@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<SnippetCollection>
+    <Language Lang="D" Guid="{12345678-1234-1234-1212-121212121212}">
+        <SnippetDir>
+            <OnOff>On</OnOff>
+            <Installed>true</Installed>
+            <Locale>1033</Locale>
+            <DirPath>.\Snippets\</DirPath>	
+            <LocalizedName>D</LocalizedName>
+        </SnippetDir>
+    </Language>
+</SnippetCollection>

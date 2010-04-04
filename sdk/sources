@@ -1,0 +1,10 @@
+SRC = \
+	win32\windef.d \
+	win32\sdkddkver.d \
+	win32\basetsd.d \
+	win32\ntstatus.d \
+	win32\winnt.d \
+	win32\winbase.d \
+	win32\winuser.d \
+	win32\ktmtypes.d \
+

@@ -1,0 +1,20 @@
+; visuald.def : translates the module exports
+
+EXETYPE      NT
+LIBRARY      "visuald.dll"
+CODE         PRELOAD DISCARDABLE
+DATA         PRELOAD MULTIPLE
+; SINGLE
+
+
+EXPORTS
+	DllCanUnloadNow            = DllCanUnloadNow            PRIVATE
+	DllGetClassObject          = DllGetClassObject          PRIVATE
+	DllRegisterServer          = DllRegisterServer          PRIVATE
+	DllUnregisterServer        = DllUnregisterServer        PRIVATE
+	VSDllRegisterServer        = VSDllRegisterServer        PRIVATE
+	VSDllUnregisterServer      = VSDllUnregisterServer      PRIVATE
+	VSDllRegisterServerUser    = VSDllRegisterServerUser    PRIVATE
+	VSDllUnregisterServerUser  = VSDllUnregisterServerUser  PRIVATE
+	RunDLLRegister             = RunDLLRegister             PRIVATE
+	RunDLLUnregister           = RunDLLUnregister           PRIVATE

@@ -1,0 +1,127 @@
+/////////////////////////////////////////////////////////////////////////////
+// Resources for Visual D
+//
+
+#include "winresrc.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+#define IDS_PACKAGE_LOAD_KEY 1
+#define IDS_PRODUCTDETAILS   100
+#define IDS_PRODUCT          101
+#define IDS_VDSETTINGS       102
+
+#define ICON_ABOUTBOX        1000
+
+STRINGTABLE 
+BEGIN
+    // PLK generated for
+    // Company Name	NoWhere
+    // Package Name	Visual D
+    // Package GUID	87654321-8765-8765-8787-878787878787
+    // PLK Version	0.1
+    // Min. Visual Studio Version	Visual Studio 2002
+    // Minimum Product Edition	Standard
+    // IDS_PACKAGE_LOAD_KEY "I0CAIJDQD2IIMCEJATAAH3MMQHMKJ3KCDQJJPEQQI9D1CIEKDIDPJDDCKPQDJ8I9ZJZZREDDM1RRCHHPQKHDE9C8P9HTC1MPE9AAJMH8AIH9HJPDCEZ3K8DAR8H1HDHP"
+
+    // PLK generated for
+    // Company Name	R-Ware
+    // Package Name	Visual D
+    // Package GUID	{002a2de9-8bb6-484d-987f-7e4ad4084715}
+    // PLK Version	0.2
+    // Min. Visual Studio Version	Visual Studio 2002
+    // Minimum Product Edition	Standard
+    // IDS_PACKAGE_LOAD_KEY "QPKRP1Z3QTARR0CZHCIEITJKDEMEZRRAMAQPZZRPEDCRI0EMHAQDCZCEIIE3RRKTE2IMHDIMZMRCECJ0MPKEQDRZJRECKIR3AHHEQ0PIPPDAIJHZEJEJQKIPZCKAC3RZ"
+
+    // PLK generated for
+    // Company Name	Rainer Schuetze
+    // Package Name	Visual D
+    // Package GUID	{002a2de9-8bb6-484d-987f-7e4ad4084715}
+    // PLK Version	0.3
+    // Min. Visual Studio Version	Visual Studio 2002
+    // Minimum Product Edition	Standard
+    IDS_PACKAGE_LOAD_KEY "QEJRPTQ2HHH3E0M0QAAPCZQJPDJCACQKMQKCDCAJQ1IIIKJQH9I2M0QIC8CJE0JIJKIDECD0H9Q0KAHJQRA0QAMZZIIQMPA9J2JMIAD1I9Q9REIMI2MCMPPJJHPIKEKZ"
+
+    IDS_PRODUCT        "Visual D"
+    IDS_PRODUCTDETAILS "Integration of the D Programming Language into Visual Studio"
+
+    IDS_VDSETTINGS     "Visual D Settings"
+END
+
+ICON_ABOUTBOX ICON "resources\daboutbox.ico"
+
+BMP_DIMAGELIST  BITMAP "resources\dimagelist.bmp"
+BMP_SPLASHSCRN  BITMAP "resources\dsplashscreenicon.bmp"
+BMP_VSIMAGELIST BITMAP "resources\vsimagelist.bmp"
+BMP_COMPLETION  BITMAP "resources\completionset.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+
+#define VER_COMPANYNAME_STR     "Rainer Schuetze"
+#define VER_FILEVERSION         0,3,0
+#define VER_FILEVERSION_STR     "0.3.0"
+#define VER_PRODUCTVERSION      0,3,0
+#define VER_PRODUCTVERSION_STR  "0.3"
+#define VER_LEGALCOPYRIGHT_STR  "(c) Rainer Schuetze"
+
+#define VER_FILEDESCRIPTION_STR  "Visual D Package\0"
+#define VER_PRODUCTNAME_STR      "Visual D\0"
+#define VER_INTERNALNAME_STR     "visuald.dll\0"
+#define VER_ORIGINALFILENAME_STR "visuald.dll\0"
+#define VER_LANGUAGENEUTRAL
+
+#define VER_FILEFLAGSMASK 0x3fL
+#define VER_FILEFLAGS     0x8L
+#define VER_FILEOS        0x40004L
+#define VER_FILETYPE      0x2L // VS_DLL
+#define VER_FILESUBTYPE   0x0L // unknown
+
+#define VER_BLOCKHEADER   "040904b0"
+#define VER_TRANSLATION   0x409
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    VER_FILEVERSION
+PRODUCTVERSION VER_PRODUCTVERSION
+FILEFLAGSMASK  VER_FILEFLAGSMASK
+FILEFLAGS      VER_FILEFLAGS
+FILEOS         VER_FILEOS
+FILETYPE       VER_FILETYPE
+FILESUBTYPE    VER_FILESUBTYPE
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK VER_BLOCKHEADER
+        BEGIN
+            VALUE "CompanyName",     VER_COMPANYNAME_STR
+            VALUE "FileDescription", VER_FILEDESCRIPTION_STR
+            VALUE "FileVersion",     VER_FILEVERSION_STR
+            VALUE "InternalName",    VER_INTERNALNAME_STR
+            VALUE "LegalCopyright",  VER_LEGALCOPYRIGHT_STR
+            VALUE "OriginalFilename",VER_ORIGINALFILENAME_STR
+            VALUE "ProductName",     VER_PRODUCTNAME_STR
+            VALUE "ProductVersion",  VER_PRODUCTVERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", VER_TRANSLATION, 0x04B0
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////

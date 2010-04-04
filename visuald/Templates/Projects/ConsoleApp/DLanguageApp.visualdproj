@@ -1,0 +1,11 @@
+<DProject>
+  <ProjectGuid>$guid1$</ProjectGuid>
+  <Config name="Debug">
+    <!-- default to defaults -->
+  </Config>
+  <Config name="Release">
+  </Config>
+  <Folder name="$safeprojectname$">
+    <File path="Program.d"></File>
+  </Folder>
+</DProject>
