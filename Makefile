@@ -7,13 +7,13 @@
 #  Microsoft Platfrom SDK (6.0A)
 #  Visual Studio Integration SDK (for VS2008)
 
-# DMD2 = c:\l\dmd-2.039\windows\bin\dmd_pdb.exe
-DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
+DMD2 = c:\l\dmd-2.042\windows\bin\dmd_rs.exe
+# DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
 
-WINSDK = c:\Programme\Microsoft SDKs\Windows\v6.0A
-MSENV  = c:\Programme\Gemeinsame Dateien\Microsoft Shared\MSEnv
+WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
+MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
 VSISDK = c:\l\vs9SDK
-NSIS   = c:\Programme\NSIS
+NSIS   = $(PROGRAMFILES)\NSIS
 
 ###
 
@@ -31,7 +31,10 @@ all: dte_idl vsi2d package
 # generate idl from olbs
 DTE_IDL_PATH=sdk\vsi\idl
 
-dte_idl: $(DTE_IDL_PATH)\dte80.idl $(DTE_IDL_PATH)\dte80a.idl $(DTE_IDL_PATH)\dte90.idl
+dte_idl: $(DTE_IDL_PATH) $(DTE_IDL_PATH)\dte80.idl $(DTE_IDL_PATH)\dte80a.idl $(DTE_IDL_PATH)\dte90.idl
+
+$(DTE_IDL_PATH):
+	if not exist $(DTE_IDL_PATH)\nul md $(DTE_IDL_PATH)
 
 sdk\vsi\idl\dte80.idl : $(TLB2IDL_EXE) "$(MSENV)\dte80.olb"
 	$(TLB2IDL_EXE) "$(MSENV)\dte80.olb" $@ "$(IVIEWER)"
@@ -48,11 +51,15 @@ $(TLB2IDL_EXE) : tlb2idl\tlb2idl.d
 ##################################
 # generate VSI d files from h and idl
 
-vsi2d: sdk\vsi_sources $(VSI_LIB)
+vsi2d: vsi_dirs sdk\vsi_sources $(VSI_LIB)
 
 VSI2D_SRC = c2d\idl2d.d c2d\tokenizer.d c2d\tokutil.d \
 	c2d\dgutil.d c2d\dlist.d 
-	
+
+vsi_dirs:
+	if not exist sdk\vsi\nul   md sdk\vsi
+	if not exist sdk\win32\nul md sdk\win32
+
 $(VSI2D_EXE) : $(VSI2D_SRC)
 	$(DMD2) -map $@.map -of$@ -version=vsi $(VSI2D_SRC)
 

@@ -33,12 +33,13 @@ DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 # LIBS = $(DMDPATH)\lib
 CV2PDB = ..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 
-VSI_LIB = $(DBGDIR)/vsi.lib 
+DBG_VSI_LIB = $(DBGDIR)/vsi.lib 
+REL_VSI_LIB = $(RELDIR)/vsi.lib 
 
 DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -I../../xmlp
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS 
 
-LIBS = $(VSI_LIB) phobos.lib uuid.lib advapi32.lib comdlg32.lib \
+LIBS = phobos.lib uuid.lib advapi32.lib comdlg32.lib \
 	ole32.lib oleaut32.lib comctl32.lib user32.lib shell32.lib gdi32.lib
 
 all: debug
@@ -53,15 +54,15 @@ exe:     $(DBGDIR)\$(PROJECT).exe
 $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
 	$(CV2PDB) -D2 $? $@
 
-$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(VSI_LIB) Makefile
+$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(DBG_VSI_LIB) Makefile
 #	echo -of$@ -g -unittest -debug $(DFLAGS) $(SRC) $(LIBS) $(DEF) $(RES) >cmdline
 	$(DMD) -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
-		$(SRC) $(LIBS) $(DEF) $(RES)
+		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(RES)
 <<NOKEEP
 
-$(RELDIR)\$(PROJECT).dll : $(SRC) $(DEF) $(RES) $(VSI_LIB) Makefile
+$(RELDIR)\$(PROJECT).dll : $(SRC) $(DEF) $(RES) $(REL_VSI_LIB) Makefile
 	$(DMD) -of$@ -O $(DFLAGS) -map $@.map @<<
-		$(SRC) $(LIBS) $(DEF) $(RES)
+		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RES)
 <<NOKEEP
 
 $(RES) : $(RC) $(RSRC)
@@ -71,9 +72,9 @@ $(RES) : $(RC) $(RSRC)
 $(DBGDIR)\$(PROJECT).exe : $(DBGDIR)\$(PROJECT)_cv.exe
 	$(CV2PDB) $? $@
 
-$(DBGDIR)\$(PROJECT)_cv.exe : $(SRC) Makefile
+$(DBGDIR)\$(PROJECT)_cv.exe : $(SRC) $(DBG_VSI_LIB) Makefile
 	$(DMD) -of$@ -g -unittest -debug -version=MAIN $(DFLAGS) @<<
-		$(SRC) $(LIBS)
+		$(SRC) $(DBG_VSI_LIB) $(LIBS)
 <<NOKEEP
 
 ######################
