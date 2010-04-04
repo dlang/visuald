@@ -92,6 +92,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\dimagelist.d"
+				>
+			</File>
+			<File
 				RelativePath=".\dlangsvc.d"
 				>
 			</File>
@@ -160,60 +164,28 @@
 				>
 			</File>
 			<Filter
-				Name="xmlp"
+				Name="Resources"
 				>
 				<File
-					RelativePath="..\..\xmlp\xmlp\compatible.d"
+					RelativePath=".\Resources\completionset.bmp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xmlp\xmlp\delegater.d"
+					RelativePath=".\Resources\DAboutBox.ico"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xmlp\xmlp\except.d"
+					RelativePath=".\Resources\DImageList.bmp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xmlp\xmlp\format.d"
+					RelativePath=".\Resources\DSplashScreenIcon.bmp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xmlp\xmlp\input.d"
+					RelativePath=".\Resources\vsimagelist.bmp"
 					>
 				</File>
-				<File
-					RelativePath="..\..\xmlp\xmlp\pieceparser.d"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xmlp\xmlp\recode.d"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xmlp\xmlp\xmldom.d"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xmlp\xmlp\xmlrules.d"
-					>
-				</File>
-				<Filter
-					Name="inrange"
-					>
-					<File
-						RelativePath="..\..\xmlp\inrange\instream.d"
-						>
-					</File>
-					<File
-						RelativePath="..\..\xmlp\inrange\instring.d"
-						>
-					</File>
-					<File
-						RelativePath="..\..\xmlp\inrange\recode.d"
-						>
-					</File>
-				</Filter>
 			</Filter>
 		</Filter>
 		<File

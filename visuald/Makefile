@@ -31,7 +31,7 @@ RELDIR = ..\bin\Release
 DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 # DMDPATH = c:\l\dmd-1.039\dmd
 # LIBS = $(DMDPATH)\lib
-CV2PDB = ..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
+CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 
 DBG_VSI_LIB = $(DBGDIR)/vsi.lib 
 REL_VSI_LIB = $(RELDIR)/vsi.lib 

@@ -20,6 +20,7 @@ import chiercontainer;
 import propertypage;
 import fileutil;
 import dimagelist;
+import config;
 
 import dproject;
 import dpackage;
@@ -162,6 +163,80 @@ class CFileNode : CHierNode,
 	}
 
 	uint GetContextMenu() { return IDM_VS_CTXT_ITEMNODE; }
+
+	override int QueryStatus( 
+		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [in] */ ULONG cCmds,
+		/* [out][in][size_is] */ OLECMD* prgCmds,
+		/* [unique][out][in] */ OLECMDTEXT *pCmdText)
+	{
+		OLECMD* Cmd = prgCmds;
+
+		HRESULT hr = S_OK;
+		bool fSupported = false;
+		bool fEnabled = false;
+		bool fInvisible = false;
+
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97)
+		{
+			switch(Cmd.cmdID)
+			{
+			case cmdidOpenWith:
+			case cmdidOpen:
+				fSupported = true;
+				fEnabled = true;
+				break;
+			default:
+				hr = OLECMDERR.E_NOTSUPPORTED;
+				break;
+			}
+		}
+		else 
+		{
+			hr = OLECMDERR.E_NOTSUPPORTED;
+		}
+		if (SUCCEEDED(hr) && fSupported)
+		{
+			Cmd.cmdf = OLECMDF_SUPPORTED;
+			if (fInvisible)
+				Cmd.cmdf |= OLECMDF_INVISIBLE;
+			else if (fEnabled)
+				Cmd.cmdf |= OLECMDF_ENABLED;
+		}
+
+		if (hr == OLECMDERR.E_NOTSUPPORTED)
+			hr = super.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+
+		return hr;
+	}
+
+	override int Exec( 
+		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [in] */ DWORD nCmdID,
+		/* [in] */ DWORD nCmdexecopt,
+		/* [unique][in] */ VARIANT *pvaIn,
+		/* [unique][out][in] */ VARIANT *pvaOut)
+	{
+		int hr = OLECMDERR.E_NOTSUPPORTED;
+
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97)
+		{
+			switch(nCmdID)
+			{
+			case cmdidOpenWith:
+			case cmdidOpen:
+				hr = GetCVsHierarchy().OpenDoc(this, false, nCmdID == cmdidOpenWith, true);
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (hr == OLECMDERR.E_NOTSUPPORTED)
+			hr = super.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+
+		return hr;
+	}
 
 	HRESULT GetRDTDocumentInfo(
 		/* [in]  */ string             pszDocumentName, 
@@ -793,6 +868,24 @@ version(none)
 		return S_OK;
 	}
 
+	int GetNodeIcon(CHierNode pNode)
+	{
+		if(CFileNode fnode = cast(CFileNode) pNode)
+		{
+			string tool = Config.GetCompileTool(fnode);
+			switch(tool)
+			{
+			case "DMD":                 return kImageDSource;
+			case kToolResourceCompiler: return kImageResource;
+			case "Custom":              return kImageScript;
+			default:                    return kImageDocument;
+			}
+		}
+		if(pNode == m_pRootNode)
+			return kImageProject;
+		return kImageFolderClosed;
+	}
+	
 	override int GetProperty(in VSITEMID itemid, in VSHPROPID propid, VARIANT* var)
 	{
 		//mixin(LogCallMix);
@@ -868,8 +961,7 @@ version(none)
 		case VSHPROPID_IconHandle:
 		case VSHPROPID_IconIndex:
 			var.vt = VT_I4;
-			var.lVal = (pNode == m_pRootNode ? kImageProject : 
-				     pNode.IsContainer() ? kImageFolderClosed : kImageDSource);
+			var.lVal = GetNodeIcon(pNode);
 			break;
 		case VSHPROPID_OpenFolderIconIndex:
 			var.vt = VT_I4;

@@ -329,7 +329,7 @@ class Package : DisposingComObject,
 	override int IdBmpSplash(uint* pIdBmp)
 	{
 		mixin(LogCallMix);
-		*pIdBmp = 1000;
+		*pIdBmp = 1001;
 		return S_OK;
 	}
 

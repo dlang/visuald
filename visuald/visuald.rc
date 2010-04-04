@@ -23,27 +23,16 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #define IDS_VDSETTINGS       102
 
 #define ICON_ABOUTBOX        1000
+#define BMP_SPLASHSCRN       1001
 
 STRINGTABLE 
 BEGIN
-    // PLK generated for
-    // Company Name	NoWhere
-    // Package Name	Visual D
-    // Package GUID	87654321-8765-8765-8787-878787878787
-    // PLK Version	0.1
-    // Min. Visual Studio Version	Visual Studio 2002
-    // Minimum Product Edition	Standard
-    // IDS_PACKAGE_LOAD_KEY "I0CAIJDQD2IIMCEJATAAH3MMQHMKJ3KCDQJJPEQQI9D1CIEKDIDPJDDCKPQDJ8I9ZJZZREDDM1RRCHHPQKHDE9C8P9HTC1MPE9AAJMH8AIH9HJPDCEZ3K8DAR8H1HDHP"
-
-    // PLK generated for
-    // Company Name	R-Ware
-    // Package Name	Visual D
-    // Package GUID	{002a2de9-8bb6-484d-987f-7e4ad4084715}
-    // PLK Version	0.2
-    // Min. Visual Studio Version	Visual Studio 2002
-    // Minimum Product Edition	Standard
-    // IDS_PACKAGE_LOAD_KEY "QPKRP1Z3QTARR0CZHCIEITJKDEMEZRRAMAQPZZRPEDCRI0EMHAQDCZCEIIE3RRKTE2IMHDIMZMRCECJ0MPKEQDRZJRECKIR3AHHEQ0PIPPDAIJHZEJEJQKIPZCKAC3RZ"
-
+    // I've chosen to keep the PLK as part of the source, disredarding the unclear statements
+    // from Microsoft, whether it must not be made public. It is very easily extracted from
+    // the binary anyway, and it is fixed to the given names.
+    // 
+    // Please do not abuse!!!
+    //
     // PLK generated for
     // Company Name	Rainer Schuetze
     // Package Name	Visual D

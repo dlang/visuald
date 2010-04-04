@@ -357,6 +357,10 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyToolOpts.Set(null, "Visual D Settings");
 		keyToolOpts.Set("Package"w, packageGuid);
 		keyToolOpts.Set("Page"w, GUID2wstring(g_ToolsPropertyPage));
+		if(keyToolOpts.GetString("ExeSearchPath"w).length == 0)
+			keyToolOpts.Set("ExeSearchPath"w, "$(DMDInstallDir)windows\\bin\n$(WindowsSdkDir)\\bin"w);
+		if(keyToolOpts.GetString("IncSearchPath"w).length == 0)
+			keyToolOpts.Set("IncSearchPath"w, "$(WindowsSdkDir)\\include;$(DevEnvDir)..\\..\\VC\\include"w);
 
 		scope RegKey keyMarshal1 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocServer32"w);
 		keyMarshal1.Set("InprocServer32"w, dllPath);

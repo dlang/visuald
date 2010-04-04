@@ -330,7 +330,7 @@ class ProjectOptions
 		if(symdebug && runCv2pdb && !lib)
 		{
 			string target = getTargetPath();
-			string cmd = pathCv2pdb ~ (Dversion == 2 ? " -D2 " : " -D1 ");
+			string cmd = quoteFilename(pathCv2pdb) ~ (Dversion == 2 ? " -D2 " : " -D1 ");
 			cmd ~= quoteFilename(target ~ "_cv") ~ " " ~ quoteFilename(target);
 			return cmd;
 		}
@@ -1392,7 +1392,7 @@ class Config :	DisposingComObject,
 		return node is null;
 	}
 
-	string GetCompileTool(CFileNode file)
+	static string GetCompileTool(CFileNode file)
 	{
 		string tool = file.GetTool();
 		string fname = file.GetFilename();

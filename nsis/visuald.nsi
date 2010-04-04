@@ -11,7 +11,7 @@
 ;--------------------------------
 ;General
 
-  !define VERSION "0.3"
+  !define VERSION "0.3.1"
   !define APPNAME "VisualD"
   !define LONG_APPNAME "Visual D"
   !define VERYLONG_APPNAME "Visual D - Visual Studio Integration of the D Programming Language"
@@ -21,7 +21,7 @@
 
   ;Name and file
   Name "${LONG_APPNAME}"
-  OutFile "${APPNAME}-v${VERSION}.exe"
+  OutFile "..\..\downloads\${APPNAME}-v${VERSION}.exe"
 
   !define UNINSTALL_REGISTRY_ROOT HKLM
   !define UNINSTALL_REGISTRY_KEY  Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}
