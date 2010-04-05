@@ -569,7 +569,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 	override int GetExpansionFunction(IXMLDOMNode xmlFunctionNode, in BSTR bstrFieldName, IVsExpansionFunction* func)
 	{
-		mixin(LogCallMix2);
+		//mixin(LogCallMix);
 
 		BSTR text;
 		if(int hr = xmlFunctionNode.text(&text))

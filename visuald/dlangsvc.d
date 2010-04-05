@@ -188,7 +188,7 @@ class LanguageService : DisposingComObject,
 	// IVsDebuggerEvents //////////////////////////////////////
 	override HRESULT OnModeChange(in DBGMODE dbgmodeNew)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 		mDbgMode = dbgmodeNew;
 		return S_OK;
 	}

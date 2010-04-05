@@ -1171,7 +1171,7 @@ class Project : CVsHierarchy,
 	{
 		mixin(LogCallMix2);
 
-		*pClassID = g_projectFactoryCLSID;
+		*cast(GUID*)pClassID = g_projectFactoryCLSID;
 		return S_OK;
 	}
 
@@ -1600,7 +1600,7 @@ class Project : CVsHierarchy,
 	{
 		mixin(LogCallMix);
 
-		*pClsid = g_GeneralPropertyPage;
+		*cast(GUID*)pClsid = g_GeneralPropertyPage;
 		return S_OK;
 		//return returnError(E_NOTIMPL);
 	}

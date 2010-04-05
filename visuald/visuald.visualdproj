@@ -1,0 +1,202 @@
+<DProject>
+ <Config name="Debug">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>0</lib>
+  <multiobj>0</multiobj>
+  <oneobj>0</oneobj>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <symdebug>1</symdebug>
+  <optimize>0</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>0</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>0</useUnitTests>
+  <useInline>0</useInline>
+  <release>0</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <program>$(DMDInstallDir)windows\bin\dmd_rs.exe</program>
+  <imppath>..</imppath>
+  <fileImppath />
+  <outdir>$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>0</doXGeneration>
+  <xfilename />
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids />
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>1</runCv2pdb>
+  <pathCv2pdb>&quot;$(VisualDInstallDir)cv2pdb.exe&quot;</pathCv2pdb>
+  <objfiles />
+  <linkswitches />
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib</libfiles>
+  <deffile />
+  <resfile />
+  <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <additionalOptions />
+  <preBuildCommand />
+  <postBuildCommand />
+  <debugtarget>c:\l\vs10\Common7\IDE\devenv.exe</debugtarget>
+  <debugarguments />
+  <debugworkingdir />
+  <debugattach>0</debugattach>
+  <debugremote />
+ </Config>
+ <Config name="Release">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>0</lib>
+  <multiobj>0</multiobj>
+  <oneobj>0</oneobj>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <symdebug>0</symdebug>
+  <optimize>0</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>0</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>0</useUnitTests>
+  <useInline>0</useInline>
+  <release>1</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <imppath />
+  <fileImppath />
+  <outdir>$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>0</doXGeneration>
+  <xfilename />
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids />
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>0</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb.exe</pathCv2pdb>
+  <objfiles />
+  <linkswitches />
+  <libfiles />
+  <deffile />
+  <resfile />
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <additionalOptions />
+  <preBuildCommand />
+  <postBuildCommand />
+  <debugtarget>$(TARGETPATH)</debugtarget>
+  <debugarguments />
+  <debugworkingdir />
+  <debugattach>0</debugattach>
+  <debugremote />
+ </Config>
+ <Folder name="VisualD">
+  <Folder name="Resources">
+   <File path="Resources\vsimagelist.bmp" />
+   <File path="Resources\completionset.bmp" />
+   <File path="Resources\DAboutBox.ico" />
+   <File path="Resources\DImageList.bmp" />
+   <File path="Resources\DSplashScreenIcon.bmp" />
+  </Folder>
+  <File path="config.d" />
+  <File path="dproject.d" />
+  <File path="build.d" />
+  <File path="chiercontainer.d" />
+  <File path="chiernode.d" />
+  <File path="completion.d" />
+  <File path="comutil.d" />
+  <File path="dimagelist.d" />
+  <File path="dlangsvc.d" />
+  <File path="dllmain.d" />
+  <File path="dpackage.d" />
+  <File path="expansionprovider.d" />
+  <File path="fileutil.d" />
+  <File path="hierarchy.d" />
+  <File path="hierutil.d" />
+  <File path="logutil.d" />
+  <File path="propertypage.d" />
+  <File path="register.d" />
+  <File path="simplelexer.d" />
+  <File path="stringutil.d" />
+  <File path="trackprojectdocument.d" />
+  <File path="vscommands.d" />
+  <File path="winctrl.d" />
+  <File path="xmlwrap.d" />
+  <File path="visuald.rc" />
+ </Folder>
+</DProject>

@@ -532,7 +532,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		/* [in] */ in MEMBERID memid,
 		/* [out] */ BSTR *pBstrMops)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 		return returnError(E_NOTIMPL);
 	}
 
@@ -540,7 +540,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		/* [out] */ ITypeLib *ppTLib,
 		/* [out] */ UINT *pIndex)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 		return returnError(E_NOTIMPL);
 	}
 

@@ -267,7 +267,7 @@ class Package : DisposingComObject,
 
 	override int QueryClose(int* pfCanClose)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 		*pfCanClose = 1;
 		return S_OK;
 	}

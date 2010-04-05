@@ -168,9 +168,9 @@ class RegKey
 		LONG cnt = 260 * wchar.sizeof;
 		wstring szName = name ~ cast(wchar)0;
 		DWORD type;
-		int hr = RegQueryValueExW(key, szName.ptr, 0, &type, buf, &cnt);
+		int hr = RegQueryValueExW(key, szName.ptr, 0, &type, buf.ptr, &cnt);
 		if(hr == S_OK && cnt > 0)
-			return to_wstring(buf);
+			return to_wstring(buf.ptr);
 		if(hr != ERROR_MORE_DATA || type != REG_SZ)
 			return ""w;
 

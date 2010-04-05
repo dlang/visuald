@@ -1132,7 +1132,7 @@ class Config :	DisposingComObject,
 
 			dbgi.dlo = DLO_Custom;    // specifies how this process should be launched
 			// clsidCustom is the clsid of the debug engine to use to launch the debugger
-			dbgi.clsidCustom = GUID_COMPlusNativeEng;        // the mixed-mode debugger
+			*cast(GUID*)(&(dbgi.clsidCustom)+0) = GUID_COMPlusNativeEng;        // the mixed-mode debugger
 			dbgi.bstrMdmRegisteredName = null; // used with DLO_AlreadyRunning. The name of the
 			                                   // app as it is registered with the MDM.
 
@@ -1795,7 +1795,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	{
 		mixin(LogCallMixNoRet);
 
-		*pCid = g_unmarshalCLSID;
+		*cast(GUID*)pCid = g_unmarshalCLSID;
 		return S_OK;
 		//return returnError(E_NOTIMPL);
 	}

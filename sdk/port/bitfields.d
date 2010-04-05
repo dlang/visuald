@@ -1,4 +1,4 @@
-module sdk.port.bitfield;
+module sdk.port.bitfields;
 
 private template myToString(ulong n, string suffix = n > uint.max ? "UL" : "U")
 {

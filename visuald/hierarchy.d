@@ -856,7 +856,7 @@ version(none)
 
 	override int QueryClose(BOOL *pfCanClose)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 
 		*pfCanClose = true;
 		return S_OK;
