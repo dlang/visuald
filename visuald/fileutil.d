@@ -40,7 +40,7 @@ string quoteFilename(string fname)
 {
 	if(fname.length >= 2 && fname[0] == '\"' && fname[$-1] == '\"')
 		return fname;
-	if(fname.indexOf('$') < 0 || indexOf(fname, ' ') >= 0)
+	if(fname.indexOf('$') >= 0 || indexOf(fname, ' ') >= 0)
 		fname = "\"" ~ fname ~ "\"";
 	return fname;
 }

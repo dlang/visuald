@@ -271,6 +271,11 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyPackage.Set("MinEdition"w, "Standard");
 		keyPackage.Set("ID"w, 1);
 
+		int bspos = dllPath.length - 1;	while (bspos >= 0 && dllPath[bspos] != '\\') bspos--;
+		scope RegKey keySatellite = new RegKey(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid ~ "\\SatelliteDll"w);
+		keySatellite.Set("Path"w, dllPath[0 .. bspos+1]);
+		keySatellite.Set("DllName"w, ".."w ~ dllPath[bspos .. $]);
+
 		scope RegKey keyCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ languageGuid);
 		keyCLSID.Set("InprocServer32"w, dllPath);
 		keyCLSID.Set("ThreadingModel"w, "Free"w); // Appartment?

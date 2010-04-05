@@ -7,6 +7,7 @@
 
   !include "MUI2.nsh"
   !include "Memento.nsh"
+  !include "InstallOptions.nsh"
 
 ;--------------------------------
 ;General
@@ -34,7 +35,8 @@
   !define VS2008_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\9.0
   !define VS2010_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\10.0
   !define VCEXPRESS_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
-
+  !define VDSETTINGS_KEY          "\ToolsOptionsPages\Projects\Visual D Settings"
+  
   ;Default installation folder
   InstallDir "$PROGRAMFILES\${APPNAME}"
 
@@ -44,6 +46,11 @@
   ;Request application privileges for Windows Vista
   RequestExecutionLevel user
 
+  ReserveFile "dmdinstall.ini"
+
+;--------------------------------
+;installation time variables
+  Var DMDInstallDir
 
 ;--------------------------------
 ;Interface Settings
@@ -57,6 +64,9 @@
   !insertmacro MUI_PAGE_LICENSE "license"
   !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
+
+  Page custom DMDInstallPage ValidateDMDInstallPage
+  
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
 
@@ -104,7 +114,7 @@ Section "Visual Studio package" SecPackage
 
   ;Store installation folder
   WriteRegStr HKCU "Software\${APPNAME}" "" $INSTDIR
-  
+
   ;Create uninstaller
   WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "DisplayName" "${VERYLONG_APPNAME}"
   WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "UninstallString" "$INSTDIR\uninstall.exe"
@@ -117,6 +127,7 @@ SectionEnd
 ${MementoSection} "Register with VS 2005" SecVS2005
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2005_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2005_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   
 ${MementoSectionEnd}
 
@@ -124,6 +135,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2008" SecVS2008
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2008_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir 
   
 ${MementoSectionEnd}
 
@@ -131,6 +143,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2010" SecVS2010
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2010_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   
 ${MementoSectionEnd}
 
@@ -138,6 +151,7 @@ ${MementoSectionEnd}
 ${MementoUnselectedSection} "Register with VC-Express" SecVCExpress
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXPRESS_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXPRESS_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   
 ${MementoSectionEnd}
 
@@ -181,7 +195,8 @@ Section "Uninstall"
 
   DeleteRegKey ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}"
   DeleteRegKey HKLM "SOFTWARE\${APPNAME}"
-  DeleteRegKey /ifempty HKCU "Software\${APPNAME}"
+  DeleteRegKey HKCU "Software\${APPNAME}"
+  ; /ifempty 
 
 SectionEnd
 
@@ -224,7 +239,24 @@ Function .onInit
   IfErrors 0 Installed_VCExpress
     SectionSetFlags ${SecVcExpress} ${SF_RO}
   Installed_VCExpress:
-  
 
+  !insertmacro INSTALLOPTIONS_EXTRACT "dmdinstall.ini"
+  
 FunctionEnd
 
+;--------------------------------
+Function DMDInstallPage
+
+  !insertmacro MUI_HEADER_TEXT "DMD Installation Folder" "Specify the directory where DMD is installed"
+
+  ReadRegStr $DMDInstallDir HKLM "Software\${APPNAME}" "DMDInstallDir" 
+  
+  WriteINIStr "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State" $DMDInstallDir
+  !insertmacro INSTALLOPTIONS_DISPLAY "dmdinstall.ini"
+  
+FunctionEnd
+
+Function ValidateDMDInstallPage
+  ReadINIStr $DMDInstallDir "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State"
+  WriteRegStr HKLM "Software\${APPNAME}" "DMDInstallDir" $DMDInstallDir
+FunctionEnd

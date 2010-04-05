@@ -273,8 +273,8 @@ CHierNode searchNode(CHierNode root, bool delegate(CHierNode) pred, bool fDispla
 		return root;
 
 	for(CHierNode node = root.GetHeadEx(fDisplayOnly); node; node = node.GetNext(fDisplayOnly))
-		if(pred(node))
-			return node;
+		if(CHierNode n = searchNode(node, pred, fDisplayOnly))
+			return n;
 	return null;
 }
 

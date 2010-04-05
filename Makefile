@@ -7,8 +7,8 @@
 #  Microsoft Platfrom SDK (6.0A)
 #  Visual Studio Integration SDK (for VS2008)
 
-DMD2 = c:\l\dmd-2.042\windows\bin\dmd_rs.exe
-# DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
+# DMD2 = c:\l\dmd-2.042\windows\bin\dmd_rs.exe
+DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
 
 WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
 MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
