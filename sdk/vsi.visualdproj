@@ -37,10 +37,10 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <program>$(DMDInstallDir)windows\bin\dmd_rs.exe</program>
+  <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath />
-  <outdir>$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
   <objname />
   <libname />
@@ -123,7 +123,7 @@
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath />
   <fileImppath />
-  <outdir>$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
   <objname />
   <libname />

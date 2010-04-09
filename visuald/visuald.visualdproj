@@ -37,10 +37,10 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <program>$(DMDInstallDir)windows\bin\dmd_rs.exe</program>
+  <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath />
-  <outdir>$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
   <objname />
   <libname />
@@ -66,7 +66,7 @@
   <run>0</run>
   <runargs />
   <runCv2pdb>1</runCv2pdb>
-  <pathCv2pdb>&quot;$(VisualDInstallDir)cv2pdb.exe&quot;</pathCv2pdb>
+  <pathCv2pdb>m:\s\d\cv2pdb\trunk\bin\debug\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
   <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib</libfiles>
@@ -76,8 +76,8 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>c:\l\vs10\Common7\IDE\devenv.exe</debugtarget>
-  <debugarguments />
+  <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
+  <debugarguments>/RootSuffix D</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
@@ -123,7 +123,7 @@
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath />
   <fileImppath />
-  <outdir>$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
   <objname />
   <libname />
@@ -198,5 +198,6 @@
   <File path="winctrl.d" />
   <File path="xmlwrap.d" />
   <File path="visuald.rc" />
+  <File path="visuald.def" />
  </Folder>
 </DProject>

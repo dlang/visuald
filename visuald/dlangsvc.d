@@ -461,6 +461,19 @@ struct TokenInfo
 	int EndIndex;
 }
 
+int GetUserPreferences(LANGPREFERENCES *langPrefs)
+{
+	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
+	if(!textmgr)
+		return E_FAIL;
+	scope(exit) release(textmgr);
+	
+	langPrefs.guidLang = g_languageCLSID;
+	if(int rc = textmgr.GetUserPreferences(null, null, langPrefs, null))
+		return rc;
+	return S_OK;
+}
+
 class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 {
 	Colorizer mColorizer;
@@ -693,6 +706,155 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return null;
 	}
 
+	//////////////////////////////////////////////////////////////
+	int ReplaceLineIndent(int line, LANGPREFERENCES* langPrefs)
+	{
+		wstring linetxt = GetText(line, 0, line, -1);
+		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
+		int n = 0;
+		if(p < linetxt.length)
+			n = CalcLineIndent(line, linetxt[p], langPrefs);
+		if(n < 0 || n == orgn)
+			return S_OK;
+
+		return doReplaceLineIndent(line, p, n, langPrefs);
+	}
+	
+	int doReplaceLineIndent(int line, int idx, int n, LANGPREFERENCES* langPrefs)
+	{
+		int tabsz = (langPrefs.fInsertTabs && langPrefs.uTabSize > 0 ? langPrefs.uTabSize : n + 1);
+		string spc = repeat("\t", n / tabsz) ~ repeat(" ", n % tabsz);
+		wstring wspc = toUTF16(spc);
+
+		TextSpan changedSpan;
+		return mBuffer.ReplaceLines(line, 0, line, idx, wspc.ptr, wspc.length, &changedSpan);
+	}
+	
+	int CalcLineIndent(int line, dchar ch, LANGPREFERENCES* langPrefs)
+	{
+		for(int ln = line - 1; ln >= 0; --ln)
+		{
+			wstring txt = GetText(ln, 0, ln, -1);
+			
+			TokenInfo[] lineInfo = GetLineInfo(ln);
+			int inf = lineInfo.length - 1;
+			for( ; inf >= 0; inf--)
+				if(lineInfo[inf].type != TokenColor.Comment &&
+				   (lineInfo[inf].type != TokenColor.Text || !isspace(txt[lineInfo[inf].StartIndex])))
+					break;
+			if(inf < 0)
+				continue;
+
+			wstring lastTok = txt[lineInfo[inf].StartIndex .. lineInfo[inf].EndIndex];
+			
+			int p, n = countVisualSpaces(txt, langPrefs.uTabSize, &p);
+
+			if(lastTok == ";"w || lastTok == "}"w)
+			{
+				int otherLine, otherIndex;
+				if(FindOpeningBracketBackward(line, 0, otherLine, otherIndex))
+				{
+					txt = GetText(otherLine, 0, otherLine, -1);
+					n = countVisualSpaces(txt, langPrefs.uTabSize, &p);
+					n += langPrefs.uIndentSize;
+				}
+			}
+			else if(lastTok != ","w && ch != '{')
+				n += langPrefs.uIndentSize;
+			if(ch == '}')
+				n -= langPrefs.uIndentSize;
+			
+			return n;
+		}
+		return -1;
+	}
+
+	int ReindentLines(int startline, int endline)
+	{
+		LANGPREFERENCES langPrefs;
+		if(int rc = GetUserPreferences(&langPrefs))
+			return rc;
+		if(langPrefs.IndentStyle != vsIndentStyleSmart)
+			return S_FALSE;
+		
+		for(int line = startline; line <= endline; line++)
+		{
+			int rc = ReplaceLineIndent(line, &langPrefs);
+			if(FAILED(rc))
+				return rc;
+		}
+		return S_OK;
+	}
+
+	//////////////////////////////////////////////////////////////
+
+	bool FindClosingBracketForward(int line, int iState, uint pos, out int otherLine, out int otherIndex)
+	{
+		int lineCount;
+		mBuffer.GetLineCount(&lineCount);
+		int level = 1;
+		while(line < lineCount)
+		{
+			wstring text = GetText(line, 0, line, -1);
+			while(pos < text.length)
+			{
+				uint ppos = pos;
+				int type = SimpleLexer.scan(iState, text, pos);
+				if(type == TokenColor.Text)
+					if(SimpleLexer.isOpeningBracket(text[ppos]))
+						level++;
+					else if(SimpleLexer.isClosingBracket(text[ppos]))
+						if(--level <= 0)
+						{
+							otherLine = line;
+							otherIndex = ppos;
+							return true;
+						}
+			}
+			line++;
+			pos = 0;
+		}
+		return false;
+	}
+
+	bool FindOpeningBracketBackward(int line, int tok, out int otherLine, out int otherIndex)
+	{
+		int level = 1;
+		while(line >= 0)
+		{
+			wstring text = GetText(line, 0, line, -1);
+			int[] tokpos;
+			int[] toktype;
+			uint pos = 0;
+			int iState = mColorizer.GetLineState(line);
+			while(pos < text.length)
+			{
+				tokpos ~= pos;
+				toktype ~= SimpleLexer.scan(iState, text, pos);
+			}
+			int p = (tok >= 0 ? tok : tokpos.length) - 1; 
+			for( ; p >= 0; p--)
+			{
+				pos = tokpos[p];
+				if(toktype[p] == TokenColor.Text)
+					if(SimpleLexer.isClosingBracket(text[pos]))
+						level++;
+					else if(SimpleLexer.isOpeningBracket(text[pos]))
+						if(--level <= 0)
+						{
+							otherLine = line;
+							otherIndex = pos;
+							return true;
+						}
+			}
+			line--;
+			tok = -1;
+		}
+		return false;
+	}
+
+	//////////////////////////////////////////////////////////////
+
 	ExpansionProvider GetExpansionProvider()
 	{
 		if(!mExpansionProvider)
@@ -836,6 +998,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			case ECMD_INVOKESNIPPETFROMSHORTCUT:
 				return HandleSnippet();
 
+			case ECMD_FORMATSELECTION:
+				return ReindentLines();
+				
 			case ECMD_COMPLETEWORD:
 			case ECMD_AUTOCOMPLETE:
 				initCompletion();
@@ -961,6 +1126,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		{
 			switch (cmdID) 
 			{
+			case ECMD_FORMATSELECTION:
 			case ECMD_COMPLETEWORD:
 			case ECMD_INSERTSNIPPET:
 			case ECMD_INVOKESNIPPETFROMSHORTCUT:
@@ -1028,75 +1194,15 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			return false;
 
 		if(SimpleLexer.isOpeningBracket(text[ppos]))
-			return FindClosingBracketForward(line, iState, pos, otherLine, otherIndex);
+			return mCodeWinMgr.mSource.FindClosingBracketForward(line, iState, pos, otherLine, otherIndex);
 		else if(SimpleLexer.isClosingBracket(text[ppos]))
-			return FindOpeningBracketBackward(line, tok, otherLine, otherIndex);
+			return mCodeWinMgr.mSource.FindOpeningBracketBackward(line, tok, otherLine, otherIndex);
 		return false;
 	}
 
-	bool FindClosingBracketForward(int line, int iState, uint pos, out int otherLine, out int otherIndex)
+	ExpansionProvider GetExpansionProvider()
 	{
-		int lineCount;
-		mCodeWinMgr.mSource.mBuffer.GetLineCount(&lineCount);
-		int level = 1;
-		while(line < lineCount)
-		{
-			wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
-			while(pos < text.length)
-			{
-				uint ppos = pos;
-				int type = SimpleLexer.scan(iState, text, pos);
-				if(type == TokenColor.Text)
-					if(SimpleLexer.isOpeningBracket(text[ppos]))
-						level++;
-					else if(SimpleLexer.isClosingBracket(text[ppos]))
-						if(--level <= 0)
-						{
-							otherLine = line;
-							otherIndex = ppos;
-							return true;
-						}
-			}
-			line++;
-			pos = 0;
-		}
-		return false;
-	}
-
-	bool FindOpeningBracketBackward(int line, int tok, out int otherLine, out int otherIndex)
-	{
-		int level = 1;
-		while(line >= 0)
-		{
-			wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
-			int[] tokpos;
-			int[] toktype;
-			uint pos = 0;
-			int iState = mCodeWinMgr.mSource.mColorizer.GetLineState(line);
-			while(pos < text.length)
-			{
-				tokpos ~= pos;
-				toktype ~= SimpleLexer.scan(iState, text, pos);
-			}
-			int p = (tok >= 0 ? tok : tokpos.length) - 1; 
-			for( ; p >= 0; p--)
-			{
-				pos = tokpos[p];
-				if(toktype[p] == TokenColor.Text)
-					if(SimpleLexer.isClosingBracket(text[pos]))
-						level++;
-					else if(SimpleLexer.isOpeningBracket(text[pos]))
-						if(--level <= 0)
-						{
-							otherLine = line;
-							otherIndex = pos;
-							return true;
-						}
-			}
-			line--;
-			tok = -1;
-		}
-		return false;
+		return mCodeWinMgr.mSource.GetExpansionProvider();
 	}
 
 	int HandleSnippet()
@@ -1104,16 +1210,11 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return E_NOTIMPL;
 	}
 
+	//////////////////////////////////////////////////////////////
 	int HandleSmartIndent(dchar ch)
 	{
-		IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
-		if(!textmgr)
-			return E_FAIL;
-		scope(exit) release(textmgr);
-		
 		LANGPREFERENCES langPrefs;
-		langPrefs.guidLang = g_languageCLSID;
-		if(int rc = textmgr.GetUserPreferences(null, null, &langPrefs, null))
+		if(int rc = GetUserPreferences(&langPrefs))
 			return rc;
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
 			return S_FALSE;
@@ -1125,59 +1226,26 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			idx--;
 
 		wstring linetxt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
-		int p, n, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
+		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
 		if(idx > p || (ch != '\n' && linetxt[p] != ch))
 			return S_FALSE; // do nothing if not at beginning of line
 
-		for(int ln = line - 1; ln >= 0; --ln)
-		{
-			wstring txt = mCodeWinMgr.mSource.GetText(ln, 0, ln, -1);
+		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &langPrefs);
+		if(n < 0 || n == orgn)
+			return S_OK;
 			
-			TokenInfo[] lineInfo = mCodeWinMgr.mSource.GetLineInfo(ln);
-			int inf = lineInfo.length - 1;
-			for( ; inf >= 0; inf--)
-				if(lineInfo[inf].type != TokenColor.Comment &&
-				   (lineInfo[inf].type != TokenColor.Text || !isspace(txt[lineInfo[inf].StartIndex])))
-					break;
-			if(inf < 0)
-				continue;
-
-			wstring lastTok = txt[lineInfo[inf].StartIndex .. lineInfo[inf].EndIndex];
-			
-			n = countVisualSpaces(txt, langPrefs.uTabSize, &p);
-
-			if(lastTok == ";"w || lastTok == "}"w)
-			{
-				int otherLine, otherIndex;
-				if(FindOpeningBracketBackward(line, idx, otherLine, otherIndex))
-				{
-					txt = mCodeWinMgr.mSource.GetText(otherLine, 0, otherLine, -1);
-					n = countVisualSpaces(txt, langPrefs.uTabSize, &p);
-					n += langPrefs.uIndentSize;
-				}
-			}
-			else if(lastTok != ","w && ch != '{')
-				n += langPrefs.uIndentSize;
-			if(ch == '}')
-				n -= langPrefs.uIndentSize;
-			
-			if(n < 0 || n == orgn)
-				break;
-			
-			int tabsz = (langPrefs.fInsertTabs && langPrefs.uTabSize > 0 ? langPrefs.uTabSize : n + 1);
-			string spc = repeat("\t", n / tabsz) ~ repeat(" ", n % tabsz);
-			wstring wspc = toUTF16(spc);
-
-			TextSpan changedSpan;
-			return mCodeWinMgr.mSource.mBuffer.ReplaceLines(line, 0, line, idx, wspc.ptr, wspc.length, &changedSpan);
-		}
-		return S_OK;
+		return mCodeWinMgr.mSource.doReplaceLineIndent(line, p, n, &langPrefs);
 	}
 
-	ExpansionProvider GetExpansionProvider()
+	int ReindentLines()
 	{
-		return mCodeWinMgr.mSource.GetExpansionProvider();
+		int iStartLine, iStartIndex, iEndLine, iEndIndex;
+		int hr = mView.GetSelection(&iStartLine, &iStartIndex, &iEndLine, &iEndIndex);
+		if(FAILED(hr)) // S_FALSE if no selection, but caret-coordinates returned
+			return hr;
+		return mCodeWinMgr.mSource.ReindentLines(iStartLine, iEndLine);
 	}
+		
 
 	// IVsTextViewFilter //////////////////////////////////////
 	override int GetWordExtent(in int iLine, in CharIndex iIndex, in uint dwFlags, /* [out] */ TextSpan *pSpan)

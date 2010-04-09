@@ -479,7 +479,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 			// mSource.ReformatSpan(edits, span);
 			// edits.ApplyEdits();
 			//}
-			rc = S_OK;
+			rc = mSource.ReindentLines(ts.iStartLine, ts.iEndLine);
 		}
 		return rc;
 	}
