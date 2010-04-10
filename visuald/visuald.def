@@ -4,7 +4,6 @@ EXETYPE      NT
 LIBRARY      "visuald.dll"
 CODE         PRELOAD DISCARDABLE
 DATA         PRELOAD MULTIPLE
-; SINGLE
 
 
 EXPORTS

@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module hierutil;
 
 import std.c.windows.windows;
@@ -10,6 +18,7 @@ import std.stream;
 import sdk.vsi.vsshell;
 import dte = sdk.vsi.dte80a;
 import comutil;
+import fileutil;
 import dpackage;
 import chiernode;
 import chiercontainer;
@@ -90,9 +99,14 @@ bool CheckFileName(string fileName)
 	if (fileName.length == 0 || fileName.length >= _MAX_PATH)
 		return false;
 	
-	string base = getName(getBaseName(fileName));
-	if(base.length == 0 || ContainsInvalidFileChars(base))
+	string base = getBaseName(fileName);
+	if(base.length == 0)
 		return false;
+	if(ContainsInvalidFileChars(base))
+		return false;
+	base = getNameWithoutExt(base);
+	if(base.length == 0)
+		return true; // file starts with '.'
 
 	static string reservedNames[] = 
 	[

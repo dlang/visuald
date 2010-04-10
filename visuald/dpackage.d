@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module dpackage;
 
 import std.c.windows.windows;
@@ -41,7 +49,7 @@ const wstring g_languageName             = "D"w;
 const wstring g_packageName              = "Visual D"w;
 const wstring g_packageVersion           = "0.3"w;
 const wstring g_packageCompany           = "Rainer Schuetze"w;
-const wstring g_languageFileExtensions[] = [ ".d"w, ".di"w ];
+const wstring g_languageFileExtensions[] = [ ".d"w, ".di"w, ".mixin"w ];
 const wstring g_projectFileExtensions    = "visualdproj"w;
 
 // CLSID registered in extensibility center (PLK)

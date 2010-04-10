@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module dproject;
 
 import std.c.windows.windows;
@@ -24,6 +32,7 @@ import dpackage;
 import propertypage;
 import hierarchy;
 import hierutil;
+import fileutil;
 import chiernode;
 import chiercontainer;
 import build;
@@ -1705,8 +1714,15 @@ class Project : CVsHierarchy,
 		if (mfDragSource) 
 			return S_OK;
 
+		CHierNode dropNode = VSITEMID2Node(itemid);
+		if(!dropNode)
+			dropNode = GetProjectNode();
+		CHierContainer dropContainer = cast(CHierContainer) dropNode;
+		if(!dropContainer)
+			dropContainer = dropNode.GetParent();
+
 		DropDataType ddt;
-		hr = ProcessSelectionDataObject(
+		hr = ProcessSelectionDataObject(dropContainer,
 			/* [in]  IDataObject* pDataObject*/ pDataObject, 
 			/* [in]  DWORD        grfKeyState*/ grfKeyState,
 			/* [out] DropDataType*           */ &ddt);
@@ -1867,6 +1883,7 @@ class Project : CVsHierarchy,
 	}
 
 	HRESULT ProcessSelectionDataObject(
+		/* [in]  */ CHierContainer dropContainer,
 		/* [in]  */ IDataObject   pDataObject, 
 		/* [in]  */ DWORD         grfKeyState,
 		/* [out] */ DropDataType* pddt)
@@ -1920,7 +1937,7 @@ class Project : CVsHierarchy,
 			{
 				VSADDRESULT vsaddresult = ADDRESULT_Failure;
 				wchar* wfilename = _toUTF16z(filename);
-				HRESULT hrTemp = pProjectNode.GetCVsHierarchy().AddItemSpecific(pProjectNode,
+				HRESULT hrTemp = pProjectNode.GetCVsHierarchy().AddItemSpecific(dropContainer,
 					/* [in]  VSADDITEMOPERATION dwAddItemOperation */ VSADDITEMOP_OPENFILE,
 					/* [in]  LPCOLESTR pszItemName                 */ null,
 					/* [in]  DWORD cFilesToOpen                    */ 1,
@@ -2052,7 +2069,7 @@ AddFiles:
 				string filename = detachBSTR(cbstrMoniker);
 				wchar* wfilename = _toUTF16z(filename);
 				VSADDRESULT vsaddresult = ADDRESULT_Failure;
-				hrTemp = pProjectNode.GetCVsHierarchy().AddItemSpecific(pProjectNode,
+				hrTemp = pProjectNode.GetCVsHierarchy().AddItemSpecific(dropContainer,
 					/* [in]  VSADDITEMOPERATION dwAddItemOperation */ VSADDITEMOP_OPENFILE,
 					/* [in]  LPCOLESTR pszItemName                 */ null,
 					/* [in]  DWORD cFilesToOpen                    */ 1,
@@ -2146,7 +2163,7 @@ Error:
 		if(!mDoc)
 			return false;
 
-		string projectName = getName(getBaseName(fileName));
+		string projectName = getNameWithoutExt(fileName);
 		CProjectNode root = new CProjectNode(fileName, this);
 		xml.Element[] propItems = xml.elementsById(xml.getRoot(mDoc), "Folder");
 		foreach(item; propItems)

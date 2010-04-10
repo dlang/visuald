@@ -88,10 +88,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\diamond.d"
-				>
-			</File>
-			<File
 				RelativePath=".\dimagelist.d"
 				>
 			</File>

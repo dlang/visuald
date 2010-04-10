@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module expansionprovider;
 
 import std.c.windows.windows;
@@ -296,6 +304,8 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return hr;
 	}
 
+	// for an example of GetExpansionFunction, see
+	// http://msdn.microsoft.com/en-us/library/microsoft.visualstudio.package.expansionfunction%28VS.80%29.aspx
 	IVsExpansionFunction GetExpansionFunction(string func, string fieldName)
 	{
 		string functionName;

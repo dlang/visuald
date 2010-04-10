@@ -1,6 +1,4 @@
-;NSIS Modern User Interface
-;Welcome/Finish Page Example Script
-;Written by Joost Verburg
+;VisualD installation script
 
 ;--------------------------------
 ;Include Modern UI
@@ -106,11 +104,7 @@ Section "Visual Studio package" SecPackage
   File ..\visuald\Templates\CodeSnippets\SnippetsIndex.xml
   
   SetOutPath "$INSTDIR\Templates\CodeSnippets\Snippets"
-  File ..\visuald\Templates\CodeSnippets\Snippets\if.snippet
-  File ..\visuald\Templates\CodeSnippets\Snippets\else.snippet
-  File ..\visuald\Templates\CodeSnippets\Snippets\while.snippet
-  File ..\visuald\Templates\CodeSnippets\Snippets\class.snippet
-  File ..\visuald\Templates\CodeSnippets\Snippets\for.snippet
+  File ..\visuald\Templates\CodeSnippets\Snippets\*.snippet
 
   ;Store installation folder
   WriteRegStr HKCU "Software\${APPNAME}" "" $INSTDIR

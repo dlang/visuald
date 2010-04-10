@@ -1,3 +1,10 @@
+# This file is part of Visual D
+#
+# Visual D integrates the D programming language into Visual Studio
+# Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+#
+# License for redistribution is given by the Artistic License 2.0
+# see file LICENSE for further details
 
 PROJECT = visuald
 
@@ -55,8 +62,7 @@ $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
 	$(CV2PDB) -D2 $? $@
 
 $(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(DBG_VSI_LIB) Makefile
-#	echo -of$@ -g -unittest -debug $(DFLAGS) $(SRC) $(LIBS) $(DEF) $(RES) >cmdline
-	$(DMD) -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
+	$(DMD) -of$@ -mixin=$(DBGDIR)\$(PROJECT).mixin -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
 		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(RES)
 <<NOKEEP
 

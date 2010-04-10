@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module fileutil;
 
 import std.string;
@@ -48,6 +56,15 @@ string quoteFilename(string fname)
 string quoteNormalizeFilename(string fname)
 {
 	return quoteFilename(normalizePath(fname));
+}
+
+string getNameWithoutExt(string fname)
+{
+	string bname = getBaseName(fname);
+	string name = getName(bname);
+	if(name.length == 0)
+		name = bname;
+	return name;
 }
 
 //-----------------------------------------------------------------------------

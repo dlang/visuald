@@ -2,9 +2,9 @@
 <CodeSnippets  xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
 	<CodeSnippet Format="1.0.0">
 		<Header>
-			<Title>while</Title>
-			<Shortcut>while</Shortcut>
-			<Description>Code snippet for while loop</Description>
+			<Title>version</Title>
+			<Shortcut>version</Shortcut>
+			<Description>Code snippet for version statement</Description>
 			<Author>Rainer Schuetze</Author>
 			<SnippetTypes>
 				<SnippetType>Expansion</SnippetType>
@@ -14,15 +14,14 @@
 		<Snippet>
 			<Declarations>
 				<Literal>
-					<ID>expression</ID>
-					<ToolTip>Expression to evaluate</ToolTip>
-					<Default>true</Default>
+					<ID>identifier</ID>
+					<ToolTip>Identifier or level</ToolTip>
+					<Default>none</Default>
 				</Literal>
-			</Declarations>
-			<Code Language="D">
-<![CDATA[while ($expression$)
+			</Declarations><Code Language="D">
+<![CDATA[version($identifier$)
 {
-	$selected$$end$
+    $selected$$end$
 }
 ]]>
 			</Code>

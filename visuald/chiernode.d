@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module chiernode;
 
 import std.c.windows.windows;
@@ -207,13 +215,13 @@ public:
 	{
 		return S_OK;
 	}
-
+	
 	// VSHPROPID.EditLabel
 	int GetEditLabel(BSTR *ppEditLabel)
 	{
-		*ppEditLabel = allocBSTR(GetName());
-		return S_OK;
-		//return E_NOTIMPL;
+		//*ppEditLabel = allocBSTR(GetName());
+		//return S_OK;
+		return E_NOTIMPL;
 	}
 	int SetEditLabel(in BSTR pEditLabel)
 	{
@@ -239,7 +247,7 @@ public:
 	// VSHPROPID_Caption
 	string GetDisplayCaption() 
 	{ 
-		return getBaseName(toUTF8(m_strName));
+		return getBaseName(m_strName);
 	}
 
 	// VSHPROPID_Parent
