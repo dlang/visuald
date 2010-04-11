@@ -20,7 +20,8 @@ SRC = dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
       logutil.d dllmain.d dproject.d hierarchy.d config.d expansionprovider.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
-      stringutil.d fileutil.d xmlwrap.d dimagelist.d
+      stringutil.d fileutil.d xmlwrap.d dimagelist.d \
+      intellisense.d
 RSRC = resources/dimagelist.bmp
 
 #      $(XMLP_SRC) $(IDL_SRC)
@@ -59,10 +60,11 @@ exe:     $(DBGDIR)\$(PROJECT).exe
 ######################
 # dll
 $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
-	$(CV2PDB) -D2 $? $@
+	$(CV2PDB) -D2.043 $? $@
 
+#-mixin=$(DBGDIR)\$(PROJECT).mixin
 $(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(DBG_VSI_LIB) Makefile
-	$(DMD) -of$@ -mixin=$(DBGDIR)\$(PROJECT).mixin -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
+	$(DMD) -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
 		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(RES)
 <<NOKEEP
 

@@ -26,6 +26,7 @@ import simplelexer;
 import dpackage;
 import expansionprovider;
 import completion;
+import intellisense;
 
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
@@ -991,6 +992,8 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		{
 			switch (nCmdID) 
 			{
+			case cmdidGotoDefn:
+				return HandleGotoDef();
 			default:
 				break;
 			}
@@ -1208,6 +1211,17 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return false;
 	}
 
+	wstring GetWordAtCaret()
+	{
+		int line, idx;
+		if(mView.GetCaretPos(&line, &idx) != S_OK)
+			return "";
+		int startIdx, endIdx;
+		if(!mCodeWinMgr.mSource.GetWordExtent(line, idx, WORDEXT_CURRENT, startIdx, endIdx))
+			return "";
+		return mCodeWinMgr.mSource.GetText(line, startIdx, line, endIdx);
+	}
+	
 	ExpansionProvider GetExpansionProvider()
 	{
 		return mCodeWinMgr.mSource.GetExpansionProvider();
@@ -1254,6 +1268,77 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return mCodeWinMgr.mSource.ReindentLines(iStartLine, iEndLine);
 	}
 		
+	//////////////////////////////////////////////////////////////
+	int HandleGotoDef()
+	{
+		string word = toUTF8(GetWordAtCaret());
+		if(word.length <= 0)
+			return S_FALSE;
+
+		Definition[] defs = Package.GetLibInfos().findDefinition(word);
+		if(defs.length == 0)
+			return S_FALSE;
+
+		// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
+		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
+		if(!pIVsUIShellOpenDocument)
+			return returnError(E_FAIL);
+		scope(exit) release(pIVsUIShellOpenDocument);
+		
+		auto wstrPath = _toUTF16z(defs[0].filename);
+		BSTR bstrAbsPath;
+		
+		HRESULT hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
+		if(FAILED(hr))
+			return returnError(hr);
+		scope(exit) detachBSTR(bstrAbsPath);
+		
+		IVsWindowFrame srpIVsWindowFrame;
+
+		hr = pIVsUIShellOpenDocument.OpenDocumentViaProject(bstrAbsPath, &LOGVIEWID_Primary, null, null, null,
+		                                                    &srpIVsWindowFrame);
+		if(FAILED(hr))
+			hr = pIVsUIShellOpenDocument.OpenStandardEditor(
+					/* [in]  VSOSEFLAGS   grfOpenStandard           */ OSE_ChooseBestStdEditor,
+					/* [in]  LPCOLESTR    pszMkDocument             */ bstrAbsPath,
+					/* [in]  REFGUID      rguidLogicalView          */ &LOGVIEWID_Primary,
+					/* [in]  LPCOLESTR    pszOwnerCaption           */ _toUTF16z("%3"),
+					/* [in]  IVsUIHierarchy  *pHier                 */ null,
+					/* [in]  VSITEMID     itemid                    */ 0,
+					/* [in]  IUnknown    *punkDocDataExisting       */ DOCDATAEXISTING_UNKNOWN,
+					/* [in]  IServiceProvider *pSP                  */ null,
+					/* [out, retval] IVsWindowFrame **ppWindowFrame */ &srpIVsWindowFrame);
+
+		if(FAILED(hr) || !srpIVsWindowFrame)
+			return returnError(hr);
+		scope(exit) release(srpIVsWindowFrame);
+		
+		srpIVsWindowFrame.Show();
+		
+		VARIANT var;
+		hr = srpIVsWindowFrame.GetProperty(VSFPROPID_DocData, &var);
+		if(FAILED(hr) || var.vt != VT_UNKNOWN || !var.punkVal)
+			return returnError(E_FAIL);
+		scope(exit) release(var.punkVal);
+
+		IVsTextLines textBuffer = qi_cast!IVsTextLines(var.punkVal);
+		if(!textBuffer)
+			if(auto bufferProvider = qi_cast!IVsTextBufferProvider(var.punkVal))
+			{
+				bufferProvider.GetTextBuffer(&textBuffer);
+				release(bufferProvider);
+			}
+		if(!textBuffer)
+			return returnError(E_FAIL);
+		scope(exit) release(textBuffer);
+
+		IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
+		if(!textmgr)
+			return returnError(E_FAIL);
+		scope(exit) release(textmgr);
+		
+		return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, defs[0].line, 0, defs[0].line, 0);
+	}
 
 	// IVsTextViewFilter //////////////////////////////////////
 	override int GetWordExtent(in int iLine, in CharIndex iIndex, in uint dwFlags, /* [out] */ TextSpan *pSpan)

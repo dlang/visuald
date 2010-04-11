@@ -441,8 +441,8 @@ public:
 	bool IsExpanded()             { return IsSet(ST_Expanded); }
 
 	//////////////////////////////////////////////////////////////
-	static ComTypeInfoHolder mTypeHolder;
-	static this()
+	__gshared static ComTypeInfoHolder mTypeHolder;
+	shared static this()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 

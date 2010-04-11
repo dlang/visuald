@@ -409,6 +409,7 @@ class CFolderNode : CHierContainer
 	override int SetEditLabel(in BSTR pEditLabel)
 	{
 		SetName(to_string(pEditLabel));
+		GetCVsHierarchy().OnPropertyChanged(this, VSHPROPID_Name, 0);
 		return S_OK;
 	}
 

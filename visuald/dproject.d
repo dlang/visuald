@@ -565,8 +565,8 @@ class ExtProject : DisposingDispatchObject, dte.Project
 
 
 	//////////////////////////////////////////////////////////////
-	static ComTypeInfoHolder mTypeHolder;
-	static this()
+	__gshared static ComTypeInfoHolder mTypeHolder;
+	shared static this()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 
@@ -689,8 +689,8 @@ class Project : CVsHierarchy,
 	}
 
 	// IDispatch
-	static ComTypeInfoHolder mTypeHolder;
-	static this()
+	__gshared static ComTypeInfoHolder mTypeHolder;
+	shared static this()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 
@@ -2163,24 +2163,28 @@ Error:
 		if(!mDoc)
 			return false;
 
+		xml.Element root = xml.getRoot(mDoc);
+		if(xml.Element el = xml.getElement(root, "ProjectGuid"))
+			mProjectGUID = uuid(el.text());
+
 		string projectName = getNameWithoutExt(fileName);
-		CProjectNode root = new CProjectNode(fileName, this);
-		xml.Element[] propItems = xml.elementsById(xml.getRoot(mDoc), "Folder");
+		CProjectNode rootnode = new CProjectNode(fileName, this);
+		xml.Element[] propItems = xml.elementsById(root, "Folder");
 		foreach(item; propItems)
 		{
 			projectName = xml.getAttribute(item, "name");
-			parseContainer(root, item);
+			parseContainer(rootnode, item);
 		}
-		root.SetName(projectName);
+		rootnode.SetName(projectName);
 
-		xml.Element[] cfgItems = xml.elementsById(xml.getRoot(mDoc), "Config");
+		xml.Element[] cfgItems = xml.elementsById(root, "Config");
 		foreach(cfg; cfgItems)
 		{
 			Config config = mConfigProvider.addConfig(xml.getAttribute(cfg, "name"));
 			config.GetProjectOptions().readXML(cfg);
 		}
 
-		SetRootNode(root);
+		SetRootNode(rootnode);
 		return true;
 	}
 
@@ -2234,9 +2238,12 @@ Error:
 	{
 		xml.Document doc = xml.newDocument("DProject");
 
+		xml.Element root = xml.getRoot(doc);
+		root ~= new xml.Element("ProjectGuid", GUID2string(mProjectGUID));
+		
 		mConfigProvider.addConfigsToXml(doc);
 
-		createDocHierarchy(xml.getRoot(doc), GetProjectNode());
+		createDocHierarchy(root, GetProjectNode());
 		return doc;
 	}
 

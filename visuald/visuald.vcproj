@@ -124,6 +124,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\intellisense.d"
+				>
+			</File>
+			<File
 				RelativePath=".\logutil.d"
 				>
 			</File>

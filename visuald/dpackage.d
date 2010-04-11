@@ -27,6 +27,7 @@ import logutil;
 import propertypage;
 import winctrl;
 import register;
+import intellisense;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vssplash;
@@ -167,6 +168,7 @@ class Package : DisposingComObject,
 		mLangsvc = addref(new LanguageService(this));
 		mProjFactory = addref(new ProjectFactory(this));
 		mOptions = new GlobalOptions();
+		mLibInfos = new LibraryInfos();
 	}
 
 	~this()
@@ -379,6 +381,12 @@ class Package : DisposingComObject,
 		return s_instance.mOptions;
 	}
 
+	static LibraryInfos GetLibInfos()
+	{
+		assert(s_instance);
+		return s_instance.mLibInfos;
+	}
+
 private:
 	void OutputLog(string msg)
 	{
@@ -393,6 +401,7 @@ private:
 	ProjectFactory   mProjFactory;
 
 	GlobalOptions    mOptions;
+	LibraryInfos     mLibInfos;
 }
 
 class GlobalOptions
