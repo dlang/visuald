@@ -2185,6 +2185,8 @@ Error:
 		}
 
 		SetRootNode(rootnode);
+		
+		Package.GetLibInfos().updateDefinitions();
 		return true;
 	}
 

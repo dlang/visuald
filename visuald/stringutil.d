@@ -99,19 +99,20 @@ string[] tokenizeArgs(string text)
 			continue;
 
 		uint endpos = pos;
-		while(pos < text.length && !isspace(ch))
+		while(pos < text.length)
 		{
 			if(ch == '\"')
 			{
 				pos = endofStringCStyle(text, pos);
-				endpos = pos;
 				ch = 0;
 			}
 			else
 			{
-				endpos = pos;
 				ch = decode(text, pos);
 			}
+			if(isspace(ch))
+				break;
+			endpos = pos;
 		}
 		args ~= text[startpos .. endpos];
 	}

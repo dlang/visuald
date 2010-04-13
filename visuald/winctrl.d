@@ -343,7 +343,7 @@ class MultiLineText : Text
 	{
 		scope lines = std.string.splitlines(text);
 		scope winstr = std.string.join(lines, std.string.newline);
-		uint exstyle = WS_HSCROLL | WS_VSCROLL | ES_WANTRETURN | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL;
+		uint exstyle = /*WS_HSCROLL |*/ WS_VSCROLL | ES_WANTRETURN | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL;
 		if(readonly)
 			exstyle = (exstyle & ~(WS_HSCROLL | ES_AUTOHSCROLL)) | ES_READONLY;
 		super(parent, winstr, id, exstyle, 0);

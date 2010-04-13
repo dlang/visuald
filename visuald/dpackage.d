@@ -15,6 +15,7 @@ import std.windows.charset;
 import std.string;
 import std.utf;
 import std.path;
+import std.file;
 
 import comutil;
 import hierutil;
@@ -414,6 +415,7 @@ class GlobalOptions
 	string ImpSearchPath;
 	string LibSearchPath;
 	string IncSearchPath;
+	string JSNSearchPath;
 
 	// evaluated once at startup
 	string WindowsSdkDir;
@@ -462,6 +464,7 @@ class GlobalOptions
 		ExeSearchPath = toUTF8(keyToolOpts.GetString("ExeSearchPath"));
 		LibSearchPath = toUTF8(keyToolOpts.GetString("LibSearchPath"));
 		ImpSearchPath = toUTF8(keyToolOpts.GetString("ImpSearchPath"));
+		JSNSearchPath = toUTF8(keyToolOpts.GetString("JSNSearchPath"));
 		IncSearchPath = toUTF8(keyToolOpts.GetString("IncSearchPath"));
 
 		scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
@@ -498,6 +501,7 @@ class GlobalOptions
 		keyToolOpts.Set("ExeSearchPath", toUTF16(ExeSearchPath));
 		keyToolOpts.Set("LibSearchPath", toUTF16(LibSearchPath));
 		keyToolOpts.Set("ImpSearchPath", toUTF16(ImpSearchPath));
+		keyToolOpts.Set("JSNSearchPath", toUTF16(JSNSearchPath));
 		keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
 		return true;
 	}
@@ -531,6 +535,25 @@ class GlobalOptions
 			imports ~= normalizeDir(unquoteArgument(arg));
 		
 		return imports;
+	}
+
+	string[] getJSONFiles()
+	{
+		string[] jsonpaths;
+		string[string] replacements = [ "DMDINSTALLDIR" : DMDInstallDir ];
+		string searchpaths = replaceMacros(JSNSearchPath, replacements);
+		string[] args = tokenizeArgs(searchpaths);
+		foreach(arg; args)
+			jsonpaths ~= normalizeDir(unquoteArgument(arg));
+		
+		string[] jsonfiles;
+		foreach(path; jsonpaths)
+		{
+			foreach (string name; dirEntries(path, SpanMode.shallow))
+				if (fnmatch(basename(name), "*.json"))
+					addunique(jsonfiles, name);
+		}
+		return jsonfiles;
 	}
 }
 

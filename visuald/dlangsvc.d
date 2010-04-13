@@ -21,6 +21,7 @@ else import std.math2;
 import comutil;
 import logutil;
 import hierutil;
+import fileutil;
 import stringutil;
 import simplelexer;
 import dpackage;
@@ -582,6 +583,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		int index = this.GetTokenInfoAt(lineInfo, idx, info);
 		if (index < 0)
 			return false;
+		if (index < lineInfo.length - 1 && info.EndIndex == idx)
+			if (lineInfo[index + 1].type == TokenColor.Identifier)
+				info = lineInfo[++index];
 
 		// don't do anything in comment or text or literal space, unless we
 		// are doing intellisense in which case we want to match the entire value
@@ -1087,9 +1091,10 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 				break;
 			case ECMD_TYPECHAR:
 				dchar ch = pvaIn.lVal;
-				if(ch == '.')
-					initCompletion();
-				else if(mCodeWinMgr.mSource.IsCompletorActive())
+				//if(ch == '.')
+				//	initCompletion();
+				//else
+				if(mCodeWinMgr.mSource.IsCompletorActive())
 				{
 					if(isalnum(ch) || ch == '_')
 						initCompletion();
@@ -1288,9 +1293,26 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		auto wstrPath = _toUTF16z(defs[0].filename);
 		BSTR bstrAbsPath;
 		
-		HRESULT hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
-		if(FAILED(hr))
-			return returnError(hr);
+		HRESULT hr;
+		hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
+		if(hr != S_OK)
+		{
+			// search import paths
+			string file = mCodeWinMgr.mSource.GetFileName();
+			string[] imps = GetImportPaths(file);
+			foreach(imp; imps)
+			{
+				string file = normalizeDir(imp) ~ defs[0].filename;
+				if(std.file.exists(file))
+				{
+					bstrAbsPath = allocBSTR(file);
+					hr = S_OK;
+					break;
+				}
+			}
+			if(hr != S_OK)
+				return returnError(hr);
+		}
 		scope(exit) detachBSTR(bstrAbsPath);
 		
 		IVsWindowFrame srpIVsWindowFrame;

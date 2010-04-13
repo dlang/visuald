@@ -1,0 +1,67 @@
+
+This is the README file for visuald, a 
+Visual Studio package providing both project management and language services
+
+Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+
+Visual D aims at providing seamless integration of the D programming language into Visual Studio. 
+
+Major Features
+---------------
+* Supported Visual Studio versions
+  - VS.NET 2003 (some limitations apply)
+  - VS 2005
+  - VS 2008
+  - VS 2010 (some limitations apply)
+* Project management
+  - all DMD command line options accessable
+  - support for resource compiler
+  - custom build commands
+  - pre/post custom build steps
+  - automatic dependency generation
+  - automatic link between dependend projects
+* Language Service
+  - Syntax highlighting
+  - Simple word-completion
+  - Import statement completion
+  - Goto definition
+  - Smart indentation
+* Completely written in D2
+
+License information
+-------------------
+
+This code is distributed under the term of the Artistic License 2.0.
+For more details, see the full text of the license in the file LICENSE.
+
+Installation
+------------
+There is a click-through-installer available at http://www.dsource.org/projects/visuald
+that will guide you through the intallation process.
+
+Usage
+-----
+Creating new Project
+
+Global Options
+
+Project Settings
+
+Goto definition
+
+Changes
+-------
+
+For documentation on the changes between this version and
+previous versions, please see the file CHANGES.
+
+Feedback
+--------
+The project home for visuald is here:
+
+    http://www.dsource.org/projects/visuald
+
+There's also a forum, where you can leave your comments and suggestions.
+
+Have fun,
+Rainer Schuetze

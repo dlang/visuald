@@ -206,17 +206,30 @@ uint Unadvise(Interface)(IUnknown pSource, uint cookie)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+version = GC_COM;
+
 class DComObject : IUnknown
+{
+	__gshared static LONG sCountInstances;
+	
+version(GC_COM)
+{
+} else
 {
 	new(uint size)
 	{
-		void* p = std.c.stdlib.malloc(size);
-version(D_Version2)
+version(GC_COM)
 {
+		void* p = new char[size];
+}
+else version(D_Version2)
+{
+		void* p = std.c.stdlib.malloc(size);
 		GC.addRange(p, size);
 }
 else
 {
+		void* p = std.c.stdlib.malloc(size);
 		if(!p)
 			_d_OutOfMemory();
 
@@ -224,6 +237,21 @@ else
 }
 		return p;
 	}
+}
+
+debug
+{
+	this()
+	{
+		logCall("ctor %s(this=%s)", this, cast(void*)this);
+		InterlockedIncrement(&sCountInstances);
+	}
+	~this()
+	{
+		logCall("dtor %s(this=%s)", this, cast(void*)this);
+		InterlockedDecrement(&sCountInstances);
+	}
+}
 
 extern (System):
 	override HRESULT QueryInterface(IID* riid, void** ppv)
@@ -245,32 +273,48 @@ extern (System):
 
 	override ULONG AddRef()
 	{
-	    return InterlockedIncrement(&count);
+		LONG lRef = InterlockedIncrement(&count);
+version(GC_COM)
+{
+		if(lRef == 1)
+		{
+			uint sz = this.classinfo.init.length;
+			GC.addRange(cast(void*) this, sz);
+		}
+}
+		return lRef;
 	}
 
 	override ULONG Release()
 	{
-	    LONG lRef = InterlockedDecrement(&count);
-	    if (lRef == 0)
-	    {
-		// free object
-		// com objects are allocated with malloc, so they are not under GC control, we have to explicitely release it ourselves
-
-		// if there is an invariant defined for this object, it will definitely fail or crash!
-
-		_d_callfinalizer(cast(void *)this);
-version(D_Version2)
+		LONG lRef = InterlockedDecrement(&count);
+		if (lRef == 0)
+		{
+version(GC_COM)
 {
-		GC.removeRange(cast(void*) this);
+			GC.removeRange(cast(void*) this);
 }
 else
 {
-		removeRange(cast(void*) this);
+			// free object
+			// com objects are allocated with malloc, so they are not under GC control, we have to explicitely release it ourselves
+
+			// if there is an invariant defined for this object, it will definitely fail or crash!
+
+			_d_callfinalizer(cast(void *)this);
+	version(D_Version2)
+	{
+			GC.removeRange(cast(void*) this);
+	}
+	else
+	{
+			removeRange(cast(void*) this);
+	}
 }
 //		std.c.stdlib.free(cast(void*) this); 
-		return 0;
-	    }
-	    return cast(ULONG)lRef;
+			return 0;
+		}
+		return cast(ULONG)lRef;
 	}
 
 	LONG count = 0;		// object reference count

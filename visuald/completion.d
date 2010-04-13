@@ -74,6 +74,26 @@ Config getProjectConfig(string file)
 	return null;
 }
 
+string[] GetImportPaths(string file)
+{
+	string[] imports;
+	if(Config cfg = getProjectConfig(file))
+	{
+		scope(exit) release(cfg);
+		ProjectOptions opt = cfg.GetProjectOptions();
+		string imp = cfg.GetProjectOptions().imppath;
+		imp = opt.replaceEnvironment(imp, cfg);
+		imports = split(imp, ";");
+		string projectpath = cfg.GetProjectDir();
+		makeFilenamesAbsolute(imports, projectpath);
+		addunique(imports, projectpath);
+	}
+	imports ~= Package.GetGlobalOptions().getImportPaths();
+	return imports;
+}
+///////////////////////////////////////////////////////////////
+
+
 class ImageList {};
 
 struct Declaration
@@ -143,24 +163,6 @@ class Declarations
 	}
 
 	///////////////////////////////////////////////////////////////
-	string[] GetImportPaths(string file)
-	{
-		string[] imports;
-		if(Config cfg = getProjectConfig(file))
-		{
-			scope(exit) release(cfg);
-			ProjectOptions opt = cfg.GetProjectOptions();
-			string imp = cfg.GetProjectOptions().imppath;
-			imp = opt.replaceEnvironment(imp, cfg);
-			imports = split(imp, ";");
-			string projectpath = cfg.GetProjectDir();
-			makeFilenamesAbsolute(imports, projectpath);
-			addunique(imports, projectpath);
-		}
-		imports ~= Package.GetGlobalOptions().getImportPaths();
-		return imports;
-	}
-
 	bool ImportExpansions(string imp, string file)
 	{
 		string[] imports = GetImportPaths(file);

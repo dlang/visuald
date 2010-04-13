@@ -1028,9 +1028,11 @@ class ToolsPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 3;
 		AddControl("DMD install path", mDmdPath = new Text(mCanvas));
 		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 2;
 		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
 		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
-		AddControl("Resource include paths", mIncPath = new Text(mCanvas));
+		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
+		AddControl("Resource includes", mIncPath = new Text(mCanvas));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1040,6 +1042,7 @@ class ToolsPropertyPage : GlobalPropertyPage
 		mImpPath.setText(opts.ImpSearchPath);
 		mLibPath.setText(opts.LibSearchPath);
 		mIncPath.setText(opts.IncSearchPath);
+		mJSNPath.setText(opts.JSNSearchPath);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1050,6 +1053,7 @@ class ToolsPropertyPage : GlobalPropertyPage
 		changes += changeOption(mImpPath.getText(), opts.ImpSearchPath, refopts.ImpSearchPath); 
 		changes += changeOption(mLibPath.getText(), opts.LibSearchPath, refopts.LibSearchPath); 
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
+		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
 		return changes;
 	}
 
@@ -1058,6 +1062,7 @@ class ToolsPropertyPage : GlobalPropertyPage
 	MultiLineText mExePath;
 	MultiLineText mImpPath;
 	MultiLineText mLibPath;
+	MultiLineText mJSNPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

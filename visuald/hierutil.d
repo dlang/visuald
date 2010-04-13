@@ -61,12 +61,20 @@ version(D_Version2)
 
 ///////////////////////////////////////////////////////////////////////
 
-bool contains(T)(ref T[] arr, T val)
+bool contains(T)(in T[] arr, T val)
 {
-	foreach(T t; arr)
+	foreach(ref T t; arr)
 		if (t == val)
 			return true;
 	return false;
+}
+
+int arrIndex(T)(in T[] arr, T val)
+{
+	for(int i = 0; i < arr.length; i++)
+		if (arr[i] == val)
+			return i;
+	return -1;
 }
 
 void addunique(T)(ref T[] arr, T val)

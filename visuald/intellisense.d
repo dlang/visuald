@@ -11,8 +11,19 @@ module intellisense;
 import std.json;
 import std.file;
 import std.utf;
+import std.date;
+import std.algorithm;
+import std.c.windows.windows;
+import std.c.windows.com;
 
+import sdk.vsi.vsshell;
+
+import dpackage;
+import config;
+import comutil;
 import logutil;
+import hierutil;
+import fileutil;
 
 class LibraryInfo
 {
@@ -26,6 +37,8 @@ class LibraryInfo
 				text = text[decidx..$];
 
 			mModules = parseJSON(text);
+			mFilename = fileName;
+			mModified = lastModified(fileName);
 			return true;
 		}
 		catch(JSONException rc)
@@ -95,6 +108,8 @@ class LibraryInfo
 	}
 
 	JSONValue mModules;
+	string mFilename;
+	d_time mModified;
 }
 
 struct Definition
@@ -108,12 +123,79 @@ class LibraryInfos
 {
 	this()
 	{
-		auto info = new LibraryInfo;
-		info.readJSON(r"m:\s\d\visuald\trunk\bin\Debug\visuald.json");
-		mInfos ~= info;
+//		auto info = new LibraryInfo;
+//		info.readJSON(r"m:\s\d\visuald\trunk\bin\Debug\visuald.json");
+//		mInfos ~= info;
 	}
-	
-	LibraryInfo[] mInfos;
+
+	string[] findJSONFiles()
+	{
+		string[] files = Package.GetGlobalOptions().getJSONFiles();
+		
+		auto srpSolution = queryService!(IVsSolution);
+		scope(exit) release(srpSolution);
+		auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+		scope(exit) release(solutionBuildManager);
+
+		if(srpSolution && solutionBuildManager)
+		{
+			IEnumHierarchies pEnum;
+			if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &g_projectFactoryCLSID, &pEnum) == S_OK)
+			{
+				scope(exit) release(pEnum);
+				IVsHierarchy pHierarchy;
+				while(pEnum.Next(1, &pHierarchy, null) == S_OK)
+				{
+					scope(exit) release(pHierarchy);
+					IVsProjectCfg activeCfg;
+					if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) == S_OK)
+					{
+						scope(exit) release(activeCfg);
+						if(Config cfg = qi_cast!Config(activeCfg))
+						{
+							ProjectOptions opt = cfg.GetProjectOptions();
+							if(opt.doXGeneration)
+							{
+								string xfile = opt.replaceEnvironment(opt.xfilename, cfg);
+								xfile = makeFilenameAbsolute(xfile, cfg.GetProjectDir());
+								if(xfile.length && std.file.exists(xfile))
+									addunique(files, xfile);
+							}
+						}
+					}
+				}
+			}
+		}
+		return files;
+	}
+
+	void updateDefinitions()
+	{
+		string[] files = findJSONFiles();
+		
+		// remove files no longer found and update modified files
+		for(int i = 0; i < mInfos.length; )
+		{
+			int idx = arrIndex(files, mInfos[i].mFilename);
+			if(idx < 0)
+				mInfos = mInfos[0 .. i] ~ mInfos[i+1 .. $];
+			else
+			{
+				files = files[0 .. idx] ~ files[idx+1 .. $];
+				if(mInfos[i].mModified != lastModified(mInfos[i].mFilename))
+					mInfos[i].readJSON(mInfos[i].mFilename);
+				i++;
+			}
+		}
+		
+		// add new files
+		foreach(file; files)
+		{
+			auto info = new LibraryInfo;
+			if(info.readJSON(file))
+				mInfos ~= info;
+		}
+	}
 	
 	Definition[] findDefinition(string name)
 	{
@@ -122,4 +204,7 @@ class LibraryInfos
 			defs ~= info.findDefinition(name);
 		return defs;
 	}
+
+	LibraryInfo[] mInfos;
+
 }

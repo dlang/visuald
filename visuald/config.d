@@ -1631,6 +1631,7 @@ class Config :	DisposingComObject,
 			HRESULT hr = cb.BuildEnd(fSuccess);
 			assert(SUCCEEDED(hr));
 		}
+		Package.GetLibInfos().updateDefinitions();
 	}
 
 private:
