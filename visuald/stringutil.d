@@ -152,6 +152,35 @@ int countVisualSpaces(S)(S txt, int tabSize, int* txtpos)
 	return p;
 }
 
+// extract value from a series of #define values
+string extractDefine(string s, string def)
+{
+	for(int p = 0; p < s.length; p++)
+	{
+		while(p < s.length && (s[p] == ' ' || s[p] == '\t'))
+			p++;
+		int q = p;
+		while(q < s.length && s[q] != '\n' && s[q] != '\r')
+			q++;
+		
+		if(startsWith(s[p .. $], "#define") && (s[p+7] == ' ' || s[p+7] == '\t'))
+		{
+			p += 7;
+			while(p < s.length && (s[p] == ' ' || s[p] == '\t'))
+				p++;
+			if(startsWith(s[p .. $], def) && (s[p+def.length] == ' ' || s[p+def.length] == '\t'))
+			{
+				p += def.length;
+				while(p < s.length && (s[p] == ' ' || s[p] == '\t'))
+					p++;
+				return s[p .. q];
+			}
+		}
+		p = q;
+	}
+	return "";
+}
+
 // endsWith does not work reliable and crashes on page end
 bool _endsWith(string s, string e)
 {

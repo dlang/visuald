@@ -44,12 +44,15 @@ struct LanguageProperty
 	DWORD value;
 }
 
+const string plk_version = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
+                           extractDefine(import("version"), "VERSION_MINOR");
+
 /*---------------------------------------------------------
  * Globals
  *---------------------------------------------------------*/
 const wstring g_languageName             = "D"w;
 const wstring g_packageName              = "Visual D"w;
-const wstring g_packageVersion           = "0.3"w;
+const  string g_packageVersion           = plk_version;
 const wstring g_packageCompany           = "Rainer Schuetze"w;
 const wstring g_languageFileExtensions[] = [ ".d"w, ".di"w, ".mixin"w ];
 const wstring g_projectFileExtensions    = "visualdproj"w;
@@ -353,7 +356,7 @@ class Package : DisposingComObject,
 	override int ProductID(BSTR* pbstrPID)
 	{
 		logCall("%s.ProductID(pbstrPID=%s)", this, pbstrPID);
-		*pbstrPID = allocwBSTR(g_packageVersion);
+		*pbstrPID = allocBSTR(g_packageVersion);
 		return S_OK;
 	}
 	override int ProductDetails(BSTR* pbstrProductDetails)

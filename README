@@ -8,11 +8,6 @@ Visual D aims at providing seamless integration of the D programming language in
 
 Major Features
 ---------------
-* Supported Visual Studio versions
-  - VS.NET 2003 (some limitations apply)
-  - VS 2005
-  - VS 2008
-  - VS 2010 (some limitations apply)
 * Project management
   - all DMD command line options accessable
   - support for resource compiler
@@ -26,18 +21,37 @@ Major Features
   - Import statement completion
   - Goto definition
   - Smart indentation
+* Supported Visual Studio versions
+  - VS.NET 2003 (some limitations apply)
+  - VS 2005
+  - VS 2008
+  - VS 2010 (some limitations apply)
+
 * Completely written in D2
 
 License information
 -------------------
 
-This code is distributed under the term of the Artistic License 2.0.
+This code is distributed under the terms of the Artistic License 2.0.
 For more details, see the full text of the license in the file LICENSE.
 
 Installation
 ------------
 There is a click-through-installer available at http://www.dsource.org/projects/visuald
-that will guide you through the intallation process.
+that will guide you through the intallation process. The installer lets you select the
+Visual Studio Version for which you want Visual D to be installed. It will always install
+for all users, not only for a single user.
+
+Building from Source
+--------------------
+The source of Visual D is available from the SVN repository at 
+http://svn.dsource.org/projects/visuald.
+
+Unfortunately, there are some patches necessary to DMD and the D runtime
+library for compilation. These include
+
+* [Issue 4015 http://d.puremagic.com/issues/show_bug.cgi?id=4015] forward reference in alias causes error
+
 
 Usage
 -----
@@ -47,11 +61,15 @@ Global Options
 
 Project Settings
 
+Word completion
+
 Goto definition
+
+cv2pdb integration
+
 
 Changes
 -------
-
 For documentation on the changes between this version and
 previous versions, please see the file CHANGES.
 

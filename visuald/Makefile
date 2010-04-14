@@ -44,8 +44,8 @@ CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 DBG_VSI_LIB = $(DBGDIR)/vsi.lib 
 REL_VSI_LIB = $(RELDIR)/vsi.lib 
 
-DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -I../../xmlp
-# -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS 
+DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J..
+# -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 
 LIBS = phobos.lib uuid.lib advapi32.lib comdlg32.lib \
 	ole32.lib oleaut32.lib comctl32.lib user32.lib shell32.lib gdi32.lib

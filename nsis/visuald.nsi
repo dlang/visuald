@@ -9,8 +9,16 @@
 
 ;--------------------------------
 ;General
+  !searchparse /file ../version "#define VERSION_MAJOR " VERSION_MAJOR
+  !searchparse /file ../version "#define VERSION_MINOR " VERSION_MINOR
+  !searchparse /file ../version "#define VERSION_REVISION " VERSION_REVISION
 
-  !define VERSION "0.3.1"
+  !searchreplace VERSION_MAJOR ${VERSION_MAJOR} " " ""
+  !searchreplace VERSION_MINOR ${VERSION_MINOR} " " ""
+  !searchreplace VERSION_REVISION ${VERSION_REVISION} " " ""
+  
+  !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}"
+  !echo "VERSION = ${VERSION}"
   !define APPNAME "VisualD"
   !define LONG_APPNAME "Visual D"
   !define VERYLONG_APPNAME "Visual D - Visual Studio Integration of the D Programming Language"
@@ -29,6 +37,7 @@
   !define MEMENTO_REGISTRY_KEY    ${UNINSTALL_REGISTRY_KEY}
   
   !define VS_REGISTRY_ROOT        HKLM
+  !define VS_NET_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\7.1
   !define VS2005_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\8.0
   !define VS2008_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\9.0
   !define VS2010_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\10.0
@@ -118,6 +127,14 @@ Section "Visual Studio package" SecPackage
 SectionEnd
 
 ;--------------------------------
+${MementoSection} "Register with VS.NET" SecVS_NET
+
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS_NET_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  
+${MementoSectionEnd}
+
+;--------------------------------
 ${MementoSection} "Register with VS 2005" SecVS2005
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2005_REGISTRY_KEY}'
@@ -156,6 +173,7 @@ ${MementoSectionDone}
 
   ;Language strings
   LangString DESC_SecPackage ${LANG_ENGLISH} "The package containing the language service."
+  LangString DESC_SecVS_NET ${LANG_ENGLISH} "Register for usage in Visual Studio .NET"
   LangString DESC_SecVS2005 ${LANG_ENGLISH} "Register for usage in Visual Studio 2005."
   LangString DESC_SecVS2008 ${LANG_ENGLISH} "Register for usage in Visual Studio 2008."
   LangString DESC_SecVS2010 ${LANG_ENGLISH} "Register for usage in Visual Studio 2010."
@@ -164,6 +182,7 @@ ${MementoSectionDone}
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecPackage} $(DESC_SecPackage)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS_NET} $(DESC_SecVS_NET)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2005} $(DESC_SecVS2005)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2008} $(DESC_SecVS2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2010} $(DESC_SecVS2010)
@@ -176,6 +195,7 @@ ${MementoSectionDone}
 
 Section "Uninstall"
 
+  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS_NET_REGISTRY_KEY}'
   ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2005_REGISTRY_KEY}'
   ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2008_REGISTRY_KEY}'
   ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2010_REGISTRY_KEY}'
@@ -206,6 +226,13 @@ Function .onInit
 
   ${MementoSectionRestore}
 
+  ; detect VS.NET
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}" InstallDir
+  IfErrors 0 Installed_VS_NET
+    SectionSetFlags ${SecVS_NET} ${SF_RO}
+  Installed_VS_NET:
+  
   ; detect VS2005
   ClearErrors
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2005_REGISTRY_KEY}" InstallDir

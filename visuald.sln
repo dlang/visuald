@@ -10,6 +10,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "visuald", "visuald\visuald.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vsi", "sdk\vsi.vcproj", "{ABE0329D-553F-4D5E-AE0E-C871776E8987}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5BC571AF-BE25-49A2-9634-36544F50DB4A}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGES = CHANGES
+		LICENSE = LICENSE
+		Makefile = Makefile
+		README = README
+		VERSION = VERSION
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
