@@ -16,17 +16,25 @@ Major Features
   - automatic dependency generation
   - automatic link between dependend projects
 * Language Service
-  - Syntax highlighting
-  - Simple word-completion
-  - Import statement completion
-  - Goto definition
-  - Smart indentation
+  - syntax highlighting
+  - simple word-completion
+  - import statement completion
+  - goto definition (using JSON file from compilation)
+  - smart indentation
 * Supported Visual Studio versions
   - VS.NET 2003 (some limitations apply)
   - VS 2005
   - VS 2008
   - VS 2010 (some limitations apply)
 
+* Includes tools to
+  - convert some idl/h files of the Windows SDK to D
+  - convert all idl/h files from the Visual Studio Integration SDK to D
+  - convert C++ code to D (which was targeted at machine-translating
+    the DMD front end to D, but this was abandoned)
+  - convert Java code to D (which was targeted at machine-translating
+    parts of the Eclipse plugin Descent to D, but this was abandoned)
+  
 * Completely written in D2
 
 License information
@@ -47,11 +55,39 @@ Building from Source
 The source of Visual D is available from the SVN repository at 
 http://svn.dsource.org/projects/visuald.
 
+You need the following tools to build Visual D:
+ - Visual Studio 2008 (other version might also work, but I haven't tried)
+ - Visual Studio Integration SDK
+ - DMD 2.042 or later 
+ - NSIS
+ - for debugging: cv2pdb
+
 Unfortunately, there are some patches necessary to DMD and the D runtime
 library for compilation. These include
 
-* [Issue 4015 http://d.puremagic.com/issues/show_bug.cgi?id=4015] forward reference in alias causes error
+ * [http://d.puremagic.com/issues/show_bug.cgi?id=3200 Issue 3200] std.xml doesn't follow spec for Tag.text
+ * [http://d.puremagic.com/issues/show_bug.cgi?id=3415 Issue 3415] broken JSON output  
+ * [http://d.puremagic.com/issues/show_bug.cgi?id=4015 Issue 4015] forward reference in alias causes error
+ * [http://d.puremagic.com/issues/show_bug.cgi?id=4069 Issue 4069] std.xml.Document.pretty saves empty elements with spaces and line breaks
+ * [http://d.puremagic.com/issues/show_bug.cgi?id=4089 Issue 4089] crash when creating JSON output for incomplete struct 
+ * [http://d.puremagic.com/issues/show_bug.cgi?id=4092 Issue 4092] broken memory management for COM objects derived from IUnknown
 
+The standard build procedure for the release version is to execute 
+"nmake install" in the trunk directory.
+
+If you want to start developing or debugging, you should execute
+"nmake" at least once to build the necessary D translations from
+the Windows and Visual Studio SDK. Afterwards you can use the solution visuald.sln.
+It contains the necessary makefile-projects.
+
+You should debug the plugin within Visual Studio using a different
+branch in the registry, so it does not interfere with your working
+environment. To create a configuration named "D", execute
+
+ devenv.exe /RootSuffix D
+
+once from the comamnd line. The compiled debug plugin can then be registered
+with nsis\register.bat.
 
 Usage
 -----

@@ -112,6 +112,7 @@ class ProjectOptions
 	ubyte Dversion;		// D version number
 	bool ignoreUnsupportedPragmas;	// rather than error on them
 
+	bool otherDMD;		// use non-default DMD
 	string program;		// program name
 	string imppath;		// array of char*'s of where to look for import modules
 	string fileImppath;	// array of char*'s of where to look for file import modules
@@ -190,7 +191,7 @@ class ProjectOptions
 	string buildCommandLine()
 	{
 		string cmd;
-		if(program.length)
+		if(otherDMD && program.length)
 			cmd = program;
 		else
 			cmd = "dmd";
@@ -421,6 +422,7 @@ class ProjectOptions
 		elem ~= new xml.Element("Dversion", toElem(Dversion));
 		elem ~= new xml.Element("ignoreUnsupportedPragmas", toElem(ignoreUnsupportedPragmas));
 
+		elem ~= new xml.Element("otherDMD", toElem(otherDMD));
 		elem ~= new xml.Element("program", toElem(program));
 		elem ~= new xml.Element("imppath", toElem(imppath));
 		elem ~= new xml.Element("fileImppath", toElem(fileImppath));
@@ -521,6 +523,7 @@ class ProjectOptions
 		fromElem(elem, "Dversion", Dversion);
 		fromElem(elem, "ignoreUnsupportedPragmas", ignoreUnsupportedPragmas );
 
+		fromElem(elem, "otherDMD", otherDMD);
 		fromElem(elem, "program", program);
 		fromElem(elem, "imppath", imppath);
 		fromElem(elem, "fileImppath", fileImppath);

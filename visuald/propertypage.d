@@ -502,25 +502,41 @@ class GeneralPropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
-		AddControl("DMD Base Path", mDmdPath = new Text(mCanvas));
 		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, [ "D1", "D2" ], false));
 		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, [ "Executable", "Library" ], false));
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
+		AddControl("",              mOtherDMD = new CheckBox(mCanvas, "Use other compiler"));
+		AddControl("DMD Path", mDmdPath = new Text(mCanvas));
+	}
+
+	void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+	
+	void EnableControls()
+	{
+		mDmdPath.setEnabled(mOtherDMD.isChecked());
 	}
 
 	override void SetControls(ProjectOptions options)
 	{
+		mOtherDMD.setChecked(options.otherDMD);
 		mCbOutputType.setSelection(options.lib);
 		mDmdPath.setText(options.program);
 		mDVersion.setSelection(options.Dversion - 1);
 		mOutputPath.setText(options.outdir);
 		mIntermediatePath.setText(options.objdir);
+		
+		EnableControls();
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
+		changes += changeOption(mOtherDMD.isChecked(), options.otherDMD, refoptions.otherDMD);
 		changes += changeOption(mCbOutputType.getSelection() != 0, options.lib, refoptions.lib);
 		changes += changeOption(mDmdPath.getText(), options.program, refoptions.program);
 		changes += changeOption(cast(ubyte) (mDVersion.getSelection() + 1), options.Dversion, refoptions.Dversion);
@@ -529,6 +545,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		return changes;
 	}
 
+	CheckBox mOtherDMD;
 	Text mDmdPath;
 	ComboBox mCbOutputType;
 	ComboBox mDVersion;
@@ -632,12 +649,25 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		AddControl("Path to cv2pdb", mPathCv2pdb = new Text(mCanvas));
 	}
 
+	void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+	
+	void EnableControls()
+	{
+		mPathCv2pdb.setEnabled(mRunCv2pdb.isChecked());
+	}
+
 	override void SetControls(ProjectOptions options)
 	{
 		mDebugMode.setSelection(options.release ? 0 : 1);
 		mDebugInfo.setSelection(options.symdebug);
 		mRunCv2pdb.setChecked(options.runCv2pdb);
 		mPathCv2pdb.setText(options.pathCv2pdb);
+		
+		EnableControls();
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -765,7 +795,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 	{
 		AddControl("", mGenDoc = new CheckBox(mCanvas, "Generate documentation"));
 		AddControl("Documentation file", mDocFile = new Text(mCanvas));
-		AddControl("Documentation directory", mDocDir = new Text(mCanvas));
+		AddControl("Documentation dir", mDocDir = new Text(mCanvas));
 		
 		AddControl("", mGenHdr = new CheckBox(mCanvas, "Generate interface headers"));
 		AddControl("Header file",  mHdrFile = new Text(mCanvas));
@@ -773,6 +803,23 @@ class DmdDocPropertyPage : ProjectPropertyPage
 
 		AddControl("", mGenJSON = new CheckBox(mCanvas, "Generate JSON file"));
 		AddControl("JSON file",  mJSONFile = new Text(mCanvas));
+	}
+
+	void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+	
+	void EnableControls()
+	{
+		mDocDir.setEnabled(mGenDoc.isChecked());
+		mDocFile.setEnabled(mGenDoc.isChecked());
+
+		mHdrDir.setEnabled(mGenHdr.isChecked());
+		mHdrFile.setEnabled(mGenHdr.isChecked());
+
+		mJSONFile.setEnabled(mGenJSON.isChecked());
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -785,6 +832,8 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		mHdrFile.setText(options.hdrname);
 		mGenJSON.setChecked(options.doXGeneration);
 		mJSONFile.setText(options.xfilename);
+		
+		EnableControls();
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
