@@ -377,11 +377,7 @@ class ProjectOptions
 		replacements["OUTDIR"] = outdir;
 		replacements["INTDIR"] = objdir;
 		replacements["TARGETPATH"] = getTargetPath();
-		replacements["DMDINSTALLDIR"] = normalizeDir(Package.GetGlobalOptions().DMDInstallDir);
-		replacements["WINDOWSSDKDIR"] = Package.GetGlobalOptions().WindowsSdkDir;
-		replacements["DEVENVDIR"] = Package.GetGlobalOptions().DevEnvDir;
-		replacements["VSINSTALLDIR"] = Package.GetGlobalOptions().VSInstallDir;
-		replacements["VISUALDINSTALLDIR"] = Package.GetGlobalOptions().VisualDInstallDir;
+		Package.GetGlobalOptions().addReplacements(replacements);
 
 		string target = replaceMacros(getTargetPath(), replacements);
 		addFileMacros(target, "TARGET", replacements);

@@ -53,8 +53,8 @@
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
   <hdrname />
-  <doXGeneration>0</doXGeneration>
-  <xfilename />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(ProjectName).json</xfilename>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>

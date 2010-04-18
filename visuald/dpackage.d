@@ -511,6 +511,15 @@ class GlobalOptions
 		return true;
 	}
 
+	void addReplacements(ref string[string] replacements)
+	{
+		replacements["DMDINSTALLDIR"] = normalizeDir(DMDInstallDir);
+		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
+		replacements["DEVENVDIR"] = DevEnvDir;
+		replacements["VSINSTALLDIR"] = VSInstallDir;
+		replacements["VISUALDINSTALLDIR"] = VisualDInstallDir;
+	}
+	
 	string[] getImportPaths()
 	{
 		string[] imports;
@@ -533,7 +542,8 @@ class GlobalOptions
 				}
 		}
 		
-		string[string] replacements = [ "DMDINSTALLDIR" : DMDInstallDir ];
+		string[string] replacements;
+		addReplacements(replacements);
 		string searchpaths = replaceMacros(ImpSearchPath, replacements);
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
@@ -545,7 +555,8 @@ class GlobalOptions
 	string[] getJSONFiles()
 	{
 		string[] jsonpaths;
-		string[string] replacements = [ "DMDINSTALLDIR" : DMDInstallDir ];
+		string[string] replacements;
+		addReplacements(replacements);
 		string searchpaths = replaceMacros(JSNSearchPath, replacements);
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
