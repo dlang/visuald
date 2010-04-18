@@ -126,7 +126,7 @@ Section "Visual Studio package" SecPackage
   File ..\visuald\Templates\ProjectItems\StaticLib\StaticLib.vstemplate
   File ..\visuald\Templates\ProjectItems\StaticLib\StaticLib.visualdproj
 
-  SetOutPath "$INSTDIR\Templates\ProjectItems\Projects"
+  SetOutPath "$INSTDIR\Templates\Projects"
   File ..\visuald\Templates\Projects\DTemplates.vsdir
 
   SetOutPath "$INSTDIR\Templates\CodeSnippets"

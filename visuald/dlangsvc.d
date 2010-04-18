@@ -1302,7 +1302,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			string[] imps = GetImportPaths(file);
 			foreach(imp; imps)
 			{
-				string file = normalizeDir(imp) ~ defs[0].filename;
+				file = normalizeDir(imp) ~ defs[0].filename;
 				if(std.file.exists(file))
 				{
 					bstrAbsPath = allocBSTR(file);

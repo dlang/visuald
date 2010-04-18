@@ -1,4 +1,5 @@
 <DProject>
+ <ProjectGuid>{32872753-4812-40DA-9B24-1C2114621E78}</ProjectGuid>
  <Config name="Debug">
   <obj>0</obj>
   <link>0</link>
@@ -37,6 +38,7 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -81,6 +83,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
+  <filesToClean>*.obj</filesToClean>
  </Config>
  <Config name="Release">
   <obj>0</obj>
@@ -120,6 +123,7 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath />
   <fileImppath />
@@ -164,6 +168,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
+  <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="vsi">
   <Folder name="port">
