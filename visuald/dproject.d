@@ -10,6 +10,7 @@ module dproject;
 
 import std.c.windows.windows;
 import std.c.windows.com;
+import std.c.string : memcpy;
 import std.windows.charset;
 import std.string;
 import std.utf;
@@ -37,6 +38,7 @@ import chiernode;
 import chiercontainer;
 import build;
 import config;
+import oledatasource;
 
 import dllmain : g_hInst;
 
@@ -787,7 +789,7 @@ class Project : CVsHierarchy,
 
 		// NOTE: this method allows a project to provide project context services 
 		// to an item (document) editor. If the project does not need to provide special
-		// services to its items then it should return NULL. Under no circumstances
+		// services to its items then it should return null. Under no circumstances
 		// should you return the IServiceProvider pointer that was passed to our
 		// package from the Environment via IVsPackage::SetSite. The global services
 		// will automatically be made available to editors. 
@@ -918,6 +920,7 @@ class Project : CVsHierarchy,
 				/* [in]  REFGUID               rguidEditorType */ rguidEditorType,
 				/* [in]  LPCOLESTR             pszPhysicalView */ pszPhysicalView,
 				/* [in]  REFGUID               rguidLogicalView*/ rguidLogicalView,
+				/* [in]  bool moveIfInProject                  */ false,
 				/* [out] VSADDRESULT *pResult                  */ pResult);
 		}
 
@@ -1640,7 +1643,19 @@ class Project : CVsHierarchy,
 		/* [out] */ IDropSource *ppDropSource)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		
+		*pdwOKEffects = DROPEFFECT_NONE;
+		*ppDataObject = null;
+		*ppDropSource = null;
+
+		HRESULT hr = PackageSelectionDataObject(ppDataObject, FALSE);
+		if(FAILED(hr))
+			return returnError(hr);
+			
+		*pdwOKEffects = DROPEFFECT_MOVE | DROPEFFECT_COPY;
+		mDDT = DropDataType.DDT_VSREF;
+		mfDragSource = TRUE;
+		return S_OK;
 	}
 
 	override int OnDropNotify( 
@@ -1648,7 +1663,10 @@ class Project : CVsHierarchy,
 		/* [in] */ in DWORD dwEffects)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		
+		mfDragSource = FALSE;
+		mDDT = DropDataType.DDT_NONE;
+		return CleanupSelectionDataObject(fDropped, FALSE, dwEffects == DROPEFFECT_MOVE);
 	}
 
 	// IVsHierarchyDropDataSource2
@@ -1658,7 +1676,66 @@ class Project : CVsHierarchy,
 		/* [retval][out] */ BOOL *pfCancelDrop)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+
+		if (pfCancelDrop)
+			*pfCancelDrop = FALSE;
+
+		HRESULT hr = S_OK;
+
+		// check for dirty documents
+		BOOL fDirty = FALSE;
+		for (ULONG i = 0; i < mItemSelDragged.length; i++)
+		{
+			CFileNode pFileNode = cast(CFileNode) VSITEMID2Node(mItemSelDragged[i].itemid);
+			if (!pFileNode)
+				continue;
+
+			bool fDirtyDoc = FALSE;
+			bool fOpenByUs = FALSE;
+			hr = pFileNode.GetDocInfo(
+				/* [out, opt] BOOL*  pfOpen     */ null,       // true if the doc is opened
+				/* [out, opt] BOOL*  pfDirty    */ &fDirtyDoc, // true if the doc is dirty
+				/* [out, opt] BOOL*  pfOpenByUs */ &fOpenByUs, // true if opened by our project
+				/* [out, opt] VSDOCCOOKIE* pVsDocCookie*/ null);// VSDOCCOOKIE if open
+			if (FAILED(hr))
+				continue;
+
+			if (fDirtyDoc && fOpenByUs)
+			{
+				fDirty = TRUE;
+				break;
+			}
+		}
+
+		// if there are no dirty docs we are ok to proceed
+		if (!fDirty) 
+			return S_OK;
+
+		// prompt to save if there are dirty docs
+		string caption = "Visual Studio D'n'D";
+		string prompt = "Save modified documents?";
+		int msgRet = UtilMessageBox(prompt, MB_YESNOCANCEL | MB_ICONEXCLAMATION, caption);
+		switch (msgRet)
+		{
+		case IDYES:
+			break;
+		case IDNO:
+			return S_OK;
+		case IDCANCEL:
+			if (pfCancelDrop)
+				*pfCancelDrop = TRUE;
+			return S_OK;
+		default:
+			assert(FALSE);
+			return S_OK;
+		}
+
+		for (ULONG i = 0; i < mItemSelDragged.length; i++)
+		{
+			if(CFileNode pFileNode = cast(CFileNode) VSITEMID2Node(mItemSelDragged[i].itemid))
+				hr = pFileNode.SaveDoc(SLNSAVEOPT_SaveIfDirty);
+		}
+		return returnError(hr);
 	}
 
 	// IVsHierarchyDropDataTarget
@@ -1692,7 +1769,8 @@ class Project : CVsHierarchy,
 	override int DragLeave()
 	{
 		mixin(LogCallMix);
-		mDDT = DropDataType.DDT_NONE;
+		if (!mfDragSource)
+			mDDT = DropDataType.DDT_NONE;
 		return S_OK;
 	}
 
@@ -1711,8 +1789,8 @@ class Project : CVsHierarchy,
 		*pdwEffect = DROPEFFECT_NONE;
 
 		HRESULT hr = S_OK;
-		if (mfDragSource) 
-			return S_OK;
+//		if (mfDragSource) 
+//			return S_OK;
 
 		CHierNode dropNode = VSITEMID2Node(itemid);
 		if(!dropNode)
@@ -1947,6 +2025,7 @@ class Project : CVsHierarchy,
 					/* [in]  REFGUID               rguidEditorType */ &GUID_NULL,
 					/* [in]  LPCOLESTR             pszPhysicalView */ null,
 					/* [in]  REFGUID               rguidLogicalView*/ &GUID_NULL,
+					/* [in]  bool moveIfInProject                  */ mfDragSource,
 					/* [out] VSADDRESULT *pResult                  */ &vsaddresult);
 				if ( (hrTemp == E_ABORT) || (hrTemp == OLEERR.E_PROMPTSAVECANCELLED) || (vsaddresult == ADDRESULT_Cancel) )
 				{
@@ -1995,11 +2074,10 @@ AttemptVSStgFormat:
 		ddt = DropDataType.DDT_VSSTG;
 
 AddFiles:
+		if(IVsSolution srpIVsSolution = queryService!(IVsSolution))
 		{
-			IVsSolution srpIVsSolution = queryService!(IVsSolution);
-			if(!srpIVsSolution)
-				goto Error;
-
+			scope(exit) release(srpIVsSolution);
+			
 			// Note that we do NOT use ::DragQueryFile as this function will 
 			// NOT work with unicode strings on win9x - even
 			// with the unicode wrappers - and the projitem ref format is in unicode
@@ -2058,7 +2136,7 @@ AddFiles:
 					hr = E_UNEXPECTED;
 					continue;
 				}
-
+				
 				BSTR cbstrMoniker;
 				hrTemp = srpIVsProject.GetMkDocument(itemidLoc, &cbstrMoniker);
 				if (FAILED(hrTemp))
@@ -2079,6 +2157,7 @@ AddFiles:
 					/* [in]  REFGUID               rguidEditorType */ &GUID_NULL,
 					/* [in]  LPCOLESTR             pszPhysicalView */ null,
 					/* [in]  REFGUID               rguidLogicalView*/ &GUID_NULL,
+					/* [in]  bool moveIfInProject                  */ mfDragSource,
 					/* [out] VSADDRESULT *pResult                  */ &vsaddresult);
 				if (hrTemp == E_ABORT || hrTemp == OLEERR.E_PROMPTSAVECANCELLED || vsaddresult == ADDRESULT_Cancel)
 				{
@@ -2110,6 +2189,232 @@ Error:
 
 		return S_OK;
 	}
+
+	HRESULT PackageSelectionDataObject(
+		/* [out] */ IDataObject *  ppDataObject, 
+		/* [in]  */ BOOL           fCutHighlightItems)
+	{
+		HRESULT hr = S_OK;
+
+		// delete any existing selection data object and restore state
+		hr = CleanupSelectionDataObject(FALSE, FALSE, FALSE);
+		if(FAILED(hr)) return hr;
+
+//		CComPtr<IVsUIHierarchyWindow> srpIVsUIHierarchyWindow;
+//		hr = _VxModule.GetIVsUIHierarchyWindow(GUID_SolutionExplorer, &srpIVsUIHierarchyWindow);
+//		IfFailRet(hr);
+//		ExpectedExprRet(srpIVsUIHierarchyWindow != null);
+
+		IVsSolution srpIVsSolution = queryService!(IVsSolution);
+		if(!srpIVsSolution) return E_NOINTERFACE;
+		scope(exit) release(srpIVsSolution);
+
+		IVsMonitorSelection srpIVsMonitorSelection = queryService!(IVsMonitorSelection);
+		if(!srpIVsMonitorSelection) return E_NOINTERFACE;
+		scope(exit) release(srpIVsMonitorSelection);
+
+		VSITEMID vsitemid;
+		IVsHierarchy srpIVsHierarchy_selection;
+		IVsMultiItemSelect srpIVsMultiItemSelect;
+		hr = srpIVsMonitorSelection.GetCurrentSelection(
+			/* [out] IVsHierarchy**        */ &srpIVsHierarchy_selection, 
+			/* [out] VSITEMID*             */ &vsitemid, 
+			/* [out] IVsMultiItemSelect**  */ &srpIVsMultiItemSelect, 
+			/* [out] ISelectionContainer** */ null);
+		if(FAILED(hr)) return hr;
+		scope(exit) release(srpIVsHierarchy_selection);
+		scope(exit) release(srpIVsMultiItemSelect);
+
+		LONG lLenGlobal  = 0; // length of the file names including null chars
+    
+		IVsHierarchy srpIVsHierarchy_this = this; // GetIVsHierarchy();
+
+		if(srpIVsHierarchy_selection !is srpIVsHierarchy_this ||
+		   vsitemid == VSITEMID_ROOT || vsitemid == VSITEMID_NIL)
+			return E_ABORT;
+
+		if(vsitemid == VSITEMID_SELECTION && srpIVsMultiItemSelect)
+		{
+			BOOL fSingleHierarchy = FALSE;
+			ULONG itemsDragged;
+			hr = srpIVsMultiItemSelect.GetSelectionInfo(&itemsDragged, &fSingleHierarchy);
+			if(FAILED(hr)) return hr;
+			if (!fSingleHierarchy) return E_ABORT;
+
+			if (itemsDragged > uint.max / VSITEMSELECTION.sizeof)
+				return E_OUTOFMEMORY;
+			
+			mItemSelDragged.length = itemsDragged;
+
+			hr = srpIVsMultiItemSelect.GetSelectedItems(GSI_fOmitHierPtrs, itemsDragged, mItemSelDragged.ptr);
+			if(FAILED(hr)) return hr;
+		}
+		else if (vsitemid != VSITEMID_ROOT)
+		{
+			mItemSelDragged.length = 1;
+			mItemSelDragged[0].pHier = null;
+			mItemSelDragged[0].itemid = vsitemid;
+		}
+
+		for (ULONG i = 0; i < mItemSelDragged.length; i++)
+		{
+			if (mItemSelDragged[i].itemid == VSITEMID_ROOT)
+				return E_ABORT;
+
+			BSTR cbstrProjref;
+			hr = srpIVsSolution.GetProjrefOfItem(srpIVsHierarchy_this, mItemSelDragged[i].itemid, &cbstrProjref);
+			if(FAILED(hr)) return hr;
+
+			wstring pref = wdetachBSTR(cbstrProjref);
+			if(pref.length==0)
+				return E_FAIL;
+
+			lLenGlobal += pref.length + 1; // plus one to count the trailing null character
+		}
+
+		if(lLenGlobal == 0)
+			return E_ABORT;
+
+		lLenGlobal += 1; // anothr trailing null character to terminate list
+
+		DWORD   cbAlloc = DROPFILES.sizeof + lLenGlobal * WCHAR.sizeof;// bytes to allocate
+		HGLOBAL hGlobal = GlobalAlloc(GHND | GMEM_SHARE, cbAlloc);
+		if(!hGlobal) return E_ABORT;
+
+		DROPFILES* pDropFiles = cast(DROPFILES*) GlobalLock(hGlobal);
+		// set the offset where the starting point of the file start
+		pDropFiles.pFiles = DROPFILES.sizeof;
+
+		// structure contain wide characters
+		pDropFiles.fWide = TRUE;
+		LPWSTR pFiles = cast(LPWSTR)(pDropFiles + 1);
+		LONG nCurPos = 0;
+		for (ULONG i = 0; i < mItemSelDragged.length; i++)
+		{
+			BSTR cbstrProjref;
+			hr = srpIVsSolution.GetProjrefOfItem(srpIVsHierarchy_this, mItemSelDragged[i].itemid, &cbstrProjref);
+			if (FAILED(hr))
+				continue;
+
+			UINT cchProjRef = wcslen(cbstrProjref) + 1;
+			memcpy(pFiles + nCurPos, cbstrProjref, cchProjRef * WCHAR.sizeof);
+			nCurPos += cchProjRef;
+			freeBSTR(cbstrProjref);
+		}
+
+		hr = S_OK;
+
+		// final null terminator as per CF_VSSTGPROJECTITEMS format spec
+		pFiles[nCurPos] = 0;
+		
+		int res = GlobalUnlock(hGlobal);
+		OleDataSource pDataObject = new OleDataSource;  // has ref count of 0
+
+		FORMATETC fmtetc;
+		fmtetc.ptd      = null;
+		fmtetc.dwAspect = DVASPECT_CONTENT;
+		fmtetc.lindex   = -1;
+		fmtetc.tymed    = TYMED_HGLOBAL;
+		fmtetc.cfFormat = cast(ushort) CF_VSREFPROJECTITEMS;
+
+		STGMEDIUM stgmedium;
+		stgmedium.tymed          = TYMED_HGLOBAL;
+		stgmedium.hGlobal        = hGlobal;
+		stgmedium.pUnkForRelease = null;
+
+		pDataObject.CacheData(fmtetc.cfFormat, &stgmedium, &fmtetc); 
+		*ppDataObject = addref(pDataObject);
+
+Error:
+/+
+		if (SUCCEEDED(hr))
+		{
+			if (fCutHighlightItems)
+			{
+				for (ULONG i = 0; i < mItemSelDragged.length; i++)
+					srpIVsUIHierarchyWindow.ExpandItem(GetIVsUIHierarchy(), mItemSelDragged[i].itemid, i == 0 ? EXPF_CutHighlightItem : EXPF_AddCutHighlightItem);
+			}
+		}
++/
+		if (FAILED(hr))
+		{
+			mItemSelDragged.length = 0;
+		}
+
+		return hr;
+	}
+
+	HRESULT CleanupSelectionDataObject(
+		/* [in] */ BOOL fDropped,
+		/* [in] */ BOOL fCut, 
+		/* [in] */ BOOL fMoved)
+	{
+		// we save if something fails but we are trying to do as much as possible
+		HRESULT hrRet = S_OK; // hr to return
+		HRESULT hr = S_OK;
+
+/+
+		CComPtr<IVsUIHierarchyWindow> srpIVsUIHierarchyWindow;
+		hr = _VxModule.GetIVsUIHierarchyWindow(
+			/* REFGUID rguidPersistenceSlot */GUID_SolutionExplorer,
+			/*IVsUIHierarchyWindow **ppIVsUIHierarchyWindow*/ &srpIVsUIHierarchyWindow);
+		if (FAILED(hr))
+			hrRet = hr;
+		if (!srpIVsUIHierarchyWindow)
+			hrRet = E_UNEXPECTED;
++/
+		
+		for (ULONG i = 0; i < mItemSelDragged.length; i++)
+		{
+			if((fMoved && fDropped) || fCut)
+			{
+				CFileNode pFileNode = cast(CFileNode) VSITEMID2Node(mItemSelDragged[i].itemid);
+				if (!pFileNode)
+					continue;
+
+				bool fOpen      = FALSE;
+				bool fDirty     = FALSE;
+				bool fOpenByUs  = FALSE;
+				hr = pFileNode.GetDocInfo(
+					/* [out, opt] BOOL*  pfOpen     */ &fOpen,  // true if the doc is opened
+					/* [out, opt] BOOL*  pfDirty    */ &fDirty, // true if the doc is dirty
+					/* [out, opt] BOOL*  pfOpenByUs */ &fOpenByUs, // true if opened by our project
+					/* [out, opt] VSDOCCOOKIE* pVsDocCookie*/ null);// VSDOCCOOKIE if open
+				if (FAILED(hr))
+					continue;
+
+				// do not close it if the doc is dirty or we do not own it
+				if (fDirty || (fOpen && !fOpenByUs))
+					continue;
+
+				// close it if opened
+				if (fOpen)
+				{
+					hr = pFileNode.CloseDoc(SLNSAVEOPT_NoSave);
+					if (FAILED(hr))
+						hrRet = hr;
+				}
+
+				BOOL res;
+				hr = RemoveItem(0, mItemSelDragged[i].itemid, &res);
+				if (FAILED(hr))
+					hrRet = hr;
+			}
+			else
+			{
+/+
+				if (srpIVsUIHierarchyWindow)
+					hr = srpIVsUIHierarchyWindow->ExpandItem(QI_cast<IVsUIHierarchy>(this), m_pItemSelDragged[i].itemid, EXPF_UnCutHighlightItem);
+				if (FAILED(hr))
+					hrRet = hr;
++/
+			}
+		}
+
+		mItemSelDragged.length = 0;
+		return hrRet;
+	}
+
 
 
 	//////////////////////////////////////////////////////////////
@@ -2158,36 +2463,44 @@ Error:
 
 	bool parseXML()
 	{
-		string fileName = toUTF8(mFilename);
-		mDoc = readXML(fileName);
-		if(!mDoc)
-			return false;
-
-		xml.Element root = xml.getRoot(mDoc);
-		if(xml.Element el = xml.getElement(root, "ProjectGuid"))
-			mProjectGUID = uuid(el.text());
-
-		string projectName = getNameWithoutExt(fileName);
-		CProjectNode rootnode = new CProjectNode(fileName, this);
-		xml.Element[] propItems = xml.elementsById(root, "Folder");
-		foreach(item; propItems)
+		try
 		{
-			projectName = xml.getAttribute(item, "name");
-			parseContainer(rootnode, item);
-		}
-		rootnode.SetName(projectName);
+			string fileName = toUTF8(mFilename);
+			mDoc = readXML(fileName);
+			if(!mDoc)
+				return false;
 
-		xml.Element[] cfgItems = xml.elementsById(root, "Config");
-		foreach(cfg; cfgItems)
+			xml.Element root = xml.getRoot(mDoc);
+			if(xml.Element el = xml.getElement(root, "ProjectGuid"))
+				mProjectGUID = uuid(el.text());
+
+			string projectName = getNameWithoutExt(fileName);
+			CProjectNode rootnode = new CProjectNode(fileName, this);
+			xml.Element[] propItems = xml.elementsById(root, "Folder");
+			foreach(item; propItems)
+			{
+				projectName = xml.getAttribute(item, "name");
+				parseContainer(rootnode, item);
+			}
+			rootnode.SetName(projectName);
+
+			xml.Element[] cfgItems = xml.elementsById(root, "Config");
+			foreach(cfg; cfgItems)
+			{
+				Config config = mConfigProvider.addConfig(xml.getAttribute(cfg, "name"));
+				config.GetProjectOptions().readXML(cfg);
+			}
+
+			SetRootNode(rootnode);
+			
+			Package.GetLibInfos().updateDefinitions();
+			return true;
+		}
+		catch(Exception e)
 		{
-			Config config = mConfigProvider.addConfig(xml.getAttribute(cfg, "name"));
-			config.GetProjectOptions().readXML(cfg);
+			logCall(e.toString());
 		}
-
-		SetRootNode(rootnode);
-		
-		Package.GetLibInfos().updateDefinitions();
-		return true;
+		return false;
 	}
 
 	void parseContainer(CHierContainer cont, xml.Element item)
@@ -2296,6 +2609,8 @@ private:
 	bool mfDragSource;
 	DropDataType mDDT;
 
+	VSITEMSELECTION[] mItemSelDragged;
+	
 	xml.Document mDoc;
 }
 

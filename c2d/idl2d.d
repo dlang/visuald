@@ -23,7 +23,7 @@ import core.memory;
 
 version = remove_pp;
 version = static_if_to_version;
-//version = vsi;
+version = vsi;
 
 class Source
 {
@@ -43,9 +43,9 @@ class idl2d
 	///////////////////////////////////////////////////////
 	// configuration
 	string vsi_base_path = r"c:\l\vs9SDK";
-	string dte_path   = r"m:\s\d\visuald\sdk\vsi\idl\";
+	string dte_path   = r"m:\s\d\visuald\trunk\sdk\vsi\idl\";
 	string win_path   = r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\";
-	string sdk_d_path = r"m:\s\d\visuald\sdk\";
+	string sdk_d_path = r"m:\s\d\visuald\trunk\sdk\";
 
 	string packageVSI = "sdk.vsi.";
 	string packageWin = "sdk.win32.";
@@ -1472,6 +1472,7 @@ version(none)
 		replaceTokenSequence(tokens, "(VOID)", "()", true);
 		replaceTokenSequence(tokens, "[in] ref $_ident", "in $_ident*", true); // in passes by value otherwise
 		replaceTokenSequence(tokens, "[in]", "in", true);
+		replaceTokenSequence(tokens, "[in,$_not out]", "[$_not] in", true);
 		replaceTokenSequence(tokens, "[*]", "[0]", true);
 		replaceTokenSequence(tokens, "[default]", "/+[default]+/", true);
 

@@ -27,13 +27,20 @@ const uint _MAX_PATH = 260;
 
 extern(Windows)
 {
+	const GMEM_SHARE =          0x2000;
+	const GMEM_MOVEABLE =       0x0002;
+	const GMEM_ZEROINIT =       0x0040;
+	const GHND =                (GMEM_MOVEABLE | GMEM_ZEROINIT);
+	
 	HWND GetActiveWindow();
 	BOOL IsWindowEnabled(HWND hWnd);
 	BOOL EnableWindow(HWND hWnd, BOOL bEnable);
 	int MessageBoxW(HWND hWnd, in wchar* lpText, in wchar* lpCaption, uint uType);
 
+	HGLOBAL GlobalAlloc(UINT uFlags, SIZE_T dwBytes);
 	void* GlobalLock(HANDLE hMem);
-	int GlobalUnlock(HANDLE hMem);
+	//int GlobalUnlock(HANDLE hMem);
+	SIZE_T GlobalSize(HGLOBAL hMem);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -198,6 +205,14 @@ int UtilMessageBox(string text, uint nType, string caption)
 	return MessageBoxW(modalstate.GetDialogOwnerHwnd(), wtext, wcaption, nType);
 }
 
+struct DROPFILES
+{
+	DWORD pFiles; // offset of file list
+	POINT pt;     // drop point (coordinates depend on fNC)
+	BOOL fNC;     // see below
+	BOOL fWide;   // TRUE if file contains wide characters, FALSE otherwise
+}
+
 //-----------------------------------------------------------------------------
 // Returns a cstring array populated with the files from a PROJREF drop. Note that 
 // we can't use the systems DragQueryFile() functions because they will NOT work 
@@ -213,14 +228,6 @@ int UtilGetFilesFromPROJITEMDrop(HGLOBAL h, ref string[] rgFiles)
 	LPVOID pv = .GlobalLock(h);
 	if (!pv)
 		return 0;
-
-	struct DROPFILES
-	{
-		DWORD pFiles; // offset of file list
-		POINT pt;     // drop point (coordinates depend on fNC)
-		BOOL fNC;     // see below
-		BOOL fWide;   // TRUE if file contains wide characters, FALSE otherwise
-	}
 
 	DROPFILES* pszDropFiles = cast(DROPFILES*)pv;
 

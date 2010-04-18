@@ -1,0 +1,15 @@
+<DProject>
+  <ProjectGuid>$guid1$</ProjectGuid>
+  <Config name="Debug">
+    <!-- default to defaults -->
+    <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+    <lib>1</lib>
+  </Config>
+  <Config name="Release">
+    <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+    <lib>1</lib>
+  </Config>
+  <Folder name="$safeprojectname$">
+    <File path="lib.d"></File>
+  </Folder>
+</DProject>

@@ -1,0 +1,18 @@
+<VSTemplate Version="2.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
+  <TemplateData>
+    <Name>Static library</Name>
+    <Description>A project for creating a static library</Description>
+    <Icon>__TemplateIcon.ico</Icon>
+    <ProjectType>D</ProjectType>
+    <SortOrder>50</SortOrder>
+    <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>StaticLibrary</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <Project File="StaticLib.visualdproj" ReplaceParameters="true">
+      <ProjectItem ReplaceParameters="true" OpenInEditor="true">lib.d</ProjectItem>
+    </Project>
+  </TemplateContent>
+</VSTemplate>

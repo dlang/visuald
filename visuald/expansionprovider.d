@@ -101,7 +101,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 	}
 
 
-	bool HandlePreExec(in GUID* guidCmdGroup, uint nCmdId, uint nCmdexecopt, VARIANT* pvaIn, VARIANT* pvaOut)
+	bool HandlePreExec(in GUID* guidCmdGroup, uint nCmdId, uint nCmdexecopt, in VARIANT* pvaIn, VARIANT* pvaOut)
 	{
 		if(!expansionActive || !expansionSession)
 			return false;
@@ -149,7 +149,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return false;
 	}
 
-	bool HandlePostExec(in GUID* guidCmdGroup, uint nCmdId, uint nCmdexecopt, bool commit, VARIANT* pvaIn, VARIANT* pvaOut)
+	bool HandlePostExec(in GUID* guidCmdGroup, uint nCmdId, uint nCmdexecopt, bool commit, in VARIANT* pvaIn, VARIANT* pvaOut)
 	{
 		if(*guidCmdGroup == CMDSETID_StandardCommandSet2K)
 		{

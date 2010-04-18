@@ -43,6 +43,19 @@ public:
 	bool ExpandByDefault() { return false; }
 	bool IsContainer() { return true; }
 
+	int OnStartLabelEdit()
+	{
+		return S_OK;
+	}
+	int OnCommitLabelEdit()
+	{
+		return S_OK;
+	}
+	int OnCancelLabelEdit()
+	{
+		return S_OK;
+	}
+	
 	VSITEMID GetFirstChildID(bool fDisplayOnly = true)
 	{
 		CHierNode head = GetHeadEx(fDisplayOnly);

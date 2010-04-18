@@ -952,7 +952,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 	}
 
 	// IOleCommandTarget //////////////////////////////////////
-	override int QueryStatus( /* [unique][in] */ GUID *pguidCmdGroup,
+	override int QueryStatus( /* [unique][in] */ in GUID *pguidCmdGroup,
 	                 /* [in] */ in uint cCmds,
 	                 /* [out][in][size_is] */ OLECMD *prgCmds,
 	                 /* [unique][out][in] */ OLECMDTEXT *pCmdText)
@@ -973,10 +973,10 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return S_OK;
 	}
 
-	override int Exec( /* [unique][in] */ GUID *pguidCmdGroup,
+	override int Exec( /* [unique][in] */ in GUID *pguidCmdGroup,
 	          /* [in] */ in uint nCmdID,
 	          /* [in] */ in uint nCmdexecopt,
-	          /* [unique][in] */ VARIANT *pvaIn,
+	          /* [unique][in] */ in VARIANT *pvaIn,
 	          /* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		mixin(LogCallMix);

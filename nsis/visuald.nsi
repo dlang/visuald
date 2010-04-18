@@ -97,17 +97,37 @@ Section "Visual Studio package" SecPackage
   
   ;ADD YOUR OWN FILES HERE...
   File ..\bin\${CONFIG}\${DLLNAME}
+  File ..\README
+  File ..\LICENSE
+  File ..\CHANGES
 
   SetOutPath "$INSTDIR\Templates\Items"
   File ..\visuald\Templates\Items\empty.d
   File ..\visuald\Templates\Items\hello.d
   File ..\visuald\Templates\Items\items.vsdir
 
-  SetOutPath "$INSTDIR\Templates\Projects\ConsoleApp"
-  File ..\visuald\Templates\Projects\ConsoleApp\Program.d
-  File ..\visuald\Templates\Projects\ConsoleApp\DLanguageApp.visualdproj
-  File ..\visuald\Templates\Projects\ConsoleApp\ConsoleApp.vstemplate
-  File ..\visuald\Templates\Projects\ConsoleApp\__TemplateIcon.ico
+  SetOutPath "$INSTDIR\Templates\ProjectItems\ConsoleApp"
+  File ..\visuald\Templates\ProjectItems\ConsoleApp\main.d
+  File ..\visuald\Templates\ProjectItems\ConsoleApp\ConsoleApp.vstemplate
+  File ..\visuald\Templates\ProjectItems\ConsoleApp\ConsoleApp.visualdproj
+
+  SetOutPath "$INSTDIR\Templates\ProjectItems\WindowsApp"
+  File ..\visuald\Templates\ProjectItems\WindowsApp\winmain.d
+  File ..\visuald\Templates\ProjectItems\WindowsApp\WindowsApp.vstemplate
+  File ..\visuald\Templates\ProjectItems\WindowsApp\WindowsApp.visualdproj
+
+  SetOutPath "$INSTDIR\Templates\ProjectItems\DynamicLib"
+  File ..\visuald\Templates\ProjectItems\DynamicLib\dllmain.d
+  File ..\visuald\Templates\ProjectItems\DynamicLib\DynamicLib.vstemplate
+  File ..\visuald\Templates\ProjectItems\DynamicLib\DynamicLib.visualdproj
+
+  SetOutPath "$INSTDIR\Templates\ProjectItems\StaticLib"
+  File ..\visuald\Templates\ProjectItems\StaticLib\lib.d
+  File ..\visuald\Templates\ProjectItems\StaticLib\StaticLib.vstemplate
+  File ..\visuald\Templates\ProjectItems\StaticLib\StaticLib.visualdproj
+
+  SetOutPath "$INSTDIR\Templates\ProjectItems\Projects"
+  File ..\visuald\Templates\Projects\DTemplates.vsdir
 
   SetOutPath "$INSTDIR\Templates\CodeSnippets"
   File ..\visuald\Templates\CodeSnippets\SnippetsIndex.xml

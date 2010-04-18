@@ -222,7 +222,7 @@ class CFileNode : CHierNode,
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
-		/* [unique][in] */ VARIANT *pvaIn,
+		/* [unique][in] */ in VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		int hr = OLECMDERR.E_NOTSUPPORTED;
@@ -354,6 +354,35 @@ class CFileNode : CHierNode,
 
 		return S_OK;
 	}
+
+	HRESULT SaveDoc(/* [in] */ VSSLNSAVEOPTIONS grfSaveOpts)
+	{
+		HRESULT hr = S_OK;
+
+		bool        fOpen       = FALSE;
+		bool        fDirty      = TRUE;
+		bool        fOpenByUs   = FALSE;
+		VSDOCCOOKIE vsDocCookie = VSDOCCOOKIE_NIL;
+
+		hr = GetDocInfo(
+			/* [out, opt] BOOL*  pfOpen     */ &fOpen, // true if the doc is opened
+			/* [out, opt] BOOL*  pfDirty    */ &fDirty, // true if the doc is dirty
+			/* [out, opt] BOOL*  pfOpenByUs */ &fOpenByUs, // true if opened by our project
+			/* [out, opt] VSDOCCOOKIE* pVsDocCookie*/ &vsDocCookie);// VSDOCCOOKIE if open
+		if (FAILED(hr) || !fOpenByUs || vsDocCookie == VSDOCCOOKIE_NIL)
+			return hr;
+
+		IVsSolution pIVsSolution = queryService!(IVsSolution);
+		if(!pIVsSolution)
+			return E_FAIL;
+		scope(exit) pIVsSolution.Release();
+
+		return pIVsSolution.SaveSolutionElement(
+			/* [in] VSSLNSAVEOPTIONS grfSaveOpts*/ grfSaveOpts, 
+			/* [in] IVsHierarchy *pHier         */ null, 
+			/* [in] VSCOOKIE docCookie          */ vsDocCookie);
+	}
+
 
 	HRESULT CloseDoc(/* [in] */ VSSLNCLOSEOPTIONS grfCloseOpts) 
 	{
@@ -495,7 +524,7 @@ class CFolderNode : CHierContainer
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
-		/* [unique][in] */ VARIANT *pvaIn,
+		/* [unique][in] */ in VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		int hr = OLECMDERR.E_NOTSUPPORTED;
@@ -571,6 +600,7 @@ class CFolderNode : CHierContainer
 		IVsAddProjectItemDlg srpAddItemDlg = queryService!(IVsAddProjectItemDlg);
 		if(!srpAddItemDlg)
 			return E_FAIL;
+		scope(exit) release(srpAddItemDlg);
 
 		VSADDITEMFLAGS dwFlags;
 		if (fAddNewItem)
@@ -601,7 +631,6 @@ class CFolderNode : CHierContainer
 		}
 		detachBSTR(bstrLocation);
 
-		release(srpAddItemDlg);
 		// NOTE: AddItem() will be called via the hierarchy IVsProject to add items.
 		return hr;
 	}
@@ -725,8 +754,17 @@ class CProjectNode : CFolderNode
 
 	override int GetProperty(VSHPROPID propid, out VARIANT var)
 	{
-		if(propid == VSHPROPID_BrowseObject)
+		switch(propid)
+		{
+		case VSHPROPID_IsNonSearchable:
+			var.vt = VT_BOOL;
+			var.boolVal = true;
+			return S_OK;
+		case VSHPROPID_BrowseObject:
 			return DISP_E_MEMBERNOTFOUND; // delegate to Project
+		default:
+			break;
+		}
 		
 		return super.GetProperty(propid, var);
 	}
@@ -770,7 +808,7 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 	// IVsUIHierarchy
 	override int QueryStatusCommand( 
 		/* [in] */ in VSITEMID itemid,
-		/* [unique][in] */ GUID *pguidCmdGroup,
+		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ in ULONG cCmds,
 		/* [size_is][out][in] */ OLECMD *prgCmds,
 		/* [unique][out][in] */ OLECMDTEXT *pCmdText)
@@ -796,10 +834,10 @@ version(none)
     
 	override int ExecCommand( 
 		/* [in] */ in VSITEMID itemid,
-		/* [unique][in] */ GUID *pguidCmdGroup,
+		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ in DWORD nCmdID,
 		/* [in] */ in DWORD nCmdexecopt,
-		/* [unique][in] */ VARIANT *pvaIn,
+		/* [unique][in] */ in VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		mixin(LogCallMix);
@@ -1219,8 +1257,9 @@ version(none)
 			return null;
 
 		default:
-			if(CHierNode* pNode = itemid in gVsItemMap)
-				return *pNode;
+			synchronized(gVsItemMap_sync)
+				if(CHierNode* pNode = itemid in gVsItemMap)
+					return *pNode;
 		}
 		return null;
 	}
@@ -1582,6 +1621,7 @@ public: // IVsHierarchyEvent propagation
 		/* [in]                        */ in GUID*              rguidEditorType,
 		/* [in]                        */ in wchar*             pszPhysicalView,
 		/* [in]                        */ in GUID*              rguidLogicalView,
+		/* [in]                        */ bool                  moveIfInProject,
 		/* [out, retval]               */ VSADDRESULT*          pResult)
 	{ 
 		*pResult = ADDRESULT_Failure;
@@ -1627,7 +1667,7 @@ public: // IVsHierarchyEvent propagation
 				else
 				{
 					// create and add node for the existing file to the project
-					pNewNode = AddExistingFile(pNode, to_string(rgpszFilesToOpen[i]));
+					pNewNode = AddExistingFile(pNode, to_string(rgpszFilesToOpen[i]), false, false, moveIfInProject);
 				}
 				if(!pNewNode)
 				{
@@ -1748,7 +1788,8 @@ public: // IVsHierarchyEvent propagation
 		return AddExistingFile(pNode, strNewFileName);
 	}
 
-	CFileNode AddExistingFile(CHierContainer pNode, string strFullPathSource, bool fSilent = false, bool fLoad = false)
+	CFileNode AddExistingFile(CHierContainer pNode, string strFullPathSource, 
+							  bool fSilent = false, bool fLoad = false, bool moveIfInProject = false)
 	{
 		// get the proper file name
 		string strFullPath = strFullPathSource;
@@ -1770,7 +1811,7 @@ public: // IVsHierarchyEvent propagation
 			}
 			string canonicalName = tolower(strFullPath);
 			CHierNode node = searchNode(GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == canonicalName; });
-			if(node)
+			if(node && !moveIfInProject)
 			{
 				if (!fSilent)
 				{

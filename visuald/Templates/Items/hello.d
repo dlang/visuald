@@ -1,7 +1,9 @@
-module hello;
+module $safeitemname$;
 
 import std.stdio;
 
-void main()
+int main(char[][]argv)
 {
-}
+    writefln("Hello D-World!\n");
+    return 0;
+} 

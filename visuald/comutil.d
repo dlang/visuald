@@ -642,6 +642,7 @@ extern(Windows) export BSTR SysAllocString(in wchar* str);
 extern(Windows) export BSTR SysAllocStringLen(in wchar* str, int len);
 extern(Windows) export BSTR SysFreeString(BSTR str);
 extern(Windows) export void* CoTaskMemAlloc(int sz);
+extern(Windows) export void CoTaskMemFree(void* ptr);
 
 extern(Windows) export int StringFromGUID2(in GUID *rguid, LPOLESTR lpsz, int cbMax);
 

@@ -173,6 +173,8 @@ class ProjectOptions
 	bool debugattach;
 	string debugremote;
 
+	string filesToClean;
+	
 	this(bool dbg)
 	{
 		Dversion = 2;
@@ -182,6 +184,8 @@ class ProjectOptions
 		debugtarget = "$(TARGETPATH)";
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb.exe";
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
+		
+		filesToClean = "*.obj";
 		
 		runCv2pdb = dbg;
 		symdebug = dbg ? 1 : 0;
@@ -348,6 +352,9 @@ class ProjectOptions
 
 	string replaceEnvironment(string cmd, Config config, string inputfile = "")
 	{
+		if(indexOf(cmd, '$') < 0)
+			return cmd;
+		
 		string configname = config.mName;
 		string projectpath = config.GetProjectPath();
 
@@ -481,6 +488,9 @@ class ProjectOptions
 		elem ~= new xml.Element("debugworkingdir", toElem(debugworkingdir));
 		elem ~= new xml.Element("debugattach", toElem(debugattach));
 		elem ~= new xml.Element("debugremote", toElem(debugremote));
+		
+		elem ~= new xml.Element("filesToClean", toElem(filesToClean));
+		
 	}
 
 	void readXML(xml.Element elem)
@@ -582,6 +592,8 @@ class ProjectOptions
 		fromElem(elem, "debugworkingdir", debugworkingdir);
 		fromElem(elem, "debugattach", debugattach);
 		fromElem(elem, "debugremote", debugremote);
+
+		fromElem(elem, "filesToClean", filesToClean);
 	}
 };
 
@@ -1433,6 +1445,82 @@ class Config :	DisposingComObject,
 		return fname;
 	}
 
+	string expandedAbsoluteFilename(string name)
+	{
+		string workdir = GetProjectDir();
+		string expname = mProjectOptions.replaceEnvironment(name, this);
+		string absname = makeFilenameAbsolute(expname, workdir);
+		return absname;
+	}
+	
+	string[] GetBuildFiles()
+	{
+		string workdir = normalizeDir(GetProjectDir());
+		string outdir = normalizeDir(makeFilenameAbsolute(GetOutDir(), workdir));
+		string intermediatedir = normalizeDir(makeFilenameAbsolute(GetIntermediateDir(), workdir));
+		
+		string target = makeFilenameAbsolute(GetTargetPath(), workdir);
+		string cmdfile = makeFilenameAbsolute(GetCommandLinePath(), workdir);
+
+		string[] files;
+		files ~= target;
+		files ~= cmdfile;
+		files ~= makeFilenameAbsolute(GetDependenciesPath(), workdir);
+		
+		if(mProjectOptions.runCv2pdb)
+		{
+			files ~= target ~ "_cv";
+			files ~= addExt(target, "pdb");
+		}
+		files ~= addExt(target, "map");
+
+		if(mProjectOptions.createImplib)
+			files ~= addExt(target, "lib");
+
+		if(mProjectOptions.doDocComments)
+		{
+			if(mProjectOptions.docdir.length)
+				files ~= expandedAbsoluteFilename(normalizeDir(mProjectOptions.docdir)) ~ "*.ddoc";
+			if(mProjectOptions.docname.length)
+				files ~= expandedAbsoluteFilename(mProjectOptions.docname);
+		}
+		if(mProjectOptions.doHdrGeneration)
+		{
+			if(mProjectOptions.hdrdir.length)
+				files ~= expandedAbsoluteFilename(normalizeDir(mProjectOptions.hdrdir)) ~ "*.di";
+			if(mProjectOptions.hdrname.length)
+				files ~= expandedAbsoluteFilename(mProjectOptions.hdrname);
+		}
+		if(mProjectOptions.doXGeneration)
+		{
+			if(mProjectOptions.xfilename.length)
+				files ~= expandedAbsoluteFilename(mProjectOptions.xfilename);
+		}
+
+		string[] toclean = split(mProjectOptions.filesToClean, ";");
+		foreach(s; toclean)
+		{
+			files ~= outdir ~ s;
+			if(outdir != intermediatedir)
+				files ~= intermediatedir ~ s;
+		}
+		searchNode(mProvider.mProject.GetRootNode(), 
+			delegate (CHierNode n) { 
+				if(CFileNode file = cast(CFileNode) n)
+				{
+					string outname = GetOutputFile(file);
+					if (outname.length && outname != file.GetFilename())
+					{
+						files ~= makeFilenameAbsolute(outname, workdir);
+						files ~= makeFilenameAbsolute(outname ~ ".cmd", workdir);
+					}
+				}
+				return false;
+			});
+		
+		return files;
+	}
+
 	string GetCompileCommand(CFileNode file)
 	{
 		string tool = GetCompileTool(file);
@@ -1798,9 +1886,9 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	override HRESULT GetUnmarshalClass
 		(
 		/+[in]+/ in IID* riid,
-		/+[in, unique]+/ void *pv,
+		/+[in, unique]+/ in void *pv,
 		/+[in]+/ in DWORD dwDestContext,
-		/+[in, unique]+/ void *pvDestContext,
+		/+[in, unique]+/ in void *pvDestContext,
 		/+[in]+/ in DWORD mshlflags,
 		/+[out]+/ CLSID *pCid
 		)
@@ -1815,9 +1903,9 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	override HRESULT GetMarshalSizeMax
 		(
 		/+[in]+/ in IID* riid,
-		/+[in, unique]+/ void *pv,
+		/+[in, unique]+/ in void *pv,
 		/+[in]+/ in DWORD dwDestContext,
-		/+[in, unique]+/ void *pvDestContext,
+		/+[in, unique]+/ in void *pvDestContext,
 		/+[in]+/ in DWORD mshlflags,
 		/+[out]+/ DWORD *pSize
 		)
@@ -1833,9 +1921,9 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		(
 		/+[in, unique]+/ IStream pStm,
 		/+[in]+/ in IID* riid,
-		/+[in, unique]+/ void *pv,
+		/+[in, unique]+/ in void *pv,
 		/+[in]+/ in DWORD dwDestContext,
-		/+[in, unique]+/ void *pvDestContext,
+		/+[in, unique]+/ in void *pvDestContext,
 		/+[in]+/ in DWORD mshlflags
 		)
 	{

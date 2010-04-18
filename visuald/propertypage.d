@@ -506,8 +506,9 @@ class GeneralPropertyPage : ProjectPropertyPage
 		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, [ "Executable", "Library" ], false));
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
+		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
 		AddControl("",              mOtherDMD = new CheckBox(mCanvas, "Use other compiler"));
-		AddControl("DMD Path", mDmdPath = new Text(mCanvas));
+		AddControl("DMD Path",      mDmdPath = new Text(mCanvas));
 	}
 
 	void UpdateDirty(bool bDirty)
@@ -529,6 +530,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		mDVersion.setSelection(options.Dversion - 1);
 		mOutputPath.setText(options.outdir);
 		mIntermediatePath.setText(options.objdir);
+		mFilesToClean.setText(options.filesToClean);
 		
 		EnableControls();
 	}
@@ -542,6 +544,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		changes += changeOption(cast(ubyte) (mDVersion.getSelection() + 1), options.Dversion, refoptions.Dversion);
 		changes += changeOption(mOutputPath.getText(), options.outdir, refoptions.outdir);
 		changes += changeOption(mIntermediatePath.getText(), options.objdir, refoptions.objdir);
+		changes += changeOption(mFilesToClean.getText(), options.filesToClean, refoptions.filesToClean);
 		return changes;
 	}
 
@@ -551,6 +554,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 	ComboBox mDVersion;
 	Text mOutputPath;
 	Text mIntermediatePath;
+	Text mFilesToClean;
 }
 
 class DebuggingPropertyPage : ProjectPropertyPage

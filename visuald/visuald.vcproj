@@ -132,6 +132,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\oledatasource.d"
+				>
+			</File>
+			<File
 				RelativePath=".\propertypage.d"
 				>
 			</File>

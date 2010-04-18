@@ -2,10 +2,12 @@
   <ProjectGuid>$guid1$</ProjectGuid>
   <Config name="Debug">
     <!-- default to defaults -->
+    <exefile>$(OutDir)\$(ProjectName).dll</exefile>
   </Config>
   <Config name="Release">
+    <exefile>$(OutDir)\$(ProjectName).dll</exefile>
   </Config>
   <Folder name="$safeprojectname$">
-    <File path="Program.d"></File>
+    <File path="dllmain.d"></File>
   </Folder>
 </DProject>

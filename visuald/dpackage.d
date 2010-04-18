@@ -46,6 +46,8 @@ struct LanguageProperty
 
 const string plk_version = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
                            extractDefine(import("version"), "VERSION_MINOR");
+const string full_version = plk_version  ~ "." ~
+                           extractDefine(import("version"), "VERSION_REVISION");
 
 /*---------------------------------------------------------
  * Globals
@@ -356,7 +358,7 @@ class Package : DisposingComObject,
 	override int ProductID(BSTR* pbstrPID)
 	{
 		logCall("%s.ProductID(pbstrPID=%s)", this, pbstrPID);
-		*pbstrPID = allocBSTR(g_packageVersion);
+		*pbstrPID = allocBSTR(full_version);
 		return S_OK;
 	}
 	override int ProductDetails(BSTR* pbstrProductDetails)

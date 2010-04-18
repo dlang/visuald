@@ -355,9 +355,9 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 
 		// Miscellaneous Files Project
 		scope RegKey keyProject2 = new RegKey(keyRoot, registrationRoot ~ regMiscFiles ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid ~ "\\/1"w);
-		keyProject1.Set(null, g_languageName);
-		keyProject1.Set("TemplatesDir"w, templatePath ~ "\\Items"w);
-		keyProject1.Set("SortPriority"w, 25);
+		keyProject2.Set(null, g_languageName);
+		keyProject2.Set("TemplatesDir"w, templatePath ~ "\\Items"w);
+		keyProject2.Set("SortPriority"w, 25);
 
 		foreach(guid; guids_propertyPages)
 		{

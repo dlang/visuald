@@ -159,7 +159,7 @@ public:
 			string msg = "Building " ~ mConfig.GetTargetPath() ~ "...\n";
 			if(m_pIVsOutputWindowPane)
 				m_pIVsOutputWindowPane.OutputString(_toUTF16z(msg));
-        		
+
 			string workdir = mConfig.GetProjectDir();
 			string outdir = makeFilenameAbsolute(mConfig.GetOutDir(), workdir);
 			if(!exists(outdir))
@@ -215,6 +215,27 @@ public:
 
 	bool DoClean()
 	{
+		string[] files = mConfig.GetBuildFiles();
+		foreach(string file; files)
+		{
+			try
+			{
+				if(indexOf(file,'*') >= 0 || indexOf(file,'?') >= 0)
+				{
+					string dir = dirname(file);
+					string pattern = basename(file);
+					foreach(string f; dirEntries(dir, SpanMode.shallow))
+						if(fnmatch(f, pattern))
+							std.file.remove(f);
+				}
+				else if(std.file.exists(file))
+					std.file.remove(file);
+			}
+			catch(FileException e)
+			{
+				OutputText("cannot delete " ~ file ~ ":" ~ e.msg);
+			}
+		}
 		return true;
 	}
 	

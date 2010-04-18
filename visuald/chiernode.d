@@ -35,7 +35,8 @@ import chiercontainer;
 
 const UINT IDMX_NULLMENU = 0;
 
-CHierNode[VSITEMID] gVsItemMap;
+__gshared CHierNode[VSITEMID] gVsItemMap;
+__gshared Object gVsItemMap_sync;
 
 class CIVsTaskItemArray {}
 class OpenDocumentList {}
@@ -50,15 +51,22 @@ class OpenDocumentList {}
 //---------------------------------------------------------------------------
 class CHierNode : DisposingDispatchObject
 {
+	shared static this()
+	{
+		gVsItemMap_sync = new Object;
+	}
+	
 	this()
 	{
 		m_grfStateFlags = ST_DefaultFlags;
-		gVsItemMap[GetVsItemID()] = this;
+		synchronized(gVsItemMap_sync)
+			gVsItemMap[GetVsItemID()] = this;
 		logCall("added %d to gVsItemMap", GetVsItemID());
 	}
 	~this()
 	{
-		gVsItemMap.remove(GetVsItemID());
+		synchronized(gVsItemMap_sync)
+			gVsItemMap.remove(GetVsItemID());
 		logCall("removed %d from gVsItemMap", GetVsItemID());
 	}
 
@@ -172,7 +180,10 @@ public:
 			pvar.vt = VT_I4;
 			pvar.lVal = GetVsItemID();
 			return S_OK;
-
+		case VSHPROPID_IsNonSearchable:
+			pvar.vt = VT_BOOL;
+			pvar.boolVal = false;
+			return S_OK;
 		case VSHPROPID_BrowseObject:
 			return QueryInterface(&IDispatch.iid, cast(void **)&pvar.pdispVal);
 
@@ -205,23 +216,23 @@ public:
 	// Defaults do nothing
 	int OnStartLabelEdit()
 	{
-		return S_OK;
+		return E_NOTIMPL;
 	}
 	int OnCommitLabelEdit()
 	{
-		return S_OK;
+		return E_NOTIMPL;
 	}
 	int OnCancelLabelEdit()
 	{
-		return S_OK;
+		return E_NOTIMPL;
 	}
 	
 	// VSHPROPID.EditLabel
 	int GetEditLabel(BSTR *ppEditLabel)
 	{
-		//*ppEditLabel = allocBSTR(GetName());
-		//return S_OK;
-		return E_NOTIMPL;
+		*ppEditLabel = allocBSTR(GetName());
+		return S_OK;
+		//return E_NOTIMPL;
 	}
 	int SetEditLabel(in BSTR pEditLabel)
 	{
@@ -319,8 +330,9 @@ public:
 	// gone away (different than the zombie case).
 	static bool IsValidCHierNode(VSITEMID itemid)
 	{
-		if(itemid in gVsItemMap)
-			return true;
+		synchronized(gVsItemMap_sync)
+			if(itemid in gVsItemMap)
+				return true;
 		return false;
 	}
 
@@ -422,7 +434,7 @@ public:
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
-		/* [unique][in] */ VARIANT *pvaIn,
+		/* [unique][in] */ in VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		//ATLTRACENOTIMPL(_T("CHierNode::IOleCommandTarget::Exec"));

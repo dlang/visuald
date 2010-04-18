@@ -21,6 +21,7 @@ Major Features
   - import statement completion
   - goto definition (using JSON file from compilation)
   - smart indentation
+  - highlight/jump-to matching braces
 * Supported Visual Studio versions
   - VS.NET 2003 (some limitations apply)
   - VS 2005
@@ -49,6 +50,9 @@ There is a click-through-installer available at http://www.dsource.org/projects/
 that will guide you through the intallation process. The installer lets you select the
 Visual Studio Version for which you want Visual D to be installed. It will always install
 for all users, not only for a single user.
+
+For debugging applications built with DMD, you should also install cv2pdb from
+http://www.dsource.org/projects/cv2pdb.
 
 Building from Source
 --------------------

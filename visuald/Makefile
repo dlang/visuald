@@ -21,7 +21,7 @@ SRC = dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d \
-      intellisense.d
+      intellisense.d oledatasource.d
 RSRC = resources/dimagelist.bmp
 
 #      $(XMLP_SRC) $(IDL_SRC)
@@ -50,6 +50,8 @@ DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J..
 LIBS = phobos.lib uuid.lib advapi32.lib comdlg32.lib \
 	ole32.lib oleaut32.lib comctl32.lib user32.lib shell32.lib gdi32.lib
 
+DEPS = Makefile ..\VERSION $(DMD)
+
 all: debug
 # lexer exe
 
@@ -63,12 +65,12 @@ $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
 	$(CV2PDB) -D2.043 $? $@
 
 #-mixin=$(DBGDIR)\$(PROJECT).mixin
-$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(DBG_VSI_LIB) Makefile
+$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(DBG_VSI_LIB) $(DEPS)
 	$(DMD) -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
 		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(RES)
 <<NOKEEP
 
-$(RELDIR)\$(PROJECT).dll : $(SRC) $(DEF) $(RES) $(REL_VSI_LIB) Makefile
+$(RELDIR)\$(PROJECT).dll : $(SRC) $(DEF) $(RES) $(REL_VSI_LIB) $(DEPS)
 	$(DMD) -of$@ -O $(DFLAGS) -map $@.map @<<
 		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RES)
 <<NOKEEP

@@ -11,3 +11,18 @@ Version history
 
   * initial release
 
+2010-04-14 Version 0.3.2
+
+  * added switch "use other compiler" to project settings
+  * disabled settings if respective enable switch is off
+  
+2010-04-18 Version 0.3.3
+
+  * now shows full version in about box
+  * added README, LICENSE and CHANGES to installer
+  * added DnD inside project
+  * fixed registration of D templates for "New File"
+  * fixed multi-hreading issue, e.g. causing find in entire solution to fail
+  * added "Clean" project
+  * cleaned up and added more project templates 
+
