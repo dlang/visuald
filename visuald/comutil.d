@@ -727,6 +727,13 @@ wchar* _toUTF16z(string s)
 	return cast(wchar*)toUTF16z(s);
 }
 
+wchar* _toUTF16zw(wstring s)
+{
+	// const for D2
+	wstring sz = s ~ "\0"w;
+	return cast(wchar*)sz.ptr;
+}
+
 string to_string(in wchar* pText, int iLength)
 {
 	if(!pText)

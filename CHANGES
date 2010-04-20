@@ -26,3 +26,9 @@ Version history
   * added "Clean" project
   * cleaned up and added more project templates 
 
+2010-04-20 Version 0.3.4
+
+  * added support for command Edit.InvokeSnippetFromShortcut
+  * installer now requests admin execution level, so it does not fail on Vista or 
+    Windows7
+  * removed VS Express version from installer

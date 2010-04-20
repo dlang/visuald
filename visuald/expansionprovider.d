@@ -253,7 +253,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return false;
 	}
 
-	bool InsertNamedExpansion(IVsTextView view, string title, string path, TextSpan pos, bool showDisambiguationUI)
+	bool InsertNamedExpansion(IVsTextView view, BSTR title, BSTR path, TextSpan pos, bool showDisambiguationUI)
 	{
 		if (mSource.IsCompletorActive)
 			mSource.DismissCompletor();
@@ -262,7 +262,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		if (expansionActive)
 			EndTemplateEditing(true);
 
-		int hr = vsExpansion.InsertNamedExpansion(_toUTF16z(title), _toUTF16z(path), pos, this, 
+		int hr = vsExpansion.InsertNamedExpansion(title, path, pos, this, 
 		                                          g_languageCLSID, showDisambiguationUI ? 1 : 0, &expansionSession);
 
 		if (hr != S_OK || !expansionSession)
@@ -283,7 +283,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 	}
 
 	/// Returns S_OK if match found, S_FALSE if expansion UI is shown, and error otherwise
-	int FindExpansionByShortcut(IVsTextView view, string shortcut, ref TextSpan span, bool showDisambiguationUI, out string title, out string path)
+	int InvokeExpansionByShortcut(IVsTextView view, wstring shortcut, ref TextSpan span, bool showDisambiguationUI, out string title, out string path)
 	{
 		if (expansionActive) 
 			EndTemplateEditing(true);
@@ -292,15 +292,30 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		title = "";
 		path = "";
 
-		IVsExpansionManager mgr = queryService!(IVsExpansionManager);
-		if (!mgr)
+		mView = view;
+		IVsTextManager2 textmgr = queryService!(VsTextManager, IVsTextManager2);
+		if(!textmgr)
 			return E_FAIL;
+		scope(exit) release(textmgr);
+
+		IVsExpansionManager exmgr;
+		textmgr.GetExpansionManager(&exmgr);
+		if (!exmgr)
+			return E_FAIL;
+		scope(exit) release(exmgr);
 
 		BSTR bstrPath, bstrTitle;
-		int hr = mgr.GetExpansionByShortcut(this, g_languageCLSID, _toUTF16z(shortcut), mView, 
-						    &span, showDisambiguationUI ? 1 : 0, &bstrPath, &bstrTitle);
+		int hr = exmgr.GetExpansionByShortcut(this, g_languageCLSID, _toUTF16zw(shortcut), mView, 
+											  &span, showDisambiguationUI ? 1 : 0, &bstrPath, &bstrTitle);
+		if(FAILED(hr) || !bstrPath || !bstrTitle)
+			return S_FALSE; // when no shortcut found, do nothing
+		
+		if(!InsertNamedExpansion(view, bstrTitle, bstrPath, span, showDisambiguationUI))
+			hr = E_FAIL;
+		
 		path = detachBSTR(bstrPath);
 		title = detachBSTR(bstrTitle);
+
 		return hr;
 	}
 

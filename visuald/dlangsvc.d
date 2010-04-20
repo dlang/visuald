@@ -15,6 +15,7 @@ import std.c.windows.com;
 import std.string;
 import std.ctype;
 import std.utf;
+import std.conv;
 version(D_Version2) import std.algorithm;
 else import std.math2;
 
@@ -257,7 +258,7 @@ class LanguageService : DisposingComObject,
 
 	bool IsDebugging()
 	{
-		return mDbgMode != DBGMODE_Design;
+		return (mDbgMode & ~ DBGMODE_EncMask) != DBGMODE_Design;
         }
 
 private:
@@ -871,7 +872,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	ExpansionProvider GetExpansionProvider()
 	{
 		if(!mExpansionProvider)
-			mExpansionProvider = new ExpansionProvider(this);
+			mExpansionProvider = addref(new ExpansionProvider(this));
 		return mExpansionProvider;
 	}
 
@@ -1234,7 +1235,19 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 	int HandleSnippet()
 	{
-		return E_NOTIMPL;
+		int line, idx;
+		if(mView.GetCaretPos(&line, &idx) != S_OK)
+			return S_FALSE;
+		int startIdx, endIdx;
+		if(!mCodeWinMgr.mSource.GetWordExtent(line, idx, WORDEXT_CURRENT, startIdx, endIdx))
+			return S_FALSE;
+		
+		wstring shortcut = mCodeWinMgr.mSource.GetText(line, startIdx, line, endIdx);
+		TextSpan ts = TextSpan(startIdx, line, endIdx, line);
+		
+		string title, path;
+		ExpansionProvider ep = GetExpansionProvider();
+		return ep.InvokeExpansionByShortcut(mView, shortcut, ts, true, title, path);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1381,12 +1394,36 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 	override int GetDataTipText( /* [out][in] */ TextSpan *pSpan, /* [out] */ BSTR *pbstrText)
 	{
 		// currently disabled to show data breakpoints while debugging
-		return E_NOTIMPL;
+		if(mCodeWinMgr.mLangSvc.IsDebugging())
+			return E_NOTIMPL;
 
-		pSpan.iEndIndex = pSpan.iStartIndex + 1;
-		wstring tip = "tip";
-		*pbstrText = allocwBSTR(tip);
+	version(none) // disabled until useful
+	{
+		if(HRESULT hr = GetWordExtent(pSpan.iStartLine, pSpan.iStartIndex, WORDEXT_CURRENT, pSpan))
+			return hr;
+
+		string word = toUTF8(mCodeWinMgr.mSource.GetText(pSpan.iStartLine, pSpan.iStartIndex, pSpan.iEndLine, pSpan.iEndIndex));
+		if(word.length <= 0)
+			return S_FALSE;
+
+		Definition[] defs = Package.GetLibInfos().findDefinition(word);
+		if(defs.length == 0)
+			return S_FALSE;
+
+		string msg = word ~ "\n";
+		foreach(def; defs)
+		{
+			string m = def.kind ~ "\t" ~ def.filename ~ ":" ~ to!(string)(def.line) ~ "\n";
+			msg ~= m;
+		}
+		*pbstrText = allocBSTR(msg);
 		return S_OK; // E_NOTIMPL;
+	}
+	else
+	{
+		return E_NOTIMPL;
+	}
+
 	}
 
 	override int GetPairExtents(in int iLine, in CharIndex iIndex, /* [out] */ TextSpan *pSpan)

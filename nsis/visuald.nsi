@@ -1,5 +1,8 @@
 ;VisualD installation script
 
+; define EXPRESS to add Express Versions to the selection of installable VS versions
+; !define EXPRESS
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -41,7 +44,10 @@
   !define VS2005_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\8.0
   !define VS2008_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\9.0
   !define VS2010_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\10.0
-  !define VCEXPRESS_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
+!ifdef EXPRESS
+  !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
+  !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
+!endif
   !define VDSETTINGS_KEY          "\ToolsOptionsPages\Projects\Visual D Settings"
   
   ;Default installation folder
@@ -50,8 +56,8 @@
   ;Get installation folder from registry if available
   InstallDirRegKey HKCU "Software\${APPNAME}" ""
 
-  ;Request application privileges for Windows Vista
-  RequestExecutionLevel user
+  ;Request admin privileges for Windows Vista
+  RequestExecutionLevel admin
 
   ReserveFile "dmdinstall.ini"
 
@@ -178,13 +184,23 @@ ${MementoSection} "Register with VS 2010" SecVS2010
   
 ${MementoSectionEnd}
 
+!ifdef EXPRESS
 ;--------------------------------
-${MementoUnselectedSection} "Register with VC-Express" SecVCExpress
+${MementoUnselectedSection} "Register with VC-Express 2008" SecVCExpress2008
 
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXPRESS_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXPRESS_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXP2008_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   
 ${MementoSectionEnd}
+
+;--------------------------------
+${MementoUnselectedSection} "Register with VC-Express 2010" SecVCExpress2010
+
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXP2010_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  
+${MementoSectionEnd}
+!endif
 
 ${MementoSectionDone}
 
@@ -197,7 +213,10 @@ ${MementoSectionDone}
   LangString DESC_SecVS2005 ${LANG_ENGLISH} "Register for usage in Visual Studio 2005."
   LangString DESC_SecVS2008 ${LANG_ENGLISH} "Register for usage in Visual Studio 2008."
   LangString DESC_SecVS2010 ${LANG_ENGLISH} "Register for usage in Visual Studio 2010."
-  LangString DESC_SecVCExpress ${LANG_ENGLISH} "Register for usage in Visual C++ Express (experimental and unusable)."
+!ifdef EXPRESS
+  LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
+  LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
+!endif
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -206,7 +225,10 @@ ${MementoSectionDone}
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2005} $(DESC_SecVS2005)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2008} $(DESC_SecVS2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2010} $(DESC_SecVS2010)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress} $(DESC_SecVCExpress)
+!ifdef EXPRESS
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
+!endif
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 
@@ -219,7 +241,10 @@ Section "Uninstall"
   ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2005_REGISTRY_KEY}'
   ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2008_REGISTRY_KEY}'
   ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2010_REGISTRY_KEY}'
-  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VCEXPRESS_REGISTRY_KEY}'
+!ifdef EXPRESS
+  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
+  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
+!endif
 
   ;ADD YOUR OWN FILES HERE...
   Delete "$INSTDIR\${DLLNAME}"
@@ -274,12 +299,21 @@ Function .onInit
     SectionSetFlags ${SecVS2010} ${SF_RO}
   Installed_VS2010:
 
-  ; detect VCExpress
+!ifdef EXPRESS
+  ; detect VCExpress 2008
   ClearErrors
-  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VCEXPRESS_REGISTRY_KEY}" InstallDir
-  IfErrors 0 Installed_VCExpress
-    SectionSetFlags ${SecVcExpress} ${SF_RO}
-  Installed_VCExpress:
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VCEXP2008_REGISTRY_KEY}" InstallDir
+  IfErrors 0 Installed_VCExpress2008
+    SectionSetFlags ${SecVcExpress2008} ${SF_RO}
+  Installed_VCExpress2008:
+
+  ; detect VCExpress 2010
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VCEXP2010_REGISTRY_KEY}" InstallDir
+  IfErrors 0 Installed_VCExpress2010
+    SectionSetFlags ${SecVcExpress2010} ${SF_RO}
+  Installed_VCExpress2010:
+!endif
 
   !insertmacro INSTALLOPTIONS_EXTRACT "dmdinstall.ini"
   
