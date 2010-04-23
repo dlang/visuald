@@ -969,19 +969,23 @@ class Project : CVsHierarchy,
 		mixin(LogCallMix);
 
 		// the root item will be removed without asking the project itself
-		if(itemid == VSITEMID_ROOT || itemid == VSITEMID_SELECTION || itemid == VSITEMID_NIL ||
-		   dwDelItemOp != DELITEMOP_RemoveFromProject)
+		if(itemid == VSITEMID_ROOT || itemid == VSITEMID_NIL || dwDelItemOp != DELITEMOP_RemoveFromProject)
 			return E_INVALIDARG;
 
-		CHierNode node = VSITEMID2Node(itemid);
-		if(!node)
-			return E_INVALIDARG;
+		CHierNode[] nodes = VSITEMID2Nodes(itemid);
+		foreach(node; nodes)
+		{
+			if(!node)
+				return E_INVALIDARG;
 
-		if(CFileNode fnode = cast(CFileNode) node)
-			if(HRESULT hr = fnode.CloseDoc(SLNSAVEOPT_PromptSave))
-				return hr;
+			if(CFileNode fnode = cast(CFileNode) node)
+				if(HRESULT hr = fnode.CloseDoc(SLNSAVEOPT_PromptSave))
+					return hr;
 
-		return node.GetParent().Delete(node, this);
+			if(node.GetParent()) // might be already removed because folder has been removed?
+				node.GetParent().Delete(node, this);
+		}
+		return S_OK;
 	}
 
 	// IVsHierarchy

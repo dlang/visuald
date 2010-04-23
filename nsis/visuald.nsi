@@ -3,12 +3,19 @@
 ; define EXPRESS to add Express Versions to the selection of installable VS versions
 ; !define EXPRESS
 
+; define CV2PDB to include cv2pdb installation (expected at ../../../cv2pdb/trunk
+!define CV2PDB
+
 ;--------------------------------
 ;Include Modern UI
 
   !include "MUI2.nsh"
   !include "Memento.nsh"
+  !include "Sections.nsh"
   !include "InstallOptions.nsh"
+
+  !include "uninstall_helper.nsh"
+  !include "replaceinfile.nsh"
 
 ;--------------------------------
 ;General
@@ -96,50 +103,61 @@
 ;--------------------------------
 ;Installer Section
 
+Section -openlogfile
+ CreateDirectory "$INSTDIR"
+ IfFileExists "$INSTDIR\${UninstLog}" +3
+  FileOpen $UninstLog "$INSTDIR\${UninstLog}" w
+ Goto +4
+  SetFileAttributes "$INSTDIR\${UninstLog}" NORMAL
+  FileOpen $UninstLog "$INSTDIR\${UninstLog}" a
+  FileSeek $UninstLog 0 END
+SectionEnd
+
 Section "Visual Studio package" SecPackage
 
   SectionIn RO
-  SetOutPath "$INSTDIR"
+  ${SetOutPath} "$INSTDIR"
   
-  ;ADD YOUR OWN FILES HERE...
-  File ..\bin\${CONFIG}\${DLLNAME}
-  File ..\README
-  File ..\LICENSE
-  File ..\CHANGES
-
-  SetOutPath "$INSTDIR\Templates\Items"
-  File ..\visuald\Templates\Items\empty.d
-  File ..\visuald\Templates\Items\hello.d
-  File ..\visuald\Templates\Items\items.vsdir
-
-  SetOutPath "$INSTDIR\Templates\ProjectItems\ConsoleApp"
-  File ..\visuald\Templates\ProjectItems\ConsoleApp\main.d
-  File ..\visuald\Templates\ProjectItems\ConsoleApp\ConsoleApp.vstemplate
-  File ..\visuald\Templates\ProjectItems\ConsoleApp\ConsoleApp.visualdproj
-
-  SetOutPath "$INSTDIR\Templates\ProjectItems\WindowsApp"
-  File ..\visuald\Templates\ProjectItems\WindowsApp\winmain.d
-  File ..\visuald\Templates\ProjectItems\WindowsApp\WindowsApp.vstemplate
-  File ..\visuald\Templates\ProjectItems\WindowsApp\WindowsApp.visualdproj
-
-  SetOutPath "$INSTDIR\Templates\ProjectItems\DynamicLib"
-  File ..\visuald\Templates\ProjectItems\DynamicLib\dllmain.d
-  File ..\visuald\Templates\ProjectItems\DynamicLib\DynamicLib.vstemplate
-  File ..\visuald\Templates\ProjectItems\DynamicLib\DynamicLib.visualdproj
-
-  SetOutPath "$INSTDIR\Templates\ProjectItems\StaticLib"
-  File ..\visuald\Templates\ProjectItems\StaticLib\lib.d
-  File ..\visuald\Templates\ProjectItems\StaticLib\StaticLib.vstemplate
-  File ..\visuald\Templates\ProjectItems\StaticLib\StaticLib.visualdproj
-
-  SetOutPath "$INSTDIR\Templates\Projects"
-  File ..\visuald\Templates\Projects\DTemplates.vsdir
-
-  SetOutPath "$INSTDIR\Templates\CodeSnippets"
-  File ..\visuald\Templates\CodeSnippets\SnippetsIndex.xml
+  ${File} ..\bin\${CONFIG}\ ${DLLNAME}
+  ${File} ..\ README
+  ${File} ..\ LICENSE
+  ${File} ..\ CHANGES
   
-  SetOutPath "$INSTDIR\Templates\CodeSnippets\Snippets"
-  File ..\visuald\Templates\CodeSnippets\Snippets\*.snippet
+  ${SetOutPath} "$INSTDIR\Templates"
+  ${SetOutPath} "$INSTDIR\Templates\Items"
+  ${File} ..\visuald\Templates\Items\ empty.d
+  ${File} ..\visuald\Templates\Items\ hello.d
+  ${File} ..\visuald\Templates\Items\ items.vsdir
+
+  ${SetOutPath} "$INSTDIR\Templates\ProjectItems"
+  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleApp"
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ main.d
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ ConsoleApp.vstemplate
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ ConsoleApp.visualdproj
+
+  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\WindowsApp"
+  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ winmain.d
+  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ WindowsApp.vstemplate
+  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ WindowsApp.visualdproj
+
+  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\DynamicLib"
+  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ dllmain.d
+  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ DynamicLib.vstemplate
+  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ DynamicLib.visualdproj
+
+  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\StaticLib"
+  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ lib.d
+  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ StaticLib.vstemplate
+  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ StaticLib.visualdproj
+
+  ${SetOutPath} "$INSTDIR\Templates\Projects"
+  ${File} ..\visuald\Templates\Projects\ DTemplates.vsdir
+
+  ${SetOutPath} "$INSTDIR\Templates\CodeSnippets"
+  ${File} ..\visuald\Templates\CodeSnippets\ SnippetsIndex.xml
+  
+  ${SetOutPath} "$INSTDIR\Templates\CodeSnippets\Snippets"
+  ${File} ..\visuald\Templates\CodeSnippets\Snippets\ *.snippet
 
   ;Store installation folder
   WriteRegStr HKCU "Software\${APPNAME}" "" $INSTDIR
@@ -173,7 +191,7 @@ ${MementoSection} "Register with VS 2008" SecVS2008
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2008_REGISTRY_KEY}'
   WriteRegStr ${VS_REGISTRY_ROOT} "${VS2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir 
-  
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -202,9 +220,51 @@ ${MementoUnselectedSection} "Register with VC-Express 2010" SecVCExpress2010
 ${MementoSectionEnd}
 !endif
 
+!ifdef CV2PDB
+;--------------------------------
+${MementoSection} "cv2pdb" SecCv2pdb
+
+  ${SetOutPath} "$INSTDIR\cv2pdb"
+  ${File} ..\..\..\cv2pdb\trunk\ autoexp.expand
+  ${File} ..\..\..\cv2pdb\trunk\ autoexp.visualizer
+  ${File} ..\..\..\cv2pdb\trunk\bin\Release\ cv2pdb.exe
+  ${File} ..\..\..\cv2pdb\trunk\bin\Release\ dviewhelper.dll
+  ${File} ..\..\..\cv2pdb\trunk\ README
+  ${File} ..\..\..\cv2pdb\trunk\ LICENSE
+  ${File} ..\..\..\cv2pdb\trunk\ CHANGES
+  ${File} ..\..\..\cv2pdb\trunk\ VERSION
+  ${File} ..\..\..\cv2pdb\trunk\ FEATURES
+  ${File} ..\..\..\cv2pdb\trunk\ TODO
+
+  !insertmacro ReplaceInFile "$INSTDIR\cv2pdb\autoexp.expand" "dviewhelper" "$INSTDIR\cv2pdb\DViewHelper" NoBackup
+
+  Push ${SecVS_NET}
+  Push ${VS_NET_REGISTRY_KEY}
+  Call PatchAutoExp
+  
+  Push ${SecVS2005}
+  Push ${VS2005_REGISTRY_KEY}
+  Call PatchAutoExp
+  
+  Push ${SecVS2008}
+  Push ${VS2008_REGISTRY_KEY}
+  Call PatchAutoExp
+  
+  Push ${SecVS2010}
+  Push ${VS2010_REGISTRY_KEY}
+  Call PatchAutoExp
+  
+${MementoSectionEnd}
+!endif
+
 ${MementoSectionDone}
 
-;--------------------------------
+Section -closelogfile
+ FileClose $UninstLog
+ SetFileAttributes "$INSTDIR\${UninstLog}" READONLY|SYSTEM|HIDDEN
+SectionEnd
+
+ ;--------------------------------
 ;Descriptions
 
   ;Language strings
@@ -217,6 +277,10 @@ ${MementoSectionDone}
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
 !endif
+!ifdef CV2PDB
+  LangString DESC_SecCv2pdb ${LANG_ENGLISH} "cv2pdb is necessary to debug executables in Visual Studio."
+  LangString DESC_SecCv2pdb2 ${LANG_ENGLISH} "$\r$\nYou might not want to install it, if you have already installed it elsewhere."
+!endif  
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -228,6 +292,9 @@ ${MementoSectionDone}
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
+!endif
+!ifdef CV2PDB
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecCv2pdb} $(DESC_SecCv2pdb)$(DESC_SecCv2pdb2)
 !endif
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -246,10 +313,25 @@ Section "Uninstall"
   ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
+!ifdef CV2PDB
+  Push ${VS_NET_REGISTRY_KEY}
+  Call un.PatchAutoExp
+  
+  Push ${VS2005_REGISTRY_KEY}
+  Call un.PatchAutoExp
+  
+  Push ${VS2008_REGISTRY_KEY}
+  Call un.PatchAutoExp
+  
+  Push ${VS2010_REGISTRY_KEY}
+  Call un.PatchAutoExp
+!endif
+  
+  Call un.installedFiles
   ;ADD YOUR OWN FILES HERE...
-  Delete "$INSTDIR\${DLLNAME}"
-  Delete "$INSTDIR\Uninstall.exe"
+  ;Delete "$INSTDIR\${DLLNAME}"
 
+  Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 
   DeleteRegKey ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}"
@@ -334,4 +416,62 @@ FunctionEnd
 Function ValidateDMDInstallPage
   ReadINIStr $DMDInstallDir "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State"
   WriteRegStr HKLM "Software\${APPNAME}" "DMDInstallDir" $DMDInstallDir
+FunctionEnd
+
+!define AutoExpPath ..\Packages\Debugger\autoexp.dat
+
+Function PatchAutoExp
+  Exch $1
+  Exch
+  Exch $0
+  Push $2
+  
+  SectionGetFlags $0 $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} enabled NoInstall
+
+enabled:
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "$1" InstallDir
+  IfErrors NoInstall
+
+  IfFileExists "$1${AutoExpPath}" +1 NoInstall
+    
+    # make backup
+    CopyFiles /SILENT "$1${AutoExpPath}" "$1${AutoExpPath}.bak"
+    
+    !insertmacro RemoveFromFile "$1${AutoExpPath}" ";; added to [AutoExpand] for cv2pdb" ";; eo added for cv2pdb" NoBackup
+    IfErrors SkipAutoExp
+      !insertmacro InsertToFile "$1${AutoExpPath}" "[AutoExpand]" "$INSTDIR\cv2pdb\autoexp.expand" NoBackup
+    SkipAutoExp:
+
+    !insertmacro RemoveFromFile "$1${AutoExpPath}" ";; added to [Visualizer] for cv2pdb" ";; eo added for cv2pdb" NoBackup
+    IfErrors SkipVisualizer
+      !insertmacro InsertToFile "$1${AutoExpPath}" "[Visualizer]" "$INSTDIR\cv2pdb\autoexp.visualizer" NoBackup
+    SkipVisualizer:
+    
+  NoInstall:
+
+  Pop $2
+  Pop $0
+  Pop $1
+FunctionEnd
+
+Function un.PatchAutoExp
+  Exch $1
+  
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "$1" InstallDir
+  IfErrors NoInstallDir
+
+    IfFileExists "$1${AutoExpPath}" +1 NoInstallDir
+    # make backup
+    CopyFiles /SILENT "$1${AutoExpPath}" "$1${AutoExpPath}.bak"
+    
+    !insertmacro un.RemoveFromFile "$1${AutoExpPath}" ";; added to [AutoExpand] for cv2pdb" ";; eo added for cv2pdb" NoBackup
+    !insertmacro un.RemoveFromFile "$1${AutoExpPath}" ";; added to [Visualizer] for cv2pdb" ";; eo added for cv2pdb" NoBackup
+    
+  NoInstallDir:
+
+  Pop $1
 FunctionEnd

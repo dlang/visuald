@@ -821,13 +821,10 @@ version(none)
 			//logCall("  cmd%d = (id=%d, f=%d)", i, prgCmds[i].cmdID, prgCmds[i].cmdf);
 			logCall("nCmdID = %s", cmd2string(*pguidCmdGroup, prgCmds[i].cmdID));
 }
+		CHierNode[] rgNodes = VSITEMID2Nodes(itemid);
 
-		if(CHierNode node = VSITEMID2Node(itemid))
-		{
-			CHierNode[] rgNodes;
-			rgNodes ~= node;
+		if(rgNodes.length)
 			return QueryStatusSelection(pguidCmdGroup, cCmds, prgCmds, pCmdText, rgNodes, true);
-		}
 
 		return returnError(E_NOTIMPL);
 	}
@@ -843,12 +840,11 @@ version(none)
 		mixin(LogCallMix);
 		logCall("nCmdID = %s", cmd2string(*pguidCmdGroup, nCmdID));
 
-		CHierNode node = VSITEMID2Node(itemid);
-		CHierNode rgNodes[];
-		GetSelectedNodes(rgNodes);
-
-		if (!node)
+		CHierNode rgNodes[] = VSITEMID2Nodes(itemid);
+		if (rgNodes.length == 0)
 			return OLECMDERR.E_NOTSUPPORTED;
+		
+		CHierNode node = rgNodes[0];
 
 		int hr = OLECMDERR.E_NOTSUPPORTED;
 		if(*pguidCmdGroup == GUID_VsUIHierarchyWindowCmds)
@@ -884,7 +880,10 @@ version(none)
 		}
 
 		if(hr == OLECMDERR.E_NOTSUPPORTED && node)
-			hr = node.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+			foreach(n; rgNodes)
+				if (FAILED(hr = n.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut)))
+					break;
+
 		return hr;
 	}
     
@@ -1262,6 +1261,31 @@ version(none)
 					return *pNode;
 		}
 		return null;
+	}
+
+	///////////////////////////////////////////////////////////////
+	CHierNode[] VSITEMID2Nodes(VSITEMID itemid)
+	{
+		CHierNode[] nodes;
+		switch (itemid)
+		{
+		case VSITEMID_NIL:
+			break;
+
+		case VSITEMID_ROOT:
+			nodes ~= GetRootNode();
+			break;
+			
+		case VSITEMID_SELECTION:
+			GetSelectedNodes(nodes);
+			break;
+
+		default:
+			synchronized(gVsItemMap_sync)
+				if(CHierNode* pNode = itemid in gVsItemMap)
+					nodes ~= *pNode;
+		}
+		return nodes;
 	}
 
 	// Virtuals called in response to VSHPROPID_FirstChild, VSHPROPID_GextNextSibling. Defaults

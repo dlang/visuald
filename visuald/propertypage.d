@@ -11,6 +11,7 @@ module propertypage;
 import std.c.windows.windows;
 import std.c.windows.com;
 import std.string;
+import std.conv;
 
 //import minwin.all;
 //import minwin.mswindows;
@@ -500,9 +501,15 @@ class GeneralPropertyPage : ProjectPropertyPage
 	string GetCategoryName() { return ""; }
 	string GetPageName() { return "General"; }
 
+	const float[] selectableVersions = [ 1, 2, 2.043 ];
+	
 	override void CreateControls()
 	{
-		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, [ "D1", "D2" ], false));
+		string[] versions;
+		foreach(ver; selectableVersions)
+			versions ~= "D" ~ to!(string)(ver);
+		
+		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
 		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, [ "Executable", "Library" ], false));
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
@@ -524,10 +531,14 @@ class GeneralPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
+		int ver = 0;
+		while(ver < selectableVersions.length - 1 && selectableVersions[ver+1] < options.Dversion)
+			ver++;
+		mDVersion.setSelection(ver);
+		
 		mOtherDMD.setChecked(options.otherDMD);
 		mCbOutputType.setSelection(options.lib);
 		mDmdPath.setText(options.program);
-		mDVersion.setSelection(options.Dversion - 1);
 		mOutputPath.setText(options.outdir);
 		mIntermediatePath.setText(options.objdir);
 		mFilesToClean.setText(options.filesToClean);
@@ -537,11 +548,12 @@ class GeneralPropertyPage : ProjectPropertyPage
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
+		float ver = selectableVersions[mDVersion.getSelection()];
 		int changes = 0;
 		changes += changeOption(mOtherDMD.isChecked(), options.otherDMD, refoptions.otherDMD);
 		changes += changeOption(mCbOutputType.getSelection() != 0, options.lib, refoptions.lib);
 		changes += changeOption(mDmdPath.getText(), options.program, refoptions.program);
-		changes += changeOption(cast(ubyte) (mDVersion.getSelection() + 1), options.Dversion, refoptions.Dversion);
+		changes += changeOption(ver, options.Dversion, refoptions.Dversion);
 		changes += changeOption(mOutputPath.getText(), options.outdir, refoptions.outdir);
 		changes += changeOption(mIntermediatePath.getText(), options.objdir, refoptions.objdir);
 		changes += changeOption(mFilesToClean.getText(), options.filesToClean, refoptions.filesToClean);

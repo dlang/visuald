@@ -92,6 +92,9 @@ class LibraryInfo
 												if(JSONValue* ln = "line" in memberobj)
 													if(ln.type == JSON_TYPE.INTEGER)
 														def.line = cast(int)ln.integer - 1;
+												if(JSONValue* typ = "type" in memberobj)
+													if(typ.type == JSON_TYPE.STRING)
+														def.type = typ.str;
 												defs ~= def;
 											}
 										findDefs(memberobj);
@@ -116,6 +119,7 @@ struct Definition
 {
 	string kind;
 	string filename;
+	string type;
 	int line;
 }
 

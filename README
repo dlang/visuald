@@ -16,6 +16,7 @@ Major Features
   - pre/post custom build steps
   - automatic dependency generation
   - automatic link between dependend projects
+  - integrates cv2pdb for seamless debugger integration 
   - new project templates
 
 * Language Service
@@ -58,8 +59,9 @@ that will guide you through the intallation process. The installer lets you sele
 Visual Studio Version for which you want Visual D to be installed. It will always install
 for all users, not only for a single user.
 
-For debugging applications built with DMD, you should also install cv2pdb from
-http://www.dsource.org/projects/cv2pdb.
+For debugging applications, you should also install cv2pdb which is now included in the
+Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoexp.dat do
+not mix with previous manual installations of cv2pdb (http://www.dsource.org/projects/cv2pdb).
 
 Visual D does not work with the Express versions of Visual Studio. But you can 
 use the (integrated) Visual Studio Shell, which is the IDE stripped of any language

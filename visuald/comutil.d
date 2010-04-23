@@ -278,8 +278,8 @@ version(GC_COM)
 {
 		if(lRef == 1)
 		{
-			uint sz = this.classinfo.init.length;
-			GC.addRange(cast(void*) this, sz);
+			//uint sz = this.classinfo.init.length;
+			GC.addRoot(cast(void*) this);
 		}
 }
 		return lRef;
@@ -292,7 +292,7 @@ version(GC_COM)
 		{
 version(GC_COM)
 {
-			GC.removeRange(cast(void*) this);
+			GC.removeRoot(cast(void*) this);
 }
 else
 {

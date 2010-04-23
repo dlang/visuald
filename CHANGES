@@ -32,3 +32,11 @@ Version history
   * installer now requests admin execution level, so it does not fail on Vista or 
     Windows7
   * removed VS Express version from installer
+
+2010-04-22 Version 0.3.5
+
+  * added cv2pdb to installer
+  * support for operations on multiselection in solution explorer
+  * added option "D 2.043" to pass corresponding flag to cv2pdb
+  * macros in all debug options are now expanded
+  * fixed crashes on COM objects that were garbage-collected while still in use

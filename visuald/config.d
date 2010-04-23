@@ -47,7 +47,8 @@ T clone(T)(T object)
 
 version(D_Version2)
 {
-	ubyte toUbyte(string s) { return to!(ubyte)(s); }
+	ubyte  toUbyte(string s) { return to!(ubyte)(s); }
+	float  toFloat(string s) { return to!(float)(s); }
 	string uintToString(uint x) { return to!(string)(x); }
 }
 else
@@ -56,6 +57,7 @@ else
 }
 
 string toElem(bool b) { return b ? "1" : "0"; }
+string toElem(float f) { return to!(string)(f); }
 string toElem(string s) { return s; }
 string toElem(uint x) { return uintToString(x); }
 
@@ -63,6 +65,7 @@ void _fromElem(xml.Element e, ref string x) { x = e.text(); }
 void _fromElem(xml.Element e, ref bool x)   { x = e.text() == "1"; }
 void _fromElem(xml.Element e, ref ubyte x)  { x = toUbyte(e.text()); }
 void _fromElem(xml.Element e, ref uint x)   { x = toUbyte(e.text()); }
+void _fromElem(xml.Element e, ref float x)  { x = toFloat(e.text()); }
 
 void fromElem(T)(xml.Element e, string s, ref T x)
 {
@@ -109,8 +112,8 @@ class ProjectOptions
 	bool pic;		// generate position-independent-code for shared libs
 	bool cov;		// generate code coverage data
 	bool nofloat;		// code should not pull in floating point support
-	ubyte Dversion;		// D version number
 	bool ignoreUnsupportedPragmas;	// rather than error on them
+	float Dversion;		// D version number
 
 	bool otherDMD;		// use non-default DMD
 	string program;		// program name
@@ -182,7 +185,7 @@ class ProjectOptions
 		outdir = "$(ConfigurationName)";
 		objdir = "$(OutDir)";
 		debugtarget = "$(TARGETPATH)";
-		pathCv2pdb = "$(VisualDInstallDir)cv2pdb.exe";
+		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
 		
 		filesToClean = "*.obj";
@@ -210,7 +213,7 @@ class ProjectOptions
 			cmd ~= " -quiet";
 		if(verbose)
 			cmd ~= " -v";
-		if(Dversion > 1 && vtls)
+		if(Dversion >= 2 && vtls)
 			cmd ~= " -vtls";
 		if(symdebug == 1)
 			cmd ~= " -g";
@@ -220,7 +223,7 @@ class ProjectOptions
 			cmd ~= " -O";
 		if(useDeprecated)
 			cmd ~= " -d";
-		if(Dversion > 1 && noboundscheck)
+		if(Dversion >= 2 && noboundscheck)
 			cmd ~= " -noboundscheck";
 		if(useUnitTests)
 			cmd ~= " -unittest";
@@ -343,7 +346,7 @@ class ProjectOptions
 		if(symdebug && runCv2pdb && !lib)
 		{
 			string target = getTargetPath();
-			string cmd = quoteFilename(pathCv2pdb) ~ (Dversion == 2 ? " -D2 " : " -D1 ");
+			string cmd = quoteFilename(pathCv2pdb) ~ " -D" ~ to!(string)(Dversion) ~ " ";
 			cmd ~= quoteFilename(target ~ "_cv") ~ " " ~ quoteFilename(target);
 			return cmd;
 		}
@@ -1116,13 +1119,14 @@ class Config :	DisposingComObject,
 			prg = GetProjectDir() ~ "\\" ~ prg;
 		prg = quoteFilename(prg);
 
-		string workdir = mProjectOptions.debugworkingdir;
+		string workdir = mProjectOptions.replaceEnvironment(mProjectOptions.debugworkingdir, this);
 		if(!isabs(workdir))
 			workdir = GetProjectDir() ~ "\\" ~ workdir;
 
+		string args = mProjectOptions.replaceEnvironment(mProjectOptions.debugarguments, this);
 		if(DBGLAUNCH_NoDebug & grfLaunch)
 		{
-			ShellExecuteW(null, null, toUTF16z(prg), toUTF16z(mProjectOptions.debugarguments), toUTF16z(workdir), SW_SHOWNORMAL);
+			ShellExecuteW(null, null, toUTF16z(prg), toUTF16z(args), toUTF16z(workdir), SW_SHOWNORMAL);
 			return(S_OK);
 		}
 
@@ -1146,8 +1150,9 @@ class Config :	DisposingComObject,
 
 			dbgi.cbSize = VsDebugTargetInfo.sizeof;
 			dbgi.bstrRemoteMachine = null;
-			if(mProjectOptions.debugremote.length > 0)
-				dbgi.bstrRemoteMachine = _toUTF16z(mProjectOptions.debugremote);
+			string remote = mProjectOptions.replaceEnvironment(mProjectOptions.debugremote, this);
+			if(remote.length > 0)
+				dbgi.bstrRemoteMachine = _toUTF16z(remote);
 
 			dbgi.dlo = DLO_Custom;    // specifies how this process should be launched
 			// clsidCustom is the clsid of the debug engine to use to launch the debugger
@@ -1157,7 +1162,7 @@ class Config :	DisposingComObject,
 
 			dbgi.bstrExe = _toUTF16z(prg);
 			dbgi.bstrCurDir = _toUTF16z(workdir);
-			dbgi.bstrArg = _toUTF16z(mProjectOptions.debugarguments);
+			dbgi.bstrArg = _toUTF16z(args);
 
 			hr = srpVsDebugger.LaunchDebugTargets(1, &dbgi);
 			if (FAILED(hr))
