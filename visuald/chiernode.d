@@ -48,6 +48,9 @@ class OpenDocumentList {}
 //  Base node class for every object in a hierarchy. Implements the idea of
 //  a node that has a parent, but no children.
 //
+// The project hierarchy does not need references to attached children and
+//  parents, as long as Dispose() does no harm to the integrity. The GC will
+// take care of destruction.
 //---------------------------------------------------------------------------
 class CHierNode : DisposingDispatchObject
 {
@@ -65,11 +68,15 @@ class CHierNode : DisposingDispatchObject
 	}
 	~this()
 	{
+	}
+
+	void removeFromItemMap(bool recurse)
+	{
 		synchronized(gVsItemMap_sync)
 			gVsItemMap.remove(GetVsItemID());
 		logCall("removed %d from gVsItemMap", GetVsItemID());
 	}
-
+	
 	/*override*/ void Dispose()
 	{
 	}
@@ -472,6 +479,10 @@ public:
 			}
 		};
 		addref(mTypeHolder);
+	}
+	shared static ~this()
+	{
+		mTypeHolder = release(mTypeHolder);
 	}
 
 	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }

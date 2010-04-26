@@ -53,6 +53,7 @@ public:
 	{
 		eIdle,
 		eBuild,
+		eRebuild,
 		eCheckUpToDate,
 		eClean,
 	};
@@ -110,6 +111,12 @@ public:
 			fSuccessfulBuild = DoBuild();
 			break;
 
+		case Operation.eRebuild:
+			fSuccessfulBuild = DoClean();
+			if(fSuccessfulBuild)
+				fSuccessfulBuild = DoBuild();
+			break;
+
 		case Operation.eCheckUpToDate:
 			fSuccessfulBuild = DoCheckIsUpToDate();
 			break;
@@ -136,11 +143,11 @@ public:
 						string cmdline = mConfig.GetCompileCommand(file);
 						if(cmdline.length)
 						{
-							HRESULT hr = RunCustomBuildBatchFile(cmdline, m_pIVsOutputWindowPane, this);
+							string outfile = mConfig.GetOutputFile(file);
+							HRESULT hr = RunCustomBuildBatchFile(outfile, cmdline, m_pIVsOutputWindowPane, this);
 							if (hr != S_OK)
 								return true; // stop compiling
 
-							string outfile = mConfig.GetOutputFile(file);
 							string cmdfile = makeFilenameAbsolute(outfile ~ ".cmd", workdir);
 							std.file.write(cmdfile, cmdline);
 						}
@@ -154,9 +161,12 @@ public:
 
 	bool DoBuild()
 	{
+		beginLog();
+			
 		try
 		{
-			string msg = "Building " ~ mConfig.GetTargetPath() ~ "...\n";
+			string target = mConfig.GetTargetPath();
+			string msg = "Building " ~ target ~ "...\n";
 			if(m_pIVsOutputWindowPane)
 				m_pIVsOutputWindowPane.OutputString(_toUTF16z(msg));
 
@@ -172,7 +182,7 @@ public:
 				return false;
 
 			string cmdline = mConfig.getCommandLine();
-			HRESULT hr = RunCustomBuildBatchFile(cmdline, m_pIVsOutputWindowPane, this);
+			HRESULT hr = RunCustomBuildBatchFile(target, cmdline, m_pIVsOutputWindowPane, this);
 			if (hr == S_OK)
 			{
 				string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
@@ -183,6 +193,10 @@ public:
 		catch(FileException)
 		{
 			return false;
+		}
+		finally
+		{
+			endLog();
 		}
 	}
 
@@ -271,7 +285,58 @@ public:
 		mConfig.FFireBuildEnd(fSuccess);
 	}
 
+	void beginLog()
+	{
+		mBuildLog = `<html><head><META HTTP-EQUIV="Content-Type" content="text/html">
+</head><body><pre>
+<table width=100% bgcolor=#CFCFE5><tr><td>
+	<font face=arial size=+3>Build Log</font>
+</table>
+`;
+	}
 
+	void addCommandLog(string target, string cmd, string output)
+	{
+		if(!mCreateLog)
+			return;
+		
+		mBuildLog ~= "<table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>\n";
+		mBuildLog ~= xml.encode("Building " ~ target);
+		mBuildLog ~= "\n</font></table>\n";
+		
+		mBuildLog ~= "<table width=100% bgcolor=#EFEFE5><tr><td><font face=arial size=+1>\n";
+		mBuildLog ~= "Command Line";
+		mBuildLog ~= "\n</font></table>\n";
+		
+		mBuildLog ~= xml.encode(cmd);
+
+		mBuildLog ~= "<table width=100% bgcolor=#EFEFE5><tr><td><font face=arial size=+1>\n";
+		mBuildLog ~= "Output";
+		mBuildLog ~= "\n</font></table>\n";
+		
+		mBuildLog ~= xml.encode(output);
+	}
+	
+	void endLog()
+	{
+		if(!mCreateLog)
+			return;
+		
+		mBuildLog ~= "</body></html>";
+
+		string workdir = mConfig.GetProjectDir();
+		string intdir = makeFilenameAbsolute(mConfig.GetIntermediateDir(), workdir);
+		string logfile = normalizeDir(intdir) ~ "buildlog.html";
+		try
+		{
+			std.file.write(logfile, mBuildLog);
+		}
+		catch(FileException e)
+		{
+			OutputText("cannot write " ~ logfile ~ ":" ~ e.msg);
+		}
+	}
+	
 /+
 	virtual HRESULT PrepareInStartingThread(CMyProjBuildableCfg *pCMyProjBuildableCfg);
 	virtual HRESULT InnerThreadMain(CMyProjBuildableCfg *pBuildableCfg);
@@ -294,6 +359,9 @@ public:
 
 	BOOL m_fStopBuild;
 	HANDLE m_hEventStartSync;
+	
+	bool mCreateLog = true;
+	string mBuildLog;
 };
 
 class CLaunchPadEvents : DComObject, IVsLaunchPadEvents
@@ -326,9 +394,10 @@ public:
 
 
 // Runs the user specified pre and post build commands.
-HRESULT RunCustomBuildBatchFile(string              strBatchFileText, 
-				IVsOutputWindowPane pIVsOutputWindowPane, 
-				CBuilderThread      pBuilder)
+HRESULT RunCustomBuildBatchFile(string              target,
+                                string              strBatchFileText, 
+                                IVsOutputWindowPane pIVsOutputWindowPane, 
+                                CBuilderThread      pBuilder)
 {
 	if (strBatchFileText.length == 0)
 		return S_OK;
@@ -363,6 +432,7 @@ HRESULT RunCustomBuildBatchFile(string              strBatchFileText,
 	if(hr == S_OK && _endsWith(output, "failed!"))
 		hr = S_FALSE;
 
+	pBuilder.addCommandLog(target, strBatchFileText, output);
 	return hr;
 }
 

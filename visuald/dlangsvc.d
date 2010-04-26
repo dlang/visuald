@@ -485,25 +485,78 @@ int GetUserPreferences(LANGPREFERENCES *langPrefs)
 	return S_OK;
 }
 
+// An object to break cyclic dependencies on Source
+class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
+{
+	Source mSource;
+	uint mCookieUserDataEvents;
+	uint mCookieTextLinesEvents;
+	
+	this(Source src, IVsTextLines buffer)
+	{
+		mSource = src;
+
+		if(buffer)
+		{
+			mCookieUserDataEvents = Advise!(IVsUserDataEvents)(buffer, this);
+			mCookieTextLinesEvents = Advise!(IVsTextLinesEvents)(buffer, this);
+		}
+	}
+	
+	void Dispose()
+	{
+		IVsTextLines buffer = mSource.mBuffer;
+		if(buffer)
+		{
+			if(mCookieUserDataEvents)
+				Unadvise!(IVsUserDataEvents)(buffer, mCookieUserDataEvents);
+			if(mCookieTextLinesEvents)
+				Unadvise!(IVsTextLinesEvents)(buffer, mCookieTextLinesEvents);
+		}
+	}
+
+	HRESULT QueryInterface(IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsUserDataEvents) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsTextLinesEvents) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	// IVsUserDataEvents //////////////////////////////////////
+	override int OnUserDataChange( /* [in] */ in GUID* riidKey,
+	                      /* [in] */ in VARIANT vtNewValue)
+	{
+		return mSource.OnUserDataChange(riidKey, vtNewValue);
+	}
+
+	// IVsTextLinesEvents //////////////////////////////////////
+	override int OnChangeLineText( /* [in] */ in TextLineChange *pTextLineChange,
+	                      /* [in] */ in BOOL fLast)
+	{
+		return mSource.OnChangeLineText(pTextLineChange, fLast);
+	}
+    
+	override int OnChangeLineAttributes( /* [in] */ in int iFirstLine,/* [in] */ in int iLastLine)
+	{
+		return mSource.OnChangeLineAttributes(iFirstLine, iLastLine);
+	}
+}
+
 class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 {
 	Colorizer mColorizer;
 	IVsTextLines mBuffer;
 	CompletionSet mCompletionSet;
 	ExpansionProvider mExpansionProvider;
-	uint mCookieUserDataEvents;
-	uint mCookieTextLinesEvents;
-
+	SourceEvents mSourceEvents;
+	
 	this(IVsTextLines buffer)
 	{
 		mColorizer = new Colorizer;
-		mBuffer = buffer;
-		if(mBuffer)
-		{
-			mBuffer.AddRef();
-			mCookieUserDataEvents = Advise!(IVsUserDataEvents)(mBuffer, this);
-			mCookieTextLinesEvents = Advise!(IVsTextLinesEvents)(mBuffer, this);
-		}
+		mBuffer = addref(buffer);
+		mSourceEvents = new SourceEvents(this, mBuffer);
 	}
 	~this()
 	{
@@ -514,14 +567,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		mExpansionProvider = release(mExpansionProvider);
 		DismissCompletor();
 		mCompletionSet = release(mCompletionSet);
-		if(mBuffer)
-		{
-			if(mCookieUserDataEvents)
-				Unadvise!(IVsUserDataEvents)(mBuffer, mCookieUserDataEvents);
-			if(mCookieTextLinesEvents)
-				Unadvise!(IVsTextLinesEvents)(mBuffer, mCookieTextLinesEvents);
-			mBuffer = release(mBuffer);
-		}
+		mSourceEvents.Dispose();
+		mBuffer = release(mBuffer);
 	}
 
 	HRESULT QueryInterface(IID* riid, void** pvObject)

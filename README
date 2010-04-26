@@ -190,6 +190,7 @@ Available macro replacements enclosed in $():
  - INTDIR: Intermediate path
  - INPUTPATH/DIR/FILENAME/EXT/NAME: input file/project file components
  - PROJECTPATH/DIR/FILENAME/EXT/NAME: project file components
+ - SAFEPROJECTPATH/DIR/FILENAME/EXT/NAME: project file components without spaces
  - SOLUTIONPATH/DIR/FILENAME/EXT/NAME: solution file components
  - TARGETPATH/DIR/FILENAME/EXT/NAME: target file components
  - any variable from the system environment

@@ -67,6 +67,8 @@ string[] writeDocument(Document doc)
 	return doc.pretty(1);
 }
 
+alias std.xml.encode encode;
+	
 }
 else
 {

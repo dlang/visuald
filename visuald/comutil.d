@@ -211,6 +211,7 @@ version = GC_COM;
 class DComObject : IUnknown
 {
 	__gshared static LONG sCountInstances;
+	__gshared static LONG sCountReferenced;
 	
 version(GC_COM)
 {
@@ -243,13 +244,18 @@ debug
 {
 	this()
 	{
-		logCall("ctor %s(this=%s)", this, cast(void*)this);
+		logCall("ctor %s this = %s", this, cast(void*)this);
 		InterlockedIncrement(&sCountInstances);
 	}
 	~this()
 	{
-		logCall("dtor %s(this=%s)", this, cast(void*)this);
+		logCall("dtor %s this = %s", this, cast(void*)this);
 		InterlockedDecrement(&sCountInstances);
+	}
+	shared static ~this()
+	{
+		logCall("%d COM objects not fully dereferenced", sCountReferenced);
+		logCall("%d COM objects never destroyed", sCountInstances);
 	}
 }
 
@@ -271,6 +277,18 @@ extern (System):
 		}
 	}
 
+version(none) // copy for debugging
+{
+	override ULONG AddRef()
+	{
+		return super.AddRef();
+	}
+	override ULONG Release()
+	{
+		return super.Release();
+	}
+}
+
 	override ULONG AddRef()
 	{
 		LONG lRef = InterlockedIncrement(&count);
@@ -278,8 +296,10 @@ version(GC_COM)
 {
 		if(lRef == 1)
 		{
+			debug InterlockedIncrement(&sCountReferenced);
 			//uint sz = this.classinfo.init.length;
 			GC.addRoot(cast(void*) this);
+			logCall("addroot %s this = %s", this, cast(void*)this);
 		}
 }
 		return lRef;
@@ -292,7 +312,9 @@ version(GC_COM)
 		{
 version(GC_COM)
 {
+			logCall("delroot %s this = %s", this, cast(void*)this);
 			GC.removeRoot(cast(void*) this);
+			debug InterlockedDecrement(&sCountReferenced);
 }
 else
 {

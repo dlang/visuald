@@ -65,7 +65,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 	this(Source src) 
 	{
-		mSource = addref(src);
+		mSource = src;
 		vsExpansion = qi_cast!(IVsExpansion)(src.GetTextLines());
 		assert(vsExpansion);
 	}
@@ -73,7 +73,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 	override void Dispose() 
 	{
 		EndTemplateEditing(true);
-		mSource = release(mSource);
+		mSource = null;
 		vsExpansion = release(vsExpansion);
 		mView = release(mView);
 	}
@@ -616,6 +616,10 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 	this(ExpansionProvider provider)
 	{
 		mProvider = addref(provider);
+	}
+	~this()
+	{
+		mProvider = release(mProvider);
 	}
 
 	override HRESULT QueryInterface(IID* riid, void** pvObject)

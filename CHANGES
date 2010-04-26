@@ -40,3 +40,14 @@ Version history
   * added option "D 2.043" to pass corresponding flag to cv2pdb
   * macros in all debug options are now expanded
   * fixed crashes on COM objects that were garbage-collected while still in use
+
+2010-04-26 Version 0.3.6
+
+  * fixed COM and memory leaks
+  * projects with a lot of files now build with response files
+  * when only removing file or changing folder name, project was not saved
+  * support for operation "Rebuild"
+  * option "other compiler" and map file were not quoted when containing spaces
+  * added build logging to $(IntDir)\buildlog.html
+  * added macros SAFEPROJECTPATH/DIR/FILENAME/EXT/NAME identical to PROJECT*, but
+    without spaces

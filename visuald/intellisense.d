@@ -157,6 +157,7 @@ class LibraryInfos
 						scope(exit) release(activeCfg);
 						if(Config cfg = qi_cast!Config(activeCfg))
 						{
+							scope(exit) release(cfg);
 							ProjectOptions opt = cfg.GetProjectOptions();
 							if(opt.doXGeneration)
 							{

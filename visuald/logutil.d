@@ -409,6 +409,7 @@ string _toLogPtr(T : TextSpan)(T* arg) { return arg ? tryformat("", arg) : "null
 } // !version(test)
 
 int gLogIndent = 0;
+__gshared bool gLogFirst = true;
 
 const string gLogFile = "c:/tmp/visuald.log";
 
@@ -462,7 +463,14 @@ version(test) {
 			OutputDebugStringA(toStringz(s));
 		else
 			synchronized(logSync.classinfo)
+			{
+				if(gLogFirst)
+				{
+					gLogFirst = false;
+					s = "\n" ~ repeat("=", 80) ~ "\n" ~ s;
+				}
 				std.file.append(gLogFile, s);
+			}
 	}
 }
 else

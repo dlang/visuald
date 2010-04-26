@@ -39,6 +39,7 @@ import sdk.vsi.vsshell;
 const int kCompletionSearchLines = 500;
 
 ///////////////////////////////////////////////////////////////
+// returns addref'd Config
 Config getProjectConfig(string file)
 {
 	auto srpSolution = queryService!(IVsSolution);

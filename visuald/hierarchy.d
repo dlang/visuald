@@ -784,6 +784,11 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 	void Dispose()
 	{
 		m_pParentHierarchy = release(m_pParentHierarchy);
+		if(m_pRootNode)
+		{
+			m_pRootNode.removeFromItemMap(true);
+			m_pRootNode = null;
+		}
 	}
 
 	HRESULT QueryInterface(IID* riid, void** pvObject)
@@ -1310,6 +1315,8 @@ version(none)
 public: // IVsHierarchyEvent propagation
 	HRESULT OnItemAdded(CHierNode pNodeParent, CHierNode pNodePrev, CHierNode pNodeAdded)
 	{
+		GetProjectNode().SetProjectFileDirty(true);
+		
 		assert(pNodeParent && pNodeAdded);
 		VSITEMID itemidParent = GetVsItemID(pNodeParent);
 		VSITEMID itemidSiblingPrev = GetVsItemID(pNodePrev);
@@ -1321,6 +1328,8 @@ public: // IVsHierarchyEvent propagation
 	}
 	HRESULT OnItemDeleted(CHierNode pNode)
 	{
+		GetProjectNode().SetProjectFileDirty(true);
+		
 		VSITEMID itemid = GetVsItemID(pNode);
 		// Note that in some cases (deletion of project node for example), an Advise
 		// may be removed while we are iterating over it. To get around this problem we
@@ -1336,6 +1345,8 @@ public: // IVsHierarchyEvent propagation
 	}
 	HRESULT OnPropertyChanged(CHierNode pNode, VSHPROPID propid, DWORD flags)
 	{
+		GetProjectNode().SetProjectFileDirty(true);
+		
 		VSITEMID itemid = GetVsItemID(pNode);
 		if (pNode.IsDisplayable()) 
 			foreach (advise; mHierarchyEventSinks)

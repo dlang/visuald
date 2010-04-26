@@ -587,6 +587,10 @@ class ExtProject : DisposingDispatchObject, dte.Project
 		};
 		addref(mTypeHolder);
 	}
+	shared static ~this()
+	{
+		mTypeHolder = release(mTypeHolder);
+	}
 
 	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }
 	
@@ -715,6 +719,10 @@ class Project : CVsHierarchy,
 			}
 		};
 		addref(mTypeHolder);
+	}
+	shared static ~this()
+	{
+		mTypeHolder = release(mTypeHolder);
 	}
 
 	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }

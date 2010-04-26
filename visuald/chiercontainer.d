@@ -37,6 +37,16 @@ class CHierContainer : public CHierNode
 		//DeleteAll(null);
 	}
 
+	void removeFromItemMap(bool recurse)
+	{
+		if(recurse)
+		{
+			for(CHierNode n = GetHeadEx(false); n; n = n.GetNext(false))
+				n.removeFromItemMap(recurse);
+		}
+		super.removeFromItemMap(recurse);
+	}
+	
 public:
 	// CHierNode overrides
 	bool Expandable() { return GetHead(true) !is null; }
@@ -189,7 +199,7 @@ public:
 			m_pTailNode = pNode;
 
 		NotifyHierarchyOfAdd(pNode);
-		addref(pNode);
+//		addref(pNode);
 	}
 
 	void    AddTail(CHierNode pNode)
@@ -211,7 +221,7 @@ public:
 		}
 		
 		NotifyHierarchyOfAdd(pNode);
-		addref(pNode);
+//		addref(pNode);
 	}
 
 	HRESULT Remove(CHierNode pNode)
@@ -253,7 +263,9 @@ public:
 
 		pNode.SetParent(null);
 		pNode.SetNext(null);
-		release(pNode);
+//		release(pNode);
+		pNode.removeFromItemMap(true);
+		
 		return S_OK;
 	}
 

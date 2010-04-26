@@ -199,7 +199,7 @@ class ProjectOptions
 	{
 		string cmd;
 		if(otherDMD && program.length)
-			cmd = program;
+			cmd = quoteNormalizeFilename(program);
 		else
 			cmd = "dmd";
 
@@ -295,7 +295,7 @@ class ProjectOptions
 
 		cmd ~= " -of" ~ quoteNormalizeFilename(dmdoutfile);
 		cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
-		cmd ~= " -map $(INTDIR)\\$(PROJECTNAME).map";
+		cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
 		switch(mapverbosity)
 		{
 		case 0: cmd ~= " -L/NOMAP"; break; // actually still creates map file
@@ -360,6 +360,7 @@ class ProjectOptions
 		
 		string configname = config.mName;
 		string projectpath = config.GetProjectPath();
+		string safeprojectpath = projectpath.replace(" ", "_");
 
 		string[string] replacements;
 		IVsSolution srpSolution = queryService!(IVsSolution);
@@ -375,6 +376,7 @@ class ProjectOptions
 		}
 		replacements["PLATFORMNAME"] = "Win32";
 		addFileMacros(projectpath, "PROJECT", replacements);
+		addFileMacros(safeprojectpath, "SAFEPROJECT", replacements);
 		addFileMacros(inputfile.length ? inputfile : projectpath, "INPUT", replacements);
 		replacements["CONFIGURATIONNAME"] = configname;
 		replacements["OUTDIR"] = outdir;
@@ -932,6 +934,15 @@ class Config :	DisposingComObject,
 		mBuilder.Dispose();
 	}
 
+	override ULONG AddRef()
+	{
+		return super.AddRef();
+	}
+	override ULONG Release()
+	{
+		return super.Release();
+	}
+
 	HRESULT QueryInterface(IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
@@ -1227,6 +1238,8 @@ class Config :	DisposingComObject,
 	{
 		mixin(LogCallMix);
 
+		if(dwOptions & VS_BUILDABLEPROJECTCFGOPTS_REBUILD)
+			return mBuilder.Start(this, CBuilderThread.Operation.eRebuild, pIVsOutputWindowPane);
 		return mBuilder.Start(this, CBuilderThread.Operation.eBuild, pIVsOutputWindowPane);
 	}
 
@@ -1466,6 +1479,7 @@ class Config :	DisposingComObject,
 		string[] files;
 		files ~= target;
 		files ~= cmdfile;
+		files ~= cmdfile ~ ".rsp";
 		files ~= makeFilenameAbsolute(GetDependenciesPath(), workdir);
 		
 		if(mProjectOptions.runCv2pdb)
@@ -1572,26 +1586,43 @@ class Config :	DisposingComObject,
 
 		string precmd = getEnvironmentChanges();
 
-		string files;
+		string responsefile = GetCommandLinePath() ~ ".rsp";
+		string[] files;
 		searchNode(mProvider.mProject.GetRootNode(), 
 			delegate (CHierNode n) { 
 				if(CFileNode file = cast(CFileNode) n)
 				{
 					string fname = GetOutputFile(file);
 					if(fname.length)
-						files ~= " " ~ quoteFilename(fname);
+						files ~= quoteFilename(fname);
 				}
 				return false;
 			});
 
-		string cmd = precmd ~ opt ~ files;
 		string[] libs = getLibsFromDependentProjects();
-		foreach(lib; libs)
-			cmd ~= " " ~ lib;
+		files ~= libs;
+
+		string fcmd = join(files, " ");
+		if(fcmd.length > 100)
+		{
+			precmd ~= "\n";
+			precmd ~= "echo " ~ files[0] ~ " >" ~ responsefile ~ "\n";
+			for(int i = 1; i < files.length; i++)
+				precmd ~= "echo " ~ files[i] ~ " >>" ~ responsefile ~ "\n";
+			precmd ~= "\n";
+			fcmd = " @" ~ responsefile;
+		}
+		else
+			fcmd = " " ~ fcmd;
+			
+		string cmd = precmd ~ opt ~ fcmd;
 		
 		string cv2pdb = mProjectOptions.appendCv2pdb();
 		if(cv2pdb.length)
+		{
+			cv2pdb = "echo Converting debug information...\n" ~ cv2pdb;
 			cmd = cmd ~ "\nif errorlevel 1 goto xit\n" ~ cv2pdb;
+		}
 
 		string pre = strip(mProjectOptions.preBuildCommand);
 		if(pre.length)
