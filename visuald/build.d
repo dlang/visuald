@@ -162,7 +162,8 @@ public:
 	bool DoBuild()
 	{
 		beginLog();
-			
+		HRESULT hr = S_FALSE;
+		
 		try
 		{
 			string target = mConfig.GetTargetPath();
@@ -182,7 +183,7 @@ public:
 				return false;
 
 			string cmdline = mConfig.getCommandLine();
-			HRESULT hr = RunCustomBuildBatchFile(target, cmdline, m_pIVsOutputWindowPane, this);
+			hr = RunCustomBuildBatchFile(target, cmdline, m_pIVsOutputWindowPane, this);
 			if (hr == S_OK)
 			{
 				string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
@@ -196,7 +197,7 @@ public:
 		}
 		finally
 		{
-			endLog();
+			endLog(hr == S_OK);
 		}
 	}
 
@@ -317,7 +318,7 @@ public:
 		mBuildLog ~= xml.encode(output);
 	}
 	
-	void endLog()
+	void endLog(bool success)
 	{
 		if(!mCreateLog)
 			return;
@@ -330,6 +331,8 @@ public:
 		try
 		{
 			std.file.write(logfile, mBuildLog);
+			if(!success)
+				OutputText("Details saved as \"file://" ~ logfile ~ "\"");
 		}
 		catch(FileException e)
 		{
@@ -405,6 +408,7 @@ HRESULT RunCustomBuildBatchFile(string              target,
 
 	// get the project root directory.
 	string strProjectDir = pBuilder.mConfig.GetProjectDir();
+	string batchFileText = insertCr(strBatchFileText);
 
 	assert(pBuilder.m_srpIVsLaunchPadFactory);
 	scope auto srpIVsLaunchPad = new ComPtr!(IVsLaunchPad);
@@ -417,7 +421,7 @@ HRESULT RunCustomBuildBatchFile(string              target,
 
 	BSTR bstrOutput;
 	hr = srpIVsLaunchPad.ptr.ExecBatchScript(
-		/* [in] LPCOLESTR pszBatchFileContents         */ _toUTF16z(strBatchFileText),
+		/* [in] LPCOLESTR pszBatchFileContents         */ _toUTF16z(batchFileText),
 		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
 		/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
 		/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to

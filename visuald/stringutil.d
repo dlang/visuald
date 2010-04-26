@@ -135,6 +135,29 @@ string replaceCrLf(string s)
 	return replace(replace(s, "\n", ";"), "\r", "");
 }
 
+string insertCr(string s)
+{
+	string ns;
+	while(s.length > 0)
+	{
+		int p = s.indexOf('\n');
+		if(p < 0)
+			break;
+		if(p > 0 && s[p-1] == '\r')
+			ns ~= s[0 .. p+1];
+		else
+			ns ~= s[0 .. p] ~ "\r\n";
+		s = s[p+1 .. $];
+	}
+	return ns ~ s;
+}
+
+unittest
+{
+	string t = insertCr("a\nb\r\ncd\n\ne\n\r\nf");
+	assert(t == "a\r\nb\r\ncd\r\n\r\ne\r\n\r\nf");
+}
+
 int countVisualSpaces(S)(S txt, int tabSize, int* txtpos)
 {
 	int p = 0;

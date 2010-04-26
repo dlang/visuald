@@ -51,3 +51,7 @@ Version history
   * added build logging to $(IntDir)\buildlog.html
   * added macros SAFEPROJECTPATH/DIR/FILENAME/EXT/NAME identical to PROJECT*, but
     without spaces
+
+2010-04-27 Version 0.3.7
+
+  * force CR/LF pairs in batch commands instead of LF only end-of-line.
