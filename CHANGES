@@ -55,3 +55,13 @@ Version history
 2010-04-27 Version 0.3.7
 
   * force CR/LF pairs in batch commands instead of LF only end-of-line.
+
+2010-05-08 Version 0.3.8
+
+  * added function parameter tooltips
+  * fix: resource files would not be updated when used with tool "Auto"
+  * fix: custom built files always added to linker command line
+  * fix: fixed initialization exception when no windows-SDK installed
+  * fix: build only worked as admin on x64
+  * fix: spurious crashes on x64
+  * improved WindowsApp project template (added libs, sets application subsystem)

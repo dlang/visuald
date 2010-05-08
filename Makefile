@@ -1,6 +1,8 @@
 #
 # master makefile to build visuald from scratch
 #
+# use this Makefile with Microsofts nmake
+#
 # prerequisites:
 #  DMD2
 #  Visual Studio 2005/2008/2010

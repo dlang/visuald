@@ -47,9 +47,6 @@ const kPlatform = "Win32";
 extern(Windows)
 {
 
-struct s_IMAGELIST;
-alias s_IMAGELIST *HIMAGELIST;
-
 export HANDLE LoadImageA(HINSTANCE hinst, LPCTSTR lpszName, UINT uType, int cxDesired, int cyDesired, UINT fuLoad);
 
 export HIMAGELIST ImageList_LoadImageA(HINSTANCE hi, LPCTSTR lpbmp, int cx, int cGrow, COLORREF crMask, UINT uType, UINT uFlags);

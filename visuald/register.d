@@ -149,15 +149,20 @@ class RegKey
 	{
 		HRESULT hr;
 		if(write)
+		{
 			hr = hrRegCreateKeyEx(root, keyname, 0, null, REG_OPTION_NON_VOLATILE, KEY_WRITE, null, &key, null);
+			if(FAILED(hr))
+				throw new RegistryException(hr);
+		}
 		else
 			hr = hrRegOpenKeyEx(root, keyname, 0, KEY_READ, &key);
-		if(FAILED(hr))
-			throw new RegistryException(hr);
 	}
 
 	void Set(wstring name, wstring value)
 	{
+		if(!key)
+			throw new RegistryException(E_FAIL);
+			
 		HRESULT hr = RegCreateValue(key, name, value);
 		if(FAILED(hr))
 			throw new RegistryException(hr);
@@ -165,6 +170,9 @@ class RegKey
 
 	void Set(wstring name, uint value)
 	{
+		if(!key)
+			throw new RegistryException(E_FAIL);
+		
 		HRESULT hr = RegCreateDwordValue(key, name, value);
 		if(FAILED(hr))
 			throw new RegistryException(hr);
@@ -172,6 +180,9 @@ class RegKey
 
 	wstring GetString(wstring name)
 	{
+		if(!key)
+			return ""w;
+		
 		wchar buf[260];
 		LONG cnt = 260 * wchar.sizeof;
 		wstring szName = name ~ cast(wchar)0;

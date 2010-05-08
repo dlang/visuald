@@ -29,6 +29,7 @@ import dproject;
 import dlangsvc;
 import dimagelist;
 import config;
+import intellisense;
 
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
@@ -604,271 +605,258 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 	}
 }
 
-/+
-    //-------------------------------------------------------------------------------------
-    public class MethodData : IVsMethodData, IDisposable {
-        IServiceProvider provider;
-        IVsMethodTipWindow methodTipWindow;
-        Methods methods;
-        int currentParameter;
-        int currentMethod;
-        bool displayed;
-        IVsTextView textView;
-        TextSpan context;
+//-------------------------------------------------------------------------------------
+class MethodData : DisposingComObject, IVsMethodData
+{
+	IServiceProvider mProvider;
+	IVsMethodTipWindow mMethodTipWindow;
+	
+	Definition[] mMethods;
+	bool mTypePrefixed = true;
+	int mCurrentParameter;
+	int mCurrentMethod;
+	bool mDisplayed;
+	IVsTextView mTextView;
+	TextSpan mContext;
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.MethodData"]/*' />
-        public MethodData(IServiceProvider site) {
-            mProvider = site;
-            Microsoft.VisualStudio.Shell.Package pkg = (Microsoft.VisualStudio.Shell.Package)site.GetService(typeof(Microsoft.VisualStudio.Shell.Package));
-            if (pkg == null) {
-                throw new NullReferenceException(typeof(Microsoft.VisualStudio.Shell.Package).FullName);
-            }
-            Guid riid = typeof(IVsMethodTipWindow).GUID;
-            Guid clsid = typeof(VsMethodTipWindowClass).GUID;
-            mMethodTipWindow = (IVsMethodTipWindow)pkg.CreateInstance(ref clsid, ref riid, typeof(IVsMethodTipWindow));
-            if (mMethodTipWindow != null) {
-                NativeMethods.ThrowOnFailure(methodTipWindow.SetMethodData(this));
-            }
-        }
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.Provider;"]/*' />
-        protected IServiceProvider Provider {
-            get { return mProvider; }
-            set { mProvider = value; }
-        }
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.MethodTipWindow;"]/*' />
-        protected IVsMethodTipWindow MethodTipWindow {
-            get { return mMethodTipWindow; }
-            set { mMethodTipWindow = value; }
-        }
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.Methods;"]/*' />
-        protected Methods Methods {
-            get { return mMethods; }
-            set { mMethods = value; }
-        }
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.TextView;"]/*' />
-        protected IVsTextView TextView {
-            get { return mTextView; }
-            set { mTextView = value; }
-        }
+	this()
+	{
+		mMethodTipWindow = VsLocalCreateInstance!IVsMethodTipWindow (&uuid_coclass_VsMethodTipWindow, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
+		if (mMethodTipWindow)
+			mMethodTipWindow.SetMethodData(this);
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.IsDisplayed"]/*' />
-        public bool IsDisplayed {
-            get {
-                return mDisplayed;
-            }
-        }
+	void Refresh(IVsTextView textView, Definition[] methods, int currentParameter, TextSpan context)
+	{
+		if (!mDisplayed)
+			mCurrentMethod = 0; // methods.DefaultMethod;
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.Refresh"]/*' />
-        public void Refresh(IVsTextView textView, Methods methods, int currentParameter, TextSpan context) {
-            if (!mDisplayed) {
-                mCurrentMethod = methods.DefaultMethod;
-            }
-            mMethods = methods;
-            mContext = context;
+		mContext = context;
+		mMethods = mMethods.init;
+	defLoop:
+		foreach(ref def; methods)
+		{
+			foreach(ref d; mMethods)
+				if(d.type == def.type)
+				{
+					if (!d.inScope.endsWith(" ..."))
+						d.inScope ~= " ...";
+					continue defLoop;
+				}
+			mMethods ~= def;
+		}
 
-            // Apparently this Refresh() method is called as a result of event notification
-            // after the currentMethod is changed, so we do not want to Dismiss anything or
-            // reset the currentMethod here. 
-            //Dismiss();  
-            mTextView = textView;
-            mMethods = methods;
+		// Apparently this Refresh() method is called as a result of event notification
+		// after the currentMethod is changed, so we do not want to Dismiss anything or
+		// reset the currentMethod here. 
+		//Dismiss();  
+		mTextView = textView;
 
-            mCurrentParameter = currentParameter;
-            mAdjustCurrentParameter(0);
-        }
+		mCurrentParameter = currentParameter;
+		AdjustCurrentParameter(0);
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.AdjustCurrentParameter"]/*' />
-        public void AdjustCurrentParameter(int increment) {
-            mCurrentParameter += increment;
-            if (mCurrentParameter < 0)
-                mCurrentParameter = -1;
-            else if (mCurrentParameter >= mGetParameterCount(mCurrentMethod))
-                mCurrentParameter = mGetParameterCount(mCurrentMethod);
+	void AdjustCurrentParameter(int increment)
+	{
+		mCurrentParameter += increment;
+		if (mCurrentParameter < 0)
+			mCurrentParameter = -1;
+		else if (mCurrentParameter >= GetParameterCount(mCurrentMethod))
+			mCurrentParameter = GetParameterCount(mCurrentMethod);
 
-            mUpdateView();
-        }
+		UpdateView();
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.Close"]/*' />
-        public void Close() {
-            mDismiss();
-            mTextView = null;
-            mMethods = null;
-        }
+	void Close()
+	{
+		Dismiss();
+		mTextView = null;
+		mMethods = null;
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.Dismiss"]/*' />
-        public void Dismiss() {
-            if (mDisplayed && mTextView != null) {
-                NativeMethods.ThrowOnFailure(mTextView.UpdateTipWindow(mMethodTipWindow, (uint)TipWindowFlags.UTW_DISMISS));
-            }
+	void Dismiss()
+	{
+		if (mDisplayed && mTextView)
+			mTextView.UpdateTipWindow(mMethodTipWindow, UTW_DISMISS);
 
-            mOnDismiss();
-        }
+		OnDismiss();
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.Dispose"]/*' />
-        public virtual void Dispose() {
-            Close();
-            if (mMethodTipWindow != null)
-                NativeMethods.ThrowOnFailure(mMethodTipWindow.SetMethodData(null));
-            mMethodTipWindow = null;
-            mProvider = null;
-        }
+	override void Dispose()
+	{
+		Close();
+		if (mMethodTipWindow)
+			mMethodTipWindow.SetMethodData(null);
+		mMethodTipWindow = release(mMethodTipWindow);
+	}
 
-        //========================================================================
-        //IVsMethodData
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.GetOverloadCount"]/*' />
-        public int GetOverloadCount() {
-            if (mTextView == null || mMethods == null) return 0;
-            return mMethods.GetCount();
-        }
+    //IVsMethodData
+	override int GetOverloadCount()
+	{
+		if (!mTextView || mMethods.length == 0)
+			return 0;
+		return mMethods.length;
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.GetCurMethod"]/*' />
-        public int GetCurMethod() {
-            return mCurrentMethod;
-        }
+	override int GetCurMethod()
+	{
+		return mCurrentMethod;
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.NextMethod"]/*' />
-        public int NextMethod() {
-            if (mCurrentMethod < GetOverloadCount() - 1) mCurrentMethod++;
+	override int NextMethod()
+	{
+		if (mCurrentMethod < GetOverloadCount() - 1)
+			mCurrentMethod++;
+		return mCurrentMethod;
+	}
 
-            return mCurrentMethod;
-        }
+	override int PrevMethod()
+	{
+		if (mCurrentMethod > 0)
+			mCurrentMethod--;
+		return mCurrentMethod;
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.PrevMethod"]/*' />
-        public int PrevMethod() {
-            if (mCurrentMethod > 0) mCurrentMethod--;
+	override int GetParameterCount(in int method)
+	{
+		if (mMethods.length == 0)
+			return 0;
+		if (method < 0 || method >= GetOverloadCount())
+			return 0;
 
-            return mCurrentMethod;
-        }
+		return mMethods[method].GetParameterCount();
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.GetParameterCount"]/*' />
-        public int GetParameterCount(int method) {
-            if (mMethods == null) return 0;
+	override int GetCurrentParameter(in int method)
+	{
+		return mCurrentParameter;
+	}
 
-            if (method < 0 || method >= GetOverloadCount()) return 0;
+	override void OnDismiss()
+	{
+		mTextView = null;
+		mMethods = mMethods.init;
+		mCurrentMethod = 0;
+		mCurrentParameter = 0;
+		mDisplayed = false;
+	}
 
-            return mMethods.GetParameterCount(method);
-        }
+	override void UpdateView()
+	{
+		if (mTextView && mMethodTipWindow)
+		{
+			mTextView.UpdateTipWindow(mMethodTipWindow, UTW_CONTENTCHANGED | UTW_CONTEXTCHANGED);
+			mDisplayed = true;
+		}
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.GetCurrentParameter"]/*' />
-        public int GetCurrentParameter(int method) {
-            return mCurrentParameter;
-        }
+	override int GetContextStream(int* pos, int* length)
+	{
+		*pos = 0;
+		*length = 0;
+		int line, idx, vspace, endpos;
+		if(HRESULT rc = mTextView.GetCaretPos(&line, &idx))
+			return rc;
+		
+		line = max(line, mContext.iStartLine);
+		if(HRESULT rc = mTextView.GetNearestPosition(line, mContext.iStartIndex, pos, &vspace))
+			return rc;
+		
+		line = max(line, mContext.iEndLine);
+		if(HRESULT rc = mTextView.GetNearestPosition(line, mContext.iEndIndex, &endpos, &vspace))
+			return rc;
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.OnDismiss"]/*' />
-        public void OnDismiss() {
-            mTextView = null;
-            mMethods = null;
-            mCurrentMethod = 0;
-            mCurrentParameter = 0;
-            mDisplayed = false;
-        }
+		*length = endpos - *pos;
+		return S_OK;
+	}
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.UpdateView"]/*' />
-        public void UpdateView() {
-            if (mTextView != null) {
-                NativeMethods.ThrowOnFailure(mTextView.UpdateTipWindow(mMethodTipWindow, (uint)TipWindowFlags.UTW_CONTENTCHANGED | (uint)TipWindowFlags.UTW_CONTEXTCHANGED));
-                mDisplayed = true;
-            }
-        }
+	override WCHAR* GetMethodText(in int method, in MethodTextType type)
+	{
+		if (mMethods.length == 0)
+			return null;
+		if (method < 0 || method >= GetOverloadCount())
+			return null;
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.GetContextStream"]/*' />
-        public int GetContextStream(out int pos, out int length) {
-            pos = 0;
-            length = 0;
-            int line, idx;
-            NativeMethods.ThrowOnFailure(mTextView.GetCaretPos(out line, out idx));
-            line = Math.Max(line, mContext.iStartLine);
-            int vspace;
-            NativeMethods.ThrowOnFailure(mTextView.GetNearestPosition(line, mContext.iStartIndex, out pos, out vspace));
-            line = Math.Max(line, mContext.iEndLine);
-            int endpos;
-            NativeMethods.ThrowOnFailure(mTextView.GetNearestPosition(line, mContext.iEndIndex, out endpos, out vspace));
-            length = endpos - pos;
-            return NativeMethods.S_OK;
-        }
+		string result;
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.GetMethodText"]/*' />
-        public IntPtr GetMethodText(int method, MethodTextType type) {
-            if (mMethods == null) return IntPtr.Zero;
+		//a type
+		if ((type == MTT_TYPEPREFIX && mTypePrefixed) ||
+			(type == MTT_TYPEPOSTFIX && !mTypePrefixed))
+		{
+			string str = mMethods[method].GetReturnType();
 
-            if (method < 0 || method >= GetOverloadCount()) return IntPtr.Zero;
+			if (str.length == 0)
+				return null;
 
-            string result = null;
+			result = str; // mMethods.TypePrefix + str + mMethods.TypePostfix;
+		}
+		else
+		{
+			//other
+			switch (type) {
+			case MTT_OPENBRACKET:
+				result = "("; // mMethods.OpenBracket;
+				break;
 
-            //a type
-            if ((type == MethodTextType.MTT_TYPEPREFIX && mMethods.TypePrefixed) ||
-                (type == MethodTextType.MTT_TYPEPOSTFIX && !mMethods.TypePrefixed)) {
-                string str = mMethods.GetType(method);
+			case MTT_CLOSEBRACKET:
+				result = ")"; // mMethods.CloseBracket;
+				break;
 
-                if (str == null) return IntPtr.Zero;
+			case MTT_DELIMITER:
+				result = ","; // mMethods.Delimiter;
+				break;
 
-                result = mMethods.TypePrefix + str + mMethods.TypePostfix;
-            } else {
-                //other
-                switch (type) {
-                case MethodTextType.MTT_OPENBRACKET:
-                result = mMethods.OpenBracket;
-                break;
+			case MTT_NAME:
+				result = mMethods[method].name;
+				break;
 
-                case MethodTextType.MTT_CLOSEBRACKET:
-                result = mMethods.CloseBracket;
-                break;
+			case MTT_DESCRIPTION:
+				result = format("%s %s @ %s(%d)", mMethods[method].kind, mMethods[method].inScope, mMethods[method].filename, mMethods[method].line);
+				break;
 
-                case MethodTextType.MTT_DELIMITER:
-                result = mMethods.Delimiter;
-                break;
+			case MTT_TYPEPREFIX:
+			case MTT_TYPEPOSTFIX:
+			default:
+				break;
+			}
+		}
 
-                case MethodTextType.MTT_NAME:
-                result = mMethods.GetName(method);
-                break;
+		return result.length == 0 ? null : allocBSTR(result); // produces leaks?
+	}
 
-                case MethodTextType.MTT_DESCRIPTION:
-                result = mMethods.GetDescription(method);
-                break;
+	override WCHAR* GetParameterText(in int method, in int parameter, in ParameterTextType type)
+	{
+		if (mMethods.length == 0)
+			return null;
+		if (method < 0 || method >= GetOverloadCount())
+			return null;
+		if (parameter < 0 || parameter >= GetParameterCount(method))
+			return null;
 
-                case MethodTextType.MTT_TYPEPREFIX:
-                case MethodTextType.MTT_TYPEPOSTFIX:
-                default:
-                break;
-                }
-            }
+		string name;
+		string description;
+		string display;
 
-            return result == null ? IntPtr.Zero : Marshal.StringToBSTR(result);
-        }
+		mMethods[method].GetParameterInfo(parameter, name, display, description);
 
-        /// <include file='doc\Source.uex' path='docs/doc[@for="MethodData.GetParameterText"]/*' />
-        public IntPtr GetParameterText(int method, int parameter, ParameterTextType type) {
-            if (mMethods == null) return IntPtr.Zero;
+		string result;
 
-            if (method < 0 || method >= GetOverloadCount()) return IntPtr.Zero;
+		switch (type) {
+		case PTT_NAME:
+			result = name;
+			break;
 
-            if (parameter < 0 || parameter >= GetParameterCount(method)) return IntPtr.Zero;
+		case PTT_DESCRIPTION:
+			result = description;
+			break;
 
-            string name;
-            string description;
-            string display;
+		case PTT_DECLARATION:
+			result = display;
+			break;
 
-            mMethods.GetParameterInfo(method, parameter, out name, out display, out description);
-
-            string result = null;
-
-            switch (type) {
-            case ParameterTextType.PTT_NAME:
-            result = name;
-            break;
-
-            case ParameterTextType.PTT_DESCRIPTION:
-            result = description;
-            break;
-
-            case ParameterTextType.PTT_DECLARATION:
-            result = display;
-            break;
-
-            default:
-            break;
-            }
-            return result == null ? IntPtr.Zero : Marshal.StringToBSTR(result);
-        }
-    }
-+/
+		default:
+			break;
+		}
+		return result.length == 0 ? null : allocBSTR(result); // produces leaks?
+	}
+}

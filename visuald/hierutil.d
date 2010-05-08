@@ -16,7 +16,9 @@ import std.utf;
 import std.stream;
 
 import sdk.vsi.vsshell;
+import sdk.vsi.objext;
 import dte = sdk.vsi.dte80a;
+import dte2 = sdk.vsi.dte80;
 import comutil;
 import fileutil;
 import dpackage;
@@ -44,29 +46,19 @@ extern(Windows)
 }
 
 ///////////////////////////////////////////////////////////////////////
-I queryService(SVC,I)()
-{
-	IServiceProvider sp = dpackage.Package.s_instance.getServiceProvider();
-	if(!sp)
-		return null;
-
-	I svc;
-	if(FAILED(sp.QueryService(&SVC.iid, &I.iid, cast(void **)&svc)))
-		return null;
-	return svc;
-}
-
-I queryService(I)()
-{
-	return queryService!(I,I);
-}
-
-///////////////////////////////////////////////////////////////////////
 version(D_Version2)
 {} else
 	int indexOf(string s, dchar ch) { return find(s, ch); }
 
 ///////////////////////////////////////////////////////////////////////
+
+bool contains(T)(in T[] arr, bool delegate(ref T t) dg)
+{
+	foreach(ref T t; arr)
+		if (dg(t))
+			return true;
+	return false;
+}
 
 bool contains(T)(in T[] arr, T val)
 {
@@ -308,3 +300,50 @@ CHierNode searchNode(CHierNode root, bool delegate(CHierNode) pred, bool fDispla
 }
 
 
+///////////////////////////////////////////////////////////////////////
+I queryService(SVC,I)()
+{
+	IServiceProvider sp = dpackage.Package.s_instance.getServiceProvider();
+	if(!sp)
+		return null;
+
+	I svc;
+	if(FAILED(sp.QueryService(&SVC.iid, &I.iid, cast(void **)&svc)))
+		return null;
+	return svc;
+}
+
+I queryService(I)()
+{
+	return queryService!(I,I);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// VsLocalCreateInstance	
+///////////////////////////////////////////////////////////////////////////////
+I VsLocalCreateInstance(I)(const GUID* clsid, DWORD dwFlags)
+{
+	if(ILocalRegistry srpLocalReg = queryService!ILocalRegistry())
+	{
+		scope(exit) release(srpLocalReg);
+		IUnknown punkOuter = null;
+		I inst;
+		if(FAILED(srpLocalReg.CreateInstance(*clsid, punkOuter, &I.iid, dwFlags, 
+		                                     cast(void**) &inst)))
+			return null;
+		return inst;
+	}
+	return null;
+}
+	
+///////////////////////////////////////////////////////////////////////////////
+dte2.DTE2 GetDTE()
+{
+	dte._DTE _dte = queryService!(dte._DTE);
+	if(!_dte)
+		return null;
+	scope(exit) release(_dte);
+		
+	dte2.DTE2 spvsDTE = qi_cast!(dte2.DTE2)(_dte);
+	return spvsDTE;
+}

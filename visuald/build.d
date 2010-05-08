@@ -144,12 +144,10 @@ public:
 						if(cmdline.length)
 						{
 							string outfile = mConfig.GetOutputFile(file);
-							HRESULT hr = RunCustomBuildBatchFile(outfile, cmdline, m_pIVsOutputWindowPane, this);
+							string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+							HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
 							if (hr != S_OK)
 								return true; // stop compiling
-
-							string cmdfile = makeFilenameAbsolute(outfile ~ ".cmd", workdir);
-							std.file.write(cmdfile, cmdline);
 						}
 					}
 				}
@@ -183,12 +181,8 @@ public:
 				return false;
 
 			string cmdline = mConfig.getCommandLine();
-			hr = RunCustomBuildBatchFile(target, cmdline, m_pIVsOutputWindowPane, this);
-			if (hr == S_OK)
-			{
-				string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
-				std.file.write(cmdfile, cmdline);
-			}
+			string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
+			hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
 			return (hr == S_OK);
 		}
 		catch(FileException)
@@ -396,30 +390,39 @@ public:
 
 
 
-// Runs the user specified pre and post build commands.
+// Runs the build commands, writing cmdfile if successful
 HRESULT RunCustomBuildBatchFile(string              target,
-                                string              strBatchFileText, 
+                                string              buildfile,
+                                string              cmdline, 
                                 IVsOutputWindowPane pIVsOutputWindowPane, 
                                 CBuilderThread      pBuilder)
 {
-	if (strBatchFileText.length == 0)
+	if (cmdline.length == 0)
 		return S_OK;
 	HRESULT hr = S_OK;
 
 	// get the project root directory.
 	string strProjectDir = pBuilder.mConfig.GetProjectDir();
-	string batchFileText = insertCr(strBatchFileText);
-
+	string batchFileText = insertCr(cmdline);
+	string output;
+	
+	string cmdfile = buildfile ~ ".cmd";
+	
 	assert(pBuilder.m_srpIVsLaunchPadFactory);
 	scope auto srpIVsLaunchPad = new ComPtr!(IVsLaunchPad);
 	hr = pBuilder.m_srpIVsLaunchPadFactory.CreateLaunchPad(&srpIVsLaunchPad.ptr);
 	if(FAILED(hr))
-		return hr;
+	{
+		output = format("internal error: IVsLaunchPadFactory.CreateLaunchPad failed with rc=%x", hr);
+		goto failure;
+	}
 	assert(srpIVsLaunchPad.ptr);
 
 	CLaunchPadEvents pCLaunchPadEvents = new CLaunchPadEvents(pBuilder);
 
 	BSTR bstrOutput;
+version(none)
+{
 	hr = srpIVsLaunchPad.ptr.ExecBatchScript(
 		/* [in] LPCOLESTR pszBatchFileContents         */ _toUTF16z(batchFileText),
 		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
@@ -431,12 +434,62 @@ HRESULT RunCustomBuildBatchFile(string              target,
 		/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ pCLaunchPadEvents,
 		/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
 
+	if(FAILED(hr))
+	{
+		output = format("internal error: IVsLaunchPad.ptr.ExecBatchScript failed with rc=%x", hr);
+		goto failure;
+	}
+} else {
+	try
+	{
+		std.file.write(cmdfile, cmdline);
+	}
+	catch(FileException e)
+	{
+		output = format("internal error: cannot write file " ~ cmdfile);
+		hr = S_FALSE;
+	}
+	DWORD result;
+	hr = srpIVsLaunchPad.ptr.ExecCommand(
+		/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
+		/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
+		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
+		/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
+		/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
+		/* [in] ULONG nTaskItemCategory                */ 0, // if LPF_PipeStdoutToTaskList is specified
+		/* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
+		/* [in] LPCOLESTR pszTaskListSubcategory       */ null, // if LPF_PipeStdoutToTaskList is specified
+		/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ pCLaunchPadEvents,
+		/* [out] DWORD *pdwProcessExitCode             */ &result,
+		/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
+
+	if(FAILED(hr))
+	{
+		output = format("internal error: IVsLaunchPad.ptr.ExecCommand failed with rc=%x", hr);
+		goto failure;
+	}
+	else if(result != 0)
+		hr = S_FALSE;
+}
 	// don't know how to get at the exit code, so check output string
-	string output = strip(detachBSTR(bstrOutput));
+	output = strip(detachBSTR(bstrOutput));
 	if(hr == S_OK && _endsWith(output, "failed!"))
 		hr = S_FALSE;
 
-	pBuilder.addCommandLog(target, strBatchFileText, output);
+	if(hr == S_OK)
+	{
+		try
+		{
+			std.file.write(buildfile, cmdline);
+		}
+		catch(FileException e)
+		{
+			output = format("internal error: cannot write file " ~ buildfile);
+			hr = S_FALSE;
+		}
+	}
+failure:
+	pBuilder.addCommandLog(target, cmdline, output);
 	return hr;
 }
 

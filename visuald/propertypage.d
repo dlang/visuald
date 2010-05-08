@@ -62,6 +62,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		/* [in] */ IPropertyPageSite pPageSite)
 	{
 		mixin(LogCallMix);
+		mSite = release(mSite);
 		mSite = addref(pPageSite);
 		return S_OK;
 	}

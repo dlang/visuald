@@ -32,6 +32,7 @@ import fileutil;
 extern(Windows) HRESULT CoDisconnectObject(IUnknown pUnk, DWORD dwReserved);
 
 const string kToolResourceCompiler = "Resource Compiler";
+const string kCmdLogFileExtension = "build";
 
 ///////////////////////////////////////////////////////////////
 
@@ -187,6 +188,7 @@ class ProjectOptions
 		debugtarget = "$(TARGETPATH)";
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
+		xfilename = "$(IntDir)\\$(ProjectName).json";
 		
 		filesToClean = "*.obj";
 		
@@ -338,7 +340,7 @@ class ProjectOptions
 
 	string getCommandLinePath()
 	{
-		return normalizeDir(objdir) ~ "$(ProjectName).cmd";
+		return normalizeDir(objdir) ~ "$(ProjectName)." ~ kCmdLogFileExtension;
 	}
 
 	string appendCv2pdb()
@@ -1375,7 +1377,7 @@ class Config :	DisposingComObject,
 
 	string[] GetDependencies(CFileNode file)
 	{
-		string tool = file.GetTool();
+		string tool = GetCompileTool(file);
 		if(tool == "Custom" || tool == kToolResourceCompiler)
 		{
 			string dep = file.GetDependencies();
@@ -1400,7 +1402,7 @@ class Config :	DisposingComObject,
 		outfile = mProjectOptions.replaceEnvironment(outfile, this, file.GetFilename());
 
 		string workdir = GetProjectDir();
-		string cmdfile = makeFilenameAbsolute(outfile ~ ".cmd", workdir);
+		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
 		
 		if(!compareCommandFile(cmdfile, fcmd))
 			return false;
@@ -1527,7 +1529,7 @@ class Config :	DisposingComObject,
 					if (outname.length && outname != file.GetFilename())
 					{
 						files ~= makeFilenameAbsolute(outname, workdir);
-						files ~= makeFilenameAbsolute(outname ~ ".cmd", workdir);
+						files ~= makeFilenameAbsolute(outname ~ "." ~ kCmdLogFileExtension, workdir);
 					}
 				}
 				return false;
@@ -1594,7 +1596,8 @@ class Config :	DisposingComObject,
 				{
 					string fname = GetOutputFile(file);
 					if(fname.length)
-						files ~= quoteFilename(fname);
+						if(file.GetTool() != "Custom" || file.GetLinkOutput())
+							files ~= quoteFilename(fname);
 				}
 				return false;
 			});

@@ -21,7 +21,7 @@ SRC = dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d \
-      intellisense.d oledatasource.d
+      intellisense.d oledatasource.d searchsymbol.d
 RSRC = resources/dimagelist.bmp
 
 #      $(XMLP_SRC) $(IDL_SRC)

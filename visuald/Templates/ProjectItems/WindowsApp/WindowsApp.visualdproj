@@ -1,9 +1,12 @@
 <DProject>
   <ProjectGuid>$guid1$</ProjectGuid>
   <Config name="Debug">
-    <!-- default to defaults -->
+    <additionalOptions>-L/SUBSYSTEM:WINDOWS:6.00</additionalOptions>
+    <libfiles>ole32.lib kernel32.lib user32.lib comctl32.lib comdlg32.lib</libfiles>
   </Config>
   <Config name="Release">
+    <additionalOptions>-L/SUBSYSTEM:WINDOWS:6.00</additionalOptions>
+    <libfiles>ole32.lib kernel32.lib user32.lib comctl32.lib comdlg32.lib</libfiles>
   </Config>
   <Folder name="$safeprojectname$">
     <File path="winmain.d"></File>

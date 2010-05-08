@@ -12,6 +12,8 @@ import std.json;
 import std.file;
 import std.utf;
 import std.date;
+import std.conv;
+import std.string;
 import std.algorithm;
 import std.c.windows.windows;
 import std.c.windows.com;
@@ -24,6 +26,7 @@ import comutil;
 import logutil;
 import hierutil;
 import fileutil;
+import simplelexer;
 
 class LibraryInfo
 {
@@ -54,6 +57,22 @@ class LibraryInfo
 		return false;
 	}
 
+	static struct JSONscope
+	{
+		JSONscope* parent;
+		string name;
+		
+		string toString()
+		{
+			string nm = name;
+			if(parent && nm.length > 0)
+				nm = parent.toString() ~ "." ~ nm;
+			else if(parent)
+				nm = parent.toString();
+			return nm;
+		}
+	}
+		
 	Definition[] findDefinition(string name)
 	{
 		Definition[] defs;
@@ -65,12 +84,16 @@ class LibraryInfo
 				if(mod.type == JSON_TYPE.OBJECT)
 				{
 					string filename;
+					string modname;
 					JSONValue[string] object = mod.object;
 					if(JSONValue* v = "file" in object)
 						if(v.type == JSON_TYPE.STRING)
 							filename = v.str;
+					if(JSONValue* v = "name" in object)
+						if(v.type == JSON_TYPE.STRING)
+							modname = v.str;
 					
-					void findDefs(JSONValue[string] object)
+					void findDefs(JSONValue[string] object, JSONscope* sc)
 					{
 						if(JSONValue* m = "members" in object)
 							if(m.type == JSON_TYPE.ARRAY)
@@ -80,30 +103,40 @@ class LibraryInfo
 								{
 									if(member.type == JSON_TYPE.OBJECT)
 									{
+										string nm;
 										JSONValue[string] memberobj = member.object;
 										if(JSONValue* n = "name" in memberobj)
-											if(n.type == JSON_TYPE.STRING && n.str == name)
-											{
-												Definition def;
-												def.filename = filename;
-												if(JSONValue* k = "kind" in memberobj)
-													if(k.type == JSON_TYPE.STRING)
-														def.kind = k.str;
-												if(JSONValue* ln = "line" in memberobj)
-													if(ln.type == JSON_TYPE.INTEGER)
-														def.line = cast(int)ln.integer - 1;
-												if(JSONValue* typ = "type" in memberobj)
-													if(typ.type == JSON_TYPE.STRING)
-														def.type = typ.str;
-												defs ~= def;
-											}
-										findDefs(memberobj);
+											if(n.type == JSON_TYPE.STRING)
+												nm = n.str;
+										JSONscope msc = JSONscope(sc, nm);
+										
+										if(nm == name)
+										{
+											Definition def;
+											def.name = name;
+											def.filename = filename;
+											def.inScope = msc.toString();
+											
+											if(JSONValue* k = "kind" in memberobj)
+												if(k.type == JSON_TYPE.STRING)
+													def.kind = k.str;
+											if(JSONValue* ln = "line" in memberobj)
+												if(ln.type == JSON_TYPE.INTEGER)
+													def.line = cast(int)ln.integer - 1;
+											if(JSONValue* typ = "type" in memberobj)
+												if(typ.type == JSON_TYPE.STRING)
+													def.type = typ.str;
+											defs ~= def;
+										}
+										
+										findDefs(memberobj, &msc);
 									}
 								}
 							}
 					}
 				
-					findDefs(object);
+					JSONscope sc = JSONscope(null, modname);
+					findDefs(object, &sc);
 				}
 			}
 		}
@@ -115,12 +148,108 @@ class LibraryInfo
 	d_time mModified;
 }
 
+struct ParameterInfo
+{
+	string rettype;
+	string[] name;
+	string[] display;
+	string[] desc;
+	
+	bool initialize(string type)
+	{
+		wstring text = to!wstring(type);
+		TokenInfo[] lineInfo = ScanLine(SimpleLexer.State.kWhite, text);
+		
+		if(lineInfo.length == 0)
+			return false;
+		int pos = lineInfo.length - 1;
+		if(text[lineInfo[pos].StartIndex .. lineInfo[pos].EndIndex] != ")")
+			return false; // not a function
+		
+		int braceLevel = 1;
+		pos--;
+		string ident;
+		int endpos = lineInfo[pos].EndIndex;
+
+		void prependParam()
+		{
+			wstring wdisp = text[lineInfo[pos].EndIndex .. endpos];
+			string disp = strip(to!string(wdisp));
+			if(disp.length)
+			{
+				name = ident ~ name;
+				display = disp ~ display;
+				desc = "" ~ desc;
+				ident = "";
+			}
+			endpos = lineInfo[pos].StartIndex;
+		}
+		
+		while(pos > 0 && braceLevel > 0)
+		{
+			wstring tok = text[lineInfo[pos].StartIndex .. lineInfo[pos].EndIndex];
+			if(ident.length == 0 && lineInfo[pos].type == TokenColor.Identifier)
+				ident = to!string(tok);
+			else if (tok == ",")
+				prependParam();
+			else if(tok == ")")
+				braceLevel++;
+			else if(tok == "(")
+			{
+				braceLevel--;
+				if(braceLevel == 0)
+					prependParam();
+			}
+			pos--;
+		}
+		
+		wstring wret = text[0 .. endpos];
+		rettype = strip(to!string(wret));
+		return braceLevel == 0;
+	}
+}
+
 struct Definition
 {
+	string name;
 	string kind;
 	string filename;
 	string type;
 	int line;
+
+	string inScope; // enclosing scope
+
+	ParameterInfo* paramInfo;
+	ParameterInfo* GetParamInfo()
+	{
+		if(!paramInfo)
+		{
+			paramInfo = new ParameterInfo;
+			paramInfo.initialize(type);
+		}
+		return paramInfo;
+	}		
+	
+	string GetReturnType() 
+	{
+		return GetParamInfo().rettype;
+	}
+	
+	int GetParameterCount() 
+	{
+		return GetParamInfo().name.length;
+	}
+	
+	void GetParameterInfo(int parameter, out string name, out string display, out string description)
+	{
+		ParameterInfo* info = GetParamInfo();
+		if(parameter < 0 || parameter >= info.name.length)
+			return;
+		
+		name = info.name[parameter];
+		display = info.display[parameter];
+		description = info.desc[parameter];
+	}
 }
 
 class LibraryInfos

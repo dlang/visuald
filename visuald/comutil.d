@@ -39,6 +39,9 @@ import logutil;
 
 extern (C) void _d_callfinalizer(void *p);
 
+struct s_IMAGELIST;
+alias s_IMAGELIST *HIMAGELIST;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 enum { DISP_E_MEMBERNOTFOUND = -2147352573 }
@@ -207,6 +210,7 @@ uint Unadvise(Interface)(IUnknown pSource, uint cookie)
 ///////////////////////////////////////////////////////////////////////////////
 
 version = GC_COM;
+// debug = COM;
 
 class DComObject : IUnknown
 {
@@ -244,12 +248,12 @@ debug
 {
 	this()
 	{
-		logCall("ctor %s this = %s", this, cast(void*)this);
+		debug(COM) logCall("ctor %s this = %s", this, cast(void*)this);
 		InterlockedIncrement(&sCountInstances);
 	}
 	~this()
 	{
-		logCall("dtor %s this = %s", this, cast(void*)this);
+		debug(COM) logCall("dtor %s this = %s", this, cast(void*)this);
 		InterlockedDecrement(&sCountInstances);
 	}
 	shared static ~this()
@@ -299,7 +303,7 @@ version(GC_COM)
 			debug InterlockedIncrement(&sCountReferenced);
 			//uint sz = this.classinfo.init.length;
 			GC.addRoot(cast(void*) this);
-			logCall("addroot %s this = %s", this, cast(void*)this);
+			debug(COM) logCall("addroot %s this = %s", this, cast(void*)this);
 		}
 }
 		return lRef;
@@ -312,7 +316,7 @@ version(GC_COM)
 		{
 version(GC_COM)
 {
-			logCall("delroot %s this = %s", this, cast(void*)this);
+			debug(COM) logCall("delroot %s this = %s", this, cast(void*)this);
 			GC.removeRoot(cast(void*) this);
 			debug InterlockedDecrement(&sCountReferenced);
 }

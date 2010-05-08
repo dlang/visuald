@@ -35,6 +35,8 @@ import sdk.vsi.vssplash;
 import sdk.vsi.proffserv;
 import sdk.vsi.vsshell90;
 import sdk.vsi.objext;
+import dte = sdk.vsi.dte80a;
+import dte2 = sdk.vsi.dte80;
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -65,6 +67,8 @@ const GUID    g_packageCLSID             = uuid("002a2de9-8bb6-484d-987f-7e4ad40
 const GUID    g_languageCLSID            = uuid("002a2de9-8bb6-484d-9800-7e4ad4084715");
 const GUID    g_projectFactoryCLSID      = uuid("002a2de9-8bb6-484d-9802-7e4ad4084715");
 const GUID    g_intellisenseCLSID        = uuid("002a2de9-8bb6-484d-9801-7e4ad4084715");
+const GUID    g_commandSetCLSID          = uuid("002a2de9-8bb6-484d-9803-7e4ad4084715");
+const GUID    g_toolWinCLSID             = uuid("002a2de9-8bb6-484d-9804-7e4ad4084715");
 
 const LanguageProperty g_languageProperties[] =
 [
@@ -324,7 +328,9 @@ class Package : DisposingComObject,
 			projTypes.Release();
 		}
 		if(mHostSP)
+		{
 			mOptions.initFromRegistry();
+		}
 		return S_OK; // E_NOTIMPL;
 	}
 
@@ -573,3 +579,65 @@ class GlobalOptions
 	}
 }
 
+class CommandManager
+{
+	HRESULT AddCommand(string name)
+	{
+		dte2.DTE2 spvsDTE = GetDTE();
+		if(!spvsDTE)
+			return E_FAIL;
+		scope(exit) release(spvsDTE);
+		
+		HRESULT hr = S_OK;
+
+		scope auto spvsCmds = new ComPtr!(dte.Commands);
+		hr = spvsDTE.Commands(&spvsCmds.ptr);
+		if (SUCCEEDED(hr))
+		{
+			// See if the command already exists
+			VARIANT svarCmdID;
+			svarCmdID.bstrVal = _toUTF16z(name);
+			svarCmdID.vt = VT_BSTR;
+			scope auto spvsCmd = new ComPtr!(dte.Command);
+			hr = spvsCmds.ptr.Item(svarCmdID, -1, &spvsCmd.ptr);
+			if (FAILED(hr))
+			{
+				// Command is not present.  Add it to the pool of commands.
+				scope auto spvsCmds2 = new ComPtr!(dte2.Commands2)(spvsCmds.ptr);
+				if (spvsCmds2.ptr)
+				{
+/+
+                    hr = spvsCmds2->AddNamedCommand2(_spvsAddin, sbstrCmdID, sbstrCmdName, sbstrCmdDescription, VARIANT_FALSE, CComVariant(IDB_FSECMD),
+                                                     NULL, vsCommandStatusSupported+vsCommandStatusEnabled, vsCommandStylePictAndText,
+                                                     vsCommandControlTypeButton, &spvsCmd);
+                    hr = (SUCCEEDED(hr) && spvsCmd) ? S_OK : E_FAIL;
+                    //if (SUCCEEDED(hr))
+                    //   hr = _AddCommandToViewMenu(spvsCmd);
+
+                    hr = sbstrCmdID.Append(L"ViewFlatSolutionExplorer");
+                    if (SUCCEEDED(hr))
+                    {
+                        CComBSTR sbstrCmdName;
+                        hr = sbstrCmdName.LoadString(IDS_COMMANDNAME) ? S_OK : E_OUTOFMEMORY;
+                        if (SUCCEEDED(hr))
+                        {
+                            CComBSTR sbstrCmdDescription;
+                            hr = sbstrCmdDescription.LoadString(IDS_COMMANDDESCRIPTION) ? S_OK : E_OUTOFMEMORY;
+                            if (SUCCEEDED(hr))
+                            {
+                                hr = spvsCmds2->AddNamedCommand2(_spvsAddin, sbstrCmdID, sbstrCmdName, sbstrCmdDescription, VARIANT_FALSE, CComVariant(IDB_FSECMD),
+                                                                 NULL, vsCommandStatusSupported+vsCommandStatusEnabled, vsCommandStylePictAndText,
+                                                                 vsCommandControlTypeButton, &spvsCmd);
+                                hr = (SUCCEEDED(hr) && spvsCmd) ? S_OK : E_FAIL;
+                                //if (SUCCEEDED(hr))
+                                //   hr = _AddCommandToViewMenu(spvsCmd);
+                            }
+                        }
+					}
+		+/
+				}
+			}
+		}
+		return hr;
+	}
+}

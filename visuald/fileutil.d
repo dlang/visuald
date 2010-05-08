@@ -8,10 +8,14 @@
 
 module fileutil;
 
+import std.c.windows.windows;
 import std.string;
 import std.stream;
 import std.path;
 import std.file;
+import std.utf;
+
+extern(Windows)	UINT GetSystemDirectoryW(LPWSTR lpBuffer, UINT uSize);
 
 string normalizeDir(string dir)
 {
@@ -65,6 +69,14 @@ string getNameWithoutExt(string fname)
 	if(name.length == 0)
 		name = bname;
 	return name;
+}
+
+string getCmdPath()
+{
+	wchar buffer[260];
+	UINT len = GetSystemDirectoryW(buffer.ptr, 260);
+	string p = toUTF8(buffer[0 .. len]);
+	return normalizeDir(p) ~ "cmd.exe";
 }
 
 //-----------------------------------------------------------------------------

@@ -21,6 +21,13 @@ import std.conv;
 // - braces must not nest more than 4095 times inside token string
 // - number of different delimiters must not exceed 256
 
+struct TokenInfo
+{
+	TokenColor type;
+	int StartIndex;
+	int EndIndex;
+}
+
 class SimpleLexer
 {
 	enum State
@@ -527,9 +534,9 @@ X";+/
 
 struct empty_t {}
 
-empty_t[string] keywords_map;
+__gshared empty_t[string] keywords_map;
 
-static this() {
+shared static this() {
 	empty_t empty;
 	foreach(string s; keywords)
 	    keywords_map[s] = empty;
@@ -655,4 +662,18 @@ const string keywords[] =
 	"shared",
 	"immutable"
 ];
+
+TokenInfo[] ScanLine(int iState, wstring text)
+{
+	TokenInfo[] lineInfo;
+	for(uint pos = 0; pos < text.length; )
+	{
+		TokenInfo info;
+		info.StartIndex = pos;
+		info.type = cast(TokenColor) SimpleLexer.scan(iState, text, pos);
+		info.EndIndex = pos;
+		lineInfo ~= info;
+	}
+	return lineInfo;
+}
 

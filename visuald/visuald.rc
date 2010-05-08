@@ -63,6 +63,8 @@ BMP_SPLASHSCRN  BITMAP "resources\dsplashscreenicon.bmp"
 BMP_VSIMAGELIST BITMAP "resources\vsimagelist.bmp"
 BMP_COMPLETION  BITMAP "resources\completionset.bmp"
 
+2001  CTMENU       "Resources\PkgCmd.cto"
+
 /////////////////////////////////////////////////////////////////////////////
 
 #define __str(x) #x

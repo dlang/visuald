@@ -1479,6 +1479,7 @@ version(none)
 		replaceExpressionTokens(tokens);
 
 		replaceTokenSequence(tokens, "__success($args)", "/+__success($args)+/", true);
+		replaceTokenSequence(tokens, "const $_ident*", "/+const+/ $_ident*", true);
 
 version(all) {
 		replaceTokenSequence(tokens, "typedef const", "typedef CONST", true);

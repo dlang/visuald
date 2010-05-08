@@ -1,5 +1,5 @@
 <DProject>
- <ProjectGuid>{7610F45A-69D9-4B68-BE63-0E055B51D447}</ProjectGuid>
+ <ProjectGuid>{8760F45A-69D9-4B68-BE63-0E055B51D447}</ProjectGuid>
  <Config name="Debug">
   <obj>0</obj>
   <link>0</link>
@@ -36,7 +36,7 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
@@ -60,7 +60,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -71,15 +71,15 @@
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib</libfiles>
+  <libfiles />
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <additionalOptions>-L/XREF</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
-  <debugarguments>/RootSuffix D</debugarguments>
+  <debugtarget>$(TargetPath)</debugtarget>
+  <debugarguments />
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
@@ -170,46 +170,11 @@
   <debugremote />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Folder name="VisualD">
-  <Folder name="Resources">
-   <File path="Resources\vsimagelist.bmp" />
-   <File path="Resources\completionset.bmp" />
-   <File path="Resources\DAboutBox.ico" />
-   <File path="Resources\DImageList.bmp" />
-   <File path="Resources\DSplashScreenIcon.bmp" />
-   <File tool="Resource Compiler" path="visuald.rc" dependencies="Resources\pkgcmd.cto" />
-   <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set PATH=%PATH%;c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
-set PATH=%PATH%;$(DevEnvDir)
-set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin
-CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
-  </Folder>
-  <File path="config.d" />
-  <File path="dproject.d" />
-  <File path="build.d" />
-  <File path="chiercontainer.d" />
-  <File path="chiernode.d" />
-  <File path="completion.d" />
-  <File path="comutil.d" />
-  <File path="dimagelist.d" />
-  <File path="dlangsvc.d" />
-  <File path="dllmain.d" />
-  <File path="dpackage.d" />
-  <File path="expansionprovider.d" />
-  <File path="fileutil.d" />
-  <File path="hierarchy.d" />
-  <File path="hierutil.d" />
-  <File path="logutil.d" />
-  <File path="propertypage.d" />
-  <File path="register.d" />
-  <File path="simplelexer.d" />
-  <File path="stringutil.d" />
-  <File path="trackprojectdocument.d" />
-  <File path="vscommands.d" />
-  <File path="winctrl.d" />
-  <File path="xmlwrap.d" />
-  <File path="visuald.def" />
-  <File path="oledatasource.d" />
-  <File path="intellisense.d" />
-  <File path="searchsymbol.d" />
+ <Folder name="vsi2d">
+  <File path="idl2d.d" />
+  <File path="tokutil.d" />
+  <File path="dgutil.d" />
+  <File path="dlist.d" />
+  <File path="tokenizer.d" />
  </Folder>
 </DProject>

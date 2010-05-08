@@ -1,0 +1,79 @@
+// Package Command Bar Definition
+//
+
+//#include "stdidcmd.h"
+//#include "vsshlids.h"
+//#include "msobtnid.h"
+//#include "virtkeys.h"
+//#include "PkgCmdID.h"
+//#include "Resource.h"
+
+//#define guidToolWindowPkg      { 0xAD5B3373, 0x1F9E, 0x442f, { 0x96, 0x9F, 0x94, 0xA9, 0x2F, 0xBB, 0xAA, 0x2C } }
+//#define guidToolWindowMenuGrp  { 0x26CB6B7B, 0xD8D4, 0x47dd, { 0x8A, 0x8B, 0x4F, 0x4D, 0xB7, 0x4F, 0xEF, 0xB9 } }
+//#define guidToolWindowCmdSet   { 0x8CBE33CC, 0xCA38, 0x4a8a, { 0x9F, 0xB9, 0x27, 0x67, 0x97, 0x73, 0x56, 0x6E } }
+
+#define g_packageCLSID         { 0x002a2de9, 0x8bb6, 0x484d, { 0x98, 0x7f, 0x7e, 0x4a, 0xd4, 0x08, 0x47, 0x15 } }
+#define g_commandSetCLSID      { 0x002a2de9, 0x8bb6, 0x484d, { 0x98, 0x03, 0x7e, 0x4a, 0xd4, 0x08, 0x47, 0x15 } }
+
+#define guidOfficeIcon         { 0xd309f794, 0x903f, 0x11d0, { 0x9e, 0xfc, 0x00, 0xa0, 0xc9, 0x11, 0x00, 0x4f } }
+#define guidSHLMainMenu        { 0xd309f791, 0x903f, 0x11d0, { 0x9e, 0xfc, 0x00, 0xa0, 0xc9, 0x11, 0x00, 0x4f } }
+
+///////////////////////////////////////////////////////////////////////////////
+// Menu IDs
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Menu Group IDs
+
+#define IDG_VS_VIEW_BROWSER           0x0130
+#define IDG_VS_WNDO_FINDRESULTS       0x0724
+
+///////////////////////////////////////////////////////////////////////////////
+// Command IDs
+
+#define CmdSearchSymbol 0x101
+
+///////////////////////////////////////////////////////////////////////////////
+// Bitmap IDs
+
+#define msotcidNoIcon	746	//(0,25) Label: '&No Icon'
+
+///////////////////////////////////////////////////////////////////////////////
+
+CMDS_SECTION g_packageCLSID
+
+    MENUS_BEGIN
+    	// NewMenu                      Relative to Group                       Priority    Type        Name                    Text
+    MENUS_END
+
+    NEWGROUPS_BEGIN
+        // NewGroup                     Parent Group                            Priority
+    NEWGROUPS_END
+
+    BUTTONS_BEGIN
+		g_commandSetCLSID:CmdSearchSymbol,	guidSHLMainMenu:IDG_VS_WNDO_FINDRESULTS, 0x0100, guidOfficeIcon:msotcidNoIcon, BUTTON, ,"&Visual D - Search Symbol";
+		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID
+		// as the command set GUID. Also, by specifying blank for the FLAGS, this command is
+		// default visible and enabled. Other valid values for FLAGS are the following:
+		//    DEFAULTDISABLED, DEFAULTINVISIBLE, DYNAMICVISIBILITY, TEXTCHANGES
+		// These values for FLAGS can be or'ed together, e.g. "DEFAULTINVISIBLE | DYNAMICVISIBILITY"
+
+    BUTTONS_END
+
+    BITMAPS_BEGIN
+        // Bitmap                          Bitmap Index, Bitmap Index ...
+    BITMAPS_END
+
+CMDS_END
+
+CMDPLACEMENT_SECTION
+    // Command                             Group                                Priority
+CMDPLACEMENT_END
+
+VISIBILITY_SECTION
+    // Command                             GUID when visible
+VISIBILITY_END
+
+KEYBINDINGS_SECTION
+    // Command                             when available   emulation    keystate
+KEYBINDINGS_END

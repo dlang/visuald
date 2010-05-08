@@ -29,6 +29,7 @@ import dpackage;
 import expansionprovider;
 import completion;
 import intellisense;
+import searchsymbol;
 
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
@@ -465,13 +466,6 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 
 ///////////////////////////////////////////////////////////////////////////////
 
-struct TokenInfo
-{
-	TokenColor type;
-	int StartIndex;
-	int EndIndex;
-}
-
 int GetUserPreferences(LANGPREFERENCES *langPrefs)
 {
 	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
@@ -549,6 +543,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	Colorizer mColorizer;
 	IVsTextLines mBuffer;
 	CompletionSet mCompletionSet;
+	MethodData mMethodData;
 	ExpansionProvider mExpansionProvider;
 	SourceEvents mSourceEvents;
 	
@@ -566,7 +561,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	{
 		mExpansionProvider = release(mExpansionProvider);
 		DismissCompletor();
+		DismissMethodTip();
 		mCompletionSet = release(mCompletionSet);
+		mMethodData = release(mMethodData);
 		mSourceEvents.Dispose();
 		mBuffer = release(mBuffer);
 	}
@@ -715,14 +712,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			return lineInfo;
 
 		wstring text = GetText(line, 0, line, -1);
-		for(uint pos = 0; pos < text.length; )
-		{
-			TokenInfo info;
-			info.StartIndex = pos;
-			info.type = cast(TokenColor) SimpleLexer.scan(iState, text, pos);
-			info.EndIndex = pos;
-			lineInfo ~= info;
-		}
+		lineInfo = ScanLine(iState, text);
 		return lineInfo;
 	}
 
@@ -878,8 +868,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return false;
 	}
 
-	bool FindOpeningBracketBackward(int line, int tok, out int otherLine, out int otherIndex)
+	bool FindOpeningBracketBackward(int line, int tok, out int otherLine, out int otherIndex,
+	                                int* pCountComma = null)
 	{
+		if(pCountComma)
+			*pCountComma = 0;
 		int level = 1;
 		while(line >= 0)
 		{
@@ -898,7 +891,10 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			{
 				pos = tokpos[p];
 				if(toktype[p] == TokenColor.Text)
-					if(SimpleLexer.isClosingBracket(text[pos]))
+				{
+					if(pCountComma && text[pos] == ',')
+						(*pCountComma)++;
+					else if(SimpleLexer.isClosingBracket(text[pos]))
 						level++;
 					else if(SimpleLexer.isOpeningBracket(text[pos]))
 						if(--level <= 0)
@@ -907,6 +903,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 							otherIndex = pos;
 							return true;
 						}
+				}
 			}
 			line--;
 			tok = -1;
@@ -914,6 +911,67 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return false;
 	}
 
+	bool ScanBackward(int line, int tok, 
+					  bool delegate(wstring text, uint pos, uint ppos, int type) dg)
+	{
+		while(line >= 0)
+		{
+			wstring text = GetText(line, 0, line, -1);
+			int[] tokpos;
+			int[] toktype;
+			uint pos = 0;
+			int iState = mColorizer.GetLineState(line);
+			while(pos < text.length)
+			{
+				tokpos ~= pos;
+				toktype ~= SimpleLexer.scan(iState, text, pos);
+			}
+			int p = (tok >= 0 ? tok : tokpos.length) - 1;
+			uint ppos = (p >= tokpos.length - 1 ? text.length : tokpos[p+1]);
+			for( ; p >= 0; p--)
+			{
+				pos = tokpos[p];
+				if(dg(text, pos, ppos, toktype[p]))
+					return true;
+				ppos = pos;
+			}
+			line--;
+			tok = -1;
+		}
+		return false;
+	}
+	
+	wstring FindIdentifierBackward(int line, int tok)
+	{
+		while(line >= 0)
+		{
+			wstring text = GetText(line, 0, line, -1);
+			int[] tokpos;
+			int[] toktype;
+			uint pos = 0;
+			int iState = mColorizer.GetLineState(line);
+			while(pos < text.length)
+			{
+				tokpos ~= pos;
+				toktype ~= SimpleLexer.scan(iState, text, pos);
+			}
+			int p = (tok >= 0 ? tok : tokpos.length) - 1;
+			uint ppos = (p >= tokpos.length - 1 ? text.length : tokpos[p+1]);
+			for( ; p >= 0; p--)
+			{
+				pos = tokpos[p];
+				if(toktype[p] == TokenColor.Identifier)
+					return text[pos .. ppos];
+				if(ppos > pos + 1 || !isspace(text[pos]))
+					return ""w;
+				ppos = pos;
+			}
+			line--;
+			tok = -1;
+		}
+		return ""w;
+	}
+	
 	//////////////////////////////////////////////////////////////
 
 	ExpansionProvider GetExpansionProvider()
@@ -933,9 +991,23 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return mCompletionSet;
 	}
 
+	MethodData GetMethodData()
+	{
+		if(!mMethodData)
+			mMethodData = addref(new MethodData());
+		return mMethodData;
+	}
+
 	bool IsCompletorActive()
 	{
 		if (mCompletionSet && mCompletionSet.mDisplayed)
+			return true;
+		return false;
+	}
+
+	bool IsMethodTipActive()
+	{
+		if (mMethodData && mMethodData.mDisplayed)
 			return true;
 		return false;
 	}
@@ -944,8 +1016,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	{
 		if (mCompletionSet && mCompletionSet.mDisplayed)
 			mCompletionSet.Close();
-		//if (this.methodData != null && this.methodData.IsDisplayed)
-		//	this.methodData.Close();
+	}
+	void DismissMethodTip()
+	{
+		if (mMethodData && mMethodData.mDisplayed)
+			mMethodData.Close();
 	}
 
 	bool EnableFormatSelection() { return true; }
@@ -1061,6 +1136,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			case ECMD_INVOKESNIPPETFROMSHORTCUT:
 				return HandleSnippet();
 
+			case ECMD_PARAMINFO:
+				return HandleMethodTip();
+				
 			case ECMD_FORMATSELECTION:
 				return ReindentLines();
 				
@@ -1133,10 +1211,15 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 			case ECMD_LEFT:
 			case ECMD_RIGHT:
+			case ECMD_UP:
+			case ECMD_DOWN:
 			case ECMD_BACKSPACE:
 				if(mCodeWinMgr.mSource.IsCompletorActive())
 					initCompletion();
+				if(mCodeWinMgr.mSource.IsMethodTipActive())
+					HandleMethodTip();
 				break;
+				
 			case ECMD_TYPECHAR:
 				dchar ch = pvaIn.lVal;
 				//if(ch == '.')
@@ -1149,8 +1232,13 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 					else
 						mCodeWinMgr.mSource.DismissCompletor();
 				}
-				else if(ch == '{' || ch == '}')
+				
+				if(ch == '{' || ch == '}')
 					HandleSmartIndent(ch);
+				
+				if(mCodeWinMgr.mSource.IsMethodTipActive())
+					if(ch == ',' || ch == ')')
+						HandleMethodTip();
 				break;
 			default:
     				break;
@@ -1190,6 +1278,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		{
 			switch (cmdID) 
 			{
+			case ECMD_PARAMINFO:
 			case ECMD_FORMATSELECTION:
 			case ECMD_COMPLETEWORD:
 			case ECMD_INSERTSNIPPET:
@@ -1237,23 +1326,36 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return mView.HighlightMatchingBrace(0, 2, spans.ptr);
 	}
 
-	bool FindMatchingBrace(int line, int idx, out int otherLine, out int otherIndex)
+	int FindLineToken(int line, int idx, out int iState, out uint pos)
 	{
-		int iState = mCodeWinMgr.mSource.mColorizer.GetLineState(line);
+		iState = mCodeWinMgr.mSource.mColorizer.GetLineState(line);
 		if(iState < 0)
-			return false;
+			return -1;
 
 		wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
-		uint pos = 0;
+		pos = 0;
 		int tok = 0;
 		for( ; pos < text.length && pos < idx; tok++)
 			SimpleLexer.scan(iState, text, pos);
-		if(pos >= text.length || pos > idx)
+		if(pos >= text.length)
+			return -1;
+		if(pos > idx)
+			tok--;
+
+		return tok;
+	}
+		
+	bool FindMatchingBrace(int line, int idx, out int otherLine, out int otherIndex)
+	{
+		int iState;
+		uint pos;
+		int tok = FindLineToken(line, idx, iState, pos);
+		if(tok < 0)
 			return false;
 
+		wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 		uint ppos = pos;
 		int toktype = SimpleLexer.scan(iState, text, pos);
-		
 		if(toktype != TokenColor.Text)
 			return false;
 
@@ -1344,6 +1446,14 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		if(defs.length == 0)
 			return S_FALSE;
 
+debug {
+		if(defs.length > 0)
+		{
+			SearchWindow sw = new SearchWindow;
+			sw.openWindow();
+			return S_FALSE;
+		}
+}
 		// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
 		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
 		if(!pIVsUIShellOpenDocument)
@@ -1422,6 +1532,58 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, defs[0].line, 0, defs[0].line, 0);
 	}
 
+	//////////////////////////////////////////////////////////////
+	int HandleMethodTip()
+	{
+		int rc = _HandleMethodTip();
+		if(rc != S_OK)
+			mCodeWinMgr.mSource.DismissMethodTip();
+		return rc;
+	}
+		
+	int _HandleMethodTip()
+	{
+		TextSpan span;
+		if(mView.GetCaretPos(&span.iStartLine, &span.iStartIndex) != S_OK)
+			return S_FALSE;
+
+		int line = span.iStartLine;
+		int idx = span.iStartIndex;
+		int iState;
+		uint pos;
+		int tok = FindLineToken(line, idx, iState, pos);
+
+	stepUp:
+		int otherLine, otherIndex, cntComma;
+		Source src = mCodeWinMgr.mSource;
+		if(!src.FindOpeningBracketBackward(line, tok, otherLine, otherIndex, &cntComma))
+			return S_FALSE;
+		
+		wstring bracket = src.GetText(otherLine, otherIndex, otherLine, otherIndex + 1);
+		if(bracket != "("w)
+			return S_FALSE;
+
+		tok = FindLineToken(otherLine, otherIndex, iState, pos);
+		string word = toUTF8(src.FindIdentifierBackward(otherLine, tok));
+		if(word.length <= 0)
+		{
+			line = otherLine;
+			idx = otherIndex;
+			goto stepUp;
+		}
+
+		Definition[] defs = Package.GetLibInfos().findDefinition(word);
+		if(defs.length == 0)
+			return S_FALSE;
+		
+		MethodData md = src.GetMethodData();
+		span.iEndLine = span.iStartLine;
+		span.iEndIndex = span.iStartIndex + 1;
+		md.Refresh(mView, defs, cntComma, span);
+		
+		return S_OK;
+	}
+	
 	// IVsTextViewFilter //////////////////////////////////////
 	override int GetWordExtent(in int iLine, in CharIndex iIndex, in uint dwFlags, /* [out] */ TextSpan *pSpan)
 	{
@@ -1429,7 +1591,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 		int startIdx, endIdx;
 		if(!mCodeWinMgr.mSource.GetWordExtent(iLine, iIndex, dwFlags, startIdx, endIdx))
-			return E_FAIL;
+			return S_FALSE;
 
 		pSpan.iStartLine = iLine;
 		pSpan.iStartIndex = startIdx;

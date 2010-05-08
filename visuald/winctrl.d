@@ -158,6 +158,11 @@ class Widget
 	{
 		return cast(Widget)cast(void*)GetWindowLongA(hwnd, GWL_USERDATA);
 	}
+
+	int SendMessage(int msg, WPARAM wp, LPARAM lp)
+	{
+		return SendMessageA(hwnd, msg, wp, lp);
+	}
 }
 
 class Window : Widget
@@ -390,16 +395,10 @@ class ComboBox : Widget
 	}
 }
 
-class CheckBox : Widget
+class ButtonBase : Widget
 {
-	this(Widget parent, string intext, int id = 0) 
-	{
-		HWND parenthwnd = parent ? parent.hwnd : null;
-		createWidget(parent, "BUTTON", intext, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE, 0, id);
-		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
-		super(parent);
-	}
-
+	this(Widget parent) { super(parent); }
+	
 	bool isChecked() 
 	{
 		bool res = SendMessageA(hwnd, BM_GETCHECK, 0, 0) == BST_CHECKED;
@@ -408,6 +407,28 @@ class CheckBox : Widget
 	void setChecked(bool x) 
 	{
 		SendMessageA(hwnd, BM_SETCHECK, x ? BST_CHECKED : BST_UNCHECKED, 0);
+	}
+}
+
+class CheckBox : ButtonBase
+{
+	this(Widget parent, string intext, int id = 0) 
+	{
+		HWND parenthwnd = parent ? parent.hwnd : null;
+		createWidget(parent, "BUTTON", intext, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE, 0, id);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		super(parent);
+	}
+}
+
+class Button : ButtonBase
+{
+	this(Widget parent, string intext, int id = 0) 
+	{
+		HWND parenthwnd = parent ? parent.hwnd : null;
+		createWidget(parent, "BUTTON", intext, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, id);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		super(parent);
 	}
 }
 
