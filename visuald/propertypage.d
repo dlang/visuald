@@ -8,14 +8,14 @@
 
 module propertypage;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.string;
 import std.conv;
 
 //import minwin.all;
 //import minwin.mswindows;
 
+import sdk.win32.objbase;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 
@@ -38,7 +38,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	const int kLineHeight = 22;
 	const int kLineSpacing = 2;
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IPropertyPage) (this, riid, pvObject))
 			return S_OK;
@@ -1181,14 +1181,14 @@ class PropertyPageFactory : DComObject, IClassFactory
 		mClsid = *rclsid;
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	HRESULT CreateInstance(IUnknown UnkOuter, IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
 	{
 		PropertyPage ppp;
 		assert(!UnkOuter);
@@ -1225,7 +1225,7 @@ class PropertyPageFactory : DComObject, IClassFactory
 		return ppp.QueryInterface(riid, pvObject);
 	}
 
-	HRESULT LockServer(BOOL fLock)
+	override HRESULT LockServer(in BOOL fLock)
 	{
 		return S_OK;
 	}

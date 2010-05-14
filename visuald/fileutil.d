@@ -8,14 +8,12 @@
 
 module fileutil;
 
-import std.c.windows.windows;
+import windows;
 import std.string;
 import std.stream;
 import std.path;
 import std.file;
 import std.utf;
-
-extern(Windows)	UINT GetSystemDirectoryW(LPWSTR lpBuffer, UINT uSize);
 
 string normalizeDir(string dir)
 {

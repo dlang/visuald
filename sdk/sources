@@ -7,4 +7,18 @@ SRC = \
 	win32\winbase.d \
 	win32\winuser.d \
 	win32\ktmtypes.d \
+	win32\winerror.d \
+	win32\unknwn.d \
+	win32\oaidl.d \
+	win32\objidl.d \
+	win32\wtypes.d \
+	win32\oleidl.d \
+	win32\ocidl.d \
+	win32\docobj.d \
+	win32\mshtmcid.d \
+	win32\xmldom.d \
+	win32\xmldso.d \
+	win32\xmldomdid.d \
+	win32\xmldsodid.d \
+	win32\idispids.d \
 

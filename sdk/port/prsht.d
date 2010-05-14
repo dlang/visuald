@@ -1,6 +1,6 @@
 module sdk.port.prsht;
 
-import std.c.windows.windows;
+import sdk.port.base;
 
 const PSP_DEFAULT                = 0x00000000;
 const PSP_DLGINDIRECT            = 0x00000001;

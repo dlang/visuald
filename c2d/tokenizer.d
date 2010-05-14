@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module tokenizer;
 
 import std.ctype;
@@ -444,6 +452,7 @@ class Tokenizer
 		if (eof())
 			return false;
 
+		handleBackSlash();
 		if (text[pos] == '\r' && !eof(1) && text[pos+1] == '\n')
 		{
 			lineno++;
@@ -462,7 +471,6 @@ class Tokenizer
 		if (eof())
 			return false;
 
-		handleBackSlash();
 		return true;
 	}
 
@@ -492,13 +500,17 @@ class Tokenizer
 
 			nextChar();
 		}
-		if (!keepBackSlashAtEOL && !eof(1) && text[pos] == '\\')
-			if (text[pos+1] == '\n' || text[pos+1] == '\r')
+		if (!keepBackSlashAtEOL)
+		{
+			if(!eof(1) && text[pos] == '\\' && text[pos+1] == '\n' || text[pos+1] == '\r')
 			{
 				nextChar();
 				nextChar();
 				goto cont_spaces;
 			}
+		}
+		else if (handleBackSlash())
+			goto cont_spaces;
 
 		return lineno - lines;
 	}

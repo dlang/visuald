@@ -8,8 +8,9 @@
 
 module register;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
+import sdk.win32.winreg;
+
 import std.string;
 import std.conv;
 import std.utf;
@@ -20,6 +21,8 @@ import dllmain;
 import propertypage;
 import config;
 import comutil;
+
+enum { SECURE_ACCESS = ~(WRITE_DAC | WRITE_OWNER | GENERIC_ALL | ACCESS_SYSTEM_SECURITY) }
 
 // Registers COM objects normally and registers VS Packages to the specified VS registry hive under HKCU
 extern(Windows)
@@ -61,54 +64,6 @@ extern(Windows)
 HRESULT DllUnregisterServer()
 {
 	return VSDllUnregisterServer(null);
-}
-
-///////////////////////////////////////////////////////////////////////
-
-extern(Windows)
-DWORD GetModuleFileNameW(in HMODULE hModule, wchar* lpFilename, DWORD nSize);
-
-extern(Windows)
-LONG RegOpenKeyExW(in HKEY hKey, in wchar* lpSubKey, in DWORD ulOptions, in REGSAM samDesired, HKEY* phkResult);
-
-extern(Windows)
-LONG RegCreateKeyExW(in HKEY hKey, in wchar* lpSubKey, DWORD Reserved, in wchar* lpClass, in DWORD dwOptions,
-                     in REGSAM samDesired, in SECURITY_ATTRIBUTES* lpSecurityAttributes, HKEY* phkResult, DWORD* lpdwDisposition);
-
-extern(Windows)
-LONG RegSetValueExW(in HKEY hKey, in wchar* lpValueName, DWORD reserved, DWORD dwType, in ubyte* data, DWORD nSize);
-
-extern(Windows)
-LONG RegQueryValueW(in HKEY hKey, in wchar* lpSubKey, wchar* lpValue, LONG *lpcbValue);
-
-extern(Windows)
-LONG RegQueryValueExW(in HKEY hkey, in wchar* lpValueName, in int Reserved, DWORD* type, void *lpData, LONG *pcbData);
-
-enum { SECURE_ACCESS = ~(WRITE_DAC | WRITE_OWNER | GENERIC_ALL | ACCESS_SYSTEM_SECURITY) }
-
-extern(Windows)
-LONG RegQueryInfoKeyW(in HKEY hKey, wchar* lpClass, DWORD* lpcClass, DWORD* lpReserved,
-                      DWORD* lpcSubKeys, DWORD* lpcMaxSubKeyLen, DWORD* lpcMaxClassLen,
-                      DWORD* lpcValues, DWORD* lpcMaxValueNameLen, DWORD* lpcMaxValueLen,
-                      DWORD* lpcbSecurityDescriptor, FILETIME* lpftLastWriteTime);
-
-extern(Windows)
-LONG RegEnumKeyW(in HKEY hKey, in DWORD dwIndex, wchar* lpName, in DWORD cchName);
-
-extern(Windows)
-LONG RegEnumKeyExW(in HKEY hKey, in DWORD dwIndex, wchar* lpName, DWORD* lpcName,
-                   DWORD* lpReserved, wchar* lpClass, DWORD* lpcClass, FILETIME* lpftLastWriteTime);
-
-extern(Windows)
-LONG RegDeleteKeyW(in HKEY hKey, in wchar* lpSubKey);
-
-enum { ERROR_INSUFFICIENT_BUFFER = 122 }
-
-HRESULT HRESULT_FROM_WIN32(ulong x)
-{
-	enum { FACILITY_WIN32 = 7 };
-	return cast(HRESULT)(x) <= 0 ? cast(HRESULT)(x) 
-	                             : cast(HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -178,23 +133,32 @@ class RegKey
 			throw new RegistryException(hr);
 	}
 
+	bool Delete(wstring name)
+	{
+		if(!key)
+			return false;
+		wchar* szName = _toUTF16zw(name);
+		HRESULT hr = RegDeleteValue(key, szName);
+		return SUCCEEDED(hr);
+	}
+	
 	wstring GetString(wstring name)
 	{
 		if(!key)
 			return ""w;
 		
 		wchar buf[260];
-		LONG cnt = 260 * wchar.sizeof;
-		wstring szName = name ~ cast(wchar)0;
+		DWORD cnt = 260 * wchar.sizeof;
+		wchar* szName = _toUTF16zw(name);
 		DWORD type;
-		int hr = RegQueryValueExW(key, szName.ptr, 0, &type, buf.ptr, &cnt);
+		int hr = RegQueryValueExW(key, szName, null, &type, cast(ubyte*) buf.ptr, &cnt);
 		if(hr == S_OK && cnt > 0)
 			return to_wstring(buf.ptr);
 		if(hr != ERROR_MORE_DATA || type != REG_SZ)
 			return ""w;
 
 		scope wchar[] pbuf = new wchar[cnt/2 + 1];
-		RegQueryValueExW(key, szName.ptr, 0, &type, pbuf.ptr, &cnt);
+		RegQueryValueExW(key, szName, null, &type, cast(ubyte*) pbuf.ptr, &cnt);
 		return to_wstring(pbuf.ptr);
 	}
 
@@ -272,7 +236,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 {
 	HKEY    keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
 	wstring registrationRoot = GetRegistrationRoot(pszRegRoot, useRanu);
-	wstring dllPath = GetModuleFileName(g_hInst);
+	wstring dllPath = GetDLLName(g_hInst);
 	wstring templatePath = GetTemplatePath(dllPath);
 
 	try
@@ -386,6 +350,11 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		if(keyToolOpts.GetString("IncSearchPath"w).length == 0)
 			keyToolOpts.Set("IncSearchPath"w, "$(WindowsSdkDir)\\include;$(DevEnvDir)..\\..\\VC\\include"w);
 
+		// remove "SkipLoading" entry from user settings
+		scope RegKey userKeyPackage = new RegKey(HKEY_CURRENT_USER, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
+		userKeyPackage.Delete("SkipLoading");
+
+		// global registry keys for marshalled objects
 		scope RegKey keyMarshal1 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocServer32"w);
 		keyMarshal1.Set("InprocServer32"w, dllPath);
 		keyMarshal1.Set("ThreadingModel"w, "Appartment"w);
@@ -403,7 +372,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 /*---------------------------------------------------------
   Registry helpers
 -----------------------------------------------------------*/
-HRESULT RegCreateValue(in HKEY key, in wstring name, in wstring value)
+HRESULT RegCreateValue(HKEY key, in wstring name, in wstring value)
 {
 	wstring szName = name ~ cast(wchar)0;
 	wstring szValue = value ~ cast(wchar)0;
@@ -412,14 +381,14 @@ HRESULT RegCreateValue(in HKEY key, in wstring name, in wstring value)
 	return HRESULT_FROM_WIN32(lRetCode);
 }
 
-HRESULT RegCreateDwordValue(in HKEY key, in wstring name, in DWORD value)
+HRESULT RegCreateDwordValue(HKEY key, in wstring name, in DWORD value)
 {
 	wstring szName = name ~ cast(wchar)0;
 	LONG lRetCode = RegSetValueExW(key, szName.ptr, 0, REG_DWORD, cast(ubyte*)(&value), value.sizeof);
 	return HRESULT_FROM_WIN32(lRetCode);
 }
 
-HRESULT RegDeleteRecursive(in HKEY keyRoot, wstring path)
+HRESULT RegDeleteRecursive(HKEY keyRoot, wstring path)
 {
 	HRESULT hr;
 	HKEY    key;
@@ -461,7 +430,7 @@ fail:
 	return hr;
 }
 
-wstring GetModuleFileName(HINSTANCE inst)
+wstring GetDLLName(HINSTANCE inst)
 {
 	//get dll path
 	wchar dllPath[MAX_PATH+1];
@@ -483,18 +452,18 @@ wstring GetTemplatePath(wstring dllpath)
 	return toUTF16(path);
 }
 
-HRESULT hrRegOpenKeyEx(in HKEY root, wstring regPath, int reserved, REGSAM samDesired, HKEY* phkResult)
+HRESULT hrRegOpenKeyEx(HKEY root, wstring regPath, int reserved, REGSAM samDesired, HKEY* phkResult)
 {
-	wstring szRegPath = regPath ~ cast(wchar)0;
-	LONG lRes = RegOpenKeyExW(root, szRegPath.ptr, 0, samDesired, phkResult);
+	wchar* szRegPath = _toUTF16zw(regPath);
+	LONG lRes = RegOpenKeyExW(root, szRegPath, 0, samDesired, phkResult);
 	return HRESULT_FROM_WIN32(lRes);
 }
 
-HRESULT hrRegCreateKeyEx(in HKEY keySub, wstring regPath, int reserved, wstring classname, DWORD opt, DWORD samDesired, 
+HRESULT hrRegCreateKeyEx(HKEY keySub, wstring regPath, int reserved, wstring classname, DWORD opt, DWORD samDesired, 
 			 SECURITY_ATTRIBUTES* security, HKEY* key, DWORD* disposition)
 {
-	wstring szRegPath = regPath ~ cast(wchar)0;
-	wstring szClassname = classname ~ cast(wchar)0;
-	LONG lRes = RegCreateKeyExW(keySub, szRegPath.ptr, 0, szClassname.ptr, opt, samDesired, security, key, disposition);
+	wchar* szRegPath = _toUTF16zw(regPath);
+	wchar* szClassname = _toUTF16zw(classname);
+	LONG lRes = RegCreateKeyExW(keySub, szRegPath, 0, szClassname, opt, samDesired, security, key, disposition);
 	return HRESULT_FROM_WIN32(lRes);
 }

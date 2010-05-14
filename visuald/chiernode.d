@@ -8,8 +8,7 @@
 
 module chiernode;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.string;
 import std.path;
 import std.utf;
@@ -64,7 +63,7 @@ class CHierNode : DisposingDispatchObject
 		m_grfStateFlags = ST_DefaultFlags;
 		synchronized(gVsItemMap_sync)
 			gVsItemMap[GetVsItemID()] = this;
-		logCall("added %d to gVsItemMap", GetVsItemID());
+		logCall("added %x to gVsItemMap", GetVsItemID());
 	}
 	~this()
 	{
@@ -74,7 +73,7 @@ class CHierNode : DisposingDispatchObject
 	{
 		synchronized(gVsItemMap_sync)
 			gVsItemMap.remove(GetVsItemID());
-		logCall("removed %d from gVsItemMap", GetVsItemID());
+		logCall("removed %x from gVsItemMap", GetVsItemID());
 	}
 	
 	/*override*/ void Dispose()
@@ -192,6 +191,7 @@ public:
 			pvar.boolVal = false;
 			return S_OK;
 		case VSHPROPID_BrowseObject:
+			pvar.vt = VT_UNKNOWN;
 			return QueryInterface(&IDispatch.iid, cast(void **)&pvar.pdispVal);
 
 		default:
@@ -434,7 +434,7 @@ public:
 		/* [unique][out][in] */ OLECMDTEXT *pCmdText)
 	{
 		//ATLTRACENOTIMPL(_T("CHierNode::IOleCommandTarget::QueryStatus"));
-		return OLECMDERR.E_NOTSUPPORTED;
+		return OLECMDERR_E_NOTSUPPORTED;
 	}
 
 	int Exec( 
@@ -445,7 +445,7 @@ public:
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
 		//ATLTRACENOTIMPL(_T("CHierNode::IOleCommandTarget::Exec"));
-		return OLECMDERR.E_NOTSUPPORTED;
+		return OLECMDERR_E_NOTSUPPORTED;
 	}
 
 	// Bit state functions

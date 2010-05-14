@@ -8,8 +8,7 @@
 
 module logutil;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.format;
 import std.utf;
 import std.string;
@@ -24,6 +23,8 @@ public import vscommands;
 
 static import dte = sdk.port.dte;
 
+import sdk.win32.oleauto;	
+	
 import sdk.vsi.textmgr;	
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
@@ -35,13 +36,6 @@ import sdk.vsi.vssplash;
 import sdk.vsi.fpstfmt;
 import sdk.vsi.vsshlids;
 import sdk.vsi.ocdesign;
-
-extern(Windows)
-{
-	export void OutputDebugStringA(in char* lpOutputString);
-	export int VariantChangeTypeEx(VARIANT* pvargDest, in VARIANT* pvarSrc, uint lcid, ushort wFlags, ushort vt);
-	export uint GetThreadLocale();
-}
 
 ///////////////////////////////////////////////////////////////
 
@@ -107,15 +101,17 @@ string GUID2utf8(ref GUID guid)
 	mixin(mixinGUID2string("IRpcProxyBuffer"));
 	mixin(mixinGUID2string("IRpcStubBuffer"));
 	mixin(mixinGUID2string("IPSFactoryBuffer"));
-	mixin(mixinGUID2string("IPropertyStorage"));
-	mixin(mixinGUID2string("IPropertySetStorage"));
-	mixin(mixinGUID2string("IEnumSTATPROPSTG"));
-	mixin(mixinGUID2string("IEnumSTATPROPSETSTG"));
+version(none)
+{
+//	mixin(mixinGUID2string("IPropertyStorage"));
+//	mixin(mixinGUID2string("IPropertySetStorage"));
+//	mixin(mixinGUID2string("IEnumSTATPROPSTG"));
+//	mixin(mixinGUID2string("IEnumSTATPROPSETSTG"));
 	mixin(mixinGUID2string("IFillLockBytes"));
 	mixin(mixinGUID2string("IProgressNotify"));
 	mixin(mixinGUID2string("ILayoutStorage"));
-	mixin(mixinGUID2string("IRpcChannel"));
-	mixin(mixinGUID2string("IRpcStub"));
+//	mixin(mixinGUID2string("IRpcChannel"));
+//	mixin(mixinGUID2string("IRpcStub"));
 	mixin(mixinGUID2string("IStubManager"));
 	mixin(mixinGUID2string("IRpcProxy"));
 	mixin(mixinGUID2string("IProxyManager"));
@@ -168,9 +164,10 @@ string GUID2utf8(ref GUID guid)
 	mixin(mixinGUID2string("IContinue"));
 	mixin(mixinGUID2string("IViewObject"));
 	mixin(mixinGUID2string("IViewObject2"));
+	mixin(mixinGUID2string("IEnumOLEVERB"));
+}
 	mixin(mixinGUID2string("IDropSource"));
 	mixin(mixinGUID2string("IDropTarget"));
-	mixin(mixinGUID2string("IEnumOLEVERB"));
 
 	mixin(mixinGUID2string("IVsSccManager2"));
 	mixin(mixinGUID2string("IVsSccManager3"));
@@ -340,6 +337,13 @@ string tryformat(...)
 	return s;
 }
 
+string _tryformat(T)(T* arg)
+{
+	if(!arg)
+		return "null";
+	return tryformat("", *arg);
+}
+	
 string varToString(in VARIANT arg) 
 {
 	if (arg.vt == VT_BSTR)
@@ -371,21 +375,44 @@ void* _toLog(Object arg) { return cast(void*) arg; }
 
 uint _toLogOut(uint arg) { return arg; }
 
+void* _toLogOut(IUnknown arg) { return cast(void*) arg; }
+string _toLogOut(GUID arg) { return GUID2utf8(arg); }
+
+version(all)
+{
+	
+string _toLogPtr(T)(const(T)* arg)
+{
+	     static if(is(T : void))     return tryformat("", arg);
+	else static if(is(T : IUnknown)) return _tryformat(cast(int**)arg);
+	else static if(is(T : GUID))     return arg ? GUID2utf8(*arg) : "null";
+	else static if(is(T : LARGE_INTEGER))  return _tryformat(cast(long*)arg);
+	else static if(is(T : ULARGE_INTEGER)) return _tryformat(cast(ulong*)arg);
+	
+	else static if(is(T : IUnknown)) return arg ? _tryformat(cast(int*)*arg) : "null";
+	else static if(is(T == struct))  return tryformat("struct ", cast(int*)arg);
+	else return _tryformat(arg);
+}
+
+} else { // !all
+	
 string _toLogPtr(T : uint)(T* arg) { return arg ? tryformat("%d", *arg) : "null"; }
+string _toLogPtr(T : short)(T* arg) { return arg ? tryformat("%s", arg) : "null"; }
 string _toLogPtr(T : wchar*)(T* arg) { return arg ? to_string(*arg) : "null"; }
 string _toLogPtr(T : void*)(T* arg) { return arg ? tryformat("", *arg) : "null"; }
 version(D_Version2)
 	string _toLogPtr(T : ulong)(T* arg) { return arg ? tryformat("%d", *arg) : "null"; }
 
-void* _toLogOut(IUnknown arg) { return cast(void*) arg; }
 string _toLogPtr(T : IUnknown)(T* arg) { return arg ? tryformat("", cast(int*)*arg) : "null"; }
 
 version(test) {} else {
 
-string _toLogOut(GUID arg) { return GUID2utf8(arg); }
 string _toLogPtr(T : GUID)(T* arg) { return GUID2utf8(*arg); }
 
 string _toLogPtr(T : VARIANT)(T* arg) { return arg ? _toLog(*arg) : "null"; }
+string _toLogPtr(T : LARGE_INTEGER)(T* arg) { return arg ? tryformat("%ld", arg.QuadPart) : "null"; }
+string _toLogPtr(T : ULARGE_INTEGER)(T* arg) { return arg ? tryformat("%ld", arg.QuadPart) : "null"; }
+string _toLogPtr(T : LPCOLESTR)(T arg) { return arg ? tryformat("%s", arg) : "null"; }
 
 string _toLogPtr(T : DISPPARAMS)(T* arg) { return arg ? "struct" : "null"; }
 string _toLogPtr(T : EXCEPINFO)(T* arg) { return arg ? "struct" : "null"; }
@@ -407,6 +434,8 @@ string _toLogPtr(T : RECT)(T* arg) { return arg ? tryformat("", arg) : "null"; }
 string _toLogPtr(T : TextSpan)(T* arg) { return arg ? tryformat("", arg) : "null"; }
 
 } // !version(test)
+
+} // !all
 
 int gLogIndent = 0;
 __gshared bool gLogFirst = true;

@@ -8,14 +8,17 @@
 
 module sdk.port.base;
 
+version = sdk;
 version(sdk) {} else version = vsi;
-//version = sdk;
 
 version(sdk) {
 	public import sdk.win32.windef;
 	public import sdk.win32.winnt;
+	public import sdk.win32.wtypes;
 	public import sdk.win32.ntstatus;
 	public import sdk.win32.winbase;
+	public import sdk.win32.winuser;
+	public import sdk.win32.winerror;
 	public import std.stdarg;
 } else {
 	public import std.c.windows.windows;
@@ -45,49 +48,67 @@ version(sdk)
 	const _WIN32_WINNT = 0x600;
 
 	alias char CHAR;
-	alias short SHORT;
-	alias long LONG;
+//	alias short SHORT;
+	alias int LONG;
 	alias int HRESULT;
 //	alias int INT;
 
 	struct GUID { uint Data1; ushort Data2; ushort Data3; ubyte Data4[ 8 ]; }
-	alias GUID CLSID;
 	alias GUID *LPGUID;
 	alias GUID *LPCGUID;
+	alias GUID *REFGUID;
+
+	alias GUID IID;
+	alias GUID *LPIID;
+	alias GUID *REFIID;
+
+	alias GUID CLSID;
+	//alias GUID *LPCLSID;
+	alias GUID *REFCLSID;
+
+	alias GUID FMTID;
+	alias GUID *LPFMTID;
+	alias GUID *REFFMTID;
 }
+alias GUID *LPCLSID;
+
+alias void * I_RPC_HANDLE;
 
 alias long hyper;
 alias wchar wchar_t;
 
-version(sdk) {} else {
-alias double DOUBLE;
-alias bool boolean;
 alias ushort _VARIANT_BOOL;
-alias int INT_PTR;
-alias uint ULONG_PTR;
-alias uint DWORD_PTR;
-alias int LONG_PTR;
-alias ulong ULARGE_INTEGER;
-alias long LARGE_INTEGER;
-alias ulong ULONG64;
-alias long LONG64;
-alias ulong DWORD64;
-alias ulong UINT64;
-alias long INT64;
-alias int INT32;
-alias uint UINT32;
-alias int LONG32;
-alias uint ULONG32;
 
-alias uint SIZE_T;
-alias uint FMTID;
-//alias uint LCID;
-//alias uint DISPID;
+version(sdk) {}
+else {
+	alias double DOUBLE;
+	alias bool boolean;
+//	alias ushort _VARIANT_BOOL;
+	alias int INT_PTR;
+	alias uint ULONG_PTR;
+	alias uint DWORD_PTR;
+	alias int LONG_PTR;
+	alias ulong ULARGE_INTEGER;
+	alias long LARGE_INTEGER;
+	alias ulong ULONG64;
+	alias long LONG64;
+	alias ulong DWORD64;
+	alias ulong UINT64;
+	alias long INT64;
+	alias int INT32;
+	alias uint UINT32;
+	alias int LONG32;
+	alias uint ULONG32;
 
-version(D_Version2) {} else
-{
-alias uint UINT_PTR;
-}
+	alias uint SIZE_T;
+	alias uint FMTID;
+	//alias uint LCID;
+	//alias uint DISPID;
+
+	version(D_Version2) {} else
+	{
+	alias uint UINT_PTR;
+	}
 }
 
 version(D_Version2) {} else
@@ -113,13 +134,27 @@ struct _TEB;
 
 alias HANDLE HMETAFILEPICT;
 
-alias GUID *LPCLSID;
 alias LPRECT LPCRECT;
 alias LPRECT LPCRECTL;
 
 int V_INT_PTR(void* p) { return cast(int) p; }
 uint V_UINT_PTR(void* p) { return cast(uint) p; }
 
+// for prsht.d
+struct _PSP;
+struct _PROPSHEETPAGEA;
+struct _PROPSHEETPAGEW;
+
+// for commctrl.d
+struct _IMAGELIST;
+struct _TREEITEM;
+struct _DSA;
+struct _DPA;
+interface IImageList {}
+
+version(sdk) {}
+else {
+	
 struct _RECTL
 {
     LONG    left;
@@ -150,6 +185,7 @@ struct _POINTS
     SHORT y;
 }
 alias _POINTS POINTS; alias _POINTS *PPOINTS;
+} // !sdk
 
 struct LOGFONTW
 {
@@ -180,9 +216,9 @@ const WM_USER = 0x400;
 const SEVERITY_SUCCESS    = 0;
 const SEVERITY_ERROR      = 1;
 
-SCODE   MAKE_SCODE(uint sev, uint fac, uint code)   { return cast(SCODE)   ((sev<<31) | (fac<<16) | code); }
-HRESULT MAKE_HRESULT(uint sev, uint fac, uint code) { return cast(HRESULT) ((sev<<31) | (fac<<16) | code); }
 }
+HRESULT MAKE_HRESULT(uint sev, uint fac, uint code) { return cast(HRESULT) ((sev<<31) | (fac<<16) | code); }
+SCODE   MAKE_SCODE(uint sev, uint fac, uint code)   { return cast(SCODE)   ((sev<<31) | (fac<<16) | code); }
 
 // from adserr.h
 const FACILITY_WINDOWS                 = 8;
@@ -199,12 +235,15 @@ const FACILITY_DISPATCH                = 2;
 const TV_FIRST                = 0x1100;      // treeview messages
 const TVN_FIRST               = (0U-400U);   // treeview notifications
 
+version(none)
+{
 extern(Windows) UINT RegisterClipboardFormatW(LPCWSTR lpszFormat);
 
 UINT RegisterClipboardFormatW(wstring format)
 {
 	format ~= "\0"w;
-	return RegisterClipboardFormatW(format.ptr);
+	return RegisterClipboardFormatW(cast(LPCWSTR) format.ptr);
+}
 }
 
 // alias /+[unique]+/ FLAGGED_WORD_BLOB * wireBSTR;
@@ -220,38 +259,10 @@ version(vsi)
 {
 const prjBuildActionCustom = 3;
 
-// VSI specifics
-IUnknown DOCDATAEXISTING_UNKNOWN;
-
-static this() { *cast(int*)&DOCDATAEXISTING_UNKNOWN = -1; }
-
-enum TokenType : int
-{
-	Unknown,
-	Text,
-	Keyword,
-	Identifier,
-	String,
-	Literal,
-	Operator,
-	Delimiter,
-	LineComment,
-	Comment
 }
 
-enum TokenColor : int
+version(none)
 {
-	Text,
-	Keyword,
-	Comment,
-	Identifier,
-	String,
-	Literal,
-};
-
-GUID GUID_COMPlusNativeEng = { 0x92EF0900, 0x2251, 0x11D2, [ 0xB7, 0x2E, 0x00, 0x00, 0xF8, 0x75, 0x72, 0xEF ] };
-}
-
 enum { 
 	CLR_NONE                = 0xFFFFFFFF,
 	CLR_DEFAULT             = 0xFF000000,
@@ -273,6 +284,7 @@ enum {
 	LR_CREATEDIBSECTION = 0x00002000,
 	LR_COPYFROMRESOURCE = 0x00004000,
 	LR_SHARED           = 0x00008000,
+}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -326,3 +338,19 @@ GUID uuid(string g)
 
 const GUID const_GUID_NULL = { 0, 0, 0, [ 0, 0, 0, 0,  0, 0, 0, 0 ] };
 
+///////////////////////////////////////////////////////////////////////////////
+// functions declared in headers, but not found in import libraries
+///////////////////////////////////////////////////////////////////////////////
+
+/+
+InterlockedBitTestAndSet
+InterlockedBitTestAndReset
+InterlockedBitTestAndComplement
+YieldProcessor
+ReadPMC
+ReadTimeStampCounter
+DbgRaiseAssertionFailure
+GetFiberData
+GetCurrentFiber
+NtCurrentTeb
++/

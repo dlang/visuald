@@ -8,8 +8,7 @@
 
 module build;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.c.stdlib;
 import std.windows.charset;
 import std.utf;
@@ -368,7 +367,7 @@ class CLaunchPadEvents : DComObject, IVsLaunchPadEvents
 		m_pBuilder = builder;
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsLaunchPadEvents) (this, riid, pvObject))
 			return S_OK;

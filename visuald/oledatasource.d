@@ -10,7 +10,10 @@ module oledatasource;
 
 import std.c.string : memcmp, memset, memcpy;
 
+import windows;
+import sdk.win32.objbase;
 import sdk.win32.objidl;
+
 import comutil;
 import hierutil;
 import logutil;
@@ -18,14 +21,6 @@ import logutil;
 extern(Windows)
 {
 	void ReleaseStgMedium(in STGMEDIUM* medium);
-	HRESULT CreateDataAdviseHolder(IDataAdviseHolder* ppDAHolder);
-
-	const CF_BITMAP           = 2;
-	const CF_METAFILEPICT     = 3;
-	const CF_PALETTE          = 9;
-
-	const DATA_S_SAMEFORMATETC  = 0x00040130L;
-	const OLE_E_NOCONNECTION    = cast(HRESULT) 0x80040004L;
 }
 
 struct VX_DATACACHE_ENTRY
@@ -48,7 +43,7 @@ class OleDataSource : DComObject, IDataObject
 		Empty();
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -364,7 +359,7 @@ class OleDataSource : DComObject, IDataObject
 		// attempt to find match in the cache
 		VX_DATACACHE_ENTRY* pCache = Lookup(pformatetcIn, DATADIR_GET);
 		if (!pCache)
-			return OLEERR.DV_E_FORMATETC;
+			return DV_E_FORMATETC;
 
 		// use cache if entry is not delay render
 		memset(pmedium, 0, STGMEDIUM.sizeof);
@@ -372,13 +367,13 @@ class OleDataSource : DComObject, IDataObject
 		{
 			// Copy the cached medium into the lpStgMedium provided by caller.
 			if (!_CopyStgMedium(pformatetcIn.cfFormat, pmedium, &pCache.m_stgMedium))
-				return OLEERR.DV_E_FORMATETC;
+				return DV_E_FORMATETC;
 
 			// format was supported for copying
 			return S_OK;
 		}
 
-		SCODE sc = OLEERR.DV_E_FORMATETC;
+		SCODE sc = DV_E_FORMATETC;
 
 		// attempt STGMEDIUM* based delay render
 		if (OnRenderData(pformatetcIn, pmedium))
@@ -399,7 +394,7 @@ class OleDataSource : DComObject, IDataObject
 		// attempt to find match in the cache
 		VX_DATACACHE_ENTRY* pCache = Lookup(pformatetc, DATADIR_GET);
 		if (!pCache)
-			return OLEERR.DV_E_FORMATETC;
+			return DV_E_FORMATETC;
 
 		// handle cached medium and copy
 		if (pCache.m_stgMedium.tymed != TYMED_NULL)
@@ -407,13 +402,13 @@ class OleDataSource : DComObject, IDataObject
 			// found a cached format -- copy it to dest medium
 			assert(pCache.m_stgMedium.tymed == pmedium.tymed);
 			if (!_CopyStgMedium(pformatetc.cfFormat, pmedium, &pCache.m_stgMedium))
-				return OLEERR.DV_E_FORMATETC;
+				return DV_E_FORMATETC;
 
 			// format was supported for copying
 			return S_OK;
 		}
 
-		SCODE sc = OLEERR.DV_E_FORMATETC;
+		SCODE sc = DV_E_FORMATETC;
 		// attempt pmedium based delay render
 		if (OnRenderData(pformatetc, pmedium))
 			sc = S_OK;
@@ -428,7 +423,7 @@ class OleDataSource : DComObject, IDataObject
 		// attempt to find match in the cache
 		VX_DATACACHE_ENTRY* pCache = Lookup(pformatetc, DATADIR_GET);
 		if (!pCache)
-			return OLEERR.DV_E_FORMATETC;
+			return DV_E_FORMATETC;
 
 		// it was found in the cache or can be rendered -- success
 		return S_OK;
@@ -457,7 +452,7 @@ class OleDataSource : DComObject, IDataObject
 		// attempt to find match in the cache
 		VX_DATACACHE_ENTRY* pCache = Lookup(pformatetc, DATADIR_SET);
 		if (!pCache)
-			return OLEERR.DV_E_FORMATETC;
+			return DV_E_FORMATETC;
 
 		assert(pCache.m_stgMedium.tymed == TYMED_NULL);
 

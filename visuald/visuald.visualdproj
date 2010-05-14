@@ -36,7 +36,7 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
@@ -123,10 +123,10 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
-  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath />
-  <fileImppath />
+  <otherDMD>1</otherDMD>
+  <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
+  <imppath>..</imppath>
+  <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
   <objname />
@@ -156,10 +156,10 @@
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
-  <libfiles />
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib</libfiles>
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <exefile>$(OutDir)\$(ProjectName).dll</exefile>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -211,5 +211,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="oledatasource.d" />
   <File path="intellisense.d" />
   <File path="searchsymbol.d" />
+  <File path="windows.d" />
  </Folder>
 </DProject>

@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 // simple double linked list
 
 module dlist;
@@ -105,7 +113,7 @@ class DList(T)
 		node._next = first;
 	}
 
-	// removes entries from list
+	// insert entries to list, return node to beginning of inserted list
 	DListNode!(T)* insertListBefore(DListNode!(T)* node, DList!(T) list)
 	{
 		if(node is &root)
@@ -299,6 +307,7 @@ struct DListIterator(T)
 		_list.insertBefore(data, _pos);
 	}
 
+	// insert entries to list, return iterator to beginning of inserted list
 	DListIterator!(T) insertListBefore(DList!(T) list)
 	{
 		DListNode!(T)* beg = _list.insertListBefore(_pos, list);

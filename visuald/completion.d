@@ -8,8 +8,7 @@
 
 module completion;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.ctype;
 import std.string;
 import std.utf;
@@ -31,6 +30,8 @@ import dimagelist;
 import config;
 import intellisense;
 
+import sdk.port.vsi;
+import sdk.win32.commctrl;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.vsshell;
@@ -311,7 +312,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 		mSource = source;
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsCompletionSetEx) (this, riid, pvObject))
 			return S_OK;

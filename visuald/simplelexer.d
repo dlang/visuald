@@ -9,7 +9,7 @@
 module simplelexer;
 
 //import idl.vsi.textmgr;
-import sdk.port.base;
+import sdk.port.vsi;
 
 import std.ctype;
 import std.utf;

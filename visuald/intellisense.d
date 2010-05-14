@@ -15,9 +15,9 @@ import std.date;
 import std.conv;
 import std.string;
 import std.algorithm;
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 
+import sdk.port.vsi;
 import sdk.vsi.vsshell;
 
 import dpackage;

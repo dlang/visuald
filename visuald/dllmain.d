@@ -8,7 +8,8 @@
 
 module dllmain;
 
-import std.c.windows.windows;
+import stdwin = std.c.windows.windows;
+import windows;
 import comutil;
 import logutil;
 import register;
@@ -61,7 +62,7 @@ extern (C)
 } // !version(D_Version2)
 
 extern (Windows)
-BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
+BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 {
 	switch (ulReason)
 	{
@@ -70,7 +71,7 @@ version(D_Version2)
 {
 			if(!dll_process_attach(hInstance, true))
 				return false;
-			g_hInst = hInstance;
+			g_hInst = cast(HINSTANCE) hInstance;
 }
 else
 {

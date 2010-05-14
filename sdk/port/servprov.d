@@ -1,7 +1,9 @@
 module sdk.port.servprov;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import sdk.port.base;
+import sdk.win32.unknwn;
+//import std.c.windows.windows;
+//import std.c.windows.com;
 
 const GUID IID_IServiceProvider = IServiceProvider.iid;
 

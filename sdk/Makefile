@@ -8,7 +8,7 @@
 
 include vsi_sources
 VSI_SRC = $(SRC) port/servprov.d port/stdole2.d port/msxml.d port/dte.d port/base.d \
-
+	port\vsi.d port\propidl.d port\rpc.d port\string.d
 
 DBGDIR = ..\bin\Debug
 RELDIR = ..\bin\Release

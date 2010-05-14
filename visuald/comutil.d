@@ -8,8 +8,7 @@
 
 module comutil;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.c.string;
 import std.c.stdlib;
 import std.string;
@@ -19,6 +18,13 @@ import std.traits;
 
 public import sdk.port.base;
 public import sdk.port.stdole2;
+
+import sdk.win32.oleauto;
+import sdk.win32.objbase;
+
+version = GC_COM;
+debug debug = COM;
+//debug(COM) debug = COM_ADDREL;
 
 version(D_Version2)
 {
@@ -39,69 +45,7 @@ import logutil;
 
 extern (C) void _d_callfinalizer(void *p);
 
-struct s_IMAGELIST;
-alias s_IMAGELIST *HIMAGELIST;
-
 ///////////////////////////////////////////////////////////////////////////////
-
-enum { DISP_E_MEMBERNOTFOUND = -2147352573 }
-
-enum OLEERR
-{
-	E_FIRST = 0x80040000,
-	E_LAST  = 0x800400FF,
-
-	E_OLEVERB                    = 0x80040000, // Invalid OLEVERB structure
-	E_ADVF                       = 0x80040001, // Invalid advise flags
-	E_ENUM_NOMORE                = 0x80040002, // Can't enumerate any more, because the associated data is missing
-	E_ADVISENOTSUPPORTED         = 0x80040003, // This implementation doesn't take advises
-	E_NOCONNECTION               = 0x80040004, // There is no connection for this connection ID
-	E_NOTRUNNING                 = 0x80040005, // Need to run the object to perform this operation
-	E_NOCACHE                    = 0x80040006, // There is no cache to operate on
-	E_BLANK                      = 0x80040007, // Uninitialized object
-	E_CLASSDIFF                  = 0x80040008, // Linked object's source class has changed
-	E_CANT_GETMONIKER            = 0x80040009, // Not able to get the moniker of the object
-	E_CANT_BINDTOSOURCE          = 0x8004000A, // Not able to bind to the source
-	E_STATIC                     = 0x8004000B, // Object is static; operation not allowed
-	E_PROMPTSAVECANCELLED        = 0x8004000C, // User canceled out of save dialog
-	E_INVALIDRECT                = 0x8004000D, // Invalid rectangle
-	E_WRONGCOMPOBJ               = 0x8004000E, // compobj.dll is too old for the ole2.dll initialized
-	E_INVALIDHWND                = 0x8004000F, // Invalid window handle
-	E_NOT_INPLACEACTIVE          = 0x80040010, // Object is not in any of the inplace active states
-	E_CANTCONVERT                = 0x80040011, // Not able to convert object
-	E_NOSTORAGE                  = 0x80040012, // Not able to perform the operation because object is not given storage yet
-	DV_E_FORMATETC               = 0x80040064, // Invalid FORMATETC structure
-	DV_E_DVTARGETDEVICE          = 0x80040065, // Invalid DVTARGETDEVICE structure
-	DV_E_STGMEDIUM               = 0x80040066, // Invalid STDGMEDIUM structure
-	DV_E_STATDATA                = 0x80040067, // Invalid STATDATA structure
-	DV_E_LINDEX                  = 0x80040068, // Invalid lindex
-	DV_E_TYMED                   = 0x80040069, // Invalid tymed
-	DV_E_CLIPFORMAT              = 0x8004006A, // Invalid clipboard format
-	DV_E_DVASPECT                = 0x8004006B, // Invalid aspect(s)
-	DV_E_DVTARGETDEVICE_SIZE     = 0x8004006C, // tdSize parameter of the DVTARGETDEVICE structure is invalid
-	DV_E_NOIVIEWOBJECT           = 0x8004006D, // Object doesn't support IViewObject interface
-}
-
-enum OLECMDERR
-{
-	E_FIRST            = (OLEERR.E_LAST+1),
-	E_NOTSUPPORTED     = (E_FIRST),
-	E_DISABLED         = (E_FIRST+1),
-	E_NOHELP           = (E_FIRST+2),
-	E_CANCELED         = (E_FIRST+3),
-	E_UNKNOWNGROUP     = (E_FIRST+4),
-}
-
-enum
-{
-	MK_LBUTTON   = 0x0001,
-	MK_RBUTTON   = 0x0002,
-	MK_SHIFT     = 0x0004,
-	MK_CONTROL   = 0x0008,
-	MK_MBUTTON   = 0x0010,
-	MK_XBUTTON1  = 0x0020,
-	MK_XBUTTON2  = 0x0040,
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -149,7 +93,7 @@ class ComPtr(Interface)
 }
 
 ///////////////////////////////////////////////////////////////////////
-bool queryInterface2(I)(I obj, in IID iid, IID* riid, void** pvObject)
+bool queryInterface2(I)(I obj, in IID iid, in IID* riid, void** pvObject)
 {
 	if(*riid == iid)
 	{
@@ -160,7 +104,7 @@ bool queryInterface2(I)(I obj, in IID iid, IID* riid, void** pvObject)
 	return false;
 }
 
-bool queryInterface(I)(I obj, IID* riid, void** pvObject)
+bool queryInterface(I)(I obj, in IID* riid, void** pvObject)
 {
 	return queryInterface2!(I)(obj, I.iid, riid, pvObject);
 }
@@ -208,9 +152,6 @@ uint Unadvise(Interface)(IUnknown pSource, uint cookie)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-version = GC_COM;
-// debug = COM;
 
 class DComObject : IUnknown
 {
@@ -264,7 +205,7 @@ debug
 }
 
 extern (System):
-	override HRESULT QueryInterface(IID* riid, void** ppv)
+	override HRESULT QueryInterface(in IID* riid, void** ppv)
 	{
 		if (*riid == IID_IUnknown)
 		{
@@ -298,6 +239,8 @@ version(none) // copy for debugging
 		LONG lRef = InterlockedIncrement(&count);
 version(GC_COM)
 {
+		debug(COM_ADDREL) logCall("addref  %s this = %s", this, cast(void*)this);
+		
 		if(lRef == 1)
 		{
 			debug InterlockedIncrement(&sCountReferenced);
@@ -312,6 +255,9 @@ version(GC_COM)
 	override ULONG Release()
 	{
 		LONG lRef = InterlockedDecrement(&count);
+
+		debug(COM_ADDREL) logCall("release %s this = %s", this, cast(void*)this);
+	
 		if (lRef == 0)
 		{
 version(GC_COM)
@@ -391,7 +337,7 @@ struct INTERFACEDATA
 
 class DisposingDispatchObject : DisposingComObject, IDispatch
 {
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IDispatch) (this, riid, pvObject))
 			return S_OK;
@@ -473,7 +419,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	{
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(ITypeInfo) (this, riid, pvObject))
 			return S_OK;
@@ -664,14 +610,6 @@ T release(T)(T p)
 
 // alias wchar* BSTR;
 
-extern(Windows) export BSTR SysAllocString(in wchar* str);
-extern(Windows) export BSTR SysAllocStringLen(in wchar* str, int len);
-extern(Windows) export BSTR SysFreeString(BSTR str);
-extern(Windows) export void* CoTaskMemAlloc(int sz);
-extern(Windows) export void CoTaskMemFree(void* ptr);
-
-extern(Windows) export int StringFromGUID2(in GUID *rguid, LPOLESTR lpsz, int cbMax);
-
 static const size_t clsidLen  = 127;
 static const size_t clsidSize = clsidLen + 1;
 
@@ -679,7 +617,7 @@ wstring GUID2wstring(in GUID clsid)
 {
 	//get clsid's as string
 	wchar oleCLSID_arr[clsidLen+1];
-	if (StringFromGUID2(&clsid, oleCLSID_arr.ptr, clsidLen) == 0)
+	if (StringFromGUID2(clsid, oleCLSID_arr.ptr, clsidLen) == 0)
 		return "";
 	wstring oleCLSID = to_wstring(oleCLSID_arr.ptr);
 	return oleCLSID;

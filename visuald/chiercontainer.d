@@ -8,8 +8,7 @@
 
 module chiercontainer;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.string;
 import std.path;
 import std.utf;

@@ -8,8 +8,7 @@
 
 module dpackage;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.c.stdlib;
 import std.windows.charset;
 import std.string;
@@ -29,6 +28,8 @@ import propertypage;
 import winctrl;
 import register;
 import intellisense;
+
+import sdk.win32.winreg;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vssplash;
@@ -69,6 +70,8 @@ const GUID    g_projectFactoryCLSID      = uuid("002a2de9-8bb6-484d-9802-7e4ad40
 const GUID    g_intellisenseCLSID        = uuid("002a2de9-8bb6-484d-9801-7e4ad4084715");
 const GUID    g_commandSetCLSID          = uuid("002a2de9-8bb6-484d-9803-7e4ad4084715");
 const GUID    g_toolWinCLSID             = uuid("002a2de9-8bb6-484d-9804-7e4ad4084715");
+
+GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
 
 const LanguageProperty g_languageProperties[] =
 [
@@ -120,14 +123,14 @@ HRESULT DllGetClassObject(CLSID* rclsid, IID* riid, LPVOID* ppv)
 ///////////////////////////////////////////////////////////////////////
 class ClassFactory : DComObject, IClassFactory
 {
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	HRESULT CreateInstance(IUnknown UnkOuter, IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
 	{
 		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
 
@@ -152,7 +155,7 @@ class ClassFactory : DComObject, IClassFactory
 		return S_FALSE;
 	}
 
-	HRESULT LockServer(BOOL fLock)
+	override HRESULT LockServer(in BOOL fLock)
 	{
 		if(fLock)
 			InterlockedIncrement(&g_dllRefCount);
@@ -185,7 +188,7 @@ class Package : DisposingComObject,
 	{
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsPackage) (this, riid, pvObject))
 			return S_OK;
@@ -493,10 +496,10 @@ class GlobalOptions
 		}
 		VSInstallDir = normalizeDir(VSInstallDir);
 
-		wstring dllPath = GetModuleFileName(g_hInst);
+		wstring dllPath = GetDLLName(g_hInst);
 		VisualDInstallDir = normalizeDir(getDirName(toUTF8(dllPath)));
 
-		wstring idePath = GetModuleFileName(null);
+		wstring idePath = GetDLLName(null);
 		DevEnvDir = normalizeDir(getDirName(toUTF8(idePath)));
 
 		return true;

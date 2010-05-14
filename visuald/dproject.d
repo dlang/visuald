@@ -8,8 +8,7 @@
 
 module dproject;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.c.string : memcpy;
 import std.windows.charset;
 import std.string;
@@ -20,6 +19,7 @@ import std.conv;
 
 import xml = xmlwrap;
 
+import sdk.win32.rpcdce;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.vsshell90;
@@ -44,21 +44,6 @@ import dllmain : g_hInst;
 
 const kPlatform = "Win32";
 
-extern(Windows)
-{
-
-export HANDLE LoadImageA(HINSTANCE hinst, LPCTSTR lpszName, UINT uType, int cxDesired, int cyDesired, UINT fuLoad);
-
-export HIMAGELIST ImageList_LoadImageA(HINSTANCE hi, LPCTSTR lpbmp, int cx, int cGrow, COLORREF crMask, UINT uType, UINT uFlags);
-export BOOL ImageList_Destroy(HIMAGELIST imgl);
-
-HINSTANCE ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
-
-UINT RegisterClipboardFormatW(LPCWSTR lpszFormat);
-
-UINT DragQueryFileW(HANDLE hDrop, UINT iFile, LPWSTR lpszFile, UINT cch);
-}
-
 ///////////////////////////////////////////////////////////////
 
 
@@ -71,7 +56,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 		mPackage = pkg;
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -211,7 +196,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 	{
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -331,7 +316,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 		mProjectItems = release(mProjectItems);
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -615,6 +600,8 @@ class Project : CVsHierarchy,
 		dte.IVsGlobalsCallback,
 		IVsHierarchyDropDataSource2,
 		IVsHierarchyDropDataTarget,
+		IVsNonLocalProject,
+		//IRpcOptions,
 		//IVsSccProject2,
 		//IBuildDependencyUpdate,
 		//IProjectEventsListener,
@@ -642,7 +629,7 @@ class Project : CVsHierarchy,
 		super.Dispose();
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -686,6 +673,10 @@ class Project : CVsHierarchy,
 			return S_OK;
 		if(queryInterface!(IVsHierarchyDropDataTarget) (this, riid, pvObject))
 			return S_OK;
+		if(queryInterface!(IVsNonLocalProject) (this, riid, pvObject))
+			return S_OK;
+		//if(queryInterface!(IRpcOptions) (this, riid, pvObject))
+		//	return S_OK;
 		//if(queryInterface!(IPerPropertyBrowsing) (this, riid, pvObject))
 		//	return S_OK;
 		return super.QueryInterface(riid, pvObject);
@@ -835,8 +826,10 @@ class Project : CVsHierarchy,
 		return returnError(E_INVALIDARG);
 	}
 
-	override int AddItem(in VSITEMID itemidLoc, in VSADDITEMOPERATION dwAddItemOperation, in wchar* pszItemName,
-	                     in ULONG cFilesToOpen, wchar** rgpszFilesToOpen, in HWND hwndDlgOwner, VSADDRESULT* pResult)
+	override int AddItem(in VSITEMID itemidLoc, in VSADDITEMOPERATION dwAddItemOperation, 
+	                     in LPCOLESTR pszItemName,
+	                     in ULONG cFilesToOpen, LPCOLESTR * rgpszFilesToOpen, 
+	                     in HWND hwndDlgOwner, VSADDRESULT* pResult)
 	{
 		mixin(LogCallMix);
 
@@ -899,11 +892,11 @@ class Project : CVsHierarchy,
 	    /* [in] */ in VSADDITEMOPERATION dwAddItemOperation,
 	    /* [in] */ in wchar* pszItemName,
 	    /* [in] */ in uint cFilesToOpen,
-	    /* [size_is][in] */ wchar** rgpszFilesToOpen,
+	    /* [size_is][in] */ LPCOLESTR* rgpszFilesToOpen,
 	    /* [in] */ in HWND hwndDlgOwner,
 	    /* [in] */ in VSSPECIFICEDITORFLAGS grfEditorFlags,
 	    /* [in] */ in GUID* rguidEditorType,
-	    /* [in] */ in wchar* pszPhysicalView,
+	    /* [in] */ in LPCOLESTR pszPhysicalView,
 	    /* [in] */ in GUID* rguidLogicalView,
 	    /* [retval][out] */ VSADDRESULT* pResult)
 	{
@@ -1043,7 +1036,7 @@ class Project : CVsHierarchy,
 			return S_OK;
 		if(itemid != VSITEMID_ROOT)
 		{
-			logCall("Getting unknown property %d for item %d!", propid, itemid);
+			logCall("Getting unknown property %d for item %x!", propid, itemid);
 			return returnError(DISP_E_MEMBERNOTFOUND);
 		}
 
@@ -1080,7 +1073,7 @@ class Project : CVsHierarchy,
 		//case VSHPROPID2.DebuggeeProcessId:
 		case cast(VSHPROPID) 1001:
 		default:
-			logCall("Getting unknown property %d for item %d!", propid, itemid);
+			logCall("Getting unknown property %d for item %x!", propid, itemid);
 			return DISP_E_MEMBERNOTFOUND;
 			// return returnError(E_NOTIMPL); // DISP_E_MEMBERNOTFOUND; 
 		}
@@ -1644,6 +1637,36 @@ class Project : CVsHierarchy,
 		return returnError(E_NOTIMPL);
 	}
 
+	// IVsNonLocalProject
+	override HRESULT EnsureLocalCopy(in VSITEMID itemid)
+	{
+		logCall("%s.EnsureLocalCopy(this=%s, itemid=%x)", this, cast(void*)this, itemid);
+		return S_OK;
+	}
+
+/+
+	// IRpcOptions
+    override HRESULT Set(/+[in]+/ IUnknown  pPrx, in DWORD dwProperty, in ULONG_PTR dwValue)
+	{
+		mixin(LogCallMix);
+		return E_NOTIMPL;
+	}
+
+    override HRESULT Query(/+[in]+/ IUnknown  pPrx, in DWORD dwProperty, /+[out]+/ ULONG_PTR * pdwValue)
+	{
+		mixin(LogCallMix);
+		
+		if(dwProperty == COMBND_RPCTIMEOUT)
+			*pdwValue = RPC_C_BINDING_MAX_TIMEOUT;
+		else if(dwProperty == COMBND_SERVER_LOCALITY)
+			*pdwValue = SERVER_LOCALITY_PROCESS_LOCAL;
+		else
+			return E_NOTIMPL;
+		
+		return S_OK;
+	}
++/
+	
 	///////////////////////////////////////////////////////////////////////
 	// IVsHierarchyDropDataSource
 	override int GetDropInfo( 
@@ -1815,7 +1838,7 @@ class Project : CVsHierarchy,
 			/* [out] DropDataType*           */ &ddt);
 
 		// We need to report our own errors.
-		if(FAILED(hr) && hr != E_UNEXPECTED && hr != OLEERR.E_PROMPTSAVECANCELLED)
+		if(FAILED(hr) && hr != E_UNEXPECTED && hr != OLE_E_PROMPTSAVECANCELLED)
 		{
 			UtilReportErrorInfo(hr);
 		}
@@ -2036,9 +2059,9 @@ class Project : CVsHierarchy,
 					/* [in]  REFGUID               rguidLogicalView*/ &GUID_NULL,
 					/* [in]  bool moveIfInProject                  */ mfDragSource,
 					/* [out] VSADDRESULT *pResult                  */ &vsaddresult);
-				if ( (hrTemp == E_ABORT) || (hrTemp == OLEERR.E_PROMPTSAVECANCELLED) || (vsaddresult == ADDRESULT_Cancel) )
+				if ( (hrTemp == E_ABORT) || (hrTemp == OLE_E_PROMPTSAVECANCELLED) || (vsaddresult == ADDRESULT_Cancel) )
 				{
-					hr = OLEERR.E_PROMPTSAVECANCELLED;
+					hr = OLE_E_PROMPTSAVECANCELLED;
 					goto Error;
 				}
 				if (FAILED(hrTemp))
@@ -2100,9 +2123,9 @@ AddFiles:
 				scope(exit) release(srpIVsHierarchy);
 
 				hrTemp = srpIVsSolution.GetItemOfProjref(_toUTF16z(rgSrcFiles[iFile]), &srpIVsHierarchy, &itemidLoc, null, null);
-				if(hrTemp == E_ABORT || hrTemp == OLEERR.E_PROMPTSAVECANCELLED)
+				if(hrTemp == E_ABORT || hrTemp == OLE_E_PROMPTSAVECANCELLED)
 				{
-					hr = OLEERR.E_PROMPTSAVECANCELLED;
+					hr = OLE_E_PROMPTSAVECANCELLED;
 					goto Error;
 				}
 				if (FAILED(hrTemp))
@@ -2124,9 +2147,9 @@ AddFiles:
 					hr = E_FAIL;
 					continue;
 				}
-				if(hrTemp == E_ABORT || hrTemp == OLEERR.E_PROMPTSAVECANCELLED)
+				if(hrTemp == E_ABORT || hrTemp == OLE_E_PROMPTSAVECANCELLED)
 				{
-					hr = OLEERR.E_PROMPTSAVECANCELLED;
+					hr = OLE_E_PROMPTSAVECANCELLED;
 					goto Error;
 				}
 
@@ -2168,9 +2191,9 @@ AddFiles:
 					/* [in]  REFGUID               rguidLogicalView*/ &GUID_NULL,
 					/* [in]  bool moveIfInProject                  */ mfDragSource,
 					/* [out] VSADDRESULT *pResult                  */ &vsaddresult);
-				if (hrTemp == E_ABORT || hrTemp == OLEERR.E_PROMPTSAVECANCELLED || vsaddresult == ADDRESULT_Cancel)
+				if (hrTemp == E_ABORT || hrTemp == OLE_E_PROMPTSAVECANCELLED || vsaddresult == ADDRESULT_Cancel)
 				{
-					hr = OLEERR.E_PROMPTSAVECANCELLED;
+					hr = OLE_E_PROMPTSAVECANCELLED;
 					goto Error;
 				}
 				if (FAILED(hrTemp))

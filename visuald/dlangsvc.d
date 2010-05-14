@@ -10,8 +10,7 @@ module dlangsvc;
 
 // import diamond;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.string;
 import std.ctype;
 import std.utf;
@@ -31,6 +30,7 @@ import completion;
 import intellisense;
 import searchsymbol;
 
+import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.vsshell;
@@ -58,7 +58,7 @@ class LanguageService : DisposingComObject,
 	{
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsLanguageInfo) (this, riid, pvObject))
 			return S_OK;
@@ -284,7 +284,7 @@ class Colorizer : DComObject, IVsColorizer
 	{
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorizer) (this, riid, pvObject))
 			return S_OK;
@@ -398,7 +398,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 		mLangSvc = null;
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsCodeWindowManager) (this, riid, pvObject))
 			return S_OK;
@@ -509,7 +509,7 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		}
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsUserDataEvents) (this, riid, pvObject))
 			return S_OK;
@@ -568,7 +568,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		mBuffer = release(mBuffer);
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsUserDataEvents) (this, riid, pvObject))
 			return S_OK;
@@ -1061,7 +1061,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		mCodeWinMgr = null;
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsTextViewFilter) (this, riid, pvObject))
 			return S_OK;
@@ -1102,6 +1102,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 	          /* [unique][in] */ in VARIANT *pvaIn,
 	          /* [unique][out][in] */ VARIANT *pvaOut)
 	{
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K && nCmdID == 1627 /*OutputPaneCombo*/) 
+			return OLECMDERR_E_NOTSUPPORTED; // do not litter output
+		
 		mixin(LogCallMix);
 		logCall("nCmdID = %s", cmd2string(*pguidCmdGroup, nCmdID));
 
@@ -1192,7 +1195,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
                     return rc;
 		}
-		return OLECMDERR.E_NOTSUPPORTED;
+		return OLECMDERR_E_NOTSUPPORTED;
 +/
 		int rc = mNextTarget.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
@@ -1737,7 +1740,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 		mPos = epe.mPos;
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsEnumBSTR) (this, riid, pvObject))
 			return S_OK;

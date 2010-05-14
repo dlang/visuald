@@ -8,12 +8,14 @@
 
 module searchsymbol;
 
-import std.c.windows.windows;
+import windows;
 import winctrl;
 import comutil;
 import hierutil;
 import logutil;
 import dpackage;
+
+import sdk.win32.commctrl;
 import sdk.vsi.vsshell;
 
 class SearchWindow
@@ -106,7 +108,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 	Button mBtnClose;
 	IServiceProvider mSite;
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsWindowPane) (this, riid, pvObject))
 			return S_OK;
@@ -175,8 +177,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 
 	///////////////////////////////////////////////////////////////////
 
-/+
-	// the following has been taken from the FlatSolutionExplorer project
+	// the following has been ported from the FlatSolutionExplorer project
 private:
 	enum COLUMNID
 	{
@@ -187,14 +188,13 @@ private:
     struct COLUMNINFO
     {
         COLUMNID colid;
-        int cx;
         BOOL fVisible;
+        int cx;
     };
 
     dte2.DTE2 _spvsDTE2;
 //    CComPtr<ISolutionItemIndex> _spsii;
-    DWORD _dwIndexEventsCookie;
-
+//    DWORD _dwIndexEventsCookie;
 //    CComPtr<IAutoComplete2> _spac2;
 
     Window _wndFileWheel;
@@ -236,7 +236,8 @@ private:
         CHAIN_MSG_MAP(CComCompositeControl<CFlatSolutionExplorer>)
     END_MSG_MAP()
 +/
-	
+
+/+	
     BOOL PreTranslateAccelerator(MSG *pmsg, ref HRESULT hrRet);
 
 protected:
@@ -298,7 +299,8 @@ protected:
 
     static LRESULT s_HdrWndProc(HWND hwnd, UINT uiMsg, WPARAM wParam, LPARAM lParam, in UINT_PTR uIdSubclass, in DWORD_PTR dwRefData);
     LRESULT _HdrWndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam);
-
++/
+	
 	this()
 	{
 		_colidSort = COLUMNID.NAME;
@@ -397,14 +399,14 @@ STDMETHODIMP IndexUpdated()
 	void _MoveSelection(BOOL fDown)
 	{
 		// Get the current selection
-		int iSel = _wndFileList.SendMessage(LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
+		int iSel = _wndFileList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
 
 		LVITEM lvi = {0};
 		lvi.iItem = fDown ? iSel+1 : iSel-1;
 		lvi.mask = LVIF_STATE;
 		lvi.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 		lvi.state = LVIS_SELECTED | LVIS_FOCUSED;
-		_wndFileList.SendMessage(LVM_SETITEM, 0, (LPARAM)&lvi);
+		_wndFileList.SendMessage(LVM_SETITEM, 0, cast(LPARAM)&lvi);
 		_wndFileList.SendMessage(LVM_ENSUREVISIBLE, lvi.iItem, FALSE);
 	}
 
@@ -1809,7 +1811,6 @@ LRESULT _OnToolbarGetInfoTip(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
     fHandled = TRUE;
     return 0;
 }
-+/
 +/
 
 }

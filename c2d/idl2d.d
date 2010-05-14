@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+//
 ///////////////////////////////////////////////////////////////////////
 //
 // idl2d - convert IDL or header files to D
@@ -24,6 +32,8 @@ import core.memory;
 version = remove_pp;
 version = static_if_to_version;
 version = vsi;
+version = macro2template;
+version = targetD2;
 
 class Source
 {
@@ -50,7 +60,7 @@ class idl2d
 	string packageVSI = "sdk.vsi.";
 	string packageWin = "sdk.win32.";
 	string packageNF  = "sdk.port.";
-	string keywordPrefix = "vsi_";
+	string keywordPrefix = "sdk_";
 
 	string vsi_path; //   = vsi_base_path ~ r"\VisualStudioIntegration\Common\IDL\";
 	string vsi_hpath; //  = vsi_base_path ~ r"\VisualStudioIntegration\Common\Inc\";
@@ -58,22 +68,36 @@ class idl2d
 	string vsi_d_path; // = sdk_d_path ~ r"vsi\";
 	string win_d_path; // = sdk_d_path ~ r"win32\";
 
-version(vsi) {
-	string[] win_idl_files = [ "oaidl.idl", "objidl.idl", "wtypes.idl", "oleidl.idl", "ocidl.idl", "docobj.idl",
-				   "mshtmcid.h", "xmldom.idl", "xmldso.idl", "xmldomdid.h", "xmldsodid.h", "idispids.h" ];
-	string[] vsi_idl_files = [ "shared.idh", "vsshell.idl", "*.idl", "*.idh" ];
-	string[] vsi_h_files   = [ "completionuuids.h", "contextuuids.h", "textmgruuids.h", "vsshelluuids.h", "vsdbgcmd.h",
-				   "venusids.h", "stdidcmd.h", "vsshlids.h", "mnuhelpids.h", "WCFReferencesIds.h",
-				   "vsdebugguids.h", "VSRegKeyNames.h", "SCGuids.h", "DSLToolsCmdID.h", "wbids.h", "sharedids.h",
-				   "vseeguids.h", "version.h"  ];
-	string[] dte_idl_files = [ "*.idl" ];
-} else {
-	string[] win_idl_files = [ "windef.h", "sdkddkver.h", "basetsd.h", "ntstatus.h", 
-				   "winnt.h", "winbase.h", "winuser.h", "ktmtypes.h" ];
-	string[] vsi_idl_files = [ ];
-	string[] vsi_h_files   = [ ];
-	string[] dte_idl_files = [ ];
-}
+	string[] win_idl_files;
+	string[] vsi_idl_files;
+	string[] vsi_h_files;
+	string[] dte_idl_files;
+	
+	version(vsi) bool vsi = true;
+	else         bool vsi = false;
+	
+	void initFiles()
+	{
+		win_idl_files = [ "windef.h", "sdkddkver.h", "basetsd.h", "ntstatus.h", 
+			"winnt.h", "winbase.h", "winuser.h", "ktmtypes.h", 
+			"winerror.h", "winreg.h", "reason.h", "commctrl.h",
+			"wingdi.h", "prsht.h", "rpcdce.h" /*, "rpcdcep.h"*/ ];
+		
+		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "objidl.idl", "wtypes.idl", "oleidl.idl", 
+			"ocidl.idl", "docobj.idl", "oleauto.h", "objbase.h",
+			"mshtmcid.h", "xmldom.idl", "xmldso.idl", "xmldomdid.h", "xmldsodid.h", "idispids.h" ];
+
+		if(vsi)
+		{
+			vsi_idl_files = [ "shared.idh", "vsshell.idl", "*.idl", "*.idh" ];
+			vsi_h_files   = [ "completionuuids.h", "contextuuids.h", "textmgruuids.h", "vsshelluuids.h", "vsdbgcmd.h",
+				"venusids.h", "stdidcmd.h", "vsshlids.h", "mnuhelpids.h", "WCFReferencesIds.h",
+				"vsdebugguids.h", "VSRegKeyNames.h", "SCGuids.h", "DSLToolsCmdID.h", "wbids.h", "sharedids.h",
+				"vseeguids.h", "version.h"  ];
+			dte_idl_files = [ "*.idl" ];
+		}
+	}
+
 	// see also preDefined, isExpressionToken, convertDefine, convertText, translateToken
 	///////////////////////////////////////////////////////
 
@@ -92,7 +116,7 @@ version(vsi) {
 	string[] currentImports;
 	string[] addedImports;
 
-	string cpp_string(string txt)
+	static string cpp_string(string txt)
 	{
 		string ntxt;
 		bool escapeNext = false;
@@ -123,6 +147,51 @@ version(vsi) {
 		return ntxt;
 	}
 
+	static string removeDuplicateEmptyLines(string txt)
+	{
+		string ntxt;
+		uint npos = 0;
+		uint pos = 0;
+		while(pos < txt.length)
+		{
+			dchar ch = decode(txt, pos);
+			if(ch == '\n')
+			{
+				uint nl = 0;
+				uint nlpos = pos; // positions after nl
+				uint lastnlpos = pos;
+				while(pos < txt.length)
+				{
+					ch = decode(txt, pos);
+					if(ch == '\n')
+					{
+						nl++;
+						lastnlpos = pos;
+					}
+					else if(!isspace(ch))
+						break;
+				}
+				if(nl > 1)
+				{
+					ntxt ~= txt[npos .. nlpos];
+					ntxt ~= '\n';
+					npos = lastnlpos;
+				}
+			}
+		}
+		ntxt ~= txt[npos .. pos];
+		return ntxt;
+	}
+	
+	unittest
+	{
+		string txt;
+		txt = removeDuplicateEmptyLines("abc\n\n\nefg");
+		assert(txt == "abc\n\nefg");
+		txt = removeDuplicateEmptyLines("abc\n\nefg");
+		assert(txt == "abc\n\nefg");
+	}
+	
 	void comment_line(ref TokenIterator tokIt)
 	{
 		TokenIterator it = tokIt + 1;
@@ -266,21 +335,33 @@ version(vsi) {
 		case Token.Ampersand:
 		case Token.Assign:
 		case Token.Dot:
-		case Token.Plus:
-		case Token.Minus:
 		case Token.Div:
 		case Token.Mod:
 		case Token.Xor:
 		case Token.Or:
 		case Token.OrOr:
 		case Token.AmpAmpersand:
-version(vsi) {} else {
+			return !first;
+		case Token.Plus:
+		case Token.Minus:
+		case Token.Asterisk:
+		case Token.Tilde:
+			return true; // can be unary or binary operator
 		case Token.Colon:
 		case Token.Question:
-}
+			if(vsi)
+				goto default;
 			return !first;
+			
 		case Token.Comma:
 			return !first && !(tokIt + 1).atEnd() && tokIt[1].type != Token.EOF;
+			
+		case Token.Struct:
+			// struct at beginning of a cast?
+			if(!tokIt.atBegin() && tokIt[-1].type == Token.ParenL)
+				return true;
+			return false;
+			
 		default:
 			return false;
 		}
@@ -316,6 +397,9 @@ version(vsi) {} else {
 		if(start.text == "(" && start[1].type == Token.Identifier && start[2].text == "*" && start[3].text == ")"
 			 && isPrimaryExpr(start + 4))
 			return start[1].text ~ start[2].text;
+		if(start.text == "(" && start[1].text == "struct" && start[2].type == Token.Identifier && start[3].text == "*" && start[4].text == ")"
+			 && isPrimaryExpr(start + 5))
+			return start[2].text ~ start[3].text;
 		return "int";
 	}
 
@@ -353,7 +437,8 @@ version(vsi) {} else {
 		switch(cond)
 		{
 		case "FALSE":
-			return -2; // not defined for expression, but not for #define
+			return -2; // not defined for expression, but for #define
+			
 		case "0":
 		case "MAC":
 		case "_MAC":
@@ -395,6 +480,7 @@ version(vsi) {} else {
 		case "APIENTRY":
 		case "NTAPI":
 		case "NTAPI_INLINE":
+		case "interface":
 			return 3; // predefined for #define, but not in normal text
 		case "TRUE":
 			return 2; // predefined for expression, but not for #define
@@ -409,17 +495,21 @@ version(vsi) {} else {
 		case "MULTIPLE_WATCH_WINDOWS":
 		case "PROXYSTUB_BUILD":
 		case "(defined(_WIN32)||defined(_WIN64))&&!defined(OLE2ANSI)":
+		case "defined(_INTEGRAL_MAX_BITS)&&_INTEGRAL_MAX_BITS>=64": // needed to define LONGLONG
+		case "!defined SENTINEL_Reason": // reason.h
+
 		//case "!defined(CTC_INVOKED)&&!defined(RGS_INVOKED)":
 		//case "!defined(_DCOM_OA_REMOTING_)&&!defined(_DCOM_OC_REMOTING_)":
 		//case "!defined(_DCOM_OA_REMOTING_)":
 		//case "!defined(_DCOM_OC_REMOTING_)":
 		case "_HRESULT_DEFINED":
-		case "_PALETTEENTRY_DEFINED":
-		case "_LOGPALETTE_DEFINED":
+//		case "_PALETTEENTRY_DEFINED":
+//		case "_LOGPALETTE_DEFINED":
 		case "_REFPOINTS_DEFINED":
 		case "COMBOX_SANDBOX":
 
 		// defined to avoid #define translation
+		case "MAKE_HRESULT":
 		case "CBPCLIPDATA":
 		case "FACILITY_ITF":
 		case "PFN_TSHELL_TMP":
@@ -437,13 +527,6 @@ version(vsi) {} else {
 		case "IEnumDebugMachines2_V7":
 		case "IID_IEnumDebugMachines2_V7":
 
-		// winnt.h
-version(vsi) {
-		case "_WINDEF_":
-		case "_WINBASE_":
-} else {
-		case "_WIN32":
-}
 		case "NULL":
 		case "VOID":
 		case "CONST":
@@ -472,6 +555,16 @@ version(vsi) {
 		case "__int3264":
 			return 1;
 		
+		// winnt.h
+		case "_WINDEF_":
+		case "_WINBASE_":
+			//if(vsi)
+			//	return 1;
+			break;
+		case "_WIN32":
+			//if(!vsi)
+				return 1;
+			break;
 		default: 
 			break;
 		}
@@ -481,6 +574,7 @@ version(vsi) {
 		   _endsWith(cond, "_h__") ||
 		   _endsWith(cond, "_H__") ||
 		   _endsWith(cond, "_H_") ||
+		   startsWith(cond, "_INC_") ||
 		   _endsWith(cond, "_IDH"))
 			return -1;
 
@@ -500,6 +594,8 @@ version(vsi) {
 				return -1; // disable all msc specials
 			if(startsWith(cond, "_MSC_VER<") || startsWith(cond, "_MSC_FULL_VER<"))
 				return 1; // disable all msc specials
+			if(startsWith(cond, "_WIN32_IE>"))
+				return 1; // assue newest IE
 			if(startsWith(cond, "NO"))
 				return -1; // used to disable parts, we want it all
 		}
@@ -510,12 +606,14 @@ version(vsi) {
 	{
 		int paren = 0;
 		for(int i = 0; i <= cond.length - op.length; i++)
+		{
+			if(paren == 0 && cond[i .. i+op.length] == op)
+				return i;
 			if(cond[i] == '(')
 				paren++;
 			else if(cond[i] == ')')
 				paren--;
-			else if(paren == 0 && cond[i .. i+op.length] == op)
-				return i;
+		}
 		return -1;
 	}
 
@@ -529,9 +627,9 @@ version(vsi) {
 			if(rc != 0)
 				return sign * rc;
 
-			if(startsWith(cond, "(") && _endsWith(cond, ")") && indexOf(cond[1..$-1], "(") < 0)
+			if(startsWith(cond, "(") && _endsWith(cond, ")") && findLogicalOp(cond[1..$], ")") == cond.length - 2)
 				cond = cond[1..$-1];
-			else if(startsWith(cond, "defined(") && _endsWith(cond, ")") && indexOf(cond[8..$-1], "(") < 0)
+			else if(startsWith(cond, "defined(") && findLogicalOp(cond[8..$], ")") == cond.length - 9)
 				cond = cond[8..$-1];
 			else if(startsWith(cond, "!") && indexOf(cond[1..$-1], "&") < 0 && indexOf(cond[1..$-1], "|") < 0)
 			{
@@ -563,7 +661,7 @@ version(vsi) {
 		string txt = tokenListToString(start, end, false, true);
 		int rc = preDefined(txt);
 
-		if(rc == 0)
+		if(rc == 0 && verbose)
 			writefln("\"" ~ txt ~ "\" not defined/undefined");
 		return rc;
 	}
@@ -795,21 +893,24 @@ version(none){
 		if(convertMacro)
 		{
 			TokenIterator lastit = endIt;
-			tokIt.text = rettype;
+			version(macro2template) tokIt.text = "auto";
+			else tokIt.text = rettype;
+			string ret = (rettype != "void" ? "return " : "");
 			if(argtype.length)
 			{
-				tokIt[3].pretext ~= argtype ~ " ";
-				tokIt[5].pretext ~= "{ return ";
+				version(macro2template) tokIt[3].pretext ~= "ARG)(ARG ";
+				else tokIt[3].pretext ~= argtype ~ " ";
+				tokIt[5].pretext ~= "{ " ~ ret;
 				lastit = tokIt + 5;
 			}
 			else if(tokIt[2].text != "(" || tokIt[2].pretext != "")
 			{
-				tokIt[2].pretext = "() { return " ~ tokIt[2].pretext;
+				tokIt[2].pretext = "() { " ~ ret ~ tokIt[2].pretext;
 				lastit = tokIt + 2;
 			}
 			else
 			{
-				tokIt[4].pretext = " { return " ~ tokIt[4].pretext;
+				tokIt[4].pretext = " { " ~ ret ~ tokIt[4].pretext;
 				lastit = tokIt + 4;
 			}
 
@@ -825,7 +926,8 @@ version(none){
 		{
 			if(it != tokIt + 1 && it != tokIt + 2 && it != tokIt + 3)
 			{
-				if(endIt == tokIt + 3 && tokIt[2].type == Token.Identifier && !(tokIt[2].text in enums))
+				if(endIt == tokIt + 3 && tokIt[2].type == Token.Identifier && 
+					!(tokIt[2].text in enums) && tokIt[2].text != "NULL")
 				{
 					if(tokIt[2].text in disabled_defines)
 						tokIt.pretext ~= "// ";
@@ -910,13 +1012,18 @@ version(all)
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1)$_ident2", "$_not cast($_ident1)$_ident2", true);
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1)$_num2",   "$_not cast($_ident1)$_num2", true);
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1)-$_num2",  "$_not cast($_ident1)-$_num2", true);
+		replaceTokenSequence(tokens,       "$_not $_ident($_ident1)~",        "$_not cast($_ident1)~", true);
 		while(replaceTokenSequence(tokens, "$_not $_ident($_ident1)($expr)",  "$_not cast($_ident1)($expr)", true) > 0) {}
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1)cast", "$_not cast($_ident1)cast", true);
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1*)$_not_semi;",    "$_not cast($_ident1*)$_not_semi", true);
 		replaceTokenSequence(tokens,       "$_not $_ident(struct $_ident1*)$_not_semi;",   "$_not cast(struct $_ident1*)$_not_semi", true);
 		replaceTokenSequence(tokens,       "$_not $_ident($_ident1 $_ident2*)", "$_not cast($_ident1 $_ident2*)", true);
 		replaceTokenSequence(tokens, "HRESULT cast", "HRESULT", true);
+		replaceTokenSequence(tokens, "extern cast", "extern", true);
 		replaceTokenSequence(tokens, "!cast", "!", true);
+		replaceTokenSequence(tokens, "reinterpret_cast<$_ident>", "cast($_ident)", true);
+		replaceTokenSequence(tokens, "reinterpret_cast<$_ident*>", "cast($_ident*)", true);
+		replaceTokenSequence(tokens, "const_cast<$_ident*>", "cast($_ident*)", true);
 	}
 
 	string getNameWithoutExt(string fname)
@@ -931,7 +1038,7 @@ version(all)
 	string translateModuleName(string name)
 	{
 		name = tolower(name);
-		if(name == "version" || name == "shared")
+		if(name == "version" || name == "shared" || name == "align")
 			return keywordPrefix ~ name;
 		return name;
 	}
@@ -1111,8 +1218,37 @@ version(all)
 			replaceTokenSequence(tokens, "struct DECLSPEC_ALIGN($_num)", "align($_num) struct", true);
 		}
 
+		if(currentModule == "commctrl")
+		{
+			// typos
+			replaceTokenSequence(tokens, "PCCOMBOEXITEMW", "PCCOMBOBOXEXITEMW", true);
+			replaceTokenSequence(tokens, "LPTBSAVEPARAMW", "LPTBSAVEPARAMSW", true);
+		}
+		if(currentModule == "oleauto")
+		{
+			replaceTokenSequence(tokens, "WINOLEAUTAPI_($_rettype)", "extern(Windows) $_rettype", true);
+			replaceTokenSequence(tokens, "WINOLEAUTAPI", "extern(Windows) HRESULT", true);
+		}
+		replaceTokenSequence(tokens, "STDAPI", "extern(Windows) HRESULT", true);
+		replaceTokenSequence(tokens, "STDAPICALLTYPE", "extern(Windows)", true);
+		replaceTokenSequence(tokens, "WINOLEAPI_($_rettype)", "extern(Windows) $_rettype", true);
+		replaceTokenSequence(tokens, "WINOLEAPI", "extern(Windows) HRESULT", true);
+		
+		replaceTokenSequence(tokens, "RPCRTAPI", "export", true);
+		replaceTokenSequence(tokens, "RPC_STATUS", "int", true);
+		replaceTokenSequence(tokens, "RPC_ENTRY", "extern(Windows)", true);
+		replaceTokenSequence(tokens, "__RPC_USER", "extern(Windows)", true);
+		replaceTokenSequence(tokens, "__RPC_STUB", "extern(Windows)", true);
+		replaceTokenSequence(tokens, "__RPC_API", "extern(Windows)", true);
+		replaceTokenSequence(tokens, "RPC_MGR_EPV", "void", true);
+		replaceTokenSequence(tokens, "__RPC_FAR", "", true);
+		
 		// windef.h and ktmtypes.h
 		replaceTokenSequence(tokens, "UOW UOW;", "UOW uow;", true);
+
+		// enc.idl (FIELD_OFFSET already defined in winnt.h)
+		replaceTokenSequence(tokens, "typedef struct _FIELD_OFFSET { $data } FIELD_OFFSET;",
+		                             "struct _FIELD_OFFSET { $data };", true);
 
 		// select unicode version of the API when defining without postfix A/W
 		replaceTokenSequence(tokens, "#ifdef UNICODE\nreturn $_identW(\n#else\nreturn $_identA(\n#endif\n", 
@@ -1186,6 +1322,7 @@ version(all)
 				break;
 
 			case "version":
+			case "align":
 				if(tokIt[1].text != "(")
 					tok.text = keywordPrefix ~ tok.text;
 				break;
@@ -1239,8 +1376,8 @@ version(all)
 			default:
 				if(tok.type == Token.Macro && tok.text.startsWith("$"))
 					tok.text = "_d_" ~ tok.text[1..$];
-				else if(tok.type == Token.Number && tok.text._endsWith("l"))
-					tok.text = tok.text[0..$-1] ~ "L";
+				else if(tok.type == Token.Number && (tok.text._endsWith("l") || tok.text._endsWith("L")))
+					tok.text = tok.text[0..$-1];
 				else if(tok.type == Token.Number && tok.text._endsWith("i64"))
 					tok.text = tok.text[0..$-3] ~ "L";
 				else if(tok.type == Token.String && tok.text.startsWith("L\""))
@@ -1258,9 +1395,10 @@ version(all)
 				else if(parenCount > 0)
 				{
 					// in function argument
-					if(tok.text == "const" || tok.text == "CONST")
-						tok.text = "/*const*/";
-					else if (tok.text.startsWith("REF") && tok.text != "REFSHOWFLAGS")
+					//if(tok.text == "const" || tok.text == "CONST")
+					//	tok.text = "/*const*/";
+					//else 
+					if (tok.text.startsWith("REF") && tok.text != "REFSHOWFLAGS")
 					{
 						tokIt.insertBefore(createToken(tok.pretext, "ref", Token.Identifier, tokIt.lineno));
 						tok.pretext = " ";
@@ -1275,7 +1413,7 @@ version(all)
 			++tokIt;
 		}
 
-version(vsi)
+version(none) version(vsi)
 {
 		// wtypes.idl:
 		replaceTokenSequence(tokens, "typedef ubyte           UCHAR;", "typedef ubyte           idl_UCHAR;",  true);
@@ -1312,6 +1450,8 @@ version(vsi)
 		replaceTokenSequence(tokens, "EXTERN_C $args;", "/+EXTERN_C $args;+/", true);
 		replaceTokenSequence(tokens, "SAFEARRAY($_ident)", "SAFEARRAY!($_ident)", true);
 
+		replaceTokenSequence(tokens, "struct $_ident;", "/+ struct $_ident; +/", true);
+		replaceTokenSequence(tokens, "class $_ident;", "/+ class $_ident; +/", true);
 		replaceTokenSequence(tokens, "interface $_ident;", "/+ interface $_ident; +/", true);
 		replaceTokenSequence(tokens, "dispinterface $_ident;", "/+ dispinterface $_ident; +/", true);
 		replaceTokenSequence(tokens, "coclass $_ident;", "/+ coclass $_ident; +/", true);
@@ -1320,10 +1460,22 @@ version(vsi)
 
 version(remove_pp)
 {
-		while(replaceTokenSequence(tokens, "version(all) { $if } else { $else }", "$if", true) > 0 ||
-		      replaceTokenSequence(tokens, "version(all) { $if } $_not else", "$if\n$_not", true) > 0 ||
-		      replaceTokenSequence(tokens, "version(none) { $if } else { $else }", "$else", true) > 0 ||
-		      replaceTokenSequence(tokens, "version(none) { $if } $_not else", "$_not", true) > 0) {}
+	string tsttxt = tokenListToString(tokens);
+	
+		while(replaceTokenSequence(tokens, "$_note else version(all) { $if } else { $else }", "$_note $if", true) > 0 ||
+		      replaceTokenSequence(tokens, "$_note else version(all) { $if } $_not else", "$_note $if\n$_not", true) > 0 ||
+		      replaceTokenSequence(tokens, "$_note else version(none) { $if } else { $else }", "$_note $else", true) > 0 ||
+		      replaceTokenSequence(tokens, "$_note else version(none) { $if } $_not else", "$_note $_not", true) > 0 ||
+		      replaceTokenSequence(tokens, "version(pp_if) { $if } else { $else }", "$else", true) > 0 ||
+		      replaceTokenSequence(tokens, "version(pp_if) { $if } $_not else", "$_not", true) > 0 ||
+		      replaceTokenSequence(tokens, "version(pp_ifndef) { $if } else { $else }", "$if", true) > 0 ||
+		      replaceTokenSequence(tokens, "version(pp_ifndef) { $if } $_not else", "$if\n$_not", true) > 0) 
+		{
+			string rtsttxt = tokenListToString(tokens);
+		}
+
+	string ntsttxt = tokenListToString(tokens);
+	
 }
 
 		while(replaceTokenSequence(tokens, "static if($expr) { } else { }", "", true) > 0 ||
@@ -1454,6 +1606,7 @@ version(none)
 			"typedef void $_expr1; typedef void $args;", true) > 0) {};
 
 		replaceTokenSequence(tokens, "typedef $_ident1 $_ident1;", "", true);
+		replaceTokenSequence(tokens, "typedef interface $_ident1 $_ident1;", "", true);
 		
 		// Remote/Local version are made final to avoid placing them into the vtbl
 		replaceTokenSequence(tokens, "[$pre call_as($arg) $post] $_not final", "[$pre call_as($arg) $post] final $_not", true);
@@ -1462,8 +1615,8 @@ version(none)
 		replaceTokenSequence(tokens, "$_identFun([$data] $_identFun $arg)", "$_identFun([$data] .$_identFun $arg)", true);
 
 		// interface without base class is used as namespace
-		replaceTokenSequence(tokens, "interface $_ident1 { $_not static $data }", 
-			"/+interface $_ident1 {+/ $_not $data /+} interface $_ident1+/", true);
+		replaceTokenSequence(tokens, "interface $_notIFace IUnknown { $_not static $data }", 
+			"/+interface $_notIFace {+/ $_not $data /+} interface $_notIFace+/", true);
 		replaceTokenSequence(tokens, "dispinterface $_ident1 { $data }", "interface $_ident1 { $data }", true);
 		replaceTokenSequence(tokens, "module $_ident1 { $data }", "/+module $_ident1 {+/ $data /+}+/", true);
 		replaceTokenSequence(tokens, "properties:", "/+properties:+/", true);
@@ -1479,12 +1632,11 @@ version(none)
 		replaceExpressionTokens(tokens);
 
 		replaceTokenSequence(tokens, "__success($args)", "/+__success($args)+/", true);
-		replaceTokenSequence(tokens, "const $_ident*", "/+const+/ $_ident*", true);
-
+			
 version(all) {
 		replaceTokenSequence(tokens, "typedef const", "typedef CONST", true);
 		replaceTokenSequence(tokens, "extern \"C\"", "extern(C)", true);
-		replaceTokenSequence(tokens, "extern \"C++\" $decl;", "/+ $* +/", true);
+		replaceTokenSequence(tokens, "extern \"C++\"", "extern(C++)", true);
 		replaceTokenSequence(tokens, "__bcount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__bcount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__in_bcount($args)", "/+$*+/", true);
@@ -1508,13 +1660,21 @@ version(all) {
 		
 		replaceTokenSequence(tokens, "__inout_bcount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_ecount($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__inout_xcount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_bcount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_ecount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_bcount_part($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_ecount_part($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_bcount_part_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_ecount_part_opt($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__deref_out_ecount($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__deref_out_bcount($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__deref_out_xcount($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__deref_out_ecount_opt($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__deref_out_bcount_opt($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__deref_out_xcount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__deref_opt_out_bcount_full($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__deref_inout_ecount_z($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_bcount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_ecount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_ecount_opt($args)", "/+$*+/", true);
@@ -1522,9 +1682,10 @@ version(all) {
 		replaceTokenSequence(tokens, "__declspec($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__in_range($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__assume_bound($args);", "/+$*+/", true);
-		replaceTokenSequence(tokens, "__asm{$args}", "/+$*+/", true);
-		replaceTokenSequence(tokens, "__asm $_not{$stmt}", "/+$*+/ }", true);
+		replaceTokenSequence(tokens, "__asm{$args}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$args+/}", true);
+		replaceTokenSequence(tokens, "__asm $_not{$stmt}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$_not$stmt+/} }", true);
 		replaceTokenSequence(tokens, "sizeof($_ident)", "$_ident.sizeof", true);
+		replaceTokenSequence(tokens, "sizeof($args)", "($args).sizeof", true);
 
 		// bitfields:
 		replaceTokenSequence(tokens, "$_identtype $_identname : $_num;",   "__bf $_identtype, __quote $_identname __quote, $_num __eobf", true);
@@ -1541,6 +1702,8 @@ version(all) {
 		   || replaceTokenSequence(tokens, "$_ident1 version(none) { $if } $_ident2", "$_ident1 $_ident2", true) > 0) {}
 
 		// __stdcall
+	version(none)
+	{
 		replaceTokenSequence(tokens, "$_identtype NTAPI", "extern(Windows) $_identtype", true);
 		replaceTokenSequence(tokens, "$_identtype (NTAPI", "extern(Windows) $_identtype (", true);
 		replaceTokenSequence(tokens, "$_identtype WINAPI", "extern(Windows) $_identtype", true);
@@ -1549,11 +1712,40 @@ version(all) {
 		replaceTokenSequence(tokens, "$_identtype APIENTRY", "extern(Windows) $_identtype", true);
 		replaceTokenSequence(tokens, "$_identtype (APIENTRY", "extern(Windows) $_identtype (", true);
 		replaceTokenSequence(tokens, "$_identtype (CALLBACK", "extern(Windows) $_identtype (", true);
+	} else {
+		replaceTokenSequence(tokens, "NTAPI", "extern(Windows)", true);
+		replaceTokenSequence(tokens, "WINAPI", "extern(Windows)", true);
+		replaceTokenSequence(tokens, "APIENTRY", "extern(Windows)", true);
+		replaceTokenSequence(tokens, "CALLBACK", "extern(Windows)", true);
+	}
 
+		replaceTokenSequence(tokens, "$_identtype extern(Windows)", "extern(Windows) $_identtype", true);
+		replaceTokenSequence(tokens, "$_identtype* extern(Windows)", "extern(Windows) $_identtype*", true);
+		replaceTokenSequence(tokens, "$_identtype (extern(Windows)", "extern(Windows) $_identtype (", true);
+		replaceTokenSequence(tokens, "$_identtype* (extern(Windows)", "extern(Windows) $_identtype* (", true);
+		replaceTokenSequence(tokens, "$_identtype (/+$_ident+/ extern(Windows)", "extern(Windows) $_identtype (", true);
+	
 		replaceTokenSequence(tokens, "DECLARE_HANDLE($_ident);", "typedef HANDLE $_ident;", true);
 		replaceTokenSequence(tokens, "__inline $_identFun(", "inline int $_identFun(", true);
 }
+version(targetD2)
+{
+		replaceTokenSequence(tokens, "$_ident const*", "dconst($_ident)*", true);
+		replaceTokenSequence(tokens, "const $_ident*", "dconst($_ident)*", true);
+		replaceTokenSequence(tokens, "CONST $_ident*", "dconst($_ident)*", true);
+}
+else
+{
+		replaceTokenSequence(tokens, "const $_ident*", "/+const+/ $_ident*", true);
+}
+		replaceTokenSequence(tokens, "in const $_not(", "in $_not", false);
+		
 
+		if(currentModule == "prsht")
+		{
+			replaceTokenSequence(tokens, "alias _PROPSHEETPAGEA $_ident;", "alias $_ident _PROPSHEETPAGEA;", true);
+			replaceTokenSequence(tokens, "alias _PROPSHEETPAGEW $_ident;", "alias $_ident _PROPSHEETPAGEW;", true);
+		}
 		//replaceTokenSequence(tokens, "[$args]", "\n\t\t/+[$args]+/", true);
 
 		TokenIterator inAlias = tokens.end();
@@ -1667,9 +1859,11 @@ version(all) {
 		case "dconst":    return "const";
 
 		case "_stdcall":  return "/*_stdcall*/";
+		case "_fastcall": return "/*_fastcall*/";
 		case "__stdcall": return "/*__stdcall*/";
 		case "__cdecl":   return "/*__cdecl*/";
-
+		case "__gdi_entry": return "/*__gdi_entry*/";
+	
 		//case "const":     return "/*const*/";
 		case "inline":    return "/*inline*/";
 		case "__int64":   return "long";
@@ -1684,10 +1878,16 @@ version(all) {
 		// winbase annotations
 		case "__in":      return "/*__in*/";
 		case "__in_opt":  return "/*__in_opt*/";
+		case "__in_z_opt":  return "/*__in_z_opt*/";
+		case "__in_bound":  return "/*__in_bound*/";
+			
+		case "__allocator":     return "/*__allocator*/";
 		case "__out":     return "/*__out*/";
 		case "__out_opt": return "/*__out_opt*/";
 		case "__inout":   return "/*__inout*/";
 		case "__deref":   return "/*__deref*/";
+		case "__deref_inout_opt": return "/*__deref_inout_opt*/";
+		case "__deref_out_opt": return "/*__deref_out_opt*/";
 		case "__deref_inout": return "/*__deref_inout*/";
 		case "__inout_opt":   return "/*__inout_opt*/";
 		case "__deref_out":   return "/*__deref_out*/";
@@ -1707,12 +1907,16 @@ version(all) {
 		case "OUT":       return "/*OUT*/";
 		case "NEAR":      return "/*NEAR*/";
 		case "FAR":       return "/*FAR*/";
+		case "HUGEP":     return "/*HUGEP*/";
 		case "OPTIONAL":  return "/*OPTIONAL*/";
 		case "DECLSPEC_NORETURN": return "/*DECLSPEC_NORETURN*/";
 		case "CONST":     return "/*CONST*/";
 		case "VOID":      return "void";
 		case "wchar_t":   return "wchar";
 		case "->":        return ".";
+
+		// vslangproj.d
+		case "prjBuildActionCustom": return "prjBuildActionEmbeddedResource";
 
 		default:
 			if(string* ps = text in tokImports)
@@ -1778,7 +1982,10 @@ version(all) {
 		//hdr ~= "import std.c.windows.windows;\n";
 		//hdr ~= "import std.c.windows.com;\n";
 		//hdr ~= "import idl.pp_util;\n";
-		hdr ~= "import " ~ packageNF ~ "base;\n";
+		if(pkg == packageVSI)
+			hdr ~= "import " ~ packageNF ~ "vsi;\n";
+		else
+			hdr ~= "import " ~ packageNF ~ "base;\n";
 		hdr ~= "\n";
 
 		foreach(imp; addedImports)
@@ -1792,10 +1999,15 @@ version(all) {
 			hdr ~= "import " ~ packageWin ~ "idispids;\n";
 		else if(currentModule == "xmldso")
 			hdr ~= "import " ~ packageWin ~ "xmldom;\n";
+		else if(currentModule == "ocidl")
+			hdr ~= "import " ~ packageWin ~ "wingdi;\n";
+		else if(currentModule == "commctrl")
+			hdr ~= "import " ~ packageWin ~ "objidl;\n";
 		hdr ~= "\n";
 
 version(static_if_to_version)
 {
+version(remove_pp) {} else
 		hdr ~= "version = pp_ifndef;\n\n";
 }
 
@@ -1827,6 +2039,7 @@ version(static_if_to_version)
 			"dte", &dte_path,
 			"win", &win_path,
 			"sdk", &sdk_d_path,
+			"prefix", &keywordPrefix,
 			"verbose", &verbose,
 			"define", &defines,
 			"undefine", &undefines);
@@ -1844,6 +2057,8 @@ version(static_if_to_version)
 		vsi_d_path = sdk_d_path ~ r"vsi\";
 		win_d_path = sdk_d_path ~ r"win32\";
 
+		initFiles();
+		
 		// GC.disable();
 
 		disabled_defines["__VARIANT_NAME_1"] = 1;
@@ -1857,6 +2072,15 @@ version(static_if_to_version)
 		disabled_defines["VBProjectConfigProperties2"] = 1; // declared twice
 		disabled_defines["IID_ProjectProperties2"] = 1;
 		disabled_defines["IID_ProjectConfigurationProperties2"] = 1;
+		// bad init
+		disabled_defines["DOCDATAEXISTING_UNKNOWN"] = 1;
+		disabled_defines["HIERARCHY_DONTCHANGE"] = 1;
+		disabled_defines["SELCONTAINER_DONTCHANGE"] = 1;
+		disabled_defines["HIERARCHY_DONTPROPAGATE"] = 1;
+		disabled_defines["SELCONTAINER_DONTPROPAGATE"] = 1;
+		disabled_defines["ME_UNKNOWN_MENU_ITEM"] = 1;
+		disabled_defines["ME_FIRST_MENU_ITEM"] = 1;
+		
 		// win sdk
 		disabled_defines["pascal"] = 1;
 		disabled_defines["WINBASEAPI"] = 1;
@@ -1870,6 +2094,9 @@ version(static_if_to_version)
 		disabled_defines["RTL_SRWLOCK_INIT"] = 1;
 		disabled_defines["RTL_CONDITION_VARIABLE_INIT"] = 1;
 
+		// commctrl.h
+		disabled_defines["HDM_TRANSLATEACCELERATOR"] = 1;
+		
 		foreach(string file; argv[1..$])
 			addSources(file);
 
@@ -1917,6 +2144,7 @@ version(static_if_to_version)
 			setCurrentFile(d_file);
 
 			string text = convertText(src.tokens);
+			text = removeDuplicateEmptyLines(text);
 
 			string hdr = makehdr(src.filename, d_file);
 			std.file.write(d_file, toUTF8(hdr ~ text));
@@ -1998,6 +2226,7 @@ alias tagELEMDESC ELEMDESC; alias tagELEMDESC * LPELEMDESC;
 unittest
 {
 	string txt = q{
+	int x;
 cpp_quote("#ifndef WIN16")
 typedef struct tagSIZE
 {
@@ -2015,7 +2244,7 @@ cpp_quote("#endif // WIN16")
 
 version(remove_pp)
 	string exptxt = q{
-
+	int x;
 struct tagSIZE
 {
     LONG        cx;
@@ -2026,6 +2255,7 @@ alias tagSIZE SIZE; alias tagSIZE *PSIZE; alias tagSIZE *LPSIZE;
 };
 else // !remove_pp
 	string exptxt = q{
+	int x;
 version(all) /* #ifndef WIN16 */ {
 struct tagSIZE
 {
@@ -2049,6 +2279,7 @@ alias tagSIZE SIZE; alias tagSIZE *PSIZE; alias tagSIZE *LPSIZE;
 unittest
 {
 	string txt = "
+	int x;
 #if defined(MIDL_PASS)
 typedef struct _LARGE_INTEGER {
 #else // MIDL_PASS
@@ -2059,6 +2290,7 @@ typedef union _LARGE_INTEGER {
 } LARGE_INTEGER;
 ";
 	string exptxt = "
+	int x;
 union _LARGE_INTEGER
 {
     struct { };    LONGLONG QuadPart;
@@ -2085,6 +2317,7 @@ int convert() { return
 //	hallo1 |\\
 //	hallo2
 ";
+	version(macro2template) exptxt = replace(exptxt, "int", "auto");
 	testConvert(txt, exptxt);
 }
 
@@ -2092,12 +2325,12 @@ int convert() { return
 unittest
 {
 	string txt = "
-#define CONTEXT_i386 0x00010000    // this assumes that i386 and
+#define CONTEXT_i386 0x00010000L    // this assumes that i386 and
 #define CONTEXT_CONTROL (CONTEXT_i386 | 0x00000001L) // SS:SP, CS:IP, FLAGS, BP
 ";
 	string exptxt = "
 const CONTEXT_i386 = 0x00010000;    // this assumes that i386 and
-const CONTEXT_CONTROL = (CONTEXT_i386 | 0x00000001L); // SS:SP, CS:IP, FLAGS, BP
+const CONTEXT_CONTROL = (CONTEXT_i386 | 0x00000001); // SS:SP, CS:IP, FLAGS, BP
 ";
 	testConvert(txt, exptxt);
 }
@@ -2108,7 +2341,78 @@ unittest
 #define NtCurrentTeb() ((struct _TEB *)_rdtebex())
 ";
 	string exptxt = "
-void NtCurrentTeb() { return    ( cast( _TEB*)_rdtebex()); }
+_TEB* NtCurrentTeb() { return    ( cast( _TEB*)_rdtebex()); }
+";
+	version(macro2template) exptxt = replace(exptxt, "_TEB* ", "auto ");
+	testConvert(txt, exptxt);
+}
+
+unittest
+{
+	string txt = "
+enum { prjBuildActionNone }
+cpp_quote(\"#define prjBuildActionMin  prjBuildActionNone\")
+cpp_quote(\"#define prjBuildActionMax  prjBuildActionCustom\")
+";
+	string exptxt = "
+enum { prjBuildActionNone }
+const prjBuildActionMin =  prjBuildActionNone;
+alias prjBuildActionEmbeddedResource  prjBuildActionMax;
 ";
 	testConvert(txt, exptxt);
 }
+
+unittest
+{
+	string txt = "
+#define _INTEGRAL_MAX_BITS 64
+#if (!defined (_MAC) && (!defined(MIDL_PASS) || defined(__midl)) && (!defined(_M_IX86) || (defined(_INTEGRAL_MAX_BITS) && _INTEGRAL_MAX_BITS >= 64)))
+typedef __int64 LONGLONG;
+#endif
+";
+	string exptxt = "
+alias long LONGLONG;
+";
+//	testConvert(txt, exptxt);
+}
+
+unittest
+{
+	string txt = "
+#define KEY_READ                ((STANDARD_RIGHTS_READ       |\\
+                                 KEY_QUERY_VALUE)\\
+                                  &  (~SYNCHRONIZE))
+";
+	string exptxt = "
+const KEY_READ =                ((STANDARD_RIGHTS_READ       |
+                                 KEY_QUERY_VALUE)
+                                  &  (~SYNCHRONIZE));
+";
+	testConvert(txt, exptxt);
+}
+
+unittest
+{
+	string txt = "
+#if _WIN32_WINNT >= 0x0600
+#define  _PROPSHEETPAGEA_V3 _PROPSHEETPAGEA
+#elif (_WIN32_IE >= 0x0400)
+#define  _PROPSHEETPAGEA_V2 _PROPSHEETPAGEA
+#else
+#define  _PROPSHEETPAGEA_V1 _PROPSHEETPAGEA
+#endif
+";
+	string exptxt = "
+version(all) /* #if _WIN32_WINNT >= 0x0600 */ {
+alias _PROPSHEETPAGEA_V3 _PROPSHEETPAGEA;
+} else version(all) /* #elif (_WIN32_IE >= 0x0400) */ {
+alias _PROPSHEETPAGEA_V2 _PROPSHEETPAGEA;
+} else {
+
+alias _PROPSHEETPAGEA_V1 _PROPSHEETPAGEA;
+} 
+
+";
+	testConvert(txt, exptxt, "prsht");
+}
+

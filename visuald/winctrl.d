@@ -8,63 +8,11 @@
 
 module winctrl;
 
-import std.c.windows.windows;
+import windows;
 import std.utf;
 import sdk.port.base;
-
-enum
-{
-    CBS_SIMPLE            =0x0001L,
-    CBS_DROPDOWN          =0x0002L,
-    CBS_DROPDOWNLIST      =0x0003L,
-    CBS_OWNERDRAWFIXED    =0x0010L,
-    CBS_OWNERDRAWVARIABLE =0x0020L,
-    CBS_AUTOHSCROLL       =0x0040L,
-    CBS_OEMCONVERT        =0x0080L,
-    CBS_SORT              =0x0100L,
-    CBS_HASSTRINGS        =0x0200L,
-    CBS_NOINTEGRALHEIGHT  =0x0400L,
-    CBS_DISABLENOSCROLL   =0x0800L,
-    CBS_UPPERCASE           =0x2000L,
-    CBS_LOWERCASE           =0x4000L,
-}
-
-const CB_ADDSTRING = 0x0143;
-const CB_FINDSTRING = 0x014C;
-const CB_SELECTSTRING = 0x014D;
-const CB_SETCURSEL = 0x014E;
-const CB_GETCURSEL = 0x0147;
-
-const GWL_USERDATA = -21;
-const WS_EX_STATICEDGE = 0x00020000;
-const WM_SETFONT = 0x0030;
-const TRANSPARENT = 1;
-
-const PSN_APPLY = -202;
-const GA_ROOT = 2;
-
-extern(Windows)
-{
-export BOOL UnregisterClassA(LPCSTR lpClassName, HINSTANCE hInstance);
-export LONG GetWindowLongA(HWND hWnd,int nIndex);
-export int SetWindowLongA(HWND hWnd, int nIndex, int dwNewLong);
-export DWORD GetSysColor(int);
-export BOOL DestroyWindow(HWND hWnd);
-export HBRUSH CreateSolidBrush(COLORREF c);
-export BOOL MoveWindow(HWND hWnd, int x, int y, int w, int h, byte bRepaint);
-export BOOL EnableWindow (HWND hWnd, BOOL enable);
-export HWND CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle,
-    int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
-export BOOL SendMessageW(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-HWND GetAncestor(HWND hwnd, UINT gaFlags);
-
-struct NMHDR
-{
-	HWND      hwndFrom;
-	UINT_PTR  idFrom;
-	UINT      code;         // NM_ code
-}
-}
+import sdk.win32.wingdi;
+import sdk.win32.prsht;
 
 private Widget[Widget] createdWindows; // collection of all windows with HWND to avoid garbage collection
 private HINSTANCE hInst;
@@ -186,7 +134,7 @@ class Window : Widget
 		wc.hInstance = hInst;
 		wc.hIcon = null; //DefaultWindowIcon.peer;
 		//wc.hIconSm = DefaultWindowSmallIcon.peer;
-		wc.hCursor = LoadCursorA(cast(HINSTANCE) null, IDC_ARROW);
+		wc.hCursor = LoadCursorW(cast(HINSTANCE) null, IDC_ARROW);
 		wc.hbrBackground = bgbrush;
 		wc.lpszMenuName = null;
 		wc.cbClsExtra = 0;
@@ -206,9 +154,9 @@ class Window : Widget
 		bgbrush = null;
 	}
 
-	this(HWND h)
+	this(in HWND h)
 	{
-		hwnd = h;
+		hwnd = cast(HWND) h; // we need to remove "const" from "in"
 		attached = true;
 		createdWindows[this] = this; // prevent garbage collection
 	}

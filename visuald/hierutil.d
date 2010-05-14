@@ -8,8 +8,7 @@
 
 module hierutil;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.string;
 import std.path;
 import std.utf;
@@ -26,24 +25,6 @@ import chiernode;
 import chiercontainer;
 
 const uint _MAX_PATH = 260;
-
-extern(Windows)
-{
-	const GMEM_SHARE =          0x2000;
-	const GMEM_MOVEABLE =       0x0002;
-	const GMEM_ZEROINIT =       0x0040;
-	const GHND =                (GMEM_MOVEABLE | GMEM_ZEROINIT);
-	
-	HWND GetActiveWindow();
-	BOOL IsWindowEnabled(HWND hWnd);
-	BOOL EnableWindow(HWND hWnd, BOOL bEnable);
-	int MessageBoxW(HWND hWnd, in wchar* lpText, in wchar* lpCaption, uint uType);
-
-	HGLOBAL GlobalAlloc(UINT uFlags, SIZE_T dwBytes);
-	void* GlobalLock(HANDLE hMem);
-	//int GlobalUnlock(HANDLE hMem);
-	SIZE_T GlobalSize(HGLOBAL hMem);
-}
 
 ///////////////////////////////////////////////////////////////////////
 version(D_Version2)
@@ -268,7 +249,7 @@ bool UtilShellInCmdLineMode()
 void UtilReportErrorInfo(HRESULT hr)
 {
 	// Filter out bogus hr's where we shouldn't be displaying an error.
-	if(hr != OLEERR.E_PROMPTSAVECANCELLED)
+	if(hr != OLE_E_PROMPTSAVECANCELLED)
 	{
 		BOOL fInExt = FALSE;
 		if(dte.IVsExtensibility ext = queryService!(dte.IVsExtensibility))

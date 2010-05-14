@@ -15,6 +15,9 @@ import std.utf;
 
 import xml = xmlwrap;
 
+import windows;
+import sdk.port.vsi;
+import sdk.win32.objbase;
 import sdk.vsi.vsshell;
 
 import comutil;
@@ -28,8 +31,6 @@ import build;
 import propertypage;
 import stringutil;
 import fileutil;
-
-extern(Windows) HRESULT CoDisconnectObject(IUnknown pUnk, DWORD dwReserved);
 
 const string kToolResourceCompiler = "Resource Compiler";
 const string kCmdLogFileExtension = "build";
@@ -639,7 +640,7 @@ class ConfigProvider : DisposingComObject,
 		mConfigs = mConfigs.init;
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -945,7 +946,7 @@ class Config :	DisposingComObject,
 		return super.Release();
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -1774,18 +1775,16 @@ private:
 };
 
 
-GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
-
 class DEnumOutFactory : DComObject, IClassFactory
 {
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	HRESULT CreateInstance(IUnknown UnkOuter, IID* riid, void** pvObject)
+	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
 	{
 		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
 
@@ -1793,7 +1792,7 @@ class DEnumOutFactory : DComObject, IClassFactory
 		DEnumOutputs eo = new DEnumOutputs(null, 0);
 		return eo.QueryInterface(riid, pvObject);
 	}
-	HRESULT LockServer(BOOL fLock)
+	override HRESULT LockServer(in BOOL fLock)
 	{
 		return returnError(E_NOTIMPL);
 	}
@@ -1820,7 +1819,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		mPos = eo.mPos;
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsEnumOutputs) (this, riid, pvObject))
 			return S_OK;
@@ -2018,19 +2017,13 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		return eo.QueryInterface(riid, ppv);
 	}
 
-	override HRESULT ReleaseMarshalData
-		(
-		/+[in, unique]+/ IStream pStm
-		)
+	override HRESULT ReleaseMarshalData(/+[in, unique]+/ IStream pStm)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
-	override HRESULT DisconnectObject
-		(
-		/+[in]+/ in DWORD dwReserved
-		)
+	override HRESULT DisconnectObject(/+[in]+/ in DWORD dwReserved)
 	{
 		logCall("%s.DisconnectObject(dwReserved=%s)", this, _toLog(dwReserved));
 		return returnError(E_NOTIMPL);
@@ -2047,7 +2040,7 @@ class VsOutput : DComObject, IVsOutput
 		mTarget = target;
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsOutput) (this, riid, pvObject))
 			return S_OK;

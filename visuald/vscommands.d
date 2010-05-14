@@ -8,7 +8,7 @@
 
 module vscommands;
 
-import std.c.windows.com;
+import windows;
 import std.string;
 import logutil;
 

@@ -10,7 +10,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
-  <symdebug>1</symdebug>
+  <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -36,7 +36,7 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
@@ -88,7 +88,7 @@
  <Config name="Release">
   <obj>0</obj>
   <link>0</link>
-  <lib>0</lib>
+  <lib>1</lib>
   <multiobj>0</multiobj>
   <oneobj>0</oneobj>
   <trace>0</trace>
@@ -121,11 +121,11 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
+  <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
-  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath />
+  <otherDMD>1</otherDMD>
+  <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
+  <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -138,8 +138,8 @@
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
   <hdrname />
-  <doXGeneration>0</doXGeneration>
-  <xfilename />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(ProjectName).json</xfilename>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
@@ -159,7 +159,7 @@
   <libfiles />
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -174,7 +174,6 @@
   <Folder name="port">
    <File path="port\winerror.d" />
    <File path="port\base.d" />
-   <File path="port\basetsd.d" />
    <File path="port\bitfields.d" />
    <File path="port\ctype.d" />
    <File path="port\dte.d" />
@@ -193,9 +192,11 @@
    <File path="port\stdole32.d" />
    <File path="port\string.d" />
    <File path="port\tvout.d" />
-   <File path="port\unknwn.d" />
    <File path="port\urlmon.d" />
    <File path="port\venuscmddef.d" />
+   <File path="port\vsi.d" />
+   <File path="port\rpc.d" />
+   <File path="port\propidl.d" />
   </Folder>
   <Folder name="win32">
    <File path="win32\xmldsodid.d" />
@@ -210,6 +211,24 @@
    <File path="win32\xmldom.d" />
    <File path="win32\xmldomdid.d" />
    <File path="win32\xmldso.d" />
+   <File path="win32\winnt.d" />
+   <File path="win32\basetsd.d" />
+   <File path="win32\ktmtypes.d" />
+   <File path="win32\ntstatus.d" />
+   <File path="win32\sdkddkver.d" />
+   <File path="win32\unknwn.d" />
+   <File path="win32\winbase.d" />
+   <File path="win32\windef.d" />
+   <File path="win32\winuser.d" />
+   <File path="win32\winerror.d" />
+   <File path="win32\winreg.d" />
+   <File path="win32\reason.d" />
+   <File path="win32\wingdi.d" />
+   <File path="win32\prsht.d" />
+   <File path="win32\oleauto.d" />
+   <File path="win32\objbase.d" />
+   <File path="win32\rpcdce.d" />
+   <File path="win32\commctrl.d" />
   </Folder>
   <Folder name="vsi">
    <File path="vsi\webmigration.d" />
@@ -291,8 +310,6 @@
    <File path="vsi\vseeguids.d" />
    <File path="vsi\vshelp80.d" />
    <File path="vsi\vshelp.d" />
-   <File path="vsi\vsi_shared.d" />
-   <File path="vsi\vsi_version.d" />
    <File path="vsi\vslangproj2.d" />
    <File path="vsi\vslangproj80.d" />
    <File path="vsi\vslangproj90.d" />
@@ -310,6 +327,8 @@
    <File path="vsi\wcfreferences.d" />
    <File path="vsi\wcfreferencesids.d" />
    <File path="vsi\webapplicationctx.d" />
+   <File path="vsi\sdk_shared.d" />
+   <File path="vsi\sdk_version.d" />
   </Folder>
  </Folder>
 </DProject>

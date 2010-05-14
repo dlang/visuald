@@ -8,8 +8,7 @@
 
 module expansionprovider;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import std.ctype;
 import std.string;
 import std.utf;
@@ -78,7 +77,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		mView = release(mView);
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsExpansionClient) (this, riid, pvObject))
 			return S_OK;
@@ -622,7 +621,7 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 		mProvider = release(mProvider);
 	}
 
-	override HRESULT QueryInterface(IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsExpansionFunction) (this, riid, pvObject))
 			return S_OK;

@@ -8,12 +8,14 @@
 
 module hierarchy;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
+import sdk.win32.commctrl;
+
 import std.string;
 import std.path;
 import std.utf;
 
+import sdk.port.vsi;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.fpstfmt;
@@ -46,7 +48,7 @@ class CFileNode : CHierNode,
 		SetName(getBaseName(filename));
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(CFileNode) (this, riid, pvObject))
 			return S_OK;
@@ -195,13 +197,13 @@ class CFileNode : CHierNode,
 				fEnabled = true;
 				break;
 			default:
-				hr = OLECMDERR.E_NOTSUPPORTED;
+				hr = OLECMDERR_E_NOTSUPPORTED;
 				break;
 			}
 		}
 		else 
 		{
-			hr = OLECMDERR.E_NOTSUPPORTED;
+			hr = OLECMDERR_E_NOTSUPPORTED;
 		}
 		if (SUCCEEDED(hr) && fSupported)
 		{
@@ -212,7 +214,7 @@ class CFileNode : CHierNode,
 				Cmd.cmdf |= OLECMDF_ENABLED;
 		}
 
-		if (hr == OLECMDERR.E_NOTSUPPORTED)
+		if (hr == OLECMDERR_E_NOTSUPPORTED)
 			hr = super.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
 
 		return hr;
@@ -225,7 +227,7 @@ class CFileNode : CHierNode,
 		/* [unique][in] */ in VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
-		int hr = OLECMDERR.E_NOTSUPPORTED;
+		int hr = OLECMDERR_E_NOTSUPPORTED;
 
 		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97)
 		{
@@ -240,7 +242,7 @@ class CFileNode : CHierNode,
 			}
 		}
 
-		if (hr == OLECMDERR.E_NOTSUPPORTED)
+		if (hr == OLECMDERR_E_NOTSUPPORTED)
 			hr = super.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
 		return hr;
@@ -497,13 +499,13 @@ class CFolderNode : CHierContainer
 				fEnabled = false; // ClipboardHasDropFormat();
 				break;
 			default:
-				hr = OLECMDERR.E_NOTSUPPORTED;
+				hr = OLECMDERR_E_NOTSUPPORTED;
 				break;
 			}
 		}
 		else 
 		{
-			hr = OLECMDERR.E_NOTSUPPORTED;
+			hr = OLECMDERR_E_NOTSUPPORTED;
 		}
 		if (SUCCEEDED(hr) && fSupported)
 		{
@@ -514,7 +516,7 @@ class CFolderNode : CHierContainer
 				Cmd.cmdf |= OLECMDF_ENABLED;
 		}
 
-		if (hr == OLECMDERR.E_NOTSUPPORTED)
+		if (hr == OLECMDERR_E_NOTSUPPORTED)
 			hr = super.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
 
 		return hr;
@@ -527,7 +529,7 @@ class CFolderNode : CHierContainer
 		/* [unique][in] */ in VARIANT *pvaIn,
 		/* [unique][out][in] */ VARIANT *pvaOut)
 	{
-		int hr = OLECMDERR.E_NOTSUPPORTED;
+		int hr = OLECMDERR_E_NOTSUPPORTED;
 
 		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97)
 		{
@@ -546,7 +548,7 @@ class CFolderNode : CHierContainer
 			}
 		}
 
-		if (hr == OLECMDERR.E_NOTSUPPORTED)
+		if (hr == OLECMDERR_E_NOTSUPPORTED)
 			hr = super.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
 		return hr;
@@ -714,7 +716,7 @@ class CProjectNode : CFolderNode
 				fEnabled = true;
 				break;
 			default:
-				hr = OLECMDERR.E_NOTSUPPORTED;
+				hr = OLECMDERR_E_NOTSUPPORTED;
 				break;
 			}
 		}
@@ -729,13 +731,13 @@ class CProjectNode : CFolderNode
 				fEnabled = true;
 				break;
 			default:
-				hr = OLECMDERR.E_NOTSUPPORTED;
+				hr = OLECMDERR_E_NOTSUPPORTED;
 				break;
 			}
 		}
 		else 
 		{
-			hr = OLECMDERR.E_NOTSUPPORTED;
+			hr = OLECMDERR_E_NOTSUPPORTED;
 		}
 		if (SUCCEEDED(hr) && fSupported)
 		{
@@ -746,7 +748,7 @@ class CProjectNode : CFolderNode
 				Cmd.cmdf |= OLECMDF_ENABLED;
 		}
 
-		if (hr == OLECMDERR.E_NOTSUPPORTED)
+		if (hr == OLECMDERR_E_NOTSUPPORTED)
 			hr = super.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
 
 		return hr;
@@ -791,7 +793,7 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 		}
 	}
 
-	HRESULT QueryInterface(IID* riid, void** pvObject)
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsHierarchy) (this, riid, pvObject))
 			return S_OK;
@@ -807,7 +809,7 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 				     in ULONG cCmds, OLECMD *prgCmds, OLECMDTEXT *pCmdText,
 				     ref CHierNode[] rgSelection, bool bIsHierCmd)
 	{
-		return returnError(OLECMDERR.E_NOTSUPPORTED);
+		return returnError(OLECMDERR_E_NOTSUPPORTED);
 	}
 
 	// IVsUIHierarchy
@@ -847,11 +849,11 @@ version(none)
 
 		CHierNode rgNodes[] = VSITEMID2Nodes(itemid);
 		if (rgNodes.length == 0)
-			return OLECMDERR.E_NOTSUPPORTED;
+			return OLECMDERR_E_NOTSUPPORTED;
 		
 		CHierNode node = rgNodes[0];
 
-		int hr = OLECMDERR.E_NOTSUPPORTED;
+		int hr = OLECMDERR_E_NOTSUPPORTED;
 		if(*pguidCmdGroup == GUID_VsUIHierarchyWindowCmds)
 		{
 			switch(nCmdID)
@@ -884,7 +886,7 @@ version(none)
 			}
 		}
 
-		if(hr == OLECMDERR.E_NOTSUPPORTED && node)
+		if(hr == OLECMDERR_E_NOTSUPPORTED && node)
 			foreach(n; rgNodes)
 				if (FAILED(hr = n.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut)))
 					break;
@@ -1054,7 +1056,7 @@ version(none)
 			if(pNode.GetProperty(propid, *var) == S_OK)
 				break;
 
-			//logCall("Getting unknown property %d for item %d!", propid, itemid);
+			//logCall("Getting unknown property %d for item %x!", propid, itemid);
 			return DISP_E_MEMBERNOTFOUND;
 			// return returnError(E_NOTIMPL); // DISP_E_MEMBERNOTFOUND; 
 		}
@@ -1085,7 +1087,7 @@ version(none)
 			break;
 		default:
 
-			logCall("Setting unknown property %d for item %d!", propid, itemid);
+			logCall("Setting unknown property %d for item %x!", propid, itemid);
 			return DISP_E_MEMBERNOTFOUND;
 		}
 		return S_OK;
@@ -1109,7 +1111,9 @@ version(none)
 
 	override int GetCanonicalName(in VSITEMID itemid, BSTR *pbstrName)
 	{
-		logCall("GetCanonicalName(itemid=%s, pbstrMkDocument=%s)", _toLog(itemid), _toLog(pbstrName));
+		logCall("GetCanonicalName(this=%s, itemid=%s, pbstrMkDocument=%s)", cast(void*)this, _toLog(itemid), _toLog(pbstrName));
+		scope(exit) 
+			logCall(" GetCanonicalName return %s", _toLog(*pbstrName));
 
 		if(CHierNode pNode = VSITEMID2Node(itemid))
 		{
@@ -1208,7 +1212,7 @@ version(none)
 			return E_INVALIDARG;
     
 		if (!punkDocData)
-			return OLEERR.E_NOTRUNNING;    // we can only perform save if the document is open
+			return OLE_E_NOTRUNNING;    // we can only perform save if the document is open
 
 		BSTR bstrMkDocumentNew;
 		HRESULT hr = E_FAIL;
@@ -1651,7 +1655,7 @@ public: // IVsHierarchyEvent propagation
 		/* [in]                        */ in wchar*             pszItemName,
 		/* [in]                        */ uint                  cFilesToOpen,
 		/* [in, size_is(cFilesToOpen)] */ in wchar**            rgpszFilesToOpen,
-		/* [in]                        */ HWND                  hwndDlg,
+		/* [in]                        */ in HWND               hwndDlg,
 		/* [in]                        */ VSSPECIFICEDITORFLAGS grfEditorFlags,
 		/* [in]                        */ in GUID*              rguidEditorType,
 		/* [in]                        */ in wchar*             pszPhysicalView,
@@ -1670,7 +1674,7 @@ public: // IVsHierarchyEvent propagation
 
 		// Return if the project file is not editable or the project file was reloaded
 		if(!pProject.QueryEditProjectFile())
-			return OLEERR.E_PROMPTSAVECANCELLED;
+			return OLE_E_PROMPTSAVECANCELLED;
 
 		switch(dwAddItemOperation)
 		{
@@ -1892,7 +1896,7 @@ public: // IVsHierarchyEvent propagation
 		/* [in]                        */ in wchar*       pszItemName,
 		/* [in]                        */ ULONG           cFilesToOpen,
 		/* [in, size_is(cFilesToOpen)] */ in wchar**      rgpszFilesToOpen,
-		/* [in]                        */ HWND            hwndDlg,
+		/* [in]                        */ in HWND         hwndDlg,
 		/* [out, retval]               */ VSADDRESULT*    pResult)
 	{
 		return E_NOTIMPL;

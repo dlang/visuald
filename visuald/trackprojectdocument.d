@@ -8,10 +8,11 @@
 
 module trackprojectdocument;
 
-import std.c.windows.windows;
-import std.c.windows.com;
+import windows;
 import comutil;
 
+import sdk.win32.oleauto;
+import sdk.win32.objbase;
 import sdk.vsi.vsshell;
 import sdk.vsi.ivstrackprojectdocuments2;
 import hierutil;
