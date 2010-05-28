@@ -1,0 +1,53 @@
+<html>
+<body>
+<table>
+<tr>
+<td>
+<table width="160" style="border: 1px solid #ccc; padding: 0.0em; margin: 0 0 0em 0em">
+<th colspan="2" bgcolor="#bbbbbb"><strong><center>Navigation</center></strong></th>
+<tr bgcolor="#FFFFFF">
+<td>
+<ul>
+<li><a href="/projects/visuald/wiki/ScreenShots" title="Global options">Screen Shots</a></li>
+<li><a href="http://www.dsource.org/projects/visuald/browser/downloads" title="Project Wizard">Downloads</a></li>
+<li><a href="/projects/visuald/wiki/WikiStart#Installation" title="Installation">Installation</a></li>
+<li><a href="/forums/viewforum.php?f=265" title="Forum">Forum</a></li>
+<li><a href="/projects/visuald/wiki/UsingSubversion" title="Using Subversion">Using Subversion</a></li>
+<li><a href="/projects/visuald/report/1" title="Active Tickets">Active Tickets</a></li>
+</ul>
+</td>
+</tr>
+</table>
+</td>
+<td>
+When starting Visual Studio for the first time after installation of Visual D, you might want to check the global settings that can be reached from the Menu Tools -> Options -> Projects:
+
+<br>
+<img src="http://www.dsource.org/projects/visuald/attachment/wiki/ScreenShots/toolopt_project.png?format=raw">
+<br>
+
+<ul>
+<li>DMD Install path: The path to DMD you entered within the installer.</li>
+<li>Executable paths: Directories to be added to the PATH environment variable before executing build commands.</li>
+<li>Import paths: Directories to be added to the import paths specified in the project configuration and specified in the DMD configuration file (currently only used import statement completion and finding symbol definition).</li>
+<li>Library paths: Directories to be added to the LIB environment variable before executing build commands.</li>
+<li>JSON paths: Directories to search for *.json files to find symbol definitions.</li>
+<li>Resource includes: include paths to pass to the resource compiler when building resource files.</li>
+</ul>
+
+Available text replacements:
+<ul>
+<li>$(DMDINSTALLDIR): DMD Install path</li>
+<li>$(WINDOWSSDKDIR): Windows SDK Directory</li>
+<li>$(DEVENVDIR): Directory of Visual Studio executable devenv.exe</li>
+<li>$(VSINSTALLDIR): Root directory of Visual Studio installation</li>
+<li>$(VISUALDINSTALLDIR): Installation folder of Visual D</li>
+<li>any variable from the system environment enclose in $()</li>
+</ul>
+
+Please note that there is also a new entry "D" in the Text Editor branch. Not all of its settings are implemented yet.
+</td>
+</tr>
+</table>
+</body>
+</html>
