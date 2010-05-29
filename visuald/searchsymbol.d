@@ -2160,12 +2160,12 @@ bool searchHierarchy(IVsHierarchy pHierarchy, VSITEMID item, bool delegate (stri
 {
 	VARIANT var;
 	if((pHierarchy.GetProperty(item, VSHPROPID_Container, &var) == S_OK &&
-		var.vt == VT_BOOL && var.boolVal) || 
+		((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))) || 
 	   (pHierarchy.GetProperty(item, VSHPROPID_Expandable, &var) == S_OK &&
-		var.vt == VT_BOOL && var.boolVal))
+		((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))))
 	{
 		if(pHierarchy.GetProperty(item, VSHPROPID_FirstChild, &var) == S_OK &&
-		   var.vt == VT_INT_PTR)
+		   (var.vt == VT_INT_PTR || var.vt == VT_I4))
 		{
 			VSITEMID chid = var.lVal;
 			while(chid != VSITEMID_NIL)
@@ -2174,9 +2174,19 @@ bool searchHierarchy(IVsHierarchy pHierarchy, VSITEMID item, bool delegate (stri
 					return true;
 				
 				if(pHierarchy.GetProperty(chid, VSHPROPID_NextSibling, &var) != S_OK ||
-				   var.vt != VT_INT_PTR)
+				   (var.vt != VT_INT_PTR && var.vt != VT_I4))
 					break;
 				chid = var.lVal;
+			}
+		}
+		else
+		{
+			IVsHierarchy nestedHierarchy;
+			VSITEMID itemidNested;
+			if(pHierarchy.GetNestedHierarchy(item, &IVsHierarchy.iid, cast(void **)&nestedHierarchy, &itemidNested) == S_OK)
+			{
+				if(searchHierarchy(nestedHierarchy, itemidNested, dg))
+					return true;
 			}
 		}
 	}

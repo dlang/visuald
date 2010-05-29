@@ -172,8 +172,6 @@
  </Config>
  <Folder name="VisualD">
   <Folder name="Resources">
-   <File path="Resources\vsimagelist.bmp" />
-   <File path="Resources\completionset.bmp" />
    <File path="Resources\DAboutBox.ico" />
    <File path="Resources\DImageList.bmp" />
    <File path="Resources\DSplashScreenIcon.bmp" />
