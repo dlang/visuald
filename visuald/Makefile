@@ -21,7 +21,7 @@ SRC = dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d \
-      intellisense.d oledatasource.d searchsymbol.d windows.d
+      intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d
 RSRC = resources/dimagelist.bmp
 
 #      $(XMLP_SRC) $(IDL_SRC)
@@ -40,11 +40,12 @@ DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 # DMDPATH = c:\l\dmd-1.039\dmd
 # LIBS = $(DMDPATH)\lib
 CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
+LIB = ..\sdk\lib
 
 DBG_VSI_LIB = $(DBGDIR)/vsi.lib 
 REL_VSI_LIB = $(RELDIR)/vsi.lib 
 
-DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J..
+DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 
 LIBS = phobos.lib uuid.lib advapi32.lib comdlg32.lib \

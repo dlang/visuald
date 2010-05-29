@@ -220,6 +220,9 @@ const SEVERITY_ERROR      = 1;
 HRESULT MAKE_HRESULT(uint sev, uint fac, uint code) { return cast(HRESULT) ((sev<<31) | (fac<<16) | code); }
 SCODE   MAKE_SCODE(uint sev, uint fac, uint code)   { return cast(SCODE)   ((sev<<31) | (fac<<16) | code); }
 
+version(none)
+{
+
 // from adserr.h
 const FACILITY_WINDOWS                 = 8;
 const FACILITY_STORAGE                 = 3;
@@ -234,6 +237,7 @@ const FACILITY_DISPATCH                = 2;
 // from commctrl.h
 const TV_FIRST                = 0x1100;      // treeview messages
 const TVN_FIRST               = (0U-400U);   // treeview notifications
+}
 
 version(none)
 {

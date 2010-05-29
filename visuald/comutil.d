@@ -49,18 +49,14 @@ extern (C) void _d_callfinalizer(void *p);
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class ComPtr(Interface)
+struct ComPtr(Interface)
 {
 	Interface ptr;
 
-	this()
-	{
-	}
-
-	this(Interface i)
+	this(Interface i = null, bool doref = true)
 	{
 		ptr = i;
-		if(ptr)
+		if(ptr && doref)
 			ptr.AddRef();
 	}
 
@@ -75,6 +71,13 @@ class ComPtr(Interface)
 			ptr.Release();
 	}
 
+	Interface detach()
+	{
+		Interface p = ptr;
+		ptr = null;
+		return p;
+	}
+	
 	void opAssign(Interface i) 
 	{
 		if(ptr)
@@ -90,6 +93,12 @@ class ComPtr(Interface)
 			ptr.Release();
 		ptr = qi_cast!(Interface)(i);
 	}
+	
+	Interface opCast(T:Interface)() { return ptr; }
+	Interface* opCast(T:Interface*)() { return &ptr; }
+	bool opCast(T:bool)() { return ptr !is null; }
+	
+	alias ptr this;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -121,14 +130,14 @@ I qi_cast(I)(IUnknown obj)
 
 uint Advise(Interface)(IUnknown pSource, IUnknown pSink)
 {
-	scope auto container = new ComPtr!(IConnectionPointContainer)(pSource);
-	if(container.ptr)
+	auto container = ComPtr!(IConnectionPointContainer)(pSource);
+	if(container)
 	{
-		scope auto point = new ComPtr!(IConnectionPoint);
-		if(container.ptr.FindConnectionPoint(&Interface.iid, &point.ptr) == S_OK)
+		ComPtr!(IConnectionPoint) point;
+		if(container.FindConnectionPoint(&Interface.iid, &point.ptr) == S_OK)
 		{
 			uint cookie;
-			if(point.ptr.Advise(pSink, &cookie) == S_OK)
+			if(point.Advise(pSink, &cookie) == S_OK)
 				return cookie;
 		}
 	}
@@ -138,13 +147,13 @@ uint Advise(Interface)(IUnknown pSource, IUnknown pSink)
 
 uint Unadvise(Interface)(IUnknown pSource, uint cookie)
 {
-	scope auto container = new ComPtr!(IConnectionPointContainer)(pSource);
-	if(container.ptr)
+	auto container = ComPtr!(IConnectionPointContainer)(pSource);
+	if(container)
 	{
-		scope auto point = new ComPtr!(IConnectionPoint);
-		if(container.ptr.FindConnectionPoint(&Interface.iid, &point.ptr) == S_OK)
+		ComPtr!(IConnectionPoint) point;
+		if(container.FindConnectionPoint(&Interface.iid, &point.ptr) == S_OK)
 		{
-			if(point.ptr.Unadvise(cookie) == S_OK)
+			if(point.Unadvise(cookie) == S_OK)
 				return cookie;
 		}
 	}

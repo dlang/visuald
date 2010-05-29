@@ -13,7 +13,12 @@ import std.format;
 import std.utf;
 import std.string;
 import std.stdio;
-import std.stdarg;
+import std.conv;
+
+import stdcarg = core.stdc.stdarg;
+import stdcio = core.stdc.stdio;
+// import std.stdarg;
+
 public import std.traits;
 
 version(test) {} else {
@@ -441,10 +446,30 @@ int gLogIndent = 0;
 __gshared bool gLogFirst = true;
 
 const string gLogFile = "c:/tmp/visuald.log";
+const string gLogGCFile = "c:/tmp/visuald.gc";
 
 void logIndent(int n)
 {
 	gLogIndent += n;
+}
+
+FILE* gcLogFh;
+
+extern(C) void log_printf(string fmt, ...)
+{
+	stdcarg.va_list q;
+	stdcarg.va_start!(string)(q, fmt);
+	
+	char[256] buf;
+	int len = vsprintf(buf.ptr, fmt.ptr, q);
+	
+	if(!gcLogFh)
+		gcLogFh = stdcio.fopen(gLogGCFile, "w");
+	
+	if(gcLogFh)
+		stdcio.fwrite(buf.ptr, len, 1, gcLogFh);
+	
+	stdcarg.va_end(q);
 }
 
 version(test) {
@@ -487,6 +512,11 @@ version(test) {
 			s ~= " EXCEPTION";
 		}
 
+		log_string(s);
+	}
+	
+	void log_string(string s)
+	{
 		s ~= "\n";
 		if(gLogFile.length == 0)
 			OutputDebugStringA(toStringz(s));
@@ -505,6 +535,9 @@ version(test) {
 else
 {
 	void logCall(...)
+	{
+	}
+	void log_string(string s)
 	{
 	}
 }

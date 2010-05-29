@@ -1,5 +1,56 @@
 module windows;
 
+HRESULT HResultFromLastError()
+{
+	return HRESULT_FROM_WIN32(GetLastError());
+}
+
+int GET_X_LPARAM(LPARAM lp)
+{
+	return cast(int)cast(short)LOWORD(lp);
+}
+
+int GET_Y_LPARAM(LPARAM lp)
+{
+	return cast(int)cast(short)HIWORD(lp);
+}
+
+int MAKELPARAM(int lo, int hi)
+{
+	return (lo & 0xffff) | (hi << 16);
+}
+
+COLORREF RGB(int r, int g, int b)
+{
+	return cast(COLORREF)(cast(BYTE)r | ((cast(uint)cast(BYTE)g)<<8) | ((cast(uint)cast(BYTE)b)<<16));
+}
+
+struct SHFILEINFOW
+{
+	HICON       hIcon;                      // out: icon
+	int         iIcon;                      // out: icon index
+	DWORD       dwAttributes;               // out: SFGAO_ flags
+	WCHAR       szDisplayName[MAX_PATH];    // out: display name (or path)
+	WCHAR       szTypeName[80];             // out: type name
+}
+alias SHFILEINFOW SHFILEINFO;
+
+extern(Windows)
+DWORD_PTR SHGetFileInfoW(LPCWSTR pszPath, DWORD dwFileAttributes, SHFILEINFOW *psfi, 
+						 UINT cbFileInfo, UINT uFlags);
+
+const SHGFI_ICON              = 0x000000100;     // get icon
+const SHGFI_DISPLAYNAME       = 0x000000200;     // get display name
+const SHGFI_TYPENAME          = 0x000000400;     // get type name
+const SHGFI_LARGEICON         = 0x000000000;     // get large icon
+const SHGFI_SMALLICON         = 0x000000001;     // get small icon
+const SHGFI_OPENICON          = 0x000000002;     // get open icon
+const SHGFI_SHELLICONSIZE     = 0x000000004;     // get shell size icon
+const SHGFI_PIDL              = 0x000000008;     // pszPath is a pidl
+const SHGFI_USEFILEATTRIBUTES = 0x000000010;    // use passed dwFileAttribute
+
+const WM_SYSTIMER = 0x118;
+
 version(all)
 {
 	public import sdk.port.base;

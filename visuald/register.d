@@ -133,6 +133,16 @@ class RegKey
 			throw new RegistryException(hr);
 	}
 
+	void Set(wstring name, void[] data)
+	{
+		if(!key)
+			throw new RegistryException(E_FAIL);
+		
+		HRESULT hr = RegCreateBinaryValue(key, name, data);
+		if(FAILED(hr))
+			throw new RegistryException(hr);
+	}
+	
 	bool Delete(wstring name)
 	{
 		if(!key)
@@ -142,10 +152,10 @@ class RegKey
 		return SUCCEEDED(hr);
 	}
 	
-	wstring GetString(wstring name)
+	wstring GetString(wstring name, wstring def = "")
 	{
 		if(!key)
-			return ""w;
+			return def;
 		
 		wchar buf[260];
 		DWORD cnt = 260 * wchar.sizeof;
@@ -155,13 +165,44 @@ class RegKey
 		if(hr == S_OK && cnt > 0)
 			return to_wstring(buf.ptr);
 		if(hr != ERROR_MORE_DATA || type != REG_SZ)
-			return ""w;
+			return def;
 
 		scope wchar[] pbuf = new wchar[cnt/2 + 1];
 		RegQueryValueExW(key, szName, null, &type, cast(ubyte*) pbuf.ptr, &cnt);
 		return to_wstring(pbuf.ptr);
 	}
 
+	DWORD GetDWORD(wstring name, DWORD def = 0)
+	{
+		if(!key)
+			return def;
+		
+		DWORD dw, type, cnt = dw.sizeof;
+		wchar* szName = _toUTF16zw(name);
+		int hr = RegQueryValueExW(key, szName, null, &type, cast(ubyte*) &dw, &cnt);
+		if(hr != S_OK || type != REG_DWORD)
+			return def;
+		return dw;
+	}
+	
+	void[] GetBinary(wstring name)
+	{
+		if(!key)
+			return null;
+		
+		wchar* szName = _toUTF16zw(name);
+		DWORD type, cnt = 0;
+		int hr = RegQueryValueExW(key, szName, null, &type, cast(ubyte*) &type, &cnt);
+		if(hr != ERROR_MORE_DATA || type != REG_BINARY)
+			return null;
+		
+		ubyte[] data = new ubyte[cnt];
+		hr = RegQueryValueExW(key, szName, null, &type, data.ptr, &cnt);
+		if(hr != S_OK)
+			return null;
+		return data;
+	}
+	
 	HKEY key;
 }
 
@@ -228,6 +269,9 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
 
 	hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID));
+
+	scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
+	keyToolMenu.Delete(packageGuid);
 
 	return hr;
 }
@@ -341,6 +385,9 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 			keyProp.Set("ThreadingModel"w, "Appartment"w);
 		}
 
+		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
+		keyToolMenu.Set(packageGuid, ",2001,1"); // CTMENU,version
+		
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);
 		keyToolOpts.Set(null, "Visual D Settings");
 		keyToolOpts.Set("Package"w, packageGuid);
@@ -385,6 +432,13 @@ HRESULT RegCreateDwordValue(HKEY key, in wstring name, in DWORD value)
 {
 	wstring szName = name ~ cast(wchar)0;
 	LONG lRetCode = RegSetValueExW(key, szName.ptr, 0, REG_DWORD, cast(ubyte*)(&value), value.sizeof);
+	return HRESULT_FROM_WIN32(lRetCode);
+}
+
+HRESULT RegCreateBinaryValue(HKEY key, in wstring name, in void[] data)
+{
+	wstring szName = name ~ cast(wchar)0;
+	LONG lRetCode = RegSetValueExW(key, szName.ptr, 0, REG_BINARY, cast(ubyte*)data.ptr, data.length);
 	return HRESULT_FROM_WIN32(lRetCode);
 }
 

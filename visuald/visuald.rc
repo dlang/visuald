@@ -11,6 +11,7 @@
 //
 
 #include "winresrc.h"
+#include "resources/resources.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
@@ -24,14 +25,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 // String Table
 //
-
-#define IDS_PACKAGE_LOAD_KEY 1
-#define IDS_PRODUCTDETAILS   100
-#define IDS_PRODUCT          101
-#define IDS_VDSETTINGS       102
-
-#define ICON_ABOUTBOX        1000
-#define BMP_SPLASHSCRN       1001
 
 STRINGTABLE 
 BEGIN
@@ -58,12 +51,24 @@ END
 
 ICON_ABOUTBOX ICON "resources\daboutbox.ico"
 
-BMP_DIMAGELIST  BITMAP "resources\dimagelist.bmp"
-BMP_SPLASHSCRN  BITMAP "resources\dsplashscreenicon.bmp"
-BMP_VSIMAGELIST BITMAP "resources\vsimagelist.bmp"
-BMP_COMPLETION  BITMAP "resources\completionset.bmp"
+IDI_ASCENDING               ICON    "resources/ascend.ico"
+IDI_DESCENDING              ICON    "resources/descend.ico"
+IDR_COMBINECOLUMNS          ICON    "resources/CombineColumns.ico"
+IDR_ALTERNATEROWCOLOR       ICON    "resources/AlternateRowColor.ico"
+IDR_GROUPBYKIND             ICON    "resources/GroupByType.ico"
+IDR_CLOSEONRETURN           ICON    "resources/CloseOnReturn.ico"
+IDR_WHOLEWORD               ICON    "resources/WholeWord.ico"
+IDR_CASESENSITIVE           ICON    "resources/CaseSensitive.ico"
+IDR_REGEXP                  ICON    "resources/RegExp.ico"
+IDR_SEARCHFILE              ICON    "resources/SearchFile.ico"
+IDR_SEARCHSYMBOL            ICON    "resources/SearchSymbol.ico"
 
-2001  CTMENU       "Resources\PkgCmd.cto"
+BMP_DIMAGELIST  BITMAP "resources/dimagelist.bmp"
+BMP_SPLASHSCRN  BITMAP "resources/dsplashscreenicon.bmp"
+//BMP_VSIMAGELIST BITMAP "resources/vsimagelist.bmp"
+//BMP_COMPLETION  BITMAP "resources/completionset.bmp"
+
+2001  CTMENU       "Resources/PkgCmd.cto"
 
 /////////////////////////////////////////////////////////////////////////////
 

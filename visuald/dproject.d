@@ -753,13 +753,14 @@ class Project : CVsHierarchy,
 		{
 			if(pfFound) *pfFound = true;
 			if(pitemid) *pitemid = node is GetRootNode() ? VSITEMID_ROOT : node.GetVsItemID();
+			if (pdwPriority) *pdwPriority = cast(CFileNode) node ? DP_Standard : DP_Intrinsic;
 		}
 		else
 		{
 			if(pfFound) *pfFound = false;
 			if(pitemid) *pitemid = VSITEMID_NIL;
+			if (pdwPriority) *pdwPriority = DP_Unsupported;
 		}
-		if (pdwPriority) *pdwPriority = DP_Unsupported;
 		return S_OK;
 	}
 
@@ -1099,7 +1100,16 @@ class Project : CVsHierarchy,
 		}
 		return S_OK;
 	}
-        
+
+	override int AdviseHierarchyEvents(IVsHierarchyEvents pEventSink, uint *pdwCookie)
+	{
+		// use this as an callback of the project load being complete
+		if(mLastHierarchyEventSinkCookie == 0)
+			Package.GetLibInfos().updateDefinitions();
+		
+		return super.AdviseHierarchyEvents(pEventSink, pdwCookie);
+	}
+
 	// IVsGetCfgProvider 
 	override int GetCfgProvider(IVsCfgProvider* pCfgProvider)
 	{
@@ -1423,6 +1433,8 @@ class Project : CVsHierarchy,
 	{
 		mixin(LogCallMix);
 
+		// config not yet known here
+		
 		return returnError(E_NOTIMPL);
 	}
 
@@ -2476,7 +2488,9 @@ Error:
 			size_t decidx = 0;
 			if(decode(text, decidx) == 0xfeff)
 				text = text[decidx..$];
-
+			if(!startsWith(text, "<?xml"))
+				text = `<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>` ~ text;
+			
 			xml.Document doc = xml.readDocument(text);
 			return doc;
 		}
@@ -2524,8 +2538,6 @@ Error:
 			}
 
 			SetRootNode(rootnode);
-			
-			Package.GetLibInfos().updateDefinitions();
 			return true;
 		}
 		catch(Exception e)

@@ -408,7 +408,7 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	string cmdfile = buildfile ~ ".cmd";
 	
 	assert(pBuilder.m_srpIVsLaunchPadFactory);
-	scope auto srpIVsLaunchPad = new ComPtr!(IVsLaunchPad);
+	ComPtr!(IVsLaunchPad) srpIVsLaunchPad;
 	hr = pBuilder.m_srpIVsLaunchPadFactory.CreateLaunchPad(&srpIVsLaunchPad.ptr);
 	if(FAILED(hr))
 	{
@@ -422,7 +422,7 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	BSTR bstrOutput;
 version(none)
 {
-	hr = srpIVsLaunchPad.ptr.ExecBatchScript(
+	hr = srpIVsLaunchPad.ExecBatchScript(
 		/* [in] LPCOLESTR pszBatchFileContents         */ _toUTF16z(batchFileText),
 		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
 		/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
@@ -449,7 +449,7 @@ version(none)
 		hr = S_FALSE;
 	}
 	DWORD result;
-	hr = srpIVsLaunchPad.ptr.ExecCommand(
+	hr = srpIVsLaunchPad.ExecCommand(
 		/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
 		/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
 		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)

@@ -15,6 +15,9 @@ import std.date;
 import std.conv;
 import std.string;
 import std.algorithm;
+import std.regex;
+
+import core.memory;
 import windows;
 
 import sdk.port.vsi;
@@ -28,6 +31,168 @@ import hierutil;
 import fileutil;
 import simplelexer;
 
+enum MatchType
+{
+	Exact,
+	CaseInsensitive,
+	StartsWith,
+	RegExp
+}
+
+struct SearchData
+{
+	string[] names;
+	Regex!char[] res;
+
+	enum
+	{ 
+		kFieldName = 1 << 0,
+		kFieldType = 1 << 1,
+		kFieldScope = 1 << 2
+	}
+	
+	ubyte searchFields = kFieldName;
+	bool wholeWord;
+	bool caseSensitive;
+	bool useRegExp;
+
+	bool init(string[] nms)
+	{
+		try
+		{
+			if(useRegExp)
+				foreach(string nm; nms)
+					res ~= regex(nm, caseSensitive ? "" : "i");
+			else
+				names = nms;
+		}
+		catch(Exception)
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	bool matchDefinition(JSONscope *sc, JSONValue[string] obj)
+	{
+		if((!useRegExp && names.length == 0) || (useRegExp && res.length == 0))
+			return true;
+		
+		string name, type, inScope;
+		if(searchFields & kFieldName)
+			if(JSONValue* n = "name" in obj)
+				if(n.type == JSON_TYPE.STRING)
+					name = caseSensitive ? n.str : tolower(n.str);
+		
+		if(searchFields & kFieldType)
+			if(JSONValue* typ = "type" in obj)
+				if(typ.type == JSON_TYPE.STRING)
+					type = caseSensitive ? typ.str : tolower(typ.str);
+
+		if(searchFields & kFieldScope)
+			inScope = sc ? (caseSensitive ? sc.toString() : tolower(sc.toString())) : "";
+		
+		return matchNames(name, type, inScope);
+	}
+
+	static bool isIdentChar(dchar ch)
+	{
+		return isalnum(ch) || ch == '_';
+	}
+	static bool isWordBoundary(dchar ch1, dchar ch2)
+	{
+		return !isIdentChar(ch1) || !isIdentChar(ch2);
+	}
+		
+	bool matchNames(string name, string type, string inScope)
+	{
+		bool matches = false;
+		if(useRegExp)
+		{
+			bool matchRegex(string txt, Regex!char re)
+			{
+				auto m = match(name, re);
+				if(m.empty() || m.hit.length == 0)
+					return false;
+				if(!wholeWord)
+					return true;
+				foreach(mx; m)
+					if((mx.pre.length == 0 || isWordBoundary(mx.pre[$-1], mx.hit[0])) &&
+					   (mx.post.length == 0 || isWordBoundary(mx.post[0], mx.hit[$-1])))
+						return true;
+				return false;
+			}
+			
+			for(int i = 0; i < res.length; i++)
+			{
+				if(searchFields & kFieldName)
+					if(matchRegex(name, res[i]))
+						continue;
+				if(searchFields & kFieldType)
+					if(matchRegex(type, res[i]))
+						continue;
+				if(searchFields & kFieldScope)
+					if(matchRegex(inScope, res[i]))
+						continue;
+				return false;
+			}
+		}
+		else
+		{
+			bool matchString(string txt, string str)
+			{
+				CaseSensitive cs = caseSensitive ? CaseSensitive.yes : CaseSensitive.no;
+				int pos = 0;
+				int p = pos + indexOf(name[pos..$], str, cs);
+				while(p >= pos)
+				{
+					if(!wholeWord)
+						return true;
+					
+					if((p == 0 || isWordBoundary(txt[p-1], txt[0])) &&
+					   (p + str.length >= txt.length || isWordBoundary(txt[p + str.length - 1], txt[p + str.length])))
+						return true;
+					
+					pos = p + 1;
+					p = pos + indexOf(name[pos..$], str, cs);
+				}
+				return false;
+			}
+			
+			for(int i = 0; i < names.length; i++)
+			{
+				if(searchFields & kFieldName)
+					if(matchString(name, names[i]))
+						continue;
+				if(searchFields & kFieldType)
+					if(matchString(type, names[i]))
+						continue;
+				if(searchFields & kFieldScope)
+					if(matchString(inScope, names[i]))
+						continue;
+				return false;
+			}
+		}
+		return true;
+	}
+}
+
+struct JSONscope
+{
+	JSONscope* parent;
+	string name;
+	
+	string toString()
+	{
+		string nm = name;
+		if(parent && nm.length > 0)
+			nm = parent.toString() ~ "." ~ nm;
+		else if(parent)
+			nm = parent.toString();
+		return nm;
+	}
+}
+	
 class LibraryInfo
 {
 	bool readJSON(string fileName)
@@ -57,25 +222,8 @@ class LibraryInfo
 		return false;
 	}
 
-	static struct JSONscope
+	bool iterateObjects(bool delegate(string filename, JSONscope* sc, JSONValue[string] object) dg)
 	{
-		JSONscope* parent;
-		string name;
-		
-		string toString()
-		{
-			string nm = name;
-			if(parent && nm.length > 0)
-				nm = parent.toString() ~ "." ~ nm;
-			else if(parent)
-				nm = parent.toString();
-			return nm;
-		}
-	}
-		
-	Definition[] findDefinition(string name)
-	{
-		Definition[] defs;
 		if(mModules.type == JSON_TYPE.ARRAY)
 		{
 			JSONValue[] modules = mModules.array;
@@ -93,8 +241,11 @@ class LibraryInfo
 						if(v.type == JSON_TYPE.STRING)
 							modname = v.str;
 					
-					void findDefs(JSONValue[string] object, JSONscope* sc)
+					bool iterate(JSONValue[string] object, JSONscope* sc)
 					{
+						if(dg(filename, sc, object))
+							return true;
+						
 						if(JSONValue* m = "members" in object)
 							if(m.type == JSON_TYPE.ARRAY)
 							{
@@ -110,37 +261,103 @@ class LibraryInfo
 												nm = n.str;
 										JSONscope msc = JSONscope(sc, nm);
 										
-										if(nm == name)
-										{
-											Definition def;
-											def.name = name;
-											def.filename = filename;
-											def.inScope = msc.toString();
-											
-											if(JSONValue* k = "kind" in memberobj)
-												if(k.type == JSON_TYPE.STRING)
-													def.kind = k.str;
-											if(JSONValue* ln = "line" in memberobj)
-												if(ln.type == JSON_TYPE.INTEGER)
-													def.line = cast(int)ln.integer - 1;
-											if(JSONValue* typ = "type" in memberobj)
-												if(typ.type == JSON_TYPE.STRING)
-													def.type = typ.str;
-											defs ~= def;
-										}
-										
-										findDefs(memberobj, &msc);
+										if(iterate(memberobj, &msc))
+											return true;
 									}
 								}
 							}
+
+						return false;
 					}
 				
 					JSONscope sc = JSONscope(null, modname);
-					findDefs(object, &sc);
+					if(iterate(object, &sc))
+						return true;
 				}
 			}
 		}
+		return false;
+	}
+
+	Definition[] findDefinition(ref SearchData sd)
+	{
+		Definition[] defs;
+
+		//GC.disable();
+		
+	debug {
+		int cnt = 0;
+		int cntKind = 0;
+		int cntLine = 0;
+		int cntType = 0;
+		bool countDef(string filename, JSONscope* sc, JSONValue[string] memberobj)
+		{
+			if(sd.matchDefinition(sc, memberobj))
+			{
+				if(JSONValue* n = "name" in memberobj)
+					if(n.type == JSON_TYPE.STRING)
+						cnt++;
+				if(JSONValue* k = "kind" in memberobj)
+					if(k.type == JSON_TYPE.STRING)
+						cntKind++;
+				if(JSONValue* ln = "line" in memberobj)
+					if(ln.type == JSON_TYPE.INTEGER)
+						cntLine++;
+				if(JSONValue* typ = "type" in memberobj)
+					if(typ.type == JSON_TYPE.STRING)
+						cntType++;
+			}
+			return false;
+		}
+		iterateObjects(&countDef);
+	}
+		
+		bool findDef(string filename, JSONscope* sc, JSONValue[string] memberobj)
+		{
+			if(sd.matchDefinition(sc, memberobj))
+			{
+				Definition def;
+				def.filename = filename;
+				def.inScope = sc ? sc.toString() : "";
+				
+				if(JSONValue* n = "name" in memberobj)
+					if(n.type == JSON_TYPE.STRING)
+						def.name = n.str;
+				if(JSONValue* k = "kind" in memberobj)
+					if(k.type == JSON_TYPE.STRING)
+						def.kind = k.str;
+				if(JSONValue* ln = "line" in memberobj)
+					if(ln.type == JSON_TYPE.INTEGER)
+						def.line = cast(int)ln.integer - 1;
+				if(JSONValue* typ = "type" in memberobj)
+					if(typ.type == JSON_TYPE.STRING)
+						def.type = typ.str;
+				defs ~= def;
+			}
+			return false;
+		}
+		
+		iterateObjects(&findDef);
+		
+		//GC.enable();
 		return defs;
+	}
+
+	string[] findCompletions(ref SearchData sd)
+	{
+		string[] cplts;
+
+		bool findCplt(string filename, JSONscope* sc, JSONValue[string] memberobj)
+		{
+			if(JSONValue* n = "name" in memberobj)
+				if(n.type == JSON_TYPE.STRING)
+					if(startsWith(n.str, sd.names[0]))
+						addunique(cplts, n.str);
+			return false;
+		}
+		iterateObjects(&findCplt);
+		
+		return cplts;
 	}
 
 	JSONValue mModules;
@@ -329,13 +546,38 @@ class LibraryInfos
 			if(info.readJSON(file))
 				mInfos ~= info;
 		}
+		
+		debug findDefinition("");
+	}
+	
+	string[] findCompletions(string name, bool caseSensitive)
+	{
+		SearchData sd;
+		sd.caseSensitive = caseSensitive;
+		if(name.length)
+			sd.names ~= name;
+		
+		string[] completions;
+		foreach(info; mInfos)
+			completions ~= info.findCompletions(sd);
+		return completions;
 	}
 	
 	Definition[] findDefinition(string name)
 	{
+		SearchData sd;
+		sd.wholeWord = true;
+		sd.caseSensitive = true;
+		if(name.length)
+			sd.names ~= name;
+		return findDefinition(sd);
+	}
+	
+	Definition[] findDefinition(ref SearchData sd)
+	{
 		Definition[] defs;
 		foreach(info; mInfos)
-			defs ~= info.findDefinition(name);
+			defs ~= info.findDefinition(sd);
 		return defs;
 	}
 

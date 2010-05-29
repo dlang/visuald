@@ -18,6 +18,7 @@ RELDIR = ..\bin\Release
 # DMD = $D\windows\bin\dmd_pdb.exe
 DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 CV2PDB = ..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
+IMPLIB = c:\l\dmc\bin\implib.exe
 
 DFLAGS = -d -L/DELEXECUTABLE -I..
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS 
@@ -28,7 +29,6 @@ vsi_release: $(RELDIR)\vsi.lib
 vsi_debug:   $(DBGDIR)\vsi.lib
 
 ######################
-# juno
 $(DBGDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD)
 	$(DMD) -of$@ -g -lib $(DFLAGS) @<<
 		$(VSI_SRC)
@@ -40,3 +40,24 @@ $(RELDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD)
 <<NOKEEP
 
 ######################
+WIN_LIBS = lib\kernel32.lib lib\user32.lib lib\winspool.lib lib\advapi32.lib \
+	lib\comdlg32.lib lib\gdi32.lib lib\ole32.lib lib\rpcrt4.lib lib\shell32.lib lib\winmm.lib \
+	lib\wsock32.lib lib\comctl32.lib lib\oleaut32.lib lib\ws2_32.lib lib\odbc32.lib \
+	lib\ctl3d32.lib
+# lib\uuid.lib 
+WINDIR = c:\windows\system32
+
+.SUFFIXES: .lib .dll .exe
+
+{$(WINDIR)}.dll{lib\}.lib:
+	$(IMPLIB) /noi /system $@ $<
+	
+{$(WINDIR)}.exe{lib\}.lib:
+	$(IMPLIB) /noi /system $@ $<
+	
+libs: $(WIN_LIBS)
+
+#kernel32.lib : kernel32.dll
+#	echo $(IMPLIB) $@ $<
+	
+$(WIN_LIBS) : Makefile

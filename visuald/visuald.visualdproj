@@ -41,7 +41,7 @@
   <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
   <imppath>..</imppath>
-  <fileImppath>..</fileImppath>
+  <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
   <objname />
@@ -75,7 +75,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
-  <additionalOptions>-L/XREF</additionalOptions>
+  <additionalOptions>-debuglib=phobos_d.lib</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
@@ -177,11 +177,21 @@
    <File path="Resources\DAboutBox.ico" />
    <File path="Resources\DImageList.bmp" />
    <File path="Resources\DSplashScreenIcon.bmp" />
-   <File tool="Resource Compiler" path="visuald.rc" dependencies="Resources\pkgcmd.cto" />
    <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set PATH=%PATH%;c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
 set PATH=%PATH%;$(DevEnvDir)
 set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin
 CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
+   <File path="Resources\resources.h" />
+   <File path="visuald.rc" />
+   <File path="Resources\AlternateRowColor.ico" />
+   <File path="Resources\ascend.ico" />
+   <File path="Resources\descend.ico" />
+   <File path="Resources\GroupByType.ico" />
+   <File path="Resources\CaseSensitive.ico" />
+   <File path="Resources\WholeWord.ico" />
+   <File path="Resources\RegExp.ico" />
+   <File path="Resources\SearchFile.ico" />
+   <File path="Resources\SearchSymbol.ico" />
   </Folder>
   <File path="config.d" />
   <File path="dproject.d" />
@@ -212,5 +222,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="intellisense.d" />
   <File path="searchsymbol.d" />
   <File path="windows.d" />
+  <File path="wmmsg.d" />
  </Folder>
 </DProject>

@@ -420,7 +420,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 	void SetFieldDefault(string field, string value)
 	{
 		assert(expansionPrepared);
-		assert(field && value);
+		//assert(field && value);
 
 		// we have an expansion "prepared" to insert, so we can now save this
 		// field default to set when the expansion is actually inserted

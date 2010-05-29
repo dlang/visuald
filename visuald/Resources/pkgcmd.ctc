@@ -6,7 +6,7 @@
 //#include "msobtnid.h"
 //#include "virtkeys.h"
 //#include "PkgCmdID.h"
-//#include "Resource.h"
+#include "Resources.h"
 
 //#define guidToolWindowPkg      { 0xAD5B3373, 0x1F9E, 0x442f, { 0x96, 0x9F, 0x94, 0xA9, 0x2F, 0xBB, 0xAA, 0x2C } }
 //#define guidToolWindowMenuGrp  { 0x26CB6B7B, 0xD8D4, 0x47dd, { 0x8A, 0x8B, 0x4F, 0x4D, 0xB7, 0x4F, 0xEF, 0xB9 } }
@@ -29,11 +29,6 @@
 #define IDG_VS_WNDO_FINDRESULTS       0x0724
 
 ///////////////////////////////////////////////////////////////////////////////
-// Command IDs
-
-#define CmdSearchSymbol 0x101
-
-///////////////////////////////////////////////////////////////////////////////
 // Bitmap IDs
 
 #define msotcidNoIcon	746	//(0,25) Label: '&No Icon'
@@ -51,7 +46,9 @@ CMDS_SECTION g_packageCLSID
     NEWGROUPS_END
 
     BUTTONS_BEGIN
-		g_commandSetCLSID:CmdSearchSymbol,	guidSHLMainMenu:IDG_VS_WNDO_FINDRESULTS, 0x0100, guidOfficeIcon:msotcidNoIcon, BUTTON, ,"&Visual D - Search Symbol";
+		// Command ID,                     Group ID,                                Priority, Icon ID,                 Button Type, Flags, Button Text, Menu Text, ToolTip Text, Command Well Text, English Command Name, Localized Command Name;
+		g_commandSetCLSID:CmdSearchSymbol, guidSHLMainMenu:IDG_VS_WNDO_FINDRESULTS, 0xF000,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,"&Visual D - Search Symbol";
+		g_commandSetCLSID:CmdSearchFile,   guidSHLMainMenu:IDG_VS_WNDO_FINDRESULTS, 0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,"&Visual D - Search File";
 		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID
 		// as the command set GUID. Also, by specifying blank for the FLAGS, this command is
 		// default visible and enabled. Other valid values for FLAGS are the following:

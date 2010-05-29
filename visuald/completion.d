@@ -38,12 +38,15 @@ import sdk.vsi.vsshell;
 
 ///////////////////////////////////////////////////////////////
 
-const int kCompletionSearchLines = 500;
+const int kCompletionSearchLines = 5000;
 
 ///////////////////////////////////////////////////////////////
 // returns addref'd Config
 Config getProjectConfig(string file)
 {
+	if(file.length == 0)
+		return null;
+	
 	auto srpSolution = queryService!(IVsSolution);
 	scope(exit) release(srpSolution);
 	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
@@ -108,7 +111,17 @@ class Declarations
 	string[] mNames;
 	string[] mDescriptions;
 	int[] mGlyphs;
-
+	int mExpansionState = kStateInit;
+	
+	enum
+	{
+		kStateInit,
+		kStateImport,
+		kStateNearBy,
+		kStateSymbols,
+		kStateCaseInsensitive
+	}
+			
 	this()
 	{
 	}
@@ -178,7 +191,7 @@ class Declarations
 			imp = imp[dpos + 1 .. $];
 		}
 
-		mNames = mNames.init;
+		int namesLength = mNames.length;
 		foreach(string impdir; imports)
 		{
 			impdir = impdir ~ dir;
@@ -202,7 +215,7 @@ class Declarations
 				}
 			}
 		}
-		return mNames.length > 0;
+		return mNames.length > namesLength;
 	}
 
 	bool ImportExpansions(IVsTextView textView, Source src)
@@ -257,7 +270,7 @@ class Declarations
 		int lineCount;
 		src.mBuffer.GetLineCount(&lineCount);
 
-		mNames.length = 0;
+		//mNames.length = 0;
 		int start = max(0, line - kCompletionSearchLines);
 		int end = min(lineCount, line + kCompletionSearchLines);
 
@@ -265,6 +278,7 @@ class Declarations
 		if(tok.length && !isalnum(tok[0]) && tok[0] != '_')
 			tok = "";
 
+		int namesLength = mNames.length;
 		for(int ln = start; ln < end; ln++)
 		{
 			int iState = src.mColorizer.GetLineState(ln);
@@ -286,8 +300,60 @@ class Declarations
 					}
 			}
 		}
-		return mNames.length > 0;
+		return mNames.length > namesLength;
 	}
+	
+	////////////////////////////////////////////////////////////////////////
+	bool SymbolExpansions(IVsTextView textView, Source src)
+	{
+		string tok = GetTokenBeforeCaret(textView, src);
+		if(tok.length && !isalnum(tok[0]) && tok[0] != '_')
+			tok = "";
+		if(!tok.length)
+			return false;
+		
+		int namesLength = mNames.length;
+		mNames ~= Package.GetLibInfos().findCompletions(tok, true);
+		return mNames.length > namesLength;
+	}
+	
+	////////////////////////////////////////////////////////////////////////
+	bool StartExpansions(IVsTextView textView, Source src)
+	{
+		mNames = mNames.init;
+		mExpansionState = kStateInit;
+		
+		return MoreExpansions(textView, src);
+	}
+
+	bool MoreExpansions(IVsTextView textView, Source src)
+	{
+		switch(mExpansionState)
+		{
+		case kStateInit:
+			if(ImportExpansions(textView, src))
+			{
+				mExpansionState = kStateImport;
+				return true;
+			}
+		case kStateImport:
+			if(NearbyExpansions(textView, src))
+			{
+				mExpansionState = kStateNearBy;
+				return true;
+			}
+		case kStateNearBy:
+			if(SymbolExpansions(textView, src))
+			{
+				mExpansionState = kStateSymbols;
+				return true;
+			}
+		default:
+			break;
+		}
+		return false;
+	}
+
 }
 
 class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx

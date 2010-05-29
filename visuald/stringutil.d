@@ -204,6 +204,36 @@ string extractDefine(string s, string def)
 	return "";
 }
 
+string extractDefines(string s)
+{
+	string m;
+	for(int p = 0; p < s.length; p++)
+	{
+		while(p < s.length && (s[p] == ' ' || s[p] == '\t'))
+			p++;
+		int q = p;
+		while(q < s.length && s[q] != '\n' && s[q] != '\r')
+			q++;
+		
+		if(startsWith(s[p .. $], "#define") && (s[p+7] == ' ' || s[p+7] == '\t'))
+		{
+			p += 7;
+			int b = p;
+			while(p < q && (s[p] == ' ' || s[p] == '\t'))
+				p++;
+			int r = p;
+			while(r < q && !isspace(s[r]))
+				r++;
+			if(r < q)
+			{
+				m ~= "const " ~ s[p..r] ~ " = " ~ s[r..q] ~ ";\n";
+			}
+		}
+		p = q;
+	}
+	return m;
+}
+
 // endsWith does not work reliable and crashes on page end
 bool _endsWith(string s, string e)
 {

@@ -75,6 +75,8 @@ class LanguageService : DisposingComObject,
 	// IDisposable
 	override void Dispose()
 	{
+		closeSearchWindow();
+
 		foreach(Source src; mSources)
 			src.Release();
 		mSources = mSources.init;
@@ -140,10 +142,10 @@ class LanguageService : DisposingComObject,
 
 	override HRESULT GetProximityExpressions(IVsTextBuffer pBuffer, in int iLine, in int iCol, in int cLines, IVsEnumBSTR* ppEnum)
 	{
-		scope auto text = new ComPtr!(IVsTextLines)(pBuffer);
-		if(!text.ptr)
+		auto text = ComPtr!(IVsTextLines)(pBuffer);
+		if(!text)
 			return E_FAIL;
-		Source src = GetSource(text.ptr);
+		Source src = GetSource(text);
 		if(!src)
 			return E_FAIL;
 
@@ -1147,7 +1149,10 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 				
 			case ECMD_COMPLETEWORD:
 			case ECMD_AUTOCOMPLETE:
-				initCompletion();
+				if(mCodeWinMgr.mSource.IsCompletorActive())
+					moreCompletions();
+				else
+					initCompletion();
 				return S_OK;
 
 			case ECMD_SURROUNDWITH:
@@ -1214,11 +1219,12 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 			case ECMD_LEFT:
 			case ECMD_RIGHT:
-			case ECMD_UP:
-			case ECMD_DOWN:
 			case ECMD_BACKSPACE:
 				if(mCodeWinMgr.mSource.IsCompletorActive())
 					initCompletion();
+				// fall through
+			case ECMD_UP:
+			case ECMD_DOWN:
 				if(mCodeWinMgr.mSource.IsMethodTipActive())
 					HandleMethodTip();
 				break;
@@ -1258,11 +1264,17 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 	{
 		CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet();
 		Declarations decl = new Declarations;
-		if(!decl.ImportExpansions(mView, mCodeWinMgr.mSource))
-			decl.NearbyExpansions(mView, mCodeWinMgr.mSource);
+		decl.StartExpansions(mView, mCodeWinMgr.mSource);
 		cs.Init(mView, decl, false);
 	}
-
+	void moreCompletions()
+	{
+		CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet();
+		Declarations decl = cs.mDecls;
+		decl.MoreExpansions(mView, mCodeWinMgr.mSource);
+		cs.Init(mView, decl, false);
+	}
+		
 	int QueryCommandStatus(in GUID *guidCmdGroup, uint cmdID)
 	{
 		if(*guidCmdGroup == CMDSETID_StandardCommandSet97) 
@@ -1449,90 +1461,14 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		if(defs.length == 0)
 			return S_FALSE;
 
-debug {
-		if(defs.length > 0)
+		if(defs.length > 1)
 		{
-			SearchWindow sw = new SearchWindow;
-			sw.openWindow();
+			showSearchWindow(false, word);
 			return S_FALSE;
 		}
-}
-		// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
-		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
-		if(!pIVsUIShellOpenDocument)
-			return returnError(E_FAIL);
-		scope(exit) release(pIVsUIShellOpenDocument);
-		
-		auto wstrPath = _toUTF16z(defs[0].filename);
-		BSTR bstrAbsPath;
-		
-		HRESULT hr;
-		hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
-		if(hr != S_OK)
-		{
-			// search import paths
-			string file = mCodeWinMgr.mSource.GetFileName();
-			string[] imps = GetImportPaths(file);
-			foreach(imp; imps)
-			{
-				file = normalizeDir(imp) ~ defs[0].filename;
-				if(std.file.exists(file))
-				{
-					bstrAbsPath = allocBSTR(file);
-					hr = S_OK;
-					break;
-				}
-			}
-			if(hr != S_OK)
-				return returnError(hr);
-		}
-		scope(exit) detachBSTR(bstrAbsPath);
-		
-		IVsWindowFrame srpIVsWindowFrame;
 
-		hr = pIVsUIShellOpenDocument.OpenDocumentViaProject(bstrAbsPath, &LOGVIEWID_Primary, null, null, null,
-		                                                    &srpIVsWindowFrame);
-		if(FAILED(hr))
-			hr = pIVsUIShellOpenDocument.OpenStandardEditor(
-					/* [in]  VSOSEFLAGS   grfOpenStandard           */ OSE_ChooseBestStdEditor,
-					/* [in]  LPCOLESTR    pszMkDocument             */ bstrAbsPath,
-					/* [in]  REFGUID      rguidLogicalView          */ &LOGVIEWID_Primary,
-					/* [in]  LPCOLESTR    pszOwnerCaption           */ _toUTF16z("%3"),
-					/* [in]  IVsUIHierarchy  *pHier                 */ null,
-					/* [in]  VSITEMID     itemid                    */ 0,
-					/* [in]  IUnknown    *punkDocDataExisting       */ DOCDATAEXISTING_UNKNOWN,
-					/* [in]  IServiceProvider *pSP                  */ null,
-					/* [out, retval] IVsWindowFrame **ppWindowFrame */ &srpIVsWindowFrame);
-
-		if(FAILED(hr) || !srpIVsWindowFrame)
-			return returnError(hr);
-		scope(exit) release(srpIVsWindowFrame);
-		
-		srpIVsWindowFrame.Show();
-		
-		VARIANT var;
-		hr = srpIVsWindowFrame.GetProperty(VSFPROPID_DocData, &var);
-		if(FAILED(hr) || var.vt != VT_UNKNOWN || !var.punkVal)
-			return returnError(E_FAIL);
-		scope(exit) release(var.punkVal);
-
-		IVsTextLines textBuffer = qi_cast!IVsTextLines(var.punkVal);
-		if(!textBuffer)
-			if(auto bufferProvider = qi_cast!IVsTextBufferProvider(var.punkVal))
-			{
-				bufferProvider.GetTextBuffer(&textBuffer);
-				release(bufferProvider);
-			}
-		if(!textBuffer)
-			return returnError(E_FAIL);
-		scope(exit) release(textBuffer);
-
-		IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
-		if(!textmgr)
-			return returnError(E_FAIL);
-		scope(exit) release(textmgr);
-		
-		return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, defs[0].line, 0, defs[0].line, 0);
+		string file = mCodeWinMgr.mSource.GetFileName();
+		return OpenFileInSolution(defs[0].filename, defs[0].line, file);
 	}
 
 	//////////////////////////////////////////////////////////////

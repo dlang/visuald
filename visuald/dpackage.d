@@ -23,11 +23,13 @@ import fileutil;
 import dproject;
 import config;
 import dlangsvc;
+import dimagelist;
 import logutil;
 import propertypage;
 import winctrl;
 import register;
 import intellisense;
+import searchsymbol;
 
 import sdk.win32.winreg;
 
@@ -171,7 +173,8 @@ class ClassFactory : DComObject, IClassFactory
 class Package : DisposingComObject,
 		IVsPackage,
 		IServiceProvider,
-		IVsInstalledProduct
+		IVsInstalledProduct,
+		IOleCommandTarget
 {
 	mixin(d2_shared ~ " static Package s_instance;");
 
@@ -195,6 +198,8 @@ class Package : DisposingComObject,
 		if(queryInterface!(IServiceProvider) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IVsInstalledProduct) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IOleCommandTarget) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -382,6 +387,42 @@ class Package : DisposingComObject,
 		logCall("%s.IdIcoLogoForAboutbox(pIdIco=%s)", this, pIdIco);
 		*pIdIco = 1000;
 		return S_OK;
+	}
+
+	// IOleCommandTarget //////////////////////////////////////
+	override int QueryStatus(in GUID *pguidCmdGroup, in uint cCmds,
+	                         OLECMD *prgCmds, OLECMDTEXT *pCmdText)
+	{
+		mixin(LogCallMix);
+
+		for (uint i = 0; i < cCmds; i++) 
+		{
+			if(g_commandSetCLSID == *pguidCmdGroup)
+				prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+		}
+		return S_OK;
+	}
+
+	override int Exec( /* [unique][in] */ in GUID *pguidCmdGroup,
+	          /* [in] */ in uint nCmdID,
+	          /* [in] */ in uint nCmdexecopt,
+	          /* [unique][in] */ in VARIANT *pvaIn,
+	          /* [unique][out][in] */ VARIANT *pvaOut)
+	{
+		if(g_commandSetCLSID != *pguidCmdGroup)
+			return OLECMDERR_E_NOTSUPPORTED;
+		
+		if(nCmdID == CmdSearchSymbol)
+		{
+			showSearchWindow(false);
+			return S_OK;
+		}
+		if(nCmdID == CmdSearchFile)
+		{
+			showSearchWindow(true);
+			return S_OK;
+		}
+		return OLECMDERR_E_NOTSUPPORTED;
 	}
 
 	/////////////////////////////////////////////////////////////
@@ -593,7 +634,7 @@ class CommandManager
 		
 		HRESULT hr = S_OK;
 
-		scope auto spvsCmds = new ComPtr!(dte.Commands);
+		ComPtr!(dte.Commands) spvsCmds;
 		hr = spvsDTE.Commands(&spvsCmds.ptr);
 		if (SUCCEEDED(hr))
 		{
@@ -601,13 +642,13 @@ class CommandManager
 			VARIANT svarCmdID;
 			svarCmdID.bstrVal = _toUTF16z(name);
 			svarCmdID.vt = VT_BSTR;
-			scope auto spvsCmd = new ComPtr!(dte.Command);
-			hr = spvsCmds.ptr.Item(svarCmdID, -1, &spvsCmd.ptr);
+			ComPtr!(dte.Command) spvsCmd;
+			hr = spvsCmds.Item(svarCmdID, -1, &spvsCmd.ptr);
 			if (FAILED(hr))
 			{
 				// Command is not present.  Add it to the pool of commands.
-				scope auto spvsCmds2 = new ComPtr!(dte2.Commands2)(spvsCmds.ptr);
-				if (spvsCmds2.ptr)
+				auto spvsCmds2 = ComPtr!(dte2.Commands2)(spvsCmds.ptr);
+				if (spvsCmds2)
 				{
 /+
                     hr = spvsCmds2->AddNamedCommand2(_spvsAddin, sbstrCmdID, sbstrCmdName, sbstrCmdDescription, VARIANT_FALSE, CComVariant(IDB_FSECMD),

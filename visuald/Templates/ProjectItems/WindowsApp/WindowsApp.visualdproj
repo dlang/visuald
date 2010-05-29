@@ -1,11 +1,11 @@
 <DProject>
   <ProjectGuid>$guid1$</ProjectGuid>
   <Config name="Debug">
-    <additionalOptions>-L/SUBSYSTEM:WINDOWS:6.00</additionalOptions>
+    <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
     <libfiles>ole32.lib kernel32.lib user32.lib comctl32.lib comdlg32.lib</libfiles>
   </Config>
   <Config name="Release">
-    <additionalOptions>-L/SUBSYSTEM:WINDOWS:6.00</additionalOptions>
+    <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
     <libfiles>ole32.lib kernel32.lib user32.lib comctl32.lib comdlg32.lib</libfiles>
   </Config>
   <Folder name="$safeprojectname$">

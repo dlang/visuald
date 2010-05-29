@@ -72,6 +72,7 @@ version(D_Version2)
 			if(!dll_process_attach(hInstance, true))
 				return false;
 			g_hInst = cast(HINSTANCE) hInstance;
+//	GC.disable();
 }
 else
 {

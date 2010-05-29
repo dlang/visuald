@@ -65,3 +65,19 @@ Version history
   * fix: build only worked as admin on x64
   * fix: spurious crashes on x64
   * improved WindowsApp project template (added libs, sets application subsystem)
+
+2010-05-28 Version 0.3.9
+
+  * new file/symbol search window
+  * word-completion can now be expanded to symbol lookup by pressing Ctrl-Space again
+  * installation now reenables package, in case you told VS to skip loading it
+  * now using machine-translated SDK instead of std.windows
+  * fixed COM leak
+  * fix: file opened through "goto definition"/"find in files" sometimes warns
+    "already opened in editor"
+  * fix: "goto error" sometimes would not jump to error with message 
+    "cannot find the file specified"
+  * fix: last version would not let you select any but the first entry of an
+    expansion list
+  * symbol information now updated after project load, it's no longer necessary
+    to build once

@@ -1193,11 +1193,11 @@ version(none)
 		/* [in] */ IUnknown punkDocData,
 		/* [out] */ BOOL *pfDirty)
 	{
-		scope auto srpPersistDocData = new ComPtr!(IVsPersistDocData)(punkDocData);
-		if(!srpPersistDocData.ptr)
+		auto srpPersistDocData = ComPtr!(IVsPersistDocData)(punkDocData);
+		if(!srpPersistDocData)
 			return E_INVALIDARG;
 
-		return srpPersistDocData.ptr.IsDocDataDirty(pfDirty);
+		return srpPersistDocData.IsDocDataDirty(pfDirty);
 	}
 
 	override int SaveItem( 
@@ -1219,16 +1219,16 @@ version(none)
 
 		if (VSSAVE_SilentSave & dwSave)
 		{
-			scope auto srpFileFormat = new ComPtr!(IPersistFileFormat)(punkDocData);
-			scope auto pIVsUIShell = new ComPtr!(IVsUIShell)(queryService!(IVsUIShell));
-			if(srpFileFormat.ptr && pIVsUIShell.ptr)
-				hr = pIVsUIShell.ptr.SaveDocDataToFile(dwSave, srpFileFormat.ptr, pszSilentSaveAsName, &bstrMkDocumentNew, pfCanceled);
+			auto srpFileFormat = ComPtr!(IPersistFileFormat)(punkDocData);
+			auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell));
+			if(srpFileFormat && pIVsUIShell)
+				hr = pIVsUIShell.SaveDocDataToFile(dwSave, srpFileFormat, pszSilentSaveAsName, &bstrMkDocumentNew, pfCanceled);
 		}
 		else
 		{
-			scope auto srpPersistDocData = new ComPtr!(IVsPersistDocData)(punkDocData);
-			if(srpPersistDocData.ptr)
-				hr = srpPersistDocData.ptr.SaveDocData(dwSave, &bstrMkDocumentNew, pfCanceled);
+			auto srpPersistDocData = ComPtr!(IVsPersistDocData)(punkDocData);
+			if(srpPersistDocData)
+				hr = srpPersistDocData.SaveDocData(dwSave, &bstrMkDocumentNew, pfCanceled);
 		}
 
 		freeBSTR(bstrMkDocumentNew); // release string
@@ -1902,7 +1902,7 @@ public: // IVsHierarchyEvent propagation
 		return E_NOTIMPL;
 	}
 
-private:
+protected:
 	CProjectNode m_pRootNode;
 
 	// Hierarchy event advises

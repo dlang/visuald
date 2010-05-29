@@ -13,6 +13,7 @@ import std.utf;
 import sdk.port.base;
 import sdk.win32.wingdi;
 import sdk.win32.prsht;
+import sdk.win32.commctrl;
 
 private Widget[Widget] createdWindows; // collection of all windows with HWND to avoid garbage collection
 private HINSTANCE hInst;
@@ -102,15 +103,87 @@ class Widget
 		EnableWindow(hwnd, enable);
 	}
 	
+	void SetFocus() 
+	{
+		.SetFocus(hwnd);
+	}
+	
+	void SetRedraw(bool enable) 
+	{
+		SendMessage(WM_SETREDRAW, enable);
+	}
+	
+	int SendMessage(int msg, WPARAM wp = 0, LPARAM lp = 0)
+	{
+		return .SendMessage(hwnd, msg, wp, lp);
+	}
+
+	void InvalidateRect(RECT* r, bool erase)
+	{
+		.InvalidateRect(hwnd, r, erase);
+	}
+	
+	string GetWindowText() 
+	{
+		WCHAR txt[256];
+		int len = GetWindowTextW(hwnd, txt.ptr, txt.length);
+		if(len < txt.length)
+			return toUTF8(txt[0..len]);
+
+		scope buffer = new wchar[len+1];
+		len = GetWindowTextW(hwnd, buffer.ptr, len+1);
+		return toUTF8(buffer[0..len]);
+	}
+	bool SetWindowText(string txt) 
+	{
+		return SetWindowTextW(hwnd, toUTF16z(txt)) != 0;
+	}
+	
+	bool GetWindowRect(RECT* r)
+	{
+		return .GetWindowRect(hwnd, r) != 0;
+	}
+	
+	bool GetClientRect(RECT* r)
+	{
+		return .GetClientRect(hwnd, r) != 0;
+	}
+	
+	bool ScreenToClient(POINT *lpPoint)
+	{
+		return .ScreenToClient(hwnd, lpPoint) != 0;
+	}
+	
+	bool ScreenToClient(RECT *rect)
+	{
+		POINT pnt = { rect.left, rect.top };
+		if (.ScreenToClient(hwnd, &pnt) == 0)
+			return false;
+		rect.right += pnt.x - rect.left;
+		rect.bottom += pnt.y - rect.top;
+		rect.left = pnt.x;
+		rect.top = pnt.y;
+		return true;
+	}
+	
+	bool SetWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags)
+	{
+		return .SetWindowPos(hwnd, hWndInsertAfter, X, Y, cx, cy, uFlags) != 0;
+	}
+
+	bool SetWindowPos(HWND hWndInsertAfter, RECT* r, uint uFlags)
+	{
+		return .SetWindowPos(hwnd, hWndInsertAfter, r.left, r.top, r.right - r.left, r.bottom - r.top, uFlags) != 0;
+	}
+
+
 	static Widget fromHWND(HWND hwnd) 
 	{
 		return cast(Widget)cast(void*)GetWindowLongA(hwnd, GWL_USERDATA);
 	}
 
-	int SendMessage(int msg, WPARAM wp, LPARAM lp)
-	{
-		return SendMessageA(hwnd, msg, wp, lp);
-	}
+	static HINSTANCE getInstance() { return hInst; }
+	
 }
 
 class Window : Widget
@@ -280,14 +353,13 @@ class Text : Widget
 		SendMessageW(hwnd, WM_SETTEXT, 0, cast(LPARAM)toUTF16z(winstr));
 	}
 
-        string getText() 
+	string getText() 
 	{
 		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
-                scope buffer = new wchar[len+1];
-                SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
-                return toUTF8(buffer[0..$-1]);
+		scope buffer = new wchar[len+1];
+		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
+		return toUTF8(buffer[0..$-1]);
 	}
-
 }
 
 class MultiLineText : Text
@@ -305,41 +377,41 @@ class MultiLineText : Text
 
 class ComboBox : Widget
 {
-        this(Widget parent, string[] texts, bool editable = true, int id = 0) 
+	this(Widget parent, string[] texts, bool editable = true, int id = 0) 
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		DWORD style = editable ? CBS_DROPDOWN | CBS_AUTOHSCROLL : CBS_DROPDOWNLIST;
 		createWidget(parent, "COMBOBOX", "", style | WS_VSCROLL | WS_HSCROLL | WS_CHILD | WS_VISIBLE, 0, id);
-            
+
 		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
 		foreach (s; texts)
 			SendMessageW(hwnd, CB_ADDSTRING, 0, cast(LPARAM)toUTF16z(s));
 
 		super(parent);
-        }
+	}
 
-        int findString(string s) 
+	int findString(string s) 
 	{
 		return SendMessageW(hwnd, CB_FINDSTRING, 0, cast(LPARAM)toUTF16z(s));
-        }
-        int getSelection() 
+	}
+	int getSelection() 
 	{
 		return SendMessageA(hwnd, CB_GETCURSEL, 0, 0);
-        }
-        void setSelection(int n) 
+	}
+	void setSelection(int n) 
 	{
 		SendMessageA(hwnd, CB_SETCURSEL, n, 0);
-        }
-        void setSelection(string s) 
+	}
+	void setSelection(string s) 
 	{
 		SendMessageA(hwnd, CB_SELECTSTRING, 0, cast(LPARAM)toUTF16z(s));
-        }
-        string getText() 
+	}
+	string getText() 
 	{
 		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
-                scope buffer = new wchar[len+1];
-                SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
-                return toUTF8(buffer[0..$-1]);
+		scope buffer = new wchar[len+1];
+		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
+		return toUTF8(buffer[0..$-1]);
 	}
 }
 
@@ -377,6 +449,42 @@ class Button : ButtonBase
 		createWidget(parent, "BUTTON", intext, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, id);
 		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
 		super(parent);
+	}
+}
+
+class ToolBar : Widget
+{
+	this(Widget parent, uint style, uint exstyle, int id = 0) 
+	{
+		HWND parenthwnd = parent ? parent.hwnd : null;
+		createWidget(parent, TOOLBARCLASSNAMEA, "", style | WS_CHILD | WS_VISIBLE, exstyle, id);
+		super(parent);
+	}
+	
+	bool EnableCheckButton(uint id, bool enable, bool check)
+	{
+		TBBUTTONINFO tbi;
+		tbi.cbSize = TBBUTTONINFO.sizeof;
+		tbi.dwMask = TBIF_STATE;
+		tbi.fsState = (enable ? TBSTATE_ENABLED : 0)
+		            | (check  ? TBSTATE_CHECKED : 0);
+		
+		return .SendMessage(hwnd, TB_SETBUTTONINFO, id, cast(LPARAM)&tbi) != 0;
+	}
+}
+
+class ListView : Widget
+{
+	this(Widget parent, uint style, uint exstyle, int id = 0) 
+	{
+		HWND parenthwnd = parent ? parent.hwnd : null;
+		createWidget(parent, "SysListView32", "", style | WS_CHILD | WS_VISIBLE, exstyle, id);
+		super(parent);
+	}
+
+	int SendItemMessage(uint msg, ref LVITEM lvi)
+	{
+		return .SendMessage(hwnd, msg, 0, cast(LPARAM)&lvi);
 	}
 }
 

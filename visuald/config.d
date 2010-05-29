@@ -366,17 +366,10 @@ class ProjectOptions
 		string safeprojectpath = projectpath.replace(" ", "_");
 
 		string[string] replacements;
-		IVsSolution srpSolution = queryService!(IVsSolution);
-		if(srpSolution)
-		{
-			BSTR pbstrSolutionFile;
-			if(srpSolution.GetSolutionInfo(null, &pbstrSolutionFile, null) == S_OK)
-			{
-				string solutionpath = detachBSTR(pbstrSolutionFile);
-				addFileMacros(solutionpath, "SOLUTION", replacements);
-			}
-			srpSolution.Release();
-		}
+	
+		string solutionpath = GetSolutionFilename();
+		if(solutionpath.length)
+			addFileMacros(solutionpath, "SOLUTION", replacements);
 		replacements["PLATFORMNAME"] = "Win32";
 		addFileMacros(projectpath, "PROJECT", replacements);
 		addFileMacros(safeprojectpath, "SAFEPROJECT", replacements);
@@ -660,7 +653,7 @@ class ConfigProvider : DisposingComObject,
 		/* [optional][out] */ ULONG *pcActual,
 		/* [optional][out] */ VSCFGFLAGS *prgfFlags)
 	{
-		mixin(LogCallMix);
+		debug(FULL_DBG) mixin(LogCallMix);
 
 		for(int i = 0; i < celt && i < mConfigs.length; i++)
 			rgpcfg[i] = addref(mConfigs[i]);
@@ -1077,7 +1070,7 @@ class Config :	DisposingComObject,
 		/* [in] */ in IID* iidCfg,
 		/* [iid_is][out] */ void **ppCfg)
 	{
-		mixin(LogCallMix);
+		debug(FULL_DBG) mixin(LogCallMix);
 		return QueryInterface(iidCfg, ppCfg);
 	}
 
@@ -1295,7 +1288,8 @@ class Config :	DisposingComObject,
 		/* [optional][out] */ BOOL *pfSupported,
 		/* [optional][out] */ BOOL *pfReady)
 	{
-		mixin(LogCallMix);
+		debug(FULL_DBG) mixin(LogCallMix);
+		
 		if(pfSupported)
 			*pfSupported = true;
 		if(pfReady)

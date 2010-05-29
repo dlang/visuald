@@ -511,7 +511,7 @@ class idl2d
 		// defined to avoid #define translation
 		case "MAKE_HRESULT":
 		case "CBPCLIPDATA":
-		case "FACILITY_ITF":
+		//case "FACILITY_ITF":
 		case "PFN_TSHELL_TMP":
 		case "V_INT_PTR":
 		case "VT_INT_PTR":
@@ -1991,6 +1991,8 @@ else
 		foreach(imp; addedImports)
 			hdr ~= "import " ~ imp ~ ";\n";
 
+		if(currentModule == "vsshell")
+			hdr ~= "import " ~ packageWin ~ "commctrl;\n";
 		if(currentModule == "vsshlids")
 			hdr ~= "import " ~ packageVSI ~ "oleipc;\n";
 		else if(currentModule == "debugger80")

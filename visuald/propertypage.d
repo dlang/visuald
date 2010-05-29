@@ -323,9 +323,9 @@ class ProjectPropertyPage : PropertyPage
 	{
 		if(mObjects.length > 0)
 		{
-			scope auto config = new ComPtr!(Config)(mObjects[0]);
-			if(config.ptr)
-				return config.ptr.GetProjectOptions();
+			auto config = ComPtr!(Config)(mObjects[0]);
+			if(config)
+				return config.GetProjectOptions();
 		}
 		return null;
 	}
@@ -350,11 +350,11 @@ class ProjectPropertyPage : PropertyPage
 		{
 			for(int i = 0; i < mObjects.length; i++)
 			{
-				scope auto config = new ComPtr!(Config)(mObjects[i]);
-				if(config.ptr)
+				auto config = ComPtr!(Config)(mObjects[i]);
+				if(config)
 				{
 					DoApply(config.ptr.GetProjectOptions(), refoptions);
-					config.ptr.SetDirty();
+					config.SetDirty();
 				}
 			}
 			return S_OK;
@@ -378,9 +378,9 @@ class NodePropertyPage : PropertyPage
 	{
 		if(mObjects.length > 0)
 		{
-			scope auto node = new ComPtr!(CFileNode)(mObjects[0]);
-			if(node.ptr)
-				return node.ptr;
+			auto node = ComPtr!(CFileNode)(mObjects[0]);
+			if(node)
+				return node;
 		}
 		return null;
 	}
@@ -405,11 +405,11 @@ class NodePropertyPage : PropertyPage
 		{
 			for(int i = 0; i < mObjects.length; i++)
 			{
-				scope auto node = new ComPtr!(CFileNode)(mObjects[i]);
-				if(node.ptr)
+				auto node = ComPtr!(CFileNode)(mObjects[i]);
+				if(node)
 				{
-					DoApply(node.ptr, refnode);
-					if(CProjectNode pn = cast(CProjectNode) node.ptr.GetRootNode())
+					DoApply(node, refnode);
+					if(CProjectNode pn = cast(CProjectNode) node.GetRootNode())
 						pn.SetProjectFileDirty(true);
 				}
 			}

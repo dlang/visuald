@@ -14,13 +14,16 @@ import std.path;
 import std.utf;
 import std.stream;
 
+import sdk.port.vsi;
 import sdk.vsi.vsshell;
 import sdk.vsi.objext;
 import dte = sdk.vsi.dte80a;
 import dte2 = sdk.vsi.dte80;
 import comutil;
 import fileutil;
+import logutil;
 import dpackage;
+import completion;
 import chiernode;
 import chiercontainer;
 
@@ -232,11 +235,11 @@ int UtilGetFilesFromPROJITEMDrop(HGLOBAL h, ref string[] rgFiles)
 //----------------------------------------------------------------------------
 bool UtilShellInCmdLineMode()
 {
-	scope auto pIVsShell = new ComPtr!(IVsShell)(queryService!(IVsShell));
-	if(pIVsShell.ptr)
+	auto pIVsShell = ComPtr!(IVsShell)(queryService!(IVsShell), false);
+	if(pIVsShell)
 	{
 		VARIANT var;
-		if(SUCCEEDED(pIVsShell.ptr.GetProperty(VSSPROPID_IsInCommandLineMode, &var)))
+		if(SUCCEEDED(pIVsShell.GetProperty(VSSPROPID_IsInCommandLineMode, &var)))
 			return var.boolVal != 0;
 	}
 	return false;
@@ -259,9 +262,9 @@ void UtilReportErrorInfo(HRESULT hr)
 			if(fInExt || UtilShellInCmdLineMode())
 				return;
 
-			scope auto pIVsUIShell = new ComPtr!(IVsUIShell)(queryService!(IVsUIShell));
-			if(pIVsUIShell.ptr)
-				pIVsUIShell.ptr.ReportErrorInfo(hr);
+			auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false);
+			if(pIVsUIShell)
+				pIVsUIShell.ReportErrorInfo(hr);
 		}
 	}
 }
@@ -327,4 +330,103 @@ dte2.DTE2 GetDTE()
 		
 	dte2.DTE2 spvsDTE = qi_cast!(dte2.DTE2)(_dte);
 	return spvsDTE;
+}
+
+////////////////////////////////////////////////////////////////////////
+string GetSolutionFilename()
+{
+	IVsSolution srpSolution = queryService!(IVsSolution);
+	if(srpSolution)
+	{
+		scope(exit) srpSolution.Release();
+		
+		BSTR pbstrSolutionFile;
+		if(srpSolution.GetSolutionInfo(null, &pbstrSolutionFile, null) == S_OK)
+			return detachBSTR(pbstrSolutionFile);
+
+	}
+	return "";
+}
+
+////////////////////////////////////////////////////////////////////////
+
+HRESULT OpenFileInSolution(string filename, int line, string srcfile = "")
+{
+	// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
+	IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
+	if(!pIVsUIShellOpenDocument)
+		return returnError(E_FAIL);
+	scope(exit) release(pIVsUIShellOpenDocument);
+	
+	auto wstrPath = _toUTF16z(filename);
+	BSTR bstrAbsPath;
+	
+	HRESULT hr;
+	hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
+	if(hr != S_OK)
+	{
+		// search import paths
+		string[] imps = GetImportPaths(srcfile);
+		foreach(imp; imps)
+		{
+			string file = normalizeDir(imp) ~ filename;
+			if(std.file.exists(file))
+			{
+				bstrAbsPath = allocBSTR(file);
+				hr = S_OK;
+				break;
+			}
+		}
+		if(hr != S_OK)
+			return returnError(hr);
+	}
+	scope(exit) detachBSTR(bstrAbsPath);
+	
+	IVsWindowFrame srpIVsWindowFrame;
+
+	hr = pIVsUIShellOpenDocument.OpenDocumentViaProject(bstrAbsPath, &LOGVIEWID_Primary, null, null, null,
+	                                                    &srpIVsWindowFrame);
+	if(FAILED(hr))
+		hr = pIVsUIShellOpenDocument.OpenStandardEditor(
+				/* [in]  VSOSEFLAGS   grfOpenStandard           */ OSE_ChooseBestStdEditor,
+				/* [in]  LPCOLESTR    pszMkDocument             */ bstrAbsPath,
+				/* [in]  REFGUID      rguidLogicalView          */ &LOGVIEWID_Primary,
+				/* [in]  LPCOLESTR    pszOwnerCaption           */ _toUTF16z("%3"),
+				/* [in]  IVsUIHierarchy  *pHier                 */ null,
+				/* [in]  VSITEMID     itemid                    */ 0,
+				/* [in]  IUnknown    *punkDocDataExisting       */ DOCDATAEXISTING_UNKNOWN,
+				/* [in]  IServiceProvider *pSP                  */ null,
+				/* [out, retval] IVsWindowFrame **ppWindowFrame */ &srpIVsWindowFrame);
+
+	if(FAILED(hr) || !srpIVsWindowFrame)
+		return returnError(hr);
+	scope(exit) release(srpIVsWindowFrame);
+	
+	srpIVsWindowFrame.Show();
+	
+	VARIANT var;
+	hr = srpIVsWindowFrame.GetProperty(VSFPROPID_DocData, &var);
+	if(FAILED(hr) || var.vt != VT_UNKNOWN || !var.punkVal)
+		return returnError(E_FAIL);
+	scope(exit) release(var.punkVal);
+
+	IVsTextLines textBuffer = qi_cast!IVsTextLines(var.punkVal);
+	if(!textBuffer)
+		if(auto bufferProvider = qi_cast!IVsTextBufferProvider(var.punkVal))
+		{
+			bufferProvider.GetTextBuffer(&textBuffer);
+			release(bufferProvider);
+		}
+	if(!textBuffer)
+		return returnError(E_FAIL);
+	scope(exit) release(textBuffer);
+
+	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
+	if(!textmgr)
+		return returnError(E_FAIL);
+	scope(exit) release(textmgr);
+
+	if(line < 0)
+		return S_OK;
+	return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, line, 0, line, 0);
 }

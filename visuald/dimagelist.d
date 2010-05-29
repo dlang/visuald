@@ -8,6 +8,10 @@
 
 module dimagelist;
 
+import stringutil;
+
+mixin(extractDefines(import("resources.h")));
+
 const kImageBmp = "BMP_DIMAGELIST";
 
 const kImageDSource = 0;
@@ -18,3 +22,13 @@ const kImageResource = 4;
 const kImageDocument = 5;
 const kImageScript = 6;
 
+const IDC_TOOLBAR = 1010;
+const IDC_FILEWHEEL = 1011;
+const IDC_FILELIST = 1012;
+const IDC_FILELISTHDR = 1013;
+
+// menu ID
+const IDM_COLUMNLISTBASE = 0x100;
+
+// Miscellaneous IDs
+const ID_SUBCLASS_HDR  = 0x100;
