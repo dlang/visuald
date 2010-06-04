@@ -34,8 +34,9 @@ $(DBGDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD)
 		$(VSI_SRC)
 <<NOKEEP
 
+	#echo -of$@ -O -inline -release -g $(DFLAGS) $(VSI_SRC) >cmdline
 $(RELDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD)
-	$(DMD) -of$@ -lib $(DFLAGS) @<<
+	$(DMD) -of$@ -lib -O -inline -release $(DFLAGS) @<<
 		$(VSI_SRC)
 <<NOKEEP
 

@@ -3,7 +3,7 @@
 ; define EXPRESS to add Express Versions to the selection of installable VS versions
 ; !define EXPRESS
 
-; define CV2PDB to include cv2pdb installation (expected at ../../../cv2pdb/trunk
+; define CV2PDB to include cv2pdb installation (expected at ../../../cv2pdb/trunk)
 !define CV2PDB
 
 ;--------------------------------
@@ -234,6 +234,7 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   ${File} ..\..\..\cv2pdb\trunk\ CHANGES
   ${File} ..\..\..\cv2pdb\trunk\ VERSION
   ${File} ..\..\..\cv2pdb\trunk\ FEATURES
+  ${File} ..\..\..\cv2pdb\trunk\ INSTALL
   ${File} ..\..\..\cv2pdb\trunk\ TODO
 
   !insertmacro ReplaceInFile "$INSTDIR\cv2pdb\autoexp.expand" "dviewhelper" "$INSTDIR\cv2pdb\DViewHelper" NoBackup

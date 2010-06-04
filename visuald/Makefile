@@ -41,6 +41,7 @@ DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 # LIBS = $(DMDPATH)\lib
 CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 LIB = ..\sdk\lib
+OPTLINKS = /SCANLIB
 
 DBG_VSI_LIB = $(DBGDIR)/vsi.lib 
 REL_VSI_LIB = $(RELDIR)/vsi.lib 
@@ -71,8 +72,11 @@ $(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(DBG_VSI_LIB) $(DEPS)
 		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(RES)
 <<NOKEEP
 
-$(RELDIR)\$(PROJECT).dll : $(SRC) $(DEF) $(RES) $(REL_VSI_LIB) $(DEPS)
-	$(DMD) -of$@ -O $(DFLAGS) -map $@.map @<<
+$(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
+	$(CV2PDB) -D2.043 $? $@
+
+$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(REL_VSI_LIB) $(DEPS)
+	$(DMD) -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
 		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RES)
 <<NOKEEP
 

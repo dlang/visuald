@@ -22,7 +22,6 @@ import intellisense;
 import dimagelist;
 
 import sdk.win32.commctrl;
-import sdk.win32.wingdi;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import dte80a = sdk.vsi.dte80a;

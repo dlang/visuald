@@ -81,3 +81,14 @@ Version history
     expansion list
   * symbol information now updated after project load, it's no longer necessary
     to build once
+
+2010-06-03 Version 0.3.10
+
+  * updated to cv2pdb 0.13 which allows debugging under plain VS2010 and is
+    more stable when evaluating arrays in the debugger
+  * now built with debug symbols to allow crash analysis. See
+    [downloads/visuald_pdb.zip] for symbols for the latest version
+  * fix: project property dialog did not popup with saved D version
+  * added the possibility to stop a build
+  * new logo now used in about box
+

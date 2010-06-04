@@ -49,7 +49,7 @@ BEGIN
     IDS_VDSETTINGS     "Visual D Settings"
 END
 
-ICON_ABOUTBOX ICON "resources\daboutbox.ico"
+ICON_ABOUTBOX ICON "resources\DAboutLogo.ico"
 
 IDI_ASCENDING               ICON    "resources/ascend.ico"
 IDI_DESCENDING              ICON    "resources/descend.ico"

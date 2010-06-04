@@ -533,7 +533,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 	override void SetControls(ProjectOptions options)
 	{
 		int ver = 0;
-		while(ver < selectableVersions.length - 1 && selectableVersions[ver+1] < options.Dversion)
+		while(ver < selectableVersions.length - 1 && selectableVersions[ver+1] <= options.Dversion)
 			ver++;
 		mDVersion.setSelection(ver);
 		

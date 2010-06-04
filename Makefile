@@ -53,7 +53,8 @@ $(TLB2IDL_EXE) : tlb2idl\tlb2idl.d
 ##################################
 # generate VSI d files from h and idl
 
-vsi2d: vsi_dirs sdk\vsi_sources $(VSI_LIB)
+vsi2d: vsi_dirs sdk\vsi_sources vsi_lib 
+# $(VSI_LIB)
 
 VSI2D_SRC = c2d\idl2d.d c2d\tokenizer.d c2d\tokutil.d \
 	c2d\dgutil.d c2d\dlist.d 
@@ -68,7 +69,8 @@ $(VSI2D_EXE) : $(VSI2D_SRC)
 sdk\vsi_sources: $(VSI2D_EXE)
 	$(VSI2D_EXE) -vsi="$(VSISDK)" -win="$(WINSDK)\Include" -dte="$(DTE_IDL_PATH)" -sdk=sdk
 
-$(VSI_LIB) : sdk\vsi_sources
+# $(VSI_LIB) : sdk\vsi_sources
+vsi_lib:
 	cd sdk && nmake "DMD=$(DMD2)" vsi_release
 
 ##################################
@@ -82,3 +84,4 @@ package:
 
 install: dte_idl vsi2d package
 	cd nsis && $(NSIS)\makensis /V1 visuald.nsi
+	zip -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb

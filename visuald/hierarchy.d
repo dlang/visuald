@@ -754,6 +754,49 @@ class CProjectNode : CFolderNode
 		return hr;
 	}
 
+	override int Exec( 
+		/* [unique][in] */ in GUID *pguidCmdGroup,
+		/* [in] */ DWORD nCmdID,
+		/* [in] */ DWORD nCmdexecopt,
+		/* [unique][in] */ in VARIANT *pvaIn,
+		/* [unique][out][in] */ VARIANT *pvaOut)
+	{
+		int hr = OLECMDERR_E_NOTSUPPORTED;
+
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K)
+		{
+			switch(nCmdID)
+			{
+			case cmdidBuildOnlyProject:
+			case cmdidRebuildOnlyProject:
+				break;
+			case cmdidCleanOnlyProject:
+				if(Config cfg = GetActiveConfig(GetCVsHierarchy()))
+				{
+					scope(exit) release(cfg);
+					if(auto win = queryService!(IVsOutputWindow)())
+					{
+						scope(exit) release(win);
+						IVsOutputWindowPane pane;
+						if(win.GetPane(&GUID_BuildOutputWindowPane, &pane) == S_OK)
+						{
+							scope(exit) release(pane);
+							cfg.StartClean(pane, 0);
+						}
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (hr == OLECMDERR_E_NOTSUPPORTED)
+			hr = super.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+
+		return hr;
+	}
+
 	override int GetProperty(VSHPROPID propid, out VARIANT var)
 	{
 		switch(propid)

@@ -19,6 +19,7 @@ version(sdk) {
 	public import sdk.win32.winbase;
 	public import sdk.win32.winuser;
 	public import sdk.win32.winerror;
+	public import sdk.win32.wingdi;
 	public import std.stdarg;
 } else {
 	public import std.c.windows.windows;
@@ -78,11 +79,13 @@ alias long hyper;
 alias wchar wchar_t;
 
 alias ushort _VARIANT_BOOL;
+alias DWORD OLE_COLOR;
+alias bool boolean;
+alias ulong uint64;
 
 version(sdk) {}
 else {
 	alias double DOUBLE;
-	alias bool boolean;
 //	alias ushort _VARIANT_BOOL;
 	alias int INT_PTR;
 	alias uint ULONG_PTR;

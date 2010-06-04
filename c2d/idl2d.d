@@ -83,8 +83,8 @@ class idl2d
 			"winerror.h", "winreg.h", "reason.h", "commctrl.h",
 			"wingdi.h", "prsht.h", "rpcdce.h" /*, "rpcdcep.h"*/ ];
 		
-		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "objidl.idl", "wtypes.idl", "oleidl.idl", 
-			"ocidl.idl", "docobj.idl", "oleauto.h", "objbase.h",
+		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "wtypes.idl", "oleidl.idl", 
+			"ocidl.idl", "objidl.idl", "docobj.idl", "oleauto.h", "objbase.h",
 			"mshtmcid.h", "xmldom.idl", "xmldso.idl", "xmldomdid.h", "xmldsodid.h", "idispids.h" ];
 
 		if(vsi)
@@ -1398,7 +1398,8 @@ version(all)
 					//if(tok.text == "const" || tok.text == "CONST")
 					//	tok.text = "/*const*/";
 					//else 
-					if (tok.text.startsWith("REF") && tok.text != "REFSHOWFLAGS")
+					if (tok.text.startsWith("REF") && 
+						tok.text != "REFSHOWFLAGS" && !tok.text.startsWith("REFERENCE"))
 					{
 						tokIt.insertBefore(createToken(tok.pretext, "ref", Token.Identifier, tokIt.lineno));
 						tok.pretext = " ";
@@ -1446,10 +1447,15 @@ version(none) version(vsi)
 		replaceTokenSequence(tokens, "MENUEDITOR_TRANSACTION_ALL,", "MENUEDITOR_TRANSACTION_ALL = 0,", true);
 		replaceTokenSequence(tokens, "SCC_STATUS_INVALID = -1L,", "SCC_STATUS_INVALID = cast(DWORD)-1L,", true);
 
+		// vslangproj90.idl
+		if(currentModule == "vslangproj90")
+			replaceTokenSequence(tokens, "CsharpProjectConfigurationProperties3", "CSharpProjectConfigurationProperties3", true);
+		
 		replaceTokenSequence(tokens, "extern const __declspec(selectany)", "dconst", true);
 		replaceTokenSequence(tokens, "EXTERN_C $args;", "/+EXTERN_C $args;+/", true);
 		replaceTokenSequence(tokens, "SAFEARRAY($_ident)", "SAFEARRAY!($_ident)", true);
 
+		replaceTokenSequence(tokens, "enum $_ident;", "/+ enum $_ident; +/", true);
 		replaceTokenSequence(tokens, "struct $_ident;", "/+ struct $_ident; +/", true);
 		replaceTokenSequence(tokens, "class $_ident;", "/+ class $_ident; +/", true);
 		replaceTokenSequence(tokens, "interface $_ident;", "/+ interface $_ident; +/", true);
@@ -1518,16 +1524,20 @@ version(none)
 		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef $_identbase $_ident2;", 
 			"enum $_ident2 : $_identbase\n{\n$enums\n}", true);
 } else {
+		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $_ident1;", 
+			"enum /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;", true);
 		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $ident2;", 
-			"enum /+$_ident1+/\n{\n$enums\n}\ntypedef int $ident2;", true);
+			"enum /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;\ntypedef int $ident2;", true);
 		replaceTokenSequence(tokens, "typedef enum { $enums } $ident2;", 
 			"enum\n{\n$enums\n}\ntypedef int $ident2;", true);
+		replaceTokenSequence(tokens, "typedef [$info] enum $_ident1 { $enums } $_ident1;", 
+			"enum [$info] /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;", true);
 		replaceTokenSequence(tokens, "typedef [$info] enum $_ident1 { $enums } $ident2;", 
-			"enum [$info] /+$_ident1+/\n{\n$enums\n}\ntypedef int $ident2;", true);
+			"enum [$info] /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;\ntypedef int $ident2;", true);
 		replaceTokenSequence(tokens, "typedef [$info] enum { $enums } $ident2;", 
 			"enum [$info]\n{\n$enums\n}\ntypedef int $ident2;", true);
 		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef $_identbase $_ident2;", 
-			"enum /+$_ident1+/ : $_identbase \n{\n$enums\n}\ntypedef $_identbase $_ident2;", true);
+			"enum /+$_ident1+/ : $_identbase \n{\n$enums\n}\ntypedef $_identbase $_ident1;\ntypedef $_identbase $_ident2;", true);
 		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef [$info] $_identbase $_ident2;", 
 			"enum /+$_ident1+/ : $_identbase \n{\n$enums\n}\ntypedef [$info] $_identbase $_ident2;", true);
 		replaceTokenSequence(tokens, "enum $_ident1 { $enums };", 
@@ -1613,7 +1623,21 @@ version(none)
 
 		// Some properties use the same name as the type of the return value
 		replaceTokenSequence(tokens, "$_identFun([$data] $_identFun $arg)", "$_identFun([$data] .$_identFun $arg)", true);
-
+		if(startsWith(currentModule, "dte"))
+		{
+			// more complications in dte*.idl
+			replaceTokenSequence(tokens, "$_identFun($_identFun $arg)", "$_identFun(.$_identFun $arg)", true);
+			replaceTokenSequence(tokens, "$_identFun($arg1, [$data] $_identFun $arg)",
+										 "$_identFun($arg1, [$data] .$_identFun $arg)", true);
+			replaceTokenSequence(tokens, "$_identFun($arg1, $arg2, [$data] $_identFun $arg)",
+										 "$_identFun($arg1, $arg2, [$data] .$_identFun $arg)", true);
+			replaceTokenSequence(tokens, "$_not . DTE*", "$_not . DTE*", true);
+			replaceTokenSequence(tokens, "$_not . TextRanges*", "$_not . TextRanges*", true);
+			replaceTokenSequence(tokens, "$_not . Breakpoints*", "$_not . Breakpoints*", true);
+			replaceTokenSequence(tokens, "$_not . UIHierarchyItems*", "$_not . UIHierarchyItems*", true);
+			replaceTokenSequence(tokens, "Collection([$data] ProjectItems $arg)", "Collection([$data] .ProjectItems $arg)", true);
+		}
+			
 		// interface without base class is used as namespace
 		replaceTokenSequence(tokens, "interface $_notIFace IUnknown { $_not static $data }", 
 			"/+interface $_notIFace {+/ $_not $data /+} interface $_notIFace+/", true);
@@ -1996,13 +2020,12 @@ else
 		if(currentModule == "vsshlids")
 			hdr ~= "import " ~ packageVSI ~ "oleipc;\n";
 		else if(currentModule == "debugger80")
-			hdr ~= "import " ~ packageVSI ~ "dte80a;\n";
+			hdr ~= "import " ~ packageWin ~ "oaidl;\n"
+				~  "import " ~ packageVSI ~ "dte80a;\n";
 		else if(currentModule == "xmldomdid")
 			hdr ~= "import " ~ packageWin ~ "idispids;\n";
 		else if(currentModule == "xmldso")
 			hdr ~= "import " ~ packageWin ~ "xmldom;\n";
-		else if(currentModule == "ocidl")
-			hdr ~= "import " ~ packageWin ~ "wingdi;\n";
 		else if(currentModule == "commctrl")
 			hdr ~= "import " ~ packageWin ~ "objidl;\n";
 		hdr ~= "\n";

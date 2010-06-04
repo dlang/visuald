@@ -11,7 +11,6 @@ module winctrl;
 import windows;
 import std.utf;
 import sdk.port.base;
-import sdk.win32.wingdi;
 import sdk.win32.prsht;
 import sdk.win32.commctrl;
 

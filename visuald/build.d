@@ -98,6 +98,7 @@ public:
 		BOOL fContinue = TRUE;
 		BOOL fSuccessfulBuild = FALSE; // set up for Fire_BuildEnd() later on.
 
+		m_fStopBuild = false;
 		Fire_BuildBegin(fContinue);
 
 		switch (m_op)
@@ -266,7 +267,7 @@ public:
 
 	void Fire_Tick(ref BOOL rfContinue) 
 	{
-		BOOL fContinue = mConfig.FFireTick();
+		rfContinue = mConfig.FFireTick() && !m_fStopBuild;
 	}
 
 	void Fire_BuildBegin(ref BOOL rfContinue)
@@ -453,11 +454,11 @@ version(none)
 		/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
 		/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
 		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
-		/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
+		/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow | LPF_PipeStdoutToTaskList,
 		/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
-		/* [in] ULONG nTaskItemCategory                */ 0, // if LPF_PipeStdoutToTaskList is specified
+		/* [in] ULONG nTaskItemCategory                */ CAT_BUILDCOMPILE, // if LPF_PipeStdoutToTaskList is specified
 		/* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
-		/* [in] LPCOLESTR pszTaskListSubcategory       */ null, // if LPF_PipeStdoutToTaskList is specified
+		/* [in] LPCOLESTR pszTaskListSubcategory       */ "Build"w.ptr, // if LPF_PipeStdoutToTaskList is specified
 		/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ pCLaunchPadEvents,
 		/* [out] DWORD *pdwProcessExitCode             */ &result,
 		/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
