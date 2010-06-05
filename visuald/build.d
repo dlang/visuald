@@ -16,9 +16,11 @@ import std.string;
 import std.regexp;
 import std.file;
 import std.path;
+import std.conv;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
+import sdk.vsi.vsshell90;
 
 import comutil;
 import chiernode;
@@ -388,6 +390,41 @@ public:
 	CBuilderThread m_pBuilder;
 };
 
+class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser 
+{
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsLaunchPadOutputParser) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	override HRESULT ParseOutputStringForInfo(
+		in LPCOLESTR pszOutputString,   // one line of output text
+		/+[out, optional]+/ BSTR *pbstrFilename,        // fully-qualified file name for task list item (may be NULL)
+		/+[out, optional]+/ ULONG *pnLineNum,           // file line number for task list item (may be NULL)
+		/+[out, optional]+/ ULONG *pnPriority,          // priority for task list item (may be NULL)
+		/+[out, optional]+/ BSTR *pbstrTaskItemText,    // description text for task list item (may be NULL)
+		/+[out, optional]+/ BSTR *pbstrHelpKeyword)
+	{
+		string line = to_string(pszOutputString);
+		uint nPriority, nLineNum;
+		string filename, taskItemText;
+		
+		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText))
+			return S_FALSE;
+		
+		if(pnPriority)
+			*pnPriority = nPriority;
+		if(pnLineNum)
+			*pnLineNum = nLineNum - 1;
+		if(pbstrFilename)
+			*pbstrFilename = allocBSTR(filename);
+		if(pbstrTaskItemText)
+			*pbstrTaskItemText = allocBSTR(taskItemText);
+		return S_OK;
+	}
+}
 
 
 // Runs the build commands, writing cmdfile if successful
@@ -418,7 +455,8 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	}
 	assert(srpIVsLaunchPad.ptr);
 
-	CLaunchPadEvents pCLaunchPadEvents = new CLaunchPadEvents(pBuilder);
+	CLaunchPadEvents pLaunchPadEvents = new CLaunchPadEvents(pBuilder);
+	CLaunchPadOutputParser pLaunchPadOutputParser = new CLaunchPadOutputParser();
 
 	BSTR bstrOutput;
 version(none)
@@ -431,7 +469,7 @@ version(none)
 		/* [in] ULONG nTaskItemCategory                */ 0, // if LPF_PipeStdoutToTaskList is specified
 		/* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
 		/* [in] LPCOLESTR pszTaskListSubcategory       */ null, // if LPF_PipeStdoutToTaskList is specified
-		/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ pCLaunchPadEvents,
+		/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ pLaunchPadEvents,
 		/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
 
 	if(FAILED(hr))
@@ -450,19 +488,34 @@ version(none)
 		hr = S_FALSE;
 	}
 	DWORD result;
-	hr = srpIVsLaunchPad.ExecCommand(
-		/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
-		/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
-		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
-		/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow | LPF_PipeStdoutToTaskList,
-		/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
-		/* [in] ULONG nTaskItemCategory                */ CAT_BUILDCOMPILE, // if LPF_PipeStdoutToTaskList is specified
-		/* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
-		/* [in] LPCOLESTR pszTaskListSubcategory       */ "Build"w.ptr, // if LPF_PipeStdoutToTaskList is specified
-		/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ pCLaunchPadEvents,
-		/* [out] DWORD *pdwProcessExitCode             */ &result,
-		/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
-
+	if(IVsLaunchPad2 pad2 = qi_cast!IVsLaunchPad2(srpIVsLaunchPad))
+		hr = pad2.ExecCommandEx(
+			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
+			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
+			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
+			/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow | LPF_PipeStdoutToTaskList,
+			/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
+			/* [in] ULONG nTaskItemCategory                */ CAT_BUILDCOMPILE, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] LPCOLESTR pszTaskListSubcategory       */ null, // "Build"w.ptr, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] IVsLaunchPadEvents pVsLaunchPadEvents  */ pLaunchPadEvents,
+			/* [in] IVsLaunchPadOutputParser pOutputParser */ pLaunchPadOutputParser,
+			/* [out] DWORD *pdwProcessExitCode             */ &result,
+			/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
+	else
+		hr = srpIVsLaunchPad.ExecCommand(
+			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
+			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
+			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
+			/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow | LPF_PipeStdoutToTaskList,
+			/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
+			/* [in] ULONG nTaskItemCategory                */ CAT_BUILDCOMPILE, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] LPCOLESTR pszTaskListSubcategory       */ null, // "Build"w.ptr, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ pLaunchPadEvents,
+			/* [out] DWORD *pdwProcessExitCode             */ &result,
+			/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
+		
 	if(FAILED(hr))
 	{
 		output = format("internal error: IVsLaunchPad.ptr.ExecCommand failed with rc=%x", hr);
@@ -475,6 +528,8 @@ version(none)
 	output = strip(detachBSTR(bstrOutput));
 	if(hr == S_OK && _endsWith(output, "failed!"))
 		hr = S_FALSE;
+
+	// outputToErrorList(srpIVsLaunchPad, pBuilder, pIVsOutputWindowPane, output);
 
 	if(hr == S_OK)
 	{
@@ -491,6 +546,113 @@ version(none)
 failure:
 	pBuilder.addCommandLog(target, cmdline, output);
 	return hr;
+}
+
+HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
+                          IVsOutputWindowPane outPane, string output)
+{
+	HRESULT hr;
+
+	auto prj = _toUTF16z(pBuilder.mConfig.GetProjectPath());
+	string[] lines = std.string.split(output, "\n");
+	foreach(line; lines)
+	{
+		uint nPriority, nLineNum;
+		string strFilename, strTaskItemText;
+		
+		if(parseOutputStringForTaskItem(line, nPriority, strFilename, nLineNum, strTaskItemText))
+		{
+			if(IVsOutputWindowPane2 pane2 = qi_cast!IVsOutputWindowPane2(outPane))
+				hr = pane2.OutputTaskItemStringEx2(
+							"."w.ptr,              // The text to write to the output window.
+							nPriority,             // The priority: use TP_HIGH for errors.
+							CAT_BUILDCOMPILE,      // Not used internally; pass NULL unless you want to use it for your own purposes.
+							null,                  // Not used internally; pass NULL unless you want to use it for your own purposes.
+							0,                     // Not used internally.
+							_toUTF16z(strFilename),          // The file name for the Error List entry; may be NULL if no file is associated with the error.
+							nLineNum,              // Zero-based line number in pszFilename.
+							nLineNum,                     // Zero-based column in pszFilename.
+							prj,                   // The unique name of the project for the Error List entry; may be NULL if no project is associated with the error.
+							_toUTF16z(strTaskItemText),      // The text of the Error List entry.
+							""w.ptr);              // in LPCOLESTR pszLookupKwd
+			else // no project or column +/
+				hr = outPane.OutputTaskItemStringEx(
+							" "w.ptr,               // The text to write to the output window.
+							nPriority,             // The priority: use TP_HIGH for errors.
+							CAT_BUILDCOMPILE,      // Not used internally; pass NULL unless you want to use it for your own purposes.
+							null,                  // Not used internally; pass NULL unless you want to use it for your own purposes.
+							0,                     // Not used internally.
+							_toUTF16z(strFilename),          // The file name for the Error List entry; may be NULL if no file is associated with the error.
+							nLineNum,              // Zero-based line number in pszFilename.
+							_toUTF16z(strTaskItemText),      // The text of the Error List entry.
+							""w.ptr);              // in LPCOLESTR pszLookupKwd
+		}
+	}
+	return hr;
+}
+
+bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
+                                  out string filename, out uint nLineNum,
+                                  out string itemText)
+{
+	outputLine = strip(outputLine);
+	
+	// DMD compile error
+	static RegExp re1, re2, re3;
+	if(!re1)
+		re1 = new RegExp(r"^(.*)\(([0-9]+)\):(.*)$");
+	
+	string[] match = re1.exec(outputLine);
+	if(match.length == 4)
+	{
+		nPriority = TP_HIGH;
+		filename = replace(match[1], "\\\\", "\\");
+		string lineno = replace(match[2], "\\\\", "\\");
+		nLineNum = to!uint(lineno);
+		itemText = strip(match[3]);
+		return true;
+	}
+
+	// link error
+	if(!re2)
+		re2 = new RegExp(r"^ *(Error *[0-9]+:.*)$");
+
+	match = re2.exec(outputLine);
+	if(match.length == 2)
+	{
+		nPriority = TP_HIGH;
+		filename = "";
+		nLineNum = 0;
+		itemText = strip(match[1]);
+		return true;
+	}
+
+	// link warning
+	if(!re3)
+		re3 = new RegExp(r"^ *(Warning *[0-9]+:.*)$");
+
+	match = re3.exec(outputLine);
+	if(match.length == 2)
+	{
+		nPriority = TP_NORMAL;
+		filename = "";
+		nLineNum = 0;
+		itemText = strip(match[1]);
+		return true;
+	}
+
+	return false;
+}
+
+unittest
+{
+	uint nPriority, nLineNum;
+	string strFilename, strTaskItemText;
+	bool rc = parseOutputStringForTaskItem("file.d(37): huhu", nPriority, strFilename, nLineNum, strTaskItemText);
+	assert(rc);
+	assert(strFilename == "file.d");
+	assert(nLineNum == 37);
+	assert(strTaskItemText == "huhu");
 }
 
 string re_match_dep = r"^[A-Za-z0-9_\.]+ *\((.*)\) : p[a-z]* : [A-Za-z0-9_\.]+ \((.*)\)$";

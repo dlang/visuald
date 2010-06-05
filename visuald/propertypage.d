@@ -917,6 +917,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		AddControl("Output File", mExeFile = new Text(mCanvas));
 		AddControl("Object Files", mObjFiles = new Text(mCanvas));
 		AddControl("Library Files", mLibFiles = new Text(mCanvas));
+		AddControl("Library Search Path", mLibPaths = new Text(mCanvas));
 		AddControl("Definition File", mDefFile = new Text(mCanvas));
 		AddControl("Resource File",   mResFile = new Text(mCanvas));
 		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas, 
@@ -928,7 +929,8 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	{
 		mExeFile.setText(options.exefile); 
 		mObjFiles.setText(options.objfiles); 
-		mLibFiles.setText(options.libfiles); 
+		mLibFiles.setText(options.libfiles);
+		mLibPaths.setText(options.libpaths);
 		mDefFile.setText(options.deffile); 
 		mResFile.setText(options.resfile); 
 		mGenMap.setSelection(options.mapverbosity); 
@@ -941,6 +943,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		changes += changeOption(mExeFile.getText(), options.exefile, refoptions.exefile); 
 		changes += changeOption(mObjFiles.getText(), options.objfiles, refoptions.objfiles); 
 		changes += changeOption(mLibFiles.getText(), options.libfiles, refoptions.libfiles); 
+		changes += changeOption(mLibPaths.getText(), options.libpaths, refoptions.libpaths); 
 		changes += changeOption(mDefFile.getText(), options.deffile, refoptions.deffile); 
 		changes += changeOption(mResFile.getText(), options.resfile, refoptions.resfile); 
 		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity); 
@@ -951,6 +954,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	Text mExeFile;
 	Text mObjFiles;
 	Text mLibFiles;
+	Text mLibPaths;
 	Text mDefFile;
 	Text mResFile;
 	ComboBox mGenMap;

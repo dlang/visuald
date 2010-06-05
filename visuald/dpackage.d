@@ -462,8 +462,10 @@ private:
 
 class GlobalOptions
 {
-	HKEY hkey;
-	wstring regRoot;
+	HKEY hConfigKey;
+	HKEY hUserKey;
+	wstring regConfigRoot;
+	wstring regUserRoot;
 
 	string DMDInstallDir;
 	string ExeSearchPath;
@@ -484,14 +486,24 @@ class GlobalOptions
 
 	bool getRegistryRoot()
 	{
+		if(hConfigKey)
+			return true;
+		
 		BSTR bstrRoot;
 		ILocalRegistry4 registry4 = queryService!(ILocalRegistry, ILocalRegistry4);
 		if(registry4)
 		{
 			scope(exit) release(registry4);
-			if(registry4.GetLocalRegistryRootEx(RegType_Configuration, cast(uint*)&hkey, &bstrRoot) == S_OK)
+			if(registry4.GetLocalRegistryRootEx(RegType_Configuration, cast(uint*)&hConfigKey, &bstrRoot) == S_OK)
 			{
-				regRoot = wdetachBSTR(bstrRoot);
+				regConfigRoot = wdetachBSTR(bstrRoot);
+				if(registry4.GetLocalRegistryRootEx(RegType_UserSettings, cast(uint*)&hUserKey, &bstrRoot) == S_OK)
+					regUserRoot = wdetachBSTR(bstrRoot);
+				else
+				{
+					regUserRoot = regConfigRoot;
+					hUserKey = HKEY_CURRENT_USER;
+				}
 				return true;
 			}
 		}
@@ -501,8 +513,11 @@ class GlobalOptions
 			scope(exit) release(registry);
 			if(registry.GetLocalRegistryRoot(&bstrRoot) == S_OK)
 			{
-				regRoot = wdetachBSTR(bstrRoot);
-				hkey = HKEY_LOCAL_MACHINE;
+				regConfigRoot = wdetachBSTR(bstrRoot);
+				hConfigKey = HKEY_LOCAL_MACHINE;
+				
+				regUserRoot = regConfigRoot;
+				hUserKey = HKEY_CURRENT_USER;
 				return true;
 			}
 		}
@@ -511,31 +526,49 @@ class GlobalOptions
 
 	bool initFromRegistry()
 	{
-		if(!hkey && !getRegistryRoot())
+		if(!getRegistryRoot())
 			return false;
 
-		scope RegKey keyToolOpts = new RegKey(hkey, regRoot ~ regPathToolsOptions, false);
-		DMDInstallDir = toUTF8(keyToolOpts.GetString("DMDInstallDir"));
-		ExeSearchPath = toUTF8(keyToolOpts.GetString("ExeSearchPath"));
-		LibSearchPath = toUTF8(keyToolOpts.GetString("LibSearchPath"));
-		ImpSearchPath = toUTF8(keyToolOpts.GetString("ImpSearchPath"));
-		JSNSearchPath = toUTF8(keyToolOpts.GetString("JSNSearchPath"));
-		IncSearchPath = toUTF8(keyToolOpts.GetString("IncSearchPath"));
-
-		scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
-		WindowsSdkDir = normalizeDir(toUTF8(keySdk.GetString("CurrentInstallFolder")));
-
-		if(char* pe = getenv("VSINSTALLDIR"))
-			VSInstallDir = fromMBSz(cast(immutable)pe);
-		else
+		bool rc = true;
+		try
 		{
-			scope RegKey keyVS = new RegKey(hkey, regRoot, false);
-			VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
-			// InstallDir is ../Common7/IDE/
+			// get defaults from global config
+			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
+			wstring wDMDInstallDir = keyToolOpts.GetString("DMDInstallDir");
+			wstring wExeSearchPath = keyToolOpts.GetString("ExeSearchPath");
+			wstring wLibSearchPath = keyToolOpts.GetString("LibSearchPath");
+			wstring wImpSearchPath = keyToolOpts.GetString("ImpSearchPath");
+			wstring wJSNSearchPath = keyToolOpts.GetString("JSNSearchPath");
+			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
+
+			// overwrite by user config
+			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
+			DMDInstallDir = toUTF8(keyUserOpts.GetString("DMDInstallDir", wDMDInstallDir));
+			ExeSearchPath = toUTF8(keyUserOpts.GetString("ExeSearchPath", wExeSearchPath));
+			LibSearchPath = toUTF8(keyUserOpts.GetString("LibSearchPath", wLibSearchPath));
+			ImpSearchPath = toUTF8(keyUserOpts.GetString("ImpSearchPath", wImpSearchPath));
+			JSNSearchPath = toUTF8(keyUserOpts.GetString("JSNSearchPath", wJSNSearchPath));
+			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
+
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
+			WindowsSdkDir = normalizeDir(toUTF8(keySdk.GetString("CurrentInstallFolder")));
+
+			if(char* pe = getenv("VSINSTALLDIR"))
+				VSInstallDir = fromMBSz(cast(immutable)pe);
+			else
+			{
+				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
+				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
+				// InstallDir is ../Common7/IDE/
+				VSInstallDir = normalizeDir(VSInstallDir);
+				VSInstallDir = getDirName(getDirName(getDirName(VSInstallDir)));
+			}
 			VSInstallDir = normalizeDir(VSInstallDir);
-			VSInstallDir = getDirName(getDirName(getDirName(VSInstallDir)));
 		}
-		VSInstallDir = normalizeDir(VSInstallDir);
+		catch(Exception e)
+		{
+			rc = false;
+		}
 
 		wstring dllPath = GetDLLName(g_hInst);
 		VisualDInstallDir = normalizeDir(getDirName(toUTF8(dllPath)));
@@ -543,21 +576,28 @@ class GlobalOptions
 		wstring idePath = GetDLLName(null);
 		DevEnvDir = normalizeDir(getDirName(toUTF8(idePath)));
 
-		return true;
+		return rc;
 	}
 
 	bool saveToRegistry()
 	{
-		if(!hkey && !getRegistryRoot())
+		if(!getRegistryRoot())
 			return false;
 
-		scope RegKey keyToolOpts = new RegKey(hkey, regRoot ~ regPathToolsOptions);
-		keyToolOpts.Set("DMDInstallDir", toUTF16(DMDInstallDir));
-		keyToolOpts.Set("ExeSearchPath", toUTF16(ExeSearchPath));
-		keyToolOpts.Set("LibSearchPath", toUTF16(LibSearchPath));
-		keyToolOpts.Set("ImpSearchPath", toUTF16(ImpSearchPath));
-		keyToolOpts.Set("JSNSearchPath", toUTF16(JSNSearchPath));
-		keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
+		try
+		{
+			scope RegKey keyToolOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions);
+			keyToolOpts.Set("DMDInstallDir", toUTF16(DMDInstallDir));
+			keyToolOpts.Set("ExeSearchPath", toUTF16(ExeSearchPath));
+			keyToolOpts.Set("LibSearchPath", toUTF16(LibSearchPath));
+			keyToolOpts.Set("ImpSearchPath", toUTF16(ImpSearchPath));
+			keyToolOpts.Set("JSNSearchPath", toUTF16(JSNSearchPath));
+			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
+		}
+		catch(Exception e)
+		{
+			return false;
+		}
 		return true;
 	}
 

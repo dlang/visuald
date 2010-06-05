@@ -163,6 +163,7 @@ class ProjectOptions
 	string objfiles;
 	string linkswitches;
 	string libfiles;
+	string libpaths;
 	string deffile;
 	string resfile;
 	string exefile;
@@ -472,6 +473,7 @@ class ProjectOptions
 		elem ~= new xml.Element("objfiles", toElem(objfiles));
 		elem ~= new xml.Element("linkswitches", toElem(linkswitches));
 		elem ~= new xml.Element("libfiles", toElem(libfiles));
+		elem ~= new xml.Element("libpaths", toElem(libpaths));
 		elem ~= new xml.Element("deffile", toElem(deffile));
 		elem ~= new xml.Element("resfile", toElem(resfile));
 		elem ~= new xml.Element("exefile", toElem(exefile));
@@ -576,6 +578,7 @@ class ProjectOptions
 		fromElem(elem, "objfiles", objfiles);
 		fromElem(elem, "linkswitches", linkswitches);
 		fromElem(elem, "libfiles", libfiles);
+		fromElem(elem, "libpaths", libpaths);
 		fromElem(elem, "deffile", deffile);
 		fromElem(elem, "resfile", resfile);
 		fromElem(elem, "exefile", exefile);
@@ -1570,8 +1573,16 @@ class Config :	DisposingComObject,
 		GlobalOptions globOpt = Package.GetGlobalOptions();
 		if(globOpt.ExeSearchPath.length)
 			cmd ~= "set PATH=" ~ replaceCrLf(globOpt.ExeSearchPath) ~ ";%PATH%\n";
-		if(globOpt.LibSearchPath.length)
-			cmd ~= "set LIB=" ~ replaceCrLf(globOpt.LibSearchPath) ~ ";%LIB%\n";
+		
+		if(globOpt.LibSearchPath.length || mProjectOptions.libpaths.length)
+		{
+			string lpath = replaceCrLf(globOpt.LibSearchPath);
+			if(mProjectOptions.libpaths.length && !_endsWith(lpath, ";"))
+				lpath ~= ";";
+			lpath ~= mProjectOptions.libpaths;
+			
+			cmd ~= "set LIB=" ~ lpath ~ ";%LIB%\n";
+		}
 		return cmd;
 	}
 

@@ -1573,35 +1573,43 @@ else
 	RegKey _GetCurrentRegKey(bool write)
 	{
 		GlobalOptions opt = Package.GetGlobalOptions();
-		wstring regPath = opt.regRoot ~ regPathToolsOptions;
+		opt.getRegistryRoot();
+		wstring regPath = opt.regUserRoot ~ regPathToolsOptions;
 		if(_iqp.searchFile)
 			regPath ~= "\\SearchFileWindow"w;
 		else
 			regPath ~= "\\SearchSymbolWindow"w;
-		return new RegKey(opt.hkey, regPath, write);
+		return new RegKey(opt.hUserKey, regPath, write);
 	}
 	
 	HRESULT _InitializeViewState()
 	{
 		HRESULT hr = S_OK;
 	
-		scope RegKey keyWinOpts = _GetCurrentRegKey(false);
-		if(keyWinOpts.GetDWORD("ColumnInfoVersion"w, 0) == 1)
+		try
 		{
-			void[] data = keyWinOpts.GetBinary("ColumnInfo"w);
-			if(data !is null)
-				*_rgColumns = cast(COLUMNINFO[])data;
-		}
+			scope RegKey keyWinOpts = _GetCurrentRegKey(false);
+			if(keyWinOpts.GetDWORD("ColumnInfoVersion"w, 0) == 1)
+			{
+				void[] data = keyWinOpts.GetBinary("ColumnInfo"w);
+				if(data !is null)
+					*_rgColumns = cast(COLUMNINFO[])data;
+			}
 
-		_iqp.colidSort  = cast(COLUMNID) keyWinOpts.GetDWORD("SortColumn"w, _iqp.colidSort);
-		_iqp.colidGroup = cast(COLUMNID) keyWinOpts.GetDWORD("GroupColumn"w, _iqp.colidGroup);
-		_iqp.fSortAscending   = keyWinOpts.GetDWORD("SortAscending"w, _iqp.fSortAscending) != 0;
-		_iqp.wholeWord        = keyWinOpts.GetDWORD("WholeWord"w, _iqp.wholeWord) != 0;
-		_iqp.caseSensitive    = keyWinOpts.GetDWORD("CaseSensitive"w, _iqp.caseSensitive) != 0;
-		_iqp.useRegExp        = keyWinOpts.GetDWORD("UseRegExp"w, _iqp.useRegExp) != 0;
-		_fCombineColumns      = keyWinOpts.GetDWORD("CombineColumns"w, _fCombineColumns) != 0;
-		_fAlternateRowColor   = keyWinOpts.GetDWORD("AlternateRowColor"w, _fAlternateRowColor) != 0;
-		_closeOnReturn        = keyWinOpts.GetDWORD("closeOnReturn"w, _closeOnReturn) != 0;
+			_iqp.colidSort  = cast(COLUMNID) keyWinOpts.GetDWORD("SortColumn"w, _iqp.colidSort);
+			_iqp.colidGroup = cast(COLUMNID) keyWinOpts.GetDWORD("GroupColumn"w, _iqp.colidGroup);
+			_iqp.fSortAscending   = keyWinOpts.GetDWORD("SortAscending"w, _iqp.fSortAscending) != 0;
+			_iqp.wholeWord        = keyWinOpts.GetDWORD("WholeWord"w, _iqp.wholeWord) != 0;
+			_iqp.caseSensitive    = keyWinOpts.GetDWORD("CaseSensitive"w, _iqp.caseSensitive) != 0;
+			_iqp.useRegExp        = keyWinOpts.GetDWORD("UseRegExp"w, _iqp.useRegExp) != 0;
+			_fCombineColumns      = keyWinOpts.GetDWORD("CombineColumns"w, _fCombineColumns) != 0;
+			_fAlternateRowColor   = keyWinOpts.GetDWORD("AlternateRowColor"w, _fAlternateRowColor) != 0;
+			_closeOnReturn        = keyWinOpts.GetDWORD("closeOnReturn"w, _closeOnReturn) != 0;
+		}
+		catch(Exception e)
+		{
+			// ok to fail, defaults still work
+		}
     
 		return hr;
 	}
@@ -1609,18 +1617,26 @@ else
 	HRESULT _WriteViewStateToRegistry()
 	{
 		_WriteColumnInfoToRegistry();
-		
-		scope RegKey keyWinOpts = _GetCurrentRegKey(true);
-		keyWinOpts.Set("SortColumn"w, _iqp.colidSort);
-		keyWinOpts.Set("GroupColumn"w, _iqp.colidGroup);
-		keyWinOpts.Set("SortAscending"w, _iqp.fSortAscending);
-		keyWinOpts.Set("WholeWord"w, _iqp.wholeWord);
-		keyWinOpts.Set("CaseSensitive"w, _iqp.caseSensitive);
-		keyWinOpts.Set("UseRegExp"w, _iqp.useRegExp);
-		keyWinOpts.Set("CombineColumns"w, _fCombineColumns);
-		keyWinOpts.Set("AlternateRowColor"w, _fAlternateRowColor);
-		keyWinOpts.Set("closeOnReturn"w, _closeOnReturn);
-		return S_OK;
+
+		HRESULT hr = S_OK;
+		try
+		{
+			scope RegKey keyWinOpts = _GetCurrentRegKey(true);
+			keyWinOpts.Set("SortColumn"w, _iqp.colidSort);
+			keyWinOpts.Set("GroupColumn"w, _iqp.colidGroup);
+			keyWinOpts.Set("SortAscending"w, _iqp.fSortAscending);
+			keyWinOpts.Set("WholeWord"w, _iqp.wholeWord);
+			keyWinOpts.Set("CaseSensitive"w, _iqp.caseSensitive);
+			keyWinOpts.Set("UseRegExp"w, _iqp.useRegExp);
+			keyWinOpts.Set("CombineColumns"w, _fCombineColumns);
+			keyWinOpts.Set("AlternateRowColor"w, _fAlternateRowColor);
+			keyWinOpts.Set("closeOnReturn"w, _closeOnReturn);
+		}
+		catch(Exception e)
+		{
+			hr = E_FAIL;
+		}
+		return hr;
 	}
 
 	HRESULT _WriteColumnInfoToRegistry()
@@ -1630,9 +1646,16 @@ else
 		for(int i = 0; i < _rgColumns.length; i++)
 			(*_rgColumns)[i].cx = _wndFileList.SendMessage(LVM_GETCOLUMNWIDTH, _ListViewIndexFromColumnID((*_rgColumns)[i].colid));
 
-		scope RegKey keyWinOpts = _GetCurrentRegKey(true);
-		keyWinOpts.Set("ColumnInfoVersion"w, kColumnInfoVersion);
-		keyWinOpts.Set("ColumnInfo"w, *_rgColumns);
+		try
+		{
+			scope RegKey keyWinOpts = _GetCurrentRegKey(true);
+			keyWinOpts.Set("ColumnInfoVersion"w, kColumnInfoVersion);
+			keyWinOpts.Set("ColumnInfo"w, *_rgColumns);
+		}
+		catch(Exception e)
+		{
+			hr = E_FAIL;
+		}
 		return hr;
 	}
 
@@ -1640,8 +1663,15 @@ else
 	{
 		HRESULT hr = S_OK;
 
-		scope RegKey keyWinOpts = _GetCurrentRegKey(true);
-		keyWinOpts.Set(toUTF16(name), dw);
+		try
+		{
+			scope RegKey keyWinOpts = _GetCurrentRegKey(true);
+			keyWinOpts.Set(toUTF16(name), dw);
+		}
+		catch(Exception e)
+		{
+			hr = E_FAIL;
+		}
 		
 		return hr;
 	}
@@ -1650,9 +1680,16 @@ else
 	{
 		HRESULT hr = S_OK;
 
-		scope RegKey keyWinOpts = _GetCurrentRegKey(true);
-		keyWinOpts.Set("SortColumn"w, _iqp.colidSort);
-		keyWinOpts.Set("SortAscending"w, _iqp.fSortAscending);
+		try
+		{
+			scope RegKey keyWinOpts = _GetCurrentRegKey(true);
+			keyWinOpts.Set("SortColumn"w, _iqp.colidSort);
+			keyWinOpts.Set("SortAscending"w, _iqp.fSortAscending);
+		}
+		catch(Exception e)
+		{
+			hr = E_FAIL;
+		}
 
 		return hr;
 	}
