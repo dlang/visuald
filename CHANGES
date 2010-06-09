@@ -98,4 +98,10 @@ Version history
   * Visual D settings now stored in the user area of the registry
   * added library search path to project settings (you need to append ";%LIB%" to
     the LIB setting in DMD's sc.ini for this to work)
+  * command VisualD.ShowScope now displays the scope of the caret in the 
+    status line
+  * Visual D now creates its own menu, expecting to be filled with more commands
+    in the future and to avoid cluttering other menus
+  * Search window commands are now called VisualD.SearchFile and VisualD.SearchSymbol
+    (you might need to reassign keyboard shortcuts)
 

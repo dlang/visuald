@@ -27,4 +27,5 @@
 
 #define CmdSearchSymbol 0x101
 #define CmdSearchFile   0x102
+#define CmdShowScope    0x103
 

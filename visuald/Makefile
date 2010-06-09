@@ -22,19 +22,28 @@ SRC = dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d
-RSRC = resources/dimagelist.bmp
+
+RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
+       resources/DAboutLogo.ico resources/GroupByType.ico resources/CombineColumns.ico \
+       resources/AlternateRowColor.ico resources/closeOnReturn.ico \
+       resources/Caseinsensitive.ico resources/CaseSensitive.ico \
+       resources/SearchSymbol.ico resources/SearchFile.ico resources/RegExp.ico \
+       resources/WholeWord.ico resources/DAboutBox.ico \
+       resources/ascend.ico resources/descend.ico
 
 #      $(XMLP_SRC) $(IDL_SRC)
 #      vsinterfaces.d vstrackprojectdocuments2.d vsshlids.d variant.d dte.d 
 RC  = visuald.rc
 DEF = visuald.def
 
-RES = visuald.res
 
 DBGDIR = ..\bin\Debug
 RELDIR = ..\bin\Release
 
-# DMD = c:\l\dmd-2.040\windows\bin\dmd_pdb.exe
+DBGRES = $(DBGDIR)\visuald.res
+RELRES = $(RELDIR)\visuald.res
+
+# DMD = c:\l\dmd2\windows\bin\dmd.exe
 # DMD = c:\l\dmd-1.056\windows\bin\dmd_pdb.exe
 DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 # DMDPATH = c:\l\dmd-1.039\dmd
@@ -67,21 +76,24 @@ $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
 	$(CV2PDB) -D2.043 $? $@
 
 #-mixin=$(DBGDIR)\$(PROJECT).mixin
-$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(DBG_VSI_LIB) $(DEPS)
+$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DEPS)
 	$(DMD) -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
-		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(RES)
+		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES)
 <<NOKEEP
 
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
 	$(CV2PDB) -D2.043 $? $@
 
-$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RES) $(REL_VSI_LIB) $(DEPS)
+$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(DEPS)
 	$(DMD) -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
-		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RES)
+		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES)
 <<NOKEEP
 
-$(RES) : $(RC) $(RSRC)
-	rc /fo$(RES) $(RC)
+$(DBGRES) : $(RC) $(RSRC)
+	rc /fo$(DBGRES) $(RC)
+
+$(RELRES) : $(RC) $(RSRC)
+	rc /fo$(RELRES) $(RC)
 
 ######################
 $(DBGDIR)\$(PROJECT).exe : $(DBGDIR)\$(PROJECT)_cv.exe

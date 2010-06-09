@@ -386,7 +386,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		}
 
 		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
-		keyToolMenu.Set(packageGuid, ",2001,1"); // CTMENU,version
+		keyToolMenu.Set(packageGuid, ",2001,2"); // CTMENU,version
 		
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);
 		keyToolOpts.Set(null, "Visual D Settings");

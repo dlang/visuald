@@ -25,6 +25,7 @@ import fileutil;
 import stringutil;
 import simplelexer;
 import dpackage;
+import dimagelist;
 import expansionprovider;
 import completion;
 import intellisense;
@@ -633,6 +634,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		if (index < lineInfo.length - 1 && info.EndIndex == idx)
 			if (lineInfo[index + 1].type == TokenColor.Identifier)
 				info = lineInfo[++index];
+		if (index > 0 && info.StartIndex == idx)
+			if (lineInfo[index - 1].type == TokenColor.Identifier)
+				info = lineInfo[--index];
 
 		// don't do anything in comment or text or literal space, unless we
 		// are doing intellisense in which case we want to match the entire value
@@ -728,7 +732,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			if (i == 0 && start > col)
 				return -1;
 
-			if (col >= start && col <= end)
+			if (col >= start && col < end)
 			{
 				info = infoArray[i];
 				return i;
@@ -737,6 +741,55 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return -1;
 	}
 
+	wstring _getToken(ref TokenInfo[] infoArray, ref int line, ref int col, 
+	                  ref TokenInfo info, int idx, bool skipComments)
+	{
+		wstring text;
+		if(idx < 0)
+			idx = infoArray.length;
+		for(;;)
+		{
+			text = GetText(line, 0, line, -1);
+			while(idx < infoArray.length)
+			{
+				if((!skipComments || infoArray[idx].type != TokenColor.Comment) &&
+				   (infoArray[idx].type != TokenColor.Text || !isspace(text[infoArray[idx].StartIndex])))
+					break;
+				idx++;
+			}
+			if(idx < infoArray.length)
+				break;
+
+			line++;
+			int lineCount;
+			mBuffer.GetLineCount(&lineCount);
+			if(line >= lineCount)
+				return "";
+			
+			infoArray = GetLineInfo(line);
+			idx = 0;
+		}
+		info = infoArray[idx];
+		col = infoArray[idx].StartIndex;
+		return text[infoArray[idx].StartIndex .. infoArray[idx].EndIndex];
+	}
+	
+	wstring GetToken(ref TokenInfo[] infoArray, ref int line, ref int col, 
+	                 ref TokenInfo info, bool skipComments = true)
+	{
+		int idx = GetTokenInfoAt(infoArray, col, info);
+		return _getToken(infoArray, line, col, info, idx, skipComments);
+	}
+	
+	wstring GetNextToken(ref TokenInfo[] infoArray, ref int line, ref int col, 
+						 ref TokenInfo info, bool skipComments = true)
+	{
+		int idx = GetTokenInfoAt(infoArray, col, info);
+		if(idx >= 0)
+			idx++;
+		return _getToken(infoArray, line, col, info, idx, skipComments);
+	}
+	
 	string GetFileName()
 	{
 		if(!mBuffer)
@@ -759,6 +812,161 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return null;
 	}
 
+	//////////////////////////////////////////////////////////////
+	bool findStatementStart(ref int line, ref int col, ref wstring fn)
+	{
+		int cl = col;
+		int level = 0;
+		TokenInfo info;
+		bool testNextFn = false;
+		for(int ln = line; ln >= 0; --ln)
+		{
+			wstring txt = GetText(ln, 0, ln, -1);
+			
+			TokenInfo[] lineInfo = GetLineInfo(ln);
+			int inf = cl < 0 ? lineInfo.length - 1 : GetTokenInfoAt(lineInfo, cl-1, info);
+			for( ; inf >= 0; inf--)
+			{
+				if(lineInfo[inf].type != TokenColor.Comment &&
+				   (lineInfo[inf].type != TokenColor.Text || !isspace(txt[lineInfo[inf].StartIndex])))
+				{
+					wchar ch = txt[lineInfo[inf].StartIndex];
+					if(level == 0)
+						if(ch == ';' || ch == '}' || ch == '{' || ch == ':')
+							return true;
+
+					if(testNextFn && lineInfo[inf].type == TokenColor.Identifier)
+						fn = txt[lineInfo[inf].StartIndex .. lineInfo[inf].EndIndex];
+					testNextFn = false;
+					
+					if(SimpleLexer.isClosingBracket(ch))
+						level++;
+					else if(SimpleLexer.isOpeningBracket(ch) && level > 0)
+					{
+						level--;
+						if(level == 0 && fn.length == 0)
+							testNextFn = true;
+					}
+					line = ln;
+					col = inf;
+				}
+			}
+			cl = -1;
+		}
+		
+		return false;
+	}
+	
+	wstring getScopeIdentifer(int line, int col, wstring fn)
+	{
+		TokenInfo info;
+		TokenInfo[] infoArray = GetLineInfo(line);
+		wstring next, tok = GetToken(infoArray, line, col, info);
+
+		for(;;)
+		{
+			switch(tok)
+			{
+			case "struct":
+			case "class":
+			case "interface":
+			case "union":
+			case "enum":
+				next = GetNextToken(infoArray, line, col, info);
+				if(next == ":" || next == "{")
+					return tok; // unnamed class/struct/enum
+				return next;
+			
+			case "mixin":
+			case "static":
+			case "final":
+			case "const":
+			case "alias":
+			case "override":
+			case "abstract":
+			case "volatile":
+			case "deprecated":
+			case "in":
+			case "out":
+			case "inout":
+			case "lazy":
+			case "auto":
+			case "private":
+			case "package":
+			case "protected":
+			case "public":
+			case "export":
+				break;
+				
+			case "align":
+			case "extern":
+				next = GetNextToken(infoArray, line, col, info);
+				if(next == "("w)
+				{
+					next = GetNextToken(infoArray, line, col, info);
+					next = GetNextToken(infoArray, line, col, info);
+				}
+				else
+				{
+					tok = next;
+					continue;
+				}
+				break;
+
+			case "synchronized":
+				next = GetNextToken(infoArray, line, col, info);
+				if(next == "("w)
+				{
+					next = GetNextToken(infoArray, line, col, info);
+					next = GetNextToken(infoArray, line, col, info);
+				}
+				return tok;
+				
+			case "scope":
+				next = GetNextToken(infoArray, line, col, info);
+				if(next == "("w)
+				{
+					tok ~= next;
+					tok ~= GetNextToken(infoArray, line, col, info);
+					tok ~= GetNextToken(infoArray, line, col, info);
+					return tok;
+				}
+				break;
+				
+			case "debug":
+			case "version":
+				next = GetNextToken(infoArray, line, col, info);
+				if(next == "("w)
+				{
+					tok ~= next;
+					tok ~= GetNextToken(infoArray, line, col, info);
+					tok ~= GetNextToken(infoArray, line, col, info);
+				}
+				return tok;
+				
+			case "this":
+			case "if":
+			case "else":
+			case "while":
+			case "for":
+			case "do":
+			case "switch":
+			case "try":
+			case "catch":
+			case "finally":
+			case "with":
+			case "asm":
+			case "foreach":
+			case "foreach_reverse":
+				return tok;
+				
+			default:
+				return fn.length ? fn ~ "()"w : tok;
+			}
+			tok = GetNextToken(infoArray, line, col, info);
+		}
+	}
+	
 	//////////////////////////////////////////////////////////////
 	int ReplaceLineIndent(int line, LANGPREFERENCES* langPrefs)
 	{
@@ -1169,6 +1377,13 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 				break;
 			}
 		}
+		if(g_commandSetCLSID == *pguidCmdGroup)
+		{
+			if(nCmdID == CmdShowScope)
+			{
+				return showCurrentScope();
+			}
+		}
 /+
 		switch (lo) 
 		{
@@ -1305,6 +1520,11 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 				break;
 			}
 		}
+		if(g_commandSetCLSID == *guidCmdGroup)
+		{
+			if(cmdID == CmdShowScope)
+				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+		}
 		return E_FAIL;
 	}
 
@@ -1414,6 +1634,55 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return ep.InvokeExpansionByShortcut(mView, shortcut, ts, true, title, path);
 	}
 
+	//////////////////////////////////////////////////////////////
+	int showCurrentScope()
+	{
+		TextSpan span;
+		if(mView.GetCaretPos(&span.iStartLine, &span.iStartIndex) != S_OK)
+			return S_FALSE;
+
+		int line = span.iStartLine;
+		int idx = span.iStartIndex;
+		int iState;
+		uint pos;
+		int tok = FindLineToken(line, idx, iState, pos);
+
+		wstring curScope;
+		int otherLine, otherIndex;
+		Source src = mCodeWinMgr.mSource;
+		while(src.FindOpeningBracketBackward(line, tok, otherLine, otherIndex))
+		{
+			tok = FindLineToken(line, otherIndex, iState, pos);
+			
+			wstring bracket = src.GetText(otherLine, otherIndex, otherLine, otherIndex + 1);
+			if(bracket == "{"w)
+			{
+				wstring fn;
+				src.findStatementStart(otherLine, otherIndex, fn);
+				wstring name = src.getScopeIdentifer(otherLine, otherIndex, fn);
+				if(name.length && name != "{")
+				{
+					if(curScope.length)
+						curScope = "." ~ curScope;
+					curScope = name ~ curScope;
+				}
+			}
+			line = otherLine;
+		}
+
+		auto pIVsStatusbar = queryService!(IVsStatusbar);
+		if(pIVsStatusbar)
+		{
+			scope(exit) release(pIVsStatusbar);
+			if(curScope.length)
+				pIVsStatusbar.SetText(("Scope: " ~ curScope ~ "\0"w).ptr);
+			else
+				pIVsStatusbar.SetText(("Scope: at module scope\0"w).ptr);
+		}
+		
+		return S_OK;
+	}
+	
 	//////////////////////////////////////////////////////////////
 	int HandleSmartIndent(dchar ch)
 	{

@@ -398,7 +398,17 @@ class Package : DisposingComObject,
 		for (uint i = 0; i < cCmds; i++) 
 		{
 			if(g_commandSetCLSID == *pguidCmdGroup)
-				prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+			{
+				switch(prgCmds[i].cmdID)
+				{
+				case CmdSearchFile:
+				case CmdSearchSymbol:
+					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+					break;
+				default:
+					break;
+				}
+			}
 		}
 		return S_OK;
 	}

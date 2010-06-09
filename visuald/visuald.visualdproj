@@ -72,6 +72,7 @@
   <objfiles />
   <linkswitches />
   <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib</libfiles>
+  <libpaths />
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
@@ -157,6 +158,7 @@
   <objfiles />
   <linkswitches />
   <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib</libfiles>
+  <libpaths />
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
@@ -180,7 +182,7 @@ set PATH=%PATH%;$(DevEnvDir)
 set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin
 CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
    <File path="Resources\resources.h" />
-   <File path="visuald.rc" />
+   <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto" />
    <File path="Resources\AlternateRowColor.ico" />
    <File path="Resources\ascend.ico" />
    <File path="Resources\descend.ico" />

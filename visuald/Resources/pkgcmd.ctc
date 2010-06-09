@@ -21,12 +21,19 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Menu IDs
 
+#define IDM_VISUALD    0x0001
 
 ///////////////////////////////////////////////////////////////////////////////
 // Menu Group IDs
 
+#define IDG_VD_EDIT                   0x0101
+#define IDG_VD_SEARCH                 0x0100
+
+#define IDG_VS_MM_FILEEDITVIEW        0x0101
 #define IDG_VS_VIEW_BROWSER           0x0130
 #define IDG_VS_WNDO_FINDRESULTS       0x0724
+#define IDG_VS_EDIT_GOTO              0x012D
+#define IDG_VS_EDIT_COMMANDWELL       0x012E
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bitmap IDs
@@ -37,18 +44,23 @@
 
 CMDS_SECTION g_packageCLSID
 
-    MENUS_BEGIN
-    	// NewMenu                      Relative to Group                       Priority    Type        Name                    Text
-    MENUS_END
+	MENUS_BEGIN
+		// NewMenu                      Relative to Group                       Priority    Type        Name                    Text
+		g_packageCLSID:IDM_VISUALD,     guidSHLMainMenu:IDG_VS_MM_FILEEDITVIEW, 0xF000,     ,           "Visual D",             "Visual D";
+	MENUS_END
 
-    NEWGROUPS_BEGIN
-        // NewGroup                     Parent Group                            Priority
-    NEWGROUPS_END
+	NEWGROUPS_BEGIN
+		// NewGroup                     Parent Group                            Priority
+		g_packageCLSID:IDG_VD_SEARCH,   g_packageCLSID:IDM_VISUALD,             0x0000;
+		g_packageCLSID:IDG_VD_EDIT,     g_packageCLSID:IDM_VISUALD,             0x0001;
+	NEWGROUPS_END
 
     BUTTONS_BEGIN
-		// Command ID,                     Group ID,                                Priority, Icon ID,                 Button Type, Flags, Button Text, Menu Text, ToolTip Text, Command Well Text, English Command Name, Localized Command Name;
-		g_commandSetCLSID:CmdSearchSymbol, guidSHLMainMenu:IDG_VS_WNDO_FINDRESULTS, 0xF000,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,"&Visual D - Search Symbol";
-		g_commandSetCLSID:CmdSearchFile,   guidSHLMainMenu:IDG_VS_WNDO_FINDRESULTS, 0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,"&Visual D - Search File";
+		// Command ID,                     Group ID,                            Priority, Icon ID,                 Button Type, Flags, Button Text,      Menu Text, ToolTip Text, Command Well Text, English Command Name, Localized Command Name;
+		g_commandSetCLSID:CmdSearchSymbol, g_packageCLSID:IDG_VD_SEARCH,        0xF000,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search S&ymbol", ,          "Search Symbol in D Projects", , "VisualD.SearchSymbol";
+		g_commandSetCLSID:CmdSearchFile,   g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search &File",   ,          "Search File in Solution",     , "VisualD.SearchFile";
+		g_commandSetCLSID:CmdShowScope,    g_packageCLSID:IDG_VD_EDIT,          0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show &Scope",    ,          "Show Scope of Cursor",        , "VisualD.ShowScope";
+		
 		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID
 		// as the command set GUID. Also, by specifying blank for the FLAGS, this command is
 		// default visible and enabled. Other valid values for FLAGS are the following:
