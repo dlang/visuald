@@ -92,7 +92,7 @@ Version history
   * added the possibility to stop a build
   * new logo now used in about box
 
-2010-06-05 Version 0.3.11
+2010-06-10 Version 0.3.11
 
   * error messages now forwarded to error list
   * Visual D settings now stored in the user area of the registry
@@ -104,4 +104,4 @@ Version history
     in the future and to avoid cluttering other menus
   * Search window commands are now called VisualD.SearchFile and VisualD.SearchSymbol
     (you might need to reassign keyboard shortcuts)
-
+  * Thanks to Alix Pexton, the web site has a professional looking new logo. 

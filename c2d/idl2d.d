@@ -48,6 +48,8 @@ bool _endsWith(string s, string e)
 	return (s.length >= e.length && s[$-e.length .. $] == e);
 }
 
+alias std.string.indexOf indexOf;
+
 class idl2d
 {
 	///////////////////////////////////////////////////////

@@ -9,8 +9,9 @@
 #  Microsoft Platfrom SDK (6.0A)
 #  Visual Studio Integration SDK (for VS2008)
 
-# DMD2 = c:\l\dmd-2.042\windows\bin\dmd_rs.exe
-DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
+DMD2 = c:\l\dmd2\windows\bin\dmd.exe
+# DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
+COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
 MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
@@ -71,7 +72,7 @@ sdk\vsi_sources: $(VSI2D_EXE)
 
 # $(VSI_LIB) : sdk\vsi_sources
 vsi_lib:
-	cd sdk && nmake "DMD=$(DMD2)" vsi_release
+	cd sdk && nmake "DMD=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" vsi_release libs
 
 ##################################
 # compile visuald package

@@ -186,12 +186,12 @@ string extractDefine(string s, string def)
 		while(q < s.length && s[q] != '\n' && s[q] != '\r')
 			q++;
 		
-		if(startsWith(s[p .. $], "#define") && (s[p+7] == ' ' || s[p+7] == '\t'))
+		if(_startsWith(s[p .. $], "#define") && (s[p+7] == ' ' || s[p+7] == '\t'))
 		{
 			p += 7;
 			while(p < s.length && (s[p] == ' ' || s[p] == '\t'))
 				p++;
-			if(startsWith(s[p .. $], def) && (s[p+def.length] == ' ' || s[p+def.length] == '\t'))
+			if(_startsWith(s[p .. $], def) && (s[p+def.length] == ' ' || s[p+def.length] == '\t'))
 			{
 				p += def.length;
 				while(p < s.length && (s[p] == ' ' || s[p] == '\t'))
@@ -215,7 +215,7 @@ string extractDefines(string s)
 		while(q < s.length && s[q] != '\n' && s[q] != '\r')
 			q++;
 		
-		if(startsWith(s[p .. $], "#define") && (s[p+7] == ' ' || s[p+7] == '\t'))
+		if(_startsWith(s[p .. $], "#define") && (s[p+7] == ' ' || s[p+7] == '\t'))
 		{
 			p += 7;
 			int b = p;
@@ -238,6 +238,12 @@ string extractDefines(string s)
 bool _endsWith(string s, string e)
 {
 	return (s.length >= e.length && s[$-e.length .. $] == e);
+}
+
+// startsWith causes compile error when used in ctfe
+bool _startsWith(string s, string w)
+{
+	return (s.length >= w.length && s[0 .. w.length] == w);
 }
 
 version(D_Version2) {} else {

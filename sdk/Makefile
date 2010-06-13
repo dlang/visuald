@@ -19,6 +19,7 @@ RELDIR = ..\bin\Release
 DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 CV2PDB = ..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 IMPLIB = c:\l\dmc\bin\implib.exe
+COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 DFLAGS = -d -L/DELEXECUTABLE -I..
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS 
@@ -41,24 +42,22 @@ $(RELDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD)
 <<NOKEEP
 
 ######################
+WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
+
 WIN_LIBS = lib\kernel32.lib lib\user32.lib lib\winspool.lib lib\advapi32.lib \
 	lib\comdlg32.lib lib\gdi32.lib lib\ole32.lib lib\rpcrt4.lib lib\shell32.lib lib\winmm.lib \
-	lib\wsock32.lib lib\comctl32.lib lib\oleaut32.lib lib\ws2_32.lib lib\odbc32.lib \
-	lib\ctl3d32.lib
+	lib\wsock32.lib lib\comctl32.lib lib\oleaut32.lib lib\ws2_32.lib lib\odbc32.lib
+# lib\ctl3d32.lib
 # lib\uuid.lib 
-WINDIR = c:\windows\system32
+# WINDIR = c:\windows\system32
 
-.SUFFIXES: .lib .dll .exe
+sdk_libs: Makefile
+	for %f in ($(WIN_LIBS)) do @( $(COFFIMPLIB) "$(WINSDK)\%f" %f )
+	@echo $(WIN_LIBS) >sdk_libs
 
-{$(WINDIR)}.dll{lib\}.lib:
-	$(IMPLIB) /noi /system $@ $<
-	
-{$(WINDIR)}.exe{lib\}.lib:
-	$(IMPLIB) /noi /system $@ $<
-	
-libs: $(WIN_LIBS)
+libs: sdk_libs
 
 #kernel32.lib : kernel32.dll
 #	echo $(IMPLIB) $@ $<
 	
-$(WIN_LIBS) : Makefile
+# $(WIN_LIBS) : Makefile

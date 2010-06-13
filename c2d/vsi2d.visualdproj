@@ -39,7 +39,7 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
+  <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -72,6 +72,7 @@
   <objfiles />
   <linkswitches />
   <libfiles />
+  <libpaths />
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
@@ -157,6 +158,7 @@
   <objfiles />
   <linkswitches />
   <libfiles />
+  <libpaths />
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
