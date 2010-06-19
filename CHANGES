@@ -105,3 +105,8 @@ Version history
   * Search window commands are now called VisualD.SearchFile and VisualD.SearchSymbol
     (you might need to reassign keyboard shortcuts)
   * Thanks to Alix Pexton, the web site has a professional looking new logo. 
+
+2010-06-19 Version 0.3.12
+
+  * tried to avoid crashes when launching debugger in VS2010
+

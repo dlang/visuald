@@ -218,6 +218,11 @@ static const wstring regPathPrjTemplates   = "\\NewProjectTemplates\\TemplateDir
 static const wstring regPathProjects       = "\\Projects"w;
 static const wstring regPathToolsOptions   = "\\ToolsOptionsPages\\Projects\\Visual D Settings"w;
 static const wstring regMiscFiles          = regPathProjects ~ "\\{A2FE74E1-B743-11d0-AE1A-00A0C90FFFC3}"w;
+static const wstring regPathMetricsExcpt   = "\\AD7Metrics\\Exception"w;
+static const wstring regPathMetricsEE      = "\\AD7Metrics\\ExpressionEvaluator"w;
+
+static const wstring vendorMicrosoftGuid   = "{994B45C4-E6E9-11D2-903F-00C04FA302A1}"w;
+static const wstring guidCOMPlusNativeEng  = "{92EF0900-2251-11D2-B72E-0000F87572EF}"w;
 
 ///////////////////////////////////////////////////////////////////////
 //  Registration
@@ -287,7 +292,10 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	{
 		wstring packageGuid = GUID2wstring(g_packageCLSID);
 		wstring languageGuid = GUID2wstring(g_languageCLSID);
+		wstring debugLangGuid = GUID2wstring(g_debuggerLanguage);
+		wstring exprEvalGuid = GUID2wstring(g_expressionEvaluator);
 
+		// package
 		scope RegKey keyPackage = new RegKey(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
 		keyPackage.Set(null, g_packageName);
 		keyPackage.Set("InprocServer32"w, dllPath);
@@ -307,6 +315,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyCLSID.Set("InprocServer32"w, dllPath);
 		keyCLSID.Set("ThreadingModel"w, "Free"w); // Appartment?
 
+		// file extensions
 		wstring fileExtensions;
 		foreach (wstring fileExt; g_languageFileExtensions)
 		{
@@ -316,7 +325,9 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 			fileExtensions ~= fileExt ~ ";"w;
 		}
 
-		scope RegKey keyLang = new RegKey(keyRoot, registrationRoot ~ regPathLServices ~ "\\"w ~ g_languageName);
+		// language service
+		wstring langserv = registrationRoot ~ regPathLServices ~ "\\"w ~ g_languageName;
+		scope RegKey keyLang = new RegKey(keyRoot, langserv);
 		keyLang.Set(null, languageGuid);
 		keyLang.Set("Package"w, packageGuid);
 		keyLang.Set("Extensions"w, fileExtensions);
@@ -332,6 +343,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyProduct.Set("Package"w, packageGuid);
 		keyProduct.Set("UseInterface"w, 1);
 
+		// snippets
 		wstring codeExp = registrationRoot ~ regPathCodeExpansions ~ "\\"w ~ g_languageName;
 		scope RegKey keyCodeExp = new RegKey(keyRoot, codeExp);
 		keyCodeExp.Set(null, languageGuid);
@@ -355,6 +367,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyPrjTempl.Set("TemplatesDir"w, templatePath ~ "\\Projects"w);
 		keyPrjTempl.Set("Folder"w, "{152CDB9D-B85A-4513-A171-245CE5C61FCC}"w); // other languages
 
+		// project
 		wstring projects = registrationRoot ~ "\\Projects\\"w ~ GUID2wstring(g_projectFactoryCLSID);
 		scope RegKey keyProject = new RegKey(keyRoot, projects);
 		keyProject.Set(null, "DProjectFactory"w);
@@ -367,6 +380,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyProject.Set("Language(VsTemplate)"w, g_languageName);
 		keyProject.Set("ItemTemplatesDir"w, templatePath ~ "\\Items"w);
 
+		// file templates
 		scope RegKey keyProject1 = new RegKey(keyRoot, projects ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid ~ "\\/1"w);
 		keyProject1.Set(null, g_languageName);
 		keyProject1.Set("TemplatesDir"w, templatePath ~ "\\Items"w);
@@ -378,6 +392,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyProject2.Set("TemplatesDir"w, templatePath ~ "\\Items"w);
 		keyProject2.Set("SortPriority"w, 25);
 
+		// property pages
 		foreach(guid; guids_propertyPages)
 		{
 			scope RegKey keyProp = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
@@ -385,9 +400,28 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 			keyProp.Set("ThreadingModel"w, "Appartment"w);
 		}
 
+version(none){
+		// expression evaluator
+		scope RegKey keyLangDebug = new RegKey(keyRoot, langserv ~ "\\Debugger Languages\\"w ~ debugLangGuid);
+		keyLangDebug.Set(null, g_languageName);
+		
+		scope RegKey keyLangException = new RegKey(keyRoot, registrationRoot ~ regPathMetricsExcpt ~ "\\"w ~ debugLangGuid ~ "\\D Exceptions");
+
+		wstring langEE = registrationRoot ~ regPathMetricsEE ~ "\\"w ~ debugLangGuid ~ "\\"w ~ vendorMicrosoftGuid;
+		scope RegKey keyLangEE = new RegKey(keyRoot, langEE);
+		keyLangEE.Set("CLSID"w, exprEvalGuid);
+		keyLangEE.Set("Language"w, g_languageName);
+		keyLangEE.Set("Name"w, "D EE"w);
+			
+		scope RegKey keyEngine = new RegKey(keyRoot, langEE ~ "\\Engine");
+		keyEngine.Set("0"w, guidCOMPlusNativeEng);
+}
+
+		// menu
 		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
 		keyToolMenu.Set(packageGuid, ",2001,2"); // CTMENU,version
 		
+		// Visual D settings
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);
 		keyToolOpts.Set(null, "Visual D Settings");
 		keyToolOpts.Set("Package"w, packageGuid);

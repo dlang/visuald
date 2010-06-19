@@ -1164,7 +1164,7 @@ class Config :	DisposingComObject,
 			if(remote.length > 0)
 				dbgi.bstrRemoteMachine = _toUTF16z(remote);
 
-			dbgi.dlo = DLO_Custom;    // specifies how this process should be launched
+			dbgi.dlo = DLO_CreateProcess; // DLO_Custom;    // specifies how this process should be launched
 			// clsidCustom is the clsid of the debug engine to use to launch the debugger
 			*cast(GUID*)(&(dbgi.clsidCustom)+0) = GUID_COMPlusNativeEng;        // the mixed-mode debugger
 			dbgi.bstrMdmRegisteredName = null; // used with DLO_AlreadyRunning. The name of the
