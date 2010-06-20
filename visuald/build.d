@@ -169,7 +169,11 @@ public:
 			string target = mConfig.GetTargetPath();
 			string msg = "Building " ~ target ~ "...\n";
 			if(m_pIVsOutputWindowPane)
-				m_pIVsOutputWindowPane.OutputString(_toUTF16z(msg));
+			{
+				BSTR bstrMsg = allocBSTR(msg);
+				m_pIVsOutputWindowPane.OutputString(bstrMsg);
+				freeBSTR(bstrMsg);
+			}
 
 			string workdir = mConfig.GetProjectDir();
 			string outdir = makeFilenameAbsolute(mConfig.GetOutDir(), workdir);

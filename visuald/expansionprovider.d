@@ -194,12 +194,13 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 		BSTR[] bstrTypes;
 		foreach(type; types)
-			bstrTypes ~= _toUTF16z(type);
+			bstrTypes ~= allocBSTR(type);
 
 		BSTR[] bstrKinds;
 		foreach(kind; kinds)
-			bstrKinds ~= _toUTF16z(kind);
+			bstrKinds ~= allocBSTR(kind);
 
+		BSTR bstrPrompt = allocBSTR(prompt);
 		int hr = exmgr.InvokeInsertionUI(mView, // pView
 						 this, // pClient
 						 g_languageCLSID, // guidLang
@@ -209,8 +210,15 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 						 bstrKinds.ptr, // bstrKinds
 						 bstrKinds.length, // iCountKinds
 						 includeNullKind ? 1 : 0, // fIncludeNULLKind
-						 _toUTF16z(prompt), // bstrPrefixText
+						 bstrPrompt, // bstrPrefixText
 						 ">"); //bstrCompletionChar
+
+		foreach(type; bstrTypes)
+			freeBSTR(type);
+		foreach(kind; bstrKinds)
+			freeBSTR(kind);
+		freeBSTR(bstrPrompt);
+		
 		return SUCCEEDED(hr);
 	}
 
@@ -224,7 +232,9 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 		mView = view;
 
-		int hr = vsExpansion.InsertSpecificExpansion(snippet, pos, this, g_languageCLSID, _toUTF16z(relativePath), &expansionSession);
+		BSTR bstrRelPath = allocBSTR(relativePath);
+		int hr = vsExpansion.InsertSpecificExpansion(snippet, pos, this, g_languageCLSID, bstrRelPath, &expansionSession);
+		freeBSTR(bstrRelPath);
 		if (hr != S_OK || !expansionSession)
 			EndTemplateEditing(true);
 		else
@@ -435,8 +445,13 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		tsInsert.iStartLine = tsInsert.iEndLine = line;
 		tsInsert.iStartIndex = tsInsert.iEndIndex = col;
 
-		int hr = vsExpansion.InsertNamedExpansion(_toUTF16z(titleToInsert), _toUTF16z(pathToInsert), tsInsert, 
+		BSTR bstrTitle = allocBSTR(titleToInsert);
+		BSTR bstrPath = allocBSTR(pathToInsert);
+		int hr = vsExpansion.InsertNamedExpansion(bstrTitle, bstrPath, tsInsert, 
 		                                          this, g_languageCLSID, 0, &expansionSession);
+		freeBSTR(bstrTitle);
+		freeBSTR(bstrPath);
+		
 		if (hr != S_OK)
 			EndTemplateEditing(true);
 		pathToInsert = null;
@@ -462,7 +477,10 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		if (!expansionSession)
 			return false;
 
-		expansionSession.GetFieldSpan(_toUTF16z(field), pts);
+		BSTR bstrField = allocBSTR(field);
+		expansionSession.GetFieldSpan(bstrField, pts);
+		freeBSTR(bstrField);
+		
 		return true;
 	}
 
@@ -473,7 +491,9 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 			return false;
 
 		BSTR bstrValue;
-		int hr = expansionSession.GetFieldValue(_toUTF16z(field), &bstrValue);
+		BSTR bstrField = allocBSTR(field);
+		int hr = expansionSession.GetFieldValue(bstrField, &bstrValue);
+		freeBSTR(bstrField);
 		value = detachBSTR(bstrValue);
 		return hr == S_OK;
 	}
@@ -585,7 +605,13 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 		// now set any field defaults that we have.
 		foreach (ref DefaultFieldValue dv; fieldDefaults)
-			expansionSession.SetFieldDefault(_toUTF16z(dv.field), _toUTF16z(dv.value));
+		{
+			BSTR bstrField = allocBSTR(dv.field);
+			BSTR bstrValue = allocBSTR(dv.value);
+			expansionSession.SetFieldDefault(bstrField, bstrValue);
+			freeBSTR(bstrField);
+			freeBSTR(bstrValue);
+		}
 
 		fieldDefaults.length = 0;
 		return S_OK;
@@ -720,8 +746,10 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 	{
 		if (mProvider && mProvider.expansionSession)
 		{
+			BSTR fieldName = allocBSTR(name);
 			BSTR fieldValue;
-			int hr = mProvider.expansionSession.GetFieldValue(_toUTF16z(name), &fieldValue);
+			int hr = mProvider.expansionSession.GetFieldValue(fieldName, &fieldValue);
+			freeBSTR(fieldName);
 			value = detachBSTR(fieldValue);
 			return SUCCEEDED(hr);
 		}
@@ -768,7 +796,7 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 
 	override HRESULT GetCurrentValue(/+[out]+/BSTR *bstrValue, /+[out]+/ BOOL *fHasDefaultValue)
 	{
-		*bstrValue = _toUTF16z("");
+		*bstrValue = allocBSTR(""); // _toUTF16z("");
 		*fHasDefaultValue = !bstrValue ? 0 : 1;
 		return S_OK;
 	}

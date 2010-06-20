@@ -1156,23 +1156,26 @@ class Config :	DisposingComObject,
 		{
 			scope(exit) release(srpVsDebugger);
 
+			// if bstr-parameters not passed as BSTR parameters, VS2010 crashes on some systems
+			//  not sure if they can be free'd afterwards...
 			VsDebugTargetInfo dbgi;
 
 			dbgi.cbSize = VsDebugTargetInfo.sizeof;
 			dbgi.bstrRemoteMachine = null;
 			string remote = mProjectOptions.replaceEnvironment(mProjectOptions.debugremote, this);
 			if(remote.length > 0)
-				dbgi.bstrRemoteMachine = _toUTF16z(remote);
+				dbgi.bstrRemoteMachine = allocBSTR(remote); // _toUTF16z(remote);
 
 			dbgi.dlo = DLO_CreateProcess; // DLO_Custom;    // specifies how this process should be launched
 			// clsidCustom is the clsid of the debug engine to use to launch the debugger
 			*cast(GUID*)(&(dbgi.clsidCustom)+0) = GUID_COMPlusNativeEng;        // the mixed-mode debugger
+			// dbgi.clsidCustom = GUID_NativeOnlyEng;
 			dbgi.bstrMdmRegisteredName = null; // used with DLO_AlreadyRunning. The name of the
 			                                   // app as it is registered with the MDM.
 
-			dbgi.bstrExe = _toUTF16z(prg);
-			dbgi.bstrCurDir = _toUTF16z(workdir);
-			dbgi.bstrArg = _toUTF16z(args);
+			dbgi.bstrExe = allocBSTR(prg); // _toUTF16z(prg);
+			dbgi.bstrCurDir = allocBSTR(workdir); // _toUTF16z(workdir);
+			dbgi.bstrArg = allocBSTR(args); // _toUTF16z(args);
 
 			hr = srpVsDebugger.LaunchDebugTargets(1, &dbgi);
 			if (FAILED(hr))

@@ -26,6 +26,7 @@ import dpackage;
 import completion;
 import chiernode;
 import chiercontainer;
+import hierarchy;
 
 const uint _MAX_PATH = 260;
 
@@ -429,4 +430,16 @@ HRESULT OpenFileInSolution(string filename, int line, string srcfile = "")
 	if(line < 0)
 		return S_OK;
 	return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, line, 0, line, 0);
+}
+
+////////////////////////////////////////////////////////////////////////
+string GetFolderPath(CFolderNode folder)
+{
+	string path;
+	while(folder && !cast(CProjectNode) folder)
+	{
+		path = "\\" ~ folder.GetName() ~ path;
+		folder = cast(CFolderNode) folder.GetParent();
+	}
+	return path;
 }

@@ -5,7 +5,7 @@
     <libfiles>ole32.lib kernel32.lib user32.lib comctl32.lib comdlg32.lib</libfiles>
   </Config>
   <Config name="Release">
-    <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
+    <additionalOptions>-L/SUBSYSTEM:WINDOWS:4.0</additionalOptions>
     <libfiles>ole32.lib kernel32.lib user32.lib comctl32.lib comdlg32.lib</libfiles>
   </Config>
   <Folder name="$safeprojectname$">

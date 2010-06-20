@@ -537,7 +537,7 @@ class CFolderNode : CHierContainer
 			{
 			case cmdidAddNewItem:
 			case cmdidAddExistingItem:
-				hr = OnCmdAddItem(nCmdID == cmdidAddNewItem);
+				hr = OnCmdAddItem(this, nCmdID == cmdidAddNewItem);
 				break;
 
 			case cmdidNewFolder:
@@ -595,7 +595,7 @@ class CFolderNode : CHierContainer
 		return hr;
 	}
 
-	HRESULT OnCmdAddItem(bool fAddNewItem, wchar* pszSelectItem = null, wchar* pszExpandDir = null)
+	HRESULT OnCmdAddItem(CFolderNode folder, bool fAddNewItem, wchar* pszSelectItem = null, wchar* pszExpandDir = null)
 	{
 		static string strFilter = "";      // filter string (initial/final value); valid if AllowStickyFilter set
 
@@ -611,6 +611,9 @@ class CFolderNode : CHierContainer
 			dwFlags = VSADDITEM_AddExistingItems | VSADDITEM_AllowMultiSelect | VSADDITEM_AllowStickyFilter;
 
 		string location = GetCVsHierarchy().GetProjectDir();
+		string folderPath = location ~ GetFolderPath(folder);
+		if(std.file.exists(folderPath) && std.file.isdir(folderPath))
+			location = folderPath;
 		BSTR bstrLocation = allocBSTR(location);
 
 		// The AddProjectItemDlg function uses and can modify the value of the filter string, so here
@@ -638,6 +641,7 @@ class CFolderNode : CHierContainer
 	}
 }
 
+////////////////////////////////////////////////////////////////////////
 class CProjectNode : CFolderNode
 {
 	this(string filename, CVsHierarchy hierarchy)
@@ -1736,7 +1740,7 @@ public: // IVsHierarchyEvent propagation
 
 			for(uint i = 0; i < cFilesToOpen; i++)
 			{
-				CFileNode pNewNode;
+				CHierNode pNewNode;
 
 				if (fNewFile)
 				{
@@ -1744,7 +1748,7 @@ public: // IVsHierarchyEvent propagation
 					assert(rgpszFilesToOpen[i]);
 					assert(pszItemName);
 
-					pNewNode = AddNewFile(pNode, to_string(rgpszFilesToOpen[i]), to_string(pszItemName));
+					pNewNode = AddNewNode(pNode, to_string(rgpszFilesToOpen[i]), to_string(pszItemName));
 				}
 				else
 				{
@@ -1759,17 +1763,21 @@ public: // IVsHierarchyEvent propagation
 					continue;
 				}
 
+				CFileNode pFileNode = cast(CFileNode) pNewNode;
+
 				// we are not opening an existing file if an editor is not specified
 				if (!fNewFile && *rguidEditorType == GUID_NULL)
 					continue;
-
+				if(!pFileNode)
+					continue;
+				
 				// open the item
 				assert(grfEditorFlags & VSSPECIFICEDITOR_DoOpen);
 				IVsWindowFrame srpWindowFrame;
 				bool useView = (grfEditorFlags & VSSPECIFICEDITOR_UseView) != 0;
 
 				// Standard open file
-				hrTemp = OpenDoc(pNewNode, fNewFile /*fNewFile*/, 
+				hrTemp = OpenDoc(pFileNode, fNewFile /*fNewFile*/, 
 							   false    /*fUseOpenWith*/,
 							   true     /*fShow*/,
 							   rguidLogicalView,
@@ -1815,7 +1823,7 @@ public: // IVsHierarchyEvent propagation
 		return hr;
 	}
 
-	CFileNode AddNewFile(CHierContainer pNode, string strFullPathSource, string strNewFileName)
+	CHierNode AddNewNode(CHierContainer pNode, string strFullPathSource, string strNewFileName)
 	{ 
 		HRESULT hr = S_OK;
 
@@ -1828,6 +1836,8 @@ public: // IVsHierarchyEvent propagation
 		if(!isabs(strNewFileName))
 			strNewFileName = GetProjectDir() ~ "\\" ~ strNewFileName;
 
+		bool dir = std.file.isdir(strFullPathSource);
+		
 		// If target != source then we need to copy
 		if (CompareFilenamesForSort(strFullPathSource, strNewFileName) != 0)
 		{
@@ -1853,7 +1863,10 @@ public: // IVsHierarchyEvent propagation
 
 			try 
 			{
-				std.file.copy(strFullPathSource, strNewFileName);
+				if(dir)
+					std.file.mkdir(strNewFileName);
+				else
+					std.file.copy(strFullPathSource, strNewFileName);
 			}
 			catch(Exception)
 			{
@@ -1864,6 +1877,15 @@ public: // IVsHierarchyEvent propagation
 			// template was read-only, but our file should not be
 			//if (fCopied)
 			//	SetFileAttributes(strNewFileName, FILE_ATTRIBUTE_ARCHIVE);
+		}
+
+		if(dir)
+		{
+			CFolderNode pFolder = new CFolderNode;
+			string strThisFolder = getBaseName(strNewFileName);
+			pFolder.SetName(strThisFolder);
+			pNode.Add(pFolder);
+			return pFolder;
 		}
 
 		// Now that we have made a copy of the template file, let's add our new file to the project

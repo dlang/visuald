@@ -108,5 +108,9 @@ Version history
 
 2010-06-19 Version 0.3.12
 
-  * tried to avoid crashes when launching debugger in VS2010
-
+  * stricter string handling to avoid crashes when launching debugger in VS2010
+  * the windows application template's substem version now defaults to 4.0
+  * added new project item template for package creating both folder in project and 
+    directory on disk
+  * if a directory exists with the name of the folder, the default location
+    of a new project item now defaults to this directory
