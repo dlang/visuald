@@ -9,8 +9,8 @@
 #  Microsoft Platfrom SDK (6.0A)
 #  Visual Studio Integration SDK (for VS2008)
 
-DMD2 = c:\l\dmd2\windows\bin\dmd.exe
-# DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
+# DMD2 = c:\l\dmd2\windows\bin\dmd.exe
+DMD2 = m:\s\d\dmd\src2\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A

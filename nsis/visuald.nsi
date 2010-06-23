@@ -128,6 +128,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\visuald\Templates\Items\ empty.d
   ${File} ..\visuald\Templates\Items\ hello.d
   ${File} ..\visuald\Templates\Items\ items.vsdir
+  ${SetOutPath} "$INSTDIR\Templates\Items\Package"
 
   ${SetOutPath} "$INSTDIR\Templates\ProjectItems"
   ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleApp"

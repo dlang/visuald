@@ -38,7 +38,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
+  <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
