@@ -114,3 +114,8 @@ Version history
     directory on disk
   * if a directory exists with the name of the folder, the default location
     of a new project item now defaults to this directory
+  * renaming a file in the project renames it on disk aswell
+  * improved build process, it should now be possible to compile Visual D following
+    the instruction on http://www.dsource.org/projects/visuald/wiki/Build_from_source
+  * updated to cv2pdb 0.14.
+

@@ -91,6 +91,22 @@ class CFileNode : CHierNode,
 		return E_NOTIMPL;
 	}
 
+	override int SetProperty(VSHPROPID propid, in VARIANT var)
+	{
+		switch(propid)
+		{
+		case VSHPROPID_EditLabel:
+			if(var.vt != VT_BSTR)
+				return returnError(E_INVALIDARG);
+			
+			string newname = to_string(var.bstrVal);
+			return Rename(newname);
+		default:
+			return super.SetProperty(propid, var);
+		}
+		return E_NOTIMPL;
+	}
+
 	HRESULT GetGuidProperty(VSHPROPID propid, out GUID pGuid)
 	{
 		switch (propid)
@@ -102,6 +118,30 @@ class CFileNode : CHierNode,
 			break;
 		default:
 			return DISP_E_MEMBERNOTFOUND;
+		}
+		return S_OK;
+	}
+
+	HRESULT Rename(string newname)
+	{
+		string oldpath = GetFullPath();
+		string newpath = normalizeDir(getDirName(oldpath)) ~ newname;
+		if(tolower(newname) == tolower(mFilename))
+			return S_OK;
+		
+		if(HRESULT hr = CloseDoc(SLNSAVEOPT_PromptSave))
+			return hr;
+		try
+		{
+			std.file.rename(oldpath, newpath);
+
+			string projDir = GetCVsHierarchy().GetProjectDir();
+			mFilename = makeRelative(newpath, projDir);
+			SetName(getBaseName(mFilename));
+		}
+		catch(Exception)
+		{
+			return returnError(E_FAIL);
 		}
 		return S_OK;
 	}
@@ -1116,8 +1156,9 @@ version(none)
 		if(!pNode)
 			return returnError(E_INVALIDARG);
 
-		if(pNode.SetProperty(propid, var) == S_OK)
-			return S_OK;
+		HRESULT hr = pNode.SetProperty(propid, var);
+		if(hr != DISP_E_MEMBERNOTFOUND && hr != E_NOTIMPL)
+			return hr;
 
 		switch(propid)
 		{

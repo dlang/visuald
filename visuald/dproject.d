@@ -1093,10 +1093,11 @@ class Project : CVsHierarchy,
 			mCaption = to_string(var.bstrVal);
 			break;
 		default:
-			if(super.SetProperty(itemid, propid, var) == S_OK)
+			HRESULT hr = super.SetProperty(itemid, propid, var);
+			if(hr == S_OK)
 				break;
 			logCall("Setting unknown property %d on %x!", propid, itemid);
-			return DISP_E_MEMBERNOTFOUND;
+			return hr;
 		}
 		return S_OK;
 	}
