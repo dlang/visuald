@@ -43,12 +43,13 @@ RELDIR = ..\bin\Release
 DBGRES = $(DBGDIR)\visuald.res
 RELRES = $(RELDIR)\visuald.res
 
-# DMD = c:\l\dmd2\windows\bin\dmd.exe
-# DMD = c:\l\dmd-1.056\windows\bin\dmd_pdb.exe
-DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
-# DMDPATH = c:\l\dmd-1.039\dmd
-# LIBS = $(DMDPATH)\lib
+DMD = c:\l\dmd2\windows\bin\dmd.exe
+# DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
+
+VSISDK = c:\l\vs9SDK
+CTC = $(VSISDK)\VisualStudioIntegration\Tools\Bin\CTC.exe
+
 LIB = ..\sdk\lib
 OPTLINKS = /SCANLIB
 
@@ -73,19 +74,19 @@ exe:     $(DBGDIR)\$(PROJECT).exe
 ######################
 # dll
 $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
-	$(CV2PDB) -D2.043 $? $@
+	"$(CV2PDB)" -D2.043 $? $@
 
 #-mixin=$(DBGDIR)\$(PROJECT).mixin
 $(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DEPS)
-	$(DMD) -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
+	"$(DMD)" -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
 		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES)
 <<NOKEEP
 
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
-	$(CV2PDB) -D2.043 $? $@
+	"$(CV2PDB)" -D2.043 $? $@
 
 $(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(DEPS)
-	$(DMD) -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
+	"$(DMD)" -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
 		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES)
 <<NOKEEP
 
@@ -95,12 +96,15 @@ $(DBGRES) : $(RC) $(RSRC)
 $(RELRES) : $(RC) $(RSRC)
 	rc /fo$(RELRES) $(RC)
 
+resources/pkgcmd.cto: resources/pkgcmd.ctc
+	$(CTC) $? $@ -Ccl -I.
+
 ######################
 $(DBGDIR)\$(PROJECT).exe : $(DBGDIR)\$(PROJECT)_cv.exe
-	$(CV2PDB) $? $@
+	"$(CV2PDB)" $? $@
 
 $(DBGDIR)\$(PROJECT)_cv.exe : $(SRC) $(DBG_VSI_LIB) Makefile
-	$(DMD) -of$@ -g -unittest -debug -version=MAIN $(DFLAGS) @<<
+	"$(DMD)" -of$@ -g -unittest -debug -version=MAIN $(DFLAGS) @<<
 		$(SRC) $(DBG_VSI_LIB) $(LIBS)
 <<NOKEEP
 

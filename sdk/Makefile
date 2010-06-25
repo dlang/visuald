@@ -14,9 +14,9 @@ DBGDIR = ..\bin\Debug
 RELDIR = ..\bin\Release
 
 # D = c:\l\dmd-1.056
-# D = c:\l\dmd-2.040
-# DMD = $D\windows\bin\dmd_pdb.exe
-DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
+D = c:\l\dmd2
+DMD = $D\windows\bin\dmd.exe
+# DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
 CV2PDB = ..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 IMPLIB = c:\l\dmc\bin\implib.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
@@ -52,6 +52,7 @@ WIN_LIBS = lib\kernel32.lib lib\user32.lib lib\winspool.lib lib\advapi32.lib \
 # WINDIR = c:\windows\system32
 
 sdk_libs: Makefile
+	if not exist lib\nul md lib
 	for %f in ($(WIN_LIBS)) do @( $(COFFIMPLIB) "$(WINSDK)\%f" %f )
 	@echo $(WIN_LIBS) >sdk_libs
 

@@ -10,7 +10,13 @@
 // Resources for Visual D
 //
 
+#if 1
+#define LANG_ENGLISH       0x09
+#define SUBLANG_ENGLISH_US 0x01
+#else
 #include "winresrc.h"
+#endif
+
 #include "resources/resources.h"
 
 /////////////////////////////////////////////////////////////////////////////

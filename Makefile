@@ -9,14 +9,16 @@
 #  Microsoft Platfrom SDK (6.0A)
 #  Visual Studio Integration SDK (for VS2008)
 
-# DMD2 = c:\l\dmd2\windows\bin\dmd.exe
-DMD2 = m:\s\d\dmd\src2\dmd.exe
+DMD2 = c:\l\dmd2\windows\bin\dmd.exe
+# DMD2 = m:\s\d\dmd\src2\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
 MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
 VSISDK = c:\l\vs9SDK
 NSIS   = $(PROGRAMFILES)\NSIS
+CV2PDB = $(PROGRAMFILES)\VisualD\cv2pdb\cv2pdb.exe
+ZIP    = c:\u\nt\gnu\zip
 
 ###
 
@@ -29,6 +31,8 @@ VSI_LIB     = $(BINDIR)\vsi.lib
 VISUALD     = $(BINDIR)\visuald.dll
 
 all: dte_idl vsi2d package
+
+DBGREL = release
 
 ###########################
 # generate idl from olbs
@@ -72,17 +76,17 @@ sdk\vsi_sources: $(VSI2D_EXE)
 
 # $(VSI_LIB) : sdk\vsi_sources
 vsi_lib:
-	cd sdk && nmake "DMD=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" vsi_release libs
+	cd sdk && nmake "DMD=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" vsi_$(DBGREL) libs
 
 ##################################
 # compile visuald package
 
 package:
-	cd visuald && nmake "DMD=$(DMD2)" release
+	cd visuald && nmake "DMD=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
 
 ##################################
 # create installer
 
 install: dte_idl vsi2d package
-	cd nsis && $(NSIS)\makensis /V1 visuald.nsi
-	zip -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb
+	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
+	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb

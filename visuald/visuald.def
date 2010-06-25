@@ -17,3 +17,5 @@ EXPORTS
 	VSDllUnregisterServerUser  = VSDllUnregisterServerUser  PRIVATE
 	RunDLLRegister             = RunDLLRegister             PRIVATE
 	RunDLLUnregister           = RunDLLUnregister           PRIVATE
+	RunDLLRegisterUser         = RunDLLRegisterUser         PRIVATE
+	RunDLLUnregisterUser       = RunDLLUnregisterUser       PRIVATE

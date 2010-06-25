@@ -147,6 +147,20 @@ void RunDLLUnregister(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdSho
 	VSDllUnregisterServer(ws.ptr);
 }
 
+extern (Windows)
+void RunDLLRegisterUser(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+{
+	wstring ws = to_wstring(lpszCmdLine) ~ cast(wchar)0;
+	VSDllRegisterServerUser(ws.ptr);
+}
+
+extern (Windows)
+void RunDLLUnregisterUser(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+{
+	wstring ws = to_wstring(lpszCmdLine) ~ cast(wchar)0;
+	VSDllUnregisterServerUser(ws.ptr);
+}
+
 } // !version(MAIN)
 
 ///////////////////////////////////////////////////////////////////////
