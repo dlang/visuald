@@ -35,6 +35,9 @@ extern(Windows)
 HRESULT LoadTypeLib(wchar* path, ITypeLib *pLib);
 
 extern(Windows)
+HANDLE LoadLibraryW(wchar* path);
+
+extern(Windows)
 export BOOL SendMessageW(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 extern(Windows)
@@ -155,55 +158,59 @@ void main(string[] argv)
 	wchar* path = cast(wchar*)toUTF16z(olb);
 	ITypeLib lib;
 	HRESULT rc = LoadTypeLib(path, &lib);
+	if(FAILED(rc))
+		throw new Exception("LoadTypeLib failed on " ~ olb);
+		
 	debug writefln("lib = %s", cast(void*)lib);
 	
-	HANDLE m = LoadLibraryA(ivdll.ptr);
+	wchar* ivdllpath = cast(wchar*)toUTF16z(ivdll);
+	HANDLE m = LoadLibraryW(ivdllpath);
 
-	if(m)
-	{
-		debug writefln("m = %s", cast(void*)m);
-		fnDllGetClassObject* fn = cast(fnDllGetClassObject*) 
-			GetProcAddress(m, "DllGetClassObject".ptr);
-		if(fn)
-		{
-			debug writefln("fn = %s", cast(void*)fn);
-			IInterfaceViewer viewer;
-			IClassFactory factory;
-			rc = (*fn)(&CLSID_ITypeLibViewer, &IID_IClassFactory, cast(void**)&factory);
-			debug writefln("factory = %s", cast(void*)factory);
-			if(factory)
-			{
-				rc = factory.CreateInstance(null, &IID_IInterfaceViewer, cast(void**)&viewer);
-				debug writefln("viewer = %s", cast(void*)viewer);
+	if(!m)
+		throw new Exception("LoadLibrary failed on " ~ ivdll);
 
-				HINSTANCE hInst = GetModuleHandleA(null);
-				WNDCLASSA wc;
-				wc.lpszClassName = "DummyWindow";
-				wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-				wc.lpfnWndProc = &WindowProc;
-				wc.hInstance = hInst;
-				wc.hIcon = null; //DefaultWindowIcon.peer;
-				//wc.hIconSm = DefaultWindowSmallIcon.peer;
-				wc.hCursor = LoadCursorA(cast(HINSTANCE) null, IDC_ARROW);
-				wc.hbrBackground = null;
-				wc.lpszMenuName = null;
-				wc.cbClsExtra = 0;
-				wc.cbWndExtra = 0;
-				ATOM atom = RegisterClassA(&wc);
-				assert(atom);
+	debug writefln("m = %s", cast(void*)m);
+	fnDllGetClassObject* fn = cast(fnDllGetClassObject*) GetProcAddress(m, "DllGetClassObject".ptr);
+	if(!fn)
+		throw new Exception("GetProcAddress(\"DllGetClassObject\") fails on " ~ ivdll);
 
-				HWND hwnd = CreateWindowA("DummyWindow".ptr, "".ptr, WS_OVERLAPPED,
-							CW_USEDEFAULT, CW_USEDEFAULT, 10, 10,
-							null, null, hInst, null);
-						writefln("hwnd = %s", cast(void*)hwnd);
-
-				myWindow = hwnd;
-						viewer.View(hwnd, IID_ITypeLib, lib);
-
-				std.file.write(outidl, idltext);
-			}
-		}
+	debug writefln("fn = %s", cast(void*)fn);
+	IInterfaceViewer viewer;
+	IClassFactory factory;
+	rc = (*fn)(&CLSID_ITypeLibViewer, &IID_IClassFactory, cast(void**)&factory);
+	if(FAILED(rc) || !factory)
+		throw new Exception("failed to create class factory");
 		
-	}
-	
+	debug writefln("factory = %s", cast(void*)factory);
+	rc = factory.CreateInstance(null, &IID_IInterfaceViewer, cast(void**)&viewer);
+	if(FAILED(rc) || !viewer)
+		throw new Exception("failed to create interface viewer");
+		
+	debug writefln("viewer = %s", cast(void*)viewer);
+
+	HINSTANCE hInst = GetModuleHandleA(null);
+	WNDCLASSA wc;
+	wc.lpszClassName = "DummyWindow";
+	wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+	wc.lpfnWndProc = &WindowProc;
+	wc.hInstance = hInst;
+	wc.hIcon = null; //DefaultWindowIcon.peer;
+	//wc.hIconSm = DefaultWindowSmallIcon.peer;
+	wc.hCursor = LoadCursorA(cast(HINSTANCE) null, IDC_ARROW);
+	wc.hbrBackground = null;
+	wc.lpszMenuName = null;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	ATOM atom = RegisterClassA(&wc);
+	assert(atom);
+
+	HWND hwnd = CreateWindowA("DummyWindow".ptr, "".ptr, WS_OVERLAPPED,
+				CW_USEDEFAULT, CW_USEDEFAULT, 10, 10,
+				null, null, hInst, null);
+
+	writefln("hwnd = %s", cast(void*)hwnd);
+	myWindow = hwnd;
+	viewer.View(hwnd, IID_ITypeLib, lib);
+
+	std.file.write(outidl, idltext);
 }
