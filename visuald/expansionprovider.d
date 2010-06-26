@@ -200,7 +200,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		foreach(kind; kinds)
 			bstrKinds ~= allocBSTR(kind);
 
-		BSTR bstrPrompt = allocBSTR(prompt);
+		auto bstrPrompt = ScopedBSTR(prompt);
 		int hr = exmgr.InvokeInsertionUI(mView, // pView
 						 this, // pClient
 						 g_languageCLSID, // guidLang
@@ -217,7 +217,6 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 			freeBSTR(type);
 		foreach(kind; bstrKinds)
 			freeBSTR(kind);
-		freeBSTR(bstrPrompt);
 		
 		return SUCCEEDED(hr);
 	}
@@ -232,9 +231,8 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 		mView = view;
 
-		BSTR bstrRelPath = allocBSTR(relativePath);
+		auto bstrRelPath = ScopedBSTR(relativePath);
 		int hr = vsExpansion.InsertSpecificExpansion(snippet, pos, this, g_languageCLSID, bstrRelPath, &expansionSession);
-		freeBSTR(bstrRelPath);
 		if (hr != S_OK || !expansionSession)
 			EndTemplateEditing(true);
 		else
@@ -445,12 +443,10 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		tsInsert.iStartLine = tsInsert.iEndLine = line;
 		tsInsert.iStartIndex = tsInsert.iEndIndex = col;
 
-		BSTR bstrTitle = allocBSTR(titleToInsert);
-		BSTR bstrPath = allocBSTR(pathToInsert);
+		auto bstrTitle = ScopedBSTR(titleToInsert);
+		auto bstrPath = ScopedBSTR(pathToInsert);
 		int hr = vsExpansion.InsertNamedExpansion(bstrTitle, bstrPath, tsInsert, 
 		                                          this, g_languageCLSID, 0, &expansionSession);
-		freeBSTR(bstrTitle);
-		freeBSTR(bstrPath);
 		
 		if (hr != S_OK)
 			EndTemplateEditing(true);
@@ -477,9 +473,8 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		if (!expansionSession)
 			return false;
 
-		BSTR bstrField = allocBSTR(field);
+		auto bstrField = ScopedBSTR(field);
 		expansionSession.GetFieldSpan(bstrField, pts);
-		freeBSTR(bstrField);
 		
 		return true;
 	}
@@ -491,9 +486,8 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 			return false;
 
 		BSTR bstrValue;
-		BSTR bstrField = allocBSTR(field);
+		auto bstrField = ScopedBSTR(field);
 		int hr = expansionSession.GetFieldValue(bstrField, &bstrValue);
-		freeBSTR(bstrField);
 		value = detachBSTR(bstrValue);
 		return hr == S_OK;
 	}
@@ -606,11 +600,9 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		// now set any field defaults that we have.
 		foreach (ref DefaultFieldValue dv; fieldDefaults)
 		{
-			BSTR bstrField = allocBSTR(dv.field);
-			BSTR bstrValue = allocBSTR(dv.value);
+			auto bstrField = ScopedBSTR(dv.field);
+			auto bstrValue = ScopedBSTR(dv.value);
 			expansionSession.SetFieldDefault(bstrField, bstrValue);
-			freeBSTR(bstrField);
-			freeBSTR(bstrValue);
 		}
 
 		fieldDefaults.length = 0;
@@ -746,10 +738,9 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 	{
 		if (mProvider && mProvider.expansionSession)
 		{
-			BSTR fieldName = allocBSTR(name);
+			auto fieldName = ScopedBSTR(name);
 			BSTR fieldValue;
 			int hr = mProvider.expansionSession.GetFieldValue(fieldName, &fieldValue);
-			freeBSTR(fieldName);
 			value = detachBSTR(fieldValue);
 			return SUCCEEDED(hr);
 		}

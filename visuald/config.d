@@ -1705,10 +1705,10 @@ class Config :	DisposingComObject,
 					IVsOutput pIVsOutput;
 					while(eo.Next(1, &pIVsOutput, &fetched) == S_OK && fetched == 1)
 					{
-						BSTR target;
-						if(pIVsOutput.get_CanonicalName(&target) == S_OK)
+						ScopedBSTR target;
+						if(pIVsOutput.get_CanonicalName(&target.bstr) == S_OK)
 						{
-							string targ = detachBSTR(target);
+							string targ = target.detach();
 							libs ~= quoteFilename(targ);
 						}
 						release(pIVsOutput);

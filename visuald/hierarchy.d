@@ -138,6 +138,8 @@ class CFileNode : CHierNode,
 			string projDir = GetCVsHierarchy().GetProjectDir();
 			mFilename = makeRelative(newpath, projDir);
 			SetName(getBaseName(mFilename));
+			
+			GetCVsHierarchy().GetProjectNode().SetProjectFileDirty(true);
 		}
 		catch(Exception)
 		{
@@ -654,7 +656,7 @@ class CFolderNode : CHierContainer
 		string folderPath = location ~ GetFolderPath(folder);
 		if(std.file.exists(folderPath) && std.file.isdir(folderPath))
 			location = folderPath;
-		BSTR bstrLocation = allocBSTR(location);
+		auto bstrLocation = ScopedBSTR(location);
 
 		// The AddProjectItemDlg function uses and can modify the value of the filter string, so here
 		// we need to detach from the bstring and take the ownership of the one returned by the function.
@@ -665,7 +667,7 @@ class CFolderNode : CHierContainer
 						     &g_projectFactoryCLSID, 
 						     cast(IVsProject)GetCVsHierarchy(), dwFlags,
 						     pszExpandDir, pszSelectItem,
-						     &bstrLocation,
+						     &bstrLocation.bstr,
 						     &bstrFilters,
 						     null /*&fDontShowAgain*/);
 
@@ -674,7 +676,6 @@ class CFolderNode : CHierContainer
 			// Take the ownership of the returned string.
 			strFilter = detachBSTR(bstrFilters);
 		}
-		detachBSTR(bstrLocation);
 
 		// NOTE: AddItem() will be called via the hierarchy IVsProject to add items.
 		return hr;

@@ -617,8 +617,6 @@ T release(T)(T p)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// alias wchar* BSTR;
-
 static const size_t clsidLen  = 127;
 static const size_t clsidSize = clsidLen + 1;
 
@@ -769,6 +767,40 @@ wstring to_wstring(in char* pText)
 		return ""w;
 	int len = strlen(pText);
 	return toUTF16(pText[0 .. len]);
+}
+
+///////////////////////////////////////////////////////////////////////
+struct ScopedBSTR
+{
+	BSTR bstr;
+	alias bstr this;
+	
+	this(string s)
+	{
+		bstr = allocBSTR(s);
+	}
+	this(wstring s)
+	{
+		bstr = allocwBSTR(s);
+	}
+	
+	~this()
+	{
+		if(bstr)
+		{
+			freeBSTR(bstr);
+			bstr = null;
+		}
+	}
+	
+	wstring wdetach()
+	{
+		return wdetachBSTR(bstr);
+	}
+	string detach()
+	{
+		return detachBSTR(bstr);
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////

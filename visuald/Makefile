@@ -96,8 +96,8 @@ $(DBGRES) : $(RC) $(RSRC)
 $(RELRES) : $(RC) $(RSRC)
 	rc /fo$(RELRES) $(RC)
 
-resources/pkgcmd.cto: resources/pkgcmd.ctc
-	$(CTC) $? $@ -Ccl -I.
+resources\pkgcmd.cto: resources\pkgcmd.ctc
+	"$(CTC)" $? $@ -Ccl -I.
 
 ######################
 $(DBGDIR)\$(PROJECT).exe : $(DBGDIR)\$(PROJECT)_cv.exe

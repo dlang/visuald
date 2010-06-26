@@ -170,9 +170,8 @@ public:
 			string msg = "Building " ~ target ~ "...\n";
 			if(m_pIVsOutputWindowPane)
 			{
-				BSTR bstrMsg = allocBSTR(msg);
+				ScopedBSTR bstrMsg = ScopedBSTR(msg);
 				m_pIVsOutputWindowPane.OutputString(bstrMsg);
-				freeBSTR(bstrMsg);
 			}
 
 			string workdir = mConfig.GetProjectDir();

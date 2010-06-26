@@ -88,15 +88,14 @@ public:
 		IVsProject pIVsProject = cast(IVsProject) mHierarchy;
 		assert(pIVsProject);
 
-		BSTR cbstrMkDokument;
-		HRESULT hr = pIVsProject.GetMkDocument(pCHierNode.GetVsItemID(), &cbstrMkDokument);
+		ScopedBSTR cbstrMkDokument;
+		HRESULT hr = pIVsProject.GetMkDocument(pCHierNode.GetVsItemID(), &cbstrMkDokument.bstr);
 		if (FAILED(hr))
 			return;
-		scope(exit) SysFreeString(cbstrMkDokument);
 
 		VSADDFILEFLAGS fInputFlags = (flags & ProjectEventFlags.IsNestedProject) ? VSADDFILEFLAGS_IsNestedProjectFile : VSADDFILEFLAGS_NoFlags;
 		
-		wchar* rgstrDocuments[] = [ cbstrMkDokument ];
+		wchar* rgstrDocuments[] = [ cbstrMkDokument.bstr ];
 		hr = srpIVsTrackProjectDocuments2.OnAfterAddFilesEx(pIVsProject, 1, rgstrDocuments.ptr, &fInputFlags);
 		assert(SUCCEEDED(hr));
 	}
