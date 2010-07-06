@@ -628,7 +628,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 
 		int count = lineInfo.length;
 		TokenInfo info;
-		int index = this.GetTokenInfoAt(lineInfo, idx, info);
+		int index = this.GetTokenInfoAt(lineInfo, idx, info, true);
 		if (index < 0)
 			return false;
 		if (index < lineInfo.length - 1 && info.EndIndex == idx)
@@ -705,8 +705,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	{
 		TokenColor type = info.type;
 		if ((flags & WORDEXT_FINDTOKEN) != 0)
-			return type != TokenColor.Comment;
-		return (type == TokenColor.Keyword || type == TokenColor.Identifier || type == TokenColor.String || type == TokenColor.Literal);
+			return type != TokenColor.Comment && type != TokenColor.String;
+		return (type == TokenColor.Keyword || type == TokenColor.Identifier || type == TokenColor.Literal);
 	}
 
 	TokenInfo[] GetLineInfo(int line)
@@ -722,7 +722,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return lineInfo;
 	}
 
-	static int GetTokenInfoAt(TokenInfo[] infoArray, int col, ref TokenInfo info)
+	static int GetTokenInfoAt(TokenInfo[] infoArray, int col, ref TokenInfo info, bool extendLast = false)
 	{
 		for (int i = 0, len = infoArray.length; i < len; i++)
 		{
@@ -737,6 +737,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 				info = infoArray[i];
 				return i;
 			}
+		}
+		if (infoArray.length > 0 && col == infoArray[$-1].EndIndex)
+		{
+			info = infoArray[$-1];
+			return infoArray.length-1;
 		}
 		return -1;
 	}
@@ -1528,6 +1533,33 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return E_FAIL;
 	}
 
+	int HighlightComment(wstring txt, int line, ViewCol idx, out int otherLine, out int otherIndex)
+	{
+		if(SimpleLexer.isStartingComment(txt, idx))
+		{
+			int iState;
+			uint pos;
+			int tokidx = FindLineToken(line, idx, iState, pos);
+			if(pos == idx)
+			{
+				SimpleLexer.scan(iState, txt, pos);
+				if(iState == SimpleLexer.toState(SimpleLexer.State.kNestedComment, 1, 0))
+				{
+					if(FindEndOfComment(iState, line, pos))
+					{
+						otherLine = line;
+						otherIndex = pos;
+						return S_OK;
+					}
+				}
+			}
+		}
+		else if(SimpleLexer.isEndingComment(txt, idx))
+		{
+		}
+		return S_FALSE;
+	}
+	
 	int HighlightMatchingBraces()
 	{
 		int line;
@@ -1535,15 +1567,18 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return rc;
-
-		wstring txt = mCodeWinMgr.mSource.GetText(line, idx, line, idx + 1);
-		if(txt.length == 0)
+		wstring txt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
+		if(txt.length <= idx)
 			return S_OK;
-		if(!SimpleLexer.isOpeningBracket(txt[0]) && !SimpleLexer.isClosingBracket(txt[0]))
-			return S_OK;
-
+		
 		int otherLine, otherIndex;
-		if(!FindMatchingBrace(line, idx, otherLine, otherIndex))
+		int highlightLen = 1;
+		if(HighlightComment(txt, line, idx, otherLine, otherIndex) == S_OK)
+			highlightLen = 2;
+		else if(!SimpleLexer.isOpeningBracket(txt[idx]) && 
+		        !SimpleLexer.isClosingBracket(txt[idx]))
+			return S_OK;
+		else if(!FindMatchingBrace(line, idx, otherLine, otherIndex))
 			return S_OK;
 
 		TextSpan[2] spans;
@@ -1578,6 +1613,39 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			tok--;
 
 		return tok;
+	}
+
+	// continuing from FindLineToken		
+	bool FindEndOfComment(ref int iState, ref int line, ref uint pos)
+	{
+		int lineCount;
+		mCodeWinMgr.mSource.mBuffer.GetLineCount(&lineCount);
+		
+		uint plinepos = pos;
+		while(line < lineCount)
+		{
+			wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
+			while(pos < text.length)
+			{
+				uint ppos = pos;
+				int toktype = SimpleLexer.scan(iState, text, pos);
+				if(toktype != TokenColor.Comment)
+				{
+					if(ppos == 0)
+					{
+						pos = plinepos - 1;
+						line--;
+					}
+					else
+						pos = ppos - 1;
+					return true;
+				}
+			}
+			plinepos = pos;
+			pos = 0;
+			line++;
+		}
+		return false;
 	}
 		
 	bool FindMatchingBrace(int line, int idx, out int otherLine, out int otherIndex)

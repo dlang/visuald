@@ -122,4 +122,11 @@ Version history
 not released Version 0.3.13
 
   * renaming a file in the project did not ensure the project to be saved
-  
+  * dragging a directory into the project now creates a folder and adds all files and
+    folders found in that directory but those that start with "."
+  * added project option "Enable informational warnings" (dmd option -wi)
+  * resource files now have command "View Code"
+  * fix: completion did not detect beginning of word at line end
+  * fix: skipping through a string literal with ctrl-left/right skipped the whole string
+  * now handling some optional project properties to keep AnkhSvn happy.
+  * SCC status of project items is now shown (but not updated yet)

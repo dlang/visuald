@@ -14,6 +14,7 @@ import std.path;
 import std.utf;
 
 import sdk.vsi.vsshell;
+import sdk.vsi.vsshell80;
 
 import hierarchy;
 import comutil;
@@ -190,6 +191,23 @@ public:
 			pvar.vt = VT_BOOL;
 			pvar.boolVal = false;
 			return S_OK;
+			
+		case VSHPROPID_StateIconIndex:
+			pvar.vt = VT_I4;
+			pvar.lVal = STATEICON_NOSTATEICON;
+			return S_OK;
+
+		case VSHPROPID_OverlayIconIndex:
+			pvar.vt = VT_I4;
+			pvar.lVal = OVERLAYICON_NONE;
+			return S_OK;
+			
+		case VSHPROPID_HasEnumerationSideEffects: // keep ankhsvn happy
+		case VSHPROPID_ChildrenEnumerated:
+			pvar.vt = VT_BOOL;
+			pvar.boolVal = false;
+			return S_OK;
+			
 		case VSHPROPID_BrowseObject:
 			pvar.vt = VT_UNKNOWN;
 			return QueryInterface(&IDispatch.iid, cast(void **)&pvar.pdispVal);

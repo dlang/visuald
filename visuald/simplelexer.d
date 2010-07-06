@@ -312,6 +312,24 @@ L_exponent:
 		return s;
 	}
 
+	static bool isStartingComment(wstring txt, int idx)
+	{
+		if(txt[idx] == '/' && idx < txt.length-1 && (txt[idx+1] == '*' || txt[idx+1] == '+'))
+			return true;
+		//if((txt[idx] == '*' || txt[idx] == '+') && idx > 0 && txt[idx-1] == '/')
+		//	return true;
+		return false;
+	}
+	
+	static bool isEndingComment(wstring txt, int idx)
+	{
+		if(txt[idx] == '/' && idx < txt.length-1 && idx > 0 && (txt[idx-1] == '*' || txt[idx-1] == '+'))
+			return true;
+		if((txt[idx] == '*' || txt[idx] == '+') && idx < txt.length-1 && txt[idx+1] == '/')
+			return true;
+		return false;
+	}
+	
 	static bool isOpeningBracket(dchar ch)
 	{
 	    return ch == '[' || ch == '(' || ch == '{';

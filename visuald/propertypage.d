@@ -764,6 +764,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	{
 		mUnindentCheckBox = kLabelWidth;
 		AddControl("", mWarnings      = new CheckBox(mCanvas, "Enable Warnings"));
+		AddControl("", mInfoWarnings  = new CheckBox(mCanvas, "Enable Informational Warnings (DMD 2.041+)"));
 		AddControl("", mQuiet         = new CheckBox(mCanvas, "Suppress Non-Error Messages"));
 		AddControl("", mVerbose       = new CheckBox(mCanvas, "Verbose Compile"));
 		AddControl("", mVtls          = new CheckBox(mCanvas, "Show TLS Variables"));
@@ -774,6 +775,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	override void SetControls(ProjectOptions options)
 	{
 		mWarnings.setChecked(options.warnings);
+		mInfoWarnings.setChecked(options.infowarnings);
 		mQuiet.setChecked(options.quiet);
 		mVerbose.setChecked(options.verbose);
 		mVtls.setChecked(options.vtls);
@@ -787,6 +789,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	{
 		int changes = 0;
 		changes += changeOption(mWarnings.isChecked(), options.warnings, refoptions.warnings);
+		changes += changeOption(mInfoWarnings.isChecked(), options.infowarnings, refoptions.infowarnings);
 		changes += changeOption(mQuiet.isChecked(), options.quiet, refoptions.quiet);
 		changes += changeOption(mVerbose.isChecked(), options.verbose, refoptions.verbose);
 		changes += changeOption(mVtls.isChecked(), options.vtls, refoptions.vtls);
@@ -796,6 +799,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	}
 
 	CheckBox mWarnings;
+	CheckBox mInfoWarnings;
 	CheckBox mQuiet;
 	CheckBox mVerbose;
 	CheckBox mVtls;

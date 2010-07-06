@@ -13,12 +13,14 @@ import sdk.win32.commctrl;
 
 import std.string;
 import std.path;
+import std.file;
 import std.utf;
 
 import sdk.port.vsi;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.fpstfmt;
+import sdk.vsi.ivssccmanager2;
 
 //import vsshlids;
 import comutil;
@@ -29,6 +31,7 @@ import chiernode;
 import chiercontainer;
 import propertypage;
 import fileutil;
+import stringutil;
 import dimagelist;
 import config;
 
@@ -85,6 +88,20 @@ class CFileNode : CHierNode,
 			var.vt = VT_BSTR;
 			var.bstrVal = allocBSTR(GetName());
 			return S_OK;
+
+		case VSHPROPID_StateIconIndex:
+			var.vt = VT_I4;
+			var.lVal = STATEICON_NOSTATEICON;
+			if(IVsSccManager2 sccmgr = queryService!(SVsSccManager, IVsSccManager2)())
+			{
+				scope(exit) release(sccmgr);
+				auto path = _toUTF16z(GetFullPath());
+				VsStateIcon icon;
+				if(sccmgr.GetSccGlyph(1, &path, &icon, null) == S_OK)
+					var.lVal = icon;
+			}
+			return S_OK;
+
 		default:
 			return super.GetProperty(propid, var);
 		}
@@ -238,6 +255,10 @@ class CFileNode : CHierNode,
 				fSupported = true;
 				fEnabled = true;
 				break;
+			case cmdidViewCode:
+				fSupported = true;
+				fEnabled = Config.GetCompileTool(this) == kToolResourceCompiler;
+				break;
 			default:
 				hr = OLECMDERR_E_NOTSUPPORTED;
 				break;
@@ -278,6 +299,9 @@ class CFileNode : CHierNode,
 			case cmdidOpenWith:
 			case cmdidOpen:
 				hr = GetCVsHierarchy().OpenDoc(this, false, nCmdID == cmdidOpenWith, true);
+				break;
+			case cmdidViewCode:
+				hr = GetCVsHierarchy().OpenDoc(this, false, false, true, &LOGVIEWID_Code);
 				break;
 			default:
 				break;
@@ -532,6 +556,7 @@ class CFolderNode : CHierContainer
 			{
 			case cmdidAddNewItem:
 			case cmdidAddExistingItem:
+			case ECMD_ADDFILTER:
 			case cmdidNewFolder:
 				fSupported = true;
 				fEnabled = true;
@@ -582,6 +607,7 @@ class CFolderNode : CHierContainer
 				hr = OnCmdAddItem(this, nCmdID == cmdidAddNewItem);
 				break;
 
+			case ECMD_ADDFILTER:
 			case cmdidNewFolder:
 				hr = OnCmdAddFolder();
 				break;
@@ -1934,7 +1960,7 @@ public: // IVsHierarchyEvent propagation
 		return AddExistingFile(pNode, strNewFileName);
 	}
 
-	CFileNode AddExistingFile(CHierContainer pNode, string strFullPathSource, 
+	CHierNode AddExistingFile(CHierContainer pNode, string strFullPathSource, 
 							  bool fSilent = false, bool fLoad = false, bool moveIfInProject = false)
 	{
 		// get the proper file name
@@ -1943,10 +1969,11 @@ public: // IVsHierarchyEvent propagation
 		if(!CheckFileName(strFullPath))
 			return null;
 
+		bool dir = false;
 		// check the file specified if we are not merely opening an existing project
 		if (!fLoad)
 		{
-			if(!std.file.isfile(strFullPath))
+			if(!std.file.exists(strFullPath))
 			{
 				if (!fSilent)
 				{
@@ -1955,16 +1982,23 @@ public: // IVsHierarchyEvent propagation
 				}
 				return null;
 			}
-			string canonicalName = tolower(strFullPath);
-			CHierNode node = searchNode(GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == canonicalName; });
-			if(node && !moveIfInProject)
+			if(std.file.isdir(strFullPath))
 			{
-				if (!fSilent)
+				dir = true;
+			}
+			else
+			{
+				string canonicalName = tolower(strFullPath);
+				CHierNode node = searchNode(GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == canonicalName; });
+				if(node && !moveIfInProject)
 				{
-					string msg = format("%s is already in the project.", strFullPath);
-					UtilMessageBox(msg, MB_OK, "Add file");
+					if (!fSilent)
+					{
+						string msg = format("%s is already in the project.", strFullPath);
+						UtilMessageBox(msg, MB_OK, "Add file");
+					}
+					return null;
 				}
-				return null;
 			}
 		}
 
@@ -1975,19 +2009,40 @@ public: // IVsHierarchyEvent propagation
 
 		if (!fSilent)
 		{
-			if(!pTrackDoc.CanAddItem(strFullPath))
+			if(dir)
+			{
+				string bname = basename(strFullPath);
+				for(CHierNode node = pNode.GetHeadEx(true); node; node = node.GetNext(true))
+					if(tolower(bname) == node.GetName())
+					{
+						if (!fSilent)
+						{
+							string msg = format("%s already exists in folder.", bname);
+							UtilMessageBox(msg, MB_OK, "Add file");
+						}
+						return null;
+					}
+			}
+			else if(!pTrackDoc.CanAddItem(strFullPath))
 				return null;
 		}
 
 		string projDir = GetProjectDir();
-		string relPath = makeRelative(strFullPath, projDir);
-
-		CFileNode pNewFile = new CFileNode(relPath);
-		pNode.Add(pNewFile);
+		CHierNode pNewNode;
+		if(dir)
+		{
+			pNewNode = new CFolderNode(basename(strFullPath));
+		}
+		else
+		{
+			string relPath = makeRelative(strFullPath, projDir);
+			pNewNode = new CFileNode(relPath);
+		}
+		pNode.Add(pNewNode);
 
 		if (!fSilent)
 		{
-			pTrackDoc.OnItemAdded(pNewFile);
+			pTrackDoc.OnItemAdded(pNewNode);
 
 			//Fire an event to extensibility
 			//CAutomationEvents::FireProjectItemsEvent(pNewFile, CAutomationEvents::ProjectItemsEventsDispIDs::ItemAdded);
@@ -1996,7 +2051,17 @@ public: // IVsHierarchyEvent propagation
 		pProject.GetCVsHierarchy().OnPropertyChanged(pNode, VSHPROPID_Expandable, 0);
 		pProject.SetProjectFileDirty(true);
 
-		return pNewFile;
+		if(dir && !fLoad && !moveIfInProject)
+		{
+			CHierContainer cont = cast(CHierContainer) pNewNode;
+			assert(cont);
+			foreach(string fname; dirEntries(strFullPath, SpanMode.shallow))
+				if(!startsWith(basename(fname), "."))
+					if(!AddExistingFile(cont, fname, fSilent))
+						return null;
+		}
+		
+		return pNewNode;
 	}
 
 	HRESULT RunWizard(
