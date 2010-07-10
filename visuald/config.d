@@ -276,22 +276,22 @@ class ProjectOptions
 				cmd ~= " -Xf" ~ quoteNormalizeFilename(xfilename);
 		}
 
-		string[] imports = split(imppath, ";");
+		string[] imports = tokenizeArgs(imppath);
 		foreach(imp; imports)
 			if(strip(imp).length)
 				cmd ~= " -I" ~ quoteNormalizeFilename(strip(imp));
 
-		string[] fileImports = split(fileImppath, ";");
+		string[] fileImports = tokenizeArgs(fileImppath);
 		foreach(imp; fileImports)
 			if(strip(imp).length)
 				cmd ~= " -J" ~ quoteNormalizeFilename(strip(imp));
 
-		string[] versions = split(versionids, ";");
+		string[] versions = tokenizeArgs(versionids);
 		foreach(ver; versions)
 			if(strip(ver).length)
 				cmd ~= " -version=" ~ strip(ver);
 
-		string[] ids = split(debugids, ";");
+		string[] ids = tokenizeArgs(debugids);
 		foreach(id; ids)
 			if(strip(id).length)
 				cmd ~= " -debug=" ~ strip(id);
@@ -1388,7 +1388,7 @@ class Config :	DisposingComObject,
 		{
 			string dep = file.GetDependencies();
 			dep = mProjectOptions.replaceEnvironment(dep, this, file.GetFilename());
-			string[] deps = split(dep, ";");
+			string[] deps = tokenizeArgs(dep);
 			deps ~= file.GetFilename();
 			string workdir = GetProjectDir();
 			foreach(ref string s; deps)
@@ -1520,7 +1520,7 @@ class Config :	DisposingComObject,
 				files ~= expandedAbsoluteFilename(mProjectOptions.xfilename);
 		}
 
-		string[] toclean = split(mProjectOptions.filesToClean, ";");
+		string[] toclean = tokenizeArgs(mProjectOptions.filesToClean);
 		foreach(s; toclean)
 		{
 			files ~= outdir ~ s;
@@ -1556,7 +1556,7 @@ class Config :	DisposingComObject,
 			if(include.length)
 			{
 				include = mProjectOptions.replaceEnvironment(include, this);
-				string[] incs = split(include, ";");
+				string[] incs = tokenizeArgs(include);
 				foreach(string inc; incs)
 					cmd ~= " /I" ~ quoteFilename(inc);
 			}
@@ -1638,16 +1638,16 @@ class Config :	DisposingComObject,
 		if(cv2pdb.length)
 		{
 			cv2pdb = "echo Converting debug information...\n" ~ cv2pdb;
-			cmd = cmd ~ "\nif errorlevel 1 goto xit\n" ~ cv2pdb;
+			cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ cv2pdb;
 		}
 
 		string pre = strip(mProjectOptions.preBuildCommand);
 		if(pre.length)
-			cmd = pre ~ "\nif errorlevel 1 goto xit\n" ~ cmd;
+			cmd = pre ~ "\nif errorlevel 1 goto reportError\n" ~ cmd;
 		string post = strip(mProjectOptions.postBuildCommand);
 		if(post.length)
-			cmd = cmd ~ "\nif errorlevel 1 goto xit\n" ~ post;
-		cmd ~= "\n:xit\n";
+			cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post;
+		cmd ~= "\n:reportError\n";
 		cmd ~= "if errorlevel 1 echo Building " ~ GetTargetPath() ~ " failed!\n";
 
 		return mProjectOptions.replaceEnvironment(cmd, this);

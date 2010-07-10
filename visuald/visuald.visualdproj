@@ -209,7 +209,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="hierarchy.d" />
   <File path="hierutil.d" />
   <File path="logutil.d" />
-  <File path="propertypage.d" />
   <File path="register.d" />
   <File path="simplelexer.d" />
   <File path="stringutil.d" />
@@ -223,5 +222,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="searchsymbol.d" />
   <File path="windows.d" />
   <File path="wmmsg.d" />
+  <File path="propertypage.d" />
  </Folder>
 </DProject>

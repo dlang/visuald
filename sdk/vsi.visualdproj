@@ -199,6 +199,8 @@
    <File path="port\vsi.d" />
    <File path="port\rpc.d" />
    <File path="port\propidl.d" />
+   <File path="port\in6addr.d" />
+   <File path="port\inaddr.d" />
   </Folder>
   <Folder name="win32">
    <File path="win32\xmldsodid.d" />
@@ -231,6 +233,19 @@
    <File path="win32\objbase.d" />
    <File path="win32\rpcdce.d" />
    <File path="win32\commctrl.d" />
+   <File path="win32\shellapi.d" />
+   <File path="win32\iphlpapi.d" />
+   <File path="win32\iptypes.d" />
+   <File path="win32\ipexport.d" />
+   <File path="win32\iprtrmib.d" />
+   <File path="win32\ifdef.d" />
+   <File path="win32\ifmib.d" />
+   <File path="win32\ipmib.d" />
+   <File path="win32\nldef.d" />
+   <File path="win32\tcpmib.d" />
+   <File path="win32\udpmib.d" />
+   <File path="win32\ipifcons.d" />
+   <File path="win32\tcpestats.d" />
   </Folder>
   <Folder name="vsi">
    <File path="vsi\webmigration.d" />

@@ -83,7 +83,12 @@ class idl2d
 		win_idl_files = [ "windef.h", "sdkddkver.h", "basetsd.h", "ntstatus.h", 
 			"winnt.h", "winbase.h", "winuser.h", "ktmtypes.h", 
 			"winerror.h", "winreg.h", "reason.h", "commctrl.h",
-			"wingdi.h", "prsht.h", "rpcdce.h" /*, "rpcdcep.h"*/ ];
+			"wingdi.h", "prsht.h", 
+			"iphlpapi.h", "iprtrmib.h", "ipexport.h", "iptypes.h", "tcpestats.h",
+			/*"inaddr.h", "in6addr.h",*/
+			"ipifcons.h", "ipmib.h", "tcpmib.h", "udpmib.h",
+			"ifmib.h", "ifdef.h", "nldef.h",
+			"shellapi.h", "rpcdce.h" /*, "rpcdcep.h"*/ ];
 		
 		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "wtypes.idl", "oleidl.idl", 
 			"ocidl.idl", "objidl.idl", "docobj.idl", "oleauto.h", "objbase.h",
@@ -529,6 +534,12 @@ class idl2d
 		case "IEnumDebugMachines2_V7":
 		case "IID_IEnumDebugMachines2_V7":
 
+		// defined with both enum and #define in ipimb.h
+		case "MIB_IPROUTE_TYPE_OTHER":
+		case "MIB_IPROUTE_TYPE_INVALID":
+		case "MIB_IPROUTE_TYPE_DIRECT":
+		case "MIB_IPROUTE_TYPE_INDIRECT":
+
 		case "NULL":
 		case "VOID":
 		case "CONST":
@@ -571,6 +582,7 @@ class idl2d
 			break;
 		}
 
+		// header double include protection
 		if(_endsWith(cond, "_DEFINED") ||
 		   _endsWith(cond, "_INCLUDED") ||
 		   _endsWith(cond, "_h__") ||
@@ -690,7 +702,12 @@ class idl2d
 		{
 version(static_if_to_version)
 {
-			tokIt.text = "version(" ~ pp ~ ") /* " ~ tokIt.text;
+			string cond = pp;
+	version(remove_pp)
+			if(pp == "pp_ifndef")
+				cond = "all";
+
+			tokIt.text = "version(" ~ cond ~ ") /* " ~ tokIt.text;
 			lastIt.text ~= " */ {";
 }
 else
@@ -1231,7 +1248,15 @@ version(all)
 			replaceTokenSequence(tokens, "WINOLEAUTAPI_($_rettype)", "extern(Windows) $_rettype", true);
 			replaceTokenSequence(tokens, "WINOLEAUTAPI", "extern(Windows) HRESULT", true);
 		}
+		if(currentModule == "shellapi")
+		{
+			replaceTokenSequence(tokens, "SHSTDAPI_($_rettype)", "extern(Windows) $_rettype", true);
+			replaceTokenSequence(tokens, "SHSTDAPI", "extern(Windows) HRESULT", true);
+			replaceTokenSequence(tokens, "LWSTDAPIV_($_rettype)", "extern(Windows) $_rettype", true);
+		}
+		replaceTokenSequence(tokens, "STDAPI_($_rettype)", "extern(Windows) $_rettype", true);
 		replaceTokenSequence(tokens, "STDAPI", "extern(Windows) HRESULT", true);
+		replaceTokenSequence(tokens, "STDMETHODCALLTYPE", "extern(Windows)", true);
 		replaceTokenSequence(tokens, "STDAPICALLTYPE", "extern(Windows)", true);
 		replaceTokenSequence(tokens, "WINOLEAPI_($_rettype)", "extern(Windows) $_rettype", true);
 		replaceTokenSequence(tokens, "WINOLEAPI", "extern(Windows) HRESULT", true);
@@ -1252,6 +1277,25 @@ version(all)
 		replaceTokenSequence(tokens, "typedef struct _FIELD_OFFSET { $data } FIELD_OFFSET;",
 		                             "struct _FIELD_OFFSET { $data };", true);
 
+		// IP_DEST_PORT_UNREACHABLE defined twice
+		if(currentModule == "ipexport")
+		{
+			replaceTokenSequence(tokens, "#define IP_DEST_PORT_UNREACHABLE    (IP_STATUS_BASE + 5)\n"
+				"#define IP_HOP_LIMIT_EXCEEDED       (IP_STATUS_BASE + 13)\n",
+				"#define IP_HOP_LIMIT_EXCEEDED       (IP_STATUS_BASE + 13)\n", false);
+		}
+		if(currentModule == "nldef")
+		{
+			// expand MAKE_ROUTE_PROTOCOL
+			replaceTokenSequence(tokens, "MAKE_ROUTE_PROTOCOL($_ident,$_num),",
+		                         "MIB_IPPROTO_ __ $_ident = $_num, PROTO_IP_ __ $_ident = $_num,", true);
+		}
+		if(currentModule == "iphlpapi")
+		{
+			// imports inside extern(C) {}
+			replaceTokenSequence(tokens, "extern \"C\" { $_data }", "$_data", true);
+		}
+		
 		// select unicode version of the API when defining without postfix A/W
 		replaceTokenSequence(tokens, "#ifdef UNICODE\nreturn $_identW(\n#else\nreturn $_identA(\n#endif\n", 
 			"    return $_identW(", false);
@@ -2030,6 +2074,17 @@ else
 			hdr ~= "import " ~ packageWin ~ "xmldom;\n";
 		else if(currentModule == "commctrl")
 			hdr ~= "import " ~ packageWin ~ "objidl;\n";
+		else if(currentModule == "shellapi")
+			hdr ~= "import " ~ packageWin ~ "iphlpapi;\n";
+		else if(currentModule == "ifmib")
+			hdr ~= "import " ~ packageWin ~ "iprtrmib;\n";
+		else if(currentModule == "ipmib")
+			hdr ~= "import " ~ packageWin ~ "iprtrmib;\n";
+		else if(currentModule == "tcpmib")
+			hdr ~= "import " ~ packageWin ~ "iprtrmib;\n";
+		else if(currentModule == "udpmib")
+			hdr ~= "import " ~ packageWin ~ "iprtrmib;\n";
+		
 		hdr ~= "\n";
 
 version(static_if_to_version)

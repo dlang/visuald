@@ -724,7 +724,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 
 	static int GetTokenInfoAt(TokenInfo[] infoArray, int col, ref TokenInfo info, bool extendLast = false)
 	{
-		for (int i = 0, len = infoArray.length; i < len; i++)
+		int len = infoArray.length;
+		for (int i = 0; i < len; i++)
 		{
 			int start = infoArray[i].StartIndex;
 			int end = infoArray[i].EndIndex;
@@ -738,10 +739,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 				return i;
 			}
 		}
-		if (infoArray.length > 0 && col == infoArray[$-1].EndIndex)
+		if (len > 0)
 		{
-			info = infoArray[$-1];
-			return infoArray.length-1;
+			info = infoArray[len-1];
+			if(col == info.EndIndex)
+				return len-1;
 		}
 		return -1;
 	}

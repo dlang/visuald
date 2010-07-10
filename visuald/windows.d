@@ -25,6 +25,10 @@ COLORREF RGB(int r, int g, int b)
 	return cast(COLORREF)(cast(BYTE)r | ((cast(uint)cast(BYTE)g)<<8) | ((cast(uint)cast(BYTE)b)<<16));
 }
 
+version(all)
+	public import sdk.win32.shellapi;
+else
+{
 struct SHFILEINFOW
 {
 	HICON       hIcon;                      // out: icon
@@ -48,6 +52,7 @@ const SHGFI_OPENICON          = 0x000000002;     // get open icon
 const SHGFI_SHELLICONSIZE     = 0x000000004;     // get shell size icon
 const SHGFI_PIDL              = 0x000000008;     // pszPath is a pidl
 const SHGFI_USEFILEATTRIBUTES = 0x000000010;    // use passed dwFileAttribute
+}
 
 const WM_SYSTIMER = 0x118;
 

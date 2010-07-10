@@ -22,6 +22,7 @@ import comutil;
 import logutil;
 import hierutil;
 import fileutil;
+import stringutil;
 import simplelexer;
 import dpackage;
 import dproject;
@@ -89,7 +90,7 @@ string[] GetImportPaths(string file)
 		ProjectOptions opt = cfg.GetProjectOptions();
 		string imp = cfg.GetProjectOptions().imppath;
 		imp = opt.replaceEnvironment(imp, cfg);
-		imports = split(imp, ";");
+		imports = tokenizeArgs(imp);
 		string projectpath = cfg.GetProjectDir();
 		makeFilenamesAbsolute(imports, projectpath);
 		addunique(imports, projectpath);

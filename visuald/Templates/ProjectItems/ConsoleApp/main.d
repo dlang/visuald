@@ -2,8 +2,8 @@ module $safeitemname$;
 
 import std.stdio;
 
-int main(char[][]argv)
+int main(string[] argv)
 {
-   writefln("Hello D-World!\n");
+   writeln("Hello D-World!");
    return 0;
 }

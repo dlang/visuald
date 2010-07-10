@@ -975,7 +975,7 @@ class DmdEventsPropertyPage : ProjectPropertyPage
 		AddControl("Pre-Build Command", mPreCmd = new MultiLineText(mCanvas));
 		AddControl("Post-Build Command", mPostCmd = new MultiLineText(mCanvas));
 
-		Label lab = new Label(mCanvas, "Use \"if errorlevel 1 goto xit\" to cancel on error");
+		Label lab = new Label(mCanvas, "Use \"if errorlevel 1 goto reportError\" to cancel on error");
 		lab.setRect(0, kPageHeight - kLineHeight, kPageWidth, kLineHeight); 
 	}
 

@@ -119,7 +119,7 @@ Version history
     the instruction on http://www.dsource.org/projects/visuald/wiki/Build_from_source
   * updated to cv2pdb 0.14.
 
-not released Version 0.3.13
+2010-07-09 Version 0.3.13
 
   * renaming a file in the project did not ensure the project to be saved
   * dragging a directory into the project now creates a folder and adds all files and
@@ -130,3 +130,8 @@ not released Version 0.3.13
   * fix: skipping through a string literal with ctrl-left/right skipped the whole string
   * now handling some optional project properties to keep AnkhSvn happy.
   * SCC status of project items is now shown (but not updated yet)
+  * minor tweak of the ConsoleApp template
+  * more files translated from the Windows SDK
+  * now using label "reportError" instead of "xit" in build batches
+  * options with multiple arguments are now delimited by both ';' and white spaces, use
+    quotes if any of these need to be part of a file name

@@ -27,14 +27,16 @@ Major Features
   - smart indentation
   - highlight/jump-to matching braces
   - code snippets
+  - parameter tooltips
   
 * Supported Visual Studio versions
   - VS.NET 2003 (some limitations apply)
   - VS 2005
   - VS 2008
-  - VS 2010 (some limitations apply)
+  - VS 2010
   Unfortunately, Express versions of Visual Studio do not support this 
-  kind of extensions. Use the Visual Studio Shell instead (see links below).
+  kind of extensions. Use the Visual Studio Shell instead (see the Visual
+  D home page for links).
   
 * Includes tools to
   - convert some idl/h files of the Windows SDK to D
@@ -54,159 +56,21 @@ For more details, see the full text of the license in the file LICENSE.
 
 Installation
 ------------
-There is a click-through-installer available at http://www.dsource.org/projects/visuald
-that will guide you through the intallation process. The installer lets you select the
-Visual Studio Version for which you want Visual D to be installed. It will always install
-for all users, not only for a single user.
-
-For debugging applications, you should also install cv2pdb which is now included in the
-Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoexp.dat do
-not mix with previous manual installations of cv2pdb (http://www.dsource.org/projects/cv2pdb).
-
-Visual D does not work with the Express versions of Visual Studio. But you can 
-use the (integrated) Visual Studio Shell, which is the IDE stripped of any language
-support. Installing Visual D on top of it will make it an IDE for D.
-
-Here is a download link for VS Shell 2008:
-
-http://www.microsoft.com/downloads/details.aspx?FamilyID=40646580-97FA-4698-B65F-620D4B4B1ED7&displaylang=en
-
-This is the release candidate for VS Shell 2010:
-
-http://www.microsoft.com/downloads/details.aspx?FamilyID=36023a58-2f85-4f7e-bd87-adac086e7ba6&displaylang=en
-
-
-Building from Source
---------------------
-The source of Visual D is available from the SVN repository at 
-http://svn.dsource.org/projects/visuald.
-
-You need the following tools to build Visual D:
- - Visual Studio 2008 (other version might also work, but I haven't tried)
- - Visual Studio Integration SDK
- - DMD 2.042 or later 
- - NSIS
- - for debugging: cv2pdb
-
-Unfortunately, there are some patches necessary to DMD and the D runtime
-library for compilation. These include
-
- * [http://d.puremagic.com/issues/show_bug.cgi?id=3200 Issue 3200] std.xml doesn't follow spec for Tag.text
- * [http://d.puremagic.com/issues/show_bug.cgi?id=3415 Issue 3415] broken JSON output  
- * [http://d.puremagic.com/issues/show_bug.cgi?id=4015 Issue 4015] forward reference in alias causes error
- * [http://d.puremagic.com/issues/show_bug.cgi?id=4069 Issue 4069] std.xml.Document.pretty saves empty elements with spaces and line breaks
- * [http://d.puremagic.com/issues/show_bug.cgi?id=4089 Issue 4089] crash when creating JSON output for incomplete struct 
- * [http://d.puremagic.com/issues/show_bug.cgi?id=4092 Issue 4092] broken memory management for COM objects derived from IUnknown
-
-The standard build procedure for the release version is to execute 
-"nmake install" in the trunk directory.
-
-If you want to start developing or debugging, you should execute
-"nmake" at least once to build the necessary D translations from
-the Windows and Visual Studio SDK. Afterwards you can use the solution visuald.sln.
-It contains the necessary makefile-projects.
-
-You should debug the plugin within Visual Studio using a different
-branch in the registry, so it does not interfere with your working
-environment. To create a configuration named "D", execute
-
- devenv.exe /RootSuffix D
-
-once from the comamnd line. The compiled debug plugin can then be registered
-with nsis\register.bat.
-
-Quick tour of Visual D
--------------------------
-
-== Global Options ==
-
-When starting Visual Studio for the first time after installation of Visual D,
-you might want to check the global settings that can be reached from the Menu
-Tools -> Options -> Projects:
-
- - DMD Install path: The path to DMD you entered within the installer.
- - Executable paths: Directories to be added to the PATH environment variable
-   before executing build commands.
- - Import paths: Directories to be added to the import paths specified in the 
-   project configuration and specified in the DMD configuration file (currently 
-   only used import statement completion and finding symbol definition).
- - Library paths: Directories to be added to the LIB environment variable before 
-   executing build commands.
- - JSON paths: Directories to search for *.json files to find symbol definitions.
- - Resource includes: include paths to pass to the resource compiler when building
-   resource files.
-
-Available text replacements:
- - $(DMDINSTALLDIR): DMD Install path
- - $(WINDOWSSDKDIR): Windows SDK Directory
- - $(DEVENVDIR): Directory of Visual Studio executable devenv.exe
- - $(VSINSTALLDIR): Root directory of Visual Studio installation
- - $(VISUALDINSTALLDIR): Installation folder of Visual D
- - any variable from the system environment enclose in $()
-
-Please note that there is also a new entry "D" in the Text Editor branch. Not 
-all of its settings are implemented yet.
-
-== New Project ==
-
-To create a new Project, navigate to the menu File -> New -> Project and select 
-the "D" entry in the "Other Languages" branch. There are 4 predefined templates
-to select from.
-
-== Editor ==
-
-You might want to check the following features:
-
-  - syntax highlighting supports all sorts of D2 style strings
-  - simple word-completion will show identifiers in the vicinity of the caret from
-    the same buffer (default short-cut Ctrl-Space)
-  - import statement completion: pressing Ctrl-Space in an import statement will
-    complete the token from the files and folders available in the import directories
-  - goto definition (default short-cut F12) takes information from compiler 
-    generated JSON files. A successful build with JSON output enabled is necessary
-    for this function. JSON files can also be precompiled and placed into the
-    directories given in the global options.
-  - smart indentation will indent nicely after pressing Return. Formatting the
-    selection (default shortcut Alt-F8) does not yet work perfectly.
-  - highlight/jump-to matching braces (default shortcut Ctrl-´)
-  - code snippets: let's you select from a list of snippets, some of them allowing
-    token replacements (default shortcut Ctrl-K Ctrl-X). You can also assign
-    the command Edit.InvokeSnippetFromShortcut to a key to insert a snippet
-    after simply typing its shortcut into the text.
-
-== Project configuration ==
-
-The project configuration is similar to what you know from other languages:
-
-Available macro replacements enclosed in $():
- - DMDINSTALLDIR: DMD Install path
- - WINDOWSSDKDIR: Windows SDK Directory
- - DEVENVDIR: Directory of Visual Studio executable devenv.exe
- - VSINSTALLDIR: Root directory of Visual Studio installation
- - VISUALDINSTALLDIR: Installation folder of Visual D
- - PLATFORMNAME: always Win32
- - CONFIGURATIONNAME
- - OUTDIR: Ouptut path
- - INTDIR: Intermediate path
- - INPUTPATH/DIR/FILENAME/EXT/NAME: input file/project file components
- - PROJECTPATH/DIR/FILENAME/EXT/NAME: project file components
- - SAFEPROJECTPATH/DIR/FILENAME/EXT/NAME: project file components without spaces
- - SOLUTIONPATH/DIR/FILENAME/EXT/NAME: solution file components
- - TARGETPATH/DIR/FILENAME/EXT/NAME: target file components
- - any variable from the system environment
 
 Changes
 -------
 For documentation on the changes between this version and
 previous versions, please see the file CHANGES.
 
-Feedback
---------
-The project home for visuald is here:
+More Information
+----------------
+For more information on installation, a quick tour of Visual D with some
+screen shots and feedback, please visit the project home for Visual D here:
 
     http://www.dsource.org/projects/visuald
 
 There's also a forum, where you can leave your comments and suggestions.
+Bug reports can be filed into the ticket system.
 
 Have fun,
 Rainer Schuetze
