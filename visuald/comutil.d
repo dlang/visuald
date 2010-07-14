@@ -692,6 +692,16 @@ wchar* string2OLESTR(string s)
 	return p;
 }
 
+string detachOLESTR(wchar* oleStr)
+{
+	if(!oleStr)
+		return null;
+
+	string s = to_string(oleStr);
+	CoTaskMemFree(oleStr);
+	return s;
+}
+
 wchar* _toUTF16z(string s)
 {
 	// const for D2

@@ -91,6 +91,8 @@ string[] GetImportPaths(string file)
 		string imp = cfg.GetProjectOptions().imppath;
 		imp = opt.replaceEnvironment(imp, cfg);
 		imports = tokenizeArgs(imp);
+		foreach(ref i; imports)
+			i = unquoteArgument(i);
 		string projectpath = cfg.GetProjectDir();
 		makeFilenamesAbsolute(imports, projectpath);
 		addunique(imports, projectpath);
@@ -692,6 +694,13 @@ class MethodData : DisposingComObject, IVsMethodData
 		mMethodTipWindow = VsLocalCreateInstance!IVsMethodTipWindow (&uuid_coclass_VsMethodTipWindow, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
 		if (mMethodTipWindow)
 			mMethodTipWindow.SetMethodData(this);
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsMethodData) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
 	}
 
 	void Refresh(IVsTextView textView, Definition[] methods, int currentParameter, TextSpan context)

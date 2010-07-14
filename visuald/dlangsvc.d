@@ -136,6 +136,19 @@ class LanguageService : DisposingComObject,
 	override HRESULT GetNameOfLocation(IVsTextBuffer pBuffer, in int iLine, in int iCol, BSTR* pbstrName, int* piLineOffset)
 	{
 		mixin(LogCallMix);
+
+		/*
+		string fname;
+		if(IPersistFileFormat fileFormat = qi_cast!IPersistFileFormat(pBuffer))
+		{
+			scope(exit) release(fileFormat);
+			uint format;
+			LPOLESTR filename;
+			if(fileFormat.GetCurFile(&filename, &format) == S_OK)
+				fname = detachOLESTR(filename);
+		}
+		*pbstrName = allocBSTR(fname);
+		*/
 		*pbstrName = null;
 		*piLineOffset = 0;
 		return S_OK;
@@ -223,7 +236,7 @@ class LanguageService : DisposingComObject,
 
 	override HRESULT QueryInvalidEncoding(in uint Format, BSTR* pbstrMessage)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
 

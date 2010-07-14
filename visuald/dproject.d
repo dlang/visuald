@@ -817,7 +817,8 @@ class Project : CVsHierarchy,
 
 	override int GetMkDocument(in VSITEMID itemid, BSTR *pbstrMkDocument)
 	{
-		logCall("GetMkDocument(itemid=%s, pbstrMkDocument=%s)", _toLog(itemid), _toLog(pbstrMkDocument));
+		mixin(LogCallMix2);
+		//logCall("%s.GetMkDocument(this=%s, itemid=%s, pbstrMkDocument=%s)", this, cast(void*)this, _toLog(itemid), _toLog(pbstrMkDocument));
 
 		if(CHierNode pNode = VSITEMID2Node(itemid))
 		{

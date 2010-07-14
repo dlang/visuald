@@ -14,6 +14,8 @@ import logutil;
 
 import sdk.vsi.stdidcmd;
 import sdk.vsi.vsshell;
+import sdk.vsi.vsdebugguids;
+import sdk.vsi.vsdbgcmd;
 
 debug
 {
@@ -2146,6 +2148,273 @@ const enumName[] VsUIHierarchyWindowCmdIds_names =
 	{ UIHWCMDID_CancelLabelEdit, "UIHWCMDID_CancelLabelEdit" },
 ];
 
+const enumName[] VSDebugCommandCmdIds_names =
+[
+{ cmdidBreakpointsWindowShow, "cmdidBreakpointsWindowShow" },
+	{ cmdidDisasmWindowShow, "cmdidDisasmWindowShow" },
+	{ cmdidProgramToDebugShow, "cmdidProgramToDebugShow" },
+	{ cmdidRegisterWindowShow, "cmdidRegisterWindowShow" },
+	{ cmdidModulesWindowShow, "cmdidModulesWindowShow" },
+	{ cmdidApplyCodeChanges, "cmdidApplyCodeChanges" },
+	{ cmdidStopApplyCodeChanges, "cmdidStopApplyCodeChanges" },
+	{ cmdidGoToDisassembly, "cmdidGoToDisassembly" },
+	{ cmdidShowDebugOutput, "cmdidShowDebugOutput" },
+	{ cmdidStepUnitLine, "cmdidStepUnitLine" },
+	{ cmdidStepUnitStatement, "cmdidStepUnitStatement" },
+	{ cmdidStepUnitInstruction, "cmdidStepUnitInstruction" },
+	{ cmdidStepUnitList, "cmdidStepUnitList" },
+	{ cmdidStepUnitListEnum, "cmdidStepUnitListEnum" },
+	{ cmdidWriteCrashDump, "cmdidWriteCrashDump" },
+	{ cmdidProcessList, "cmdidProcessList" },
+	{ cmdidProcessListEnum, "cmdidProcessListEnum" },
+	{ cmdidThreadList, "cmdidThreadList" },
+	{ cmdidThreadListEnum, "cmdidThreadListEnum" },
+	{ cmdidStackFrameList, "cmdidStackFrameList" },
+	{ cmdidStackFrameListEnum, "cmdidStackFrameListEnum" },
+	{ cmdidDisableAllBreakpoints, "cmdidDisableAllBreakpoints" },
+	{ cmdidEnableAllBreakpoints, "cmdidEnableAllBreakpoints" },
+	{ cmdidToggleAllBreakpoints, "cmdidToggleAllBreakpoints" },
+	{ cmdidTerminateAll, "cmdidTerminateAll" },
+	{ cmdidSymbolOptions, "cmdidSymbolOptions" },
+	{ cmdidLoadSymbolsFromCurrentPath, "cmdidLoadSymbolsFromCurrentPath" },
+	{ cmdidSymbolLoadInfo, "cmdidSymbolLoadInfo" },
+	{ cmdidStopEvaluatingExpression, "cmdidStopEvaluatingExpression" },
+	{ cmdidAttachedProcsWindowShow, "cmdidAttachedProcsWindowShow" },
+	{ cmdidToggleFlaggedThreads, "cmdidToggleFlaggedThreads" },
+	{ cmdidThreadFlag, "cmdidThreadFlag" },
+	{ cmdidThreadUnflag, "cmdidThreadUnflag" },
+	{ cmdidJustMyCode, "cmdidJustMyCode" },
+	{ cmdidNewFileBreakpoint, "cmdidNewFileBreakpoint" },
+	{ cmdidNewFunctionBreakpoint, "cmdidNewFunctionBreakpoint" },
+	{ cmdidNewAddressBreakpoint, "cmdidNewAddressBreakpoint" },
+	{ cmdidNewDataBreakpoint, "cmdidNewDataBreakpoint" },
+	{ cmdidThreadUnflagAll, "cmdidThreadUnflagAll" },
+	{ cmdidInsertTracepoint, "cmdidInsertTracepoint" },
+	{ cmdidBreakpointLocation, "cmdidBreakpointLocation" },
+	{ cmdidBreakpointCondition, "cmdidBreakpointCondition" },
+	{ cmdidBreakpointHitCount, "cmdidBreakpointHitCount" },
+	{ cmdidBreakpointConstraints, "cmdidBreakpointConstraints" },
+	{ cmdidBreakpointAction, "cmdidBreakpointAction" },
+	{ cmdidCreateObjectID, "cmdidCreateObjectID" },
+	{ cmdidRunMacrosForBreakpointsJustHit, "cmdidRunMacrosForBreakpointsJustHit" },
+	{ cmdidCopyExpression, "cmdidCopyExpression" },
+	{ cmdidCopyValue, "cmdidCopyValue" },
+	{ cmdidDestroyObjectID, "cmdidDestroyObjectID" },
+	{ cmdidOutputOnException, "cmdidOutputOnException" },
+	{ cmdidOutputOnModuleLoad, "cmdidOutputOnModuleLoad" },
+	{ cmdidOutputOnModuleUnload, "cmdidOutputOnModuleUnload" },
+	{ cmdidOutputOnProcessDestroy, "cmdidOutputOnProcessDestroy" },
+	{ cmdidOutputOnThreadDestroy, "cmdidOutputOnThreadDestroy" },
+	{ cmdidOutputOnOutputDebugString, "cmdidOutputOnOutputDebugString" },
+	{ cmdidSingleProcStepInto, "cmdidSingleProcStepInto" },
+	{ cmdidSingleProcStepOver, "cmdidSingleProcStepOver" },
+	{ cmdidSingleProcStepOut, "cmdidSingleProcStepOut" },
+	{ cmdidToggleCurrentThreadFlag, "cmdidToggleCurrentThreadFlag" },
+	{ cmdidShowThreadIpIndicators, "cmdidShowThreadIpIndicators" },
+	{ cmdidLoadSymbolsFromPublic, "cmdidLoadSymbolsFromPublic" },
+	{ cmdidLoadSymbolsDisabled, "cmdidLoadSymbolsDisabled" },
+	{ cmdidOutputOnStepFilter, "cmdidOutputOnStepFilter" },
+	{ cmdidStepFilterToggle, "cmdidStepFilterToggle" },
+	{ cmdidShowStepIntoSpecificMenu, "cmdidShowStepIntoSpecificMenu" },
+
+// See above for explanation of these constants...
+	{ cmdidMemoryWindowShow, "cmdidMemoryWindowShow" },
+	{ cmdidMemoryWindowShow1, "cmdidMemoryWindowShow1" },
+	{ cmdidMemoryWindowShow2, "cmdidMemoryWindowShow2" },
+	{ cmdidMemoryWindowShow3, "cmdidMemoryWindowShow3" },
+	{ cmdidMemoryWindowShow4, "cmdidMemoryWindowShow4" },
+	{ cmdidWatchWindowShow, "cmdidWatchWindowShow" },
+	{ cmdidWatchWindowShow1, "cmdidWatchWindowShow1" },
+	{ cmdidWatchWindowShow2, "cmdidWatchWindowShow2" },
+	{ cmdidWatchWindowShow3, "cmdidWatchWindowShow3" },
+	{ cmdidWatchWindowShow4, "cmdidWatchWindowShow4" },
+
+// Breakpoint Window commands
+	{ cmdidBreakpointsWindowFirst, "cmdidBreakpointsWindowFirst" },
+	{ cmdidBreakpointsWindowLast, "cmdidBreakpointsWindowLast" },
+
+	{ cmdidBreakpointsWindowNewBreakpoint, "cmdidBreakpointsWindowNewBreakpoint" },
+	{ cmdidBreakpointsWindowNewGroup, "cmdidBreakpointsWindowNewGroup" },
+	{ cmdidBreakpointsWindowDelete, "cmdidBreakpointsWindowDelete" },
+	{ cmdidBreakpointsWindowProperties, "cmdidBreakpointsWindowProperties" },
+	{ cmdidBreakpointsWindowDefaultGroup, "cmdidBreakpointsWindowDefaultGroup" },
+	{ cmdidBreakpointsWindowGoToSource, "cmdidBreakpointsWindowGoToSource" },
+	{ cmdidBreakpointsWindowGoToDisassembly, "cmdidBreakpointsWindowGoToDisassembly" },
+	{ cmdidBreakpointsWindowGoToBreakpoint, "cmdidBreakpointsWindowGoToBreakpoint" },
+
+	{ cmdidBreakpointsWindowColumnName, "cmdidBreakpointsWindowColumnName" },
+	{ cmdidBreakpointsWindowColumnCondition, "cmdidBreakpointsWindowColumnCondition" },
+	{ cmdidBreakpointsWindowColumnHitCount, "cmdidBreakpointsWindowColumnHitCount" },
+	{ cmdidBreakpointsWindowColumnLanguage, "cmdidBreakpointsWindowColumnLanguage" },
+	{ cmdidBreakpointsWindowColumnFunction, "cmdidBreakpointsWindowColumnFunction" },
+	{ cmdidBreakpointsWindowColumnFile, "cmdidBreakpointsWindowColumnFile" },
+	{ cmdidBreakpointsWindowColumnAddress, "cmdidBreakpointsWindowColumnAddress" },
+	{ cmdidBreakpointsWindowColumnData, "cmdidBreakpointsWindowColumnData" },
+	{ cmdidBreakpointsWindowColumnProcess, "cmdidBreakpointsWindowColumnProcess" },
+	{ cmdidBreakpointsWindowColumnConstraints, "cmdidBreakpointsWindowColumnConstraints" },
+	{ cmdidBreakpointsWindowColumnAction, "cmdidBreakpointsWindowColumnAction" },
+
+// Disassembly Window commands
+	{ cmdidGoToSource, "cmdidGoToSource" },
+	{ cmdidShowDisasmAddress, "cmdidShowDisasmAddress" },
+	{ cmdidShowDisasmSource, "cmdidShowDisasmSource" },
+	{ cmdidShowDisasmCodeBytes, "cmdidShowDisasmCodeBytes" },
+	{ cmdidShowDisasmSymbolNames, "cmdidShowDisasmSymbolNames" },
+	{ cmdidShowDisasmLineNumbers, "cmdidShowDisasmLineNumbers" },
+	{ cmdidShowDisasmToolbar, "cmdidShowDisasmToolbar" },
+	{ cmdidDisasmExpression, "cmdidDisasmExpression" },
+	{ cmdidToggleDisassembly, "cmdidToggleDisassembly" },
+
+// Memory Window commands
+	{ cmdidMemoryExpression, "cmdidMemoryExpression" },
+	{ cmdidMemoryExpression1, "cmdidMemoryExpression1" },
+	{ cmdidMemoryExpression2, "cmdidMemoryExpression2" },
+	{ cmdidMemoryExpression3, "cmdidMemoryExpression3" },
+	{ cmdidMemoryExpression4, "cmdidMemoryExpression4" },
+
+	{ cmdidAutoReevaluate, "cmdidAutoReevaluate" },
+	{ cmdidAutoReevaluate1, "cmdidAutoReevaluate1" },
+	{ cmdidAutoReevaluate2, "cmdidAutoReevaluate2" },
+	{ cmdidAutoReevaluate3, "cmdidAutoReevaluate3" },
+	{ cmdidAutoReevaluate4, "cmdidAutoReevaluate4" },
+
+	{ cmdidMemoryColumns, "cmdidMemoryColumns" },
+	{ cmdidMemoryColumns1, "cmdidMemoryColumns1" },
+	{ cmdidMemoryColumns2, "cmdidMemoryColumns2" },
+	{ cmdidMemoryColumns3, "cmdidMemoryColumns3" },
+	{ cmdidMemoryColumns4, "cmdidMemoryColumns4" },
+
+	{ cmdidColCountList, "cmdidColCountList" },
+	{ cmdidColCountList1, "cmdidColCountList1" },
+	{ cmdidColCountList2, "cmdidColCountList2" },
+	{ cmdidColCountList3, "cmdidColCountList3" },
+	{ cmdidColCountList4, "cmdidColCountList4" },
+
+// The following apply to all instances of the memory windows.  If any of these
+// are added to the toolbar, they must be made per-instance!
+	{ cmdidShowNoData, "cmdidShowNoData" },
+	{ cmdidOneByteInt, "cmdidOneByteInt" },
+	{ cmdidTwoByteInt, "cmdidTwoByteInt" },
+	{ cmdidFourByteInt, "cmdidFourByteInt" },
+	{ cmdidEightByteInt, "cmdidEightByteInt" },
+	{ cmdidFloat, "cmdidFloat" },
+	{ cmdidDouble, "cmdidDouble" },
+	{ cmdidFormatHex, "cmdidFormatHex" },
+	{ cmdidFormatSigned, "cmdidFormatSigned" },
+	{ cmdidFormatUnsigned, "cmdidFormatUnsigned" },
+	{ cmdidFormatBigEndian, "cmdidFormatBigEndian" },
+	{ cmdidShowNoText, "cmdidShowNoText" },
+	{ cmdidShowAnsiText, "cmdidShowAnsiText" },
+	{ cmdidShowUnicodeText, "cmdidShowUnicodeText" },
+	{ cmdidEditValue, "cmdidEditValue" },
+	{ cmdidShowToolbar, "cmdidShowToolbar" },
+
+// MemoryView-specific commands.  These are used internally by the MemoryView implementation.
+	{ cmdidStopInPlaceEdit, "cmdidStopInPlaceEdit" },
+
+// Registers Window commands
+	{ cmdidRegisterWindowFirst, "cmdidRegisterWindowFirst" },
+	{ cmdidRegWinGroupFirst, "cmdidRegWinGroupFirst" },
+	{ cmdidRegWinGroupLast, "cmdidRegWinGroupLast" },
+
+	{ cmdidRegisterWindowLast, "cmdidRegisterWindowLast" },
+
+// QuickWatch commands
+	{ cmdidQuickWatchFirst, "cmdidQuickWatchFirst" },
+	{ cmdidQuickWatchLast, "cmdidQuickWatchLast" },
+
+// Modules Window commands
+	{ cmdidModulesWindowFirst, "cmdidModulesWindowFirst" },
+	{ cmdidModulesWindowLast, "cmdidModulesWindowLast" },
+
+	{ cmdidReloadSymbols, "cmdidReloadSymbols" },
+	{ cmdidShowAllModules, "cmdidShowAllModules" },
+	{ cmdidToggleUserCode, "cmdidToggleUserCode" },
+
+// step into specific
+	{ cmdidStepIntoSpecificFirst, "cmdidStepIntoSpecificFirst" },
+	{ cmdidStepIntoSpecificLast, "cmdidStepIntoSpecificLast" },
+
+// Call Stack commands
+	{ cmdidCallStackWindowFirst, "cmdidCallStackWindowFirst" },
+	{ cmdidCallStackWindowLast, "cmdidCallStackWindowLast" },
+
+	{ cmdidSetCurrentFrame, "cmdidSetCurrentFrame" },
+	{ cmdidCallStackValues, "cmdidCallStackValues" },
+	{ cmdidCallStackTypes, "cmdidCallStackTypes" },
+	{ cmdidCallStackNames, "cmdidCallStackNames" },
+	{ cmdidCallStackModules, "cmdidCallStackModules" },
+	{ cmdidCallStackLineOffset, "cmdidCallStackLineOffset" },
+	{ cmdidCallStackByteOffset, "cmdidCallStackByteOffset" },
+	{ cmdidCrossThreadCallStack, "cmdidCrossThreadCallStack" },
+	{ cmdidShowExternalCode, "cmdidShowExternalCode" },
+	{ cmdidUnwindFromException, "cmdidUnwindFromException" },
+
+// Datatip commands
+	{ cmdidDatatipFirst, "cmdidDatatipFirst" },
+	{ cmdidDatatipLast, "cmdidDatatipLast" },
+
+	{ cmdidDatatipNoTransparency, "cmdidDatatipNoTransparency" },
+	{ cmdidDatatipLowTransparency, "cmdidDatatipLowTransparency" },
+	{ cmdidDatatipMedTransparency, "cmdidDatatipMedTransparency" },
+	{ cmdidDatatipHighTransparency, "cmdidDatatipHighTransparency" },
+
+// Attached Processes Window commands
+	{ cmdidAttachedProcsWindowFirst, "cmdidAttachedProcsWindowFirst" },
+	{ cmdidAttachedProcsWindowLast, "cmdidAttachedProcsWindowLast" },
+
+	{ cmdidAttachedProcsStartProcess, "cmdidAttachedProcsStartProcess" },
+	{ cmdidAttachedProcsPauseProcess, "cmdidAttachedProcsPauseProcess" },
+	{ cmdidAttachedProcsStepIntoProcess, "cmdidAttachedProcsStepIntoProcess" },
+	{ cmdidAttachedProcsStepOverProcess, "cmdidAttachedProcsStepOverProcess" },
+	{ cmdidAttachedProcsStepOutProcess, "cmdidAttachedProcsStepOutProcess" },
+	{ cmdidAttachedProcsDetachProcess, "cmdidAttachedProcsDetachProcess" },
+	{ cmdidAttachedProcsTerminateProcess, "cmdidAttachedProcsTerminateProcess" },
+	{ cmdidAttachedProcsDetachOnStop, "cmdidAttachedProcsDetachOnStop" },
+	{ cmdidAttachedProcsColumnName, "cmdidAttachedProcsColumnName" },
+	{ cmdidAttachedProcsColumnID, "cmdidAttachedProcsColumnID" },
+	{ cmdidAttachedProcsColumnPath, "cmdidAttachedProcsColumnPath" },
+	{ cmdidAttachedProcsColumnTitle, "cmdidAttachedProcsColumnTitle" },
+	{ cmdidAttachedProcsColumnMachine, "cmdidAttachedProcsColumnMachine" },
+	{ cmdidAttachedProcsColumnState, "cmdidAttachedProcsColumnState" },
+	{ cmdidAttachedProcsColumnTransport, "cmdidAttachedProcsColumnTransport" },
+	{ cmdidAttachedProcsColumnTransportQualifier, "cmdidAttachedProcsColumnTransportQualifier" },
+
+	{ cmdidThreadIpMarkerSwitchContext, "cmdidThreadIpMarkerSwitchContext" },
+	{ cmdidThreadIpMarkerFlagUnflag, "cmdidThreadIpMarkerFlagUnflag" },
+	{ cmdidThreadIpMarkersSwitchContext, "cmdidThreadIpMarkersSwitchContext" },
+	{ cmdidThreadIpMarkersSwitchContextFirst, "cmdidThreadIpMarkersSwitchContextFirst" },
+	{ cmdidThreadIpMarkersSwitchContextLast, "cmdidThreadIpMarkersSwitchContextLast" },
+	{ cmdidThreadIpMarkersFlag, "cmdidThreadIpMarkersFlag" },
+	{ cmdidThreadIpMarkersFlagFirst, "cmdidThreadIpMarkersFlagFirst" },
+	{ cmdidThreadIpMarkersFlagLast, "cmdidThreadIpMarkersFlagLast" },
+	{ cmdidThreadIpMarkersUnflag, "cmdidThreadIpMarkersUnflag" },
+	{ cmdidThreadIpMarkersUnflagFirst, "cmdidThreadIpMarkersUnflagFirst" },
+	{ cmdidThreadIpMarkersUnflagLast, "cmdidThreadIpMarkersUnflagLast" },
+
+// Command Window commands
+// while all commands are available in the command window,
+// these are not on any menus by default
+//
+	{ cmdidCommandWindowFirst, "cmdidCommandWindowFirst" },
+	{ cmdidCommandWindowLast, "cmdidCommandWindowLast" },
+
+	{ cmdidListMemory, "cmdidListMemory" },
+	{ cmdidListCallStack, "cmdidListCallStack" },
+	{ cmdidListDisassembly, "cmdidListDisassembly" },
+	{ cmdidListRegisters, "cmdidListRegisters" },
+	{ cmdidListThreads, "cmdidListThreads" },
+	{ cmdidSetRadix, "cmdidSetRadix" },
+	{ cmdidSetCurrentThread, "cmdidSetCurrentThread" },
+	{ cmdidSetCurrentStackFrame, "cmdidSetCurrentStackFrame" },
+	{ cmdidListSource, "cmdidListSource" },
+	{ cmdidSymbolPath, "cmdidSymbolPath" },
+	{ cmdidListModules, "cmdidListModules" },
+	{ cmdidListProcesses, "cmdidListProcesses" },
+	{ cmdidSetCurrentProcess, "cmdidSetCurrentProcess" },
+];
+
+		
 string enum_string(in enumName[] names, uint cmd)
 {
 	foreach(ref enumName en; names)
@@ -2169,9 +2438,13 @@ debug
 	{
 		name = enum_string(VSStd97CmdID_names, cmdID);
 	}
-	if(guidCmdGroup == GUID_VsUIHierarchyWindowCmds)
+	else if(guidCmdGroup == GUID_VsUIHierarchyWindowCmds)
 	{
 		name = enum_string(VsUIHierarchyWindowCmdIds_names, cmdID);
+	}
+	else if(guidCmdGroup == guidVSDebugCommand)
+	{
+		name = enum_string(VSDebugCommandCmdIds_names, cmdID);
 	}
 }
 

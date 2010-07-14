@@ -1382,7 +1382,8 @@ version(none)
 		default:
 			synchronized(gVsItemMap_sync)
 				if(CHierNode* pNode = itemid in gVsItemMap)
-					return *pNode;
+					if(pNode.GetRootNode() == GetRootNode())
+						return *pNode;
 		}
 		return null;
 	}

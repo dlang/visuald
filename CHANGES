@@ -135,3 +135,6 @@ Version history
   * now using label "reportError" instead of "xit" in build batches
   * options with multiple arguments are now delimited by both ';' and white spaces, use
     quotes if any of these need to be part of a file name
+
+not released Version 0.3.14
+

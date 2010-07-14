@@ -1523,7 +1523,7 @@ class Config :	DisposingComObject,
 		string[] toclean = tokenizeArgs(mProjectOptions.filesToClean);
 		foreach(s; toclean)
 		{
-			files ~= outdir ~ s;
+			files ~= outdir ~ unquoteArgument(s);
 			if(outdir != intermediatedir)
 				files ~= intermediatedir ~ s;
 		}
