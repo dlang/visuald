@@ -56,10 +56,11 @@ CMDS_SECTION g_packageCLSID
 	NEWGROUPS_END
 
     BUTTONS_BEGIN
-		// Command ID,                     Group ID,                            Priority, Icon ID,                 Button Type, Flags, Button Text,      Menu Text, ToolTip Text, Command Well Text, English Command Name, Localized Command Name;
-		g_commandSetCLSID:CmdSearchSymbol, g_packageCLSID:IDG_VD_SEARCH,        0xF000,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search S&ymbol", ,          "Search Symbol in D Projects", , "VisualD.SearchSymbol";
-		g_commandSetCLSID:CmdSearchFile,   g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search &File",   ,          "Search File in Solution",     , "VisualD.SearchFile";
-		g_commandSetCLSID:CmdShowScope,    g_packageCLSID:IDG_VD_EDIT,          0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show &Scope",    ,          "Show Scope of Cursor",        , "VisualD.ShowScope";
+		// Command ID,                      Group ID,                            Priority, Icon ID,                 Button Type, Flags, Button Text,           Menu Text,              ToolTip Text, Command Well Text, English Command, Localized Command Name;
+		g_commandSetCLSID:CmdSearchSymbol,  g_packageCLSID:IDG_VD_SEARCH,        0xF000,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search Symbol",       "Search S&ymbol",       "Search Symbol in D Projects", , "SearchSymbol",  "SearchSymbol";
+		g_commandSetCLSID:CmdSearchFile,    g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search File",         "Search &File",         "Search File in Solution",     , "SearchFile",    "SearchFile";
+		g_commandSetCLSID:CmdShowScope,     g_packageCLSID:IDG_VD_EDIT,          0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show Scope",          "Show &Scope",          "Show Scope of Cursor",        , "ShowScope",     "ShowScope";
+		g_commandSetCLSID:CmdShowMethodTip, g_packageCLSID:IDG_VD_EDIT,          0xF200,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show Parameter Info", "Show &Parameter Info", "Show Parameter Info",         , "ParameterInfo", "ParameterInfo";
 		
 		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID
 		// as the command set GUID. Also, by specifying blank for the FLAGS, this command is

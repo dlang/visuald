@@ -823,6 +823,7 @@ class Project : CVsHierarchy,
 		if(CHierNode pNode = VSITEMID2Node(itemid))
 		{
 			*pbstrMkDocument = allocBSTR(pNode.GetFullPath());
+			logCall("%s.GetMkDocument returns pbstrMkDocument=%s", this, to_string(*pbstrMkDocument));
 			return S_OK;
 		}
 		return returnError(E_INVALIDARG);

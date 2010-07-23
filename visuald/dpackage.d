@@ -89,7 +89,7 @@ const LanguageProperty g_languageProperties[] =
   { "ShowDropdownBarOption "w,       1 },
   { "Single Code Window Only"w,      1 },
   { "EnableAdvancedMembersOption"w,  1 },
-  { "Support CF_HTML"w,              1 },
+  { "Support CF_HTML"w,              0 },
   { "EnableLineNumbersOption"w,      1 },
   { "HideAdvancedMembersByDefault"w, 0 },
 ];
@@ -361,7 +361,7 @@ class Package : DisposingComObject,
 	override int IdBmpSplash(uint* pIdBmp)
 	{
 		mixin(LogCallMix);
-		*pIdBmp = 1001;
+		*pIdBmp = BMP_SPLASHSCRN;
 		return S_OK;
 	}
 
@@ -387,7 +387,7 @@ class Package : DisposingComObject,
 	override int IdIcoLogoForAboutbox(uint* pIdIco)
 	{
 		logCall("%s.IdIcoLogoForAboutbox(pIdIco=%s)", this, pIdIco);
-		*pIdIco = 1000;
+		*pIdIco = ICON_ABOUTBOX;
 		return S_OK;
 	}
 
@@ -675,6 +675,7 @@ class GlobalOptions
 	}
 }
 
+// not used:
 class CommandManager
 {
 	HRESULT AddCommand(string name)

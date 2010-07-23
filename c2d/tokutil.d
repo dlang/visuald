@@ -202,6 +202,20 @@ bool isOpeningBracket(int type)
 	return (type == Token.BraceL || type == Token.BracketL || type == Token.ParenL);
 }
 
+bool isBracketPair(dchar ch1, dchar ch2)
+{
+	switch(ch1)
+	{
+	case '{': return ch2 == '}';
+	case '}': return ch2 == '{';
+	case '(': return ch2 == ')';
+	case ')': return ch2 == ')';
+	case '[': return ch2 == ']';
+	case ']': return ch2 == '[';
+	default:  return false;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // iterator on token after closing bracket
 bool advanceToClosingBracket(ref TokenIterator it, TokenIterator stopIt)

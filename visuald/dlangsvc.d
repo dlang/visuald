@@ -23,6 +23,7 @@ import logutil;
 import hierutil;
 import fileutil;
 import stringutil;
+import pkgutil;
 import simplelexer;
 import dpackage;
 import dimagelist;
@@ -34,15 +35,22 @@ import searchsymbol;
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
+import sdk.vsi.textmgr90;
 import sdk.vsi.vsshell;
 import sdk.vsi.singlefileeditor;
 import sdk.vsi.fpstfmt;
+import sdk.vsi.stdidcmd;
+import sdk.vsi.vsdbgcmd;
+import sdk.vsi.vsdebugguids;
+import sdk.vsi.msdbg;
 
 ///////////////////////////////////////////////////////////////////////////////
 
 class LanguageService : DisposingComObject, 
                         IVsLanguageInfo, 
                         IVsLanguageDebugInfo, 
+                        IVsLanguageDebugInfo2,
+						IVsLanguageDebugInfoRemap,
                         IVsProvideColorableItems, 
                         IVsLanguageContextProvider, 
                         IServiceProvider, 
@@ -50,6 +58,8 @@ class LanguageService : DisposingComObject,
                         IVsDebuggerEvents, 
                         IVsFormatFilterProvider
 {
+	static const GUID iid = g_languageCLSID;
+		
 	this(Package pkg)
 	{
 		mPackage = pkg;
@@ -66,6 +76,10 @@ class LanguageService : DisposingComObject,
 		if(queryInterface!(IVsProvideColorableItems) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IVsLanguageDebugInfo) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsLanguageDebugInfo2) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsLanguageDebugInfoRemap) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IVsDebuggerEvents) (this, riid, pvObject))
 			return S_OK;
@@ -186,6 +200,74 @@ class LanguageService : DisposingComObject,
 		pCodeSpan.iEndLine = iLine;
 		pCodeSpan.iEndIndex = 0;
 		return S_OK;
+	}
+
+	// IVsLanguageDebugInfo2 //////////////////////////////////////
+	HRESULT QueryCommonLanguageBlock(
+	            /+[in]+/  IVsTextBuffer pBuffer, //code buffer containing a break point
+	            in  int iLine,                   //line for a break point
+	            in  int iCol,                    //column for a break point           
+	            in  DWORD dwFlag,                //common language block being queried. see LANGUAGECOMMONBLOCK
+	            /+[out]+/ BOOL *pfInBlock)       //true if iLine and iCol is inside common language block;otherwise, false;
+	{
+		mixin(LogCallMix);
+		return E_NOTIMPL;
+	}
+	
+	HRESULT ValidateInstructionpointLocation(
+	            /+[in]+/  IVsTextBuffer pBuffer, //code buffer containing an instruction point(IP)   
+	            in  int iLine,             //line for the existing IP
+	            in  int iCol,              //column for the existing IP
+	            /+[out]+/ TextSpan *pCodeSpan)   //new IP code span
+	{
+		mixin(LogCallMix);
+		return E_NOTIMPL;
+	}
+
+	HRESULT QueryCatchLineSpan(
+	            /+[in]+/  IVsTextBuffer pBuffer,       //code buffer containing a break point
+	            in  int iLine,                   //line for a break point
+	            in  int iCol,                    //column for a break point
+	            /+[out]+/ BOOL *pfIsInCatch,
+	            /+[out]+/ TextSpan *ptsCatchLine)
+	{
+		mixin(LogCallMix);
+		return E_NOTIMPL;
+	}
+
+	// IVsLanguageDebugInfoRemap //////////////////////////////////////
+	HRESULT RemapBreakpoint(/+[in]+/ IUnknown pUserBreakpointRequest, 
+	                        /+[out]+/IUnknown* ppMappedBreakpointRequest)
+	{
+		mixin(LogCallMix);
+
+		/+
+		auto bp = ComPtr!(IDebugBreakpointRequest3)(pUserBreakpointRequest);
+		if(bp)
+		{
+			BP_LOCATION_TYPE type;
+			HRESULT hr = bp.GetLocationType(&type);
+			logCall("type = %x", type);
+			
+			BP_REQUEST_INFO info;
+			bp.GetRequestInfo(BPREQI_ALLFIELDS, &info);
+			if((type & BPLT_LOCATION_TYPE_MASK) == BPLT_FILE_LINE)
+			{
+				// wrong struct alignment
+				if(auto dp2 = (&info.bpLocation.bplocCodeFileLine.pDocPos)[1])
+				{
+					ScopedBSTR bstrFileName;
+					dp2.GetFileName(&bstrFileName.bstr);
+					logCall("filename = %s", to_string(bstrFileName));
+				}
+			}
+			BP_REQUEST_INFO2 info2;
+			bp.GetRequestInfo2(BPREQI_ALLFIELDS, &info2);
+		
+		}
+		+/
+		
+		return S_FALSE;
 	}
 
 	// IVsProvideColorableItems //////////////////////////////////////
@@ -1335,9 +1417,39 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K && nCmdID == 1627 /*OutputPaneCombo*/) 
 			return OLECMDERR_E_NOTSUPPORTED; // do not litter output
 		
-		mixin(LogCallMix);
-		logCall("nCmdID = %s", cmd2string(*pguidCmdGroup, nCmdID));
-
+		debug 
+		{
+			bool logit = true;
+			if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K)
+			{
+				switch(nCmdID)
+				{
+				case ECMD_HANDLEIMEMESSAGE:
+					logit = false;
+					break;
+				default:
+					break;
+				}
+			}
+			else if(*pguidCmdGroup == guidVSDebugCommand)
+			{
+				switch(nCmdID)
+				{
+				case cmdidOutputPaneCombo:
+				case cmdidProcessList:
+				case cmdidThreadList:
+				case cmdidStackFrameList:
+					logit = false;
+					break;
+				default:
+					break;
+				}
+			}
+			if(logit)
+				logCall("%s.Exec(this=%s, pguidCmdGroup=%s, nCmdId=%d: %s)", 
+				        this, cast(void*) this, _toLog(pguidCmdGroup), nCmdID, cmd2string(*pguidCmdGroup, nCmdID));
+		}
+		
 		ushort lo = (nCmdexecopt & 0xffff);
 		ushort hi = (nCmdexecopt >> 16);
 
@@ -1399,9 +1511,16 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		}
 		if(g_commandSetCLSID == *pguidCmdGroup)
 		{
-			if(nCmdID == CmdShowScope)
+			switch (nCmdID) 
 			{
+			case CmdShowScope:
 				return showCurrentScope();
+			
+			case CmdShowMethodTip:
+				return HandleMethodTip();
+				
+			default:
+				break;
 			}
 		}
 /+
@@ -1542,13 +1661,19 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		}
 		if(g_commandSetCLSID == *guidCmdGroup)
 		{
-			if(cmdID == CmdShowScope)
+			switch (cmdID) 
+			{
+			case CmdShowScope:
+			case CmdShowMethodTip:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+			default:
+				break;
+			}
 		}
 		return E_FAIL;
 	}
 
-	int HighlightComment(wstring txt, int line, ViewCol idx, out int otherLine, out int otherIndex)
+	int HighlightComment(wstring txt, int line, ref ViewCol idx, out int otherLine, out int otherIndex)
 	{
 		if(SimpleLexer.isStartingComment(txt, idx))
 		{
@@ -1558,12 +1683,21 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			if(pos == idx)
 			{
 				SimpleLexer.scan(iState, txt, pos);
-				if(iState == SimpleLexer.toState(SimpleLexer.State.kNestedComment, 1, 0))
+				//if(iState == SimpleLexer.toState(SimpleLexer.State.kNestedComment, 1, 0) ||
+				if(iState == SimpleLexer.State.kWhite)
+				{
+					// terminated on same line
+					otherLine = line;
+					otherIndex = pos - 2; //assume 2 character comment extro 
+					return S_OK;
+				}
+				if(SimpleLexer.scanState(iState) == SimpleLexer.State.kNestedComment ||
+				   SimpleLexer.scanState(iState) == SimpleLexer.State.kBlockComment)
 				{
 					if(FindEndOfComment(iState, line, pos))
 					{
 						otherLine = line;
-						otherIndex = pos;
+						otherIndex = pos - 2; //assume 2 character comment extro 
 						return S_OK;
 					}
 				}
@@ -1571,6 +1705,37 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		}
 		else if(SimpleLexer.isEndingComment(txt, idx))
 		{
+			int iState;
+			uint pos;
+			int tokidx = FindLineToken(line, idx, iState, pos);
+			if(tokidx >= 0)
+			{
+				int prevpos = pos;
+				int prevline = line;
+				SimpleLexer.scan(iState, txt, pos);
+				if(pos == idx + 2 && iState == SimpleLexer.State.kWhite)
+				{
+					while(line > 0)
+					{
+						TokenInfo[] lineInfo = mCodeWinMgr.mSource.GetLineInfo(line);
+						if(tokidx < 0)
+							tokidx = lineInfo.length - 1;
+						while(tokidx >= 0)
+						{
+							if(lineInfo[tokidx].type != TokenColor.Comment)
+							{
+								otherLine = prevline;
+								otherIndex = prevpos;
+								return S_OK;
+							}
+							prevpos = lineInfo[tokidx].StartIndex;
+							prevline = line;
+							tokidx--;
+						}
+						line--;
+					}
+				}
+			}
 		}
 		return S_FALSE;
 	}
@@ -1594,40 +1759,60 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		        !SimpleLexer.isClosingBracket(txt[idx]))
 			return S_OK;
 		else if(!FindMatchingBrace(line, idx, otherLine, otherIndex))
+		{
+			showStatusBarText("no matching bracket found"w);
 			return S_OK;
+		}
 
 		TextSpan[2] spans;
 		spans[0].iStartLine = line;
 		spans[0].iStartIndex = idx;
 		spans[0].iEndLine = line;
-		spans[0].iEndIndex = idx + 1;
+		spans[0].iEndIndex = idx + highlightLen;
 
 		spans[1].iStartLine = otherLine;
 		spans[1].iStartIndex = otherIndex;
 		spans[1].iEndLine = otherLine;
-		spans[1].iEndIndex = otherIndex + 1;
+		spans[1].iEndIndex = otherIndex + highlightLen;
 
 		// HIGHLIGHTMATCHINGBRACEFLAGS.USERECTANGLEBRACES
-		return mView.HighlightMatchingBrace(0, 2, spans.ptr);
+		HRESULT hr = mView.HighlightMatchingBrace(0, 2, spans.ptr);
+
+		if(highlightLen == 1)
+		{
+			wstring otxt = mCodeWinMgr.mSource.GetText(otherLine, otherIndex, otherLine, otherIndex + 1);
+			if(!otxt.length || !SimpleLexer.isBracketPair(txt[idx], otxt[0]))
+				showStatusBarText("mismatched bracket " ~ otxt);
+		}
+
+		return hr;
 	}
 
+	// return the token index from the scan sequence
+	// iState,pos is the scan state before the token at char index idx
 	int FindLineToken(int line, int idx, out int iState, out uint pos)
 	{
-		iState = mCodeWinMgr.mSource.mColorizer.GetLineState(line);
-		if(iState < 0)
+		int state = mCodeWinMgr.mSource.mColorizer.GetLineState(line);
+		if(state < 0)
 			return -1;
 
 		wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
-		pos = 0;
+		uint p = 0;
 		int tok = 0;
-		for( ; pos < text.length && pos < idx; tok++)
-			SimpleLexer.scan(iState, text, pos);
-		if(pos >= text.length)
-			return -1;
-		if(pos > idx)
-			tok--;
+		while(p < text.length)
+		{
+			iState = state;
+			pos = p;
+			if(p == idx)
+				return tok;
 
-		return tok;
+			SimpleLexer.scan(state, text, p);
+			if(p > idx)
+				return tok;
+			
+			tok++;
+		}
+		return -1;
 	}
 
 	// continuing from FindLineToken		
@@ -1648,11 +1833,11 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 				{
 					if(ppos == 0)
 					{
-						pos = plinepos - 1;
+						pos = plinepos;
 						line--;
 					}
 					else
-						pos = ppos - 1;
+						pos = ppos;
 					return true;
 				}
 			}
@@ -1753,15 +1938,10 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			line = otherLine;
 		}
 
-		auto pIVsStatusbar = queryService!(IVsStatusbar);
-		if(pIVsStatusbar)
-		{
-			scope(exit) release(pIVsStatusbar);
-			if(curScope.length)
-				pIVsStatusbar.SetText(("Scope: " ~ curScope ~ "\0"w).ptr);
-			else
-				pIVsStatusbar.SetText(("Scope: at module scope\0"w).ptr);
-		}
+		if(curScope.length)
+			showStatusBarText("Scope: " ~ curScope);
+		else
+			showStatusBarText("Scope: at module scope"w);
 		
 		return S_OK;
 	}
@@ -1811,16 +1991,24 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 		Definition[] defs = Package.GetLibInfos().findDefinition(word);
 		if(defs.length == 0)
+		{
+			showStatusBarText("No definition found for '" ~ word ~ "'");
 			return S_FALSE;
+		}
 
 		if(defs.length > 1)
 		{
+			showStatusBarText("Multiple definitions found for '" ~ word ~ "'");
 			showSearchWindow(false, word);
 			return S_FALSE;
 		}
 
 		string file = mCodeWinMgr.mSource.GetFileName();
-		return OpenFileInSolution(defs[0].filename, defs[0].line, file);
+		HRESULT hr = OpenFileInSolution(defs[0].filename, defs[0].line, file);
+		if(hr != S_OK)
+			showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", defs[0].filename, defs[0].line, word));
+
+		return hr;
 	}
 
 	//////////////////////////////////////////////////////////////

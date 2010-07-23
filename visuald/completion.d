@@ -92,7 +92,7 @@ string[] GetImportPaths(string file)
 		imp = opt.replaceEnvironment(imp, cfg);
 		imports = tokenizeArgs(imp);
 		foreach(ref i; imports)
-			i = unquoteArgument(i);
+			i = normalizeDir(unquoteArgument(i));
 		string projectpath = cfg.GetProjectDir();
 		makeFilenamesAbsolute(imports, projectpath);
 		addunique(imports, projectpath);

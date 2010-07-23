@@ -55,6 +55,7 @@ struct SearchData
 	bool wholeWord;
 	bool caseSensitive;
 	bool useRegExp;
+	bool noDupsOnSameLine;
 
 	bool init(string[] nms)
 	{
@@ -285,7 +286,7 @@ class LibraryInfo
 
 		//GC.disable();
 		
-	debug {
+	debug(FINDDEF) {
 		int cnt = 0;
 		int cntKind = 0;
 		int cntLine = 0;
@@ -332,7 +333,16 @@ class LibraryInfo
 				if(JSONValue* typ = "type" in memberobj)
 					if(typ.type == JSON_TYPE.STRING)
 						def.type = typ.str;
-				defs ~= def;
+				
+				bool add = true;
+				if(sd.noDupsOnSameLine)
+				{
+					foreach(d; defs)
+						if(d.filename == def.filename && d.line == def.line)
+							add = false;
+				}
+				if(add)
+					defs ~= def;
 			}
 			return false;
 		}
@@ -547,7 +557,7 @@ class LibraryInfos
 				mInfos ~= info;
 		}
 		
-		debug findDefinition("");
+		debug(FINDDEF) findDefinition("");
 	}
 	
 	string[] findCompletions(string name, bool caseSensitive)
@@ -568,6 +578,7 @@ class LibraryInfos
 		SearchData sd;
 		sd.wholeWord = true;
 		sd.caseSensitive = true;
+		sd.noDupsOnSameLine = true;
 		if(name.length)
 			sd.names ~= name;
 		return findDefinition(sd);

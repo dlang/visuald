@@ -312,24 +312,44 @@ L_exponent:
 		return s;
 	}
 
-	static bool isStartingComment(wstring txt, int idx)
+	static bool isStartingComment(wstring txt, ref int idx)
 	{
-		if(txt[idx] == '/' && idx < txt.length-1 && (txt[idx+1] == '*' || txt[idx+1] == '+'))
+		if(idx >= 0 && idx < txt.length-1 && txt[idx] == '/' && (txt[idx+1] == '*' || txt[idx+1] == '+'))
 			return true;
-		//if((txt[idx] == '*' || txt[idx] == '+') && idx > 0 && txt[idx-1] == '/')
-		//	return true;
+		if((txt[idx] == '*' || txt[idx] == '+') && idx > 0 && txt[idx-1] == '/')
+		{
+			idx--;
+			return true;
+		}
 		return false;
 	}
 	
-	static bool isEndingComment(wstring txt, int idx)
+	static bool isEndingComment(wstring txt, ref int idx)
 	{
-		if(txt[idx] == '/' && idx < txt.length-1 && idx > 0 && (txt[idx-1] == '*' || txt[idx-1] == '+'))
+		if(idx < txt.length && idx > 0 && txt[idx] == '/' && (txt[idx-1] == '*' || txt[idx-1] == '+'))
+		{
+			idx--;
 			return true;
-		if((txt[idx] == '*' || txt[idx] == '+') && idx < txt.length-1 && txt[idx+1] == '/')
+		}
+		if(idx < txt.length-1 && idx >= 0 && (txt[idx] == '*' || txt[idx] == '+') && txt[idx+1] == '/')
 			return true;
 		return false;
 	}
 	
+	static bool isBracketPair(dchar ch1, dchar ch2)
+	{
+		switch(ch1)
+		{
+		case '{': return ch2 == '}';
+		case '}': return ch2 == '{';
+		case '(': return ch2 == ')';
+		case ')': return ch2 == ')';
+		case '[': return ch2 == ']';
+		case ']': return ch2 == '[';
+		default:  return false;
+		}
+	}
+
 	static bool isOpeningBracket(dchar ch)
 	{
 	    return ch == '[' || ch == '(' || ch == '{';

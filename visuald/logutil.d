@@ -14,6 +14,7 @@ import std.utf;
 import std.string;
 import std.stdio;
 import std.conv;
+import std.date;
 
 import stdcarg = core.stdc.stdarg;
 import stdcio = core.stdc.stdio;
@@ -40,7 +41,10 @@ import sdk.vsi.textmgr2;
 import sdk.vsi.vssplash;
 import sdk.vsi.fpstfmt;
 import sdk.vsi.vsshlids;
+import sdk.vsi.vsdebugguids;
 import sdk.vsi.ocdesign;
+import sdk.vsi.ivswebservices;
+import sdk.vsi.encbuild;
 
 ///////////////////////////////////////////////////////////////
 
@@ -57,7 +61,7 @@ const GUID  IID_IRpcOptions = uuid("00000144-0000-0000-C000-000000000046");
 const GUID  IID_SolutionProperties = uuid("28f7c3a6-fdc6-11d2-8a61-00c04f682e21");
 const GUID  IID_isVCProject = uuid("3990034a-3af2-44c9-bd22-7b10654b5721");
 const GUID  IID_GetActiveVCFileConfigurationFromVCFile1 = uuid("694c76bc-3ef4-11d3-b278-0050041db12a");
-
+const GUID  VisualD_LanguageService = uuid("002a2de9-8bb6-484d-9800-7e4ad4084715");
 
 string mixinGUID2string(string T)
 {
@@ -317,9 +321,18 @@ version(none)
 	mixin(mixinGUID2string("CMDSETID_StandardCommandSet2K"));
 	mixin(mixinGUID2string("CMDSETID_StandardCommandSet97"));
 	mixin(mixinGUID2string("GUID_VsUIHierarchyWindowCmds"));
+	mixin(mixinGUID2string("guidVSDebugCommand"));
 	//mixin(mixinGUID2string("VsSetGuidTeamSystemDataCmdIds"));
 	//mixin(mixinGUID2string("VsTextTransformationCmdIds"));
 
+	
+	mixin(mixinGUID2string("IVsLanguageDebugInfoRemap"));
+	mixin(mixinGUID2string("IVsLanguageDebugInfo2"));
+	mixin(mixinGUID2string("IVsDebuggableProjectCfg2"));
+	mixin(mixinGUID2string("IVsENCRebuildableProjectCfg"));
+	mixin(mixinGUID2string("IVsWebServiceProvider"));
+	mixin(mixinGUID2string("VisualD_LanguageService"));
+		
 	return toUTF8(GUID2wstring(guid));
 }
 
@@ -477,6 +490,7 @@ version(test) {
 	void logCall(...)
 	{
 		string s;
+		
 		void putc(dchar c)
 		{
 			s ~= c;
@@ -497,7 +511,14 @@ version(test) {
 
 	void logCall(...)
 	{
-		string s = repeat(" ", gLogIndent);
+		auto buffer = new char[17 + 1];
+		d_time now = std.date.getUTCtime();
+		uint tid = GetCurrentThreadId();
+		auto len = sprintf(buffer.ptr, "%02d:%02d:%02d - %04x - ",
+		                   hourFromTime(now), minFromTime(now), secFromTime(now), tid);
+		string s = to!string(buffer[0..len]);
+		s ~= repeat(" ", gLogIndent);
+		
 		void putc(dchar c)
 		{
 			s ~= c;

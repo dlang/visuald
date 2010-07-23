@@ -136,5 +136,15 @@ Version history
   * options with multiple arguments are now delimited by both ';' and white spaces, use
     quotes if any of these need to be part of a file name
 
-not released Version 0.3.14
+2010-07-23 Version 0.3.14
 
+  * fixed parameter tooltips on VS2010
+  * fixed handling of quoted file/path names
+  * updated bitmaps in aboutbox and templates to the website logo
+  * added command VisualD.ParameterInfo to avoid hook by Visual Assist
+  * fixed import completion for packages accessed through project import path settings
+  * goto definition now displays error in status line if no definition found or opening source file fails
+  * now jumping to definition if multiple definitions exist on the same line
+  * brace highlighting now shows error in status line for mismatched brackets
+  * brace highlighting now also shows begin/end of block comments
+  * fixed pasting html text not omitting format information

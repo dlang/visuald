@@ -25,7 +25,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // CTC Command IDs
 
-#define CmdSearchSymbol 0x101
-#define CmdSearchFile   0x102
-#define CmdShowScope    0x103
+#define CmdSearchSymbol  0x101
+#define CmdSearchFile    0x102
+#define CmdShowScope     0x103
+#define CmdShowMethodTip 0x104
 

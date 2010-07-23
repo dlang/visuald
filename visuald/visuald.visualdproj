@@ -184,7 +184,7 @@ set PATH=%PATH%;$(DevEnvDir)
 set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin
 CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
    <File path="Resources\resources.h" />
-   <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto" />
+   <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico" />
    <File path="Resources\AlternateRowColor.ico" />
    <File path="Resources\ascend.ico" />
    <File path="Resources\descend.ico" />
@@ -225,5 +225,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="windows.d" />
   <File path="wmmsg.d" />
   <File path="propertypage.d" />
+  <File path="pkgutil.d" />
  </Folder>
 </DProject>
