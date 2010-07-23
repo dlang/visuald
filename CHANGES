@@ -139,6 +139,7 @@ Version history
 2010-07-23 Version 0.3.14
 
   * fixed parameter tooltips on VS2010
+  * fixed debugger data tooltips on VS2010
   * fixed handling of quoted file/path names
   * updated bitmaps in aboutbox and templates to the website logo
   * added command VisualD.ParameterInfo to avoid hook by Visual Assist

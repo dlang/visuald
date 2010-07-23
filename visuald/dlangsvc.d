@@ -1375,8 +1375,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
-		if(queryInterface!(IVsTextViewFilter) (this, riid, pvObject))
-			return S_OK;
+		// do not implement, VS2010 will not show Data tooltips in debugger if it is
+		//if(queryInterface!(IVsTextViewFilter) (this, riid, pvObject))
+		//	return S_OK;
 		if(queryInterface!(IVsTextViewEvents) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IOleCommandTarget) (this, riid, pvObject))
@@ -2063,6 +2064,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return S_OK;
 	}
 	
+	// not implemented, VS2010 will not show Data tooltips in debugger if it is
 	// IVsTextViewFilter //////////////////////////////////////
 	override int GetWordExtent(in int iLine, in CharIndex iIndex, in uint dwFlags, /* [out] */ TextSpan *pSpan)
 	{
@@ -2081,10 +2083,13 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 	override int GetDataTipText( /* [out][in] */ TextSpan *pSpan, /* [out] */ BSTR *pbstrText)
 	{
+		mixin(LogCallMix);
+
 		// currently disabled to show data breakpoints while debugging
 		if(mCodeWinMgr.mLangSvc.IsDebugging())
 			return E_NOTIMPL;
-
+		//return TIP_S_ONLYIFNOMARKER;
+		
 	version(none) // disabled until useful
 	{
 		if(HRESULT hr = GetWordExtent(pSpan.iStartLine, pSpan.iStartIndex, WORDEXT_CURRENT, pSpan))
