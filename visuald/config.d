@@ -192,6 +192,7 @@ class ProjectOptions
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
 		xfilename = "$(IntDir)\\$(ProjectName).json";
+		doXGeneration = true;
 		
 		filesToClean = "*.obj";
 		
@@ -1185,7 +1186,7 @@ class Config :	DisposingComObject,
 			hr = srpVsDebugger.LaunchDebugTargets(1, &dbgi);
 			if (FAILED(hr))
 			{
-				string msg = format("cannot launch debugger on %s", prg);
+				string msg = format("cannot launch debugger on %s\nhr = %x", prg, hr);
 				mProvider.mProject.SetErrorInfo(E_FAIL, msg);
 				hr = E_FAIL;
 			}
@@ -1589,7 +1590,7 @@ class Config :	DisposingComObject,
 				lpath ~= ";";
 			lpath ~= mProjectOptions.libpaths;
 			
-			cmd ~= "set LIB=" ~ lpath ~ ";%LIB%\n";
+			cmd ~= "set DMD_LIB=" ~ lpath ~ "\n";
 		}
 		return cmd;
 	}
@@ -1632,13 +1633,17 @@ class Config :	DisposingComObject,
 		else
 			fcmd = " " ~ fcmd;
 			
-		string cmd = precmd ~ opt ~ fcmd;
+		string cmd = precmd ~ opt ~ fcmd ~ "\n";
+		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 		
 		string cv2pdb = mProjectOptions.appendCv2pdb();
 		if(cv2pdb.length)
 		{
-			cv2pdb = "echo Converting debug information...\n" ~ cv2pdb;
-			cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ cv2pdb;
+			string cvtarget = quoteFilename(mProjectOptions.getTargetPath() ~ "_cv");
+			cmd ~= "if not exist " ~ cvtarget ~ " (echo " ~ cvtarget ~ " not created! && goto reportError)\n";
+			cmd ~= "echo Converting debug information...\n";
+			cmd ~= cv2pdb;
+			cmd ~= "\nif errorlevel 1 goto reportError\n";
 		}
 
 		string pre = strip(mProjectOptions.preBuildCommand);
@@ -1647,8 +1652,13 @@ class Config :	DisposingComObject,
 		string post = strip(mProjectOptions.postBuildCommand);
 		if(post.length)
 			cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post;
+		
+		string target = quoteFilename(mProjectOptions.getTargetPath());
+		cmd ~= "if not exist " ~ target ~ " (echo " ~ target ~ " not created! && goto reportError)\n";
+		cmd ~= "\ngoto noError\n";
 		cmd ~= "\n:reportError\n";
-		cmd ~= "if errorlevel 1 echo Building " ~ GetTargetPath() ~ " failed!\n";
+		cmd ~= "echo Building " ~ GetTargetPath() ~ " failed!\n";
+		cmd ~= "\n:noError\n";
 
 		return mProjectOptions.replaceEnvironment(cmd, this);
 	}

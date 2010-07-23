@@ -149,3 +149,6 @@ Version history
   * brace highlighting now shows error in status line for mismatched brackets
   * brace highlighting now also shows begin/end of block comments
   * fixed pasting html text not omitting format information
+  * now using environment variable DMD_LIB to pass library path to DMD, please update DMDs sc.ini accordingly
+  * now build checks whether output files are actually created to avoid silent link failure
+  * generating JSON output is now the default setting for new projects
