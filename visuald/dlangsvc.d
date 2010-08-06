@@ -1192,7 +1192,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			int[] tokpos;
 			int[] toktype;
 			uint pos = 0;
+			
 			int iState = mColorizer.GetLineState(line);
+			if(iState < 0)
+				break;
+			
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
@@ -1232,7 +1236,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			int[] tokpos;
 			int[] toktype;
 			uint pos = 0;
+
 			int iState = mColorizer.GetLineState(line);
+			if(iState < 0)
+				break;
+			
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
@@ -1261,7 +1269,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			int[] tokpos;
 			int[] toktype;
 			uint pos = 0;
+			
 			int iState = mColorizer.GetLineState(line);
+			if(iState < 0)
+				break;
+			
 			while(pos < text.length)
 			{
 				tokpos ~= pos;

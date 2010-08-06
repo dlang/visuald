@@ -87,7 +87,7 @@ uint endofStringCStyle(string text, uint pos, dchar term = '\"')
 	return pos;
 }
 
-string[] tokenizeArgs(string text, bool semi_is_seperator = true)
+string[] tokenizeArgs(string text, bool semi_is_seperator = true, bool space_is_seperator = true)
 {
 	string[] args;
 	uint pos = 0;
@@ -110,7 +110,9 @@ string[] tokenizeArgs(string text, bool semi_is_seperator = true)
 			{
 				ch = decode(text, pos);
 			}
-			if(isspace(ch) || (semi_is_seperator && ch == ';'))
+			if(isspace(ch) && (space_is_seperator || ch != ' '))
+				break;
+			if(semi_is_seperator && ch == ';')
 				break;
 			endpos = pos;
 		}

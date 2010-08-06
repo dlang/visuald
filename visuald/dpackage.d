@@ -15,6 +15,7 @@ import std.string;
 import std.utf;
 import std.path;
 import std.file;
+import std.conv;
 
 import comutil;
 import hierutil;
@@ -622,11 +623,35 @@ class GlobalOptions
 		replacements["VISUALDINSTALLDIR"] = VisualDInstallDir;
 	}
 	
+	string findDmdBinDir()
+	{
+		string installdir = normalizeDir(DMDInstallDir);
+		string bindir = installdir ~ "windows\\bin\\";
+		if(std.file.exists(bindir ~ "dmd.exe"))
+			return bindir;
+		
+		string[string] replacements;
+		addReplacements(replacements);
+		string searchpaths = replaceMacros(ExeSearchPath, replacements);
+		string[] paths = tokenizeArgs(searchpaths, true, false);
+		if(char* p = getenv("PATH"))
+			paths ~= tokenizeArgs(to!string(p), true, false);
+		
+		foreach(path; paths)
+		{
+			path = unquoteArgument(path);
+			path = normalizeDir(path);
+			if(std.file.exists(path ~ "dmd.exe"))
+				return path;
+		}
+		return installdir;
+	}
+	
 	string[] getImportPaths()
 	{
 		string[] imports;
-		string bindir = normalizeDir(DMDInstallDir) ~ "windows\\bin";
-		string inifile = bindir ~ "\\sc.ini";
+		string bindir = findDmdBinDir();
+		string inifile = bindir ~ "sc.ini";
 		if(std.file.exists(inifile))
 		{
 			string[string][string] ini = parseIni(inifile);
