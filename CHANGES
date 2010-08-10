@@ -159,4 +159,5 @@ not released Version 0.3.15
     through the executable paths setting and the PATH environment variable
   * fixed freeze when searching indentation level for smart indent (might also affect brace
     matching)
-
+  * now packaged with cv2pdb 0.15.
+  * fixed crash when running along-side the Qt-Addin

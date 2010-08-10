@@ -451,9 +451,11 @@ class Colorizer : DComObject, IVsColorizer
 
 	int GetLineState(int iLine)
 	{
-		if(iLine >= mLineState.length)
-			return -1;
-		return mLineState[iLine];
+		int state = -1;
+		if(iLine >= 0 && iLine < mLineState.length)
+			state = mLineState[iLine];
+		assert(state >= 0);
+		return state;
 	}
 
 	
