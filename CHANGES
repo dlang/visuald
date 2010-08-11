@@ -153,11 +153,11 @@ Version history
   * now build checks whether output files are actually created to avoid silent link failure
   * generating JSON output is now the default setting for new projects
 
-not released Version 0.3.15
+2010-08-11 Version 0.3.15
 
   * when reading import paths from sc.ini, the directory is determined by searching dmd.exe 
     through the executable paths setting and the PATH environment variable
   * fixed freeze when searching indentation level for smart indent (might also affect brace
     matching)
-  * now packaged with cv2pdb 0.15.
-  * fixed crash when running along-side the Qt-Addin
+  * now packaged with cv2pdb 0.16.
+  * fixed crash when running along-side the Qt-Addin for Visual Studio
