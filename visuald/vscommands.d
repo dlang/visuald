@@ -16,9 +16,50 @@ import sdk.vsi.stdidcmd;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.vsdbgcmd;
+import sdk.vsi.sdk_version;
 
 debug
 {
+
+static if (sdk.vsi.sdk_version.rmj > 9)
+{
+	alias cmdidShellNavigate1First  cmdidShellNavigate1;
+	alias cmdidShellNavigate2First  cmdidShellNavigate2;
+	alias cmdidShellNavigate3First  cmdidShellNavigate3;
+	alias cmdidShellNavigate4First  cmdidShellNavigate4;
+	alias cmdidShellNavigate5First  cmdidShellNavigate5;
+	alias cmdidShellNavigate6First  cmdidShellNavigate6;
+	alias cmdidShellNavigate7First  cmdidShellNavigate7;
+	alias cmdidShellNavigate8First  cmdidShellNavigate8;
+	alias cmdidShellNavigate9First  cmdidShellNavigate9;
+	alias cmdidShellNavigate10First cmdidShellNavigate10;
+	alias cmdidShellNavigate11First cmdidShellNavigate11;
+	alias cmdidShellNavigate12First cmdidShellNavigate12;
+	alias cmdidShellNavigate13First cmdidShellNavigate13;
+	alias cmdidShellNavigate14First cmdidShellNavigate14;
+	alias cmdidShellNavigate15First cmdidShellNavigate15;
+	alias cmdidShellNavigate16First cmdidShellNavigate16;
+	alias cmdidShellNavigate17First cmdidShellNavigate17;
+	alias cmdidShellNavigate18First cmdidShellNavigate18;
+	alias cmdidShellNavigate19First cmdidShellNavigate19;
+	alias cmdidShellNavigate20First cmdidShellNavigate20;
+	alias cmdidShellNavigate21First cmdidShellNavigate21;
+	alias cmdidShellNavigate22First cmdidShellNavigate22;
+	alias cmdidShellNavigate23First cmdidShellNavigate23;
+	alias cmdidShellNavigate24First cmdidShellNavigate24;
+	alias cmdidShellNavigate25First cmdidShellNavigate25;
+	alias cmdidShellNavigate26First cmdidShellNavigate26;
+	alias cmdidShellNavigate27First cmdidShellNavigate27;
+	alias cmdidShellNavigate28First cmdidShellNavigate28;
+	alias cmdidShellNavigate29First cmdidShellNavigate29;
+	alias cmdidShellNavigate30First cmdidShellNavigate30;
+	alias cmdidShellNavigate31First cmdidShellNavigate31;
+	alias cmdidShellNavigate32First cmdidShellNavigate32;
+	alias cmdidShellNavigateLast    cmdidShellNavigate33;
+	
+	enum ECMD_PROMOTELOCAL = 1554; // no longer in SDK 10.0
+	enum cmdidProgramToDebugShow = 0x00000102;
+}
 
 struct enumName
 {

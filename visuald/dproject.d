@@ -554,7 +554,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 
-				/* [size_is][in] */ LPOLESTR *rgszNames,
+				/* [size_is][in] */ in LPOLESTR *rgszNames,
 				/* [in] */ in UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
 			{
@@ -688,7 +688,7 @@ class Project : CVsHierarchy,
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 
-				/* [size_is][in] */ LPOLESTR *rgszNames,
+				/* [size_is][in] */ in LPOLESTR *rgszNames,
 				/* [in] */ in UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
 			{
@@ -831,7 +831,7 @@ class Project : CVsHierarchy,
 
 	override int AddItem(in VSITEMID itemidLoc, in VSADDITEMOPERATION dwAddItemOperation, 
 	                     in LPCOLESTR pszItemName,
-	                     in ULONG cFilesToOpen, LPCOLESTR * rgpszFilesToOpen, 
+	                     in ULONG cFilesToOpen, in LPCOLESTR * rgpszFilesToOpen, 
 	                     in HWND hwndDlgOwner, VSADDRESULT* pResult)
 	{
 		mixin(LogCallMix);
@@ -895,7 +895,7 @@ class Project : CVsHierarchy,
 	    /* [in] */ in VSADDITEMOPERATION dwAddItemOperation,
 	    /* [in] */ in wchar* pszItemName,
 	    /* [in] */ in uint cFilesToOpen,
-	    /* [size_is][in] */ LPCOLESTR* rgpszFilesToOpen,
+	    /* [size_is][in] */ in LPCOLESTR* rgpszFilesToOpen,
 	    /* [in] */ in HWND hwndDlgOwner,
 	    /* [in] */ in VSSPECIFICEDITORFLAGS grfEditorFlags,
 	    /* [in] */ in GUID* rguidEditorType,
@@ -1392,7 +1392,7 @@ class Project : CVsHierarchy,
 	override int AddComponent( 
 	    /* [in] */ in VSADDCOMPOPERATION dwAddCompOperation,
 	    /* [in] */ in ULONG cComponents,
-	    /* [size_is][in] */ PVSCOMPONENTSELECTORDATA *rgpcsdComponents,
+	    /* [size_is][in] */ in PVSCOMPONENTSELECTORDATA *rgpcsdComponents,
 	    /* [in] */ in HWND hwndPickerDlg,
 	    /* [retval][out] */ VSADDCOMPRESULT *pResult)
 	{

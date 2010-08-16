@@ -218,7 +218,9 @@ public:
 		string deppath = makeFilenameAbsolute(mConfig.GetDependenciesPath(), workdir);
 		if(!std.file.exists(deppath))
 			return false;
-		string[] files = getFilenamesFromDepFile(deppath);
+		string[] files;
+		if(!getFilenamesFromDepFile(deppath, files))
+			return false;
 		string[] libs = mConfig.getLibsFromDependentProjects();
 		files ~= libs;
 		makeFilenamesAbsolute(files, workdir);
@@ -660,9 +662,9 @@ unittest
 
 string re_match_dep = r"^[A-Za-z0-9_\.]+ *\((.*)\) : p[a-z]* : [A-Za-z0-9_\.]+ \((.*)\)$";
 
-string[] getFilenamesFromDepFile(string depfile)
+bool getFilenamesFromDepFile(string depfile, ref string[] files)
 {
-	string[] files;
+	int cntValid = 0;
 	try
 	{
 		string txt = cast(string)std.file.read(depfile);
@@ -678,15 +680,17 @@ string[] getFilenamesFromDepFile(string depfile)
 				string file2 = replace(match[2], "\\\\", "\\");
 				addunique(files, file1);
 				addunique(files, file2);
+				cntValid++;
 			}
 		}
 	}
 	catch(Exception e)
 	{
+		cntValid = 0;
 		// file read error
 	}
 	files.sort; // for faster file access?
-	return files;
+	return cntValid > 0;
 }
 
 

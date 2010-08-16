@@ -140,9 +140,20 @@ alias HANDLE HMETAFILEPICT;
 alias LPRECT LPCRECT;
 alias LPRECT LPCRECTL;
 
+enum STACK_ALIGN = 4;
+
+int ALIGN_UP_BY(uint sz, uint algn) { return (sz + algn - 1) & ~(algn-1); }
+	
 int V_INT_PTR(void* p) { return cast(int) p; }
 uint V_UINT_PTR(void* p) { return cast(uint) p; }
 
+// for winnt.d (7.1)
+struct _PACKEDEVENTINFO;
+struct _EVENTSFORLOGFILE;
+
+// for winuser.d (7.1)
+alias HANDLE HPOWERNOTIFY;
+	
 // for prsht.d
 struct _PSP;
 struct _PROPSHEETPAGEA;
@@ -154,7 +165,9 @@ struct _TREEITEM;
 struct _DSA;
 struct _DPA;
 interface IImageList {}
-
+// 7.1
+const CCM_TRANSLATEACCELERATOR = (WM_USER+97);
+	
 version(sdk) {}
 else {
 	

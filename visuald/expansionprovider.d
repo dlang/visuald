@@ -533,7 +533,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return S_OK;
 	}
 
-	override int IsValidType(IVsTextLines buffer, in TextSpan* ts, BSTR* rgTypes, in int iCountTypes, BOOL *fIsValid)
+	override int IsValidType(IVsTextLines buffer, in TextSpan* ts, in BSTR* rgTypes, in int iCountTypes, BOOL *fIsValid)
 	{
 		mixin(LogCallMix);
 

@@ -483,7 +483,7 @@ public:
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 
-				/* [size_is][in] */ LPOLESTR *rgszNames,
+				/* [size_is][in] */ in LPOLESTR *rgszNames,
 				/* [in] */ in UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
 			{

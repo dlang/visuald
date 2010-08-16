@@ -33,12 +33,13 @@
   <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -119,12 +120,13 @@
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -201,6 +203,9 @@
    <File path="port\propidl.d" />
    <File path="port\in6addr.d" />
    <File path="port\inaddr.d" />
+   <File path="port\registryroots.d" />
+   <File path="port\excpt.d" />
+   <File path="port\kernelspecs.d" />
   </Folder>
   <Folder name="win32">
    <File path="win32\xmldsodid.d" />

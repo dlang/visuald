@@ -377,8 +377,8 @@ class DisposingDispatchObject : DisposingComObject, IDispatch
 
 	override int GetIDsOfNames( 
 		/* [in] */ in IID* riid,
-		/* [size_is][in] */ LPOLESTR *rgszNames,
-		/* [range][in] */ UINT cNames,
+		/* [size_is][in] */ in LPOLESTR *rgszNames,
+		/* [range][in] */ in UINT cNames,
 		/* [in] */ in LCID lcid,
 		/* [size_is][out] */ DISPID *rgDispId)
 	{
@@ -492,7 +492,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 	}
 
 	override int GetIDsOfNames( 
-		/* [size_is][in] */ LPOLESTR *rgszNames,
+		/* [size_is][in] */ in LPOLESTR *rgszNames,
 		/* [in] */ in UINT cNames,
 		/* [size_is][out] */ MEMBERID *pMemId)
 	{

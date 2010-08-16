@@ -54,13 +54,26 @@ class idl2d
 {
 	///////////////////////////////////////////////////////
 	// configuration
-	string vsi_base_path = r"c:\l\vs9SDK";
-	string dte_path   = r"m:\s\d\visuald\trunk\sdk\vsi\idl\";
-	string win_path   = r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\";
-	string sdk_d_path = r"m:\s\d\visuald\trunk\sdk\";
-
-	string packageVSI = "sdk.vsi.";
-	string packageWin = "sdk.win32.";
+	version(all)
+	{
+		string vsi_base_path = r"c:\l\vs9SDK";
+		string dte_path   = r"m:\s\d\visuald\trunk\sdk\vsi\idl\";
+		string win_path   = r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\";
+		string sdk_d_path = r"m:\s\d\visuald\trunk\sdk\";
+	}
+	else
+	{
+		string vsi_base_path = r"c:\Program Files\Microsoft Visual Studio 2010 SDK"; // r"c:\l\vs9SDK";
+		string dte_path   = r"c:\s\d\visuald\trunk\sdk\vsi\idl\";
+		string win_path   = r"c:\Program Files\Microsoft SDKs\Windows\v7.1\Include\";
+		string sdk_d_path = r"c:\s\d\visuald\trunk\sdk\";
+	}
+	
+	const string dirVSI = "vsi";
+	const string dirWin = "win32";
+	
+	string packageVSI = "sdk." ~ dirVSI ~ ".";
+	string packageWin = "sdk." ~ dirWin ~ ".";
 	string packageNF  = "sdk.port.";
 	string keywordPrefix = "sdk_";
 
@@ -99,8 +112,10 @@ class idl2d
 			vsi_idl_files = [ "shared.idh", "vsshell.idl", "*.idl", "*.idh" ];
 			vsi_h_files   = [ "completionuuids.h", "contextuuids.h", "textmgruuids.h", "vsshelluuids.h", "vsdbgcmd.h",
 				"venusids.h", "stdidcmd.h", "vsshlids.h", "mnuhelpids.h", "WCFReferencesIds.h",
-				"vsdebugguids.h", "VSRegKeyNames.h", "SCGuids.h", "DSLToolsCmdID.h", "wbids.h", "sharedids.h",
+				"vsdebugguids.h", "VSRegKeyNames.h", "SCGuids.h", "wbids.h", "sharedids.h",
 				"vseeguids.h", "version.h"  ];
+			// no longer in SDK2010: "DSLToolsCmdID.h", 
+			
 			dte_idl_files = [ "*.idl" ];
 		}
 	}
@@ -742,6 +757,7 @@ else
 
 	string convertPP(string text, int lineno, bool inEnum)
 	{
+version(remove_pp) {} else
 		if(inEnum)
 			return "// " ~ text;
 
@@ -1482,17 +1498,26 @@ version(none) version(vsi)
 		//replaceTokenSequence(tokens, "interface IWinTypes { $data }", 
 		//	"/+interface IWinTypes {+/\n$data\n/+ } /+IWinTypes+/ +/", true);
 
-		// docobj.idl
-		replaceTokenSequence(tokens, "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000, OLECMDIDF_REFRESH_THROUGHSCRIPT   = 0x4000,", "__XXX__", true);
-		replaceTokenSequence(tokens, "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000, OLECMDIDF_REFRESH_THROUGHSCRIPT   = 0x4000", "", true);
-		replaceTokenSequence(tokens, "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000", "", true);
-		replaceTokenSequence(tokens, "__XXX__", "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000,\nOLECMDIDF_REFRESH_THROUGHSCRIPT   = 0x4000,", true);
-
+		// docobj.idl (v6.0a)
+		if(currentModule == "docobj")
+		{
+			replaceTokenSequence(tokens, "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000, OLECMDIDF_REFRESH_THROUGHSCRIPT   = 0x4000 $_not,",
+										 "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000,\nOLECMDIDF_REFRESH_THROUGHSCRIPT   = 0x4000, $_not", true);
+			replaceTokenSequence(tokens, "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000 $_not,", "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000, $_not", true);
+		}
+		
 		//vsshell.idl
-		replaceTokenSequence(tokens, "typedef DWORD PFN_TSHELL_TMP;", "typedef PfnTshell PFN_TSHELL_TMP;", true);
-		replaceTokenSequence(tokens, "MENUEDITOR_TRANSACTION_ALL,", "MENUEDITOR_TRANSACTION_ALL = 0,", true);
-		replaceTokenSequence(tokens, "SCC_STATUS_INVALID = -1L,", "SCC_STATUS_INVALID = cast(DWORD)-1L,", true);
-
+		if(currentModule == "vsshell")
+		{
+			replaceTokenSequence(tokens, "typedef DWORD PFN_TSHELL_TMP;", "typedef PfnTshell PFN_TSHELL_TMP;", true);
+			replaceTokenSequence(tokens, "MENUEDITOR_TRANSACTION_ALL,", "MENUEDITOR_TRANSACTION_ALL = 0,", true);
+			replaceTokenSequence(tokens, "SCC_STATUS_INVALID = -1L,", "SCC_STATUS_INVALID = cast(DWORD)-1L,", true);
+		}
+		if(currentModule == "vsshell80")
+		{
+			replaceTokenSequence(tokens, "MENUEDITOR_TRANSACTION_ALL,", "MENUEDITOR_TRANSACTION_ALL = 0,", true); // overflow from -1u
+		}
+		
 		// vslangproj90.idl
 		if(currentModule == "vslangproj90")
 			replaceTokenSequence(tokens, "CsharpProjectConfigurationProperties3", "CSharpProjectConfigurationProperties3", true);
@@ -1515,6 +1540,7 @@ version(remove_pp)
 	string tsttxt = tokenListToString(tokens);
 	
 		while(replaceTokenSequence(tokens, "$_note else version(all) { $if } else { $else }", "$_note $if", true) > 0 ||
+		      replaceTokenSequence(tokens, "$_note else version(all) { $if } else version($ver) { $else_ver } else { $else }", "$_note $if", true) > 0 ||
 		      replaceTokenSequence(tokens, "$_note else version(all) { $if } $_not else", "$_note $if\n$_not", true) > 0 ||
 		      replaceTokenSequence(tokens, "$_note else version(none) { $if } else { $else }", "$_note $else", true) > 0 ||
 		      replaceTokenSequence(tokens, "$_note else version(none) { $if } $_not else", "$_note $_not", true) > 0 ||
@@ -1637,6 +1663,8 @@ version(none)
 			"union $_ident3 /+switch($expr) +/ { $data };", true);
 		replaceTokenSequence(tokens, "union $_ident1 switch($expr) $_ident2 { $data };",
 			"union $_ident1 /+switch($expr) $_ident2 +/ { $data };", true);
+		replaceTokenSequence(tokens, "union $_ident1 switch($expr) $_ident2 { $data }",
+			"union $_ident1 /+switch($expr) $_ident2 +/ { $data }", true);
 		replaceTokenSequence(tokens, "case $_ident1:", "[case $_ident1:]", true);
 		replaceTokenSequence(tokens, "default:", "[default:]", true);
 		replaceTokenSequence(tokens, "union { $data } $_ident2 $expr;", 
@@ -1694,8 +1722,11 @@ version(none)
 		replaceTokenSequence(tokens, "(void)", "()", true);
 		replaceTokenSequence(tokens, "(VOID)", "()", true);
 		replaceTokenSequence(tokens, "[in] ref $_ident", "in $_ident*", true); // in passes by value otherwise
+		replaceTokenSequence(tokens, "[in,$data] ref $_ident", "[$data] in $_ident*", true); // in passes by value otherwise
 		replaceTokenSequence(tokens, "[in]", "in", true);
-		replaceTokenSequence(tokens, "[in,$_not out]", "[$_not] in", true);
+		replaceTokenSequence(tokens, "[in,$_not out $data]", "[$_not $data] in", true);
+		replaceTokenSequence(tokens, "[$args1]in[$args2]in", "[$args1][$args2]in", true);
+		replaceTokenSequence(tokens, "in in", "in", true);
 		replaceTokenSequence(tokens, "[*]", "[0]", true);
 		replaceTokenSequence(tokens, "[default]", "/+[default]+/", true);
 
@@ -1719,6 +1750,7 @@ version(all) {
 		replaceTokenSequence(tokens, "__out_bcount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__out_bcount_part($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__out_bcount_part_opt($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__out_bcount_full($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__out_ecount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__out_ecount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__out_ecount_part($args)", "/+$*+/", true);
@@ -1746,11 +1778,21 @@ version(all) {
 		replaceTokenSequence(tokens, "__deref_opt_out_bcount_full($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__deref_inout_ecount_z($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_bcount($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__field_bcount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_ecount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__field_ecount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__in_range($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__range($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__declspec($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__in_range($args)", "/+$*+/", true);
+		
+		replaceTokenSequence(tokens, "__drv_functionClass($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__drv_maxIRQL($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__drv_when($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__drv_freesMem($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__drv_preferredFunction($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__drv_allocatesMem($args)", "/+$*+/", true);
+	
 		replaceTokenSequence(tokens, "__assume_bound($args);", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__asm{$args}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$args+/}", true);
 		replaceTokenSequence(tokens, "__asm $_not{$stmt}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$_not$stmt+/} }", true);
@@ -1811,6 +1853,18 @@ else
 		replaceTokenSequence(tokens, "in const $_not(", "in $_not", false);
 		
 
+		if(currentModule == "vsshelluuids")
+		{
+			replaceTokenSequence(tokens, "dconst GUID uuid_IVsDebugger3 = uuid($uid);$data dconst GUID uuid_IVsDebugger3",
+			                             "$data\ndconst GUID uuid_IVsDebugger3",true);
+			replaceTokenSequence(tokens, "dconst GUID uuid_IVsDebugLaunchHook = uuid($uid);$data dconst GUID uuid_IVsDebugLaunchHook",
+			                             "$data\ndconst GUID uuid_IVsDebugLaunchHook",true);
+		}
+		if(currentModule == "mnuhelpids")
+		{
+			replaceTokenSequence(tokens, "dconst icmdHelpManager = $data; dconst icmdHelpManager", "dconst icmdHelpManager", true);
+		}
+		
 		if(currentModule == "prsht")
 		{
 			replaceTokenSequence(tokens, "alias _PROPSHEETPAGEA $_ident;", "alias $_ident _PROPSHEETPAGEA;", true);
@@ -1946,29 +2000,45 @@ else
 		case "NULL":      return "null";
 
 		// winbase annotations
-		case "__in":      return "/*__in*/";
-		case "__in_opt":  return "/*__in_opt*/";
-		case "__in_z_opt":  return "/*__in_z_opt*/";
-		case "__in_bound":  return "/*__in_bound*/";
+		case "__in":
+		case "__in_opt":
+		case "__in_z_opt":
+		case "__in_bound":
 			
-		case "__allocator":     return "/*__allocator*/";
-		case "__out":     return "/*__out*/";
-		case "__out_opt": return "/*__out_opt*/";
-		case "__inout":   return "/*__inout*/";
-		case "__deref":   return "/*__deref*/";
-		case "__deref_inout_opt": return "/*__deref_inout_opt*/";
-		case "__deref_out_opt": return "/*__deref_out_opt*/";
-		case "__deref_inout": return "/*__deref_inout*/";
-		case "__inout_opt":   return "/*__inout_opt*/";
-		case "__deref_out":   return "/*__deref_out*/";
-		case "__deref_opt_out":   return "/*__deref_opt_out*/";
-		case "__deref_opt_out_opt":   return "/*__deref_opt_out_opt*/";
-		case "__callback":  return "/*__callback*/";
-		case "__format_string": return "/*__format_string*/";
-		case "__reserved":  return "/*__reserved*/";
-		case "__notnull": return "/*__notnull*/";
-		case "__nullterminated": return "/*__nullterminated*/";
-		case "__nullnullterminated": return "/*__nullnullterminated*/";
+		case "__allocator":
+		case "__out":
+		case "__out_opt":
+		case "__out_z":
+		case "__inout":
+		case "__deref":
+		case "__deref_inout_opt":
+		case "__deref_out_opt":
+		case "__deref_inout":
+		case "__inout_opt":
+		case "__deref_out":
+		case "__deref_opt_out":
+		case "__deref_opt_out_opt":
+		case "__deref_opt_inout_opt":
+			
+		case "__callback":
+		case "__format_string":
+		case "__reserved":
+		case "__notnull":
+		case "__nullterminated":
+		case "__nullnullterminated":
+		case "__possibly_notnullterminated":
+		
+		case "__drv_interlocked":
+		case "__drv_sameIRQL":
+		case "__drv_inTry":
+		case "__drv_aliasesMem":
+			 
+		case "__post":
+		case "__notvalid":
+		case "__analysis_noreturn":
+			return "/*" ~ text ~ "*/";
+			
+
 		case "__checkReturn": return "/*__checkReturn*/";
 		case "volatile":  return "/*volatile*/";
 		case "__inline":  return "/*__inline*/";
@@ -2136,8 +2206,8 @@ version(remove_pp) {} else
 		vsi_path  = vsi_base_path ~ r"\VisualStudioIntegration\Common\IDL\";
 		vsi_hpath = vsi_base_path ~ r"\VisualStudioIntegration\Common\Inc\";
 
-		vsi_d_path = sdk_d_path ~ r"vsi\";
-		win_d_path = sdk_d_path ~ r"win32\";
+		vsi_d_path = sdk_d_path ~ dirVSI ~ r"\";
+		win_d_path = sdk_d_path ~ dirWin ~ r"\";
 
 		initFiles();
 		
