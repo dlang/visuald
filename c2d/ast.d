@@ -5,6 +5,7 @@ import dlist;
 import dgutil;
 import tokutil;
 
+import std.conv;
 import std.stdio;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -533,6 +534,12 @@ class AST
 		return "<not implemented>";
 	}
 
+	long evaluate()
+	{
+		throwException(start.lineno, "evaluate() not implemented!");
+		return 0;
+	}
+	
 	string getScope()
 	{
 		string txt;
@@ -1431,6 +1438,92 @@ class Expression : AST
 			break;
 		}
 		return txt;
+	}
+
+	long evaluate()
+	{
+		switch(_type)
+		{
+		default:
+			break;
+		case Type.PrimaryExp:
+			switch(_toktype)
+			{
+			default:
+				break;
+			case Token.Identifier:
+				return 0; // undefined identifier
+			case Token.Number:
+				return parse!long(start.text);
+			case Token.ParenL:
+				return children[0].evaluate();
+
+			}
+			break;
+
+		case Type.UnaryExp:
+			switch(_toktype)
+			{
+			default:
+				break;
+			case Token.Minus:
+				return -children[0].evaluate();
+			case Token.Plus:
+				return children[0].evaluate();
+			case Token.Exclamation:
+				return !children[0].evaluate();
+			case Token.Tilde:
+				return ~children[0].evaluate();
+			}
+			break;
+
+		case Type.EmptyExp:
+			break;
+
+		case Type.BinaryExp:
+			long v1 = children[0].evaluate();
+			long v2 = children[1].evaluate();
+			switch(_toktype)
+			{
+			case Token.Asterisk:       return v1 * v2;
+			case Token.Div:            return v1 / v2;
+			case Token.Mod:            return v1 % v2;
+			case Token.Plus:           return v1 + v2;
+			case Token.Minus:          return v1 - v2;
+			case Token.Shl:            return v1 << v2;
+			case Token.Shr:            return v1 >> v2;
+			case Token.LessThan:       return v1 < v2;
+			case Token.LessEq:         return v1 <= v2;
+			case Token.GreaterThan:    return v1 > v2;
+			case Token.GreaterEq:      return v1 >= v2;
+			case Token.Equal:          return v1 == v2;
+			case Token.Unequal:        return v1 != v2;
+			case Token.Ampersand:      return v1 & v2;
+			case Token.Xor:            return v1 ^ v2;
+			case Token.Or:             return v1 | v2;
+			case Token.AmpAmpersand:   return v1 && v2;
+			case Token.OrOr:           return v1 || v2;
+			case Token.Comma:          return v1, v2;
+			case Token.Tilde:
+			case Token.Unordered:
+			case Token.UnordGreater:
+			case Token.UnordGreaterEq:
+			case Token.UnordLess:
+			case Token.UnordLessEq:
+			case Token.UnordEq:
+			case Token.LessGreater:
+			case Token.LessEqGreater:
+			default:
+				break;
+			}
+			break;
+
+		case Type.CondExp:
+			return children[0].evaluate() ? children[1].evaluate() : children[2].evaluate();
+		}
+		ToStringData tsd;
+		throwException("cannot evaluate " ~ toString(tsd));
+		return 0;
 	}
 }
 

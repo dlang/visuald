@@ -65,6 +65,24 @@ void skipComments(ref TokenIterator tokIt, bool skipPP = true)
 		tokIt.advance();
 }
 
+void comment_line(ref TokenIterator tokIt)
+{
+	TokenIterator it = tokIt + 1;
+	string txt = tokIt.pretext ~ "// " ~ tokIt.text;
+	while(!it.atEnd() && it.pretext.indexOf('\n') < 0 && it.type != Token.EOF)
+	{
+		txt ~= it.pretext ~ it.text;
+		it.advance();
+	}
+	if(!it.atEnd())
+	{
+		tokIt.eraseUntil(it);
+		tokIt.pretext = txt ~ tokIt.pretext;
+	}
+	else
+		tokIt.text = "// " ~ tokIt.text;
+}
+
 void nextToken(ref TokenIterator tokIt, bool skipPP = true)
 {
 	tokIt.advance();
@@ -74,7 +92,9 @@ void nextToken(ref TokenIterator tokIt, bool skipPP = true)
 void checkToken(ref TokenIterator tokIt, int type, bool skipPP = true)
 {
 	skipComments(tokIt, skipPP);
-
+	if(tokIt.atEnd())
+		return;
+	
 	if(tokIt.type != type)
 	{
 		string txt = tokIt.text;
@@ -376,13 +396,14 @@ static void scanAny(TL)(ref TL tokenList, string text, int lineno = 1, bool comb
 	}
 }
 
-static TokenList scanText(string text, int lineno = 1, bool combinePP = true)
+TokenList scanText(string text, int lineno = 1, bool combinePP = true)
 {
 	TokenList tokenList = new TokenList;
 	scanAny(tokenList, text, lineno, combinePP);
 	return tokenList;
 }
-static scanTextArray(TYPE)(ref TYPE[] tokens, string text, int lineno = 1, bool combinePP = true)
+
+void scanTextArray(TYPE)(ref TYPE[] tokens, string text, int lineno = 1, bool combinePP = true)
 {
 	scanAny(tokens, text, lineno, combinePP);
 
@@ -644,10 +665,13 @@ TokenList createReplacementTokenList(RTYPE) (RTYPE[] replace, TokenRange match, 
 		else if(startsWith(reptext, "$"))
 		{
 			int idx = findSubmatch(submatch, reptext);
-			if(idx >= 0)
-				tokenList.appendList(copyTokenList(submatch[idx].start, submatch[idx].end));
-			else
+			if(idx < 0)
 				throwException("no submatch for " ~ reptext);
+
+			TokenList list = copyTokenList(submatch[idx].start, submatch[idx].end);
+			if(!list.empty && pretext.length)
+				list.begin().pretext = pretext ~ list.begin().pretext;
+			tokenList.appendList(list);
 		}
 		else
 		{
@@ -674,6 +698,7 @@ int _replaceTokenSequence(RTYPE)(TokenList srctoken, string[] search, RTYPE[] re
 			break;
 
 		string pretext = match.start.pretext;
+		match.start.pretext = "";
 		TokenList tokenList = createReplacementTokenList(replace, match, submatch);
 
 		if(!tokenList.empty())
@@ -710,7 +735,7 @@ TokenList scanArgument(ref TokenIterator it)
 {
 	TokenIterator start = it;
 	
-	while(it.type != Token.Comma && it.type != Token.ParenR)
+	while(!it.atEnd() && it.type != Token.Comma && it.type != Token.ParenR)
 	{
 		if(it.type == Token.ParenL)
 			advanceToClosingBracket(it);
@@ -728,7 +753,7 @@ TokenList scanArgument(ref TokenIterator it)
 	return tokenList;
 }
 
-void replaceArgument(ref TokenIterator defIt, TokenList list)
+void replaceArgument(ref TokenIterator defIt, TokenList list, void delegate(bool, TokenList) expandList)
 {
 	// defIt on identifer to replace
 	string pretext = defIt.pretext;
@@ -743,60 +768,64 @@ void replaceArgument(ref TokenIterator defIt, TokenList list)
 	defIt.erase();
 	if(!defIt.atBegin() && defIt[-1].type == Token.Fis)
 	{
+		if(expandList)
+		{
+			list = copyTokenList(list);
+			expandList(true, list);
+		}
 		// TODO: should create escape sequences?
 		string insText = "\"" ~ strip(tokenListToString(list)) ~ "\"";
-		Token tok = createToken("", insText, Token.String, defIt.lineno);
+		Token tok = createToken("", insText, Token.String, defIt[-1].lineno);
 		defIt.retreat();
 		defIt.insertAfter(tok);
 		defIt.erase(); // remove '#'
 	}
-	else if((!defIt.atBegin() && defIt[-1].type == Token.FisFis) || (!defIt.atEnd() && defIt.type == Token.FisFis))
-	{
-		TokenList insList = copyTokenList(list);
-		if(!defIt.atBegin() && defIt[-1].type == Token.FisFis)
-		{
-			defIt.retreat();
-			defIt.erase();
-			if(!defIt.atBegin())
-			{
-				defIt.retreat();
-				insList.prepend(*defIt);
-				defIt.erase();
-			}
-		}
-		if(!defIt.atEnd() && defIt.type == Token.FisFis)
-		{
-			defIt.erase();
-			if(!defIt.atEnd())
-			{
-				insList.append(*defIt);
-				defIt.erase();
-			}
-		}
-		string insText = strip(tokenListToString(insList));
-		TokenList newList = scanText(insText, lineno);
-		TokenIterator end = defIt;
-		TokenIterator insIt = defIt.insertListBefore(newList);
-		defIt = end;
-	}
 	else
 	{
+		bool org = ((!defIt.atBegin() && defIt[-1].type == Token.FisFis) || (!defIt.atEnd() && defIt.type == Token.FisFis));
 		TokenList insList = copyTokenList(list);
-		TokenIterator end = defIt;
-		TokenIterator insIt = defIt.insertListBefore(insList);
-		defIt = end;
+		if(!org && expandList)
+			expandList(true, insList);
+
+		TokenIterator ins = defIt;
+		insertTokenList(ins, insList);
 	}
 }
 
-void expandDefine(ref TokenIterator it, TokenList define)
+TokenList removeFisFis(TokenList tokens)
+{
+	int cntFisFis = 0;
+	TokenIterator it = tokens.begin();
+	while(!it.atEnd())
+	{
+		if(it.type == Token.FisFis)
+		{
+			it.erase();
+			if(!it.atEnd())
+				it.pretext = "";
+			cntFisFis++;
+		}
+		it.advance();
+	}
+	if(cntFisFis == 0)
+		return tokens;
+	
+	string text = strip(tokenListToString(tokens));
+	TokenList newList = scanText(text, tokens.begin().lineno);
+	return newList;
+}
+
+// returns iterator after insertion, it is set to iterator at beginning of insertion
+TokenIterator expandDefine(ref TokenIterator it, TokenList define, void delegate(bool, TokenList) expandList)
 {
 	define = copyTokenList(define, true);
 	TokenIterator srcIt = it;
 	TokenIterator defIt = define.begin() + 2;
-
+	string pretext = srcIt.pretext;
+	
 	TokenList[string] args;
 	checkToken(it, Token.Identifier, false);
-	if(defIt.type == Token.ParenL && defIt.pretext.length == 0)
+	if(!defIt.atEnd() && defIt.type == Token.ParenL && defIt.pretext.length == 0)
 	{
 		nextToken(defIt, false);
 		checkToken(it, Token.ParenL, false);
@@ -827,7 +856,7 @@ void expandDefine(ref TokenIterator it, TokenList define)
 		if(defIt.type == Token.Identifier)
 			if(TokenList* list = defIt.text in args)
 			{
-				replaceArgument(defIt, *list);
+				replaceArgument(defIt, *list, expandList);
 				continue;
 			}
 		defIt.advance();
@@ -835,12 +864,25 @@ void expandDefine(ref TokenIterator it, TokenList define)
 
 	if(!define.empty())
 	{
-		define.begin().pretext = srcIt.pretext ~ define.begin().pretext;
+		define = removeFisFis(define);
 		srcIt.eraseUntil(it);  // makes srcIt invalid, but it stays valid
-		it = it.insertListBefore(define);
+		srcIt = it;
+		if(expandList)
+		{
+			expandList(false, define);
+			it = insertTokenList(srcIt, define); // it is after insertion now
+		}
+		else
+			it = insertTokenList(srcIt, define);
 	}
 	else
+	{
 		srcIt.eraseUntil(it);  // makes srcIt invalid, but it stays valid
+		srcIt = it;
+	}
+	if(!it.atEnd())
+		it.pretext = pretext ~ it.pretext;
+	return srcIt;
 }
 
 enum MixinMode
@@ -861,8 +903,8 @@ void expandPPdefines(TokenList srctokens, TokenList[string] defines, MixinMode m
 			string text = strip(it.text);
 			TokenList defList = scanText(text, it.lineno, false);
 			TokenIterator tokIt = defList.begin();
-			assert(tokIt[0].type == Token.PPdefine);
-			assert(tokIt[1].type == Token.Identifier);
+			assume(tokIt[0].type == Token.PPdefine);
+			assume(tokIt[1].type == Token.Identifier);
 
 			if(TokenList* list = tokIt[1].text in defines)
 			{
@@ -885,8 +927,8 @@ void expandPPdefines(TokenList srctokens, TokenList[string] defines, MixinMode m
 		{
 			TokenList undefList = scanText(it.text, it.lineno, false);
 			TokenIterator tokIt = undefList.begin();
-			assert(tokIt[0].type == Token.PPundef);
-			assert(tokIt[1].type == Token.Identifier);
+			assume(tokIt[0].type == Token.PPundef);
+			assume(tokIt[1].type == Token.Identifier);
 	
 			if(TokenList* list = tokIt[1].text in defines)
 			{
@@ -906,7 +948,7 @@ void expandPPdefines(TokenList srctokens, TokenList[string] defines, MixinMode m
 					if(mixinMode != MixinMode.ExpandDefine)
 						invokeMixin(it, mixinMode);
 					else
-						expandDefine(it, *list);
+						expandDefine(it, *list, null);
 					continue;
 				}
 			}
@@ -926,7 +968,7 @@ void insertTokenBefore(ref TokenIterator it, Token tok, string tokpretext = "")
 void invokeMixin(ref TokenIterator it, MixinMode mixinMode)
 {
 	TokenIterator start = it;
-	assert(it.type == Token.Identifier);
+	assume(it.type == Token.Identifier);
 	string text = "mixin(" ~ it.text;
 
 	nextToken(it);
@@ -1038,8 +1080,8 @@ void regexReplacePPdefines(TokenList srctokens, string[string] defines)
 			string text = strip(it.text);
 			TokenList defList = scanText(text, it.lineno, false);
 			TokenIterator tokIt = defList.begin();
-			assert(tokIt[0].type == Token.PPdefine);
-			assert(tokIt[1].type == Token.Identifier);
+			assume(tokIt[0].type == Token.PPdefine);
+			assume(tokIt[1].type == Token.Identifier);
 
 			string ident = tokIt[1].text;
 			foreach(re, s; defines)
@@ -1097,7 +1139,7 @@ unittest
 
 	TokenList[string] defines = [ "X" : null ];
 	string res = testDefine(txt, defines);
-	assert(res == exp);
+	assume(res == exp);
 }
 
 unittest
@@ -1117,7 +1159,7 @@ unittest
 
 	TokenList[string] defines = [ "X" : null ];
 	string res = testDefine(txt, defines);
-	assert(res == exp);
+	assume(res == exp);
 }
 
 unittest
@@ -1133,7 +1175,7 @@ unittest
 
 	TokenList[string] defines = [ "X" : null ];
 	string res = testDefine(txt, defines);
-	assert(res == exp);
+	assume(res == exp);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1161,7 +1203,7 @@ unittest
 
 	TokenList[string] mixins = [ "X" : null ];
 	string res = testMixin(txt, mixins);
-	assert(res == exp);
+	assume(res == exp);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1202,7 +1244,7 @@ unittest
 	replaceTokenSequence(list, "static_if(MEM_DEBUG) { $1 }", "", true);
 
 	string res = tokenListToString(list);
-	assert(res == exp);
+	assume(res == exp);
 }
 
 unittest
@@ -1217,16 +1259,13 @@ unittest
 		"X(c)\n";
 
 	string exp = 
-		"\n"
-		"    int a1(); \n"
+		"int a1(); \n"
 		"    int a2(); \n"
 		"    int a3();\n"
-		"\n"
-		"    int b1(); \n"
+		"int b1(); \n"
 		"    int b2(); \n"
 		"    int b3();\n"
-		"\n"
-		"    int c1(); \n"
+		"int c1(); \n"
 		"    int c2(); \n"
 		"    int c3();\n";
 
@@ -1236,7 +1275,7 @@ unittest
 	expandPPdefines(list, defines, MixinMode.ExpandDefine);
 
 	string res = tokenListToString(list);
-	assert(res == exp);
+	assume(res == exp);
 }
 
 unittest 
@@ -1244,5 +1283,5 @@ unittest
 	string txt = "0 a __ b c";
 	TokenList list = scanText(txt);
 	string ntxt = tokenListToString(list, true);
-	assert(ntxt == "0 ab c");
+	assume(ntxt == "0 ab c");
 }

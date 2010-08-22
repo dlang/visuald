@@ -15,6 +15,7 @@ import std.utf;
 // version = V2;
 // version = Java;
 // version = IDL;
+version = dollar_in_ident;
 
 class Token
 {
@@ -22,7 +23,6 @@ class Token
 	enum {
 		Comment,
 		Newline,
-
 		Identifier,
 		Number,
 		String,
@@ -32,29 +32,32 @@ class Token
 		Class,
 		Union,
 		Enum,
-		Typedef,
+		
+		Typedef, // 10
 		Extern,
 		Static,
 		Const,
 		__In,
+		
 		__Out,
 		__Body,
-
 		__Asm,
 		__Declspec,
 		If,
-		Else,
+		
+		Else,  // 20
 		Do,
 		While,
 		For,
 		Return,
+		
 		Break,
 		Continue,
 		Switch,
 		Goto,
 		Delete,
 
-		BraceL,
+		BraceL, // 30
 		BraceR,
 		BracketL,
 		BracketR,
@@ -65,49 +68,56 @@ class Token
 		Unequal,
 		LessThan,
 		LessEq,
-		GreaterThan,
+		
+		GreaterThan, // 40
 		GreaterEq,
-
 		Unordered,
 		LessGreater,
 		LessEqGreater,
+		
 		UnordGreater,
 		UnordGreaterEq,
 		UnordLess,
 		UnordLessEq,
 		UnordEq,
 
-		Shl,
+		Shl, // 50
 		Shr,
 		Comma,
 		Asterisk,
 		Ampersand,
+		
 		Assign,
 		Dot,
 		Elipsis,
 		Colon,
 		DoubleColon,
-		Semicolon,
+		
+		Semicolon, // 60
 		Tilde,
 		Question,
 		Exclamation,
 		Deref,
+		
 		Plus,
 		PlusPlus,
 		Minus,
 		MinusMinus,
 		Div,
-		Mod,
+		
+		Mod, // 70
 		Xor,
 		Or,
 		OrOr,
 		AmpAmpersand,
+		
 		AddAsgn,
 		SubAsgn,
 		MulAsgn,
 		DivAsgn,
 		ModAsgn,
-		AndAsgn,
+		
+		AndAsgn, // 80
 		XorAsgn,
 		OrAsgn,
 		ShlAsgn,
@@ -118,7 +128,8 @@ class Token
 		PPundef,
 		PPif,
 		PPifdef,
-		PPifndef,
+		
+		PPifndef, // 90
 		PPelse,
 		PPelif,
 		PPendif,
@@ -127,10 +138,10 @@ class Token
 
 		Fis,
 		FisFis,
-
 		Macro,
 		Other,
-		EOF,
+		
+		EOF, // 100
 		V1Tokens
 	}
 
@@ -440,7 +451,7 @@ class Tokenizer
 				incPos();
 			}
 			else
-				break;
+				return false;
 			if(keepBackSlashAtEOL)
 				curText ~= "\\\n";
 		}
@@ -553,8 +564,12 @@ version(IDL) {} else {
 
 	bool skipAlnum()
 	{
-		while(!eof() && (isalnum(text[pos]) || text[pos] == '_'))
-			nextChar();
+		version(dollar_in_ident)
+			while(!eof() && (isalnum(text[pos]) || text[pos] == '_' || text[pos] == '$'))
+				nextChar();
+		else
+			while(!eof() && (isalnum(text[pos]) || text[pos] == '_'))
+				nextChar();
 		return true;
 	}
 
@@ -807,6 +822,8 @@ version(Java)
 }
 			default:          tok.type = Token.Identifier; break;
 			}
+			if(ppOnly)
+				tok.type = Token.Identifier;
 			break;
 		
 		case '$':
@@ -880,5 +897,7 @@ version(Java)
 	bool skipNewline;
 	bool keepBackSlashAtEOL;
 	bool enableASMComment;
+	
+	static bool ppOnly;
 }
 

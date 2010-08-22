@@ -138,100 +138,6 @@ class idl2d
 	string[] currentImports;
 	string[] addedImports;
 
-	static string cpp_string(string txt)
-	{
-		string ntxt;
-		bool escapeNext = false;
-		foreach(dchar ch; txt)
-		{
-			if(escapeNext)
-			{
-				switch(ch)
-				{
-				case '\\': ch = '\\'; break;
-				case 'a':  ch = '\a'; break;
-				case 'r':  ch = '\r'; break;
-				case 'n':  ch = '\n'; break;
-				case 't':  ch = '\t'; break;
-				case '"':  ch = '\"'; break;
-				case '\'': ch = '\''; break;
-				default:   break;
-				}
-				escapeNext = false;
-			}
-			else if(ch == '\\')
-			{
-				escapeNext = true;
-				continue;
-			}
-			ntxt ~= toUTF8((&ch)[0..1]);
-		}
-		return ntxt;
-	}
-
-	static string removeDuplicateEmptyLines(string txt)
-	{
-		string ntxt;
-		uint npos = 0;
-		uint pos = 0;
-		while(pos < txt.length)
-		{
-			dchar ch = decode(txt, pos);
-			if(ch == '\n')
-			{
-				uint nl = 0;
-				uint nlpos = pos; // positions after nl
-				uint lastnlpos = pos;
-				while(pos < txt.length)
-				{
-					ch = decode(txt, pos);
-					if(ch == '\n')
-					{
-						nl++;
-						lastnlpos = pos;
-					}
-					else if(!isspace(ch))
-						break;
-				}
-				if(nl > 1)
-				{
-					ntxt ~= txt[npos .. nlpos];
-					ntxt ~= '\n';
-					npos = lastnlpos;
-				}
-			}
-		}
-		ntxt ~= txt[npos .. pos];
-		return ntxt;
-	}
-	
-	unittest
-	{
-		string txt;
-		txt = removeDuplicateEmptyLines("abc\n\n\nefg");
-		assert(txt == "abc\n\nefg");
-		txt = removeDuplicateEmptyLines("abc\n\nefg");
-		assert(txt == "abc\n\nefg");
-	}
-	
-	void comment_line(ref TokenIterator tokIt)
-	{
-		TokenIterator it = tokIt + 1;
-		string txt = tokIt.pretext ~ "// " ~ tokIt.text;
-		while(!it.atEnd() && it.pretext.indexOf('\n') < 0 && it.type != Token.EOF)
-		{
-			txt ~= it.pretext ~ it.text;
-			it.advance();
-		}
-		if(!it.atEnd())
-		{
-			tokIt.eraseUntil(it);
-			tokIt.pretext = txt ~ tokIt.pretext;
-		}
-		else
-			tokIt.text = "// " ~ tokIt.text;
-	}
-
 	void reinsert_cpp_quote(ref TokenIterator tokIt)
 	{
 		TokenIterator it = tokIt;
@@ -1061,15 +967,6 @@ version(all)
 		replaceTokenSequence(tokens, "const_cast<$_ident*>", "cast($_ident*)", true);
 	}
 
-	string getNameWithoutExt(string fname)
-	{
-		string bname = getBaseName(fname);
-		string name = getName(bname);
-		if(name.length == 0)
-			name = bname;
-		return name;
-	}
-
 	string translateModuleName(string name)
 	{
 		name = tolower(name);
@@ -1697,6 +1594,7 @@ version(none)
 
 		// Some properties use the same name as the type of the return value
 		replaceTokenSequence(tokens, "$_identFun([$data] $_identFun $arg)", "$_identFun([$data] .$_identFun $arg)", true);
+
 		if(startsWith(currentModule, "dte"))
 		{
 			// more complications in dte*.idl
@@ -1719,6 +1617,7 @@ version(none)
 		replaceTokenSequence(tokens, "module $_ident1 { $data }", "/+module $_ident1 {+/ $data /+}+/", true);
 		replaceTokenSequence(tokens, "properties:", "/+properties:+/", true);
 		replaceTokenSequence(tokens, "methods:", "/+methods:+/", true);
+		
 		replaceTokenSequence(tokens, "(void)", "()", true);
 		replaceTokenSequence(tokens, "(VOID)", "()", true);
 		replaceTokenSequence(tokens, "[in] ref $_ident", "in $_ident*", true); // in passes by value otherwise
