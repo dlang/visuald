@@ -28,6 +28,7 @@
 
 #define IDG_VD_EDIT                   0x0101
 #define IDG_VD_SEARCH                 0x0100
+#define IDG_VD_BUILD                  0x0102
 
 #define IDG_VS_MM_FILEEDITVIEW        0x0101
 #define IDG_VS_VIEW_BROWSER           0x0130
@@ -53,6 +54,7 @@ CMDS_SECTION g_packageCLSID
 		// NewGroup                     Parent Group                            Priority
 		g_packageCLSID:IDG_VD_SEARCH,   g_packageCLSID:IDM_VISUALD,             0x0000;
 		g_packageCLSID:IDG_VD_EDIT,     g_packageCLSID:IDM_VISUALD,             0x0001;
+		g_packageCLSID:IDG_VD_BUILD,    g_packageCLSID:IDM_VISUALD,             0x0002;
 	NEWGROUPS_END
 
     BUTTONS_BEGIN
@@ -61,6 +63,7 @@ CMDS_SECTION g_packageCLSID
 		g_commandSetCLSID:CmdSearchFile,    g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search File",         "Search &File",         "Search File in Solution",     , "SearchFile",    "SearchFile";
 		g_commandSetCLSID:CmdShowScope,     g_packageCLSID:IDG_VD_EDIT,          0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show Scope",          "Show &Scope",          "Show Scope of Cursor",        , "ShowScope",     "ShowScope";
 		g_commandSetCLSID:CmdShowMethodTip, g_packageCLSID:IDG_VD_EDIT,          0xF200,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show Parameter Info", "Show &Parameter Info", "Show Parameter Info",         , "ParameterInfo", "ParameterInfo";
+		g_commandSetCLSID:CmdBuildPhobos,   g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Build Phobos Browse Info", "Build Phobos Browse Info", "Build Phobos Browse Info", , "BuildPhobosBrowseInfo", "BuildPhobosBrowseInfo";
 		
 		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID
 		// as the command set GUID. Also, by specifying blank for the FLAGS, this command is

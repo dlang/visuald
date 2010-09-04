@@ -485,6 +485,12 @@ extern(C) void log_printf(string fmt, ...)
 	stdcarg.va_end(q);
 }
 
+extern(C) void log_flush()
+{
+	if(gcLogFh)
+		stdcio.fflush(gcLogFh);
+}
+
 version(test) {
 
 	void logCall(...)

@@ -28,11 +28,12 @@
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>1</useUnitTests>
+  <useUnitTests>0</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
@@ -76,7 +77,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <additionalOptions>-L/XREF</additionalOptions>
+  <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>$(TargetPath)</debugtarget>
@@ -119,6 +120,7 @@
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>

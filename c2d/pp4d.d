@@ -14,13 +14,14 @@
 //
 // what it does:
 // - read input files and #included/imported files
+// - tokenize input files
 // - expand preprocessor conditionals, removing any disabled source code
 // - converting #define into
 //   - comment if expansion text cannot be parsed as a C++ expression
 //   - template if there are parenthesis () 
 //   - alias if expansion is a simple identifier
 //   - enum 
-// - expand definitions that are not vonverted to template/alias/enum
+// - expand definitions that are not converted to template/alias/enum
 // - apply user replacements
 // - apply standard replacements
 // - 
@@ -53,6 +54,7 @@ class Source
 	string d_file;
 	string text;
 	TokenList tokens;
+	AST ast;
 	
 	int[] alignment;
 }
@@ -97,7 +99,8 @@ class pp4d
 	
 	void initFiles()
 	{
-		inc_path[r"c:\Program Files\Microsoft SDKs\Windows\v7.1\Include\"] = r"pp\win32\";
+//		inc_path[r"c:\Program Files\Microsoft SDKs\Windows\v7.1\Include\"] = r"pp\win32\";
+		inc_path[r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\"] = r"pp\win32\";
 	}
 
 	void warning(int lineno, string msg)
@@ -398,7 +401,7 @@ class pp4d
 	{
 		if(it.atEnd() || it == endIt)
 			return false;
-		if(it.text == "const")
+		if(endIt == it + 1 && Tokenizer.identifierToKeyword(it.text) != Token.Identifier)
 			return false;
 		return true;
 	}
@@ -482,9 +485,9 @@ class pp4d
 						repltext ~= "; }\n";
 						repltext = replace(repltext, "\\\n", "\n");
 					}
-					else if(exprIt.type == Token.Identifier)
+					else if(exprIt.type == Token.Identifier && ((exprIt + 1).atEnd() || exprIt[1].type == Token.EOF))
 					{
-						repltext = "alias " ~ exprIt.text ~ " " ~ def.ident ~ ";\n";
+						repltext = "typedef " ~ exprIt.text ~ " " ~ def.ident ~ ";\n";
 					}
 					else
 					{
@@ -636,8 +639,11 @@ class pp4d
 			if(tokIt.type == Token.Identifier)
 				if(Define* def = tokIt.text in defines)
 				{
-					if(def.tokens && !def.isExpr)
+					if(def.invocationLevel >= defineLevel && def.tokens && !def.isExpr)
 					{
+						def.invocationLevel = defineLevel;
+						scope(exit) def.invocationLevel = int.max;
+							
 						tokIt = expandDefine(tokIt, def.tokens, &expandArgDefines);
 						return true;
 					}
@@ -1228,7 +1234,23 @@ class pp4d
 		setCurrentSource(src);
 
 		preprocessText(src.tokens);
-		convertText(src.tokens);
+		identifierToKeywords(src.tokens);
+
+		int cntExceptions = SyntaxException.count;
+		try
+		{
+			src.ast = new AST(AST.Type.Module);
+			TokenIterator tokIt = src.tokens.begin();
+			src.ast.parseModule(tokIt);
+		}
+		catch
+		{
+		}
+		cntExceptions = SyntaxException.count - cntExceptions;
+		if(cntExceptions > 0)
+			writeln(to!string(cntExceptions) ~ " syntax errors");
+		
+//		convertText(src.tokens);
 		string text = tokenListToString(src.tokens, true);
 		text = removeDuplicateEmptyLines(text);
 		
@@ -1314,13 +1336,26 @@ void testProcess(string txt, string exp)
 	assume(res == exp);
 }
 
-version(none) unittest
+unittest
 {
 	string txt = 
 		"#define X(a) a X\n" ~
 		"X(2)\n";
 	string exp = 
 		"2 X\n";
+
+	testProcess(txt, exp);
+}
+
+unittest
+{
+	string txt = 
+		"#define RASCONNW struct tagRASCONNW\n" ~
+		"RASCONNW\n" ~
+		"{ };\n";
+	string exp = 
+		"struct tagRASCONNW\n" ~
+		"{ };\n";
 
 	testProcess(txt, exp);
 }

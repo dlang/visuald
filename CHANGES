@@ -166,3 +166,7 @@ unreleased Version 0.3.16
 
   * now also compiles against VSI SDK for Visual Studio 2010 and Windows SDK v7.1
   * empty dependency file now causes rebuild
+  * new command "Build phobos browse info"
+  * add support for MaGo debugger
+  * fix dmd option for profiling
+  

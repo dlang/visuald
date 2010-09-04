@@ -92,15 +92,12 @@ void nextToken(ref TokenIterator tokIt, bool skipPP = true)
 void checkToken(ref TokenIterator tokIt, int type, bool skipPP = true)
 {
 	skipComments(tokIt, skipPP);
-	if(tokIt.atEnd())
-		return;
 	
-	if(tokIt.type != type)
+	if(tokIt.atEnd() ||tokIt.type != type)
 	{
-		string txt = tokIt.text;
-		if(tokIt.type == Token.EOF)
-			txt = "EOF";
-		throwException((*tokIt).lineno, "unexpected " ~ txt);
+		string txt = tokIt.atEnd() ? "EOF" : tokIt.text;
+		int lineno = tokIt.atEnd() ? (tokIt-1).atEnd() ? -1 : tokIt[-1].lineno : tokIt.lineno;
+		throwException(lineno, "expected " ~ Token.toString(type) ~ " instead of " ~ txt);
 	}
 	nextToken(tokIt, skipPP);
 }
@@ -117,6 +114,21 @@ string tokensToIdentifier(TokenIterator start, TokenIterator end)
 		++start;
 	}
 	return ident;
+}
+
+void identifierToKeywords(TokenIterator start, TokenIterator end)
+{
+	while(!start.atEnd() && start != end)
+	{
+		if(start.type == Token.Identifier)
+			start.type = Tokenizer.identifierToKeyword(start.text);
+		++start;
+	}
+}
+
+void identifierToKeywords(TokenList list)
+{
+	return identifierToKeywords(list.begin(), list.end());
 }
 
 //////////////////////////////////////////////////////////////////////////////

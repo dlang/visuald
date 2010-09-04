@@ -162,6 +162,8 @@ version(V2)
 		Reinterpret_cast,
 		Const_cast,
 		Empty,    // helper for unspecified identifier in declaration
+		Interface,
+		Template,
 	}
 }
 version(Java)
@@ -313,21 +315,24 @@ version(V2)
 		case Const_cast: return "const_cast";
 		case Empty:	return "";
 		case Newline:	return "\n";
+		case Interface: return "interface";
+		case Template: return "template";
 
 }
 version(Java)
 {
 		case Instanceof: return "instanceof";
 }
+		case Identifier: return "<identifier>";
+		case Number: return "<number>";
+		case String: return "<string>";
+		case EOF: return "EOF";
+			
 		// other types supposed to fail because no representation available
 		case Macro:
 		case PPinsert:
 		case Comment:
-		case Identifier:
-		case Number:
-		case String:
 		case PPother:
-		case EOF:
 		case Other:
 		default:
 			assert(false);
@@ -645,6 +650,62 @@ version(IDL) {} else {
 		return tok.type;
 	}
 
+	static int identifierToKeyword(string ident)
+	{
+		switch(ident)
+		{
+		case "namespace": return Token.Namespace;
+		case "struct":    return Token.Struct;
+		case "class":     return Token.Class;
+		case "union":     return Token.Union;
+		case "enum":      return Token.Enum;
+		case "typedef":   return Token.Typedef;
+		case "extern":    return Token.Extern;
+		case "static":    return Token.Static;
+		case "const":     return Token.Const;
+		case "__in":      return Token.__In;
+		case "__out":     return Token.__Out;
+		case "__body":    return Token.__Body;
+		case "_asm":      return Token.__Asm;
+		case "__asm":     return Token.__Asm;
+		case "__declspec":  return Token.__Declspec;
+		case "if":        return Token.If;
+		case "else":      return Token.Else;
+		case "while":     return Token.While;
+		case "do":        return Token.Do;
+		case "for":       return Token.For;
+		case "switch":    return Token.Switch;
+		case "goto":      return Token.Goto;
+		case "return":    return Token.Return;
+		case "continue":  return Token.Continue;
+		case "break":     return Token.Break;
+		case "delete":    return Token.Delete;
+version(V2)
+{
+		case "case":      return Token.Case;
+		case "default":   return Token.Default;
+		case "static_if": return Token.Static_if;
+		case "mixin":     return Token.Mixin;
+		case "__version": return Token.Version;
+		case "sizeof":    return Token.Sizeof;
+		case "operator":  return Token.Operator;
+		case "new":       return Token.New;
+		case "this":      return Token.This;
+		case "static_cast": return Token.Static_cast;
+		case "dynamic_cast": return Token.Dynamic_cast;
+		case "reinterpret_cast": return Token.Reinterpret_cast;
+		case "const_cast": return Token.Const_cast;
+		case "interface": return Token.Interface;
+		case "template":  return Token.Template;
+}
+version(Java)
+{
+		case "instanceof": return Token.Instanceof;
+}
+		default:          return Token.Identifier;
+		}
+	}
+	
 	bool next(Token tok)
 	{
 		curText = "";
@@ -772,58 +833,10 @@ version(IDL) {} else {
 		case '_':
 			skipIdent();
 			string ident = curText;
-			switch(ident)
-			{
-			case "namespace": tok.type = Token.Namespace; break;
-			case "struct":    tok.type = Token.Struct; break;
-			case "class":     tok.type = Token.Class; break;
-			case "union":     tok.type = Token.Union; break;
-			case "enum":      tok.type = Token.Enum; break;
-			case "typedef":   tok.type = Token.Typedef; break;
-			case "extern":    tok.type = Token.Extern; break;
-			case "static":    tok.type = Token.Static; break;
-			case "const":     tok.type = Token.Const; break;
-			case "__in":      tok.type = Token.__In; break;
-			case "__out":     tok.type = Token.__Out; break;
-			case "__body":    tok.type = Token.__Body; break;
-			case "_asm":      tok.type = Token.__Asm; break;
-			case "__asm":     tok.type = Token.__Asm; break;
-			case "__declspec":  tok.type = Token.__Declspec; break;
-			case "if":        tok.type = Token.If; break;
-			case "else":      tok.type = Token.Else; break;
-			case "while":     tok.type = Token.While; break;
-			case "do":        tok.type = Token.Do; break;
-			case "for":       tok.type = Token.For; break;
-			case "switch":    tok.type = Token.Switch; break;
-			case "goto":      tok.type = Token.Goto; break;
-			case "return":    tok.type = Token.Return; break;
-			case "continue":  tok.type = Token.Continue; break;
-			case "break":     tok.type = Token.Break; break;
-			case "delete":    tok.type = Token.Delete; break;
-version(V2)
-{
-			case "case":      tok.type = Token.Case; break;
-			case "default":   tok.type = Token.Default; break;
-			case "static_if": tok.type = Token.Static_if; break;
-			case "mixin":     tok.type = Token.Mixin; break;
-			case "__version": tok.type = Token.Version; break;
-			case "sizeof":    tok.type = Token.Sizeof; break;
-			case "operator":  tok.type = Token.Operator; break;
-			case "new":       tok.type = Token.New; break;
-			case "this":      tok.type = Token.This; break;
-			case "static_cast": tok.type = Token.Static_cast; break;
-			case "dynamic_cast": tok.type = Token.Dynamic_cast; break;
-			case "reinterpret_cast": tok.type = Token.Reinterpret_cast; break;
-			case "const_cast": tok.type = Token.Const_cast; break;
-}
-version(Java)
-{
-			case "instanceof": tok.type = Token.Instanceof; break;
-}
-			default:          tok.type = Token.Identifier; break;
-			}
 			if(ppOnly)
 				tok.type = Token.Identifier;
+			else
+				tok.type = identifierToKeyword(ident);
 			break;
 		
 		case '$':

@@ -30,3 +30,5 @@
 #define CmdShowScope     0x103
 #define CmdShowMethodTip 0x104
 
+#define CmdBuildPhobos   0x110
+

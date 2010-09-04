@@ -248,6 +248,8 @@ bool _startsWith(string s, string w)
 	return (s.length >= w.length && s[0 .. w.length] == w);
 }
 
+//alias startsWith _startsWith;
+
 version(D_Version2) {} else {
 
 // for D1 compatibility

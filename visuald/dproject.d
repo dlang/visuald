@@ -614,7 +614,7 @@ class Project : CVsHierarchy,
 	this(ProjectFactory factory, string name, string filename)
 	{
 		mFactory = factory;
-		mName = name;
+		mCaption = mName = name;
 		mFilename = filename;
 		mExtProject = addref(new ExtProject(this));
 		mConfigProvider = addref(new ConfigProvider(this));
@@ -1069,6 +1069,11 @@ class Project : CVsHierarchy,
 			break;
 			//return DISP_E_MEMBERNOTFOUND; 
 
+		case VSHPROPID_ConfigurationProvider:
+			var.vt = VT_UNKNOWN;
+			return GetCfgProvider(cast(IVsCfgProvider*)&var.punkVal);
+			//return QueryInterface(&IVsGetCfgProvider.iid, cast(void **)&var.punkVal);
+			
 		case VSHPROPID_ProjectDir:
 		    // IsNonSearchable, HasEnumerationSideEffects
 		    // 1001

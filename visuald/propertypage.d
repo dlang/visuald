@@ -582,6 +582,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		AddControl("Working Directory", mWorkingDir = new Text(mCanvas));
 		AddControl("",                  mAttach = new CheckBox(mCanvas, "Attach to runnng process"));
 		AddControl("Remote Machine",    mRemote = new Text(mCanvas));
+		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Mixed", "MaGo" ], false));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -591,6 +592,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		mWorkingDir.setText(options.debugworkingdir);
 		mAttach.setChecked(options.debugattach);
 		mRemote.setText(options.debugremote);
+		mDebugEngine.setSelection(options.debugEngine);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -601,6 +603,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		changes += changeOption(mWorkingDir.getText(), options.debugworkingdir, refoptions.debugworkingdir);
 		changes += changeOption(mAttach.isChecked(), options.debugattach, options.debugattach);
 		changes += changeOption(mRemote.getText(), options.debugremote, refoptions.debugremote);
+		changes += changeOption(cast(ubyte)mDebugEngine.getSelection(), options.debugEngine, refoptions.debugEngine);
 		return changes;
 	}
 
@@ -609,6 +612,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 	Text mWorkingDir;
 	Text mRemote;
 	CheckBox mAttach;
+	ComboBox mDebugEngine;
 }
 
 class DmdGeneralPropertyPage : ProjectPropertyPage

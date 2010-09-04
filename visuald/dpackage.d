@@ -406,6 +406,7 @@ class Package : DisposingComObject,
 				{
 				case CmdSearchFile:
 				case CmdSearchSymbol:
+				case CmdBuildPhobos:
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
 				default:
@@ -433,6 +434,12 @@ class Package : DisposingComObject,
 		if(nCmdID == CmdSearchFile)
 		{
 			showSearchWindow(true);
+			return S_OK;
+		}
+		if(nCmdID == CmdBuildPhobos)
+		{
+			mOptions.buildPhobosBrowseInfo();
+			mLibInfos.updateDefinitions();
 			return S_OK;
 		}
 		return OLECMDERR_E_NOTSUPPORTED;
@@ -647,7 +654,7 @@ class GlobalOptions
 		return installdir;
 	}
 	
-	string[] getImportPaths()
+	string[] getIniImportPaths()
 	{
 		string[] imports;
 		string bindir = findDmdBinDir();
@@ -668,6 +675,12 @@ class GlobalOptions
 					}
 				}
 		}
+		return imports;
+	}
+	
+	string[] getImportPaths()
+	{
+		string[] imports = getIniImportPaths();
 		
 		string[string] replacements;
 		addReplacements(replacements);
@@ -679,7 +692,7 @@ class GlobalOptions
 		return imports;
 	}
 
-	string[] getJSONFiles()
+	string[] getJSONPaths()
 	{
 		string[] jsonpaths;
 		string[string] replacements;
@@ -688,6 +701,12 @@ class GlobalOptions
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
 			jsonpaths ~= normalizeDir(unquoteArgument(arg));
+		return jsonpaths;
+	}
+	
+	string[] getJSONFiles()
+	{
+		string[] jsonpaths = getJSONPaths();
 		
 		string[] jsonfiles;
 		foreach(path; jsonpaths)
@@ -698,7 +717,162 @@ class GlobalOptions
 		}
 		return jsonfiles;
 	}
+
+	string[] findDFiles(string path, string sub)
+	{
+		string[] files;
+		foreach(string file; dirEntries(path ~ sub, SpanMode.shallow))
+		{
+			if(_startsWith(file, path))
+				file = file[path.length .. $];
+			if(fnmatch(basename(file), "openrj.d"))
+				continue;
+			if(fnmatch(basename(file), "*.d"))
+				if(string* pfile = contains(files, file ~ "i"))
+					*pfile = file;
+				else
+					files ~= file;
+			else if(fnmatch(basename(file), "*.di"))
+				if(!contains(files, file[0..$-1]))
+					files ~= file;
+		}
+		return files;
+	}
+
+	bool buildPhobosBrowseInfo()
+	{
+		auto win = queryService!(IVsOutputWindow)();
+		if(!win)
+			return false;
+		scope(exit) release(win);
+		
+		IVsOutputWindowPane pane;
+		if(win.GetPane(&GUID_BuildOutputWindowPane, &pane) != S_OK || !pane)
+			return false;
+		scope(exit) release(pane);
+
+		string[] jsonPaths = getJSONPaths();
+		string jsonPath;
+		if(jsonPaths.length)
+			jsonPath = jsonPaths[0];
+		if(jsonPath.length == 0)
+		{
+			JSNSearchPath ~= "\"$(VisualDInstallDir)" ~ "json\\\"";
+			jsonPath = getJSONPaths()[0];
+		}
+		
+		pane.Clear();
+		pane.Activate();
+		string msg = "Building phobos JSON browse information files to " ~ jsonPath ~ "\n";
+		pane.OutputString(toUTF16z(msg));
+		
+		if(!std.file.exists(jsonPath))
+		{
+			try
+			{
+				mkdirRecurse(jsonPath[0..$-1]); // normalized dir has trailing slash
+			}
+			catch(Exception)
+			{
+				msg = format("cannot create directory " ~ jsonPath);
+				pane.OutputString(toUTF16z(msg));
+				return false;
+			}
+		}
+		
+		string[] imports = getIniImportPaths();
+		foreach(s; imports)
+			pane.OutputString(toUTF16z("Using import " ~ s ~ "\n"));
+
+		string cmdfile = jsonPath ~ "buildjson.bat";
+		string dmdpath = findDmdBinDir() ~ "dmd.exe";
+		foreach(s; imports)
+		{
+			string[] files;
+			string cmdline = "@echo off\n";
+			string jsonfile;
+			
+			if(std.file.exists(s ~ "std\\algorithm.d"))
+			{
+				files ~= findDFiles(s, "std");
+				files ~= findDFiles(s, "std\\c");
+				files ~= findDFiles(s, "std\\c\\windows");
+				files ~= findDFiles(s, "std\\internal\\math");
+				files ~= findDFiles(s, "std\\windows");
+				files ~= findDFiles(s, "etc\\c");
+				jsonfile = jsonPath ~ "phobos.json";
+			}
+			if(std.file.exists(s ~ "object.di"))
+			{
+				files ~= "object.di";
+				files ~= findDFiles(s, "core");
+				files ~= findDFiles(s, "core\\stdc");
+				files ~= findDFiles(s, "core\\sync");
+				files ~= findDFiles(s, "core\\sys\\windows");
+				files ~= findDFiles(s, "std");
+				jsonfile = jsonPath ~ "druntime.json";
+			}
+
+			if(files.length)
+			{
+				string sfiles = join(files, " ");
+				cmdline ~= dmdpath ~ " -c -Xf" ~ jsonfile ~ " -o- " ~ sfiles ~ "\n\n";
+				pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " from import " ~ s ~ "\n"));
+				if(!launchBuildPhobosBrowseInfo(s, cmdfile, cmdline, pane))
+					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " failed!\n"));
+			}
+		}
+		return true;
+	}
+	
+	bool launchBuildPhobosBrowseInfo(string workdir, string cmdfile, string cmdline, IVsOutputWindowPane pane)
+	{
+		/////////////
+		auto srpIVsLaunchPadFactory = queryService!(IVsLaunchPadFactory);
+		if (!srpIVsLaunchPadFactory)
+			return false;
+		scope(exit) release(srpIVsLaunchPadFactory);
+
+		ComPtr!(IVsLaunchPad) srpIVsLaunchPad;
+		HRESULT hr = srpIVsLaunchPadFactory.CreateLaunchPad(&srpIVsLaunchPad.ptr);
+		if(FAILED(hr) || !srpIVsLaunchPad.ptr)
+		{
+			string msg = format("internal error: IVsLaunchPadFactory.CreateLaunchPad failed with rc=%x", hr);
+			pane.OutputString(toUTF16z(msg));
+			return false;
+		}
+
+		try
+		{
+			std.file.write(cmdfile, cmdline);
+		}
+		catch(FileException e)
+		{
+			string msg = format("internal error: cannot write file " ~ cmdfile);
+			pane.OutputString(toUTF16z(msg));
+			return false;
+		}
+		scope(exit) std.file.remove(cmdfile);
+		
+		BSTR bstrOutput;
+		DWORD result;
+		hr = srpIVsLaunchPad.ExecCommand(
+			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
+			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
+			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(workdir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
+			/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
+			/* [in] IVsOutputWindowPane *pOutputWindowPane */ pane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
+			/* [in] ULONG nTaskItemCategory                */ 0, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] LPCOLESTR pszTaskListSubcategory       */ null, // "Build"w.ptr, // if LPF_PipeStdoutToTaskList is specified
+			/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ null, //pLaunchPadEvents,
+			/* [out] DWORD *pdwProcessExitCode             */ &result,
+			/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
+
+		return hr == S_OK && result == 0;
+	}
 }
+
 
 // not used:
 class CommandManager

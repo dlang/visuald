@@ -37,20 +37,20 @@ version(D_Version2)
 
 ///////////////////////////////////////////////////////////////////////
 
-bool contains(T)(in T[] arr, bool delegate(ref T t) dg)
+T* contains(T)(T[] arr, bool delegate(ref T t) dg)
 {
 	foreach(ref T t; arr)
 		if (dg(t))
-			return true;
-	return false;
+			return &t;
+	return null;
 }
 
-bool contains(T)(in T[] arr, T val)
+T* contains(T)(T[] arr, T val)
 {
 	foreach(ref T t; arr)
 		if (t == val)
-			return true;
-	return false;
+			return &t;
+	return null;
 }
 
 int arrIndex(T)(in T[] arr, T val)

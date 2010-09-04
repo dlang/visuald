@@ -8,7 +8,11 @@
 #define _MSC_FULL_VER 160000000
 
 // remove annotations
-#define __SPECSTRINGS_STRICT_LEVEL 0
+#define __SPECSTRINGS_STRICT_LEVEL 1  // 0 for Win SDK 7.1?
+
+// Win SDK 6.0A specific?
+#define __allowed(x)
+#define __deref_opt_out_z
 
 #define __notnull
 #define __maybenull
@@ -17,6 +21,7 @@
 #define __refparam
 #define __valid
 #define __notvalid
+#define __reserved
 #define __nullterminated
 #define __volatile
 #define __nonvolatile
@@ -36,10 +41,12 @@
 #define __deref_out
 #define __deref_inout
 #define __deref_inout_opt
+#define __deref_opt_inout_bcount_part_opt(p,s)
 
 #define __success(b)
 #define __ecount(n)
 #define __in_ecount(n)
+#define __out_ecount(n)
 #define __elem_writableTo(size)
 #define __byte_writableTo(size)
 #define __elem_readableTo(size)
@@ -52,12 +59,18 @@
 #define __inline
 #define __forceinline
 
+#define _huge
+#define __huge
+
 // translate into invalid expression, so these get expanded
-#define __declspec(x) pp4d:___declspec(x)
-#define __stdcall     pp4d:___stdcall
-#define __cdecl       pp4d:___cdecl
+#define __declspec(x) __noexpr __declspec(x)
+#define __stdcall     __noexpr __stdcall
+#define __cdecl       __noexpr __cdecl
+
 #define __export
 #define __override
+
+#define _cdecl __cdecl
 
 #pragma regex("$_ident1 $_ident2 $_ident3 pp4d:___stdcall", "extern(Windows) $_ident1 $_ident2 $_ident3")
 #pragma regex("$_ident1 $_ident2          pp4d:___stdcall", "extern(Windows) $_ident1 $_ident2")
@@ -91,11 +104,13 @@
 #define DUMMYSTRUCTNAME4
 #define DUMMYSTRUCTNAME5
 
+#define _VARIANT_BOOL    VARIANT_BOOL
 
 // windef.h and ktmtypes.h
 #pragma regex("UOW UOW;", "UOW uow;")
 
-#if 1
+#include "winnt.h"
+#if 0
 #include "windows.h"
 #include "iphlpapi.h"
 #include "commctrl.h"
@@ -132,7 +147,10 @@
 #include "rpcdce.h"
  // /*, "rpcdcep.h"
 */
+
+/*
 		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "wtypes.idl", "oleidl.idl", 
 			"ocidl.idl", "objidl.idl", "docobj.idl", "oleauto.h", "objbase.h",
 			"mshtmcid.h", "xmldom.idl", "xmldso.idl", "xmldomdid.h", "xmldsodid.h", "idispids.h" ];
+*/
 #endif

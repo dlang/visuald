@@ -18,6 +18,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vsi2d", "c2d\vsi2d.visualdproj", "{8760F45A-69D9-4B68-BE63-0E055B51D447}"
 EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "cpp2d", "c2d\cpp2d.visualdproj", "{E2073B79-635A-48FA-A5A3-6E500D3A5DD8}"
+EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "pp4d", "c2d\pp4d.visualdproj", "{DD5C355B-9B0E-4932-8EA4-3B51DC0183DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -36,6 +40,14 @@ Global
 		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Debug|Win32.Build.0 = Debug|Win32
 		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Release|Win32.ActiveCfg = Release|Win32
 		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Release|Win32.Build.0 = Release|Win32
+		{E2073B79-635A-48FA-A5A3-6E500D3A5DD8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E2073B79-635A-48FA-A5A3-6E500D3A5DD8}.Debug|Win32.Build.0 = Debug|Win32
+		{E2073B79-635A-48FA-A5A3-6E500D3A5DD8}.Release|Win32.ActiveCfg = Release|Win32
+		{E2073B79-635A-48FA-A5A3-6E500D3A5DD8}.Release|Win32.Build.0 = Release|Win32
+		{DD5C355B-9B0E-4932-8EA4-3B51DC0183DB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DD5C355B-9B0E-4932-8EA4-3B51DC0183DB}.Debug|Win32.Build.0 = Debug|Win32
+		{DD5C355B-9B0E-4932-8EA4-3B51DC0183DB}.Release|Win32.ActiveCfg = Release|Win32
+		{DD5C355B-9B0E-4932-8EA4-3B51DC0183DB}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

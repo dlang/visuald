@@ -203,7 +203,8 @@ debug
 	}
 	~this()
 	{
-		debug(COM) logCall("dtor %s this = %s", this, cast(void*)this);
+		// logCall needs GC, but finalizer called from within GC
+		//debug(COM) logCall("dtor %s this = %s", this, cast(void*)this);
 		InterlockedDecrement(&sCountInstances);
 	}
 	shared static ~this()

@@ -10,6 +10,8 @@ import std.stdio;
 
 //////////////////////////////////////////////////////////////////////////////
 
+bool tryRecover = true;
+
 // how to handle identifier in declaration
 enum IdentPolicy
 {
@@ -395,6 +397,8 @@ class AST
 		// extern "C" { and namespace only allowed on highest level and thrown away
 		while(!tokIt.atEnd() && tokIt.type != Token.EOF && tokIt.type != Token.BraceR)
 		{
+			try
+			{
 			TokenIterator start = tokIt;
 			switch(tokIt.type)
 			{
@@ -413,19 +417,22 @@ class AST
 				break;
 
 			case Token.Extern:
-				if(tokIt[1].type == Token.String && tokIt[2].type == Token.BraceL)
+				if(tokIt[1].type == Token.String)
 				{
 					nextToken(tokIt);
 					nextToken(tokIt);
-					nextToken(tokIt);
+					if(tokIt.type == Token.BraceL)
+					{
+						nextToken(tokIt);
 
-					DeclGroup grp = new DeclGroup;
-					grp.parseDeclarations(tokIt);
-					checkToken(tokIt, Token.BraceR);
-					grp.start = start;
-					grp.end = tokIt;
-					addChild(grp);
-					break;
+						DeclGroup grp = new DeclGroup;
+						grp.parseDeclarations(tokIt);
+						checkToken(tokIt, Token.BraceR);
+						grp.start = start;
+						grp.end = tokIt;
+						addChild(grp);
+						break;
+					}
 				}
 				// otherwise fall through to normal declaration
 				goto default;
@@ -459,6 +466,26 @@ class AST
 				Declaration decl = Declaration.parseDeclaration(tokIt);
 				addChild(decl);
 				break;
+			}
+			} 
+			catch(Exception e)
+			{
+				if(!tryRecover)
+					throw e;
+
+				if(!tokIt.atEnd())
+					tokIt.pretext ~= " /* SYNTAX ERROR: " ~ e.msg ~ " */ ";
+
+				while(!tokIt.atEnd() && tokIt.type != Token.EOF && 
+					   tokIt.type != Token.BraceR && tokIt.type != Token.Semicolon)
+					nextToken(tokIt);
+				if(!tokIt.atEnd() && tokIt.type == Token.Semicolon)
+					nextToken(tokIt);
+				
+				Declaration decl = new Declaration(new DeclType(DeclType.Basic, "error"));
+				decl.start = start;
+				decl.end = tokIt;
+				addChild(decl);
 			}
 		}
 	}
@@ -921,6 +948,7 @@ class Expression : AST
 		case Token.Struct:
 		case Token.Union:
 		case Token.Class:
+		case Token.Interface:
 			return 1;
 		case Token.Identifier:
 			break;
@@ -1091,7 +1119,7 @@ class Expression : AST
 	{
 		return parseBinaryExp!(Token.Assign, Token.AddAsgn, Token.SubAsgn, Token.MulAsgn, 
 		                       Token.DivAsgn, Token.ModAsgn, Token.AndAsgn, Token.XorAsgn, Token.OrAsgn,
-				       Token.ShlAsgn, Token.ShrAsgn)
+		                       Token.ShlAsgn, Token.ShrAsgn)
 		                      (&parseCondExp, tokIt);
 	}
 
@@ -1188,9 +1216,8 @@ class Expression : AST
 
 		case Token.Colon:
 			nextToken(tokIt);
-			if(tokIt.type != Token.Number)
-				throwException(tokIt.lineno, "number expected for bitfield size");
-			nextToken(tokIt);
+			if(tokIt.type != Token.Number && tokIt.type != Token.Identifier)
+				throwException(tokIt.lineno, "number or identifier expected for bitfield size");
 			e = new Expression(Type.PostExp, Token.Colon, e, parsePrimaryDeclExp (tokIt, idpolicy));
 			break;
 
@@ -1230,7 +1257,7 @@ class Expression : AST
 	static Expression parseDeclModifierExp(ref TokenIterator tokIt, IdentPolicy idpolicy, bool declstmt)
 	{
 		TokenIterator start = tokIt;
-		nextToken(tokIt);
+		DeclType.skipModifiers(tokIt);
 
 		Expression e = parseDeclExp(tokIt, idpolicy, declstmt);
 		e.start = start;
@@ -1555,6 +1582,8 @@ class Statement : AST
 		TokenIterator start = tokIt;
 		Statement stmt;
 
+		try
+		{
 	L_reparse:
 		int type = tokIt.type;
 		switch (type)
@@ -1563,6 +1592,7 @@ class Statement : AST
 		case Token.Class:
 		case Token.Union:
 		case Token.Enum:
+		case Token.Interface:
 			Declaration decl = Declaration.parseDeclaration(tokIt, IdentPolicy.MultipleOptional, true);
 			stmt = new Statement(type, decl);
 			break;
@@ -1718,7 +1748,25 @@ class Statement : AST
 			checkToken(tokIt, Token.Semicolon);
 			break;
 		}
-
+		}
+		catch(Exception e)
+		{
+			if(!tryRecover)
+				throw e;
+		
+			if(!tokIt.atEnd())
+				tokIt.pretext ~= " /* SYNTAX ERROR: " ~ e.msg ~ " */ ";
+			
+			while(!tokIt.atEnd() && tokIt.type != Token.EOF && 
+			      tokIt.type != Token.BraceR && tokIt.type != Token.Semicolon)
+				nextToken(tokIt);
+			
+			if(!tokIt.atEnd() && tokIt.type == Token.Semicolon)
+				nextToken(tokIt);
+			
+			stmt = new Statement(Token.Semicolon); // empty statement
+		}
+		
 		stmt.start = start;
 		stmt.end = tokIt;
 		return stmt;
@@ -1778,6 +1826,7 @@ class DeclType : AST
 		Basic,
 		Enum,
 		Class,
+		Template,
 		CtorDtor,
 		Elipsis,
 	}
@@ -1905,11 +1954,24 @@ class DeclType : AST
 		case "__inline":
 		case "__ss":
 		case "__naked":
+		case "__noexpr": // added by pp4d to avoid interpretation of single modifier as expression
 			return true;
 		default:
 			return false;
 		}
 	}
+	static bool isMutabilityModifier(string ident)
+	{
+		switch(ident)
+		{
+		case "const":
+		case "volatile":
+			return true;
+		default:
+			return false;
+		}
+	}
+	
 	static bool isPersistentTypeModifier(string ident)
 	{
 		switch(ident)
@@ -1917,7 +1979,6 @@ class DeclType : AST
 		case "typedef":
 		case "static":
 		case "STATIC": // used for private functions
-		case "const":
 			return true;
 		default:
 			return false;
@@ -1930,12 +1991,14 @@ class DeclType : AST
 		case "register":
 		case "virtual":
 		case "extern":
-		case "volatile":
 		case "inline":
+		case "__declspec":
 		case "CEXTERN":
 			return true;
 		default:
-			return isPersistentTypeModifier(ident) || isCallingType(ident);
+			return isPersistentTypeModifier(ident) 
+				|| isCallingType(ident)
+				|| isMutabilityModifier(ident);
 		}
 	}
 
@@ -1957,9 +2020,12 @@ class DeclType : AST
 		while(isTypeModifier(tokIt.text))
 		{
 			bool isExtern = tokIt.type == Token.Extern;
+			bool isDeclspec = tokIt.text == "__declspec";
 			nextToken(tokIt);
 			if(isExtern && tokIt.type == Token.String)
 				nextToken(tokIt);
+			if(isDeclspec && tokIt.type == Token.ParenL)
+				advanceToClosingBracket(tokIt);
 		}
 	}
 }
@@ -2268,6 +2334,7 @@ class Declaration : AST
 	{
 		TokenIterator start = tokIt;
 		nextToken(tokIt);
+		DeclType.skipModifiers(tokIt);
 
 		string ident;
 		if (tokIt.type == Token.Identifier)
@@ -2317,6 +2384,7 @@ class Declaration : AST
 		case Token.Struct:
 		case Token.Class:
 		case Token.Union:
+		case Token.Interface:
 			decl = parseStruct(tokIt);
 			break;
 		default:
@@ -2336,7 +2404,7 @@ class Declaration : AST
 			break;
 		}
 
-		while(DeclType.isCallingType(tokIt.text))
+		while(DeclType.isCallingType(tokIt.text) || DeclType.isMutabilityModifier(tokIt.text))
 			nextToken(tokIt);
 
 		decl.start = start;
@@ -2423,9 +2491,38 @@ class Declaration : AST
 		return decl;
 	}
 
+	static Declaration parseTemplateDeclaration(ref TokenIterator tokIt)
+	{
+		checkToken(tokIt, Token.Template);
+		checkToken(tokIt, Token.LessThan);
+		
+		DeclType decltype = new DeclType(DeclType.Template, "template");
+		Declaration decl = new Declaration(decltype);
+		
+		if(!tokIt.atEnd() && tokIt.type != Token.GreaterThan)
+		{
+			if(tokIt.text == "typename")
+				tokIt.advance();
+			decl.addChild(parseTypeDeclaration(tokIt));
+			while(!tokIt.atEnd() && tokIt.type == Token.Comma)
+			{
+				tokIt.advance();
+				if(tokIt.text == "typename")
+					tokIt.advance();
+				decl.addChild(parseTypeDeclaration(tokIt));
+			}
+			checkToken(tokIt, Token.GreaterThan);
+		}
+		decl.addChild(parseDeclaration(tokIt));
+		return decl;
+	}
+		
 	static Declaration parseDeclaration(ref TokenIterator tokIt, 
 	                                    IdentPolicy idpolicy = IdentPolicy.MultipleOptional, bool declstmt = false)
 	{
+		if(tokIt.type == Token.Template)
+			return parseTemplateDeclaration(tokIt);
+
 		TokenIterator start = tokIt;
 		DeclType decltype = parseTypeDeclaration(tokIt);
 		Declaration decl = new Declaration(decltype);
@@ -2796,6 +2893,10 @@ bool copyDefaultArguments(Declaration from, Declaration to)
 
 AST testAST(string txt)
 {
+	bool oldRecover = tryRecover;
+	scope(exit) tryRecover = oldRecover;
+	tryRecover = false;
+	
 	TokenList tokenList = scanText(txt);
 	AST ast = new AST(AST.Type.Module);
 	TokenIterator tokIt = tokenList.begin();
@@ -2859,3 +2960,14 @@ unittest
 	assert(exp == res);
 }
 
+unittest
+{
+	string txt = "typedef X const*PX;";
+	AST ast = testAST(txt);
+}
+
+unittest
+{
+	string txt = "typedef void (__noexpr __stdcall *fn)();";
+	AST ast = testAST(txt);
+}

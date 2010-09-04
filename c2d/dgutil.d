@@ -18,7 +18,13 @@ import core.exception;
 
 class SyntaxException : Exception
 {
-	this(string msg) { super(msg); }
+	this(string msg)
+	{ 
+		super(msg);
+		count++;
+	}
+	
+	static int count;
 }
 
 void throwException(string msg)

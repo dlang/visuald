@@ -179,6 +179,7 @@ class ProjectOptions
 	string debugworkingdir;
 	bool debugattach;
 	string debugremote;
+	ubyte debugEngine; // 0: mixed, 1: mago
 
 	string filesToClean;
 	
@@ -214,7 +215,7 @@ class ProjectOptions
 		if(multiobj)
 			cmd ~= " -multiobj";
 		if(trace)
-			cmd ~= " -trace";
+			cmd ~= " -profile";
 		if(quiet)
 			cmd ~= " -quiet";
 		if(verbose)
@@ -492,6 +493,7 @@ class ProjectOptions
 		elem ~= new xml.Element("debugworkingdir", toElem(debugworkingdir));
 		elem ~= new xml.Element("debugattach", toElem(debugattach));
 		elem ~= new xml.Element("debugremote", toElem(debugremote));
+		elem ~= new xml.Element("debugEngine", toElem(debugEngine));
 		
 		elem ~= new xml.Element("filesToClean", toElem(filesToClean));
 		
@@ -598,6 +600,7 @@ class ProjectOptions
 		fromElem(elem, "debugworkingdir", debugworkingdir);
 		fromElem(elem, "debugattach", debugattach);
 		fromElem(elem, "debugremote", debugremote);
+		fromElem(elem, "debugEngine", debugEngine);
 
 		fromElem(elem, "filesToClean", filesToClean);
 	}
@@ -1133,7 +1136,7 @@ class Config :	DisposingComObject,
 
 		if(!isabs(prg))
 			prg = GetProjectDir() ~ "\\" ~ prg;
-		prg = quoteFilename(prg);
+		//prg = quoteFilename(prg);
 
 		string workdir = mProjectOptions.replaceEnvironment(mProjectOptions.debugworkingdir, this);
 		if(!isabs(workdir))
@@ -1142,7 +1145,7 @@ class Config :	DisposingComObject,
 		string args = mProjectOptions.replaceEnvironment(mProjectOptions.debugarguments, this);
 		if(DBGLAUNCH_NoDebug & grfLaunch)
 		{
-			ShellExecuteW(null, null, toUTF16z(prg), toUTF16z(args), toUTF16z(workdir), SW_SHOWNORMAL);
+			ShellExecuteW(null, null, toUTF16z(quoteFilename(prg)), toUTF16z(args), toUTF16z(workdir), SW_SHOWNORMAL);
 			return(S_OK);
 		}
 
@@ -1172,10 +1175,22 @@ class Config :	DisposingComObject,
 			if(remote.length > 0)
 				dbgi.bstrRemoteMachine = allocBSTR(remote); // _toUTF16z(remote);
 
+			
 			dbgi.dlo = DLO_CreateProcess; // DLO_Custom;    // specifies how this process should be launched
 			// clsidCustom is the clsid of the debug engine to use to launch the debugger
-			*cast(GUID*)(&(dbgi.clsidCustom)+0) = GUID_COMPlusNativeEng;        // the mixed-mode debugger
-			// dbgi.clsidCustom = GUID_NativeOnlyEng;
+			switch(mProjectOptions.debugEngine)
+			{
+			case 1:
+				GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
+				dbgi.clsidCustom = GUID_MaGoDebugger;
+				break;
+			//case 2:
+			//	dbgi.clsidCustom = GUID_NativeOnlyEng; // does not work
+			//	break;
+			default:
+				*cast(GUID*)(&(dbgi.clsidCustom)+0) = GUID_COMPlusNativeEng;        // the mixed-mode debugger
+				break;
+			}
 			dbgi.bstrMdmRegisteredName = null; // used with DLO_AlreadyRunning. The name of the
 			                                   // app as it is registered with the MDM.
 
