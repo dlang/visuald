@@ -6,6 +6,9 @@
 ; define CV2PDB to include cv2pdb installation (expected at ../../../cv2pdb/trunk)
 !define CV2PDB
 
+; define MAGO to include magob installation (expected at ../../../mago)
+!define MAGO
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -56,7 +59,11 @@
   !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
 !endif
   !define VDSETTINGS_KEY          "\ToolsOptionsPages\Projects\Visual D Settings"
-  
+!ifdef MAGO
+  !define MAGO_CLSID              {97348AC0-2B6B-4B99-A245-4C7E2C09D403}
+  !define MAGO_KEY                AD7Metrics\Engine\${MAGO_CLSID}
+!endif
+
   ;Default installation folder
   InstallDir "$PROGRAMFILES\${APPNAME}"
 
@@ -259,6 +266,38 @@ ${MementoSection} "cv2pdb" SecCv2pdb
 ${MementoSectionEnd}
 !endif
 
+!ifdef MAGO
+;--------------------------------
+${MementoSection} "mago" SecMago
+
+  ${SetOutPath} "$INSTDIR\Mago"
+  ${File} ..\..\..\mago\Release\ MagoNatDE.dll
+  ${File} ..\..\..\mago\Release\ MagoNatEE.dll
+  ${File} ..\..\..\mago\Release\ udis86.dll
+  ${File} ..\..\..\mago\Release\ CVSTI.dll
+
+  ExecWait 'regsvr32 /s "$INSTDIR\Mago\MagoNatDE.dll"'
+
+  Push ${SecVS_NET}
+  Push ${VS_NET_REGISTRY_KEY}
+  Call RegisterMago
+  
+  Push ${SecVS2005}
+  Push ${VS2005_REGISTRY_KEY}
+  Call RegisterMago
+  
+  Push ${SecVS2008}
+  Push ${VS2008_REGISTRY_KEY}
+  Call RegisterMago
+  
+  Push ${SecVS2010}
+  Push ${VS2010_REGISTRY_KEY}
+  Call RegisterMago
+  
+${MementoSectionEnd}
+!endif
+
+
 ${MementoSectionDone}
 
 Section -closelogfile
@@ -283,6 +322,10 @@ SectionEnd
   LangString DESC_SecCv2pdb ${LANG_ENGLISH} "cv2pdb is necessary to debug executables in Visual Studio."
   LangString DESC_SecCv2pdb2 ${LANG_ENGLISH} "$\r$\nYou might not want to install it, if you have already installed it elsewhere."
 !endif  
+!ifdef MAGO
+  LangString DESC_SecMago ${LANG_ENGLISH} "Mago is a debug engine especially designed for the D-Language."
+  LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. It is in an early alpha stage, so some things are still in an experimental stage."
+!endif  
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -297,6 +340,9 @@ SectionEnd
 !endif
 !ifdef CV2PDB
     !insertmacro MUI_DESCRIPTION_TEXT ${SecCv2pdb} $(DESC_SecCv2pdb)$(DESC_SecCv2pdb2)
+!endif
+!ifdef MAGO
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecMago} $(DESC_SecMago)$(DESC_SecMago2)
 !endif
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -327,6 +373,15 @@ Section "Uninstall"
   
   Push ${VS2010_REGISTRY_KEY}
   Call un.PatchAutoExp
+!endif
+
+!ifdef MAGO
+  ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
+  
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_KEY}"
 !endif
   
   Call un.installedFiles
@@ -475,5 +530,30 @@ Function un.PatchAutoExp
     
   NoInstallDir:
 
+  Pop $1
+FunctionEnd
+
+Function RegisterMago
+  Exch $1
+  Exch
+  Exch $0
+  Push $2
+  
+  SectionGetFlags $0 $2
+  IntOp $2 $2 & ${SF_SELECTED}
+  IntCmp $2 ${SF_SELECTED} enabled NoInstall
+
+  # $1 contains registry root
+enabled:
+  ClearErrors
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_KEY}" "CLSID" "${MAGO_CLSID}" 
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_KEY}" "Name"  "Mago Native" 
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_KEY}" "ENC" 0
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_KEY}2 "Disassembly" 1
+    
+NoInstall:
+
+  Pop $2
+  Pop $0
   Pop $1
 FunctionEnd

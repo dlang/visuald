@@ -281,13 +281,13 @@ class Declarations
 		if(tok.length && !isalnum(tok[0]) && tok[0] != '_')
 			tok = "";
 
+		int iState = src.mColorizer.GetLineState(start);
+		if(iState < 0)
+			return false;
+
 		int namesLength = mNames.length;
 		for(int ln = start; ln < end; ln++)
 		{
-			int iState = src.mColorizer.GetLineState(ln);
-			if(iState < 0)
-				break;
-
 			wstring text = src.GetText(ln, 0, ln, -1);
 			uint pos = 0;
 			while(pos < text.length)

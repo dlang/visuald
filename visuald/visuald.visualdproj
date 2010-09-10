@@ -85,6 +85,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
+  <debugEngine>0</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Config name="Release">
@@ -172,6 +173,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
+  <debugEngine>0</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="VisualD">

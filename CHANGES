@@ -169,4 +169,7 @@ unreleased Version 0.3.16
   * new command "Build phobos browse info"
   * add support for MaGo debugger
   * fix dmd option for profiling
+  * fixed bad status message for matching parenthesis
+  * now supports comment/uncomment selected lines
+  * block re-indentation now works as a single command with respect to undo/redo
   

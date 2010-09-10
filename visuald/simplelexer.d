@@ -343,7 +343,7 @@ L_exponent:
 		case '{': return ch2 == '}';
 		case '}': return ch2 == '{';
 		case '(': return ch2 == ')';
-		case ')': return ch2 == ')';
+		case ')': return ch2 == '(';
 		case '[': return ch2 == ']';
 		case ']': return ch2 == '[';
 		default:  return false;

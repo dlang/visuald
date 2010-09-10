@@ -160,7 +160,7 @@ unittest
 	assert(t == "a\r\nb\r\ncd\r\n\r\ne\r\n\r\nf");
 }
 
-int countVisualSpaces(S)(S txt, int tabSize, int* txtpos)
+int countVisualSpaces(S)(S txt, int tabSize, int* txtpos = null)
 {
 	int p = 0;
 	int n = 0;
@@ -177,6 +177,52 @@ int countVisualSpaces(S)(S txt, int tabSize, int* txtpos)
 	return p;
 }
 
+int visiblePosition(S)(S txt, int tabSize, int idx)
+{
+	if(idx > txt.length)
+		idx = txt.length;
+	
+	int p = 0;
+	
+	for(int n = 0; n < idx; n++)
+		if(txt[n] == '\t')
+			p = p + tabSize - (p % tabSize);
+		else
+			p++;
+
+	return p;
+}
+
+S createVisualSpaces(S)(int n, int tabSize, int tabOff = 0)
+{
+	S s;
+	if(tabSize < 2)
+	{
+		for(int i = 0; i < n; i++)
+			s ~= " ";
+	}
+	else
+	{
+		while (n > 0 && tabOff > 0 && tabOff < tabSize)
+		{
+			s ~= " ";
+			tabOff++;
+			n--;
+		}
+		while(n >= tabSize)
+		{
+			s ~= "\t";
+			n -= tabSize;
+		}
+		while(n > 0)
+		{
+			s ~= " ";
+			n--;
+		}
+	}
+	return s;
+}
+	
 // extract value from a series of #define values
 string extractDefine(string s, string def)
 {

@@ -1694,7 +1694,7 @@ version(all) {
 	
 		replaceTokenSequence(tokens, "__assume_bound($args);", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__asm{$args}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$args+/}", true);
-		replaceTokenSequence(tokens, "__asm $_not{$stmt}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$_not$stmt+/} }", true);
+		replaceTokenSequence(tokens, "__asm $_not{$stmt}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$_not $stmt+/} }", true);
 		replaceTokenSequence(tokens, "sizeof($_ident)", "$_ident.sizeof", true);
 		replaceTokenSequence(tokens, "sizeof($args)", "($args).sizeof", true);
 
