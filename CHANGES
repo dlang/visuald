@@ -171,5 +171,6 @@ unreleased Version 0.3.16
   * fix dmd option for profiling
   * fixed bad status message for matching parenthesis
   * now supports comment/uncomment selected lines
+  * improved smart indentation
   * block re-indentation now works as a single command with respect to undo/redo
   

@@ -1246,52 +1246,13 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	// calculate the indentation of the given line
 	// - if ch != 0, assume it being inserted at the beginning of the line
 	// - find the beginning of the previous statement
-	//   - if the first token on the line is "else", remember "if" as a stop marker
+	//   - if the first token on the line is "else", find the matching "if" and indent to its line
 	//   - set iterator tokIt to the last token of the previous line
 	//   - if *tokIt is ';', move back one
 	//   - while *tokIt is not the stop marker or '{' or ';'
 	//     - move back one matching braces
 	// - if the token before the given line is not ';' or '}', indent by one level more
 
-	/*
-	"if",
-	"else",
-	"while",
-	"for",
-	"synchronized",
-	"scope",
-	"version",
-	"debug",
-	*/
-	// keywords that always start a statement/declaration
-	wstring[] startKeywords = 
-	[ 
-		"if",
-		"while",
-		"do",
-		"switch",
-		"case",
-		"default",
-		"try",
-		"with",
-		"foreach",
-		"foreach_reverse",
-		"scope",
-		"version",
-		"debug",
-		"delete",
-		"throw",
-		"module",
-		"pragma",
-		"template",
-		"unittest",
-	];
-	wstring[] contKeywords = 
-	[ 
-		"else",
-		"catch",
-		"finally",
-	];	
 	int CalcLineIndent(int line, dchar ch, LANGPREFERENCES* langPrefs)
 	{
 		LineTokenIterator lntokIt = LineTokenIterator(this, line, 0);
@@ -1303,87 +1264,112 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			lntokIt.ensureNoComment(false);
 			startTok = lntokIt.getText();
 		}
-		wstring txt, matchStmt;
-		int skipIf = 0;
-		int indent;
+		wstring txt;
 
 		if(!lntokIt.retreatOverComments())
 			return 0;
 		
-		wstring prevTok = lntokIt.getText();
+		bool isOpenBraceOrCase(wstring txt)
+		{
+			return (txt == "{" || txt == "[" || txt == "case" || txt == "default");
+		}
+		int findMatchingIf()
+		{
+			int cntIf = 1;
+			while(cntIf > 0 && lntokIt.retreatOverBraces())
+			{
+				txt = lntokIt.getText();
+				if(isOpenBraceOrCase(txt)) // emergency exit on pending opening brace
+					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
+				if(txt == "if")
+					--cntIf;
+				else if(txt == "else")
+					++cntIf;
+			}
+			return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
+		}
+		bool findOpenBrace(ref LineTokenIterator it)
+		{
+			do
+			{
+				txt = it.getText();
+				if(txt == "{" || txt == "[" || txt == "(")
+					return true;
+			}
+			while(it.retreatOverBraces());
+			return false;
+		}
 		
+		int findPreviousCaseIndent()
+		{
+			do
+			{
+				txt = lntokIt.getText();
+				if(txt == "{" || txt == "[") // emergency exit on pending opening brace
+					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
+				if(txt == "case" || txt == "default") // emergency exit on pending opening brace
+					break;
+			}
+			while(lntokIt.retreatOverBraces());
+			return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
+		}
+		
+		if(startTok == "else")
+			return findMatchingIf();
+		if(startTok == "case" || startTok == "default")
+			return findPreviousCaseIndent();
+		
+		LineTokenIterator it = lntokIt;
+		bool hasOpenBrace = findOpenBrace(it);
+		if(hasOpenBrace && txt == "(")
+			return visiblePosition(it.lineText, langPrefs.uTabSize, it.getIndex() + 1);
+
+		if(startTok == "}" || startTok == "]")
+		{
+			if(hasOpenBrace)
+				return countVisualSpaces(it.lineText, langPrefs.uTabSize);
+			return 0;
+		}
+		
+		wstring prevTok = lntokIt.getText();
+		if(prevTok == "{" || prevTok == "[")
+			return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
+
+		int indent;
 		bool newStmt = (prevTok == ";" || prevTok == "}");
 		if(newStmt)
 			lntokIt.retreatOverBraces();
-		else
+		else if(startTok != "{" && startTok != "[" && hasOpenBrace)
 			indent = langPrefs.uTabSize;
-		
-		while(lntokIt.retreatOverBraces())
+
+		do
 		{
 			txt = lntokIt.getText();
 			if(txt == "(")
-				return visiblePosition(txt, langPrefs.uTabSize, lntokIt.getIndex() + 1);
-			if(txt == "{" || txt == "[")
+				return visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1);
+			if(isOpenBraceOrCase(txt))
 				return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
 			
-			if(txt == "else")
-				skipIf++;
-			else if(txt == "if")
-				skipIf--;
-			else if(txt == "}" || txt == ";")
+			if(txt == "}" || txt == ";")
 			{
-				LineTokenIterator it = lntokIt;
-				it.advanceOverComments();
-				txt = it.getText();
-				if(skipIf <= 0)
-					return indent + countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
-			}
-		}
-		
-		version(none)
-		{
-		while(lntokIt.retreatOverBraces())
-		{
-			wstring txt = lntokIt.getText();
-			version(none) if(matchStmt.length && txt == matchStmt)
-			{
-				indent = countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
-				break;
-			}
-			if(contains(startKeywords, txt))
-			{
-				if(txt != "if" || skipIf == 0)
-				{
-					indent = countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
-					break;
-				}
-				skipIf--;
-			}
-			if(txt == ";" || txt == "}")
-			{
+				// use indentation of next statement
 				lntokIt.advanceOverComments();
-				txt = lntokIt.getText();
-				if(txt != "else")
-				{
-					indent = countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
-					indent += langPrefs.uIndentSize;
-					break;
-				}
-				skipIf++;
-				lntokIt.retreatOverComments();
+				return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
 			}
-			if(txt == "{")
+			if(!newStmt && SimpleLexer.isIdentifier(txt))
 			{
-				indent = countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
-				indent += langPrefs.uIndentSize;
-				break;
+				return indent + countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
+			}
+			if(newStmt && txt == "else")
+			{
+				findMatchingIf();
+				txt = lntokIt.getText();
+				if(isOpenBraceOrCase(txt))
+					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
 			}
 		}
-		if(prevTok != "" && prevTok != ","w && prevTok != ";"w && prevTok != "}"w && startTok != "{")
-			indent += langPrefs.uIndentSize;
-		if(startTok == "}" || startTok == "]")
-			indent -= langPrefs.uIndentSize;
-		}
+		while(lntokIt.retreatOverBraces());
+
 		return indent;
 	}
 

@@ -336,6 +336,25 @@ L_exponent:
 		return false;
 	}
 	
+	static bool isIdentifier(wstring text)
+	{
+		if(text.length == 0)
+			return false;
+		
+		uint pos;
+		dchar ch = decode(text, pos);
+		if(!isUniAlpha(ch) && ch != '_')
+			return false;
+		
+		while(pos < text.length)
+		{
+			ch = decode(text, pos);
+			if(!isUniAlpha(ch) && !isdigit(ch) && ch != '_')
+				return false;
+		}
+		return true;
+	}
+
 	static bool isBracketPair(dchar ch1, dchar ch2)
 	{
 		switch(ch1)
