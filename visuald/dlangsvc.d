@@ -2012,7 +2012,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 						HandleMethodTip();
 				break;
 			default:
-    				break;
+				break;
 			}
 		}
 

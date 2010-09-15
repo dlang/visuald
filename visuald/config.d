@@ -352,7 +352,7 @@ class ProjectOptions
 
 	string appendCv2pdb()
 	{
-		if(symdebug && runCv2pdb && !lib)
+		if(symdebug && runCv2pdb && !lib && debugEngine == 0)
 		{
 			string target = getTargetPath();
 			string cmd = quoteFilename(pathCv2pdb) ~ " -D" ~ to!(string)(Dversion) ~ " ";

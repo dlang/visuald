@@ -90,3 +90,6 @@ package:
 install: dte_idl vsi2d package
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb
+
+install_only:
+	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi

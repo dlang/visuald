@@ -82,7 +82,7 @@ class SimpleLexer
 		{
 			uint nextpos = pos;
 			dchar ch = decode(text, nextpos);
-			if(!isUniAlpha(ch) && !isdigit(ch) && ch != '_')
+			if(!isIdentifierChar(ch) && !isdigit(ch))
 				break;
 			pos = nextpos;
 		}
@@ -304,7 +304,7 @@ L_exponent:
 			s = State.kStringDelimitedNestedAngle;
 		else
 		{
-			if(isUniAlpha(ch) || ch == '_')
+			if(isIdentifierChar(ch))
 				scanIdentifier(text, startpos, pos);
 			string delim = toUTF8(text[startpos .. pos]);
 			nesting = getDelimiterIndex(delim);
@@ -336,6 +336,11 @@ L_exponent:
 		return false;
 	}
 	
+	static bool isIdentifierChar(dchar ch)
+	{
+		return isUniAlpha(ch) || ch == '_' || ch == '@';
+	}
+	
 	static bool isIdentifier(wstring text)
 	{
 		if(text.length == 0)
@@ -343,13 +348,13 @@ L_exponent:
 		
 		uint pos;
 		dchar ch = decode(text, pos);
-		if(!isUniAlpha(ch) && ch != '_')
+		if(!isIdentifierChar(ch))
 			return false;
 		
 		while(pos < text.length)
 		{
 			ch = decode(text, pos);
-			if(!isUniAlpha(ch) && !isdigit(ch) && ch != '_')
+			if(!isIdentifierChar(ch) && !isdigit(ch))
 				return false;
 		}
 		return true;
@@ -431,7 +436,7 @@ L_exponent:
 		{
 			uint startpos = pos;
 			dchar ch = decode(text, pos);
-			if(isUniAlpha(ch) || ch == '_')
+			if(isIdentifierChar(ch))
 				scanIdentifier(text, startpos, pos);
 			string ident = toUTF8(text[startpos .. pos]);
 			if(ident == delimiter)
@@ -493,7 +498,7 @@ X";+/
 					type = scanIdentifier(text, startpos, pos);
 				}
 			}
-			else if(isUniAlpha(ch) || ch == '_')
+			else if(isIdentifierChar(ch))
 				type = scanIdentifier(text, startpos, pos);
 			else if(isdigit(ch))
 				type = scanNumber(text, ch, pos);
@@ -717,7 +722,14 @@ const string keywords[] =
 	"__FILE__",
 	"__LINE__",
 	"shared",
-	"immutable"
+	"immutable",
+	
+	"@disable",
+	"@property",
+	"@safe",
+	"@system",
+	"@trusted",
+	
 ];
 
 TokenInfo[] ScanLine(int iState, wstring text)

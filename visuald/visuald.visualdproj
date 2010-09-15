@@ -98,8 +98,8 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
-  <symdebug>0</symdebug>
-  <optimize>0</optimize>
+  <symdebug>1</symdebug>
+  <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -117,7 +117,7 @@
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
+  <useInline>1</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -127,8 +127,8 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
-  <program>m:\s\d\dmd\src_org\dmd_pdb.exe</program>
+  <otherDMD>1</otherDMD>
+  <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -142,8 +142,8 @@
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
   <hdrname />
-  <doXGeneration>0</doXGeneration>
-  <xfilename />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(ProjectName).json</xfilename>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
@@ -157,7 +157,7 @@
   <run>0</run>
   <runargs />
   <runCv2pdb>1</runCv2pdb>
-  <pathCv2pdb>$(VisualDInstallDir)cv2pdb.exe</pathCv2pdb>
+  <pathCv2pdb>m:\s\d\cv2pdb\trunk\bin\debug\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
   <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib</libfiles>
