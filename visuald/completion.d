@@ -41,68 +41,6 @@ import sdk.vsi.vsshell;
 
 const int kCompletionSearchLines = 5000;
 
-///////////////////////////////////////////////////////////////
-// returns addref'd Config
-Config getProjectConfig(string file)
-{
-	if(file.length == 0)
-		return null;
-	
-	auto srpSolution = queryService!(IVsSolution);
-	scope(exit) release(srpSolution);
-	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
-	scope(exit) release(solutionBuildManager);
-
-	if(srpSolution && solutionBuildManager)
-	{
-		scope auto wfile = _toUTF16z(file);
-		IEnumHierarchies pEnum;
-		if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &g_projectFactoryCLSID, &pEnum) == S_OK)
-		{
-			scope(exit) release(pEnum);
-			IVsHierarchy pHierarchy;
-			while(pEnum.Next(1, &pHierarchy, null) == S_OK)
-			{
-				scope(exit) release(pHierarchy);
-				VSITEMID itemid;
-				if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
-				{
-					IVsProjectCfg activeCfg;
-					if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) == S_OK)
-					{
-						scope(exit) release(activeCfg);
-						if(Config cfg = qi_cast!Config(activeCfg))
-							return cfg;
-					}
-				}
-			}
-		}
-	}
-	return null;
-}
-
-string[] GetImportPaths(string file)
-{
-	string[] imports;
-	if(Config cfg = getProjectConfig(file))
-	{
-		scope(exit) release(cfg);
-		ProjectOptions opt = cfg.GetProjectOptions();
-		string imp = cfg.GetProjectOptions().imppath;
-		imp = opt.replaceEnvironment(imp, cfg);
-		imports = tokenizeArgs(imp);
-		foreach(ref i; imports)
-			i = normalizeDir(unquoteArgument(i));
-		string projectpath = cfg.GetProjectDir();
-		makeFilenamesAbsolute(imports, projectpath);
-		addunique(imports, projectpath);
-	}
-	imports ~= Package.GetGlobalOptions().getImportPaths();
-	return imports;
-}
-///////////////////////////////////////////////////////////////
-
-
 class ImageList {};
 
 struct Declaration

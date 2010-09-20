@@ -40,7 +40,7 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
+  <program>c:\l\dmd-2.048\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -183,5 +183,6 @@
   <File path="dlist.d" />
   <File path="tokenizer.d" />
   <File path="ast.d" />
+  <File path="patchast.d" />
  </Folder>
 </DProject>

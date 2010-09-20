@@ -25,16 +25,14 @@
 // - apply user replacements
 // - apply standard replacements
 // - 
-// - 
-// - 
-// - 
-// - 
+
 module pp4d;
 
 import tokenizer;
 import tokutil;
 import dgutil;
 import ast;
+import patchast;
 
 import std.string;
 import std.file;
@@ -99,8 +97,8 @@ class pp4d
 	
 	void initFiles()
 	{
-//		inc_path[r"c:\Program Files\Microsoft SDKs\Windows\v7.1\Include\"] = r"pp\win32\";
-		inc_path[r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\"] = r"pp\win32\";
+		inc_path[r"c:\Program Files\Microsoft SDKs\Windows\v7.1\Include\"] = r"pp\win32\";
+//		inc_path[r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\"] = r"pp\win32\";
 	}
 
 	void warning(int lineno, string msg)
@@ -129,6 +127,7 @@ class pp4d
 	Define[string] defines;
 	int defineLevel;
 	
+	ConvProject project;
 	string[] srcfiles;
 	string[] excludefiles;
 
@@ -642,7 +641,9 @@ class pp4d
 					if(def.invocationLevel >= defineLevel && def.tokens && !def.isExpr)
 					{
 						def.invocationLevel = defineLevel;
-						scope(exit) def.invocationLevel = int.max;
+						scope(exit) {
+							def.invocationLevel = int.max;
+						}
 							
 						tokIt = expandDefine(tokIt, def.tokens, &expandArgDefines);
 						return true;
@@ -1215,6 +1216,19 @@ class pp4d
 	}
 	
 
+	string mapTokenList(TokenList tokenList)
+	{
+		int pass = 0;
+		string text;
+		for(TokenIterator tokIt = tokenList.begin(); !tokIt.atEnd(); ++tokIt)
+		{
+			Token tok = *tokIt;
+			string mapped = pass > 0 ? tok.text : mapTokenText(tok);
+			text ~= tok.pretext ~ mapped;
+		}
+		return text;
+	}
+
 	void processFile(string file)
 	{
 		foreach(Source s; srcs)
@@ -1242,6 +1256,7 @@ class pp4d
 			src.ast = new AST(AST.Type.Module);
 			TokenIterator tokIt = src.tokens.begin();
 			src.ast.parseModule(tokIt);
+			src.ast.verify();
 		}
 		catch
 		{
@@ -1251,11 +1266,6 @@ class pp4d
 			writeln(to!string(cntExceptions) ~ " syntax errors");
 		
 //		convertText(src.tokens);
-		string text = tokenListToString(src.tokens, true);
-		text = removeDuplicateEmptyLines(text);
-		
-		string hdr = ""; // makehdr(src.filename, d_file);
-		std.file.write(src.d_file, toUTF8(hdr ~ text));
 		
 		setCurrentSource(prevSource);
 	}
@@ -1291,6 +1301,19 @@ class pp4d
 		}
 		return file;
 	}
+
+	void writeFile(Source src)
+	{
+version(none)
+		string text = tokenListToString(src.tokens, true);
+else
+		string text = mapTokenList(src.tokens);
+		
+		text = removeDuplicateEmptyLines(text);
+		
+		string hdr = ""; // makehdr(src.filename, d_file);
+		std.file.write(src.d_file, toUTF8(hdr ~ text));
+	}
 	
 	bool searchAndProcessFile(string file)
 	{
@@ -1315,6 +1338,15 @@ class pp4d
 		string[] inputFiles = argv[1..$];
 		foreach(string file; inputFiles)
 			processFile(file);
+
+		project = new ConvProject;
+		foreach(Source src; srcs)
+			project.registerAST(src.ast);
+		
+		project.processAll();
+		
+		foreach(Source src; srcs)
+			writeFile(src);
 		
 		return 0;
 	}

@@ -299,7 +299,7 @@ class ProjectOptions
 				cmd ~= " -debug=" ~ strip(id);
 
 		string dmdoutfile = getTargetPath();
-		if(symdebug && runCv2pdb && !lib)
+		if(usesCv2pdb())
 			dmdoutfile ~= "_cv";
 
 		cmd ~= " -of" ~ quoteNormalizeFilename(dmdoutfile);
@@ -350,9 +350,14 @@ class ProjectOptions
 		return normalizeDir(objdir) ~ "$(ProjectName)." ~ kCmdLogFileExtension;
 	}
 
+	bool usesCv2pdb()
+	{
+		return (symdebug && runCv2pdb && !lib && debugEngine == 0);
+	}
+	
 	string appendCv2pdb()
 	{
-		if(symdebug && runCv2pdb && !lib && debugEngine == 0)
+		if(usesCv2pdb())
 		{
 			string target = getTargetPath();
 			string cmd = quoteFilename(pathCv2pdb) ~ " -D" ~ to!(string)(Dversion) ~ " ";
@@ -1506,7 +1511,7 @@ class Config :	DisposingComObject,
 		files ~= cmdfile ~ ".rsp";
 		files ~= makeFilenameAbsolute(GetDependenciesPath(), workdir);
 		
-		if(mProjectOptions.runCv2pdb)
+		if(mProjectOptions.usesCv2pdb())
 		{
 			files ~= target ~ "_cv";
 			files ~= addExt(target, "pdb");

@@ -64,6 +64,7 @@ CMDS_SECTION g_packageCLSID
 		g_commandSetCLSID:CmdShowScope,     g_packageCLSID:IDG_VD_EDIT,          0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show Scope",          "Show &Scope",          "Show Scope of Cursor",        , "ShowScope",     "ShowScope";
 		g_commandSetCLSID:CmdShowMethodTip, g_packageCLSID:IDG_VD_EDIT,          0xF200,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show Parameter Info", "Show &Parameter Info", "Show Parameter Info",         , "ParameterInfo", "ParameterInfo";
 		g_commandSetCLSID:CmdBuildPhobos,   g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Build Phobos Browse Info", "Build Phobos Browse Info", "Build Phobos Browse Info", , "BuildPhobosBrowseInfo", "BuildPhobosBrowseInfo";
+		g_commandSetCLSID:CmdShowProfile,   g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Open Profiler Window", "&Open Profiler Window", "Open Profiler Window",      , "OpenProfilerWindow", "OpenProfilerWindow";
 		
 		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID
 		// as the command set GUID. Also, by specifying blank for the FLAGS, this command is

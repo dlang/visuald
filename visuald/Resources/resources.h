@@ -20,7 +20,11 @@
 #define IDR_REGEXP                  2008
 #define IDR_SEARCHFILE              2009
 #define IDR_SEARCHSYMBOL            2010
-#define IDR_LAST                    2010
+#define IDR_FANINOUT                2011
+#define IDR_REMOVETRACE             2012
+#define IDR_SETTRACE                2013
+#define IDR_FULLDECO                2014
+#define IDR_LAST                    2014
 
 ///////////////////////////////////////////////////////////////////////////////
 // CTC Command IDs
@@ -31,4 +35,4 @@
 #define CmdShowMethodTip 0x104
 
 #define CmdBuildPhobos   0x110
-
+#define CmdShowProfile   0x111

@@ -31,6 +31,7 @@ import winctrl;
 import register;
 import intellisense;
 import searchsymbol;
+import profiler;
 
 import sdk.win32.winreg;
 
@@ -72,9 +73,10 @@ const GUID    g_languageCLSID            = uuid("002a2de9-8bb6-484d-9800-7e4ad40
 const GUID    g_projectFactoryCLSID      = uuid("002a2de9-8bb6-484d-9802-7e4ad4084715");
 const GUID    g_intellisenseCLSID        = uuid("002a2de9-8bb6-484d-9801-7e4ad4084715");
 const GUID    g_commandSetCLSID          = uuid("002a2de9-8bb6-484d-9803-7e4ad4084715");
-const GUID    g_toolWinCLSID             = uuid("002a2de9-8bb6-484d-9804-7e4ad4084715");
+const GUID    g_searchWinCLSID           = uuid("002a2de9-8bb6-484d-9804-7e4ad4084715");
 const GUID    g_debuggerLanguage         = uuid("002a2de9-8bb6-484d-9805-7e4ad4084715");
 const GUID    g_expressionEvaluator      = uuid("002a2de9-8bb6-484d-9806-7e4ad4084715");
+const GUID    g_profileWinCLSID          = uuid("002a2de9-8bb6-484d-9807-7e4ad4084715");
 
 GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
 
@@ -407,6 +409,7 @@ class Package : DisposingComObject,
 				case CmdSearchFile:
 				case CmdSearchSymbol:
 				case CmdBuildPhobos:
+				case CmdShowProfile:
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
 				default:
@@ -440,6 +443,11 @@ class Package : DisposingComObject,
 		{
 			mOptions.buildPhobosBrowseInfo();
 			mLibInfos.updateDefinitions();
+			return S_OK;
+		}
+		if(nCmdID == CmdShowProfile)
+		{
+			showProfilerWindow();
 			return S_OK;
 		}
 		return OLECMDERR_E_NOTSUPPORTED;
@@ -816,7 +824,7 @@ class GlobalOptions
 			if(files.length)
 			{
 				string sfiles = join(files, " ");
-				cmdline ~= dmdpath ~ " -c -Xf" ~ jsonfile ~ " -o- " ~ sfiles ~ "\n\n";
+				cmdline ~= quoteFilename(dmdpath) ~ " -c -Xf" ~ quoteFilename(jsonfile) ~ " -o- " ~ sfiles ~ "\n\n";
 				pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " from import " ~ s ~ "\n"));
 				if(!launchBuildPhobosBrowseInfo(s, cmdfile, cmdline, pane))
 					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " failed!\n"));

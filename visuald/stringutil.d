@@ -14,6 +14,7 @@ import std.path;
 import std.utf;
 import std.string;
 import std.ctype;
+import std.conv;
 
 string ellipseString(string s, int maxlen)
 {
@@ -304,4 +305,28 @@ bool startsWith(string s, string e)
 	return (s.length >= e.length && s[0 .. e.length] == e);
 }
 
+}
+
+bool parseLong(ref char[] txt, out long res)
+{
+	munch(txt, " \t\n\r");
+	int n = 0;
+	while(n < txt.length && isdigit(txt[n]))
+		n++;
+	if(n <= 0)
+		return false;
+	res = to!long(txt[0..n]);
+	txt = txt[n..$];
+	return true;
+}
+
+char[] parseNonSpace(ref char[] txt)
+{
+	munch(txt, " \t\n\r");
+	int n = 0;
+	while(n < txt.length && !isspace(txt[n]))
+		n++;
+	char[] res = txt[0..n];
+	txt = txt[n..$];
+	return res;
 }

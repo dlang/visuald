@@ -718,9 +718,12 @@ class AST
 	// call this to cleanup garbage from unittests
 	static void clearStatic()
 	{
-		baseClass = baseClass.init;
-		derivedClasses = derivedClasses.init;
-		enumIdentifier = enumIdentifier.init;
+		string[string] ini1;
+		baseClass = ini1; // = baseClass.init;
+		string[][string] ini2;
+		derivedClasses = ini2; // = derivedClasses.init;
+		string[string] ini3;
+		enumIdentifier = ini3; // = enumIdentifier.init;
 	}
 }
 

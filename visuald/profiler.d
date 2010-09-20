@@ -6,42 +6,38 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module searchsymbol;
+module profiler;
 
 import windows;
 import winctrl;
 import comutil;
+import dimagelist;
+import register;
 import hierutil;
 import logutil;
 import stringutil;
-import fileutil;
-import wmmsg;
-import register;
 import dpackage;
-import intellisense;
-import dimagelist;
+import config;
+import wmmsg;
 
 import sdk.win32.commctrl;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
-import dte80a = sdk.vsi.dte80a;
-import dte80 = sdk.vsi.dte80;
 
-import std.utf;
-import std.algorithm;
-import std.date;
-import std.math;
-import std.string;
-import std.path;
-import std.file;
 import std.conv;
-import std.contracts;
-import std.c.stdio : sprintf;
+import std.utf;
+import std.stdio;
+import std.string;
+import std.algorithm;
+import std.file;
+import std.path;
+
+import core.demangle;
 
 private IVsWindowFrame sWindowFrame;
-private	SearchPane sSearchPane;
+private	ProfilePane sProfilePane;
 
-bool showSearchWindow()
+bool showProfilerWindow()
 {
 	if(!sWindowFrame)
 	{
@@ -49,67 +45,31 @@ bool showSearchWindow()
 		if(!pIVsUIShell)
 			return false;
 
-		sSearchPane = new SearchPane();
-		const(wchar)* caption = "Visual D Search"w.ptr;
+		sProfilePane = new ProfilePane();
+		const(wchar)* caption = "Visual D Profiler"w.ptr;
 		HRESULT hr;
-		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sSearchPane, 
-										  &GUID_NULL, &g_searchWinCLSID, &GUID_NULL, 
+		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sProfilePane, 
+										  &GUID_NULL, &g_profileWinCLSID, &GUID_NULL, 
 										  null, caption, null, &sWindowFrame);
 		if(!SUCCEEDED(hr))
 		{
-			sSearchPane = null;
+			sProfilePane = null;
 			return false;
 		}
 	}
 	if(FAILED(sWindowFrame.Show()))
 		return false;
 	BOOL fHandled;
-	sSearchPane._OnSetFocus(0, 0, 0, fHandled);
+	sProfilePane._OnSetFocus(0, 0, 0, fHandled);
 	return fHandled != 0;
 }
-
-bool showSearchWindow(bool searchFile, string word = "")
-{
-	if(!showSearchWindow())
-		return false;
-	
-	bool refresh = (sSearchPane._iqp.searchFile != searchFile);
-	if(refresh)
-		sSearchPane._ReinitViewState(searchFile, false);
-	
-	if(!searchFile && word.length)
-	{
-		sSearchPane._iqp.wholeWord = true;
-		sSearchPane._iqp.caseSensitive = true;
-		sSearchPane._iqp.useRegExp = false;
-		refresh = true;
-	}
-	
-	if(sSearchPane._wndFileWheel && word.length)
-	{
-		sSearchPane._wndFileWheel.SetWindowText(word);
-		refresh = true;
-	}
-	
-	if(refresh)
-		sSearchPane._RefreshFileList();
-
-	return true;
-}
-
-bool closeSearchWindow()
-{
-	sWindowFrame = release(sWindowFrame);
-	sSearchPane = null;
-	return true;
-}
-
-//const string kImageBmp = "imagebmp";
 
 const int  kColumnInfoVersion = 1;
 const bool kToolBarAtTop = true;
 const int  kToolBarHeight = 24;
 const int  kPaneMargin = 2;
+
+const HDMIL_PRIVATE = 0xf00d;
 
 struct static_COLUMNINFO
 {
@@ -118,33 +78,6 @@ struct static_COLUMNINFO
 	int cx;
 }
 
-enum COLUMNID
-{
-	NONE = -1,
-	NAME,
-	PATH,
-	SIZE,
-	LINE,
-	TYPE,
-	SCOPE,
-	MODIFIEDDATE,
-	KIND,
-	MAX
-}
-
-static_COLUMNINFO[] s_rgColumns =
-[
-	//{ "none", LVCFMT_LEFT, 80 },
-	{ "Name", LVCFMT_LEFT, 80 },
-	{ "Path", LVCFMT_LEFT, 80 },
-	{ "Size", LVCFMT_RIGHT, 80 },
-	{ "Line", LVCFMT_RIGHT, 30 },
-	{ "Type", LVCFMT_LEFT, 30 },
-	{ "Scope", LVCFMT_LEFT, 80 },
-	{ "Date", LVCFMT_LEFT, 80 },
-	{ "Kind", LVCFMT_LEFT, 80 },
-];
-
 struct COLUMNINFO
 {
 	COLUMNID colid;
@@ -152,21 +85,54 @@ struct COLUMNINFO
 	int cx;
 };
 
-const COLUMNINFO[] default_fileColumns =
+enum COLUMNID
+{
+	NONE = -1,
+	NAME,
+	CALLS,
+	TREETIME,
+	FUNCTIME,
+	CALLTIME,
+	MAX
+}
+
+static_COLUMNINFO[] s_rgColumns =
 [
-	{ COLUMNID.NAME, true, 100 },
-	{ COLUMNID.PATH, true, 200 },
-	{ COLUMNID.MODIFIEDDATE, true, 100 },
+	//{ "none", LVCFMT_LEFT, 80 },
+	{ "Function",  LVCFMT_LEFT, 80 },
+	{ "Calls",     LVCFMT_LEFT, 80 },
+	{ "Tree Time", LVCFMT_LEFT, 80 },
+	{ "Func Time", LVCFMT_LEFT, 80 },
+	{ "Call Time", LVCFMT_LEFT, 80 },
 ];
 
-const COLUMNINFO[] default_symbolColumns =
+const COLUMNINFO[] default_Columns =
 [
-	{ COLUMNID.NAME, true, 100 },
-	{ COLUMNID.TYPE, true, 50 },
-	{ COLUMNID.PATH, true, 200 },
-	{ COLUMNID.LINE, true, 50 },
-	{ COLUMNID.SCOPE, true, 100 },
-	{ COLUMNID.KIND, true, 100 },
+	{ COLUMNID.NAME, true, 300 },
+	{ COLUMNID.CALLS, true, 100 },
+	{ COLUMNID.TREETIME, true, 100 },
+	{ COLUMNID.FUNCTIME, true, 100 },
+	{ COLUMNID.CALLTIME, true, 100 },
+];
+
+static_COLUMNINFO[] s_rgFanInColumns =
+[
+	//{ "none", LVCFMT_LEFT, 80 },
+	{ "Caller",  LVCFMT_LEFT, 80 },
+	{ "Calls",   LVCFMT_LEFT, 80 },
+];
+
+static_COLUMNINFO[] s_rgFanOutColumns =
+[
+	//{ "none", LVCFMT_LEFT, 80 },
+	{ "Callee",  LVCFMT_LEFT, 80 },
+	{ "Calls",   LVCFMT_LEFT, 80 },
+];
+
+const COLUMNINFO[] default_FanColumns =
+[
+	{ COLUMNID.NAME, true, 300 },
+	{ COLUMNID.CALLS, true, 100 },
 ];
 
 struct INDEXQUERYPARAMS
@@ -174,17 +140,11 @@ struct INDEXQUERYPARAMS
 	COLUMNID colidSort;
 	bool fSortAscending;
 	COLUMNID colidGroup;
-	bool searchFile;
-	bool wholeWord;
-	bool caseSensitive;
-	bool useRegExp;
 }
 
-const HDMIL_PRIVATE = 0xf00d;
-
-class SearchWindowBack : Window
+class ProfileWindowBack : Window
 {
-	this(Window parent, SearchPane pane)
+	this(Window parent, ProfilePane pane)
 	{
 		mPane = pane;
 		super(parent);
@@ -200,10 +160,10 @@ class SearchWindowBack : Window
 		return super.WindowProc(hWnd, uMsg, wParam, lParam);
 	}
 	
-	SearchPane mPane;
+	ProfilePane mPane;
 }
 
-class SearchPane : DisposingComObject, IVsWindowPane
+class ProfilePane : DisposingComObject, IVsWindowPane
 {
 	IServiceProvider mSite;
 
@@ -238,7 +198,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 		mixin(LogCallMix2);
 
 		_wndParent = new Window(hwndParent);
-		_wndBack = new SearchWindowBack(_wndParent, this);
+		_wndBack = new ProfileWindowBack(_wndParent, this);
 
 		BOOL fHandled;
 		_OnInitDialog(WM_INITDIALOG, 0, 0, fHandled);
@@ -263,8 +223,10 @@ class SearchPane : DisposingComObject, IVsWindowPane
 			_wndParent = null;
 			_wndBack = null;
 			_wndFileWheel = null;;
-			_wndFileList = null;
-			_wndFileListHdr = null;
+			_wndFuncList = null;
+			_wndFuncListHdr = null;
+			_wndFanInList = null;
+			_wndFanOutList = null;
 			_wndToolbar = null;
 			if(_himlToolbar)
 				ImageList_Destroy(_himlToolbar);
@@ -302,26 +264,25 @@ class SearchPane : DisposingComObject, IVsWindowPane
 
 	///////////////////////////////////////////////////////////////////
 
-	// the following has been ported from the FlatSolutionExplorer project
 private:
-	SolutionItemIndex _spsii;
-//    DWORD _dwIndexEventsCookie;
-
 	Window _wndParent;
-	SearchWindowBack _wndBack;
+	ProfileWindowBack _wndBack;
+
 	Text _wndFileWheel;
-	ListView _wndFileList;
-	Window _wndFileListHdr;
+	ListView _wndFuncList;
+	ListView _wndFanInList;
+	ListView _wndFanOutList;
+	Window _wndFuncListHdr;
 	ToolBar _wndToolbar;
 	HIMAGELIST _himlToolbar;
-	ItemArray _lastResultsArray; // remember to keep reference to SolutionItems referenced in list items
+	ItemArray _lastResultsArray; // remember to keep reference to ProfileItems referenced in list items
+	ProfileItemIndex _spsii;
 
-	BOOL _fCombineColumns;
+	BOOL _fShowFanInOut;
+	BOOL _fFullDecoration;
 	BOOL _fAlternateRowColor;
 	BOOL _closeOnReturn;
-	COLUMNINFO[] _fileColumns;
-	COLUMNINFO[] _symbolColumns;
-	COLUMNINFO[]* _rgColumns;
+	COLUMNINFO[] _rgColumns;
 
 	INDEXQUERYPARAMS _iqp;
 	COLORREF _crAlternate;
@@ -370,15 +331,12 @@ private:
 				{
 				case IDOK:
 					return _OnOpenSelectedItem(code, id, hWnd, fHandled);
-				case IDR_COMBINECOLUMNS:
 				case IDR_ALTERNATEROWCOLOR:
 				case IDR_GROUPBYKIND:
 				case IDR_CLOSEONRETURN:
-				case IDR_WHOLEWORD:
-				case IDR_CASESENSITIVE:
-				case IDR_REGEXP:
-				case IDR_SEARCHFILE:
-				case IDR_SEARCHSYMBOL:
+				case IDR_FANINOUT:
+				case IDR_REMOVETRACE:
+				case IDR_SETTRACE:
 					return _OnCheckBtnClicked(code, id, hWnd, fHandled);
 				default:
 					break;
@@ -397,6 +355,8 @@ private:
 					return _OnFileListColumnClick(wParam, nmhdr, fHandled);
 				case LVN_DELETEITEM:
 					return _OnFileListDeleteItem(wParam, nmhdr, fHandled);
+				case LVN_ITEMCHANGED:
+					return _OnFileListItemChanged(wParam, nmhdr, fHandled);
 				case NM_DBLCLK:
 					return _OnFileListDblClick(wParam, nmhdr, fHandled);
 				case NM_CUSTOMDRAW:
@@ -421,20 +381,18 @@ private:
 		_fAlternateRowColor = true;
 		_closeOnReturn = true;
 
-		_spsii = new SolutionItemIndex();
-		_fileColumns = default_fileColumns.dup;
-		_symbolColumns = default_symbolColumns.dup;
+		_spsii = new ProfileItemIndex();
+		_rgColumns = default_Columns.dup;
 		_iqp.colidSort = COLUMNID.NAME;
 		_iqp.fSortAscending = true;
 		_iqp.colidGroup = COLUMNID.NONE;
-		_rgColumns = _iqp.searchFile ? &_fileColumns : &_symbolColumns;
 	}
 
 	void _MoveSelection(BOOL fDown)
 	{
 		// Get the current selection
-		int iSel = _wndFileList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
-		int iCnt = _wndFileList.SendMessage(LVM_GETITEMCOUNT);
+		int iSel = _wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
+		int iCnt = _wndFuncList.SendMessage(LVM_GETITEMCOUNT);
 		if(iSel == 0 && !fDown)
 			return;
 		if(iSel == iCnt - 1 && fDown)
@@ -445,26 +403,26 @@ private:
 		lvi.mask = LVIF_STATE;
 		lvi.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 		lvi.state = 0;
-		_wndFileList.SendItemMessage(LVM_SETITEM, lvi);
+		_wndFuncList.SendItemMessage(LVM_SETITEM, lvi);
 
 		lvi.iItem = fDown ? iSel+1 : iSel-1;
 		lvi.mask = LVIF_STATE;
 		lvi.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 		lvi.state = LVIS_SELECTED | LVIS_FOCUSED;
-		_wndFileList.SendItemMessage(LVM_SETITEM, lvi);
+		_wndFuncList.SendItemMessage(LVM_SETITEM, lvi);
 		
-		_wndFileList.SendMessage(LVM_ENSUREVISIBLE, lvi.iItem, FALSE);
+		_wndFuncList.SendMessage(LVM_ENSUREVISIBLE, lvi.iItem, FALSE);
 	}
 
 	HRESULT _PrepareFileListForResults(in ItemArray puaResults)
 	{
-		_wndFileList.SendMessage(LVM_DELETEALLITEMS);
-		_wndFileList.SendMessage(LVM_REMOVEALLGROUPS);
+		_wndFuncList.SendMessage(LVM_DELETEALLITEMS);
+		_wndFuncList.SendMessage(LVM_REMOVEALLGROUPS);
 
 		HIMAGELIST himl = ImageList_LoadImageA(getInstance(), kImageBmp, 16, 10, CLR_DEFAULT,
 											IMAGE_BITMAP, LR_LOADTRANSPARENT);
 		if(himl)
-			_wndFileList.SendMessage(LVM_SETIMAGELIST, LVSIL_SMALL, cast(LPARAM)himl);
+			_wndFuncList.SendMessage(LVM_SETIMAGELIST, LVSIL_SMALL, cast(LPARAM)himl);
 
 		HRESULT hr = S_OK;
 		BOOL fEnableGroups = _iqp.colidGroup != COLUMNID.NONE;
@@ -480,7 +438,7 @@ private:
     
 		if (SUCCEEDED(hr))
 		{
-			hr = _wndFileList.SendMessage(LVM_ENABLEGROUPVIEW, fEnableGroups) == -1 ? E_FAIL : S_OK;
+			hr = _wndFuncList.SendMessage(LVM_ENABLEGROUPVIEW, fEnableGroups) == -1 ? E_FAIL : S_OK;
 		}
 
 		return hr;
@@ -490,12 +448,12 @@ private:
 	{
 		LVITEM lvi;
 		lvi.pszText = LPSTR_TEXTCALLBACK;
-		lvi.iItem = cast(int)_wndFileList.SendMessage(LVM_GETITEMCOUNT);
+		lvi.iItem = cast(int)_wndFuncList.SendMessage(LVM_GETITEMCOUNT);
 		DWORD cItems = pua.GetCount();
 		HRESULT hr = S_OK;
 		for (DWORD i = 0; i < cItems && SUCCEEDED(hr); i++)
 		{
-			if(SolutionItem spsi = pua.GetItem(i))
+			if(ProfileItem spsi = pua.GetItem(i))
 			{
 				for (int iCol = COLUMNID.NAME; iCol < COLUMNID.MAX; iCol++)
 				{
@@ -516,7 +474,7 @@ private:
 							lvi.iGroupId = iGroupId;
 						}
 					}
-					if (_wndFileList.SendItemMessage(LVM_INSERTITEM, lvi) != -1 && iCol == COLUMNID.NAME)
+					if (_wndFuncList.SendItemMessage(LVM_INSERTITEM, lvi) != -1 && iCol == COLUMNID.NAME)
 					{
 						//spsi.detach();
 					}
@@ -528,7 +486,7 @@ private:
 		return hr;
 	}
 
-	HRESULT _AddGroupToFileList(int iGroupId, in SolutionItemGroup psig)
+	HRESULT _AddGroupToFileList(int iGroupId, in ProfileItemGroup psig)
 	{
 		LVGROUP lvg;
 		lvg.cbSize = lvg.sizeof;
@@ -537,7 +495,7 @@ private:
 		lvg.iGroupId = iGroupId;
 		lvg.pszHeader = _toUTF16z(psig.GetName());
 		lvg.state = LVGS_NORMAL;
-		HRESULT hr = _wndFileList.SendMessage(LVM_INSERTGROUP, cast(WPARAM)-1, cast(LPARAM)&lvg) != -1 ? S_OK : E_FAIL;
+		HRESULT hr = _wndFuncList.SendMessage(LVM_INSERTGROUP, cast(WPARAM)-1, cast(LPARAM)&lvg) != -1 ? S_OK : E_FAIL;
 		if (SUCCEEDED(hr))
 		{
 			const(ItemArray) spItems = psig.GetItems();
@@ -553,13 +511,13 @@ private:
 	{
 		mixin(LogCallMix);
 		
-		_wndFileList.SetRedraw(FALSE);
+		_wndFuncList.SetRedraw(FALSE);
 
 		HRESULT hr = S_OK;
 		string strWordWheel = _wndFileWheel.GetWindowText();
 
 		ItemArray spResultsArray;
-		hr = _spsii.Search(strWordWheel, &_iqp, &spResultsArray);
+		hr = _spsii.Update(strWordWheel, &_iqp, &spResultsArray);
 		if (SUCCEEDED(hr))
 		{
 			hr = _PrepareFileListForResults(spResultsArray);
@@ -570,7 +528,7 @@ private:
 					DWORD cGroups = spResultsArray.GetCount();
 					for (DWORD iGroup = 0; iGroup < cGroups && SUCCEEDED(hr); iGroup++)
 					{
-						if(SolutionItemGroup spsig = spResultsArray.GetGroup(iGroup))
+						if(ProfileItemGroup spsig = spResultsArray.GetGroup(iGroup))
 						{
 							hr = _AddGroupToFileList(iGroup, spsig);
 						}
@@ -592,14 +550,50 @@ private:
 			lviSelect.iItem = 0;
 			lviSelect.state = LVIS_SELECTED | LVIS_FOCUSED;
 			lviSelect.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
-			_wndFileList.SendItemMessage(LVM_SETITEM, lviSelect);
+			_wndFuncList.SendItemMessage(LVM_SETITEM, lviSelect);
 		}
 
-		_wndFileList.SetRedraw(TRUE);
-		_wndFileList.InvalidateRect(null, FALSE);
+		_wndFuncList.SetRedraw(TRUE);
+		_wndFuncList.InvalidateRect(null, FALSE);
 		return hr;
 	}
 
+	string _demangle(string txt)
+	{
+		if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
+			txt = to!string(demangle(txt));
+		return txt;
+	}
+
+	void _InsertFanInOut(ListView lv, Fan fan)
+	{
+		LVITEM lvi;
+		lvi.pszText = _toUTF16z(_demangle(fan.func));
+		lvi.iItem = cast(int)lv.SendMessage(LVM_GETITEMCOUNT);
+		lvi.mask = LVIF_TEXT;
+		lv.SendItemMessage(LVM_INSERTITEM, lvi);
+
+		lvi.pszText = _toUTF16z(to!string(fan.calls));
+		lvi.iSubItem = 1;
+		lvi.mask = LVIF_TEXT;
+		lv.SendItemMessage(LVM_SETITEM, lvi);
+	}
+	
+	void RefreshFanInOutList(ProfileItem psi)
+	{
+		if(!psi || !_fShowFanInOut)
+			return;
+		
+		_wndFanInList.SendMessage(LVM_DELETEALLITEMS);
+		_wndFanOutList.SendMessage(LVM_DELETEALLITEMS);
+
+		foreach(fan; psi.mFanIn)
+			_InsertFanInOut(_wndFanInList, fan);
+		
+		foreach(fan; psi.mFanOut)
+			_InsertFanInOut(_wndFanOutList, fan);
+	}
+	
 	// Special icon dimensions for the sort direction indicator
 	const int c_cxSortIcon = 7;
 	const int c_cySortIcon = 6;
@@ -646,7 +640,7 @@ private:
 		// First, get the current header item fmt
 		HDITEM hdi;
 		hdi.mask = HDI_FORMAT;
-		HRESULT hr = _wndFileListHdr.SendMessage(HDM_GETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
+		HRESULT hr = _wndFuncListHdr.SendMessage(HDM_GETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
 		if (SUCCEEDED(hr))
 		{
 			// Add the image mask and alignment
@@ -657,7 +651,7 @@ private:
 				hdi.fmt |= HDF_BITMAP_ON_RIGHT;
 			}
 			hdi.iImage = fAscending;
-			hr = _wndFileListHdr.SendMessage(HDM_SETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
+			hr = _wndFuncListHdr.SendMessage(HDM_SETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
 		}
 		return hr;
 	}
@@ -669,7 +663,7 @@ private:
 		// First, get the current header item fmt
 		HDITEM hdi;
 		hdi.mask = HDI_FORMAT;
-		HRESULT hr = _wndFileListHdr.SendMessage(HDM_GETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
+		HRESULT hr = _wndFuncListHdr.SendMessage(HDM_GETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
 		if (SUCCEEDED(hr))
 		{
 			// Remove the image mask and alignment
@@ -678,70 +672,75 @@ private:
 			{
 				hdi.fmt &= ~HDF_BITMAP_ON_RIGHT;
 			}
-			hr = _wndFileListHdr.SendMessage(HDM_SETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
+			hr = _wndFuncListHdr.SendMessage(HDM_SETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
+		}
+		return hr;
+	}
+
+	HRESULT _InsertListViewColumn(ListView lv, const(static_COLUMNINFO)[] static_rgColumns, int iIndex, COLUMNID colid, 
+								  int cx, bool set = false)
+	{
+		LVCOLUMN lvc;
+		lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+		lvc.fmt = static_rgColumns[colid].fmt;
+		lvc.cx = cx;
+
+		HRESULT hr = S_OK;
+		string strDisplayName = static_rgColumns[colid].displayName;
+		lvc.pszText = _toUTF16z(strDisplayName);
+		uint msg = set ? LVM_SETCOLUMNW : LVM_INSERTCOLUMNW;
+		hr = lv.SendMessage(msg, iIndex, cast(LPARAM)&lvc) >= 0 ? S_OK : E_FAIL;
+		
+		if (SUCCEEDED(hr) && lv == _wndFuncList)
+		{
+			HDITEM hdi;
+			hdi.mask = HDI_LPARAM;
+			hdi.lParam = colid;
+			hr = _wndFuncListHdr.SendMessage(HDM_SETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
 		}
 		return hr;
 	}
 
 	HRESULT _InsertListViewColumn(int iIndex, COLUMNID colid, int cx, bool set = false)
 	{
-		LVCOLUMN lvc;
-		lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
-		lvc.fmt = s_rgColumns[colid].fmt;
-		lvc.cx = cx;
-
-		HRESULT hr = S_OK;
-		string strDisplayName = s_rgColumns[colid].displayName;
-		lvc.pszText = _toUTF16z(strDisplayName);
-		uint msg = set ? LVM_SETCOLUMNW : LVM_INSERTCOLUMNW;
-		hr = _wndFileList.SendMessage(msg, iIndex, cast(LPARAM)&lvc) >= 0 ? S_OK : E_FAIL;
-		if (SUCCEEDED(hr))
-		{
-			HDITEM hdi;
-			hdi.mask = HDI_LPARAM;
-			hdi.lParam = colid;
-			hr = _wndFileListHdr.SendMessage(HDM_SETITEM, iIndex, cast(LPARAM)&hdi) ? S_OK : E_FAIL;
-		}
-		return hr;
+		return _InsertListViewColumn(_wndFuncList, s_rgColumns, iIndex, colid, cx, set);
 	}
 
-	HRESULT _InitializeFileListColumns()
+	HRESULT _InitializeListColumns(ListView lv, const(COLUMNINFO)[] rgColumns, const(static_COLUMNINFO)[] static_rgColumns)
 	{
-		_wndFileList.SendMessage(LVM_DELETEALLITEMS);
-		_wndFileList.SendMessage(LVM_REMOVEALLGROUPS);
+		lv.SendMessage(LVM_DELETEALLITEMS);
+		lv.SendMessage(LVM_REMOVEALLGROUPS);
 
-		bool hasNameColumn = _wndFileList.SendMessage(LVM_GETCOLUMNWIDTH, 0) > 0;
+		bool hasNameColumn = lv.SendMessage(LVM_GETCOLUMNWIDTH, 0) > 0;
 		// cannot delete col 0, so keep name
-		while(_wndFileList.SendMessage(LVM_DELETECOLUMN, 1)) {}
+		while(lv.SendMessage(LVM_DELETECOLUMN, 1)) {}
 		
 		HRESULT hr = S_OK;
-		COLUMNID colPath = _iqp.searchFile ? COLUMNID.PATH : COLUMNID.TYPE;
 		int cColumnsInserted = 0;
-		for (UINT i = 0; i < _rgColumns.length && SUCCEEDED(hr); i++)
+		for (UINT i = 0; i < rgColumns.length && SUCCEEDED(hr); i++)
 		{
-			COLUMNINFO* ci = &(*_rgColumns)[i];
+			const(COLUMNINFO)* ci = &(rgColumns[i]);
 			if (ci.fVisible)
 			{
-				// Don't insert the path column if we're compressing path and filename
-				if (ci.colid != colPath || !_fCombineColumns)
-				{
-					int cx = ci.cx;
-					if (ci.colid == COLUMNID.NAME && _fCombineColumns)
-					{
-						COLUMNINFO *pci = _ColumnInfoFromColumnID(colPath);
-						cx += pci.cx;
-					}
-					bool set = hasNameColumn ? cColumnsInserted == 0 : false;
-					hr = _InsertListViewColumn(cColumnsInserted++, ci.colid, cx, set);
-				}
+				bool set = hasNameColumn ? cColumnsInserted == 0 : false;
+				hr = _InsertListViewColumn(lv, static_rgColumns, cColumnsInserted++, ci.colid, ci.cx, set);
 			}
 		}
 		return hr;
 	}
 	
-	HRESULT _InitializeFileList()
+	HRESULT _InitializeFuncListColumns()
 	{
-		_wndFileList.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 
+		HRESULT hr;
+		hr = _InitializeListColumns(_wndFuncList, _rgColumns, s_rgColumns);
+		hr |= _InitializeListColumns(_wndFanInList, default_FanColumns, s_rgFanInColumns);
+		hr |= _InitializeListColumns(_wndFanOutList, default_FanColumns, s_rgFanOutColumns);
+		return hr;
+	}
+	
+	HRESULT _InitializeFuncList()
+	{
+		_wndFuncList.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 
 		                         LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP,
 		                         LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP);
 
@@ -749,9 +748,9 @@ private:
 		HRESULT hr = _CreateSortImageList(himl);
 		if (SUCCEEDED(hr))
 		{
-			_wndFileListHdr.SendMessage(HDM_SETIMAGELIST, HDMIL_PRIVATE, cast(LPARAM)himl);
+			_wndFuncListHdr.SendMessage(HDM_SETIMAGELIST, HDMIL_PRIVATE, cast(LPARAM)himl);
 
-			_InitializeFileListColumns();
+			_InitializeFuncListColumns();
 			
 			if (SUCCEEDED(hr))
 			{
@@ -821,17 +820,13 @@ private:
 					return btn;
 				}
 				static const TBBUTTON s_tbb[] = [
-					initButton(IDR_SEARCHFILE,        BTNS_CHECKGROUP),
-					initButton(IDR_SEARCHSYMBOL,      BTNS_CHECKGROUP),
-					initButton(-1, BTNS_SEP),
-					initButton(IDR_COMBINECOLUMNS,    BTNS_CHECK),
 					initButton(IDR_ALTERNATEROWCOLOR, BTNS_CHECK),
-					initButton(IDR_GROUPBYKIND,       BTNS_CHECK),
 					initButton(IDR_CLOSEONRETURN,     BTNS_CHECK),
+					initButton(IDR_FULLDECO,          BTNS_CHECK),
+					initButton(IDR_FANINOUT,          BTNS_CHECK),
 					initButton(-1, BTNS_SEP),
-					initButton(IDR_WHOLEWORD,         BTNS_CHECK),
-					initButton(IDR_CASESENSITIVE,     BTNS_CHECK),
-					initButton(IDR_REGEXP,            BTNS_CHECK),
+					initButton(IDR_SETTRACE,          BTNS_BUTTON),
+					initButton(IDR_REMOVETRACE,       BTNS_BUTTON),
 				];
 
 				hr = _wndToolbar.SendMessage(TB_ADDBUTTONS, s_tbb.length, cast(LPARAM)s_tbb.ptr) ? S_OK : E_FAIL;
@@ -849,17 +844,13 @@ private:
 		// Set the initial state of the buttons
 		HRESULT hr = S_OK;
 
-		_wndToolbar.EnableCheckButton(IDR_COMBINECOLUMNS,    true, _fCombineColumns != 0);
 		_wndToolbar.EnableCheckButton(IDR_ALTERNATEROWCOLOR, true, _fAlternateRowColor != 0);
 		_wndToolbar.EnableCheckButton(IDR_CLOSEONRETURN,     true, _closeOnReturn != 0);
-		_wndToolbar.EnableCheckButton(IDR_GROUPBYKIND,       true, _iqp.colidGroup == COLUMNID.KIND);
 
-		_wndToolbar.EnableCheckButton(IDR_WHOLEWORD,         true, _iqp.wholeWord);
-		_wndToolbar.EnableCheckButton(IDR_CASESENSITIVE,     true, _iqp.caseSensitive);
-		_wndToolbar.EnableCheckButton(IDR_REGEXP,            true, _iqp.useRegExp);
-		_wndToolbar.EnableCheckButton(IDR_SEARCHFILE,        true, _iqp.searchFile);
-		_wndToolbar.EnableCheckButton(IDR_SEARCHSYMBOL,      true, !_iqp.searchFile);
-		
+		//_wndToolbar.EnableCheckButton(IDR_GROUPBYKIND,       true, _iqp.colidGroup == COLUMNID.KIND);
+		_wndToolbar.EnableCheckButton(IDR_FANINOUT,          true, _fShowFanInOut != 0);
+		_wndToolbar.EnableCheckButton(IDR_FULLDECO,          true, _fFullDecoration != 0);
+	
 		return hr;
 	}
 	
@@ -896,7 +887,7 @@ private:
 
 	static extern(Windows) LRESULT s_HdrWndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam, in UINT_PTR uIdSubclass, in DWORD_PTR dwRefData)
 	{
-		if(SearchPane pfsec = cast(SearchPane)cast(void*)dwRefData)
+		if(ProfilePane pfsec = cast(ProfilePane)cast(void*)dwRefData)
 			return pfsec._HdrWndProc(hWnd, uiMsg, wParam, lParam);
 		return DefSubclassProc(hWnd, uiMsg, wParam, lParam);
 	}
@@ -909,23 +900,37 @@ private:
 			_wndFileWheel = new Text(_wndBack, "", IDC_FILEWHEEL);
 			int top = kToolBarAtTop ? kToolBarHeight : 1;
 			_wndFileWheel.setRect(0, top + 2, 185, 16);
-			_wndFileList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
+			_wndFuncList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
 			                            0, IDC_FILELIST);
-			_wndFileList.setRect(0, top + 20, 185, 78);
-			HWND hdrHwnd = cast(HWND)_wndFileList.SendMessage(LVM_GETHEADER);
+			_wndFuncList.setRect(0, top + 20, 185, 78);
+			HWND hdrHwnd = cast(HWND)_wndFuncList.SendMessage(LVM_GETHEADER);
 			if(hdrHwnd)
 			{
-				_wndFileListHdr = new Window(hdrHwnd);
+				_wndFuncListHdr = new Window(hdrHwnd);
 
 				// HACK:  This header control is created by the listview.  When listview handles LVM_SETIMAGELIST with
 				// LVSIL_SMALL it also forwards the message to the header control.  The subclass proc will intercept those
 				// messages and prevent resetting the imagelist
-				SetWindowSubclass(_wndFileListHdr.hwnd, &s_HdrWndProc, ID_SUBCLASS_HDR, cast(DWORD_PTR)cast(void*)this);
+				SetWindowSubclass(_wndFuncListHdr.hwnd, &s_HdrWndProc, ID_SUBCLASS_HDR, cast(DWORD_PTR)cast(void*)this);
 
-				//_wndFileListHdr.SetDlgCtrlID(IDC_FILELISTHDR);
+				//_wndFuncListHdr.SetDlgCtrlID(IDC_FILELISTHDR);
 			}
-			_InitializeFileList();
+			_wndFanInList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
+			                             0, IDC_FANINLIST);
+			_wndFanInList.setRect(0, top + 20 + 78, 185, 40);
+			_wndFanOutList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
+			                              0, IDC_FANOUTLIST);
+			_wndFanOutList.setRect(0, top + 20 + 78 + 40, 185, 40);
 
+			_InitializeFuncList();
+			
+			_wndFanInList.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 
+									  LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP,
+									  LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP);
+			_wndFanOutList.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 
+									   LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP,
+									   LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP);
+			
 			_InitializeToolbar();
 		}
 		//return CComCompositeControl<CFlatSolutionExplorer>::OnInitDialog(uiMsg, wParam, lParam, fHandled);
@@ -943,6 +948,7 @@ private:
 		RECT r, br;
 		_wndParent.GetClientRect(&r);
 		_wndBack.GetClientRect(&br);
+		
 		if(br.right - br.left != r.right - r.left - 2*kPaneMargin || 
 		   br.bottom - br.top != r.bottom - r.top - 2*kPaneMargin)
 			_wndBack.setRect(kPaneMargin, kPaneMargin, 
@@ -953,7 +959,12 @@ private:
 	{
 		int cx = LOWORD(lParam);
 		int cy = HIWORD(lParam);
-
+		
+		return ResizeControls(cx, cy);
+	}
+	
+	LRESULT ResizeControls(int cx, int cy)
+	{
 		// Adjust child control sizes
 		// - File Wheel stretches to fit horizontally but size is vertically fixed
 		// - File List stretches to fit horizontally and vertically but the topleft coordinate is fixed
@@ -964,6 +975,11 @@ private:
 
 		if (_wndToolbar.GetWindowRect(&rcToolbar))
 		{
+			int hTool = (kToolBarAtTop ? 0 : rcToolbar.bottom - rcToolbar.top);
+			int h     = cy - hTool;
+			int hFan  = _fShowFanInOut ? h / 4 : 0;
+			int hFunc = h - 2 * hFan;
+		
 			RECT rcFileWheel;
 			if (_wndFileWheel.GetWindowRect(&rcFileWheel))
 			{
@@ -971,18 +987,36 @@ private:
 				rcFileWheel.right = cx;
 				_wndFileWheel.SetWindowPos(null, &rcFileWheel, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 				RECT rcFileList;
-				if (_wndFileList.GetWindowRect(&rcFileList))
+					
+				if (_wndFuncList.GetWindowRect(&rcFileList))
 				{
 					_wndBack.ScreenToClient(&rcFileList);
 					rcFileList.right = cx;
-					rcFileList.bottom = cy - (kToolBarAtTop ? 0 : rcToolbar.bottom - rcToolbar.top);
-					_wndFileList.SetWindowPos(null, &rcFileList, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+					rcFileList.bottom = hFunc;
+					_wndFuncList.SetWindowPos(null, &rcFileList, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+				
+					rcFileList.top = rcFileList.bottom;
+					rcFileList.bottom += hFan;
+					if(_wndFanInList)
+						_wndFanInList.SetWindowPos(null, &rcFileList, SWP_NOZORDER | SWP_NOACTIVATE);
+
+					rcFileList.top = rcFileList.bottom;
+					rcFileList.bottom += hFan;
+					if(_wndFanOutList)
+						_wndFanOutList.SetWindowPos(null, &rcFileList, SWP_NOZORDER | SWP_NOACTIVATE);
 				}
 			}
 		}
 		return 0;
 	}
 
+	void RearrangeControls()
+	{
+		RECT rcBack;
+		if (_wndBack.GetWindowRect(&rcBack))
+			ResizeControls(rcBack.right - rcBack.left, rcBack.bottom - rcBack.top);
+	}
+	
 	LRESULT _OnSetFocus(UINT uiMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		// Skip the CComCompositeControl handling
@@ -1000,7 +1034,7 @@ private:
 	LRESULT _OnKeyDown(UINT uiMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		//HWND hwndFocus = .GetFocus();
-		//UINT cItems = cast(UINT)_wndFileList.SendMessage(LVM_GETITEMCOUNT);
+		//UINT cItems = cast(UINT)_wndFuncList.SendMessage(LVM_GETITEMCOUNT);
 		//if (cItems && hwndFocus == _wndFileWheel.hwnd)
 		{
 			UINT vKey = LOWORD(wParam);
@@ -1011,7 +1045,7 @@ private:
 			case VK_PRIOR:
 			case VK_NEXT:
 				fHandled = TRUE;
-				return _wndFileList.SendMessage(uiMsg, wParam, lParam);
+				return _wndFuncList.SendMessage(uiMsg, wParam, lParam);
 				// _MoveSelection(vKey == VK_DOWN);
 			case VK_RETURN:
 			case VK_EXECUTE:
@@ -1036,15 +1070,14 @@ private:
 		{
 			int iIndex = 0;
 			BOOL fDone = FALSE;
-			COLUMNID colPath = _iqp.searchFile ? COLUMNID.PATH : COLUMNID.TYPE;
 			for (size_t i = 0; i < _rgColumns.length && !fDone; i++)
 			{
-				COLUMNINFO *ci = &(*_rgColumns)[i];
+				COLUMNINFO *ci = &(_rgColumns[i]);
 				if (ci.colid == colid)
 				{
 					fDone = TRUE;
 				}
-				else if (ci.fVisible && (ci.colid != colPath || !_fCombineColumns))
+				else if (ci.fVisible)
 				{
 					iIndex++;
 				}
@@ -1060,7 +1093,7 @@ private:
 		{
 			int iCol = _ListViewIndexFromColumnID(colid);
 
-			hr = _wndFileList.SendMessage(LVM_DELETECOLUMN, iCol) ? S_OK : E_FAIL;
+			hr = _wndFuncList.SendMessage(LVM_DELETECOLUMN, iCol) ? S_OK : E_FAIL;
 			if (SUCCEEDED(hr))
 			{
 				pci.fVisible = fVisible;
@@ -1088,14 +1121,13 @@ private:
 			mii.cbSize = mii.sizeof;
 			mii.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STATE | MIIM_STRING;
 			mii.fType = MFT_STRING;
-			COLUMNID colPath = _iqp.searchFile ? COLUMNID.PATH : COLUMNID.TYPE;
 			
 			// Don't include the first column (COLUMNID.NAME) in the list
 			for (size_t i = COLUMNID.NAME + 1; i < _rgColumns.length && SUCCEEDED(hr); i++)
 			{
-				COLUMNINFO *ci = &(*_rgColumns)[i];
+				COLUMNINFO *ci = &(_rgColumns[i]);
 				string strDisplayName = s_rgColumns[ci.colid].displayName;
-				mii.fState = (ci.colid == colPath && _fCombineColumns) ? MFS_DISABLED : MFS_ENABLED;
+				mii.fState = MFS_ENABLED;
 				if (ci.fVisible)
 				{
 					mii.fState |= MFS_CHECKED;
@@ -1126,10 +1158,10 @@ private:
 		HWND hwndContextMenu = cast(HWND)wParam;
 		// I think the listview is doing the wrong thing with WM_CONTEXTMENU and using its own HWND even if
 		// the WM_CONTEXTMENU originated in the header.  Just double check the coordinates to be sure
-		if (hwndContextMenu == _wndFileList.hwnd)
+		if (hwndContextMenu == _wndFuncList.hwnd)
 		{
 			RECT rcHdr;
-			if (_wndFileListHdr.GetWindowRect(&rcHdr))
+			if (_wndFuncListHdr.GetWindowRect(&rcHdr))
 			{
 				POINT pt;
 				pt.x = GET_X_LPARAM(lParam);
@@ -1158,7 +1190,7 @@ private:
 		return 0;
 	}
 
-	HRESULT _OpenSolutionItem(string pszPath, int line)
+	HRESULT _OpenProfileItem(string pszPath, int line)
 	{
 		HRESULT hr = S_OK;
 version(all)
@@ -1186,14 +1218,14 @@ else
 
 	LRESULT _OnOpenSelectedItem(WORD wNotifyCode, WORD wID, HWND hwndCtl, ref BOOL fHandled)
 	{
-		int iSel = _wndFileList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
+		int iSel = _wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
 		if (iSel != -1)
 		{
-			_OpenSolutionItem(iSel);
+			_OpenProfileItem(iSel);
 		}
 		else
 		{
-			_OpenSolutionItem(_wndFileWheel.GetWindowText(), -1);
+			_OpenProfileItem(_wndFileWheel.GetWindowText(), -1);
 		}
 		fHandled = TRUE;
 		return 0;
@@ -1204,50 +1236,6 @@ else
 		fHandled = TRUE;
 		_RefreshFileList();
 		return 0;
-	}
-
-	static struct CmdToColID 
-	{
-		uint uiCmd;
-		COLUMNID colid;
-	}
-	
-	static const CmdToColID s_rgCmdToColIDMap[] = 
-	[
-		// { IDR_UNGROUPED, COLUMNID.NONE },
-		{ IDR_GROUPBYKIND, COLUMNID.KIND }
-	];
-
-/+
-	UINT _ColumnIDtoGroupCommandID(COLUMNID colid)
-	{
-		UINT uiRet = IDR_UNGROUPED;
-		BOOL fFound = FALSE;
-		for (int i = 0; i < s_rgCmdToColIDMap.length && !fFound; i++)
-		{
-			if (colid == s_rgCmdToColIDMap[i].colid)
-			{
-				uiRet = s_rgCmdToColIDMap[i].uiCmd;
-				fFound = TRUE;
-			}
-		}
-		return uiRet;
-	}
-+/
-	
-	COLUMNID _GroupCommandIDtoColumnID(UINT uiCmd)
-	{
-		COLUMNID colidRet = COLUMNID.NONE;
-		BOOL fFound = FALSE;
-		for (int i = 0; i < s_rgCmdToColIDMap.length && !fFound; i++)
-		{
-			if (uiCmd == s_rgCmdToColIDMap[i].uiCmd)
-			{
-				colidRet = s_rgCmdToColIDMap[i].colid;
-				fFound = TRUE;
-			}
-		}
-		return colidRet;
 	}
 
 	HRESULT _SetGroupColumn(COLUMNID colid)
@@ -1262,12 +1250,12 @@ else
 	int _ListViewIndexFromColumnID(COLUMNID colid)
 	{
 		int iCol = -1;
-		int cCols = _wndFileListHdr.SendMessage(HDM_GETITEMCOUNT);
+		int cCols = _wndFuncListHdr.SendMessage(HDM_GETITEMCOUNT);
 		for (int i = 0; i < cCols && iCol == -1; i++)
 		{
 			HDITEM hdi;
 			hdi.mask = HDI_LPARAM;
-			if (_wndFileListHdr.SendMessage(HDM_GETITEM, i, cast(LPARAM)&hdi) && hdi.lParam == colid)
+			if (_wndFuncListHdr.SendMessage(HDM_GETITEM, i, cast(LPARAM)&hdi) && hdi.lParam == colid)
 			{
 				iCol = i;
 			}
@@ -1280,97 +1268,13 @@ else
 		COLUMNINFO *pci = null;
 		for (size_t iCol = 0; iCol < _rgColumns.length && pci is null; iCol++)
 		{
-			COLUMNINFO *ci = &(*_rgColumns)[iCol];
+			COLUMNINFO *ci = &(_rgColumns[iCol]);
 			if (ci.colid == colid)
 			{
 				pci = ci;
 			}
 		}
 		return pci;
-	}
-
-	HRESULT _SetCompressedNameAndPath(BOOL fSet)
-	{
-		HRESULT hr = S_OK;
-		if (fSet != _fCombineColumns)
-		{
-			int iName = _ListViewIndexFromColumnID(COLUMNID.NAME);
-			COLUMNID colPath = _iqp.searchFile ? COLUMNID.PATH : COLUMNID.TYPE;
-			COLUMNINFO *pciPath = _ColumnInfoFromColumnID(colPath);
-			COLUMNINFO *pciName = _ColumnInfoFromColumnID(COLUMNID.NAME);
-
-			hr = (iName > -1 && pciPath && pciName) ? S_OK : E_FAIL;
-			if (SUCCEEDED(hr))
-			{
-				_fCombineColumns = fSet;
-				_wndFileList.SetRedraw(FALSE);
-				_wndFileListHdr.SetRedraw(FALSE);
-				if (fSet)
-				{
-					// If the path column is currently hidden, set it to visible
-					if (pciPath.fVisible)
-					{
-						int iPath = _ListViewIndexFromColumnID(colPath);
-						hr = _wndFileList.SendMessage(LVM_DELETECOLUMN, iPath) ? S_OK : E_FAIL;
-					}
-					else
-					{
-						pciPath.fVisible = TRUE;
-					}
-
-					_wndFileList.SendMessage(LVM_SETCOLUMNWIDTH, iName, MAKELPARAM(pciName.cx + pciPath.cx, 0));
-
-					// If the list is currently sorted by path, change it to name.  Otherwise, just reset the values
-					// for the name column and avoid a requery
-					if (_iqp.colidSort == colPath)
-					{
-						_SetSortColumn(COLUMNID.NAME, iName);
-					}
-					else
-					{
-						LVITEM lvi;
-						lvi.mask = LVIF_TEXT;
-						lvi.pszText = LPSTR_TEXTCALLBACK;
-						lvi.iSubItem = iName;
-						UINT cItems = cast(UINT)_wndFileList.SendMessage(LVM_GETITEMCOUNT);
-						for (UINT i = 0; i < cItems; i++)
-						{
-							lvi.iItem = i;
-							_wndFileList.SendItemMessage(LVM_SETITEM, lvi);
-						}
-					}
-				}
-				else
-				{
-					_wndFileList.SendMessage(LVM_SETCOLUMNWIDTH, iName, MAKELPARAM(pciName.cx, 0));
-					pciPath.cx = max(pciPath.cx, 30);
-					hr = _InsertListViewColumn(iName + 1, colPath, pciPath.cx);
-					if (SUCCEEDED(hr))
-					{
-						LVITEM lvi;
-						lvi.mask = LVIF_TEXT;
-						lvi.pszText = LPSTR_TEXTCALLBACK;
-						UINT cItems = cast(UINT)_wndFileList.SendMessage(LVM_GETITEMCOUNT);
-						for (UINT i = 0; i < cItems; i++)
-						{
-							lvi.iItem = i;
-							lvi.iSubItem = iName;
-							_wndFileList.SendItemMessage(LVM_SETITEM, lvi);
-							lvi.iSubItem = iName+1;
-							_wndFileList.SendItemMessage(LVM_SETITEM, lvi);
-						}
-					}
-				}
-
-				_WriteViewOptionToRegistry("CombineColumns"w, _fCombineColumns);
-
-				_wndFileListHdr.SetRedraw(TRUE);
-				_wndFileListHdr.InvalidateRect(null, FALSE);
-				_wndFileList.SetRedraw(TRUE);
-				_wndFileList.InvalidateRect(null, FALSE);
-			}
-		}
-		return hr;
 	}
 
 	LRESULT _OnCheckBtnClicked(WORD wNotifyCode, WORD wID, HWND hwndCtl, ref BOOL fHandled)
@@ -1384,48 +1288,54 @@ else
 			
 			switch(wID)
 			{
-			case IDR_COMBINECOLUMNS:
-				_SetCompressedNameAndPath(checked);
-				break;
-		
 			case IDR_ALTERNATEROWCOLOR:
 				_fAlternateRowColor = checked;
 				_WriteViewOptionToRegistry("AlternateRowColor"w, _fAlternateRowColor);
-				_wndFileList.InvalidateRect(null, FALSE);
+				_wndFuncList.InvalidateRect(null, FALSE);
 				break;
 			
 			case IDR_CLOSEONRETURN:
 				_closeOnReturn = checked;
 				_WriteViewOptionToRegistry("CloseOnReturn"w, _closeOnReturn);
 				break;
-			
+
+			case IDR_FANINOUT:
+				_fShowFanInOut = checked;
+				_WriteViewOptionToRegistry("ShowFanInOut"w, _fShowFanInOut);
+				RearrangeControls();
+				break;
+				
+			case IDR_SETTRACE:
+				if(Config cfg = getCurrentStartupConfig())
+				{
+					scope(exit) release(cfg);
+					string workdir = cfg.GetProjectOptions().replaceEnvironment(cfg.GetProjectOptions().debugworkingdir, cfg);
+					if(!isabs(workdir))
+						workdir = cfg.GetProjectDir() ~ "\\" ~ workdir;
+					string tracelog = workdir ~ "trace.log";
+					_wndFileWheel.SetWindowText(tracelog);
+					_RefreshFileList();
+				}
+				break;
+				
+			case IDR_REMOVETRACE:
+				string fname = _wndFileWheel.GetWindowText();
+				if(std.file.exists(fname))
+					std.file.remove(fname);
+				_RefreshFileList();
+				break;
+				
+			case IDR_FULLDECO:
+				_fFullDecoration = checked;
+				_WriteViewOptionToRegistry("FullDecoration"w, _fFullDecoration);
+				RearrangeControls();
+				break;
+				
+/+
 			case IDR_GROUPBYKIND:
 				_SetGroupColumn(checked ? COLUMNID.KIND : COLUMNID.NONE);
 				break;
-
-			case IDR_WHOLEWORD:
-				_iqp.wholeWord = checked;
-				_WriteViewOptionToRegistry("WholeWord"w, _iqp.wholeWord);
-				_RefreshFileList();
-				break;
-			case IDR_CASESENSITIVE:
-				_iqp.caseSensitive = !checked;
-				_WriteViewOptionToRegistry("CaseSensitive"w, _iqp.caseSensitive);
-				_RefreshFileList();
-				break;
-			case IDR_REGEXP:
-				_iqp.useRegExp = checked;
-				_WriteViewOptionToRegistry("UseRegExp"w, _iqp.useRegExp);
-				_RefreshFileList();
-				break;
-
-			case IDR_SEARCHFILE:
-				_ReinitViewState(checked, true);
-				break;
-			case IDR_SEARCHSYMBOL:
-				_ReinitViewState(!checked, true);
-				break;
-			
++/
 			default:
 				return 1;
 			}
@@ -1441,30 +1351,13 @@ else
 		COLUMNID colid = COLUMNID.NONE;
 		HDITEM hdi;
 		hdi.mask = HDI_LPARAM;
-		if (_wndFileListHdr.SendMessage(HDM_GETITEM, iIndex, cast(LPARAM)&hdi))
+		if (_wndFuncListHdr.SendMessage(HDM_GETITEM, iIndex, cast(LPARAM)&hdi))
 		{
 			colid = cast(COLUMNID)hdi.lParam;
 		}
 		return colid;
 	}
 
-	string _timeString(d_time time)
-	{
-		char[] buffer = new char[128];
-		
-//		auto dst = daylightSavingTA(time);
-//		auto offset = localTZA + dst;
-		auto t = time; // + offset;
-
-		auto len = sprintf(buffer.ptr, "%04d/%02d/%02d %02d:%02d:%02d",
-		                   yearFromTime(t), dateFromTime(t), monthFromTime(t),
-		                   hourFromTime(t), minFromTime(t), secFromTime(t));
-		
-		assert(len < buffer.length);
-		buffer = buffer[0 .. len];
-		return assumeUnique(buffer);
-	}
-	
 	////////////////////////////////////////////////////////////////////////
 	LRESULT _OnFileListGetDispInfo(int idCtrl, in NMHDR *pnmh, ref BOOL fHandled)
 	{
@@ -1474,69 +1367,38 @@ else
 			LVITEM lvi;
 			lvi.mask = LVIF_PARAM;
 			lvi.iItem = pnmlvdi.item.iItem;
-			if (_wndFileList.SendItemMessage(LVM_GETITEM, lvi))
+			if (_wndFuncList.SendItemMessage(LVM_GETITEM, lvi))
 			{
 				pnmlvdi.item.mask |= LVIF_DI_SETITEM;
-				SolutionItem psiWeak = cast(SolutionItem)cast(void*)lvi.lParam;
+				ProfileItem psiWeak = cast(ProfileItem)cast(void*)lvi.lParam;
 				string txt;
 				switch (_ColumnIDFromListViewIndex(pnmlvdi.item.iSubItem))
 				{
 				case COLUMNID.NAME:
-					if (_fCombineColumns)
-					{
-						string name = psiWeak.GetName();
-						if(_iqp.searchFile)
-						{
-							string path = psiWeak.GetPath();
-							txt = name ~ " (" ~ path ~ ")";
-						}
-						else
-						{
-							string type = psiWeak.GetType();
-							if(type.length)
-								txt = name ~ " : " ~ type;
-							else
-								txt = name;
-						}
-					}
-					else
-					{
-						txt = psiWeak.GetName();
-					}
+					txt = _demangle(psiWeak.GetName());
 					break;
 
-				case COLUMNID.PATH:
-					txt = psiWeak.GetPath();
-					break;
-
-				case COLUMNID.SIZE:
-					long cb = psiWeak.GetSize();
+				case COLUMNID.CALLS:
+					long cb = psiWeak.GetCalls();
 					txt = to!string(cb);
 					break;
 
-				case COLUMNID.MODIFIEDDATE:
-					d_time ft = psiWeak.GetModified();
-					if(ft != 0)
-						//txt = std.date.toString(ft);
-						txt = _timeString(ft);
+				case COLUMNID.TREETIME:
+					long cb = psiWeak.GetTreeTime();
+					cb = cast(long) (cb * 1000000.0 / _spsii.mTicksPerSec);
+					txt = to!string(cb);
 					break;
 
-				case COLUMNID.LINE:
-					int ln = psiWeak.GetLine();
-					if(ln >= 0)
-						txt = to!string(ln);
+				case COLUMNID.FUNCTIME:
+					long cb = psiWeak.GetFuncTime();
+					cb = cast(long) (cb * 1000000.0 / _spsii.mTicksPerSec);
+					txt = to!string(cb);
 					break;
 
-				case COLUMNID.SCOPE:
-					txt = psiWeak.GetScope();
-					break;
-
-				case COLUMNID.TYPE:
-					txt = psiWeak.GetType();
-					break;
-
-				case COLUMNID.KIND:
-					txt = psiWeak.GetKind();
+				case COLUMNID.CALLTIME:
+					long cb = psiWeak.GetCallTime();
+					cb = cast(long) (cb * 1000000.0 / _spsii.mTicksPerSec);
+					txt = to!string(cb);
 					break;
 
 				default:
@@ -1552,20 +1414,16 @@ else
 		return 0;
 	}
 
-	void _ReinitViewState(bool searchFile, bool refresh)
+	void _ReinitViewState(bool refresh)
 	{
 		_WriteViewStateToRegistry();
 		_RemoveSortIcon(_ListViewIndexFromColumnID(_iqp.colidSort));
 
-		_iqp.searchFile = searchFile;
-
-		_rgColumns = _iqp.searchFile ? &_fileColumns : &_symbolColumns;
-		
 		_InitializeViewState();
 		_InitializeSwitches();
 		_AddSortIcon(_ListViewIndexFromColumnID(_iqp.colidSort), _iqp.fSortAscending);
 		
-		_InitializeFileListColumns();
+		_InitializeFuncListColumns();
 		
 		_RefreshFileList();
 	}
@@ -1574,18 +1432,13 @@ else
 	{
 		GlobalOptions opt = Package.GetGlobalOptions();
 		opt.getRegistryRoot();
-		wstring regPath = opt.regUserRoot ~ regPathToolsOptions;
-		if(_iqp.searchFile)
-			regPath ~= "\\SearchFileWindow"w;
-		else
-			regPath ~= "\\SearchSymbolWindow"w;
+		wstring regPath = opt.regUserRoot ~ regPathToolsOptions ~ "\\ProfileSymbolWindow"w;
 		return new RegKey(opt.hUserKey, regPath, write);
 	}
 	
 	HRESULT _InitializeViewState()
 	{
 		HRESULT hr = S_OK;
-	
 		try
 		{
 			scope RegKey keyWinOpts = _GetCurrentRegKey(false);
@@ -1593,18 +1446,15 @@ else
 			{
 				void[] data = keyWinOpts.GetBinary("ColumnInfo"w);
 				if(data !is null)
-					*_rgColumns = cast(COLUMNINFO[])data;
+					_rgColumns = cast(COLUMNINFO[])data;
 			}
 
 			_iqp.colidSort  = cast(COLUMNID) keyWinOpts.GetDWORD("SortColumn"w, _iqp.colidSort);
 			_iqp.colidGroup = cast(COLUMNID) keyWinOpts.GetDWORD("GroupColumn"w, _iqp.colidGroup);
-			_iqp.fSortAscending   = keyWinOpts.GetDWORD("SortAscending"w, _iqp.fSortAscending) != 0;
-			_iqp.wholeWord        = keyWinOpts.GetDWORD("WholeWord"w, _iqp.wholeWord) != 0;
-			_iqp.caseSensitive    = keyWinOpts.GetDWORD("CaseSensitive"w, _iqp.caseSensitive) != 0;
-			_iqp.useRegExp        = keyWinOpts.GetDWORD("UseRegExp"w, _iqp.useRegExp) != 0;
-			_fCombineColumns      = keyWinOpts.GetDWORD("CombineColumns"w, _fCombineColumns) != 0;
 			_fAlternateRowColor   = keyWinOpts.GetDWORD("AlternateRowColor"w, _fAlternateRowColor) != 0;
 			_closeOnReturn        = keyWinOpts.GetDWORD("closeOnReturn"w, _closeOnReturn) != 0;
+			_fShowFanInOut        = keyWinOpts.GetDWORD("ShowFanInOut"w, _fShowFanInOut) != 0;
+			_fFullDecoration      = keyWinOpts.GetDWORD("FullDecoration"w, _fFullDecoration) != 0;
 		}
 		catch(Exception e)
 		{
@@ -1625,10 +1475,6 @@ else
 			keyWinOpts.Set("SortColumn"w, _iqp.colidSort);
 			keyWinOpts.Set("GroupColumn"w, _iqp.colidGroup);
 			keyWinOpts.Set("SortAscending"w, _iqp.fSortAscending);
-			keyWinOpts.Set("WholeWord"w, _iqp.wholeWord);
-			keyWinOpts.Set("CaseSensitive"w, _iqp.caseSensitive);
-			keyWinOpts.Set("UseRegExp"w, _iqp.useRegExp);
-			keyWinOpts.Set("CombineColumns"w, _fCombineColumns);
 			keyWinOpts.Set("AlternateRowColor"w, _fAlternateRowColor);
 			keyWinOpts.Set("closeOnReturn"w, _closeOnReturn);
 		}
@@ -1644,13 +1490,13 @@ else
 		HRESULT hr = S_OK;
 
 		for(int i = 0; i < _rgColumns.length; i++)
-			(*_rgColumns)[i].cx = _wndFileList.SendMessage(LVM_GETCOLUMNWIDTH, _ListViewIndexFromColumnID((*_rgColumns)[i].colid));
+			_rgColumns[i].cx = _wndFuncList.SendMessage(LVM_GETCOLUMNWIDTH, _ListViewIndexFromColumnID(_rgColumns[i].colid));
 
 		try
 		{
 			scope RegKey keyWinOpts = _GetCurrentRegKey(true);
 			keyWinOpts.Set("ColumnInfoVersion"w, kColumnInfoVersion);
-			keyWinOpts.Set("ColumnInfo"w, *_rgColumns);
+			keyWinOpts.Set("ColumnInfo"w, _rgColumns);
 		}
 		catch(Exception e)
 		{
@@ -1738,23 +1584,43 @@ else
 	LRESULT _OnFileListDeleteItem(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
-		SolutionItem psi = cast(SolutionItem)cast(void*)pnmlv.lParam;
+		ProfileItem psi = cast(ProfileItem)cast(void*)pnmlv.lParam;
 		// psi.Release();
 		fHandled = TRUE;
 		return 0;
 	}
 
-	HRESULT _OpenSolutionItem(int iIndex)
+	LRESULT _OnFileListItemChanged(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	{
+		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
+
+		LVITEM lvi;
+		lvi.mask = LVIF_STATE;
+		lvi.iItem = pnmlv.iItem;
+		lvi.stateMask = LVIS_SELECTED;
+		if (pnmlv.uNewState & LVIS_SELECTED)
+			//_wndFuncList.SendItemMessage(LVM_GETITEM, lvi) && (lvi.state & LVIS_SELECTED))
+		{
+			ProfileItem psi = _lastResultsArray.GetItem(pnmlv.iItem);
+			RefreshFanInOutList(psi);
+		}
+		fHandled = TRUE;
+		return 0;
+	}
+
+	
+	HRESULT _OpenProfileItem(int iIndex)
 	{
 		LVITEM lvi;
 		lvi.mask = LVIF_PARAM;
 		lvi.iItem = iIndex;
-		HRESULT hr = _wndFileList.SendItemMessage(LVM_GETITEM, lvi) ? S_OK : E_FAIL;
+		HRESULT hr = _wndFuncList.SendItemMessage(LVM_GETITEM, lvi) ? S_OK : E_FAIL;
 		if (SUCCEEDED(hr))
 		{
-			SolutionItem psiWeak = cast(SolutionItem)cast(void*)lvi.lParam;
+			/+
+			ProfileItem psiWeak = cast(ProfileItem)cast(void*)lvi.lParam;
 			string fname = psiWeak.GetFullPath();
-			hr = _OpenSolutionItem(fname, psiWeak.GetLine());
+			hr = _OpenProfileItem(fname, psiWeak.GetLine());
 			
 			if(hr != S_OK && !_iqp.searchFile && !isabs(fname))
 			{
@@ -1772,9 +1638,10 @@ else
 				if(i < path.length)
 				{
 					fname = fname[i .. $];
-					hr = _OpenSolutionItem(fname, psiWeak.GetLine());
+					hr = _OpenProfileItem(fname, psiWeak.GetLine());
 				}
 			}
+			+/
 		}
 		return hr;
 	}
@@ -1782,7 +1649,7 @@ else
 	LRESULT _OnFileListDblClick(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMITEMACTIVATE *pnmitem = cast(NMITEMACTIVATE*) pnmh;
-		if (FAILED(_OpenSolutionItem(pnmitem.iItem)))
+		if (FAILED(_OpenProfileItem(pnmitem.iItem)))
 		{
 			MessageBeep(MB_ICONHAND);
 		}
@@ -1836,7 +1703,7 @@ else
 			lvi.mask = LVIF_STATE;
 			lvi.iItem = cast(int)pnmlvcd.nmcd.dwItemSpec;
 			lvi.stateMask = LVIS_SELECTED;
-			if (_wndFileList.SendItemMessage(LVM_GETITEM, lvi) && (lvi.state & LVIS_SELECTED))
+			if (_wndFuncList.SendItemMessage(LVM_GETITEM, lvi) && (lvi.state & LVIS_SELECTED))
 			{
 				pnmlvcd.clrText = GetSysColor(COLOR_HIGHLIGHTTEXT);
 				pnmlvcd.clrTextBk = GetSysColor(COLOR_HIGHLIGHT);
@@ -1869,26 +1736,9 @@ else
 		if (pnmhdr.pitem.mask & HDI_WIDTH) 
 		{
 			COLUMNID colid = _ColumnIDFromListViewIndex(pnmhdr.iItem);
-			if (colid == COLUMNID.NAME && _fCombineColumns)
-			{
-				// Get the size delta and distrubute it between the name and path columns
-				COLUMNID colPath = _iqp.searchFile ? COLUMNID.PATH : COLUMNID.TYPE;
-				COLUMNINFO *pciName = _ColumnInfoFromColumnID(COLUMNID.NAME);
-				COLUMNINFO *pciPath = _ColumnInfoFromColumnID(colPath);
-
-				int cxTotal = pciName.cx + pciPath.cx;
-				int cxDelta = pnmhdr.pitem.cxy - cxTotal;
-				int iPercentChange = MulDiv(100, cxDelta, cxTotal);
-				int cxNameDelta = MulDiv(abs(cxDelta), iPercentChange, 100);
-				int cxPathDelta = cxDelta - cxNameDelta;
-				pciName.cx += cxNameDelta;
-				pciPath.cx += cxPathDelta;
-			}
-			else
-			{
-				COLUMNINFO *pci = _ColumnInfoFromColumnID(colid);
-				pci.cx = pnmhdr.pitem.cxy;
-			}
+			COLUMNINFO *pci = _ColumnInfoFromColumnID(colid);
+			pci.cx = pnmhdr.pitem.cxy;
+			
 			_WriteColumnInfoToRegistry();
 		}
 
@@ -1902,35 +1752,23 @@ else
 		string tip;
 		switch(pnmtbgit.iItem)
 		{
-		case IDR_COMBINECOLUMNS:
-			if(_iqp.searchFile)
-				tip = "Toggle single/double column display of name and path";
-			else
-				tip = "Toggle single/double column display of name and type";
-			break;
 		case IDR_ALTERNATEROWCOLOR:
 			tip = "Toggle alternating row background color";
 			break;
-		case IDR_GROUPBYKIND:
-			tip = "Grouped display by kind";
+		case IDR_FULLDECO:
+			tip = "Show full name decoration";
 			break;
 		case IDR_CLOSEONRETURN:
 			tip = "Close search window when item selected or focus lost";
 			break;
-		case IDR_WHOLEWORD:
-			tip = "Match whole word only";
+		case IDR_FANINOUT:
+			tip = "Show Fan In/Out";
 			break;
-		case IDR_CASESENSITIVE:
-			tip = "Match case insensitive";
+		case IDR_SETTRACE:
+			tip = "Set trace log file from current project";
 			break;
-		case IDR_REGEXP:
-			tip = "Match by regular expression";
-			break;
-		case IDR_SEARCHFILE:
-			tip = "Search for file in solution";
-			break;
-		case IDR_SEARCHSYMBOL:
-			tip = "Search for symbol in solution";
+		case IDR_REMOVETRACE:
+			tip = "Delete current trace.log to reinit profiling";
 			break;
 		default:
 			break;
@@ -1943,82 +1781,93 @@ else
 	}
 }
 
-////////////////////////////////////////////////////////////////////////
-class SolutionItem //: IUnknown
+class ItemArray
 {
-	static const GUID iid = uuid("6EB1B172-33C2-418a-8B67-F428FD456B46");
-
-	this(string path, string relpath)
+	ProfileItem[] mItems;
+	ProfileItemGroup[] mGroups;
+	
+	void add(ProfileItem item)
 	{
-		int idx = lastIndexOf(path, '\\');
-		if(idx < 0)
-			def.name = path;
-		else
-			def.name = path[idx + 1 .. $];
+		mItems ~= item;
+	}
+	
+	void addByGroup(string grp, ProfileItem item)
+	{
+		for(int i = 0; i < mGroups.length; i++)
+			if(mGroups[i].GetName() == grp)
+				return mGroups[i].add(item);
 
-		def.filename = path;
-		def.line = -1;
-		def.kind = "file";
-		if(exists(path))
+		auto group = new ProfileItemGroup(grp);
+		group.add(item);
+		mGroups ~= group;
+	}
+	
+	int GetCount() const { return max(mItems.length, mGroups.length); }
+	
+	ProfileItemGroup GetGroup(uint idx) const
+	{
+		if(idx >= mGroups.length)
+			return null;
+		return cast(ProfileItemGroup)mGroups[idx];
+	}
+	
+	ProfileItem GetItem(uint idx) const 
+	{
+		if(idx >= mItems.length)
+			return null;
+		return cast(ProfileItem)mItems[idx]; 
+	}
+	
+	void sort(COLUMNID id, bool ascending)
+	{
+		void doSort(string method)(ref ProfileItem[] items)
 		{
-			long ftc, fta, ftm;
-			getTimes(path, ftc, fta, _modifiedDate);
+			if(ascending)
+				std.algorithm.sort!("a." ~ method ~ "() < b." ~ method ~ "()")(items);
+			else
+				std.algorithm.sort!("a." ~ method ~ "() > b." ~ method ~ "()")(items);
 		}
-		def.inScope = relpath;
-	}
-	this(Definition d)
-	{
-		def = d;
-		if(def.kind == "module")
-			def.line = -1;
-	}
-	
-	int GetIconIndex() const { return 0; }
-	
-	string GetName() const
-	{
-		return def.name;
-	}
-	string GetFullPath() const 
-	{
-		return def.filename;
-	}
-	string GetPath() const
-	{
-		if(def.kind != "file")
-			return def.filename;
-		
-		if(def.inScope.length)
-			return def.inScope;
-		int idx = lastIndexOf(def.filename, '\\');
-		if(idx < 0)
-			return "";
-		return def.filename[0 .. idx];
-	}
-	int GetLine() const { return def.line; }
-	string GetScope() const { return def.inScope; }
-	string GetType() const { return def.type; }
-	string GetKind() const { return def.kind; }
-	long GetSize() const { return 0; }
-	long GetModified() const { return _modifiedDate; }
+			
+		switch(id)
+		{
+		case COLUMNID.NAME:
+			doSort!"GetName"(mItems);
+			break;
 
-	//HRESULT GetItem(in IID* riid, void **ppv);
-	
-	Definition def;
-	long _modifiedDate;
+		case COLUMNID.CALLS:
+			doSort!"GetCalls"(mItems);
+			break;
+
+		case COLUMNID.TREETIME:
+			doSort!"GetTreeTime"(mItems);
+			break;
+			
+		case COLUMNID.FUNCTIME:
+			doSort!"GetFuncTime"(mItems);
+			break;
+			
+		case COLUMNID.CALLTIME:
+			doSort!"GetCallTime"(mItems);
+			break;
+			
+		default:
+			break;
+		}
+		
+		foreach(grp; mGroups)
+			grp.mArray.sort(id, ascending);
+	}
 }
 
-class SolutionItemGroup //: IUnknown
+class ProfileItemGroup
 {
-	static const GUID iid = uuid("FCF2F784-0C4E-4c2c-A0CE-E44E3B20D8E2");
-
 	this(string name)
 	{
 		mName = name;
 		mArray = new ItemArray;
 	}
 	
-	void add(SolutionItem item)
+	void add(ProfileItem item)
 	{
 		mArray.add(item);
 	}
@@ -2030,286 +1879,116 @@ class SolutionItemGroup //: IUnknown
 	string mName;
 }
 
-class SolutionItemIndex //: IUnknown
+struct Fan
 {
-	static const GUID iid = uuid("DA2FC9FF-57D4-42bd-9E26-518A42668DEE");
+	string func;
+	long calls;
+}
 
-	HRESULT Search(string pszSearch, INDEXQUERYPARAMS *piqp, ItemArray *ppv)
+class ProfileItem
+{
+	int GetIconIndex() const { return 0; }
+
+	string GetName() const { return mName; }
+	
+	long GetCalls() const { return mCalls; }
+	long GetTreeTime() const { return mTreeTime; }
+	long GetFuncTime() const { return mFuncTime; }
+	long GetCallTime() const { return mCalls ? mFuncTime / mCalls : 0; }
+	
+	string mName;
+	long mCalls;
+	long mTreeTime;
+	long mFuncTime;
+	
+	Fan[] mFanIn;
+	Fan[] mFanOut;
+}
+
+class ProfileItemIndex
+{
+	HRESULT Update(string fname, INDEXQUERYPARAMS *piqp, ItemArray *ppv)
 	{
-		string[] args = tokenizeArgs(pszSearch);
-		auto arr = new ItemArray;
-		
-		SearchData sd;
-		sd.wholeWord = piqp.wholeWord;
-		sd.caseSensitive = piqp.caseSensitive;
-		sd.useRegExp = piqp.useRegExp;
-		if(!sd.init(args))
+		if(!std.file.exists(fname))
 			return E_FAIL;
-
-		if (piqp.searchFile)
-		{
-			string solutionpath = GetSolutionFilename();
-			string solutiondir = normalizeDir(getDirName(solutionpath));
-			
-			searchSolutionItem(delegate bool(string s)
-				{
-					string f = s;
-					if(s.startsWith(solutiondir)) // case-insensitive?
-						f = s[solutiondir.length .. $];
-					//makeRelative(s, solutiondir);
-					
-					if(!sd.matchNames(f, "", ""))
-							return false;
-					if(f == s)
-						f = "";
-					
-					if(piqp.colidGroup == COLUMNID.KIND)
-					{
-						string ext = getExt(s);
-						arr.addByGroup(ext, new SolutionItem(s, f));
-					}
-					else
-						arr.add(new SolutionItem(s, f));
-					return false;
-				});
-		}
-		else
-		{
-			Definition[] defs = Package.GetLibInfos().findDefinition(sd);
-			foreach(ref def; defs)
-			{
-				if(piqp.colidGroup == COLUMNID.KIND)
-					arr.addByGroup(def.kind, new SolutionItem(def));
-				else
-					arr.add(new SolutionItem(def));
-			}
-		}
-		arr.sort(piqp.colidSort, piqp.fSortAscending);
-		*ppv = arr;
-		return S_OK;
-	}
-
-}
-
-class ItemArray //: IUnknown
-{
-	static const GUID iid = uuid("5A97C4DF-DE3A-4bb6-B621-2F9550BFE7C0");
-	
-	SolutionItem[] mItems;
-	SolutionItemGroup[] mGroups;
-	
-	this()
-	{
-	}
-	
-	void add(SolutionItem item)
-	{
-		mItems ~= item;
-	}
-	
-	void addByGroup(string grp, SolutionItem item)
-	{
-		for(int i = 0; i < mGroups.length; i++)
-			if(mGroups[i].GetName() == grp)
-				return mGroups[i].add(item);
-
-		auto group = new SolutionItemGroup(grp);
-		group.add(item);
-		mGroups ~= group;
-	}
-	
-	int GetCount() const { return max(mItems.length, mGroups.length); }
-	
-	SolutionItemGroup GetGroup(uint idx) const
-	{
-		if(idx >= mGroups.length)
-			return null;
-		return cast(SolutionItemGroup)mGroups[idx];
-	}
-	
-	SolutionItem GetItem(uint idx) const 
-	{
-		if(idx >= mItems.length)
-			return null;
-		return cast(SolutionItem)mItems[idx]; 
-	}
-	//HRESULT GetItem(I)(uint idx, I*ptr) const { return E_FAIL; }
-	
-	void sort(COLUMNID id, bool ascending)
-	{
-		switch(id)
-		{
-		case COLUMNID.NAME:
-			if(ascending)
-				std.algorithm.sort!("a.GetName() < b.GetName()")(mItems);
-			else
-				std.algorithm.sort!("a.GetName() > b.GetName()")(mItems);
-			break;
-
-		case COLUMNID.LINE:
-			if(ascending)
-				std.algorithm.sort!("a.GetLine() < b.GetLine()")(mItems);
-			else
-				std.algorithm.sort!("a.GetLine() > b.GetLine()")(mItems);
-			break;
-
-		case COLUMNID.TYPE:
-			if(ascending)
-				std.algorithm.sort!("a.GetType() < b.GetType()")(mItems);
-			else
-				std.algorithm.sort!("a.GetType() > b.GetType()")(mItems);
-			break;
-			
-		case COLUMNID.PATH:
-			if(ascending)
-				std.algorithm.sort!("a.GetPath() < b.GetPath()")(mItems);
-			else
-				std.algorithm.sort!("a.GetPath() > b.GetPath()")(mItems);
-			break;
-			
-		case COLUMNID.SCOPE:
-			if(ascending)
-				std.algorithm.sort!("a.GetScope() < b.GetScope()")(mItems);
-			else
-				std.algorithm.sort!("a.GetScope() > b.GetScope()")(mItems);
-			break;
-			
-		case COLUMNID.MODIFIEDDATE:
-			if(ascending)
-				std.algorithm.sort!("a.GetModified() < b.GetModified()")(mItems);
-			else
-				std.algorithm.sort!("a.GetModified() > b.GetModified()")(mItems);
-			break;
-			
-		default:
-			break;
-		}
 		
-		foreach(grp; mGroups)
-			grp.mArray.sort(id, ascending);
-	}
-	
-}
-
-////////////////////////////////////////////////////////////////////////
-bool searchHierarchy(IVsHierarchy pHierarchy, VSITEMID item, bool delegate (string) dg)
-{
-	VARIANT var;
-	if((pHierarchy.GetProperty(item, VSHPROPID_Container, &var) == S_OK &&
-		((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))) || 
-	   (pHierarchy.GetProperty(item, VSHPROPID_Expandable, &var) == S_OK &&
-		((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))))
-	{
-		if(pHierarchy.GetProperty(item, VSHPROPID_FirstChild, &var) == S_OK &&
-		   (var.vt == VT_INT_PTR || var.vt == VT_I4))
+		ubyte[] text; // not valid utf8
+		try
 		{
-			VSITEMID chid = var.lVal;
-			while(chid != VSITEMID_NIL)
+			ItemArray array = new ItemArray;
+			ProfileItem curItem;
+			
+			File file = File(fname, "rb");
+			char[] buf;
+			while(file.readln(buf))
 			{
-				if(searchHierarchy(pHierarchy, chid, dg))
-					return true;
-				
-				if(pHierarchy.GetProperty(chid, VSHPROPID_NextSibling, &var) != S_OK ||
-				   (var.vt != VT_INT_PTR && var.vt != VT_I4))
+				if(buf[0] == '-')
+				{
+					curItem = new ProfileItem;
+					array.add(curItem);
+				}
+				else if(buf[0] == '=')
+				{
+					int pos = std.algorithm.indexOf(buf, "Timer Is");
+					if(pos > 0)
+						mTicksPerSec = parse!long(buf[pos + 9 .. $]);
 					break;
-				chid = var.lVal;
+				}
+				else if(curItem)
+				{
+					char[] txt = buf;
+					munch(txt, " \t\n\r");
+					if(txt.length > 0 && isdigit(txt[0]))
+					{
+						long calls;
+						if(parseLong(txt, calls))
+						{
+							char[] id = parseNonSpace(txt);
+							if(id.length > 0)
+							{
+								munch(txt, " \t\n\r");
+								if(txt.length == 0)
+								{
+									Fan fan = Fan(to!string(id), calls);
+									if(curItem.mName)
+										curItem.mFanOut ~= fan;
+									else
+										curItem.mFanIn ~= fan;
+								}
+							}
+						}
+					}
+					else if(txt.length > 0)
+					{
+						long calls, treeTime, funcTime;
+						char[] id = parseNonSpace(txt);
+						if(id.length > 0 &&
+						   parseLong(txt, calls) && 
+						   parseLong(txt, treeTime) &&
+						   parseLong(txt, funcTime))
+						{
+							munch(txt, " \t\n\r");
+							if(txt.length == 0)
+							{
+								curItem.mName = to!string(id);
+								curItem.mCalls = calls;
+								curItem.mTreeTime = treeTime;
+								curItem.mFuncTime = funcTime;
+							}
+						}
+					}
+				}
 			}
+			
+			array.sort(piqp.colidSort, piqp.fSortAscending);
+			*ppv = array;
+			return S_OK;
 		}
-		else
+		catch(Exception e)
 		{
-			IVsHierarchy nestedHierarchy;
-			VSITEMID itemidNested;
-			if(pHierarchy.GetNestedHierarchy(item, &IVsHierarchy.iid, cast(void **)&nestedHierarchy, &itemidNested) == S_OK)
-			{
-				if(searchHierarchy(nestedHierarchy, itemidNested, dg))
-					return true;
-			}
+			return E_FAIL;
 		}
-	}
-	else if(IVsProject prj = qi_cast!IVsProject(pHierarchy))
-	{
-		scope(exit) release(prj);
-		BSTR bstrMkDocument;
-		if(prj.GetMkDocument(item, &bstrMkDocument) == S_OK)
-		{
-			string docname = detachBSTR(bstrMkDocument);
-			if(dg(docname))
-				return true;
-		}
-	}
-	return false;
-}
-
-bool searchSolutionItem(bool delegate (string) dg)
-{
-	if(auto srpSolution = queryService!(IVsSolution))
-	{
-		scope(exit) release(srpSolution);
-		IEnumHierarchies pEnum;
-		if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION, &GUID_NULL, &pEnum) == S_OK)
-		{
-			scope(exit) release(pEnum);
-			IVsHierarchy pHierarchy;
-			while(pEnum.Next(1, &pHierarchy, null) == S_OK)
-			{
-				scope(exit) release(pHierarchy);
-				VSITEMID itemid = VSITEMID_ROOT;
-				if(searchHierarchy(pHierarchy, VSITEMID_ROOT, dg))
-					return true;
-			}
-		}
-	}
-	return false;
-}
-
-//------------------------------------------------------------------------------
-// CSolutionItemTypeCache
-//------------------------------------------------------------------------------
-
-struct TYPECACHEINFO
-{
-	string szFriendlyName;
-	int iIconIndex;
-}
-
-class CSolutionItemTypeCache
-{
-	this()
-	{
-		_himl = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 16, 8);
 	}
 	
-	~this()
-	{
-		if (_himl)
-			ImageList_Destroy(_himl);
-	}
-
-	const(TYPECACHEINFO) *GetTypeInfo(string pszCanonicalType)
-	{
-		if(TYPECACHEINFO* ti = pszCanonicalType in _mapTypes)
-			return ti;
-
-		SHFILEINFO shfi;
-		if(SHGetFileInfoW(_toUTF16z(pszCanonicalType), FILE_ATTRIBUTE_NORMAL, &shfi, shfi.sizeof,
-		                  SHGFI_ICON | SHGFI_SMALLICON | SHGFI_SHELLICONSIZE | SHGFI_TYPENAME | SHGFI_USEFILEATTRIBUTES))
-		{
-			TYPECACHEINFO tci;
-			tci.iIconIndex = ImageList_ReplaceIcon(_himl, -1, shfi.hIcon);
-			if(tci.iIconIndex != -1)
-			{
-				tci.szFriendlyName = to_string(shfi.szTypeName.ptr);
-				_mapTypes[pszCanonicalType] = tci;
-			}
-			DestroyIcon(shfi.hIcon);
-		}
-		return pszCanonicalType in _mapTypes;
-	}
-	
-	HIMAGELIST GetIconImageList() { return _himl; }
-
-private:
-	TYPECACHEINFO[string] _mapTypes;
-	HIMAGELIST _himl;
-};
-
+	long mTicksPerSec = 1;
+}

@@ -842,6 +842,7 @@ class CProjectNode : CFolderNode
 			case cmdidRebuildOnlyProject:
 				break;
 			case cmdidCleanOnlyProject:
+				//IVsSolutionBuildManager.StartSimpleUpdateProjectConfiguration?
 				if(Config cfg = GetActiveConfig(GetCVsHierarchy()))
 				{
 					scope(exit) release(cfg);
