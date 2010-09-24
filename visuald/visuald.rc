@@ -71,6 +71,7 @@ IDR_SEARCHSYMBOL            ICON    "resources/SearchSymbol.ico"
 IDR_FANINOUT                ICON    "resources/faninout.ico"
 IDR_REMOVETRACE             ICON    "resources/removetrace.ico"
 IDR_SETTRACE                ICON    "resources/settrace.ico"
+IDR_REFRESH                 ICON    "resources/refresh.ico"
 IDR_FULLDECO                ICON    "resources/fulldeco.ico"
 
 BMP_DIMAGELIST  BITMAP "resources/dimagelist.bmp"

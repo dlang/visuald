@@ -277,7 +277,8 @@ private:
 	HIMAGELIST _himlToolbar;
 	ItemArray _lastResultsArray; // remember to keep reference to ProfileItems referenced in list items
 	ProfileItemIndex _spsii;
-
+	int _lastSelectedItem;
+	
 	BOOL _fShowFanInOut;
 	BOOL _fFullDecoration;
 	BOOL _fAlternateRowColor;
@@ -337,6 +338,7 @@ private:
 				case IDR_FANINOUT:
 				case IDR_REMOVETRACE:
 				case IDR_SETTRACE:
+				case IDR_REFRESH:
 					return _OnCheckBtnClicked(code, id, hWnd, fHandled);
 				default:
 					break;
@@ -365,6 +367,10 @@ private:
 					break;
 				}
 			}
+			if(nmhdr.idFrom == IDC_FANINLIST && nmhdr.code == NM_DBLCLK)
+				return _OnFanInOutListDblClick(true, nmhdr, fHandled);
+			if(nmhdr.idFrom == IDC_FANOUTLIST && nmhdr.code == NM_DBLCLK)
+				return _OnFanInOutListDblClick(false, nmhdr, fHandled);
 			if (nmhdr.idFrom == IDC_FILELISTHDR && nmhdr.code == HDN_ITEMCHANGED)
 				return _OnFileListHdrItemChanged(wParam, nmhdr, fHandled);
 			if (nmhdr.idFrom == IDC_TOOLBAR && nmhdr.code == TBN_GETINFOTIP)
@@ -398,14 +404,19 @@ private:
 		if(iSel == iCnt - 1 && fDown)
 			return;
 		
+		_UpdateSelection(iSel, fDown ? iSel+1 : iSel-1);
+	}
+	
+	void _UpdateSelection(int from, int to)
+	{
 		LVITEM lvi;
-		lvi.iItem = iSel; // fDown ? iSel+1 : iSel-1;
+		lvi.iItem = from;
 		lvi.mask = LVIF_STATE;
 		lvi.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 		lvi.state = 0;
 		_wndFuncList.SendItemMessage(LVM_SETITEM, lvi);
 
-		lvi.iItem = fDown ? iSel+1 : iSel-1;
+		lvi.iItem = to;
 		lvi.mask = LVIF_STATE;
 		lvi.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 		lvi.state = LVIS_SELECTED | LVIS_FOCUSED;
@@ -816,7 +827,8 @@ private:
 
 				TBBUTTON initButton(int id, ubyte style)
 				{
-					TBBUTTON btn = { id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, [0,], 0, 0 };
+					TBBUTTON btn = { id < 0 ? IDR_LAST - IDR_FIRST + 1 : id - IDR_FIRST, 
+					                 id, TBSTATE_ENABLED, style, [0,], 0, 0 };
 					return btn;
 				}
 				static const TBBUTTON s_tbb[] = [
@@ -827,6 +839,7 @@ private:
 					initButton(-1, BTNS_SEP),
 					initButton(IDR_SETTRACE,          BTNS_BUTTON),
 					initButton(IDR_REMOVETRACE,       BTNS_BUTTON),
+					initButton(IDR_REFRESH,           BTNS_BUTTON),
 				];
 
 				hr = _wndToolbar.SendMessage(TB_ADDBUTTONS, s_tbb.length, cast(LPARAM)s_tbb.ptr) ? S_OK : E_FAIL;
@@ -1305,6 +1318,10 @@ else
 				RearrangeControls();
 				break;
 				
+			case IDR_REFRESH:
+				_RefreshFileList();
+				break;
+				
 			case IDR_SETTRACE:
 				if(Config cfg = getCurrentStartupConfig())
 				{
@@ -1328,7 +1345,7 @@ else
 			case IDR_FULLDECO:
 				_fFullDecoration = checked;
 				_WriteViewOptionToRegistry("FullDecoration"w, _fFullDecoration);
-				RearrangeControls();
+				_RefreshFileList();
 				break;
 				
 /+
@@ -1594,20 +1611,37 @@ else
 	{
 		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
 
-		LVITEM lvi;
-		lvi.mask = LVIF_STATE;
-		lvi.iItem = pnmlv.iItem;
-		lvi.stateMask = LVIS_SELECTED;
 		if (pnmlv.uNewState & LVIS_SELECTED)
-			//_wndFuncList.SendItemMessage(LVM_GETITEM, lvi) && (lvi.state & LVIS_SELECTED))
 		{
 			ProfileItem psi = _lastResultsArray.GetItem(pnmlv.iItem);
 			RefreshFanInOutList(psi);
+			_lastSelectedItem = pnmlv.iItem;
 		}
 		fHandled = TRUE;
 		return 0;
 	}
 
+	LRESULT _OnFanInOutListDblClick(bool fanin, ref NMHDR *pnmh, ref BOOL fHandled)
+	{
+		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
+		ProfileItem psi = _lastResultsArray.GetItem(_lastSelectedItem);
+		if(psi)
+		{
+			Fan[] fan = fanin ? psi.mFanIn : psi.mFanOut;
+			if(pnmlv.iItem >= 0 && pnmlv.iItem < fan.length)
+			{
+				string func = fan[pnmlv.iItem].func;
+				int idx = _lastResultsArray.findFunc(func);
+				if(idx >= 0)
+				{
+					int sel = _wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
+					_UpdateSelection(sel, idx);
+				}
+			}
+		}
+		fHandled = TRUE;
+		return 0;
+	}
 	
 	HRESULT _OpenProfileItem(int iIndex)
 	{
@@ -1764,6 +1798,9 @@ else
 		case IDR_FANINOUT:
 			tip = "Show Fan In/Out";
 			break;
+		case IDR_REFRESH:
+			tip = "Reread trace log to update display";
+			break;
 		case IDR_SETTRACE:
 			tip = "Set trace log file from current project";
 			break;
@@ -1817,7 +1854,15 @@ class ItemArray
 			return null;
 		return cast(ProfileItem)mItems[idx]; 
 	}
-	
+
+	int findFunc(string name)
+	{
+		foreach(i, psi; mItems)
+			if(psi.GetName() == name)
+				return i;
+		return -1;
+	}
+
 	void sort(COLUMNID id, bool ascending)
 	{
 		void doSort(string method)(ref ProfileItem[] items)

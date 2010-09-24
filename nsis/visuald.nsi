@@ -549,7 +549,7 @@ enabled:
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_KEY}" "CLSID" "${MAGO_CLSID}" 
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_KEY}" "Name"  "Mago Native" 
   WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_KEY}" "ENC" 0
-  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_KEY}2 "Disassembly" 1
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_KEY}" "Disassembly" 1
     
 NoInstall:
 

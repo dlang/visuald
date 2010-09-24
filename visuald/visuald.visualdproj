@@ -199,6 +199,7 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File path="Resources\faninout.ico" />
    <File path="Resources\removetrace.ico" />
    <File path="Resources\settrace.ico" />
+   <File path="Resources\refresh.ico" />
   </Folder>
   <File path="config.d" />
   <File path="dproject.d" />

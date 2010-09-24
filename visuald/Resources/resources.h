@@ -23,8 +23,9 @@
 #define IDR_FANINOUT                2011
 #define IDR_REMOVETRACE             2012
 #define IDR_SETTRACE                2013
-#define IDR_FULLDECO                2014
-#define IDR_LAST                    2014
+#define IDR_REFRESH                 2014
+#define IDR_FULLDECO                2015
+#define IDR_LAST                    2015
 
 ///////////////////////////////////////////////////////////////////////////////
 // CTC Command IDs
