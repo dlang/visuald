@@ -164,16 +164,17 @@ Version history
 
 2010-09-15 Version 0.3.16
 
-  * now also compiles against VSI SDK for Visual Studio 2010 and Windows SDK v7.1
+  * now Visual D itself also compiles against VSI SDK for Visual Studio 2010 and Windows SDK v7.1
   * empty dependency file now causes rebuild
   * new command "Build phobos browse info"
-  * add support for MaGo debugger
-  * fix dmd option for profiling
+  * added support for Mago debugger
+  * fixed dmd option for profiling
   * fixed bad status message for matching parenthesis
-  * now supports comment/uncomment selected lines
+  * now supports command comment/uncomment selected lines
   * improved smart indentation
   * block re-indentation now works as a single command with respect to undo/redo
   * now packaged with cv2pdb 0.17
-  * fix for loading DLLs (including Visual D) on Windows Server 2003
+  * fixed loading DLLs (including Visual D) on Windows Server 2003
   * now installer includes Mago debugger
   * new profiler window to display trace.log
+  * fixed bad variable replacement when building project name shorter than 4 characters
