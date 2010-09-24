@@ -162,7 +162,7 @@ Version history
   * now packaged with cv2pdb 0.16.
   * fixed crash when running along-side the Qt-Addin for Visual Studio
 
-2010-09-15 Version 0.3.16
+2010-09-24 Version 0.3.16
 
   * now Visual D itself also compiles against VSI SDK for Visual Studio 2010 and Windows SDK v7.1
   * empty dependency file now causes rebuild
