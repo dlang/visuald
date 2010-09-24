@@ -580,9 +580,9 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		AddControl("Command",           mCommand = new Text(mCanvas));
 		AddControl("Command Arguments", mArguments = new Text(mCanvas));
 		AddControl("Working Directory", mWorkingDir = new Text(mCanvas));
-		AddControl("",                  mAttach = new CheckBox(mCanvas, "Attach to runnng process"));
+		AddControl("",                  mAttach = new CheckBox(mCanvas, "Attach to running process"));
 		AddControl("Remote Machine",    mRemote = new Text(mCanvas));
-		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Visual Studio", "MaGo" ], false));
+		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago" ], false));
 	}
 
 	override void SetControls(ProjectOptions options)
