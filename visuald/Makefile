@@ -21,7 +21,8 @@ SRC = dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d pkgutil.d \
-      intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d
+      intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
+      profiler.d
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
        resources/DAboutLogo.ico resources/GroupByType.ico resources/CombineColumns.ico \
@@ -29,7 +30,9 @@ RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
        resources/Caseinsensitive.ico resources/CaseSensitive.ico \
        resources/SearchSymbol.ico resources/SearchFile.ico resources/RegExp.ico \
        resources/WholeWord.ico resources/DAboutBox.ico \
-       resources/ascend.ico resources/descend.ico
+       resources/ascend.ico resources/descend.ico \
+       resources/refresh.ico resources/removetrace.ico resources/settrace.ico \
+       resources/fulldeco.ico resources/faninout.ico
 
 #      $(XMLP_SRC) $(IDL_SRC)
 #      vsinterfaces.d vstrackprojectdocuments2.d vsshlids.d variant.d dte.d 

@@ -275,6 +275,8 @@ ${MementoSection} "mago" SecMago
   ${File} ..\..\..\mago\Release\ MagoNatEE.dll
   ${File} ..\..\..\mago\Release\ udis86.dll
   ${File} ..\..\..\mago\Release\ CVSTI.dll
+  ${File} ..\..\..\mago\ LICENSE.TXT
+  ${File} ..\..\..\mago\ NOTICE.TXT
 
   ExecWait 'regsvr32 /s "$INSTDIR\Mago\MagoNatDE.dll"'
 

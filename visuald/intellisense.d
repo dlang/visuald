@@ -56,6 +56,7 @@ struct SearchData
 	bool caseSensitive;
 	bool useRegExp;
 	bool noDupsOnSameLine;
+	bool findQualifiedName;
 
 	bool init(string[] nms)
 	{
@@ -73,9 +74,32 @@ struct SearchData
 		}
 		return true;
 	}
+
+	string getQualifiedName(JSONscope *sc, JSONValue[string] obj)
+	{
+		string name;
+		if(JSONValue* n = "name" in obj)
+			if(n.type == JSON_TYPE.STRING)
+				name = n.str;
+		
+		string scname = sc.toString();
+		if(JSONValue* n = "kind" in obj)
+			if(n.type == JSON_TYPE.STRING)
+				if(n.str == "module")
+					name = "";
+		
+		if(name.length == 0)
+			name = scname;
+		else if (scname.length != 0)
+			name = scname ~ "." ~ name;
+		return name;
+	}
 	
 	bool matchDefinition(JSONscope *sc, JSONValue[string] obj)
 	{
+		if(findQualifiedName && names.length > 0)
+			return sc.toString() == names[0];
+		
 		if((!useRegExp && names.length == 0) || (useRegExp && res.length == 0))
 			return true;
 		
@@ -96,6 +120,16 @@ struct SearchData
 		return matchNames(name, type, inScope);
 	}
 
+	bool pruneSubtree(JSONscope *sc, JSONValue[string] obj)
+	{
+		if(findQualifiedName && names.length > 0)
+		{
+			string name = sc.toString();
+			return !startsWith(names[0], name);
+		}
+		return false;
+	}
+	
 	static bool isIdentChar(dchar ch)
 	{
 		return isalnum(ch) || ch == '_';
@@ -104,7 +138,7 @@ struct SearchData
 	{
 		return !isIdentChar(ch1) || !isIdentChar(ch2);
 	}
-		
+
 	bool matchNames(string name, string type, string inScope)
 	{
 		bool matches = false;
@@ -223,7 +257,11 @@ class LibraryInfo
 		return false;
 	}
 
-	bool iterateObjects(bool delegate(string filename, JSONscope* sc, JSONValue[string] object) dg)
+	// dg_match returns:
+	// 0 - continue search
+	// 1 - stop search
+	// 2 - continue search, but prune subtree
+	bool iterateObjects(int delegate(string filename, JSONscope* sc, JSONValue[string] object) dg_match)
 	{
 		if(mModules.type == JSON_TYPE.ARRAY)
 		{
@@ -242,10 +280,13 @@ class LibraryInfo
 						if(v.type == JSON_TYPE.STRING)
 							modname = v.str;
 					
-					bool iterate(JSONValue[string] object, JSONscope* sc)
+					int iterate(JSONValue[string] object, JSONscope* sc)
 					{
-						if(dg(filename, sc, object))
-							return true;
+						int res = dg_match(filename, sc, object);
+						if(res == 1)
+							return 1;
+						if(res == 2)
+							return 0;
 						
 						if(JSONValue* m = "members" in object)
 							if(m.type == JSON_TYPE.ARRAY)
@@ -262,13 +303,14 @@ class LibraryInfo
 												nm = n.str;
 										JSONscope msc = JSONscope(sc, nm);
 										
-										if(iterate(memberobj, &msc))
-											return true;
+										res = iterate(memberobj, &msc);
+										if(res > 0)
+											return res;
 									}
 								}
 							}
 
-						return false;
+						return 0;
 					}
 				
 					JSONscope sc = JSONscope(null, modname);
@@ -291,8 +333,10 @@ class LibraryInfo
 		int cntKind = 0;
 		int cntLine = 0;
 		int cntType = 0;
-		bool countDef(string filename, JSONscope* sc, JSONValue[string] memberobj)
+		int countDef(string filename, JSONscope* sc, JSONValue[string] memberobj)
 		{
+			if(sd.pruneSubtree(sc, memberobj))
+				return 2;
 			if(sd.matchDefinition(sc, memberobj))
 			{
 				if(JSONValue* n = "name" in memberobj)
@@ -308,13 +352,15 @@ class LibraryInfo
 					if(typ.type == JSON_TYPE.STRING)
 						cntType++;
 			}
-			return false;
+			return 0;
 		}
 		iterateObjects(&countDef);
 	}
 		
-		bool findDef(string filename, JSONscope* sc, JSONValue[string] memberobj)
+		int findDef(string filename, JSONscope* sc, JSONValue[string] memberobj)
 		{
+			if(sd.pruneSubtree(sc, memberobj))
+				return 2;
 			if(sd.matchDefinition(sc, memberobj))
 			{
 				Definition def;
@@ -344,7 +390,7 @@ class LibraryInfo
 				if(add)
 					defs ~= def;
 			}
-			return false;
+			return 0;
 		}
 		
 		iterateObjects(&findDef);
@@ -357,13 +403,13 @@ class LibraryInfo
 	{
 		string[] cplts;
 
-		bool findCplt(string filename, JSONscope* sc, JSONValue[string] memberobj)
+		int findCplt(string filename, JSONscope* sc, JSONValue[string] memberobj)
 		{
 			if(JSONValue* n = "name" in memberobj)
 				if(n.type == JSON_TYPE.STRING)
 					if(startsWith(n.str, sd.names[0]))
 						addunique(cplts, n.str);
-			return false;
+			return 0;
 		}
 		iterateObjects(&findCplt);
 		

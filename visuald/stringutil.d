@@ -61,6 +61,10 @@ string replaceMacros(string s, string[string] replacements)
 			if(!p || *p <= i)
 			{
 				s = s[0 .. i] ~ nid ~ s[i + 3 + len .. $];
+				int difflen = nid.length - (len + 3);
+				foreach(ref int pos; lastReplacePos)
+					if(pos > i)
+						pos += difflen;
 				lastReplacePos[id] = i + nid.length;
 				continue;
 			}

@@ -16,7 +16,9 @@ import register;
 import hierutil;
 import logutil;
 import stringutil;
+import pkgutil;
 import dpackage;
+import intellisense;
 import config;
 import wmmsg;
 
@@ -336,6 +338,7 @@ private:
 				case IDR_GROUPBYKIND:
 				case IDR_CLOSEONRETURN:
 				case IDR_FANINOUT:
+				case IDR_FULLDECO:
 				case IDR_REMOVETRACE:
 				case IDR_SETTRACE:
 				case IDR_REFRESH:
@@ -569,17 +572,19 @@ private:
 		return hr;
 	}
 
-	string _demangle(string txt)
+	string _demangle(string txt, bool fullDeco)
 	{
+		int p = 0;
+		txt = decodeDmdString(txt.dup, p);
 		if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
-			txt = to!string(demangle(txt));
+			txt = to!string(demangle(txt, null, fullDeco));
 		return txt;
 	}
 
 	void _InsertFanInOut(ListView lv, Fan fan)
 	{
 		LVITEM lvi;
-		lvi.pszText = _toUTF16z(_demangle(fan.func));
+		lvi.pszText = _toUTF16z(_demangle(fan.func, _fFullDecoration != 0));
 		lvi.iItem = cast(int)lv.SendMessage(LVM_GETITEMCOUNT);
 		lvi.mask = LVIF_TEXT;
 		lv.SendItemMessage(LVM_INSERTITEM, lvi);
@@ -1392,7 +1397,7 @@ else
 				switch (_ColumnIDFromListViewIndex(pnmlvdi.item.iSubItem))
 				{
 				case COLUMNID.NAME:
-					txt = _demangle(psiWeak.GetName());
+					txt = _demangle(psiWeak.GetName(), _fFullDecoration != 0);
 					break;
 
 				case COLUMNID.CALLS:
@@ -1645,38 +1650,50 @@ else
 	
 	HRESULT _OpenProfileItem(int iIndex)
 	{
-		LVITEM lvi;
-		lvi.mask = LVIF_PARAM;
-		lvi.iItem = iIndex;
-		HRESULT hr = _wndFuncList.SendItemMessage(LVM_GETITEM, lvi) ? S_OK : E_FAIL;
-		if (SUCCEEDED(hr))
+		ProfileItem psi = _lastResultsArray.GetItem(iIndex);
+		if(!psi)
+			return E_FAIL;
+
+		SearchData sd;
+		sd.wholeWord = true;
+		sd.caseSensitive = true;
+		sd.noDupsOnSameLine = true;
+
+		string name = _demangle(psi.GetName(), false);
+		if(std.string.indexOf(name, '.') >= 0)
 		{
-			/+
-			ProfileItem psiWeak = cast(ProfileItem)cast(void*)lvi.lParam;
-			string fname = psiWeak.GetFullPath();
-			hr = _OpenProfileItem(fname, psiWeak.GetLine());
-			
-			if(hr != S_OK && !_iqp.searchFile && !isabs(fname))
-			{
-				// guess import path from filename (e.g. "src\core\mem.d") and 
-				//  scope (e.g. "core.mem.gc.Proxy") to try opening
-				// the file ("core\mem.d")
-				string inScope = tolower(psiWeak.GetScope());
-				string path = normalizeDir(getDirName(tolower(psiWeak.GetPath())));
-				inScope = replace(inScope, ".", "\\");
-				
-				int i;
-				for(i = 1; i < path.length; i++)
-					if(startsWith(inScope, path[i .. $]))
-						break;
-				if(i < path.length)
-				{
-					fname = fname[i .. $];
-					hr = _OpenProfileItem(fname, psiWeak.GetLine());
-				}
-			}
-			+/
+			sd.findQualifiedName = true;
+			sd.names ~= name;
 		}
+		else
+		{
+			if(name == "__Dmain")
+				sd.names ~= "main";
+			else if(name.length > 0 && name[0] == '_')
+				sd.names ~= name[1..$]; // assume extern "C", cutoff '_'
+			else
+				sd.names ~= name;
+		}
+		
+		Definition[] defs = Package.GetLibInfos().findDefinition(sd);
+		if(defs.length == 0)
+		{
+			showStatusBarText("No definition found for '" ~ sd.names[0] ~ "'");
+			return S_FALSE;
+		}
+		if(defs.length > 1)
+		{
+			// todo: match types to find best candidate?
+			showStatusBarText("Multiple definitions found for '" ~ sd.names[0] ~ "'");
+		}
+		
+		HRESULT hr = S_FALSE;
+		for(int i = 0; i < defs.length && hr != S_OK; i++)
+			hr = OpenFileInSolution(defs[i].filename, defs[i].line);
+		
+		if(hr != S_OK)
+			showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", defs[0].filename, defs[0].line, sd.names[0]));
+
 		return hr;
 	}
 
@@ -1954,13 +1971,15 @@ class ProfileItemIndex
 {
 	HRESULT Update(string fname, INDEXQUERYPARAMS *piqp, ItemArray *ppv)
 	{
+		ItemArray array = new ItemArray;
+		*ppv = array;
+		
 		if(!std.file.exists(fname))
-			return E_FAIL;
+			return S_FALSE;
 		
 		ubyte[] text; // not valid utf8
 		try
 		{
-			ItemArray array = new ItemArray;
 			ProfileItem curItem;
 			
 			File file = File(fname, "rb");
@@ -2026,7 +2045,6 @@ class ProfileItemIndex
 			}
 			
 			array.sort(piqp.colidSort, piqp.fSortAscending);
-			*ppv = array;
 			return S_OK;
 		}
 		catch(Exception e)

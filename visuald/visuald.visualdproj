@@ -39,7 +39,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
+  <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -80,7 +80,7 @@
   <additionalOptions>-debuglib=phobos_d.lib</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>c:\l\vs9shell\Common7\IDE\devenv.exe</debugtarget>
+  <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
   <debugarguments>/RootSuffix D</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
