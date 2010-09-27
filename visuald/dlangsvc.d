@@ -1391,7 +1391,14 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	int CommentLines(int startline, int endline)
+	enum
+	{
+		AutoComment,
+		ForceComment,
+		ForceUncomment,
+	}
+
+	int CommentLines(int startline, int endline, int commentMode)
 	{
 		LANGPREFERENCES langPrefs;
 		if(int rc = GetUserPreferences(&langPrefs))
@@ -1421,7 +1428,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 				break;
 		}
 
-		if (line > endline)
+		if (line > endline && commentMode != ForceComment)
 		{
 			// remove comment
 			for(line = startline; line <= endline; line++)
@@ -1442,7 +1449,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 					return hr;
 			}
 		}
-		else
+		else if((line <= endline && commentMode != ForceUncomment) || commentMode == ForceComment)
 		{
 			// insert comment
 			int tabsz = (langPrefs.fInsertTabs ? langPrefs.uTabSize : 0);
@@ -1893,7 +1900,10 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			
 			case ECMD_COMMENTBLOCK:
 			case ECMD_COMMENT_BLOCK:
-				return CommentLines();
+				return CommentLines(Source.ForceComment);
+			case ECMD_UNCOMMENTBLOCK:
+			case ECMD_UNCOMMENT_BLOCK:
+				return CommentLines(Source.ForceUncomment);
 				
 			case ECMD_COMPLETEWORD:
 			case ECMD_AUTOCOMPLETE:
@@ -1926,6 +1936,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			
 			case CmdShowMethodTip:
 				return HandleMethodTip();
+				
+			case CmdToggleComment:
+				return CommentLines(Source.AutoComment);
 				
 			default:
 				break;
@@ -2059,6 +2072,8 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			case ECMD_FORMATSELECTION:
 			case ECMD_COMMENTBLOCK:
 			case ECMD_COMMENT_BLOCK:
+			case ECMD_UNCOMMENTBLOCK:
+			case ECMD_UNCOMMENT_BLOCK:
 			case ECMD_COMPLETEWORD:
 			case ECMD_INSERTSNIPPET:
 			case ECMD_INVOKESNIPPETFROMSHORTCUT:
@@ -2075,6 +2090,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			{
 			case CmdShowScope:
 			case CmdShowMethodTip:
+			case CmdToggleComment:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
@@ -2330,6 +2346,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		if(FAILED(hr)) // S_FALSE if no selection, but caret-coordinates returned
 			return hr;
 
+		if(iEndLine < iStartLine)
+			std.algorithm.swap(iStartLine, iEndLine);
+		
 		IVsCompoundAction compAct = qi_cast!IVsCompoundAction(mView);
 		if(compAct)
 			compAct.OpenCompoundAction("RedindentLines"w.ptr);
@@ -2345,12 +2364,17 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 	}
 		
 	//////////////////////////////////////////////////////////////
-	int CommentLines()
+	int CommentLines(int commentMode)
 	{
 		int iStartLine, iStartIndex, iEndLine, iEndIndex;
 		int hr = mView.GetSelection(&iStartLine, &iStartIndex, &iEndLine, &iEndIndex);
 		if(FAILED(hr)) // S_FALSE if no selection, but caret-coordinates returned
 			return hr;
+		if(iEndLine < iStartLine)
+		{
+			std.algorithm.swap(iStartLine, iEndLine);
+			std.algorithm.swap(iStartIndex, iEndIndex);
+		}
 		if(iEndIndex == 0 && iEndLine > iStartLine)
 			iEndLine--;
 		
@@ -2358,7 +2382,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		if(compAct)
 			compAct.OpenCompoundAction("CommentLines"w.ptr);
 		
-		hr = mCodeWinMgr.mSource.CommentLines(iStartLine, iEndLine);
+		hr = mCodeWinMgr.mSource.CommentLines(iStartLine, iEndLine, commentMode);
 		if(compAct)
 		{
 			compAct.CloseCompoundAction();

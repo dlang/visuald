@@ -182,4 +182,7 @@ Version history
 unreleased Version 0.3.17
 
   * improved support for mercurial-scc, AnkhSVN and VisualHG
-
+  * (un)comment/format selection did not work with selection created from bottom to top
+  + (un)comment selection now works similer to C++ always adding/removing comments, toggle
+    comments is now a new Visual D command
+    

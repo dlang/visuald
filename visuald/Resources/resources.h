@@ -34,6 +34,7 @@
 #define CmdSearchFile    0x102
 #define CmdShowScope     0x103
 #define CmdShowMethodTip 0x104
+#define CmdToggleComment 0x105
 
 #define CmdBuildPhobos   0x110
 #define CmdShowProfile   0x111
