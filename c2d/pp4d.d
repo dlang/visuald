@@ -1250,6 +1250,16 @@ class pp4d
 		preprocessText(src.tokens);
 		identifierToKeywords(src.tokens);
 
+//		convertText(src.tokens);
+		
+		setCurrentSource(prevSource);
+	}
+
+	void parseSource(Source src)
+	{
+		Source prevSource = currentSource;
+		setCurrentSource(src);
+		
 		int cntExceptions = SyntaxException.count;
 		try
 		{
@@ -1263,13 +1273,11 @@ class pp4d
 		}
 		cntExceptions = SyntaxException.count - cntExceptions;
 		if(cntExceptions > 0)
-			writeln(to!string(cntExceptions) ~ " syntax errors");
-		
-//		convertText(src.tokens);
-		
+			writeln(src.filename ~ ": " ~ to!string(cntExceptions) ~ " syntax errors");
+	
 		setCurrentSource(prevSource);
 	}
-
+	
 	string processText(string text)
 	{
 		Source src = new Source;
@@ -1335,18 +1343,33 @@ else
 		initFiles();
 		Tokenizer.ppOnly = true;
 		
-		string[] inputFiles = argv[1..$];
-		foreach(string file; inputFiles)
-			processFile(file);
+		try
+		{
+			string[] inputFiles = argv[1..$];
+			foreach(string file; inputFiles)
+				processFile(file);
 
-		project = new ConvProject;
-		foreach(Source src; srcs)
-			project.registerAST(src.ast);
-		
-		project.processAll();
-		
-		foreach(Source src; srcs)
-			writeFile(src);
+			foreach(Source src; srcs)
+				writeFile(src);
+
+			foreach(Source src; srcs)
+				parseSource(src);
+
+			project = new ConvProject;
+			foreach(Source src; srcs)
+				project.registerAST(src.ast);
+			
+			project.processAll();
+			
+			foreach(Source src; srcs)
+				writeFile(src);
+		}
+		catch(Throwable e)
+		{
+			writeln("fatal error: " ~ currentFile ~ " " ~ e.msg);
+			e = e;
+			throw e;
+		}
 		
 		return 0;
 	}

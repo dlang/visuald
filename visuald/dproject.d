@@ -23,6 +23,7 @@ import sdk.win32.rpcdce;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.vsshell90;
+import sdk.vsi.ivssccproject2;
 import sdk.vsi.fpstfmt;
 import dte = sdk.vsi.dte80a;
 
@@ -602,7 +603,7 @@ class Project : CVsHierarchy,
 		IVsHierarchyDropDataTarget,
 		IVsNonLocalProject,
 		//IRpcOptions,
-		//IVsSccProject2,
+		IVsSccProject2,
 		//IBuildDependencyUpdate,
 		//IProjectEventsListener,
 		//IProjectEventsProvider,
@@ -675,6 +676,9 @@ class Project : CVsHierarchy,
 			return S_OK;
 		if(queryInterface!(IVsNonLocalProject) (this, riid, pvObject))
 			return S_OK;
+		if(queryInterface!(IVsSccProject2) (this, riid, pvObject))
+			return S_OK;
+		
 		//if(queryInterface!(IRpcOptions) (this, riid, pvObject))
 		//	return S_OK;
 		//if(queryInterface!(IPerPropertyBrowsing) (this, riid, pvObject))
@@ -1686,6 +1690,58 @@ class Project : CVsHierarchy,
 		return S_OK;
 	}
 +/
+	
+	// IVsSccProject2
+	override HRESULT SccGlyphChanged(in int cAffectedNodes,
+	    /+[size_is(cAffectedNodes)]+/in VSITEMID *rgitemidAffectedNodes,
+	    /+[size_is(cAffectedNodes)]+/in VsStateIcon *rgsiNewGlyphs,
+	    /+[size_is(cAffectedNodes)]+/in DWORD *rgdwNewSccStatus)
+	{
+		mixin(LogCallMix);
+		
+		if(cAffectedNodes == 0)
+		{
+			searchNode(GetRootNode(), delegate (CHierNode n)
+			{ 
+				foreach (advise; mHierarchyEventSinks)
+					advise.OnPropertyChanged(GetVsItemID(n), VSHPROPID_StateIconIndex, 0);
+				return false;
+			});
+		}
+		else
+		{
+			for(int i = 0; i < cAffectedNodes; i++)
+				foreach (advise; mHierarchyEventSinks)
+					advise.OnPropertyChanged(rgitemidAffectedNodes[i], VSHPROPID_StateIconIndex, 0);
+		}
+		return S_OK;
+	}
+	
+	override HRESULT SetSccLocation(in LPCOLESTR pszSccProjectName, // opaque to project
+	                                in LPCOLESTR pszSccAuxPath,     // opaque to project
+	                                in LPCOLESTR pszSccLocalPath,   // opaque to project
+	                                in LPCOLESTR pszSccProvider)    // opaque to project
+	{
+		mixin(LogCallMix);
+		return E_NOTIMPL;
+	}
+	
+	override HRESULT GetSccFiles(in VSITEMID itemid,                  // Node in project hierarchy
+	                             /+[out]+/ CALPOLESTR *pCaStringsOut, // Files associated with node
+	                             /+[out]+/ CADWORD *pCaFlagsOut)      // Flags per file
+	{
+		mixin(LogCallMix);
+		return E_NOTIMPL;
+	}
+	
+	override HRESULT GetSccSpecialFiles(in VSITEMID itemid,           // node in project hierarchy
+	                                    in LPCOLESTR pszSccFile,      // one of the files associated with the node
+	                                    /+[out]+/ CALPOLESTR *pCaStringsOut, // special files associated with above file
+	                                    /+[out]+/ CADWORD *pCaFlagsOut) // flags per special file
+	{
+		mixin(LogCallMix);
+		return E_NOTIMPL;
+	}
 	
 	///////////////////////////////////////////////////////////////////////
 	// IVsHierarchyDropDataSource

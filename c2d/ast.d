@@ -330,7 +330,9 @@ class AST
 	//////////////////////////////////////////////////////////////
 	void verifyIteratorList(ref TokenIterator tokIt)
 	{
-		assert(tokIt.getList() == start.getList());
+		if(tokIt.getList() != start.getList())
+			assert(tokIt.getList() == start.getList());
+			
 		while(tokIt != start)
 			tokIt.advance();
 		
@@ -1358,9 +1360,14 @@ class Expression : AST
 				break;
 
 			case Token.String:
-			case Token.Mixin:
+				txt = "\"" ~ start.text ~ "\"";
+				break;
 			case Token.Sizeof:
-				throwException(start.lineno, "not implemented");
+				txt = "sizeof(" ~ children[0].toString(tsd) ~ ")";
+				break;
+			case Token.Mixin:
+				txt = "mixin(" ~ children[0].toString(tsd) ~ ")";
+				break;
 			}
 			break;
 

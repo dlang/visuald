@@ -59,6 +59,8 @@
 #define __inline
 #define __forceinline
 
+#define _far
+#define __far
 #define _huge
 #define __huge
 
@@ -109,6 +111,7 @@
 // windef.h and ktmtypes.h
 #pragma regex("UOW UOW;", "UOW uow;")
 
+#include "windef.h"
 #include "winnt.h"
 #if 0
 #include "windows.h"
