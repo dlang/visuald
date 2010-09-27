@@ -1098,27 +1098,27 @@ version(none)
 			break;
 	
 		case VSHPROPID_FirstVisibleChild:
-			var.vt = VT_INT_PTR;
+			var.vt = VT_INT; // VT_INT_PTR;
 			var.lVal = GetFirstDisplayableNodeID(pNode);
 			break;
 		case VSHPROPID_FirstChild:
-			var.vt = VT_INT_PTR;
+			var.vt = VT_INT; // VT_INT_PTR;
 			var.lVal = pNode.GetFirstMemberChildID();
 			break;
 		case VSHPROPID_NextVisibleSibling:
-			var.vt = VT_INT_PTR;
+			var.vt = VT_INT; // VT_INT_PTR;
 			var.lVal = GetNextDisplayableNodeID(pNode);
 			break;
 		case VSHPROPID_NextSibling:
-			var.vt = VT_INT_PTR;
+			var.vt = VT_INT; // VT_INT_PTR;
 			var.lVal = pNode.GetNextMemberSiblingID();
 			break;
 		case VSHPROPID_Parent:
-			var.vt = VT_INT_PTR;
+			var.vt = VT_INT; // VT_INT_PTR;
 			var.lVal = GetVsItemID(pNode.GetParent());
 			break;
 		case VSHPROPID_Root:
-			var.vt = VT_INT_PTR;
+			var.vt = VT_INT; // VT_INT_PTR;
 			var.lVal = VSITEMID_ROOT;
 			break;
 		case VSHPROPID_IconImgList:

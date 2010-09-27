@@ -178,3 +178,8 @@ Version history
   * now installer includes Mago debugger
   * new profiler window to display trace.log
   * fixed bad variable replacement when building project name shorter than 4 characters
+
+unreleased Version 0.3.17
+
+  * improved support for mercurial-scc, AnkhSVN and VisualHG
+
