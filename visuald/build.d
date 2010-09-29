@@ -316,7 +316,7 @@ public:
 		mBuildLog ~= "Output";
 		mBuildLog ~= "\n</font></table>\n";
 		
-		mBuildLog ~= xml.encode(output);
+		mBuildLog ~= xml.encode(output) ~ "\n";
 	}
 	
 	void endLog(bool success)

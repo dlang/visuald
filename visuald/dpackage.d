@@ -765,7 +765,7 @@ class GlobalOptions
 			jsonPath = jsonPaths[0];
 		if(jsonPath.length == 0)
 		{
-			JSNSearchPath ~= "\"$(VisualDInstallDir)" ~ "json\\\"";
+			JSNSearchPath ~= "\"$(APPDATA)\\VisualD\\json\\\"";
 			jsonPath = getJSONPaths()[0];
 		}
 		
@@ -800,7 +800,7 @@ class GlobalOptions
 			string cmdline = "@echo off\n";
 			string jsonfile;
 			
-			if(std.file.exists(s ~ "std\\algorithm.d"))
+			if(std.file.exists(s ~ "std\\algorithm.d")) // D2
 			{
 				files ~= findDFiles(s, "std");
 				files ~= findDFiles(s, "std\\c");
@@ -809,6 +809,14 @@ class GlobalOptions
 				files ~= findDFiles(s, "std\\windows");
 				files ~= findDFiles(s, "etc\\c");
 				jsonfile = jsonPath ~ "phobos.json";
+			}
+			if(std.file.exists(s ~ "std\\gc.d")) // D1
+			{
+				files ~= findDFiles(s, "std");
+				files ~= findDFiles(s, "std\\c");
+				files ~= findDFiles(s, "std\\c\\windows");
+				files ~= findDFiles(s, "std\\windows");
+				jsonfile = jsonPath ~ "phobos1.json";
 			}
 			if(std.file.exists(s ~ "object.di"))
 			{
@@ -856,7 +864,7 @@ class GlobalOptions
 		}
 		catch(FileException e)
 		{
-			string msg = format("internal error: cannot write file " ~ cmdfile);
+			string msg = format("internal error: cannot write file " ~ cmdfile ~ "\n");
 			pane.OutputString(toUTF16z(msg));
 			return false;
 		}
