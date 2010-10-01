@@ -235,14 +235,3 @@ unittest
 	res = makeRelative(file, path);
 	assert(res == file);
 }
-
-
-version(D_Version2) {} else {
-
-void mkdirRecurse(string outdir)
-{
-    // TODO
-    mkdir(outdir);
-}
-
-}

@@ -21,12 +21,48 @@ import std.conv;
 // - braces must not nest more than 4095 times inside token string
 // - number of different delimiters must not exceed 256
 
+enum TokenColor : int
+{
+	Text,
+	Keyword,
+	Comment,
+	Identifier,
+	String,
+	Literal,
+	Text2,
+	Operator,
+
+	DisabledKeyword,
+	DisabledComment,
+	DisabledIdentifier,
+	DisabledString,
+	DisabledLiteral,
+	DisabledText2,
+	DisabledOperator
+}
+
+enum TokenType : int
+{
+	Unknown,
+	Text,
+	Keyword,
+	Identifier,
+	String,
+	Literal,
+	Operator,
+	Delimiter,
+	LineComment,
+	Comment
+}
+
 struct TokenInfo
 {
 	TokenColor type;
 	int StartIndex;
 	int EndIndex;
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 class SimpleLexer
 {
@@ -48,17 +84,22 @@ class SimpleLexer
 		kStringEscape, // removed in D2.026
 	}
 
+	// lexer scan state is: ___TTNNS
+	// TT: token string nesting level
+	// NN: comment nesting level/string delimiter id
+	// S: State
 	static State scanState(int state) { return cast(State) (state & 0xf); }
 	static int nestingLevel(int state) { return (state >> 4) & 0xff; } // used for state kNestedComment and kStringDelimited
-	static int tokenStringLevel(int state) { return (state >> 12); }
+	static int tokenStringLevel(int state) { return (state >> 12) & 0xff; }
+	static int getOtherState(int state) { return (state & 0xfff00000); }
 
-	static int toState(State s, int nesting, int tokLevel)
+	static int toState(State s, int nesting, int tokLevel, int otherState)
 	{
 		assert(s >= State.kWhite && s <= State.kStringDelimitedNestedAngle);
 		assert(nesting < 32);
 		assert(tokLevel < 32);
 
-		return s | (nesting << 4) | (tokLevel << 12); 
+		return s | ((nesting & 0xff) << 4) | ((tokLevel & 0xff) << 12) | otherState;
 	}
 
 	static string[256] s_delimiters;
@@ -410,6 +451,11 @@ L_exponent:
 		assert(0);
 	}
 
+	static bool isCommentOrSpace(int type, wstring text)
+	{
+		return (type == TokenColor.Comment || (type == TokenColor.Text && isspace(text[0])));
+	}
+
 	static State scanNestedDelimiterString(wstring text, ref uint pos, State s, ref int nesting)
 	{
 		dchar open  = openingBracket(s);
@@ -449,20 +495,12 @@ L_exponent:
 		return State.kStringDelimited;
 	}
 
-version(D_Version2)
-{
-	static string str1 = "string";
-	static string str2 = r"string";
-/+	static string str3 = q"X
-	    (stri)ng "
-X";+/
-}
-
 	static int scan(ref int state, in wstring text, ref uint pos)
 	{
 		State s = scanState(state);
 		int nesting = nestingLevel(state);
 		int tokLevel = tokenStringLevel(state);
+		int otherState = getOtherState(state);
 
 		int type = TokenColor.Text;
 		uint startpos = pos;
@@ -524,8 +562,11 @@ X";+/
 					type = TokenColor.Comment;
 				}
 				else
+				{
 					// step back to position after '/'
 					pos = prevpos;
+					type = TokenColor.Operator;
+				}
 			}
 			else if (ch == '"')
 				goto case State.kStringCStyle;
@@ -546,6 +587,8 @@ X";+/
 					tokLevel--;
 				type = TokenColor.String;
 			}
+			else if(!isspace(ch))
+				type = TokenColor.Operator;
 			break;
 
 		case State.kBlockComment:
@@ -589,7 +632,7 @@ X";+/
 		default:
 			break;
 		}
-		state = toState(s, nesting, tokLevel);
+		state = toState(s, nesting, tokLevel, otherState);
 		return tokLevel > 0 ? TokenColor.String : type;
 	}
 }

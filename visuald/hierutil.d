@@ -33,11 +33,6 @@ import config;
 const uint _MAX_PATH = 260;
 
 ///////////////////////////////////////////////////////////////////////
-version(D_Version2)
-{} else
-	int indexOf(string s, dchar ch) { return find(s, ch); }
-
-///////////////////////////////////////////////////////////////////////
 
 T* contains(T)(T[] arr, bool delegate(ref T t) dg)
 {

@@ -418,8 +418,7 @@ string _toLogPtr(T : uint)(T* arg) { return arg ? tryformat("%d", *arg) : "null"
 string _toLogPtr(T : short)(T* arg) { return arg ? tryformat("%s", arg) : "null"; }
 string _toLogPtr(T : wchar*)(T* arg) { return arg ? to_string(*arg) : "null"; }
 string _toLogPtr(T : void*)(T* arg) { return arg ? tryformat("", *arg) : "null"; }
-version(D_Version2)
-	string _toLogPtr(T : ulong)(T* arg) { return arg ? tryformat("%d", *arg) : "null"; }
+string _toLogPtr(T : ulong)(T* arg) { return arg ? tryformat("%d", *arg) : "null"; }
 
 string _toLogPtr(T : IUnknown)(T* arg) { return arg ? tryformat("", cast(int*)*arg) : "null"; }
 
@@ -505,10 +504,7 @@ version(test) {
 		std.format.doFormat(&putc, _arguments, _argptr);
 		s ~= "\n";
 
-		version(D_Version2)
-			std.stdio.fputs(toStringz(s), stdout.getFP);
-		else
-			std.stdio.fputs(toStringz(s), stdout);
+		std.stdio.fputs(toStringz(s), stdout.getFP);
 	}
 
 } else debug {

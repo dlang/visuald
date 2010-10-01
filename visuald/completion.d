@@ -14,9 +14,7 @@ import std.string;
 import std.utf;
 import std.file;
 import std.path;
-
-version(D_Version2) import std.algorithm;
-else import std.math2;
+import std.algorithm;
 
 import comutil;
 import logutil;

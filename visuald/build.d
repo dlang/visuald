@@ -603,7 +603,7 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 	outputLine = strip(outputLine);
 	
 	// DMD compile error
-	static RegExp re1, re2, re3;
+	static RegExp re1, re2, re3, re4;
 	if(!re1)
 		re1 = new RegExp(r"^(.*)\(([0-9]+)\):(.*)$");
 	
@@ -632,11 +632,26 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 		return true;
 	}
 
-	// link warning
+	// link error with file name
 	if(!re3)
-		re3 = new RegExp(r"^ *(Warning *[0-9]+:.*)$");
+		re3 = new RegExp(r"^(.*)\(([0-9]+)\) *: *(Error *[0-9]+:.*)$");
 
 	match = re3.exec(outputLine);
+	if(match.length == 4)
+	{
+		nPriority = TP_HIGH;
+		filename = replace(match[1], "\\\\", "\\");
+		string lineno = replace(match[2], "\\\\", "\\");
+		nLineNum = to!uint(lineno);
+		itemText = strip(match[3]);
+		return true;
+	}
+
+	// link warning
+	if(!re4)
+		re4 = new RegExp(r"^ *(Warning *[0-9]+:.*)$");
+
+	match = re4.exec(outputLine);
 	if(match.length == 2)
 	{
 		nPriority = TP_NORMAL;

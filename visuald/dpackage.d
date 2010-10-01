@@ -83,7 +83,7 @@ GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
 const LanguageProperty g_languageProperties[] =
 [
   // see http://msdn.microsoft.com/en-us/library/bb166421.aspx
-  { "RequestStockColors"w,           1 },
+  { "RequestStockColors"w,           0 },
   { "ShowCompletion"w,               1 },
   { "ShowSmartIndent"w,              1 },
   { "ShowHotURLs"w,                  1 },

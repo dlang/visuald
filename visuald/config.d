@@ -47,16 +47,9 @@ T clone(T)(T object)
 
 ///////////////////////////////////////////////////////////////
 
-version(D_Version2)
-{
-	ubyte  toUbyte(string s) { return to!(ubyte)(s); }
-	float  toFloat(string s) { return to!(float)(s); }
-	string uintToString(uint x) { return to!(string)(x); }
-}
-else
-{
-	string uintToString(uint x) { return toString(x); }
-}
+ubyte  toUbyte(string s) { return to!(ubyte)(s); }
+float  toFloat(string s) { return to!(float)(s); }
+string uintToString(uint x) { return to!(string)(x); }
 
 string toElem(bool b) { return b ? "1" : "0"; }
 string toElem(float f) { return to!(string)(f); }

@@ -15,8 +15,7 @@ import std.string;
 import std.ctype;
 import std.utf;
 import std.conv;
-version(D_Version2) import std.algorithm;
-else import std.math2;
+import std.algorithm;
 
 import comutil;
 import logutil;
@@ -271,14 +270,47 @@ class LanguageService : DisposingComObject,
 	}
 
 	// IVsProvideColorableItems //////////////////////////////////////
+	static ColorableItem[] colorableItems;
+	
+	// delete <VisualStudio-User-Root>\FontAndColors\Cache\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}\Version
+	// if the list of colorableItems changes
+	
+	shared static this()
+	{
+		colorableItems = [
+			// The first 6 items in this list MUST be these default items.
+			new ColorableItem("Keyword",    CI_BLUE,            CI_USERTEXT_BK),
+			new ColorableItem("Comment",    CI_DARKGREEN,       CI_USERTEXT_BK),
+			new ColorableItem("Identifier", CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
+			new ColorableItem("String",     CI_MAROON,          CI_USERTEXT_BK),
+			new ColorableItem("Number",     CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
+			new ColorableItem("Text",       CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
+			// Visual D specific
+			new ColorableItem("Visual D Operator",         CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
+				
+			new ColorableItem("Visual D Disabled Keyword",    CI_DARKGRAY,  CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled Comment",    CI_DARKGREEN, CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled Identifier", CI_DARKGRAY,  CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled String",     CI_DARKGRAY,  CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled Number",     CI_DARKGRAY,  CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled Text",       CI_DARKGRAY,  CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY,  CI_USERTEXT_BK)
+		];
+	};
+
 	override HRESULT GetColorableItem(in int iIndex, IVsColorableItem* ppItem)
 	{
-		return E_NOTIMPL;
+		if(iIndex < 1 || iIndex > colorableItems.length)
+			return E_INVALIDARG;
+		
+		*ppItem = addref(colorableItems[iIndex-1]);
+		return S_OK;
 	}
 
 	override HRESULT GetItemCount(int* piCount)
 	{
-		return E_NOTIMPL;
+		*piCount = colorableItems.length;
+		return S_OK;
 	}
 
 	// IVsLanguageContextProvider //////////////////////////////////////
@@ -372,12 +404,76 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////
 
+class ColorableItem : DComObject, IVsColorableItem
+{
+	private string mDisplayName;
+	private COLORINDEX mBackground;
+	private COLORINDEX mForeground;
+
+	this(string displayName, COLORINDEX foreground, COLORINDEX background)
+	{
+		mDisplayName = displayName;
+		mBackground = background;
+		mForeground = foreground;
+	}
+
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsColorableItem) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+	
+	HRESULT GetDefaultColors(/+[out]+/ COLORINDEX *piForeground, /+[out]+/ COLORINDEX *piBackground)
+	{
+		if(!piForeground || !piBackground)
+			return E_INVALIDARG;
+		
+		*piForeground = mForeground;
+		*piBackground = mBackground;
+		return S_OK;
+	}
+	
+	HRESULT GetDefaultFontFlags(/+[out]+/ DWORD *pdwFontFlags) // see FONTFLAGS enum
+	{
+		if(!pdwFontFlags)
+			return E_INVALIDARG;
+		
+		*pdwFontFlags = 0;
+		return S_OK;
+	}
+
+	HRESULT GetDisplayName(/+[out]+/ BSTR * pbstrName)
+	{
+		if(!pbstrName)
+			return E_INVALIDARG;
+
+		*pbstrName = allocBSTR(mDisplayName);
+		return S_OK;
+	}
+} 
+
 class Colorizer : DComObject, IVsColorizer 
 {
 	// mLineState keeps track of evaluated states, assuming the interesting lines have been processed
 	//  after the last changes
+	// the lower 20 bits are used by the lexer, the upper 12 bits encode the version state
+	//  xxxx_xxxx_xPPP
+	//  PPP - version parse state
 	int[] mLineState;
+	int[string] mVersions; // positive: lineno defined, negative: lineno first usage without definition
 
+	enum VersionParseState
+	{
+		Idle,
+		VersionParsed,     // version, expecting = or (
+		AssignParsed,      // version=, expecting identifier or number
+		ParenLParsed,      // version(, expecting identifier or number
+		IdentifierParsed,  // version(identifier, expecting )
+		NumberParsed,      // version(number, expecting )
+		ParenRParsed,      // version(identifier|number), check for '{'
+	}
+	
 	~this()
 	{
 	}
@@ -412,6 +508,9 @@ class Colorizer : DComObject, IVsColorizer
 		{
 			uint prevpos = pos;
 			int type = SimpleLexer.scan(iState, text, pos);
+			
+			type = parseVersions(iLine, type, text[prevpos..pos], iState);
+			
 			while(prevpos < pos)
 				pAttributes[prevpos++] = type;
 		}
@@ -427,7 +526,11 @@ class Colorizer : DComObject, IVsColorizer
 		wstring text = to_cwstring(pText, iLength);
 		uint pos = 0;
 		while(pos < iLength)
-			SimpleLexer.scan(iState, text, pos);
+		{
+			uint prevpos = pos;
+			int type = SimpleLexer.scan(iState, text, pos);
+			type = parseVersions(iLine, type, text[prevpos..pos], iState);
+		}
 		return iState;
 	}
 
@@ -437,6 +540,53 @@ class Colorizer : DComObject, IVsColorizer
 	}
 
 	//////////////////////////////////////////////////////////////
+	int parseVersions(int iLine, int type, wstring text, ref int iState)
+	{
+	version(test)
+	{
+		if(SimpleLexer.isCommentOrSpace(type, text))
+			return type;
+
+		int parseState = (iState >> 20) & 0xf;
+		switch(parseState)
+		{
+		case VersionParseState.Idle:
+			if(type == TokenColor.Keyword && text == "version")
+			{
+				parseState = VersionParseState.VersionParsed;
+				type = TokenColor.DisabledKeyword;
+			}
+			break;
+			
+		case VersionParseState.VersionParsed:
+			if(text == "=")
+			{
+				parseState = VersionParseState.AssignParsed;
+				type = TokenColor.DisabledOperator;
+			}
+			else if(text == "(")
+			{
+				parseState = VersionParseState.ParenLParsed;
+				type = TokenColor.DisabledOperator;
+			}
+			else
+				parseState = VersionParseState.Idle;
+			break;
+			
+		case VersionParseState.AssignParsed:
+		case VersionParseState.ParenLParsed:
+		case VersionParseState.IdentifierParsed:
+		case VersionParseState.NumberParsed:
+		case VersionParseState.ParenRParsed:
+			parseState = VersionParseState.Idle;
+			break;
+		}
+		
+		iState = (iState & 0xff0fffff) | (parseState << 20);
+	}
+		return type;
+	}
+
 	void SaveLineState(int iLine, int state)
 	{
 		if(iLine >= mLineState.length)
@@ -740,7 +890,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		// of quoted strings.
 		TokenColor type = info.type;
 		if ((flags != WORDEXT_FINDTOKEN || type != TokenColor.String) && 
-		    (type == TokenColor.Comment || type == TokenColor.Text || type == TokenColor.String || type == TokenColor.Literal))
+		    (type == TokenColor.Comment || type == TokenColor.Text || 
+			 type == TokenColor.String || type == TokenColor.Literal || type == TokenColor.Operator))
 			return false;
 
 		//search for a token
@@ -1543,7 +1694,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		wstring text = GetText(line, 0, line, -1);
 		uint ppos = pos;
 		int toktype = SimpleLexer.scan(iState, text, pos);
-		if(toktype != TokenColor.Text)
+		if(toktype != TokenColor.Operator)
 			return false;
 
 		return FindClosingBracketForward(line, iState, pos, otherLine, otherIndex);
@@ -1561,7 +1712,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			{
 				uint ppos = pos;
 				int type = SimpleLexer.scan(iState, text, pos);
-				if(type == TokenColor.Text)
+				if(type == TokenColor.Operator)
 					if(SimpleLexer.isOpeningBracket(text[ppos]))
 						level++;
 					else if(SimpleLexer.isClosingBracket(text[ppos]))
@@ -1604,7 +1755,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			for( ; p >= 0; p--)
 			{
 				pos = tokpos[p];
-				if(toktype[p] == TokenColor.Text)
+				if(toktype[p] == TokenColor.Operator)
 				{
 					if(pCountComma && text[pos] == ',')
 						(*pCountComma)++;
@@ -2225,7 +2376,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 		uint ppos = pos;
 		int toktype = SimpleLexer.scan(iState, text, pos);
-		if(toktype != TokenColor.Text)
+		if(toktype != TokenColor.Operator)
 			return false;
 
 		if(SimpleLexer.isOpeningBracket(text[ppos]))
@@ -2613,7 +2764,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 					if(array_find(mExpressions, ident) < 0)
 						mExpressions ~= ident;
 				}
-				else if (type == TokenColor.Text && txt == "."w)
+				else if (type == TokenColor.Operator && txt == "."w)
 					ident ~= "."w;
 				else
 					ident = ""w;

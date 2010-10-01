@@ -26,20 +26,10 @@ version = GC_COM;
 debug debug = COM;
 //debug(COM) debug = COM_ADDREL;
 
-version(D_Version2)
-{
-	import core.runtime;
-	import core.memory;
+import core.runtime;
+import core.memory;
 
-	const string d2_shared = "__gshared";
-}
-else
-{
-	import std.gc;
-	import std.outofmemory;
-
-	const string d2_shared = "";
-}
+const string d2_shared = "__gshared";
 
 import logutil;
 
@@ -177,18 +167,10 @@ version(GC_COM)
 {
 		void* p = new char[size];
 }
-else version(D_Version2)
-{
-		void* p = std.c.stdlib.malloc(size);
-		GC.addRange(p, size);
-}
 else
 {
 		void* p = std.c.stdlib.malloc(size);
-		if(!p)
-			_d_OutOfMemory();
-
-		addRange(p, cast(char*) p + size);
+		GC.addRange(p, size);
 }
 		return p;
 	}
@@ -284,14 +266,7 @@ else
 			// if there is an invariant defined for this object, it will definitely fail or crash!
 
 			_d_callfinalizer(cast(void *)this);
-	version(D_Version2)
-	{
 			GC.removeRange(cast(void*) this);
-	}
-	else
-	{
-			removeRange(cast(void*) this);
-	}
 }
 //		std.c.stdlib.free(cast(void*) this); 
 			return 0;
@@ -736,11 +711,7 @@ wstring to_wstring(in wchar* pText, int iLength)
 {
 	if(!pText)
 		return ""w;
-version(D_Version2)
 	wstring text = pText[0 .. iLength].idup;
-else
-	wstring text = pText[0 .. iLength].dup;
-
 	return text;
 }
 
@@ -748,11 +719,7 @@ wstring to_cwstring(in wchar* pText, int iLength)
 {
 	if(!pText)
 		return ""w;
-version(D_Version2)
 	wstring text = pText[0 .. iLength].idup;
-else
-	wstring text = pText[0 .. iLength];
-
 	return text;
 }
 

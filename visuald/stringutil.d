@@ -52,10 +52,7 @@ string replaceMacros(string s, string[string] replacements)
 			if(string *ps = id in replacements)
 				nid = *ps;
 			else if(char* pe = getenv(std.windows.charset.toMBSz(id)))
-				version(D_Version2)
-					nid = fromMBSz(cast(immutable)pe);
-				else
-					nid = fromMBSz(pe);
+				nid = fromMBSz(cast(immutable)pe);
 			
 			int *p = id in lastReplacePos;
 			if(!p || *p <= i)
@@ -300,16 +297,6 @@ bool _startsWith(string s, string w)
 }
 
 //alias startsWith _startsWith;
-
-version(D_Version2) {} else {
-
-// for D1 compatibility
-bool startsWith(string s, string e)
-{
-	return (s.length >= e.length && s[0 .. e.length] == e);
-}
-
-}
 
 bool parseLong(ref char[] txt, out long res)
 {
