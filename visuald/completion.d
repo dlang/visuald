@@ -218,7 +218,7 @@ class Declarations
 			tok = "";
 
 		int iState = src.mColorizer.GetLineState(start);
-		if(iState < 0)
+		if(iState == -1)
 			return false;
 
 		int namesLength = mNames.length;

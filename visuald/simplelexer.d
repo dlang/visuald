@@ -37,7 +37,7 @@ enum TokenColor : int
 	DisabledIdentifier,
 	DisabledString,
 	DisabledLiteral,
-	DisabledText2,
+	DisabledText,
 	DisabledOperator
 }
 
@@ -135,6 +135,11 @@ class SimpleLexer
 		return TokenColor.Identifier;
 	}
 
+	static int scanOperator(wstring text, int startpos, ref uint pos)
+	{
+		return TokenColor.Operator;
+	}
+	
 	static dchar trydecode(wstring text, ref uint pos)
 	{
 		if(pos >= text.length)
@@ -382,7 +387,7 @@ L_exponent:
 		return isUniAlpha(ch) || ch == '_' || ch == '@';
 	}
 	
-	static bool isIdentifier(wstring text)
+	static bool isIdentifier(S)(S text)
 	{
 		if(text.length == 0)
 			return false;
@@ -401,6 +406,21 @@ L_exponent:
 		return true;
 	}
 
+	static bool isInteger(S)(S text)
+	{
+		if(text.length == 0)
+			return false;
+
+		uint pos;
+		while(pos < text.length)
+		{
+			dchar ch = decode(text, pos);
+			if(!isdigit(ch))
+				return false;
+		}
+		return true;
+	}
+	
 	static bool isBracketPair(dchar ch1, dchar ch2)
 	{
 		switch(ch1)
@@ -565,7 +585,7 @@ L_exponent:
 				{
 					// step back to position after '/'
 					pos = prevpos;
-					type = TokenColor.Operator;
+					type = scanOperator(text, startpos, pos);
 				}
 			}
 			else if (ch == '"')
@@ -588,7 +608,7 @@ L_exponent:
 				type = TokenColor.String;
 			}
 			else if(!isspace(ch))
-				type = TokenColor.Operator;
+				type = scanOperator(text, startpos, pos);
 			break;
 
 		case State.kBlockComment:
@@ -637,14 +657,29 @@ L_exponent:
 	}
 }
 
-struct empty_t {}
+///////////////////////////////////////////////////////////////
+TokenInfo[] ScanLine(int iState, wstring text)
+{
+	TokenInfo[] lineInfo;
+	for(uint pos = 0; pos < text.length; )
+	{
+		TokenInfo info;
+		info.StartIndex = pos;
+		info.type = cast(TokenColor) SimpleLexer.scan(iState, text, pos);
+		info.EndIndex = pos;
+		lineInfo ~= info;
+	}
+	return lineInfo;
+}
 
-__gshared empty_t[string] keywords_map;
+///////////////////////////////////////////////////////////////
 
-shared static this() {
-	empty_t empty;
-	foreach(string s; keywords)
-	    keywords_map[s] = empty;
+__gshared int[string] keywords_map; // maps to TOK enumerator
+
+shared static this() 
+{
+	foreach(i, s; keywords)
+	    keywords_map[s] = i;
 }
 
 const string keywords[] = 
@@ -775,17 +810,221 @@ const string keywords[] =
 	
 ];
 
-TokenInfo[] ScanLine(int iState, wstring text)
+string genKeywordsEnum(string[] kwords)
 {
-	TokenInfo[] lineInfo;
-	for(uint pos = 0; pos < text.length; )
+	string enums = "enum {";
+	foreach(kw; kwords)
 	{
-		TokenInfo info;
-		info.StartIndex = pos;
-		info.type = cast(TokenColor) SimpleLexer.scan(iState, text, pos);
-		info.EndIndex = pos;
-		lineInfo ~= info;
+		if(kw[0] == '@')
+			kw = kw[1..$];
+		enums ~= "TOK_" ~ kw ~ ",";
 	}
-	return lineInfo;
+	enums ~= "TOK_numKeywords }";
+	return enums;
+}
+
+mixin(genKeywordsEnum(keywords));
+
+const string[] operators =
+[
+	"lcurly",           "{",
+	"rcurly",           "}",
+	"lparen",           "(",
+	"rparen",           ")",
+	"lbracket",         "[",
+	"rbracket",         "]",
+	"semicolon",        ";",
+	"colon",            ":",
+	"comma",            ",",
+	"dot",              ".",
+	"xor",              "^",
+	"xorass",           "^=",
+	"assign",           "=",
+	"lt",               "<",
+	"gt",               ">",
+	"le",               "<=",
+	"ge",               ">=",
+	"equal",            "==",
+	"notequal",         "!=",
+
+	"unord",            "!<>=",
+	"ue",               "!<>",
+	"lg",               "<>",
+	"leg",              "<>=",
+	"ule",              "!>",
+	"ul",               "!>=",
+	"uge",              "!<",
+	"ug",               "!<=",
+
+	"not",              "!",
+	"shl",              "<<",
+	"shr",              ">>",
+	"ushr",             ">>>",
+	"add",              "+",
+	"min",              "-",
+	"mul",              "*",
+	"div",              "/",
+	"mod",              "%",
+	"slice",            "..",
+	"dotdotdot",        "...",
+	"and",              "&",
+	"andand",           "&&",
+	"or",               "|",
+	"oror",             "||",
+	"array",            "[]",
+//	"address",          "&",
+//	"star",             "*",
+	"tilde",            "~",
+	"dollar",           "$",
+	"plusplus",         "++",
+	"minusminus",       "--",
+//	"preplusplus",      "++",
+//	"preminusminus",    "--",
+	"question",         "?",
+//	"neg",              "-",
+//	"uadd",             "+",
+	"addass",           "+=",
+	"minass",           "-=",
+	"mulass",           "*=",
+	"divass",           "/=",
+	"modass",           "%=",
+	"shlass",           "<<=",
+	"shrass",           ">>=",
+	"ushrass",          ">>>=",
+	"andass",           "&=",
+	"orass",            "|=",
+	"catass",           "~=",
+//	"cat",              "~",
+//	"identity",         "is",
+//	"notidentity",      "!is",
+
+	"pow",              "^^",
+	"powass",           "^^=",
+
+/+
+	"plus",             "++",
+	"pow",              "^^",
+	"powass",           "^^==",
+	"minus",            "--",
++/
+];
+
+string genOperatorEnum(string[] ops)
+{
+	string enums = "enum {";
+	for(int o = 0; o < ops.length; o += 2)
+	{
+		enums ~= "TOK_" ~ ops[o] ~ ",";
+	}
+	enums ~= "TOK_numOperators }";
+	return enums;
+}
+
+mixin(genOperatorEnum(operators));
+
+enum TOK_error = -1;
+
+bool _stringEqual(string s1, string s2, int length)
+{
+	if(s1.length < length || s2.length < length)
+		return false;
+	for(int i = 0; i < length; i++)
+		if(s1[i] != s2[i])
+			return false;
+	return true;
+}
+
+string genOperatorParser(string peekch, string getch)
+{
+	// create sorted list of operators
+	int[] opIndex;
+	for(int o = 0; o < operators.length; o += 2)
+	{
+		string op = operators[o+1];
+		int p = 0;
+		while(p < opIndex.length)
+		{
+			assert(op != operators[opIndex[p]+1], "duplicate operator " ~ op);
+			if(op < operators[opIndex[p]+1])
+				break;
+			p++;
+		}
+		// array slicing does not work in CTFE?
+		// opIndex ~= opIndex[0..p] ~ o ~ opIndex[p..$];
+		int[] nIndex;
+		for(int i = 0; i < p; i++)
+			nIndex ~= opIndex[i];
+		nIndex ~= o;
+		for(int i = p; i < opIndex.length; i++)
+			nIndex ~= opIndex[i];
+		opIndex = nIndex;
+	}
+	
+	int matchlen = 0;
+	string indent = "";
+	string[] defaults = [ "error" ];
+	string txt = indent ~ "dchar ch;\n";
+	for(int o = 0; o < opIndex.length; o++)
+	{
+		string op = operators[opIndex[o]+1];
+		string nextop;
+		if(o + 1 < opIndex.length)
+			nextop = operators[opIndex[o+1]+1];
+		
+		while(op.length > matchlen)
+		{
+			if(matchlen > 0)
+				txt ~= indent ~ "case '" ~ op[matchlen-1] ~ "':\n";
+			indent ~= "  ";
+			txt ~= indent ~ "ch = " ~ getch ~ ";\n";
+			txt ~= indent ~ "switch(ch)\n";
+			txt ~= indent ~ "{\n";
+			indent ~= "  ";
+			int len = (matchlen > 0 ? matchlen - 1 : 0);
+			while(len > 0 && defaults[len] == defaults[len+1])
+				len--;
+			txt ~= indent ~ "default: len = " ~ to!string(len) ~ "; return TOK_" ~ defaults[$-1] ~ ";\n";
+			//txt ~= indent ~ "case '" ~ op[matchlen] ~ "':\n";
+			defaults ~= defaults[$-1];
+			matchlen++;
+		}
+		if(nextop.length > matchlen && nextop[0..matchlen] == op)
+		{
+			if(matchlen > 0)
+				txt ~= indent ~ "case '" ~ op[matchlen-1] ~ "':\n";
+			indent ~= "  ";
+			txt ~= indent ~ "ch = " ~ getch ~ ";\n";
+			txt ~= indent ~ "switch(ch)\n";
+			txt ~= indent ~ "{\n";
+			indent ~= "  ";
+			txt ~= indent ~ "default: len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]] ~ "; // " ~ op ~ "\n";
+			defaults ~= operators[opIndex[o]];
+			matchlen++;
+		}
+		else
+		{
+			txt ~= indent ~ "case '" ~ op[matchlen-1] ~ "': len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]] ~ "; // " ~ op ~ "\n";
+		
+			while(nextop.length < matchlen || (matchlen > 0 && !_stringEqual(op, nextop, matchlen-1)))
+			{
+				matchlen--;
+				indent = indent[0..$-2];
+				txt ~= indent ~ "}\n";
+				indent = indent[0..$-2];
+				defaults = defaults[0..$-1];
+			}
+		}
+	}
+	return txt;
+}
+
+// pragma(msg, genOperatorParser("peekch()", "getch()"));
+
+int parseOperator()
+{
+	dchar getch() { return 0; }
+	int len;
+
+	mixin(genOperatorParser("peekch()", "getch()"));
 }
 

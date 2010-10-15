@@ -1144,6 +1144,37 @@ class ToolsPropertyPage : GlobalPropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+class ColorizerPropertyPage : GlobalPropertyPage
+{
+	string GetCategoryName() { return "Language"; }
+	string GetPageName() { return "Colorizer"; }
+
+	this(GlobalOptions options)
+	{
+		super(options);
+	}
+
+	override void CreateControls()
+	{
+		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
+	}
+
+	override void SetControls(GlobalOptions opts)
+	{
+		mColorizeVersions.setChecked(opts.ColorizeVersions);
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
+		return changes;
+	}
+
+	CheckBox mColorizeVersions;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 const GUID    g_GeneralPropertyPage      = uuid("002a2de9-8bb6-484d-9810-7e4ad4084715");
 const GUID    g_DmdGeneralPropertyPage   = uuid("002a2de9-8bb6-484d-9811-7e4ad4084715");
 const GUID    g_DmdDebugPropertyPage     = uuid("002a2de9-8bb6-484d-9812-7e4ad4084715");
@@ -1160,6 +1191,9 @@ const GUID    g_DmdCmdLinePropertyPage   = uuid("002a2de9-8bb6-484d-981c-7e4ad40
 
 // does not need to be registered, created explicitely by package
 const GUID    g_ToolsPropertyPage        = uuid("002a2de9-8bb6-484d-9820-7e4ad4084715");
+
+// registered under Languages\\Language Services\\D\\EditorToolsOptions\\Colorizer, created explicitely by package
+const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");
 
 const GUID* guids_propertyPages[] = 
 [ 

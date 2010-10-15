@@ -335,6 +335,11 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		foreach (ref LanguageProperty prop; g_languageProperties)
 			keyLang.Set(prop.name, prop.value);
 		
+		// colorizer settings
+		scope RegKey keyColorizer = new RegKey(keyRoot, langserv ~ "\\EditorToolsOptions\\Colorizer"w);
+		keyColorizer.Set("Package"w, packageGuid);
+		keyColorizer.Set("Page"w, GUID2wstring(g_ColorizerPropertyPage));
+		
 		scope RegKey keyService = new RegKey(keyRoot, registrationRoot ~ "\\Services\\"w ~ languageGuid);
 		keyService.Set(null, packageGuid);
 		keyService.Set("Name"w, g_languageName);

@@ -919,6 +919,11 @@ private:
 	VSCOOKIE mLastCfgProviderEventsCookie;
 }
 
+interface ConfigModifiedListener : IUnknown
+{
+	void OnConfigModified();
+}
+
 class Config :	DisposingComObject, 
 		IVsProjectCfg2,
 		IVsDebuggableProjectCfg,
@@ -1355,9 +1360,25 @@ class Config :	DisposingComObject,
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
+	void AddModifiedListener(ConfigModifiedListener listener)
+	{
+		mModifiedListener ~= listener;
+	}
+
+	void RemoveModifiedListener(ConfigModifiedListener listener)
+	{
+		int idx = arrIndexPtr(mModifiedListener, listener);
+		if(idx >= 0)
+			mModifiedListener = mModifiedListener[0 .. idx] ~ mModifiedListener[idx + 1 .. $];
+	}
+		
+	//////////////////////////////////////////////////////////////////////////////
 	void SetDirty()
 	{
 		mProvider.mProject.GetProjectNode().SetProjectFileDirty(true);
+		
+		foreach(listener; mModifiedListener)
+			listener.OnConfigModified();
 	}
 
 	CProjectNode GetProjectNode() { return mProvider.mProject.GetProjectNode(); }
@@ -1803,6 +1824,7 @@ private:
 	ProjectOptions mProjectOptions;
 	CBuilderThread mBuilder;
 
+	ConfigModifiedListener[] mModifiedListener;
 	IVsBuildStatusCallback[VSCOOKIE] mBuildStatusCallbacks;
 	bool[VSCOOKIE] mTicking;
 	bool[VSCOOKIE] mStarted;

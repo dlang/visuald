@@ -575,9 +575,16 @@ private:
 	string _demangle(string txt, bool fullDeco)
 	{
 		int p = 0;
-		txt = decodeDmdString(txt.dup, p);
-		if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
-			txt = to!string(demangle(txt, null, fullDeco));
+		static if(is(typeof(decodeDmdString)))
+		{
+			txt = decodeDmdString(txt.dup, p);
+			if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
+				txt = to!string(demangle(txt, null, fullDeco));
+		}
+		else
+			if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
+				txt = to!string(demangle(txt));
+			
 		return txt;
 	}
 

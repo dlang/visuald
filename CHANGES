@@ -194,3 +194,5 @@ unreleased Version 0.3.18
 
   * linker errors with file name on the same line did not make it into the error list
   * added color "Visual D Operator" to "Fonts and Colors" setup
+  * added version/debug colorizations
+  * additional tools settings page under TextEditor->D->Colorizer

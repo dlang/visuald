@@ -273,7 +273,7 @@ class Package : DisposingComObject,
 	override int GetPropertyPage(in GUID* rguidPage, VSPROPSHEETPAGE* ppage)
 	{
 		mixin(LogCallMix2);
-		if(*rguidPage != g_ToolsPropertyPage)
+		if(*rguidPage != g_ToolsPropertyPage && *rguidPage != g_ColorizerPropertyPage)
 			return E_NOTIMPL;
 
 		*ppage = VSPROPSHEETPAGE.init;
@@ -281,7 +281,12 @@ class Package : DisposingComObject,
 		auto win = new Window(null, "");
 		ppage.hwndDlg = win.hwnd;
 
-		ToolsPropertyPage tpp = new ToolsPropertyPage(mOptions);
+		GlobalPropertyPage tpp;
+		if(*rguidPage == g_ToolsPropertyPage)
+			tpp = new ToolsPropertyPage(mOptions);
+		else
+			tpp = new ColorizerPropertyPage(mOptions);
+			
 		tpp.Activate(win.hwnd, null, false);
 		tpp.SetWindowSize(0, 0, 400, 300);
 		addref(tpp);
@@ -508,6 +513,9 @@ class GlobalOptions
 	string VSInstallDir;
 	string VisualDInstallDir;
 
+	bool ColorizeVersions = true;
+	bool lastColorizeVersions;
+	
 	this()
 	{
 	}
@@ -568,7 +576,8 @@ class GlobalOptions
 			wstring wImpSearchPath = keyToolOpts.GetString("ImpSearchPath");
 			wstring wJSNSearchPath = keyToolOpts.GetString("JSNSearchPath");
 			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
-
+			ColorizeVersions = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
+	
 			// overwrite by user config
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
 			DMDInstallDir = toUTF8(keyUserOpts.GetString("DMDInstallDir", wDMDInstallDir));
@@ -577,7 +586,9 @@ class GlobalOptions
 			ImpSearchPath = toUTF8(keyUserOpts.GetString("ImpSearchPath", wImpSearchPath));
 			JSNSearchPath = toUTF8(keyUserOpts.GetString("JSNSearchPath", wJSNSearchPath));
 			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
-
+			ColorizeVersions = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
+			lastColorizeVersions = ColorizeVersions;
+			
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
 			WindowsSdkDir = normalizeDir(toUTF8(keySdk.GetString("CurrentInstallFolder")));
 
@@ -621,11 +632,20 @@ class GlobalOptions
 			keyToolOpts.Set("ImpSearchPath", toUTF16(ImpSearchPath));
 			keyToolOpts.Set("JSNSearchPath", toUTF16(JSNSearchPath));
 			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
+			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
 		}
 		catch(Exception e)
 		{
 			return false;
 		}
+		
+		if(lastColorizeVersions != ColorizeVersions)
+		{
+			lastColorizeVersions = ColorizeVersions;
+			if(auto svc = Package.s_instance.mLangsvc)
+				svc.OnActiveProjectCfgChange(null);
+		}
+		
 		return true;
 	}
 

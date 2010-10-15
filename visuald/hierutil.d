@@ -58,6 +58,14 @@ int arrIndex(T)(in T[] arr, T val)
 	return -1;
 }
 
+int arrIndexPtr(T)(in T[] arr, T val)
+{
+	for(int i = 0; i < arr.length; i++)
+		if (arr[i] is val)
+			return i;
+	return -1;
+}
+
 void addunique(T)(ref T[] arr, T val)
 {
 	if (!contains(arr, val))
