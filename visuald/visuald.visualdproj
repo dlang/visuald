@@ -5,6 +5,7 @@
   <link>0</link>
   <lib>0</lib>
   <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -39,12 +40,12 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
+  <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\obj</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -80,12 +81,12 @@
   <additionalOptions>-debuglib=phobos_d.lib</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>c:\l\vs9shell\Common7\IDE\devenv.exe</debugtarget>
+  <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
   <debugarguments>/RootSuffix D</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>0</debugEngine>
+  <debugEngine>1</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Config name="Release">
@@ -93,6 +94,7 @@
   <link>0</link>
   <lib>0</lib>
   <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
