@@ -291,6 +291,12 @@ class BracedStatement(string open, string close) : Location
 			parser.reduce();
 			return true;
 		}
+		if(tok == ")" || tok == "]" || tok == "}")
+		{
+			// mismatched brace - bail out
+			parser.reduce();
+			return false;
+		}
 		Statement stmt = new Statement(this, _span);
 		parser.push(stmt);
 		return false;

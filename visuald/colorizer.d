@@ -35,26 +35,35 @@ import sdk.vsi.textmgr2;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class ColorableItem : DComObject, IVsColorableItem
+class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 {
 	private string mDisplayName;
 	private COLORINDEX mBackground;
 	private COLORINDEX mForeground;
-
-	this(string displayName, COLORINDEX foreground, COLORINDEX background)
+	
+	private COLORREF mRgbForeground;
+	private COLORREF mRgbBackground;
+	
+	this(string displayName, COLORINDEX foreground, COLORINDEX background, 
+	     COLORREF rgbForeground = 0, COLORREF rgbBackground = 0)
 	{
 		mDisplayName = displayName;
 		mBackground = background;
 		mForeground = foreground;
+		mRgbForeground = rgbForeground;
+		mRgbBackground = rgbBackground;
 	}
 	
 	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorableItem) (this, riid, pvObject))
 			return S_OK;
+		if(queryInterface!(IVsHiColorItem) (this, riid, pvObject))
+			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 	
+	// IVsColorableItem
 	HRESULT GetDefaultColors(/+[out]+/ COLORINDEX *piForeground, /+[out]+/ COLORINDEX *piBackground)
 	{
 		if(!piForeground || !piBackground)
@@ -81,6 +90,22 @@ class ColorableItem : DComObject, IVsColorableItem
 
 		*pbstrName = allocBSTR(mDisplayName);
 		return S_OK;
+	}
+	
+	// IVsHiColorItem
+	HRESULT GetColorData(in VSCOLORDATA cdElement, /+[out]+/ COLORREF* pcrColor)
+	{
+		if(cdElement == CD_FOREGROUND && mForeground == -1)
+		{
+			*pcrColor = mRgbForeground;
+			return S_OK;
+		}
+		if(cdElement == CD_BACKGROUND && mBackground == -1)
+		{
+			*pcrColor = mRgbBackground;
+			return S_OK;
+		}
+		return E_NOTIMPL;
 	}
 } 
 
@@ -119,9 +144,11 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 	{
 		IdleEnabled,
 		IdleDisabled,
-		VersionParsed,     // version, expecting = or (
-		AssignParsed,      // version=, expecting identifier or number
-		ParenLParsed,      // version(, expecting identifier or number
+		IdleEnabledVerify,         // verify enable state on next token
+		IdleDisabledVerify,
+		VersionParsed,             // version, expecting = or (
+		AssignParsed,              // version=, expecting identifier or number
+		ParenLParsed,              // version(, expecting identifier or number
 		IdentNumberParsedEnable,   // version(identifier|number, expecting )
 		IdentNumberParsedDisable,  // version(identifier|number, expecting )
 		ParenRParsedEnable,        // version(identifier|number), check for '{'
@@ -186,7 +213,13 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 			if(mColorizeVersions)
 			{
 				wstring tok = text[prevpos..pos];
-				if(!SimpleLexer.isCommentOrSpace(type, tok))
+				if(SimpleLexer.isCommentOrSpace(type, tok))
+				{
+					int parseState = getParseState(iState);
+					if(parseState == VersionParseState.IdleDisabled)
+						type = disabledColorType(type);
+				}
+				else
 				{
 					ParserSpan span;
 					if (pos >= text.length)
@@ -462,7 +495,33 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 		return true;
 	}
 	
+	int disabledColorType(int type)
+	{
+		switch(type)
+		{
+			case TokenColor.Text2:
+			case TokenColor.Text:        return TokenColor.DisabledText;
+			case TokenColor.Keyword:     return TokenColor.DisabledKeyword;
+			case TokenColor.Comment:     return TokenColor.DisabledComment;
+			case TokenColor.Identifier:  return TokenColor.DisabledIdentifier;
+			case TokenColor.String:      return TokenColor.DisabledString;
+			case TokenColor.Literal:     return TokenColor.DisabledLiteral;
+			case TokenColor.Operator:    return TokenColor.DisabledOperator;
+			default: break;
+		}
+		return type;
+	}
 	
+	static assert(VersionParseState.max <= 15);
+	
+	private static int getParseState(int iState)
+	{
+		return (iState >> 20) & 0x0f;
+	}
+	private static int getDebugOrVersion(int iState)
+	{
+		return (iState >> 24) & 0x1;
+	}
 	int parseVersions(ref ParserSpan span, int type, wstring text, ref int iState, ref bool versionsChanged)
 	{
 		int iLine = span.iStartLine;
@@ -492,24 +551,24 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 		//if(SimpleLexer.isCommentOrSpace(type, text))
 		//	return type;
 
-		int parseState = (iState >> 20) & 0x0f;
-		int debugOrVersion = (iState >> 24) & 0x1;
+		int parseState = getParseState(iState);
+		int debugOrVersion = getDebugOrVersion(iState);
+		int ntype = type;
 		
 		switch(parseState)
 		{
-		case VersionParseState.IdleDisabled:
-			switch(type)
+		case VersionParseState.IdleDisabledVerify:
+		case VersionParseState.IdleEnabledVerify:
+			if(isAddressEnabled(span.iStartLine, span.iStartIndex))
 			{
-				case TokenColor.Text2:
-				case TokenColor.Text:        type = TokenColor.DisabledText; break;
-				case TokenColor.Keyword:     type = TokenColor.DisabledKeyword; break;
-				case TokenColor.Comment:     type = TokenColor.DisabledComment; break;
-				case TokenColor.Identifier:  type = TokenColor.DisabledIdentifier; break;
-				case TokenColor.String:      type = TokenColor.DisabledString; break;
-				case TokenColor.Literal:     type = TokenColor.DisabledLiteral; break;
-				case TokenColor.Operator:    type = TokenColor.DisabledOperator; break;
-				default: break;
+				parseState = VersionParseState.IdleEnabled;
+				goto case VersionParseState.IdleEnabled;
 			}
+			parseState = VersionParseState.IdleDisabled;
+			goto case VersionParseState.IdleDisabled;
+			
+		case VersionParseState.IdleDisabled:
+			ntype = disabledColorType(ntype);
 			break;
 			
 		case VersionParseState.IdleEnabled:
@@ -538,7 +597,7 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 			if(SimpleLexer.isIdentifier(text))
 			{
 				if(!defineVersion(iLine, text, debugOrVersion, versionsChanged))
-					type |= 5 << 14; // red ~~~~
+					ntype |= 5 << 14; // red ~~~~
 			}
 			else if(SimpleLexer.isInteger(text))
 				defineVersion(iLine, to!int(text), debugOrVersion, versionsChanged);
@@ -583,22 +642,25 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 		if(text == ";" || text == "}")
 		{
 			if(parseState == VersionParseState.IdleDisabled)
-			{
-				if(isAddressEnabled(span.iEndLine, span.iEndIndex))
-					parseState = VersionParseState.IdleEnabled;
-			}
+				parseState = text == ";" ? VersionParseState.IdleDisabledVerify : VersionParseState.IdleEnabledVerify;
 		}
 		else if(text == "else")
 		{
 			if(isAddressEnabled(span.iEndLine, span.iEndIndex))
+			{
 				parseState = VersionParseState.IdleEnabled;
+				ntype = type; // restore enabled type
+			}
 			else
+			{
 				parseState = VersionParseState.IdleDisabled;
+				ntype = disabledColorType(ntype);
+			}
 		}
 		
 		iState = (iState & 0x800fffff) | (parseState << 20) | (debugOrVersion << 24);
 	}
-		return type;
+		return ntype;
 	}
 
 	wstring getVersionToken(Location verloc)
@@ -681,7 +743,7 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 		
 		int ln = line;
 		if(ln > mLineState.length)
-			ln = mLineState.length-1;
+			ln = max(mLineState.length, 1) - 1;
 		while(ln > 0 && mLineState[ln] == -1)
 			ln--;
 		

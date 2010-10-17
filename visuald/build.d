@@ -17,6 +17,7 @@ import std.regexp;
 import std.file;
 import std.path;
 import std.conv;
+import std.exception;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
@@ -132,6 +133,8 @@ public:
 		return fSuccessfulBuild != 0;
 	}
 
+	bool isStopped() const { return m_fStopBuild != 0; }
+	
 	bool doCustomBuilds()
 	{
 		string workdir = mConfig.GetProjectDir();
@@ -140,6 +143,8 @@ public:
 			delegate (CHierNode n) { 
 				if(CFileNode file = cast(CFileNode) n)
 				{
+					if(isStopped())
+						return true;
 					if(!mConfig.isUptodate(file))
 					{
 						string cmdline = mConfig.GetCompileCommand(file);
@@ -200,9 +205,30 @@ public:
 		}
 	}
 
+	bool customFilesUpToDate()
+	{
+		CHierNode node = searchNode(mConfig.GetProjectNode(), 
+			delegate (CHierNode n) 
+			{
+				if(isStopped())
+					return true;
+				if(CFileNode file = cast(CFileNode) n)
+				{
+					if(!mConfig.isUptodate(file))
+						return true;
+				}
+				return false;
+			});
+		
+		return node is null;
+	}
+
 	bool DoCheckIsUpToDate()
 	{
-		if(!mConfig.customFilesUpToDate())
+		clearCachedFileTimes();
+		scope(exit) clearCachedFileTimes();
+		
+		if(!customFilesUpToDate())
 			return false;
 
 		string workdir = mConfig.GetProjectDir();
@@ -675,15 +701,43 @@ unittest
 	assert(strTaskItemText == "huhu");
 }
 
+string unEscapeFilename(string file)
+{
+	int pos = indexOf(file, '\\');
+	if(pos < 0)
+		return file;
+
+	char[] p;
+	int start = 0;
+	while(pos < file.length)
+	{
+		if(file[pos+1] == '(' || file[pos+1] == ')' || file[pos+1] == '\\')
+		{
+			p ~= file[start .. pos];
+			start = pos + 1;
+		}
+		int nextpos = indexOf(file[pos + 1 .. $], '\\');
+		if(nextpos < 0)
+			break;
+		pos += nextpos + 1;
+	}
+	p ~= file[start..$];
+	return assumeUnique(p);
+}
+
 string re_match_dep = r"^[A-Za-z0-9_\.]+ *\((.*)\) : p[a-z]* : [A-Za-z0-9_\.]+ \((.*)\)$";
 
 bool getFilenamesFromDepFile(string depfile, ref string[] files)
 {
+	int[string] aafiles;
+	
 	int cntValid = 0;
 	try
 	{
 		string txt = cast(string)std.file.read(depfile);
 
+version(slow)
+{
 		RegExp re = new RegExp(re_match_dep);
 		string[] lines = splitlines(txt);
 		foreach(line; lines)
@@ -693,17 +747,55 @@ bool getFilenamesFromDepFile(string depfile, ref string[] files)
 			{
 				string file1 = replace(match[1], "\\\\", "\\");
 				string file2 = replace(match[2], "\\\\", "\\");
-				addunique(files, file1);
-				addunique(files, file2);
+				aafiles[file1] = 1;
+				aafiles[file2] = 1;
 				cntValid++;
 			}
 		}
+}
+else
+{
+		uint pos = 0;
+		uint openpos = 0;
+		bool skipNext = false;
+		while(pos < txt.length)
+		{
+			dchar ch = decode(txt, pos);
+			if(skipNext)
+			{
+				skipNext = false;
+				continue;
+			}
+			if(ch == '\\')
+				skipNext = true;
+			if(ch == '(')
+				openpos = pos;
+			else if(ch == ')' && openpos > 0)
+			{
+				// only check lines that import "object", these are written once per file
+				const string kCheck = " : public : object ";
+				if(pos + kCheck.length <= txt.length && txt[pos .. pos + kCheck.length] == kCheck)
+				{
+					string file = txt[openpos .. pos-1];
+					file = unEscapeFilename(file);
+					aafiles[file] = 1;
+					openpos = 0;
+					cntValid++;
+				}
+			}
+			else if(ch == '\n')
+				openpos = 0;
+		}
+				
+}
 	}
 	catch(Exception e)
 	{
 		cntValid = 0;
 		// file read error
 	}
+
+	files ~= aafiles.keys;
 	files.sort; // for faster file access?
 	return cntValid > 0;
 }
@@ -715,6 +807,14 @@ unittest
 
 	RegExp re = new RegExp(re_match_dep);
 	string[] match = re.exec(line);
+
+	assert(match.length == 3);
+	assert(match[0] == line);
+	assert(match[1] == r"c:\\dmd\\phobos\\std\\file.d");
+	assert(match[2] == r"c:\\dmd\\phobos\\std\\utf.d");
+
+	line = r"std.file (c:\\dmd\\phobos\\std\\file.d) : public : std.utf (c:\\dmd\\phobos\\std\\utf.d):abc,def";
+	match = re.exec(line);
 
 	assert(match.length == 3);
 	assert(match[0] == line);

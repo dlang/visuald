@@ -153,6 +153,8 @@ class ProjectOptions
 	bool runCv2pdb;		// run cv2pdb on executable
 	string pathCv2pdb;	// exe path for cv2pdb 
 
+	bool singleFileCompilation = false;
+	
 	// Linker stuff
 	string objfiles;
 	string linkswitches;
@@ -185,17 +187,17 @@ class ProjectOptions
 		debugtarget = "$(TARGETPATH)";
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
-		xfilename = "$(IntDir)\\$(ProjectName).json";
+		xfilename = "$(IntDir)\\$(TargetName).json";
 		doXGeneration = true;
 		
-		filesToClean = "*.obj";
+		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
 		
 		runCv2pdb = dbg;
 		symdebug = dbg ? 1 : 0;
 		release = dbg ? 0 : 1;
 	}
 
-	string buildCommandLine()
+	string buildCommandLine(bool performLink = true)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -203,7 +205,7 @@ class ProjectOptions
 		else
 			cmd = "dmd";
 
-		if(lib)
+		if(lib && performLink)
 			cmd ~= " -lib";
 		if(multiobj)
 			cmd ~= " -multiobj";
@@ -291,35 +293,38 @@ class ProjectOptions
 			if(strip(id).length)
 				cmd ~= " -debug=" ~ strip(id);
 
-		string dmdoutfile = getTargetPath();
-		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
-
-		cmd ~= " -of" ~ quoteNormalizeFilename(dmdoutfile);
-		cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
-		cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
-		switch(mapverbosity)
+		if(performLink)
 		{
-		case 0: cmd ~= " -L/NOMAP"; break; // actually still creates map file
-		case 1: cmd ~= " -L/MAP:ADDRESS"; break;
-		case 2: break;
-		case 3: cmd ~= " -L/MAP:FULL"; break;
-		case 4: cmd ~= " -L/MAP:FULL -L/XREF"; break;
-		default: break;
-		}
+			string dmdoutfile = getTargetPath();
+			if(usesCv2pdb())
+				dmdoutfile ~= "_cv";
 
-		if(!lib)
-		{
-			if(createImplib)
-				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
-			if(objfiles.length)
-				cmd ~= " " ~ objfiles;
-			if(deffile.length)
-				cmd ~= " " ~ deffile;
-			if(libfiles.length)
-				cmd ~= " " ~ libfiles;
-			if(resfile.length)
-				cmd ~= " " ~ resfile;
+			cmd ~= " -of" ~ quoteNormalizeFilename(dmdoutfile);
+			cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
+			cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+			switch(mapverbosity)
+			{
+			case 0: cmd ~= " -L/NOMAP"; break; // actually still creates map file
+			case 1: cmd ~= " -L/MAP:ADDRESS"; break;
+			case 2: break;
+			case 3: cmd ~= " -L/MAP:FULL"; break;
+			case 4: cmd ~= " -L/MAP:FULL -L/XREF"; break;
+			default: break;
+			}
+
+			if(!lib)
+			{
+				if(createImplib)
+					cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+				if(objfiles.length)
+					cmd ~= " " ~ objfiles;
+				if(deffile.length)
+					cmd ~= " " ~ deffile;
+				if(libfiles.length)
+					cmd ~= " " ~ libfiles;
+				if(resfile.length)
+					cmd ~= " " ~ resfile;
+			}
 		}
 		return cmd;
 	}
@@ -360,7 +365,7 @@ class ProjectOptions
 		return "";
 	}
 
-	string replaceEnvironment(string cmd, Config config, string inputfile = "")
+	string replaceEnvironment(string cmd, Config config, string inputfile = "", string outputfile = "")
 	{
 		if(indexOf(cmd, '$') < 0)
 			return cmd;
@@ -381,10 +386,10 @@ class ProjectOptions
 		replacements["CONFIGURATIONNAME"] = configname;
 		replacements["OUTDIR"] = outdir;
 		replacements["INTDIR"] = objdir;
-		replacements["TARGETPATH"] = getTargetPath();
 		Package.GetGlobalOptions().addReplacements(replacements);
 
-		string target = replaceMacros(getTargetPath(), replacements);
+		string targetpath = outputfile.length ? outputfile : getTargetPath();
+		string target = replaceMacros(targetpath, replacements);
 		addFileMacros(target, "TARGET", replacements);
 
 		return replaceMacros(cmd, replacements);
@@ -396,6 +401,7 @@ class ProjectOptions
 		elem ~= new xml.Element("link", toElem(link));
 		elem ~= new xml.Element("lib", toElem(lib));
 		elem ~= new xml.Element("multiobj", toElem(multiobj));
+		elem ~= new xml.Element("singleFileCompilation", toElem(singleFileCompilation));
 		elem ~= new xml.Element("oneobj", toElem(oneobj));
 		elem ~= new xml.Element("trace", toElem(trace));
 		elem ~= new xml.Element("quiet", toElem(quiet));
@@ -503,6 +509,7 @@ class ProjectOptions
 		fromElem(elem, "link", link);
 		fromElem(elem, "lib", lib);
 		fromElem(elem, "multiobj", multiobj);
+		fromElem(elem, "singleFileCompilation", singleFileCompilation);
 		fromElem(elem, "oneobj", oneobj);
 		fromElem(elem, "trace", trace);
 		fromElem(elem, "quiet", quiet);
@@ -1421,14 +1428,35 @@ class Config :	DisposingComObject,
 		string tool = GetCompileTool(file);
 		if(tool == "Custom" || tool == kToolResourceCompiler)
 		{
+			string outfile = GetOutputFile(file);
 			string dep = file.GetDependencies();
-			dep = mProjectOptions.replaceEnvironment(dep, this, file.GetFilename());
+			dep = mProjectOptions.replaceEnvironment(dep, this, file.GetFilename(), outfile);
 			string[] deps = tokenizeArgs(dep);
 			deps ~= file.GetFilename();
 			string workdir = GetProjectDir();
 			foreach(ref string s; deps)
 				s = makeFilenameAbsolute(s, workdir);
 			return deps;
+		}
+		if(tool == "DMDsingle")
+		{
+			string outfile = GetOutputFile(file);
+			string depfile = outfile ~ ".dep";
+			depfile = mProjectOptions.replaceEnvironment(depfile, this, file.GetFilename(), outfile);
+
+			string workdir = GetProjectDir();
+			string deppath = makeFilenameAbsolute(depfile, workdir);
+		
+			string[] files;
+			bool depok = false;
+			if(std.file.exists(deppath))
+				depok = getFilenamesFromDepFile(deppath, files);
+			if(!depok)
+				files ~= deppath; // force update without if dependency file does not exist or is invalid
+
+			files ~= file.GetFilename();
+			makeFilenamesAbsolute(files, workdir);
+			return files;
 		}
 		return null;
 	}
@@ -1440,7 +1468,7 @@ class Config :	DisposingComObject,
 			return true;
 
 		string outfile = GetOutputFile(file);
-		outfile = mProjectOptions.replaceEnvironment(outfile, this, file.GetFilename());
+		outfile = mProjectOptions.replaceEnvironment(outfile, this, file.GetFilename(), outfile);
 
 		string workdir = GetProjectDir();
 		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
@@ -1457,29 +1485,40 @@ class Config :	DisposingComObject,
 		return targettm > sourcetm;
 	}
 
-	bool customFilesUpToDate()
-	{
-		CHierNode node = searchNode(mProvider.mProject.GetRootNode(), 
-			delegate (CHierNode n) { 
-				if(CFileNode file = cast(CFileNode) n)
-				{
-					if(!isUptodate(file))
-						return true;
-				}
-				return false;
-			});
-		
-		return node is null;
-	}
-
-	static string GetCompileTool(CFileNode file)
+	static bool IsResource(CFileNode file)
 	{
 		string tool = file.GetTool();
-		string fname = file.GetFilename();
+		if(tool == "")
+			if(tolower(getExt(file.GetFilename())) == "rc")
+				return true;
+		return tool == kToolResourceCompiler;
+	}
+	
+	static string GetStaticCompileTool(CFileNode file)
+	{
+		string tool = file.GetTool();
 		if(tool == "")
 		{
+			string fname = file.GetFilename();
 			string ext = tolower(getExt(fname));
 			if(ext == "d" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
+				tool = "DMD";
+			else if(ext == "rc")
+				tool = kToolResourceCompiler;
+		}
+		return tool;
+	}
+	
+	string GetCompileTool(CFileNode file)
+	{
+		string tool = file.GetTool();
+		if(tool == "")
+		{
+			string fname = file.GetFilename();
+			string ext = tolower(getExt(fname));
+			if(ext == "d" && mProjectOptions.singleFileCompilation)
+				tool = "DMDsingle";
+			else if(ext == "d" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
@@ -1493,6 +1532,8 @@ class Config :	DisposingComObject,
 		string fname;
 		if(tool == "DMD")
 			return file.GetFilename();
+		if(tool == "DMDsingle")
+			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(getName(file.GetFilename())) ~ ".obj";
 		if(tool == kToolResourceCompiler)
 			fname = mProjectOptions.objdir ~ "\\" ~ getName(file.GetFilename()) ~ ".res";
 		if(tool == "Custom")
@@ -1530,7 +1571,10 @@ class Config :	DisposingComObject,
 			files ~= target ~ "_cv";
 			files ~= addExt(target, "pdb");
 		}
-		files ~= addExt(target, "map");
+		string mapfile = expandedAbsoluteFilename("$(INTDIR)\\$(SAFEPROJECTNAME).map");
+		files ~= mapfile;
+		string buildlog = expandedAbsoluteFilename("$(INTDIR)\\buildlog.html");
+		files ~= buildlog;
 
 		if(mProjectOptions.createImplib)
 			files ~= addExt(target, "lib");
@@ -1590,22 +1634,30 @@ class Config :	DisposingComObject,
 			string include = Package.GetGlobalOptions().IncSearchPath;
 			if(include.length)
 			{
-				include = mProjectOptions.replaceEnvironment(include, this);
+				include = mProjectOptions.replaceEnvironment(include, this, outfile);
 				string[] incs = tokenizeArgs(include);
 				foreach(string inc; incs)
 					cmd ~= " /I" ~ quoteFilename(inc);
 			}
-			cmd ~= " " ~ file.GetFilename();
+			cmd ~= " " ~ quoteFilename(file.GetFilename());
 		}
 		if(tool == "Custom")
 		{
 			cmd = file.GetCustomCmd();
 		}
+		if(tool == "DMDsingle")
+		{
+			string depfile = GetOutputFile(file) ~ ".dep";
+			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
+			cmd ~= mProjectOptions.buildCommandLine(false);
+			cmd ~= " -c -of" ~ quoteFilename(outfile) ~ " -deps=" ~ quoteFilename(depfile);
+			cmd ~= " " ~ file.GetFilename();
+		}
 		if(cmd.length)
 		{
 			cmd = getEnvironmentChanges() ~ cmd ~ "\n";
 			cmd ~= "if errorlevel 1 echo Building " ~ outfile ~ " failed!\n";
-			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename());
+			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
 		return cmd;
 	}
@@ -1658,11 +1710,11 @@ class Config :	DisposingComObject,
 		if(fcmd.length > 100)
 		{
 			precmd ~= "\n";
-			precmd ~= "echo " ~ files[0] ~ " >" ~ responsefile ~ "\n";
+			precmd ~= "echo " ~ files[0] ~ " >" ~ quoteFilename(responsefile) ~ "\n";
 			for(int i = 1; i < files.length; i++)
-				precmd ~= "echo " ~ files[i] ~ " >>" ~ responsefile ~ "\n";
+				precmd ~= "echo " ~ files[i] ~ " >>" ~ quoteFilename(responsefile) ~ "\n";
 			precmd ~= "\n";
-			fcmd = " @" ~ responsefile;
+			fcmd = " @" ~ quoteFilename(responsefile);
 		}
 		else
 			fcmd = " " ~ fcmd;
@@ -1770,6 +1822,47 @@ class Config :	DisposingComObject,
 		return libs;
 	}
 
+	int addJSONFiles(ref string[] files)
+	{
+		int cnt = 0;
+		alias mProjectOptions opt;
+		if(opt.doXGeneration)
+		{
+			void addJSONFile(string xfile)
+			{
+				xfile = makeFilenameAbsolute(xfile, GetProjectDir());
+				if(xfile.length && std.file.exists(xfile))
+				{
+					addunique(files, xfile);
+					cnt++;
+				}
+			}
+			if(opt.singleFileCompilation)
+			{
+				searchNode(mProvider.mProject.GetRootNode(), 
+					delegate (CHierNode n) { 
+						if(CFileNode file = cast(CFileNode) n)
+						{
+							string tool = GetCompileTool(file);
+							if(tool == "DMDsingle")
+							{
+								string outfile = GetOutputFile(file);
+								string xfile = opt.replaceEnvironment(opt.xfilename, this, file.GetFilename(), outfile);
+								addJSONFile(xfile);
+							}
+						}
+						return false;
+					});
+			}
+			else
+			{
+				string xfile = opt.replaceEnvironment(opt.xfilename, this);
+				addJSONFile(xfile);
+			}
+		}
+		return cnt;
+	}
+	
 	// tick the sink and check if build can continue or not.
 	BOOL FFireTick()
 	{

@@ -2201,7 +2201,7 @@ bool searchHierarchy(IVsHierarchy pHierarchy, VSITEMID item, bool delegate (stri
 		((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))))
 	{
 		if(pHierarchy.GetProperty(item, VSHPROPID_FirstChild, &var) == S_OK &&
-		   (var.vt == VT_INT_PTR || var.vt == VT_I4))
+		   (var.vt == VT_INT_PTR || var.vt == VT_I4 || var.vt == VT_INT))
 		{
 			VSITEMID chid = var.lVal;
 			while(chid != VSITEMID_NIL)
@@ -2210,7 +2210,7 @@ bool searchHierarchy(IVsHierarchy pHierarchy, VSITEMID item, bool delegate (stri
 					return true;
 				
 				if(pHierarchy.GetProperty(chid, VSHPROPID_NextSibling, &var) != S_OK ||
-				   (var.vt != VT_INT_PTR && var.vt != VT_I4))
+				   (var.vt != VT_INT_PTR && var.vt != VT_I4 && var.vt != VT_INT))
 					break;
 				chid = var.lVal;
 			}

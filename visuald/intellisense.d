@@ -560,14 +560,7 @@ class LibraryInfos
 						if(Config cfg = qi_cast!Config(activeCfg))
 						{
 							scope(exit) release(cfg);
-							ProjectOptions opt = cfg.GetProjectOptions();
-							if(opt.doXGeneration)
-							{
-								string xfile = opt.replaceEnvironment(opt.xfilename, cfg);
-								xfile = makeFilenameAbsolute(xfile, cfg.GetProjectDir());
-								if(xfile.length && std.file.exists(xfile))
-									addunique(files, xfile);
-							}
+							cfg.addJSONFiles(files);
 						}
 					}
 				}

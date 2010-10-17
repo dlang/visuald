@@ -314,13 +314,13 @@ class LanguageService : DisposingComObject,
 			// Visual D specific
 			new ColorableItem("Visual D Operator",         CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
 				
-			new ColorableItem("Visual D Disabled Keyword",    CI_DARKGRAY,  CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Comment",    CI_DARKGREEN, CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Identifier", CI_DARKGRAY,  CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled String",     CI_DARKGRAY,  CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Number",     CI_DARKGRAY,  CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Text",       CI_DARKGRAY,  CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY,  CI_USERTEXT_BK)
+			new ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+			new ColorableItem("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
+			new ColorableItem("Visual D Disabled Identifier", CI_DARKGRAY, CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled String",     -1,          CI_USERTEXT_BK, RGB(192, 160, 160)),
+			new ColorableItem("Visual D Disabled Number",     CI_DARKGRAY, CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled Text",       CI_DARKGRAY, CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK)
 		];
 	};
 

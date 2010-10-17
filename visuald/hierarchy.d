@@ -257,7 +257,7 @@ class CFileNode : CHierNode,
 				break;
 			case cmdidViewCode:
 				fSupported = true;
-				fEnabled = Config.GetCompileTool(this) == kToolResourceCompiler;
+				fEnabled = Config.IsResource(this);
 				break;
 			default:
 				hr = OLECMDERR_E_NOTSUPPORTED;
@@ -1040,7 +1040,7 @@ version(none)
 	{
 		if(CFileNode fnode = cast(CFileNode) pNode)
 		{
-			string tool = Config.GetCompileTool(fnode);
+			string tool = Config.GetStaticCompileTool(fnode);
 			switch(tool)
 			{
 			case "DMD":                 return kImageDSource;

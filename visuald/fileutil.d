@@ -14,6 +14,7 @@ import std.stream;
 import std.path;
 import std.file;
 import std.utf;
+import std.conv;
 
 string normalizeDir(string dir)
 {
@@ -69,6 +70,14 @@ string getNameWithoutExt(string fname)
 	return name;
 }
 
+string safeFilename(string fname)
+{
+	string safefile = fname;
+	foreach(char ch; ":\\/")
+		safefile = replace(safefile, to!string(ch), "_");
+	return safefile;
+}
+
 string getCmdPath()
 {
 	wchar buffer[260];
@@ -78,16 +87,32 @@ string getCmdPath()
 }
 
 //-----------------------------------------------------------------------------
+long[string] gCachedFileTimes;
+
+void clearCachedFileTimes()
+{
+	long[string] empty;
+	gCachedFileTimes = empty; // = gCachedFileTimes.init;
+}
+
+//-----------------------------------------------------------------------------
 void getOldestNewestFileTime(string[] files, out long oldest, out long newest)
 {
 	oldest = long.max;
 	newest = long.min;
 	foreach(file; files)
 	{
-		if(!exists(file))
-			goto L_fileNotFound;
-		long ftc, fta, ftm;
-		getTimes(file, ftc, fta, ftm);
+		long ftm;
+		if(auto ptm = file in gCachedFileTimes)
+			ftm = *ptm;
+		else
+		{
+			if(!exists(file))
+				goto L_fileNotFound;
+			long ftc, fta;
+			getTimes(file, ftc, fta, ftm);
+			gCachedFileTimes[file] = ftm;
+		}
 		if(ftm > newest)
 			newest = ftm;
 		if(ftm < oldest)

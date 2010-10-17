@@ -196,3 +196,7 @@ unreleased Version 0.3.18
   * added color "Visual D Operator" to "Fonts and Colors" setup
   * added version/debug colorizations
   * additional tools settings page under TextEditor->D->Colorizer
+  * fixed broken search file dialog introduced in last version
+  * project configuration: added single file compilation option
+  * project configuration: changed defaults for "file to clean" and "json path"
+    to better support single file compilation
