@@ -215,8 +215,8 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 				wstring tok = text[prevpos..pos];
 				if(SimpleLexer.isCommentOrSpace(type, tok))
 				{
-					int parseState = getParseState(iState);
-					if(parseState == VersionParseState.IdleDisabled)
+					int parseState = getParseState(state);
+					if(parseState == VersionParseState.IdleDisabled || parseState == VersionParseState.IdleDisabledVerify)
 						type = disabledColorType(type);
 				}
 				else

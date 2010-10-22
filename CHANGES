@@ -200,3 +200,6 @@ unreleased Version 0.3.18
   * project configuration: added single file compilation option
   * project configuration: changed defaults for "file to clean" and "json path"
     to better support single file compilation
+  * fixed incomplete parsing of escaped file names in dependency files
+  * improved dependency file parsing speed
+  * bugfix: imports with selective imports could miss from dependent import files
