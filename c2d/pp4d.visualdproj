@@ -5,6 +5,7 @@
   <link>0</link>
   <lib>0</lib>
   <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -85,7 +86,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>0</debugEngine>
+  <debugEngine>1</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Config name="Release">
@@ -93,6 +94,7 @@
   <link>0</link>
   <lib>0</lib>
   <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>

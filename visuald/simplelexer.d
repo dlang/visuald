@@ -109,7 +109,7 @@ class SimpleLexer
 		return idx;
 	}
 
-	static int scanIdentifier(wstring text, int startpos, ref uint pos, int* pid = null)
+	static int scanIdentifier(S)(S text, int startpos, ref uint pos, int* pid = null)
 	{
 		while(pos < text.length)
 		{
@@ -140,17 +140,20 @@ class SimpleLexer
 		return TokenColor.Identifier;
 	}
 
-	static int scanOperator(wstring text, uint startpos, ref uint pos, int* pid = null)
+	static int scanOperator(S)(S text, uint startpos, ref uint pos, int* pid = null)
 	{
 		int len;
 		int id = parseOperator(text, startpos, len);
+		if(id == TOK_error)
+			return TokenColor.Text;
+		
 		if(pid)
 			*pid = id;
 		pos = startpos + len;
 		return TokenColor.Operator;
 	}
 	
-	static dchar trydecode(wstring text, ref uint pos)
+	static dchar trydecode(S)(S text, ref uint pos)
 	{
 		if(pos >= text.length)
 			return 0;
@@ -158,7 +161,7 @@ class SimpleLexer
 		return ch;
 	}
 
-	static void skipDigits(wstring text, ref uint pos, int base)
+	static void skipDigits(S)(S text, ref uint pos, int base)
 	{
 		while(pos < text.length)
 		{
@@ -173,7 +176,7 @@ class SimpleLexer
 		}
 	}
 
-	static int scanNumber(wstring text, dchar ch, ref uint pos, int* pid = null)
+	static int scanNumber(S)(S text, dchar ch, ref uint pos, int* pid = null)
 	{
 		// pos after first digit
 		int base = 10;
@@ -257,7 +260,7 @@ L_exponent:
 		return TokenColor.Literal;
 	}
 
-	static State scanBlockComment(wstring text, ref uint pos)
+	static State scanBlockComment(S)(S text, ref uint pos)
 	{
 		while(pos < text.length)
 		{
@@ -274,7 +277,7 @@ L_exponent:
 		return State.kBlockComment;
 	}
 
-	static State scanNestedComment(wstring text, ref uint pos, ref int nesting)
+	static State scanNestedComment(S)(S text, ref uint pos, ref int nesting)
 	{
 		while(pos < text.length)
 		{
@@ -308,7 +311,7 @@ L_exponent:
 		return State.kNestedComment;
 	}
 
-	static State scanStringWysiwyg(wstring text, ref uint pos)
+	static State scanStringWysiwyg(S)(S text, ref uint pos)
 	{
 		while(pos < text.length)
 		{
@@ -319,7 +322,7 @@ L_exponent:
 		return State.kStringWysiwyg;
 	}
 
-	static State scanStringAltWysiwyg(wstring text, ref uint pos)
+	static State scanStringAltWysiwyg(S)(S text, ref uint pos)
 	{
 		while(pos < text.length)
 		{
@@ -330,7 +333,7 @@ L_exponent:
 		return State.kStringAltWysiwyg;
 	}
 
-	static State scanStringCStyle(wstring text, ref uint pos, dchar term)
+	static State scanStringCStyle(S)(S text, ref uint pos, dchar term)
 	{
 		while(pos < text.length)
 		{
@@ -347,7 +350,7 @@ L_exponent:
 		return State.kStringCStyle;
 	}
 
-	static State startDelimiterString(wstring text, ref uint pos, ref int nesting)
+	static State startDelimiterString(S)(S text, ref uint pos, ref int nesting)
 	{
 		nesting = 1;
 
@@ -372,7 +375,7 @@ L_exponent:
 		return s;
 	}
 
-	static bool isStartingComment(wstring txt, ref int idx)
+	static bool isStartingComment(S)(S txt, ref int idx)
 	{
 		if(idx >= 0 && idx < txt.length-1 && txt[idx] == '/' && (txt[idx+1] == '*' || txt[idx+1] == '+'))
 			return true;
@@ -384,14 +387,14 @@ L_exponent:
 		return false;
 	}
 	
-	static bool isEndingComment(wstring txt, ref int idx)
+	static bool isEndingComment(S)(S txt, ref int pos)
 	{
-		if(idx < txt.length && idx > 0 && txt[idx] == '/' && (txt[idx-1] == '*' || txt[idx-1] == '+'))
+		if(pos < txt.length && pos > 0 && txt[pos] == '/' && (txt[pos-1] == '*' || txt[pos-1] == '+'))
 		{
-			idx--;
+			pos--;
 			return true;
 		}
-		if(idx < txt.length-1 && idx >= 0 && (txt[idx] == '*' || txt[idx] == '+') && txt[idx+1] == '/')
+		if(pos < txt.length-1 && pos >= 0 && (txt[pos] == '*' || txt[pos] == '+') && txt[pos+1] == '/')
 			return true;
 		return false;
 	}
@@ -485,12 +488,12 @@ L_exponent:
 		assert(0);
 	}
 
-	static bool isCommentOrSpace(int type, wstring text)
+	static bool isCommentOrSpace(S)(int type, S text)
 	{
 		return (type == TokenColor.Comment || (type == TokenColor.Text && isspace(text[0])));
 	}
 
-	static State scanNestedDelimiterString(wstring text, ref uint pos, State s, ref int nesting)
+	static State scanNestedDelimiterString(S)(S text, ref uint pos, State s, ref int nesting)
 	{
 		dchar open  = openingBracket(s);
 		dchar close = closingBracket(s);
@@ -508,7 +511,7 @@ L_exponent:
 		return s;
 	}
 
-	static State scanDelimitedString(wstring text, ref uint pos, int delim)
+	static State scanDelimitedString(S)(S text, ref uint pos, int delim)
 	{
 		string delimiter = s_delimiters[delim];
 
@@ -529,7 +532,7 @@ L_exponent:
 		return State.kStringDelimited;
 	}
 
-	static int scan(ref int state, in wstring text, ref uint pos, ref int id)
+	static int scan(S)(ref int state, in S text, ref uint pos, ref int id)
 	{
 		State s = scanState(state);
 		int nesting = nestingLevel(state);
@@ -707,7 +710,7 @@ L_exponent:
 		return type; // tokLevel > 0 ? TokenColor.String : type;
 	}
 	
-	static int scan(ref int state, in wstring text, ref uint pos)
+	static int scan(S)(ref int state, in S text, ref uint pos)
 	{
 		int id;
 		return scan(state, text, pos, id);
@@ -715,7 +718,7 @@ L_exponent:
 }
 
 ///////////////////////////////////////////////////////////////
-TokenInfo[] ScanLine(int iState, wstring text)
+TokenInfo[] ScanLine(S)(int iState, S text)
 {
 	TokenInfo[] lineInfo;
 	for(uint pos = 0; pos < text.length; )
