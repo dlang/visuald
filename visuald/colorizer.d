@@ -205,15 +205,18 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 		version(LOG) mixin(_LogIndentNoRet);
 		
 		uint pos = 0;
+		bool inTokenString = (SimpleLexer.tokenStringLevel(state) > 0);
+		
 		while(pos < iLength)
 		{
 			uint prevpos = pos;
 			int type = SimpleLexer.scan(state, text, pos);
 			
+			bool nowInTokenString = (SimpleLexer.tokenStringLevel(state) > 0);
 			if(mColorizeVersions)
 			{
 				wstring tok = text[prevpos..pos];
-				if(SimpleLexer.isCommentOrSpace(type, tok))
+				if(SimpleLexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
 				{
 					int parseState = getParseState(state);
 					if(parseState == VersionParseState.IdleDisabled || parseState == VersionParseState.IdleDisabledVerify)
@@ -229,7 +232,10 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 					type = parseVersions(span, type, tok, state, versionsChanged);
 				}
 			}
-			
+			if(inTokenString || nowInTokenString)
+				type = stringColorType(type);
+			inTokenString = nowInTokenString;
+				
 			while(prevpos < pos)
 				pAttributes[prevpos++] = type;
 		}
@@ -252,21 +258,28 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 	int ScanAndParse(int iLine, wstring text, bool doShift, ref int state, ref uint pos, ref bool versionsChanged)
 	{
 		uint prevpos = pos;
-		int type = SimpleLexer.scan(state, text, pos);
+		int id;
+		int type = SimpleLexer.scan(state, text, pos, id);
 		if(mColorizeVersions)
 		{
-			wstring tok = text[prevpos..pos];
-			if(!SimpleLexer.isCommentOrSpace(type, tok))
+			wstring txt = text[prevpos..pos];
+			if(!SimpleLexer.isCommentOrSpace(type, txt))
 			{
-				ParserSpan span;
+				ParserToken tok;
+				tok.type = type;
+				tok.text = txt;
+				tok.id = id;
 				if (pos >= text.length)
-					span = ParserSpan(prevpos, iLine, 0, iLine + 1);
+					tok.span = ParserSpan(prevpos, iLine, 0, iLine + 1);
 				else
-					span = ParserSpan(prevpos, iLine, pos, iLine);
-				if(doShift)
-					mParser.shift(tok, span);
+					tok.span = ParserSpan(prevpos, iLine, pos, iLine);
 
-				type = parseVersions(span, type, tok, state, versionsChanged);
+				bool inTokenString = (SimpleLexer.tokenStringLevel(state) > 0);
+				if(doShift)
+					mParser.shift(tok);
+
+				if (!inTokenString)
+					type = parseVersions(tok.span, type, txt, state, versionsChanged);
 			}
 		}
 		return type;
@@ -507,6 +520,23 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.String:      return TokenColor.DisabledString;
 			case TokenColor.Literal:     return TokenColor.DisabledLiteral;
 			case TokenColor.Operator:    return TokenColor.DisabledOperator;
+			default: break;
+		}
+		return type;
+	}
+	
+	int stringColorType(int type)
+	{
+		switch(type)
+		{
+			case TokenColor.Text2:
+			case TokenColor.Text:        return TokenColor.StringText;
+			case TokenColor.Keyword:     return TokenColor.StringKeyword;
+			case TokenColor.Comment:     return TokenColor.StringComment;
+			case TokenColor.Identifier:  return TokenColor.StringIdentifier;
+			case TokenColor.String:      return TokenColor.StringString;
+			case TokenColor.Literal:     return TokenColor.StringLiteral;
+			case TokenColor.Operator:    return TokenColor.StringOperator;
 			default: break;
 		}
 		return type;

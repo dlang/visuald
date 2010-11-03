@@ -35,7 +35,7 @@ import std.string;
 import std.path;
 import std.file;
 import std.conv;
-import std.contracts;
+import std.exception;
 import std.c.stdio : sprintf;
 
 private IVsWindowFrame sWindowFrame;

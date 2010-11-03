@@ -440,6 +440,9 @@ version(none){
 		scope RegKey userKeyPackage = new RegKey(HKEY_CURRENT_USER, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
 		userKeyPackage.Delete("SkipLoading");
 
+		// remove Text Editor FontsAndColors Cache to add new Colors provided by Visual D
+		RegDeleteRecursive(HKEY_CURRENT_USER, registrationRoot ~ "\\FontAndColors\\Cache\\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}");
+
 		// global registry keys for marshalled objects
 		scope RegKey keyMarshal1 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocServer32"w);
 		keyMarshal1.Set("InprocServer32"w, dllPath);

@@ -311,7 +311,8 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("String",     CI_MAROON,          CI_USERTEXT_BK),
 			new ColorableItem("Number",     CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
 			new ColorableItem("Text",       CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
-			// Visual D specific
+			
+			// Visual D specific (must match SimpleLexer.TokenColor
 			new ColorableItem("Visual D Operator",         CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
 				
 			new ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
@@ -320,7 +321,15 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("Visual D Disabled String",     -1,          CI_USERTEXT_BK, RGB(192, 160, 160)),
 			new ColorableItem("Visual D Disabled Number",     CI_DARKGRAY, CI_USERTEXT_BK),
 			new ColorableItem("Visual D Disabled Text",       CI_DARKGRAY, CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK)
+			new ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK),
+
+			new ColorableItem("Visual D Token String Keyword",    -1,      CI_USERTEXT_BK, RGB(160,0,128)),
+			new ColorableItem("Visual D Token String Comment",    -1,      CI_USERTEXT_BK, RGB(128,160,80)),
+			new ColorableItem("Visual D Token String Identifier", -1,      CI_USERTEXT_BK, RGB(128,32,32)),
+			new ColorableItem("Visual D Token String String",     -1,      CI_USERTEXT_BK, RGB(255,64,64)),
+			new ColorableItem("Visual D Token String Number",     -1,      CI_USERTEXT_BK, RGB(128,32,32)),
+			new ColorableItem("Visual D Token String Text",       -1,      CI_USERTEXT_BK, RGB(128,32,32)),
+			new ColorableItem("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,32,32))
 		];
 	};
 

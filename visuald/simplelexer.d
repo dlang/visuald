@@ -8,9 +8,6 @@
 
 module simplelexer;
 
-//import idl.vsi.textmgr;
-import sdk.port.vsi;
-
 import std.ctype;
 import std.utf;
 import std.uni;
@@ -38,21 +35,15 @@ enum TokenColor : int
 	DisabledString,
 	DisabledLiteral,
 	DisabledText,
-	DisabledOperator
-}
+	DisabledOperator,
 
-enum TokenType : int
-{
-	Unknown,
-	Text,
-	Keyword,
-	Identifier,
-	String,
-	Literal,
-	Operator,
-	Delimiter,
-	LineComment,
-	Comment
+	StringKeyword,
+	StringComment,
+	StringIdentifier,
+	StringString,
+	StringLiteral,
+	StringText,
+	StringOperator,
 }
 
 struct TokenInfo
@@ -79,9 +70,10 @@ class SimpleLexer
 		kStringDelimitedNestedParen,
 		kStringDelimitedNestedBrace,
 		kStringDelimitedNestedAngle,
+		kStringTokenFirst,  // after 'q', but before '{' to pass '{' as single operator
 		kStringHex,    // for now, treated as State.kStringWysiwyg
 		kStringToken,  // encoded by tokenStringLevel > 0
-		kStringEscape, // removed in D2.026
+		kStringEscape, // removed in D2.026, not supported
 	}
 
 	// lexer scan state is: ___TTNNS
@@ -95,7 +87,7 @@ class SimpleLexer
 
 	static int toState(State s, int nesting, int tokLevel, int otherState)
 	{
-		assert(s >= State.kWhite && s <= State.kStringDelimitedNestedAngle);
+		assert(s >= State.kWhite && s <= State.kStringTokenFirst);
 		assert(nesting < 32);
 		assert(tokLevel < 32);
 
@@ -117,7 +109,7 @@ class SimpleLexer
 		return idx;
 	}
 
-	static int scanIdentifier(wstring text, int startpos, ref uint pos)
+	static int scanIdentifier(wstring text, int startpos, ref uint pos, int* pid = null)
 	{
 		while(pos < text.length)
 		{
@@ -129,14 +121,32 @@ class SimpleLexer
 		}
 		string ident = toUTF8(text[startpos .. pos]);
 
-		if(ident in keywords_map)
+		if(int* pident = ident in keywords_map)
+		{
+			if(pid)
+				*pid = *pident;
 			return TokenColor.Keyword;
+		}
 
+		if(int* pident = ident in specials_map)
+		{
+			if(pid)
+				*pid = TOK_StringLiteral;
+			return TokenColor.String;
+		}
+
+		if(pid)
+			*pid = TOK_Identifier;
 		return TokenColor.Identifier;
 	}
 
-	static int scanOperator(wstring text, int startpos, ref uint pos)
+	static int scanOperator(wstring text, uint startpos, ref uint pos, int* pid = null)
 	{
+		int len;
+		int id = parseOperator(text, startpos, len);
+		if(pid)
+			*pid = id;
+		pos = startpos + len;
 		return TokenColor.Operator;
 	}
 	
@@ -163,7 +173,7 @@ class SimpleLexer
 		}
 	}
 
-	static int scanNumber(wstring text, dchar ch, ref uint pos)
+	static int scanNumber(wstring text, dchar ch, ref uint pos, int* pid = null)
 	{
 		// pos after first digit
 		int base = 10;
@@ -221,6 +231,8 @@ L_exponent:
 			}
 			if(ch == 'i')
 				pos = nextpos;
+			if(*pid)
+				*pid = TOK_FloatLiteral;
 		}
 		else
 		{
@@ -239,6 +251,8 @@ L_exponent:
 				if(toupper(ch) == 'U')
 					pos = nextpos;
 			}
+			if(*pid)
+				*pid = TOK_IntegerLiteral;
 		}
 		return TokenColor.Literal;
 	}
@@ -515,7 +529,7 @@ L_exponent:
 		return State.kStringDelimited;
 	}
 
-	static int scan(ref int state, in wstring text, ref uint pos)
+	static int scan(ref int state, in wstring text, ref uint pos, ref int id)
 	{
 		State s = scanState(state);
 		int nesting = nestingLevel(state);
@@ -524,11 +538,14 @@ L_exponent:
 
 		int type = TokenColor.Text;
 		uint startpos = pos;
+		dchar ch;
 
+		id = TOK_Space;
+		
 		switch(s)
 		{
 		case State.kWhite:
-			dchar ch = decode(text, pos);
+			ch = decode(text, pos);
 			if(ch == 'r' || ch == 'x' || ch == 'q')
 			{
 				int prevpos = pos;
@@ -543,7 +560,10 @@ L_exponent:
 				}
 				else if(tokLevel == 0 && ch == 'q' && nch == '{')
 				{
-					tokLevel = 1;
+					pos = prevpos;
+					type = TokenColor.String;
+					id = TOK_StringLiteral;
+					s = State.kStringTokenFirst;
 					break;
 				}
 				else if(nch == '"')
@@ -553,13 +573,13 @@ L_exponent:
 				else
 				{
 					pos = prevpos;
-					type = scanIdentifier(text, startpos, pos);
+					type = scanIdentifier(text, startpos, pos, &id);
 				}
 			}
 			else if(isIdentifierChar(ch))
-				type = scanIdentifier(text, startpos, pos);
+				type = scanIdentifier(text, startpos, pos, &id);
 			else if(isdigit(ch))
-				type = scanNumber(text, ch, pos);
+				type = scanNumber(text, ch, pos, &id);
 			else if (ch == '/')
 			{
 				int prevpos = pos;
@@ -568,24 +588,27 @@ L_exponent:
 				{
 					// line comment
 					type = TokenColor.Comment;
+					id = TOK_Comment;
 					pos = text.length;
 				}
 				else if (ch == '*')
 				{
 					s = scanBlockComment(text, pos);
 					type = TokenColor.Comment;
+					id = TOK_Comment;
 				}
 				else if (ch == '+')
 				{
 					nesting = 1;
 					s = scanNestedComment(text, pos, nesting);
 					type = TokenColor.Comment;
+					id = TOK_Comment;
 				}
 				else
 				{
 					// step back to position after '/'
 					pos = prevpos;
-					type = scanOperator(text, startpos, pos);
+					type = scanOperator(text, startpos, pos, &id);
 				}
 			}
 			else if (ch == '"')
@@ -597,48 +620,75 @@ L_exponent:
 			else if (ch == '\'')
 			{
 				s = scanStringCStyle(text, pos, '\'');
+				id = TOK_CharLiteral;
 				type = TokenColor.String;
 			}
-			else if (tokLevel > 0)
+			else if (ch == '#')
 			{
-				if(ch == '{')
-					tokLevel++;
-				if (ch == '}')
-					tokLevel--;
-				type = TokenColor.String;
+				// display #! or #line as line comment
+				type = TokenColor.Comment;
+				id = TOK_Comment;
+				pos = text.length;
 			}
-			else if(!isspace(ch))
-				type = scanOperator(text, startpos, pos);
+			else
+			{
+				if (tokLevel > 0)
+				{
+					if(ch == '{')
+						tokLevel++;
+					else if (ch == '}')
+						tokLevel--;
+					id = TOK_StringLiteral;
+				}
+				if(!isspace(ch))
+					type = scanOperator(text, startpos, pos, &id);
+			}
 			break;
 
+		case State.kStringTokenFirst:
+			ch = decode(text, pos);
+			assert(ch == '{');
+
+			tokLevel = 1;
+			type = TokenColor.Operator;
+			id = TOK_StringLiteral;
+			s = State.kWhite;
+			break;
+			
 		case State.kBlockComment:
 			s = scanBlockComment(text, pos);
 			type = TokenColor.Comment;
+			id = TOK_Comment;
 			break;
 
 		case State.kNestedComment:
 			s = scanNestedComment(text, pos, nesting);
 			type = TokenColor.Comment;
+			id = TOK_Comment;
 			break;
 
 		case State.kStringCStyle:
 			s = scanStringCStyle(text, pos, '"');
 			type = TokenColor.String;
+			id = TOK_StringLiteral;
 			break;
 
 		case State.kStringWysiwyg:
 			s = scanStringWysiwyg(text, pos);
 			type = TokenColor.String;
+			id = TOK_StringLiteral;
 			break;
 
 		case State.kStringAltWysiwyg:
 			s = scanStringAltWysiwyg(text, pos);
 			type = TokenColor.String;
+			id = TOK_StringLiteral;
 			break;
 
 		case State.kStringDelimited:
 			s = scanDelimitedString(text, pos, nesting);
 			type = TokenColor.String;
+			id = TOK_StringLiteral;
 			break;
 
 		case State.kStringDelimitedNestedBracket:
@@ -647,13 +697,20 @@ L_exponent:
 		case State.kStringDelimitedNestedAngle:
 			s = scanNestedDelimiterString(text, pos, s, nesting);
 			type = TokenColor.String;
+			id = TOK_StringLiteral;
 			break;
 
 		default:
 			break;
 		}
 		state = toState(s, nesting, tokLevel, otherState);
-		return tokLevel > 0 ? TokenColor.String : type;
+		return type; // tokLevel > 0 ? TokenColor.String : type;
+	}
+	
+	static int scan(ref int state, in wstring text, ref uint pos)
+	{
+		int id;
+		return scan(state, text, pos, id);
 	}
 }
 
@@ -675,11 +732,15 @@ TokenInfo[] ScanLine(int iState, wstring text)
 ///////////////////////////////////////////////////////////////
 
 __gshared int[string] keywords_map; // maps to TOK enumerator
+__gshared int[string] specials_map; // maps to TOK enumerator
 
 shared static this() 
 {
 	foreach(i, s; keywords)
-	    keywords_map[s] = i;
+		keywords_map[s] = TOK_begin_Keywords + i;
+
+	foreach(i, s; specials)
+		specials_map[s] = i;
 }
 
 const string keywords[] = 
@@ -797,130 +858,170 @@ const string keywords[] =
 	"__thread",
 	"__traits",
 	"__overloadset",
+	
 	"__FILE__",
 	"__LINE__",
+	
 	"shared",
 	"immutable",
 	
 	"@disable",
 	"@property",
-	"@safe",
+	"@safe",	
 	"@system",
 	"@trusted",
 	
 ];
 
-string genKeywordsEnum(string[] kwords)
+// not listed as keywords, but "special tokens"
+const string specials[] = 
+[
+	"__DATE__",
+	"__EOF__",
+	"__TIME__",
+	"__TIMESTAMP__",
+	"__VENDOR__",
+	"__VERSION__",
+];
+
+////////////////////////////////////////////////////////////////////////
+enum
 {
-	string enums = "enum {";
+	TOK_begin_Generic,
+	TOK_Space = TOK_begin_Generic,
+	TOK_Comment,
+	TOK_Identifier,
+	TOK_IntegerLiteral,
+	TOK_FloatLiteral,
+	TOK_StringLiteral,
+	TOK_CharLiteral,
+	TOK_end_Generic
+}
+
+string genKeywordsEnum(T)(string[] kwords, T begin)
+{
+	string enums = "enum { TOK_begin_Keywords = " ~ to!string(begin) ~ ", ";
+	bool first = true;
 	foreach(kw; kwords)
 	{
 		if(kw[0] == '@')
 			kw = kw[1..$];
-		enums ~= "TOK_" ~ kw ~ ",";
+		enums ~= "TOK_" ~ kw;
+		if(first)
+		{
+			first = false;
+			enums ~= " = TOK_begin_Keywords";
+		}
+		enums ~= ",";
 	}
-	enums ~= "TOK_numKeywords }";
+	enums ~= "TOK_end_Keywords }";
 	return enums;
 }
 
-mixin(genKeywordsEnum(keywords));
+mixin(genKeywordsEnum(keywords, "TOK_end_Generic"));
 
-const string[] operators =
+const string[2][] operators =
 [
-	"lcurly",           "{",
-	"rcurly",           "}",
-	"lparen",           "(",
-	"rparen",           ")",
-	"lbracket",         "[",
-	"rbracket",         "]",
-	"semicolon",        ";",
-	"colon",            ":",
-	"comma",            ",",
-	"dot",              ".",
-	"xor",              "^",
-	"xorass",           "^=",
-	"assign",           "=",
-	"lt",               "<",
-	"gt",               ">",
-	"le",               "<=",
-	"ge",               ">=",
-	"equal",            "==",
-	"notequal",         "!=",
+	[ "lcurly",           "{" ],
+	[ "rcurly",           "}" ],
+	[ "lparen",           "(" ],
+	[ "rparen",           ")" ],
+	[ "lbracket",         "[" ],
+	[ "rbracket",         "]" ],
+	[ "semicolon",        ";" ],
+	[ "colon",            ":" ],
+	[ "comma",            "," ],
+	[ "dot",              "." ],
+	[ "xor",              "^" ],
+	[ "xorass",           "^=" ],
+	[ "assign",           "=" ],
+	[ "lt",               "<" ],
+	[ "gt",               ">" ],
+	[ "le",               "<=" ],
+	[ "ge",               ">=" ],
+	[ "equal",            "==" ],
+	[ "notequal",         "!=" ],
 
-	"unord",            "!<>=",
-	"ue",               "!<>",
-	"lg",               "<>",
-	"leg",              "<>=",
-	"ule",              "!>",
-	"ul",               "!>=",
-	"uge",              "!<",
-	"ug",               "!<=",
+	[ "unord",            "!<>=" ],
+	[ "ue",               "!<>" ],
+	[ "lg",               "<>" ],
+	[ "leg",              "<>=" ],
+	[ "ule",              "!>" ],
+	[ "ul",               "!>=" ],
+	[ "uge",              "!<" ],
+	[ "ug",               "!<=" ],
 
-	"not",              "!",
-	"shl",              "<<",
-	"shr",              ">>",
-	"ushr",             ">>>",
-	"add",              "+",
-	"min",              "-",
-	"mul",              "*",
-	"div",              "/",
-	"mod",              "%",
-	"slice",            "..",
-	"dotdotdot",        "...",
-	"and",              "&",
-	"andand",           "&&",
-	"or",               "|",
-	"oror",             "||",
-	"array",            "[]",
-//	"address",          "&",
-//	"star",             "*",
-	"tilde",            "~",
-	"dollar",           "$",
-	"plusplus",         "++",
-	"minusminus",       "--",
-//	"preplusplus",      "++",
-//	"preminusminus",    "--",
-	"question",         "?",
-//	"neg",              "-",
-//	"uadd",             "+",
-	"addass",           "+=",
-	"minass",           "-=",
-	"mulass",           "*=",
-	"divass",           "/=",
-	"modass",           "%=",
-	"shlass",           "<<=",
-	"shrass",           ">>=",
-	"ushrass",          ">>>=",
-	"andass",           "&=",
-	"orass",            "|=",
-	"catass",           "~=",
-//	"cat",              "~",
-//	"identity",         "is",
-//	"notidentity",      "!is",
+	[ "not",              "!" ],
+	[ "shl",              "<<" ],
+	[ "shr",              ">>" ],
+	[ "ushr",             ">>>" ],
+	[ "add",              "+" ],
+	[ "min",              "-" ],
+	[ "mul",              "*" ],
+	[ "div",              "/" ],
+	[ "mod",              "%" ],
+	[ "slice",            ".." ],
+	[ "dotdotdot",        "..." ],
+	[ "and",              "&" ],
+	[ "andand",           "&&" ],
+	[ "or",               "|" ],
+	[ "oror",             "||" ],
+	[ "array",            "[]" ],
+	[ "tilde",            "~" ],
+	[ "dollar",           "$" ],
+	[ "plusplus",         "++" ],
+	[ "minusminus",       "--" ],
+	[ "question",         "?" ],
+	[ "addass",           "+=" ],
+	[ "minass",           "-=" ],
+	[ "mulass",           "*=" ],
+	[ "divass",           "/=" ],
+	[ "modass",           "%=" ],
+	[ "shlass",           "<<=" ],
+	[ "shrass",           ">>=" ],
+	[ "ushrass",          ">>>=" ],
+	[ "andass",           "&=" ],
+	[ "orass",            "|=" ],
+	[ "catass",           "~=" ],
 
-	"pow",              "^^",
-	"powass",           "^^=",
+	[ "pow",              "^^" ],
+	[ "powass",           "^^=" ],
 
 /+
-	"plus",             "++",
-	"pow",              "^^",
-	"powass",           "^^==",
-	"minus",            "--",
+	// symbols with duplicate meaning
+	[ "address",          "&" ],
+	[ "star",             "*" ],
+	[ "preplusplus",      "++" ],
+	[ "preminusminus",    "--" ],
+	[ "neg",              "-" ],
+	[ "uadd",             "+" ],
+	[ "cat",              "~" ],
+	[ "identity",         "is" ],
+	[ "notidentity",      "!is" ],
+	[ "plus",             "++" ],
+	[ "minus",            "--" ],
 +/
 ];
 
-string genOperatorEnum(string[] ops)
+string genOperatorEnum(T)(string[2][] ops, T begin)
 {
-	string enums = "enum {";
-	for(int o = 0; o < ops.length; o += 2)
+	string enums = "enum { TOK_begin_Operators = " ~ to!string(begin) ~ ", ";
+	bool first = true;
+	for(int o = 0; o < ops.length; o++)
 	{
-		enums ~= "TOK_" ~ ops[o] ~ ",";
+		enums ~= "TOK_" ~ ops[o][0];
+		if(first)
+		{
+			first = false;
+			enums ~= " = TOK_begin_Operators";
+		}
+		enums ~= ",";
 	}
-	enums ~= "TOK_numOperators }";
+	enums ~= "TOK_end_Operators }";
 	return enums;
 }
 
-mixin(genOperatorEnum(operators));
+mixin(genOperatorEnum(operators, "TOK_end_Keywords"));
 
 enum TOK_error = -1;
 
@@ -934,18 +1035,18 @@ bool _stringEqual(string s1, string s2, int length)
 	return true;
 }
 
-string genOperatorParser(string peekch, string getch)
+string genOperatorParser(string getch)
 {
 	// create sorted list of operators
 	int[] opIndex;
-	for(int o = 0; o < operators.length; o += 2)
+	for(int o = 0; o < operators.length; o++)
 	{
-		string op = operators[o+1];
+		string op = operators[o][1];
 		int p = 0;
 		while(p < opIndex.length)
 		{
-			assert(op != operators[opIndex[p]+1], "duplicate operator " ~ op);
-			if(op < operators[opIndex[p]+1])
+			assert(op != operators[opIndex[p]][1], "duplicate operator " ~ op);
+			if(op < operators[opIndex[p]][1])
 				break;
 			p++;
 		}
@@ -966,10 +1067,10 @@ string genOperatorParser(string peekch, string getch)
 	string txt = indent ~ "dchar ch;\n";
 	for(int o = 0; o < opIndex.length; o++)
 	{
-		string op = operators[opIndex[o]+1];
+		string op = operators[opIndex[o]][1];
 		string nextop;
 		if(o + 1 < opIndex.length)
-			nextop = operators[opIndex[o+1]+1];
+			nextop = operators[opIndex[o+1]][1];
 		
 		while(op.length > matchlen)
 		{
@@ -997,13 +1098,13 @@ string genOperatorParser(string peekch, string getch)
 			txt ~= indent ~ "switch(ch)\n";
 			txt ~= indent ~ "{\n";
 			indent ~= "  ";
-			txt ~= indent ~ "default: len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]] ~ "; // " ~ op ~ "\n";
-			defaults ~= operators[opIndex[o]];
+			txt ~= indent ~ "default: len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]][0] ~ "; // " ~ op ~ "\n";
+			defaults ~= operators[opIndex[o]][0];
 			matchlen++;
 		}
 		else
 		{
-			txt ~= indent ~ "case '" ~ op[matchlen-1] ~ "': len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]] ~ "; // " ~ op ~ "\n";
+			txt ~= indent ~ "case '" ~ op[matchlen-1] ~ "': len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]][0] ~ "; // " ~ op ~ "\n";
 		
 			while(nextop.length < matchlen || (matchlen > 0 && !_stringEqual(op, nextop, matchlen-1)))
 			{
@@ -1018,13 +1119,22 @@ string genOperatorParser(string peekch, string getch)
 	return txt;
 }
 
-// pragma(msg, genOperatorParser("peekch()", "getch()"));
-
-int parseOperator()
+int parseOperator(wstring txt, uint pos, ref int len)
 {
-	dchar getch() { return 0; }
-	int len;
-
-	mixin(genOperatorParser("peekch()", "getch()"));
+	dchar getch() 
+	{
+		if(pos >= txt.length)
+			return 0;
+		return decode(txt, pos);
+	}
+	
+	mixin(genOperatorParser("getch()"));
 }
 
+////////////////////////////////////////////////////////////////////////
+version(none)
+{
+	pragma(msg, genKeywordsEnum(keywords, "TOK_end_Generic"));
+	pragma(msg, genOperatorEnum(operators, "TOK_end_Keywords"));
+	pragma(msg, genOperatorParser("getch()"));
+}

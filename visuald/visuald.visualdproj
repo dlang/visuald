@@ -70,7 +70,7 @@
   <run>0</run>
   <runargs />
   <runCv2pdb>1</runCv2pdb>
-  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <pathCv2pdb>m:\s\d\cv2pdb\trunk\bin\debug\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
   <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib</libfiles>

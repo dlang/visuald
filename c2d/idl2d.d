@@ -1421,7 +1421,7 @@ version(none) version(vsi)
 		
 		replaceTokenSequence(tokens, "extern const __declspec(selectany)", "dconst", true);
 		replaceTokenSequence(tokens, "EXTERN_C $args;", "/+EXTERN_C $args;+/", true);
-		replaceTokenSequence(tokens, "SAFEARRAY($_ident)", "SAFEARRAY!($_ident)", true);
+		replaceTokenSequence(tokens, "SAFEARRAY($_ident)", "SAFEARRAY/*($_ident)*/", true);
 
 		replaceTokenSequence(tokens, "enum $_ident;", "/+ enum $_ident; +/", true);
 		replaceTokenSequence(tokens, "struct $_ident;", "/+ struct $_ident; +/", true);
@@ -1738,6 +1738,12 @@ version(all) {
 	
 		replaceTokenSequence(tokens, "DECLARE_HANDLE($_ident);", "typedef HANDLE $_ident;", true);
 		replaceTokenSequence(tokens, "__inline $_identFun(", "inline int $_identFun(", true);
+
+		replaceTokenSequence(tokens, "HRESULT($_ident)($_args);", "HRESULT $_ident($_args);", true);
+		replaceTokenSequence(tokens, "$_identType (*$_identFunc)($_args)", "$_identType function($_args) $_identFunc", true);
+		replaceTokenSequence(tokens, "void* (*$_identFunc)($_args)", "void* function($_args) $_identFunc", true);
+		replaceTokenSequence(tokens, "$_identType (__stdcall *$_identFunc)($_args)", "$_identType __stdcall function($_args) $_identFunc", true);
+		replaceTokenSequence(tokens, "$_identType (__cdecl *$_identFunc)($_args)", "$_identType __cdecl function($_args) $_identFunc", true);
 }
 version(targetD2)
 {

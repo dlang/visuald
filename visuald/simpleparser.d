@@ -11,6 +11,8 @@ module simpleparser;
 import std.exception;
 import std.string;
 
+import simplelexer;
+
 version(MAIN)
 {
 import std.stdio;
@@ -21,8 +23,6 @@ alias string ParserToken;
 else // !version(MAIN)
 {
 import sdk.vsi.sdk_shared;
-
-alias wstring ParserToken;
 
 import logutil;
 //debug = log;
@@ -82,11 +82,19 @@ NonBraceToken: anything but '{', '(', '[' (might also exclude ')', ']', '}')
 
 struct ParserSpan
 {
-    int   iStartIndex;	// starting character index within the line (must be <= length of line)
-    int   iStartLine;	// starting line
-    int   iEndIndex;	// ending character index within the line (must be <= length of line)
-    int   iEndLine;		// ending line
+	int iStartIndex; // starting character index within the line (must be <= length of line)
+	int iStartLine;  // starting line
+	int iEndIndex;   // ending character index within the line (must be <= length of line)
+	int iEndLine;    // ending line
 }
+
+struct ParserToken
+{
+	wstring    text;
+	int        type;
+	int        id;
+	ParserSpan span;
+};
 
 debug(log)
 string logString(ref ParserSpan span)
@@ -167,7 +175,7 @@ class Location
 	}
 	
 	// return true if token consumed
-	abstract bool shift(Parser parser, ParserToken tok, ref ParserSpan span);
+	abstract bool shift(Parser parser, ref ParserToken tok);
 	
 	// return true if reduce should not be called on parent 
 	bool reduce(Parser parser, Location loc)
@@ -190,26 +198,26 @@ class Module : Location
 		super(null, _span);
 	}
 	
-	override bool shift(Parser parser, ParserToken tok, ref ParserSpan _span)
+	override bool shift(Parser parser, ref ParserToken tok)
 	{
 		Location loc;
-		switch(tok)
+		switch(tok.id)
 		{
-			case ")":
-			case "]":
-			case "}": // mismatched brace - do not create statement, it will reduce on them, just eat away
+			case TOK_rparen:
+			case TOK_rbracket:
+			case TOK_rcurly: // mismatched brace - do not create statement, it will reduce on them, just eat away
 				return true;
-			case "if":
-				loc = new IfStatement(this, _span);
+			case TOK_if:
+				loc = new IfStatement(this, tok.span);
 				break;
-			case "version":
-				loc = new VersionStatement(this, _span);
+			case TOK_version:
+				loc = new VersionStatement(this, tok.span);
 				break;
-			case "debug":
-				loc = new DebugStatement(this, _span);
+			case TOK_debug:
+				loc = new DebugStatement(this, tok.span);
 				break;
 			default:
-				Statement stmt = new Statement(this, _span);
+				Statement stmt = new Statement(this, tok.span);
 				parser.push(stmt);
 				return false;
 		}
@@ -224,41 +232,41 @@ class Statement : Location
 {
 	mixin ForwardConstructor;
 
-	override bool shift(Parser parser, ParserToken tok, ref ParserSpan _span)
+	override bool shift(Parser parser, ref ParserToken tok)
 	{
 		Location loc;
-		switch(tok)
+		switch(tok.id)
 		{
-			case "if":
-				loc = new IfStatement(this, _span);
+			case TOK_if:
+				loc = new IfStatement(this, tok.span);
 				break;
-			case "version":
-				loc = new VersionStatement(this, _span);
+			case TOK_version:
+				loc = new VersionStatement(this, tok.span);
 				break;
-			case "debug":
-				loc = new DebugStatement(this, _span);
+			case TOK_debug:
+				loc = new DebugStatement(this, tok.span);
 				break;
-			case "{":
-				loc = new CurlyBracedStatement(this, _span);
+			case TOK_lcurly:
+				loc = new CurlyBracedStatement(this, tok.span);
 				break;
-			case "[":
-				loc = new SquareBracedExpression(this, _span);
+			case TOK_lbracket:
+				loc = new SquareBracedExpression(this, tok.span);
 				break;
-			case "(":
-				loc = new RoundBracedExpression(this, _span);
+			case TOK_lparen:
+				loc = new RoundBracedExpression(this, tok.span);
 				break;
-			case ")":
-			case "]":
-			case "}": // mismatched brace - bail out
+			case TOK_rparen:
+			case TOK_rbracket:
+			case TOK_rcurly: // mismatched brace - bail out
 				parser.reduce();
 				return false;
-			case ";":
-				extendSpan(_span);
+			case TOK_semicolon:
+				extendSpan(tok.span);
 				parser.reduce();
 				return true;
 				
 			default:
-				extendSpan(_span);
+				extendSpan(tok.span);
 				return true;
 		}
 		parser.push(loc);
@@ -273,42 +281,42 @@ class Statement : Location
 	
 }
 
-class BracedStatement(string open, string close) : Location
+class BracedStatement(int openid, int closeid) : Location
 {
 	mixin ForwardConstructor;
 
-	override bool shift(Parser parser, ParserToken tok, ref ParserSpan _span)
+	override bool shift(Parser parser, ref ParserToken tok)
 	{
 		if(spanEmpty(span))
 		{
-			extendSpan(_span);
-			assert(tok == open);
+			extendSpan(tok.span);
+			assert(tok.id == openid);
 			return true;
 		}
-		extendSpan(_span);
-		if(tok == close)
+		extendSpan(tok.span);
+		if(tok.id == closeid)
 		{
 			parser.reduce();
 			return true;
 		}
-		if(tok == ")" || tok == "]" || tok == "}")
+		if(tok.id == TOK_rcurly || tok.id == TOK_rbracket || tok.id == TOK_rparen)
 		{
 			// mismatched brace - bail out
 			parser.reduce();
 			return false;
 		}
-		Statement stmt = new Statement(this, _span);
+		Statement stmt = new Statement(this, tok.span);
 		parser.push(stmt);
 		return false;
 	}
 }
 
-class CurlyBracedStatement : BracedStatement!("{","}")
+class CurlyBracedStatement : BracedStatement!(TOK_lcurly, TOK_rcurly)
 {
 	mixin ForwardConstructor;
 }
 
-class SquareBracedExpression : BracedStatement!("[","]")
+class SquareBracedExpression : BracedStatement!(TOK_lbracket, TOK_rbracket)
 {
 	mixin ForwardConstructor;
 
@@ -318,7 +326,7 @@ class SquareBracedExpression : BracedStatement!("[","]")
 	}
 }
 
-class RoundBracedExpression : BracedStatement!("(",")")
+class RoundBracedExpression : BracedStatement!(TOK_lparen, TOK_rparen)
 {
 	mixin ForwardConstructor;
 
@@ -332,22 +340,23 @@ class IfDebugVersionStatement(string keyword) : Location
 {
 	mixin ForwardConstructor;
 
-	override bool shift(Parser parser, ParserToken tok, ref ParserSpan _span)
+	override bool shift(Parser parser, ref ParserToken tok)
 	{
 		if(spanEmpty(span))
 		{
-			assert(tok == keyword);
-			extendSpan(_span);
+			assert(tok.text == keyword);
+			extendSpan(tok.span);
 			return true;
 		}
 		
 		if(children.length == 0)
 		{
-			if(tok != "(")
+			if(tok.id != TOK_lparen)
 			{
-				if(keyword == "debug" && tok != "=")
+				if(keyword == "debug" && tok.id != TOK_assign)
 				{
-					ParserSpan sp = ParserSpan(_span.iStartIndex, _span.iStartLine, _span.iStartIndex, _span.iStartLine);
+					ParserSpan sp = ParserSpan(tok.span.iStartIndex, tok.span.iStartLine, 
+											   tok.span.iStartIndex, tok.span.iStartLine);
 					children ~= new RoundBracedExpression(this, sp);
 					goto then_statement;
 				}
@@ -355,28 +364,28 @@ class IfDebugVersionStatement(string keyword) : Location
 				parser.replace(new Statement(parent, span));
 				return false;
 			}
-			extendSpan(_span);
-			Location loc = new RoundBracedExpression(this, _span);
+			extendSpan(tok.span);
+			Location loc = new RoundBracedExpression(this, tok.span);
 			parser.push(loc);
 			return false;
 		}
 		if(children.length == 1)
 		{
 then_statement:
-			extendSpan(_span);
-			Statement stmt = new Statement(this, _span);
+			extendSpan(tok.span);
+			Statement stmt = new Statement(this, tok.span);
 			parser.push(stmt);
 			return false;
 		}
 		if(children.length == 2)
 		{
-			if(tok != "else")
+			if(tok.id != TOK_else)
 			{
 				parser.reduce();
 				return false;
 			}
-			extendSpan(_span);
-			Statement stmt = new Statement(this, _span);
+			extendSpan(tok.span);
+			Statement stmt = new Statement(this, tok.span);
 			parser.push(stmt);
 			return true;
 		}
@@ -415,13 +424,13 @@ class Parser
 	{
 	}
 
-	void shift(ParserToken tok, ref ParserSpan span)
+	void shift(ref ParserToken tok)
 	{
 		if(stack.length == 0)
 			stack ~= new Module;
 		
 		debug(log) writeln(repeat(" ", stack.length), "shift ", tok, " ", logString(span));
-		while(!stack[$-1].shift(this, tok, span)) {}
+		while(!stack[$-1].shift(this, tok)) {}
 	}
 
 	void reduce()

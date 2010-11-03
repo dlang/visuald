@@ -6,7 +6,7 @@
 ; define CV2PDB to include cv2pdb installation (expected at ../../../cv2pdb/trunk)
 !define CV2PDB
 
-; define MAGO to include magob installation (expected at ../../../mago)
+; define MAGO to include mago installation (expected at ../../../mago)
 !define MAGO
 
 ;--------------------------------
@@ -59,9 +59,23 @@
   !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
 !endif
   !define VDSETTINGS_KEY          "\ToolsOptionsPages\Projects\Visual D Settings"
+  
 !ifdef MAGO
   !define MAGO_CLSID              {97348AC0-2B6B-4B99-A245-4C7E2C09D403}
-  !define MAGO_KEY                AD7Metrics\Engine\${MAGO_CLSID}
+  !define MAGO_ENGINE_KEY         AD7Metrics\Engine\${MAGO_CLSID}
+  !define MAGO_EXCEPTION_KEY      AD7Metrics\Exception\${MAGO_CLSID}
+  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/MagoDebug for more information. Copyright (c) 2010 Aldo J. Nunez"
+
+  !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
+  !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MINOR " MAGO_VERSION_MINOR
+  !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_REVISION " MAGO_VERSION_REVISION
+
+  !searchreplace MAGO_VERSION_MAJOR ${MAGO_VERSION_MAJOR} " " ""
+  !searchreplace MAGO_VERSION_MINOR ${MAGO_VERSION_MINOR} " " ""
+  !searchreplace MAGO_VERSION_REVISION ${MAGO_VERSION_REVISION} " " ""
+  
+  !define MAGO_VERSION "${MAGO_VERSION_MAJOR}.${MAGO_VERSION_MINOR}.${MAGO_VERSION_REVISION}"
+  !echo "MAGO_VERSION = ${MAGO_VERSION}"
 !endif
 
   ;Default installation folder
@@ -354,13 +368,13 @@ SectionEnd
 
 Section "Uninstall"
 
-  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS_NET_REGISTRY_KEY}'
-  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2005_REGISTRY_KEY}'
-  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2008_REGISTRY_KEY}'
-  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VS2010_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS_NET_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2005_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2008_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2010_REGISTRY_KEY}'
 !ifdef EXPRESS
-  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
-  ExecWait 'rundll32 $INSTDIR\${DLLNAME} RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
 !ifdef CV2PDB
@@ -380,10 +394,20 @@ Section "Uninstall"
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
   
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\InstalledProducts\Mago"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\InstalledProducts\Mago"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\InstalledProducts\Mago"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\InstalledProducts\Mago"
 !endif
   
   Call un.installedFiles
@@ -535,6 +559,13 @@ Function un.PatchAutoExp
   Pop $1
 FunctionEnd
 
+; File macro
+!macro RegisterException Root Exception
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "${Root}\${MAGO_EXCEPTION_KEY}\${Exception}" "Code" 0
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "${Root}\${MAGO_EXCEPTION_KEY}\${Exception}" "State" 3
+!macroend
+!define RegisterException "!insertmacro RegisterException"
+
 Function RegisterMago
   Exch $1
   Exch
@@ -548,10 +579,79 @@ Function RegisterMago
   # $1 contains registry root
 enabled:
   ClearErrors
-  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_KEY}" "CLSID" "${MAGO_CLSID}" 
-  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_KEY}" "Name"  "Mago Native" 
-  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_KEY}" "ENC" 0
-  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_KEY}" "Disassembly" 1
+  
+  WriteRegStr ${VS_REGISTRY_ROOT} "$1\InstalledProducts\Mago" "" "Mago Native Debug Engine"
+  WriteRegStr ${VS_REGISTRY_ROOT} "$1\InstalledProducts\Mago" "PID" "${MAGO_VERSION}"
+  WriteRegStr ${VS_REGISTRY_ROOT} "$1\InstalledProducts\Mago" "ProductDetails" "${MAGO_ABOUT}"
+  
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_ENGINE_KEY}" "CLSID" "${MAGO_CLSID}" 
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_ENGINE_KEY}" "Name"  "Mago Native" 
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "ENC" 0
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "Disassembly" 1
+
+  ${RegisterException} $1 "D Exceptions"
+  ${RegisterException} $1 "D Exceptions\core.exception.AssertError"
+  ${RegisterException} $1 "D Exceptions\core.exception.FinalizeError"
+  ${RegisterException} $1 "D Exceptions\core.exception.HiddenFuncError"
+  ${RegisterException} $1 "D Exceptions\core.exception.OutOfMemoryError"
+  ${RegisterException} $1 "D Exceptions\core.exception.RangeError"
+  ${RegisterException} $1 "D Exceptions\core.exception.SwitchError"
+  ${RegisterException} $1 "D Exceptions\core.exception.UnicodeException"
+  ${RegisterException} $1 "D Exceptions\core.sync.exception.SyncException"
+  ${RegisterException} $1 "D Exceptions\core.thread.FiberException"
+  ${RegisterException} $1 "D Exceptions\core.thread.ThreadException"
+  ${RegisterException} $1 "D Exceptions\object.Error"
+  ${RegisterException} $1 "D Exceptions\object.Exception"
+  ${RegisterException} $1 "D Exceptions\std.base64.Base64CharException"
+  ${RegisterException} $1 "D Exceptions\std.base64.Base64Exception"
+  ${RegisterException} $1 "D Exceptions\std.boxer.UnboxException"
+  ${RegisterException} $1 "D Exceptions\std.concurrency.LinkTerminated"
+  ${RegisterException} $1 "D Exceptions\std.concurrency.MailboxFull"
+  ${RegisterException} $1 "D Exceptions\std.concurrency.MessageMismatch"
+  ${RegisterException} $1 "D Exceptions\std.concurrency.OwnerTerminated"
+  ${RegisterException} $1 "D Exceptions\std.conv.ConvError"
+  ${RegisterException} $1 "D Exceptions\std.conv.ConvOverflowError"
+  ${RegisterException} $1 "D Exceptions\std.dateparse.DateParseError"
+  ${RegisterException} $1 "D Exceptions\std.demangle.MangleException"
+  ${RegisterException} $1 "D Exceptions\std.encoding.EncodingException"
+  ${RegisterException} $1 "D Exceptions\std.encoding.UnrecognizedEncodingException"
+  ${RegisterException} $1 "D Exceptions\std.exception.ErrnoException"
+  ${RegisterException} $1 "D Exceptions\std.file.FileException"
+  ${RegisterException} $1 "D Exceptions\std.format.FormatError"
+  ${RegisterException} $1 "D Exceptions\std.json.JSONException"
+  ${RegisterException} $1 "D Exceptions\std.loader.ExeModuleException"
+  ${RegisterException} $1 "D Exceptions\std.math.NotImplemented"
+  ${RegisterException} $1 "D Exceptions\std.regexp.RegExpException"
+  ${RegisterException} $1 "D Exceptions\std.socket.AddressException"
+  ${RegisterException} $1 "D Exceptions\std.socket.HostException"
+  ${RegisterException} $1 "D Exceptions\std.socket.SocketAcceptException"
+  ${RegisterException} $1 "D Exceptions\std.socket.SocketException"
+  ${RegisterException} $1 "D Exceptions\std.stdio.StdioException"
+  ${RegisterException} $1 "D Exceptions\std.stream.OpenException"
+  ${RegisterException} $1 "D Exceptions\std.stream.ReadException"
+  ${RegisterException} $1 "D Exceptions\std.stream.SeekException"
+  ${RegisterException} $1 "D Exceptions\std.stream.StreamException"
+  ${RegisterException} $1 "D Exceptions\std.stream.StreamFileException"
+  ${RegisterException} $1 "D Exceptions\std.stream.WriteException"
+  ${RegisterException} $1 "D Exceptions\std.typecons.NotImplementedError"
+  ${RegisterException} $1 "D Exceptions\std.uri.URIerror"
+  ${RegisterException} $1 "D Exceptions\std.utf.UtfError"
+  ${RegisterException} $1 "D Exceptions\std.utf.UtfException"
+  ${RegisterException} $1 "D Exceptions\std.variant.VariantException"
+  ${RegisterException} $1 "D Exceptions\std.windows.registry.RegistryException"
+  ${RegisterException} $1 "D Exceptions\std.windows.registry.Win32Exception"
+  ${RegisterException} $1 "D Exceptions\std.xml.CDataException"
+  ${RegisterException} $1 "D Exceptions\std.xml.CheckException"
+  ${RegisterException} $1 "D Exceptions\std.xml.CommentException"
+  ${RegisterException} $1 "D Exceptions\std.xml.DecodeException"
+  ${RegisterException} $1 "D Exceptions\std.xml.InvalidTypeException"
+  ${RegisterException} $1 "D Exceptions\std.xml.PIException"
+  ${RegisterException} $1 "D Exceptions\std.xml.TagException"
+  ${RegisterException} $1 "D Exceptions\std.xml.TextException"
+  ${RegisterException} $1 "D Exceptions\std.xml.XIException"
+  ${RegisterException} $1 "D Exceptions\std.xml.XMLException"
+  ${RegisterException} $1 "D Exceptions\std.zip.ZipException"
+  ${RegisterException} $1 "D Exceptions\std.zlib.ZlibException"
     
 NoInstall:
 

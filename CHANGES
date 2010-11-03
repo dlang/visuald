@@ -190,7 +190,7 @@ Version history
     to avoid access rights problems
   * command "Build phobos browse info" now also works for D1
 
-unreleased Version 0.3.18
+2010-10-22 Version 0.3.18
 
   * linker errors with file name on the same line did not make it into the error list
   * added color "Visual D Operator" to "Fonts and Colors" setup

@@ -15,7 +15,7 @@ struct _PROPSHEETPAGEW;
 
 extern(Windows)
 {
-	typedef UINT (*LPFNPSPCALLBACKA)(HWND hwnd, UINT uMsg, _PROPSHEETPAGEA *ppsp);
-	typedef UINT (*LPFNPSPCALLBACKW)(HWND hwnd, UINT uMsg, _PROPSHEETPAGEW *ppsp);
+	typedef UINT function(HWND hwnd, UINT uMsg, _PROPSHEETPAGEA *ppsp) *LPFNPSPCALLBACKA;
+	typedef UINT function(HWND hwnd, UINT uMsg, _PROPSHEETPAGEW *ppsp) *LPFNPSPCALLBACKW;
 }
 
