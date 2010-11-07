@@ -68,13 +68,13 @@
 
   !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
   !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MINOR " MAGO_VERSION_MINOR
-  !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_REVISION " MAGO_VERSION_REVISION
+  !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_BUILD " MAGO_VERSION_BUILD
 
   !searchreplace MAGO_VERSION_MAJOR ${MAGO_VERSION_MAJOR} " " ""
   !searchreplace MAGO_VERSION_MINOR ${MAGO_VERSION_MINOR} " " ""
-  !searchreplace MAGO_VERSION_REVISION ${MAGO_VERSION_REVISION} " " ""
-  
-  !define MAGO_VERSION "${MAGO_VERSION_MAJOR}.${MAGO_VERSION_MINOR}.${MAGO_VERSION_REVISION}"
+  !searchreplace MAGO_VERSION_BUILD ${MAGO_VERSION_BUILD} " " ""
+
+  !define MAGO_VERSION "${MAGO_VERSION_MAJOR}.${MAGO_VERSION_MINOR}.${MAGO_VERSION_BUILD}.${MAGO_VERSION_SVNREVISION}"
   !echo "MAGO_VERSION = ${MAGO_VERSION}"
 !endif
 
@@ -588,6 +588,7 @@ enabled:
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_ENGINE_KEY}" "Name"  "Mago Native" 
   WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "ENC" 0
   WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "Disassembly" 1
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "Exceptions" 1
 
   ${RegisterException} $1 "D Exceptions"
   ${RegisterException} $1 "D Exceptions\core.exception.AssertError"

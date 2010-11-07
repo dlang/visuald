@@ -208,4 +208,4 @@ Version history
   * now packaged with new mago version, including better exception handling and 
     disassembly support
   * fixed mago deinstallation, added mago to Visual Studio About Window
-  * added token identifier enumarator to lexer
+  * added token identifier enumerator to lexer
