@@ -216,3 +216,4 @@ Version history
   * fixed some issues with detecting floating point numbers
   * fixed issues with bad colorization state
   * fixed crash when a project in a solution could no longer be found
+  * now packaged with cv2pdb 0.19
