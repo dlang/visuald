@@ -10,6 +10,7 @@ module simpleparser;
 
 import std.exception;
 import std.string;
+import std.conv;
 
 import simplelexer;
 
@@ -26,8 +27,6 @@ import logutil;
 //debug = log;
 alias logCall writeln;
 }
-
-debug(log) import std.conv;
 
 // very simple parser, just checking curly braces and statement/declaration boundaries
 // we are mainly interested in finding the matching else to if, version and debug statements
@@ -94,7 +93,6 @@ struct ParserToken(S)
 	ParserSpan span;
 };
 
-debug(log)
 string logString(ref ParserSpan span)
 {
 	if(span.iStartLine == 0 && span.iEndLine == 0)

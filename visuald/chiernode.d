@@ -122,6 +122,9 @@ public:
 			return null;
 
 		CHierNode pNode = GetRootNode();
+		if(!pNode)
+			return null;
+		
 		return pNode.GetCVsHierarchy();
 	}
 

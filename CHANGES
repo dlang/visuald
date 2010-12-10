@@ -209,3 +209,10 @@ Version history
     disassembly support
   * fixed mago deinstallation, added mago to Visual Studio About Window
   * added token identifier enumerator to lexer
+
+2010-12-11 Version 0.3.19
+
+  * fixed [] being a single token confusing brace matching
+  * fixed some issues with detecting floating point numbers
+  * fixed issues with bad colorization state
+  * fixed crash when a project in a solution could no longer be found

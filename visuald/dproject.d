@@ -2573,12 +2573,13 @@ Error:
 
 	bool parseXML()
 	{
+		string fileName;
 		try
 		{
-			string fileName = toUTF8(mFilename);
+			fileName = toUTF8(mFilename);
 			mDoc = readXML(fileName);
 			if(!mDoc)
-				return false;
+				goto fail;
 
 			xml.Element root = xml.getRoot(mDoc);
 			if(xml.Element el = xml.getElement(root, "ProjectGuid"))
@@ -2608,6 +2609,13 @@ Error:
 		{
 			logCall(e.toString());
 		}
+
+	fail:
+		string projectName = getNameWithoutExt(fileName);
+		CProjectNode rootnode = new CProjectNode("", this);
+		rootnode.SetName("Failed to load " ~ projectName);
+		SetRootNode(rootnode);
+		
 		return false;
 	}
 

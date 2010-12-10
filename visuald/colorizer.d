@@ -772,7 +772,7 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 		version(LOG) mixin(LogCallMix2);
 		
 		int ln = line;
-		if(ln > mLineState.length)
+		if(ln >= mLineState.length)
 			ln = max(mLineState.length, 1) - 1;
 		while(ln > 0 && mLineState[ln] == -1)
 			ln--;
@@ -822,14 +822,14 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 	{
 		version(LOG) mixin(LogCallMix);
 		
+		int p;
 		int diffLines = iNewEndLine - iOldEndLine;
 		if(diffLines > 0)
 		{
 			int lines = mSource.GetLineCount();   // new line count
 			SaveLineState(lines, -1); // ensure mLineState[] is large enough
 			
-			int p = lines;
-			for(; p > iNewEndLine; p--)
+			for(p = lines; p > iNewEndLine; p--)
 				mLineState[p] = mLineState[p - diffLines];
 			
 			for(; p > iStartLine; p--)
@@ -838,11 +838,11 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 		else if(diffLines < 0)
 		{
 			int lines = mSource.GetLineCount();   // new line count
-			int p = lines;
-			for(p = iNewEndLine; p < lines; p++)
-				mLineState[p] = mLineState[p - diffLines];
-			
 			for(p = iStartLine + 1; p < iNewEndLine; p++)
+				mLineState[p] = -1;
+			for(; p - diffLines < lines; p++)
+				mLineState[p] = mLineState[p - diffLines];
+			for(; p < lines; p++)
 				mLineState[p] = -1;
 		}
 		
