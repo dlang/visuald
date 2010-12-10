@@ -205,9 +205,12 @@ class SimpleLexer
 
 		if((base == 10 && tolower(ch) == 'e') || (base == 16 && tolower(ch) == 'p'))
 			goto L_exponent;
-		if(base >= 10 && ch == '.')
+		uint trypos = nextpos;
+		if(base >= 8 && ch == '.' && trydecode(text, trypos) != '.') // ".." is the slice token
 		{
 			// float
+			if(base < 10)
+				base = 10;
 			pos = nextpos;
 			skipDigits(text, pos, base);
 
@@ -232,14 +235,18 @@ L_exponent:
 				pos = nextpos;
 				ch = trydecode(text, nextpos);
 			}
+complexLiteral:
 			if(ch == 'i')
 				pos = nextpos;
-			if(*pid)
+			if(pid)
 				*pid = TOK_FloatLiteral;
 		}
 		else
 		{
 			// check integer suffix
+			if(ch == 'i')
+				goto complexLiteral;
+
 			if(toupper(ch) == 'U')
 			{
 				pos = nextpos;
@@ -254,7 +261,7 @@ L_exponent:
 				if(toupper(ch) == 'U')
 					pos = nextpos;
 			}
-			if(*pid)
+			if(pid)
 				*pid = TOK_IntegerLiteral;
 		}
 		return TokenColor.Literal;
@@ -583,6 +590,15 @@ L_exponent:
 				type = scanIdentifier(text, startpos, pos, &id);
 			else if(isdigit(ch))
 				type = scanNumber(text, ch, pos, &id);
+			else if (ch == '.')
+			{
+				uint nextpos = pos;
+				ch = trydecode(text, nextpos);
+				if(isdigit(ch))
+					type = scanNumber(text, ch, pos, &id);
+				else
+					type = scanOperator(text, startpos, pos, &id);
+			}
 			else if (ch == '/')
 			{
 				int prevpos = pos;
@@ -623,7 +639,7 @@ L_exponent:
 			else if (ch == '\'')
 			{
 				s = scanStringCStyle(text, pos, '\'');
-				id = TOK_CharLiteral;
+				id = TOK_CharacterLiteral;
 				type = TokenColor.String;
 			}
 			else if (ch == '#')
@@ -858,6 +874,7 @@ const string keywords[] =
 	"macro",
 	"pure",
 	"nothrow",
+	"__gshared",
 	"__thread",
 	"__traits",
 	"__overloadset",
@@ -897,8 +914,16 @@ enum
 	TOK_IntegerLiteral,
 	TOK_FloatLiteral,
 	TOK_StringLiteral,
-	TOK_CharLiteral,
+	TOK_CharacterLiteral,
+	TOK_EOF,
 	TOK_end_Generic
+}
+
+string genKeywordEnum(string kw)
+{
+	if(kw[0] == '@')
+		kw = kw[1..$];
+	return "TOK_" ~ kw;
 }
 
 string genKeywordsEnum(T)(string[] kwords, T begin)
@@ -907,9 +932,7 @@ string genKeywordsEnum(T)(string[] kwords, T begin)
 	bool first = true;
 	foreach(kw; kwords)
 	{
-		if(kw[0] == '@')
-			kw = kw[1..$];
-		enums ~= "TOK_" ~ kw;
+		enums ~= genKeywordEnum(kw);
 		if(first)
 		{
 			first = false;
@@ -969,7 +992,6 @@ const string[2][] operators =
 	[ "andand",           "&&" ],
 	[ "or",               "|" ],
 	[ "oror",             "||" ],
-	[ "array",            "[]" ],
 	[ "tilde",            "~" ],
 	[ "dollar",           "$" ],
 	[ "plusplus",         "++" ],
@@ -990,7 +1012,11 @@ const string[2][] operators =
 	[ "pow",              "^^" ],
 	[ "powass",           "^^=" ],
 
+	[ "notcontains",      "!in" ],
+	[ "notidentity",      "!is" ],
+	
 /+
+	[ "array",            "[]" ],
 	// symbols with duplicate meaning
 	[ "address",          "&" ],
 	[ "star",             "*" ],
@@ -1000,7 +1026,6 @@ const string[2][] operators =
 	[ "uadd",             "+" ],
 	[ "cat",              "~" ],
 	[ "identity",         "is" ],
-	[ "notidentity",      "!is" ],
 	[ "plus",             "++" ],
 	[ "minus",            "--" ],
 +/
@@ -1122,7 +1147,7 @@ string genOperatorParser(string getch)
 	return txt;
 }
 
-int parseOperator(wstring txt, uint pos, ref int len)
+int parseOperator(S)(S txt, uint pos, ref int len)
 {
 	dchar getch() 
 	{
@@ -1140,4 +1165,25 @@ version(none)
 	pragma(msg, genKeywordsEnum(keywords, "TOK_end_Generic"));
 	pragma(msg, genOperatorEnum(operators, "TOK_end_Keywords"));
 	pragma(msg, genOperatorParser("getch()"));
+}
+
+string tokenString(int id)
+{
+	switch(id)
+	{
+		case TOK_Space:            return " ";
+		case TOK_Comment:          return "/**/";
+		case TOK_Identifier:       return "Identifier";
+		case TOK_IntegerLiteral:   return "IntegerLiteral";
+		case TOK_FloatLiteral:     return "FloatLiteral";
+		case TOK_StringLiteral:    return "StringtLiteral";
+		case TOK_CharacterLiteral: return "CharacterLiteral";
+		case TOK_EOF:              return "__EOF__";
+		case TOK_begin_Keywords: .. case TOK_end_Keywords - 1:
+			return keywords[id - TOK_begin_Keywords];
+		case TOK_begin_Operators: .. case TOK_end_Operators - 1:
+			return operators[id - TOK_begin_Operators][1];
+		default:
+			assert(false);
+	}
 }

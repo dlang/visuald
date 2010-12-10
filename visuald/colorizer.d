@@ -122,7 +122,7 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 	int mLastValidLine;
 	
 	Source mSource;
-	Parser mParser;
+	ParserBase!wstring mParser;
 	Config mConfig;
 	bool mColorizeVersions;
 	
@@ -158,7 +158,7 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 	this(Source src)
 	{
 		mSource = src;
-		mParser = new Parser;
+		mParser = new ParserBase!wstring;
 		
 		mColorizeVersions = Package.GetGlobalOptions().ColorizeVersions;
 		UpdateConfig();
@@ -265,7 +265,7 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 			wstring txt = text[prevpos..pos];
 			if(!SimpleLexer.isCommentOrSpace(type, txt))
 			{
-				ParserToken tok;
+				ParserToken!wstring tok;
 				tok.type = type;
 				tok.text = txt;
 				tok.id = id;
@@ -693,7 +693,7 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 		return ntype;
 	}
 
-	wstring getVersionToken(Location verloc)
+	wstring getVersionToken(LocationBase!wstring verloc)
 	{
 		if(verloc.children.length == 0)
 			return "";
@@ -711,11 +711,11 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 	bool isAddressEnabled(int iLine, int iIndex)
 	{
 		mParser.fixExtend();
-		Location loc = mParser.findLocation(iLine, iIndex, true);
-		Location child = null;
+		LocationBase!wstring loc = mParser.findLocation(iLine, iIndex, true);
+		LocationBase!wstring child = null;
 		while(loc)
 		{
-			if(VersionStatement verloc = cast(VersionStatement) loc)
+			if(VersionStatement!wstring verloc = cast(VersionStatement!wstring) loc)
 			{
 				wstring ver = getVersionToken(verloc);
 				if(isVersionEnabled(verloc.span.iStartLine, ver, 0))
@@ -729,7 +729,7 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 						return false; // then statement
 				}
 			}
-			else if(DebugStatement dbgloc = cast(DebugStatement) loc)
+			else if(DebugStatement!wstring dbgloc = cast(DebugStatement!wstring) loc)
 			{
 				wstring ver = getVersionToken(dbgloc);
 				if(isVersionEnabled(dbgloc.span.iStartLine, ver, 1))
