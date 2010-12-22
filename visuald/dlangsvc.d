@@ -58,6 +58,7 @@ class LanguageService : DisposingComObject,
 //                        ISynchronizeInvoke, 
                         IVsDebuggerEvents, 
                         IVsFormatFilterProvider,
+//                        IVsOutliningCapableLanguage,
                         IVsUpdateSolutionEvents
 {
 	static const GUID iid = g_languageCLSID;
@@ -87,6 +88,8 @@ class LanguageService : DisposingComObject,
 			return S_OK;
 		if(queryInterface!(IVsUpdateSolutionEvents) (this, riid, pvObject))
 			return S_OK;
+		//if(queryInterface!(IVsOutliningCapableLanguage) (this, riid, pvObject))
+		//    return S_OK;
 		
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -421,6 +424,14 @@ class LanguageService : DisposingComObject,
 		
 		return S_OK;
 	}
+
+	// IVsOutliningCapableLanguage ///////////////////////////////
+	//HRESULT CollapseToDefinitions(/+[in]+/ IVsTextLines pTextLines,  // the buffer in question
+	//                              /+[in]+/ IVsOutliningSession pSession)
+	//{
+	//    GetSource(pTextLines).UpdateOutlining(pSession, hrsDefault);
+	//    return S_OK;
+	//}
 	
 	//////////////////////////////////////////////////////////////
 
@@ -571,7 +582,6 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 				return vf;
 		return null;
 	}
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -662,6 +672,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		mBuffer = addref(buffer);
 		mColorizer = new Colorizer(this);
 		mSourceEvents = new SourceEvents(this, mBuffer);
+
+		UpdateOutlining();
 	}
 	~this()
 	{
@@ -716,6 +728,115 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			colorState.ReColorizeLines (iTopLine, iBottomLine);
 		}
 		return S_OK;
+	}
+
+	///////////////////////////////////////////////////////////////////////////////
+	void CheckOutlining(in TextLineChange *pTextLineChange)
+	{
+		if(pTextLineChange.iNewEndLine > pTextLineChange.iOldEndLine)
+			UpdateOutlining();
+	}
+
+	void UpdateOutlining()
+	{
+		if(auto htm = queryService!(VsTextManager, IVsHiddenTextManager))
+		{
+			scope(exit) release(htm);
+			IVsHiddenTextSession htsession;
+			if(htm.GetHiddenTextSession(mBuffer, &htsession) != S_OK)
+				htm.CreateHiddenTextSession(0, mBuffer, null, &htsession);
+				
+			scope(exit) release(htsession);
+			UpdateOutlining(htsession, hrsExpanded);
+		}
+	}
+	
+	void UpdateOutlining(IVsHiddenTextSession session, int state)
+	{
+		NewHiddenRegion[] rgns = CreateOutlineRegions(state);
+		IVsEnumHiddenRegions pEnum;
+		session.AddHiddenRegions(chrNonUndoable, rgns.length, rgns.ptr, &pEnum);
+		release(pEnum);
+	}
+	
+	NewHiddenRegion[] CreateOutlineRegions(int expansionState)
+	{
+		NewHiddenRegion[] rgns;
+		int lastOpenRegion = -1; // builds chain with iEndIndex of TextSpan
+		
+		int lines = GetLineCount();
+		int state = 0;
+		int lastCommentStartLine = -1;
+		int lastCommentStartLineLength = 0;
+		int prevLineLenth = 0;
+		for(int ln = 0; ln < lines; ln++)
+		{
+			wstring txt = GetText(ln, 0, ln, -1);
+			uint pos = 0;
+			bool isSpaceOrComment = true;
+			bool isComment = false;
+			while(pos < txt.length)
+			{
+				uint prevpos = pos;
+				int col = SimpleLexer.scan(state, txt, pos);
+				if(col == TokenColor.Operator)
+				{
+					if(txt[pos-1] == '{')
+					{
+						NewHiddenRegion rgn;
+						rgn.iType = hrtCollapsible;
+						rgn.dwBehavior = hrbClientControlled;
+						rgn.dwState = expansionState;
+						rgn.tsHiddenText = TextSpan(pos, ln, lastOpenRegion, -1);
+						rgn.pszBanner = "...."w.ptr;
+						lastOpenRegion = rgns.length;
+						rgns ~= rgn;
+					}
+					else if(txt[pos-1] == '}' && lastOpenRegion >= 0)
+					{
+						int idx = lastOpenRegion;
+						lastOpenRegion = rgns[idx].tsHiddenText.iEndIndex;
+						if(rgns[idx].tsHiddenText.iStartLine == ln)
+						{
+							for(int i = idx; i < rgns.length - 1; i++)
+								rgns[i] = rgns[i + 1];
+							rgns.length = rgns.length - 1;
+						}
+						else
+						{
+							rgns[idx].tsHiddenText.iEndIndex = pos - 1;
+							rgns[idx].tsHiddenText.iEndLine = ln;
+						}
+					}
+				}
+				isComment = isComment || (col == TokenColor.Comment);
+				isSpaceOrComment = isSpaceOrComment && SimpleLexer.isCommentOrSpace(col, txt[prevpos .. pos]);
+			}
+			if(lastCommentStartLine >= 0)
+			{
+				if(!isSpaceOrComment)
+				{
+					if(lastCommentStartLine + 1 < ln)
+					{
+						NewHiddenRegion rgn;
+						rgn.iType = hrtCollapsible;
+						rgn.dwBehavior = hrbClientControlled;
+						rgn.dwState = expansionState;
+						rgn.tsHiddenText = TextSpan(lastCommentStartLineLength, lastCommentStartLine, prevLineLenth, ln - 1);
+						rgn.pszBanner = "...."w.ptr;
+						rgns ~= rgn;
+					}
+					lastCommentStartLine = -1;
+				}
+			}
+			else if(isComment && isSpaceOrComment)
+			{
+				lastCommentStartLine = ln;
+				lastCommentStartLineLength = txt.length;
+			}
+			prevLineLenth = txt.length;
+		}
+		return rgns;
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////

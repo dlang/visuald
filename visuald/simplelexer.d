@@ -76,6 +76,8 @@ class SimpleLexer
 		kStringEscape, // removed in D2.026, not supported
 	}
 
+	static bool s_scanTokenString = true; // if false, TokenString returns a series of TokenColor.String
+	
 	// lexer scan state is: ___TTNNS
 	// TT: token string nesting level
 	// NN: comment nesting level/string delimiter id
@@ -232,11 +234,12 @@ L_exponent:
 			ch = trydecode(text, nextpos);
 			if(ch == 'L' || toupper(ch) == 'F')
 			{
+L_floatLiteral:
 				pos = nextpos;
 				ch = trydecode(text, nextpos);
 			}
-complexLiteral:
 			if(ch == 'i')
+L_complexLiteral:
 				pos = nextpos;
 			if(pid)
 				*pid = TOK_FloatLiteral;
@@ -245,7 +248,9 @@ complexLiteral:
 		{
 			// check integer suffix
 			if(ch == 'i')
-				goto complexLiteral;
+				goto L_complexLiteral;
+			if(toupper(ch) == 'F')
+				goto L_floatLiteral;
 
 			if(toupper(ch) == 'U')
 			{
@@ -258,6 +263,8 @@ complexLiteral:
 			{
 				pos = nextpos;
 				ch = trydecode(text, nextpos);
+				if(ch == 'i')
+					goto L_complexLiteral;
 				if(toupper(ch) == 'U')
 					pos = nextpos;
 			}
@@ -318,13 +325,22 @@ complexLiteral:
 		return State.kNestedComment;
 	}
 
+	static State scanStringPostFix(S)(S text, ref uint pos)
+	{
+		uint nextpos = pos;
+		dchar ch = trydecode(text, nextpos);
+		if(ch == 'c' || ch == 'w' || ch == 'd')
+			pos = nextpos;
+		return State.kWhite;
+	}
+	
 	static State scanStringWysiwyg(S)(S text, ref uint pos)
 	{
 		while(pos < text.length)
 		{
 			dchar ch = decode(text, pos);
 			if(ch == '"')
-				return State.kWhite;
+				return scanStringPostFix(text, pos);
 		}
 		return State.kStringWysiwyg;
 	}
@@ -335,7 +351,7 @@ complexLiteral:
 		{
 			dchar ch = decode(text, pos);
 			if(ch == '`')
-				return State.kWhite;
+				return scanStringPostFix(text, pos);
 		}
 		return State.kStringAltWysiwyg;
 	}
@@ -352,7 +368,7 @@ complexLiteral:
 				ch = decode(text, pos);
 			}
 			else if(ch == term)
-				return State.kWhite;
+				return scanStringPostFix(text, pos);
 		}
 		return State.kStringCStyle;
 	}
@@ -372,6 +388,8 @@ complexLiteral:
 			s = State.kStringDelimitedNestedBrace;
 		else if(ch == '<')
 			s = State.kStringDelimitedNestedAngle;
+		else if(ch == 0 || isspace(ch)) // bad delimiter, fallback to wysiwyg string
+			s = State.kStringWysiwyg;
 		else
 		{
 			if(isIdentifierChar(ch))
@@ -513,7 +531,7 @@ complexLiteral:
 			else if(ch == close && nesting > 0)
 				nesting--;
 			else if(ch == '"' && nesting == 0)
-				return State.kWhite;
+				return scanStringPostFix(text, pos);
 		}
 		return s;
 	}
@@ -531,9 +549,9 @@ complexLiteral:
 			string ident = toUTF8(text[startpos .. pos]);
 			if(ident == delimiter)
 			{
-				ch = decode(text, pos);
+				ch = trydecode(text, pos);
 				if(ch == '"')
-					return State.kWhite;
+					return scanStringPostFix(text, pos);
 			}
 		}
 		return State.kStringDelimited;
@@ -565,6 +583,8 @@ complexLiteral:
 					s = startDelimiterString(text, pos, nesting);
 					if(s == State.kStringDelimited)
 						goto case State.kStringDelimited;
+					else if(s == State.kStringWysiwyg)
+						goto case State.kStringWysiwyg;
 					else
 						goto case State.kStringDelimitedNestedBracket;
 				}
@@ -657,9 +677,11 @@ complexLiteral:
 						tokLevel++;
 					else if (ch == '}')
 						tokLevel--;
+					if(!isspace(ch))
+						type = scanOperator(text, startpos, pos, &id);
 					id = TOK_StringLiteral;
 				}
-				if(!isspace(ch))
+				else if(!isspace(ch))
 					type = scanOperator(text, startpos, pos, &id);
 			}
 			break;
@@ -723,7 +745,10 @@ complexLiteral:
 			break;
 		}
 		state = toState(s, nesting, tokLevel, otherState);
-		return type; // tokLevel > 0 ? TokenColor.String : type;
+		
+		if(tokLevel > 0)
+			id = TOK_StringLiteral;
+		return type;
 	}
 	
 	static int scan(S)(ref int state, in S text, ref uint pos)
@@ -1132,7 +1157,10 @@ string genOperatorParser(string getch)
 		}
 		else
 		{
-			txt ~= indent ~ "case '" ~ op[matchlen-1] ~ "': len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]][0] ~ "; // " ~ op ~ "\n";
+			string case_txt = "case '" ~ op[matchlen-1] ~ "':";
+			if(isalnum(op[matchlen-1]))
+				case_txt ~= " ch = getch(); if(isalnum(ch)) goto default;\n" ~ indent ~ "  ";
+			txt ~= indent ~ case_txt ~ " len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]][0] ~ "; // " ~ op ~ "\n";
 		
 			while(nextop.length < matchlen || (matchlen > 0 && !_stringEqual(op, nextop, matchlen-1)))
 			{

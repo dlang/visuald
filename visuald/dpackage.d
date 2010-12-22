@@ -513,6 +513,8 @@ class GlobalOptions
 	string VSInstallDir;
 	string VisualDInstallDir;
 
+	bool timeBuilds;
+
 	bool ColorizeVersions = true;
 	bool lastColorizeVersions;
 	
@@ -577,6 +579,7 @@ class GlobalOptions
 			wstring wJSNSearchPath = keyToolOpts.GetString("JSNSearchPath");
 			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
 			ColorizeVersions = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
+			timeBuilds       = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
 	
 			// overwrite by user config
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
@@ -586,7 +589,9 @@ class GlobalOptions
 			ImpSearchPath = toUTF8(keyUserOpts.GetString("ImpSearchPath", wImpSearchPath));
 			JSNSearchPath = toUTF8(keyUserOpts.GetString("JSNSearchPath", wJSNSearchPath));
 			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
-			ColorizeVersions = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
+
+			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
+			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds", 0) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
@@ -633,6 +638,7 @@ class GlobalOptions
 			keyToolOpts.Set("JSNSearchPath", toUTF16(JSNSearchPath));
 			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
 			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
+			keyToolOpts.Set("timeBuilds", timeBuilds);
 		}
 		catch(Exception e)
 		{

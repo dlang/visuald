@@ -17,7 +17,9 @@ import std.regexp;
 import std.file;
 import std.path;
 import std.conv;
+import std.math;
 import std.exception;
+import core.stdc.time;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
@@ -31,6 +33,7 @@ import hierarchy;
 import fileutil;
 import stringutil;
 import config;
+import dpackage;
 
 // builder thread class
 class CBuilderThread // : public CVsThread<CMyProjBuildableCfg>
@@ -315,6 +318,8 @@ public:
 
 	void beginLog()
 	{
+		mStartBuildTime = time(null);
+		
 		mBuildLog = `<html><head><META HTTP-EQUIV="Content-Type" content="text/html">
 </head><body><pre>
 <table width=100% bgcolor=#CFCFE5><tr><td>
@@ -365,6 +370,20 @@ public:
 		{
 			OutputText("cannot write " ~ logfile ~ ":" ~ e.msg);
 		}
+
+		if(Package.GetGlobalOptions().timeBuilds)
+		{
+			time_t now = time(null);
+			double duration = difftime(now, mStartBuildTime);
+			if(duration >= 60)
+			{
+				int min = cast(int) floor(duration / 60);
+				int sec = cast(int) floor(duration - 60 * min);
+				OutputText("Build time: " ~ to!string(min) ~ ":" ~ to!string(sec) ~ " min");
+			}
+			else
+				OutputText("Build time: " ~ to!string(duration) ~ " s");
+		}
 	}
 	
 /+
@@ -389,6 +408,8 @@ public:
 
 	BOOL m_fStopBuild;
 	HANDLE m_hEventStartSync;
+
+	time_t mStartBuildTime;
 	
 	bool mCreateLog = true;
 	string mBuildLog;

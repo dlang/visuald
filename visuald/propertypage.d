@@ -1115,6 +1115,7 @@ class ToolsPropertyPage : GlobalPropertyPage
 		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
 		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
 		AddControl("Resource includes", mIncPath = new Text(mCanvas));
+		AddControl("", mTimeBuilds = new CheckBox(mCanvas, "Show build time"));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1125,6 +1126,7 @@ class ToolsPropertyPage : GlobalPropertyPage
 		mLibPath.setText(opts.LibSearchPath);
 		mIncPath.setText(opts.IncSearchPath);
 		mJSNPath.setText(opts.JSNSearchPath);
+		mTimeBuilds.setChecked(opts.timeBuilds);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1136,6 +1138,8 @@ class ToolsPropertyPage : GlobalPropertyPage
 		changes += changeOption(mLibPath.getText(), opts.LibSearchPath, refopts.LibSearchPath); 
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
 		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
+		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
+		
 		return changes;
 	}
 
@@ -1145,6 +1149,7 @@ class ToolsPropertyPage : GlobalPropertyPage
 	MultiLineText mImpPath;
 	MultiLineText mLibPath;
 	MultiLineText mJSNPath;
+	CheckBox mTimeBuilds;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
