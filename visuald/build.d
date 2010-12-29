@@ -379,6 +379,7 @@ public:
 			{
 				int min = cast(int) floor(duration / 60);
 				int sec = cast(int) floor(duration - 60 * min);
+				string tm = format("%d:%02d", min, sec);
 				OutputText("Build time: " ~ to!string(min) ~ ":" ~ to!string(sec) ~ " min");
 			}
 			else

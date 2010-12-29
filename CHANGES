@@ -217,3 +217,14 @@ Version history
   * fixed issues with bad colorization state
   * fixed crash when a project in a solution could no longer be found
   * now packaged with cv2pdb 0.19
+
+2010-12-29 Version 0.3.20
+
+  * basic outlining support (disable with check box on global text editor page
+    if it is causing trouble, manually activate it with "Outlining -> Collapse to Definitions")
+  * added build times output (set check box on global project option page)
+  * fixed missing newline after post build command
+  * fix: suffix L was not recognized on floats
+  * code completion and goto definition now also work in comments or strings
+  * ddoc files in project now also passed to DMD automatically
+  * support for generating modules.ddoc for CanDyDOC

@@ -54,7 +54,7 @@ class OpenDocumentList {}
 //---------------------------------------------------------------------------
 class CHierNode : DisposingDispatchObject
 {
-	shared static this()
+	static void shared_static_this()
 	{
 		gVsItemMap_sync = new Object;
 	}
@@ -482,7 +482,7 @@ public:
 
 	//////////////////////////////////////////////////////////////
 	__gshared static ComTypeInfoHolder mTypeHolder;
-	shared static this()
+	static void shared_static_this_typeHolder()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 
@@ -501,7 +501,7 @@ public:
 		};
 		addref(mTypeHolder);
 	}
-	shared static ~this()
+	static void shared_static_dtor_typeHolder()
 	{
 		mTypeHolder = release(mTypeHolder);
 	}

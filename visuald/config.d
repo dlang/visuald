@@ -31,6 +31,7 @@ import build;
 import propertypage;
 import stringutil;
 import fileutil;
+import lexutil;
 
 const string kToolResourceCompiler = "Resource Compiler";
 const string kCmdLogFileExtension = "build";
@@ -124,6 +125,7 @@ class ProjectOptions
 	string docdir;		// write documentation file to docdir directory
 	string docname;		// write documentation file to docname
 	string ddocfiles;	// macro include files for Ddoc
+	string modules_ddoc; // generate modules.ddoc for candydoc
 
 	bool doHdrGeneration;	// process embedded documentation comments
 	string hdrdir;		// write 'header' file to docdir directory
@@ -449,6 +451,7 @@ class ProjectOptions
 		elem ~= new xml.Element("doDocComments", toElem(doDocComments));
 		elem ~= new xml.Element("docdir", toElem(docdir));
 		elem ~= new xml.Element("docname", toElem(docname));
+		elem ~= new xml.Element("modules_ddoc", toElem(modules_ddoc));
 		elem ~= new xml.Element("ddocfiles", toElem(ddocfiles));
 
 		elem ~= new xml.Element("doHdrGeneration", toElem(doHdrGeneration));
@@ -557,6 +560,7 @@ class ProjectOptions
 		fromElem(elem, "doDocComments", doDocComments);
 		fromElem(elem, "docdir", docdir);
 		fromElem(elem, "docname", docname);
+		fromElem(elem, "modules_ddoc", modules_ddoc);
 		fromElem(elem, "ddocfiles", ddocfiles);
 
 		fromElem(elem, "doHdrGeneration", doHdrGeneration);
@@ -1501,7 +1505,7 @@ class Config :	DisposingComObject,
 		{
 			string fname = file.GetFilename();
 			string ext = tolower(getExt(fname));
-			if(ext == "d" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
+			if(ext == "d" || ext == "ddoc" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
@@ -1518,7 +1522,7 @@ class Config :	DisposingComObject,
 			string ext = tolower(getExt(fname));
 			if(ext == "d" && mProjectOptions.singleFileCompilation)
 				tool = "DMDsingle";
-			else if(ext == "d" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
+			else if(ext == "d" || ext == "ddoc" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
@@ -1681,6 +1685,42 @@ class Config :	DisposingComObject,
 		return cmd;
 	}
 
+	string getModuleName(string fname)
+	{
+		string ext = tolower(getExt(fname));
+		if(ext != "d" && ext != "di")
+			return "";
+		
+		string modname = getModuleDeclarationName(fname);
+		if(modname.length > 0)
+			return modname;
+		return getName(getBaseName(fname));
+	}
+
+	string getModulesDDocCommandLine(string[] files, ref string modules_ddoc)
+	{
+		string mod_cmd;
+		modules_ddoc = strip(mProjectOptions.modules_ddoc);
+		if(modules_ddoc.length > 0)
+		{
+			modules_ddoc = quoteFilename(modules_ddoc);
+			mod_cmd = "echo MODULES = >" ~ modules_ddoc ~ "\n";
+			string workdir = GetProjectDir();
+			for(int i = 0; i < files.length; i++)
+			{
+				string fname = makeFilenameAbsolute(files[i], workdir);
+				string mod = getModuleName(fname);
+				if(mod.length > 0)
+				{
+					if(indexOf(mod, '.') < 0)
+						mod = "." ~ mod;
+					mod_cmd ~= "echo     $$(MODULE " ~ mod ~ ") >>" ~ modules_ddoc ~ "\n";
+				}
+			}
+		}
+		return mod_cmd;
+	}
+	
 	string getCommandLine()
 	{
 		string opt = mProjectOptions.buildCommandLine();
@@ -1719,6 +1759,14 @@ class Config :	DisposingComObject,
 		else
 			fcmd = " " ~ fcmd;
 			
+		string modules_ddoc;
+		string mod_cmd = getModulesDDocCommandLine(files, modules_ddoc);
+		if(mod_cmd.length > 0)
+		{
+			precmd ~= mod_cmd ~ "\nif errorlevel 1 goto reportError\n";
+			fcmd ~= " " ~ modules_ddoc;
+		}
+
 		string cmd = precmd ~ opt ~ fcmd ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 		
@@ -1735,9 +1783,10 @@ class Config :	DisposingComObject,
 		string pre = strip(mProjectOptions.preBuildCommand);
 		if(pre.length)
 			cmd = pre ~ "\nif errorlevel 1 goto reportError\n" ~ cmd;
+		
 		string post = strip(mProjectOptions.postBuildCommand);
 		if(post.length)
-			cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post;
+			cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post ~ "\n\n";
 		
 		string target = quoteFilename(mProjectOptions.getTargetPath());
 		cmd ~= "if not exist " ~ target ~ " (echo " ~ target ~ " not created! && goto reportError)\n";

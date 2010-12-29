@@ -23,6 +23,7 @@ import stringutil;
 import fileutil;
 import dproject;
 import config;
+import chiernode;
 import dlangsvc;
 import dimagelist;
 import logutil;
@@ -97,9 +98,29 @@ const LanguageProperty g_languageProperties[] =
   { "HideAdvancedMembersByDefault"w, 0 },
 ];
 
-mixin(d2_shared ~  " int g_dllRefCount;");
+///////////////////////////////////////////////////////////////////////
+void global_init()
+{
+	// avoid cyclic init dependencies
+	initWinControls(g_hInst);
+	LanguageService.shared_static_this();
+	CHierNode.shared_static_this();
+	CHierNode.shared_static_this_typeHolder();
+	ExtProject.shared_static_this_typeHolder();
+	Project.shared_static_this_typeHolder();
+}
+
+void global_exit()
+{
+	LanguageService.shared_static_dtor();
+	CHierNode.shared_static_dtor_typeHolder();
+	ExtProject.shared_static_dtor_typeHolder();
+	Project.shared_static_dtor_typeHolder();
+}
 
 ///////////////////////////////////////////////////////////////////////
+mixin(d2_shared ~  " int g_dllRefCount;");
+
 extern(Windows)
 HRESULT DllCanUnloadNow()
 {
@@ -174,12 +195,15 @@ class ClassFactory : DComObject, IClassFactory
 	int lockCount;
 }
 
+static const GUID SOleComponentManager_iid = { 0x000C060B,0x0000,0x0000,[ 0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46 ] }; 
+			
 ///////////////////////////////////////////////////////////////////////
 class Package : DisposingComObject,
 		IVsPackage,
 		IServiceProvider,
 		IVsInstalledProduct,
-		IOleCommandTarget
+		IOleCommandTarget,
+		IOleComponent
 {
 	mixin(d2_shared ~ " static Package s_instance;");
 
@@ -205,6 +229,8 @@ class Package : DisposingComObject,
 		if(queryInterface!(IVsInstalledProduct) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IOleCommandTarget) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IOleComponent) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -237,6 +263,7 @@ class Package : DisposingComObject,
 					sc.Release();
 				}
 				mLangServiceCookie = 0;
+				mLangsvc = release(mLangsvc);
 			}
 			if(mProjFactoryCookie)
 			{
@@ -250,12 +277,19 @@ class Package : DisposingComObject,
 					projTypes.Release();
 				}
 				mProjFactoryCookie = 0;
+				mProjFactory = release(mProjFactory);
+			}
+			if (mComponentID != 0) 
+			{
+				IOleComponentManager componentManager;
+				if(mHostSP.QueryService(&SOleComponentManager_iid, &IOleComponentManager.iid, cast(void**)&componentManager) == S_OK)
+				{
+					scope(exit) release(componentManager);
+					componentManager.FRevokeComponent(mComponentID); 
+				}
 			}
 			mHostSP = release(mHostSP);
 		}
-
-		mLangsvc.setDebugger(null);
-
 		return S_OK;
 	}
 
@@ -348,6 +382,23 @@ class Package : DisposingComObject,
 		if(mHostSP)
 		{
 			mOptions.initFromRegistry();
+		}
+
+		//register with ComponentManager for Idle processing
+		IOleComponentManager componentManager;
+		if(mHostSP.QueryService(&SOleComponentManager_iid, &IOleComponentManager.iid, cast(void**)&componentManager) == S_OK)
+		{
+			scope(exit) release(componentManager);
+			if (mComponentID == 0) 
+			{
+				OLECRINFO crinfo;
+				crinfo.cbSize = crinfo.sizeof;
+				crinfo.grfcrf = olecrfNeedIdleTime | olecrfNeedPeriodicIdleTime | olecrfNeedAllActiveNotifs | olecrfNeedSpecActiveNotifs;
+				crinfo.grfcadvf = olecadvfModal | olecadvfRedrawOff | olecadvfWarningsOff;
+				crinfo.uIdleTimeInterval = 1000;
+				if(!componentManager.FRegisterComponent(this, &crinfo, &mComponentID))
+					OutputLog("FRegisterComponent failed");
+			}
 		}
 		return S_OK; // E_NOTIMPL;
 	}
@@ -458,6 +509,55 @@ class Package : DisposingComObject,
 		return OLECMDERR_E_NOTSUPPORTED;
 	}
 
+	// IOleComponent Methods
+	BOOL FDoIdle(in OLEIDLEF grfidlef)
+	{
+		mLangsvc.OnIdle();
+		return false;
+	}
+	
+	void Terminate() 
+	{
+	}
+	BOOL FPreTranslateMessage(MSG* msg)
+	{
+		return FALSE;
+	}
+	void OnEnterState(in OLECSTATE uStateID, in BOOL fEnter)
+	{
+	}
+	void OnAppActivate(in BOOL fActive, in DWORD dwOtherThreadID)
+	{
+	}
+	void OnLoseActivation()
+	{
+	}
+	void OnActivationChange(/+[in]+/ IOleComponent pic, 
+							in BOOL fSameComponent,
+							in const( OLECRINFO)*pcrinfo,
+							in BOOL fHostIsActivating,
+							in const( OLECHOSTINFO)*pchostinfo, 
+							in DWORD dwReserved)
+	{
+	}
+	BOOL FReserved1(in DWORD dwReserved, in UINT message, in WPARAM wParam, in LPARAM lParam)
+	{
+		return TRUE;
+	}
+	
+	BOOL FContinueMessageLoop(in OLELOOP uReason, in void *pvLoopData, in MSG *pMsgPeeked)
+	{
+		return 1;
+	}
+	BOOL FQueryTerminate( in BOOL fPromptUser)
+	{
+		return 1;
+	}
+	HWND HwndGetWindow(in OLECWINDOW dwWhich, in DWORD dwReserved)
+	{
+		return null;
+	}
+
 	/////////////////////////////////////////////////////////////
 	IServiceProvider getServiceProvider()
 	{
@@ -485,6 +585,8 @@ private:
 	IServiceProvider mHostSP;
 	uint             mLangServiceCookie;
 	uint             mProjFactoryCookie;
+	
+	uint             mComponentID;
 	
 	LanguageService  mLangsvc;
 	ProjectFactory   mProjFactory;
@@ -514,6 +616,7 @@ class GlobalOptions
 	string VisualDInstallDir;
 
 	bool timeBuilds;
+	bool autoOutlining;
 
 	bool ColorizeVersions = true;
 	bool lastColorizeVersions;
@@ -580,7 +683,8 @@ class GlobalOptions
 			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
 			ColorizeVersions = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
 			timeBuilds       = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
-	
+			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
+
 			// overwrite by user config
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
 			DMDInstallDir = toUTF8(keyUserOpts.GetString("DMDInstallDir", wDMDInstallDir));
@@ -591,7 +695,8 @@ class GlobalOptions
 			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
 
 			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
-			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds", 0) != 0;
+			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",       timeBuilds) != 0;
+			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
@@ -639,6 +744,7 @@ class GlobalOptions
 			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
 			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
 			keyToolOpts.Set("timeBuilds", timeBuilds);
+			keyToolOpts.Set("autoOutlining", autoOutlining);
 		}
 		catch(Exception e)
 		{

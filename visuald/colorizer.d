@@ -109,7 +109,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 	}
 } 
 
-class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
+class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 {
 	// mLineState keeps track of evaluated states, assuming the interesting lines have been processed
 	//  after the last changes
@@ -166,10 +166,17 @@ class Colorizer : DComObject, IVsColorizer, ConfigModifiedListener
 
 	~this()
 	{
-		if(mConfig)
-			mConfig.RemoveModifiedListener(this);
 	}
 
+	override void Dispose()
+	{
+		if(mConfig)
+		{
+			mConfig.RemoveModifiedListener(this);
+			mConfig = null;
+		}
+	}
+	
 	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorizer) (this, riid, pvObject))

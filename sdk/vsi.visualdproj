@@ -5,6 +5,7 @@
   <link>0</link>
   <lib>1</lib>
   <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -93,6 +94,7 @@
   <link>0</link>
   <lib>1</lib>
   <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>

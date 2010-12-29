@@ -22,7 +22,7 @@ SRC = dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d pkgutil.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
-      profiler.d simpleparser.d colorizer.d viewfilter.d
+      profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
        resources/DAboutLogo.ico resources/GroupByType.ico resources/CombineColumns.ico \

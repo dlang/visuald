@@ -58,7 +58,7 @@ class LanguageService : DisposingComObject,
 //                        ISynchronizeInvoke, 
                         IVsDebuggerEvents, 
                         IVsFormatFilterProvider,
-//                        IVsOutliningCapableLanguage,
+                        IVsOutliningCapableLanguage,
                         IVsUpdateSolutionEvents
 {
 	static const GUID iid = g_languageCLSID;
@@ -66,6 +66,7 @@ class LanguageService : DisposingComObject,
 	this(Package pkg)
 	{
 		mPackage = pkg;
+		mUpdateSolutionEvents = new UpdateSolutionEvents(this);
 	}
 
 	~this()
@@ -86,10 +87,11 @@ class LanguageService : DisposingComObject,
 			return S_OK;
 		if(queryInterface!(IVsDebuggerEvents) (this, riid, pvObject))
 			return S_OK;
-		if(queryInterface!(IVsUpdateSolutionEvents) (this, riid, pvObject))
+// delegated to mUpdateSolutionEvents
+//		if(queryInterface!(IVsUpdateSolutionEvents) (this, riid, pvObject))
+//			return S_OK;
+		if(queryInterface!(IVsOutliningCapableLanguage) (this, riid, pvObject))
 			return S_OK;
-		//if(queryInterface!(IVsOutliningCapableLanguage) (this, riid, pvObject))
-		//    return S_OK;
 		
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -99,6 +101,8 @@ class LanguageService : DisposingComObject,
 	{
 		closeSearchWindow();
 
+		setDebugger(null);
+		
 		foreach(Source src; mSources)
 			src.Release();
 		mSources = mSources.init;
@@ -141,7 +145,7 @@ class LanguageService : DisposingComObject,
 			if(solutionBuildManager)
 			{
 				scope(exit) release(solutionBuildManager);
-				solutionBuildManager.AdviseUpdateSolutionEvents(this, &mUpdateSolutionEventsCookie);
+				solutionBuildManager.AdviseUpdateSolutionEvents(mUpdateSolutionEvents, &mUpdateSolutionEventsCookie);
 			}
 		}
 
@@ -299,12 +303,12 @@ class LanguageService : DisposingComObject,
 	}
 
 	// IVsProvideColorableItems //////////////////////////////////////
-	static ColorableItem[] colorableItems;
+	static __gshared ColorableItem[] colorableItems;
 	
 	// delete <VisualStudio-User-Root>\FontAndColors\Cache\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}\Version
 	// if the list of colorableItems changes
 	
-	shared static this()
+	static void shared_static_this()
 	{
 		colorableItems = [
 			// The first 6 items in this list MUST be these default items.
@@ -335,6 +339,10 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,32,32))
 		];
 	};
+	static void shared_static_dtor()
+	{
+		clear(colorableItems); // to keep GC leak detection happy
+	}
 
 	override HRESULT GetColorableItem(in int iIndex, IVsColorableItem* ppItem)
 	{
@@ -426,15 +434,27 @@ class LanguageService : DisposingComObject,
 	}
 
 	// IVsOutliningCapableLanguage ///////////////////////////////
-	//HRESULT CollapseToDefinitions(/+[in]+/ IVsTextLines pTextLines,  // the buffer in question
-	//                              /+[in]+/ IVsOutliningSession pSession)
-	//{
-	//    GetSource(pTextLines).UpdateOutlining(pSession, hrsDefault);
-	//    return S_OK;
-	//}
+	HRESULT CollapseToDefinitions(/+[in]+/ IVsTextLines pTextLines,  // the buffer in question
+								  /+[in]+/ IVsOutliningSession pSession)
+	{
+		GetSource(pTextLines).mOutlining = true;
+		if(auto session = qi_cast!IVsHiddenTextSession(pSession))
+		{
+			GetSource(pTextLines).UpdateOutlining(session, hrsDefault);
+			GetSource(pTextLines).CollapseAllHiddenRegions(session);
+		}
+		return S_OK;
+	}
 	
 	//////////////////////////////////////////////////////////////
-
+	bool OnIdle()
+	{
+		for(int i = 0; i < mSources.length; i++)
+			if(mSources[i].OnIdle())
+				return true;
+		return false;
+	}
+	
 	Source GetSource(IVsTextLines buffer)
 	{
 		Source src;
@@ -480,6 +500,52 @@ private:
 	IVsDebugger          mDebugger;
 	VSCOOKIE             mCookieDebuggerEvents = VSCOOKIE_NIL;
 	VSCOOKIE             mUpdateSolutionEventsCookie = VSCOOKIE_NIL;
+	UpdateSolutionEvents mUpdateSolutionEvents;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// seperate object from LanguageService to avoid circular references
+class UpdateSolutionEvents : DComObject, IVsUpdateSolutionEvents
+{
+	LanguageService mLangSvc;
+	
+	this(LanguageService svc)
+	{
+		mLangSvc = svc;
+	}
+	
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsUpdateSolutionEvents) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	// IVsUpdateSolutionEvents ///////////////////////////////////
+	HRESULT UpdateSolution_Begin(/+[in,   out]+/ BOOL *pfCancelUpdate)
+	{
+		return mLangSvc.UpdateSolution_Begin(pfCancelUpdate);
+	}
+	
+	HRESULT UpdateSolution_Done(in BOOL   fSucceeded, in BOOL fModified, in BOOL fCancelCommand)
+	{
+		return mLangSvc.UpdateSolution_Done(fSucceeded, fModified, fCancelCommand);
+	}
+	
+	HRESULT UpdateSolution_StartUpdate( /+[in, out]+/   BOOL *pfCancelUpdate )
+	{
+		return mLangSvc.UpdateSolution_StartUpdate(pfCancelUpdate);
+	}
+
+	HRESULT UpdateSolution_Cancel()
+	{
+		return mLangSvc.UpdateSolution_Cancel();
+	}
+	
+	HRESULT OnActiveProjectCfgChange(/+[in]+/   IVsHierarchy pIVsHierarchy)
+	{
+		return mLangSvc.OnActiveProjectCfgChange(pIVsHierarchy);
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -666,14 +732,16 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	MethodData mMethodData;
 	ExpansionProvider mExpansionProvider;
 	SourceEvents mSourceEvents;
-
+	bool mOutlining;
+	IVsHiddenTextSession mHiddenTextSession;
+	
 	this(IVsTextLines buffer)
 	{
 		mBuffer = addref(buffer);
 		mColorizer = new Colorizer(this);
 		mSourceEvents = new SourceEvents(this, mBuffer);
 
-		UpdateOutlining();
+		mOutlining = Package.GetGlobalOptions().autoOutlining;
 	}
 	~this()
 	{
@@ -688,6 +756,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		mMethodData = release(mMethodData);
 		mSourceEvents.Dispose();
 		mBuffer = release(mBuffer);
+		mHiddenTextSession = release(mHiddenTextSession);
 	}
 
 	HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -710,6 +779,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	override int OnChangeLineText( /* [in] */ in TextLineChange *pTextLineChange,
 	                      /* [in] */ in BOOL fLast)
 	{
+		if(mOutlining)
+			CheckOutlining(pTextLineChange);
 		return mColorizer.OnLinesChanged(pTextLineChange.iStartLine, pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine, fLast != 0);
 	}
     
@@ -731,32 +802,85 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
+	enum
+	{
+		kOutlineStateValid,
+		kOutlineStateDirty,
+		kOutlineStateDirtyIdle,
+		kOutlineStateDirtyIdle2,
+	}
+	int mOutlineState = kOutlineStateDirty;
+	
+	bool OnIdle()
+	{
+		if(!mOutlining)
+			return false;
+
+		final switch(mOutlineState)
+		{
+			case kOutlineStateDirtyIdle2:
+				UpdateOutlining();
+				mOutlineState = kOutlineStateValid;
+				return true;
+			case kOutlineStateDirty:
+				mOutlineState = kOutlineStateDirtyIdle;
+				return false;
+			case kOutlineStateDirtyIdle:
+				mOutlineState = kOutlineStateDirtyIdle2;
+				return false;
+			case kOutlineStateValid:
+				return false;
+		}
+	}
+	
 	void CheckOutlining(in TextLineChange *pTextLineChange)
 	{
-		if(pTextLineChange.iNewEndLine > pTextLineChange.iOldEndLine)
-			UpdateOutlining();
+		mOutlineState = kOutlineStateDirty;
 	}
 
-	void UpdateOutlining()
+	IVsHiddenTextSession GetHiddenTextSession()
 	{
+		if(mHiddenTextSession)
+			return mHiddenTextSession;
+		
 		if(auto htm = queryService!(VsTextManager, IVsHiddenTextManager))
 		{
 			scope(exit) release(htm);
-			IVsHiddenTextSession htsession;
-			if(htm.GetHiddenTextSession(mBuffer, &htsession) != S_OK)
-				htm.CreateHiddenTextSession(0, mBuffer, null, &htsession);
-				
-			scope(exit) release(htsession);
-			UpdateOutlining(htsession, hrsExpanded);
+			if(htm.GetHiddenTextSession(mBuffer, &mHiddenTextSession) != S_OK)
+				htm.CreateHiddenTextSession(0, mBuffer, null, &mHiddenTextSession);
 		}
+		return mHiddenTextSession;
+	}
+	
+	enum int kHiddenRegionCookie = 37;
+	
+	void UpdateOutlining()
+	{
+		if(auto session = GetHiddenTextSession())
+			UpdateOutlining(session, hrsExpanded);
 	}
 	
 	void UpdateOutlining(IVsHiddenTextSession session, int state)
 	{
 		NewHiddenRegion[] rgns = CreateOutlineRegions(state);
-		IVsEnumHiddenRegions pEnum;
-		session.AddHiddenRegions(chrNonUndoable, rgns.length, rgns.ptr, &pEnum);
-		release(pEnum);
+		if(DiffRegions(session, rgns))
+			session.AddHiddenRegions(chrNonUndoable, rgns.length, rgns.ptr, null);
+	}
+
+	void CollapseAllHiddenRegions(IVsHiddenTextSession session)
+	{
+		IVsEnumHiddenRegions penum;
+		TextSpan span = TextSpan(0, 0, 0, GetLineCount());
+		session.EnumHiddenRegions(FHR_BY_CLIENT_DATA, kHiddenRegionCookie, &span, &penum);
+
+		IVsHiddenRegion region;
+		uint fetched;
+		while (penum.Next(1, &region, &fetched) == S_OK && fetched == 1)
+		{
+			region.SetState(hrsDefault, chrDefault);
+			release(region);
+		}
+		release(penum);
 	}
 	
 	NewHiddenRegion[] CreateOutlineRegions(int expansionState)
@@ -787,8 +911,12 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 						rgn.iType = hrtCollapsible;
 						rgn.dwBehavior = hrbClientControlled;
 						rgn.dwState = expansionState;
-						rgn.tsHiddenText = TextSpan(pos, ln, lastOpenRegion, -1);
-						rgn.pszBanner = "...."w.ptr;
+						if(ln > 0 && isSpaceOrComment && !isComment) // move into previous line
+							rgn.tsHiddenText = TextSpan(prevLineLenth, ln-1, lastOpenRegion, -1);
+						else
+							rgn.tsHiddenText = TextSpan(pos - 1, ln, lastOpenRegion, -1);
+						rgn.pszBanner = "{...}"w.ptr;
+						rgn.dwClient = kHiddenRegionCookie;
 						lastOpenRegion = rgns.length;
 						rgns ~= rgn;
 					}
@@ -804,7 +932,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 						}
 						else
 						{
-							rgns[idx].tsHiddenText.iEndIndex = pos - 1;
+							rgns[idx].tsHiddenText.iEndIndex = pos;
 							rgns[idx].tsHiddenText.iEndLine = ln;
 						}
 					}
@@ -823,7 +951,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 						rgn.dwBehavior = hrbClientControlled;
 						rgn.dwState = expansionState;
 						rgn.tsHiddenText = TextSpan(lastCommentStartLineLength, lastCommentStartLine, prevLineLenth, ln - 1);
-						rgn.pszBanner = "...."w.ptr;
+						rgn.pszBanner = "..."w.ptr;
+						rgn.dwClient = kHiddenRegionCookie;
 						rgns ~= rgn;
 					}
 					lastCommentStartLine = -1;
@@ -836,9 +965,52 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			}
 			prevLineLenth = txt.length;
 		}
+		while(lastOpenRegion >= 0)
+		{
+			int idx = lastOpenRegion;
+			lastOpenRegion = rgns[idx].tsHiddenText.iEndIndex;
+			rgns[idx].tsHiddenText.iEndIndex = 0;
+			rgns[idx].tsHiddenText.iEndLine = lines;
+			rgns[idx].pszBanner = "{..."w.ptr;
+		}
 		return rgns;
 	}
 	
+	bool DiffRegions(IVsHiddenTextSession session, ref NewHiddenRegion[] rgns)
+	{
+		// Compare the existing regions with the new regions and 
+		// remove any that do not match the new regions.
+		IVsEnumHiddenRegions penum;
+		TextSpan span = TextSpan(0, 0, 0, GetLineCount());
+		session.EnumHiddenRegions(FHR_BY_CLIENT_DATA, kHiddenRegionCookie, &span, &penum);
+
+		uint found = 0;
+		uint enumerated = 0;
+		uint fetched;
+		IVsHiddenRegion region;
+		while (penum.Next(1, &region, &fetched) == S_OK && fetched == 1)
+		{
+			enumerated++;
+			region.GetSpan(&span);
+			int i;
+			for(i = 0; i < rgns.length; i++)
+				if(rgns[i].tsHiddenText == span)
+					break;
+			if(i < rgns.length)
+			{
+				for(int j = i + 1; j < rgns.length; j++)
+					rgns[j-1] = rgns[j];
+				rgns.length = rgns.length - 1;
+				found++;
+			}
+			else
+				region.Invalidate(chrNonUndoable);
+			release(region);
+		}
+		release(penum);
+		return found != rgns.length || enumerated != rgns.length;
+	}
+
 	///////////////////////////////////////////////////////////////////////////////
 	wstring GetText(int startLine, int startCol, int endLine, int endCol)
 	{
@@ -854,6 +1026,17 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	{
 		startIdx = endIdx = idx;
 
+version(all)
+{
+		wstring txt = GetText(line, 0, line, -1);
+		while(endIdx < txt.length && SimpleLexer.isIdentifierChar(txt[endIdx]))
+			endIdx++;
+		while(startIdx > 0 && SimpleLexer.isIdentifierChar(txt[startIdx-1]))
+			startIdx--;
+		return startIdx < endIdx;
+}
+else
+{
 		int length;
 		mBuffer.GetLengthOfLine(line, &length);
 		// pin to length of line just in case we return false and skip pinning at the end of this method.
@@ -940,6 +1123,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		startIdx = min(length, info.StartIndex);
 		endIdx = min(length, info.EndIndex);
 		return true;
+}
 	}
 
 	static bool MatchToken(WORDEXTFLAGS flags, TokenInfo info)

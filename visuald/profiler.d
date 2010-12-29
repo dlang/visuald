@@ -579,7 +579,7 @@ private:
 		{
 			txt = decodeDmdString(txt.dup, p);
 			if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
-				txt = to!string(demangle(txt, null, fullDeco));
+				txt = to!string(demangle(txt, fullDeco));
 		}
 		else
 			if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')

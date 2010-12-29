@@ -48,9 +48,10 @@
   <objdir>$(OutDir)\obj</objdir>
   <objname />
   <libname />
-  <doDocComments>0</doDocComments>
-  <docdir />
+  <doDocComments>1</doDocComments>
+  <docdir>..\doc</docdir>
   <docname />
+  <modules_ddoc>..\doc\modules.ddoc</modules_ddoc>
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
@@ -78,7 +79,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
-  <additionalOptions>-debuglib=phobos_d.lib</additionalOptions>
+  <additionalOptions>-debuglib=phobos_d.lib -mixin=$(IntDir)\mixins.d</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
@@ -86,7 +87,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>1</debugEngine>
+  <debugEngine>0</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Config name="Release">
@@ -140,6 +141,7 @@
   <doDocComments>0</doDocComments>
   <docdir />
   <docname />
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
@@ -238,5 +240,7 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="simpleparser.d" />
   <File path="viewfilter.d" />
   <File path="colorizer.d" />
+  <File path="lexutil.d" />
+  <File path="..\doc\candydoc\candy.ddoc" />
  </Folder>
 </DProject>

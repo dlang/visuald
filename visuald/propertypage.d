@@ -31,7 +31,7 @@ import hierarchy;
 abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage, IVsPropertyPage2
 {
 	const int kPageWidth = 400;
-	const int kPageHeight = 200;
+	const int kPageHeight = 210;
 	const int kMargin = 4;
 	const int kLabelWidth = 100;
 	const int kTextHeight = 18;
@@ -825,6 +825,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		AddControl("", mGenDoc = new CheckBox(mCanvas, "Generate documentation"));
 		AddControl("Documentation file", mDocFile = new Text(mCanvas));
 		AddControl("Documentation dir", mDocDir = new Text(mCanvas));
+		AddControl("CanDyDOC module", mModulesDDoc = new Text(mCanvas));
 		
 		AddControl("", mGenHdr = new CheckBox(mCanvas, "Generate interface headers"));
 		AddControl("Header file",  mHdrFile = new Text(mCanvas));
@@ -844,7 +845,8 @@ class DmdDocPropertyPage : ProjectPropertyPage
 	{
 		mDocDir.setEnabled(mGenDoc.isChecked());
 		mDocFile.setEnabled(mGenDoc.isChecked());
-
+		mModulesDDoc.setEnabled(mGenDoc.isChecked());
+		
 		mHdrDir.setEnabled(mGenHdr.isChecked());
 		mHdrFile.setEnabled(mGenHdr.isChecked());
 
@@ -856,6 +858,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		mGenDoc.setChecked(options.doDocComments);
 		mDocDir.setText(options.docdir);
 		mDocFile.setText(options.docname);
+		mModulesDDoc.setText(options.modules_ddoc);
 		mGenHdr.setChecked(options.doHdrGeneration);
 		mHdrDir.setText(options.hdrdir);
 		mHdrFile.setText(options.hdrname);
@@ -871,6 +874,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		changes += changeOption(mGenDoc.isChecked(), options.doDocComments, refoptions.doDocComments);
 		changes += changeOption(mDocDir.getText(), options.docdir, refoptions.docdir);
 		changes += changeOption(mDocFile.getText(), options.docname, refoptions.docname);
+		changes += changeOption(mModulesDDoc.getText(), options.modules_ddoc, refoptions.modules_ddoc);
 		changes += changeOption(mGenHdr.isChecked(), options.doHdrGeneration, refoptions.doHdrGeneration);
 		changes += changeOption(mHdrDir.getText(), options.hdrdir, refoptions.hdrdir);
 		changes += changeOption(mHdrFile.getText(), options.hdrname, refoptions.hdrname);
@@ -882,6 +886,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 	CheckBox mGenDoc;
 	Text mDocDir;
 	Text mDocFile;
+	Text mModulesDDoc;
 	CheckBox mGenHdr;
 	Text mHdrDir;
 	Text mHdrFile;
@@ -1166,21 +1171,25 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override void CreateControls()
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
+		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 	}
 
 	override void SetControls(GlobalOptions opts)
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
+		mAutoOutlining.setChecked(opts.autoOutlining);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
+		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
 		return changes;
 	}
 
 	CheckBox mColorizeVersions;
+	CheckBox mAutoOutlining;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -551,7 +551,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 
 	//////////////////////////////////////////////////////////////
 	__gshared static ComTypeInfoHolder mTypeHolder;
-	shared static this()
+	static void shared_static_this_typeHolder()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 
@@ -570,7 +570,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 		};
 		addref(mTypeHolder);
 	}
-	shared static ~this()
+	static void shared_static_dtor_typeHolder()
 	{
 		mTypeHolder = release(mTypeHolder);
 	}
@@ -688,7 +688,7 @@ class Project : CVsHierarchy,
 
 	// IDispatch
 	__gshared static ComTypeInfoHolder mTypeHolder;
-	shared static this()
+	static void shared_static_this_typeHolder()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
 			override int GetIDsOfNames( 
@@ -712,7 +712,7 @@ class Project : CVsHierarchy,
 		};
 		addref(mTypeHolder);
 	}
-	shared static ~this()
+	static void shared_static_dtor_typeHolder()
 	{
 		mTypeHolder = release(mTypeHolder);
 	}

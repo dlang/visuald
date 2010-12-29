@@ -66,6 +66,8 @@ string replaceMacros(string s, string[string] replacements)
 				continue;
 			}
 		}
+		else if(s[i .. i+2] == "$$")
+			s = s[0 .. i] ~ s[i + 1 .. $];
 		i++;
 	}
 

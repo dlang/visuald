@@ -13,7 +13,7 @@ import windows;
 import comutil;
 import logutil;
 import register;
-import winctrl;
+import dpackage;
 
 import core.runtime;
 import core.memory;
@@ -46,7 +46,7 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 				return false;
 			g_hInst = cast(HINSTANCE) hInstance;
 //	GC.disable();
-			initWinControls(g_hInst);
+			global_init();
 			//MessageBoxA(cast(HANDLE)0, "Hi", "there", 0);
 
 			logCall("DllMain(DLL_PROCESS_ATTACH, tid=%x)", GetCurrentThreadId());
@@ -54,6 +54,7 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 
 		case DLL_PROCESS_DETACH:
 			logCall("DllMain(DLL_PROCESS_DETACH, tid=%x)", GetCurrentThreadId());
+			global_exit();
 			dll_process_detach( hInstance, true );
 			break;
 

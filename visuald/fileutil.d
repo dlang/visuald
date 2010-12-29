@@ -15,6 +15,7 @@ import std.path;
 import std.file;
 import std.utf;
 import std.conv;
+import std.intrinsic;
 
 string normalizeDir(string dir)
 {
@@ -154,6 +155,41 @@ bool compareCommandFile(string cmdfile, string cmdline)
 		return false;
 	}
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+string readUtf8(string fname, uint upTo = -1U)
+{
+	/* Convert all non-UTF-8 formats to UTF-8.
+	 * BOM : http://www.unicode.org/faq/utf_bom.html
+	 * 00 00 FE FF  UTF-32BE, big-endian
+	 * FF FE 00 00  UTF-32LE, little-endian
+	 * FE FF        UTF-16BE, big-endian
+	 * FF FE        UTF-16LE, little-endian
+	 * EF BB BF     UTF-8
+	 */
+	static ubyte[4] bomUTF32BE = [ 0x00, 0x00, 0xFE, 0xFF ]; // UTF-32, big-endian
+	static ubyte[4] bomUTF32LE = [ 0xFF, 0xFE, 0x00, 0x00 ]; // UTF-32, little-endian
+	static ubyte[2] bomUTF16BE = [ 0xFE, 0xFF ];             // UTF-16, big-endian
+	static ubyte[2] bomUTF16LE = [ 0xFF, 0xFE ];             // UTF-16, little-endian
+	static ubyte[3] bomUTF8    = [ 0xEF, 0xBB, 0xBF ];       // UTF-8
+
+	ubyte[] data = cast(ubyte[]) std.file.read(fname, upTo);
+	if(data.length >= 4 && data[0..4] == bomUTF32BE[])
+		foreach(ref d; cast(uint[]) data)
+			d = bswap(d);
+	if(data.length >= 2 && data[0..2] == bomUTF16BE[])
+		foreach(ref d; cast(ushort[]) data)
+			d = bswap(d) >> 16;
+
+	if(data.length >= 4 && data[0..4] == bomUTF32LE[])
+		return toUTF8(cast(dchar[]) data[4..$]);
+	if(data.length >= 2 && data[0..2] == bomUTF16LE[])
+		return toUTF8(cast(wchar[]) data[2..$]);
+	if(data.length >= 3 && data[0..3] == bomUTF8[])
+		return toUTF8(cast(string) data[3..$]);
+
+	return cast(string)data;
 }
 
 //-----------------------------------------------------------------------------
