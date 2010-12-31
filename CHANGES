@@ -222,7 +222,7 @@ Version history
 
   * basic outlining support (disable with check box on global text editor page
     if it is causing trouble, manually activate it with "Outlining -> Collapse to Definitions")
-  * added build times output (set check box on global project option page)
+  * added build time output (set check box on global project option page)
   * fixed missing newline after post build command
   * fix: suffix L was not recognized on floats
   * code completion and goto definition now also work in comments or strings

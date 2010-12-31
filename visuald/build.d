@@ -189,7 +189,14 @@ public:
 			string intermediatedir = makeFilenameAbsolute(mConfig.GetIntermediateDir(), workdir);
 			if(!exists(intermediatedir))
 				mkdirRecurse(intermediatedir);
-
+			string modules_ddoc;
+			if(mConfig.getModulesDDocCommandLine([], modules_ddoc))
+			{
+				string modpath = dirname(modules_ddoc);
+				modpath = makeFilenameAbsolute(modpath, workdir);
+				if(!exists(modpath))
+					mkdirRecurse(modpath);
+			}
 			if(!doCustomBuilds())
 				return false;
 

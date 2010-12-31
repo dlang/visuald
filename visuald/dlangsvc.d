@@ -905,7 +905,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 				int col = SimpleLexer.scan(state, txt, pos);
 				if(col == TokenColor.Operator)
 				{
-					if(txt[pos-1] == '{')
+					if(txt[pos-1] == '{' || txt[pos-1] == '[')
 					{
 						NewHiddenRegion rgn;
 						rgn.iType = hrtCollapsible;
@@ -915,12 +915,12 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 							rgn.tsHiddenText = TextSpan(prevLineLenth, ln-1, lastOpenRegion, -1);
 						else
 							rgn.tsHiddenText = TextSpan(pos - 1, ln, lastOpenRegion, -1);
-						rgn.pszBanner = "{...}"w.ptr;
+						rgn.pszBanner = txt[pos-1] == '{' ? "{...}"w.ptr : "[...]"w.ptr;
 						rgn.dwClient = kHiddenRegionCookie;
 						lastOpenRegion = rgns.length;
 						rgns ~= rgn;
 					}
-					else if(txt[pos-1] == '}' && lastOpenRegion >= 0)
+					else if((txt[pos-1] == '}' || txt[pos-1] == ']') && lastOpenRegion >= 0)
 					{
 						int idx = lastOpenRegion;
 						lastOpenRegion = rgns[idx].tsHiddenText.iEndIndex;
@@ -942,7 +942,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			}
 			if(lastCommentStartLine >= 0)
 			{
-				if(!isSpaceOrComment)
+				// do not fold single comment line with subsequent empty line
+				if(!isSpaceOrComment || (!isComment && lastCommentStartLine + 1 == ln))
 				{
 					if(lastCommentStartLine + 1 < ln)
 					{
@@ -971,7 +972,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			lastOpenRegion = rgns[idx].tsHiddenText.iEndIndex;
 			rgns[idx].tsHiddenText.iEndIndex = 0;
 			rgns[idx].tsHiddenText.iEndLine = lines;
-			rgns[idx].pszBanner = "{..."w.ptr;
+			rgns[idx].pszBanner = rgns[idx].pszBanner[0] == '{' ? "{..."w.ptr : "[..."w.ptr;
 		}
 		return rgns;
 	}

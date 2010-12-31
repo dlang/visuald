@@ -1699,6 +1699,8 @@ class Config :	DisposingComObject,
 
 	string getModulesDDocCommandLine(string[] files, ref string modules_ddoc)
 	{
+		if(!mProjectOptions.doDocComments)
+			return "";
 		string mod_cmd;
 		modules_ddoc = strip(mProjectOptions.modules_ddoc);
 		if(modules_ddoc.length > 0)

@@ -48,10 +48,10 @@
   <objdir>$(OutDir)\obj</objdir>
   <objname />
   <libname />
-  <doDocComments>1</doDocComments>
+  <doDocComments>0</doDocComments>
   <docdir>..\doc</docdir>
   <docname />
-  <modules_ddoc>..\doc\modules.ddoc</modules_ddoc>
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
@@ -241,6 +241,5 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="viewfilter.d" />
   <File path="colorizer.d" />
   <File path="lexutil.d" />
-  <File path="..\doc\candydoc\candy.ddoc" />
  </Folder>
 </DProject>
