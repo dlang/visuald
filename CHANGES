@@ -228,3 +228,5 @@ Version history
   * code completion and goto definition now also work in comments or strings
   * ddoc files in project now also passed to DMD automatically
   * support for generating modules.ddoc for CanDyDOC
+
+  * added macro expansion to modules.ddoc setting
