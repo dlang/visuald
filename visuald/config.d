@@ -1586,9 +1586,11 @@ class Config :	DisposingComObject,
 		if(mProjectOptions.doDocComments)
 		{
 			if(mProjectOptions.docdir.length)
-				files ~= expandedAbsoluteFilename(normalizeDir(mProjectOptions.docdir)) ~ "*.ddoc";
+				files ~= expandedAbsoluteFilename(normalizeDir(mProjectOptions.docdir)) ~ "*.html";
 			if(mProjectOptions.docname.length)
 				files ~= expandedAbsoluteFilename(mProjectOptions.docname);
+			if(mProjectOptions.modules_ddoc)
+				files ~= expandedAbsoluteFilename(mProjectOptions.modules_ddoc);
 		}
 		if(mProjectOptions.doHdrGeneration)
 		{

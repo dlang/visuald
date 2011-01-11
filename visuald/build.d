@@ -189,14 +189,18 @@ public:
 			string intermediatedir = makeFilenameAbsolute(mConfig.GetIntermediateDir(), workdir);
 			if(!exists(intermediatedir))
 				mkdirRecurse(intermediatedir);
+			
 			string modules_ddoc;
 			if(mConfig.getModulesDDocCommandLine([], modules_ddoc))
 			{
+				modules_ddoc = unquoteArgument(modules_ddoc);
+				modules_ddoc = mConfig.GetProjectOptions().replaceEnvironment(modules_ddoc, mConfig);
 				string modpath = dirname(modules_ddoc);
 				modpath = makeFilenameAbsolute(modpath, workdir);
 				if(!exists(modpath))
 					mkdirRecurse(modpath);
 			}
+			
 			if(!doCustomBuilds())
 				return false;
 
@@ -205,8 +209,9 @@ public:
 			hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
 			return (hr == S_OK);
 		}
-		catch(FileException)
+		catch(FileException fe)
 		{
+			OutputText("Error setting up build: " ~ fe.msg);
 			return false;
 		}
 		finally
