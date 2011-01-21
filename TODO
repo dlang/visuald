@@ -6,10 +6,6 @@ Copyright (c) 2011 by Rainer Schuetze, All Rights Reserved
 This file lists issues that I'm aware of and hope to resolve in the near future,
 but no guarantees.
 
-Installation:
----------------
-- build sdk-imports
-
 Settings:
 ---------------
 - different global settings for D1/D2
@@ -31,6 +27,7 @@ Project:
 - buildlog should contain project name to disambiguate
 - adding new item to project causes lots of System.Resources.MissingManifestResourceException
   which seems like a frozen UI (only first dialog open)
+- unicode characters in $(APPDATA) cause trouble with "Build JSON for phobos"
 
 Language service:
 ---------------
@@ -40,6 +37,8 @@ Language service:
 - code definition window
 - cursor-location-stack
 - showScope: function/delegate literal not shown correctly, in/out/body
+- completion: if item found both in buffer and JSON info, it is displayed twice
+- remember line changes since last build to adjust gotoDefinition line numbers
 
 Search:
 ---------------
@@ -53,3 +52,7 @@ Profile:
 ---------------
 - splitter for fan in/out windows
 - switch window layout to fan in/out side by side
+
+Installation:
+---------------
+- build sdk-imports

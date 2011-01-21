@@ -1,7 +1,7 @@
 // This file is part of Visual D
 //
 // Visual D integrates the D programming language into Visual Studio
-// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+// Copyright (c) 2010-2011 by Rainer Schuetze, All Rights Reserved
 //
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
@@ -71,13 +71,11 @@ class SimpleLexer
 		kStringDelimitedNestedBrace,
 		kStringDelimitedNestedAngle,
 		kStringTokenFirst,  // after 'q', but before '{' to pass '{' as single operator
-		kStringHex,    // for now, treated as State.kStringWysiwyg
 		kStringToken,  // encoded by tokenStringLevel > 0
+		kStringHex,    // for now, treated as State.kStringWysiwyg
 		kStringEscape, // removed in D2.026, not supported
 	}
 
-	static bool s_scanTokenString = true; // if false, TokenString returns a series of TokenColor.String
-	
 	// lexer scan state is: ___TTNNS
 	// TT: token string nesting level
 	// NN: comment nesting level/string delimiter id
@@ -87,14 +85,21 @@ class SimpleLexer
 	static int tokenStringLevel(int state) { return (state >> 12) & 0xff; }
 	static int getOtherState(int state) { return (state & 0xfff00000); }
 
+	static bool sTokenizeTokenString = true;
+	static bool sSplitNestedComments = true;
+	
 	static int toState(State s, int nesting, int tokLevel, int otherState)
 	{
-		assert(s >= State.kWhite && s <= State.kStringTokenFirst);
+		static assert(State.kStringToken <= 15);
+		assert(s >= State.kWhite && s <= State.kStringToken);
 		assert(nesting < 32);
 		assert(tokLevel < 32);
 
 		return s | ((nesting & 0xff) << 4) | ((tokLevel & 0xff) << 12) | otherState;
 	}
+
+	static bool isStringState(State state) { return state >= State.kStringCStyle; }
+	static bool isCommentState(State state) { return state == State.kBlockComment || state == State.kNestedComment; }
 
 	static string[256] s_delimiters;
 	static int s_nextDelimiter;
@@ -117,7 +122,7 @@ class SimpleLexer
 		{
 			uint nextpos = pos;
 			dchar ch = decode(text, nextpos);
-			if(!isIdentifierChar(ch) && !isdigit(ch))
+			if(!isIdentifierCharOrDigit(ch))
 				break;
 			pos = nextpos;
 		}
@@ -291,7 +296,7 @@ L_complexLiteral:
 		return State.kBlockComment;
 	}
 
-	static State scanNestedComment(S)(S text, ref uint pos, ref int nesting)
+	static State scanNestedComment(S)(S text, uint startpos, ref uint pos, ref int nesting)
 	{
 		while(pos < text.length)
 		{
@@ -303,6 +308,11 @@ L_complexLiteral:
 				ch = decode(text, pos);
 				if(ch == '+')
 				{
+					if(sSplitNestedComments && pos > startpos + 2)
+					{
+						pos -= 2;
+						return State.kNestedComment;
+					}
 					nesting++;
 					goto nextChar;
 				}
@@ -317,6 +327,8 @@ L_complexLiteral:
 					nesting--;
 					if(nesting == 0)
 						return State.kWhite;
+					if(sSplitNestedComments)
+						return State.kNestedComment;
 					break;
 				}
 			}
@@ -400,6 +412,21 @@ L_complexLiteral:
 		return s;
 	}
 
+	static State scanTokenString(S)(S text, ref uint pos, ref int tokLevel)
+	{
+		int state = toState(State.kWhite, 0, 0, 0);
+		int id = -1;
+		while(pos < text.length && tokLevel > 0)
+		{
+			int type = scan(state, text, pos, id);
+			if(id == TOK_lcurly)
+				tokLevel++;
+			else if(id == TOK_rcurly)
+				tokLevel--;
+		}
+		return (tokLevel > 0 ? State.kStringToken : State.kWhite);
+	}
+
 	static bool isStartingComment(S)(S txt, ref int idx)
 	{
 		if(idx >= 0 && idx < txt.length-1 && txt[idx] == '/' && (txt[idx+1] == '*' || txt[idx+1] == '+'))
@@ -429,6 +456,11 @@ L_complexLiteral:
 		return isUniAlpha(ch) || ch == '_' || ch == '@';
 	}
 	
+	static bool isIdentifierCharOrDigit(dchar ch)
+	{
+		return isIdentifierChar(ch) || isdigit(ch);
+	}
+	
 	static bool isIdentifier(S)(S text)
 	{
 		if(text.length == 0)
@@ -442,7 +474,7 @@ L_complexLiteral:
 		while(pos < text.length)
 		{
 			ch = decode(text, pos);
-			if(!isIdentifierChar(ch) && !isdigit(ch))
+			if(!isIdentifierCharOrDigit(ch))
 				return false;
 		}
 		return true;
@@ -536,7 +568,7 @@ L_complexLiteral:
 		return s;
 	}
 
-	static State scanDelimitedString(S)(S text, ref uint pos, int delim)
+	static State scanDelimitedString(S)(S text, ref uint pos, ref int delim)
 	{
 		string delimiter = s_delimiters[delim];
 
@@ -551,7 +583,10 @@ L_complexLiteral:
 			{
 				ch = trydecode(text, pos);
 				if(ch == '"')
+				{
+					delim = 0; // reset delimiter id, it shadows nesting
 					return scanStringPostFix(text, pos);
+				}
 			}
 		}
 		return State.kStringDelimited;
@@ -590,10 +625,18 @@ L_complexLiteral:
 				}
 				else if(tokLevel == 0 && ch == 'q' && nch == '{')
 				{
-					pos = prevpos;
 					type = TokenColor.String;
 					id = TOK_StringLiteral;
-					s = State.kStringTokenFirst;
+					if(sTokenizeTokenString)
+					{
+						pos = prevpos;
+						s = State.kStringTokenFirst;
+					}
+					else
+					{
+						tokLevel = 1;
+						s = scanTokenString(text, pos, tokLevel);
+					}
 					break;
 				}
 				else if(nch == '"')
@@ -628,7 +671,7 @@ L_complexLiteral:
 					// line comment
 					type = TokenColor.Comment;
 					id = TOK_Comment;
-					pos = text.length;
+					while(pos < text.length && decode(text, pos) != '\n') {}
 				}
 				else if (ch == '*')
 				{
@@ -639,7 +682,7 @@ L_complexLiteral:
 				else if (ch == '+')
 				{
 					nesting = 1;
-					s = scanNestedComment(text, pos, nesting);
+					s = scanNestedComment(text, startpos, pos, nesting);
 					type = TokenColor.Comment;
 					id = TOK_Comment;
 				}
@@ -667,7 +710,7 @@ L_complexLiteral:
 				// display #! or #line as line comment
 				type = TokenColor.Comment;
 				id = TOK_Comment;
-				pos = text.length;
+				while(pos < text.length && decode(text, pos) != '\n') {}
 			}
 			else
 			{
@@ -696,6 +739,12 @@ L_complexLiteral:
 			s = State.kWhite;
 			break;
 			
+		case State.kStringToken:
+			type = TokenColor.String;
+			id = TOK_StringLiteral;
+			s = scanTokenString(text, pos, tokLevel);
+			break;
+			
 		case State.kBlockComment:
 			s = scanBlockComment(text, pos);
 			type = TokenColor.Comment;
@@ -703,7 +752,7 @@ L_complexLiteral:
 			break;
 
 		case State.kNestedComment:
-			s = scanNestedComment(text, pos, nesting);
+			s = scanNestedComment(text, pos, pos, nesting);
 			type = TokenColor.Comment;
 			id = TOK_Comment;
 			break;

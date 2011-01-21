@@ -8,8 +8,11 @@
 
 module stringutil;
 
+import windows;
+import comutil;
+
 import std.c.stdlib;
-import std.windows.charset;
+//import std.windows.charset;
 import std.path;
 import std.utf;
 import std.string;
@@ -36,6 +39,18 @@ void addFileMacros(string path, string base, ref string[string] replacements)
 	replacements[base ~ "NAME"] = name.length == 0 ? filename : name;
 }
 
+string getEnvVar(string var)
+{
+	wchar wbuf[256];
+	const(wchar)* wvar = toUTF16z(var);
+	uint cnt = GetEnvironmentVariable(wvar, wbuf.ptr, 256);
+	if(cnt < 256)
+		return to_string(wbuf.ptr, cnt);
+	wchar[] pbuf = new wchar[cnt+1];
+	cnt = GetEnvironmentVariable(wvar, pbuf.ptr, cnt + 1);
+	return to_string(pbuf.ptr, cnt);
+}
+
 string replaceMacros(string s, string[string] replacements)
 {
 	int[string] lastReplacePos;
@@ -51,8 +66,8 @@ string replaceMacros(string s, string[string] replacements)
 			string nid;
 			if(string *ps = id in replacements)
 				nid = *ps;
-			else if(char* pe = getenv(std.windows.charset.toMBSz(id)))
-				nid = fromMBSz(cast(immutable)pe);
+			else
+				nid = getEnvVar(id);
 			
 			int *p = id in lastReplacePos;
 			if(!p || *p <= i)
@@ -322,4 +337,24 @@ char[] parseNonSpace(ref char[] txt)
 	char[] res = txt[0..n];
 	txt = txt[n..$];
 	return res;
+}
+
+S createPasteString(S)(S s)
+{
+	S t;
+	bool wasWhite = false;
+	foreach(dchar ch; s)
+	{
+		if(t.length > 30)
+			return t ~ "...";
+		bool isw = iswhite(ch);
+		if(ch == '&')
+			t ~= "&&";
+		else if(!isw)
+			t ~= ch;
+		else if(!wasWhite)
+			t ~= ' ';
+		wasWhite = isw;
+	}
+	return t;		
 }

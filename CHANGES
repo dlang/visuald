@@ -229,4 +229,14 @@ Version history
   * ddoc files in project now also passed to DMD automatically
   * support for generating modules.ddoc for CanDyDOC
 
+2011-01-21 Version 0.3.21
+
+  * fix: identifiers extracted for GotoDefinition stopped at digits
+  * fix: clean removed ddoc files from the doc directory, but not html files
   * added macro expansion to modules.ddoc setting
+  * added context menu to show paste ring buffer and insert from it
+  * brace highlighting now done in idle handling, so it also works when moving
+    the caret with the mouse
+  * brace matching now also includes strings and nested comments
+  * goto matching brace now implemented (the VS implementation does not work 
+    well with D)

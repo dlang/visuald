@@ -452,6 +452,9 @@ class LanguageService : DisposingComObject,
 		for(int i = 0; i < mSources.length; i++)
 			if(mSources[i].OnIdle())
 				return true;
+		foreach(CodeWindowManager mgr; mCodeWinMgrs)
+			if(mgr.OnIdle())
+				return true;
 		return false;
 	}
 	
@@ -634,6 +637,14 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 
 	//////////////////////////////////////////////////////////////////////
 
+	bool OnIdle()
+	{
+		foreach(ViewFilter vf; mViewFilters)
+			if(vf.OnIdle())
+				return true;
+		return false;
+	}
+	
 	void CloseFilters()
 	{
 		foreach(ViewFilter vf; mViewFilters)
@@ -1030,9 +1041,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 version(all)
 {
 		wstring txt = GetText(line, 0, line, -1);
-		while(endIdx < txt.length && SimpleLexer.isIdentifierChar(txt[endIdx]))
+		while(endIdx < txt.length && SimpleLexer.isIdentifierCharOrDigit(txt[endIdx]))
 			endIdx++;
-		while(startIdx > 0 && SimpleLexer.isIdentifierChar(txt[startIdx-1]))
+		while(startIdx > 0 && SimpleLexer.isIdentifierCharOrDigit(txt[startIdx-1]))
 			startIdx--;
 		return startIdx < endIdx;
 }
@@ -1829,7 +1840,8 @@ else
 	}
 
 	// continuing from FindLineToken		
-	bool FindEndOfComment(ref int iState, ref int line, ref uint pos)
+	bool FindEndOfTokens(ref int iState, ref int line, ref uint pos, 
+						 bool function(int state, int data) testFn, int data)
 	{
 		int lineCount;
 		mBuffer.GetLineCount(&lineCount);
@@ -1842,8 +1854,9 @@ else
 			{
 				uint ppos = pos;
 				int toktype = SimpleLexer.scan(iState, text, pos);
-				if(toktype != TokenColor.Comment)
+				if(testFn(iState, data))
 				{
+					/+
 					if(ppos == 0)
 					{
 						pos = plinepos;
@@ -1851,6 +1864,7 @@ else
 					}
 					else
 						pos = ppos;
+					+/
 					return true;
 				}
 			}
@@ -1860,7 +1874,107 @@ else
 		}
 		return false;
 	}
+	
+	static bool testEndComment(int state, int level)
+	{
+		int slevel = SimpleLexer.nestingLevel(state);
+		if(slevel > level)
+			return false;
+		auto sstate = SimpleLexer.scanState(state);
+		if(sstate == SimpleLexer.State.kNestedComment)
+			return slevel <= level;
+		return sstate != SimpleLexer.State.kBlockComment;
+	}
+	
+	bool FindEndOfComment(int startState, ref int iState, ref int line, ref uint pos)
+	{
+		int level = SimpleLexer.nestingLevel(startState);
+		if(testEndComment(iState, level))
+			return true;
+		return FindEndOfTokens(iState, line, pos, &testEndComment, level);
+	}
+	
+	static bool testEndString(int state, int level)
+	{
+		if(SimpleLexer.tokenStringLevel(state) > level)
+			return false;
 		
+		auto sstate = SimpleLexer.scanState(state);
+		return !SimpleLexer.isStringState(sstate);
+	}
+	bool FindEndOfString(int startState, ref int iState, ref int line, ref uint pos)
+	{
+		int level = SimpleLexer.tokenStringLevel(startState);
+		if(testEndString(iState, level))
+			return true;
+		return FindEndOfTokens(iState, line, pos, &testEndString, level);
+	}
+	
+	bool FindStartOfTokens(ref int iState, ref int line, ref uint pos,
+	                       bool function(int state, int data) testFn, int data)
+	{
+		int lineState;
+		uint plinepos = pos;
+		uint foundpos = uint.max;
+
+		while(line >= 0)
+		{
+			wstring text = GetText(line, 0, line, -1);
+			lineState = mColorizer.GetLineState(line);
+
+			uint len = (plinepos > text.length ? text.length : plinepos);
+			plinepos = 0;
+			
+			if(testFn(lineState, data))
+				foundpos = 0;
+			while(plinepos < len)
+			{
+				int toktype = SimpleLexer.scan(lineState, text, plinepos);
+				if(testFn(lineState, data))
+					foundpos = plinepos;
+			}
+
+			if(foundpos < uint.max)
+			{
+				pos = foundpos;
+				return true;
+			}
+			
+			plinepos = uint.max;
+			line--;
+		}
+		return false;
+	}
+
+	static bool testStartComment(int state, int level)
+	{
+		if(!SimpleLexer.isCommentState(SimpleLexer.scanState(state)))
+			return true;
+		int slevel = SimpleLexer.nestingLevel(state);
+		return slevel < level;
+	}
+	
+	bool FindStartOfComment(ref int iState, ref int line, ref uint pos)
+	{
+		// comment ends after the token that starts at (line,pos) with state iState
+		// possible states:
+		// - not a comment state: comment starts at passed pos
+		// - it's a block comment: scan backwards until we find a non-comment state
+		// - it's a nested comment: scan backwards until we find a state with nesting level less than passed state
+		if(!SimpleLexer.isCommentState(SimpleLexer.scanState(iState)))
+			return true;
+		int level = SimpleLexer.nestingLevel(iState);
+		return FindStartOfTokens(iState, line, pos, &testStartComment, level);
+	}
+	
+	bool FindStartOfString(ref int iState, ref int line, ref uint pos)
+	{
+		int level = SimpleLexer.tokenStringLevel(iState);
+		if(testEndString(iState, level))
+			return true;
+		return FindStartOfTokens(iState, line, pos, &testEndString, level);
+	}
+	
 	bool FindClosingBracketForward(int line, int idx, out int otherLine, out int otherIndex)
 	{
 		int iState;

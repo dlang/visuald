@@ -487,6 +487,39 @@ class ListView : Widget
 	}
 }
 
+int PopupContextMenu(HWND hwnd, POINT pt, wstring[] entries, int check = -1, int presel = -1)
+{
+	HMENU hmnu = CreatePopupMenu();
+	if(!hmnu)
+		return -1;
+	scope(exit) DestroyMenu(hmnu);
+	
+	MENUITEMINFO mii;
+	mii.cbSize = mii.sizeof;
+	mii.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STATE | MIIM_STRING;
+	mii.fType = MFT_STRING;
+	
+	wchar*[] entriesz;
+	for (int i = 0; i < entries.length; i++)
+	{
+		mii.fState = (i == check ? MFS_CHECKED : 0) | (i == 1 ? MFS_DEFAULT : 0);
+
+		wchar* pz = cast(wchar*) (entries[i] ~ '\0').ptr;
+		entriesz ~= pz;
+		mii.wID = i + 1;
+		mii.dwTypeData = pz;
+		if(!InsertMenuItem(hmnu, cast(UINT)i + 1, TRUE, &mii))
+			return -1;
+	}
+
+	UINT uiCmd = TrackPopupMenuEx(hmnu, TPM_RETURNCMD | TPM_NONOTIFY | TPM_HORIZONTAL | TPM_TOPALIGN | TPM_LEFTALIGN, pt.x, pt.y, hwnd, null);
+	if (uiCmd)
+		return uiCmd - 1;
+
+	HRESULT hr = HResultFromLastError();
+	return -1;
+}
+
 bool initWinControls(HINSTANCE inst)
 {
 	hInst = inst;

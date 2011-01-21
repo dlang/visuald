@@ -236,6 +236,16 @@ int UtilGetFilesFromPROJITEMDrop(HGLOBAL h, ref string[] rgFiles)
     return rgFiles.length;
 }
 
+wstring UtilGetStringFromHGLOBAL(HGLOBAL h)
+{
+	LPVOID pv = .GlobalLock(h);
+	if (!pv)
+		return "";
+	wstring ws = to_wstring(cast(wchar*) pv);
+	.GlobalUnlock(h);
+	return ws;
+}
+
 //----------------------------------------------------------------------------
 // Returns TRUE if Shell is in command line (non-interactive) mode
 //----------------------------------------------------------------------------
@@ -273,6 +283,22 @@ void UtilReportErrorInfo(HRESULT hr)
 				pIVsUIShell.ReportErrorInfo(hr);
 		}
 	}
+}
+
+int ShowContextMenu(UINT iCntxtMenuID, in GUID* GroupGuid, IOleCommandTarget pIOleCmdTarg)
+{
+	auto srpUIManager = queryService!(IVsUIShell);
+	if(!srpUIManager)
+		return E_FAIL;
+	scope(exit) release(srpUIManager);
+
+	POINT  pnt;
+	GetCursorPos(&pnt);
+	POINTS pnts = { cast(short)pnt.x, cast(short)pnt.y };
+
+	int hr = srpUIManager.ShowContextMenu(0, GroupGuid, iCntxtMenuID, &pnts, pIOleCmdTarg);
+
+	return hr;
 }
 
 //-----------------------------------------------------------------------------

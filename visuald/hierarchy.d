@@ -1640,22 +1640,6 @@ public: // IVsHierarchyEvent propagation
 		return idmxMenu;
 	}
 
-	int ShowContextMenu(UINT iCntxtMenuID, in GUID* GroupGuid, IOleCommandTarget pIOleCmdTarg)
-	{
-		auto srpUIManager = queryService!(IVsUIShell);
-		if(!srpUIManager)
-			return E_FAIL;
-		scope(exit) release(srpUIManager);
-
-		POINT  pnt;
-		GetCursorPos(&pnt);
-		POINTS pnts = { cast(short)pnt.x, cast(short)pnt.y };
-
-		int hr = srpUIManager.ShowContextMenu(0, GroupGuid, iCntxtMenuID, &pnts, pIOleCmdTarg);
-
-		return hr;
-	}
-
 	void SetErrorInfo(HRESULT hr, string txt)
 	{
 		auto srpUIManager = queryService!(IVsUIShell);

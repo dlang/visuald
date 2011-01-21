@@ -30,11 +30,13 @@ import intellisense;
 import searchsymbol;
 import expansionprovider;
 import dlangsvc;
+import winctrl;
 
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.stdidcmd;
+import sdk.vsi.vsshell;
 import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
@@ -49,6 +51,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 	uint mCookieTextViewEvents;
 	IOleCommandTarget mNextTarget;
 
+	int mLastHighlightBracesLine;
+	ViewCol mLastHighlightBracesCol;
+		
 	this(CodeWindowManager mgr, IVsTextView view)
 	{
 		mCodeWinMgr = mgr;
@@ -166,6 +171,10 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		{
 			switch (nCmdID) 
 			{
+			case cmdidPasteNextTBXCBItem:
+				if(PasteFromRing() == S_OK)
+					return S_OK;
+				break;
 			case cmdidGotoDefn:
 				return HandleGotoDef();
 			default:
@@ -214,6 +223,12 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 					//ep.DisplayExpansionBrowser(mView, "Insert Snippet", ["type1", "type2"], true, ["kind1", "kind2"], true);
 					ep.DisplayExpansionBrowser(mView, "Insert Snippet", [], false, [], false);
 				break;
+				
+			case ECMD_GOTOBRACE:
+				return GotoMatchingPair(false);
+			case ECMD_GOTOBRACE_EXT:
+				return GotoMatchingPair(true);
+			
 			default:
 				break;
 			}
@@ -320,7 +335,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			}
 		}
 
-		HighlightMatchingBraces();
+		// delayed into idle: HighlightMatchingPairs();
 		return rc;
 	}
 
@@ -347,6 +362,8 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		{
 			switch (cmdID) 
 			{
+			case cmdidPasteNextTBXCBItem:
+				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			case cmdidGotoDefn:
 			//case VsCommands.GotoDecl:
 			//case VsCommands.GotoRef:
@@ -370,6 +387,8 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			case ECMD_INVOKESNIPPETFROMSHORTCUT:
 			case ECMD_SURROUNDWITH:
 			case ECMD_AUTOCOMPLETE:
+			case ECMD_GOTOBRACE:
+			case ECMD_GOTOBRACE_EXT:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
@@ -392,41 +411,54 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 	int HighlightComment(wstring txt, int line, ref ViewCol idx, out int otherLine, out int otherIndex)
 	{
+		int iState, tokidx;
+		uint pos;
 		if(SimpleLexer.isStartingComment(txt, idx))
 		{
-			int iState;
-			uint pos;
-			int tokidx = mCodeWinMgr.mSource.FindLineToken(line, idx, iState, pos);
+			tokidx = mCodeWinMgr.mSource.FindLineToken(line, idx, iState, pos);
 			if(pos == idx)
 			{
-				SimpleLexer.scan(iState, txt, pos);
-				//if(iState == SimpleLexer.toState(SimpleLexer.State.kNestedComment, 1, 0) ||
-				if(iState == SimpleLexer.State.kWhite)
+				int startState = iState;
+				if(SimpleLexer.scan(iState, txt, pos) == TokenColor.Comment)
 				{
-					// terminated on same line
-					otherLine = line;
-					otherIndex = pos - 2; //assume 2 character comment extro 
-					return S_OK;
-				}
-				if(SimpleLexer.scanState(iState) == SimpleLexer.State.kNestedComment ||
-				   SimpleLexer.scanState(iState) == SimpleLexer.State.kBlockComment)
-				{
-					if(mCodeWinMgr.mSource.FindEndOfComment(iState, line, pos))
+					//if(iState == SimpleLexer.toState(SimpleLexer.State.kNestedComment, 1, 0) ||
+					if(iState == SimpleLexer.State.kWhite)
 					{
+						// terminated on same line
 						otherLine = line;
 						otherIndex = pos - 2; //assume 2 character comment extro 
 						return S_OK;
 					}
+					if(SimpleLexer.isCommentState(SimpleLexer.scanState(iState)))
+					{
+						if(mCodeWinMgr.mSource.FindEndOfComment(startState, iState, line, pos))
+						{
+							otherLine = line;
+							otherIndex = pos - 2; //assume 2 character comment extro 
+							return S_OK;
+						}
+					}
 				}
 			}
 		}
-		else if(SimpleLexer.isEndingComment(txt, idx))
+		if(SimpleLexer.isEndingComment(txt, idx))
 		{
-			int iState;
-			uint pos;
-			int tokidx = mCodeWinMgr.mSource.FindLineToken(line, idx, iState, pos);
+			tokidx = mCodeWinMgr.mSource.FindLineToken(line, idx, iState, pos);
 			if(tokidx >= 0)
 			{
+				int startState = iState;
+				uint startpos = pos;
+				if(SimpleLexer.scan(iState, txt, pos) == TokenColor.Comment)
+				{
+					if(startState == iState ||
+					   mCodeWinMgr.mSource.FindStartOfComment(startState, line, startpos))
+					{
+						otherLine = line;
+						otherIndex = startpos;
+						return S_OK;
+					}
+				}
+/+
 				int prevpos = pos;
 				int prevline = line;
 				SimpleLexer.scan(iState, txt, pos);
@@ -452,35 +484,64 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 						line--;
 					}
 				}
++/
 			}
 		}
 		return S_FALSE;
 	}
 	
-	int HighlightMatchingBraces()
+	int HighlightString(wstring txt, int line, ref ViewCol idx, out int otherLine, out int otherIndex)
 	{
-		int line;
-		ViewCol idx;
+		int iState;
+		uint pos;
+		auto src = mCodeWinMgr.mSource;
+		int tokidx = src.FindLineToken(line, idx, iState, pos);
+		if(tokidx < 0)
+			return S_FALSE;
+		
+		uint startPos = pos;
+		int startState = iState;
+		int type = SimpleLexer.scan(iState, txt, pos);
+		if(type == TokenColor.String)
+		{
+			SimpleLexer.State sstate;
+			sstate = SimpleLexer.scanState(startState);
+			if(idx == startPos && !SimpleLexer.isStringState(sstate))
+			{
+				if(src.FindEndOfString(startState, iState, line, pos))
+				{
+					otherLine = line;
+					otherIndex = pos - 1;
+					return S_OK;
+				}
+				return S_FALSE;
+			}
+			sstate = SimpleLexer.scanState(iState);
+			if(idx == pos - 1 && !SimpleLexer.isStringState(sstate))
+			{
+				if(src.FindStartOfString(startState, line, startPos))
+				{
+					otherLine = line;
+					otherIndex = startPos;
+					return S_OK;
+				}
+			}
+		}
+		return S_FALSE;
+	}
+	
+	int HighlightMatchingPairs()
+	{
+		int line, otherLine;
+		ViewCol idx, otherIndex;
+		int highlightLen;
+		bool checkMismatch;
 
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return rc;
-		wstring txt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
-		if(txt.length <= idx)
+		if(FindMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) != S_OK)
 			return S_OK;
 		
-		int otherLine, otherIndex;
-		int highlightLen = 1;
-		if(HighlightComment(txt, line, idx, otherLine, otherIndex) == S_OK)
-			highlightLen = 2;
-		else if(!SimpleLexer.isOpeningBracket(txt[idx]) && 
-		        !SimpleLexer.isClosingBracket(txt[idx]))
-			return S_OK;
-		else if(!FindMatchingBrace(line, idx, otherLine, otherIndex))
-		{
-			showStatusBarText("no matching bracket found"w);
-			return S_OK;
-		}
-
 		TextSpan[2] spans;
 		spans[0].iStartLine = line;
 		spans[0].iStartIndex = idx;
@@ -495,16 +556,41 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		// HIGHLIGHTMATCHINGBRACEFLAGS.USERECTANGLEBRACES
 		HRESULT hr = mView.HighlightMatchingBrace(0, 2, spans.ptr);
 
-		if(highlightLen == 1)
+		if(highlightLen == 1 && checkMismatch)
 		{
+			wstring txt = mCodeWinMgr.mSource.GetText(line, idx, line, idx + 1);
 			wstring otxt = mCodeWinMgr.mSource.GetText(otherLine, otherIndex, otherLine, otherIndex + 1);
-			if(!otxt.length || !SimpleLexer.isBracketPair(txt[idx], otxt[0]))
+			if(!otxt.length || !SimpleLexer.isBracketPair(txt[0], otxt[0]))
 				showStatusBarText("mismatched bracket " ~ otxt);
 		}
 
 		return hr;
 	}
 
+	int FindMatchingPairs(int line, ref ViewCol idx, out int otherLine, out ViewCol otherIndex,
+				  		  out int highlightLen, out bool checkMismatch)
+	{
+		wstring txt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
+		if(txt.length <= idx)
+			return S_FALSE;
+		
+		highlightLen = 1;
+		checkMismatch = true;
+		if(HighlightComment(txt, line, idx, otherLine, otherIndex) == S_OK)
+			highlightLen = 2;
+		else if(HighlightString(txt, line, idx, otherLine, otherIndex) == S_OK)
+			checkMismatch = false;
+		else if(!SimpleLexer.isOpeningBracket(txt[idx]) && 
+		        !SimpleLexer.isClosingBracket(txt[idx]))
+			return S_FALSE;
+		else if(!FindMatchingBrace(line, idx, otherLine, otherIndex))
+		{
+			// showStatusBarText("no matching bracket found"w);
+			return S_FALSE;
+		}
+		return S_OK;
+	}
+	
 	bool FindMatchingBrace(int line, int idx, out int otherLine, out int otherIndex)
 	{
 		int iState;
@@ -526,6 +612,66 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return false;
 	}
 
+	int FindClosingMatchingPairs(out int line, out ViewCol idx, out int otherLine, out ViewCol otherIndex,
+				  				 out int highlightLen, out bool checkMismatch)
+	{
+		if(int rc = mView.GetCaretPos(&line, &idx))
+			return rc;
+		int caretLine = line;
+		int caretIndex = idx;
+		
+		while(line >= 0)
+		{
+			wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
+			if(idx < 0)
+				idx = text.length;
+			
+			while(--idx >= 0)
+			{
+				if(SimpleLexer.isOpeningBracket(text[idx]) || 
+				   text[idx] == '\"' || text[idx] == '`' || text[idx] == '/')
+				{
+					if(FindMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) == S_OK)
+						if(otherLine > caretLine || 
+						   (otherLine == caretLine && otherIndex > caretIndex))
+							return S_OK;
+				}
+			}
+			line--;
+		}
+		
+		return S_FALSE;
+	}
+	
+	int GotoMatchingPair(bool select)
+	{
+		int line, otherLine;
+		ViewCol idx, otherIndex;
+		int highlightLen;
+		bool checkMismatch;
+
+		if(mView.GetCaretPos(&line, &idx) != S_OK)
+			return S_FALSE;
+		if(FindMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) != S_OK)
+			if(FindClosingMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) != S_OK)
+				return S_OK;
+		
+		mView.SetCaretPos(otherLine, otherIndex);
+
+		TextSpan span;
+		span.iStartLine = otherLine;
+		span.iStartIndex = otherIndex;
+		span.iEndLine = otherLine;
+		span.iEndIndex = otherIndex + highlightLen;
+		
+		mView.EnsureSpanVisible(span);
+		if(select)
+			mView.SetSelection (line, idx, otherLine, otherIndex + highlightLen);
+			
+		return S_OK;
+	}
+	
+	//////////////////////////////
 	wstring GetWordAtCaret()
 	{
 		int line, idx;
@@ -682,6 +828,94 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return hr;
 	}
 		
+	//////////////////////////////////////////////////////////////
+	int PasteFromRing()
+	{
+		if(auto svc = queryService!(IVsToolbox, IVsToolboxClipboardCycler))
+		{
+			scope(exit) release(svc);
+			wstring[] entries;
+			svc.BeginCycle();
+			IVsToolboxUser tbuser = qi_cast!IVsToolboxUser(mView);
+			scope(exit) release(tbuser);
+			BOOL itemsAvailable;
+			if(svc.AreDataObjectsAvailable(tbuser, &itemsAvailable) == S_OK && itemsAvailable)
+			{
+				IDataObject firstDataObject;
+				IDataObject pDataObject;
+				while(svc.GetAndSelectNextDataObject(tbuser, &pDataObject) == S_OK)
+				{
+					scope(exit) release(pDataObject);
+					
+					if(pDataObject is firstDataObject)
+						break;
+					if(!firstDataObject)
+						firstDataObject = addref(pDataObject);
+						
+					FORMATETC fmt;
+					fmt.cfFormat = CF_UNICODETEXT;
+					fmt.ptd = null;
+					fmt.dwAspect = DVASPECT_CONTENT;
+					fmt.lindex = -1;
+					fmt.tymed = TYMED_HGLOBAL;
+    
+					STGMEDIUM medium;
+					if(pDataObject.GetData(&fmt, &medium) == S_OK)
+					{
+						if(medium.tymed == TYMED_HGLOBAL)
+						{
+							wstring s = UtilGetStringFromHGLOBAL(medium.hGlobal);
+							.GlobalFree(medium.hGlobal);
+
+							s = createPasteString(s);
+							if(entries.length > 0 && entries[0] == s)
+								break;
+							entries ~= s;
+						}
+					}
+				}
+				release(firstDataObject);
+				
+				if(entries.length > 0)
+				{
+					TextSpan span;
+					if(mView.GetCaretPos (&span.iStartLine, &span.iStartIndex) == S_OK)
+					{
+						span.iEndLine = span.iStartLine;
+						span.iEndIndex = span.iStartIndex;
+						mView.EnsureSpanVisible(span);
+						POINT pt;
+						if(mView.GetPointOfLineColumn (span.iStartLine, span.iStartIndex, &pt) == S_OK)
+						{
+							int height;
+							mView.GetLineHeight (&height);
+							pt.y += height;
+							
+							HWND hwnd = cast(HWND) mView.GetWindowHandle();
+							ClientToScreen(hwnd, &pt);
+							for(int k = 0; k < 10 && k < entries.length; k++)
+								entries[k] = entries[k] ~ "\t(&" ~ cast(wchar)('0' + ((k + 1) % 10)) ~ ")";
+							int sel = PopupContextMenu(hwnd, pt, entries, -1, 1);
+							
+							if(sel >= 0)
+							{
+								svc.BeginCycle();
+								for(int i = 0; i <= sel; i++)
+								{
+									if(svc.GetAndSelectNextDataObject(tbuser, &pDataObject) == S_OK)
+										release(pDataObject);
+								}
+								return E_NOTIMPL; // forward to VS for insert
+							}
+						}
+					}
+				}
+				return S_OK; // do not pass to VS, insert cancelled
+			}
+		}
+		return E_NOTIMPL; // forward to VS for insert
+	}
+	
 	//////////////////////////////////////////////////////////////
 	int HandleGotoDef()
 	{
@@ -870,5 +1104,20 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		return S_OK;
 	}
 
+	bool OnIdle()
+	{
+		int line;
+		ViewCol idx;
+
+		if(int rc = mView.GetCaretPos(&line, &idx))
+			return false;
+		if(mLastHighlightBracesLine == line && mLastHighlightBracesCol == idx)
+			return false;
+			
+		mLastHighlightBracesLine = line;
+		mLastHighlightBracesCol = idx;
+		HighlightMatchingPairs();
+		return true;
+	}
 }
 

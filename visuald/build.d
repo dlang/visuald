@@ -20,6 +20,7 @@ import std.conv;
 import std.math;
 import std.exception;
 import core.stdc.time;
+import core.stdc.string;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
@@ -545,7 +546,10 @@ version(none)
 } else {
 	try
 	{
-		std.file.write(cmdfile, cmdline);
+		int cp = GetKBCodePage();
+		const(char)*p = toMBSz(batchFileText, cp);
+		int plen = strlen(p);
+		std.file.write(cmdfile, p[0..plen]);
 	}
 	catch(FileException e)
 	{
