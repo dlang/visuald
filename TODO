@@ -27,7 +27,6 @@ Project:
 - buildlog should contain project name to disambiguate
 - adding new item to project causes lots of System.Resources.MissingManifestResourceException
   which seems like a frozen UI (only first dialog open)
-- unicode characters in $(APPDATA) cause trouble with "Build JSON for phobos"
 
 Language service:
 ---------------

@@ -240,3 +240,5 @@ Version history
   * brace matching now also includes strings and nested comments
   * goto matching brace now implemented (the VS implementation does not work 
     well with D)
+  * improved handling of unicode characters in environment and batch files
+  
