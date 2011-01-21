@@ -72,6 +72,13 @@ void addunique(T)(ref T[] arr, T val)
 		arr ~= val;
 }
 
+void addunique(T)(ref T[] arr, T[] vals)
+{
+	foreach(val; vals)
+		if (!contains(arr, val))
+			arr ~= val;
+}
+
 ///////////////////////////////////////////////////////////////////////
 int CompareFilenamesForSort(string f1, string f2)
 {

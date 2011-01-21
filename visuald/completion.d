@@ -149,7 +149,7 @@ class Declarations
 				}
 				if(canImport && base.startsWith(imp) && array_find(mNames, base) < 0)
 				{
-					mNames ~= base;
+					addunique(mNames, base);
 					mGlyphs ~= dir ? kImageFolderClosed : kImageDSource;
 				}
 			}
@@ -234,8 +234,8 @@ class Declarations
 					if(type == TokenColor.Identifier || type == TokenColor.Keyword)
 					{
 						string txt = toUTF8(text[ppos .. pos]);
-						if(txt.startsWith(tok) && array_find(mNames, txt) < 0)
-							mNames ~= txt;
+						if(txt.startsWith(tok))
+							addunique(mNames, txt);
 					}
 			}
 		}
@@ -252,7 +252,7 @@ class Declarations
 			return false;
 		
 		int namesLength = mNames.length;
-		mNames ~= Package.GetLibInfos().findCompletions(tok, true);
+		addunique(mNames, Package.GetLibInfos().findCompletions(tok, true));
 		return mNames.length > namesLength;
 	}
 	

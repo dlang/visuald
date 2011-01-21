@@ -28,7 +28,13 @@ Major Features
   - highlight/jump-to matching braces
   - code snippets
   - parameter tooltips
-  
+  - display of scope at caret position
+  - code outlining
+
+* Other
+  - symbol/file search window
+  - profiler window 
+    
 * Supported Visual Studio versions
   - VS.NET 2003 (some limitations apply)
   - VS 2005
@@ -56,6 +62,24 @@ For more details, see the full text of the license in the file LICENSE.
 
 Installation
 ------------
+
+The click-through-installer will guide you through the intallation process. 
+The installer lets you select the Visual Studio Version for which you want 
+Visual D to be installed. It will always install for all users, not only for 
+a single user.
+
+To compile your application, you must have DMD installed.
+
+For debugging applications, you should also install cv2pdb which is now 
+included in the Visual D installer. Please make sure, changes to 
+Common7\Packages\Debugger\autoexp.dat do not mix with previous manual 
+installations of cv2pdb. 
+
+Unfortunately, if you are using the Visual Studio Shell, it misses one file,
+that is needed for the conversion of the debug information by cv2pdb. This 
+is msobj80.dll for VS2008 and msobj100.dll for VS2010 and must be extracted 
+from a standard installation, the Visual C Express edition or the Windows SDK.
+You might also find it installed by other Microsoft products. 
 
 Changes
 -------

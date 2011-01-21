@@ -788,7 +788,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		
 		IVsCompoundAction compAct = qi_cast!IVsCompoundAction(mView);
 		if(compAct)
-			compAct.OpenCompoundAction("RedindentLines"w.ptr);
+			compAct.OpenCompoundAction("ReindentLines"w.ptr);
 		
 		hr = mCodeWinMgr.mSource.ReindentLines(iStartLine, iEndLine);
 
@@ -895,7 +895,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 							ClientToScreen(hwnd, &pt);
 							for(int k = 0; k < 10 && k < entries.length; k++)
 								entries[k] = entries[k] ~ "\t(&" ~ cast(wchar)('0' + ((k + 1) % 10)) ~ ")";
-							int sel = PopupContextMenu(hwnd, pt, entries, -1, 1);
+							int sel = PopupContextMenu(hwnd, pt, entries);
 							
 							if(sel >= 0)
 							{
