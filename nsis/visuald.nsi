@@ -60,6 +60,8 @@
 !endif
   !define VDSETTINGS_KEY          "\ToolsOptionsPages\Projects\Visual D Settings"
   
+  !define WIN32_EXCEPTION_KEY     AD7Metrics\Exception\{3B476D35-A401-11D2-AAD4-00C04F990171}
+  
 !ifdef MAGO
   !define MAGO_CLSID              {97348AC0-2B6B-4B99-A245-4C7E2C09D403}
   !define MAGO_ENGINE_KEY         AD7Metrics\Engine\${MAGO_CLSID}
@@ -88,6 +90,21 @@
   RequestExecutionLevel admin
 
   ReserveFile "dmdinstall.ini"
+
+;--------------------------------
+; register win32 macro
+!macro RegisterWin32Exception Root Exception
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "${Root}\${WIN32_EXCEPTION_KEY}\${Exception}" "Code" 0xE0440001
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "${Root}\${WIN32_EXCEPTION_KEY}\${Exception}" "State" 3
+!macroend
+!define RegisterWin32Exception "!insertmacro RegisterWin32Exception"
+
+; register macro
+!macro RegisterException Root Exception
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "${Root}\${MAGO_EXCEPTION_KEY}\${Exception}" "Code" 0
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "${Root}\${MAGO_EXCEPTION_KEY}\${Exception}" "State" 3
+!macroend
+!define RegisterException "!insertmacro RegisterException"
 
 ;--------------------------------
 ;installation time variables
@@ -197,6 +214,7 @@ ${MementoSection} "Register with VS.NET" SecVS_NET
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS_NET_REGISTRY_KEY}'
   WriteRegStr ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ${RegisterWin32Exception} ${VS_NET_REGISTRY_KEY} "Win32 Exceptions\D Exception"
   
 ${MementoSectionEnd}
 
@@ -205,6 +223,7 @@ ${MementoSection} "Register with VS 2005" SecVS2005
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2005_REGISTRY_KEY}'
   WriteRegStr ${VS_REGISTRY_ROOT} "${VS2005_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ${RegisterWin32Exception} ${VS2005_REGISTRY_KEY} "Win32 Exceptions\D Exception"
   
 ${MementoSectionEnd}
 
@@ -213,6 +232,7 @@ ${MementoSection} "Register with VS 2008" SecVS2008
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2008_REGISTRY_KEY}'
   WriteRegStr ${VS_REGISTRY_ROOT} "${VS2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir 
+  ${RegisterWin32Exception} ${VS2008_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
 ${MementoSectionEnd}
 
@@ -221,6 +241,7 @@ ${MementoSection} "Register with VS 2010" SecVS2010
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2010_REGISTRY_KEY}'
   WriteRegStr ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ${RegisterWin32Exception} ${VS2010_REGISTRY_KEY} "Win32 Exceptions\D Exception"
   
 ${MementoSectionEnd}
 
@@ -391,6 +412,11 @@ Section "Uninstall"
   Call un.PatchAutoExp
 !endif
 
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
   
@@ -559,13 +585,7 @@ Function un.PatchAutoExp
   Pop $1
 FunctionEnd
 
-; File macro
-!macro RegisterException Root Exception
-  WriteRegDWORD ${VS_REGISTRY_ROOT} "${Root}\${MAGO_EXCEPTION_KEY}\${Exception}" "Code" 0
-  WriteRegDWORD ${VS_REGISTRY_ROOT} "${Root}\${MAGO_EXCEPTION_KEY}\${Exception}" "State" 3
-!macroend
-!define RegisterException "!insertmacro RegisterException"
-
+;---------------------------------------
 Function RegisterMago
   Exch $1
   Exch

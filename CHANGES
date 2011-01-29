@@ -229,7 +229,7 @@ Version history
   * ddoc files in project now also passed to DMD automatically
   * support for generating modules.ddoc for CanDyDOC
 
-2011-01-21 Version 0.3.21
+2011-01-29 Version 0.3.21
 
   * fix: identifiers extracted for GotoDefinition stopped at digits
   * fix: clean removed ddoc files from the doc directory, but not html files
@@ -242,3 +242,5 @@ Version history
     well with D)
   * completion: items are no longer displayed multiple times
   * improved handling of unicode characters in environment and batch files
+  * installer now adds a "D Exception" to the "Win32 Exception" list to allow
+    the debugger to stop when a D exception is thrown
