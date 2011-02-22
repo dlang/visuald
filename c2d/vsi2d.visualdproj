@@ -5,6 +5,7 @@
   <link>0</link>
   <lib>0</lib>
   <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -39,7 +40,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
@@ -50,6 +51,7 @@
   <doDocComments>0</doDocComments>
   <docdir />
   <docname />
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
@@ -85,6 +87,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
+  <debugEngine>0</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Config name="Release">
@@ -92,6 +95,7 @@
   <link>0</link>
   <lib>0</lib>
   <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -137,6 +141,7 @@
   <doDocComments>0</doDocComments>
   <docdir />
   <docname />
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
@@ -172,6 +177,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
+  <debugEngine>0</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="vsi2d">

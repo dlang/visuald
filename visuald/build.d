@@ -18,6 +18,7 @@ import std.file;
 import std.path;
 import std.conv;
 import std.math;
+import std.array;
 import std.exception;
 import core.stdc.time;
 import core.stdc.string;
@@ -522,7 +523,6 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	assert(srpIVsLaunchPad.ptr);
 
 	CLaunchPadEvents pLaunchPadEvents = new CLaunchPadEvents(pBuilder);
-	CLaunchPadOutputParser pLaunchPadOutputParser = new CLaunchPadOutputParser();
 
 	BSTR bstrOutput;
 version(none)
@@ -558,6 +558,8 @@ version(none)
 	}
 	DWORD result;
 	if(IVsLaunchPad2 pad2 = qi_cast!IVsLaunchPad2(srpIVsLaunchPad))
+	{
+		CLaunchPadOutputParser pLaunchPadOutputParser = new CLaunchPadOutputParser();
 		hr = pad2.ExecCommandEx(
 			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
 			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
@@ -571,6 +573,8 @@ version(none)
 			/* [in] IVsLaunchPadOutputParser pOutputParser */ pLaunchPadOutputParser,
 			/* [out] DWORD *pdwProcessExitCode             */ &result,
 			/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
+		release(pad2);
+	}
 	else
 		hr = srpIVsLaunchPad.ExecCommand(
 			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
@@ -838,7 +842,7 @@ else
 	return cntValid > 0;
 }
 
-
+version(slow)
 unittest
 {
 	string line = r"std.file (c:\\dmd\\phobos\\std\\file.d) : public : std.utf (c:\\dmd\\phobos\\std\\utf.d)";

@@ -575,15 +575,20 @@ private:
 	string _demangle(string txt, bool fullDeco)
 	{
 		int p = 0;
-		static if(is(typeof(decodeDmdString)))
-		{
-			txt = decodeDmdString(txt.dup, p);
-			if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
+		debug // allow std 2.052 in debug builds
+			enum hasTypeArg = __traits(compiles, { demangle("",true); });
+		else // ensure patched runtime in release
+			enum hasTypeArg = true;
+
+		txt = decodeDmdString(txt, p);
+		if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
+			static if(hasTypeArg)
 				txt = to!string(demangle(txt, fullDeco));
-		}
-		else
-			if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
+			else
+			{
+				pragma(msg, "_demangle uses compatibility mode");
 				txt = to!string(demangle(txt));
+			}
 			
 		return txt;
 	}
@@ -2000,7 +2005,7 @@ class ProfileItemIndex
 				}
 				else if(buf[0] == '=')
 				{
-					int pos = std.algorithm.indexOf(buf, "Timer Is");
+					int pos = std.string.indexOf(buf, "Timer Is");
 					if(pos > 0)
 						mTicksPerSec = parse!long(buf[pos + 9 .. $]);
 					break;

@@ -10,6 +10,7 @@ module winctrl;
 
 import windows;
 import std.utf;
+import std.exception;
 import sdk.port.base;
 import sdk.win32.prsht;
 import sdk.win32.commctrl;
@@ -346,10 +347,19 @@ class Text : Widget
 		super(parent);
 	}
 
-	void setText(string str) {
+	void setText(string str)
+	{
 		auto lines = std.string.splitlines(str);
-		auto winstr = std.string.join(lines, std.string.newline);
+		string newline = std.string.newline; // join no longer likes immutable seperator
+		auto winstr = std.string.join(lines, newline);
 		SendMessageW(hwnd, WM_SETTEXT, 0, cast(LPARAM)toUTF16z(winstr));
+	}
+
+	void setText(wstring str)
+	{
+		auto lines = std.string.splitlines(str);
+		auto winstr = std.string.join(lines, "\r\n") ~ "\0";
+		SendMessageW(hwnd, WM_SETTEXT, 0, cast(LPARAM)winstr.ptr);
 	}
 
 	string getText() 
@@ -359,6 +369,14 @@ class Text : Widget
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
 		return toUTF8(buffer[0..$-1]);
 	}
+
+	wstring getWText() 
+	{
+		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+		auto buffer = new wchar[len+1];
+		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
+		return assumeUnique(buffer[0..$-1]);
+	}
 }
 
 class MultiLineText : Text
@@ -366,7 +384,8 @@ class MultiLineText : Text
 	this(Widget parent, string text = "", int id = 0, bool readonly = false)
 	{
 		scope lines = std.string.splitlines(text);
-		scope winstr = std.string.join(lines, std.string.newline);
+		string newline = std.string.newline;
+		scope winstr = std.string.join(lines, newline);
 		uint exstyle = /*WS_HSCROLL |*/ WS_VSCROLL | ES_WANTRETURN | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL;
 		if(readonly)
 			exstyle = (exstyle & ~(WS_HSCROLL | ES_AUTOHSCROLL)) | ES_READONLY;
@@ -411,6 +430,13 @@ class ComboBox : Widget
 		scope buffer = new wchar[len+1];
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
 		return toUTF8(buffer[0..$-1]);
+	}
+	wstring getWText() 
+	{
+		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+		scope buffer = new wchar[len+1];
+		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
+		return assumeUnique(buffer[0..$-1]);
 	}
 }
 

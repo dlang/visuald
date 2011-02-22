@@ -15,6 +15,7 @@ import std.utf;
 import std.file;
 import std.path;
 import std.algorithm;
+import std.array;
 
 import comutil;
 import logutil;

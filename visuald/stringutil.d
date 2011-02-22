@@ -18,6 +18,7 @@ import std.utf;
 import std.string;
 import std.ctype;
 import std.conv;
+import std.array;
 
 string ellipseString(string s, int maxlen)
 {

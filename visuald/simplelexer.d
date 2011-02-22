@@ -87,6 +87,7 @@ class SimpleLexer
 
 	static bool sTokenizeTokenString = true;
 	static bool sSplitNestedComments = true;
+	static bool sAllowDollarInIdentifiers = false;
 	
 	static int toState(State s, int nesting, int tokLevel, int otherState)
 	{
@@ -453,6 +454,8 @@ L_complexLiteral:
 	
 	static bool isIdentifierChar(dchar ch)
 	{
+		if(sAllowDollarInIdentifiers && ch == '$')
+			return true;
 		return isUniAlpha(ch) || ch == '_' || ch == '@';
 	}
 	

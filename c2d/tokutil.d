@@ -6,14 +6,15 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module tokutil;
+module c2d.tokutil;
 
-import tokenizer;
-import dlist;
-import dgutil;
+import c2d.tokenizer;
+import c2d.dlist;
+import c2d.dgutil;
 
 import std.string;
 import std.ctype;
+import std.array;
 static import std.regexp;
 
 //////////////////////////////////////////////////////////////////////////////

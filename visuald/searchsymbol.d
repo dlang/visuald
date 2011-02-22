@@ -36,6 +36,7 @@ import std.path;
 import std.file;
 import std.conv;
 import std.exception;
+import std.array;
 import std.c.stdio : sprintf;
 
 private IVsWindowFrame sWindowFrame;
@@ -1448,7 +1449,7 @@ else
 		return colid;
 	}
 
-	string _timeString(d_time time)
+	string _timeString(std.date.d_time time)
 	{
 		char[] buffer = new char[128];
 		
@@ -1457,7 +1458,7 @@ else
 		auto t = time; // + offset;
 
 		auto len = sprintf(buffer.ptr, "%04d/%02d/%02d %02d:%02d:%02d",
-		                   yearFromTime(t), dateFromTime(t), monthFromTime(t),
+		                   yearFromTime(t), dateFromTime(t), monthFromTime(t) + 1,
 		                   hourFromTime(t), minFromTime(t), secFromTime(t));
 		
 		assert(len < buffer.length);
@@ -1515,7 +1516,7 @@ else
 					break;
 
 				case COLUMNID.MODIFIEDDATE:
-					d_time ft = psiWeak.GetModified();
+					std.date.d_time ft = psiWeak.GetModified();
 					if(ft != 0)
 						//txt = std.date.toString(ft);
 						txt = _timeString(ft);

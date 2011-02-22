@@ -8,7 +8,7 @@
 
 // simple double linked list
 
-module dlist;
+module c2d.dlist;
 
 struct DListNode(T)
 {

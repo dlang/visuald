@@ -372,6 +372,26 @@ dte2.DTE2 GetDTE()
 }
 
 ////////////////////////////////////////////////////////////////////////
+IVsTextLines GetCurrentTextBuffer(IVsTextView* pview)
+{
+	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
+	if(!textmgr)
+		return null;
+	scope(exit) release(textmgr);
+
+	IVsTextView view;
+	if(textmgr.GetActiveView(false, null, &view) != S_OK)
+		return null;
+	scope(exit) release(view);
+	if(pview)
+		*pview = addref(view);
+	
+	IVsTextLines buffer;
+	view.GetBuffer(&buffer);
+	return buffer;
+}
+
+////////////////////////////////////////////////////////////////////////
 string GetSolutionFilename()
 {
 	IVsSolution srpSolution = queryService!(IVsSolution);
@@ -460,14 +480,19 @@ HRESULT OpenFileInSolution(string filename, int line, string srcfile = "")
 		return returnError(E_FAIL);
 	scope(exit) release(textBuffer);
 
+	if(line < 0)
+		return S_OK;
+	return NavigateTo(textBuffer, line, 0, line, 0);
+}
+
+HRESULT NavigateTo(IVsTextBuffer textBuffer, int line1, int col1, int line2, int col2)
+{
 	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
 	if(!textmgr)
 		return returnError(E_FAIL);
 	scope(exit) release(textmgr);
 
-	if(line < 0)
-		return S_OK;
-	return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, line, 0, line, 0);
+	return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, line1, col1, line2, col2);
 }
 
 ////////////////////////////////////////////////////////////////////////

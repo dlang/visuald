@@ -16,6 +16,7 @@ import std.utf;
 import std.path;
 import std.file;
 import std.conv;
+import std.array;
 
 import comutil;
 import hierutil;
@@ -32,6 +33,7 @@ import winctrl;
 import register;
 import intellisense;
 import searchsymbol;
+import tokenreplacedialog;
 import profiler;
 
 import sdk.win32.winreg;
@@ -78,6 +80,7 @@ const GUID    g_searchWinCLSID           = uuid("002a2de9-8bb6-484d-9804-7e4ad40
 const GUID    g_debuggerLanguage         = uuid("002a2de9-8bb6-484d-9805-7e4ad4084715");
 const GUID    g_expressionEvaluator      = uuid("002a2de9-8bb6-484d-9806-7e4ad4084715");
 const GUID    g_profileWinCLSID          = uuid("002a2de9-8bb6-484d-9807-7e4ad4084715");
+const GUID    g_tokenReplaceWinCLSID     = uuid("002a2de9-8bb6-484d-9808-7e4ad4084715");
 
 GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
 
@@ -464,6 +467,9 @@ class Package : DisposingComObject,
 				{
 				case CmdSearchFile:
 				case CmdSearchSymbol:
+				case CmdSearchTokNext:
+				case CmdSearchTokPrev:
+				case CmdReplaceTokens:
 				case CmdBuildPhobos:
 				case CmdShowProfile:
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
@@ -493,6 +499,21 @@ class Package : DisposingComObject,
 		if(nCmdID == CmdSearchFile)
 		{
 			showSearchWindow(true);
+			return S_OK;
+		}
+		if(nCmdID == CmdSearchTokNext)
+		{
+			findNextTokenReplace(false);
+			return S_OK;
+		}
+		if(nCmdID == CmdSearchTokPrev)
+		{
+			findNextTokenReplace(true);
+			return S_OK;
+		}
+		if(nCmdID == CmdReplaceTokens)
+		{
+			showTokenReplaceWindow(true);
 			return S_OK;
 		}
 		if(nCmdID == CmdBuildPhobos)
@@ -963,7 +984,7 @@ class GlobalOptions
 
 			if(files.length)
 			{
-				string sfiles = join(files, " ");
+				string sfiles = std.string.join(files, " ");
 				cmdline ~= quoteFilename(dmdpath) ~ " -c -Xf" ~ quoteFilename(jsonfile) ~ " -o- " ~ sfiles ~ "\n\n";
 				pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " from import " ~ s ~ "\n"));
 				if(!launchBuildPhobosBrowseInfo(s, cmdfile, cmdline, pane))

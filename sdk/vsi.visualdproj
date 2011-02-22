@@ -41,7 +41,7 @@
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
+  <program>m:\s\d\dmd2\dmd\src\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -51,6 +51,7 @@
   <doDocComments>0</doDocComments>
   <docdir />
   <docname />
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
@@ -140,6 +141,7 @@
   <doDocComments>0</doDocComments>
   <docdir />
   <docname />
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />

@@ -20,7 +20,7 @@ version(sdk) {
 	public import sdk.win32.winuser;
 	public import sdk.win32.winerror;
 	public import sdk.win32.wingdi;
-	public import std.stdarg;
+	public import core.vararg;
 } else {
 	public import std.c.windows.windows;
 	public import std.c.windows.com;
@@ -201,7 +201,6 @@ struct _POINTS
     SHORT y;
 }
 alias _POINTS POINTS; alias _POINTS *PPOINTS;
-} // !sdk
 
 struct LOGFONTW
 {
@@ -221,6 +220,7 @@ struct LOGFONTW
     WCHAR     lfFaceName[32 ];
 }
 alias LOGFONTW* PLOGFONTW, NPLOGFONTW, LPLOGFONTW;
+} // !sdk
 
 const OLE_E_LAST = 0x800400FF;
 
@@ -332,6 +332,8 @@ uint strtohex(string s)
 
 GUID uuid(string g) 
 {
+//	return GUID(0, 0, 0, [ 0, 0, 0, 0, 0, 0, 0, 0 ]);
+	
 	if(g.length == 38) 
 	{
 		assert(g[0] == '{' && g[$-1] == '}', "Incorrect format for GUID.");

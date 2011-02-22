@@ -244,3 +244,13 @@ Version history
   * improved handling of unicode characters in environment and batch files
   * installer now adds a "D Exception" to the "Win32 Exception" list to allow
     the debugger to stop when a D exception is thrown
+
+unreleased Version 0.3.22
+
+  * Visual D now builds with DMD 2.052
+  * fixed WindowsApp template to build with DMD 2.052
+  * fixed small COM leak
+  * paste ring menu no longer stops when repeating the first entry and 
+    avoids duplicate entries
+  * new token search and replace dialog
+  * new compilation mode: compile and link in separately

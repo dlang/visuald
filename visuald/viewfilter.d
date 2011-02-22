@@ -32,6 +32,8 @@ import expansionprovider;
 import dlangsvc;
 import winctrl;
 
+import tokenreplace;
+
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
@@ -843,7 +845,8 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			{
 				IDataObject firstDataObject;
 				IDataObject pDataObject;
-				while(svc.GetAndSelectNextDataObject(tbuser, &pDataObject) == S_OK)
+				while(entries.length < 30 && 
+					  svc.GetAndSelectNextDataObject(tbuser, &pDataObject) == S_OK)
 				{
 					scope(exit) release(pDataObject);
 					
@@ -868,9 +871,8 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 							.GlobalFree(medium.hGlobal);
 
 							s = createPasteString(s);
-							if(entries.length > 0 && entries[0] == s)
-								break;
-							entries ~= s;
+							if(!contains(entries, s))
+								entries ~= s;
 						}
 					}
 				}
@@ -914,6 +916,28 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			}
 		}
 		return E_NOTIMPL; // forward to VS for insert
+	}
+
+	//////////////////////////////////////////////////////////////
+	int RemoveUnittests()
+	{
+		int endLine, endCol;
+		mCodeWinMgr.mSource.GetLastLineIndex(endLine, endCol);
+		wstring wtxt = mCodeWinMgr.mSource.GetText(0, 0, endLine, endCol);
+		ReplaceOptions opt;
+version(none)
+{
+		string txt = to!string(wtxt);
+		string rtxt = replaceTokenSequence(txt, "unittest { $any }", "", opt, null);
+		if(txt == rtxt)
+			return S_OK;
+		wstring wrtxt = to!wstring(rtxt);
+}
+else
+		wstring wrtxt = replaceTokenSequence(wtxt, 1, 0, "unittest { $any }", "", opt, null);
+		
+		TextSpan changedSpan;
+		return mCodeWinMgr.mSource.mBuffer.ReplaceLines(0, 0, endLine, endCol, wrtxt.ptr, wrtxt.length, &changedSpan);
 	}
 	
 	//////////////////////////////////////////////////////////////

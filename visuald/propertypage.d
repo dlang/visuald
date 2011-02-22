@@ -509,6 +509,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		string[] versions;
 		foreach(ver; selectableVersions)
 			versions ~= "D" ~ to!(string)(ver);
+		versions[$-1] ~= "+";
 		
 		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
 		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, [ "Executable", "Library" ], false));
@@ -517,7 +518,8 @@ class GeneralPropertyPage : ProjectPropertyPage
 		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
 		AddControl("",              mOtherDMD = new CheckBox(mCanvas, "Use other compiler"));
 		AddControl("DMD Path",      mDmdPath = new Text(mCanvas));
-		AddControl("",              mSingleFileComp = new CheckBox(mCanvas, "Single file compilation"));
+		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas, 
+			[ "Combined compile and link", "Single file compilation", "Separate compile and link" ], false));
 	}
 
 	void UpdateDirty(bool bDirty)
@@ -539,7 +541,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		mDVersion.setSelection(ver);
 		
 		mOtherDMD.setChecked(options.otherDMD);
-		mSingleFileComp.setChecked(options.singleFileCompilation);
+		mSingleFileComp.setSelection(options.singleFileCompilation);
 		mCbOutputType.setSelection(options.lib);
 		mDmdPath.setText(options.program);
 		mOutputPath.setText(options.outdir);
@@ -554,7 +556,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		float ver = selectableVersions[mDVersion.getSelection()];
 		int changes = 0;
 		changes += changeOption(mOtherDMD.isChecked(), options.otherDMD, refoptions.otherDMD);
-		changes += changeOption(mSingleFileComp.isChecked(), options.singleFileCompilation, refoptions.singleFileCompilation);
+		changes += changeOption(cast(uint) mSingleFileComp.getSelection(), options.singleFileCompilation, refoptions.singleFileCompilation);
 		changes += changeOption(mCbOutputType.getSelection() != 0, options.lib, refoptions.lib);
 		changes += changeOption(mDmdPath.getText(), options.program, refoptions.program);
 		changes += changeOption(ver, options.Dversion, refoptions.Dversion);
@@ -565,7 +567,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 	}
 
 	CheckBox mOtherDMD;
-	CheckBox mSingleFileComp;
+	ComboBox mSingleFileComp;
 	Text mDmdPath;
 	ComboBox mCbOutputType;
 	ComboBox mDVersion;

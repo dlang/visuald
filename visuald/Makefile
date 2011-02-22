@@ -16,13 +16,14 @@ XMLP_SRC = $(XMLP)/compatible.d $(XMLP)/delegater.d $(XMLP)/except.d \
            $(XMLP)/../inrange/recode.d
 # $(XMLP)/recode.d 
 
-SRC = dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
-      logutil.d dllmain.d dproject.d hierarchy.d config.d expansionprovider.d \
+SRC = config.d dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
+      logutil.d dllmain.d dproject.d hierarchy.d expansionprovider.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d pkgutil.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
-      profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d
+      profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d \
+      ..\c2d\dlist.d tokenreplace.d tokenreplacedialog.d 
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
        resources/DAboutLogo.ico resources/GroupByType.ico resources/CombineColumns.ico \

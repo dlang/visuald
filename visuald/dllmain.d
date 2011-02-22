@@ -56,8 +56,18 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 			logCall("DllMain(DLL_PROCESS_DETACH, tid=%x)", GetCurrentThreadId());
 			global_exit();
 			dll_process_detach( hInstance, true );
+			
+			debug if(DComObject.sCountReferenced != 0 || DComObject.sCountInstances != 0)
+				asm { int 3; } // use continue, not terminate in the debugger
 			break;
 
+debug // allow std 2.052 in debug builds
+	enum isPatchedLib = __traits(compiles, { bool b = dll_thread_attach( true, true ); });
+else // ensure patched runtime in release
+	enum isPatchedLib = true;
+		
+	static if(isPatchedLib)
+	{
 		case DLL_THREAD_ATTACH:
 			if(!dll_thread_attach( true, true ))
 				return false;
@@ -65,10 +75,23 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 			break;
 
 		case DLL_THREAD_DETACH:
-			if(core.thread_helper.GetTlsDataAddress(GetCurrentThreadId(), _tls_index))
+			if(core.thread_helper.GetTlsDataAddress(GetCurrentThreadId())) // , _tls_index))
 				logCall("DllMain(DLL_THREAD_DETACH, id=%x)", GetCurrentThreadId());
 			dll_thread_detach( true, true );
 			break;
+	}
+	else
+	{
+		pragma(msg, "DllMain uses compatibility mode");
+		case DLL_THREAD_ATTACH:
+			dll_thread_attach( true, true );
+			break;
+
+		case DLL_THREAD_DETACH:
+			dll_thread_detach( true, true );
+			break;
+	}
+	
 	}
 	return true;
 }

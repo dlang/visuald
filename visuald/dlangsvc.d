@@ -764,7 +764,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		DismissCompletor();
 		DismissMethodTip();
 		mCompletionSet = release(mCompletionSet);
-		mMethodData = release(mMethodData);
+		if(mMethodData)
+		{
+			mMethodData.Dispose(); // we need to break the circular reference MethodData<->IVsMethodTipWindow
+			mMethodData = release(mMethodData);
+		}
 		mSourceEvents.Dispose();
 		mBuffer = release(mBuffer);
 		mHiddenTextSession = release(mHiddenTextSession);
@@ -1026,11 +1030,13 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	///////////////////////////////////////////////////////////////////////////////
 	wstring GetText(int startLine, int startCol, int endLine, int endCol)
 	{
-		if(endCol == -1)
+		if(endLine == -1)
+			mBuffer.GetLastLineIndex(&endLine, &endCol);
+		else if(endCol == -1)
 			mBuffer.GetLengthOfLine(endLine, &endCol);
 
 		BSTR text;
-		mBuffer.GetLineText(startLine, startCol, endLine, endCol, &text);
+		HRESULT hr = mBuffer.GetLineText(startLine, startCol, endLine, endCol, &text);
 		return wdetachBSTR(text);
 	}
 
@@ -1151,6 +1157,11 @@ else
 		int lineCount;
 		mBuffer.GetLineCount(&lineCount);
 		return lineCount;
+	}
+	
+	int GetLastLineIndex(ref int endLine, ref int endCol)
+	{
+		return mBuffer.GetLastLineIndex(&endLine, &endCol);
 	}
 	
 	TokenInfo[] GetLineInfo(int line, wstring *ptext = null)

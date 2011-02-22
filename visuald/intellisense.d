@@ -418,7 +418,7 @@ class LibraryInfo
 
 	JSONValue mModules;
 	string mFilename;
-	d_time mModified;
+	std.date.d_time mModified;
 }
 
 struct ParameterInfo

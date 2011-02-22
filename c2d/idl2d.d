@@ -12,11 +12,11 @@
 //
 // 
 //
-module idl2d;
+module c2d.idl2d;
 
-import tokenizer;
-import tokutil;
-import dgutil;
+import c2d.tokenizer;
+import c2d.tokutil;
+import c2d.dgutil;
 
 import std.string;
 import std.file;
@@ -26,6 +26,7 @@ import std.ctype;
 import std.algorithm;
 import std.getopt;
 import std.utf;
+import std.array;
 import std.windows.charset;
 import core.memory;
 

@@ -35,6 +35,9 @@
 #define CmdShowScope     0x103
 #define CmdShowMethodTip 0x104
 #define CmdToggleComment 0x105
+#define CmdReplaceTokens 0x106
+#define CmdSearchTokNext 0x107
+#define CmdSearchTokPrev 0x108
 
 #define CmdBuildPhobos   0x110
 #define CmdShowProfile   0x111

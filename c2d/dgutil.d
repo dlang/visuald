@@ -6,7 +6,7 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module dgutil;
+module c2d.dgutil;
 
 import std.string;
 import std.ctype;

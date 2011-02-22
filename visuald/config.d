@@ -12,6 +12,7 @@ import std.string;
 import std.conv;
 import std.path;
 import std.utf;
+import std.array;
 
 import xml = xmlwrap;
 
@@ -32,6 +33,12 @@ import propertypage;
 import stringutil;
 import fileutil;
 import lexutil;
+
+///////////////////////////////////////////////////////////////
+// fix bad compilation order, causing inner function to be generated
+//  before outer functions (bugzilla 2962)
+static if(__traits(compiles,std.conv.parse!(real,string))){}
+///////////////////////////////////////////////////////////////
 
 const string kToolResourceCompiler = "Resource Compiler";
 const string kCmdLogFileExtension = "build";
@@ -155,7 +162,13 @@ class ProjectOptions
 	bool runCv2pdb;		// run cv2pdb on executable
 	string pathCv2pdb;	// exe path for cv2pdb 
 
-	bool singleFileCompilation = false;
+	enum
+	{
+		kCombinedCompileAndLink,
+		kSingleFileCompilation,
+		kSeparateCompileAndLink,
+	}
+	uint singleFileCompilation = kCombinedCompileAndLink;
 	
 	// Linker stuff
 	string objfiles;
@@ -294,39 +307,45 @@ class ProjectOptions
 		foreach(id; ids)
 			if(strip(id).length)
 				cmd ~= " -debug=" ~ strip(id);
-
+	
 		if(performLink)
-		{
-			string dmdoutfile = getTargetPath();
-			if(usesCv2pdb())
-				dmdoutfile ~= "_cv";
+			cmd ~= linkCommandLine();
+		return cmd;
+	}
+	
+	string linkCommandLine()
+	{
+		string cmd;
+		
+		string dmdoutfile = getTargetPath();
+		if(usesCv2pdb())
+			dmdoutfile ~= "_cv";
 
-			cmd ~= " -of" ~ quoteNormalizeFilename(dmdoutfile);
-			cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
-			cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
-			switch(mapverbosity)
-			{
+		cmd ~= " -of" ~ quoteNormalizeFilename(dmdoutfile);
+		cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
+		cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+		switch(mapverbosity)
+		{
 			case 0: cmd ~= " -L/NOMAP"; break; // actually still creates map file
 			case 1: cmd ~= " -L/MAP:ADDRESS"; break;
 			case 2: break;
 			case 3: cmd ~= " -L/MAP:FULL"; break;
 			case 4: cmd ~= " -L/MAP:FULL -L/XREF"; break;
 			default: break;
-			}
+		}
 
-			if(!lib)
-			{
-				if(createImplib)
-					cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
-				if(objfiles.length)
-					cmd ~= " " ~ objfiles;
-				if(deffile.length)
-					cmd ~= " " ~ deffile;
-				if(libfiles.length)
-					cmd ~= " " ~ libfiles;
-				if(resfile.length)
-					cmd ~= " " ~ resfile;
-			}
+		if(!lib)
+		{
+			if(createImplib)
+				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+			if(objfiles.length)
+				cmd ~= " " ~ objfiles;
+			if(deffile.length)
+				cmd ~= " " ~ deffile;
+			if(libfiles.length)
+				cmd ~= " " ~ libfiles;
+			if(resfile.length)
+				cmd ~= " " ~ resfile;
 		}
 		return cmd;
 	}
@@ -1520,7 +1539,7 @@ class Config :	DisposingComObject,
 		{
 			string fname = file.GetFilename();
 			string ext = tolower(getExt(fname));
-			if(ext == "d" && mProjectOptions.singleFileCompilation)
+			if(ext == "d" && mProjectOptions.singleFileCompilation == ProjectOptions.kSingleFileCompilation)
 				tool = "DMDsingle";
 			else if(ext == "d" || ext == "ddoc" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
 				tool = "DMD";
@@ -1724,16 +1743,50 @@ class Config :	DisposingComObject,
 		}
 		return mod_cmd;
 	}
+
+	string getCommandFileList(string[] files, string responsefile, ref string precmd)
+	{
+		string fcmd = std.string.join(files, " ");
+		if(fcmd.length > 100)
+		{
+			precmd ~= "\n";
+			precmd ~= "echo " ~ files[0] ~ " >" ~ quoteFilename(responsefile) ~ "\n";
+			for(int i = 1; i < files.length; i++)
+				precmd ~= "echo " ~ files[i] ~ " >>" ~ quoteFilename(responsefile) ~ "\n";
+			precmd ~= "\n";
+			fcmd = " @" ~ quoteFilename(responsefile);
+		}
+		else
+			fcmd = " " ~ fcmd;
+		
+		return fcmd;
+	}
+	
+	string getLinkFileList(string[] dfiles, ref string precmd)
+	{
+		string[] files = dfiles.dup;
+		foreach(ref f; files)
+			if(f.endsWith(".d") || f.endsWith(".D"))
+			{
+				string fname = getName(f);
+				if(!mProjectOptions.preservePaths)
+					fname = getBaseName(fname);
+				f = mProjectOptions.objdir ~ "\\" ~ fname ~ ".obj";
+			}
+		
+		string responsefile = GetCommandLinePath() ~ ".lnk";
+		return getCommandFileList(files, responsefile, precmd);
+	}
 	
 	string getCommandLine()
 	{
-		string opt = mProjectOptions.buildCommandLine();
+		bool separateLink = mProjectOptions.singleFileCompilation == ProjectOptions.kSeparateCompileAndLink;
+		string opt = mProjectOptions.buildCommandLine(!separateLink);
 		if(mProjectOptions.additionalOptions.length)
 			opt ~= " " ~ mProjectOptions.additionalOptions;
 
 		string precmd = getEnvironmentChanges();
 
-		string responsefile = GetCommandLinePath() ~ ".rsp";
 		string[] files;
 		searchNode(mProvider.mProject.GetRootNode(), 
 			delegate (CHierNode n) { 
@@ -1750,19 +1803,9 @@ class Config :	DisposingComObject,
 		string[] libs = getLibsFromDependentProjects();
 		files ~= libs;
 
-		string fcmd = join(files, " ");
-		if(fcmd.length > 100)
-		{
-			precmd ~= "\n";
-			precmd ~= "echo " ~ files[0] ~ " >" ~ quoteFilename(responsefile) ~ "\n";
-			for(int i = 1; i < files.length; i++)
-				precmd ~= "echo " ~ files[i] ~ " >>" ~ quoteFilename(responsefile) ~ "\n";
-			precmd ~= "\n";
-			fcmd = " @" ~ quoteFilename(responsefile);
-		}
-		else
-			fcmd = " " ~ fcmd;
-			
+		string responsefile = GetCommandLinePath() ~ ".rsp";
+		string fcmd = getCommandFileList(files, responsefile, precmd);
+		
 		string modules_ddoc;
 		string mod_cmd = getModulesDDocCommandLine(files, modules_ddoc);
 		if(mod_cmd.length > 0)
@@ -1771,8 +1814,20 @@ class Config :	DisposingComObject,
 			fcmd ~= " " ~ modules_ddoc;
 		}
 
+		if(separateLink)
+			opt ~= " -c -od" ~ quoteFilename(mProjectOptions.objdir);
+
 		string cmd = precmd ~ opt ~ fcmd ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
+		
+		if(separateLink)
+		{
+			string lnkcmd = mProjectOptions.buildCommandLine(true);
+			string prelnk;
+			lnkcmd ~= getLinkFileList(files, prelnk);
+			cmd = cmd ~ "\n" ~ prelnk ~ lnkcmd ~ "\n";
+			cmd = cmd ~ "if errorlevel 1 goto reportError\n";
+		}
 		
 		string cv2pdb = mProjectOptions.appendCv2pdb();
 		if(cv2pdb.length)
@@ -1890,7 +1945,7 @@ class Config :	DisposingComObject,
 					cnt++;
 				}
 			}
-			if(opt.singleFileCompilation)
+			if(opt.singleFileCompilation == ProjectOptions.kSingleFileCompilation)
 			{
 				searchNode(mProvider.mProject.GetRootNode(), 
 					delegate (CHierNode n) { 

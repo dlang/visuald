@@ -16,6 +16,7 @@ import std.file;
 import std.utf;
 import std.conv;
 import std.intrinsic;
+import std.array;
 
 string normalizeDir(string dir)
 {

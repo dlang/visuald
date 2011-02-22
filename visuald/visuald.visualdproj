@@ -29,7 +29,7 @@
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
+  <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
@@ -41,7 +41,7 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
+  <program>m:\s\d\dmd2\dmd\src\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -51,7 +51,7 @@
   <doDocComments>0</doDocComments>
   <docdir>..\doc</docdir>
   <docname />
-  <modules_ddoc />
+  <modules_ddoc>..\doc\modules.ddoc</modules_ddoc>
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
@@ -79,7 +79,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
-  <additionalOptions>-debuglib=phobos_d.lib -mixin=$(IntDir)\mixins.d</additionalOptions>
+  <additionalOptions>-debuglib=phobos.lib</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
@@ -207,7 +207,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   </Folder>
   <File path="config.d" />
   <File path="dproject.d" />
-  <File path="build.d" />
   <File path="chiercontainer.d" />
   <File path="chiernode.d" />
   <File path="completion.d" />
@@ -241,5 +240,11 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="viewfilter.d" />
   <File path="colorizer.d" />
   <File path="lexutil.d" />
+  <File path="tokenreplace.d" />
+  <File path="build.d" />
+  <File path="tokenreplacedialog.d" />
+  <Folder name="c2d">
+   <File path="..\c2d\dlist.d" />
+  </Folder>
  </Folder>
 </DProject>

@@ -21,7 +21,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
         Runtime.terminate(&exceptionHandler);
     }
-    catch (Object o)		// catch any uncaught exceptions
+    catch (Throwable o)		// catch any uncaught exceptions
     {
         MessageBoxA(null, cast(char *)o.toString(), "Error", MB_OK | MB_ICONEXCLAMATION);
         result = 0;		// failed

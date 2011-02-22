@@ -23,7 +23,7 @@ import sdk.win32.oleauto;
 import sdk.win32.objbase;
 
 version = GC_COM;
-debug debug = COM;
+//debug debug = COM;
 //debug(COM) debug = COM_ADDREL;
 
 import core.runtime;
@@ -152,11 +152,19 @@ uint Unadvise(Interface)(IUnknown pSource, uint cookie)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+extern (C) void*  gc_malloc( size_t sz, uint ba = 0 ); 
+	
 class DComObject : IUnknown
 {
+	__gshared static LONG sCountCreated;
 	__gshared static LONG sCountInstances;
 	__gshared static LONG sCountReferenced;
-	
+
+	new(uint size)
+	{
+		void* p = gc_malloc(size, 1); // BlkAttr.FINALIZE
+		return p;
+	}
 version(GC_COM)
 {
 } else
@@ -182,6 +190,7 @@ debug
 	{
 		debug(COM) logCall("ctor %s this = %s", this, cast(void*)this);
 		InterlockedIncrement(&sCountInstances);
+		InterlockedIncrement(&sCountCreated);
 	}
 	~this()
 	{
@@ -191,8 +200,9 @@ debug
 	}
 	shared static ~this()
 	{
+		logCall("%d COM objects created", sCountCreated);
 		logCall("%d COM objects not fully dereferenced", sCountReferenced);
-		logCall("%d COM objects never destroyed", sCountInstances);
+		logCall("%d COM objects never destroyed (no final collection run yet!)", sCountInstances);
 	}
 }
 
@@ -296,6 +306,7 @@ class DisposingComObject : DComObject
 	abstract void Dispose();
 }
 
+/+
 struct PARAMDATA 
 {
 	OLECHAR* szName;
@@ -319,6 +330,7 @@ struct INTERFACEDATA
 	METHODDATA* pmethdata;   // Pointer to an array of METHODDATAs.
 	uint cMembers;           // Count of 
 }
++/
 
 class DisposingDispatchObject : DisposingComObject, IDispatch
 {
