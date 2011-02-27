@@ -245,12 +245,16 @@ Version history
   * installer now adds a "D Exception" to the "Win32 Exception" list to allow
     the debugger to stop when a D exception is thrown
 
-unreleased Version 0.3.22
+2011-02-27 Version 0.3.22
 
   * Visual D now builds with DMD 2.052
   * fixed WindowsApp template to build with DMD 2.052
-  * fixed small COM leak
+  * fixed some COM leaks
   * paste ring menu no longer stops when repeating the first entry and 
     avoids duplicate entries
   * new token search and replace dialog
-  * new compilation mode: compile and link in separately
+  * new compilation mode: compile and link in separate steps allowing multiple object files
+  * the option "Statement completion -> Parameter information" is now respected,
+    showing the parameter tooltip when writing the opening parenthesis
+  * smart-indent now respects the contents of the new line when inserting a line break
+  * now supporting the Code Definition Window

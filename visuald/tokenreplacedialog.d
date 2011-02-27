@@ -76,7 +76,7 @@ bool closeTokenReplaceWindow()
 	return true;
 }
 
-class TokenReplaceWindowBack : Window
+class TokenReplaceWindowBack : Dialog
 {
 	this(Window parent, TokenReplacePane pane)
 	{
@@ -322,6 +322,11 @@ private:
 		_wndReplace     = new Button(_wndBack, "&Replace", IDC_REPLACE);
 		_wndReplaceAll  = new Button(_wndBack, "Replace &All", IDC_REPLACEALL);
 		_wndClose       = new Button(_wndBack, "Close", IDC_FINDCLOSE);
+		
+		_wndMatchCase  .AddWindowStyle(WS_TABSTOP);
+		_wndMatchBraces.AddWindowStyle(WS_TABSTOP);
+		_wndIncComment .AddWindowStyle(WS_TABSTOP);
+		_wndDirectionUp.AddWindowStyle(WS_TABSTOP);
 		
 		_ReadStateFromRegistry();
 		

@@ -586,7 +586,7 @@ private:
 				txt = to!string(demangle(txt, fullDeco));
 			else
 			{
-				pragma(msg, "_demangle uses compatibility mode");
+				pragma(msg, text(__FILE__, "(", __LINE__, "): profiler._demangle uses compatibility mode, this won't allow disabling type info"));
 				txt = to!string(demangle(txt));
 			}
 			

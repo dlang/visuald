@@ -409,16 +409,10 @@ string GetSolutionFilename()
 
 ////////////////////////////////////////////////////////////////////////
 
-HRESULT OpenFileInSolution(string filename, int line, string srcfile = "")
+HRESULT FindFileInSolution(IVsUIShellOpenDocument pIVsUIShellOpenDocument, string filename, string srcfile, 
+						   out BSTR bstrAbsPath)
 {
-	// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
-	IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
-	if(!pIVsUIShellOpenDocument)
-		return returnError(E_FAIL);
-	scope(exit) release(pIVsUIShellOpenDocument);
-	
 	auto wstrPath = _toUTF16z(filename);
-	BSTR bstrAbsPath;
 	
 	HRESULT hr;
 	hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
@@ -436,9 +430,38 @@ HRESULT OpenFileInSolution(string filename, int line, string srcfile = "")
 				break;
 			}
 		}
-		if(hr != S_OK)
-			return returnError(hr);
 	}
+	return hr;
+}
+
+HRESULT FindFileInSolution(string filename, string srcfile, out string absPath)
+{
+	// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
+	IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
+	if(!pIVsUIShellOpenDocument)
+		return returnError(E_FAIL);
+	scope(exit) release(pIVsUIShellOpenDocument);
+	
+	BSTR bstrAbsPath;
+	HRESULT hr = FindFileInSolution(pIVsUIShellOpenDocument, filename, srcfile, bstrAbsPath);
+	if(hr != S_OK)
+		return returnError(hr);
+	absPath = detachBSTR(bstrAbsPath);
+	return S_OK;
+}
+
+HRESULT OpenFileInSolution(string filename, int line, string srcfile = "")
+{
+	// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
+	IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
+	if(!pIVsUIShellOpenDocument)
+		return returnError(E_FAIL);
+	scope(exit) release(pIVsUIShellOpenDocument);
+	
+	BSTR bstrAbsPath;
+	HRESULT hr = FindFileInSolution(pIVsUIShellOpenDocument, filename, srcfile, bstrAbsPath);
+	if(hr != S_OK)
+		return returnError(hr);
 	scope(exit) detachBSTR(bstrAbsPath);
 	
 	IVsWindowFrame srpIVsWindowFrame;

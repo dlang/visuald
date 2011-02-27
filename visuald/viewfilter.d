@@ -329,8 +329,16 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 					HandleSmartIndent(ch);
 				
 				if(mCodeWinMgr.mSource.IsMethodTipActive())
+				{
 					if(ch == ',' || ch == ')')
 						HandleMethodTip();
+				}
+				else if(ch == '(')
+				{
+					LANGPREFERENCES langPrefs;
+					if(GetUserPreferences(&langPrefs) == S_OK && langPrefs.fAutoListParams)
+						_HandleMethodTip(false);
+				}
 				break;
 			default:
 				break;
@@ -760,11 +768,13 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
 			return S_FALSE;
 		
-		int line, idx;
+		int line, idx, len;
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return rc;
 		if(ch != '\n')
 			idx--;
+		else if(mCodeWinMgr.mSource.mBuffer.GetLengthOfLine(line, &len) == S_OK && len > 0)
+			return ReindentLines();
 
 		wstring linetxt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
@@ -837,6 +847,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		{
 			scope(exit) release(svc);
 			wstring[] entries;
+			int[] entryIndex;
+			int cntEntries = 0;
+			
 			svc.BeginCycle();
 			IVsToolboxUser tbuser = qi_cast!IVsToolboxUser(mView);
 			scope(exit) release(tbuser);
@@ -849,7 +862,7 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 					  svc.GetAndSelectNextDataObject(tbuser, &pDataObject) == S_OK)
 				{
 					scope(exit) release(pDataObject);
-					
+			
 					if(pDataObject is firstDataObject)
 						break;
 					if(!firstDataObject)
@@ -872,9 +885,13 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 							s = createPasteString(s);
 							if(!contains(entries, s))
+							{
 								entries ~= s;
+								entryIndex ~= cntEntries;
+							}
 						}
 					}
+					cntEntries++;
 				}
 				release(firstDataObject);
 				
@@ -899,10 +916,11 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 								entries[k] = entries[k] ~ "\t(&" ~ cast(wchar)('0' + ((k + 1) % 10)) ~ ")";
 							int sel = PopupContextMenu(hwnd, pt, entries);
 							
-							if(sel >= 0)
+							if(sel >= 0 && sel < entryIndex.length)
 							{
+								int cnt = entryIndex[sel];
 								svc.BeginCycle();
-								for(int i = 0; i <= sel; i++)
+								for(int i = 0; i <= cnt; i++)
 								{
 									if(svc.GetAndSelectNextDataObject(tbuser, &pDataObject) == S_OK)
 										release(pDataObject);
@@ -978,7 +996,7 @@ else
 		return rc;
 	}
 		
-	int _HandleMethodTip()
+	int _HandleMethodTip(bool tryUpper = true)
 	{
 		TextSpan span;
 		if(mView.GetCaretPos(&span.iStartLine, &span.iStartIndex) != S_OK)
@@ -1006,6 +1024,8 @@ else
 		{
 			line = otherLine;
 			idx = otherIndex;
+			if(!tryUpper)
+				return S_FALSE;
 			goto stepUp;
 		}
 
@@ -1086,12 +1106,15 @@ else
 	override int OnSetFocus(IVsTextView pView)
 	{
 		mixin(LogCallMix);
+		mCodeWinMgr.mLangSvc.mLastActiveView = this;
 		return S_OK;
 	}
 
 	override int OnKillFocus(IVsTextView pView)
 	{
 		mixin(LogCallMix);
+		if(mCodeWinMgr.mLangSvc.mLastActiveView is this)
+			mCodeWinMgr.mLangSvc.mLastActiveView = null;
 		return S_OK;
 	}
 

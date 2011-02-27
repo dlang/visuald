@@ -20,6 +20,8 @@ import core.memory;
 import core.dll_helper;
 static import core.thread_helper;
 
+import std.conv;
+
 __gshared HINSTANCE g_hInst;
 
 ///////////////////////////////////////////////////////////////////////
@@ -82,7 +84,7 @@ else // ensure patched runtime in release
 	}
 	else
 	{
-		pragma(msg, "DllMain uses compatibility mode");
+		pragma(msg, text(__FILE__, "(", __LINE__, "): DllMain uses compatibility mode, this can cause crashes on a 64-bit OS"));
 		case DLL_THREAD_ATTACH:
 			dll_thread_attach( true, true );
 			break;

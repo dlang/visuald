@@ -38,6 +38,7 @@ import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.textmgr90;
 import sdk.vsi.vsshell;
+import sdk.vsi.vsshell80;
 import sdk.vsi.singlefileeditor;
 import sdk.vsi.fpstfmt;
 import sdk.vsi.stdidcmd;
@@ -445,6 +446,39 @@ class LanguageService : DisposingComObject,
 		}
 		return S_OK;
 	}
+
+	//////////////////////////////////////////////////////////////
+	private Source cdwLastSource;
+	private int cdwLastLine, cdwLastColumn;
+	public ViewFilter mLastActiveView;
+	
+	void tryJumpToDefinitionInCodeWindow(Source src, int line, int col)
+	{
+		if (cdwLastSource == src && cdwLastLine == line && cdwLastColumn == col)
+			return;
+
+		cdwLastSource = src;
+		cdwLastLine = line;
+		cdwLastColumn = col;
+
+		int startIdx, endIdx;
+		if(!src.GetWordExtent(line, col, WORDEXT_CURRENT, startIdx, endIdx))
+			return;
+		string word = toUTF8(src.GetText(line, startIdx, line, endIdx));
+		if(word.length <= 0)
+			return;
+
+		Definition[] defs = Package.GetLibInfos().findDefinition(word);
+		if(defs.length == 0)
+			return;
+		
+		string srcfile = src.GetFileName();
+		string abspath;
+		if(FindFileInSolution(defs[0].filename, srcfile, abspath) != S_OK)
+			return;
+		
+		jumpToDefinitionInCodeWindow("", abspath, defs[0].line, 0);
+	}
 	
 	//////////////////////////////////////////////////////////////
 	bool OnIdle()
@@ -455,6 +489,13 @@ class LanguageService : DisposingComObject,
 		foreach(CodeWindowManager mgr; mCodeWinMgrs)
 			if(mgr.OnIdle())
 				return true;
+		
+		if(mLastActiveView && mLastActiveView.mView)
+		{
+			int line, idx;
+			mLastActiveView.mView.GetCaretPos(&line, &idx);
+			tryJumpToDefinitionInCodeWindow(mLastActiveView.mCodeWinMgr.mSource, line, idx);
+		}
 		return false;
 	}
 	
@@ -659,6 +700,69 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 				return vf;
 		return null;
 	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+class CodeDefViewContext : DComObject, IVsCodeDefViewContext 
+{
+	private string symbol;
+	private string filename;
+	private int line;
+	private int column;
+
+	this(string symbol, string filename, int line, int col)
+	{
+		this.symbol = symbol;
+		this.filename = filename;
+		this.line = line;
+		this.column = col;
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsCodeDefViewContext) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	override HRESULT GetCount(ULONG* pcItems)
+	{
+		*pcItems = 1;
+		return S_OK;
+	}
+	override HRESULT GetCol(in ULONG iItem, ULONG* piCol)
+	{
+		*piCol = column;
+		return S_OK;
+	}
+	override HRESULT GetLine(in ULONG iItem, ULONG* piLine)
+	{
+		*piLine = line;
+		return S_OK;
+	}
+	override HRESULT GetFileName(in ULONG iItem, BSTR *pbstrFilename)
+	{
+		*pbstrFilename = allocBSTR(filename);
+		return S_OK;
+	}
+	override HRESULT GetSymbolName(in ULONG iItem, BSTR *pbstrSymbolName)
+	{
+		*pbstrSymbolName = allocBSTR(symbol);
+		return S_OK;
+	}
+}
+/////////////////////////////////////////////////////////////////////////
+
+void jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int col)
+{
+	IVsCodeDefView cdv = queryService!(SVsCodeDefView,IVsCodeDefView);
+	if (cdv is null)
+		return;
+	if (cdv.IsVisible() != S_OK)
+		return;
+
+	CodeDefViewContext context = new CodeDefViewContext(symbol, filename, line, col);
+	cdv.SetContext(context);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

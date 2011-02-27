@@ -176,6 +176,17 @@ class Widget
 		return .SetWindowPos(hwnd, hWndInsertAfter, r.left, r.top, r.right - r.left, r.bottom - r.top, uFlags) != 0;
 	}
 
+	bool AddWindowStyle(int flag) 
+	{
+		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
+		return SetWindowLongA(hwnd, GWL_STYLE, style | flag) != 0;
+	}
+
+	bool DelWindowStyle(int flag) 
+	{
+		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
+		return SetWindowLongA(hwnd, GWL_STYLE, style & ~flag) != 0;
+	}
 
 	static Widget fromHWND(HWND hwnd) 
 	{
@@ -318,6 +329,71 @@ class Window : Widget
 	}
 
 	HANDLE backgroundBrush;
+}
+
+class Dialog : Widget
+{
+	static bool hasRegistered = false;
+	static HBRUSH bgbrush;
+
+	static void registerClass() 
+	{
+		if(hasRegistered)
+			return;
+		hasRegistered = true;
+		
+		DWORD color = GetSysColor(COLOR_BTNFACE);
+		bgbrush = CreateSolidBrush(color);
+
+		WNDCLASSA wc;
+		wc.lpszClassName = "VisualDDialog";
+		wc.style = CS_DBLCLKS | CS_SAVEBITS;
+		wc.lpfnWndProc = &DlgWindowProc;
+		wc.hInstance = hInst;
+		wc.hIcon = null; //DefaultWindowIcon.peer;
+		//wc.hIconSm = DefaultWindowSmallIcon.peer;
+		wc.hCursor = LoadCursorW(cast(HINSTANCE) null, IDC_ARROW);
+		wc.hbrBackground = bgbrush;
+		wc.lpszMenuName = null;
+		wc.cbClsExtra = 0;
+		wc.cbWndExtra = DLGWINDOWEXTRA;
+		ATOM atom = RegisterClassA(&wc);
+		assert(atom);
+	}
+	static void unregisterClass() 
+	{
+		if(!hasRegistered)
+			return;
+		hasRegistered = false;
+
+		UnregisterClassA("VisualDDialog", hInst);
+		if(bgbrush)
+			DeleteObject(bgbrush);
+		bgbrush = null;
+	}
+
+	extern(Windows) static int DlgWindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		if (Dialog dlg = cast(Dialog) fromHWND(hWnd))
+			return dlg.WindowProc(hWnd,uMsg,wParam,lParam);
+		return DefDlgProcA(hWnd, uMsg, wParam, lParam);
+	}
+
+	this(Widget parent, string text = "", int id = 0)
+	{
+		registerClass();
+		HWND parenthwnd = parent ? parent.hwnd : null; // VisualDDialog
+		createWidget(parent, "#32770", text, WS_CHILD | WS_VISIBLE | DS_3DLOOK | DS_CONTROL, 0, id);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		SetWindowLongA(hwnd, GWL_WNDPROC, cast(int)cast(void*)&DlgWindowProc);
+
+		super(parent);
+	}
+
+	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	{
+		return DefDlgProcA(hWnd, uMsg, wParam, lParam);
+	}
 }
 
 class Label : Widget
@@ -528,7 +604,7 @@ int PopupContextMenu(HWND hwnd, POINT pt, wstring[] entries, int check = -1, int
 	wchar*[] entriesz;
 	for (int i = 0; i < entries.length; i++)
 	{
-		mii.fState = (i == check ? MFS_CHECKED : 0) | (i == 1 ? MFS_DEFAULT : 0);
+		mii.fState = (i == check ? MFS_CHECKED : 0) | (i == presel ? MFS_DEFAULT : 0);
 
 		wchar* pz = cast(wchar*) (entries[i] ~ '\0').ptr;
 		entriesz ~= pz;
@@ -550,11 +626,13 @@ bool initWinControls(HINSTANCE inst)
 {
 	hInst = inst;
 	Window.registerClass();
+	Dialog.registerClass();
 	return true;
 }
 
 bool exitWinControls(HINSTANCE inst)
 {
 	Window.unregisterClass();
+	Dialog.unregisterClass();
 	return true;
 }
