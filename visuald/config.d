@@ -167,6 +167,7 @@ class ProjectOptions
 		kCombinedCompileAndLink,
 		kSingleFileCompilation,
 		kSeparateCompileAndLink,
+		kSeparateCompileOnly,
 	}
 	uint singleFileCompilation = kCombinedCompileAndLink;
 	
@@ -212,7 +213,7 @@ class ProjectOptions
 		release = dbg ? 0 : 1;
 	}
 
-	string buildCommandLine(bool performLink = true)
+	string buildCommandLine(bool compile = true, bool performLink = true)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -263,7 +264,7 @@ class ProjectOptions
 		if(ignoreUnsupportedPragmas)
 			cmd ~= " -ignore";
 
-		if(doDocComments)
+		if(doDocComments && compile)
 		{
 			cmd ~= " -D";
 			if(docdir.length)
@@ -272,7 +273,7 @@ class ProjectOptions
 				cmd ~= " -Df" ~ quoteNormalizeFilename(docname);
 		}
 
-		if(doHdrGeneration)
+		if(doHdrGeneration && compile)
 		{
 			cmd ~= " -H";
 			if(hdrdir.length)
@@ -281,7 +282,7 @@ class ProjectOptions
 				cmd ~= " -Hf" ~ quoteNormalizeFilename(hdrname);
 		}
 
-		if(doXGeneration)
+		if(doXGeneration && compile)
 		{
 			cmd ~= " -X";
 			if(xfilename.length)
@@ -1674,7 +1675,7 @@ class Config :	DisposingComObject,
 		{
 			string depfile = GetOutputFile(file) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
-			cmd ~= mProjectOptions.buildCommandLine(false);
+			cmd ~= mProjectOptions.buildCommandLine(true, false);
 			cmd ~= " -c -of" ~ quoteFilename(outfile) ~ " -deps=" ~ quoteFilename(depfile);
 			cmd ~= " " ~ file.GetFilename();
 		}
@@ -1780,8 +1781,9 @@ class Config :	DisposingComObject,
 	
 	string getCommandLine()
 	{
+		bool doLink = mProjectOptions.singleFileCompilation != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.singleFileCompilation == ProjectOptions.kSeparateCompileAndLink;
-		string opt = mProjectOptions.buildCommandLine(!separateLink);
+		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink);
 		if(mProjectOptions.additionalOptions.length)
 			opt ~= " " ~ mProjectOptions.additionalOptions;
 
@@ -1814,15 +1816,17 @@ class Config :	DisposingComObject,
 			fcmd ~= " " ~ modules_ddoc;
 		}
 
-		if(separateLink)
+		if(separateLink || !doLink)
 			opt ~= " -c -od" ~ quoteFilename(mProjectOptions.objdir);
 
 		string cmd = precmd ~ opt ~ fcmd ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 		
-		if(separateLink)
+		if(separateLink && doLink)
 		{
-			string lnkcmd = mProjectOptions.buildCommandLine(true);
+			string lnkcmd = mProjectOptions.buildCommandLine(false, true);
+			if(mProjectOptions.additionalOptions.length)
+				lnkcmd ~= " " ~ mProjectOptions.additionalOptions;
 			string prelnk;
 			lnkcmd ~= getLinkFileList(files, prelnk);
 			cmd = cmd ~ "\n" ~ prelnk ~ lnkcmd ~ "\n";
@@ -1830,7 +1834,7 @@ class Config :	DisposingComObject,
 		}
 		
 		string cv2pdb = mProjectOptions.appendCv2pdb();
-		if(cv2pdb.length)
+		if(cv2pdb.length && doLink)
 		{
 			string cvtarget = quoteFilename(mProjectOptions.getTargetPath() ~ "_cv");
 			cmd ~= "if not exist " ~ cvtarget ~ " (echo " ~ cvtarget ~ " not created! && goto reportError)\n";

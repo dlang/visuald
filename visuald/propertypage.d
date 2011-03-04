@@ -519,7 +519,8 @@ class GeneralPropertyPage : ProjectPropertyPage
 		AddControl("",              mOtherDMD = new CheckBox(mCanvas, "Use other compiler"));
 		AddControl("DMD Path",      mDmdPath = new Text(mCanvas));
 		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas, 
-			[ "Combined compile and link", "Single file compilation", "Separate compile and link" ], false));
+			[ "Combined compile and link", "Single file compilation", 
+			  "Separate compile and link", "Compile only (use Post-build command to link)" ], false));
 	}
 
 	void UpdateDirty(bool bDirty)
@@ -1025,7 +1026,7 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		mCmdLine.setText(options.buildCommandLine()); 
+		mCmdLine.setText(options.buildCommandLine(true, true)); 
 		mAddOpt.setText(options.additionalOptions); 
 	}
 
