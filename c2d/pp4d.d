@@ -28,11 +28,11 @@
 
 module pp4d;
 
-import tokenizer;
-import tokutil;
-import dgutil;
-import ast;
-import patchast;
+import c2d.tokenizer;
+import c2d.tokutil;
+import c2d.dgutil;
+import c2d.ast;
+import c2d.patchast;
 
 import std.string;
 import std.file;

@@ -29,8 +29,6 @@ version = GC_COM;
 import core.runtime;
 import core.memory;
 
-const string d2_shared = "__gshared";
-
 import logutil;
 
 extern (C) void _d_callfinalizer(void *p);
@@ -156,9 +154,9 @@ extern (C) void*  gc_malloc( size_t sz, uint ba = 0 );
 	
 class DComObject : IUnknown
 {
-	__gshared static LONG sCountCreated;
-	__gshared static LONG sCountInstances;
-	__gshared static LONG sCountReferenced;
+	__gshared LONG sCountCreated;
+	__gshared LONG sCountInstances;
+	__gshared LONG sCountReferenced;
 
 	new(uint size)
 	{

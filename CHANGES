@@ -259,8 +259,9 @@ Version history
   * smart-indent now respects the contents of the new line when inserting a line break
   * now supporting the Code Definition Window
 
-2011-03-04 Version 0.3.23rc1
+2011-03-09 Version 0.3.23
 
   * fixed issue with threads without TLS that crept back in by migrating to DMD 2.052
   * separate compile and link: removed -X,-D,-H from the link step to avoid creating empty files
   * new compilation mode: compile only to set your link step manually in the post-build step
+  * jumping to errors in files that exist i several projects now jump to the correct source

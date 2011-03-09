@@ -10,6 +10,7 @@
 #  Visual Studio Integration SDK (for VS2008)
 
 # DMD2 = c:\l\dmd2\windows\bin\dmd.exe
+# DMD2 = c:\l\dmd-2.051\windows\bin\dmd.exe
 DMD2 = m:\s\d\dmd2\dmd\src\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 

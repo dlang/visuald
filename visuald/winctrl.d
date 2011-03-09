@@ -434,7 +434,17 @@ class Text : Widget
 	void setText(wstring str)
 	{
 		auto lines = std.string.splitlines(str);
-		auto winstr = std.string.join(lines, "\r\n") ~ "\0";
+		static if(__traits(compiles, std.string.join(lines, "\r\n")))
+			auto winstr = std.string.join(lines, "\r\n") ~ "\0";
+		else
+		{
+			wstring winstr;
+			if(lines.length > 0)
+				winstr = lines[0];
+			for(int i = 1; i < lines.length; i++)
+				winstr ~= "\r\n" ~ lines[i];
+			winstr ~= "\0";
+		}
 		SendMessageW(hwnd, WM_SETTEXT, 0, cast(LPARAM)winstr.ptr);
 	}
 

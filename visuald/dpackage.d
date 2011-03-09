@@ -122,7 +122,7 @@ void global_exit()
 }
 
 ///////////////////////////////////////////////////////////////////////
-mixin(d2_shared ~  " int g_dllRefCount;");
+__gshared int g_dllRefCount;
 
 extern(Windows)
 HRESULT DllCanUnloadNow()
@@ -208,7 +208,7 @@ class Package : DisposingComObject,
 		IOleCommandTarget,
 		IOleComponent
 {
-	mixin(d2_shared ~ " static Package s_instance;");
+	__gshared Package s_instance;
 
 	this()
 	{

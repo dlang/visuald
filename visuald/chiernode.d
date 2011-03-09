@@ -481,7 +481,7 @@ public:
 	bool IsExpanded()             { return IsSet(ST_Expanded); }
 
 	//////////////////////////////////////////////////////////////
-	__gshared static ComTypeInfoHolder mTypeHolder;
+	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {

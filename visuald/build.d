@@ -20,6 +20,7 @@ import std.conv;
 import std.math;
 import std.array;
 import std.exception;
+import core.thread;
 import core.stdc.time;
 import core.stdc.string;
 
@@ -36,6 +37,8 @@ import fileutil;
 import stringutil;
 import config;
 import dpackage;
+
+// version = threadedBuild;
 
 // builder thread class
 class CBuilderThread // : public CVsThread<CMyProjBuildableCfg>
@@ -84,10 +87,22 @@ public:
 		if(!m_pIVsStatusbar)
 			m_pIVsStatusbar = queryService!(IVsStatusbar);
 
-		bool rc = ThreadMain();
-		m_op = Operation.eIdle;
+		mSuccess = true;
+
+version(threadedBuild)
+{
+		if(op == Operation.eCheckUpToDate)
+			ThreadMain(); // synchronous handling needed
+		else
+		{
+			mThread = new Thread(&ThreadMain);
+			mThread.start();
+		}
+}
+else
+		ThreadMain();
 		//return super::Start(pCMyProjBuildableCfg);
-		return rc ? S_OK : S_FALSE;
+		return mSuccess ? S_OK : S_FALSE;
 	}
 
 	void Stop(BOOL fSync)
@@ -101,11 +116,16 @@ public:
 			*pfDone = (m_op == Operation.eIdle);
 	}
 
-	bool ThreadMain()
+	void ThreadMain()
 	{
 		BOOL fContinue = TRUE;
 		BOOL fSuccessfulBuild = FALSE; // set up for Fire_BuildEnd() later on.
 
+		scope(exit)
+		{
+			mThread = null;
+			m_op = Operation.eIdle;
+		}
 		m_fStopBuild = false;
 		Fire_BuildBegin(fContinue);
 
@@ -135,7 +155,7 @@ public:
 		}
 
 		Fire_BuildEnd(fSuccessfulBuild);
-		return fSuccessfulBuild != 0;
+		mSuccess = fSuccessfulBuild != 0;
 	}
 
 	bool isStopped() const { return m_fStopBuild != 0; }
@@ -426,6 +446,8 @@ public:
 
 	time_t mStartBuildTime;
 	
+	Thread mThread; // keep a reference to the thread to avoid it from being collected
+	bool mSuccess = false;
 	bool mCreateLog = true;
 	string mBuildLog;
 };
@@ -459,6 +481,11 @@ public:
 
 class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser 
 {
+	this(CBuilderThread builder)
+	{
+		mProjectDir = builder.mConfig.GetProjectDir();
+	}
+ 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsLaunchPadOutputParser) (this, riid, pvObject))
@@ -481,6 +508,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText))
 			return S_FALSE;
 		
+		filename = makeFilenameAbsolute(filename, mProjectDir);
 		if(pnPriority)
 			*pnPriority = nPriority;
 		if(pnLineNum)
@@ -491,6 +519,8 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 			*pbstrTaskItemText = allocBSTR(taskItemText);
 		return S_OK;
 	}
+
+	string mProjectDir;
 }
 
 
@@ -559,7 +589,7 @@ version(none)
 	DWORD result;
 	if(IVsLaunchPad2 pad2 = qi_cast!IVsLaunchPad2(srpIVsLaunchPad))
 	{
-		CLaunchPadOutputParser pLaunchPadOutputParser = new CLaunchPadOutputParser();
+		CLaunchPadOutputParser pLaunchPadOutputParser = new CLaunchPadOutputParser(pBuilder);
 		hr = pad2.ExecCommandEx(
 			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
 			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),

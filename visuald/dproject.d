@@ -550,7 +550,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 
 
 	//////////////////////////////////////////////////////////////
-	__gshared static ComTypeInfoHolder mTypeHolder;
+	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {
@@ -687,7 +687,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IDispatch
-	__gshared static ComTypeInfoHolder mTypeHolder;
+	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
 		mTypeHolder = new class ComTypeInfoHolder {

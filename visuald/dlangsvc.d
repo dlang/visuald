@@ -304,7 +304,7 @@ class LanguageService : DisposingComObject,
 	}
 
 	// IVsProvideColorableItems //////////////////////////////////////
-	static __gshared ColorableItem[] colorableItems;
+	__gshared ColorableItem[] colorableItems;
 	
 	// delete <VisualStudio-User-Root>\FontAndColors\Cache\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}\Version
 	// if the list of colorableItems changes

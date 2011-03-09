@@ -77,7 +77,7 @@ else // ensure patched runtime in release
 			break;
 
 		case DLL_THREAD_DETACH:
-			if(core.thread_helper.GetTlsDataAddress(GetCurrentThreadId())) // , _tls_index))
+			if(core.thread_helper.GetTlsDataAddress(GetCurrentThreadId())) //, _tls_index))
 				logCall("DllMain(DLL_THREAD_DETACH, id=%x)", GetCurrentThreadId());
 			dll_thread_detach( true, true );
 			break;
