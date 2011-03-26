@@ -41,3 +41,4 @@
 
 #define CmdBuildPhobos   0x110
 #define CmdShowProfile   0x111
+#define CmdShowWebsite   0x112

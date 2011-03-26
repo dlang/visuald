@@ -472,6 +472,7 @@ class Package : DisposingComObject,
 				case CmdReplaceTokens:
 				case CmdBuildPhobos:
 				case CmdShowProfile:
+				case CmdShowWebsite:
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
 				default:
@@ -525,6 +526,15 @@ class Package : DisposingComObject,
 		if(nCmdID == CmdShowProfile)
 		{
 			showProfilerWindow();
+			return S_OK;
+		}
+		if(nCmdID == CmdShowWebsite)
+		{
+			if(dte2.DTE2 spvsDTE = GetDTE())
+			{
+				scope(exit) release(spvsDTE);
+				spvsDTE.ExecuteCommand("View.WebBrowser"w.ptr, "http://www.dsource.org/projects/visuald"w.ptr);
+			}
 			return S_OK;
 		}
 		return OLECMDERR_E_NOTSUPPORTED;
