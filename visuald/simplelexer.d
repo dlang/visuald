@@ -188,6 +188,10 @@ class SimpleLexer
 	{
 		// pos after first digit
 		int base = 10;
+		uint nextpos = pos;
+		if(ch == '.')
+			goto L_float;
+
 		if(ch == '0')
 		{
 			uint prevpos = pos;
@@ -208,7 +212,7 @@ class SimpleLexer
 		skipDigits(text, pos, base);
 		// pos now after last digit of integer part
 
-		uint nextpos = pos;
+		nextpos = pos;
 		ch = trydecode(text, nextpos);
 
 		if((base == 10 && tolower(ch) == 'e') || (base == 16 && tolower(ch) == 'p'))
@@ -219,6 +223,7 @@ class SimpleLexer
 			// float
 			if(base < 10)
 				base = 10;
+L_float:
 			pos = nextpos;
 			skipDigits(text, pos, base);
 
@@ -661,7 +666,7 @@ L_complexLiteral:
 				uint nextpos = pos;
 				ch = trydecode(text, nextpos);
 				if(isdigit(ch))
-					type = scanNumber(text, ch, pos, &id);
+					type = scanNumber(text, '.', pos, &id);
 				else
 					type = scanOperator(text, startpos, pos, &id);
 			}
@@ -1035,8 +1040,9 @@ const string[2][] operators =
 	[ "colon",            ":" ],
 	[ "comma",            "," ],
 	[ "dot",              "." ],
+
+	// binary operators
 	[ "xor",              "^" ],
-	[ "xorass",           "^=" ],
 	[ "assign",           "=" ],
 	[ "lt",               "<" ],
 	[ "gt",               ">" ],
@@ -1053,8 +1059,9 @@ const string[2][] operators =
 	[ "ul",               "!>=" ],
 	[ "uge",              "!<" ],
 	[ "ug",               "!<=" ],
+	[ "notcontains",      "!in" ],
+	[ "notidentity",      "!is" ],
 
-	[ "not",              "!" ],
 	[ "shl",              "<<" ],
 	[ "shr",              ">>" ],
 	[ "ushr",             ">>>" ],
@@ -1063,22 +1070,20 @@ const string[2][] operators =
 	[ "mul",              "*" ],
 	[ "div",              "/" ],
 	[ "mod",              "%" ],
-	[ "slice",            ".." ],
-	[ "dotdotdot",        "..." ],
+	[ "pow",              "^^" ],
 	[ "and",              "&" ],
 	[ "andand",           "&&" ],
 	[ "or",               "|" ],
 	[ "oror",             "||" ],
 	[ "tilde",            "~" ],
-	[ "dollar",           "$" ],
-	[ "plusplus",         "++" ],
-	[ "minusminus",       "--" ],
-	[ "question",         "?" ],
+	
+	[ "xorass",           "^=" ],
 	[ "addass",           "+=" ],
 	[ "minass",           "-=" ],
 	[ "mulass",           "*=" ],
 	[ "divass",           "/=" ],
 	[ "modass",           "%=" ],
+	[ "powass",           "^^=" ],
 	[ "shlass",           "<<=" ],
 	[ "shrass",           ">>=" ],
 	[ "ushrass",          ">>>=" ],
@@ -1086,12 +1091,15 @@ const string[2][] operators =
 	[ "orass",            "|=" ],
 	[ "catass",           "~=" ],
 
-	[ "pow",              "^^" ],
-	[ "powass",           "^^=" ],
-
-	[ "notcontains",      "!in" ],
-	[ "notidentity",      "!is" ],
+	// end of binary operators
 	
+	[ "not",              "!" ],
+	[ "dollar",           "$" ],
+	[ "slice",            ".." ],
+	[ "dotdotdot",        "..." ],
+	[ "plusplus",         "++" ],
+	[ "minusminus",       "--" ],
+	[ "question",         "?" ],
 /+
 	[ "array",            "[]" ],
 	// symbols with duplicate meaning
@@ -1127,6 +1135,11 @@ string genOperatorEnum(T)(string[2][] ops, T begin)
 }
 
 mixin(genOperatorEnum(operators, "TOK_end_Keywords"));
+
+enum TOK_binaryOperatorFirst = TOK_xor;
+enum TOK_binaryOperatorLast  = TOK_catass;
+enum TOK_assignOperatorFirst = TOK_xorass;
+enum TOK_assignOperatorLast  = TOK_catass;
 
 enum TOK_error = -1;
 
@@ -1263,6 +1276,17 @@ string tokenString(int id)
 			return keywords[id - TOK_begin_Keywords];
 		case TOK_begin_Operators: .. case TOK_end_Operators - 1:
 			return operators[id - TOK_begin_Operators][1];
+		default:
+			assert(false);
+	}
+}
+
+string operatorName(int id)
+{
+	switch(id)
+	{
+		case TOK_begin_Operators: .. case TOK_end_Operators - 1:
+			return operators[id - TOK_begin_Operators][0];
 		default:
 			assert(false);
 	}

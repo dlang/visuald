@@ -1,0 +1,214 @@
+<DProject>
+ <ProjectGuid>{FE3A959D-6CFA-43BF-8637-62125B571770}</ProjectGuid>
+ <Config name="Debug">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>0</lib>
+  <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
+  <oneobj>0</oneobj>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <symdebug>1</symdebug>
+  <optimize>0</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>0</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>1</useUnitTests>
+  <useInline>0</useInline>
+  <release>0</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2.043</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <otherDMD>0</otherDMD>
+  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <imppath />
+  <fileImppath>.</fileImppath>
+  <outdir>$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(Test)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir>$(OutDir)\doc</docdir>
+  <docname />
+  <modules_ddoc />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(ProjectName).json</xfilename>
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids>MAIN</versionids>
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>1</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <objfiles />
+  <linkswitches />
+  <libfiles />
+  <libpaths />
+  <deffile />
+  <resfile />
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <additionalOptions />
+  <preBuildCommand />
+  <postBuildCommand />
+  <debugtarget>$(TARGETPATH)</debugtarget>
+  <debugarguments>c:\s\d\visuald\trunk\vdc\runnable\rstest.d</debugarguments>
+  <debugworkingdir>c:\s\d\visuald\trunk\vdc\runnable</debugworkingdir>
+  <debugattach>0</debugattach>
+  <debugremote />
+  <debugEngine>0</debugEngine>
+  <filesToClean>*.obj</filesToClean>
+ </Config>
+ <Config name="Release">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>0</lib>
+  <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
+  <oneobj>0</oneobj>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <symdebug>0</symdebug>
+  <optimize>1</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>0</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>0</useUnitTests>
+  <useInline>1</useInline>
+  <release>1</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <otherDMD>0</otherDMD>
+  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <imppath />
+  <fileImppath>.</fileImppath>
+  <outdir>$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <modules_ddoc />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(ProjectName).json</xfilename>
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids>MAIN</versionids>
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>0</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <objfiles />
+  <linkswitches />
+  <libfiles />
+  <libpaths />
+  <deffile />
+  <resfile />
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <additionalOptions />
+  <preBuildCommand />
+  <postBuildCommand />
+  <debugtarget>$(TARGETPATH)</debugtarget>
+  <debugarguments>runnable\*.d</debugarguments>
+  <debugworkingdir />
+  <debugattach>0</debugattach>
+  <debugremote />
+  <debugEngine>0</debugEngine>
+  <filesToClean>*.obj</filesToClean>
+ </Config>
+ <Folder name="parser">
+  <Folder name="parser">
+   <File path="parser\aggr.d" />
+   <File path="parser\decl.d" />
+   <File path="parser\engine.d" />
+   <File path="parser\expr.d" />
+   <File path="parser\iasm.d" />
+   <File path="parser\misc.d" />
+   <File path="parser\mod.d" />
+   <File path="parser\stmt.d" />
+   <File path="parser\tmpl.d" />
+  </Folder>
+  <Folder name="ast">
+   <File path="ast\aggr.d" />
+   <File path="ast\decl.d" />
+   <File path="ast\expr.d" />
+   <File path="ast\misc.d" />
+   <File path="ast\mod.d" />
+   <File path="ast\stmt.d" />
+   <File path="ast\tmpl.d" />
+   <File path="ast\node.d" />
+   <File path="ast\all.d" />
+   <File path="ast\iasm.d" />
+   <File path="ast\type.d" />
+  </Folder>
+  <File path="..\visuald\simplelexer.d" />
+  <File path="util.d" />
+  <File path="parsertest.d" />
+  <File path="semantic.d" />
+  <File path="interpret.d" />
+ </Folder>
+</DProject>
