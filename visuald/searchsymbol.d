@@ -1159,27 +1159,10 @@ private:
 		return 0;
 	}
 
-	HRESULT _OpenSolutionItem(string pszPath, int line)
+	HRESULT _OpenSolutionItem(string pszPath, int line, string scop)
 	{
 		HRESULT hr = S_OK;
-version(all)
-{
-		hr = OpenFileInSolution(pszPath, line);
-}
-else
-{
-		if(dte80.DTE2 dte = GetDTE())
-		{
-			scope(exit) release(dte);
-			ComPtr!(dte80.ItemOperations) spvsItemOperations;
-			hr = dte.ItemOperations(&spvsItemOperations.ptr);
-			if (SUCCEEDED(hr))
-			{
-				ComPtr!(dte80a.Window) spvsWnd;
-				hr = spvsItemOperations.OpenFile(_toUTF16z(pszPath), null, &spvsWnd.ptr);
-			}
-		}
-}
+		hr = OpenFileInSolutionWithScope(pszPath, line, scop);
 		if(hr == S_OK && _closeOnReturn)
 			sWindowFrame.Hide();
 		return hr;
@@ -1194,7 +1177,7 @@ else
 		}
 		else
 		{
-			_OpenSolutionItem(_wndFileWheel.GetWindowText(), -1);
+			_OpenSolutionItem(_wndFileWheel.GetWindowText(), -1, "");
 		}
 		fHandled = TRUE;
 		return 0;
@@ -1755,7 +1738,14 @@ else
 		{
 			SolutionItem psiWeak = cast(SolutionItem)cast(void*)lvi.lParam;
 			string fname = psiWeak.GetFullPath();
-			hr = _OpenSolutionItem(fname, psiWeak.GetLine());
+version(none)
+{
+			string scop = !_iqp.searchFile ? psiWeak.GetScope() : null;
+			hr = _OpenSolutionItem(fname, psiWeak.GetLine(), scop);
+}
+else
+{
+			hr = _OpenSolutionItem(fname, psiWeak.GetLine(), "");
 			
 			if(hr != S_OK && !_iqp.searchFile && !isabs(fname))
 			{
@@ -1773,9 +1763,10 @@ else
 				if(i < path.length)
 				{
 					fname = fname[i .. $];
-					hr = _OpenSolutionItem(fname, psiWeak.GetLine());
+					hr = _OpenSolutionItem(fname, psiWeak.GetLine(), "");
 				}
 			}
+}
 		}
 		return hr;
 	}

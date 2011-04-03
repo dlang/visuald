@@ -13,6 +13,7 @@ import std.string;
 import std.path;
 import std.utf;
 import std.stream;
+import std.array;
 
 import sdk.port.vsi;
 import sdk.vsi.vsshell;
@@ -516,6 +517,32 @@ HRESULT NavigateTo(IVsTextBuffer textBuffer, int line1, int col1, int line2, int
 	scope(exit) release(textmgr);
 
 	return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, line1, col1, line2, col2);
+}
+
+HRESULT OpenFileInSolutionWithScope(string fname, int line, string scop)
+{
+	HRESULT hr = OpenFileInSolution(fname, line);
+	
+	if(hr != S_OK && !isabs(fname) && scop.length)
+	{
+		// guess import path from filename (e.g. "src\core\mem.d") and 
+		//  scope (e.g. "core.mem.gc.Proxy") to try opening
+		// the file ("core\mem.d")
+		string inScope = tolower(scop);
+		string path = normalizeDir(getDirName(tolower(fname)));
+		inScope = replace(inScope, ".", "\\");
+		
+		int i;
+		for(i = 1; i < path.length; i++)
+			if(startsWith(inScope, path[i .. $]))
+				break;
+		if(i < path.length)
+		{
+			fname = fname[i .. $];
+			hr = OpenFileInSolution(fname, line);
+		}
+	}
+	return hr;
 }
 
 ////////////////////////////////////////////////////////////////////////

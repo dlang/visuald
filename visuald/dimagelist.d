@@ -47,3 +47,44 @@ const IDM_COLUMNLISTBASE = 0x100;
 
 // Miscellaneous IDs
 const ID_SUBCLASS_HDR  = 0x100;
+
+// entries in the image list "completionset.bmp" through the envireonment
+enum CSIMG_PROT_PUBLIC    = 0;
+enum CSIMG_PROT_LETTER    = 1;
+enum CSIMG_PROT_BRIGHT    = 2;
+enum CSIMG_PROT_PROTECTED = 3;
+enum CSIMG_PROT_PRIVATE   = 4;
+enum CSIMG_PROT_LINK      = 5;
+
+enum CSIMG_CLASS          = 0;  // combine with CSIMG_PROT for modifier
+enum CSIMG_PACKAGE        = 6;
+enum CSIMG_DELEGATE       = 12;
+enum CSIMG_ENUM           = 18;
+enum CSIMG_ENUMMEMBER     = 24;
+enum CSIMG_BLITZ          = 30;
+enum CSIMG_UNKNOWN1       = 36;
+enum CSIMG_FIELD          = 42;
+enum CSIMG_INTERFACE      = 48;
+enum CSIMG_UNKNOWN2       = 54;
+enum CSIMG_UNKNOWN3       = 60;
+enum CSIMG_UNKNOWN4       = 66;
+enum CSIMG_MEMBER         = 72;
+enum CSIMG_MEMBERS        = 78;
+enum CSIMG_UNKNOWN5       = 84;
+enum CSIMG_NAMESPACE      = 90;
+enum CSIMG_UNKNOWN6       = 96;
+enum CSIMG_PROPERTY       = 102;
+enum CSIMG_STRUCT         = 108;
+enum CSIMG_TEMPLATE       = 114;
+enum CSIMG_UNKNOWN7       = 120;
+enum CSIMG_UNION          = 126;
+enum CSIMG_STRUCT3        = 132;
+enum CSIMG_FIELD2         = 138;
+enum CSIMG_STRUCT4        = 144;
+enum CSIMG_UNKNOWN8       = 150;
+enum CSIMG_JMEMBER        = 156;
+enum CSIMG_JFIELD         = 162;
+enum CSIMG_JSTRUCT        = 168;
+enum CSIMG_JNAMESPACE     = 174;
+enum CSIMG_JINTERFACE     = 180;
+enum CSIMG_STOP           = 186; // series of single bitmaps follow

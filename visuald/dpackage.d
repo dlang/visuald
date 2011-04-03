@@ -602,38 +602,34 @@ version(none)
 	/////////////////////////////////////////////////////////////
 	HRESULT InitLibraryManager()
 	{
-		if (mOmLibraryMgrCookie != 0) // already init-ed 
+		if (mOmLibraryCookie != 0) // already init-ed 
 			return E_UNEXPECTED;
 
 		HRESULT hr = E_FAIL;
-		if(auto om = queryService!(IVsObjectManager))
+		if(auto om = queryService!(IVsObjectManager, IVsObjectManager2))
 		{
 			scope(exit) release(om);
 			
-			auto libMgr = new LibraryManager;
-
-			//Register the Library Manager
-			hr = om.RegisterLibMgr(&g_omLibraryManagerCLSID, libMgr, &mOmLibraryMgrCookie);
+			auto lib = new Library;
+			hr = om.RegisterSimpleLibrary(lib, &mOmLibraryCookie);
 			if(SUCCEEDED(hr))
-				mLibMgr = addref(libMgr);
+				lib.Initialize();
 		}
 		return hr;
 	}
 	
 	HRESULT CloseLibraryManager()
 	{
-		if (mOmLibraryMgrCookie == 0) // already closed or not init-ed
+		if (mOmLibraryCookie == 0) // already closed or not init-ed
 			return S_OK;
 
 		HRESULT hr = E_FAIL;
-		if(auto om = queryService!(IVsObjectManager))
+		if(auto om = queryService!(IVsObjectManager, IVsObjectManager2))
 		{
 			scope(exit) release(om);
-			hr = om.UnregisterLibMgr(mOmLibraryMgrCookie);
-
+			hr = om.UnregisterLibrary(mOmLibraryCookie);
 		}
-		mOmLibraryMgrCookie = 0;
-		mLibMgr = release(mLibMgr);
+		mOmLibraryCookie = 0;
 		return hr;
 	}
 
@@ -665,8 +661,7 @@ private:
 	LanguageService  mLangsvc;
 	ProjectFactory   mProjFactory;
 	
-	LibraryManager   mLibMgr;
-	uint             mOmLibraryMgrCookie;
+	uint             mOmLibraryCookie;
 
 	GlobalOptions    mOptions;
 	LibraryInfos     mLibInfos;

@@ -273,6 +273,17 @@ class DeclDef
 //AttributeSpecifier:
 //    Attribute :
 //    Attribute DeclarationBlock
+//
+//Attribute:
+//    LinkageAttribute
+//    AlignAttribute
+//    AttributeOrStorageClass
+//    ProtectionAttribute
+//    @disable
+//    @property
+//    @safe	
+//    @system
+//    @trusted
 class AttributeSpecifier
 {
 	// no members means "Attribute:"
@@ -508,17 +519,6 @@ class DeclarationBlock
 
 
 //-- GRAMMAR_BEGIN --
-//Attribute:
-//    LinkageAttribute
-//    AlignAttribute
-//    AttributeOrStorageClass
-//    ProtectionAttribute
-//    @disable
-//    @property
-//    @safe	
-//    @system
-//    @trusted
-//
 //LinkageAttribute:
 //    extern ( LinkageType )
 //

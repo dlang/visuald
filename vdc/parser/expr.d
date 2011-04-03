@@ -238,6 +238,9 @@ class PowExpression : BinaryExpression
 //    DeleteExpression
 //    CastExpression
 //    /*NewAnonClassExpression*/
+//
+// DeleteExpression:
+//     delete UnaryExpression
 class UnaryExpression : Expression
 {
 	static Action enter(Parser p)
@@ -279,7 +282,7 @@ class UnaryExpression : Expression
 //    NewArguments Type [ AssignExpression ]
 //    NewArguments Type ( ArgumentList )
 //    NewArguments Type
-//    NewArguments ClassArguments BaseClasses_opt { DeclDefs_opt } 
+//    NewArguments ClassArguments BaseClassList_opt { DeclDefs_opt } 
 //
 //NewArguments:
 //    new ( ArgumentList )
@@ -402,7 +405,7 @@ class NewExpression : UnaryExpression
 
 //-- GRAMMAR_BEGIN --
 // AnonymousClass:
-//     ClassArguments BaseClasses_opt { DeclDefs_opt } 
+//     ClassArguments BaseClassList_opt { DeclDefs_opt } 
 class AnonymousClass
 {
 	static Action enter(Parser p)
@@ -736,9 +739,8 @@ class EmptyArgumentList
 
 //-- GRAMMAR_BEGIN --
 //PrimaryExpression:
-//    Identifier
-//    . Identifier
-//    TemplateInstance
+//    IdentifierOrTemplateInstance
+//    . IdentifierOrTemplateInstance
 //    this
 //    super
 //    null

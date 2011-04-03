@@ -4,6 +4,7 @@ import comutil;
 import logutil;
 import hierutil;
 import dpackage;
+import dimagelist;
 import intellisense;
 
 import sdk.vsi.vsshell;
@@ -111,7 +112,7 @@ class LibraryManager : DComObject, IVsLibraryMgr
 }
 
 class Library : DComObject,
-                IVsLibrary,
+                IVsSimpleLibrary2,
                 IVsLiteTreeList,
                 IVsSolutionEvents
                 //IBrowseDataProviderImpl,
@@ -119,7 +120,6 @@ class Library : DComObject,
 {
 	string          mName = "D-Lib";
 	LIB_CHECKSTATE  mCheckState;
-	LIB_FLAGS       mLibFlags;
 	HIMAGELIST      mImages;   //image list.
 
 	//UpdateCounter Version Stamp
@@ -128,8 +128,8 @@ class Library : DComObject,
 	//Cookie used to hook up the solution events.
 	VSCOOKIE        mIVsSolutionEventsCookie;  
 
-    //Array of Projects
-    LibraryItem[]   mLibraryItems;
+	//Array of Projects
+	LibraryItem[]   mLibraryItems;
 	
 	BrowseCounter   mCounterLibList;
 	
@@ -138,7 +138,7 @@ class Library : DComObject,
 		if(*riid == IVsLibrary2Ex.iid) // keep out of log file
 			return E_NOINTERFACE;
 
-		if(queryInterface!(IVsLibrary) (this, riid, pvObject))
+		if(queryInterface!(IVsSimpleLibrary2) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IVsLiteTreeList) (this, riid, pvObject))
 			return S_OK;
@@ -150,7 +150,6 @@ class Library : DComObject,
 	HRESULT Initialize()
 	{
 		mCheckState = LCS_CHECKED;
-		mLibFlags   = LF_PROJECT | LF_EXPANDABLE;
 		mLibraryCounter = 0;
 		
 		if(auto solution = queryService!IVsSolution())
@@ -235,9 +234,9 @@ class Library : DComObject,
 	}
 
 
-	// IVsLibrary ////////////////////////////////////////////////////////
+	// IVsSimpleLibrary2 ////////////////////////////////////////////////////////
     //Return E_FAIL if category not supported.
-    HRESULT GetSupportedCategoryFields(in LIB_CATEGORY eCategory, 
+    override HRESULT GetSupportedCategoryFields2(in LIB_CATEGORY2 eCategory, 
 		/+[out, retval]+/ DWORD *pCatField)
 	{
 		mixin(LogCallMix2);
@@ -258,7 +257,7 @@ class Library : DComObject,
 				//  LCMT_ENUMITEM = 0x0100,
 				//  LCMT_TYPEDEF  = 0x0200,
 				//  LCMT_FUNCTION = 0x0400,
-				*pCatField = LCMT_FUNCTION | LCMT_VARIABLE;
+				*pCatField = LCMT_ENUMITEM | LCMT_FUNCTION | LCMT_VARIABLE | LCMT_TYPEDEF | LCMT_METHOD | LCMT_FIELD;
 				break;
 
 			case LC_MEMBERACCESS:
@@ -268,7 +267,7 @@ class Library : DComObject,
 				//  LCMA_PACKAGE   = 0x0008,
 				//  LCMA_FRIEND    = 0x0010,
 				//  LCMA_SEALED    = 0x0020
-				*pCatField = LCMA_PUBLIC;
+				*pCatField = LCMA_PUBLIC; // not in JSON files
 				break;
 
 			case LC_CLASSTYPE:
@@ -285,7 +284,7 @@ class Library : DComObject,
 				//  LCCT_MACRO     = 0x0400,
 				//  LCCT_MAP       = 0x0800,
 				//  LCCT_GLOBAL    = 0x1000,
-				*pCatField = LCCT_CLASS;
+				*pCatField = LCCT_CLASS | LCCT_INTERFACE | LCCT_STRUCT | LCCT_ENUM | LCCT_MODULE | LCCT_UNION;
 				break;
 
 			case LC_CLASSACCESS:
@@ -295,7 +294,7 @@ class Library : DComObject,
 				//  LCCA_PACKAGE   = 0x0008,
 				//  LCCA_FRIEND    = 0x0010,
 				//  LCCA_SEALED    = 0x0020
-				*pCatField = LCCA_PUBLIC; 
+				*pCatField = LCCA_PUBLIC; // not in JSON files
 				break;
 
 			case LC_ACTIVEPROJECT:
@@ -320,7 +319,7 @@ class Library : DComObject,
 				//  LLT_DEFINITIONS             = 0x000800,
 				//  LLT_REFERENCES              = 0x001000,
 				//  LLT_HIERARCHY               = 0x002000, 
-				*pCatField = LLT_PACKAGE | LLT_CLASSES | LLT_MEMBERS;
+				*pCatField = LLT_NAMESPACES | LLT_PACKAGE | LLT_CLASSES | LLT_MEMBERS;
 				break;
 
 			case LC_VISIBILITY:
@@ -338,8 +337,15 @@ class Library : DComObject,
 				*pCatField = LCMDT_STATIC | LCMDT_FINAL;
 				break;
 
+			case LC_HIERARCHYTYPE:
+				*pCatField = LCHT_BASESANDINTERFACES;
+				break;
+				
+			case LC_NODETYPE:
+			case LC_MEMBERINHERITANCE:
+			case LC_SEARCHMATCHTYPE:
+				
 			default:
-				assert(FALSE); // Unknown category
 				*pCatField = 0;
 				return E_FAIL;
 		}
@@ -347,9 +353,9 @@ class Library : DComObject,
 		return S_OK;
 	}
 
-    //Retrieve a IVsObjectList interface of LISTTYPE
-    HRESULT GetList(in LIB_LISTTYPE eListType,  in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA *pobSrch, 
-		/+[out, retval]+/ IVsObjectList *ppList)
+	//Retrieve a IVsObjectList interface of LISTTYPE
+	override HRESULT GetList2(in LIB_LISTTYPE2 eListType, in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA2 *pobSrch, 
+		/+[out, retval]+/ IVsSimpleObjectList2 *ppList)
 	{
 		mixin(LogCallMix2);
 
@@ -357,39 +363,22 @@ class Library : DComObject,
 			return E_NOTIMPL;
 
 		assert(ppList);
-		auto ol = new ObjectList(this, eListType); //, eFlags, pobSrch);
-		return ol.QueryInterface(&IVsObjectList.iid, cast(void**) ppList);
-	}
-
-    //Retreive a list of library contents (either PROJECT or GLOBAL.  Return S_FALSE and NULL if library not expandable
-    HRESULT GetLibList(in LIB_PERSISTTYPE lptType, 
-		/+[out, retval]+/ IVsLiteTreeList *ppList)
-	{
-		mixin(LogCallMix2);
-		assert(ppList);
-
-		if (LPT_PROJECT != lptType)
-			return E_INVALIDARG;  // We only support project browse containers
-
-		if(HRESULT hr = mCounterLibList.ResetChanges())
-			return hr;
-
-		*ppList = addref(this);
-		return S_OK;
+		auto ol = new ObjectList(this, eListType, eFlags, pobSrch);
+		return ol.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
 	}
 
     //Get various settings for the library
-    HRESULT GetLibFlags(/+[out, retval]+/ LIB_FLAGS *pfFlags)
+    override HRESULT GetLibFlags2(/+[out, retval]+/ LIB_FLAGS2 *pfFlags)
 	{
 		mixin(LogCallMix2);
-
 		assert(pfFlags);
-		*pfFlags = mLibFlags;
+		
+		*pfFlags = LF_PROJECT | LF_EXPANDABLE;
 		return S_OK;
 	}
 
     //Counter to check if the library has changed
-    HRESULT UpdateCounter(/+[out]+/ ULONG *pCurUpdate)
+    override HRESULT UpdateCounter(/+[out]+/ ULONG *pCurUpdate)
 	{
 		mixin(LogCallMix2);
 
@@ -399,28 +388,28 @@ class Library : DComObject,
 	}
 
     // Unqiue guid identifying each library that never changes (even across shell instances)
-    HRESULT GetGuid(const(GUID)**ppguidLib)
+    override HRESULT GetGuid(GUID* ppguidLib)
 	{
 		mixin(LogCallMix2);
 
 		assert(ppguidLib);
-		*ppguidLib = &g_omLibraryCLSID;
+		*ppguidLib = g_omLibraryCLSID;
 		return S_OK;
 	}
 
     // Returns the separator string used to separate namespaces, classes and members 
     // eg. "::" for VC and "." for VB
-    HRESULT GetSeparatorString(LPCWSTR *pszSeparator)
+    override HRESULT GetSeparatorStringWithOwnership(BSTR *pszSeparator)
 	{
 		mixin(LogCallMix2);
-		*pszSeparator = "."w.ptr;
+		*pszSeparator = allocBSTR(".");
 		return S_OK;
 	}
 
     //Retrieve the persisted state of this library from the passed stream 
     //(essentially information for each browse container being browsed). Only
     //implement for GLOBAL browse containers
-    HRESULT LoadState(/+[in]+/ IStream pIStream, in LIB_PERSISTTYPE lptType)
+    override HRESULT LoadState(/+[in]+/ IStream pIStream, in LIB_PERSISTTYPE lptType)
 	{
 		mixin(LogCallMix2);
 		// we do not save/load persisted state
@@ -430,7 +419,7 @@ class Library : DComObject,
     //Save the current state of this library to the passed stream 
     //(essentially information for each browse container being browsed). Only
     //implement for GLOBAL browse containers
-    HRESULT SaveState(/+[in]+/ IStream pIStream, in LIB_PERSISTTYPE lptType)
+    override HRESULT SaveState(/+[in]+/ IStream pIStream, in LIB_PERSISTTYPE lptType)
 	{
 		mixin(LogCallMix2);
 		// we do not save/load persisted state
@@ -440,7 +429,7 @@ class Library : DComObject,
     // Used to obtain a list of browse containers corresponding to the given
     // project (hierarchy). Only return a list if your package owns this hierarchy
     // Meaningful only for libraries providing PROJECT browse containers.
-    HRESULT GetBrowseContainersForHierarchy(/+[in]+/ IVsHierarchy pHierarchy,
+    override HRESULT GetBrowseContainersForHierarchy(/+[in]+/ IVsHierarchy pHierarchy,
         in ULONG celt,
         /+[in, out, size_is(celt)]+/ VSBROWSECONTAINER *rgBrowseContainers,
         /+[out, optional]+/ ULONG *pcActual)
@@ -457,8 +446,7 @@ class Library : DComObject,
 			{
 				if (celt && rgBrowseContainers)
 				{
-					if(HRESULT hr = GetGuid(&rgBrowseContainers[0].pguidLib))
-						return hr;
+					rgBrowseContainers[0].pguidLib = cast(GUID*) &g_omLibraryCLSID;
 					if(HRESULT hr = lib.GetText(TTO_DEFAULT, &rgBrowseContainers[0].szName))
 						return hr;
 				}
@@ -473,7 +461,7 @@ class Library : DComObject,
     // Start browsing the component specified in PVSCOMPONENTSELECTORDATA (name is equivalent to that
     // returned thru the liblist's GetText method for this browse container). 
     // Only meaningful for registered libraries for a given type of GLOBAL browse container 
-    HRESULT AddBrowseContainer(in PVSCOMPONENTSELECTORDATA pcdComponent, 
+    override HRESULT AddBrowseContainer(in PVSCOMPONENTSELECTORDATA pcdComponent, 
 		/+[in, out]+/ LIB_ADDREMOVEOPTIONS *pgrfOptions, 
 		/+[out]+/ BSTR *pbstrComponentAdded)
 	{
@@ -485,16 +473,23 @@ class Library : DComObject,
     // Stop browsing the component identified by name (name is equivalent to that
     // returned thru the liblist's GetText method for this browse container 
     // Only meaningful for registered libraries for a given type of GLOBAL browse container 
-    HRESULT RemoveBrowseContainer(in DWORD dwReserved, in LPCWSTR pszLibName)
+    override HRESULT RemoveBrowseContainer(in DWORD dwReserved, in LPCWSTR pszLibName)
 	{
 		mixin(LogCallMix2);
 		// we do not support GLOBAL browse containers
 		return E_NOTIMPL; 
 	}
+	
+    override HRESULT CreateNavInfo(/+[ size_is (ulcNodes)]+/ in SYMBOL_DESCRIPTION_NODE *rgSymbolNodes, in ULONG ulcNodes, 
+		/+[out]+/ IVsNavInfo * ppNavInfo)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL; 
+	}
 
 	// IVsLiteTreeList ////////////////////////////////////////////////////////
     //Fetches VSTREEFLAGS
-    HRESULT GetFlags(/+[out]+/ VSTREEFLAGS *pFlags)
+    override HRESULT GetFlags(/+[out]+/ VSTREEFLAGS *pFlags)
 	{
 		mixin(LogCallMix2);
 
@@ -505,7 +500,7 @@ class Library : DComObject,
 	}
 	
     //Count of items in this list
-    HRESULT GetItemCount(/+[out]+/ ULONG* pCount)
+    override HRESULT GetItemCount(/+[out]+/ ULONG* pCount)
 	{
 		mixin(LogCallMix2);
 		assert(pCount);
@@ -515,7 +510,7 @@ class Library : DComObject,
 	}
 	
     //An item has been expanded, get the next list
-    HRESULT GetExpandedList(in ULONG Index, 
+    override HRESULT GetExpandedList(in ULONG Index, 
 		/+[out]+/ BOOL *pfCanRecurse, 
 		/+[out]+/ IVsLiteTreeList *pptlNode)
 	{
@@ -527,7 +522,7 @@ class Library : DComObject,
 	
     //Called during a ReAlign command if TF_CANTRELOCATE isn't set.  Return
     //E_FAIL if the list can't be located, in which case the list will be discarded.
-    HRESULT LocateExpandedList(/+[in]+/ IVsLiteTreeList ExpandedList, 
+    override HRESULT LocateExpandedList(/+[in]+/ IVsLiteTreeList ExpandedList, 
 		/+[out]+/ ULONG *iIndex)
 	{
 		mixin(LogCallMix2);
@@ -536,7 +531,7 @@ class Library : DComObject,
 		return E_FAIL;
 	}
     //Called when a list is collapsed by the user.
-    HRESULT OnClose(/+[out]+/ VSTREECLOSEACTIONS *ptca)
+    override HRESULT OnClose(/+[out]+/ VSTREECLOSEACTIONS *ptca)
 	{
 		mixin(LogCallMix2);
 		
@@ -550,10 +545,10 @@ class Library : DComObject,
 	}
     //Get a pointer to the main text for the list item. Caller will NOT free, implementor
     //can reuse buffer for each call to GetText except for TTO_SORTTEXT. See VSTREETEXTOPTIONS for tto details
-    HRESULT GetText(in ULONG uIndex, in VSTREETEXTOPTIONS tto, 
+    override HRESULT GetText(in ULONG uIndex, in VSTREETEXTOPTIONS tto, 
 		/+[out]+/ const( WCHAR)**ppszText)
 	{
-		mixin(LogCallMix2);
+		// mixin(LogCallMix2);
 		assert(ppszText);
 		if (!IsValidIndex(uIndex))
 			return E_UNEXPECTED;
@@ -563,7 +558,7 @@ class Library : DComObject,
     //Get a pointer to the tip text for the list item. Like GetText, caller will NOT free, implementor
     //can reuse buffer for each call to GetTipText. If you want tiptext to be same as TTO_DISPLAYTEXT, you can
     //E_NOTIMPL this call.
-    HRESULT GetTipText(in ULONG uIndex, in VSTREETOOLTIPTYPE eTipType, 
+    override HRESULT GetTipText(in ULONG uIndex, in VSTREETOOLTIPTYPE eTipType, 
 		/+[out]+/ const( WCHAR)**ppszText)
 	{
 		mixin(LogCallMix2);
@@ -576,7 +571,7 @@ class Library : DComObject,
 	}
 	
     //Is this item expandable?  Not called if TF_NOEXPANSION is set
-    HRESULT GetExpandable(in ULONG uIndex, 
+    override HRESULT GetExpandable(in ULONG uIndex, 
 		/+[out]+/ BOOL *pfExpandable)
 	{
 		mixin(LogCallMix2);
@@ -590,10 +585,10 @@ class Library : DComObject,
 	}
 	
     //Retrieve information to draw the item
-    /+[local]+/ HRESULT GetDisplayData(in ULONG uIndex, 
+    /+[local]+/ override HRESULT GetDisplayData(in ULONG uIndex, 
 		/+[out]+/ VSTREEDISPLAYDATA *pData)
 	{
-		mixin(LogCallMix2);
+		//mixin(LogCallMix2);
 
 		assert(pData);
 		if (!IsValidIndex(uIndex))
@@ -609,7 +604,7 @@ class Library : DComObject,
     //multiple trees may be using this list.  Returning an update counter > than
     //the last one cached by a given tree will force calls to GetItemCount and
     //LocateExpandedList as needed.
-    HRESULT UpdateCounter(/+[out]+/ ULONG *pCurUpdate,  
+    override HRESULT UpdateCounter(/+[out]+/ ULONG *pCurUpdate,  
 		/+[out]+/ VSTREEITEMCHANGESMASK *pgrfChanges)
 	{
 		mixin(LogCallMix2);
@@ -620,7 +615,7 @@ class Library : DComObject,
     // If prgListChanges is NULL, should return the # of changes in pcChanges. Otherwise
     // *pcChanges will indicate the size of the array (so that caller can allocate the array) to fill
     // with the VSTREELISTITEMCHANGE records
-    HRESULT GetListChanges(/+[in,out]+/ ULONG *pcChanges, 
+    override HRESULT GetListChanges(/+[in,out]+/ ULONG *pcChanges, 
 		/+[ size_is (*pcChanges)]+/ in VSTREELISTITEMCHANGE *prgListChanges)
 	{
 		mixin(LogCallMix2);
@@ -630,7 +625,7 @@ class Library : DComObject,
 	}
 	
     //Toggles the state of the given item (may be more than two states)
-    HRESULT ToggleState(in ULONG uIndex, 
+    override HRESULT ToggleState(in ULONG uIndex, 
 		/+[out]+/ VSTREESTATECHANGEREFRESH *ptscr)
 	{
 		mixin(LogCallMix2);
@@ -699,7 +694,7 @@ version(todo)
 	// IVsSolutionEvents //////////////////////////////////////////////////////
     // fAdded   == TRUE means project added to solution after solution open.
     // fAdded   == FALSE means project added to solution during solution open.
-    HRESULT OnAfterOpenProject(/+[in]+/ IVsHierarchy pIVsHierarchy, in BOOL fAdded)
+    override HRESULT OnAfterOpenProject(/+[in]+/ IVsHierarchy pIVsHierarchy, in BOOL fAdded)
 	{
 		mixin(LogCallMix2);
 		assert(pIVsHierarchy);
@@ -738,7 +733,7 @@ version(todo)
 	
     // fRemoving == TRUE means project being removed from   solution before solution close.
     // fRemoving == FALSE   means project being removed from solution during solution close.
-    HRESULT OnQueryCloseProject(/+[in]+/ IVsHierarchy   pHierarchy, in BOOL fRemoving, 
+    override HRESULT OnQueryCloseProject(/+[in]+/ IVsHierarchy   pHierarchy, in BOOL fRemoving, 
 		/+[in,out]+/ BOOL *pfCancel)
 	{
 		mixin(LogCallMix2);
@@ -747,7 +742,7 @@ version(todo)
 	
     // fRemoved == TRUE means   project removed from solution before solution close.
     // fRemoved == FALSE means project removed from solution during solution close.
-    HRESULT OnBeforeCloseProject(/+[in]+/   IVsHierarchy pHierarchy, in BOOL fRemoved)
+    override HRESULT OnBeforeCloseProject(/+[in]+/   IVsHierarchy pHierarchy, in BOOL fRemoved)
 	{
 		mixin(LogCallMix2);
 
@@ -755,7 +750,7 @@ version(todo)
 
 		//Do we have this project?
 		int idx;
-		for(idx = 0; idx < mLibraryItems.length; idx)
+		for(idx = 0; idx < mLibraryItems.length; idx++)
 			if(mLibraryItems[idx].GetHierarchy() is pHierarchy)
 				break;
 
@@ -783,18 +778,18 @@ version(todo)
 	}
 
     // stub hierarchy   is placeholder hierarchy for unloaded project.
-    HRESULT OnAfterLoadProject(/+[in]+/ IVsHierarchy pStubHierarchy,   /+[in]+/ IVsHierarchy pRealHierarchy)
+    override HRESULT OnAfterLoadProject(/+[in]+/ IVsHierarchy pStubHierarchy,   /+[in]+/ IVsHierarchy pRealHierarchy)
 	{
 		mixin(LogCallMix2);
 		return S_OK;
 	}
-    HRESULT OnQueryUnloadProject(/+[in]+/   IVsHierarchy pRealHierarchy, 
+    override HRESULT OnQueryUnloadProject(/+[in]+/   IVsHierarchy pRealHierarchy, 
 		/+[in,out]+/ BOOL *pfCancel)
 	{
 		mixin(LogCallMix2);
 		return S_OK;
 	}
-    HRESULT OnBeforeUnloadProject(/+[in]+/ IVsHierarchy pRealHierarchy, /+[in]+/   IVsHierarchy pStubHierarchy)
+    override HRESULT OnBeforeUnloadProject(/+[in]+/ IVsHierarchy pRealHierarchy, /+[in]+/   IVsHierarchy pStubHierarchy)
 	{
 		mixin(LogCallMix2);
 		return S_OK;
@@ -802,28 +797,40 @@ version(todo)
 
     // fNewSolution == TRUE means   solution is being created now.
     // fNewSolution == FALSE means solution was created previously, is being loaded.
-    HRESULT OnAfterOpenSolution(/+[in]+/ IUnknown   pUnkReserved, in BOOL fNewSolution)
+    override HRESULT OnAfterOpenSolution(/+[in]+/ IUnknown   pUnkReserved, in BOOL fNewSolution)
 	{
 		mixin(LogCallMix2);
 		return S_OK;
 	}
-    HRESULT OnQueryCloseSolution(/+[in]+/   IUnknown pUnkReserved, 
+    override HRESULT OnQueryCloseSolution(/+[in]+/   IUnknown pUnkReserved, 
 		/+[in,out]+/ BOOL *pfCancel)
 	{
 		mixin(LogCallMix2);
 		return S_OK;
 	}
-    HRESULT OnBeforeCloseSolution(/+[in]+/ IUnknown pUnkReserved)
+    override HRESULT OnBeforeCloseSolution(/+[in]+/ IUnknown pUnkReserved)
 	{
 		mixin(LogCallMix2);
 		return S_OK;
 	}
-    HRESULT OnAfterCloseSolution(/+[in]+/   IUnknown pUnkReserved)
+    override HRESULT OnAfterCloseSolution(/+[in]+/   IUnknown pUnkReserved)
 	{
 		mixin(LogCallMix2);
 		return S_OK;
 	}
 
+}
+
+// move to intellisense.d?
+int GetInfoCount(JSONValue val)
+{
+	if(val.type == JSON_TYPE.ARRAY)
+		return val.array.length;
+	if(val.type == JSON_TYPE.OBJECT)
+		if(JSONValue* m = "members" in val.object)
+			if(m.type == JSON_TYPE.ARRAY)
+				return m.array.length;
+	return 0;
 }
 
 string GetInfoName(JSONValue val)
@@ -832,6 +839,8 @@ string GetInfoName(JSONValue val)
 		if(JSONValue* v = "name" in val.object)
 			if(v.type == JSON_TYPE.STRING)
 				return v.str;
+	if(val.type == JSON_TYPE.STRING)
+		return val.str;
 	return null;
 }
 
@@ -841,57 +850,200 @@ string GetInfoKind(JSONValue val)
 		if(JSONValue* v = "kind" in val.object)
 			if(v.type == JSON_TYPE.STRING)
 				return v.str;
+	if(val.type == JSON_TYPE.STRING)
+		return "class";
 	return null;
 }
 
-class ObjectList : DComObject, IVsObjectList
+string GetInfoType(JSONValue val)
+{
+	if(val.type == JSON_TYPE.OBJECT)
+		if(JSONValue* v = "type" in val.object)
+			if(v.type == JSON_TYPE.STRING)
+				return v.str;
+	return null;
+}
+
+JSONValue GetInfoObject(JSONValue val, ULONG idx)
+{
+	if(val.type == JSON_TYPE.ARRAY)
+		if(idx < val.array.length)
+			return val.array[idx];
+	if(val.type == JSON_TYPE.OBJECT)
+		if(JSONValue* m = "members" in val.object)
+			if(m.type == JSON_TYPE.ARRAY)
+				if(idx < m.array.length)
+					return m.array[idx];
+	return JSONValue();
+}
+
+bool HasFunctionPrototype(string kind)
+{
+	switch(kind)
+	{
+		case "constructor":
+		case "destructor":
+		case "allocator":
+		case "deallocator":
+		case "delegate":
+		case "function":
+			return true;
+		default:
+			return false;
+	}
+}
+
+LIB_LISTTYPE2 GetListType(string kind)
+{
+	switch(kind)
+	{
+		case "union":
+		case "struct":
+		case "anonymous struct":
+		case "anonymous union":
+		case "interface":
+		case "enum":
+		case "class":            return LLT_CLASSES;
+		case "module":           return LLT_HIERARCHY | LLT_PACKAGE;
+		case "variable":
+		case "constructor":
+		case "destructor":
+		case "allocator":
+		case "deallocator":
+		case "enum member":
+		case "template":
+		case "alias":
+		case "typedef":
+		case "delegate":
+		case "function":         return LLT_MEMBERS;
+			
+		// not expected to show up in json file
+		case "attribute":
+		case "function alias":
+		case "alias this":
+		case "pragma":
+		case "import":
+		case "static import":
+		case "static if":
+		case "static assert":
+		case "template instance":
+		case "mixin":
+		case "debug":
+		case "version":          return LLT_MEMBERS;
+		default:                 return LLT_MEMBERS;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+class ObjectList : DComObject, IVsSimpleObjectList2
 {
 	// CComPtr<IBrowseDataProvider> m_srpIBrowseDataProvider;
 	// VSCOOKIE         m_dwIBrowseDataProviderEventsCookie;
 	Library mLibrary;   // Holds a pointer to the library
 	LIB_LISTTYPE  mListType;     //type of the list
+	LIB_LISTFLAGS mFlags;
+	const(VSOBSEARCHCRITERIA2) *mObSrch; // assume valid through the lifetime of the list
+	
 	BrowseCounter mCounter;
 	LibraryInfo mLibInfo;
+	ObjectList mParent;
 	JSONValue mObject;
+	JSONValue[] mMembers;
 		
-	this(Library lib, in LIB_LISTTYPE eListType)
+	this(Library lib, in LIB_LISTTYPE2 eListType, in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA2 *pobSrch)
 	{
 		mLibrary = lib;
 		mListType = eListType;
+		mFlags = eFlags;
+		mObSrch = pobSrch;
 		
 		LibraryInfos infos = Package.GetLibInfos();
 		mLibInfo = infos.findInfo("phobos");
 		if(mLibInfo)
 			mObject = mLibInfo.mModules;
+		initMembers();
 	}
 
-	this(Library lib, LibraryInfo libInfo, JSONValue object)
+	this(Library lib, LibraryInfo libInfo, ObjectList parent, JSONValue object,
+		 in LIB_LISTTYPE2 eListType, in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA2 *pobSrch)
 	{
+		mListType = eListType;
+		mFlags = eFlags;
+		mObSrch = pobSrch;
+		
 		mLibrary = lib;
 		mLibInfo = libInfo;
+		mParent = parent;
 		mObject = object;
+		initMembers();
 	}
 	
 	HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
-		if(queryInterface!(IVsObjectList) (this, riid, pvObject))
-			return S_OK;
-		if(queryInterface!(IVsLiteTreeList) (this, riid, pvObject))
+		if(queryInterface!(IVsSimpleObjectList2) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	int GetCount()
+	void initMembers()
 	{
-		if(!mLibInfo)
-			return 0;
+		JSONValue[] arr;
 		if(mObject.type == JSON_TYPE.ARRAY)
-			return mObject.array.length;
+			arr = mObject.array;
+
 		if(mObject.type == JSON_TYPE.OBJECT)
+		{
 			if(JSONValue* m = "members" in mObject.object)
 				if(m.type == JSON_TYPE.ARRAY)
-					return m.array.length;
-		return 0;
+					arr = m.array;
+			
+			bool hasBase = false;
+			if(JSONValue* m = "base" in mObject.object)
+				hasBase = true;
+			else if(JSONValue* m = "interfaces" in mObject.object)
+				hasBase = true;
+
+			if(hasBase && (mListType & LLT_CLASSES))
+			{
+				JSONValue[] bases;
+				if(JSONValue* v = "base" in mObject.object)
+					bases ~= *v;
+				if(JSONValue* v = "interfaces" in mObject.object)
+					if(v.type == JSON_TYPE.ARRAY)
+						bases ~= v.array;
+
+				JSONValue n;
+				n.type = JSON_TYPE.STRING;
+				n.str = "Base Classes";
+
+				JSONValue k;
+				k.type = JSON_TYPE.STRING;
+				k.str = "class";
+
+				JSONValue m;
+				m.type = JSON_TYPE.ARRAY;
+				m.array = bases;
+				
+				JSONValue b;
+				b.type = JSON_TYPE.OBJECT;
+				b.object["name"] = n;
+				b.object["kind"] = k;
+				b.object["members"] = m;
+				mMembers ~= b;
+			}
+		}
+
+		foreach(v; arr)
+		{
+			string kind = GetInfoKind(v);
+			if(mListType & GetListType(kind))
+				mMembers ~= v;
+		}
+	}
+	
+	int GetCount()
+	{
+		return mMembers.length;
 	}
 	
 	bool IsValidIndex(/* [in] */ ULONG uIndex)
@@ -901,17 +1053,9 @@ class ObjectList : DComObject, IVsObjectList
 
 	JSONValue GetObject(ULONG idx)
 	{
-		if(!mLibInfo)
+		if(idx >= mMembers.length)
 			return JSONValue();
-		if(mObject.type == JSON_TYPE.ARRAY)
-			if(idx < mObject.array.length)
-				return mObject.array[idx];
-		if(mObject.type == JSON_TYPE.OBJECT)
-			if(JSONValue* m = "members" in mObject.object)
-				if(m.type == JSON_TYPE.ARRAY)
-					if(idx < mObject.array.length)
-						return m.array[idx];
-		return JSONValue();
+		return mMembers[idx];
 	}
 		
 	string GetName(ULONG idx)
@@ -926,8 +1070,24 @@ class ObjectList : DComObject, IVsObjectList
 		return GetInfoKind(v);
 	}
 	
+	JSONValue GetModule()
+	{
+		if(GetInfoKind(mObject) == "module")
+			return mObject;
+		if(mParent)
+			return mParent.GetModule();
+		return JSONValue();
+	}
+
+	JSONValue GetModule(ULONG idx)
+	{
+		if(GetKind(idx) == "module")
+			return GetObject(idx);
+		return GetModule();
+	}
+	
 	// IVsLiteTreeList ///////////////////////////////////////////////////////
-    HRESULT GetFlags(/+[out]+/ VSTREEFLAGS *pFlags)
+	override HRESULT GetFlags(/+[out]+/ VSTREEFLAGS *pFlags)
 	{
 		mixin(LogCallMix2);
 		assert(pFlags);
@@ -945,7 +1105,7 @@ class ObjectList : DComObject, IVsObjectList
 		return S_OK;
 	}
     //Count of items in this list
-    HRESULT GetItemCount(/+[out]+/ ULONG* pCount)
+	override HRESULT GetItemCount(/+[out]+/ ULONG* pCount)
 	{
 		mixin(LogCallMix2);
 		assert(pCount);
@@ -954,26 +1114,8 @@ class ObjectList : DComObject, IVsObjectList
 		return S_OK;
 	}
 	
-    //An item has been expanded, get the next list
-    HRESULT GetExpandedList(in ULONG Index, 
-		/+[out]+/ BOOL *pfCanRecurse, 
-		/+[out]+/ IVsLiteTreeList *pptlNode)
-	{
-		mixin(LogCallMix2);
-		return E_NOTIMPL;
-	}
-
-	//Called during a ReAlign command if TF_CANTRELOCATE isn't set.  Return
-    //E_FAIL if the list can't be located, in which case the list will be discarded.
-    HRESULT LocateExpandedList(/+[in]+/ IVsLiteTreeList ExpandedList, 
-		/+[out]+/ ULONG *iIndex)
-	{
-		mixin(LogCallMix2);
-		return E_FAIL;
-	}
-    
 	//Called when a list is collapsed by the user.
-    HRESULT OnClose(/+[out]+/ VSTREECLOSEACTIONS *ptca)
+	override HRESULT OnClose(/+[out]+/ VSTREECLOSEACTIONS *ptca)
 	{
 		mixin(LogCallMix2);
 		
@@ -983,106 +1125,134 @@ class ObjectList : DComObject, IVsObjectList
 		return E_NOTIMPL;
 	}
 
-	//Get a pointer to the main text for the list item. Caller will NOT free, implementor
-    //can reuse buffer for each call to GetText except for TTO_SORTTEXT. See VSTREETEXTOPTIONS for tto details
-    HRESULT GetText(in ULONG uIndex, in VSTREETEXTOPTIONS tto, 
-		/+[out]+/ const( WCHAR)**ppszText)
+	override HRESULT GetTextWithOwnership(in ULONG uIndex, in VSTREETEXTOPTIONS tto, 
+		/+[out]+/ BSTR *pbstrText)
 	{
-		mixin(LogCallMix2);
+		//mixin(LogCallMix2);
 		
 		if (!IsValidIndex(uIndex))
 			return E_UNEXPECTED;
 
-		string name = GetName(uIndex);
-		
-		static wchar* wname;
-		wname = _toUTF16z(name); // keep until next call
-		*ppszText = wname;
+		auto val = GetObject(uIndex);
+		string name = GetInfoName(val);
+		Definition def;
+		def.kind = GetInfoKind(val);
+		if(HasFunctionPrototype(def.kind))
+		{
+			def.name = name;
+			def.type = GetInfoType(val);
+			string ret = def.GetReturnType();
+			name = ret ~ " " ~ name ~ "(";
+			for(int i = 0; i < def.GetParameterCount(); i++)
+			{
+				string pname, description, display;
+				def.GetParameterInfo(i, pname, display, description);
+				if(i > 0)
+					name ~= ", ";
+				name ~= display;
+			}
+			name ~= ")";
+		}		
+		*pbstrText = allocBSTR(name);
 		return S_OK;
 	}
     
-	//Get a pointer to the tip text for the list item. Like GetText, caller will NOT free, implementor
-    //can reuse buffer for each call to GetTipText. If you want tiptext to be same as TTO_DISPLAYTEXT, you can
-    //E_NOTIMPL this call.
-    HRESULT GetTipText(in ULONG Index, in VSTREETOOLTIPTYPE eTipType, 
-		/+[out]+/ const( WCHAR)**ppszText)
+	//If you want tiptext to be same as TTO_DISPLAYTEXT, you can E_NOTIMPL this call.
+	override HRESULT GetTipTextWithOwnership(in ULONG uIndex, in VSTREETOOLTIPTYPE eTipType, 
+		/+[out]+/ BSTR *pbstrText)
 	{
 		mixin(LogCallMix2);
-		return E_NOTIMPL;
+
+		if (!IsValidIndex(uIndex))
+			return E_UNEXPECTED;
+
+		string kind = GetKind(uIndex);
+		string name = GetName(uIndex);
+		*pbstrText = allocBSTR(kind ~ " " ~ name);
+		return S_OK;
 	} 
     
-	//Is this item expandable?  Not called if TF_NOEXPANSION is set
-    HRESULT GetExpandable(in ULONG uIndex, 
-		/+[out]+/ BOOL *pfExpandable)
-	{
-		mixin(LogCallMix2);
-		assert(pfExpandable);
-		
-		if (!IsValidIndex(uIndex))
-			return E_UNEXPECTED;
-
-		if (GetCount() > 0) // mListType & (LLT_PACKAGE | LLT_CLASSES))
-			*pfExpandable = TRUE;
-		else
-			*pfExpandable = FALSE;
-		return S_OK;
-	}
-	
     //Retrieve information to draw the item
-    /+[local]+/ HRESULT GetDisplayData(in ULONG Index, 
-		/+[out]+/ VSTREEDISPLAYDATA *pData)
+    /+[local]+/ HRESULT GetDisplayData(in ULONG Index, /+[out]+/ VSTREEDISPLAYDATA *pData)
 	{
-		mixin(LogCallMix2);
-		return E_NOTIMPL;
+		//mixin(LogCallMix2);
+		pData.Mask = TDM_IMAGE | TDM_SELECTEDIMAGE;
+		string kind = GetKind(Index);
+		switch(kind)
+		{
+			case "class":            pData.Image = CSIMG_CLASS; break;
+			case "module":           pData.Image = CSIMG_PACKAGE; break;
+			case "variable":         pData.Image = CSIMG_FIELD; break;
+			case "constructor":
+			case "destructor":
+			case "allocator":
+			case "deallocator":
+			case "function":         pData.Image = CSIMG_MEMBER; break;
+			case "delegate":         pData.Image = CSIMG_MEMBER; break;
+			case "interface":        pData.Image = CSIMG_INTERFACE; break;
+			case "union":            pData.Image = CSIMG_UNION; break;
+			case "struct":           pData.Image = CSIMG_STRUCT; break;
+			case "anonymous struct": pData.Image = CSIMG_STRUCT; break;
+			case "anonymous union":  pData.Image = CSIMG_UNION; break;
+			case "enum":             pData.Image = CSIMG_ENUM; break;
+			case "enum member":      pData.Image = CSIMG_ENUMMEMBER; break;
+			case "template":         pData.Image = CSIMG_TEMPLATE; break;
+			case "alias":
+			case "typedef":          pData.Image = CSIMG_UNKNOWN7; break;
+				
+			// not expected to show up in json file
+			case "attribute":
+			case "function alias":
+			case "alias this":
+			case "pragma":
+			case "import":
+			case "static import":
+			case "static if":
+			case "static assert":
+			case "template instance":
+			case "mixin":
+			case "debug":
+			case "version":
+				pData.Image = CSIMG_BLITZ; 
+				break;
+			default:
+				pData.Image = CSIMG_STOP;
+		}
+		pData.SelectedImage = pData.Image;
+		
+		return S_OK;
 	}
     //Return latest update increment.  True/False isn't sufficient here since
     //multiple trees may be using this list.  Returning an update counter > than
     //the last one cached by a given tree will force calls to GetItemCount and
     //LocateExpandedList as needed.
-    HRESULT UpdateCounter(/+[out]+/ ULONG *pCurUpdate,  
-		/+[out]+/ VSTREEITEMCHANGESMASK *pgrfChanges)
+	override HRESULT UpdateCounter(/+[out]+/ ULONG *pCurUpdate)
 	{
 		mixin(LogCallMix2);
-	    return mCounter.UpdateCounter(pCurUpdate, pgrfChanges);
-	}
-    
-	// If prgListChanges is NULL, should return the # of changes in pcChanges. Otherwise
-    // *pcChanges will indicate the size of the array (so that caller can allocate the array) to fill
-    // with the VSTREELISTITEMCHANGE records
-    HRESULT GetListChanges(/+[in,out]+/ ULONG *pcChanges, 
-		/+[ size_is (*pcChanges)]+/ in VSTREELISTITEMCHANGE *prgListChanges)
-	{
-		mixin(LogCallMix2);
-	    return mCounter.GetListChanges(pcChanges, cast(VSTREELISTITEMCHANGE *) prgListChanges);
-	}
-    //Toggles the state of the given item (may be more than two states)
-    HRESULT ToggleState(in ULONG Index, 
-		/+[out]+/ VSTREESTATECHANGEREFRESH *ptscr)
-	{
-		mixin(LogCallMix2);
-		return E_NOTIMPL;
+	    return mCounter.UpdateCounter(pCurUpdate, null);
 	}
 
 	// IVsObjectList /////////////////////////////////////////////////////////////
-    HRESULT GetCapabilities(/+[out]+/  LIB_LISTCAPABILITIES *pCapabilities)
+	override HRESULT GetCapabilities2(/+[out]+/  LIB_LISTCAPABILITIES *pCapabilities)
 	{
 		mixin(LogCallMix2);
-		return E_NOTIMPL;
+		*pCapabilities = LLC_NONE;
+		return S_OK;
 	}
     // Get a sublist
-    HRESULT GetList(in ULONG uIndex, in LIB_LISTTYPE ListType, in LIB_LISTFLAGS Flags, in VSOBSEARCHCRITERIA *pobSrch, 
-		/+[out]+/ IVsObjectList *ppList)
+	override HRESULT GetList2(in ULONG uIndex, in LIB_LISTTYPE2 ListType, in LIB_LISTFLAGS Flags, in VSOBSEARCHCRITERIA2 *pobSrch, 
+		/+[out]+/ IVsSimpleObjectList2 *ppList)
 	{
 		mixin(LogCallMix2);
 		auto obj = GetObject(uIndex);
 		if(obj.type != JSON_TYPE.OBJECT)
 			return E_UNEXPECTED;
 
-		auto list = new ObjectList(mLibrary, mLibInfo, obj);
-		return list.QueryInterface(&IVsObjectList.iid, cast(void**) ppList);
+		auto list = new ObjectList(mLibrary, mLibInfo, this, obj, ListType, Flags, pobSrch);
+		return list.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
 	}
 	
-    HRESULT GetCategoryField(in ULONG uIndex, in LIB_CATEGORY Category, 
+	override HRESULT GetCategoryField2(in ULONG uIndex, in LIB_CATEGORY2 Category, 
 		/+[out,retval]+/ DWORD* pField)
 	{
 		mixin(LogCallMix2);
@@ -1091,7 +1261,7 @@ class ObjectList : DComObject, IVsObjectList
 		if(Category == LC_LISTTYPE && uIndex == BrowseCounter.NULINDEX)
 		{
 			// child list types supported under this list
-			*pField = LLT_PACKAGE | LLT_CLASSES | LLT_MEMBERS;
+			*pField = LLT_NAMESPACES | LLT_CLASSES | LLT_MEMBERS;
 			return S_OK;
 		}
 		if (!IsValidIndex(uIndex))
@@ -1104,10 +1274,18 @@ class ObjectList : DComObject, IVsObjectList
 				switch (GetKind(uIndex))
 				{
 					case "module":
-						*pField = LLT_PACKAGE;
+						*pField = LLT_NAMESPACES | LLT_CLASSES | LLT_MEMBERS;
 						break;
 					case "class":
-						*pField = LLT_CLASSES;
+					case "interface":
+						*pField = LLT_CLASSES | LLT_MEMBERS | LLT_HIERARCHY;
+						break;
+					case "union":
+					case "struct":
+					case "anonymous struct":
+					case "anonymous union":
+					case "enum":
+						*pField = LLT_CLASSES | LLT_MEMBERS;
 						break;
 					default:
 						*pField = 0;
@@ -1120,19 +1298,39 @@ class ObjectList : DComObject, IVsObjectList
 			case LC_MEMBERTYPE:
 				assert(uIndex != BrowseCounter.NULINDEX);
 				return E_NOTIMPL; // m_rgpBrowseNode[uIndex]->GetCategoryField(eCategory, pField);
+				
+			case LC_HIERARCHYTYPE:
+				switch (GetKind(uIndex))
+				{
+					case "class":
+					case "interface":
+						*pField = LLT_CLASSES | LLT_MEMBERS | LLT_HIERARCHY;
+						break;
+					default:
+						*pField = 0;
+						return E_FAIL;
+				}
+				break;
+				
+			case LC_NODETYPE:
+			case LC_MEMBERINHERITANCE:
+			case LC_SEARCHMATCHTYPE:
+				
 			default:
-				return E_NOTIMPL;
+				*pField = 0;
+				return E_FAIL;
 		}
 		return S_OK;
 	}
 
-    HRESULT GetExpandable2(in ULONG Index, in LIB_LISTTYPE ListTypeExcluded, 
+	override HRESULT GetExpandable3(in ULONG Index, in LIB_LISTTYPE2 ListTypeExcluded, 
 		/+[out]+/ BOOL *pfExpandable)
 	{
-		mixin(LogCallMix2);
+		//mixin(LogCallMix2);
 		assert(pfExpandable);
-
-		if (GetCount() > 0) // mListType & (LLT_PACKAGE | LLT_CLASSES))
+		
+		JSONValue obj = GetObject(Index);
+		if(GetInfoCount(obj) > 0) // mListType & (LLT_PACKAGE | LLT_CLASSES))
 			*pfExpandable = TRUE;
 		else
 			*pfExpandable = FALSE;
@@ -1140,47 +1338,51 @@ class ObjectList : DComObject, IVsObjectList
 		return S_OK;
 	}
 	
-    HRESULT GetNavigationInfo(in ULONG uIndex, /+[in, out]+/ VSOBNAVIGATIONINFO2 *pobNav)
-	{
-		mixin(LogCallMix2);
-		if (!IsValidIndex(uIndex))
-			return E_UNEXPECTED;
-		
-		assert(pobNav);
-
-		if(HRESULT hr = mLibrary.GetGuid(&(pobNav.pguidLib)))
-			return hr;
-		assert(pobNav.pName);
-		pobNav.pName.lltName = mListType;
-		return GetText(uIndex, 0, &pobNav.pName.pszName);
-	}
-    HRESULT LocateNavigationInfo(in VSOBNAVIGATIONINFO2 *pobNav, in VSOBNAVNAMEINFONODE *pobName, in BOOL fDontUpdate, 
-		/+[out]+/ BOOL *pfMatchedName, 
-		/+[out]+/ ULONG *pIndex)
+	override HRESULT GetNavInfo(in ULONG uIndex, /+[out]+/ IVsNavInfo * ppNavInfo)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetBrowseObject(in ULONG Index, 
+	override HRESULT GetNavInfoNode(in ULONG Index, 
+		/+[out]+/ IVsNavInfoNode * ppNavInfoNode)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+	
+	override HRESULT LocateNavInfoNode(/+[in]+/ IVsNavInfoNode  pNavInfoNode, 
+		/+[out]+/ ULONG * pulIndex)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+	
+	override HRESULT GetBrowseObject(in ULONG Index, 
 		/+[out]+/ IDispatch *ppdispBrowseObj)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetUserContext(in ULONG Index, 
+	override HRESULT GetUserContext(in ULONG Index, 
 		/+[out]+/ IUnknown *ppunkUserCtx)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT ShowHelp(in ULONG Index)
+	override HRESULT ShowHelp(in ULONG Index)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetSourceContext(in ULONG Index, 
-		/+[out]+/ const( WCHAR)**pszFileName, 
+	override HRESULT GetSourceContextWithOwnership(in ULONG Index, 
+		/+[out]+/ BSTR *pszFileName, 
 		/+[out]+/ ULONG *pulLineNum)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+	override HRESULT GetProperty(in ULONG Index, in VSOBJLISTELEMPROPID propid, 
+		/+[out]+/ VARIANT *pvar)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
@@ -1191,7 +1393,7 @@ class ObjectList : DComObject, IVsObjectList
     // If there are >1 itemids, return VSITEMID_SELECTION and a subsequent call will be made
     // on GetMultipleSourceItems to get them. If there are no available source items, return
     // VSITEMID_ROOT to indicate the root of the hierarchy as a whole.
-    HRESULT CountSourceItems(in ULONG Index, 
+	override HRESULT CountSourceItems(in ULONG Index, 
 		/+[out]+/ IVsHierarchy *ppHier, 
 		/+[out]+/ VSITEMID *pitemid, 
 		/+[out, retval]+/ ULONG *pcItems)
@@ -1201,7 +1403,7 @@ class ObjectList : DComObject, IVsObjectList
 	}
     // Used if CountSourceItems returns > 1. Details for filling up these out params are same 
     // as IVsMultiItemSelect::GetSelectedItems
-    HRESULT GetMultipleSourceItems(in ULONG Index, in VSGSIFLAGS grfGSI, in ULONG cItems, 
+	override HRESULT GetMultipleSourceItems(in ULONG Index, in VSGSIFLAGS grfGSI, in ULONG cItems, 
 		/+[out, size_is(cItems)]+/ VSITEMSELECTION *rgItemSel)
 	{
 		mixin(LogCallMix2);
@@ -1209,22 +1411,46 @@ class ObjectList : DComObject, IVsObjectList
 	}
     // Return TRUE if navigation to source of the specified type (definition or declaration),
     // is possible, FALSE otherwise
-    HRESULT CanGoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType, 
+	override HRESULT CanGoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType, 
 		/+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
-		return E_NOTIMPL;
+		if(SrcType != GS_ANY && SrcType != GS_DEFINITION)
+			return E_FAIL;
+		*pfOK = TRUE;
+		return S_OK;
 	}
     // Called to cause navigation to the source (definition or declration) for the
     // item Index. You must must coordinate with the project system to open the
     // source file and navigate it to the approp. line. Return S_OK on success or an
     // hr error (along with rich error info if possible) if the navigation failed.
-    HRESULT GoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType)
+	override HRESULT GoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType)
 	{
 		mixin(LogCallMix2);
-		return E_NOTIMPL;
+		
+		string file, modname;
+
+		auto mod = GetModule();
+		if(mod.type == JSON_TYPE.OBJECT)
+		{
+			if(JSONValue* v = "file" in mod.object)
+				if(v.type == JSON_TYPE.STRING)
+					file = v.str;
+			if(JSONValue* v = "name" in mod.object)
+				if(v.type == JSON_TYPE.STRING)
+					modname = v.str;
+		}
+		int line = 0;
+		auto obj = GetObject(Index);
+		if(obj.type == JSON_TYPE.OBJECT)
+			if(JSONValue* v = "line" in obj.object)
+				if(v.type == JSON_TYPE.INTEGER)
+					line = cast(int)v.integer - 1;
+		
+		return OpenFileInSolution(file, line, modname);
 	}
-    HRESULT GetContextMenu(in ULONG Index, 
+	
+	override HRESULT GetContextMenu(in ULONG Index, 
 		/+[out]+/ CLSID *pclsidActive, 
 		/+[out]+/ LONG *pnMenuId, 
 		/+[out]+/ IOleCommandTarget *ppCmdTrgtActive)
@@ -1232,13 +1458,13 @@ class ObjectList : DComObject, IVsObjectList
 		// mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}   
-    HRESULT QueryDragDrop(in ULONG Index, /+[in]+/ IDataObject pDataObject, in DWORD grfKeyState, 
+	override HRESULT QueryDragDrop(in ULONG Index, /+[in]+/ IDataObject pDataObject, in DWORD grfKeyState, 
 		/+[in, out]+/DWORD * pdwEffect)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT DoDragDrop(in ULONG Index, /+[in]+/ IDataObject  pDataObject, in DWORD grfKeyState, 
+	override HRESULT DoDragDrop(in ULONG Index, /+[in]+/ IDataObject  pDataObject, in DWORD grfKeyState, 
 		/+[in, out]+/DWORD * pdwEffect)
 	{
 		mixin(LogCallMix2);
@@ -1250,7 +1476,7 @@ class ObjectList : DComObject, IVsObjectList
     // and return TRUE if successful rename with that new name is possible or an an error hr (along with FALSE)
     // if the name is somehow invalid (and set the rich error info to indicate to the user
     // what was wrong) 
-    HRESULT CanRename(in ULONG Index, in LPCOLESTR pszNewName, 
+	override HRESULT CanRename(in ULONG Index, in LPCOLESTR pszNewName, 
 		/+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
@@ -1260,13 +1486,13 @@ class ObjectList : DComObject, IVsObjectList
     // been called with the newname so that you've had a chance to validate the name. If
     // Rename succeeds, return S_OK, other wise error hr (and set the rich error info)
     // indicating the problem encountered.
-    HRESULT DoRename(in ULONG Index, in LPCOLESTR pszNewName, in VSOBJOPFLAGS grfFlags)
+	override HRESULT DoRename(in ULONG Index, in LPCOLESTR pszNewName, in VSOBJOPFLAGS grfFlags)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
     // Says whether the item Index can be deleted or not. Return TRUE if it can, FALSE if not.
-    HRESULT CanDelete(in ULONG Index, 
+	override HRESULT CanDelete(in ULONG Index, 
 		/+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
@@ -1276,18 +1502,53 @@ class ObjectList : DComObject, IVsObjectList
     // the item previously returned TRUE. On a successful deletion this should return S_OK, if
     // the deletion failed, return the failure as an error hresult and set any pertinent error
     // info in the standard ole error info.
-    HRESULT DoDelete(in ULONG Index, in VSOBJOPFLAGS grfFlags)
+	override HRESULT DoDelete(in ULONG Index, in VSOBJOPFLAGS grfFlags)
 	{
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
     // Used to add the description pane text in OBject Browser. Also an alternate
     // mechanism for providing tooltips (ODO_TOOLTIPDESC is set in that case)
-    HRESULT FillDescription(in ULONG Index, in VSOBJDESCOPTIONS grfOptions, /+[in]+/ IVsObjectBrowserDescription2 pobDesc)
+	override HRESULT FillDescription2(in ULONG Index, in VSOBJDESCOPTIONS grfOptions, /+[in]+/ IVsObjectBrowserDescription3 pobDesc)
 	{
 		mixin(LogCallMix2);
-		return E_NOTIMPL;
+		
+		auto val = GetObject(Index);
+		Definition def;
+		def.name = GetInfoName(val);
+		def.type = GetInfoType(val);
+		def.kind = GetInfoKind(val);
+		
+		if(HasFunctionPrototype(def.kind))
+		{
+			string ret = def.GetReturnType();
+			pobDesc.AddDescriptionText3(_toUTF16z(ret),      OBDS_TYPE, null);
+			pobDesc.AddDescriptionText3(" ",                 OBDS_MISC, null);
+			pobDesc.AddDescriptionText3(_toUTF16z(def.name), OBDS_NAME, null);
+			pobDesc.AddDescriptionText3("(",                 OBDS_MISC, null);
+			for(int i = 0; i < def.GetParameterCount(); i++)
+			{
+				string name, description, disp;
+				def.GetParameterInfo(i, name, disp, description);
+				if(i > 0)
+					pobDesc.AddDescriptionText3(", ",        OBDS_COMMA, null);
+				pobDesc.AddDescriptionText3(_toUTF16z(disp), OBDS_PARAM, null);
+			}
+			pobDesc.AddDescriptionText3(")\n",               OBDS_MISC, null);
+		}
+		else
+		{
+			pobDesc.AddDescriptionText3("Name: ",            OBDS_MISC, null);
+			pobDesc.AddDescriptionText3(_toUTF16z(def.name), OBDS_NAME, null);
+			pobDesc.AddDescriptionText3("\nType: ",          OBDS_MISC, null);
+			pobDesc.AddDescriptionText3(_toUTF16z(def.type), OBDS_TYPE, null);
+			pobDesc.AddDescriptionText3("\nKind: ",          OBDS_MISC, null);
+			pobDesc.AddDescriptionText3(_toUTF16z(def.kind), OBDS_TYPE, null);
+		}
+		
+		return S_OK;
 	}
+	
     // These three methods give the list a chance to provide clipboard formats for a drag-drop or 
     // copy/paste operation.
     // Caller first calls EnumClipboardFormats(index, flags, 0, NULL, &cExpected) to get the count
@@ -1305,7 +1566,7 @@ class ObjectList : DComObject, IVsObjectList
     // and will be called respectively on GetClipboardFormat or GetExtendedClipboardVariant for each.
     // Note that CV/OB will automatically provide a CF_NAVINFO and a CF_TEXT/CF_UNICODETEXT format, so
     // EnumClipboardFormats should NOT return these values.
-    HRESULT EnumClipboardFormats(in ULONG Index, 
+	override HRESULT EnumClipboardFormats(in ULONG Index, 
         in VSOBJCFFLAGS grfFlags,
         in ULONG  celt, 
         /+[in, out, size_is(celt)]+/ VSOBJCLIPFORMAT *rgcfFormats,
@@ -1314,7 +1575,7 @@ class ObjectList : DComObject, IVsObjectList
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetClipboardFormat(in ULONG Index,
+	override HRESULT GetClipboardFormat(in ULONG Index,
         in    VSOBJCFFLAGS grfFlags,
         in    FORMATETC *pFormatetc,
         in    STGMEDIUM *pMedium)
@@ -1322,7 +1583,7 @@ class ObjectList : DComObject, IVsObjectList
 		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
-    HRESULT GetExtendedClipboardVariant(in ULONG Index,
+	override HRESULT GetExtendedClipboardVariant(in ULONG Index,
         in VSOBJCFFLAGS grfFlags,
         in const( VSOBJCLIPFORMAT)*pcfFormat,
         /+[out]+/ VARIANT *pvarFormat)
@@ -1420,11 +1681,13 @@ struct BrowseCounter
 	}
 
 	HRESULT UpdateCounter(
-		/* [out] */ ULONG *                 puCurUpdate,  
+		/* [out] */ ULONG *                 puCurUpdate,
 		/* [out] */ VSTREEITEMCHANGESMASK * pgrfChanges)
 	{
-		*puCurUpdate = m_uCounter;
-		*pgrfChanges = m_listChanges.grfChange;
+		if(puCurUpdate)
+			*puCurUpdate = m_uCounter;
+		if(pgrfChanges)
+			*pgrfChanges = m_listChanges.grfChange;
 		return S_OK;
 	}
 
@@ -1459,4 +1722,4 @@ private:
 	ULONG m_cChanges;
 	BOOL  m_fIsCounterDirty;
 	VSTREELISTITEMCHANGE m_listChanges = { NULINDEX, TCT_NOCHANGE };
-};
+}
