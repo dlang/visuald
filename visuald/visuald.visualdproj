@@ -42,7 +42,7 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
   <program>m:\s\d\dmd2\dmd\src\dmd.exe</program>
-  <imppath>..</imppath>
+  <imppath>..;..\vdc</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\obj</objdir>
@@ -83,7 +83,7 @@
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
-  <debugarguments>/RootSuffix D</debugarguments>
+  <debugarguments>/RootSuffix D /log </debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
@@ -205,8 +205,14 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File path="Resources\settrace.ico" />
    <File path="Resources\refresh.ico" />
   </Folder>
+  <Folder name="workaround">
+   <File path="workaround.d" />
+  </Folder>
   <Folder name="c2d">
    <File path="..\c2d\dlist.d" />
+  </Folder>
+  <Folder name="std">
+   <File path="std\parallelism.d" />
   </Folder>
   <File path="config.d" />
   <File path="dproject.d" />
@@ -246,5 +252,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="tokenreplace.d" />
   <File path="build.d" />
   <File path="tokenreplacedialog.d" />
+  <File path="library.d" />
  </Folder>
 </DProject>

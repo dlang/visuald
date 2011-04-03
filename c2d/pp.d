@@ -1,9 +1,9 @@
-module pp;
+module c2d.pp;
 
-import tokenizer;
-import dlist;
-import dgutil;
-import tokutil;
+import c2d.tokenizer;
+import c2d.dlist;
+import c2d.dgutil;
+import c2d.tokutil;
 
 import std.string;
 

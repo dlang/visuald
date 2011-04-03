@@ -48,6 +48,13 @@ import sdk.vsi.encbuild;
 
 ///////////////////////////////////////////////////////////////
 
+void OutputDebugLog(string msg)
+{
+	OutputDebugStringA(toStringz(msg));
+}
+
+///////////////////////////////////////////////////////////////
+
 T returnError(T)(T err)
 {
 	logCall(" ERROR %x", err);
@@ -759,7 +766,7 @@ string _getLogReturn(string func, string type)
 	return call;
 }
 
-const string nl = "\n";
+const string nl = " "; // "\n";
 const string FuncNameMix = "struct __FUNCTION {} static const string __FUNCTION__ = _getJustName(__FUNCTION.mangleof);" ~ nl;
 const string _hasThisMix = "static const bool hasThis = true;" ~ nl;
 

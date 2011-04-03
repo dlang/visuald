@@ -1,11 +1,11 @@
-module patchast;
+module c2d.patchast;
 
-import tokenizer;
-import ast;
-import dlist;
-import dgutil;
-import tokutil;
-version(pp) import pp;
+import c2d.tokenizer;
+import c2d.ast;
+import c2d.dlist;
+import c2d.dgutil;
+import c2d.tokutil;
+version(pp) import c2d.pp;
 
 import std.string;
 import std.file;

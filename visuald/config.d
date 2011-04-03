@@ -35,10 +35,6 @@ import fileutil;
 import lexutil;
 
 ///////////////////////////////////////////////////////////////
-// fix bad compilation order, causing inner function to be generated
-//  before outer functions (bugzilla 2962)
-static if(__traits(compiles,std.conv.parse!(real,string))){}
-///////////////////////////////////////////////////////////////
 
 const string kToolResourceCompiler = "Resource Compiler";
 const string kCmdLogFileExtension = "build";

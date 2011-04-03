@@ -16,6 +16,7 @@ import parser.engine;
 import std.exception;
 import std.stdio;
 import std.string;
+import std.array;
 
 class SemanticException : Exception
 {

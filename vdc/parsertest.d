@@ -8,6 +8,9 @@
 
 module parsertest;
 
+version(MAIN)
+{
+
 import util;
 import semantic;
 import simplelexer;
@@ -235,9 +238,6 @@ unittest
 	//alias 4 test;
 	//uint[test] arr;
 	//pragma(msg,arr.sizeof);
-
-version(MAIN)
-{
 
 import core.exception;
 import std.file;

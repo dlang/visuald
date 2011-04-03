@@ -322,6 +322,13 @@ class LibraryInfo
 		return false;
 	}
 
+	JSONValue[] getModules()
+	{
+		if(mModules.type == JSON_TYPE.ARRAY)
+			return mModules.array;
+		return null;
+	}
+
 	Definition[] findDefinition(ref SearchData sd)
 	{
 		Definition[] defs;
@@ -631,6 +638,13 @@ class LibraryInfos
 		return defs;
 	}
 
+	LibraryInfo findInfo(string name)
+	{
+		if(mInfos.length > 0)
+			return mInfos[0];
+		return null;
+	}
+	
 	LibraryInfo[] mInfos;
 
 }

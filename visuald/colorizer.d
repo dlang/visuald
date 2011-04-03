@@ -125,6 +125,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	ParserBase!wstring mParser;
 	Config mConfig;
 	bool mColorizeVersions;
+	bool mParseSource;
 	
 	const int kIndexVersion = 0;
 	const int kIndexDebug   = 1;
@@ -161,6 +162,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		mParser = new ParserBase!wstring;
 		
 		mColorizeVersions = Package.GetGlobalOptions().ColorizeVersions;
+		mParseSource = Package.GetGlobalOptions().parseSource;
 		UpdateConfig();
 	}
 
@@ -220,9 +222,16 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			int type = SimpleLexer.scan(state, text, pos);
 			
 			bool nowInTokenString = (SimpleLexer.tokenStringLevel(state) > 0);
+			wstring tok = text[prevpos..pos];
+
+			ParserSpan span;
+			if (pos >= text.length)
+				span = ParserSpan(prevpos, iLine, 0, iLine + 1);
+			else
+				span = ParserSpan(prevpos, iLine, pos, iLine);
+			
 			if(mColorizeVersions)
 			{
-				wstring tok = text[prevpos..pos];
 				if(SimpleLexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
 				{
 					int parseState = getParseState(state);
@@ -231,16 +240,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				}
 				else
 				{
-					ParserSpan span;
-					if (pos >= text.length)
-						span = ParserSpan(prevpos, iLine, 0, iLine + 1);
-					else
-						span = ParserSpan(prevpos, iLine, pos, iLine);
 					type = parseVersions(span, type, tok, state, versionsChanged);
 				}
 			}
 			if(inTokenString || nowInTokenString)
 				type = stringColorType(type);
+			else if(mParseSource)
+				type = parseErrors(span, type, tok);
 			inTokenString = nowInTokenString;
 				
 			while(prevpos < pos)
@@ -698,6 +704,15 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		iState = (iState & 0x800fffff) | (parseState << 20) | (debugOrVersion << 24);
 	}
 		return ntype;
+	}
+
+	int parseErrors(ref ParserSpan span, int type, wstring tok)
+	{
+		if(!SimpleLexer.isCommentOrSpace(type, tok))
+			if(mSource.hasParseError(span))
+				type |= 5 << 14; // red ~
+		
+		return type;
 	}
 
 	wstring getVersionToken(LocationBase!wstring verloc)

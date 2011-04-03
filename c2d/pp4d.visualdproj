@@ -51,6 +51,7 @@
   <doDocComments>0</doDocComments>
   <docdir />
   <docname />
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
@@ -140,6 +141,7 @@
   <doDocComments>0</doDocComments>
   <docdir />
   <docname />
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />

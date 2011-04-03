@@ -1,4 +1,4 @@
-module ast;
+module c2d.ast;
 
 import c2d.tokenizer;
 import c2d.dlist;

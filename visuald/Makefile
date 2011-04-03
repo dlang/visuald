@@ -16,7 +16,8 @@ XMLP_SRC = $(XMLP)/compatible.d $(XMLP)/delegater.d $(XMLP)/except.d \
            $(XMLP)/../inrange/recode.d
 # $(XMLP)/recode.d 
 
-SRC = config.d dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
+SRC = workaround.d std/parallelism.d \
+      config.d dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
       logutil.d dllmain.d dproject.d hierarchy.d expansionprovider.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \

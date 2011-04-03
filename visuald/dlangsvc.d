@@ -10,13 +10,6 @@ module dlangsvc;
 
 // import diamond;
 
-import windows;
-import std.string;
-import std.ctype;
-import std.utf;
-import std.conv;
-import std.algorithm;
-
 import comutil;
 import logutil;
 import hierutil;
@@ -32,6 +25,19 @@ import intellisense;
 import searchsymbol;
 import viewfilter;
 import colorizer;
+import windows;
+
+import ast = ast.all;
+import parser.engine;
+import simpleparser;
+
+import std.string;
+import std.ctype;
+import std.utf;
+import std.conv;
+import std.algorithm;
+
+import std.parallelism;
 
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
@@ -452,10 +458,10 @@ class LanguageService : DisposingComObject,
 	private int cdwLastLine, cdwLastColumn;
 	public ViewFilter mLastActiveView;
 	
-	void tryJumpToDefinitionInCodeWindow(Source src, int line, int col)
+	bool tryJumpToDefinitionInCodeWindow(Source src, int line, int col)
 	{
 		if (cdwLastSource == src && cdwLastLine == line && cdwLastColumn == col)
-			return;
+			return false;
 
 		cdwLastSource = src;
 		cdwLastLine = line;
@@ -463,21 +469,21 @@ class LanguageService : DisposingComObject,
 
 		int startIdx, endIdx;
 		if(!src.GetWordExtent(line, col, WORDEXT_CURRENT, startIdx, endIdx))
-			return;
+			return false;
 		string word = toUTF8(src.GetText(line, startIdx, line, endIdx));
 		if(word.length <= 0)
-			return;
+			return false;
 
 		Definition[] defs = Package.GetLibInfos().findDefinition(word);
 		if(defs.length == 0)
-			return;
+			return false;
 		
 		string srcfile = src.GetFileName();
 		string abspath;
 		if(FindFileInSolution(defs[0].filename, srcfile, abspath) != S_OK)
-			return;
+			return false;
 		
-		jumpToDefinitionInCodeWindow("", abspath, defs[0].line, 0);
+		return jumpToDefinitionInCodeWindow("", abspath, defs[0].line, 0);
 	}
 	
 	//////////////////////////////////////////////////////////////
@@ -494,7 +500,8 @@ class LanguageService : DisposingComObject,
 		{
 			int line, idx;
 			mLastActiveView.mView.GetCaretPos(&line, &idx);
-			tryJumpToDefinitionInCodeWindow(mLastActiveView.mCodeWinMgr.mSource, line, idx);
+			if(tryJumpToDefinitionInCodeWindow(mLastActiveView.mCodeWinMgr.mSource, line, idx))
+				return true;
 		}
 		return false;
 	}
@@ -533,7 +540,7 @@ class LanguageService : DisposingComObject,
 	bool IsDebugging()
 	{
 		return (mDbgMode & ~ DBGMODE_EncMask) != DBGMODE_Design;
-        }
+	}
 
 private:
 	Package              mPackage;
@@ -753,16 +760,17 @@ class CodeDefViewContext : DComObject, IVsCodeDefViewContext
 }
 /////////////////////////////////////////////////////////////////////////
 
-void jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int col)
+bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int col)
 {
 	IVsCodeDefView cdv = queryService!(SVsCodeDefView,IVsCodeDefView);
 	if (cdv is null)
-		return;
+		return false;
 	if (cdv.IsVisible() != S_OK)
-		return;
+		return false;
 
 	CodeDefViewContext context = new CodeDefViewContext(symbol, filename, line, col);
 	cdv.SetContext(context);
+	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -850,6 +858,12 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	bool mOutlining;
 	IVsHiddenTextSession mHiddenTextSession;
 	
+	ast.Module mAST;
+	ParseError[] mParseErrors;
+	int mParsingState;
+	int mModificationCountAST;
+	int mModificationCount;
+
 	this(IVsTextLines buffer)
 	{
 		mBuffer = addref(buffer);
@@ -857,6 +871,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		mSourceEvents = new SourceEvents(this, mBuffer);
 
 		mOutlining = Package.GetGlobalOptions().autoOutlining;
+		mModificationCountAST = -1;
 	}
 	~this()
 	{
@@ -898,6 +913,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	override int OnChangeLineText( /* [in] */ in TextLineChange *pTextLineChange,
 	                      /* [in] */ in BOOL fLast)
 	{
+		mModificationCount++;
 		if(mOutlining)
 			CheckOutlining(pTextLineChange);
 		return mColorizer.OnLinesChanged(pTextLineChange.iStartLine, pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine, fLast != 0);
@@ -932,6 +948,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	
 	bool OnIdle()
 	{
+		if(startParsing())
+			return true;
+		
 		if(!mOutlining)
 			return false;
 
@@ -1144,6 +1163,16 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return wdetachBSTR(text);
 	}
 
+	wstring GetText()
+	{
+		int endLine, endCol;
+		mBuffer.GetLastLineIndex(&endLine, &endCol);
+
+		BSTR text;
+		HRESULT hr = mBuffer.GetLineText(0, 0, endLine, endCol, &text);
+		return wdetachBSTR(text);
+	}
+	
 	bool GetWordExtent(int line, int idx, WORDEXTFLAGS flags, out int startIdx, out int endIdx)
 	{
 		startIdx = endIdx = idx;
@@ -2250,6 +2279,64 @@ else
 			tok = -1;
 		}
 		return ""w;
+	}
+	
+	//////////////////////////////////////////////////////////////
+	
+	bool startParsing()
+	{
+		if(!Package.GetGlobalOptions().parseSource)
+			return false;
+		
+		if(mParsingState > 1)
+		{
+			mParsingState = 0;
+			ReColorizeLines (0, -1);
+			return true;
+		}
+		
+		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
+			return false;
+		
+		mParsingState = 1;
+		mModificationCountAST = mModificationCount;
+		auto task = task((Source src) { src.doParse(); }, this);
+		taskPool.put(task);
+		
+		return true;
+	}
+	
+	void doParse()
+	{
+		wstring wtxt = GetText();
+		string txt = to!string(wtxt);
+		
+		Parser p = new Parser;
+		p.mSaveErrors = true;
+		ast.Node n;
+		try
+		{
+			n = p.parseText(txt);
+		}
+		catch(ParseException e)
+		{
+			OutputDebugLog(e.msg);
+		}
+		catch(Throwable t)
+		{
+			OutputDebugLog(t.msg);
+		}
+		mAST = cast(ast.Module) n;
+		mParseErrors = p.errors;
+		mParsingState = 2;
+	}
+	
+	bool hasParseError(ParserSpan span)
+	{
+		for(int i = 0; i < mParseErrors.length; i++)
+			if(spanContains(span, mParseErrors[i].span.start.line-1, mParseErrors[i].span.start.index))
+				return true;
+		return false;
 	}
 	
 	//////////////////////////////////////////////////////////////

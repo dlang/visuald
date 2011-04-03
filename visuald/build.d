@@ -39,6 +39,12 @@ import config;
 import dpackage;
 
 // version = threadedBuild;
+version = taskedBuild;
+
+version(taskedBuild)
+{
+	import std.parallelism;
+}
 
 // builder thread class
 class CBuilderThread // : public CVsThread<CMyProjBuildableCfg>
@@ -89,18 +95,24 @@ public:
 
 		mSuccess = true;
 
-version(threadedBuild)
-{
 		if(op == Operation.eCheckUpToDate)
 			ThreadMain(); // synchronous handling needed
 		else
 		{
+version(taskedBuild)
+{
+			auto task = task((CBuilderThread t) { t.ThreadMain(); }, this);
+			taskPool.put(task);
+}
+else version(threadedBuild)
+{
 			mThread = new Thread(&ThreadMain);
 			mThread.start();
-		}
 }
 else
-		ThreadMain();
+			ThreadMain();
+		}
+
 		//return super::Start(pCMyProjBuildableCfg);
 		return mSuccess ? S_OK : S_FALSE;
 	}
@@ -123,7 +135,8 @@ else
 
 		scope(exit)
 		{
-			mThread = null;
+			version(threadedBuild)
+				mThread = null;
 			m_op = Operation.eIdle;
 		}
 		m_fStopBuild = false;
@@ -446,7 +459,8 @@ else
 
 	time_t mStartBuildTime;
 	
-	Thread mThread; // keep a reference to the thread to avoid it from being collected
+	version(threadedBuild)
+		Thread mThread; // keep a reference to the thread to avoid it from being collected
 	bool mSuccess = false;
 	bool mCreateLog = true;
 	string mBuildLog;

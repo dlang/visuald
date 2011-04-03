@@ -1063,6 +1063,7 @@ else
 		mixin(LogCallMix);
 
 		// currently disabled to show data breakpoints while debugging
+		// not working without debugger, see Package.SetSite: QueryService(&IVsDebugger)
 		if(mCodeWinMgr.mLangSvc.IsDebugging())
 			return E_NOTIMPL;
 		//return TIP_S_ONLYIFNOMARKER;

@@ -358,6 +358,8 @@ class BlockStatement : Statement
 		{
 			case TOK_rcurly:
 				return Accept;
+			case TOK_EOF:
+				return Forward;
 			default:
 				p.pushState(&shiftStatement);
 				return Statement.enter(p);

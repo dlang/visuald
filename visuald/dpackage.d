@@ -35,6 +35,7 @@ import intellisense;
 import searchsymbol;
 import tokenreplacedialog;
 import profiler;
+import library;
 
 import sdk.win32.winreg;
 
@@ -81,6 +82,9 @@ const GUID    g_debuggerLanguage         = uuid("002a2de9-8bb6-484d-9805-7e4ad40
 const GUID    g_expressionEvaluator      = uuid("002a2de9-8bb6-484d-9806-7e4ad4084715");
 const GUID    g_profileWinCLSID          = uuid("002a2de9-8bb6-484d-9807-7e4ad4084715");
 const GUID    g_tokenReplaceWinCLSID     = uuid("002a2de9-8bb6-484d-9808-7e4ad4084715");
+
+const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-9810-7e4ad4084715");
+const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-9811-7e4ad4084715");
 
 GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
 
@@ -254,6 +258,8 @@ class Package : DisposingComObject,
 
 		if(mHostSP)
 		{
+			CloseLibraryManager();
+			
 			if(mLangServiceCookie)
 			{
 				IProfferService sc;
@@ -261,7 +267,7 @@ class Package : DisposingComObject,
 				{
 					if(mLangServiceCookie && sc.RevokeService(mLangServiceCookie) != S_OK)
 					{
-						OutputLog("RevokeService(lang-service) failed");
+						OutputDebugLog("RevokeService(lang-service) failed");
 					}
 					sc.Release();
 				}
@@ -275,7 +281,7 @@ class Package : DisposingComObject,
 				{
 					if(projTypes.UnregisterProjectType(mProjFactoryCookie) != S_OK)
 					{
-						OutputLog("UnregisterProjectType() failed");
+						OutputDebugLog("UnregisterProjectType() failed");
 					}
 					projTypes.Release();
 				}
@@ -363,29 +369,32 @@ class Package : DisposingComObject,
 		{
 			if(sc.ProfferService(&g_languageCLSID, this, &mLangServiceCookie) != S_OK)
 			{
-				OutputLog("ProfferService(language-service) failed");
+				OutputDebugLog("ProfferService(language-service) failed");
 			}
 			sc.Release();
 		}
+version(none)
+{
+	// getting the debugger here causes crashes when installing/uninstalling other plugins
+	//  command line used by installer: devenv /setup /NoSetupVSTemplates
 		IVsDebugger debugger;
 		if(mHostSP.QueryService(&IVsDebugger.iid, &IVsDebugger.iid, cast(void**)&debugger) == S_OK)
 		{
 			mLangsvc.setDebugger(debugger);
 			debugger.Release();
 		}
+}
 		IVsRegisterProjectTypes projTypes;
 		if(mHostSP.QueryService(&IVsRegisterProjectTypes.iid, &IVsRegisterProjectTypes.iid, cast(void**)&projTypes) == S_OK)
 		{
 			if(projTypes.RegisterProjectType(&g_projectFactoryCLSID, mProjFactory, &mProjFactoryCookie) != S_OK)
 			{
-				OutputLog("RegisterProjectType() failed");
+				OutputDebugLog("RegisterProjectType() failed");
 			}
 			projTypes.Release();
 		}
-		if(mHostSP)
-		{
-			mOptions.initFromRegistry();
-		}
+		
+		mOptions.initFromRegistry();
 
 		//register with ComponentManager for Idle processing
 		IOleComponentManager componentManager;
@@ -400,9 +409,11 @@ class Package : DisposingComObject,
 				crinfo.grfcadvf = olecadvfModal | olecadvfRedrawOff | olecadvfWarningsOff;
 				crinfo.uIdleTimeInterval = 1000;
 				if(!componentManager.FRegisterComponent(this, &crinfo, &mComponentID))
-					OutputLog("FRegisterComponent failed");
+					OutputDebugLog("FRegisterComponent failed");
 			}
 		}
+		InitLibraryManager();
+		
 		return S_OK; // E_NOTIMPL;
 	}
 
@@ -588,6 +599,43 @@ class Package : DisposingComObject,
 	{
 		return null;
 	}
+	/////////////////////////////////////////////////////////////
+	HRESULT InitLibraryManager()
+	{
+		if (mOmLibraryMgrCookie != 0) // already init-ed 
+			return E_UNEXPECTED;
+
+		HRESULT hr = E_FAIL;
+		if(auto om = queryService!(IVsObjectManager))
+		{
+			scope(exit) release(om);
+			
+			auto libMgr = new LibraryManager;
+
+			//Register the Library Manager
+			hr = om.RegisterLibMgr(&g_omLibraryManagerCLSID, libMgr, &mOmLibraryMgrCookie);
+			if(SUCCEEDED(hr))
+				mLibMgr = addref(libMgr);
+		}
+		return hr;
+	}
+	
+	HRESULT CloseLibraryManager()
+	{
+		if (mOmLibraryMgrCookie == 0) // already closed or not init-ed
+			return S_OK;
+
+		HRESULT hr = E_FAIL;
+		if(auto om = queryService!(IVsObjectManager))
+		{
+			scope(exit) release(om);
+			hr = om.UnregisterLibMgr(mOmLibraryMgrCookie);
+
+		}
+		mOmLibraryMgrCookie = 0;
+		mLibMgr = release(mLibMgr);
+		return hr;
+	}
 
 	/////////////////////////////////////////////////////////////
 	IServiceProvider getServiceProvider()
@@ -608,11 +656,6 @@ class Package : DisposingComObject,
 	}
 
 private:
-	void OutputLog(string msg)
-	{
-		OutputDebugStringA(toStringz(msg));
-	}
-
 	IServiceProvider mHostSP;
 	uint             mLangServiceCookie;
 	uint             mProjFactoryCookie;
@@ -621,6 +664,9 @@ private:
 	
 	LanguageService  mLangsvc;
 	ProjectFactory   mProjFactory;
+	
+	LibraryManager   mLibMgr;
+	uint             mOmLibraryMgrCookie;
 
 	GlobalOptions    mOptions;
 	LibraryInfos     mLibInfos;
@@ -648,7 +694,8 @@ class GlobalOptions
 
 	bool timeBuilds;
 	bool autoOutlining;
-
+	bool parseSource;
+	
 	bool ColorizeVersions = true;
 	bool lastColorizeVersions;
 	
@@ -715,6 +762,7 @@ class GlobalOptions
 			ColorizeVersions = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
 			timeBuilds       = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
 			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
+			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
 
 			// overwrite by user config
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
@@ -728,6 +776,7 @@ class GlobalOptions
 			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
 			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",       timeBuilds) != 0;
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
+			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
@@ -776,6 +825,7 @@ class GlobalOptions
 			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
 			keyToolOpts.Set("timeBuilds", timeBuilds);
 			keyToolOpts.Set("autoOutlining", autoOutlining);
+			keyToolOpts.Set("parseSource", parseSource);
 		}
 		catch(Exception e)
 		{

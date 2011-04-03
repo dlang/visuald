@@ -91,6 +91,12 @@ struct Snapshot
 	State rollbackState;
 }
 
+struct ParseError
+{
+	TextSpan span;
+	string msg;
+}
+
 class Parser
 {
 	Stack!State stateStack;
@@ -116,8 +122,12 @@ class Parser
 	
 	int lastErrorTokenPos;
 	string lastError;
+	TextSpan lastErrorSpan;
 	debug State[] traceState;
 	debug string[] traceToken;
+
+	bool mSaveErrors;
+	ParseError[] errors;
 	
 	this()
 	{
@@ -204,14 +214,25 @@ class Parser
 	{
 		if(tokenPos < lastErrorTokenPos)
 			return Reject;
+		
 		lastErrorTokenPos = tokenPos;
 		lastError = createError(msg);
+		lastErrorSpan = tok.span;
+		
 		return Reject;
+	}
+	
+	void writeError(ref const(TextSpan) errorSpan, string msg)
+	{
+		if(mSaveErrors)
+			errors ~= ParseError(errorSpan, msg);
+		else
+			writeln(msg);
 	}
 	
 	void writeError(string msg)
 	{
-		writeln(msg);
+		writeError(tok.span, msg);
 	}
 	
 	Action notImplementedError(string what = "")
@@ -519,7 +540,7 @@ class Parser
 				}
 				if(recoverStack.depth > 0)
 				{
-					writeError(lastError);
+					writeError(lastErrorSpan, lastError);
 					recover();
 					goto retryToken;
 				}
@@ -646,6 +667,7 @@ class Parser
 		nodeStack  = nodeStack.init;
 		lastErrorTokenPos = 0;
 		lastError = "";
+		errors = errors.init;
 	}
 }
 

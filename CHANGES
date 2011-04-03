@@ -261,7 +261,13 @@ Version history
 
 2011-03-09 Version 0.3.23
 
-  * fixed issue with threads without TLS that crept back in by migrating to DMD 2.052
+  * fixed issue on x64 with threads without TLS that crept back in by migrating to DMD 2.052
   * separate compile and link: removed -X,-D,-H from the link step to avoid creating empty files
   * new compilation mode: compile only to set your link step manually in the post-build step
-  * jumping to errors in files that exist i several projects now jump to the correct source
+  * jumping to errors in files that exist in several projects now jump to the correct source
+
+unreleased Version 0.3.24
+
+  * fixed crash when installing/uninstalling other Visual Studio plugins
+  * building is now delegated into another thread, so the UI is more responsive while building
+  * added menu entry "Open Website" to browse the visual D Website inside Visual Studio

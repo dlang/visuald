@@ -1175,12 +1175,14 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
+		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 	}
 
 	override void SetControls(GlobalOptions opts)
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
 		mAutoOutlining.setChecked(opts.autoOutlining);
+		mParseSource.setChecked(opts.parseSource);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1188,11 +1190,13 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
+		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		return changes;
 	}
 
 	CheckBox mColorizeVersions;
 	CheckBox mAutoOutlining;
+	CheckBox mParseSource;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

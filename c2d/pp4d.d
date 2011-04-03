@@ -26,7 +26,7 @@
 // - apply standard replacements
 // - 
 
-module pp4d;
+module c2d.pp4d;
 
 import c2d.tokenizer;
 import c2d.tokutil;
@@ -97,8 +97,8 @@ class pp4d
 	
 	void initFiles()
 	{
-		inc_path[r"c:\Program Files\Microsoft SDKs\Windows\v7.1\Include\"] = r"pp\win32\";
-//		inc_path[r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\"] = r"pp\win32\";
+//		inc_path[r"c:\Program Files\Microsoft SDKs\Windows\v7.1\Include\"] = r"pp\win32\";
+		inc_path[r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\"] = r"pp\win32\";
 	}
 
 	void warning(int lineno, string msg)
