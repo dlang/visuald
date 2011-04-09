@@ -136,6 +136,7 @@ else
 	if(filename.length)
 	{
 		string ofile3 = "c:/tmp/d/c1/" ~ basename(filename);
+		writeln(ofile3);
 		std.file.write(ofile3, app3);
 	}
 }

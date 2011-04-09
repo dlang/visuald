@@ -29,6 +29,7 @@ Project:
   which seems like a frozen UI (only first dialog open)
 - incremental builds
 - DnD project folders
+- debugger: better error messages when path or working directory are invalid
 
 Language service:
 ---------------
@@ -47,6 +48,19 @@ Search:
 - button state not shown correctly after switching search type
 - do not add definition again if on same line
 - crashes when searching C# project?
+
+Object Browser:
+---------------
+- Show full information/hierarchy in base classes
+- Derived types
+- Derived members
+- Search
+- modules without module statement shown with empty name
+- templates functions have expansion
+- restrict "My Solution" to classes in projects in solution
+- list projects in "Custom Components"
+- goto source on module
+- enum base classes
 
 Profile:
 ---------------

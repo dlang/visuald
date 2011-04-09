@@ -579,18 +579,25 @@ class LibraryInfos
 	void updateDefinitions()
 	{
 		string[] files = findJSONFiles();
+		bool modified = false;
 		
 		// remove files no longer found and update modified files
 		for(int i = 0; i < mInfos.length; )
 		{
 			int idx = arrIndex(files, mInfos[i].mFilename);
 			if(idx < 0)
+			{
 				mInfos = mInfos[0 .. i] ~ mInfos[i+1 .. $];
+				modified = true;
+			}
 			else
 			{
 				files = files[0 .. idx] ~ files[idx+1 .. $];
 				if(mInfos[i].mModified != lastModified(mInfos[i].mFilename))
+				{
 					mInfos[i].readJSON(mInfos[i].mFilename);
+					modified = true;
+				}
 				i++;
 			}
 		}
@@ -600,8 +607,14 @@ class LibraryInfos
 		{
 			auto info = new LibraryInfo;
 			if(info.readJSON(file))
+			{
 				mInfos ~= info;
+				modified = true;
+			}
 		}
+		
+		if(modified)
+			mUpdateCounter++;
 		
 		debug(FINDDEF) findDefinition("");
 	}
@@ -640,11 +653,17 @@ class LibraryInfos
 
 	LibraryInfo findInfo(string name)
 	{
-		if(mInfos.length > 0)
-			return mInfos[0];
+		foreach(info; mInfos)
+		{
+			string iname = getNameWithoutExt(info.mFilename);
+			if(icmp(name, iname) == 0)
+				return info;
+		}
 		return null;
 	}
 	
+	@property int updateCounter() { return mUpdateCounter; }
+	
 	LibraryInfo[] mInfos;
-
+	int mUpdateCounter;
 }

@@ -42,6 +42,22 @@ struct TextSpan
 	TextPos end;
 }
 
+// returns < 0 if adr1 < adr2
+int compareTextSpanAddress(int line1, int index1, int line2, int index2)
+{
+	int difflines = line1 - line2;
+	if(difflines != 0)
+		return difflines;
+	return index1 - index2;
+}
+
+bool textSpanContains(ref const(TextSpan) span, int line, int index)
+{
+	return compareTextSpanAddress(span.start.line, span.start.index, line, index) <= 0 
+		&& compareTextSpanAddress(span.end.line,   span.end.index,   line, index) > 0;
+}
+
+
 class Token
 {
 	TokenId id; // terminals and non-terminals

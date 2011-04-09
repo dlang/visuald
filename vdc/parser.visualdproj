@@ -262,12 +262,12 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
+  <debugtarget>m:\s\d\visuald\trunk\bin\TestDebug\parser.exe</debugtarget>
   <debugarguments>c:\s\d\visuald\trunk\vdc\runnable\rstest.d</debugarguments>
-  <debugworkingdir>c:\s\d\visuald\trunk\vdc\runnable</debugworkingdir>
+  <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>0</debugEngine>
+  <debugEngine>1</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="parser">

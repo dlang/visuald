@@ -45,6 +45,8 @@ import sdk.vsi.msdbg;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+version = tip;
+
 class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget, 
                    IVsTextViewEvents, IVsExpansionEvents
 {
@@ -55,7 +57,10 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 	int mLastHighlightBracesLine;
 	ViewCol mLastHighlightBracesCol;
-		
+	
+version(tip)
+	TextTipData mTextTipData;
+	
 	this(CodeWindowManager mgr, IVsTextView view)
 	{
 		mCodeWinMgr = mgr;
@@ -63,6 +68,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 		mCookieTextViewEvents = Advise!(IVsTextViewEvents)(mView, this);
 
 		mView.AddCommandFilter(this, &mNextTarget);
+		
+version(tip)
+		mTextTipData = addref(new TextTipData);
 	}
 	~this()
 	{
@@ -77,6 +85,12 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 			if(mCookieTextViewEvents)
 				Unadvise!(IVsTextViewEvents)(mView, mCookieTextViewEvents);
 			mView = release(mView);
+		}
+		if(mTextTipData)
+		{
+			 // we need to break the circular reference TextTipData<->IVsMethodTipWindow
+			mTextTipData.Dispose();
+			mTextTipData = release(mTextTipData);
 		}
 		mCodeWinMgr = null;
 	}
@@ -1165,7 +1179,113 @@ else
 		mLastHighlightBracesLine = line;
 		mLastHighlightBracesCol = idx;
 		HighlightMatchingPairs();
+		
+version(tip)
+		string msg = mCodeWinMgr.mSource.getParseError(line, idx);
+		if(msg.length)
+		{
+			mTextTipData.Init(mView, msg);
+			mTextTipData.UpdateView();
+		}
+		else
+			mTextTipData.Dismiss();
+		
 		return true;
 	}
 }
 
+class TextTipData : DisposingComObject, IVsTextTipData
+{
+	IVsTextTipWindow mTipWindow;
+	IVsTextView mTextView;
+	string mTipText;
+	bool mDisplayed;
+	
+	this()
+	{
+		mTipText = "Tipp";
+		mTipWindow = VsLocalCreateInstance!IVsTextTipWindow (&uuid_coclass_VsTextTipWindow, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
+		if (mTipWindow)
+			mTipWindow.SetTextTipData(this);
+	}
+	
+	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsTextTipData) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	void Init(IVsTextView textView, string tip)
+	{
+		Close();
+		mTextView = textView;
+		mTipText = tip;
+		mDisplayed = false;
+	}
+	
+	void Close()
+	{
+		Dismiss();
+	}
+
+	void Dismiss()
+	{
+		if (mDisplayed && mTextView)
+			mTextView.UpdateTipWindow(mTipWindow, UTW_DISMISS);
+		OnDismiss();
+	}
+
+	override void Dispose()
+	{
+		Close();
+		if (mTipWindow)
+			mTipWindow.SetTextTipData(null);
+		mTipWindow = release(mTipWindow);
+	}
+
+	HRESULT GetTipText (/+[out, custom(uuid_IVsTextTipData, "optional")]+/ BSTR *pbstrText, 
+		/+[out]+/ BOOL *pfGetFontInfo)
+	{
+		if(pbstrText)
+			*pbstrText = allocBSTR(mTipText);
+		if(pfGetFontInfo)
+			*pfGetFontInfo = FALSE;
+		return S_OK;
+	}
+
+	// NOTE: *pdwFontAttr will already have been memset-ed to zeroes, so you can set only the indices that are not normal
+    HRESULT GetTipFontInfo (in int cChars, /+[out, size_is(cChars)]+/ ULONG *pdwFontAttr)
+	{
+		return E_NOTIMPL;
+	}
+	
+	HRESULT GetContextStream(/+[out]+/ int *piPos, /+[out]+/ int *piLength)
+	{
+		int line, idx, vspace, endpos;
+		if(HRESULT rc = mTextView.GetCaretPos(&line, &idx))
+			return rc;
+		if(HRESULT rc = mTextView.GetNearestPosition(line, idx, piPos, &vspace))
+			return rc;
+
+		*piLength = 1;
+		return S_OK;
+	}
+	
+	HRESULT OnDismiss ()
+	{
+		mTextView = null;
+		mDisplayed = false;
+		return S_OK;
+	}
+	
+	HRESULT UpdateView ()
+	{
+		if (mTextView && mTipWindow)
+		{
+			mTextView.UpdateTipWindow(mTipWindow, UTW_CONTENTCHANGED);
+			mDisplayed = true;
+		}
+		return S_OK;
+	}
+}

@@ -625,10 +625,12 @@ class Parser
 	{
 		SimpleLexer.sTokenizeTokenString = false;
 		lineno = 1;
+		int linepos = 0; // position after last line break
 		int tokid;
 		for(uint pos = 0; pos < text.length; )
 		{
 			int prevlineno = lineno;
+			int prevlinepos = linepos;
 			uint prevpos = pos;
 			TokenColor type = cast(TokenColor) SimpleLexer.scan(state, text, pos, tokid);
 
@@ -636,7 +638,10 @@ class Parser
 			{
 				for(uint lpos = prevpos; lpos < pos; lpos++)
 					if(text[lpos] == '\n')
+					{
 						lineno++;
+						linepos = lpos + 1;
+					}
 			}
 			if(tokid != TOK_Space && tokid != TOK_Comment)
 			{
@@ -644,8 +649,8 @@ class Parser
 				lexerTok.id = tokid;
 				lexerTok.span.start.line = prevlineno;
 				lexerTok.span.end.line = lineno;
-				lexerTok.span.start.index = prevpos;
-				lexerTok.span.end.index = pos;
+				lexerTok.span.start.index = prevpos - prevlinepos;
+				lexerTok.span.end.index = pos - linepos;
 				shift(lexerTok);
 			}
 		}

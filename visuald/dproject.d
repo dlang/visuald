@@ -189,7 +189,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		mExtProject = prj;
 	}
 
-	static ComTypeInfoHolder mTypeHolder;
+	__gshared ComTypeInfoHolder mTypeHolder;
 
 	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }
 	

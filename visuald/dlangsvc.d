@@ -28,6 +28,7 @@ import colorizer;
 import windows;
 
 import ast = ast.all;
+static import vdcutil = util;
 import parser.engine;
 import simpleparser;
 
@@ -128,6 +129,9 @@ class LanguageService : DisposingComObject,
 				mUpdateSolutionEventsCookie = VSCOOKIE_NIL;
 			}
 		}
+		
+		cdwLastSource = null;
+		mLastActiveView = null;
 	}
 
 	// IVsLanguageInfo //////////////////////////////////////
@@ -2337,6 +2341,14 @@ else
 			if(spanContains(span, mParseErrors[i].span.start.line-1, mParseErrors[i].span.start.index))
 				return true;
 		return false;
+	}
+	
+	string getParseError(int line, int index)
+	{
+		for(int i = 0; i < mParseErrors.length; i++)
+			if(vdcutil.textSpanContains(mParseErrors[i].span, line+1, index))
+				return mParseErrors[i].msg;
+		return null;
 	}
 	
 	//////////////////////////////////////////////////////////////

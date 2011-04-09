@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module library;
 
 import comutil;
@@ -12,6 +20,7 @@ import sdk.vsi.vsshell80;
 import sdk.win32.commctrl;
 
 import std.json;
+import std.conv;
 
 class LibraryManager : DComObject, IVsLibraryMgr
 {
@@ -114,16 +123,13 @@ class LibraryManager : DComObject, IVsLibraryMgr
 class Library : DComObject,
                 IVsSimpleLibrary2,
                 IVsLiteTreeList,
-                IVsSolutionEvents
                 //IBrowseDataProviderImpl,
                 //IBrowseDataProviderEvents,
+                IVsSolutionEvents
 {
-	string          mName = "D-Lib";
+	string          mName = "D-Library";
 	LIB_CHECKSTATE  mCheckState;
 	HIMAGELIST      mImages;   //image list.
-
-	//UpdateCounter Version Stamp
-	ULONG           mLibraryCounter; 
 
 	//Cookie used to hook up the solution events.
 	VSCOOKIE        mIVsSolutionEventsCookie;  
@@ -140,8 +146,8 @@ class Library : DComObject,
 
 		if(queryInterface!(IVsSimpleLibrary2) (this, riid, pvObject))
 			return S_OK;
-		if(queryInterface!(IVsLiteTreeList) (this, riid, pvObject))
-			return S_OK;
+//		if(queryInterface!(IVsLiteTreeList) (this, riid, pvObject))
+//			return S_OK;
 		if(queryInterface!(IVsSolutionEvents) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
@@ -150,7 +156,6 @@ class Library : DComObject,
 	HRESULT Initialize()
 	{
 		mCheckState = LCS_CHECKED;
-		mLibraryCounter = 0;
 		
 		if(auto solution = queryService!IVsSolution())
 		{
@@ -383,7 +388,7 @@ class Library : DComObject,
 		mixin(LogCallMix2);
 
 		assert(pCurUpdate);
-		*pCurUpdate = mLibraryCounter;
+		*pCurUpdate = Package.GetLibInfos().updateCounter();
 		return S_OK;
 	}
 
@@ -675,8 +680,6 @@ class Library : DComObject,
 		}
 
 		if (fUpdateLibraryCounter)
-			mLibraryCounter++;
-		else
 		{
 version(todo)
 {
@@ -864,6 +867,24 @@ string GetInfoType(JSONValue val)
 	return null;
 }
 
+string GetInfoFilename(JSONValue val)
+{
+	if(val.type == JSON_TYPE.OBJECT)
+		if(JSONValue* v = "file" in val.object)
+			if(v.type == JSON_TYPE.STRING)
+				return v.str;
+	return null;
+}
+
+int GetInfoLine(JSONValue val)
+{
+	if(val.type == JSON_TYPE.OBJECT)
+		if(JSONValue* v = "line" in val.object)
+			if(v.type == JSON_TYPE.INTEGER)
+				return cast(int) v.integer;
+	return -1;
+}
+
 JSONValue GetInfoObject(JSONValue val, ULONG idx)
 {
 	if(val.type == JSON_TYPE.ARRAY)
@@ -956,11 +977,6 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		mListType = eListType;
 		mFlags = eFlags;
 		mObSrch = pobSrch;
-		
-		LibraryInfos infos = Package.GetLibInfos();
-		mLibInfo = infos.findInfo("phobos");
-		if(mLibInfo)
-			mObject = mLibInfo.mModules;
 		initMembers();
 	}
 
@@ -988,10 +1004,19 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	void initMembers()
 	{
 		JSONValue[] arr;
-		if(mObject.type == JSON_TYPE.ARRAY)
+		if(!mParent)
+		{
+			// all modules from the library
+			LibraryInfos infos = Package.GetLibInfos();
+			foreach(info; infos.mInfos)
+				if(info.mModules.type == JSON_TYPE.ARRAY)
+					arr ~= info.mModules.array;
+		}
+		
+		else if(mObject.type == JSON_TYPE.ARRAY)
 			arr = mObject.array;
 
-		if(mObject.type == JSON_TYPE.OBJECT)
+		else if(mObject.type == JSON_TYPE.OBJECT)
 		{
 			if(JSONValue* m = "members" in mObject.object)
 				if(m.type == JSON_TYPE.ARRAY)
@@ -1540,12 +1565,29 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		{
 			pobDesc.AddDescriptionText3("Name: ",            OBDS_MISC, null);
 			pobDesc.AddDescriptionText3(_toUTF16z(def.name), OBDS_NAME, null);
-			pobDesc.AddDescriptionText3("\nType: ",          OBDS_MISC, null);
-			pobDesc.AddDescriptionText3(_toUTF16z(def.type), OBDS_TYPE, null);
-			pobDesc.AddDescriptionText3("\nKind: ",          OBDS_MISC, null);
-			pobDesc.AddDescriptionText3(_toUTF16z(def.kind), OBDS_TYPE, null);
+			if(def.type.length)
+			{
+				pobDesc.AddDescriptionText3("\nType: ",          OBDS_MISC, null);
+				pobDesc.AddDescriptionText3(_toUTF16z(def.type), OBDS_TYPE, null);
+			}
+			if(def.kind.length)
+			{
+				pobDesc.AddDescriptionText3("\nKind: ",          OBDS_MISC, null);
+				pobDesc.AddDescriptionText3(_toUTF16z(def.kind), OBDS_TYPE, null);
+			}
 		}
-		
+		string filename = GetInfoFilename(GetModule(Index));
+		if(filename.length)
+		{
+			string msg = "\n\nFile: " ~ filename;
+			pobDesc.AddDescriptionText3(_toUTF16z(msg),          OBDS_MISC, null);
+			int line = GetInfoLine(val);
+			if(line >= 0)
+			{
+				msg = "(" ~ to!string(line) ~ ")";
+				pobDesc.AddDescriptionText3(_toUTF16z(msg),      OBDS_MISC, null);
+			}
+		}
 		return S_OK;
 	}
 	
