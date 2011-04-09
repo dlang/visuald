@@ -48,24 +48,32 @@ Search:
 - button state not shown correctly after switching search type
 - do not add definition again if on same line
 - crashes when searching C# project?
+- update result list after build
 
 Object Browser:
 ---------------
 - Show full information/hierarchy in base classes
 - Derived types
-- Derived members
+- inherited members
+- enum base classes
 - Search
 - modules without module statement shown with empty name
-- templates functions have expansion
+- templates functions have expansion (remove homonym template declarations)
 - restrict "My Solution" to classes in projects in solution
 - list projects in "Custom Components"
-- goto source on module
-- enum base classes
+- split constraint from name
+- description: hyperlinks to other symbols
 
 Profile:
 ---------------
 - splitter for fan in/out windows
 - switch window layout to fan in/out side by side
+
+Lexer/Parser:
+---------------
+- fix Cmp/ShiftExpression
+- octal numbers
+- fix PowExpression
 
 Installation:
 ---------------

@@ -554,6 +554,11 @@ version(none)
 	// IOleComponent Methods
 	BOOL FDoIdle(in OLEIDLEF grfidlef)
 	{
+		if(mWantsUpdateLibInfos)
+		{
+			mWantsUpdateLibInfos = false;
+			Package.GetLibInfos().updateDefinitions();
+		}
 		mLangsvc.OnIdle();
 		return false;
 	}
@@ -650,6 +655,12 @@ version(none)
 		assert(s_instance);
 		return s_instance.mLibInfos;
 	}
+	
+	static void scheduleUpdateLibrary()
+	{
+		assert(s_instance);
+		s_instance.mWantsUpdateLibInfos = true;
+	}
 
 private:
 	IServiceProvider mHostSP;
@@ -665,6 +676,7 @@ private:
 
 	GlobalOptions    mOptions;
 	LibraryInfos     mLibInfos;
+	bool             mWantsUpdateLibInfos;
 }
 
 class GlobalOptions

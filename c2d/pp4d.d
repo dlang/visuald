@@ -43,6 +43,7 @@ import std.algorithm;
 import std.getopt;
 import std.utf;
 import std.conv;
+import std.array;
 import std.windows.charset;
 
 ///////////////////////////////////////////////////////

@@ -38,8 +38,9 @@ import stringutil;
 import config;
 import dpackage;
 
+// threaded builds cause Visual Studio to close the solution
 // version = threadedBuild;
-version = taskedBuild;
+// version = taskedBuild;
 
 version(taskedBuild)
 {
