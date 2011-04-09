@@ -6,11 +6,11 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module ast.iasm;
+module vdc.ast.iasm;
 
-import util;
-import simplelexer;
-import ast.node;
+import vdc.util;
+import vdc.lexer;
+import vdc.ast.node;
 
 class AsmInstruction : Node
 {

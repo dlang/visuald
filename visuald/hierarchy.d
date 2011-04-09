@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module hierarchy;
+module visuald.hierarchy;
 
-import windows;
+import visuald.windows;
 import sdk.win32.commctrl;
 
 import std.string;
@@ -23,20 +23,20 @@ import sdk.vsi.fpstfmt;
 import sdk.vsi.ivssccmanager2;
 
 //import vsshlids;
-import comutil;
-import logutil;
-import trackprojectdocument;
-import hierutil;
-import chiernode;
-import chiercontainer;
-import propertypage;
-import fileutil;
-import stringutil;
-import dimagelist;
-import config;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.trackprojectdocument;
+import visuald.hierutil;
+import visuald.chiernode;
+import visuald.chiercontainer;
+import visuald.propertypage;
+import visuald.fileutil;
+import visuald.stringutil;
+import visuald.dimagelist;
+import visuald.config;
 
-import dproject;
-import dpackage;
+import visuald.dproject;
+import visuald.dpackage;
 
 ///////////////////////////////////////////////////////////////////////////////
 class CFileNode : CHierNode, 

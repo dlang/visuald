@@ -6,21 +6,21 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module profiler;
+module visuald.profiler;
 
-import windows;
-import winctrl;
-import comutil;
-import dimagelist;
-import register;
-import hierutil;
-import logutil;
-import stringutil;
-import pkgutil;
-import dpackage;
-import intellisense;
-import config;
-import wmmsg;
+import visuald.windows;
+import visuald.winctrl;
+import visuald.comutil;
+import visuald.dimagelist;
+import visuald.register;
+import visuald.hierutil;
+import visuald.logutil;
+import visuald.stringutil;
+import visuald.pkgutil;
+import visuald.dpackage;
+import visuald.intellisense;
+import visuald.config;
+import visuald.wmmsg;
 
 import sdk.win32.commctrl;
 import sdk.vsi.vsshell;

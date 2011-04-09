@@ -6,20 +6,20 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module tokenreplacedialog;
+module visuald.tokenreplacedialog;
 
-import windows;
-import winctrl;
-import comutil;
-import logutil;
-import hierutil;
-import stringutil;
-import pkgutil;
-import wmmsg;
-import dpackage;
-import dimagelist;
-import tokenreplace;
-import register;
+import visuald.windows;
+import visuald.winctrl;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.stringutil;
+import visuald.pkgutil;
+import visuald.wmmsg;
+import visuald.dpackage;
+import visuald.dimagelist;
+import visuald.tokenreplace;
+import visuald.register;
 
 import sdk.win32.commctrl;
 import sdk.vsi.vsshell;

@@ -16,15 +16,42 @@ XMLP_SRC = $(XMLP)/compatible.d $(XMLP)/delegater.d $(XMLP)/except.d \
            $(XMLP)/../inrange/recode.d
 # $(XMLP)/recode.d 
 
-SRC = workaround.d std/parallelism.d \
-      config.d dlangsvc.d dpackage.d register.d simplelexer.d comutil.d \
+VDC = ../vdc
+VDC_SRC = $(VDC)/parser/aggr.d \
+        $(VDC)/parser/decl.d \
+        $(VDC)/parser/engine.d \
+        $(VDC)/parser/expr.d \
+        $(VDC)/parser/iasm.d \
+        $(VDC)/parser/misc.d \
+        $(VDC)/parser/mod.d \
+        $(VDC)/parser/stmt.d \
+        $(VDC)/parser/tmpl.d \
+        $(VDC)/ast/aggr.d \
+        $(VDC)/ast/decl.d \
+        $(VDC)/ast/expr.d \
+        $(VDC)/ast/misc.d \
+        $(VDC)/ast/mod.d \
+        $(VDC)/ast/stmt.d \
+        $(VDC)/ast/tmpl.d \
+        $(VDC)/ast/node.d \
+        $(VDC)/ast/all.d \
+        $(VDC)/ast/iasm.d \
+        $(VDC)/ast/type.d \
+        $(VDC)/util.d \
+        $(VDC)/semantic.d \
+        $(VDC)/interpret.d \
+        $(VDC)/parsertest.d \
+        $(VDC)/lexer.d
+
+SRC = workaround.d ../stdext/parallelism.d \
+      config.d dlangsvc.d dpackage.d register.d comutil.d \
       logutil.d dllmain.d dproject.d hierarchy.d expansionprovider.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \
       completion.d trackprojectdocument.d vscommands.d winctrl.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d pkgutil.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
       profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d \
-      ..\c2d\dlist.d tokenreplace.d tokenreplacedialog.d 
+      ..\c2d\dlist.d tokenreplace.d tokenreplacedialog.d library.d
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
        resources/DAboutLogo.ico resources/GroupByType.ico resources/CombineColumns.ico \
@@ -48,8 +75,9 @@ RELDIR = ..\bin\Release
 DBGRES = $(DBGDIR)\visuald.res
 RELRES = $(RELDIR)\visuald.res
 
-DMD = c:\l\dmd2\windows\bin\dmd.exe
+# DMD = c:\l\dmd2\windows\bin\dmd.exe
 # DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
+DMD = m:\s\d\dmd2\dmd\src\dmd_pdb.exe
 CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 
 VSISDK = c:\l\vs9SDK
@@ -81,20 +109,32 @@ exe:     $(DBGDIR)\$(PROJECT).exe
 $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
 	"$(CV2PDB)" -D2.043 $? $@
 
-#-mixin=$(DBGDIR)\$(PROJECT).mixin
-$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DEPS)
-	"$(DMD)" -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
-		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES)
+$(DBGDIR)\vdc.lib : $(VDC_SRC)
+	"$(DMD)" -of$@ -lib -g $(DFLAGS) @<<
+		$(VDC_SRC)
 <<NOKEEP
 
+#-mixin=$(DBGDIR)\$(PROJECT).mixin
+$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(RELDIR)\vdc.lib  $(DEPS)
+	"$(DMD)" -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
+		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES) $(RELDIR)\vdc.lib
+<<NOKEEP
+
+#-----
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
 	"$(CV2PDB)" -D2.043 $? $@
 
-$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(DEPS)
-	"$(DMD)" -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
-		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES)
+$(RELDIR)\vdc.lib : $(VDC_SRC)
+	"$(DMD)" -of$@ -O -inline -release -lib -g $(DFLAGS) @<<
+		$(VDC_SRC)
 <<NOKEEP
 
+$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(DEPS)
+	"$(DMD)" -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
+		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib
+<<NOKEEP
+
+#-----
 $(DBGRES) : $(RC) $(RSRC)
 	rc /fo$(DBGRES) $(RC)
 

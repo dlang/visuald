@@ -6,7 +6,7 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module intellisense;
+module visuald.intellisense;
 
 import std.json;
 import std.file;
@@ -18,18 +18,19 @@ import std.algorithm;
 import std.regex;
 
 import core.memory;
-import windows;
+import visuald.windows;
 
 import sdk.port.vsi;
 import sdk.vsi.vsshell;
 
-import dpackage;
-import config;
-import comutil;
-import logutil;
-import hierutil;
-import fileutil;
-import simplelexer;
+import visuald.dpackage;
+import visuald.config;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.fileutil;
+
+import vdc.lexer;
 
 enum MatchType
 {
@@ -438,7 +439,7 @@ struct ParameterInfo
 	bool initialize(string type)
 	{
 		wstring text = to!wstring(type);
-		TokenInfo[] lineInfo = ScanLine(SimpleLexer.State.kWhite, text);
+		TokenInfo[] lineInfo = ScanLine(Lexer.State.kWhite, text);
 		
 		if(lineInfo.length == 0)
 			return false;

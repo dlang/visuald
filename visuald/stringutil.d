@@ -6,10 +6,10 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module stringutil;
+module visuald.stringutil;
 
-import windows;
-import comutil;
+import visuald.windows;
+import visuald.comutil;
 
 import std.c.stdlib;
 //import std.windows.charset;

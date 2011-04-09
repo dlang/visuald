@@ -6,14 +6,14 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module dllmain;
+module visuald.dllmain;
 
 import stdwin = std.c.windows.windows;
-import windows;
-import comutil;
-import logutil;
-import register;
-import dpackage;
+import visuald.windows;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.register;
+import visuald.dpackage;
 
 import core.runtime;
 import core.memory;

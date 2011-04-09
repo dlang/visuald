@@ -6,33 +6,33 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module viewfilter;
+module visuald.viewfilter;
 
-import windows;
+import visuald.windows;
 import std.string;
 import std.ctype;
 import std.utf;
 import std.conv;
 import std.algorithm;
 
-import comutil;
-import logutil;
-import hierutil;
-import fileutil;
-import stringutil;
-import pkgutil;
-import dpackage;
-import dimagelist;
-import completion;
-import simplelexer;
-import simpleparser;
-import intellisense;
-import searchsymbol;
-import expansionprovider;
-import dlangsvc;
-import winctrl;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.fileutil;
+import visuald.stringutil;
+import visuald.pkgutil;
+import visuald.dpackage;
+import visuald.dimagelist;
+import visuald.completion;
+import visuald.simpleparser;
+import visuald.intellisense;
+import visuald.searchsymbol;
+import visuald.expansionprovider;
+import visuald.dlangsvc;
+import visuald.winctrl;
+import visuald.tokenreplace;
 
-import tokenreplace;
+import vdc.lexer;
 
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
@@ -437,23 +437,23 @@ version(tip)
 	{
 		int iState, tokidx;
 		uint pos;
-		if(SimpleLexer.isStartingComment(txt, idx))
+		if(Lexer.isStartingComment(txt, idx))
 		{
 			tokidx = mCodeWinMgr.mSource.FindLineToken(line, idx, iState, pos);
 			if(pos == idx)
 			{
 				int startState = iState;
-				if(SimpleLexer.scan(iState, txt, pos) == TokenColor.Comment)
+				if(Lexer.scan(iState, txt, pos) == TokenColor.Comment)
 				{
-					//if(iState == SimpleLexer.toState(SimpleLexer.State.kNestedComment, 1, 0) ||
-					if(iState == SimpleLexer.State.kWhite)
+					//if(iState == Lexer.toState(Lexer.State.kNestedComment, 1, 0) ||
+					if(iState == Lexer.State.kWhite)
 					{
 						// terminated on same line
 						otherLine = line;
 						otherIndex = pos - 2; //assume 2 character comment extro 
 						return S_OK;
 					}
-					if(SimpleLexer.isCommentState(SimpleLexer.scanState(iState)))
+					if(Lexer.isCommentState(Lexer.scanState(iState)))
 					{
 						if(mCodeWinMgr.mSource.FindEndOfComment(startState, iState, line, pos))
 						{
@@ -465,14 +465,14 @@ version(tip)
 				}
 			}
 		}
-		if(SimpleLexer.isEndingComment(txt, idx))
+		if(Lexer.isEndingComment(txt, idx))
 		{
 			tokidx = mCodeWinMgr.mSource.FindLineToken(line, idx, iState, pos);
 			if(tokidx >= 0)
 			{
 				int startState = iState;
 				uint startpos = pos;
-				if(SimpleLexer.scan(iState, txt, pos) == TokenColor.Comment)
+				if(Lexer.scan(iState, txt, pos) == TokenColor.Comment)
 				{
 					if(startState == iState ||
 					   mCodeWinMgr.mSource.FindStartOfComment(startState, line, startpos))
@@ -485,8 +485,8 @@ version(tip)
 /+
 				int prevpos = pos;
 				int prevline = line;
-				SimpleLexer.scan(iState, txt, pos);
-				if(pos == idx + 2 && iState == SimpleLexer.State.kWhite)
+				Lexer.scan(iState, txt, pos);
+				if(pos == idx + 2 && iState == Lexer.State.kWhite)
 				{
 					while(line > 0)
 					{
@@ -525,12 +525,12 @@ version(tip)
 		
 		uint startPos = pos;
 		int startState = iState;
-		int type = SimpleLexer.scan(iState, txt, pos);
+		int type = Lexer.scan(iState, txt, pos);
 		if(type == TokenColor.String)
 		{
-			SimpleLexer.State sstate;
-			sstate = SimpleLexer.scanState(startState);
-			if(idx == startPos && !SimpleLexer.isStringState(sstate))
+			Lexer.State sstate;
+			sstate = Lexer.scanState(startState);
+			if(idx == startPos && !Lexer.isStringState(sstate))
 			{
 				if(src.FindEndOfString(startState, iState, line, pos))
 				{
@@ -540,8 +540,8 @@ version(tip)
 				}
 				return S_FALSE;
 			}
-			sstate = SimpleLexer.scanState(iState);
-			if(idx == pos - 1 && !SimpleLexer.isStringState(sstate))
+			sstate = Lexer.scanState(iState);
+			if(idx == pos - 1 && !Lexer.isStringState(sstate))
 			{
 				if(src.FindStartOfString(startState, line, startPos))
 				{
@@ -584,7 +584,7 @@ version(tip)
 		{
 			wstring txt = mCodeWinMgr.mSource.GetText(line, idx, line, idx + 1);
 			wstring otxt = mCodeWinMgr.mSource.GetText(otherLine, otherIndex, otherLine, otherIndex + 1);
-			if(!otxt.length || !SimpleLexer.isBracketPair(txt[0], otxt[0]))
+			if(!otxt.length || !Lexer.isBracketPair(txt[0], otxt[0]))
 				showStatusBarText("mismatched bracket " ~ otxt);
 		}
 
@@ -604,8 +604,8 @@ version(tip)
 			highlightLen = 2;
 		else if(HighlightString(txt, line, idx, otherLine, otherIndex) == S_OK)
 			checkMismatch = false;
-		else if(!SimpleLexer.isOpeningBracket(txt[idx]) && 
-		        !SimpleLexer.isClosingBracket(txt[idx]))
+		else if(!Lexer.isOpeningBracket(txt[idx]) && 
+		        !Lexer.isClosingBracket(txt[idx]))
 			return S_FALSE;
 		else if(!FindMatchingBrace(line, idx, otherLine, otherIndex))
 		{
@@ -625,13 +625,13 @@ version(tip)
 
 		wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 		uint ppos = pos;
-		int toktype = SimpleLexer.scan(iState, text, pos);
+		int toktype = Lexer.scan(iState, text, pos);
 		if(toktype != TokenColor.Operator)
 			return false;
 
-		if(SimpleLexer.isOpeningBracket(text[ppos]))
+		if(Lexer.isOpeningBracket(text[ppos]))
 			return mCodeWinMgr.mSource.FindClosingBracketForward(line, iState, pos, otherLine, otherIndex);
-		else if(SimpleLexer.isClosingBracket(text[ppos]))
+		else if(Lexer.isClosingBracket(text[ppos]))
 			return mCodeWinMgr.mSource.FindOpeningBracketBackward(line, tok, otherLine, otherIndex);
 		return false;
 	}
@@ -652,7 +652,7 @@ version(tip)
 			
 			while(--idx >= 0)
 			{
-				if(SimpleLexer.isOpeningBracket(text[idx]) || 
+				if(Lexer.isOpeningBracket(text[idx]) || 
 				   text[idx] == '\"' || text[idx] == '`' || text[idx] == '/')
 				{
 					if(FindMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) == S_OK)

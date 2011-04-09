@@ -6,16 +6,16 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module parser.expr;
+module vdc.parser.expr;
 
-import util;
-import simplelexer;
-import parser.engine;
-import parser.decl;
-import parser.tmpl;
-import parser.misc;
-import parser.aggr;
-import ast = ast.all;
+import vdc.util;
+import vdc.lexer;
+import vdc.parser.engine;
+import vdc.parser.decl;
+import vdc.parser.tmpl;
+import vdc.parser.misc;
+import vdc.parser.aggr;
+import ast = vdc.ast.all;
 
 alias ast.PREC PREC;
 

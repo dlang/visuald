@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module hierutil;
+module visuald.hierutil;
 
-import windows;
+import visuald.windows;
 import std.string;
 import std.path;
 import std.utf;
@@ -20,16 +20,16 @@ import sdk.vsi.vsshell;
 import sdk.vsi.objext;
 import dte = sdk.vsi.dte80a;
 import dte2 = sdk.vsi.dte80;
-import comutil;
-import fileutil;
-import logutil;
-import stringutil;
-import dpackage;
-import completion;
-import chiernode;
-import chiercontainer;
-import hierarchy;
-import config;
+import visuald.comutil;
+import visuald.fileutil;
+import visuald.logutil;
+import visuald.stringutil;
+import visuald.dpackage;
+import visuald.completion;
+import visuald.chiernode;
+import visuald.chiercontainer;
+import visuald.hierarchy;
+import visuald.config;
 
 const uint _MAX_PATH = 260;
 
@@ -327,7 +327,7 @@ CHierNode searchNode(CHierNode root, bool delegate(CHierNode) pred, bool fDispla
 ///////////////////////////////////////////////////////////////////////
 I queryService(SVC,I)()
 {
-	IServiceProvider sp = dpackage.Package.s_instance.getServiceProvider();
+	IServiceProvider sp = visuald.dpackage.Package.s_instance.getServiceProvider();
 	if(!sp)
 		return null;
 

@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module dproject;
+module visuald.dproject;
 
-import windows;
+import visuald.windows;
 import std.c.string : memcpy;
 import std.windows.charset;
 import std.string;
@@ -17,7 +17,7 @@ import std.file;
 import std.path;
 import std.conv;
 
-import xml = xmlwrap;
+import xml = visuald.xmlwrap;
 
 import sdk.win32.rpcdce;
 import sdk.vsi.vsshell;
@@ -27,21 +27,20 @@ import sdk.vsi.ivssccproject2;
 import sdk.vsi.fpstfmt;
 import dte = sdk.vsi.dte80a;
 
-import comutil;
-import logutil;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.dpackage;
+import visuald.propertypage;
+import visuald.hierarchy;
+import visuald.hierutil;
+import visuald.fileutil;
+import visuald.chiernode;
+import visuald.chiercontainer;
+import visuald.build;
+import visuald.config;
+import visuald.oledatasource;
 
-import dpackage;
-import propertypage;
-import hierarchy;
-import hierutil;
-import fileutil;
-import chiernode;
-import chiercontainer;
-import build;
-import config;
-import oledatasource;
-
-import dllmain : g_hInst;
+import visuald.dllmain : g_hInst;
 
 const kPlatform = "Win32";
 

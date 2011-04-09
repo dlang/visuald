@@ -1,7 +1,15 @@
-module wmmsg;
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
 
-import windows;
-import logutil;
+module visuald.wmmsg;
+
+import visuald.windows;
+import visuald.logutil;
 
 string msg_toString(uint msg)
 {

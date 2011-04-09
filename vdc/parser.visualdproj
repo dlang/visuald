@@ -42,7 +42,7 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath />
+  <imppath>..</imppath>
   <fileImppath>.</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(Test)</objdir>
@@ -132,7 +132,7 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath />
+  <imppath>..</imppath>
   <fileImppath>.</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -295,10 +295,10 @@
    <File path="ast\iasm.d" />
    <File path="ast\type.d" />
   </Folder>
-  <File path="..\visuald\simplelexer.d" />
   <File path="util.d" />
   <File path="semantic.d" />
   <File path="interpret.d" />
   <File path="parsertest.d" />
+  <File path="lexer.d" />
  </Folder>
 </DProject>

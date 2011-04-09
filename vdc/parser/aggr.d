@@ -6,18 +6,18 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module parser.aggr;
+module vdc.parser.aggr;
 
-import util;
-import simplelexer;
-import parser.engine;
-import parser.mod;
-import parser.tmpl;
-import parser.decl;
-import parser.misc;
-import parser.stmt;
+import vdc.util;
+import vdc.lexer;
+import vdc.parser.engine;
+import vdc.parser.mod;
+import vdc.parser.tmpl;
+import vdc.parser.decl;
+import vdc.parser.misc;
+import vdc.parser.stmt;
 
-import ast = ast.all;
+import ast = vdc.ast.all;
 
 //-- GRAMMAR_BEGIN --
 //AggregateDeclaration:

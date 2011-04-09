@@ -6,17 +6,17 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module oledatasource;
+module visuald.oledatasource;
 
 import std.c.string : memcmp, memset, memcpy;
 
-import windows;
+import visuald.windows;
 import sdk.win32.objbase;
 import sdk.win32.objidl;
 
-import comutil;
-import hierutil;
-import logutil;
+import visuald.comutil;
+import visuald.hierutil;
+import visuald.logutil;
 
 extern(Windows)
 {

@@ -6,17 +6,17 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module parser.misc;
+module vdc.parser.misc;
 
-import util;
-import simplelexer;
-import parser.engine;
-import parser.expr;
-import parser.decl;
-import parser.stmt;
-import parser.mod;
+import vdc.util;
+import vdc.lexer;
+import vdc.parser.engine;
+import vdc.parser.expr;
+import vdc.parser.decl;
+import vdc.parser.stmt;
+import vdc.parser.mod;
 
-import ast = ast.misc;
+import ast = vdc.ast.misc;
 
 //-- GRAMMAR_BEGIN --
 //EnumDeclaration:

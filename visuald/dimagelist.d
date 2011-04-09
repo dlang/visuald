@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module dimagelist;
+module visuald.dimagelist;
 
-import stringutil;
+import visuald.stringutil;
 
 mixin(extractDefines(import("resources.h")));
 

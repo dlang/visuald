@@ -6,7 +6,7 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module simplelexer;
+module vdc.lexer;
 
 import std.ctype;
 import std.utf;
@@ -55,7 +55,7 @@ struct TokenInfo
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class SimpleLexer
+class Lexer
 {
 	enum State
 	{
@@ -129,14 +129,14 @@ class SimpleLexer
 		}
 		string ident = toUTF8(text[startpos .. pos]);
 
-		if(int* pident = ident in keywords_map)
+		if(auto pident = ident in keywords_map)
 		{
 			if(pid)
 				*pid = *pident;
 			return TokenColor.Keyword;
 		}
 
-		if(int* pident = ident in specials_map)
+		if(auto pident = ident in specials_map)
 		{
 			if(pid)
 				*pid = TOK_StringLiteral;
@@ -823,7 +823,7 @@ TokenInfo[] ScanLine(S)(int iState, S text)
 	{
 		TokenInfo info;
 		info.StartIndex = pos;
-		info.type = cast(TokenColor) SimpleLexer.scan(iState, text, pos);
+		info.type = cast(TokenColor) Lexer.scan(iState, text, pos);
 		info.EndIndex = pos;
 		lineInfo ~= info;
 	}
@@ -832,16 +832,17 @@ TokenInfo[] ScanLine(S)(int iState, S text)
 
 ///////////////////////////////////////////////////////////////
 
-__gshared int[string] keywords_map; // maps to TOK enumerator
-__gshared int[string] specials_map; // maps to TOK enumerator
+// converted int[string] to short[string] due to bug #2500
+__gshared short[string] keywords_map; // maps to TOK enumerator
+__gshared short[string] specials_map; // maps to TOK enumerator
 
 shared static this() 
 {
 	foreach(i, s; keywords)
-		keywords_map[s] = TOK_begin_Keywords + i;
+		keywords_map[s] = cast(short) (TOK_begin_Keywords + i);
 
 	foreach(i, s; specials)
-		specials_map[s] = i;
+		specials_map[s] = cast(short) i;
 }
 
 const string keywords[] = 

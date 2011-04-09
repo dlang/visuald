@@ -6,18 +6,18 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module ast.misc;
+module vdc.ast.misc;
 
-import simplelexer;
-import semantic;
-import interpret;
-import util;
+import vdc.lexer;
+import vdc.semantic;
+import vdc.interpret;
+import vdc.util;
 
-import ast.node;
-import ast.expr;
-import ast.decl;
-import ast.stmt;
-import ast.type;
+import vdc.ast.node;
+import vdc.ast.expr;
+import vdc.ast.decl;
+import vdc.ast.stmt;
+import vdc.ast.type;
 
 //EnumDeclaration:
 //    enum EnumTag EnumBody

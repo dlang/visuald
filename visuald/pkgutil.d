@@ -6,10 +6,10 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module pkgutil;
+module visuald.pkgutil;
 
-import hierutil;
-import comutil;
+import visuald.hierutil;
+import visuald.comutil;
 
 import std.conv;
 import sdk.vsi.vsshell;
@@ -282,7 +282,7 @@ bool RemoveHardwareBreakpoint(HANDLE hBrk)
 
 //import pkgutil;
 import sdk.port.base;
-import dllmain;
+import visuald.dllmain;
 
 void setHWBreakpopints()
 {

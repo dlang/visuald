@@ -6,31 +6,32 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module dlangsvc;
+module visuald.dlangsvc;
 
 // import diamond;
 
-import comutil;
-import logutil;
-import hierutil;
-import fileutil;
-import stringutil;
-import pkgutil;
-import simplelexer;
-import dpackage;
-import dimagelist;
-import expansionprovider;
-import completion;
-import intellisense;
-import searchsymbol;
-import viewfilter;
-import colorizer;
-import windows;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.fileutil;
+import visuald.stringutil;
+import visuald.pkgutil;
+import visuald.dpackage;
+import visuald.dimagelist;
+import visuald.expansionprovider;
+import visuald.completion;
+import visuald.intellisense;
+import visuald.searchsymbol;
+import visuald.viewfilter;
+import visuald.colorizer;
+import visuald.windows;
+import visuald.simpleparser;
 
-import ast = ast.all;
-static import vdcutil = util;
-import parser.engine;
-import simpleparser;
+import vdc.lexer;
+
+import ast = vdc.ast.all;
+static import vdc.util;
+import vdc.parser.engine;
 
 import std.string;
 import std.ctype;
@@ -38,7 +39,7 @@ import std.utf;
 import std.conv;
 import std.algorithm;
 
-import std.parallelism;
+import stdext.parallelism;
 
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
@@ -330,7 +331,7 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("Number",     CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
 			new ColorableItem("Text",       CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
 			
-			// Visual D specific (must match SimpleLexer.TokenColor
+			// Visual D specific (must match Lexer.TokenColor
 			new ColorableItem("Visual D Operator",         CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
 				
 			new ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
@@ -1044,7 +1045,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			while(pos < txt.length)
 			{
 				uint prevpos = pos;
-				int col = SimpleLexer.scan(state, txt, pos);
+				int col = Lexer.scan(state, txt, pos);
 				if(col == TokenColor.Operator)
 				{
 					if(txt[pos-1] == '{' || txt[pos-1] == '[')
@@ -1080,7 +1081,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 					}
 				}
 				isComment = isComment || (col == TokenColor.Comment);
-				isSpaceOrComment = isSpaceOrComment && SimpleLexer.isCommentOrSpace(col, txt[prevpos .. pos]);
+				isSpaceOrComment = isSpaceOrComment && Lexer.isCommentOrSpace(col, txt[prevpos .. pos]);
 			}
 			if(lastCommentStartLine >= 0)
 			{
@@ -1184,9 +1185,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 version(all)
 {
 		wstring txt = GetText(line, 0, line, -1);
-		while(endIdx < txt.length && SimpleLexer.isIdentifierCharOrDigit(txt[endIdx]))
+		while(endIdx < txt.length && Lexer.isIdentifierCharOrDigit(txt[endIdx]))
 			endIdx++;
-		while(startIdx > 0 && SimpleLexer.isIdentifierCharOrDigit(txt[startIdx-1]))
+		while(startIdx > 0 && Lexer.isIdentifierCharOrDigit(txt[startIdx-1]))
 			startIdx--;
 		return startIdx < endIdx;
 }
@@ -1439,9 +1440,9 @@ else
 						fn = txt[lineInfo[inf].StartIndex .. lineInfo[inf].EndIndex];
 					testNextFn = false;
 					
-					if(SimpleLexer.isClosingBracket(ch))
+					if(Lexer.isClosingBracket(ch))
 						level++;
-					else if(SimpleLexer.isOpeningBracket(ch) && level > 0)
+					else if(Lexer.isOpeningBracket(ch) && level > 0)
 					{
 						level--;
 						if(level == 0 && fn.length == 0)
@@ -1844,7 +1845,7 @@ else
 				lntokIt.advanceOverComments();
 				return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
 			}
-			if(!newStmt && SimpleLexer.isIdentifier(txt))
+			if(!newStmt && Lexer.isIdentifier(txt))
 			{
 				return indent + countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
 			}
@@ -1978,7 +1979,7 @@ else
 			if(p == idx)
 				return tok;
 
-			SimpleLexer.scan(state, text, p);
+			Lexer.scan(state, text, p);
 			if(p > idx)
 				return tok;
 			
@@ -2001,7 +2002,7 @@ else
 			while(pos < text.length)
 			{
 				uint ppos = pos;
-				int toktype = SimpleLexer.scan(iState, text, pos);
+				int toktype = Lexer.scan(iState, text, pos);
 				if(testFn(iState, data))
 				{
 					/+
@@ -2025,18 +2026,18 @@ else
 	
 	static bool testEndComment(int state, int level)
 	{
-		int slevel = SimpleLexer.nestingLevel(state);
+		int slevel = Lexer.nestingLevel(state);
 		if(slevel > level)
 			return false;
-		auto sstate = SimpleLexer.scanState(state);
-		if(sstate == SimpleLexer.State.kNestedComment)
+		auto sstate = Lexer.scanState(state);
+		if(sstate == Lexer.State.kNestedComment)
 			return slevel <= level;
-		return sstate != SimpleLexer.State.kBlockComment;
+		return sstate != Lexer.State.kBlockComment;
 	}
 	
 	bool FindEndOfComment(int startState, ref int iState, ref int line, ref uint pos)
 	{
-		int level = SimpleLexer.nestingLevel(startState);
+		int level = Lexer.nestingLevel(startState);
 		if(testEndComment(iState, level))
 			return true;
 		return FindEndOfTokens(iState, line, pos, &testEndComment, level);
@@ -2044,15 +2045,15 @@ else
 	
 	static bool testEndString(int state, int level)
 	{
-		if(SimpleLexer.tokenStringLevel(state) > level)
+		if(Lexer.tokenStringLevel(state) > level)
 			return false;
 		
-		auto sstate = SimpleLexer.scanState(state);
-		return !SimpleLexer.isStringState(sstate);
+		auto sstate = Lexer.scanState(state);
+		return !Lexer.isStringState(sstate);
 	}
 	bool FindEndOfString(int startState, ref int iState, ref int line, ref uint pos)
 	{
-		int level = SimpleLexer.tokenStringLevel(startState);
+		int level = Lexer.tokenStringLevel(startState);
 		if(testEndString(iState, level))
 			return true;
 		return FindEndOfTokens(iState, line, pos, &testEndString, level);
@@ -2077,7 +2078,7 @@ else
 				foundpos = 0;
 			while(plinepos < len)
 			{
-				int toktype = SimpleLexer.scan(lineState, text, plinepos);
+				int toktype = Lexer.scan(lineState, text, plinepos);
 				if(testFn(lineState, data))
 					foundpos = plinepos;
 			}
@@ -2096,9 +2097,9 @@ else
 
 	static bool testStartComment(int state, int level)
 	{
-		if(!SimpleLexer.isCommentState(SimpleLexer.scanState(state)))
+		if(!Lexer.isCommentState(Lexer.scanState(state)))
 			return true;
-		int slevel = SimpleLexer.nestingLevel(state);
+		int slevel = Lexer.nestingLevel(state);
 		return slevel < level;
 	}
 	
@@ -2109,15 +2110,15 @@ else
 		// - not a comment state: comment starts at passed pos
 		// - it's a block comment: scan backwards until we find a non-comment state
 		// - it's a nested comment: scan backwards until we find a state with nesting level less than passed state
-		if(!SimpleLexer.isCommentState(SimpleLexer.scanState(iState)))
+		if(!Lexer.isCommentState(Lexer.scanState(iState)))
 			return true;
-		int level = SimpleLexer.nestingLevel(iState);
+		int level = Lexer.nestingLevel(iState);
 		return FindStartOfTokens(iState, line, pos, &testStartComment, level);
 	}
 	
 	bool FindStartOfString(ref int iState, ref int line, ref uint pos)
 	{
-		int level = SimpleLexer.tokenStringLevel(iState);
+		int level = Lexer.tokenStringLevel(iState);
 		if(testEndString(iState, level))
 			return true;
 		return FindStartOfTokens(iState, line, pos, &testEndString, level);
@@ -2133,7 +2134,7 @@ else
 
 		wstring text = GetText(line, 0, line, -1);
 		uint ppos = pos;
-		int toktype = SimpleLexer.scan(iState, text, pos);
+		int toktype = Lexer.scan(iState, text, pos);
 		if(toktype != TokenColor.Operator)
 			return false;
 
@@ -2151,11 +2152,11 @@ else
 			while(pos < text.length)
 			{
 				uint ppos = pos;
-				int type = SimpleLexer.scan(iState, text, pos);
+				int type = Lexer.scan(iState, text, pos);
 				if(type == TokenColor.Operator)
-					if(SimpleLexer.isOpeningBracket(text[ppos]))
+					if(Lexer.isOpeningBracket(text[ppos]))
 						level++;
-					else if(SimpleLexer.isClosingBracket(text[ppos]))
+					else if(Lexer.isClosingBracket(text[ppos]))
 						if(--level <= 0)
 						{
 							otherLine = line;
@@ -2189,7 +2190,7 @@ else
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
-				toktype ~= SimpleLexer.scan(iState, text, pos);
+				toktype ~= Lexer.scan(iState, text, pos);
 			}
 			int p = (tok >= 0 ? tok : tokpos.length) - 1; 
 			for( ; p >= 0; p--)
@@ -2199,9 +2200,9 @@ else
 				{
 					if(pCountComma && text[pos] == ',')
 						(*pCountComma)++;
-					else if(SimpleLexer.isClosingBracket(text[pos]))
+					else if(Lexer.isClosingBracket(text[pos]))
 						level++;
-					else if(SimpleLexer.isOpeningBracket(text[pos]))
+					else if(Lexer.isOpeningBracket(text[pos]))
 						if(--level <= 0)
 						{
 							otherLine = line;
@@ -2233,7 +2234,7 @@ else
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
-				toktype ~= SimpleLexer.scan(iState, text, pos);
+				toktype ~= Lexer.scan(iState, text, pos);
 			}
 			int p = (tok >= 0 ? tok : tokpos.length) - 1;
 			uint ppos = (p >= tokpos.length - 1 ? text.length : tokpos[p+1]);
@@ -2266,7 +2267,7 @@ else
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
-				toktype ~= SimpleLexer.scan(iState, text, pos);
+				toktype ~= Lexer.scan(iState, text, pos);
 			}
 			int p = (tok >= 0 ? tok : tokpos.length) - 1;
 			uint ppos = (p >= tokpos.length - 1 ? text.length : tokpos[p+1]);
@@ -2346,7 +2347,7 @@ else
 	string getParseError(int line, int index)
 	{
 		for(int i = 0; i < mParseErrors.length; i++)
-			if(vdcutil.textSpanContains(mParseErrors[i].span, line+1, index))
+			if(vdc.util.textSpanContains(mParseErrors[i].span, line+1, index))
 				return mParseErrors[i].msg;
 		return null;
 	}
@@ -2427,7 +2428,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 			while(pos < text.length)
 			{
 				uint ppos = pos;
-				int type = SimpleLexer.scan(iState, text, pos);
+				int type = Lexer.scan(iState, text, pos);
 				wstring txt = text[ppos .. pos];
 				if(type == TokenColor.Identifier || txt == "this"w)
 				{

@@ -6,14 +6,14 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module ast.tmpl;
+module vdc.ast.tmpl;
 
-import util;
-import simplelexer;
-import ast.node;
-import ast.decl;
-import ast.expr;
-import ast.type;
+import vdc.util;
+import vdc.lexer;
+import vdc.ast.node;
+import vdc.ast.decl;
+import vdc.ast.expr;
+import vdc.ast.type;
 
 //TemplateDeclaration:
 //    template TemplateIdentifier ( TemplateParameterList ) Constraint_opt { DeclDefs }

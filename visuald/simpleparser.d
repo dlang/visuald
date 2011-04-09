@@ -6,13 +6,13 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module simpleparser;
+module visuald.simpleparser;
 
 import std.exception;
 import std.string;
 import std.conv;
 
-import simplelexer;
+import vdc.lexer;
 
 version(MAIN)
 {
@@ -23,7 +23,7 @@ else // !version(MAIN)
 {
 import sdk.vsi.sdk_shared;
 
-import logutil;
+import visuald.logutil;
 //debug = log;
 alias logCall writeln;
 }
@@ -591,7 +591,7 @@ class ParserBase(S = string)
 			ParserToken!S tok;
 			tok.span.iStartLine = lno;
 			tok.span.iStartIndex = pos;
-			tok.type = cast(TokenColor) SimpleLexer.scan(state, line, pos, tok.id);
+			tok.type = cast(TokenColor) Lexer.scan(state, line, pos, tok.id);
 			tok.text = line[tok.span.iStartIndex .. pos];
 			
 			if(pos == line.length)
@@ -605,7 +605,7 @@ class ParserBase(S = string)
 				tok.span.iEndLine = lno;
 				tok.span.iEndIndex = pos;
 			}
-			if(!SimpleLexer.isCommentOrSpace(tok.type, line[tok.span.iStartIndex .. $]))
+			if(!Lexer.isCommentOrSpace(tok.type, line[tok.span.iStartIndex .. $]))
 				shift(tok);
 		}
 	}

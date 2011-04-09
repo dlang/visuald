@@ -6,15 +6,15 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module ast.all;
+module vdc.ast.all;
 
-public import ast.aggr;
-public import ast.decl;
-public import ast.expr;
-public import ast.iasm;
-public import ast.misc;
-public import ast.mod;
-public import ast.node;
-public import ast.stmt;
-public import ast.tmpl;
-public import ast.type;
+public import vdc.ast.aggr;
+public import vdc.ast.decl;
+public import vdc.ast.expr;
+public import vdc.ast.iasm;
+public import vdc.ast.misc;
+public import vdc.ast.mod;
+public import vdc.ast.node;
+public import vdc.ast.stmt;
+public import vdc.ast.tmpl;
+public import vdc.ast.type;

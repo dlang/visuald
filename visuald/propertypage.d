@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module propertypage;
+module visuald.propertypage;
 
-import windows;
+import visuald.windows;
 import std.string;
 import std.conv;
 
@@ -19,14 +19,14 @@ import sdk.win32.objbase;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 
-import comutil;
-import logutil;
-import dpackage;
-import dproject;
-import dllmain;
-import config;
-import winctrl;
-import hierarchy;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.dpackage;
+import visuald.dproject;
+import visuald.dllmain;
+import visuald.config;
+import visuald.winctrl;
+import visuald.hierarchy;
 
 abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage, IVsPropertyPage2
 {
@@ -128,7 +128,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 			return E_INVALIDARG;
 		pPageInfo.cb = PROPPAGEINFO.sizeof;
 		pPageInfo.pszTitle = string2OLESTR("Title");
-		pPageInfo.size = comutil.SIZE(kPageWidth, kPageHeight);
+		pPageInfo.size = visuald.comutil.SIZE(kPageWidth, kPageHeight);
 		pPageInfo.pszHelpFile = string2OLESTR("HelpFile");
 		pPageInfo.pszDocString = string2OLESTR("DocString");
 		pPageInfo.dwHelpContext = 0;

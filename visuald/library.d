@@ -6,14 +6,14 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module library;
+module visuald.library;
 
-import comutil;
-import logutil;
-import hierutil;
-import dpackage;
-import dimagelist;
-import intellisense;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.dpackage;
+import visuald.dimagelist;
+import visuald.intellisense;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;

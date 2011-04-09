@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module completion;
+module visuald.completion;
 
-import windows;
+import visuald.windows;
 import std.ctype;
 import std.string;
 import std.utf;
@@ -17,18 +17,19 @@ import std.path;
 import std.algorithm;
 import std.array;
 
-import comutil;
-import logutil;
-import hierutil;
-import fileutil;
-import stringutil;
-import simplelexer;
-import dpackage;
-import dproject;
-import dlangsvc;
-import dimagelist;
-import config;
-import intellisense;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.fileutil;
+import visuald.stringutil;
+import visuald.dpackage;
+import visuald.dproject;
+import visuald.dlangsvc;
+import visuald.dimagelist;
+import visuald.config;
+import visuald.intellisense;
+
+import vdc.lexer;
 
 import sdk.port.vsi;
 import sdk.win32.commctrl;
@@ -230,7 +231,7 @@ class Declarations
 			while(pos < text.length)
 			{
 				uint ppos = pos;
-				int type = SimpleLexer.scan(iState, text, pos);
+				int type = Lexer.scan(iState, text, pos);
 				if(ln != line || pos < idx || ppos > idx)
 					if(type == TokenColor.Identifier || type == TokenColor.Keyword)
 					{

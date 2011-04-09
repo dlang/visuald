@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module logutil;
+module visuald.logutil;
 
-import windows;
+import visuald.windows;
 import std.format;
 import std.utf;
 import std.string;
@@ -24,8 +24,8 @@ public import std.traits;
 
 version(test) {} else {
 
-import comutil;
-public import vscommands;
+import visuald.comutil;
+public import visuald.vscommands;
 
 static import dte = sdk.port.dte;
 

@@ -25,9 +25,10 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-module tokenreplace;
+module visuald.tokenreplace;
 
-import simplelexer;
+import vdc.lexer;
+
 import c2d.dlist;
 
 import std.string;
@@ -379,7 +380,7 @@ static void scanAny(TL)(ref TL tokenList, _string text, int lineno = 1, int colu
 	{
 		int tokid;
 		uint prevpos = pos;
-		SimpleLexer.scan(state, text, pos, tokid);
+		Lexer.scan(state, text, pos, tokid);
 
 		_string txt = text[prevpos .. pos];
 		advanceTextPos(txt, lineno, column); 
@@ -801,8 +802,8 @@ _string replaceTokenSequence(_string srctext, int srclineno, int srccolumn, _str
 {
 	TokenList tokens = scanText(srctext, srclineno, srccolumn);
 	
-	SimpleLexer.sAllowDollarInIdentifiers = true;
-	scope(exit) SimpleLexer.sAllowDollarInIdentifiers = false;
+	Lexer.sAllowDollarInIdentifiers = true;
+	scope(exit) Lexer.sAllowDollarInIdentifiers = false;
 	
 	int cnt = replaceTokenSequence(tokens, search, replace, opt, ranges);
 	if(cnt == 0)

@@ -6,13 +6,14 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module lexutil;
+module visuald.lexutil;
 
 import std.exception;
 import std.stdio;
 
-import simplelexer;
-import fileutil;
+import visuald.fileutil;
+
+import vdc.lexer;
 
 string getModuleDeclarationName(string fname)
 {
@@ -31,7 +32,7 @@ string getModuleDeclarationName(string fname)
 			{
 				int id;
 				uint prevpos = pos;
-				SimpleLexer.scan(state, line, pos, id);
+				Lexer.scan(state, line, pos, id);
 				if(id == TOK_Space || id == TOK_Comment)
 					continue;
 				

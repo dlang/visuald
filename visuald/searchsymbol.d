@@ -6,20 +6,20 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module searchsymbol;
+module visuald.searchsymbol;
 
-import windows;
-import winctrl;
-import comutil;
-import hierutil;
-import logutil;
-import stringutil;
-import fileutil;
-import wmmsg;
-import register;
-import dpackage;
-import intellisense;
-import dimagelist;
+import visuald.windows;
+import visuald.winctrl;
+import visuald.comutil;
+import visuald.hierutil;
+import visuald.logutil;
+import visuald.stringutil;
+import visuald.fileutil;
+import visuald.wmmsg;
+import visuald.register;
+import visuald.dpackage;
+import visuald.intellisense;
+import visuald.dimagelist;
 
 import sdk.win32.commctrl;
 import sdk.vsi.vsshell;

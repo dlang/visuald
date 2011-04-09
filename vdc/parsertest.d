@@ -6,18 +6,18 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module parsertest;
+module vdc.parsertest;
 
 version(MAIN)
 {
 
-import util;
-import semantic;
-import simplelexer;
-import parser.engine;
-import parser.mod;
+import vdc.util;
+import vdc.semantic;
+import vdc.lexer;
+import vdc.parser.engine;
+import vdc.parser.mod;
 
-import ast = ast.all;
+import ast = vdc.ast.all;
 
 import std.exception;
 import std.stdio;

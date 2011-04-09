@@ -6,15 +6,15 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module util;
+module vdc.util;
 
-import simplelexer;
-import parser.expr;
-import parser.decl;
-import parser.stmt;
-import parser.aggr;
-import parser.misc;
-import parser.mod;
+import vdc.lexer;
+import vdc.parser.expr;
+import vdc.parser.decl;
+import vdc.parser.stmt;
+import vdc.parser.aggr;
+import vdc.parser.misc;
+import vdc.parser.mod;
 
 import std.conv;
 import std.string;
@@ -357,12 +357,12 @@ string genClassEnum(allMembers...)(string name, string prefix, int off)
 	return s;
 }
 
-mixin(genClassEnum!(__traits(allMembers,parser.expr),
-					__traits(allMembers,parser.decl),
-					__traits(allMembers,parser.stmt),
-					__traits(allMembers,parser.mod),
-					__traits(allMembers,parser.aggr),
-					__traits(allMembers,parser.misc))("", "NT_", TOK_end_Operators));
+mixin(genClassEnum!(__traits(allMembers,vdc.parser.expr),
+					__traits(allMembers,vdc.parser.decl),
+					__traits(allMembers,vdc.parser.stmt),
+					__traits(allMembers,vdc.parser.mod),
+					__traits(allMembers,vdc.parser.aggr),
+					__traits(allMembers,vdc.parser.misc))("", "NT_", TOK_end_Operators));
 
 ////////////////////////////////////////////////////////////////
 T static_cast(T, S = Object)(S p)
@@ -626,8 +626,8 @@ string writeD(ast.Node n)
 ////////////////////////////////////////////////////////////////
 
 version(all) {
-import parser.engine;
-	
+import vdc.parser.engine;
+
 void verifyParseWrite(string filename = __FILE__, int lno = __LINE__)(string txt)
 {
 	Parser p = new Parser;

@@ -6,26 +6,27 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module colorizer;
+module visuald.colorizer;
 
-import windows;
+import visuald.windows;
 import std.string;
 import std.ctype;
 import std.utf;
 import std.conv;
 import std.algorithm;
 
-import comutil;
-import logutil;
-import hierutil;
-import fileutil;
-import stringutil;
-import pkgutil;
-import simplelexer;
-import simpleparser;
-import dpackage;
-import dlangsvc;
-import config;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.fileutil;
+import visuald.stringutil;
+import visuald.pkgutil;
+import visuald.simpleparser;
+import visuald.dpackage;
+import visuald.dlangsvc;
+import visuald.config;
+
+import vdc.lexer;
 
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
@@ -214,14 +215,14 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		version(LOG) mixin(_LogIndentNoRet);
 		
 		uint pos = 0;
-		bool inTokenString = (SimpleLexer.tokenStringLevel(state) > 0);
+		bool inTokenString = (Lexer.tokenStringLevel(state) > 0);
 		
 		while(pos < iLength)
 		{
 			uint prevpos = pos;
-			int type = SimpleLexer.scan(state, text, pos);
+			int type = Lexer.scan(state, text, pos);
 			
-			bool nowInTokenString = (SimpleLexer.tokenStringLevel(state) > 0);
+			bool nowInTokenString = (Lexer.tokenStringLevel(state) > 0);
 			wstring tok = text[prevpos..pos];
 
 			ParserSpan span;
@@ -232,7 +233,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			
 			if(mColorizeVersions)
 			{
-				if(SimpleLexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
+				if(Lexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
 				{
 					int parseState = getParseState(state);
 					if(parseState == VersionParseState.IdleDisabled || parseState == VersionParseState.IdleDisabledVerify)
@@ -272,11 +273,11 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		uint prevpos = pos;
 		int id;
-		int type = SimpleLexer.scan(state, text, pos, id);
+		int type = Lexer.scan(state, text, pos, id);
 		if(mColorizeVersions)
 		{
 			wstring txt = text[prevpos..pos];
-			if(!SimpleLexer.isCommentOrSpace(type, txt))
+			if(!Lexer.isCommentOrSpace(type, txt))
 			{
 				ParserToken!wstring tok;
 				tok.type = type;
@@ -287,7 +288,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				else
 					tok.span = ParserSpan(prevpos, iLine, pos, iLine);
 
-				bool inTokenString = (SimpleLexer.tokenStringLevel(state) > 0);
+				bool inTokenString = (Lexer.tokenStringLevel(state) > 0);
 				if(doShift)
 					mParser.shift(tok);
 
@@ -430,7 +431,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		string versionids = mConfigVersions[debugOrVersion];
 		string[] versions = tokenizeArgs(versionids);
 		foreach(ver; versions)
-			if(SimpleLexer.isInteger(ver) && to!int(ver) >= num)
+			if(Lexer.isInteger(ver) && to!int(ver) >= num)
 				return true;
 		return false;
 	}
@@ -490,7 +491,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	
 	bool isVersionEnabled(int line, wstring ident, int debugOrVersion)
 	{
-		if(SimpleLexer.isInteger(ident))
+		if(Lexer.isInteger(ident))
 			return isVersionEnabled(line, to!int(ident), debugOrVersion);
 		
 		if (debugOrVersion)
@@ -591,7 +592,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	}
 	version(all)
 	{
-		//if(SimpleLexer.isCommentOrSpace(type, text))
+		//if(Lexer.isCommentOrSpace(type, text))
 		//	return type;
 
 		int parseState = getParseState(iState);
@@ -637,18 +638,18 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			break;
 			
 		case VersionParseState.AssignParsed:
-			if(SimpleLexer.isIdentifier(text))
+			if(Lexer.isIdentifier(text))
 			{
 				if(!defineVersion(iLine, text, debugOrVersion, versionsChanged))
 					ntype |= 5 << 14; // red ~~~~
 			}
-			else if(SimpleLexer.isInteger(text))
+			else if(Lexer.isInteger(text))
 				defineVersion(iLine, to!int(text), debugOrVersion, versionsChanged);
 			parseState = VersionParseState.IdleEnabled;
 			break;
 			
 		case VersionParseState.ParenLParsed:
-			if(SimpleLexer.isIdentifier(text) || SimpleLexer.isInteger(text))
+			if(Lexer.isIdentifier(text) || Lexer.isInteger(text))
 			{
 				if(isVersionEnabled(iLine, text, debugOrVersion))
 					parseState = VersionParseState.IdentNumberParsedEnable;
@@ -708,7 +709,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 
 	int parseErrors(ref ParserSpan span, int type, wstring tok)
 	{
-		if(!SimpleLexer.isCommentOrSpace(type, tok))
+		if(!Lexer.isCommentOrSpace(type, tok))
 			if(mSource.hasParseError(span))
 				type |= 5 << 14; // red ~
 		

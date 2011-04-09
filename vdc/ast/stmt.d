@@ -6,13 +6,13 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module ast.stmt;
+module vdc.ast.stmt;
 
-import util;
-import simplelexer;
-import ast.node;
-import ast.expr;
-import ast.decl;
+import vdc.util;
+import vdc.lexer;
+import vdc.ast.node;
+import vdc.ast.expr;
+import vdc.ast.decl;
 
 //Statement:
 //    ScopeStatement

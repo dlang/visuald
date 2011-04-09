@@ -6,20 +6,20 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module ast.type;
+module vdc.ast.type;
 
-import util;
-import simplelexer;
-import semantic;
-import interpret;
+import vdc.util;
+import vdc.lexer;
+import vdc.semantic;
+import vdc.interpret;
 
-import ast.node;
-import ast.expr;
-import ast.misc;
-import ast.aggr;
-import ast.tmpl;
-import ast.stmt;
-import ast.decl;
+import vdc.ast.node;
+import vdc.ast.expr;
+import vdc.ast.misc;
+import vdc.ast.aggr;
+import vdc.ast.tmpl;
+import vdc.ast.stmt;
+import vdc.ast.decl;
 
 import std.conv;
 

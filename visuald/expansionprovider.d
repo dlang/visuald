@@ -6,19 +6,20 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module expansionprovider;
+module visuald.expansionprovider;
 
-import windows;
+import visuald.windows;
 import std.ctype;
 import std.string;
 import std.utf;
 
-import comutil;
-import logutil;
-import hierutil;
-import simplelexer;
-import dpackage;
-import dlangsvc;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.dpackage;
+import visuald.dlangsvc;
+
+import vdc.lexer;
 
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;

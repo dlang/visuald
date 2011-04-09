@@ -6,20 +6,20 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module parser.stmt;
+module vdc.parser.stmt;
 
-import util;
-import simplelexer;
-import parser.engine;
-import parser.expr;
-import parser.decl;
-import parser.iasm;
-import parser.mod;
-import parser.misc;
-import parser.tmpl;
-import parser.aggr;
+import vdc.util;
+import vdc.lexer;
+import vdc.parser.engine;
+import vdc.parser.expr;
+import vdc.parser.decl;
+import vdc.parser.iasm;
+import vdc.parser.mod;
+import vdc.parser.misc;
+import vdc.parser.tmpl;
+import vdc.parser.aggr;
 
-import ast = ast.all;
+import ast = vdc.ast.all;
 
 //-- GRAMMAR_BEGIN --
 //Statement:

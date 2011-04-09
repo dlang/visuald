@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module build;
+module visuald.build;
 
-import windows;
+import visuald.windows;
 import std.c.stdlib;
 import std.windows.charset;
 import std.utf;
@@ -28,15 +28,15 @@ import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.vsshell90;
 
-import comutil;
-import chiernode;
-import dproject;
-import hierutil;
-import hierarchy;
-import fileutil;
-import stringutil;
-import config;
-import dpackage;
+import visuald.comutil;
+import visuald.chiernode;
+import visuald.dproject;
+import visuald.hierutil;
+import visuald.hierarchy;
+import visuald.fileutil;
+import visuald.stringutil;
+import visuald.config;
+import visuald.dpackage;
 
 // threaded builds cause Visual Studio to close the solution
 // version = threadedBuild;
@@ -44,7 +44,7 @@ import dpackage;
 
 version(taskedBuild)
 {
-	import std.parallelism;
+	import stdext.parallelism;
 }
 
 // builder thread class

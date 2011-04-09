@@ -6,7 +6,7 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module config;
+module visuald.config;
 
 import std.string;
 import std.conv;
@@ -14,25 +14,25 @@ import std.path;
 import std.utf;
 import std.array;
 
-import xml = xmlwrap;
+import xml = visuald.xmlwrap;
 
-import windows;
+import visuald.windows;
 import sdk.port.vsi;
 import sdk.win32.objbase;
 import sdk.vsi.vsshell;
 
-import comutil;
-import logutil;
-import hierutil;
-import hierarchy;
-import chiernode;
-import dproject;
-import dpackage;
-import build;
-import propertypage;
-import stringutil;
-import fileutil;
-import lexutil;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.hierarchy;
+import visuald.chiernode;
+import visuald.dproject;
+import visuald.dpackage;
+import visuald.build;
+import visuald.propertypage;
+import visuald.stringutil;
+import visuald.fileutil;
+import visuald.lexutil;
 
 ///////////////////////////////////////////////////////////////
 

@@ -6,7 +6,7 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module parser.engine;
+module vdc.parser.engine;
 
 import std.exception;
 import std.stdio;
@@ -15,12 +15,12 @@ import std.conv;
 import std.intrinsic;
 import std.utf;
 
-import util;
-import simplelexer;
-import parser.expr;
-import parser.mod;
+import vdc.util;
+import vdc.lexer;
+import vdc.parser.expr;
+import vdc.parser.mod;
 
-import ast.node;
+import vdc.ast.node;
 
 class ParseException : Exception
 {
@@ -577,7 +577,7 @@ class Parser
 		{
 			int tokid;
 			uint prevpos = pos;
-			TokenColor type = cast(TokenColor) SimpleLexer.scan(state, line, pos, tokid);
+			TokenColor type = cast(TokenColor) Lexer.scan(state, line, pos, tokid);
 			
 			if(tokid != TOK_Space && tokid != TOK_Comment)
 			{
@@ -588,8 +588,8 @@ class Parser
 				
 				if(tokid == TOK_StringLiteral)
 				{
-					if(SimpleLexer.scanState(state) != SimpleLexer.State.kWhite ||
-					   SimpleLexer.tokenStringLevel(state) > 0)
+					if(Lexer.scanState(state) != Lexer.State.kWhite ||
+					   Lexer.tokenStringLevel(state) > 0)
 					{
 						if(partialString.length == 0)
 							partialStringSpan = lexerTok.span;
@@ -623,7 +623,7 @@ class Parser
 		int state = 0;
 	version(all)
 	{
-		SimpleLexer.sTokenizeTokenString = false;
+		Lexer.sTokenizeTokenString = false;
 		lineno = 1;
 		int linepos = 0; // position after last line break
 		int tokid;
@@ -632,7 +632,7 @@ class Parser
 			int prevlineno = lineno;
 			int prevlinepos = linepos;
 			uint prevpos = pos;
-			TokenColor type = cast(TokenColor) SimpleLexer.scan(state, text, pos, tokid);
+			TokenColor type = cast(TokenColor) Lexer.scan(state, text, pos, tokid);
 
 			if(tokid == TOK_Space || tokid == TOK_Comment || tokid == TOK_StringLiteral || tokid == TOK_CharacterLiteral)
 			{

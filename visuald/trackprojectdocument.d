@@ -6,18 +6,18 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module trackprojectdocument;
+module visuald.trackprojectdocument;
 
-import windows;
-import comutil;
+import visuald.windows;
+import visuald.comutil;
 
 import sdk.win32.oleauto;
 import sdk.win32.objbase;
 import sdk.vsi.vsshell;
 import sdk.vsi.ivstrackprojectdocuments2;
-import hierutil;
-import hierarchy;
-import chiernode;
+import visuald.hierutil;
+import visuald.hierarchy;
+import visuald.chiernode;
 
 import std.utf;
 

@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module register;
+module visuald.register;
 
-import windows;
+import visuald.windows;
 import sdk.win32.winreg;
 
 import std.string;
@@ -16,11 +16,11 @@ import std.conv;
 import std.utf;
 import std.path;
 
-import dpackage;
-import dllmain;
-import propertypage;
-import config;
-import comutil;
+import visuald.dpackage;
+import visuald.dllmain;
+import visuald.propertypage;
+import visuald.config;
+import visuald.comutil;
 
 enum { SECURE_ACCESS = ~(WRITE_DAC | WRITE_OWNER | GENERIC_ALL | ACCESS_SYSTEM_SECURITY) }
 

@@ -6,11 +6,11 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module vscommands;
+module visuald.vscommands;
 
-import windows;
+import visuald.windows;
 import std.string;
-import logutil;
+import visuald.logutil;
 
 import sdk.vsi.stdidcmd;
 import sdk.vsi.vsshell;

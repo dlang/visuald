@@ -6,18 +6,18 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module ast.node;
+module vdc.ast.node;
+
+import vdc.util;
+import vdc.semantic;
+import vdc.lexer;
+import vdc.ast.expr;
 
 import std.exception;
 import std.stdio;
 import std.string;
 import std.conv;
 import std.algorithm;
-
-import util;
-import semantic;
-import simplelexer;
-import ast.expr;
 
 class Node
 {

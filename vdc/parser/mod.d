@@ -6,19 +6,19 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module parser.mod;
+module vdc.parser.mod;
 
-import util;
-import simplelexer;
-import parser.engine;
-import parser.decl;
-import parser.expr;
-import parser.misc;
-import parser.aggr;
-import parser.tmpl;
-import parser.stmt;
+import vdc.util;
+import vdc.lexer;
+import vdc.parser.engine;
+import vdc.parser.decl;
+import vdc.parser.expr;
+import vdc.parser.misc;
+import vdc.parser.aggr;
+import vdc.parser.tmpl;
+import vdc.parser.stmt;
 
-import ast = ast.mod;
+import ast = vdc.ast.mod;
 
 import std.conv;
 

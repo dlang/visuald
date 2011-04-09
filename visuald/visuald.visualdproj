@@ -40,9 +40,9 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\dmd2\dmd\src\dmd.exe</program>
-  <imppath>..;..\vdc</imppath>
+  <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\obj</objdir>
@@ -211,8 +211,8 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <Folder name="c2d">
    <File path="..\c2d\dlist.d" />
   </Folder>
-  <Folder name="std">
-   <File path="std\parallelism.d" />
+  <Folder name="stdext">
+   <File path="..\stdext\parallelism.d" />
   </Folder>
   <File path="config.d" />
   <File path="dproject.d" />
@@ -230,7 +230,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="hierutil.d" />
   <File path="logutil.d" />
   <File path="register.d" />
-  <File path="simplelexer.d" />
   <File path="stringutil.d" />
   <File path="trackprojectdocument.d" />
   <File path="vscommands.d" />

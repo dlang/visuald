@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module winctrl;
+module visuald.winctrl;
 
-import windows;
+import visuald.windows;
 import std.utf;
 import std.exception;
 import sdk.port.base;

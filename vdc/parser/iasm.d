@@ -6,13 +6,13 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module parser.iasm;
+module vdc.parser.iasm;
 
-import util;
-import simplelexer;
-import parser.engine;
+import vdc.util;
+import vdc.lexer;
+import vdc.parser.engine;
 
-import ast = ast.all;
+import ast = vdc.ast.all;
 
 class AsmInstruction
 {

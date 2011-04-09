@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module comutil;
+module visuald.comutil;
 
-import windows;
+import visuald.windows;
 import std.c.string;
 import std.c.stdlib;
 import std.string;
@@ -30,7 +30,7 @@ debug debug = COM;
 import core.runtime;
 import core.memory;
 
-import logutil;
+import visuald.logutil;
 
 extern (C) void _d_callfinalizer(void *p);
 

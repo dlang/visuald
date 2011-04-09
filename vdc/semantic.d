@@ -6,12 +6,12 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module semantic;
+module vdc.semantic;
 
-import util;
-import ast.mod;
-import ast.node;
-import parser.engine;
+import vdc.util;
+import vdc.ast.mod;
+import vdc.ast.node;
+import vdc.parser.engine;
 
 import std.exception;
 import std.stdio;

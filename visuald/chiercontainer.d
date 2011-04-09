@@ -6,19 +6,19 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module chiercontainer;
+module visuald.chiercontainer;
 
-import windows;
+import visuald.windows;
 import std.string;
 import std.path;
 import std.utf;
 
 import sdk.vsi.vsshell;
 
-import hierarchy;
-import chiernode;
-import hierutil;
-import comutil;
+import visuald.hierarchy;
+import visuald.chiernode;
+import visuald.hierutil;
+import visuald.comutil;
 
 //-----------------------------------------------------------------------------
 // Name: CHierContainer

@@ -73,7 +73,7 @@ Author:  David Simcha
 Copyright:  Copyright (c) 2009-2011, David Simcha.
 License:    $(WEB boost.org/LICENSE_1_0.txt, Boost License 1.0)
 */
-module std.parallelism;
+module stdext.parallelism;
 
 import core.thread, core.cpuid, std.algorithm, std.range, std.c.stdlib,
     std.stdio, std.exception, std.functional, std.conv, std.math, core.memory,

@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module chiernode;
+module visuald.chiernode;
 
-import windows;
+import visuald.windows;
 import std.string;
 import std.path;
 import std.utf;
@@ -16,11 +16,11 @@ import std.utf;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 
-import hierarchy;
-import comutil;
-import logutil;
-import hierutil;
-import stringutil;
+import visuald.hierarchy;
+import visuald.comutil;
+import visuald.logutil;
+import visuald.hierutil;
+import visuald.stringutil;
 
 //import dproject;
 
@@ -31,7 +31,7 @@ enum ICON_TYPE
 	ICON_StateImage
 }
 
-import chiercontainer;
+import visuald.chiercontainer;
 
 const UINT IDMX_NULLMENU = 0;
 

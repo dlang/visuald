@@ -6,9 +6,9 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 
-module dpackage;
+module visuald.dpackage;
 
-import windows;
+import visuald.windows;
 import std.c.stdlib;
 import std.windows.charset;
 import std.string;
@@ -18,24 +18,24 @@ import std.file;
 import std.conv;
 import std.array;
 
-import comutil;
-import hierutil;
-import stringutil;
-import fileutil;
-import dproject;
-import config;
-import chiernode;
-import dlangsvc;
-import dimagelist;
-import logutil;
-import propertypage;
-import winctrl;
-import register;
-import intellisense;
-import searchsymbol;
-import tokenreplacedialog;
-import profiler;
-import library;
+import visuald.comutil;
+import visuald.hierutil;
+import visuald.stringutil;
+import visuald.fileutil;
+import visuald.dproject;
+import visuald.config;
+import visuald.chiernode;
+import visuald.dlangsvc;
+import visuald.dimagelist;
+import visuald.logutil;
+import visuald.propertypage;
+import visuald.winctrl;
+import visuald.register;
+import visuald.intellisense;
+import visuald.searchsymbol;
+import visuald.tokenreplacedialog;
+import visuald.profiler;
+import visuald.library;
 
 import sdk.win32.winreg;
 
