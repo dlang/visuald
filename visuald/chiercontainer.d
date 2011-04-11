@@ -36,7 +36,7 @@ class CHierContainer : public CHierNode
 		//DeleteAll(null);
 	}
 
-	void removeFromItemMap(bool recurse)
+	override void removeFromItemMap(bool recurse)
 	{
 		if(recurse)
 		{
@@ -48,24 +48,24 @@ class CHierContainer : public CHierNode
 	
 public:
 	// CHierNode overrides
-	bool Expandable() { return GetHead(true) !is null; }
-	bool ExpandByDefault() { return false; }
-	bool IsContainer() { return true; }
+	override bool Expandable() { return GetHead(true) !is null; }
+	override bool ExpandByDefault() { return false; }
+	override bool IsContainer() { return true; }
 
-	int OnStartLabelEdit()
+	override int OnStartLabelEdit()
 	{
 		return S_OK;
 	}
-	int OnCommitLabelEdit()
+	override int OnCommitLabelEdit()
 	{
 		return S_OK;
 	}
-	int OnCancelLabelEdit()
+	override int OnCancelLabelEdit()
 	{
 		return S_OK;
 	}
 	
-	VSITEMID GetFirstChildID(bool fDisplayOnly = true)
+	override VSITEMID GetFirstChildID(bool fDisplayOnly = true)
 	{
 		CHierNode head = GetHeadEx(fDisplayOnly);
 		return head ? head.GetVsItemID() : VSITEMID_NIL;
@@ -73,7 +73,7 @@ public:
 
 	// Used by the hierarchy in response to VSHPROPID_FirstChild/VSHPROPID_NextSibling. These
 	// properties are spec'd to only return member items (visible or not)
-	VSITEMID GetFirstMemberChildID()
+	override VSITEMID GetFirstMemberChildID()
 	{
 		CHierNode pNode = GetHeadEx(false);
 		while(pNode && !pNode.IsMemberItem())
@@ -92,7 +92,7 @@ public:
 
 	int EnumerateChildren() { return S_OK; }
 
-	CHierNode GetHeadEx(bool fDisplayOnly = true)
+	override CHierNode GetHeadEx(bool fDisplayOnly = true)
 	{
 		if (!HaveChildrenBeenEnumerated())
 		{

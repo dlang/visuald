@@ -77,7 +77,7 @@ class CHierNode : DisposingDispatchObject
 		logCall("removed %x from gVsItemMap", GetVsItemID());
 	}
 	
-	/*override*/ void Dispose()
+	override void Dispose()
 	{
 	}
 

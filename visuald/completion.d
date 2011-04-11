@@ -352,7 +352,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 		mDisplayed = (!mWasUnique || !completeWord);
 	}
 
-	void Dispose()
+	override void Dispose()
 	{
 		Close();
 		//if (imageList != null) imageList.Dispose();

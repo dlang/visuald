@@ -169,6 +169,9 @@ class IdentifierOrTemplateInstance
 				n.addMember(new ast.BasicType(p.tok));
 				p.topNode!(ast.TemplateInstance).addMember(n);
 				return Accept;
+
+			default:
+				return p.parseError("'(' of single argument template expected after '!'");
 		}
 	}
 	

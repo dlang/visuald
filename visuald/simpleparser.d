@@ -319,7 +319,7 @@ class SquareBracedExpression(S) : BracedStatement!(S, TOK_lbracket, TOK_rbracket
 {
 	mixin ForwardConstructor;
 
-	bool isStatement()
+	override bool isStatement()
 	{
 		return false;
 	}
@@ -329,7 +329,7 @@ class RoundBracedExpression(S) : BracedStatement!(S, TOK_lparen, TOK_rparen)
 {
 	mixin ForwardConstructor;
 
-	bool isStatement()
+	override bool isStatement()
 	{
 		return false;
 	}
@@ -392,7 +392,7 @@ then_statement:
 		return false;
 	}
 
-	bool reduce(Parser parser, Location loc)
+	override bool reduce(Parser parser, Location loc)
 	{
 		super.reduce(parser, loc);
 		return (children.length <= 2); // always continue reduce after else statement

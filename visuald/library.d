@@ -140,7 +140,7 @@ class Library : DComObject,
 	
 	BrowseCounter   mCounterLibList;
 	
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(*riid == IVsLibrary2Ex.iid) // keep out of log file
 			return E_NOINTERFACE;
@@ -522,7 +522,7 @@ class Library : DComObject,
 	{
 		mixin(LogCallMix2);
 
-		assert(false); // TF_NOEXPANSION is set: this shouldn't be called
+		assert(_false); // TF_NOEXPANSION is set: this shouldn't be called
 		return E_FAIL;
 	}
 	
@@ -533,7 +533,7 @@ class Library : DComObject,
 	{
 		mixin(LogCallMix2);
 		
-		assert(false); // TF_NOEXPANSION and TF_NORELOCATE is set: this shouldn't be called
+		assert(_false); // TF_NOEXPANSION and TF_NORELOCATE is set: this shouldn't be called
 		return E_FAIL;
 	}
     //Called when a list is collapsed by the user.
@@ -995,7 +995,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		initMembers();
 	}
 	
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsSimpleObjectList2) (this, riid, pvObject))
 			return S_OK;

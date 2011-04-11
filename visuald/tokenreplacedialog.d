@@ -84,7 +84,7 @@ class TokenReplaceWindowBack : Dialog
 		super(parent);
 	}
 	
-	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
 	{
 		BOOL fHandled;
 		LRESULT rc = mPane._WindowProc(hWnd, uMsg, wParam, lParam, fHandled);
@@ -101,7 +101,7 @@ class TokenReplacePane : DisposingComObject, IVsWindowPane
 {
 	IServiceProvider mSite;
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsWindowPane) (this, riid, pvObject))
 			return S_OK;
@@ -113,7 +113,7 @@ class TokenReplacePane : DisposingComObject, IVsWindowPane
 		return super.QueryInterface(riid, pvObject);
 	}
 	
-	void Dispose()
+	override void Dispose()
 	{
 		mSite = release(mSite);
 	}

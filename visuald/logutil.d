@@ -48,6 +48,10 @@ import sdk.vsi.encbuild;
 
 ///////////////////////////////////////////////////////////////
 
+bool _false; // used in assert(false) to avoid semantic change of assert
+
+///////////////////////////////////////////////////////////////
+
 void OutputDebugLog(string msg)
 {
 	OutputDebugStringA(toStringz(msg));

@@ -49,7 +49,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	void Dispose()
+	override void Dispose()
 	{
 		mSite = release(mSite);
 
@@ -207,6 +207,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		case 1:
 			return S_FALSE;
 			//*pbstrCategory = allocBSTR("CategoryTitle1");
+		default:
 			break;
 		}
 		return S_OK;
@@ -477,8 +478,8 @@ class GlobalPropertyPage : PropertyPage
 ///////////////////////////////////////////////////////////////////////////////
 class CommonPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return ""; }
-	string GetPageName() { return "General"; }
+	override string GetCategoryName() { return ""; }
+	override string GetPageName() { return "General"; }
 
 	override void CreateControls() 
 	{
@@ -499,8 +500,8 @@ class CommonPropertyPage : ProjectPropertyPage
 
 class GeneralPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return ""; }
-	string GetPageName() { return "General"; }
+	override string GetCategoryName() { return ""; }
+	override string GetPageName() { return "General"; }
 
 	const float[] selectableVersions = [ 1, 2, 2.043 ];
 	
@@ -523,7 +524,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 			  "Separate compile and link", "Compile only (use Post-build command to link)" ], false));
 	}
 
-	void UpdateDirty(bool bDirty)
+	override void UpdateDirty(bool bDirty)
 	{
 		super.UpdateDirty(bDirty);
 		EnableControls();
@@ -579,8 +580,8 @@ class GeneralPropertyPage : ProjectPropertyPage
 
 class DebuggingPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return ""; }
-	string GetPageName() { return "Debugging"; }
+	override string GetCategoryName() { return ""; }
+	override string GetPageName() { return "Debugging"; }
 
 	override void CreateControls()
 	{
@@ -624,8 +625,8 @@ class DebuggingPropertyPage : ProjectPropertyPage
 
 class DmdGeneralPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return "DMD"; }
-	string GetPageName() { return "General"; }
+	override string GetCategoryName() { return "DMD"; }
+	override string GetPageName() { return "General"; }
 
 	override void CreateControls()
 	{
@@ -666,8 +667,8 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 
 class DmdDebugPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return "DMD"; }
-	string GetPageName() { return "Debug"; }
+	override string GetCategoryName() { return "DMD"; }
+	override string GetPageName() { return "Debug"; }
 
 	override void CreateControls()
 	{
@@ -677,7 +678,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		AddControl("Path to cv2pdb", mPathCv2pdb = new Text(mCanvas));
 	}
 
-	void UpdateDirty(bool bDirty)
+	override void UpdateDirty(bool bDirty)
 	{
 		super.UpdateDirty(bDirty);
 		EnableControls();
@@ -716,8 +717,8 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 
 class DmdCodeGenPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return "DMD"; }
-	string GetPageName() { return "Code Generation"; }
+	override string GetCategoryName() { return "DMD"; }
+	override string GetPageName() { return "Code Generation"; }
 
 	override void CreateControls()
 	{
@@ -768,8 +769,8 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 
 class DmdMessagesPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return "DMD"; }
-	string GetPageName() { return "Messages"; }
+	override string GetCategoryName() { return "DMD"; }
+	override string GetPageName() { return "Messages"; }
 
 	override void CreateControls()
 	{
@@ -820,8 +821,8 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 
 class DmdDocPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return "DMD"; }
-	string GetPageName() { return "Documentation"; }
+	override string GetCategoryName() { return "DMD"; }
+	override string GetPageName() { return "Documentation"; }
 
 	override void CreateControls()
 	{
@@ -838,7 +839,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		AddControl("JSON file",  mJSONFile = new Text(mCanvas));
 	}
 
-	void UpdateDirty(bool bDirty)
+	override void UpdateDirty(bool bDirty)
 	{
 		super.UpdateDirty(bDirty);
 		EnableControls();
@@ -899,8 +900,8 @@ class DmdDocPropertyPage : ProjectPropertyPage
 
 class DmdOutputPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return "DMD"; }
-	string GetPageName() { return "Output"; }
+	override string GetCategoryName() { return "DMD"; }
+	override string GetPageName() { return "Output"; }
 
 	override void CreateControls()
 	{
@@ -929,8 +930,8 @@ class DmdOutputPropertyPage : ProjectPropertyPage
 
 class DmdLinkerPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return "Linker"; }
-	string GetPageName() { return "General"; }
+	override string GetCategoryName() { return "Linker"; }
+	override string GetPageName() { return "General"; }
 
 	override void CreateControls()
 	{
@@ -983,8 +984,8 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 
 class DmdEventsPropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return ""; }
-	string GetPageName() { return "Build Events"; }
+	override string GetCategoryName() { return ""; }
+	override string GetPageName() { return "Build Events"; }
 
 	override void CreateControls()
 	{
@@ -1015,8 +1016,8 @@ class DmdEventsPropertyPage : ProjectPropertyPage
 
 class DmdCmdLinePropertyPage : ProjectPropertyPage
 {
-	string GetCategoryName() { return ""; }
-	string GetPageName() { return "Command line"; }
+	override string GetCategoryName() { return ""; }
+	override string GetPageName() { return "Command line"; }
 
 	override void CreateControls()
 	{
@@ -1043,8 +1044,8 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 
 class FilePropertyPage : NodePropertyPage
 {
-	string GetCategoryName() { return ""; }
-	string GetPageName() { return "File"; }
+	override string GetCategoryName() { return ""; }
+	override string GetPageName() { return "File"; }
 
 	override void CreateControls()
 	{
@@ -1105,8 +1106,8 @@ class FilePropertyPage : NodePropertyPage
 ///////////////////////////////////////////////////////////////////////////////
 class ToolsPropertyPage : GlobalPropertyPage
 {
-	string GetCategoryName() { return "Projects"; }
-	string GetPageName() { return "D Options"; }
+	override string GetCategoryName() { return "Projects"; }
+	override string GetPageName() { return "D Options"; }
 
 	this(GlobalOptions options)
 	{
@@ -1163,8 +1164,8 @@ class ToolsPropertyPage : GlobalPropertyPage
 ///////////////////////////////////////////////////////////////////////////////
 class ColorizerPropertyPage : GlobalPropertyPage
 {
-	string GetCategoryName() { return "Language"; }
-	string GetPageName() { return "Colorizer"; }
+	override string GetCategoryName() { return "Language"; }
+	override string GetPageName() { return "Colorizer"; }
 
 	this(GlobalOptions options)
 	{

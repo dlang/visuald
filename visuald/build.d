@@ -8,7 +8,18 @@
 
 module visuald.build;
 
+import visuald.comutil;
+import visuald.logutil;
+import visuald.chiernode;
+import visuald.dproject;
+import visuald.hierutil;
+import visuald.hierarchy;
+import visuald.fileutil;
+import visuald.stringutil;
+import visuald.config;
+import visuald.dpackage;
 import visuald.windows;
+
 import std.c.stdlib;
 import std.windows.charset;
 import std.utf;
@@ -27,16 +38,6 @@ import core.stdc.string;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.vsshell90;
-
-import visuald.comutil;
-import visuald.chiernode;
-import visuald.dproject;
-import visuald.hierutil;
-import visuald.hierarchy;
-import visuald.fileutil;
-import visuald.stringutil;
-import visuald.config;
-import visuald.dpackage;
 
 // threaded builds cause Visual Studio to close the solution
 // version = threadedBuild;
@@ -146,7 +147,7 @@ else
 		switch (m_op)
 		{
 		default:
-			assert(false);
+			assert(_false);
 			break;
 
 		case Operation.eBuild:

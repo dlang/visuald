@@ -251,13 +251,13 @@ class ValueT(T) : Value
 //	pragma(msg, text(" compiles?", __traits(compiles, val ? true : false )));
 	
 	static if(__traits(compiles, val ? true : false))
-		bool toBool()
+		override bool toBool()
 		{
 			return val ? true : false;
 		}
 
 	static if(__traits(compiles, (){ long lng = val; }))
-		long toLong()
+		override long toLong()
 		{
 			return val;
 		}
@@ -349,7 +349,7 @@ class ValueT(T) : Value
 		return s;
 	}
 	
-	Value opBin(int tokid, Value v)
+	override Value opBin(int tokid, Value v)
 	{
 		switch(tokid)
 		{
@@ -371,8 +371,11 @@ class ValueT(T) : Value
 				mixin("auto z = " ~ op ~ "val;");
 				return create(z);
 			}
-			semanticError(text("cannot calculate ", op, " on a ", this));
-			return this;
+			else
+			{
+				semanticError(text("cannot calculate ", op, " on a ", this));
+				return this;
+			}
 		}
 	}
 	
@@ -396,7 +399,7 @@ class ValueT(T) : Value
 		return s;
 	}
 	
-	Value opUn(int tokid)
+	override Value opUn(int tokid)
 	{
 		switch(tokid)
 		{
@@ -470,12 +473,12 @@ class FloatValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -487,12 +490,12 @@ class DoubleValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -504,12 +507,12 @@ class RealValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -521,12 +524,12 @@ class IFloatValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -538,12 +541,12 @@ class IDoubleValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -555,12 +558,12 @@ class IRealValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -572,12 +575,12 @@ class CFloatValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -589,12 +592,12 @@ class CDoubleValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -606,12 +609,12 @@ class CRealValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val != 0;
 	}
 
-	long toLong()
+	override long toLong()
 	{
 		return cast(int) val;
 	}
@@ -623,7 +626,7 @@ class StringValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val !is null;
 	}
@@ -661,12 +664,12 @@ class PointerValue : Value
 	
 	ValType val;
 
-	bool toBool()
+	override bool toBool()
 	{
 		return val !is null;
 	}
 	
-	Value opDerefPointer()
+	override Value opDerefPointer()
 	{
 		return val;
 	}

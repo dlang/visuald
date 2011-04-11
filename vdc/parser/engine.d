@@ -1075,29 +1075,32 @@ mixin template stateShiftToken(TokenId id1, alias newstate1,
 					else
 						return newstate1(p);
 				
-				static if(id2 == -1)
+				else static if(id2 == -1)
 					static if(&newstate2 is &Parser.forward)
 						return Forward;
 					else
 						return newstate2(p);
 				
-				static if(id3 == -1)
+				else static if(id3 == -1)
 					static if(&newstate3 is &Parser.forward)
 						return Forward;
 					else
 						return newstate3(p);
 				
-				static if(id4 == -1)
+				else static if(id4 == -1)
 					static if(&newstate4 is &Parser.forward)
 						return Forward;
 					else
 						return newstate4(p);
 				
-				string msg = tokenString(id1);
-				static if(id2 != 0) msg ~= " or " ~ tokenString(id2);
-				static if(id3 != 0) msg ~= " or " ~ tokenString(id3);
-				static if(id4 != 0) msg ~= " or " ~ tokenString(id4);
-				return p.parseError(tokenString(id1) ~ " expected");
+				else
+				{
+					string msg = tokenString(id1);
+					static if(id2 != 0) msg ~= " or " ~ tokenString(id2);
+					static if(id3 != 0) msg ~= " or " ~ tokenString(id3);
+					static if(id4 != 0) msg ~= " or " ~ tokenString(id4);
+					return p.parseError(tokenString(id1) ~ " expected");
+				}
 		}
 	}
 }

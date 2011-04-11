@@ -37,7 +37,7 @@ class EmptyStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(";");
 		writer.nl;
@@ -121,13 +121,13 @@ class LabeledStatement : Statement
 		ident = tok.txt;
 	}
 	
-	LabeledStatement clone()
+	override LabeledStatement clone()
 	{
 		LabeledStatement n = static_cast!LabeledStatement(super.clone());
 		n.ident = ident;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -136,7 +136,7 @@ class LabeledStatement : Statement
 		return tn.ident == ident;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		{
 			CodeIndenter indent = CodeIndenter(writer, -1);
@@ -159,7 +159,7 @@ class BlockStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("{");
 		writer.nl;
@@ -179,7 +179,7 @@ class ExpressionStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), ";");
 		writer.nl;
@@ -192,7 +192,7 @@ class DeclarationStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0));
 	}
@@ -216,7 +216,7 @@ class IfStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("if(", getMember(0), ")");
 		writer.nl;
@@ -242,7 +242,7 @@ class WhileStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("while(", getMember(0), ")");
 		writer.nl;
@@ -259,7 +259,7 @@ class DoStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("do");
 		writer.nl;
@@ -288,7 +288,7 @@ class ForStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("for(", getMember(0), getMember(1), "; ", getMember(2), ")");
 		writer.nl;
@@ -331,7 +331,7 @@ class ForeachStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(id, "(", getMember(0), "; ");
 		if(members.length == 3)
@@ -352,7 +352,7 @@ class ForeachTypeList : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer.writeArray(members);
 	}
@@ -364,13 +364,13 @@ class ForeachType : Node
 
 	bool isRef;
 
-	ForeachType clone()
+	override ForeachType clone()
 	{
 		ForeachType n = static_cast!ForeachType(super.clone());
 		n.isRef = isRef;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -379,7 +379,7 @@ class ForeachType : Node
 		return tn.isRef == isRef;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(isRef)
 			writer("ref ");
@@ -395,13 +395,13 @@ class SwitchStatement : Statement
 
 	bool isFinal;
 
-	SwitchStatement clone()
+	override SwitchStatement clone()
 	{
 		SwitchStatement n = static_cast!SwitchStatement(super.clone());
 		n.isFinal = isFinal;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -410,7 +410,7 @@ class SwitchStatement : Statement
 		return tn.isFinal == isFinal;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(isFinal)
 			writer("final ");
@@ -445,7 +445,7 @@ class CaseStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		{
 			CodeIndenter indent = CodeIndenter(writer, -1);
@@ -470,7 +470,7 @@ class DefaultStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		{
 			CodeIndenter indent = CodeIndenter(writer, -1);
@@ -490,13 +490,13 @@ class ContinueStatement : Statement
 
 	string ident;
 
-	ContinueStatement clone()
+	override ContinueStatement clone()
 	{
 		ContinueStatement n = static_cast!ContinueStatement(super.clone());
 		n.ident = ident;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -505,7 +505,7 @@ class ContinueStatement : Statement
 		return tn.ident == ident;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("continue");
 		if(ident.length)
@@ -527,13 +527,13 @@ class BreakStatement : Statement
 
 	string ident;
 
-	BreakStatement clone()
+	override BreakStatement clone()
 	{
 		BreakStatement n = static_cast!BreakStatement(super.clone());
 		n.ident = ident;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -542,7 +542,7 @@ class BreakStatement : Statement
 		return tn.ident == ident;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("break");
 		if(ident.length)
@@ -563,7 +563,7 @@ class ReturnStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("return ", getMember(0), ";");
 		writer.nl;
@@ -582,13 +582,13 @@ class GotoStatement : Statement
 
 	string ident;
 	
-	GotoStatement clone()
+	override GotoStatement clone()
 	{
 		GotoStatement n = static_cast!GotoStatement(super.clone());
 		n.ident = ident;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -597,7 +597,7 @@ class GotoStatement : Statement
 		return tn.ident == ident;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(id == TOK_Identifier)
 		{
@@ -626,7 +626,7 @@ class WithStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("with(", getMember(0), ")");
 		writer.nl;
@@ -644,7 +644,7 @@ class SynchronizedStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(members.length > 1)
 			writer("synchronized(", getMember(0), ") ");
@@ -685,7 +685,7 @@ class TryStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("try");
 		writer.nl();
@@ -702,7 +702,7 @@ class Catch : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(members.length > 2)
 			writer("catch(", getMember(0), " ", getMember(1), ")");
@@ -722,7 +722,7 @@ class FinallyStatement : Catch
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("finally");
 		writer.nl();
@@ -740,7 +740,7 @@ class ThrowStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("throw ", getMember(0), ";");
 		writer.nl;
@@ -755,7 +755,7 @@ class ScopeGuardStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("scope(", getMember(0), ")");
 		writer.nl;
@@ -777,7 +777,7 @@ class AsmStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("asm {");
 		writer.nl;
@@ -794,7 +794,7 @@ class AsmInstructionList : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		foreach(m; members)
 		{
@@ -810,7 +810,7 @@ class PragmaStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), " ", getMember(1));
 	}
@@ -822,7 +822,7 @@ class MixinStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("mixin(", getMember(0), ");");
 		writer.nl;

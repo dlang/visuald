@@ -25,7 +25,7 @@ class AsmInstruction : Node
 		tokens ~= ntok;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		foreach(t; tokens)
 		{

@@ -55,7 +55,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 		mRgbBackground = rgbBackground;
 	}
 	
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorableItem) (this, riid, pvObject))
 			return S_OK;
@@ -180,7 +180,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 	}
 	
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorizer) (this, riid, pvObject))
 			return S_OK;
@@ -262,7 +262,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		version(LOG) mixin(LogCallMix2);
 		
-		assert(false); // should not be called if GetStateMaintenanceFlag return false
+		assert(_false); // should not be called if GetStateMaintenanceFlag return false
 	
 		bool versionsChanged;
 		wstring text = to_cwstring(pText, iLength);
@@ -599,7 +599,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		int debugOrVersion = getDebugOrVersion(iState);
 		int ntype = type;
 		
-		switch(parseState)
+		final switch(cast(VersionParseState) parseState)
 		{
 		case VersionParseState.IdleDisabledVerify:
 		case VersionParseState.IdleEnabledVerify:

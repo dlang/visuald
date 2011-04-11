@@ -33,7 +33,7 @@ class Module : Node
 	string filename;
 	bool imported;
 	
-	Module clone()
+	override Module clone()
 	{
 		Module n = static_cast!Module(super.clone());
 		n.filename = filename;
@@ -41,7 +41,7 @@ class Module : Node
 		return n;
 	}
 
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -54,13 +54,13 @@ class Module : Node
 	
 	Project getProject() { return static_cast!Project(parent); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		foreach(m; members)
 			writer(m);
 	}
 
-	void toC(CodeWriter writer)
+	override void toC(CodeWriter writer)
 	{
 		if(members.length > 0 && cast(ModuleDeclaration) getMember(0))
 		{
@@ -143,7 +143,7 @@ class Module : Node
 		return scop.search(ident);
 	}
 	
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		if(imported) // no full semantic on imports
 			return;
@@ -249,7 +249,7 @@ class ModuleDeclaration : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("module ", getMember(0), ";");
 		writer.nl;
@@ -262,7 +262,7 @@ class ModuleFullyQualifiedName : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer.writeArray(members, ".");
 	}
@@ -282,7 +282,7 @@ class EmptyDeclDef : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(";");
 		writer.nl;
@@ -295,7 +295,7 @@ class AttributeSpecifier : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer.writeAttributes(attr);
 		writer.writeAnnotations(annotation);
@@ -330,7 +330,7 @@ class AttributeSpecifier : Node
 		m.annotation = combineAnnotations(annotation, m.annotation);
 	}
 	
-	Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScope(Scope sc, Node[] athis)
 	{
 		switch(id)
 		{
@@ -356,7 +356,7 @@ class DeclarationBlock : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(id == TOK_lcurly)
 		{
@@ -375,7 +375,7 @@ class DeclarationBlock : Node
 				writer(m);
 	}
 	
-	Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScope(Scope sc, Node[] athis)
 	{
 		return members;
 	}
@@ -403,13 +403,13 @@ class Pragma : Node
 
 	string ident;
 
-	Pragma clone()
+	override Pragma clone()
 	{
 		Pragma n = static_cast!Pragma(super.clone());
 		n.ident = ident;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -418,7 +418,7 @@ class Pragma : Node
 		return tn.ident == ident;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("pragma(", ident);
 		foreach(m; members)
@@ -434,16 +434,16 @@ class ImportDeclaration : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("import ", getMember(0), ";");
 		writer.nl();
 	}
-	void toC(CodeWriter writer)
+	override void toC(CodeWriter writer)
 	{
 	}
 	
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		getMember(0).semantic(sc);
 	}
@@ -455,12 +455,12 @@ class ImportList : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer.writeArray(members);
 	}
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		foreach(m; members)
 			m.semantic(sc);
@@ -485,14 +485,14 @@ class Import : Node
 	int countLookups;
 	int countFound;
 		
-	Import clone()
+	override Import clone()
 	{
 		Import n = static_cast!Import(super.clone());
 		n.aliasIdent = aliasIdent;
 		return n;
 	}
 
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -501,7 +501,7 @@ class Import : Node
 		return tn.aliasIdent == aliasIdent;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(aliasIdent.length)
 			writer(aliasIdent, " = ");
@@ -510,12 +510,12 @@ class Import : Node
 			writer(" : ", bindList);
 	}
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		sc.addImport(this);
 	}
 
-	void addSymbols(Scope sc)
+	override void addSymbols(Scope sc)
 	{
 		if(aliasIdent.length > 0)
 			sc.addSymbol(aliasIdent, this);
@@ -555,7 +555,7 @@ class ImportBindList : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer.writeArray(members);
 	}
@@ -569,7 +569,7 @@ class ImportBind : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0));
 		if(members.length > 1)
@@ -583,7 +583,7 @@ class MixinDeclaration : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("mixin(", getMember(0), ");");
 		writer.nl;
@@ -596,14 +596,14 @@ class Unittest : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("unittest");
 		writer.nl;
 		writer(getMember(0));
 	}
 
-	void toC(CodeWriter writer)
+	override void toC(CodeWriter writer)
 	{
 	}
 }

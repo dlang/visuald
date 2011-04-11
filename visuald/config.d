@@ -663,14 +663,14 @@ class ConfigProvider : DisposingComObject,
 		}
 	}
 
-	void Dispose()
+	override void Dispose()
 	{
 		foreach(Config cfg; mConfigs)
 			release(cfg);
 		mConfigs = mConfigs.init;
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -981,7 +981,7 @@ class Config :	DisposingComObject,
 		return super.Release();
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 

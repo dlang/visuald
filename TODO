@@ -13,6 +13,7 @@ Settings:
 
 Project:
 ---------------
+- file with relative path opened twice
 - clean/build/rebuild only project not working
 - incorrect build order of single file compilations (check dependencies)
 - sort project items

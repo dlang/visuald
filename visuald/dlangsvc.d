@@ -628,7 +628,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 	{
 	}
 
-	void Dispose()
+	override void Dispose()
 	{
 		CloseFilters();
 
@@ -641,7 +641,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 		mLangSvc = null;
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsCodeWindowManager) (this, riid, pvObject))
 			return S_OK;
@@ -811,7 +811,7 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		}
 	}
 	
-	void Dispose()
+	override void Dispose()
 	{
 		IVsTextLines buffer = mSource.mBuffer;
 		if(buffer)
@@ -823,7 +823,7 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		}
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsUserDataEvents) (this, riid, pvObject))
 			return S_OK;
@@ -882,7 +882,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	{
 	}
 
-	void Dispose()
+	override void Dispose()
 	{
 		mExpansionProvider = release(mExpansionProvider);
 		DismissCompletor();
@@ -898,7 +898,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		mHiddenTextSession = release(mHiddenTextSession);
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsUserDataEvents) (this, riid, pvObject))
 			return S_OK;
@@ -2454,7 +2454,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 		mPos = epe.mPos;
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsEnumBSTR) (this, riid, pvObject))
 			return S_OK;

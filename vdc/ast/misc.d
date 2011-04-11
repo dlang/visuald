@@ -38,14 +38,14 @@ class EnumDeclaration : Node
 	string ident;
 	bool isDecl; // does not have body syntax
 	
-	EnumDeclaration clone()
+	override EnumDeclaration clone()
 	{
 		EnumDeclaration n = static_cast!EnumDeclaration(super.clone());
 		n.ident = ident;
 		n.isDecl = isDecl;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -58,7 +58,7 @@ class EnumDeclaration : Node
 	Type getBaseType() { return members.length > 1 ? getMember!Type(0) : null; }
 	EnumBody getBody() { return members.length > 0 ? getMember!EnumBody(members.length - 1) : null; }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(!writer.writeDeclarations)
 			return;
@@ -100,7 +100,7 @@ class EnumDeclaration : Node
 		}
 	}
 
-	void addSymbols(Scope sc)
+	override void addSymbols(Scope sc)
 	{
 		if(ident.length)
 			sc.addSymbol(ident, this);
@@ -120,7 +120,7 @@ class EnumBody : Node
 
 	EnumMembers getEnumMembers() { return getMember!EnumMembers(0); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("{");
 		writer.nl();
@@ -137,7 +137,7 @@ class EnumBody : Node
 		return getEnumMembers().hasSemanticSearches();
 	}
 
-	void addSymbols(Scope sc)
+	override void addSymbols(Scope sc)
 	{
 		getMember(0).addSymbols(sc);
 	}
@@ -151,7 +151,7 @@ class EnumMembers : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		foreach(m; members)
 		{
@@ -168,7 +168,7 @@ class EnumMembers : Node
 		return false;
 	}
 	
-	void addSymbols(Scope sc)
+	override void addSymbols(Scope sc)
 	{
 		addMemberSymbols(sc);
 	}
@@ -184,13 +184,13 @@ class EnumMember : Node
 
 	string ident;
 	
-	EnumMember clone()
+	override EnumMember clone()
 	{
 		EnumMember n = static_cast!EnumMember(super.clone());
 		n.ident = ident;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -203,7 +203,7 @@ class EnumMember : Node
 	Expression getInitializer() { return members.length > 0 ? getMember!Expression(members.length - 1) : null; }
 	Type getType() { return members.length > 1 ? getMember!Type(0) : null; }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(Type type = getType())
 			writer(type, " ");
@@ -212,7 +212,7 @@ class EnumMember : Node
 			writer(" = ", expr);
 	}
 	
-	void addSymbols(Scope sc)
+	override void addSymbols(Scope sc)
 	{
 		sc.addSymbol(ident, this);
 	}
@@ -246,7 +246,7 @@ class FunctionBody : Node
 	Statement bodyStatement;
 	string outIdentifier;
 
-	FunctionBody clone()
+	override FunctionBody clone()
 	{
 		FunctionBody n = static_cast!FunctionBody(super.clone());
 		for(int m = 0; m < members.length; m++)
@@ -262,7 +262,7 @@ class FunctionBody : Node
 		return n;
 	}
 	
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -271,7 +271,7 @@ class FunctionBody : Node
 		return tn.outIdentifier == outIdentifier;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(inStatement)
 		{
@@ -310,7 +310,7 @@ class ConditionalDeclaration : Node
 	Node getThenDeclarations() { return getMember(1); }
 	Node getElseDeclarations() { return getMember(2); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0));
 		writer.nl;
@@ -329,7 +329,7 @@ class ConditionalDeclaration : Node
 		}
 	}
 
-	Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScope(Scope sc, Node[] athis)
 	{
 		Node n;
 		if(getCondition().evalCondition(sc))
@@ -351,7 +351,7 @@ class ConditionalStatement : Statement
 	Statement getThenStatement() { return getMember!Statement(1); }
 	Statement getElseStatement() { return getMember!Statement(2); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0));
 		writer.nl;
@@ -370,7 +370,7 @@ class ConditionalStatement : Statement
 		}
 	}
 
-	Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScope(Scope sc, Node[] athis)
 	{
 		Node n;
 		if(getCondition().evalCondition(sc))
@@ -396,13 +396,13 @@ class VersionSpecification : Node
 	mixin ForwardCtor!();
 	mixin GetIdentifierOrInteger!();
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("version = ", getMember(0), ";");
 		writer.nl;
 	}
 	
-	Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScope(Scope sc, Node[] athis)
 	{
 		if(isIdentifier())
 			sc.mod.specifyVersion(getIdentifier(), span.start);
@@ -417,13 +417,13 @@ class DebugSpecification : Node
 	mixin ForwardCtor!();
 	mixin GetIdentifierOrInteger!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("debug = ", getMember(0), ";");
 		writer.nl;
 	}
 
-	Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScope(Scope sc, Node[] athis)
 	{
 		if(isIdentifier())
 			sc.mod.specifyDebug(getIdentifier(), span.start);
@@ -445,7 +445,7 @@ class VersionCondition : Condition
 	mixin ForwardCtor!();
 	mixin GetIdentifierOrInteger!();
 
-	bool evalCondition(Scope sc)
+	override bool evalCondition(Scope sc)
 	{
 		if(members.length == 0)
 		{
@@ -459,7 +459,7 @@ class VersionCondition : Condition
 		return sc.mod.versionEnabled(getInteger());
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(members.length > 0)
 			writer("version(", getMember(0), ") ");
@@ -476,7 +476,7 @@ class DebugCondition : Condition
 	mixin ForwardCtor!();
 	mixin GetIdentifierOrInteger!();
 
-	bool evalCondition(Scope sc)
+	override bool evalCondition(Scope sc)
 	{
 		if(members.length == 0)
 			return sc.mod.debugEnabled();
@@ -485,7 +485,7 @@ class DebugCondition : Condition
 		return sc.mod.debugEnabled(getInteger());
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(members.length > 0)
 			writer("debug(", getMember(0), ") ");
@@ -498,12 +498,12 @@ class StaticIfCondition : Condition
 {
 	mixin ForwardCtor!();
 
-	bool evalCondition(Scope sc)
+	override bool evalCondition(Scope sc)
 	{
 		return getMember!Expression(0).interpret(sc).toBool();
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("static if(", getMember(0), ")");
 	}
@@ -517,7 +517,7 @@ class StaticAssert : Node
 
 	ArgumentList getArgumentList() { return getMember!ArgumentList(0); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(writer.writeImplementations)
 		{
@@ -525,11 +525,11 @@ class StaticAssert : Node
 			writer.nl();
 		}
 	}
-	void toC(CodeWriter writer)
+	override void toC(CodeWriter writer)
 	{
 	}
 	
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		auto args = getArgumentList();
 		auto expr = args.getMember!Expression(0);

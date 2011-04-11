@@ -29,7 +29,7 @@ class Aggregate : Type
 {
 	mixin ForwardCtor!();
 	
-	bool propertyNeedsParens() const { return true; }
+	override bool propertyNeedsParens() const { return true; }
 	
 	bool hasBody = true;
 	bool hasTemplArgs;
@@ -40,7 +40,7 @@ class Aggregate : Type
 	Constraint getConstraint() { return hasConstraint ? getMember!Constraint(1) : null; }
 	StructBody getBody() { return hasBody ? getMember!StructBody(members.length - 1) : null; }
 
-	Aggregate clone()
+	override Aggregate clone()
 	{
 		Aggregate n = static_cast!Aggregate(super.clone());
 
@@ -52,7 +52,7 @@ class Aggregate : Type
 		return n;
 	}
 
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -86,7 +86,7 @@ class Aggregate : Type
 			writer(constraint);
 	}
 
-	void addSymbols(Scope sc)
+	override void addSymbols(Scope sc)
 	{
 		if(ident.length)
 			sc.addSymbol(ident, this);
@@ -108,7 +108,7 @@ class Struct : Aggregate
 		ident = tok.txt;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
 			return;
@@ -135,7 +135,7 @@ class Union : Aggregate
 		ident = tok.txt;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
 			return;
@@ -159,7 +159,7 @@ class InheritingAggregate : Aggregate
 		baseClasses ~= bc;
 	}
 	
-	InheritingAggregate clone()
+	override InheritingAggregate clone()
 	{
 		InheritingAggregate n = static_cast!InheritingAggregate(super.clone());
 		
@@ -170,7 +170,7 @@ class InheritingAggregate : Aggregate
 		return n;
 	}
 
-	bool convertableFrom(Type from, ConversionFlags flags)
+	override bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(super.convertableFrom(from, flags))
 			return true;
@@ -186,7 +186,7 @@ class InheritingAggregate : Aggregate
 		return false;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		// class/interface written by derived class
 		writer.writeIdentifier(ident);
@@ -218,7 +218,7 @@ class Class : InheritingAggregate
 		ident = tok.txt;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
 			return;
@@ -251,7 +251,7 @@ class Intrface : InheritingAggregate
 		ident = tok.txt;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
 			return;
@@ -287,7 +287,7 @@ class BaseClass : Node
 		return null;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		// do not output protection in anonymous classes, and public is the default anyway
 		if(id != TOK_public)
@@ -295,7 +295,7 @@ class BaseClass : Node
 		writer(getMember(0));
 	}
 
-	void toC(CodeWriter writer)
+	override void toC(CodeWriter writer)
 	{
 		writer("public ", getMember(0)); // protection diffent from C
 	}
@@ -307,7 +307,7 @@ class StructBody : Node
 {
 	mixin ForwardCtor!();
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("{");
 		writer.nl();
@@ -335,7 +335,7 @@ class Constructor : Node
 	Constraint getConstraint() { return isTemplate() && members.length > 3 ? getMember!Constraint(2) : null; }
 	FunctionBody getBody() { return getMember!FunctionBody(members.length - 1); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("this");
 		if(auto tpl = getTemplateParameters())
@@ -368,7 +368,7 @@ class Destructor : Node
 
 	FunctionBody getBody() { return getMember!FunctionBody(0); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("~this()");
 		if(writer.writeImplementations)
@@ -390,7 +390,7 @@ class Invariant : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("invariant()");
 		if(writer.writeImplementations)
@@ -412,7 +412,7 @@ class ClassAllocator : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("new", getMember(0));
 		writer.nl;
@@ -426,7 +426,7 @@ class ClassDeallocator : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("delete", getMember(0));
 		writer.nl;
@@ -450,14 +450,14 @@ class AliasThis : Node
 		ident = tok.txt;
 	}
 	
-	AliasThis clone()
+	override AliasThis clone()
 	{
 		AliasThis n = static_cast!AliasThis(super.clone());
 		n.ident = ident;
 		return n;
 	}
 
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -466,7 +466,7 @@ class AliasThis : Node
 		return tn.ident == ident;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("alias ");
 		writer.writeIdentifier(ident);

@@ -269,5 +269,7 @@ Version history
 unreleased Version 0.3.24
 
   * fixed crash when installing/uninstalling other Visual Studio plugins
-  * building is now delegated into another thread, so the UI is more responsive while building
   * added menu entry "Open Website" to browse the visual D Website inside Visual Studio
+  * added support for Object Browser and Class View
+  * now runs a parser in the background to underline syntax errors
+  * fixed scanning of floating point literals starting with '.'

@@ -21,7 +21,7 @@ string getModuleDeclarationName(string fname)
 	try
 	{
 		enum ParseState { kSpace, kModule, kIdent, kDot };
-		int pstate = ParseState.kSpace;
+		ParseState pstate = ParseState.kSpace;
 		int state = 0;
 		File file = File(fname, "r");
 		while(!file.eof())
@@ -36,7 +36,7 @@ string getModuleDeclarationName(string fname)
 				if(id == TOK_Space || id == TOK_Comment)
 					continue;
 				
-				switch(pstate)
+				final switch(pstate)
 				{
 					case ParseState.kSpace:
 						if(id != TOK_module)

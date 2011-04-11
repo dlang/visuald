@@ -255,7 +255,7 @@ class Window : Widget
 		super(parent);
 	}
 
-	void Dispose()
+	override void Dispose()
 	{
 		if(backgroundBrush)
 			DeleteObject(backgroundBrush);

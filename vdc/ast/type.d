@@ -49,7 +49,7 @@ class Type : Node
 		return true;
 	}
 	
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		if(!typeinfo)
 			typeSemantic(sc);
@@ -72,7 +72,7 @@ class BasicType : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return false; }
+	override bool propertyNeedsParens() const { return false; }
 	
 	static TypeInfo getTypeInfo(int id)
 	{
@@ -104,7 +104,7 @@ class BasicType : Type
 		}
 	}
 
-	Value createValue()
+	override Value createValue()
 	{
 		switch(id)
 		{
@@ -136,7 +136,7 @@ class BasicType : Type
 		return new VoidValue;
 	}
 	
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		assert(id != TOK_auto);
 		typeinfo = getTypeInfo(id);
@@ -174,7 +174,7 @@ class BasicType : Type
 		}
 	}
 	
-	bool convertableFrom(Type from, ConversionFlags flags)
+	override bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(super.convertableFrom(from, flags))
 			return true;
@@ -188,7 +188,7 @@ class BasicType : Type
 		return id == bt.id;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		assert(id != TOK_auto);
 		writer(id);
@@ -201,9 +201,9 @@ class AutoType : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return false; }
+	override bool propertyNeedsParens() const { return false; }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(id != TOK_auto) // only implicitely added?
 			writer(id);
@@ -216,11 +216,11 @@ class ModifiedType : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return true; }
+	override bool propertyNeedsParens() const { return true; }
 	
 	Type getType() { return getMember!Type(0); }
 	
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		TypeInfo_Const ti;
 		switch(id)
@@ -229,6 +229,7 @@ class ModifiedType : Type
 			case TOK_immutable: ti = new TypeInfo_Invariant; break;
 			case TOK_inout:     ti = new TypeInfo_Inout;  break;
 			case TOK_shared:    ti = new TypeInfo_Shared; break;
+			default: assert(false);
 		}
 		
 		auto type = getType();
@@ -238,7 +239,7 @@ class ModifiedType : Type
 		typeinfo = ti;
 	}
 	
-	bool convertableFrom(Type from, ConversionFlags flags)
+	override bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(super.convertableFrom(from, flags))
 			return true;
@@ -264,12 +265,12 @@ class ModifiedType : Type
 		return false;
 	}
 
-	Value createValue()
+	override Value createValue()
 	{
 		return getType().createValue(); // ignore modifier
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(id, "(", getMember(0), ")");
 	}
@@ -281,17 +282,17 @@ class IdentifierType : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return false; }
+	override bool propertyNeedsParens() const { return false; }
 	
 	IdentifierList getIdentifierList() { return getMember!IdentifierList(0); }
 	
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		auto idlist = getIdentifierList();
 		idlist.semantic(sc);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0));
 	}
@@ -304,13 +305,13 @@ class Typeof : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return false; }
+	override bool propertyNeedsParens() const { return false; }
 	
 	bool isReturn() { return id == TOK_return; }
 	
 	IdentifierList getIdentifierList() { return getMember!IdentifierList(1); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(isReturn())
 			writer("typeof(return)");
@@ -326,11 +327,11 @@ class TypeIndirection : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return true; }
+	override bool propertyNeedsParens() const { return true; }
 	
 	Type getType() { return getMember!Type(0); }
 	
-	bool convertableFrom(Type from, ConversionFlags flags)
+	override bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(super.convertableFrom(from, flags))
 			return true;
@@ -353,7 +354,7 @@ class TypePointer : TypeIndirection
 {
 	mixin ForwardCtor!();
 
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		auto type = getType();
 		type.semantic(sc);
@@ -362,12 +363,12 @@ class TypePointer : TypeIndirection
 		typeinfo = typeinfo_ptr;
 	}
 
-	Value createValue()
+	override Value createValue()
 	{
 		return new PointerValue();
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "*");
 	}
@@ -379,7 +380,7 @@ class TypeDynamicArray : TypeIndirection
 {
 	mixin ForwardCtor!();
 
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		auto type = getType();
 		type.semantic(sc);
@@ -388,7 +389,7 @@ class TypeDynamicArray : TypeIndirection
 		typeinfo = typeinfo_arr;
 	}
 	
-	bool convertableFrom(Type from, ConversionFlags flags)
+	override bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(super.convertableFrom(from, flags))
 			return true;
@@ -407,7 +408,7 @@ class TypeDynamicArray : TypeIndirection
 		return false;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[]");
 	}
@@ -419,7 +420,7 @@ class SuffixDynamicArray : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("[]");
 	}
@@ -433,7 +434,7 @@ class TypeStaticArray : TypeIndirection
 
 	Expression getDimension() { return getMember!Expression(1); }
 	
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		auto type = getType();
 		type.semantic(sc);
@@ -443,7 +444,7 @@ class TypeStaticArray : TypeIndirection
 		typeinfo = typeinfo_arr;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[", getMember(1), "]");
 	}
@@ -457,7 +458,7 @@ class SuffixStaticArray : Node
 
 	Expression getDimension() { return getMember!Expression(0); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("[", getMember(0), "]");
 	}
@@ -471,7 +472,7 @@ class TypeAssocArray : TypeIndirection
 
 	Type getKeyType() { return getMember!Type(1); }
 	
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		auto vtype = getType();
 		vtype.semantic(sc);
@@ -484,7 +485,7 @@ class TypeAssocArray : TypeIndirection
 		typeinfo = typeinfo_arr;
 	}
 
-	bool convertableFrom(Type from, ConversionFlags flags)
+	override bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(super.convertableFrom(from, flags))
 		{
@@ -495,7 +496,7 @@ class TypeAssocArray : TypeIndirection
 		return false;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[", getMember(1), "]");
 	}
@@ -509,7 +510,7 @@ class SuffixAssocArray : Node
 
 	Type getKeyType() { return getMember!Type(0); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("[", getMember(0), "]");
 	}
@@ -521,13 +522,13 @@ class TypeArraySlice : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return true; }
+	override bool propertyNeedsParens() const { return true; }
 	
 	Type getType() { return getMember!Type(0); }
 	Expression getLower() { return getMember!Expression(1); }
 	Expression getUpper() { return getMember!Expression(2); }
 
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		auto rtype = getType();
 		if(auto tpl = cast(TypeInfo_Tuple) rtype.typeinfo)
@@ -553,7 +554,7 @@ class TypeArraySlice : Type
 		}
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[", getLower(), " .. ", getUpper(), "]");
 	}
@@ -565,12 +566,12 @@ class TypeDelegate : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return true; }
+	override bool propertyNeedsParens() const { return true; }
 	
 	Type getReturnType() { return getMember!Type(0); }
 	ParameterList getParameters() { return getMember!ParameterList(1); }
 	
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		auto ti_dg = new TypeInfo_DelegateX;
 			
@@ -588,7 +589,7 @@ class TypeDelegate : Type
 		typeinfo = ti_dg;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getReturnType(), " delegate", getParameters());
 		writer.writeAttributes(attr, true);
@@ -601,12 +602,12 @@ class TypeFunction : Type
 {
 	mixin ForwardCtor!();
 
-	bool propertyNeedsParens() const { return true; }
+	override bool propertyNeedsParens() const { return true; }
 	
 	Type getReturnType() { return getMember!Type(0); }
 	ParameterList getParameters() { return getMember!ParameterList(1); }
 	
-	void typeSemantic(Scope sc)
+	override void typeSemantic(Scope sc)
 	{
 		auto ti_fn = new TypeInfo_FunctionX;
 			
@@ -623,7 +624,7 @@ class TypeFunction : Type
 		typeinfo = ti_fn;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getReturnType(), " function", getParameters());
 		writer.writeAttributes(attr, true);

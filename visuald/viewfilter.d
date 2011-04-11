@@ -76,7 +76,7 @@ version(tip)
 	{
 	}
 
-	void Dispose()
+	override void Dispose()
 	{
 		if(mView)
 		{
@@ -95,7 +95,7 @@ version(tip)
 		mCodeWinMgr = null;
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		// do not implement, VS2010 will not show Data tooltips in debugger if it is
 		//if(queryInterface!(IVsTextViewFilter) (this, riid, pvObject))
@@ -1209,7 +1209,7 @@ class TextTipData : DisposingComObject, IVsTextTipData
 			mTipWindow.SetTextTipData(this);
 	}
 	
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsTextTipData) (this, riid, pvObject))
 			return S_OK;

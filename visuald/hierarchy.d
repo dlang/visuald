@@ -51,7 +51,7 @@ class CFileNode : CHierNode,
 		SetName(getBaseName(filename));
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(CFileNode) (this, riid, pvObject))
 			return S_OK;
@@ -79,7 +79,7 @@ class CFileNode : CHierNode,
 	}
 
 	// Property functions
-	int GetProperty(VSHPROPID propid, out VARIANT var)
+	override int GetProperty(VSHPROPID propid, out VARIANT var)
 	{
 		switch(propid)
 		{
@@ -105,7 +105,6 @@ class CFileNode : CHierNode,
 		default:
 			return super.GetProperty(propid, var);
 		}
-		return E_NOTIMPL;
 	}
 
 	override int SetProperty(VSHPROPID propid, in VARIANT var)
@@ -121,10 +120,9 @@ class CFileNode : CHierNode,
 		default:
 			return super.SetProperty(propid, var);
 		}
-		return E_NOTIMPL;
 	}
 
-	HRESULT GetGuidProperty(VSHPROPID propid, out GUID pGuid)
+	override HRESULT GetGuidProperty(VSHPROPID propid, out GUID pGuid)
 	{
 		switch (propid)
 		{
@@ -165,7 +163,7 @@ class CFileNode : CHierNode,
 		return S_OK;
 	}
 
-	string GetFullPath()
+	override string GetFullPath()
 	{
 		if(isabs(mFilename))
 			return mFilename;
@@ -224,14 +222,14 @@ class CFileNode : CHierNode,
 		mLinkOut = lnk;
 	}
 
-	int DoDefaultAction()
+	override int DoDefaultAction()
 	{
 		if(CVsHierarchy hier = GetCVsHierarchy())
 			return hier.OpenDoc(this, false, false, true);
 		return S_OK;
 	}
 
-	uint GetContextMenu() { return IDM_VS_CTXT_ITEMNODE; }
+	override uint GetContextMenu() { return IDM_VS_CTXT_ITEMNODE; }
 
 	override int QueryStatus( 
 		/* [unique][in] */ in GUID *pguidCmdGroup,
@@ -520,7 +518,6 @@ class CFolderNode : CHierContainer
 		default:
 			return super.GetProperty(propid, var);
 		}
-		return E_NOTIMPL;
 	}
 
 	override int SetProperty(VSHPROPID propid, in VARIANT var)
@@ -534,7 +531,6 @@ class CFolderNode : CHierContainer
 		default:
 			return super.SetProperty(propid, var);
 		}
-		return E_NOTIMPL;
 	}
 
 	override int QueryStatus( 
@@ -721,14 +717,14 @@ class CProjectNode : CFolderNode
 	{
 	}
 
-	uint GetContextMenu() { return IDM_VS_CTXT_PROJNODE; }
+	override uint GetContextMenu() { return IDM_VS_CTXT_PROJNODE; }
 
-	string GetFullPath()
+	override string GetFullPath()
 	{
 		return mFilename;
 	}
 
-	CVsHierarchy GetCVsHierarchy()
+	override CVsHierarchy GetCVsHierarchy()
 	{
 		return mHierarchy;
 	}
@@ -898,7 +894,7 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 				IVsUIHierarchy,
 				IVsPersistHierarchyItem
 {
-	void Dispose()
+	override void Dispose()
 	{
 		m_pParentHierarchy = release(m_pParentHierarchy);
 		if(m_pRootNode)
@@ -908,7 +904,7 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 		}
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsHierarchy) (this, riid, pvObject))
 			return S_OK;
@@ -1370,14 +1366,14 @@ version(none)
 		switch (itemid)
 		{
 		case VSITEMID_NIL:
-			assert(false, "error: known invalid VSITEMID");
+			assert(_false, "error: known invalid VSITEMID");
 			return null;
 
 		case VSITEMID_ROOT:
 			return GetRootNode();
 
 		case VSITEMID_SELECTION:
-			assert(false, "error: Hierarchy illegaly called with VSITEMID_SELECTION");
+			assert(_false, "error: Hierarchy illegaly called with VSITEMID_SELECTION");
 			return null;
 
 		default:

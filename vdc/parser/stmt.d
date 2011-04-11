@@ -240,8 +240,6 @@ class NonEmptyStatement : Statement
 				p.pushRollback(&rollbackDeclFailure);
 				p.pushState(&shiftDecl);
 				return Declaration.enter(p);
-				
-				return p.parseError("unexpeced token in statement");
 		}
 	}
 	
@@ -748,7 +746,7 @@ class CaseStatement : Statement
 	static Action stateStatement(Parser p)
 	{
 		return Forward;
-		
+/+
 		switch(p.tok.id)
 		{
 			case TOK_case:
@@ -759,6 +757,7 @@ class CaseStatement : Statement
 				p.pushState(&Parser.popForward);
 				return Statement.enter(p);
 		}
++/
 	}
 	
 	// argument list

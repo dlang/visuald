@@ -27,7 +27,7 @@ class TemplateDeclaration : Node
 	Node getBody() { return getMember(members.length - 1); }
 	bool isMixin() { return id == TOK_mixin; }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(isMixin())
 			writer("mixin ");
@@ -48,7 +48,7 @@ class TemplateDeclaration : Node
 //		writer.nl();
 		writer.nl();
 	}
-	void toC(CodeWriter writer)
+	override void toC(CodeWriter writer)
 	{
 		// we never write the template, only instantiations
 	}
@@ -65,7 +65,7 @@ class TemplateParameterList : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("(");
 		writer.writeArray(members);
@@ -92,7 +92,7 @@ class TemplateInstance : Identifier
 {
 	mixin ForwardCtorTok!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer.writeIdentifier(ident);
 		writer("!(", getMember(0), ")");
@@ -108,7 +108,7 @@ class TemplateArgumentList : Node
 {
 	mixin ForwardCtorNoId!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		bool writeSep = false;
 		foreach(m; members)
@@ -178,7 +178,7 @@ class TemplateTypeParameter : TemplateParameter
 		ident = tok.txt;
 	}
 	
-	TemplateTypeParameter clone()
+	override TemplateTypeParameter clone()
 	{
 		TemplateTypeParameter n = static_cast!TemplateTypeParameter(super.clone());
 		n.ident = ident;
@@ -191,7 +191,7 @@ class TemplateTypeParameter : TemplateParameter
 		}
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -200,7 +200,7 @@ class TemplateTypeParameter : TemplateParameter
 		return tn.ident == ident;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer.writeIdentifier(ident);
 		if(specialization)
@@ -222,7 +222,7 @@ class TemplateThisParameter : TemplateParameter
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("this ", getMember(0));
 	}
@@ -240,7 +240,7 @@ class TemplateValueParameter : TemplateParameter
 	Expression specialization;
 	Expression def;
 
-	TemplateValueParameter clone()
+	override TemplateValueParameter clone()
 	{
 		TemplateValueParameter n = static_cast!TemplateValueParameter(super.clone());
 		for(int m = 0; m < members.length; m++)
@@ -253,7 +253,7 @@ class TemplateValueParameter : TemplateParameter
 		return n;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0));
 		if(specialization)
@@ -283,7 +283,7 @@ class TemplateAliasParameter : TemplateParameter
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("alias ", getMember(0));
 	}
@@ -295,13 +295,13 @@ class TemplateTupleParameter : TemplateParameter
 {
 	string ident;
 	
-	TemplateTupleParameter clone()
+	override TemplateTupleParameter clone()
 	{
 		TemplateTupleParameter n = static_cast!TemplateTupleParameter(super.clone());
 		n.ident = ident;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -317,7 +317,7 @@ class TemplateTupleParameter : TemplateParameter
 		super(tok);
 		ident = tok.txt;
 	}
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer.writeIdentifier(ident);
 		writer("...");
@@ -347,7 +347,7 @@ class TemplateMixin : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("mixin ", getMember(0));
 		if(members.length > 1)
@@ -364,7 +364,7 @@ class Constraint : Node
 {
 	mixin ForwardCtor!();
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(" if(", getMember(0), ")");
 	}

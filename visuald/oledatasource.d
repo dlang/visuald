@@ -43,7 +43,7 @@ class OleDataSource : DComObject, IDataObject
 		Empty();
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 

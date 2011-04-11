@@ -523,7 +523,7 @@ class DCodeWriter : CodeWriter
 		super(snk);
 	}
 	
-	void writeNode(ast.Node node)
+	override void writeNode(ast.Node node)
 	{
 		node.toD(this);
 	}
@@ -536,12 +536,12 @@ class CCodeWriter : CodeWriter
 		super(snk);
 	}
 	
-	void writeNode(ast.Node node)
+	override void writeNode(ast.Node node)
 	{
 		node.toC(this);
 	}
 
-	void writeKeyword(int id)
+	override void writeKeyword(int id)
 	{
 		// Compiler-specific
 		switch(id)
@@ -554,7 +554,7 @@ class CCodeWriter : CodeWriter
 		}
 	}
 	
-	void writeIdentifier(string ident)
+	override void writeIdentifier(string ident)
 	{
 		// check whether it conflicts with a C++ keyword
 		// Compiler-specific
@@ -574,7 +574,7 @@ class CCodeWriter : CodeWriter
 		}
 	}
 	
-	void writeAttributes(Annotation attr, bool spaceBefore = false)
+	override void writeAttributes(Annotation attr, bool spaceBefore = false)
 	{
 		while(attr)
 		{
@@ -592,7 +592,7 @@ class CCodeWriter : CodeWriter
 		}
 	}
 
-	void writeAnnotations(Annotation annot)
+	override void writeAnnotations(Annotation annot)
 	{
 	}
 }

@@ -111,15 +111,15 @@ class BinaryExpression : Expression
 	Expression getLeftExpr() { return getMember!Expression(0); }
 	Expression getRightExpr() { return getMember!Expression(1); }
 
-	PREC getPrecedence() { return precedence[id]; }
+	override PREC getPrecedence() { return precedence[id]; }
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		getLeftExpr().semantic(sc);
 		getRightExpr().semantic(sc);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		Expression exprL = getLeftExpr();
 		Expression exprR = getRightExpr();
@@ -132,7 +132,7 @@ class BinaryExpression : Expression
 		writeExpr(writer, exprR, parenR);
 	}
 
-	Type calcType(Scope sc)
+	override Type calcType(Scope sc)
 	{
 		if(!type)
 		{
@@ -142,7 +142,7 @@ class BinaryExpression : Expression
 		return type;
 	}
 	
-	Value interpret(Scope sc)
+	override Value interpret(Scope sc)
 	{
 		Value vL = getLeftExpr().interpret(sc);
 		Value vR = getRightExpr().interpret(sc);
@@ -272,16 +272,16 @@ class ConditionalExpression : Expression
 	Expression getThenExpr() { return getMember!Expression(1); }
 	Expression getElseExpr() { return getMember!Expression(2); }
 	
-	PREC getPrecedence() { return PREC.cond; }
+	override PREC getPrecedence() { return PREC.cond; }
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		getCondition().semantic(sc);
 		getThenExpr().semantic(sc);
 		getElseExpr().semantic(sc);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		Expression condExpr = getCondition();
 		Expression thenExpr = getThenExpr();
@@ -298,7 +298,7 @@ class ConditionalExpression : Expression
 		writeExpr(writer, elseExpr, elseParen);
 	}
 	
-	Value interpret(Scope sc)
+	override Value interpret(Scope sc)
 	{
 		Value cond = getCondition().interpret(sc);
 		Expression e = (cond.toBool() ? getThenExpr() : getElseExpr());
@@ -313,7 +313,7 @@ class OrOrExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 
-	Value interpret(Scope sc)
+	override Value interpret(Scope sc)
 	{
 		Value vL = getLeftExpr().interpret(sc);
 		if(vL.toBool())
@@ -330,7 +330,7 @@ class AndAndExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 
-	Value interpret(Scope sc)
+	override Value interpret(Scope sc)
 	{
 		Value vL = getLeftExpr().interpret(sc);
 		if(!vL.toBool())
@@ -457,16 +457,16 @@ class UnaryExpression : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.unary; }
+	override PREC getPrecedence() { return PREC.unary; }
 	
 	Expression getExpression() { return getMember!Expression(0); }
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		getExpression().semantic(sc);
 	}
 	
-	Value interpret(Scope sc)
+	override Value interpret(Scope sc)
 	{
 		Value v = getExpression().interpret(sc);
 version(all)
@@ -488,7 +488,7 @@ else
 		}
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		Expression expr = getExpression();
 		bool paren = (expr.getPrecedence() < getPrecedence());
@@ -514,13 +514,13 @@ class NewExpression : Expression
 		super(TOK_new, tok.span);
 	}
 
-	NewExpression clone()
+	override NewExpression clone()
 	{
 		NewExpression n = static_cast!NewExpression(super.clone());
 		n.hasNewArgs = hasNewArgs;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -529,13 +529,13 @@ class NewExpression : Expression
 		return tn.hasNewArgs == hasNewArgs;
 	}
 	
-	PREC getPrecedence() { return PREC.unary; }
+	override PREC getPrecedence() { return PREC.unary; }
 	
 	ArgumentList getNewArguments() { return hasNewArgs ? getMember!ArgumentList(0) : null; }
 	Type getType() { return getMember!Type(hasNewArgs ? 1 : 0); }
 	ArgumentList getCtorArguments() { return members.length > (hasNewArgs ? 2 : 1) ? getMember!ArgumentList(members.length - 1) : null; }
 	
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		if(auto args = getNewArguments())
 			args.semantic(sc);
@@ -544,7 +544,7 @@ class NewExpression : Expression
 			args.semantic(sc);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(ArgumentList nargs = getNewArguments())
 			writer("new(", nargs, ") ");
@@ -563,9 +563,9 @@ class AnonymousClassType : Type
 	ArgumentList getArguments() { return members.length > 1 ? getMember!ArgumentList(0) : null; }
 	AnonymousClass getClass() { return getMember!AnonymousClass(members.length - 1); }
 	
-	bool propertyNeedsParens() const { return true; }
+	override bool propertyNeedsParens() const { return true; }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(ArgumentList args = getArguments())
 			writer("class(", args, ") ");
@@ -595,19 +595,19 @@ class CastExpression : Expression
 		super(TOK_cast, tok.span);
 	}
 
-	PREC getPrecedence() { return PREC.unary; }
+	override PREC getPrecedence() { return PREC.unary; }
 	
 	Type getType() { return members.length > 1 ? getMember!Type(0) : null; }
 	Expression getExpression() { return getMember!Expression(members.length - 1); }
 	
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		if(auto type = getType())
 			type.semantic(sc);
 		getExpression().semantic(sc);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("cast(");
 		writer.writeAttributes(attr);
@@ -643,17 +643,17 @@ class PostfixExpression : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
 	Expression getExpression() { return getMember!Expression(0); }
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		foreach(m; members)
 			m.semantic(sc);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		Expression expr = getExpression();
 		bool paren = (expr.getPrecedence() < getPrecedence());
@@ -701,13 +701,13 @@ class ArgumentList : Node
 {
 	mixin ForwardCtor!();
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		foreach(m; members)
 			m.semantic(sc);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		bool writeSep = false;
 		foreach(m; members)
@@ -762,9 +762,9 @@ class PrimaryExpression : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(id);
 	}
@@ -776,15 +776,15 @@ class ArrayLiteral : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		foreach(m; members)
 			m.semantic(sc);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("[");
 		writer.writeArray(members);
@@ -798,9 +798,9 @@ class VoidInitializer : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("void");
 	}
@@ -811,9 +811,9 @@ class EmptyExpression : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.expr; }
+	override PREC getPrecedence() { return PREC.expr; }
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 	}
 }
@@ -864,9 +864,9 @@ class FunctionLiteral : Expression
 	ParameterList getParameterList() { return getMember!ParameterList(members.length - 2); }
 	FunctionBody getFunctionBody() { return getMember!FunctionBody(members.length - 1); }
 	
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(id != 0)
 			writer(id, " ");
@@ -882,9 +882,9 @@ class StructLiteral : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("{ ", getMember(0), " }");
 	}
@@ -901,12 +901,12 @@ class AssertExpression : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
 	Expression getExpression() { return getMember!Expression(0); }
 	Expression getMessage() { return getMember!Expression(1); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("assert(");
 		writer(getExpression());
@@ -922,11 +922,11 @@ class MixinExpression : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
 	Expression getExpression() { return getMember!Expression(0); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("mixin(", getMember!Expression(0), ")");
 	}
@@ -938,11 +938,11 @@ class ImportExpression : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
 	Expression getExpression() { return getMember!Expression(0); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("import(", getMember!Expression(0), ")");
 	}
@@ -955,9 +955,9 @@ class TypeIdExpression : Expression
 {
 	mixin ForwardCtor!();
 
-	PREC getPrecedence() { return PREC.primary; }
+	override PREC getPrecedence() { return PREC.primary; }
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("typeid(", getMember(0), ")");
 	}
@@ -1001,14 +1001,14 @@ class IsExpression : PrimaryExpression
 		super(TOK_is, tok.span);
 	}
 	
-	IsExpression clone()
+	override IsExpression clone()
 	{
 		IsExpression n = static_cast!IsExpression(super.clone());
 		n.kind = kind;
 		n.ident = ident;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -1021,7 +1021,7 @@ class IsExpression : PrimaryExpression
 	Type getType() { return getMember!Type(0); }
 	TypeSpecialization getTypeSpecialization() { return members.length > 1 ? getMember!TypeSpecialization(1) : null; }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("is(", getType());
 		if(ident.length)
@@ -1043,7 +1043,7 @@ class TypeSpecialization : Node
 	
 	Type getType() { return getMember!Type(0); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(id != 0)
 			writer(id);
@@ -1066,14 +1066,14 @@ class IdentifierExpression : PrimaryExpression
 		super(TOK_Identifier, tok.span);
 	}
 	
-	IdentifierExpression clone()
+	override IdentifierExpression clone()
 	{
 		IdentifierExpression n = static_cast!IdentifierExpression(super.clone());
 		n.global = global;
 		return n;
 	}
 	
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -1084,7 +1084,7 @@ class IdentifierExpression : PrimaryExpression
 	
 	Identifier getIdentifier() { return getMember!Identifier(0); }
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		if(global)
 			sc = Module.getModule(this).scop;
@@ -1093,14 +1093,14 @@ class IdentifierExpression : PrimaryExpression
 		resolved = sc.resolve(ident, span);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		if(global)
 			writer(".");
 		writer(getIdentifier());
 	}
 
-	void toC(CodeWriter writer)
+	override void toC(CodeWriter writer)
 	{
 		if(resolved)
 		{
@@ -1159,7 +1159,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		value = parse!ulong(val, radix);
 	}
 	
-	IntegerLiteralExpression clone()
+	override IntegerLiteralExpression clone()
 	{
 		IntegerLiteralExpression n = static_cast!IntegerLiteralExpression(super.clone());
 		n.txt = txt;
@@ -1169,7 +1169,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		return n;
 	}
 
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -1181,12 +1181,12 @@ class IntegerLiteralExpression : PrimaryExpression
 			&& tn.lng == lng;
 	}
 
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(txt);
 	}
 	
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		if(type)
 			return;
@@ -1212,7 +1212,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		return v;
 	}
 	
-	Value interpret(Scope sc)
+	override Value interpret(Scope sc)
 	{
 		if(lng || value >= 0x80000000)
 			if(unsigned)
@@ -1292,7 +1292,7 @@ class FloatLiteralExpression : PrimaryExpression
 		value = parse!real(val);
 	}
 	
-	FloatLiteralExpression clone()
+	override FloatLiteralExpression clone()
 	{
 		FloatLiteralExpression n = static_cast!FloatLiteralExpression(super.clone());
 		n.txt = txt;
@@ -1302,7 +1302,7 @@ class FloatLiteralExpression : PrimaryExpression
 		n.flt = flt;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -1315,7 +1315,7 @@ class FloatLiteralExpression : PrimaryExpression
 			&& tn.lng == lng;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(txt);
 	}
@@ -1338,13 +1338,13 @@ class StringLiteralExpression : PrimaryExpression
 		txt ~= " " ~ tok.txt;
 	}
 
-	StringLiteralExpression clone()
+	override StringLiteralExpression clone()
 	{
 		StringLiteralExpression n = static_cast!StringLiteralExpression(super.clone());
 		n.txt = txt;
 		return n;
 	}
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -1353,17 +1353,17 @@ class StringLiteralExpression : PrimaryExpression
 		return tn.txt == txt;
 	}
 
-	void semantic(Scope sc)
+	override void semantic(Scope sc)
 	{
 		type = createTypeString(span);
 	}
 	
-	Value interpret(Scope sc)
+	override Value interpret(Scope sc)
 	{
 		return Value.create(txt);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(txt);
 	}
@@ -1381,14 +1381,14 @@ class CharacterLiteralExpression : PrimaryExpression
 		txt = tok.txt;
 	}
 	
-	CharacterLiteralExpression clone()
+	override CharacterLiteralExpression clone()
 	{
 		CharacterLiteralExpression n = static_cast!CharacterLiteralExpression(super.clone());
 		n.txt = txt;
 		return n;
 	}
 	
-	bool compare(const(Node) n) const
+	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
 			return false;
@@ -1397,7 +1397,7 @@ class CharacterLiteralExpression : PrimaryExpression
 		return tn.txt == txt;
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer(txt);
 	}
@@ -1415,7 +1415,7 @@ class TypeProperty : PrimaryExpression
 	Type getType() { return getMember!Type(0); }
 	Identifier getProperty() { return getMember!Identifier(1); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		Type type = getType();
 		if(type.propertyNeedsParens())
@@ -1437,7 +1437,7 @@ class StructConstructor : PrimaryExpression
 	Type getType() { return getMember!Type(0); }
 	ArgumentList getArguments() { return getMember!ArgumentList(1); }
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		Type type = getType();
 		if(type.propertyNeedsParens())
@@ -1456,7 +1456,7 @@ class TraitsExpression : PrimaryExpression
 		super(TOK___traits, tok.span);
 	}
 	
-	void toD(CodeWriter writer)
+	override void toD(CodeWriter writer)
 	{
 		writer("__traits(", getMember(0));
 		if(members.length > 1)

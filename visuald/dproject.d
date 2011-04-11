@@ -56,7 +56,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 		mPackage = pkg;
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -622,14 +622,14 @@ class Project : CVsHierarchy,
 		parseXML();
 	}
 	
-	void Dispose()
+	override void Dispose()
 	{
 		mConfigProvider = release(mConfigProvider);
 		mExtProject = release(mExtProject);
 		super.Dispose();
 	}
 
-	HRESULT QueryInterface(in IID* riid, void** pvObject)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		//mixin(LogCallMix);
 
@@ -1136,12 +1136,6 @@ class Project : CVsHierarchy,
 		// needs common properties to not open settings dialog modal
 		mixin(LogCallMix);
 		return PropertyPageFactory.GetCommonPages(pPages);
-
-		// no common properties
-		pPages.cElems = 0;
-		pPages.pElems = null;
-		return S_FALSE;
-		// return GetPagesImpl(pPages);
 	}
 
 	// IVsAggregatableProject
@@ -1457,7 +1451,7 @@ class Project : CVsHierarchy,
 	}
 
 	// CVsHierarchy
-	HRESULT QueryStatusSelection(in GUID *pguidCmdGroup,
+	override HRESULT QueryStatusSelection(in GUID *pguidCmdGroup,
 				     in ULONG cCmds, OLECMD *prgCmds, OLECMDTEXT *pCmdText,
 				     ref CHierNode[] rgSelection, 
 				     bool bIsHierCmd)// TRUE if cmd originated via CVSUiHierarchy::ExecCommand
@@ -1833,7 +1827,7 @@ class Project : CVsHierarchy,
 				*pfCancelDrop = TRUE;
 			return S_OK;
 		default:
-			assert(FALSE);
+			assert(_false);
 			return S_OK;
 		}
 
@@ -2063,8 +2057,6 @@ class Project : CVsHierarchy,
 		default:
 			return S_FALSE;
 		}
-
-		return S_FALSE;
 	}
 
 	HRESULT ProcessSelectionDataObject(
