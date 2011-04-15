@@ -246,8 +246,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			}
 			if(inTokenString || nowInTokenString)
 				type = stringColorType(type);
-			else if(mParseSource)
-				type = parseErrors(span, type, tok);
+			//else if(mParseSource)
+			//	type = parseErrors(span, type, tok);
 			inTokenString = nowInTokenString;
 				
 			while(prevpos < pos)

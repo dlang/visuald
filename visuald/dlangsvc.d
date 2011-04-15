@@ -952,8 +952,21 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	override HRESULT GetTipText(/+[in]+/ IVsTextMarker pMarker, 
 		/+[out, optional]+/ BSTR *pbstrText)
 	{
-		*pbstrText = allocBSTR("Toooool");
-		return S_OK;
+		if(auto marker = qi_cast!IVsTextLineMarker(pMarker))
+		{
+			scope(exit) marker.Release();
+			TextSpan span;
+			if(marker.GetCurrentSpan(&span) == S_OK)
+			{
+				string tip = getParseError(span.iStartLine, span.iStartIndex);
+				if(tip.length)
+				{
+					*pbstrText = allocBSTR(tip);
+					return S_OK;
+				}
+			}
+		}
+		return E_FAIL;
 	}
 
 	override HRESULT OnBufferSave(LPCOLESTR pszFileName)
@@ -2372,7 +2385,7 @@ else
 		
 		mParsingState = 1;
 		mModificationCountAST = mModificationCount;
-		auto task = task((Source src) { src.doParse(); }, this);
+		auto task = task(&doParse);
 		taskPool.put(task);
 		
 		return true;

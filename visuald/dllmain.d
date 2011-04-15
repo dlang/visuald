@@ -92,11 +92,11 @@ else // ensure patched runtime in release
 		case DLL_THREAD_DETACH:
 			dll_thread_detach( true, true );
 			break;
+	}
 			
 		default:
 			assert(_false);
 			return false;
-	}
 	
 	}
 	return true;
