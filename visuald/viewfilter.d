@@ -86,6 +86,7 @@ version(tip)
 				Unadvise!(IVsTextViewEvents)(mView, mCookieTextViewEvents);
 			mView = release(mView);
 		}
+version(tip)
 		if(mTextTipData)
 		{
 			 // we need to break the circular reference TextTipData<->IVsMethodTipWindow
@@ -1181,6 +1182,7 @@ else
 		HighlightMatchingPairs();
 		
 version(tip)
+{
 		string msg = mCodeWinMgr.mSource.getParseError(line, idx);
 		if(msg.length)
 		{
@@ -1189,7 +1191,7 @@ version(tip)
 		}
 		else
 			mTextTipData.Dismiss();
-		
+}
 		return true;
 	}
 }

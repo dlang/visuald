@@ -852,7 +852,7 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	}
 }
 
-class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
+class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTextMarkerClient
 {
 	Colorizer mColorizer;
 	IVsTextLines mBuffer;
@@ -904,6 +904,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			return S_OK;
 		if(queryInterface!(IVsTextLinesEvents) (this, riid, pvObject))
 			return S_OK;
+		if(queryInterface!(IVsTextMarkerClient) (this, riid, pvObject))
+			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
 
@@ -941,6 +943,52 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 		return S_OK;
 	}
 
+	// IVsTextMarkerClient //////////////////////////////////////
+	override HRESULT MarkerInvalidated()
+	{
+		return S_OK;
+	}
+
+	override HRESULT GetTipText(/+[in]+/ IVsTextMarker pMarker, 
+		/+[out, optional]+/ BSTR *pbstrText)
+	{
+		*pbstrText = allocBSTR("Toooool");
+		return S_OK;
+	}
+
+	override HRESULT OnBufferSave(LPCOLESTR pszFileName)
+	{
+		return S_OK;
+	}
+
+	override HRESULT OnBeforeBufferClose()
+	{
+		return S_OK;
+	}
+
+
+        // Commands -- see MarkerCommandValues for meaning of iItem param
+	override HRESULT GetMarkerCommandInfo(/+[in]+/ IVsTextMarker pMarker, in int iItem, 
+		/+[out, custom(uuid_IVsTextMarkerClient, "optional")]+/ BSTR * pbstrText, 
+		/+[out]+/ DWORD* pcmdf)
+	{
+		return E_NOTIMPL;
+	}
+
+	override HRESULT ExecMarkerCommand(/+[in]+/ IVsTextMarker pMarker, in int iItem)
+	{
+		return E_NOTIMPL;
+	}
+
+	override HRESULT OnAfterSpanReload()
+	{
+		return S_OK;
+	}
+
+	override HRESULT OnAfterMarkerChange(/+[in]+/ IVsTextMarker pMarker)
+	{
+		return S_OK;
+	}
 	///////////////////////////////////////////////////////////////////////////////
 	enum
 	{
@@ -2295,6 +2343,25 @@ else
 		
 		if(mParsingState > 1)
 		{
+			IVsEnumLineMarkers pEnum;
+			if(mBuffer.EnumMarkers(0, 0, 0, 0, MARKER_CODESENSE_ERROR, EM_ENTIREBUFFER, &pEnum) == S_OK)
+			{
+				scope(exit) release(pEnum);
+				IVsTextLineMarker marker;
+				while(pEnum.Next(&marker) == S_OK)
+				{
+					marker.Invalidate();
+					marker.Release();
+				}
+			}
+			for(int i = 0; i < mParseErrors.length; i++)
+			{
+				auto span = mParseErrors[0].span;
+				IVsTextLineMarker marker;
+				mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.start.line - 1, span.start.index, 
+										 span.end.line - 1, span.end.index, this, &marker);
+			}
+			
 			mParsingState = 0;
 			ReColorizeLines (0, -1);
 			return true;
