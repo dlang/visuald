@@ -324,15 +324,15 @@ class LanguageService : DisposingComObject,
 	{
 		colorableItems = [
 			// The first 6 items in this list MUST be these default items.
-			new ColorableItem("Keyword",    CI_BLUE,            CI_USERTEXT_BK),
-			new ColorableItem("Comment",    CI_DARKGREEN,       CI_USERTEXT_BK),
-			new ColorableItem("Identifier", CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
-			new ColorableItem("String",     CI_MAROON,          CI_USERTEXT_BK),
-			new ColorableItem("Number",     CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
-			new ColorableItem("Text",       CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
+			new ColorableItem("Keyword",    CI_BLUE,        CI_USERTEXT_BK),
+			new ColorableItem("Comment",    CI_DARKGREEN,   CI_USERTEXT_BK),
+			new ColorableItem("Identifier", CI_USERTEXT_FG, CI_USERTEXT_BK),
+			new ColorableItem("String",     CI_MAROON,      CI_USERTEXT_BK),
+			new ColorableItem("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
+			new ColorableItem("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
 			
 			// Visual D specific (must match Lexer.TokenColor
-			new ColorableItem("Visual D Operator",         CI_SYSPLAINTEXT_FG, CI_USERTEXT_BK),
+			new ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
 				
 			new ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
 			new ColorableItem("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
@@ -1246,6 +1246,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 version(all)
 {
 		wstring txt = GetText(line, 0, line, -1);
+		if(idx > txt.length)
+			return false;
 		while(endIdx < txt.length && Lexer.isIdentifierCharOrDigit(txt[endIdx]))
 			endIdx++;
 		while(startIdx > 0 && Lexer.isIdentifierCharOrDigit(txt[startIdx-1]))
