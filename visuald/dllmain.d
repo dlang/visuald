@@ -17,8 +17,16 @@ import visuald.dpackage;
 
 import core.runtime;
 import core.memory;
-import core.dll_helper;
-static import core.thread_helper;
+version(all) //dmd_2_052)
+{
+	import core.dll_helper;
+	import threadaux = core.thread_helper;
+}
+else
+{
+	import core.sys.windows._dll;
+	import threadaux = core.sys.windows._thread;
+}
 
 import std.conv;
 
@@ -77,7 +85,7 @@ else // ensure patched runtime in release
 			break;
 
 		case DLL_THREAD_DETACH:
-			if(core.thread_helper.GetTlsDataAddress(GetCurrentThreadId())) //, _tls_index))
+			if(threadaux.GetTlsDataAddress(GetCurrentThreadId())) //, _tls_index))
 				logCall("DllMain(DLL_THREAD_DETACH, id=%x)", GetCurrentThreadId());
 			dll_thread_detach( true, true );
 			break;

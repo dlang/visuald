@@ -36,7 +36,7 @@ import visuald.lexutil;
 
 ///////////////////////////////////////////////////////////////
 
-const string kToolResourceCompiler = "Resource Compiler";
+enum string kToolResourceCompiler = "Resource Compiler";
 const string kCmdLogFileExtension = "build";
 
 ///////////////////////////////////////////////////////////////

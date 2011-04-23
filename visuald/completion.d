@@ -314,7 +314,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 	this(ImageList imageList, Source source)
 	{
-		mImageList = ImageList_LoadImageA(g_hInst, kImageBmp, 16, 10, CLR_DEFAULT,
+		mImageList = ImageList_LoadImageA(g_hInst, kImageBmp.ptr, 16, 10, CLR_DEFAULT,
 						  IMAGE_BITMAP, LR_LOADTRANSPARENT);
 		mSource = source;
 	}

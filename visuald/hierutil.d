@@ -302,7 +302,7 @@ int ShowContextMenu(UINT iCntxtMenuID, in GUID* GroupGuid, IOleCommandTarget pIO
 
 	POINT  pnt;
 	GetCursorPos(&pnt);
-	POINTS pnts = { cast(short)pnt.x, cast(short)pnt.y };
+	POINTS pnts = POINTS(cast(short)pnt.x, cast(short)pnt.y);
 
 	int hr = srpUIManager.ShowContextMenu(0, GroupGuid, iCntxtMenuID, &pnts, pIOleCmdTarg);
 

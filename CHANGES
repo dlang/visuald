@@ -274,4 +274,7 @@ unreleased Version 0.3.24
   * now runs a parser in the background to underline syntax errors
   * fixed scanning of floating point literals starting with '.'
   * default colors for identifiers, numbers and operators now follow the "Plain Text" setting
-  
+  * new version 0.1.2 of mago that fixes some issues with exceptions and improves
+    the call stack display
+  * if a source file is used in multiple project, it is no longer opened multiple times in 
+    the editor

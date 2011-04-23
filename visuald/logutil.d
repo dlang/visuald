@@ -487,7 +487,7 @@ extern(C) void log_printf(string fmt, ...)
 	int len = vsprintf(buf.ptr, fmt.ptr, q);
 	
 	if(!gcLogFh)
-		gcLogFh = stdcio.fopen(gLogGCFile, "w");
+		gcLogFh = stdcio.fopen(gLogGCFile.ptr, "w");
 	
 	if(gcLogFh)
 		stdcio.fwrite(buf.ptr, len, 1, gcLogFh);

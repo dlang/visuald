@@ -169,7 +169,7 @@ class CFileNode : CHierNode,
 			return mFilename;
 		string root = GetRootNode().GetFullPath();
 		root = getDirName(root);
-		return root ~ "\\" ~ mFilename;
+		return removeDotDotPath(root ~ "\\" ~ mFilename);
 	}
 
 	string GetFilename()
@@ -295,8 +295,10 @@ class CFileNode : CHierNode,
 			switch(nCmdID)
 			{
 			case cmdidOpenWith:
+				hr = GetCVsHierarchy().OpenDoc(this, false, true, true);
+				break;
 			case cmdidOpen:
-				hr = GetCVsHierarchy().OpenDoc(this, false, nCmdID == cmdidOpenWith, true);
+				hr = GetCVsHierarchy().OpenDoc(this, false, false, true);
 				break;
 			case cmdidViewCode:
 				hr = GetCVsHierarchy().OpenDoc(this, false, false, true, &LOGVIEWID_Code);
@@ -1119,7 +1121,7 @@ version(none)
 			break;
 		case VSHPROPID_IconImgList:
 			var.vt = VT_I4;
-			var.lVal = cast(int) ImageList_LoadImageA(g_hInst, kImageBmp, 16, 10, CLR_DEFAULT,
+			var.lVal = cast(int) ImageList_LoadImageA(g_hInst, kImageBmp.ptr, 16, 10, CLR_DEFAULT,
 								  IMAGE_BITMAP, LR_LOADTRANSPARENT);
 			break;
 		case VSHPROPID_IconHandle:
@@ -1664,11 +1666,28 @@ public: // IVsHierarchyEvent propagation
 		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
 		if(!pIVsUIShellOpenDocument)
 			return returnError(E_FAIL);
+		scope(exit) release(pIVsUIShellOpenDocument);
 
 		string strFullPath = pNode.GetFullPath();
 		auto wstrFullPath = _toUTF16z(strFullPath);
 
-		IVsWindowFrame srpIVsWindowFrame;
+		// do not force file to belong to only one project
+		VSITEMID itemid = GetVsItemID(pNode);
+		IVsUIHierarchy pHier = this;
+		
+		IVsUIHierarchy hierOpen;
+		VSITEMID itemidOpen;
+		IVsWindowFrame windowFrame;
+		BOOL fOpen;
+		scope(exit) release(windowFrame);
+		scope(exit) release(hierOpen);
+		
+		hr = pIVsUIShellOpenDocument.IsDocumentOpen(null, 0, wstrFullPath, rguidLogicalView,
+													IDO_ActivateIfOpen, 
+													&hierOpen, &itemidOpen, &windowFrame, &fOpen);
+		if(SUCCEEDED(hr) && fOpen)
+			return hr;
+
 		if(!pszPhysicalView)
 		{
 			VSOSEFLAGS openFlags = OSE_ChooseBestStdEditor;
@@ -1683,11 +1702,11 @@ public: // IVsHierarchyEvent propagation
 				/* [in]  LPCOLESTR    pszMkDocument             */ wstrFullPath,
 				/* [in]  REFGUID      rguidLogicalView          */ rguidLogicalView,
 				/* [in]  LPCOLESTR    pszOwnerCaption           */ _toUTF16z("%3"),
-				/* [in]  IVsUIHierarchy  *pHier                 */ this,
-				/* [in]  VSITEMID     itemid                    */ GetVsItemID(pNode),
+				/* [in]  IVsUIHierarchy  *pHier                 */ pHier,
+				/* [in]  VSITEMID     itemid                    */ itemid,
 				/* [in]  IUnknown    *punkDocDataExisting       */ punkDocDataExisting,
 				/* [in]  IServiceProvider *pSP                  */ null,
-				/* [out, retval] IVsWindowFrame **ppWindowFrame */ &srpIVsWindowFrame);
+				/* [out, retval] IVsWindowFrame **ppWindowFrame */ &windowFrame);
 		}
 		else
 		{
@@ -1700,15 +1719,15 @@ public: // IVsHierarchyEvent propagation
 				/* LPCOLESTR pszPhysicalView        */ cast(wchar*) pszPhysicalView,
 				/* REFGUID rguidLogicalView         */ rguidLogicalView,
 				/* LPCOLESTR pszOwnerCaption        */ _toUTF16z("%3"),
-				/* IVsUIHierarchy *pHier            */ this,
-				/* VSITEMID itemid                  */ pNode.GetVsItemID(),
+				/* IVsUIHierarchy *pHier            */ pHier,
+				/* VSITEMID itemid                  */ itemid,
 				/* IUnknown *punkDocDataExisting    */ punkDocDataExisting,
 				/* IServiceProvider *pSPHierContext */ null,
-				/* IVsWindowFrame **ppWindowFrame   */ &srpIVsWindowFrame);
+				/* IVsWindowFrame **ppWindowFrame   */ &windowFrame);
 		}
 
-		// Note that for external editors we don't get an srpIVsWindowFrame.
-		if(SUCCEEDED(hr) && srpIVsWindowFrame)
+		// Note that for external editors we don't get an windowFrame.
+		if(SUCCEEDED(hr) && windowFrame)
 		{
 			if(fNewFile)
 			{
@@ -1719,7 +1738,7 @@ public: // IVsHierarchyEvent propagation
 				// NOTE: Ideally this method would be called InitializeNewDocData but it is too late to rename this method.
 				//              Most editors can ignore the parameter passed. It is a legacy of historical insignificance.
 				VARIANT var;
-				HRESULT hrTemp = srpIVsWindowFrame.GetProperty(VSFPROPID_DocData, &var);
+				HRESULT hrTemp = windowFrame.GetProperty(VSFPROPID_DocData, &var);
 				if(SUCCEEDED(hrTemp) && var.vt == VT_UNKNOWN && var.punkVal)
 				{
 					IVsPersistDocData srpDocData;
@@ -1734,16 +1753,12 @@ public: // IVsHierarchyEvent propagation
 
 			// Show window
 			if (fShow)
-				srpIVsWindowFrame.Show();
+				windowFrame.Show();
 
 			// Return window frame if requested
 			if(ppWindowFrame)
-				*ppWindowFrame = addref(srpIVsWindowFrame);
+				*ppWindowFrame = addref(windowFrame);
 		}
-
-		release(srpIVsWindowFrame);
-		release(pIVsUIShellOpenDocument);
-
 		return hr;
 	}
 

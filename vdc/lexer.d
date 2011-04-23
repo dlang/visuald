@@ -1009,7 +1009,7 @@ string genKeywordEnum(string kw)
 	return "TOK_" ~ kw;
 }
 
-string genKeywordsEnum(T)(string[] kwords, T begin)
+string genKeywordsEnum(T)(const string[] kwords, T begin)
 {
 	string enums = "enum { TOK_begin_Keywords = " ~ to!string(begin) ~ ", ";
 	bool first = true;
@@ -1117,7 +1117,7 @@ const string[2][] operators =
 +/
 ];
 
-string genOperatorEnum(T)(string[2][] ops, T begin)
+string genOperatorEnum(T)(const string[2][] ops, T begin)
 {
 	string enums = "enum { TOK_begin_Operators = " ~ to!string(begin) ~ ", ";
 	bool first = true;

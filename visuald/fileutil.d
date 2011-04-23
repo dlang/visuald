@@ -49,6 +49,21 @@ void makeFilenamesAbsolute(string[] files, string workdir)
 	}
 }
 
+string removeDotDotPath(string file)
+{
+	// assumes \\ used as path separator
+	for( ; ; )
+	{
+		int pos = indexOf(file, "\\..\\");
+		if(pos < 0)
+			return file;
+		int lpos = lastIndexOf(file[0..pos], '\\');
+		if(lpos < 0)
+			return file;
+		file = file[0..lpos] ~ file[pos + 3 .. $];
+	}
+}
+
 string quoteFilename(string fname)
 {
 	if(fname.length >= 2 && fname[0] == '\"' && fname[$-1] == '\"')

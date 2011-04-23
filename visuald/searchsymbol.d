@@ -462,7 +462,7 @@ private:
 		_wndFileList.SendMessage(LVM_DELETEALLITEMS);
 		_wndFileList.SendMessage(LVM_REMOVEALLGROUPS);
 
-		HIMAGELIST himl = ImageList_LoadImageA(getInstance(), kImageBmp, 16, 10, CLR_DEFAULT,
+		HIMAGELIST himl = ImageList_LoadImageA(getInstance(), kImageBmp.ptr, 16, 10, CLR_DEFAULT,
 											IMAGE_BITMAP, LR_LOADTRANSPARENT);
 		if(himl)
 			_wndFileList.SendMessage(LVM_SETIMAGELIST, LVSIL_SMALL, cast(LPARAM)himl);
@@ -816,9 +816,11 @@ private:
 			{
 				_wndToolbar.SendMessage(TB_SETIMAGELIST, 0, cast(LPARAM)_himlToolbar);
 
+				TBBUTTON btn2 = TBBUTTON(10, 11, TBSTATE_ENABLED, 1, cast(BYTE[])[0,0], 0, 0);
+				
 				TBBUTTON initButton(int id, ubyte style)
 				{
-					TBBUTTON btn = { id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, [0,], 0, 0 };
+					TBBUTTON btn = TBBUTTON(id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, cast(BYTE[])[0,0], 0, 0);
 					return btn;
 				}
 				static const TBBUTTON s_tbb[] = [
