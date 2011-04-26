@@ -825,6 +825,30 @@ version(todo)
 
 }
 
+enum useJSON = false;
+
+static if(useJSON)
+	alias JSONValue InfoObject;
+else
+	alias BrowseNode InfoObject;
+
+int GetInfoCount(BrowseNode val)   { return val ? val.members.length : 0; }
+string GetInfoName(BrowseNode val) { return val ? val.name : null; }
+string GetInfoKind(BrowseNode val) { return val ? val.kind : null; }
+string GetInfoType(BrowseNode val) { return val ? val.type : null; }
+string GetInfoBase(BrowseNode val) { return val ? val.GetBase() : null; }
+string[] GetInfoInterfaces(BrowseNode val) { return val ? val.GetInterfaces() : null; }
+string GetInfoFilename(BrowseNode val) { return val ? val.GetFile() : null; }
+int GetInfoLine(BrowseNode val) { return val ? val.line : -1; }
+string GetInfoScope(BrowseNode val) { return val ? val.GetScope() : null; }
+
+BrowseNode GetInfoObject(BrowseNode val, ULONG idx)
+{
+	if(!val || idx >= val.members.length)
+		return null;
+	return val.members[idx];
+}
+
 // move to intellisense.d?
 int GetInfoCount(JSONValue val)
 {
@@ -868,6 +892,27 @@ string GetInfoType(JSONValue val)
 	return null;
 }
 
+string GetInfoBase(JSONValue val)
+{
+	if(val.type == JSON_TYPE.OBJECT)
+		if(JSONValue* v = "base" in val.object)
+			if(v.type == JSON_TYPE.STRING)
+				return v.str;
+	return null;
+}
+
+string[] GetInfoInterfaces(JSONValue val)
+{
+	string[] ifaces;
+	if(val.type == JSON_TYPE.OBJECT)
+		if(JSONValue* v = "interfaces" in val.object)
+			if(v.type == JSON_TYPE.ARRAY)
+				foreach(i, iface; v.array)
+					if(iface.type == JSON_TYPE.STRING)
+						ifaces ~= iface.str;
+	return ifaces;
+}
+
 string GetInfoFilename(JSONValue val)
 {
 	if(val.type == JSON_TYPE.OBJECT)
@@ -882,7 +927,7 @@ int GetInfoLine(JSONValue val)
 	if(val.type == JSON_TYPE.OBJECT)
 		if(JSONValue* v = "line" in val.object)
 			if(v.type == JSON_TYPE.INTEGER)
-				return cast(int) v.integer;
+				return cast(int) v.integer - 1;
 	return -1;
 }
 
@@ -969,8 +1014,8 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	BrowseCounter mCounter;
 	LibraryInfo mLibInfo;
 	ObjectList mParent;
-	JSONValue mObject;
-	JSONValue[] mMembers;
+	InfoObject mObject;
+	InfoObject[] mMembers;
 		
 	this(Library lib, in LIB_LISTTYPE2 eListType, in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA2 *pobSrch)
 	{
@@ -981,7 +1026,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		initMembers();
 	}
 
-	this(Library lib, LibraryInfo libInfo, ObjectList parent, JSONValue object,
+	this(Library lib, LibraryInfo libInfo, ObjectList parent, InfoObject object,
 		 in LIB_LISTTYPE2 eListType, in LIB_LISTFLAGS eFlags, in VSOBSEARCHCRITERIA2 *pobSrch)
 	{
 		mListType = eListType;
@@ -1004,64 +1049,58 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 
 	void initMembers()
 	{
-		JSONValue[] arr;
+		InfoObject[] arr;
 		if(!mParent)
 		{
 			// all modules from the library
-			LibraryInfos infos = Package.GetLibInfos();
+			auto infos = Package.GetLibInfos();
 			foreach(info; infos.mInfos)
-				if(info.mModules.type == JSON_TYPE.ARRAY)
-					arr ~= info.mModules.array;
+				static if(!useJSON)
+					arr ~= info.mModules;
+				else
+					if(info.mModules.type == JSON_TYPE.ARRAY)
+						arr ~= info.mModules.array;
+				
 		}
-		
-		else if(mObject.type == JSON_TYPE.ARRAY)
-			arr = mObject.array;
-
-		else if(mObject.type == JSON_TYPE.OBJECT)
+		else if(mObject)
 		{
-			if(JSONValue* m = "members" in mObject.object)
-				if(m.type == JSON_TYPE.ARRAY)
-					arr = m.array;
+			arr = mObject.members;
+			string base = mObject.GetBase();
+			string[] ifaces = mObject.GetInterfaces();
 			
-			bool hasBase = false;
-			if(JSONValue* m = "base" in mObject.object)
-				hasBase = true;
-			else if(JSONValue* m = "interfaces" in mObject.object)
-				hasBase = true;
-			
+			bool hasBase = base.length || ifaces.length;
 			// do not show base class of enums in the tree
-			if(JSONValue* m = "kind" in mObject.object)
-				if(m.type == JSON_TYPE.STRING)
-					if(m.str == "enum")
-						hasBase = false;
+			if(mObject.kind == "enum")
+				hasBase = false;
 
 			if(hasBase && (mListType & LLT_CLASSES))
 			{
-				JSONValue[] bases;
-				if(JSONValue* v = "base" in mObject.object)
-					bases ~= *v;
-				if(JSONValue* v = "interfaces" in mObject.object)
-					if(v.type == JSON_TYPE.ARRAY)
-						bases ~= v.array;
+				InfoObject bc = new InfoObject;
+				bc.name = "Base Classes";
+				bc.kind = "class";
+				bc.parent = mObject;
+				bc.line = -2;
+				mMembers ~= bc;
 
-				JSONValue n;
-				n.type = JSON_TYPE.STRING;
-				n.str = "Base Classes";
+				void addBase(string name, string kind)
+				{
+					auto infos = Package.GetLibInfos();
+					InfoObject n = infos.findClass(name, mObject);
+					if(!n)
+					{
+						n = new InfoObject;
+						n.name = name;
+						n.kind = kind;
+						n.parent = bc;
+						n.line = -2;
+					}
+					bc.members ~= n;
+				}
 
-				JSONValue k;
-				k.type = JSON_TYPE.STRING;
-				k.str = "class";
-
-				JSONValue m;
-				m.type = JSON_TYPE.ARRAY;
-				m.array = bases;
-				
-				JSONValue b;
-				b.type = JSON_TYPE.OBJECT;
-				b.object["name"] = n;
-				b.object["kind"] = k;
-				b.object["members"] = m;
-				mMembers ~= b;
+				if(base.length)
+					addBase(base, "class");
+				foreach(iface; ifaces)
+					addBase(iface, "interface");
 			}
 		}
 
@@ -1075,7 +1114,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 			
 		foreach(v; arr)
 		{
-			void addIfCorrectKind(JSONValue val)
+			void addIfCorrectKind(InfoObject val)
 			{
 				string kind = GetInfoKind(val);
 				if(mListType & GetListType(kind))
@@ -1083,11 +1122,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 			}
 			if(searchName.length)
 			{
-				JSONValue* fileValue;
-				if(v.type == JSON_TYPE.OBJECT)
-					fileValue = "file" in v.object;
-						
-				void searchRecurse(JSONValue val)
+				void searchRecurse(InfoObject val)
 				{
 					string name = GetInfoName(val);
 					if(!(mObSrch.grfOptions & VSOBSO_CASESENSITIVE))
@@ -1110,17 +1145,10 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 							break;
 					}
 					if(rc)
-					{
-						if(fileValue && val.type == JSON_TYPE.OBJECT)
-							if("file" !in val.object)
-								val.object["file"] = *fileValue;
 						addIfCorrectKind(val);
-					}
 
-					if(val.type == JSON_TYPE.OBJECT)
-						if(JSONValue* m = "members" in val.object)
-							foreach(v2; m.array)
-								searchRecurse(v2);
+					foreach(v2; val.members)
+						searchRecurse(v2);
 				}
 				searchRecurse(v);
 			}
@@ -1139,35 +1167,35 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		return uIndex < GetCount();
 	}
 
-	JSONValue GetObject(ULONG idx)
+	InfoObject GetObject(ULONG idx)
 	{
 		if(idx >= mMembers.length)
-			return JSONValue();
+			return null;
 		return mMembers[idx];
 	}
 		
 	string GetName(ULONG idx)
 	{
-		JSONValue v = GetObject(idx);
+		InfoObject v = GetObject(idx);
 		return GetInfoName(v);
 	}
 
 	string GetKind(ULONG idx)
 	{
-		JSONValue v = GetObject(idx);
+		InfoObject v = GetObject(idx);
 		return GetInfoKind(v);
 	}
 	
-	JSONValue GetModule()
+	InfoObject GetModule()
 	{
 		if(GetInfoKind(mObject) == "module")
 			return mObject;
 		if(mParent)
 			return mParent.GetModule();
-		return JSONValue();
+		return null;
 	}
 
-	JSONValue GetModule(ULONG idx)
+	InfoObject GetModule(ULONG idx)
 	{
 		if(GetKind(idx) == "module")
 			return GetObject(idx);
@@ -1223,6 +1251,12 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 
 		auto val = GetObject(uIndex);
 		string name = GetInfoName(val);
+		if(mFlags & LLF_USESEARCHFILTER)
+		{
+			string scp = GetInfoScope(val);
+			if(scp.length)
+				name = scp ~ "." ~ name;
+		}
 		Definition def;
 		def.kind = GetInfoKind(val);
 		if(HasFunctionPrototype(def.kind))
@@ -1333,7 +1367,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	{
 		mixin(LogCallMix2);
 		auto obj = GetObject(uIndex);
-		if(obj.type != JSON_TYPE.OBJECT)
+		if(!obj)
 			return E_UNEXPECTED;
 
 		auto list = new ObjectList(mLibrary, mLibInfo, this, obj, ListType, Flags, pobSrch);
@@ -1417,7 +1451,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		//mixin(LogCallMix2);
 		assert(pfExpandable);
 		
-		JSONValue obj = GetObject(Index);
+		InfoObject obj = GetObject(Index);
 		if(GetInfoCount(obj) > 0) // mListType & (LLT_PACKAGE | LLT_CLASSES))
 			*pfExpandable = TRUE;
 		else
@@ -1519,21 +1553,17 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		string file, modname;
 
 		auto mod = GetModule(Index);
-		if(mod.type == JSON_TYPE.OBJECT)
+		if(mod)
 		{
-			if(JSONValue* v = "file" in mod.object)
-				if(v.type == JSON_TYPE.STRING)
-					file = v.str;
-			if(JSONValue* v = "name" in mod.object)
-				if(v.type == JSON_TYPE.STRING)
-					modname = v.str;
+			file = GetInfoFilename(mod);
+			modname = GetInfoName(mod);
 		}
 		auto obj = GetObject(Index);
 		int line = GetInfoLine(obj);
 		if(file.length == 0)
 			file = GetInfoFilename(obj);
 
-		return OpenFileInSolution(file, line - 1, modname);
+		return OpenFileInSolution(file, line, modname);
 	}
 	
 	override HRESULT GetContextMenu(in ULONG Index, 
@@ -1604,6 +1634,9 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		def.name = GetInfoName(val);
 		def.type = GetInfoType(val);
 		def.kind = GetInfoKind(val);
+		def.line = GetInfoLine(val);
+		if(def.line < -1)
+			return S_OK; // no description for auto generated nodes
 		
 		if(HasFunctionPrototype(def.kind))
 		{
@@ -1636,25 +1669,21 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 				pobDesc.AddDescriptionText3("\nKind: ",          OBDS_MISC, null);
 				pobDesc.AddDescriptionText3(_toUTF16z(def.kind), OBDS_TYPE, null);
 			}
-			if(val.type == JSON_TYPE.OBJECT)
+			string base = GetInfoBase(val);
+			if(base.length)
 			{
-				if(JSONValue* v = "base" in val.object)
-					if(v.type == JSON_TYPE.STRING)
-					{
-						pobDesc.AddDescriptionText3("\nBase: ",       OBDS_MISC, null);
-						pobDesc.AddDescriptionText3(_toUTF16z(v.str), OBDS_TYPE, null);
-					}
-				if(JSONValue* v = "interfaces" in mObject.object)
+				pobDesc.AddDescriptionText3("\nBase: ",      OBDS_MISC, null);
+				pobDesc.AddDescriptionText3(_toUTF16z(base), OBDS_TYPE, null);
+			}
+			string[] ifaces = GetInfoInterfaces(val);
+			if(ifaces.length)
+			{
+				pobDesc.AddDescriptionText3("\nInterfaces: ", OBDS_MISC, null);
+				foreach(i, iface; ifaces)
 				{
-					pobDesc.AddDescriptionText3("\nInterfaces: ",       OBDS_MISC, null);
-					if(v.type == JSON_TYPE.ARRAY)
-						foreach(i, iface; v.array)
-							if(iface.type == JSON_TYPE.STRING)
-							{
-								if(i > 0)
-									pobDesc.AddDescriptionText3(", ",       OBDS_MISC, null);
-								pobDesc.AddDescriptionText3(_toUTF16z(v.str), OBDS_TYPE, null);
-							}
+					if(i > 0)
+						pobDesc.AddDescriptionText3(", ", OBDS_MISC, null);
+					pobDesc.AddDescriptionText3(_toUTF16z(iface), OBDS_TYPE, null);
 				}
 			}
 		}
@@ -1665,10 +1694,9 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		{
 			string msg = "\n\nFile: " ~ filename;
 			pobDesc.AddDescriptionText3(_toUTF16z(msg),          OBDS_MISC, null);
-			int line = GetInfoLine(val);
-			if(line >= 0)
+			if(def.line >= 0)
 			{
-				msg = "(" ~ to!string(line) ~ ")";
+				msg = "(" ~ to!string(def.line) ~ ")";
 				pobDesc.AddDescriptionText3(_toUTF16z(msg),      OBDS_MISC, null);
 			}
 		}

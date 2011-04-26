@@ -121,11 +121,55 @@ struct SearchData
 		return matchNames(name, type, inScope);
 	}
 
+	bool matchDefinition(BrowseNode node)
+	{
+		if(findQualifiedName && names.length > 0)
+			return node.GetScope() == names[0];
+		
+		if((!useRegExp && names.length == 0) || (useRegExp && res.length == 0))
+			return true;
+		
+		string name, type, inScope;
+		if(searchFields & kFieldName)
+			name = caseSensitive ? node.name : tolower(node.name);
+		
+		if(searchFields & kFieldType)
+			type = caseSensitive ? node.type : tolower(node.type);
+
+		if(searchFields & kFieldScope)
+			inScope = caseSensitive ? node.GetScope() : tolower(node.GetScope());
+		
+		return matchNames(name, type, inScope);
+	}
+
+	void addDefinition(ref Definition[] defs, ref Definition def)
+	{
+		bool add = true;
+		if(noDupsOnSameLine)
+		{
+			foreach(d; defs)
+				if(d.filename == def.filename && d.line == def.line)
+					add = false;
+		}
+		if(add)
+			defs ~= def;
+	}
+
 	bool pruneSubtree(JSONscope *sc, JSONValue[string] obj)
 	{
 		if(findQualifiedName && names.length > 0)
 		{
 			string name = sc.toString();
+			return !startsWith(names[0], name);
+		}
+		return false;
+	}
+	
+	bool pruneSubtree(BrowseNode node)
+	{
+		if(findQualifiedName && names.length > 0)
+		{
+			string name = node.GetScope();
 			return !startsWith(names[0], name);
 		}
 		return false;
@@ -388,15 +432,7 @@ class LibraryInfo
 					if(typ.type == JSON_TYPE.STRING)
 						def.type = typ.str;
 				
-				bool add = true;
-				if(sd.noDupsOnSameLine)
-				{
-					foreach(d; defs)
-						if(d.filename == def.filename && d.line == def.line)
-							add = false;
-				}
-				if(add)
-					defs ~= def;
+				sd.addDefinition(defs, def);
 			}
 			return 0;
 		}
@@ -535,6 +571,9 @@ struct Definition
 
 class LibraryInfos
 {
+	alias BrowseInfo INFO;
+	alias BrowseNode VALUE;
+	
 	this()
 	{
 //		auto info = new LibraryInfo;
@@ -606,7 +645,7 @@ class LibraryInfos
 		// add new files
 		foreach(file; files)
 		{
-			auto info = new LibraryInfo;
+			auto info = new INFO;
 			if(info.readJSON(file))
 			{
 				mInfos ~= info;
@@ -652,7 +691,12 @@ class LibraryInfos
 		return defs;
 	}
 
-	LibraryInfo findInfo(string name)
+	VALUE findClass(string name, VALUE lookupScope)
+	{
+		return null;
+	}
+	
+	INFO findInfo(string name)
 	{
 		foreach(info; mInfos)
 		{
@@ -665,6 +709,265 @@ class LibraryInfos
 	
 	@property int updateCounter() { return mUpdateCounter; }
 	
-	LibraryInfo[] mInfos;
+	INFO[] mInfos;
 	int mUpdateCounter;
+}
+
+class BrowseNode
+{
+	string name;
+	string kind;
+	string type;
+	
+	int line;
+	
+	BrowseNode parent;
+	BrowseNode[] members;
+	
+	string GetFile()
+	{
+		if(parent)
+			return parent.GetFile();
+		return null;
+	}
+	string GetBase()
+	{
+		return null;
+	}
+	string[] GetInterfaces()
+	{
+		return null;
+	}
+	string GetScope()
+	{
+		if(!parent)
+			return null;
+		
+		string pname = parent.name;
+		for(auto p = parent.parent; p; p = p.parent)
+		{
+			if(pname.length && p.name.length)
+				pname = p.name ~ "." ~ pname;
+			else
+				pname = p.name ~ pname;
+		}
+		return pname;
+	}
+}
+
+class ModuleBrowseNode : BrowseNode
+{
+	string file;
+	
+	override string GetFile()
+	{
+		return file;
+	}
+}
+
+class ClassBrowseNode : BrowseNode
+{
+	string base;
+	string[] interfaces;
+
+	override string GetBase()
+	{
+		return base;
+	}
+	override string[] GetInterfaces()
+	{
+		return interfaces;
+	}
+}
+
+class BrowseInfo
+{
+	string mFilename;
+	std.date.d_time mModified;
+	
+	BrowseNode[] mModules;
+
+	bool readJSON(string fileName)
+	{
+		LibraryInfo info = new LibraryInfo;
+		if(!info.readJSON(fileName))
+			return false;
+		
+		mFilename = info.mFilename;
+		mModified = info.mModified;
+		clear(mModules);
+		
+		createModules(info);
+		return true;
+	}
+
+	static BrowseNode createNode(JSONValue[string] memberobj)
+	{
+		string kind;
+		if(JSONValue* k = "kind" in memberobj)
+			if(k.type == JSON_TYPE.STRING)
+				kind = k.str;
+		
+		BrowseNode node;
+		if(kind == "module")
+		{
+			auto n = new ModuleBrowseNode;
+			if(JSONValue* v = "file" in memberobj)
+				if(v.type == JSON_TYPE.STRING)
+					n.file = v.str;
+			node = n;
+		}
+		else if (kind == "class" || kind == "interface")
+		{
+			auto n = new ClassBrowseNode;
+			if(JSONValue* base = "base" in memberobj)
+				if(base.type == JSON_TYPE.STRING)
+					n.base = base.str;
+			if(JSONValue* iface = "interfaces" in memberobj)
+				if(iface.type == JSON_TYPE.ARRAY)
+					foreach(m; iface.array)
+						if(m.type == JSON_TYPE.STRING)
+							n.interfaces ~= m.str;
+			node = n;
+		}
+		else
+			node = new BrowseNode;
+
+		node.kind = kind;
+		if(JSONValue* n = "name" in memberobj)
+			if(n.type == JSON_TYPE.STRING)
+				node.name = n.str;
+		if(JSONValue* ln = "line" in memberobj)
+			if(ln.type == JSON_TYPE.INTEGER)
+				node.line = cast(int)ln.integer - 1;
+		if(JSONValue* typ = "type" in memberobj)
+			if(typ.type == JSON_TYPE.STRING)
+				node.type = typ.str;
+			
+		return node;
+	}
+	
+	static void removeEponymousTemplate(BrowseNode n)
+	{
+		if(n.parent && n.members.length == 1 && n.line == n.members[0].line &&
+		   (n.kind == "template" || n.kind == n.members[0].kind))
+		{
+			if(startsWith(n.name, n.members[0].name ~ "("))
+			{
+				n.members[0].name = n.name;
+				foreach(ref m; n.parent.members)
+					if(m == n)
+						m = n.members[0];
+			}
+		}
+	}
+	
+	void createModules(LibraryInfo info)
+	{
+		if(info.mModules.type == JSON_TYPE.ARRAY)
+		{
+			JSONValue[] modules = info.mModules.array;
+			foreach(JSONValue mod; modules)
+			{
+				if(mod.type == JSON_TYPE.OBJECT)
+				{
+					void iterate(JSONValue[string] object, BrowseNode parent)
+					{
+						BrowseNode node = createNode(object);
+						if(parent)
+						{
+							parent.members ~= node;
+							node.parent = parent;
+						}
+						else
+							mModules ~= node;
+						
+						if(JSONValue* m = "members" in object)
+							if(m.type == JSON_TYPE.ARRAY)
+							{
+								JSONValue[] members = m.array;
+								foreach(member; members)
+									if(member.type == JSON_TYPE.OBJECT)
+										iterate(member.object, node);
+							}
+						
+						removeEponymousTemplate(node);
+					}
+					
+					iterate(mod.object, null);
+				}
+			}
+		}
+	}
+
+	// dg_match returns:
+	// 0 - continue search
+	// 1 - stop search
+	// 2 - continue search, but prune subtree
+	bool iterateNodes(int delegate(BrowseNode node) dg_match)
+	{
+		foreach(mod; mModules)
+		{
+			int iterate(BrowseNode node)
+			{
+				int res = dg_match(node);
+				if(res == 1)
+					return 1;
+				if(res == 2)
+					return 0;
+
+				foreach(n; node.members)
+				{
+					res = iterate(n);
+					if(res > 0)
+						return res;
+				}
+				return 0;
+			}
+			if(iterate(mod) == 1)
+				return true;
+		}
+		return false;
+	}
+	
+	Definition[] findDefinition(ref SearchData sd)
+	{
+		Definition[] defs;
+
+		int findDef(BrowseNode node)
+		{
+			if(sd.pruneSubtree(node))
+				return 2;
+			if(sd.matchDefinition(node))
+			{
+				Definition def;
+				def.filename = node.GetFile();
+				def.line = node.line;
+				def.inScope = node.GetScope();
+				def.name = node.name;
+				def.kind = node.kind;
+				def.type = node.type;
+				sd.addDefinition(defs, def);
+			}
+			return 0;
+		}
+		
+		iterateNodes(&findDef);
+		return defs;
+	}
+
+	string[] findCompletions(ref SearchData sd)
+	{
+		string[] cplts;
+
+		int findCplt(BrowseNode node)
+		{
+			if(startsWith(node.name, sd.names[0]))
+				addunique(cplts, node.name);
+			return 0;
+		}
+		iterateNodes(&findCplt);
+		
+		return cplts;
+	}
 }

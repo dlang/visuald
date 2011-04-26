@@ -354,6 +354,7 @@ class LanguageService : DisposingComObject,
 	static void shared_static_dtor()
 	{
 		clear(colorableItems); // to keep GC leak detection happy
+		Source.parseTaskPool = null;
 	}
 
 	override HRESULT GetColorableItem(in int iIndex, IVsColorableItem* ppItem)
@@ -865,6 +866,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	
 	ast.Module mAST;
 	ParseError[] mParseErrors;
+	wstring mParseText;
 	int mParsingState;
 	int mModificationCountAST;
 	int mModificationCount;
@@ -894,8 +896,10 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 			mMethodData = release(mMethodData);
 		}
 		mSourceEvents.Dispose();
+		mSourceEvents = null;
 		mBuffer = release(mBuffer);
 		mHiddenTextSession = release(mHiddenTextSession);
+		mColorizer = null;
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -2351,6 +2355,21 @@ else
 	
 	//////////////////////////////////////////////////////////////
 	
+	// create our own task pool to be able to destroy it (it keeps a the
+	//  arguments to the last task, so they are never collected)
+	__gshared static TaskPool parseTaskPool;
+
+	void runTask(T)(T dg)
+	{
+		if(!parseTaskPool)
+		{
+			parseTaskPool = new TaskPool(defaultPoolThreads);
+			parseTaskPool.isDaemon = true;
+		}
+		auto task = task(&doParse);
+		parseTaskPool.put(task);
+	}
+	
 	bool startParsing()
 	{
 		if(!Package.GetGlobalOptions().parseSource)
@@ -2377,6 +2396,7 @@ else
 										 span.end.line - 1, span.end.index, this, &marker);
 			}
 			
+			mParseText = null;
 			mParsingState = 0;
 			ReColorizeLines (0, -1);
 			return true;
@@ -2385,18 +2405,17 @@ else
 		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
 			return false;
 		
+		mParseText = GetText(); // should not be read from another thread
 		mParsingState = 1;
 		mModificationCountAST = mModificationCount;
-		auto task = task(&doParse);
-		taskPool.put(task);
+		runTask(&doParse);
 		
 		return true;
 	}
 	
 	void doParse()
 	{
-		wstring wtxt = GetText();
-		string txt = to!string(wtxt);
+		string txt = to!string(mParseText);
 		
 		Parser p = new Parser;
 		p.mSaveErrors = true;

@@ -236,7 +236,7 @@ class Node
 	
 	void replaceMember(Node m, Node[] nm) 
 	{
-		int n = std.algorithm.indexOf(members, m);
+		int n = std.algorithm.countUntil(members, m);
 		assert(n >= 0);
 		replaceMember(n, nm);
 	}

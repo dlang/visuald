@@ -389,6 +389,7 @@ class AttributeSpecifier
 				return Accept;
 
 			case TOK_alias:
+			case TOK_typedef:
 				p.pushState(&shiftDeclDef);
 				return Declaration.enter(p);
 				

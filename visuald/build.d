@@ -78,6 +78,9 @@ public:
 
 	HRESULT Start(Config cfg, Operation op, IVsOutputWindowPane pIVsOutputWindowPane)
 	{
+		logCall("%s.Start(cfg=%s, op=%s, pIVsOutputWindowPane=%s)", this, cast(void**)cfg, op, cast(void**) pIVsOutputWindowPane);
+		//mixin(LogCallMix2);
+		
 		m_op = op;
 		mConfig = cfg;
 
@@ -121,6 +124,8 @@ else
 
 	void Stop(BOOL fSync)
 	{
+		mixin(LogCallMix2);
+		
 		m_fStopBuild = TRUE;
 	}
 
@@ -132,6 +137,8 @@ else
 
 	void ThreadMain()
 	{
+		mixin(LogCallMix2);
+		
 		BOOL fContinue = TRUE;
 		BOOL fSuccessfulBuild = FALSE; // set up for Fire_BuildEnd() later on.
 
@@ -177,6 +184,8 @@ else
 	
 	bool doCustomBuilds()
 	{
+		mixin(LogCallMix2);
+		
 		string workdir = mConfig.GetProjectDir();
 
 		CHierNode node = searchNode(mConfig.GetProjectNode(), 
@@ -206,6 +215,8 @@ else
 
 	bool DoBuild()
 	{
+		mixin(LogCallMix2);
+		
 		beginLog();
 		HRESULT hr = S_FALSE;
 		
@@ -277,6 +288,8 @@ else
 
 	bool DoCheckIsUpToDate()
 	{
+		mixin(LogCallMix2);
+		
 		clearCachedFileTimes();
 		scope(exit) clearCachedFileTimes();
 		
@@ -309,6 +322,8 @@ else
 
 	bool DoClean()
 	{
+		mixin(LogCallMix2);
+		
 		string[] files = mConfig.GetBuildFiles();
 		foreach(string file; files)
 		{
@@ -357,11 +372,15 @@ else
 
 	void Fire_BuildBegin(ref BOOL rfContinue)
 	{
+		mixin(LogCallMix2);
+		
 		mConfig.FFireBuildBegin(rfContinue);
 	}
 
 	void Fire_BuildEnd(BOOL fSuccess)
 	{
+		mixin(LogCallMix2);
+		
 		mConfig.FFireBuildEnd(fSuccess);
 	}
 
@@ -517,6 +536,8 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		/+[out, optional]+/ BSTR *pbstrTaskItemText,    // description text for task list item (may be NULL)
 		/+[out, optional]+/ BSTR *pbstrHelpKeyword)
 	{
+		mixin(LogCallMix2);
+		
 		string line = to_string(pszOutputString);
 		uint nPriority, nLineNum;
 		string filename, taskItemText;
@@ -547,6 +568,8 @@ HRESULT RunCustomBuildBatchFile(string              target,
                                 IVsOutputWindowPane pIVsOutputWindowPane, 
                                 CBuilderThread      pBuilder)
 {
+	logCall("RunCustomBuildBatchFile(target=\"%s\", buildfile=\"%s\")", target, buildfile);
+	
 	if (cmdline.length == 0)
 		return S_OK;
 	HRESULT hr = S_OK;
@@ -670,6 +693,8 @@ failure:
 HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
                           IVsOutputWindowPane outPane, string output)
 {
+	logCall("outputToErrorList(output=\"%s\")", output);
+	
 	HRESULT hr;
 
 	auto prj = _toUTF16z(pBuilder.mConfig.GetProjectPath());

@@ -454,6 +454,9 @@ class IfCondition
 
 	static Action shiftDecl(Parser p)
 	{
+		if(p.tok.id != TOK_rparen)
+			return p.parseError("')' expected after declaration");
+		
 		p.popRollback();
 		return Forward;
 	}

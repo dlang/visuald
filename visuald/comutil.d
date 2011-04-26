@@ -24,8 +24,8 @@ import sdk.win32.objbase;
 
 version = GC_COM;
 debug debug = COM;
-//debug(COM) debug = COM_DTOR; // causes crashes because logCall needs GC, but finalizer called from within GC
-//debug(COM) debug = COM_ADDREL;
+// debug(COM) debug = COM_DTOR; // causes crashes because logCall needs GC, but finalizer called from within GC
+// debug(COM) debug = COM_ADDREL;
 
 import core.runtime;
 import core.memory;

@@ -15,6 +15,8 @@ import visuald.logutil;
 import visuald.register;
 import visuald.dpackage;
 
+import stdext.parallelism;
+
 import core.runtime;
 import core.memory;
 version(all) //dmd_2_052)

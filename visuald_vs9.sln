@@ -26,6 +26,8 @@ Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "pp4d", "c2d\pp4d.visualdpro
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "parser", "vdc\parser.visualdproj", "{FE3A959D-6CFA-43BF-8637-62125B571770}"
 EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "magotest", "magotest\magotest.visualdproj", "{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -69,6 +71,12 @@ Global
 		{FE3A959D-6CFA-43BF-8637-62125B571770}.Release|Win32.Build.0 = Release|Win32
 		{FE3A959D-6CFA-43BF-8637-62125B571770}.Test|Win32.ActiveCfg = TestDebug|Win32
 		{FE3A959D-6CFA-43BF-8637-62125B571770}.Test|Win32.Build.0 = TestDebug|Win32
+		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Debug|Win32.Build.0 = Debug|Win32
+		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Release|Win32.ActiveCfg = Release|Win32
+		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Release|Win32.Build.0 = Release|Win32
+		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Test|Win32.ActiveCfg = Debug|Win32
+		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Test|Win32.Build.0 = Debug|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

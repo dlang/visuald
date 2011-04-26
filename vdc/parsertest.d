@@ -236,6 +236,25 @@ unittest
 	testParse(txt, "unittest4");
 }
 
+unittest
+{
+	string txt = q{
+		public alias uint AReserved;
+		private typedef uint TReserved;
+	};
+	testParse(txt, "unittest5");
+}
+
+unittest
+{
+	string txt = q{
+		void foo() {
+			if(a * b * 2) {}
+		}
+	};
+	testParse(txt, "unittest6");
+}
+
 	//alias 4 test;
 	//uint[test] arr;
 	//pragma(msg,arr.sizeof);
@@ -253,7 +272,7 @@ int main(string[] argv)
 		{
 			string path = dirname(file);
 			string pattern = basename(file);
-			foreach(string name; dirEntries(path, SpanMode.shallow))
+			foreach(string name; dirEntries(path, SpanMode.depth))
 				if(fnmatch(basename(name), pattern))
 					prj.addFile(name);
 		}
@@ -262,9 +281,11 @@ int main(string[] argv)
 			prj.addFile(file);
 		}
 	}
-	prj.semantic();
-
-	prj.writeCpp("c:/tmp/d/cproject.cpp");
+	version(cpp)
+	{
+		prj.semantic();
+		prj.writeCpp("c:/tmp/d/cproject.cpp");
+	}
 
 	return 0;
 }

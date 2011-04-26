@@ -13,7 +13,6 @@ Settings:
 
 Project:
 ---------------
-- file with relative path opened twice
 - clean/build/rebuild only project not working
 - incorrect build order of single file compilations (check dependencies)
 - sort project items
@@ -57,9 +56,7 @@ Object Browser:
 - Derived types
 - inherited members
 - enum base classes
-- Search
 - modules without module statement shown with empty name
-- templates functions have expansion (remove homonym template declarations)
 - restrict "My Solution" to classes in projects in solution
 - list projects in "Custom Components"
 - split constraint from name

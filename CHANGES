@@ -278,3 +278,4 @@ unreleased Version 0.3.24
     the call stack display
   * if a source file is used in multiple project, it is no longer opened multiple times in 
     the editor
+  * improved lookup speed in browse info, now removing duplicate entries for eponymous templates
