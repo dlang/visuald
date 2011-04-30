@@ -16,7 +16,7 @@ import vdc.parser.decl;
 import vdc.parser.stmt;
 import vdc.parser.mod;
 
-import ast = vdc.ast.misc;
+import ast = vdc.ast.all;
 
 //-- GRAMMAR_BEGIN --
 //EnumDeclaration:
@@ -482,6 +482,7 @@ class VersionCondOrSpec
 //ConditionalDeclaration:
 //    Condition DeclarationBlock
 //    Condition DeclarationBlock else DeclarationBlock
+//    Condition: DeclDefs_opt
 class ConditionalDeclaration
 {
 	// Condition DeclarationBlock else $ DeclarationBlock
@@ -494,8 +495,41 @@ class ConditionalDeclaration
 	// Condition $ DeclarationBlock else DeclarationBlock
 	mixin stateAppendClass!(DeclarationBlock, stateElse.shift) stateThenDecl;
 	
+	static Action shiftCondition(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_colon:
+				auto declblk = new ast.DeclarationBlock(p.tok);
+				p.topNode!(ast.ConditionalDeclaration).id = TOK_colon;
+				p.pushNode(declblk);
+				p.pushState(&enterDeclarationBlock);
+				return Accept;
+			default:
+				return stateThenDecl.shift(p);
+		}
+	}
+	static Action enterDeclarationBlock(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_rcurly:
+			case TOK_EOF:
+				return shiftDeclarationBlock(p);
+			default:
+				p.pushState(&shiftDeclarationBlock);
+				return DeclDefs.enter(p);
+		}
+	}
+	
+	static Action shiftDeclarationBlock(Parser p)
+	{
+		p.popAppendTopNode!(ast.ConditionalDeclaration,ast.DeclarationBlock)();
+		return Forward;
+	}
+	
 	// $ Condition DeclarationBlock else DeclarationBlock
-	mixin stateEnterClass!(Condition, ast.ConditionalDeclaration, stateThenDecl.shift);
+	mixin stateEnterClass!(Condition, ast.ConditionalDeclaration, shiftCondition);
 	
 	static Action enterAfterVersion(Parser p)
 	{

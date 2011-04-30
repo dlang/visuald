@@ -30,6 +30,7 @@ Project:
 - incremental builds
 - DnD project folders
 - debugger: better error messages when path or working directory are invalid
+- single file compilation of library: rebuilds lib every time
 
 Language service:
 ---------------

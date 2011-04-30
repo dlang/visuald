@@ -89,6 +89,7 @@ class NoScopeStatement : ScopeStatement
 //    GotoStatement
 //    WithStatement
 //    SynchronizedStatement
+//    VolatileStatement
 //    TryStatement
 //    ScopeGuardStatement
 //    ThrowStatement
@@ -651,6 +652,23 @@ class SynchronizedStatement : Statement
 		else
 			writer("synchronized ");
 			
+		writer.nl;
+		{
+			CodeIndenter indent = CodeIndenter(writer);
+			writer(getMember(members.length - 1));
+		}
+	}
+}
+
+//VolatileStatement:
+//    [ScopeNonEmptyStatement]
+class VolatileStatement : Statement
+{
+	mixin ForwardCtor!();
+
+	override void toD(CodeWriter writer)
+	{
+		writer("volatile ");
 		writer.nl;
 		{
 			CodeIndenter indent = CodeIndenter(writer);

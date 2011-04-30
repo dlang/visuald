@@ -90,12 +90,12 @@ string replaceMacros(string s, string[string] replacements)
 	return s;
 }
 
-uint endofStringCStyle(string text, uint pos, dchar term = '\"')
+uint endofStringCStyle(string text, uint pos, dchar term = '\"', dchar esc = '\\')
 {
 	while(pos < text.length)
 	{
 		dchar ch = decode(text, pos);
-		if(ch == '\\')
+		if(ch == esc)
 		{
 			if (pos >= text.length)
 				break;
@@ -123,7 +123,7 @@ string[] tokenizeArgs(string text, bool semi_is_seperator = true, bool space_is_
 		{
 			if(ch == '\"')
 			{
-				pos = endofStringCStyle(text, pos);
+				pos = endofStringCStyle(text, pos, '\"', 0);
 				ch = 0;
 			}
 			else
@@ -146,7 +146,7 @@ string unquoteArgument(string arg)
 	if(arg.length <= 0 || arg[0] != '\"')
 		return arg;
 
-	if (endofStringCStyle(arg, 1) != arg.length)
+	if (endofStringCStyle(arg, 1, '\"', 0) != arg.length)
 		return arg;
 
 	return arg[1..$-1];

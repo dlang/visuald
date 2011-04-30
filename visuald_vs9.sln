@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README = README
 		TODO = TODO
 		VERSION = VERSION
+		nsis\visuald.nsi = nsis\visuald.nsi
 	EndProjectSection
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vsi2d", "c2d\vsi2d.visualdproj", "{8760F45A-69D9-4B68-BE63-0E055B51D447}"

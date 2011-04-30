@@ -313,6 +313,8 @@ class ConditionalDeclaration : Node
 	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0));
+		if(id == TOK_colon)
+			writer(":");
 		writer.nl;
 		{
 			CodeIndenter indent = CodeIndenter(writer);

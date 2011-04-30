@@ -66,7 +66,7 @@
   !define MAGO_CLSID              {97348AC0-2B6B-4B99-A245-4C7E2C09D403}
   !define MAGO_ENGINE_KEY         AD7Metrics\Engine\${MAGO_CLSID}
   !define MAGO_EXCEPTION_KEY      AD7Metrics\Exception\${MAGO_CLSID}
-  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/MagoDebug for more information. Copyright (c) 2010 Aldo J. Nunez"
+  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010 Aldo J. Nunez"
 
   !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
   !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MINOR " MAGO_VERSION_MINOR

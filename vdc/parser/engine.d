@@ -119,7 +119,8 @@ class Parser
 	Token lexerTok;
 	string partialString;
 	TextSpan partialStringSpan;
-	
+
+	int countErrors;
 	int lastErrorTokenPos;
 	string lastError;
 	TextSpan lastErrorSpan;
@@ -228,6 +229,7 @@ class Parser
 			errors ~= ParseError(errorSpan, msg);
 		else
 			writeln(msg);
+		countErrors++;
 	}
 	
 	void writeError(string msg)
@@ -673,6 +675,7 @@ class Parser
 		lastErrorTokenPos = 0;
 		lastError = "";
 		errors = errors.init;
+		countErrors = 0;
 	}
 }
 

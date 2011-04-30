@@ -847,11 +847,11 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		
 		int p;
 		int diffLines = iNewEndLine - iOldEndLine;
+		int lines = mSource.GetLineCount();   // new line count
+		SaveLineState(lines, -1); // ensure mLineState[] is large enough
+		
 		if(diffLines > 0)
 		{
-			int lines = mSource.GetLineCount();   // new line count
-			SaveLineState(lines, -1); // ensure mLineState[] is large enough
-			
 			for(p = lines; p > iNewEndLine; p--)
 				mLineState[p] = mLineState[p - diffLines];
 			
@@ -860,7 +860,6 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		else if(diffLines < 0)
 		{
-			int lines = mSource.GetLineCount();   // new line count
 			for(p = iStartLine + 1; p < iNewEndLine; p++)
 				mLineState[p] = -1;
 			for(; p - diffLines < lines; p++)

@@ -109,6 +109,7 @@ alias ScopeStatement NoScopeStatement;
 //    GotoStatement
 //    WithStatement
 //    SynchronizedStatement
+//    VolatileStatement
 //    TryStatement
 //    ScopeGuardStatement
 //    ThrowStatement
@@ -166,6 +167,9 @@ class NonEmptyStatement : Statement
 			case TOK_synchronized:
 				// could also be a declaration?
 				return SynchronizedStatement.enter(p);
+			case TOK_volatile:
+				// could also be a declaration?
+				return VolatileStatement.enter(p);
 			case TOK_try:
 				return TryStatement.enter(p);
 			case TOK_scope:
@@ -226,7 +230,6 @@ class NonEmptyStatement : Statement
 			case TOK_const:
 			case TOK_auto:
 			// case TOK_scope:
-			case TOK_volatile:
 			case TOK___gshared:
 			case TOK___thread:
 			case TOK_shared:
@@ -928,6 +931,14 @@ class SynchronizedStatement : Statement
 						   -1, stateStatement.shift) stateLparen;
 	
 	mixin stateEnterToken!(TOK_synchronized, ast.SynchronizedStatement, stateLparen.shift);
+}
+
+//-- GRAMMAR_BEGIN --
+//VolatileStatement:
+//    volatile ScopeNonEmptyStatement
+class VolatileStatement : Statement
+{
+	mixin SequenceNode!(ast.VolatileStatement, TOK_volatile, ScopeNonEmptyStatement);
 }
 
 

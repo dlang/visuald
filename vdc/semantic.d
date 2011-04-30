@@ -137,7 +137,8 @@ class Scope
 class Project : Node
 {
 	Options options;
-
+	int countErrors;
+	
 	Module[string] mModulesByName;
 	
 	this()
@@ -163,8 +164,10 @@ class Project : Node
 		catch(Exception e)
 		{
 			writeln(e.msg);
+			countErrors += p.countErrors + 1;
 			return null;
 		}
+		countErrors += p.countErrors;
 		if(!n)
 			return null;
 
@@ -176,6 +179,7 @@ class Project : Node
 		if(auto pm = modname in mModulesByName)
 		{
 			semanticError(fname, "module name " ~ modname ~ " already used by " ~ pm.filename);
+			countErrors++;
 			return null;
 		}
 

@@ -845,7 +845,8 @@ class GlobalOptions
 			if(auto svc = Package.s_instance.mLangsvc)
 				svc.OnActiveProjectCfgChange(null);
 		}
-		
+		Package.scheduleUpdateLibrary();
+			
 		return true;
 	}
 

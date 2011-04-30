@@ -255,6 +255,23 @@ unittest
 	testParse(txt, "unittest6");
 }
 
+unittest
+{
+	string txt = q{
+		version(all)
+		{
+		version(v1):
+		version(v2):
+		}
+		static if(true):
+		pragma(msg,"static if(true)");
+
+		static if(false):
+		pragma(msg,"static if(false)");
+	};
+	testParse(txt, "unittest7");
+}
+
 	//alias 4 test;
 	//uint[test] arr;
 	//pragma(msg,arr.sizeof);
@@ -286,7 +303,7 @@ int main(string[] argv)
 		prj.semantic();
 		prj.writeCpp("c:/tmp/d/cproject.cpp");
 	}
-
+	writeln(prj.countErrors, " errors");
 	return 0;
 }
 }
