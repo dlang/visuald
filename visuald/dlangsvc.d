@@ -2363,7 +2363,10 @@ else
 	{
 		if(!parseTaskPool)
 		{
-			parseTaskPool = new TaskPool(defaultPoolThreads);
+			int threads = defaultPoolThreads;
+			if(threads < 1)
+				threads = 1;
+			parseTaskPool = new TaskPool(threads);
 			parseTaskPool.isDaemon = true;
 		}
 		auto task = task(&doParse);

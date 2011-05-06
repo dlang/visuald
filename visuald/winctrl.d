@@ -156,7 +156,7 @@ class Widget
 	
 	bool ScreenToClient(RECT *rect)
 	{
-		POINT pnt = POINT(rect.left, rect.top);
+		POINT pnt = { rect.left, rect.top };
 		if (.ScreenToClient(hwnd, &pnt) == 0)
 			return false;
 		rect.right += pnt.x - rect.left;

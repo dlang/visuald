@@ -45,7 +45,14 @@ import sdk.vsi.msdbg;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-version = tip;
+interface IVsCustomDataTip : IUnknown
+{
+	static const GUID iid = uuid("80DD0557-F6FE-48e3-9651-398C5E7D8D78");
+	
+	HRESULT DisplayDataTip();
+}
+
+// version = tip;
 
 class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget, 
                    IVsTextViewEvents, IVsExpansionEvents
@@ -98,9 +105,8 @@ version(tip)
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
-		// do not implement, VS2010 will not show Data tooltips in debugger if it is
-		//if(queryInterface!(IVsTextViewFilter) (this, riid, pvObject))
-		//	return S_OK;
+		if(queryInterface!(IVsTextViewFilter) (this, riid, pvObject))
+			return S_OK;
 		if(queryInterface!(IVsTextViewEvents) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IOleCommandTarget) (this, riid, pvObject))
@@ -1056,7 +1062,6 @@ else
 		return S_OK;
 	}
 	
-	// not implemented, VS2010 will not show Data tooltips in debugger if it is
 	// IVsTextViewFilter //////////////////////////////////////
 	override int GetWordExtent(in int iLine, in CharIndex iIndex, in uint dwFlags, /* [out] */ TextSpan *pSpan)
 	{
@@ -1077,39 +1082,53 @@ else
 	{
 		mixin(LogCallMix);
 
-		// currently disabled to show data breakpoints while debugging
-		// not working without debugger, see Package.SetSite: QueryService(&IVsDebugger)
-		if(mCodeWinMgr.mLangSvc.IsDebugging())
-			return E_NOTIMPL;
-		//return TIP_S_ONLYIFNOMARKER;
+		HRESULT resFwd = TIP_S_ONLYIFNOMARKER; // enable and prefer TextMarker tooltips
 		
-	version(none) // disabled until useful
-	{
-		if(HRESULT hr = GetWordExtent(pSpan.iStartLine, pSpan.iStartIndex, WORDEXT_CURRENT, pSpan))
-			return hr;
+		if(pSpan.iStartLine == pSpan.iEndLine && pSpan.iStartIndex == pSpan.iEndIndex)
+			if(HRESULT hr = GetWordExtent(pSpan.iStartLine, pSpan.iStartIndex, WORDEXT_CURRENT, pSpan))
+				return resFwd;
+		
+		// when implementing IVsTextViewFilter, VS2010 will no longer ask the debugger
+		//  for tooltips, so we have to do it ourselves
+		if(IVsDebugger srpVsDebugger = queryService!(IVsDebugger))
+		{
+			scope(exit) release(srpVsDebugger);
 
+			HRESULT hr = srpVsDebugger.GetDataTipValue(mCodeWinMgr.mSource.mBuffer, pSpan, null, pbstrText);
+			if(hr == 0x45001) // always returned when debugger active, so no other tooltips then
+			{
+				if(IVsCustomDataTip tip = qi_cast!IVsCustomDataTip(srpVsDebugger))
+				{
+					scope(exit) release(tip);
+					if(SUCCEEDED (tip.DisplayDataTip()))
+						return S_OK;
+				}
+				else
+					return hr;
+			} // return hr; // this triggers HandoffNoDefaultTipToDebugger
+		}
+
+version(none) // quick info tooltips not good enough yet
+{
 		string word = toUTF8(mCodeWinMgr.mSource.GetText(pSpan.iStartLine, pSpan.iStartIndex, pSpan.iEndLine, pSpan.iEndIndex));
 		if(word.length <= 0)
-			return S_FALSE;
+			return resFwd;
 
 		Definition[] defs = Package.GetLibInfos().findDefinition(word);
 		if(defs.length == 0)
-			return S_FALSE;
+			return resFwd;
 
-		string msg = word ~ "\n";
+		string msg = word;
 		foreach(def; defs)
 		{
-			string m = def.kind ~ "\t" ~ def.filename ~ ":" ~ to!(string)(def.line) ~ "\n";
+			string m = "\n" ~ def.kind ~ "\t" ~ def.filename;
+			if(def.line > 0)
+				m ~= ":" ~ to!(string)(def.line);
 			msg ~= m;
 		}
 		*pbstrText = allocBSTR(msg);
-		return S_OK; // E_NOTIMPL;
-	}
-	else
-	{
-		return E_NOTIMPL;
-	}
-
+}
+		return resFwd;
 	}
 
 	override int GetPairExtents(in int iLine, in CharIndex iIndex, /* [out] */ TextSpan *pSpan)

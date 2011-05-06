@@ -26,8 +26,8 @@ version(all) //dmd_2_052)
 }
 else
 {
-	import core.sys.windows._dll;
-	import threadaux = core.sys.windows._thread;
+	import core.sys.windows.dll;
+	import threadaux = core.sys.windows.threadaux;
 }
 
 import std.conv;

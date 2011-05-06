@@ -816,11 +816,11 @@ private:
 			{
 				_wndToolbar.SendMessage(TB_SETIMAGELIST, 0, cast(LPARAM)_himlToolbar);
 
-				TBBUTTON btn2 = TBBUTTON(10, 11, TBSTATE_ENABLED, 1, cast(BYTE[])[0,0], 0, 0);
+				TBBUTTON btn2 = { 10, 11, TBSTATE_ENABLED, 1, cast(BYTE[])[0,0], 0, 0 };
 				
 				TBBUTTON initButton(int id, ubyte style)
 				{
-					TBBUTTON btn = TBBUTTON(id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, cast(BYTE[])[0,0], 0, 0);
+					TBBUTTON btn = { id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, [0,0], 0, 0 };
 					return btn;
 				}
 				static const TBBUTTON s_tbb[] = [

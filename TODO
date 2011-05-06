@@ -77,3 +77,4 @@ Lexer/Parser:
 Installation:
 ---------------
 - build sdk-imports
+- bad/no version number in resource of DLL

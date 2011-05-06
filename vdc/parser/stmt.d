@@ -548,6 +548,7 @@ class Expression_opt
 //
 //Aggregate:
 //    Expression
+//    Type
 //
 //ForeachRangeStatement:
 //    Foreach ( ForeachType ; LwrExpression .. UprExpression ) ScopeNonEmptyStatement
@@ -576,7 +577,7 @@ class ForeachStatement : Statement
 	// Foreach ( ForeachTypeList ; Aggregate ) $ NoScopeNonEmptyStatement
 	mixin stateAppendClass!(NoScopeNonEmptyStatement, Parser.forward) stateStatement;
 	
-	// Foreach ( ForeachTypeList ; Aggregate $ ) NoScopeNonEmptyStatement
+	// Foreach ( ForeachTypeList ; LwrExpression .. UprExpression $ ) NoScopeNonEmptyStatement
 	mixin stateShiftToken!(TOK_rparen, stateStatement.shift) stateRparen;
 	
 	// Foreach ( ForeachType ; LwrExpression .. $ UprExpression ) ScopeNonEmptyStatement
@@ -589,9 +590,13 @@ class ForeachStatement : Statement
 		switch(p.tok.id)
 		{
 			case TOK_slice:
+				p.popAppendTopNode!();
+				p.popRollback();
 				p.pushState(&stateUprExpression.shift);
 				return Accept;
 			case TOK_rparen:
+				p.popAppendTopNode!();
+				p.popRollback();
 				p.pushState(&stateStatement.shift);
 				return Accept;
 			default:
@@ -599,11 +604,35 @@ class ForeachStatement : Statement
 		}
 	}
 
-	// Foreach ( ForeachTypeList ; $ Aggregate ) NoScopeNonEmptyStatement
-	mixin stateAppendClass!(Expression, shiftExpression) stateExpression;
+	static Action shiftType(Parser p)
+	{
+		// static foreach with type tuple
+		switch(p.tok.id)
+		{
+			case TOK_rparen:
+				p.popAppendTopNode!();
+				p.pushState(&stateStatement.shift);
+				return Accept;
+			default:
+				return p.parseError("closing parenthesis expected");
+		}
+	}
 	
+	// Foreach ( ForeachTypeList ; $ Aggregate ) NoScopeNonEmptyStatement
+	static Action stateExpression(Parser p)
+	{
+		p.pushRollback(&rollbackExpression);
+		p.pushState(&shiftExpression);
+		return Expression.enter(p);
+	}
+	static Action rollbackExpression(Parser p)
+	{
+		p.pushState(&shiftType);
+		return Type.enter(p);
+	}
+
 	// Foreach ( ForeachTypeList $ ; Aggregate ) NoScopeNonEmptyStatement
-	mixin stateShiftToken!(TOK_semicolon, stateExpression.shift) stateSemicolon;
+	mixin stateShiftToken!(TOK_semicolon, stateExpression) stateSemicolon;
 	
 	// Foreach ( $ ForeachTypeList ; Aggregate ) NoScopeNonEmptyStatement
 	mixin stateAppendClass!(ForeachTypeList, stateSemicolon.shift) stateForeachTypeList;
