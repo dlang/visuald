@@ -164,6 +164,29 @@ class Decl : Node
 	{
 		getDeclarators().addSymbols(sc);
 	}
+
+	override void _semantic(Scope sc)
+	{
+		if(auto fn = getFunctionBody())
+		{
+			// if it is a function declaration, create a new scope including function parameters
+			scop = sc.push(scop);
+			if(auto decls = getDeclarators())
+				if(auto decl = decls.getDeclarator(0))
+				{
+					foreach(m; decl.members) // template parameters and function parameters and constraint
+					{
+						m.addSymbols(scop);
+					}
+				}
+			
+			super._semantic(scop);
+			//fn.semantic(scop);
+			sc = scop.pop();
+		}
+		else
+			super._semantic(sc);
+	}
 }
 
 //Declarators:
@@ -253,6 +276,8 @@ class Declarator : Identifier
 {
 	mixin ForwardCtorTok!();
 
+	Type type;
+	
 	override void toD(CodeWriter writer)
 	{
 		super.toD(writer);
@@ -263,6 +288,32 @@ class Declarator : Identifier
 	override void addSymbols(Scope sc)
 	{
 		sc.addSymbol(ident, this);
+	}
+
+	override Type calcType(Scope sc)
+	{
+		if(type)
+			return type;
+		
+		for(Node p = parent; p; p = p.parent)
+		{
+			if(auto decl = cast(Decl) p)
+			{
+				type = decl.getType();
+				if(type)
+					type = type.calcType(sc);
+				return type;
+			}
+			else if(auto pdecl = cast(ParameterDeclarator) p)
+			{
+				type = pdecl.getType();
+				if(type)
+					type = type.calcType(sc);
+				return type;
+			}
+		}
+		semanticError("cannot find Declarator type");
+		return null;
 	}
 }
 
@@ -293,8 +344,9 @@ class IdentifierList : Node
 		return tn.global == global;
 	}
 	
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
+		// TODO: does not work for package qualified symbols
 		if(global)
 			sc = Module.getModule(this).scop;
 
@@ -355,7 +407,7 @@ class ParameterList : Node
 	mixin ForwardCtor!();
 
 	Parameter getParameter(int i) { return getMember!Parameter(i); }
-		
+
 	bool varargs;
 	
 	override ParameterList clone()
@@ -388,6 +440,11 @@ class ParameterList : Node
 		}
 	}
 	
+	override void addSymbols(Scope sc)
+	{
+		foreach(m; members)
+			m.addSymbols(sc);
+	}
 }
 
 //Parameter:
@@ -424,6 +481,11 @@ class Parameter : Node
 		if(members.length > 1)
 			writer(" = ", getMember(1));
 	}
+
+	override void addSymbols(Scope sc)
+	{
+		getParameterDeclarator().addSymbols(sc);
+	}
 }
 
 //ParameterDeclarator:
@@ -441,5 +503,11 @@ class ParameterDeclarator : Node
 		writer(getType());
 		if(auto decl = getDeclarator())
 			writer(" ", decl);
+	}
+	
+	override void addSymbols(Scope sc)
+	{
+		if (auto decl = getDeclarator())
+			decl.addSymbols(sc);
 	}
 }

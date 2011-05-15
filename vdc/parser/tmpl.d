@@ -171,7 +171,7 @@ class IdentifierOrTemplateInstance
 				return Accept;
 
 			default:
-				return p.parseError("'(' of single argument template expected after '!'");
+				return p.parseError("'(' or single argument template expected after '!'");
 		}
 	}
 	

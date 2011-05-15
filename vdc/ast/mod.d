@@ -130,38 +130,50 @@ class Module : Node
 		return null;
 	}
 	
-	Node[] search(string ident)
+	void initScope()
 	{
 		if(!scop)
 		{
 			scop = new Scope;
 			scop.mod = this;
 
+			// add implicite import of module object
+			if(auto prj = getProject())
+				if(prj.mObjectModule && prj.mObjectModule !is this)
+				{
+					auto imp = Import.create(prj.mObjectModule);
+					scop.addImport(imp);
+				}
+			
 			expandNonScopeMembers(scop);
 			addMemberSymbols(scop);
 		}
-		return scop.search(ident);
 	}
 	
-	override void semantic(Scope sc)
+	Node[] search(string ident)
+	{
+		initScope();
+		return scop.search(ident, false, false);
+	}
+	
+	override void _semantic(Scope sc)
 	{
 		if(imported) // no full semantic on imports
 			return;
 		
 		// the order in which lazy semantic analysis takes place:
-		// - evaluate/expand version/debug and static if conditionals
+		// - evaluate/expand version/debug
+		// - evaluate mixins and static if conditionals in lexical order
 		// - analyze declarations:
 		//   - instantiate templates
 		//   - evaluate compile time expression
 		//   to resolve identifiers:
 		//     look in current scope, module
 		//     if not found, search all imports
-		if(!scop)
-		{
-			scop = sc.push(new Scope);
-			scop.mod = this;
-		}
-		scope(exit) scop.pop();
+		initScope();
+
+		sc = sc.push(scop);
+		scope(exit) sc.pop();
 		
 		expandNonScopeMembers(scop);
 		addMemberSymbols(scop);
@@ -387,7 +399,7 @@ class LinkageAttribute : AttributeSpecifier
 {
 	mixin ForwardCtor!();
 }
-	
+
 //AlignAttribute:
 //    attribute
 class AlignAttribute : AttributeSpecifier
@@ -443,8 +455,9 @@ class ImportDeclaration : Node
 	{
 	}
 	
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
+		getMember(0).annotation = annotation; // copy protection attributes
 		getMember(0).semantic(sc);
 	}
 }
@@ -460,19 +473,18 @@ class ImportList : Node
 		writer.writeArray(members);
 	}
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		foreach(m; members)
+		{
+			m.annotation = annotation; // copy protection attributes
 			m.semantic(sc);
+		}
 	}
 }
 
 //Import:
-//    aliasIdent_opt [ModuleFullyQualifiedName 
-//    ModuleAliasIdentifier = ModuleFullyQualifiedName
-//
-//ModuleAliasIdentifier:
-//    Identifier
+//    aliasIdent_opt [ModuleFullyQualifiedName ImportBindList_opt]
 class Import : Node
 {
 	mixin ForwardCtor!();
@@ -510,7 +522,7 @@ class Import : Node
 			writer(" : ", bindList);
 	}
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		sc.addImport(this);
 	}
@@ -537,6 +549,18 @@ class Import : Node
 	{
 		auto mfqn = getMember!ModuleFullyQualifiedName(0);
 		return mfqn.getName();
+	}
+	
+	static Import create(Module mod)
+	{
+		// TODO: no location info
+		auto id = new Identifier;
+		id.ident = mod.getModuleName(); // TODO: incorrect for modules in packages
+		auto mfqm = new ModuleFullyQualifiedName;
+		mfqm.addMember(id);
+		auto imp = new Import;
+		imp.addMember(mfqm);
+		return imp;
 	}
 }
 

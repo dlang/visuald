@@ -89,7 +89,7 @@ class Expression : Node
 
 	abstract PREC getPrecedence();
 
-	Type calcType(Scope sc)
+	override Type calcType(Scope sc)
 	{
 		if(!type)
 			semanticError(text(this, ".calcType not implemented"));
@@ -113,7 +113,7 @@ class BinaryExpression : Expression
 
 	override PREC getPrecedence() { return precedence[id]; }
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		getLeftExpr().semantic(sc);
 		getRightExpr().semantic(sc);
@@ -274,7 +274,7 @@ class ConditionalExpression : Expression
 	
 	override PREC getPrecedence() { return PREC.cond; }
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		getCondition().semantic(sc);
 		getThenExpr().semantic(sc);
@@ -461,7 +461,7 @@ class UnaryExpression : Expression
 	
 	Expression getExpression() { return getMember!Expression(0); }
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		getExpression().semantic(sc);
 	}
@@ -535,7 +535,7 @@ class NewExpression : Expression
 	Type getType() { return getMember!Type(hasNewArgs ? 1 : 0); }
 	ArgumentList getCtorArguments() { return members.length > (hasNewArgs ? 2 : 1) ? getMember!ArgumentList(members.length - 1) : null; }
 	
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		if(auto args = getNewArguments())
 			args.semantic(sc);
@@ -600,7 +600,7 @@ class CastExpression : Expression
 	Type getType() { return members.length > 1 ? getMember!Type(0) : null; }
 	Expression getExpression() { return getMember!Expression(members.length - 1); }
 	
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		if(auto type = getType())
 			type.semantic(sc);
@@ -647,10 +647,24 @@ class PostfixExpression : Expression
 
 	Expression getExpression() { return getMember!Expression(0); }
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
-		foreach(m; members)
-			m.semantic(sc);
+		if(id == TOK_dot)
+		{
+			auto expr = getExpression();
+			expr.semantic(sc);
+			auto type = expr.calcType(sc);
+			if(type)
+				if(auto id = getMember!Identifier(1))
+				{
+					Scope s = type.getScope();
+					Node n = s ? s.resolve(id.ident, id.span, false) : null;
+					type = n ? n.calcType(s) : null;
+				}
+		}
+		else
+			foreach(m; members)
+				m.semantic(sc);
 	}
 	
 	override void toD(CodeWriter writer)
@@ -701,7 +715,7 @@ class ArgumentList : Node
 {
 	mixin ForwardCtor!();
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		foreach(m; members)
 			m.semantic(sc);
@@ -750,7 +764,7 @@ class ArgumentList : Node
 //    AssertExpression
 //    MixinExpression
 //    ImportExpression
-//    BasicType . Identifier
+//    TypeProperty
 //    Typeof
 //    TypeidExpression
 //    IsExpression
@@ -778,7 +792,7 @@ class ArrayLiteral : Expression
 
 	override PREC getPrecedence() { return PREC.primary; }
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		foreach(m; members)
 			m.semantic(sc);
@@ -1084,15 +1098,6 @@ class IdentifierExpression : PrimaryExpression
 	
 	Identifier getIdentifier() { return getMember!Identifier(0); }
 
-	override void semantic(Scope sc)
-	{
-		if(global)
-			sc = Module.getModule(this).scop;
-		
-		string ident = getIdentifier().ident;
-		resolved = sc.resolve(ident, span);
-	}
-	
 	override void toD(CodeWriter writer)
 	{
 		if(global)
@@ -1112,6 +1117,26 @@ class IdentifierExpression : PrimaryExpression
 			}
 		}
 		writer(getIdentifier());
+	}
+
+	override void _semantic(Scope sc)
+	{
+		if(global)
+			sc = Module.getModule(this).scop;
+		
+		string ident = getIdentifier().ident;
+		resolved = sc.resolve(ident, span);
+	}
+	
+	override Type calcType(Scope sc)
+	{
+		if(type)
+			return type;
+		if(resolved)
+			type = resolved.calcType(sc);
+		if(!type)
+			semanticError("cannot determine type");
+		return type;
 	}
 }
 
@@ -1186,7 +1211,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		writer(txt);
 	}
 	
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		if(type)
 			return;
@@ -1353,7 +1378,7 @@ class StringLiteralExpression : PrimaryExpression
 		return tn.txt == txt;
 	}
 
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		type = createTypeString(span);
 	}
@@ -1403,6 +1428,8 @@ class CharacterLiteralExpression : PrimaryExpression
 	}
 }
 
+//TypeProperty:
+//    [Type Identifier]
 class TypeProperty : PrimaryExpression
 {
 	this() {} // default constructor need for clone()

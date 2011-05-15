@@ -40,7 +40,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\dmd2\dmd\src\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -262,8 +262,8 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>m:\s\d\visuald\trunk\bin\TestDebug\parser.exe</debugtarget>
-  <debugarguments />
+  <debugtarget>c:\s\d\visuald\trunk\bin\TestDebug\parser.exe</debugtarget>
+  <debugarguments>c:\tmp\d\semtest.d</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
@@ -300,5 +300,6 @@
   <File path="interpret.d" />
   <File path="parsertest.d" />
   <File path="lexer.d" />
+  <File path="logger.d" />
  </Folder>
 </DProject>

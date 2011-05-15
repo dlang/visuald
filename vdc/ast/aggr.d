@@ -40,6 +40,7 @@ class Aggregate : Type
 	Constraint getConstraint() { return hasConstraint ? getMember!Constraint(1) : null; }
 	StructBody getBody() { return hasBody ? getMember!StructBody(members.length - 1) : null; }
 
+	public /* clone and compare */ { 
 	override Aggregate clone()
 	{
 		Aggregate n = static_cast!Aggregate(super.clone());
@@ -63,7 +64,8 @@ class Aggregate : Type
 			&& tn.hasConstraint == hasConstraint
 			&& tn.ident == ident;
 	}
-	
+	}
+	public /* writer */ {
 	void bodyToD(CodeWriter writer)
 	{
 		if(auto bdy = getBody())
@@ -84,6 +86,18 @@ class Aggregate : Type
 			writer(tpl);
 		if(auto constraint = getConstraint())
 			writer(constraint);
+	}
+	}
+	
+	void _semantic(Scope sc)
+	{
+		// TODO: TemplateParameterList, Constraint
+		if(auto bdy = getBody())
+		{
+			sc = enterScope(sc);
+			bdy.semantic(sc);
+			sc = sc.pop();
+		}
 	}
 
 	override void addSymbols(Scope sc)
@@ -108,6 +122,7 @@ class Struct : Aggregate
 		ident = tok.txt;
 	}
 
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
@@ -117,6 +132,7 @@ class Struct : Aggregate
 		writer.writeIdentifier(ident);
 		tmplToD(writer);
 		bodyToD(writer);
+	}
 	}
 }
 
@@ -135,6 +151,7 @@ class Union : Aggregate
 		ident = tok.txt;
 	}
 
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
@@ -144,6 +161,7 @@ class Union : Aggregate
 		writer.writeIdentifier(ident);
 		tmplToD(writer);
 		bodyToD(writer);
+	}
 	}
 }
 
@@ -159,6 +177,7 @@ class InheritingAggregate : Aggregate
 		baseClasses ~= bc;
 	}
 	
+	public /* clone and compare */ { 
 	override InheritingAggregate clone()
 	{
 		InheritingAggregate n = static_cast!InheritingAggregate(super.clone());
@@ -169,7 +188,8 @@ class InheritingAggregate : Aggregate
 		
 		return n;
 	}
-
+	}
+	
 	override bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(super.convertableFrom(from, flags))
@@ -186,6 +206,7 @@ class InheritingAggregate : Aggregate
 		return false;
 	}
 	
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		// class/interface written by derived class
@@ -200,6 +221,7 @@ class InheritingAggregate : Aggregate
 				writer(", ", bc);
 		}
 		bodyToD(writer);
+	}
 	}
 }
 
@@ -218,6 +240,7 @@ class Class : InheritingAggregate
 		ident = tok.txt;
 	}
 
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
@@ -225,6 +248,7 @@ class Class : InheritingAggregate
 		
 		writer("class ");
 		super.toD(writer);
+	}
 	}
 }
 
@@ -251,6 +275,7 @@ class Intrface : InheritingAggregate
 		ident = tok.txt;
 	}
 
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
@@ -258,6 +283,7 @@ class Intrface : InheritingAggregate
 		
 		writer(TOK_interface, " ");
 		super.toD(writer);
+	}
 	}
 }
 
@@ -287,6 +313,7 @@ class BaseClass : Node
 		return null;
 	}
 
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		// do not output protection in anonymous classes, and public is the default anyway
@@ -299,6 +326,7 @@ class BaseClass : Node
 	{
 		writer("public ", getMember(0)); // protection diffent from C
 	}
+	}
 }
 
 // StructBody:
@@ -307,6 +335,7 @@ class StructBody : Node
 {
 	mixin ForwardCtor!();
 	
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("{");
@@ -318,6 +347,12 @@ class StructBody : Node
 		}
 		writer("}");
 		writer.nl();
+	}
+	}
+	
+	override void addSymbols(Scope sc)
+	{
+		addMemberSymbols(sc);
 	}
 }
 
@@ -335,6 +370,7 @@ class Constructor : Node
 	Constraint getConstraint() { return isTemplate() && members.length > 3 ? getMember!Constraint(2) : null; }
 	FunctionBody getBody() { return getMember!FunctionBody(members.length - 1); }
 	
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("this");
@@ -358,6 +394,7 @@ class Constructor : Node
 			writer.nl;
 		}
 	}
+	}
 }
 
 //Destructor:
@@ -368,6 +405,7 @@ class Destructor : Node
 
 	FunctionBody getBody() { return getMember!FunctionBody(0); }
 	
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("~this()");
@@ -382,6 +420,7 @@ class Destructor : Node
 			writer.nl;
 		}
 	}
+	}
 }
 
 //Invariant:
@@ -390,6 +429,7 @@ class Invariant : Node
 {
 	mixin ForwardCtor!();
 
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("invariant()");
@@ -404,6 +444,7 @@ class Invariant : Node
 			writer.nl;
 		}
 	}
+	}
 }
 
 //ClassAllocator:
@@ -412,11 +453,13 @@ class ClassAllocator : Node
 {
 	mixin ForwardCtor!();
 
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("new", getMember(0));
 		writer.nl;
 		writer(getMember(1));
+	}
 	}
 }
 
@@ -426,11 +469,13 @@ class ClassDeallocator : Node
 {
 	mixin ForwardCtor!();
 
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("delete", getMember(0));
 		writer.nl;
 		writer(getMember(1));
+	}
 	}
 }
 
@@ -450,6 +495,7 @@ class AliasThis : Node
 		ident = tok.txt;
 	}
 	
+	public /* clone and compare */ { 
 	override AliasThis clone()
 	{
 		AliasThis n = static_cast!AliasThis(super.clone());
@@ -465,13 +511,15 @@ class AliasThis : Node
 		auto tn = static_cast!(typeof(this))(n);
 		return tn.ident == ident;
 	}
-	
+	}
+	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("alias ");
 		writer.writeIdentifier(ident);
 		writer(" this;");
 		writer.nl;
+	}
 	}
 }
 

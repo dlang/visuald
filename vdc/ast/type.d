@@ -23,6 +23,36 @@ import vdc.ast.decl;
 
 import std.conv;
 
+class BuiltinSymbol(T) : Symbol
+{
+	Type type;
+	T value;
+	
+	this(Type t, T val)
+	{
+		type = t;
+		value = val;
+	}
+	
+	override Type calcType(Scope sc)
+	{
+		return type;
+	}
+
+	override void toD(CodeWriter writer)
+	{
+		assert(false);
+	}
+}
+
+Scope createTypeScope()
+{
+	Scope sc = new Scope;
+	sc.addSymbol("sizeof", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
+	sc.addSymbol("mangleof", new BuiltinSymbol!string(getTypeString(), "mangleof"));
+	return sc;
+}
+
 class Type : Node
 {
 	// semantic data
@@ -49,7 +79,7 @@ class Type : Node
 		return true;
 	}
 	
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		if(!typeinfo)
 			typeSemantic(sc);
@@ -57,9 +87,14 @@ class Type : Node
 
 	void typeSemantic(Scope sc)
 	{
-		super.semantic(sc);
+		super._semantic(sc);
 	}
-	
+
+	override Type calcType(Scope sc)
+	{
+		return this;
+	}
+
 	Value createValue()
 	{
 		semanticError(text("cannot create value of type ", this));
@@ -74,6 +109,23 @@ class BasicType : Type
 
 	override bool propertyNeedsParens() const { return false; }
 	
+	static Type createType(int tokid)
+	{
+		BasicType type = new BasicType;
+		type.id = tokid;
+		return type;
+	}
+	
+	static Type getType(int tokid)
+	{
+		static Type[] cachedTypes;
+		if(tokid >= cachedTypes.length)
+			cachedTypes.length = tokid + 1;
+		if(!cachedTypes[tokid])
+			cachedTypes[tokid] = createType(tokid);
+		return cachedTypes[tokid];
+	}
+
 	static TypeInfo getTypeInfo(int id)
 	{
 		switch(id)
@@ -284,12 +336,19 @@ class IdentifierType : Type
 
 	override bool propertyNeedsParens() const { return false; }
 	
+	Node resolved;
+	
 	IdentifierList getIdentifierList() { return getMember!IdentifierList(0); }
 	
-	override void typeSemantic(Scope sc)
+	override Type calcType(Scope sc)
 	{
 		auto idlist = getIdentifierList();
 		idlist.semantic(sc);
+		if(idlist.resolved)
+			return idlist.resolved.calcType(sc);
+
+		semanticError("cannot resolve type");
+		return null;
 	}
 	
 	override void toD(CodeWriter writer)
@@ -380,6 +439,8 @@ class TypeDynamicArray : TypeIndirection
 {
 	mixin ForwardCtor!();
 
+	static Scope cachedScope;
+	
 	override void typeSemantic(Scope sc)
 	{
 		auto type = getType();
@@ -411,6 +472,16 @@ class TypeDynamicArray : TypeIndirection
 	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[]");
+	}
+	
+	override Scope getScope()
+	{
+		if(!scop)
+		{
+			scop = createTypeScope();
+			scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
+		}
+		return scop;
 	}
 }
 
@@ -654,3 +725,15 @@ TypeDynamicArray createTypeString(ref const(TextSpan) span)
 	arr.addMember(mt);
 	return arr;
 }
+
+TypeDynamicArray getTypeString()
+{
+	static TypeDynamicArray cachedTypedString;
+	if(!cachedTypedString)
+	{
+		TextSpan span;
+		cachedTypedString = createTypeString(span);
+	}
+	return cachedTypedString;
+}
+

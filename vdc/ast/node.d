@@ -12,6 +12,8 @@ import vdc.util;
 import vdc.semantic;
 import vdc.lexer;
 import vdc.ast.expr;
+import vdc.ast.type;
+import vdc.logger;
 
 import std.exception;
 import std.stdio;
@@ -220,11 +222,50 @@ class Node
 	{
 	}
 	
-	void semantic(Scope sc)
+	Scope enterScope(ref Scope nscope, Scope sc)
+	{
+		if(!nscope)
+		{
+			nscope = sc.pushClone();
+			expandNonScopeMembers(nscope);
+			addMemberSymbols(nscope);
+			return nscope;
+		}
+		return sc.push(nscope);
+	}
+	Scope enterScope(Scope sc)
+	{
+		return enterScope(scop, sc);
+	}
+	
+	final void semantic(Scope sc)
+	{
+		logInfo("Scope(%s):semantic(%s)", cast(void*)sc, this);
+		LogIndent indent = LogIndent(1);
+		
+		_semantic(sc);
+	}
+	
+	void _semantic(Scope sc)
 	{
 //		throw new SemanticException(text(this, ".semantic not implemented"));
 		foreach(m; members)
 			m.semantic(sc);
+	}
+
+	Scope getScope()
+	{
+		if(scop)
+			return scop;
+		if(parent)
+			return parent.getScope();
+		return null;
+	}
+	
+	Type calcType(Scope sc)
+	{
+		semanticError(text(this, ".calcType not implemented"));
+		return null;
 	}
 
 	////////////////////////////////////////////////////////////

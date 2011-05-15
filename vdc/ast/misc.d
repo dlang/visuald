@@ -31,12 +31,14 @@ import vdc.ast.type;
 //
 //EnumBaseType:
 //    Type
-class EnumDeclaration : Node
+class EnumDeclaration : Type
 {
 	mixin ForwardCtor!();
 
 	string ident;
 	bool isDecl; // does not have body syntax
+	
+	override bool propertyNeedsParens() const { return false; }
 	
 	override EnumDeclaration clone()
 	{
@@ -246,6 +248,9 @@ class FunctionBody : Node
 	Statement bodyStatement;
 	string outIdentifier;
 
+	Scope inScop;
+	Scope outScop;
+	
 	override FunctionBody clone()
 	{
 		FunctionBody n = static_cast!FunctionBody(super.clone());
@@ -299,6 +304,32 @@ class FunctionBody : Node
 		}
 		writer.nl; // should not be written for function literals
 	}
+
+	override void _semantic(Scope sc)
+	{
+		if(inStatement)
+		{
+			sc = enterScope(inScop, sc);
+			inStatement.semantic(sc);
+			sc = sc.pop();
+		}
+		if(bodyStatement)
+		{
+			sc = enterScope(sc);
+			bodyStatement.semantic(sc);
+			sc = sc.pop();
+		}
+		if(outStatement)
+		{
+			// TODO: put into scope of inStatement?
+			sc = enterScope(outScop, sc);
+			if(outIdentifier.length)
+				sc.addSymbol(outIdentifier, this); // TODO: create Symbol for outIdentifier
+			outStatement.semantic(sc);
+			sc = sc.pop();
+		}
+	}
+
 }
 
 ////////////////////////////////////////////////////////////////
@@ -531,7 +562,7 @@ class StaticAssert : Node
 	{
 	}
 	
-	override void semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		auto args = getArgumentList();
 		auto expr = args.getMember!Expression(0);

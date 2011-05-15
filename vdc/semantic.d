@@ -12,11 +12,14 @@ import vdc.util;
 import vdc.ast.mod;
 import vdc.ast.node;
 import vdc.parser.engine;
+import vdc.logger;
 
 import std.exception;
 import std.stdio;
 import std.string;
 import std.array;
+
+int semanticErrors;
 
 class SemanticException : Exception
 {
@@ -33,6 +36,7 @@ void semanticError(string filename, ref const(TextPos) pos, string msg)
 		write("(", pos.line, ")");
 	write(": ");
 	writeln(msg);
+	semanticErrors++;
 }
 
 void semanticError(ref const(TextPos) pos, string msg)
@@ -69,6 +73,12 @@ class Scope
 	
 	static Scope current;
 	
+	enum
+	{
+		SearchParentScope = 1,
+		SearchPrivateImport = 2,
+	}
+	
 	Scope pushClone()
 	{
 		Scope sc = new Scope;
@@ -80,6 +90,9 @@ class Scope
 	}
 	Scope push(Scope sc)
 	{
+		if(!sc)
+			return pushClone();
+
 		sc.parent = this;
 		return current = sc;
 	}
@@ -91,6 +104,8 @@ class Scope
 	
 	void addSymbol(string ident, Symbol s)
 	{
+		logInfo("Scope(%s).addSymbol(%s, sym=%s)", cast(void*)this, ident, s);
+		
 		if(auto sym = ident in symbols)
 			*sym ~= s;
 		else
@@ -102,7 +117,7 @@ class Scope
 		imports ~= imp;
 	}
 	
-	Symbol[] search(string ident)
+	Symbol[] search(string ident, bool inParents, bool privateImports)
 	{
 		if(auto pn = ident in symbols)
 			return *pn;
@@ -110,14 +125,19 @@ class Scope
 		Node[] syms;
 		foreach(imp; imports)
 		{
-			syms ~= imp.search(this, ident);
+			if(privateImports || (imp.annotation & Annotation_Public))
+				syms ~= imp.search(this, ident);
 		}
+		if(syms.length == 0 && inParents && parent)
+			syms = parent.search(ident, true, privateImports);
 		return syms;
 	}
 	
-	Node resolve(string ident, ref const(TextSpan) span)
+	Node resolve(string ident, ref const(TextSpan) span, bool inParents = true)
 	{
-		Node[] n = search(ident);
+		Node[] n = search(ident, inParents, true);
+		logInfo("Scope(%s).search(%s) found %s", cast(void*)this, ident, n);
+		
 		if(n.length == 0)
 		{
 			semanticError(span.start, "unknown identifier " ~ ident);
@@ -139,14 +159,16 @@ class Project : Node
 	Options options;
 	int countErrors;
 	
+	Module mObjectModule; // object.d
 	Module[string] mModulesByName;
 	
 	this()
 	{
 		super(TextSpan());
 		options = new Options;
-		options.importDirs ~= r"c:\s\d\phobos\druntime\import\";
-		options.importDirs ~= r"c:\s\d\phobos\phobos\";
+		options.importDirs ~= r"c:\s\d\dmd2\druntime\import\";
+		options.importDirs ~= r"c:\s\d\dmd2\phobos\";
+		options.importDirs ~= r"c:\tmp\d\runnable\";
 	}
 	
 	////////////////////////////////////////////////////////////
@@ -227,6 +249,8 @@ class Project : Node
 	
 	void semantic()
 	{
+		mObjectModule = importModule("object");
+
 		Scope sc = new Scope;
 		for(int m = 0; m < members.length; m++)
 			members[m].semantic(sc);

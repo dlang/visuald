@@ -26,6 +26,9 @@ import std.conv;
 import std.file;
 import std.path;
 
+version = semantic;
+version = cpp;
+
 ////////////////////////////////////////////////////////////////
 
 ast.Node parse(TokenId[ ] tokens)
@@ -298,12 +301,14 @@ int main(string[] argv)
 			prj.addFile(file);
 		}
 	}
+	version(semantic)
+		prj.semantic();
+	
 	version(cpp)
 	{
-		prj.semantic();
 		prj.writeCpp("c:/tmp/d/cproject.cpp");
 	}
-	writeln(prj.countErrors, " errors");
+	writeln(prj.countErrors + semanticErrors, " errors");
 	return 0;
 }
 }

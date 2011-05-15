@@ -13,6 +13,7 @@ import vdc.lexer;
 import vdc.ast.node;
 import vdc.ast.expr;
 import vdc.ast.decl;
+import vdc.semantic;
 
 //Statement:
 //    ScopeStatement
@@ -172,6 +173,18 @@ class BlockStatement : Statement
 		writer("}");
 		writer.nl;
 	}
+
+	override void _semantic(Scope sc)
+	{
+		// TODO: TemplateParameterList, Constraint
+		if(members.length > 0)
+		{
+			sc = enterScope(sc);
+			super._semantic(sc);
+			sc = sc.pop();
+		}
+	}
+
 }
 
 //ExpressionStatement:
@@ -196,6 +209,11 @@ class DeclarationStatement : Statement
 	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0));
+	}
+	override void _semantic(Scope sc)
+	{
+		super._semantic(sc);
+		getMember(0).addSymbols(sc);
 	}
 }
 
