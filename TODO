@@ -24,7 +24,6 @@ Project:
 - remove auto-tool?
 - automation objects incomplete?
 - exceptions when opening rc-file with project
-- buildlog should contain project name to disambiguate
 - adding new item to project causes lots of System.Resources.MissingManifestResourceException
   which seems like a frozen UI (only first dialog open)
 - incremental builds
@@ -41,8 +40,10 @@ Language service:
 - remember line changes since last build to adjust gotoDefinition line numbers
 - default encoding for new source files should be utf8
 - help on identifier through http://dpldocs.info/
+- collapse disabled version/debug blocks
+- disable parsing/outlining for large files
+- move outlining into thread
 - version highlighting does not support version(x): syntax
-- version(unittest) always false
 
 Search:
 ---------------
@@ -75,8 +76,8 @@ Lexer/Parser:
 - fix Cmp/ShiftExpression
 - octal numbers
 - fix PowExpression
+- do not parse file if it is D1
 
 Installation:
 ---------------
 - build sdk-imports
-- bad/no version number in resource of DLL

@@ -141,6 +141,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	int mDebugLevelLine = -2;  // -2 never defined, -1 if set on command line
 
 	string mConfigVersions[2];
+	bool mConfigRelease;
+	bool mConfigUnittest;
 	
 	enum VersionParseState
 	{
@@ -481,7 +483,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case "D_InlineAsm_X86_64": return -1;
 			case "D_LP64":          return -1;
 			case "D_PIC":           return -1;
-			case "unittest":        return -1;
+			case "unittest":        return mConfigUnittest ? 1 : -1;
 			case "D_Version2":      return 1;
 			case "none":            return -1;
 			case "all":             return 1;
@@ -496,10 +498,10 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		
 		if (debugOrVersion)
 		{
+			if(mConfigRelease)
+				return false;
 			if(ident.length == 0)
-				if(Config cfg = GetConfig())
-					if(!cfg.GetProjectOptions().release)
-						return true;
+				return true;
 		}
 		else
 		{
@@ -633,6 +635,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				parseState = VersionParseState.AssignParsed;
 			else if(text == "(")
 				parseState = VersionParseState.ParenLParsed;
+			else if(debugOrVersion)
+			{
+				if(isVersionEnabled(iLine, "", debugOrVersion))
+					parseState = VersionParseState.IdleEnabled;
+				else
+					parseState = VersionParseState.IdleDisabled;
+			}
 			else
 				parseState = VersionParseState.IdleEnabled;
 			break;
@@ -903,6 +912,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		{
 			changes += modifyValue(mConfig.GetProjectOptions().versionids, mConfigVersions[kIndexVersion]);
 			changes += modifyValue(mConfig.GetProjectOptions().debugids,   mConfigVersions[kIndexDebug]);
+			changes += modifyValue(mConfig.GetProjectOptions().release,    mConfigRelease);
+			changes += modifyValue(mConfig.GetProjectOptions().useUnitTests, mConfigUnittest);
 		}
 		return changes != 0;
 	}

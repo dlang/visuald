@@ -6,12 +6,13 @@
 # prerequisites:
 #  DMD2
 #  Visual Studio 2005/2008/2010
-#  Microsoft Platfrom SDK (6.0A)
-#  Visual Studio Integration SDK (for VS2008)
+#  Microsoft Platfrom SDK (6.0A/7.0A/7.1)
+#  Visual Studio Integration SDK (for VS2008/VS2010)
 
-# DMD2 = c:\l\dmd2\windows\bin\dmd.exe
+DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
 # DMD2 = c:\l\dmd-2.051\windows\bin\dmd.exe
-DMD2 = m:\s\d\dmd2\dmd\src\dmd.exe
+# DMD2 = c:\l\dmd-2.053\windows\bin\dmd.exe
+# DMD2 = m:\s\d\dmd2\dmd\src\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
@@ -94,3 +95,17 @@ install: dte_idl vsi2d package
 
 install_only:
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
+
+##################################
+# clean build results
+
+clean:
+	if exist $(BINDIR)\vsi.lib     del $(BINDIR)\vsi.lib
+	if exist $(BINDIR)\vdc.lib     del $(BINDIR)\vdc.lib
+	if exist $(BINDIR)\visuald.dll del $(BINDIR)\visuald.dll
+	if exist $(TLB2IDL_EXE)        del $(TLB2IDL_EXE)
+	if exist $(VSI2D_EXE)          del $(VSI2D_EXE)
+	if exist $(DTE_IDL_PATH)\nul   (del /Q $(DTE_IDL_PATH) && rd $(DTE_IDL_PATH))
+	if exist sdk\vsi\nul           (del /Q sdk\vsi && rd sdk\vsi)
+	if exist sdk\win32\nul         (del /Q sdk\win32 && rd sdk\win32)
+

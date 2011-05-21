@@ -266,7 +266,7 @@ Version history
   * new compilation mode: compile only to set your link step manually in the post-build step
   * jumping to errors in files that exist in several projects now jump to the correct source
 
-unreleased Version 0.3.24
+2011-05-08 Version 0.3.24
 
   * fixed crash when installing/uninstalling other Visual Studio plugins
   * added menu entry "Open Website" to browse the visual D Website inside Visual Studio
@@ -282,3 +282,16 @@ unreleased Version 0.3.24
   * fixed issues with quoted arguments with trailing backslash in settings
   * browse info now updated when JSON paths changed in global options
   * fixed spurious crash when removing multiple lines 
+  * now installs cv2pdb 0.21
+
+unreleased Version 0.3.25
+
+  * fixed version information of the DLL
+  * error list: warnings are no longer shown as errors
+  * project name added to buildlog.html to allow multiple projects with the same intermediate dir
+  * fixed highlighting of version(unittest) and debug without identifier
+  * reduced parsing thread priority to interfere less with editing
+  * adjusted to build with the latest VS2010 SDK
+  * Visual D now builds with DMD 2.053
+  * friendlier error message if debug executable or working dir do not exist
+  

@@ -89,7 +89,7 @@ class Aggregate : Type
 	}
 	}
 	
-	void _semantic(Scope sc)
+	override void _semantic(Scope sc)
 	{
 		// TODO: TemplateParameterList, Constraint
 		if(auto bdy = getBody())

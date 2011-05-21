@@ -9,7 +9,7 @@
 module vdc.logger;
 
 import std.stdio;
-import std.date;
+import std.datetime;
 import std.conv;
 import std.string;
 
@@ -50,10 +50,10 @@ version(enableLog) {
 	void logInfo(...)
 	{
 		auto buffer = new char[17 + 1];
-		d_time now = std.date.getUTCtime();
+		SysTime now = Clock.currTime();
 		uint tid = GetCurrentThreadId();
 		auto len = sprintf(buffer.ptr, "%02d:%02d:%02d - %04x - ",
-		                   hourFromTime(now), minFromTime(now), secFromTime(now), tid);
+		                   now.hour, now.minute, now.second, tid);
 		string s = to!string(buffer[0..len]);
 		s ~= repeat(" ", gLogIndent);
 		

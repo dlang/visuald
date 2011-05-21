@@ -15,8 +15,8 @@ import std.path;
 import std.file;
 import std.utf;
 import std.conv;
-import std.intrinsic;
 import std.array;
+import core.bitop;
 
 string normalizeDir(string dir)
 {
@@ -126,8 +126,7 @@ void getOldestNewestFileTime(string[] files, out long oldest, out long newest)
 		{
 			if(!exists(file))
 				goto L_fileNotFound;
-			long ftc, fta;
-			getTimes(file, ftc, fta, ftm);
+			ftm = timeLastModified(file).stdTime();
 			gCachedFileTimes[file] = ftm;
 		}
 		if(ftm > newest)

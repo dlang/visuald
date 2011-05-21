@@ -106,7 +106,9 @@ class idl2d
 		
 		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "wtypes.idl", "oleidl.idl", 
 			"ocidl.idl", "objidl.idl", "docobj.idl", "oleauto.h", "objbase.h",
-			"mshtmcid.h", "xmldom.idl", "xmldso.idl", "xmldomdid.h", "xmldsodid.h", "idispids.h" ];
+			"mshtmcid.h", "xmldom.idl", "xmldso.idl", "xmldomdid.h", "xmldsodid.h", "idispids.h",
+			"activdbg.id*", "activscp.id*", "dbgprop.id*", // only available in Windows SDK v7.x
+		];
 
 		if(vsi)
 		{
@@ -114,8 +116,10 @@ class idl2d
 			vsi_h_files   = [ "completionuuids.h", "contextuuids.h", "textmgruuids.h", "vsshelluuids.h", "vsdbgcmd.h",
 				"venusids.h", "stdidcmd.h", "vsshlids.h", "mnuhelpids.h", "WCFReferencesIds.h",
 				"vsdebugguids.h", "VSRegKeyNames.h", "SCGuids.h", "wbids.h", "sharedids.h",
-				"vseeguids.h", "version.h"  ];
+				"vseeguids.h", "version.h",
+				"vsplatformuiuuids.*", // only in VS2010 SDK
 			// no longer in SDK2010: "DSLToolsCmdID.h", 
+			 ];
 			
 			dte_idl_files = [ "*.idl" ];
 		}
@@ -490,6 +494,11 @@ class idl2d
 		case "__int3264":
 			return 1;
 		
+		case "_NO_SCRIPT_GUIDS": // used in activdbg.h, disable to avoid duplicate GUID definitions
+		case "EnumStackFramesEx": // used in activdbg.h, but in wrong scope
+		case "SynchronousCallIntoThread": // used in activdbg.h, but in wrong scope
+			return 1;
+			
 		// winnt.h
 		case "_WINDEF_":
 		case "_WINBASE_":
@@ -1904,6 +1913,7 @@ else
 		case "bool":      return "idl_bool";
 		case "GUID_NULL": return "const_GUID_NULL";
 		case "NULL":      return "null";
+		case "scope":     return "idl_scope";
 
 		// winbase annotations
 		case "__in":
@@ -1963,6 +1973,9 @@ else
 
 		// vslangproj.d
 		case "prjBuildActionCustom": return "prjBuildActionEmbeddedResource";
+
+		// wingdi.d: wrong octal number in SDK v6.0A
+		case "02500": return "2500";
 
 		default:
 			if(string* ps = text in tokImports)

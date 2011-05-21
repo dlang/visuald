@@ -40,7 +40,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>c:\l\dmd-2.048\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>

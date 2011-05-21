@@ -174,6 +174,7 @@ string insertCr(string s)
 	return ns ~ s;
 }
 
+version(unittest)
 unittest
 {
 	string t = insertCr("a\nb\r\ncd\n\ne\n\r\nf");

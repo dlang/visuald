@@ -29,7 +29,7 @@ import dte80 = sdk.vsi.dte80;
 
 import std.utf;
 import std.algorithm;
-import std.date;
+import std.datetime;
 import std.math;
 import std.string;
 import std.path;
@@ -1434,8 +1434,15 @@ private:
 		return colid;
 	}
 
-	string _timeString(std.date.d_time time)
+	string _timeString(const(SysTime) time)
 	{
+version(all)
+{
+		DateTime dt = cast(DateTime) time;
+		return dt.toSimpleString();
+}
+else
+{
 		char[] buffer = new char[128];
 		
 //		auto dst = daylightSavingTA(time);
@@ -1449,6 +1456,7 @@ private:
 		assert(len < buffer.length);
 		buffer = buffer[0 .. len];
 		return assumeUnique(buffer);
+}
 	}
 	
 	////////////////////////////////////////////////////////////////////////
@@ -1501,8 +1509,8 @@ private:
 					break;
 
 				case COLUMNID.MODIFIEDDATE:
-					std.date.d_time ft = psiWeak.GetModified();
-					if(ft != 0)
+					const(SysTime) ft = psiWeak.GetModified();
+					if(ft.stdTime() != 0)
 						//txt = std.date.toString(ft);
 						txt = _timeString(ft);
 					break;
@@ -1954,10 +1962,7 @@ class SolutionItem //: IUnknown
 		def.line = -1;
 		def.kind = "file";
 		if(exists(path))
-		{
-			long ftc, fta, ftm;
-			getTimes(path, ftc, fta, _modifiedDate);
-		}
+			_modifiedDate = timeLastModified(path);
 		def.inScope = relpath;
 	}
 	this(Definition d)
@@ -1994,12 +1999,12 @@ class SolutionItem //: IUnknown
 	string GetType() const { return def.type; }
 	string GetKind() const { return def.kind; }
 	long GetSize() const { return 0; }
-	long GetModified() const { return _modifiedDate; }
+	const(SysTime) GetModified() const { return _modifiedDate; }
 
 	//HRESULT GetItem(in IID* riid, void **ppv);
 	
 	Definition def;
-	long _modifiedDate;
+	SysTime _modifiedDate;
 }
 
 class SolutionItemGroup //: IUnknown

@@ -575,7 +575,7 @@ private:
 	string _demangle(string txt, bool fullDeco)
 	{
 		int p = 0;
-		debug // allow std 2.052 in debug builds
+		version(all) // debug // allow std 2.052 in debug builds
 			enum hasTypeArg = __traits(compiles, { demangle("",true); });
 		else // ensure patched runtime in release
 			enum hasTypeArg = true;

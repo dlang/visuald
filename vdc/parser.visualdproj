@@ -41,7 +41,7 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>0</otherDMD>
-  <program>m:\s\d\dmd2\dmd\src\dmd.exe</program>
+  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -93,7 +93,7 @@
  <Config name="Release">
   <obj>0</obj>
   <link>0</link>
-  <lib>0</lib>
+  <lib>1</lib>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
@@ -168,7 +168,7 @@
   <libpaths />
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -262,7 +262,7 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>c:\s\d\visuald\trunk\bin\TestDebug\parser.exe</debugtarget>
+  <debugtarget>m:\s\d\visuald\trunk\bin\TestDebug\parser.exe</debugtarget>
   <debugarguments>c:\tmp\d\semtest.d</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>

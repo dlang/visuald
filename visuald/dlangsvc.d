@@ -39,7 +39,7 @@ import std.utf;
 import std.conv;
 import std.algorithm;
 
-import stdext.parallelism;
+import std.parallelism;
 
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
@@ -2368,6 +2368,7 @@ else
 				threads = 1;
 			parseTaskPool = new TaskPool(threads);
 			parseTaskPool.isDaemon = true;
+			parseTaskPool.priority(core.thread.Thread.PRIORITY_MIN);
 		}
 		auto task = task(&doParse);
 		parseTaskPool.put(task);

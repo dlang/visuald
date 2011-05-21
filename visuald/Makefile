@@ -41,6 +41,7 @@ VDC_SRC = $(VDC)/parser/aggr.d \
         $(VDC)/semantic.d \
         $(VDC)/interpret.d \
         $(VDC)/parsertest.d \
+        $(VDC)/logger.d \
         $(VDC)/lexer.d
 
 SRC = workaround.d ../stdext/parallelism.d \
@@ -109,7 +110,7 @@ exe:     $(DBGDIR)\$(PROJECT).exe
 $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
 	"$(CV2PDB)" -D2.043 $? $@
 
-$(DBGDIR)\vdc.lib : $(VDC_SRC)
+$(DBGDIR)\vdc.lib : $(VDC_SRC) Makefile
 	"$(DMD)" -of$@ -lib -g $(DFLAGS) @<<
 		$(VDC_SRC)
 <<NOKEEP
@@ -124,7 +125,7 @@ $(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(RELDIR)\v
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
 	"$(CV2PDB)" -D2.043 $? $@
 
-$(RELDIR)\vdc.lib : $(VDC_SRC)
+$(RELDIR)\vdc.lib : $(VDC_SRC) Makefile
 	"$(DMD)" -of$@ -O -inline -release -lib -g $(DFLAGS) @<<
 		$(VDC_SRC)
 <<NOKEEP

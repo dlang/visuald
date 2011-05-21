@@ -14,7 +14,7 @@ import std.utf;
 import std.string;
 import std.stdio;
 import std.conv;
-import std.date;
+import std.datetime;
 
 import stdcarg = core.stdc.stdarg;
 import stdcio = core.stdc.stdio;
@@ -525,10 +525,10 @@ version(test) {
 	void logCall(...)
 	{
 		auto buffer = new char[17 + 1];
-		d_time now = std.date.getUTCtime();
+		SysTime now = Clock.currTime();
 		uint tid = GetCurrentThreadId();
 		auto len = sprintf(buffer.ptr, "%02d:%02d:%02d - %04x - ",
-		                   hourFromTime(now), minFromTime(now), secFromTime(now), tid);
+		                   now.hour, now.minute, now.second, tid);
 		string s = to!string(buffer[0..len]);
 		s ~= repeat(" ", gLogIndent);
 		
@@ -557,12 +557,24 @@ version(test) {
 		else
 			synchronized(logSync.classinfo)
 			{
+				static bool canLog;
 				if(gLogFirst)
 				{
 					gLogFirst = false;
 					s = "\n" ~ repeat("=", 80) ~ "\n" ~ s;
+					
+					try
+					{
+						string bar = "\n" ~ repeat("=", 80) ~ "\n";
+						std.file.append(gLogFile, bar);
+						canLog = true;
+					}
+					catch(Exception e)
+					{
+					}
 				}
-				std.file.append(gLogFile, s);
+				if(canLog)
+					std.file.append(gLogFile, s);
 			}
 	}
 }

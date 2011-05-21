@@ -15,11 +15,11 @@ import visuald.logutil;
 import visuald.register;
 import visuald.dpackage;
 
-import stdext.parallelism;
+import std.parallelism;
 
 import core.runtime;
 import core.memory;
-version(all) //dmd_2_052)
+version(dmd_2_052)
 {
 	import core.dll_helper;
 	import threadaux = core.thread_helper;

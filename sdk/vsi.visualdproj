@@ -41,7 +41,7 @@
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\dmd2\dmd\src\dmd.exe</program>
+  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -130,7 +130,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -275,7 +275,6 @@
    <File path="vsi\discoveryservice80.d" />
    <File path="vsi\discoveryservice90.d" />
    <File path="vsi\discoveryservice.d" />
-   <File path="vsi\dsltoolscmdid.d" />
    <File path="vsi\dte80.d" />
    <File path="vsi\dte80a.d" />
    <File path="vsi\dte90.d" />

@@ -12,8 +12,9 @@ import std.exception;
 import std.stdio;
 import std.string;
 import std.conv;
-import std.intrinsic;
 import std.utf;
+
+import core.bitop;
 
 import vdc.util;
 import vdc.lexer;

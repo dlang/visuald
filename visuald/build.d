@@ -45,7 +45,7 @@ import sdk.vsi.vsshell90;
 
 version(taskedBuild)
 {
-	import stdext.parallelism;
+	import std.parallelism;
 }
 
 // builder thread class
@@ -427,7 +427,7 @@ else
 
 		string workdir = mConfig.GetProjectDir();
 		string intdir = makeFilenameAbsolute(mConfig.GetIntermediateDir(), workdir);
-		string logfile = normalizeDir(intdir) ~ "buildlog.html";
+		string logfile = mConfig.GetBuildLogFile();
 		try
 		{
 			std.file.write(logfile, mBuildLog);
@@ -749,11 +749,14 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 	string[] match = re1.exec(outputLine);
 	if(match.length == 4)
 	{
-		nPriority = TP_HIGH;
 		filename = replace(match[1], "\\\\", "\\");
 		string lineno = replace(match[2], "\\\\", "\\");
 		nLineNum = to!uint(lineno);
 		itemText = strip(match[3]);
+		if(itemText.startsWith("Warning:")) // make these errors if not building with -wi?
+			nPriority = TP_NORMAL;
+		else
+			nPriority = TP_HIGH;
 		return true;
 	}
 

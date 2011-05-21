@@ -11,7 +11,7 @@ module visuald.intellisense;
 import std.json;
 import std.file;
 import std.utf;
-import std.date;
+import std.datetime;
 import std.conv;
 import std.string;
 import std.algorithm;
@@ -223,7 +223,7 @@ struct SearchData
 			{
 				CaseSensitive cs = caseSensitive ? CaseSensitive.yes : CaseSensitive.no;
 				int pos = 0;
-				int p = pos + indexOf(name[pos..$], str, cs);
+				int p = pos + std.string.indexOf(name[pos..$], str, cs);
 				while(p >= pos)
 				{
 					if(!wholeWord)
@@ -234,7 +234,7 @@ struct SearchData
 						return true;
 					
 					pos = p + 1;
-					p = pos + indexOf(name[pos..$], str, cs);
+					p = pos + std.string.indexOf(name[pos..$], str, cs);
 				}
 				return false;
 			}
@@ -286,7 +286,7 @@ class LibraryInfo
 
 			mModules = parseJSON(text);
 			mFilename = fileName;
-			mModified = lastModified(fileName);
+			mModified = timeLastModified(fileName);
 			return true;
 		}
 		catch(JSONException rc)
@@ -462,7 +462,7 @@ class LibraryInfo
 
 	JSONValue mModules;
 	string mFilename;
-	std.date.d_time mModified;
+	SysTime mModified;
 }
 
 struct ParameterInfo
@@ -633,7 +633,8 @@ class LibraryInfos
 			else
 			{
 				files = files[0 .. idx] ~ files[idx+1 .. $];
-				if(mInfos[i].mModified != lastModified(mInfos[i].mFilename))
+				auto filetime = timeLastModified(mInfos[i].mFilename);
+				if(mInfos[i].mModified != filetime)
 				{
 					mInfos[i].readJSON(mInfos[i].mFilename);
 					modified = true;
@@ -783,7 +784,7 @@ class ClassBrowseNode : BrowseNode
 class BrowseInfo
 {
 	string mFilename;
-	std.date.d_time mModified;
+	SysTime mModified;
 	
 	BrowseNode[] mModules;
 
