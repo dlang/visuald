@@ -44,7 +44,7 @@ VDC_SRC = $(VDC)/parser/aggr.d \
         $(VDC)/logger.d \
         $(VDC)/lexer.d
 
-SRC = workaround.d ../stdext/parallelism.d \
+SRC = workaround.d \
       config.d dlangsvc.d dpackage.d register.d comutil.d \
       logutil.d dllmain.d dproject.d hierarchy.d expansionprovider.d \
       hierutil.d chiernode.d chiercontainer.d propertypage.d build.d \

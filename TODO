@@ -41,9 +41,9 @@ Language service:
 - default encoding for new source files should be utf8
 - help on identifier through http://dpldocs.info/
 - collapse disabled version/debug blocks
-- disable parsing/outlining for large files
-- move outlining into thread
+- disable parsing/outlining for large files?
 - version highlighting does not support version(x): syntax
+- stop outlining does not work
 
 Search:
 ---------------

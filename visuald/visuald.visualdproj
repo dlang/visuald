@@ -29,7 +29,7 @@
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
+  <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
@@ -41,7 +41,7 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\dmd2\dmd\src\dmd.exe</program>
+  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -130,7 +130,7 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -190,7 +190,7 @@ set PATH=%PATH%;$(DevEnvDir)
 set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin
 CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
    <File path="Resources\resources.h" />
-   <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico" />
+   <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" />
    <File path="Resources\AlternateRowColor.ico" />
    <File path="Resources\ascend.ico" />
    <File path="Resources\descend.ico" />
@@ -211,13 +211,9 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <Folder name="c2d">
    <File path="..\c2d\dlist.d" />
   </Folder>
-  <Folder name="stdext">
-   <File path="..\stdext\parallelism.d" />
-  </Folder>
   <File path="config.d" />
   <File path="dproject.d" />
   <File path="chiercontainer.d" />
-  <File path="chiernode.d" />
   <File path="completion.d" />
   <File path="comutil.d" />
   <File path="dimagelist.d" />
@@ -252,5 +248,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="build.d" />
   <File path="tokenreplacedialog.d" />
   <File path="library.d" />
+  <File path="chiernode.d" />
  </Folder>
 </DProject>

@@ -238,8 +238,13 @@ wstring GetRegistrationRoot(in wchar* pszRegRoot, bool useRanu)
 	else
 		szRegistrationRoot = to_wstring(pszRegRoot);
 	if(useRanu)
-		szRegistrationRoot ~= "\\Configuration"w;
-
+	{
+		scope RegKey keyConfig = new RegKey(HKEY_CURRENT_USER, szRegistrationRoot ~ "_Config"w, false);
+		if(keyConfig.key)
+			szRegistrationRoot ~= "_Config"w; // VS2010
+		else
+			szRegistrationRoot ~= "\\Configuration"w;
+	}
 	return szRegistrationRoot;
 }
 

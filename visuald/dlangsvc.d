@@ -54,6 +54,8 @@ import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
 
+version = threadedOutlining;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 class LanguageService : DisposingComObject, 
@@ -834,20 +836,18 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	}
 
 	// IVsUserDataEvents //////////////////////////////////////
-	override int OnUserDataChange( /* [in] */ in GUID* riidKey,
-	                      /* [in] */ in VARIANT vtNewValue)
+	override int OnUserDataChange(in GUID* riidKey, in VARIANT vtNewValue)
 	{
 		return mSource.OnUserDataChange(riidKey, vtNewValue);
 	}
 
 	// IVsTextLinesEvents //////////////////////////////////////
-	override int OnChangeLineText( /* [in] */ in TextLineChange *pTextLineChange,
-	                      /* [in] */ in BOOL fLast)
+	override int OnChangeLineText(in TextLineChange *pTextLineChange, in BOOL fLast)
 	{
 		return mSource.OnChangeLineText(pTextLineChange, fLast);
 	}
     
-	override int OnChangeLineAttributes( /* [in] */ in int iFirstLine,/* [in] */ in int iLastLine)
+	override int OnChangeLineAttributes(in int iFirstLine, in int iLastLine)
 	{
 		return mSource.OnChangeLineAttributes(iFirstLine, iLastLine);
 	}
@@ -867,6 +867,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	ast.Module mAST;
 	ParseError[] mParseErrors;
 	wstring mParseText;
+	NewHiddenRegion[] mOutlineRegions;
+	
 	int mParsingState;
 	int mModificationCountAST;
 	int mModificationCount;
@@ -914,15 +916,13 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	}
 
 	// IVsUserDataEvents //////////////////////////////////////
-	override int OnUserDataChange( /* [in] */ in GUID* riidKey,
-	                      /* [in] */ in VARIANT vtNewValue)
+	override int OnUserDataChange(in GUID* riidKey, in VARIANT vtNewValue)
 	{
 		return S_OK;
 	}
 
 	// IVsTextLinesEvents //////////////////////////////////////
-	override int OnChangeLineText( /* [in] */ in TextLineChange *pTextLineChange,
-	                      /* [in] */ in BOOL fLast)
+	override int OnChangeLineText(in TextLineChange *pTextLineChange, in BOOL fLast)
 	{
 		mModificationCount++;
 		if(mOutlining)
@@ -930,7 +930,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		return mColorizer.OnLinesChanged(pTextLineChange.iStartLine, pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine, fLast != 0);
 	}
     
-	override int OnChangeLineAttributes( /* [in] */ in int iFirstLine,/* [in] */ in int iLastLine)
+	override int OnChangeLineAttributes(in int iFirstLine, in int iLastLine)
 	{
 		return S_OK;
 	}
@@ -1020,7 +1020,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	{
 		if(startParsing())
 			return true;
-		
+
+version(threadedOutlining) 
+{
+		return false;
+} else {
 		if(!mOutlining)
 			return false;
 
@@ -1039,6 +1043,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 			case kOutlineStateValid:
 				return false;
 		}
+}
 	}
 	
 	void CheckOutlining(in TextLineChange *pTextLineChange)
@@ -1090,20 +1095,29 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		}
 		release(penum);
 	}
-	
+
 	NewHiddenRegion[] CreateOutlineRegions(int expansionState)
+	{
+		wstring source = GetText(); // should not be read from another thread
+		return CreateOutlineRegions(source, expansionState);
+	}
+	
+	static NewHiddenRegion[] CreateOutlineRegions(wstring source, int expansionState)
 	{
 		NewHiddenRegion[] rgns;
 		int lastOpenRegion = -1; // builds chain with iEndIndex of TextSpan
 		
-		int lines = GetLineCount();
 		int state = 0;
 		int lastCommentStartLine = -1;
 		int lastCommentStartLineLength = 0;
 		int prevLineLenth = 0;
-		for(int ln = 0; ln < lines; ln++)
+		int ln = 0;
+		foreach(txt; splitter(source, '\n'))
 		{
-			wstring txt = GetText(ln, 0, ln, -1);
+			//wstring txt = GetText(ln, 0, ln, -1);
+			if(txt.length > 0 && txt[$-1] == '\r')
+				txt = txt[0..$-1];
+			
 			uint pos = 0;
 			bool isSpaceOrComment = true;
 			bool isComment = false;
@@ -1173,13 +1187,14 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 				lastCommentStartLineLength = txt.length;
 			}
 			prevLineLenth = txt.length;
+			ln++;
 		}
 		while(lastOpenRegion >= 0)
 		{
 			int idx = lastOpenRegion;
 			lastOpenRegion = rgns[idx].tsHiddenText.iEndIndex;
 			rgns[idx].tsHiddenText.iEndIndex = 0;
-			rgns[idx].tsHiddenText.iEndLine = lines;
+			rgns[idx].tsHiddenText.iEndLine = ln;
 			rgns[idx].pszBanner = rgns[idx].pszBanner[0] == '{' ? "{..."w.ptr : "[..."w.ptr;
 		}
 		return rgns;
@@ -2376,7 +2391,7 @@ else
 	
 	bool startParsing()
 	{
-		if(!Package.GetGlobalOptions().parseSource)
+		if(!Package.GetGlobalOptions().parseSource && !mOutlining)
 			return false;
 		
 		if(mParsingState > 1)
@@ -2400,6 +2415,13 @@ else
 										 span.end.line - 1, span.end.index, this, &marker);
 			}
 			
+			if(mOutlining)
+			{
+				if(auto session = GetHiddenTextSession())
+					if(DiffRegions(session, mOutlineRegions))
+						session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
+				mOutlineRegions = mOutlineRegions.init;
+			}
 			mParseText = null;
 			mParsingState = 0;
 			ReColorizeLines (0, -1);
@@ -2419,25 +2441,32 @@ else
 	
 	void doParse()
 	{
-		string txt = to!string(mParseText);
-		
-		Parser p = new Parser;
-		p.mSaveErrors = true;
-		ast.Node n;
-		try
+		if(Package.GetGlobalOptions().parseSource)
 		{
-			n = p.parseText(txt);
+			string txt = to!string(mParseText);
+			
+			Parser p = new Parser;
+			p.mSaveErrors = true;
+			ast.Node n;
+			try
+			{
+				n = p.parseText(txt);
+			}
+			catch(ParseException e)
+			{
+				OutputDebugLog(e.msg);
+			}
+			catch(Throwable t)
+			{
+				OutputDebugLog(t.msg);
+			}
+			mAST = cast(ast.Module) n;
+			mParseErrors = p.errors;
 		}
-		catch(ParseException e)
+		if(mOutlining)
 		{
-			OutputDebugLog(e.msg);
+			mOutlineRegions = CreateOutlineRegions(mParseText, hrsExpanded);
 		}
-		catch(Throwable t)
-		{
-			OutputDebugLog(t.msg);
-		}
-		mAST = cast(ast.Module) n;
-		mParseErrors = p.errors;
 		mParsingState = 2;
 	}
 	

@@ -290,8 +290,11 @@ unreleased Version 0.3.25
   * error list: warnings are no longer shown as errors
   * project name added to buildlog.html to allow multiple projects with the same intermediate dir
   * fixed highlighting of version(unittest) and debug without identifier
-  * reduced parsing thread priority to interfere less with editing
-  * adjusted to build with the latest VS2010 SDK
-  * Visual D now builds with DMD 2.053
   * friendlier error message if debug executable or working dir do not exist
+  * reduced parsing thread priority to interfere less with editing
+  * adjusted vsi2d to build with the latest VS2010 SDK
+  * Visual D now builds with DMD 2.053
+  * moved from std.date to std.datetime to fix some time displays
+  * moved outlining into parse thread to reduce delays when editing large files
+
   
