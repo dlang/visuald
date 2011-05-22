@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Vsix Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010">
+
+  <!-- VSIX Manifest for specifying a new well-known project/item template location.-->
+
+  <Identifier Id="Visual.D">
+    <Name>Visual D</Name>
+    <Author>Rainer Schuetze</Author>
+    <Version>0.3</Version>
+    <Description>Extension to provide support for the D programming language.</Description>
+    <Locale>1033</Locale>
+    <SupportedProducts>
+      <VisualStudio Version="10.0">
+        <Edition>Pro</Edition>
+      </VisualStudio>
+    </SupportedProducts>
+    <SupportedFrameworkRuntimeEdition MinVersion="4.0" MaxVersion="4.0" />
+  </Identifier>
+  <References />
+  <Content>
+    <VsPackage>visuald.pkgdef</VsPackage>
+  </Content>
+</Vsix>
