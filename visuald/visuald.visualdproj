@@ -40,7 +40,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -71,7 +71,7 @@
   <run>0</run>
   <runargs />
   <runCv2pdb>1</runCv2pdb>
-  <pathCv2pdb>m:\s\d\cv2pdb\trunk\bin\release\cv2pdb.exe</pathCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)\cv2pdb\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
   <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib</libfiles>
@@ -82,8 +82,8 @@
   <additionalOptions>-debuglib=phobos.lib</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>c:\l\vs9\Common7\IDE\devenv.exe</debugtarget>
-  <debugarguments>/RootSuffix D /log </debugarguments>
+  <debugtarget>c:\l\vsshell10\Common7\IDE\devenv.exe</debugtarget>
+  <debugarguments />
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />

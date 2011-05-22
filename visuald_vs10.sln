@@ -1,0 +1,60 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2BD51E62-6604-48AE-9E01-C940C0CA1C68}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGES = CHANGES
+		Makefile = Makefile
+		README = README
+		TODO = TODO
+		VERSION = VERSION
+	EndProjectSection
+EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "VisualD", "visuald\visuald.visualdproj", "{7610F45A-69D9-4B68-BE63-0E055B51D447}"
+	ProjectSection(ProjectDependencies) = postProject
+		{32872753-4812-40DA-9B24-1C2114621E78} = {32872753-4812-40DA-9B24-1C2114621E78}
+		{FE3A959D-6CFA-43BF-8637-62125B571770} = {FE3A959D-6CFA-43BF-8637-62125B571770}
+	EndProjectSection
+EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vsi", "sdk\vsi.visualdproj", "{32872753-4812-40DA-9B24-1C2114621E78}"
+EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vsi2d", "c2d\vsi2d.visualdproj", "{8760F45A-69D9-4B68-BE63-0E055B51D447}"
+EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "parser", "vdc\parser.visualdproj", "{FE3A959D-6CFA-43BF-8637-62125B571770}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		TestDebug|Win32 = TestDebug|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7610F45A-69D9-4B68-BE63-0E055B51D447}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7610F45A-69D9-4B68-BE63-0E055B51D447}.Debug|Win32.Build.0 = Debug|Win32
+		{7610F45A-69D9-4B68-BE63-0E055B51D447}.Release|Win32.ActiveCfg = Release|Win32
+		{7610F45A-69D9-4B68-BE63-0E055B51D447}.Release|Win32.Build.0 = Release|Win32
+		{7610F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|Win32.ActiveCfg = Debug|Win32
+		{7610F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|Win32.Build.0 = Debug|Win32
+		{32872753-4812-40DA-9B24-1C2114621E78}.Debug|Win32.ActiveCfg = Debug|Win32
+		{32872753-4812-40DA-9B24-1C2114621E78}.Debug|Win32.Build.0 = Debug|Win32
+		{32872753-4812-40DA-9B24-1C2114621E78}.Release|Win32.ActiveCfg = Release|Win32
+		{32872753-4812-40DA-9B24-1C2114621E78}.Release|Win32.Build.0 = Release|Win32
+		{32872753-4812-40DA-9B24-1C2114621E78}.TestDebug|Win32.ActiveCfg = Debug|Win32
+		{32872753-4812-40DA-9B24-1C2114621E78}.TestDebug|Win32.Build.0 = Debug|Win32
+		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Debug|Win32.Build.0 = Debug|Win32
+		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Release|Win32.ActiveCfg = Release|Win32
+		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Release|Win32.Build.0 = Release|Win32
+		{8760F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|Win32.ActiveCfg = Debug|Win32
+		{8760F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|Win32.Build.0 = Debug|Win32
+		{FE3A959D-6CFA-43BF-8637-62125B571770}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FE3A959D-6CFA-43BF-8637-62125B571770}.Debug|Win32.Build.0 = Debug|Win32
+		{FE3A959D-6CFA-43BF-8637-62125B571770}.Release|Win32.ActiveCfg = Release|Win32
+		{FE3A959D-6CFA-43BF-8637-62125B571770}.Release|Win32.Build.0 = Release|Win32
+		{FE3A959D-6CFA-43BF-8637-62125B571770}.TestDebug|Win32.ActiveCfg = TestDebug|Win32
+		{FE3A959D-6CFA-43BF-8637-62125B571770}.TestDebug|Win32.Build.0 = TestDebug|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
