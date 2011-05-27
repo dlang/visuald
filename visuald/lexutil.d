@@ -22,6 +22,7 @@ string getModuleDeclarationName(string fname)
 	{
 		enum ParseState { kSpace, kModule, kIdent, kDot };
 		ParseState pstate = ParseState.kSpace;
+		Lexer lex;
 		int state = 0;
 		File file = File(fname, "r");
 		while(!file.eof())
@@ -32,7 +33,7 @@ string getModuleDeclarationName(string fname)
 			{
 				int id;
 				uint prevpos = pos;
-				Lexer.scan(state, line, pos, id);
+				lex.scan(state, line, pos, id);
 				if(id == TOK_Space || id == TOK_Comment)
 					continue;
 				

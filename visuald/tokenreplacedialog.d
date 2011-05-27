@@ -33,7 +33,8 @@ import std.conv;
 private IVsWindowFrame sWindowFrame;
 private	TokenReplacePane sSearchPane;
 
-const int  kPaneMargin = 2;
+const int  kPaneMargin = 0;
+const int  kBackMargin = 4;
 
 bool showTokenReplaceWindow(bool replace)
 {
@@ -379,16 +380,16 @@ private:
 	// Adjust child control sizes
 	void _layoutViews(int cw, int ch)
 	{
-		int top = 2; // kToolBarAtTop ? kToolBarHeight : 1;
-		int bot = ch - 2;
+		int top = kBackMargin; // kToolBarAtTop ? kToolBarHeight : 1;
+		int bot = ch - kBackMargin;
 		int lineh = 16;
 		int combh = 20;
 		int lblspacing = 1;
 		int spacing = 3;
 		int btnw = 80;
 		int btnh = 24;
-		int x = 2;
-		int w = cw - 4;
+		int x = kBackMargin;
+		int w = cw - 2 * kBackMargin;
 		_wndReplaceAll  .setRect(x + w - btnw,                  bot - btnh, btnw, btnh);
 		_wndReplace     .setRect(x + w - btnw - spacing - btnw, bot - btnh, btnw, btnh);
 		bot -= btnh + spacing;

@@ -110,7 +110,8 @@ bool closeSearchWindow()
 const int  kColumnInfoVersion = 1;
 const bool kToolBarAtTop = true;
 const int  kToolBarHeight = 24;
-const int  kPaneMargin = 2;
+const int  kPaneMargin = 0; // margin for back inside pane
+const int  kBackMargin = 2; // margin for controls inside back
 
 struct static_COLUMNINFO
 {
@@ -808,12 +809,13 @@ private:
 		HRESULT hr = _CreateToolbarImageList(_himlToolbar);
 		if (SUCCEEDED(hr))
 		{
-			int style = CCS_NODIVIDER | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS;
-			style |= (kToolBarAtTop ? CCS_TOP : CCS_BOTTOM);
+			int style = CCS_NODIVIDER | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CCS_NORESIZE;
+			//style |= (kToolBarAtTop ? CCS_TOP : CCS_BOTTOM);
 			_wndToolbar = new ToolBar(_wndBack, style, TBSTYLE_EX_DOUBLEBUFFER, IDC_TOOLBAR);
 			hr = _wndToolbar.hwnd ? S_OK : E_FAIL;
 			if (SUCCEEDED(hr))
 			{
+				_wndToolbar.setRect(kBackMargin, kBackMargin, 100, kToolBarHeight);
 				_wndToolbar.SendMessage(TB_SETIMAGELIST, 0, cast(LPARAM)_himlToolbar);
 
 				TBBUTTON btn2 = { 10, 11, TBSTATE_ENABLED, 1, cast(BYTE[])[0,0], 0, 0 };
@@ -911,10 +913,10 @@ private:
 		{
 			_wndFileWheel = new Text(_wndBack, "", IDC_FILEWHEEL);
 			int top = kToolBarAtTop ? kToolBarHeight : 1;
-			_wndFileWheel.setRect(0, top + 2, 185, 16);
+			_wndFileWheel.setRect(kBackMargin, top + 2 + kBackMargin, 185, 16);
 			_wndFileList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
 			                            0, IDC_FILELIST);
-			_wndFileList.setRect(0, top + 20, 185, 78);
+			_wndFileList.setRect(kBackMargin, top + kBackMargin + 20, 185, 78);
 			HWND hdrHwnd = cast(HWND)_wndFileList.SendMessage(LVM_GETHEADER);
 			if(hdrHwnd)
 			{
@@ -962,25 +964,21 @@ private:
 		// - File List stretches to fit horizontally and vertically but the topleft coordinate is fixed
 		// - Toolbar autosizes along the bottom
 
-		_wndToolbar.SendMessage(TB_AUTOSIZE);
-		RECT rcToolbar;
-
-		if (_wndToolbar.GetWindowRect(&rcToolbar))
+		_wndToolbar.setRect(kBackMargin, kBackMargin, cx - 2 * kBackMargin, kToolBarHeight);
+		
+		RECT rcFileWheel;
+		if (_wndFileWheel.GetWindowRect(&rcFileWheel))
 		{
-			RECT rcFileWheel;
-			if (_wndFileWheel.GetWindowRect(&rcFileWheel))
+			_wndBack.ScreenToClient(&rcFileWheel);
+			rcFileWheel.right = cx - kBackMargin;
+			_wndFileWheel.SetWindowPos(null, &rcFileWheel, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+			RECT rcFileList;
+			if (_wndFileList.GetWindowRect(&rcFileList))
 			{
-				_wndBack.ScreenToClient(&rcFileWheel);
-				rcFileWheel.right = cx;
-				_wndFileWheel.SetWindowPos(null, &rcFileWheel, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-				RECT rcFileList;
-				if (_wndFileList.GetWindowRect(&rcFileList))
-				{
-					_wndBack.ScreenToClient(&rcFileList);
-					rcFileList.right = cx;
-					rcFileList.bottom = cy - (kToolBarAtTop ? 0 : rcToolbar.bottom - rcToolbar.top);
-					_wndFileList.SetWindowPos(null, &rcFileList, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-				}
+				_wndBack.ScreenToClient(&rcFileList);
+				rcFileList.right = cx - kBackMargin;
+				rcFileList.bottom = cy - (kToolBarAtTop ? 0 : kToolBarHeight) - kBackMargin;
+				_wndFileList.SetWindowPos(null, &rcFileList, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 			}
 		}
 		return 0;

@@ -222,7 +222,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		while(pos < iLength)
 		{
 			uint prevpos = pos;
-			int type = Lexer.scan(state, text, pos);
+			int type = dLex.scan(state, text, pos);
 			
 			bool nowInTokenString = (Lexer.tokenStringLevel(state) > 0);
 			wstring tok = text[prevpos..pos];
@@ -275,11 +275,11 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		uint prevpos = pos;
 		int id;
-		int type = Lexer.scan(state, text, pos, id);
+		int type = dLex.scan(state, text, pos, id);
 		if(mColorizeVersions)
 		{
 			wstring txt = text[prevpos..pos];
-			if(!Lexer.isCommentOrSpace(type, txt))
+			if(!dLex.isCommentOrSpace(type, txt))
 			{
 				ParserToken!wstring tok;
 				tok.type = type;
@@ -290,7 +290,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				else
 					tok.span = ParserSpan(prevpos, iLine, pos, iLine);
 
-				bool inTokenString = (Lexer.tokenStringLevel(state) > 0);
+				bool inTokenString = (dLex.tokenStringLevel(state) > 0);
 				if(doShift)
 					mParser.shift(tok);
 
@@ -433,7 +433,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		string versionids = mConfigVersions[debugOrVersion];
 		string[] versions = tokenizeArgs(versionids);
 		foreach(ver; versions)
-			if(Lexer.isInteger(ver) && to!int(ver) >= num)
+			if(dLex.isInteger(ver) && to!int(ver) >= num)
 				return true;
 		return false;
 	}
@@ -493,7 +493,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	
 	bool isVersionEnabled(int line, wstring ident, int debugOrVersion)
 	{
-		if(Lexer.isInteger(ident))
+		if(dLex.isInteger(ident))
 			return isVersionEnabled(line, to!int(ident), debugOrVersion);
 		
 		if (debugOrVersion)
@@ -594,7 +594,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	}
 	version(all)
 	{
-		//if(Lexer.isCommentOrSpace(type, text))
+		//if(dLex.isCommentOrSpace(type, text))
 		//	return type;
 
 		int parseState = getParseState(iState);
@@ -647,18 +647,18 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			break;
 			
 		case VersionParseState.AssignParsed:
-			if(Lexer.isIdentifier(text))
+			if(dLex.isIdentifier(text))
 			{
 				if(!defineVersion(iLine, text, debugOrVersion, versionsChanged))
 					ntype |= 5 << 14; // red ~~~~
 			}
-			else if(Lexer.isInteger(text))
+			else if(dLex.isInteger(text))
 				defineVersion(iLine, to!int(text), debugOrVersion, versionsChanged);
 			parseState = VersionParseState.IdleEnabled;
 			break;
 			
 		case VersionParseState.ParenLParsed:
-			if(Lexer.isIdentifier(text) || Lexer.isInteger(text))
+			if(dLex.isIdentifier(text) || dLex.isInteger(text))
 			{
 				if(isVersionEnabled(iLine, text, debugOrVersion))
 					parseState = VersionParseState.IdentNumberParsedEnable;
@@ -718,7 +718,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 
 	int parseErrors(ref ParserSpan span, int type, wstring tok)
 	{
-		if(!Lexer.isCommentOrSpace(type, tok))
+		if(!dLex.isCommentOrSpace(type, tok))
 			if(mSource.hasParseError(span))
 				type |= 5 << 14; // red ~
 		

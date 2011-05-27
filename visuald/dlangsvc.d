@@ -57,6 +57,8 @@ import sdk.vsi.msdbg;
 version = threadedOutlining;
 
 ///////////////////////////////////////////////////////////////////////////////
+__gshared Lexer dLex;
+///////////////////////////////////////////////////////////////////////////////
 
 class LanguageService : DisposingComObject, 
                         IVsLanguageInfo, 
@@ -100,6 +102,8 @@ class LanguageService : DisposingComObject,
 			return S_OK;
 // delegated to mUpdateSolutionEvents
 //		if(queryInterface!(IVsUpdateSolutionEvents) (this, riid, pvObject))
+//			return S_OK;
+//		if(queryInterface!(IVsFormatFilterProvider) (this, riid, pvObject))
 //			return S_OK;
 		if(queryInterface!(IVsOutliningCapableLanguage) (this, riid, pvObject))
 			return S_OK;
@@ -456,7 +460,7 @@ class LanguageService : DisposingComObject,
 		if(auto session = qi_cast!IVsHiddenTextSession(pSession))
 		{
 			GetSource(pTextLines).UpdateOutlining(session, hrsDefault);
-			GetSource(pTextLines).CollapseAllHiddenRegions(session);
+			GetSource(pTextLines).CollapseAllHiddenRegions(session, true);
 		}
 		return S_OK;
 	}
@@ -862,6 +866,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	ExpansionProvider mExpansionProvider;
 	SourceEvents mSourceEvents;
 	bool mOutlining;
+	bool mStopOutlining;
+	bool mVerifiedEncoding;
 	IVsHiddenTextSession mHiddenTextSession;
 	
 	ast.Module mAST;
@@ -915,6 +921,28 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		return super.QueryInterface(riid, pvObject);
 	}
 
+	void setUtf8Encoding()
+	{
+		if(auto ud = qi_cast!IVsUserData(mBuffer))
+		{
+			scope(exit) release(ud);
+			//object oname;
+			//Guid GUID_VsBufferMoniker = typeof(IVsUserData).GUID;
+			VARIANT var;
+			if(SUCCEEDED(ud.GetData(&GUID_VsBufferEncodingVSTFF, &var)))
+			{
+				uint dwBufferVSTFF = var.ulVal;
+				uint codepage = dwBufferVSTFF & VSTFF_CPMASK;           // to extract codepage
+				uint vstffFlags = dwBufferVSTFF & VSTFF_FLAGSMASK;   // to extract CHARFMT
+				if(!(vstffFlags & VSTFF_SIGNATURE) && codepage != 65001) // no signature, and not utf8
+				{
+					var.ulVal = vstffFlags | 65001;
+					ud.SetData(&GUID_VsBufferEncodingVSTFF, var);
+				}
+			}
+		}
+	}
+	
 	// IVsUserDataEvents //////////////////////////////////////
 	override int OnUserDataChange(in GUID* riidKey, in VARIANT vtNewValue)
 	{
@@ -925,6 +953,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	override int OnChangeLineText(in TextLineChange *pTextLineChange, in BOOL fLast)
 	{
 		mModificationCount++;
+		if(!mVerifiedEncoding)
+		{
+			mVerifiedEncoding = true;
+			setUtf8Encoding();
+		}
 		if(mOutlining)
 			CheckOutlining(pTextLineChange);
 		return mColorizer.OnLinesChanged(pTextLineChange.iStartLine, pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine, fLast != 0);
@@ -1048,6 +1081,7 @@ version(threadedOutlining)
 	
 	void CheckOutlining(in TextLineChange *pTextLineChange)
 	{
+version(threadedOutlining) {} else
 		mOutlineState = kOutlineStateDirty;
 	}
 
@@ -1067,10 +1101,60 @@ version(threadedOutlining)
 	
 	enum int kHiddenRegionCookie = 37;
 	
+	bool AnyOutlineExpanded(IVsHiddenTextSession session)
+	{
+		IVsEnumHiddenRegions penum;
+		TextSpan span = TextSpan(0, 0, 0, GetLineCount());
+		session.EnumHiddenRegions(FHR_BY_CLIENT_DATA, kHiddenRegionCookie, &span, &penum);
+
+		IVsHiddenRegion region;
+		uint fetched;
+		int hiddenLine = -1;
+		bool expanded = false;
+		while (!expanded && penum.Next(1, &region, &fetched) == S_OK && fetched == 1)
+		{
+			uint state;
+			region.GetState(&state);
+			region.GetSpan(&span);
+			release(region);
+			
+			if(span.iStartLine <= hiddenLine)
+				continue;
+			if(state == hrsExpanded)
+				expanded = true;
+			hiddenLine = span.iEndLine;
+		}
+		release(penum);
+		return expanded;
+	}
+	
 	void UpdateOutlining()
 	{
 		if(auto session = GetHiddenTextSession())
 			UpdateOutlining(session, hrsExpanded);
+	}
+	
+	HRESULT StopOutlining()
+	{
+		if(mOutlining)
+		{
+			mStopOutlining = true;
+			version(threadedOutlining) 
+				mModificationCount++; // trigger reparsing
+			else
+				CheckOutlining(null);
+		}
+		return S_OK;
+	}
+
+	HRESULT ToggleOutlining()
+	{
+		if(mOutlining)
+		{
+			if(auto session = GetHiddenTextSession())
+				CollapseAllHiddenRegions(session, AnyOutlineExpanded(session));
+		}
+		return S_OK;
 	}
 	
 	void UpdateOutlining(IVsHiddenTextSession session, int state)
@@ -1080,7 +1164,7 @@ version(threadedOutlining)
 			session.AddHiddenRegions(chrNonUndoable, rgns.length, rgns.ptr, null);
 	}
 
-	void CollapseAllHiddenRegions(IVsHiddenTextSession session)
+	void CollapseAllHiddenRegions(IVsHiddenTextSession session, bool collapsed)
 	{
 		IVsEnumHiddenRegions penum;
 		TextSpan span = TextSpan(0, 0, 0, GetLineCount());
@@ -1090,7 +1174,7 @@ version(threadedOutlining)
 		uint fetched;
 		while (penum.Next(1, &region, &fetched) == S_OK && fetched == 1)
 		{
-			region.SetState(hrsDefault, chrDefault);
+			region.SetState(collapsed ? hrsDefault : hrsExpanded, chrDefault);
 			release(region);
 		}
 		release(penum);
@@ -1106,12 +1190,13 @@ version(threadedOutlining)
 	{
 		NewHiddenRegion[] rgns;
 		int lastOpenRegion = -1; // builds chain with iEndIndex of TextSpan
-		
+		Lexer lex;
 		int state = 0;
 		int lastCommentStartLine = -1;
 		int lastCommentStartLineLength = 0;
 		int prevLineLenth = 0;
 		int ln = 0;
+		int prevBracketLine = -1;
 		foreach(txt; splitter(source, '\n'))
 		{
 			//wstring txt = GetText(ln, 0, ln, -1);
@@ -1124,7 +1209,7 @@ version(threadedOutlining)
 			while(pos < txt.length)
 			{
 				uint prevpos = pos;
-				int col = Lexer.scan(state, txt, pos);
+				int col = dLex.scan(state, txt, pos);
 				if(col == TokenColor.Operator)
 				{
 					if(txt[pos-1] == '{' || txt[pos-1] == '[')
@@ -1133,7 +1218,7 @@ version(threadedOutlining)
 						rgn.iType = hrtCollapsible;
 						rgn.dwBehavior = hrbClientControlled;
 						rgn.dwState = expansionState;
-						if(ln > 0 && isSpaceOrComment && !isComment) // move into previous line
+						if(ln > prevBracketLine+1 && isSpaceOrComment && !isComment) // move into previous line
 							rgn.tsHiddenText = TextSpan(prevLineLenth, ln-1, lastOpenRegion, -1);
 						else
 							rgn.tsHiddenText = TextSpan(pos - 1, ln, lastOpenRegion, -1);
@@ -1141,6 +1226,7 @@ version(threadedOutlining)
 						rgn.dwClient = kHiddenRegionCookie;
 						lastOpenRegion = rgns.length;
 						rgns ~= rgn;
+						prevBracketLine = ln;
 					}
 					else if((txt[pos-1] == '}' || txt[pos-1] == ']') && lastOpenRegion >= 0)
 					{
@@ -1157,6 +1243,7 @@ version(threadedOutlining)
 							rgns[idx].tsHiddenText.iEndIndex = pos;
 							rgns[idx].tsHiddenText.iEndLine = ln;
 						}
+						prevBracketLine = ln;
 					}
 				}
 				isComment = isComment || (col == TokenColor.Comment);
@@ -1267,9 +1354,9 @@ version(all)
 		wstring txt = GetText(line, 0, line, -1);
 		if(idx > txt.length)
 			return false;
-		while(endIdx < txt.length && Lexer.isIdentifierCharOrDigit(txt[endIdx]))
+		while(endIdx < txt.length && dLex.isIdentifierCharOrDigit(txt[endIdx]))
 			endIdx++;
-		while(startIdx > 0 && Lexer.isIdentifierCharOrDigit(txt[startIdx-1]))
+		while(startIdx > 0 && dLex.isIdentifierCharOrDigit(txt[startIdx-1]))
 			startIdx--;
 		return startIdx < endIdx;
 }
@@ -1395,7 +1482,7 @@ else
 		wstring text = GetText(line, 0, line, -1);
 		if(ptext)
 			*ptext = text;
-		lineInfo = ScanLine(iState, text);
+		lineInfo = dLex.ScanLine(iState, text);
 		return lineInfo;
 	}
 
@@ -1927,7 +2014,7 @@ else
 				lntokIt.advanceOverComments();
 				return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
 			}
-			if(!newStmt && Lexer.isIdentifier(txt))
+			if(!newStmt && dLex.isIdentifier(txt))
 			{
 				return indent + countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
 			}
@@ -2061,7 +2148,7 @@ else
 			if(p == idx)
 				return tok;
 
-			Lexer.scan(state, text, p);
+			dLex.scan(state, text, p);
 			if(p > idx)
 				return tok;
 			
@@ -2084,7 +2171,7 @@ else
 			while(pos < text.length)
 			{
 				uint ppos = pos;
-				int toktype = Lexer.scan(iState, text, pos);
+				int toktype = dLex.scan(iState, text, pos);
 				if(testFn(iState, data))
 				{
 					/+
@@ -2160,7 +2247,7 @@ else
 				foundpos = 0;
 			while(plinepos < len)
 			{
-				int toktype = Lexer.scan(lineState, text, plinepos);
+				int toktype = dLex.scan(lineState, text, plinepos);
 				if(testFn(lineState, data))
 					foundpos = plinepos;
 			}
@@ -2216,7 +2303,7 @@ else
 
 		wstring text = GetText(line, 0, line, -1);
 		uint ppos = pos;
-		int toktype = Lexer.scan(iState, text, pos);
+		int toktype = dLex.scan(iState, text, pos);
 		if(toktype != TokenColor.Operator)
 			return false;
 
@@ -2234,7 +2321,7 @@ else
 			while(pos < text.length)
 			{
 				uint ppos = pos;
-				int type = Lexer.scan(iState, text, pos);
+				int type = dLex.scan(iState, text, pos);
 				if(type == TokenColor.Operator)
 					if(Lexer.isOpeningBracket(text[ppos]))
 						level++;
@@ -2272,7 +2359,7 @@ else
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
-				toktype ~= Lexer.scan(iState, text, pos);
+				toktype ~= dLex.scan(iState, text, pos);
 			}
 			int p = (tok >= 0 ? tok : tokpos.length) - 1; 
 			for( ; p >= 0; p--)
@@ -2316,7 +2403,7 @@ else
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
-				toktype ~= Lexer.scan(iState, text, pos);
+				toktype ~= dLex.scan(iState, text, pos);
 			}
 			int p = (tok >= 0 ? tok : tokpos.length) - 1;
 			uint ppos = (p >= tokpos.length - 1 ? text.length : tokpos[p+1]);
@@ -2349,7 +2436,7 @@ else
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
-				toktype ~= Lexer.scan(iState, text, pos);
+				toktype ~= dLex.scan(iState, text, pos);
 			}
 			int p = (tok >= 0 ? tok : tokpos.length) - 1;
 			uint ppos = (p >= tokpos.length - 1 ? text.length : tokpos[p+1]);
@@ -2395,38 +2482,7 @@ else
 			return false;
 		
 		if(mParsingState > 1)
-		{
-			IVsEnumLineMarkers pEnum;
-			if(mBuffer.EnumMarkers(0, 0, 0, 0, MARKER_CODESENSE_ERROR, EM_ENTIREBUFFER, &pEnum) == S_OK)
-			{
-				scope(exit) release(pEnum);
-				IVsTextLineMarker marker;
-				while(pEnum.Next(&marker) == S_OK)
-				{
-					marker.Invalidate();
-					marker.Release();
-				}
-			}
-			for(int i = 0; i < mParseErrors.length; i++)
-			{
-				auto span = mParseErrors[0].span;
-				IVsTextLineMarker marker;
-				mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.start.line - 1, span.start.index, 
-										 span.end.line - 1, span.end.index, this, &marker);
-			}
-			
-			if(mOutlining)
-			{
-				if(auto session = GetHiddenTextSession())
-					if(DiffRegions(session, mOutlineRegions))
-						session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
-				mOutlineRegions = mOutlineRegions.init;
-			}
-			mParseText = null;
-			mParsingState = 0;
-			ReColorizeLines (0, -1);
-			return true;
-		}
+			return finishParsing();
 		
 		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
 			return false;
@@ -2436,6 +2492,45 @@ else
 		mModificationCountAST = mModificationCount;
 		runTask(&doParse);
 		
+		return true;
+	}
+	
+	bool finishParsing()
+	{
+		IVsEnumLineMarkers pEnum;
+		if(mBuffer.EnumMarkers(0, 0, 0, 0, MARKER_CODESENSE_ERROR, EM_ENTIREBUFFER, &pEnum) == S_OK)
+		{
+			scope(exit) release(pEnum);
+			IVsTextLineMarker marker;
+			while(pEnum.Next(&marker) == S_OK)
+			{
+				marker.Invalidate();
+				marker.Release();
+			}
+		}
+		for(int i = 0; i < mParseErrors.length; i++)
+		{
+			auto span = mParseErrors[0].span;
+			IVsTextLineMarker marker;
+			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.start.line - 1, span.start.index, 
+									 span.end.line - 1, span.end.index, this, &marker);
+		}
+		
+		if(mOutlining)
+		{
+			if(mStopOutlining)
+			{
+				mOutlineRegions = mOutlineRegions.init;
+				mOutlining = false;
+			}
+			if(auto session = GetHiddenTextSession())
+				if(DiffRegions(session, mOutlineRegions))
+					session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
+			mOutlineRegions = mOutlineRegions.init;
+		}
+		mParseText = null;
+		mParsingState = 0;
+		ReColorizeLines (0, -1);
 		return true;
 	}
 	
@@ -2562,7 +2657,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 			while(pos < text.length)
 			{
 				uint ppos = pos;
-				int type = Lexer.scan(iState, text, pos);
+				int type = dLex.scan(iState, text, pos);
 				wstring txt = text[ppos .. pos];
 				if(type == TokenColor.Identifier || txt == "this"w)
 				{

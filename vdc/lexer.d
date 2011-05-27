@@ -55,7 +55,7 @@ struct TokenInfo
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class Lexer
+struct Lexer
 {
 	enum State
 	{
@@ -85,9 +85,9 @@ class Lexer
 	static int tokenStringLevel(int state) { return (state >> 12) & 0xff; }
 	static int getOtherState(int state) { return (state & 0xfff00000); }
 
-	static bool sTokenizeTokenString = true;
-	static bool sSplitNestedComments = true;
-	static bool sAllowDollarInIdentifiers = false;
+	bool mTokenizeTokenString = true;
+	bool mSplitNestedComments = true;
+	bool mAllowDollarInIdentifiers = false;
 	
 	static int toState(State s, int nesting, int tokLevel, int otherState)
 	{
@@ -117,7 +117,13 @@ class Lexer
 		return idx;
 	}
 
-	static int scanIdentifier(S)(S text, int startpos, ref uint pos, int* pid = null)
+	int scanIdentifier(S)(S text, int startpos, ref uint pos)
+	{
+		int pid;
+		return scanIdentifier(text, startpos, pos, pid);
+	}
+	
+	int scanIdentifier(S)(S text, int startpos, ref uint pos, ref int pid)
 	{
 		while(pos < text.length)
 		{
@@ -129,34 +135,23 @@ class Lexer
 		}
 		string ident = toUTF8(text[startpos .. pos]);
 
-		if(auto pident = ident in keywords_map)
-		{
-			if(pid)
-				*pid = *pident;
+		if(findKeyword(ident, pid))
 			return TokenColor.Keyword;
-		}
-
-		if(auto pident = ident in specials_map)
-		{
-			if(pid)
-				*pid = TOK_StringLiteral;
+		if(findSpecial(ident, pid))
 			return TokenColor.String;
-		}
 
-		if(pid)
-			*pid = TOK_Identifier;
+		pid = TOK_Identifier;
 		return TokenColor.Identifier;
 	}
 
-	static int scanOperator(S)(S text, uint startpos, ref uint pos, int* pid = null)
+	static int scanOperator(S)(S text, uint startpos, ref uint pos, ref int pid)
 	{
 		int len;
 		int id = parseOperator(text, startpos, len);
 		if(id == TOK_error)
 			return TokenColor.Text;
 		
-		if(pid)
-			*pid = id;
+		pid = id;
 		pos = startpos + len;
 		return TokenColor.Operator;
 	}
@@ -184,7 +179,13 @@ class Lexer
 		}
 	}
 
-	static int scanNumber(S)(S text, dchar ch, ref uint pos, int* pid = null)
+	static int scanNumber(S)(S text, dchar ch, ref uint pos)
+	{
+		int pid;
+		return scanNumber(text, ch, pos, pid);
+	}
+	
+	static int scanNumber(S)(S text, dchar ch, ref uint pos, ref int pid)
 	{
 		// pos after first digit
 		int base = 10;
@@ -252,8 +253,7 @@ L_floatLiteral:
 			if(ch == 'i')
 L_complexLiteral:
 				pos = nextpos;
-			if(pid)
-				*pid = TOK_FloatLiteral;
+			pid = TOK_FloatLiteral;
 		}
 		else
 		{
@@ -279,8 +279,7 @@ L_complexLiteral:
 				if(toupper(ch) == 'U')
 					pos = nextpos;
 			}
-			if(pid)
-				*pid = TOK_IntegerLiteral;
+			pid = TOK_IntegerLiteral;
 		}
 		return TokenColor.Literal;
 	}
@@ -302,7 +301,7 @@ L_complexLiteral:
 		return State.kBlockComment;
 	}
 
-	static State scanNestedComment(S)(S text, uint startpos, ref uint pos, ref int nesting)
+	State scanNestedComment(S)(S text, uint startpos, ref uint pos, ref int nesting)
 	{
 		while(pos < text.length)
 		{
@@ -314,7 +313,7 @@ L_complexLiteral:
 				ch = decode(text, pos);
 				if(ch == '+')
 				{
-					if(sSplitNestedComments && pos > startpos + 2)
+					if(mSplitNestedComments && pos > startpos + 2)
 					{
 						pos -= 2;
 						return State.kNestedComment;
@@ -333,7 +332,7 @@ L_complexLiteral:
 					nesting--;
 					if(nesting == 0)
 						return State.kWhite;
-					if(sSplitNestedComments)
+					if(mSplitNestedComments)
 						return State.kNestedComment;
 					break;
 				}
@@ -391,7 +390,7 @@ L_complexLiteral:
 		return State.kStringCStyle;
 	}
 
-	static State startDelimiterString(S)(S text, ref uint pos, ref int nesting)
+	State startDelimiterString(S)(S text, ref uint pos, ref int nesting)
 	{
 		nesting = 1;
 
@@ -418,7 +417,7 @@ L_complexLiteral:
 		return s;
 	}
 
-	static State scanTokenString(S)(S text, ref uint pos, ref int tokLevel)
+	State scanTokenString(S)(S text, ref uint pos, ref int tokLevel)
 	{
 		int state = toState(State.kWhite, 0, 0, 0);
 		int id = -1;
@@ -457,19 +456,19 @@ L_complexLiteral:
 		return false;
 	}
 	
-	static bool isIdentifierChar(dchar ch)
+	bool isIdentifierChar(dchar ch)
 	{
-		if(sAllowDollarInIdentifiers && ch == '$')
+		if(mAllowDollarInIdentifiers && ch == '$')
 			return true;
 		return isUniAlpha(ch) || ch == '_' || ch == '@';
 	}
 	
-	static bool isIdentifierCharOrDigit(dchar ch)
+	bool isIdentifierCharOrDigit(dchar ch)
 	{
 		return isIdentifierChar(ch) || isdigit(ch);
 	}
 	
-	static bool isIdentifier(S)(S text)
+	bool isIdentifier(S)(S text)
 	{
 		if(text.length == 0)
 			return false;
@@ -576,7 +575,7 @@ L_complexLiteral:
 		return s;
 	}
 
-	static State scanDelimitedString(S)(S text, ref uint pos, ref int delim)
+	State scanDelimitedString(S)(S text, ref uint pos, ref int delim)
 	{
 		string delimiter = s_delimiters[delim];
 
@@ -600,7 +599,7 @@ L_complexLiteral:
 		return State.kStringDelimited;
 	}
 
-	static int scan(S)(ref int state, in S text, ref uint pos, ref int id)
+	int scan(S)(ref int state, in S text, ref uint pos, ref int id)
 	{
 		State s = scanState(state);
 		int nesting = nestingLevel(state);
@@ -635,7 +634,7 @@ L_complexLiteral:
 				{
 					type = TokenColor.String;
 					id = TOK_StringLiteral;
-					if(sTokenizeTokenString)
+					if(mTokenizeTokenString)
 					{
 						pos = prevpos;
 						s = State.kStringTokenFirst;
@@ -654,21 +653,21 @@ L_complexLiteral:
 				else
 				{
 					pos = prevpos;
-					type = scanIdentifier(text, startpos, pos, &id);
+					type = scanIdentifier(text, startpos, pos, id);
 				}
 			}
 			else if(isIdentifierChar(ch))
-				type = scanIdentifier(text, startpos, pos, &id);
+				type = scanIdentifier(text, startpos, pos, id);
 			else if(isdigit(ch))
-				type = scanNumber(text, ch, pos, &id);
+				type = scanNumber(text, ch, pos, id);
 			else if (ch == '.')
 			{
 				uint nextpos = pos;
 				ch = trydecode(text, nextpos);
 				if(isdigit(ch))
-					type = scanNumber(text, '.', pos, &id);
+					type = scanNumber(text, '.', pos, id);
 				else
-					type = scanOperator(text, startpos, pos, &id);
+					type = scanOperator(text, startpos, pos, id);
 			}
 			else if (ch == '/')
 			{
@@ -698,7 +697,7 @@ L_complexLiteral:
 				{
 					// step back to position after '/'
 					pos = prevpos;
-					type = scanOperator(text, startpos, pos, &id);
+					type = scanOperator(text, startpos, pos, id);
 				}
 			}
 			else if (ch == '"')
@@ -729,11 +728,11 @@ L_complexLiteral:
 					else if (ch == '}')
 						tokLevel--;
 					if(!isspace(ch))
-						type = scanOperator(text, startpos, pos, &id);
+						type = scanOperator(text, startpos, pos, id);
 					id = TOK_StringLiteral;
 				}
 				else if(!isspace(ch))
-					type = scanOperator(text, startpos, pos, &id);
+					type = scanOperator(text, startpos, pos, id);
 			}
 			break;
 
@@ -808,26 +807,26 @@ L_complexLiteral:
 		return type;
 	}
 	
-	static int scan(S)(ref int state, in S text, ref uint pos)
+	int scan(S)(ref int state, in S text, ref uint pos)
 	{
 		int id;
 		return scan(state, text, pos, id);
 	}
-}
 
-///////////////////////////////////////////////////////////////
-TokenInfo[] ScanLine(S)(int iState, S text)
-{
-	TokenInfo[] lineInfo;
-	for(uint pos = 0; pos < text.length; )
+	///////////////////////////////////////////////////////////////
+	TokenInfo[] ScanLine(S)(int iState, S text)
 	{
-		TokenInfo info;
-		info.StartIndex = pos;
-		info.type = cast(TokenColor) Lexer.scan(iState, text, pos);
-		info.EndIndex = pos;
-		lineInfo ~= info;
+		TokenInfo[] lineInfo;
+		for(uint pos = 0; pos < text.length; )
+		{
+			TokenInfo info;
+			info.StartIndex = pos;
+			info.type = cast(TokenColor) scan(iState, text, pos);
+			info.EndIndex = pos;
+			lineInfo ~= info;
+		}
+		return lineInfo;
 	}
-	return lineInfo;
 }
 
 ///////////////////////////////////////////////////////////////
@@ -843,6 +842,46 @@ shared static this()
 
 	foreach(i, s; specials)
 		specials_map[s] = cast(short) i;
+}
+
+bool findKeyword(string ident, ref int id)
+{
+	if(__ctfe)
+	{
+		// slow, but compiles
+		foreach(i, k; keywords)
+			if(k == ident)
+			{
+				id = TOK_begin_Keywords + i;
+				return true;
+			}
+	}
+	else if(auto pident = ident in keywords_map)
+	{
+		id = *pident;
+		return true;
+	}
+	return false;
+}
+
+bool findSpecial(string ident, ref int id)
+{
+	if(__ctfe)
+	{
+		// slow, but compiles
+		foreach(i, k; specials)
+			if(k == ident)
+			{
+				id = TOK_StringLiteral;
+				return true;
+			}
+	}
+	else if(auto pident = ident in specials_map)
+	{
+		id = TOK_StringLiteral;
+		return true;
+	}
+	return false;
 }
 
 const string keywords[] = 

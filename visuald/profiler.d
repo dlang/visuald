@@ -69,7 +69,8 @@ bool showProfilerWindow()
 const int  kColumnInfoVersion = 1;
 const bool kToolBarAtTop = true;
 const int  kToolBarHeight = 24;
-const int  kPaneMargin = 2;
+const int  kPaneMargin = 0;
+const int  kBackMargin = 2;
 
 const HDMIL_PRIVATE = 0xf00d;
 
@@ -834,8 +835,8 @@ private:
 		HRESULT hr = _CreateToolbarImageList(_himlToolbar);
 		if (SUCCEEDED(hr))
 		{
-			int style = CCS_NODIVIDER | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS;
-			style |= (kToolBarAtTop ? CCS_TOP : CCS_BOTTOM);
+			int style = CCS_NODIVIDER | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CCS_NORESIZE;
+			//style |= (kToolBarAtTop ? CCS_TOP : CCS_BOTTOM);
 			_wndToolbar = new ToolBar(_wndBack, style, TBSTYLE_EX_DOUBLEBUFFER, IDC_TOOLBAR);
 			hr = _wndToolbar.hwnd ? S_OK : E_FAIL;
 			if (SUCCEEDED(hr))
@@ -929,10 +930,10 @@ private:
 		{
 			_wndFileWheel = new Text(_wndBack, "", IDC_FILEWHEEL);
 			int top = kToolBarAtTop ? kToolBarHeight : 1;
-			_wndFileWheel.setRect(0, top + 2, 185, 16);
+			_wndFileWheel.setRect(kBackMargin, top + kBackMargin, 185, 16);
 			_wndFuncList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
 			                            0, IDC_FILELIST);
-			_wndFuncList.setRect(0, top + 20, 185, 78);
+			_wndFuncList.setRect(kBackMargin, top + kBackMargin + 20, 185, 78);
 			HWND hdrHwnd = cast(HWND)_wndFuncList.SendMessage(LVM_GETHEADER);
 			if(hdrHwnd)
 			{
@@ -947,10 +948,10 @@ private:
 			}
 			_wndFanInList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
 			                             0, IDC_FANINLIST);
-			_wndFanInList.setRect(0, top + 20 + 78, 185, 40);
+			_wndFanInList.setRect(kBackMargin, top + 20 + 78, 185, 40);
 			_wndFanOutList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
 			                              0, IDC_FANOUTLIST);
-			_wndFanOutList.setRect(0, top + 20 + 78 + 40, 185, 40);
+			_wndFanOutList.setRect(kBackMargin, top + 20 + 78 + 40, 185, 40);
 
 			_InitializeFuncList();
 			
@@ -1000,41 +1001,37 @@ private:
 		// - File List stretches to fit horizontally and vertically but the topleft coordinate is fixed
 		// - Toolbar autosizes along the bottom
 
-		_wndToolbar.SendMessage(TB_AUTOSIZE);
-		RECT rcToolbar;
+		_wndToolbar.setRect(kBackMargin, kBackMargin, cx - 2 * kBackMargin, kToolBarHeight);
 
-		if (_wndToolbar.GetWindowRect(&rcToolbar))
-		{
-			int hTool = (kToolBarAtTop ? 0 : rcToolbar.bottom - rcToolbar.top);
-			int h     = cy - hTool;
-			int hFan  = _fShowFanInOut ? h / 4 : 0;
-			int hFunc = h - 2 * hFan;
+		int hTool = (kToolBarAtTop ? 0 : kToolBarHeight);
+		int h     = cy - hTool - 2 * kBackMargin;
+		int hFan  = _fShowFanInOut ? h / 4 : 0;
+		int hFunc = h - 2 * hFan;
 		
-			RECT rcFileWheel;
-			if (_wndFileWheel.GetWindowRect(&rcFileWheel))
-			{
-				_wndBack.ScreenToClient(&rcFileWheel);
-				rcFileWheel.right = cx;
-				_wndFileWheel.SetWindowPos(null, &rcFileWheel, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-				RECT rcFileList;
+		RECT rcFileWheel;
+		if (_wndFileWheel.GetWindowRect(&rcFileWheel))
+		{
+			_wndBack.ScreenToClient(&rcFileWheel);
+			rcFileWheel.right = cx - kBackMargin;
+			_wndFileWheel.SetWindowPos(null, &rcFileWheel, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+			RECT rcFileList;
 					
-				if (_wndFuncList.GetWindowRect(&rcFileList))
-				{
-					_wndBack.ScreenToClient(&rcFileList);
-					rcFileList.right = cx;
-					rcFileList.bottom = hFunc;
-					_wndFuncList.SetWindowPos(null, &rcFileList, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+			if (_wndFuncList.GetWindowRect(&rcFileList))
+			{
+				_wndBack.ScreenToClient(&rcFileList);
+				rcFileList.right = cx - kBackMargin;
+				rcFileList.bottom = hFunc + kBackMargin;
+				_wndFuncList.SetWindowPos(null, &rcFileList, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 				
-					rcFileList.top = rcFileList.bottom;
-					rcFileList.bottom += hFan;
-					if(_wndFanInList)
-						_wndFanInList.SetWindowPos(null, &rcFileList, SWP_NOZORDER | SWP_NOACTIVATE);
+				rcFileList.top = rcFileList.bottom;
+				rcFileList.bottom += hFan;
+				if(_wndFanInList)
+					_wndFanInList.SetWindowPos(null, &rcFileList, SWP_NOZORDER | SWP_NOACTIVATE);
 
-					rcFileList.top = rcFileList.bottom;
-					rcFileList.bottom += hFan;
-					if(_wndFanOutList)
-						_wndFanOutList.SetWindowPos(null, &rcFileList, SWP_NOZORDER | SWP_NOACTIVATE);
-				}
+				rcFileList.top = rcFileList.bottom;
+				rcFileList.bottom += hFan;
+				if(_wndFanOutList)
+					_wndFanOutList.SetWindowPos(null, &rcFileList, SWP_NOZORDER | SWP_NOACTIVATE);
 			}
 		}
 		return 0;

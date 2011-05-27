@@ -252,6 +252,11 @@ version(tip)
 			case ECMD_GOTOBRACE_EXT:
 				return GotoMatchingPair(true);
 			
+			case ECMD_OUTLN_STOP_HIDING_ALL:
+				return mCodeWinMgr.mSource.StopOutlining();
+			case ECMD_OUTLN_TOGGLE_ALL:
+				return mCodeWinMgr.mSource.ToggleOutlining();
+				
 			default:
 				break;
 			}
@@ -420,6 +425,8 @@ version(tip)
 			case ECMD_AUTOCOMPLETE:
 			case ECMD_GOTOBRACE:
 			case ECMD_GOTOBRACE_EXT:
+			case ECMD_OUTLN_STOP_HIDING_ALL:
+			case ECMD_OUTLN_TOGGLE_ALL:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
@@ -450,7 +457,7 @@ version(tip)
 			if(pos == idx)
 			{
 				int startState = iState;
-				if(Lexer.scan(iState, txt, pos) == TokenColor.Comment)
+				if(dLex.scan(iState, txt, pos) == TokenColor.Comment)
 				{
 					//if(iState == Lexer.toState(Lexer.State.kNestedComment, 1, 0) ||
 					if(iState == Lexer.State.kWhite)
@@ -479,7 +486,7 @@ version(tip)
 			{
 				int startState = iState;
 				uint startpos = pos;
-				if(Lexer.scan(iState, txt, pos) == TokenColor.Comment)
+				if(dLex.scan(iState, txt, pos) == TokenColor.Comment)
 				{
 					if(startState == iState ||
 					   mCodeWinMgr.mSource.FindStartOfComment(startState, line, startpos))
@@ -532,7 +539,7 @@ version(tip)
 		
 		uint startPos = pos;
 		int startState = iState;
-		int type = Lexer.scan(iState, txt, pos);
+		int type = dLex.scan(iState, txt, pos);
 		if(type == TokenColor.String)
 		{
 			Lexer.State sstate;
@@ -632,7 +639,7 @@ version(tip)
 
 		wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 		uint ppos = pos;
-		int toktype = Lexer.scan(iState, text, pos);
+		int toktype = dLex.scan(iState, text, pos);
 		if(toktype != TokenColor.Operator)
 			return false;
 

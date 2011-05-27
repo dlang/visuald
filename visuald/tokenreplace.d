@@ -110,6 +110,14 @@ struct ReplaceOptions
 }
 
 //////////////////////////////////////////////////////////////////////////////
+__gshared Lexer trLex;
+
+shared static this()
+{
+	trLex.mAllowDollarInIdentifiers = true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 void advanceTextPos(_string text, ref int lineno, ref int column)
 {
 	for( ; ; )
@@ -380,7 +388,7 @@ static void scanAny(TL)(ref TL tokenList, _string text, int lineno = 1, int colu
 	{
 		int tokid;
 		uint prevpos = pos;
-		Lexer.scan(state, text, pos, tokid);
+		trLex.scan(state, text, pos, tokid);
 
 		_string txt = text[prevpos .. pos];
 		advanceTextPos(txt, lineno, column); 
@@ -801,9 +809,6 @@ _string replaceTokenSequence(_string srctext, int srclineno, int srccolumn, _str
 							 ref const ReplaceOptions opt, ReplaceRange[]* ranges)
 {
 	TokenList tokens = scanText(srctext, srclineno, srccolumn);
-	
-	Lexer.sAllowDollarInIdentifiers = true;
-	scope(exit) Lexer.sAllowDollarInIdentifiers = false;
 	
 	int cnt = replaceTokenSequence(tokens, search, replace, opt, ranges);
 	if(cnt == 0)

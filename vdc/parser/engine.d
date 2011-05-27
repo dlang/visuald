@@ -626,7 +626,8 @@ class Parser
 		int state = 0;
 	version(all)
 	{
-		Lexer.sTokenizeTokenString = false;
+		Lexer lex;
+		lex.mTokenizeTokenString = false;
 		lineno = 1;
 		int linepos = 0; // position after last line break
 		int tokid;
@@ -635,7 +636,7 @@ class Parser
 			int prevlineno = lineno;
 			int prevlinepos = linepos;
 			uint prevpos = pos;
-			TokenColor type = cast(TokenColor) Lexer.scan(state, text, pos, tokid);
+			TokenColor type = cast(TokenColor) lex.scan(state, text, pos, tokid);
 
 			if(tokid == TOK_Space || tokid == TOK_Comment || tokid == TOK_StringLiteral || tokid == TOK_CharacterLiteral)
 			{

@@ -296,5 +296,9 @@ unreleased Version 0.3.25
   * Visual D now builds with DMD 2.053
   * moved from std.date to std.datetime to fix some time displays
   * moved outlining into parse thread to reduce delays when editing large files
-
-  
+  * added warning to library search path settings
+  * d-files now set to UTF8 encoding if not already marked by BOM
+  * fixed transparent window frame around dialogs in VS2010
+  * added drag'n'drop of project folders
+  * added support for "Stop Outlining" and "Toggle All Outlining"
+  * tweaked outlining for multi-dimensional arrays and token strings

@@ -24,6 +24,7 @@ import sdk.port.vsi;
 import sdk.vsi.vsshell;
 
 import visuald.dpackage;
+import visuald.dlangsvc;
 import visuald.config;
 import visuald.comutil;
 import visuald.logutil;
@@ -475,7 +476,7 @@ struct ParameterInfo
 	bool initialize(string type)
 	{
 		wstring text = to!wstring(type);
-		TokenInfo[] lineInfo = ScanLine(Lexer.State.kWhite, text);
+		TokenInfo[] lineInfo = dLex.ScanLine(Lexer.State.kWhite, text);
 		
 		if(lineInfo.length == 0)
 			return false;

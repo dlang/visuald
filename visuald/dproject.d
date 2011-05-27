@@ -2059,6 +2059,108 @@ class Project : CVsHierarchy,
 		}
 	}
 
+	bool isChildItem(CHierContainer dropTarget, IVsHierarchy srpIVsHierarchy, VSITEMID itemidLoc)
+	{
+		if(srpIVsHierarchy !is this)
+			return false;
+		
+		CHierNode dropSource = VSITEMID2Node(itemidLoc);
+		for(CHierNode c = dropTarget; c; c = c.GetParent())
+			if(dropSource == c)
+				return true;
+		return false;
+	}
+	
+	HRESULT copyVirtualFolder(CHierContainer dropContainer, IVsHierarchy srpIVsHierarchy, VSITEMID itemidLoc)
+	{
+		if(isChildItem(dropContainer, srpIVsHierarchy, itemidLoc))
+		{
+			UtilMessageBox("Cannot drop folder into itself or one of its sub folders", MB_OK, "Drop folder");
+			return S_FALSE;
+		}
+		IVsProject srpIVsProject = qi_cast!IVsProject(srpIVsHierarchy);
+		if(!srpIVsProject)
+			return E_UNEXPECTED;
+		scope(exit) release(srpIVsProject);
+
+		BSTR cbstrMoniker;
+		if(HRESULT hr = srpIVsProject.GetMkDocument(itemidLoc, &cbstrMoniker))
+			return hr;
+		string name = detachBSTR(cbstrMoniker);
+
+		CFolderNode pFolder = new CFolderNode;
+		
+		string strThisFolder = getBaseName(name);
+		pFolder.SetName(strThisFolder);
+		
+		VARIANT var;
+		if(srpIVsHierarchy.GetProperty(itemidLoc, VSHPROPID_FirstChild, &var) == S_OK &&
+		   (var.vt == VT_INT_PTR || var.vt == VT_I4 || var.vt == VT_INT))
+		{
+			VSITEMID chid = var.lVal;
+			while(chid != VSITEMID_NIL)
+			{
+				if(HRESULT hr = processVSItem(pFolder, srpIVsHierarchy, chid))
+					return hr;
+				
+				if(srpIVsHierarchy.GetProperty(chid, VSHPROPID_NextSibling, &var) != S_OK ||
+				   (var.vt != VT_INT_PTR && var.vt != VT_I4 && var.vt != VT_INT))
+					break;
+				chid = var.lVal;
+			}
+		}
+
+		dropContainer.Add(pFolder);
+		return S_OK;
+	}
+	
+	HRESULT processVSItem(CHierContainer dropContainer, IVsHierarchy srpIVsHierarchy, VSITEMID itemidLoc)
+	{
+		// If this is a virtual item, we skip it
+		GUID typeGuid;
+		bool isFolder = false;
+		HRESULT hr = srpIVsHierarchy.GetGuidProperty(itemidLoc, VSHPROPID_TypeGuid, &typeGuid);
+		if(SUCCEEDED(hr) && typeGuid == GUID_ItemType_VirtualFolder)
+			return copyVirtualFolder(dropContainer, srpIVsHierarchy, itemidLoc);
+
+		if(SUCCEEDED(hr) && typeGuid != GUID_ItemType_PhysicalFile)
+			return S_FALSE;
+		
+		if(hr == E_ABORT || hr == OLE_E_PROMPTSAVECANCELLED)
+			return OLE_E_PROMPTSAVECANCELLED;
+
+		IVsProject srpIVsProject;
+		scope(exit) release(srpIVsProject);
+
+		hr = srpIVsHierarchy.QueryInterface(&IVsProject.iid, cast(void **)&srpIVsProject);
+		if(FAILED(hr) || !srpIVsProject)
+			return hr;
+				
+		BSTR cbstrMoniker;
+		hr = srpIVsProject.GetMkDocument(itemidLoc, &cbstrMoniker);
+		if (FAILED(hr))
+			return hr;
+
+		string filename = detachBSTR(cbstrMoniker);
+		wchar* wfilename = _toUTF16z(filename);
+		VSADDRESULT vsaddresult = ADDRESULT_Failure;
+		hr = GetProjectNode().GetCVsHierarchy().AddItemSpecific(dropContainer,
+			/* [in]  VSADDITEMOPERATION dwAddItemOperation */ VSADDITEMOP_OPENFILE,
+			/* [in]  LPCOLESTR pszItemName                 */ null,
+			/* [in]  DWORD cFilesToOpen                    */ 1,
+			/* [in]  LPCOLESTR rgpszFilesToOpen[]          */ &wfilename,
+			/* [in]  HWND hwndDlg                          */ null,
+			/* [in]  VSSPECIFICEDITORFLAGS grfEditorFlags  */ cast(VSSPECIFICEDITORFLAGS) 0,
+			/* [in]  REFGUID               rguidEditorType */ &GUID_NULL,
+			/* [in]  LPCOLESTR             pszPhysicalView */ null,
+			/* [in]  REFGUID               rguidLogicalView*/ &GUID_NULL,
+			/* [in]  bool moveIfInProject                  */ mfDragSource,
+			/* [out] VSADDRESULT *pResult                  */ &vsaddresult);
+		if (hr == E_ABORT || hr == OLE_E_PROMPTSAVECANCELLED || vsaddresult == ADDRESULT_Cancel)
+			return OLE_E_PROMPTSAVECANCELLED;
+		return hr;
+	}
+	
 	HRESULT ProcessSelectionDataObject(
 		/* [in]  */ CHierContainer dropContainer,
 		/* [in]  */ IDataObject   pDataObject, 
@@ -2206,69 +2308,11 @@ AddFiles:
 					continue;
 				}
 
-				// If this is a virtual item, we skip it
-				GUID typeGuid;
-				hrTemp = srpIVsHierarchy.GetGuidProperty(itemidLoc, VSHPROPID_TypeGuid, &typeGuid);
-				if(SUCCEEDED(hrTemp) && typeGuid != GUID_ItemType_PhysicalFile)
-				{
-					hr = E_FAIL;
-					continue;
-				}
-				if(hrTemp == E_ABORT || hrTemp == OLE_E_PROMPTSAVECANCELLED)
-				{
-					hr = OLE_E_PROMPTSAVECANCELLED;
+				hr = processVSItem(dropContainer, srpIVsHierarchy, itemidLoc);
+				if(FAILED(hr))
 					goto Error;
-				}
-
-
-				IVsProject srpIVsProject;
-				scope(exit) release(srpIVsProject);
-
-				hrTemp = srpIVsHierarchy.QueryInterface(&IVsProject.iid, cast(void **)&srpIVsProject);
-				if(FAILED(hrTemp))
-				{
-					hr = hrTemp;
-					continue;
-				}
-				if(srpIVsProject is null)
-				{
-					hr = E_UNEXPECTED;
-					continue;
-				}
-				
-				BSTR cbstrMoniker;
-				hrTemp = srpIVsProject.GetMkDocument(itemidLoc, &cbstrMoniker);
-				if (FAILED(hrTemp))
-				{
-					hr = hrTemp;
-					continue;
-				}
-				string filename = detachBSTR(cbstrMoniker);
-				wchar* wfilename = _toUTF16z(filename);
-				VSADDRESULT vsaddresult = ADDRESULT_Failure;
-				hrTemp = pProjectNode.GetCVsHierarchy().AddItemSpecific(dropContainer,
-					/* [in]  VSADDITEMOPERATION dwAddItemOperation */ VSADDITEMOP_OPENFILE,
-					/* [in]  LPCOLESTR pszItemName                 */ null,
-					/* [in]  DWORD cFilesToOpen                    */ 1,
-					/* [in]  LPCOLESTR rgpszFilesToOpen[]          */ &wfilename,
-					/* [in]  HWND hwndDlg                          */ null,
-					/* [in]  VSSPECIFICEDITORFLAGS grfEditorFlags  */ cast(VSSPECIFICEDITORFLAGS) 0,
-					/* [in]  REFGUID               rguidEditorType */ &GUID_NULL,
-					/* [in]  LPCOLESTR             pszPhysicalView */ null,
-					/* [in]  REFGUID               rguidLogicalView*/ &GUID_NULL,
-					/* [in]  bool moveIfInProject                  */ mfDragSource,
-					/* [out] VSADDRESULT *pResult                  */ &vsaddresult);
-				if (hrTemp == E_ABORT || hrTemp == OLE_E_PROMPTSAVECANCELLED || vsaddresult == ADDRESULT_Cancel)
-				{
-					hr = OLE_E_PROMPTSAVECANCELLED;
-					goto Error;
-				}
-				if (FAILED(hrTemp))
-				{
-					hr = hrTemp;
-					continue;
-				}
-				fItemProcessed = TRUE;
+				if(hr == S_OK)
+					fItemProcessed = TRUE;
 			}
 		}
 
@@ -2469,7 +2513,13 @@ Error:
 			{
 				CFileNode pFileNode = cast(CFileNode) VSITEMID2Node(mItemSelDragged[i].itemid);
 				if (!pFileNode)
+				{
+					CHierContainer pFolderNode = cast(CHierContainer) VSITEMID2Node(mItemSelDragged[i].itemid);
+					if(pFolderNode)
+						if(auto parent = pFolderNode.GetParent())
+							hr = parent.Delete(pFolderNode, this);
 					continue;
+				}
 
 				bool fOpen      = FALSE;
 				bool fDirty     = FALSE;

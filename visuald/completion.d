@@ -231,7 +231,7 @@ class Declarations
 			while(pos < text.length)
 			{
 				uint ppos = pos;
-				int type = Lexer.scan(iState, text, pos);
+				int type = dLex.scan(iState, text, pos);
 				if(ln != line || pos < idx || ppos > idx)
 					if(type == TokenColor.Identifier || type == TokenColor.Keyword)
 					{

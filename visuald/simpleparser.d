@@ -77,6 +77,9 @@ OtherToken:    anything but '{', ';', if, version, debug (might also exclude ')'
 NonBraceToken: anything but '{', '(', '[' (might also exclude ')', ']', '}')
 */
 
+//////////////////////////////////////////////////////////////////////////////
+__gshared Lexer spLex;
+
 struct ParserSpan
 {
 	int iStartIndex; // starting character index within the line (must be <= length of line)
@@ -591,7 +594,7 @@ class ParserBase(S = string)
 			ParserToken!S tok;
 			tok.span.iStartLine = lno;
 			tok.span.iStartIndex = pos;
-			tok.type = cast(TokenColor) Lexer.scan(state, line, pos, tok.id);
+			tok.type = cast(TokenColor) spLex.scan(state, line, pos, tok.id);
 			tok.text = line[tok.span.iStartIndex .. pos];
 			
 			if(pos == line.length)

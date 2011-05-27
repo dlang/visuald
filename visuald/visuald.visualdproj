@@ -82,8 +82,8 @@
   <additionalOptions>-debuglib=phobos.lib</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>c:\l\vsshell10\Common7\IDE\devenv.exe</debugtarget>
-  <debugarguments />
+  <debugtarget>$(Devenvdir)\devenv.exe</debugtarget>
+  <debugarguments>/RootSuffix D</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
