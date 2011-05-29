@@ -31,6 +31,7 @@ import std.conv;
 import std.math;
 import std.array;
 import std.exception;
+import std.algorithm;
 import core.thread;
 import core.stdc.time;
 import core.stdc.string;
@@ -182,35 +183,149 @@ else
 
 	bool isStopped() const { return m_fStopBuild != 0; }
 	
-	bool doCustomBuilds()
+	//////////////////////////////////////////////////////////////////////
+	static struct FileDep
 	{
-		mixin(LogCallMix2);
-		
+		CFileNode file;
+		string outfile;
+		string[] dependencies;
+	}
+	
+	// sorts inplace
+	static void sortDependencies(FileDep[] filedeps)
+	{
+		for(int i = 0, j, k; i < filedeps.length; i++)
+		{
+			// sort i-th file before the first file that depends on it
+			for(j = 0; j < i; j++)
+			{
+				if(countUntil(filedeps[j].dependencies, filedeps[i].outfile) >= 0)
+					break;
+			}
+			// check whether the i-th file depends on any later file
+			for(k = j; k < i; k++)
+			{
+				if(countUntil(filedeps[i].dependencies, filedeps[k].outfile) >= 0)
+					throw new Exception("circular dependency on " ~ filedeps[i].outfile);
+			}
+			if(j < i)
+			{
+				FileDep dep = filedeps[i];
+				for(k = i; k > j; k--)
+					filedeps[k] = filedeps[k-1];
+				filedeps[j] = dep;
+			}
+		}
+	}
+	
+	CFileNode[] BuildDependencyList()
+	{
 		string workdir = mConfig.GetProjectDir();
-
+		Config config = mConfig; // closure does not work with both local variables and this pointer?
+		FileDep[] filedeps;
 		CHierNode node = searchNode(mConfig.GetProjectNode(), 
 			delegate (CHierNode n) { 
 				if(CFileNode file = cast(CFileNode) n)
 				{
-					if(isStopped())
-						return true;
-					if(!mConfig.isUptodate(file))
+					string tool = config.GetCompileTool(file);
+					if(tool == "Custom" || tool == kToolResourceCompiler)
 					{
-						string cmdline = mConfig.GetCompileCommand(file);
-						if(cmdline.length)
-						{
-							string outfile = mConfig.GetOutputFile(file);
-							string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
-							HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
-							if (hr != S_OK)
-								return true; // stop compiling
-						}
+						FileDep dep;
+						dep.outfile = config.GetOutputFile(file);
+						dep.outfile = canonicalPath(makeFilenameAbsolute(dep.outfile, workdir));
+						dep.dependencies = config.GetDependencies(file);
+						foreach(ref d; dep.dependencies)
+							d = canonicalPath(d);
+						dep.file = file;
+						filedeps ~= dep;
 					}
 				}
 				return false;
 			});
+		
+		sortDependencies(filedeps);
+		CFileNode[] files;
+		foreach(fdep; filedeps)
+			files ~= fdep.file;
 
-		return node is null;
+		return files;
+	}
+	
+	unittest
+	{
+		FileDep[] deps = [
+			{ null, "file1", [ "file2", "file3" ] },
+			{ null, "file2", [ "file4", "file5" ] },
+			{ null, "file3", [ "file2", "file6" ] },
+		];
+		sortDependencies(deps);
+		assert(deps[0].outfile == "file2");
+		assert(deps[1].outfile == "file3");
+		assert(deps[2].outfile == "file1");
+		
+		deps[0].dependencies ~= "file1";
+		try
+		{
+			sortDependencies(deps);
+			assert(false);
+		}
+		catch(Exception e)
+		{
+			assert(std.string.indexOf(e.msg, "circular") >= 0);
+		}
+	}
+	//////////////////////////////////////////////////////////////////////
+	bool buildCustomFile(CFileNode file)
+	{
+		if(!mConfig.isUptodate(file))
+		{
+			string cmdline = mConfig.GetCompileCommand(file);
+			if(cmdline.length)
+			{
+				string workdir = mConfig.GetProjectDir();
+				string outfile = mConfig.GetOutputFile(file);
+				string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+				removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
+				HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
+				if (hr != S_OK)
+					return false; // stop compiling
+			}
+		}
+		return true;
+	}
+	
+	bool doCustomBuilds()
+	{
+		mixin(LogCallMix2);
+		
+		version(old)
+		{
+			CHierNode node = searchNode(mConfig.GetProjectNode(), 
+				delegate (CHierNode n) { 
+					if(CFileNode file = cast(CFileNode) n)
+					{
+						if(isStopped())
+							return true;
+						if(!buildCustomFile(file))
+							return true;
+					}
+					return false;
+				});
+
+			return node is null;
+		}
+		else
+		{
+			CFileNode[] files = BuildDependencyList();
+			foreach(file; files)
+			{
+				if(isStopped())
+					return false;
+				if(!buildCustomFile(file))
+					return false;
+			}
+			return true;
+		}
 	}
 
 	bool DoBuild()
@@ -257,9 +372,9 @@ else
 			hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
 			return (hr == S_OK);
 		}
-		catch(FileException fe)
+		catch(Exception e)
 		{
-			OutputText("Error setting up build: " ~ fe.msg);
+			OutputText("Error setting up build: " ~ e.msg);
 			return false;
 		}
 		finally
@@ -329,7 +444,7 @@ else
 		{
 			try
 			{
-				if(indexOf(file,'*') >= 0 || indexOf(file,'?') >= 0)
+				if(std.string.indexOf(file,'*') >= 0 || std.string.indexOf(file,'?') >= 0)
 				{
 					string dir = dirname(file);
 					string pattern = basename(file);
@@ -819,7 +934,7 @@ unittest
 
 string unEscapeFilename(string file)
 {
-	int pos = indexOf(file, '\\');
+	int pos = std.string.indexOf(file, '\\');
 	if(pos < 0)
 		return file;
 
@@ -832,7 +947,7 @@ string unEscapeFilename(string file)
 			p ~= file[start .. pos];
 			start = pos + 1;
 		}
-		int nextpos = indexOf(file[pos + 1 .. $], '\\');
+		int nextpos = std.string.indexOf(file[pos + 1 .. $], '\\');
 		if(nextpos < 0)
 			break;
 		pos += nextpos + 1;

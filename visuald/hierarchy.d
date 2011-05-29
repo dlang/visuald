@@ -495,6 +495,7 @@ class CFolderNode : CHierContainer
 	this(string name = "")
 	{
 		SetName(name);
+		SetIsSortedList(true);
 	}
 
 	// VSHPROPID_EditLabel

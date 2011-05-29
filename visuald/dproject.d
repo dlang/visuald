@@ -2667,7 +2667,7 @@ Error:
 		{
 			string name = xml.getAttribute(folder, "name");
 			CHierContainer node = new CFolderNode(name);
-			cont.AddTail(node);
+			cont.Add(node);
 			parseContainer(node, folder);
 		}
 
@@ -2681,7 +2681,7 @@ Error:
 			node.SetOutFile(xml.getAttribute(file, "outfile"));
 			node.SetCustomCmd(xml.getAttribute(file, "customcmd"));
 			node.SetLinkOutput(xml.getAttribute(file, "linkoutput") == "true");
-			cont.AddTail(node);
+			cont.Add(node);
 		}
 	}
 

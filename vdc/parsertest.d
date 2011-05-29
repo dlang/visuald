@@ -275,6 +275,30 @@ unittest
 	testParse(txt, "unittest7");
 }
 
+int[] ctfeLexer(string s)
+{
+	Lexer lex;
+	int state;
+	uint pos;
+	
+	int[] ids;
+	while(pos < s.length)
+	{
+		uint prevpos = pos;
+		int id;
+		int type = lex.scan(state, s, pos, id);
+		assert(prevpos < pos);
+		if(!Lexer.isCommentOrSpace(type, s[prevpos .. pos]))
+			ids ~= id;
+	}
+	return ids;
+}
+
+unittest
+{
+	static assert(ctfeLexer(q{int /* comment to skip */ a;}) == [ TOK_int, TOK_Identifier, TOK_semicolon ]);
+}
+
 	//alias 4 test;
 	//uint[test] arr;
 	//pragma(msg,arr.sizeof);

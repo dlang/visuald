@@ -33,6 +33,11 @@ string normalizePath(string path)
 	return replace(path, "/", "\\");
 }
 
+string canonicalPath(string path)
+{
+	return tolower(replace(path, "/", "\\"));
+}
+
 string makeFilenameAbsolute(string file, string workdir)
 {
 	if(!isabs(file))
@@ -112,6 +117,12 @@ void clearCachedFileTimes()
 	gCachedFileTimes = empty; // = gCachedFileTimes.init;
 }
 
+void removeCachedFileTime(string file)
+{
+	file = canonicalPath(file);
+	gCachedFileTimes.remove(file);
+}
+
 //-----------------------------------------------------------------------------
 void getOldestNewestFileTime(string[] files, out long oldest, out long newest)
 {
@@ -119,6 +130,7 @@ void getOldestNewestFileTime(string[] files, out long oldest, out long newest)
 	newest = long.min;
 	foreach(file; files)
 	{
+		file = canonicalPath(file);
 		long ftm;
 		if(auto ptm = file in gCachedFileTimes)
 			ftm = *ptm;

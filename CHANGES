@@ -302,3 +302,5 @@ unreleased Version 0.3.25
   * added drag'n'drop of project folders
   * added support for "Stop Outlining" and "Toggle All Outlining"
   * tweaked outlining for multi-dimensional arrays and token strings
+  * build order of custom/resource compilations now sorted by dependencies
+  * project items now sorted alphabetically

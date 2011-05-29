@@ -83,11 +83,14 @@ void addunique(T)(ref T[] arr, T[] vals)
 ///////////////////////////////////////////////////////////////////////
 int CompareFilenamesForSort(string f1, string f2)
 {
+	return icmp(f1, f2);
+/+
 	if(f1 == f2)
 		return 0;
 	if(f1 < f2)
 		return -1;
 	return 1;
++/
 }
 
 bool ContainsInvalidFileChars(string name)

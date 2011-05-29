@@ -140,7 +140,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		/* [in] */ in ULONG cObjects,
 		/* [size_is][in] */ IUnknown *ppUnk)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 
 		foreach(obj; mObjects)
 			release(obj);

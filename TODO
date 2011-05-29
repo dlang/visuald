@@ -14,8 +14,6 @@ Settings:
 Project:
 ---------------
 - clean/build/rebuild only project not working
-- incorrect build order of single file compilations (check dependencies)
-- sort project items
 - midl compiler?
 - manifest compiler?
 - no automatic lib dependencies
@@ -26,8 +24,9 @@ Project:
 - exceptions when opening rc-file with project
 - adding new item to project causes lots of System.Resources.MissingManifestResourceException
   which seems like a frozen UI (only first dialog open)
-- incremental builds
+- incremental builds?
 - single file compilation of library: rebuilds lib every time
+- DnD files/folders looses project file settings
 
 Language service:
 ---------------
@@ -41,6 +40,7 @@ Language service:
 - disable parsing/outlining for large files?
 - version highlighting does not support version(x): syntax
 - replace token: empty dialog when opened without resizing
+- reindent after paste?
 
 Search:
 ---------------

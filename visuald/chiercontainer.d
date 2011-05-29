@@ -344,6 +344,13 @@ protected:
 		}
 	}
 
+	static int CompareNodesForSort(CHierNode pNode1, CHierNode pNode2)
+	{
+		string name1 = (pNode1.IsContainer() ? "C" : "F") ~ pNode1.GetName();
+		string name2 = (pNode2.IsContainer() ? "C" : "F") ~ pNode2.GetName();
+		return CompareFilenamesForSort(name1, name2);
+	}
+	
 	// Used by sorted lists.
 	void AddSorted(CHierNode pStartingNode, CHierNode pNode)
 	{
@@ -359,7 +366,7 @@ protected:
 		// any duplicates. If no startingNode is specified, do a quick check against the tail to see if it belongs there
 		if(!pStartingNode && m_pTailNode)
 		{
-			if (CompareFilenamesForSort(m_pTailNode.GetName(), pNode.GetName()) < 0)
+			if (CompareNodesForSort(m_pTailNode, pNode) < 0)
 			{
 				AddTail(pNode);
 				return;
@@ -368,7 +375,7 @@ protected:
 
 		while(pCurNode)
 		{   // ASSERT that there are not two items with the same name since the sorting relies on this.
-			if (CompareFilenamesForSort(pCurNode.GetName(), pNode.GetName()) > 0)
+			if (CompareNodesForSort(pCurNode, pNode) > 0)
 			{   // Insert before this folder
 				if(pPrevNode)
 				{   // Inserting somewhere in the middle
