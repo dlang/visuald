@@ -2545,7 +2545,7 @@ else
 			ast.Node n;
 			try
 			{
-				n = p.parseText(txt);
+				n = p.parseModule(txt);
 			}
 			catch(ParseException e)
 			{

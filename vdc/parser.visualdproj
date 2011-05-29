@@ -213,7 +213,7 @@
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
-  <warnings>0</warnings>
+  <warnings>1</warnings>
   <infowarnings>0</infowarnings>
   <pic>0</pic>
   <cov>0</cov>
@@ -262,7 +262,7 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>m:\s\d\visuald\trunk\bin\TestDebug\parser.exe</debugtarget>
+  <debugtarget>$(TargetPath)</debugtarget>
   <debugarguments>c:\tmp\d\semtest.d</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
@@ -271,6 +271,19 @@
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="parser">
+  <Folder name="ast">
+   <File path="ast\aggr.d" />
+   <File path="ast\all.d" />
+   <File path="ast\decl.d" />
+   <File path="ast\expr.d" />
+   <File path="ast\iasm.d" />
+   <File path="ast\misc.d" />
+   <File path="ast\mod.d" />
+   <File path="ast\node.d" />
+   <File path="ast\stmt.d" />
+   <File path="ast\tmpl.d" />
+   <File path="ast\type.d" />
+  </Folder>
   <Folder name="parser">
    <File path="parser\aggr.d" />
    <File path="parser\decl.d" />
@@ -282,24 +295,11 @@
    <File path="parser\stmt.d" />
    <File path="parser\tmpl.d" />
   </Folder>
-  <Folder name="ast">
-   <File path="ast\aggr.d" />
-   <File path="ast\decl.d" />
-   <File path="ast\expr.d" />
-   <File path="ast\misc.d" />
-   <File path="ast\mod.d" />
-   <File path="ast\stmt.d" />
-   <File path="ast\tmpl.d" />
-   <File path="ast\node.d" />
-   <File path="ast\all.d" />
-   <File path="ast\iasm.d" />
-   <File path="ast\type.d" />
-  </Folder>
-  <File path="util.d" />
-  <File path="semantic.d" />
   <File path="interpret.d" />
-  <File path="parsertest.d" />
   <File path="lexer.d" />
   <File path="logger.d" />
+  <File path="parsertest.d" />
+  <File path="semantic.d" />
+  <File path="util.d" />
  </Folder>
 </DProject>

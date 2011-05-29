@@ -1692,7 +1692,7 @@ else
 		}
 		if(defs.length > 1)
 		{
-			// todo: match types to find best candidate?
+			// TODO: match types to find best candidate?
 			showStatusBarText("Multiple definitions found for '" ~ sd.names[0] ~ "'");
 		}
 		

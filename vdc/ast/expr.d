@@ -21,6 +21,8 @@ import vdc.ast.aggr;
 import vdc.ast.mod;
 import vdc.ast.type;
 
+import vdc.parser.engine;
+
 import std.conv;
 import std.string;
 
@@ -95,12 +97,6 @@ class Expression : Node
 			semanticError(text(this, ".calcType not implemented"));
 		return type;
 	}
-	
-	Value interpret(Scope sc)
-	{
-		semanticError(text(this, ".interpret not implemented"));
-		return new VoidValue;
-	}
 }
 
 class BinaryExpression : Expression
@@ -138,6 +134,8 @@ class BinaryExpression : Expression
 		{
 			Type typeL = getLeftExpr().calcType(sc);
 			Type typeR = getRightExpr().calcType(sc);
+			semanticError(text(this, "calcType on binary not implemented"));
+			type = typeL;
 		}
 		return type;
 	}
@@ -219,7 +217,7 @@ else
 
 mixin template BinaryExpr()
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -261,7 +259,7 @@ class AssignExpression : BinaryExpression
 //    OrOrExpression ? Expression : ConditionalExpression
 class ConditionalExpression : Expression
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -507,7 +505,7 @@ class NewExpression : Expression
 {
 	bool hasNewArgs;
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -588,7 +586,7 @@ class AnonymousClassType : Type
 //    cast ( inout shared ) UnaryExpression
 class CastExpression : Expression
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -667,6 +665,56 @@ class PostfixExpression : Expression
 				m.semantic(sc);
 	}
 	
+	override Value interpret(Scope sc)
+	{
+		Expression expr = getExpression();
+		Value val = expr.interpret(sc);
+		switch(id)
+		{
+			case TOK_dot:
+				auto id = getMember!Identifier(1);
+				assert(id);
+				return val.getProperty(id.ident);
+				
+			case TOK_lbracket:
+				if(members.length == 2)
+				{
+					auto args = getMember!ArgumentList(1);
+					auto vidx = args.interpret(sc);
+					Value idx;
+					if(vidx.values.length != 1)
+					{
+						semanticError("exactly one value expected as array index");
+						return new ErrorValue;
+					}
+					idx = vidx.values[0];
+					return val.opIndex(idx);
+				}
+				else if(members.length == 3)
+				{
+					Value beg = getMember(1).interpret(sc);
+					Value end = getMember(2).interpret(sc);
+					return val.opSlice(beg, end);
+				}
+				assert(members.length == 1);
+				return val; // full slice
+				
+			case TOK_lparen:
+				TupleValue args;
+				if(members.length == 2)
+					args = getMember!ArgumentList(1).interpret(sc);
+				else
+					args = new TupleValue;
+				return val.opCall(args);
+				
+			case TOK_new:
+			case TOK_plusplus:
+			case TOK_minusminus:
+			default:
+				return super.interpret(sc);
+		}
+	}
+	
 	override void toD(CodeWriter writer)
 	{
 		Expression expr = getExpression();
@@ -719,6 +767,14 @@ class ArgumentList : Node
 	{
 		foreach(m; members)
 			m.semantic(sc);
+	}
+
+	override TupleValue interpret(Scope sc)
+	{
+		TupleValue args = new TupleValue;
+		foreach(m; members)
+			args.values ~= m.interpret(sc);
+		return args;
 	}
 	
 	override void toD(CodeWriter writer)
@@ -778,6 +834,16 @@ class PrimaryExpression : Expression
 
 	override PREC getPrecedence() { return PREC.primary; }
 
+	override Value interpret(Scope sc)
+	{
+		switch(id)
+		{
+			case TOK_true:  return Value.create(true);
+			case TOK_false: return Value.create(false);
+			default:        return super.interpret(sc);
+		}
+	}
+	
 	override void toD(CodeWriter writer)
 	{
 		writer(id);
@@ -857,7 +923,7 @@ class KeyValuePair : BinaryExpression
 		precedence[TOK_colon] = PREC.assign;
 	}
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -940,9 +1006,38 @@ class MixinExpression : Expression
 
 	Expression getExpression() { return getMember!Expression(0); }
 	
+	Expression resolved;
+	
 	override void toD(CodeWriter writer)
 	{
 		writer("mixin(", getMember!Expression(0), ")");
+	}
+
+	override void _semantic(Scope sc)
+	{
+		if(resolved)
+			return;
+		
+		Value v = getMember(0).interpret(sc);
+		string s = v.toStr();
+		Parser parser = new Parser;
+		Node n = parser.parseExpression(s, span);
+		resolved = cast(Expression) n;
+	}
+
+	override Type calcType(Scope sc)
+	{
+		if(resolved)
+			return resolved.calcType(sc);
+		return new ErrorType;
+	}
+	
+	override Value interpret(Scope sc)
+	{
+		if(resolved)
+			return resolved.interpret(sc);
+		semanticError("cannot interpret mixin");
+		return new ErrorValue;
 	}
 }
 
@@ -1008,7 +1103,7 @@ class IsExpression : PrimaryExpression
 	int kind;
 	string ident;
 
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -1073,7 +1168,7 @@ class IdentifierExpression : PrimaryExpression
 	// semantic data	
 	Node resolved;
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -1138,6 +1233,15 @@ class IdentifierExpression : PrimaryExpression
 			semanticError("cannot determine type");
 		return type;
 	}
+	
+	override Value interpret(Scope sc)
+	{
+		if(!resolved)
+			semantic(sc);
+		if(!resolved)
+			return new ErrorValue;
+		return resolved.interpret(sc);
+	}
 }
 
 class IntegerLiteralExpression : PrimaryExpression
@@ -1148,7 +1252,7 @@ class IntegerLiteralExpression : PrimaryExpression
 	bool unsigned;
 	bool lng;
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -1230,35 +1334,28 @@ class IntegerLiteralExpression : PrimaryExpression
 		type.semantic(sc);
 	}
 	
-	T create(T)()
-	{
-		T v = new T;
-		v.val = cast(T.ValType) value;
-		return v;
-	}
-	
 	override Value interpret(Scope sc)
 	{
 		if(lng || value >= 0x80000000)
 			if(unsigned)
-				return create!ULongValue();
+				return Value.create(cast(ulong)value);
 			else
-				return create!LongValue();
+				return Value.create(cast(long)value);
 		else if(value >= 0x8000)
 			if(unsigned)
-				return create!UIntValue();
+				return Value.create(cast(uint)value);
 			else
-				return create!IntValue();
+				return Value.create(cast(int)value);
 		else if(value >= 0x80)
 			if(unsigned)
-				return create!UShortValue();
+				return Value.create(cast(ushort)value);
 			else
-				return create!ShortValue();
+				return Value.create(cast(short)value);
 		else
 			if(unsigned)
-				return create!UByteValue();
+				return Value.create(cast(ubyte)value);
 			else
-				return create!ByteValue();
+				return Value.create(cast(byte)value);
 	}
 	
 	int getInt()
@@ -1284,7 +1381,7 @@ class FloatLiteralExpression : PrimaryExpression
 	bool lng;
 	bool flt;
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -1340,6 +1437,24 @@ class FloatLiteralExpression : PrimaryExpression
 			&& tn.lng == lng;
 	}
 	
+	override Value interpret(Scope sc)
+	{
+		if(complex)
+			if(lng)
+				return Value.create(cast(ireal)value);
+			else if(flt)
+				return Value.create(cast(ifloat)value);
+			else
+				return Value.create(cast(idouble)value);
+		else
+			if(lng)
+				return Value.create(cast(real)value);
+			else if(flt)
+				return Value.create(cast(float)value);
+			else
+				return Value.create(cast(double)value);
+	}
+	
 	override void toD(CodeWriter writer)
 	{
 		writer(txt);
@@ -1349,18 +1464,49 @@ class FloatLiteralExpression : PrimaryExpression
 class StringLiteralExpression : PrimaryExpression
 {
 	string txt;
+	string rawtxt;
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
+	static string raw(string s)
+	{
+		if(s.length == 0)
+			return s;
+		if(s.length > 2 && s[0] == 'q' && s[1] == '{' && s[$-1] == '}')
+			return s[2..$-1];
+		
+		// TODO: missing hex/escape translation and delimiter string handling
+		int p = 0;
+		while(p < s.length && s[p] != '"' && s[p] != '`')
+			p++;
+		if(p >= s.length)
+			return s;
+		int q = s.length - 1;
+		while(q > p && s[q] != s[p])
+			q--;
+		if(q <= p)
+			return s;
+		return s[p+1..q];
+	}
+	unittest
+	{
+		assert(raw(`r"abc"`) == "abc");
+		assert(raw(`q{abc}`) == "abc");
+		assert(raw(`"abc"c`) == "abc");
+	}
+	
 	this(Token tok)
 	{
 		super(tok);
 		txt = tok.txt;
+		
+		rawtxt = raw(txt);
 	}
 
 	void addText(Token tok)
 	{
 		txt ~= " " ~ tok.txt;
+		rawtxt ~= raw(tok.txt);
 	}
 
 	override StringLiteralExpression clone()
@@ -1385,7 +1531,7 @@ class StringLiteralExpression : PrimaryExpression
 	
 	override Value interpret(Scope sc)
 	{
-		return Value.create(txt);
+		return Value.create(rawtxt);
 	}
 	
 	override void toD(CodeWriter writer)
@@ -1398,7 +1544,7 @@ class CharacterLiteralExpression : PrimaryExpression
 {
 	string txt;
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -1422,6 +1568,20 @@ class CharacterLiteralExpression : PrimaryExpression
 		return tn.txt == txt;
 	}
 	
+	override Value interpret(Scope sc)
+	{
+		if(txt.length < 3)
+			return Value.create(char.init);
+
+		// TODO: missing escape decoding
+		dchar ch = txt[1];
+		if(txt[$-1] == 'd')
+			return Value.create(ch);
+		if(txt[$-1] == 'w')
+			return Value.create(cast(wchar)ch);
+		return Value.create(cast(char)ch);
+	}
+	
 	override void toD(CodeWriter writer)
 	{
 		writer(txt);
@@ -1432,7 +1592,7 @@ class CharacterLiteralExpression : PrimaryExpression
 //    [Type Identifier]
 class TypeProperty : PrimaryExpression
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -1450,11 +1610,16 @@ class TypeProperty : PrimaryExpression
 		else
 			writer(getType(), ".", getProperty());
 	}
+
+	override Value interpret(Scope sc)
+	{
+		return getType().interpretProperty(getProperty().ident);
+	}
 }
 
 class StructConstructor : PrimaryExpression
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -1476,7 +1641,7 @@ class StructConstructor : PrimaryExpression
 
 class TraitsExpression : PrimaryExpression
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{

@@ -1083,7 +1083,6 @@ const string[2][] operators =
 
 	// binary operators
 	[ "xor",              "^" ],
-	[ "assign",           "=" ],
 	[ "lt",               "<" ],
 	[ "gt",               ">" ],
 	[ "le",               "<=" ],
@@ -1117,6 +1116,7 @@ const string[2][] operators =
 	[ "oror",             "||" ],
 	[ "tilde",            "~" ],
 	
+	[ "assign",           "=" ],
 	[ "xorass",           "^=" ],
 	[ "addass",           "+=" ],
 	[ "minass",           "-=" ],
@@ -1178,7 +1178,7 @@ mixin(genOperatorEnum(operators, "TOK_end_Keywords"));
 
 enum TOK_binaryOperatorFirst = TOK_xor;
 enum TOK_binaryOperatorLast  = TOK_catass;
-enum TOK_assignOperatorFirst = TOK_xorass;
+enum TOK_assignOperatorFirst = TOK_assign;
 enum TOK_assignOperatorLast  = TOK_catass;
 
 enum TOK_error = -1;

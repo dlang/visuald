@@ -26,6 +26,8 @@ import std.conv;
 import std.file;
 import std.path;
 
+import core.runtime;
+
 version = semantic;
 version = cpp;
 
@@ -74,7 +76,7 @@ void testParse(string txt, string filename = "")
 	try
 	{
 		p.filename = filename;
-		n = p.parseText(txt);
+		n = p.parseModule(txt);
 	}
 	catch(ParseException e)
 	{
@@ -102,7 +104,7 @@ void testParse(string txt, string filename = "")
 	}
 	
 	p.filename = filename ~ "_D";
-	ast.Node n2 = p.parseText(app);
+	ast.Node n2 = p.parseModule(app);
 
 version(all)
 {	
@@ -146,9 +148,9 @@ else
 
 version(all) unittest
 {
-	//Node n = p.parseText("a = b + c * 4 - 6");
+	//Node n = p.parseModule("a = b + c * 4 - 6");
 	//n.print(0);
-	//p.parseText("a, b, c = (1 ? 2 : 3 || d && 5 ^ *x)[3 .. 5]").print(0);
+	//p.parseModule("a, b, c = (1 ? 2 : 3 || d && 5 ^ *x)[3 .. 5]").print(0);
 
 	string txt = q{
 void fn()
@@ -308,6 +310,8 @@ import std.file;
 	
 int main(string[] argv)
 {
+	Runtime.traceHandler = null;
+	
 	Project prj = new Project;
 
 	foreach(file; argv[1..$])

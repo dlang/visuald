@@ -170,7 +170,7 @@ class TemplateTypeParameter : TemplateParameter
 	Type specialization;
 	Node def;
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -310,7 +310,7 @@ class TemplateTupleParameter : TemplateParameter
 		return tn.ident == ident;
 	}
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{

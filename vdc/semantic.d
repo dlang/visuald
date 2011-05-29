@@ -181,7 +181,7 @@ class Project : Node
 		{
 			string txt = readUtf8(fname);
 			p.filename = fname;
-			n = p.parseText(txt);
+			n = p.parseModule(txt);
 		}
 		catch(Exception e)
 		{

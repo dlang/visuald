@@ -277,6 +277,14 @@ class Declarator : Identifier
 	mixin ForwardCtorTok!();
 
 	Type type;
+	Value value;
+	
+	Expression getInitializer()
+	{
+		if(auto di = cast(DeclaratorInitializer) parent)
+			return di.getInitializer();
+		return null;
+	}
 	
 	override void toD(CodeWriter writer)
 	{
@@ -285,11 +293,58 @@ class Declarator : Identifier
 			writer(m);
 	}
 
+	bool isAlias()
+	{
+		for(Node p = parent; p; p = p.parent)
+			if(auto decl = cast(Decl) p)
+				return decl.isAlias;
+			else if(auto pdecl = cast(ParameterDeclarator) p)
+				break;
+		return false;
+	}
+	
 	override void addSymbols(Scope sc)
 	{
 		sc.addSymbol(ident, this);
 	}
 
+	Type applySuffixes(Type t)
+	{
+		foreach(m; members) // template parameters and function parameters and constraint
+		{
+			if(auto pl = cast(ParameterList) m)
+			{
+				auto tf = new TypeFunction(pl.id, pl.span);
+				tf.mInit = this;
+				tf.addMember(t.clone());
+				tf.addMember(pl.clone());
+				t = tf;
+			}
+			else if(auto saa = cast(SuffixAssocArray) m)
+			{
+				auto taa = new TypeAssocArray(saa.id, saa.span);
+				taa.addMember(t.clone());
+				taa.addMember(saa.getKeyType().clone());
+				t = taa;
+			}
+			else if(auto sda = cast(SuffixDynamicArray) m)
+			{
+				auto tda = new TypeDynamicArray(sda.id, sda.span);
+				tda.addMember(t.clone());
+				t = tda;
+			}
+			else if(auto ssa = cast(SuffixStaticArray) m)
+			{
+				auto tsa = new TypeStaticArray(ssa.id, ssa.span);
+				tsa.addMember(t.clone());
+				tsa.addMember(ssa.getDimension().clone());
+				t = tsa;
+			}
+			// TODO: slice suffix? template parameters, constraint
+		}
+		return t;
+	}
+	
 	override Type calcType(Scope sc)
 	{
 		if(type)
@@ -301,19 +356,59 @@ class Declarator : Identifier
 			{
 				type = decl.getType();
 				if(type)
+				{
+					type = applySuffixes(type);
 					type = type.calcType(sc);
+				}
 				return type;
 			}
 			else if(auto pdecl = cast(ParameterDeclarator) p)
 			{
 				type = pdecl.getType();
 				if(type)
+				{
+					type = applySuffixes(type);
 					type = type.calcType(sc);
+				}
 				return type;
 			}
 		}
 		semanticError("cannot find Declarator type");
 		return null;
+	}
+
+	override Value interpret(Scope sc)
+	{
+		if(value)
+			return value;
+		
+		Type type = calcType(sc);
+		if(!type)
+			value = new ErrorValue;
+		else if(isAlias())
+			value = new TypeValue(type);
+		else
+		{
+			value = type.createValue();
+			if(auto expr = getInitializer())
+				value.opBin(TOK_assign, expr.interpret(sc));
+		}
+		return value;
+	}
+	
+	Value interpretCall(Scope sc)
+	{
+		for(Node p = parent; p; p = p.parent)
+			if(auto decl = cast(Decl) p)
+			{
+				if(auto fbody = decl.getFunctionBody())
+					return fbody.interpret(sc);
+				semanticError(ident, " is not a interpretable function");
+				return new ErrorValue;
+			}
+
+		semanticError("cannot interpret external function ", ident);
+		return new ErrorValue;
 	}
 }
 
@@ -370,7 +465,7 @@ class Identifier : Node
 {
 	string ident;
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{

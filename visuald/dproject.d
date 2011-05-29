@@ -511,7 +511,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 		hr = mProject.QueryInterface(&IID_IUnknown, cast(void**)&varIVsGlobalsCallback.punkVal);
 		if(!FAILED(hr))
 		{
-			//! @todo fix: returns failure
+			//! TODO fix: returns failure
 			hr = ext.GetGlobalsObject(varIVsGlobalsCallback, cast(IUnknown*) &globals);
 			varIVsGlobalsCallback.punkVal.Release();
 		}

@@ -632,13 +632,13 @@ void verifyParseWrite(string filename = __FILE__, int lno = __LINE__)(string txt
 {
 	Parser p = new Parser;
 	p.filename = filename;
-	ast.Node n = p.parseText(txt);
+	ast.Node n = p.parseModule(txt);
 
 	string ntxt;
 	DCodeWriter writer = new DCodeWriter(getStringSink(ntxt));
 	writer(n);
 	
-	ast.Node m = p.parseText(ntxt);
+	ast.Node m = p.parseModule(ntxt);
 	bool eq = n.compare(m);
 	assert(eq);
 }

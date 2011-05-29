@@ -20,57 +20,64 @@ import std.conv;
 import std.typetuple;
 import std.string;
 
+template Singleton(T, ARGS...)
+{
+	T get()
+	{
+		static T instance;
+		if(!instance)
+			instance = new T(ARGS);
+		return instance;
+	}
+}
+
 class ErrorType : Type
 {
 	mixin ForwardCtor!();
 	
 	override bool propertyNeedsParens() const { return false; }
+	override void toD(CodeWriter writer) { writer("_errortype_"); }
 }
-
-int basicTypeToken(bool)    { return TOK_bool; }
-int basicTypeToken(byte)    { return TOK_byte; }
-int basicTypeToken(ubyte)   { return TOK_ubyte; }
-int basicTypeToken(short)   { return TOK_short; }
-int basicTypeToken(ushort)  { return TOK_ushort; }
-int basicTypeToken(int)     { return TOK_int; }
-int basicTypeToken(uint)    { return TOK_uint; }
-int basicTypeToken(long)    { return TOK_long; }
-int basicTypeToken(ulong)   { return TOK_ulong; }
-int basicTypeToken(char)    { return TOK_char; }
-int basicTypeToken(wchar)   { return TOK_wchar; }
-int basicTypeToken(dchar)   { return TOK_dchar; }
-int basicTypeToken(float)   { return TOK_float; }
-int basicTypeToken(double)  { return TOK_double; }
-int basicTypeToken(real)    { return TOK_real; }
-int basicTypeToken(ifloat)  { return TOK_ifloat; }
-int basicTypeToken(idouble) { return TOK_idouble; }
-int basicTypeToken(ireal)   { return TOK_ireal; }
-int basicTypeToken(cfloat)  { return TOK_cfloat; }
-int basicTypeToken(cdouble) { return TOK_cdouble; }
-int basicTypeToken(creal)   { return TOK_creal; }
 
 class Value
 {
 	static T _create(T, V)(V val)
 	{
 		T v = new T;
-		v.val = cast(T.ValType) val;
+		v.pval = new T.ValType;
+		*v.pval = cast(T.ValType) val;
 		return v;
 	}
 	
-	static Value create(bool   v) { return _create!BoolValue  (v); }
-	static Value create(byte   v) { return _create!ByteValue  (v); }
-	static Value create(ubyte  v) { return _create!UByteValue (v); }
-	static Value create(short  v) { return _create!ShortValue (v); }
-	static Value create(ushort v) { return _create!UShortValue(v); }
-	static Value create(int    v) { return _create!IntValue   (v); }
-	static Value create(uint   v) { return _create!UIntValue  (v); }
-	static Value create(long   v) { return _create!IntValue   (v); }
-	static Value create(ulong  v) { return _create!ULongValue (v); }
-	static Value create(char   v) { return _create!CharValue  (v); }
-	static Value create(wchar  v) { return _create!WCharValue (v); }
-	static Value create(dchar  v) { return _create!DCharValue (v); }
-	static Value create(string v) { return _create!StringValue(v); }
+	static Value create(bool    v) { return _create!BoolValue   (v); }
+	static Value create(byte    v) { return _create!ByteValue   (v); }
+	static Value create(ubyte   v) { return _create!UByteValue  (v); }
+	static Value create(short   v) { return _create!ShortValue  (v); }
+	static Value create(ushort  v) { return _create!UShortValue (v); }
+	static Value create(int     v) { return _create!IntValue    (v); }
+	static Value create(uint    v) { return _create!UIntValue   (v); }
+	static Value create(long    v) { return _create!IntValue    (v); }
+	static Value create(ulong   v) { return _create!ULongValue  (v); }
+	static Value create(char    v) { return _create!CharValue   (v); }
+	static Value create(wchar   v) { return _create!WCharValue  (v); }
+	static Value create(dchar   v) { return _create!DCharValue  (v); }
+	static Value create(float   v) { return _create!FloatValue  (v); }
+	static Value create(double  v) { return _create!DoubleValue (v); }
+	static Value create(real    v) { return _create!RealValue   (v); }
+	static Value create(ifloat  v) { return _create!IFloatValue (v); }
+	static Value create(idouble v) { return _create!IDoubleValue(v); }
+	static Value create(ireal   v) { return _create!IRealValue  (v); }
+	static Value create(cfloat  v) { return _create!CFloatValue (v); }
+	static Value create(cdouble v) { return _create!CDoubleValue(v); }
+	static Value create(creal   v) { return _create!CRealValue  (v); }
+	
+	static Value create(string  v) { return StringValue._create (v); }
+	
+	Type getType()
+	{
+		semanticError(text("cannot get type of ", this));
+		return Singleton!(ErrorType).get();
+	}
 	
 	bool toBool()
 	{
@@ -120,6 +127,38 @@ class Value
 		return this;
 	}
 
+	Value opRefPointer()
+	{
+		return PointerValue._create(this);
+	}
+	Value opDerefPointer()
+	{
+		semanticError(text("cannot dereference a ", this));
+		return this;
+	}
+
+	Value getProperty(string ident)
+	{
+		return getType().interpretProperty(ident);
+	}
+	
+	Value opIndex(Value v)
+	{
+		semanticError(text("cannot index a ", this));
+		return this;
+	}
+	
+	Value opSlice(Value b, Value e)
+	{
+		semanticError(text("cannot slice a ", this));
+		return this;
+	}
+	
+	Value opCall(Value args)
+	{
+		semanticError(text("cannot call a ", this));
+		return this;
+	}
 	
 	//mixin template operators()
 	version(none)
@@ -127,11 +166,11 @@ class Value
 		{
 			TypeInfo ti1 = this.classinfo;
 			TypeInfo ti2 = v.classinfo;
-			foreach(iv1; IntegerValues)
+			foreach(iv1; BasicTypeValues)
 			{
 				if(ti1 is typeid(iv1))
 				{
-					foreach(iv2; IntegerValues)
+					foreach(iv2; BasicTypeValues)
 					{
 						if(ti2 is typeid(iv2))
 							static if (__traits(compiles, {
@@ -162,11 +201,11 @@ class Value
 		{
 			TypeInfo ti1 = this.classinfo;
 			TypeInfo ti2 = v.classinfo;
-			foreach(iv1; IntegerValues)
+			foreach(iv1; BasicTypeValues)
 			{
 				if(ti1 is typeid(iv1))
 				{
-					foreach(iv2; IntegerValues)
+					foreach(iv2; BasicTypeValues)
 					{
 						if(ti2 is typeid(iv2))
 						{
@@ -203,7 +242,7 @@ class Value
 		Value opUnOp(string op)()
 		{
 			TypeInfo ti1 = this.classinfo;
-			foreach(iv1; IntegerValues)
+			foreach(iv1; BasicTypeValues)
 			{
 				if(ti1 is typeid(iv1))
 				{
@@ -221,70 +260,45 @@ class Value
 			return this;
 		}
 
-	Value opRefPointer()
-	{
-		return _create!(PointerValue)(this);
-	}
-	Value opDerefPointer()
-	{
-		semanticError(text("cannot dereference a ", this));
-		return this;
-	}
-}
-
-alias TypeTuple!(bool, byte, ubyte, short, ushort, int, uint, long, ulong, 
-				 char, wchar, dchar) IntegerTypes;
-
-alias TypeTuple!(BoolValue, ByteValue, UByteValue, ShortValue, UShortValue,
-				 IntValue, UIntValue, LongValue, ULongValue,
-				 CharValue, WCharValue, DCharValue) IntegerValues;
-
-class ValueT(T) : Value
-{
-	alias T ValType;
-	
-	ValType val;
-	
-	int getTypeIndex() { return staticIndexOf!(ValType, IntegerTypes); }
-	
-//	pragma(msg, ValType);
-//	pragma(msg, text(" compiles?", __traits(compiles, val ? true : false )));
-	
-	static if(__traits(compiles, val ? true : false))
-		override bool toBool()
-		{
-			return val ? true : false;
-		}
-
-	static if(__traits(compiles, (){ long lng = val; }))
-		override long toLong()
-		{
-			return val;
-		}
-	
 	////////////////////////////////////////////////////////////
-	mixin template mixinBinaryOp(string op)
+	mixin template mixinBinaryOp1(string op, iv2)
+	{
+		Value binOp1(Value v)
+		{
+			iv2.ValType v2 = *(cast(iv2) v).pval;
+			static if(op == "/" || op == "%")
+				if(v2 == 0)
+				{
+					semanticError("division by zero");
+					v2 = cast(iv2.ValType) 1;
+				}
+			mixin("auto z = *pval " ~ op ~ "v2;");
+			return create(z);
+		}
+	}
+	
+	mixin template mixinBinaryOp(string op, Types...)
 	{
 		Value binOp(Value v)
 		{
 			TypeInfo ti = v.classinfo;
-			foreach(iv2; IntegerValues)
+			foreach(iv2; Types)
 			{
 				if(ti is typeid(iv2))
 				{
 					static if (__traits(compiles, { 
 						iv2.ValType y;
-						mixin("auto z = val " ~ op ~ "y;");
+						mixin("auto z = (*pval) " ~ op ~ "y;");
 					}))
 					{
-						iv2.ValType v2 = (cast(iv2) v).val;
+						iv2.ValType v2 = *(cast(iv2) v).pval;
 						static if(op == "/" || op == "%")
 							if(v2 == 0)
 							{
 								semanticError("division by zero");
-								v2 = 1;
+								v2 = cast(iv2.ValType) 1;
 							}
-						mixin("auto z = val " ~ op ~ "v2;");
+						mixin("auto z = (*pval) " ~ op ~ "v2;");
 						return create(z);
 					}
 					else
@@ -296,27 +310,27 @@ class ValueT(T) : Value
 		}
 	}
 
-	mixin template mixinAssignOp(string op)
+	mixin template mixinAssignOp(string op, Types...)
 	{
 		Value assOp(Value v)
 		{
 			TypeInfo ti = v.classinfo;
-			foreach(iv2; IntegerValues)
+			foreach(iv2; Types)
 			{
 				if(ti is typeid(iv2))
 					static if (__traits(compiles, {
 						iv2.ValType y;
-						mixin("val " ~ op ~ "y;");
+						mixin("*pval " ~ op ~ "y;");
 					}))
 					{
-						iv2.ValType v2 = (cast(iv2) v).val;
+						iv2.ValType v2 = *(cast(iv2) v).pval;
 						static if(op == "/=" || op == "%=")
 							if(v2 == 0)
 							{
 								semanticError("division by zero");
-								v2 = 1;
+								v2 = cast(iv2.ValType) 1;
 							}
-						mixin("val " ~ op ~ "v2;");
+						mixin("*pval " ~ op ~ "v2;");
 						return this;
 					}
 			}
@@ -324,15 +338,76 @@ class ValueT(T) : Value
 			return this;
 		}
 	}
+}
+
+alias TypeTuple!(bool, byte, ubyte, short, ushort, int, uint, long, ulong, 
+				 char, wchar, dchar, float, double, real, 
+				 ifloat, idouble, ireal, cfloat, cdouble, creal) BasicTypes;
+
+alias TypeTuple!(BoolValue, ByteValue, UByteValue, ShortValue, UShortValue,
+				 IntValue, UIntValue, LongValue, ULongValue,
+				 CharValue, WCharValue, DCharValue, 
+				 FloatValue, DoubleValue, RealValue,
+				 IFloatValue, IDoubleValue, IRealValue,
+				 CFloatValue, CDoubleValue, CRealValue) BasicTypeValues;
+
+alias TypeTuple!(TOK_bool, TOK_byte, TOK_ubyte, TOK_short, TOK_ushort, TOK_int, 
+				 TOK_uint, TOK_long, TOK_ulong, TOK_char, TOK_wchar, TOK_dchar,
+				 TOK_float, TOK_double, TOK_real, TOK_ifloat, TOK_idouble, TOK_ireal, 
+				 TOK_cfloat, TOK_cdouble, TOK_creal) BasicTypeTokens;
+
+int BasicType2Token(T)() { return BasicTypeTokens[staticIndexOf!(T, BasicTypes)]; }
+
+template Token2BasicType(int tok)
+{
+	alias BasicTypes[staticIndexOf!(tok, BasicTypeTokens)] Token2BasicType;
+}
+
+template Token2ValueType(int tok)
+{
+	alias BasicTypeValues[staticIndexOf!(tok, BasicTypeTokens)] Token2ValueType;
+}
+
+class ValueT(T) : Value
+{
+	alias T ValType;
 	
+	ValType* pval;
+	
+	static int getTypeIndex() { return staticIndexOf!(ValType, BasicTypes); }
+	
+	override Type getType()
+	{
+		static Type instance;
+		if(!instance)
+			instance = BasicType.createType(BasicTypeTokens[getTypeIndex()]);
+		return instance;
+	}
+	
+//	pragma(msg, ValType);
+//	pragma(msg, text(" compiles?", __traits(compiles, val ? true : false )));
+	
+	static if(__traits(compiles, *pval ? true : false))
+		override bool toBool()
+		{
+			return *pval ? true : false;
+		}
+
+	static if(__traits(compiles, (){ long lng = *pval; }))
+		override long toLong()
+		{
+			return *pval;
+		}
+	
+	////////////////////////////////////////////////////////////
 	static string genMixinBinOpAll()
 	{
 		string s;
 		for(int i = TOK_binaryOperatorFirst; i <= TOK_binaryOperatorLast; i++)
 			if(i >= TOK_assignOperatorFirst && i <= TOK_assignOperatorLast)
-				s ~= text("mixin mixinAssignOp!(\"", tokenString(i), "\") ass_", operatorName(i), ";\n");
+				s ~= text("mixin mixinAssignOp!(\"", tokenString(i), "\", BasicTypeValues) ass_", operatorName(i), ";\n");
 			else
-				s ~= text("mixin mixinBinaryOp!(\"", tokenString(i), "\") bin_", operatorName(i), ";\n");
+				s ~= text("mixin mixinBinaryOp!(\"", tokenString(i), "\", BasicTypeValues) bin_", operatorName(i), ";\n");
 		return s;
 	}
 	
@@ -366,9 +441,9 @@ class ValueT(T) : Value
 	{
 		Value unOp()
 		{
-			static if (__traits(compiles, { mixin("auto z = " ~ op ~ "val;"); }))
+			static if (__traits(compiles, { mixin("auto z = " ~ op ~ "(*pval);"); }))
 			{
-				mixin("auto z = " ~ op ~ "val;");
+				mixin("auto z = " ~ op ~ "(*pval);");
 				return create(z);
 			}
 			else
@@ -416,6 +491,10 @@ class ValueT(T) : Value
 
 
 class VoidValue : Value
+{
+}
+
+class ErrorValue : Value
 {
 }
 
@@ -467,168 +546,105 @@ class DCharValue : ValueT!dchar
 {
 }
 
-class FloatValue : Value
+class FloatValue : ValueT!float
 {
-	alias float ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
 
-class DoubleValue : Value
+class DoubleValue : ValueT!double
 {
-	alias double ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
 
-class RealValue : Value
+class RealValue : ValueT!real
 {
-	alias real ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
 
-class IFloatValue : Value
+class IFloatValue : ValueT!ifloat
 {
-	alias ifloat ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
 
-class IDoubleValue : Value
+class IDoubleValue : ValueT!idouble
 {
-	alias idouble ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
 
-class IRealValue : Value
+class IRealValue : ValueT!ireal
 {
-	alias ireal ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
 
-class CFloatValue : Value
+class CFloatValue : ValueT!cfloat
 {
-	alias cfloat ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
 
-class CDoubleValue : Value
+class CDoubleValue : ValueT!cdouble
 {
-	alias cdouble ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
 
-class CRealValue : Value
+class CRealValue : ValueT!creal
 {
-	alias creal ValType;
-	
-	ValType val;
-
-	override bool toBool()
-	{
-		return val != 0;
-	}
-
-	override long toLong()
-	{
-		return cast(int) val;
-	}
 }
+
+alias TypeTuple!(CharValue, WCharValue, DCharValue, StringValue) StringTypeValues;
 
 class StringValue : Value
 {
 	alias string ValType;
 	
-	ValType val;
+	ValType* pval;
+
+	static StringValue _create(string s)
+	{
+		StringValue sv = new StringValue;
+		sv.pval = (new string[1]).ptr;
+		*sv.pval = s;
+		return sv;
+	}
+	
+	override string toStr()
+	{
+		return *pval;
+	}
 
 	override bool toBool()
 	{
-		return val !is null;
+		return *pval !is null;
+	}
+
+	mixin mixinAssignOp!("=",  StringTypeValues) ass_assign;
+	mixin mixinAssignOp!("~=", StringTypeValues) ass_catass;
+	mixin mixinBinaryOp!("~",  StringTypeValues) bin_tilde;
+	mixin mixinBinaryOp1!("<",  StringValue) bin_lt;
+	mixin mixinBinaryOp1!(">",  StringValue) bin_gt;
+	mixin mixinBinaryOp1!("<=", StringValue) bin_le;
+	mixin mixinBinaryOp1!(">=", StringValue) bin_ge;
+	mixin mixinBinaryOp1!("==", StringValue) bin_equal;
+	mixin mixinBinaryOp1!("!=", StringValue) bin_notequal;
+	
+	override Value opBin(int tokid, Value v)
+	{
+		switch(tokid)
+		{
+			case TOK_assign:   return ass_assign.assOp(v);
+			case TOK_tilde:    return bin_tilde.binOp(v);
+			case TOK_catass:   return ass_catass.assOp(v);
+			case TOK_lt:       return bin_lt.binOp1(v);
+			case TOK_gt:       return bin_gt.binOp1(v);
+			case TOK_le:       return bin_le.binOp1(v);
+			case TOK_ge:       return bin_ge.binOp1(v);
+			case TOK_equal:    return bin_equal.binOp1(v);
+			case TOK_notequal: return bin_notequal.binOp1(v);
+			default:           return super.opBin(tokid, v);
+		}
+	}
+}
+
+class DynArrayValue : Value
+{
+	Type type;
+	size_t count;
+	Value firstVal;
+
+	this(Type t)
+	{
+		type = t;
 	}
 }
 
@@ -637,7 +653,7 @@ class StructValue : Value
 	Type type;
 	alias void[] ValType;
 	
-	ValType val;
+	ValType* pval;
 
 	this(Type t)
 	{
@@ -650,7 +666,7 @@ class ClassValue : Value
 	Type type;
 	alias void[] ValType;
 	
-	ValType val;
+	ValType* pval;
 
 	this(Type t)
 	{
@@ -662,15 +678,84 @@ class PointerValue : Value
 {
 	alias Value ValType;
 	
-	ValType val;
+	ValType pval;
 
+	static PointerValue _create(Value v)
+	{
+		PointerValue pv = new PointerValue;
+		pv.pval = v;
+		return pv;
+	}
+	
 	override bool toBool()
 	{
-		return val !is null;
+		return pval !is null;
 	}
 	
 	override Value opDerefPointer()
 	{
-		return val;
+		return pval;
 	}
+}
+
+class TypeValue : Value
+{
+	Type type;
+	
+	this(Type t)
+	{
+		type = t;
+	}
+
+	override Type getType()
+	{
+		return type;
+	}
+}
+
+class TupleValue : Value
+{
+	Value[] values;
+}
+
+class FunctionValue : Value
+{
+	TypeFunction functype;
+	
+	override Value opCall(Value vargs)
+	{
+		if(!functype.mInit)
+		{
+			semanticError("calling null reference");
+			return new ErrorValue;
+		}
+		auto args = static_cast!TupleValue(vargs);
+		ParameterList params = functype.getParameters();
+		if(args.values.length != params.members.length)
+		{
+			semanticError("incorrect number of arguments");
+			return new ErrorValue;
+		}
+		Scope sc = new Scope;
+		for(int p = 0; p < params.members.length; p++)
+		{
+			auto sym = params.getParameter(p).clone();
+			auto pd = sym.getParameterDeclarator();
+			Type type = sym.calcType(sc);
+			Value value = sym.interpret(sc);
+			value.opBin(TOK_assign, args.values[p]);
+
+			if(Declarator decl = pd.getDeclarator())
+			{
+				sc.addSymbol(decl.ident, sym);
+			}
+		}
+		return functype.mInit.interpretCall(sc);
+	}
+}
+
+class DelegateValue : Value
+{
+	Scope context;
+	FunctionValue func;
 }

@@ -330,6 +330,34 @@ class FunctionBody : Node
 		}
 	}
 
+	override Value interpret(Scope sc)
+	{
+		Value value;
+		if(inStatement)
+		{
+			sc = enterScope(inScop, sc);
+			inStatement.interpret(sc);
+			sc = sc.pop();
+		}
+		if(bodyStatement)
+		{
+			sc = enterScope(sc);
+			value = bodyStatement.interpret(sc);
+			sc = sc.pop();
+		}
+		if(outStatement)
+		{
+			// TODO: put into scope of inStatement?
+			sc = enterScope(outScop, sc);
+			if(outIdentifier.length)
+				sc.addSymbol(outIdentifier, this); // TODO: create Symbol for outIdentifier
+			outStatement.interpret(sc);
+			sc = sc.pop();
+		}
+		if(!value)
+			return new VoidValue;
+		return value;
+	}
 }
 
 ////////////////////////////////////////////////////////////////
@@ -362,7 +390,7 @@ class ConditionalDeclaration : Node
 		}
 	}
 
-	override Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
 		Node n;
 		if(getCondition().evalCondition(sc))
@@ -403,8 +431,27 @@ class ConditionalStatement : Statement
 		}
 	}
 
-	override Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
+		if(cast(StaticIfCondition) getCondition())
+			return athis;
+		
+		Node n;
+		if(getCondition().evalCondition(sc))
+			n = getThenStatement();
+		else
+			n = getElseStatement();
+		if(!n)
+			return null;
+		athis[0] = n;
+		return athis;
+	}
+
+	override Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
+	{
+		if(!cast(StaticIfCondition) getCondition())
+			return athis;
+		
 		Node n;
 		if(getCondition().evalCondition(sc))
 			n = getThenStatement();
@@ -435,7 +482,7 @@ class VersionSpecification : Node
 		writer.nl;
 	}
 	
-	override Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
 		if(isIdentifier())
 			sc.mod.specifyVersion(getIdentifier(), span.start);
@@ -456,7 +503,7 @@ class DebugSpecification : Node
 		writer.nl;
 	}
 
-	override Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
 		if(isIdentifier())
 			sc.mod.specifyDebug(getIdentifier(), span.start);

@@ -1207,7 +1207,7 @@ class Config :	DisposingComObject,
 			{
 				if(!std.file.exists(prg))
 				{
-					UtilMessageBox("The program to launch does nopt exist:\n" ~ prg, MB_OK, "Launch Debugger");
+					UtilMessageBox("The program to launch does not exist:\n" ~ prg, MB_OK, "Launch Debugger");
 					return S_FALSE;
 				}
 				if(workdir.length && !std.file.exists(workdir) || !std.file.isdir(workdir))

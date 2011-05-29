@@ -14,12 +14,28 @@ import vdc.ast.node;
 import vdc.ast.expr;
 import vdc.ast.decl;
 import vdc.semantic;
+import vdc.interpret;
+
+import vdc.parser.engine;
+
+import std.conv;
 
 //Statement:
 //    ScopeStatement
 class Statement : Node
 {
 	mixin ForwardCtor!();
+	
+	override Value interpret(Scope sc)
+	{
+		foreach(m; members)
+		{
+			Value v = m.interpret(sc);
+			if(v)
+				return v;
+		}
+		return null;
+	}
 }
 
 //ScopeStatement:
@@ -115,7 +131,7 @@ class LabeledStatement : Statement
 	
 	Statement getStatement() { return getMember!Statement(0); }
 
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
@@ -198,6 +214,12 @@ class ExpressionStatement : Statement
 		writer(getMember(0), ";");
 		writer.nl;
 	}
+
+	override Value interpret(Scope sc)
+	{
+		getMember(0).interpret(sc);
+		return null;
+	}
 }
 
 //DeclarationStatement:
@@ -214,6 +236,12 @@ class DeclarationStatement : Statement
 	{
 		super._semantic(sc);
 		getMember(0).addSymbols(sc);
+	}
+
+	override Value interpret(Scope sc)
+	{
+		getMember(0).interpret(sc);
+		return null;
 	}
 }
 
@@ -253,6 +281,22 @@ class IfStatement : Statement
 			}
 		}
 	}
+
+	override Value interpret(Scope sc)
+	{
+		Value cond = getMember(0).interpret(sc);
+		if(cond.toBool())
+		{
+			if(Value v = getMember(1).interpret(sc))
+				return v;
+		}
+		else if(members.length > 2)
+		{
+			if(Value v = getMember(2).interpret(sc))
+				return v;
+		}
+		return null;
+	}
 }
 
 //WhileStatement:
@@ -269,6 +313,19 @@ class WhileStatement : Statement
 			CodeIndenter indent = CodeIndenter(writer);
 			writer(getMember(1));
 		}
+	}
+
+	override Value interpret(Scope sc)
+	{
+		for( ; ; )
+		{
+			Value cond = getMember(0).interpret(sc);
+			if(!cond.toBool())
+				break;
+			if(Value v = getMember(1).interpret(sc))
+				return v;
+		}
+		return null;
 	}
 }
 
@@ -288,6 +345,19 @@ class DoStatement : Statement
 		}
 		writer("while(", getMember(1), ");");
 		writer.nl;
+	}
+
+	override Value interpret(Scope sc)
+	{
+		for( ; ; )
+		{
+			if(Value v = getMember(0).interpret(sc))
+				return v;
+			Value cond = getMember(1).interpret(sc);
+			if(!cond.toBool())
+				break;
+		}
+		return null;
 	}
 }
 
@@ -315,6 +385,21 @@ class ForStatement : Statement
 			CodeIndenter indent = CodeIndenter(writer);
 			writer(getMember(3));
 		}
+	}
+
+	override Value interpret(Scope sc)
+	{
+		getMember(0).interpret(sc);
+		for( ; ; )
+		{
+			Value cond = getMember(1).interpret(sc);
+			if(!cond.toBool())
+				break;
+			if(Value v = getMember(3).interpret(sc))
+				return v;
+			getMember(2).interpret(sc);
+		}
+		return null;
 	}
 }
 
@@ -364,6 +449,12 @@ class ForeachStatement : Statement
 			CodeIndenter indent = CodeIndenter(writer);
 			writer(getMember(members.length - 1));
 		}
+	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
 	}
 }
 
@@ -440,13 +531,26 @@ class SwitchStatement : Statement
 			writer(getMember(1));
 		}
 	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
+	}
 }
+
 //FinalSwitchStatement:
 //    final switch ( Expression ) ScopeNonEmptyStatement
 //
 class FinalSwitchStatement : Statement
 {
 	mixin ForwardCtor!();
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
+	}
 }
 
 //CaseStatement:
@@ -481,6 +585,12 @@ class CaseStatement : Statement
 		}
 		writer.nl();
 	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
+	}
 }
 
 //DefaultStatement:
@@ -498,6 +608,11 @@ class DefaultStatement : Statement
 		writer.nl();
 	}
 	
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
+	}
 }
 
 //ContinueStatement:
@@ -534,6 +649,12 @@ class ContinueStatement : Statement
 		}
 		writer(";");
 		writer.nl;
+	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
 	}
 }
 
@@ -572,6 +693,12 @@ class BreakStatement : Statement
 		writer(";");
 		writer.nl;
 	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
+	}
 }
 
 
@@ -586,6 +713,11 @@ class ReturnStatement : Statement
 	{
 		writer("return ", getMember(0), ";");
 		writer.nl;
+	}
+
+	override Value interpret(Scope sc)
+	{
+		return getMember(0).interpret(sc);
 	}
 }
 
@@ -635,6 +767,12 @@ class GotoStatement : Statement
 		}
 		writer.nl;
 	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
+	}
 }
 
 //WithStatement:
@@ -653,6 +791,12 @@ class WithStatement : Statement
 			CodeIndenter indent = CodeIndenter(writer);
 			writer(getMember(1));
 		}
+	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
 	}
 }
 
@@ -676,6 +820,12 @@ class SynchronizedStatement : Statement
 			writer(getMember(members.length - 1));
 		}
 	}
+
+	override Value interpret(Scope sc)
+	{
+		// no need to synhronize, interpreter is single-threaded
+		return super.interpret(sc);
+	}
 }
 
 //VolatileStatement:
@@ -692,6 +842,12 @@ class VolatileStatement : Statement
 			CodeIndenter indent = CodeIndenter(writer);
 			writer(getMember(members.length - 1));
 		}
+	}
+
+	override Value interpret(Scope sc)
+	{
+		// no need to synhronize, interpreter is single-threaded
+		return super.interpret(sc);
 	}
 }
 
@@ -731,6 +887,12 @@ class TryStatement : Statement
 		}
 		foreach(m; members[1..$])
 			writer(m);
+	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
 	}
 }
 
@@ -781,6 +943,12 @@ class ThrowStatement : Statement
 		writer("throw ", getMember(0), ";");
 		writer.nl;
 	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
+	}
 }
 
 //ScopeGuardStatement:
@@ -799,6 +967,12 @@ class ScopeGuardStatement : Statement
 			CodeIndenter indent = CodeIndenter(writer);
 			writer(getMember(1));
 		}
+	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " not implemented."));
+		return new ErrorValue;
 	}
 }
 
@@ -823,6 +997,12 @@ class AsmStatement : Statement
 		}
 		writer("}");
 		writer.nl;
+	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, " cannot be interpreted."));
+		return new ErrorValue;
 	}
 }
 
@@ -850,6 +1030,12 @@ class PragmaStatement : Statement
 	{
 		writer(getMember(0), " ", getMember(1));
 	}
+
+	override Value interpret(Scope sc)
+	{
+		getMember(0).interpret(sc);
+		return getMember(1).interpret(sc);
+	}
 }
 
 //MixinStatement:
@@ -862,6 +1048,21 @@ class MixinStatement : Statement
 	{
 		writer("mixin(", getMember(0), ");");
 		writer.nl;
+	}
+
+	override void _semantic(Scope sc)
+	{
+		Value v = getMember(0).interpret(sc);
+		string s = v.toStr();
+		Parser parser = new Parser;
+		Node[] n = parser.parseStatements(s, span);
+		parent.replaceMember(this, n);
+	}
+
+	override Value interpret(Scope sc)
+	{
+		semanticError(text(this, "semantic not run"));
+		return new ErrorValue;
 	}
 }
 

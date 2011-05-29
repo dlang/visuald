@@ -14,6 +14,7 @@ import vdc.lexer;
 import vdc.ast.expr;
 import vdc.ast.type;
 import vdc.logger;
+import vdc.interpret;
 
 import std.exception;
 import std.stdio;
@@ -37,7 +38,7 @@ class Node
 	
 	this()
 	{
-		// default constructor need for clone()
+		// default constructor needed for clone()
 	}
 	
 	this(ref const(TextSpan) _span)
@@ -59,7 +60,7 @@ class Node
 	{
 		this()
 		{
-			// default constructor need for clone()
+			// default constructor needed for clone()
 		}
 		this(ref const(TextSpan) _span)
 		{
@@ -77,7 +78,7 @@ class Node
 		
 	mixin template ForwardCtorTok()
 	{
-		this() {} // default constructor need for clone()
+		this() {} // default constructor needed for clone()
 		
 		this(Token tok)
 		{
@@ -87,7 +88,7 @@ class Node
 	
 	mixin template ForwardCtorNoId()
 	{
-		this() {} // default constructor need for clone()
+		this() {} // default constructor needed for clone()
 		
 		this(ref const(TextSpan) _span)
 		{
@@ -181,27 +182,60 @@ class Node
 	}
 	int semanticState;
 	
-	void expandNonScopeMembers(Scope sc)
+	void expandNonScopeSimple(Scope sc, int i, int j)
+	{
+		Node[1] narray;
+		for(int m = i; m < j; )
+		{
+			Node n = members[m];
+			narray[0] = n;
+			Node[] nm = n.expandNonScopeBlock(sc, narray);
+			if(nm.length == 1 && nm[0] == n)
+			{
+				n.addSymbols(sc);
+				m++;
+			}
+			else
+			{
+				replaceMember(m, nm);
+				j += nm.length - 1;
+			}
+		}
+	}
+	
+	void expandNonScopeBlocks(Scope sc)
 	{
 		if(semanticState >= SemanticState.ExpandingNonScopeMembers)
 			return;
 		
+		// simple expansions
 		semanticState = SemanticState.ExpandingNonScopeMembers;
+		expandNonScopeSimple(sc, 0, members.length);
+
+		// expansions with interpretation
 		Node[1] narray;
 		for(int m = 0; m < members.length; )
 		{
 			Node n = members[m];
 			narray[0] = n;
-			Node[] nm = n.expandNonScope(sc, narray);
+			Node[] nm = n.expandNonScopeInterpret(sc, narray);
 			if(nm.length == 1 && nm[0] == n)
 				m++;
 			else
+			{
 				replaceMember(m, nm);
+				expandNonScopeSimple(sc, m, m + nm.length);
+			}
 		}
 		semanticState = SemanticState.ExpandedNonScopeMembers;
 	}
 	
-	Node[] expandNonScope(Scope sc, Node[] athis)
+	Node[] expandNonScopeBlock(Scope sc, Node[] athis)
+	{
+		return athis;
+	}
+	
+	Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
 	{
 		return athis;
 	}
@@ -211,9 +245,7 @@ class Node
 		if(semanticState >= SemanticState.AddingSymbols)
 			return;
 		
-		semanticState = SemanticState.AddingSymbols;
-		for(int m = 0; m < members.length; m++)
-			members[m].addSymbols(sc);
+		expandNonScopeBlocks(sc);
 
 		semanticState = SemanticState.AddedSymbols;
 	}
@@ -227,7 +259,6 @@ class Node
 		if(!nscope)
 		{
 			nscope = sc.pushClone();
-			expandNonScopeMembers(nscope);
 			addMemberSymbols(nscope);
 			return nscope;
 		}
@@ -268,6 +299,11 @@ class Node
 		return null;
 	}
 
+	Value interpret(Scope sc)
+	{
+		semanticError(text(this, ".interpret not implemented"));
+		return new ErrorValue;
+	}
 	////////////////////////////////////////////////////////////
 	void addMember(Node m) 
 	{

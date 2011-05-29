@@ -18,6 +18,9 @@ import vdc.ast.expr;
 import vdc.ast.misc;
 import vdc.ast.aggr;
 
+import vdc.parser.engine;
+import vdc.interpret;
+
 import std.conv;
 import std.path;
 import std.algorithm;
@@ -145,7 +148,6 @@ class Module : Node
 					scop.addImport(imp);
 				}
 			
-			expandNonScopeMembers(scop);
 			addMemberSymbols(scop);
 		}
 	}
@@ -175,7 +177,6 @@ class Module : Node
 		sc = sc.push(scop);
 		scope(exit) sc.pop();
 		
-		expandNonScopeMembers(scop);
 		addMemberSymbols(scop);
 		
 		foreach(m; members)
@@ -342,7 +343,7 @@ class AttributeSpecifier : Node
 		m.annotation = combineAnnotations(annotation, m.annotation);
 	}
 	
-	override Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
 		switch(id)
 		{
@@ -387,7 +388,7 @@ class DeclarationBlock : Node
 				writer(m);
 	}
 	
-	override Node[] expandNonScope(Scope sc, Node[] athis)
+	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
 		return members;
 	}
@@ -612,6 +613,15 @@ class MixinDeclaration : Node
 		writer("mixin(", getMember(0), ");");
 		writer.nl;
 	}
+	
+	override Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
+	{
+		Value v = getMember(0).interpret(sc);
+		string s = v.toStr();
+		Parser parser = new Parser;
+		return parser.parseDeclarations(s, span);
+	}
+
 }
 
 //Unittest:

@@ -109,7 +109,7 @@ class Aggregate : Type
 
 class Struct : Aggregate
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(ref const(TextSpan) _span)
 	{
@@ -138,7 +138,7 @@ class Struct : Aggregate
 
 class Union : Aggregate
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(ref const(TextSpan) _span)
 	{
@@ -227,7 +227,7 @@ class InheritingAggregate : Aggregate
 
 class Class : InheritingAggregate
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(ref const(TextSpan) _span)
 	{
@@ -262,7 +262,7 @@ class AnonymousClass : InheritingAggregate
 // Interface conflicts with object.Interface
 class Intrface : InheritingAggregate
 {
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(ref const(TextSpan) _span)
 	{
@@ -293,7 +293,7 @@ class BaseClass : Node
 {
 	mixin ForwardCtor!();
 	
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 	
 	this(TokenId prot, ref const(TextSpan) _span)
 	{
@@ -487,7 +487,7 @@ class AliasThis : Node
 	
 	mixin ForwardCtor!();
 
-	this() {} // default constructor need for clone()
+	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{

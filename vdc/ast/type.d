@@ -95,10 +95,16 @@ class Type : Node
 		return this;
 	}
 
+	Value interpretProperty(string prop)
+	{
+		semanticError(text("cannot calculate property ", prop, " of type ", this));
+		return new ErrorValue;
+	}
+
 	Value createValue()
 	{
 		semanticError(text("cannot create value of type ", this));
-		return new VoidValue;
+		return new ErrorValue;
 	}
 }
 
@@ -106,7 +112,7 @@ class Type : Node
 class BasicType : Type
 {
 	mixin ForwardCtor!();
-
+	
 	override bool propertyNeedsParens() const { return false; }
 	
 	static Type createType(int tokid)
@@ -128,64 +134,68 @@ class BasicType : Type
 
 	static TypeInfo getTypeInfo(int id)
 	{
-		switch(id)
+		// TODO: convert foreach to table access for faster lookup
+		foreach(tok; BasicTypeTokens)
 		{
-			case TOK_bool:    return typeid(bool);
-			case TOK_byte:    return typeid(byte);
-			case TOK_ubyte:   return typeid(ubyte);
-			case TOK_short:   return typeid(short);
-			case TOK_ushort:  return typeid(ushort);
-			case TOK_int:     return typeid(int);
-			case TOK_uint:    return typeid(uint);
-			case TOK_long:    return typeid(long);
-			case TOK_ulong:   return typeid(ulong);
-			case TOK_char:    return typeid(char);
-			case TOK_wchar:   return typeid(wchar);
-			case TOK_dchar:   return typeid(dchar);
-			case TOK_float:   return typeid(float);
-			case TOK_double:  return typeid(double);
-			case TOK_real:    return typeid(real);
-			case TOK_ifloat:  return typeid(ifloat);
-			case TOK_idouble: return typeid(idouble);
-			case TOK_ireal:   return typeid(ireal);
-			case TOK_cfloat:  return typeid(cfloat);
-			case TOK_cdouble: return typeid(cdouble);
-			case TOK_creal:   return typeid(creal);
-			case TOK_void:    return typeid(void);
-			default: return null;
+			if (id == tok)
+				return typeid(Token2BasicType!(tok));
 		}
+		return null;
+	}
+
+	static size_t getSizeof(int id)
+	{
+		// TODO: convert foreach to table access for faster lookup
+		foreach(tok; BasicTypeTokens)
+		{
+			if (id == tok)
+				return Token2BasicType!(tok).sizeof;
+		}
+		assert(false);
+	}
+
+	static string getMangleof(int id)
+	{
+		// TODO: convert foreach to table access for faster lookup
+		foreach(tok; BasicTypeTokens)
+		{
+			if (id == tok)
+				return Token2BasicType!(tok).mangleof;
+		}
+		assert(false);
+	}
+
+	static size_t getAlignof(int id)
+	{
+		// TODO: convert foreach to table access for faster lookup
+		foreach(tok; BasicTypeTokens)
+		{
+			if (id == tok)
+				return Token2BasicType!(tok).alignof;
+		}
+		assert(false);
+	}
+
+	static string getStringof(int id)
+	{
+		// TODO: convert foreach to table access for faster lookup
+		foreach(tok; BasicTypeTokens)
+		{
+			if (id == tok)
+				return Token2BasicType!(tok).stringof;
+		}
+		assert(false);
 	}
 
 	override Value createValue()
 	{
-		switch(id)
+		foreach(tok; BasicTypeTokens)
 		{
-			case TOK_bool:    return new BoolValue;
-			case TOK_byte:    return new ByteValue;
-			case TOK_ubyte:   return new UByteValue;
-			case TOK_short:   return new ShortValue;
-			case TOK_ushort:  return new UShortValue;
-			case TOK_int:     return new IntValue;
-			case TOK_uint:    return new UIntValue;
-			case TOK_long:    return new LongValue;
-			case TOK_ulong:   return new ULongValue;
-			case TOK_char:    return new CharValue;
-			case TOK_wchar:   return new WCharValue;
-			case TOK_dchar:   return new DCharValue;
-			case TOK_float:   return new FloatValue;
-			case TOK_double:  return new DoubleValue;
-			case TOK_real:    return new RealValue;
-			case TOK_ifloat:  return new IFloatValue;
-			case TOK_idouble: return new IDoubleValue;
-			case TOK_ireal:   return new IRealValue;
-			case TOK_cfloat:  return new CFloatValue;
-			case TOK_cdouble: return new CDoubleValue;
-			case TOK_creal:   return new CRealValue;
-			case TOK_void:    return new VoidValue;
-			default: break;
+			if (id == tok)
+				return Value.create(Token2BasicType!(tok).init);
 		}
 		semanticError(text("cannot create value of type ", this));
-		return new VoidValue;
+		return new ErrorValue;
 	}
 	
 	override void typeSemantic(Scope sc)
@@ -223,6 +233,44 @@ class BasicType : Type
 			case TOK_creal:   return Category.kComplex;
 			case TOK_void:    return Category.kVoid;
 			default: assert(false);
+		}
+	}
+	
+	override Value interpretProperty(string prop)
+	{
+		switch(prop)
+		{
+			// all types
+			case "init":
+				return createValue();
+			case "sizeof":
+				return Value.create(getSizeof(id));
+			case "alignof":
+				return Value.create(getAlignof(id));
+			case "mangleof":
+				return Value.create(getMangleof(id));
+			case "stringof":
+				return Value.create(getStringof(id));
+				
+			// integer types
+			case "min":
+			case "max":
+				
+			// floating point types
+			case "infinity":
+			case "nan":
+			case "dig":
+			case "epsilon":
+			case "mant_dig":
+			case "max_10_exp":
+			case "max_exp":
+			case "min_10_exp":
+			case "min_exp":
+			case "min_normal":
+			case "re":
+			case "im":
+			default:
+				return super.interpretProperty(prop);
 		}
 	}
 	
@@ -270,7 +318,7 @@ class ModifiedType : Type
 
 	override bool propertyNeedsParens() const { return true; }
 	
-	Type getType() { return getMember!Type(0); }
+	Type getType() { return getMember!Type(0); } // ignoring modifiers
 	
 	override void typeSemantic(Scope sc)
 	{
@@ -483,6 +531,17 @@ class TypeDynamicArray : TypeIndirection
 		}
 		return scop;
 	}
+
+	override Value createValue()
+	{
+		if(auto mtype = cast(ModifiedType) getType())
+			if(mtype.id == TOK_immutable)
+				if(auto btype = cast(BasicType) mtype.getType())
+					if(btype.id == TOK_char)
+						return StringValue._create("");
+		
+		return super.createValue();
+	}
 }
 
 //SuffixDynamicArray:
@@ -678,6 +737,8 @@ class TypeFunction : Type
 	Type getReturnType() { return getMember!Type(0); }
 	ParameterList getParameters() { return getMember!ParameterList(1); }
 	
+	Declarator mInit; // the actual function pointer
+	
 	override void typeSemantic(Scope sc)
 	{
 		auto ti_fn = new TypeInfo_FunctionX;
@@ -695,6 +756,13 @@ class TypeFunction : Type
 		typeinfo = ti_fn;
 	}
 
+	override Value createValue()
+	{
+		auto fv = new FunctionValue;
+		fv.functype = this;
+		return fv;
+	}
+	
 	override void toD(CodeWriter writer)
 	{
 		writer(getReturnType(), " function", getParameters());
@@ -715,9 +783,20 @@ class TypeInfo_DelegateX : TypeInfo_Delegate
 	TypeInfo context;
 }
 
+class TypeString : TypeDynamicArray
+{
+	mixin ForwardCtor!();
+
+	override Value createValue()
+	{
+		return new StringValue;
+	}
+	
+}
+
 TypeDynamicArray createTypeString(ref const(TextSpan) span)
 {
-	auto arr = new TypeDynamicArray(span);
+	auto arr = new TypeString(span);
 			
 	BasicType ct = new BasicType(TOK_char, span);
 	ModifiedType mt = new ModifiedType(TOK_immutable, span);

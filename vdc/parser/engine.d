@@ -20,6 +20,7 @@ import vdc.util;
 import vdc.lexer;
 import vdc.parser.expr;
 import vdc.parser.mod;
+import vdc.parser.stmt;
 
 import vdc.ast.node;
 
@@ -618,12 +619,10 @@ class Parser
 		}
 	}
 
-	Node parseText(S)(S text)
+	void parseText(S)(S text)
 	{
-		reinit();
-		pushState(&Module.enter);
-		
 		int state = 0;
+
 	version(all)
 	{
 		Lexer lex;
@@ -665,8 +664,76 @@ class Parser
 		foreach(lno, line; lines)
 			parseLine(state, line, lno + 1);
 	}
+	}
+
+	Node parseModule(S)(S text)
+	{
+		reinit();
+		pushState(&Module.enter);
+		
+		parseText(text);
+		
 		if(!shiftEOF())
 			return null;
+		return popNode();
+	}
+
+	Node[] parseCurlyBlock(S)(S text, TextSpan mixinSpan)
+	{
+		lexerTok.txt = "{";
+		lexerTok.id = TOK_lcurly;
+		lexerTok.span = mixinSpan;
+		lexerTok.span.end.index = mixinSpan.end.index + 1;
+		if(!shift(lexerTok))
+			return null;
+		
+		parseText(text);
+		
+		lexerTok.txt = "}";
+		lexerTok.id = TOK_rcurly;
+		if(!shift(lexerTok))
+			return null;
+		if (nodeStack.depth > 1)
+			return parseError("parsing unfinished before end of mixin"), null;
+		return popNode().members;
+	}
+	
+	Node[] parseDeclarations(S)(S text, TextSpan mixinSpan)
+	{
+		reinit();
+		pushState(&DeclarationBlock.enter);
+
+		return parseCurlyBlock(text, mixinSpan);
+	}
+
+	Node[] parseStatements(S)(S text, TextSpan mixinSpan)
+	{
+		reinit();
+		pushState(&BlockStatement.enter);
+
+		return parseCurlyBlock(text, mixinSpan);
+	}
+
+	Node parseExpression(S)(S text, TextSpan mixinSpan)
+	{
+		reinit();
+		pushState(&Expression.enter);
+
+		lexerTok.txt = "(";
+		lexerTok.id = TOK_lparen;
+		lexerTok.span = mixinSpan;
+		lexerTok.span.end.index = mixinSpan.end.index + 1;
+		if(!shift(lexerTok))
+			return null;
+		
+		parseText(text);
+		
+		lexerTok.txt = ")";
+		lexerTok.id = TOK_rparen;
+		if(!shift(lexerTok))
+			return null;
+		if (nodeStack.depth > 1)
+			return parseError("parsing unfinished before end of mixin"), null;
 		return popNode();
 	}
 
