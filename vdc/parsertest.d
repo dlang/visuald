@@ -29,7 +29,7 @@ import std.path;
 import core.runtime;
 
 version = semantic;
-version = cpp;
+//version = cpp;
 
 ////////////////////////////////////////////////////////////////
 

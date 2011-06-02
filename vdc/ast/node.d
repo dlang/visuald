@@ -295,15 +295,14 @@ class Node
 	
 	Type calcType(Scope sc)
 	{
-		semanticError(text(this, ".calcType not implemented"));
-		return null;
+		return semanticErrorType(text(this, ".calcType not implemented"));
 	}
 
 	Value interpret(Scope sc)
 	{
-		semanticError(text(this, ".interpret not implemented"));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, ".interpret not implemented"));
 	}
+	
 	////////////////////////////////////////////////////////////
 	void addMember(Node m) 
 	{

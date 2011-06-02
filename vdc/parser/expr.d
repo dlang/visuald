@@ -205,22 +205,72 @@ class AddExpression : BinaryExpression
 
 //-- GRAMMAR_BEGIN --
 //MulExpression:
-//    PowExpression
-//    MulExpression * PowExpression
-//    MulExpression / PowExpression
-//    MulExpression % PowExpression
+//    SignExpression
+//    MulExpression * SignExpression
+//    MulExpression / SignExpression
+//    MulExpression % SignExpression
 class MulExpression : BinaryExpression
 {
-	mixin BinaryExpr!(ast.MulExpression, PREC.mul, "L", PowExpression, TOK_mul, TOK_div, TOK_mod);
+	mixin BinaryExpr!(ast.MulExpression, PREC.mul, "L", SignExpression, TOK_mul, TOK_div, TOK_mod);
+}
+
+//-- GRAMMAR_BEGIN --
+//SignExpression:
+//    PowExpression
+//    + SignExpression
+//    - SignExpression
+class SignExpression : Expression
+{
+	static Action enter(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_min:
+			case TOK_add:
+				auto expr = new ast.UnaryExpression(p.tok);
+				p.pushNode(expr);
+				p.pushState(&shift);
+				p.pushState(&enter);
+				return Accept;
+			default:
+				return PowExpression.enter(p);
+		}
+	}
+
+	static Action shift(Parser p)
+	{
+		p.popAppendTopNode!(ast.UnaryExpression)();
+		return Forward;
+	}
 }
 
 //-- GRAMMAR_BEGIN --
 //PowExpression:
 //    UnaryExpression
-//    UnaryExpression ^^ PowExpression
+//    UnaryExpression ^^ SignExpression
 class PowExpression : BinaryExpression
 {
-	mixin BinaryExpr!(ast.PowExpression, PREC.pow, "L", UnaryExpression, TOK_pow);
+	static Action shiftExponent(Parser p)
+	{
+		p.popAppendTopNode!(ast.PowExpression)();
+		return Forward;
+	}
+	
+	static Action shiftPow(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_pow:
+				auto pe = new ast.PowExpression(p.tok);
+				p.appendReplaceTopNode(pe);
+				p.pushState(&shiftExponent);
+				p.pushState(&SignExpression.enter);
+				return Accept;
+			default:
+				return Forward;
+		}
+	}
+	mixin stateEnterClass!(UnaryExpression, NoASTNode, shiftPow);
 }
 
 //-- GRAMMAR_BEGIN --

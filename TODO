@@ -26,7 +26,7 @@ Project:
   which seems like a frozen UI (only first dialog open)
 - incremental builds?
 - single file compilation of library: rebuilds lib every time
-- DnD files/folders looses project file settings
+- DnD files/folders loses project file settings
 
 Language service:
 ---------------
@@ -71,7 +71,6 @@ Lexer/Parser:
 ---------------
 - fix Cmp/ShiftExpression
 - octal numbers
-- fix PowExpression
 - do not parse file if it is D1
 
 Installation:

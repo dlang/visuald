@@ -453,8 +453,7 @@ class ForeachStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -534,8 +533,7 @@ class SwitchStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -548,8 +546,7 @@ class FinalSwitchStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -588,8 +585,7 @@ class CaseStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -610,8 +606,7 @@ class DefaultStatement : Statement
 	
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -653,8 +648,7 @@ class ContinueStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -696,8 +690,7 @@ class BreakStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -770,8 +763,7 @@ class GotoStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -795,8 +787,7 @@ class WithStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -891,8 +882,7 @@ class TryStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -946,8 +936,7 @@ class ThrowStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -971,8 +960,7 @@ class ScopeGuardStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " not implemented."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " not implemented."));
 	}
 }
 
@@ -1001,8 +989,7 @@ class AsmStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, " cannot be interpreted."));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " cannot be interpreted."));
 	}
 }
 
@@ -1061,8 +1048,7 @@ class MixinStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		semanticError(text(this, "semantic not run"));
-		return new ErrorValue;
+		return semanticErrorValue(text(this, " semantic not run"));
 	}
 }
 

@@ -94,7 +94,7 @@ class Expression : Node
 	override Type calcType(Scope sc)
 	{
 		if(!type)
-			semanticError(text(this, ".calcType not implemented"));
+			return semanticErrorType(text(this, ".calcType not implemented"));
 		return type;
 	}
 }
@@ -134,8 +134,7 @@ class BinaryExpression : Expression
 		{
 			Type typeL = getLeftExpr().calcType(sc);
 			Type typeR = getRightExpr().calcType(sc);
-			semanticError(text(this, "calcType on binary not implemented"));
-			type = typeL;
+			return semanticErrorType(text(this, "calcType on binary not implemented"));
 		}
 		return type;
 	}
@@ -208,8 +207,7 @@ else
 			case TOK_modass:	return vL.opassign!"%="(vR);
 
 			default:
-				semanticError(text("interpretation of binary operator ", tokenString(id), " not implemented"));
-				return vL;
+				return semanticErrorType(text("interpretation of binary operator ", tokenString(id), " not implemented"));
 		}
 	}
 
@@ -481,8 +479,7 @@ else
 			case TOK_not:        return v.opUnOp!"!"();
 			case TOK_tilde:      return v.opUnOp!"~"();
 			default:
-				semanticError(text("interpretation of unary operator ", tokenString(id), " not implemented"));
-				return v;
+				return semanticErrorValue(text("interpretation of unary operator ", tokenString(id), " not implemented"));
 		}
 	}
 	
@@ -683,10 +680,7 @@ class PostfixExpression : Expression
 					auto vidx = args.interpret(sc);
 					Value idx;
 					if(vidx.values.length != 1)
-					{
-						semanticError("exactly one value expected as array index");
-						return new ErrorValue;
-					}
+						return semanticErrorValue("exactly one value expected as array index");
 					idx = vidx.values[0];
 					return val.opIndex(idx);
 				}
@@ -1036,8 +1030,7 @@ class MixinExpression : Expression
 	{
 		if(resolved)
 			return resolved.interpret(sc);
-		semanticError("cannot interpret mixin");
-		return new ErrorValue;
+		return semanticErrorValue("cannot interpret mixin");
 	}
 }
 
@@ -1230,7 +1223,7 @@ class IdentifierExpression : PrimaryExpression
 		if(resolved)
 			type = resolved.calcType(sc);
 		if(!type)
-			semanticError("cannot determine type");
+			return semanticErrorType("cannot determine type");
 		return type;
 	}
 	

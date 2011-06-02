@@ -11,8 +11,10 @@ module vdc.semantic;
 import vdc.util;
 import vdc.ast.mod;
 import vdc.ast.node;
+import vdc.ast.type;
 import vdc.parser.engine;
 import vdc.logger;
+import vdc.interpret;
 
 import std.exception;
 import std.stdio;
@@ -57,6 +59,18 @@ void semanticError(string msg)
 void semanticError(string fname, string msg)
 {
 	semanticError(fname, TextPos(), msg);
+}
+
+ErrorValue semanticErrorValue(string msg)
+{
+	semanticError(TextPos(), msg);
+	return Singleton!(ErrorValue).get();
+}
+
+ErrorType semanticErrorType(string msg)
+{
+	semanticError(TextPos(), msg);
+	return Singleton!(ErrorType).get();
 }
 
 alias Node Symbol;
@@ -166,8 +180,8 @@ class Project : Node
 	{
 		super(TextSpan());
 		options = new Options;
-		options.importDirs ~= r"c:\s\d\dmd2\druntime\import\";
-		options.importDirs ~= r"c:\s\d\dmd2\phobos\";
+		options.importDirs ~= r"m:\s\d\dmd2\druntime\import\";
+		options.importDirs ~= r"m:\s\d\dmd2\phobos\";
 		options.importDirs ~= r"c:\tmp\d\runnable\";
 	}
 	

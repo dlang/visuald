@@ -97,14 +97,12 @@ class Type : Node
 
 	Value interpretProperty(string prop)
 	{
-		semanticError(text("cannot calculate property ", prop, " of type ", this));
-		return new ErrorValue;
+		return semanticErrorValue(text("cannot calculate property ", prop, " of type ", this));
 	}
 
-	Value createValue()
+	Value createValue(Value initValue)
 	{
-		semanticError(text("cannot create value of type ", this));
-		return new ErrorValue;
+		return semanticErrorValue(text("cannot create value of type ", this));
 	}
 }
 
@@ -187,15 +185,19 @@ class BasicType : Type
 		assert(false);
 	}
 
-	override Value createValue()
+	override Value createValue(Value initValue)
 	{
+		// TODO: convert foreach to table access for faster lookup
 		foreach(tok; BasicTypeTokens)
 		{
 			if (id == tok)
+			{
+				if(initValue)
+					return createInitValue!(Token2ValueType!(tok))(initValue);
 				return Value.create(Token2BasicType!(tok).init);
+			}
 		}
-		semanticError(text("cannot create value of type ", this));
-		return new ErrorValue;
+		return semanticErrorValue(text("cannot create value of type ", this));
 	}
 	
 	override void typeSemantic(Scope sc)
@@ -242,7 +244,7 @@ class BasicType : Type
 		{
 			// all types
 			case "init":
-				return createValue();
+				return createValue(null);
 			case "sizeof":
 				return Value.create(getSizeof(id));
 			case "alignof":
@@ -308,6 +310,13 @@ class AutoType : Type
 		if(id != TOK_auto) // only implicitely added?
 			writer(id);
 	}
+
+	override Value createValue(Value initValue)
+	{
+		if(!initValue)
+			return semanticErrorValue("no initializer in auto declaration");
+		return initValue;
+	}
 }
 
 //ModifiedType:
@@ -365,9 +374,9 @@ class ModifiedType : Type
 		return false;
 	}
 
-	override Value createValue()
+	override Value createValue(Value initValue)
 	{
-		return getType().createValue(); // ignore modifier
+		return getType().createValue(initValue); // TODO: ignores modifier
 	}
 	
 	override void toD(CodeWriter writer)
@@ -395,8 +404,7 @@ class IdentifierType : Type
 		if(idlist.resolved)
 			return idlist.resolved.calcType(sc);
 
-		semanticError("cannot resolve type");
-		return null;
+		return semanticErrorType("cannot resolve type");
 	}
 	
 	override void toD(CodeWriter writer)
@@ -470,9 +478,9 @@ class TypePointer : TypeIndirection
 		typeinfo = typeinfo_ptr;
 	}
 
-	override Value createValue()
+	override Value createValue(Value initValue)
 	{
-		return new PointerValue();
+		return createInitValue!PointerValue(initValue);
 	}
 	
 	override void toD(CodeWriter writer)
@@ -532,15 +540,15 @@ class TypeDynamicArray : TypeIndirection
 		return scop;
 	}
 
-	override Value createValue()
+	override Value createValue(Value initValue)
 	{
 		if(auto mtype = cast(ModifiedType) getType())
 			if(mtype.id == TOK_immutable)
 				if(auto btype = cast(BasicType) mtype.getType())
 					if(btype.id == TOK_char)
-						return StringValue._create("");
+						return createInitValue!StringValue(initValue);
 		
-		return super.createValue();
+		return super.createValue(initValue);
 	}
 }
 
@@ -756,8 +764,9 @@ class TypeFunction : Type
 		typeinfo = ti_fn;
 	}
 
-	override Value createValue()
+	override Value createValue(Value initValue)
 	{
+		assert(!initValue);
 		auto fv = new FunctionValue;
 		fv.functype = this;
 		return fv;
@@ -787,9 +796,9 @@ class TypeString : TypeDynamicArray
 {
 	mixin ForwardCtor!();
 
-	override Value createValue()
+	override Value createValue(Value initValue)
 	{
-		return new StringValue;
+		return createInitValue!StringValue(initValue);
 	}
 	
 }

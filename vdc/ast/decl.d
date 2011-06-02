@@ -389,9 +389,10 @@ class Declarator : Identifier
 			value = new TypeValue(type);
 		else
 		{
-			value = type.createValue();
 			if(auto expr = getInitializer())
-				value.opBin(TOK_assign, expr.interpret(sc));
+				value = type.createValue(expr.interpret(sc));
+			else
+				value = type.createValue(null);
 		}
 		return value;
 	}
@@ -403,12 +404,10 @@ class Declarator : Identifier
 			{
 				if(auto fbody = decl.getFunctionBody())
 					return fbody.interpret(sc);
-				semanticError(ident, " is not a interpretable function");
-				return new ErrorValue;
+				return semanticErrorValue(text(ident, " is not a interpretable function"));
 			}
 
-		semanticError("cannot interpret external function ", ident);
-		return new ErrorValue;
+		return semanticErrorValue(text("cannot interpret external function ", ident));
 	}
 }
 

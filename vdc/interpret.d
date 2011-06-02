@@ -44,8 +44,7 @@ class Value
 	static T _create(T, V)(V val)
 	{
 		T v = new T;
-		v.pval = new T.ValType;
-		*v.pval = cast(T.ValType) val;
+		*v.pval = val;
 		return v;
 	}
 	
@@ -56,7 +55,7 @@ class Value
 	static Value create(ushort  v) { return _create!UShortValue (v); }
 	static Value create(int     v) { return _create!IntValue    (v); }
 	static Value create(uint    v) { return _create!UIntValue   (v); }
-	static Value create(long    v) { return _create!IntValue    (v); }
+	static Value create(long    v) { return _create!LongValue   (v); }
 	static Value create(ulong   v) { return _create!ULongValue  (v); }
 	static Value create(char    v) { return _create!CharValue   (v); }
 	static Value create(wchar   v) { return _create!WCharValue  (v); }
@@ -75,8 +74,7 @@ class Value
 	
 	Type getType()
 	{
-		semanticError(text("cannot get type of ", this));
-		return Singleton!(ErrorType).get();
+		return semanticErrorType(text("cannot get type of ", this));
 	}
 	
 	bool toBool()
@@ -111,8 +109,7 @@ class Value
 	version(all)
 	Value opBin(int tokid, Value v)
 	{
-		semanticError(text("binary operator ", tokenString(tokid), " on ", this, " not implemented"));
-		return this;
+		return semanticErrorValue(text("binary operator ", tokenString(tokid), " on ", this, " not implemented"));
 	}
 
 	Value opUn(int tokid)
@@ -123,8 +120,7 @@ class Value
 			case TOK_mul:        return opDerefPointer();
 			default: break;
 		}
-		semanticError(text("unary operator ", tokenString(tokid), " on ", this, " not implemented"));
-		return this;
+		return semanticErrorValue(text("unary operator ", tokenString(tokid), " on ", this, " not implemented"));
 	}
 
 	Value opRefPointer()
@@ -133,8 +129,7 @@ class Value
 	}
 	Value opDerefPointer()
 	{
-		semanticError(text("cannot dereference a ", this));
-		return this;
+		return semanticErrorValue(text("cannot dereference a ", this));
 	}
 
 	Value getProperty(string ident)
@@ -144,20 +139,17 @@ class Value
 	
 	Value opIndex(Value v)
 	{
-		semanticError(text("cannot index a ", this));
-		return this;
+		return semanticErrorValue(text("cannot index a ", this));
 	}
 	
 	Value opSlice(Value b, Value e)
 	{
-		semanticError(text("cannot slice a ", this));
-		return this;
+		return semanticErrorValue(text("cannot slice a ", this));
 	}
 	
 	Value opCall(Value args)
 	{
-		semanticError(text("cannot call a ", this));
-		return this;
+		return semanticErrorValue(text("cannot call a ", this));
 	}
 	
 	//mixin template operators()
@@ -182,18 +174,14 @@ class Value
 								iv2.ValType v2 = (cast(iv2) v).val;
 								static if(op == "/=" || op == "%=")
 									if(v2 == 0)
-									{
-										semanticError("division by zero");
-										v2 = 1;
-									}
+										return semanticErrorValue("division by zero");
 								mixin("(cast(iv1) this).val " ~ op ~ "v2;");
 								return this;
 							}
 					}
 				}
 			}
-			semanticError(text("cannot execute ", op, " on a ", v, " with a ", this));
-			return this;
+			return semanticErrorValue(text("cannot execute ", op, " on a ", v, " with a ", this));
 		}
 		
 	version(none)
@@ -219,23 +207,19 @@ class Value
 								iv2.ValType v2 = (cast(iv2) v).val;
 								static if(op == "/" || op == "%")
 									if(v2 == 0)
-									{
-										semanticError("division by zero");
-										v2 = 1;
-									}
+										return semanticErrorValue("division by zero");
 								mixin("auto z = v1 " ~ op ~ "v2;");
 								return create(z);
 							}
 							else
 							{
-								semanticError(text("cannot calculate ", op, " on a ", this, " and a ", v));
+								return semanticErrorValue(text("cannot calculate ", op, " on a ", this, " and a ", v));
 							}
 						}
 					}
 				}
 			}
-			semanticError(text("cannot calculate ", op, " on a ", this, " and a ", v));
-			return this;
+			return semanticErrorValue(text("cannot calculate ", op, " on a ", this, " and a ", v));
 		}
 
 	version(none)
@@ -256,8 +240,7 @@ class Value
 					}
 				}
 			}
-			semanticError(text("cannot calculate ", op, " on a ", this));
-			return this;
+			return semanticErrorValue(text("cannot calculate ", op, " on a ", this));
 		}
 
 	////////////////////////////////////////////////////////////
@@ -268,10 +251,7 @@ class Value
 			iv2.ValType v2 = *(cast(iv2) v).pval;
 			static if(op == "/" || op == "%")
 				if(v2 == 0)
-				{
-					semanticError("division by zero");
-					v2 = cast(iv2.ValType) 1;
-				}
+					return semanticErrorValue("division by zero");
 			mixin("auto z = *pval " ~ op ~ "v2;");
 			return create(z);
 		}
@@ -294,10 +274,7 @@ class Value
 						iv2.ValType v2 = *(cast(iv2) v).pval;
 						static if(op == "/" || op == "%")
 							if(v2 == 0)
-							{
-								semanticError("division by zero");
-								v2 = cast(iv2.ValType) 1;
-							}
+								return semanticErrorValue("division by zero");
 						mixin("auto z = (*pval) " ~ op ~ "v2;");
 						return create(z);
 					}
@@ -305,8 +282,7 @@ class Value
 						break;
 				}
 			}
-			semanticError(text("cannot calculate ", op, " on a ", this, " and a ", v));
-			return this;
+			return semanticErrorValue(text("cannot calculate ", op, " on a ", this, " and a ", v));
 		}
 	}
 
@@ -326,18 +302,22 @@ class Value
 						iv2.ValType v2 = *(cast(iv2) v).pval;
 						static if(op == "/=" || op == "%=")
 							if(v2 == 0)
-							{
-								semanticError("division by zero");
-								v2 = cast(iv2.ValType) 1;
-							}
+								return semanticErrorValue("division by zero");
 						mixin("*pval " ~ op ~ "v2;");
 						return this;
 					}
 			}
-			semanticError(text("cannot assign ", op, " a ", v, " to a ", this));
-			return this;
+			return semanticErrorValue(text("cannot assign ", op, " a ", v, " to a ", this));
 		}
 	}
+}
+
+T createInitValue(T)(Value initValue)
+{
+	T v = new T;
+	if(initValue)
+		v.opBin(TOK_assign, initValue);
+	return v;
 }
 
 alias TypeTuple!(bool, byte, ubyte, short, ushort, int, uint, long, ulong, 
@@ -373,6 +353,11 @@ class ValueT(T) : Value
 	alias T ValType;
 	
 	ValType* pval;
+	
+	this()
+	{
+		pval = new ValType;
+	}
 	
 	static int getTypeIndex() { return staticIndexOf!(ValType, BasicTypes); }
 	
@@ -432,8 +417,7 @@ class ValueT(T) : Value
 			default: break;
 		}
 		
-		semanticError(text("cannot calculate ", tokenString(tokid), " on a ", this, " and a ", v));
-		return this;
+		return semanticErrorValue(text("cannot calculate ", tokenString(tokid), " on a ", this, " and a ", v));
 	}
 
 	////////////////////////////////////////////////////////////
@@ -448,8 +432,7 @@ class ValueT(T) : Value
 			}
 			else
 			{
-				semanticError(text("cannot calculate ", op, " on a ", this));
-				return this;
+				return semanticErrorValue(text("cannot calculate ", op, " on a ", this));
 			}
 		}
 	}
@@ -483,8 +466,7 @@ class ValueT(T) : Value
 			mixin(genUnOpCases());
 			default: break;
 		}
-		semanticError(text("cannot calculate ", tokenString(tokid), " on a ", this));
-		return this;
+		return semanticErrorValue(text("cannot calculate ", tokenString(tokid), " on a ", this));
 	}
 
 }
@@ -590,11 +572,20 @@ class StringValue : Value
 	
 	ValType* pval;
 
+	this()
+	{
+		pval = (new string[1]).ptr;
+	}
+	
+	this(string s)
+	{
+		pval = (new string[1]).ptr;
+		*pval = s;
+	}
+	
 	static StringValue _create(string s)
 	{
-		StringValue sv = new StringValue;
-		sv.pval = (new string[1]).ptr;
-		*sv.pval = s;
+		StringValue sv = new StringValue(s);
 		return sv;
 	}
 	
@@ -676,9 +667,9 @@ class ClassValue : Value
 
 class PointerValue : Value
 {
-	alias Value ValType;
+	alias Value ValType; 
 	
-	ValType pval;
+	ValType pval; // Value is a class type, so its a reference, i.e. a pointer to the value
 
 	static PointerValue _create(Value v)
 	{
@@ -694,6 +685,8 @@ class PointerValue : Value
 	
 	override Value opDerefPointer()
 	{
+		if(!pval)
+			return semanticErrorValue("dereferencing a null pointer");
 		return pval;
 	}
 }
@@ -725,17 +718,13 @@ class FunctionValue : Value
 	override Value opCall(Value vargs)
 	{
 		if(!functype.mInit)
-		{
-			semanticError("calling null reference");
-			return new ErrorValue;
-		}
+			return semanticErrorValue("calling null reference");
+
 		auto args = static_cast!TupleValue(vargs);
 		ParameterList params = functype.getParameters();
 		if(args.values.length != params.members.length)
-		{
-			semanticError("incorrect number of arguments");
-			return new ErrorValue;
-		}
+			return semanticErrorValue("incorrect number of arguments");
+
 		Scope sc = new Scope;
 		for(int p = 0; p < params.members.length; p++)
 		{
