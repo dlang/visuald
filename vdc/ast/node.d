@@ -271,7 +271,7 @@ class Node
 	
 	final void semantic(Scope sc)
 	{
-		logInfo("Scope(%s):semantic(%s)", cast(void*)sc, this);
+		logInfo("Scope(%s):semantic(%s=%s)", cast(void*)sc, this, cast(void*)this);
 		LogIndent indent = LogIndent(1);
 		
 		_semantic(sc);
@@ -308,6 +308,14 @@ class Node
 	{
 		members ~= m;
 		m.parent = this;
+	}
+	
+	void removeMember(int m, int cnt = 1) 
+	{
+		assert(m >= 0 && m + cnt <= members.length);
+		for (int n = m + cnt; n < members.length; n++)
+			members[n - cnt] = members[m];
+		members.length = members.length - cnt;
 	}
 	
 	void replaceMember(Node m, Node[] nm) 

@@ -5,7 +5,11 @@
 //
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
-
+//
+// interpret: return null to indicate that execution should not continue
+//            return special values for program flow control
+//            return normal values for returning values
+//
 module vdc.ast.stmt;
 
 import vdc.util;
@@ -21,7 +25,7 @@ import vdc.parser.engine;
 import std.conv;
 
 //Statement:
-//    ScopeStatement
+//    [Statement...]
 class Statement : Node
 {
 	mixin ForwardCtor!();
@@ -38,6 +42,19 @@ class Statement : Node
 	}
 }
 
+class EmptyStatement : Statement
+{
+	mixin ForwardCtor!();
+
+	override void toD(CodeWriter writer)
+	{
+		writer(";");
+		writer.nl;
+	}
+}
+
+version(obsolete)
+{
 //ScopeStatement:
 //    ;
 //    NonEmptyStatement
@@ -48,17 +65,6 @@ class Statement : Node
 class ScopeStatement : Statement
 {
 	mixin ForwardCtor!();
-}
-
-class EmptyStatement : Statement
-{
-	mixin ForwardCtor!();
-
-	override void toD(CodeWriter writer)
-	{
-		writer(";");
-		writer.nl;
-	}
 }
 
 //ScopeNonEmptyStatement:
@@ -121,7 +127,7 @@ class NonEmptyStatement : Statement
 {
 	mixin ForwardCtor!();
 }
-
+} // version(obsolete)
 
 //LabeledStatement:
 //    Identifier : NoScopeStatement
@@ -204,7 +210,7 @@ class BlockStatement : Statement
 }
 
 //ExpressionStatement:
-//    Expression ;
+//    [Expression]
 class ExpressionStatement : Statement
 {
 	mixin ForwardCtor!();
@@ -223,7 +229,7 @@ class ExpressionStatement : Statement
 }
 
 //DeclarationStatement:
-//    Declaration
+//    [Decl]
 class DeclarationStatement : Statement
 {
 	mixin ForwardCtor!();
@@ -235,13 +241,34 @@ class DeclarationStatement : Statement
 	override void _semantic(Scope sc)
 	{
 		super._semantic(sc);
-		getMember(0).addSymbols(sc);
+		auto decl = getMember!Decl(0);
+		decl.addSymbols(sc);
+		if(decl.attr & Attr_Static)
+			initValues(sc, false);
 	}
 
 	override Value interpret(Scope sc)
 	{
-		getMember(0).interpret(sc);
+		auto decl = getMember!Decl(0);
+		if(!(decl.attr & Attr_Static))
+			initValues(sc, true);
 		return null;
+	}
+	
+	void initValues(Scope sc, bool reinit)
+	{
+		auto decl = getMember!Decl(0);
+		if(decl.getFunctionBody())
+			return; // nothing to do for local functions
+		
+		auto decls = decl.getDeclarators();
+		for(int n = 0; n < decls.members.length; n++)
+		{
+			auto d = decls.getDeclarator(n);
+			if(reinit)
+				d.value = null;
+			d.interpret(sc);
+		}
 	}
 }
 
@@ -317,13 +344,28 @@ class WhileStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		for( ; ; )
+		while(getMember(0).interpret(sc).toBool())
 		{
-			Value cond = getMember(0).interpret(sc);
-			if(!cond.toBool())
-				break;
 			if(Value v = getMember(1).interpret(sc))
+			{
+				if(auto bv = cast(BreakValue)v)
+				{
+					if(!bv.ident)
+						break;
+					if(auto ls = cast(LabeledStatement)parent)
+						if(ls.ident == bv.ident)
+							break;
+				}
+				else if(auto cv = cast(ContinueValue)v)
+				{
+					if(!cv.ident)
+						continue;
+					if(auto ls = cast(LabeledStatement)parent)
+						if(ls.ident == cv.ident)
+							continue;
+				}
 				return v;
+			}
 		}
 		return null;
 	}
@@ -349,14 +391,30 @@ class DoStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		for( ; ; )
+		do
 		{
 			if(Value v = getMember(0).interpret(sc))
+			{
+				if(auto bv = cast(BreakValue)v)
+				{
+					if(!bv.ident)
+						break;
+					if(auto ls = cast(LabeledStatement)parent)
+						if(ls.ident == bv.ident)
+							break;
+				}
+				else if(auto cv = cast(ContinueValue)v)
+				{
+					if(!cv.ident)
+						continue;
+					if(auto ls = cast(LabeledStatement)parent)
+						if(ls.ident == cv.ident)
+							continue;
+				}
 				return v;
-			Value cond = getMember(1).interpret(sc);
-			if(!cond.toBool())
-				break;
+			}
 		}
+		while(getMember(1).interpret(sc).toBool());
 		return null;
 	}
 }
@@ -648,7 +706,7 @@ class ContinueStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return new ContinueValue(ident);
 	}
 }
 
@@ -690,7 +748,7 @@ class BreakStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return new BreakValue(ident);
 	}
 }
 
@@ -792,8 +850,7 @@ class WithStatement : Statement
 }
 
 //SynchronizedStatement:
-//    synchronized ScopeNonEmptyStatement
-//    synchronized ( Expression ) ScopeNonEmptyStatement
+//    [Expression_opt ScopeNonEmptyStatement]
 class SynchronizedStatement : Statement
 {
 	mixin ForwardCtor!();
@@ -815,7 +872,7 @@ class SynchronizedStatement : Statement
 	override Value interpret(Scope sc)
 	{
 		// no need to synhronize, interpreter is single-threaded
-		return super.interpret(sc);
+		return getMember(members.length - 1).interpret(sc);
 	}
 }
 
@@ -1026,7 +1083,7 @@ class PragmaStatement : Statement
 }
 
 //MixinStatement:
-//    mixin ( AssignExpression ) ;
+//    [ AssignExpression ]
 class MixinStatement : Statement
 {
 	mixin ForwardCtor!();

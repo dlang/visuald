@@ -49,6 +49,7 @@ Search:
 - button state not shown correctly after switching search type
 - crashes when searching C# project?
 - update result list after build
+- icons broken, all the same
 
 Object Browser:
 ---------------
@@ -66,6 +67,7 @@ Profile:
 ---------------
 - splitter for fan in/out windows
 - switch window layout to fan in/out side by side
+- icons broken, all the same
 
 Lexer/Parser:
 ---------------

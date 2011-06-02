@@ -279,6 +279,13 @@ class Declarator : Identifier
 	Type type;
 	Value value;
 	
+	override Declarator clone()
+	{
+		Declarator n = static_cast!Declarator(super.clone());
+		n.type = type;
+		return n;
+	}
+	
 	Expression getInitializer()
 	{
 		if(auto di = cast(DeclaratorInitializer) parent)
@@ -310,36 +317,44 @@ class Declarator : Identifier
 
 	Type applySuffixes(Type t)
 	{
-		foreach(m; members) // template parameters and function parameters and constraint
+		// template parameters and function parameters and constraint
+		for(int m = 0; m < members.length; )
 		{
-			if(auto pl = cast(ParameterList) m)
+			auto member = members[0];
+			if(auto pl = cast(ParameterList) member)
 			{
 				auto tf = new TypeFunction(pl.id, pl.span);
 				tf.mInit = this;
 				tf.addMember(t.clone());
-				tf.addMember(pl.clone());
+				removeMember(m);
+				tf.addMember(pl);
 				t = tf;
 			}
-			else if(auto saa = cast(SuffixAssocArray) m)
+			else if(auto saa = cast(SuffixAssocArray) member)
 			{
 				auto taa = new TypeAssocArray(saa.id, saa.span);
 				taa.addMember(t.clone());
-				taa.addMember(saa.getKeyType().clone());
+				removeMember(m);
+				taa.addMember(saa.getKeyType());
 				t = taa;
 			}
-			else if(auto sda = cast(SuffixDynamicArray) m)
+			else if(auto sda = cast(SuffixDynamicArray) member)
 			{
 				auto tda = new TypeDynamicArray(sda.id, sda.span);
 				tda.addMember(t.clone());
+				removeMember(m);
 				t = tda;
 			}
-			else if(auto ssa = cast(SuffixStaticArray) m)
+			else if(auto ssa = cast(SuffixStaticArray) member)
 			{
 				auto tsa = new TypeStaticArray(ssa.id, ssa.span);
 				tsa.addMember(t.clone());
-				tsa.addMember(ssa.getDimension().clone());
+				removeMember(m);
+				tsa.addMember(ssa.getDimension());
 				t = tsa;
 			}
+			else
+				m++;
 			// TODO: slice suffix? template parameters, constraint
 		}
 		return t;

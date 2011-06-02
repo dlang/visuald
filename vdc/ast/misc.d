@@ -355,7 +355,7 @@ class FunctionBody : Node
 			sc = sc.pop();
 		}
 		if(!value)
-			return new VoidValue;
+			return theVoidValue;
 		return value;
 	}
 }

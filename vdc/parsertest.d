@@ -146,6 +146,15 @@ else
 	}
 }
 
+void testSemantic(string txt, string filename = "")
+{
+	Project prj = new Project;
+	auto mod = prj.addText(filename, txt);
+	assert(mod);
+	prj.semantic();
+	assert(prj.countErrors + semanticErrors == 0);
+}
+
 version(all) unittest
 {
 	//Node n = p.parseModule("a = b + c * 4 - 6");
@@ -277,6 +286,7 @@ unittest
 	testParse(txt, "unittest7");
 }
 
+///////////////////////////////////////////////////////////////////////
 int[] ctfeLexer(string s)
 {
 	Lexer lex;
@@ -300,10 +310,101 @@ unittest
 {
 	static assert(ctfeLexer(q{int /* comment to skip */ a;}) == [ TOK_int, TOK_Identifier, TOK_semicolon ]);
 }
+///////////////////////////////////////////////////////////////////////
+unittest
+{
+	string txt = q{
+		static assert((5^15) == 10);
+		static assert(5 < 7);
+		static assert(15 > 7);
+		static assert(5 <= 7);
+		static assert(15 >= 7);
+		static assert(7 == 7);
+		static assert(5 != 7);
+		static assert(5 << 2 == 20);
+		static assert(5 >> 1 == 2);
+		static assert(5 >>> 1 == 2);
+		static assert(5 + 2 == 7);
+		static assert(5 - 2 == 3);
+		static assert(5 * 2 == 10);
+		static assert(5 / 2 == 2);
+		static assert(5 % 2 == 1);
+		static assert(3^^3 == 27);
+		static assert(-3^^2 == -9);
+		static assert((5 & 3) == 1);
+		static assert((5 | 3) == 7);
+		static assert((5 && 0) == false);
+		static assert((0 || 5) == true);
+		static assert(~0 == -1);
+		static assert(!false == true);
+		static assert((1 == 2 ? 5 : 3) == 3);
 
+		static assert(1 + 2 == 3);
+		static assert(1.0 + 2.5 == 3.5);
+		static assert(1 + 2.5 == 3.5);
+		// static assert(1 ~ 2 == 12);
+		static assert("1" ~ "2" == "12");
+		static assert("1" ~ '2' == "12");
+	};
+	testSemantic(txt, "ctfe_operators");
+}
+
+unittest
+{
+	string txt = q{
+		static assert(x == 3);
+		mixin(mix);
+		string mix = "int x = 3;";
+
+		int y = foo() + mixin("3");
+
+		int foo()
+		{
+			mixin("return 4;");
+		}
+		static assert(y == 7);
+	};
+	testSemantic(txt, "forward_mixin");
+}
+
+unittest
+{
+	string txt = q{
+		float fac(float x)
+		{
+			if(x <= 1)
+				return x;
+			float y = x - 1;
+			return x * fac(y);
+		}
+
+		static assert(fac(3) == 6);
+	};
+	testSemantic(txt, "ctfe_fac");
+}
+	
+unittest
+{
+	string txt = q{
+		static if(int.sizeof == 4)
+		{
+			alias int ssize_t;
+		}
+		else
+		{
+			alias long ssize_t;
+		}
+
+		static assert(ssize_t.stringof == "int");
+	};
+	testSemantic(txt, "static_if");
+}
+	
 	//alias 4 test;
 	//uint[test] arr;
 	//pragma(msg,arr.sizeof);
+
+///////////////////////////////////////////////////////////////////////
 
 import core.exception;
 import std.file;

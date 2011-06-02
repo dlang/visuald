@@ -11,6 +11,7 @@ module vdc.interpret;
 import vdc.util;
 import vdc.semantic;
 import vdc.lexer;
+import vdc.logger;
 
 import vdc.ast.decl;
 import vdc.ast.type;
@@ -41,10 +42,14 @@ class ErrorType : Type
 
 class Value
 {
+	bool mutable = true;
+	debug string sval;
+	
 	static T _create(T, V)(V val)
 	{
 		T v = new T;
 		*v.pval = val;
+		debug v.sval = v.toString();
 		return v;
 	}
 	
@@ -105,7 +110,11 @@ class Value
 		semanticError(text("cannot convert ", this, " to string"));
 		return "";
 	}
-
+	override string toString()
+	{
+		return "undisplayable-value";
+	}
+	
 	version(all)
 	Value opBin(int tokid, Value v)
 	{
@@ -147,7 +156,7 @@ class Value
 		return semanticErrorValue(text("cannot slice a ", this));
 	}
 	
-	Value opCall(Value args)
+	Value opCall(Scope sc, Value args)
 	{
 		return semanticErrorValue(text("cannot call a ", this));
 	}
@@ -290,6 +299,9 @@ class Value
 	{
 		Value assOp(Value v)
 		{
+			if(!mutable)
+				return semanticErrorValue(text(this, " value is not mutable"));
+				
 			TypeInfo ti = v.classinfo;
 			foreach(iv2; Types)
 			{
@@ -304,6 +316,9 @@ class Value
 							if(v2 == 0)
 								return semanticErrorValue("division by zero");
 						mixin("*pval " ~ op ~ "v2;");
+
+						logInfo("value changed by " ~ op ~ " to " ~ toString());
+						debug sval = toString();
 						return this;
 					}
 			}
@@ -367,6 +382,11 @@ class ValueT(T) : Value
 		if(!instance)
 			instance = BasicType.createType(BasicTypeTokens[getTypeIndex()]);
 		return instance;
+	}
+	
+	override string toString()
+	{
+		return T.stringof ~ " " ~ to!string(*pval);
 	}
 	
 //	pragma(msg, ValType);
@@ -471,13 +491,32 @@ class ValueT(T) : Value
 
 }
 
-
 class VoidValue : Value
 {
+	override string toString()
+	{
+		return "void";
+	}
+}
+
+VoidValue _theVoidValue;
+
+VoidValue theVoidValue()
+{
+	if(!_theVoidValue)
+	{
+		_theVoidValue = new VoidValue;
+		_theVoidValue.mutable = false;
+	}
+	return _theVoidValue;
 }
 
 class ErrorValue : Value
 {
+	override string toString()
+	{
+		return "_error_";
+	}
 }
 
 class BoolValue : ValueT!bool
@@ -589,6 +628,10 @@ class StringValue : Value
 		return sv;
 	}
 	
+	override string toString()
+	{
+		return "string";
+	}
 	override string toStr()
 	{
 		return *pval;
@@ -715,7 +758,7 @@ class FunctionValue : Value
 {
 	TypeFunction functype;
 	
-	override Value opCall(Value vargs)
+	override Value opCall(Scope sc, Value vargs)
 	{
 		if(!functype.mInit)
 			return semanticErrorValue("calling null reference");
@@ -725,21 +768,25 @@ class FunctionValue : Value
 		if(args.values.length != params.members.length)
 			return semanticErrorValue("incorrect number of arguments");
 
-		Scope sc = new Scope;
+		Value[] prevValues;
+		prevValues.length = params.members.length;
 		for(int p = 0; p < params.members.length; p++)
 		{
-			auto sym = params.getParameter(p).clone();
-			auto pd = sym.getParameterDeclarator();
-			Type type = sym.calcType(sc);
-			Value value = sym.interpret(sc);
-			value.opBin(TOK_assign, args.values[p]);
-
-			if(Declarator decl = pd.getDeclarator())
-			{
-				sc.addSymbol(decl.ident, sym);
-			}
+			auto decl = params.getParameter(p).getParameterDeclarator().getDeclarator();
+			prevValues[p] = decl.interpret(sc);
+			Value v = args.values[p];
+			Type t = prevValues[p].getType();
+			if(!t.compare(v.getType()))
+				v = t.createValue(v);
+			decl.value = v;
 		}
-		return functype.mInit.interpretCall(sc);
+		Value retVal = functype.mInit.interpretCall(sc);
+		for(int p = 0; p < params.members.length; p++)
+		{
+			auto decl = params.getParameter(p).getParameterDeclarator().getDeclarator();
+			decl.value = prevValues[p];
+		}
+		return retVal ? retVal : theVoidValue;
 	}
 }
 
@@ -747,4 +794,45 @@ class DelegateValue : Value
 {
 	Scope context;
 	FunctionValue func;
+}
+
+// program control
+class BreakValue : Value
+{
+	string ident;
+
+	this(string s)
+	{
+		ident = s;
+	}
+}
+
+class ContinueValue : Value
+{
+	string ident;
+	
+	this(string s)
+	{
+		ident = s;
+	}
+}
+
+class GotoValue : Value
+{
+	string ident;
+
+	this(string s)
+	{
+		ident = s;
+	}
+}
+
+class GotoCaseValue : Value
+{
+	string ident;
+
+	this(string s)
+	{
+		ident = s;
+	}
 }

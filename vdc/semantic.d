@@ -118,7 +118,7 @@ class Scope
 	
 	void addSymbol(string ident, Symbol s)
 	{
-		logInfo("Scope(%s).addSymbol(%s, sym=%s)", cast(void*)this, ident, s);
+		logInfo("Scope(%s).addSymbol(%s, sym %s=%s)", cast(void*)this, ident, s, cast(void*)s);
 		
 		if(auto sym = ident in symbols)
 			*sym ~= s;
@@ -150,7 +150,7 @@ class Scope
 	Node resolve(string ident, ref const(TextSpan) span, bool inParents = true)
 	{
 		Node[] n = search(ident, inParents, true);
-		logInfo("Scope(%s).search(%s) found %s", cast(void*)this, ident, n);
+		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n, n.length > 0 ? cast(void*)n[0] : null);
 		
 		if(n.length == 0)
 		{
@@ -180,21 +180,19 @@ class Project : Node
 	{
 		super(TextSpan());
 		options = new Options;
-		options.importDirs ~= r"m:\s\d\dmd2\druntime\import\";
-		options.importDirs ~= r"m:\s\d\dmd2\phobos\";
+		options.importDirs ~= r"c:\s\d\dmd2\druntime\import\";
+		options.importDirs ~= r"c:\s\d\dmd2\phobos\";
 		options.importDirs ~= r"c:\tmp\d\runnable\";
 	}
 	
 	////////////////////////////////////////////////////////////
-	Module addFile(string fname, bool imported = false)
+	Module addText(string fname, string txt, bool imported = false)
 	{
-		debug writeln(fname, ":");
 		Parser p = new Parser;
+		p.filename = fname;
 		Node n;
 		try
 		{
-			string txt = readUtf8(fname);
-			p.filename = fname;
 			n = p.parseModule(txt);
 		}
 		catch(Exception e)
@@ -222,6 +220,13 @@ class Project : Node
 		addMember(mod);
 		mModulesByName[modname] = mod;
 		return mod;
+	}
+	
+	Module addFile(string fname, bool imported = false)
+	{
+		debug writeln(fname, ":");
+		string txt = readUtf8(fname);
+		return addText(fname, txt, imported);
 	}
 	
 	Module getModule(string modname)

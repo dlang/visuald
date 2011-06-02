@@ -466,7 +466,16 @@ class UnaryExpression : Expression
 	{
 		Value v = getExpression().interpret(sc);
 version(all)
-		return v.opUn(id);
+		switch(id)
+		{
+			case TOK_plusplus:
+				return v.opBin(TOK_addass, Value.create(cast(byte)1));
+			case TOK_minusminus:
+				return v.opBin(TOK_minass, Value.create(cast(byte)1));
+						
+			default:
+				return v.opUn(id);
+		}
 else
 		switch(id)
 		{
@@ -699,7 +708,7 @@ class PostfixExpression : Expression
 					args = getMember!ArgumentList(1).interpret(sc);
 				else
 					args = new TupleValue;
-				return val.opCall(args);
+				return val.opCall(sc, args);
 				
 			case TOK_new:
 			case TOK_plusplus:
