@@ -447,15 +447,29 @@ class ForStatement : Statement
 
 	override Value interpret(Scope sc)
 	{
-		getMember(0).interpret(sc);
-		for( ; ; )
+		for(getMember(0).interpret(sc); getMember(1).interpret(sc).toBool();
+			getMember(2).interpret(sc))
 		{
-			Value cond = getMember(1).interpret(sc);
-			if(!cond.toBool())
-				break;
 			if(Value v = getMember(3).interpret(sc))
+			{
+				if(auto bv = cast(BreakValue)v)
+				{
+					if(!bv.ident)
+						break;
+					if(auto ls = cast(LabeledStatement)parent)
+						if(ls.ident == bv.ident)
+							break;
+				}
+				else if(auto cv = cast(ContinueValue)v)
+				{
+					if(!cv.ident)
+						continue;
+					if(auto ls = cast(LabeledStatement)parent)
+						if(ls.ident == cv.ident)
+							continue;
+				}
 				return v;
-			getMember(2).interpret(sc);
+			}
 		}
 		return null;
 	}

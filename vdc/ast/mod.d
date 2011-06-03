@@ -17,6 +17,7 @@ import vdc.ast.decl;
 import vdc.ast.expr;
 import vdc.ast.misc;
 import vdc.ast.aggr;
+import vdc.ast.tmpl;
 
 import vdc.parser.engine;
 import vdc.interpret;
@@ -416,6 +417,8 @@ class Pragma : Node
 
 	string ident;
 
+	TemplateArgumentList getTemplateArgumentList() { return getMember!TemplateArgumentList(0); }
+	
 	override Pragma clone()
 	{
 		Pragma n = static_cast!Pragma(super.clone());
@@ -433,10 +436,24 @@ class Pragma : Node
 	
 	override void toD(CodeWriter writer)
 	{
-		writer("pragma(", ident);
-		foreach(m; members)
-			writer(", ", m);
-		writer(")");
+		writer("pragma(", ident, ", ", getMember(0), ")");
+	}
+
+	override void _semantic(Scope sc)
+	{
+		if(ident == "msg")
+		{
+			string msg;
+			auto alst = getTemplateArgumentList();
+			alst.semantic(sc);
+			
+			foreach(m; alst.members)
+			{
+				Value val = m.interpret(sc);
+				msg ~= val.toStr();
+			}
+			semanticMessage(msg);
+		}
 	}
 }
 

@@ -619,7 +619,7 @@ class StaticAssert : Node
 			for(int a = 1; a < args.members.length; a++)
 			{
 				auto arg = args.getMember!Expression(a);
-				txt ~= arg.interpret(sc).toString();
+				txt ~= arg.interpret(sc).toStr();
 			}
 			if(txt.length == 0)
 				txt = "static assertion failed: " ~ writeD(expr);

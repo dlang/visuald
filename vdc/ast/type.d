@@ -297,6 +297,16 @@ class BasicType : Type
 	}
 }
 
+class NullType : Type
+{
+	override bool propertyNeedsParens() const { return false; }
+	
+	override void toD(CodeWriter writer)
+	{
+		writer("Null");
+	}
+}
+
 //AutoType:
 //    auto added implicitely if there is no other type specified
 class AutoType : Type
@@ -435,6 +445,17 @@ class Typeof : Type
 		if(auto identifierList = getIdentifierList())
 			writer(".", identifierList);
 	}
+	
+	override Value interpret(Scope sc)
+	{
+		if(isReturn())
+		{
+			return semanticErrorValue("typeof(return) not implemented");
+		}
+		Node n = getMember(0);
+		Type t = n.calcType(sc);
+		return new TypeValue(t);
+	}
 }
 
 // base class for types that have an indirection, i.e. pointer and arrays
@@ -548,7 +569,21 @@ class TypeDynamicArray : TypeIndirection
 					if(btype.id == TOK_char)
 						return createInitValue!StringValue(initValue);
 		
-		return super.createValue(initValue);
+		
+		auto val = new TupleValue;
+		if(int dim = initValue ? initValue.getProperty("length").toInt() : 0)
+		{
+			auto type = getType();
+			val.values.length = dim;
+			IntValue idxval = new IntValue;
+			for(int i = 0; i < dim; i++)
+			{
+				*(idxval.pval) = i;
+				Value v = initValue ? initValue.opIndex(idxval) : null;
+				val.values[i] = type.createValue(v);
+			}
+		}
+		return val;
 	}
 }
 
@@ -585,6 +620,22 @@ class TypeStaticArray : TypeIndirection
 	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[", getMember(1), "]");
+	}
+	
+	override Value createValue(Value initValue)
+	{
+		int dim = getDimension().interpret(scop).toInt();
+		auto val = new TupleValue;
+		auto type = getType();
+		val.values.length = dim;
+		IntValue idxval = new IntValue;
+		for(int i = 0; i < dim; i++)
+		{
+			*(idxval.pval) = i;
+			Value v = initValue ? initValue.opIndex(idxval) : null;
+			val.values[i] = type.createValue(v);
+		}
+		return val;
 	}
 }
 
@@ -801,6 +852,12 @@ class TypeString : TypeDynamicArray
 		return createInitValue!StringValue(initValue);
 	}
 	
+}
+
+TypeDynamicArray createTypeString()
+{
+	TextSpan span;
+	return createTypeString(span);
 }
 
 TypeDynamicArray createTypeString(ref const(TextSpan) span)

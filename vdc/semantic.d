@@ -61,6 +61,11 @@ void semanticError(string fname, string msg)
 	semanticError(fname, TextPos(), msg);
 }
 
+void semanticMessage(string msg)
+{
+	writeln(msg);
+}
+
 ErrorValue semanticErrorValue(string msg)
 {
 	semanticError(TextPos(), msg);

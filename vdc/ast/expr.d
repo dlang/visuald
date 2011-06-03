@@ -298,7 +298,7 @@ class ConditionalExpression : Expression
 	{
 		Value cond = getCondition().interpret(sc);
 		Expression e = (cond.toBool() ? getThenExpr() : getElseExpr());
-		return e.interpret(sc);
+		return e.interpret(sc); // TODO: cast to common type
 	}
 }
 
@@ -653,22 +653,24 @@ class PostfixExpression : Expression
 
 	override void _semantic(Scope sc)
 	{
-		if(id == TOK_dot)
+		switch(id)
 		{
-			auto expr = getExpression();
-			expr.semantic(sc);
-			auto type = expr.calcType(sc);
-			if(type)
-				if(auto id = getMember!Identifier(1))
-				{
-					Scope s = type.getScope();
-					Node n = s ? s.resolve(id.ident, id.span, false) : null;
-					type = n ? n.calcType(s) : null;
-				}
+			case TOK_dot:
+				auto expr = getExpression();
+				expr.semantic(sc);
+				auto type = expr.calcType(sc);
+				if(type)
+					if(auto id = getMember!Identifier(1))
+					{
+						Scope s = type.getScope();
+						Node n = s ? s.resolve(id.ident, id.span, false) : null;
+						type = n ? n.calcType(s) : null;
+					}
+				break;
+			default:
+				foreach(m; members)
+					m.semantic(sc);
 		}
-		else
-			foreach(m; members)
-				m.semantic(sc);
 	}
 	
 	override Value interpret(Scope sc)
@@ -710,9 +712,15 @@ class PostfixExpression : Expression
 					args = new TupleValue;
 				return val.opCall(sc, args);
 				
-			case TOK_new:
 			case TOK_plusplus:
+				Value v2 = val.getType().createValue(val);
+				val.opBin(TOK_addass, Value.create(cast(byte)1));
+				return v2;
 			case TOK_minusminus:
+				Value v2 = val.getType().createValue(val);
+				val.opBin(TOK_minass, Value.create(cast(byte)1));
+				return v2;
+			case TOK_new:
 			default:
 				return super.interpret(sc);
 		}
@@ -843,6 +851,7 @@ class PrimaryExpression : Expression
 		{
 			case TOK_true:  return Value.create(true);
 			case TOK_false: return Value.create(false);
+			case TOK_null:  return new NullValue;
 			default:        return super.interpret(sc);
 		}
 	}
@@ -861,6 +870,8 @@ class ArrayLiteral : Expression
 
 	override PREC getPrecedence() { return PREC.primary; }
 
+	ArgumentList getArgumentList() { return getMember!ArgumentList(0); }
+		
 	override void _semantic(Scope sc)
 	{
 		foreach(m; members)
@@ -872,6 +883,16 @@ class ArrayLiteral : Expression
 		writer("[");
 		writer.writeArray(members);
 		writer("]");
+	}
+
+	override Value interpret(Scope sc)
+	{
+		Value val;
+		if(auto args = getArgumentList())
+			val = args.interpret(sc);
+		else
+			val = new TupleValue;
+		return val;
 	}
 }
 
@@ -886,6 +907,10 @@ class VoidInitializer : Expression
 	override void toD(CodeWriter writer)
 	{
 		writer("void");
+	}
+	override Value interpret(Scope sc)
+	{
+		return theVoidValue();
 	}
 }
 

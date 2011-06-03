@@ -49,7 +49,7 @@ class Value
 	{
 		T v = new T;
 		*v.pval = val;
-		debug v.sval = v.toString();
+		debug v.sval = v.toStr();
 		return v;
 	}
 	
@@ -112,7 +112,7 @@ class Value
 	}
 	override string toString()
 	{
-		return "undisplayable-value";
+		return text(getType(), ":", toStr());
 	}
 	
 	version(all)
@@ -317,8 +317,8 @@ class Value
 								return semanticErrorValue("division by zero");
 						mixin("*pval " ~ op ~ "v2;");
 
-						logInfo("value changed by " ~ op ~ " to " ~ toString());
-						debug sval = toString();
+						logInfo("value changed by " ~ op ~ " to " ~ toStr());
+						debug sval = toStr();
 						return this;
 					}
 			}
@@ -384,21 +384,23 @@ class ValueT(T) : Value
 		return instance;
 	}
 	
-	override string toString()
+	override string toStr()
 	{
-		return T.stringof ~ " " ~ to!string(*pval);
+		return to!string(*pval);
 	}
 	
 //	pragma(msg, ValType);
 //	pragma(msg, text(" compiles?", __traits(compiles, val ? true : false )));
 	
+	// pragma(msg, "toBool " ~ ValType.stringof ~ (__traits(compiles, *pval ? true : false) ? " compiles" : " fails"));
 	static if(__traits(compiles, *pval ? true : false))
 		override bool toBool()
 		{
 			return *pval ? true : false;
 		}
 
-	static if(__traits(compiles, (){ long lng = *pval; }))
+	// pragma(msg, "toLong " ~ ValType.stringof ~ (__traits(compiles, function long () { ValType v; return v; }) ? " compiles" : " fails"));
+	static if(__traits(compiles, function long () { ValType v; return v; } ))
 		override long toLong()
 		{
 			return *pval;
@@ -493,7 +495,7 @@ class ValueT(T) : Value
 
 class VoidValue : Value
 {
-	override string toString()
+	override string toStr()
 	{
 		return "void";
 	}
@@ -513,9 +515,27 @@ VoidValue theVoidValue()
 
 class ErrorValue : Value
 {
-	override string toString()
+	override string toStr()
 	{
 		return "_error_";
+	}
+	
+	override Type getType()
+	{
+		return Singleton!ErrorType.get();
+	}
+}
+
+class NullValue : Value
+{
+	override string toStr()
+	{
+		return "null";
+	}
+
+	override Type getType()
+	{
+		return Singleton!NullType.get();
 	}
 }
 
@@ -605,6 +625,17 @@ class CRealValue : ValueT!creal
 
 alias TypeTuple!(CharValue, WCharValue, DCharValue, StringValue) StringTypeValues;
 
+class DynArrayValue : Value
+{
+	Type type;
+	Value[] values;
+
+	this(Type t)
+	{
+		type = t;
+	}
+}
+
 class StringValue : Value
 {
 	alias string ValType;
@@ -628,10 +659,11 @@ class StringValue : Value
 		return sv;
 	}
 	
-	override string toString()
+	override Type getType()
 	{
-		return "string";
+		return createTypeString();
 	}
+	
 	override string toStr()
 	{
 		return *pval;
@@ -668,17 +700,13 @@ class StringValue : Value
 			default:           return super.opBin(tokid, v);
 		}
 	}
-}
 
-class DynArrayValue : Value
-{
-	Type type;
-	size_t count;
-	Value firstVal;
-
-	this(Type t)
+	override Value opIndex(Value v)
 	{
-		type = t;
+		int idx = v.toInt();
+		if(idx < 0 || idx >= (*pval).length)
+			return semanticErrorValue(text("index ", idx, " out of bounds on ", *pval));
+		return create((*pval)[idx]);
 	}
 }
 
@@ -747,11 +775,46 @@ class TypeValue : Value
 	{
 		return type;
 	}
+
+	override string toStr()
+	{
+		return writeD(type);
+	}
 }
 
 class TupleValue : Value
 {
 	Value[] values;
+
+	override Value opIndex(Value v)
+	{
+		int idx = v.toInt();
+		if(idx < 0 || idx >= values.length)
+			return semanticErrorValue(text("index ", idx, " out of bounds on value tuple"));
+		return values[idx];
+	}
+
+	override Value opBin(int tokid, Value v)
+	{
+		switch(tokid)
+		{
+			case TOK_assign:
+			case TOK_tilde:
+			case TOK_catass:
+			default:           return super.opBin(tokid, v);
+		}
+	}
+
+	override Value getProperty(string ident)
+	{
+		switch(ident)
+		{
+			case "length":
+				return create(values.length);
+			default:
+				return super.getProperty(ident);
+		}
+	}
 }
 
 class FunctionValue : Value
@@ -797,40 +860,37 @@ class DelegateValue : Value
 }
 
 // program control
-class BreakValue : Value
+class ProgramControlValue : Value
 {
 	string ident;
+}
 
+class BreakValue : ProgramControlValue
+{
 	this(string s)
 	{
 		ident = s;
 	}
 }
 
-class ContinueValue : Value
+class ContinueValue : ProgramControlValue 
 {
-	string ident;
-	
 	this(string s)
 	{
 		ident = s;
 	}
 }
 
-class GotoValue : Value
+class GotoValue : ProgramControlValue 
 {
-	string ident;
-
 	this(string s)
 	{
 		ident = s;
 	}
 }
 
-class GotoCaseValue : Value
+class GotoCaseValue : ProgramControlValue 
 {
-	string ident;
-
 	this(string s)
 	{
 		ident = s;

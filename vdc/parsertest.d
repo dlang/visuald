@@ -400,6 +400,28 @@ unittest
 	testSemantic(txt, "static_if");
 }
 	
+unittest
+{
+	string txt = q{
+		string foo()
+		{
+			string s = "";
+			char i = 'A';
+			while(true)
+			{
+				s ~= i;
+				++i;
+				if(i > 'K')
+					break;
+			}
+			return s;
+		}
+
+		static assert(foo() == "ABCDEFGHIJK");
+	};
+	testSemantic(txt, "while");
+}
+	
 	//alias 4 test;
 	//uint[test] arr;
 	//pragma(msg,arr.sizeof);
