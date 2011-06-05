@@ -13,6 +13,7 @@ import vdc.semantic;
 import vdc.lexer;
 import vdc.ast.expr;
 import vdc.ast.type;
+import vdc.ast.mod;
 import vdc.logger;
 import vdc.interpret;
 
@@ -245,7 +246,8 @@ class Node
 		if(semanticState >= SemanticState.AddingSymbols)
 			return;
 		
-		expandNonScopeBlocks(sc);
+		scop = sc;
+		expandNonScopeBlocks(scop);
 
 		semanticState = SemanticState.AddedSymbols;
 	}
@@ -271,6 +273,8 @@ class Node
 	
 	final void semantic(Scope sc)
 	{
+		assert(sc);
+		
 		logInfo("Scope(%s):semantic(%s=%s)", cast(void*)sc, this, cast(void*)this);
 		LogIndent indent = LogIndent(1);
 		
@@ -293,12 +297,12 @@ class Node
 		return null;
 	}
 	
-	Type calcType(Scope sc)
+	Type calcType()
 	{
 		return semanticErrorType(text(this, ".calcType not implemented"));
 	}
 
-	Value interpret(Scope sc)
+	Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, ".interpret not implemented"));
 	}
@@ -341,6 +345,18 @@ class Node
 		return static_cast!T(members[idx]);
 	}
 
+	Module getModule()
+	{
+		Node n = this;
+		while(n)
+		{
+			if(n.scop)
+				return n.scop.mod;
+			n = n.parent;
+		}
+		return null;
+	}
+	
 	////////////////////////////////////////////////////////////
 	void extendSpan(ref const(TextSpan) _span)
 	{

@@ -123,17 +123,6 @@ class Module : Node
 		return getName(basename(filename));
 	}
 
-	static Module getModule(Node n)
-	{
-		while(n)
-		{
-			if(n.scop)
-				return n.scop.mod;
-			n = n.parent;
-		}
-		return null;
-	}
-	
 	void initScope()
 	{
 		if(!scop)
@@ -449,7 +438,7 @@ class Pragma : Node
 			
 			foreach(m; alst.members)
 			{
-				Value val = m.interpret(sc);
+				Value val = m.interpret(nullContext);
 				msg ~= val.toStr();
 			}
 			semanticMessage(msg);
@@ -633,7 +622,7 @@ class MixinDeclaration : Node
 	
 	override Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
 	{
-		Value v = getMember(0).interpret(sc);
+		Value v = getMember(0).interpret(sc.ctx);
 		string s = v.toStr();
 		Parser parser = new Parser;
 		return parser.parseDeclarations(s, span);

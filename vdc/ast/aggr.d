@@ -11,6 +11,7 @@ module vdc.ast.aggr;
 import vdc.util;
 import vdc.lexer;
 import vdc.semantic;
+import vdc.interpret;
 
 import vdc.ast.node;
 import vdc.ast.mod;
@@ -40,7 +41,6 @@ class Aggregate : Type
 	Constraint getConstraint() { return hasConstraint ? getMember!Constraint(1) : null; }
 	StructBody getBody() { return hasBody ? getMember!StructBody(members.length - 1) : null; }
 
-	public /* clone and compare */ { 
 	override Aggregate clone()
 	{
 		Aggregate n = static_cast!Aggregate(super.clone());
@@ -64,8 +64,7 @@ class Aggregate : Type
 			&& tn.hasConstraint == hasConstraint
 			&& tn.ident == ident;
 	}
-	}
-	public /* writer */ {
+
 	void bodyToD(CodeWriter writer)
 	{
 		if(auto bdy = getBody())
@@ -86,7 +85,6 @@ class Aggregate : Type
 			writer(tpl);
 		if(auto constraint = getConstraint())
 			writer(constraint);
-	}
 	}
 	
 	override void _semantic(Scope sc)
@@ -122,7 +120,6 @@ class Struct : Aggregate
 		ident = tok.txt;
 	}
 
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
@@ -133,6 +130,110 @@ class Struct : Aggregate
 		tmplToD(writer);
 		bodyToD(writer);
 	}
+
+	int[string] mapName2Value;
+	Declarator[string] mapName2Method;
+	StructValue initVal;
+	TypeValue typeVal;
+	
+	StructValue _initValue()
+	{
+		StructValue sv = new StructValue(this);
+		getBody().iterateDeclarators(false, false, (Declarator decl) { 
+			Type type = decl.calcType();
+			Value value;
+			if(auto expr = decl.getInitializer())
+				value = type.createValue(expr.interpret(sv));
+			else
+				value = type.createValue(null);
+
+			mapName2Value[decl.ident] = sv.values.length;
+			sv.values ~= value;
+		});
+		return sv;
+	}
+	
+	Value[] _initValues(Value[] initValues)
+	{
+		if(!initVal)
+		{
+			initVal = _initValue();
+			_initMethods();
+		}
+		
+		Value[] values;
+		getBody().iterateDeclarators(false, false, (Declarator decl) {
+			int n = values.length;
+			Value v = n < initValues.length ? initValues[n] : initVal.values[n];
+			Type t = decl.calcType();
+			v = t.createValue(v);
+			values ~= v;
+		});
+		return values;
+	}
+	
+	void _initMethods()
+	{
+		getBody().iterateDeclarators(false, true, (Declarator decl) {
+			mapName2Method[decl.ident] = decl;
+		});
+	}
+	
+	override Value createValue(Value initValue)
+	{
+		if(auto bdy = getBody())
+		{
+			StructValue sv = new StructValue(this);
+			Value[] initValues;
+			if(initValue)
+				if(auto tv = cast(TupleValue) initValue)
+					initValues = tv.values;
+				else
+					semanticError(text("cannot initialize a struct from ", initValue));
+			sv.values = _initValues(initValues);
+			return sv;
+		}
+		return semanticErrorValue(text("cannot create value of incomplete type ", ident));
+	}
+
+	Value getProperty(StructValue sv, string ident)
+	{
+		if(int* pidx = ident in mapName2Value)
+			return sv.values[*pidx];
+		if(auto pdecl = ident in mapName2Method)
+		{
+			Value v = pdecl.calcType().createValue(null);
+			auto dgv = static_cast!DelegateValue(v);
+			dgv.context = sv;
+			return dgv;
+		}
+		return null;
+	}
+	
+	override Value interpretProperty(string prop)
+	{
+		if(Value v = getStaticProperty(prop))
+			return v;
+		return super.interpretProperty(prop);
+	}
+
+	Value getStaticProperty(string ident)
+	{
+		if(!scop)
+			return semanticErrorValue(text(this, ": no scope set in lookup of ", ident));
+	
+		TextSpan span;
+		Node n = scop.resolve(ident, span, false);
+		if(!n)
+			return null;
+		return n.interpret(nullContext);
+	}
+
+	override Value interpret(Context sc)
+	{
+		if(!typeVal)
+			typeVal = new TypeValue(this);
+		return typeVal;
 	}
 }
 
@@ -151,7 +252,6 @@ class Union : Aggregate
 		ident = tok.txt;
 	}
 
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
@@ -161,7 +261,6 @@ class Union : Aggregate
 		writer.writeIdentifier(ident);
 		tmplToD(writer);
 		bodyToD(writer);
-	}
 	}
 }
 
@@ -177,7 +276,6 @@ class InheritingAggregate : Aggregate
 		baseClasses ~= bc;
 	}
 	
-	public /* clone and compare */ { 
 	override InheritingAggregate clone()
 	{
 		InheritingAggregate n = static_cast!InheritingAggregate(super.clone());
@@ -187,7 +285,6 @@ class InheritingAggregate : Aggregate
 				n.baseClasses ~= static_cast!BaseClass(n.members[m]);
 		
 		return n;
-	}
 	}
 	
 	override bool convertableFrom(Type from, ConversionFlags flags)
@@ -206,7 +303,6 @@ class InheritingAggregate : Aggregate
 		return false;
 	}
 	
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		// class/interface written by derived class
@@ -221,7 +317,6 @@ class InheritingAggregate : Aggregate
 				writer(", ", bc);
 		}
 		bodyToD(writer);
-	}
 	}
 }
 
@@ -240,7 +335,6 @@ class Class : InheritingAggregate
 		ident = tok.txt;
 	}
 
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
@@ -248,7 +342,6 @@ class Class : InheritingAggregate
 		
 		writer("class ");
 		super.toD(writer);
-	}
 	}
 }
 
@@ -275,7 +368,6 @@ class Intrface : InheritingAggregate
 		ident = tok.txt;
 	}
 
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		if(writer.writeReferencedOnly && semanticSearches == 0)
@@ -283,7 +375,6 @@ class Intrface : InheritingAggregate
 		
 		writer(TOK_interface, " ");
 		super.toD(writer);
-	}
 	}
 }
 
@@ -313,7 +404,6 @@ class BaseClass : Node
 		return null;
 	}
 
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		// do not output protection in anonymous classes, and public is the default anyway
@@ -326,7 +416,6 @@ class BaseClass : Node
 	{
 		writer("public ", getMember(0)); // protection diffent from C
 	}
-	}
 }
 
 // StructBody:
@@ -335,7 +424,6 @@ class StructBody : Node
 {
 	mixin ForwardCtor!();
 	
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("{");
@@ -348,6 +436,57 @@ class StructBody : Node
 		writer("}");
 		writer.nl();
 	}
+	
+	void initStatics(Scope sc)
+	{
+		foreach(m; members)
+		{
+			Decl decl = cast(Decl) m;
+			if(!decl)
+				continue;
+			if(!(decl.attr & Attr_Static))
+				continue;
+			if(decl.isAlias || decl.getFunctionBody())
+				continue; // nothing to do for local functions
+			
+			auto decls = decl.getDeclarators();
+			for(int n = 0; n < decls.members.length; n++)
+			{
+				auto d = decls.getDeclarator(n);
+				d.interpret(nullContext);
+			}
+		}
+	}
+	
+	void iterateDeclarators(bool wantStatics, bool wantFuncs, void delegate(Declarator d) dg)
+	{
+		foreach(m; members)
+		{
+			Decl decl = cast(Decl) m;
+			if(!decl)
+				continue;
+			if(decl.isAlias)
+				continue; // nothing to do for aliases
+			bool isStatic = (decl.attr & Attr_Static) != 0;
+			if(isStatic != wantStatics)
+				continue;
+			bool isFunc = decl.getFunctionBody() !is null;
+			if(isFunc != wantFuncs)
+				continue; // nothing to do for aliases and local functions
+
+			auto decls = decl.getDeclarators();
+			for(int n = 0; n < decls.members.length; n++)
+			{
+				auto d = decls.getDeclarator(n);
+				dg(d);
+			}
+		}
+	}
+	
+	override void _semantic(Scope sc)
+	{
+		super._semantic(sc);
+		initStatics(sc);
 	}
 	
 	override void addSymbols(Scope sc)
@@ -370,7 +509,6 @@ class Constructor : Node
 	Constraint getConstraint() { return isTemplate() && members.length > 3 ? getMember!Constraint(2) : null; }
 	FunctionBody getBody() { return getMember!FunctionBody(members.length - 1); }
 	
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("this");
@@ -394,7 +532,6 @@ class Constructor : Node
 			writer.nl;
 		}
 	}
-	}
 }
 
 //Destructor:
@@ -405,7 +542,6 @@ class Destructor : Node
 
 	FunctionBody getBody() { return getMember!FunctionBody(0); }
 	
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("~this()");
@@ -420,7 +556,6 @@ class Destructor : Node
 			writer.nl;
 		}
 	}
-	}
 }
 
 //Invariant:
@@ -429,7 +564,6 @@ class Invariant : Node
 {
 	mixin ForwardCtor!();
 
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("invariant()");
@@ -444,7 +578,6 @@ class Invariant : Node
 			writer.nl;
 		}
 	}
-	}
 }
 
 //ClassAllocator:
@@ -453,13 +586,11 @@ class ClassAllocator : Node
 {
 	mixin ForwardCtor!();
 
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("new", getMember(0));
 		writer.nl;
 		writer(getMember(1));
-	}
 	}
 }
 
@@ -469,13 +600,11 @@ class ClassDeallocator : Node
 {
 	mixin ForwardCtor!();
 
-	public /* writer */ {
 	override void toD(CodeWriter writer)
 	{
 		writer("delete", getMember(0));
 		writer.nl;
 		writer(getMember(1));
-	}
 	}
 }
 
@@ -495,7 +624,6 @@ class AliasThis : Node
 		ident = tok.txt;
 	}
 	
-	public /* clone and compare */ { 
 	override AliasThis clone()
 	{
 		AliasThis n = static_cast!AliasThis(super.clone());
@@ -511,15 +639,13 @@ class AliasThis : Node
 		auto tn = static_cast!(typeof(this))(n);
 		return tn.ident == ident;
 	}
-	}
-	public /* writer */ {
+
 	override void toD(CodeWriter writer)
 	{
 		writer("alias ");
 		writer.writeIdentifier(ident);
 		writer(" this;");
 		writer.nl;
-	}
 	}
 }
 

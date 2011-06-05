@@ -845,9 +845,8 @@ private:
 
 				TBBUTTON initButton(int id, ubyte style)
 				{
-					TBBUTTON btn = TBBUTTON(id < 0 ? IDR_LAST - IDR_FIRST + 1 : id - IDR_FIRST, 
-					                        id, TBSTATE_ENABLED, style, [0,0], 0, 0);
-					return btn;
+					return TBBUTTON(id < 0 ? IDR_LAST - IDR_FIRST + 1 : id - IDR_FIRST, 
+					                id, TBSTATE_ENABLED, style, [0,0], 0, 0);
 				}
 				static const TBBUTTON s_tbb[] = [
 					initButton(IDR_ALTERNATEROWCOLOR, BTNS_CHECK),

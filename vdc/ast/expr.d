@@ -91,7 +91,7 @@ class Expression : Node
 
 	abstract PREC getPrecedence();
 
-	override Type calcType(Scope sc)
+	override Type calcType()
 	{
 		if(!type)
 			return semanticErrorType(text(this, ".calcType not implemented"));
@@ -128,18 +128,18 @@ class BinaryExpression : Expression
 		writeExpr(writer, exprR, parenR);
 	}
 
-	override Type calcType(Scope sc)
+	override Type calcType()
 	{
 		if(!type)
 		{
-			Type typeL = getLeftExpr().calcType(sc);
-			Type typeR = getRightExpr().calcType(sc);
+			Type typeL = getLeftExpr().calcType();
+			Type typeR = getRightExpr().calcType();
 			return semanticErrorType(text(this, "calcType on binary not implemented"));
 		}
 		return type;
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Value vL = getLeftExpr().interpret(sc);
 		Value vR = getRightExpr().interpret(sc);
@@ -294,7 +294,7 @@ class ConditionalExpression : Expression
 		writeExpr(writer, elseExpr, elseParen);
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Value cond = getCondition().interpret(sc);
 		Expression e = (cond.toBool() ? getThenExpr() : getElseExpr());
@@ -309,7 +309,7 @@ class OrOrExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Value vL = getLeftExpr().interpret(sc);
 		if(vL.toBool())
@@ -326,7 +326,7 @@ class AndAndExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Value vL = getLeftExpr().interpret(sc);
 		if(!vL.toBool())
@@ -462,7 +462,7 @@ class UnaryExpression : Expression
 		getExpression().semantic(sc);
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Value v = getExpression().interpret(sc);
 version(all)
@@ -658,13 +658,15 @@ class PostfixExpression : Expression
 			case TOK_dot:
 				auto expr = getExpression();
 				expr.semantic(sc);
-				auto type = expr.calcType(sc);
+				auto type = expr.calcType();
 				if(type)
 					if(auto id = getMember!Identifier(1))
 					{
+						if(auto pt = cast(TypePointer)type)
+							type = pt.getType().calcType();
 						Scope s = type.getScope();
 						Node n = s ? s.resolve(id.ident, id.span, false) : null;
-						type = n ? n.calcType(s) : null;
+						type = n ? n.calcType() : null;
 					}
 				break;
 			default:
@@ -673,7 +675,7 @@ class PostfixExpression : Expression
 		}
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Expression expr = getExpression();
 		Value val = expr.interpret(sc);
@@ -682,7 +684,8 @@ class PostfixExpression : Expression
 			case TOK_dot:
 				auto id = getMember!Identifier(1);
 				assert(id);
-				return val.getProperty(id.ident);
+				Value v = val.getProperty(id.ident);
+				return v;
 				
 			case TOK_lbracket:
 				if(members.length == 2)
@@ -780,7 +783,7 @@ class ArgumentList : Node
 			m.semantic(sc);
 	}
 
-	override TupleValue interpret(Scope sc)
+	override TupleValue interpret(Context sc)
 	{
 		TupleValue args = new TupleValue;
 		foreach(m; members)
@@ -845,7 +848,7 @@ class PrimaryExpression : Expression
 
 	override PREC getPrecedence() { return PREC.primary; }
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		switch(id)
 		{
@@ -885,7 +888,7 @@ class ArrayLiteral : Expression
 		writer("]");
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Value val;
 		if(auto args = getArgumentList())
@@ -908,7 +911,7 @@ class VoidInitializer : Expression
 	{
 		writer("void");
 	}
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return theVoidValue();
 	}
@@ -964,6 +967,10 @@ class KeyValuePair : BinaryExpression
 //    delegate Type_opt ParameterAttributes_opt FunctionBody
 //    ParameterAttributes FunctionBody
 //    FunctionBody
+//
+//ParameterAttributes:
+//    Parameters
+//    Parameters FunctionAttributes
 class FunctionLiteral : Expression
 {
 	mixin ForwardCtor!();
@@ -986,6 +993,8 @@ class FunctionLiteral : Expression
 	}
 }
 
+//StructLiteral:
+//    [ArrayValueList]
 class StructLiteral : Expression
 {
 	mixin ForwardCtor!();
@@ -996,12 +1005,13 @@ class StructLiteral : Expression
 	{
 		writer("{ ", getMember(0), " }");
 	}
+
+	override Value interpret(Context sc)
+	{
+		return getMember(0).interpret(sc);
+	}
 }
 
-//ParameterAttributes:
-//    Parameters
-//    Parameters FunctionAttributes
-//
 //AssertExpression:
 //    assert ( AssignExpression )
 //    assert ( AssignExpression , AssignExpression )
@@ -1021,6 +1031,17 @@ class AssertExpression : Expression
 		if(Expression msg = getMessage())
 			writer(", ", msg);
 		writer(")");
+	}
+
+	override Value interpret(Context sc)
+	{
+		bool cond = getExpression().interpret(sc).toBool();
+		if(!cond)
+		{
+			string msg = getMessage().interpret(sc).toStr();
+			return semanticErrorValue(msg);
+		}
+		return theVoidValue;
 	}
 }
 
@@ -1046,21 +1067,21 @@ class MixinExpression : Expression
 		if(resolved)
 			return;
 		
-		Value v = getMember(0).interpret(sc);
+		Value v = getMember(0).interpret(nullContext);
 		string s = v.toStr();
 		Parser parser = new Parser;
 		Node n = parser.parseExpression(s, span);
 		resolved = cast(Expression) n;
 	}
 
-	override Type calcType(Scope sc)
+	override Type calcType()
 	{
 		if(resolved)
-			return resolved.calcType(sc);
+			return resolved.calcType();
 		return new ErrorType;
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		if(resolved)
 			return resolved.interpret(sc);
@@ -1231,8 +1252,8 @@ class IdentifierExpression : PrimaryExpression
 	{
 		if(resolved)
 		{
-			Module thisMod = Module.getModule(this);
-			Module thatMod = Module.getModule(resolved);
+			Module thisMod = getModule();
+			Module thatMod = resolved.getModule();
 			if(global || thisMod is thatMod)
 			{
 				thatMod.writeNamespace(writer);
@@ -1244,27 +1265,29 @@ class IdentifierExpression : PrimaryExpression
 	override void _semantic(Scope sc)
 	{
 		if(global)
-			sc = Module.getModule(this).scop;
+			scop = getModule().scop;
+		else
+			scop = sc;
 		
 		string ident = getIdentifier().ident;
-		resolved = sc.resolve(ident, span);
+		resolved = scop.resolve(ident, span);
 	}
 	
-	override Type calcType(Scope sc)
+	override Type calcType()
 	{
 		if(type)
 			return type;
 		if(resolved)
-			type = resolved.calcType(sc);
+			type = resolved.calcType();
 		if(!type)
 			return semanticErrorType("cannot determine type");
 		return type;
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		if(!resolved)
-			semantic(sc);
+			semantic(getScope());
 		if(!resolved)
 			return new ErrorValue;
 		return resolved.interpret(sc);
@@ -1361,7 +1384,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		type.semantic(sc);
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		if(lng || value >= 0x80000000)
 			if(unsigned)
@@ -1464,7 +1487,7 @@ class FloatLiteralExpression : PrimaryExpression
 			&& tn.lng == lng;
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		if(complex)
 			if(lng)
@@ -1556,7 +1579,7 @@ class StringLiteralExpression : PrimaryExpression
 		type = createTypeString(span);
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return Value.create(rawtxt);
 	}
@@ -1595,7 +1618,7 @@ class CharacterLiteralExpression : PrimaryExpression
 		return tn.txt == txt;
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		if(txt.length < 3)
 			return Value.create(char.init);
@@ -1638,7 +1661,7 @@ class TypeProperty : PrimaryExpression
 			writer(getType(), ".", getProperty());
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return getType().interpretProperty(getProperty().ident);
 	}

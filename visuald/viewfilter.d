@@ -331,7 +331,7 @@ version(tip)
 			case ECMD_BACKSPACE:
 				if(mCodeWinMgr.mSource.IsCompletorActive())
 					initCompletion();
-				// fall through
+				goto case;
 			case ECMD_UP:
 			case ECMD_DOWN:
 				if(mCodeWinMgr.mSource.IsMethodTipActive())

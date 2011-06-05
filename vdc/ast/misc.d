@@ -330,29 +330,21 @@ class FunctionBody : Node
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Value value;
 		if(inStatement)
 		{
-			sc = enterScope(inScop, sc);
 			inStatement.interpret(sc);
-			sc = sc.pop();
 		}
 		if(bodyStatement)
 		{
-			sc = enterScope(sc);
 			value = bodyStatement.interpret(sc);
-			sc = sc.pop();
 		}
 		if(outStatement)
 		{
 			// TODO: put into scope of inStatement?
-			sc = enterScope(outScop, sc);
-			if(outIdentifier.length)
-				sc.addSymbol(outIdentifier, this); // TODO: create Symbol for outIdentifier
 			outStatement.interpret(sc);
-			sc = sc.pop();
 		}
 		if(!value)
 			return theVoidValue;
@@ -484,10 +476,11 @@ class VersionSpecification : Node
 	
 	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
+		auto mod = sc.mod;
 		if(isIdentifier())
-			sc.mod.specifyVersion(getIdentifier(), span.start);
+			mod.specifyVersion(getIdentifier(), span.start);
 		else
-			sc.mod.specifyVersion(getInteger());
+			mod.specifyVersion(getInteger());
 		return [];
 	}
 }
@@ -505,10 +498,11 @@ class DebugSpecification : Node
 
 	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
+		auto mod = sc.mod;
 		if(isIdentifier())
-			sc.mod.specifyDebug(getIdentifier(), span.start);
+			mod.specifyDebug(getIdentifier(), span.start);
 		else
-			sc.mod.specifyDebug(getInteger());
+			mod.specifyDebug(getInteger());
 		return [];
 	}
 }
@@ -530,13 +524,15 @@ class VersionCondition : Condition
 		if(members.length == 0)
 		{
 			assert(id == TOK_unittest);
-			if(auto prj = sc.mod.getProject())
-				return prj.options.unittestOn;
+			if(auto mod = getModule())
+				if(auto prj = mod.getProject())
+					return prj.options.unittestOn;
 			return false;
 		}
+		auto mod = getModule();
 		if(isIdentifier())
-			return sc.mod.versionEnabled(getIdentifier(), span.start);
-		return sc.mod.versionEnabled(getInteger());
+			return mod.versionEnabled(getIdentifier(), span.start);
+		return mod.versionEnabled(getInteger());
 	}
 	
 	override void toD(CodeWriter writer)
@@ -558,11 +554,12 @@ class DebugCondition : Condition
 
 	override bool evalCondition(Scope sc)
 	{
+		auto mod = getModule();
 		if(members.length == 0)
-			return sc.mod.debugEnabled();
+			return mod.debugEnabled();
 		if(isIdentifier())
-			return sc.mod.versionEnabled(getIdentifier(), span.start);
-		return sc.mod.debugEnabled(getInteger());
+			return mod.versionEnabled(getIdentifier(), span.start);
+		return mod.debugEnabled(getInteger());
 	}
 	
 	override void toD(CodeWriter writer)
@@ -580,7 +577,7 @@ class StaticIfCondition : Condition
 
 	override bool evalCondition(Scope sc)
 	{
-		return getMember!Expression(0).interpret(sc).toBool();
+		return getMember!Expression(0).interpret(sc.ctx).toBool();
 	}
 	
 	override void toD(CodeWriter writer)
@@ -613,13 +610,13 @@ class StaticAssert : Node
 	{
 		auto args = getArgumentList();
 		auto expr = args.getMember!Expression(0);
-		if(!expr.interpret(sc).toBool())
+		if(!expr.interpret(nullContext).toBool())
 		{
 			string txt;
 			for(int a = 1; a < args.members.length; a++)
 			{
 				auto arg = args.getMember!Expression(a);
-				txt ~= arg.interpret(sc).toStr();
+				txt ~= arg.interpret(nullContext).toStr();
 			}
 			if(txt.length == 0)
 				txt = "static assertion failed: " ~ writeD(expr);

@@ -222,6 +222,7 @@ class NonEmptyStatement : Statement
 				return AttributeSpecifier.enter(p);
 				
 			mixin(case_TOKs_BasicTypeX);
+				goto case;
 			case TOK_deprecated:
 			// case TOK_static:
 			// case TOK_final:

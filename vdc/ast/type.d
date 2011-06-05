@@ -34,7 +34,7 @@ class BuiltinSymbol(T) : Symbol
 		value = val;
 	}
 	
-	override Type calcType(Scope sc)
+	override Type calcType()
 	{
 		return type;
 	}
@@ -90,7 +90,7 @@ class Type : Node
 		super._semantic(sc);
 	}
 
-	override Type calcType(Scope sc)
+	override Type calcType()
 	{
 		return this;
 	}
@@ -407,12 +407,12 @@ class IdentifierType : Type
 	
 	IdentifierList getIdentifierList() { return getMember!IdentifierList(0); }
 	
-	override Type calcType(Scope sc)
+	override Type calcType()
 	{
 		auto idlist = getIdentifierList();
-		idlist.semantic(sc);
+		idlist.semantic(getScope());
 		if(idlist.resolved)
-			return idlist.resolved.calcType(sc);
+			return idlist.resolved.calcType();
 
 		return semanticErrorType("cannot resolve type");
 	}
@@ -446,14 +446,14 @@ class Typeof : Type
 			writer(".", identifierList);
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		if(isReturn())
 		{
 			return semanticErrorValue("typeof(return) not implemented");
 		}
 		Node n = getMember(0);
-		Type t = n.calcType(sc);
+		Type t = n.calcType();
 		return new TypeValue(t);
 	}
 }
@@ -503,7 +503,7 @@ class TypePointer : TypeIndirection
 	{
 		return createInitValue!PointerValue(initValue);
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "*");
@@ -557,6 +557,7 @@ class TypeDynamicArray : TypeIndirection
 		{
 			scop = createTypeScope();
 			scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
+			scop.parent = super.getScope();
 		}
 		return scop;
 	}
@@ -613,8 +614,19 @@ class TypeStaticArray : TypeIndirection
 		type.semantic(sc);
 		auto typeinfo_arr = new TypeInfo_StaticArray;
 		typeinfo_arr.value = type.typeinfo;
-		typeinfo_arr.len = getDimension().interpret(sc).toInt();
+		typeinfo_arr.len = getDimension().interpret(sc.ctx).toInt();
 		typeinfo = typeinfo_arr;
+	}
+
+	override Scope getScope()
+	{
+		if(!scop)
+		{
+			scop = createTypeScope();
+			scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
+			scop.parent = super.getScope();
+		}
+		return scop;
 	}
 
 	override void toD(CodeWriter writer)
@@ -624,7 +636,7 @@ class TypeStaticArray : TypeIndirection
 	
 	override Value createValue(Value initValue)
 	{
-		int dim = getDimension().interpret(scop).toInt();
+		int dim = getDimension().interpret(scop.ctx).toInt();
 		auto val = new TupleValue;
 		auto type = getType();
 		val.values.length = dim;
@@ -722,8 +734,8 @@ class TypeArraySlice : Type
 		auto rtype = getType();
 		if(auto tpl = cast(TypeInfo_Tuple) rtype.typeinfo)
 		{
-			int lo = getLower().interpret(sc).toInt();
-			int up = getUpper().interpret(sc).toInt();
+			int lo = getLower().interpret(sc.ctx).toInt();
+			int up = getUpper().interpret(sc.ctx).toInt();
 			if(lo > up || lo < 0 || up > tpl.elements.length)
 			{
 				semanticError("tuple slice out of bounds");
@@ -746,42 +758,6 @@ class TypeArraySlice : Type
 	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[", getLower(), " .. ", getUpper(), "]");
-	}
-}
-
-//TypeDelegate:
-//    [Type ParameterList]
-class TypeDelegate : Type
-{
-	mixin ForwardCtor!();
-
-	override bool propertyNeedsParens() const { return true; }
-	
-	Type getReturnType() { return getMember!Type(0); }
-	ParameterList getParameters() { return getMember!ParameterList(1); }
-	
-	override void typeSemantic(Scope sc)
-	{
-		auto ti_dg = new TypeInfo_DelegateX;
-			
-		auto rtype = getReturnType();
-		rtype.semantic(sc);
-		auto params = getParameters();
-		params.semantic(sc);
-		
-		ti_dg.next = rtype.typeinfo;
-		ti_dg.parameters = new TypeInfo_Tuple;
-		for(int p = 0; p < params.members.length; p++)
-			ti_dg.parameters.elements ~= params.getParameter(p).getParameterDeclarator().getType().typeinfo;
-		ti_dg.attributes = combineAttributes(attr, params.attr);
-		// no context information when defining the type, only with an instance
-		typeinfo = ti_dg;
-	}
-
-	override void toD(CodeWriter writer)
-	{
-		writer(getReturnType(), " delegate", getParameters());
-		writer.writeAttributes(attr, true);
 	}
 }
 
@@ -826,6 +802,45 @@ class TypeFunction : Type
 	override void toD(CodeWriter writer)
 	{
 		writer(getReturnType(), " function", getParameters());
+		writer.writeAttributes(attr, true);
+	}
+}
+
+//TypeDelegate:
+//    [Type ParameterList]
+class TypeDelegate : TypeFunction
+{
+	mixin ForwardCtor!();
+
+	override void typeSemantic(Scope sc)
+	{
+		auto ti_dg = new TypeInfo_DelegateX;
+			
+		auto rtype = getReturnType();
+		rtype.semantic(sc);
+		auto params = getParameters();
+		params.semantic(sc);
+		
+		ti_dg.next = rtype.typeinfo;
+		ti_dg.parameters = new TypeInfo_Tuple;
+		for(int p = 0; p < params.members.length; p++)
+			ti_dg.parameters.elements ~= params.getParameter(p).getParameterDeclarator().getType().typeinfo;
+		ti_dg.attributes = combineAttributes(attr, params.attr);
+		// no context information when defining the type, only with an instance
+		typeinfo = ti_dg;
+	}
+
+	override Value createValue(Value initValue)
+	{
+		assert(!initValue);
+		auto dv = new DelegateValue;
+		dv.functype = this;
+		return dv;
+	}
+	
+	override void toD(CodeWriter writer)
+	{
+		writer(getReturnType(), " delegate", getParameters());
 		writer.writeAttributes(attr, true);
 	}
 }

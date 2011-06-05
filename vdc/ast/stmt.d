@@ -30,7 +30,7 @@ class Statement : Node
 {
 	mixin ForwardCtor!();
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		foreach(m; members)
 		{
@@ -221,7 +221,7 @@ class ExpressionStatement : Statement
 		writer.nl;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		getMember(0).interpret(sc);
 		return null;
@@ -244,10 +244,10 @@ class DeclarationStatement : Statement
 		auto decl = getMember!Decl(0);
 		decl.addSymbols(sc);
 		if(decl.attr & Attr_Static)
-			initValues(sc, false);
+			initValues(sc.ctx, false);
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		auto decl = getMember!Decl(0);
 		if(!(decl.attr & Attr_Static))
@@ -255,7 +255,7 @@ class DeclarationStatement : Statement
 		return null;
 	}
 	
-	void initValues(Scope sc, bool reinit)
+	void initValues(Context sc, bool reinit)
 	{
 		auto decl = getMember!Decl(0);
 		if(decl.getFunctionBody())
@@ -309,7 +309,7 @@ class IfStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		Value cond = getMember(0).interpret(sc);
 		if(cond.toBool())
@@ -342,7 +342,7 @@ class WhileStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		while(getMember(0).interpret(sc).toBool())
 		{
@@ -389,7 +389,7 @@ class DoStatement : Statement
 		writer.nl;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		do
 		{
@@ -445,7 +445,7 @@ class ForStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		for(getMember(0).interpret(sc); getMember(1).interpret(sc).toBool();
 			getMember(2).interpret(sc))
@@ -523,7 +523,7 @@ class ForeachStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -603,7 +603,7 @@ class SwitchStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -616,7 +616,7 @@ class FinalSwitchStatement : Statement
 {
 	mixin ForwardCtor!();
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -655,7 +655,7 @@ class CaseStatement : Statement
 		writer.nl();
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -676,7 +676,7 @@ class DefaultStatement : Statement
 		writer.nl();
 	}
 	
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -718,7 +718,7 @@ class ContinueStatement : Statement
 		writer.nl;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return new ContinueValue(ident);
 	}
@@ -760,7 +760,7 @@ class BreakStatement : Statement
 		writer.nl;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return new BreakValue(ident);
 	}
@@ -780,7 +780,7 @@ class ReturnStatement : Statement
 		writer.nl;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return getMember(0).interpret(sc);
 	}
@@ -833,7 +833,7 @@ class GotoStatement : Statement
 		writer.nl;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -857,7 +857,7 @@ class WithStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -883,7 +883,7 @@ class SynchronizedStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		// no need to synhronize, interpreter is single-threaded
 		return getMember(members.length - 1).interpret(sc);
@@ -906,7 +906,7 @@ class VolatileStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		// no need to synhronize, interpreter is single-threaded
 		return super.interpret(sc);
@@ -951,7 +951,7 @@ class TryStatement : Statement
 			writer(m);
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -1005,7 +1005,7 @@ class ThrowStatement : Statement
 		writer.nl;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -1029,7 +1029,7 @@ class ScopeGuardStatement : Statement
 		}
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " not implemented."));
 	}
@@ -1058,7 +1058,7 @@ class AsmStatement : Statement
 		writer.nl;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " cannot be interpreted."));
 	}
@@ -1089,7 +1089,7 @@ class PragmaStatement : Statement
 		writer(getMember(0), " ", getMember(1));
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		getMember(0).interpret(sc);
 		return getMember(1).interpret(sc);
@@ -1110,14 +1110,14 @@ class MixinStatement : Statement
 
 	override void _semantic(Scope sc)
 	{
-		Value v = getMember(0).interpret(sc);
+		Value v = getMember(0).interpret(sc.ctx);
 		string s = v.toStr();
 		Parser parser = new Parser;
 		Node[] n = parser.parseStatements(s, span);
 		parent.replaceMember(this, n);
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
 		return semanticErrorValue(text(this, " semantic not run"));
 	}

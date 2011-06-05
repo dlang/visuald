@@ -25,7 +25,7 @@ import ast = vdc.ast.all;
 //    enum EnumTag : EnumBaseType EnumBody
 //    enum : EnumBaseType EnumBody
 //    enum EnumTag ;
-//    enum EnumInitializer ;
+//    enum EnumInitializers ;
 //    enum Type EnumInitializers ;
 //
 //EnumTag:

@@ -15,6 +15,7 @@ import vdc.logger;
 
 import vdc.ast.decl;
 import vdc.ast.type;
+import vdc.ast.aggr;
 
 import std.variant;
 import std.conv;
@@ -156,7 +157,7 @@ class Value
 		return semanticErrorValue(text("cannot slice a ", this));
 	}
 	
-	Value opCall(Scope sc, Value args)
+	Value opCall(Context sc, Value args)
 	{
 		return semanticErrorValue(text("cannot call a ", this));
 	}
@@ -710,32 +711,6 @@ class StringValue : Value
 	}
 }
 
-class StructValue : Value
-{
-	Type type;
-	alias void[] ValType;
-	
-	ValType* pval;
-
-	this(Type t)
-	{
-		type = t;
-	}
-}
-
-class ClassValue : Value
-{
-	Type type;
-	alias void[] ValType;
-	
-	ValType* pval;
-
-	this(Type t)
-	{
-		type = t;
-	}
-}
-
 class PointerValue : Value
 {
 	alias Value ValType; 
@@ -780,6 +755,11 @@ class TypeValue : Value
 	{
 		return writeD(type);
 	}
+	
+	override Value opCall(Context sc, Value vargs)
+	{
+		return type.createValue(vargs);
+	}
 }
 
 class TupleValue : Value
@@ -821,7 +801,7 @@ class FunctionValue : Value
 {
 	TypeFunction functype;
 	
-	override Value opCall(Scope sc, Value vargs)
+	override Value opCall(Context sc, Value vargs)
 	{
 		if(!functype.mInit)
 			return semanticErrorValue("calling null reference");
@@ -853,12 +833,54 @@ class FunctionValue : Value
 	}
 }
 
-class DelegateValue : Value
+class DelegateValue : FunctionValue
 {
-	Scope context;
-	FunctionValue func;
+	Value context;
+	
+	override Value opCall(Context sc, Value vargs)
+	{
+		return super.opCall(context, vargs);
+	}
 }
 
+class StructValue : TupleValue
+{
+	Struct type;
+
+	this(Struct t)
+	{
+		type = t;
+	}
+
+	override Type getType()
+	{
+		return type;
+	}
+
+	override Value getProperty(string ident)
+	{
+		if(Value v = type.getProperty(this, ident))
+			return v;
+		if(Value v = type.getStaticProperty(ident))
+			return v;
+		return super.getProperty(ident);
+	}
+}
+
+class ClassValue : Value
+{
+	Type type;
+	alias void[] ValType;
+	
+	ValType* pval;
+
+	this(Type t)
+	{
+		type = t;
+	}
+}
+
+////////////////////////////////////////////////////////////////////////
 // program control
 class ProgramControlValue : Value
 {

@@ -277,18 +277,21 @@ class Declarations
 				mExpansionState = kStateImport;
 				return true;
 			}
+			goto case;
 		case kStateImport:
 			if(NearbyExpansions(textView, src))
 			{
 				mExpansionState = kStateNearBy;
 				return true;
 			}
+			goto case;
 		case kStateNearBy:
 			if(SymbolExpansions(textView, src))
 			{
 				mExpansionState = kStateSymbols;
 				return true;
 			}
+			goto default;
 		default:
 			break;
 		}

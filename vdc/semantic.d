@@ -79,6 +79,8 @@ ErrorType semanticErrorType(string msg)
 }
 
 alias Node Symbol;
+alias Value Context;
+Context nullContext;
 
 class Scope
 {
@@ -89,6 +91,7 @@ class Scope
 	Module mod;
 	Symbol[][string] symbols;
 	Import[] imports;
+	Context ctx;
 	
 	static Scope current;
 	
@@ -185,8 +188,8 @@ class Project : Node
 	{
 		super(TextSpan());
 		options = new Options;
-		options.importDirs ~= r"c:\s\d\dmd2\druntime\import\";
-		options.importDirs ~= r"c:\s\d\dmd2\phobos\";
+		options.importDirs ~= r"m:\s\d\dmd2\druntime\import\";
+		options.importDirs ~= r"m:\s\d\dmd2\phobos\";
 		options.importDirs ~= r"c:\tmp\d\runnable\";
 	}
 	
@@ -324,7 +327,7 @@ class Project : Node
 			writer.nl;
 			{
 				CodeIndenter indent = CodeIndenter(writer);
-				Module mod = Module.getModule(mainNode);
+				Module mod = mainNode.getModule();
 				mod.writeNamespace(writer);
 				writer("main();");
 				writer.nl;
@@ -341,6 +344,28 @@ class Project : Node
 	override void toD(CodeWriter writer)
 	{
 		throw new SemanticException("Project.toD not implemeted");
+	}
+	
+	int run()
+	{
+		Node[] funcs;
+		foreach(m; mModulesByName)
+			funcs ~= m.search("main");
+		if(funcs.length == 0)
+		{
+			semanticError("no function main");
+			return -1;
+		}
+		if(funcs.length > 1)
+		{
+			semanticError("multiple functions main");
+			return -2;
+		}
+		TupleValue args = new TupleValue;
+		Value v = funcs[0].interpret(nullContext).opCall(nullContext, args);
+		if(v is theVoidValue)
+			return 0;
+		return v.toInt();
 	}
 }
 

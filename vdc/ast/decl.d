@@ -24,12 +24,15 @@ import vdc.ast.mod;
 
 import std.conv;
 
+version(obsolete)
+{
 //Declaration:
 //    alias Decl
 //    Decl
 class Declaration : Node
 {
 	mixin ForwardCtor!();
+}
 }
 
 // AliasDeclaration:
@@ -278,6 +281,8 @@ class Declarator : Identifier
 
 	Type type;
 	Value value;
+	bool isAlias;
+	bool needsThis;
 	
 	override Declarator clone()
 	{
@@ -300,7 +305,7 @@ class Declarator : Identifier
 			writer(m);
 	}
 
-	bool isAlias()
+	bool _isAlias()
 	{
 		for(Node p = parent; p; p = p.parent)
 			if(auto decl = cast(Decl) p)
@@ -309,7 +314,20 @@ class Declarator : Identifier
 				break;
 		return false;
 	}
-	
+	bool _needsThis()
+	{
+		for(Node p = parent; p; p = p.parent)
+			if(auto decl = cast(Decl) p)
+			{
+				if(!decl.parent || cast(Module)decl.parent || cast(DeclarationStatement)decl.parent)
+					return false;
+				return !(decl.attr & Attr_Static);
+			}
+			else if(auto pdecl = cast(ParameterDeclarator) p)
+				break;
+		return false;
+	}
+
 	override void addSymbols(Scope sc)
 	{
 		sc.addSymbol(ident, this);
@@ -317,17 +335,21 @@ class Declarator : Identifier
 
 	Type applySuffixes(Type t)
 	{
+		isAlias = _isAlias();
+		needsThis = _needsThis();
+		
 		// template parameters and function parameters and constraint
 		for(int m = 0; m < members.length; )
 		{
 			auto member = members[0];
 			if(auto pl = cast(ParameterList) member)
 			{
-				auto tf = new TypeFunction(pl.id, pl.span);
+				auto tf = needsThis ? new TypeDelegate(pl.id, pl.span) : new TypeFunction(pl.id, pl.span);
 				tf.mInit = this;
 				tf.addMember(t.clone());
 				removeMember(m);
 				tf.addMember(pl);
+				tf.scop = getScope(); // not fully added to node tree
 				t = tf;
 			}
 			else if(auto saa = cast(SuffixAssocArray) member)
@@ -360,7 +382,7 @@ class Declarator : Identifier
 		return t;
 	}
 	
-	override Type calcType(Scope sc)
+	override Type calcType()
 	{
 		if(type)
 			return type;
@@ -373,7 +395,7 @@ class Declarator : Identifier
 				if(type)
 				{
 					type = applySuffixes(type);
-					type = type.calcType(sc);
+					type = type.calcType();
 				}
 				return type;
 			}
@@ -383,7 +405,7 @@ class Declarator : Identifier
 				if(type)
 				{
 					type = applySuffixes(type);
-					type = type.calcType(sc);
+					type = type.calcType();
 				}
 				return type;
 			}
@@ -392,15 +414,21 @@ class Declarator : Identifier
 		return null;
 	}
 
-	override Value interpret(Scope sc)
+	override Value interpret(Context sc)
 	{
+		if(needsThis)
+		{
+			if(!sc)
+				return semanticErrorValue(text("evaluating ", ident, " needs context pointer"));
+			return sc.getProperty(ident);
+		}
 		if(value)
 			return value;
 		
-		Type type = calcType(sc);
+		Type type = calcType();
 		if(!type)
 			value = new ErrorValue;
-		else if(isAlias())
+		else if(isAlias)
 			value = new TypeValue(type);
 		else
 		{
@@ -412,7 +440,7 @@ class Declarator : Identifier
 		return value;
 	}
 	
-	Value interpretCall(Scope sc)
+	Value interpretCall(Context sc)
 	{
 		for(Node p = parent; p; p = p.parent)
 			if(auto decl = cast(Decl) p)
@@ -457,7 +485,7 @@ class IdentifierList : Node
 	{
 		// TODO: does not work for package qualified symbols
 		if(global)
-			sc = Module.getModule(this).scop;
+			sc = getModule().scop;
 
 		for(int m = 0; sc && m < members.length; m++)
 		{

@@ -30,6 +30,7 @@ import core.runtime;
 
 version = semantic;
 //version = cpp;
+version = run;
 
 ////////////////////////////////////////////////////////////////
 
@@ -458,6 +459,10 @@ int main(string[] argv)
 	version(cpp)
 	{
 		prj.writeCpp("c:/tmp/d/cproject.cpp");
+	}
+	version(run)
+	{
+		prj.run();
 	}
 	writeln(prj.countErrors + semanticErrors, " errors");
 	return 0;
