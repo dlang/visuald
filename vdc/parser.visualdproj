@@ -40,7 +40,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
+  <otherDMD>1</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -220,7 +220,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
+  <otherDMD>1</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath />
   <fileImppath>.</fileImppath>
@@ -263,11 +263,11 @@
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>$(TargetPath)</debugtarget>
-  <debugarguments>c:\tmp\d\semtest.d</debugarguments>
+  <debugarguments>c:\tmp\d\test\runnable\nested.d</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>0</debugEngine>
+  <debugEngine>1</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="parser">

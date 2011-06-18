@@ -103,6 +103,113 @@ class Aggregate : Type
 		if(ident.length)
 			sc.addSymbol(ident, this);
 	}
+
+	size_t[string] mapName2Value;
+	Declarator[string] mapName2Method;
+	TupleValue initVal;
+	TypeValue typeVal;
+	
+	abstract TupleValue _initValue();
+	
+	void _setupInitValue(TupleValue sv)
+	{
+		getBody().iterateDeclarators(false, false, (Declarator decl) { 
+			Type type = decl.calcType();
+			Value value;
+			if(auto expr = decl.getInitializer())
+				value = type.createValue(expr.interpret(sv));
+			else
+				value = type.createValue(null);
+
+			mapName2Value[decl.ident] = sv.values.length;
+			sv.values ~= value;
+		});
+	}
+	
+	Value[] _initValues(Value[] initValues)
+	{
+		if(!initVal)
+		{
+			initVal = _initValue();
+			_initMethods();
+		}
+		
+		Value[] values;
+		getBody().iterateDeclarators(false, false, (Declarator decl) {
+			int n = values.length;
+			Value v = n < initValues.length ? initValues[n] : initVal.values[n];
+			Type t = decl.calcType();
+			v = t.createValue(v);
+			values ~= v;
+		});
+		return values;
+	}
+	
+	Value _createValue(ValueType, Args...)(Value initValue, Args a)
+	{
+		if(auto bdy = getBody())
+		{
+			ValueType sv = new ValueType(a);
+			Value[] initValues;
+			if(initValue)
+				if(auto tv = cast(TupleValue) initValue)
+					initValues = tv.values;
+				else
+					semanticError("cannot initialize a struct from ", initValue);
+			sv.values = _initValues(initValues);
+			return sv;
+		}
+		return semanticErrorValue("cannot create value of incomplete type ", ident);
+	}
+	
+	void _initMethods()
+	{
+		getBody().iterateDeclarators(false, true, (Declarator decl) {
+			mapName2Method[decl.ident] = decl;
+		});
+	}
+	
+	Value getProperty(TupleValue sv, string ident)
+	{
+		if(auto pidx = ident in mapName2Value)
+			return sv.values[*pidx];
+		if(auto pdecl = ident in mapName2Method)
+		{
+			Value v = pdecl.calcType().createValue(null);
+			auto dgv = static_cast!DelegateValue(v);
+			auto cv = new ContextValue;
+			cv.thisValue = sv;
+			dgv.context = cv;
+			return dgv;
+		}
+		return null;
+	}
+	
+	override Value interpretProperty(string prop)
+	{
+		if(Value v = getStaticProperty(prop))
+			return v;
+		return super.interpretProperty(prop);
+	}
+
+	Value getStaticProperty(string ident)
+	{
+		if(!scop)
+			return semanticErrorValue(this, ": no scope set in lookup of ", ident);
+	
+		TextSpan span;
+		Node n = scop.resolve(ident, span, false);
+		if(!n)
+			return null;
+		return n.interpret(nullContext);
+	}
+
+	override Value interpret(Context sc)
+	{
+		if(!typeVal)
+			typeVal = new TypeValue(this);
+		return typeVal;
+	}
 }
 
 class Struct : Aggregate
@@ -131,109 +238,16 @@ class Struct : Aggregate
 		bodyToD(writer);
 	}
 
-	int[string] mapName2Value;
-	Declarator[string] mapName2Method;
-	StructValue initVal;
-	TypeValue typeVal;
-	
-	StructValue _initValue()
+	override TupleValue _initValue()
 	{
 		StructValue sv = new StructValue(this);
-		getBody().iterateDeclarators(false, false, (Declarator decl) { 
-			Type type = decl.calcType();
-			Value value;
-			if(auto expr = decl.getInitializer())
-				value = type.createValue(expr.interpret(sv));
-			else
-				value = type.createValue(null);
-
-			mapName2Value[decl.ident] = sv.values.length;
-			sv.values ~= value;
-		});
+		_setupInitValue(sv);
 		return sv;
 	}
-	
-	Value[] _initValues(Value[] initValues)
-	{
-		if(!initVal)
-		{
-			initVal = _initValue();
-			_initMethods();
-		}
-		
-		Value[] values;
-		getBody().iterateDeclarators(false, false, (Declarator decl) {
-			int n = values.length;
-			Value v = n < initValues.length ? initValues[n] : initVal.values[n];
-			Type t = decl.calcType();
-			v = t.createValue(v);
-			values ~= v;
-		});
-		return values;
-	}
-	
-	void _initMethods()
-	{
-		getBody().iterateDeclarators(false, true, (Declarator decl) {
-			mapName2Method[decl.ident] = decl;
-		});
-	}
-	
+
 	override Value createValue(Value initValue)
 	{
-		if(auto bdy = getBody())
-		{
-			StructValue sv = new StructValue(this);
-			Value[] initValues;
-			if(initValue)
-				if(auto tv = cast(TupleValue) initValue)
-					initValues = tv.values;
-				else
-					semanticError(text("cannot initialize a struct from ", initValue));
-			sv.values = _initValues(initValues);
-			return sv;
-		}
-		return semanticErrorValue(text("cannot create value of incomplete type ", ident));
-	}
-
-	Value getProperty(StructValue sv, string ident)
-	{
-		if(int* pidx = ident in mapName2Value)
-			return sv.values[*pidx];
-		if(auto pdecl = ident in mapName2Method)
-		{
-			Value v = pdecl.calcType().createValue(null);
-			auto dgv = static_cast!DelegateValue(v);
-			dgv.context = sv;
-			return dgv;
-		}
-		return null;
-	}
-	
-	override Value interpretProperty(string prop)
-	{
-		if(Value v = getStaticProperty(prop))
-			return v;
-		return super.interpretProperty(prop);
-	}
-
-	Value getStaticProperty(string ident)
-	{
-		if(!scop)
-			return semanticErrorValue(text(this, ": no scope set in lookup of ", ident));
-	
-		TextSpan span;
-		Node n = scop.resolve(ident, span, false);
-		if(!n)
-			return null;
-		return n.interpret(nullContext);
-	}
-
-	override Value interpret(Context sc)
-	{
-		if(!typeVal)
-			typeVal = new TypeValue(this);
-		return typeVal;
+		return _createValue!StructValue(initValue, this);
 	}
 }
 
@@ -261,6 +275,18 @@ class Union : Aggregate
 		writer.writeIdentifier(ident);
 		tmplToD(writer);
 		bodyToD(writer);
+	}
+
+	override TupleValue _initValue()
+	{
+		UnionValue sv = new UnionValue(this);
+		_setupInitValue(sv);
+		return sv;
+	}
+
+	override Value createValue(Value initValue)
+	{
+		return _createValue!UnionValue(initValue, this);
 	}
 }
 
@@ -343,6 +369,18 @@ class Class : InheritingAggregate
 		writer("class ");
 		super.toD(writer);
 	}
+
+	override TupleValue _initValue()
+	{
+		ClassValue sv = new ClassValue(this);
+		_setupInitValue(sv);
+		return sv;
+	}
+
+	override Value createValue(Value initValue)
+	{
+		return _createValue!ClassValue(initValue, this);
+	}
 }
 
 class AnonymousClass : InheritingAggregate
@@ -350,6 +388,12 @@ class AnonymousClass : InheritingAggregate
 	mixin ForwardCtor!();
 	
 	// "class(args) " written by AnonymousClassType
+
+	override TupleValue _initValue()
+	{
+		semanticErrorValue("cannot create value of interface type ", ident);
+		return new TupleValue;
+	}
 }
 
 // Interface conflicts with object.Interface
@@ -376,6 +420,12 @@ class Intrface : InheritingAggregate
 		writer(TOK_interface, " ");
 		super.toD(writer);
 	}
+
+	override TupleValue _initValue()
+	{
+		semanticErrorValue("cannot create value of interface type ", ident);
+		return new TupleValue;
+	}
 }
 
 // BaseClass:
@@ -400,7 +450,7 @@ class BaseClass : Node
 		if(auto inh = cast(InheritingAggregate) res)
 			return inh;
 		
-		semanticError(text("class or interface expected instead of ", res));
+		semanticError("class or interface expected instead of ", res);
 		return null;
 	}
 
@@ -453,7 +503,7 @@ class StructBody : Node
 			for(int n = 0; n < decls.members.length; n++)
 			{
 				auto d = decls.getDeclarator(n);
-				d.interpret(nullContext);
+				d.interpretCatch(nullContext);
 			}
 		}
 	}

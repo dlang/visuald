@@ -80,12 +80,13 @@ class Value
 	
 	Type getType()
 	{
-		return semanticErrorType(text("cannot get type of ", this));
+		semanticError("cannot get type of ", this);
+		return Singleton!(ErrorType).get();
 	}
 	
 	bool toBool()
 	{
-		semanticError(text("cannot convert ", this, " to bool"));
+		semanticError("cannot convert ", this, " to bool");
 		return false;
 	}
 
@@ -97,29 +98,29 @@ class Value
 	
 	long toLong()
 	{
-		semanticError(text("cannot convert ", this, " to integer"));
+		semanticError("cannot convert ", this, " to integer");
 		return 0;
 	}
 
 	void setLong(long lng)
 	{
-		semanticError(text("cannot convert long to ", this));
+		semanticError("cannot convert long to ", this);
 	}
 
 	string toStr()
 	{
-		semanticError(text("cannot convert ", this, " to string"));
+		semanticError("cannot convert ", this, " to string");
 		return "";
 	}
-	override string toString()
-	{
-		return text(getType(), ":", toStr());
-	}
+	//override string toString()
+	//{
+	//    return text(getType(), ":", toStr());
+	//}
 	
 	version(all)
 	Value opBin(int tokid, Value v)
 	{
-		return semanticErrorValue(text("binary operator ", tokenString(tokid), " on ", this, " not implemented"));
+		return semanticErrorValue("binary operator ", tokenString(tokid), " on ", this, " not implemented");
 	}
 
 	Value opUn(int tokid)
@@ -130,16 +131,18 @@ class Value
 			case TOK_mul:        return opDerefPointer();
 			default: break;
 		}
-		return semanticErrorValue(text("unary operator ", tokenString(tokid), " on ", this, " not implemented"));
+		return semanticErrorValue("unary operator ", tokenString(tokid), " on ", this, " not implemented");
 	}
 
 	Value opRefPointer()
 	{
-		return PointerValue._create(this);
+		auto tp = new TypePointer();
+		tp.addMember(getType());
+		return PointerValue._create(tp, this);
 	}
 	Value opDerefPointer()
 	{
-		return semanticErrorValue(text("cannot dereference a ", this));
+		return semanticErrorValue("cannot dereference a ", this);
 	}
 
 	Value getProperty(string ident)
@@ -149,17 +152,17 @@ class Value
 	
 	Value opIndex(Value v)
 	{
-		return semanticErrorValue(text("cannot index a ", this));
+		return semanticErrorValue("cannot index a ", this);
 	}
 	
 	Value opSlice(Value b, Value e)
 	{
-		return semanticErrorValue(text("cannot slice a ", this));
+		return semanticErrorValue("cannot slice a ", this);
 	}
 	
 	Value opCall(Context sc, Value args)
 	{
-		return semanticErrorValue(text("cannot call a ", this));
+		return semanticErrorValue("cannot call a ", this);
 	}
 	
 	//mixin template operators()
@@ -191,7 +194,7 @@ class Value
 					}
 				}
 			}
-			return semanticErrorValue(text("cannot execute ", op, " on a ", v, " with a ", this));
+			return semanticErrorValue("cannot execute ", op, " on a ", v, " with a ", this);
 		}
 		
 	version(none)
@@ -223,13 +226,13 @@ class Value
 							}
 							else
 							{
-								return semanticErrorValue(text("cannot calculate ", op, " on a ", this, " and a ", v));
+								return semanticErrorValue("cannot calculate ", op, " on a ", this, " and a ", v);
 							}
 						}
 					}
 				}
 			}
-			return semanticErrorValue(text("cannot calculate ", op, " on a ", this, " and a ", v));
+			return semanticErrorValue("cannot calculate ", op, " on a ", this, " and a ", v);
 		}
 
 	version(none)
@@ -250,7 +253,7 @@ class Value
 					}
 				}
 			}
-			return semanticErrorValue(text("cannot calculate ", op, " on a ", this));
+			return semanticErrorValue("cannot calculate ", op, " on a ", this);
 		}
 
 	////////////////////////////////////////////////////////////
@@ -292,7 +295,7 @@ class Value
 						break;
 				}
 			}
-			return semanticErrorValue(text("cannot calculate ", op, " on a ", this, " and a ", v));
+			return semanticErrorValue("cannot calculate ", op, " on a ", this, " and a ", v);
 		}
 	}
 
@@ -301,7 +304,7 @@ class Value
 		Value assOp(Value v)
 		{
 			if(!mutable)
-				return semanticErrorValue(text(this, " value is not mutable"));
+				return semanticErrorValue(this, " value is not mutable");
 				
 			TypeInfo ti = v.classinfo;
 			foreach(iv2; Types)
@@ -323,7 +326,7 @@ class Value
 						return this;
 					}
 			}
-			return semanticErrorValue(text("cannot assign ", op, " a ", v, " to a ", this));
+			return semanticErrorValue("cannot assign ", op, " a ", v, " to a ", this);
 		}
 	}
 }
@@ -440,7 +443,7 @@ class ValueT(T) : Value
 			default: break;
 		}
 		
-		return semanticErrorValue(text("cannot calculate ", tokenString(tokid), " on a ", this, " and a ", v));
+		return semanticErrorValue("cannot calculate ", tokenString(tokid), " on a ", this, " and a ", v);
 	}
 
 	////////////////////////////////////////////////////////////
@@ -455,7 +458,7 @@ class ValueT(T) : Value
 			}
 			else
 			{
-				return semanticErrorValue(text("cannot calculate ", op, " on a ", this));
+				return semanticErrorValue("cannot calculate ", op, " on a ", this);
 			}
 		}
 	}
@@ -489,7 +492,7 @@ class ValueT(T) : Value
 			mixin(genUnOpCases());
 			default: break;
 		}
-		return semanticErrorValue(text("cannot calculate ", tokenString(tokid), " on a ", this));
+		return semanticErrorValue("cannot calculate ", tokenString(tokid), " on a ", this);
 	}
 
 }
@@ -706,22 +709,27 @@ class StringValue : Value
 	{
 		int idx = v.toInt();
 		if(idx < 0 || idx >= (*pval).length)
-			return semanticErrorValue(text("index ", idx, " out of bounds on ", *pval));
+			return semanticErrorValue("index ", idx, " out of bounds on ", *pval);
 		return create((*pval)[idx]);
 	}
 }
 
 class PointerValue : Value
 {
-	alias Value ValType; 
-	
-	ValType pval; // Value is a class type, so its a reference, i.e. a pointer to the value
+	TypePointer type;  // type of pointer
+	Value pval; // Value is a class type, so its a reference, i.e. a pointer to the value
 
-	static PointerValue _create(Value v)
+	static PointerValue _create(TypePointer type, Value v)
 	{
 		PointerValue pv = new PointerValue;
+		pv.type = type;
 		pv.pval = v;
 		return pv;
+	}
+	
+	override Type getType()
+	{
+		return type;
 	}
 	
 	override bool toBool()
@@ -734,6 +742,48 @@ class PointerValue : Value
 		if(!pval)
 			return semanticErrorValue("dereferencing a null pointer");
 		return pval;
+	}
+
+	override Value opBin(int tokid, Value v)
+	{
+		switch(tokid)
+		{
+			case TOK_assign:
+				auto pv = cast(PointerValue)v;
+				if(!v)
+					pval = null;
+				else if(!pv)
+					return semanticErrorValue("cannot convert value ", v, " to pointer of type ", type);
+				else if(pv.type.convertableTo(type))
+					pval = pv.pval;
+				else
+					return semanticErrorValue("cannot convert pointer type ", pv.type, " to ", type);
+				return this;
+			case TOK_equal:
+			case TOK_notequal:
+				auto pv = cast(PointerValue)v;
+				if(!pv || (!pv.type.convertableTo(type) && !type.convertableTo(pv.type)))
+					return semanticErrorValue("cannot compare types ", pv.type, " and ", type);
+				if(tokid == TOK_equal)
+					return Value.create(pv.pval is pval);
+				else
+					return Value.create(pv.pval !is pval);
+			default:
+				return super.opBin(tokid, v);
+		}
+	}
+
+	override Value getProperty(string ident)
+	{
+		switch(ident)
+		{
+			case "init":
+				return _create(type, null);
+			default:
+				if(!pval)
+					return semanticErrorValue("dereferencing null pointer");
+				return pval.getProperty(ident);
+		}
 	}
 }
 
@@ -770,7 +820,7 @@ class TupleValue : Value
 	{
 		int idx = v.toInt();
 		if(idx < 0 || idx >= values.length)
-			return semanticErrorValue(text("index ", idx, " out of bounds on value tuple"));
+			return semanticErrorValue("index ", idx, " out of bounds on value tuple");
 		return values[idx];
 	}
 
@@ -778,10 +828,24 @@ class TupleValue : Value
 	{
 		switch(tokid)
 		{
+			case TOK_equal:
+				if(auto tv = cast(TupleValue) v)
+				{
+					if(tv.values.length != values.length)
+						return Value.create(false);
+					for(int i = 0; i < values.length; i++)
+						if(!values[i].opBin(TOK_equal, tv.values[i]).toBool())
+							return Value.create(false);
+					return Value.create(true);
+				}
+				return semanticErrorValue("cannot compare ", v, " to ", this);
+			case TOK_notequal:
+				return opBin(TOK_equal, v);
 			case TOK_assign:
 			case TOK_tilde:
 			case TOK_catass:
-			default:           return super.opBin(tokid, v);
+			default:
+				return super.opBin(tokid, v);
 		}
 	}
 
@@ -800,6 +864,7 @@ class TupleValue : Value
 class FunctionValue : Value
 {
 	TypeFunction functype;
+	bool adr;
 	
 	override Value opCall(Context sc, Value vargs)
 	{
@@ -831,11 +896,46 @@ class FunctionValue : Value
 		}
 		return retVal ? retVal : theVoidValue;
 	}
+
+	override Type getType()
+	{
+		return functype;
+	}
+
+	override Value opRefPointer()
+	{
+		adr = true;
+		return this;
+	}
+}
+
+class ContextValue : Value
+{
+	Value thisValue;
+	Value[string] closureVars;
+
+	override Value getProperty(string ident)
+	{
+		switch(ident)
+		{
+			case "this":
+				if(thisValue)
+					return thisValue;
+				goto default;
+			default:
+				if(auto pn = ident in closureVars)
+					return *pn;
+				if(thisValue)
+					return thisValue.getProperty(ident);
+				return semanticErrorValue("context has no property ", ident);
+		}
+	}
 }
 
 class DelegateValue : FunctionValue
 {
-	Value context;
+	Type contextType; // struct/class pointer or closure
+	ContextValue context;
 	
 	override Value opCall(Context sc, Value vargs)
 	{
@@ -843,11 +943,11 @@ class DelegateValue : FunctionValue
 	}
 }
 
-class StructValue : TupleValue
+class AggrValue(T) : TupleValue
 {
-	Struct type;
+	T type;
 
-	this(Struct t)
+	this(T t)
 	{
 		type = t;
 	}
@@ -865,18 +965,50 @@ class StructValue : TupleValue
 			return v;
 		return super.getProperty(ident);
 	}
+
+	override Value opBin(int tokid, Value v)
+	{
+		switch(tokid)
+		{
+			case TOK_equal:
+				if(Value fv = type.getProperty(this, "opEqual"))
+				{
+					auto tv = new TupleValue;
+					tv.values ~= v;
+					return fv.opCall(this, tv);
+				}
+				return super.opBin(tokid, v);
+			case TOK_is:
+				return Value.create(v is this);
+			case TOK_notidentity:
+				return Value.create(v !is this);
+			default:
+				return super.opBin(tokid, v);
+		}
+	}
+}
+	
+class StructValue : AggrValue!Struct
+{
+	this(Struct t)
+	{
+		super(t);
+	}
 }
 
-class ClassValue : Value
+class UnionValue : AggrValue!Union
 {
-	Type type;
-	alias void[] ValType;
-	
-	ValType* pval;
-
-	this(Type t)
+	this(Union t)
 	{
-		type = t;
+		super(t);
+	}
+}
+
+class ClassValue : AggrValue!Class
+{
+	this(Class t)
+	{
+		super(t);
 	}
 }
 

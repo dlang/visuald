@@ -14,6 +14,7 @@ version(MAIN)
 import vdc.util;
 import vdc.semantic;
 import vdc.lexer;
+import vdc.logger;
 import vdc.parser.engine;
 import vdc.parser.mod;
 
@@ -149,6 +150,8 @@ else
 
 void testSemantic(string txt, string filename = "")
 {
+	logInfo("### testSemantic " ~ filename ~ " ###");
+	
 	Project prj = new Project;
 	auto mod = prj.addText(filename, txt);
 	assert(mod);
@@ -423,6 +426,38 @@ unittest
 	testSemantic(txt, "while");
 }
 	
+unittest
+{
+	string txt = q{
+		struct Abc9
+		{
+			int bar(int x)
+			{
+				Abc9 *foo() { return &this; }
+
+				Abc9 *p = foo();
+				assert(p == &this);
+				return 4 + x;
+			}
+		}
+		static assert(Abc9().bar(3) == 7);
+	};
+	testSemantic(txt, "nested");
+}
+		
+unittest
+{
+	string txt = q{
+		int bar2(int a)
+		{
+			static int c = 4;
+			int foo(int b) { return b + c + 1; }
+			return foo(a);
+		}
+		static assert(bar2(3) == 8);
+	};
+	testSemantic(txt, "static");
+}
 	//alias 4 test;
 	//uint[test] arr;
 	//pragma(msg,arr.sizeof);
@@ -465,7 +500,7 @@ int main(string[] argv)
 		prj.run();
 	}
 	writeln(prj.countErrors + semanticErrors, " errors");
-	return 0;
+	return prj.countErrors + semanticErrors > 0 ? 1 : 0;
 }
 }
 

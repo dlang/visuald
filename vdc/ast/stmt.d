@@ -6,7 +6,7 @@
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
 //
-// interpret: return null to indicate that execution should not continue
+// interpret: return null to indicate that execution should continue
 //            return special values for program flow control
 //            return normal values for returning values
 //
@@ -238,10 +238,29 @@ class DeclarationStatement : Statement
 	{
 		writer(getMember(0));
 	}
+
+	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
+	{
+		Node n = getMember(0);
+		Node[1] nthis = [ n ];
+		Node[] nm = n.expandNonScopeBlock(sc, nthis);
+		if(nm.length == 1 && nm[0] == n)
+			return athis;
+		
+		DeclarationStatement[] decls;
+		foreach(m; nm)
+		{
+			auto decl = new DeclarationStatement(id, span);
+			decl.addMember(m);
+			decls ~= decl;
+		}
+		return decls;
+	}
+	
 	override void _semantic(Scope sc)
 	{
 		super._semantic(sc);
-		auto decl = getMember!Decl(0);
+		auto decl = getMember(0);
 		decl.addSymbols(sc);
 		if(decl.attr & Attr_Static)
 			initValues(sc.ctx, false);
@@ -249,7 +268,7 @@ class DeclarationStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		auto decl = getMember!Decl(0);
+		auto decl = getMember(0);
 		if(!(decl.attr & Attr_Static))
 			initValues(sc, true);
 		return null;
@@ -257,7 +276,9 @@ class DeclarationStatement : Statement
 	
 	void initValues(Context sc, bool reinit)
 	{
-		auto decl = getMember!Decl(0);
+		auto decl = cast(Decl)getMember(0);
+		if(!decl)
+			return; // classes, enums, etc
 		if(decl.getFunctionBody())
 			return; // nothing to do for local functions
 		
@@ -267,7 +288,7 @@ class DeclarationStatement : Statement
 			auto d = decls.getDeclarator(n);
 			if(reinit)
 				d.value = null;
-			d.interpret(sc);
+			d.interpretCatch(sc);
 		}
 	}
 }
@@ -525,7 +546,7 @@ class ForeachStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -605,7 +626,7 @@ class SwitchStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -618,7 +639,7 @@ class FinalSwitchStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -657,7 +678,7 @@ class CaseStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -678,7 +699,7 @@ class DefaultStatement : Statement
 	
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -835,7 +856,7 @@ class GotoStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -859,7 +880,7 @@ class WithStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -953,7 +974,7 @@ class TryStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -1007,7 +1028,7 @@ class ThrowStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -1031,7 +1052,7 @@ class ScopeGuardStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " not implemented."));
+		return semanticErrorValue(this, " not implemented.");
 	}
 }
 
@@ -1060,7 +1081,7 @@ class AsmStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " cannot be interpreted."));
+		return semanticErrorValue(this, " cannot be interpreted.");
 	}
 }
 
@@ -1110,7 +1131,7 @@ class MixinStatement : Statement
 
 	override void _semantic(Scope sc)
 	{
-		Value v = getMember(0).interpret(sc.ctx);
+		Value v = getMember(0).interpretCatch(sc.ctx);
 		string s = v.toStr();
 		Parser parser = new Parser;
 		Node[] n = parser.parseStatements(s, span);
@@ -1119,7 +1140,7 @@ class MixinStatement : Statement
 
 	override Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, " semantic not run"));
+		return semanticErrorValue(this, " semantic not run");
 	}
 }
 

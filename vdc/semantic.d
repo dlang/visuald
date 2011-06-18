@@ -31,34 +31,51 @@ class SemanticException : Exception
 	}
 }
 
-void semanticError(string filename, ref const(TextPos) pos, string msg)
+class InterpretException : Exception
+{
+	this()
+	{
+		super("cannot interpret");
+	}
+}
+
+void semanticErrorWriteLoc(string filename, ref const(TextPos) pos)
 {
 	write(filename);
 	if(pos.line > 0)
 		write("(", pos.line, ")");
 	write(": ");
-	writeln(msg);
 	semanticErrors++;
 }
 
-void semanticError(ref const(TextPos) pos, string msg)
+void semanticErrorLoc(T...)(string filename, ref const(TextPos) pos, T args)
+{
+	foreach(a; args)
+		if(typeid(a) == typeid(ErrorType) || typeid(a) == typeid(ErrorValue))
+			return;
+	
+	semanticErrorWriteLoc(filename, pos);
+	writeln(args);
+}
+
+void semanticErrorPos(T...)(ref const(TextPos) pos, T args)
 {
 	string filename;
 	if(Scope.current && Scope.current.mod)
 		filename = Scope.current.mod.filename;
 	else
 		filename = "at global scope";
-	semanticError(filename, pos, msg);
+	semanticErrorLoc(filename, pos, args);
 }
 
-void semanticError(string msg)
+void semanticError(T...)(T args)
 {
-	semanticError(TextPos(), msg);
+	semanticErrorPos(TextPos(), args);
 }
 
-void semanticError(string fname, string msg)
+void semanticErrorFile(T...)(string fname, T args)
 {
-	semanticError(fname, TextPos(), msg);
+	semanticErrorLoc(fname, TextPos(), args);
 }
 
 void semanticMessage(string msg)
@@ -66,15 +83,16 @@ void semanticMessage(string msg)
 	writeln(msg);
 }
 
-ErrorValue semanticErrorValue(string msg)
+ErrorValue semanticErrorValue(T...)(T args)
 {
-	semanticError(TextPos(), msg);
-	return Singleton!(ErrorValue).get();
+	semanticErrorPos(TextPos(), args);
+	throw new InterpretException;
+	// return Singleton!(ErrorValue).get();
 }
 
-ErrorType semanticErrorType(string msg)
+ErrorType semanticErrorType(T...)(T args)
 {
-	semanticError(TextPos(), msg);
+	semanticErrorPos(TextPos(), args);
 	return Singleton!(ErrorType).get();
 }
 
@@ -147,7 +165,7 @@ class Scope
 		Node[] syms;
 		foreach(imp; imports)
 		{
-			if(privateImports || (imp.annotation & Annotation_Public))
+			if(privateImports || (imp.getProtection() & Annotation_Public))
 				syms ~= imp.search(this, ident);
 		}
 		if(syms.length == 0 && inParents && parent)
@@ -162,14 +180,14 @@ class Scope
 		
 		if(n.length == 0)
 		{
-			semanticError(span.start, "unknown identifier " ~ ident);
+			semanticErrorPos(span.start, "unknown identifier " ~ ident);
 			return null;
 		}
 		foreach(s; n)
 			s.semanticSearches++;
 		
 		if(n.length > 1)
-			semanticError(span.start, "ambiguous identifier " ~ ident);
+			semanticErrorPos(span.start, "ambiguous identifier " ~ ident);
 		return n[0];
 	}
 	
@@ -220,7 +238,7 @@ class Project : Node
 		string modname = mod.getModuleName();
 		if(auto pm = modname in mModulesByName)
 		{
-			semanticError(fname, "module name " ~ modname ~ " already used by " ~ pm.filename);
+			semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.filename);
 			countErrors++;
 			return null;
 		}
@@ -362,10 +380,18 @@ class Project : Node
 			return -2;
 		}
 		TupleValue args = new TupleValue;
-		Value v = funcs[0].interpret(nullContext).opCall(nullContext, args);
-		if(v is theVoidValue)
-			return 0;
-		return v.toInt();
+		try
+		{
+			Value v = funcs[0].interpret(nullContext).opCall(nullContext, args);
+			if(v is theVoidValue)
+				return 0;
+			return v.toInt();
+		}
+		catch(InterpretException)
+		{
+			semanticError("cannot run main, interpretation aborted");
+			return -1;
+		}
 	}
 }
 
@@ -385,7 +411,7 @@ struct VersionDebug
 		if(auto vi = ident in identifiers)
 		{
 			if(pos < vi.defined)
-				semanticError(pos, "identifier " ~ ident ~ " used before defined");
+				semanticErrorPos(pos, "identifier " ~ ident ~ " used before defined");
 
 			if(pos < vi.firstUsage)
 				vi.firstUsage = pos;
@@ -404,7 +430,7 @@ struct VersionDebug
 		if(auto vi = ident in identifiers)
 		{
 			if(pos > vi.firstUsage)
-				semanticError(pos, "identifier " ~ ident ~ " defined after usage");
+				semanticErrorPos(pos, "identifier " ~ ident ~ " defined after usage");
 			if(pos < vi.defined)
 				vi.defined = pos;
 		}

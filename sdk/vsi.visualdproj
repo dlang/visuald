@@ -40,7 +40,7 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
+  <otherDMD>1</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -182,19 +182,25 @@
  </Config>
  <Folder name="vsi">
   <Folder name="port">
-   <File path="port\winerror.d" />
    <File path="port\base.d" />
    <File path="port\bitfields.d" />
    <File path="port\ctype.d" />
    <File path="port\dte.d" />
+   <File path="port\excpt.d" />
    <File path="port\guiddef.d" />
+   <File path="port\in6addr.d" />
+   <File path="port\inaddr.d" />
+   <File path="port\kernelspecs.d" />
    <File path="port\msxml.d" />
    <File path="port\poppack.d" />
    <File path="port\pp.d" />
+   <File path="port\propidl.d" />
    <File path="port\prsht.d" />
    <File path="port\pshpack2.d" />
    <File path="port\pshpack4.d" />
    <File path="port\pshpack8.d" />
+   <File path="port\registryroots.d" />
+   <File path="port\rpc.d" />
    <File path="port\servprov.d" />
    <File path="port\specstrings.d" />
    <File path="port\stdarg.d" />
@@ -205,76 +211,24 @@
    <File path="port\urlmon.d" />
    <File path="port\venuscmddef.d" />
    <File path="port\vsi.d" />
-   <File path="port\rpc.d" />
-   <File path="port\propidl.d" />
-   <File path="port\in6addr.d" />
-   <File path="port\inaddr.d" />
-   <File path="port\registryroots.d" />
-   <File path="port\excpt.d" />
-   <File path="port\kernelspecs.d" />
-  </Folder>
-  <Folder name="win32">
-   <File path="win32\xmldsodid.d" />
-   <File path="win32\docobj.d" />
-   <File path="win32\idispids.d" />
-   <File path="win32\mshtmcid.d" />
-   <File path="win32\oaidl.d" />
-   <File path="win32\objidl.d" />
-   <File path="win32\ocidl.d" />
-   <File path="win32\oleidl.d" />
-   <File path="win32\wtypes.d" />
-   <File path="win32\xmldom.d" />
-   <File path="win32\xmldomdid.d" />
-   <File path="win32\xmldso.d" />
-   <File path="win32\winnt.d" />
-   <File path="win32\basetsd.d" />
-   <File path="win32\ktmtypes.d" />
-   <File path="win32\ntstatus.d" />
-   <File path="win32\sdkddkver.d" />
-   <File path="win32\unknwn.d" />
-   <File path="win32\winbase.d" />
-   <File path="win32\windef.d" />
-   <File path="win32\winuser.d" />
-   <File path="win32\winerror.d" />
-   <File path="win32\winreg.d" />
-   <File path="win32\reason.d" />
-   <File path="win32\wingdi.d" />
-   <File path="win32\prsht.d" />
-   <File path="win32\oleauto.d" />
-   <File path="win32\objbase.d" />
-   <File path="win32\rpcdce.d" />
-   <File path="win32\commctrl.d" />
-   <File path="win32\shellapi.d" />
-   <File path="win32\iphlpapi.d" />
-   <File path="win32\iptypes.d" />
-   <File path="win32\ipexport.d" />
-   <File path="win32\iprtrmib.d" />
-   <File path="win32\ifdef.d" />
-   <File path="win32\ifmib.d" />
-   <File path="win32\ipmib.d" />
-   <File path="win32\nldef.d" />
-   <File path="win32\tcpmib.d" />
-   <File path="win32\udpmib.d" />
-   <File path="win32\ipifcons.d" />
-   <File path="win32\tcpestats.d" />
+   <File path="port\winerror.d" />
   </Folder>
   <Folder name="vsi">
-   <File path="vsi\webmigration.d" />
    <File path="vsi\completion.d" />
    <File path="vsi\completionuuids.d" />
+   <File path="vsi\compsvcspkg.d" />
    <File path="vsi\compsvcspkg80.d" />
    <File path="vsi\compsvcspkg90.d" />
-   <File path="vsi\compsvcspkg.d" />
    <File path="vsi\containedlanguage.d" />
-   <File path="vsi\context2.d" />
    <File path="vsi\context.d" />
+   <File path="vsi\context2.d" />
    <File path="vsi\contextuuids.d" />
    <File path="vsi\customfind.d" />
    <File path="vsi\debugger80.d" />
    <File path="vsi\designer.d" />
+   <File path="vsi\discoveryservice.d" />
    <File path="vsi\discoveryservice80.d" />
    <File path="vsi\discoveryservice90.d" />
-   <File path="vsi\discoveryservice.d" />
    <File path="vsi\dte80.d" />
    <File path="vsi\dte80a.d" />
    <File path="vsi\dte90.d" />
@@ -315,16 +269,18 @@
    <File path="vsi\oleipc.d" />
    <File path="vsi\proffserv.d" />
    <File path="vsi\scguids.d" />
+   <File path="vsi\sdk_shared.d" />
+   <File path="vsi\sdk_version.d" />
    <File path="vsi\sh.d" />
    <File path="vsi\sharedids.d" />
    <File path="vsi\singlefileeditor.d" />
    <File path="vsi\stdidcmd.d" />
+   <File path="vsi\textfind.d" />
    <File path="vsi\textfind2.d" />
    <File path="vsi\textfind90.d" />
-   <File path="vsi\textfind.d" />
+   <File path="vsi\textmgr.d" />
    <File path="vsi\textmgr2.d" />
    <File path="vsi\textmgr90.d" />
-   <File path="vsi\textmgr.d" />
    <File path="vsi\textmgruuids.d" />
    <File path="vsi\uilocale.d" />
    <File path="vsi\undoredo.d" />
@@ -335,18 +291,18 @@
    <File path="vsi\vsdebugguids.d" />
    <File path="vsi\vsdisp.d" />
    <File path="vsi\vseeguids.d" />
-   <File path="vsi\vshelp80.d" />
    <File path="vsi\vshelp.d" />
+   <File path="vsi\vshelp80.d" />
+   <File path="vsi\vslangproj.d" />
    <File path="vsi\vslangproj2.d" />
    <File path="vsi\vslangproj80.d" />
    <File path="vsi\vslangproj90.d" />
-   <File path="vsi\vslangproj.d" />
    <File path="vsi\vsmanaged.d" />
    <File path="vsi\vsregkeynames.d" />
+   <File path="vsi\vsshell.d" />
    <File path="vsi\vsshell2.d" />
    <File path="vsi\vsshell80.d" />
    <File path="vsi\vsshell90.d" />
-   <File path="vsi\vsshell.d" />
    <File path="vsi\vsshelluuids.d" />
    <File path="vsi\vsshlids.d" />
    <File path="vsi\vssplash.d" />
@@ -354,8 +310,52 @@
    <File path="vsi\wcfreferences.d" />
    <File path="vsi\wcfreferencesids.d" />
    <File path="vsi\webapplicationctx.d" />
-   <File path="vsi\sdk_shared.d" />
-   <File path="vsi\sdk_version.d" />
+   <File path="vsi\webmigration.d" />
+  </Folder>
+  <Folder name="win32">
+   <File path="win32\basetsd.d" />
+   <File path="win32\commctrl.d" />
+   <File path="win32\docobj.d" />
+   <File path="win32\idispids.d" />
+   <File path="win32\ifdef.d" />
+   <File path="win32\ifmib.d" />
+   <File path="win32\ipexport.d" />
+   <File path="win32\iphlpapi.d" />
+   <File path="win32\ipifcons.d" />
+   <File path="win32\ipmib.d" />
+   <File path="win32\iprtrmib.d" />
+   <File path="win32\iptypes.d" />
+   <File path="win32\ktmtypes.d" />
+   <File path="win32\mshtmcid.d" />
+   <File path="win32\nldef.d" />
+   <File path="win32\ntstatus.d" />
+   <File path="win32\oaidl.d" />
+   <File path="win32\objbase.d" />
+   <File path="win32\objidl.d" />
+   <File path="win32\ocidl.d" />
+   <File path="win32\oleauto.d" />
+   <File path="win32\oleidl.d" />
+   <File path="win32\prsht.d" />
+   <File path="win32\reason.d" />
+   <File path="win32\rpcdce.d" />
+   <File path="win32\sdkddkver.d" />
+   <File path="win32\shellapi.d" />
+   <File path="win32\tcpestats.d" />
+   <File path="win32\tcpmib.d" />
+   <File path="win32\udpmib.d" />
+   <File path="win32\unknwn.d" />
+   <File path="win32\winbase.d" />
+   <File path="win32\windef.d" />
+   <File path="win32\winerror.d" />
+   <File path="win32\wingdi.d" />
+   <File path="win32\winnt.d" />
+   <File path="win32\winreg.d" />
+   <File path="win32\winuser.d" />
+   <File path="win32\wtypes.d" />
+   <File path="win32\xmldom.d" />
+   <File path="win32\xmldomdid.d" />
+   <File path="win32\xmldso.d" />
+   <File path="win32\xmldsodid.d" />
   </Folder>
  </Folder>
 </DProject>

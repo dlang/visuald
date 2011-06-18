@@ -299,12 +299,24 @@ class Node
 	
 	Type calcType()
 	{
-		return semanticErrorType(text(this, ".calcType not implemented"));
+		return semanticErrorType(this, ".calcType not implemented");
 	}
 
 	Value interpret(Context sc)
 	{
-		return semanticErrorValue(text(this, ".interpret not implemented"));
+		return semanticErrorValue(this, ".interpret not implemented");
+	}
+	
+	Value interpretCatch(Context sc)
+	{
+		try
+		{
+			return interpret(sc);
+		}
+		catch(InterpretException)
+		{
+		}
+		return semanticErrorValue(this, ": interpretation stopped");
 	}
 	
 	////////////////////////////////////////////////////////////
@@ -356,7 +368,26 @@ class Node
 		}
 		return null;
 	}
+	string getModuleFilename()
+	{
+		Module mod = getModule();
+		if(!mod)
+			return null;
+		return mod.filename;
+	}
 	
+	ErrorValue semanticErrorValue(T...)(T args)
+	{
+		semanticErrorLoc(getModuleFilename(), span.start, args);
+		return Singleton!(ErrorValue).get();
+	}
+
+	ErrorType semanticErrorType(T...)(T args)
+	{
+		semanticErrorLoc(getModuleFilename(), span.start, args);
+		return Singleton!(ErrorType).get();
+	}
+
 	////////////////////////////////////////////////////////////
 	void extendSpan(ref const(TextSpan) _span)
 	{

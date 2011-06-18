@@ -389,6 +389,11 @@ class DeclarationBlock : Node
 class LinkageAttribute : AttributeSpecifier
 {
 	mixin ForwardCtor!();
+
+	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
+	{
+		return super.expandNonScopeBlock(sc, athis);
+	}
 }
 
 //AlignAttribute:
@@ -438,7 +443,7 @@ class Pragma : Node
 			
 			foreach(m; alst.members)
 			{
-				Value val = m.interpret(nullContext);
+				Value val = m.interpretCatch(nullContext);
 				msg ~= val.toStr();
 			}
 			semanticMessage(msg);
@@ -467,6 +472,12 @@ class ImportDeclaration : Node
 		getMember(0).annotation = annotation; // copy protection attributes
 		getMember(0).semantic(sc);
 	}
+
+	override void addSymbols(Scope sc)
+	{
+		getMember(0).addSymbols(sc);
+	}
+
 }
 
 //ImportList:
@@ -488,6 +499,12 @@ class ImportList : Node
 			m.semantic(sc);
 		}
 	}
+
+	override void addSymbols(Scope sc)
+	{
+		foreach(m; members)
+			m.addSymbols(sc);
+	}
 }
 
 //Import:
@@ -499,6 +516,13 @@ class Import : Node
 	string aliasIdent;
 	ImportBindList getImportBindList() { return members.length > 1 ? getMember!ImportBindList(1) : null; }
 	
+	Annotation getProtection()
+	{
+		if(parent && parent.parent)
+			return parent.parent.annotation & Annotation_ProtectionMask;
+		return Annotation_Private;
+	}
+
 	// semantic data
 	Module mod;
 	int countLookups;
@@ -529,13 +553,9 @@ class Import : Node
 			writer(" : ", bindList);
 	}
 
-	override void _semantic(Scope sc)
-	{
-		sc.addImport(this);
-	}
-
 	override void addSymbols(Scope sc)
 	{
+		sc.addImport(this);
 		if(aliasIdent.length > 0)
 			sc.addSymbol(aliasIdent, this);
 	}

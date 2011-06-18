@@ -314,18 +314,23 @@ class Declarator : Identifier
 				break;
 		return false;
 	}
-	bool _needsThis()
+	// returns 0 for never, 1 for non-static statement declaration, 2 for yes
+	int _needsThis()
 	{
 		for(Node p = parent; p; p = p.parent)
 			if(auto decl = cast(Decl) p)
 			{
-				if(!decl.parent || cast(Module)decl.parent || cast(DeclarationStatement)decl.parent)
-					return false;
-				return !(decl.attr & Attr_Static);
+				if(!decl.parent || cast(Module)decl.parent)
+					return 0;
+				if (decl.attr & Attr_Static)
+					return 0;
+				if(cast(DeclarationStatement)decl.parent)
+					return 1;
+				return 2;
 			}
 			else if(auto pdecl = cast(ParameterDeclarator) p)
 				break;
-		return false;
+		return 0;
 	}
 
 	override void addSymbols(Scope sc)
@@ -336,7 +341,8 @@ class Declarator : Identifier
 	Type applySuffixes(Type t)
 	{
 		isAlias = _isAlias();
-		needsThis = _needsThis();
+		int wantsThis = _needsThis();
+		needsThis = wantsThis == 2;
 		
 		// template parameters and function parameters and constraint
 		for(int m = 0; m < members.length; )
@@ -344,6 +350,7 @@ class Declarator : Identifier
 			auto member = members[0];
 			if(auto pl = cast(ParameterList) member)
 			{
+				needsThis = wantsThis != 0;
 				auto tf = needsThis ? new TypeDelegate(pl.id, pl.span) : new TypeFunction(pl.id, pl.span);
 				tf.mInit = this;
 				tf.addMember(t.clone());
@@ -419,7 +426,7 @@ class Declarator : Identifier
 		if(needsThis)
 		{
 			if(!sc)
-				return semanticErrorValue(text("evaluating ", ident, " needs context pointer"));
+				return semanticErrorValue("evaluating ", ident, " needs context pointer");
 			return sc.getProperty(ident);
 		}
 		if(value)
@@ -429,9 +436,26 @@ class Declarator : Identifier
 		if(!type)
 			value = new ErrorValue;
 		else if(isAlias)
-			value = new TypeValue(type);
+			value = new TypeValue(type); // TODO: alias not restricted to types
 		else
 		{
+			if(needsThis)
+			{
+				if(auto dgtype = cast(TypeDelegate)type)
+				{
+					value = dgtype.createValue(null);
+					if(auto dgvalue = cast(DelegateValue)value)
+					{
+						auto cv = new ContextValue;
+						cv.thisValue = sc;
+						dgvalue.context = cv;
+					}
+					return value;
+				}
+				if(!sc)
+					return semanticErrorValue("evaluating ", ident, " needs context pointer");
+				return sc.getProperty(ident);
+			}
 			if(auto expr = getInitializer())
 				value = type.createValue(expr.interpret(sc));
 			else
@@ -447,10 +471,10 @@ class Declarator : Identifier
 			{
 				if(auto fbody = decl.getFunctionBody())
 					return fbody.interpret(sc);
-				return semanticErrorValue(text(ident, " is not a interpretable function"));
+				return semanticErrorValue(ident, " is not a interpretable function");
 			}
 
-		return semanticErrorValue(text("cannot interpret external function ", ident));
+		return semanticErrorValue("cannot interpret external function ", ident);
 	}
 }
 

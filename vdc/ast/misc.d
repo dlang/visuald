@@ -610,7 +610,7 @@ class StaticAssert : Node
 	{
 		auto args = getArgumentList();
 		auto expr = args.getMember!Expression(0);
-		if(!expr.interpret(nullContext).toBool())
+		if(!expr.interpretCatch(nullContext).toBool())
 		{
 			string txt;
 			for(int a = 1; a < args.members.length; a++)
@@ -620,7 +620,7 @@ class StaticAssert : Node
 			}
 			if(txt.length == 0)
 				txt = "static assertion failed: " ~ writeD(expr);
-			semanticError(span.start, txt);
+			semanticErrorPos(span.start, txt);
 		}
 	}
 }

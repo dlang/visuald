@@ -148,7 +148,33 @@ Attribute tokenToAttribute(TokenId tok)
 		case TOK_export:       return Attr_Export;
 		case TOK_align:        return Attr_Align;
 		default: return 0;
-			
+	}
+}
+
+TokenId attributeToToken(Attribute attr)
+{
+	switch(attr)
+	{
+		case Attr_Extern:       return TOK_extern;
+		case Attr_Synchronized: return TOK_synchronized;
+		case Attr_Static:       return TOK_static;
+		case Attr_Final:        return TOK_final;
+		case Attr_Abstract:     return TOK_abstract;
+		case Attr_Const:        return TOK_const;
+		case Attr_Auto:         return TOK_auto;
+		case Attr_Scope:        return TOK_scope;
+		case Attr_Ref:          return TOK_ref;
+		case Attr_Volatile:     return TOK_volatile;
+		case Attr_Gshared:      return TOK___gshared;
+		case Attr_Thread:       return TOK___thread;
+		case Attr_Shared:       return TOK_shared;
+		case Attr_Immutable:    return TOK_immutable;
+		case Attr_Pure:         return TOK_pure;
+		case Attr_Nothrow:      return TOK_nothrow;
+		case Attr_Inout:        return TOK_inout;
+		case Attr_Export:       return TOK_export;
+		case Attr_Align:        return TOK_align;
+		default: return -1;
 	}
 }
 

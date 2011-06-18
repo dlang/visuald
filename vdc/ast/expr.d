@@ -81,7 +81,6 @@ void writeOperator(CodeWriter writer, TokenId op, int spaces)
 
 ////////////////////////////////////////////////////////////////
 //Expression:
-//    CommaExpression
 class Expression : Node
 {
 	// semantic data
@@ -94,11 +93,13 @@ class Expression : Node
 	override Type calcType()
 	{
 		if(!type)
-			return semanticErrorType(text(this, ".calcType not implemented"));
+			return semanticErrorType(this, ".calcType not implemented");
 		return type;
 	}
 }
 
+//BinaryExpression:
+//    [Expression Expression]
 class BinaryExpression : Expression
 {
 	mixin ForwardCtor!();
@@ -134,7 +135,7 @@ class BinaryExpression : Expression
 		{
 			Type typeL = getLeftExpr().calcType();
 			Type typeR = getRightExpr().calcType();
-			return semanticErrorType(text(this, "calcType on binary not implemented"));
+			return semanticErrorType(this, "calcType on binary not implemented");
 		}
 		return type;
 	}
@@ -207,7 +208,7 @@ else
 			case TOK_modass:	return vL.opassign!"%="(vR);
 
 			default:
-				return semanticErrorType(text("interpretation of binary operator ", tokenString(id), " not implemented"));
+				return semanticErrorType("interpretation of binary operator ", tokenString(id), " not implemented");
 		}
 	}
 
@@ -223,38 +224,18 @@ mixin template BinaryExpr()
 	}
 }
 
-//CommaExpression:
-//    AssignExpression
-//    AssignExpression , CommaExpression
 class CommaExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
-//AssignExpression:
-//    ConditionalExpression
-//    ConditionalExpression = AssignExpression
-//    ConditionalExpression += AssignExpression
-//    ConditionalExpression -= AssignExpression
-//    ConditionalExpression *= AssignExpression
-//    ConditionalExpression /= AssignExpression
-//    ConditionalExpression %= AssignExpression
-//    ConditionalExpression &= AssignExpression
-//    ConditionalExpression |= AssignExpression
-//    ConditionalExpression ^= AssignExpression
-//    ConditionalExpression ~= AssignExpression
-//    ConditionalExpression <<= AssignExpression
-//    ConditionalExpression >>= AssignExpression
-//    ConditionalExpression >>>= AssignExpression
-//    ConditionalExpression ^^= AssignExpression
 class AssignExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
 //ConditionalExpression:
-//    OrOrExpression
-//    OrOrExpression ? Expression : ConditionalExpression
+//    [Expression Expression Expression]
 class ConditionalExpression : Expression
 {
 	this() {} // default constructor needed for clone()
@@ -302,9 +283,6 @@ class ConditionalExpression : Expression
 	}
 }
 
-//OrOrExpression:
-//    AndAndExpression
-//    OrOrExpression || AndAndExpression
 class OrOrExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
@@ -319,9 +297,6 @@ class OrOrExpression : BinaryExpression
 	}
 }
 
-//AndAndExpression:
-//    OrExpression
-//    AndAndExpression && OrExpression
 class AndAndExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
@@ -336,119 +311,48 @@ class AndAndExpression : BinaryExpression
 	}
 }
 
-//OrExpression:
-//    XorExpression
-//    OrExpression | XorExpression
 class OrExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
-//XorExpression:
-//    AndExpression
-//    XorExpression ^ AndExpression
 class XorExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
-//AndExpression:
-//    CmpExpression
-//    AndExpression & CmpExpression
 class AndExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
-//CmpExpression:
-//    ShiftExpression
-//    EqualExpression
-//    IdentityExpression
-//    RelExpression
-//    InExpression
-//
-//EqualExpression:
-//    ShiftExpression == ShiftExpression
-//    ShiftExpression != ShiftExpression
-//
-//IdentityExpression:
-//    ShiftExpression is ShiftExpression
-//    ShiftExpression !is ShiftExpression
-//
-//RelExpression:
-//    ShiftExpression < ShiftExpression
-//    ShiftExpression <= ShiftExpression
-//    ShiftExpression > ShiftExpression
-//    ShiftExpression >= ShiftExpression
-//    ShiftExpression !<>= ShiftExpression
-//    ShiftExpression !<> ShiftExpression
-//    ShiftExpression <> ShiftExpression
-//    ShiftExpression <>= ShiftExpression
-//    ShiftExpression !> ShiftExpression
-//    ShiftExpression !>= ShiftExpression
-//    ShiftExpression !< ShiftExpression
-//    ShiftExpression !<= ShiftExpression
-//
-//InExpression:
-//    ShiftExpression in ShiftExpression
-//    ShiftExpression !in ShiftExpression
 class CmpExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
-//ShiftExpression:
-//    AddExpression
-//    ShiftExpression << AddExpression
-//    ShiftExpression >> AddExpression
-//    ShiftExpression >>> AddExpression
 class ShiftExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
-//AddExpression:
-//    MulExpression
-//    AddExpression + MulExpression
-//    AddExpression - MulExpression
-//    AddExpression ~ MulExpression
 class AddExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
-//MulExpression:
-//    PowExpression
-//    MulExpression * PowExpression
-//    MulExpression / PowExpression
-//    MulExpression % PowExpression
 class MulExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
-//PowExpression:
-//    UnaryExpression
-//    UnaryExpression ^^ PowExpression
 class PowExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
 }
 
 //UnaryExpression:
-//    PostfixExpression
-//    & UnaryExpression
-//    ++ UnaryExpression
-//    -- UnaryExpression
-//    * UnaryExpression
-//    - UnaryExpression
-//    + UnaryExpression
-//    ! UnaryExpression
-//    ~ UnaryExpression
-//    NewExpression
-//    DeleteExpression
-//    CastExpression
-//    /*NewAnonClassExpression*/
+//    id [Expression]
 class UnaryExpression : Expression
 {
 	mixin ForwardCtor!();
@@ -472,7 +376,10 @@ version(all)
 				return v.opBin(TOK_addass, Value.create(cast(byte)1));
 			case TOK_minusminus:
 				return v.opBin(TOK_minass, Value.create(cast(byte)1));
-						
+			case TOK_delete:
+				// TODO: call destructor?
+				v.opBin(TOK_assign, v.getType().createValue(null));
+				return theVoidValue;
 			default:
 				return v.opUn(id);
 		}
@@ -488,7 +395,7 @@ else
 			case TOK_not:        return v.opUnOp!"!"();
 			case TOK_tilde:      return v.opUnOp!"~"();
 			default:
-				return semanticErrorValue(text("interpretation of unary operator ", tokenString(id), " not implemented"));
+				return semanticErrorValue("interpretation of unary operator ", tokenString(id), " not implemented");
 		}
 	}
 	
@@ -548,6 +455,19 @@ class NewExpression : Expression
 			args.semantic(sc);
 	}
 	
+	override Type calcType()
+	{
+		return getType().calcType();
+	}
+	
+	override Value interpret(Context sc)
+	{
+		Value initVal;
+		if(auto args = getNewArguments())
+			initVal = args.interpret(sc);
+		return calcType().createValue(initVal);
+	}
+	
 	override void toD(CodeWriter writer)
 	{
 		if(ArgumentList nargs = getNewArguments())
@@ -580,16 +500,7 @@ class AnonymousClassType : Type
 }
 
 //CastExpression:
-//    cast ( Type )         UnaryExpression
-//    cast ( )              UnaryExpression
-//    cast ( const )        UnaryExpression
-//    cast ( immutable )    UnaryExpression
-//    cast ( inout )        UnaryExpression
-//    cast ( shared )       UnaryExpression
-//    cast ( shared const ) UnaryExpression
-//    cast ( const shared ) UnaryExpression
-//    cast ( shared inout ) UnaryExpression
-//    cast ( inout shared ) UnaryExpression
+//    attr [Type_opt Expression]
 class CastExpression : Expression
 {
 	this() {} // default constructor needed for clone()
@@ -609,6 +520,44 @@ class CastExpression : Expression
 		if(auto type = getType())
 			type.semantic(sc);
 		getExpression().semantic(sc);
+	}
+	
+	override Type calcType()
+	{
+		if(type)
+			return type;
+		
+		if(auto t = getType())
+			type = getType().calcType();
+		else
+		{
+			// extract basic type and attributes from expression
+			Type t = getExpression().calcType();
+			Attribute mattr = 0;
+			while(t)
+			{
+				auto mf = cast(ModifiedType) t;
+				if(!mf)
+					break;
+				mattr |= tokenToAttribute(mf.id);
+				t = mf.getType();
+			}
+			assert(t);
+			if(mattr != attr)
+			{
+				// rebuild modified type
+				for(Attribute a = attr, ta; a; a -= ta)
+				{
+					ta = a & -a;
+					TokenId aid = attributeToToken(attr);
+					auto mt = new ModifiedType(aid, span);
+					mt.addMember(t);
+					t = mt;
+				}
+			}
+			type = t;
+		}
+		return type;
 	}
 	
 	override void toD(CodeWriter writer)
@@ -651,14 +600,16 @@ class PostfixExpression : Expression
 
 	Expression getExpression() { return getMember!Expression(0); }
 
-	override void _semantic(Scope sc)
+	override Type calcType()
 	{
+		if(type)
+			return type;
+		
+		auto expr = getExpression();
+		auto type = expr.calcType();
 		switch(id)
 		{
 			case TOK_dot:
-				auto expr = getExpression();
-				expr.semantic(sc);
-				auto type = expr.calcType();
 				if(type)
 					if(auto id = getMember!Identifier(1))
 					{
@@ -669,10 +620,39 @@ class PostfixExpression : Expression
 						type = n ? n.calcType() : null;
 					}
 				break;
+			case TOK_lbracket:
+				if(members.length == 2) // if slice, same type as expression
+				{
+					auto args = getMember!ArgumentList(1);
+					auto vidx = args.interpret(nullContext);
+					Value idx;
+					if(vidx.values.length != 1)
+						return semanticErrorType("exactly one value expected as array index");
+					idx = vidx.values[0];
+					type = type.opIndex(idx.toInt());
+				}
+				else if(members.length == 3)
+				{
+					Scope sc = getScope();
+					Value beg = getMember(1).interpret(nullContext);
+					Value end = getMember(2).interpret(nullContext);
+					type = type.opSlice(beg.toInt(), end.toInt());
+				}
+				else
+					assert(members.length == 1);  // full slice
+				break;
+			case TOK_lparen:
+				Type args;
+				if(members.length == 2)
+					args = getMember!ArgumentList(1).calcType();
+				else
+					args = new TypeArraySlice;
+				type = type.opCall(args);
+				break;
 			default:
-				foreach(m; members)
-					m.semantic(sc);
+				break;
 		}
+		return type;
 	}
 	
 	override Value interpret(Context sc)
@@ -770,9 +750,7 @@ class PostfixExpression : Expression
 }
 
 //ArgumentList:
-//    AssignExpression
-//    AssignExpression ,
-//    AssignExpression , ArgumentList
+//    [Expression...]
 class ArgumentList : Node
 {
 	mixin ForwardCtor!();
@@ -852,9 +830,18 @@ class PrimaryExpression : Expression
 	{
 		switch(id)
 		{
+			case TOK_this:
+				if(!sc)
+					return semanticErrorValue("this needs context");
+				ContextValue cv;
+				while((cv = cast(ContextValue) sc) !is null)
+					sc = cv.thisValue;
+				return sc;
 			case TOK_true:  return Value.create(true);
 			case TOK_false: return Value.create(false);
 			case TOK_null:  return new NullValue;
+			case TOK_super:
+			case TOK_dollar:
 			default:        return super.interpret(sc);
 		}
 	}
@@ -963,14 +950,7 @@ class KeyValuePair : BinaryExpression
 }
 
 //FunctionLiteral:
-//    function Type_opt ParameterAttributes_opt FunctionBody
-//    delegate Type_opt ParameterAttributes_opt FunctionBody
-//    ParameterAttributes FunctionBody
-//    FunctionBody
-//
-//ParameterAttributes:
-//    Parameters
-//    Parameters FunctionAttributes
+//    id [ Type_opt ParameterList_opt FunctionBody ] attr
 class FunctionLiteral : Expression
 {
 	mixin ForwardCtor!();
@@ -991,6 +971,17 @@ class FunctionLiteral : Expression
 		writer.writeAttributes(attr, false);
 		writer(getFunctionBody());
 	}
+
+	override void _semantic(Scope sc)
+	{
+		if(auto t = getType())
+			t.semantic(sc);
+		
+		sc = enterScope(sc);
+		getFunctionBody().semantic(sc);
+		sc = sc.pop();
+	}
+	
 }
 
 //StructLiteral:
@@ -1035,10 +1026,14 @@ class AssertExpression : Expression
 
 	override Value interpret(Context sc)
 	{
-		bool cond = getExpression().interpret(sc).toBool();
-		if(!cond)
+		auto cond = getExpression().interpret(sc);
+		if(!cond.toBool())
 		{
-			string msg = getMessage().interpret(sc).toStr();
+			string msg;
+			if(auto m = getMessage())
+				msg = m.interpret(sc).toStr();
+			else
+				msg = writeD(getExpression()) ~ " failed";
 			return semanticErrorValue(msg);
 		}
 		return theVoidValue;
@@ -1067,7 +1062,7 @@ class MixinExpression : Expression
 		if(resolved)
 			return;
 		
-		Value v = getMember(0).interpret(nullContext);
+		Value v = getMember(0).interpretCatch(nullContext);
 		string s = v.toStr();
 		Parser parser = new Parser;
 		Node n = parser.parseExpression(s, span);
@@ -1411,13 +1406,13 @@ class IntegerLiteralExpression : PrimaryExpression
 	int getInt()
 	{
 		if(value > int.max)
-			semanticError(span.start, text(value, " too large to fit an integer"));
+			semanticErrorPos(span.start, text(value, " too large to fit an integer"));
 		return cast(int) value;
 	}
 	uint getUInt()
 	{
 		if(value > uint.max)
-			semanticError(span.start, text(value, " too large to fit an unsigned integer"));
+			semanticErrorPos(span.start, text(value, " too large to fit an unsigned integer"));
 		return cast(uint) value;
 	}
 }

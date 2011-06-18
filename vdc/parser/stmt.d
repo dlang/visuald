@@ -294,6 +294,7 @@ class NonEmptyStatement : Statement
 				p.popToken();
 				return StaticAssert.enterAfterStatic(p);
 			default:
+				p.pushState(&shiftDeclaration);
 				return AttributeSpecifier.enterAfterStatic(p);
 		}
 	}

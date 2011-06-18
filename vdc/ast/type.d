@@ -97,13 +97,29 @@ class Type : Node
 
 	Value interpretProperty(string prop)
 	{
-		return semanticErrorValue(text("cannot calculate property ", prop, " of type ", this));
+		return semanticErrorValue("cannot calculate property ", prop, " of type ", this);
 	}
 
 	Value createValue(Value initValue)
 	{
-		return semanticErrorValue(text("cannot create value of type ", this));
+		return semanticErrorValue("cannot create value of type ", this);
 	}
+
+	Type opIndex(int v)
+	{
+		return semanticErrorType("cannot index a ", this);
+	}
+	
+	Type opSlice(int b, int e)
+	{
+		return semanticErrorType("cannot slice a ", this);
+	}
+	
+	Type opCall(Type args)
+	{
+		return semanticErrorType("cannot call a ", this);
+	}
+	
 }
 
 //BasicType only created for standard types associated with tokens
@@ -185,6 +201,30 @@ class BasicType : Type
 		assert(false);
 	}
 
+	static Value getMin(int id)
+	{
+		// TODO: convert foreach to table access for faster lookup
+		foreach(tok; BasicTypeTokens)
+		{
+			static if(__traits(compiles, Token2BasicType!(tok).min))
+				if (id == tok)
+					return Value.create(Token2BasicType!(tok).min);
+		}
+		return .semanticErrorValue(tokenString(id), " has no min property");
+	}
+
+	static Value getMax(int id)
+	{
+		// TODO: convert foreach to table access for faster lookup
+		foreach(tok; BasicTypeTokens)
+		{
+			static if(__traits(compiles, Token2BasicType!(tok).max))
+				if (id == tok)
+					return Value.create(Token2BasicType!(tok).max);
+		}
+		return .semanticErrorValue(tokenString(id), " has no max property");
+	}
+
 	override Value createValue(Value initValue)
 	{
 		// TODO: convert foreach to table access for faster lookup
@@ -197,7 +237,7 @@ class BasicType : Type
 				return Value.create(Token2BasicType!(tok).init);
 			}
 		}
-		return semanticErrorValue(text("cannot create value of type ", this));
+		return semanticErrorValue("cannot create value of type ", this);
 	}
 	
 	override void typeSemantic(Scope sc)
@@ -256,7 +296,9 @@ class BasicType : Type
 				
 			// integer types
 			case "min":
+				return getMin(id);
 			case "max":
+				return getMax(id);
 				
 			// floating point types
 			case "infinity":
@@ -482,6 +524,17 @@ class TypeIndirection : Type
 		// even better    -> head_const(B*)
 		return nextThis.convertableFrom(ifrom.getType(), flags & ~ConversionFlags.kIndirectionClear);
 	}
+
+	override Type opIndex(int v)
+	{
+		return getType();
+	}
+	
+	override Type opSlice(int b, int e)
+	{
+		return this;
+	}
+	
 }
 
 //TypePointer:
@@ -501,7 +554,16 @@ class TypePointer : TypeIndirection
 
 	override Value createValue(Value initValue)
 	{
-		return createInitValue!PointerValue(initValue);
+		auto v = PointerValue._create(this, null);
+		if(initValue)
+			v.opBin(TOK_assign, initValue);
+		return v;
+	}
+
+	bool convertableTo(TypePointer t)
+	{
+		auto type = getType().calcType();
+		return t.getType().calcType().compare(type);
 	}
 
 	override void toD(CodeWriter writer)
@@ -636,7 +698,7 @@ class TypeStaticArray : TypeIndirection
 	
 	override Value createValue(Value initValue)
 	{
-		int dim = getDimension().interpret(scop.ctx).toInt();
+		int dim = getDimension().interpret(getScope().ctx).toInt();
 		auto val = new TupleValue;
 		auto type = getType();
 		val.values.length = dim;
@@ -649,6 +711,14 @@ class TypeStaticArray : TypeIndirection
 		}
 		return val;
 	}
+	
+	override Type opSlice(int b, int e)
+	{
+		auto da = new TypeDynamicArray;
+		da.addMember(getType().clone());
+		return da;
+	}
+	
 }
 
 //SuffixStaticArray:
@@ -793,9 +863,16 @@ class TypeFunction : Type
 
 	override Value createValue(Value initValue)
 	{
-		assert(!initValue);
 		auto fv = new FunctionValue;
-		fv.functype = this;
+		if(FunctionValue ifv = cast(FunctionValue) initValue)
+		{
+			// TODO: verfy types
+			fv.functype = ifv.functype;
+		}
+		else if(initValue)
+			return semanticErrorValue("cannot assign ", initValue, " to ", this);
+		else
+			fv.functype = this;
 		return fv;
 	}
 	
@@ -832,10 +909,18 @@ class TypeDelegate : TypeFunction
 
 	override Value createValue(Value initValue)
 	{
-		assert(!initValue);
-		auto dv = new DelegateValue;
-		dv.functype = this;
-		return dv;
+		auto fv = new DelegateValue;
+		if(DelegateValue ifv = cast(DelegateValue) initValue)
+		{
+			// TODO: verfy types
+			fv.functype = ifv.functype;
+			fv.context = ifv.context;
+		}
+		else if(initValue)
+			return semanticErrorValue("cannot assign ", initValue, " to ", this);
+		else
+			fv.functype = this;
+		return fv;
 	}
 	
 	override void toD(CodeWriter writer)

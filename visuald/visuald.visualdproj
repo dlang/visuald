@@ -40,7 +40,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
+  <otherDMD>1</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -181,73 +181,73 @@
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="VisualD">
+  <Folder name="c2d">
+   <File path="..\c2d\dlist.d" />
+  </Folder>
   <Folder name="Resources">
+   <File path="Resources\AlternateRowColor.ico" />
+   <File path="Resources\ascend.ico" />
+   <File path="Resources\CaseSensitive.ico" />
    <File path="Resources\DAboutBox.ico" />
+   <File path="Resources\descend.ico" />
    <File path="Resources\DImageList.bmp" />
    <File path="Resources\DSplashScreenIcon.bmp" />
+   <File path="Resources\faninout.ico" />
+   <File path="Resources\GroupByType.ico" />
    <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set PATH=%PATH%;c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
 set PATH=%PATH%;$(DevEnvDir)
 set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin
 CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
-   <File path="Resources\resources.h" />
-   <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" />
-   <File path="Resources\AlternateRowColor.ico" />
-   <File path="Resources\ascend.ico" />
-   <File path="Resources\descend.ico" />
-   <File path="Resources\GroupByType.ico" />
-   <File path="Resources\CaseSensitive.ico" />
-   <File path="Resources\WholeWord.ico" />
+   <File path="Resources\refresh.ico" />
    <File path="Resources\RegExp.ico" />
+   <File path="Resources\removetrace.ico" />
+   <File path="Resources\resources.h" />
    <File path="Resources\SearchFile.ico" />
    <File path="Resources\SearchSymbol.ico" />
-   <File path="Resources\faninout.ico" />
-   <File path="Resources\removetrace.ico" />
    <File path="Resources\settrace.ico" />
-   <File path="Resources\refresh.ico" />
+   <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" />
+   <File path="Resources\WholeWord.ico" />
   </Folder>
   <Folder name="workaround">
    <File path="workaround.d" />
   </Folder>
-  <Folder name="c2d">
-   <File path="..\c2d\dlist.d" />
-  </Folder>
-  <File path="config.d" />
-  <File path="dproject.d" />
+  <File path="build.d" />
   <File path="chiercontainer.d" />
+  <File path="chiernode.d" />
+  <File path="colorizer.d" />
   <File path="completion.d" />
   <File path="comutil.d" />
+  <File path="config.d" />
   <File path="dimagelist.d" />
   <File path="dlangsvc.d" />
   <File path="dllmain.d" />
   <File path="dpackage.d" />
+  <File path="dproject.d" />
   <File path="expansionprovider.d" />
   <File path="fileutil.d" />
   <File path="hierarchy.d" />
   <File path="hierutil.d" />
-  <File path="logutil.d" />
-  <File path="register.d" />
-  <File path="stringutil.d" />
-  <File path="trackprojectdocument.d" />
-  <File path="vscommands.d" />
-  <File path="winctrl.d" />
-  <File path="xmlwrap.d" />
-  <File path="visuald.def" />
-  <File path="oledatasource.d" />
   <File path="intellisense.d" />
-  <File path="searchsymbol.d" />
-  <File path="windows.d" />
-  <File path="wmmsg.d" />
-  <File path="propertypage.d" />
+  <File path="lexutil.d" />
+  <File path="library.d" />
+  <File path="logutil.d" />
+  <File path="oledatasource.d" />
   <File path="pkgutil.d" />
   <File path="profiler.d" />
+  <File path="propertypage.d" />
+  <File path="register.d" />
+  <File path="searchsymbol.d" />
   <File path="simpleparser.d" />
-  <File path="viewfilter.d" />
-  <File path="colorizer.d" />
-  <File path="lexutil.d" />
+  <File path="stringutil.d" />
   <File path="tokenreplace.d" />
-  <File path="build.d" />
   <File path="tokenreplacedialog.d" />
-  <File path="library.d" />
-  <File path="chiernode.d" />
+  <File path="trackprojectdocument.d" />
+  <File path="viewfilter.d" />
+  <File path="visuald.def" />
+  <File path="vscommands.d" />
+  <File path="winctrl.d" />
+  <File path="windows.d" />
+  <File path="wmmsg.d" />
+  <File path="xmlwrap.d" />
  </Folder>
 </DProject>
