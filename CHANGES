@@ -284,7 +284,7 @@ Version history
   * fixed spurious crash when removing multiple lines 
   * now installs cv2pdb 0.21
 
-unreleased Version 0.3.25
+2011-06-19 Version 0.3.25
 
   * fixed version information of the DLL
   * error list: warnings are no longer shown as errors
@@ -304,3 +304,4 @@ unreleased Version 0.3.25
   * tweaked outlining for multi-dimensional arrays and token strings
   * build order of custom/resource compilations now sorted by dependencies
   * project items now sorted alphabetically
+  * fixed a few more issues with relative paths causing a source file to be opened twice in the editor

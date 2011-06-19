@@ -59,13 +59,44 @@ string removeDotDotPath(string file)
 	// assumes \\ used as path separator
 	for( ; ; )
 	{
+		// remove duplicate back slashes
+		int pos = indexOf(file[1..$], "\\\\");
+		if(pos < 0)
+			break;
+		file = file[0..pos+1] ~ file[pos + 2 .. $];
+	}
+	for( ; ; )
+	{
 		int pos = indexOf(file, "\\..\\");
 		if(pos < 0)
-			return file;
+			break;
 		int lpos = lastIndexOf(file[0..pos], '\\');
 		if(lpos < 0)
-			return file;
+			break;
 		file = file[0..lpos] ~ file[pos + 3 .. $];
+	}
+	for( ; ; )
+	{
+		int pos = indexOf(file, "\\.\\");
+		if(pos < 0)
+			break;
+		file = file[0..pos] ~ file[pos + 2 .. $];
+	}
+	return file;
+}
+
+string makeFilenameCanonical(string file, string workdir)
+{
+	file = makeFilenameAbsolute(file, workdir);
+	file = removeDotDotPath(file);
+	return file;
+}
+
+void makeFilenamesCanonical(string[] files, string workdir)
+{
+	foreach(ref file; files)
+	{
+		file = makeFilenameCanonical(file, workdir);
 	}
 }
 

@@ -638,7 +638,7 @@ string[] GetImportPaths(string file)
 		foreach(ref i; imports)
 			i = normalizeDir(unquoteArgument(i));
 		string projectpath = cfg.GetProjectDir();
-		makeFilenamesAbsolute(imports, projectpath);
+		makeFilenamesCanonical(imports, projectpath);
 		addunique(imports, projectpath);
 	}
 	imports ~= Package.GetGlobalOptions().getImportPaths();

@@ -900,7 +900,7 @@ class GlobalOptions
 					{
 						arg = unquoteArgument(arg);
 						if(arg.startsWith("-I"))
-							imports ~= normalizeDir(arg[2..$]);
+							imports ~= removeDotDotPath(normalizeDir(arg[2..$]));
 					}
 				}
 		}
@@ -916,7 +916,7 @@ class GlobalOptions
 		string searchpaths = replaceMacros(ImpSearchPath, replacements);
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
-			imports ~= normalizeDir(unquoteArgument(arg));
+			imports ~= removeDotDotPath(normalizeDir(unquoteArgument(arg)));
 		
 		return imports;
 	}

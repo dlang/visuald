@@ -660,7 +660,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText))
 			return S_FALSE;
 		
-		filename = makeFilenameAbsolute(filename, mProjectDir);
+		filename = makeFilenameCanonical(filename, mProjectDir);
 		if(pnPriority)
 			*pnPriority = nPriority;
 		if(pnLineNum)
