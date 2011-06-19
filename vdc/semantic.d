@@ -12,6 +12,7 @@ import vdc.util;
 import vdc.ast.mod;
 import vdc.ast.node;
 import vdc.ast.type;
+import vdc.ast.decl;
 import vdc.parser.engine;
 import vdc.logger;
 import vdc.interpret;
@@ -97,8 +98,76 @@ ErrorType semanticErrorType(T...)(T args)
 }
 
 alias Node Symbol;
-alias Value Context;
+
+class Context 
+{
+	Scope scop;
+	Value[Node] vars;
+	Context parent;
+
+	this(Context p)
+	{
+		parent = p;
+	}
+
+	Value getThis()
+	{
+		if(parent)
+			return parent.getThis();
+		return null;
+	}
+	
+	void setThis(Value v)
+	{
+		setValue(null, v);
+	}
+	
+	Value getValue(Node n)
+	{
+		if(auto pn = n in vars)
+			return *pn;
+		if(parent)
+			return parent.getValue(n);
+		return null;
+	}
+
+	void setValue(Node n, Value v)
+	{
+		vars[n] = v;
+	}
+}
+
+class AggrContext : Context
+{
+	TupleValue instance;
+
+	this(Context p, TupleValue inst)
+	{
+		super(p);
+		instance = inst;
+	}
+	
+	override Value getThis()
+	{
+		return instance;
+	}
+
+	override Value getValue(Node n)
+	{
+		if(auto v = super.getValue(n))
+			return v;
+
+		if(auto decl = cast(Declarator) n)
+			return instance.getProperty(decl.ident);
+
+		return null;
+	}
+}
+
 Context nullContext;
+
+Context globalContext;
+Context threadContext;
 
 class Scope
 {
@@ -107,9 +176,11 @@ class Scope
 	Annotation annotations;
 	Attribute attributes;
 	Module mod;
+	Node node;
 	Symbol[][string] symbols;
 	Import[] imports;
-	Context ctx;
+	
+	Context ctx; // compile time only
 	
 	static Scope current;
 	
@@ -206,9 +277,14 @@ class Project : Node
 	{
 		super(TextSpan());
 		options = new Options;
-		options.importDirs ~= r"m:\s\d\dmd2\druntime\import\";
-		options.importDirs ~= r"m:\s\d\dmd2\phobos\";
+
+		options.importDirs ~= r"c:\l\dmd-2.053\src\druntime\import\";
+		options.importDirs ~= r"c:\l\dmd-2.053\src\phobos\";
+		
 		options.importDirs ~= r"c:\tmp\d\runnable\";
+		
+		globalContext = new Context(null);
+		threadContext = new Context(null);
 	}
 	
 	////////////////////////////////////////////////////////////

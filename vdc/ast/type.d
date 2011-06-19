@@ -62,6 +62,12 @@ class Type : Node
 
 	abstract bool propertyNeedsParens() const;
 	
+	override Type clone()
+	{
+		Type n = static_cast!Type(super.clone());
+		return n;
+	}
+	
 	enum ConversionFlags
 	{
 		kAllowBaseClass          = 1 << 0,
@@ -633,7 +639,7 @@ class TypeDynamicArray : TypeIndirection
 						return createInitValue!StringValue(initValue);
 		
 		
-		auto val = new TupleValue;
+		auto val = new DynArrayValue(this);
 		if(int dim = initValue ? initValue.getProperty("length").toInt() : 0)
 		{
 			auto type = getType();
@@ -842,7 +848,7 @@ class TypeFunction : Type
 	Type getReturnType() { return getMember!Type(0); }
 	ParameterList getParameters() { return getMember!ParameterList(1); }
 	
-	Declarator mInit; // the actual function pointer
+	Declarator funcDecl; // the actual function pointer
 	
 	override void typeSemantic(Scope sc)
 	{

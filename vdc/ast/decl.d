@@ -174,6 +174,7 @@ class Decl : Node
 		{
 			// if it is a function declaration, create a new scope including function parameters
 			scop = sc.push(scop);
+			scop.node = this;
 			if(auto decls = getDeclarators())
 				if(auto decl = decls.getDeclarator(0))
 				{
@@ -282,7 +283,8 @@ class Declarator : Identifier
 	Type type;
 	Value value;
 	bool isAlias;
-	bool needsThis;
+	bool isRef;
+	bool needsContext;
 	
 	override Declarator clone()
 	{
@@ -315,22 +317,21 @@ class Declarator : Identifier
 		return false;
 	}
 	// returns 0 for never, 1 for non-static statement declaration, 2 for yes
-	int _needsThis()
+	bool _needsContext()
 	{
 		for(Node p = parent; p; p = p.parent)
 			if(auto decl = cast(Decl) p)
 			{
 				if(!decl.parent || cast(Module)decl.parent)
-					return 0;
-				if (decl.attr & Attr_Static)
-					return 0;
-				if(cast(DeclarationStatement)decl.parent)
-					return 1;
-				return 2;
+					return false;
+				if (decl.attr & (Attr_Static | Attr_Shared | Attr_Gshared))
+					return false;
+				return true;
 			}
 			else if(auto pdecl = cast(ParameterDeclarator) p)
-				break;
-		return 0;
+				return true;
+		
+		return false;
 	}
 
 	override void addSymbols(Scope sc)
@@ -341,8 +342,7 @@ class Declarator : Identifier
 	Type applySuffixes(Type t)
 	{
 		isAlias = _isAlias();
-		int wantsThis = _needsThis();
-		needsThis = wantsThis == 2;
+		needsContext = _needsContext();
 		
 		// template parameters and function parameters and constraint
 		for(int m = 0; m < members.length; )
@@ -350,9 +350,8 @@ class Declarator : Identifier
 			auto member = members[0];
 			if(auto pl = cast(ParameterList) member)
 			{
-				needsThis = wantsThis != 0;
-				auto tf = needsThis ? new TypeDelegate(pl.id, pl.span) : new TypeFunction(pl.id, pl.span);
-				tf.mInit = this;
+				auto tf = needsContext ? new TypeDelegate(pl.id, pl.span) : new TypeFunction(pl.id, pl.span);
+				tf.funcDecl = this;
 				tf.addMember(t.clone());
 				removeMember(m);
 				tf.addMember(pl);
@@ -423,43 +422,53 @@ class Declarator : Identifier
 
 	override Value interpret(Context sc)
 	{
-		if(needsThis)
-		{
-			if(!sc)
-				return semanticErrorValue("evaluating ", ident, " needs context pointer");
-			return sc.getProperty(ident);
-		}
 		if(value)
 			return value;
-		
 		Type type = calcType();
 		if(!type)
 			value = new ErrorValue;
 		else if(isAlias)
 			value = new TypeValue(type); // TODO: alias not restricted to types
+		else if(needsContext)
+		{
+			if(!sc)
+				return semanticErrorValue("evaluating ", ident, " needs context pointer");
+			if(auto v = sc.getValue(this))
+				return v;
+		}
+		return interpretReinit(sc);
+	}
+	
+	Value interpretReinit(Context sc)
+	{
+		Type type = calcType();
+		if(!type)
+			value = new ErrorValue;
+		else if(isAlias)
+			value = new TypeValue(type); // TODO: alias not restricted to types
+		else if(needsContext)
+		{
+			if(!sc)
+				return semanticErrorValue("evaluating ", ident, " needs context pointer");
+			Value v;
+			if(auto expr = getInitializer())
+				v = type.createValue(expr.interpret(sc));
+			else
+			{
+				v = type.createValue(null);
+				if(auto dgvalue = cast(DelegateValue)v)
+					dgvalue.context = sc;
+			}
+			sc.setValue(this, v);
+			return v;
+		}
+		else if(auto expr = getInitializer())
+			value = type.createValue(expr.interpret(sc));
 		else
 		{
-			if(needsThis)
-			{
-				if(auto dgtype = cast(TypeDelegate)type)
-				{
-					value = dgtype.createValue(null);
-					if(auto dgvalue = cast(DelegateValue)value)
-					{
-						auto cv = new ContextValue;
-						cv.thisValue = sc;
-						dgvalue.context = cv;
-					}
-					return value;
-				}
-				if(!sc)
-					return semanticErrorValue("evaluating ", ident, " needs context pointer");
-				return sc.getProperty(ident);
-			}
-			if(auto expr = getInitializer())
-				value = type.createValue(expr.interpret(sc));
-			else
-				value = type.createValue(null);
+			value = type.createValue(null);
+			if(auto dgvalue = cast(DelegateValue)value)
+				dgvalue.context = sc;
 		}
 		return value;
 	}

@@ -261,6 +261,7 @@ class Node
 		if(!nscope)
 		{
 			nscope = sc.pushClone();
+			nscope.node = this;
 			addMemberSymbols(nscope);
 			return nscope;
 		}

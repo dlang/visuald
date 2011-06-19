@@ -5,7 +5,26 @@
 //
 // License for redistribution is given by the Artistic License 2.0
 // see file LICENSE for further details
-
+//
+// Interpretation passes around a context, holding the current variable stack
+// class Context { Scope sc; Value[Node] vars; Context parent; }
+//
+// static shared values are not looked up in the context
+// thread local static values are looked up in a global thread context
+// non-static values are looked up in the current context
+//
+// member/field lookup in aggregates uses an instance specific Context
+//
+// when entering a scope, a new Context is created with the current 
+//  Context as parent
+// when leaving a scope, the context is destroyed together with scoped values
+//  created within the lifetime of the context
+// a delegate value saves the current context to be used when calling the delegate
+//
+// local functions are called with the context of the enclosing function
+// member functions are called with the context of the instance
+// static or global functions are called with the thread context
+//
 module vdc.interpret;
 
 import vdc.util;
@@ -629,10 +648,9 @@ class CRealValue : ValueT!creal
 
 alias TypeTuple!(CharValue, WCharValue, DCharValue, StringValue) StringTypeValues;
 
-class DynArrayValue : Value
+class DynArrayValue : TupleValue
 {
 	Type type;
-	Value[] values;
 
 	this(Type t)
 	{
@@ -840,8 +858,13 @@ class TupleValue : Value
 				}
 				return semanticErrorValue("cannot compare ", v, " to ", this);
 			case TOK_notequal:
-				return opBin(TOK_equal, v);
+				return Value.create(!opBin(TOK_equal, v).toBool());
 			case TOK_assign:
+				if(auto tv = cast(TupleValue) v)
+					values = tv.values;
+				else
+					return semanticErrorValue("cannot assign ", v, " to ", this);
+				return this;
 			case TOK_tilde:
 			case TOK_catass:
 			default:
@@ -866,9 +889,9 @@ class FunctionValue : Value
 	TypeFunction functype;
 	bool adr;
 	
-	override Value opCall(Context sc, Value vargs)
+	Value doCall(Context sc, Value vargs)
 	{
-		if(!functype.mInit)
+		if(!functype.funcDecl)
 			return semanticErrorValue("calling null reference");
 
 		auto args = static_cast!TupleValue(vargs);
@@ -876,25 +899,45 @@ class FunctionValue : Value
 		if(args.values.length != params.members.length)
 			return semanticErrorValue("incorrect number of arguments");
 
-		Value[] prevValues;
-		prevValues.length = params.members.length;
+		auto ctx = new Context(sc);
 		for(int p = 0; p < params.members.length; p++)
 		{
 			auto decl = params.getParameter(p).getParameterDeclarator().getDeclarator();
-			prevValues[p] = decl.interpret(sc);
 			Value v = args.values[p];
-			Type t = prevValues[p].getType();
-			if(!t.compare(v.getType()))
-				v = t.createValue(v);
-			decl.value = v;
+			Type t = v.getType();
+			if(!decl.isRef)
+				v = t.createValue(v); // if not ref, always create copy
+			else if(!t.compare(v.getType()))
+				v = semanticErrorValue("cannot create reference of incompatible type");
+			ctx.setValue(decl, v);
 		}
-		Value retVal = functype.mInit.interpretCall(sc);
-		for(int p = 0; p < params.members.length; p++)
-		{
-			auto decl = params.getParameter(p).getParameterDeclarator().getDeclarator();
-			decl.value = prevValues[p];
-		}
+		Value retVal = functype.funcDecl.interpretCall(ctx);
 		return retVal ? retVal : theVoidValue;
+	}
+
+	override Value opCall(Context sc, Value vargs)
+	{
+		return doCall(threadContext, vargs);
+	}
+
+	override Value opBin(int tokid, Value v)
+	{
+		FunctionValue dg = cast(FunctionValue) v;
+		if(!dg)
+			return semanticErrorValue("cannot assign ", v, " to function");
+		//! TODO: verify compatibility of types
+		switch(tokid)
+		{
+			case TOK_assign:
+				functype = dg.functype;
+				return Value;
+			case TOK_equal:
+				return Value.create(functype.compare(dg.functype));
+			case TOK_notequal:
+				return Value.create(!functype.compare(dg.functype));
+			default:
+				return super.opBin(tokid, v);
+		}
 	}
 
 	override Type getType()
@@ -909,37 +952,35 @@ class FunctionValue : Value
 	}
 }
 
-class ContextValue : Value
-{
-	Value thisValue;
-	Value[string] closureVars;
-
-	override Value getProperty(string ident)
-	{
-		switch(ident)
-		{
-			case "this":
-				if(thisValue)
-					return thisValue;
-				goto default;
-			default:
-				if(auto pn = ident in closureVars)
-					return *pn;
-				if(thisValue)
-					return thisValue.getProperty(ident);
-				return semanticErrorValue("context has no property ", ident);
-		}
-	}
-}
-
 class DelegateValue : FunctionValue
 {
 	Type contextType; // struct/class pointer or closure
-	ContextValue context;
+	Context context;
 	
 	override Value opCall(Context sc, Value vargs)
 	{
-		return super.opCall(context, vargs);
+		return doCall(context, vargs);
+	}
+
+	override Value opBin(int tokid, Value v)
+	{
+		DelegateValue dg = cast(DelegateValue) v;
+		if(!dg)
+			return semanticErrorValue("cannot assign ", v, " to delegate");
+		//! TODO: verify compatibility of types
+		switch(tokid)
+		{
+			case TOK_assign:
+				context = dg.context;
+				functype = dg.functype;
+				return Value;
+			case TOK_equal:
+				return Value.create((context is dg.context) && functype.compare(dg.functype));
+			case TOK_notequal:
+				return Value.create((context !is dg.context) || !functype.compare(dg.functype));
+			default:
+				return super.opBin(tokid, v);
+		}
 	}
 }
 
@@ -973,9 +1014,10 @@ class AggrValue(T) : TupleValue
 			case TOK_equal:
 				if(Value fv = type.getProperty(this, "opEqual"))
 				{
+					auto ctx = new AggrContext(null, this);
 					auto tv = new TupleValue;
 					tv.values ~= v;
-					return fv.opCall(this, tv);
+					return fv.opCall(ctx, tv);
 				}
 				return super.opBin(tokid, v);
 			case TOK_is:

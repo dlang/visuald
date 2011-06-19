@@ -831,12 +831,11 @@ class PrimaryExpression : Expression
 		switch(id)
 		{
 			case TOK_this:
-				if(!sc)
+				Value v = sc ? sc.getThis() : null;
+				if(!v)
 					return semanticErrorValue("this needs context");
-				ContextValue cv;
-				while((cv = cast(ContextValue) sc) !is null)
-					sc = cv.thisValue;
-				return sc;
+				return v;
+				
 			case TOK_true:  return Value.create(true);
 			case TOK_false: return Value.create(false);
 			case TOK_null:  return new NullValue;
@@ -982,6 +981,88 @@ class FunctionLiteral : Expression
 		sc = sc.pop();
 	}
 	
+	TypeFunction func;
+	
+	override Value interpret(Context sc)
+	{
+		if(!func)
+		{
+			auto pl = getParameterList();
+			if(!pl)
+				pl = new ParameterList();
+
+			if(id == TOK_function)
+			{
+				auto funclit = new TypeFunctionLiteral;
+				funclit.paramList = pl;
+				func = funclit;
+			}
+			else
+			{
+				auto funclit = new TypeDelegateLiteral;
+				funclit.paramList = pl;
+				func = funclit;
+			}
+/+
+			auto rt = getType();
+			if(!rt)
+				rt = new AutoType(TOK_auto, span);
+			else
+				rt = rt.clone();
+			func.addMember(rt);
+			
+			auto pl = getParameterList();
+			if(!pl)
+				pl = new ParameterList();
+			else
+				pl = pl.clone();
+			func.addMember(pl);
++/
+			
+			auto decl = new FuncLiteralDeclarator;
+			decl.type = func;
+			decl.funcbody = getFunctionBody();
+			func.funcDecl = decl;
+		}
+		
+		if(id == TOK_function)
+		{
+			auto fn = new FunctionValue;
+			fn.functype = func;
+			return fn;
+		}
+		else
+		{
+			auto dg = new DelegateValue;
+			dg.context = sc;
+			dg.functype = func;
+			return dg;
+		}
+	}
+}
+
+class TypeFunctionLiteral : TypeFunction
+{
+	ParameterList paramList;
+	
+	override ParameterList getParameters() { return paramList; }
+}
+
+class TypeDelegateLiteral : TypeDelegate
+{
+	ParameterList paramList;
+	
+	override ParameterList getParameters() { return paramList; }
+}
+
+class FuncLiteralDeclarator : Declarator
+{
+	FunctionBody funcbody;
+	
+	override Value interpretCall(Context sc)
+	{
+		return funcbody.interpret(sc);
+	}
 }
 
 //StructLiteral:

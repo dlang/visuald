@@ -113,11 +113,13 @@ class Aggregate : Type
 	
 	void _setupInitValue(TupleValue sv)
 	{
+		auto ctx = new AggrContext(null, sv);
+		ctx.scop = scop;
 		getBody().iterateDeclarators(false, false, (Declarator decl) { 
 			Type type = decl.calcType();
 			Value value;
 			if(auto expr = decl.getInitializer())
-				value = type.createValue(expr.interpret(sv));
+				value = type.createValue(expr.interpret(ctx));
 			else
 				value = type.createValue(null);
 
@@ -175,10 +177,11 @@ class Aggregate : Type
 			return sv.values[*pidx];
 		if(auto pdecl = ident in mapName2Method)
 		{
-			Value v = pdecl.calcType().createValue(null);
+			auto func = pdecl.calcType();
+			Value v = func.createValue(null);
 			auto dgv = static_cast!DelegateValue(v);
-			auto cv = new ContextValue;
-			cv.thisValue = sv;
+			auto cv = new AggrContext(null, sv);
+			cv.scop = scop;
 			dgv.context = cv;
 			return dgv;
 		}

@@ -129,6 +129,7 @@ class Module : Node
 		{
 			scop = new Scope;
 			scop.mod = this;
+			scop.node = this;
 
 			// add implicite import of module object
 			if(auto prj = getProject())

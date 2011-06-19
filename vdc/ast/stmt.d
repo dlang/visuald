@@ -279,16 +279,20 @@ class DeclarationStatement : Statement
 		auto decl = cast(Decl)getMember(0);
 		if(!decl)
 			return; // classes, enums, etc
-		if(decl.getFunctionBody())
-			return; // nothing to do for local functions
+		//if(decl.getFunctionBody())
+		//	return; // nothing to do for local functions
 		
 		auto decls = decl.getDeclarators();
 		for(int n = 0; n < decls.members.length; n++)
 		{
 			auto d = decls.getDeclarator(n);
 			if(reinit)
+			{
 				d.value = null;
-			d.interpretCatch(sc);
+				d.interpretReinit(sc);
+			}
+			else
+				d.interpret(sc);
 		}
 	}
 }
