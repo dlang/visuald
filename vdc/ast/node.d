@@ -14,6 +14,7 @@ import vdc.lexer;
 import vdc.ast.expr;
 import vdc.ast.type;
 import vdc.ast.mod;
+import vdc.ast.tmpl;
 import vdc.logger;
 import vdc.interpret;
 
@@ -320,6 +321,15 @@ class Node
 		return semanticErrorValue(this, ": interpretation stopped");
 	}
 	
+	bool isTemplate()
+	{
+		return false;
+	}
+	Node expandTemplate(Scope sc, TemplateArgumentList args)
+	{
+		return this;
+	}
+	
 	////////////////////////////////////////////////////////////
 	void addMember(Node m) 
 	{
@@ -331,7 +341,7 @@ class Node
 	{
 		assert(m >= 0 && m + cnt <= members.length);
 		for (int n = m + cnt; n < members.length; n++)
-			members[n - cnt] = members[m];
+			members[n - cnt] = members[n];
 		members.length = members.length - cnt;
 	}
 	

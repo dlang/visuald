@@ -35,6 +35,7 @@ import vdc.logger;
 import vdc.ast.decl;
 import vdc.ast.type;
 import vdc.ast.aggr;
+import vdc.ast.expr;
 
 import std.variant;
 import std.conv;
@@ -64,6 +65,7 @@ class Value
 {
 	bool mutable = true;
 	debug string sval;
+	debug string ident;
 	
 	static T _create(T, V)(V val)
 	{
@@ -131,6 +133,12 @@ class Value
 		semanticError("cannot convert ", this, " to string");
 		return "";
 	}
+
+	string toMixin()
+	{
+		semanticError("cannot convert ", this, " to mixin");
+		return "";
+	}
 	//override string toString()
 	//{
 	//    return text(getType(), ":", toStr());
@@ -139,7 +147,8 @@ class Value
 	version(all)
 	Value opBin(Context ctx, int tokid, Value v)
 	{
-		return semanticErrorValue("binary operator ", tokenString(tokid), " on ", this, " not implemented");
+		return semanticErrorValue("cannot calculate ", this, " ", tokenString(tokid), " ", v);
+		//return semanticErrorValue("binary operator ", tokenString(tokid), " on ", this, " not implemented");
 	}
 
 	Value opUn(Context ctx, int tokid)
@@ -164,9 +173,9 @@ class Value
 		return semanticErrorValue("cannot dereference a ", this);
 	}
 
-	Value interpretProperty(Context ctx, string ident)
+	Value interpretProperty(Context ctx, string prop)
 	{
-		return getType().interpretProperty(ctx, ident);
+		return getType().interpretProperty(ctx, prop);
 	}
 	
 	Value opIndex(Value v)
@@ -340,7 +349,7 @@ class Value
 								return semanticErrorValue("division by zero");
 						mixin("*pval " ~ op ~ "v2;");
 
-						logInfo("value changed by " ~ op ~ " to %s", toStr());
+						logInfo("value %s changed by " ~ op ~ " to %s", ident, toStr());
 						debug sval = toStr();
 						return this;
 					}
@@ -657,14 +666,19 @@ class DynArrayValue : TupleValue
 		type = t;
 	}
 
-	override Value interpretProperty(Context ctx, string ident)
+	override string toStr()
 	{
-		switch(ident)
+		return _toStr("[", "]");
+	}
+	
+	override Value interpretProperty(Context ctx, string prop)
+	{
+		switch(prop)
 		{
 			case "length":
 				return new SetLengthValue(this);
 			default:
-				return super.interpretProperty(ctx, ident);
+				return super.interpretProperty(ctx, prop);
 		}
 	}
 }
@@ -678,17 +692,22 @@ class SetLengthValue : UIntValue
 		array = a;
 	}
 
+	override string toStr()
+	{
+		return array.toStr() ~ ".length";
+	}
+
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
 		{
 			case TOK_assign:
 				int len = v.toInt();
-				int oldlen = array.values.length;
-				array.values.length = len;
+				int oldlen = array._values.length;
+				array._values.length = len;
 				if(TypeDynamicArray tda = cast(TypeDynamicArray) array.type)
 					while(oldlen < len)
-						array.values[oldlen++] = tda.getType().createValue(ctx, null);
+						array._values[oldlen++] = tda.getType().createValue(ctx, null);
 				return this;
 			default:
 				return super.opBin(ctx, tokid, v);
@@ -727,6 +746,11 @@ class StringValue : Value
 	
 	override string toStr()
 	{
+		return '"' ~ *pval ~ '"';
+	}
+
+	override string toMixin()
+	{
 		return *pval;
 	}
 
@@ -749,9 +773,15 @@ class StringValue : Value
 	{
 		switch(tokid)
 		{
-			case TOK_assign:   return ass_assign.assOp(v);
+			case TOK_assign:   
+				auto rv = ass_assign.assOp(v); 
+				debug sval = toStr();
+				return rv;
+			case TOK_catass:
+				auto rv = ass_catass.assOp(v);
+				debug sval = toStr();
+				return rv;
 			case TOK_tilde:    return bin_tilde.binOp(v);
-			case TOK_catass:   return ass_catass.assOp(v);
 			case TOK_lt:       return bin_lt.binOp1(v);
 			case TOK_gt:       return bin_gt.binOp1(v);
 			case TOK_le:       return bin_le.binOp1(v);
@@ -775,6 +805,11 @@ class PointerValue : Value
 {
 	TypePointer type;  // type of pointer
 	Value pval; // Value is a class type, so its a reference, i.e. a pointer to the value
+
+	override string toStr()
+	{
+		return "&" ~ pval.toStr();
+	}
 
 	static PointerValue _create(TypePointer type, Value v)
 	{
@@ -815,6 +850,7 @@ class PointerValue : Value
 					pval = pv.pval;
 				else
 					return semanticErrorValue("cannot convert pointer type ", pv.type, " to ", type);
+				debug sval = toStr();
 				return this;
 			case TOK_equal:
 			case TOK_notequal:
@@ -830,16 +866,16 @@ class PointerValue : Value
 		}
 	}
 
-	override Value interpretProperty(Context ctx, string ident)
+	override Value interpretProperty(Context ctx, string prop)
 	{
-		switch(ident)
+		switch(prop)
 		{
 			case "init":
 				return _create(type, null);
 			default:
 				if(!pval)
 					return semanticErrorValue("dereferencing null pointer");
-				return pval.interpretProperty(ctx, ident);
+				return pval.interpretProperty(ctx, prop);
 		}
 	}
 }
@@ -869,10 +905,64 @@ class TypeValue : Value
 	}
 }
 
+class AliasValue : Value
+{
+	IdentifierList id;
+	
+	this(IdentifierList _id)
+	{
+		id = _id;
+	}
+
+	override Type getType()
+	{
+		return id.calcType();
+	}
+
+	override string toStr()
+	{
+		return writeD(id);
+	}
+}
+
 class TupleValue : Value
 {
-	Value[] values;
+private:
+	Value[] _values;
+public:
+	@property Value[] values() 
+	{ 
+		return _values; 
+	}
+	@property void values(Value[] v)
+	{
+		_values = v;
+		debug sval = toStr();
+	}
+	void addValue(Value v)
+	{
+		_values ~= v;
+		debug sval = toStr();
+	}
+	
+	override string toStr()
+	{
+		return _toStr("(", ")");
+	}
 
+	string _toStr(string open, string close)
+	{
+		string s = open;
+		foreach(i, v; values)
+		{
+			if(i > 0)
+				s ~= ",";
+			s ~= v.toStr();
+		}
+		s ~= close;
+		return s;
+	}
+	
 	override Value opIndex(Value v)
 	{
 		int idx = v.toInt();
@@ -903,6 +993,7 @@ class TupleValue : Value
 					values = tv.values;
 				else
 					return semanticErrorValue("cannot assign ", v, " to ", this);
+				debug sval = toStr();
 				return this;
 			case TOK_tilde:
 			case TOK_catass:
@@ -911,14 +1002,14 @@ class TupleValue : Value
 		}
 	}
 
-	override Value interpretProperty(Context ctx, string ident)
+	override Value interpretProperty(Context ctx, string prop)
 	{
-		switch(ident)
+		switch(prop)
 		{
 			case "length":
 				return create(values.length);
 			default:
-				return super.interpretProperty(ctx, ident);
+				return super.interpretProperty(ctx, prop);
 		}
 	}
 }
@@ -928,6 +1019,15 @@ class FunctionValue : Value
 	TypeFunction functype;
 	bool adr;
 	
+	override string toStr()
+	{
+		if(!functype.funcDecl)
+			return "null";
+		if(!functype.funcDecl.ident)
+			return "_funcliteral_";
+		return "&" ~ functype.funcDecl.ident;
+	}
+
 	Value doCall(Context sc, Value vargs)
 	{
 		if(!functype.funcDecl)
@@ -984,6 +1084,7 @@ class FunctionValue : Value
 		{
 			case TOK_assign:
 				functype = dg.functype;
+				debug sval = toStr();
 				return Value;
 			case TOK_equal:
 				return Value.create(functype.compare(dg.functype));
@@ -1008,7 +1109,6 @@ class FunctionValue : Value
 
 class DelegateValue : FunctionValue
 {
-	Type contextType; // struct/class pointer or closure
 	Context context;
 	
 	override Value opCall(Context sc, Value vargs)
@@ -1027,6 +1127,7 @@ class DelegateValue : FunctionValue
 			case TOK_assign:
 				context = dg.context;
 				functype = dg.functype;
+				debug sval = toStr();
 				return Value;
 			case TOK_equal:
 				return Value.create((context is dg.context) && functype.compare(dg.functype));
@@ -1038,31 +1139,28 @@ class DelegateValue : FunctionValue
 	}
 }
 
-class AggrValue(T) : TupleValue
+class AggrValue : TupleValue
 {
-	T type;
 	Value outer;
 
-	this(T t)
+	abstract override Aggregate getType();
+
+	override string toStr()
 	{
-		type = t;
+		return getType().ident ~ _toStr("{", "}");
 	}
 
-	override Type getType()
+	override Value interpretProperty(Context ctx, string prop)
 	{
-		return type;
-	}
-
-	override Value interpretProperty(Context ctx, string ident)
-	{
-		if(Value v = type.getProperty(ctx, this, ident))
+		auto type = getType();
+		if(Value v = type.getProperty(ctx, this, prop))
 			return v;
-		if(Value v = type.getStaticProperty(ident))
+		if(Value v = type.getStaticProperty(prop))
 			return v;
 		if(outer) // TODO: outer checked after super?
-			if(Value v = outer.interpretProperty(ctx, ident))
+			if(Value v = outer.interpretProperty(ctx, prop))
 				return v;
-		return super.interpretProperty(ctx, ident);
+		return super.interpretProperty(ctx, prop);
 	}
 
 	override Value opBin(Context ctx, int tokid, Value v)
@@ -1070,11 +1168,11 @@ class AggrValue(T) : TupleValue
 		switch(tokid)
 		{
 			case TOK_equal:
-				if(Value fv = type.getProperty(ctx, this, "opEqual"))
+				if(Value fv = getType().getProperty(ctx, this, "opEqual"))
 				{
 					auto tctx = new AggrContext(ctx, this);
 					auto tv = new TupleValue;
-					tv.values ~= v;
+					tv.addValue(v);
 					return fv.opCall(tctx, tv);
 				}
 				return super.opBin(ctx, tokid, v);
@@ -1087,8 +1185,23 @@ class AggrValue(T) : TupleValue
 		}
 	}
 }
+
+class AggrValueT(T) : AggrValue
+{
+	T type;
+
+	this(T t)
+	{
+		type = t;
+	}
+
+	override Aggregate getType()
+	{
+		return type;
+	}
+}
 	
-class StructValue : AggrValue!Struct
+class StructValue : AggrValueT!Struct
 {
 	this(Struct t)
 	{
@@ -1096,7 +1209,7 @@ class StructValue : AggrValue!Struct
 	}
 }
 
-class UnionValue : AggrValue!Union
+class UnionValue : AggrValueT!Union
 {
 	this(Union t)
 	{
@@ -1104,7 +1217,7 @@ class UnionValue : AggrValue!Union
 	}
 }
 
-class ClassValue : AggrValue!Class
+class ClassInstanceValue : AggrValueT!Class
 {
 	this(Class t)
 	{
@@ -1112,7 +1225,95 @@ class ClassValue : AggrValue!Class
 	}
 }
 
-class AnonymousClassValue : AggrValue!AnonymousClass
+class ReferenceValue : Value
+{
+	ClassInstanceValue instance;
+
+	override string toStr()
+	{
+		if(!instance)
+			return "null";
+		return instance.toStr();
+	}
+	
+	override Value opBin(Context ctx, int tokid, Value v)
+	{
+		auto cv = cast(ReferenceValue) v;
+		if(!cv)
+			return super.opBin(ctx, tokid, v);
+		
+		switch(tokid)
+		{
+			case TOK_assign:
+				instance = cv.instance;
+				debug sval = toStr();
+				return this;
+			case TOK_equal:
+				if(instance is cv.instance)
+					return Value.create(true);
+				if(!instance || !cv.instance)
+					return Value.create(false);
+				return instance.opBin(ctx, TOK_equal, cv.instance);
+			case TOK_is:
+				return Value.create(instance is cv.instance);
+			case TOK_notidentity:
+				return Value.create(instance !is cv.instance);
+			default:
+				return super.opBin(ctx, tokid, v);
+		}
+	}
+}
+
+class ReferenceValueT(T) : ReferenceValue
+{
+	T type;
+
+	this(T t)
+	{
+		type = t;
+	}
+
+	override T getType()
+	{
+		return type;
+	}
+
+	override Value interpretProperty(Context ctx, string prop)
+	{
+		if(instance)
+			return instance.interpretProperty(ctx, prop);
+		if(Value v = type.getStaticProperty(prop))
+			return v;
+		return super.interpretProperty(ctx, prop);
+	}
+}
+
+class ClassValue : ReferenceValueT!Class
+{
+	this(Class t, ClassInstanceValue inst = null)
+	{
+		super(t);
+		instance = inst;
+	}
+}
+
+class InterfaceValue : ReferenceValueT!Intrface
+{
+	this(Intrface t)
+	{
+		super(t);
+	}
+}
+
+class AnonymousClassInstanceValue : AggrValueT!AnonymousClass
+{
+	this(AnonymousClass t)
+	{
+		super(t);
+	}
+}
+
+class AnonymousClassValue : ReferenceValueT!AnonymousClass
 {
 	this(AnonymousClass t)
 	{
@@ -1124,14 +1325,14 @@ class AnonymousClassValue : AggrValue!AnonymousClass
 // program control
 class ProgramControlValue : Value
 {
-	string ident;
+	string label;
 }
 
 class BreakValue : ProgramControlValue
 {
 	this(string s)
 	{
-		ident = s;
+		label = s;
 	}
 }
 
@@ -1139,7 +1340,7 @@ class ContinueValue : ProgramControlValue
 {
 	this(string s)
 	{
-		ident = s;
+		label = s;
 	}
 }
 
@@ -1147,7 +1348,7 @@ class GotoValue : ProgramControlValue
 {
 	this(string s)
 	{
-		ident = s;
+		label = s;
 	}
 }
 
@@ -1155,6 +1356,6 @@ class GotoCaseValue : ProgramControlValue
 {
 	this(string s)
 	{
-		ident = s;
+		label = s;
 	}
 }

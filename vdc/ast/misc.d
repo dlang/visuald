@@ -616,10 +616,10 @@ class StaticAssert : Node
 			for(int a = 1; a < args.members.length; a++)
 			{
 				auto arg = args.getMember!Expression(a);
-				txt ~= arg.interpret(nullContext).toStr();
+				txt ~= arg.interpret(nullContext).toMixin();
 			}
 			if(txt.length == 0)
-				txt = "static assertion failed: " ~ writeD(expr);
+				txt = "static assertion " ~ writeD(expr) ~ " failed";
 			semanticErrorPos(span.start, txt);
 		}
 	}

@@ -375,18 +375,18 @@ class WhileStatement : Statement
 			{
 				if(auto bv = cast(BreakValue)v)
 				{
-					if(!bv.ident)
+					if(!bv.label)
 						break;
 					if(auto ls = cast(LabeledStatement)parent)
-						if(ls.ident == bv.ident)
+						if(ls.ident == bv.label)
 							break;
 				}
 				else if(auto cv = cast(ContinueValue)v)
 				{
-					if(!cv.ident)
+					if(!cv.label)
 						continue;
 					if(auto ls = cast(LabeledStatement)parent)
-						if(ls.ident == cv.ident)
+						if(ls.ident == cv.label)
 							continue;
 				}
 				return v;
@@ -422,18 +422,18 @@ class DoStatement : Statement
 			{
 				if(auto bv = cast(BreakValue)v)
 				{
-					if(!bv.ident)
+					if(!bv.label)
 						break;
 					if(auto ls = cast(LabeledStatement)parent)
-						if(ls.ident == bv.ident)
+						if(ls.ident == bv.label)
 							break;
 				}
 				else if(auto cv = cast(ContinueValue)v)
 				{
-					if(!cv.ident)
+					if(!cv.label)
 						continue;
 					if(auto ls = cast(LabeledStatement)parent)
-						if(ls.ident == cv.ident)
+						if(ls.ident == cv.label)
 							continue;
 				}
 				return v;
@@ -479,18 +479,18 @@ class ForStatement : Statement
 			{
 				if(auto bv = cast(BreakValue)v)
 				{
-					if(!bv.ident)
+					if(!bv.label)
 						break;
 					if(auto ls = cast(LabeledStatement)parent)
-						if(ls.ident == bv.ident)
+						if(ls.ident == bv.label)
 							break;
 				}
 				else if(auto cv = cast(ContinueValue)v)
 				{
-					if(!cv.ident)
+					if(!cv.label)
 						continue;
 					if(auto ls = cast(LabeledStatement)parent)
-						if(ls.ident == cv.ident)
+						if(ls.ident == cv.label)
 							continue;
 				}
 				return v;
@@ -1136,7 +1136,7 @@ class MixinStatement : Statement
 	override void _semantic(Scope sc)
 	{
 		Value v = getMember(0).interpretCatch(sc.ctx);
-		string s = v.toStr();
+		string s = v.toMixin();
 		Parser parser = new Parser;
 		Node[] n = parser.parseStatements(s, span);
 		parent.replaceMember(this, n);

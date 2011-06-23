@@ -171,6 +171,7 @@ class Decl : Node
 
 	override void _semantic(Scope sc)
 	{
+		bool isTemplate = false;
 		if(auto fn = getFunctionBody())
 		{
 			// if it is a function declaration, create a new scope including function parameters
@@ -181,11 +182,18 @@ class Decl : Node
 				{
 					foreach(m; decl.members) // template parameters and function parameters and constraint
 					{
+						if(cast(TemplateParameterList) m)
+						{
+							// it does not make sense to add symbols for unexpanded templates
+							isTemplate = decl._isTemplate = true;
+							break; 
+						}
 						m.addSymbols(scop);
 					}
 				}
 			
-			super._semantic(scop);
+			if(!isTemplate)
+				super._semantic(scop);
 			//fn.semantic(scop);
 			sc = scop.pop();
 		}
@@ -286,6 +294,8 @@ class Declarator : Identifier
 	bool isAlias;
 	bool isRef;
 	bool needsContext;
+	bool _isTemplate;
+	TemplateInstantiation[] tmpl;
 	
 	override Declarator clone()
 	{
@@ -333,6 +343,104 @@ class Declarator : Identifier
 				return true;
 		
 		return false;
+	}
+
+	override bool isTemplate()
+	{
+		return _isTemplate;
+	}
+	
+	override Node expandTemplate(Scope sc, TemplateArgumentList args)
+	{
+		assert(_isTemplate);
+		
+		TemplateParameterList tpl = getTemplateParameterList();
+		
+		if(args.members.length != tpl.members.length)
+		{
+			semanticError("incorrect number of arguments for template expansion of ", ident);
+			return this;
+		}
+		Value[] vargs;
+		string[] names;
+		Context ctx = new Context(nullContext);
+		ctx.scop = sc;
+		int m;
+		for(m = 0; m < args.members.length; m++)
+		{
+			Value v;
+			string name;
+			auto am = args.members[m];
+			auto pm = tpl.members[m];
+			if(auto typeparam = cast(TemplateTypeParameter) pm)
+			{
+				v = am.interpret(ctx);
+				name = typeparam.ident;
+				if(!cast(TypeValue) v)
+				{
+					semanticError(ident, ": ", m+1, ". argument must evaluate to a type, not ", v.toStr());
+					v = null;
+				}
+			}
+			else if(auto thisparam = cast(TemplateThisParameter) pm)
+			{
+				semanticError("cannot infer this parameter for ", ident);
+			}
+			else if(auto valueparam = cast(TemplateValueParameter) pm)
+			{
+				v = am.interpret(ctx);
+				auto decl = valueparam.getParameterDeclarator().getDeclarator();
+				v = decl.calcType().createValue(ctx, v);
+				name = decl.ident;
+			}
+			else if(auto aliasparam = cast(TemplateAliasParameter) pm)
+			{
+				if(auto type = cast(Type) am)
+					v = new TypeValue(type);
+				else if(auto id = cast(IdentifierExpression) am)
+				{
+					auto idlist = new IdentifierList;
+					idlist.addMember(id.getIdentifier().clone());
+					v = new AliasValue(idlist);
+				}
+				else
+					semanticError(ident, ": ", m+1, ". argument must evaluate to an identifier, not ", am);
+				name = aliasparam.getIdent();
+			}
+			else if(auto tupleparam = cast(TemplateTupleParameter) pm)
+			{
+				semanticError("cannot infer template tuple parameter for ", ident);
+			}
+			if(!v)
+				return this;
+			vargs ~= v;
+			names ~= name;
+		}
+		if(auto impl = getTemplateInstantiation(vargs))
+			return impl.decl;
+
+		// new instantiation has template parameters as parameterlist and contains
+		//  a copy of the function declaration without template arguments
+		auto tmpl = new TemplateInstantiation(this, vargs, names);
+		addMember(tmpl); // add as suffix
+		tmpl.semantic(getScope());
+		return tmpl.decl;
+	}
+
+	TemplateInstantiation getTemplateInstantiation(Value[] args)
+	{
+		return null;
+	}
+	
+	TemplateParameterList getTemplateParameterList()
+	{
+		for(int m = 0; m < members.length; m++)
+		{
+			auto member = members[0];
+			if(auto tpl = cast(TemplateParameterList) member)
+				return tpl;
+		}
+		return null;
 	}
 
 	override void addSymbols(Scope sc)
@@ -453,9 +561,14 @@ class Declarator : Identifier
 				return semanticErrorValue("evaluating ", ident, " needs context pointer");
 			Value v;
 			if(auto expr = getInitializer())
-				v = type.createValue(sc, expr.interpret(sc));
+			{
+				v = expr.interpret(sc);
+				if(!v.getType().compare(type))
+					type.createValue(sc, v);
+			}
 			else
 				v = type.createValue(sc, null);
+			debug v.ident = ident;
 			sc.setValue(this, v);
 			return v;
 		}
@@ -463,6 +576,7 @@ class Declarator : Identifier
 			value = type.createValue(sc, expr.interpret(sc));
 		else
 			value = type.createValue(sc, null);
+		debug value.ident = ident;
 		return value;
 	}
 	
@@ -482,6 +596,60 @@ class Declarator : Identifier
 	}
 }
 
+class TemplateInstantiation : Node
+{
+	Value[] args;
+	Declarator decl;
+
+	ParameterList getParameterList() { return getMember!ParameterList(0); }
+	
+	this(Declarator dec, Value[] vargs, string[] names)
+	{
+		decl = dec.clone();
+		args = vargs;
+		
+		ParameterList pl = new ParameterList;
+		for(int m = 0; m < decl.members.length; m++)
+		{
+			if(auto tpl = cast(TemplateParameterList) decl.members[m])
+			{
+				decl.removeMember(m);
+				for(m = 0; m < tpl.members.length; m++)
+				{
+					auto pd = new ParameterDeclarator;
+					pd.addMember(vargs[m].getType().clone());
+					auto d = new Declarator;
+					d.ident = names[m];
+					d.value = vargs[m];
+					pd.addMember(d);
+					pl.addMember(pd);
+				}
+				break;
+			}
+		}
+		addMember(pl);
+		addMember(decl);
+		logInfo("created template instance of ", decl.ident, " with args ", vargs);
+	}
+	
+	override void toD(CodeWriter writer)
+	{
+		// suppress output (add a flag to the writer to enable output of expanded template?)
+	}
+	
+	override void addSymbols(Scope sc)
+	{
+		getParameterList().addSymbols(sc);
+	}
+	
+	override void _semantic(Scope sc)
+	{
+		sc = enterScope(sc);
+		super._semantic(sc);
+		sc = scop.pop();
+	}
+}
+	
 //IdentifierList:
 //    [IdentifierOrTemplateInstance...]
 class IdentifierList : Node

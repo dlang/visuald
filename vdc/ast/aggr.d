@@ -32,6 +32,7 @@ class Aggregate : Type
 	mixin ForwardCtor!();
 	
 	override bool propertyNeedsParens() const { return true; }
+	abstract bool isReferenceType() const;
 	
 	bool hasBody = true;
 	bool hasTemplArgs;
@@ -113,7 +114,7 @@ class Aggregate : Type
 	
 	abstract TupleValue _initValue();
 	
-	void _setupInitValue(TupleValue sv)
+	void _setupInitValue(AggrValue sv)
 	{
 		auto ctx = new AggrContext(nullContext, sv);
 		ctx.scop = scop;
@@ -124,9 +125,9 @@ class Aggregate : Type
 				value = type.createValue(ctx, expr.interpret(ctx));
 			else
 				value = type.createValue(ctx, null);
-
+			debug value.ident = decl.ident;
 			mapName2Value[decl.ident] = sv.values.length;
-			sv.values ~= value;
+			sv.addValue(value);
 		});
 	}
 	
@@ -143,36 +144,52 @@ class Aggregate : Type
 			Value v = n < initValues.length ? initValues[n] : initVal.values[n];
 			Type t = decl.calcType();
 			v = t.createValue(thisctx, v);
-			thisctx.instance.values ~= v;
+			debug v.ident = decl.ident;
+			thisctx.instance.addValue(v);
 		});
 	}
 	
-	Value _createValue(ValueType, Args...)(Context ctx, Value initValue, Args a)
+	ValueType _createValue(ValueType, Args...)(Context ctx, Value initValue, Args a)
 	{
-		if(auto bdy = getBody())
+		//! TODO: check type of initValue
+		ValueType sv = new ValueType(a);
+		auto bdy = getBody();
+		if(!bdy)
 		{
-			ValueType sv = new ValueType(a);
-			Value[] initValues;
-			if(initValue)
-				if(auto tv = cast(TupleValue) initValue)
-					initValues = tv.values;
-				else
-					semanticError("cannot initialize a ", sv, " from ", initValue);
-
-			auto thisctx = new AggrContext(ctx, sv);
-			thisctx.scop = scop;
-			_initValues(thisctx, initValues); // appends to sv.values
-
-			if(!(attr & Attr_Static) && ctx)
-				sv.outer = ctx.getThis();
-
-			if(constructors.length > 0)
-			{
-				constructors[0].interpretCall(thisctx);
-			}
+			semanticErrorValue("cannot create value of incomplete type ", ident);
 			return sv;
 		}
-		return semanticErrorValue("cannot create value of incomplete type ", ident);
+		Value[] initValues;
+		if(initValue)
+		{
+			auto tv = cast(TupleValue) initValue;
+			if(!tv)
+			{
+				semanticErrorValue("cannot initialize a ", sv, " from ", initValue);
+				return sv;
+			}
+			initValues = tv.values;
+		}
+		auto aggr = cast(AggrValue) initValue;
+		if(aggr)
+			sv.outer = aggr.outer;
+		else if(!(attr & Attr_Static) && ctx)
+			sv.outer = ctx.getThis();
+
+		if(initValue)
+			logInfo("creating new instance of %s with args ", ident, initValue.toStr());
+		else
+			logInfo("creating new instance of %s", ident);
+			
+		auto thisctx = new AggrContext(ctx, sv);
+		thisctx.scop = scop;
+		_initValues(thisctx, initValues); // appends to sv.values
+
+		if(constructors.length > 0)
+		{
+			constructors[0].interpretCall(thisctx);
+		}
+		return sv;
 	}
 	
 	void _initMethods()
@@ -186,7 +203,7 @@ class Aggregate : Type
 		});
 	}
 	
-	Value getProperty(Context ctx, TupleValue sv, string ident)
+	Value getProperty(Context ctx, AggrValue sv, string ident)
 	{
 		if(auto pidx = ident in mapName2Value)
 			return sv.values[*pidx];
@@ -233,6 +250,8 @@ class Struct : Aggregate
 {
 	this() {} // default constructor needed for clone()
 
+	override bool isReferenceType() const { return false; }
+	
 	this(ref const(TextSpan) _span)
 	{
 		super(_span);
@@ -272,6 +291,8 @@ class Union : Aggregate
 {
 	this() {} // default constructor needed for clone()
 
+	override bool isReferenceType() const { return false; }
+	
 	this(ref const(TextSpan) _span)
 	{
 		super(_span);
@@ -310,6 +331,8 @@ class Union : Aggregate
 class InheritingAggregate : Aggregate
 {
 	mixin ForwardCtor!();
+	
+	override bool isReferenceType() const { return true; }
 	
 	BaseClass[] baseClasses;
 
@@ -389,33 +412,51 @@ class Class : InheritingAggregate
 
 	override TupleValue _initValue()
 	{
-		ClassValue sv = new ClassValue(this);
+		ClassInstanceValue sv = new ClassInstanceValue(this);
 		_setupInitValue(sv);
 		return sv;
 	}
 
 	override Value createValue(Context ctx, Value initValue)
 	{
-		return _createValue!ClassValue(ctx, initValue, this);
+		auto v = new ClassValue(this);
+		if(!initValue)
+			return v;
+		if(auto rv = cast(ReferenceValue)initValue)
+			return v.opBin(ctx, TOK_assign, rv);
+
+		v.instance = _createValue!ClassInstanceValue(ctx, initValue, this);
+		return v;
 	}
 }
 
-class AnonymousClass : InheritingAggregate
+class AnonymousClass : Class
 {
-	mixin ForwardCtor!();
-	
-	// "class(args) " written by AnonymousClassType
+	mixin ForwardCtorNoId!();
+
+	override void toD(CodeWriter writer)
+	{
+		// "class(args) " written by AnonymousClassType, so skip Class.toD
+		InheritingAggregate.toD(writer);
+	}
 
 	override TupleValue _initValue()
 	{
-		AnonymousClassValue sv = new AnonymousClassValue(this);
+		ClassInstanceValue sv = new ClassInstanceValue(this);
 		_setupInitValue(sv);
 		return sv;
 	}
 
 	override Value createValue(Context ctx, Value initValue)
 	{
-		return _createValue!AnonymousClassValue(ctx, initValue, this);
+		auto v = new ClassValue(this);
+		if(!initValue)
+			return v;
+		if(auto rv = cast(ReferenceValue)initValue)
+			return v.opBin(ctx, TOK_assign, rv);
+
+		v.instance = _createValue!ClassInstanceValue(ctx, initValue, this);
+		return v;
 	}
 }
 
@@ -446,8 +487,15 @@ class Intrface : InheritingAggregate
 
 	override TupleValue _initValue()
 	{
-		semanticErrorValue("cannot create value of interface type ", ident);
+		semanticError("Intrface::_initValue should not be called!");
 		return new TupleValue;
+	}	
+	override Value createValue(Context ctx, Value initValue)
+	{
+		Value v = new InterfaceValue(this);
+		if(!initValue)
+			return v;
+		return v.opBin(ctx, TOK_assign, initValue);
 	}
 }
 
@@ -590,7 +638,7 @@ class Constructor : Node
 {
 	mixin ForwardCtor!();
 	
-	bool isTemplate() const { return members.length > 2; }
+	override bool isTemplate() const { return members.length > 2; }
 	
 	TemplateParameterList getTemplateParameters() { return isTemplate() ? getMember!TemplateParameterList(0) : null; }
 	ParameterList getParameters() { return members.length > 1 ? getMember!ParameterList(isTemplate() ? 1 : 0) : null; }

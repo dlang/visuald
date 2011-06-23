@@ -12,6 +12,7 @@ import vdc.util;
 import vdc.ast.mod;
 import vdc.ast.node;
 import vdc.ast.type;
+import vdc.ast.aggr;
 import vdc.ast.decl;
 import vdc.parser.engine;
 import vdc.logger;
@@ -139,9 +140,9 @@ class Context
 
 class AggrContext : Context
 {
-	TupleValue instance;
+	AggrValue instance;
 
-	this(Context p, TupleValue inst)
+	this(Context p, AggrValue inst)
 	{
 		super(p);
 		instance = inst;
@@ -149,6 +150,8 @@ class AggrContext : Context
 	
 	override Value getThis()
 	{
+		if(auto t = cast(Class)instance.getType())
+			return new ClassValue(t, static_cast!ClassInstanceValue (instance));
 		return instance;
 	}
 
@@ -165,6 +168,7 @@ class AggrContext : Context
 }
 
 Context nullContext;
+AggrContext noThisContext;
 
 Context globalContext;
 Context threadContext;

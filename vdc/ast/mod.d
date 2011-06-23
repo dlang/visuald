@@ -445,7 +445,7 @@ class Pragma : Node
 			foreach(m; alst.members)
 			{
 				Value val = m.interpretCatch(nullContext);
-				msg ~= val.toStr();
+				msg ~= val.toMixin();
 			}
 			semanticMessage(msg);
 		}
@@ -644,7 +644,7 @@ class MixinDeclaration : Node
 	override Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
 	{
 		Value v = getMember(0).interpret(sc.ctx);
-		string s = v.toStr();
+		string s = v.toMixin();
 		Parser parser = new Parser;
 		return parser.parseDeclarations(s, span);
 	}

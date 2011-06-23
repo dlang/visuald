@@ -14,6 +14,8 @@ import vdc.ast.node;
 import vdc.ast.decl;
 import vdc.ast.expr;
 import vdc.ast.type;
+import vdc.interpret;
+import vdc.semantic;
 
 //TemplateDeclaration:
 //    template TemplateIdentifier ( TemplateParameterList ) Constraint_opt { DeclDefs }
@@ -92,10 +94,17 @@ class TemplateInstance : Identifier
 {
 	mixin ForwardCtorTok!();
 
+	TemplateArgumentList getTemplateArgumentList() { return getMember!TemplateArgumentList(0); }
+	
 	override void toD(CodeWriter writer)
 	{
 		writer.writeIdentifier(ident);
 		writer("!(", getMember(0), ")");
+	}
+
+	override Value interpret(Context sc)
+	{
+		return super.interpret(sc);
 	}
 }
 //
@@ -240,6 +249,8 @@ class TemplateValueParameter : TemplateParameter
 	Expression specialization;
 	Expression def;
 
+	ParameterDeclarator getParameterDeclarator() { return getMember!ParameterDeclarator(0); }
+	
 	override TemplateValueParameter clone()
 	{
 		TemplateValueParameter n = static_cast!TemplateValueParameter(super.clone());
@@ -283,6 +294,8 @@ class TemplateAliasParameter : TemplateParameter
 {
 	mixin ForwardCtor!();
 
+	string getIdent() { return getMember!TemplateTypeParameter(0).ident; }
+	
 	override void toD(CodeWriter writer)
 	{
 		writer("alias ", getMember(0));

@@ -465,6 +465,8 @@ class NewExpression : Expression
 		Value initVal;
 		if(auto args = getNewArguments())
 			initVal = args.interpret(sc);
+		else
+			initVal = new TupleValue; // empty args force new instance
 		return calcType().createValue(sc, initVal);
 	}
 	
@@ -771,7 +773,7 @@ class ArgumentList : Node
 	{
 		TupleValue args = new TupleValue;
 		foreach(m; members)
-			args.values ~= m.interpret(sc);
+			args.addValue(m.interpret(sc));
 		return args;
 	}
 	
@@ -1118,9 +1120,9 @@ class AssertExpression : Expression
 		{
 			string msg;
 			if(auto m = getMessage())
-				msg = m.interpret(sc).toStr();
+				msg = m.interpret(sc).toMixin();
 			else
-				msg = writeD(getExpression()) ~ " failed";
+				msg = "assertion " ~ writeD(getExpression()) ~ " failed";
 			return semanticErrorValue(msg);
 		}
 		return theVoidValue;
@@ -1150,7 +1152,7 @@ class MixinExpression : Expression
 			return;
 		
 		Value v = getMember(0).interpretCatch(nullContext);
-		string s = v.toStr();
+		string s = v.toMixin();
 		Parser parser = new Parser;
 		Node n = parser.parseExpression(s, span);
 		resolved = cast(Expression) n;
@@ -1353,6 +1355,20 @@ class IdentifierExpression : PrimaryExpression
 		
 		string ident = getIdentifier().ident;
 		resolved = scop.resolve(ident, span);
+		if(resolved && resolved.isTemplate())
+		{
+			TemplateArgumentList args;
+			if(auto tmplid = cast(TemplateInstance)getIdentifier())
+			{
+				args = tmplid.getTemplateArgumentList();
+			}
+			else
+			{
+				semanticError("cannot infer template arguments");
+				return;
+			}
+			resolved = resolved.expandTemplate(sc, args);
+		}
 	}
 	
 	override Type calcType()

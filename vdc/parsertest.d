@@ -318,6 +318,16 @@ unittest
 unittest
 {
 	string txt = q{
+		int foo(alias a)(){ return a; }
+		int x = 3;
+		static assert(foo!(x)() == 3);
+	};
+	testSemantic(txt, "template_func");
+}
+
+unittest
+{
+	string txt = q{
 		static assert((5^15) == 10);
 		static assert(5 < 7);
 		static assert(15 > 7);

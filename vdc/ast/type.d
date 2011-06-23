@@ -654,14 +654,16 @@ class TypeDynamicArray : TypeIndirection
 		if(int dim = initValue ? initValue.interpretProperty(sc, "length").toInt() : 0)
 		{
 			auto type = getType();
-			val.values.length = dim;
+			Value[] values;
+			values.length = dim;
 			IntValue idxval = new IntValue;
 			for(int i = 0; i < dim; i++)
 			{
 				*(idxval.pval) = i;
 				Value v = initValue ? initValue.opIndex(idxval) : null;
-				val.values[i] = type.createValue(sc, v);
+				values[i] = type.createValue(sc, v);
 			}
+			val.values = values;
 		}
 		return val;
 	}
@@ -720,14 +722,16 @@ class TypeStaticArray : TypeIndirection
 		int dim = getDimension().interpret(ctx).toInt();
 		auto val = new TupleValue;
 		auto type = getType();
-		val.values.length = dim;
+		Value[] values;
+		values.length = dim;
 		IntValue idxval = new IntValue;
 		for(int i = 0; i < dim; i++)
 		{
 			*(idxval.pval) = i;
 			Value v = initValue ? initValue.opIndex(idxval) : null;
-			val.values[i] = type.createValue(ctx, v);
+			values[i] = type.createValue(ctx, v);
 		}
+		val.values = values;
 		return val;
 	}
 	
