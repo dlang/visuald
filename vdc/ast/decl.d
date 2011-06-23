@@ -11,6 +11,7 @@ module vdc.ast.decl;
 import vdc.util;
 import vdc.lexer;
 import vdc.semantic;
+import vdc.logger;
 import vdc.interpret;
 
 import vdc.ast.node;
@@ -452,29 +453,23 @@ class Declarator : Identifier
 				return semanticErrorValue("evaluating ", ident, " needs context pointer");
 			Value v;
 			if(auto expr = getInitializer())
-				v = type.createValue(expr.interpret(sc));
+				v = type.createValue(sc, expr.interpret(sc));
 			else
-			{
-				v = type.createValue(null);
-				if(auto dgvalue = cast(DelegateValue)v)
-					dgvalue.context = sc;
-			}
+				v = type.createValue(sc, null);
 			sc.setValue(this, v);
 			return v;
 		}
 		else if(auto expr = getInitializer())
-			value = type.createValue(expr.interpret(sc));
+			value = type.createValue(sc, expr.interpret(sc));
 		else
-		{
-			value = type.createValue(null);
-			if(auto dgvalue = cast(DelegateValue)value)
-				dgvalue.context = sc;
-		}
+			value = type.createValue(sc, null);
 		return value;
 	}
 	
 	Value interpretCall(Context sc)
 	{
+		logInfo("calling %s", ident);
+		
 		for(Node p = parent; p; p = p.parent)
 			if(auto decl = cast(Decl) p)
 			{
@@ -579,11 +574,13 @@ class ParameterList : Node
 	Parameter getParameter(int i) { return getMember!Parameter(i); }
 
 	bool varargs;
+	bool anonymous_varargs;
 	
 	override ParameterList clone()
 	{
 		ParameterList n = static_cast!ParameterList(super.clone());
 		n.varargs = varargs;
+		n.anonymous_varargs = anonymous_varargs;
 		return n;
 	}
 
@@ -593,14 +590,16 @@ class ParameterList : Node
 			return false;
 
 		auto tn = static_cast!(typeof(this))(n);
-		return tn.varargs == varargs;
+		return tn.varargs == varargs && tn.anonymous_varargs == anonymous_varargs;
 	}
 	
 	override void toD(CodeWriter writer)
 	{
 		writer("(");
 		writer.writeArray(members);
-		if(varargs)
+		if(anonymous_varargs)
+			writer(", ...");
+		else if(varargs)
 			writer("...");
 		writer(")");
 		if(attr)

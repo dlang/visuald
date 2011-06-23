@@ -137,12 +137,12 @@ class Value
 	//}
 	
 	version(all)
-	Value opBin(int tokid, Value v)
+	Value opBin(Context ctx, int tokid, Value v)
 	{
 		return semanticErrorValue("binary operator ", tokenString(tokid), " on ", this, " not implemented");
 	}
 
-	Value opUn(int tokid)
+	Value opUn(Context ctx, int tokid)
 	{
 		switch(tokid)
 		{
@@ -164,9 +164,9 @@ class Value
 		return semanticErrorValue("cannot dereference a ", this);
 	}
 
-	Value getProperty(string ident)
+	Value interpretProperty(Context ctx, string ident)
 	{
-		return getType().interpretProperty(ident);
+		return getType().interpretProperty(ctx, ident);
 	}
 	
 	Value opIndex(Value v)
@@ -340,7 +340,7 @@ class Value
 								return semanticErrorValue("division by zero");
 						mixin("*pval " ~ op ~ "v2;");
 
-						logInfo("value changed by " ~ op ~ " to " ~ toStr());
+						logInfo("value changed by " ~ op ~ " to %s", toStr());
 						debug sval = toStr();
 						return this;
 					}
@@ -350,11 +350,11 @@ class Value
 	}
 }
 
-T createInitValue(T)(Value initValue)
+T createInitValue(T)(Context ctx, Value initValue)
 {
 	T v = new T;
 	if(initValue)
-		v.opBin(TOK_assign, initValue);
+		v.opBin(ctx, TOK_assign, initValue);
 	return v;
 }
 
@@ -454,7 +454,7 @@ class ValueT(T) : Value
 		return s;
 	}
 	
-	override Value opBin(int tokid, Value v)
+	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
 		{
@@ -502,7 +502,7 @@ class ValueT(T) : Value
 		return s;
 	}
 	
-	override Value opUn(int tokid)
+	override Value opUn(Context ctx, int tokid)
 	{
 		switch(tokid)
 		{
@@ -656,6 +656,45 @@ class DynArrayValue : TupleValue
 	{
 		type = t;
 	}
+
+	override Value interpretProperty(Context ctx, string ident)
+	{
+		switch(ident)
+		{
+			case "length":
+				return new SetLengthValue(this);
+			default:
+				return super.interpretProperty(ctx, ident);
+		}
+	}
+}
+
+class SetLengthValue : UIntValue
+{
+	DynArrayValue array;
+	
+	this(DynArrayValue a)
+	{
+		array = a;
+	}
+
+	override Value opBin(Context ctx, int tokid, Value v)
+	{
+		switch(tokid)
+		{
+			case TOK_assign:
+				int len = v.toInt();
+				int oldlen = array.values.length;
+				array.values.length = len;
+				if(TypeDynamicArray tda = cast(TypeDynamicArray) array.type)
+					while(oldlen < len)
+						array.values[oldlen++] = tda.getType().createValue(ctx, null);
+				return this;
+			default:
+				return super.opBin(ctx, tokid, v);
+		}
+	}
+
 }
 
 class StringValue : Value
@@ -706,7 +745,7 @@ class StringValue : Value
 	mixin mixinBinaryOp1!("==", StringValue) bin_equal;
 	mixin mixinBinaryOp1!("!=", StringValue) bin_notequal;
 	
-	override Value opBin(int tokid, Value v)
+	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
 		{
@@ -719,7 +758,7 @@ class StringValue : Value
 			case TOK_ge:       return bin_ge.binOp1(v);
 			case TOK_equal:    return bin_equal.binOp1(v);
 			case TOK_notequal: return bin_notequal.binOp1(v);
-			default:           return super.opBin(tokid, v);
+			default:           return super.opBin(ctx, tokid, v);
 		}
 	}
 
@@ -762,7 +801,7 @@ class PointerValue : Value
 		return pval;
 	}
 
-	override Value opBin(int tokid, Value v)
+	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
 		{
@@ -787,11 +826,11 @@ class PointerValue : Value
 				else
 					return Value.create(pv.pval !is pval);
 			default:
-				return super.opBin(tokid, v);
+				return super.opBin(ctx, tokid, v);
 		}
 	}
 
-	override Value getProperty(string ident)
+	override Value interpretProperty(Context ctx, string ident)
 	{
 		switch(ident)
 		{
@@ -800,7 +839,7 @@ class PointerValue : Value
 			default:
 				if(!pval)
 					return semanticErrorValue("dereferencing null pointer");
-				return pval.getProperty(ident);
+				return pval.interpretProperty(ctx, ident);
 		}
 	}
 }
@@ -826,7 +865,7 @@ class TypeValue : Value
 	
 	override Value opCall(Context sc, Value vargs)
 	{
-		return type.createValue(vargs);
+		return type.createValue(sc, vargs);
 	}
 }
 
@@ -842,7 +881,7 @@ class TupleValue : Value
 		return values[idx];
 	}
 
-	override Value opBin(int tokid, Value v)
+	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
 		{
@@ -852,13 +891,13 @@ class TupleValue : Value
 					if(tv.values.length != values.length)
 						return Value.create(false);
 					for(int i = 0; i < values.length; i++)
-						if(!values[i].opBin(TOK_equal, tv.values[i]).toBool())
+						if(!values[i].opBin(ctx, TOK_equal, tv.values[i]).toBool())
 							return Value.create(false);
 					return Value.create(true);
 				}
 				return semanticErrorValue("cannot compare ", v, " to ", this);
 			case TOK_notequal:
-				return Value.create(!opBin(TOK_equal, v).toBool());
+				return Value.create(!opBin(ctx, TOK_equal, v).toBool());
 			case TOK_assign:
 				if(auto tv = cast(TupleValue) v)
 					values = tv.values;
@@ -868,18 +907,18 @@ class TupleValue : Value
 			case TOK_tilde:
 			case TOK_catass:
 			default:
-				return super.opBin(tokid, v);
+				return super.opBin(ctx, tokid, v);
 		}
 	}
 
-	override Value getProperty(string ident)
+	override Value interpretProperty(Context ctx, string ident)
 	{
 		switch(ident)
 		{
 			case "length":
 				return create(values.length);
 			default:
-				return super.getProperty(ident);
+				return super.interpretProperty(ctx, ident);
 		}
 	}
 }
@@ -894,19 +933,34 @@ class FunctionValue : Value
 		if(!functype.funcDecl)
 			return semanticErrorValue("calling null reference");
 
+		auto ctx = new Context(sc);
+
 		auto args = static_cast!TupleValue(vargs);
 		ParameterList params = functype.getParameters();
-		if(args.values.length != params.members.length)
+		int numparams = params.members.length;
+		if(params.anonymous_varargs)
+		{
+			if(args.values.length < numparams)
+				return semanticErrorValue("too few arguments");
+			// TODO: add _arguments and _argptr variables
+		}
+		else if(params.varargs)
+		{
+			if(args.values.length < numparams - 1)
+				return semanticErrorValue("too few arguments");
+			// TODO: pack remaining arguments into tuple
+			numparams--;
+		}
+		else if(args.values.length != numparams)
 			return semanticErrorValue("incorrect number of arguments");
 
-		auto ctx = new Context(sc);
-		for(int p = 0; p < params.members.length; p++)
+		for(int p = 0; p < numparams; p++)
 		{
 			auto decl = params.getParameter(p).getParameterDeclarator().getDeclarator();
 			Value v = args.values[p];
 			Type t = v.getType();
 			if(!decl.isRef)
-				v = t.createValue(v); // if not ref, always create copy
+				v = t.createValue(sc, v); // if not ref, always create copy
 			else if(!t.compare(v.getType()))
 				v = semanticErrorValue("cannot create reference of incompatible type");
 			ctx.setValue(decl, v);
@@ -920,7 +974,7 @@ class FunctionValue : Value
 		return doCall(threadContext, vargs);
 	}
 
-	override Value opBin(int tokid, Value v)
+	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		FunctionValue dg = cast(FunctionValue) v;
 		if(!dg)
@@ -936,7 +990,7 @@ class FunctionValue : Value
 			case TOK_notequal:
 				return Value.create(!functype.compare(dg.functype));
 			default:
-				return super.opBin(tokid, v);
+				return super.opBin(ctx, tokid, v);
 		}
 	}
 
@@ -962,7 +1016,7 @@ class DelegateValue : FunctionValue
 		return doCall(context, vargs);
 	}
 
-	override Value opBin(int tokid, Value v)
+	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		DelegateValue dg = cast(DelegateValue) v;
 		if(!dg)
@@ -979,7 +1033,7 @@ class DelegateValue : FunctionValue
 			case TOK_notequal:
 				return Value.create((context !is dg.context) || !functype.compare(dg.functype));
 			default:
-				return super.opBin(tokid, v);
+				return super.opBin(ctx, tokid, v);
 		}
 	}
 }
@@ -987,6 +1041,7 @@ class DelegateValue : FunctionValue
 class AggrValue(T) : TupleValue
 {
 	T type;
+	Value outer;
 
 	this(T t)
 	{
@@ -998,34 +1053,37 @@ class AggrValue(T) : TupleValue
 		return type;
 	}
 
-	override Value getProperty(string ident)
+	override Value interpretProperty(Context ctx, string ident)
 	{
-		if(Value v = type.getProperty(this, ident))
+		if(Value v = type.getProperty(ctx, this, ident))
 			return v;
 		if(Value v = type.getStaticProperty(ident))
 			return v;
-		return super.getProperty(ident);
+		if(outer) // TODO: outer checked after super?
+			if(Value v = outer.interpretProperty(ctx, ident))
+				return v;
+		return super.interpretProperty(ctx, ident);
 	}
 
-	override Value opBin(int tokid, Value v)
+	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
 		{
 			case TOK_equal:
-				if(Value fv = type.getProperty(this, "opEqual"))
+				if(Value fv = type.getProperty(ctx, this, "opEqual"))
 				{
-					auto ctx = new AggrContext(null, this);
+					auto tctx = new AggrContext(ctx, this);
 					auto tv = new TupleValue;
 					tv.values ~= v;
-					return fv.opCall(ctx, tv);
+					return fv.opCall(tctx, tv);
 				}
-				return super.opBin(tokid, v);
+				return super.opBin(ctx, tokid, v);
 			case TOK_is:
 				return Value.create(v is this);
 			case TOK_notidentity:
 				return Value.create(v !is this);
 			default:
-				return super.opBin(tokid, v);
+				return super.opBin(ctx, tokid, v);
 		}
 	}
 }
@@ -1049,6 +1107,14 @@ class UnionValue : AggrValue!Union
 class ClassValue : AggrValue!Class
 {
 	this(Class t)
+	{
+		super(t);
+	}
+}
+
+class AnonymousClassValue : AggrValue!AnonymousClass
+{
+	this(AnonymousClass t)
 	{
 		super(t);
 	}

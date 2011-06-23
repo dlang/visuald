@@ -147,7 +147,7 @@ class BinaryExpression : Expression
 
 version(all)
 {
-		return vL.opBin(id, vR);
+		return vL.opBin(sc, id, vR);
 }
 else
 		switch(id)
@@ -373,15 +373,15 @@ version(all)
 		switch(id)
 		{
 			case TOK_plusplus:
-				return v.opBin(TOK_addass, Value.create(cast(byte)1));
+				return v.opBin(sc, TOK_addass, Value.create(cast(byte)1));
 			case TOK_minusminus:
-				return v.opBin(TOK_minass, Value.create(cast(byte)1));
+				return v.opBin(sc, TOK_minass, Value.create(cast(byte)1));
 			case TOK_delete:
 				// TODO: call destructor?
-				v.opBin(TOK_assign, v.getType().createValue(null));
+				v.opBin(sc, TOK_assign, v.getType().createValue(sc, null));
 				return theVoidValue;
 			default:
-				return v.opUn(id);
+				return v.opUn(sc, id);
 		}
 else
 		switch(id)
@@ -465,7 +465,7 @@ class NewExpression : Expression
 		Value initVal;
 		if(auto args = getNewArguments())
 			initVal = args.interpret(sc);
-		return calcType().createValue(initVal);
+		return calcType().createValue(sc, initVal);
 	}
 	
 	override void toD(CodeWriter writer)
@@ -497,6 +497,12 @@ class AnonymousClassType : Type
 			writer("class ");
 		writer(getClass());
 	}
+
+	override Type calcType()
+	{
+		return getClass().calcType();
+	}
+	
 }
 
 //CastExpression:
@@ -664,7 +670,7 @@ class PostfixExpression : Expression
 			case TOK_dot:
 				auto id = getMember!Identifier(1);
 				assert(id);
-				Value v = val.getProperty(id.ident);
+				Value v = val.interpretProperty(sc, id.ident);
 				return v;
 				
 			case TOK_lbracket:
@@ -696,12 +702,12 @@ class PostfixExpression : Expression
 				return val.opCall(sc, args);
 				
 			case TOK_plusplus:
-				Value v2 = val.getType().createValue(val);
-				val.opBin(TOK_addass, Value.create(cast(byte)1));
+				Value v2 = val.getType().createValue(sc, val);
+				val.opBin(sc, TOK_addass, Value.create(cast(byte)1));
 				return v2;
 			case TOK_minusminus:
-				Value v2 = val.getType().createValue(val);
-				val.opBin(TOK_minass, Value.create(cast(byte)1));
+				Value v2 = val.getType().createValue(sc, val);
+				val.opBin(sc, TOK_minass, Value.create(cast(byte)1));
 				return v2;
 			case TOK_new:
 			default:
@@ -1739,7 +1745,7 @@ class TypeProperty : PrimaryExpression
 
 	override Value interpret(Context sc)
 	{
-		return getType().interpretProperty(getProperty().ident);
+		return getType().interpretProperty(sc, getProperty().ident);
 	}
 }
 

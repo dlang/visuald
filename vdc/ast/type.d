@@ -48,8 +48,8 @@ class BuiltinSymbol(T) : Symbol
 Scope createTypeScope()
 {
 	Scope sc = new Scope;
-	sc.addSymbol("sizeof", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
-	sc.addSymbol("mangleof", new BuiltinSymbol!string(getTypeString(), "mangleof"));
+	//sc.addSymbol("sizeof", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
+	//sc.addSymbol("mangleof", new BuiltinSymbol!string(getTypeString(), "mangleof"));
 	return sc;
 }
 
@@ -101,12 +101,12 @@ class Type : Node
 		return this;
 	}
 
-	Value interpretProperty(string prop)
+	Value interpretProperty(Context ctx, string prop)
 	{
 		return semanticErrorValue("cannot calculate property ", prop, " of type ", this);
 	}
 
-	Value createValue(Value initValue)
+	Value createValue(Context ctx, Value initValue)
 	{
 		return semanticErrorValue("cannot create value of type ", this);
 	}
@@ -231,7 +231,7 @@ class BasicType : Type
 		return .semanticErrorValue(tokenString(id), " has no max property");
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
 		// TODO: convert foreach to table access for faster lookup
 		foreach(tok; BasicTypeTokens)
@@ -239,7 +239,7 @@ class BasicType : Type
 			if (id == tok)
 			{
 				if(initValue)
-					return createInitValue!(Token2ValueType!(tok))(initValue);
+					return createInitValue!(Token2ValueType!(tok))(ctx, initValue);
 				return Value.create(Token2BasicType!(tok).init);
 			}
 		}
@@ -284,13 +284,13 @@ class BasicType : Type
 		}
 	}
 	
-	override Value interpretProperty(string prop)
+	override Value interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
 			// all types
 			case "init":
-				return createValue(null);
+				return createValue(nullContext, null);
 			case "sizeof":
 				return Value.create(getSizeof(id));
 			case "alignof":
@@ -320,7 +320,7 @@ class BasicType : Type
 			case "re":
 			case "im":
 			default:
-				return super.interpretProperty(prop);
+				return super.interpretProperty(ctx, prop);
 		}
 	}
 	
@@ -369,7 +369,7 @@ class AutoType : Type
 			writer(id);
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
 		if(!initValue)
 			return semanticErrorValue("no initializer in auto declaration");
@@ -432,9 +432,9 @@ class ModifiedType : Type
 		return false;
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
-		return getType().createValue(initValue); // TODO: ignores modifier
+		return getType().createValue(ctx, initValue); // TODO: ignores modifier
 	}
 	
 	override void toD(CodeWriter writer)
@@ -558,11 +558,11 @@ class TypePointer : TypeIndirection
 		typeinfo = typeinfo_ptr;
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
 		auto v = PointerValue._create(this, null);
 		if(initValue)
-			v.opBin(TOK_assign, initValue);
+			v.opBin(ctx, TOK_assign, initValue);
 		return v;
 	}
 
@@ -618,29 +618,40 @@ class TypeDynamicArray : TypeIndirection
 	{
 		writer(getMember(0), "[]");
 	}
-	
+
+	/+
 	override Scope getScope()
 	{
 		if(!scop)
 		{
 			scop = createTypeScope();
-			scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
+			//scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
 			scop.parent = super.getScope();
 		}
 		return scop;
 	}
+	+/
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
 		if(auto mtype = cast(ModifiedType) getType())
 			if(mtype.id == TOK_immutable)
 				if(auto btype = cast(BasicType) mtype.getType())
 					if(btype.id == TOK_char)
-						return createInitValue!StringValue(initValue);
+						return createInitValue!StringValue(ctx, initValue);
 		
 		
 		auto val = new DynArrayValue(this);
-		if(int dim = initValue ? initValue.getProperty("length").toInt() : 0)
+		// TODO: check types
+		if(auto dav = cast(DynArrayValue)initValue)
+			val.values = dav.values;
+		return val;
+	}
+	
+	Value deepCopy(Context sc, Value initValue)
+	{
+		auto val = new DynArrayValue(this);
+		if(int dim = initValue ? initValue.interpretProperty(sc, "length").toInt() : 0)
 		{
 			auto type = getType();
 			val.values.length = dim;
@@ -649,7 +660,7 @@ class TypeDynamicArray : TypeIndirection
 			{
 				*(idxval.pval) = i;
 				Value v = initValue ? initValue.opIndex(idxval) : null;
-				val.values[i] = type.createValue(v);
+				val.values[i] = type.createValue(sc, v);
 			}
 		}
 		return val;
@@ -686,25 +697,27 @@ class TypeStaticArray : TypeIndirection
 		typeinfo = typeinfo_arr;
 	}
 
+	/+
 	override Scope getScope()
 	{
 		if(!scop)
 		{
 			scop = createTypeScope();
-			scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
+			//scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
 			scop.parent = super.getScope();
 		}
 		return scop;
 	}
+	+/
 
 	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[", getMember(1), "]");
 	}
 	
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
-		int dim = getDimension().interpret(getScope().ctx).toInt();
+		int dim = getDimension().interpret(ctx).toInt();
 		auto val = new TupleValue;
 		auto type = getType();
 		val.values.length = dim;
@@ -713,7 +726,7 @@ class TypeStaticArray : TypeIndirection
 		{
 			*(idxval.pval) = i;
 			Value v = initValue ? initValue.opIndex(idxval) : null;
-			val.values[i] = type.createValue(v);
+			val.values[i] = type.createValue(ctx, v);
 		}
 		return val;
 	}
@@ -867,7 +880,7 @@ class TypeFunction : Type
 		typeinfo = ti_fn;
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
 		auto fv = new FunctionValue;
 		if(FunctionValue ifv = cast(FunctionValue) initValue)
@@ -913,7 +926,7 @@ class TypeDelegate : TypeFunction
 		typeinfo = ti_dg;
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
 		auto fv = new DelegateValue;
 		if(DelegateValue ifv = cast(DelegateValue) initValue)
@@ -925,7 +938,10 @@ class TypeDelegate : TypeFunction
 		else if(initValue)
 			return semanticErrorValue("cannot assign ", initValue, " to ", this);
 		else
+		{
 			fv.functype = this;
+			fv.context = ctx;
+		}
 		return fv;
 	}
 	
@@ -953,9 +969,9 @@ class TypeString : TypeDynamicArray
 {
 	mixin ForwardCtor!();
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
-		return createInitValue!StringValue(initValue);
+		return createInitValue!StringValue(ctx, initValue);
 	}
 	
 }

@@ -1284,7 +1284,7 @@ class ParameterList
 		switch(p.tok.id)
 		{
 			case TOK_dotdotdot:
-				p.topNode!(ast.ParameterList)().varargs = true;
+				p.topNode!(ast.ParameterList)().anonymous_varargs = true;
 				return Accept;
 			default:
 				p.pushState(&shiftParameter);

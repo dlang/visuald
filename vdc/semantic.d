@@ -158,7 +158,7 @@ class AggrContext : Context
 			return v;
 
 		if(auto decl = cast(Declarator) n)
-			return instance.getProperty(decl.ident);
+			return instance.interpretProperty(this, decl.ident);
 
 		return null;
 	}
@@ -243,12 +243,9 @@ class Scope
 			syms = parent.search(ident, true, privateImports);
 		return syms;
 	}
-	
-	Node resolve(string ident, ref const(TextSpan) span, bool inParents = true)
+
+	Node resolveOverload(string ident, ref const(TextSpan) span, Node[] n)
 	{
-		Node[] n = search(ident, inParents, true);
-		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n, n.length > 0 ? cast(void*)n[0] : null);
-		
 		if(n.length == 0)
 		{
 			semanticErrorPos(span.start, "unknown identifier " ~ ident);
@@ -260,6 +257,14 @@ class Scope
 		if(n.length > 1)
 			semanticErrorPos(span.start, "ambiguous identifier " ~ ident);
 		return n[0];
+	}
+
+	Node resolve(string ident, ref const(TextSpan) span, bool inParents = true)
+	{
+		Node[] n = search(ident, inParents, true);
+		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n, n.length > 0 ? cast(void*)n[0] : null);
+		
+		return resolveOverload(ident, span, n);
 	}
 	
 	Project getProject() { return mod ? mod.getProject() : null; }

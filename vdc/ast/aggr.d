@@ -10,6 +10,7 @@ module vdc.ast.aggr;
 
 import vdc.util;
 import vdc.lexer;
+import vdc.logger;
 import vdc.semantic;
 import vdc.interpret;
 
@@ -106,6 +107,7 @@ class Aggregate : Type
 
 	size_t[string] mapName2Value;
 	Declarator[string] mapName2Method;
+	Constructor[] constructors;
 	TupleValue initVal;
 	TypeValue typeVal;
 	
@@ -113,22 +115,22 @@ class Aggregate : Type
 	
 	void _setupInitValue(TupleValue sv)
 	{
-		auto ctx = new AggrContext(null, sv);
+		auto ctx = new AggrContext(nullContext, sv);
 		ctx.scop = scop;
 		getBody().iterateDeclarators(false, false, (Declarator decl) { 
 			Type type = decl.calcType();
 			Value value;
 			if(auto expr = decl.getInitializer())
-				value = type.createValue(expr.interpret(ctx));
+				value = type.createValue(ctx, expr.interpret(ctx));
 			else
-				value = type.createValue(null);
+				value = type.createValue(ctx, null);
 
 			mapName2Value[decl.ident] = sv.values.length;
 			sv.values ~= value;
 		});
 	}
 	
-	Value[] _initValues(Value[] initValues)
+	void _initValues(AggrContext thisctx, Value[] initValues)
 	{
 		if(!initVal)
 		{
@@ -136,18 +138,16 @@ class Aggregate : Type
 			_initMethods();
 		}
 		
-		Value[] values;
 		getBody().iterateDeclarators(false, false, (Declarator decl) {
-			int n = values.length;
+			int n = thisctx.instance.values.length;
 			Value v = n < initValues.length ? initValues[n] : initVal.values[n];
 			Type t = decl.calcType();
-			v = t.createValue(v);
-			values ~= v;
+			v = t.createValue(thisctx, v);
+			thisctx.instance.values ~= v;
 		});
-		return values;
 	}
 	
-	Value _createValue(ValueType, Args...)(Value initValue, Args a)
+	Value _createValue(ValueType, Args...)(Context ctx, Value initValue, Args a)
 	{
 		if(auto bdy = getBody())
 		{
@@ -157,8 +157,19 @@ class Aggregate : Type
 				if(auto tv = cast(TupleValue) initValue)
 					initValues = tv.values;
 				else
-					semanticError("cannot initialize a struct from ", initValue);
-			sv.values = _initValues(initValues);
+					semanticError("cannot initialize a ", sv, " from ", initValue);
+
+			auto thisctx = new AggrContext(ctx, sv);
+			thisctx.scop = scop;
+			_initValues(thisctx, initValues); // appends to sv.values
+
+			if(!(attr & Attr_Static) && ctx)
+				sv.outer = ctx.getThis();
+
+			if(constructors.length > 0)
+			{
+				constructors[0].interpretCall(thisctx);
+			}
 			return sv;
 		}
 		return semanticErrorValue("cannot create value of incomplete type ", ident);
@@ -169,30 +180,32 @@ class Aggregate : Type
 		getBody().iterateDeclarators(false, true, (Declarator decl) {
 			mapName2Method[decl.ident] = decl;
 		});
+		
+		getBody().iterateConstructors(false, (Constructor ctor) {
+			constructors ~= ctor;
+		});
 	}
 	
-	Value getProperty(TupleValue sv, string ident)
+	Value getProperty(Context ctx, TupleValue sv, string ident)
 	{
 		if(auto pidx = ident in mapName2Value)
 			return sv.values[*pidx];
 		if(auto pdecl = ident in mapName2Method)
 		{
 			auto func = pdecl.calcType();
-			Value v = func.createValue(null);
-			auto dgv = static_cast!DelegateValue(v);
-			auto cv = new AggrContext(null, sv);
+			auto cv = new AggrContext(ctx, sv);
 			cv.scop = scop;
-			dgv.context = cv;
+			Value dgv = func.createValue(cv, null);
 			return dgv;
 		}
 		return null;
 	}
 	
-	override Value interpretProperty(string prop)
+	override Value interpretProperty(Context ctx, string prop)
 	{
 		if(Value v = getStaticProperty(prop))
 			return v;
-		return super.interpretProperty(prop);
+		return super.interpretProperty(ctx, prop);
 	}
 
 	Value getStaticProperty(string ident)
@@ -200,11 +213,12 @@ class Aggregate : Type
 		if(!scop)
 			return semanticErrorValue(this, ": no scope set in lookup of ", ident);
 	
-		TextSpan span;
-		Node n = scop.resolve(ident, span, false);
-		if(!n)
+		Node[] res = scop.search(ident, false, true);
+		if(res.length == 0)
 			return null;
-		return n.interpret(nullContext);
+		if(res.length > 1)
+			semanticError("ambiguous identifier " ~ ident);
+		return res[0].interpret(nullContext);
 	}
 
 	override Value interpret(Context sc)
@@ -248,9 +262,9 @@ class Struct : Aggregate
 		return sv;
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
-		return _createValue!StructValue(initValue, this);
+		return _createValue!StructValue(ctx, initValue, this);
 	}
 }
 
@@ -287,9 +301,9 @@ class Union : Aggregate
 		return sv;
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
-		return _createValue!UnionValue(initValue, this);
+		return _createValue!UnionValue(ctx, initValue, this);
 	}
 }
 
@@ -380,9 +394,9 @@ class Class : InheritingAggregate
 		return sv;
 	}
 
-	override Value createValue(Value initValue)
+	override Value createValue(Context ctx, Value initValue)
 	{
-		return _createValue!ClassValue(initValue, this);
+		return _createValue!ClassValue(ctx, initValue, this);
 	}
 }
 
@@ -394,8 +408,14 @@ class AnonymousClass : InheritingAggregate
 
 	override TupleValue _initValue()
 	{
-		semanticErrorValue("cannot create value of interface type ", ident);
-		return new TupleValue;
+		AnonymousClassValue sv = new AnonymousClassValue(this);
+		_setupInitValue(sv);
+		return sv;
+	}
+
+	override Value createValue(Context ctx, Value initValue)
+	{
+		return _createValue!AnonymousClassValue(ctx, initValue, this);
 	}
 }
 
@@ -535,7 +555,22 @@ class StructBody : Node
 			}
 		}
 	}
-	
+
+	void iterateConstructors(bool wantStatics, void delegate(Constructor ctor) dg)
+	{
+		foreach(m; members)
+		{
+			Constructor ctor = cast(Constructor) m;
+			if(!ctor)
+				continue;
+			bool isStatic = (ctor.attr & Attr_Static) != 0;
+			if(isStatic != wantStatics)
+				continue;
+
+			dg(ctor);
+		}
+	}
+
 	override void _semantic(Scope sc)
 	{
 		super._semantic(sc);
@@ -560,7 +595,7 @@ class Constructor : Node
 	TemplateParameterList getTemplateParameters() { return isTemplate() ? getMember!TemplateParameterList(0) : null; }
 	ParameterList getParameters() { return members.length > 1 ? getMember!ParameterList(isTemplate() ? 1 : 0) : null; }
 	Constraint getConstraint() { return isTemplate() && members.length > 3 ? getMember!Constraint(2) : null; }
-	FunctionBody getBody() { return getMember!FunctionBody(members.length - 1); }
+	FunctionBody getFunctionBody() { return getMember!FunctionBody(members.length - 1); }
 	
 	override void toD(CodeWriter writer)
 	{
@@ -577,13 +612,22 @@ class Constructor : Node
 		if(writer.writeImplementations)
 		{
 			writer.nl;
-			writer(getBody());
+			writer(getFunctionBody());
 		}
 		else
 		{
 			writer(";");
 			writer.nl;
 		}
+	}
+
+	Value interpretCall(Context sc)
+	{
+		logInfo("calling ctor");
+		
+		if(auto fbody = getFunctionBody())
+			return fbody.interpret(sc);
+		return semanticErrorValue("ctor is not a interpretable function");
 	}
 }
 
