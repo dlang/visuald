@@ -22,7 +22,7 @@ __gshared int   gLogIndent = 0;
 __gshared bool  gLogFirst = true;
 __gshared const string gLogFile = "c:/tmp/parser.log";
 
-version = enableLog;
+debug version = enableLog;
 
 version(enableLog) {
 
@@ -93,6 +93,12 @@ version(enableLog) {
 }
 else
 {
+	struct LogIndent
+	{
+		this(int n)
+		{
+		}
+	}
 	void logInfo(...)
 	{
 	}

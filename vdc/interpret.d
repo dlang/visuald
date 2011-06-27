@@ -349,7 +349,7 @@ class Value
 								return semanticErrorValue("division by zero");
 						mixin("*pval " ~ op ~ "v2;");
 
-						logInfo("value %s changed by " ~ op ~ " to %s", ident, toStr());
+						debug logInfo("value %s changed by " ~ op ~ " to %s", ident, toStr());
 						debug sval = toStr();
 						return this;
 					}

@@ -209,7 +209,7 @@ class ProjectOptions
 		release = dbg ? 0 : 1;
 	}
 
-	string buildCommandLine(bool compile = true, bool performLink = true)
+	string buildCommandLine(bool compile = true, bool performLink = true, bool deps = true)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -305,6 +305,8 @@ class ProjectOptions
 			if(strip(id).length)
 				cmd ~= " -debug=" ~ strip(id);
 	
+		if(deps)
+			cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
 		if(performLink)
 			cmd ~= linkCommandLine();
 		return cmd;
@@ -319,7 +321,6 @@ class ProjectOptions
 			dmdoutfile ~= "_cv";
 
 		cmd ~= " -of" ~ quoteNormalizeFilename(dmdoutfile);
-		cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
 		cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
 		switch(mapverbosity)
 		{
@@ -1688,7 +1689,7 @@ class Config :	DisposingComObject,
 		{
 			string depfile = GetOutputFile(file) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
-			cmd ~= mProjectOptions.buildCommandLine(true, false);
+			cmd ~= mProjectOptions.buildCommandLine(true, false, false);
 			cmd ~= " -c -of" ~ quoteFilename(outfile) ~ " -deps=" ~ quoteFilename(depfile);
 			cmd ~= " " ~ file.GetFilename();
 		}
@@ -1775,8 +1776,8 @@ class Config :	DisposingComObject,
 		
 		return fcmd;
 	}
-	
-	string getLinkFileList(string[] dfiles, ref string precmd)
+
+	string[] getObjectFileList(string[] dfiles)
 	{
 		string[] files = dfiles.dup;
 		foreach(ref f; files)
@@ -1787,21 +1788,18 @@ class Config :	DisposingComObject,
 					fname = getBaseName(fname);
 				f = mProjectOptions.objdir ~ "\\" ~ fname ~ ".obj";
 			}
-		
+		return files;
+	}
+	
+	string getLinkFileList(string[] dfiles, ref string precmd)
+	{
+		string[] files = getObjectFileList(dfiles);
 		string responsefile = GetCommandLinePath() ~ ".lnk";
 		return getCommandFileList(files, responsefile, precmd);
 	}
 	
-	string getCommandLine()
+	string[] getInputFileList()
 	{
-		bool doLink = mProjectOptions.singleFileCompilation != ProjectOptions.kSeparateCompileOnly;
-		bool separateLink = mProjectOptions.singleFileCompilation == ProjectOptions.kSeparateCompileAndLink;
-		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink);
-		if(mProjectOptions.additionalOptions.length)
-			opt ~= " " ~ mProjectOptions.additionalOptions;
-
-		string precmd = getEnvironmentChanges();
-
 		string[] files;
 		searchNode(mProvider.mProject.GetRootNode(), 
 			delegate (CHierNode n) { 
@@ -1817,6 +1815,19 @@ class Config :	DisposingComObject,
 
 		string[] libs = getLibsFromDependentProjects();
 		files ~= libs;
+		return files;
+	}
+	
+	string getCommandLine()
+	{
+		bool doLink = mProjectOptions.singleFileCompilation != ProjectOptions.kSeparateCompileOnly;
+		bool separateLink = mProjectOptions.singleFileCompilation == ProjectOptions.kSeparateCompileAndLink;
+		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
+		if(mProjectOptions.additionalOptions.length)
+			opt ~= " " ~ mProjectOptions.additionalOptions;
+
+		string precmd = getEnvironmentChanges();
+		string[] files = getInputFileList();
 
 		string responsefile = GetCommandLinePath() ~ ".rsp";
 		string fcmd = getCommandFileList(files, responsefile, precmd);
@@ -1837,7 +1848,7 @@ class Config :	DisposingComObject,
 		
 		if(separateLink && doLink)
 		{
-			string lnkcmd = mProjectOptions.buildCommandLine(false, true);
+			string lnkcmd = mProjectOptions.buildCommandLine(false, true, false);
 			if(mProjectOptions.additionalOptions.length)
 				lnkcmd ~= " " ~ mProjectOptions.additionalOptions;
 			string prelnk;
@@ -1874,6 +1885,31 @@ class Config :	DisposingComObject,
 		return mProjectOptions.replaceEnvironment(cmd, this);
 	}
 
+	bool writeLinkDependencyFile()
+	{
+		string workdir = normalizeDir(GetProjectDir());
+		string depfile = makeFilenameAbsolute(GetDependenciesPath(), workdir);
+		string files[] = getInputFileList();
+		files = getObjectFileList(files);
+		string prefix = "target (";
+		string postfix = ") : public : object \n";
+		string deps;
+		foreach(f; files)
+		{
+			deps ~= prefix ~ replace(f, "\\", "\\\\") ~ postfix;
+		}
+		bool fromMap = mProjectOptions.mapverbosity >= 3;
+		try
+		{
+			std.file.write(depfile, deps);
+			return true;
+		}
+		catch(Exception e)
+		{
+		}
+		return false;
+	}
+	
 	string[] getLibsFromDependentProjects()
 	{
 		string[] libs;

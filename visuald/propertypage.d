@@ -1030,7 +1030,7 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		mCmdLine.setText(options.buildCommandLine(true, true)); 
+		mCmdLine.setText(options.buildCommandLine(true, true, true));
 		mAddOpt.setText(options.additionalOptions); 
 	}
 

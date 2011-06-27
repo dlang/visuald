@@ -181,10 +181,10 @@
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="vsi2d">
-  <File path="idl2d.d" />
-  <File path="tokutil.d" />
   <File path="dgutil.d" />
   <File path="dlist.d" />
+  <File path="idl2d.d" />
   <File path="tokenizer.d" />
+  <File path="tokutil.d" />
  </Folder>
 </DProject>

@@ -305,3 +305,9 @@ Version history
   * build order of custom/resource compilations now sorted by dependencies
   * project items now sorted alphabetically
   * fixed a few more issues with relative paths causing a source file to be opened twice in the editor
+
+unreleased Version 0.3.26
+
+  * fixed regression in last version: single file compilation did not build any d files
+  * single file compilation: avoid relinking every time
+  * seperate compile and link: no longer trashes dependencies in link step

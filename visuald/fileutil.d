@@ -127,7 +127,7 @@ string safeFilename(string fname)
 {
 	string safefile = fname;
 	foreach(char ch; ":\\/")
-		safefile = replace(safefile, to!string(ch), "_");
+		safefile = replace(safefile, to!string(ch), "-"); // - instead of _ to not possibly be part of a module name
 	return safefile;
 }
 

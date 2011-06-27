@@ -298,34 +298,30 @@ else
 	{
 		mixin(LogCallMix2);
 		
-		version(old)
+		// first build custom files with dependency graph
+		CFileNode[] files = BuildDependencyList();
+		foreach(file; files)
 		{
-			CHierNode node = searchNode(mConfig.GetProjectNode(), 
-				delegate (CHierNode n) { 
-					if(CFileNode file = cast(CFileNode) n)
-					{
-						if(isStopped())
-							return true;
-						if(!buildCustomFile(file))
-							return true;
-					}
-					return false;
-				});
+			if(isStopped())
+				return false;
+			if(!buildCustomFile(file))
+				return false;
+		}
+		
+		// now build files not in the dependency graph (d files in single compilation modes)
+		CHierNode node = searchNode(mConfig.GetProjectNode(), 
+			delegate (CHierNode n) { 
+				if(CFileNode file = cast(CFileNode) n)
+				{
+					if(isStopped())
+						return true;
+					if(!buildCustomFile(file))
+						return true;
+				}
+				return false;
+			});
 
-			return node is null;
-		}
-		else
-		{
-			CFileNode[] files = BuildDependencyList();
-			foreach(file; files)
-			{
-				if(isStopped())
-					return false;
-				if(!buildCustomFile(file))
-					return false;
-			}
-			return true;
-		}
+		return node is null;
 	}
 
 	bool DoBuild()
@@ -370,6 +366,8 @@ else
 			string cmdline = mConfig.getCommandLine();
 			string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
 			hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
+			if(hr == S_OK && mConfig.GetProjectOptions().singleFileCompilation == ProjectOptions.kSingleFileCompilation)
+				mConfig.writeLinkDependencyFile();
 			return (hr == S_OK);
 		}
 		catch(Exception e)
