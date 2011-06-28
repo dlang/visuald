@@ -291,6 +291,7 @@ class Declarator : Identifier
 
 	Type type;
 	Value value;
+	Node aliasTo;
 	bool isAlias;
 	bool isRef;
 	bool needsContext;
@@ -395,7 +396,9 @@ class Declarator : Identifier
 			}
 			else if(auto aliasparam = cast(TemplateAliasParameter) pm)
 			{
-				if(auto type = cast(Type) am)
+				if(auto idtype = cast(IdentifierType) am)
+					v = new AliasValue(idtype.getIdentifierList());
+				else if(auto type = cast(Type) am)
 					v = new TypeValue(type);
 				else if(auto id = cast(IdentifierExpression) am)
 				{
@@ -417,14 +420,14 @@ class Declarator : Identifier
 			names ~= name;
 		}
 		if(auto impl = getTemplateInstantiation(vargs))
-			return impl.decl;
+			return impl.getDeclarator();
 
 		// new instantiation has template parameters as parameterlist and contains
 		//  a copy of the function declaration without template arguments
 		auto tmpl = new TemplateInstantiation(this, vargs, names);
-		addMember(tmpl); // add as suffix
-		tmpl.semantic(getScope());
-		return tmpl.decl;
+		parent.addMember(tmpl); // add as suffix
+		tmpl.semantic(parent.getScope());
+		return tmpl.getDeclarator();
 	}
 
 	TemplateInstantiation getTemplateInstantiation(Value[] args)
@@ -456,7 +459,7 @@ class Declarator : Identifier
 		// template parameters and function parameters and constraint
 		for(int m = 0; m < members.length; )
 		{
-			auto member = members[0];
+			auto member = members[m];
 			if(auto pl = cast(ParameterList) member)
 			{
 				auto tf = needsContext ? new TypeDelegate(pl.id, pl.span) : new TypeFunction(pl.id, pl.span);
@@ -501,6 +504,8 @@ class Declarator : Identifier
 	{
 		if(type)
 			return type;
+		if(aliasTo)
+			return aliasTo.calcType();
 		
 		for(Node p = parent; p; p = p.parent)
 		{
@@ -525,19 +530,19 @@ class Declarator : Identifier
 				return type;
 			}
 		}
-		semanticError("cannot find Declarator type");
-		return null;
+		type = semanticErrorType("cannot find Declarator type");
+		return type;
 	}
 
 	override Value interpret(Context sc)
 	{
 		if(value)
 			return value;
+		if(aliasTo)
+			return aliasTo.interpret(sc); // TODO: alias not restricted to types
 		Type type = calcType();
-		if(!type)
-			value = new ErrorValue;
-		else if(isAlias)
-			value = new TypeValue(type); // TODO: alias not restricted to types
+		if(isAlias)
+			return type.interpret(sc); // TODO: alias not restricted to types
 		else if(needsContext)
 		{
 			if(!sc)
@@ -550,11 +555,11 @@ class Declarator : Identifier
 	
 	Value interpretReinit(Context sc)
 	{
+		if(aliasTo)
+			return aliasTo.interpret(sc); // TODO: alias not restricted to types
 		Type type = calcType();
-		if(!type)
-			value = new ErrorValue;
-		else if(isAlias)
-			value = new TypeValue(type); // TODO: alias not restricted to types
+		if(isAlias)
+			return type.interpret(sc); // TODO: alias not restricted to types
 		else if(needsContext)
 		{
 			if(!sc)
@@ -599,28 +604,53 @@ class Declarator : Identifier
 class TemplateInstantiation : Node
 {
 	Value[] args;
-	Declarator decl;
-
-	ParameterList getParameterList() { return getMember!ParameterList(0); }
+	Declarator dec;
 	
-	this(Declarator dec, Value[] vargs, string[] names)
+	ParameterList getParameterList() { return getMember!ParameterList(0); }
+	Declarator getDeclarator() { return dec; }
+	
+	this(Declarator ddec, Value[] vargs, string[] names)
 	{
-		decl = dec.clone();
+		Decl decl = new Decl;
+		dec = ddec.clone();
 		args = vargs;
 		
-		ParameterList pl = new ParameterList;
-		for(int m = 0; m < decl.members.length; m++)
-		{
-			if(auto tpl = cast(TemplateParameterList) decl.members[m])
+		for(Node p = ddec.parent; p; p = p.parent)
+			if(auto ddecl = cast(Decl) p)
 			{
-				decl.removeMember(m);
+				if(auto type = ddecl.getType())
+					decl.addMember(type.clone());
+				Declarators decs = new Declarators;
+				decs.addMember(dec);
+				decl.addMember(decs);
+				if(auto fbody = ddecl.getFunctionBody())
+					decl.addMember(fbody.clone());
+				break;
+			}
+		assert(decl.members.length > 0);
+		
+		ParameterList pl = new ParameterList;
+		for(int m = 0; m < dec.members.length; m++)
+		{
+			if(auto tpl = cast(TemplateParameterList) dec.members[m])
+			{
+				dec.removeMember(m);
 				for(m = 0; m < tpl.members.length; m++)
 				{
 					auto pd = new ParameterDeclarator;
 					pd.addMember(vargs[m].getType().clone());
+					
 					auto d = new Declarator;
 					d.ident = names[m];
-					d.value = vargs[m];
+					if(auto av = cast(AliasValue) vargs[m])
+					{
+						d.isAlias = true;
+						d.aliasTo = av.resolve();
+					}
+					else
+					{
+						d.value = vargs[m];
+					}
 					pd.addMember(d);
 					pl.addMember(pd);
 				}
@@ -629,7 +659,7 @@ class TemplateInstantiation : Node
 		}
 		addMember(pl);
 		addMember(decl);
-		logInfo("created template instance of ", decl.ident, " with args ", vargs);
+		logInfo("created template instance of ", dec.ident, " with args ", vargs);
 	}
 	
 	override void toD(CodeWriter writer)
@@ -677,6 +707,27 @@ class IdentifierList : Node
 		return tn.global == global;
 	}
 	
+	Node resolve()
+	{
+		if(!resolved)
+			semantic(getScope());
+		return resolved;
+	}
+	
+	override Type calcType()
+	{
+		if(Node n = resolve())
+			return n.calcType();
+		return semanticErrorType("cannot resolve type of ", writeD(this));
+	}
+
+	override Value interpret(Context sc)
+	{
+		if(Node n = resolve())
+			return n.interpret(sc);
+		return semanticErrorValue("cannot resolve ", writeD(this));
+	}
+
 	override void _semantic(Scope sc)
 	{
 		// TODO: does not work for package qualified symbols

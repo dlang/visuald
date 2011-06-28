@@ -346,10 +346,10 @@ class AttributeSpecifier : Node
 				auto db = getMember!DeclarationBlock(0);
 				foreach(m; db.members)
 					applyAttributes(m);
-				return db.members;
+				return db.removeAll();
 			default:
 				applyAttributes(getMember(0));
-				return members;
+				return removeAll();
 		}
 	}
 }

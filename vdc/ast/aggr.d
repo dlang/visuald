@@ -98,6 +98,11 @@ class Aggregate : Type
 			bdy.semantic(sc);
 			sc = sc.pop();
 		}
+		if(!initVal)
+		{
+			initVal = _initValue();
+			_initMethods();
+		}
 	}
 
 	override void addSymbols(Scope sc)
@@ -210,7 +215,7 @@ class Aggregate : Type
 		if(auto pdecl = ident in mapName2Method)
 		{
 			auto func = pdecl.calcType();
-			auto cv = new AggrContext(ctx, sv);
+			auto cv = new AggrContext(nullContext, sv);
 			cv.scop = scop;
 			Value dgv = func.createValue(cv, null);
 			return dgv;
@@ -218,15 +223,25 @@ class Aggregate : Type
 		return null;
 	}
 	
-	override Value interpretProperty(Context ctx, string prop)
+	override Value _interpretProperty(Context ctx, string prop)
 	{
 		if(Value v = getStaticProperty(prop))
 			return v;
-		return super.interpretProperty(ctx, prop);
+		Value vt = ctx.getThis();
+		auto av = cast(AggrValue) vt;
+		if(!av)
+			if(auto rv = cast(ReferenceValue) vt)
+				av = rv.instance;
+		if(av)
+			if(Value v = getProperty(ctx, av, prop))
+				return v;
+		return super._interpretProperty(ctx, prop);
 	}
 
 	Value getStaticProperty(string ident)
 	{
+		if(!scop)
+			semantic(getScope());
 		if(!scop)
 			return semanticErrorValue(this, ": no scope set in lookup of ", ident);
 	
@@ -235,6 +250,8 @@ class Aggregate : Type
 			return null;
 		if(res.length > 1)
 			semanticError("ambiguous identifier " ~ ident);
+		if(!(res[0].attr & Attr_Static))
+			return null; // delay into getProperty
 		return res[0].interpret(nullContext);
 	}
 
@@ -338,7 +355,7 @@ class InheritingAggregate : Aggregate
 
 	void addBaseClass(BaseClass bc)
 	{
-		members ~= bc;
+		addMember(bc);
 		baseClasses ~= bc;
 	}
 	
@@ -369,6 +386,14 @@ class InheritingAggregate : Aggregate
 		return false;
 	}
 	
+	override Value _interpretProperty(Context ctx, string prop)
+	{
+		foreach(bc; baseClasses)
+			if(Value v = bc._interpretProperty(ctx, prop))
+				return v;
+		return super._interpretProperty(ctx, prop);
+	}
+
 	override void toD(CodeWriter writer)
 	{
 		// class/interface written by derived class
@@ -426,6 +451,7 @@ class Class : InheritingAggregate
 			return v.opBin(ctx, TOK_assign, rv);
 
 		v.instance = _createValue!ClassInstanceValue(ctx, initValue, this);
+		v.validate();
 		return v;
 	}
 }
@@ -456,6 +482,7 @@ class AnonymousClass : Class
 			return v.opBin(ctx, TOK_assign, rv);
 
 		v.instance = _createValue!ClassInstanceValue(ctx, initValue, this);
+		v.validate();
 		return v;
 	}
 }
@@ -514,10 +541,10 @@ class BaseClass : Node
 
 	TokenId getProtection() { return id; }
 	IdentifierList getIdentifierList() { return getMember!IdentifierList(0); }
-	
+
 	InheritingAggregate getClass()
 	{
-		auto res = getIdentifierList().resolved;
+		auto res = getIdentifierList().resolve();
 		if(auto inh = cast(InheritingAggregate) res)
 			return inh;
 		
@@ -536,6 +563,13 @@ class BaseClass : Node
 	override void toC(CodeWriter writer)
 	{
 		writer("public ", getMember(0)); // protection diffent from C
+	}
+
+	Value _interpretProperty(Context ctx, string prop)
+	{
+		if(auto clss = getClass())
+			return clss._interpretProperty(ctx, prop);
+		return null;
 	}
 }
 
@@ -666,6 +700,16 @@ class Constructor : Node
 		{
 			writer(";");
 			writer.nl;
+		}
+	}
+
+	override void _semantic(Scope sc)
+	{
+		if(auto fbody = getFunctionBody())
+		{
+			sc = enterScope(sc);
+			fbody.semantic(sc);
+			sc = sc.pop();
 		}
 	}
 

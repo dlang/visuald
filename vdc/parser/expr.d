@@ -731,7 +731,7 @@ class PostfixExpression : Expression
 			if (arglist.members.length != 1)
 				return p.parseError("a single expression is expected before ..");
 
-			p.topNode().addMember(arglist.members[0]);
+			p.topNode().addMember(arglist.removeMember(0));
 			p.pushState(&shiftSlice);
 			p.pushState(&AssignExpression.enter);
 			return Accept;

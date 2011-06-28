@@ -331,20 +331,46 @@ class Node
 	}
 	
 	////////////////////////////////////////////////////////////
+	invariant()
+	{
+		foreach(m; members)
+			assert(m.parent is this);
+	}
+	
 	void addMember(Node m) 
 	{
+		assert(m.parent is null);
 		members ~= m;
 		m.parent = this;
 	}
-	
-	void removeMember(int m, int cnt = 1) 
+
+	Node removeMember(int m) 
+	{
+		Node n = members[m];
+		removeMember(m, 1);
+		return n;
+	}
+
+	void removeMember(int m, int cnt) 
 	{
 		assert(m >= 0 && m + cnt <= members.length);
+		for (int i = 0; i < cnt; i++)
+			members[m + i].parent = null;
+			
 		for (int n = m + cnt; n < members.length; n++)
 			members[n - cnt] = members[n];
 		members.length = members.length - cnt;
 	}
 	
+	Node[] removeAll() 
+	{
+		for (int m = 0; m < members.length; m++)
+			members[m].parent = null;
+		Node[] nm = members;
+		members = members.init;
+		return nm;
+	}
+
 	void replaceMember(Node m, Node[] nm) 
 	{
 		int n = std.algorithm.countUntil(members, m);

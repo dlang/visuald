@@ -101,9 +101,20 @@ class Type : Node
 		return this;
 	}
 
-	Value interpretProperty(Context ctx, string prop)
+	override Value interpret(Context sc)
 	{
+		return new TypeValue(this);
+	}
+	
+	final Value interpretProperty(Context ctx, string prop)
+	{
+		if(Value v = _interpretProperty(ctx, prop))
+			return v;
 		return semanticErrorValue("cannot calculate property ", prop, " of type ", this);
+	}
+	Value _interpretProperty(Context ctx, string prop)
+	{
+		return null;
 	}
 
 	Value createValue(Context ctx, Value initValue)
@@ -284,7 +295,7 @@ class BasicType : Type
 		}
 	}
 	
-	override Value interpretProperty(Context ctx, string prop)
+	override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
@@ -320,7 +331,7 @@ class BasicType : Type
 			case "re":
 			case "im":
 			default:
-				return super.interpretProperty(ctx, prop);
+				return super._interpretProperty(ctx, prop);
 		}
 	}
 	
@@ -454,7 +465,12 @@ class IdentifierType : Type
 	Node resolved;
 	
 	IdentifierList getIdentifierList() { return getMember!IdentifierList(0); }
-	
+
+	override void toD(CodeWriter writer)
+	{
+		writer(getMember(0));
+	}
+
 	override Type calcType()
 	{
 		auto idlist = getIdentifierList();
@@ -465,9 +481,10 @@ class IdentifierType : Type
 		return semanticErrorType("cannot resolve type");
 	}
 	
-	override void toD(CodeWriter writer)
+	override Value interpret(Context sc)
 	{
-		writer(getMember(0));
+		// might also be called inside an alias, actually resolving to a value
+		return new TypeValue(this);
 	}
 }
 

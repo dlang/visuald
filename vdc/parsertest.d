@@ -318,6 +318,28 @@ unittest
 unittest
 {
 	string txt = q{
+		class Adapter
+		{
+			int func() { return 73; }
+		}
+		class Foo46
+		{
+			class AnonAdapter : Adapter {}
+
+			void func()
+			{
+				Adapter a = new AnonAdapter();
+				return a.func();
+			}
+		}
+		static assert((new Foo46).func() == 73);
+	};
+	testSemantic(txt, "adapter");
+}
+
+unittest
+{
+	string txt = q{
 		int foo(alias a)(){ return a; }
 		int x = 3;
 		static assert(foo!(x)() == 3);

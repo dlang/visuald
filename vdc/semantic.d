@@ -157,12 +157,13 @@ class AggrContext : Context
 
 	override Value getValue(Node n)
 	{
-		if(auto v = super.getValue(n))
-			return v;
-
+		if(auto pn = n in vars)
+			return *pn;
 		if(auto decl = cast(Declarator) n)
-			return instance.interpretProperty(this, decl.ident);
-
+			if(Value v = instance._interpretProperty(this, decl.ident))
+				return v;
+		if(parent)
+			return parent.getValue(n);
 		return null;
 	}
 }

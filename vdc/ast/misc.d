@@ -610,13 +610,13 @@ class StaticAssert : Node
 	{
 		auto args = getArgumentList();
 		auto expr = args.getMember!Expression(0);
-		if(!expr.interpretCatch(nullContext).toBool())
+		if(!expr.interpretCatch(globalContext).toBool())
 		{
 			string txt;
 			for(int a = 1; a < args.members.length; a++)
 			{
 				auto arg = args.getMember!Expression(a);
-				txt ~= arg.interpret(nullContext).toMixin();
+				txt ~= arg.interpret(globalContext).toMixin();
 			}
 			if(txt.length == 0)
 				txt = "static assertion " ~ writeD(expr) ~ " failed";

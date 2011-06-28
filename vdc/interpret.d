@@ -36,6 +36,7 @@ import vdc.ast.decl;
 import vdc.ast.type;
 import vdc.ast.aggr;
 import vdc.ast.expr;
+import vdc.ast.node;
 
 import std.variant;
 import std.conv;
@@ -139,6 +140,17 @@ class Value
 		semanticError("cannot convert ", this, " to mixin");
 		return "";
 	}
+
+	PointerValue toPointer()
+	{
+		return null;
+	}
+
+	void validate()
+	{
+		debug sval = toStr();
+	}
+	
 	//override string toString()
 	//{
 	//    return text(getType(), ":", toStr());
@@ -165,7 +177,7 @@ class Value
 	Value opRefPointer()
 	{
 		auto tp = new TypePointer();
-		tp.addMember(getType());
+		tp.addMember(getType().clone());
 		return PointerValue._create(tp, this);
 	}
 	Value opDerefPointer()
@@ -173,9 +185,16 @@ class Value
 		return semanticErrorValue("cannot dereference a ", this);
 	}
 
-	Value interpretProperty(Context ctx, string prop)
+	final Value interpretProperty(Context ctx, string prop)
 	{
-		return getType().interpretProperty(ctx, prop);
+		if(Value v = _interpretProperty(ctx, prop))
+			return v;
+		return semanticErrorValue("cannot calculate property ", prop, " of value ", toStr());
+	}
+
+	Value _interpretProperty(Context ctx, string prop)
+	{
+		return getType()._interpretProperty(ctx, prop);
 	}
 	
 	Value opIndex(Value v)
@@ -664,6 +683,7 @@ class DynArrayValue : TupleValue
 	this(Type t)
 	{
 		type = t;
+		debug sval = toStr();
 	}
 
 	override string toStr()
@@ -671,14 +691,14 @@ class DynArrayValue : TupleValue
 		return _toStr("[", "]");
 	}
 	
-	override Value interpretProperty(Context ctx, string prop)
+	override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
 			case "length":
 				return new SetLengthValue(this);
 			default:
-				return super.interpretProperty(ctx, prop);
+				return super._interpretProperty(ctx, prop);
 		}
 	}
 }
@@ -690,6 +710,7 @@ class SetLengthValue : UIntValue
 	this(DynArrayValue a)
 	{
 		array = a;
+		debug sval = toStr();
 	}
 
 	override string toStr()
@@ -725,12 +746,14 @@ class StringValue : Value
 	this()
 	{
 		pval = (new string[1]).ptr;
+		debug sval = toStr();
 	}
 	
 	this(string s)
 	{
 		pval = (new string[1]).ptr;
 		*pval = s;
+		debug sval = toStr();
 	}
 	
 	static StringValue _create(string s)
@@ -752,6 +775,16 @@ class StringValue : Value
 	override string toMixin()
 	{
 		return *pval;
+	}
+
+	override PointerValue toPointer()
+	{
+		// TODO: implementation here just to satisfy string -> C const char* conversion
+		PointerValue pv = new PointerValue;
+		pv.type = new TypePointer;
+		pv.type.addMember(BasicType.createType(TOK_char));
+		pv.pval = this;
+		return pv;
 	}
 
 	override bool toBool()
@@ -808,7 +841,7 @@ class PointerValue : Value
 
 	override string toStr()
 	{
-		return "&" ~ pval.toStr();
+		return pval ? "&" ~ pval.toStr() : "null";
 	}
 
 	static PointerValue _create(TypePointer type, Value v)
@@ -816,6 +849,7 @@ class PointerValue : Value
 		PointerValue pv = new PointerValue;
 		pv.type = type;
 		pv.pval = v;
+		debug pv.sval = pv.toStr();
 		return pv;
 	}
 	
@@ -827,6 +861,11 @@ class PointerValue : Value
 	override bool toBool()
 	{
 		return pval !is null;
+	}
+	
+	override PointerValue toPointer()
+	{
+		return this;
 	}
 	
 	override Value opDerefPointer()
@@ -841,7 +880,7 @@ class PointerValue : Value
 		switch(tokid)
 		{
 			case TOK_assign:
-				auto pv = cast(PointerValue)v;
+				auto pv = v.toPointer();
 				if(!v)
 					pval = null;
 				else if(!pv)
@@ -866,7 +905,7 @@ class PointerValue : Value
 		}
 	}
 
-	override Value interpretProperty(Context ctx, string prop)
+	override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
@@ -875,7 +914,7 @@ class PointerValue : Value
 			default:
 				if(!pval)
 					return semanticErrorValue("dereferencing null pointer");
-				return pval.interpretProperty(ctx, prop);
+				return pval._interpretProperty(ctx, prop);
 		}
 	}
 }
@@ -887,6 +926,7 @@ class TypeValue : Value
 	this(Type t)
 	{
 		type = t;
+		debug sval = toStr();
 	}
 
 	override Type getType()
@@ -912,8 +952,14 @@ class AliasValue : Value
 	this(IdentifierList _id)
 	{
 		id = _id;
+		debug sval = toStr();
 	}
 
+	Node resolve()
+	{
+		return id.resolve();
+	}
+	
 	override Type getType()
 	{
 		return id.calcType();
@@ -930,6 +976,11 @@ class TupleValue : Value
 private:
 	Value[] _values;
 public:
+	this()
+	{
+		debug sval = toStr();
+	}
+
 	@property Value[] values() 
 	{ 
 		return _values; 
@@ -1002,14 +1053,14 @@ public:
 		}
 	}
 
-	override Value interpretProperty(Context ctx, string prop)
+	override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
 			case "length":
 				return create(values.length);
 			default:
-				return super.interpretProperty(ctx, prop);
+				return super._interpretProperty(ctx, prop);
 		}
 	}
 }
@@ -1048,7 +1099,6 @@ class FunctionValue : Value
 		{
 			if(args.values.length < numparams - 1)
 				return semanticErrorValue("too few arguments");
-			// TODO: pack remaining arguments into tuple
 			numparams--;
 		}
 		else if(args.values.length != numparams)
@@ -1060,10 +1110,29 @@ class FunctionValue : Value
 			Value v = args.values[p];
 			Type t = v.getType();
 			if(!decl.isRef)
-				v = t.createValue(sc, v); // if not ref, always create copy
-			else if(!t.compare(v.getType()))
-				v = semanticErrorValue("cannot create reference of incompatible type");
+				v = decl.calcType().createValue(sc, v); // if not ref, always create copy
+			else if(!t.compare(decl.calcType()))
+				return semanticErrorValue("cannot create reference of incompatible type", v.getType());
 			ctx.setValue(decl, v);
+		}
+		if(params.varargs)
+		{
+			// TODO: pack remaining arguments into array
+			auto vdecl = params.getParameter(numparams).getParameterDeclarator().getDeclarator();
+			Value arr = vdecl.calcType().createValue(ctx, null);
+			if(auto darr = cast(DynArrayValue) arr)
+			{
+				for(int n = numparams; n < args.values.length; n++)
+				{
+					Value v = args.values[n];
+					Type t = v.getType();
+					v = t.createValue(sc, v); // if not ref, always create copy
+					darr.addValue(v);
+				}
+				ctx.setValue(vdecl, darr);
+			}
+			else
+				return semanticErrorValue("array type expected for variable argument parameter");
 		}
 		Value retVal = functype.funcDecl.interpretCall(ctx);
 		return retVal ? retVal : theVoidValue;
@@ -1142,25 +1211,34 @@ class DelegateValue : FunctionValue
 class AggrValue : TupleValue
 {
 	Value outer;
-
+	AggrContext context;
+	
 	abstract override Aggregate getType();
 
 	override string toStr()
 	{
-		return getType().ident ~ _toStr("{", "}");
+		if(auto t = getType())
+			return t.ident ~ _toStr("{", "}");
+		return "<notype>" ~ _toStr("{", "}");
 	}
 
-	override Value interpretProperty(Context ctx, string prop)
+	override Value _interpretProperty(Context ctx, string prop)
 	{
 		auto type = getType();
 		if(Value v = type.getProperty(ctx, this, prop))
 			return v;
 		if(Value v = type.getStaticProperty(prop))
 			return v;
+		if(!context)
+			context = new AggrContext(nullContext, this);
+		if(Value v = super._interpretProperty(context, prop))
+			return v;
+
 		if(outer) // TODO: outer checked after super?
-			if(Value v = outer.interpretProperty(ctx, prop))
+			if(Value v = outer._interpretProperty(ctx, prop))
 				return v;
-		return super.interpretProperty(ctx, prop);
+
+		return null;
 	}
 
 	override Value opBin(Context ctx, int tokid, Value v)
@@ -1193,6 +1271,7 @@ class AggrValueT(T) : AggrValue
 	this(T t)
 	{
 		type = t;
+		debug sval = toStr();
 	}
 
 	override Aggregate getType()
@@ -1278,13 +1357,14 @@ class ReferenceValueT(T) : ReferenceValue
 		return type;
 	}
 
-	override Value interpretProperty(Context ctx, string prop)
+	override Value _interpretProperty(Context ctx, string prop)
 	{
 		if(instance)
-			return instance.interpretProperty(ctx, prop);
+			if(Value v = instance._interpretProperty(ctx, prop))
+				return v;
 		if(Value v = type.getStaticProperty(prop))
 			return v;
-		return super.interpretProperty(ctx, prop);
+		return super._interpretProperty(ctx, prop);
 	}
 }
 
@@ -1294,6 +1374,7 @@ class ClassValue : ReferenceValueT!Class
 	{
 		super(t);
 		instance = inst;
+		validate();
 	}
 }
 
@@ -1302,6 +1383,7 @@ class InterfaceValue : ReferenceValueT!Intrface
 	this(Intrface t)
 	{
 		super(t);
+		validate();
 	}
 }
 
@@ -1310,6 +1392,7 @@ class AnonymousClassInstanceValue : AggrValueT!AnonymousClass
 	this(AnonymousClass t)
 	{
 		super(t);
+		validate();
 	}
 }
 
@@ -1318,6 +1401,7 @@ class AnonymousClassValue : ReferenceValueT!AnonymousClass
 	this(AnonymousClass t)
 	{
 		super(t);
+		validate();
 	}
 }
 

@@ -523,6 +523,20 @@ class CastExpression : Expression
 	Type getType() { return members.length > 1 ? getMember!Type(0) : null; }
 	Expression getExpression() { return getMember!Expression(members.length - 1); }
 	
+	override void toD(CodeWriter writer)
+	{
+		writer("cast(");
+		writer.writeAttributes(attr);
+		if(Type type = getType())
+			writer(getType());
+		writer(")");
+			
+		if(getExpression().getPrecedence() < getPrecedence())
+			writer("(", getExpression(), ")");
+		else
+			writer(getExpression());
+	}
+
 	override void _semantic(Scope sc)
 	{
 		if(auto type = getType())
@@ -568,18 +582,14 @@ class CastExpression : Expression
 		return type;
 	}
 	
-	override void toD(CodeWriter writer)
+	override Value interpret(Context sc)
 	{
-		writer("cast(");
-		writer.writeAttributes(attr);
-		if(Type type = getType())
-			writer(getType());
-		writer(")");
-			
-		if(getExpression().getPrecedence() < getPrecedence())
-			writer("(", getExpression(), ")");
-		else
-			writer(getExpression());
+		Value val = getExpression().interpret(sc);
+		Type t = calcType();
+		Type vt = val.getType();
+		if(t.compare(vt))
+			return val;
+		return vt.createValue(sc, val);
 	}
 }
 
@@ -672,8 +682,7 @@ class PostfixExpression : Expression
 			case TOK_dot:
 				auto id = getMember!Identifier(1);
 				assert(id);
-				Value v = val.interpretProperty(sc, id.ident);
-				return v;
+				return val.interpretProperty(sc, id.ident);
 				
 			case TOK_lbracket:
 				if(members.length == 2)
@@ -1387,7 +1396,7 @@ class IdentifierExpression : PrimaryExpression
 		if(!resolved)
 			semantic(getScope());
 		if(!resolved)
-			return new ErrorValue;
+			return semanticErrorValue("unresolved identifer ", writeD(this));
 		return resolved.interpret(sc);
 	}
 }
