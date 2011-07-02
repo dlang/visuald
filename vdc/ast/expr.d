@@ -624,20 +624,10 @@ class PostfixExpression : Expression
 			return type;
 		
 		auto expr = getExpression();
-		auto type = expr.calcType();
+		auto etype = expr.calcType();
 		switch(id)
 		{
-			case TOK_dot:
-				if(type)
-					if(auto id = getMember!Identifier(1))
-					{
-						if(auto pt = cast(TypePointer)type)
-							type = pt.getType().calcType();
-						Scope s = type.getScope();
-						Node n = s ? s.resolve(id.ident, id.span, false) : null;
-						type = n ? n.calcType() : null;
-					}
-				break;
+			// TOK_dot handled by DotExpression
 			case TOK_lbracket:
 				if(members.length == 2) // if slice, same type as expression
 				{
@@ -647,17 +637,20 @@ class PostfixExpression : Expression
 					if(vidx.values.length != 1)
 						return semanticErrorType("exactly one value expected as array index");
 					idx = vidx.values[0];
-					type = type.opIndex(idx.toInt());
+					type = etype.opIndex(idx.toInt());
 				}
 				else if(members.length == 3)
 				{
 					Scope sc = getScope();
 					Value beg = getMember(1).interpret(nullContext);
 					Value end = getMember(2).interpret(nullContext);
-					type = type.opSlice(beg.toInt(), end.toInt());
+					type = etype.opSlice(beg.toInt(), end.toInt());
 				}
 				else
+				{
 					assert(members.length == 1);  // full slice
+					type = etype;
+				}
 				break;
 			case TOK_lparen:
 				Type args;
@@ -665,9 +658,10 @@ class PostfixExpression : Expression
 					args = getMember!ArgumentList(1).calcType();
 				else
 					args = new TypeArraySlice;
-				type = type.opCall(args);
+				type = etype.opCall(args);
 				break;
 			default:
+				type = semanticErrorType("cannot determine type of ", this);
 				break;
 		}
 		return type;
@@ -679,11 +673,7 @@ class PostfixExpression : Expression
 		Value val = expr.interpret(sc);
 		switch(id)
 		{
-			case TOK_dot:
-				auto id = getMember!Identifier(1);
-				assert(id);
-				return val.interpretProperty(sc, id.ident);
-				
+			// TOK_dot handled by DotExpression
 			case TOK_lbracket:
 				if(members.length == 2)
 				{
@@ -763,6 +753,47 @@ class PostfixExpression : Expression
 				writeOperator(writer, id, Spaces.Right);
 				break;
 		}
+	}
+}
+
+class DotExpression : PostfixExpression
+{
+	mixin ForwardCtor!();
+
+	Identifier getIdentifier() { return getMember!Identifier(1); }
+
+	Node resolved;
+	
+	override Type calcType()
+	{
+		if(type)
+			return type;
+		
+		auto expr = getExpression();
+		auto etype = expr.calcType();
+		auto id = getMember!Identifier(1);
+		if(auto pt = cast(TypePointer)etype)
+			etype = pt.getType().calcType();
+		Scope s = etype.getScope();
+		resolved = s ? s.resolve(id.ident, id.span, false) : null;
+		if(resolved)
+			type = resolved.calcType();
+		else
+			type = semanticErrorType("cannot resolve type of property ", id.ident);
+		return type;
+	}
+
+	override Value interpret(Context sc)
+	{
+		Expression expr = getExpression();
+		Value val = expr.interpret(sc);
+
+		if(!type)
+			calcType();
+		if(!resolved)
+			return Singleton!ErrorValue.get(); // calcType already produced an error
+		auto id = getMember!Identifier(1);
+		return val.interpretProperty(sc, id.ident);
 	}
 }
 
@@ -1749,6 +1780,8 @@ class CharacterLiteralExpression : PrimaryExpression
 //    [Type Identifier]
 class TypeProperty : PrimaryExpression
 {
+	Node resolved;
+	
 	this() {} // default constructor needed for clone()
 
 	this(Token tok)
@@ -1768,9 +1801,26 @@ class TypeProperty : PrimaryExpression
 			writer(getType(), ".", getProperty());
 	}
 
+	override Type calcType()
+	{
+		if(type)
+			return type;
+		
+		resolved = getType().getScope().resolve(getProperty().ident, span);
+		if(resolved)
+			type = resolved.calcType();
+		else
+			type = semanticErrorType("cannot determine type of property ", getProperty().ident);
+		return type;
+	}
+
 	override Value interpret(Context sc)
 	{
-		return getType().interpretProperty(sc, getProperty().ident);
+		if(!type)
+			calcType();
+		if(!resolved)
+			return Singleton!ErrorValue.get(); // calcType already produced an error
+		return resolved.interpret(nullContext);
 	}
 }
 

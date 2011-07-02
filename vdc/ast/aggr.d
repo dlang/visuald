@@ -100,8 +100,10 @@ class Aggregate : Type
 		}
 		if(!initVal)
 		{
-			initVal = _initValue();
-			_initMethods();
+			if(mapName2Value.length == 0)
+				_initFields(0);
+			if(mapName2Method.length == 0 && constructors.length == 0)
+				_initMethods();
 		}
 	}
 
@@ -131,7 +133,6 @@ class Aggregate : Type
 			else
 				value = type.createValue(ctx, null);
 			debug value.ident = decl.ident;
-			mapName2Value[decl.ident] = sv.values.length;
 			sv.addValue(value);
 		});
 	}
@@ -179,7 +180,7 @@ class Aggregate : Type
 		if(aggr)
 			sv.outer = aggr.outer;
 		else if(!(attr & Attr_Static) && ctx)
-			sv.outer = ctx.getThis();
+			sv.outer = ctx;
 
 		if(initValue)
 			logInfo("creating new instance of %s with args ", ident, initValue.toStr());
@@ -196,7 +197,15 @@ class Aggregate : Type
 		}
 		return sv;
 	}
-	
+
+	int _initFields(int off)
+	{
+		getBody().iterateDeclarators(false, false, (Declarator decl) {
+			mapName2Value[decl.ident] = off++;
+		});
+		return off;
+	}
+		
 	void _initMethods()
 	{
 		getBody().iterateDeclarators(false, true, (Declarator decl) {
@@ -255,6 +264,12 @@ class Aggregate : Type
 		return res[0].interpret(nullContext);
 	}
 
+	override Type opCall(Type args)
+	{
+		// must be a constructor
+		return this;
+	}
+	
 	override Value interpret(Context sc)
 	{
 		if(!typeVal)

@@ -642,25 +642,27 @@ class PostfixExpression : Expression
 		{
 			case TOK_plusplus:
 			case TOK_minusminus:
-				break;
+				p.appendReplaceTopNode(new ast.PostfixExpression(p.tok));
+				return Accept;
 				
 			case TOK_dot:
 				p.pushState(&shiftDot);
-				break;
+				p.appendReplaceTopNode(new ast.DotExpression(p.tok));
+				return Accept;
 				
 			case TOK_lparen:
 				p.pushState(&shiftLParen);
-				break;
+				p.appendReplaceTopNode(new ast.PostfixExpression(p.tok));
+				return Accept;
 				
 			case TOK_lbracket:
 				p.pushState(&shiftLBracket);
-				break;
+				p.appendReplaceTopNode(new ast.PostfixExpression(p.tok));
+				return Accept;
 			
 			default:
 				return Forward;
 		}
-		p.appendReplaceTopNode(new ast.PostfixExpression(p.tok));
-		return Accept;
 	}
 
 	static Action shiftDot(Parser p)
@@ -668,7 +670,7 @@ class PostfixExpression : Expression
 		switch(p.tok.id)
 		{
 			case TOK_Identifier:
-				auto expr = p.topNode!(ast.PostfixExpression)();
+				auto expr = p.topNode!(ast.DotExpression)();
 				expr.id = TOK_dot;
 				p.pushState(&shiftIdentifierOrTemplateInstance);
 				return IdentifierOrTemplateInstance.enter(p);

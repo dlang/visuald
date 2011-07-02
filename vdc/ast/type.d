@@ -25,31 +25,64 @@ import std.conv;
 
 class BuiltinSymbol(T) : Symbol
 {
-	Type type;
-	T value;
+	Value value;
 	
-	this(Type t, T val)
+	this(T val)
 	{
-		type = t;
-		value = val;
+		value = Value.create(val);
 	}
 	
-	override Type calcType()
-	{
-		return type;
-	}
-
 	override void toD(CodeWriter writer)
 	{
 		assert(false);
 	}
+
+	override Type calcType()
+	{
+		return value.getType();
+	}
+	override Value interpret(Context sc)
+	{
+		return value;
+	}
 }
 
-Scope createTypeScope()
+Symbol newBuiltinSymbol(T)(T val)
 {
+	return new BuiltinSymbol!T(val);
+}
+
+class BuiltinType(T) : Node
+{
+}
+
+Scope[int] builtInScopes;
+
+Scope getBuiltinScope(int tokid)
+{
+	if(auto ps = tokid in builtInScopes)
+		return *ps;
+	
 	Scope sc = new Scope;
-	//sc.addSymbol("sizeof", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
-	//sc.addSymbol("mangleof", new BuiltinSymbol!string(getTypeString(), "mangleof"));
+
+	foreach(tok; BasicTypeTokens)
+	{
+		if (tokid == tok)
+		{
+			alias Token2BasicType!(tok) BT;
+			
+			sc.addSymbol("init",     newBuiltinSymbol(BT.init));
+			sc.addSymbol("sizeof",   newBuiltinSymbol(BT.sizeof));
+			sc.addSymbol("mangleof", newBuiltinSymbol(BT.mangleof));
+			sc.addSymbol("alignof",  newBuiltinSymbol(BT.alignof));
+			sc.addSymbol("stringof", newBuiltinSymbol(BT.stringof));
+			static if(__traits(compiles, BT.min))
+				sc.addSymbol("min", newBuiltinSymbol(BT.min));
+			static if(__traits(compiles, BT.max))
+				sc.addSymbol("min", newBuiltinSymbol(BT.max));
+		}
+	}
+	builtInScopes[tokid] = sc;
 	return sc;
 }
 
@@ -263,6 +296,13 @@ class BasicType : Type
 		typeinfo = getTypeInfo(id);
 	}
 
+	override Scope getScope()
+	{
+		if(!scop)
+			scop = getBuiltinScope(id);
+		return scop;
+	}
+	
 	enum Category { kInteger, kFloat, kComplex, kVoid }
 	
 	static Category category(int id)

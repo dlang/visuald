@@ -1210,7 +1210,7 @@ class DelegateValue : FunctionValue
 
 class AggrValue : TupleValue
 {
-	Value outer;
+	Context outer;
 	AggrContext context;
 	
 	abstract override Aggregate getType();
@@ -1230,14 +1230,14 @@ class AggrValue : TupleValue
 		if(Value v = type.getStaticProperty(prop))
 			return v;
 		if(!context)
-			context = new AggrContext(nullContext, this);
+			context = new AggrContext(outer, this);
 		if(Value v = super._interpretProperty(context, prop))
 			return v;
 
-		if(outer) // TODO: outer checked after super?
-			if(Value v = outer._interpretProperty(ctx, prop))
-				return v;
-
+		//if(outer) // TODO: outer checked after super?
+		//    if(Value v = outer._interpretProperty(ctx, prop))
+		//        return v;
+		//
 		return null;
 	}
 

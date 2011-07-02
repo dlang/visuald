@@ -518,7 +518,7 @@ class LanguageService : DisposingComObject,
 		return false;
 	}
 	
-	Source GetSource(IVsTextLines buffer)
+	Source GetSource(IVsTextLines buffer, bool create = true)
 	{
 		Source src;
 		for(int i = 0; i < mSources.length; i++)
@@ -527,7 +527,8 @@ class LanguageService : DisposingComObject,
 			if(src.mBuffer is buffer)
 				goto L_found;
 		}
-
+		if(!create)
+			return null;
 		src = new Source(buffer);
 		mSources ~= src;
 		src.AddRef();
@@ -535,6 +536,17 @@ class LanguageService : DisposingComObject,
 		return src;
 	}
 
+	Source GetSource(string filename)
+	{
+		for(int i = 0; i < mSources.length; i++)
+		{
+			string srcfile = mSources[i].GetFileName();
+			if(CompareFilenames(srcfile, filename) == 0)
+				return mSources[i];
+		}
+		return null;
+	}
+	
 	void setDebugger(IVsDebugger debugger)
 	{
 		if(mCookieDebuggerEvents && mDebugger)
@@ -870,6 +882,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	bool mVerifiedEncoding;
 	IVsHiddenTextSession mHiddenTextSession;
 	
+	static struct LineChange { int oldLine, newLine; }
+	LineChange[] mLineChanges;
+	
 	ast.Module mAST;
 	ParseError[] mParseErrors;
 	wstring mParseText;
@@ -958,11 +973,22 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 			mVerifiedEncoding = true;
 			setUtf8Encoding();
 		}
+		if(pTextLineChange.iOldEndLine != pTextLineChange.iNewEndLine)
+		{
+			LineChange chg = LineChange(pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine);
+			mLineChanges ~= chg;
+		}
+		
 		if(mOutlining)
 			CheckOutlining(pTextLineChange);
 		return mColorizer.OnLinesChanged(pTextLineChange.iStartLine, pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine, fLast != 0);
 	}
     
+	void ClearLineChanges()
+	{
+		mLineChanges = mLineChanges.init;
+	}
+	
 	override int OnChangeLineAttributes(in int iFirstLine, in int iLastLine)
 	{
 		return S_OK;
@@ -980,6 +1006,14 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		return S_OK;
 	}
 
+	int adjustLineNumberSinceLastBuild(int line)
+	{
+		foreach(ref chg; mLineChanges)
+			if(line >= chg.oldLine)
+				line += chg.newLine - chg.oldLine;
+		return line;
+	}
+	
 	// IVsTextMarkerClient //////////////////////////////////////
 	override HRESULT MarkerInvalidated()
 	{

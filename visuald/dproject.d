@@ -1116,7 +1116,7 @@ class Project : CVsHierarchy,
 	{
 		// use this as an callback of the project load being complete
 		if(mLastHierarchyEventSinkCookie == 0)
-			Package.GetLibInfos().updateDefinitions();
+			Package.scheduleUpdateLibrary();
 		
 		return super.AdviseHierarchyEvents(pEventSink, pdwCookie);
 	}
@@ -2564,7 +2564,19 @@ Error:
 		return hrRet;
 	}
 
+	///////////////////////////////////////////////////////////////////////
 
+	void ClearLineChanges()
+	{
+		auto langsvc = Package.GetLanguageService();
+		
+		searchNode(GetRootNode(), delegate (CHierNode n) {
+			string file = n.GetCanonicalName();
+			if(auto src = langsvc.GetSource(file))
+				src.ClearLineChanges();
+			return false;
+		});
+	}
 
 	//////////////////////////////////////////////////////////////
 

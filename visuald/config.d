@@ -1425,6 +1425,7 @@ class Config :	DisposingComObject,
 	string GetProjectPath() { return mProvider.mProject.GetFilename(); }
 	string GetProjectDir() { return getDirName(mProvider.mProject.GetFilename()); }
 	string GetProjectName() { return mProvider.mProject.GetProjectNode().GetName(); }
+	Project GetProject() { return mProvider.mProject; }
 
 	ProjectOptions GetProjectOptions() { return mProjectOptions; }
 

@@ -1905,7 +1905,7 @@ public: // IVsHierarchyEvent propagation
 		bool dir = std.file.isdir(strFullPathSource);
 		
 		// If target != source then we need to copy
-		if (CompareFilenamesForSort(strFullPathSource, strNewFileName) != 0)
+		if (CompareFilenames(strFullPathSource, strNewFileName) != 0)
 		{
 			bool fCopied = true;
 			bool bStatus = false;

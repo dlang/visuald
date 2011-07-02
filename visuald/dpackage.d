@@ -644,6 +644,12 @@ version(none)
 		return mHostSP;
 	}
 
+	static LanguageService GetLanguageService()
+	{
+		assert(s_instance);
+		return s_instance.mLangsvc;
+	}
+
 	static GlobalOptions GetGlobalOptions()
 	{
 		assert(s_instance);

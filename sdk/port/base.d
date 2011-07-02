@@ -160,7 +160,7 @@ struct _PROPSHEETPAGEA;
 struct _PROPSHEETPAGEW;
 
 // for commctrl.d
-struct _IMAGELIST;
+struct _IMAGELIST {}
 struct _TREEITEM;
 struct _DSA;
 struct _DPA;

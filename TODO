@@ -25,7 +25,6 @@ Project:
 - adding new item to project causes lots of System.Resources.MissingManifestResourceException
   which seems like a frozen UI (only first dialog open)
 - incremental builds?
-- single file compilation of library: rebuilds lib every time
 - DnD files/folders loses project file settings
 
 Language service:
@@ -34,7 +33,6 @@ Language service:
 - use spell-checker on completion?
 - case insensitive completion?
 - showScope: function/delegate literal not shown correctly, in/out/body
-- remember line changes since last build to adjust gotoDefinition line numbers
 - help on identifier through http://dpldocs.info/
 - collapse disabled version/debug blocks
 - disable parsing/outlining for large files?
@@ -42,6 +40,7 @@ Language service:
 - bad updates for version/debug highlighting while editing
 - replace token: empty dialog when opened without resizing
 - reindent after paste?
+- temporarily bad characters when deleting (colorizer?)
 
 Search:
 ---------------

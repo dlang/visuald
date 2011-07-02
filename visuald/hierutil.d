@@ -81,7 +81,7 @@ void addunique(T)(ref T[] arr, T[] vals)
 }
 
 ///////////////////////////////////////////////////////////////////////
-int CompareFilenamesForSort(string f1, string f2)
+int CompareFilenames(string f1, string f2)
 {
 	return icmp(f1, f2);
 /+
@@ -454,7 +454,7 @@ HRESULT FindFileInSolution(string filename, string srcfile, out string absPath)
 	return S_OK;
 }
 
-HRESULT OpenFileInSolution(string filename, int line, string srcfile = "")
+HRESULT OpenFileInSolution(string filename, int line, string srcfile = "", bool adjustLineToChanges = false)
 {
 	// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
 	IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
@@ -509,6 +509,10 @@ HRESULT OpenFileInSolution(string filename, int line, string srcfile = "")
 
 	if(line < 0)
 		return S_OK;
+	if(adjustLineToChanges)
+		if(auto src = Package.GetLanguageService().GetSource(textBuffer))
+			line = src.adjustLineNumberSinceLastBuild(line);
+	
 	return NavigateTo(textBuffer, line, 0, line, 0);
 }
 
@@ -522,9 +526,9 @@ HRESULT NavigateTo(IVsTextBuffer textBuffer, int line1, int col1, int line2, int
 	return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, line1, col1, line2, col2);
 }
 
-HRESULT OpenFileInSolutionWithScope(string fname, int line, string scop)
+HRESULT OpenFileInSolutionWithScope(string fname, int line, string scop, bool adjustLineToChanges = false)
 {
-	HRESULT hr = OpenFileInSolution(fname, line);
+	HRESULT hr = OpenFileInSolution(fname, line, "", adjustLineToChanges);
 	
 	if(hr != S_OK && !isabs(fname) && scop.length)
 	{
@@ -542,7 +546,7 @@ HRESULT OpenFileInSolutionWithScope(string fname, int line, string scop)
 		if(i < path.length)
 		{
 			fname = fname[i .. $];
-			hr = OpenFileInSolution(fname, line);
+			hr = OpenFileInSolution(fname, line, "", adjustLineToChanges);
 		}
 	}
 	return hr;
@@ -574,7 +578,8 @@ Config getProjectConfig(string file)
 
 	if(srpSolution && solutionBuildManager)
 	{
-		scope auto wfile = _toUTF16z(file);
+		bool isJSON = tolower(getExt(file)) == "json";
+		auto wfile = _toUTF16z(file);
 		IEnumHierarchies pEnum;
 		if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &g_projectFactoryCLSID, &pEnum) == S_OK)
 		{
@@ -583,15 +588,34 @@ Config getProjectConfig(string file)
 			while(pEnum.Next(1, &pHierarchy, null) == S_OK)
 			{
 				scope(exit) release(pHierarchy);
-				VSITEMID itemid;
-				if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
+				IVsProjectCfg activeCfg;
+				scope(exit) release(activeCfg);
+
+				if(isJSON)
 				{
-					IVsProjectCfg activeCfg;
 					if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) == S_OK)
 					{
-						scope(exit) release(activeCfg);
 						if(Config cfg = qi_cast!Config(activeCfg))
-							return cfg;
+						{
+							string[] files;
+							if(cfg.addJSONFiles(files))
+								foreach(f; files)
+									if(CompareFilenames(f, file) == 0)
+										return cfg;
+							release(cfg);
+						}
+					}
+				}
+				else
+				{
+					VSITEMID itemid;
+					if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
+					{
+						if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) == S_OK)
+						{
+							if(Config cfg = qi_cast!Config(activeCfg))
+								return cfg;
+						}
 					}
 				}
 			}

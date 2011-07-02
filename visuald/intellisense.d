@@ -800,6 +800,11 @@ class BrowseInfo
 		clear(mModules);
 		
 		createModules(info);
+		if(Config cfg = getProjectConfig(mFilename))
+		{
+			cfg.GetProject().ClearLineChanges();
+			release(cfg);
+		}
 		return true;
 	}
 

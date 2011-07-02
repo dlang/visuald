@@ -1563,7 +1563,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		if(file.length == 0)
 			file = GetInfoFilename(obj);
 
-		return OpenFileInSolution(file, line, modname);
+		return OpenFileInSolution(file, line, modname, true);
 	}
 	
 	override HRESULT GetContextMenu(in ULONG Index, 

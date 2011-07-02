@@ -311,3 +311,4 @@ unreleased Version 0.3.26
   * fixed regression in last version: single file compilation did not build any d files
   * single file compilation: avoid relinking every time
   * seperate compile and link: no longer trashes dependencies in link step
+  * goto definition, search symbol: now line number adjusted according to changes since last successful build

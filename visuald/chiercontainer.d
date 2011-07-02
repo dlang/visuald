@@ -348,7 +348,7 @@ protected:
 	{
 		string name1 = (pNode1.IsContainer() ? "C" : "F") ~ pNode1.GetName();
 		string name2 = (pNode2.IsContainer() ? "C" : "F") ~ pNode2.GetName();
-		return CompareFilenamesForSort(name1, name2);
+		return CompareFilenames(name1, name2);
 	}
 	
 	// Used by sorted lists.

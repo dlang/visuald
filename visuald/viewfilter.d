@@ -1008,7 +1008,7 @@ else
 		}
 
 		string file = mCodeWinMgr.mSource.GetFileName();
-		HRESULT hr = OpenFileInSolution(defs[0].filename, defs[0].line, file);
+		HRESULT hr = OpenFileInSolution(defs[0].filename, defs[0].line, file, true);
 		if(hr != S_OK)
 			showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", defs[0].filename, defs[0].line, word));
 
