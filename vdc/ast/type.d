@@ -23,7 +23,7 @@ import vdc.ast.decl;
 
 import std.conv;
 
-class BuiltinSymbol(T) : Symbol
+class BuiltinProperty(T) : Symbol
 {
 	Value value;
 	
@@ -47,9 +47,9 @@ class BuiltinSymbol(T) : Symbol
 	}
 }
 
-Symbol newBuiltinSymbol(T)(T val)
+Symbol newBuiltinProperty(T)(T val)
 {
-	return new BuiltinSymbol!T(val);
+	return new BuiltinProperty!T(val);
 }
 
 class BuiltinType(T) : Node
@@ -58,7 +58,7 @@ class BuiltinType(T) : Node
 
 Scope[int] builtInScopes;
 
-Scope getBuiltinScope(int tokid)
+Scope getBuiltinBasicTypeScope(int tokid)
 {
 	if(auto ps = tokid in builtInScopes)
 		return *ps;
@@ -71,15 +71,15 @@ Scope getBuiltinScope(int tokid)
 		{
 			alias Token2BasicType!(tok) BT;
 			
-			sc.addSymbol("init",     newBuiltinSymbol(BT.init));
-			sc.addSymbol("sizeof",   newBuiltinSymbol(BT.sizeof));
-			sc.addSymbol("mangleof", newBuiltinSymbol(BT.mangleof));
-			sc.addSymbol("alignof",  newBuiltinSymbol(BT.alignof));
-			sc.addSymbol("stringof", newBuiltinSymbol(BT.stringof));
+			sc.addSymbol("init",     newBuiltinProperty(BT.init));
+			sc.addSymbol("sizeof",   newBuiltinProperty(BT.sizeof));
+			sc.addSymbol("mangleof", newBuiltinProperty(BT.mangleof));
+			sc.addSymbol("alignof",  newBuiltinProperty(BT.alignof));
+			sc.addSymbol("stringof", newBuiltinProperty(BT.stringof));
 			static if(__traits(compiles, BT.min))
-				sc.addSymbol("min", newBuiltinSymbol(BT.min));
+				sc.addSymbol("min", newBuiltinProperty(BT.min));
 			static if(__traits(compiles, BT.max))
-				sc.addSymbol("min", newBuiltinSymbol(BT.max));
+				sc.addSymbol("max", newBuiltinProperty(BT.max));
 		}
 	}
 	builtInScopes[tokid] = sc;
@@ -139,13 +139,23 @@ class Type : Node
 		return new TypeValue(this);
 	}
 	
-	final Value interpretProperty(Context ctx, string prop)
+	Value getProperty(Value sv, string ident)
+	{
+		return null;
+	}
+	
+	Value getProperty(Value sv, Declarator decl)
+	{
+		return null;
+	}
+	
+	@disable final Value interpretProperty(Context ctx, string prop)
 	{
 		if(Value v = _interpretProperty(ctx, prop))
 			return v;
 		return semanticErrorValue("cannot calculate property ", prop, " of type ", this);
 	}
-	Value _interpretProperty(Context ctx, string prop)
+	@disable Value _interpretProperty(Context ctx, string prop)
 	{
 		return null;
 	}
@@ -299,7 +309,7 @@ class BasicType : Type
 	override Scope getScope()
 	{
 		if(!scop)
-			scop = getBuiltinScope(id);
+			scop = getBuiltinBasicTypeScope(id);
 		return scop;
 	}
 	
@@ -335,7 +345,7 @@ class BasicType : Type
 		}
 	}
 	
-	override Value _interpretProperty(Context ctx, string prop)
+	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
@@ -635,6 +645,34 @@ class TypePointer : TypeIndirection
 	}
 }
 
+class LengthProperty : Symbol
+{
+	Type type;
+	
+	override Type calcType()
+	{
+		if(!type)
+			type = BasicType.createType(TOK_uint);
+		return type;
+	}
+		
+	override Value interpret(Context sc)
+	{
+		if(auto ac = cast(AggrContext)sc)
+		{
+			if(auto dav = cast(DynArrayValue) ac.instance)
+				return new SetLengthValue(dav);
+			return semanticErrorValue("cannot calulate length of ", ac.instance);
+		}
+		return semanticErrorValue("no context to length of ", sc);
+	}
+
+	override void toD(CodeWriter writer)
+	{
+		writer("length");
+	}
+}
+
 //TypeDynamicArray:
 //    [Type]
 class TypeDynamicArray : TypeIndirection
@@ -676,18 +714,15 @@ class TypeDynamicArray : TypeIndirection
 		writer(getMember(0), "[]");
 	}
 
-	/+
 	override Scope getScope()
 	{
 		if(!scop)
 		{
-			scop = createTypeScope();
-			//scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
-			scop.parent = super.getScope();
+			scop = new Scope;
+			scop.addSymbol("length", new LengthProperty);
 		}
 		return scop;
 	}
-	+/
 
 	override Value createValue(Context ctx, Value initValue)
 	{
@@ -705,7 +740,7 @@ class TypeDynamicArray : TypeIndirection
 		return val;
 	}
 	
-	Value deepCopy(Context sc, Value initValue)
+/+	Value deepCopy(Context sc, Value initValue)
 	{
 		auto val = new DynArrayValue(this);
 		if(int dim = initValue ? initValue.interpretProperty(sc, "length").toInt() : 0)
@@ -724,6 +759,7 @@ class TypeDynamicArray : TypeIndirection
 		}
 		return val;
 	}
++/
 }
 
 //SuffixDynamicArray:
@@ -756,13 +792,25 @@ class TypeStaticArray : TypeIndirection
 		typeinfo = typeinfo_arr;
 	}
 
+	override Scope getScope()
+	{
+		if(!scop)
+		{
+			Scope sc = parent.getScope();
+			scop = new Scope;
+			size_t len = getDimension().interpret(sc.ctx).toInt();
+			scop.addSymbol("length", newBuiltinProperty(len));
+		}
+		return scop;
+	}
+
 	/+
 	override Scope getScope()
 	{
 		if(!scop)
 		{
 			scop = createTypeScope();
-			//scop.addSymbol("length", new BuiltinSymbol!uint(BasicType.getType(TOK_uint), 0));
+			//scop.addSymbol("length", new BuiltinProperty!uint(BasicType.getType(TOK_uint), 0));
 			scop.parent = super.getScope();
 		}
 		return scop;
@@ -954,6 +1002,11 @@ class TypeFunction : Type
 		else
 			fv.functype = this;
 		return fv;
+	}
+
+	override Type opCall(Type args)
+	{
+		return getReturnType().calcType();
 	}
 	
 	override void toD(CodeWriter writer)

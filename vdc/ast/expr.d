@@ -329,6 +329,36 @@ class AndExpression : BinaryExpression
 class CmpExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
+
+	void _checkIdentityLiterals()
+	{
+		if(id == TOK_is || id == TOK_notidentity)
+		{
+			if(auto litL = cast(IntegerLiteralExpression) getLeftExpr())
+				litL.forceLargerType(getRightExpr().calcType());
+			if(auto litR = cast(IntegerLiteralExpression) getRightExpr())
+				litR.forceLargerType(getLeftExpr().calcType());
+		}
+	}
+
+	override Type calcType()
+	{
+		if(!type)
+		{
+			_checkIdentityLiterals();
+			Type typeL = getLeftExpr().calcType();
+			Type typeR = getRightExpr().calcType();
+			return semanticErrorType(this, "calcType on binary not implemented");
+		}
+		return type;
+	}
+	
+	override void _semantic(Scope sc)
+	{
+		_checkIdentityLiterals();
+		getLeftExpr().semantic(sc);
+		getRightExpr().semantic(sc);
+	}
 }
 
 class ShiftExpression : BinaryExpression
@@ -463,7 +493,7 @@ class NewExpression : Expression
 	override Value interpret(Context sc)
 	{
 		Value initVal;
-		if(auto args = getNewArguments())
+		if(auto args = getCtorArguments())
 			initVal = args.interpret(sc);
 		else
 			initVal = new TupleValue; // empty args force new instance
@@ -793,7 +823,8 @@ class DotExpression : PostfixExpression
 		if(!resolved)
 			return Singleton!ErrorValue.get(); // calcType already produced an error
 		auto id = getMember!Identifier(1);
-		return val.interpretProperty(sc, id.ident);
+		Context ctx = new AggrContext(sc, val);
+		return resolved.interpret(ctx);
 	}
 }
 
@@ -1155,7 +1186,8 @@ class AssertExpression : Expression
 
 	override Value interpret(Context sc)
 	{
-		auto cond = getExpression().interpret(sc);
+		auto actx = new AssertContext(sc);
+		auto cond = getExpression().interpret(actx);
 		if(!cond.toBool())
 		{
 			string msg;
@@ -1163,6 +1195,8 @@ class AssertExpression : Expression
 				msg = m.interpret(sc).toMixin();
 			else
 				msg = "assertion " ~ writeD(getExpression()) ~ " failed";
+			foreach(id, val; actx.identVal)
+				msg ~= "\n\t" ~ writeD(id) ~ " = " ~ val.toStr();
 			return semanticErrorValue(msg);
 		}
 		return theVoidValue;
@@ -1428,7 +1462,10 @@ class IdentifierExpression : PrimaryExpression
 			semantic(getScope());
 		if(!resolved)
 			return semanticErrorValue("unresolved identifer ", writeD(this));
-		return resolved.interpret(sc);
+		Value v = resolved.interpret(sc);
+		if(auto actx = cast(AssertContext)sc)
+			actx.identVal[this] = v;
+		return v;
 	}
 }
 
@@ -1436,9 +1473,12 @@ class IntegerLiteralExpression : PrimaryExpression
 {
 	string txt;
 	
-	ulong value;
+	ulong value; // literals are never negative by themselves
 	bool unsigned;
 	bool lng;
+	
+	bool forceInt; // set in semantic pass
+	bool forceShort;
 	
 	this() {} // default constructor needed for clone()
 
@@ -1471,6 +1511,7 @@ class IntegerLiteralExpression : PrimaryExpression
 				radix = 2;
 			else
 				radix = 8;
+			unsigned = true;
 		}
 		val = removechars(val, "_");
 		value = parse!ulong(val, radix);
@@ -1502,23 +1543,42 @@ class IntegerLiteralExpression : PrimaryExpression
 	{
 		writer(txt);
 	}
+
+	void forceLargerType(Type t)
+	{
+		if(t.id == TOK_int || t.id == TOK_uint)
+			forceInt = true;
+		if(t.id == TOK_short || t.id == TOK_ushort)
+			forceShort = true;
+	}
 	
 	override void _semantic(Scope sc)
 	{
 		if(type)
 			return;
-		
-		if(lng)
+
+		long lim = unsigned ? 0x1_0000_0000 : 0x8000_0000;
+		if(lng || value >= lim)
 			if(unsigned)
 				type = new BasicType(TOK_ulong, span);
 			else
 				type = new BasicType(TOK_long, span);
-		else
+		else if(true || forceInt || value >= (lim >> 16))
 			if(unsigned)
 				type = new BasicType(TOK_uint, span);
 			else
 				type = new BasicType(TOK_int, span);
-		
+		else if(forceShort || value >= (lim >= 24))
+			if(unsigned)
+				type = new BasicType(TOK_ushort, span);
+			else
+				type = new BasicType(TOK_short, span);
+		else
+			if(unsigned)
+				type = new BasicType(TOK_ubyte, span);
+			else
+				type = new BasicType(TOK_byte, span);
+
 		type.semantic(sc);
 	}
 	
@@ -1529,12 +1589,12 @@ class IntegerLiteralExpression : PrimaryExpression
 				return Value.create(cast(ulong)value);
 			else
 				return Value.create(cast(long)value);
-		else if(value >= 0x8000)
+		else if(true || forceInt || value >= 0x8000)
 			if(unsigned)
 				return Value.create(cast(uint)value);
 			else
 				return Value.create(cast(int)value);
-		else if(value >= 0x80)
+		else if(forceShort || value >= 0x80)
 			if(unsigned)
 				return Value.create(cast(ushort)value);
 			else

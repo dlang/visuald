@@ -285,13 +285,14 @@ class Initializer : Expression
 
 //Declarator:
 //    Identifier [DeclaratorSuffixes...]
-class Declarator : Identifier
+class Declarator : Identifier, CallableNode
 {
 	mixin ForwardCtorTok!();
 
 	Type type;
 	Value value;
 	Node aliasTo;
+	ParameterList parameterList;
 	bool isAlias;
 	bool isRef;
 	bool needsContext;
@@ -469,6 +470,7 @@ class Declarator : Identifier
 				tf.addMember(pl);
 				tf.scop = getScope(); // not fully added to node tree
 				t = tf;
+				parameterList = pl;
 			}
 			else if(auto saa = cast(SuffixAssocArray) member)
 			{
@@ -512,6 +514,11 @@ class Declarator : Identifier
 			if(auto decl = cast(Decl) p)
 			{
 				type = decl.getType();
+				if(cast(AutoType)type)
+				{
+					if(auto expr = getInitializer())
+						type = expr.calcType();
+				}
 				if(type)
 				{
 					type = applySuffixes(type);
@@ -584,20 +591,30 @@ class Declarator : Identifier
 		debug value.ident = ident;
 		return value;
 	}
+
+	override ParameterList getParameterList() 
+	{
+		calcType();
+		return parameterList;
+	}
 	
-	Value interpretCall(Context sc)
+	override FunctionBody getFunctionBody() 
+	{ 
+		for(Node p = parent; p; p = p.parent)
+			if(auto decl = cast(Decl) p)
+				if(auto fbody = decl.getFunctionBody())
+					return fbody;
+		return null;
+	}
+
+	override Value interpretCall(Context sc)
 	{
 		logInfo("calling %s", ident);
 		
-		for(Node p = parent; p; p = p.parent)
-			if(auto decl = cast(Decl) p)
-			{
-				if(auto fbody = decl.getFunctionBody())
-					return fbody.interpret(sc);
-				return semanticErrorValue(ident, " is not a interpretable function");
-			}
+		if(auto fbody = getFunctionBody())
+			return fbody.interpret(sc);
 
-		return semanticErrorValue("cannot interpret external function ", ident);
+		return semanticErrorValue(ident, " is not a interpretable function");
 	}
 }
 

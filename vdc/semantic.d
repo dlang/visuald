@@ -140,9 +140,9 @@ class Context
 
 class AggrContext : Context
 {
-	AggrValue instance;
+	Value instance;
 
-	this(Context p, AggrValue inst)
+	this(Context p, Value inst)
 	{
 		super(p);
 		instance = inst;
@@ -160,11 +160,22 @@ class AggrContext : Context
 		if(auto pn = n in vars)
 			return *pn;
 		if(auto decl = cast(Declarator) n)
-			if(Value v = instance._interpretProperty(this, decl.ident))
+			//if(Value v = instance._interpretProperty(this, decl.ident))
+			if(Value v = instance.getType().getProperty(instance, decl))
 				return v;
 		if(parent)
 			return parent.getValue(n);
 		return null;
+	}
+}
+
+class AssertContext : Context
+{
+	Value[Node] identVal;
+
+	this(Context p)
+	{
+		super(p);
 	}
 }
 
@@ -292,6 +303,7 @@ class Project : Node
 		options.importDirs ~= r"c:\l\dmd-2.053\src\phobos\";
 		
 		options.importDirs ~= r"c:\tmp\d\runnable\";
+		options.importDirs ~= r"c:\tmp\d\runnable\imports\";
 		
 		globalContext = new Context(null);
 		threadContext = new Context(null);
@@ -466,6 +478,16 @@ class Project : Node
 			return -2;
 		}
 		TupleValue args = new TupleValue;
+		if(auto cn = cast(CallableNode)funcs[0])
+			if(auto pl = cn.getParameterList())
+				if(pl.members.length > 0)
+				{
+					auto tda = new TypeDynamicArray;
+					tda.addMember(createTypeString());
+					auto dav = new DynArrayValue(tda);
+					args.addValue(dav);
+				}
+		
 		try
 		{
 			Value v = funcs[0].interpret(nullContext).opCall(nullContext, args);

@@ -113,8 +113,12 @@ class Aggregate : Type
 			sc.addSymbol(ident, this);
 	}
 
+	int mapDeclOffset;
+	size_t[Declarator] mapDecl2Value;
 	size_t[string] mapName2Value;
 	Declarator[string] mapName2Method;
+	bool[Declarator] isMethod;
+	
 	Constructor[] constructors;
 	TupleValue initVal;
 	TypeValue typeVal;
@@ -144,15 +148,18 @@ class Aggregate : Type
 			initVal = _initValue();
 			_initMethods();
 		}
+		auto inst = static_cast!AggrValue(thisctx.instance);
 		
-		getBody().iterateDeclarators(false, false, (Declarator decl) {
-			int n = thisctx.instance.values.length;
-			Value v = n < initValues.length ? initValues[n] : initVal.values[n];
+		mapDeclOffset = inst.values.length;
+		inst.setValuesLength(mapDeclOffset + mapDecl2Value.length);
+		foreach(decl, idx; mapDecl2Value)
+		{
+			Value v = mapDeclOffset + idx < initValues.length ? initValues[mapDeclOffset + idx] : initVal.values[idx];
 			Type t = decl.calcType();
 			v = t.createValue(thisctx, v);
 			debug v.ident = decl.ident;
-			thisctx.instance.addValue(v);
-		});
+			inst.values[mapDeclOffset + idx] = v;
+		}
 	}
 	
 	ValueType _createValue(ValueType, Args...)(Context ctx, Value initValue, Args a)
@@ -193,7 +200,7 @@ class Aggregate : Type
 
 		if(constructors.length > 0)
 		{
-			constructors[0].interpretCall(thisctx);
+			doCall(constructors[0], thisctx, constructors[0].getParameterList(), initValue);
 		}
 		return sv;
 	}
@@ -201,6 +208,7 @@ class Aggregate : Type
 	int _initFields(int off)
 	{
 		getBody().iterateDeclarators(false, false, (Declarator decl) {
+			mapDecl2Value[decl] = off;
 			mapName2Value[decl.ident] = off++;
 		});
 		return off;
@@ -209,6 +217,7 @@ class Aggregate : Type
 	void _initMethods()
 	{
 		getBody().iterateDeclarators(false, true, (Declarator decl) {
+			isMethod[decl] = true;
 			mapName2Method[decl.ident] = decl;
 		});
 		
@@ -217,14 +226,49 @@ class Aggregate : Type
 		});
 	}
 	
-	Value getProperty(Context ctx, AggrValue sv, string ident)
+	override Value getProperty(Value sv, string prop)
 	{
-		if(auto pidx = ident in mapName2Value)
-			return sv.values[*pidx];
-		if(auto pdecl = ident in mapName2Method)
+		if(1)
+		assert(false);
+		else {
+		if(auto rv = cast(ReferenceValue) sv)
+			sv = rv.instance;
+		AggrValue av = static_cast!AggrValue(sv);
+		if(auto pidx = prop in mapName2Value)
+			return av.values[*pidx];
+		if(auto pdecl = prop in mapName2Method)
 		{
 			auto func = pdecl.calcType();
-			auto cv = new AggrContext(nullContext, sv);
+			auto cv = new AggrContext(nullContext, av);
+			cv.scop = scop;
+			Value dgv = func.createValue(cv, null);
+			return dgv;
+		}
+		return null;
+		}
+	}
+	
+	override Value getProperty(Value sv, Declarator decl)
+	{
+		if(auto rv = cast(ReferenceValue) sv)
+			sv = rv.instance;
+		AggrValue av = static_cast!AggrValue(sv);
+		if(Value v = _getProperty(av, decl))
+			return v;
+		if(av.outer)
+			return av.outer.getValue(decl);
+		return null;
+	}
+	
+	Value _getProperty(AggrValue av, Declarator decl)
+	{
+		if(auto pidx = decl in mapDecl2Value)
+			return av.values[*pidx + mapDeclOffset];
+		if(decl in isMethod)
+		{
+			auto odecl = findOverride(av, decl);
+			auto func = odecl.calcType();
+			auto cv = new AggrContext(nullContext, av);
 			cv.scop = scop;
 			Value dgv = func.createValue(cv, null);
 			return dgv;
@@ -232,7 +276,7 @@ class Aggregate : Type
 		return null;
 	}
 	
-	override Value _interpretProperty(Context ctx, string prop)
+	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		if(Value v = getStaticProperty(prop))
 			return v;
@@ -242,23 +286,23 @@ class Aggregate : Type
 			if(auto rv = cast(ReferenceValue) vt)
 				av = rv.instance;
 		if(av)
-			if(Value v = getProperty(ctx, av, prop))
+			if(Value v = getProperty(av, prop))
 				return v;
 		return super._interpretProperty(ctx, prop);
 	}
 
-	Value getStaticProperty(string ident)
+	Value getStaticProperty(string prop)
 	{
 		if(!scop)
 			semantic(getScope());
 		if(!scop)
-			return semanticErrorValue(this, ": no scope set in lookup of ", ident);
+			return semanticErrorValue(this, ": no scope set in lookup of ", prop);
 	
-		Node[] res = scop.search(ident, false, true);
+		Node[] res = scop.search(prop, false, true);
 		if(res.length == 0)
 			return null;
 		if(res.length > 1)
-			semanticError("ambiguous identifier " ~ ident);
+			semanticError("ambiguous identifier " ~ prop);
 		if(!(res[0].attr & Attr_Static))
 			return null; // delay into getProperty
 		return res[0].interpret(nullContext);
@@ -275,6 +319,17 @@ class Aggregate : Type
 		if(!typeVal)
 			typeVal = new TypeValue(this);
 		return typeVal;
+	}
+
+	final Declarator findOverride(AggrValue av, Declarator decl)
+	{
+		Aggregate clss = av.getType();
+		return clss._findOverride(av, decl);
+	}
+	
+	Declarator _findOverride(AggrValue av, Declarator decl)
+	{
+		return decl;
 	}
 }
 
@@ -401,7 +456,7 @@ class InheritingAggregate : Aggregate
 		return false;
 	}
 	
-	override Value _interpretProperty(Context ctx, string prop)
+	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		foreach(bc; baseClasses)
 			if(Value v = bc._interpretProperty(ctx, prop))
@@ -423,6 +478,37 @@ class InheritingAggregate : Aggregate
 				writer(", ", bc);
 		}
 		bodyToD(writer);
+	}
+
+	override void _initValues(AggrContext thisctx, Value[] initValues)
+	{
+		if(baseClasses.length > 0)
+			if(auto bc = cast(Class)baseClasses[0].getClass())
+				bc._initValues(thisctx, initValues);
+		super._initValues(thisctx, initValues);
+	}
+	
+	override Value _getProperty(AggrValue av, Declarator decl)
+	{
+		if(Value v = super._getProperty(av, decl))
+			return v;
+		if(baseClasses.length > 0)
+			if(auto bc = baseClasses[0].getClass())
+				if(Value v = bc._getProperty(av, decl))
+					return v;
+		return null;
+	}
+	
+	override Declarator _findOverride(AggrValue av, Declarator decl)
+	{
+		if(auto pdecl = decl.ident in mapName2Method)
+			return *pdecl;
+
+		if(baseClasses.length > 0)
+			if(auto bc = baseClasses[0].getClass())
+				return bc._findOverride(av, decl);
+		
+		return decl;
 	}
 }
 
@@ -580,7 +666,7 @@ class BaseClass : Node
 		writer("public ", getMember(0)); // protection diffent from C
 	}
 
-	Value _interpretProperty(Context ctx, string prop)
+	@disable Value _interpretProperty(Context ctx, string prop)
 	{
 		if(auto clss = getClass())
 			return clss._interpretProperty(ctx, prop);
@@ -640,14 +726,14 @@ class StructBody : Node
 			bool isStatic = (decl.attr & Attr_Static) != 0;
 			if(isStatic != wantStatics)
 				continue;
-			bool isFunc = decl.getFunctionBody() !is null;
-			if(isFunc != wantFuncs)
-				continue; // nothing to do for aliases and local functions
 
 			auto decls = decl.getDeclarators();
 			for(int n = 0; n < decls.members.length; n++)
 			{
 				auto d = decls.getDeclarator(n);
+				bool isFunc = d.getParameterList() !is null;
+				if(isFunc != wantFuncs)
+					continue; // nothing to do for aliases and local functions
 				dg(d);
 			}
 		}
@@ -683,23 +769,24 @@ class StructBody : Node
 //Constructor:
 //    [TemplateParameters_opt Parameters_opt Constraint_opt FunctionBody]
 //    if no parameters: this ( this )
-class Constructor : Node
+class Constructor : Node, CallableNode
 {
 	mixin ForwardCtor!();
 	
 	override bool isTemplate() const { return members.length > 2; }
 	
 	TemplateParameterList getTemplateParameters() { return isTemplate() ? getMember!TemplateParameterList(0) : null; }
-	ParameterList getParameters() { return members.length > 1 ? getMember!ParameterList(isTemplate() ? 1 : 0) : null; }
 	Constraint getConstraint() { return isTemplate() && members.length > 3 ? getMember!Constraint(2) : null; }
-	FunctionBody getFunctionBody() { return getMember!FunctionBody(members.length - 1); }
+	
+	override ParameterList getParameterList() { return members.length > 1 ? getMember!ParameterList(isTemplate() ? 1 : 0) : null; }
+	override FunctionBody getFunctionBody() { return getMember!FunctionBody(members.length - 1); }
 	
 	override void toD(CodeWriter writer)
 	{
 		writer("this");
 		if(auto tpl = getTemplateParameters())
 			writer(tpl);
-		if(auto pl = getParameters())
+		if(auto pl = getParameterList())
 			writer(pl);
 		else
 			writer("(this)");
@@ -728,7 +815,7 @@ class Constructor : Node
 		}
 	}
 
-	Value interpretCall(Context sc)
+	override Value interpretCall(Context sc)
 	{
 		logInfo("calling ctor");
 		

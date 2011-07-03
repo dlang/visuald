@@ -15,6 +15,8 @@ import vdc.ast.expr;
 import vdc.ast.type;
 import vdc.ast.mod;
 import vdc.ast.tmpl;
+import vdc.ast.decl;
+import vdc.ast.misc;
 import vdc.logger;
 import vdc.interpret;
 
@@ -443,3 +445,10 @@ class Node
 	}
 }
 
+interface CallableNode
+{
+	Value interpretCall(Context sc);
+	
+	ParameterList getParameterList();
+	FunctionBody getFunctionBody();
+}

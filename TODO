@@ -41,6 +41,7 @@ Language service:
 - replace token: empty dialog when opened without resizing
 - reindent after paste?
 - temporarily bad characters when deleting (colorizer?)
+- when hovering identifier with preceding dot, include identifier before dot in debugger tool tip
 
 Search:
 ---------------

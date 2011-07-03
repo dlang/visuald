@@ -185,14 +185,14 @@ class Value
 		return semanticErrorValue("cannot dereference a ", this);
 	}
 
-	final Value interpretProperty(Context ctx, string prop)
+	@disable final Value interpretProperty(Context ctx, string prop)
 	{
 		if(Value v = _interpretProperty(ctx, prop))
 			return v;
 		return semanticErrorValue("cannot calculate property ", prop, " of value ", toStr());
 	}
 
-	Value _interpretProperty(Context ctx, string prop)
+	@disable Value _interpretProperty(Context ctx, string prop)
 	{
 		return getType()._interpretProperty(ctx, prop);
 	}
@@ -328,14 +328,14 @@ class Value
 				{
 					static if (__traits(compiles, { 
 						iv2.ValType y;
-						mixin("auto z = (*pval) " ~ op ~ "y;");
+						mixin("auto z = (*pval) " ~ op ~ " y;");
 					}))
 					{
 						iv2.ValType v2 = *(cast(iv2) v).pval;
 						static if(op == "/" || op == "%")
 							if(v2 == 0)
 								return semanticErrorValue("division by zero");
-						mixin("auto z = (*pval) " ~ op ~ "v2;");
+						mixin("auto z = (*pval) " ~ op ~ " v2;");
 						return create(z);
 					}
 					else
@@ -357,21 +357,25 @@ class Value
 			foreach(iv2; Types)
 			{
 				if(ti is typeid(iv2))
+				{
 					static if (__traits(compiles, {
 						iv2.ValType y;
-						mixin("*pval " ~ op ~ "y;");
+						mixin("*pval " ~ op ~ " y;");
 					}))
 					{
 						iv2.ValType v2 = *(cast(iv2) v).pval;
 						static if(op == "/=" || op == "%=")
 							if(v2 == 0)
 								return semanticErrorValue("division by zero");
-						mixin("*pval " ~ op ~ "v2;");
+						mixin("*pval " ~ op ~ " v2;");
 
 						debug logInfo("value %s changed by " ~ op ~ " to %s", ident, toStr());
 						debug sval = toStr();
 						return this;
 					}
+					else
+						break;
+				}
 			}
 			return semanticErrorValue("cannot assign ", op, " a ", v, " to a ", this);
 		}
@@ -470,6 +474,7 @@ class ValueT(T) : Value
 	}
 	
 	mixin(genMixinBinOpAll());
+	mixin mixinBinaryOp!("is", BasicTypeValues) bin_is;
 	
 	static string genBinOpCases()
 	{
@@ -487,10 +492,11 @@ class ValueT(T) : Value
 		switch(tokid)
 		{
 			mixin(genBinOpCases());
+			case TOK_is: return bin_is.binOp(v);
 			default: break;
 		}
 		
-		return semanticErrorValue("cannot calculate ", tokenString(tokid), " on a ", this, " and a ", v);
+		return semanticErrorValue("cannot calculate '", tokenString(tokid), "' on a ", this, " and a ", v);
 	}
 
 	////////////////////////////////////////////////////////////
@@ -505,7 +511,7 @@ class ValueT(T) : Value
 			}
 			else
 			{
-				return semanticErrorValue("cannot calculate ", op, " on a ", this);
+				return semanticErrorValue("cannot calculate '", op, "' on a ", this);
 			}
 		}
 	}
@@ -539,7 +545,7 @@ class ValueT(T) : Value
 			mixin(genUnOpCases());
 			default: break;
 		}
-		return semanticErrorValue("cannot calculate ", tokenString(tokid), " on a ", this);
+		return semanticErrorValue("cannot calculate '", tokenString(tokid), "' on a ", this);
 	}
 
 }
@@ -691,7 +697,12 @@ class DynArrayValue : TupleValue
 		return _toStr("[", "]");
 	}
 	
-	override Value _interpretProperty(Context ctx, string prop)
+	override Type getType()
+	{
+		return type;
+	}
+	
+	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
@@ -905,7 +916,7 @@ class PointerValue : Value
 		}
 	}
 
-	override Value _interpretProperty(Context ctx, string prop)
+	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
@@ -995,6 +1006,10 @@ public:
 		_values ~= v;
 		debug sval = toStr();
 	}
+	void setValuesLength(size_t len)
+	{
+		_values.length = len;
+	}
 	
 	override string toStr()
 	{
@@ -1053,7 +1068,7 @@ public:
 		}
 	}
 
-	override Value _interpretProperty(Context ctx, string prop)
+	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
@@ -1063,6 +1078,66 @@ public:
 				return super._interpretProperty(ctx, prop);
 		}
 	}
+}
+
+Value doCall(CallableNode funcNode, Context sc, ParameterList params, Value vargs)
+{
+	if(!funcNode)
+		return semanticErrorValue("calling null reference");
+
+	auto ctx = new Context(sc);
+
+	auto args = static_cast!TupleValue(vargs);
+	int numparams = params.members.length;
+	if(params.anonymous_varargs)
+	{
+		if(args.values.length < numparams)
+			return semanticErrorValue("too few arguments");
+		// TODO: add _arguments and _argptr variables
+	}
+	else if(params.varargs)
+	{
+		if(args.values.length < numparams - 1)
+			return semanticErrorValue("too few arguments");
+		numparams--;
+	}
+	else if(args.values.length != numparams)
+		return semanticErrorValue("incorrect number of arguments");
+
+	for(int p = 0; p < numparams; p++)
+	{
+		if(auto decl = params.getParameter(p).getParameterDeclarator().getDeclarator())
+		{
+			Value v = args.values[p];
+			Type t = v.getType();
+			if(!decl.isRef)
+				v = decl.calcType().createValue(sc, v); // if not ref, always create copy
+			else if(!t.compare(decl.calcType()))
+				return semanticErrorValue("cannot create reference of incompatible type", v.getType());
+			ctx.setValue(decl, v);
+		}
+	}
+	if(params.varargs)
+	{
+		// TODO: pack remaining arguments into array
+		auto vdecl = params.getParameter(numparams).getParameterDeclarator().getDeclarator();
+		Value arr = vdecl.calcType().createValue(ctx, null);
+		if(auto darr = cast(DynArrayValue) arr)
+		{
+			for(int n = numparams; n < args.values.length; n++)
+			{
+				Value v = args.values[n];
+				Type t = v.getType();
+				v = t.createValue(sc, v); // if not ref, always create copy
+				darr.addValue(v);
+			}
+			ctx.setValue(vdecl, darr);
+		}
+		else
+			return semanticErrorValue("array type expected for variable argument parameter");
+	}
+	Value retVal = funcNode.interpretCall(ctx);
+	return retVal ? retVal : theVoidValue;
 }
 
 class FunctionValue : Value
@@ -1079,68 +1154,9 @@ class FunctionValue : Value
 		return "&" ~ functype.funcDecl.ident;
 	}
 
-	Value doCall(Context sc, Value vargs)
-	{
-		if(!functype.funcDecl)
-			return semanticErrorValue("calling null reference");
-
-		auto ctx = new Context(sc);
-
-		auto args = static_cast!TupleValue(vargs);
-		ParameterList params = functype.getParameters();
-		int numparams = params.members.length;
-		if(params.anonymous_varargs)
-		{
-			if(args.values.length < numparams)
-				return semanticErrorValue("too few arguments");
-			// TODO: add _arguments and _argptr variables
-		}
-		else if(params.varargs)
-		{
-			if(args.values.length < numparams - 1)
-				return semanticErrorValue("too few arguments");
-			numparams--;
-		}
-		else if(args.values.length != numparams)
-			return semanticErrorValue("incorrect number of arguments");
-
-		for(int p = 0; p < numparams; p++)
-		{
-			auto decl = params.getParameter(p).getParameterDeclarator().getDeclarator();
-			Value v = args.values[p];
-			Type t = v.getType();
-			if(!decl.isRef)
-				v = decl.calcType().createValue(sc, v); // if not ref, always create copy
-			else if(!t.compare(decl.calcType()))
-				return semanticErrorValue("cannot create reference of incompatible type", v.getType());
-			ctx.setValue(decl, v);
-		}
-		if(params.varargs)
-		{
-			// TODO: pack remaining arguments into array
-			auto vdecl = params.getParameter(numparams).getParameterDeclarator().getDeclarator();
-			Value arr = vdecl.calcType().createValue(ctx, null);
-			if(auto darr = cast(DynArrayValue) arr)
-			{
-				for(int n = numparams; n < args.values.length; n++)
-				{
-					Value v = args.values[n];
-					Type t = v.getType();
-					v = t.createValue(sc, v); // if not ref, always create copy
-					darr.addValue(v);
-				}
-				ctx.setValue(vdecl, darr);
-			}
-			else
-				return semanticErrorValue("array type expected for variable argument parameter");
-		}
-		Value retVal = functype.funcDecl.interpretCall(ctx);
-		return retVal ? retVal : theVoidValue;
-	}
-
 	override Value opCall(Context sc, Value vargs)
 	{
-		return doCall(threadContext, vargs);
+		return doCall(functype.funcDecl, threadContext, functype.getParameters(), vargs);
 	}
 
 	override Value opBin(Context ctx, int tokid, Value v)
@@ -1182,7 +1198,7 @@ class DelegateValue : FunctionValue
 	
 	override Value opCall(Context sc, Value vargs)
 	{
-		return doCall(context, vargs);
+		return doCall(functype.funcDecl, context, functype.getParameters(), vargs);
 	}
 
 	override Value opBin(Context ctx, int tokid, Value v)
@@ -1222,10 +1238,10 @@ class AggrValue : TupleValue
 		return "<notype>" ~ _toStr("{", "}");
 	}
 
-	override Value _interpretProperty(Context ctx, string prop)
+	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		auto type = getType();
-		if(Value v = type.getProperty(ctx, this, prop))
+		if(Value v = type.getProperty(this, prop))
 			return v;
 		if(Value v = type.getStaticProperty(prop))
 			return v;
@@ -1246,7 +1262,7 @@ class AggrValue : TupleValue
 		switch(tokid)
 		{
 			case TOK_equal:
-				if(Value fv = getType().getProperty(ctx, this, "opEqual"))
+				if(Value fv = getType().getProperty(this, "opEqual"))
 				{
 					auto tctx = new AggrContext(ctx, this);
 					auto tv = new TupleValue;
@@ -1357,7 +1373,7 @@ class ReferenceValueT(T) : ReferenceValue
 		return type;
 	}
 
-	override Value _interpretProperty(Context ctx, string prop)
+	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		if(instance)
 			if(Value v = instance._interpretProperty(ctx, prop))

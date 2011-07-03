@@ -318,6 +318,21 @@ unittest
 unittest
 {
 	string txt = q{
+		interface I { int get(); }
+		class C : I { int get() { return 1; } }
+		int foo() 
+		{
+			I c = new C;
+			return c.get();
+		}
+		static assert(foo() == 1);
+	};
+	testSemantic(txt, "override");
+}
+
+unittest
+{
+	string txt = q{
 		class Adapter
 		{
 			int func() { return 73; }
@@ -496,6 +511,7 @@ unittest
 
 ///////////////////////////////////////////////////////////////////////
 
+
 import core.exception;
 import std.file;
 	
@@ -503,36 +519,57 @@ int main(string[] argv)
 {
 	Runtime.traceHandler = null;
 	
-	Project prj = new Project;
+	void foreach_file(void delegate (string fname) dg)
+	{
+		foreach(file; argv[1..$])
+		{
+			if(indexOf(file, '*') >= 0 || indexOf(file, '?') >= 0)
+			{
+				string path = dirname(file);
+				string pattern = basename(file);
+				foreach(string name; dirEntries(path, SpanMode.depth))
+					if(fnmatch(basename(name), pattern))
+						dg(name);
+			}
+			else
+			{
+				dg(file);
+			}
+		}
+	}
 
-	foreach(file; argv[1..$])
+	if(false)
 	{
-		if(indexOf(file, '*') >= 0 || indexOf(file, '?') >= 0)
+		Project prj = new Project;
+
+		foreach_file((string fname){prj.addFile(fname);});
+
+		version(semantic)
+			prj.semantic();
+		
+		version(cpp)
 		{
-			string path = dirname(file);
-			string pattern = basename(file);
-			foreach(string name; dirEntries(path, SpanMode.depth))
-				if(fnmatch(basename(name), pattern))
-					prj.addFile(name);
+			prj.writeCpp("c:/tmp/d/cproject.cpp");
 		}
-		else
+		version(run)
 		{
-			prj.addFile(file);
+			prj.run();
 		}
+		writeln(prj.countErrors + semanticErrors, " errors");
+		return prj.countErrors + semanticErrors > 0 ? 1 : 0;
 	}
-	version(semantic)
-		prj.semantic();
-	
-	version(cpp)
+	else
 	{
-		prj.writeCpp("c:/tmp/d/cproject.cpp");
+		foreach_file((string fname){
+			Project prj = new Project;
+			semanticErrors = 0;
+			prj.addFile(fname);
+			prj.semantic();
+			prj.run();
+			writeln(prj.countErrors + semanticErrors, " errors");
+		});
+		return semanticErrors > 0 ? 1 : 0;
 	}
-	version(run)
-	{
-		prj.run();
-	}
-	writeln(prj.countErrors + semanticErrors, " errors");
-	return prj.countErrors + semanticErrors > 0 ? 1 : 0;
 }
 }
 
