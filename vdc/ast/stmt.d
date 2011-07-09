@@ -263,7 +263,11 @@ class DeclarationStatement : Statement
 		auto decl = getMember(0);
 		decl.addSymbols(sc);
 		if(decl.attr & Attr_Static)
-			initValues(sc.ctx, false);
+		{
+			Context ctx = new Context(nullContext);
+			ctx.scop = sc;
+			initValues(ctx, false);
+		}
 	}
 
 	override Value interpret(Context sc)
@@ -1135,7 +1139,9 @@ class MixinStatement : Statement
 
 	override void _semantic(Scope sc)
 	{
-		Value v = getMember(0).interpretCatch(sc.ctx);
+		Context ctx = new Context(nullContext);
+		ctx.scop = sc;
+		Value v = getMember(0).interpretCatch(ctx);
 		string s = v.toMixin();
 		Parser parser = new Parser;
 		Node[] n = parser.parseStatements(s, span);

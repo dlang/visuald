@@ -80,6 +80,8 @@ Scope getBuiltinBasicTypeScope(int tokid)
 				sc.addSymbol("min", newBuiltinProperty(BT.min));
 			static if(__traits(compiles, BT.max))
 				sc.addSymbol("max", newBuiltinProperty(BT.max));
+			static if(__traits(compiles, BT.nan))
+				sc.addSymbol("nan", newBuiltinProperty(BT.nan));
 		}
 	}
 	builtInScopes[tokid] = sc;
@@ -109,13 +111,14 @@ class Type : Node
 		
 		// flags to clear on indirection
 		kIndirectionClear = kAllowBaseClass | kAllowBaseTypeConversion,
+		kImpliciteConversion = kAllowBaseClass | kAllowConstConversion | kAllowBaseTypeConversion,
 	}
 	
 	bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(from == this)
 			return true;
-		return true;
+		return false;
 	}
 	
 	override void _semantic(Scope sc)
@@ -195,7 +198,12 @@ class BasicType : Type
 		type.id = tokid;
 		return type;
 	}
-	
+
+	static Type getSizeType()
+	{
+		return getType(TOK_uint); // TOK_ulong if compiling for 64-bit
+	}
+
 	static Type getType(int tokid)
 	{
 		static Type[] cachedTypes;
@@ -732,7 +740,6 @@ class TypeDynamicArray : TypeIndirection
 					if(btype.id == TOK_char)
 						return createInitValue!StringValue(ctx, initValue);
 		
-		
 		auto val = new DynArrayValue(this);
 		// TODO: check types
 		if(auto dav = cast(DynArrayValue)initValue)
@@ -788,7 +795,10 @@ class TypeStaticArray : TypeIndirection
 		type.semantic(sc);
 		auto typeinfo_arr = new TypeInfo_StaticArray;
 		typeinfo_arr.value = type.typeinfo;
-		typeinfo_arr.len = getDimension().interpret(sc.ctx).toInt();
+
+		Context ctx = new Context(nullContext);
+		ctx.scop = sc;
+		typeinfo_arr.len = getDimension().interpret(ctx).toInt();
 		typeinfo = typeinfo_arr;
 	}
 
@@ -796,9 +806,10 @@ class TypeStaticArray : TypeIndirection
 	{
 		if(!scop)
 		{
-			Scope sc = parent.getScope();
-			scop = new Scope;
-			size_t len = getDimension().interpret(sc.ctx).toInt();
+			enterScope(parent.getScope());
+			Context ctx = new Context(nullContext);
+			ctx.scop = scop;
+			size_t len = getDimension().interpret(ctx).toInt();
 			scop.addSymbol("length", newBuiltinProperty(len));
 		}
 		return scop;
@@ -932,8 +943,10 @@ class TypeArraySlice : Type
 		auto rtype = getType();
 		if(auto tpl = cast(TypeInfo_Tuple) rtype.typeinfo)
 		{
-			int lo = getLower().interpret(sc.ctx).toInt();
-			int up = getUpper().interpret(sc.ctx).toInt();
+			Context ctx = new Context(nullContext);
+			ctx.scop = sc;
+			int lo = getLower().interpret(ctx).toInt();
+			int up = getUpper().interpret(ctx).toInt();
 			if(lo > up || lo < 0 || up > tpl.elements.length)
 			{
 				semanticError("tuple slice out of bounds");

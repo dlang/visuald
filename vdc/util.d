@@ -410,6 +410,16 @@ int arrfind(T)(T[] arr, T a)
 }
 
 ////////////////////////////////////////////////////////////////
+T[] arrmerge(T)(T[] a1, T[] a2)
+{
+	T[] arr = a1;
+	for(int i = 0; i < a2.length; i++)
+		if(arrfind(arr, a2[i]) < 0)
+			arr ~= a2[i];
+	return arr;
+}
+
+////////////////////////////////////////////////////////////////
 void delegate(string s) getStringSink(ref string s)
 {
 	void stringSink(string txt)

@@ -577,7 +577,9 @@ class StaticIfCondition : Condition
 
 	override bool evalCondition(Scope sc)
 	{
-		return getMember!Expression(0).interpret(sc.ctx).toBool();
+		Context ctx = new Context(nullContext);
+		ctx.scop = sc;
+		return getMember!Expression(0).interpret(ctx).toBool();
 	}
 	
 	override void toD(CodeWriter writer)

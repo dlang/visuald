@@ -197,6 +197,11 @@ class Value
 		return getType()._interpretProperty(ctx, prop);
 	}
 	
+	Value doCast(Value v)
+	{
+		return semanticErrorValue("cannot cast a ", v, " to ", this);
+	}
+	
 	Value opIndex(Value v)
 	{
 		return semanticErrorValue("cannot index a ", this);
@@ -548,6 +553,34 @@ class ValueT(T) : Value
 		return semanticErrorValue("cannot calculate '", tokenString(tokid), "' on a ", this);
 	}
 
+	override Value doCast(Value v)
+	{
+		if(!mutable)
+			return semanticErrorValue(this, " value is not mutable");
+			
+		TypeInfo ti = v.classinfo;
+		foreach(iv2; BasicTypeValues)
+		{
+			if(ti is typeid(iv2))
+			{
+				static if (__traits(compiles, {
+					iv2.ValType y;
+					*pval = cast(ValType)(y);
+				}))
+				{
+					iv2.ValType v2 = *(cast(iv2) v).pval;
+					*pval = cast(ValType)(v2);
+
+					debug logInfo("value %s changed by cast(" ~ ValType.stringof ~ ") to %s", ident, toStr());
+					debug sval = toStr();
+					return this;
+				}
+				else
+					break;
+			}
+		}
+		return super.doCast(v);
+	}
 }
 
 class VoidValue : Value
@@ -684,9 +717,9 @@ alias TypeTuple!(CharValue, WCharValue, DCharValue, StringValue) StringTypeValue
 
 class DynArrayValue : TupleValue
 {
-	Type type;
+	TypeDynamicArray type;
 
-	this(Type t)
+	this(TypeDynamicArray t)
 	{
 		type = t;
 		debug sval = toStr();
@@ -1037,6 +1070,17 @@ public:
 		return values[idx];
 	}
 
+	override Value opSlice(Value b, Value e)
+	{
+		int idxb = b.toInt();
+		int idxe = e.toInt();
+		if(idxb < 0 || idxb > values.length || idxe < idxb || idxe > values.length)
+			return semanticErrorValue("slice [", idxb, "..", idxe, "] out of bounds on value tuple");
+		auto nv = new TupleValue;
+		nv._values = _values[idxb..idxe];
+		return nv;
+	}
+	
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
@@ -1054,6 +1098,7 @@ public:
 				return semanticErrorValue("cannot compare ", v, " to ", this);
 			case TOK_notequal:
 				return Value.create(!opBin(ctx, TOK_equal, v).toBool());
+			
 			case TOK_assign:
 				if(auto tv = cast(TupleValue) v)
 					values = tv.values;
@@ -1061,8 +1106,22 @@ public:
 					return semanticErrorValue("cannot assign ", v, " to ", this);
 				debug sval = toStr();
 				return this;
+			
 			case TOK_tilde:
+				auto nv = new TupleValue;
+				if(auto tv = cast(TupleValue) v)
+					nv._values = _values ~ tv._values;
+				else
+					nv._values = _values ~ v;
+				return nv;
+			
 			case TOK_catass:
+				if(auto tv = cast(TupleValue) v)
+					_values ~= tv._values;
+				else
+					_values ~= v;
+				return this;
+				
 			default:
 				return super.opBin(ctx, tokid, v);
 		}
@@ -1333,26 +1392,28 @@ class ReferenceValue : Value
 	
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
-		auto cv = cast(ReferenceValue) v;
-		if(!cv)
+		ClassInstanceValue other;
+		if(auto cv = cast(ReferenceValue) v)
+			other = cv.instance;
+		else if(!cast(NullValue) v)
 			return super.opBin(ctx, tokid, v);
 		
 		switch(tokid)
 		{
 			case TOK_assign:
-				instance = cv.instance;
+				instance = other;
 				debug sval = toStr();
 				return this;
 			case TOK_equal:
-				if(instance is cv.instance)
+				if(instance is other)
 					return Value.create(true);
-				if(!instance || !cv.instance)
+				if(!instance || !other)
 					return Value.create(false);
-				return instance.opBin(ctx, TOK_equal, cv.instance);
+				return instance.opBin(ctx, TOK_equal, other);
 			case TOK_is:
-				return Value.create(instance is cv.instance);
+				return Value.create(instance is other);
 			case TOK_notidentity:
-				return Value.create(instance !is cv.instance);
+				return Value.create(instance !is other);
 			default:
 				return super.opBin(ctx, tokid, v);
 		}

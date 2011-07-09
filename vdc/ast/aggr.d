@@ -127,9 +127,12 @@ class Aggregate : Type
 	
 	void _setupInitValue(AggrValue sv)
 	{
+		auto bdy = getBody();
+		if(!bdy)
+			return;
 		auto ctx = new AggrContext(nullContext, sv);
 		ctx.scop = scop;
-		getBody().iterateDeclarators(false, false, (Declarator decl) { 
+		bdy.iterateDeclarators(false, false, (Declarator decl) { 
 			Type type = decl.calcType();
 			Value value;
 			if(auto expr = decl.getInitializer())
@@ -207,23 +210,27 @@ class Aggregate : Type
 
 	int _initFields(int off)
 	{
-		getBody().iterateDeclarators(false, false, (Declarator decl) {
-			mapDecl2Value[decl] = off;
-			mapName2Value[decl.ident] = off++;
-		});
+		if(auto bdy = getBody())
+			bdy.iterateDeclarators(false, false, (Declarator decl) {
+				mapDecl2Value[decl] = off;
+				mapName2Value[decl.ident] = off++;
+			});
 		return off;
 	}
 		
 	void _initMethods()
 	{
-		getBody().iterateDeclarators(false, true, (Declarator decl) {
-			isMethod[decl] = true;
-			mapName2Method[decl.ident] = decl;
-		});
-		
-		getBody().iterateConstructors(false, (Constructor ctor) {
-			constructors ~= ctor;
-		});
+		if(auto bdy = getBody())
+		{
+			bdy.iterateDeclarators(false, true, (Declarator decl) {
+				isMethod[decl] = true;
+				mapName2Method[decl.ident] = decl;
+			});
+			
+			bdy.iterateConstructors(false, (Constructor ctor) {
+				constructors ~= ctor;
+			});
+		}
 	}
 	
 	override Value getProperty(Value sv, string prop)

@@ -260,10 +260,20 @@ class ModuleDeclaration : Node
 	}
 }
 
+class PackageIdentifier : Node
+{
+	override void toD(CodeWriter writer)
+	{
+		assert(false);
+	}
+}
+
 //ModuleFullyQualifiedName:
 //    [Identifier...]
 class ModuleFullyQualifiedName : Node
 {
+	PackageIdentifier[] pkgs;
+	
 	mixin ForwardCtor!();
 
 	override void toD(CodeWriter writer)
@@ -271,6 +281,41 @@ class ModuleFullyQualifiedName : Node
 		writer.writeArray(members, ".");
 	}
 
+
+	override void addSymbols(Scope sc)
+	{
+		foreach(m; 0..members.length)
+		{
+			string name = getMember!Identifier(m).ident;
+			Node[] n = sc.search(name, false, false);
+			if(n.length > 1)
+			{
+				semanticError("ambiguous use of package/module name ", name);
+				break;
+			}
+			else if(n.length == 1)
+			{
+				if(auto pkg = cast(PackageIdentifier)n[0])
+				{
+					sc = pkg.scop;
+					pkgs ~= pkg;
+				}
+				else
+				{
+					semanticError("package/module name ", name, " also used as ", n[0]);
+					break;
+				}
+			}
+			else
+			{
+				auto pkg = new PackageIdentifier;
+				sc.addSymbol(name, pkg);
+				sc = pkg.enterScope(sc);
+				pkgs ~= pkg;
+			}
+		}
+	}
+	
 	string getName()
 	{
 		string name = getMember!Identifier(0).ident;
@@ -559,6 +604,9 @@ class Import : Node
 		sc.addImport(this);
 		if(aliasIdent.length > 0)
 			sc.addSymbol(aliasIdent, this);
+		
+		auto mfqn = getMember!ModuleFullyQualifiedName(0);
+		mfqn.addSymbols(sc);
 	}
 
 	Node[] search(Scope sc, string ident)
@@ -643,7 +691,9 @@ class MixinDeclaration : Node
 	
 	override Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
 	{
-		Value v = getMember(0).interpret(sc.ctx);
+		Context ctx = new Context(nullContext);
+		ctx.scop = sc;
+		Value v = getMember(0).interpret(ctx);
 		string s = v.toMixin();
 		Parser parser = new Parser;
 		return parser.parseDeclarations(s, span);

@@ -619,7 +619,8 @@ class CastExpression : Expression
 		Type vt = val.getType();
 		if(t.compare(vt))
 			return val;
-		return vt.createValue(sc, val);
+		Value v = t.createValue(sc, null);
+		return v.doCast(val);
 	}
 }
 
@@ -695,6 +696,19 @@ class PostfixExpression : Expression
 				break;
 		}
 		return type;
+	}
+
+	override ArgumentList getFunctionArguments()
+	{
+		switch(id)
+		{
+			case TOK_lparen:
+				if(members.length == 2)
+					return getMember!ArgumentList(1);
+				return new ArgumentList;
+			default:
+				return null;
+		}
 	}
 	
 	override Value interpret(Context sc)
@@ -805,7 +819,7 @@ class DotExpression : PostfixExpression
 		if(auto pt = cast(TypePointer)etype)
 			etype = pt.getType().calcType();
 		Scope s = etype.getScope();
-		resolved = s ? s.resolve(id.ident, id.span, false) : null;
+		resolved = s ? s.resolve(id.ident, id, false) : null;
 		if(resolved)
 			type = resolved.calcType();
 		else
@@ -918,6 +932,8 @@ class PrimaryExpression : Expression
 			case TOK_true:  return Value.create(true);
 			case TOK_false: return Value.create(false);
 			case TOK_null:  return new NullValue;
+			case TOK___LINE__: return Value.create(span.start.line);
+			case TOK___FILE__: return new StringValue(getModuleFilename());
 			case TOK_super:
 			case TOK_dollar:
 			default:        return super.interpret(sc);
@@ -934,18 +950,14 @@ class PrimaryExpression : Expression
 //    [ ArgumentList ]
 class ArrayLiteral : Expression
 {
+	bool isAssoc;
+	
 	mixin ForwardCtor!();
 
 	override PREC getPrecedence() { return PREC.primary; }
 
 	ArgumentList getArgumentList() { return getMember!ArgumentList(0); }
 		
-	override void _semantic(Scope sc)
-	{
-		foreach(m; members)
-			m.semantic(sc);
-	}
-	
 	override void toD(CodeWriter writer)
 	{
 		writer("[");
@@ -953,6 +965,29 @@ class ArrayLiteral : Expression
 		writer("]");
 	}
 
+	override void _semantic(Scope sc)
+	{
+		super._semantic(sc);
+		
+		auto argl = getArgumentList();
+		int cntPairs = 0;
+		int cntIndex = 0;
+		foreach(m; argl.members)
+		{
+			m.semantic(sc);
+			if(auto kv = cast(KeyValuePair) m)
+			{
+				Type kt = kv.getKey().calcType();
+				Type st = BasicType.getSizeType();
+				if(st.convertableFrom(kt, Type.ConversionFlags.kImpliciteConversion))
+					cntIndex++;
+				cntPairs++;
+			}
+		}
+		if(cntPairs == argl.members.length && cntIndex < argl.members.length)
+			isAssoc = true;
+	}
+	
 	override Value interpret(Context sc)
 	{
 		Value val;
@@ -995,21 +1030,8 @@ class EmptyExpression : Expression
 }
 
 
-//AssocArrayLiteral:
-//    [ KeyValuePairs ]
-//
-//KeyValuePairs:
-//    KeyValuePair
-//    KeyValuePair , KeyValuePairs
-//
 //KeyValuePair:
-//    KeyExpression : ValueExpression
-//
-//KeyExpression:
-//    ConditionalExpression
-//
-//ValueExpression:
-//    ConditionalExpression
+//    [Expression Expression]
 class KeyValuePair : BinaryExpression
 {
 	mixin ForwardCtor!();
@@ -1025,6 +1047,9 @@ class KeyValuePair : BinaryExpression
 	{
 		super(TOK_colon, tok.span);
 	}
+
+	Expression getKey() { return getMember!Expression(0); }
+	Expression getValue() { return getMember!Expression(1); }
 }
 
 //FunctionLiteral:
@@ -1034,7 +1059,7 @@ class FunctionLiteral : Expression
 	mixin ForwardCtor!();
 
 	Type getType() { return members.length > 2 ? getMember!Type(0) : null; }
-	ParameterList getParameterList() { return getMember!ParameterList(members.length - 2); }
+	override ParameterList getParameterList() { return getMember!ParameterList(members.length - 2); }
 	FunctionBody getFunctionBody() { return getMember!FunctionBody(members.length - 1); }
 	
 	override PREC getPrecedence() { return PREC.primary; }
@@ -1427,8 +1452,8 @@ class IdentifierExpression : PrimaryExpression
 		else
 			scop = sc;
 		
-		string ident = getIdentifier().ident;
-		resolved = scop.resolve(ident, span);
+		auto id = getIdentifier();
+		resolved = scop.resolve(id.ident, id);
 		if(resolved && resolved.isTemplate())
 		{
 			TemplateArgumentList args;
@@ -1449,6 +1474,8 @@ class IdentifierExpression : PrimaryExpression
 	{
 		if(type)
 			return type;
+		if(!scop)
+			semantic(getScope());
 		if(resolved)
 			type = resolved.calcType();
 		if(!type)
@@ -1456,12 +1483,19 @@ class IdentifierExpression : PrimaryExpression
 		return type;
 	}
 	
+	override ArgumentList getFunctionArguments()
+	{
+		if(parent)
+			return parent.getFunctionArguments();
+		return null;
+	}
+	
 	override Value interpret(Context sc)
 	{
 		if(!resolved)
 			semantic(getScope());
 		if(!resolved)
-			return semanticErrorValue("unresolved identifer ", writeD(this));
+			return semanticErrorValue("unresolved identifier ", writeD(this));
 		Value v = resolved.interpret(sc);
 		if(auto actx = cast(AssertContext)sc)
 			actx.identVal[this] = v;
@@ -1506,11 +1540,20 @@ class IntegerLiteralExpression : PrimaryExpression
 		if(val[0] == '0' && val.length > 1)
 		{
 			if(val[1] == 'x' || val[1] == 'X')
+			{
 				radix = 16;
+				val = val[2..$];
+			}
 			else if(val[1] == 'b' || val[1] == 'B')
+			{
 				radix = 2;
+				val = val[2..$];
+			}
 			else
+			{
 				radix = 8;
+				val = val[1..$];
+			}
 			unsigned = true;
 		}
 		val = removechars(val, "_");
@@ -1689,11 +1732,11 @@ class FloatLiteralExpression : PrimaryExpression
 	{
 		if(complex)
 			if(lng)
-				return Value.create(cast(ireal)value);
+				return Value.create(cast(ireal) (1i * value));
 			else if(flt)
-				return Value.create(cast(ifloat)value);
+				return Value.create(cast(ifloat) (1i * value));
 			else
-				return Value.create(cast(idouble)value);
+				return Value.create(cast(idouble) (1i * value));
 		else
 			if(lng)
 				return Value.create(cast(real)value);
@@ -1866,11 +1909,12 @@ class TypeProperty : PrimaryExpression
 		if(type)
 			return type;
 		
-		resolved = getType().getScope().resolve(getProperty().ident, span);
+		auto id = getProperty();
+		resolved = getType().getScope().resolve(id.ident, id);
 		if(resolved)
 			type = resolved.calcType();
 		else
-			type = semanticErrorType("cannot determine type of property ", getProperty().ident);
+			type = semanticErrorType("cannot determine type of property ", id.ident);
 		return type;
 	}
 

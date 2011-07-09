@@ -323,6 +323,15 @@ class Node
 		return semanticErrorValue(this, ": interpretation stopped");
 	}
 	
+	ParameterList getParameterList()
+	{
+		return null;
+	}
+	ArgumentList getFunctionArguments()
+	{
+		return null;
+	}
+		
 	bool isTemplate()
 	{
 		return false;
@@ -415,6 +424,11 @@ class Node
 		return mod.filename;
 	}
 	
+	void semanticError(T...)(T args)
+	{
+		semanticErrorLoc(getModuleFilename(), span.start, args);
+	}
+
 	ErrorValue semanticErrorValue(T...)(T args)
 	{
 		semanticErrorLoc(getModuleFilename(), span.start, args);

@@ -623,7 +623,7 @@ class TemplateInstantiation : Node
 	Value[] args;
 	Declarator dec;
 	
-	ParameterList getParameterList() { return getMember!ParameterList(0); }
+	override ParameterList getParameterList() { return getMember!ParameterList(0); }
 	Declarator getDeclarator() { return dec; }
 	
 	this(Declarator ddec, Value[] vargs, string[] names)
@@ -753,8 +753,8 @@ class IdentifierList : Node
 
 		for(int m = 0; sc && m < members.length; m++)
 		{
-			string ident = getMember!Identifier(m).ident;
-			resolved = sc.resolve(ident, span);
+			auto id = getMember!Identifier(m);
+			resolved = sc.resolve(id.ident, id);
 			sc = (resolved ? resolved.scop : null);
 		}
 	}
@@ -798,6 +798,13 @@ class Identifier : Node
 	override void toD(CodeWriter writer)
 	{
 		writer.writeIdentifier(ident);
+	}
+
+	override ArgumentList getFunctionArguments()
+	{
+		if(parent)
+			return parent.getFunctionArguments();
+		return null;
 	}
 }
 
@@ -861,6 +868,7 @@ class Parameter : Node
 	TokenId io;
 	
 	ParameterDeclarator getParameterDeclarator() { return getMember!ParameterDeclarator(0); }
+	Expression getInitializer() { return getMember!Expression(1); }
 	
 	override Parameter clone()
 	{
@@ -891,6 +899,11 @@ class Parameter : Node
 	{
 		getParameterDeclarator().addSymbols(sc);
 	}
+
+	override Type calcType()
+	{
+		return getParameterDeclarator().calcType();
+	}
 }
 
 //ParameterDeclarator:
@@ -914,5 +927,12 @@ class ParameterDeclarator : Node
 	{
 		if (auto decl = getDeclarator())
 			decl.addSymbols(sc);
+	}
+
+	override Type calcType()
+	{
+		if (auto decl = getDeclarator())
+			return decl.calcType();
+		return getType().calcType();
 	}
 }

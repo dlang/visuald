@@ -14,6 +14,7 @@ import vdc.ast.node;
 import vdc.ast.type;
 import vdc.ast.aggr;
 import vdc.ast.decl;
+import vdc.ast.expr;
 import vdc.parser.engine;
 import vdc.logger;
 import vdc.interpret;
@@ -196,7 +197,7 @@ class Scope
 	Symbol[][string] symbols;
 	Import[] imports;
 	
-	Context ctx; // compile time only
+//	Context ctx; // compile time only
 	
 	static Scope current;
 	
@@ -253,34 +254,85 @@ class Scope
 		foreach(imp; imports)
 		{
 			if(privateImports || (imp.getProtection() & Annotation_Public))
-				syms ~= imp.search(this, ident);
+				syms = arrmerge(syms, imp.search(this, ident));
 		}
 		if(syms.length == 0 && inParents && parent)
 			syms = parent.search(ident, true, privateImports);
 		return syms;
 	}
 
-	Node resolveOverload(string ident, ref const(TextSpan) span, Node[] n)
+	Node[] matchFunctionArguments(Node id, Node[] n)
+	{
+		Node[] matches;
+		ArgumentList fnargs = id.getFunctionArguments();
+		int cntFunc = 0;
+		foreach(s; n)
+			if(s.getParameterList())
+				cntFunc++;
+		if(cntFunc != n.length)
+			return matches;
+		
+		Node[] args;
+		if(fnargs)
+			args = fnargs.members;
+		foreach(s; n)
+		{
+			auto pl = s.getParameterList();
+			if(args.length > pl.members.length)
+				continue;
+
+			if(args.length < pl.members.length)
+				// parameterlist must have default
+				if(auto param = pl.getParameter(args.length))
+					if(!param.getInitializer())
+						continue;
+
+			int a;
+			for(a = 0; a < args.length; a++)
+			{
+				auto atype = args[a].calcType();
+				auto ptype = pl.members[a].calcType();
+				if(!ptype.convertableFrom(atype, Type.ConversionFlags.kImpliciteConversion))
+					break;
+			}
+			if(a < args.length)
+				continue;
+			matches ~= s;
+		}
+		return matches;
+	}
+	
+	Node resolveOverload(string ident, Node id, Node[] n)
 	{
 		if(n.length == 0)
 		{
-			semanticErrorPos(span.start, "unknown identifier " ~ ident);
+			id.semanticError("unknown identifier " ~ ident);
 			return null;
 		}
 		foreach(s; n)
 			s.semanticSearches++;
 		
 		if(n.length > 1)
-			semanticErrorPos(span.start, "ambiguous identifier " ~ ident);
+		{
+			Node[] matches = matchFunctionArguments(id, n);
+			if(matches.length == 1)
+				return matches[0];
+			else if(matches.length > 0)
+				n = matches; // report only matching funcs
+
+			id.semanticError("ambiguous identifier " ~ ident);
+			foreach(s; n)
+				s.semanticError("possible candidate");
+		}
 		return n[0];
 	}
 
-	Node resolve(string ident, ref const(TextSpan) span, bool inParents = true)
+	Node resolve(string ident, Node id, bool inParents = true)
 	{
 		Node[] n = search(ident, inParents, true);
 		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n, n.length > 0 ? cast(void*)n[0] : null);
 		
-		return resolveOverload(ident, span, n);
+		return resolveOverload(ident, id, n);
 	}
 	
 	Project getProject() { return mod ? mod.getProject() : null; }
@@ -392,11 +444,18 @@ class Project : Node
 	
 	void semantic()
 	{
-		mObjectModule = importModule("object");
+		try
+		{
+			mObjectModule = importModule("object");
 
-		Scope sc = new Scope;
-		for(int m = 0; m < members.length; m++)
-			members[m].semantic(sc);
+			Scope sc = new Scope;
+			for(int m = 0; m < members.length; m++)
+				members[m].semantic(sc);
+		}
+		catch(InterpretException)
+		{
+			semanticError("unhandled interpret exception, semantic analysis aborted");
+		}
 	}
 
 	////////////////////////////////////////////////////////////
