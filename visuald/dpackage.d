@@ -959,9 +959,10 @@ class GlobalOptions
 		string[] jsonfiles;
 		foreach(path; jsonpaths)
 		{
-			foreach (string name; dirEntries(path, SpanMode.shallow))
-				if (fnmatch(basename(name), "*.json"))
-					addunique(jsonfiles, name);
+			if(isExistingDir(path))
+				foreach (string name; dirEntries(path, SpanMode.shallow))
+					if (fnmatch(basename(name), "*.json"))
+						addunique(jsonfiles, name);
 		}
 		return jsonfiles;
 	}
@@ -969,6 +970,8 @@ class GlobalOptions
 	string[] findDFiles(string path, string sub)
 	{
 		string[] files;
+		if(!isExistingDir(path ~ sub))
+			return files;
 		foreach(string file; dirEntries(path ~ sub, SpanMode.shallow))
 		{
 			if(_startsWith(file, path))

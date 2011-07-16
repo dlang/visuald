@@ -679,7 +679,7 @@ class CFolderNode : CHierContainer
 
 		string location = GetCVsHierarchy().GetProjectDir();
 		string folderPath = location ~ GetFolderPath(folder);
-		if(std.file.exists(folderPath) && std.file.isdir(folderPath))
+		if(isExistingDir(folderPath))
 			location = folderPath;
 		auto bstrLocation = ScopedBSTR(location);
 
@@ -1902,7 +1902,7 @@ public: // IVsHierarchyEvent propagation
 		if(!isabs(strNewFileName))
 			strNewFileName = GetProjectDir() ~ "\\" ~ strNewFileName;
 
-		bool dir = std.file.isdir(strFullPathSource);
+		bool dir = isExistingDir(strFullPathSource);
 		
 		// If target != source then we need to copy
 		if (CompareFilenames(strFullPathSource, strNewFileName) != 0)

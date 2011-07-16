@@ -136,13 +136,15 @@ class Declarations
 		foreach(string impdir; imports)
 		{
 			impdir = impdir ~ dir;
+			if(!isExistingDir(impdir))
+				continue;
 			foreach(string name; dirEntries(impdir, SpanMode.shallow))
 			{
 				string base = getBaseName(name);
 				string ext = tolower(getExt(name));
 				bool canImport = false;
-				bool dir = isdir(name);
-				if(dir)
+				bool issubdir = isdir(name);
+				if(issubdir)
 					canImport = (ext.length == 0);
 				else if(ext == "d" || ext == "di")
 				{
@@ -152,7 +154,7 @@ class Declarations
 				if(canImport && base.startsWith(imp) && array_find(mNames, base) < 0)
 				{
 					addunique(mNames, base);
-					mGlyphs ~= dir ? kImageFolderClosed : kImageDSource;
+					mGlyphs ~= issubdir ? kImageFolderClosed : kImageDSource;
 				}
 			}
 		}

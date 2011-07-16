@@ -446,9 +446,10 @@ else
 				{
 					string dir = dirname(file);
 					string pattern = basename(file);
-					foreach(string f; dirEntries(dir, SpanMode.shallow))
-						if(fnmatch(f, pattern))
-							std.file.remove(f);
+					if(isExistingDir(dir))
+						foreach(string f; dirEntries(dir, SpanMode.shallow))
+							if(fnmatch(f, pattern))
+								std.file.remove(f);
 				}
 				else if(std.file.exists(file))
 					std.file.remove(file);

@@ -139,6 +139,11 @@ string getCmdPath()
 	return normalizeDir(p) ~ "cmd.exe";
 }
 
+bool isExistingDir(string dir)
+{
+	return std.file.exists(dir) && std.file.isdir(dir);
+}
+
 //-----------------------------------------------------------------------------
 long[string] gCachedFileTimes;
 
