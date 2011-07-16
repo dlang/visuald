@@ -1569,7 +1569,7 @@ class Config :	DisposingComObject,
 		if(tool == "DMDsingle")
 			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(getName(file.GetFilename())) ~ ".obj";
 		if(tool == kToolResourceCompiler)
-			fname = mProjectOptions.objdir ~ "\\" ~ getName(file.GetFilename()) ~ ".res";
+			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(getName(file.GetFilename()), "_") ~ ".res";
 		if(tool == "Custom")
 			fname = file.GetOutFile();
 		if(fname.length)

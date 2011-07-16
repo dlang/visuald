@@ -73,12 +73,19 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		/* [in] */ in BOOL bModal)
 	{
 		mixin(LogCallMix);
-
+		
 		if(mWindow)
 			return returnError(E_FAIL);
-
+		return _Activate(new Window(hWndParent), pRect, bModal);
+	}
+	
+	int _Activate( 
+		/* [in] */ Window win,
+		/* [in] */ in RECT *pRect,
+		/* [in] */ in BOOL bModal)
+	{
 		RECT r; 
-		mWindow = new Window(hWndParent);
+		mWindow = win;
 		mCanvas = new Window(mWindow);
 		DWORD color = GetSysColor(COLOR_BTNFACE);
 		mCanvas.setBackground(color);
@@ -1110,7 +1117,7 @@ class FilePropertyPage : NodePropertyPage
 class ToolsPropertyPage : GlobalPropertyPage
 {
 	override string GetCategoryName() { return "Projects"; }
-	override string GetPageName() { return "D Options"; }
+	override string GetPageName() { return "D Directories"; }
 
 	this(GlobalOptions options)
 	{
@@ -1128,7 +1135,6 @@ class ToolsPropertyPage : GlobalPropertyPage
 		AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
 		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
 		AddControl("Resource includes", mIncPath = new Text(mCanvas));
-		AddControl("", mTimeBuilds = new CheckBox(mCanvas, "Show build time"));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1139,7 +1145,6 @@ class ToolsPropertyPage : GlobalPropertyPage
 		mLibPath.setText(opts.LibSearchPath);
 		mIncPath.setText(opts.IncSearchPath);
 		mJSNPath.setText(opts.JSNSearchPath);
-		mTimeBuilds.setChecked(opts.timeBuilds);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1151,8 +1156,6 @@ class ToolsPropertyPage : GlobalPropertyPage
 		changes += changeOption(mLibPath.getText(), opts.LibSearchPath, refopts.LibSearchPath); 
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
 		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
-		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
-		
 		return changes;
 	}
 
@@ -1162,7 +1165,41 @@ class ToolsPropertyPage : GlobalPropertyPage
 	MultiLineText mImpPath;
 	MultiLineText mLibPath;
 	MultiLineText mJSNPath;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+class ToolsProperty2Page : GlobalPropertyPage
+{
+	override string GetCategoryName() { return "Projects"; }
+	override string GetPageName() { return "D Options"; }
+
+	this(GlobalOptions options)
+	{
+		super(options);
+	}
+
+	override void CreateControls()
+	{
+		AddControl("", mTimeBuilds   = new CheckBox(mCanvas, "Show build time"));
+		AddControl("", mSortProjects = new CheckBox(mCanvas, "Sort project items"));
+	}
+
+	override void SetControls(GlobalOptions opts)
+	{
+		mTimeBuilds.setChecked(opts.timeBuilds);
+		mSortProjects.setChecked(opts.sortProjects);
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
+		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
+		return changes;
+	}
+
 	CheckBox mTimeBuilds;
+	CheckBox mSortProjects;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1221,6 +1258,7 @@ const GUID    g_DmdCmdLinePropertyPage   = uuid("002a2de9-8bb6-484d-981c-7e4ad40
 
 // does not need to be registered, created explicitely by package
 const GUID    g_ToolsPropertyPage        = uuid("002a2de9-8bb6-484d-9820-7e4ad4084715");
+const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad4084715");
 
 // registered under Languages\\Language Services\\D\\EditorToolsOptions\\Colorizer, created explicitely by package
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");

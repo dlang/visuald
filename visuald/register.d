@@ -217,6 +217,7 @@ static const wstring regPathCodeExpansions = "\\Languages\\CodeExpansions"w;
 static const wstring regPathPrjTemplates   = "\\NewProjectTemplates\\TemplateDirs"w;
 static const wstring regPathProjects       = "\\Projects"w;
 static const wstring regPathToolsOptions   = "\\ToolsOptionsPages\\Projects\\Visual D Settings"w;
+static const wstring regPathToolsDirs      = "\\ToolsOptionsPages\\Projects\\Visual D Directories"w;
 static const wstring regMiscFiles          = regPathProjects ~ "\\{A2FE74E1-B743-11d0-AE1A-00A0C90FFFC3}"w;
 static const wstring regPathMetricsExcpt   = "\\AD7Metrics\\Exception"w;
 static const wstring regPathMetricsEE      = "\\AD7Metrics\\ExpressionEvaluator"w;
@@ -435,11 +436,17 @@ version(none){
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);
 		keyToolOpts.Set(null, "Visual D Settings");
 		keyToolOpts.Set("Package"w, packageGuid);
-		keyToolOpts.Set("Page"w, GUID2wstring(g_ToolsPropertyPage));
+		keyToolOpts.Set("Page"w, GUID2wstring(g_ToolsProperty2Page));
+
 		if(keyToolOpts.GetString("ExeSearchPath"w).length == 0)
 			keyToolOpts.Set("ExeSearchPath"w, "$(DMDInstallDir)windows\\bin\n$(WindowsSdkDir)\\bin"w);
 		if(keyToolOpts.GetString("IncSearchPath"w).length == 0)
 			keyToolOpts.Set("IncSearchPath"w, "$(WindowsSdkDir)\\include;$(DevEnvDir)..\\..\\VC\\include"w);
+
+		scope RegKey keyToolOpts2 = new RegKey(keyRoot, registrationRoot ~ regPathToolsDirs);
+		keyToolOpts2.Set(null, "Visual D Directories");
+		keyToolOpts2.Set("Package"w, packageGuid);
+		keyToolOpts2.Set("Page"w, GUID2wstring(g_ToolsPropertyPage));
 
 		// remove "SkipLoading" entry from user settings
 		scope RegKey userKeyPackage = new RegKey(HKEY_CURRENT_USER, registrationRoot ~ "\\Packages\\"w ~ packageGuid);

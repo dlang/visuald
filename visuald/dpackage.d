@@ -316,21 +316,26 @@ class Package : DisposingComObject,
 	override int GetPropertyPage(in GUID* rguidPage, VSPROPSHEETPAGE* ppage)
 	{
 		mixin(LogCallMix2);
-		if(*rguidPage != g_ToolsPropertyPage && *rguidPage != g_ColorizerPropertyPage)
+		if(*rguidPage != g_ToolsPropertyPage && 
+		   *rguidPage != g_ToolsProperty2Page && 
+		   *rguidPage != g_ColorizerPropertyPage)
 			return E_NOTIMPL;
 
 		*ppage = VSPROPSHEETPAGE.init;
 		ppage.dwSize = VSPROPSHEETPAGE.sizeof;
-		auto win = new Window(null, "");
+		auto win = new Window(null, WS_OVERLAPPED, "Visual D Settings");
+		win.setRect(0, 0, 400, 300);
 		ppage.hwndDlg = win.hwnd;
 
 		GlobalPropertyPage tpp;
 		if(*rguidPage == g_ToolsPropertyPage)
 			tpp = new ToolsPropertyPage(mOptions);
+		else if(*rguidPage == g_ToolsProperty2Page)
+			tpp = new ToolsProperty2Page(mOptions);
 		else
 			tpp = new ColorizerPropertyPage(mOptions);
 			
-		tpp.Activate(win.hwnd, null, false);
+		tpp._Activate(win, null, false);
 		tpp.SetWindowSize(0, 0, 400, 300);
 		addref(tpp);
 
@@ -706,6 +711,7 @@ class GlobalOptions
 	string VisualDInstallDir;
 
 	bool timeBuilds;
+	bool sortProjects = true;
 	bool autoOutlining;
 	bool parseSource;
 	
@@ -774,6 +780,7 @@ class GlobalOptions
 			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
 			ColorizeVersions = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
 			timeBuilds       = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
+			sortProjects     = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
 			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
 
@@ -788,6 +795,7 @@ class GlobalOptions
 
 			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
 			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",       timeBuilds) != 0;
+			sortProjects         = keyUserOpts.GetDWORD("sortProjects",     sortProjects) != 0;
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
 			lastColorizeVersions = ColorizeVersions;
@@ -837,8 +845,11 @@ class GlobalOptions
 			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
 			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
 			keyToolOpts.Set("timeBuilds", timeBuilds);
+			keyToolOpts.Set("sortProjects", sortProjects);
 			keyToolOpts.Set("autoOutlining", autoOutlining);
 			keyToolOpts.Set("parseSource", parseSource);
+
+			CHierNode.setContainerIsSorted(sortProjects);
 		}
 		catch(Exception e)
 		{

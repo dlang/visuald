@@ -37,6 +37,7 @@ const UINT IDMX_NULLMENU = 0;
 
 __gshared CHierNode[VSITEMID] gVsItemMap;
 __gshared Object gVsItemMap_sync;
+__gshared bool hierContainerIsSorted = true;
 
 class CIVsTaskItemArray {}
 class OpenDocumentList {}
@@ -81,6 +82,19 @@ class CHierNode : DisposingDispatchObject
 	{
 	}
 
+	static setContainerIsSorted(bool sort)
+	{
+		synchronized(gVsItemMap_sync)
+		{
+			hierContainerIsSorted = sort;
+			foreach(n; gVsItemMap)
+			{
+				if(auto c = cast(CHierContainer) n)
+					c.SetIsSortedList(sort);
+			}
+		}
+	}
+	
 public:
 	// IsKindOf checking
 	uint GetKindOf() { return 0; }

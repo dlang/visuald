@@ -254,6 +254,13 @@ class Window : Widget
 		createdWindows[this] = this; // prevent garbage collection
 		super(parent);
 	}
+	this(Widget parent, uint style, string title = "", int id = 0)
+	{
+		registerClass();
+		createWidget(parent, "VisualDWindow", title, style, 0, id);
+		createdWindows[this] = this; // prevent garbage collection
+		super(parent);
+	}
 
 	override void Dispose()
 	{

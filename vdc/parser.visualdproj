@@ -259,11 +259,11 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <additionalOptions />
+  <additionalOptions>-debuglib=phobos.lib</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>$(TargetPath)</debugtarget>
-  <debugarguments>c:\tmp\d\test\runnable\nested.d</debugarguments>
+  <debugarguments>c:\tmp\d\test\runnable\const*.d</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />

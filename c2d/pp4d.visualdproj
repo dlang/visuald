@@ -181,12 +181,12 @@
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="pp4d">
-  <File path="pp4d.d" />
-  <File path="tokutil.d" />
+  <File path="ast.d" />
   <File path="dgutil.d" />
   <File path="dlist.d" />
-  <File path="tokenizer.d" />
-  <File path="ast.d" />
   <File path="patchast.d" />
+  <File path="pp4d.d" />
+  <File path="tokenizer.d" />
+  <File path="tokutil.d" />
  </Folder>
 </DProject>

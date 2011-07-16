@@ -123,11 +123,11 @@ string getNameWithoutExt(string fname)
 	return name;
 }
 
-string safeFilename(string fname)
+string safeFilename(string fname, string rep = "-") // - instead of _ to not possibly be part of a module name
 {
 	string safefile = fname;
 	foreach(char ch; ":\\/")
-		safefile = replace(safefile, to!string(ch), "-"); // - instead of _ to not possibly be part of a module name
+		safefile = replace(safefile, to!string(ch), rep);
 	return safefile;
 }
 
