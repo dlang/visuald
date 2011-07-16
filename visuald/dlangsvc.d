@@ -975,8 +975,17 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		}
 		if(pTextLineChange.iOldEndLine != pTextLineChange.iNewEndLine)
 		{
-			LineChange chg = LineChange(pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine);
-			mLineChanges ~= chg;
+			bool skip = false;
+			if(pTextLineChange.iStartLine == 0 && pTextLineChange.iOldEndLine == 0)
+			{
+				// is this the first insert that actually fills the Source with the file content?
+				skip = (GetLineCount() == pTextLineChange.iNewEndLine + 1);
+			}
+			if(!skip)
+			{
+				LineChange chg = LineChange(pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine);
+				mLineChanges ~= chg;
+			}
 		}
 		
 		if(mOutlining)

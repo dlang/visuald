@@ -82,7 +82,7 @@ class CHierNode : DisposingDispatchObject
 	{
 	}
 
-	static setContainerIsSorted(bool sort)
+	static void setContainerIsSorted(bool sort)
 	{
 		synchronized(gVsItemMap_sync)
 		{

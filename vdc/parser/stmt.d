@@ -482,10 +482,11 @@ class WhileStatement : Statement
 
 //-- GRAMMAR_BEGIN --
 //DoStatement:
-//    do ScopeNonEmptyStatement while ( Expression ) ;
+//    do ScopeNonEmptyStatement while ( Expression ) 
+// trailing ';' currently not part of grammar ;-(
 class DoStatement : Statement
 {
-	mixin SequenceNode!(ast.DoStatement, TOK_do, ScopeNonEmptyStatement, TOK_while, TOK_lparen, Expression, TOK_rparen, TOK_semicolon);
+	mixin SequenceNode!(ast.DoStatement, TOK_do, ScopeNonEmptyStatement, TOK_while, TOK_lparen, Expression, TOK_rparen); //, TOK_semicolon);
 }
 
 //-- GRAMMAR_BEGIN --

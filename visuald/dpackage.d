@@ -800,6 +800,8 @@ class GlobalOptions
 			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			
+			CHierNode.setContainerIsSorted(sortProjects);
+			
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
 			WindowsSdkDir = normalizeDir(toUTF8(keySdk.GetString("CurrentInstallFolder")));
 

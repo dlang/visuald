@@ -315,3 +315,4 @@ unreleased Version 0.3.26
   * fix: resource files in sub folders would not build because the same folders were expected in the intermediate directory
   * global settings: split page into directories/settings pages to make option "Show build time" accessible
   * global settings: added option to disable sorting projects
+  * parser now accepts "do {} while(cond)" without trailing ';'

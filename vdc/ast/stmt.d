@@ -414,7 +414,7 @@ class DoStatement : Statement
 			CodeIndenter indent = CodeIndenter(writer);
 			writer(getMember(0));
 		}
-		writer("while(", getMember(1), ");");
+		writer("while(", getMember(1), ")");
 		writer.nl;
 	}
 
