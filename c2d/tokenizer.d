@@ -8,7 +8,7 @@
 
 module c2d.tokenizer;
 
-import std.ctype;
+import std.ascii;
 import std.string;
 import std.utf;
 
@@ -499,7 +499,7 @@ class Tokenizer
 		int lines = lineno;
 		handleBackSlash();
 	cont_spaces:
-		while(!eof() && isspace(text[pos]))
+		while(!eof() && isWhite(text[pos]))
 		{
 			if (isNewline())
 			{
@@ -561,7 +561,7 @@ version(IDL) {} else {
 	{
 		if (eof())
 			return false;
-		if(!isalpha(text[pos]) && text[pos] != '_')
+		if(!isAlpha(text[pos]) && text[pos] != '_')
 			return false;
 		nextChar();
 		return skipAlnum();
@@ -570,7 +570,7 @@ version(IDL) {} else {
 	bool skipAlnum()
 	{
 		version(dollar_in_ident)
-			while(!eof() && (isalnum(text[pos]) || text[pos] == '_' || text[pos] == '$'))
+			while(!eof() && (isAlphaNum(text[pos]) || text[pos] == '_' || text[pos] == '$'))
 				nextChar();
 		else
 			while(!eof() && (isalnum(text[pos]) || text[pos] == '_'))

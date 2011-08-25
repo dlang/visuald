@@ -34,10 +34,11 @@ static import vdc.util;
 import vdc.parser.engine;
 
 import std.string;
-import std.ctype;
+import std.ascii;
 import std.utf;
 import std.conv;
 import std.algorithm;
+import std.array;
 
 import std.parallelism;
 
@@ -1567,7 +1568,7 @@ else
 			while(idx < infoArray.length)
 			{
 				if((!skipComments || infoArray[idx].type != TokenColor.Comment) &&
-				   (infoArray[idx].type != TokenColor.Text || !isspace(text[infoArray[idx].StartIndex])))
+				   (infoArray[idx].type != TokenColor.Text || !isWhite(text[infoArray[idx].StartIndex])))
 					break;
 				idx++;
 			}
@@ -1641,7 +1642,7 @@ else
 			for( ; inf >= 0; inf--)
 			{
 				if(lineInfo[inf].type != TokenColor.Comment &&
-				   (lineInfo[inf].type != TokenColor.Text || !isspace(txt[lineInfo[inf].StartIndex])))
+				   (lineInfo[inf].type != TokenColor.Text || !isWhite(txt[lineInfo[inf].StartIndex])))
 				{
 					wchar ch = txt[lineInfo[inf].StartIndex];
 					if(level == 0)
@@ -1797,7 +1798,7 @@ else
 	int doReplaceLineIndent(int line, int idx, int n, LANGPREFERENCES* langPrefs)
 	{
 		int tabsz = (langPrefs.fInsertTabs && langPrefs.uTabSize > 0 ? langPrefs.uTabSize : n + 1);
-		string spc = repeat("\t", n / tabsz) ~ repeat(" ", n % tabsz);
+		string spc = replicate("\t", n / tabsz) ~ replicate(" ", n % tabsz);
 		wstring wspc = toUTF16(spc);
 
 		TextSpan changedSpan;
@@ -1844,7 +1845,7 @@ else
 		bool onCommentOrSpace()
 		{
 			return (lineInfo[tok].type == TokenColor.Comment ||
-			       (lineInfo[tok].type == TokenColor.Text && isspace(lineText[lineInfo[tok].StartIndex])));
+			       (lineInfo[tok].type == TokenColor.Text && isWhite(lineText[lineInfo[tok].StartIndex])));
 		}
 		
 		bool advanceOverComments()
@@ -2040,6 +2041,8 @@ else
 		bool newStmt = (prevTok == ";" || prevTok == "}");
 		if(newStmt)
 			lntokIt.retreatOverBraces();
+		else if(prevTok == ")" && (startTok == "in" || startTok == "out" || startTok == "body"))
+			indent = 0; // special case to not indent in/out/body in contracts
 		else if(startTok != "{" && startTok != "[" && hasOpenBrace)
 			indent = langPrefs.uTabSize;
 
@@ -2488,7 +2491,7 @@ else
 				pos = tokpos[p];
 				if(toktype[p] == TokenColor.Identifier)
 					return text[pos .. ppos];
-				if(ppos > pos + 1 || !isspace(text[pos]))
+				if(ppos > pos + 1 || !isWhite(text[pos]))
 					return ""w;
 				ppos = pos;
 			}

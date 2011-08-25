@@ -123,7 +123,7 @@ bool CheckFileName(string fileName)
 		"LPT1","LPT2", "LPT3","LPT4","LPT5", "LPT6", "LPT7","LPT8", "LPT9" 
 	];
 
-	base = toupper(base);
+	base = toUpper(base);
 	foreach(rsvd; reservedNames)
 		if(base == rsvd)
 			return false;
@@ -535,8 +535,8 @@ HRESULT OpenFileInSolutionWithScope(string fname, int line, string scop, bool ad
 		// guess import path from filename (e.g. "src\core\mem.d") and 
 		//  scope (e.g. "core.mem.gc.Proxy") to try opening
 		// the file ("core\mem.d")
-		string inScope = tolower(scop);
-		string path = normalizeDir(getDirName(tolower(fname)));
+		string inScope = toLower(scop);
+		string path = normalizeDir(getDirName(toLower(fname)));
 		inScope = replace(inScope, ".", "\\");
 		
 		int i;
@@ -578,7 +578,7 @@ Config getProjectConfig(string file)
 
 	if(srpSolution && solutionBuildManager)
 	{
-		bool isJSON = tolower(getExt(file)) == "json";
+		bool isJSON = toLower(getExt(file)) == "json";
 		auto wfile = _toUTF16z(file);
 		IEnumHierarchies pEnum;
 		if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &g_projectFactoryCLSID, &pEnum) == S_OK)

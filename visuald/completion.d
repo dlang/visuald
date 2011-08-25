@@ -9,7 +9,7 @@
 module visuald.completion;
 
 import visuald.windows;
-import std.ctype;
+import std.ascii;
 import std.string;
 import std.utf;
 import std.file;
@@ -112,7 +112,7 @@ class Declarations
 	}
 	bool IsCommitChar(string textSoFar, int index, dchar ch)
 	{
-		return ch == '\n' || ch == '\r'; // !(isalnum(ch) || ch == '_');
+		return ch == '\n' || ch == '\r'; // !(isAlphaNum(ch) || ch == '_');
 	}
 	string OnCommit(IVsTextView textView, string textSoFar, dchar ch, int index, ref TextSpan initialExtent)
 	{
@@ -141,9 +141,9 @@ class Declarations
 			foreach(string name; dirEntries(impdir, SpanMode.shallow))
 			{
 				string base = getBaseName(name);
-				string ext = tolower(getExt(name));
+				string ext = toLower(getExt(name));
 				bool canImport = false;
-				bool issubdir = isdir(name);
+				bool issubdir = isDir(name);
 				if(issubdir)
 					canImport = (ext.length == 0);
 				else if(ext == "d" || ext == "di")
@@ -218,7 +218,7 @@ class Declarations
 		int end = min(lineCount, line + kCompletionSearchLines);
 
 		string tok = GetTokenBeforeCaret(textView, src);
-		if(tok.length && !isalnum(tok[0]) && tok[0] != '_')
+		if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
 			tok = "";
 
 		int iState = src.mColorizer.GetLineState(start);
@@ -250,7 +250,7 @@ class Declarations
 	bool SymbolExpansions(IVsTextView textView, Source src)
 	{
 		string tok = GetTokenBeforeCaret(textView, src);
-		if(tok.length && !isalnum(tok[0]) && tok[0] != '_')
+		if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
 			tok = "";
 		if(!tok.length)
 			return false;

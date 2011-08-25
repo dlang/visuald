@@ -19,6 +19,7 @@ import vdc.parser.mod;
 import std.conv;
 import std.string;
 import std.stdio;
+import std.array;
 
 alias int TokenId;
 enum NumTokens = TOK_end_Operators;
@@ -483,7 +484,7 @@ class CodeWriter
 	void indent(int n)
 	{
 		if(n > 0)
-			indentation ~= repeat("  ", n);
+			indentation ~= replicate("  ", n);
 		else
 			indentation = indentation[0..$+n*2];
 	}

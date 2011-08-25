@@ -10,7 +10,7 @@ module visuald.viewfilter;
 
 import visuald.windows;
 import std.string;
-import std.ctype;
+import std.ascii;
 import std.utf;
 import std.conv;
 import std.algorithm;
@@ -345,7 +345,7 @@ version(tip)
 				//else
 				if(mCodeWinMgr.mSource.IsCompletorActive())
 				{
-					if(isalnum(ch) || ch == '_')
+					if(isAlphaNum(ch) || ch == '_')
 						initCompletion();
 					else
 						mCodeWinMgr.mSource.DismissCompletor();

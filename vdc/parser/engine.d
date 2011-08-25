@@ -660,7 +660,7 @@ class Parser
 	}
 	else
 	{
-		S[] lines = splitlines(text);
+		S[] lines = splitLines(text);
 		foreach(lno, line; lines)
 			parseLine(state, line, lno + 1);
 	}

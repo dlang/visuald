@@ -749,7 +749,7 @@ class Project : CVsHierarchy,
 			string root = getDirName(GetRootNode().GetFullPath());
 			docName = root ~ "\\" ~ docName;
 		}
-		docName = tolower(docName);
+		docName = toLower(docName);
 
 		CHierNode node = searchNode(GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == docName; });
 		if(node)

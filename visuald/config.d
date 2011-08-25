@@ -400,7 +400,9 @@ class ProjectOptions
 			addFileMacros(solutionpath, "SOLUTION", replacements);
 		replacements["PLATFORMNAME"] = "Win32";
 		addFileMacros(projectpath, "PROJECT", replacements);
+		replacements["PROJECTNAME"] = config.GetProjectName();
 		addFileMacros(safeprojectpath, "SAFEPROJECT", replacements);
+		replacements["SAFEPROJECTNAME"] = config.GetProjectName().replace(" ", "_");
 		addFileMacros(inputfile.length ? inputfile : projectpath, "INPUT", replacements);
 		replacements["CONFIGURATIONNAME"] = configname;
 		replacements["OUTDIR"] = outdir;
@@ -1523,7 +1525,7 @@ class Config :	DisposingComObject,
 	{
 		string tool = file.GetTool();
 		if(tool == "")
-			if(tolower(getExt(file.GetFilename())) == "rc")
+			if(toLower(getExt(file.GetFilename())) == "rc")
 				return true;
 		return tool == kToolResourceCompiler;
 	}
@@ -1534,7 +1536,7 @@ class Config :	DisposingComObject,
 		if(tool == "")
 		{
 			string fname = file.GetFilename();
-			string ext = tolower(getExt(fname));
+			string ext = toLower(getExt(fname));
 			if(ext == "d" || ext == "ddoc" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
 				tool = "DMD";
 			else if(ext == "rc")
@@ -1549,7 +1551,7 @@ class Config :	DisposingComObject,
 		if(tool == "")
 		{
 			string fname = file.GetFilename();
-			string ext = tolower(getExt(fname));
+			string ext = toLower(getExt(fname));
 			if(ext == "d" && mProjectOptions.singleFileCompilation == ProjectOptions.kSingleFileCompilation)
 				tool = "DMDsingle";
 			else if(ext == "d" || ext == "ddoc" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
@@ -1724,7 +1726,7 @@ class Config :	DisposingComObject,
 
 	string getModuleName(string fname)
 	{
-		string ext = tolower(getExt(fname));
+		string ext = toLower(getExt(fname));
 		if(ext != "d" && ext != "di")
 			return "";
 		

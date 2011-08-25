@@ -12,6 +12,7 @@ import std.stdio;
 import std.datetime;
 import std.conv;
 import std.string;
+import std.array;
 
 extern(Windows) void OutputDebugStringA(const char* lpOutputString);
 extern(Windows) uint GetCurrentThreadId();
@@ -55,7 +56,7 @@ version(enableLog) {
 		auto len = sprintf(buffer.ptr, "%02d:%02d:%02d - %04x - ",
 		                   now.hour, now.minute, now.second, tid);
 		string s = to!string(buffer[0..len]);
-		s ~= repeat(" ", gLogIndent);
+		s ~= replicate(" ", gLogIndent);
 		
 		void putc(dchar c)
 		{
@@ -85,7 +86,7 @@ version(enableLog) {
 				if(gLogFirst)
 				{
 					gLogFirst = false;
-					s = "\n" ~ repeat("=", 80) ~ "\n" ~ s;
+					s = "\n" ~ replicate("=", 80) ~ "\n" ~ s;
 				}
 				std.file.append(gLogFile, s);
 			}

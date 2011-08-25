@@ -782,7 +782,8 @@ private:
 			// icons  have image index IDR_XXX - IDR_FIRST
 			for (int i = IDR_FIRST; i <= IDR_LAST && SUCCEEDED(hr); i++)
 			{
-				HICON hicn = cast(HICON)LoadImage(getInstance(), MAKEINTRESOURCE(i), IMAGE_ICON, c_cxToolbarIcon, c_cyToolbarIcon, LR_DEFAULTCOLOR | LR_SHARED);
+				HICON hicn = cast(HICON)LoadImage(getInstance(), MAKEINTRESOURCE(i), 
+												  IMAGE_ICON, c_cxToolbarIcon, c_cyToolbarIcon, LR_DEFAULTCOLOR | LR_SHARED);
 				hr = hicn ? S_OK : HResultFromLastError();
 				if (SUCCEEDED(hr))
 				{
@@ -1759,8 +1760,8 @@ else
 				// guess import path from filename (e.g. "src\core\mem.d") and 
 				//  scope (e.g. "core.mem.gc.Proxy") to try opening
 				// the file ("core\mem.d")
-				string inScope = tolower(psiWeak.GetScope());
-				string path = normalizeDir(getDirName(tolower(psiWeak.GetPath())));
+				string inScope = toLower(psiWeak.GetScope());
+				string path = normalizeDir(getDirName(toLower(psiWeak.GetPath())));
 				inScope = replace(inScope, ".", "\\");
 				
 				int i;

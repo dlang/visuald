@@ -32,7 +32,7 @@ import vdc.lexer;
 import c2d.dlist;
 
 import std.string;
-import std.ctype;
+import std.ascii;
 import std.conv;
 
 alias wstring _string;
@@ -178,7 +178,7 @@ _string tokensToIdentifier(TokenIterator start, TokenIterator end)
 	while(!start.atEnd() && start != end)
 	{
 		if(ident.length > 0 && start.text.length > 0)
-			if(isalnum(ident[$-1]) && isalnum(start.text[0]))
+			if(isAlphaNum(ident[$-1]) && isAlphaNum(start.text[0]))
 				ident ~= " ";
 		ident ~= start.text;
 		++start;
@@ -240,7 +240,7 @@ _string tokenListToString(TokenIterator start, TokenIterator end, bool checkSpac
 			{
 				dchar prevch = prevtext[$-1];
 				dchar ch = txt[0];
-				if((isalnum(ch) || ch == '_') && (isalnum(prevch) || prevch == '_'))
+				if((isAlphaNum(ch) || ch == '_') && (isAlphaNum(prevch) || prevch == '_'))
 					txt = " " ~ txt;
 			}
 			prevtext = tok.text;

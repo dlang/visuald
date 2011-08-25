@@ -16,7 +16,7 @@ import std.c.stdlib;
 import std.path;
 import std.utf;
 import std.string;
-import std.ctype;
+import std.ascii;
 import std.conv;
 import std.array;
 
@@ -63,7 +63,7 @@ string replaceMacros(string s, string[string] replacements)
 			int len = indexOf(s[i+2 .. $], ')');
 			if(len < 0)
 				break;
-			string id = toupper(s[i + 2 .. i + 2 + len]);
+			string id = toUpper(s[i + 2 .. i + 2 + len]);
 			string nid;
 			if(string *ps = id in replacements)
 				nid = *ps;
@@ -115,7 +115,7 @@ string[] tokenizeArgs(string text, bool semi_is_seperator = true, bool space_is_
 	{
 		uint startpos = pos;
 		dchar ch = decode(text, pos);
-		if(isspace(ch))
+		if(isWhite(ch))
 			continue;
 
 		uint endpos = pos;
@@ -130,7 +130,7 @@ string[] tokenizeArgs(string text, bool semi_is_seperator = true, bool space_is_
 			{
 				ch = decode(text, pos);
 			}
-			if(isspace(ch) && (space_is_seperator || ch != ' '))
+			if(isWhite(ch) && (space_is_seperator || ch != ' '))
 				break;
 			if(semi_is_seperator && ch == ';')
 				break;
@@ -185,7 +185,7 @@ int countVisualSpaces(S)(S txt, int tabSize, int* txtpos = null)
 {
 	int p = 0;
 	int n = 0;
-	while(n < txt.length && isspace(txt[n]))
+	while(n < txt.length && isWhite(txt[n]))
 	{
 		if(txt[n] == '\t')
 			p = p + tabSize - (p % tabSize);
@@ -291,7 +291,7 @@ string extractDefines(string s)
 			while(p < q && (s[p] == ' ' || s[p] == '\t'))
 				p++;
 			int r = p;
-			while(r < q && !isspace(s[r]))
+			while(r < q && !isWhite(s[r]))
 				r++;
 			if(r < q)
 			{
@@ -321,7 +321,7 @@ bool parseLong(ref char[] txt, out long res)
 {
 	munch(txt, " \t\n\r");
 	int n = 0;
-	while(n < txt.length && isdigit(txt[n]))
+	while(n < txt.length && isDigit(txt[n]))
 		n++;
 	if(n <= 0)
 		return false;
@@ -334,7 +334,7 @@ char[] parseNonSpace(ref char[] txt)
 {
 	munch(txt, " \t\n\r");
 	int n = 0;
-	while(n < txt.length && !isspace(txt[n]))
+	while(n < txt.length && !isWhite(txt[n]))
 		n++;
 	char[] res = txt[0..n];
 	txt = txt[n..$];
@@ -349,7 +349,7 @@ S createPasteString(S)(S s)
 	{
 		if(t.length > 30)
 			return t ~ "...";
-		bool isw = iswhite(ch);
+		bool isw = isWhite(ch);
 		if(ch == '&')
 			t ~= "&&";
 		else if(!isw)

@@ -1368,6 +1368,8 @@ class Expression : AST
 			case Token.Mixin:
 				txt = "mixin(" ~ children[0].toString(tsd) ~ ")";
 				break;
+			default:
+				assert(0);
 			}
 			break;
 
@@ -1417,6 +1419,8 @@ class Expression : AST
 				}
 				txt ~= "]";
 				break;
+			default:
+				assert(0);
 			}
 			break;
 
@@ -1437,6 +1441,8 @@ class Expression : AST
 			case Token.Delete:
 				txt = Token.toString(_toktype) ~ " " ~ children[0].toString(tsd);
 				break;
+			default:
+				assert(0);
 			}
 			break;
 
@@ -1464,6 +1470,8 @@ class Expression : AST
 			case Token.Comma:
 				txt = children[0].toString(tsd) ~ " " ~ Token.toString(_toktype) ~ " " ~ children[1].toString(tsd);
 				break;
+			default:
+				assert(0);
 			}
 			break;
 
@@ -1473,6 +1481,8 @@ class Expression : AST
 		case Type.CastExp:
 			txt = "(" ~ children[0].toString(tsd) ~ ")" ~ children[1].toString(tsd);
 			break;
+		default:
+			assert(0);
 		}
 		return txt;
 	}
@@ -1913,6 +1923,8 @@ class DeclType : AST
 		case Elipsis:
 			txt = "..."; 
 			break;
+		default:
+			assert(0);
 		}
 		return txt;
 	}

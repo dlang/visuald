@@ -11,6 +11,7 @@ module visuald.simpleparser;
 import std.exception;
 import std.string;
 import std.conv;
+import std.array;
 
 import vdc.lexer;
 
@@ -434,7 +435,7 @@ class ParserBase(S = string)
 		if(stack.length == 0)
 			stack ~= new Module!S;
 		
-		debug(log) writeln(repeat(" ", stack.length), "shift ", tok.text, " ", logString(tok.span));
+		debug(log) writeln(replicate(" ", stack.length), "shift ", tok.text, " ", logString(tok.span));
 		while(!stack[$-1].shift(this, tok)) {}
 	}
 
@@ -450,7 +451,7 @@ class ParserBase(S = string)
 	
 	void push(Location loc)
 	{
-		debug(log) writeln(repeat(" ", stack.length), "push ", loc);
+		debug(log) writeln(replicate(" ", stack.length), "push ", loc);
 		assert(stack.length > 0);
 		assert(loc.parent == stack[$-1]);
 		stack[$-1].children ~= loc;
@@ -462,13 +463,13 @@ class ParserBase(S = string)
 		enforce(stack.length, "parser stack empty");
 		Location loc = stack[$-1];
 		stack = stack[0..$-1];
-		debug(log) writeln(repeat(" ", stack.length), "pop ", loc, " ", logString(loc.span));
+		debug(log) writeln(replicate(" ", stack.length), "pop ", loc, " ", logString(loc.span));
 		return loc;
 	}
 
 	void replace(Location loc)
 	{
-		debug(log) writeln(repeat(" ", stack.length), "replace ", loc);
+		debug(log) writeln(replicate(" ", stack.length), "replace ", loc);
 		Location prev = pop();
 		assert(stack.length > 0);
 		assert(stack[$-1].children.length > 0);
@@ -573,7 +574,7 @@ class ParserBase(S = string)
 	
 	void writeTree(Location loc, int indent)
 	{
-		writeln(repeat(" ", indent), loc, " ", logString(loc.span));
+		writeln(replicate(" ", indent), loc, " ", logString(loc.span));
 		foreach(child; loc.children)
 			writeTree(child, indent + 1);
 	}

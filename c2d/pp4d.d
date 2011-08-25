@@ -38,7 +38,7 @@ import std.string;
 import std.file;
 import std.path;
 import std.stdio;
-import std.ctype;
+import std.ascii;
 import std.algorithm;
 import std.getopt;
 import std.utf;
@@ -554,7 +554,7 @@ class pp4d
 	//////////////////////////////////////////////////////////////
 	string translateModuleName(string name)
 	{
-		name = tolower(name);
+		name = toLower(name);
 		if(name == "version" || name == "shared" || name == "align")
 			return keywordPrefix ~ name;
 		return name;
@@ -1207,7 +1207,7 @@ class pp4d
 				break;
 			}
 		
-		d_file = tolower(d_file);
+		d_file = toLower(d_file);
 		if(d_file._endsWith(".idl") || d_file._endsWith(".idh"))
 			d_file = d_file[0 .. $-3] ~ "d";
 		if(d_file.endsWith(".h"))

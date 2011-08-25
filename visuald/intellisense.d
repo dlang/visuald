@@ -15,7 +15,9 @@ import std.datetime;
 import std.conv;
 import std.string;
 import std.algorithm;
+
 import std.regex;
+//import stdext.fred;
 
 import core.memory;
 import visuald.windows;
@@ -109,15 +111,15 @@ struct SearchData
 		if(searchFields & kFieldName)
 			if(JSONValue* n = "name" in obj)
 				if(n.type == JSON_TYPE.STRING)
-					name = caseSensitive ? n.str : tolower(n.str);
+					name = caseSensitive ? n.str : toLower(n.str);
 		
 		if(searchFields & kFieldType)
 			if(JSONValue* typ = "type" in obj)
 				if(typ.type == JSON_TYPE.STRING)
-					type = caseSensitive ? typ.str : tolower(typ.str);
+					type = caseSensitive ? typ.str : toLower(typ.str);
 
 		if(searchFields & kFieldScope)
-			inScope = sc ? (caseSensitive ? sc.toString() : tolower(sc.toString())) : "";
+			inScope = sc ? (caseSensitive ? sc.toString() : toLower(sc.toString())) : "";
 		
 		return matchNames(name, type, inScope);
 	}
@@ -132,13 +134,13 @@ struct SearchData
 		
 		string name, type, inScope;
 		if(searchFields & kFieldName)
-			name = caseSensitive ? node.name : tolower(node.name);
+			name = caseSensitive ? node.name : toLower(node.name);
 		
 		if(searchFields & kFieldType)
-			type = caseSensitive ? node.type : tolower(node.type);
+			type = caseSensitive ? node.type : toLower(node.type);
 
 		if(searchFields & kFieldScope)
-			inScope = caseSensitive ? node.GetScope() : tolower(node.GetScope());
+			inScope = caseSensitive ? node.GetScope() : toLower(node.GetScope());
 		
 		return matchNames(name, type, inScope);
 	}
@@ -178,7 +180,7 @@ struct SearchData
 	
 	static bool isIdentChar(dchar ch)
 	{
-		return isalnum(ch) || ch == '_';
+		return isAlphaNum(ch) || ch == '_';
 	}
 	static bool isWordBoundary(dchar ch1, dchar ch2)
 	{

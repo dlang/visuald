@@ -29,12 +29,12 @@
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
+  <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
-  <warnings>1</warnings>
-  <infowarnings>0</infowarnings>
+  <warnings>0</warnings>
+  <infowarnings>1</infowarnings>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
@@ -181,6 +181,9 @@
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="VisualD">
+  <Folder name="a_workaround">
+   <File path="workaround.d" />
+  </Folder>
   <Folder name="c2d">
    <File path="..\c2d\dlist.d" />
   </Folder>
@@ -208,8 +211,10 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" />
    <File path="Resources\WholeWord.ico" />
   </Folder>
-  <Folder name="workaround">
-   <File path="workaround.d" />
+  <Folder name="stdext">
+   <File tool="None" path="..\stdext\fred.d" />
+   <File tool="None" path="..\stdext\fred_uni.d" />
+   <File tool="None" path="..\stdext\regionallocator.d" />
   </Folder>
   <File path="build.d" />
   <File path="chiercontainer.d" />

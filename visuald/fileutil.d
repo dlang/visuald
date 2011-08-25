@@ -35,7 +35,7 @@ string normalizePath(string path)
 
 string canonicalPath(string path)
 {
-	return tolower(replace(path, "/", "\\"));
+	return toLower(replace(path, "/", "\\"));
 }
 
 string makeFilenameAbsolute(string file, string workdir)
@@ -299,8 +299,8 @@ string makeRelative(string file, string path)
 	if(path[$-1] != '\\')
 		path ~= "\\";
 
-	string lfile = tolower(file);
-	string lpath = tolower(path);
+	string lfile = toLower(file);
+	string lpath = toLower(path);
 
 	int posfile = 0;
 	for( ; ; )

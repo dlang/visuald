@@ -26,6 +26,8 @@ Project:
   which seems like a frozen UI (only first dialog open)
 - incremental builds?
 - DnD files/folders loses project file settings
+- retreive both filename and name in the solution, and make them accessible through variables
+- different icon for project items after changing tool
 
 Language service:
 ---------------

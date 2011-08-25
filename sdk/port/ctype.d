@@ -1,3 +1,3 @@
 module sdk.port.ctype;
 
-public import std.ctype;
+public import std.ascii;

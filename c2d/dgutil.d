@@ -9,9 +9,10 @@
 module c2d.dgutil;
 
 import std.string;
-import std.ctype;
+import std.ascii;
 import std.utf;
 import std.path;
+import std.array;
 import core.exception;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -82,7 +83,7 @@ string reindent(string txt, int indent, int tabsize)
 		if(indentation < 0)
 			indentation = 0;
 		
-		string spaces = repeat("\t", indentation / tabsize) ~ repeat(" ", indentation % tabsize);
+		string spaces = replicate("\t", indentation / tabsize) ~ replicate(" ", indentation % tabsize);
 		ntxt ~= spaces;
 		pos = p;
 	}
@@ -142,7 +143,7 @@ string removeDuplicateEmptyLines(string txt)
 					nl++;
 					lastnlpos = pos;
 				}
-				else if(!isspace(ch))
+				else if(!isWhite(ch))
 					break;
 			}
 			if(nl > 1)

@@ -8,9 +8,9 @@
 
 module vdc.lexer;
 
-import std.ctype;
+import std.ascii;
 import std.utf;
-import std.uni;
+import std.uni : isUniAlpha;
 import std.conv;
 
 // current limitations:
@@ -136,7 +136,7 @@ struct Lexer
 		string ident = toUTF8(text[startpos .. pos]);
 
 		if(findKeyword(ident, pid))
-			return TokenColor.Keyword;
+			return pid == TOK_is ? TokenColor.Operator : TokenColor.Keyword;
 		if(findSpecial(ident, pid))
 			return TokenColor.String;
 
@@ -173,7 +173,7 @@ struct Lexer
 			if(ch != '_')
 				if(base < 16 && (ch < '0' || ch >= '0' + base))
 					break;
-				else if(base == 16 && !isxdigit(ch))
+				else if(base == 16 && !isHexDigit(ch))
 					break;
 			pos = nextpos;
 		}
@@ -197,7 +197,7 @@ struct Lexer
 		{
 			uint prevpos = pos;
 			ch = trydecode(text, pos);
-			ch = tolower(ch);
+			ch = toLower(ch);
 			if(ch == 'b')
 				base = 2;
 			else if (ch == 'x')
@@ -216,7 +216,7 @@ struct Lexer
 		nextpos = pos;
 		ch = trydecode(text, nextpos);
 
-		if((base == 10 && tolower(ch) == 'e') || (base == 16 && tolower(ch) == 'p'))
+		if((base == 10 && toLower(ch) == 'e') || (base == 16 && toLower(ch) == 'p'))
 			goto L_exponent;
 		uint trypos = nextpos;
 		if(base >= 8 && ch == '.' && trydecode(text, trypos) != '.') // ".." is the slice token
@@ -230,7 +230,7 @@ L_float:
 
 			nextpos = pos;
 			ch = trydecode(text, nextpos);
-			if((base == 10 && tolower(ch) == 'e') || (base == 16 && tolower(ch) == 'p'))
+			if((base == 10 && toLower(ch) == 'e') || (base == 16 && toLower(ch) == 'p'))
 			{
 L_exponent:
 				// exponent
@@ -244,7 +244,7 @@ L_exponent:
 			// suffix
 			nextpos = pos;
 			ch = trydecode(text, nextpos);
-			if(ch == 'L' || toupper(ch) == 'F')
+			if(ch == 'L' || toUpper(ch) == 'F')
 			{
 L_floatLiteral:
 				pos = nextpos;
@@ -260,10 +260,10 @@ L_complexLiteral:
 			// check integer suffix
 			if(ch == 'i')
 				goto L_complexLiteral;
-			if(toupper(ch) == 'F')
+			if(toUpper(ch) == 'F')
 				goto L_floatLiteral;
 
-			if(toupper(ch) == 'U')
+			if(toUpper(ch) == 'U')
 			{
 				pos = nextpos;
 				ch = trydecode(text, nextpos);
@@ -276,7 +276,7 @@ L_complexLiteral:
 				ch = trydecode(text, nextpos);
 				if(ch == 'i')
 					goto L_complexLiteral;
-				if(toupper(ch) == 'U')
+				if(toUpper(ch) == 'U')
 					pos = nextpos;
 			}
 			pid = TOK_IntegerLiteral;
@@ -405,7 +405,7 @@ L_complexLiteral:
 			s = State.kStringDelimitedNestedBrace;
 		else if(ch == '<')
 			s = State.kStringDelimitedNestedAngle;
-		else if(ch == 0 || isspace(ch)) // bad delimiter, fallback to wysiwyg string
+		else if(ch == 0 || std.uni.isWhite(ch)) // bad delimiter, fallback to wysiwyg string
 			s = State.kStringWysiwyg;
 		else
 		{
@@ -465,7 +465,7 @@ L_complexLiteral:
 	
 	bool isIdentifierCharOrDigit(dchar ch)
 	{
-		return isIdentifierChar(ch) || isdigit(ch);
+		return isIdentifierChar(ch) || isDigit(ch);
 	}
 	
 	bool isIdentifier(S)(S text)
@@ -496,7 +496,7 @@ L_complexLiteral:
 		while(pos < text.length)
 		{
 			dchar ch = decode(text, pos);
-			if(!isdigit(ch))
+			if(!isDigit(ch))
 				return false;
 		}
 		return true;
@@ -554,7 +554,7 @@ L_complexLiteral:
 
 	static bool isCommentOrSpace(S)(int type, S text)
 	{
-		return (type == TokenColor.Comment || (type == TokenColor.Text && isspace(text[0])));
+		return (type == TokenColor.Comment || (type == TokenColor.Text && isWhite(text[0])));
 	}
 
 	static State scanNestedDelimiterString(S)(S text, ref uint pos, State s, ref int nesting)
@@ -658,13 +658,13 @@ L_complexLiteral:
 			}
 			else if(isIdentifierChar(ch))
 				type = scanIdentifier(text, startpos, pos, id);
-			else if(isdigit(ch))
+			else if(isDigit(ch))
 				type = scanNumber(text, ch, pos, id);
 			else if (ch == '.')
 			{
 				uint nextpos = pos;
 				ch = trydecode(text, nextpos);
-				if(isdigit(ch))
+				if(isDigit(ch))
 					type = scanNumber(text, '.', pos, id);
 				else
 					type = scanOperator(text, startpos, pos, id);
@@ -727,11 +727,11 @@ L_complexLiteral:
 						tokLevel++;
 					else if (ch == '}')
 						tokLevel--;
-					if(!isspace(ch))
+					if(!isWhite(ch))
 						type = scanOperator(text, startpos, pos, id);
 					id = TOK_StringLiteral;
 				}
-				else if(!isspace(ch))
+				else if(!isWhite(ch))
 					type = scanOperator(text, startpos, pos, id);
 			}
 			break;
@@ -1263,8 +1263,8 @@ string genOperatorParser(string getch)
 		else
 		{
 			string case_txt = "case '" ~ op[matchlen-1] ~ "':";
-			if(isalnum(op[matchlen-1]))
-				case_txt ~= " ch = getch(); if(isalnum(ch)) goto default;\n" ~ indent ~ "  ";
+			if(isAlphaNum(op[matchlen-1]))
+				case_txt ~= " ch = getch(); if(isAlphaNum(ch)) goto default;\n" ~ indent ~ "  ";
 			txt ~= indent ~ case_txt ~ " len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]][0] ~ "; // " ~ op ~ "\n";
 		
 			while(nextop.length < matchlen || (matchlen > 0 && !_stringEqual(op, nextop, matchlen-1)))

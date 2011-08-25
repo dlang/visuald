@@ -10,7 +10,7 @@ module visuald.colorizer;
 
 import visuald.windows;
 import std.string;
-import std.ctype;
+import std.ascii;
 import std.utf;
 import std.conv;
 import std.algorithm;
@@ -638,9 +638,15 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			else if(debugOrVersion)
 			{
 				if(isVersionEnabled(iLine, "", debugOrVersion))
+				{
 					parseState = VersionParseState.IdleEnabled;
+					goto case VersionParseState.IdleEnabled;
+				}
 				else
+				{
 					parseState = VersionParseState.IdleDisabled;
+					goto case VersionParseState.IdleDisabled;
+				}
 			}
 			else
 				parseState = VersionParseState.IdleEnabled;

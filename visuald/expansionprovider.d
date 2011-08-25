@@ -9,7 +9,7 @@
 module visuald.expansionprovider;
 
 import visuald.windows;
-import std.ctype;
+import std.ascii;
 import std.string;
 import std.utf;
 
@@ -347,7 +347,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 			char ch = func[i];
 
 			// ignore and skip whitespace
-			if (!isspace(ch))
+			if (!isWhite(ch))
 			{
 				switch (ch)
 				{

@@ -24,7 +24,6 @@ import std.c.stdlib;
 import std.windows.charset;
 import std.utf;
 import std.string;
-import std.regexp;
 import std.file;
 import std.path;
 import std.conv;
@@ -35,6 +34,9 @@ import std.algorithm;
 import core.thread;
 import core.stdc.time;
 import core.stdc.string;
+
+import std.regex;
+//import stdext.fred;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
@@ -849,6 +851,14 @@ HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
 	return hr;
 }
 
+bool isInitializedRE(T)(ref T re)
+{
+	static if(__traits(compiles,re.ir))
+		return re.ir !is null; // stdext.fred
+	else
+		return re.captures() > 0; // std.regex
+}
+	
 bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
                                   out string filename, out uint nLineNum,
                                   out string itemText)
@@ -856,17 +866,18 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 	outputLine = strip(outputLine);
 	
 	// DMD compile error
-	static RegExp re1, re2, re3, re4;
-	if(!re1)
-		re1 = new RegExp(r"^(.*)\(([0-9]+)\):(.*)$");
-	
-	string[] match = re1.exec(outputLine);
-	if(match.length == 4)
+	static Regex!char re1, re2, re3, re4;
+	if(!isInitializedRE(re1))
+		re1 = regex(r"^(.*)\(([0-9]+)\):(.*)$"); // replace . with [\x00-\x7f] for std.regex
+
+	auto rematch = match(outputLine, re1);
+	if(!rematch.empty())
 	{
-		filename = replace(match[1], "\\\\", "\\");
-		string lineno = replace(match[2], "\\\\", "\\");
+		auto captures = rematch.captures();
+		filename = replace(captures[1], "\\\\", "\\");
+		string lineno = replace(captures[2], "\\\\", "\\");
 		nLineNum = to!uint(lineno);
-		itemText = strip(match[3]);
+		itemText = strip(captures[3]);
 		if(itemText.startsWith("Warning:")) // make these errors if not building with -wi?
 			nPriority = TP_NORMAL;
 		else
@@ -875,45 +886,46 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 	}
 
 	// link error
-	if(!re2)
-		re2 = new RegExp(r"^ *(Error *[0-9]+:.*)$");
+	if(!isInitializedRE(re2))
+		re2 = regex(r"^ *(Error *[0-9]+:.*)$");
 
-	match = re2.exec(outputLine);
-	if(match.length == 2)
+	rematch = match(outputLine, re2);
+	if(!rematch.empty())
 	{
 		nPriority = TP_HIGH;
 		filename = "";
 		nLineNum = 0;
-		itemText = strip(match[1]);
+		itemText = strip(rematch.captures[1]);
 		return true;
 	}
 
 	// link error with file name
-	if(!re3)
-		re3 = new RegExp(r"^(.*)\(([0-9]+)\) *: *(Error *[0-9]+:.*)$");
+	if(!isInitializedRE(re3))
+		re3 = regex(r"^(.*)\(([0-9]+)\) *: *(Error *[0-9]+:.*)$");
 
-	match = re3.exec(outputLine);
-	if(match.length == 4)
+	rematch = match(outputLine, re3);
+	if(!rematch.empty())
 	{
+		auto captures = rematch.captures();
 		nPriority = TP_HIGH;
-		filename = replace(match[1], "\\\\", "\\");
-		string lineno = replace(match[2], "\\\\", "\\");
+		filename = replace(captures[1], "\\\\", "\\");
+		string lineno = replace(captures[2], "\\\\", "\\");
 		nLineNum = to!uint(lineno);
-		itemText = strip(match[3]);
+		itemText = strip(captures[3]);
 		return true;
 	}
 
 	// link warning
-	if(!re4)
-		re4 = new RegExp(r"^ *(Warning *[0-9]+:.*)$");
+	if(!isInitializedRE(re4))
+		re4 = regex(r"^ *(Warning *[0-9]+:.*)$");
 
-	match = re4.exec(outputLine);
-	if(match.length == 2)
+	rematch = match(outputLine, re4);
+	if(!rematch.empty())
 	{
 		nPriority = TP_NORMAL;
 		filename = "";
 		nLineNum = 0;
-		itemText = strip(match[1]);
+		itemText = strip(rematch.captures[1]);
 		return true;
 	}
 
@@ -969,7 +981,7 @@ bool getFilenamesFromDepFile(string depfile, ref string[] files)
 version(slow)
 {
 		RegExp re = new RegExp(re_match_dep);
-		string[] lines = splitlines(txt);
+		string[] lines = splitLines(txt);
 		foreach(line; lines)
 		{
 			string[] match = re.exec(line);

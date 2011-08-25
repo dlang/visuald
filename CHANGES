@@ -306,7 +306,7 @@ Version history
   * project items now sorted alphabetically
   * fixed a few more issues with relative paths causing a source file to be opened twice in the editor
 
-unreleased Version 0.3.26
+2011-08-25 Version 0.3.26
 
   * fixed regression in last version: single file compilation did not build any d files
   * single file compilation: avoid relinking every time
@@ -316,3 +316,8 @@ unreleased Version 0.3.26
   * global settings: split page into directories/settings pages to make option "Show build time" accessible
   * global settings: added option to disable sorting projects
   * parser now accepts "do {} while(cond)" without trailing ';'
+  * project options macro $(PROJECTNAME) now uses the name in the solution instead of the project file name
+  * fixed bad indentation of first contract
+  * fixed colorization of first token after debug condition without arguments
+  * "is" now always colored as operator, not as keyword
+  * updated to build with dmd 2.055beta

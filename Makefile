@@ -71,7 +71,7 @@ vsi_dirs:
 	if not exist sdk\win32\nul md sdk\win32
 
 $(VSI2D_EXE) : $(VSI2D_SRC)
-	$(DMD2) -map $@.map -of$@ -version=vsi $(VSI2D_SRC)
+	$(DMD2) -d -map $@.map -of$@ -version=vsi $(VSI2D_SRC)
 
 sdk\vsi_sources: $(VSI2D_EXE)
 	$(VSI2D_EXE) -vsi="$(VSISDK)" -win="$(WINSDK)\Include" -dte="$(DTE_IDL_PATH)" -sdk=sdk

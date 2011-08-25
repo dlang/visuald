@@ -13,7 +13,7 @@ import c2d.dlist;
 import c2d.dgutil;
 
 import std.string;
-import std.ctype;
+import std.ascii;
 import std.array;
 static import std.regexp;
 
@@ -109,7 +109,7 @@ string tokensToIdentifier(TokenIterator start, TokenIterator end)
 	while(!start.atEnd() && start != end)
 	{
 		if(ident.length > 0 && start.text.length > 0)
-			if(isalnum(ident[$-1]) && isalnum(start.text[0]))
+			if(isAlphaNum(ident[$-1]) && isAlphaNum(start.text[0]))
 				ident ~= " ";
 		ident ~= start.text;
 		++start;
@@ -186,7 +186,7 @@ string tokenListToString(TokenIterator start, TokenIterator end, bool checkSpace
 			{
 				char prevch = prevtext[$-1];
 				char ch = txt[0];
-				if((isalnum(ch) || ch == '_') && (isalnum(prevch) || prevch == '_'))
+				if((isAlphaNum(ch) || ch == '_') && (isAlphaNum(prevch) || prevch == '_'))
 					txt = " " ~ txt;
 			}
 			prevtext = tok.text;
@@ -860,7 +860,7 @@ TokenIterator expandDefine(ref TokenIterator it, TokenList define, void delegate
 	}
 
 	if(!defIt.atEnd())
-		defIt.pretext = stripl(defIt.pretext);
+		defIt.pretext = stripLeft(defIt.pretext);
 
 	define.begin().eraseUntil(defIt);
 	while(!defIt.atEnd())
@@ -1056,7 +1056,7 @@ string createMixinFunction(TokenList tokList, MixinMode mixinMode)
 	text ~= ") { return \"";
 
 	if(!it.atEnd())
-		it.pretext = stripl(it.pretext);
+		it.pretext = stripLeft(it.pretext);
 
 	while(!it.atEnd())
 	{

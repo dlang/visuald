@@ -11,7 +11,7 @@ import std.string;
 import std.file;
 import std.path;
 import std.stdio;
-import std.ctype;
+import std.ascii;
 import std.array;
 import std.algorithm;
 

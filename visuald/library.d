@@ -1109,7 +1109,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		{
 			searchName = to_string(mObSrch.szName);
 			if(!(mObSrch.grfOptions & VSOBSO_CASESENSITIVE))
-				searchName = tolower(searchName);
+				searchName = toLower(searchName);
 		}
 			
 		foreach(v; arr)
@@ -1126,7 +1126,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 				{
 					string name = GetInfoName(val);
 					if(!(mObSrch.grfOptions & VSOBSO_CASESENSITIVE))
-						name = tolower(name);
+						name = toLower(name);
 					
 					bool rc;
 					switch(mObSrch.eSrchType)

@@ -22,7 +22,7 @@ import std.string;
 import std.file;
 import std.path;
 import std.stdio;
-import std.ctype;
+import std.ascii;
 import std.algorithm;
 import std.getopt;
 import std.utf;
@@ -523,7 +523,7 @@ class idl2d
 		   _endsWith(cond, "_IDH"))
 			return -1;
 
-		if(cond == "_" ~ toupper(currentModule) ~ "_")
+		if(cond == "_" ~ toUpper(currentModule) ~ "_")
 			return -1;
 
 		if(indexOf(cond, "(") < 0 && indexOf(cond, "|") < 0 && indexOf(cond, "&") < 0)
@@ -979,7 +979,7 @@ version(all)
 
 	string translateModuleName(string name)
 	{
-		name = tolower(name);
+		name = toLower(name);
 		if(name == "version" || name == "shared" || name == "align")
 			return keywordPrefix ~ name;
 		return name;
@@ -1007,7 +1007,7 @@ version(all)
 	{
 		text = replace(text, "/", "\\");
 		text = replace(text, "\"", "");
-		text = tolower(getNameWithoutExt(text));
+		text = toLower(getNameWithoutExt(text));
 		string ntext = translateFilename(text);
 		string name = translateModuleName(text);
 		foreach(string file; srcfiles)
@@ -2206,7 +2206,7 @@ version(remove_pp) {} else
 			d_file = replace(d_file, vsi_path, vsi_d_path);
 			d_file = replace(d_file, vsi_hpath, vsi_d_path);
 			d_file = replace(d_file, dte_path, vsi_d_path);
-			d_file = tolower(d_file);
+			d_file = toLower(d_file);
 			if(d_file._endsWith(".idl") || d_file._endsWith(".idh"))
 				d_file = d_file[0 .. $-3] ~ "d";
 			if(d_file.endsWith(".h"))

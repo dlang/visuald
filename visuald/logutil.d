@@ -15,6 +15,7 @@ import std.string;
 import std.stdio;
 import std.conv;
 import std.datetime;
+import std.array;
 
 import stdcarg = core.stdc.stdarg;
 import stdcio = core.stdc.stdio;
@@ -530,7 +531,7 @@ version(test) {
 		auto len = sprintf(buffer.ptr, "%02d:%02d:%02d - %04x - ",
 		                   now.hour, now.minute, now.second, tid);
 		string s = to!string(buffer[0..len]);
-		s ~= repeat(" ", gLogIndent);
+		s ~= replicate(" ", gLogIndent);
 		
 		void putc(dchar c)
 		{
@@ -561,11 +562,11 @@ version(test) {
 				if(gLogFirst)
 				{
 					gLogFirst = false;
-					s = "\n" ~ repeat("=", 80) ~ "\n" ~ s;
+					s = "\n" ~ replicate("=", 80) ~ "\n" ~ s;
 					
 					try
 					{
-						string bar = "\n" ~ repeat("=", 80) ~ "\n";
+						string bar = "\n" ~ replicate("=", 80) ~ "\n";
 						std.file.append(gLogFile, bar);
 						canLog = true;
 					}

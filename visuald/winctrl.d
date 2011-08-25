@@ -432,7 +432,7 @@ class Text : Widget
 
 	void setText(string str)
 	{
-		auto lines = std.string.splitlines(str);
+		auto lines = std.string.splitLines(str);
 		string newline = std.string.newline; // join no longer likes immutable seperator
 		auto winstr = std.string.join(lines, newline);
 		SendMessageW(hwnd, WM_SETTEXT, 0, cast(LPARAM)toUTF16z(winstr));
@@ -440,7 +440,7 @@ class Text : Widget
 
 	void setText(wstring str)
 	{
-		auto lines = std.string.splitlines(str);
+		auto lines = std.string.splitLines(str);
 		static if(__traits(compiles, std.string.join(lines, "\r\n")))
 			auto winstr = std.string.join(lines, "\r\n") ~ "\0";
 		else
@@ -476,7 +476,7 @@ class MultiLineText : Text
 {
 	this(Widget parent, string text = "", int id = 0, bool readonly = false)
 	{
-		scope lines = std.string.splitlines(text);
+		scope lines = std.string.splitLines(text);
 		string newline = std.string.newline;
 		scope winstr = std.string.join(lines, newline);
 		uint exstyle = /*WS_HSCROLL |*/ WS_VSCROLL | ES_WANTRETURN | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL;

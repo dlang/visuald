@@ -44,6 +44,8 @@ VDC_SRC = $(VDC)/parser/aggr.d \
         $(VDC)/logger.d \
         $(VDC)/lexer.d
 
+# FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
+
 SRC = workaround.d \
       config.d dlangsvc.d dpackage.d register.d comutil.d \
       logutil.d dllmain.d dproject.d hierarchy.d expansionprovider.d \
@@ -52,7 +54,8 @@ SRC = workaround.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d pkgutil.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
       profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d \
-      ..\c2d\dlist.d tokenreplace.d tokenreplacedialog.d library.d
+      ..\c2d\dlist.d tokenreplace.d tokenreplacedialog.d library.d \
+      $(FRED_SRC)
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
        resources/DAboutLogo.ico resources/GroupByType.ico resources/CombineColumns.ico \

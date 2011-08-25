@@ -162,7 +162,7 @@ public:
 	string GetCanonicalName()
 	{
 		string name = GetFullPath();
-		return tolower(name);
+		return toLower(name);
 	}
 
 	string GetFullPath()

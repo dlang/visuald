@@ -141,7 +141,7 @@ class CFileNode : CHierNode,
 	{
 		string oldpath = GetFullPath();
 		string newpath = normalizeDir(getDirName(oldpath)) ~ newname;
-		if(tolower(newname) == tolower(mFilename))
+		if(toLower(newname) == toLower(mFilename))
 			return S_OK;
 		
 		if(HRESULT hr = CloseDoc(SLNSAVEOPT_PromptSave))
@@ -1242,7 +1242,7 @@ version(none)
 	{
 		mixin(LogCallMix2);
 
-		string docName = tolower(to_string(pszName));
+		string docName = toLower(to_string(pszName));
 		CHierNode node = searchNode(GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == docName; });
 		*pitemid = GetVsItemID(node);
 		return node ? S_OK : E_FAIL;
@@ -1919,7 +1919,7 @@ public: // IVsHierarchyEvent propagation
 				if (msgRet != IDYES)
 					return null;
 
-				string docName = tolower(strNewFileName);
+				string docName = toLower(strNewFileName);
 				CHierNode node = searchNode(GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == docName; });
 				// Remove the corresponding node from the hierarchy, we will add a new one with the same name below
 				if(node)
@@ -1986,7 +1986,7 @@ public: // IVsHierarchyEvent propagation
 			}
 			else
 			{
-				string canonicalName = tolower(strFullPath);
+				string canonicalName = toLower(strFullPath);
 				CHierNode node = searchNode(GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == canonicalName; });
 				if(node && !moveIfInProject)
 				{
@@ -2011,7 +2011,7 @@ public: // IVsHierarchyEvent propagation
 			{
 				string bname = basename(strFullPath);
 				for(CHierNode node = pNode.GetHeadEx(true); node; node = node.GetNext(true))
-					if(tolower(bname) == node.GetName())
+					if(toLower(bname) == node.GetName())
 					{
 						if (!fSilent)
 						{
