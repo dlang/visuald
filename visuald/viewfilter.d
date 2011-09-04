@@ -256,7 +256,7 @@ version(tip)
 				return mCodeWinMgr.mSource.StopOutlining();
 			case ECMD_OUTLN_TOGGLE_ALL:
 				return mCodeWinMgr.mSource.ToggleOutlining();
-				
+			
 			default:
 				break;
 			}
@@ -317,6 +317,18 @@ version(tip)
 			if (ep.HandlePostExec(pguidCmdGroup, nCmdID, nCmdexecopt, gotEnterKey, pvaIn, pvaOut))
 				return rc;
 
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97) 
+		{
+			switch (nCmdID) 
+			{
+			case cmdidPasteNextTBXCBItem:
+			case cmdidPaste:
+				ReindentPastedLines();
+				break;
+			default:
+				break;
+			}
+		}
 		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K) 
 		{
 			switch (nCmdID) 
@@ -351,7 +363,8 @@ version(tip)
 						mCodeWinMgr.mSource.DismissCompletor();
 				}
 				
-				if(ch == '{' || ch == '}')
+				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' || 
+				   ch == 'n' || ch == 't' || ch == 'y') // last characters of "in", "out" and "body"
 					HandleSmartIndent(ch);
 				
 				if(mCodeWinMgr.mSource.IsMethodTipActive())
@@ -806,14 +819,20 @@ version(tip)
 
 		wstring linetxt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
+		wstring trimmed;
+		if(std.ascii.isAlpha(ch) && ((trimmed = strip(linetxt)) == "in" || trimmed == "out" || trimmed == "body"))
+			return ReindentLines();
 		if(idx > p || (ch != '\n' && linetxt[p] != ch))
 			return S_FALSE; // do nothing if not at beginning of line
 
 		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &langPrefs);
 		if(n < 0 || n == orgn)
 			return S_OK;
-			
-		return mCodeWinMgr.mSource.doReplaceLineIndent(line, p, n, &langPrefs);
+		
+		if(ch == '\n')
+			return mView.SetCaretPos(line, n);
+		else
+			return mCodeWinMgr.mSource.doReplaceLineIndent(line, p, n, &langPrefs);
 	}
 
 	int ReindentLines()
@@ -822,7 +841,11 @@ version(tip)
 		int hr = mView.GetSelection(&iStartLine, &iStartIndex, &iEndLine, &iEndIndex);
 		if(FAILED(hr)) // S_FALSE if no selection, but caret-coordinates returned
 			return hr;
+		return ReindentLines(iStartLine, iEndLine);
+	}
 
+	int ReindentLines(int iStartLine, int iEndLine)
+	{
 		if(iEndLine < iStartLine)
 			std.algorithm.swap(iStartLine, iEndLine);
 		
@@ -830,7 +853,7 @@ version(tip)
 		if(compAct)
 			compAct.OpenCompoundAction("ReindentLines"w.ptr);
 		
-		hr = mCodeWinMgr.mSource.ReindentLines(iStartLine, iEndLine);
+		int hr = mCodeWinMgr.mSource.ReindentLines(iStartLine, iEndLine);
 
 		if(compAct)
 		{
@@ -839,7 +862,16 @@ version(tip)
 		}
 		return hr;
 	}
-		
+
+	int ReindentPastedLines()
+	{
+		if(Package.GetGlobalOptions().pasteIndent)
+			with(mCodeWinMgr.mSource.mLastTextLineChange)
+				if(iStartLine != iNewEndLine)
+					return ReindentLines(iStartLine, iNewEndLine);
+		return S_OK;
+	}
+
 	//////////////////////////////////////////////////////////////
 	int CommentLines(int commentMode)
 	{

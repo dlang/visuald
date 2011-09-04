@@ -714,6 +714,7 @@ class GlobalOptions
 	bool sortProjects = true;
 	bool autoOutlining;
 	bool parseSource;
+	bool pasteIndent;
 	
 	bool ColorizeVersions = true;
 	bool lastColorizeVersions;
@@ -783,6 +784,7 @@ class GlobalOptions
 			sortProjects     = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
 			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
+			pasteIndent      = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
 			// overwrite by user config
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
@@ -798,6 +800,7 @@ class GlobalOptions
 			sortProjects         = keyUserOpts.GetDWORD("sortProjects",     sortProjects) != 0;
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
+			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			
 			CHierNode.setContainerIsSorted(sortProjects);
@@ -850,6 +853,7 @@ class GlobalOptions
 			keyToolOpts.Set("sortProjects", sortProjects);
 			keyToolOpts.Set("autoOutlining", autoOutlining);
 			keyToolOpts.Set("parseSource", parseSource);
+			keyToolOpts.Set("pasteIndent", pasteIndent);
 
 			CHierNode.setContainerIsSorted(sortProjects);
 		}

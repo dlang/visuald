@@ -15,7 +15,8 @@ import c2d.dgutil;
 import std.string;
 import std.ascii;
 import std.array;
-static import std.regexp;
+//static import std.regexp;
+static import std.regex;
 
 //////////////////////////////////////////////////////////////////////////////
 alias DList!(Token) TokenList;
@@ -1098,7 +1099,10 @@ void regexReplacePPdefines(TokenList srctokens, string[string] defines)
 
 			string ident = tokIt[1].text;
 			foreach(re, s; defines)
-				if(std.regexp.find(ident, re) >= 0)
+			{
+				//if(std.regexp.find(ident, re) >= 0)
+				auto rex = std.regex.regex(re);
+				if(!std.regex.match(ident, rex).empty())
 				{
 					// no arguments supported so far
 					string posttext = "\n";
@@ -1117,6 +1121,7 @@ void regexReplacePPdefines(TokenList srctokens, string[string] defines)
 					it.type = Token.PPinsert;
 					break;
 				}
+			}
 		}
 		it.advance();
 	}

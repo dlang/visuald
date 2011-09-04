@@ -458,7 +458,7 @@ class Parser
 		return Reject;
 	}
 	
-	static Action rollbackPeekAfterParen(Parser p, State fn)
+	static Action rollbackPeekAfterParen(Parser p)
 	{
 		assert(p.tok.id == TOK_lparen);
 		return Forward;

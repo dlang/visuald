@@ -185,7 +185,11 @@
    <File path="workaround.d" />
   </Folder>
   <Folder name="c2d">
+   <File path="..\c2d\dgutil.d" />
    <File path="..\c2d\dlist.d" />
+   <File path="..\c2d\idl2d.d" />
+   <File path="..\c2d\tokenizer.d" />
+   <File path="..\c2d\tokutil.d" />
   </Folder>
   <Folder name="Resources">
    <File path="Resources\AlternateRowColor.ico" />

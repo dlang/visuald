@@ -184,6 +184,7 @@
   <File path="dgutil.d" />
   <File path="dlist.d" />
   <File path="idl2d.d" />
+  <File path="idl2d_main.d" />
   <File path="tokenizer.d" />
   <File path="tokutil.d" />
  </Folder>

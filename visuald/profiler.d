@@ -583,6 +583,7 @@ private:
 
 		txt = decodeDmdString(txt, p);
 		if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
+		{
 			static if(hasTypeArg)
 				txt = to!string(demangle(txt, fullDeco));
 			else
@@ -590,7 +591,7 @@ private:
 				pragma(msg, text(__FILE__, "(", __LINE__, "): profiler._demangle uses compatibility mode, this won't allow disabling type info"));
 				txt = to!string(demangle(txt));
 			}
-			
+		}
 		return txt;
 	}
 
@@ -916,7 +917,7 @@ private:
 		return lRet;
 	}
 
-	static extern(Windows) LRESULT s_HdrWndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam, in UINT_PTR uIdSubclass, in DWORD_PTR dwRefData)
+	static extern(Windows) LRESULT s_HdrWndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 	{
 		if(ProfilePane pfsec = cast(ProfilePane)cast(void*)dwRefData)
 			return pfsec._HdrWndProc(hWnd, uiMsg, wParam, lParam);

@@ -257,6 +257,7 @@ class idl2d
 		case Token.BraceR:
 			if(!first)
 				return tokIt.type != Token.Identifier && tokIt.type != Token.Number && tokIt.type != Token.ParenL;
+			return !first;
 		case Token.Equal:
 		case Token.Unequal:
 		case Token.LessThan:
@@ -508,7 +509,7 @@ class idl2d
 		case "_WIN32":
 			//if(!vsi)
 				return 1;
-			break;
+			//break;
 		default: 
 			break;
 		}
@@ -1013,10 +1014,12 @@ version(all)
 		foreach(string file; srcfiles)
 		{
 			if(translateModuleName(getNameWithoutExt(file)) == name)
+			{
 				if(file.startsWith(win_path))
 					return packageWin ~ ntext;
 				else
 					return packageVSI ~ ntext;
+			}
 		}
 		return packageNF ~ ntext;
 	}
@@ -2243,13 +2246,6 @@ version(remove_pp) {} else
 	string currentModule;
 	string currentFullModule;
 }
-
-int main(string[] argv)
-{
-	idl2d inst = new idl2d;
-	return inst.main(argv);
-}
-
 
 ///////////////////////////////////////////////////////////////////////
 void testConvert(string txt, string exptxt, string mod = "")

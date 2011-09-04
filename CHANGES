@@ -321,3 +321,9 @@ Version history
   * fixed colorization of first token after debug condition without arguments
   * "is" now always colored as operator, not as keyword
   * updated to build with dmd 2.055beta
+
+unreleased Version 0.3.27
+
+  * smart reindenting line when typing last char of sole "in", "out" and "body"
+  * tweaked smart indenting with respect to enumerators, arrays, labels and more
+  * paste a full line or more now causes automatic reinentation (global option to disable)

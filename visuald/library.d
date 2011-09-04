@@ -669,6 +669,7 @@ class Library : DComObject,
 		else // item has been unchecked
 		{
 			if (mCheckState != LCS_UNCHECKED)
+			{
 				if (!cChecked)
 				{
 					// the last checked has been unchecked
@@ -678,6 +679,7 @@ class Library : DComObject,
 				}
 				else
 					mCheckState = LCS_CHECKEDGRAY;
+			}
 		}
 
 		if (fUpdateLibraryCounter)

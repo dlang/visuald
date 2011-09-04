@@ -63,7 +63,7 @@ $(TLB2IDL_EXE) : tlb2idl\tlb2idl.d
 vsi2d: vsi_dirs sdk\vsi_sources vsi_lib 
 # $(VSI_LIB)
 
-VSI2D_SRC = c2d\idl2d.d c2d\tokenizer.d c2d\tokutil.d \
+VSI2D_SRC = c2d\idl2d.d c2d\idl2d_main.d c2d\tokenizer.d c2d\tokutil.d \
 	c2d\dgutil.d c2d\dlist.d 
 
 vsi_dirs:

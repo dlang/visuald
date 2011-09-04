@@ -65,6 +65,7 @@ class EnumDeclaration : Type
 		if(!writer.writeDeclarations)
 			return;
 		if(writer.writeReferencedOnly)
+		{
 			if(ident.length)
 			{
 				if(semanticSearches == 0)
@@ -73,7 +74,7 @@ class EnumDeclaration : Type
 			else if(auto bdy = getBody())
 				if(!bdy.hasSemanticSearches())
 					return;
-		
+		}
 		if(isDecl)
 		{
 			writer("enum ");

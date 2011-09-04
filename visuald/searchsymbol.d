@@ -899,7 +899,7 @@ private:
 		return lRet;
 	}
 
-	static extern(Windows) LRESULT s_HdrWndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam, in UINT_PTR uIdSubclass, in DWORD_PTR dwRefData)
+	static extern(Windows) LRESULT s_HdrWndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 	{
 		if(SearchPane pfsec = cast(SearchPane)cast(void*)dwRefData)
 			return pfsec._HdrWndProc(hWnd, uiMsg, wParam, lParam);

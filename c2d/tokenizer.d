@@ -335,7 +335,7 @@ version(Java)
 		case PPother:
 		case Other:
 		default:
-			assert(false);
+			assert(false || false);
 			return "<unexpected>";
 		}
 	}
@@ -829,7 +829,9 @@ version(Java)
 			break;
 
 		case 'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z':
+			goto case;
 		case 'A','B','C','D','E','F','G','H','I','J','K',    'M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z':
+			goto case;
 		case '_':
 			skipIdent();
 			string ident = curText;

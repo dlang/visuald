@@ -171,10 +171,12 @@ struct Lexer
 			uint nextpos = pos;
 			dchar ch = decode(text, nextpos);
 			if(ch != '_')
+			{
 				if(base < 16 && (ch < '0' || ch >= '0' + base))
 					break;
 				else if(base == 16 && !isHexDigit(ch))
 					break;
+			}
 			pos = nextpos;
 		}
 	}
@@ -862,6 +864,12 @@ bool findKeyword(string ident, ref int id)
 		return true;
 	}
 	return false;
+}
+
+bool isKeyword(string ident)
+{
+	int id;
+	return findKeyword(ident, id);
 }
 
 bool findSpecial(string ident, ref int id)
