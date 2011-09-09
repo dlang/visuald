@@ -29,6 +29,29 @@ void showStatusBarText(string txt)
 	showStatusBarText(to!wstring(txt));
 }
 
+IVsOutputWindowPane getBuildOutputPane()
+{
+	auto win = queryService!(IVsOutputWindow)();
+	if(!win)
+		return null;
+	scope(exit) release(win);
+	
+	IVsOutputWindowPane pane;
+	if(win.GetPane(&GUID_BuildOutputWindowPane, &pane) != S_OK || !pane)
+		return null;
+	return pane;
+}
+
+void writeToBuildOutputPane(string msg)
+{
+	if(IVsOutputWindowPane pane = getBuildOutputPane())
+	{
+		scope(exit) release(pane);
+		pane.Activate();
+		pane.OutputString(_toUTF16z(msg));
+	}
+}
+
 // Hardware Breakpoint Functions
 
 enum 

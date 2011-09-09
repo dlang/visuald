@@ -32,6 +32,7 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.hierutil;
 import visuald.fileutil;
+import visuald.pkgutil;
 
 import vdc.lexer;
 
@@ -295,11 +296,13 @@ class LibraryInfo
 		catch(JSONException rc)
 		{
 			string msg = rc.toString();
+			writeToBuildOutputPane(fileName ~ ": " ~ msg);
 			logCall("EXCEPTION: " ~ msg);
 		} 
 		catch(FileException rc)
 		{
 			string msg = rc.toString();
+			writeToBuildOutputPane(fileName ~ ": " ~ msg);
 			logCall("EXCEPTION: " ~ msg);
 		}
 		return false;

@@ -34,6 +34,7 @@ import visuald.fileutil;
 import visuald.stringutil;
 import visuald.dimagelist;
 import visuald.config;
+import visuald.pkgutil;
 
 import visuald.dproject;
 import visuald.dpackage;
@@ -156,8 +157,9 @@ class CFileNode : CHierNode,
 			
 			GetCVsHierarchy().GetProjectNode().SetProjectFileDirty(true);
 		}
-		catch(Exception)
+		catch(Exception e)
 		{
+			writeToBuildOutputPane(e.msg);
 			return returnError(E_FAIL);
 		}
 		return S_OK;
@@ -1934,9 +1936,10 @@ public: // IVsHierarchyEvent propagation
 				else
 					std.file.copy(strFullPathSource, strNewFileName);
 			}
-			catch(Exception)
+			catch(Exception e)
 			{
 				// get windows error and produce error info
+				writeToBuildOutputPane(e.msg);
 				return null;
 			}
 

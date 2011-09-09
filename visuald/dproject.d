@@ -39,6 +39,7 @@ import visuald.chiercontainer;
 import visuald.build;
 import visuald.config;
 import visuald.oledatasource;
+import visuald.pkgutil;
 
 import visuald.dllmain : g_hInst;
 
@@ -172,6 +173,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 		}
 		catch(Exception e)
 		{
+			writeToBuildOutputPane(e.msg);
 			logCall(e.toString());
 		}
 		return false;
@@ -2614,11 +2616,13 @@ Error:
 		catch(xml.RecodeException rc)
 		{
 			string msg = rc.toString();
+			writeToBuildOutputPane(msg);
 			logCall(msg);
 		} 
 		catch(xml.XmlException rc)
 		{
 			string msg = rc.toString();
+			writeToBuildOutputPane(msg);
 			logCall(msg);
 		}	
 		return null;
@@ -2660,6 +2664,7 @@ Error:
 		}
 		catch(Exception e)
 		{
+			writeToBuildOutputPane(e.toString());
 			logCall(e.toString());
 		}
 
@@ -2713,6 +2718,7 @@ Error:
 		catch(Exception e)
 		{
 			string msg = e.toString();
+			writeToBuildOutputPane(msg);
 			logCall(msg);
 		}
 		return false;

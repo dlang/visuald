@@ -36,6 +36,7 @@ import visuald.searchsymbol;
 import visuald.tokenreplacedialog;
 import visuald.profiler;
 import visuald.library;
+import visuald.pkgutil;
 
 import sdk.win32.winreg;
 
@@ -822,6 +823,7 @@ class GlobalOptions
 		}
 		catch(Exception e)
 		{
+			writeToBuildOutputPane(e.msg);
 			rc = false;
 		}
 
@@ -859,6 +861,7 @@ class GlobalOptions
 		}
 		catch(Exception e)
 		{
+			writeToBuildOutputPane(e.msg);
 			return false;
 		}
 		
@@ -996,13 +999,8 @@ class GlobalOptions
 
 	bool buildPhobosBrowseInfo()
 	{
-		auto win = queryService!(IVsOutputWindow)();
-		if(!win)
-			return false;
-		scope(exit) release(win);
-		
-		IVsOutputWindowPane pane;
-		if(win.GetPane(&GUID_BuildOutputWindowPane, &pane) != S_OK || !pane)
+		IVsOutputWindowPane pane = getBuildOutputPane();
+		if(!pane)
 			return false;
 		scope(exit) release(pane);
 
