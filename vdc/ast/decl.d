@@ -479,6 +479,7 @@ class Declarator : Identifier, CallableNode
 				removeMember(m);
 				taa.addMember(saa.getKeyType());
 				t = taa;
+				taa.scop = getScope(); // not fully added to node tree
 			}
 			else if(auto sda = cast(SuffixDynamicArray) member)
 			{
@@ -486,14 +487,19 @@ class Declarator : Identifier, CallableNode
 				tda.addMember(t.clone());
 				removeMember(m);
 				t = tda;
+				tda.scop = getScope(); // not fully added to node tree
 			}
 			else if(auto ssa = cast(SuffixStaticArray) member)
 			{
 				auto tsa = new TypeStaticArray(ssa.id, ssa.span);
 				tsa.addMember(t.clone());
 				removeMember(m);
-				tsa.addMember(ssa.getDimension());
+				auto dim = ssa.getDimension();
+				assert(dim == ssa.getMember(0));
+				ssa.removeMember(0);
+				tsa.addMember(dim);
 				t = tsa;
+				tsa.scop = getScope(); // not fully added to node tree
 			}
 			else
 				m++;

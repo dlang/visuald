@@ -34,7 +34,7 @@ class BuiltinProperty(T) : Symbol
 	
 	override void toD(CodeWriter writer)
 	{
-		assert(false);
+		_assert(false);
 	}
 
 	override Type calcType()
@@ -120,6 +120,15 @@ class Type : Node
 			return true;
 		return false;
 	}
+	final bool convertableFromImplicite(Type from)
+	{
+		return convertableFrom(from, ConversionFlags.kImpliciteConversion);
+	}
+
+	Type commonType(Type other)
+	{
+		return other;
+	}
 	
 	override void _semantic(Scope sc)
 	{
@@ -183,6 +192,11 @@ class Type : Node
 		return semanticErrorType("cannot call a ", this);
 	}
 	
+	//////////////////////////////////////////////////////////////
+	Type unqualified()
+	{
+		return this;
+	}
 }
 
 //BasicType only created for standard types associated with tokens
@@ -233,7 +247,8 @@ class BasicType : Type
 			if (id == tok)
 				return Token2BasicType!(tok).sizeof;
 		}
-		assert(false);
+		_assert(false);
+		return int.sizeof;
 	}
 
 	static string getMangleof(int id)
@@ -244,7 +259,8 @@ class BasicType : Type
 			if (id == tok)
 				return Token2BasicType!(tok).mangleof;
 		}
-		assert(false);
+		_assert(false);
+		return null;
 	}
 
 	static size_t getAlignof(int id)
@@ -255,7 +271,8 @@ class BasicType : Type
 			if (id == tok)
 				return Token2BasicType!(tok).alignof;
 		}
-		assert(false);
+		_assert(false);
+		return int.alignof;
 	}
 
 	static string getStringof(int id)
@@ -266,7 +283,8 @@ class BasicType : Type
 			if (id == tok)
 				return Token2BasicType!(tok).stringof;
 		}
-		assert(false);
+		_assert(false);
+		return null;
 	}
 
 	static Value getMin(int id)
@@ -310,7 +328,7 @@ class BasicType : Type
 	
 	override void typeSemantic(Scope sc)
 	{
-		assert(id != TOK_auto);
+		_assert(id != TOK_auto);
 		typeinfo = getTypeInfo(id);
 	}
 
@@ -349,8 +367,10 @@ class BasicType : Type
 			case TOK_cdouble: return Category.kComplex;
 			case TOK_creal:   return Category.kComplex;
 			case TOK_void:    return Category.kVoid;
-			default: assert(false);
+			default: break;
 		}
+		_assert(false);
+		return Category.kVoid;
 	}
 	
 	@disable override Value _interpretProperty(Context ctx, string prop)
@@ -409,7 +429,7 @@ class BasicType : Type
 	
 	override void toD(CodeWriter writer)
 	{
-		assert(id != TOK_auto);
+		_assert(id != TOK_auto);
 		writer(id);
 	}
 }
@@ -456,6 +476,11 @@ class ModifiedType : Type
 	
 	Type getType() { return getMember!Type(0); } // ignoring modifiers
 	
+	override Type unqualified()
+	{
+		return getType();
+	}
+
 	override void typeSemantic(Scope sc)
 	{
 		TypeInfo_Const ti;
@@ -465,7 +490,7 @@ class ModifiedType : Type
 			case TOK_immutable: ti = new TypeInfo_Invariant; break;
 			case TOK_inout:     ti = new TypeInfo_Inout;  break;
 			case TOK_shared:    ti = new TypeInfo_Shared; break;
-			default: assert(false);
+			default: _assert(false);
 		}
 		
 		auto type = getType();
@@ -520,7 +545,8 @@ class IdentifierType : Type
 
 	override bool propertyNeedsParens() const { return false; }
 	
-	Node resolved;
+	//Node resolved;
+	Type type;
 	
 	IdentifierList getIdentifierList() { return getMember!IdentifierList(0); }
 
@@ -529,14 +555,22 @@ class IdentifierType : Type
 		writer(getMember(0));
 	}
 
+	override bool convertableFrom(Type from, ConversionFlags flags)
+	{
+		return calcType().convertableFrom(from, flags);
+	}
+
 	override Type calcType()
 	{
+		if(type)
+			return type;
 		auto idlist = getIdentifierList();
 		idlist.semantic(getScope());
 		if(idlist.resolved)
-			return idlist.resolved.calcType();
-
-		return semanticErrorType("cannot resolve type");
+			type = idlist.resolved.calcType();
+		else
+			type = semanticErrorType("cannot resolve type");
+		return type;
 	}
 	
 	override Value interpret(Context sc)
@@ -586,33 +620,50 @@ class TypeIndirection : Type
 {
 	mixin ForwardCtor!();
 
+	Type _next;
+
 	override bool propertyNeedsParens() const { return true; }
 	
-	Type getType() { return getMember!Type(0); }
+	//Type getType() { return getMember!Type(0); }
 	
+	void setNextType(Type t)
+	{
+		_next = t.calcType();
+	}
+
+	Type getNextType()
+	{
+		if(_next)
+			return _next;
+		_next = getMember!Type(0).calcType();
+		return _next;
+	}
+
 	override bool convertableFrom(Type from, ConversionFlags flags)
 	{
 		if(super.convertableFrom(from, flags))
 			return true;
 		
-		Type nextThis = getType();
+		Type nextThis = getNextType();
 		if(this.classinfo != from.classinfo)
 			return false;
 		auto ifrom = static_cast!TypeIndirection(from);
-		assert(ifrom);
+		_assert(ifrom !is null);
 	
 		// could allow A* -> const(B*) if class A derives from B
 		// even better    -> head_const(B*)
-		return nextThis.convertableFrom(ifrom.getType(), flags & ~ConversionFlags.kIndirectionClear);
+		return nextThis.convertableFrom(ifrom.getNextType(), flags & ~ConversionFlags.kIndirectionClear);
 	}
 
 	override Type opIndex(int v)
 	{
-		return getType();
+		_assert(false);
+		return getNextType();
 	}
 	
 	override Type opSlice(int b, int e)
 	{
+		_assert(false);
 		return this;
 	}
 	
@@ -626,8 +677,8 @@ class TypePointer : TypeIndirection
 
 	override void typeSemantic(Scope sc)
 	{
-		auto type = getType();
-		type.semantic(sc);
+		auto type = getNextType();
+		//type.semantic(sc);
 		auto typeinfo_ptr = new TypeInfo_Pointer;
 		typeinfo_ptr.m_next = type.typeinfo;
 		typeinfo = typeinfo_ptr;
@@ -643,8 +694,9 @@ class TypePointer : TypeIndirection
 
 	bool convertableTo(TypePointer t)
 	{
-		auto type = getType().calcType();
-		return t.getType().calcType().compare(type);
+		auto type = getNextType();
+		auto otype = t.getNextType();
+		return otype.compare(type);
 	}
 
 	override void toD(CodeWriter writer)
@@ -691,8 +743,8 @@ class TypeDynamicArray : TypeIndirection
 	
 	override void typeSemantic(Scope sc)
 	{
-		auto type = getType();
-		type.semantic(sc);
+		auto type = getNextType();
+		//type.semantic(sc);
 		auto typeinfo_arr = new TypeInfo_Array;
 		typeinfo_arr.value = type.typeinfo;
 		typeinfo = typeinfo_arr;
@@ -705,13 +757,13 @@ class TypeDynamicArray : TypeIndirection
 		
 		if(from.classinfo == typeid(TypeStaticArray))
 		{
-			Type nextThis = getType();
+			Type nextThis = getNextType();
 			auto arrfrom = static_cast!TypeStaticArray(from);
 			assert(arrfrom);
 	
 			// should allow A[] -> const(B[]) if class A derives from B
 			// even better      -> head_const(B[])
-			if(nextThis.convertableFrom(arrfrom.getType(), flags & ~ConversionFlags.kIndirectionClear))
+			if(nextThis.convertableFrom(arrfrom.getNextType(), flags & ~ConversionFlags.kIndirectionClear))
 				return true;
 		}
 		return false;
@@ -734,6 +786,7 @@ class TypeDynamicArray : TypeIndirection
 
 	override Value createValue(Context ctx, Value initValue)
 	{
+	version(none)
 		if(auto mtype = cast(ModifiedType) getType())
 			if(mtype.id == TOK_immutable)
 				if(auto btype = cast(BasicType) mtype.getType())
@@ -741,9 +794,8 @@ class TypeDynamicArray : TypeIndirection
 						return createInitValue!StringValue(ctx, initValue);
 		
 		auto val = new DynArrayValue(this);
-		// TODO: check types
-		if(auto dav = cast(DynArrayValue)initValue)
-			val.values = dav.values;
+		if(initValue)
+			val.opBin(ctx, TOK_assign, initValue);
 		return val;
 	}
 	
@@ -791,8 +843,8 @@ class TypeStaticArray : TypeIndirection
 	
 	override void typeSemantic(Scope sc)
 	{
-		auto type = getType();
-		type.semantic(sc);
+		auto type = getNextType();
+		//type.semantic(sc);
 		auto typeinfo_arr = new TypeInfo_StaticArray;
 		typeinfo_arr.value = type.typeinfo;
 
@@ -837,7 +889,7 @@ class TypeStaticArray : TypeIndirection
 	{
 		int dim = getDimension().interpret(ctx).toInt();
 		auto val = new TupleValue;
-		auto type = getType();
+		auto type = getNextType();
 		Value[] values;
 		values.length = dim;
 		IntValue idxval = new IntValue;
@@ -854,7 +906,7 @@ class TypeStaticArray : TypeIndirection
 	override Type opSlice(int b, int e)
 	{
 		auto da = new TypeDynamicArray;
-		da.addMember(getType().clone());
+		da.setNextType(getNextType()); //addMember(nextType().clone());
 		return da;
 	}
 	
@@ -884,10 +936,10 @@ class TypeAssocArray : TypeIndirection
 	
 	override void typeSemantic(Scope sc)
 	{
-		auto vtype = getType();
-		vtype.semantic(sc);
+		auto vtype = getNextType();
+		//vtype.semantic(sc);
 		auto ktype = getKeyType();
-		ktype.semantic(sc);
+		//ktype.semantic(sc);
 		
 		auto typeinfo_arr = new TypeInfo_AssociativeArray;
 		typeinfo_arr.value = vtype.typeinfo;
@@ -1096,6 +1148,7 @@ class TypeString : TypeDynamicArray
 {
 	mixin ForwardCtor!();
 
+	version(none)
 	override Value createValue(Context ctx, Value initValue)
 	{
 		return createInitValue!StringValue(ctx, initValue);
@@ -1103,30 +1156,30 @@ class TypeString : TypeDynamicArray
 	
 }
 
-TypeDynamicArray createTypeString()
+TypeDynamicArray createTypeString(C)()
 {
 	TextSpan span;
-	return createTypeString(span);
+	return createTypeString!C(span);
 }
 
-TypeDynamicArray createTypeString(ref const(TextSpan) span)
+TypeDynamicArray createTypeString(C)(ref const(TextSpan) span)
 {
 	auto arr = new TypeString(span);
 			
-	BasicType ct = new BasicType(TOK_char, span);
+	BasicType ct = new BasicType(BasicType2Token!C, span);
 	ModifiedType mt = new ModifiedType(TOK_immutable, span);
 	mt.addMember(ct);
 	arr.addMember(mt);
 	return arr;
 }
 
-TypeDynamicArray getTypeString()
+TypeDynamicArray getTypeString(C)()
 {
 	static TypeDynamicArray cachedTypedString;
 	if(!cachedTypedString)
 	{
 		TextSpan span;
-		cachedTypedString = createTypeString(span);
+		cachedTypedString = createTypeString!C(span);
 	}
 	return cachedTypedString;
 }

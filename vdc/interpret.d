@@ -42,6 +42,7 @@ import std.variant;
 import std.conv;
 import std.typetuple;
 import std.string;
+import std.utf;
 
 template Singleton(T, ARGS...)
 {
@@ -65,6 +66,7 @@ class ErrorType : Type
 class Value
 {
 	bool mutable = true;
+	bool literal = false;
 	debug string sval;
 	debug string ident;
 	
@@ -98,7 +100,7 @@ class Value
 	static Value create(cdouble v) { return _create!CDoubleValue(v); }
 	static Value create(creal   v) { return _create!CRealValue  (v); }
 	
-	static Value create(string  v) { return StringValue._create (v); }
+	static Value create(string  v) { return createStringValue (v); }
 	
 	Type getType()
 	{
@@ -141,7 +143,17 @@ class Value
 		return "";
 	}
 
-	PointerValue toPointer()
+	Value getElement(size_t idx)
+	{
+		return semanticErrorValue("cannot get ", idx, ". element of array of ", this);
+	}
+
+	void setElements(size_t oldcnt, size_t newcnt)
+	{
+		semanticError("cannot set no of elements of array of ", this);
+	}
+
+	PointerValue toPointer(TypePointer to)
 	{
 		return null;
 	}
@@ -177,7 +189,7 @@ class Value
 	Value opRefPointer()
 	{
 		auto tp = new TypePointer();
-		tp.addMember(getType().clone());
+		tp.setNextType(getType()); //addMember(getType().clone());
 		return PointerValue._create(tp, this);
 	}
 	Value opDerefPointer()
@@ -313,12 +325,16 @@ class Value
 	{
 		Value binOp1(Value v)
 		{
-			iv2.ValType v2 = *(cast(iv2) v).pval;
-			static if(op == "/" || op == "%")
-				if(v2 == 0)
-					return semanticErrorValue("division by zero");
-			mixin("auto z = *pval " ~ op ~ "v2;");
-			return create(z);
+			if(auto vv = cast(iv2) v)
+			{
+				iv2.ValType v2 = *vv.pval;
+				static if(op == "/" || op == "%")
+					if(v2 == 0)
+						return semanticErrorValue("division by zero");
+				mixin("auto z = *pval " ~ op ~ "v2;");
+				return create(z);
+			}
+			return semanticErrorValue("cannot calculate ", op, " on ", this, " and ", v);
 		}
 	}
 	
@@ -395,9 +411,12 @@ T createInitValue(T)(Context ctx, Value initValue)
 	return v;
 }
 
-alias TypeTuple!(bool, byte, ubyte, short, ushort, int, uint, long, ulong, 
-				 char, wchar, dchar, float, double, real, 
-				 ifloat, idouble, ireal, cfloat, cdouble, creal) BasicTypes;
+alias TypeTuple!(bool, byte, ubyte, short, ushort,
+				 int, uint, long, ulong, 
+				 char, wchar, dchar, 
+				 float, double, real, 
+				 ifloat, idouble, ireal, 
+				 cfloat, cdouble, creal) BasicTypes;
 
 alias TypeTuple!(BoolValue, ByteValue, UByteValue, ShortValue, UShortValue,
 				 IntValue, UIntValue, LongValue, ULongValue,
@@ -406,12 +425,19 @@ alias TypeTuple!(BoolValue, ByteValue, UByteValue, ShortValue, UShortValue,
 				 IFloatValue, IDoubleValue, IRealValue,
 				 CFloatValue, CDoubleValue, CRealValue) BasicTypeValues;
 
-alias TypeTuple!(TOK_bool, TOK_byte, TOK_ubyte, TOK_short, TOK_ushort, TOK_int, 
-				 TOK_uint, TOK_long, TOK_ulong, TOK_char, TOK_wchar, TOK_dchar,
-				 TOK_float, TOK_double, TOK_real, TOK_ifloat, TOK_idouble, TOK_ireal, 
+alias TypeTuple!(TOK_bool, TOK_byte, TOK_ubyte, TOK_short, TOK_ushort, 
+				 TOK_int, TOK_uint, TOK_long, TOK_ulong, 
+				 TOK_char, TOK_wchar, TOK_dchar,
+				 TOK_float, TOK_double, TOK_real, 
+				 TOK_ifloat, TOK_idouble, TOK_ireal, 
 				 TOK_cfloat, TOK_cdouble, TOK_creal) BasicTypeTokens;
 
-int BasicType2Token(T)() { return BasicTypeTokens[staticIndexOf!(T, BasicTypes)]; }
+int BasicType2Token(T)()     { return BasicTypeTokens[staticIndexOf!(T, BasicTypes)]; }
+
+template BasicType2ValueType(T)
+{
+	alias BasicTypeValues[staticIndexOf!(T, BasicTypes)] BasicType2ValueType;
+}
 
 template Token2BasicType(int tok)
 {
@@ -431,7 +457,8 @@ class ValueT(T) : Value
 	
 	this()
 	{
-		pval = new ValType;
+		pval = (new ValType[1]).ptr;
+		debug sval = toStr();
 	}
 	
 	static int getTypeIndex() { return staticIndexOf!(ValType, BasicTypes); }
@@ -447,6 +474,23 @@ class ValueT(T) : Value
 	override string toStr()
 	{
 		return to!string(*pval);
+	}
+	
+	override Value getElement(size_t idx)
+	{
+		alias BasicTypeValues[getTypeIndex()] ValueType;
+		auto v = new ValueType;
+		v.pval = pval + idx;
+		debug v.sval = v.toStr();
+		return v;
+	}
+	
+	override void setElements(size_t oldcnt, size_t newcnt)
+	{
+		ValType[] arr = pval[0 .. oldcnt];
+		arr.length = newcnt;
+		pval = arr.ptr;
+		debug sval = toStr();
 	}
 	
 //	pragma(msg, ValType);
@@ -555,9 +599,9 @@ class ValueT(T) : Value
 
 	override Value doCast(Value v)
 	{
-		if(!mutable)
+		if(!mutable) // doCast changes this value
 			return semanticErrorValue(this, " value is not mutable");
-			
+		
 		TypeInfo ti = v.classinfo;
 		foreach(iv2; BasicTypeValues)
 		{
@@ -667,14 +711,26 @@ class ULongValue : ValueT!ulong
 
 class CharValue : ValueT!char
 {
+	override string toStr()
+	{
+		return "'" ~ to!string(*pval) ~ "'";
+	}
 }
 
 class WCharValue : ValueT!wchar
 {
+	override string toStr()
+	{
+		return "'" ~ to!string(*pval) ~ "'w";
+	}
 }
 
 class DCharValue : ValueT!dchar
 {
+	override string toStr()
+	{
+		return "'" ~ to!string(*pval) ~ "'d";
+	}
 }
 
 class FloatValue : ValueT!float
@@ -713,11 +769,11 @@ class CRealValue : ValueT!creal
 {
 }
 
-alias TypeTuple!(CharValue, WCharValue, DCharValue, StringValue) StringTypeValues;
-
-class DynArrayValue : TupleValue
+class DynArrayValue : Value
 {
 	TypeDynamicArray type;
+	Value first;
+	size_t len;
 
 	this(TypeDynamicArray t)
 	{
@@ -727,7 +783,19 @@ class DynArrayValue : TupleValue
 
 	override string toStr()
 	{
-		return _toStr("[", "]");
+		if(isString())
+			return "\"" ~ toMixin() ~ "\"";
+
+		string s = "[";
+		for(size_t i = 0; i < len; i++)
+		{
+			if(i > 0)
+				s ~= ",";
+			Value v = first.getElement(i);
+			s ~= v.toStr();
+		}
+		s ~= "]";
+		return s;
 	}
 	
 	override Type getType()
@@ -735,6 +803,223 @@ class DynArrayValue : TupleValue
 		return type;
 	}
 	
+	override Value opIndex(Value v)
+	{
+		int idx = v.toInt();
+		if(idx < 0 || idx >= len)
+			return semanticErrorValue("index ", idx, " out of bounds on value tuple");
+		return first.getElement(idx);
+	}
+
+	override Value opSlice(Value b, Value e)
+	{
+		int idxb = b.toInt();
+		int idxe = e.toInt();
+		if(idxb < 0 || idxb > len || idxe < idxb || idxe > len)
+			return semanticErrorValue("slice [", idxb, "..", idxe, "] out of bounds on value ", toStr());
+		auto nv = new DynArrayValue(type);
+		nv.first = first.getElement(idxb);
+		nv.len = idxe - idxb;
+		return nv;
+	}
+	
+	override Value opBin(Context ctx, int tokid, Value v)
+	{
+		switch(tokid)
+		{
+			case TOK_equal:
+				if(auto tv = cast(DynArrayValue) v)
+				{
+					if(tv.len != len)
+						return Value.create(false);
+					for(int i = 0; i < len; i++)
+						if(!first.getElement(i).opBin(ctx, TOK_equal, tv.first.getElement(i)).toBool())
+							return Value.create(false);
+					return Value.create(true);
+				}
+				return semanticErrorValue("cannot compare ", v, " to ", this);
+			case TOK_notequal:
+				return Value.create(!opBin(ctx, TOK_equal, v).toBool());
+			
+			case TOK_assign:
+				if(auto tv = cast(DynArrayValue) v)
+				{
+					if(tv.len == 0)
+						first = null;
+					else
+						first = tv.first.getElement(0); // create copy of "ptr" value
+					len = tv.len;
+				}
+				else
+					return semanticErrorValue("cannot assign ", v, " to ", this);
+				debug sval = toStr();
+				return this;
+			
+			case TOK_tilde:
+				auto nv = new DynArrayValue(type);
+				if(auto tv = cast(DynArrayValue) v)
+				{
+					nv.setLength(ctx, len + tv.len);
+					for(size_t i = 0; i < len; i++)
+						nv.setItem(ctx, i, getItem(i));
+					for(size_t i = 0; i < tv.len; i++)
+						nv.setItem(ctx, len + i, tv.getItem(i));
+				}
+				else
+				{
+					nv.setLength(ctx, len + 1);
+					for(size_t i = 0; i < len; i++)
+						nv.setItem(ctx, i, getItem(i));
+					nv.setItem(ctx, len, v);
+				}
+				return nv;
+			
+			case TOK_catass:
+				size_t oldlen = len;
+				if(auto tv = cast(DynArrayValue) v)
+				{
+					setLength(ctx, len + tv.len);
+					for(size_t i = 0; i < tv.len; i++)
+						setItem(ctx, oldlen + i, tv.getItem(i));
+				}
+				else
+				{
+					setLength(ctx, len + 1);
+					setItem(ctx, oldlen, v);
+				}
+				return this;
+
+			default:
+				return super.opBin(ctx, tokid, v);
+		}
+	}
+	
+	void setLength(Context ctx, size_t newlen)
+	{
+		if(newlen > len)
+		{
+			if(len == 0)
+			{
+				first = type.getNextType().createValue(ctx, null);
+				first.setElements(1, newlen);
+			}
+			else
+				first.setElements(len, newlen);
+		}
+		len = newlen;
+	}
+
+	void setItem(Context ctx, size_t idx, Value v)
+	{
+		if(idx < 0 || idx >= len)
+			return semanticErrorValue("index ", idx, " out of bounds on dynamic array");
+		first.getElement(idx).opBin(ctx, TOK_assign, v);
+	}
+	Value getItem(size_t idx)
+	{
+		return first.getElement(idx);
+	}
+	
+	bool isString()
+	{
+		auto t = type.getNextType().unqualified();
+
+		if(auto bt = cast(BasicType) t)
+			if(bt.id == TOK_char || bt.id == TOK_wchar || bt.id == TOK_dchar)
+				return true;
+		return false;
+	}
+	
+	override PointerValue toPointer(TypePointer to)
+	{
+		// TODO: implementation here just to satisfy string -> C const char* conversion
+		if(isString())
+		{
+			Value nfirst = first;
+			auto nt = type.getNextType();
+			auto nto = to.getNextType();
+			if(literal)
+			{
+				// automatic conversion between string,wstring,dstring
+				auto uto = nto.unqualified();
+				auto ut = nt.unqualified();
+				if(auto bt = cast(BasicType) ut)
+					if(auto bto = cast(BasicType) uto)
+					{
+						if(bt.id != bto.id)
+						{
+							semanticErrorValue("literal string conversion not implemented!");
+
+							DynArrayValue nv;
+							switch(bto.id)
+							{
+								case TOK_char:
+									string s;
+									switch(bt.id)
+									{
+										case TOK_wchar:
+										case TOK_dchar:
+										default:
+											break;
+									}
+									nv = createStringValue(s);
+									break;
+								case TOK_wchar:
+									wstring s;
+									switch(bt.id)
+									{
+										case TOK_char:
+										case TOK_dchar:
+										default:
+											break;
+									}
+									nv = createStringValue(s);
+									break;
+								case TOK_dchar:
+									dstring s;
+									switch(bt.id)
+									{
+										case TOK_char:
+										case TOK_wchar:
+										default:
+											break;
+									}
+									nv = createStringValue(s);
+									break;
+								default:
+									assert(0);
+							}
+							nfirst = nv.first;
+						}
+					}
+			}
+			PointerValue pv = new PointerValue;
+			auto tp = new TypePointer;
+			tp.setNextType(nto);
+			pv.type = tp;
+			pv.pval = nfirst;
+			debug pv.sval = pv.toStr();
+			return pv;
+		}
+		return super.toPointer(to);
+	}
+	
+	override string toMixin()
+	{
+		if(isString())
+		{
+			if(len == 0)
+				return "";
+			if(auto cv = cast(CharValue)first)
+				return toUTF8(cv.pval[0..len]);
+			if(auto wv = cast(WCharValue)first)
+				return toUTF8(wv.pval[0..len]);
+			if(auto dv = cast(DCharValue)first)
+				return toUTF8(dv.pval[0..len]);
+		}
+		return super.toMixin();
+	}
+
 	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
@@ -754,6 +1039,7 @@ class SetLengthValue : UIntValue
 	this(DynArrayValue a)
 	{
 		array = a;
+		super();
 		debug sval = toStr();
 	}
 
@@ -768,11 +1054,7 @@ class SetLengthValue : UIntValue
 		{
 			case TOK_assign:
 				int len = v.toInt();
-				int oldlen = array._values.length;
-				array._values.length = len;
-				if(TypeDynamicArray tda = cast(TypeDynamicArray) array.type)
-					while(oldlen < len)
-						array._values[oldlen++] = tda.getType().createValue(ctx, null);
+				array.setLength(ctx, len);
 				return this;
 			default:
 				return super.opBin(ctx, tokid, v);
@@ -780,6 +1062,22 @@ class SetLengthValue : UIntValue
 	}
 
 }
+
+DynArrayValue createStringValue(C)(immutable(C)[] s)
+{
+	DynArrayValue dav = new DynArrayValue(getTypeString!C());
+	auto cv = new BasicType2ValueType!C;
+	cv.mutable = false;
+	cv.pval = cast(C*) s.ptr;
+	debug cv.sval = cv.toStr();
+	dav.first = cv;
+	dav.len = s.length;
+	dav.literal = true;
+	debug dav.sval = dav.toStr();
+	return dav;
+}
+
+alias TypeTuple!(CharValue, WCharValue, DCharValue, StringValue) StringTypeValues;
 
 class StringValue : Value
 {
@@ -808,7 +1106,7 @@ class StringValue : Value
 	
 	override Type getType()
 	{
-		return createTypeString();
+		return getTypeString!char();
 	}
 	
 	override string toStr()
@@ -821,13 +1119,14 @@ class StringValue : Value
 		return *pval;
 	}
 
-	override PointerValue toPointer()
+	override PointerValue toPointer(TypePointer to)
 	{
 		// TODO: implementation here just to satisfy string -> C const char* conversion
 		PointerValue pv = new PointerValue;
 		pv.type = new TypePointer;
 		pv.type.addMember(BasicType.createType(TOK_char));
 		pv.pval = this;
+		debug pv.sval = pv.toStr();
 		return pv;
 	}
 
@@ -907,7 +1206,7 @@ class PointerValue : Value
 		return pval !is null;
 	}
 	
-	override PointerValue toPointer()
+	override PointerValue toPointer(TypePointer to)
 	{
 		return this;
 	}
@@ -924,12 +1223,12 @@ class PointerValue : Value
 		switch(tokid)
 		{
 			case TOK_assign:
-				auto pv = v.toPointer();
+				auto pv = v.toPointer(type);
 				if(!v)
 					pval = null;
 				else if(!pv)
 					return semanticErrorValue("cannot convert value ", v, " to pointer of type ", type);
-				else if(pv.type.convertableTo(type))
+				else if(type.convertableFromImplicite(pv.type))
 					pval = pv.pval;
 				else
 					return semanticErrorValue("cannot convert pointer type ", pv.type, " to ", type);
@@ -938,7 +1237,7 @@ class PointerValue : Value
 			case TOK_equal:
 			case TOK_notequal:
 				auto pv = cast(PointerValue)v;
-				if(!pv || (!pv.type.convertableTo(type) && !type.convertableTo(pv.type)))
+				if(!pv || (!pv.type.convertableFromImplicite(type) && !type.convertableFromImplicite(pv.type)))
 					return semanticErrorValue("cannot compare types ", pv.type, " and ", type);
 				if(tokid == TOK_equal)
 					return Value.create(pv.pval is pval);
@@ -1183,12 +1482,13 @@ Value doCall(CallableNode funcNode, Context sc, ParameterList params, Value varg
 		Value arr = vdecl.calcType().createValue(ctx, null);
 		if(auto darr = cast(DynArrayValue) arr)
 		{
+			darr.setLength(ctx, args.values.length - numparams);
 			for(int n = numparams; n < args.values.length; n++)
 			{
 				Value v = args.values[n];
 				Type t = v.getType();
 				v = t.createValue(sc, v); // if not ref, always create copy
-				darr.addValue(v);
+				darr.setItem(ctx, n - numparams, v);
 			}
 			ctx.setValue(vdecl, darr);
 		}
@@ -1418,6 +1718,7 @@ class ReferenceValue : Value
 				return super.opBin(ctx, tokid, v);
 		}
 	}
+
 }
 
 class ReferenceValueT(T) : ReferenceValue
@@ -1442,6 +1743,24 @@ class ReferenceValueT(T) : ReferenceValue
 		if(Value v = type.getStaticProperty(prop))
 			return v;
 		return super._interpretProperty(ctx, prop);
+	}
+
+	override Value doCast(Value v)
+	{
+		if(cast(NullValue) v)
+		{
+			instance = null;
+			return this;
+		}
+		if(auto cv = cast(ReferenceValue) v)
+		{
+			if(type.convertableFrom(cv.getType(), Type.ConversionFlags.kImpliciteConversion))
+				instance = cv.instance;
+			else
+				instance = null;
+			return this;
+		}
+		return super.doCast(v);
 	}
 }
 

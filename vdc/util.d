@@ -21,6 +21,16 @@ import std.string;
 import std.stdio;
 import std.array;
 
+////////////////////////////////////////////////////////////////
+// use instead of assert() to be nicely breakable and avoid the bad
+// semantics of assert(false)
+void _assert(bool cond)
+{
+	if(!cond)
+		assert(false);
+}
+
+////////////////////////////////////////////////////////////////
 alias int TokenId;
 enum NumTokens = TOK_end_Operators;
 
@@ -73,6 +83,7 @@ class Token
 	}
 }
 
+////////////////////////////////////////////////////////////////
 string genFlagsEnum(string name, string prefix, string[] allMembers)
 {
 	string s = "enum " ~ name ~ " { ";

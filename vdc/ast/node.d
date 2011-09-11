@@ -183,6 +183,7 @@ class Node
 		AddedSymbols,
 		ResolvingSymbols,
 		ResolvedSymbols,
+		SemanticDone,
 	}
 	int semanticState;
 	
@@ -279,10 +280,14 @@ class Node
 	{
 		assert(sc);
 		
-		logInfo("Scope(%s):semantic(%s=%s)", cast(void*)sc, this, cast(void*)this);
-		LogIndent indent = LogIndent(1);
+		if(semanticState < SemanticState.SemanticDone)
+		{
+			logInfo("Scope(%s):semantic(%s=%s)", cast(void*)sc, this, cast(void*)this);
+			LogIndent indent = LogIndent(1);
 		
-		_semantic(sc);
+			_semantic(sc);
+			semanticState = SemanticState.SemanticDone;
+		}
 	}
 	
 	void _semantic(Scope sc)

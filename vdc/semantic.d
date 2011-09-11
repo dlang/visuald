@@ -542,7 +542,7 @@ class Project : Node
 				if(pl.members.length > 0)
 				{
 					auto tda = new TypeDynamicArray;
-					tda.addMember(createTypeString());
+					tda.setNextType(getTypeString!char());
 					auto dav = new DynArrayValue(tda);
 					args.addValue(dav);
 				}

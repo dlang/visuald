@@ -18,7 +18,7 @@ import vdc.interpret;
 import vdc.semantic;
 
 //TemplateDeclaration:
-//    template TemplateIdentifier ( TemplateParameterList ) Constraint_opt { DeclDefs }
+//    [Identifier TemplateParameterList Constraint_opt DeclarationBlock]
 class TemplateDeclaration : Node
 {
 	mixin ForwardCtor!();
@@ -54,15 +54,17 @@ class TemplateDeclaration : Node
 	{
 		// we never write the template, only instantiations
 	}
+
+	override void addSymbols(Scope sc)
+	{
+		string ident = getIdentifier().ident;
+		sc.addSymbol(ident, this);
+	}
+
 }
-//
-//TemplateIdentifier:
-//    Identifier
-//
+
 //TemplateParameterList:
-//    TemplateParameter
-//    TemplateParameter ,
-//    TemplateParameter , TemplateParameterList
+//    [ TemplateParameter... ]
 class TemplateParameterList : Node
 {
 	mixin ForwardCtor!();
@@ -86,10 +88,8 @@ class TemplateParameter : Node
 	mixin ForwardCtor!();
 }
 
-//
 //TemplateInstance:
-//    TemplateIdentifier ! ( TemplateArgumentList )
-//    TemplateIdentifier ! TemplateSingleArgument
+//    ident [ TemplateArgumentList ]
 class TemplateInstance : Identifier
 {
 	mixin ForwardCtorTok!();
@@ -110,9 +110,7 @@ class TemplateInstance : Identifier
 //
 //
 //TemplateArgumentList:
-//    TemplateArgument
-//    TemplateArgument ,
-//    TemplateArgument , TemplateArgumentList
+//    [ TemplateArgument... ]
 class TemplateArgumentList : Node
 {
 	mixin ForwardCtorNoId!();
@@ -224,9 +222,9 @@ class TemplateTypeParameter : TemplateParameter
 //
 //TemplateTypeParameterDefault:
 //    = Type
-//
+
 //TemplateThisParameter:
-//    this TemplateTypeParameter
+//    [ TemplateTypeParameter ]
 class TemplateThisParameter : TemplateParameter
 {
 	mixin ForwardCtor!();
@@ -367,6 +365,25 @@ class TemplateMixin : Node
 			writer(" ", getMember(1));
 		writer(";");
 		writer.nl();
+	}
+
+	override Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
+	{
+		if(auto idlist = getMember!IdentifierList(0))
+		{
+			if(Node n = idlist.resolve())
+			{
+				if(auto tmd = cast(TemplateDeclaration) n)
+				{
+					// replace parameters
+					auto bdy = tmd.getBody().clone();
+					return bdy.members;
+				}
+				else
+					semanticError(n, " is not a TemplateDeclaration");
+			}
+		}
+		return athis;
 	}
 }
 

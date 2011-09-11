@@ -552,6 +552,8 @@ class Class : InheritingAggregate
 
 	override Value createValue(Context ctx, Value initValue)
 	{
+		semantic(getScope());
+
 		auto v = new ClassValue(this);
 		if(!initValue)
 			return v;

@@ -40,7 +40,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -220,7 +220,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -259,11 +259,11 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <additionalOptions>-debuglib=phobos.lib</additionalOptions>
+  <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>$(TargetPath)</debugtarget>
-  <debugarguments>c:\tmp\d\test\runnable\const*.d</debugarguments>
+  <debugarguments>c:\tmp\d\runnable\*.d</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />

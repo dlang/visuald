@@ -151,7 +151,8 @@ else
 void testSemantic(string txt, string filename = "")
 {
 	logInfo("### testSemantic " ~ filename ~ " ###");
-	
+	writeln(filename ~":");
+
 	Project prj = new Project;
 	auto mod = prj.addText(filename, txt);
 	assert(mod);
@@ -315,6 +316,25 @@ unittest
 	static assert(ctfeLexer(q{int /* comment to skip */ a;}) == [ TOK_int, TOK_Identifier, TOK_semicolon ]);
 }
 ///////////////////////////////////////////////////////////////////////
+unittest
+{
+	string txt = q{
+		template mix() { int foo() { return 1; } }
+		class C { mixin mix; }
+		static assert((new C).foo() == 1);
+	};
+	testSemantic(txt, "templateMixin");
+}
+
+unittest
+{
+	string txt = q{
+		static assert([ 1, 2, 3, 4 ][1] == 2);
+		static assert("abcd" == [ 'a', 'b', 'c', 'd' ]);
+	};
+	testSemantic(txt, "dyn_array");
+}
+
 unittest
 {
 	string txt = q{

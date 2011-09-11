@@ -817,7 +817,7 @@ class DotExpression : PostfixExpression
 		auto etype = expr.calcType();
 		auto id = getMember!Identifier(1);
 		if(auto pt = cast(TypePointer)etype)
-			etype = pt.getType().calcType();
+			etype = pt.getNextType();
 		Scope s = etype.getScope();
 		resolved = s ? s.resolve(id.ident, id, false) : null;
 		if(resolved)
@@ -933,7 +933,7 @@ class PrimaryExpression : Expression
 			case TOK_false: return Value.create(false);
 			case TOK_null:  return new NullValue;
 			case TOK___LINE__: return Value.create(span.start.line);
-			case TOK___FILE__: return new StringValue(getModuleFilename());
+			case TOK___FILE__: return createStringValue(getModuleFilename());
 			case TOK_super:
 			case TOK_dollar:
 			default:        return super.interpret(sc);
@@ -983,18 +983,47 @@ class ArrayLiteral : Expression
 					cntIndex++;
 				cntPairs++;
 			}
+			else
+				break;
 		}
 		if(cntPairs == argl.members.length && cntIndex < argl.members.length)
 			isAssoc = true;
+		
+		if(!isAssoc)
+		{
+			type = new TypeDynamicArray;
+			Type vt = new AutoType;
+			foreach(m; argl.members)
+				vt = vt.commonType(m.calcType());
+			type.addMember(vt);
+		}
 	}
 	
+	override Type calcType()
+	{
+		if(type)
+			return type;
+		semantic(getScope());
+		return type;
+	}
+
 	override Value interpret(Context sc)
 	{
-		Value val;
+		TupleValue val;
 		if(auto args = getArgumentList())
 			val = args.interpret(sc);
 		else
 			val = new TupleValue;
+		
+		if(auto tda = cast(TypeDynamicArray) calcType())
+		{
+			auto telem = tda.getNextType();
+			auto vda = new DynArrayValue(tda);
+			vda.setLength(sc, val.values.length);
+			for(size_t i = 0; i < val.values.length; i++)
+				vda.setItem(sc, i, val.values[i]);
+			return vda;
+		}
 		return val;
 	}
 }
@@ -1625,7 +1654,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		type.semantic(sc);
 	}
 	
-	override Value interpret(Context sc)
+	Value _interpret(Context sc)
 	{
 		if(lng || value >= 0x80000000)
 			if(unsigned)
@@ -1647,6 +1676,12 @@ class IntegerLiteralExpression : PrimaryExpression
 				return Value.create(cast(ubyte)value);
 			else
 				return Value.create(cast(byte)value);
+	}
+	override Value interpret(Context sc)
+	{
+		Value v = _interpret(sc);
+		v.literal = true;
+		return v;
 	}
 	
 	int getInt()
@@ -1728,7 +1763,30 @@ class FloatLiteralExpression : PrimaryExpression
 			&& tn.lng == lng;
 	}
 	
-	override Value interpret(Context sc)
+	override void _semantic(Scope sc)
+	{
+		if(type)
+			return;
+
+		if(complex)
+			if(lng)
+				type = new BasicType(TOK_ireal, span);
+			else if(flt)
+				type = new BasicType(TOK_ifloat, span);
+			else
+				type = new BasicType(TOK_idouble, span);
+		else
+			if(lng)
+				type = new BasicType(TOK_real, span);
+			else if(flt)
+				type = new BasicType(TOK_float, span);
+			else
+				type = new BasicType(TOK_double, span);
+
+		type.semantic(sc);
+	}
+	
+	Value _interpret(Context sc)
 	{
 		if(complex)
 			if(lng)
@@ -1744,6 +1802,12 @@ class FloatLiteralExpression : PrimaryExpression
 				return Value.create(cast(float)value);
 			else
 				return Value.create(cast(double)value);
+	}
+	override Value interpret(Context sc)
+	{
+		Value v = _interpret(sc);
+		v.literal = true;
+		return v;
 	}
 	
 	override void toD(CodeWriter writer)
@@ -1804,6 +1868,7 @@ class StringLiteralExpression : PrimaryExpression
 	{
 		StringLiteralExpression n = static_cast!StringLiteralExpression(super.clone());
 		n.txt = txt;
+		n.rawtxt = rawtxt;
 		return n;
 	}
 	override bool compare(const(Node) n) const
@@ -1817,12 +1882,26 @@ class StringLiteralExpression : PrimaryExpression
 
 	override void _semantic(Scope sc)
 	{
-		type = createTypeString(span);
+		switch(txt[$-1])
+		{
+			default:
+			case 'c':
+				type = getTypeString!char();
+				break;
+			case 'w':
+				type = getTypeString!wchar();
+				break;
+			case 'd':
+				type = getTypeString!dchar();
+				break;
+		}
 	}
-	
+
 	override Value interpret(Context sc)
 	{
-		return Value.create(rawtxt);
+		Value v = Value.create(rawtxt);
+		v.literal = true;
+		return v;
 	}
 	
 	override void toD(CodeWriter writer)
@@ -1859,7 +1938,7 @@ class CharacterLiteralExpression : PrimaryExpression
 		return tn.txt == txt;
 	}
 	
-	override Value interpret(Context sc)
+	Value _interpret(Context sc)
 	{
 		if(txt.length < 3)
 			return Value.create(char.init);
@@ -1871,6 +1950,29 @@ class CharacterLiteralExpression : PrimaryExpression
 		if(txt[$-1] == 'w')
 			return Value.create(cast(wchar)ch);
 		return Value.create(cast(char)ch);
+	}
+	
+	override Value interpret(Context sc)
+	{
+		Value v = _interpret(sc);
+		v.literal = true;
+		return v;
+	}
+	
+	override void _semantic(Scope sc)
+	{
+		if(type)
+			return;
+
+		if(txt.length >= 3)
+			if(txt[$-1] == 'd')
+				type = new BasicType(TOK_dchar, span);
+			else if(txt[$-1] == 'w')
+				type = new BasicType(TOK_wchar, span);
+		if(!type)
+			type = new BasicType(TOK_char, span);
+
+		type.semantic(sc);
 	}
 	
 	override void toD(CodeWriter writer)

@@ -9,20 +9,26 @@
 #  Microsoft Platfrom SDK (6.0A/7.0A/7.1)
 #  Visual Studio Integration SDK (for VS2008/VS2010)
 
-DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
-# DMD2 = c:\l\dmd-2.051\windows\bin\dmd.exe
-# DMD2 = c:\l\dmd-2.053\windows\bin\dmd.exe
-# DMD2 = m:\s\d\dmd2\dmd\src\dmd.exe
+##############################################################
+# update the following variables to match the installation 
+# paths on your system
+
+# DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
+DMD2 = c:\l\dmd-2.055\windows\bin\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
-WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
+# WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
+WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
+# VSISDK = c:\l\vs9SDK
+VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2010 SDK
+# VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2008 SDK
 MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
-VSISDK = c:\l\vs9SDK
 NSIS   = $(PROGRAMFILES)\NSIS
 CV2PDB = $(PROGRAMFILES)\VisualD\cv2pdb\cv2pdb.exe
 ZIP    = c:\u\unix\usr\local\wbin\zip.exe
 
-###
+##############################################################
+# no more changes should be necessary starting from here
 
 BINDIR = bin\Release
 IVIEWER = $(WINSDK)\bin\iviewers.dll
@@ -33,6 +39,8 @@ VSI_LIB     = $(BINDIR)\vsi.lib
 VISUALD     = $(BINDIR)\visuald.dll
 
 all: dte_idl vsi2d package
+
+sdk: dte_idl vsi_dirs sdk\vsi_sources
 
 DBGREL = release
 
