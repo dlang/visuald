@@ -1344,7 +1344,7 @@ version(threadedOutlining) {} else
 		uint enumerated = 0;
 		uint fetched;
 		IVsHiddenRegion region;
-		while (penum.Next(1, &region, &fetched) == S_OK && fetched == 1)
+		while(penum.Next(1, &region, &fetched) == S_OK && fetched == 1)
 		{
 			enumerated++;
 			region.GetSpan(&span);
@@ -1364,7 +1364,31 @@ version(threadedOutlining) {} else
 			release(region);
 		}
 		release(penum);
-		return found != rgns.length || enumerated != rgns.length;
+
+		// validate regions against current text
+		int lines = GetLineCount();
+		for(int i = 0; i < rgns.length; i++)
+		{
+			with(rgns[i].tsHiddenText)
+			{
+				if(iStartLine >= lines)
+				{
+					rgns.length = i;
+					break;
+				}
+				if(iEndLine >= lines)
+					iEndLine = lines;
+				int length;
+				mBuffer.GetLengthOfLine(iStartLine, &length);
+				if(iStartIndex >= length)
+					iStartIndex = length;
+				if(iStartLine != iEndLine)
+					mBuffer.GetLengthOfLine(iEndLine, &length);
+				if(iEndIndex >= length)
+					iEndIndex = length;
+			}
+		}
+		return found != enumerated || rgns.length != 0;
 	}
 
 	///////////////////////////////////////////////////////////////////////////////

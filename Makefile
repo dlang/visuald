@@ -13,15 +13,15 @@
 # update the following variables to match the installation 
 # paths on your system
 
-# DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
-DMD2 = c:\l\dmd-2.055\windows\bin\dmd.exe
+DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
+# DMD2 = c:\l\dmd-2.055\windows\bin\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
-# WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
-WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
-# VSISDK = c:\l\vs9SDK
-VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2010 SDK
+WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
+# WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
+VSISDK = c:\l\vs9SDK
 # VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2008 SDK
+# VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2010 SDK
 MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
 NSIS   = $(PROGRAMFILES)\NSIS
 CV2PDB = $(PROGRAMFILES)\VisualD\cv2pdb\cv2pdb.exe
@@ -40,7 +40,7 @@ VISUALD     = $(BINDIR)\visuald.dll
 
 all: dte_idl vsi2d package
 
-sdk: dte_idl vsi_dirs sdk\vsi_sources
+sdk: dte_idl vsi_dirs sdk\vsi_sources sdk_lib
 
 DBGREL = release
 
@@ -86,13 +86,16 @@ sdk\vsi_sources: $(VSI2D_EXE)
 
 # $(VSI_LIB) : sdk\vsi_sources
 vsi_lib:
-	cd sdk && nmake "DMD=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" vsi_$(DBGREL) libs
+	cd sdk && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" vsi_$(DBGREL) libs
+
+sdk_lib:
+	cd sdk && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" libs
 
 ##################################
 # compile visuald package
 
 package:
-	cd visuald && nmake "DMD=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
+	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
 
 ##################################
 # create installer

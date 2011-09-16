@@ -41,8 +41,8 @@ Language service:
 - version highlighting does not support version(x): syntax
 - bad updates for version/debug highlighting while editing
 - replace token: empty dialog when opened without resizing
-- temporarily bad characters when deleting (colorizer, outline?)
 - when hovering identifier with preceding dot, include identifier before dot in debugger tool tip
+- stop parsing/outlining when text is modified
 
 Search:
 ---------------

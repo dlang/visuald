@@ -19,8 +19,8 @@ import std.array;
 static import std.regex;
 
 //////////////////////////////////////////////////////////////////////////////
-alias DList!(Token) TokenList;
-alias DListIterator!(Token) TokenIterator;
+alias DList!(c2d.tokenizer.Token) TokenList;
+alias DListIterator!(c2d.tokenizer.Token) TokenIterator;
 
 struct TokenRange
 {
@@ -683,8 +683,8 @@ TokenList createReplacementTokenList(RTYPE) (RTYPE[] replace, TokenRange match, 
 				throwException("no submatch for " ~ reptext);
 
 			TokenList list = copyTokenList(submatch[idx].start, submatch[idx].end);
-			if(!list.empty && pretext.length)
-				list.begin().pretext = pretext ~ list.begin().pretext;
+			if(!list.empty && !list.begin().pretext.length) //&& pretext.length)
+				list.begin().pretext = pretext; // ~ list.begin().pretext;
 			tokenList.appendList(list);
 		}
 		else

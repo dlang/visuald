@@ -79,9 +79,9 @@ RELDIR = ..\bin\Release
 DBGRES = $(DBGDIR)\visuald.res
 RELRES = $(RELDIR)\visuald.res
 
-# DMD = c:\l\dmd2\windows\bin\dmd.exe
-# DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
-DMD = m:\s\d\dmd2\dmd\src\dmd_pdb.exe
+# DMD2 = c:\l\dmd2\windows\bin\dmd.exe
+# DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
+DMD2 = m:\s\d\dmd2\dmd\src\dmd_pdb.exe
 CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 
 VSISDK = c:\l\vs9SDK
@@ -93,13 +93,13 @@ OPTLINKS = /SCANLIB
 DBG_VSI_LIB = $(DBGDIR)/vsi.lib 
 REL_VSI_LIB = $(RELDIR)/vsi.lib 
 
-DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources
+DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 
 LIBS = phobos.lib ..\sdk\lib\comctl32.lib uuid.lib advapi32.lib comdlg32.lib \
 	ole32.lib oleaut32.lib user32.lib shell32.lib gdi32.lib
 
-DEPS = Makefile ..\VERSION $(DMD)
+DEPS = Makefile ..\VERSION $(DMD2)
 
 all: debug
 # lexer exe
@@ -114,13 +114,13 @@ $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
 	"$(CV2PDB)" -D2.043 $? $@
 
 $(DBGDIR)\vdc.lib : $(VDC_SRC) Makefile
-	"$(DMD)" -of$@ -lib -g $(DFLAGS) @<<
+	"$(DMD2)" -of$@ -lib -g $(DFLAGS) @<<
 		$(VDC_SRC)
 <<NOKEEP
 
 #-mixin=$(DBGDIR)\$(PROJECT).mixin
 $(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(RELDIR)\vdc.lib  $(DEPS)
-	"$(DMD)" -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
+	"$(DMD2)" -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
 		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES) $(RELDIR)\vdc.lib
 <<NOKEEP
 
@@ -129,12 +129,12 @@ $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
 	"$(CV2PDB)" -D2.043 $? $@
 
 $(RELDIR)\vdc.lib : $(VDC_SRC) Makefile
-	"$(DMD)" -of$@ -O -inline -release -lib -g $(DFLAGS) @<<
+	"$(DMD2)" -of$@ -O -inline -release -lib -g $(DFLAGS) @<<
 		$(VDC_SRC)
 <<NOKEEP
 
 $(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(DEPS)
-	"$(DMD)" -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
+	"$(DMD2)" -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
 		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib
 <<NOKEEP
 
@@ -153,7 +153,7 @@ $(DBGDIR)\$(PROJECT).exe : $(DBGDIR)\$(PROJECT)_cv.exe
 	"$(CV2PDB)" $? $@
 
 $(DBGDIR)\$(PROJECT)_cv.exe : $(SRC) $(DBG_VSI_LIB) Makefile
-	"$(DMD)" -of$@ -g -unittest -debug -version=MAIN $(DFLAGS) @<<
+	"$(DMD2)" -of$@ -g -unittest -debug -version=MAIN $(DFLAGS) @<<
 		$(SRC) $(DBG_VSI_LIB) $(LIBS)
 <<NOKEEP
 

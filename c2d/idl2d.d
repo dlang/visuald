@@ -1436,6 +1436,7 @@ version(none) version(vsi)
 		replaceTokenSequence(tokens, "EXTERN_C $args;", "/+EXTERN_C $args;+/", true);
 		replaceTokenSequence(tokens, "SAFEARRAY($_ident)", "SAFEARRAY/*($_ident)*/", true);
 
+		// remove forward declarations
 		replaceTokenSequence(tokens, "enum $_ident;", "/+ enum $_ident; +/", true);
 		replaceTokenSequence(tokens, "struct $_ident;", "/+ struct $_ident; +/", true);
 		replaceTokenSequence(tokens, "class $_ident;", "/+ class $_ident; +/", true);
@@ -2263,6 +2264,22 @@ void testConvert(string txt, string exptxt, string mod = "")
 unittest
 {
 	string txt = q{
+typedef struct tag { } TAG;
+};
+
+	string exptxt = q{
+struct tag
+{
+}
+alias tag TAG;
+};
+
+	testConvert(txt, exptxt);
+}
+
+unittest
+{
+	string txt = q{
 cpp_quote("//;end_internal")
 cpp_quote("typedef struct tagELEMDESC {")
 cpp_quote("    TYPEDESC tdesc;             /* the type of the element */")
@@ -2408,7 +2425,7 @@ unittest
 #define NtCurrentTeb() ((struct _TEB *)_rdtebex())
 ";
 	string exptxt = "
-_TEB* NtCurrentTeb() { return    ( cast( _TEB*)_rdtebex()); }
+_TEB* NtCurrentTeb() { return  ( cast( _TEB*)_rdtebex()); }
 ";
 	version(macro2template) exptxt = replace(exptxt, "_TEB* ", "auto ");
 	testConvert(txt, exptxt);

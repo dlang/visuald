@@ -6,20 +6,18 @@
 # License for redistribution is given by the Artistic License 2.0
 # see file LICENSE for further details
 
+DMD2 = c:\l\dmd-2.055\windows\bin\dmd.exe
+# DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
+CV2PDB = ..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
+IMPLIB = c:\l\dmc\bin\implib.exe
+COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
+
 include vsi_sources
 VSI_SRC = $(SRC) port/servprov.d port/stdole2.d port/msxml.d port/dte.d port/base.d \
 	port\vsi.d port\propidl.d port\rpc.d port\string.d port\in6addr.d port\inaddr.d
 
 DBGDIR = ..\bin\Debug
 RELDIR = ..\bin\Release
-
-# D = c:\l\dmd-1.056
-D = c:\l\dmd2
-DMD = $D\windows\bin\dmd.exe
-# DMD = m:\s\d\dmd\src_org\dmd_pdb.exe
-CV2PDB = ..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
-IMPLIB = c:\l\dmc\bin\implib.exe
-COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 DFLAGS = -d -L/DELEXECUTABLE -I..
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS 
@@ -30,14 +28,14 @@ vsi_release: $(RELDIR)\vsi.lib
 vsi_debug:   $(DBGDIR)\vsi.lib
 
 ######################
-$(DBGDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD)
-	$(DMD) -of$@ -g -lib $(DFLAGS) @<<
+$(DBGDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD2)
+	$(DMD2) -of$@ -g -lib $(DFLAGS) @<<
 		$(VSI_SRC)
 <<NOKEEP
 
 	#echo -of$@ -O -inline -release -g $(DFLAGS) $(VSI_SRC) >cmdline
-$(RELDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD)
-	$(DMD) -of$@ -lib -O -inline -release $(DFLAGS) @<<
+$(RELDIR)\vsi.lib : $(VSI_SRC) Makefile vsi_sources $(DMD2)
+	$(DMD2) -of$@ -lib -O -inline -release $(DFLAGS) @<<
 		$(VSI_SRC)
 <<NOKEEP
 

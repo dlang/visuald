@@ -329,3 +329,5 @@ unreleased Version 0.3.27
   * paste a full line or more now causes automatic reinentation (global option to disable)
   * fix: build phobos browse information broken in last version
   * some internal errors are now reproted to the output window (like failing to parse JSON file)
+  * fixed bad display when deleting characters from line with outlining
+  

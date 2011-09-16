@@ -1965,10 +1965,12 @@ class CharacterLiteralExpression : PrimaryExpression
 			return;
 
 		if(txt.length >= 3)
+		{
 			if(txt[$-1] == 'd')
 				type = new BasicType(TOK_dchar, span);
 			else if(txt[$-1] == 'w')
 				type = new BasicType(TOK_wchar, span);
+		}
 		if(!type)
 			type = new BasicType(TOK_char, span);
 
