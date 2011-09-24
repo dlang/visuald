@@ -31,6 +31,8 @@ import std.math;
 import std.array;
 import std.exception;
 import std.algorithm;
+
+import core.demangle;
 import core.thread;
 import core.stdc.time;
 import core.stdc.string;
@@ -630,6 +632,41 @@ public:
 	CBuilderThread m_pBuilder;
 };
 
+string demangleText(string ln)
+{
+	string txt;
+	for (int i = 0; i < ln.length; )
+	{
+		char ch = ln[i]; // compressed symbols are NOT utf8!
+		if(isAlphaNum(ch) || ch == '_')
+		{
+			string s = decodeDmdString(ln, i);
+			if(s.length > 3 && s[0] == '_' && s[1] == 'D' && isDigit(s[2]))
+			{
+				auto d = core.demangle.demangle(s);
+				txt ~= d;
+			}
+			else if(s.length > 4 && s[0] == '_' && s[1] == '_' && s[2] == 'D' && isDigit(s[3]))
+			{
+				// __moddtor/__modctor have duplicate '__'
+				auto d = core.demangle.demangle(s[1..$]);
+				if(d == s[1..$])
+					txt ~= s;
+				else
+					txt ~= d;
+			}
+			else
+				txt ~= s;
+		}
+		else
+		{
+			txt ~= ch;
+			i++;
+		}
+	}
+	return txt;
+}
+
 class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser 
 {
 	this(CBuilderThread builder)
@@ -661,6 +698,9 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText))
 			return S_FALSE;
 		
+		if(Package.GetGlobalOptions().demangleError)
+			taskItemText = demangleText(taskItemText);
+
 		filename = makeFilenameCanonical(filename, mProjectDir);
 		if(pnPriority)
 			*pnPriority = nPriority;
@@ -822,7 +862,8 @@ HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
 		
 		if(parseOutputStringForTaskItem(line, nPriority, strFilename, nLineNum, strTaskItemText))
 		{
-			if(IVsOutputWindowPane2 pane2 = qi_cast!IVsOutputWindowPane2(outPane))
+			IVsOutputWindowPane2 pane2 = qi_cast!IVsOutputWindowPane2(outPane);
+			if(pane2)
 				hr = pane2.OutputTaskItemStringEx2(
 							"."w.ptr,              // The text to write to the output window.
 							nPriority,             // The priority: use TP_HIGH for errors.
@@ -846,6 +887,7 @@ HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
 							nLineNum,              // Zero-based line number in pszFilename.
 							_toUTF16z(strTaskItemText),      // The text of the Error List entry.
 							""w.ptr);              // in LPCOLESTR pszLookupKwd
+			release(pane2);
 		}
 	}
 	return hr;

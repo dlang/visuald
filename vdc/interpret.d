@@ -43,6 +43,7 @@ import std.conv;
 import std.typetuple;
 import std.string;
 import std.utf;
+import std.traits;
 
 template Singleton(T, ARGS...)
 {
@@ -356,6 +357,10 @@ class Value
 						static if(op == "/" || op == "%")
 							if(v2 == 0)
 								return semanticErrorValue("division by zero");
+						static if(op == "^^" && isIntegral!(ValType) && isIntegral!(iv2.ValType))
+							if(v2 < 0)
+								return semanticErrorValue("integer pow with negative exponent");
+
 						mixin("auto z = (*pval) " ~ op ~ " v2;");
 						return create(z);
 					}

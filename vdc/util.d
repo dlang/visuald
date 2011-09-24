@@ -432,6 +432,16 @@ T[] arrmerge(T)(T[] a1, T[] a2)
 }
 
 ////////////////////////////////////////////////////////////////
+bool isIn(T...)(T values)
+{
+	T[0] needle = values[0];
+	foreach(v; values[1..$])
+		if(v == needle)
+			return true;
+	return false;
+}
+
+////////////////////////////////////////////////////////////////
 void delegate(string s) getStringSink(ref string s)
 {
 	void stringSink(string txt)

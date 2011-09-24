@@ -1180,14 +1180,16 @@ class ToolsProperty2Page : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		AddControl("", mTimeBuilds   = new CheckBox(mCanvas, "Show build time"));
-		AddControl("", mSortProjects = new CheckBox(mCanvas, "Sort project items"));
+		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
+		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
+		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in Error List"));
 	}
 
 	override void SetControls(GlobalOptions opts)
 	{
 		mTimeBuilds.setChecked(opts.timeBuilds);
 		mSortProjects.setChecked(opts.sortProjects);
+		mDemangleError.setChecked(opts.demangleError);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1195,11 +1197,13 @@ class ToolsProperty2Page : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
 		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
+		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
 		return changes;
 	}
 
 	CheckBox mTimeBuilds;
 	CheckBox mSortProjects;
+	CheckBox mDemangleError;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

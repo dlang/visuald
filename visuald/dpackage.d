@@ -713,6 +713,7 @@ class GlobalOptions
 
 	bool timeBuilds;
 	bool sortProjects = true;
+	bool demangleError = true;
 	bool autoOutlining;
 	bool parseSource;
 	bool pasteIndent;
@@ -783,6 +784,7 @@ class GlobalOptions
 			ColorizeVersions = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
 			timeBuilds       = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
 			sortProjects     = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
+			demangleError    = keyToolOpts.GetDWORD("demangleError", 1) != 0;
 			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
 			pasteIndent      = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
@@ -799,6 +801,7 @@ class GlobalOptions
 			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
 			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",       timeBuilds) != 0;
 			sortProjects         = keyUserOpts.GetDWORD("sortProjects",     sortProjects) != 0;
+			demangleError        = keyUserOpts.GetDWORD("demangleError",    demangleError) != 0;
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
@@ -853,6 +856,7 @@ class GlobalOptions
 			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
 			keyToolOpts.Set("timeBuilds", timeBuilds);
 			keyToolOpts.Set("sortProjects", sortProjects);
+			keyToolOpts.Set("demangleError", demangleError);
 			keyToolOpts.Set("autoOutlining", autoOutlining);
 			keyToolOpts.Set("parseSource", parseSource);
 			keyToolOpts.Set("pasteIndent", pasteIndent);

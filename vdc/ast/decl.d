@@ -358,80 +358,22 @@ class Declarator : Identifier, CallableNode
 		
 		TemplateParameterList tpl = getTemplateParameterList();
 		
-		if(args.members.length != tpl.members.length)
-		{
-			semanticError("incorrect number of arguments for template expansion of ", ident);
+		ArgMatch[] vargs = matchTemplateArgs(ident, sc, args, tpl);
+		if(vargs is null)
 			return this;
-		}
-		Value[] vargs;
-		string[] names;
-		Context ctx = new Context(nullContext);
-		ctx.scop = sc;
-		int m;
-		for(m = 0; m < args.members.length; m++)
-		{
-			Value v;
-			string name;
-			auto am = args.members[m];
-			auto pm = tpl.members[m];
-			if(auto typeparam = cast(TemplateTypeParameter) pm)
-			{
-				v = am.interpret(ctx);
-				name = typeparam.ident;
-				if(!cast(TypeValue) v)
-				{
-					semanticError(ident, ": ", m+1, ". argument must evaluate to a type, not ", v.toStr());
-					v = null;
-				}
-			}
-			else if(auto thisparam = cast(TemplateThisParameter) pm)
-			{
-				semanticError("cannot infer this parameter for ", ident);
-			}
-			else if(auto valueparam = cast(TemplateValueParameter) pm)
-			{
-				v = am.interpret(ctx);
-				auto decl = valueparam.getParameterDeclarator().getDeclarator();
-				v = decl.calcType().createValue(ctx, v);
-				name = decl.ident;
-			}
-			else if(auto aliasparam = cast(TemplateAliasParameter) pm)
-			{
-				if(auto idtype = cast(IdentifierType) am)
-					v = new AliasValue(idtype.getIdentifierList());
-				else if(auto type = cast(Type) am)
-					v = new TypeValue(type);
-				else if(auto id = cast(IdentifierExpression) am)
-				{
-					auto idlist = new IdentifierList;
-					idlist.addMember(id.getIdentifier().clone());
-					v = new AliasValue(idlist);
-				}
-				else
-					semanticError(ident, ": ", m+1, ". argument must evaluate to an identifier, not ", am);
-				name = aliasparam.getIdent();
-			}
-			else if(auto tupleparam = cast(TemplateTupleParameter) pm)
-			{
-				semanticError("cannot infer template tuple parameter for ", ident);
-			}
-			if(!v)
-				return this;
-			vargs ~= v;
-			names ~= name;
-		}
+
 		if(auto impl = getTemplateInstantiation(vargs))
 			return impl.getDeclarator();
 
 		// new instantiation has template parameters as parameterlist and contains
 		//  a copy of the function declaration without template arguments
-		auto tmpl = new TemplateInstantiation(this, vargs, names);
+		auto tmpl = new TemplateInstantiation(this, vargs);
 		parent.addMember(tmpl); // add as suffix
 		tmpl.semantic(parent.getScope());
 		return tmpl.getDeclarator();
 	}
 
-	TemplateInstantiation getTemplateInstantiation(Value[] args)
+	TemplateInstantiation getTemplateInstantiation(ArgMatch[] args)
 	{
 		return null;
 	}
@@ -626,13 +568,13 @@ class Declarator : Identifier, CallableNode
 
 class TemplateInstantiation : Node
 {
-	Value[] args;
+	ArgMatch[] args;
 	Declarator dec;
 	
 	override ParameterList getParameterList() { return getMember!ParameterList(0); }
 	Declarator getDeclarator() { return dec; }
 	
-	this(Declarator ddec, Value[] vargs, string[] names)
+	this(Declarator ddec, ArgMatch[] vargs)
 	{
 		Decl decl = new Decl;
 		dec = ddec.clone();
@@ -652,35 +594,16 @@ class TemplateInstantiation : Node
 			}
 		assert(decl.members.length > 0);
 		
-		ParameterList pl = new ParameterList;
 		for(int m = 0; m < dec.members.length; m++)
 		{
 			if(auto tpl = cast(TemplateParameterList) dec.members[m])
 			{
 				dec.removeMember(m);
-				for(m = 0; m < tpl.members.length; m++)
-				{
-					auto pd = new ParameterDeclarator;
-					pd.addMember(vargs[m].getType().clone());
-					
-					auto d = new Declarator;
-					d.ident = names[m];
-					if(auto av = cast(AliasValue) vargs[m])
-					{
-						d.isAlias = true;
-						d.aliasTo = av.resolve();
-					}
-					else
-					{
-						d.value = vargs[m];
-					}
-					pd.addMember(d);
-					pl.addMember(pd);
-				}
+				ParameterList pl = createTemplateParameterList(vargs);
+				addMember(pl);
 				break;
 			}
 		}
-		addMember(pl);
 		addMember(decl);
 		logInfo("created template instance of ", dec.ident, " with args ", vargs);
 	}
@@ -760,7 +683,7 @@ class IdentifierList : Node
 		for(int m = 0; sc && m < members.length; m++)
 		{
 			auto id = getMember!Identifier(m);
-			resolved = sc.resolve(id.ident, id);
+			resolved = sc.resolveWithTemplate(id.ident, sc, id);
 			sc = (resolved ? resolved.scop : null);
 		}
 	}

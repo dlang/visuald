@@ -326,8 +326,9 @@ unreleased Version 0.3.27
 
   * smart reindenting line when typing last char of sole "in", "out" and "body"
   * tweaked smart indenting with respect to enumerators, arrays, labels and more
-  * paste a full line or more now causes automatic reinentation (global option to disable)
+  * paste a full line or more now causes automatic reindentation (global option to disable)
   * fix: build phobos browse information broken in last version
-  * some internal errors are now reproted to the output window (like failing to parse JSON file)
+  * some internal errors are now reported to the output window (like failing to parse JSON file)
   * fixed bad display when deleting characters from line with outlining
-  
+  * automatic reindentation was not triggered when typing '{', '}', etc (win 7/8 only?)
+  * new option to show demangled symbols in the Error List (not the output window)

@@ -792,12 +792,3 @@ struct ScopedBSTR
 	}
 }
 
-///////////////////////////////////////////////////////////////////////
-int array_find(T)(ref T[] arr, T x)
-{
-	for(int i = 0; i < arr.length; i++)
-		if(arr[i] == x)
-			return i;
-	return -1;
-}
-

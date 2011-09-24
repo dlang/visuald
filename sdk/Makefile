@@ -7,7 +7,7 @@
 # see file LICENSE for further details
 
 DMD2 = c:\l\dmd-2.055\windows\bin\dmd.exe
-# DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
+# DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
 CV2PDB = ..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 IMPLIB = c:\l\dmc\bin\implib.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe

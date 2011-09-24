@@ -778,7 +778,8 @@ class TypeDynamicArray : TypeIndirection
 	{
 		if(!scop)
 		{
-			scop = new Scope;
+			Scope sc = parent ? parent.getScope() : null;
+			scop = sc ? sc.pushClone() : new Scope;
 			scop.addSymbol("length", new LengthProperty);
 		}
 		return scop;

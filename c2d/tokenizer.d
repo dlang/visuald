@@ -335,7 +335,7 @@ version(Java)
 		case PPother:
 		case Other:
 		default:
-			assert(false || false);
+			assert(type == EOF); // always fails
 			return "<unexpected>";
 		}
 	}

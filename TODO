@@ -78,3 +78,12 @@ Lexer/Parser:
 Installation:
 ---------------
 - build sdk-imports
+
+Debugger:
+---------------
+- show derived class
+- step after exception
+- stepping through function call jumps to default assignment
+- Mago: set instruction pointer
+- local functions/delegates should have debug info for closure vars ("this" exists)
+

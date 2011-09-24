@@ -2839,7 +2839,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 					ident ~= txt;
 					if(ident.length > 4 && ident[0..5] == "this."w)
 						ident = "this->"w ~ ident[5..$];
-					if(array_find(mExpressions, ident) < 0)
+					if(arrfind(mExpressions, ident) < 0)
 						mExpressions ~= ident;
 				}
 				else if (type == TokenColor.Operator && txt == "."w)
@@ -2848,7 +2848,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 					ident = ""w;
 			}
 		}
-		if(array_find(mExpressions, "this"w) < 0)
+		if(arrfind(mExpressions, "this"w) < 0)
 			mExpressions ~= "this"w;
 	}
 

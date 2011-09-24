@@ -1482,21 +1482,7 @@ class IdentifierExpression : PrimaryExpression
 			scop = sc;
 		
 		auto id = getIdentifier();
-		resolved = scop.resolve(id.ident, id);
-		if(resolved && resolved.isTemplate())
-		{
-			TemplateArgumentList args;
-			if(auto tmplid = cast(TemplateInstance)getIdentifier())
-			{
-				args = tmplid.getTemplateArgumentList();
-			}
-			else
-			{
-				semanticError("cannot infer template arguments");
-				return;
-			}
-			resolved = resolved.expandTemplate(sc, args);
-		}
+		resolved = scop.resolveWithTemplate(id.ident, sc, id);
 	}
 	
 	override Type calcType()

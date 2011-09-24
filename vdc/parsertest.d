@@ -316,6 +316,7 @@ unittest
 	static assert(ctfeLexer(q{int /* comment to skip */ a;}) == [ TOK_int, TOK_Identifier, TOK_semicolon ]);
 }
 ///////////////////////////////////////////////////////////////////////
+
 unittest
 {
 	string txt = q{
@@ -324,6 +325,32 @@ unittest
 		static assert((new C).foo() == 1);
 	};
 	testSemantic(txt, "templateMixin");
+}
+
+unittest
+{
+	string txt = q{
+		template Floating()
+		{
+			const a = 1;
+		}
+		mixin Floating flt;
+		static assert(flt.a == 1);
+	};
+	testSemantic(txt, "templateMixinNamed");
+}
+
+unittest
+{
+	string txt = q{
+		template Floating(T)
+		{
+			T[3] a;
+		}
+		mixin Floating!int flt;
+		static assert(flt.a[0] == 0);
+	};
+	testSemantic(txt, "templateMixinArg");
 }
 
 unittest
@@ -583,6 +610,7 @@ int main(string[] argv)
 		foreach_file((string fname){
 			Project prj = new Project;
 			semanticErrors = 0;
+			logInfo("### testSemantic " ~ fname ~ " ###");
 			prj.addFile(fname);
 			prj.semantic();
 			prj.run();

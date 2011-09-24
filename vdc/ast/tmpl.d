@@ -28,7 +28,13 @@ class TemplateDeclaration : Node
 	Constraint getConstraint() { return members.length > 3 ? getMember!Constraint(2) : null; }
 	Node getBody() { return getMember(members.length - 1); }
 	bool isMixin() { return id == TOK_mixin; }
-	
+
+	override TemplateDeclaration clone()
+	{
+		TemplateDeclaration n = static_cast!TemplateDeclaration(super.clone());
+		return n;
+	}
+
 	override void toD(CodeWriter writer)
 	{
 		if(isMixin())
@@ -61,6 +67,83 @@ class TemplateDeclaration : Node
 		sc.addSymbol(ident, this);
 	}
 
+	override void _semantic(Scope sc)
+	{
+		// do not recurse into declaration, it only makes sense for an instance
+	}
+
+	override bool isTemplate() const { return true; }
+
+	override Node expandTemplate(Scope sc, TemplateArgumentList args)
+	{
+		TemplateParameterList tpl = getTemplateParameterList();
+		string ident = getIdentifier().ident;
+
+		ArgMatch[] vargs = matchTemplateArgs(ident, sc, args, tpl);
+		ParameterList pl = createTemplateParameterList(vargs);
+
+		auto bdy = getBody().clone();
+		auto inst = new TemplateMixinInstance;
+		inst.addMember(pl);
+		inst.addMember(bdy);
+		return inst;
+	}
+}
+
+//TemplateMixinInstance:
+//    name [ParameterList DeclarationBlock]
+class TemplateMixinInstance : Type
+{
+	mixin ForwardCtor!();
+
+	// semantic data
+	string instanceName; // set when named instance created by cloning
+	TypeValue typeVal;
+
+	ParameterList getTemplateParameterList() { return getMember!ParameterList(0); }
+	Node getBody() { return getMember(1); }
+
+	override bool propertyNeedsParens() const { return false; }
+
+	override void toD(CodeWriter writer)
+	{
+		writer("mixin ", getBody(), " ", instanceName);
+	}
+
+	override void _semantic(Scope sc)
+	{
+		// TODO: TemplateParameterList, Constraint
+		sc = enterScope(sc);
+		super._semantic(sc);
+		sc = sc.pop();
+	}
+
+	override void addSymbols(Scope sc)
+	{
+		if(instanceName.length)
+			sc.addSymbol(instanceName, this);
+		else
+		{
+			sc = enterScope(sc).pop();
+
+			// put symbols into parent scope aswell
+			foreach(id, sym; scop.symbols)
+				foreach(s; sym)
+					sc.addSymbol(id, s);
+		}
+	}
+
+	override Type calcType()
+	{
+		return this;
+	}
+
+	override Value interpret(Context sc)
+	{
+		if(!typeVal)
+			typeVal = new TypeValue(calcType());
+		return typeVal;
+	}
 }
 
 //TemplateParameterList:
@@ -352,8 +435,8 @@ class TemplateTupleParameter : TemplateParameter
 //
 // translated to
 //TemplateMixin:
-//    mixin GlobalIdentifierList MixinIdentifier_opt ;
-//    mixin Typeof . IdentifierList MixinIdentifier_opt ;
+//    [IdentifierList MixinIdentifier_opt]
+//    [Typeof MixinIdentifier]
 class TemplateMixin : Node
 {
 	mixin ForwardCtor!();
@@ -373,14 +456,18 @@ class TemplateMixin : Node
 		{
 			if(Node n = idlist.resolve())
 			{
-				if(auto tmd = cast(TemplateDeclaration) n)
+				if(auto tmi = cast(TemplateMixinInstance) n)
 				{
-					// replace parameters
-					auto bdy = tmd.getBody().clone();
-					return bdy.members;
+					// TODO: match constraints, replace parameters
+					if(members.length > 1)
+					{
+						// named instance
+						string name = getMember!Identifier(1).ident;
+						tmi.instanceName = name;
+					}
+					return [ tmi ];
 				}
-				else
-					semanticError(n, " is not a TemplateDeclaration");
+				semanticError(n, " is not a TemplateMixinInstance");
 			}
 		}
 		return athis;
@@ -406,3 +493,94 @@ class Constraint : Node
 //MixinIdentifier:
 //    Identifier
 //
+
+ArgMatch[] matchTemplateArgs(string ident, Scope sc, TemplateArgumentList args, TemplateParameterList tpl)
+{
+	if(args.members.length != tpl.members.length)
+	{
+		semanticError("incorrect number of arguments for template expansion of ", ident);
+		return null;
+	}
+	ArgMatch[] vargs;
+	Context ctx = new Context(nullContext);
+	ctx.scop = sc;
+	int m;
+	for(m = 0; m < args.members.length; m++)
+	{
+		Value v;
+		string name;
+		auto am = args.members[m];
+		auto pm = tpl.members[m];
+		if(auto typeparam = cast(TemplateTypeParameter) pm)
+		{
+			v = am.interpret(ctx);
+			name = typeparam.ident;
+			if(!cast(TypeValue) v)
+			{
+				semanticError(ident, ": ", m+1, ". argument must evaluate to a type, not ", v.toStr());
+				v = null;
+			}
+		}
+		else if(auto thisparam = cast(TemplateThisParameter) pm)
+		{
+			semanticError("cannot infer this parameter for ", ident);
+		}
+		else if(auto valueparam = cast(TemplateValueParameter) pm)
+		{
+			v = am.interpret(ctx);
+			auto decl = valueparam.getParameterDeclarator().getDeclarator();
+			v = decl.calcType().createValue(ctx, v);
+			name = decl.ident;
+		}
+		else if(auto aliasparam = cast(TemplateAliasParameter) pm)
+		{
+			if(auto idtype = cast(IdentifierType) am)
+				v = new AliasValue(idtype.getIdentifierList());
+			else if(auto type = cast(Type) am)
+				v = new TypeValue(type);
+			else if(auto id = cast(IdentifierExpression) am)
+			{
+				auto idlist = new IdentifierList;
+				idlist.addMember(id.getIdentifier().clone());
+				v = new AliasValue(idlist);
+			}
+			else
+				semanticError(ident, ": ", m+1, ". argument must evaluate to an identifier, not ", am);
+			name = aliasparam.getIdent();
+		}
+		else if(auto tupleparam = cast(TemplateTupleParameter) pm)
+		{
+			semanticError("cannot infer template tuple parameter for ", ident);
+		}
+		if(!v)
+			return null;
+		vargs ~= ArgMatch(v, name);
+	}
+	return vargs;
+}
+
+
+ParameterList createTemplateParameterList(ArgMatch[] vargs)
+{
+	ParameterList pl = new ParameterList;
+	for(int m = 0; m < vargs.length; m++)
+	{
+		auto pd = new ParameterDeclarator;
+		pd.addMember(vargs[m].value.getType().clone());
+
+		auto d = new Declarator;
+		d.ident = vargs[m].name;
+		if(auto av = cast(AliasValue) vargs[m].value)
+		{
+			d.isAlias = true;
+			d.aliasTo = av.resolve();
+		}
+		else
+		{
+			d.value = vargs[m].value;
+		}
+		pd.addMember(d);
+		pl.addMember(pd);
+	}
+	return pl;
+}

@@ -15,6 +15,7 @@ import vdc.ast.type;
 import vdc.ast.aggr;
 import vdc.ast.decl;
 import vdc.ast.expr;
+import vdc.ast.tmpl;
 import vdc.parser.engine;
 import vdc.logger;
 import vdc.interpret;
@@ -23,6 +24,7 @@ import std.exception;
 import std.stdio;
 import std.string;
 import std.array;
+import std.conv;
 
 int semanticErrors;
 
@@ -42,13 +44,14 @@ class InterpretException : Exception
 	}
 }
 
-void semanticErrorWriteLoc(string filename, ref const(TextPos) pos)
+string semanticErrorWriteLoc(string filename, ref const(TextPos) pos)
 {
-	write(filename);
+	string txt = filename;
 	if(pos.line > 0)
-		write("(", pos.line, ")");
-	write(": ");
+		txt ~= text("(", pos.line, ")");
+	txt ~= ": ";
 	semanticErrors++;
+	return txt;
 }
 
 void semanticErrorLoc(T...)(string filename, ref const(TextPos) pos, T args)
@@ -57,8 +60,10 @@ void semanticErrorLoc(T...)(string filename, ref const(TextPos) pos, T args)
 		if(typeid(a) == typeid(ErrorType) || typeid(a) == typeid(ErrorValue))
 			return;
 	
-	semanticErrorWriteLoc(filename, pos);
-	writeln(args);
+	string msg = semanticErrorWriteLoc(filename, pos);
+	msg ~= text(args);
+	writeln(msg);
+	logInfo(msg);
 }
 
 void semanticErrorPos(T...)(ref const(TextPos) pos, T args)
@@ -200,7 +205,11 @@ class Scope
 //	Context ctx; // compile time only
 	
 	static Scope current;
-	
+
+	this()
+	{
+		logInfo("Scope(%s) created, current=%s", cast(void*)this, cast(void*)current);
+	}
 	enum
 	{
 		SearchParentScope = 1,
@@ -335,8 +344,39 @@ class Scope
 		return resolveOverload(ident, id, n);
 	}
 	
+	Node resolveWithTemplate(string ident, Scope sc, Node id, bool inParents = true)
+	{
+		Node[] n = search(ident, inParents, true);
+		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n, n.length > 0 ? cast(void*)n[0] : null);
+
+		auto resolved = resolveOverload(ident, id, n);
+		if(resolved && resolved.isTemplate())
+		{
+			TemplateArgumentList args;
+			if(auto tmplid = cast(TemplateInstance)id)
+			{
+				args = tmplid.getTemplateArgumentList();
+			}
+			else
+			{
+				args = new TemplateArgumentList; // no args
+			}
+			resolved = resolved.expandTemplate(sc, args);
+		}
+		return resolved;
+	}
+
 	Project getProject() { return mod ? mod.getProject() : null; }
 }
+
+struct ArgMatch
+{
+	Value value;
+	string name;
+
+	string toString() { return "{" ~ value.toStr() ~ "," ~ name ~ "}"; }
+}
+
 
 class Project : Node
 {
@@ -351,12 +391,15 @@ class Project : Node
 		super(TextSpan());
 		options = new Options;
 
-		options.importDirs ~= r"c:\l\dmd-2.053\src\druntime\import\";
-		options.importDirs ~= r"c:\l\dmd-2.053\src\phobos\";
+		options.importDirs ~= r"c:\l\dmd-2.055\src\druntime\import\";
+		options.importDirs ~= r"c:\l\dmd-2.055\src\phobos\";
 		
 		options.importDirs ~= r"c:\tmp\d\runnable\";
 		options.importDirs ~= r"c:\tmp\d\runnable\imports\";
-		
+
+		options.importDirs ~= r"m:\s\d\rainers\dmd\test\";
+		options.importDirs ~= r"m:\s\d\rainers\dmd\test\imports\";
+
 		globalContext = new Context(null);
 		threadContext = new Context(null);
 	}

@@ -351,7 +351,7 @@ version(tip)
 				break;
 				
 			case ECMD_TYPECHAR:
-				dchar ch = pvaIn.lVal;
+				dchar ch = pvaIn.uiVal;
 				//if(ch == '.')
 				//	initCompletion();
 				//else

@@ -1843,8 +1843,8 @@ class Config :	DisposingComObject,
 			fcmd ~= " " ~ modules_ddoc;
 		}
 
-		if(separateLink || !doLink)
-			opt ~= " -c -od" ~ quoteFilename(mProjectOptions.objdir);
+		if(separateLink || !doLink)   
+			opt ~= " -c -od" ~ quoteFilename(mProjectOptions.objdir);    
 
 		string cmd = precmd ~ opt ~ fcmd ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";

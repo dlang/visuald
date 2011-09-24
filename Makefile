@@ -17,7 +17,9 @@ DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
 # DMD2 = c:\l\dmd-2.055\windows\bin\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
-WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
+# avoid trailing '\', it ruins the command line
+WINSDK = $(WINDOWSSDKDIR:\=/)
+# WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
 VSISDK = c:\l\vs9SDK
 # VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2008 SDK
