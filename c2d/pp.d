@@ -611,14 +611,53 @@ class ConditionalCode
 	}
 
 	///////////////////////////////////////////////////////
+	bool isExpandableSection()
+	{
+		if(!conditional)
+		{
+			// check whether this is the first and only section of a conditional (no #elif/#else)
+			return false;
+		}
+
+		Token iftok = start[-1];
+		string ident, comment;
+		int ntokens = splitPPCondition(iftok, ident, comment);
+
+		if(ntokens == 1)
+		   if(auto p = ident in PP.expandConditionals)
+			   return *p;
+
+		return false;
+	}
+	void expandSection()
+	{
+		start[-1].text = "// " ~ start[-1].text;
+		start[-1].type = Token.PPinsert;
+
+		TokenIterator stop = end - 1;
+		if(children.count() > 1)
+		{
+			for(TokenIterator it = children[1].start - 1; !it.atEnd() && it != stop; ++it)
+			{
+				it.text = "";
+				it.type = Token.PPinsert;
+			}
+		}
+		stop.text = "// " ~ stop.text;
+		stop.type = Token.PPinsert;
+	}
+	///////////////////////////////////////////////////////
 	bool isRemovableSection()
 	{
 		Token iftok = start[-1];
 		string ident, comment;
-		splitPPCondition(iftok, ident, comment);
+		int ntokens = splitPPCondition(iftok, ident, comment);
 
 		if((ident == "__DMC__" || ident == "__SC__") && startsWith(start[0].text, "#pragma once") && end == start + 2)
 			return true;
+		if(ntokens == 1)
+			if(auto p = ident in PP.expandConditionals)
+				return !*p;
 
 		return false;
 	}
@@ -641,10 +680,7 @@ class ConditionalCode
 	}
 	bool isVersionDefine(string ident)
 	{
-		foreach(def; PP.versionDefines)
-			if(ident == def)
-				return true;
-		return false;
+		return (ident in PP.versionDefines) !is null;
 	}
 
 	void convertIfndef()
@@ -733,9 +769,14 @@ class ConditionalCode
 	//////////////////////////////////////////////////////////////////////////////
 	void fixConditionalIf()
 	{
-		if (isRemovableSection())
+		if(isRemovableSection())
 		{
 			removeSection();
+			return;
+		}
+		if(isExpandableSection())
+		{
+			expandSection();
 			return;
 		}
 
@@ -846,7 +887,8 @@ class PP
 
 	ConditionalCode root;
 
-	static string[] versionDefines;
+	static bool[string] versionDefines;
+	static bool[string] expandConditionals;
 }
 
 ///////////////////////////////////////////////////////////////////////

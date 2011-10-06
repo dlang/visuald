@@ -280,7 +280,8 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   ${File} ..\..\..\cv2pdb\trunk\ INSTALL
   ${File} ..\..\..\cv2pdb\trunk\ TODO
 
-  !insertmacro ReplaceInFile "$INSTDIR\cv2pdb\autoexp.expand" "dviewhelper" "$INSTDIR\cv2pdb\DViewHelper" NoBackup
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$INSTDIR\cv2pdb\autoexp.expand" "dviewhelper" "$0\cv2pdb\DViewHelper" NoBackup
 
   Push ${SecVS_NET}
   Push ${VS_NET_REGISTRY_KEY}

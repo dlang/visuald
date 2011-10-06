@@ -504,7 +504,7 @@ public:
 				/* [in] */ in UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
 			{
-				mixin(LogCallMix);
+				//mixin(LogCallMix);
 				if (cNames == 1 && to_string(*rgszNames) == "__id")
 				{
 					*pMemId = 2;

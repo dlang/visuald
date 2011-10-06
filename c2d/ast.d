@@ -81,7 +81,7 @@ class AST
 	}
 
 	//////////////////////////////////////////////////////////////
-	void insertChildBefore(ASTIterator it, AST ast, TokenList toklist)
+	void insertChildBefore(ASTIterator it, AST ast, TokenList toklist, TokenIterator* pInsertPos = null)
 	{
 		bool insertAtStart = !children || children.empty();
 		if(!children)
@@ -96,7 +96,9 @@ class AST
 
 		// it on child after inserted ast
 		TokenIterator insertPos;
-		if(insertAtStart)
+		if(pInsertPos)
+			insertPos = *pInsertPos;
+		else if(insertAtStart)
 			insertPos = defaultInsertStartTokenPosition();
 		else if (it.atEnd())
 			insertPos = defaultInsertEndTokenPosition();
@@ -175,6 +177,13 @@ class AST
 		if(!children)
 			return 0;
 		return children.count();
+	}
+
+	ASTIterator childrenBegin()
+	{
+		if(!children)
+			return ASTIterator();
+		return children.begin();
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -421,6 +430,7 @@ class AST
 			case Token.Extern:
 				if(tokIt[1].type == Token.String)
 				{
+					tokIt[1].text = "(" ~ tokIt[1].text[1..$-1] ~ ")";
 					nextToken(tokIt);
 					nextToken(tokIt);
 					if(tokIt.type == Token.BraceL)
@@ -683,10 +693,18 @@ class AST
 
 	static bool isPOD(string className)
 	{
-		if(className in baseClass)
-			return false;
-		if(className in derivedClasses)
-			return false;
+		int loop = 0;
+		while(loop++ < 20)
+		{
+			if(className in baseClass)
+				return false;
+			if(className in derivedClasses)
+				return false;
+			if(auto p = className in typedefIdentifier)
+				className = *p;
+			else
+				break;
+		}
 		return true;
 	}
 
@@ -703,6 +721,17 @@ class AST
 		return false;
 	}
 
+	static void addTypedef(DeclType dtype, DeclVar dvar)
+	{
+		if(dvar._ident.length == 0 || dtype._ident.length == 0)
+			return;
+		if(dvar._ident in typedefIdentifier)
+			return;
+		if(dvar.children && !dvar.children.empty && dvar.children[0]._type != Type.PrimaryExp)
+			return;
+		typedefIdentifier[dvar._ident] = dtype._ident;
+	}
+
 	//////////////////////////////////////////////////////////////////////
 	TokenIterator start; // first token
 	TokenIterator end;   // token after last token
@@ -716,6 +745,7 @@ class AST
 	static string[string]   baseClass;
 	static string[][string] derivedClasses;
 	static string[string]   enumIdentifier;
+	static string[string]   typedefIdentifier;
 
 	// call this to cleanup garbage from unittests
 	static void clearStatic()
@@ -726,6 +756,7 @@ class AST
 		derivedClasses = ini2; // = derivedClasses.init;
 		string[string] ini3;
 		enumIdentifier = ini3; // = enumIdentifier.init;
+		typedefIdentifier = ini3; // = enumIdentifier.init;
 	}
 }
 
@@ -771,8 +802,7 @@ class Expression : AST
 				if(tokIt.type == Token.Operator)
 				{
 					nextToken(tokIt);
-					// TODO: allows any token 
-					nextToken(tokIt);
+					checkOperator(tokIt);
 				}
 				else
 					checkToken(tokIt, Token.Identifier);
@@ -781,8 +811,7 @@ class Expression : AST
 			break;
 		case Token.Operator:
 			nextToken(tokIt);
-			// TODO: allows any token 
-			nextToken(tokIt);
+			checkOperator(tokIt);
 			e = new Expression(Type.PrimaryExp, Token.Operator);
 			break;
 
@@ -1157,8 +1186,7 @@ class Expression : AST
 				if(tokIt.type == Token.Operator)
 				{
 					nextToken(tokIt);
-					// TODO: allows any token 
-					nextToken(tokIt);
+					checkOperator(tokIt);
 				}
 				else
 					checkToken(tokIt, Token.Identifier);
@@ -1167,8 +1195,7 @@ class Expression : AST
 			break;
 		case Token.Operator:
 			nextToken(tokIt);
-			// TODO: allows any token 
-			nextToken(tokIt);
+			checkOperator(tokIt);
 			e = new Expression(Type.PrimaryExp, Token.Operator);
 			break;
 
@@ -1402,13 +1429,13 @@ class Expression : AST
 				txt ~= ")";
 				break;
 			case Token.BracketL:
+				txt = children[0].toString(tsd) ~ "[";
+
 				bool wasInPrototype = tsd.inPrototype;
 				scope(exit) tsd.inPrototype = wasInPrototype;
-
 				if(tsd.inDeclarator)
 					tsd.inPrototype = false;
 
-				txt = children[0].toString(tsd) ~ "[";
 				if(children.count() > 1)
 				{
 					bool wasAddScopeToIdentifier = tsd.addScopeToIdentifier;
@@ -1918,6 +1945,16 @@ class DeclType : AST
 				txt = "class ";
 			txt ~= _ident;
 			break;
+		case Template:
+			string args;
+			for(ASTIterator it = children.begin(); !it.atEnd(); ++it)
+			{
+				if(args.length)
+					args ~= ", ";
+				args ~= it.toString(tsd);
+			}
+			txt ~= _ident ~ "<" ~ args ~ ">";
+			break;
 		case CtorDtor: 
 			break;
 		case Elipsis:
@@ -2065,9 +2102,14 @@ class DeclVar : AST
 	this(Expression vardecl, Expression init = null)
 	{
 		super(Type.VarDeclaration);
-		// drill into vardecl to find identifier
+
 		if(vardecl)
+		{
 			addChild(vardecl);
+			// drill into vardecl to find identifier
+			if(auto id = findIdentifier(vardecl))
+				_ident = getIdentifier(id);
+		}
 		if(init)
 			addChild(init);
 	}
@@ -2298,7 +2340,10 @@ class Declaration : AST
 		inis.addChild(parseCtorInitializer(tokIt));
 
 		while(tokIt.type == Token.Comma)
+		{
+			nextToken(tokIt);
 			inis.addChild(parseCtorInitializer(tokIt));
+		}
 
 		inis.start = start;
 		inis.end = tokIt;
@@ -2396,6 +2441,8 @@ class Declaration : AST
 		TokenIterator start = tokIt;
 		DeclType decl;
 
+		if(tokIt.text == "typename")
+			tokIt.advance();
 		DeclType.skipModifiers(tokIt);
 
 		switch (tokIt.type)
@@ -2421,7 +2468,15 @@ class Declaration : AST
 			else
 			{
 				checkToken(tokIt, Token.Identifier);
-				decl = new DeclType(DeclType.Class, ident);
+				if(tokIt.type == Token.LessThan)
+				{
+					nextToken(tokIt);
+					decl = new DeclType(DeclType.Template, ident);
+					decl.parseDeclArguments(tokIt, Token.GreaterThan);
+					checkToken(tokIt, Token.GreaterThan);
+				}
+				else
+					decl = new DeclType(DeclType.Class, ident);
 			}
 			break;
 		}
@@ -2515,27 +2570,29 @@ class Declaration : AST
 
 	static Declaration parseTemplateDeclaration(ref TokenIterator tokIt)
 	{
+		TokenIterator start = tokIt;
+
 		checkToken(tokIt, Token.Template);
 		checkToken(tokIt, Token.LessThan);
 		
 		DeclType decltype = new DeclType(DeclType.Template, "template");
-		Declaration decl = new Declaration(decltype);
-		
 		if(!tokIt.atEnd() && tokIt.type != Token.GreaterThan)
 		{
-			if(tokIt.text == "typename")
-				tokIt.advance();
-			decl.addChild(parseTypeDeclaration(tokIt));
+			decltype.addChild(parseTypeDeclaration(tokIt));
 			while(!tokIt.atEnd() && tokIt.type == Token.Comma)
 			{
 				tokIt.advance();
-				if(tokIt.text == "typename")
-					tokIt.advance();
-				decl.addChild(parseTypeDeclaration(tokIt));
+				decltype.addChild(parseTypeDeclaration(tokIt));
 			}
 			checkToken(tokIt, Token.GreaterThan);
 		}
+		decltype.start = start;
+		decltype.end = tokIt;
+
+		Declaration decl = new Declaration(decltype);
 		decl.addChild(parseDeclaration(tokIt));
+		decl.start = start;
+		decl.end = tokIt;
 		return decl;
 	}
 		
@@ -2556,9 +2613,15 @@ class Declaration : AST
 				DeclVar vdecl = parseDeclVar(tokIt, idpolicy, declstmt);
 				decl.addChild(vdecl);
 
+				if(decltype.isTypedef())
+					addTypedef(decltype, vdecl);
+
 				if(idpolicy == IdentPolicy.SingleOptional || idpolicy == IdentPolicy.SingleMandantory || 
 				   idpolicy == IdentPolicy.Prohibited)
 					goto L_eodecl;
+
+				if(DeclType.isMutabilityModifier(tokIt.text))
+					nextToken(tokIt);
 
 				if(tokIt.type == Token.__In || tokIt.type == Token.__Out || 
 				   tokIt.type == Token.__Body || tokIt.type == Token.BraceL)
@@ -2761,6 +2824,14 @@ DeclType isClassDefinition(AST ast)
 				return dtype;
 		}
 	}
+	return null;
+}
+
+string getIdentifier(AST ast)
+{
+	for(TokenIterator tokIt = ast.start; tokIt != ast.end; ++tokIt)
+		if(tokIt.type == Token.Identifier)
+			return tokIt.text;
 	return null;
 }
 

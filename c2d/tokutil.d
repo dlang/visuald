@@ -104,6 +104,18 @@ void checkToken(ref TokenIterator tokIt, int type, bool skipPP = true)
 	nextToken(tokIt, skipPP);
 }
 
+void checkOperator(ref TokenIterator tokIt)
+{
+	// TODO: allows any token 
+	if(tokIt.type == Token.BracketL)
+	{
+		nextToken(tokIt);
+		checkToken(tokIt, Token.BracketR);
+	}
+	else
+		nextToken(tokIt);
+}
+
 string tokensToIdentifier(TokenIterator start, TokenIterator end)
 {
 	string ident;

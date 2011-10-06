@@ -10,6 +10,7 @@ module visuald.pkgutil;
 
 import visuald.hierutil;
 import visuald.comutil;
+import visuald.dpackage;
 
 import std.conv;
 import sdk.vsi.vsshell;
@@ -29,14 +30,30 @@ void showStatusBarText(string txt)
 	showStatusBarText(to!wstring(txt));
 }
 
+void deleteBuildOutputPane()
+{
+	auto win = queryService!(IVsOutputWindow)();
+	if(!win)
+		return;
+	scope(exit) release(win);
+
+	win.DeletePane(&g_outputPaneCLSID);
+}
+
 IVsOutputWindowPane getBuildOutputPane()
 {
 	auto win = queryService!(IVsOutputWindow)();
 	if(!win)
 		return null;
 	scope(exit) release(win);
-	
+
 	IVsOutputWindowPane pane;
+	if(win.GetPane(&g_outputPaneCLSID, &pane) == S_OK && pane)
+		return pane;
+	if(win.CreatePane(&g_outputPaneCLSID, "Visual D", false, true) == S_OK)
+		if(win.GetPane(&g_outputPaneCLSID, &pane) == S_OK && pane)
+			return pane;
+
 	if(win.GetPane(&GUID_BuildOutputWindowPane, &pane) != S_OK || !pane)
 		return null;
 	return pane;

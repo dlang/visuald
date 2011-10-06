@@ -518,7 +518,7 @@ class Tokenizer
 		}
 		if (!keepBackSlashAtEOL)
 		{
-			if(!eof(1) && text[pos] == '\\' && text[pos+1] == '\n' || text[pos+1] == '\r')
+			if(!eof(2) && text[pos] == '\\' && (text[pos+1] == '\n' || text[pos+1] == '\r'))
 			{
 				nextChar();
 				nextChar();
@@ -542,14 +542,19 @@ class Tokenizer
 	bool skipString()
 	{
 		int sep = text[pos];
-		while(nextChar() && text[pos] != sep)
+		nextChar();
+		while(!eof() && text[pos] != sep)
 		{
 version(IDL) {} else {
 			if(isNewline())
 				throw new Exception("newline in string constant");
 }
-			if(text[pos] == '\\')
+			if(!handleBackSlash())
+			{
+				if(text[pos] == '\\')
+					nextChar();
 				nextChar();
+			}
 		}
 		if (eof())
 			return false;
@@ -573,7 +578,7 @@ version(IDL) {} else {
 			while(!eof() && (isAlphaNum(text[pos]) || text[pos] == '_' || text[pos] == '$'))
 				nextChar();
 		else
-			while(!eof() && (isalnum(text[pos]) || text[pos] == '_'))
+			while(!eof() && (isAlphaNum(text[pos]) || text[pos] == '_'))
 				nextChar();
 		return true;
 	}

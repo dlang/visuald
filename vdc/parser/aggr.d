@@ -308,6 +308,11 @@ class AggregateDeclaration
 				return Accept;
 			case TOK_lcurly:
 				return shiftLcurly(p);
+			case TOK_colon:
+				if(!cast(ast.Class) p.topNode() && !cast(ast.Intrface) p.topNode())
+					return p.parseError("only classes and interfaces support inheritance");
+				p.pushState(&shiftColon);
+				return Accept;
 			default:
 				return p.parseError("'{' expected after constraint");
 		}

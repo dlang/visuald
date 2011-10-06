@@ -14,6 +14,7 @@ import std.path;
 import std.utf;
 import std.stream;
 import std.array;
+import std.conv;
 
 import sdk.port.vsi;
 import sdk.vsi.vsshell;
@@ -420,7 +421,7 @@ HRESULT FindFileInSolution(IVsUIShellOpenDocument pIVsUIShellOpenDocument, strin
 	
 	HRESULT hr;
 	hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
-	if(hr != S_OK)
+	if(hr != S_OK || !bstrAbsPath || !isabs(to_string(bstrAbsPath)))
 	{
 		// search import paths
 		string[] imps = GetImportPaths(srcfile);
@@ -429,6 +430,7 @@ HRESULT FindFileInSolution(IVsUIShellOpenDocument pIVsUIShellOpenDocument, strin
 			string file = normalizeDir(imp) ~ filename;
 			if(std.file.exists(file))
 			{
+				detachBSTR(bstrAbsPath);
 				bstrAbsPath = allocBSTR(file);
 				hr = S_OK;
 				break;

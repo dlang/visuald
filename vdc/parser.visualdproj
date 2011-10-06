@@ -263,7 +263,7 @@
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>$(TargetPath)</debugtarget>
-  <debugarguments>m:\s\d\rainers\dmd\test\runnable\arrayop.d</debugarguments>
+  <debugarguments>m:\s\d\rainers\dmd\test\runnable\*.d</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />

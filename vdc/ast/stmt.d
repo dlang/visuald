@@ -301,6 +301,23 @@ class DeclarationStatement : Statement
 	}
 }
 
+//ImportStatement:
+//    [ImportDeclaration]
+class ImportStatement : Statement
+{
+	mixin ForwardCtor!();
+
+	override void toD(CodeWriter writer)
+	{
+		getMember(0).toD(writer);
+	}
+
+	override Value interpret(Context sc)
+	{
+		return null;
+	}
+}
+
 //IfStatement:
 //    if ( IfCondition ) ThenStatement
 //    if ( IfCondition ) ThenStatement else ElseStatement

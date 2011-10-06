@@ -995,7 +995,7 @@ class ArrayLiteral : Expression
 			Type vt = new AutoType;
 			foreach(m; argl.members)
 				vt = vt.commonType(m.calcType());
-			type.addMember(vt);
+			type.addMember(vt.clone());
 		}
 	}
 	

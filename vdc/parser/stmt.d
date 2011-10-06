@@ -240,6 +240,11 @@ class NonEmptyStatement : Statement
 				p.pushState(&shiftDeclaration);
 				return Declaration.enter(p);
 				
+			case TOK_import:
+				p.pushRollback(&rollbackDeclFailure);
+				p.pushState(&shiftImport);
+				return ImportDeclaration.enter(p);
+
 			default:
 				p.pushRollback(&rollbackDeclFailure);
 				p.pushState(&shiftDecl);
@@ -327,6 +332,12 @@ class NonEmptyStatement : Statement
 	static Action shiftDeclaration(Parser p)
 	{
 		p.appendReplaceTopNode(new ast.DeclarationStatement(p.tok));
+		return Forward;
+	}
+
+	static Action shiftImport(Parser p)
+	{
+		p.appendReplaceTopNode(new ast.ImportStatement(p.tok));
 		return Forward;
 	}
 }

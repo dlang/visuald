@@ -28,6 +28,8 @@ Project:
 - DnD files/folders loses project file settings
 - retreive both filename and name in the solution, and make them accessible through variables
 - different icon for project items after changing tool
+- what happens without d file on the command line?
+- template to create a Visual D project from an existing source tree
 
 Language service:
 ---------------
@@ -43,6 +45,7 @@ Language service:
 - replace token: empty dialog when opened without resizing
 - when hovering identifier with preceding dot, include identifier before dot in debugger tool tip
 - stop parsing/outlining when text is modified
+- build druntime info fails
 
 Search:
 ---------------
@@ -74,6 +77,7 @@ Lexer/Parser:
 - fix Cmp/ShiftExpression
 - octal numbers
 - do not parse file if it is D1
+- deprecated syntax
 
 Installation:
 ---------------
@@ -86,4 +90,6 @@ Debugger:
 - stepping through function call jumps to default assignment
 - Mago: set instruction pointer
 - local functions/delegates should have debug info for closure vars ("this" exists)
-
+- mago: watch TLS variables broken
+- mago: does not show local variables of last function
+- dviewhelper: not loaded if path contains spaces

@@ -560,7 +560,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 				/* [in] */ in UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
 			{
-				mixin(LogCallMix);
+				//mixin(LogCallMix);
 				if (cNames == 1 && to_string(*rgszNames) == "Name")
 				{
 					*pMemId = 1;
@@ -697,7 +697,7 @@ class Project : CVsHierarchy,
 				/* [in] */ in UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
 			{
-				mixin(LogCallMix);
+				//mixin(LogCallMix);
 				if (cNames == 1 && to_string(*rgszNames) == "Name")
 				{
 					*pMemId = 1;

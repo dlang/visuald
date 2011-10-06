@@ -29,7 +29,7 @@
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>1</useUnitTests>
+  <useUnitTests>0</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
@@ -70,7 +70,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>1</runCv2pdb>
+  <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)\cv2pdb\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
@@ -79,7 +79,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
-  <additionalOptions>-debuglib=phobos.lib</additionalOptions>
+  <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
   <debugtarget>$(Devenvdir)\devenv.exe</debugtarget>

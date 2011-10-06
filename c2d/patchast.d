@@ -255,9 +255,9 @@ bool wantsSpacePretext(string s)
 
 bool needSeparatingSpace(char prevch, char nextch)
 {
-	if(!isalnum(prevch) && prevch != '_')
+	if(!isAlphaNum(prevch) && prevch != '_')
 		return false;
-	if(!isalnum(nextch) && nextch != '_')
+	if(!isAlphaNum(nextch) && nextch != '_')
 		return false;
 	return true;
 }
@@ -406,7 +406,7 @@ void patchBasicDeclType(AST ast)
 		for( ; !it.atEnd(); ++it)
 			if(it.pretext.length || it.text.length)
 				break;
-		if(!it.atEnd() && it.pretext.length == 0 && (isalnum(it.text[0]) || it.text[0] == '*' || it.text[0] == '_'))
+		if(!it.atEnd() && it.pretext.length == 0 && (isAlphaNum(it.text[0]) || it.text[0] == '*' || it.text[0] == '_'))
 			it.pretext = " ";
 	}
 }
@@ -785,6 +785,9 @@ void patchCallArguments(Expression expr)
 	case KindOfPatch.IsPrint:
 		if(arg.start.text == "v")
 			arg.start.pretext ~= "cast(int)";
+		break;
+
+	default:
 		break;
 	}
 

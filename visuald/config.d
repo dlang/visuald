@@ -290,6 +290,11 @@ class ProjectOptions
 			if(strip(imp).length)
 				cmd ~= " -I" ~ quoteNormalizeFilename(strip(imp));
 
+		string[] globalimports = tokenizeArgs(Package.GetGlobalOptions().ImpSearchPath);
+		foreach(gimp; globalimports)
+			if(strip(gimp).length)
+				cmd ~= " -I" ~ quoteNormalizeFilename(strip(gimp));
+
 		string[] fileImports = tokenizeArgs(fileImppath);
 		foreach(imp; fileImports)
 			if(strip(imp).length)

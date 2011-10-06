@@ -83,6 +83,7 @@ const GUID    g_debuggerLanguage         = uuid("002a2de9-8bb6-484d-9805-7e4ad40
 const GUID    g_expressionEvaluator      = uuid("002a2de9-8bb6-484d-9806-7e4ad4084715");
 const GUID    g_profileWinCLSID          = uuid("002a2de9-8bb6-484d-9807-7e4ad4084715");
 const GUID    g_tokenReplaceWinCLSID     = uuid("002a2de9-8bb6-484d-9808-7e4ad4084715");
+const GUID    g_outputPaneCLSID          = uuid("002a2de9-8bb6-484d-9809-7e4ad4084715");
 
 const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-9810-7e4ad4084715");
 const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-9811-7e4ad4084715");
@@ -245,6 +246,8 @@ class Package : DisposingComObject,
 
 	override void Dispose()
 	{
+		deleteBuildOutputPane();
+
 		Close();
 		mLangsvc = release(mLangsvc);
 		mProjFactory = release(mProjFactory);
@@ -987,16 +990,23 @@ class GlobalOptions
 		{
 			if(_startsWith(file, path))
 				file = file[path.length .. $];
-			if(fnmatch(basename(file), "openrj.d"))
+			string bname = basename(file);
+			if(fnmatch(bname, "openrj.d"))
 				continue;
-			if(fnmatch(basename(file), "*.d"))
+			if(fnmatch(bname, "*.d"))
 				if(string* pfile = contains(files, file ~ "i"))
 					*pfile = file;
 				else
 					files ~= file;
-			else if(fnmatch(basename(file), "*.di"))
+			else if(fnmatch(bname, "*.di"))
+			{
+				// use the d file instead if available
+				string dfile = "..\\src\\" ~ file[0..$-1];
+				if(std.file.exists(path ~ dfile))
+					file = dfile;
 				if(!contains(files, file[0..$-1]))
 					files ~= file;
+			}
 		}
 		return files;
 	}
@@ -1081,7 +1091,7 @@ class GlobalOptions
 			if(files.length)
 			{
 				string sfiles = std.string.join(files, " ");
-				cmdline ~= quoteFilename(dmdpath) ~ " -c -Xf" ~ quoteFilename(jsonfile) ~ " -o- " ~ sfiles ~ "\n\n";
+				cmdline ~= quoteFilename(dmdpath) ~ " -d -c -Xf" ~ quoteFilename(jsonfile) ~ " -o- " ~ sfiles ~ "\n\n";
 				pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " from import " ~ s ~ "\n"));
 				if(!launchBuildPhobosBrowseInfo(s, cmdfile, cmdline, pane))
 					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " failed!\n"));
