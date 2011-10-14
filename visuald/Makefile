@@ -55,6 +55,7 @@ SRC = workaround.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
       profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d \
       ..\c2d\dlist.d tokenreplace.d tokenreplacedialog.d library.d \
+      help.d \
       $(FRED_SRC)
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \

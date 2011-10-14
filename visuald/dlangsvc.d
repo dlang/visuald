@@ -340,6 +340,8 @@ class LanguageService : DisposingComObject,
 			
 			// Visual D specific (must match Lexer.TokenColor
 			new ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
+			new ColorableItem("Visual D Register",         CI_PURPLE,      CI_USERTEXT_BK),
+			new ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
 				
 			new ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
 			new ColorableItem("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
@@ -348,6 +350,8 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("Visual D Disabled Number",     CI_DARKGRAY, CI_USERTEXT_BK),
 			new ColorableItem("Visual D Disabled Text",       CI_DARKGRAY, CI_USERTEXT_BK),
 			new ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK),
+			new ColorableItem("Visual D Disabled Register",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+			new ColorableItem("Visual D Disabled Mnemonic",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
 
 			new ColorableItem("Visual D Token String Keyword",    -1,      CI_USERTEXT_BK, RGB(160,0,128)),
 			new ColorableItem("Visual D Token String Comment",    -1,      CI_USERTEXT_BK, RGB(128,160,80)),
@@ -355,7 +359,9 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("Visual D Token String String",     -1,      CI_USERTEXT_BK, RGB(255,64,64)),
 			new ColorableItem("Visual D Token String Number",     -1,      CI_USERTEXT_BK, RGB(128,32,32)),
 			new ColorableItem("Visual D Token String Text",       -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			new ColorableItem("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,32,32))
+			new ColorableItem("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,32,32)),
+			new ColorableItem("Visual D Token String Register",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
+			new ColorableItem("Visual D Token String Mnemonic",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
 		];
 	};
 	static void shared_static_dtor()

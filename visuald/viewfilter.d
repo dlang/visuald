@@ -9,12 +9,6 @@
 module visuald.viewfilter;
 
 import visuald.windows;
-import std.string;
-import std.ascii;
-import std.utf;
-import std.conv;
-import std.algorithm;
-
 import visuald.comutil;
 import visuald.logutil;
 import visuald.hierutil;
@@ -31,6 +25,7 @@ import visuald.expansionprovider;
 import visuald.dlangsvc;
 import visuald.winctrl;
 import visuald.tokenreplace;
+import visuald.help;
 
 import vdc.lexer;
 
@@ -42,6 +37,12 @@ import sdk.vsi.vsshell;
 import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
+
+import std.string;
+import std.ascii;
+import std.utf;
+import std.conv;
+import std.algorithm;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -200,6 +201,8 @@ version(tip)
 				break;
 			case cmdidGotoDefn:
 				return HandleGotoDef();
+			case cmdidF1Help:
+				return HandleHelp();
 			default:
 				break;
 			}
@@ -1045,6 +1048,18 @@ else
 			showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", defs[0].filename, defs[0].line, word));
 
 		return hr;
+	}
+
+	int HandleHelp()
+	{
+		string word = toUTF8(GetWordAtCaret());
+		if(word.length <= 0)
+			return S_FALSE;
+
+		if(!openHelp(word))
+			showStatusBarText(text("No documentation found for '", word, "'."));
+
+		return S_OK;
 	}
 
 	//////////////////////////////////////////////////////////////

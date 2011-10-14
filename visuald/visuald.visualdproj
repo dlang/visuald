@@ -70,7 +70,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>0</runCv2pdb>
+  <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)\cv2pdb\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
@@ -234,6 +234,7 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="dproject.d" />
   <File path="expansionprovider.d" />
   <File path="fileutil.d" />
+  <File path="help.d" />
   <File path="hierarchy.d" />
   <File path="hierutil.d" />
   <File path="intellisense.d" />

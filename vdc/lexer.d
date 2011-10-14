@@ -28,6 +28,8 @@ enum TokenColor : int
 	Literal,
 	Text2,
 	Operator,
+	AsmRegister,
+	AsmMnemonic,
 
 	DisabledKeyword,
 	DisabledComment,
@@ -36,6 +38,8 @@ enum TokenColor : int
 	DisabledLiteral,
 	DisabledText,
 	DisabledOperator,
+	DisabledAsmRegister,
+	DisabledAsmMnemonic,
 
 	StringKeyword,
 	StringComment,
@@ -44,6 +48,8 @@ enum TokenColor : int
 	StringLiteral,
 	StringText,
 	StringOperator,
+	StringAsmRegister,
+	StringAsmMnemonic,
 }
 
 struct TokenInfo

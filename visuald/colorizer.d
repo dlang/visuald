@@ -157,8 +157,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		IdentNumberParsedDisable,  // version(identifier|number, expecting )
 		ParenRParsedEnable,        // version(identifier|number), check for '{'
 		ParenRParsedDisable,       // version(identifier|number), check for '{'
+		AsmParsedEnabled,          // enabled asm, expecting {
+		AsmParsedDisabled,         // disabled asm, expecting {
+		InAsmBlockEnabled,         // inside asm {}, expecting {
+		InAsmBlockDisabled,        // inside disabled asm {}, expecting {
 	}
-	
+	static assert(VersionParseState.max <= 15);
+
 	this(Source src)
 	{
 		mSource = src;
@@ -536,6 +541,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.String:      return TokenColor.DisabledString;
 			case TokenColor.Literal:     return TokenColor.DisabledLiteral;
 			case TokenColor.Operator:    return TokenColor.DisabledOperator;
+			case TokenColor.AsmRegister: return TokenColor.DisabledAsmRegister;
+			case TokenColor.AsmMnemonic: return TokenColor.DisabledAsmMnemonic;
 			default: break;
 		}
 		return type;
@@ -552,14 +559,159 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Identifier:  return TokenColor.StringIdentifier;
 			case TokenColor.String:      return TokenColor.StringString;
 			case TokenColor.Literal:     return TokenColor.StringLiteral;
-			case TokenColor.Operator:    return TokenColor.StringOperator;
+			case TokenColor.AsmRegister: return TokenColor.StringAsmRegister;
+			case TokenColor.AsmMnemonic: return TokenColor.StringAsmMnemonic;
 			default: break;
 		}
 		return type;
 	}
 	
-	static assert(VersionParseState.max <= 15);
-	
+	__gshared int[wstring] asmIdentifiers;
+	const wstring[] asmKeywords = [ "__LOCAL_SIZE", "dword", "even", "far", "naked", "near", "ptr", "qword", "seg", "word", ];
+	const wstring[] asmRegisters = [
+		"AL",   "AH",   "AX",   "EAX",
+		"BL",   "BH",   "BX",   "EBX",
+		"CL",   "CH",   "CX",   "ECX",
+		"DL",   "DH",   "DX",   "EDX",
+		"BP",   "EBP",  "SP",   "ESP",  
+		"DI",   "EDI",  "SI",   "ESI",  
+		"ES",   "CS",   "SS",   "DS",   "GS",   "FS",   
+		"CR0",  "CR2",  "CR3",  "CR4",  
+		"DR0",  "DR1",  "DR2",  "DR3",  "DR4",  "DR5",  "DR6",  "DR7",  
+		"TR3",  "TR4",  "TR5",  "TR6",  "TR7",  
+		"MM0",  "MM1",  "MM2",  "MM3",  "MM4",  "MM5",  "MM6",  "MM7",  
+		"XMM0", "XMM1", "XMM2", "XMM3", "XMM4", "XMM5", "XMM6", "XMM7", 
+	];
+	const wstring[] asmMnemonics = [
+		"__emit",     "_emit",      "aaa",        "aad",        "aam",        "aas",        
+		"adc",        "add",        "addpd",      "addps",      "addsd",      "addss",      
+		"addsubpd",   "addsubps",   "and",        "andnpd",     "andnps",     "andpd",      
+		"andps",      "arpl",       "blendpd",    "blendps",    "blendvpd",   "blendvps",   
+		"bound",      "bsf",        "bsr",        "bswap",      "bt",         "btc",        
+		"btr",        "bts",        "call",       "cbw",        "cdq",        "cdqe",       
+		"clc",        "cld",        "clflush",    "cli",        "clts",       "cmc",        
+		"cmova",      "cmovae",     "cmovb",      "cmovbe",     "cmovc",      "cmove",      
+		"cmovg",      "cmovge",     "cmovl",      "cmovle",     "cmovna",     "cmovnae",    
+		"cmovnb",     "cmovnbe",    "cmovnc",     "cmovne",     "cmovng",     "cmovnge",    
+		"cmovnl",     "cmovnle",    "cmovno",     "cmovnp",     "cmovns",     "cmovnz",     
+		"cmovo",      "cmovp",      "cmovpe",     "cmovpo",     "cmovs",      "cmovz",      
+		"cmp",        "cmppd",      "cmpps",      "cmps",       "cmpsb",      "cmpsd",      
+		"cmpsq",      "cmpss",      "cmpsw",      "cmpxchg",    "cmpxchg16b", "cmpxchg8b",  
+		"comisd",     "comiss",     "cpuid",      "cqo",        "crc32",      "cvtdq2pd",   
+		"cvtdq2ps",   "cvtpd2dq",   "cvtpd2pi",   "cvtpd2ps",   "cvtpi2pd",   "cvtpi2ps",   
+		"cvtps2dq",   "cvtps2pd",   "cvtps2pi",   "cvtsd2si",   "cvtsd2ss",   "cvtsi2sd",   
+		"cvtsi2ss",   "cvtss2sd",   "cvtss2si",   "cvttpd2dq",  "cvttpd2pi",  "cvttps2dq",  
+		"cvttps2pi",  "cvttsd2si",  "cvttss2si",  "cwd",        "cwde",       "da",         
+		"daa",        "das",        "db",         "dd",         "de",         "dec",        
+		"df",         "di",         "div",        "divpd",      "divps",      "divsd",      
+		"divss",      "dl",         "dppd",       "dpps",       "dq",         "ds",         
+		"dt",         "dw",         "emms",       "enter",      "extractps",  "f2xm1",      
+		"fabs",       "fadd",       "faddp",      "fbld",       "fbstp",      "fchs",       
+		"fclex",      "fcmovb",     "fcmovbe",    "fcmove",     "fcmovnb",    "fcmovnbe",   
+		"fcmovne",    "fcmovnu",    "fcmovu",     "fcom",       "fcomi",      "fcomip",     
+		"fcomp",      "fcompp",     "fcos",       "fdecstp",    "fdisi",      "fdiv",       
+		"fdivp",      "fdivr",      "fdivrp",     "feni",       "ffree",      "fiadd",      
+		"ficom",      "ficomp",     "fidiv",      "fidivr",     "fild",       "fimul",      
+		"fincstp",    "finit",      "fist",       "fistp",      "fisttp",     "fisub",      
+		"fisubr",     "fld",        "fld1",       "fldcw",      "fldenv",     "fldl2e",     
+		"fldl2t",     "fldlg2",     "fldln2",     "fldpi",      "fldz",       "fmul",       
+		"fmulp",      "fnclex",     "fndisi",     "fneni",      "fninit",     "fnop",       
+		"fnsave",     "fnstcw",     "fnstenv",    "fnstsw",     "fpatan",     "fprem",      
+		"fprem1",     "fptan",      "frndint",    "frstor",     "fsave",      "fscale",     
+		"fsetpm",     "fsin",       "fsincos",    "fsqrt",      "fst",        "fstcw",      
+		"fstenv",     "fstp",       "fstsw",      "fsub",       "fsubp",      "fsubr",      
+		"fsubrp",     "ftst",       "fucom",      "fucomi",     "fucomip",    "fucomp",     
+		"fucompp",    "fwait",      "fxam",       "fxch",       "fxrstor",    "fxsave",     
+		"fxtract",    "fyl2x",      "fyl2xp1",    "haddpd",     "haddps",     "hlt",        
+		"hsubpd",     "hsubps",     "idiv",       "imul",       "in",         "inc",        
+		"ins",        "insb",       "insd",       "insertps",   "insw",       "int",        
+		"into",       "invd",       "invlpg",     "iret",       "iretd",      "ja",         
+		"jae",        "jb",         "jbe",        "jc",         "jcxz",       "je",         
+		"jecxz",      "jg",         "jge",        "jl",         "jle",        "jmp",        
+		"jna",        "jnae",       "jnb",        "jnbe",       "jnc",        "jne",        
+		"jng",        "jnge",       "jnl",        "jnle",       "jno",        "jnp",        
+		"jns",        "jnz",        "jo",         "jp",         "jpe",        "jpo",        
+		"js",         "jz",         "lahf",       "lar",        "lddqu",      "ldmxcsr",    
+		"lds",        "lea",        "leave",      "les",        "lfence",     "lfs",        
+		"lgdt",       "lgs",        "lidt",       "lldt",       "lmsw",       "lock",       
+		"lods",       "lodsb",      "lodsd",      "lodsq",      "lodsw",      "loop",       
+		"loope",      "loopne",     "loopnz",     "loopz",      "lsl",        "lss",        
+		"ltr",        "maskmovdqu", "maskmovq",   "maxpd",      "maxps",      "maxsd",      
+		"maxss",      "mfence",     "minpd",      "minps",      "minsd",      "minss",      
+		"monitor",    "mov",        "movapd",     "movaps",     "movd",       "movddup",    
+		"movdq2q",    "movdqa",     "movdqu",     "movhlps",    "movhpd",     "movhps",     
+		"movlhps",    "movlpd",     "movlps",     "movmskpd",   "movmskps",   "movntdq",    
+		"movntdqa",   "movnti",     "movntpd",    "movntps",    "movntq",     "movq",       
+		"movq2dq",    "movs",       "movsb",      "movsd",      "movshdup",   "movsldup",   
+		"movsq",      "movss",      "movsw",      "movsx",      "movupd",     "movups",     
+		"movzx",      "mpsadbw",    "mul",        "mulpd",      "mulps",      "mulsd",      
+		"mulss",      "mwait",      "neg",        "nop",        "not",        "or",         
+		"orpd",       "orps",       "out",        "outs",       "outsb",      "outsd",      
+		"outsw",      "pabsb",      "pabsd",      "pabsw",      "packssdw",   "packsswb",   
+		"packusdw",   "packuswb",   "paddb",      "paddd",      "paddq",      "paddsb",     
+		"paddsw",     "paddusb",    "paddusw",    "paddw",      "palignr",    "pand",       
+		"pandn",      /*"pause",*/  "pavgb",      "pavgusb",    "pavgw",      "pblendvb",   
+		"pblendw",    "pcmpeqb",    "pcmpeqd",    "pcmpeqq",    "pcmpeqw",    "pcmpestri",  
+		"pcmpestrm",  "pcmpgtb",    "pcmpgtd",    "pcmpgtq",    "pcmpgtw",    "pcmpistri",  
+		"pcmpistrm",  "pextrb",     "pextrd",     "pextrq",     "pextrw",     "pf2id",      
+		"pfacc",      "pfadd",      "pfcmpeq",    "pfcmpge",    "pfcmpgt",    "pfmax",      
+		"pfmin",      "pfmul",      "pfnacc",     "pfpnacc",    "pfrcp",      "pfrcpit1",   
+		"pfrcpit2",   "pfrsqit1",   "pfrsqrt",    "pfsub",      "pfsubr",     "phaddd",     
+		"phaddsw",    "phaddw",     "phminposuw", "phsubd",     "phsubsw",    "phsubw",     
+		"pi2fd",      "pinsrb",     "pinsrd",     "pinsrq",     "pinsrw",     "pmaddubsw",  
+		"pmaddwd",    "pmaxsb",     "pmaxsd",     "pmaxsw",     "pmaxub",     "pmaxud",     
+		"pmaxuw",     "pminsb",     "pminsd",     "pminsw",     "pminub",     "pminud",     
+		"pminuw",     "pmovmskb",   "pmovsxbd",   "pmovsxbq",   "pmovsxbw",   "pmovsxdq",   
+		"pmovsxwd",   "pmovsxwq",   "pmovzxbd",   "pmovzxbq",   "pmovzxbw",   "pmovzxdq",   
+		"pmovzxwd",   "pmovzxwq",   "pmuldq",     "pmulhrsw",   "pmulhrw",    "pmulhuw",    
+		"pmulhw",     "pmulld",     "pmullw",     "pmuludq",    "pop",        "popa",       
+		"popad",      "popcnt",     "popf",       "popfd",      "popfq",      "por",        
+		"prefetchnta","prefetcht0", "prefetcht1", "prefetcht2", "psadbw",     "pshufb",     
+		"pshufd",     "pshufhw",    "pshuflw",    "pshufw",     "psignb",     "psignd",     
+		"psignw",     "pslld",      "pslldq",     "psllq",      "psllw",      "psrad",      
+		"psraw",      "psrld",      "psrldq",     "psrlq",      "psrlw",      "psubb",      
+		"psubd",      "psubq",      "psubsb",     "psubsw",     "psubusb",    "psubusw",    
+		"psubw",      "pswapd",     "ptest",      "punpckhbw",  "punpckhdq",  "punpckhqdq", 
+		"punpckhwd",  "punpcklbw",  "punpckldq",  "punpcklqdq", "punpcklwd",  "push",       
+		"pusha",      "pushad",     "pushf",      "pushfd",     "pushfq",     "pxor",       
+		"rcl",        "rcpps",      "rcpss",      "rcr",        "rdmsr",      "rdpmc",      
+		"rdtsc",      "rep",        "repe",       "repne",      "repnz",      "repz",       
+		"ret",        "retf",       "rol",        "ror",        "roundpd",    "roundps",    
+		"roundsd",    "roundss",    "rsm",        "rsqrtps",    "rsqrtss",    "sahf",       
+		"sal",        "sar",        "sbb",        "scas",       "scasb",      "scasd",      
+		"scasq",      "scasw",      "seta",       "setae",      "setb",       "setbe",      
+		"setc",       "sete",       "setg",       "setge",      "setl",       "setle",      
+		"setna",      "setnae",     "setnb",      "setnbe",     "setnc",      "setne",      
+		"setng",      "setnge",     "setnl",      "setnle",     "setno",      "setnp",      
+		"setns",      "setnz",      "seto",       "setp",       "setpe",      "setpo",      
+		"sets",       "setz",       "sfence",     "sgdt",       "shl",        "shld",       
+		"shr",        "shrd",       "shufpd",     "shufps",     "sidt",       "sldt",       
+		"smsw",       "sqrtpd",     "sqrtps",     "sqrtsd",     "sqrtss",     "stc",        
+		"std",        "sti",        "stmxcsr",    "stos",       "stosb",      "stosd",      
+		"stosq",      "stosw",      "str",        "sub",        "subpd",      "subps",      
+		"subsd",      "subss",      "syscall",    "sysenter",   "sysexit",    "sysret",     
+		"test",       "ucomisd",    "ucomiss",    "ud2",        "unpckhpd",   "unpckhps",   
+		"unpcklpd",   "unpcklps",   "verr",       "verw",       "wait",       "wbinvd",     
+		"wrmsr",      "xadd",       "xchg",       "xlat",       "xlatb",      "xor",        
+		"xorpd",      "xorps",      
+	];
+	shared static this()
+	{
+		foreach(id; asmKeywords)
+			asmIdentifiers[id] = TokenColor.Keyword;
+		foreach(id; asmRegisters)
+			asmIdentifiers[id] = TokenColor.AsmRegister;
+		foreach(id; asmMnemonics)
+			asmIdentifiers[id] = TokenColor.AsmMnemonic;
+	}
+
+	int asmColorType(wstring text)
+	{
+		if(auto p = text in asmIdentifiers)
+			return *p;
+		return TokenColor.Identifier;
+	}
+
 	private static int getParseState(int iState)
 	{
 		return (iState >> 20) & 0x0f;
@@ -615,6 +767,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			
 		case VersionParseState.IdleDisabled:
 			ntype = disabledColorType(ntype);
+			if(text == "asm")
+				parseState = VersionParseState.AsmParsedDisabled;
 			break;
 			
 		case VersionParseState.IdleEnabled:
@@ -628,6 +782,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				parseState = VersionParseState.VersionParsed;
 				debugOrVersion = 1;
 			}
+			else if(text == "asm")
+				parseState = VersionParseState.AsmParsedEnabled;
 			break;
 			
 		case VersionParseState.VersionParsed:
@@ -695,6 +851,33 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 
 		case VersionParseState.ParenRParsedDisable:
 			parseState = VersionParseState.IdleDisabled;
+			goto case VersionParseState.IdleDisabled;
+
+		// asm block
+		case VersionParseState.AsmParsedEnabled:
+			if(text == "{")
+				parseState = VersionParseState.InAsmBlockEnabled;
+			else
+				parseState = VersionParseState.IdleEnabled;
+			break;
+		case VersionParseState.AsmParsedDisabled:
+			if(text == "{")
+				parseState = VersionParseState.InAsmBlockDisabled;
+			else
+				parseState = VersionParseState.IdleDisabled;
+			goto case VersionParseState.IdleDisabled;
+
+		case VersionParseState.InAsmBlockEnabled:
+			if(text == "}")
+				parseState = VersionParseState.IdleEnabled;
+			else if(ntype == TokenColor.Identifier)
+				ntype = asmColorType(text);
+			break;
+		case VersionParseState.InAsmBlockDisabled:
+			if(text == "}")
+				parseState = VersionParseState.IdleDisabled;
+			else if(ntype == TokenColor.Identifier)
+				ntype = asmColorType(text);
 			goto case VersionParseState.IdleDisabled;
 		}
 		

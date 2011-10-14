@@ -335,12 +335,16 @@ Version history
 
 unreleased Version 0.3.28
 
-  * mago debugger: fixed crash when using and there is no sstStaticSym section in the debug info
+  * mago debugger: fixed crash when there is no sstStaticSym section in the debug info
   * mago debugger: fixed local variables not shown in last function of an object file
   * mago debugger: fixed display of TLS variables
+  * mago debugger: added workaround for bad line number debug info, causing mago to switch to assembly easily
+  * mago debugger: globals and statics can now be displayed without specifying complete scope
   * cv2pdb: fixed patching of autoexp.dat when the install path contained spaces
   * fix: the import path set in the global options never made it to the command line
   * fixed parser to accept "class B() if(true) : A {}"
   * fixed parser to support import as statement
   * building druntime browse info now uses src folder (di files look ugly and do not compile)
   * building browse info now writes to "Visual D" output pane
+  * F1 searches language and phobos documentation for help on identifier
+  * added highlighting of asm block, using new colors "Visual D Register/Mnemonic" and "Disabled/Token String" variants

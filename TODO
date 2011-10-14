@@ -45,7 +45,7 @@ Language service:
 - replace token: empty dialog when opened without resizing
 - when hovering identifier with preceding dot, include identifier before dot in debugger tool tip
 - stop parsing/outlining when text is modified
-- build druntime info fails
+- indentation of multiple string literals on several lines
 
 Search:
 ---------------
