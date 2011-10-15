@@ -892,7 +892,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	static struct LineChange { int oldLine, newLine; }
 	LineChange[] mLineChanges;
 	TextLineChange mLastTextLineChange;
-	
+
+	Parser mParser;
 	ast.Module mAST;
 	ParseError[] mParseErrors;
 	wstring mParseText;
@@ -1237,7 +1238,7 @@ version(threadedOutlining) {} else
 		return CreateOutlineRegions(source, expansionState);
 	}
 	
-	static NewHiddenRegion[] CreateOutlineRegions(wstring source, int expansionState)
+	NewHiddenRegion[] CreateOutlineRegions(wstring source, int expansionState)
 	{
 		NewHiddenRegion[] rgns;
 		int lastOpenRegion = -1; // builds chain with iEndIndex of TextSpan
@@ -1250,6 +1251,9 @@ version(threadedOutlining) {} else
 		int prevBracketLine = -1;
 		foreach(txt; splitter(source, '\n'))
 		{
+			if(mModificationCountAST != mModificationCount)
+				break;
+
 			//wstring txt = GetText(ln, 0, ln, -1);
 			if(txt.length > 0 && txt[$-1] == '\r')
 				txt = txt[0..$-1];
@@ -2640,7 +2644,7 @@ else
 	
 	// create our own task pool to be able to destroy it (it keeps a the
 	//  arguments to the last task, so they are never collected)
-	__gshared static TaskPool parseTaskPool;
+	__gshared TaskPool parseTaskPool;
 
 	void runTask(T)(T dg)
 	{
@@ -2665,6 +2669,10 @@ else
 		if(mParsingState > 1)
 			return finishParsing();
 		
+		if(mModificationCountAST != mModificationCount)
+			if(auto parser = mParser)
+				parser.abort = true;
+
 		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
 			return false;
 		
@@ -2721,12 +2729,12 @@ else
 		{
 			string txt = to!string(mParseText);
 			
-			Parser p = new Parser;
-			p.mSaveErrors = true;
+			mParser = new Parser;
+			mParser.saveErrors = true;
 			ast.Node n;
 			try
 			{
-				n = p.parseModule(txt);
+				n = mParser.parseModule(txt);
 			}
 			catch(ParseException e)
 			{
@@ -2737,7 +2745,8 @@ else
 				OutputDebugLog(t.msg);
 			}
 			mAST = cast(ast.Module) n;
-			mParseErrors = p.errors;
+			mParseErrors = mParser.errors;
+			mParser = null;
 		}
 		if(mOutlining)
 		{

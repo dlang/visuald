@@ -568,21 +568,21 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		/* [in] */ in TYPEATTR *pTypeAttr)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		//return returnError(E_NOTIMPL);
 	}
 
 	/* [local] */ void ReleaseFuncDesc( 
 		/* [in] */ in FUNCDESC *pFuncDesc)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		//return returnError(E_NOTIMPL);
 	}
 
 	/* [local] */ void ReleaseVarDesc( 
 		/* [in] */ in VARDESC *pVarDesc)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		//return returnError(E_NOTIMPL);
 	}
 }
 

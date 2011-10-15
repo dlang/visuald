@@ -129,7 +129,8 @@ class Parser
 	debug State[] traceState;
 	debug string[] traceToken;
 
-	bool mSaveErrors;
+	bool abort;
+	bool saveErrors;
 	ParseError[] errors;
 	
 	this()
@@ -227,7 +228,7 @@ class Parser
 	
 	void writeError(ref const(TextSpan) errorSpan, string msg)
 	{
-		if(mSaveErrors)
+		if(saveErrors)
 			errors ~= ParseError(errorSpan, msg);
 		else
 			writeln(msg);
@@ -577,7 +578,7 @@ class Parser
 			partialString ~= "\n";
 		
 		lineno = lno;
-		for(uint pos = 0; pos < line.length; )
+		for(uint pos = 0; pos < line.length && !abort; )
 		{
 			int tokid;
 			uint prevpos = pos;
@@ -630,7 +631,7 @@ class Parser
 		lineno = 1;
 		int linepos = 0; // position after last line break
 		int tokid;
-		for(uint pos = 0; pos < text.length; )
+		for(uint pos = 0; pos < text.length && !abort; )
 		{
 			int prevlineno = lineno;
 			int prevlinepos = linepos;
@@ -673,7 +674,7 @@ class Parser
 		
 		parseText(text);
 		
-		if(!shiftEOF())
+		if(abort || !shiftEOF())
 			return null;
 		return popNode();
 	}
@@ -691,7 +692,7 @@ class Parser
 		
 		lexerTok.txt = "}";
 		lexerTok.id = TOK_rcurly;
-		if(!shift(lexerTok))
+		if(abort || !shift(lexerTok))
 			return null;
 		if (nodeStack.depth > 1)
 			return parseError("parsing unfinished before end of mixin"), null;
@@ -730,7 +731,7 @@ class Parser
 		
 		lexerTok.txt = ")";
 		lexerTok.id = TOK_rparen;
-		if(!shift(lexerTok))
+		if(abort || !shift(lexerTok))
 			return null;
 		if (nodeStack.depth > 1)
 			return parseError("parsing unfinished before end of mixin"), null;
@@ -745,6 +746,7 @@ class Parser
 		lastError = "";
 		errors = errors.init;
 		countErrors = 0;
+		abort = false;
 	}
 }
 

@@ -101,7 +101,7 @@ void testParse(string txt, string filename = "")
 
 	if(filename.length)
 	{
-		string ofile1 = "c:/tmp/d/a1/" ~ basename(filename);
+		string ofile1 = "c:/tmp/d/a1/" ~ baseName(filename);
 		std.file.write(ofile1, app);
 	}
 	
@@ -121,7 +121,7 @@ else
 	
 	if(filename.length)
 	{
-		string ofile2 = "c:/tmp/d/a2/" ~ basename(filename);
+		string ofile2 = "c:/tmp/d/a2/" ~ baseName(filename);
 		std.file.write(ofile2, app2);
 	}
 	
@@ -142,7 +142,7 @@ else
 
 	if(filename.length)
 	{
-		string ofile3 = "c:/tmp/d/c1/" ~ basename(filename);
+		string ofile3 = "c:/tmp/d/c1/" ~ baseName(filename);
 		writeln(ofile3);
 		std.file.write(ofile3, app3);
 	}
@@ -572,10 +572,10 @@ int main(string[] argv)
 		{
 			if(indexOf(file, '*') >= 0 || indexOf(file, '?') >= 0)
 			{
-				string path = dirname(file);
-				string pattern = basename(file);
+				string path = dirName(file);
+				string pattern = baseName(file);
 				foreach(string name; dirEntries(path, SpanMode.depth))
-					if(fnmatch(basename(name), pattern))
+					if(globMatch(baseName(name), pattern))
 						dg(name);
 			}
 			else

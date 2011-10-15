@@ -25,6 +25,7 @@ import std.stdio;
 import std.string;
 import std.array;
 import std.conv;
+import std.datetime;
 
 int semanticErrors;
 
@@ -377,6 +378,14 @@ struct ArgMatch
 	string toString() { return "{" ~ value.toStr() ~ "," ~ name ~ "}"; }
 }
 
+class SourceModule
+{
+	// filename already in Module
+	SysTime lastModified;
+
+	Module parsed;
+	Module analyzed;
+}
 
 class Project : Node
 {
@@ -384,7 +393,7 @@ class Project : Node
 	int countErrors;
 	
 	Module mObjectModule; // object.d
-	Module[string] mModulesByName;
+	SourceModule[string] mModulesByName;
 	
 	this()
 	{
@@ -431,13 +440,19 @@ class Project : Node
 		string modname = mod.getModuleName();
 		if(auto pm = modname in mModulesByName)
 		{
-			semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.filename);
+			semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.parsed.filename);
 			countErrors++;
 			return null;
 		}
 
+		auto src = new SourceModule;
+		src.parsed = mod;
+		src.analyzed = mod.clone(); // TODO: clone
+		if(std.file.exists(fname)) // could be pseudo name
+			src.lastModified = std.file.timeLastModified(fname);
+
 		addMember(mod);
-		mModulesByName[modname] = mod;
+		mModulesByName[modname] = src;
 		return mod;
 	}
 	
@@ -451,7 +466,7 @@ class Project : Node
 	Module getModule(string modname)
 	{
 		if(auto pm = modname in mModulesByName)
-			return *pm;
+			return pm.analyzed;
 		return null;
 	}
 
@@ -568,7 +583,7 @@ class Project : Node
 	{
 		Node[] funcs;
 		foreach(m; mModulesByName)
-			funcs ~= m.search("main");
+			funcs ~= m.analyzed.search("main");
 		if(funcs.length == 0)
 		{
 			semanticError("no function main");

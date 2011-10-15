@@ -348,3 +348,4 @@ unreleased Version 0.3.28
   * building browse info now writes to "Visual D" output pane
   * F1 searches language and phobos documentation for help on identifier
   * added highlighting of asm block, using new colors "Visual D Register/Mnemonic" and "Disabled/Token String" variants
+  * parsing and outlining now aborted when text changes, so editing is more responsive with large source files

@@ -917,7 +917,7 @@ class DynArrayValue : Value
 	void setItem(Context ctx, size_t idx, Value v)
 	{
 		if(idx < 0 || idx >= len)
-			return semanticErrorValue("index ", idx, " out of bounds on dynamic array");
+			return semanticError("index ", idx, " out of bounds on dynamic array");
 		first.getElement(idx).opBin(ctx, TOK_assign, v);
 	}
 	Value getItem(size_t idx)

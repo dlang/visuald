@@ -37,15 +37,13 @@ Language service:
 - use spell-checker on completion?
 - case insensitive completion?
 - showScope: function/delegate literal not shown correctly, in/out/body
-- help on identifier through http://dpldocs.info/
 - collapse disabled version/debug blocks
 - disable parsing/outlining for large files?
 - version highlighting does not support version(x): syntax
 - bad updates for version/debug highlighting while editing
 - replace token: empty dialog when opened without resizing
 - when hovering identifier with preceding dot, include identifier before dot in debugger tool tip
-- stop parsing/outlining when text is modified
-- indentation of multiple string literals on several lines
+- check indentation of multiple string literals on several lines
 
 Search:
 ---------------

@@ -88,12 +88,12 @@ class Module : Node
 		}
 		else
 		{
-			writer("namespace ", basename(filename), " {");
+			writer("namespace ", baseName(filename), " {");
 			writer.nl;
 			foreach(m; members)
 				writer(m);
 			writer.nl(false);
-			writer("} // namespace ", basename(filename));
+			writer("} // namespace ", baseName(filename));
 			writer.nl;
 		}
 	}
@@ -108,7 +108,7 @@ class Module : Node
 				writer("::", m);
 		}
 		else
-			writer("::", basename(filename));
+			writer("::", baseName(filename));
 		writer("::");
 	}
 	
@@ -120,7 +120,7 @@ class Module : Node
 			string name = mfqn.getName();
 			return name;
 		}
-		return getName(basename(filename));
+		return stripExtension(baseName(filename));
 	}
 
 	void initScope()
@@ -135,7 +135,7 @@ class Module : Node
 			if(auto prj = getProject())
 				if(prj.mObjectModule && prj.mObjectModule !is this)
 				{
-					auto imp = Import.create(prj.mObjectModule);
+					auto imp = Import.create(prj.mObjectModule); // only needs module name
 					scop.addImport(imp);
 				}
 			
