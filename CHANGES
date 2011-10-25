@@ -333,7 +333,7 @@ Version history
   * automatic reindentation was not triggered when typing '{', '}', etc (win 7/8 only?)
   * new option to show demangled symbols in the Error List (not the output window)
 
-unreleased Version 0.3.28
+2011-10-25 Version 0.3.28
 
   * mago debugger: fixed crash when there is no sstStaticSym section in the debug info
   * mago debugger: fixed local variables not shown in last function of an object file
