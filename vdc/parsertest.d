@@ -589,7 +589,7 @@ int main(string[] argv)
 	{
 		Project prj = new Project;
 
-		foreach_file((string fname){prj.addFile(fname);});
+		foreach_file((string fname){prj.addAndParseFile(fname);});
 
 		version(semantic)
 			prj.semantic();
@@ -611,7 +611,7 @@ int main(string[] argv)
 			Project prj = new Project;
 			semanticErrors = 0;
 			logInfo("### testSemantic " ~ fname ~ " ###");
-			prj.addFile(fname);
+			prj.addAndParseFile(fname);
 			prj.semantic();
 			prj.run();
 			writeln(prj.countErrors + semanticErrors, " errors");

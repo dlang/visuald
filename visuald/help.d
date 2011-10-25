@@ -186,6 +186,7 @@ bool openHelp(string word)
 	tryAlternative(capitalize(word) ~ "Expression");
 	if(word == "unittest") tryAlternative("UnitTest");
 	if(word == "function" || word == "delegate") tryAlternative("closures");
+	if(word == "__traits" || word == "traits") tryAlternative("TraitsExpression");
 
 	if(files)
 	{

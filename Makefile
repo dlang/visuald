@@ -14,7 +14,7 @@
 # paths on your system
 
 DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
-# DMD2 = c:\l\dmd-2.055\windows\bin\dmd.exe
+# DMD2 = c:\l\dmd-2.056\windows\bin\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 # avoid trailing '\', it ruins the command line

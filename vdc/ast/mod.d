@@ -182,8 +182,9 @@ class Module : Node
 	
 	void specifyVersion(string ident, TextPos pos)
 	{
-		if(Options.versionPredefined(ident) != 0)
-			semanticError("cannot define predifined version identifier " ~ ident);
+		if(auto prj = getProject())
+			if(prj.options.versionPredefined(ident) != 0)
+				semanticError("cannot define predefined version identifier " ~ ident);
 		versionIds.define(ident, pos);
 	}
 

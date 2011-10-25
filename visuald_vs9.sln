@@ -29,6 +29,8 @@ Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "parser", "vdc\parser.visual
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "magotest", "magotest\magotest.visualdproj", "{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}"
 EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "dmdgen", "C:\tmp\d\dmdgen\dmdgen.visualdproj", "{2CA93A4E-C812-417E-B925-4C5E56B031FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -78,6 +80,12 @@ Global
 		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Release|Win32.Build.0 = Release|Win32
 		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Test|Win32.ActiveCfg = Debug|Win32
 		{8757B442-D8DE-4CDF-ACF4-097D8B69BEFF}.Test|Win32.Build.0 = Debug|Win32
+		{2CA93A4E-C812-417E-B925-4C5E56B031FB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2CA93A4E-C812-417E-B925-4C5E56B031FB}.Debug|Win32.Build.0 = Debug|Win32
+		{2CA93A4E-C812-417E-B925-4C5E56B031FB}.Release|Win32.ActiveCfg = Release|Win32
+		{2CA93A4E-C812-417E-B925-4C5E56B031FB}.Release|Win32.Build.0 = Release|Win32
+		{2CA93A4E-C812-417E-B925-4C5E56B031FB}.Test|Win32.ActiveCfg = Release|Win32
+		{2CA93A4E-C812-417E-B925-4C5E56B031FB}.Test|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -719,6 +719,7 @@ class GlobalOptions
 	bool demangleError = true;
 	bool autoOutlining;
 	bool parseSource;
+	bool doSemantics;
 	bool pasteIndent;
 	
 	bool ColorizeVersions = true;
@@ -790,6 +791,7 @@ class GlobalOptions
 			demangleError    = keyToolOpts.GetDWORD("demangleError", 1) != 0;
 			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
+			doSemantics      = keyToolOpts.GetDWORD("doSemantics", 1) != 0;
 			pasteIndent      = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
 			// overwrite by user config
@@ -807,6 +809,7 @@ class GlobalOptions
 			demangleError        = keyUserOpts.GetDWORD("demangleError",    demangleError) != 0;
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
+			doSemantics          = keyUserOpts.GetDWORD("doSemantics",      doSemantics) != 0;
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			
@@ -862,6 +865,7 @@ class GlobalOptions
 			keyToolOpts.Set("demangleError", demangleError);
 			keyToolOpts.Set("autoOutlining", autoOutlining);
 			keyToolOpts.Set("parseSource", parseSource);
+			keyToolOpts.Set("doSemantics", doSemantics);
 			keyToolOpts.Set("pasteIndent", pasteIndent);
 
 			CHierNode.setContainerIsSorted(sortProjects);

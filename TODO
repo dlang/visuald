@@ -88,6 +88,3 @@ Debugger:
 - stepping through function call jumps to default assignment
 - Mago: set instruction pointer
 - local functions/delegates should have debug info for closure vars ("this" exists)
-- mago: watch TLS variables broken
-- mago: does not show local variables of last function
-- dviewhelper: not loaded if path contains spaces

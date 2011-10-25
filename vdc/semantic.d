@@ -382,7 +382,9 @@ class SourceModule
 {
 	// filename already in Module
 	SysTime lastModified;
+	int optionsChangeCount;
 
+	string txt;
 	Module parsed;
 	Module analyzed;
 }
@@ -393,7 +395,8 @@ class Project : Node
 	int countErrors;
 	
 	Module mObjectModule; // object.d
-	SourceModule[string] mModulesByName;
+	SourceModule[string] mSourcesByModName;
+	SourceModule[string] mSourcesByFileName;
 	
 	this()
 	{
@@ -412,7 +415,7 @@ class Project : Node
 		globalContext = new Context(null);
 		threadContext = new Context(null);
 	}
-	
+
 	////////////////////////////////////////////////////////////
 	Module addText(string fname, string txt, bool imported = false)
 	{
@@ -438,7 +441,7 @@ class Project : Node
 		mod.imported = imported;
 		
 		string modname = mod.getModuleName();
-		if(auto pm = modname in mModulesByName)
+		if(auto pm = modname in mSourcesByModName)
 		{
 			semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.parsed.filename);
 			countErrors++;
@@ -452,20 +455,32 @@ class Project : Node
 			src.lastModified = std.file.timeLastModified(fname);
 
 		addMember(mod);
-		mModulesByName[modname] = src;
+		mSourcesByModName[modname] = src;
+		mSourcesByFileName[fname] = src;
 		return mod;
 	}
 	
-	Module addFile(string fname, bool imported = false)
+	Module addAndParseFile(string fname, bool imported = false)
 	{
 		debug writeln(fname, ":");
 		string txt = readUtf8(fname);
 		return addText(fname, txt, imported);
 	}
 	
+	bool addFile(string fname)
+	{
+		auto src = new SourceModule;
+		if(std.file.exists(fname)) // could be pseudo name
+			src.lastModified = std.file.timeLastModified(fname);
+
+		src.txt = readUtf8(fname);
+		mSourcesByFileName[fname] = src;
+		return true;
+	}
+
 	Module getModule(string modname)
 	{
-		if(auto pm = modname in mModulesByName)
+		if(auto pm = modname in mSourcesByModName)
 			return pm.analyzed;
 		return null;
 	}
@@ -487,7 +502,7 @@ class Project : Node
 			semanticError("cannot find imported module " ~ modname);
 			return null;
 		}
-		return addFile(srcfile, true);
+		return addAndParseFile(srcfile, true);
 	}
 	
 	string searchImportFile(string dfile)
@@ -582,7 +597,7 @@ class Project : Node
 	int run()
 	{
 		Node[] funcs;
-		foreach(m; mModulesByName)
+		foreach(m; mSourcesByModName)
 			funcs ~= m.analyzed.search("main");
 		if(funcs.length == 0)
 		{
@@ -630,7 +645,34 @@ struct VersionDebug
 {
 	int level;
 	VersionInfo[string] identifiers;
-	
+
+	bool reset(int lev, string[] ids)
+	{
+		if(lev == level && ids.length == identifiers.length)
+		{
+			bool different = false;
+			foreach(id; ids)
+				if(id !in identifiers)
+					different = true;
+			if(!different)
+				return false;
+		}
+
+		level = lev;
+		identifiers = identifiers.init;
+		foreach(id; ids)
+			identifiers[id] = VersionInfo();
+
+		return true;
+	}
+
+	bool preDefined(string ident) const
+	{
+		if(auto vi = ident in identifiers)
+			return vi.defined.line >= 0;
+		return false;
+	}
+
 	bool defined(string ident, TextPos pos)
 	{
 		if(auto vi = ident in identifiers)
@@ -678,19 +720,39 @@ class Options
 	VersionDebug debugIds;
 	VersionDebug versionIds;
 
+	int changeCount;
+
+	bool setImportDirs(string[] dirs)
+	{
+		if(dirs == importDirs)
+			return false;
+		
+		importDirs = dirs.dup;
+		changeCount++;
+		return true;
+	}
+	bool setVersionIds(int level, string[] versionids)
+	{
+		if(!versionIds.reset(level, versionids))
+			return false;
+		changeCount++;
+		return true;
+	}
+	bool setDebugIds(int level, string[] debugids)
+	{
+		if(!debugIds.reset(level, debugids))
+			return false;
+		changeCount++;
+		return true;
+	}
+
 	bool versionEnabled(string ident)
 	{
 		int pre = versionPredefined(ident);
 		if(pre == 0)
 			return versionIds.defined(ident, TextPos());
 		
-		switch(ident)
-		{
-			case "unittest":
-				return unittestOn;
-			default:
-				return pre > 0;
-		}
+		return pre > 0;
 	}
 	
 	bool versionEnabled(int level)
@@ -708,7 +770,7 @@ class Options
 		return level <= debugIds.level;
 	}
 	
-	static int versionPredefined(string ident)
+	int versionPredefined(string ident)
 	{
 		switch(ident)
 		{
@@ -728,7 +790,7 @@ class Options
 			case "D_InlineAsm_X86_64": return -1;
 			case "D_LP64":          return -1;
 			case "D_PIC":           return -1;
-			case "unittest":        return -1;
+			case "unittest":        return unittestOn ? 1 : -1;
 			case "D_Version2":      return 1;
 			case "none":            return -1;
 			case "all":             return 1;
