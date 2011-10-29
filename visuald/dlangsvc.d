@@ -338,10 +338,11 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
 			new ColorableItem("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
 			
-			// Visual D specific (must match Lexer.TokenColor
+			// Visual D specific (must match Lexer.TokenCat)
 			new ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
 			new ColorableItem("Visual D Register",         CI_PURPLE,      CI_USERTEXT_BK),
 			new ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
+			new ColorableItem("Visual D Type",                -1,          CI_USERTEXT_BK, RGB(0, 0, 160)),
 				
 			new ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
 			new ColorableItem("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
@@ -352,6 +353,7 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK),
 			new ColorableItem("Visual D Disabled Register",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
 			new ColorableItem("Visual D Disabled Mnemonic",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+			new ColorableItem("Visual D Disabled Type",       -1,          CI_USERTEXT_BK, RGB(64, 112, 208)),
 
 			new ColorableItem("Visual D Token String Keyword",    -1,      CI_USERTEXT_BK, RGB(160,0,128)),
 			new ColorableItem("Visual D Token String Comment",    -1,      CI_USERTEXT_BK, RGB(128,160,80)),
@@ -362,6 +364,7 @@ class LanguageService : DisposingComObject,
 			new ColorableItem("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,32,32)),
 			new ColorableItem("Visual D Token String Register",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
 			new ColorableItem("Visual D Token String Mnemonic",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
+			new ColorableItem("Visual D Token String Type",       -1,      CI_USERTEXT_BK, RGB(112,0,80)),
 		];
 	};
 	static void shared_static_dtor()
@@ -1265,7 +1268,7 @@ version(threadedOutlining) {} else
 			{
 				uint prevpos = pos;
 				int col = dLex.scan(state, txt, pos);
-				if(col == TokenColor.Operator)
+				if(col == TokenCat.Operator)
 				{
 					if(txt[pos-1] == '{' || txt[pos-1] == '[')
 					{
@@ -1301,7 +1304,7 @@ version(threadedOutlining) {} else
 						prevBracketLine = ln;
 					}
 				}
-				isComment = isComment || (col == TokenColor.Comment);
+				isComment = isComment || (col == TokenCat.Comment);
 				isSpaceOrComment = isSpaceOrComment && Lexer.isCommentOrSpace(col, txt[prevpos .. pos]);
 			}
 			if(lastCommentStartLine >= 0)
@@ -1459,19 +1462,19 @@ else
 		if (index < 0)
 			return false;
 		if (index < lineInfo.length - 1 && info.EndIndex == idx)
-			if (lineInfo[index + 1].type == TokenColor.Identifier)
+			if (lineInfo[index + 1].type == TokenCat.Identifier)
 				info = lineInfo[++index];
 		if (index > 0 && info.StartIndex == idx)
-			if (lineInfo[index - 1].type == TokenColor.Identifier)
+			if (lineInfo[index - 1].type == TokenCat.Identifier)
 				info = lineInfo[--index];
 
 		// don't do anything in comment or text or literal space, unless we
 		// are doing intellisense in which case we want to match the entire value
 		// of quoted strings.
-		TokenColor type = info.type;
-		if ((flags != WORDEXT_FINDTOKEN || type != TokenColor.String) && 
-		    (type == TokenColor.Comment || type == TokenColor.Text || 
-			 type == TokenColor.String || type == TokenColor.Literal || type == TokenColor.Operator))
+		TokenCat type = info.type;
+		if ((flags != WORDEXT_FINDTOKEN || type != TokenCat.String) && 
+		    (type == TokenCat.Comment || type == TokenCat.Text || 
+			 type == TokenCat.String || type == TokenCat.Literal || type == TokenCat.Operator))
 			return false;
 
 		//search for a token
@@ -1532,10 +1535,10 @@ else
 
 	static bool MatchToken(WORDEXTFLAGS flags, TokenInfo info)
 	{
-		TokenColor type = info.type;
+		TokenCat type = info.type;
 		if ((flags & WORDEXT_FINDTOKEN) != 0)
-			return type != TokenColor.Comment && type != TokenColor.String;
-		return (type == TokenColor.Keyword || type == TokenColor.Identifier || type == TokenColor.Literal);
+			return type != TokenCat.Comment && type != TokenCat.String;
+		return (type == TokenCat.Keyword || type == TokenCat.Identifier || type == TokenCat.Literal);
 	}
 
 	int GetLineCount()
@@ -1602,8 +1605,8 @@ else
 			text = GetText(line, 0, line, -1);
 			while(idx < infoArray.length)
 			{
-				if((!skipComments || infoArray[idx].type != TokenColor.Comment) &&
-				   (infoArray[idx].type != TokenColor.Text || !isWhite(text[infoArray[idx].StartIndex])))
+				if((!skipComments || infoArray[idx].type != TokenCat.Comment) &&
+				   (infoArray[idx].type != TokenCat.Text || !isWhite(text[infoArray[idx].StartIndex])))
 					break;
 				idx++;
 			}
@@ -1676,15 +1679,15 @@ else
 			int inf = cl < 0 ? lineInfo.length - 1 : GetTokenInfoAt(lineInfo, cl-1, info);
 			for( ; inf >= 0; inf--)
 			{
-				if(lineInfo[inf].type != TokenColor.Comment &&
-				   (lineInfo[inf].type != TokenColor.Text || !isWhite(txt[lineInfo[inf].StartIndex])))
+				if(lineInfo[inf].type != TokenCat.Comment &&
+				   (lineInfo[inf].type != TokenCat.Text || !isWhite(txt[lineInfo[inf].StartIndex])))
 				{
 					wchar ch = txt[lineInfo[inf].StartIndex];
 					if(level == 0)
 						if(ch == ';' || ch == '}' || ch == '{' || ch == ':')
 							return true;
 
-					if(testNextFn && lineInfo[inf].type == TokenColor.Identifier)
+					if(testNextFn && lineInfo[inf].type == TokenCat.Identifier)
 						fn = txt[lineInfo[inf].StartIndex .. lineInfo[inf].EndIndex];
 					testNextFn = false;
 					
@@ -1881,8 +1884,8 @@ else
 
 		bool onCommentOrSpace()
 		{
-			return (lineInfo[tok].type == TokenColor.Comment ||
-			       (lineInfo[tok].type == TokenColor.Text && isWhite(lineText[lineInfo[tok].StartIndex])));
+			return (lineInfo[tok].type == TokenCat.Comment ||
+			       (lineInfo[tok].type == TokenCat.Text && isWhite(lineText[lineInfo[tok].StartIndex])));
 		}
 		
 		bool advanceOverComments()
@@ -2487,7 +2490,7 @@ else
 		wstring text = GetText(line, 0, line, -1);
 		uint ppos = pos;
 		int toktype = dLex.scan(iState, text, pos);
-		if(toktype != TokenColor.Operator)
+		if(toktype != TokenCat.Operator)
 			return false;
 
 		return FindClosingBracketForward(line, iState, pos, otherLine, otherIndex);
@@ -2505,7 +2508,7 @@ else
 			{
 				uint ppos = pos;
 				int type = dLex.scan(iState, text, pos);
-				if(type == TokenColor.Operator)
+				if(type == TokenCat.Operator)
 				{
 					if(Lexer.isOpeningBracket(text[ppos]))
 						level++;
@@ -2550,7 +2553,7 @@ else
 			for( ; p >= 0; p--)
 			{
 				pos = tokpos[p];
-				if(toktype[p] == TokenColor.Operator)
+				if(toktype[p] == TokenCat.Operator)
 				{
 					if(pCountComma && text[pos] == ',')
 						(*pCountComma)++;
@@ -2628,7 +2631,7 @@ else
 			for( ; p >= 0; p--)
 			{
 				pos = tokpos[p];
-				if(toktype[p] == TokenColor.Identifier)
+				if(toktype[p] == TokenCat.Identifier)
 					return text[pos .. ppos];
 				if(ppos > pos + 1 || !isWhite(text[pos]))
 					return ""w;
@@ -2849,7 +2852,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 				uint ppos = pos;
 				int type = dLex.scan(iState, text, pos);
 				wstring txt = text[ppos .. pos];
-				if(type == TokenColor.Identifier || txt == "this"w)
+				if(type == TokenCat.Identifier || txt == "this"w)
 				{
 					ident ~= txt;
 					if(ident.length > 4 && ident[0..5] == "this."w)
@@ -2857,7 +2860,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 					if(arrfind(mExpressions, ident) < 0)
 						mExpressions ~= ident;
 				}
-				else if (type == TokenColor.Operator && txt == "."w)
+				else if (type == TokenCat.Operator && txt == "."w)
 					ident ~= "."w;
 				else
 					ident = ""w;

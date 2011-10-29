@@ -34,6 +34,46 @@ import sdk.vsi.textmgr2;
 
 // version = LOG;
 
+enum TokenColor
+{
+	// assumed to match lexer.TokenCat and colorableItems in dlangsvc.d
+	Text       = TokenCat.Text,
+	Keyword    = TokenCat.Keyword,
+	Comment    = TokenCat.Comment,
+	Identifier = TokenCat.Identifier,
+	String     = TokenCat.String,
+	Literal    = TokenCat.Literal,
+	Text2      = TokenCat.Text2,
+	Operator   = TokenCat.Operator,
+
+	// colorizer specifics:
+	AsmRegister,
+	AsmMnemonic,
+	UserType,
+
+	DisabledKeyword,
+	DisabledComment,
+	DisabledIdentifier,
+	DisabledString,
+	DisabledLiteral,
+	DisabledText,
+	DisabledOperator,
+	DisabledAsmRegister,
+	DisabledAsmMnemonic,
+	DisabledUserType,
+
+	StringKeyword,
+	StringComment,
+	StringIdentifier,
+	StringString,
+	StringLiteral,
+	StringText,
+	StringOperator,
+	StringAsmRegister,
+	StringAsmMnemonic,
+	StringUserType,
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
@@ -243,6 +283,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				if(Lexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
 				{
 					int parseState = getParseState(state);
+					if(type == TokenColor.Identifier)
+						type = userColorType(tok);
 					if(parseState == VersionParseState.IdleDisabled || parseState == VersionParseState.IdleDisabledVerify)
 						type = disabledColorType(type);
 				}
@@ -543,6 +585,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Operator:    return TokenColor.DisabledOperator;
 			case TokenColor.AsmRegister: return TokenColor.DisabledAsmRegister;
 			case TokenColor.AsmMnemonic: return TokenColor.DisabledAsmMnemonic;
+			case TokenColor.UserType:    return TokenColor.DisabledUserType;
 			default: break;
 		}
 		return type;
@@ -561,6 +604,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Literal:     return TokenColor.StringLiteral;
 			case TokenColor.AsmRegister: return TokenColor.StringAsmRegister;
 			case TokenColor.AsmMnemonic: return TokenColor.StringAsmMnemonic;
+			case TokenColor.UserType:    return TokenColor.StringUserType;
 			default: break;
 		}
 		return type;
@@ -705,10 +749,17 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			asmIdentifiers[id] = TokenColor.AsmMnemonic;
 	}
 
-	int asmColorType(wstring text)
+	private int asmColorType(wstring text)
 	{
 		if(auto p = text in asmIdentifiers)
 			return *p;
+		return TokenColor.Identifier;
+	}
+
+	private int userColorType(wstring text)
+	{
+		if(auto p = text in Package.GetGlobalOptions().UserTypes)
+			return TokenColor.UserType;
 		return TokenColor.Identifier;
 	}
 
@@ -752,7 +803,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		int parseState = getParseState(iState);
 		int debugOrVersion = getDebugOrVersion(iState);
 		int ntype = type;
-		
+		if(ntype == TokenColor.Identifier)
+			ntype = userColorType(text);
+
 		final switch(cast(VersionParseState) parseState)
 		{
 		case VersionParseState.IdleDisabledVerify:
@@ -1014,11 +1067,15 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		int prevState = ln < mLineState.length ? mLineState[ln] : -1;
 		SaveLineState(ln, state);
 		
-		if(versionsChanged || state != prevState)
+		if(versionsChanged || mColorizeVersions || state != prevState)
 		{
 			ln++;
 			while(ln < mLineState.length)
+			{
+				if(mLineState[ln] == -1)
+					break;
 				mLineState[ln++] = -1;
+			}
 			
 			mSource.ReColorizeLines(line, -1);
 		}

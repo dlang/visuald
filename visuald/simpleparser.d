@@ -595,7 +595,7 @@ class ParserBase(S = string)
 			ParserToken!S tok;
 			tok.span.iStartLine = lno;
 			tok.span.iStartIndex = pos;
-			tok.type = cast(TokenColor) spLex.scan(state, line, pos, tok.id);
+			tok.type = cast(TokenCat) spLex.scan(state, line, pos, tok.id);
 			tok.text = line[tok.span.iStartIndex .. pos];
 			
 			if(pos == line.length)

@@ -1223,6 +1223,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
+		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1231,6 +1232,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mAutoOutlining.setChecked(opts.autoOutlining);
 		mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
+		mUserTypes.setText(opts.UserTypesSpec);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1240,6 +1242,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
 		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
+		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec); 
 		return changes;
 	}
 
@@ -1247,6 +1250,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	CheckBox mAutoOutlining;
 	CheckBox mParseSource;
 	CheckBox mPasteIndent;
+	MultiLineText mUserTypes;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

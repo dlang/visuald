@@ -708,6 +708,9 @@ class GlobalOptions
 	string IncSearchPath;
 	string JSNSearchPath;
 
+	string UserTypesSpec;
+	bool[wstring] UserTypes;
+
 	// evaluated once at startup
 	string WindowsSdkDir;
 	string DevEnvDir;
@@ -777,6 +780,8 @@ class GlobalOptions
 		bool rc = true;
 		try
 		{
+			wstring defUserTypesSpec = "Object string wstring dstring ClassInfo\n"
+			                           "hash_t ptrdiff_t size_t sizediff_t";
 			// get defaults from global config
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
 			wstring wDMDInstallDir = keyToolOpts.GetString("DMDInstallDir");
@@ -785,6 +790,7 @@ class GlobalOptions
 			wstring wImpSearchPath = keyToolOpts.GetString("ImpSearchPath");
 			wstring wJSNSearchPath = keyToolOpts.GetString("JSNSearchPath");
 			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
+			wstring wUserTypesSpec = keyToolOpts.GetString("UserTypesSpec", defUserTypesSpec);
 			ColorizeVersions = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
 			timeBuilds       = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
 			sortProjects     = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
@@ -802,6 +808,7 @@ class GlobalOptions
 			ImpSearchPath = toUTF8(keyUserOpts.GetString("ImpSearchPath", wImpSearchPath));
 			JSNSearchPath = toUTF8(keyUserOpts.GetString("JSNSearchPath", wJSNSearchPath));
 			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
+			UserTypesSpec = toUTF8(keyUserOpts.GetString("UserTypesSpec", wUserTypesSpec));
 
 			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
 			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",       timeBuilds) != 0;
@@ -812,7 +819,9 @@ class GlobalOptions
 			doSemantics          = keyUserOpts.GetDWORD("doSemantics",      doSemantics) != 0;
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
 			lastColorizeVersions = ColorizeVersions;
-			
+			foreach(t; tokenizeArgs(UserTypesSpec))
+				UserTypes[to!wstring(t)] = true;
+
 			CHierNode.setContainerIsSorted(sortProjects);
 			
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
@@ -859,6 +868,8 @@ class GlobalOptions
 			keyToolOpts.Set("ImpSearchPath", toUTF16(ImpSearchPath));
 			keyToolOpts.Set("JSNSearchPath", toUTF16(JSNSearchPath));
 			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
+			keyToolOpts.Set("UserTypesSpec", toUTF16(UserTypesSpec));
+			
 			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
 			keyToolOpts.Set("timeBuilds", timeBuilds);
 			keyToolOpts.Set("sortProjects", sortProjects);
@@ -876,14 +887,25 @@ class GlobalOptions
 			return false;
 		}
 		
+		bool updateColorizer = false;
+		bool[wstring] types;
+		foreach(t; tokenizeArgs(UserTypesSpec))
+			types[to!wstring(t)] = true;
+		if(types != UserTypes)
+		{
+			UserTypes = types;
+			updateColorizer = true;
+		}
 		if(lastColorizeVersions != ColorizeVersions)
 		{
 			lastColorizeVersions = ColorizeVersions;
+			updateColorizer = true;
+		}
+		if(updateColorizer)
 			if(auto svc = Package.s_instance.mLangsvc)
 				svc.OnActiveProjectCfgChange(null);
-		}
+
 		Package.scheduleUpdateLibrary();
-			
 		return true;
 	}
 

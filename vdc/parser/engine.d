@@ -582,7 +582,7 @@ class Parser
 		{
 			int tokid;
 			uint prevpos = pos;
-			TokenColor type = cast(TokenColor) Lexer.scan(state, line, pos, tokid);
+			TokenCat type = cast(TokenCat) Lexer.scan(state, line, pos, tokid);
 			
 			if(tokid != TOK_Space && tokid != TOK_Comment)
 			{
@@ -636,7 +636,7 @@ class Parser
 			int prevlineno = lineno;
 			int prevlinepos = linepos;
 			uint prevpos = pos;
-			TokenColor type = cast(TokenColor) lex.scan(state, text, pos, tokid);
+			TokenCat type = cast(TokenCat) lex.scan(state, text, pos, tokid);
 
 			if(tokid == TOK_Space || tokid == TOK_Comment || tokid == TOK_StringLiteral || tokid == TOK_CharacterLiteral)
 			{

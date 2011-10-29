@@ -18,8 +18,9 @@ import std.conv;
 // - braces must not nest more than 4095 times inside token string
 // - number of different delimiters must not exceed 256
 
-enum TokenColor : int
+enum TokenCat : int
 {
+	// assumed to match beginning of visuald.colorizer.TokenColor
 	Text,
 	Keyword,
 	Comment,
@@ -28,33 +29,11 @@ enum TokenColor : int
 	Literal,
 	Text2,
 	Operator,
-	AsmRegister,
-	AsmMnemonic,
-
-	DisabledKeyword,
-	DisabledComment,
-	DisabledIdentifier,
-	DisabledString,
-	DisabledLiteral,
-	DisabledText,
-	DisabledOperator,
-	DisabledAsmRegister,
-	DisabledAsmMnemonic,
-
-	StringKeyword,
-	StringComment,
-	StringIdentifier,
-	StringString,
-	StringLiteral,
-	StringText,
-	StringOperator,
-	StringAsmRegister,
-	StringAsmMnemonic,
 }
 
 struct TokenInfo
 {
-	TokenColor type;
+	TokenCat type;
 	int StartIndex;
 	int EndIndex;
 }
@@ -142,12 +121,12 @@ struct Lexer
 		string ident = toUTF8(text[startpos .. pos]);
 
 		if(findKeyword(ident, pid))
-			return pid == TOK_is ? TokenColor.Operator : TokenColor.Keyword;
+			return pid == TOK_is ? TokenCat.Operator : TokenCat.Keyword;
 		if(findSpecial(ident, pid))
-			return TokenColor.String;
+			return TokenCat.String;
 
 		pid = TOK_Identifier;
-		return TokenColor.Identifier;
+		return TokenCat.Identifier;
 	}
 
 	static int scanOperator(S)(S text, uint startpos, ref uint pos, ref int pid)
@@ -155,11 +134,11 @@ struct Lexer
 		int len;
 		int id = parseOperator(text, startpos, len);
 		if(id == TOK_error)
-			return TokenColor.Text;
+			return TokenCat.Text;
 		
 		pid = id;
 		pos = startpos + len;
-		return TokenColor.Operator;
+		return TokenCat.Operator;
 	}
 	
 	static dchar trydecode(S)(S text, ref uint pos)
@@ -289,7 +268,7 @@ L_complexLiteral:
 			}
 			pid = TOK_IntegerLiteral;
 		}
-		return TokenColor.Literal;
+		return TokenCat.Literal;
 	}
 
 	static State scanBlockComment(S)(S text, ref uint pos)
@@ -562,7 +541,7 @@ L_complexLiteral:
 
 	static bool isCommentOrSpace(S)(int type, S text)
 	{
-		return (type == TokenColor.Comment || (type == TokenColor.Text && isWhite(text[0])));
+		return (type == TokenCat.Comment || (type == TokenCat.Text && isWhite(text[0])));
 	}
 
 	static State scanNestedDelimiterString(S)(S text, ref uint pos, State s, ref int nesting)
@@ -614,7 +593,7 @@ L_complexLiteral:
 		int tokLevel = tokenStringLevel(state);
 		int otherState = getOtherState(state);
 
-		int type = TokenColor.Text;
+		int type = TokenCat.Text;
 		uint startpos = pos;
 		dchar ch;
 
@@ -640,7 +619,7 @@ L_complexLiteral:
 				}
 				else if(tokLevel == 0 && ch == 'q' && nch == '{')
 				{
-					type = TokenColor.String;
+					type = TokenCat.String;
 					id = TOK_StringLiteral;
 					if(mTokenizeTokenString)
 					{
@@ -684,21 +663,21 @@ L_complexLiteral:
 				if (ch == '/')
 				{
 					// line comment
-					type = TokenColor.Comment;
+					type = TokenCat.Comment;
 					id = TOK_Comment;
 					while(pos < text.length && decode(text, pos) != '\n') {}
 				}
 				else if (ch == '*')
 				{
 					s = scanBlockComment(text, pos);
-					type = TokenColor.Comment;
+					type = TokenCat.Comment;
 					id = TOK_Comment;
 				}
 				else if (ch == '+')
 				{
 					nesting = 1;
 					s = scanNestedComment(text, startpos, pos, nesting);
-					type = TokenColor.Comment;
+					type = TokenCat.Comment;
 					id = TOK_Comment;
 				}
 				else
@@ -718,12 +697,12 @@ L_complexLiteral:
 			{
 				s = scanStringCStyle(text, pos, '\'');
 				id = TOK_CharacterLiteral;
-				type = TokenColor.String;
+				type = TokenCat.String;
 			}
 			else if (ch == '#')
 			{
 				// display #! or #line as line comment
-				type = TokenColor.Comment;
+				type = TokenCat.Comment;
 				id = TOK_Comment;
 				while(pos < text.length && decode(text, pos) != '\n') {}
 			}
@@ -749,50 +728,50 @@ L_complexLiteral:
 			assert(ch == '{');
 
 			tokLevel = 1;
-			type = TokenColor.Operator;
+			type = TokenCat.Operator;
 			id = TOK_StringLiteral;
 			s = State.kWhite;
 			break;
 			
 		case State.kStringToken:
-			type = TokenColor.String;
+			type = TokenCat.String;
 			id = TOK_StringLiteral;
 			s = scanTokenString(text, pos, tokLevel);
 			break;
 			
 		case State.kBlockComment:
 			s = scanBlockComment(text, pos);
-			type = TokenColor.Comment;
+			type = TokenCat.Comment;
 			id = TOK_Comment;
 			break;
 
 		case State.kNestedComment:
 			s = scanNestedComment(text, pos, pos, nesting);
-			type = TokenColor.Comment;
+			type = TokenCat.Comment;
 			id = TOK_Comment;
 			break;
 
 		case State.kStringCStyle:
 			s = scanStringCStyle(text, pos, '"');
-			type = TokenColor.String;
+			type = TokenCat.String;
 			id = TOK_StringLiteral;
 			break;
 
 		case State.kStringWysiwyg:
 			s = scanStringWysiwyg(text, pos);
-			type = TokenColor.String;
+			type = TokenCat.String;
 			id = TOK_StringLiteral;
 			break;
 
 		case State.kStringAltWysiwyg:
 			s = scanStringAltWysiwyg(text, pos);
-			type = TokenColor.String;
+			type = TokenCat.String;
 			id = TOK_StringLiteral;
 			break;
 
 		case State.kStringDelimited:
 			s = scanDelimitedString(text, pos, nesting);
-			type = TokenColor.String;
+			type = TokenCat.String;
 			id = TOK_StringLiteral;
 			break;
 
@@ -801,7 +780,7 @@ L_complexLiteral:
 		case State.kStringDelimitedNestedBrace:
 		case State.kStringDelimitedNestedAngle:
 			s = scanNestedDelimiterString(text, pos, s, nesting);
-			type = TokenColor.String;
+			type = TokenCat.String;
 			id = TOK_StringLiteral;
 			break;
 
@@ -829,7 +808,7 @@ L_complexLiteral:
 		{
 			TokenInfo info;
 			info.StartIndex = pos;
-			info.type = cast(TokenColor) scan(iState, text, pos);
+			info.type = cast(TokenCat) scan(iState, text, pos);
 			info.EndIndex = pos;
 			lineInfo ~= info;
 		}

@@ -349,3 +349,8 @@ Version history
   * F1 searches language and phobos documentation for help on identifier
   * added highlighting of asm block, using new colors "Visual D Register/Mnemonic" and "Disabled/Token String" variants
   * parsing and outlining now aborted when text changes, so editing is more responsive with large source files
+
+unreleased Version 0.3.29
+
+  * highlighting: new colors for user defined list of types (defaults to basic types in object.d)
+  * disabled versions: fixed wrong highlighting when editing before conditional

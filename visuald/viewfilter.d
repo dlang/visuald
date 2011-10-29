@@ -473,7 +473,7 @@ version(tip)
 			if(pos == idx)
 			{
 				int startState = iState;
-				if(dLex.scan(iState, txt, pos) == TokenColor.Comment)
+				if(dLex.scan(iState, txt, pos) == TokenCat.Comment)
 				{
 					//if(iState == Lexer.toState(Lexer.State.kNestedComment, 1, 0) ||
 					if(iState == Lexer.State.kWhite)
@@ -502,7 +502,7 @@ version(tip)
 			{
 				int startState = iState;
 				uint startpos = pos;
-				if(dLex.scan(iState, txt, pos) == TokenColor.Comment)
+				if(dLex.scan(iState, txt, pos) == TokenCat.Comment)
 				{
 					if(startState == iState ||
 					   mCodeWinMgr.mSource.FindStartOfComment(startState, line, startpos))
@@ -525,7 +525,7 @@ version(tip)
 							tokidx = lineInfo.length - 1;
 						while(tokidx >= 0)
 						{
-							if(lineInfo[tokidx].type != TokenColor.Comment)
+							if(lineInfo[tokidx].type != TokenCat.Comment)
 							{
 								otherLine = prevline;
 								otherIndex = prevpos;
@@ -556,7 +556,7 @@ version(tip)
 		uint startPos = pos;
 		int startState = iState;
 		int type = dLex.scan(iState, txt, pos);
-		if(type == TokenColor.String)
+		if(type == TokenCat.String)
 		{
 			Lexer.State sstate;
 			sstate = Lexer.scanState(startState);
@@ -656,7 +656,7 @@ version(tip)
 		wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 		uint ppos = pos;
 		int toktype = dLex.scan(iState, text, pos);
-		if(toktype != TokenColor.Operator)
+		if(toktype != TokenCat.Operator)
 			return false;
 
 		if(Lexer.isOpeningBracket(text[ppos]))

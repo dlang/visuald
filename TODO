@@ -40,7 +40,6 @@ Language service:
 - collapse disabled version/debug blocks
 - disable parsing/outlining for large files?
 - version highlighting does not support version(x): syntax
-- bad updates for version/debug highlighting while editing
 - replace token: empty dialog when opened without resizing
 - when hovering identifier with preceding dot, include identifier before dot in debugger tool tip
 - check indentation of multiple string literals on several lines
@@ -80,6 +79,7 @@ Lexer/Parser:
 Installation:
 ---------------
 - build sdk-imports
+- add dmd-installation via ftp
 
 Debugger:
 ---------------

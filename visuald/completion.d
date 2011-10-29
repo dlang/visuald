@@ -236,7 +236,7 @@ class Declarations
 				uint ppos = pos;
 				int type = dLex.scan(iState, text, pos);
 				if(ln != line || pos < idx || ppos > idx)
-					if(type == TokenColor.Identifier || type == TokenColor.Keyword)
+					if(type == TokenCat.Identifier || type == TokenCat.Keyword)
 					{
 						string txt = toUTF8(text[ppos .. pos]);
 						if(txt.startsWith(tok))

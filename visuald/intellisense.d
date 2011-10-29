@@ -511,7 +511,7 @@ struct ParameterInfo
 		while(pos > 0 && braceLevel > 0)
 		{
 			wstring tok = text[lineInfo[pos].StartIndex .. lineInfo[pos].EndIndex];
-			if(ident.length == 0 && lineInfo[pos].type == TokenColor.Identifier)
+			if(ident.length == 0 && lineInfo[pos].type == TokenCat.Identifier)
 				ident = to!string(tok);
 			else if (tok == ",")
 				prependParam();
