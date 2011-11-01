@@ -800,6 +800,14 @@ class TypeDynamicArray : TypeIndirection
 		return val;
 	}
 	
+	override Type opSlice(int b, int e)
+	{
+		//return this;
+		auto da = new TypeStaticArray;
+		da.setNextType(getNextType()); //addMember(nextType().clone());
+		return da;
+	}
+
 /+	Value deepCopy(Context sc, Value initValue)
 	{
 		auto val = new DynArrayValue(this);
@@ -889,26 +897,20 @@ class TypeStaticArray : TypeIndirection
 	override Value createValue(Context ctx, Value initValue)
 	{
 		int dim = getDimension().interpret(ctx).toInt();
-		auto val = new TupleValue;
-		auto type = getNextType();
-		Value[] values;
-		values.length = dim;
-		IntValue idxval = new IntValue;
-		for(int i = 0; i < dim; i++)
-		{
-			*(idxval.pval) = i;
-			Value v = initValue ? initValue.opIndex(idxval) : null;
-			values[i] = type.createValue(ctx, v);
-		}
-		val.values = values;
+		auto val = new StaticArrayValue(this);
+		val.setLength(ctx, dim);
+		if(initValue)
+			val.opBin(ctx, TOK_assign, initValue);
+
 		return val;
 	}
 	
 	override Type opSlice(int b, int e)
 	{
-		auto da = new TypeDynamicArray;
-		da.setNextType(getNextType()); //addMember(nextType().clone());
-		return da;
+		//auto da = new TypeDynamicArray;
+		//da.setNextType(getNextType()); //addMember(nextType().clone());
+		//return da;
+		return this;
 	}
 	
 }

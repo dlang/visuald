@@ -109,6 +109,7 @@ class BinaryExpression : Expression
 	Expression getRightExpr() { return getMember!Expression(1); }
 
 	override PREC getPrecedence() { return precedence[id]; }
+	bool isAssign() { return false; }
 
 	override void _semantic(Scope sc)
 	{
@@ -142,11 +143,24 @@ class BinaryExpression : Expression
 	
 	override Value interpret(Context sc)
 	{
-		Value vL = getLeftExpr().interpret(sc);
-		Value vR = getRightExpr().interpret(sc);
-
+		Value vL, vR;
+		if(isAssign())
+		{
+			// right side evaluated first in assignments
+			vR = getRightExpr().interpret(sc);
+			vL = getLeftExpr().interpret(sc);
+		}
+		else
+		{
+			vL = getLeftExpr().interpret(sc);
+			vR = getRightExpr().interpret(sc);
+		}
 version(all)
 {
+		auto btL = cast(BasicType) vL.getType();
+		auto avR = cast(ArrayValueBase) vR;
+		if(btL && avR)
+			return vR.opBin_r(sc, id, vL);
 		return vL.opBin(sc, id, vR);
 }
 else
@@ -231,6 +245,8 @@ class CommaExpression : BinaryExpression
 
 class AssignExpression : BinaryExpression
 {
+	override bool isAssign() { return true; }
+
 	mixin BinaryExpr!();
 }
 
@@ -735,9 +751,12 @@ class PostfixExpression : Expression
 					Value end = getMember(2).interpret(sc);
 					return val.opSlice(beg, end);
 				}
-				assert(members.length == 1);
-				return val; // full slice
-				
+				assert(members.length == 1);  // full slice
+				Node nodelen = val.getType().getScope().resolve("length", val.getType(), false);
+				if(nodelen)
+					return val.opSlice(Value.create(0), nodelen.interpret(sc));
+				return val;
+
 			case TOK_lparen:
 				TupleValue args;
 				if(members.length == 2)
@@ -1022,6 +1041,7 @@ class ArrayLiteral : Expression
 			vda.setLength(sc, val.values.length);
 			for(size_t i = 0; i < val.values.length; i++)
 				vda.setItem(sc, i, val.values[i]);
+			debug vda.sval = vda.toStr();
 			return vda;
 		}
 		return val;

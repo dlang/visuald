@@ -449,8 +449,8 @@ class Project : Node
 		}
 
 		auto src = new SourceModule;
-		src.parsed = mod;
-		src.analyzed = mod.clone(); // TODO: clone
+		src.parsed = mod.clone();
+		src.analyzed = mod;
 		if(std.file.exists(fname)) // could be pseudo name
 			src.lastModified = std.file.timeLastModified(fname);
 

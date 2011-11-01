@@ -259,9 +259,9 @@ class DeclarationStatement : Statement
 	
 	override void _semantic(Scope sc)
 	{
-		super._semantic(sc);
 		auto decl = getMember(0);
-		decl.addSymbols(sc);
+		decl.addSymbols(sc); // symbols might already be referenced in an initializer
+		super._semantic(sc);
 		if(decl.attr & Attr_Static)
 		{
 			Context ctx = new Context(nullContext);

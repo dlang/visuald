@@ -657,8 +657,8 @@ class BaseClass : Node
 		auto res = getIdentifierList().resolve();
 		if(auto inh = cast(InheritingAggregate) res)
 			return inh;
-		
-		semanticError("class or interface expected instead of ", res);
+		if (res) // if null, resolve already issued an error
+			semanticError("class or interface expected instead of ", res);
 		return null;
 	}
 

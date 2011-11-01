@@ -176,6 +176,12 @@ class Value
 		//return semanticErrorValue("binary operator ", tokenString(tokid), " on ", this, " not implemented");
 	}
 
+	Value opBin_r(Context ctx, int tokid, Value v)
+	{
+		return semanticErrorValue("cannot calculate ", v, " ", tokenString(tokid), " ", this);
+		//return semanticErrorValue("binary operator ", tokenString(tokid), " on ", this, " not implemented");
+	}
+
 	Value opUn(Context ctx, int tokid)
 	{
 		switch(tokid)
@@ -393,9 +399,12 @@ class Value
 						static if(op == "/=" || op == "%=")
 							if(v2 == 0)
 								return semanticErrorValue("division by zero");
-						mixin("*pval " ~ op ~ " v2;");
+						static if(op == "%=" && (is(T == float) || is(T == double) || is(T == real))) // compiler bug
+							mixin("*pval = *pval % v2;");
+						else
+							mixin("*pval " ~ op ~ " v2;");
 
-						debug logInfo("value %s changed by " ~ op ~ " to %s", ident, toStr());
+						debug logInfo("value %s changed by %s to %s", ident, op, toStr());
 						debug sval = toStr();
 						return this;
 					}
@@ -774,23 +783,13 @@ class CRealValue : ValueT!creal
 {
 }
 
-class DynArrayValue : Value
+class ArrayValueBase : Value
 {
-	TypeDynamicArray type;
 	Value first;
 	size_t len;
 
-	this(TypeDynamicArray t)
-	{
-		type = t;
-		debug sval = toStr();
-	}
-
 	override string toStr()
 	{
-		if(isString())
-			return "\"" ~ toMixin() ~ "\"";
-
 		string s = "[";
 		for(size_t i = 0; i < len; i++)
 		{
@@ -802,12 +801,7 @@ class DynArrayValue : Value
 		s ~= "]";
 		return s;
 	}
-	
-	override Type getType()
-	{
-		return type;
-	}
-	
+
 	override Value opIndex(Value v)
 	{
 		int idx = v.toInt();
@@ -816,44 +810,272 @@ class DynArrayValue : Value
 		return first.getElement(idx);
 	}
 
+	void setItem(Context ctx, size_t idx, Value v)
+	{
+		if(idx < 0 || idx >= len)
+			return semanticError("index ", idx, " out of bounds on dynamic array");
+		first.getElement(idx).opBin(ctx, TOK_assign, v);
+	}
+
+	ArrayValueBase createResultArray(Context ctx, Value fv, int nlen)
+	{
+		auto dim = new IntegerLiteralExpression();
+		dim.txt = to!string(nlen);
+		dim.value = nlen;
+		auto ntype = new TypeStaticArray;
+		ntype.addMember(fv.getType().clone());
+		ntype.addMember(dim);
+
+		auto narr = static_cast!ArrayValueBase(ntype.createValue(ctx, null));
+		narr.first.getElement(0).opBin(ctx, TOK_assign, fv);
+		return narr;
+	}
+
+	Value getItem(size_t idx)
+	{
+		return first.getElement(idx);
+	}
+
+	static Value _opBin(Context ctx, int tokid, Value v1, Value v2, bool reverse)
+	{
+		if(reverse)
+			return v2.opBin(ctx, tokid, v1);
+		return v1.opBin(ctx, tokid, v2);
+	}
+
+	Value _opBin(Context ctx, int tokid, Value v, bool reverse)
+	{
+		switch(tokid)
+		{
+			case TOK_equal:
+			case TOK_lt:
+			case TOK_le:
+			case TOK_gt:
+			case TOK_ge:
+			case TOK_unord:
+			case TOK_ue:
+			case TOK_lg:
+			case TOK_leg:
+			case TOK_ule:
+			case TOK_ul:
+			case TOK_uge:
+			case TOK_ug:
+			//case TOK_notcontains:
+			//case TOK_notidentity:
+			//case TOK_is:
+			//case TOK_in:
+				if(auto tv = cast(ArrayValueBase) v)
+				{
+					if(tv.len != len)
+						return Value.create(false);
+					for(int i = 0; i < len; i++)
+						if(!_opBin(ctx, tokid, first.getElement(i), tv.first.getElement(i), reverse).toBool())
+							return Value.create(false);
+					return Value.create(true);
+				}
+				for(int i = 0; i < len; i++)
+					if(!_opBin(ctx, tokid, first.getElement(i), v, reverse).toBool())
+						return Value.create(false);
+				return Value.create(true);
+
+			case TOK_notequal:
+				return Value.create(!opBin(ctx, TOK_equal, v).toBool());
+
+			case TOK_add:
+			case TOK_min:
+			case TOK_mul:
+			case TOK_div:
+			case TOK_mod:
+			case TOK_pow:
+			case TOK_shl:
+			case TOK_shr:
+			case TOK_ushr:
+			case TOK_xor:
+			case TOK_or:
+			case TOK_and:
+			//case TOK_cat:
+				if(auto tv = cast(ArrayValueBase) v)
+				{
+					if(tv.len != len)
+						return semanticErrorValue(tokenString(tokid), " on arrays of different length ", len, " and ", tv.len);
+
+					if(len == 0)
+						return getType().createValue(ctx, null);
+
+					Value fv = _opBin(ctx, tokid, first.getElement(0), tv.first.getElement(0), reverse);
+					auto narr = createResultArray(ctx, fv, len);
+					for(int i = 1; i < len; i++)
+					{
+						fv = _opBin(ctx, tokid, first.getElement(i), tv.first.getElement(i), reverse);
+						narr.first.getElement(i).opBin(ctx, TOK_assign, fv);
+					}
+					debug narr.sval = narr.toStr();
+					return narr;
+				}
+
+				if(len == 0)
+					return getType().createValue(ctx, null);
+
+				Value fv = _opBin(ctx, tokid, first.getElement(0), v, reverse);
+				auto narr = createResultArray(ctx, fv, len);
+				for(int i = 1; i < len; i++)
+				{
+					fv = _opBin(ctx, tokid, first.getElement(i), v, reverse);
+					narr.first.getElement(i).opBin(ctx, TOK_assign, fv);
+				}
+				debug narr.sval = narr.toStr();
+				return narr;
+
+			default:
+				if(reverse)
+					return super.opBin_r(ctx, tokid, v);
+				return super.opBin(ctx, tokid, v);
+		}
+	}
+
+	override Value opBin(Context ctx, int tokid, Value v)
+	{
+		switch(tokid)
+		{
+			case TOK_addass:
+			case TOK_minass:
+			case TOK_mulass:
+			case TOK_divass:
+			case TOK_modass:
+			case TOK_powass:
+			case TOK_shlass:
+			case TOK_shrass:
+			case TOK_ushrass:
+			case TOK_xorass:
+			case TOK_orass:
+			case TOK_andass:
+			//case TOK_catass:
+				if(auto tv = cast(ArrayValueBase) v)
+				{
+					if(tv.len != len)
+						return semanticErrorValue(tokenString(tokid), " on arrays of different length ", len, " and ", tv.len);
+					for(int i = 0; i < len; i++)
+						first.getElement(i).opBin(ctx, tokid, tv.first.getElement(i));
+				}
+				else
+				{
+					for(int i = 0; i < len; i++)
+						first.getElement(i).opBin(ctx, tokid, v);
+				}
+				debug sval = toStr();
+				return this;
+
+			default:
+				return _opBin(ctx, tokid, v, false);
+		}
+	}
+
+	override Value opBin_r(Context ctx, int tokid, Value v)
+	{
+		return _opBin(ctx, tokid, v, true);
+	}
+
+	override Value opUn(Context ctx, int tokid)
+	{
+		switch(tokid)
+		{
+			case TOK_add:
+			case TOK_min:
+			case TOK_not:
+			case TOK_tilde:
+				if(len == 0)
+					return getType().createValue(ctx, null);
+
+				Value fv = first.getElement(0).opUn(ctx, tokid);
+				auto narr = createResultArray(ctx, fv, len);
+				for(int i = 1; i < len; i++)
+				{
+					fv = first.getElement(i).opUn(ctx, tokid);
+					narr.first.getElement(i).opBin(ctx, TOK_assign, fv);
+				}
+				return narr;
+			default:
+				return super.opUn(ctx, tokid);
+		}
+	}
+}
+
+class ArrayValue(T) : ArrayValueBase
+{
+	T type;
+
+	void setLength(Context ctx, size_t newlen)
+	{
+		if(newlen > len)
+		{
+			if(len == 0)
+			{
+				first = type.getNextType().createValue(ctx, null);
+				first.setElements(1, newlen);
+			}
+			else
+				first.setElements(len, newlen);
+		}
+		len = newlen;
+		// intermediate state, cannot set sval yet
+	}
+
 	override Value opSlice(Value b, Value e)
 	{
 		int idxb = b.toInt();
 		int idxe = e.toInt();
 		if(idxb < 0 || idxb > len || idxe < idxb || idxe > len)
 			return semanticErrorValue("slice [", idxb, "..", idxe, "] out of bounds on value ", toStr());
-		auto nv = new DynArrayValue(type);
-		nv.first = first.getElement(idxb);
-		nv.len = idxe - idxb;
+		auto nv = type.opSlice(idxb, idxe).createValue(nullContext, null);
+		if(auto arr = cast(ArrayValueBase) nv)
+		{
+			arr.first = first.getElement(idxb);
+			arr.len = idxe - idxb;
+		}
+		debug nv.sval = nv.toStr();
 		return nv;
+	}
+
+}
+
+class DynArrayValue : ArrayValue!TypeDynamicArray
+{
+	this(TypeDynamicArray t)
+	{
+		type = t;
+		debug sval = toStr();
+	}
+
+	override string toStr()
+	{
+		if(isString())
+			return "\"" ~ toMixin() ~ "\"";
+
+		return super.toStr();
+	}
+	
+	override Type getType()
+	{
+		return type;
 	}
 	
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
 		{
-			case TOK_equal:
-				if(auto tv = cast(DynArrayValue) v)
-				{
-					if(tv.len != len)
-						return Value.create(false);
-					for(int i = 0; i < len; i++)
-						if(!first.getElement(i).opBin(ctx, TOK_equal, tv.first.getElement(i)).toBool())
-							return Value.create(false);
-					return Value.create(true);
-				}
-				return semanticErrorValue("cannot compare ", v, " to ", this);
-			case TOK_notequal:
-				return Value.create(!opBin(ctx, TOK_equal, v).toBool());
-			
 			case TOK_assign:
-				if(auto tv = cast(DynArrayValue) v)
+				if(auto tv = cast(ArrayValueBase) v)
 				{
 					if(tv.len == 0)
 						first = null;
 					else
 						first = tv.first.getElement(0); // create copy of "ptr" value
 					len = tv.len;
+				}
+				else if(cast(NullValue) v)
+				{
+					first = null;
+					len = 0;
 				}
 				else
 					return semanticErrorValue("cannot assign ", v, " to ", this);
@@ -877,6 +1099,7 @@ class DynArrayValue : Value
 						nv.setItem(ctx, i, getItem(i));
 					nv.setItem(ctx, len, v);
 				}
+				debug nv.sval = nv.toStr();
 				return nv;
 			
 			case TOK_catass:
@@ -892,37 +1115,12 @@ class DynArrayValue : Value
 					setLength(ctx, len + 1);
 					setItem(ctx, oldlen, v);
 				}
+				debug sval = toStr();
 				return this;
 
 			default:
 				return super.opBin(ctx, tokid, v);
 		}
-	}
-	
-	void setLength(Context ctx, size_t newlen)
-	{
-		if(newlen > len)
-		{
-			if(len == 0)
-			{
-				first = type.getNextType().createValue(ctx, null);
-				first.setElements(1, newlen);
-			}
-			else
-				first.setElements(len, newlen);
-		}
-		len = newlen;
-	}
-
-	void setItem(Context ctx, size_t idx, Value v)
-	{
-		if(idx < 0 || idx >= len)
-			return semanticError("index ", idx, " out of bounds on dynamic array");
-		first.getElement(idx).opBin(ctx, TOK_assign, v);
-	}
-	Value getItem(size_t idx)
-	{
-		return first.getElement(idx);
 	}
 	
 	bool isString()
@@ -1060,6 +1258,7 @@ class SetLengthValue : UIntValue
 			case TOK_assign:
 				int len = v.toInt();
 				array.setLength(ctx, len);
+				debug array.sval = array.toStr();
 				return this;
 			default:
 				return super.opBin(ctx, tokid, v);
@@ -1080,6 +1279,50 @@ DynArrayValue createStringValue(C)(immutable(C)[] s)
 	dav.literal = true;
 	debug dav.sval = dav.toStr();
 	return dav;
+}
+
+class StaticArrayValue : ArrayValue!TypeStaticArray
+{
+	this(TypeStaticArray t)
+	{
+		type = t;
+		debug sval = toStr();
+	}
+
+	override Type getType()
+	{
+		return type;
+	}
+
+	override Value opBin(Context ctx, int tokid, Value v)
+	{
+		switch(tokid)
+		{
+			case TOK_assign:
+				if(auto tv = cast(ArrayValueBase) v)
+				{
+					if(tv.len != len)
+						return semanticErrorValue("different length in assignment from ", v, " to ", this);
+
+					IntValue idxval = new IntValue;
+					for(int i = 0; i < len; i++)
+					{
+						*(idxval.pval) = i;
+						Value vidx = v.opIndex(idxval);
+						auto idx = opIndex(idxval);
+						idx.opBin(ctx, TOK_assign, vidx);
+					}
+				}
+				else
+					return semanticErrorValue("cannot assign ", v, " to ", this);
+				debug sval = toStr();
+				return this;
+
+			default:
+				return super.opBin(ctx, tokid, v);
+		}
+	}
+
 }
 
 alias TypeTuple!(CharValue, WCharValue, DCharValue, StringValue) StringTypeValues;
@@ -1495,6 +1738,7 @@ Value doCall(CallableNode funcNode, Context sc, ParameterList params, Value varg
 				v = t.createValue(sc, v); // if not ref, always create copy
 				darr.setItem(ctx, n - numparams, v);
 			}
+			debug darr.sval = darr.toStr();
 			ctx.setValue(vdecl, darr);
 		}
 		else
