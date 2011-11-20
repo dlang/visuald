@@ -16,6 +16,9 @@ import std.stream;
 import std.array;
 import std.conv;
 
+import stdext.path;
+import stdext.array;
+
 import sdk.port.vsi;
 import sdk.vsi.vsshell;
 import sdk.vsi.objext;
@@ -33,53 +36,6 @@ import visuald.hierarchy;
 import visuald.config;
 
 const uint _MAX_PATH = 260;
-
-///////////////////////////////////////////////////////////////////////
-
-T* contains(T)(T[] arr, bool delegate(ref T t) dg)
-{
-	foreach(ref T t; arr)
-		if (dg(t))
-			return &t;
-	return null;
-}
-
-T* contains(T)(T[] arr, T val)
-{
-	foreach(ref T t; arr)
-		if (t == val)
-			return &t;
-	return null;
-}
-
-int arrIndex(T)(in T[] arr, T val)
-{
-	for(int i = 0; i < arr.length; i++)
-		if (arr[i] == val)
-			return i;
-	return -1;
-}
-
-int arrIndexPtr(T)(in T[] arr, T val)
-{
-	for(int i = 0; i < arr.length; i++)
-		if (arr[i] is val)
-			return i;
-	return -1;
-}
-
-void addunique(T)(ref T[] arr, T val)
-{
-	if (!contains(arr, val))
-		arr ~= val;
-}
-
-void addunique(T)(ref T[] arr, T[] vals)
-{
-	foreach(val; vals)
-		if (!contains(arr, val))
-			arr ~= val;
-}
 
 ///////////////////////////////////////////////////////////////////////
 int CompareFilenames(string f1, string f2)
@@ -669,4 +625,65 @@ string[] GetImportPaths(string file)
 	}
 	imports ~= Package.GetGlobalOptions().getImportPaths();
 	return imports;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+const(wchar)* _toFilter(string filter)
+{
+	wchar* s = _toUTF16z(filter);
+	for(wchar*p = s; *p; p++)
+		if(*p == '|')
+			*p = 0;
+	return s;
+}
+
+string getOpenFileDialog(HWND hwnd, string title, string dir, string filter)
+{
+	string file;
+	auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell));
+	if(pIVsUIShell)
+	{
+		wchar filename[260];
+		VSOPENFILENAMEW ofn;
+		ofn.lStructSize = ofn.sizeof;
+		ofn.hwndOwner = hwnd;
+		ofn.pwzDlgTitle = _toUTF16z(title);
+		ofn.pwzFileName = filename.ptr;
+		ofn.nMaxFileName = 260;
+		ofn.pwzInitialDir = _toUTF16z(dir);
+		ofn.pwzFilter = _toFilter(filter);
+
+		HRESULT hr = pIVsUIShell.GetOpenFileNameViaDlg(&ofn);
+		if(hr != S_OK)
+			return "";
+
+		file = to!string(filename);
+	}
+	return file;
+}
+
+string getSaveFileDialog(HWND hwnd, string title, string dir, string filter)
+{
+	string file;
+	auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell));
+	if(pIVsUIShell)
+	{
+		wchar filename[260];
+		VSSAVEFILENAMEW ofn;
+		ofn.lStructSize = ofn.sizeof;
+		ofn.hwndOwner = hwnd;
+		ofn.pwzDlgTitle = _toUTF16z(title);
+		ofn.pwzFileName = filename.ptr;
+		ofn.nMaxFileName = 260;
+		ofn.pwzInitialDir = _toUTF16z(dir);
+		ofn.pwzFilter = _toFilter(filter);
+
+		HRESULT hr = pIVsUIShell.GetSaveFileNameViaDlg(&ofn);
+		if(hr != S_OK)
+			return "";
+
+		file = to!string(filename);
+	}
+	return file;
 }

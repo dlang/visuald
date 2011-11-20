@@ -44,8 +44,12 @@ VDC_SRC = $(VDC)/parser/aggr.d \
         $(VDC)/logger.d \
         $(VDC)/lexer.d
 
+STDEXT_SRC = ../stdext/file.d ../stdext/array.d ../stdext/path.d
 # FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
 
+C2D_SRC = ../c2d/ast.d ../c2d/dlist.d ../c2d/cpp2d.d ../c2d/dgutil.d \
+          ../c2d/pp.d ../c2d/tokenizer.d ../c2d/tokutil.d
+          
 SRC = workaround.d \
       config.d dlangsvc.d dpackage.d register.d comutil.d \
       logutil.d dllmain.d dproject.d hierarchy.d expansionprovider.d \
@@ -54,9 +58,9 @@ SRC = workaround.d \
       stringutil.d fileutil.d xmlwrap.d dimagelist.d pkgutil.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
       profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d \
-      ..\c2d\dlist.d tokenreplace.d tokenreplacedialog.d library.d \
-      help.d \
-      $(FRED_SRC)
+      tokenreplace.d tokenreplacedialog.d library.d \
+      help.d wizard.d \
+      $(STDEXT_SRC) $(C2D_SRC)
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
        resources/DAboutLogo.ico resources/GroupByType.ico resources/CombineColumns.ico \

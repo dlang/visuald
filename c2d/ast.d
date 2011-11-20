@@ -11,6 +11,7 @@ import std.stdio;
 //////////////////////////////////////////////////////////////////////////////
 
 bool tryRecover = true;
+int syntaxErrors;
 
 // how to handle identifier in declaration
 enum IdentPolicy
@@ -140,9 +141,9 @@ class AST
 
 	TokenList removeChild(AST ast, bool keepComments = false)
 	{
-		assert(children && ast._parent == this);
+		assume(children && ast._parent == this);
 		ASTIterator it = children.find(ast);
-		assert(!it.atEnd());
+		assume(!it.atEnd());
 
 		TokenIterator end = ast.end;
 		if(keepComments)
@@ -189,7 +190,7 @@ class AST
 	//////////////////////////////////////////////////////////////
 	void insertTokenListBefore(AST child, TokenList toklist)
 	{
-		assert(!null || child._parent is this);
+		assume(!null || child._parent is this);
 
 		TokenIterator insertPos;
 		if(!child)
@@ -246,7 +247,7 @@ class AST
 				return;
 			}
 
-		assert(false, "token not part of AST");
+		assume(false, "token not part of AST");
 	}
 
 	void removeToken(int toktype)
@@ -265,7 +266,7 @@ class AST
 		if(!_parent)
 			return null;
 		
-		assert(_parent.children, "inconsistent AST");
+		assume(_parent.children, "inconsistent AST");
 		ASTIterator it = _parent.children.begin();
 		if(it.atEnd() || *it is this)
 			return null;
@@ -274,7 +275,8 @@ class AST
 			if(*it is this)
 				return it[-1];
 
-		assert(false, "inconsistent AST");
+		assume(false, "inconsistent AST");
+		return null;
 	}
 
 	AST nextSibling()
@@ -282,10 +284,10 @@ class AST
 		if(!_parent)
 			return null;
 		
-		assert(_parent.children, "inconsistent AST");
+		assume(_parent.children, "inconsistent AST");
 		
 		ASTIterator it = _parent.children.find(this);
-		assert(!it.atEnd(), "inconsistent AST");
+		assume(!it.atEnd(), "inconsistent AST");
 		
 		++it;
 		if(it.atEnd())
@@ -340,7 +342,7 @@ class AST
 	void verifyIteratorList(ref TokenIterator tokIt)
 	{
 		if(tokIt.getList() != start.getList())
-			assert(tokIt.getList() == start.getList());
+			assume(tokIt.getList() == start.getList());
 			
 		while(tokIt != start)
 			tokIt.advance();
@@ -349,7 +351,7 @@ class AST
 			for(ASTIterator it = children.begin(); !it.atEnd(); ++it)
 				it.verifyIteratorList(tokIt);
 
-		assert(tokIt.getList() == end.getList());
+		assume(tokIt.getList() == end.getList());
 		while(tokIt != end)
 			tokIt.advance();
 	}
@@ -359,7 +361,7 @@ class AST
 		if(children)
 			for(ASTIterator it = children.begin(); !it.atEnd(); ++it)
 			{
-				assert(it._parent is this);
+				assume(it._parent is this);
 				it.verifyChildren();
 			}
 	}
@@ -473,7 +475,7 @@ class AST
 					addChild(Declaration.parseCtorDtor(tokIt, len, isDtor));
 					break;
 				}
-				// otherwise fall through
+				goto default; // otherwise fall through
 			default:
 				Declaration decl = Declaration.parseDeclaration(tokIt);
 				addChild(decl);
@@ -485,6 +487,7 @@ class AST
 				if(!tryRecover)
 					throw e;
 
+				syntaxErrors++;
 				if(!tokIt.atEnd())
 					tokIt.pretext ~= " /* SYNTAX ERROR: " ~ e.msg ~ " */ ";
 
@@ -554,11 +557,20 @@ class AST
 	void parseModule(ref TokenIterator tokIt)
 	{
 		start = tokIt;
+	retry:
 		skipComments(tokIt);
 
 		//parseStatements(tokIt);
 		parseDeclarations(tokIt);
-
+		if(!tokIt.atEnd() && tokIt.type == Token.BraceR)
+		{
+			/+
+			syntaxErrors++;
+			tokIt.pretext ~= "/* SYNTAX ERROR: unexpected } */";
+			tokIt.advance();
+			goto retry;
+			+/
+		}
 		end = tokIt;
 		if(!tokIt.atEnd() && tokIt.type != Token.EOF)
 			throwException((*tokIt).lineno, "not parsed until the end of the file");
@@ -1055,7 +1067,7 @@ class Expression : AST
 				e.addChild(expr);
 				break;
 			}
-			// fall through
+			goto default; // fall through
 		default:
 			e = parsePrimaryExp(tokIt);
 			e = parsePostExp(tokIt, e);
@@ -1340,14 +1352,14 @@ class Expression : AST
 	//////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////
 
-	Expression clone()
+	override Expression clone()
 	{
 		Expression expr = new Expression(_type, _toktype);
 		cloneChildren(expr);
 		return expr;
 	}
 
-	string toString(ref ToStringData tsd)
+	override string toString(ref ToStringData tsd)
 	{
 		string txt;
 		switch(_type)
@@ -1396,7 +1408,7 @@ class Expression : AST
 				txt = "mixin(" ~ children[0].toString(tsd) ~ ")";
 				break;
 			default:
-				assert(0);
+				assume(0);
 			}
 			break;
 
@@ -1447,7 +1459,7 @@ class Expression : AST
 				txt ~= "]";
 				break;
 			default:
-				assert(0);
+				assume(0);
 			}
 			break;
 
@@ -1469,7 +1481,7 @@ class Expression : AST
 				txt = Token.toString(_toktype) ~ " " ~ children[0].toString(tsd);
 				break;
 			default:
-				assert(0);
+				assume(0);
 			}
 			break;
 
@@ -1479,26 +1491,26 @@ class Expression : AST
 		case Type.BinaryExp:
 			switch(_toktype)
 			{
-			case Token.Asterisk, Token.Div, Token.Mod:
-			case Token.Plus, Token.Minus, Token.Tilde:
-			case Token.Shl, Token.Shr:
-			case Token.LessThan, Token.LessEq, Token.GreaterThan, Token.GreaterEq,
+			case Token.Asterisk, Token.Div, Token.Mod,
+			     Token.Plus, Token.Minus, Token.Tilde,
+			     Token.Shl, Token.Shr,
+			     Token.LessThan, Token.LessEq, Token.GreaterThan, Token.GreaterEq,
 			     Token.Unordered, Token.LessGreater, Token.LessEqGreater, Token.UnordGreater,
-			     Token.UnordGreaterEq, Token.UnordLess, Token.UnordLessEq, Token.UnordEq:
-			case Token.Equal, Token.Unequal:
-			case Token.Ampersand:
-			case Token.Xor:
-			case Token.Or:
-			case Token.AmpAmpersand:
-			case Token.OrOr:
-			case Token.Assign, Token.AddAsgn, Token.SubAsgn, Token.MulAsgn, 
+			     Token.UnordGreaterEq, Token.UnordLess, Token.UnordLessEq, Token.UnordEq,
+			     Token.Equal, Token.Unequal,
+			     Token.Ampersand,
+			     Token.Xor,
+			     Token.Or,
+			     Token.AmpAmpersand,
+			     Token.OrOr,
+			     Token.Assign, Token.AddAsgn, Token.SubAsgn, Token.MulAsgn,
 			     Token.DivAsgn, Token.ModAsgn, Token.AndAsgn, Token.XorAsgn, Token.OrAsgn,
-			     Token.ShlAsgn, Token.ShrAsgn:
-			case Token.Comma:
+			     Token.ShlAsgn, Token.ShrAsgn,
+			     Token.Comma:
 				txt = children[0].toString(tsd) ~ " " ~ Token.toString(_toktype) ~ " " ~ children[1].toString(tsd);
 				break;
 			default:
-				assert(0);
+				assume(0);
 			}
 			break;
 
@@ -1509,12 +1521,12 @@ class Expression : AST
 			txt = "(" ~ children[0].toString(tsd) ~ ")" ~ children[1].toString(tsd);
 			break;
 		default:
-			assert(0);
+			assume(0);
 		}
 		return txt;
 	}
 
-	long evaluate()
+	override long evaluate()
 	{
 		switch(_type)
 		{
@@ -1772,6 +1784,7 @@ class Statement : AST
 		case Token.Continue:
 		case Token.Break:
 			nextToken(tokIt);
+			goto case;
 		case Token.Semicolon:
 			checkToken(tokIt, Token.Semicolon);
 			stmt = new Statement(type);
@@ -1801,6 +1814,7 @@ class Statement : AST
 			if(!tryRecover)
 				throw e;
 		
+			syntaxErrors++;
 			if(!tokIt.atEnd())
 				tokIt.pretext ~= " /* SYNTAX ERROR: " ~ e.msg ~ " */ ";
 			
@@ -1838,14 +1852,14 @@ class Statement : AST
 
 	///////////////////////////////////////////////////////////////////////
 
-	Statement clone()
+	override Statement clone()
 	{
 		Statement stmt = new Statement(_toktype);
 		cloneChildren(stmt);
 		return stmt;
 	}
 
-	TokenIterator defaultInsertStartTokenPosition()
+	override TokenIterator defaultInsertStartTokenPosition()
 	{
 		TokenIterator it = start;
 		if(_toktype == Token.BraceL)
@@ -1854,7 +1868,7 @@ class Statement : AST
 		return it;
 	}
 
-	TokenIterator defaultInsertEndTokenPosition()
+	override TokenIterator defaultInsertEndTokenPosition()
 	{
 		TokenIterator it = end;
 		if(_toktype == Token.BraceL)
@@ -1888,7 +1902,7 @@ class DeclType : AST
 	int _dtype;
 	string _ident;
 
-	TokenIterator defaultInsertStartTokenPosition()
+	override TokenIterator defaultInsertStartTokenPosition()
 	{
 		if(_dtype == Class)
 		{
@@ -1899,7 +1913,7 @@ class DeclType : AST
 		return super.defaultInsertStartTokenPosition();
 	}
 
-	TokenIterator defaultInsertEndTokenPosition()
+	override TokenIterator defaultInsertEndTokenPosition()
 	{
 		if(_dtype == Class)
 		{
@@ -1927,7 +1941,7 @@ class DeclType : AST
 		return tokIt;
 	}
 
-	string toString(ref ToStringData tsd)
+	override string toString(ref ToStringData tsd)
 	{
 		string txt;
 		switch(_dtype)
@@ -1961,12 +1975,12 @@ class DeclType : AST
 			txt = "..."; 
 			break;
 		default:
-			assert(0);
+			assume(0);
 		}
 		return txt;
 	}
 
-	DeclType clone()
+	override DeclType clone()
 	{
 		DeclType dtype = new DeclType(_dtype, _ident);
 		cloneChildren(dtype);
@@ -2114,7 +2128,7 @@ class DeclVar : AST
 			addChild(init);
 	}
 
-	string toString(ref ToStringData tsd)
+	override string toString(ref ToStringData tsd)
 	{
 		bool wasInDeclarator = tsd.inDeclarator;
 		scope(exit) tsd.inDeclarator = wasInDeclarator;
@@ -2143,7 +2157,7 @@ class DeclVar : AST
 		return txt;
 	}
 
-	DeclVar clone()
+	override DeclVar clone()
 	{
 		DeclVar var = _type == Type.EnumDeclaration ? new DeclVar(_ident) : new DeclVar(cast(Expression) null);
 		cloneChildren(var);
@@ -2160,14 +2174,14 @@ class DeclGroup : AST
 		super(Type.DeclarationGroup);
 	}
 
-	DeclGroup clone()
+	override DeclGroup clone()
 	{
 		DeclGroup grp = new DeclGroup;
 		cloneChildren(grp);
 		return grp;
 	}
 
-	TokenIterator defaultInsertStartTokenPosition()
+	override TokenIterator defaultInsertStartTokenPosition()
 	{
 		TokenIterator it = start;
 		if(it != end && it.type == Token.BraceL)
@@ -2175,7 +2189,7 @@ class DeclGroup : AST
 		return it;
 	}
 
-	TokenIterator defaultInsertEndTokenPosition()
+	override TokenIterator defaultInsertEndTokenPosition()
 	{
 		TokenIterator it = end;
 		if(it != start && it[-1].type == Token.BraceR)
@@ -2191,7 +2205,7 @@ class DeclConditional : AST
 		super(Type.ConditionalDeclaration);
 	}
 
-	DeclConditional clone()
+	override DeclConditional clone()
 	{
 		DeclConditional cond = new DeclConditional;
 		cloneChildren(cond);
@@ -2207,7 +2221,7 @@ class CtorInitializer : AST
 		super(Type.CtorInitializer);
 	}
 
-	CtorInitializer clone()
+	override CtorInitializer clone()
 	{
 		CtorInitializer ctor = new CtorInitializer;
 		cloneChildren(ctor);
@@ -2223,7 +2237,7 @@ class CtorInitializers : AST
 		super(Type.CtorInitializers);
 	}
 
-	CtorInitializers clone()
+	override CtorInitializers clone()
 	{
 		CtorInitializers ctors = new CtorInitializers;
 		cloneChildren(ctors);
@@ -2686,7 +2700,7 @@ class Declaration : AST
 
 	///////////////////////////////////////////////////////////////////////////////
 
-	string toString(ref ToStringData tsd)
+	override string toString(ref ToStringData tsd)
 	{
 		string txt;
 		ASTIterator it = children.begin();
@@ -2703,7 +2717,7 @@ class Declaration : AST
 		return txt;
 	}
 
-	Declaration clone()
+	override Declaration clone()
 	{
 		Declaration decl = new Declaration(null);
 		cloneChildren(decl);
@@ -2718,7 +2732,7 @@ class Declaration : AST
 
 int expressionType(Expression expr)
 {
-	assert(expr);
+	assume(expr);
 	return expr._toktype;
 }
 
@@ -2864,7 +2878,7 @@ void dumpIdentifier(Declaration decl)
 	string txt;
 	ASTIterator it = decl.children.begin();
 	DeclType decltype = cast(DeclType) *it;
-	assert(decltype);
+	assume(decltype);
 
 	ToStringData tsd;
 	tsd.noIdentifierInPrototype = true;
@@ -2874,7 +2888,7 @@ void dumpIdentifier(Declaration decl)
 	for(it.advance(); !it.atEnd(); ++it)
 	{
 		DeclVar declvar = cast(DeclVar) *it;
-		assert(declvar);
+		assume(declvar);
 		string ident;
 		if(AST ast = findIdentifier(declvar.children[0]))
 			ident = tokensToIdentifier(ast.start, ast.end);
@@ -2907,7 +2921,8 @@ void iterateTopLevelDeclarations(AST ast, void delegate(Declaration) apply)
 		case AST.Type.PrimaryExp:
 			if(it.start.type == Token.Mixin)
 				break;
-
+			// TODO?
+			break;
 		case AST.Type.Protection:
 			break;
 

@@ -20,6 +20,9 @@ import visuald.config;
 import visuald.dpackage;
 import visuald.windows;
 
+import stdext.path;
+import stdext.file;
+
 import std.c.stdlib;
 import std.windows.charset;
 import std.utf;

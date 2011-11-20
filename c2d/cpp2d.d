@@ -1,11 +1,22 @@
-module c2d.patchast;
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
+module c2d.cpp2d;
 
 import c2d.tokenizer;
 import c2d.ast;
 import c2d.dlist;
+import c2d.pp;
 import c2d.dgutil;
 import c2d.tokutil;
-version(pp) import c2d.pp;
+
+import stdext.file;
+import stdext.path;
 
 import std.string;
 import std.file;
@@ -14,6 +25,9 @@ import std.stdio;
 import std.ascii;
 import std.array;
 import std.algorithm;
+import std.conv;
+
+alias std.string.indexOf indexOf;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +55,7 @@ import std.algorithm;
 // - remove extern "C" { }
 // + prototype "(void)" -> "()"
 // ? add toPtr() to class allocations
-// + conveert class pointers to non-pointers
+// + convert class pointers to non-pointers
 // + convert stack object class to new
 // + "::", "->" -> "."
 // + empty statement ";" -> "{}"
@@ -49,12 +63,12 @@ import std.algorithm;
 // + "{" -> "[" for array initializer
 // + convert multi-dimensional initializers, if specified as one-dimensional list
 // + convert "&" to "ref" for function arguments
-// + add "d_" to keywords
+// + add "d2d_" to keywords
 // + convert basic types
 // + convert sizeof(x) -> x.sizeof
 // + convert number postfix
 // + convert wide chars
-// + remove unnecessary paranthesis (confuses parser in sizeof, (i)++, (i).nn)
+// + remove unnecessary paranthesis (confuses dmd in sizeof, (i)++, (i).nn)
 // + translate bitfields to mixin
 // - add & to function pointers
 // + convert const type -> const(type)
@@ -76,51 +90,412 @@ import std.algorithm;
 
 ///////////////////////////////////////////////////////////////////////
 
+bool[string] keywordsMap;
 string[string] tokenMap;
 string[string] filenameMap;
 
+struct PatchRule
+{
+	string filenamePattern;
+	string[] searchTokens;
+	string[] replaceTokens;
+}
+
+struct C2DIni
+{
+	int    inputType;           // 0: input files, 1: current document, 2: current selection
+	string inputFiles;          // file and dir list
+	string inputDir;
+	string outputDir;
+	string importAllFile;
+
+	string packagePrefix;
+	string codePrefix;
+	string keywordPrefix;
+
+	string versionDefines;      // PP identifiers to convert to versions
+	string expandConditionals;  // PP identifiers to expand in conditionals
+	string userValueTypes;      // with translation to basic D types?
+	string userClassTypes;
+	string replaceTokenPre;
+	string replaceTokenPost;
+
+	bool addToStartup;
+
+	// syntax:
+	// filepattern:: search => replace
+	static bool parsePatchRule(ref PatchRule rule, string line)
+	{
+		int pos = std.string.indexOf(line, "::");
+		if(pos >= 0)
+		{
+			rule.filenamePattern = std.string.strip(line[0..pos]);
+			line = line[pos + 2 .. $];
+		}
+		else
+			rule.filenamePattern = "";
+
+		pos = std.string.indexOf(line, "=>");
+		if(pos < 0)
+			return false;
+		string search = line[0 .. pos];
+		string replac = line[pos+2 .. $];
+		replac = replace(replac, "\\n", "\n");
+
+		rule.searchTokens = rule.searchTokens.init;
+		rule.replaceTokens = rule.replaceTokens.init;
+		scanTextArray!(string)(rule.searchTokens, search);
+		scanTextArray!(string)(rule.replaceTokens, replac);
+		return rule.searchTokens.length > 0;
+	}
+
+	static PatchRule[] parseRules(string txt)
+	{
+		PatchRule[] rules;
+		string[] lines = splitLines(txt);
+		for(int n = 0; n < lines.length; )
+		{
+			string line = lines[n++];
+			while(line.endsWith("\\") && !line.endsWith("\\\\"))
+			{
+				line = line[0..$-1];
+				if(n < lines.length)
+					line ~= lines[n++];
+			}
+			line = stripl(line);
+			if(line.startsWith("//"))
+				continue;
+
+			PatchRule rule;
+			if(parsePatchRule(rule, line))
+				rules ~= rule;
+		}
+		return rules;
+	}
+
+	void readFromFile(string fname)
+	{
+		string txt = to!string(std.file.read(fname));
+		readFromText(txt);
+	}
+
+	void writeToFile(string fname)
+	{
+		string s = writeToText();
+		std.file.write(fname, s);
+	}
+
+	void readFromText(string txt)
+	{
+		string[string][string] ini = parseIniText(txt);
+
+		if(auto set = "Settings" in ini)
+		{
+			if(auto p = "inputType" in *set)
+				inputType = parse!int(*p);
+			if(auto p = "addToStartup" in *set)
+				addToStartup = parse!bool(*p);
+			if(auto p = "outputDir" in *set)
+				outputDir = *p;
+			if(auto p = "inputDir" in *set)
+				inputDir = *p;
+			if(auto p = "keywordPrefix" in *set)
+				keywordPrefix = *p;
+		}
+
+		if(auto set = "inputFiles" in ini)
+			if(auto p = "" in *set)
+				inputFiles = *p;
+		if(auto set = "versionDefines" in ini)
+			if(auto p = "" in *set)
+				versionDefines = *p;
+		if(auto set = "expandConditionals" in ini)
+			if(auto p = "" in *set)
+				expandConditionals = *p;
+		if(auto set = "userValueTypes" in ini)
+			if(auto p = "" in *set)
+				userValueTypes = *p;
+		if(auto set = "userClassTypes" in ini)
+			if(auto p = "" in *set)
+				userClassTypes = *p;
+		if(auto set = "replaceTokenPre" in ini)
+			if(auto p = "" in *set)
+				replaceTokenPre = *p;
+		if(auto set = "replaceTokenPost" in ini)
+			if(auto p = "" in *set)
+				replaceTokenPost = *p;
+	}
+
+	string writeToText()
+	{
+		string s = "[Settings]\n";
+		s ~= "inputType=" ~ to!string(inputType) ~ "\n";
+		s ~= "addToStartup=" ~ to!string(addToStartup) ~ "\n";
+		s ~= "outputDir=" ~ outputDir ~ "\n";
+		s ~= "inputDir=" ~ inputDir ~ "\n";
+		s ~= "keywordPrefix=" ~ keywordPrefix ~ "\n";
+
+		s ~= "[inputFiles]\n"		  ~ inputFiles;			if(!s.endsWith("\n")) s ~= "\n";
+		s ~= "[versionDefines]\n"	  ~ versionDefines;		if(!s.endsWith("\n")) s ~= "\n";
+		s ~= "[expandConditionals]\n" ~ expandConditionals; if(!s.endsWith("\n")) s ~= "\n";
+		s ~= "[userValueTypes]\n"	  ~ userValueTypes;		if(!s.endsWith("\n")) s ~= "\n";
+		s ~= "[userClassTypes]\n"	  ~ userClassTypes;		if(!s.endsWith("\n")) s ~= "\n";
+		s ~= "[replaceTokenPre]\n"    ~ replaceTokenPre;	if(!s.endsWith("\n")) s ~= "\n";
+		s ~= "[replaceTokenPost]\n"   ~ replaceTokenPost;	if(!s.endsWith("\n")) s ~= "\n";
+
+		return s;
+	}
+
+	bool toC2DOptions(ref C2DOptions opt)
+	{
+		opt.enableDmdSpecifics = false;
+		opt.keywordsPrefix = keywordPrefix;
+		opt.codePrefix = codePrefix;
+		opt.importAllFile = importAllFile;
+		opt.inputDir = normalizeDir(inputDir);
+		opt.outputDir = normalizeDir(outputDir);
+
+		opt.userValueTypes = opt.userValueTypes.init;
+		opt.userRefTypes = opt.userRefTypes.init;
+		
+		foreach(t; split(userValueTypes))
+			opt.userValueTypes[t] = true;
+
+		foreach(t; split(userClassTypes))
+			opt.userRefTypes[t] = true;
+
+		opt.preRules = parseRules(replaceTokenPre);
+		opt.postRules = parseRules(replaceTokenPost);
+
+		PP.versionDefines = PP.versionDefines.init;
+		foreach(v; split(versionDefines))
+			PP.versionDefines[v] = true;
+
+		PP.expandConditionals = PP.expandConditionals.init;
+		opt.expandDefines = opt.expandDefines.init;
+		foreach(v; split(expandConditionals))
+		{
+			bool b = true;
+			int pos = indexOf(v, '=');
+			string def;
+			if(pos > 0)
+			{
+				def = v[pos + 1 .. $];
+				b = (def.length == 0 || indexOf("tTyY1", def[0]) >= 0);
+				v = v[0..pos];
+			}
+			PP.expandConditionals[v] = b;
+			TokenList toklist;
+			if(def.length)
+			{
+				toklist = scanText(def);
+				toklist.prepend(createToken(" ", v, Token.Identifier, 0));
+				toklist.prepend(createToken("", "#define", Token.PPdefine, 0));
+			}
+			opt.expandDefines[v] = toklist;
+		}
+		return true;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////
+
+struct C2DOptions
+{
+	bool enableDmdSpecifics = true;
+	int indentSize = 4;
+	int tabSize = 4;
+
+	string keywordsPrefix;
+	string codePrefix;
+	
+	string importAllFile;
+	string inputDir;
+	string outputDir;
+
+	bool[string] userValueTypes;
+	bool[string] userRefTypes;
+
+	PatchRule[] preRules;
+	PatchRule[] postRules;
+
+	TokenList[string] expandDefines;
+
+	void setup_dmd()
+	{
+		options.enableDmdSpecifics = true;
+
+		keywordsPrefix = "dmd_";
+		codePrefix = "import dmd.port;\nimport dmd.importall;\n\n";
+
+		importAllFile = "dmd/importall.d";
+		inputDir = "c:/tmp/d/";
+		outputDir = "c:/tmp/d/dmdgen2/";
+
+		preRules = preRules.init;
+		postRules = postRules.init;
+
+		foreach(t; [ "TOK", "MATCH", "dchar_t", "opflag_t", "regm_t", "targ_size_t",
+					 "tym_t", "OPER", "TY" ])
+			userValueTypes[t] = true;
+	}
+}
+
+C2DOptions options;
+
 static this()
 {
+	// bool says whether the C++ keyword exists and has the same meaning
+	keywordsMap = [
+		"this" : true,
+		"super" : false,
+		"assert" : true,
+		"null" : false,
+		"true" : true,
+		"false" : true,
+		"cast" : false,
+		"new" : true,
+		"delete" : true,
+		"throw" : true,
+		"module" : false,
+		"pragma" : false,
+		"typeof" : false,
+		"typeid" : false,
+		"template" : false,
+
+		"void" : true,
+		"byte" : false,
+		"ubyte" : false,
+		"short" : true,
+		"ushort" : false,
+		"int" : true,
+		"uint" : false,
+		"long" : true,
+		"ulong" : false,
+		"cent" : false,
+		"ucent" : false,
+		"float" : true,
+		"double" : true,
+		"real" : false,
+		"bool" : true,
+		"char" : true,
+		"wchar" : false,
+		"dchar" : false,
+		"ifloat" : false,
+		"idouble" : false,
+		"ireal" : false,
+
+		"cfloat" : false,
+		"cdouble" : false,
+		"creal" : false,
+
+		"delegate" : false,
+		"function" : false,
+
+		"is" : false,
+		"if" : true,
+		"else" : true,
+		"while" : true,
+		"for" : true,
+		"do" : true,
+		"switch" : true,
+		"case" : true,
+		"default" : true,
+		"break" : true,
+		"continue" : true,
+		"synchronized" : false,
+		"return" : true,
+		"goto" : true,
+		"try" : true,
+		"catch" : true,
+		"finally" : true,
+		"with" : false,
+		"asm" : false,
+		"foreach" : false,
+		"foreach_reverse" : false,
+		"scope" : false,
+
+		"struct" : true,
+		"class" : true,
+		"interface" : true,
+		"union" : true,
+		"enum" : true,
+		"import" : false,
+		"mixin" : false,
+		"static" : true,
+		"final" : false,
+		"const" : true,
+		"typedef" : true,
+		"alias" : false,
+		"override" : false,
+		"abstract" : false,
+		"volatile" : true,
+		"debug" : false,
+		"deprecated" : false,
+		"in" : false,
+		"out" : false,
+		"inout" : false,
+		"lazy" : false,
+		"auto" : false,
+
+		"align" : false,
+		"extern" : true,
+		"private" : true,
+		"package" : true,
+		"protected" : true,
+		"public" : true,
+		"export" : false,
+
+		"body" : false,
+		"invariant" : false,
+		"unittest" : false,
+		"version" : false,
+		//{	"manifest",	TOKmanifest	},
+
+		// Added after 1.0
+		"ref" : false,
+		"macro" : false,
+		"pure" : false,
+		"nothrow" : true,
+		"__gshared" : false,
+		"__thread" : false,
+		"__traits" : false,
+		"__overloadset" : false,
+
+		"__FILE__" : true,
+		"__LINE__" : true,
+
+		"shared" : false,
+		"immutable" : false,
+
+		"@disable" : false,
+		"@property" : false,
+		"@safe" : false,
+		"@system" : false,
+		"@trusted" : false,
+	];
+
+	/*
+		// dmd specific?
+	*/
+
 	tokenMap = [
 		"::" : ".",
 		"->" : ".",
 
-		"version"   : "d_version",
-		"ref"       : "d_ref",
-		"align"     : "d_align",
-		"dchar"     : "dmd_dchar",
-		"body"      : "d_body",
-		"module"    : "d_module",
-		"scope"     : "d_scope",
-		"pragma"    : "d_pragma",
-		"wchar"     : "d_wchar",
-		"real"      : "d_real",
-		"byte"      : "d_byte",
-		"cast"      : "d_cast",
-		"delegate"  : "d_delegate",
-		"alias"     : "d_alias",
-		"is"        : "d_is",
-		"in"        : "d_in",
-		"out"       : "d_out",
-		"invariant" : "d_invariant",
-		"final"     : "d_final",
-		"inout"     : "d_inout",
-		"override"  : "d_override",
-		"alignof"   : "d_alignof",
-		"mangleof"  : "d_mangleof",
-		"init"      : "d_init",
-
-		"Object"    : "d_Object",
-		"TypeInfo"  : "d_TypeInfo",
-		"toString"  : "d_toString",
-		"main"      : "d_main",
-		"string"    : "d_string",
-
+		// dmd specific
 		"param_t"   : "PARAM",
-		"hash_t"    : "d_hash_t",
-		"File"      : "d_File",
 		"STATIC"    : "private",
 		"CEXTERN"   : "extern",
+		"finally"   : "dmd_finally",
+		"Object"    : "dmd_Object",
+		"TypeInfo"  : "dmd_TypeInfo",
+		"toString"  : "dmd_toString",
+		"main"      : "dmd_main",
+		"string"    : "dmd_string",
+		"hash_t"    : "dmd_hash_t",
+		"File"      : "dmd_File",
+
 		"__try"     : "try",
 		"NULL"      : "null",
 		//"__except"          : "catch(Exception e) //", false);
@@ -131,12 +506,16 @@ static this()
 		"__real"    : "real",
 		"typedef"   : "alias",
 
+		// temporary renames
+		"__super"   : "super",
+		"__const"   : "const",
 		"__static_if" : "static if",
 		"__static_eval" : "static_eval!",
 		"__version" : "version",
 		"__cast"    : "cast",
 		"__init"    : "init",
 		"__string"  : "string",
+		"__mixin"   : "mixin",
 		"__bitfields" : "bitfields!",
 		"__is"      : "is",
 		"!__is"     : "!is",
@@ -152,32 +531,51 @@ static this()
 		"__inline"  : "",
 		"inline"    : "",
 		"register"  : "",
-		"volatile"  : "/*volatile*/"
+		"volatile"  : "/*volatile*/",
+		"typename"  : "",
 	];
 
+	/*
 	filenameMap = [
-		"version"   : "dmd_version",
-		"macro"     : "dmd_macro",
-		"enum"      : "dmd_enum",
-		"template"  : "dmd_template",
-		"module"    : "dmd_module",
-		"import"    : "dmd_import",
-		"scope"     : "dmd_scope",
 		"root"      : "dmd_root",
 		"code"      : "dmd_code",
+		"type"      : "dmd_type",
 		"global"    : "dmd_global",
+		"complex_t" : "dmd_complex_t",
 		"mem"       : "dmd_mem",
-		"d-gcc-real": "d_gcc_real",
-		"d-gcc-complex_t" : "d_gcc_complex_t",
-		"d-dmd-gcc" : "d_dmd_gcc",
-		"dchar"     : "dmd_dchar",
-		"frontend.net.pragma" : "frontend.net.dmd_pragma"
 	];
+	*/
+}
+
+string createModuleName(string filename)
+{
+	filename = stripExtension(filename);
+	filename = replace(filename, "\\", "/");
+	string names[] = split(filename, "/");
+	string modname;
+	foreach(n; names)
+	{
+		string safename;
+		foreach(dchar ch; n)
+			if(isAlphaNum(ch))
+				safename ~= ch;
+			else
+				safename ~= '_';
+
+		if(safename in keywordsMap)
+			safename = options.keywordsPrefix ~ safename;
+		if(string *ps = safename in filenameMap)
+			safename = *ps;
+
+		if(modname.length)
+			modname ~= '.';
+		modname ~= safename;
+	}
+	return modname;
 }
 
 string mapTokenText(Token tok)
 {
-version(pp)
 	if(Token.isPPToken(tok.type))
 		return fixPPToken(tok);
 	if(tok.type == Token.String)
@@ -185,12 +583,14 @@ version(pp)
 	if(tok.type == Token.Number)
 		return fixNumber(tok.text);
 	
+	if(bool *pb = tok.text in keywordsMap)
+		if(!*pb)
+			return options.keywordsPrefix ~ tok.text;
 	if(string *ps = tok.text in tokenMap)
 		return *ps;
 	return tok.text;
 }
 
-version(pp)
 string fixPPToken(Token tok)
 {
 	assert(tok.type != Token.PPinsert);
@@ -203,12 +603,9 @@ string fixPPToken(Token tok)
 		if(!it.atEnd() && it.type == Token.String)
 		{
 			string fname = it.text[1 .. $-1]; // remove quotes
-			fname = replace(fname, ".h", "");
-			fname = replace(fname, "/", ".");
-			if(string* ps = fname in filenameMap)
-				fname = *ps;
+			string modname = createModuleName(fname);
 			it[-1].text = "import";
-			it.text = fname ~ ";";
+			it.text = modname ~ ";";
 			return tokenListToString(tokList);
 		}
 	}
@@ -317,6 +714,7 @@ void patchBasicDeclType(AST ast)
 		SIGNED   = 0x0400,
 		UNSIGNED = 0x0800,
 		BOOL     = 0x1000,
+		CHAR     = 0x2000,
 	}
 
 	int type = 0;
@@ -340,17 +738,22 @@ void patchBasicDeclType(AST ast)
 		case "_Complex":  type |= TF_BIT.COMPLEX; break;
 		case "__int64":   type |= TF_BIT.INT | TF_BIT.SIZE64; break;
 		case "_int64":    type |= TF_BIT.INT | TF_BIT.SIZE64; break;
+		case "__int32":   type |= TF_BIT.INT | TF_BIT.SIZE32; break;
+		case "_int32":    type |= TF_BIT.INT | TF_BIT.SIZE32; break;
 		case "INT32":     type |= TF_BIT.INT | TF_BIT.SIZE32; break;
+		case "LONG":      type |= TF_BIT.INT | TF_BIT.SIZE32; break;
 		case "UINT32":    type |= TF_BIT.INT | TF_BIT.SIZE32 | TF_BIT.UNSIGNED; break;
-		case "wchar_t":   type |= TF_BIT.INT | TF_BIT.SIZE16 | TF_BIT.UNSIGNED; break;
+		case "DWORD":     type |= TF_BIT.INT | TF_BIT.SIZE32 | TF_BIT.UNSIGNED; break;
+		case "wchar_t":   type |= TF_BIT.INT | TF_BIT.SIZE16 | TF_BIT.UNSIGNED | TF_BIT.CHAR; break;
 		case "long":
 			if(type & TF_BIT.LONG)
-				type = TF_BIT.INT | TF_BIT.SIZE64;
+				type = type & ~TF_BIT.SIZE32 | TF_BIT.SIZE64;
 			else
 				type |= TF_BIT.LONG;
 			break;
 		case "const":
-			isConst = true; // fall through
+			isConst = true;
+			goto default; // fall through
 		default:
 			isBasic = false;
 		}
@@ -379,6 +782,7 @@ void patchBasicDeclType(AST ast)
 	case TF_BIT.INT | TF_BIT.SIZE8  | TF_BIT.SIGNED:   basic = "char"; break; // byte?
 	case TF_BIT.INT | TF_BIT.SIZE16 | TF_BIT.UNSIGNED: basic = "ushort"; break;
 	case TF_BIT.INT | TF_BIT.SIZE16 | TF_BIT.SIGNED:   basic = "short"; break;
+	case TF_BIT.INT | TF_BIT.SIZE16 | TF_BIT.UNSIGNED | TF_BIT.CHAR:   basic = "wchar_t"; break;
 	case TF_BIT.INT |                 TF_BIT.UNSIGNED:
 	case TF_BIT.INT | TF_BIT.SIZE32 | TF_BIT.UNSIGNED: basic = "uint"; break;
 	case TF_BIT.INT |                 TF_BIT.SIGNED:
@@ -416,7 +820,8 @@ void patchDeclTypeModifier(AST ast)
 	for(TokenIterator tokIt = ast.start; tokIt != ast.end; ++tokIt)
 	{
 		if(DeclType.isTypeModifier(tokIt.text))
-			if(!DeclType.isPersistentTypeModifier(tokIt.text))
+			if(!DeclType.isPersistentTypeModifier(tokIt.text) &&
+			   !DeclType.isMutabilityModifier(tokIt.text))
 				clearTokenText(tokIt);
 	}
 }
@@ -435,6 +840,10 @@ bool patchVoidArg(DeclType dtype)
 		if(dvar.start != dvar.end)
 			return false; // non-empty DeclVar
 	}
+	if(!dtype.start.atBegin() && dtype.start[-1].type == Token.LessThan)
+		return false;
+	if(!dtype.end.atEnd() && dtype.end.type == Token.GreaterThan)
+		return false;
 
 	// no DeclVar follows, must be (void) arg
 	clearTokenText(dtype.start);
@@ -452,7 +861,7 @@ void patchOperatorName(Expression expr)
 			prefix = "glob_"; // replace "::operator new" -> ".glob_new"
 			it.advance();
 		}
-		if(it.type == Token.Operator)
+		/*version(V2)*/ if(it.type == Token.Operator)
 		{
 			string op;
 			switch(it[1].text)
@@ -465,8 +874,7 @@ void patchOperatorName(Expression expr)
 			{
 				clearTokenText(it);
 				it[1].text = prefix ~ op;
-
-				// if this is the declaration, reomve return type
+				// if this is the declaration, remove return type
 				AST parent = expr._parent;
 				while(parent && (parent._type == AST.Type.UnaryExp || parent._type == AST.Type.PostExp))
 					parent = parent._parent;
@@ -598,14 +1006,18 @@ void patchReferenceArg(Expression expr)
 		if(Declaration decl = cast(Declaration) parent._parent)
 		{
 			decl.start.pretext ~= "ref ";
-			expr.start.text = "";  // remove '&'
+			expr.start.text = " ";  // remove '&'
 		}
 }
 
 ///////////////////////////////////////////////////////////////
 
+// dmd specific
 void patchAssignArrayData(Expression expr)
 {
+	if(!options.enableDmdSpecifics)
+		return;
+
 	// expr is binary expression
 	if(expr._toktype != Token.Assign)
 		return;
@@ -637,8 +1049,12 @@ void patchAssignArrayData(Expression expr)
 	e2.start.pretext ~= "cast(void*)";
 }
 
+// dmd specific
 void patchAssignCast(Expression expr)
 {
+	if(!options.enableDmdSpecifics)
+		return;
+
 	// expr is binary expression
 	if(expr._toktype != Token.Assign)
 		return;
@@ -722,8 +1138,12 @@ void patchPointerComparison(Expression expr)
 
 ///////////////////////////////////////////////////////////////
 
+// dmd specific
 void patchCallArguments(Expression expr)
 {
+	if(!options.enableDmdSpecifics)
+		return;
+
 	// expr is postexp expression
 	if(expr._toktype != Token.ParenL && expr._toktype != Token.Mixin)
 		return; // not a call
@@ -748,6 +1168,7 @@ void patchCallArguments(Expression expr)
 	case "search":        argIdx = 0; patch = KindOfPatch.ZeroLoc; break;
 	case "IdentifierExp": argIdx = 0; patch = KindOfPatch.ZeroLoc; break;
 	case "push":          if(!obj || obj.start.text == "sc") return; // not on Scope
+		goto case; // fall through
 	case "shift":         argIdx = 0; patch = KindOfPatch.AddCastVoid; break;
 	case "write":
 	case "toCBuffer":
@@ -786,16 +1207,20 @@ void patchCallArguments(Expression expr)
 		if(arg.start.text == "v")
 			arg.start.pretext ~= "cast(int)";
 		break;
-
+		
 	default:
 		break;
 	}
 
 }
 
+// dmd specific
 void patchCtorInitializer(AST ast)
 {
-	if(ast.start.text != "super")
+	if(!options.enableDmdSpecifics)
+		return;
+
+	if(ast.start.text != "__super")
 		return;
 	if(!ast.children || ast.children.empty())
 		return;
@@ -805,8 +1230,12 @@ void patchCtorInitializer(AST ast)
 		arg.start.text = "Loc(0)";
 }
 
+// dmd specific
 void patchReturnExpressionType(Statement stmt)
 {
+	if(!options.enableDmdSpecifics)
+		return;
+
 	if(!stmt.children || stmt.children.empty())
 		return;
 
@@ -998,7 +1427,7 @@ void extractStructDefinition(Declaration decl)
 	TokenIterator begIt = ndlist.begin();
 	if(begIt != ndtype.start)
 	{
-		if(std.string.indexOf(ndtype.start.pretext, "\n") < 0)
+		if(indexOf(ndtype.start.pretext, "\n") < 0)
 		{
 			int pos = lastIndexOf(begIt.pretext, "\n");
 			if(pos >= 0)
@@ -1210,6 +1639,8 @@ void patchInitializer(Declaration decl)
 		return;
 
 	DeclType dtype = cast(DeclType) decl.children[0];
+	if(dtype && dtype._dtype == DeclType.Template)
+		return; // TODO
 	DeclVar  dvar  = cast(DeclVar)  decl.children[1];
 
 	assert(dtype && dvar);
@@ -1266,7 +1697,7 @@ void patchArrayInit(Expression init, int dim, bool isBasic)
 		for(ASTIterator it = init.children.begin(); !it.atEnd(); ++it)
 		{
 			Token tok = *it.start;
-			if(std.string.indexOf(tok.pretext, '\n') >= 0)
+			if(indexOf(tok.pretext, '\n') >= 0)
 			{
 				if(it != init.children.begin())
 					tok.pretext = close ~ tok.pretext;
@@ -1283,6 +1714,8 @@ void patchStringDeclaration(Declaration decl)
 		return;
 
 	DeclType dtype = cast(DeclType) decl.children[0];
+	if(dtype && dtype._dtype == DeclType.Template)
+		return; // TODO
 	DeclVar  dvar  = cast(DeclVar)  decl.children[1];
 
 	assert(dtype && dvar);
@@ -1301,10 +1734,12 @@ void patchStringDeclaration(Declaration decl)
 		bool isNotChar = false;
 		for(TokenIterator it = dtype.start; it != dtype.end; ++it)
 			if(!DeclType.isTypeModifier(it.text))
+			{
 				if(it.text == "char")
 					charTok = *it;
 				else
 					isNotChar = true;
+			}
 		return isNotChar ? null : charTok;
 	}
 
@@ -1329,6 +1764,8 @@ void patchPointerDeclaration(Declaration decl)
 		return;
 
 	DeclType dtype = cast(DeclType) decl.children[0];
+	if(dtype && dtype._dtype == DeclType.Template)
+		return; // TODO
 	DeclVar  dvar  = cast(DeclVar)  decl.children[1];
 
 	assert(dtype && dvar);
@@ -1361,6 +1798,7 @@ void patchDeclType(DeclType dtype)
 			clearTokenText(startIt);
 		
 		// add ":int" to workaround forward references
+		version(dmd_2_43)
 		for( ; nextIt != dtype.end; ++nextIt)
 			if(nextIt.type == Token.BraceL)
 			{
@@ -1377,6 +1815,7 @@ void patchDeclType(DeclType dtype)
 			TokenIterator nextIt = startIt;
 			nextToken(nextIt);
 			if(nextIt.type == Token.Identifier)
+			{
 				if(dtype._parent.children.count() > 1)
 					// variable declaration doesn't need struct keyword
 					clearTokenText(startIt);
@@ -1384,6 +1823,7 @@ void patchDeclType(DeclType dtype)
 					startIt.text = "struct";
 				else
 					startIt.text = "class";
+			}
 		}
 		if(startIt.type == Token.Union)
 		{
@@ -1407,6 +1847,47 @@ void patchDeclType(DeclType dtype)
 						text = "static " ~ var.start.text ~ " opCall"; // var.start[2].pretext = "def_ctor" ~ var.start[2].pretext;
 				var.start.text = text;
 			}
+		}
+	}
+	else if(dtype._dtype == DeclType.Template)
+	{
+		if(dtype.start.text == "template")
+		{
+			// a declaration, move arguments to identifier
+			if(dtype.end.text == "struct" || dtype.end.text == "class")
+			{
+				Declaration decl = cast(Declaration)dtype._parent;
+				assert(decl && decl.children.count() > 1);
+				if(Declaration decl2 = cast(Declaration)decl.children[1])
+				{
+					if(DeclType dtype2 = cast(DeclType)decl2.children[0])
+					{
+						TokenList tl = decl.removeChild(dtype);
+						dtype.removeToken(dtype.start); // throw away "template"
+						
+						for(TokenIterator it = tl.begin(); it != tl.end(); it.advance())
+							if(it.text == "<")
+								it.text = "(";
+						if(dtype.end[-1].text == ">")
+							dtype.end[-1].text = ")";
+
+						TokenIterator insertPos = dtype2.start + 2; // after "struct Identifier"
+						dtype2.insertChildBefore(dtype2.childrenBegin(), dtype, tl, &insertPos);
+					}
+				}
+			}
+		}
+		else
+		{
+			// an instance, just replace <> with !()
+			TokenIterator stop = dtype.end;
+			if(!dtype.children.empty())
+				stop = dtype.children.begin().start;
+			for(TokenIterator it = dtype.start; it != stop && it != dtype.end; it.advance())
+				if(it.text == "<")
+					it.text = "!(";
+			if(dtype.end[-1].text == ">")
+				dtype.end[-1].text = ")";
 		}
 	}
 }
@@ -1551,7 +2032,34 @@ void patchAST(AST ast)
 	}
 }
 
-///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+
+typedef void function (TokenList) patch_fn;
+
+struct translateInfo
+{
+	string inputFile;
+	patch_fn prepatch;
+	patch_fn postpatch;
+};
+
+void setupVariables()
+{
+	PP.versionDefines["DEBUG"] = true;
+	PP.versionDefines["DMDV1"] = true;
+	PP.versionDefines["DMDV2"] = true; // allow early evaluation
+	PP.versionDefines["_DH"] = true;   // identifier ambiguous, also used by iasm_c
+	PP.versionDefines["LOG"] = true;
+	PP.versionDefines["LOGSEMANTIC"] = true;
+	PP.versionDefines["IN_GCC"] = true;
+
+	PP.expandConditionals["0"] = false;
+	PP.expandConditionals["1"] = true;
+	PP.expandConditionals["DMDV1"] = false;
+	PP.expandConditionals["DMDV2"] = true;
+	PP.expandConditionals["_DH"]   = false;
+	PP.expandConditionals["IN_GCC"] = true;
+}
 
 bool isBasicUserType(string ident)
 {
@@ -1570,23 +2078,15 @@ bool isBasicUserType(string ident)
 	case "uinteger_t":
 	case "va_list":
 		return true;
-	case "TOK":
-	case "MATCH":
-	case "dchar_t":
-	case "opflag_t":
-	case "regm_t":
-	case "targ_size_t":
-	case "tym_t":
-	case "OPER":
-	case "TY":
-		return true;
 	default:
-		return false;
+		return (ident in options.userValueTypes) !is null;
 	}
 }
 
 bool isClassType(string ident)
 {
+	if(ident in options.userRefTypes)
+		return true;
 	if(AST.isPOD(ident))
 		return false;
 	if(isBasicUserType(ident))
@@ -1601,8 +2101,8 @@ bool isClassType(string ident)
 
 int firstPathSeparator(string path)
 {
-	int fslash = std.string.indexOf(path, '/');
-	int bslash = std.string.indexOf(path, '\\');
+	int fslash = indexOf(path, '/');
+	int bslash = indexOf(path, '\\');
 	if(fslash < 0)
 		return bslash;
 	if(bslash < 0)
@@ -1610,88 +2110,25 @@ int firstPathSeparator(string path)
 	return min(fslash, bslash);
 }
 
-version(none)
-string createImportAll(string filename, bool makefile)
+///////////////////////////////////////////////////////////////////////
+void writeDirAndFile(string filename, string text)
 {
-	string path = dirname(filename);
-	string ext = getExt(filename);
-	string bname = filename[path.length + 1..$-ext.length-1];
-	
-	string txt;
-	if (makefile)
-		txt = "SRC = \\\n";
-	else
-	{
-		txt = "module " ~ bname ~ ";\n\n";
-		txt ~= "public import dmdport;\n\n";
-	}
-
-	foreach(ti; srcfiles)
-	{
-		string file = genOutFilename(ti.inputFile, 0);
-		int pdot = lastIndexOf(file, '.');
-		int pslash;
-		if(makefile)
-			pslash = firstPathSeparator(file);
-		else
-			pslash = max(lastIndexOf(file, '/'), lastIndexOf(file, '\\'));
-
-		string mod = file[pslash+1 .. pdot];
-		if(string *ps = mod in filenameMap)
-			mod = *ps;
-
-		if(!makefile)
-		{
-			mod = replace(mod, "/", ".");
-			mod = replace(mod, "\\", ".");
-		}
-
-		if(makefile)
-			txt ~= "\tdmdgen/" ~ mod ~ ".d \\\n";
-		else
-			txt ~= "public import " ~ mod ~ ";\n";
-	}
-
-	return txt;
-}
-
-string genOutFilename(string filename, int pass)
-{
-	string path = dirname(filename);
-	string gendir = pass == 0 ? "dmdgen" : "gen" ~ format("%d", pass);
-	string genpath = replace(path, "dmd", gendir);
-	if(!exists(genpath))
-		mkdirRecurse(genpath);
-
-	string ext = getExt(filename);
-	string bname = filename[path.length + 1..$-ext.length-1];
-
-	if(pass == 0)
-	{
-		if(string *ps = bname in filenameMap)
-			bname = *ps;
-
-		if (ext != "h")
-			bname ~= "_" ~ ext;
-		bname ~= ".d";
-	}
-	else
-	{
-		bname = bname ~ "." ~ ext;
-	}
-	return genpath ~ sep ~ bname;
+	string path = dirName(filename);
+	if(!exists(path))
+		mkdirRecurse(path);
+	std.file.write(filename, text);
 }
 
 ///////////////////////////////////////////////////////////////
 
 class Source
 {
-	this(ConvProject dg, string filename)
+	this(DmdGen dg, string filename)
 	{
-		this(dg, filename, cast(string) read(filename));
+		this(dg, filename, cast(string) read(options.inputDir ~ filename));
 	}
 
-	this(ConvProject dg, string filename, string text)
+	this(DmdGen dg, string filename, string text)
 	{
 		_tokenList = new TokenList;
 		_dg = dg;
@@ -1704,14 +2141,23 @@ class Source
 		_tokenList = scanText(_text);
 	}
 
-version(pp)
 	void rescanPP()
 	{
 		.rescanPP(_tokenList);
 	}
 
+	int patchRules(PatchRule[] rules)
+	{
+		int cntReplace = 0;
+		foreach(rule; rules)
+			if(rule.filenamePattern.length == 0 || globMatch(_filename, rule.filenamePattern))
+				cntReplace += replaceTokenSequence(_tokenList, rule.searchTokens, rule.replaceTokens, true);
+		if(cntReplace > 0)
+			rescanPP();
+		return cntReplace;
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
-version(pp)
 	void fixConditionalCompilation()
 	{
 		PP pp = new PP;
@@ -1726,7 +2172,7 @@ version(pp)
 		_ast.parseModule(tokIt);
 	}
 
-	void writeTokenList(string outfilename, string hdr, int pass)
+	string createTokenListText(int pass)
 	{
 		string text;
 		for(TokenIterator tokIt = _tokenList.begin(); !tokIt.atEnd(); ++tokIt)
@@ -1735,11 +2181,18 @@ version(pp)
 			string mapped = pass > 0 ? tok.text : mapTokenText(tok);
 			text ~= tok.pretext ~ mapped;
 		}
-		std.file.write(outfilename, hdr ~ text);
+		return text;
 	}
 
-	ConvProject _dg;
+	void writeTokenList(string outfilename, string hdr, int pass)
+	{
+		string text = createTokenListText(pass);
+		writeDirAndFile(options.outputDir ~ outfilename, hdr ~ text);
+	}
+
+	DmdGen _dg;
 	string _filename;
+	patch_fn postpatch;
 
 	string _text;
 
@@ -1749,13 +2202,39 @@ version(pp)
 
 ///////////////////////////////////////////////////////////////
 
-class ConvProject
+class DmdGen
 {
 	///////////////////////////////////////////////////////////////////////
 	AST[][string] functionDeclarations;
 	AST[][string] functionDefinitions;
 	AST[][string] varDefinitions;
-	AST[] sources;
+	Source[] sources;
+
+	///////////////////////////////////////////////////////////////////////
+
+	void writemsg(string s)
+	{
+		writeln(s);
+	}
+
+	Source findSource(AST ast)
+	{
+		AST root = ast.getRoot();
+		foreach(src; sources)
+			if(src._ast == root)
+				return src;
+		return null;
+	}
+
+	void writemsg(AST ast, string s)
+	{
+		string where = text("(", ast.start.lineno, ")");
+		if(auto src = findSource(ast))
+			s = src._filename ~ where;
+		writemsg(s);
+	}
+
+	///////////////////////////////////////////////////////////////////////
 
 	void registerFunctionDefinition(Declaration decl)
 	{
@@ -1766,7 +2245,7 @@ class ConvProject
 			tsd.noIdentifierInPrototype = true;
 			string ident = decl.toString(tsd);
 			if(ident in functionDefinitions)
-				writefln("duplicate definition of " ~ ident);
+				writemsg(decl, "duplicate definition of " ~ ident);
 			functionDefinitions[ident] ~= decl;
 		}
 		else if(type == DeclClassification.VarDeclaration || type == DeclClassification.VarDefinition)
@@ -1774,7 +2253,7 @@ class ConvProject
 			ToStringData tsd;
 			string ident = decl.toString(tsd);
 			if(ident in varDefinitions)
-				writefln("duplicate definition of " ~ ident);
+				writemsg(decl, "duplicate definition of " ~ ident);
 			varDefinitions[ident] ~= decl;
 		}
 	}
@@ -1787,9 +2266,11 @@ class ConvProject
 		stmt.start = stmt.end = stmtList.begin();
 
 		if(callSuper)
-			tokList.begin().text = "super";
+			tokList.begin().text = "__super";
+		else
+			tokList.begin()[1].text = " = ("; // was "("
 		stmt.appendChild(ctorInit, tokList);
-		stmt.end.insertBefore(createToken("", ";", Token.Semicolon, 0));
+		stmt.insertTokenBefore(null, createToken("", ";", Token.Semicolon, 0)); // append
 
 		tokList = stmtList;
 		return stmt;
@@ -1834,6 +2315,7 @@ class ConvProject
 		//		insertIt = stmt.children.begin();
 		}
 		
+		int count = 0;
 		while(initIt.children && !initIt.children.empty())
 		{
 			CtorInitializer initCtor = cast(CtorInitializer) *(initIt.children.begin());
@@ -1845,6 +2327,7 @@ class ConvProject
 			bool callSuper = AST.isBaseClass(id, className);
 			Statement initStmt = convertCtorInitializerToStatement(initCtor, initList, callSuper);
 			stmt.insertChildBefore(insertIt, initStmt, initList);
+			insertIt = stmt.children.begin() + ++count;
 		}
 
 		initIt._parent.removeChild(*initIt);
@@ -1949,7 +2432,7 @@ class ConvProject
 
 			if(ident in functionDeclarations)
 			{
-				writefln("mutiple declarations for " ~ ident);
+				writemsg(decl, "mutiple declarations for " ~ ident);
 			}
 			functionDeclarations[ident] ~= decl;
 
@@ -1962,7 +2445,7 @@ class ConvProject
 			}
 			else
 			{
-				writefln("no implementation for " ~ ident);
+				writemsg(decl, "no implementation for " ~ ident);
 				countNoImplementations++;
 			}
 		}
@@ -1978,7 +2461,7 @@ class ConvProject
 					replaceFunctionDeclarationWithDefinition(decl, varDefinitions[ident], checkMethodLevel, true);
 				else
 				{
-					writefln("no instantiation of " ~ ident);
+					writemsg(decl, "no instantiation of " ~ ident);
 					countNoImplementations++;
 				}
 			}
@@ -1995,7 +2478,7 @@ class ConvProject
 		string mergePretext(string pre1, string pre2)
 		{
 			if(strip(pre1) == "")
-				if(std.string.indexOf(pre2, '\n') >= 0)
+				if(indexOf(pre2, '\n') >= 0)
 					return pre2;
 			return pre1 ~ pre2;
 		}
@@ -2040,7 +2523,7 @@ class ConvProject
 			copyDefaultArguments(decl, cast(Declaration) impl);
 
 			if(indent > 0)
-				reindentList(implList, 4 * indent, 8);
+				reindentList(implList, indent * options.indentSize, options.tabSize);
 
 			if(conditional && sameConditional)
 			{
@@ -2084,10 +2567,10 @@ class ConvProject
 	{
 		declsToRemove.length = 0;
 
-		foreach(AST ast; sources)
+		foreach(Source src; sources)
 		{
-			ast.verify();
-			iterateTopLevelDeclarations(ast, &moveMethods);
+			src._ast.verify();
+			iterateTopLevelDeclarations(src._ast, &moveMethods);
 		}
 
 		foreach(AST decl; declsToRemove)
@@ -2099,53 +2582,117 @@ class ConvProject
 	///////////////////////////////////////////////////////////////////////
 	void moveAllCtorInitializers()
 	{
-		foreach(AST ast; sources)
+		foreach(Source src; sources)
 		{
-			ast.verify();
-			iterateTopLevelDeclarations(ast, &moveCtorInitializers);
+			src._ast.verify();
+			iterateTopLevelDeclarations(src._ast, &moveCtorInitializers);
 		}
 	}
 
 	///////////////////////////////////////////////////////////////////////
 	void patchAllAST()
 	{
-		foreach(AST ast; sources)
-			patchAST(ast);
+		foreach(Source src; sources)
+			patchAST(src._ast);
+	}
+
+	void writeFiles(int pass)
+	{
+		string hdr;
+		if(pass == 0 && options.importAllFile.length)
+		{
+			string importAllFile = options.importAllFile;
+			string importAll = createImportAll(importAllFile, false);
+			writeDirAndFile(options.outputDir ~ importAllFile, importAll);
+			
+			string srcAll = createImportAll(importAllFile, true);
+			writeDirAndFile(options.outputDir ~ "sources", srcAll);
+
+			hdr = options.codePrefix;
+		}
+
+		foreach(Source src; sources)
+		{
+			if(pass == 0 && src.postpatch)
+				src.postpatch(src._tokenList);
+			src.patchRules(options.postRules);
+
+			string outfile = genOutFilename(src._filename, pass);
+			string modname = createModuleName(src._filename);
+			string modtext = "module " ~ modname ~ ";\n\n";
+			src.writeTokenList(outfile, modtext ~ hdr, pass);
+		}
+	}
+
+	string createImportAll(string filename, bool makefile)
+	{
+		string txt;
+		if (makefile)
+			txt = "SRC = \\\n";
+		else
+		{
+			string modname = createModuleName(filename);
+			txt = "module " ~ modname ~ ";\n\n";
+			txt ~= options.codePrefix;
+		}
+
+		foreach(Source src; sources)
+		{
+			string file = genOutFilename(src._filename, 0);
+			string mod = createModuleName(file);
+
+			if(makefile)
+				mod = replace(mod, ".", "\\");
+
+			if(makefile)
+				txt ~= "\t" ~ mod ~ ".d \\\n";
+			else
+				txt ~= "public import " ~ mod ~ ";\n";
+		}
+
+		return txt;
+	}
+
+	string genOutFilename(string filename, int pass)
+	{
+		string ext = extension(filename);
+		string modname = createModuleName(filename);
+		string fname = replace(modname, ".", "/");
+		if(pass == 0)
+		{
+			if (ext != ".h" && ext != "")
+				fname ~= "_" ~ ext[1 .. $];
+			fname ~= ".d";
+		}
+		else
+		{
+			fname ~= ext;
+		}
+		string genpath = (pass > 0 ? format("pass%d/", pass) : "");
+		return genpath ~ fname;
 	}
 
 	///////////////////////////////////////////////////////////////////////
-	void registerAST(AST ast)
+	void processSource(Source src, patch_fn prepatch, patch_fn postpatch)
 	{
-		sources ~= ast;
-		iterateTopLevelDeclarations(ast, &registerFunctionDefinition);
-	}
-
-	///////////////////////////////////////////////////////////////////////
-	void processAll()
-	{
-		moveAllMethods();
-		moveAllCtorInitializers();
-		patchAllAST();
-	}
-	
-version(none)
-{
-	///////////////////////////////////////////////////////////////////////
-	Source createSource(string currentfile, patch_fn patch)
-	{
-		Source src = new Source(this, currentfile);
 		src.scan();
 		src.fixConditionalCompilation();
 		src.rescanPP();
-		if(patch)
+		if(prepatch)
 		{
-			patch(src._tokenList);
+			prepatch(src._tokenList);
 			src.rescanPP();
 		}
+		if(options.expandDefines.length)
+			expandPPdefines(src._tokenList, options.expandDefines, MixinMode.ExpandDefine);
 
-		if(currentfile.length)
+		src.patchRules(options.preRules);
+
+		src.postpatch = postpatch;
+
+		if(src._filename.length)
 		{
-			string outfile = genOutFilename(currentfile, 1);
+			string outfile = genOutFilename(src._filename, 1);
 			src.writeTokenList(outfile, "", 1);
 		}
 
@@ -2153,12 +2700,14 @@ version(none)
 		src._ast.verify();
 
 		iterateTopLevelDeclarations(src._ast, &registerFunctionDefinition);
-		return src;
 	}
 
 	///////////////////////////////////////////////////////////////////////
-	int main(string[] argv)
+	int main_dmd(translateInfo[] srcfiles)
 	{
+		options.setup_dmd();
+
+		syntaxErrors = 0;
 		int parsed = 0;
 		int failed = 0;
 		string currentfile;
@@ -2168,9 +2717,10 @@ version(none)
 			try
 			{
 				currentfile = ti.inputFile;
-				writefln(currentfile);
+				writemsg(currentfile);
 
-				Source src = createSource(currentfile, ti.patch);
+				Source src = new Source(this, currentfile);
+				processSource(src, ti.prepatch, ti.postpatch);
 				sources ~= src;
 			}
 			catch(Exception e)
@@ -2179,15 +2729,21 @@ version(none)
 				string msg = e.toString();
 				if(startsWith(msg, currentfile))
 					throw e;
+				if(msg.indexOf("SyntaxException") > 0)
+				{
+					int pos = msg.indexOf("):");
+					if(pos > 0)
+						msg = msg[pos + 2 .. $];
+				}
 				msg = currentfile ~ ": " ~ msg;
-				writefln(msg);
+				writemsg(msg);
 				//throw new Exception(msg);
 			}
 		}
 
-		writefln("%d of %d files failed to parse", failed, parsed);
+		writemsg(text(failed, " of ", parsed, " files failed to parse"));
 		if(failed > 0)
-		    return -1;
+			return -1;
 
 		moveAllMethods();
 		moveAllCtorInitializers();
@@ -2196,65 +2752,121 @@ version(none)
 		patchAllAST();
 		writeFiles(0);
 
+		writemsg(text("conversion of ", parsed, " files completed (", syntaxErrors, " syntax errors)"));
 		return 0;
 	}
-} // version(none)
-	
-}
 
-/+
-int main(string[] argv)
-{
-	try
+	///////////////////////////////////////////////////////////////////////
+	int main(string[] srcfiles)
 	{
-		setupVariables();
-		AST.clearStatic();
+		int parsed = 0;
+		int failed = 0;
+		syntaxErrors = 0;
 
-		ConvProject dg = new ConvProject;
-		return dg.main(argv);
+		foreach(string currentfile; srcfiles)
+		{
+			parsed++;
+			try
+			{
+				writemsg(currentfile);
+
+				Source src = new Source(this, currentfile);
+				processSource(src, null, null);
+				sources ~= src;
+			}
+			catch(Exception e)
+			{
+				string absfile = makeFilenameAbsolute(currentfile, options.inputDir);
+				failed++;
+				string msg = e.toString();
+				if(startsWith(msg, currentfile))
+					throw e;
+				if(msg.indexOf("SyntaxException") > 0)
+				{
+					int pos = msg.indexOf("):");
+					if(pos > 0)
+						msg = absfile ~ msg[pos + 2 .. $];
+					else
+						msg = absfile ~ ": " ~ msg;
+				}
+				else
+					msg = absfile ~ ": " ~ msg;
+				writemsg(msg);
+				//throw new Exception(msg);
+			}
+		}
+
+		writemsg(text(failed, " of ", parsed, " files failed to parse, aborting"));
+		if(failed > 0)
+			return -1;
+
+		moveAllMethods();
+		moveAllCtorInitializers();
+		writeFiles(2);
+
+		patchAllAST();
+		writeFiles(0);
+
+		writemsg(text("conversion of ", parsed, " files completed (", syntaxErrors, " syntax errors)"));
+		return 0;
 	}
-	catch(Exception e)
+
+	///////////////////////////////////////////////////////////////////////
+	string main(string text)
 	{
-		string msg = e.toString();
-		writefln(msg);
+		Source src = new Source(this, "", text);
+		try
+		{
+			processSource(src, null, null);
+			sources ~= src;
+		}
+		catch(Throwable e)
+		{
+			string msg = e.toString();
+			writemsg(msg);
+			return null;
+		}
+
+		moveAllMethods();
+		moveAllCtorInitializers();
+		//writeFiles(2);
+
+		patchAllAST();
+		//writeFiles(0);
+
+		src.patchRules(options.postRules);
+
+		string ntext = src.createTokenListText(0);
+		return ntext;
 	}
-	catch(Error e)
-	{
-		string msg = e.toString();
-		writefln(msg);
-	}
-	return -1;
 }
-+/
 
 ///////////////////////////////////////////////////////////////////////
 
-string testPatchAST(string txt, int countRemove = 1, int countNoImpl = 0, TokenList[string] defines = null)
+string testDmdGen(string txt, int countRemove = 1, int countNoImpl = 0, TokenList[string] defines = null)
 {
 	AST.clearStatic();
 
 	TokenList tokenList = scanText(txt);
 
-version(pp)
-{
 	PP pp = new PP;
 	pp.fixConditionalCompilation(tokenList);
 	pp.convertDefinesToEnums(tokenList);
 	rescanPP(tokenList);
-	
+
 	if(defines)
 	{
 		expandPPdefines(tokenList, defines, MixinMode.ExpandDefine);
 		rescanPP(tokenList);
 	}
-}
 
 	AST ast = new AST(AST.Type.Module);
 	TokenIterator tokIt = tokenList.begin();
 	ast.parseModule(tokIt);
 	ast.verify();
 
-	ConvProject gen = new ConvProject;
+	DmdGen gen = new DmdGen;
+	options.setup_dmd();
 	iterateTopLevelDeclarations(ast, &gen.registerFunctionDefinition);
 	iterateTopLevelDeclarations(ast, &gen.moveMethods);
 	assert(gen.countNoImplementations == countNoImpl);
@@ -2274,6 +2886,7 @@ version(pp)
 	for(TokenIterator it = tokenList.begin(); !it.atEnd(); ++it)
 		res ~= it.pretext ~ mapTokenText(*it);
 
+	res = detab(res, options.tabSize);
 	return res;
 }
 
@@ -2291,7 +2904,7 @@ unittest
 {
 	string txt = "class C { type_t foo(int a, int x = 1); }; type_t C::foo(int a, int y) {}";
 	string exp = "struct C {  type_t foo(int a, int y = 1) {} };";
-	string res = testPatchAST(txt);
+	string res = testDmdGen(txt);
 
 	assert(res == exp);
 }
@@ -2307,7 +2920,7 @@ unittest
 		"struct C {\n"
 		"    FuncDeclaration *overloadResolve(int flags = 0) {}\n"
 		"};\n";
-	string res = testPatchAST(txt, 1, 0);
+	string res = testDmdGen(txt, 1, 0);
 
 	assert(res == exp);
 }
@@ -2383,7 +2996,7 @@ unittest
 //	    "}"
 	    ;
 
-	string res = testPatchAST(txt);
+	string res = testDmdGen(txt);
 	assert(res == exp);
 }
 
@@ -2414,7 +3027,7 @@ unittest
 //	    "}"
 	    ;
 
-	string res = testPatchAST(txt);
+	string res = testDmdGen(txt);
 	assert(res == exp);
 }
 
@@ -2436,7 +3049,7 @@ unittest
 	    "    static int z[NUM];\n"
 	    "};\n";
 
-	string res = testPatchAST(txt, 3);
+	string res = testDmdGen(txt, 3);
 	assert(res == exp);
 }
 
@@ -2455,7 +3068,7 @@ unittest
 	    "    this(int x) { super(x); }\n"
 	    "};\n";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
@@ -2471,7 +3084,7 @@ unittest
 	    "    if(memchr(cast(char *)stringbuffer)) x;\n"
 	    "}";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
@@ -2487,7 +3100,7 @@ unittest
 	    "    int x;\n"
 	    "    int *y = 0;\n";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
@@ -2498,9 +3111,9 @@ unittest
 	    "int b = sizeof(wchar_t);\n";
 	string exp =
 	    "int a = (void *).sizeof;\n"
-	    "int b = ushort.sizeof;\n";
+	    "int b = wchar_t.sizeof;\n";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
@@ -2525,7 +3138,7 @@ unittest
 	    "  }\n"
 	    "}";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
@@ -2542,11 +3155,10 @@ unittest
 	    "  A a = new A(3);\n"
 	    "}";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
-version(pp)
 unittest
 {
 	string txt = 
@@ -2565,17 +3177,16 @@ unittest
 	    "class A : B {\n"
 	    "    this() { }\n"
 	    "    static A bar() { halt; }\n"
-	    "    enum : int { ABC = 1 };\n"
+	    "    enum { ABC = 1 };\n"
 	    "    int foo() { return 0; }\n"
 	    "    abstract void baz();\n"
 	    "};\n"
 	    "int abc = A.ABC;\n";
 
-	string res = testPatchAST(txt, 3);
+	string res = testDmdGen(txt, 3);
 	assert(res == exp);
 }
 
-version(pp)
 unittest
 {
 	string txt = 
@@ -2583,7 +3194,7 @@ unittest
 	    "    A();\n"
 	    "};\n"
 	    "A::A() : B(1) {\n"
-	    "#if 0\n"
+	    "#if 1\n"
 	    "    x = 0;\n"
 	    "#endif\n"
 	    "    y = 1;\n"
@@ -2591,18 +3202,19 @@ unittest
 	string exp =
 	    "class A : B {\n"
 	    "    this() { super(1);\n"
-	    "    static if(0) {\n"
-	    "\tx = 0;\n"
+	    "    static if(1) {\n"
+	    //"    // #if 1\n"
+	    "        x = 0;\n"
+	    //"    // #endif\n"
 	    "    }\n"
-	    "\ty = 1;\n"
+	    "        y = 1;\n"
 	    "    }\n"
 	    "};\n";
 
-	string res = testPatchAST(txt, 1);
+	string res = testDmdGen(txt, 1);
 	assert(res == exp);
 }
 
-version(pp)
 unittest
 {
 	string txt = 
@@ -2626,7 +3238,7 @@ unittest
 	    "        x = 1;\n"
 	    "}\n";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
@@ -2637,15 +3249,14 @@ unittest
 	    "    x = 1;\n"
 	    "}\n";
 	string exp =
-	    "int foo(ref int *x) {\n"
+	    "int foo(ref int * x) {\n"
 	    "    x = 1;\n"
 	    "}\n";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
-version(pp)
 unittest
 {
 	string txt = 
@@ -2656,7 +3267,7 @@ unittest
 
 	TokenList[string] defines = [ "X" : null ];
 
-	string res = testPatchAST(txt, 0, 0, defines);
+	string res = testDmdGen(txt, 0, 0, defines);
 	assert(res == exp);
 }
 
@@ -2681,7 +3292,7 @@ unittest
 	    "alias unnamed_7 T;\n"
 	    "alias unnamed_7 *PS;";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
@@ -2690,10 +3301,10 @@ unittest
 	string txt = "\n"
 	    "typedef enum { e1, e2, e3 } ENUM;\n";
 	string exp = "\n"
-	    "enum unnamed_2 : int { e1, e2, e3 }\n"
+	    "enum unnamed_2 { e1, e2, e3 }\n"
 	    "alias unnamed_2 ENUM;\n";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
@@ -2702,21 +3313,28 @@ unittest
 	string txt = "class CFile : CF {}; int foo() { CFile f(&g); }\n";
 	string exp = "class CFile : CF {}; int foo() { CFile f = new CFile(&g); }\n";
 
-	string res = testPatchAST(txt, 0);
+	string res = testDmdGen(txt, 0);
 	assert(res == exp);
 }
 
-version(none)
 unittest
 {
 	string txt = "extern \"C\" { bool foo(const real_t *); }\n";
 	string exp = "extern (C) { bool foo(const real_t *); }\n";
 
-	string res = testPatchAST(txt, 0, 1);
+	string res = testDmdGen(txt, 0, 1);
 	assert(res == exp);
 }
 
-version(pp)
+unittest
+{
+	string txt = "extern \"C\" bool foo;\n";
+	string exp = "extern (C) bool foo;\n";
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
 unittest
 {
 	string txt = "#if 1\n"
@@ -2727,12 +3345,12 @@ unittest
 	string exp = "static if(1) {\n"
 	    "int x();\n"
 	    "int y();\n"
-	    "} else {\n"
+		"} else {\n"
 	    "int a();\n"
 	    "int b();\n"
-	    "}\n";
+		"}\n";
 
-	string res = testPatchAST(txt, 0, 2);
+	string res = testDmdGen(txt, 0, 2); // x(), y() count as one non-implemented function
 	assert(res == exp);
 }
 
@@ -2743,7 +3361,7 @@ unittest
 	string exp = "int foo();\n"
 		 "int bar() { return x; }\n";
 
-	string res = testPatchAST(txt, 0, 1);
+	string res = testDmdGen(txt, 0, 1);
 	assert(res == exp);
 }
 
@@ -2752,7 +3370,7 @@ unittest
 	string txt = "int arr[] = { 0, 1, 2, 3 };\n";
 	string exp = "int arr[] = [ 0, 1, 2, 3 ];\n";
 
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
 
@@ -2766,7 +3384,7 @@ unittest
 		" { 0, 1, },\n"
 		" { 2, 3, },\n"
 		"];\n";
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
 
@@ -2780,7 +3398,7 @@ unittest
 		" [ 0, 1, ],\n"
 		" [ 2, 3, ],\n"
 		"];\n";
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
 
@@ -2789,7 +3407,7 @@ unittest
 	string txt = "static char txt[] = \"hi\";\n";
 	string exp = "static string txt = \"hi\";\n";
 
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
 
@@ -2802,7 +3420,7 @@ unittest
 		"    Type tbit() { return 0; }\n"
 		"};";
 
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
 
@@ -2812,12 +3430,12 @@ unittest
 		"int foo() {\n"
 		"    Ident id = (op == kEnum) ? 0 : 1;\n"
 		"}";
-	string exp = "enum ENUM : int { kEnum };\n"
+	string exp = "enum ENUM { kEnum };\n"
 		"int foo() {\n"
 		"    Ident id = (op == ENUM.kEnum) ? 0 : 1;\n"
 		"}";
 
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
 
@@ -2838,16 +3456,16 @@ unittest
 		"    Expression e = new IdentifierExp(Loc(0), id);\n"
 		"}";
 
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
 
 unittest
 {
-	string txt = "mixin(X(b));\n";
+	string txt = "__mixin(X(b));\n";
 	string exp = "mixin(X(\"b\"));\n";
 
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
 
@@ -2856,6 +3474,69 @@ unittest
 	string txt = "void foo() { int dim2 = 3; }";
 	string exp = "void foo() { int dim2 = cast(int)3; }";
 
-	string res = testPatchAST(txt, 0, 0);
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt = "typedef ArrayBase<struct File> Files;";
+	string exp = "alias ArrayBase!(dmd_File) Files;";
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt = "template<typename TYPE>struct ArrayBase : Array { };";
+	string exp = "class ArrayBase( TYPE) : Array { };";
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt = "struct S { S(int value_) : value(value_), negative(false) {} };";
+	string exp = "struct S { this(int value_) { value = (value_); negative = (false);} };";
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt = "struct S { static S foo(const T numbers[2]); }; S S::foo(const T numbers[2]) { }";
+	string exp = "struct S {  static S foo(const T numbers[2]) { } };";
+
+	string res = testDmdGen(txt, 1, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt = "typedef ArrayBase<void> Voids;";
+	string exp = "alias ArrayBase!(void) Voids;";
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt = "struct Keyword { const char *name; };";
+	string exp = "struct Keyword { const(char) *name; };";
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt = "class C : B { }; typedef C D; D* c;";
+	string exp = "class C : B { }; alias C D; D c;";
+
+	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }

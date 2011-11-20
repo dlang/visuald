@@ -18,6 +18,10 @@ import std.file;
 import std.conv;
 import std.array;
 
+import stdext.path;
+import stdext.array;
+import stdext.file;
+
 import visuald.comutil;
 import visuald.hierutil;
 import visuald.stringutil;
@@ -34,9 +38,11 @@ import visuald.register;
 import visuald.intellisense;
 import visuald.searchsymbol;
 import visuald.tokenreplacedialog;
+import visuald.wizard;
 import visuald.profiler;
 import visuald.library;
 import visuald.pkgutil;
+import visuald.colorizer;
 
 import sdk.win32.winreg;
 
@@ -84,6 +90,7 @@ const GUID    g_expressionEvaluator      = uuid("002a2de9-8bb6-484d-9806-7e4ad40
 const GUID    g_profileWinCLSID          = uuid("002a2de9-8bb6-484d-9807-7e4ad4084715");
 const GUID    g_tokenReplaceWinCLSID     = uuid("002a2de9-8bb6-484d-9808-7e4ad4084715");
 const GUID    g_outputPaneCLSID          = uuid("002a2de9-8bb6-484d-9809-7e4ad4084715");
+const GUID    g_WizardWinCLSID           = uuid("002a2de9-8bb6-484d-980a-7e4ad4084715");
 
 const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-9810-7e4ad4084715");
 const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-9811-7e4ad4084715");
@@ -490,6 +497,7 @@ version(none)
 				case CmdSearchTokNext:
 				case CmdSearchTokPrev:
 				case CmdReplaceTokens:
+				case CmdConvWizard:
 				case CmdBuildPhobos:
 				case CmdShowProfile:
 				case CmdShowWebsite:
@@ -537,6 +545,11 @@ version(none)
 			showTokenReplaceWindow(true);
 			return S_OK;
 		}
+		if(nCmdID == CmdConvWizard)
+		{
+			showWizardWindow(true);
+			return S_OK;
+		}
 		if(nCmdID == CmdBuildPhobos)
 		{
 			mOptions.buildPhobosBrowseInfo();
@@ -569,6 +582,7 @@ version(none)
 			Package.GetLibInfos().updateDefinitions();
 		}
 		mLangsvc.OnIdle();
+		OutputPaneBuffer.flush();
 		return false;
 	}
 	
@@ -709,7 +723,7 @@ class GlobalOptions
 	string JSNSearchPath;
 
 	string UserTypesSpec;
-	bool[wstring] UserTypes;
+	int[wstring] UserTypes;
 
 	// evaluated once at startup
 	string WindowsSdkDir;
@@ -819,8 +833,7 @@ class GlobalOptions
 			doSemantics          = keyUserOpts.GetDWORD("doSemantics",      doSemantics) != 0;
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
 			lastColorizeVersions = ColorizeVersions;
-			foreach(t; tokenizeArgs(UserTypesSpec))
-				UserTypes[to!wstring(t)] = true;
+			UserTypes = parseUserTypes(UserTypesSpec);
 
 			CHierNode.setContainerIsSorted(sortProjects);
 			
@@ -888,9 +901,7 @@ class GlobalOptions
 		}
 		
 		bool updateColorizer = false;
-		bool[wstring] types;
-		foreach(t; tokenizeArgs(UserTypesSpec))
-			types[to!wstring(t)] = true;
+		int[wstring] types = parseUserTypes(UserTypesSpec);
 		if(types != UserTypes)
 		{
 			UserTypes = types;

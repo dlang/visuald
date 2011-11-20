@@ -10,6 +10,7 @@ module visuald.pkgutil;
 
 import visuald.hierutil;
 import visuald.comutil;
+import visuald.logutil;
 import visuald.dpackage;
 
 import std.conv;
@@ -59,6 +60,32 @@ IVsOutputWindowPane getBuildOutputPane()
 	return pane;
 }
 
+class OutputPaneBuffer
+{
+	static shared(string) buffer;
+
+	static synchronized void push(string msg)
+	{
+		buffer ~= msg;
+	}
+
+	static synchronized string pop()
+	{
+		string msg = buffer;
+		buffer = buffer.init;
+		return msg;
+	}
+
+	static void flush()
+	{
+		if(buffer.length)
+		{
+			string msg = pop();
+			writeToBuildOutputPane(msg);
+		}
+	}
+}
+
 void writeToBuildOutputPane(string msg)
 {
 	if(IVsOutputWindowPane pane = getBuildOutputPane())
@@ -67,8 +94,45 @@ void writeToBuildOutputPane(string msg)
 		pane.Activate();
 		pane.OutputString(_toUTF16z(msg));
 	}
+	else
+		OutputPaneBuffer.push(msg);
 }
 
+bool tryWithExceptionToBuildOutputPane(T)(T dg, string errInfo = "")
+{
+	try
+	{
+		dg();
+		return true;
+	}
+	catch(Exception e)
+	{
+		string msg = e.toString();
+		if(errInfo.length)
+			msg = errInfo ~ ": " ~ msg;
+		writeToBuildOutputPane(msg);
+		logCall("EXCEPTION: " ~ msg);
+	}
+	return false;
+}
+
+///////////////////////////////////////////////////////////////////////
+HRESULT GetSelectionForward(IVsTextView view, int*startLine, int*startCol, int*endLine, int*endCol)
+{
+	HRESULT hr = view.GetSelection(startLine, startCol, endLine, endCol);
+	if(FAILED(hr))
+		return hr;
+	if(*startLine > *endLine)
+	{
+		std.algorithm.swap(*startLine, *endLine);
+		std.algorithm.swap(*startCol, *endCol);
+	}
+	else if(*startLine == *endLine && *startCol > *endCol)
+		std.algorithm.swap(*startCol, *endCol);
+	return hr;
+}
+
+///////////////////////////////////////////////////////////////////////
 // Hardware Breakpoint Functions
 
 enum 

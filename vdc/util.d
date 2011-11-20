@@ -407,28 +407,11 @@ T static_cast(T, S = Object)(S p)
 {
 	if(!p)
 		return null;
+	if(__ctfe)
+		return cast(T) p;
 	assert(cast(T) p);
 	void* vp = cast(void*)p;
 	return cast(T) vp;
-}
-
-////////////////////////////////////////////////////////////////
-int arrfind(T)(T[] arr, T a)
-{
-	for(int i = 0; i < arr.length; i++)
-		if(arr[i] == a)
-			return i;
-	return -1;
-}
-
-////////////////////////////////////////////////////////////////
-T[] arrmerge(T)(T[] a1, T[] a2)
-{
-	T[] arr = a1;
-	for(int i = 0; i < a2.length; i++)
-		if(arrfind(arr, a2[i]) < 0)
-			arr ~= a2[i];
-	return arr;
 }
 
 ////////////////////////////////////////////////////////////////

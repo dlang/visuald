@@ -169,8 +169,8 @@ class Parser
 	void popAppendTopNode(T = Node, P = Node)()
 	{
 		auto node = popNode();
-		assert(cast(P) node);
-		assert(cast(T) topNode());
+		if(!__ctfe) assert(cast(P) node);
+		if(!__ctfe) assert(cast(T) topNode());
 		topNode().addMember(node);
 	}
 	

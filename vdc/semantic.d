@@ -20,6 +20,8 @@ import vdc.parser.engine;
 import vdc.logger;
 import vdc.interpret;
 
+import stdext.array;
+
 import std.exception;
 import std.stdio;
 import std.string;
@@ -264,7 +266,7 @@ class Scope
 		foreach(imp; imports)
 		{
 			if(privateImports || (imp.getProtection() & Annotation_Public))
-				syms = arrmerge(syms, imp.search(this, ident));
+				addunique(syms, imp.search(this, ident));
 		}
 		if(syms.length == 0 && inParents && parent)
 			syms = parent.search(ident, true, privateImports);

@@ -17,6 +17,9 @@ import std.path;
 import std.algorithm;
 import std.array;
 
+import stdext.array;
+import stdext.file;
+
 import visuald.comutil;
 import visuald.logutil;
 import visuald.hierutil;
@@ -30,7 +33,6 @@ import visuald.config;
 import visuald.intellisense;
 
 import vdc.lexer;
-import vdc.util : arrfind;
 
 import sdk.port.vsi;
 import sdk.win32.commctrl;
@@ -152,7 +154,7 @@ class Declarations
 					base = base[0 .. $-1-ext.length];
 					canImport = true;
 				}
-				if(canImport && base.startsWith(imp) && arrfind(mNames, base) < 0)
+				if(canImport && base.startsWith(imp) && arrIndex(mNames, base) < 0)
 				{
 					addunique(mNames, base);
 					mGlyphs ~= issubdir ? kImageFolderClosed : kImageDSource;

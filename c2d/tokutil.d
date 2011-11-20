@@ -537,6 +537,12 @@ bool findTokenSequence(TokenIterator it, string[] search, bool checkBracketsSear
 							break;
 						addSubmatch(search[i], mit, mit + 1);
 					}
+					else if(startsWith(search[i], "$_string"))
+					{
+						if(mit.type != Token.String)
+							break;
+						addSubmatch(search[i], mit, mit + 1);
+					}
 					else if(startsWith(search[i], "$_ident"))
 					{
 						if(mit.type != Token.Identifier)
@@ -579,6 +585,11 @@ bool findTokenSequence(TokenIterator it, string[] search, bool checkBracketsSear
 						else if(startsWith(search[i + 1], "$_num"))
 						{
 							if(mit.type == Token.Number)
+								break;
+						}
+						else if(startsWith(search[i], "$_string"))
+						{
+							if(mit.type != Token.String)
 								break;
 						}
 						else if(mittext == search[i + 1])
@@ -711,6 +722,9 @@ TokenList createReplacementTokenList(RTYPE) (RTYPE[] replace, TokenRange match, 
 
 int _replaceTokenSequence(RTYPE)(TokenList srctoken, string[] search, RTYPE[] replace, bool checkBrackets)
 {
+	if(search.length == 0)
+		return 0;
+
 	for(int i = 0; i < search.length; i++)
 		search[i] = strip(search[i]);
 
@@ -1252,7 +1266,7 @@ unittest
 	string txt = 
 		"  if (list_freelist) {\n"
 		"    list--;\n"
-		"static_if(MEM_DEBUG) {\n"
+		"__static_if(MEM_DEBUG) {\n"
 		"    mem_setnewfileline(list,file,line);\n"
 		"}\n"
 		"  } else {\n"
@@ -1270,8 +1284,8 @@ unittest
 
 	TokenList list = scanText(txt);
 
-	replaceTokenSequence(list, "static_if(MEM_DEBUG) { $1 } else { $2 }", "$2", true);
-	replaceTokenSequence(list, "static_if(MEM_DEBUG) { $1 }", "", true);
+	replaceTokenSequence(list, "__static_if(MEM_DEBUG) { $1 } else { $2 }", "$2", true);
+	replaceTokenSequence(list, "__static_if(MEM_DEBUG) { $1 }", "", true);
 
 	string res = tokenListToString(list);
 	assume(res == exp);

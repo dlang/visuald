@@ -38,10 +38,17 @@ void throwException(int line, string msg)
 	throw new SyntaxException(format("(%d):", line) ~ msg);
 }
 
-void assume(bool cond, string file = __FILE__, int line = __LINE__)
+void assume(T)(T cond, int line = __LINE__, string file = __FILE__)
 {
 	debug if(!cond)
 		throw new AssertError(file, line);
+	assert(cond);
+}
+
+void assume(T)(T cond, string msg, int line = __LINE__, string file = __FILE__)
+{
+	debug if(!cond)
+		throw new AssertError(msg, file, line);
 	assert(cond);
 }
 

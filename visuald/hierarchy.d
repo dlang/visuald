@@ -16,6 +16,9 @@ import std.path;
 import std.file;
 import std.utf;
 
+import stdext.path;
+import stdext.file;
+
 import sdk.port.vsi;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;

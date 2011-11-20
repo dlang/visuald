@@ -349,6 +349,7 @@ class Node
 	////////////////////////////////////////////////////////////
 	invariant()
 	{
+		if(!__ctfe)
 		foreach(m; members)
 			assert(m.parent is this);
 	}

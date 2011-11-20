@@ -17,6 +17,8 @@ import std.file;
 import std.path;
 import std.conv;
 
+import stdext.path;
+
 import xml = visuald.xmlwrap;
 
 import sdk.win32.rpcdce;

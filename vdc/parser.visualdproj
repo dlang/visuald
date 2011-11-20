@@ -70,7 +70,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>1</runCv2pdb>
+  <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
@@ -267,7 +267,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>1</debugEngine>
+  <debugEngine>0</debugEngine>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="parser">

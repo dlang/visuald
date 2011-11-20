@@ -22,6 +22,8 @@ import vdc.ast.expr;
 import vdc.ast.misc;
 import vdc.ast.type;
 
+import stdext.array;
+
 import std.algorithm;
 import std.conv;
 
@@ -441,7 +443,7 @@ class InheritingAggregate : Aggregate
 		InheritingAggregate n = static_cast!InheritingAggregate(super.clone());
 		
 		for(int m = 0; m < members.length; m++)
-			if(arrfind(cast(Node[]) baseClasses, members[m]) >= 0)
+			if(arrIndex(cast(Node[]) baseClasses, members[m]) >= 0)
 				n.baseClasses ~= static_cast!BaseClass(n.members[m]);
 		
 		return n;

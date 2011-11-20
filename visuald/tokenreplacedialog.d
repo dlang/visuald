@@ -256,7 +256,9 @@ private:
 		case WM_DESTROY:
 			return _OnDestroy(uMsg, wParam, lParam, fHandled);
 		case WM_SIZE:
-			return _OnSize(uMsg, wParam, lParam, fHandled);
+			if(hWnd == _wndBack.hwnd)
+				return _OnSize(uMsg, wParam, lParam, fHandled);
+			break;
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 			return _OnKeyDown(uMsg, wParam, lParam, fHandled);

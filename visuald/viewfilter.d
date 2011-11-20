@@ -38,6 +38,8 @@ import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
 
+import stdext.array;
+
 import std.string;
 import std.ascii;
 import std.utf;
@@ -841,7 +843,7 @@ version(tip)
 	int ReindentLines()
 	{
 		int iStartLine, iStartIndex, iEndLine, iEndIndex;
-		int hr = mView.GetSelection(&iStartLine, &iStartIndex, &iEndLine, &iEndIndex);
+		int hr = GetSelectionForward(mView, &iStartLine, &iStartIndex, &iEndLine, &iEndIndex);
 		if(FAILED(hr)) // S_FALSE if no selection, but caret-coordinates returned
 			return hr;
 		return ReindentLines(iStartLine, iEndLine);
@@ -879,14 +881,9 @@ version(tip)
 	int CommentLines(int commentMode)
 	{
 		int iStartLine, iStartIndex, iEndLine, iEndIndex;
-		int hr = mView.GetSelection(&iStartLine, &iStartIndex, &iEndLine, &iEndIndex);
+		int hr = GetSelectionForward(mView, &iStartLine, &iStartIndex, &iEndLine, &iEndIndex);
 		if(FAILED(hr)) // S_FALSE if no selection, but caret-coordinates returned
 			return hr;
-		if(iEndLine < iStartLine)
-		{
-			std.algorithm.swap(iStartLine, iEndLine);
-			std.algorithm.swap(iStartIndex, iEndIndex);
-		}
 		if(iEndIndex == 0 && iEndLine > iStartLine)
 			iEndLine--;
 		

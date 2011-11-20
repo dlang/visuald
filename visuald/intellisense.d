@@ -19,6 +19,9 @@ import std.algorithm;
 import std.regex;
 //import stdext.fred;
 
+import stdext.path;
+import stdext.array;
+
 import core.memory;
 import visuald.windows;
 

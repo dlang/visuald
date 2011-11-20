@@ -315,6 +315,27 @@ unittest
 {
 	static assert(ctfeLexer(q{int /* comment to skip */ a;}) == [ TOK_int, TOK_Identifier, TOK_semicolon ]);
 }
+
+string ctfeParser(string txt)
+{
+	Parser p = new Parser;
+	ast.Node n = p.parseModule(txt);
+
+	class DSink { string s; void write(string txt) { s ~= txt; } }
+	DSink sink = new DSink;
+
+	DCodeWriter writer = new DCodeWriter(&sink.write);
+	writer(n);
+
+	return sink.s;
+}
+
+unittest
+{
+	assert(ctfeParser(q{int /* comment to skip */ a;}) == "int a;\n");
+	//static assert(ctfeParser(q{int /* comment to skip */ a;}) == "int a;\n");
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 unittest

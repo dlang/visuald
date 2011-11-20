@@ -30,6 +30,7 @@ Project:
 - different icon for project items after changing tool
 - what happens without d file on the command line?
 - template to create a Visual D project from an existing source tree
+- project config: edit all configurations only changes current config
 
 Language service:
 ---------------
@@ -43,6 +44,8 @@ Language service:
 - replace token: empty dialog when opened without resizing
 - when hovering identifier with preceding dot, include identifier before dot in debugger tool tip
 - check indentation of multiple string literals on several lines
+- show help in standard browser
+- VS no longer remembers position inside file across restart?
 
 Search:
 ---------------
@@ -51,6 +54,7 @@ Search:
 - button state not shown correctly after switching search type
 - crashes when searching C# project?
 - update result list after build
+- update too slow when typing filter
 
 Object Browser:
 ---------------

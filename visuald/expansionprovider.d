@@ -17,6 +17,7 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.hierutil;
 import visuald.dpackage;
+import visuald.pkgutil;
 import visuald.dlangsvc;
 
 import vdc.lexer;
@@ -753,7 +754,7 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 		TextSpan result;
 		if (mProvider && mProvider.mView)
 		{
-			int hr = mProvider.mView.GetSelection(&result.iStartLine, &result.iStartIndex, &result.iEndLine, &result.iEndIndex);
+			int hr = GetSelectionForward(mProvider.mView, &result.iStartLine, &result.iStartIndex, &result.iEndLine, &result.iEndIndex);
 			assert(SUCCEEDED(hr));
 		}
 		return result;

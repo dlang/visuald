@@ -27,6 +27,8 @@ import sdk.vsi.vsshell80;
 import dte80a = sdk.vsi.dte80a;
 import dte80 = sdk.vsi.dte80;
 
+import stdext.path;
+
 import std.utf;
 import std.algorithm;
 import std.datetime;

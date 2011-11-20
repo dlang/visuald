@@ -354,3 +354,5 @@ unreleased Version 0.3.29
 
   * highlighting: new colors for user defined list of types (defaults to basic types in object.d)
   * disabled versions: fixed wrong highlighting when editing before conditional
+  * token replace dialog: fixed empty dialog when opening with default size
+  * fixed crash when building a project with a configuration that is not available in a dependent project

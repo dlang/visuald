@@ -14,6 +14,10 @@ import std.path;
 import std.utf;
 import std.array;
 
+import stdext.path;
+import stdext.array;
+import stdext.file;
+
 import xml = visuald.xmlwrap;
 
 import visuald.windows;
@@ -763,7 +767,7 @@ class ConfigProvider : DisposingComObject,
 		string plat = to_string(pszPlatformName);
 		
 		if(plat == "" || plat == kPlatform)
-			for(int i = 0; mConfigs.length; i++)
+			for(int i = 0; i < mConfigs.length; i++)
 				if(mConfigs[i].mName == cfg)
 				{
 					*ppCfg = addref(mConfigs[i]);
@@ -1956,6 +1960,8 @@ class Config :	DisposingComObject,
 						cp2.GetCfgOfName(_toUTF16z(mName), _toUTF16z(kPlatform), &cfg);
 						if(cfg)
 							cfg.QueryInterface(&IVsProjectCfg.iid, cast(void**)&prjcfg);
+						else
+							cp2.GetCfgs(1, &prjcfg, null, null); // TODO: find a "similar" config?
 					}
 				}
 				release(cfg);

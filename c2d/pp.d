@@ -203,7 +203,7 @@ class ConditionalCode
 	{
 		if(isVersionDefine(strip(condition)))
 			return "__version(" ~ condition ~ ")";
-		return "static_if(" ~ condition ~ ")";
+		return "__static_if(" ~ condition ~ ")";
 	}
 
 	///////////////////////////////////////////////////////
@@ -382,9 +382,9 @@ class ConditionalCode
 		// to
 		//   if (x)
 		//     c = 0;
-		// else static_if(COND1) // comment
+		// else __static_if(COND1) // comment
 		//   /*else*/ if (a)
-		// goto L_T3; else goto L_F3; else static_if(COND2)
+		// goto L_T3; else goto L_F3; else __static_if(COND2)
 		//   /*else*/ if (b)
 		// goto L_T3; else goto L_F3; else L_F3: if(0) L_T3:
 		//     c = 1;
@@ -739,7 +739,7 @@ class ConditionalCode
 
 		if(ident == "__DMC__" && startsWith(start[0].text, "#pragma once") && end == start + 3)
 		{
-			// completely remove section
+			// completely remove section (obsolete? also covered by isRemovableSection?
 		}
 		if(isVersionDefine(ident))
 		{
@@ -1336,7 +1336,7 @@ unittest
 
 	string exp =
 		"  a = 1;\n"
-		"static_if(COND) {\n"
+		"__static_if(COND) {\n"
 		"  b = 2;\n"
 		"}\n"
 		"  c = 3;\n"
@@ -1356,7 +1356,7 @@ unittest
 		;
 
 	string exp = 
-		"static_if(!COND) goto L_F1;\n"
+		"__static_if(!COND) goto L_F1;\n"
 		"  if(a)\n"
 		"L_F1:\n"
 		"    b = 1;\n"
@@ -1379,9 +1379,9 @@ unittest
 
 	string exp = 
 		"bool cond_1;\n"
-		"static_if(COND1) { // comment\n"
+		"__static_if(COND1) { // comment\n"
 		"  cond_1 = (a);\n"
-		"} else static_if(COND2) {\n"
+		"} else __static_if(COND2) {\n"
 		"  cond_1 = (b);\n"
 		"}\n"
 		"    if (cond_1) c = 1;\n"
@@ -1407,9 +1407,9 @@ unittest
 	string exp = 
 		"  if (x)\n"
 		"    c = 0;\n"
-		"else if(true) static_if(COND1) // comment\n"
+		"else if(true) __static_if(COND1) // comment\n"
 		"  /*else*/ if (a)\n"
-		"goto L_T3; else goto L_F3; else static_if(COND2)\n"
+		"goto L_T3; else goto L_F3; else __static_if(COND2)\n"
 		"  /*else*/ if (b)\n"
 		"goto L_T3; else goto L_F3; else goto L_T3; else L_F3: if(0) L_T3:\n"
 		"    c = 1;\n"
@@ -1433,7 +1433,7 @@ unittest
 	string exp = 
 		"  if (a)\n"
 		"    c = 1;\n"
-		"else static_if(COND) {\n"
+		"else __static_if(COND) {\n"
 		"  /*else*/ if (b)\n"
 		"    c = 2;\n"
 		"}\n"
@@ -1458,9 +1458,9 @@ unittest
 
 	string exp = 
 		"bool cond_1;\n"
-		"static_if(COND1) { // comment\n"
+		"__static_if(COND1) { // comment\n"
 		"  cond_1 = (a);\n"
-		"} else static_if(COND2) {\n"
+		"} else __static_if(COND2) {\n"
 		"  if (b)\n"
 		"    c = 0;\n"
 		"  else\n"
@@ -1489,7 +1489,7 @@ unittest
 	string exp = 
 		"  if (a1)\n"
 		"    c = 0;\n"
-		"else static_if(COND) // comment\n"
+		"else __static_if(COND) // comment\n"
 		"  /*else*/ if (a2)\n"
 		"    c = 1;\n"
 		"else goto L_F3; else goto L_F3; if (true) {} else L_F3:\n"

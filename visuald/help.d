@@ -16,6 +16,8 @@ import visuald.comutil;
 
 import dte2 = sdk.vsi.dte80;
 
+import stdext.path;
+
 import std.file;
 import std.path;
 import std.string;

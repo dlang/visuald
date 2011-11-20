@@ -12,7 +12,7 @@ import std.ascii;
 import std.string;
 import std.utf;
 
-// version = V2;
+version = V2;
 // version = Java;
 // version = IDL;
 version = dollar_in_ident;
@@ -301,8 +301,8 @@ version(Java)
 version(V2)
 {
 		case New:	return "new";
-		case Static_if: return "static_if";
-		case Mixin:	return "mixin";
+		case Static_if: return "__static_if";
+		case Mixin:	return "__mixin";
 		case Case:	return "case";
 		case Default:	return "default";
 		case Operator:	return "operator";
@@ -689,8 +689,8 @@ version(V2)
 {
 		case "case":      return Token.Case;
 		case "default":   return Token.Default;
-		case "static_if": return Token.Static_if;
-		case "mixin":     return Token.Mixin;
+		case "__static_if": return Token.Static_if;
+		case "__mixin":   return Token.Mixin;
 		case "__version": return Token.Version;
 		case "sizeof":    return Token.Sizeof;
 		case "operator":  return Token.Operator;

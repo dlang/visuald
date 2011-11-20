@@ -74,6 +74,32 @@ enum TokenColor
 	StringUserType,
 }
 
+int[wstring] parseUserTypes(string spec)
+{
+	int color = TokenColor.UserType;
+	int[wstring] types;
+	foreach(t; tokenizeArgs(spec))
+	{
+		switch(t)
+		{
+			case "[Keyword]":	 color = TokenColor.Keyword;	break;
+			case "[Comment]":	 color = TokenColor.Comment;	break;
+			case "[Identifier]": color = TokenColor.Identifier; break;
+			case "[String]":	 color = TokenColor.String;		break;
+			case "[Number]":	 color = TokenColor.Literal;	break;
+			case "[Text]":		 color = TokenColor.Text;		break;
+
+			case "[Operator]":	 color = TokenColor.Operator;	break;
+			case "[Register]":	 color = TokenColor.AsmRegister;break;
+			case "[Mnemonic]":	 color = TokenColor.AsmMnemonic;break;
+			case "[Type]":		 color = TokenColor.UserType;	break;
+
+			default: types[to!wstring(t)] = color; break;
+		}
+	}
+	return types;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
@@ -119,7 +145,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 	{
 		if(!pdwFontFlags)
 			return E_INVALIDARG;
-		
+
 		*pdwFontFlags = 0;
 		return S_OK;
 	}
@@ -759,7 +785,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	private int userColorType(wstring text)
 	{
 		if(auto p = text in Package.GetGlobalOptions().UserTypes)
-			return TokenColor.UserType;
+			return *p;
 		return TokenColor.Identifier;
 	}
 

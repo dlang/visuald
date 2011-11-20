@@ -33,6 +33,8 @@ import ast = vdc.ast.all;
 static import vdc.util;
 import vdc.parser.engine;
 
+import stdext.array;
+
 import std.string;
 import std.ascii;
 import std.utf;
@@ -112,9 +114,25 @@ class LanguageService : DisposingComObject,
 		return super.QueryInterface(riid, pvObject);
 	}
 
+	void stopAllParsing()
+	{
+		foreach(Source src; mSources)
+			if(auto parser = src.mParser)
+				parser.abort = true;
+		
+		if(Source.parseTaskPool)
+		{
+			//Source.parseTaskPool.finish();
+			//Source.parseTaskPool.wait();
+			Source.parseTaskPool.stop();
+		}
+	}
+
 	// IDisposable
 	override void Dispose()
 	{
+		stopAllParsing();
+
 		closeSearchWindow();
 
 		setDebugger(null);
@@ -2857,7 +2875,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 					ident ~= txt;
 					if(ident.length > 4 && ident[0..5] == "this."w)
 						ident = "this->"w ~ ident[5..$];
-					if(arrfind(mExpressions, ident) < 0)
+					if(arrIndex(mExpressions, ident) < 0)
 						mExpressions ~= ident;
 				}
 				else if (type == TokenCat.Operator && txt == "."w)
@@ -2866,7 +2884,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 					ident = ""w;
 			}
 		}
-		if(arrfind(mExpressions, "this"w) < 0)
+		if(arrIndex(mExpressions, "this"w) < 0)
 			mExpressions ~= "this"w;
 	}
 

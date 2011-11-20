@@ -185,9 +185,11 @@
    <File path="workaround.d" />
   </Folder>
   <Folder name="c2d">
+   <File path="..\c2d\ast.d" />
+   <File path="..\c2d\cpp2d.d" />
    <File path="..\c2d\dgutil.d" />
    <File path="..\c2d\dlist.d" />
-   <File path="..\c2d\idl2d.d" />
+   <File path="..\c2d\pp.d" />
    <File path="..\c2d\tokenizer.d" />
    <File path="..\c2d\tokutil.d" />
   </Folder>
@@ -214,11 +216,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File path="Resources\settrace.ico" />
    <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" />
    <File path="Resources\WholeWord.ico" />
-  </Folder>
-  <Folder name="stdext">
-   <File tool="None" path="..\stdext\fred.d" />
-   <File tool="None" path="..\stdext\fred_uni.d" />
-   <File tool="None" path="..\stdext\regionallocator.d" />
   </Folder>
   <File path="build.d" />
   <File path="chiercontainer.d" />
@@ -257,6 +254,7 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="vscommands.d" />
   <File path="winctrl.d" />
   <File path="windows.d" />
+  <File path="wizard.d" />
   <File path="wmmsg.d" />
   <File path="xmlwrap.d" />
  </Folder>
