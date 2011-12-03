@@ -10,9 +10,16 @@ module c2d.cpp2d_main;
 
 import c2d.cpp2d;
 import c2d.ast;
+import c2d.pp;
 import c2d.tokutil;
 
+import stdext.path;
+import stdext.file;
+import stdext.string;
+
 import std.stdio;
+import std.file;
+import std.getopt;
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -705,27 +712,98 @@ translateInfo srcfiles[] =
 ];
 
 ///////////////////////////////////////////////////////////////
+// dmd specific setup
+void setupDmd()
+{
+	if("param_t" in tokenMap)
+		return; // don't need to do it twice
+
+	tokenMap["param_t"]	 = "PARAM";
+	tokenMap["STATIC"]	 = "private";
+	tokenMap["CEXTERN"]	 = "extern";
+	tokenMap["finally"]	 = "dmd_finally";
+	tokenMap["Object"]	 = "dmd_Object";
+	tokenMap["TypeInfo"] = "dmd_TypeInfo";
+	tokenMap["toString"] = "dmd_toString";
+	tokenMap["main"]	 = "dmd_main";
+	tokenMap["string"]	 = "dmd_string";
+	tokenMap["hash_t"]	 = "dmd_hash_t";
+	tokenMap["File"]	 = "dmd_File";
+
+	PP.versionDefines["DEBUG"] = true;
+	PP.versionDefines["DMDV1"] = true;
+	PP.versionDefines["DMDV2"] = true; // allow early evaluation
+	PP.versionDefines["_DH"] = true;   // identifier ambiguous, also used by iasm_c
+	PP.versionDefines["LOG"] = true;
+	PP.versionDefines["LOGSEMANTIC"] = true;
+	PP.versionDefines["IN_GCC"] = true;
+
+	PP.expandConditionals["0"] = false;
+	PP.expandConditionals["1"] = true;
+	PP.expandConditionals["DMDV1"] = false;
+	PP.expandConditionals["DMDV2"] = true;
+	PP.expandConditionals["_DH"]   = false;
+	PP.expandConditionals["IN_GCC"] = true;
+}
+
+///////////////////////////////////////////////////////////////
 int main(string[] argv)
 {
-	try
-	{
-		setupVariables();
-		AST.clearStatic();
+	bool dmd;
+	string cfg_path;
 
-		DmdGen dg = new DmdGen;
+	getopt(argv, 
+		   "dmd", &dmd,
+		   "config", &cfg_path);
+
+	Cpp2DConverter dg = new Cpp2DConverter;
+	if(dmd)
+	{
+		setupDmd();
+		AST.clearStatic();
 		return dg.main_dmd(srcfiles);
 	}
-	catch(Exception e)
+
+	C2DIni ini;
+	if(cfg_path.length)
 	{
-		string msg = e.toString();
-		writeln(msg);
+		ini.readFromFile(cfg_path);
+		ini.toC2DOptions(/*c2d.cpp2d.*/options);
 	}
-	catch(Error e)
+	else if(argv.length <= 1)
 	{
-		string msg = e.toString();
-		writeln(msg);
+		writeln("usage: %s [-dmd|-config file.ini] [files...]", argv[0]);
+		return -1;
 	}
+	string[] filespecs;
+	string workdir;
+	if(argv.length > 1)
+	{
+		filespecs = argv[1..$];
+		workdir = normalizeDir(getcwd());
+	}
+	else
+	{
+		filespecs = tokenizeArgs(ini.inputFiles);
+		workdir = ini.inputDir;
+	}
+	string[] files = expandFileList(filespecs, workdir);
+	if(files.length)
+		return dg.main(files);
+	writeln("no input files.");
 	return -1;
+}
+
+///////////////////////////////////////////////////////////////
+extern(C) void D3c2d5cpp2d12__unittest48FZv();
+extern extern(C) __gshared ModuleInfo D3c2d5cpp2d12__ModuleInfoZ;
+
+unittest
+{
+	ModuleInfo* info = &D3c2d5cpp2d12__ModuleInfoZ;
+	if(auto test = info.unitTest())
+		test();
+	void* p = cast(void*) &D3c2d5cpp2d12__unittest48FZv;
 }
 
 ///////////////////////////////////////////////////////////////
@@ -764,3 +842,4 @@ shared static this()
 {
 	disableStacktrace();
 }
+

@@ -30,12 +30,12 @@ import visuald.hierarchy;
 
 abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage, IVsPropertyPage2
 {
-	const int kPageWidth = 400;
+	const int kPageWidth = 470;
 	const int kPageHeight = 210;
 	const int kMargin = 4;
-	const int kLabelWidth = 100;
-	const int kTextHeight = 18;
-	const int kLineHeight = 22;
+	const int kLabelWidth = 120;
+	const int kTextHeight = 20;
+	const int kLineHeight = 23;
 	const int kLineSpacing = 2;
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -84,7 +84,6 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		/* [in] */ in RECT *pRect,
 		/* [in] */ in BOOL bModal)
 	{
-		RECT r; 
 		mWindow = win;
 		mCanvas = new Window(mWindow);
 		DWORD color = GetSysColor(COLOR_BTNFACE);
@@ -281,6 +280,9 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		{
 			h = kTextHeight;
 		}
+		else if(cb)
+			h -= 2;
+
 		int y = mLines*kLineHeight + (lines * kLineHeight - kLineSpacing - h) / 2;
 		if(w)
 			w.setRect(x, y, kPageWidth - 2*kMargin - kLabelWidth, h); 
@@ -314,7 +316,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	bool mEnableUpdateDirty;
 	int mLines;
 	int mLinesPerMultiLine = 4;
-	int mUnindentCheckBox = 16;
+	int mUnindentCheckBox = kLabelWidth; //16;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

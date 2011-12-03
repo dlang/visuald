@@ -26,6 +26,8 @@ import std.string;
 import std.conv;
 import std.algorithm;
 
+import stdext.util;
+
 class Node
 {
 	TokenId id;

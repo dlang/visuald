@@ -18,6 +18,8 @@ import vdc.parser.mod;
 
 import ast = vdc.ast.all;
 
+import stdext.util;
+
 //-- GRAMMAR_BEGIN --
 //EnumDeclaration:
 //    enum EnumTag EnumBody

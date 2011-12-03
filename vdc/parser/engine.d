@@ -14,6 +14,8 @@ import std.string;
 import std.conv;
 import std.utf;
 
+import stdext.util;
+
 import core.bitop;
 
 import vdc.util;

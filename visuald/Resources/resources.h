@@ -39,6 +39,7 @@
 #define CmdSearchTokNext 0x107
 #define CmdSearchTokPrev 0x108
 #define CmdConvWizard    0x109
+#define CmdConvSelection 0x10a
 
 #define CmdBuildPhobos   0x110
 #define CmdShowProfile   0x111

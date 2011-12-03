@@ -31,6 +31,7 @@ Project:
 - what happens without d file on the command line?
 - template to create a Visual D project from an existing source tree
 - project config: edit all configurations only changes current config
+- breaking into build does not stop dmd
 
 Language service:
 ---------------
@@ -79,6 +80,12 @@ Lexer/Parser:
 - octal numbers
 - do not parse file if it is D1
 - deprecated syntax
+
+C++ to D
+---------
+- documentation
+- parse operators
+- edit fields sometimes do not support Ctrl-C/V
 
 Installation:
 ---------------

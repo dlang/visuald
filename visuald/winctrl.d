@@ -17,6 +17,26 @@ import sdk.win32.commctrl;
 
 private Widget[Widget] createdWindows; // collection of all windows with HWND to avoid garbage collection
 private HINSTANCE hInst;
+private HFONT winFont;
+
+HFONT getDialogFont()
+{
+	if(winFont)
+		return winFont;
+	// GetStockObject(DEFAULT_GUI_FONT);
+
+	//winFont = CreateFontA(int cHeight, int cWidth, int cEscapement, int cOrientation, int cWeight, DWORD bItalic,
+	//                      DWORD bUnderline, DWORD bStrikeOut, DWORD iCharSet, DWORD iOutPrecision, DWORD iClipPrecision,
+	//                      DWORD iQuality, DWORD iPitchAndFamily, LPCSTR pszFaceName);
+
+	//Logical units are device dependent pixels, so this will create a handle to a logical font that is 48 pixels in height.
+	//The width, when set to 0, will cause the font mapper to choose the closest matching value.
+	//The font face name will be MS Sans serif.
+
+	winFont = CreateFontA(16,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
+	                      CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY, VARIABLE_PITCH, "Segoe UI");
+	return winFont;
+}
 
 class Widget
 {
@@ -391,7 +411,7 @@ class Dialog : Widget
 		registerClass();
 		HWND parenthwnd = parent ? parent.hwnd : null; // VisualDDialog
 		createWidget(parent, "#32770", text, WS_CHILD | WS_VISIBLE | DS_3DLOOK | DS_CONTROL, 0, id);
-		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		SetWindowLongA(hwnd, GWL_WNDPROC, cast(int)cast(void*)&DlgWindowProc);
 
 		super(parent);
@@ -409,7 +429,7 @@ class Label : Widget
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "STATIC", text, SS_LEFTNOWORDWRAP | WS_CHILD | WS_VISIBLE, 0, id);
-		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)	getDialogFont(), 0);
 
 		super(parent);
 	}
@@ -426,7 +446,7 @@ class Text : Widget
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "EDIT", text, style | WS_CHILD | WS_VISIBLE, exstyle, id);
-		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		super(parent);
 	}
 
@@ -494,7 +514,7 @@ class ComboBox : Widget
 		DWORD style = editable ? CBS_DROPDOWN | CBS_AUTOHSCROLL : CBS_DROPDOWNLIST;
 		createWidget(parent, "COMBOBOX", "", style | WS_VSCROLL | WS_HSCROLL | WS_CHILD | WS_VISIBLE, 0, id);
 
-		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		foreach (s; texts)
 			SendMessageW(hwnd, CB_ADDSTRING, 0, cast(LPARAM)toUTF16z(s));
 
@@ -554,7 +574,7 @@ class CheckBox : ButtonBase
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "BUTTON", intext, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE, 0, id);
-		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		super(parent);
 	}
 }
@@ -565,7 +585,7 @@ class Button : ButtonBase
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "BUTTON", intext, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, id);
-		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		super(parent);
 	}
 }

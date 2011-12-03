@@ -19,6 +19,8 @@ import vdc.ast.decl;
 import vdc.ast.stmt;
 import vdc.ast.type;
 
+import stdext.util;
+
 //EnumDeclaration:
 //    enum EnumTag EnumBody
 //    enum EnumBody

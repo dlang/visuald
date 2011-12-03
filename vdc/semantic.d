@@ -20,6 +20,7 @@ import vdc.parser.engine;
 import vdc.logger;
 import vdc.interpret;
 
+import stdext.util;
 import stdext.array;
 
 import std.exception;

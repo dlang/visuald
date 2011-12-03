@@ -40,8 +40,8 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <otherDMD>0</otherDMD>
-  <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
+  <otherDMD>1</otherDMD>
+  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -181,11 +181,7 @@
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="vsi2d">
-  <File path="dgutil.d" />
-  <File path="dlist.d" />
   <File path="idl2d.d" />
   <File path="idl2d_main.d" />
-  <File path="tokenizer.d" />
-  <File path="tokutil.d" />
  </Folder>
 </DProject>

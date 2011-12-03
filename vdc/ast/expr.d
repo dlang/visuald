@@ -23,6 +23,7 @@ import vdc.ast.type;
 
 import vdc.parser.engine;
 
+import stdext.util;
 import std.conv;
 import std.string;
 

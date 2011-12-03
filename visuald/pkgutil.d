@@ -41,6 +41,19 @@ void deleteBuildOutputPane()
 	win.DeletePane(&g_outputPaneCLSID);
 }
 
+void clearBuildOutputPane()
+{
+	auto win = queryService!(IVsOutputWindow)();
+	if(!win)
+		return;
+	scope(exit) release(win);
+
+	IVsOutputWindowPane pane;
+	if(win.GetPane(&g_outputPaneCLSID, &pane) == S_OK && pane)
+		pane.Clear();
+	release(pane);
+}
+
 IVsOutputWindowPane getBuildOutputPane()
 {
 	auto win = queryService!(IVsOutputWindow)();

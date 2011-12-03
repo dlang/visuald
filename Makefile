@@ -99,6 +99,10 @@ sdk_lib:
 package:
 	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
 
+cpp2d_exe:
+	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" ..\$(BINDIR)\cpp2d.exe
+	copy $(BINDIR)\cpp2d.exe ..\downloads
+
 ##################################
 # create installer
 

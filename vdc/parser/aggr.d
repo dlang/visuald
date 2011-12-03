@@ -19,6 +19,8 @@ import vdc.parser.stmt;
 
 import ast = vdc.ast.all;
 
+import stdext.util;
+
 //-- GRAMMAR_BEGIN --
 //AggregateDeclaration:
 //    struct Identifier StructBody

@@ -28,6 +28,8 @@ import visuald.config;
 
 import vdc.lexer;
 
+import stdext.string;
+
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;

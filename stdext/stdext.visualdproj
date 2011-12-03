@@ -184,5 +184,7 @@
   <File path="array.d" />
   <File path="file.d" />
   <File path="path.d" />
+  <File path="string.d" />
+  <File path="util.d" />
  </Folder>
 </DProject>

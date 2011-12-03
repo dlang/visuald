@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module c2d.pp;
 
 import c2d.tokenizer;
@@ -6,6 +14,8 @@ import c2d.dgutil;
 import c2d.tokutil;
 
 import std.string;
+import std.conv;
+import std.ascii;
 
 class ConditionalCode
 {
@@ -649,6 +659,12 @@ class ConditionalCode
 	///////////////////////////////////////////////////////
 	bool isRemovableSection()
 	{
+		if(children.count() > 2)
+			return false;
+		if(children.count() == 2)
+			if(children[1].start[-1].type != Token.PPelse)
+				return false;
+
 		Token iftok = start[-1];
 		string ident, comment;
 		int ntokens = splitPPCondition(iftok, ident, comment);
@@ -661,20 +677,37 @@ class ConditionalCode
 
 		return false;
 	}
-	void removeSection()
+	void removeSection(bool firstOnly = true)
 	{
-		end.pretext = start[-1].pretext ~ end.pretext;
-		for(TokenIterator it = start - 1; !it.atEnd() && it != end; ++it)
+		if(firstOnly && children.count() > 1)
 		{
-			it.text = "";
-			it.type = Token.PPinsert;
+			// must be #if/#else, expand to #else part
+			string cond = start[-1].text;
+			children[0].removeSection(false);
+
+			start[-1].text = "// not " ~ cond;
+			start[-1].type = Token.PPinsert;
+
+			TokenIterator stop = end - 1;
+			stop.text = "// " ~ stop.text;
+			stop.type = Token.PPinsert;
+		}
+		else
+		{
+			end.pretext = start[-1].pretext ~ end.pretext;
+			for(TokenIterator it = start - 1; !it.atEnd() && it != end; ++it)
+			{
+				it.text = "";
+				it.type = Token.PPinsert;
+			}
 		}
 	}
 
 	///////////////////////////////////////////////////////
 	bool isRemovableIfndef(string ident)
 	{
-		if(endsWith(ident, "_H"))
+		string upr = toUpper(ident);
+		if(endsWith(upr, "_H") || endsWith(upr, "_H_") || endsWith(upr, "_H__"))
 			return true;
 		return false;
 	}
@@ -719,7 +752,7 @@ class ConditionalCode
 		}
 		else
 		{
-			// treat as #if expreession
+			// treat as #if expression
 			convertStandardIfElifElseEndif("!");
 			return;
 		}
@@ -899,24 +932,27 @@ void rescanPP(TokenList srcTokenList)
 		Token tok = *tokIt;
 		if(tok.type == Token.PPinsert)
 		{
+			TokenIterator nextIt = tokIt + 1;
 			TokenList tokenList = scanText(tok.text, tok.lineno);
 			while(!tokenList.empty() && tokenList.end()[-1].text == "")
 			{
 				TokenIterator endIt = tokenList.end() - 1;
-				if(!(tokIt + 1).atEnd())
-					tokIt[1].pretext = endIt.pretext ~ tokIt[1].pretext;
+				if(!nextIt.atEnd())
+					nextIt.pretext = endIt.pretext ~ nextIt.pretext;
 				endIt.erase();
 			}
 
 			srcTokenList.insertListAfter(tokIt, tokenList);
-			tokIt[1].pretext = tokIt.pretext ~ tokIt[1].pretext;
+			nextIt = tokIt + 1;
+			nextIt.pretext = tokIt.pretext ~ nextIt.pretext;
 			tokIt.erase(); // skips to next token
 		}
 		else if(tokIt.type == Token.EOF)
 		{
-			if(!(tokIt + 1).atEnd())
+			TokenIterator nextIt = tokIt + 1;
+			if(!nextIt.atEnd())
 			{
-				tokIt[1].pretext = tokIt.pretext ~ tokIt[1].pretext;
+				nextIt.pretext = tokIt.pretext ~ nextIt.pretext;
 				tokIt.erase();
 			}
 			else
@@ -929,26 +965,156 @@ void rescanPP(TokenList srcTokenList)
 
 ///////////////////////////////////////////////////////////////////////
 
+bool isExpressionToken(TokenIterator tokIt, bool first)
+{
+	int type = tokIt.type;
+	switch(type)
+	{
+		case Token.Identifier:
+			switch(tokIt.text)
+			{
+				case "_far":
+				case "_pascal":
+				case "_cdecl":
+				case "void":
+					return false;
+				default:
+					//return tokIt.text !in disabled_defines;
+					break;
+			}
+		case Token.String:
+		case Token.Number:
+		case Token.ParenL:
+		case Token.BracketL:
+		case Token.BraceL:
+			return true;
+		case Token.ParenR:
+		case Token.BracketR:
+		case Token.BraceR:
+			if(!first)
+				return tokIt.type != Token.Identifier && tokIt.type != Token.Number && tokIt.type != Token.ParenL;
+			return !first;
+		case Token.Equal:
+		case Token.Unequal:
+		case Token.LessThan:
+		case Token.LessEq:
+		case Token.GreaterThan:
+		case Token.GreaterEq:
+		case Token.Shl:
+		case Token.Shr:
+		case Token.Ampersand:
+		case Token.Assign:
+		case Token.Dot:
+		case Token.Div:
+		case Token.Mod:
+		case Token.Xor:
+		case Token.Or:
+		case Token.OrOr:
+		case Token.AmpAmpersand:
+			return !first;
+		case Token.Plus:
+		case Token.Minus:
+		case Token.Asterisk:
+		case Token.Tilde:
+			return true; // can be unary or binary operator
+		case Token.Colon:
+		case Token.Question:
+			return !first;
+
+		case Token.Comma:
+			return !first && !(tokIt + 1).atEnd() && tokIt[1].type != Token.EOF;
+
+		case Token.Struct:
+			// struct at beginning of a cast?
+			if(!tokIt.atBegin() && tokIt[-1].type == Token.ParenL)
+				return true;
+			return false;
+
+		default:
+			return false;
+	}
+}
+
+bool isExpression(TokenIterator start, TokenIterator end)
+{
+	if(start == end || start.type == Token.EOF)
+		return false;
+	if(!isExpressionToken(start, true))
+		return false;
+	for(TokenIterator it = start + 1; it != end && !it.atEnd() && it.type != Token.EOF; ++it)
+		if(!isExpressionToken(it, false))
+			return false;
+	return true;
+}
+
 string convertDefineToEnum(string deftext, string function(string) fixNumber)
 {
 	TokenList tokList = scanText(deftext, 1, false);
 	TokenIterator it = tokList.begin();
 	assert(it.type == Token.PPdefine);
 	it.advance();
-	if(!it.atEnd() && it.type == Token.Identifier)
+	if(!it.atEnd() && it.type == Token.Identifier &&
+	   it.text !in PP.versionDefines && it.text !in PP.expandConditionals)
 	{
 		it.advance();
-		if(!it.atEnd() && it.type == Token.Number)
+		if(!it.atEnd())
 		{
-			it.advance();
-			if(it.atEnd() || it.type == Token.EOF)
+			TokenIterator end = tokList.end();
+			string posttext;
+			if(end[-1].type == Token.EOF)
 			{
-				string numtext = it[-1].text;
-				if(fixNumber)
-					numtext = fixNumber(numtext);
-				string text = "enum { " ~ it[-2].text ~ " = " ~ numtext ~ " };";
-				if(!it.atEnd())
-					text ~= it.pretext;
+				end.retreat();
+				posttext = end.pretext;
+			}
+			if(it.text == "(" && it.pretext.length == 0)
+			{
+				// macro to template
+				string ident = it[-1].text;
+				string types;
+				string args;
+				it.advance();
+				int cnt = 0;
+				while(!it.atEnd() && it.type == Token.Identifier)
+				{
+					if(cnt > 0)
+					{
+						args ~= ", ";
+						types ~= ", ";
+					}
+					cnt++;
+					string type = "ARG" ~ to!string(cnt);
+					args ~= type ~ " " ~ it.text;
+					types ~= "typename " ~ type;
+					it.advance();
+					if(it.atEnd() || it.type != Token.Comma)
+						break;
+					it.advance();
+				}
+				if(it.atEnd() || it.text != ")")
+					throwException("bad argument list for #define " ~ ident);
+				it.advance();
+				bool isExp = isExpression(it, tokList.end());
+				string rettype = isExp ? "__auto" : "void";
+				string ret = isExp ? "return" : "";
+				string text = tokenListToString(it, end);
+				if(ret.length && text.length && (isAlphaNum(text[0]) || text[0] == '_'))
+					ret ~= " ";
+
+				text = "template< " ~ types ~ " > " 
+					~ rettype ~ " " ~ ident ~ "(" ~ args ~") { " ~ ret ~ text ~ "; }" ~ posttext;
+				return text;
+			}
+			else if(it.type == Token.Identifier && ((it + 1).atEnd() || it[1].type == Token.EOF))
+			{
+				// identifier to alias
+				string text = "typedef " ~ it[-1].text ~ it.pretext ~ it.text ~ ";" ~ posttext;
+				return text;
+			}
+			else if(isExpression(it, tokList.end()))
+			{
+				// expression to enum
+				string text = tokenListToString(it, end);
+				text = "__enum " ~ it[-1].text ~ " =" ~ text ~ ";" ~ posttext;
 				return text;
 			}
 		}

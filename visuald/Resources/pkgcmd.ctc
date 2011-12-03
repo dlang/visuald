@@ -30,6 +30,7 @@
 #define IDG_VD_SEARCH                 0x0100
 #define IDG_VD_BUILD                  0x0102
 #define IDG_VD_WEB                    0x0103
+#define IDG_VD_CONVERSION             0x0104
 
 #define IDG_VS_MM_FILEEDITVIEW        0x0101
 #define IDG_VS_VIEW_BROWSER           0x0130
@@ -71,7 +72,8 @@ CMDS_SECTION g_packageCLSID
 		g_commandSetCLSID:CmdToggleComment, g_packageCLSID:IDG_VD_EDIT,          0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Toggle Comment Selection", "Toggle &Comment Selection", "Toggle Comment Selection",    , "ToggleCommentSelection", "ToggleCommentSelection";
 		g_commandSetCLSID:CmdBuildPhobos,   g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Build Phobos Browse Info", "Build Phobos &Browse Info", "Build Phobos Browse Info",    , "BuildPhobosBrowseInfo",  "BuildPhobosBrowseInfo";
 		g_commandSetCLSID:CmdShowProfile,   g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Open Profiler Window",     "&Open Profiler Window",     "Open Profiler Window",        , "OpenProfilerWindow",     "OpenProfilerWindow";
-		g_commandSetCLSID:CmdConvWizard,    g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "C++ Conversion Wizard",    "C++ Conversion &Wizard",    "C++ Conversion Wizard",       , "ConversionWizard",       "ConversionWizard";
+		g_commandSetCLSID:CmdConvWizard,    g_packageCLSID:IDG_VD_CONVERSION,    0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "C++ Conversion Wizard",    "C++ Conversion &Wizard",    "C++ Conversion Wizard",       , "ConversionWizard",       "ConversionWizard";
+		g_commandSetCLSID:CmdConvSelection, g_packageCLSID:IDG_VD_CONVERSION,    0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "C++ Convert Selection",    "C++ Convert Selection",     "C++ Convert Selection",       , "ConvertSelection",       "ConvertSelection";
 		g_commandSetCLSID:CmdShowWebsite,   g_packageCLSID:IDG_VD_WEB,           0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Visual D Website",         "Visual D &Website",         "Open Visual D Website",       , "OpenWebsite",            "OpenWebsite";
 		
 		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID

@@ -22,6 +22,8 @@ import vdc.ast.tmpl;
 import vdc.parser.engine;
 import vdc.interpret;
 
+import stdext.util;
+
 import std.conv;
 import std.path;
 import std.algorithm;

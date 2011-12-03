@@ -34,6 +34,7 @@ static import vdc.util;
 import vdc.parser.engine;
 
 import stdext.array;
+import stdext.string;
 
 import std.string;
 import std.ascii;

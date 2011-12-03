@@ -356,3 +356,7 @@ unreleased Version 0.3.29
   * disabled versions: fixed wrong highlighting when editing before conditional
   * token replace dialog: fixed empty dialog when opening with default size
   * fixed crash when building a project with a configuration that is not available in a dependent project
+  * fixed freeze in startup due to thread starting issues (probably only happened with more than 2 cores)
+  * added C++ to D conversion wizard
+  * added installation for Visual Studio 11
+  * tweaked dialogs to better integrate with VS

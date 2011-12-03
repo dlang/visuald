@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module c2d.ast;
 
 import c2d.tokenizer;
@@ -10,8 +18,12 @@ import std.stdio;
 
 //////////////////////////////////////////////////////////////////////////////
 
+debug = VERIFY;
+//debug = TOKENTEXT;
+
 bool tryRecover = true;
 int syntaxErrors;
+string syntaxErrorMessages;
 
 // how to handle identifier in declaration
 enum IdentPolicy
@@ -105,7 +117,7 @@ class AST
 			insertPos = defaultInsertEndTokenPosition();
 		else
 			insertPos = it.start;
-		insertPos.insertListBefore(toklist);
+		insertPos.insertListBefore(toklist); // insertPos now points after inserted token list
 
 		ast.fixIteratorList(start.getList());
 
@@ -121,6 +133,7 @@ class AST
 			else
 				fixIteratorChildrenEnd(ast, ast.end, insertPos);
 		}
+		debug(TOKENTEXT) verify();
 	}
 
 	void appendChild(AST ast, TokenList toklist)
@@ -170,6 +183,7 @@ class AST
 		ast.fixIteratorList(list);
 		ast._parent  = null;
 
+		debug(TOKENTEXT) verify();
 		return list;
 	}
 
@@ -190,7 +204,7 @@ class AST
 	//////////////////////////////////////////////////////////////
 	void insertTokenListBefore(AST child, TokenList toklist)
 	{
-		assume(!null || child._parent is this);
+		assume(true || child._parent is this);
 
 		TokenIterator insertPos;
 		if(!child)
@@ -343,7 +357,9 @@ class AST
 	{
 		if(tokIt.getList() != start.getList())
 			assume(tokIt.getList() == start.getList());
-			
+
+		debug(TOKENTEXT) toktext = tokenListToString(start, end);
+
 		while(tokIt != start)
 			tokIt.advance();
 		
@@ -366,12 +382,15 @@ class AST
 			}
 	}
 
-	void verify()
+	final void verify()
 	{
-		TokenIterator tokIt = start;
-		verifyIteratorList(tokIt);
+		debug(VERIFY)
+		{
+			TokenIterator tokIt = start;
+			verifyIteratorList(tokIt);
 
-		verifyChildren();
+			verifyChildren();
+		}
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -393,6 +412,23 @@ class AST
 		return end;
 	}
 
+	static void recoverFromSyntaxError(Exception e, ref TokenIterator tokIt)
+	{
+		if(!tryRecover)
+			throw e;
+
+		syntaxErrors++;
+		syntaxErrorMessages ~= "$FILENAME$" ~ e.msg ~ "\n";
+		if(!tokIt.atEnd())
+			tokIt.pretext ~= " /* SYNTAX ERROR: " ~ e.msg ~ " */ ";
+
+		while(!tokIt.atEnd() && tokIt.type != Token.EOF && 
+			   tokIt.type != Token.BraceR && tokIt.type != Token.Semicolon)
+			nextToken(tokIt);
+		if(!tokIt.atEnd() && tokIt.type == Token.Semicolon)
+			nextToken(tokIt);
+	}
+
 	//////////////////////////////////////////////////////////////////////
 	AST parseProtection(ref TokenIterator tokIt)
 	{
@@ -410,9 +446,9 @@ class AST
 		// extern "C" { and namespace only allowed on highest level and thrown away
 		while(!tokIt.atEnd() && tokIt.type != Token.EOF && tokIt.type != Token.BraceR)
 		{
+			TokenIterator start = tokIt;
 			try
 			{
-			TokenIterator start = tokIt;
 			switch(tokIt.type)
 			{
 			case Token.Namespace:
@@ -484,22 +520,12 @@ class AST
 			} 
 			catch(Exception e)
 			{
-				if(!tryRecover)
-					throw e;
+				recoverFromSyntaxError(e, tokIt);
 
-				syntaxErrors++;
-				if(!tokIt.atEnd())
-					tokIt.pretext ~= " /* SYNTAX ERROR: " ~ e.msg ~ " */ ";
-
-				while(!tokIt.atEnd() && tokIt.type != Token.EOF && 
-					   tokIt.type != Token.BraceR && tokIt.type != Token.Semicolon)
-					nextToken(tokIt);
-				if(!tokIt.atEnd() && tokIt.type == Token.Semicolon)
-					nextToken(tokIt);
-				
-				Declaration decl = new Declaration(new DeclType(DeclType.Basic, "error"));
-				decl.start = start;
-				decl.end = tokIt;
+				auto dtype = new DeclType(DeclType.Basic, "error");
+				Declaration decl = new Declaration(dtype);
+				decl.start = dtype.start = start;
+				decl.end = dtype.end = tokIt;
 				addChild(decl);
 			}
 		}
@@ -674,6 +700,7 @@ class AST
 	{
 		if(_type == Type.Declaration && children && !children.empty())
 			if(DeclType dtype = cast(DeclType) children[0])
+			{
 				if(dtype._dtype == DeclType.Enum)
 					if(dtype.children)
 					{
@@ -684,6 +711,14 @@ class AST
 							if(DeclVar var = cast(DeclVar) *it)
 								addEnumIdentifier(scp, var._ident);
 					}
+				if(dtype._dtype == DeclType.Basic && dtype._ident == "__enum")
+				{
+					string scp = getScope();
+					for(ASTIterator it = children.begin() + 1; !it.atEnd(); ++it)
+						if(DeclVar var = cast(DeclVar) *it)
+							addEnumIdentifier(scp, var._ident);
+				}
+			}
 
 		if(children)
 			for(ASTIterator it = children.begin(); !it.atEnd(); ++it)
@@ -747,6 +782,7 @@ class AST
 	//////////////////////////////////////////////////////////////////////
 	TokenIterator start; // first token
 	TokenIterator end;   // token after last token
+	debug(TOKENTEXT) string toktext;
 
 	DList!(AST) children;
 
@@ -1811,19 +1847,7 @@ class Statement : AST
 		}
 		catch(Exception e)
 		{
-			if(!tryRecover)
-				throw e;
-		
-			syntaxErrors++;
-			if(!tokIt.atEnd())
-				tokIt.pretext ~= " /* SYNTAX ERROR: " ~ e.msg ~ " */ ";
-			
-			while(!tokIt.atEnd() && tokIt.type != Token.EOF && 
-			      tokIt.type != Token.BraceR && tokIt.type != Token.Semicolon)
-				nextToken(tokIt);
-			
-			if(!tokIt.atEnd() && tokIt.type == Token.Semicolon)
-				nextToken(tokIt);
+			recoverFromSyntaxError(e, tokIt);
 			
 			stmt = new Statement(Token.Semicolon); // empty statement
 		}
@@ -2009,6 +2033,8 @@ class DeclType : AST
 		case "INT32":
 		case "UINT32":
 		case "wchar_t":
+		case "__auto":
+		case "__enum":
 			return true;
 		default:
 			return false;
@@ -2586,17 +2612,27 @@ class Declaration : AST
 	{
 		TokenIterator start = tokIt;
 
-		checkToken(tokIt, Token.Template);
-		checkToken(tokIt, Token.LessThan);
-		
 		DeclType decltype = new DeclType(DeclType.Template, "template");
-		if(!tokIt.atEnd() && tokIt.type != Token.GreaterThan)
+		checkToken(tokIt, Token.Template);
+		if(!tokIt.atEnd() && tokIt.type == Token.LessGreater) // special case for <>
 		{
-			decltype.addChild(parseTypeDeclaration(tokIt));
-			while(!tokIt.atEnd() && tokIt.type == Token.Comma)
+			tokIt.text = "<";
+			tokIt.type = Token.LessThan;
+			tokIt.insertAfter(createToken("", ">", Token.GreaterThan, tokIt.lineno));
+			checkToken(tokIt, Token.LessThan);
+			checkToken(tokIt, Token.GreaterThan);
+		}
+		else
+		{
+			checkToken(tokIt, Token.LessThan);
+			if(!tokIt.atEnd() && tokIt.type != Token.GreaterThan)
 			{
-				tokIt.advance();
 				decltype.addChild(parseTypeDeclaration(tokIt));
+				while(!tokIt.atEnd() && tokIt.type == Token.Comma)
+				{
+					tokIt.advance();
+					decltype.addChild(parseTypeDeclaration(tokIt));
+				}
 			}
 			checkToken(tokIt, Token.GreaterThan);
 		}

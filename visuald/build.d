@@ -22,6 +22,7 @@ import visuald.windows;
 
 import stdext.path;
 import stdext.file;
+import stdext.string;
 
 import std.c.stdlib;
 import std.windows.charset;
@@ -638,7 +639,7 @@ public:
 string demangleText(string ln)
 {
 	string txt;
-	for (int i = 0; i < ln.length; )
+	for (uint i = 0; i < ln.length; )
 	{
 		char ch = ln[i]; // compressed symbols are NOT utf8!
 		if(isAlphaNum(ch) || ch == '_')

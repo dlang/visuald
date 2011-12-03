@@ -38,6 +38,8 @@ import vdc.ast.aggr;
 import vdc.ast.expr;
 import vdc.ast.node;
 
+import stdext.util;
+
 import std.variant;
 import std.conv;
 import std.typetuple;

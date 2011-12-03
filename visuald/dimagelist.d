@@ -8,7 +8,7 @@
 
 module visuald.dimagelist;
 
-import visuald.stringutil;
+import stdext.string;
 
 mixin(extractDefines(import("resources.h")));
 
@@ -42,7 +42,7 @@ const IDC_FINDCLOSE     = 2009;
 const IDC_FINDMATCHBRACES = 2010;
 const IDC_FINDINCCOMMENT  = 2011;
 
-const IDC_WIZ_ADDTOSTARTUP  = 2020;
+const IDC_WIZ_WRITEINTERMED = 2020;
 const IDC_WIZ_INPUTTPYE     = 2021;
 const IDC_WIZ_INPUTFILES    = 2022;
 const IDC_WIZ_KEYWORDPREFIX = 2023;
@@ -57,6 +57,8 @@ const IDC_WIZ_LOAD          = 2031;
 const IDC_WIZ_SAVE          = 2032;
 const IDC_WIZ_CONVERT       = 2033;
 const IDC_WIZ_INPUTDIR      = 2034;
+const IDC_WIZ_PACKAGEPREFIX = 2035;
+const IDC_WIZ_CODEHDR       = 2036;
 
 // menu ID
 const IDM_COLUMNLISTBASE = 0x100;

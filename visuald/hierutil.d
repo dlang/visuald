@@ -18,6 +18,7 @@ import std.conv;
 
 import stdext.path;
 import stdext.array;
+import stdext.string;
 
 import sdk.port.vsi;
 import sdk.vsi.vsshell;

@@ -17,6 +17,8 @@ import vdc.ast.type;
 import vdc.interpret;
 import vdc.semantic;
 
+import stdext.util;
+
 //TemplateDeclaration:
 //    [Identifier TemplateParameterList Constraint_opt DeclarationBlock]
 class TemplateDeclaration : Node

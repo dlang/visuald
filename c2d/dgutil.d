@@ -35,7 +35,7 @@ void throwException(string msg)
 
 void throwException(int line, string msg)
 {
-	throw new SyntaxException(format("(%d):", line) ~ msg);
+	throw new SyntaxException(format("(%d): ", line) ~ msg);
 }
 
 void assume(T)(T cond, int line = __LINE__, string file = __FILE__)

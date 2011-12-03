@@ -26,6 +26,8 @@ import sdk.win32.commctrl;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 
+import stdext.string;
+
 import std.conv;
 import std.utf;
 import std.stdio;
@@ -575,7 +577,7 @@ private:
 
 	string _demangle(string txt, bool fullDeco)
 	{
-		int p = 0;
+		uint p = 0;
 		version(all) // debug // allow std 2.052 in debug builds
 			enum hasTypeArg = __traits(compiles, { demangle("",true); });
 		else // ensure patched runtime in release

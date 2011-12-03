@@ -138,15 +138,28 @@ string[] expandFileListPattern(string file, string workdir)
 	return files;
 }
 
+string[] addFileListPattern(string[] files, string file, string workdir)
+{
+	if (indexOf(file, '*') >= 0 || indexOf(file, '?') >= 0)
+		addunique(files, expandFileListPattern(file, workdir));
+	else
+		addunique(files, file);
+	return files;
+}
+
 string[] expandFileList(string[] filespecs, string workdir)
 {
 	string files[];
 	foreach(file; filespecs)
 	{
-		if (indexOf(file, '*') >= 0 || indexOf(file, '?') >= 0)
-			addunique(files, expandFileListPattern(file, workdir));
+		if (file.startsWith("-"))
+		{
+			string[] exclude = addFileListPattern([], file[1..$], workdir);
+			foreach(ex; exclude)
+				stdext.array.remove(files, ex);
+		}
 		else
-			addunique(files, file);
+			files = addFileListPattern(files, file, workdir);
 	}
 	return files;
 }

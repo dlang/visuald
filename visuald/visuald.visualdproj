@@ -184,15 +184,6 @@
   <Folder name="a_workaround">
    <File path="workaround.d" />
   </Folder>
-  <Folder name="c2d">
-   <File path="..\c2d\ast.d" />
-   <File path="..\c2d\cpp2d.d" />
-   <File path="..\c2d\dgutil.d" />
-   <File path="..\c2d\dlist.d" />
-   <File path="..\c2d\pp.d" />
-   <File path="..\c2d\tokenizer.d" />
-   <File path="..\c2d\tokutil.d" />
-  </Folder>
   <Folder name="Resources">
    <File path="Resources\AlternateRowColor.ico" />
    <File path="Resources\ascend.ico" />
@@ -224,6 +215,7 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="completion.d" />
   <File path="comutil.d" />
   <File path="config.d" />
+  <File path="cppwizard.d" />
   <File path="dimagelist.d" />
   <File path="dlangsvc.d" />
   <File path="dllmain.d" />
@@ -254,7 +246,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="vscommands.d" />
   <File path="winctrl.d" />
   <File path="windows.d" />
-  <File path="wizard.d" />
   <File path="wmmsg.d" />
   <File path="xmlwrap.d" />
  </Folder>

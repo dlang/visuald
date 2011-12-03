@@ -120,7 +120,7 @@ struct C2DIni
 	string replaceTokenPre;
 	string replaceTokenPost;
 
-	bool addToStartup;
+	bool writeIntermediate;
 
 	// syntax:
 	// filepattern:: search => replace
@@ -193,19 +193,24 @@ struct C2DIni
 		{
 			if(auto p = "inputType" in *set)
 				inputType = parse!int(*p);
-			if(auto p = "addToStartup" in *set)
-				addToStartup = parse!bool(*p);
+			if(auto p = "writeIntermediate" in *set)
+				writeIntermediate = parse!bool(*p);
 			if(auto p = "outputDir" in *set)
 				outputDir = *p;
 			if(auto p = "inputDir" in *set)
 				inputDir = *p;
 			if(auto p = "keywordPrefix" in *set)
 				keywordPrefix = *p;
+			if(auto p = "packagePrefix" in *set)
+				packagePrefix = *p;
 		}
 
 		if(auto set = "inputFiles" in ini)
 			if(auto p = "" in *set)
 				inputFiles = *p;
+		if(auto set = "codePrefix" in ini)
+			if(auto p = "" in *set)
+				codePrefix = *p;
 		if(auto set = "versionDefines" in ini)
 			if(auto p = "" in *set)
 				versionDefines = *p;
@@ -230,12 +235,14 @@ struct C2DIni
 	{
 		string s = "[Settings]\n";
 		s ~= "inputType=" ~ to!string(inputType) ~ "\n";
-		s ~= "addToStartup=" ~ to!string(addToStartup) ~ "\n";
+		s ~= "writeIntermediate=" ~ to!string(writeIntermediate) ~ "\n";
 		s ~= "outputDir=" ~ outputDir ~ "\n";
 		s ~= "inputDir=" ~ inputDir ~ "\n";
 		s ~= "keywordPrefix=" ~ keywordPrefix ~ "\n";
+		s ~= "packagePrefix=" ~ packagePrefix ~ "\n";
 
 		s ~= "[inputFiles]\n"		  ~ inputFiles;			if(!s.endsWith("\n")) s ~= "\n";
+		s ~= "[codePrefix]\n"		  ~ codePrefix;			if(!s.endsWith("\n")) s ~= "\n";
 		s ~= "[versionDefines]\n"	  ~ versionDefines;		if(!s.endsWith("\n")) s ~= "\n";
 		s ~= "[expandConditionals]\n" ~ expandConditionals; if(!s.endsWith("\n")) s ~= "\n";
 		s ~= "[userValueTypes]\n"	  ~ userValueTypes;		if(!s.endsWith("\n")) s ~= "\n";
@@ -249,7 +256,9 @@ struct C2DIni
 	bool toC2DOptions(ref C2DOptions opt)
 	{
 		opt.enableDmdSpecifics = false;
+		opt.writeIntermediate = writeIntermediate;
 		opt.keywordsPrefix = keywordPrefix;
+		opt.packagePrefix = packagePrefix;
 		opt.codePrefix = codePrefix;
 		opt.importAllFile = importAllFile;
 		opt.inputDir = normalizeDir(inputDir);
@@ -303,10 +312,13 @@ struct C2DIni
 struct C2DOptions
 {
 	bool enableDmdSpecifics = true;
+	bool writeIntermediate;
+
 	int indentSize = 4;
 	int tabSize = 4;
 
 	string keywordsPrefix;
+	string packagePrefix;
 	string codePrefix;
 	
 	string importAllFile;
@@ -483,19 +495,6 @@ static this()
 		"::" : ".",
 		"->" : ".",
 
-		// dmd specific
-		"param_t"   : "PARAM",
-		"STATIC"    : "private",
-		"CEXTERN"   : "extern",
-		"finally"   : "dmd_finally",
-		"Object"    : "dmd_Object",
-		"TypeInfo"  : "dmd_TypeInfo",
-		"toString"  : "dmd_toString",
-		"main"      : "dmd_main",
-		"string"    : "dmd_string",
-		"hash_t"    : "dmd_hash_t",
-		"File"      : "dmd_File",
-
 		"__try"     : "try",
 		"NULL"      : "null",
 		//"__except"          : "catch(Exception e) //", false);
@@ -516,6 +515,8 @@ static this()
 		"__init"    : "init",
 		"__string"  : "string",
 		"__mixin"   : "mixin",
+		"__auto"    : "auto",
+		"__enum"    : "enum",
 		"__bitfields" : "bitfields!",
 		"__is"      : "is",
 		"!__is"     : "!is",
@@ -552,7 +553,7 @@ string createModuleName(string filename)
 	filename = stripExtension(filename);
 	filename = replace(filename, "\\", "/");
 	string names[] = split(filename, "/");
-	string modname;
+	string modname = options.packagePrefix;
 	foreach(n; names)
 	{
 		string safename;
@@ -591,14 +592,27 @@ string mapTokenText(Token tok)
 	return tok.text;
 }
 
+string createMappedTokenListText(TokenList tokList)
+{
+	string text;
+	for(TokenIterator tokIt = tokList.begin(); !tokIt.atEnd(); ++tokIt)
+	{
+		Token tok = *tokIt;
+		string mapped = mapTokenText(tok);
+		text ~= tok.pretext ~ mapped;
+	}
+	return text;
+}
+
+
 string fixPPToken(Token tok)
 {
-	assert(tok.type != Token.PPinsert);
+	assume(tok.type != Token.PPinsert);
 	if(tok.type == Token.PPinclude)
 	{
 		TokenList tokList = scanText(tok.text, 1, false);
 		TokenIterator it = tokList.begin();
-		assert(it.type == Token.PPinclude);
+		assume(it.type == Token.PPinclude);
 		it.advance();
 		if(!it.atEnd() && it.type == Token.String)
 		{
@@ -697,6 +711,27 @@ void clearTokenText(TokenIterator tokIt)
 	}
 }
 
+void checkSeparatingSpace(TokenIterator tokIt)
+{
+	if(!tokIt.atEnd() && !tokIt.atBegin())
+	{
+		char nextch = 0;
+		if(tokIt.pretext.length)
+			nextch = tokIt.pretext[0];
+		else if(tokIt.text.length)
+			nextch = tokIt.text[0];
+		
+		TokenIterator prevIt = tokIt - 1;
+		char prevch = 0;
+		if(prevIt.text.length)
+			prevch = prevIt.text[$-1];
+		else if(prevIt.pretext.length)
+			prevch = prevIt.pretext[$-1];
+		if(needSeparatingSpace(prevch, nextch))
+			tokIt.pretext = " " ~ tokIt.pretext;
+	}
+}
+
 void patchBasicDeclType(AST ast)
 {
 	enum TF_BIT
@@ -715,6 +750,8 @@ void patchBasicDeclType(AST ast)
 		UNSIGNED = 0x0800,
 		BOOL     = 0x1000,
 		CHAR     = 0x2000,
+		AUTO     = 0x4000,
+		ENUM     = 0x8000,
 	}
 
 	int type = 0;
@@ -727,6 +764,8 @@ void patchBasicDeclType(AST ast)
 		switch(tokIt.text)
 		{
 		case "void":      type |= TF_BIT.VOID; break;
+		case "__auto":    type |= TF_BIT.AUTO; break;
+		case "__enum":    type |= TF_BIT.ENUM; break;
 		case "bool":      type |= TF_BIT.BOOL; break;
 		case "char":      type |= TF_BIT.INT | TF_BIT.SIZE8; break;
 		case "int":       type |= TF_BIT.INT | TF_BIT.SIZE32; break;
@@ -766,7 +805,7 @@ void patchBasicDeclType(AST ast)
 			clearTokenText(tokIt);
 	}
 
-	if((type & (TF_BIT.VOID | TF_BIT.BOOL | TF_BIT.INT | TF_BIT.FLOAT | TF_BIT.COMPLEX)) == 0)
+	if((type & (TF_BIT.VOID | TF_BIT.BOOL | TF_BIT.INT | TF_BIT.FLOAT | TF_BIT.COMPLEX | TF_BIT.AUTO | TF_BIT.ENUM)) == 0)
 		type |= TF_BIT.INT;
 	if((type & TF_BIT.INT) != 0 && (type & TF_BIT.LONG) != 0)
 		type &= ~TF_BIT.LONG;
@@ -776,6 +815,8 @@ void patchBasicDeclType(AST ast)
 	switch(type)
 	{
 	case 0:                                            basic = ""; break;
+	case TF_BIT.AUTO:                                  basic = "__auto"; break;
+	case TF_BIT.ENUM:                                  basic = "__enum"; break;
 	case TF_BIT.VOID:                                  basic = "void"; break;
 	case TF_BIT.BOOL:                                  basic = "bool"; break;
 	case TF_BIT.INT | TF_BIT.SIZE8  | TF_BIT.UNSIGNED: basic = "ubyte"; break;
@@ -881,7 +922,7 @@ void patchOperatorName(Expression expr)
 				if(parent && parent._type == AST.Type.VarDeclaration)
 				{
 					parent = parent._parent;
-					assert(parent && parent._type == AST.Type.Declaration);
+					assume(parent && parent._type == AST.Type.Declaration);
 					for(TokenIterator declIt = parent.start; declIt != expr.start; ++declIt)
 						clearTokenText(declIt);
 				}
@@ -897,7 +938,14 @@ void patchEnumName(Expression expr)
 	{
 		if(expr.start.type == Token.Identifier)
 			if(string* ps = expr.start.text in AST.enumIdentifier)
-			    expr.start.text = replace(*ps, "::", ".") ~ expr.start.text;
+			{
+				// don't replace in declarations
+				AST var = expr._parent;
+				while(var && !cast(DeclVar)var)
+					var = var._parent;
+				if(!var || (cast(DeclVar)var)._ident != expr.start.text)
+					expr.start.text = replace(*ps, "::", ".") ~ expr.start.text;
+			}
 	}
 }
 
@@ -921,7 +969,7 @@ void patchSizeof(Expression expr)
 	if(expr._toktype == Token.Sizeof)
 	{
 		// extract argument
-		assert(expr.children.count() == 1);
+		assume(expr.children.count() == 1);
 		AST nexpr = expr.children[0].clone();          // doesn't have parenthesis
 		TokenList nexprList = nexpr.cloneTokens(true);
 		if(sizeofExpressionNeedsParenthesis(nexpr))
@@ -978,9 +1026,11 @@ void patchPrimaryParen(Expression expr)
 			if(subExpr._toktype == Token.Identifier)
 			{
 				TokenList subList = expr.removeChild(subExpr);
+				subExpr.start.pretext = expr.start.pretext ~ subExpr.start.pretext;
 				ASTIterator it = expr._parent.children.find(expr);
 				expr._parent.insertChildBefore(it, subExpr, subList);
 				expr._parent.removeChild(expr);
+				checkSeparatingSpace(subExpr.start);
 				patchAST(subExpr);
 			}
 	}
@@ -1392,7 +1442,7 @@ void nameUnnamedStruct(DeclType dtype)
 	
 	// now on struct/union/enum
 	nextToken(tokIt);
-	assert(tokIt.type == Token.BraceL);
+	assume(tokIt.type == Token.BraceL);
 
 	if(tokIt.type != Token.Identifier)
 	{
@@ -1499,9 +1549,9 @@ bool removeExternDeclaration(Declaration decl)
 
 bool isSimpleVarDecl(DeclVar var)
 {
-	assert(var && var.children && !var.children.empty);
+	assume(var && var.children && !var.children.empty);
 	Expression expr = cast(Expression)var.children[0];
-	assert(expr);
+	assume(expr);
 
 	return expr._type == AST.Type.PrimaryExp && expr._toktype == Token.Identifier;
 }
@@ -1522,7 +1572,7 @@ void patchClassVarInit(Statement stmt)
 		DeclType dtype = cast(DeclType) decl.children[0];
 		DeclVar  dvar  = cast(DeclVar)  decl.children[1];
 
-		assert(dtype && dvar && dvar.children);
+		assume(dtype && dvar && dvar.children);
 
 		if(dtype._dtype == DeclType.Class && !dtype.isTypedef() && !isBasicUserType(dtype._ident))
 		{
@@ -1532,7 +1582,7 @@ void patchClassVarInit(Statement stmt)
 			if((!isPOD && isSimpleVarDecl(dvar)) || hasArgs)
 			{
 				AST ident = findIdentifier(dvar);
-				assert(ident);
+				assume(ident);
 				string newtext = " = new ";
 				if(isPOD)
 					newtext = " = ";
@@ -1596,7 +1646,7 @@ void splitNonSimpleVarList(Declaration decl)
 			DeclVar dvar = cast(DeclVar)decl.children[1];
 			TokenIterator semiIt = decl.end - 1;
 			TokenIterator commaIt = dvar.end;
-			assert(commaIt.type == Token.Comma && semiIt.type == Token.Semicolon);
+			assume(commaIt.type == Token.Comma && semiIt.type == Token.Semicolon);
 
 			AST.fixIteratorChildrenEnd(dvar, commaIt, semiIt);
 			commaIt.eraseUntil(semiIt);
@@ -1613,8 +1663,8 @@ void patchAbstractMethods(Declaration decl)
 	decl.start.pretext ~= "abstract "; // this should be the "virtual" token, that is cleared later
 
 	DeclVar  dvar  = cast(DeclVar)  decl.children[1];
-	assert(dvar.end[-2].text == "=");
-	assert(dvar.end[-1].text == "0");
+	assume(dvar.end[-2].text == "=");
+	assume(dvar.end[-1].text == "0");
 
 	if(strip(dvar.end[-2].pretext) == "")
 		dvar.end[-2].pretext = "";
@@ -1643,13 +1693,13 @@ void patchInitializer(Declaration decl)
 		return; // TODO
 	DeclVar  dvar  = cast(DeclVar)  decl.children[1];
 
-	assert(dtype && dvar);
+	assume(dtype && dvar);
 	if(dvar.countChildren() < 2)
 		return;
 
 	Expression var  = cast(Expression) dvar.children[0];
 	Expression init = cast(Expression) dvar.children[1];
-	assert(var && init);
+	assume(var && init);
 	
 	int dim = getArrayDimension(var);
 	if(dim >= 1)
@@ -1718,7 +1768,7 @@ void patchStringDeclaration(Declaration decl)
 		return; // TODO
 	DeclVar  dvar  = cast(DeclVar)  decl.children[1];
 
-	assert(dtype && dvar);
+	assume(dtype && dvar);
 
 	Expression var = cast(Expression) dvar.children[0];
 	if(!var || var._type != AST.Type.PostExp || var._toktype != Token.BracketL || var.countChildren() != 1)
@@ -1751,8 +1801,8 @@ void patchStringDeclaration(Declaration decl)
 	dtype._dtype = DeclType.Class;
 	dtype._ident = tok.text;
 
-	assert(var.end[-2].type == Token.BracketL);
-	assert(var.end[-1].type == Token.BracketR);
+	assume(var.end[-2].type == Token.BracketL);
+	assume(var.end[-1].type == Token.BracketR);
 	
 	clearTokenText(var.end - 2);
 	clearTokenText(var.end - 1);
@@ -1768,7 +1818,7 @@ void patchPointerDeclaration(Declaration decl)
 		return; // TODO
 	DeclVar  dvar  = cast(DeclVar)  decl.children[1];
 
-	assert(dtype && dvar);
+	assume(dtype && dvar);
 
 	if(dtype._dtype != DeclType.Class || !isClassType(dtype._ident))
 		return;
@@ -1854,26 +1904,41 @@ void patchDeclType(DeclType dtype)
 		if(dtype.start.text == "template")
 		{
 			// a declaration, move arguments to identifier
-			if(dtype.end.text == "struct" || dtype.end.text == "class")
+			Declaration decl = cast(Declaration)dtype._parent;
+			assume(decl && decl.children.count() > 1);
+			if(Declaration decl2 = cast(Declaration)decl.children[1])
 			{
-				Declaration decl = cast(Declaration)dtype._parent;
-				assert(decl && decl.children.count() > 1);
-				if(Declaration decl2 = cast(Declaration)decl.children[1])
+				bool isStruct = dtype.end.text == "struct" || dtype.end.text == "class";
+				if(DeclType dtype2 = cast(DeclType)decl2.children[0])
 				{
-					if(DeclType dtype2 = cast(DeclType)decl2.children[0])
-					{
-						TokenList tl = decl.removeChild(dtype);
-						dtype.removeToken(dtype.start); // throw away "template"
-						
-						for(TokenIterator it = tl.begin(); it != tl.end(); it.advance())
-							if(it.text == "<")
-								it.text = "(";
-						if(dtype.end[-1].text == ">")
-							dtype.end[-1].text = ")";
+					TokenList tl = decl.removeChild(dtype);
+					string pretext = dtype.start.pretext;
+					dtype.removeToken(dtype.start); // throw away "template"
+					
+					for(TokenIterator it = tl.begin(); it != tl.end(); it.advance())
+						if(it.text == "<")
+							it.text = "(";
+					if(dtype.end[-1].text == ">")
+						dtype.end[-1].text = ")";
 
+					if(isStruct)
+					{
 						TokenIterator insertPos = dtype2.start + 2; // after "struct Identifier"
 						dtype2.insertChildBefore(dtype2.childrenBegin(), dtype, tl, &insertPos);
 					}
+					else if(auto dvar2 = cast(DeclVar)decl2.children[1])
+					{
+						// simply add arguments to identifier
+						if(dvar2.start.type == Token.Identifier)
+						{
+							string argtext = createMappedTokenListText(tl);
+							dvar2.start.text ~= argtext;
+						}
+						// bad insert position:
+						//TokenIterator insertPos = dvar2.start + 1; // after "int Identifier"
+						//dvar2.insertChildBefore(dvar2.childrenBegin(), dtype, tl, &insertPos);
+					}
+					decl.start.pretext = pretext ~ decl.start.pretext;
 				}
 			}
 		}
@@ -1881,7 +1946,7 @@ void patchDeclType(DeclType dtype)
 		{
 			// an instance, just replace <> with !()
 			TokenIterator stop = dtype.end;
-			if(!dtype.children.empty())
+			if(dtype.children && !dtype.children.empty())
 				stop = dtype.children.begin().start;
 			for(TokenIterator it = dtype.start; it != stop && it != dtype.end; it.advance())
 				if(it.text == "<")
@@ -1901,10 +1966,10 @@ void patchCastExp(AST ast)
 		TokenIterator it = ast.start;
 		it.text = "__cast";
 		nextToken(it);
-		assert(it.type == Token.LessThan);
+		assume(it.type == Token.LessThan);
 		it.text = "(";
 		it = ast.children[0].end;
-		assert(it.type == Token.GreaterThan);
+		assume(it.type == Token.GreaterThan);
 		it.text = ")";
 	}
 }
@@ -2000,6 +2065,7 @@ void patchAST(AST ast)
 			}
 	}
 	if(ast.children)
+	{
 		for(ASTIterator it = ast.children.begin(); !it.atEnd(); )
 		{
 			// some simple support to allow changing the current child without making the iterator invalid
@@ -2007,6 +2073,7 @@ void patchAST(AST ast)
 			++it;
 			patchAST(child);
 		}
+	}
 
 	// process after children are processed
 	if(ast._type == AST.Type.ConditionalDeclaration)
@@ -2023,7 +2090,7 @@ void patchAST(AST ast)
 		}
 
 		int cnt = ast.countChildren();
-		assert(cnt > 1);
+		assume(cnt > 1);
 		bool empty = emptyDeclGroup(ast.children[1]);
 		if(empty && cnt > 2)
 			empty = emptyDeclGroup(ast.children[2]);
@@ -2034,7 +2101,7 @@ void patchAST(AST ast)
 
 ///////////////////////////////////////////////////////////////
 
-typedef void function (TokenList) patch_fn;
+alias void function (TokenList) patch_fn;
 
 struct translateInfo
 {
@@ -2042,24 +2109,6 @@ struct translateInfo
 	patch_fn prepatch;
 	patch_fn postpatch;
 };
-
-void setupVariables()
-{
-	PP.versionDefines["DEBUG"] = true;
-	PP.versionDefines["DMDV1"] = true;
-	PP.versionDefines["DMDV2"] = true; // allow early evaluation
-	PP.versionDefines["_DH"] = true;   // identifier ambiguous, also used by iasm_c
-	PP.versionDefines["LOG"] = true;
-	PP.versionDefines["LOGSEMANTIC"] = true;
-	PP.versionDefines["IN_GCC"] = true;
-
-	PP.expandConditionals["0"] = false;
-	PP.expandConditionals["1"] = true;
-	PP.expandConditionals["DMDV1"] = false;
-	PP.expandConditionals["DMDV2"] = true;
-	PP.expandConditionals["_DH"]   = false;
-	PP.expandConditionals["IN_GCC"] = true;
-}
 
 bool isBasicUserType(string ident)
 {
@@ -2123,15 +2172,20 @@ void writeDirAndFile(string filename, string text)
 
 class Source
 {
-	this(DmdGen dg, string filename)
+	this(Cpp2DConverter dg)
 	{
-		this(dg, filename, cast(string) read(options.inputDir ~ filename));
+		_dg = dg;
 	}
 
-	this(DmdGen dg, string filename, string text)
+	void init(string filename)
+	{
+		string absfile = makeFilenameAbsolute(filename, options.inputDir);
+		init(filename, cast(string) read(absfile));
+	}
+
+	void init(string filename, string text)
 	{
 		_tokenList = new TokenList;
-		_dg = dg;
 		_filename = filename;
 		_text = text;
 	}
@@ -2190,7 +2244,7 @@ class Source
 		writeDirAndFile(options.outputDir ~ outfilename, hdr ~ text);
 	}
 
-	DmdGen _dg;
+	Cpp2DConverter _dg;
 	string _filename;
 	patch_fn postpatch;
 
@@ -2202,13 +2256,14 @@ class Source
 
 ///////////////////////////////////////////////////////////////
 
-class DmdGen
+class Cpp2DConverter
 {
 	///////////////////////////////////////////////////////////////////////
 	AST[][string] functionDeclarations;
 	AST[][string] functionDefinitions;
 	AST[][string] varDefinitions;
 	Source[] sources;
+	Source currentSource;
 
 	///////////////////////////////////////////////////////////////////////
 
@@ -2221,17 +2276,44 @@ class DmdGen
 	{
 		AST root = ast.getRoot();
 		foreach(src; sources)
-			if(src._ast == root)
+			if(src._ast is root)
 				return src;
 		return null;
 	}
 
 	void writemsg(AST ast, string s)
 	{
-		string where = text("(", ast.start.lineno, ")");
+		string where = text("(", ast.start.lineno, "): ");
 		if(auto src = findSource(ast))
-			s = src._filename ~ where;
-		writemsg(s);
+		{
+			string absfile = makeFilenameAbsolute(src._filename, options.inputDir);
+			where = absfile ~ where;
+		}
+		writemsg(where ~ s);
+	}
+
+	void writeerror(Throwable e)
+	{
+		string msg = e.toString();
+		//if(startsWith(msg, currentfile))
+		//	throw e;
+		string fname;
+		if(currentSource)
+			fname = makeFilenameAbsolute(currentSource._filename, options.inputDir);
+		
+		if(msg.indexOf("SyntaxException") > 0)
+		{
+			int pos = msg.indexOf("):");
+			if(pos > 0)
+				msg = strip(msg[pos + 2 .. $]);
+			if(msg.startsWith("("))
+				msg = fname ~ msg;
+			else if(fname.length)
+				msg = fname ~ ": " ~ msg;
+		}
+		else if(fname.length)
+			msg = fname ~ ": " ~ msg;
+		writemsg(msg);
 	}
 
 	///////////////////////////////////////////////////////////////////////
@@ -2244,16 +2326,22 @@ class DmdGen
 			ToStringData tsd;
 			tsd.noIdentifierInPrototype = true;
 			string ident = decl.toString(tsd);
-			if(ident in functionDefinitions)
+			if(auto fdecl = ident in functionDefinitions)
+			{
 				writemsg(decl, "duplicate definition of " ~ ident);
+				writemsg((*fdecl)[0], "  previous definition is here");
+			}
 			functionDefinitions[ident] ~= decl;
 		}
 		else if(type == DeclClassification.VarDeclaration || type == DeclClassification.VarDefinition)
 		{
 			ToStringData tsd;
 			string ident = decl.toString(tsd);
-			if(ident in varDefinitions)
+			if(auto vdecl = ident in varDefinitions)
+			{
 				writemsg(decl, "duplicate definition of " ~ ident);
+				writemsg((*vdecl)[0], "  previous definition is here");
+			}
 			varDefinitions[ident] ~= decl;
 		}
 	}
@@ -2319,7 +2407,7 @@ class DmdGen
 		while(initIt.children && !initIt.children.empty())
 		{
 			CtorInitializer initCtor = cast(CtorInitializer) *(initIt.children.begin());
-			assert(initCtor);
+			assume(initCtor);
 
 			TokenList initList = initIt.removeChild(initCtor);
 
@@ -2336,9 +2424,9 @@ class DmdGen
 	///////////////////////////////////////////////////////////////////////
 	void removeScopeFromIdentifier(AST impl)
 	{
-		assert(impl.children && impl.children.count() >= 2);
+		assume(impl.children && impl.children.count() >= 2);
 		DeclVar declvar = cast(DeclVar) impl.children[1];
-		assert(declvar);
+		assume(declvar);
 
 		AST ident = findIdentifier(declvar);
 		AST cloneIdent = ident.clone();
@@ -2386,8 +2474,8 @@ class DmdGen
 
 	AST cloneConditionalCode(AST impl, TokenList implList, ref AST[] cond, ref TokenList condList)
 	{
-		assert(cond.length > 0);
-		assert(cond[0].children.count == 2); // expr + if, no else
+		assume(cond.length > 0);
+		assume(cond[0].children.count == 2); // expr + if, no else
 
 		AST condImpl = cond[0].clone();
 		condList = condImpl.cloneTokens(true);
@@ -2432,7 +2520,7 @@ class DmdGen
 
 			if(ident in functionDeclarations)
 			{
-				writemsg(decl, "mutiple declarations for " ~ ident);
+				writemsg(decl, "multiple declarations for " ~ ident);
 			}
 			functionDeclarations[ident] ~= decl;
 
@@ -2470,7 +2558,7 @@ class DmdGen
 
 	void replaceFunctionDeclarationWithDefinition(Declaration decl, AST[] def, int indent, bool isStatic)
 	{
-		assert(def.length > 0);
+		assume(def.length > 0);
 
 		ASTIterator insertIt = decl._parent.children.find(decl);
 		string pretext = decl.start.pretext;
@@ -2488,10 +2576,12 @@ class DmdGen
 		bool sameConditional;
 		if(def.length > 1)
 		{
-			sameConditional = true;
+			// if we have multiple definitions of the method, check whether they are all in the same
+			//  conditional branch (e.g. in a series of #if/#elif/#else)
 			AST[] cond;
 			getConditionals(def[0], cond);
-			for(int d1 = 1; d1 < def.length; d1++)
+			sameConditional = (cond.length > 0);
+			for(int d1 = 1; d1 < def.length && sameConditional; d1++)
 			{
 				AST[] condOther;
 				getConditionals(def[d1], condOther);
@@ -2499,7 +2589,7 @@ class DmdGen
 					sameConditional = false;
 			}
 
-			if(sameConditional)
+			if(cond.length > 0)
 			{
 				conditional = cond[0].clone();
 				condList = conditional.cloneTokens(true);
@@ -2530,17 +2620,20 @@ class DmdGen
 				ASTIterator it = conditional.children.begin() + d + 1;
 				AST cond = conditional;
 
-				if((*it).start.type == Token.BraceL)
+				if(!it.atEnd() && (*it).start.type == Token.BraceL)
 				{
 					cond = *it;
 					if(cond.children)
 						it = cond.children.begin();
 				}
-				cond.insertChildBefore(it, impl, implList);
+				if(it.atEnd())
+					cond.appendChild(impl, implList);
+				else
+					cond.insertChildBefore(it, impl, implList);
 				if(!it.atEnd())
 					cond.removeChild(*it);
 			}
-			else if(def.length > 1)
+			else if(conditional) // && def.length > 1)
 			{
 				AST condImpl = cloneConditionalCode(impl, implList, condDef, condList);
 				if(!condList.empty())
@@ -2567,10 +2660,10 @@ class DmdGen
 	{
 		declsToRemove.length = 0;
 
-		foreach(Source src; sources)
+		foreach(currentSource; sources)
 		{
-			src._ast.verify();
-			iterateTopLevelDeclarations(src._ast, &moveMethods);
+			currentSource._ast.verify();
+			iterateTopLevelDeclarations(currentSource._ast, &moveMethods);
 		}
 
 		foreach(AST decl; declsToRemove)
@@ -2582,23 +2675,22 @@ class DmdGen
 	///////////////////////////////////////////////////////////////////////
 	void moveAllCtorInitializers()
 	{
-		foreach(Source src; sources)
+		foreach(currentSource; sources)
 		{
-			src._ast.verify();
-			iterateTopLevelDeclarations(src._ast, &moveCtorInitializers);
+			currentSource._ast.verify();
+			iterateTopLevelDeclarations(currentSource._ast, &moveCtorInitializers);
 		}
 	}
 
 	///////////////////////////////////////////////////////////////////////
 	void patchAllAST()
 	{
-		foreach(Source src; sources)
-			patchAST(src._ast);
+		foreach(currentSource; sources)
+			patchAST(currentSource._ast);
 	}
 
 	void writeFiles(int pass)
 	{
-		string hdr;
 		if(pass == 0 && options.importAllFile.length)
 		{
 			string importAllFile = options.importAllFile;
@@ -2607,20 +2699,28 @@ class DmdGen
 			
 			string srcAll = createImportAll(importAllFile, true);
 			writeDirAndFile(options.outputDir ~ "sources", srcAll);
-
-			hdr = options.codePrefix;
 		}
 
-		foreach(Source src; sources)
+		foreach(currentSource; sources)
 		{
-			if(pass == 0 && src.postpatch)
-				src.postpatch(src._tokenList);
-			src.patchRules(options.postRules);
+			if(pass == 0 && currentSource.postpatch)
+				currentSource.postpatch(currentSource._tokenList);
+			if(pass == 0)
+				currentSource.patchRules(options.postRules);
 
-			string outfile = genOutFilename(src._filename, pass);
-			string modname = createModuleName(src._filename);
-			string modtext = "module " ~ modname ~ ";\n\n";
-			src.writeTokenList(outfile, modtext ~ hdr, pass);
+			string outfile = genOutFilename(currentSource._filename, pass);
+			string hdr;
+			if(pass == 0)
+			{
+				hdr = options.codePrefix;
+				string modname = createModuleName(currentSource._filename);
+				string modtext = replace(hdr, "MODULENAME", modname);
+				if(modtext == hdr)
+					hdr = "module " ~ modname ~ ";\n\n" ~ modtext;
+				else
+					hdr = modtext;
+			}
+			currentSource.writeTokenList(outfile, hdr, pass);
 		}
 	}
 
@@ -2632,13 +2732,14 @@ class DmdGen
 		else
 		{
 			string modname = createModuleName(filename);
-			txt = "module " ~ modname ~ ";\n\n";
-			txt ~= options.codePrefix;
+			txt = replace(options.codePrefix, "MODULENAME", modname);
+			if(txt == options.codePrefix)
+				txt = "module " ~ modname ~ ";\n\n" ~ txt;
 		}
 
-		foreach(Source src; sources)
+		foreach(currentSource; sources)
 		{
-			string file = genOutFilename(src._filename, 0);
+			string file = genOutFilename(currentSource._filename, 0);
 			string mod = createModuleName(file);
 
 			if(makefile)
@@ -2684,19 +2785,31 @@ class DmdGen
 			src.rescanPP();
 		}
 		if(options.expandDefines.length)
+		{
 			expandPPdefines(src._tokenList, options.expandDefines, MixinMode.ExpandDefine);
-
+			rescanPP(src._tokenList);
+		}
 		src.patchRules(options.preRules);
 
 		src.postpatch = postpatch;
 
-		if(src._filename.length)
+		if(src._filename.length && options.writeIntermediate)
 		{
 			string outfile = genOutFilename(src._filename, 1);
 			src.writeTokenList(outfile, "", 1);
 		}
 
+		syntaxErrorMessages = "";
 		src.createAST();
+		if(syntaxErrorMessages.length)
+		{
+			string absfile = makeFilenameAbsolute(src._filename, options.inputDir);
+			syntaxErrorMessages = replace(syntaxErrorMessages, "$FILENAME$", absfile);
+			if(syntaxErrorMessages.endsWith("\n"))
+				syntaxErrorMessages = syntaxErrorMessages[0..$-1];
+			writemsg(syntaxErrorMessages);
+		}
+
 		src._ast.verify();
 
 		iterateTopLevelDeclarations(src._ast, &registerFunctionDefinition);
@@ -2717,26 +2830,17 @@ class DmdGen
 			try
 			{
 				currentfile = ti.inputFile;
-				writemsg(currentfile);
+				writemsg("parsing " ~ currentfile);
 
-				Source src = new Source(this, currentfile);
-				processSource(src, ti.prepatch, ti.postpatch);
-				sources ~= src;
+				currentSource = new Source(this);
+				currentSource.init(currentfile);
+				sources ~= currentSource;
+				processSource(currentSource, ti.prepatch, ti.postpatch);
 			}
-			catch(Exception e)
+			catch(Throwable e)
 			{
 				failed++;
-				string msg = e.toString();
-				if(startsWith(msg, currentfile))
-					throw e;
-				if(msg.indexOf("SyntaxException") > 0)
-				{
-					int pos = msg.indexOf("):");
-					if(pos > 0)
-						msg = msg[pos + 2 .. $];
-				}
-				msg = currentfile ~ ": " ~ msg;
-				writemsg(msg);
+				writeerror(e);
 				//throw new Exception(msg);
 			}
 		}
@@ -2745,13 +2849,21 @@ class DmdGen
 		if(failed > 0)
 			return -1;
 
-		moveAllMethods();
-		moveAllCtorInitializers();
-		writeFiles(2);
+		try
+		{
+			moveAllMethods();
+			moveAllCtorInitializers();
+			if(options.writeIntermediate)
+				writeFiles(2);
 
-		patchAllAST();
-		writeFiles(0);
-
+			patchAllAST();
+			writeFiles(0);
+		}
+		catch(Throwable e)
+		{
+			writeerror(e);
+			return 1;
+		}
 		writemsg(text("conversion of ", parsed, " files completed (", syntaxErrors, " syntax errors)"));
 		return 0;
 	}
@@ -2770,42 +2882,39 @@ class DmdGen
 			{
 				writemsg(currentfile);
 
-				Source src = new Source(this, currentfile);
-				processSource(src, null, null);
-				sources ~= src;
+				currentSource = new Source(this);
+				currentSource.init(currentfile);
+				sources ~= currentSource;
+				processSource(currentSource, null, null);
 			}
-			catch(Exception e)
+			catch(Throwable e)
 			{
-				string absfile = makeFilenameAbsolute(currentfile, options.inputDir);
 				failed++;
-				string msg = e.toString();
-				if(startsWith(msg, currentfile))
-					throw e;
-				if(msg.indexOf("SyntaxException") > 0)
-				{
-					int pos = msg.indexOf("):");
-					if(pos > 0)
-						msg = absfile ~ msg[pos + 2 .. $];
-					else
-						msg = absfile ~ ": " ~ msg;
-				}
-				else
-					msg = absfile ~ ": " ~ msg;
-				writemsg(msg);
-				//throw new Exception(msg);
+				writeerror(e);
 			}
 		}
 
-		writemsg(text(failed, " of ", parsed, " files failed to parse, aborting"));
 		if(failed > 0)
+		{
+			writemsg(text(failed, " of ", parsed, " files failed to parse, aborting"));
 			return -1;
+		}
 
-		moveAllMethods();
-		moveAllCtorInitializers();
-		writeFiles(2);
+		try
+		{
+			moveAllMethods();
+			moveAllCtorInitializers();
+			if(options.writeIntermediate)
+				writeFiles(2);
 
-		patchAllAST();
-		writeFiles(0);
+			patchAllAST();
+			writeFiles(0);
+		}
+		catch(Throwable e)
+		{
+			writeerror(e);
+			return 1;
+		}
 
 		writemsg(text("conversion of ", parsed, " files completed (", syntaxErrors, " syntax errors)"));
 		return 0;
@@ -2814,30 +2923,30 @@ class DmdGen
 	///////////////////////////////////////////////////////////////////////
 	string main(string text)
 	{
-		Source src = new Source(this, "", text);
+		currentSource = new Source(this);
 		try
 		{
-			processSource(src, null, null);
-			sources ~= src;
+			currentSource.init("", text);
+			sources ~= currentSource;
+			processSource(currentSource, null, null);
+
+			moveAllMethods();
+			moveAllCtorInitializers();
+			//writeFiles(2);
+
+			patchAllAST();
+			//writeFiles(0);
+
+			currentSource.patchRules(options.postRules);
+
+			string ntext = currentSource.createTokenListText(0);
+			return ntext;
 		}
 		catch(Throwable e)
 		{
-			string msg = e.toString();
-			writemsg(msg);
+			writeerror(e);
 			return null;
 		}
-
-		moveAllMethods();
-		moveAllCtorInitializers();
-		//writeFiles(2);
-
-		patchAllAST();
-		//writeFiles(0);
-
-		src.patchRules(options.postRules);
-
-		string ntext = src.createTokenListText(0);
-		return ntext;
 	}
 }
 
@@ -2849,37 +2958,42 @@ string testDmdGen(string txt, int countRemove = 1, int countNoImpl = 0, TokenLis
 
 	TokenList tokenList = scanText(txt);
 
-	PP pp = new PP;
-	pp.fixConditionalCompilation(tokenList);
-	pp.convertDefinesToEnums(tokenList);
-	rescanPP(tokenList);
-
 	if(defines)
 	{
 		expandPPdefines(tokenList, defines, MixinMode.ExpandDefine);
 		rescanPP(tokenList);
 	}
 
+	PP pp = new PP;
+	pp.fixConditionalCompilation(tokenList);
+	pp.convertDefinesToEnums(tokenList);
+	rescanPP(tokenList);
+	debug string chk1 = tokenListToString(tokenList);
+
 	AST ast = new AST(AST.Type.Module);
 	TokenIterator tokIt = tokenList.begin();
 	ast.parseModule(tokIt);
 	ast.verify();
+	debug string chk2 = tokenListToString(tokenList);
 
-	DmdGen gen = new DmdGen;
+	Cpp2DConverter gen = new Cpp2DConverter;
 	options.setup_dmd();
 	iterateTopLevelDeclarations(ast, &gen.registerFunctionDefinition);
 	iterateTopLevelDeclarations(ast, &gen.moveMethods);
-	assert(gen.countNoImplementations == countNoImpl);
+	assume(gen.countNoImplementations == countNoImpl);
+	debug string chk3 = tokenListToString(tokenList);
 
-	assert(gen.declsToRemove.length == countRemove);
+	assume(gen.declsToRemove.length == countRemove);
 	foreach(decl; gen.declsToRemove)
 		decl._parent.removeChild(decl, true);
 	ast.verify();
 
 	iterateTopLevelDeclarations(ast, &gen.moveCtorInitializers);
+	debug string chk4 = tokenListToString(tokenList);
 	ast.verify();
 
 	patchAST(ast);
+	debug string chk5 = tokenListToString(tokenList);
 	ast.verify();
 
 	string res;
@@ -3177,7 +3291,7 @@ unittest
 	    "class A : B {\n"
 	    "    this() { }\n"
 	    "    static A bar() { halt; }\n"
-	    "    enum { ABC = 1 };\n"
+	    "    enum ABC = 1;\n"
 	    "    int foo() { return 0; }\n"
 	    "    abstract void baz();\n"
 	    "};\n"
@@ -3481,7 +3595,7 @@ unittest
 unittest
 {
 	string txt = "typedef ArrayBase<struct File> Files;";
-	string exp = "alias ArrayBase!(dmd_File) Files;";
+	string exp = "alias ArrayBase!(File) Files;";
 
 	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
@@ -3540,3 +3654,72 @@ unittest
 	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
+
+unittest
+{
+	// force failure
+	string txt = "if(cond) fun(); else gun();";
+	string exp = "if(cond) fun(); else gun();";
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res != exp);
+}
+
+unittest
+{
+	string txt = 
+	    "#if EXP\n"
+	    "int a;\n"
+	    "#else\n"
+	    "int b;\n"
+	    "#endif\n"
+	    ;
+	string exp =
+	    "// #if EXP\n"
+	    "int a;\n"
+		" \n"
+	    "// #endif\n"
+		;
+
+	PP.expandConditionals["EXP"] = true;
+
+	string res = testDmdGen(txt, 0, 0, null);
+	assert(res == exp);
+
+	exp =
+	    "// not #if EXP\n"
+	    " \n"
+		"int b;\n"
+	    "// #endif\n"
+		;
+
+	PP.expandConditionals["EXP"] = false;
+
+	res = testDmdGen(txt, 0, 0, null);
+	assert(res == exp);
+
+	PP.expandConditionals = PP.expandConditionals.init;
+}
+
+unittest
+{
+	// force failure
+	string txt = 
+		"#define A 1\n"
+		"#define B A\n"
+		"#define C() B*B\n"
+		"#define SQR(a) (a)*(a)\n"
+		;
+	string exp = 
+		"enum A = 1;\n"
+		"alias B A;\n"
+		" auto C(  )() { return B*B; }\n"
+		" auto SQR(  ARG1 )(ARG1 a) { return a*a; }\n"
+		;
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+version(MAIN)
+void main() {}

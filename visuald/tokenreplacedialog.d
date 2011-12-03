@@ -397,7 +397,7 @@ private:
 		bot -= btnh + spacing;
 		_wndClose       .setRect(x + w - btnw,                  bot - btnh, btnw, btnh);
 		_wndNext        .setRect(x + w - btnw - spacing - btnw, bot - btnh, btnw, btnh);
-		bot -= btnh + spacing;
+		bot -= btnh + spacing + spacing;
 		
 		_wndLookIn      .setRect(x, bot - combh, w, combh); bot -= combh + lblspacing;
 		_wndLookInLabel .setRect(x, bot - lineh, w, lineh); bot -= lineh + spacing;

@@ -17,6 +17,7 @@ import std.array;
 import stdext.path;
 import stdext.array;
 import stdext.file;
+import stdext.string;
 
 import xml = visuald.xmlwrap;
 

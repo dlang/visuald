@@ -21,6 +21,7 @@ import vdc.ast.tmpl;
 import vdc.ast.stmt;
 import vdc.ast.decl;
 
+import stdext.util;
 import std.conv;
 
 class BuiltinProperty(T) : Symbol

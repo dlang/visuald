@@ -24,6 +24,7 @@ import vdc.ast.type;
 import vdc.ast.mod;
 
 import std.conv;
+import stdext.util;
 
 version(obsolete)
 {

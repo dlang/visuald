@@ -21,6 +21,7 @@ import std.array;
 import stdext.path;
 import stdext.array;
 import stdext.file;
+import stdext.string;
 
 import visuald.comutil;
 import visuald.hierutil;
@@ -38,7 +39,7 @@ import visuald.register;
 import visuald.intellisense;
 import visuald.searchsymbol;
 import visuald.tokenreplacedialog;
-import visuald.wizard;
+import visuald.cppwizard;
 import visuald.profiler;
 import visuald.library;
 import visuald.pkgutil;
@@ -90,7 +91,7 @@ const GUID    g_expressionEvaluator      = uuid("002a2de9-8bb6-484d-9806-7e4ad40
 const GUID    g_profileWinCLSID          = uuid("002a2de9-8bb6-484d-9807-7e4ad4084715");
 const GUID    g_tokenReplaceWinCLSID     = uuid("002a2de9-8bb6-484d-9808-7e4ad4084715");
 const GUID    g_outputPaneCLSID          = uuid("002a2de9-8bb6-484d-9809-7e4ad4084715");
-const GUID    g_WizardWinCLSID           = uuid("002a2de9-8bb6-484d-980a-7e4ad4084715");
+const GUID    g_CppWizardWinCLSID        = uuid("002a2de9-8bb6-484d-980a-7e4ad4084715");
 
 const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-9810-7e4ad4084715");
 const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-9811-7e4ad4084715");
@@ -547,7 +548,7 @@ version(none)
 		}
 		if(nCmdID == CmdConvWizard)
 		{
-			showWizardWindow(true);
+			showCppWizardWindow();
 			return S_OK;
 		}
 		if(nCmdID == CmdBuildPhobos)

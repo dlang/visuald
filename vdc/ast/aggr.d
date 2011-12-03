@@ -23,6 +23,7 @@ import vdc.ast.misc;
 import vdc.ast.type;
 
 import stdext.array;
+import stdext.util;
 
 import std.algorithm;
 import std.conv;

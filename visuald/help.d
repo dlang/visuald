@@ -168,8 +168,12 @@ string createDisambiguationPage(string word, string[] files)
 
 bool openHelp(string word)
 {
-	if(tags.length == 0)
+	static bool triedLoad;
+	if(!triedLoad) // (tags.length == 0) no longer works ;-((
+	{
+		triedLoad = true;
 		loadTags();
+	}
 
 	string url;
 	auto files = word in tags;

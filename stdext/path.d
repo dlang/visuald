@@ -40,7 +40,7 @@ string makeFilenameAbsolute(string file, string workdir)
 		if(file == ".")
 			file = workdir;
 		else
-			file = workdir ~ "\\" ~ file;
+			file = normalizeDir(workdir) ~ file;
 	}
 	return file;
 }

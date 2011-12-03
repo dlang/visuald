@@ -403,28 +403,6 @@ mixin(genClassEnum!(__traits(allMembers,vdc.parser.expr),
 					__traits(allMembers,vdc.parser.misc))("", "NT_", TOK_end_Operators));
 
 ////////////////////////////////////////////////////////////////
-T static_cast(T, S = Object)(S p)
-{
-	if(!p)
-		return null;
-	if(__ctfe)
-		return cast(T) p;
-	assert(cast(T) p);
-	void* vp = cast(void*)p;
-	return cast(T) vp;
-}
-
-////////////////////////////////////////////////////////////////
-bool isIn(T...)(T values)
-{
-	T[0] needle = values[0];
-	foreach(v; values[1..$])
-		if(v == needle)
-			return true;
-	return false;
-}
-
-////////////////////////////////////////////////////////////////
 void delegate(string s) getStringSink(ref string s)
 {
 	void stringSink(string txt)

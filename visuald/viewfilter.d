@@ -25,6 +25,7 @@ import visuald.expansionprovider;
 import visuald.dlangsvc;
 import visuald.winctrl;
 import visuald.tokenreplace;
+import visuald.cppwizard;
 import visuald.help;
 
 import vdc.lexer;
@@ -39,6 +40,7 @@ import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
 
 import stdext.array;
+import stdext.string;
 
 import std.string;
 import std.ascii;
@@ -279,6 +281,9 @@ version(tip)
 			case CmdToggleComment:
 				return CommentLines(Source.AutoComment);
 				
+			case CmdConvSelection:
+				return ConvertSelection();
+
 			default:
 				break;
 			}
@@ -457,6 +462,7 @@ version(tip)
 			case CmdShowScope:
 			case CmdShowMethodTip:
 			case CmdToggleComment:
+			case CmdConvSelection:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
@@ -805,6 +811,14 @@ version(tip)
 		return S_OK;
 	}
 	
+	//////////////////////////////////////////////////////////////
+	int ConvertSelection()
+	{
+		if(convertSelection(mView))
+			return S_OK;
+		return S_FALSE;
+	}
+
 	//////////////////////////////////////////////////////////////
 	int HandleSmartIndent(dchar ch)
 	{

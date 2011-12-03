@@ -1,0 +1,60 @@
+[Settings]
+inputType=0
+writeIntermediate=true
+outputDir=c:\tmp\d\dmd2
+inputDir=c:\tmp\d\dmd
+keywordPrefix=d_
+packagePrefix=dmd
+
+[inputFiles]
+*.h *.c
+-impcnvgen.c -idgen.c
+-libmach.c -libelf.c
+-toelfdebug.c -toir.c -iasm.c
+
+[codePrefix]
+// converted
+module MODULENAME;
+
+import all;
+
+[versionDefines]
+
+[expandConditionals]
+_WIN32=1
+DMDV2=1
+DMDV1=0
+IN_GCC=0
+TARGET_WINDOS=1
+TARGET_OSX=0
+TARGET_LINUX=0
+TARGET_NET=0
+0=0 1=1
+WINDOWS_SEH=0
+MEM_DEBUG=0
+X Y
+__DMC__=0
+STRUCTTHISREF=0
+DEBUG=1
+START
+PERFORM_UNITTEST=0
+UNA_INTERPRET
+ASSIGNEXP
+BIN_INTERPRET2
+BIN_INTERPRET
+BIN_ASSIGN_INTERPRET
+UNA_INTERPRET
+DOUBLE SINGLE
+ISTYPE ISDSYMBOL DUMP
+
+[userValueTypes]
+[userClassTypes]
+
+[replaceTokenPre]
+operator== => opEqual
+operator!= => opNotEqual
+operator bool => bool opCast
+operator* => opMul
+operator/ => opDiv
+
+[replaceTokenPost]

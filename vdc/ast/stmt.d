@@ -22,6 +22,8 @@ import vdc.interpret;
 
 import vdc.parser.engine;
 
+import stdext.util;
+
 import std.conv;
 
 //Statement:
@@ -247,7 +249,7 @@ class DeclarationStatement : Statement
 		if(nm.length == 1 && nm[0] == n)
 			return athis;
 		
-		DeclarationStatement[] decls;
+		Node[] decls;
 		foreach(m; nm)
 		{
 			auto decl = new DeclarationStatement(id, span);

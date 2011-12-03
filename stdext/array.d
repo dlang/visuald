@@ -53,3 +53,10 @@ void addunique(T)(ref T[] arr, T[] vals)
 			arr ~= val;
 }
 
+void remove(T)(ref T[] arr, T val)
+{
+	int idx = arrIndex(arr, val);
+	if(idx >= 0)
+		arr = arr[0..idx] ~ arr[idx+1..$];
+}
+
