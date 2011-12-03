@@ -772,7 +772,7 @@ int main(string[] argv)
 	}
 	else if(argv.length <= 1)
 	{
-		writeln("usage: %s [-dmd|-config file.ini] [files...]", argv[0]);
+		writeln("usage: ", argv[0], " [-dmd|-config file.ini] [files...]");
 		return -1;
 	}
 	string[] filespecs;

@@ -53,11 +53,12 @@ CMDS_SECTION g_packageCLSID
 	MENUS_END
 
 	NEWGROUPS_BEGIN
-		// NewGroup                     Parent Group                            Priority
-		g_packageCLSID:IDG_VD_SEARCH,   g_packageCLSID:IDM_VISUALD,             0x0000;
-		g_packageCLSID:IDG_VD_EDIT,     g_packageCLSID:IDM_VISUALD,             0x0001;
-		g_packageCLSID:IDG_VD_BUILD,    g_packageCLSID:IDM_VISUALD,             0x0002;
-		g_packageCLSID:IDG_VD_WEB,      g_packageCLSID:IDM_VISUALD,             0x0003;
+		// NewGroup                       Parent Group                            Priority
+		g_packageCLSID:IDG_VD_SEARCH,     g_packageCLSID:IDM_VISUALD,             0x0000;
+		g_packageCLSID:IDG_VD_EDIT,       g_packageCLSID:IDM_VISUALD,             0x0001;
+		g_packageCLSID:IDG_VD_BUILD,      g_packageCLSID:IDM_VISUALD,             0x0002;
+		g_packageCLSID:IDG_VD_CONVERSION, g_packageCLSID:IDM_VISUALD,             0x0003;
+		g_packageCLSID:IDG_VD_WEB,        g_packageCLSID:IDM_VISUALD,             0x0004;
 	NEWGROUPS_END
 
     BUTTONS_BEGIN
