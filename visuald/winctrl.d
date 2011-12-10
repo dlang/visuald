@@ -10,6 +10,7 @@ module visuald.winctrl;
 
 import visuald.windows;
 import std.utf;
+import std.string;
 import std.exception;
 import sdk.port.base;
 import sdk.win32.prsht;
@@ -19,22 +20,36 @@ private Widget[Widget] createdWindows; // collection of all windows with HWND to
 private HINSTANCE hInst;
 private HFONT winFont;
 
+LOGFONTW dialogLogFont = { lfHeight : -9, lfCharSet : 1, lfFaceName : "Segoe UI" };
+
 HFONT getDialogFont()
 {
 	if(winFont)
 		return winFont;
+	return newDialogFont();
+}
+
+int GetDesktopDPI()
+{
+	HWND hwnd = GetDesktopWindow();
+	HDC hDDC = GetDC(hwnd);
+	int dpi = GetDeviceCaps(hDDC, LOGPIXELSY);
+	ReleaseDC(hwnd, hDDC);
+	return dpi;
+}
+
+HFONT newDialogFont()
+{
 	// GetStockObject(DEFAULT_GUI_FONT);
+
+	//int nHeight = -MulDiv(dialogFontSize, GetDesktopDPI(), 72);
 
 	//winFont = CreateFontA(int cHeight, int cWidth, int cEscapement, int cOrientation, int cWeight, DWORD bItalic,
 	//                      DWORD bUnderline, DWORD bStrikeOut, DWORD iCharSet, DWORD iOutPrecision, DWORD iClipPrecision,
 	//                      DWORD iQuality, DWORD iPitchAndFamily, LPCSTR pszFaceName);
 
-	//Logical units are device dependent pixels, so this will create a handle to a logical font that is 48 pixels in height.
-	//The width, when set to 0, will cause the font mapper to choose the closest matching value.
-	//The font face name will be MS Sans serif.
-
-	winFont = CreateFontA(16,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_OUTLINE_PRECIS,
-	                      CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY, VARIABLE_PITCH, "Segoe UI");
+	winFont = CreateFontIndirectW(&dialogLogFont);
+	assert(winFont);
 	return winFont;
 }
 

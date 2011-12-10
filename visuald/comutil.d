@@ -674,8 +674,8 @@ wchar* string2OLESTR(string s)
 	wstring ws = toUTF16(s);
 	int sz = (ws.length + 1) * 2;
 	wchar* p = cast(wchar*) CoTaskMemAlloc(sz);
-	p[0 .. s.length] = ws[0 .. $];
-	p[s.length] = 0;
+	p[0 .. ws.length] = ws[0 .. $];
+	p[ws.length] = 0;
 	return p;
 }
 
@@ -687,6 +687,22 @@ string detachOLESTR(wchar* oleStr)
 	string s = to_string(oleStr);
 	CoTaskMemFree(oleStr);
 	return s;
+}
+
+unittest
+{
+	// chinese for utf-8
+	string str2 = "\xe8\xbf\x99\xe6\x98\xaf\xe4\xb8\xad\xe6\x96\x87";
+	wchar* olestr2 = string2OLESTR(str2);
+	string cmpstr2 = detachOLESTR(olestr2);
+	assert(str2 == cmpstr2);
+
+	// chinese for Ansi
+	wstring str1 = "\ud5e2\ucac7\ud6d0\ucec4"w;
+	wchar* olestr1 = wstring2OLESTR(str1);
+	string cmpstr1 = detachOLESTR(olestr1);
+	wstring wcmpstr1 = toUTF16(cmpstr1);
+	assert(str1 == wcmpstr1);
 }
 
 wchar* _toUTF16z(string s)

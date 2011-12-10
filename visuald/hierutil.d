@@ -23,6 +23,7 @@ import stdext.string;
 import sdk.port.vsi;
 import sdk.vsi.vsshell;
 import sdk.vsi.objext;
+import sdk.vsi.uilocale;
 import dte = sdk.vsi.dte80a;
 import dte2 = sdk.vsi.dte80;
 import visuald.comutil;
@@ -35,6 +36,7 @@ import visuald.chiernode;
 import visuald.chiercontainer;
 import visuald.hierarchy;
 import visuald.config;
+import visuald.winctrl;
 
 const uint _MAX_PATH = 260;
 
@@ -331,6 +333,127 @@ dte2.DTE2 GetDTE()
 		
 	dte2.DTE2 spvsDTE = qi_cast!(dte2.DTE2)(_dte);
 	return spvsDTE;
+}
+
+string getStringProperty(dte.Properties props, string propName, string def = null)
+{
+	VARIANT index;
+	dte.Property prop;
+	index.vt = VT_BSTR;
+	index.bstrVal = allocBSTR(propName);
+	HRESULT hr = props.Item(index, &prop);
+	detachBSTR(index.bstrVal);
+	if(FAILED(hr) || !prop)
+		return def;
+	scope(exit) release(prop);
+
+	VARIANT var;
+	hr = prop.Value(&var);
+	if(var.vt != VT_BSTR)
+		return def;
+	if(FAILED(hr))
+		return def;
+	return detachBSTR(var.bstrVal);
+}
+
+int getIntProperty(dte.Properties props, string propName, int def = -1)
+{
+	VARIANT index;
+	dte.Property prop;
+	index.vt = VT_BSTR;
+	index.bstrVal = allocBSTR(propName);
+	HRESULT hr = props.Item(index, &prop);
+	detachBSTR(index.bstrVal);
+	if(FAILED(hr) || !prop)
+		return def;
+	scope(exit) release(prop);
+
+	VARIANT var;
+	hr = prop.Value(&var);
+	if(FAILED(hr))
+		return def;
+	if(var.vt == VT_I2 || var.vt == VT_UI2)
+		return var.iVal;
+	if(var.vt == VT_INT || var.vt == VT_I4 || var.vt == VT_UI4 || var.vt == VT_UINT)
+		return var.intVal;
+	return def;
+}
+
+string getEnvironmentFont(out int fontSize, out int charSet)
+{
+	dte._DTE _dte = queryService!(dte._DTE);
+	if(!_dte)
+		return null;
+	scope(exit) release(_dte);
+
+	dte.Properties props;
+	BSTR bprop = allocBSTR("FontsAndColors");
+	BSTR bpage = allocBSTR("Dialogs and Tool Windows");
+	HRESULT hr = _dte.Properties(bprop, bpage, &props);
+	detachBSTR(bprop);
+	detachBSTR(bpage);
+	if(FAILED(hr) || !props)
+		return null;
+	scope(exit) release(props);
+
+	string family = getStringProperty(props, "FontFamily");
+	fontSize = getIntProperty(props, "FontSize", 10);
+	charSet = getIntProperty(props, "FontCharacterSet", 1);
+
+/+
+	IDispatch obj;
+	hr = prop.Object(&obj);
+	if(FAILED(hr) || !obj)
+		return null;
+	scope(exit) release(obj);
+
+	dte.FontsAndColorsItems faci = qi_cast!(dte.FontsAndColorsItems)(obj);
+	if(!faci)
+		return null;
+	scope(exit) release(faci);
+
+	dte.ColorableItems ci;
+	index.bstrVal = allocBSTR("Plain Text");
+	hr = faci.Item(index, &ci);
+	detachBSTR(index.bstrVal);
+	if(FAILED(hr) || !ci)
+		return null;
+
+	BSTR wname;
+	ci.Name(&wname);
+	string name = detachBSTR(wname);
+
+	dte._FontsAndColors fac = qi_cast!(dte._FontsAndColors)(ci);
+	fac = release(fac);
+
+	fac = qi_cast!(dte._FontsAndColors)(faci);
+	fac = release(fac);
++/
+	return family;
+}
+
+void updateEnvironmentFont()
+{
+	IUIHostLocale locale = queryService!(IUIHostLocale);
+	if(locale)
+	{
+		scope(exit) release(locale);
+		if(SUCCEEDED(locale.GetDialogFont(&dialogLogFont)))
+			return;
+	}
+
+	int size;
+	int charset;
+	string font = getEnvironmentFont(size, charset);
+	if(font.length)
+	{
+		HDC hDDC = GetDC(GetDesktopWindow());
+		int nHeight = -MulDiv(size, GetDeviceCaps(hDDC, LOGPIXELSY), 72);
+
+		dialogLogFont.lfHeight = nHeight;
+		dialogLogFont.lfCharSet = cast(ubyte)charset;
+		dialogLogFont.lfFaceName[] = to!wstring(font)[];
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////

@@ -360,3 +360,8 @@ Version history
   * added C++ to D conversion wizard
   * added installation for Visual Studio 11
   * tweaked dialogs to better integrate with VS
+
+unreleased Version 0.3.30
+
+  * fixed utf8 to OLE string conversion, that could get in the way when using non ascii file names
+  * property pages now adjust its font abd size to the IDE environment

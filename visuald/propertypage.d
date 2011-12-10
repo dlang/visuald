@@ -27,16 +27,17 @@ import visuald.dllmain;
 import visuald.config;
 import visuald.winctrl;
 import visuald.hierarchy;
+import visuald.hierutil;
 
 abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage, IVsPropertyPage2
 {
-	const int kPageWidth = 470;
-	const int kPageHeight = 210;
-	const int kMargin = 4;
-	const int kLabelWidth = 120;
-	const int kTextHeight = 20;
-	const int kLineHeight = 23;
-	const int kLineSpacing = 2;
+	/*const*/ int kPageWidth = 370;
+	/*const*/ int kPageHeight = 210;
+	/*const*/ int kMargin = 4;
+	/*const*/ int kLabelWidth = 120;
+	/*const*/ int kTextHeight = 20;
+	/*const*/ int kLineHeight = 23;
+	/*const*/ int kLineSpacing = 2;
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
@@ -56,6 +57,12 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		foreach(obj; mObjects)
 			release(obj);
 		mObjects.length = 0;
+
+		if(mDlgFont)
+		{
+			DeleteObject(mDlgFont);
+			mDlgFont = null;
+		}
 	}
 
 	override int SetPageSite( 
@@ -84,6 +91,24 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		/* [in] */ in RECT *pRect,
 		/* [in] */ in BOOL bModal)
 	{
+		if(pRect)
+			logCall("_Activate(" ~ to!string(*pRect) ~ ")");
+		RECT pr;
+		GetWindowRect(win.hwnd, &pr);
+		logCall("  parent.rect = " ~ to!string(pr) ~ "");
+
+		if(HWND phwnd = GetParent(win.hwnd))
+		{
+			GetWindowRect(phwnd, &pr);
+			logCall("  parent.parent.rect = " ~ to!string(pr) ~ "");
+		}
+		if(pRect)
+			kPageWidth = pRect.right - pRect.left;
+
+		updateEnvironmentFont();
+		if(!mDlgFont)
+			mDlgFont = newDialogFont();
+
 		mWindow = win;
 		mCanvas = new Window(mWindow);
 		DWORD color = GetSysColor(COLOR_BTNFACE);
@@ -125,13 +150,42 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		//return returnError(E_NOTIMPL);
 	}
 
+	void calcSizes()
+	{
+		updateEnvironmentFont();
+		kMargin = 4;
+
+		if(!mDlgFont)
+			mDlgFont = newDialogFont();
+		HWND hwnd = GetDesktopWindow();
+		HDC dc = GetDC(hwnd);
+		SelectObject(dc, mDlgFont);
+		TEXTMETRIC tm;
+		GetTextMetrics(dc, &tm);
+		ReleaseDC(hwnd, dc);
+
+		int fHeight = tm.tmHeight;
+		int fWidth = tm.tmAveCharWidth;
+
+		kPageWidth = fWidth * 70 + 2 * kMargin;
+		kLabelWidth = fWidth * 20;
+		mUnindentCheckBox = kLabelWidth;
+
+		kLineSpacing = 2;
+		kTextHeight = fHeight + 4;
+		kLineHeight = kTextHeight + kLineSpacing + 1;
+		kPageHeight = kLineHeight * 10 + 2 * kMargin;
+	}
+
 	override int GetPageInfo( 
 		/* [out] */ PROPPAGEINFO *pPageInfo)
 	{
-//		mixin(LogCallMix);
+		mixin(LogCallMix);
 
 		if(pPageInfo.cb < PROPPAGEINFO.sizeof)
 			return E_INVALIDARG;
+
+		calcSizes();
 		pPageInfo.cb = PROPPAGEINFO.sizeof;
 		pPageInfo.pszTitle = string2OLESTR("Title");
 		pPageInfo.size = visuald.comutil.SIZE(kPageWidth, kPageHeight);
@@ -309,6 +363,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	abstract string GetCategoryName();
 	abstract string GetPageName();
 
+	HFONT mDlgFont;
 	IUnknown[] mObjects;
 	IPropertyPageSite mSite;
 	Window mWindow;
@@ -316,7 +371,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	bool mEnableUpdateDirty;
 	int mLines;
 	int mLinesPerMultiLine = 4;
-	int mUnindentCheckBox = kLabelWidth; //16;
+	int mUnindentCheckBox = 120; //16;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -454,6 +509,7 @@ class GlobalPropertyPage : PropertyPage
 
 	void SetWindowSize(int x, int y, int w, int h)
 	{
+		mixin(LogCallMix);
 		if(mCanvas)
 			mCanvas.setRect(x, y, w, h);
 	}

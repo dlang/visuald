@@ -333,12 +333,6 @@ class Package : DisposingComObject,
 		   *rguidPage != g_ColorizerPropertyPage)
 			return E_NOTIMPL;
 
-		*ppage = VSPROPSHEETPAGE.init;
-		ppage.dwSize = VSPROPSHEETPAGE.sizeof;
-		auto win = new Window(null, WS_OVERLAPPED, "Visual D Settings");
-		win.setRect(0, 0, 400, 300);
-		ppage.hwndDlg = win.hwnd;
-
 		GlobalPropertyPage tpp;
 		if(*rguidPage == g_ToolsPropertyPage)
 			tpp = new ToolsPropertyPage(mOptions);
@@ -346,9 +340,20 @@ class Package : DisposingComObject,
 			tpp = new ToolsProperty2Page(mOptions);
 		else
 			tpp = new ColorizerPropertyPage(mOptions);
-			
-		tpp._Activate(win, null, false);
-		tpp.SetWindowSize(0, 0, 400, 300);
+		
+		PROPPAGEINFO pageInfo;
+		pageInfo.cb = PROPPAGEINFO.sizeof;
+		tpp.GetPageInfo(&pageInfo);
+		*ppage = VSPROPSHEETPAGE.init;
+		ppage.dwSize = VSPROPSHEETPAGE.sizeof;
+		auto win = new Window(null, WS_OVERLAPPED, "Visual D Settings");
+		win.setRect(0, 0, pageInfo.size.cx, pageInfo.size.cy);
+		ppage.hwndDlg = win.hwnd;
+
+		RECT r;
+		GetWindowRect(win.hwnd, &r);
+		tpp._Activate(win, &r, false);
+		tpp.SetWindowSize(0, 0, pageInfo.size.cx, pageInfo.size.cy);
 		addref(tpp);
 
 		win.destroyDelegate = delegate (Widget)

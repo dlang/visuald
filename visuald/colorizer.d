@@ -80,6 +80,7 @@ int[wstring] parseUserTypes(string spec)
 {
 	int color = TokenColor.UserType;
 	int[wstring] types;
+	types["__ctfe"] = TokenColor.Keyword;
 	foreach(t; tokenizeArgs(spec))
 	{
 		switch(t)
