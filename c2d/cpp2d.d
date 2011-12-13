@@ -1675,6 +1675,9 @@ void patchAbstractMethods(Declaration decl)
 int getArrayDimension(Expression var)
 {
 	int dim = 0;
+	while(var && var._type == AST.Type.UnaryExp) // skip pointer declarations
+		var = cast(Expression) var.children[0];
+
 	while(var && var._type == AST.Type.PostExp && var._toktype == Token.BracketL)
 	{
 		dim++;
@@ -1744,6 +1747,7 @@ void patchArrayInit(Expression init, int dim, bool isBasic)
 		string close = !isBasic ? " }," : " ],";
 
 		// struct/array initializer expected, but none found, so we assume one intializer per line
+		bool isOpen = false;
 		for(ASTIterator it = init.children.begin(); !it.atEnd(); ++it)
 		{
 			Token tok = *it.start;
@@ -1752,9 +1756,11 @@ void patchArrayInit(Expression init, int dim, bool isBasic)
 				if(it != init.children.begin())
 					tok.pretext = close ~ tok.pretext;
 				tok.pretext ~= open;
+				isOpen = true;
 			}
 		}
-		init.end[-1].pretext = close ~ init.end[-1].pretext;
+		if(isOpen)
+			init.end[-1].pretext = close ~ init.end[-1].pretext;
 	}
 }
 

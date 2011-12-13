@@ -405,6 +405,22 @@ version(tip)
 		CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet();
 		Declarations decl = new Declarations;
 		decl.StartExpansions(mView, mCodeWinMgr.mSource);
+		if(!mCodeWinMgr.mSource.IsCompletorActive())
+		{
+			while(decl.GetCount() == 1 && decl.MoreExpansions(mView, mCodeWinMgr.mSource)) {}
+			if(decl.GetCount() == 1)
+			{
+				int line, idx, startIdx, endIdx;
+				mView.GetCaretPos(&line, &idx);
+				if(mCodeWinMgr.mSource.GetWordExtent(line, idx, WORDEXT_FINDTOKEN, startIdx, endIdx))
+				{
+					wstring txt = to!wstring(decl.GetName(0));
+					TextSpan changedSpan;
+					mCodeWinMgr.mSource.mBuffer.ReplaceLines(line, startIdx, line, endIdx, txt.ptr, txt.length, &changedSpan);
+					return;
+				}
+			}
+		}
 		cs.Init(mView, decl, false);
 	}
 	void moreCompletions()

@@ -29,6 +29,30 @@ import visuald.winctrl;
 import visuald.hierarchy;
 import visuald.hierutil;
 
+class PropertyWindow : Window
+{
+	this(Widget parent, uint style, string title, PropertyPage page)
+	{
+		mPropertyPage = page;
+		super(parent, style, title);
+	}
+
+	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	{
+		switch (uMsg) {
+			case WM_SIZE:
+				int w = LOWORD(lParam);
+				mPropertyPage.updateSizes(w);
+				break;
+			default:
+				break;
+		}
+		return super.WindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
+	PropertyPage mPropertyPage;
+}
+
 abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage, IVsPropertyPage2
 {
 	/*const*/ int kPageWidth = 370;
@@ -38,6 +62,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	/*const*/ int kTextHeight = 20;
 	/*const*/ int kLineHeight = 23;
 	/*const*/ int kLineSpacing = 2;
+	/*const*/ int kNeededLines = 10;
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
@@ -57,6 +82,8 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		foreach(obj; mObjects)
 			release(obj);
 		mObjects.length = 0;
+
+		mResizableWidgets = mResizableWidgets.init;
 
 		if(mDlgFont)
 		{
@@ -94,7 +121,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		if(pRect)
 			logCall("_Activate(" ~ to!string(*pRect) ~ ")");
 		RECT pr;
-		GetWindowRect(win.hwnd, &pr);
+		win.GetWindowRect(&pr);
 		logCall("  parent.rect = " ~ to!string(pr) ~ "");
 
 		if(HWND phwnd = GetParent(win.hwnd))
@@ -114,7 +141,8 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		DWORD color = GetSysColor(COLOR_BTNFACE);
 		mCanvas.setBackground(color);
 		mCanvas.setRect(kMargin, kMargin, kPageWidth - 2 * kMargin, kPageHeight - 2 * kMargin);
-		
+		mResizableWidgets ~= mCanvas;
+
 		// avoid closing canvas (but not dialog) if pressing esc in MultiLineEdit controls
 		//mCanvas.cancelCloseDelegate ~= delegate bool(Widget c) { return true; };
 		
@@ -150,7 +178,21 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		//return returnError(E_NOTIMPL);
 	}
 
-	void calcSizes()
+	void updateSizes(int width)
+	{
+		foreach(w; mResizableWidgets)
+		{
+			RECT r;
+			if(w && w.hwnd)
+			{
+				w.GetWindowRect(&r);
+				r.right = width - kMargin;
+				w.SetWindowPos(null, &r, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+			}
+		}
+	}
+
+	void calcMetric()
 	{
 		updateEnvironmentFont();
 		kMargin = 4;
@@ -167,14 +209,14 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		int fHeight = tm.tmHeight;
 		int fWidth = tm.tmAveCharWidth;
 
-		kPageWidth = fWidth * 70 + 2 * kMargin;
-		kLabelWidth = fWidth * 20;
+		kPageWidth = fWidth * 75 + 2 * kMargin;
+		kLabelWidth = fWidth * 22;
 		mUnindentCheckBox = kLabelWidth;
 
 		kLineSpacing = 2;
 		kTextHeight = fHeight + 4;
 		kLineHeight = kTextHeight + kLineSpacing + 1;
-		kPageHeight = kLineHeight * 10 + 2 * kMargin;
+		kPageHeight = kLineHeight * kNeededLines + 2 * kMargin;
 	}
 
 	override int GetPageInfo( 
@@ -185,7 +227,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		if(pPageInfo.cb < PROPPAGEINFO.sizeof)
 			return E_INVALIDARG;
 
-		calcSizes();
+		calcMetric();
 		pPageInfo.cb = PROPPAGEINFO.sizeof;
 		pPageInfo.pszTitle = string2OLESTR("Title");
 		pPageInfo.size = visuald.comutil.SIZE(kPageWidth, kPageHeight);
@@ -341,6 +383,8 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		if(w)
 			w.setRect(x, y, kPageWidth - 2*kMargin - kLabelWidth, h); 
 		mLines += lines;
+		if(w)
+			mResizableWidgets ~= w;
 	}
 
 	int changeOption(V)(V val, ref V optval, ref V refval)
@@ -363,6 +407,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	abstract string GetCategoryName();
 	abstract string GetPageName();
 
+	Widget[] mResizableWidgets;
 	HFONT mDlgFont;
 	IUnknown[] mObjects;
 	IPropertyPageSite mSite;
@@ -1179,6 +1224,7 @@ class ToolsPropertyPage : GlobalPropertyPage
 
 	this(GlobalOptions options)
 	{
+		kNeededLines = 13;
 		super(options);
 	}
 

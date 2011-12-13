@@ -577,7 +577,10 @@ private:
 
 	string _demangle(string txt, bool fullDeco)
 	{
-		uint p = 0;
+		static if(__traits(compiles, (){uint p; decodeDmdString("", p);}))
+			uint p = 0;
+		else
+			int p = 0; // until dmd 2.056
 		version(all) // debug // allow std 2.052 in debug builds
 			enum hasTypeArg = __traits(compiles, { demangle("",true); });
 		else // ensure patched runtime in release

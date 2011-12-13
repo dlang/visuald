@@ -192,7 +192,8 @@ class Declarations
 
 		string txt = toUTF8(text[info[t].EndIndex .. idx]);
 		txt = strip(txt);
-		return ImportExpansions(txt, src.GetFileName());
+		ImportExpansions(txt, src.GetFileName());
+		return true;
 	}
 
 	///////////////////////////////////////////////////////////////
@@ -279,7 +280,7 @@ class Declarations
 		case kStateInit:
 			if(ImportExpansions(textView, src))
 			{
-				mExpansionState = kStateImport;
+				mExpansionState = kStateSymbols; // do not try other symbols but file imports
 				return true;
 			}
 			goto case;

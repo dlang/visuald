@@ -346,12 +346,12 @@ class Package : DisposingComObject,
 		tpp.GetPageInfo(&pageInfo);
 		*ppage = VSPROPSHEETPAGE.init;
 		ppage.dwSize = VSPROPSHEETPAGE.sizeof;
-		auto win = new Window(null, WS_OVERLAPPED, "Visual D Settings");
+		auto win = new PropertyWindow(null, WS_OVERLAPPED, "Visual D Settings", tpp);
 		win.setRect(0, 0, pageInfo.size.cx, pageInfo.size.cy);
 		ppage.hwndDlg = win.hwnd;
 
 		RECT r;
-		GetWindowRect(win.hwnd, &r);
+		win.GetWindowRect(&r);
 		tpp._Activate(win, &r, false);
 		tpp.SetWindowSize(0, 0, pageInfo.size.cx, pageInfo.size.cy);
 		addref(tpp);

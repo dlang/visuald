@@ -639,7 +639,11 @@ public:
 string demangleText(string ln)
 {
 	string txt;
-	for (uint i = 0; i < ln.length; )
+	static if(__traits(compiles, (){uint p; decodeDmdString("", p);}))
+		uint i;
+	else
+		int i; // until dmd 2.056
+	for (i = 0; i < ln.length; )
 	{
 		char ch = ln[i]; // compressed symbols are NOT utf8!
 		if(isAlphaNum(ch) || ch == '_')
