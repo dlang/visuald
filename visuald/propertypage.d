@@ -1347,6 +1347,8 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mPasteIndent.setChecked(opts.pasteIndent);
 		mSemantics.setChecked(opts.projectSemantics);
 		mUserTypes.setText(opts.UserTypesSpec);
+
+		mSemantics.setEnabled(false);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)

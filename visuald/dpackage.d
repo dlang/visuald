@@ -818,7 +818,7 @@ class GlobalOptions
 			demangleError    = keyToolOpts.GetDWORD("demangleError", 1) != 0;
 			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
-			projectSemantics = keyToolOpts.GetDWORD("projectSemantics", 1) != 0;
+			projectSemantics = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
 			doSemantics      = keyToolOpts.GetDWORD("doSemantics", 1) != 0;
 			pasteIndent      = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 

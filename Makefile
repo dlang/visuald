@@ -14,7 +14,7 @@
 # paths on your system
 
 DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
-# DMD2 = c:\l\dmd-2.056\windows\bin\dmd.exe
+# DMD2 = c:\l\dmd2\windows\bin\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 # avoid trailing '\', it ruins the command line
@@ -106,7 +106,7 @@ cpp2d_exe:
 ##################################
 # create installer
 
-install: dte_idl vsi2d package
+install: dte_idl vsi2d package cpp2d_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb
 
