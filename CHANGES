@@ -368,4 +368,7 @@ unreleased Version 0.3.30
   * __ctfe is now highlighted as a keyword
   * completion automatically inserts now if there is only one candidate
   * completion of import modules now restricted to files, not symbols
-  
+  * colorizer now asks the parser whether "is" and "in" are used as operators
+  * debugger data tooltip now grabs ident1.ident2 expressions when hovering ident2
+  * added checkbox for options -gs and -property to project configuration
+  * added new color to highlight predefined versions

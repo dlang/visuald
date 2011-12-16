@@ -27,6 +27,8 @@ import visuald.dlangsvc;
 import visuald.config;
 
 import vdc.lexer;
+import vdc.semantic;
+import vdc.ast.node;
 
 import stdext.string;
 
@@ -52,6 +54,7 @@ enum TokenColor
 	AsmRegister,
 	AsmMnemonic,
 	UserType,
+	Version,
 
 	DisabledKeyword,
 	DisabledComment,
@@ -63,6 +66,7 @@ enum TokenColor
 	DisabledAsmRegister,
 	DisabledAsmMnemonic,
 	DisabledUserType,
+	DisabledVersion,
 
 	StringKeyword,
 	StringComment,
@@ -74,6 +78,7 @@ enum TokenColor
 	StringAsmRegister,
 	StringAsmMnemonic,
 	StringUserType,
+	StringVersion,
 }
 
 int[wstring] parseUserTypes(string spec)
@@ -96,6 +101,7 @@ int[wstring] parseUserTypes(string spec)
 			case "[Register]":	 color = TokenColor.AsmRegister;break;
 			case "[Mnemonic]":	 color = TokenColor.AsmMnemonic;break;
 			case "[Type]":		 color = TokenColor.UserType;	break;
+			case "[Version]":	 color = TokenColor.Version;	break;
 
 			default: types[to!wstring(t)] = color; break;
 		}
@@ -293,11 +299,11 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		uint pos = 0;
 		bool inTokenString = (Lexer.tokenStringLevel(state) > 0);
 		
+		Node ast = mSource.mAST;
 		while(pos < iLength)
 		{
 			uint prevpos = pos;
 			int type = dLex.scan(state, text, pos);
-			
 			bool nowInTokenString = (Lexer.tokenStringLevel(state) > 0);
 			wstring tok = text[prevpos..pos];
 
@@ -306,7 +312,16 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				span = ParserSpan(prevpos, iLine, 0, iLine + 1);
 			else
 				span = ParserSpan(prevpos, iLine, pos, iLine);
-			
+
+			if(ast && tok[0] == 'i')
+				if(tok == "in" || tok == "is")
+				{
+					if(isBinaryOperator(ast, iLine + 1, prevpos, iLine + 1, pos))
+						type = TokenColor.Operator;
+					else
+						type = TokenColor.Keyword;
+				}
+
 			if(mColorizeVersions)
 			{
 				if(Lexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
@@ -539,32 +554,20 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return true;
 	}
 
+	__gshared int[wstring] predefinedVersions;
+	shared static this()
+	{
+		foreach(v, p; vdc.semantic.Options.sPredefinedVersions)
+			predefinedVersions[to!wstring(v)] = p;
+	}
+
 	int versionPredefined(wstring ident)
 	{
-		switch(ident)
-		{
-			case "DigitalMars":     return 1;
-			case "X86":             return 1;
-			case "X86_64":          return -1;
-			case "Windows":         return 1;
-			case "Win32":           return 1;
-			case "Win64":           return -1;
-			case "linux":           return -1;
-			case "Posix":           return -1;
-			case "LittleEndian":    return 1;
-			case "BigEndian":       return -1;
-			case "D_Coverage":      return -1;
-			case "D_Ddoc":          return -1;
-			case "D_InlineAsm_X86": return 1;
-			case "D_InlineAsm_X86_64": return -1;
-			case "D_LP64":          return -1;
-			case "D_PIC":           return -1;
-			case "unittest":        return mConfigUnittest ? 1 : -1;
-			case "D_Version2":      return 1;
-			case "none":            return -1;
-			case "all":             return 1;
-			default:                return 0;
-		}
+		if(ident == "unittest")
+			return mConfigUnittest ? 1 : -1;
+		if(int*p = ident in predefinedVersions)
+			return *p;
+		return 0;
 	}
 	
 	bool isVersionEnabled(int line, wstring ident, int debugOrVersion)
@@ -615,6 +618,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.AsmRegister: return TokenColor.DisabledAsmRegister;
 			case TokenColor.AsmMnemonic: return TokenColor.DisabledAsmMnemonic;
 			case TokenColor.UserType:    return TokenColor.DisabledUserType;
+			case TokenColor.Version:     return TokenColor.DisabledVersion;
 			default: break;
 		}
 		return type;
@@ -634,6 +638,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.AsmRegister: return TokenColor.StringAsmRegister;
 			case TokenColor.AsmMnemonic: return TokenColor.StringAsmMnemonic;
 			case TokenColor.UserType:    return TokenColor.StringUserType;
+			case TokenColor.Version:     return TokenColor.StringVersion;
 			default: break;
 		}
 		return type;
@@ -851,6 +856,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			ntype = disabledColorType(ntype);
 			if(text == "asm")
 				parseState = VersionParseState.AsmParsedDisabled;
+			else if(versionPredefined(text) && isVersionCondition(span))
+				ntype = TokenColor.DisabledVersion;
 			break;
 			
 		case VersionParseState.IdleEnabled:
@@ -893,8 +900,10 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		case VersionParseState.AssignParsed:
 			if(dLex.isIdentifier(text))
 			{
+				if(debugOrVersion == 0 && versionPredefined(text))
+					ntype = TokenColor.Version;
 				if(!defineVersion(iLine, text, debugOrVersion, versionsChanged))
-					ntype |= 5 << 14; // red ~~~~
+					ntype |= 5 << 14; // red ~~~~ on VS2008
 			}
 			else if(dLex.isInteger(text))
 				defineVersion(iLine, to!int(text), debugOrVersion, versionsChanged);
@@ -904,6 +913,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		case VersionParseState.ParenLParsed:
 			if(dLex.isIdentifier(text) || dLex.isInteger(text))
 			{
+				if(debugOrVersion == 0 && versionPredefined(text))
+					ntype = TokenColor.Version;
+
 				if(isVersionEnabled(iLine, text, debugOrVersion))
 					parseState = VersionParseState.IdentNumberParsedEnable;
 				else
@@ -1052,6 +1064,27 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return true;
 	}
 	
+	bool isVersionCondition(ref ParserSpan vspan)
+	{
+		mParser.fixExtend();
+		LocationBase!wstring loc = mParser.findLocation(vspan.iStartLine, vspan.iStartIndex, true);
+		LocationBase!wstring child = null;
+		while(loc)
+		{
+			if(VersionStatement!wstring verloc = cast(VersionStatement!wstring) loc)
+			{
+				if(verloc.children.length > 0)
+				{
+					if(spanContains(verloc.children[0].span, vspan.iStartLine, vspan.iStartIndex))
+						return true;
+				}
+			}
+			child = loc;
+			loc = loc.parent;
+		}
+		return false;
+	}
+
 	//////////////////////////////////////////////////////////////
 	void SaveLineState(int iLine, int state)
 	{

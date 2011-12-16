@@ -1166,8 +1166,25 @@ else
 		HRESULT resFwd = TIP_S_ONLYIFNOMARKER; // enable and prefer TextMarker tooltips
 		
 		if(pSpan.iStartLine == pSpan.iEndLine && pSpan.iStartIndex == pSpan.iEndIndex)
+		{
 			if(HRESULT hr = GetWordExtent(pSpan.iStartLine, pSpan.iStartIndex, WORDEXT_CURRENT, pSpan))
 				return resFwd;
+
+			wstring txt = mCodeWinMgr.mSource.GetText(pSpan.iStartLine, 0, pSpan.iStartLine, -1);
+		L_again:
+			int idx = pSpan.iStartIndex - 1;
+			while(idx >= 0 && isWhite(txt[idx]))
+				idx--;
+			if(idx >= 0 && txt[idx] == '.')
+			{
+				while(idx > 0 && isWhite(txt[idx - 1]))
+					idx--;
+				while(idx > 0 && dLex.isIdentifierCharOrDigit(txt[idx - 1]))
+					idx--;
+				pSpan.iStartIndex = idx;
+				goto L_again;
+			}
+		}
 		
 		// when implementing IVsTextViewFilter, VS2010 will no longer ask the debugger
 		//  for tooltips, so we have to do it ourselves

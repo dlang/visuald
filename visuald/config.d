@@ -114,6 +114,8 @@ class ProjectOptions
 	bool preservePaths;	// !=0 means don't strip path from source file
 	bool warnings;		// enable warnings
 	bool infowarnings;	// enable informational warnings
+	bool checkProperty;	// enforce property syntax
+	bool genStackFrame;	// always generate stack frame
 	bool pic;		// generate position-independent-code for shared libs
 	bool cov;		// generate code coverage data
 	bool nofloat;		// code should not pull in floating point support
@@ -258,6 +260,10 @@ class ProjectOptions
 			cmd ~= " -w";
 		if(infowarnings)
 			cmd ~= " -wi";
+		if(checkProperty)
+			cmd ~= " -property";
+		if(genStackFrame)
+			cmd ~= " -gs";
 		if(cov)
 			cmd ~= " -cov";
 		if(nofloat)
@@ -462,6 +468,8 @@ class ProjectOptions
 		elem ~= new xml.Element("preservePaths", toElem(preservePaths));
 		elem ~= new xml.Element("warnings", toElem(warnings));
 		elem ~= new xml.Element("infowarnings", toElem(infowarnings));
+		elem ~= new xml.Element("checkProperty", toElem(checkProperty));
+		elem ~= new xml.Element("genStackFrame", toElem(genStackFrame));
 		elem ~= new xml.Element("pic", toElem(pic));
 		elem ~= new xml.Element("cov", toElem(cov));
 		elem ~= new xml.Element("nofloat", toElem(nofloat));
@@ -571,6 +579,8 @@ class ProjectOptions
 		fromElem(elem, "preservePaths", preservePaths);
 		fromElem(elem, "warnings", warnings);
 		fromElem(elem, "infowarnings", infowarnings);
+		fromElem(elem, "checkProperty", checkProperty);
+		fromElem(elem, "genStackFrame", genStackFrame);
 		fromElem(elem, "pic", pic);
 		fromElem(elem, "cov", cov);
 		fromElem(elem, "nofloat", nofloat);

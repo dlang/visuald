@@ -23,7 +23,7 @@ import core.bitop;
 
 bool isExistingDir(string dir)
 {
-	return std.file.exists(dir) && std.file.isdir(dir);
+	return std.file.exists(dir) && std.file.isDir(dir);
 }
 
 string getCmdPath()

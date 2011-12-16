@@ -443,15 +443,20 @@ class Project : Node
 		mod.filename = fname;
 		mod.imported = imported;
 		
+		SourceModule src;
 		string modname = mod.getModuleName();
 		if(auto pm = modname in mSourcesByModName)
 		{
-			semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.parsed.filename);
-			countErrors++;
-			return null;
+			if(pm.parsed)
+			{
+				semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.parsed.filename);
+				countErrors++;
+				return null;
+			}
+			src = *pm;
 		}
-
-		auto src = new SourceModule;
+		else
+			src = new SourceModule;
 		src.parsed = mod.clone();
 		src.analyzed = mod;
 		if(std.file.exists(fname)) // could be pseudo name
@@ -532,6 +537,10 @@ class Project : Node
 		{
 			semanticError("unhandled interpret exception, semantic analysis aborted");
 		}
+	}
+	////////////////////////////////////////////////////////////
+	void update()
+	{
 	}
 
 	////////////////////////////////////////////////////////////
@@ -773,33 +782,83 @@ class Options
 		return level <= debugIds.level;
 	}
 	
+	__gshared int[string] predefinedVersions;
+
+	static int[string] sPredefinedVersions()
+	{
+		if(!predefinedVersions)
+		{
+			predefinedVersions = 
+			[
+				"DigitalMars" : 1,
+				"GNU" : -1,
+				"LDC" : -1,
+				"SDC" : -1,
+				"D_NET" : -1,
+
+				"Windows" : 1,
+				"Win32" : 1,
+				"Win64" : -1,
+				"linux" : -1,
+				"OSX" : -1,
+				"FreeBSD" : -1,
+				"OpenBSD" : -1,
+				"BSD" : -1,
+				"Solaris" : -1,
+				"Posix" : -1,
+				"AIX" : -1,
+				"SkyOS" : -1,
+				"SysV3" : -1,
+				"SysV4" : -1,
+				"Hurd" : -1,
+				"Cygwin" : -1,
+				"MinGW" : -1,
+
+				"X86" : 1,
+				"X86_64" : -1,
+				"ARM" : -1,
+				"PPC" : -1,
+				"PPC64" : -1,
+				"IA64" : -1,
+				"MIPS" : -1,
+				"MIPS64" : -1,
+				"SPARC" : -1,
+				"SPARC64" : -1,
+				"S390" : -1,
+				"S390X" : -1,
+				"HPPA" : -1,
+				"HPPA64" : -1,
+				"SH" : -1,
+				"SH64" : -1,
+				"Alpha" : -1,
+
+				"LittleEndian" : 1,
+				"BigEndian" : -1,
+
+				"D_Coverage" : -1,
+				"D_Ddoc" : -1,
+				"D_InlineAsm_X86" : 1,
+				"D_InlineAsm_X86_64" : 1,
+				"D_LP64" : -1,
+				"D_PIC" : -1,
+
+				"D_Version2" : 1,
+				"none" : -1,
+				"all" : 1,
+			];
+		}
+		return predefinedVersions;
+	}
+	
 	int versionPredefined(string ident)
 	{
-		switch(ident)
-		{
-			case "DigitalMars":     return 1;
-			case "X86":             return 1;
-			case "X86_64":          return -1;
-			case "Windows":         return 1;
-			case "Win32":           return 1;
-			case "Win64":           return -1;
-			case "linux":           return -1;
-			case "Posix":           return -1;
-			case "LittleEndian":    return 1;
-			case "BigEndian":       return -1;
-			case "D_Coverage":      return -1;
-			case "D_Ddoc":          return -1;
-			case "D_InlineAsm_X86": return 1;
-			case "D_InlineAsm_X86_64": return -1;
-			case "D_LP64":          return -1;
-			case "D_PIC":           return -1;
-			case "unittest":        return unittestOn ? 1 : -1;
-			case "D_Version2":      return 1;
-			case "none":            return -1;
-			case "all":             return 1;
-			default:                return 0;
-		}
+		if(ident == "unittest")
+			return unittestOn ? 1 : -1;
+		if(int*p = ident in sPredefinedVersions)
+			return *p;
+		return 0;
 	}
+
 	}
 }
 

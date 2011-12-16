@@ -842,6 +842,7 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		AddControl("", mUnitTests     = new CheckBox(mCanvas, "Generate Unittest Code"));
 		AddControl("", mInline        = new CheckBox(mCanvas, "Expand Inline Functions"));
 		AddControl("", mNoFloat       = new CheckBox(mCanvas, "No Floating Point Support"));
+		AddControl("", mGenStackFrame = new CheckBox(mCanvas, "Always generate stack frame (DMD 2.056+)"));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -853,6 +854,7 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		mUnitTests.setChecked(options.useUnitTests);
 		mInline.setChecked(options.useInline);
 		mNoFloat.setChecked(options.nofloat);
+		mGenStackFrame.setChecked(options.genStackFrame);
 
 		mNoboundscheck.setEnabled(options.Dversion > 1);
 	}
@@ -867,6 +869,7 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		changes += changeOption(mUnitTests.isChecked(), options.useUnitTests, refoptions.useUnitTests);
 		changes += changeOption(mInline.isChecked(), options.useInline, refoptions.useInline);
 		changes += changeOption(mNoFloat.isChecked(), options.nofloat, refoptions.nofloat);
+		changes += changeOption(mGenStackFrame.isChecked(), options.genStackFrame, refoptions.genStackFrame);
 		return changes;
 	}
 
@@ -877,6 +880,7 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 	CheckBox mUnitTests;
 	CheckBox mInline;
 	CheckBox mNoFloat;
+	CheckBox mGenStackFrame;
 }
 
 class DmdMessagesPropertyPage : ProjectPropertyPage
@@ -894,6 +898,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		AddControl("", mVtls          = new CheckBox(mCanvas, "Show TLS Variables"));
 		AddControl("", mUseDeprecated = new CheckBox(mCanvas, "Allow Deprecated Features"));
 		AddControl("", mIgnorePragmas = new CheckBox(mCanvas, "Ignore Unsupported Pragmas"));
+		AddControl("", mCheckProperty = new CheckBox(mCanvas, "Enforce Property Syntax (DMD 2.055+)"));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -905,6 +910,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		mVtls.setChecked(options.vtls);
 		mUseDeprecated.setChecked(options.useDeprecated);
 		mIgnorePragmas.setChecked(options.ignoreUnsupportedPragmas);
+		mCheckProperty.setChecked(options.checkProperty);
 
 		mVtls.setEnabled(options.Dversion > 1);
 	}
@@ -919,6 +925,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		changes += changeOption(mVtls.isChecked(), options.vtls, refoptions.vtls);
 		changes += changeOption(mUseDeprecated.isChecked(), options.useDeprecated, refoptions.useDeprecated);
 		changes += changeOption(mIgnorePragmas.isChecked(), options.ignoreUnsupportedPragmas, refoptions.ignoreUnsupportedPragmas);
+		changes += changeOption(mCheckProperty.isChecked(), options.checkProperty, refoptions.checkProperty);
 		return changes;
 	}
 
@@ -929,6 +936,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	CheckBox mVtls;
 	CheckBox mUseDeprecated;
 	CheckBox mIgnorePragmas;
+	CheckBox mCheckProperty;
 }
 
 class DmdDocPropertyPage : ProjectPropertyPage
@@ -1326,6 +1334,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
+		AddControl("", mSemantics = new CheckBox(mCanvas, "Analyze project semantics"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
 	}
@@ -1336,6 +1345,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mAutoOutlining.setChecked(opts.autoOutlining);
 		mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
+		mSemantics.setChecked(opts.projectSemantics);
 		mUserTypes.setText(opts.UserTypesSpec);
 	}
 
@@ -1346,6 +1356,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
 		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
+		changes += changeOption(mSemantics.isChecked(), opts.projectSemantics, refopts.projectSemantics); 
 		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec); 
 		return changes;
 	}
@@ -1354,6 +1365,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	CheckBox mAutoOutlining;
 	CheckBox mParseSource;
 	CheckBox mPasteIndent;
+	CheckBox mSemantics;
 	MultiLineText mUserTypes;
 }
 

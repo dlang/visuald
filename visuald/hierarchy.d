@@ -1986,7 +1986,7 @@ public: // IVsHierarchyEvent propagation
 				}
 				return null;
 			}
-			if(std.file.isdir(strFullPath))
+			if(std.file.isDir(strFullPath))
 			{
 				dir = true;
 			}

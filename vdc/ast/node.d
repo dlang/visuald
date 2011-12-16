@@ -474,3 +474,65 @@ interface CallableNode
 	ParameterList getParameterList();
 	FunctionBody getFunctionBody();
 }
+
+TextPos minimumTextPos(Node node)
+{
+	TextPos start = node.span.start;
+	while(node.members.length > 0)
+	{
+		if(compareTextSpanAddress(node.members[0].span.start.line, node.members[0].span.start.index,
+								  start.line, start.index) < 0)
+			start = node.members[0].span.start;
+		node = node.members[0];
+	}
+	return start;
+}
+
+TextPos maximumTextPos(Node node)
+{
+	TextPos end = node.span.end;
+	while(node.members.length > 0)
+	{
+		if(compareTextSpanAddress(node.members[$-1].span.end.line, node.members[$-1].span.start.index,
+								  end.line, end.index) > 0)
+			end = node.members[$-1].span.end;
+		node = node.members[$-1];
+	}
+	return end;
+}
+
+bool nodeContains(Node node, TextPos pos)
+{
+	TextPos start = minimumTextPos(node);
+	if(start > pos)
+		return false;
+	TextPos end = maximumTextPos(node);
+	if(end <= pos)
+		return false;
+	return true;
+}
+
+// figure out whether the given range is between the children of a binary expression
+bool isBinaryOperator(Node root, int startLine, int startIndex, int endLine, int endIndex)
+{
+	TextPos pos = TextPos(startIndex, startLine);
+	if(!nodeContains(root, pos))
+		return false;
+
+L_loop:
+	if(root.members.length == 2)
+	{
+		if(cast(BinaryExpression) root)
+			if(maximumTextPos(root.members[0]) <= pos && minimumTextPos(root.members[1]) > pos)
+				return true;
+	}
+
+	foreach(m; root.members)
+		if(nodeContains(m, pos))
+		{
+			root = m;
+			goto L_loop;
+		}
+
+	return false;
+}

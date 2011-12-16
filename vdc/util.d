@@ -39,7 +39,7 @@ struct TextPos
 	int index;
 	int line;
 	
-	int opCmp(ref const(TextPos) tp)
+	int opCmp(ref const(TextPos) tp) const
 	{
 		if(line != tp.line)
 			return line - tp.line;

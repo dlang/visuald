@@ -32,6 +32,7 @@ Project:
 - template to create a Visual D project from an existing source tree
 - project config: edit all configurations only changes current config
 - breaking into build does not stop dmd
+- -property option
 
 Language service:
 ---------------
