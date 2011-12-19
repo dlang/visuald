@@ -229,6 +229,8 @@ class CppWizardPane : DisposingComObject, IVsWindowPane
 			_wndSave = null;
 			_wndConvert = null;
 
+			mDlgFont = deleteDialogFont(mDlgFont);
+
 			if(_himlToolbar)
 				ImageList_Destroy(_himlToolbar);
 		}
@@ -272,6 +274,7 @@ private:
 	CppWizardWindowBack _wndBack;
 	ToolBar       _wndToolbar;
 	HIMAGELIST    _himlToolbar;
+	HFONT mDlgFont;
 
 	Label         _wndInputTypeLabel;
 	ComboBox      _wndInputType;
@@ -396,6 +399,12 @@ private:
 
 	LRESULT _OnInitDialog(UINT uiMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
+		if(_wndInputTypeLabel)
+			return S_OK;
+		updateEnvironmentFont();
+		if(!mDlgFont)
+			mDlgFont = newDialogFont();
+
 		_wndInputTypeLabel = new Label(_wndBack, "&Convert:", -1);
 		_wndInputType      = new ComboBox(_wndBack, [ "Input files", "Current Document", 
 		                                              "Current Selection" ], false, IDC_WIZ_INPUTTPYE);

@@ -236,6 +236,8 @@ class ProfilePane : DisposingComObject, IVsWindowPane
 			if(_himlToolbar)
 				ImageList_Destroy(_himlToolbar);
 			_lastResultsArray = null;
+
+			mDlgFont = deleteDialogFont(mDlgFont);
 		}
 		return S_OK;
 	}
@@ -272,6 +274,7 @@ class ProfilePane : DisposingComObject, IVsWindowPane
 private:
 	Window _wndParent;
 	ProfileWindowBack _wndBack;
+	HFONT mDlgFont;
 
 	Text _wndFileWheel;
 	ListView _wndFuncList;
@@ -932,6 +935,12 @@ private:
 
 	LRESULT _OnInitDialog(UINT uiMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
+		if(_wndFileWheel)
+			return S_OK;
+		updateEnvironmentFont();
+		if(!mDlgFont)
+			mDlgFont = newDialogFont();
+
 		if (SUCCEEDED(_InitializeViewState()))
 		{
 			_wndFileWheel = new Text(_wndBack, "", IDC_FILEWHEEL);

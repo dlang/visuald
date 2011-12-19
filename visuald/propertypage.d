@@ -85,11 +85,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 
 		mResizableWidgets = mResizableWidgets.init;
 
-		if(mDlgFont)
-		{
-			DeleteObject(mDlgFont);
-			mDlgFont = null;
-		}
+		mDlgFont = deleteDialogFont(mDlgFont);
 	}
 
 	override int SetPageSite( 

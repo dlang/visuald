@@ -53,6 +53,17 @@ HFONT newDialogFont()
 	return winFont;
 }
 
+HFONT deleteDialogFont(HFONT font)
+{
+	if(font is null)
+		return null;
+	if(winFont is font)
+		winFont = null;
+
+	DeleteObject(font);
+	return null;
+}
+
 class Widget
 {
 	HWND hwnd;

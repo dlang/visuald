@@ -838,7 +838,7 @@ class Options
 				"D_Coverage" : -1,
 				"D_Ddoc" : -1,
 				"D_InlineAsm_X86" : 1,
-				"D_InlineAsm_X86_64" : 1,
+				"D_InlineAsm_X86_64" : -1,
 				"D_LP64" : -1,
 				"D_PIC" : -1,
 

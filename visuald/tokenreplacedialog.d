@@ -179,6 +179,8 @@ class TokenReplacePane : DisposingComObject, IVsWindowPane
 			
 			if(_himlToolbar)
 				ImageList_Destroy(_himlToolbar);
+
+			mDlgFont = deleteDialogFont(mDlgFont);
 		}
 		return S_OK;
 	}
@@ -220,6 +222,7 @@ private:
 	HIMAGELIST _himlToolbar;
 	ReplaceOptions _options;
 	
+	HFONT mDlgFont;
 	Label         _wndFindLabel;
 	MultiLineText _wndFindText;
 	Label         _wndReplaceLabel;
@@ -309,6 +312,13 @@ private:
 
 	LRESULT _OnInitDialog(UINT uiMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
+		if(_wndFindLabel)
+			return S_OK;
+
+		updateEnvironmentFont();
+		if(!mDlgFont)
+			mDlgFont = newDialogFont();
+
 		_wndFindLabel   = new Label(_wndBack, "Fi&nd what:", -1);
 		_wndFindText    = new MultiLineText(_wndBack, "", IDC_FINDTEXT);
 		_wndReplaceLabel = new Label(_wndBack, "Re&place with:", -1);
