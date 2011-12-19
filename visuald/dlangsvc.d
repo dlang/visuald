@@ -32,6 +32,7 @@ import vdc.lexer;
 import ast = vdc.ast.all;
 static import vdc.util;
 import vdc.parser.engine;
+import vdc.semantic;
 
 import stdext.array;
 import stdext.string;
@@ -598,12 +599,41 @@ class LanguageService : DisposingComObject,
 		return (mDbgMode & ~ DBGMODE_EncMask) != DBGMODE_Design;
 	}
 
+	// semantic completion ///////////////////////////////////
+	vdc.semantic.Scope GetScope(Source src, int line, int index, bool* inDotExpr)
+	{
+		if(!mSemanticProject)
+			mSemanticProject = new vdc.semantic.Project;
+
+		fnSemanticWriteError = &writeToBuildOutputPane;
+		ast.Module mod;
+		string fname = src.GetFileName();
+		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
+		if(sm && (sm.parsed == src.mAST || !src.mAST))
+			mod = sm.analyzed;
+		else if(src.mAST)
+			mod = mSemanticProject.addSource(fname, src.mAST);
+		else
+		{
+			wstring wtxt = src.GetText(); // should not be read from another thread
+			string txt = to!string(wtxt);
+			mod = mSemanticProject.addText(fname, txt);
+		}
+		if(!mod)
+			return null;
+
+		mSemanticProject.initScope();
+		return ast.getTextPosScope(mod, line + 1, index, inDotExpr);
+	}
+
 private:
 	Package              mPackage;
 	Source[]             mSources;
 	CodeWindowManager[]  mCodeWinMgrs;
 	DBGMODE              mDbgMode;
 	
+	vdc.semantic.Project mSemanticProject;
+
 	IVsDebugger          mDebugger;
 	VSCOOKIE             mCookieDebuggerEvents = VSCOOKIE_NIL;
 	VSCOOKIE             mUpdateSolutionEventsCookie = VSCOOKIE_NIL;
@@ -2848,6 +2878,7 @@ else
 	}
 
 	bool EnableFormatSelection() { return true; }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////

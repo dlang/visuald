@@ -372,3 +372,5 @@ unreleased Version 0.3.30
   * debugger data tooltip now grabs ident1.ident2 expressions when hovering ident2
   * added checkbox for options -gs and -property to project configuration
   * added new color to highlight predefined versions
+  * creating new folder now initiates renaming it
+

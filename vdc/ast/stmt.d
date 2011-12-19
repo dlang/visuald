@@ -198,6 +198,8 @@ class BlockStatement : Statement
 		writer.nl;
 	}
 
+	override bool createsScope() const { return true; }
+
 	override void _semantic(Scope sc)
 	{
 		// TODO: TemplateParameterList, Constraint

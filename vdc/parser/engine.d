@@ -176,6 +176,13 @@ class Parser
 		topNode().addMember(node);
 	}
 	
+	// extend the full psan of the node on top of the node stack
+	void extendTopNode(Token tok)
+	{
+		if(auto n = topNode())
+			n.extendSpan(tok.span);
+	}
+
 	// state stack //////////////////
 	void pushState(State fn)
 	{
@@ -519,6 +526,8 @@ class Parser
 			}
 
 			act = fn(this);
+			if(act == Accept)
+				extendTopNode(tok);
 		}
 		while(act == Forward);
 		return act;

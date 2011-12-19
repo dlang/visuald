@@ -48,6 +48,13 @@ class InterpretException : Exception
 	}
 }
 
+void semanticWriteError(string msg)
+{
+	writeln(msg);
+}
+
+void function(string) fnSemanticWriteError = &semanticWriteError;
+
 string semanticErrorWriteLoc(string filename, ref const(TextPos) pos)
 {
 	string txt = filename;
@@ -66,7 +73,7 @@ void semanticErrorLoc(T...)(string filename, ref const(TextPos) pos, T args)
 	
 	string msg = semanticErrorWriteLoc(filename, pos);
 	msg ~= text(args);
-	writeln(msg);
+	fnSemanticWriteError(msg);
 	logInfo(msg);
 }
 
@@ -92,7 +99,7 @@ void semanticErrorFile(T...)(string fname, T args)
 
 void semanticMessage(string msg)
 {
-	writeln(msg);
+	fnSemanticWriteError(msg);
 }
 
 ErrorValue semanticErrorValue(T...)(T args)
@@ -234,6 +241,7 @@ class Scope
 		if(!sc)
 			return pushClone();
 
+		assert(this !is sc);
 		sc.parent = this;
 		return current = sc;
 	}
@@ -258,19 +266,43 @@ class Scope
 		imports ~= imp;
 	}
 	
+	struct SearchData { string ident; Scope sc; }
+	static Stack!SearchData searchStack;
+
 	Symbol[] search(string ident, bool inParents, bool privateImports)
 	{
-		if(auto pn = ident in symbols)
+		// check recursive search
+		SearchData sd = SearchData(ident, this);
+		for(int d = 0; d < searchStack.depth; d++)
+			if(searchStack.stack[d] == sd) // memcmp
+				return null;
+
+		Node[] syms;
+		bool collect = ident.endsWith("*");
+		if(collect)
+		{
+			string iden = ident[0..$-1];
+			foreach(id, sym; symbols)
+				if(id.startsWith(iden))
+					addunique(syms, sym);
+		}
+		else if(auto pn = ident in symbols)
 			return *pn;
 		
-		Node[] syms;
+		searchStack.push(sd);
 		foreach(imp; imports)
 		{
 			if(privateImports || (imp.getProtection() & Annotation_Public))
 				addunique(syms, imp.search(this, ident));
 		}
-		if(syms.length == 0 && inParents && parent)
-			syms = parent.search(ident, true, privateImports);
+		if(inParents && parent)
+		{
+			if(syms.length == 0)
+				syms = parent.search(ident, true, privateImports);
+			else if(collect)
+				addunique(syms, parent.search(ident, true, privateImports));
+		}
+		searchStack.pop();
 		return syms;
 	}
 
@@ -419,6 +451,36 @@ class Project : Node
 		threadContext = new Context(null);
 	}
 
+	Module addSource(string fname, Module mod, bool imported = false)
+	{
+		mod.filename = fname;
+		mod.imported = imported;
+
+		SourceModule src;
+		string modname = mod.getModuleName();
+		if(auto pm = modname in mSourcesByModName)
+		{
+			if(pm.parsed && pm.parsed.filename != fname)
+			{
+				semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.parsed.filename);
+				countErrors++;
+				return null;
+			}
+			src = *pm;
+		}
+		else
+			src = new SourceModule;
+		src.parsed = mod;
+		src.analyzed = mod.clone();
+		if(std.file.exists(fname)) // could be pseudo name
+			src.lastModified = std.file.timeLastModified(fname);
+
+		addMember(src.analyzed);
+		mSourcesByModName[modname] = src;
+		mSourcesByFileName[fname] = src;
+		return src.analyzed;
+	}
+
 	////////////////////////////////////////////////////////////
 	Module addText(string fname, string txt, bool imported = false)
 	{
@@ -431,7 +493,7 @@ class Project : Node
 		}
 		catch(Exception e)
 		{
-			writeln(e.msg);
+			fnSemanticWriteError(e.msg);
 			countErrors += p.countErrors + 1;
 			return null;
 		}
@@ -440,32 +502,7 @@ class Project : Node
 			return null;
 
 		auto mod = static_cast!(Module)(n);
-		mod.filename = fname;
-		mod.imported = imported;
-		
-		SourceModule src;
-		string modname = mod.getModuleName();
-		if(auto pm = modname in mSourcesByModName)
-		{
-			if(pm.parsed)
-			{
-				semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.parsed.filename);
-				countErrors++;
-				return null;
-			}
-			src = *pm;
-		}
-		else
-			src = new SourceModule;
-		src.parsed = mod.clone();
-		src.analyzed = mod;
-		if(std.file.exists(fname)) // could be pseudo name
-			src.lastModified = std.file.timeLastModified(fname);
-
-		addMember(mod);
-		mSourcesByModName[modname] = src;
-		mSourcesByFileName[fname] = src;
-		return mod;
+		return addSource(fname, mod, imported);
 	}
 	
 	Module addAndParseFile(string fname, bool imported = false)
@@ -490,6 +527,13 @@ class Project : Node
 	{
 		if(auto pm = modname in mSourcesByModName)
 			return pm.analyzed;
+		return null;
+	}
+
+	SourceModule getModuleByFilename(string filename)
+	{
+		if(auto pm = filename in mSourcesByFileName)
+			return *pm;
 		return null;
 	}
 
@@ -523,15 +567,22 @@ class Project : Node
 		return null;
 	}
 	
+	void initScope()
+	{
+		if(!mObjectModule)
+			mObjectModule = importModule("object");
+
+		scop = new Scope;
+	}
+
 	void semantic()
 	{
 		try
 		{
-			mObjectModule = importModule("object");
+			initScope();
 
-			Scope sc = new Scope;
 			for(int m = 0; m < members.length; m++)
-				members[m].semantic(sc);
+				members[m].semantic(scop);
 		}
 		catch(InterpretException)
 		{

@@ -61,6 +61,7 @@ class Declarations
 	{
 		kStateInit,
 		kStateImport,
+		kStateSemantic,
 		kStateNearBy,
 		kStateSymbols,
 		kStateCaseInsensitive
@@ -264,6 +265,35 @@ class Declarations
 		return mNames.length > namesLength;
 	}
 	
+	///////////////////////////////////////////////////////////////////////////
+
+	bool SemanticExpansions(IVsTextView textView, Source src)
+	{
+		if(!Package.GetGlobalOptions().projectSemantics)
+			return false;
+
+		string tok = GetTokenBeforeCaret(textView, src);
+		if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
+			tok = "";
+
+		int line, idx;
+		int hr = textView.GetCaretPos(&line, &idx);
+
+		bool inDotExpr;
+		vdc.semantic.Scope sc = Package.GetLanguageService().GetScope(src, line, idx, &inDotExpr);
+		if(!sc)
+			return false;
+		auto syms = sc.search(tok ~ "*", !inDotExpr, true);
+
+		int namesLength = mNames.length;
+
+		foreach(s; syms)
+			if(auto decl = cast(ast.Declarator) s)
+				mNames.addunique(decl.ident);
+
+		return mNames.length > namesLength;
+	}
+
 	////////////////////////////////////////////////////////////////////////
 	bool StartExpansions(IVsTextView textView, Source src)
 	{
@@ -285,6 +315,13 @@ class Declarations
 			}
 			goto case;
 		case kStateImport:
+			if(SemanticExpansions(textView, src))
+			{
+				mExpansionState = kStateSemantic;
+				return true;
+			}
+			goto case;
+		case kStateSemantic:
 			if(NearbyExpansions(textView, src))
 			{
 				mExpansionState = kStateNearBy;

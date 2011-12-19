@@ -742,7 +742,6 @@ class GlobalOptions
 	bool demangleError = true;
 	bool autoOutlining;
 	bool parseSource;
-	bool doSemantics;
 	bool pasteIndent;
 	bool projectSemantics;
 	
@@ -819,7 +818,6 @@ class GlobalOptions
 			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
 			projectSemantics = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
-			doSemantics      = keyToolOpts.GetDWORD("doSemantics", 1) != 0;
 			pasteIndent      = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
 			// overwrite by user config
@@ -839,7 +837,6 @@ class GlobalOptions
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
 			projectSemantics     = keyUserOpts.GetDWORD("projectSemantics", projectSemantics) != 0;
-			doSemantics          = keyUserOpts.GetDWORD("doSemantics",      doSemantics) != 0;
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			UserTypes = parseUserTypes(UserTypesSpec);
@@ -899,7 +896,6 @@ class GlobalOptions
 			keyToolOpts.Set("autoOutlining", autoOutlining);
 			keyToolOpts.Set("parseSource", parseSource);
 			keyToolOpts.Set("projectSemantics", projectSemantics);
-			keyToolOpts.Set("doSemantics", doSemantics);
 			keyToolOpts.Set("pasteIndent", pasteIndent);
 
 			CHierNode.setContainerIsSorted(sortProjects);

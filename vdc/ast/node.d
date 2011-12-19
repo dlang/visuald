@@ -34,6 +34,7 @@ class Node
 	Attribute attr;
 	Annotation annotation;
 	TextSpan span; // file extracted from parent module
+	TextSpan fulspan;
 	
 	Node parent;
 	Node[] members;
@@ -49,17 +50,18 @@ class Node
 	
 	this(ref const(TextSpan) _span)
 	{
-		span = _span;
+		fulspan = span = _span;
 	}
 	this(Token tok)
 	{
 		id = tok.id;
 		span = tok.span;
+		fulspan = tok.span;
 	}
 	this(TokenId _id, ref const(TextSpan) _span)
 	{
 		id = _id;
-		span = _span;
+		fulspan = span = _span;
 	}
 
 	mixin template ForwardCtor()
@@ -123,6 +125,7 @@ class Node
 		n.attr = attr;
 		n.annotation = annotation;
 		n.span = span;
+		n.fulspan = fulspan;
 		
 		foreach(m; members)
 			n.addMember(m.clone());
@@ -262,6 +265,8 @@ class Node
 	{
 	}
 	
+	bool createsScope() const { return false; }
+
 	Scope enterScope(ref Scope nscope, Scope sc)
 	{
 		if(!nscope)
@@ -361,6 +366,7 @@ class Node
 		assert(m.parent is null);
 		members ~= m;
 		m.parent = this;
+		extendSpan(m.fulspan);
 	}
 
 	Node removeMember(int m) 
@@ -452,18 +458,23 @@ class Node
 	////////////////////////////////////////////////////////////
 	void extendSpan(ref const(TextSpan) _span)
 	{
-		span.end.line = _span.end.line;
-		span.end.index = _span.end.index;
+		if(_span.start < fulspan.start)
+			fulspan.start = _span.start;
+		if(_span.end > fulspan.end)
+			fulspan.end = _span.end;
 	}
 	void limitSpan(ref const(TextSpan) _span)
 	{
-		span.end.line = _span.end.line;
-		span.end.index = _span.end.index;
+		if(_span.start > fulspan.start)
+			fulspan.start = _span.start;
+		if(_span.end < fulspan.end)
+			fulspan.end = _span.end;
 	}
 	void clearSpan()
 	{
 		span.end.line = span.start.line;
 		span.end.index = span.start.index;
+		fulspan = span;
 	}
 }
 
@@ -477,28 +488,38 @@ interface CallableNode
 
 TextPos minimumTextPos(Node node)
 {
-	TextPos start = node.span.start;
-	while(node.members.length > 0)
+	version(all)
+		return node.fulspan.start;
+	else
 	{
-		if(compareTextSpanAddress(node.members[0].span.start.line, node.members[0].span.start.index,
-								  start.line, start.index) < 0)
-			start = node.members[0].span.start;
-		node = node.members[0];
+		TextPos start = node.span.start;
+		while(node.members.length > 0)
+		{
+			if(compareTextSpanAddress(node.members[0].span.start.line, node.members[0].span.start.index,
+									  start.line, start.index) < 0)
+				start = node.members[0].span.start;
+			node = node.members[0];
+		}
+		return start;
 	}
-	return start;
 }
 
 TextPos maximumTextPos(Node node)
 {
-	TextPos end = node.span.end;
-	while(node.members.length > 0)
+	version(all)
+		return node.fulspan.end;
+	else
 	{
-		if(compareTextSpanAddress(node.members[$-1].span.end.line, node.members[$-1].span.start.index,
-								  end.line, end.index) > 0)
-			end = node.members[$-1].span.end;
-		node = node.members[$-1];
+		TextPos end = node.span.end;
+		while(node.members.length > 0)
+		{
+			if(compareTextSpanAddress(node.members[$-1].span.end.line, node.members[$-1].span.start.index,
+									  end.line, end.index) > 0)
+				end = node.members[$-1].span.end;
+			node = node.members[$-1];
+		}
+		return end;
 	}
-	return end;
 }
 
 bool nodeContains(Node node, TextPos pos)
@@ -535,4 +556,43 @@ L_loop:
 		}
 
 	return false;
+}
+
+Scope getTextPosScope(Node root, int line, int index, bool *inDotExpr)
+{
+	TextPos pos = TextPos(index, line);
+	if(!nodeContains(root, pos))
+		return null;
+
+	Scope sc;
+	if(root.parent)
+		sc = root.parent.getScope();
+	if(sc && root.createsScope())
+		sc = root.enterScope(sc);
+	else
+		sc = root.getScope();
+	if(!sc)
+		return null;
+
+L_loop:
+	foreach(m; root.members)
+		if(nodeContains(m, pos))
+		{
+			if(m.createsScope())
+				sc = m.enterScope(sc);
+			root = m;
+			goto L_loop;
+		}
+
+	if(inDotExpr)
+		*inDotExpr = false;
+	if(auto id = cast(Identifier)root)
+		if(auto dotexpr = cast(DotExpression)id.parent)
+		{
+			sc = dotexpr.getExpression().calcType().getScope();
+			if(inDotExpr)
+				*inDotExpr = true;
+		}
+
+	return sc;
 }

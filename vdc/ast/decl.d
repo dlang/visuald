@@ -619,6 +619,8 @@ class TemplateInstantiation : Node
 		getParameterList().addSymbols(sc);
 	}
 	
+	override bool createsScope() const { return true; }
+
 	override void _semantic(Scope sc)
 	{
 		sc = enterScope(sc);

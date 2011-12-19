@@ -125,6 +125,14 @@ class Module : Node
 		return stripExtension(baseName(filename));
 	}
 
+	override bool createsScope() const { return true; }
+
+	override Scope enterScope(Scope sc)
+	{
+		initScope();
+		return super.enterScope(sc);
+	}
+
 	void initScope()
 	{
 		if(!scop)
@@ -141,10 +149,15 @@ class Module : Node
 					scop.addImport(imp);
 				}
 			
-			addMemberSymbols(scop);
+			super.addMemberSymbols(scop);
 		}
 	}
-	
+
+	override void addMemberSymbols(Scope sc)
+	{
+		initScope();
+	}
+
 	Node[] search(string ident)
 	{
 		initScope();
@@ -169,8 +182,6 @@ class Module : Node
 
 		sc = sc.push(scop);
 		scope(exit) sc.pop();
-		
-		addMemberSymbols(scop);
 		
 		foreach(m; members)
 		{
@@ -284,6 +295,7 @@ class ModuleFullyQualifiedName : Node
 		writer.writeArray(members, ".");
 	}
 
+	override bool createsScope() const { return true; }
 
 	override void addSymbols(Scope sc)
 	{

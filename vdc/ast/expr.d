@@ -1125,6 +1125,8 @@ class FunctionLiteral : Expression
 		writer(getFunctionBody());
 	}
 
+	override bool createsScope() const { return true; }
+
 	override void _semantic(Scope sc)
 	{
 		if(auto t = getType())

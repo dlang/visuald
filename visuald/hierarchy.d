@@ -664,6 +664,34 @@ class CFolderNode : CHierContainer
 		GetCVsHierarchy().OnPropertyChanged(this, VSHPROPID_Expandable, 0);
 
 		pProject.SetProjectFileDirty(true);
+
+		// let the user rename the folder which will create the directory when finished
+		auto shell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell));
+		if(shell)
+		{
+			IVsWindowFrame frame;
+			IVsUIHierarchyWindow uiHierarchyWindow;
+			scope(exit) release(frame);
+			scope(exit) release(uiHierarchyWindow);
+			VARIANT var;
+
+			hr = shell.FindToolWindow(0, &GUID_SolutionExplorer, &frame);
+			if(SUCCEEDED(hr) && frame)
+				hr = frame.GetProperty(VSFPROPID_DocView, &var);
+			if(SUCCEEDED(hr) && (var.vt == VT_UNKNOWN || var.vt == VT_DISPATCH))
+			{
+				uiHierarchyWindow = qi_cast!IVsUIHierarchyWindow(var.punkVal);
+				var.punkVal = release(var.punkVal);
+			}
+			if(uiHierarchyWindow)
+			{
+				hr = uiHierarchyWindow.ExpandItem(GetCVsHierarchy(), pFolder.GetVsItemID(), EXPF_SelectItem);
+				if(SUCCEEDED(hr))
+					hr = shell.PostExecCommand(&CMDSETID_StandardCommandSet97, cmdidRename, 0, &var);
+				if(FAILED(hr))
+					hr = pFolder.OnCancelLabelEdit(); // make sure the directory is created...
+			}
+		}
 		return hr;
 	}
 

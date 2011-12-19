@@ -92,6 +92,8 @@ class Aggregate : Type
 			writer(constraint);
 	}
 	
+	override bool createsScope() const { return true; }
+
 	override void _semantic(Scope sc)
 	{
 		// TODO: TemplateParameterList, Constraint
@@ -816,6 +818,8 @@ class Constructor : Node, CallableNode
 			writer.nl;
 		}
 	}
+
+	override bool createsScope() const { return true; }
 
 	override void _semantic(Scope sc)
 	{

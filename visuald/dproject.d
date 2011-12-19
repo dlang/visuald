@@ -45,8 +45,6 @@ import visuald.pkgutil;
 
 import visuald.dllmain : g_hInst;
 
-import vdc.semantic;
-
 const kPlatform = "Win32";
 
 ///////////////////////////////////////////////////////////////
@@ -2773,22 +2771,6 @@ Error:
 		elem ~= xmlcontainer;
 	}
 
-	void createSemanticProject()
-	{
-		mSemanticProject = new vdc.semantic.Project;
-		
-		searchNode(GetRootNode(), delegate (CHierNode n) { 
-			if(CFileNode file = cast(CFileNode) n)
-			{
-				string tool = file.GetTool();
-				if(tool == "DMD" || tool == "DMDsingle"
-				   || (tool == "" && toLower(extension(tool)) == ".d"))
-					mSemanticProject.addFile(file.GetCanonicalName());
-			}
-			return false;
-		});
-	}
-
 	string GetFilename() { return mFilename; }
 
 private:
@@ -2800,7 +2782,6 @@ private:
 	GUID     mProjectGUID;
 	ConfigProvider mConfigProvider;
 	ExtProject mExtProject;
-	vdc.semantic.Project mSemanticProject;
 
 	bool mfDragSource;
 	DropDataType mDDT;

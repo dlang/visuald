@@ -308,6 +308,8 @@ class FunctionBody : Node
 		writer.nl; // should not be written for function literals
 	}
 
+	override bool createsScope() const { return true; }
+
 	override void _semantic(Scope sc)
 	{
 		if(inStatement)
