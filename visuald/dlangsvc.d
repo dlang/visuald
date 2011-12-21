@@ -600,12 +600,16 @@ class LanguageService : DisposingComObject,
 	}
 
 	// semantic completion ///////////////////////////////////
-	vdc.semantic.Scope GetScope(Source src, int line, int index, bool* inDotExpr)
+	ast.Module GetSemanticModule(Source src)
 	{
 		if(!mSemanticProject)
 			mSemanticProject = new vdc.semantic.Project;
 
-		fnSemanticWriteError = &writeToBuildOutputPane;
+		static void semanticWriteError(string msg)
+		{
+			writeToBuildOutputPane(msg ~ "\n");
+		}
+		fnSemanticWriteError = &semanticWriteError;
 		ast.Module mod;
 		string fname = src.GetFileName();
 		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
@@ -619,11 +623,32 @@ class LanguageService : DisposingComObject,
 			string txt = to!string(wtxt);
 			mod = mSemanticProject.addText(fname, txt);
 		}
+		return mod;
+	}
+
+	ast.Node GetNode(Source src, int line, int index, bool* inDotExpr)
+	{
+		ast.Module mod = GetSemanticModule(src);
 		if(!mod)
 			return null;
 
 		mSemanticProject.initScope();
-		return ast.getTextPosScope(mod, line + 1, index, inDotExpr);
+		return ast.getTextPosNode(mod, line + 1, index, inDotExpr);
+	}
+
+	string GetType(Source src, int line, int index)
+	{
+		ast.Module mod = GetSemanticModule(src);
+		if(!mod)
+			return null;
+
+		mSemanticProject.initScope();
+		ast.Node n = ast.getTextPosNode(mod, line + 1, index, null);
+		ast.Type t = n.calcType();
+		string txt;
+		vdc.util.DCodeWriter writer = new vdc.util.DCodeWriter(vdc.util.getStringSink(txt));
+		writer(t);
+		return txt;
 	}
 
 private:

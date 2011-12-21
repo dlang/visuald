@@ -1226,6 +1226,13 @@ version(none) // quick info tooltips not good enough yet
 		}
 		*pbstrText = allocBSTR(msg);
 }
+		if(Package.GetGlobalOptions().projectSemantics)
+		{
+			string txt = Package.GetLanguageService().GetType(mCodeWinMgr.mSource, pSpan.iStartLine, pSpan.iStartIndex);
+			if(txt.length)
+				*pbstrText = allocBSTR(txt);
+		}
+
 		return resFwd;
 	}
 

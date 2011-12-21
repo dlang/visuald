@@ -33,6 +33,7 @@ import visuald.config;
 import visuald.intellisense;
 
 import vdc.lexer;
+import ast = vdc.ast.all;
 
 import sdk.port.vsi;
 import sdk.win32.commctrl;
@@ -212,6 +213,9 @@ class Declarations
 
 	bool NearbyExpansions(IVsTextView textView, Source src)
 	{
+		if(!Package.GetGlobalOptions().expandFromBuffer)
+			return false;
+
 		int line, idx;
 		if(int hr = textView.GetCaretPos(&line, &idx))
 			return false;
@@ -254,6 +258,9 @@ class Declarations
 	////////////////////////////////////////////////////////////////////////
 	bool SymbolExpansions(IVsTextView textView, Source src)
 	{
+		if(!Package.GetGlobalOptions().expandFromJSON)
+			return false;
+
 		string tok = GetTokenBeforeCaret(textView, src);
 		if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
 			tok = "";
@@ -280,7 +287,10 @@ class Declarations
 		int hr = textView.GetCaretPos(&line, &idx);
 
 		bool inDotExpr;
-		vdc.semantic.Scope sc = Package.GetLanguageService().GetScope(src, line, idx, &inDotExpr);
+		ast.Node n = Package.GetLanguageService().GetNode(src, line, idx, &inDotExpr);
+		if(!n)
+			return false;
+		vdc.semantic.Scope sc = n.getScope();
 		if(!sc)
 			return false;
 		auto syms = sc.search(tok ~ "*", !inDotExpr, true);

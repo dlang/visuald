@@ -165,6 +165,11 @@ class Decl : Node
 		}
 	}
 	
+	override Type calcType()
+	{
+		return getType().calcType();
+	}
+
 	override void addSymbols(Scope sc)
 	{
 		getDeclarators().addSymbols(sc);
@@ -249,6 +254,11 @@ class DeclaratorInitializer : Node
 			else
 				writer(" = ", getMember(1));
 		}
+	}
+
+	override Type calcType()
+	{
+		return getInitializer().calcType();
 	}
 
 	override void addSymbols(Scope sc)

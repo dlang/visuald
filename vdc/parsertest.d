@@ -333,7 +333,7 @@ string ctfeParser(string txt)
 unittest
 {
 	assert(ctfeParser(q{int /* comment to skip */ a;}) == "int a;\n");
-	//static assert(ctfeParser(q{int /* comment to skip */ a;}) == "int a;\n");
+	static assert(ctfeParser(q{int /* comment to skip */ a;}) == "int a;\n");
 }
 
 ///////////////////////////////////////////////////////////////////////

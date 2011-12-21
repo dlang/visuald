@@ -1323,6 +1323,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
+		kNeededLines = 11;
 	}
 
 	override void CreateControls()
@@ -1330,9 +1331,11 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
-		AddControl("", mSemantics = new CheckBox(mCanvas, "Analyze project semantics"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
+		AddControl("", mSemantics = new CheckBox(mCanvas, "Expansions from semantics"));
+		AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
+		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1342,6 +1345,8 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
 		mSemantics.setChecked(opts.projectSemantics);
+		mExpandFromBuffer.setChecked(opts.expandFromBuffer);
+		mExpandFromJSON.setChecked(opts.expandFromJSON);
 		mUserTypes.setText(opts.UserTypesSpec);
 
 		//mSemantics.setEnabled(false);
@@ -1355,6 +1360,8 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
 		changes += changeOption(mSemantics.isChecked(), opts.projectSemantics, refopts.projectSemantics); 
+		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer); 
+		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON); 
 		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec); 
 		return changes;
 	}
@@ -1364,6 +1371,8 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	CheckBox mParseSource;
 	CheckBox mPasteIndent;
 	CheckBox mSemantics;
+	CheckBox mExpandFromBuffer;
+	CheckBox mExpandFromJSON;
 	MultiLineText mUserTypes;
 }
 

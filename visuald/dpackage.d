@@ -744,6 +744,8 @@ class GlobalOptions
 	bool parseSource;
 	bool pasteIndent;
 	bool projectSemantics;
+	bool expandFromBuffer;
+	bool expandFromJSON;
 	
 	bool ColorizeVersions = true;
 	bool lastColorizeVersions;
@@ -818,6 +820,8 @@ class GlobalOptions
 			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
 			projectSemantics = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
+			expandFromBuffer = keyToolOpts.GetDWORD("expandFromBuffer", 1) != 0;
+			expandFromJSON   = keyToolOpts.GetDWORD("expandFromJSON", 1) != 0;
 			pasteIndent      = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
 			// overwrite by user config
@@ -837,6 +841,8 @@ class GlobalOptions
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
 			projectSemantics     = keyUserOpts.GetDWORD("projectSemantics", projectSemantics) != 0;
+			expandFromBuffer     = keyUserOpts.GetDWORD("expandFromBuffer", expandFromBuffer) != 0;
+			expandFromJSON       = keyUserOpts.GetDWORD("expandFromJSON",   expandFromJSON) != 0;
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			UserTypes = parseUserTypes(UserTypesSpec);
@@ -896,6 +902,8 @@ class GlobalOptions
 			keyToolOpts.Set("autoOutlining", autoOutlining);
 			keyToolOpts.Set("parseSource", parseSource);
 			keyToolOpts.Set("projectSemantics", projectSemantics);
+			keyToolOpts.Set("expandFromBuffer", expandFromBuffer);
+			keyToolOpts.Set("expandFromJSON", expandFromJSON);
 			keyToolOpts.Set("pasteIndent", pasteIndent);
 
 			CHierNode.setContainerIsSorted(sortProjects);

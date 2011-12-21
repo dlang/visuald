@@ -309,7 +309,12 @@ class Node
 		if(scop)
 			return scop;
 		if(parent)
-			return parent.getScope();
+		{
+			Scope sc = parent.getScope();
+			if(createsScope())
+				sc = enterScope(sc);
+			return sc;
+		}
 		return null;
 	}
 	
@@ -522,6 +527,7 @@ TextPos maximumTextPos(Node node)
 	}
 }
 
+// prefer start
 bool nodeContains(Node node, TextPos pos)
 {
 	TextPos start = minimumTextPos(node);
@@ -529,6 +535,18 @@ bool nodeContains(Node node, TextPos pos)
 		return false;
 	TextPos end = maximumTextPos(node);
 	if(end <= pos)
+		return false;
+	return true;
+}
+
+// prefer end
+bool nodeContainsEnd(Node node, TextPos pos)
+{
+	TextPos start = minimumTextPos(node);
+	if(start >= pos)
+		return false;
+	TextPos end = maximumTextPos(node);
+	if(end < pos)
 		return false;
 	return true;
 }
@@ -558,41 +576,30 @@ L_loop:
 	return false;
 }
 
-Scope getTextPosScope(Node root, int line, int index, bool *inDotExpr)
+Node getTextPosNode(Node root, int line, int index, bool *inDotExpr)
 {
 	TextPos pos = TextPos(index, line);
-	if(!nodeContains(root, pos))
-		return null;
-
-	Scope sc;
-	if(root.parent)
-		sc = root.parent.getScope();
-	if(sc && root.createsScope())
-		sc = root.enterScope(sc);
-	else
-		sc = root.getScope();
-	if(!sc)
+	if(!nodeContainsEnd(root, pos))
 		return null;
 
 L_loop:
 	foreach(m; root.members)
-		if(nodeContains(m, pos))
+		if(nodeContainsEnd(m, pos))
 		{
-			if(m.createsScope())
-				sc = m.enterScope(sc);
 			root = m;
 			goto L_loop;
 		}
 
 	if(inDotExpr)
+	{
 		*inDotExpr = false;
-	if(auto id = cast(Identifier)root)
-		if(auto dotexpr = cast(DotExpression)id.parent)
-		{
-			sc = dotexpr.getExpression().calcType().getScope();
-			if(inDotExpr)
+		if(auto id = cast(Identifier)root)
+			if(auto dotexpr = cast(DotExpression)id.parent)
+			{
+				root = dotexpr.getExpression().calcType();
 				*inDotExpr = true;
-		}
+			}
+	}
 
-	return sc;
+	return root;
 }

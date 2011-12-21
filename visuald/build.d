@@ -918,7 +918,7 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 	// DMD compile error
 	static Regex!char re1, re2, re3, re4;
 	if(!isInitializedRE(re1))
-		re1 = regex(r"^(.*)\(([0-9]+)\):(.*)$"); // replace . with [\x00-\x7f] for std.regex
+		re1 = regex(r"^(.*?)\(([0-9]+)\):(.*)$"); // replace . with [\x00-\x7f] for std.regex
 
 	auto rematch = match(outputLine, re1);
 	if(!rematch.empty())
@@ -951,7 +951,7 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 
 	// link error with file name
 	if(!isInitializedRE(re3))
-		re3 = regex(r"^(.*)\(([0-9]+)\) *: *(Error *[0-9]+:.*)$");
+		re3 = regex(r"^(.*?)\(([0-9]+)\) *: *(Error *[0-9]+:.*)$");
 
 	rematch = match(outputLine, re3);
 	if(!rematch.empty())

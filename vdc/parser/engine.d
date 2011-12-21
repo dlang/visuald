@@ -179,7 +179,7 @@ class Parser
 	// extend the full psan of the node on top of the node stack
 	void extendTopNode(Token tok)
 	{
-		if(auto n = topNode())
+		if(Node n = topNode())
 			n.extendSpan(tok.span);
 	}
 
