@@ -26,6 +26,7 @@ import visuald.viewfilter;
 import visuald.colorizer;
 import visuald.windows;
 import visuald.simpleparser;
+import visuald.config;
 
 import vdc.lexer;
 
@@ -600,10 +601,28 @@ class LanguageService : DisposingComObject,
 	}
 
 	// semantic completion ///////////////////////////////////
-	ast.Module GetSemanticModule(Source src)
+	void ConfigureSemanticProject(Source src)
 	{
 		if(!mSemanticProject)
 			mSemanticProject = new vdc.semantic.Project;
+
+		string file = src.GetFileName();
+		auto opts = mSemanticProject.options;
+		string[] imp = GetImportPaths(file);
+		opts.setImportDirs(imp);
+		if(Config cfg = getProjectConfig(file))
+		{
+			auto cfgopts = cfg.GetProjectOptions();
+			opts.unittestOn = cfgopts.useUnitTests;
+			opts.debugOn = !cfgopts.release;
+			opts.setVersionIds(cfgopts.versionlevel, tokenizeArgs(cfgopts.versionids)); 
+			opts.setDebugIds(cfgopts.debuglevel, tokenizeArgs(cfgopts.debugids)); 
+		}
+	}
+
+	ast.Module GetSemanticModule(Source src)
+	{
+		ConfigureSemanticProject(src);
 
 		static void semanticWriteError(string msg)
 		{
@@ -626,28 +645,54 @@ class LanguageService : DisposingComObject,
 		return mod;
 	}
 
-	ast.Node GetNode(Source src, int line, int index, bool* inDotExpr)
+	ast.Node GetNode(Source src, TextSpan* pSpan, bool* inDotExpr)
 	{
 		ast.Module mod = GetSemanticModule(src);
 		if(!mod)
 			return null;
 
 		mSemanticProject.initScope();
-		return ast.getTextPosNode(mod, line + 1, index, inDotExpr);
+
+		vdc.util.TextSpan span;
+		span.start.line = pSpan.iStartLine + 1;
+		span.start.index = pSpan.iStartIndex;
+		span.end.line = pSpan.iEndLine + 1;
+		span.end.index = pSpan.iEndIndex;
+
+		ast.Node n = ast.getTextPosNode(mod, &span, inDotExpr);
+		if(n)
+		{
+			pSpan.iStartLine = n.fulspan.start.line - 1;
+			pSpan.iStartIndex = n.fulspan.start.index;
+			pSpan.iEndLine = n.fulspan.end.line - 1;
+			pSpan.iEndIndex = n.fulspan.end.index;
+		}
+		return n;
 	}
 
-	string GetType(Source src, int line, int index)
+	string GetType(Source src, TextSpan* pSpan)
 	{
-		ast.Module mod = GetSemanticModule(src);
-		if(!mod)
-			return null;
-
-		mSemanticProject.initScope();
-		ast.Node n = ast.getTextPosNode(mod, line + 1, index, null);
-		ast.Type t = n.calcType();
 		string txt;
-		vdc.util.DCodeWriter writer = new vdc.util.DCodeWriter(vdc.util.getStringSink(txt));
-		writer(t);
+		try
+		{
+			ast.Module mod = GetSemanticModule(src);
+			if(!mod)
+				return null;
+
+			ast.Node n = GetNode(src, pSpan, null);
+			if(n && n !is mod)
+			{
+				ast.Type t = n.calcType();
+				vdc.util.DCodeWriter writer = new vdc.util.DCodeWriter(vdc.util.getStringSink(txt));
+				writer.writeImplementations = false;
+				writer.writeClassImplementations = false;
+				writer(n, "\ntype: ", t);
+			}
+		}
+		catch(Error e)
+		{
+			txt = e.msg;
+		}
 		return txt;
 	}
 

@@ -1164,7 +1164,7 @@ else
 		mixin(LogCallMix);
 
 		HRESULT resFwd = TIP_S_ONLYIFNOMARKER; // enable and prefer TextMarker tooltips
-		
+		TextSpan span = *pSpan;
 		if(pSpan.iStartLine == pSpan.iEndLine && pSpan.iStartIndex == pSpan.iEndIndex)
 		{
 			if(HRESULT hr = GetWordExtent(pSpan.iStartLine, pSpan.iStartIndex, WORDEXT_CURRENT, pSpan))
@@ -1228,9 +1228,12 @@ version(none) // quick info tooltips not good enough yet
 }
 		if(Package.GetGlobalOptions().projectSemantics)
 		{
-			string txt = Package.GetLanguageService().GetType(mCodeWinMgr.mSource, pSpan.iStartLine, pSpan.iStartIndex);
+			string txt = Package.GetLanguageService().GetType(mCodeWinMgr.mSource, &span);
 			if(txt.length)
+			{
 				*pbstrText = allocBSTR(txt);
+				*pSpan = span;
+			}
 		}
 
 		return resFwd;

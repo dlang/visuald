@@ -137,7 +137,7 @@ class BinaryExpression : Expression
 		{
 			Type typeL = getLeftExpr().calcType();
 			Type typeR = getRightExpr().calcType();
-			return semanticErrorType(this, "calcType on binary not implemented");
+			type = typeL.commonType(typeR);
 		}
 		return type;
 	}
@@ -242,6 +242,11 @@ mixin template BinaryExpr()
 class CommaExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
+
+	override Type calcType()
+	{
+		return getRightExpr().calcType();
+	}
 }
 
 class AssignExpression : BinaryExpression
@@ -249,6 +254,11 @@ class AssignExpression : BinaryExpression
 	override bool isAssign() { return true; }
 
 	mixin BinaryExpr!();
+
+	override Type calcType()
+	{
+		return getLeftExpr().calcType();
+	}
 }
 
 //ConditionalExpression:
@@ -292,6 +302,17 @@ class ConditionalExpression : Expression
 		writeExpr(writer, elseExpr, elseParen);
 	}
 	
+	override Type calcType()
+	{
+		if(!type)
+		{
+			Type typeL = getThenExpr().calcType();
+			Type typeR = getElseExpr().calcType();
+			type = typeL.commonType(typeR);
+		}
+		return type;
+	}
+
 	override Value interpret(Context sc)
 	{
 		Value cond = getCondition().interpret(sc);
@@ -303,6 +324,13 @@ class ConditionalExpression : Expression
 class OrOrExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
+
+	override Type calcType()
+	{
+		if(!type)
+			type = BasicType.createType(TOK_bool);
+		return type;
+	}
 
 	override Value interpret(Context sc)
 	{
@@ -317,6 +345,13 @@ class OrOrExpression : BinaryExpression
 class AndAndExpression : BinaryExpression
 {
 	mixin BinaryExpr!();
+
+	override Type calcType()
+	{
+		if(!type)
+			type = BasicType.createType(TOK_bool);
+		return type;
+	}
 
 	override Value interpret(Context sc)
 	{
@@ -363,9 +398,7 @@ class CmpExpression : BinaryExpression
 		if(!type)
 		{
 			_checkIdentityLiterals();
-			Type typeL = getLeftExpr().calcType();
-			Type typeR = getRightExpr().calcType();
-			return semanticErrorType(this, "calcType on binary not implemented");
+			type = BasicType.createType(TOK_bool);
 		}
 		return type;
 	}
@@ -413,6 +446,27 @@ class UnaryExpression : Expression
 		getExpression().semantic(sc);
 	}
 	
+	override Type calcType()
+	{
+		if(!type)
+		{
+			Type exprtype = getExpression().calcType();
+			switch(id)
+			{
+				default:
+					type = exprtype;
+					break;
+				case TOK_delete:
+					type = BasicType.createType(TOK_void);
+					break;
+				case TOK_not:
+					type = BasicType.createType(TOK_bool);
+					break;
+			}
+		}
+		return type;
+	}
+
 	override Value interpret(Context sc)
 	{
 		Value v = getExpression().interpret(sc);
@@ -960,6 +1014,48 @@ class PrimaryExpression : Expression
 		}
 	}
 	
+	override Type calcType()
+	{
+		if(type)
+			return type;
+
+		switch(id)
+		{
+			case TOK_this:
+			case TOK_super:
+				auto sc = getScope();
+				type = sc ? sc.getThisType() : null;
+				if(id == TOK_super)
+					if(auto clss = cast(Class)type)
+						if(auto bc = clss.getBaseClass())
+							type = bc.calcType();
+				if(!type)
+					type = semanticErrorType("this needs context");
+				break;
+
+			case TOK_true:
+			case TOK_false:
+				type = BasicType.createType(TOK_bool);
+				break;
+
+			case TOK_null:  
+				type = Singleton!NullType.get();
+				break;
+
+			case TOK_dollar:
+			case TOK___LINE__:
+				type = BasicType.createType(TOK_uint);
+				break;
+
+			case TOK___FILE__:
+				type = getTypeString!char();
+				break;
+			default:
+				return super.calcType();
+		}
+		return type;
+	}
+
 	override void toD(CodeWriter writer)
 	{
 		writer(id);
@@ -1057,6 +1153,12 @@ class VoidInitializer : Expression
 
 	override PREC getPrecedence() { return PREC.primary; }
 
+	override Type calcType()
+	{
+		if(!type)
+			type = BasicType.createType(TOK_void);
+		return type;
+	}
 	override void toD(CodeWriter writer)
 	{
 		writer("void");
@@ -1139,7 +1241,7 @@ class FunctionLiteral : Expression
 	
 	TypeFunction func;
 	
-	override Value interpret(Context sc)
+	override Type calcType()
 	{
 		if(!func)
 		{
@@ -1159,28 +1261,35 @@ class FunctionLiteral : Expression
 				funclit.paramList = pl;
 				func = funclit;
 			}
-/+
+			/+
 			auto rt = getType();
 			if(!rt)
-				rt = new AutoType(TOK_auto, span);
+			rt = new AutoType(TOK_auto, span);
 			else
-				rt = rt.clone();
+			rt = rt.clone();
 			func.addMember(rt);
-			
+
 			auto pl = getParameterList();
 			if(!pl)
-				pl = new ParameterList();
+			pl = new ParameterList();
 			else
-				pl = pl.clone();
+			pl = pl.clone();
 			func.addMember(pl);
-+/
-			
+			+/
+
 			auto decl = new FuncLiteralDeclarator;
 			decl.type = func;
 			decl.funcbody = getFunctionBody();
 			func.funcDecl = decl;
 		}
-		
+		return func;
+	}
+
+	override Value interpret(Context sc)
+	{
+		if(!func)
+			calcType();
+
 		if(id == TOK_function)
 		{
 			auto fn = new FunctionValue;
@@ -1334,6 +1443,12 @@ class ImportExpression : Expression
 
 	Expression getExpression() { return getMember!Expression(0); }
 	
+	override Type calcType()
+	{
+		if(!type)
+			type = getTypeString!char();
+		return type;
+	}
 	override void toD(CodeWriter writer)
 	{
 		writer("import(", getMember!Expression(0), ")");
@@ -1426,6 +1541,13 @@ class IsExpression : PrimaryExpression
 		if(auto ts = getTypeSpecialization())
 			writer(ts);
 		writer(")");
+	}
+
+	override Type calcType()
+	{
+		if(!type)
+			type = BasicType.createType(TOK_bool);
+		return type;
 	}
 }
 
@@ -1633,10 +1755,10 @@ class IntegerLiteralExpression : PrimaryExpression
 			forceShort = true;
 	}
 	
-	override void _semantic(Scope sc)
+	override Type calcType()
 	{
 		if(type)
-			return;
+			return type;
 
 		long lim = unsigned ? 0x1_0000_0000 : 0x8000_0000;
 		if(lng || value >= lim)
@@ -1660,7 +1782,12 @@ class IntegerLiteralExpression : PrimaryExpression
 			else
 				type = new BasicType(TOK_byte, span);
 
-		type.semantic(sc);
+		return type;
+	}
+
+	override void _semantic(Scope sc)
+	{
+		calcType().semantic(sc);
 	}
 	
 	Value _interpret(Context sc)
@@ -1772,10 +1899,10 @@ class FloatLiteralExpression : PrimaryExpression
 			&& tn.lng == lng;
 	}
 	
-	override void _semantic(Scope sc)
+	override Type calcType()
 	{
 		if(type)
-			return;
+			return type;
 
 		if(complex)
 			if(lng)
@@ -1792,7 +1919,12 @@ class FloatLiteralExpression : PrimaryExpression
 			else
 				type = new BasicType(TOK_double, span);
 
-		type.semantic(sc);
+		return type;
+	}
+
+	override void _semantic(Scope sc)
+	{
+		calcType().semantic(sc);
 	}
 	
 	Value _interpret(Context sc)
@@ -1889,21 +2021,29 @@ class StringLiteralExpression : PrimaryExpression
 		return tn.txt == txt;
 	}
 
+	override Type calcType()
+	{
+		if(!type)
+		{
+			switch(txt[$-1])
+			{
+				default:
+				case 'c':
+					type = getTypeString!char();
+					break;
+				case 'w':
+					type = getTypeString!wchar();
+					break;
+				case 'd':
+					type = getTypeString!dchar();
+					break;
+			}
+		}
+		return type;
+	}
 	override void _semantic(Scope sc)
 	{
-		switch(txt[$-1])
-		{
-			default:
-			case 'c':
-				type = getTypeString!char();
-				break;
-			case 'w':
-				type = getTypeString!wchar();
-				break;
-			case 'd':
-				type = getTypeString!dchar();
-				break;
-		}
+		calcType();
 	}
 
 	override Value interpret(Context sc)
@@ -1947,6 +2087,24 @@ class CharacterLiteralExpression : PrimaryExpression
 		return tn.txt == txt;
 	}
 	
+	override Type calcType()
+	{
+		if(type)
+			return type;
+
+		if(txt.length >= 3)
+		{
+			if(txt[$-1] == 'd')
+				type = new BasicType(TOK_dchar, span);
+			else if(txt[$-1] == 'w')
+				type = new BasicType(TOK_wchar, span);
+		}
+		if(!type)
+			type = new BasicType(TOK_char, span);
+
+		return type;
+	}
+
 	Value _interpret(Context sc)
 	{
 		if(txt.length < 3)
@@ -1970,20 +2128,7 @@ class CharacterLiteralExpression : PrimaryExpression
 	
 	override void _semantic(Scope sc)
 	{
-		if(type)
-			return;
-
-		if(txt.length >= 3)
-		{
-			if(txt[$-1] == 'd')
-				type = new BasicType(TOK_dchar, span);
-			else if(txt[$-1] == 'w')
-				type = new BasicType(TOK_wchar, span);
-		}
-		if(!type)
-			type = new BasicType(TOK_char, span);
-
-		type.semantic(sc);
+		calcType().semantic(sc);
 	}
 	
 	override void toD(CodeWriter writer)

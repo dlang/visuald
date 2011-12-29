@@ -331,13 +331,14 @@ class NonEmptyStatement : Statement
 	
 	static Action shiftDeclaration(Parser p)
 	{
-		p.appendReplaceTopNode(new ast.DeclarationStatement(p.tok));
+		p.appendReplaceTopNode(new ast.DeclarationStatement(p.topNode().span));
 		return Forward;
 	}
 
 	static Action shiftImport(Parser p)
 	{
-		p.appendReplaceTopNode(new ast.ImportStatement(p.tok));
+		p.popRollback();
+		p.appendReplaceTopNode(new ast.ImportStatement(p.topNode().span));
 		return Forward;
 	}
 }

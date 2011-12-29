@@ -94,12 +94,28 @@ class Aggregate : Type
 	
 	override bool createsScope() const { return true; }
 
+	override Scope enterScope(ref Scope nscope, Scope sc)
+	{
+		if(!nscope)
+		{
+			nscope = new AggregateScope;
+			nscope.annotations = sc.annotations;
+			nscope.attributes = sc.attributes;
+			nscope.mod = sc.mod;
+			nscope.parent = sc;
+			nscope.node = this;
+			addMemberSymbols(nscope);
+			return nscope;
+		}
+		return sc.push(nscope);
+	}
+
 	override void _semantic(Scope sc)
 	{
 		// TODO: TemplateParameterList, Constraint
 		if(auto bdy = getBody())
 		{
-			sc = enterScope(sc);
+			sc = super.enterScope(sc);
 			bdy.semantic(sc);
 			sc = sc.pop();
 		}
@@ -345,6 +361,14 @@ class Aggregate : Type
 	}
 }
 
+class AggregateScope : Scope
+{
+	override Type getThisType()
+	{
+		return static_cast!Aggregate(node);
+	}
+}
+
 class Struct : Aggregate
 {
 	this() {} // default constructor needed for clone()
@@ -370,7 +394,8 @@ class Struct : Aggregate
 		writer("struct ");
 		writer.writeIdentifier(ident);
 		tmplToD(writer);
-		bodyToD(writer);
+		if(writer.writeClassImplementations)
+			bodyToD(writer);
 	}
 
 	override TupleValue _initValue()
@@ -411,7 +436,8 @@ class Union : Aggregate
 		writer("union ");
 		writer.writeIdentifier(ident);
 		tmplToD(writer);
-		bodyToD(writer);
+		if(writer.writeClassImplementations)
+			bodyToD(writer);
 	}
 
 	override TupleValue _initValue()
@@ -441,6 +467,22 @@ class InheritingAggregate : Aggregate
 		baseClasses ~= bc;
 	}
 	
+	override Scope enterScope(ref Scope nscope, Scope sc)
+	{
+		if(!nscope)
+		{
+			nscope = new InheritingScope;
+			nscope.annotations = sc.annotations;
+			nscope.attributes = sc.attributes;
+			nscope.mod = sc.mod;
+			nscope.parent = sc;
+			nscope.node = this;
+			addMemberSymbols(nscope);
+			return nscope;
+		}
+		return sc.push(nscope);
+	}
+
 	override InheritingAggregate clone()
 	{
 		InheritingAggregate n = static_cast!InheritingAggregate(super.clone());
@@ -481,15 +523,18 @@ class InheritingAggregate : Aggregate
 		// class/interface written by derived class
 		writer.writeIdentifier(ident);
 		tmplToD(writer);
-		if(baseClasses.length)
+		if(writer.writeClassImplementations)
 		{
-			if(ident.length > 0)
-				writer(" : ");
-			writer(baseClasses[0]);
-			foreach(bc; baseClasses[1..$])
-				writer(", ", bc);
+			if(baseClasses.length)
+			{
+				if(ident.length > 0)
+					writer(" : ");
+				writer(baseClasses[0]);
+				foreach(bc; baseClasses[1..$])
+					writer(", ", bc);
+			}
+			bodyToD(writer);
 		}
-		bodyToD(writer);
 	}
 
 	override void _initValues(AggrContext thisctx, Value[] initValues)
@@ -524,6 +569,19 @@ class InheritingAggregate : Aggregate
 	}
 }
 
+class InheritingScope : AggregateScope
+{
+	override void searchParents(string ident, bool inParents, bool privateImports, ref Node[] syms)
+	{
+		auto ia = static_cast!InheritingAggregate(node);
+		foreach(bc; ia.baseClasses)
+			if(auto sc = bc.calcType().getScope())
+				addunique(syms, sc.search(ident, false, false));
+
+		super.searchParents(ident, inParents, privateImports, syms);
+	}
+}
+
 class Class : InheritingAggregate
 {
 	this() {} // default constructor needed for clone()
@@ -546,6 +604,14 @@ class Class : InheritingAggregate
 		
 		writer("class ");
 		super.toD(writer);
+	}
+
+	Class getBaseClass()
+	{
+		if(baseClasses.length > 0)
+			if(auto bc = cast(Class)baseClasses[0].getClass())
+				return bc;
+		return null;
 	}
 
 	override TupleValue _initValue()
@@ -647,6 +713,8 @@ class BaseClass : Node
 {
 	mixin ForwardCtor!();
 	
+	Type type;
+
 	this() {} // default constructor needed for clone()
 	
 	this(TokenId prot, ref const(TextSpan) _span)
@@ -665,6 +733,17 @@ class BaseClass : Node
 		if (res) // if null, resolve already issued an error
 			semanticError("class or interface expected instead of ", res);
 		return null;
+	}
+
+	override Type calcType()
+	{
+		if(type)
+			return type;
+
+		type = getClass();
+		if(!type)
+			type = semanticErrorType("cannot resolve base class ", this);
+		return type;
 	}
 
 	override void toD(CodeWriter writer)

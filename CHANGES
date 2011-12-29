@@ -364,7 +364,7 @@ Version history
 unreleased Version 0.3.30
 
   * fixed utf8 to OLE string conversion, that could get in the way when using non ascii file names
-  * property pages now adjust its font abd size to the IDE environment
+  * property pages now adjust their font and size to the IDE environment
   * __ctfe is now highlighted as a keyword
   * completion automatically inserts now if there is only one candidate
   * completion of import modules now restricted to files, not symbols

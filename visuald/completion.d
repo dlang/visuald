@@ -287,7 +287,10 @@ class Declarations
 		int hr = textView.GetCaretPos(&line, &idx);
 
 		bool inDotExpr;
-		ast.Node n = Package.GetLanguageService().GetNode(src, line, idx, &inDotExpr);
+		TextSpan span;
+		span.iStartLine = span.iEndLine = line;
+		span.iStartIndex = span.iEndIndex = idx;
+		ast.Node n = Package.GetLanguageService().GetNode(src, &span, &inDotExpr);
 		if(!n)
 			return false;
 		vdc.semantic.Scope sc = n.getScope();

@@ -374,6 +374,13 @@ class Node
 		extendSpan(m.fulspan);
 	}
 
+	Node removeMember(Node m) 
+	{
+		int n = std.algorithm.countUntil(members, m);
+		assert(n >= 0);
+		return removeMember(n);
+	}
+
 	Node removeMember(int m) 
 	{
 		Node n = members[m];
@@ -539,6 +546,17 @@ bool nodeContains(Node node, TextPos pos)
 	return true;
 }
 
+bool nodeContains(Node node, ref TextSpan span)
+{
+	TextPos start = minimumTextPos(node);
+	if(start > span.start)
+		return false;
+	TextPos end = maximumTextPos(node);
+	if(end < span.end)
+		return false;
+	return true;
+}
+
 // prefer end
 bool nodeContainsEnd(Node node, TextPos pos)
 {
@@ -576,30 +594,34 @@ L_loop:
 	return false;
 }
 
-Node getTextPosNode(Node root, int line, int index, bool *inDotExpr)
+Node getTextPosNode(Node root, TextSpan* span, bool *inDotExpr)
 {
-	TextPos pos = TextPos(index, line);
-	if(!nodeContainsEnd(root, pos))
+	if(!nodeContains(root, *span))
 		return null;
 
 L_loop:
 	foreach(m; root.members)
-		if(nodeContainsEnd(m, pos))
+		if(nodeContains(m, *span))
 		{
 			root = m;
 			goto L_loop;
 		}
 
 	if(inDotExpr)
-	{
 		*inDotExpr = false;
-		if(auto id = cast(Identifier)root)
-			if(auto dotexpr = cast(DotExpression)id.parent)
+
+	if(auto id = cast(Identifier)root)
+		if(auto dotexpr = cast(DotExpression)id.parent)
+			if(dotexpr.getIdentifier() == id)
 			{
-				root = dotexpr.getExpression().calcType();
-				*inDotExpr = true;
+				if(inDotExpr)
+				{
+					root = dotexpr.getExpression().calcType();
+					*inDotExpr = true;
+				}
+				else
+					root = dotexpr;
 			}
-	}
 
 	return root;
 }

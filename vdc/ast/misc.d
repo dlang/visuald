@@ -90,17 +90,20 @@ class EnumDeclaration : Type
 		{
 			writer("enum ");
 			writer.writeIdentifier(ident);
-			if(Type type = getBaseType())
-				writer(" : ", type);
-			if (members.length > 0)
+			if(writer.writeClassImplementations)
 			{
-				writer.nl();
-				writer(getBody());
-			}
-			else
-			{
-				writer(";");
-				writer.nl;
+				if(Type type = getBaseType())
+					writer(" : ", type);
+				if (members.length > 0)
+				{
+					writer.nl();
+					writer(getBody());
+				}
+				else
+				{
+					writer(";");
+					writer.nl;
+				}
 			}
 		}
 	}
@@ -188,7 +191,8 @@ class EnumMember : Node
 	mixin ForwardCtor!();
 
 	string ident;
-	
+	Type type;
+
 	override EnumMember clone()
 	{
 		EnumMember n = static_cast!EnumMember(super.clone());
@@ -208,6 +212,22 @@ class EnumMember : Node
 	Expression getInitializer() { return members.length > 0 ? getMember!Expression(members.length - 1) : null; }
 	Type getType() { return members.length > 1 ? getMember!Type(0) : null; }
 	
+	override Type calcType()
+	{
+		if(type)
+			return type;
+
+		if(auto dtype = getType())
+			type = dtype.calcType();
+		else if(parent && parent.parent && parent.parent)
+			if(auto ed = cast(EnumDeclaration)parent.parent.parent)
+				type = ed.calcType();
+
+		if(!type)
+			type = semanticErrorType("cannot determine type of enum member ", ident);
+		return type;
+	}
+
 	override void toD(CodeWriter writer)
 	{
 		if(Type type = getType())
@@ -310,6 +330,31 @@ class FunctionBody : Node
 
 	override bool createsScope() const { return true; }
 
+	override Scope enterScope(ref Scope nscope, Scope sc)
+	{
+		if(!nscope)
+		{
+			nscope = new Scope;
+			nscope.annotations = sc.annotations;
+			nscope.attributes = sc.attributes;
+			nscope.mod = sc.mod;
+			nscope.parent = sc;
+			nscope.node = this;
+
+			ParameterList pl;
+			if(auto callable = cast(CallableNode) parent)
+				pl = callable.getParameterList();
+			if(auto decl = cast(Decl) parent)
+				if(auto decls = decl.getDeclarators())
+					if(auto callable = cast(CallableNode) decls.getDeclarator(0))
+						pl = callable.getParameterList();
+			if(pl)
+				pl.addSymbols(sc);
+			return nscope;
+		}
+		return sc.push(nscope);
+	}
+
 	override void _semantic(Scope sc)
 	{
 		if(inStatement)
@@ -320,7 +365,7 @@ class FunctionBody : Node
 		}
 		if(bodyStatement)
 		{
-			sc = enterScope(sc);
+			sc = super.enterScope(sc);
 			bodyStatement.semantic(sc);
 			sc = sc.pop();
 		}
@@ -396,7 +441,7 @@ class ConditionalDeclaration : Node
 			n = getElseDeclarations();
 		if(!n)
 			return null;
-		athis[0] = n;
+		athis[0] = removeMember(n);
 		return athis;
 	}
 }
@@ -440,7 +485,7 @@ class ConditionalStatement : Statement
 			n = getElseStatement();
 		if(!n)
 			return null;
-		athis[0] = n;
+		athis[0] = removeMember(n);
 		return athis;
 	}
 
@@ -563,7 +608,7 @@ class DebugCondition : Condition
 		if(members.length == 0)
 			return mod.debugEnabled();
 		if(isIdentifier())
-			return mod.versionEnabled(getIdentifier(), span.start);
+			return mod.debugEnabled(getIdentifier(), span.start);
 		return mod.debugEnabled(getInteger());
 	}
 	

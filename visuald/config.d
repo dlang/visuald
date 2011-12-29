@@ -194,6 +194,7 @@ class ProjectOptions
 	bool debugattach;
 	string debugremote;
 	ubyte debugEngine; // 0: mixed, 1: mago
+	bool debugStdOutToOutoutWindow;
 
 	string filesToClean;
 	
@@ -538,6 +539,7 @@ class ProjectOptions
 		elem ~= new xml.Element("debugattach", toElem(debugattach));
 		elem ~= new xml.Element("debugremote", toElem(debugremote));
 		elem ~= new xml.Element("debugEngine", toElem(debugEngine));
+		elem ~= new xml.Element("debugStdOutToOutoutWindow", toElem(debugStdOutToOutoutWindow));
 		
 		elem ~= new xml.Element("filesToClean", toElem(filesToClean));
 		
@@ -649,6 +651,7 @@ class ProjectOptions
 		fromElem(elem, "debugattach", debugattach);
 		fromElem(elem, "debugremote", debugremote);
 		fromElem(elem, "debugEngine", debugEngine);
+		fromElem(elem, "debugStdOutToOutoutWindow", debugStdOutToOutoutWindow);
 
 		fromElem(elem, "filesToClean", filesToClean);
 	}
@@ -1198,6 +1201,12 @@ class Config :	DisposingComObject,
 		string args = mProjectOptions.replaceEnvironment(mProjectOptions.debugarguments, this);
 		if(DBGLAUNCH_NoDebug & grfLaunch)
 		{
+			bool withPause = true;
+			if(withPause)
+			{
+				args = "/c " ~ quoteFilename(prg) ~ " " ~ args ~ " & pause";
+				prg = getCmdPath();
+			}
 			ShellExecuteW(null, null, toUTF16z(quoteFilename(prg)), toUTF16z(args), toUTF16z(workdir), SW_SHOWNORMAL);
 			return(S_OK);
 		}
@@ -1262,6 +1271,7 @@ class Config :	DisposingComObject,
 			dbgi.bstrExe = allocBSTR(prg); // _toUTF16z(prg);
 			dbgi.bstrCurDir = allocBSTR(workdir); // _toUTF16z(workdir);
 			dbgi.bstrArg = allocBSTR(args); // _toUTF16z(args);
+			dbgi.fSendStdoutToOutputWindow = mProjectOptions.debugStdOutToOutoutWindow;
 
 			hr = srpVsDebugger.LaunchDebugTargets(1, &dbgi);
 			if (FAILED(hr))

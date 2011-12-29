@@ -668,8 +668,28 @@ class IdentifierList : Node
 	
 	Node resolve()
 	{
-		if(!resolved)
-			semantic(getScope());
+		if(resolved)
+			return resolved;
+		
+		// TODO: does not work for package qualified symbols
+		Scope sc;
+		if(global)
+			sc = getModule().scop;
+		else if(auto bc = cast(BaseClass) parent)
+			if(auto clss = bc.parent)
+				if(auto p = clss.parent)
+					sc = p.getScope();
+		if(!sc)
+			sc = getScope();
+
+		for(int m = 0; sc && m < members.length; m++)
+		{
+			auto id = getMember!Identifier(m);
+			resolved = sc.resolveWithTemplate(id.ident, sc, id);
+			sc = (resolved ? resolved.getScope() : null);
+		}
+		if(!sc)
+			resolved = semanticErrorType("cannot resolve ", writeD(this));
 		return resolved;
 	}
 	
@@ -689,16 +709,7 @@ class IdentifierList : Node
 
 	override void _semantic(Scope sc)
 	{
-		// TODO: does not work for package qualified symbols
-		if(global)
-			sc = getModule().scop;
-
-		for(int m = 0; sc && m < members.length; m++)
-		{
-			auto id = getMember!Identifier(m);
-			resolved = sc.resolveWithTemplate(id.ident, sc, id);
-			sc = (resolved ? resolved.scop : null);
-		}
+		resolve();
 	}
 	
 	override void toD(CodeWriter writer)
@@ -747,6 +758,23 @@ class Identifier : Node
 		if(parent)
 			return parent.getFunctionArguments();
 		return null;
+	}
+
+	override Type calcType()
+	{
+		if(auto p = cast(IdentifierList) parent)
+			return p.calcType();
+		if(auto p = cast(IdentifierExpression) parent)
+			return p.calcType();
+		if(auto p = cast(DotExpression) parent)
+			return p.calcType();
+		if(auto p = cast(ModuleFullyQualifiedName) parent)
+		{
+		}
+		if(auto p = cast(ForeachType) parent)
+		{
+		}
+		return super.calcType();
 	}
 }
 

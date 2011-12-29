@@ -237,8 +237,12 @@ class Module : Node
 	bool debugEnabled(string ident, TextPos pos)
 	{
 		if(auto prj = getProject())
+		{
+			if(!prj.options.debugOn)
+				return false;
 			if(prj.options.debugEnabled(ident))
 				return true;
+		}
 		if(debugIds.defined(ident, pos))
 			return true;
 		return false;
@@ -247,8 +251,12 @@ class Module : Node
 	bool debugEnabled(int level)
 	{
 		if(auto prj = getProject())
+		{
+			if(!prj.options.debugOn)
+				return false;
 			if(prj.options.debugEnabled(level))
 				return true;
+		}
 		return level <= debugIds.level;
 	}
 	bool debugEnabled()
@@ -441,7 +449,7 @@ class DeclarationBlock : Node
 	
 	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
-		return members;
+		return removeAll();
 	}
 }
 

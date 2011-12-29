@@ -260,7 +260,12 @@ class DeclarationStatement : Statement
 		}
 		return decls;
 	}
-	
+
+	override void addSymbols(Scope sc)
+	{
+		addMemberSymbols(sc);
+	}
+
 	override void _semantic(Scope sc)
 	{
 		auto decl = getMember(0);

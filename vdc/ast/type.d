@@ -128,7 +128,11 @@ class Type : Node
 
 	Type commonType(Type other)
 	{
-		return other;
+		if(convertableFromImplicite(other))
+			return this;
+		if(other.convertableFromImplicite(this))
+			return other;
+		return semanticErrorType(this, " has no common type with ", other);
 	}
 	
 	override void _semantic(Scope sc)
@@ -341,7 +345,36 @@ class BasicType : Type
 	}
 	
 	enum Category { kInteger, kFloat, kComplex, kVoid }
-	
+
+	static int categoryLevel(int id)
+	{
+		switch(id)
+		{
+			case TOK_bool:    return 0;
+			case TOK_byte:    return 1;
+			case TOK_ubyte:   return 1;
+			case TOK_short:   return 2;
+			case TOK_ushort:  return 2;
+			case TOK_int:     return 4;
+			case TOK_uint:    return 4;
+			case TOK_long:    return 8;
+			case TOK_ulong:   return 8;
+			case TOK_char:    return 1;
+			case TOK_wchar:   return 2;
+			case TOK_dchar:   return 4;
+			case TOK_float:   return 10; // assume al floats convertable, ignore lost accuracy
+			case TOK_double:  return 10;
+			case TOK_real:    return 10;
+			case TOK_ifloat:  return 10;
+			case TOK_idouble: return 10;
+			case TOK_ireal:   return 10;
+			case TOK_cfloat:  return 16;
+			case TOK_cdouble: return 16;
+			case TOK_creal:   return 16;
+			default: assert(false);
+		}
+	}
+
 	static Category category(int id)
 	{
 		switch(id)
@@ -422,10 +455,21 @@ class BasicType : Type
 		auto bt = cast(BasicType) from;
 		if(!bt)
 			return false;
+		if(id == bt.id)
+			return true;
+
+		Category cat = category(id);
+		Category fcat = category(bt.id);
 
 		if(flags & ConversionFlags.kAllowBaseTypeConversion)
-			return category(id) == category(bt.id);
-		return id == bt.id;
+			return cat == fcat;
+		if(flags & ConversionFlags.kImpliciteConversion)
+		{
+			if(cat == Category.kVoid || fcat != Category.kVoid)
+				return cat == fcat;
+			return (categoryLevel(id) >= categoryLevel(bt.id));
+		}
+		return false;
 	}
 	
 	override void toD(CodeWriter writer)
@@ -464,6 +508,21 @@ class AutoType : Type
 		if(!initValue)
 			return semanticErrorValue("no initializer in auto declaration");
 		return initValue;
+	}
+
+	override Type calcType()
+	{
+		Expression expr;
+
+		if(auto decl = cast(Decl) parent)
+		{
+			Declarators decls = decl.getDeclarators();
+			if(auto declinit = cast(DeclaratorInitializer) decls.getMember(0))
+				expr = declinit.getInitializer();
+		}
+		if(expr)
+			return expr.calcType();
+		return semanticErrorType("no initializer in auto declaration");
 	}
 }
 
@@ -658,7 +717,7 @@ class TypeIndirection : Type
 
 	override Type opIndex(int v)
 	{
-		_assert(false);
+		//_assert(false);
 		return getNextType();
 	}
 	

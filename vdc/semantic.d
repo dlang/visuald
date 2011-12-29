@@ -22,6 +22,7 @@ import vdc.interpret;
 
 import stdext.util;
 import stdext.array;
+import stdext.path;
 
 import std.exception;
 import std.stdio;
@@ -251,6 +252,13 @@ class Scope
 		return current = parent;
 	}
 	
+	Type getThisType()
+	{
+		if(!parent)
+			return null;
+		return parent.getThisType();
+	}
+
 	void addSymbol(string ident, Symbol s)
 	{
 		logInfo("Scope(%s).addSymbol(%s, sym %s=%s)", cast(void*)this, ident, s, cast(void*)s);
@@ -269,6 +277,30 @@ class Scope
 	struct SearchData { string ident; Scope sc; }
 	static Stack!SearchData searchStack;
 
+	void searchCollect(string ident, ref Node[] syms)
+	{
+		string iden = ident[0..$-1];
+		foreach(id, sym; symbols)
+			if(id.startsWith(iden))
+				addunique(syms, sym);
+	}
+
+	void searchParents(string ident, bool inParents, bool privateImports, ref Node[] syms)
+	{
+		if(inParents && parent)
+		{
+			if(syms.length == 0)
+				syms = parent.search(ident, true, privateImports);
+			else if(collectSymbols(ident))
+				addunique(syms, parent.search(ident, true, privateImports));
+		}
+	}
+
+	static bool collectSymbols(string ident) 
+	{
+		return ident.endsWith("*");
+	}
+
 	Symbol[] search(string ident, bool inParents, bool privateImports)
 	{
 		// check recursive search
@@ -278,14 +310,8 @@ class Scope
 				return null;
 
 		Node[] syms;
-		bool collect = ident.endsWith("*");
-		if(collect)
-		{
-			string iden = ident[0..$-1];
-			foreach(id, sym; symbols)
-				if(id.startsWith(iden))
-					addunique(syms, sym);
-		}
+		if(collectSymbols(ident))
+			searchCollect(ident, syms);
 		else if(auto pn = ident in symbols)
 			return *pn;
 		
@@ -295,13 +321,7 @@ class Scope
 			if(privateImports || (imp.getProtection() & Annotation_Public))
 				addunique(syms, imp.search(this, ident));
 		}
-		if(inParents && parent)
-		{
-			if(syms.length == 0)
-				syms = parent.search(ident, true, privateImports);
-			else if(collect)
-				addunique(syms, parent.search(ident, true, privateImports));
-		}
+		searchParents(ident, inParents, privateImports, syms);
 		searchStack.pop();
 		return syms;
 	}
@@ -554,6 +574,7 @@ class Project : Node
 			semanticError("cannot find imported module " ~ modname);
 			return null;
 		}
+		srcfile = normalizePath(srcfile);
 		return addAndParseFile(srcfile, true);
 	}
 	

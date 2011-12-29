@@ -374,6 +374,8 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		}
 		else if(cb)
 			h -= 2;
+		//else if(cast(ComboBox) w)
+		//    h -= 4;
 
 		int y = mLines*kLineHeight + (lines * kLineHeight - kLineSpacing - h) / 2;
 		if(w)
@@ -699,6 +701,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		AddControl("",                  mAttach = new CheckBox(mCanvas, "Attach to running process"));
 		AddControl("Remote Machine",    mRemote = new Text(mCanvas));
 		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago" ], false));
+		AddControl("",                  mStdOutToOutoutWindow = new CheckBox(mCanvas, "Redirect stdout to output window"));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -709,6 +712,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		mAttach.setChecked(options.debugattach);
 		mRemote.setText(options.debugremote);
 		mDebugEngine.setSelection(options.debugEngine);
+		mStdOutToOutoutWindow.setChecked(options.debugStdOutToOutoutWindow);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -720,6 +724,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		changes += changeOption(mAttach.isChecked(), options.debugattach, options.debugattach);
 		changes += changeOption(mRemote.getText(), options.debugremote, refoptions.debugremote);
 		changes += changeOption(cast(ubyte)mDebugEngine.getSelection(), options.debugEngine, refoptions.debugEngine);
+		changes += changeOption(mStdOutToOutoutWindow.isChecked(), options.debugStdOutToOutoutWindow, options.debugStdOutToOutoutWindow);
 		return changes;
 	}
 
@@ -729,6 +734,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 	Text mRemote;
 	CheckBox mAttach;
 	ComboBox mDebugEngine;
+	CheckBox mStdOutToOutoutWindow;
 }
 
 class DmdGeneralPropertyPage : ProjectPropertyPage
@@ -1333,7 +1339,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
-		AddControl("", mSemantics = new CheckBox(mCanvas, "Expansions from semantics"));
+		AddControl("", mSemantics = new CheckBox(mCanvas, "Expansions from semantics (very experimental)"));
 		AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
 		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
 	}

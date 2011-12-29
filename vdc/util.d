@@ -429,6 +429,7 @@ class CodeWriter
 	
 	bool writeDeclarations    = true;
 	bool writeImplementations = true;
+	bool writeClassImplementations = true;
 	bool writeReferencedOnly  = false;
 	bool newline;
 	bool lastLineEmpty;

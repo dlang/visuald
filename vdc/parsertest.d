@@ -330,10 +330,28 @@ string ctfeParser(string txt)
 	return sink.s;
 }
 
+const string mixinCTFEParser = q{
+	int a() {}
+	//void ctfeParser()
+	//{
+//		Parser p = new Parser;
+//		ast.Node n = p.parseModule(txt);
+
+//		class DSink { string s; void write(string txt) { s ~= txt; } }
+//		DSink sink = new DSink;
+
+//		DCodeWriter writer = new DCodeWriter(&sink.write);
+//		writer(n);
+
+//		return sink.s;
+	//}
+};
+
 unittest
 {
 	assert(ctfeParser(q{int /* comment to skip */ a;}) == "int a;\n");
 	static assert(ctfeParser(q{int /* comment to skip */ a;}) == "int a;\n");
+	static assert(ctfeParser(mixinCTFEParser) == mixinCTFEParser);
 }
 
 ///////////////////////////////////////////////////////////////////////
