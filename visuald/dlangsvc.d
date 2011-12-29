@@ -612,6 +612,7 @@ class LanguageService : DisposingComObject,
 		opts.setImportDirs(imp);
 		if(Config cfg = getProjectConfig(file))
 		{
+			scope(exit) release(cfg);
 			auto cfgopts = cfg.GetProjectOptions();
 			opts.unittestOn = cfgopts.useUnitTests;
 			opts.debugOn = !cfgopts.release;

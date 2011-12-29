@@ -158,6 +158,7 @@ class DComObject : IUnknown
 	__gshared LONG sCountCreated;
 	__gshared LONG sCountInstances;
 	__gshared LONG sCountReferenced;
+	__gshared bool[LONG] sReferencedObjects;
 
 	new(uint size)
 	{
@@ -200,8 +201,11 @@ debug
 	shared static ~this()
 	{
 		logCall("%d COM objects created", sCountCreated);
-		logCall("%d COM objects not fully dereferenced", sCountReferenced);
 		logCall("%d COM objects never destroyed (no final collection run yet!)", sCountInstances);
+		logCall("%d COM objects not fully dereferenced", sCountReferenced);
+		foreach(p, b; sReferencedObjects)
+			if(b)
+				logCall("   leaked COM object: %s", cast(void*)(p^1));
 	}
 }
 
@@ -246,8 +250,10 @@ version(GC_COM)
 		{
 			debug InterlockedIncrement(&sCountReferenced);
 			//uint sz = this.classinfo.init.length;
-			GC.addRoot(cast(void*) this);
-			debug(COM) logCall("addroot %s this = %s", this, cast(void*)this);
+			void* vthis = cast(void*) this;
+			GC.addRoot(vthis);
+			debug(COM) logCall("addroot %s this = %s", this, vthis);
+			synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = true;
 		}
 }
 		return lRef;
@@ -263,9 +269,11 @@ version(GC_COM)
 		{
 version(GC_COM)
 {
-			debug(COM) logCall("delroot %s this = %s", this, cast(void*)this);
-			GC.removeRoot(cast(void*) this);
+			void* vthis = cast(void*) this;
+			debug(COM) logCall("delroot %s this = %s", this, vthis);
+			GC.removeRoot(vthis);
 			debug InterlockedDecrement(&sCountReferenced);
+			synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = false;
 }
 else
 {
