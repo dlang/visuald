@@ -745,7 +745,7 @@ class IdentifierOrInteger
 				p.pushNode(new ast.Identifier(p.tok));
 				return Accept;
 			default:
-				return p.parseError("interger or identifier expected");
+				return p.parseError("integer or identifier expected");
 		}
 	}
 }

@@ -364,6 +364,8 @@ class IfStatement : Statement
 		}
 	}
 
+	override bool createsScope() const { return true; }
+
 	override Value interpret(Context sc)
 	{
 		Value cond = getMember(0).interpret(sc);
@@ -386,6 +388,8 @@ class IfStatement : Statement
 class WhileStatement : Statement
 {
 	mixin ForwardCtor!();
+
+	override bool createsScope() const { return true; }
 
 	override void toD(CodeWriter writer)
 	{
@@ -431,6 +435,8 @@ class WhileStatement : Statement
 class DoStatement : Statement
 {
 	mixin ForwardCtor!();
+
+	override bool createsScope() const { return true; }
 
 	override void toD(CodeWriter writer)
 	{
@@ -489,6 +495,8 @@ class DoStatement : Statement
 class ForStatement : Statement
 {
 	mixin ForwardCtor!();
+
+	override bool createsScope() const { return true; }
 
 	override void toD(CodeWriter writer)
 	{
@@ -562,6 +570,8 @@ class ForeachStatement : Statement
 {
 	mixin ForwardCtor!();
 
+	override bool createsScope() const { return true; }
+
 	override void toD(CodeWriter writer)
 	{
 		writer(id, "(", getMember(0), "; ");
@@ -630,6 +640,8 @@ class SwitchStatement : Statement
 	mixin ForwardCtor!();
 
 	bool isFinal;
+
+	override bool createsScope() const { return true; }
 
 	override SwitchStatement clone()
 	{
@@ -902,6 +914,8 @@ class WithStatement : Statement
 {
 	mixin ForwardCtor!();
 
+	override bool createsScope() const { return true; }
+
 	override void toD(CodeWriter writer)
 	{
 		writer("with(", getMember(0), ")");
@@ -923,6 +937,8 @@ class WithStatement : Statement
 class SynchronizedStatement : Statement
 {
 	mixin ForwardCtor!();
+
+	override bool createsScope() const { return true; }
 
 	override void toD(CodeWriter writer)
 	{
@@ -950,6 +966,8 @@ class SynchronizedStatement : Statement
 class VolatileStatement : Statement
 {
 	mixin ForwardCtor!();
+
+	override bool createsScope() const { return true; }
 
 	override void toD(CodeWriter writer)
 	{
@@ -994,6 +1012,8 @@ class TryStatement : Statement
 {
 	mixin ForwardCtor!();
 
+	override bool createsScope() const { return true; }
+
 	override void toD(CodeWriter writer)
 	{
 		writer("try");
@@ -1016,6 +1036,8 @@ class Catch : Node
 {
 	mixin ForwardCtor!();
 
+	override bool createsScope() const { return true; }
+
 	override void toD(CodeWriter writer)
 	{
 		if(members.length > 2)
@@ -1035,6 +1057,8 @@ class Catch : Node
 class FinallyStatement : Catch
 {
 	mixin ForwardCtor!();
+
+	override bool createsScope() const { return true; }
 
 	override void toD(CodeWriter writer)
 	{
@@ -1073,6 +1097,8 @@ class ThrowStatement : Statement
 class ScopeGuardStatement : Statement
 {
 	mixin ForwardCtor!();
+
+	override bool createsScope() const { return true; }
 
 	override void toD(CodeWriter writer)
 	{

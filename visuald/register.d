@@ -346,6 +346,11 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyColorizer.Set("Package"w, packageGuid);
 		keyColorizer.Set("Page"w, GUID2wstring(g_ColorizerPropertyPage));
 		
+		// intellisense settings
+		scope RegKey keyIntellisense = new RegKey(keyRoot, langserv ~ "\\EditorToolsOptions\\Intellisense"w);
+		keyIntellisense.Set("Package"w, packageGuid);
+		keyIntellisense.Set("Page"w, GUID2wstring(g_IntellisensePropertyPage));
+
 		scope RegKey keyService = new RegKey(keyRoot, registrationRoot ~ "\\Services\\"w ~ languageGuid);
 		keyService.Set(null, packageGuid);
 		keyService.Set("Name"w, g_languageName);
@@ -430,7 +435,7 @@ version(none){
 
 		// menu
 		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
-		keyToolMenu.Set(packageGuid, ",2001,11"); // CTMENU,version
+		keyToolMenu.Set(packageGuid, ",2001,12"); // CTMENU,version
 		
 		// Visual D settings
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);

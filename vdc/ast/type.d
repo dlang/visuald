@@ -204,6 +204,14 @@ class Type : Node
 	}
 }
 
+class ErrorType : Type
+{
+	mixin ForwardCtor!();
+
+	override bool propertyNeedsParens() const { return false; }
+	override void toD(CodeWriter writer) { writer("_errortype_"); }
+}
+
 //BasicType only created for standard types associated with tokens
 class BasicType : Type
 {

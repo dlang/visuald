@@ -1031,6 +1031,7 @@ enum
 	TOK_StringLiteral,
 	TOK_CharacterLiteral,
 	TOK_EOF,
+	TOK_RECOVER,
 	TOK_end_Generic
 }
 
@@ -1305,6 +1306,7 @@ string tokenString(int id)
 		case TOK_StringLiteral:    return "StringtLiteral";
 		case TOK_CharacterLiteral: return "CharacterLiteral";
 		case TOK_EOF:              return "__EOF__";
+		case TOK_RECOVER:          return "__RECOVER__";
 		case TOK_begin_Keywords: .. case TOK_end_Keywords - 1:
 			return keywords[id - TOK_begin_Keywords];
 		case TOK_begin_Operators: .. case TOK_end_Operators - 1:

@@ -1226,7 +1226,7 @@ version(none) // quick info tooltips not good enough yet
 		}
 		*pbstrText = allocBSTR(msg);
 }
-		if(Package.GetGlobalOptions().projectSemantics)
+		if(Package.GetGlobalOptions().showTypeInTooltip)
 		{
 			string txt = Package.GetLanguageService().GetType(mCodeWinMgr.mSource, &span);
 			if(txt.length)

@@ -267,7 +267,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 			_wndParent.Dispose();
 			_wndParent = null;
 			_wndBack = null;
-			_wndFileWheel = null;;
+			_wndFileWheel = null;
 			_wndFileList = null;
 			_wndFileListHdr = null;
 			_wndToolbar = null;

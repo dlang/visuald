@@ -133,7 +133,7 @@ class DeclDefs
 
 	static Action next(Parser p)
 	{
-		if(p.tok.id == TOK_rcurly || p.tok.id == TOK_EOF)
+		if(p.tok.id == TOK_rcurly || p.tok.id == TOK_EOF || p.tok.id == TOK_RECOVER)
 			return Forward;
 		
 		p.pushState(&shiftDeclDef);

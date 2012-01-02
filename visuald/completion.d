@@ -16,6 +16,7 @@ import std.file;
 import std.path;
 import std.algorithm;
 import std.array;
+import std.conv;
 
 import stdext.array;
 import stdext.file;
@@ -24,15 +25,18 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.hierutil;
 import visuald.fileutil;
+import visuald.pkgutil;
 import visuald.stringutil;
 import visuald.dpackage;
 import visuald.dproject;
 import visuald.dlangsvc;
 import visuald.dimagelist;
+import visuald.dllmain;
 import visuald.config;
 import visuald.intellisense;
 
 import vdc.lexer;
+import vdc.parser.engine;
 import ast = vdc.ast.all;
 
 import sdk.port.vsi;
@@ -279,32 +283,64 @@ class Declarations
 		if(!Package.GetGlobalOptions().projectSemantics)
 			return false;
 
-		string tok = GetTokenBeforeCaret(textView, src);
-		if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
-			tok = "";
+		try
+		{
+			string tok = GetTokenBeforeCaret(textView, src);
+			if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
+				tok = "";
 
-		int line, idx;
-		int hr = textView.GetCaretPos(&line, &idx);
+			int line, idx;
+			int hr = textView.GetCaretPos(&line, &idx);
 
-		bool inDotExpr;
-		TextSpan span;
-		span.iStartLine = span.iEndLine = line;
-		span.iStartIndex = span.iEndIndex = idx;
-		ast.Node n = Package.GetLanguageService().GetNode(src, &span, &inDotExpr);
-		if(!n)
+			auto langsvc = Package.GetLanguageService();
+			ast.Module mod = langsvc.GetSemanticModule(src);
+			if(!mod)
+				return false;
+
+			bool inDotExpr;
+			TextSpan span;
+			span.iStartLine = span.iEndLine = line;
+			span.iStartIndex = span.iEndIndex = idx;
+			ast.Node n = langsvc.GetNode(mod, &span, &inDotExpr);
+			if(!n)
+				return false;
+
+			if(auto r = cast(ast.ParseRecoverNode)n)
+			{
+				wstring wexpr = src.FindExpressionBefore(line, idx);
+				if(wexpr)
+				{
+					string expr = to!string(wexpr);
+					Parser parser = new Parser;
+					ast.Node inserted = parser.parseExpression(expr, r.fulspan);
+					if(!inserted)
+						return false;
+					r.addMember(inserted);
+					n = inserted.calcType();
+					r.removeMember(inserted);
+					inDotExpr = true;
+				}
+			}
+			vdc.semantic.Scope sc = n.getScope();
+			if(!sc)
+				return false;
+			auto syms = sc.search(tok ~ "*", !inDotExpr, true);
+
+			int namesLength = mNames.length;
+
+			foreach(s; syms)
+				if(auto decl = cast(ast.Declarator) s)
+					mNames.addunique(decl.ident);
+				else if(auto em = cast(ast.EnumMember) s)
+					mNames.addunique(em.ident);
+
+			return mNames.length > namesLength;
+		}
+		catch(Error e)
+		{
+			writeToBuildOutputPane(e.msg);
 			return false;
-		vdc.semantic.Scope sc = n.getScope();
-		if(!sc)
-			return false;
-		auto syms = sc.search(tok ~ "*", !inDotExpr, true);
-
-		int namesLength = mNames.length;
-
-		foreach(s; syms)
-			if(auto decl = cast(ast.Declarator) s)
-				mNames.addunique(decl.ident);
-
-		return mNames.length > namesLength;
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////

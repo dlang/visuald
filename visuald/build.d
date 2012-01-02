@@ -48,6 +48,8 @@ import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.vsshell90;
 
+import xml = visuald.xmlwrap;
+
 // threaded builds cause Visual Studio to close the solution
 // version = threadedBuild;
 // version = taskedBuild;

@@ -20,7 +20,7 @@ string getModuleDeclarationName(string fname)
 	string modname;
 	try
 	{
-		enum ParseState { kSpace, kModule, kIdent, kDot };
+		enum ParseState { kSpace, kModule, kIdent, kDot }
 		ParseState pstate = ParseState.kSpace;
 		Lexer lex;
 		int state = 0;

@@ -133,6 +133,30 @@ class Widget
 			}
 	}
 
+	// coordinates relative to parent (child window) or screen (top level window)
+	bool getRect(ref int left, ref int top, ref int w, ref int h)
+	{
+		RECT r;
+		if(!.GetWindowRect(hwnd, &r))
+			return false;
+		if(HWND ph = GetParent(hwnd))
+		{
+			RECT pr;
+			if(!.GetWindowRect(ph, &pr))
+				return false;
+			r.left -= pr.left;
+			r.right -= pr.left;
+			r.top -= pr.top;
+			r.bottom -= pr.top;
+		}
+		left = r.left;
+		top = r.top;
+		w = r.right - r.left;
+		h = r.bottom - r.top;
+		return true;
+	}
+
+	// coordinates relative to parent (child window) or screen (top level window)
 	void setRect(int left, int top, int w, int h)
 	{
 		BOOL ok = MoveWindow(hwnd, left, top, w, h, true);
@@ -222,16 +246,38 @@ class Widget
 		return .SetWindowPos(hwnd, hWndInsertAfter, r.left, r.top, r.right - r.left, r.bottom - r.top, uFlags) != 0;
 	}
 
-	bool AddWindowStyle(int flag) 
+	bool SetWindowStyle(int style) 
+	{
+		return SetWindowLongA(hwnd, GWL_STYLE, style) != 0;
+	}
+
+	bool AddWindowStyle(int flag, int clear = 0) 
 	{
 		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
-		return SetWindowLongA(hwnd, GWL_STYLE, style | flag) != 0;
+		return SetWindowLongA(hwnd, GWL_STYLE, (style & ~clear) | flag) != 0;
 	}
 
 	bool DelWindowStyle(int flag) 
 	{
 		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
 		return SetWindowLongA(hwnd, GWL_STYLE, style & ~flag) != 0;
+	}
+
+	bool SetWindowExStyle(int style) 
+	{
+		return SetWindowLongA(hwnd, GWL_EXSTYLE, style) != 0;
+	}
+
+	bool AddWindowExStyle(int flag, int clear = 0) 
+	{
+		DWORD style = GetWindowLongA(hwnd, GWL_EXSTYLE);
+		return SetWindowLongA(hwnd, GWL_EXSTYLE, (style & ~clear) | flag) != 0;
+	}
+
+	bool DelWindowExStyle(int flag) 
+	{
+		DWORD style = GetWindowLongA(hwnd, GWL_EXSTYLE);
+		return SetWindowLongA(hwnd, GWL_EXSTYLE, style & ~flag) != 0;
 	}
 
 	static Widget fromHWND(HWND hwnd) 

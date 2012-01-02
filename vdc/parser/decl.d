@@ -276,6 +276,8 @@ class Decl(bool checkSemi = true)
 		p.popAppendTopNode!(ast.Decl)();
 		static if(checkSemi)
 		{
+			if(p.tok.id == TOK_RECOVER)
+				return Forward;
 			auto decl = p.topNode!(ast.Decl)();
 			if(decl.members.length == 2 && // BasicType and Declarators
 			   decl.members[1].members.length == 1 && // only one declarator

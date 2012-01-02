@@ -389,8 +389,18 @@ class BlockStatement : Statement
 
 	static Action recover(Parser p)
 	{
-		p.pushState(&shiftLcurly);
+		auto node = new ast.ParseRecoverNode(p.tok);
+		if(p.nodeStack.depth)
+			node.fulspan.start = p.topNode().fulspan.end; // record span of removed text
+		p.pushNode(node);
+		p.pushState(&afterRecover);
 		return Parser.recoverSemiCurly(p);
+	}
+
+	static Action afterRecover(Parser p)
+	{
+		p.popAppendTopNode!(ast.BlockStatement, ast.ParseRecoverNode)();
+		return shiftLcurly(p);
 	}
 }
 

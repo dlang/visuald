@@ -15,6 +15,7 @@ import vdc.parser.stmt;
 import vdc.parser.aggr;
 import vdc.parser.misc;
 import vdc.parser.mod;
+import ast = vdc.ast.all;
 
 import std.conv;
 import std.string;

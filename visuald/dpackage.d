@@ -44,6 +44,7 @@ import visuald.profiler;
 import visuald.library;
 import visuald.pkgutil;
 import visuald.colorizer;
+import visuald.dllmain;
 
 import sdk.win32.winreg;
 
@@ -93,8 +94,9 @@ const GUID    g_tokenReplaceWinCLSID     = uuid("002a2de9-8bb6-484d-9808-7e4ad40
 const GUID    g_outputPaneCLSID          = uuid("002a2de9-8bb6-484d-9809-7e4ad4084715");
 const GUID    g_CppWizardWinCLSID        = uuid("002a2de9-8bb6-484d-980a-7e4ad4084715");
 
-const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-9810-7e4ad4084715");
-const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-9811-7e4ad4084715");
+const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-980b-7e4ad4084715");
+const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-980c-7e4ad4084715");
+// more guids in propertypage.d starting with 9810
 
 GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
 
@@ -284,6 +286,8 @@ class Package : DisposingComObject,
 					sc.Release();
 				}
 				mLangServiceCookie = 0;
+				if(mLangsvc)
+					mLangsvc.Dispose(); // cannot call later because Package.mHostSP needed to query services
 				mLangsvc = release(mLangsvc);
 			}
 			if(mProjFactoryCookie)
@@ -307,6 +311,7 @@ class Package : DisposingComObject,
 				{
 					scope(exit) release(componentManager);
 					componentManager.FRevokeComponent(mComponentID); 
+					mComponentID = 0;
 				}
 			}
 			mHostSP = release(mHostSP);
@@ -328,19 +333,19 @@ class Package : DisposingComObject,
 	override int GetPropertyPage(in GUID* rguidPage, VSPROPSHEETPAGE* ppage)
 	{
 		mixin(LogCallMix2);
-		if(*rguidPage != g_ToolsPropertyPage && 
-		   *rguidPage != g_ToolsProperty2Page && 
-		   *rguidPage != g_ColorizerPropertyPage)
-			return E_NOTIMPL;
 
 		GlobalPropertyPage tpp;
 		if(*rguidPage == g_ToolsPropertyPage)
 			tpp = new ToolsPropertyPage(mOptions);
 		else if(*rguidPage == g_ToolsProperty2Page)
 			tpp = new ToolsProperty2Page(mOptions);
-		else
+		else if(*rguidPage == g_ColorizerPropertyPage)
 			tpp = new ColorizerPropertyPage(mOptions);
-		
+		else if(*rguidPage == g_IntellisensePropertyPage)
+			tpp = new IntellisensePropertyPage(mOptions);
+		else
+			return E_NOTIMPL;
+
 		PROPPAGEINFO pageInfo;
 		pageInfo.cb = PROPPAGEINFO.sizeof;
 		tpp.GetPageInfo(&pageInfo);
@@ -356,12 +361,12 @@ class Package : DisposingComObject,
 		tpp.SetWindowSize(0, 0, pageInfo.size.cx, pageInfo.size.cy);
 		addref(tpp);
 
-		win.destroyDelegate = delegate (Widget)
+		win.destroyDelegate = delegate void(Widget w)
 		{
 			tpp.Deactivate();
 			release(tpp);
 		};
-		win.applyDelegate = delegate (Widget)
+		win.applyDelegate = delegate void(Widget w)
 		{
 			tpp.Apply();
 		};
@@ -746,6 +751,7 @@ class GlobalOptions
 	bool projectSemantics;
 	bool expandFromBuffer;
 	bool expandFromJSON;
+	bool showTypeInTooltip;
 	
 	bool ColorizeVersions = true;
 	bool lastColorizeVersions;
@@ -822,6 +828,7 @@ class GlobalOptions
 			projectSemantics = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
 			expandFromBuffer = keyToolOpts.GetDWORD("expandFromBuffer", 1) != 0;
 			expandFromJSON   = keyToolOpts.GetDWORD("expandFromJSON", 1) != 0;
+			showTypeInTooltip= keyToolOpts.GetDWORD("showTypeInTooltip", 0) != 0;
 			pasteIndent      = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
 			// overwrite by user config
@@ -844,6 +851,7 @@ class GlobalOptions
 			expandFromBuffer     = keyUserOpts.GetDWORD("expandFromBuffer", expandFromBuffer) != 0;
 			expandFromJSON       = keyUserOpts.GetDWORD("expandFromJSON",   expandFromJSON) != 0;
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
+			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip",showTypeInTooltip) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			UserTypes = parseUserTypes(UserTypesSpec);
 
@@ -904,6 +912,7 @@ class GlobalOptions
 			keyToolOpts.Set("projectSemantics", projectSemantics);
 			keyToolOpts.Set("expandFromBuffer", expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON", expandFromJSON);
+			keyToolOpts.Set("showTypeInTooltip", showTypeInTooltip);
 			keyToolOpts.Set("pasteIndent", pasteIndent);
 
 			CHierNode.setContainerIsSorted(sortProjects);

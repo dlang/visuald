@@ -675,6 +675,13 @@ class PostfixExpression : Expression
 				p.pushState(&shiftIdentifierOrTemplateInstance);
 				return IdentifierOrTemplateInstance.enter(p);
 				
+			case TOK_RECOVER:
+				auto expr = p.topNode!(ast.DotExpression)();
+				expr.id = TOK_dot;
+				auto id = new ast.Identifier(p.tok);
+				expr.addMember(id);
+				return Forward;
+
 			case TOK_new:
 				p.pushState(&shiftNewExpression);
 				return NewExpression.enter(p);

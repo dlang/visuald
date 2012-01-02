@@ -38,9 +38,6 @@ import stdext.util;
 //UnionTemplateDeclaration:
 //    union Identifier ( TemplateParameterList ) Constraint_opt StructBody
 //
-//StructBody:
-//    { DeclDefs_opt }
-//
 //ClassDeclaration:
 //    class Identifier BaseClassList_opt ClassBody
 //    ClassTemplateDeclaration
@@ -68,6 +65,12 @@ import stdext.util;
 //
 //BaseInterfaceList:
 //    : InterfaceClasses
+//
+//StructBody:
+//    { DeclDefs_opt }
+//
+//ClassBody:
+//    { DeclDefs_opt }
 //
 //InterfaceBody:
 //    { DeclDefs_opt }
@@ -344,10 +347,6 @@ class AggregateDeclaration
 }
 
 //-- GRAMMAR_BEGIN --
-//ClassBody:
-//    { }
-//    { DeclDefs_opt }
-//
 //Constructor:
 //    this TemplateParameters_opt Parameters MemberFunctionAttributes_opt Constraint_opt FunctionBody
 //    this ( this ) Constraint_opt FunctionBody

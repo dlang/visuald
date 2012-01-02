@@ -374,4 +374,7 @@ unreleased Version 0.3.30
   * added new color to highlight predefined versions
   * creating new folder now initiates renaming it
   * fixed error message capture for error list in case the message also contains "filename(lineno):"
-  * new options on page "Tools->Options->Text Editor->D->Colorizer" to select sources of code completion
+  * new options page "Tools->Options->Text Editor->D->Intellisense" to select sources of code completion
+  * experimental tooltips and code completion from semantic analysis of source code
+  * project configuration: new debugger option to redirect stdout to the debugger output window
+  * project configuration: new option to pause after running program without debugger

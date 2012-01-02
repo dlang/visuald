@@ -58,14 +58,6 @@ template Singleton(T, ARGS...)
 	}
 }
 
-class ErrorType : Type
-{
-	mixin ForwardCtor!();
-	
-	override bool propertyNeedsParens() const { return false; }
-	override void toD(CodeWriter writer) { writer("_errortype_"); }
-}
-
 class Value
 {
 	bool mutable = true;

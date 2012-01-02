@@ -490,6 +490,23 @@ class Node
 	}
 }
 
+class ParseRecoverNode : Node
+{
+	mixin ForwardCtor!();
+
+	override void toD(CodeWriter writer)
+	{
+		string start = to!string(fulspan.start.line) ~ "," ~ to!string(fulspan.start.index);
+		string end   = to!string(fulspan.end.line) ~ "," ~ to!string(fulspan.end.index);
+		writer("/+ syntax error: span = ", start, " - ", end, " +/");
+		writer.nl();
+	}
+	
+	override void _semantic(Scope sc)
+	{
+	}
+}
+
 interface CallableNode
 {
 	Value interpretCall(Context sc);
@@ -610,8 +627,18 @@ L_loop:
 	if(inDotExpr)
 		*inDotExpr = false;
 
-	if(auto id = cast(Identifier)root)
+	if(auto dotexpr = cast(DotExpression)root)
+	{
+		if(inDotExpr)
+		{
+			root = dotexpr.getExpression().calcType();
+			*inDotExpr = true;
+		}
+	}
+	else if(auto id = cast(Identifier)root)
+	{
 		if(auto dotexpr = cast(DotExpression)id.parent)
+		{
 			if(dotexpr.getIdentifier() == id)
 			{
 				if(inDotExpr)
@@ -622,6 +649,7 @@ L_loop:
 				else
 					root = dotexpr;
 			}
-
+		}
+	}
 	return root;
 }

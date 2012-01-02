@@ -227,7 +227,7 @@ class ProfilePane : DisposingComObject, IVsWindowPane
 			_wndParent.Dispose();
 			_wndParent = null;
 			_wndBack = null;
-			_wndFileWheel = null;;
+			_wndFileWheel = null;
 			_wndFuncList = null;
 			_wndFuncListHdr = null;
 			_wndFanInList = null;

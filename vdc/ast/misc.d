@@ -21,6 +21,8 @@ import vdc.ast.type;
 
 import stdext.util;
 
+import std.algorithm;
+
 //EnumDeclaration:
 //    enum EnumTag EnumBody
 //    enum EnumBody
@@ -108,6 +110,8 @@ class EnumDeclaration : Type
 		}
 	}
 
+	override bool createsScope() const { return ident.length > 0; }
+
 	override void addSymbols(Scope sc)
 	{
 		if(ident.length)
@@ -115,6 +119,15 @@ class EnumDeclaration : Type
 		
 		else if(auto bdy = getBody())
 			bdy.addSymbols(sc);
+	}
+
+	override Value createValue(Context ctx, Value initValue)
+	{
+		if(auto bt = getBaseType())
+			return getBaseType().createValue(ctx, initValue);
+		if(initValue)
+			return initValue.getType().createValue(ctx, initValue);
+		return Value.create(0);
 	}
 }
 
@@ -127,7 +140,7 @@ class EnumBody : Node
 	mixin ForwardCtor!();
 
 	EnumMembers getEnumMembers() { return getMember!EnumMembers(0); }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer("{");
@@ -192,6 +205,7 @@ class EnumMember : Node
 
 	string ident;
 	Type type;
+	Value value;
 
 	override EnumMember clone()
 	{
@@ -240,6 +254,27 @@ class EnumMember : Node
 	override void addSymbols(Scope sc)
 	{
 		sc.addSymbol(ident, this);
+	}
+
+	override Value interpret(Context sc)
+	{
+		if(value)
+			return value;
+
+		Value ival;
+		if(Expression expr = getInitializer())
+			ival = expr.interpret(sc);
+		else if(auto em = cast(EnumMembers)parent)
+		{
+			int n = countUntil(parent.members, this);
+			if(n > 0)
+			{
+				ival = parent.members[n].interpret(sc);
+				ival = ival.opBin(sc, TOK_addass, Value.create(cast(byte)1));
+			}
+		}
+		value = calcType().createValue(sc, ival);
+		return value;
 	}
 }
 
@@ -349,7 +384,7 @@ class FunctionBody : Node
 					if(auto callable = cast(CallableNode) decls.getDeclarator(0))
 						pl = callable.getParameterList();
 			if(pl)
-				pl.addSymbols(sc);
+				pl.addSymbols(nscope);
 			return nscope;
 		}
 		return sc.push(nscope);

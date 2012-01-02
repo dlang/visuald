@@ -222,7 +222,7 @@ enum { ERROR_INSUFFICIENT_BUFFER = 122 }
 
 HRESULT HRESULT_FROM_WIN32(ulong x)
 {
-	enum { FACILITY_WIN32 = 7 };
+	enum { FACILITY_WIN32 = 7 }
 	return cast(HRESULT)(x) <= 0 ? cast(HRESULT)(x) 
 	                             : cast(HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000);
 }

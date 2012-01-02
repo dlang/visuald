@@ -26,17 +26,22 @@ import vdc.parser.stmt;
 
 import vdc.ast.node;
 
+// version = recoverError;
+
 class ParseException : Exception
 {
-	this(string msg)
+	this(TextSpan _span, string msg)
 	{
 		super(msg);
+		span = _span;
 	}
 	
 	this()
 	{
 		super("syntax error");
 	}
+
+	TextSpan span;
 }
 
 alias Action function (Parser p) State;
@@ -83,6 +88,25 @@ struct Stack(T)
 		auto s = stack[--depth];
 		return s;
 	}
+
+	void copyTo(ref Stack!T other)
+	{
+		other.depth = depth;
+		other.stack.length = depth;
+		other.stack[] = stack[0..depth];
+	}
+
+	bool compare(ref Stack!T other, int maxdepth)
+	{
+		if(maxdepth > depth)
+			maxdepth = depth;
+		if(other.depth < maxdepth)
+			return false;
+		for(int i = 0; i < maxdepth; i++)
+			if(stack[i] !is other.stack[i])
+				return false;
+		return true;
+	}
 }
 
 struct Snapshot
@@ -128,13 +152,23 @@ class Parser
 	int lastErrorTokenPos;
 	string lastError;
 	TextSpan lastErrorSpan;
+
+	version(recoverError)
+	{
+		Stack!State errStateStack;
+		Stack!Node  errNodeStack;
+		Stack!Token errTokenStack;
+	}
+
 	debug State[] traceState;
 	debug string[] traceToken;
 
+	bool recovering;
 	bool abort;
 	bool saveErrors;
 	ParseError[] errors;
-	
+	State lastState;
+
 	this()
 	{
 		lexerTok = new Token;
@@ -179,8 +213,8 @@ class Parser
 	// extend the full psan of the node on top of the node stack
 	void extendTopNode(Token tok)
 	{
-		if(Node n = topNode())
-			n.extendSpan(tok.span);
+		if(nodeStack.depth > 0)
+			topNode().extendSpan(tok.span);
 	}
 
 	// state stack //////////////////
@@ -225,12 +259,20 @@ class Parser
 	
 	Action parseError(string msg)
 	{
-		if(tokenPos < lastErrorTokenPos)
+		if(tokenPos < lastErrorTokenPos || recovering)
 			return Reject;
 		
 		lastErrorTokenPos = tokenPos;
 		lastError = createError(msg);
 		lastErrorSpan = tok.span;
+
+		version(recoverError)
+		{
+			stateStack.copyTo(errStateStack);
+			nodeStack.copyTo(errNodeStack);
+			tokenStack.copyTo(errTokenStack);
+			errStateStack.push(lastState);
+		}
 		
 		return Reject;
 	}
@@ -282,7 +324,7 @@ class Parser
 		assert(nodeStack.depth >= ss.nodeStackDepth);
 		assert(tokenStack.depth >= ss.tokenStackDepth);
 		assert(ss.tokenPos < tokenHistory.depth);
-		
+
 		stateStack.depth = ss.stateStackDepth;
 		nodeStack.depth = ss.nodeStackDepth;
 		tokenStack.depth = ss.tokenStackDepth;
@@ -295,6 +337,38 @@ class Parser
 		}
 
 		pushState(ss.rollbackState);
+	}
+
+	version(recoverError)
+	void recoverNode(ref Snapshot ss)
+	{
+		assert(stateStack.compare(errStateStack, ss.stateStackDepth));
+		assert(nodeStack.compare(errNodeStack, ss.nodeStackDepth));
+		assert(tokenStack.compare(errTokenStack, ss.tokenStackDepth));
+
+		Token _tok = new Token;
+		_tok.copy(lexerTok);
+		_tok.id = TOK_RECOVER;
+		_tok.txt = "__recover" ~ to!string(countErrors);
+		_tok.span.end = tok.span.start;
+		tok = _tok;
+
+		recovering = true;
+		scope(exit) recovering = false;
+
+		errStateStack.copyTo(stateStack);
+		errNodeStack.copyTo(nodeStack);
+		errTokenStack.copyTo(tokenStack);
+
+		Action act = Forward;
+		while(stateStack.depth > ss.stateStackDepth &&
+			  nodeStack.depth >= ss.nodeStackDepth &&
+			  tokenStack.depth >= ss.tokenStackDepth &&
+			  act == Forward)
+		{
+			State fn = popState();
+			act = fn(this);
+		}
 	}
 
 	// recover from error
@@ -322,6 +396,9 @@ class Parser
 		assert(nodeStack.depth >= ss.nodeStackDepth);
 		assert(tokenStack.depth >= ss.tokenStackDepth);
 		
+		version(recoverError)
+			recoverNode(ss);
+
 		stateStack.depth = ss.stateStackDepth;
 		nodeStack.depth = ss.nodeStackDepth;
 		tokenStack.depth = ss.tokenStackDepth;
@@ -510,6 +587,7 @@ class Parser
 			assert(stateStack.depth > 0);
 			
 			State fn = popState();
+			lastState = fn;
 
 			while(recoverStack.depth > 0 && stateStack.depth < recoverStack.top().stateStackDepth)
 				popRocoverState();
@@ -560,7 +638,7 @@ class Parser
 					recover();
 					goto retryToken;
 				}
-				throw new ParseException(lastError);
+				throw new ParseException(lastErrorSpan, lastError);
 			}
 		}
 		
@@ -753,11 +831,20 @@ class Parser
 	{
 		stateStack = stateStack.init;
 		nodeStack  = nodeStack.init;
+		tokenStack = tokenStack.init;
+		version(recoverError)
+		{
+			errStateStack = errStateStack.init;
+			errNodeStack  = errNodeStack.init;
+			errTokenStack = errTokenStack.init;
+		}
 		lastErrorTokenPos = 0;
 		lastError = "";
 		errors = errors.init;
 		countErrors = 0;
 		abort = false;
+		recovering = false;
+		lastState = null;
 	}
 }
 
@@ -823,7 +910,7 @@ mixin template ListNode(ASTNodeType, SubType, TokenId sep, bool trailingSeparato
 				case TOK_rbracket:
 				case TOK_rcurly:
 					return Forward;
-				default:;
+				default:
 			}
 		
 		p.pushState(&shift);

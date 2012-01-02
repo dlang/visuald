@@ -194,7 +194,8 @@ class ProjectOptions
 	bool debugattach;
 	string debugremote;
 	ubyte debugEngine; // 0: mixed, 1: mago
-	bool debugStdOutToOutoutWindow;
+	bool debugStdOutToOutputWindow;
+	bool pauseAfterRunning;
 
 	string filesToClean;
 	
@@ -539,7 +540,8 @@ class ProjectOptions
 		elem ~= new xml.Element("debugattach", toElem(debugattach));
 		elem ~= new xml.Element("debugremote", toElem(debugremote));
 		elem ~= new xml.Element("debugEngine", toElem(debugEngine));
-		elem ~= new xml.Element("debugStdOutToOutoutWindow", toElem(debugStdOutToOutoutWindow));
+		elem ~= new xml.Element("debugStdOutToOutputWindow", toElem(debugStdOutToOutputWindow));
+		elem ~= new xml.Element("pauseAfterRunning", toElem(pauseAfterRunning));
 		
 		elem ~= new xml.Element("filesToClean", toElem(filesToClean));
 		
@@ -651,7 +653,8 @@ class ProjectOptions
 		fromElem(elem, "debugattach", debugattach);
 		fromElem(elem, "debugremote", debugremote);
 		fromElem(elem, "debugEngine", debugEngine);
-		fromElem(elem, "debugStdOutToOutoutWindow", debugStdOutToOutoutWindow);
+		fromElem(elem, "debugStdOutToOutputWindow", debugStdOutToOutputWindow);
+		fromElem(elem, "pauseAfterRunning", pauseAfterRunning);
 
 		fromElem(elem, "filesToClean", filesToClean);
 	}
@@ -1201,8 +1204,7 @@ class Config :	DisposingComObject,
 		string args = mProjectOptions.replaceEnvironment(mProjectOptions.debugarguments, this);
 		if(DBGLAUNCH_NoDebug & grfLaunch)
 		{
-			bool withPause = true;
-			if(withPause)
+			if(mProjectOptions.pauseAfterRunning)
 			{
 				args = "/c " ~ quoteFilename(prg) ~ " " ~ args ~ " & pause";
 				prg = getCmdPath();
@@ -1271,7 +1273,7 @@ class Config :	DisposingComObject,
 			dbgi.bstrExe = allocBSTR(prg); // _toUTF16z(prg);
 			dbgi.bstrCurDir = allocBSTR(workdir); // _toUTF16z(workdir);
 			dbgi.bstrArg = allocBSTR(args); // _toUTF16z(args);
-			dbgi.fSendStdoutToOutputWindow = mProjectOptions.debugStdOutToOutoutWindow;
+			dbgi.fSendStdoutToOutputWindow = mProjectOptions.debugStdOutToOutputWindow;
 
 			hr = srpVsDebugger.LaunchDebugTargets(1, &dbgi);
 			if (FAILED(hr))
@@ -1675,9 +1677,10 @@ class Config :	DisposingComObject,
 		string[] toclean = tokenizeArgs(mProjectOptions.filesToClean);
 		foreach(s; toclean)
 		{
-			files ~= outdir ~ unquoteArgument(s);
+			string uqs = unquoteArgument(s);
+			files ~= outdir ~ uqs;
 			if(outdir != intermediatedir)
-				files ~= intermediatedir ~ s;
+				files ~= intermediatedir ~ uqs;
 		}
 		searchNode(mProvider.mProject.GetRootNode(), 
 			delegate (CHierNode n) { 
@@ -1866,7 +1869,7 @@ class Config :	DisposingComObject,
 		string fcmd = getCommandFileList(files, responsefile, precmd);
 		
 		string modules_ddoc;
-		string mod_cmd = getModulesDDocCommandLine(files, modules_ddoc);
+		string mod_cmd = getModulesDDocCommandLine(files, modules_ddoc); // TODO: single file compilation: files contains object files, not source
 		if(mod_cmd.length > 0)
 		{
 			precmd ~= mod_cmd ~ "\nif errorlevel 1 goto reportError\n";

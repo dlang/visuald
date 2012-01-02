@@ -695,13 +695,33 @@ class DebuggingPropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
+		Label lbl;
 		AddControl("Command",           mCommand = new Text(mCanvas));
 		AddControl("Command Arguments", mArguments = new Text(mCanvas));
 		AddControl("Working Directory", mWorkingDir = new Text(mCanvas));
 		AddControl("",                  mAttach = new CheckBox(mCanvas, "Attach to running process"));
 		AddControl("Remote Machine",    mRemote = new Text(mCanvas));
 		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago" ], false));
-		AddControl("",                  mStdOutToOutoutWindow = new CheckBox(mCanvas, "Redirect stdout to output window"));
+		AddControl("",                  mStdOutToOutputWindow = new CheckBox(mCanvas, "Redirect stdout to output window"));
+		AddControl("Run without debugging", lbl = new Label(mCanvas, ""));
+		AddControl("",                  mPauseAfterRunning = new CheckBox(mCanvas, "Pause when program finishes"));
+
+		lbl.AddWindowExStyle(WS_EX_STATICEDGE);
+		lbl.AddWindowStyle(SS_ETCHEDFRAME, SS_TYPEMASK);
+		int left, top, w, h;
+		if(lbl.getRect(left, top, w, h))
+			lbl.setRect(left, top + h / 2 - 1, w, 2);
+	}
+
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+
+	void EnableControls()
+	{
+		mStdOutToOutputWindow.setEnabled(mDebugEngine.getSelection() == 0);
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -712,7 +732,10 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		mAttach.setChecked(options.debugattach);
 		mRemote.setText(options.debugremote);
 		mDebugEngine.setSelection(options.debugEngine);
-		mStdOutToOutoutWindow.setChecked(options.debugStdOutToOutoutWindow);
+		mStdOutToOutputWindow.setChecked(options.debugStdOutToOutputWindow);
+		mPauseAfterRunning.setChecked(options.pauseAfterRunning);
+
+		EnableControls();
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -724,7 +747,8 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		changes += changeOption(mAttach.isChecked(), options.debugattach, options.debugattach);
 		changes += changeOption(mRemote.getText(), options.debugremote, refoptions.debugremote);
 		changes += changeOption(cast(ubyte)mDebugEngine.getSelection(), options.debugEngine, refoptions.debugEngine);
-		changes += changeOption(mStdOutToOutoutWindow.isChecked(), options.debugStdOutToOutoutWindow, options.debugStdOutToOutoutWindow);
+		changes += changeOption(mStdOutToOutputWindow.isChecked(), options.debugStdOutToOutputWindow, options.debugStdOutToOutputWindow);
+		changes += changeOption(mPauseAfterRunning.isChecked(), options.pauseAfterRunning, options.pauseAfterRunning);
 		return changes;
 	}
 
@@ -734,7 +758,8 @@ class DebuggingPropertyPage : ProjectPropertyPage
 	Text mRemote;
 	CheckBox mAttach;
 	ComboBox mDebugEngine;
-	CheckBox mStdOutToOutoutWindow;
+	CheckBox mStdOutToOutputWindow;
+	CheckBox mPauseAfterRunning;
 }
 
 class DmdGeneralPropertyPage : ProjectPropertyPage
@@ -1339,9 +1364,6 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
-		AddControl("", mSemantics = new CheckBox(mCanvas, "Expansions from semantics (very experimental)"));
-		AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
-		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1350,9 +1372,6 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mAutoOutlining.setChecked(opts.autoOutlining);
 		mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
-		mSemantics.setChecked(opts.projectSemantics);
-		mExpandFromBuffer.setChecked(opts.expandFromBuffer);
-		mExpandFromJSON.setChecked(opts.expandFromJSON);
 		mUserTypes.setText(opts.UserTypesSpec);
 
 		//mSemantics.setEnabled(false);
@@ -1365,9 +1384,6 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
 		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
-		changes += changeOption(mSemantics.isChecked(), opts.projectSemantics, refopts.projectSemantics); 
-		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer); 
-		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON); 
 		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec); 
 		return changes;
 	}
@@ -1376,13 +1392,56 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	CheckBox mAutoOutlining;
 	CheckBox mParseSource;
 	CheckBox mPasteIndent;
-	CheckBox mSemantics;
-	CheckBox mExpandFromBuffer;
-	CheckBox mExpandFromJSON;
 	MultiLineText mUserTypes;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+class IntellisensePropertyPage : GlobalPropertyPage
+{
+	override string GetCategoryName() { return "Language"; }
+	override string GetPageName() { return "Intellisense"; }
+
+	this(GlobalOptions options)
+	{
+		super(options);
+	}
+
+	override void CreateControls()
+	{
+		AddControl("", mSemantics = new CheckBox(mCanvas, "Expansions from semantics (very experimental)"));
+		AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
+		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
+		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip (experimental)"));
+	}
+
+	override void SetControls(GlobalOptions opts)
+	{
+		mSemantics.setChecked(opts.projectSemantics);
+		mExpandFromBuffer.setChecked(opts.expandFromBuffer);
+		mExpandFromJSON.setChecked(opts.expandFromJSON);
+		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
+
+		//mSemantics.setEnabled(false);
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mSemantics.isChecked(), opts.projectSemantics, refopts.projectSemantics); 
+		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer); 
+		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON); 
+		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip); 
+		return changes;
+	}
+
+	CheckBox mSemantics;
+	CheckBox mExpandFromBuffer;
+	CheckBox mExpandFromJSON;
+	CheckBox mShowTypeInTooltip;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// more guids in dpackage.d starting up to 980f
 const GUID    g_GeneralPropertyPage      = uuid("002a2de9-8bb6-484d-9810-7e4ad4084715");
 const GUID    g_DmdGeneralPropertyPage   = uuid("002a2de9-8bb6-484d-9811-7e4ad4084715");
 const GUID    g_DmdDebugPropertyPage     = uuid("002a2de9-8bb6-484d-9812-7e4ad4084715");
@@ -1403,6 +1462,7 @@ const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad40
 
 // registered under Languages\\Language Services\\D\\EditorToolsOptions\\Colorizer, created explicitely by package
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");
+const GUID    g_IntellisensePropertyPage = uuid("002a2de9-8bb6-484d-9823-7e4ad4084715");
 
 const GUID* guids_propertyPages[] = 
 [ 

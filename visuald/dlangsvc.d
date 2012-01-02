@@ -646,12 +646,8 @@ class LanguageService : DisposingComObject,
 		return mod;
 	}
 
-	ast.Node GetNode(Source src, TextSpan* pSpan, bool* inDotExpr)
+	ast.Node GetNode(ast.Module mod, TextSpan* pSpan, bool* inDotExpr)
 	{
-		ast.Module mod = GetSemanticModule(src);
-		if(!mod)
-			return null;
-
 		mSemanticProject.initScope();
 
 		vdc.util.TextSpan span;
@@ -680,14 +676,17 @@ class LanguageService : DisposingComObject,
 			if(!mod)
 				return null;
 
-			ast.Node n = GetNode(src, pSpan, null);
+			ast.Node n = GetNode(mod, pSpan, null);
 			if(n && n !is mod)
 			{
 				ast.Type t = n.calcType();
-				vdc.util.DCodeWriter writer = new vdc.util.DCodeWriter(vdc.util.getStringSink(txt));
-				writer.writeImplementations = false;
-				writer.writeClassImplementations = false;
-				writer(n, "\ntype: ", t);
+				if(!cast(ast.ErrorType) t)
+				{
+					vdc.util.DCodeWriter writer = new vdc.util.DCodeWriter(vdc.util.getStringSink(txt));
+					writer.writeImplementations = false;
+					writer.writeClassImplementations = false;
+					writer(n, "\ntype: ", t);
+				}
 			}
 		}
 		catch(Error e)
@@ -1968,7 +1967,7 @@ else
 		return mBuffer.ReplaceLines(line, 0, line, idx, wspc.ptr, wspc.length, &changedSpan);
 	}
 
-	struct LineTokenIterator
+	static struct LineTokenIterator
 	{
 		int line;
 		int tok;
@@ -2105,6 +2104,20 @@ else
 			if(tok < lineInfo.length)
 				return lineInfo[tok].StartIndex;
 			return 0;
+		}
+
+		int getEndIndex()
+		{
+			if(tok < lineInfo.length)
+				return lineInfo[tok].EndIndex;
+			return 0;
+		}
+
+		int getTokenType()
+		{
+			if(tok < lineInfo.length)
+				return lineInfo[tok].type;
+			return -1;
 		}
 
 		wstring getPrevToken(int n = 1)
@@ -2355,6 +2368,51 @@ else
 				return rc;
 		}
 		return S_OK;
+	}
+
+	////////////////////////////////////////////////////////////////////////
+	wstring FindExpressionBefore(int caretLine, int caretIndex)
+	{
+		int startLine, startIndex;
+		LineTokenIterator lntokIt = LineTokenIterator(this, caretLine + 1, 0);
+		while(lntokIt.line > caretLine || (lntokIt.getIndex() >= caretIndex && lntokIt.line == caretLine))
+			lntokIt.retreatOverComments();
+
+		if(lntokIt.getTokenType() == TokenColor.Identifier && lntokIt.getEndIndex() >= caretIndex && lntokIt.line == caretLine)
+			lntokIt.retreatOverComments();
+		if(lntokIt.getText() != ".")
+			return null;
+		
+		caretLine = lntokIt.line;
+		caretIndex = lntokIt.getIndex();
+		lntokIt.retreatOverComments();
+
+	L_retry:
+		startLine = lntokIt.line;
+		startIndex = lntokIt.getIndex();
+
+		int type = lntokIt.getTokenType();
+		if(type == TokenColor.Identifier || type == TokenColor.String || type == TokenColor.Literal)
+		{
+			lntokIt.retreatOverComments();
+			wstring tok = lntokIt.getText();
+			if(tok == "." || tok == "!")
+			{
+				lntokIt.retreatOverComments();
+				goto L_retry;
+			}
+		}
+		else
+		{
+			wstring tok = lntokIt.getText();
+			if(tok == "}" || tok == ")" || tok == "]")
+			{
+				lntokIt.retreatOverBraces();
+				goto L_retry;
+			}
+		}
+		wstring wsnip = GetText(startLine, startIndex, caretLine, caretIndex);
+		return wsnip;
 	}
 
 	////////////////////////////////////////////////////////////////////////

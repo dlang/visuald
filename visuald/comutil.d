@@ -155,10 +155,13 @@ extern (C) void*  gc_malloc( size_t sz, uint ba = 0 );
 	
 class DComObject : IUnknown
 {
-	__gshared LONG sCountCreated;
-	__gshared LONG sCountInstances;
-	__gshared LONG sCountReferenced;
-	__gshared bool[LONG] sReferencedObjects;
+	debug
+	{
+		__gshared LONG sCountCreated;
+		__gshared LONG sCountInstances;
+		__gshared LONG sCountReferenced;
+		__gshared int[LONG] sReferencedObjects;
+	}
 
 	new(uint size)
 	{
@@ -188,14 +191,21 @@ debug
 {
 	this()
 	{
-		debug(COM) logCall("ctor %s this = %s", this, cast(void*)this);
+		void* vthis = cast(void*) this;
+		debug(COM) logCall("ctor %s this = %s", this, vthis);
+		debug(COM_ADDREL) synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = 0;
 		InterlockedIncrement(&sCountInstances);
 		InterlockedIncrement(&sCountCreated);
 	}
 	~this()
 	{
 		// logCall needs GC, but finalizer called from within GC
-		debug(COM_DTOR) logCall("dtor %s this = %s", this, cast(void*)this);
+		void* vthis = cast(void*) this;
+		debug(COM_DTOR) logCall("dtor %s this = %s", this, vthis);
+		debug(COM_ADDREL) 
+			synchronized(DComObject.classinfo) 
+				if(auto p = (cast(size_t)vthis^1) in sReferencedObjects)
+					*p = -1,
 		InterlockedDecrement(&sCountInstances);
 	}
 	shared static ~this()
@@ -203,9 +213,14 @@ debug
 		logCall("%d COM objects created", sCountCreated);
 		logCall("%d COM objects never destroyed (no final collection run yet!)", sCountInstances);
 		logCall("%d COM objects not fully dereferenced", sCountReferenced);
-		foreach(p, b; sReferencedObjects)
-			if(b)
-				logCall("   leaked COM object: %s", cast(void*)(p^1));
+		debug(COM_ADDREL) 
+			foreach(p, b; sReferencedObjects)
+			{
+				if(b > 0)
+					logCall("   leaked COM object: %s", cast(void*)(p^1));
+				else if(b == 0)
+					logCall("   not collected:     %s", cast(void*)(p^1));
+			}
 	}
 }
 
@@ -253,7 +268,8 @@ version(GC_COM)
 			void* vthis = cast(void*) this;
 			GC.addRoot(vthis);
 			debug(COM) logCall("addroot %s this = %s", this, vthis);
-			synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = true;
+			debug(COM_ADDREL) 
+				synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = 1;
 		}
 }
 		return lRef;
@@ -273,7 +289,8 @@ version(GC_COM)
 			debug(COM) logCall("delroot %s this = %s", this, vthis);
 			GC.removeRoot(vthis);
 			debug InterlockedDecrement(&sCountReferenced);
-			synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = false;
+			debug(COM_ADDREL) 
+				synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = 0;
 }
 else
 {
