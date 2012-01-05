@@ -744,6 +744,7 @@ class GlobalOptions
 
 	bool timeBuilds;
 	bool sortProjects = true;
+	bool stopSolutionBuild;
 	bool demangleError = true;
 	bool autoOutlining;
 	bool parseSource;
@@ -819,17 +820,18 @@ class GlobalOptions
 			wstring wJSNSearchPath = keyToolOpts.GetString("JSNSearchPath");
 			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
 			wstring wUserTypesSpec = keyToolOpts.GetString("UserTypesSpec", defUserTypesSpec);
-			ColorizeVersions = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
-			timeBuilds       = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
-			sortProjects     = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
-			demangleError    = keyToolOpts.GetDWORD("demangleError", 1) != 0;
-			autoOutlining    = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
-			parseSource      = keyToolOpts.GetDWORD("parseSource", 1) != 0;
-			projectSemantics = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
-			expandFromBuffer = keyToolOpts.GetDWORD("expandFromBuffer", 1) != 0;
-			expandFromJSON   = keyToolOpts.GetDWORD("expandFromJSON", 1) != 0;
-			showTypeInTooltip= keyToolOpts.GetDWORD("showTypeInTooltip", 0) != 0;
-			pasteIndent      = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
+			ColorizeVersions  = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
+			timeBuilds        = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
+			sortProjects      = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
+			stopSolutionBuild = keyToolOpts.GetDWORD("stopSolutionBuild", 0) != 0;
+			demangleError     = keyToolOpts.GetDWORD("demangleError", 1) != 0;
+			autoOutlining     = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
+			parseSource       = keyToolOpts.GetDWORD("parseSource", 1) != 0;
+			projectSemantics  = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
+			expandFromBuffer  = keyToolOpts.GetDWORD("expandFromBuffer", 1) != 0;
+			expandFromJSON    = keyToolOpts.GetDWORD("expandFromJSON", 1) != 0;
+			showTypeInTooltip = keyToolOpts.GetDWORD("showTypeInTooltip", 0) != 0;
+			pasteIndent       = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
 			// overwrite by user config
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
@@ -841,17 +843,18 @@ class GlobalOptions
 			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
 			UserTypesSpec = toUTF8(keyUserOpts.GetString("UserTypesSpec", wUserTypesSpec));
 
-			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions", ColorizeVersions) != 0;
-			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",       timeBuilds) != 0;
-			sortProjects         = keyUserOpts.GetDWORD("sortProjects",     sortProjects) != 0;
-			demangleError        = keyUserOpts.GetDWORD("demangleError",    demangleError) != 0;
-			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",    autoOutlining) != 0;
-			parseSource          = keyUserOpts.GetDWORD("parseSource",      parseSource) != 0;
-			projectSemantics     = keyUserOpts.GetDWORD("projectSemantics", projectSemantics) != 0;
-			expandFromBuffer     = keyUserOpts.GetDWORD("expandFromBuffer", expandFromBuffer) != 0;
-			expandFromJSON       = keyUserOpts.GetDWORD("expandFromJSON",   expandFromJSON) != 0;
-			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",      pasteIndent) != 0;
-			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip",showTypeInTooltip) != 0;
+			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions",  ColorizeVersions) != 0;
+			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",        timeBuilds) != 0;
+			sortProjects         = keyUserOpts.GetDWORD("sortProjects",      sortProjects) != 0;
+			stopSolutionBuild    = keyUserOpts.GetDWORD("stopSolutionBuild", stopSolutionBuild) != 0;
+			demangleError        = keyUserOpts.GetDWORD("demangleError",     demangleError) != 0;
+			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",     autoOutlining) != 0;
+			parseSource          = keyUserOpts.GetDWORD("parseSource",       parseSource) != 0;
+			projectSemantics     = keyUserOpts.GetDWORD("projectSemantics",  projectSemantics) != 0;
+			expandFromBuffer     = keyUserOpts.GetDWORD("expandFromBuffer",  expandFromBuffer) != 0;
+			expandFromJSON       = keyUserOpts.GetDWORD("expandFromJSON",    expandFromJSON) != 0;
+			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",       pasteIndent) != 0;
+			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip", showTypeInTooltip) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			UserTypes = parseUserTypes(UserTypesSpec);
 
@@ -906,6 +909,7 @@ class GlobalOptions
 			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
 			keyToolOpts.Set("timeBuilds", timeBuilds);
 			keyToolOpts.Set("sortProjects", sortProjects);
+			keyToolOpts.Set("stopSolutionBuild", stopSolutionBuild);
 			keyToolOpts.Set("demangleError", demangleError);
 			keyToolOpts.Set("autoOutlining", autoOutlining);
 			keyToolOpts.Set("parseSource", parseSource);

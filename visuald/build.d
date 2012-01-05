@@ -170,12 +170,16 @@ else
 
 		case Operation.eBuild:
 			fSuccessfulBuild = DoBuild();
+			if(!fSuccessfulBuild)
+				StopSolutionBuild();
 			break;
 
 		case Operation.eRebuild:
 			fSuccessfulBuild = DoClean();
 			if(fSuccessfulBuild)
 				fSuccessfulBuild = DoBuild();
+			if(!fSuccessfulBuild)
+				StopSolutionBuild();
 			break;
 
 		case Operation.eCheckUpToDate:
@@ -506,6 +510,19 @@ else
 		mixin(LogCallMix2);
 		
 		mConfig.FFireBuildEnd(fSuccess);
+	}
+
+	void StopSolutionBuild()
+	{
+		if(!Package.GetGlobalOptions().stopSolutionBuild)
+			return;
+
+		if(auto solutionBuildManager = queryService!(IVsSolutionBuildManager)())
+		{
+			OutputText("Solution build stopped.");
+			scope(exit) release(solutionBuildManager);
+			solutionBuildManager.CancelUpdateSolutionConfiguration();
+		}
 	}
 
 	void beginLog()
@@ -1023,7 +1040,8 @@ string re_match_dep = r"^[A-Za-z0-9_\.]+ *\((.*)\) : p[a-z]* : [A-Za-z0-9_\.]+ \
 
 bool getFilenamesFromDepFile(string depfile, ref string[] files)
 {
-	int[string] aafiles;
+	// converted int[string] to byte[string] due to bug #2500
+	byte[string] aafiles;
 	
 	int cntValid = 0;
 	try

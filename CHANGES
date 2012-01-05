@@ -378,3 +378,5 @@ unreleased Version 0.3.30
   * experimental tooltips and code completion from semantic analysis of source code
   * project configuration: new debugger option to redirect stdout to the debugger output window
   * project configuration: new option to pause after running program without debugger
+  * added option to "Tools->Options->Projects and Solutions->Visual D Settings" to stop a solution build
+    if a project fails to build

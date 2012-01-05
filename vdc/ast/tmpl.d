@@ -130,7 +130,7 @@ class TemplateMixinInstance : Type
 
 			// put symbols into parent scope aswell
 			foreach(id, sym; scop.symbols)
-				foreach(s; sym)
+				foreach(s, b; sym)
 					sc.addSymbol(id, s);
 		}
 	}

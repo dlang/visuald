@@ -34,7 +34,7 @@ Project:
 - breaking into build does not stop dmd
 
 Language service:
----------------
+-----------------
 - goto definition does not know about scope
 - use spell-checker on completion?
 - case insensitive completion?
@@ -46,6 +46,14 @@ Language service:
 - check indentation of multiple string literals on several lines
 - show help in standard browser
 - VS no longer remembers position inside file across restart?
+
+Semantics:
+---------------
+- move into background thread
+- import paths for source files not in any project
+- invalidate after changes
+- templates
+- operator overloads
 
 Search:
 ---------------

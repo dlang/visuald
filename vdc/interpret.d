@@ -432,6 +432,7 @@ alias TypeTuple!(BoolValue, ByteValue, UByteValue, ShortValue, UShortValue,
 				 FloatValue, DoubleValue, RealValue,
 				 IFloatValue, IDoubleValue, IRealValue,
 				 CFloatValue, CDoubleValue, CRealValue) BasicTypeValues;
+alias TypeTuple!(BasicTypeValues, SetLengthValue) RHS_BasicTypeValues;
 
 alias TypeTuple!(TOK_bool, TOK_byte, TOK_ubyte, TOK_short, TOK_ushort, 
 				 TOK_int, TOK_uint, TOK_long, TOK_ulong, 
@@ -524,14 +525,14 @@ class ValueT(T) : Value
 		string s;
 		for(int i = TOK_binaryOperatorFirst; i <= TOK_binaryOperatorLast; i++)
 			if(i >= TOK_assignOperatorFirst && i <= TOK_assignOperatorLast)
-				s ~= text("mixin mixinAssignOp!(\"", tokenString(i), "\", BasicTypeValues) ass_", operatorName(i), ";\n");
+				s ~= text("mixin mixinAssignOp!(\"", tokenString(i), "\", RHS_BasicTypeValues) ass_", operatorName(i), ";\n");
 			else
-				s ~= text("mixin mixinBinaryOp!(\"", tokenString(i), "\", BasicTypeValues) bin_", operatorName(i), ";\n");
+				s ~= text("mixin mixinBinaryOp!(\"", tokenString(i), "\", RHS_BasicTypeValues) bin_", operatorName(i), ";\n");
 		return s;
 	}
 	
 	mixin(genMixinBinOpAll());
-	mixin mixinBinaryOp!("is", BasicTypeValues) bin_is;
+	mixin mixinBinaryOp!("is", RHS_BasicTypeValues) bin_is;
 	
 	static string genBinOpCases()
 	{
@@ -611,7 +612,7 @@ class ValueT(T) : Value
 			return semanticErrorValue(this, " value is not mutable");
 		
 		TypeInfo ti = v.classinfo;
-		foreach(iv2; BasicTypeValues)
+		foreach(iv2; RHS_BasicTypeValues)
 		{
 			if(ti is typeid(iv2))
 			{
@@ -1077,6 +1078,8 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 				return this;
 			
 			case TOK_tilde:
+				if(auto ev = cast(ErrorValue) v)
+					return v;
 				auto nv = new DynArrayValue(type);
 				if(auto tv = cast(DynArrayValue) v)
 				{
@@ -1098,6 +1101,8 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 			
 			case TOK_catass:
 				size_t oldlen = len;
+				if(auto ev = cast(ErrorValue) v)
+					return v;
 				if(auto tv = cast(DynArrayValue) v)
 				{
 					setLength(ctx, len + tv.len);

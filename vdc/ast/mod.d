@@ -26,6 +26,7 @@ import stdext.util;
 
 import std.conv;
 import std.path;
+import std.array;
 import std.algorithm;
 
 ////////////////////////////////////////////////////////////////
@@ -158,10 +159,10 @@ class Module : Node
 		initScope();
 	}
 
-	Node[] search(string ident)
+	Scope.SearchSet search(string ident)
 	{
 		initScope();
-		return scop.search(ident, false, false);
+		return scop.search(ident, false, false, true);
 	}
 	
 	override void _semantic(Scope sc)
@@ -284,6 +285,8 @@ class ModuleDeclaration : Node
 
 class PackageIdentifier : Node
 {
+	mixin ForwardCtor!();
+
 	override void toD(CodeWriter writer)
 	{
 		assert(false);
@@ -309,29 +312,32 @@ class ModuleFullyQualifiedName : Node
 	{
 		foreach(m; 0..members.length)
 		{
-			string name = getMember!Identifier(m).ident;
-			Node[] n = sc.search(name, false, false);
-			if(n.length > 1)
+			auto id = getMember!Identifier(m);
+			string name = id.ident;
+			Scope.SearchSet syms = sc.search(name, false, false, false);
+			if(syms.length > 1)
 			{
 				semanticError("ambiguous use of package/module name ", name);
 				break;
 			}
-			else if(n.length == 1)
+			else if(syms.length == 1)
 			{
-				if(auto pkg = cast(PackageIdentifier)n[0])
+				Node n = syms.first();
+
+				if(auto pkg = cast(PackageIdentifier)n)
 				{
-					sc = pkg.scop;
+					sc = pkg.enterScope(sc);
 					pkgs ~= pkg;
 				}
 				else
 				{
-					semanticError("package/module name ", name, " also used as ", n[0]);
+					semanticError("package/module name ", name, " also used as ", n);
 					break;
 				}
 			}
 			else
 			{
-				auto pkg = new PackageIdentifier;
+				auto pkg = new PackageIdentifier(id.span);
 				sc.addSymbol(name, pkg);
 				sc = pkg.enterScope(sc);
 				pkgs ~= pkg;
@@ -632,14 +638,14 @@ class Import : Node
 		mfqn.addSymbols(sc);
 	}
 
-	Node[] search(Scope sc, string ident)
+	Scope.SearchSet search(Scope sc, string ident)
 	{
 		if(!mod)
 			if(auto prj = sc.mod.getProject())
 				mod = prj.importModule(getModuleName());
 		
 		if(!mod)
-			return [];
+			return Scope.SearchSet();
 		
 		return mod.search(ident);
 	}

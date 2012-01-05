@@ -1108,10 +1108,15 @@ class ArrayLiteral : Expression
 		if(!isAssoc)
 		{
 			type = new TypeDynamicArray;
-			Type vt = new AutoType;
-			foreach(m; argl.members)
-				vt = vt.commonType(m.calcType());
-			type.addMember(vt.clone());
+			if(argl.members.length)
+			{
+				Type vt = argl.members[0].calcType();
+				foreach(m; argl.members[1..$])
+					vt = vt.commonType(m.calcType());
+				type.addMember(vt.clone());
+			}
+			else
+				type.addMember(new AutoType(TOK_auto, span));
 		}
 	}
 	

@@ -147,18 +147,22 @@ $(RELDIR)\vdc.lib : $(VDC_SRC) Makefile
 		$(VDC_SRC)
 <<NOKEEP
 
+INLINE=
+#-inline
+
 $(RELDIR)\c2d.lib : $(C2D_SRC) Makefile
-	"$(DMD2)" -of$@ -O -inline -release -lib -g $(DFLAGS) @<<
+	"$(DMD2)" -of$@ -O $(INLINE) -release -lib -g $(DFLAGS) @<<
 		$(C2D_SRC)
 <<NOKEEP
 
+# -c -od$(RELDIR)
 $(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\c2d.lib $(DEPS)
-	"$(DMD2)" -of$@ -O -inline -release -g $(DFLAGS) -map $@.map @<<
+	"$(DMD2)" -of$@ -O $(INLINE) -release -g $(DFLAGS) -map $@.map @<<
 		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib $(RELDIR)\c2d.lib
 <<NOKEEP
 
 $(RELDIR)\cpp2d.exe : $(RELDIR)\c2d.lib ..\c2d\cpp2d_main.d $(STDEXT_SRC) Makefile
-	"$(DMD2)" -of$@ -O -inline -release $(DFLAGS) $(RELDIR)\c2d.lib ..\c2d\cpp2d_main.d $(STDEXT_SRC)
+	"$(DMD2)" -of$@ -O $(INLINE) -release $(DFLAGS) $(RELDIR)\c2d.lib ..\c2d\cpp2d_main.d $(STDEXT_SRC)
 
 #-----
 $(DBGRES) : $(RC) $(RSRC)
@@ -177,6 +181,7 @@ $(DBGDIR)\$(PROJECT).exe : $(DBGDIR)\$(PROJECT)_cv.exe
 $(DBGDIR)\$(PROJECT)_cv.exe : $(SRC) $(DBG_VSI_LIB) Makefile
 	"$(DMD2)" -of$@ -g -unittest -debug -version=MAIN $(DFLAGS) @<<
 		$(SRC) $(DBG_VSI_LIB) $(LIBS)
+
 <<NOKEEP
 
 ######################

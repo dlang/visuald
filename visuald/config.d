@@ -366,6 +366,68 @@ class ProjectOptions
 		return cmd;
 	}
 
+	string optlinkCommandLine(string[] lnkfiles)
+	{
+		string cmd;
+
+		string dmdoutfile = getTargetPath();
+		if(usesCv2pdb())
+			dmdoutfile ~= "_cv";
+		string mapfile = "\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+
+		static string plusList(string[] lnkfiles, string ext)
+		{
+			string s;
+			foreach(i, file; lnkfiles)
+			{
+				if(getExt(file) != ".obj")
+					continue;
+				if(s.length > 0)
+					s ~= "+";
+				s ~= quoteNormalizeFilename(file);
+			}
+			return s;
+		}
+
+		cmd ~= plusList(lnkfiles, ".obj");
+		cmd ~= ",";
+		cmd ~= quoteNormalizeFilename(dmdoutfile);
+		cmd ~= ",";
+		cmd ~= mapfile;
+		cmd ~= ",";
+
+		string[] libs = tokenizeArgs(libfiles);
+		libs ~= "user32.lib";
+		libs ~= "kernel32.lib";
+		cmd ~= plusList(lnkfiles, ".lib");
+		cmd ~= ",";
+		cmd ~= plusList(lnkfiles, ".def");
+		cmd ~= ",";
+		cmd ~= plusList(lnkfiles, ".res");
+
+		if(symdebug)
+			cmd ~= "/CO";
+		cmd ~= "/NOI";
+
+		// options
+		switch(mapverbosity)
+		{
+			case 0: cmd ~= "/NOMAP"; break; // actually still creates map file
+			case 1: cmd ~= "/MAP:ADDRESS"; break;
+			case 2: break;
+			case 3: cmd ~= "/MAP:FULL"; break;
+			case 4: cmd ~= "/MAP:FULL/XREF"; break;
+			default: break;
+		}
+
+		if(!lib)
+		{
+			if(createImplib)
+				cmd ~= "/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+		}
+		return cmd;
+	}
+
 	string getTargetPath()
 	{
 		if(exefile.length)

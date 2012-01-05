@@ -43,7 +43,7 @@ export BOOL SendMessageW(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 extern(Windows)
 HWND FindWindowExA(HWND hwndParent, HWND hwndChildAfter, LPCSTR lpszClass, LPCSTR lpszWindow);
 
-typedef
+alias
 extern(Windows)
 HRESULT fnDllGetClassObject(CLSID* rclsid, IID* riid, LPVOID* ppv);
 

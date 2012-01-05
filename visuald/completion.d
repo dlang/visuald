@@ -324,16 +324,17 @@ class Declarations
 			vdc.semantic.Scope sc = n.getScope();
 			if(!sc)
 				return false;
-			auto syms = sc.search(tok ~ "*", !inDotExpr, true);
+			auto syms = sc.search(tok ~ "*", !inDotExpr, true, true);
 
 			int namesLength = mNames.length;
 
-			foreach(s; syms)
+			foreach(s, b; syms)
 				if(auto decl = cast(ast.Declarator) s)
 					mNames.addunique(decl.ident);
 				else if(auto em = cast(ast.EnumMember) s)
 					mNames.addunique(em.ident);
 
+			sort!("icmp(a, b) < 0", SwapStrategy.stable)(mNames);
 			return mNames.length > namesLength;
 		}
 		catch(Error e)

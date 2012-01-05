@@ -1321,6 +1321,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	{
 		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
+		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in Error List"));
 	}
 
@@ -1328,6 +1329,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	{
 		mTimeBuilds.setChecked(opts.timeBuilds);
 		mSortProjects.setChecked(opts.sortProjects);
+		mStopSlnBuild.setChecked(opts.stopSolutionBuild);
 		mDemangleError.setChecked(opts.demangleError);
 	}
 
@@ -1336,12 +1338,14 @@ class ToolsProperty2Page : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
 		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
+		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild); 
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
 		return changes;
 	}
 
 	CheckBox mTimeBuilds;
 	CheckBox mSortProjects;
+	CheckBox mStopSlnBuild;
 	CheckBox mDemangleError;
 }
 

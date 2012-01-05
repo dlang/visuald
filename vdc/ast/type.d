@@ -532,6 +532,11 @@ class AutoType : Type
 			return expr.calcType();
 		return semanticErrorType("no initializer in auto declaration");
 	}
+
+	override bool convertableFrom(Type from, ConversionFlags flags)
+	{
+		return calcType().convertableFrom(from, flags);
+	}
 }
 
 //ModifiedType:

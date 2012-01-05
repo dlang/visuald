@@ -326,14 +326,18 @@ class Aggregate : Type
 		if(!scop)
 			return semanticErrorValue(this, ": no scope set in lookup of ", prop);
 	
-		Node[] res = scop.search(prop, false, true);
+		Scope.SearchSet res = scop.search(prop, false, true, true);
 		if(res.length == 0)
 			return null;
 		if(res.length > 1)
 			semanticError("ambiguous identifier " ~ prop);
-		if(!(res[0].attr & Attr_Static))
-			return null; // delay into getProperty
-		return res[0].interpret(nullContext);
+
+		foreach(n, b; res)
+		{
+			if(n.attr & Attr_Static)
+				return n.interpret(nullContext);
+		}
+		return null; // delay into getProperty
 	}
 
 	override Type opCall(Type args)
@@ -571,14 +575,14 @@ class InheritingAggregate : Aggregate
 
 class InheritingScope : AggregateScope
 {
-	override void searchParents(string ident, bool inParents, bool privateImports, ref Node[] syms)
+	override void searchParents(string ident, bool inParents, bool privateImports, bool publicImports, ref SearchSet syms)
 	{
 		auto ia = static_cast!InheritingAggregate(node);
 		foreach(bc; ia.baseClasses)
 			if(auto sc = bc.calcType().getScope())
-				addunique(syms, sc.search(ident, false, false));
+				addunique(syms, sc.search(ident, false, false, true));
 
-		super.searchParents(ident, inParents, privateImports, syms);
+		super.searchParents(ident, inParents, privateImports, publicImports, syms);
 	}
 }
 

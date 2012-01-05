@@ -60,3 +60,45 @@ void remove(T)(ref T[] arr, T val)
 		arr = arr[0..idx] ~ arr[idx+1..$];
 }
 
+///////////////////////////////////////////////////////////////////////
+
+struct Set(T)
+{
+	bool[T] _payload;
+
+	alias _payload this;
+
+	T first()
+	{
+		foreach(n, b; _payload)
+			return n;
+		return null;
+	}
+}
+
+bool contains(T)(ref bool[T] arr, T val)
+{
+	return (val in arr);
+}
+
+void addunique(T)(ref bool[T] arr, T val)
+{
+	arr[val] = true;
+}
+
+void addunique(T)(ref bool[T] arr, T[] vals)
+{
+	foreach(val; vals)
+		arr[val] = true;
+}
+
+void addunique(T)(ref bool[T] arr, bool[T] vals)
+{
+	foreach(val, b; vals)
+		arr[val] = true;
+}
+
+void remove(T)(ref bool[T] arr, T val)
+{
+	arr.remove(val);
+}

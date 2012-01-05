@@ -106,8 +106,8 @@ void semanticMessage(string msg)
 ErrorValue semanticErrorValue(T...)(T args)
 {
 	semanticErrorPos(TextPos(), args);
-	throw new InterpretException;
-	// return Singleton!(ErrorValue).get();
+	//throw new InterpretException;
+	return Singleton!(ErrorValue).get();
 }
 
 ErrorType semanticErrorType(T...)(T args)
@@ -211,7 +211,7 @@ class Scope
 	Attribute attributes;
 	Module mod;
 	Node node;
-	Symbol[][string] symbols;
+	Set!Symbol[string] symbols;
 	Import[] imports;
 	
 //	Context ctx; // compile time only
@@ -264,9 +264,9 @@ class Scope
 		logInfo("Scope(%s).addSymbol(%s, sym %s=%s)", cast(void*)this, ident, s, cast(void*)s);
 		
 		if(auto sym = ident in symbols)
-			*sym ~= s;
+			addunique(*sym, s);
 		else
-			symbols[ident] = [s];
+			symbols[ident] = [s : true];
 	}
 	
 	void addImport(Import imp)
@@ -277,7 +277,9 @@ class Scope
 	struct SearchData { string ident; Scope sc; }
 	static Stack!SearchData searchStack;
 
-	void searchCollect(string ident, ref Node[] syms)
+	alias Set!Symbol SearchSet;
+
+	void searchCollect(string ident, ref SearchSet syms)
 	{
 		string iden = ident[0..$-1];
 		foreach(id, sym; symbols)
@@ -285,14 +287,14 @@ class Scope
 				addunique(syms, sym);
 	}
 
-	void searchParents(string ident, bool inParents, bool privateImports, ref Node[] syms)
+	void searchParents(string ident, bool inParents, bool privateImports, bool publicImports, ref SearchSet syms)
 	{
 		if(inParents && parent)
 		{
 			if(syms.length == 0)
-				syms = parent.search(ident, true, privateImports);
+				syms = parent.search(ident, true, privateImports, publicImports);
 			else if(collectSymbols(ident))
-				addunique(syms, parent.search(ident, true, privateImports));
+				addunique(syms, parent.search(ident, true, privateImports, publicImports));
 		}
 	}
 
@@ -301,37 +303,38 @@ class Scope
 		return ident.endsWith("*");
 	}
 
-	Symbol[] search(string ident, bool inParents, bool privateImports)
+	SearchSet search(string ident, bool inParents, bool privateImports, bool publicImports)
 	{
 		// check recursive search
 		SearchData sd = SearchData(ident, this);
 		for(int d = 0; d < searchStack.depth; d++)
 			if(searchStack.stack[d] == sd) // memcmp
-				return null;
+				return Scope.SearchSet();
 
-		Node[] syms;
+		SearchSet syms;
 		if(collectSymbols(ident))
 			searchCollect(ident, syms);
 		else if(auto pn = ident in symbols)
 			return *pn;
 		
 		searchStack.push(sd);
-		foreach(imp; imports)
-		{
-			if(privateImports || (imp.getProtection() & Annotation_Public))
-				addunique(syms, imp.search(this, ident));
-		}
-		searchParents(ident, inParents, privateImports, syms);
+		if(publicImports)
+			foreach(imp; imports)
+			{
+				if(privateImports || (imp.getProtection() & Annotation_Public))
+					addunique(syms, imp.search(this, ident));
+			}
+		searchParents(ident, inParents, privateImports, publicImports, syms);
 		searchStack.pop();
 		return syms;
 	}
 
-	Node[] matchFunctionArguments(Node id, Node[] n)
+	Scope.SearchSet matchFunctionArguments(Node id, Scope.SearchSet n)
 	{
-		Node[] matches;
+		Scope.SearchSet matches;
 		ArgumentList fnargs = id.getFunctionArguments();
 		int cntFunc = 0;
-		foreach(s; n)
+		foreach(s, b; n)
 			if(s.getParameterList())
 				cntFunc++;
 		if(cntFunc != n.length)
@@ -340,7 +343,7 @@ class Scope
 		Node[] args;
 		if(fnargs)
 			args = fnargs.members;
-		foreach(s; n)
+		foreach(s, b; n)
 		{
 			auto pl = s.getParameterList();
 			if(args.length > pl.members.length)
@@ -362,48 +365,48 @@ class Scope
 			}
 			if(a < args.length)
 				continue;
-			matches ~= s;
+			matches[s] = true;
 		}
 		return matches;
 	}
 	
-	Node resolveOverload(string ident, Node id, Node[] n)
+	Node resolveOverload(string ident, Node id, Scope.SearchSet n)
 	{
 		if(n.length == 0)
 		{
 			id.semanticError("unknown identifier " ~ ident);
 			return null;
 		}
-		foreach(s; n)
+		foreach(s, b; n)
 			s.semanticSearches++;
 		
 		if(n.length > 1)
 		{
-			Node[] matches = matchFunctionArguments(id, n);
+			auto matches = matchFunctionArguments(id, n);
 			if(matches.length == 1)
-				return matches[0];
+				return matches.first();
 			else if(matches.length > 0)
 				n = matches; // report only matching funcs
 
 			id.semanticError("ambiguous identifier " ~ ident);
-			foreach(s; n)
+			foreach(s, b; n)
 				s.semanticError("possible candidate");
 		}
-		return n[0];
+		return n.first();
 	}
 
 	Node resolve(string ident, Node id, bool inParents = true)
 	{
-		Node[] n = search(ident, inParents, true);
-		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n, n.length > 0 ? cast(void*)n[0] : null);
+		auto n = search(ident, inParents, true, true);
+		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n.keys(), n.length > 0 ? cast(void*)n.first() : null);
 		
 		return resolveOverload(ident, id, n);
 	}
 	
 	Node resolveWithTemplate(string ident, Scope sc, Node id, bool inParents = true)
 	{
-		Node[] n = search(ident, inParents, true);
-		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n, n.length > 0 ? cast(void*)n[0] : null);
+		auto n = search(ident, inParents, true, true);
+		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n.keys(), n.length > 0 ? cast(void*)n.first() : null);
 
 		auto resolved = resolveOverload(ident, id, n);
 		if(resolved && resolved.isTemplate())
@@ -491,10 +494,13 @@ class Project : Node
 		else
 			src = new SourceModule;
 		src.parsed = mod;
-		src.analyzed = mod.clone();
+
 		if(std.file.exists(fname)) // could be pseudo name
 			src.lastModified = std.file.timeLastModified(fname);
 
+		if(src.analyzed)
+			removeMember(src.analyzed);
+		src.analyzed = mod.clone();
 		addMember(src.analyzed);
 		mSourcesByModName[modname] = src;
 		mSourcesByFileName[fname] = src;
@@ -509,6 +515,7 @@ class Project : Node
 		Node n;
 		try
 		{
+			semanticMessage(fname ~ ": parsing...");
 			n = p.parseModule(txt);
 		}
 		catch(Exception e)
@@ -648,7 +655,7 @@ class Project : Node
 					if(pn.length > 1 || mainNode)
 						semanticError("multiple candidates for main function");
 					else
-						mainNode = (*pn)[0];
+						mainNode = (*pn).first();
 				}
 			}
 		if(mainNode)
@@ -680,9 +687,9 @@ class Project : Node
 	
 	int run()
 	{
-		Node[] funcs;
+		Scope.SearchSet funcs;
 		foreach(m; mSourcesByModName)
-			funcs ~= m.analyzed.search("main");
+			addunique(funcs, m.analyzed.search("main"));
 		if(funcs.length == 0)
 		{
 			semanticError("no function main");
@@ -694,7 +701,7 @@ class Project : Node
 			return -2;
 		}
 		TupleValue args = new TupleValue;
-		if(auto cn = cast(CallableNode)funcs[0])
+		if(auto cn = cast(CallableNode)funcs.first())
 			if(auto pl = cn.getParameterList())
 				if(pl.members.length > 0)
 				{
@@ -706,7 +713,7 @@ class Project : Node
 		
 		try
 		{
-			Value v = funcs[0].interpret(nullContext).opCall(nullContext, args);
+			Value v = funcs.first().interpret(nullContext).opCall(nullContext, args);
 			if(v is theVoidValue)
 				return 0;
 			return v.toInt();

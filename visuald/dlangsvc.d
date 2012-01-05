@@ -621,6 +621,19 @@ class LanguageService : DisposingComObject,
 		}
 	}
 
+	void UpdateSemanticModule(Source src)
+	{
+		if(!src.mAST)
+			return;
+
+		ConfigureSemanticProject(src);
+
+		string fname = src.GetFileName();
+		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
+		if(!sm || sm.parsed != src.mAST)
+			mSemanticProject.addSource(fname, src.mAST);
+	}
+
 	ast.Module GetSemanticModule(Source src)
 	{
 		ConfigureSemanticProject(src);
@@ -628,6 +641,7 @@ class LanguageService : DisposingComObject,
 		static void semanticWriteError(string msg)
 		{
 			writeToBuildOutputPane(msg ~ "\n");
+			showStatusBarText(msg);
 		}
 		fnSemanticWriteError = &semanticWriteError;
 		ast.Module mod;
@@ -2901,6 +2915,9 @@ else
 					session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
 			mOutlineRegions = mOutlineRegions.init;
 		}
+		if(mAST && (Package.GetGlobalOptions().projectSemantics || Package.GetGlobalOptions().showTypeInTooltip))
+			Package.GetLanguageService().UpdateSemanticModule(this);
+
 		mParseText = null;
 		mParsingState = 0;
 		ReColorizeLines (0, -1);
