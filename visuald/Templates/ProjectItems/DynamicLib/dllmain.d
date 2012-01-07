@@ -1,14 +1,14 @@
 module $safeitemname$;
 
 import std.c.windows.windows;
-import core.dll_helper;
+import core.sys.windows.dll;
 
 __gshared HINSTANCE g_hInst;
 
 extern (Windows)
 BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 {
-    switch (ulReason)
+    final switch (ulReason)
     {
 	case DLL_PROCESS_ATTACH:
 	    g_hInst = hInstance;

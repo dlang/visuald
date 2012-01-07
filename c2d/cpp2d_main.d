@@ -764,6 +764,7 @@ int main(string[] argv)
 		return dg.main_dmd(srcfiles);
 	}
 
+
 	C2DIni ini;
 	if(cfg_path.length)
 	{

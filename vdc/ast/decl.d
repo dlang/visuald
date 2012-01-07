@@ -772,9 +772,24 @@ class Identifier : Node
 		{
 		}
 		if(auto p = cast(ForeachType) parent)
+			return parent.calcType();
+		return super.calcType();
+	}
+
+	override Value interpret(Context ctx)
+	{
+		if(auto p = cast(IdentifierList) parent)
+			return p.interpret(ctx);
+		if(auto p = cast(IdentifierExpression) parent)
+			return p.interpret(ctx);
+		if(auto p = cast(DotExpression) parent)
+			return p.interpret(ctx);
+		if(auto p = cast(ModuleFullyQualifiedName) parent)
 		{
 		}
-		return super.calcType();
+		if(auto p = cast(ForeachType) parent)
+			return parent.interpret(ctx);
+		return super.interpret(ctx);
 	}
 }
 

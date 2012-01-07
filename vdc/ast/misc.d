@@ -269,7 +269,7 @@ class EnumMember : Node
 			int n = countUntil(parent.members, this);
 			if(n > 0)
 			{
-				ival = parent.members[n].interpret(sc);
+				ival = parent.members[n - 1].interpret(sc);
 				ival = ival.opBin(sc, TOK_addass, Value.create(cast(byte)1));
 			}
 		}

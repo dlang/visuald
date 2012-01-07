@@ -361,11 +361,12 @@ Version history
   * added installation for Visual Studio 11
   * tweaked dialogs to better integrate with VS
 
-unreleased Version 0.3.30
+2012-01-07 Version 0.3.30
 
   * fixed utf8 to OLE string conversion, that could get in the way when using non ascii file names
   * property pages now adjust their font and size to the IDE environment
   * __ctfe is now highlighted as a keyword
+  * scope(identifier) with wrong identifier shown as a parse error
   * completion automatically inserts now if there is only one candidate
   * completion of import modules now restricted to files, not symbols
   * colorizer now asks the parser whether "is" and "in" are used as operators

@@ -283,7 +283,7 @@ class Aggregate : Type
 		AggrValue av = static_cast!AggrValue(sv);
 		if(Value v = _getProperty(av, decl))
 			return v;
-		if(av.outer)
+		if(av && av.outer)
 			return av.outer.getValue(decl);
 		return null;
 	}
@@ -291,7 +291,11 @@ class Aggregate : Type
 	Value _getProperty(AggrValue av, Declarator decl)
 	{
 		if(auto pidx = decl in mapDecl2Value)
+		{
+			if(!av)
+				return semanticErrorValue("member access needs non-null instance pointer");
 			return av.values[*pidx + mapDeclOffset];
+		}
 		if(decl in isMethod)
 		{
 			auto odecl = findOverride(av, decl);
@@ -321,8 +325,8 @@ class Aggregate : Type
 
 	Value getStaticProperty(string prop)
 	{
-		if(!scop)
-			semantic(getScope());
+		if(!scop && parent)
+			semantic(parent.getScope());
 		if(!scop)
 			return semanticErrorValue(this, ": no scope set in lookup of ", prop);
 	
@@ -627,7 +631,8 @@ class Class : InheritingAggregate
 
 	override Value createValue(Context ctx, Value initValue)
 	{
-		semantic(getScope());
+		if(!scop && parent)
+			semantic(parent.getScope());
 
 		auto v = new ClassValue(this);
 		if(!initValue)

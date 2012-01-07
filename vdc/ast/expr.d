@@ -398,7 +398,20 @@ class CmpExpression : BinaryExpression
 		if(!type)
 		{
 			_checkIdentityLiterals();
-			type = BasicType.createType(TOK_bool);
+			if(id == TOK_in)
+			{
+				auto t = getRightExpr().calcType();
+				if(auto ti = cast(TypeIndirection)t)
+				{
+					auto tp = new TypePointer();
+					tp.setNextType(ti.getNextType());
+					type = tp;
+				}
+				else
+					type = semanticErrorType("cannot calculate type of operator in on ", t);
+			}
+			else
+				type = BasicType.createType(TOK_bool);
 		}
 		return type;
 	}

@@ -153,7 +153,7 @@ class Value
 		return null;
 	}
 
-	void validate()
+	final void validate()
 	{
 		debug sval = toStr();
 	}

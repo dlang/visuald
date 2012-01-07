@@ -17,6 +17,7 @@ import vdc.lexer;
 import vdc.ast.node;
 import vdc.ast.expr;
 import vdc.ast.decl;
+import vdc.ast.type;
 import vdc.semantic;
 import vdc.interpret;
 
@@ -572,6 +573,12 @@ class ForeachStatement : Statement
 
 	override bool createsScope() const { return true; }
 
+	Expression getAggregate() { return getMember!Expression(1); }
+	Expression getLwrExpression() { return getMember!Expression(1); }
+	Expression getUprExpression() { return getMember!Expression(2); }
+
+	final bool isRangeForeach() const { return members.length > 3; }
+
 	override void toD(CodeWriter writer)
 	{
 		writer(id, "(", getMember(0), "; ");
@@ -602,6 +609,11 @@ class ForeachTypeList : Node
 	{
 		writer.writeArray(members);
 	}
+
+	override void addSymbols(Scope sc)
+	{
+		addMemberSymbols(sc);
+	}
 }
 
 class ForeachType : Node
@@ -609,6 +621,10 @@ class ForeachType : Node
 	mixin ForwardCtor!();
 
 	bool isRef;
+	Type type;
+
+	Type getType() { return members.length == 2 ? getMember!Type(0) : null; }
+	Identifier getIdentifier() { return getMember!Identifier(members.length - 1); }
 
 	override ForeachType clone()
 	{
@@ -630,6 +646,39 @@ class ForeachType : Node
 		if(isRef)
 			writer("ref ");
 		writer.writeArray(members, " ");
+	}
+
+	override void addSymbols(Scope sc)
+	{
+		string ident = getIdentifier().ident;
+		sc.addSymbol(ident, this);
+	}
+
+	override Type calcType()
+	{
+		if(type)
+			return type;
+
+		if(auto t = getType())
+			type = t.calcType();
+
+		else if(ForeachStatement stmt = parent ? cast(ForeachStatement) parent.parent : null)
+		{
+			if(stmt.isRangeForeach())
+				type = stmt.getLwrExpression().calcType();
+			else
+			{
+				Expression expr = stmt.getAggregate();
+				Type et = expr.calcType();
+				if(auto ti = cast(TypeIndirection) et)
+				{
+					type = ti.getNextType();
+				}
+			}
+		}
+		if(!type)
+			type = semanticErrorType("cannot infer type of foreach variable ", getIdentifier().ident);
+		return type;
 	}
 }
 

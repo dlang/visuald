@@ -34,6 +34,7 @@ import ast = vdc.ast.all;
 static import vdc.util;
 import vdc.parser.engine;
 import vdc.semantic;
+import vdc.interpret;
 
 import stdext.array;
 import stdext.string;
@@ -638,10 +639,12 @@ class LanguageService : DisposingComObject,
 	{
 		ConfigureSemanticProject(src);
 
-		static void semanticWriteError(string msg)
+		static void semanticWriteError(vdc.semantic.MessageType type, string msg)
 		{
-			writeToBuildOutputPane(msg ~ "\n");
-			showStatusBarText(msg);
+			if(type == MessageType.Message)
+				showStatusBarText(msg);
+			else
+				writeToBuildOutputPane(msg ~ "\n");
 		}
 		fnSemanticWriteError = &semanticWriteError;
 		ast.Module mod;
@@ -700,6 +703,14 @@ class LanguageService : DisposingComObject,
 					writer.writeImplementations = false;
 					writer.writeClassImplementations = false;
 					writer(n, "\ntype: ", t);
+
+version(none)
+					if(!cast(ast.Statement) n && !cast(ast.Type) n)
+					{
+						Value v = n.interpret(globalContext);
+						if(!cast(ErrorValue) v && !cast(TypeValue) v)
+							txt ~= "\nvalue: " ~ v.toStr();
+					}
 				}
 			}
 		}

@@ -21,6 +21,8 @@ import vdc.parser.aggr;
 
 import ast = vdc.ast.all;
 
+import stdext.util;
+
 //-- GRAMMAR_BEGIN --
 //Statement:
 //    ScopeStatement
@@ -1107,12 +1109,26 @@ class ThrowStatement : Statement
 //    scope ( "failure" ) ScopeNonEmptyStatement
 class ScopeGuardStatement : Statement
 {
-	mixin SequenceNode!(ast.ScopeGuardStatement, TOK_scope, TOK_lparen, Identifier, TOK_rparen, ScopeNonEmptyStatement);
+	mixin SequenceNode!(ast.ScopeGuardStatement, TOK_scope, TOK_lparen, ScopeGuardIdentifier, TOK_rparen, ScopeNonEmptyStatement);
 	
 	static Action enterAfterScope(Parser p)
 	{
 		p.pushNode(new ast.ScopeGuardStatement(p.tok));
 		return shift1.shift(p);
+	}
+}
+
+class ScopeGuardIdentifier
+{
+	static Action enter(Parser p)
+	{
+		if(p.tok.id != TOK_Identifier)
+			return p.parseError("identifier expected");
+		if(!isIn(p.tok.txt, "exit", "success", "failure"))
+			return p.parseError("one of exit, success and failure expected in scope guard statement");
+
+		p.pushNode(new ast.Identifier(p.tok));
+		return Accept;
 	}
 }
 

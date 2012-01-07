@@ -49,12 +49,19 @@ class InterpretException : Exception
 	}
 }
 
-void semanticWriteError(string msg)
+enum MessageType
+{
+	Warning,
+	Error,
+	Message
+}
+
+void semanticWriteError(MessageType, string msg)
 {
 	writeln(msg);
 }
 
-void function(string) fnSemanticWriteError = &semanticWriteError;
+void function(MessageType,string) fnSemanticWriteError = &semanticWriteError;
 
 string semanticErrorWriteLoc(string filename, ref const(TextPos) pos)
 {
@@ -74,7 +81,7 @@ void semanticErrorLoc(T...)(string filename, ref const(TextPos) pos, T args)
 	
 	string msg = semanticErrorWriteLoc(filename, pos);
 	msg ~= text(args);
-	fnSemanticWriteError(msg);
+	fnSemanticWriteError(MessageType.Error, msg);
 	logInfo(msg);
 }
 
@@ -100,7 +107,7 @@ void semanticErrorFile(T...)(string fname, T args)
 
 void semanticMessage(string msg)
 {
-	fnSemanticWriteError(msg);
+	fnSemanticWriteError(MessageType.Message, msg);
 }
 
 ErrorValue semanticErrorValue(T...)(T args)
@@ -520,7 +527,7 @@ class Project : Node
 		}
 		catch(Exception e)
 		{
-			fnSemanticWriteError(e.msg);
+			fnSemanticWriteError(MessageType.Error, e.msg);
 			countErrors += p.countErrors + 1;
 			return null;
 		}

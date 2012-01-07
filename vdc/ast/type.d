@@ -637,12 +637,9 @@ class IdentifierType : Type
 	{
 		if(type)
 			return type;
+
 		auto idlist = getIdentifierList();
-		idlist.semantic(getScope());
-		if(idlist.resolved)
-			type = idlist.resolved.calcType();
-		else
-			type = semanticErrorType("cannot resolve type");
+		type = idlist.calcType();
 		return type;
 	}
 	
@@ -774,7 +771,12 @@ class TypePointer : TypeIndirection
 
 	override void toD(CodeWriter writer)
 	{
-		writer(getMember(0), "*");
+		if(auto m = getMember(0))
+			writer(m, "*");
+		else if(_next)
+			writer(_next, "*");
+		else
+			writer("_missingtype_*");
 	}
 }
 
