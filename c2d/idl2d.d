@@ -57,6 +57,13 @@ class idl2d
 	// configuration
 	version(all)
 	{
+		string vsi_base_path;
+		string dte_path;
+		string win_path;
+		string sdk_d_path;
+	}
+	else version(all)
+	{
 		string vsi_base_path = r"c:\l\vs9SDK";
 		string dte_path   = r"m:\s\d\visuald\trunk\sdk\vsi\idl\";
 		string win_path   = r"c:\Programme\Microsoft SDKs\Windows\v6.0A\Include\";
@@ -2129,28 +2136,47 @@ version(remove_pp) {} else
 
 	int main(string[] argv)
 	{
+		if(argv.length <= 1)
+		{
+			writeln("usage: ", basename(argv[0]), " {-vsi|-dte|-win|-sdk|-prefix|-verbose|-define} [files...]");
+			writeln();
+			writeln(" -vsi=DIR   specify path to Visual Studio Integration SDK");
+			writeln(" -dte=DIR   specify path to additional IDL files from VSI SDK");
+			writeln(" -win=DIR   specify path to Windows SDK include folder");
+			writeln(" -sdk=DIR   output base directory for Windows/VSI SDK files");
+			writeln(" -prefix=P  prefix used for identifiers that are D keywords");
+			writeln(" -verbose   report undefined definitions in preprocessor conditions");
+			writeln();
+			writeln("Example: ", basename(argv[0]), ` test.idl`);
+			writeln("         ", basename(argv[0]), ` -win="%WindowsSdkDir%\Include" -vsi="%VSSDK110Install%" -sdk=sdk`);
+			return -1;
+		}
+
 		getopt(argv, 
 			"vsi", &vsi_base_path,
 			"dte", &dte_path,
 			"win", &win_path,
 			"sdk", &sdk_d_path,
 			"prefix", &keywordPrefix,
-			"verbose", &verbose,
-			"define", &defines,
-			"undefine", &undefines);
+			"verbose", &verbose);
 
-		if(!_endsWith(dte_path, "\\"))
+		if(!dte_path.empty && !_endsWith(dte_path, "\\"))
 			dte_path ~= "\\";
-		if(!_endsWith(win_path, "\\"))
+		if(!win_path.empty && !_endsWith(win_path, "\\"))
 			win_path ~= "\\";
-		if(!_endsWith(sdk_d_path, "\\"))
+		if(!sdk_d_path.empty && !_endsWith(sdk_d_path, "\\"))
 			sdk_d_path ~= "\\";
 
-		vsi_path  = vsi_base_path ~ r"\VisualStudioIntegration\Common\IDL\";
-		vsi_hpath = vsi_base_path ~ r"\VisualStudioIntegration\Common\Inc\";
-
-		vsi_d_path = sdk_d_path ~ dirVSI ~ r"\";
-		win_d_path = sdk_d_path ~ dirWin ~ r"\";
+		if(!vsi_base_path.empty)
+		{
+			vsi_path  = vsi_base_path ~ r"\VisualStudioIntegration\Common\IDL\";
+			vsi_hpath = vsi_base_path ~ r"\VisualStudioIntegration\Common\Inc\";
+		}
+		if(!sdk_d_path.empty)
+		{
+			vsi_d_path = sdk_d_path ~ dirVSI ~ r"\";
+			win_d_path = sdk_d_path ~ dirWin ~ r"\";
+		}
 
 		initFiles();
 		
@@ -2196,14 +2222,18 @@ version(remove_pp) {} else
 			addSources(file);
 
 		writeln("Searching files...");
-		foreach(pat; win_idl_files)
-			addSources(win_path ~ pat);
-		foreach(pat; vsi_idl_files)
-			addSources(vsi_path ~ pat);
-		foreach(pat; vsi_h_files)
-			addSources(vsi_hpath ~ pat);
-		foreach(pat; dte_idl_files)
-			addSources(dte_path ~ pat);
+		if(!win_path.empty)
+			foreach(pat; win_idl_files)
+				addSources(win_path ~ pat);
+		if(!vsi_path.empty)
+			foreach(pat; vsi_idl_files)
+				addSources(vsi_path ~ pat);
+		if(!vsi_hpath.empty)
+			foreach(pat; vsi_h_files)
+				addSources(vsi_hpath ~ pat);
+		if(!dte_path.empty)
+			foreach(pat; dte_idl_files)
+				addSources(dte_path ~ pat);
 
 		writeln("Scanning files...");
 		Source[] srcs;
@@ -2246,20 +2276,19 @@ version(remove_pp) {} else
 			sources ~= "\t" ~ d_file[sdk_d_path.length .. $] ~ " \\\n";
 		}
 		sources ~= "\n";
-		version(vsi) 
-			string srcfile = sdk_d_path ~ "\\vsi_sources";
-		else
-			string srcfile = sdk_d_path ~ "\\sources";
-		std.file.write(srcfile, sources);
-
+		if(!sdk_d_path.empty)
+		{
+			version(vsi) 
+				string srcfile = sdk_d_path ~ "\\vsi_sources";
+			else
+				string srcfile = sdk_d_path ~ "\\sources";
+			std.file.write(srcfile, sources);
+		}
 		return 0;
 	}
 
 	bool verbose;
 	bool simple = true;
-
-	string[string] defines;
-	string[] undefines;
 
 	string[] srcfiles;
 	string[] excludefiles;
