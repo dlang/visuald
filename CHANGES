@@ -381,3 +381,13 @@ Version history
   * project configuration: new option to pause after running program without debugger
   * added option to "Tools->Options->Projects and Solutions->Visual D Settings" to stop a solution build
     if a project fails to build
+
+unreleased Version 0.3.31
+
+  * added option to "Intellisense" page to configure trigger of code completion
+  * delay code definition window update until caret at the same position for a second to avoid pauses while
+    navigating through the source
+  * added support for building with GDC
+  * added platform support for "x86" (use with GDC only)
+  * includes new version 0.23 of cv2pdb that now also converts DWARF to pdb
+  * tweaked idl2d to convert files to build with dmd 2.058

@@ -45,6 +45,7 @@ import std.utf;
 import std.conv;
 import std.algorithm;
 import std.array;
+import std.datetime;
 
 import std.parallelism;
 
@@ -504,15 +505,26 @@ class LanguageService : DisposingComObject,
 	private Source cdwLastSource;
 	private int cdwLastLine, cdwLastColumn;
 	public ViewFilter mLastActiveView;
-	
+	private SysTime mTimeOutSamePos;
+
 	bool tryJumpToDefinitionInCodeWindow(Source src, int line, int col)
 	{
+		SysTime now = Clock.currTime();
 		if (cdwLastSource == src && cdwLastLine == line && cdwLastColumn == col)
+		{
+			// wait for the caret staying on the same position for a second
+			if(mTimeOutSamePos > now)
+				return false;
+			mTimeOutSamePos += dur!"days"(1);
+		}
+		else
+		{
+			cdwLastSource = src;
+			cdwLastLine = line;
+			cdwLastColumn = col;
+			mTimeOutSamePos = now + dur!"seconds"(1);
 			return false;
-
-		cdwLastSource = src;
-		cdwLastLine = line;
-		cdwLastColumn = col;
+		}
 
 		int startIdx, endIdx;
 		if(!src.GetWordExtent(line, col, WORDEXT_CURRENT, startIdx, endIdx))
@@ -650,9 +662,10 @@ class LanguageService : DisposingComObject,
 		ast.Module mod;
 		string fname = src.GetFileName();
 		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
-		if(sm && (sm.parsed == src.mAST || !src.mAST))
+		bool astUptodate = (src.mAST && src.mModificationCountAST == src.mModificationCount);
+		if(sm && sm.parsed == src.mAST && astUptodate)
 			mod = sm.analyzed;
-		else if(src.mAST)
+		else if(astUptodate)
 			mod = mSemanticProject.addSource(fname, src.mAST);
 		else
 		{

@@ -752,6 +752,7 @@ class GlobalOptions
 	bool projectSemantics;
 	bool expandFromBuffer;
 	bool expandFromJSON;
+	byte expandTrigger;
 	bool showTypeInTooltip;
 	
 	bool ColorizeVersions = true;
@@ -830,6 +831,7 @@ class GlobalOptions
 			projectSemantics  = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
 			expandFromBuffer  = keyToolOpts.GetDWORD("expandFromBuffer", 1) != 0;
 			expandFromJSON    = keyToolOpts.GetDWORD("expandFromJSON", 1) != 0;
+			expandTrigger     = keyToolOpts.GetDWORD("expandTrigger", 0) != 0;
 			showTypeInTooltip = keyToolOpts.GetDWORD("showTypeInTooltip", 0) != 0;
 			pasteIndent       = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
@@ -853,6 +855,7 @@ class GlobalOptions
 			projectSemantics     = keyUserOpts.GetDWORD("projectSemantics",  projectSemantics) != 0;
 			expandFromBuffer     = keyUserOpts.GetDWORD("expandFromBuffer",  expandFromBuffer) != 0;
 			expandFromJSON       = keyUserOpts.GetDWORD("expandFromJSON",    expandFromJSON) != 0;
+			expandTrigger        = keyUserOpts.GetDWORD("expandTrigger",     expandTrigger) != 0;
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",       pasteIndent) != 0;
 			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip", showTypeInTooltip) != 0;
 			lastColorizeVersions = ColorizeVersions;
@@ -916,6 +919,7 @@ class GlobalOptions
 			keyToolOpts.Set("projectSemantics", projectSemantics);
 			keyToolOpts.Set("expandFromBuffer", expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON", expandFromJSON);
+			keyToolOpts.Set("expandTrigger", expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip", showTypeInTooltip);
 			keyToolOpts.Set("pasteIndent", pasteIndent);
 

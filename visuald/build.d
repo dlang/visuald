@@ -935,11 +935,17 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 	outputLine = strip(outputLine);
 	
 	// DMD compile error
-	static Regex!char re1, re2, re3, re4;
+	static Regex!char re1, re1gdc, re2, re3, re4;
 	if(!isInitializedRE(re1))
 		re1 = regex(r"^(.*?)\(([0-9]+)\):(.*)$"); // replace . with [\x00-\x7f] for std.regex
 
 	auto rematch = match(outputLine, re1);
+	if(rematch.empty())
+	{
+		if(!isInitializedRE(re1gdc))
+			re1gdc = regex(r"^(.*?):([0-9]+):(.*)$");
+		rematch = match(outputLine, re1gdc);
+	}
 	if(!rematch.empty())
 	{
 		auto captures = rematch.captures();

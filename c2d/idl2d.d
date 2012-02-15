@@ -866,8 +866,8 @@ version(none){
 				lastit = tokIt + 4;
 			}
 
-			if(lastit == endIt)
-				endIt.text ~= "; }";
+			if(lastit == endIt) // empty?
+				endIt.text ~= " }";
 			else
 				endIt[-1].text ~= "; }";
 
@@ -889,7 +889,7 @@ version(none){
 				}
 				else
 				{
-					tokIt.text = "dconst";
+					tokIt.text = "denum";
 					(tokIt+2).insertBefore(createToken(" ", "=", Token.Assign, tokIt.lineno));
 					if(ident.startsWith("uuid_"))
 					{
@@ -1195,6 +1195,7 @@ version(all)
 		replaceTokenSequence(tokens, "__RPC_API", "extern(Windows)", true);
 		replaceTokenSequence(tokens, "RPC_MGR_EPV", "void", true);
 		replaceTokenSequence(tokens, "__RPC_FAR", "", true);
+		replaceTokenSequence(tokens, "UNREFERENCED_PARAMETER($arg);", "/*UNREFERENCED_PARAMETER($arg);*/", true);
 		
 		// windef.h and ktmtypes.h
 		replaceTokenSequence(tokens, "UOW UOW;", "UOW uow;", true);
@@ -1432,6 +1433,17 @@ version(none) version(vsi)
 		if(currentModule == "vslangproj90")
 			replaceTokenSequence(tokens, "CsharpProjectConfigurationProperties3", "CSharpProjectConfigurationProperties3", true);
 		
+		if(currentModule == "msdbg")
+			replaceTokenSequence(tokens, "const DWORD S_UNKNOWN = 0x3;", "denum DWORD S_UNKNOWN = 0x3;", true);
+		if(currentModule == "activdbg")
+			replaceTokenSequence(tokens, "const THREAD_STATE", "denum THREAD_STATE", true);
+
+		if(currentModule == "objidl")
+		{
+			replaceTokenSequence(tokens, "const OLECHAR *COLE_DEFAULT_PRINCIPAL", "denum const OLECHAR *COLE_DEFAULT_PRINCIPAL", true);
+			replaceTokenSequence(tokens, "const void    *COLE_DEFAULT_AUTHINFO",  "denum const void    *COLE_DEFAULT_AUTHINFO", true);
+		}
+
 		replaceTokenSequence(tokens, "extern const __declspec(selectany)", "dconst", true);
 		replaceTokenSequence(tokens, "EXTERN_C $args;", "/+EXTERN_C $args;+/", true);
 		replaceTokenSequence(tokens, "SAFEARRAY($_ident)", "SAFEARRAY/*($_ident)*/", true);
@@ -1477,6 +1489,8 @@ version(remove_pp)
 					     "interface $_ident1 : $_identbase { $data\n} __eo_interface", true);
 		while(replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { typedef $args; $data } $tail __eo_interface", 
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\ntypedef $args; __eo_interface", true) > 0
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { denum $args; $data } $tail __eo_interface", 
+						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\ndenum $args; __eo_interface", true) > 0
 		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { enum $args; $data } $tail __eo_interface", 
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nenum $args; __eo_interface", true) > 0
 		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { dconst $_ident = $expr; $data } $tail __eo_interface", 
@@ -1707,7 +1721,7 @@ version(all) {
 		replaceTokenSequence(tokens, "__drv_allocatesMem($args)", "/+$*+/", true);
 	
 		replaceTokenSequence(tokens, "__assume_bound($args);", "/+$*+/", true);
-		replaceTokenSequence(tokens, "__asm{$args}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$args+/}", true);
+		replaceTokenSequence(tokens, "__asm{$args}$_opt;", "assert(false, \"asm not translated\"); asm{naked; nop; /+$args+/}", true);
 		replaceTokenSequence(tokens, "__asm $_not{$stmt}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$_not $stmt+/} }", true);
 		replaceTokenSequence(tokens, "sizeof($_ident)", "$_ident.sizeof", true);
 		replaceTokenSequence(tokens, "sizeof($args)", "($args).sizeof", true);
@@ -1758,6 +1772,7 @@ version(all) {
 		replaceTokenSequence(tokens, "void* (*$_identFunc)($_args)", "void* function($_args) $_identFunc", true);
 		replaceTokenSequence(tokens, "$_identType (__stdcall *$_identFunc)($_args)", "$_identType __stdcall function($_args) $_identFunc", true);
 		replaceTokenSequence(tokens, "$_identType (__cdecl *$_identFunc)($_args)", "$_identType __cdecl function($_args) $_identFunc", true);
+		replaceTokenSequence(tokens, "$_identType (/+__cdecl+/ *$_identFunc)($_args)", "$_identType __cdecl function($_args) $_identFunc", true);
 }
 version(targetD2)
 {
@@ -1855,7 +1870,11 @@ else
 				tokIt[1].pretext = "";
 			}
 			else if(tok.text == "*" && !tokIt.atBegin() && isClassIdentifier(tokIt[-1].text))
+			{
 				tok.text = "";
+				if(tok.pretext.empty && tokIt[1].pretext.empty)
+					tok.pretext = " ";
+			}
 			else if(tok.type == Token.String && tok.text.length > 4 && tok.text[0] == '\'')
 				tok.text = "\"" ~ tok.text[1 .. $-1] ~ "\"";
 
@@ -1899,6 +1918,7 @@ else
 	{
 		switch(text)
 		{
+		case "denum":     return "enum";
 		case "dconst":    return "const";
 
 		case "_stdcall":  return "/*_stdcall*/";

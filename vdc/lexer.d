@@ -10,7 +10,6 @@ module vdc.lexer;
 
 import std.ascii;
 import std.utf;
-import std.uni : isUniAlpha;
 import std.conv;
 
 // current limitations:
@@ -447,7 +446,7 @@ L_complexLiteral:
 	{
 		if(mAllowDollarInIdentifiers && ch == '$')
 			return true;
-		return isUniAlpha(ch) || ch == '_' || ch == '@';
+		return isAlpha(ch) || ch == '_' || ch == '@';
 	}
 	
 	bool isIdentifierCharOrDigit(dchar ch)

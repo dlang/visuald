@@ -419,7 +419,10 @@ class Node
 	{
 		if(m < members.length)
 			members[m].parent = null;
-		members = members[0..m] ~ nm ~ members[m+1..$];
+		if(nm.length == 1 && m < members.length)
+			members[m] = nm[0];
+		else
+			members = members[0..m] ~ nm ~ members[m+1..$];
 		foreach(n; nm)
 			n.parent = this;
 	}

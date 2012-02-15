@@ -98,6 +98,18 @@ void addunique(T)(ref bool[T] arr, bool[T] vals)
 		arr[val] = true;
 }
 
+// needed in dmd 2.058beta
+void addunique(T)(ref Set!T arr, T val)
+{
+	arr[val] = true;
+}
+
+void addunique(T)(ref Set!T arr, bool[T] vals)
+{
+	foreach(val, b; vals)
+		arr[val] = true;
+}
+
 void remove(T)(ref bool[T] arr, T val)
 {
 	arr.remove(val);

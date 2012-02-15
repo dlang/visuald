@@ -45,11 +45,6 @@ import visuald.pkgutil;
 
 import visuald.dllmain : g_hInst;
 
-const kPlatform = "Win32";
-
-///////////////////////////////////////////////////////////////
-
-
 ///////////////////////////////////////////////////////////////
 
 class ProjectFactory : DComObject, IVsProjectFactory
@@ -2657,7 +2652,11 @@ Error:
 			xml.Element[] cfgItems = xml.elementsById(root, "Config");
 			foreach(cfg; cfgItems)
 			{
-				Config config = mConfigProvider.addConfig(xml.getAttribute(cfg, "name"));
+				string name = xml.getAttribute(cfg, "name");
+				string platform = xml.getAttribute(cfg, "platform");
+				if(platform.length == 0)
+					platform = kPlatforms[0];
+				Config config = mConfigProvider.addConfig(name, platform);
 				config.GetProjectOptions().readXML(cfg);
 			}
 

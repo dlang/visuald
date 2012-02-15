@@ -32,6 +32,8 @@ Project:
 - template to create a Visual D project from an existing source tree
 - project config: edit all configurations only changes current config
 - breaking into build does not stop dmd
+- environment variables with parenthesis don't work $(ProgramFiles(x86))
+- GDC: separate compile + link does not write to object dir
 
 Language service:
 -----------------
@@ -106,3 +108,7 @@ Debugger:
 - stepping through function call jumps to default assignment
 - Mago: set instruction pointer
 - local functions/delegates should have debug info for closure vars ("this" exists)
+
+GUI-Designer:
+-------------
+- Form designer: see IVSMDDesignerService

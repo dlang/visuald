@@ -29,7 +29,7 @@ import visuald.comutil;
 //  parent/sibling info.
 //
 //-----------------------------------------------------------------------------
-class CHierContainer : public CHierNode
+class CHierContainer : CHierNode
 {
 	~this()
 	{

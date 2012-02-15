@@ -18,6 +18,7 @@ import stdext.path;
 import stdext.array;
 import stdext.file;
 import stdext.string;
+import stdext.util;
 
 import xml = visuald.xmlwrap;
 
@@ -40,6 +41,8 @@ import visuald.fileutil;
 import visuald.lexutil;
 
 ///////////////////////////////////////////////////////////////
+
+const string[] kPlatforms = [ "Win32", "x64" ];
 
 enum string kToolResourceCompiler = "Resource Compiler";
 const string kCmdLogFileExtension = "build";
@@ -75,6 +78,13 @@ void fromElem(T)(xml.Element e, string s, ref T x)
 {
 	if(xml.Element el = xml.getElement(e, s))
 		_fromElem(el, x);
+}
+
+enum Compiler
+{
+	DMD,
+	GDC,
+	LDC
 }
 
 class ProjectOptions
@@ -122,7 +132,8 @@ class ProjectOptions
 	bool ignoreUnsupportedPragmas;	// rather than error on them
 	float Dversion;		// D version number
 
-	bool otherDMD;		// use non-default DMD
+	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
+	bool otherDMD;		// use explicit program path 
 	string program;		// program name
 	string imppath;		// array of char*'s of where to look for import modules
 	string fileImppath;	// array of char*'s of where to look for file import modules
@@ -199,7 +210,7 @@ class ProjectOptions
 
 	string filesToClean;
 	
-	this(bool dbg)
+	this(bool dbg, bool x64)
 	{
 		Dversion = 2;
 		exefile = "$(OutDir)\\$(ProjectName).exe";
@@ -212,13 +223,24 @@ class ProjectOptions
 		doXGeneration = true;
 		
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
-		
+		setDebug(dbg);
+		setX64(x64);
+	}
+
+	void setDebug(bool dbg)
+	{
 		runCv2pdb = dbg;
 		symdebug = dbg ? 1 : 0;
 		release = dbg ? 0 : 1;
 	}
+	void setX64(bool x64)
+	{
+		isX86_64 = x64;
+	}
 
-	string buildCommandLine(bool compile = true, bool performLink = true, bool deps = true)
+	string objectFileExtension() { return compiler == 0 ? "obj" : "o"; }
+
+	string buildDMDCommandLine(bool compile = true, bool performLink = true, bool deps = true)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -330,7 +352,132 @@ class ProjectOptions
 		return cmd;
 	}
 	
-	string linkCommandLine()
+	string buildGDCCommandLine(bool compile = true, bool performLink = true, bool deps = true)
+	{
+		string cmd;
+		if(otherDMD && program.length)
+			cmd = quoteNormalizeFilename(program);
+		else
+			cmd = "gdc";
+
+		if(lib && performLink)
+			cmd ~= " -lib";
+//		if(multiobj)
+//			cmd ~= " -multiobj";
+		if(isX86_64)
+			cmd ~= " -m64";
+		else
+			cmd ~= " -m32";
+		if(trace)
+			cmd ~= " -pg";
+//		if(quiet)
+//			cmd ~= " -quiet";
+		if(verbose)
+			cmd ~= " -fd-verbose";
+		if(Dversion < 2)
+			cmd ~= " -fd-version=1";
+		if(Dversion >= 2 && vtls)
+			cmd ~= " -fd-vtls";
+		if(symdebug == 1)
+			cmd ~= " -g";
+		if(symdebug == 2)
+			cmd ~= " -fdebug-c";
+		if(optimize)
+			cmd ~= " -O3";
+		if(useDeprecated)
+			cmd ~= " -fdeprecated";
+		if(Dversion >= 2 && noboundscheck)
+			cmd ~= " -fno-bounds-check";
+		if(useUnitTests)
+			cmd ~= " -funittest";
+		if(!useInline)
+			cmd ~= " -fno-inline-functions";
+		if(release)
+			cmd ~= " -frelease";
+		else
+			cmd ~= " -fdebug";
+//		if(preservePaths)
+//			cmd ~= " -op";
+		if(warnings)
+			cmd ~= " -Werror";
+		if(infowarnings)
+			cmd ~= " -Wall";
+		if(checkProperty)
+			cmd ~= " -fproperty";
+		if(genStackFrame)
+			cmd ~= " -fno-omit-frame-pointer";
+		if(cov)
+			cmd ~= " -fprofile-arcs -ftest-coverage";
+//		if(nofloat)
+//			cmd ~= " -nofloat";
+		if(ignoreUnsupportedPragmas)
+			cmd ~= " -fignore-unknown-pragmas";
+
+		if(doDocComments && compile)
+		{
+			cmd ~= " -fdoc";
+			if(docdir.length)
+				cmd ~= " -fdoc-dir=" ~ quoteNormalizeFilename(docdir);
+			if(docname.length)
+				cmd ~= " -fdoc-file=" ~ quoteNormalizeFilename(docname);
+		}
+
+		if(doHdrGeneration && compile)
+		{
+			cmd ~= " -fintfc";
+			if(hdrdir.length)
+				cmd ~= " -fintfc-dir=" ~ quoteNormalizeFilename(hdrdir);
+			if(hdrname.length)
+				cmd ~= " -fintfc-file=" ~ quoteNormalizeFilename(hdrname);
+		}
+
+		if(doXGeneration && compile)
+		{
+			string xfile = xfilename.length ? xfilename : "$(OUTDIR)\\$(SAFEPROJECTNAME).json";
+			cmd ~= " -fXf=" ~ quoteNormalizeFilename(xfile);
+		}
+
+		string[] imports = tokenizeArgs(imppath);
+		foreach(imp; imports)
+			if(strip(imp).length)
+				cmd ~= " -I" ~ quoteNormalizeFilename(strip(imp));
+
+		string[] globalimports = tokenizeArgs(Package.GetGlobalOptions().ImpSearchPath);
+		foreach(gimp; globalimports)
+			if(strip(gimp).length)
+				cmd ~= " -I" ~ quoteNormalizeFilename(strip(gimp));
+
+		string[] fileImports = tokenizeArgs(fileImppath);
+		foreach(imp; fileImports)
+			if(strip(imp).length)
+				cmd ~= " -J" ~ quoteNormalizeFilename(strip(imp));
+
+		string[] versions = tokenizeArgs(versionids);
+		foreach(ver; versions)
+			if(strip(ver).length)
+				cmd ~= " -fversion=" ~ strip(ver);
+
+		string[] ids = tokenizeArgs(debugids);
+		foreach(id; ids)
+			if(strip(id).length)
+				cmd ~= " -fdebug=" ~ strip(id);
+
+		if(deps)
+			cmd ~= " -fdeps=" ~ quoteNormalizeFilename(getDependenciesPath());
+		if(performLink)
+			cmd ~= linkCommandLine();
+		return cmd;
+	}
+
+	string buildCommandLine(bool compile = true, bool performLink = true, bool deps = true)
+	{
+		if(compiler == Compiler.GDC)
+			return buildGDCCommandLine(compile, performLink, deps);
+		else
+			return buildDMDCommandLine(compile, performLink, deps);
+	}
+
+	string linkDMDCommandLine()
 	{
 		string cmd;
 		
@@ -366,6 +513,40 @@ class ProjectOptions
 		return cmd;
 	}
 
+	string linkGDCCommandLine()
+	{
+		string cmd;
+
+		string dmdoutfile = getTargetPath();
+		if(usesCv2pdb())
+			dmdoutfile ~= "_cv";
+
+		cmd ~= " -o " ~ quoteNormalizeFilename(dmdoutfile);
+		switch(mapverbosity)
+		{
+			case 0: // no map
+				break;
+			default:
+				cmd ~= " -Wl,-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				break;
+		}
+
+		if(!lib)
+		{
+//			if(createImplib)
+//				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+			if(objfiles.length)
+				cmd ~= " " ~ objfiles;
+			if(deffile.length)
+				cmd ~= " " ~ deffile;
+			if(libfiles.length)
+				cmd ~= " " ~ libfiles;
+			if(resfile.length)
+				cmd ~= " " ~ resfile;
+		}
+		return cmd;
+	}
+
 	string optlinkCommandLine(string[] lnkfiles)
 	{
 		string cmd;
@@ -380,7 +561,7 @@ class ProjectOptions
 			string s;
 			foreach(i, file; lnkfiles)
 			{
-				if(getExt(file) != ".obj")
+				if(getExt(file) != ext)
 					continue;
 				if(s.length > 0)
 					s ~= "+";
@@ -389,7 +570,7 @@ class ProjectOptions
 			return s;
 		}
 
-		cmd ~= plusList(lnkfiles, ".obj");
+		cmd ~= plusList(lnkfiles, objectFileExtension());
 		cmd ~= ",";
 		cmd ~= quoteNormalizeFilename(dmdoutfile);
 		cmd ~= ",";
@@ -428,6 +609,21 @@ class ProjectOptions
 		return cmd;
 	}
 
+	string linkCommandLine()
+	{
+		if(compiler == Compiler.GDC)
+			return linkGDCCommandLine();
+		else
+			return linkDMDCommandLine();
+	}
+
+	string getOutputDirOption()
+	{
+		if(compiler != Compiler.DMD)
+			return ""; // does not work with GDC
+		else
+			return " -od" ~ quoteFilename(objdir);
+	}
 	string getTargetPath()
 	{
 		if(exefile.length)
@@ -449,7 +645,7 @@ class ProjectOptions
 
 	bool usesCv2pdb()
 	{
-		return (symdebug && runCv2pdb && !lib && debugEngine == 0);
+		return (/*compiler == Compiler.DMD && */symdebug && runCv2pdb && !lib && debugEngine != 1);
 	}
 	
 	string appendCv2pdb()
@@ -478,7 +674,7 @@ class ProjectOptions
 		string solutionpath = GetSolutionFilename();
 		if(solutionpath.length)
 			addFileMacros(solutionpath, "SOLUTION", replacements);
-		replacements["PLATFORMNAME"] = "Win32";
+		replacements["PLATFORMNAME"] = config.mPlatform;
 		addFileMacros(projectpath, "PROJECT", replacements);
 		replacements["PROJECTNAME"] = config.GetProjectName();
 		addFileMacros(safeprojectpath, "SAFEPROJECT", replacements);
@@ -540,6 +736,7 @@ class ProjectOptions
 		elem ~= new xml.Element("Dversion", toElem(Dversion));
 		elem ~= new xml.Element("ignoreUnsupportedPragmas", toElem(ignoreUnsupportedPragmas));
 
+		elem ~= new xml.Element("compiler", toElem(compiler));
 		elem ~= new xml.Element("otherDMD", toElem(otherDMD));
 		elem ~= new xml.Element("program", toElem(program));
 		elem ~= new xml.Element("imppath", toElem(imppath));
@@ -653,6 +850,7 @@ class ProjectOptions
 		fromElem(elem, "Dversion", Dversion);
 		fromElem(elem, "ignoreUnsupportedPragmas", ignoreUnsupportedPragmas );
 
+		fromElem(elem, "compiler", compiler);
 		fromElem(elem, "otherDMD", otherDMD);
 		fromElem(elem, "program", program);
 		fromElem(elem, "imppath", imppath);
@@ -734,9 +932,9 @@ class ConfigProvider : DisposingComObject,
 //		mConfigs ~= addref(new Config(this, "Release"));
 	}
 
-	Config addConfig(string name)
+	Config addConfig(string name, string platform)
 	{
-		Config cfg = new Config(this, name);
+		Config cfg = new Config(this, name, platform);
 		mConfigs ~= addref(cfg);
 		return cfg;
 	}
@@ -747,6 +945,7 @@ class ConfigProvider : DisposingComObject,
 		{
 			auto config = new xml.Element("Config");
 			xml.setAttribute(config, "name", cfg.mName);
+			xml.setAttribute(config, "platform", cfg.mPlatform);
 
 			ProjectOptions opt = cfg.GetProjectOptions();
 			opt.writeXML(config);
@@ -815,10 +1014,21 @@ class ConfigProvider : DisposingComObject,
 		/* [optional][out] */ ULONG *pcActual)
 	{
 		mixin(LogCallMix);
-		for(int i = 0; i < celt && i < mConfigs.length; i++)
-			rgbstr[i] = allocBSTR(mConfigs[i].mName);
+		int j, cnt = 0;
+		for(int i = 0; i < mConfigs.length; i++)
+		{
+			for(j = 0; j < i; j++)
+				if(mConfigs[i].mName == mConfigs[j].mName)
+					break;
+			if(j >= i)
+			{
+				if(cnt < celt && rgbstr)
+					rgbstr[cnt] = allocBSTR(mConfigs[i].mName);
+				cnt++;
+			}
+		}
 		if(pcActual)
-			*pcActual = mConfigs.length;
+			*pcActual = cnt;
 		return S_OK;
 	}
 
@@ -829,10 +1039,21 @@ class ConfigProvider : DisposingComObject,
 		/* [optional][out] */ ULONG *pcActual)
 	{
 		mixin(LogCallMix);
-		if(celt >= 1 && rgbstr)
-			*rgbstr = allocBSTR(kPlatform);
+		int j, cnt = 0;
+		for(int i = 0; i < mConfigs.length; i++)
+		{
+			for(j = 0; j < i; j++)
+				if(mConfigs[i].mPlatform == mConfigs[j].mPlatform)
+					break;
+			if(j >= i)
+			{
+				if(cnt < celt)
+					rgbstr[cnt] = allocBSTR(mConfigs[i].mPlatform);
+				cnt++;
+			}
+		}
 		if(pcActual)
-			*pcActual = 1;
+			*pcActual = cnt;
 		return S_OK;
 	}
 
@@ -845,13 +1066,13 @@ class ConfigProvider : DisposingComObject,
 		string cfg = to_string(pszCfgName);
 		string plat = to_string(pszPlatformName);
 		
-		if(plat == "" || plat == kPlatform)
-			for(int i = 0; i < mConfigs.length; i++)
-				if(mConfigs[i].mName == cfg)
-				{
-					*ppCfg = addref(mConfigs[i]);
-					return S_OK;
-				}
+		for(int i = 0; i < mConfigs.length; i++)
+			if((plat == "" || plat == mConfigs[i].mPlatform) &&
+			   (cfg == "" || mConfigs[i].mName == cfg))
+			{
+				*ppCfg = addref(mConfigs[i]);
+				return S_OK;
+			}
 
 		return returnError(E_INVALIDARG);
 	}
@@ -892,11 +1113,13 @@ class ConfigProvider : DisposingComObject,
 		//if(!mProject.QueryEditProjectFile())
 		//	return returnError(E_ABORT);
     
-		Config config = new Config(this, strCfgName);
-		if (clonecfg)
-			config.mProjectOptions = clone(clonecfg.mProjectOptions);
-
-		mConfigs ~= addref(config);
+		int cnt = mConfigs.length;
+		for(int i = 0; i < cnt; i++)
+			if(mConfigs[i].mName == strCloneCfgName)
+			{
+				Config config = new Config(this, strCfgName, mConfigs[i].mPlatform, mConfigs[i].mProjectOptions);
+				mConfigs ~= addref(config);
+			}
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnCfgNameAdded(pszCfgName); });
 
@@ -910,14 +1133,14 @@ class ConfigProvider : DisposingComObject,
 		logCall("%s.DeleteCfgsOfCfgName(pszCfgName=%s)", this, _toLog(pszCfgName));
 
 		string strCfgName = to_string(pszCfgName);
-		int index = -1;
-		foreach(i, c; mConfigs)
-			if(c.mName == strCfgName)
-				index = i;
-		if(index < 0)
+		int cnt = mConfigs.length;
+		for(int i = 0; i < mConfigs.length; )
+			if(mConfigs[i].mName == strCfgName)
+				mConfigs = mConfigs[0..i] ~ mConfigs[i+1..$];
+			else
+				i++;
+		if(cnt == mConfigs.length)
 			return returnError(E_FAIL);
-
-		mConfigs = mConfigs[0..index] ~ mConfigs[index+1..$];
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnCfgNameDeleted(pszCfgName); });
 
@@ -947,7 +1170,9 @@ class ConfigProvider : DisposingComObject,
 		//if(!mProject.QueryEditProjectFile())
 		//	return returnError(E_ABORT);
 
-		config.mName = strNewName;
+		foreach(c; mConfigs)
+			if(c.mName == strOldName)
+				config.mName = strNewName;
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnCfgNameRenamed(pszOldName, pszNewName); });
 
@@ -960,14 +1185,57 @@ class ConfigProvider : DisposingComObject,
 		/* [in] */ in wchar* pszClonePlatformName)
 	{
 		logCall("%s.AddCfgsOfPlatformName(pszPlatformName=%s,pszClonePlatformName=%s)", this, _toLog(pszPlatformName), _toLog(pszClonePlatformName));
-		return returnError(E_NOTIMPL);
+
+		string strPlatformName = to_string(pszPlatformName);
+		string strClonePlatformName = to_string(pszClonePlatformName);
+
+		// Check if the CfgName already exists and that CloneCfgName exists
+		Config clonecfg;
+		foreach(c; mConfigs)
+			if(c.mPlatform == strPlatformName)
+				return returnError(E_FAIL);
+			else if(c.mPlatform == strClonePlatformName)
+				clonecfg = c;
+
+		if(strClonePlatformName.length && !clonecfg)
+			return returnError(E_FAIL);
+
+		//if(!mProject.QueryEditProjectFile())
+		//	return returnError(E_ABORT);
+
+		int cnt = mConfigs.length;
+		for(int i = 0; i < cnt; i++)
+			if(mConfigs[i].mPlatform == strClonePlatformName)
+			{
+				Config config = new Config(this, mConfigs[i].mName, strPlatformName, mConfigs[i].mProjectOptions);
+				mConfigs ~= addref(config);
+			}
+
+		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnPlatformNameAdded(pszPlatformName); });
+
+		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file 
+		return S_OK;
 	}
 
 	override int DeleteCfgsOfPlatformName( 
 		/* [in] */ in wchar* pszPlatformName)
 	{
 		logCall("%s.DeleteCfgsOfPlatformName(pszPlatformName=%s)", this, _toLog(pszPlatformName));
-		return returnError(E_NOTIMPL);
+
+		string strPlatformName = to_string(pszPlatformName);
+		int cnt = mConfigs.length;
+		for(int i = 0; i < mConfigs.length; )
+			if(mConfigs[i].mPlatform == strPlatformName)
+				mConfigs = mConfigs[0..i] ~ mConfigs[i+1..$];
+			else
+				i++;
+		if(cnt == mConfigs.length)
+			return returnError(E_FAIL);
+
+		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnPlatformNameDeleted(pszPlatformName); });
+
+		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file 
+		return S_OK;
 	}
 
 	override int GetSupportedPlatformNames( 
@@ -976,10 +1244,10 @@ class ConfigProvider : DisposingComObject,
 		/* [optional][out] */ ULONG *pcActual)
 	{
 		mixin(LogCallMix);
-		if(celt >= 1)
-			*rgbstr = allocBSTR(kPlatform);
+		for(int cnt = 0; cnt < kPlatforms.length && cnt < celt && rgbstr; cnt++)
+			rgbstr[cnt] = allocBSTR(kPlatforms[cnt]);
 		if(pcActual)
-			*pcActual = 1;
+			*pcActual = kPlatforms.length;
 		return S_OK;
 	}
 
@@ -994,6 +1262,8 @@ class ConfigProvider : DisposingComObject,
 		case VSCFGPROPID_SupportsCfgAdd:
 		case VSCFGPROPID_SupportsCfgDelete:
 		case VSCFGPROPID_SupportsCfgRename:
+		case VSCFGPROPID_SupportsPlatformAdd:
+		case VSCFGPROPID_SupportsPlatformDelete:
 			var.vt = VT_BOOL;
 			var.boolVal = true;
 			return S_OK;
@@ -1050,12 +1320,20 @@ class Config :	DisposingComObject,
 {
 	static GUID iid = { 0x402744c1, 0xe382, 0x4877, [ 0x9e, 0x38, 0x26, 0x9c, 0xb7, 0xa3, 0xb8, 0x9d ] };
 
-	this(ConfigProvider provider, string name)
+	this(ConfigProvider provider, string name, string platform, ProjectOptions opts = null)
 	{
 		mProvider = provider;
-		mProjectOptions = new ProjectOptions(name == "Debug");
+		if (opts)
+		{
+			mProjectOptions = clone(opts);
+			mProjectOptions.setDebug(name == "Debug");
+			mProjectOptions.setX64(platform == "x64");
+		}
+		else
+			mProjectOptions = new ProjectOptions(name == "Debug", platform == "x64");
 		mBuilder = new CBuilderThread;
 		mName = name;
+		mPlatform = platform;
 	}
 
 	override void Dispose()
@@ -1106,7 +1384,7 @@ class Config :	DisposingComObject,
 	{
 		logCall("%s.get_DisplayName(pbstrDisplayName=%s)", this, _toLog(pbstrDisplayName));
 
-		*pbstrDisplayName = allocBSTR(mName ~ "|" ~ kPlatform);
+		*pbstrDisplayName = allocBSTR(mName ~ "|" ~ mPlatform);
 		return S_OK;
 	}
     
@@ -1163,9 +1441,10 @@ class Config :	DisposingComObject,
 
 	override int get_Platform( /* [out] */ GUID *pguidPlatform)
 	{
-//		mixin(LogCallMix);
-		*pguidPlatform = GUID_VS_PLATFORM_WIN32_X86;
-		return S_OK;
+		// The documentation says this is obsolete, so don't do anything.
+		//		mixin(LogCallMix);
+		*pguidPlatform = GUID(); //GUID_VS_PLATFORM_WIN32_X86;
+		return returnError(E_NOTIMPL);
 	}
 
 	override int get_IsPackaged( /* [out] */ BOOL *pfIsPackaged)
@@ -1323,11 +1602,11 @@ class Config :	DisposingComObject,
 				GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
 				dbgi.clsidCustom = GUID_MaGoDebugger;
 				break;
-			//case 2:
-			//	dbgi.clsidCustom = GUID_NativeOnlyEng; // does not work
-			//	break;
+			case 2:
+				dbgi.clsidCustom = GUID_COMPlusNativeEng; // the mixed-mode debugger (works only on x86)
+				break;
 			default:
-				*cast(GUID*)(&(dbgi.clsidCustom)+0) = GUID_COMPlusNativeEng;        // the mixed-mode debugger
+				dbgi.clsidCustom = GUID_NativeOnlyEng; // works for x64
 				break;
 			}
 			dbgi.bstrMdmRegisteredName = null; // used with DLO_AlreadyRunning. The name of the
@@ -1631,7 +1910,7 @@ class Config :	DisposingComObject,
 		{
 			string fname = file.GetFilename();
 			string ext = toLower(getExt(fname));
-			if(ext == "d" || ext == "ddoc" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
+			if(isIn(ext, "d", "ddoc", "def", "lib", "obj", "o", "res"))
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
@@ -1648,7 +1927,7 @@ class Config :	DisposingComObject,
 			string ext = toLower(getExt(fname));
 			if(ext == "d" && mProjectOptions.singleFileCompilation == ProjectOptions.kSingleFileCompilation)
 				tool = "DMDsingle";
-			else if(ext == "d" || ext == "ddoc" || ext == "def" || ext == "lib" || ext == "obj" || ext == "res")
+			else if(isIn(ext, "d", "ddoc", "def", "lib", "obj", "o", "res"))
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
@@ -1663,7 +1942,7 @@ class Config :	DisposingComObject,
 		if(tool == "DMD")
 			return file.GetFilename();
 		if(tool == "DMDsingle")
-			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(getName(file.GetFilename())) ~ ".obj";
+			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(getName(file.GetFilename())) ~ "." ~ mProjectOptions.objectFileExtension();
 		if(tool == kToolResourceCompiler)
 			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(getName(file.GetFilename()), "_") ~ ".res";
 		if(tool == "Custom")
@@ -1788,7 +2067,10 @@ class Config :	DisposingComObject,
 			string depfile = GetOutputFile(file) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
 			cmd ~= mProjectOptions.buildCommandLine(true, false, false);
-			cmd ~= " -c -of" ~ quoteFilename(outfile) ~ " -deps=" ~ quoteFilename(depfile);
+			if(mProjectOptions.compiler == Compiler.DMD)
+				cmd ~= " -c -of" ~ quoteFilename(outfile) ~ " -deps=" ~ quoteFilename(depfile);
+			else
+				cmd ~= " -c -o " ~ quoteFilename(outfile) ~ " -fdeps=" ~ quoteFilename(depfile);
 			cmd ~= " " ~ file.GetFilename();
 		}
 		if(cmd.length)
@@ -1884,7 +2166,10 @@ class Config :	DisposingComObject,
 				string fname = getName(f);
 				if(!mProjectOptions.preservePaths)
 					fname = getBaseName(fname);
-				f = mProjectOptions.objdir ~ "\\" ~ fname ~ ".obj";
+				if(mProjectOptions.compiler == Compiler.DMD)
+					f = mProjectOptions.objdir ~ "\\" ~ fname ~ "." ~ mProjectOptions.objectFileExtension();
+				else
+					f = fname ~ "." ~ mProjectOptions.objectFileExtension();
 			}
 		return files;
 	}
@@ -1939,7 +2224,7 @@ class Config :	DisposingComObject,
 		}
 
 		if(separateLink || !doLink)   
-			opt ~= " -c -od" ~ quoteFilename(mProjectOptions.objdir);    
+			opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
 
 		string cmd = precmd ~ opt ~ fcmd ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
@@ -2043,11 +2328,11 @@ class Config :	DisposingComObject,
 					cp.QueryInterface(&IVsCfgProvider2.iid, cast(void**)&cp2);
 					if(cp2)
 					{
-						cp2.GetCfgOfName(_toUTF16z(mName), _toUTF16z(kPlatform), &cfg);
+						cp2.GetCfgOfName(_toUTF16z(mName), _toUTF16z(mPlatform), &cfg);
+						if(!cfg)
+							cp2.GetCfgs(1, &cfg, null, null); // TODO: find a "similar" config?
 						if(cfg)
 							cfg.QueryInterface(&IVsProjectCfg.iid, cast(void**)&prjcfg);
-						else
-							cp2.GetCfgs(1, &prjcfg, null, null); // TODO: find a "similar" config?
 					}
 				}
 				release(cfg);
@@ -2174,6 +2459,7 @@ class Config :	DisposingComObject,
 
 private:
 	string mName;
+	string mPlatform;
 	ConfigProvider mProvider;
 	ProjectOptions mProjectOptions;
 	CBuilderThread mBuilder;

@@ -147,8 +147,7 @@ $(RELDIR)\vdc.lib : $(VDC_SRC) Makefile
 		$(VDC_SRC)
 <<NOKEEP
 
-INLINE=
-#-inline
+INLINE=-inline
 
 $(RELDIR)\c2d.lib : $(C2D_SRC) Makefile
 	"$(DMD2)" -of$@ -O $(INLINE) -release -lib -g $(DFLAGS) @<<

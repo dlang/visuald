@@ -446,7 +446,7 @@ class ProjectPropertyPage : PropertyPage
 		if(mWindow)
 			if(ProjectOptions options = GetProjectOptions())
 			{
-				scope ProjectOptions opt = new ProjectOptions(false);
+				scope ProjectOptions opt = new ProjectOptions(false, false);
 				return DoApply(opt, options) > 0 ? S_OK : S_FALSE;
 			}
 		return S_FALSE;
@@ -593,7 +593,7 @@ class CommonPropertyPage : ProjectPropertyPage
 
 	override void CreateControls() 
 	{
-		AddControl("Build System",  mCbBuildSystem = new ComboBox(mCanvas, [ "DMD", "dsss", "rebuild" ], false));
+		AddControl("Build System",  mCbBuildSystem = new ComboBox(mCanvas, [ "Visual D", "dsss", "rebuild" ], false));
 		mCbBuildSystem.setSelection(0);
 		mCbBuildSystem.setEnabled(false);
 	}
@@ -622,6 +622,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 			versions ~= "D" ~ to!(string)(ver);
 		versions[$-1] ~= "+";
 		
+		AddControl("Compiler",      mCompiler = new ComboBox(mCanvas, [ "DMD", "GDC" ], false));
 		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
 		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, [ "Executable", "Library" ], false));
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
@@ -653,6 +654,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		mDVersion.setSelection(ver);
 		
 		mOtherDMD.setChecked(options.otherDMD);
+		mCompiler.setSelection(options.compiler);
 		mSingleFileComp.setSelection(options.singleFileCompilation);
 		mCbOutputType.setSelection(options.lib);
 		mDmdPath.setText(options.program);
@@ -668,6 +670,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		float ver = selectableVersions[mDVersion.getSelection()];
 		int changes = 0;
 		changes += changeOption(mOtherDMD.isChecked(), options.otherDMD, refoptions.otherDMD);
+		changes += changeOption(cast(ubyte) mCompiler.getSelection(), options.compiler, refoptions.compiler);
 		changes += changeOption(cast(uint) mSingleFileComp.getSelection(), options.singleFileCompilation, refoptions.singleFileCompilation);
 		changes += changeOption(mCbOutputType.getSelection() != 0, options.lib, refoptions.lib);
 		changes += changeOption(mDmdPath.getText(), options.program, refoptions.program);
@@ -679,6 +682,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 	}
 
 	CheckBox mOtherDMD;
+	ComboBox mCompiler;
 	ComboBox mSingleFileComp;
 	Text mDmdPath;
 	ComboBox mCbOutputType;
@@ -701,7 +705,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		AddControl("Working Directory", mWorkingDir = new Text(mCanvas));
 		AddControl("",                  mAttach = new CheckBox(mCanvas, "Attach to running process"));
 		AddControl("Remote Machine",    mRemote = new Text(mCanvas));
-		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago" ], false));
+		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
 		AddControl("",                  mStdOutToOutputWindow = new CheckBox(mCanvas, "Redirect stdout to output window"));
 		AddControl("Run without debugging", lbl = new Label(mCanvas, ""));
 		AddControl("",                  mPauseAfterRunning = new CheckBox(mCanvas, "Pause when program finishes"));
@@ -721,7 +725,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 
 	void EnableControls()
 	{
-		mStdOutToOutputWindow.setEnabled(mDebugEngine.getSelection() == 0);
+		mStdOutToOutputWindow.setEnabled(mDebugEngine.getSelection() != 1);
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1415,6 +1419,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddControl("", mSemantics = new CheckBox(mCanvas, "Expansions from semantics (very experimental)"));
 		AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
 		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
+		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "writing '.'", "writing an identifier" ], false));
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip (experimental)"));
 	}
 
@@ -1423,6 +1428,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mSemantics.setChecked(opts.projectSemantics);
 		mExpandFromBuffer.setChecked(opts.expandFromBuffer);
 		mExpandFromJSON.setChecked(opts.expandFromJSON);
+		mExpandTrigger.setSelection(opts.expandTrigger);
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 
 		//mSemantics.setEnabled(false);
@@ -1434,6 +1440,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(mSemantics.isChecked(), opts.projectSemantics, refopts.projectSemantics); 
 		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer); 
 		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON); 
+		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger); 
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip); 
 		return changes;
 	}
@@ -1441,6 +1448,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	CheckBox mSemantics;
 	CheckBox mExpandFromBuffer;
 	CheckBox mExpandFromJSON;
+	ComboBox mExpandTrigger;
 	CheckBox mShowTypeInTooltip;
 }
 

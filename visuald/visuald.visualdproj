@@ -1,6 +1,6 @@
 <DProject>
  <ProjectGuid>{7610F45A-69D9-4B68-BE63-0E055B51D447}</ProjectGuid>
- <Config name="Debug">
+ <Config name="Debug" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -42,6 +42,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
   <otherDMD>1</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
@@ -76,7 +77,7 @@
   <pathCv2pdb>$(VisualDInstallDir)\cv2pdb\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -94,7 +95,7 @@
   <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release">
+ <Config name="Release" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -136,6 +137,7 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
   <imppath>..</imppath>

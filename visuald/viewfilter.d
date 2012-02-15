@@ -362,10 +362,11 @@ version(tip)
 				
 			case ECMD_TYPECHAR:
 				dchar ch = pvaIn.uiVal;
-				//if(ch == '.')
-				//	initCompletion();
-				//else
-				if(mCodeWinMgr.mSource.IsCompletorActive())
+				if(ch == '.' && Package.GetGlobalOptions().expandTrigger >= 1 
+				   && Package.GetGlobalOptions().projectSemantics)
+					initCompletion();
+				
+				else if(mCodeWinMgr.mSource.IsCompletorActive() || Package.GetGlobalOptions().expandTrigger >= 2)
 				{
 					if(isAlphaNum(ch) || ch == '_')
 						initCompletion();

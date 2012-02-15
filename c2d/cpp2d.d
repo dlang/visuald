@@ -162,7 +162,7 @@ struct C2DIni
 				if(n < lines.length)
 					line ~= lines[n++];
 			}
-			line = stripl(line);
+			line = stripLeft(line);
 			if(line.startsWith("//"))
 				continue;
 

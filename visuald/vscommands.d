@@ -2466,7 +2466,7 @@ string enum_string(in enumName[] names, uint cmd)
 
 } // debug
 
-string cmd2string(ref GUID guidCmdGroup, uint cmdID)
+string cmd2string(ref const(GUID) guidCmdGroup, uint cmdID)
 {
 	string name;
 debug

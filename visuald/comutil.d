@@ -636,7 +636,7 @@ wstring GUID2wstring(in GUID clsid)
 {
 	//get clsid's as string
 	wchar oleCLSID_arr[clsidLen+1];
-	if (StringFromGUID2(clsid, oleCLSID_arr.ptr, clsidLen) == 0)
+	if (StringFromGUID2(*cast(GUID*)&clsid, oleCLSID_arr.ptr, clsidLen) == 0)
 		return "";
 	wstring oleCLSID = to_wstring(oleCLSID_arr.ptr);
 	return oleCLSID;

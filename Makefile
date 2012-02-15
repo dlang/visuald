@@ -103,10 +103,13 @@ cpp2d_exe:
 	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" ..\$(BINDIR)\cpp2d.exe
 	copy $(BINDIR)\cpp2d.exe ..\downloads
 
+idl2d_exe: $(VSI2D_EXE) 
+	copy $(VSI2D_EXE) ..\downloads\idl2d.exe
+
 ##################################
 # create installer
 
-install: dte_idl vsi2d package cpp2d_exe
+install: dte_idl vsi2d package cpp2d_exe idl2d_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb
 

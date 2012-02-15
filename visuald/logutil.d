@@ -84,7 +84,7 @@ string mixinGUID2string(string T)
 	~ "else static assert(0, \"unknown GUID " ~ T ~ "\");";
 }
 
-string GUID2utf8(ref GUID guid)
+string GUID2utf8(ref const(GUID) guid)
 {
 	mixin(mixinGUID2string("IUnknown"));
 	mixin(mixinGUID2string("IClassFactory"));
