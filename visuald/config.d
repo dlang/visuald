@@ -1777,14 +1777,12 @@ class Config :	DisposingComObject,
 	//////////////////////////////////////////////////////////////////////////////
 	void AddModifiedListener(ConfigModifiedListener listener)
 	{
-		mModifiedListener ~= listener;
+		mModifiedListener.addunique(listener);
 	}
 
 	void RemoveModifiedListener(ConfigModifiedListener listener)
 	{
-		int idx = arrIndexPtr(mModifiedListener, listener);
-		if(idx >= 0)
-			mModifiedListener = mModifiedListener[0 .. idx] ~ mModifiedListener[idx + 1 .. $];
+		mModifiedListener.remove(listener);
 	}
 		
 	//////////////////////////////////////////////////////////////////////////////
@@ -2051,10 +2049,10 @@ class Config :	DisposingComObject,
 			string include = Package.GetGlobalOptions().IncSearchPath;
 			if(include.length)
 			{
-				include = mProjectOptions.replaceEnvironment(include, this, outfile);
 				string[] incs = tokenizeArgs(include);
 				foreach(string inc; incs)
 					cmd ~= " /I" ~ quoteFilename(inc);
+				cmd = mProjectOptions.replaceEnvironment(cmd, this, outfile);
 			}
 			cmd ~= " " ~ quoteFilename(file.GetFilename());
 		}

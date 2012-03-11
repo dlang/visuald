@@ -89,6 +89,7 @@ Lexer/Parser:
 - octal numbers
 - do not parse file if it is D1
 - deprecated syntax
+- __vector(T) type
 
 C++ to D
 ---------

@@ -9,11 +9,6 @@
 module visuald.propertypage;
 
 import visuald.windows;
-import std.string;
-import std.conv;
-
-//import minwin.all;
-//import minwin.mswindows;
 
 import sdk.win32.objbase;
 import sdk.vsi.vsshell;
@@ -28,6 +23,10 @@ import visuald.config;
 import visuald.winctrl;
 import visuald.hierarchy;
 import visuald.hierutil;
+
+import stdext.array;
+import std.string;
+import std.conv;
 
 class PropertyWindow : Window
 {
@@ -418,10 +417,17 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class ProjectPropertyPage : PropertyPage
+class ProjectPropertyPage : PropertyPage, ConfigModifiedListener 
 {
 	abstract void SetControls(ProjectOptions options);
 	abstract int  DoApply(ProjectOptions options, ProjectOptions refoptions);
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		//if(queryInterface!(ConfigModifiedListener) (this, riid, pvObject))
+		//	return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
 
 	override void UpdateControls()
 	{
@@ -429,14 +435,45 @@ class ProjectPropertyPage : PropertyPage
 			SetControls(options);
 	}
 
-	ProjectOptions GetProjectOptions()
+	override void Dispose()
+	{
+		if(auto cfg = GetConfig())
+			cfg.RemoveModifiedListener(this);
+
+		super.Dispose();
+	}
+
+	void OnConfigModified()
+	{
+	}
+
+	override int SetObjects(/* [in] */ in ULONG cObjects,
+							/* [size_is][in] */ IUnknown *ppUnk)
+	{
+		if(auto cfg = GetConfig())
+			cfg.RemoveModifiedListener(this);
+		
+		int rc = super.SetObjects(cObjects, ppUnk);
+		
+		if(auto cfg = GetConfig())
+			cfg.AddModifiedListener(this);
+
+		return rc;
+	}
+
+	Config GetConfig()
 	{
 		if(mObjects.length > 0)
 		{
 			auto config = ComPtr!(Config)(mObjects[0]);
-			if(config)
-				return config.GetProjectOptions();
+			return config;
 		}
+		return null;
+	}
+	ProjectOptions GetProjectOptions()
+	{
+		if(auto cfg = GetConfig())
+			return cfg.GetProjectOptions();
 		return null;
 	}
 
@@ -1175,6 +1212,13 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 	{
 		AddControl("Command line", mCmdLine = new MultiLineText(mCanvas, "", 0, true));
 		AddControl("Additional options", mAddOpt = new MultiLineText(mCanvas));
+	}
+
+	override void OnConfigModified()
+	{
+		if(ProjectOptions options = GetProjectOptions())
+			if(mCmdLine && mCmdLine.hwnd)
+				mCmdLine.setText(options.buildCommandLine(true, true, true));
 	}
 
 	override void SetControls(ProjectOptions options)

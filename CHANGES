@@ -391,3 +391,5 @@ unreleased Version 0.3.31
   * added platform support for "x86" (use with GDC only)
   * includes new version 0.23 of cv2pdb that now also converts DWARF to pdb
   * tweaked idl2d to convert files to build with dmd 2.058
+  * project config: shown command line now updated when pressing "Apply"
+  * fix resource include with spaces
