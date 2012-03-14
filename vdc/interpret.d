@@ -1777,7 +1777,7 @@ class FunctionValue : Value
 			case TOK_assign:
 				functype = dg.functype;
 				debug sval = toStr();
-				return Value;
+				return this;
 			case TOK_equal:
 				return Value.create(functype.compare(dg.functype));
 			case TOK_notequal:
@@ -1820,7 +1820,7 @@ class DelegateValue : FunctionValue
 				context = dg.context;
 				functype = dg.functype;
 				debug sval = toStr();
-				return Value;
+				return this;
 			case TOK_equal:
 				return Value.create((context is dg.context) && functype.compare(dg.functype));
 			case TOK_notequal:

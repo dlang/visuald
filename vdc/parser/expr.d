@@ -814,6 +814,7 @@ class EmptyArgumentList
 //    StringLiteral
 //    ArrayLiteral
 //    AssocArrayLiteral
+//    Lambda
 //    FunctionLiteral
 //    StructLiteral            // deprecated
 //    AssertExpression
@@ -876,9 +877,9 @@ class PrimaryExpression : Expression
 				p.pushState(&shiftDot);
 				return Accept;
 			case TOK_Identifier:
-				p.pushNode(new ast.IdentifierExpression(p.tok));
-				p.pushState(&shiftIdentifierOrTemplateInstance);
-				return IdentifierOrTemplateInstance.enter(p);
+				p.pushToken(p.tok);
+				p.pushState(&shiftIdentifier);
+				return Accept;
 
 			case TOK_IntegerLiteral:
 				p.pushNode(new ast.IntegerLiteralExpression(p.tok));
@@ -899,11 +900,11 @@ class PrimaryExpression : Expression
 			
 			case TOK_delegate:
 			case TOK_function:
-				return FunctionLiteral.enter(p);
+				return FunctionLiteral!false.enter(p);
 			case TOK_lcurly:
 				p.pushRollback(&rollbackFunctionLiteralFailure);
 				p.pushState(&shiftFunctionLiteral);
-				return FunctionLiteral.enter(p);
+				return FunctionLiteral!false.enter(p);
 				
 			case TOK_lparen:
 				p.pushRollback(&rollbackExpressionFailure);
@@ -916,6 +917,33 @@ class PrimaryExpression : Expression
 		}
 	}
 	
+	static Action shiftIdentifier(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_lambda:
+				auto tok = p.popToken();
+				auto lambda = new ast.Lambda(p.tok);
+				lambda.addMember(new ast.IdentifierExpression(tok));
+				p.pushNode(lambda);
+				p.pushState(&shiftLambda);
+				p.pushState(&AssignExpression.enter);
+				return Accept;
+
+			default:
+				auto tok = p.topToken();
+				p.pushNode(new ast.IdentifierExpression(tok));
+				p.pushState(&shiftIdentifierOrTemplateInstance);
+				return IdentifierOrTemplateInstance.enterIdentifier(p);
+		}
+	}
+
+	static Action shiftLambda(Parser p)
+	{
+		p.popAppendTopNode!(ast.Lambda)();
+		return Forward;
+	}
+
 	// ( Expression )
 	// ( Type ) . Identifier
 	// FunctionLiteral: ParameterAttributes FunctionBody
@@ -929,7 +957,7 @@ class PrimaryExpression : Expression
 	}
 	static Action shiftRparenExpr(Parser p)
 	{
-		if(p.tok.id == TOK_lcurly)
+		if(p.tok.id == TOK_lcurly || p.tok.id == TOK_lambda)
 			return Reject;
 		
 		p.popRollback();
@@ -948,7 +976,7 @@ class PrimaryExpression : Expression
 
 	static Action rollbackFunctionLiteralFailure(Parser p)
 	{
-		assert(p.tok.id == TOK_lcurly);
+		assert(p.tok.id == TOK_lcurly || p.tok.id == TOK_lambda);
 		return StructLiteral.enter(p);
 	}
 
@@ -988,7 +1016,7 @@ class PrimaryExpression : Expression
 	static Action rollbackTypeFailure(Parser p)
 	{
 		assert(p.tok.id == TOK_lparen);
-		return FunctionLiteral.enter(p);
+		return FunctionLiteral!true.enter(p);
 	}
 	
 	static Action shiftDot(Parser p)
@@ -1108,7 +1136,7 @@ class ArrayValue : BinaryExpression
 //ParameterAttributes:
 //    Parameters
 //    Parameters FunctionAttributes
-class FunctionLiteral : Expression
+class FunctionLiteral(bool allowLambda) : Expression
 {
 	static Action enter(Parser p)
 	{
@@ -1190,7 +1218,13 @@ class FunctionLiteral : Expression
 			case TOK_lcurly:
 				p.pushState(&shiftFunctionBody);
 				return FunctionBody.enter(p);
-				
+			
+			static if(allowLambda)
+			case TOK_lambda:
+				p.pushState(&shiftLambda);
+				p.pushState(&AssignExpression.enter);
+				return Accept;
+
 			mixin(case_TOKs_FunctionAttribute);
 				auto lit = p.topNode!(ast.FunctionLiteral)();
 				p.combineAttributes(lit.attr, tokenToAttribute(p.tok.id));
@@ -1205,6 +1239,14 @@ class FunctionLiteral : Expression
 	static Action shiftFunctionBody(Parser p)
 	{
 		p.popAppendTopNode!(ast.FunctionLiteral);
+		return Forward;
+	}
+
+	static Action shiftLambda(Parser p)
+	{
+		auto expr = p.popNode!(ast.Expression)();
+		auto lit = p.topNode!(ast.FunctionLiteral)();
+		lit.addMember(expr);
 		return Forward;
 	}
 }

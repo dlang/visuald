@@ -1,6 +1,6 @@
 <DProject>
  <ProjectGuid>{8760F45A-69D9-4B68-BE63-0E055B51D447}</ProjectGuid>
- <Config name="Debug">
+ <Config name="Debug" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -35,13 +35,16 @@
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
+  <checkProperty>0</checkProperty>
+  <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
+  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -88,9 +91,11 @@
   <debugattach>0</debugattach>
   <debugremote />
   <debugEngine>0</debugEngine>
+  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
+  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release">
+ <Config name="Release" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -125,11 +130,14 @@
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
+  <checkProperty>0</checkProperty>
+  <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath />
@@ -178,6 +186,8 @@
   <debugattach>0</debugattach>
   <debugremote />
   <debugEngine>0</debugEngine>
+  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
+  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Folder name="vsi2d">

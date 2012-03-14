@@ -99,6 +99,7 @@ void addunique(T)(ref bool[T] arr, bool[T] vals)
 }
 
 // needed in dmd 2.058beta
+//version(none):
 void addunique(T)(ref Set!T arr, T val)
 {
 	arr[val] = true;

@@ -382,14 +382,22 @@ Version history
   * added option to "Tools->Options->Projects and Solutions->Visual D Settings" to stop a solution build
     if a project fails to build
 
-unreleased Version 0.3.31
+2012-03-14 Version 0.3.31
 
   * added option to "Intellisense" page to configure trigger of code completion
   * delay code definition window update until caret at the same position for a second to avoid pauses while
     navigating through the source
   * added support for building with GDC
-  * added platform support for "x86" (use with GDC only)
+  * added platform support for "x64" (use with GDC only)
   * includes new version 0.23 of cv2pdb that now also converts DWARF to pdb
   * tweaked idl2d to convert files to build with dmd 2.058
+  * new version of mago: 
+    - fixed possible stall when starting debugging
+    - support for associative arrays in expressions
+    - fixed problem with loading debug info of large projects
+  * property: fixed editing multiple configurations at once
+  * added Compile command to syntax check the current source file
+  * parser now supports new delegate syntax (x) => x
   * project config: shown command line now updated when pressing "Apply"
   * fix resource include with spaces
+  * fix always rebuilding if a dependent library project target has spaces in the path name

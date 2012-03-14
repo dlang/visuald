@@ -1032,7 +1032,7 @@ class Project : CVsHierarchy,
 		mProjectGUID = *rguid;
 		return S_OK;
 	}
-        
+
 	override int GetProperty(in VSITEMID itemid, in VSHPROPID propid, VARIANT* var)
 	{
 		//mixin(LogCallMix);

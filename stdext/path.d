@@ -88,6 +88,7 @@ string removeDotDotPath(string file)
 string makeFilenameCanonical(string file, string workdir)
 {
 	file = makeFilenameAbsolute(file, workdir);
+	file = normalizePath(file);
 	file = removeDotDotPath(file);
 	return file;
 }
@@ -107,6 +108,14 @@ string quoteFilename(string fname)
 	if(fname.indexOf('$') >= 0 || indexOf(fname, ' ') >= 0)
 		fname = "\"" ~ fname ~ "\"";
 	return fname;
+}
+
+void quoteFilenames(string[] files)
+{
+	foreach(ref file; files)
+	{
+		file = quoteFilename(file);
+	}
 }
 
 string quoteNormalizeFilename(string fname)

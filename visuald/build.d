@@ -63,8 +63,12 @@ version(taskedBuild)
 class CBuilderThread // : public CVsThread<CMyProjBuildableCfg>
 {
 public:
-	this()
+	this(Config cfg)
 	{
+		mConfig = cfg;
+
+		// get a pointer to IVsLaunchPadFactory
+		m_srpIVsLaunchPadFactory = queryService!(IVsLaunchPadFactory);
 	}
 
 	~this()
@@ -87,24 +91,16 @@ public:
 		eClean,
 	};
 
-	HRESULT Start(Config cfg, Operation op, IVsOutputWindowPane pIVsOutputWindowPane)
+	HRESULT Start(Operation op, IVsOutputWindowPane pIVsOutputWindowPane)
 	{
-		logCall("%s.Start(cfg=%s, op=%s, pIVsOutputWindowPane=%s)", this, cast(void**)cfg, op, cast(void**) pIVsOutputWindowPane);
+		logCall("%s.Start(op=%s, pIVsOutputWindowPane=%s)", this, op, cast(void**) pIVsOutputWindowPane);
 		//mixin(LogCallMix2);
 		
 		m_op = op;
-		mConfig = cfg;
 
 		m_pIVsOutputWindowPane = release(m_pIVsOutputWindowPane);
 		m_pIVsOutputWindowPane = addref(pIVsOutputWindowPane);
 
-		// get a pointer to IVsLaunchPadFactory
-		if (!m_srpIVsLaunchPadFactory)
-		{
-			m_srpIVsLaunchPadFactory = queryService!(IVsLaunchPadFactory);
-			if (!m_srpIVsLaunchPadFactory)
-				return E_FAIL;
-		}
 		// Note that the QueryService for SID_SVsStatusbar will fail during command line build
 		if(!m_pIVsStatusbar)
 			m_pIVsStatusbar = queryService!(IVsStatusbar);
@@ -698,6 +694,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 {
 	this(CBuilderThread builder)
 	{
+		mCompiler = builder.mConfig.GetProjectOptions().compiler;
 		mProjectDir = builder.mConfig.GetProjectDir();
 	}
  
@@ -722,7 +719,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		uint nPriority, nLineNum;
 		string filename, taskItemText;
 		
-		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText))
+		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText, mCompiler))
 			return S_FALSE;
 		
 		if(Package.GetGlobalOptions().demangleError)
@@ -741,6 +738,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 	}
 
 	string mProjectDir;
+	int mCompiler;
 }
 
 
@@ -887,7 +885,7 @@ HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
 		uint nPriority, nLineNum;
 		string strFilename, strTaskItemText;
 		
-		if(parseOutputStringForTaskItem(line, nPriority, strFilename, nLineNum, strTaskItemText))
+		if(parseOutputStringForTaskItem(line, nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD))
 		{
 			IVsOutputWindowPane2 pane2 = qi_cast!IVsOutputWindowPane2(outPane);
 			if(pane2)
@@ -930,22 +928,18 @@ bool isInitializedRE(T)(ref T re)
 	
 bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
                                   out string filename, out uint nLineNum,
-                                  out string itemText)
+                                  out string itemText, int compiler)
 {
 	outputLine = strip(outputLine);
 	
 	// DMD compile error
-	static Regex!char re1, re1gdc, re2, re3, re4;
-	if(!isInitializedRE(re1))
-		re1 = regex(r"^(.*?)\(([0-9]+)\):(.*)$"); // replace . with [\x00-\x7f] for std.regex
+	static Regex!char re1dmd, re1gdc, re2, re3, re4;
+	if(!isInitializedRE(re1dmd))
+		re1dmd = regex(r"^(.*?)\(([0-9]+)\):(.*)$"); // replace . with [\x00-\x7f] for std.regex
+	if(!isInitializedRE(re1gdc))
+		re1gdc = regex(r"^(.*?):([0-9]+):(.*)$");
 
-	auto rematch = match(outputLine, re1);
-	if(rematch.empty())
-	{
-		if(!isInitializedRE(re1gdc))
-			re1gdc = regex(r"^(.*?):([0-9]+):(.*)$");
-		rematch = match(outputLine, re1gdc);
-	}
+	auto rematch = match(outputLine, compiler == Compiler.GDC ? re1gdc : re1dmd);
 	if(!rematch.empty())
 	{
 		auto captures = rematch.captures();
@@ -1011,7 +1005,7 @@ unittest
 {
 	uint nPriority, nLineNum;
 	string strFilename, strTaskItemText;
-	bool rc = parseOutputStringForTaskItem("file.d(37): huhu", nPriority, strFilename, nLineNum, strTaskItemText);
+	bool rc = parseOutputStringForTaskItem("file.d(37): huhu", nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
 	assert(rc);
 	assert(strFilename == "file.d");
 	assert(nLineNum == 37);

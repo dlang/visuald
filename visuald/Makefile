@@ -48,7 +48,7 @@ STDEXT_SRC = ../stdext/file.d ../stdext/array.d ../stdext/path.d ../stdext/util.
              ../stdext/string.d
 # FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
 
-C2D_SRC = ../c2d/ast.d ../c2d/dlist.d ../c2d/cpp2d.d ../c2d/dgutil.d \
+C2D_SRC = ../c2d/cpp2d.d ../c2d/ast.d ../c2d/dlist.d ../c2d/dgutil.d \
           ../c2d/pp.d ../c2d/tokenizer.d ../c2d/tokutil.d
           
 SRC = workaround.d \
@@ -86,7 +86,6 @@ DBGRES = $(DBGDIR)\visuald.res
 RELRES = $(RELDIR)\visuald.res
 
 # DMD2 = c:\l\dmd2\windows\bin\dmd.exe
-# DMD2 = m:\s\d\dmd\src_org\dmd_pdb.exe
 DMD2 = m:\s\d\dmd2\dmd\src\dmd_pdb.exe
 CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 

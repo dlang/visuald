@@ -44,7 +44,7 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
+  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -90,7 +90,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>0</debugEngine>
+  <debugEngine>1</debugEngine>
   <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
   <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj</filesToClean>

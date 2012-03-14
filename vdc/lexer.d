@@ -1082,6 +1082,7 @@ const string[2][] operators =
 	[ "ge",               ">=" ],
 	[ "equal",            "==" ],
 	[ "notequal",         "!=" ],
+	[ "lambda",           "=>" ],
 
 	[ "unord",            "!<>=" ],
 	[ "ue",               "!<>" ],

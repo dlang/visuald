@@ -495,12 +495,14 @@ class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 
 		if(ProjectOptions refoptions = GetProjectOptions())
 		{
+			// make a copy, otherwise changes will no longer be detected after the first configuration
+			auto refopt = clone(refoptions);
 			for(int i = 0; i < mObjects.length; i++)
 			{
 				auto config = ComPtr!(Config)(mObjects[i]);
 				if(config)
 				{
-					DoApply(config.ptr.GetProjectOptions(), refoptions);
+					DoApply(config.ptr.GetProjectOptions(), refopt);
 					config.SetDirty();
 				}
 			}

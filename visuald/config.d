@@ -212,7 +212,7 @@ class ProjectOptions
 	
 	this(bool dbg, bool x64)
 	{
-		Dversion = 2;
+		Dversion = 2.043;
 		exefile = "$(OutDir)\\$(ProjectName).exe";
 		outdir = "$(ConfigurationName)";
 		objdir = "$(OutDir)";
@@ -240,7 +240,7 @@ class ProjectOptions
 
 	string objectFileExtension() { return compiler == 0 ? "obj" : "o"; }
 
-	string buildDMDCommandLine(bool compile = true, bool performLink = true, bool deps = true)
+	string buildDMDCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -295,7 +295,7 @@ class ProjectOptions
 		if(ignoreUnsupportedPragmas)
 			cmd ~= " -ignore";
 
-		if(doDocComments && compile)
+		if(doDocComments && compile && !syntaxOnly)
 		{
 			cmd ~= " -D";
 			if(docdir.length)
@@ -304,7 +304,7 @@ class ProjectOptions
 				cmd ~= " -Df" ~ quoteNormalizeFilename(docname);
 		}
 
-		if(doHdrGeneration && compile)
+		if(doHdrGeneration && compile && !syntaxOnly)
 		{
 			cmd ~= " -H";
 			if(hdrdir.length)
@@ -313,7 +313,7 @@ class ProjectOptions
 				cmd ~= " -Hf" ~ quoteNormalizeFilename(hdrname);
 		}
 
-		if(doXGeneration && compile)
+		if(doXGeneration && compile && !syntaxOnly)
 		{
 			cmd ~= " -X";
 			if(xfilename.length)
@@ -345,14 +345,14 @@ class ProjectOptions
 			if(strip(id).length)
 				cmd ~= " -debug=" ~ strip(id);
 	
-		if(deps)
+		if(deps && !syntaxOnly)
 			cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
 		if(performLink)
 			cmd ~= linkCommandLine();
 		return cmd;
 	}
 	
-	string buildGDCCommandLine(bool compile = true, bool performLink = true, bool deps = true)
+	string buildGDCCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -360,8 +360,8 @@ class ProjectOptions
 		else
 			cmd = "gdc";
 
-		if(lib && performLink)
-			cmd ~= " -lib";
+//		if(lib && performLink)
+//			cmd ~= " -lib";
 //		if(multiobj)
 //			cmd ~= " -multiobj";
 		if(isX86_64)
@@ -413,7 +413,7 @@ class ProjectOptions
 		if(ignoreUnsupportedPragmas)
 			cmd ~= " -fignore-unknown-pragmas";
 
-		if(doDocComments && compile)
+		if(doDocComments && compile && !syntaxOnly)
 		{
 			cmd ~= " -fdoc";
 			if(docdir.length)
@@ -422,7 +422,7 @@ class ProjectOptions
 				cmd ~= " -fdoc-file=" ~ quoteNormalizeFilename(docname);
 		}
 
-		if(doHdrGeneration && compile)
+		if(doHdrGeneration && compile && !syntaxOnly)
 		{
 			cmd ~= " -fintfc";
 			if(hdrdir.length)
@@ -431,7 +431,7 @@ class ProjectOptions
 				cmd ~= " -fintfc-file=" ~ quoteNormalizeFilename(hdrname);
 		}
 
-		if(doXGeneration && compile)
+		if(doXGeneration && compile && !syntaxOnly)
 		{
 			string xfile = xfilename.length ? xfilename : "$(OUTDIR)\\$(SAFEPROJECTNAME).json";
 			cmd ~= " -fXf=" ~ quoteNormalizeFilename(xfile);
@@ -462,19 +462,28 @@ class ProjectOptions
 			if(strip(id).length)
 				cmd ~= " -fdebug=" ~ strip(id);
 
-		if(deps)
+		if(deps && !syntaxOnly)
 			cmd ~= " -fdeps=" ~ quoteNormalizeFilename(getDependenciesPath());
 		if(performLink)
 			cmd ~= linkCommandLine();
 		return cmd;
 	}
 
-	string buildCommandLine(bool compile = true, bool performLink = true, bool deps = true)
+	string buildCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
-		if(compiler == Compiler.GDC)
-			return buildGDCCommandLine(compile, performLink, deps);
-		else
-			return buildDMDCommandLine(compile, performLink, deps);
+		if(compiler == Compiler.DMD)
+			return buildDMDCommandLine(compile, performLink, deps, syntaxOnly);
+
+		if(!compile && performLink && lib)
+			return buildARCommandLine();
+
+		return buildGDCCommandLine(compile, performLink, deps, syntaxOnly);
+	}
+
+	string buildARCommandLine()
+	{
+		string cmd = "ar cru " ~ getTargetPath();
+		return cmd;
 	}
 
 	string linkDMDCommandLine()
@@ -1331,7 +1340,7 @@ class Config :	DisposingComObject,
 		}
 		else
 			mProjectOptions = new ProjectOptions(name == "Debug", platform == "x64");
-		mBuilder = new CBuilderThread;
+		mBuilder = new CBuilderThread(this);
 		mName = name;
 		mPlatform = platform;
 	}
@@ -1680,8 +1689,8 @@ class Config :	DisposingComObject,
 		mixin(LogCallMix);
 
 		if(dwOptions & VS_BUILDABLEPROJECTCFGOPTS_REBUILD)
-			return mBuilder.Start(this, CBuilderThread.Operation.eRebuild, pIVsOutputWindowPane);
-		return mBuilder.Start(this, CBuilderThread.Operation.eBuild, pIVsOutputWindowPane);
+			return mBuilder.Start(CBuilderThread.Operation.eRebuild, pIVsOutputWindowPane);
+		return mBuilder.Start(CBuilderThread.Operation.eBuild, pIVsOutputWindowPane);
 	}
 
 	override int StartClean( 
@@ -1690,7 +1699,7 @@ class Config :	DisposingComObject,
 	{
 		mixin(LogCallMix);
 	
-		return mBuilder.Start(this, CBuilderThread.Operation.eClean, pIVsOutputWindowPane);
+		return mBuilder.Start(CBuilderThread.Operation.eClean, pIVsOutputWindowPane);
 	}
 
 	override int StartUpToDateCheck( 
@@ -1699,7 +1708,7 @@ class Config :	DisposingComObject,
 	{
 		mixin(LogCallMix);
 	
-		HRESULT rc = mBuilder.Start(this, CBuilderThread.Operation.eCheckUpToDate, pIVsOutputWindowPane);
+		HRESULT rc = mBuilder.Start(CBuilderThread.Operation.eCheckUpToDate, pIVsOutputWindowPane);
 		return rc == S_OK ? S_OK : E_FAIL; // E_FAIL used to indicate "not uptodate"
 		//return returnError(E_NOTIMPL); //S_OK;
 	}
@@ -1862,6 +1871,7 @@ class Config :	DisposingComObject,
 				files ~= deppath; // force update without if dependency file does not exist or is invalid
 
 			files ~= file.GetFilename();
+			files ~= getDDocFileList();
 			makeFilenamesAbsolute(files, workdir);
 			return files;
 		}
@@ -2038,7 +2048,7 @@ class Config :	DisposingComObject,
 		return files;
 	}
 
-	string GetCompileCommand(CFileNode file)
+	string GetCompileCommand(CFileNode file, bool syntaxOnly = false)
 	{
 		string tool = GetCompileTool(file);
 		string cmd;
@@ -2064,12 +2074,18 @@ class Config :	DisposingComObject,
 		{
 			string depfile = GetOutputFile(file) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
-			cmd ~= mProjectOptions.buildCommandLine(true, false, false);
-			if(mProjectOptions.compiler == Compiler.DMD)
+			cmd ~= mProjectOptions.buildCommandLine(true, false, false, syntaxOnly);
+			if(syntaxOnly && mProjectOptions.compiler == Compiler.DMD)
+				cmd ~= " -c -o-";
+			else if(syntaxOnly)
+				cmd ~= " -c -fsyntax-only";
+			else if(mProjectOptions.compiler == Compiler.DMD)
 				cmd ~= " -c -of" ~ quoteFilename(outfile) ~ " -deps=" ~ quoteFilename(depfile);
 			else
 				cmd ~= " -c -o " ~ quoteFilename(outfile) ~ " -fdeps=" ~ quoteFilename(depfile);
 			cmd ~= " " ~ file.GetFilename();
+			foreach(ddoc; getDDocFileList())
+				cmd ~= " " ~ ddoc;
 		}
 		if(cmd.length)
 		{
@@ -2139,6 +2155,10 @@ class Config :	DisposingComObject,
 
 	string getCommandFileList(string[] files, string responsefile, ref string precmd)
 	{
+		if(mProjectOptions.compiler == Compiler.GDC)
+			foreach(ref f; files)
+				f = replace(f, "\\", "/");
+
 		string fcmd = std.string.join(files, " ");
 		if(fcmd.length > 100)
 		{
@@ -2179,6 +2199,34 @@ class Config :	DisposingComObject,
 		return getCommandFileList(files, responsefile, precmd);
 	}
 	
+	string[] getSourceFileList()
+	{
+		string[] files;
+		searchNode(mProvider.mProject.GetRootNode(), 
+			delegate (CHierNode n) { 
+				if(CFileNode file = cast(CFileNode) n)
+					files ~= file.GetFilename();
+				return false;
+			});
+		return files;
+	}
+
+	string[] getDDocFileList()
+	{
+		string[] files;
+		searchNode(mProvider.mProject.GetRootNode(), 
+			delegate (CHierNode n) { 
+				if(CFileNode file = cast(CFileNode) n)
+				{
+					string fname = file.GetFilename();
+					if(extension(fname) == ".ddoc")
+						files ~= fname;
+				}
+				return false;
+			});
+		return files;
+	}
+
 	string[] getInputFileList()
 	{
 		string[] files;
@@ -2189,7 +2237,7 @@ class Config :	DisposingComObject,
 					string fname = GetOutputFile(file);
 					if(fname.length)
 						if(file.GetTool() != "Custom" || file.GetLinkOutput())
-							files ~= quoteFilename(fname);
+							files ~= fname;
 				}
 				return false;
 			});
@@ -2203,18 +2251,22 @@ class Config :	DisposingComObject,
 	{
 		bool doLink = mProjectOptions.singleFileCompilation != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.singleFileCompilation == ProjectOptions.kSeparateCompileAndLink;
+		if (mProjectOptions.compiler == Compiler.GDC && mProjectOptions.lib)
+			separateLink = true;
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
 		if(mProjectOptions.additionalOptions.length)
 			opt ~= " " ~ mProjectOptions.additionalOptions;
 
 		string precmd = getEnvironmentChanges();
 		string[] files = getInputFileList();
+		quoteFilenames(files);
 
 		string responsefile = GetCommandLinePath() ~ ".rsp";
 		string fcmd = getCommandFileList(files, responsefile, precmd);
 		
+		string[] srcfiles = getSourceFileList();
 		string modules_ddoc;
-		string mod_cmd = getModulesDDocCommandLine(files, modules_ddoc); // TODO: single file compilation: files contains object files, not source
+		string mod_cmd = getModulesDDocCommandLine(srcfiles, modules_ddoc);
 		if(mod_cmd.length > 0)
 		{
 			precmd ~= mod_cmd ~ "\nif errorlevel 1 goto reportError\n";
@@ -2354,7 +2406,7 @@ class Config :	DisposingComObject,
 						if(pIVsOutput.get_CanonicalName(&target.bstr) == S_OK)
 						{
 							string targ = target.detach();
-							libs ~= quoteFilename(targ);
+							libs ~= targ;
 						}
 						release(pIVsOutput);
 					}
@@ -2454,6 +2506,8 @@ class Config :	DisposingComObject,
 		}
 		Package.scheduleUpdateLibrary();
 	}
+
+	CBuilderThread getBuilder() { return mBuilder; }
 
 private:
 	string mName;

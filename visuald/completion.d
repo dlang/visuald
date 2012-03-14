@@ -725,7 +725,8 @@ class MethodData : DisposingComObject, IVsMethodData
 
 	this()
 	{
-		mMethodTipWindow = VsLocalCreateInstance!IVsMethodTipWindow (&uuid_coclass_VsMethodTipWindow, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
+		auto uuid = uuid_coclass_VsMethodTipWindow;
+		mMethodTipWindow = VsLocalCreateInstance!IVsMethodTipWindow (&uuid, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
 		if (mMethodTipWindow)
 			mMethodTipWindow.SetMethodData(this);
 	}

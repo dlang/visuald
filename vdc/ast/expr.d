@@ -988,6 +988,7 @@ class ArgumentList : Node
 //    StringLiterals
 //    ArrayLiteral
 //    AssocArrayLiteral
+//    Lambda
 //    FunctionLiteral
 //    AssertExpression
 //    MixinExpression
@@ -1321,6 +1322,20 @@ class FunctionLiteral : Expression
 			dg.functype = func;
 			return dg;
 		}
+	}
+}
+
+//Lambda:
+//    [ ParameterList Expression ]
+class Lambda : Expression
+{
+	mixin ForwardCtor!();
+
+	override PREC getPrecedence() { return PREC.primary; }
+
+	override void toD(CodeWriter writer)
+	{
+		writer(getMember(0), " => ", getMember(1));
 	}
 }
 

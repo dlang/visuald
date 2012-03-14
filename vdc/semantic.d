@@ -97,12 +97,14 @@ void semanticErrorPos(T...)(ref const(TextPos) pos, T args)
 
 void semanticError(T...)(T args)
 {
-	semanticErrorPos(TextPos(), args);
+	TextPos pos;
+	semanticErrorPos(pos, args);
 }
 
 void semanticErrorFile(T...)(string fname, T args)
 {
-	semanticErrorLoc(fname, TextPos(), args);
+	TextPos pos;
+	semanticErrorLoc(fname, pos, args);
 }
 
 void semanticMessage(string msg)
@@ -112,7 +114,8 @@ void semanticMessage(string msg)
 
 ErrorValue semanticErrorValue(T...)(T args)
 {
-	semanticErrorPos(TextPos(), args);
+	TextPos pos;
+	semanticErrorPos(pos, args);
 	//throw new InterpretException;
 	return Singleton!(ErrorValue).get();
 }
@@ -465,7 +468,8 @@ class Project : Node
 	
 	this()
 	{
-		super(TextSpan());
+		TextSpan initspan;
+		super(initspan);
 		options = new Options;
 
 		options.importDirs ~= r"c:\l\dmd-2.055\src\druntime\import\";

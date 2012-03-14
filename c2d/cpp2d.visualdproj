@@ -1,6 +1,6 @@
 <DProject>
  <ProjectGuid>{E2073B79-635A-48FA-A5A3-6E500D3A5DD8}</ProjectGuid>
- <Config name="Debug">
+ <Config name="Debug" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -42,8 +42,9 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
+  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -94,7 +95,7 @@
   <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release">
+ <Config name="Release" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -136,6 +137,7 @@
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath />
@@ -188,7 +190,7 @@
   <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug GDC">
+ <Config name="Debug GDC" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -230,6 +232,7 @@
   <nofloat>0</nofloat>
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
   <otherDMD>1</otherDMD>
   <program>c:\u\MinGW\msys\1.0\bin\sh.exe -c gdmd</program>
   <imppath>..</imppath>

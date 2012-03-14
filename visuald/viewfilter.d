@@ -16,6 +16,9 @@ import visuald.fileutil;
 import visuald.stringutil;
 import visuald.pkgutil;
 import visuald.dpackage;
+import visuald.dproject;
+import visuald.hierarchy;
+import visuald.chiernode;
 import visuald.dimagelist;
 import visuald.completion;
 import visuald.simpleparser;
@@ -26,6 +29,8 @@ import visuald.dlangsvc;
 import visuald.winctrl;
 import visuald.tokenreplace;
 import visuald.cppwizard;
+import visuald.config;
+import visuald.build;
 import visuald.help;
 
 import vdc.lexer;
@@ -40,6 +45,7 @@ import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
 
 import stdext.array;
+import stdext.path;
 import stdext.string;
 
 import std.string;
@@ -253,7 +259,10 @@ version(tip)
 					//ep.DisplayExpansionBrowser(mView, "Insert Snippet", ["type1", "type2"], true, ["kind1", "kind2"], true);
 					ep.DisplayExpansionBrowser(mView, "Insert Snippet", [], false, [], false);
 				break;
-				
+			
+			case ECMD_COMPILE:
+				return CompileDoc();
+
 			case ECMD_GOTOBRACE:
 				return GotoMatchingPair(false);
 			case ECMD_GOTOBRACE_EXT:
@@ -401,6 +410,81 @@ version(tip)
 
 	//////////////////////////////
 
+	HRESULT CompileDoc()
+	{
+		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
+		if(!pIVsUIShellOpenDocument)
+			return returnError(E_FAIL);
+		scope(exit) release(pIVsUIShellOpenDocument);
+
+		string fname = mCodeWinMgr.mSource.GetFileName();
+		wchar* wfname = _toUTF16z(fname);
+		IVsUIHierarchy pUIH;
+		uint itemid;
+		IServiceProvider pSP;
+		VSDOCINPROJECT docInProj;
+		if(pIVsUIShellOpenDocument.IsDocumentInAProject(wfname, &pUIH, &itemid, &pSP, &docInProj) != S_OK)
+			return S_OK;
+
+		scope(exit) release(pSP);
+		scope(exit) release(pUIH);
+
+		if(!pUIH)
+			return returnError(E_FAIL);
+		Project proj = qi_cast!Project(pUIH);
+		if(!proj)
+			return S_OK;
+
+		CHierNode pNode = proj.VSITEMID2Node(itemid);
+		if(!pNode)
+			return returnError(E_INVALIDARG);
+		CFileNode pFile = cast(CFileNode) pNode;
+		if(!pFile)
+			string S_OK;
+
+		if(pFile.SaveDoc(SLNSAVEOPT_SaveIfDirty) != S_OK)
+			return returnError(E_FAIL);
+
+		auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+		scope(exit) release(solutionBuildManager);
+		IVsProjectCfg activeCfg;
+		scope(exit) release(activeCfg);
+
+		if(solutionBuildManager)
+			if(solutionBuildManager.FindActiveProjectCfg(null, null, proj, &activeCfg) == S_OK)
+			{
+				if(Config cfg = qi_cast!Config(activeCfg))
+				{
+					scope(exit) release(cfg);
+
+					string tool = pFile.GetTool();
+					string stool = cfg.GetStaticCompileTool(pFile);
+					if(stool == "DMD")
+						pFile.SetTool("DMDsingle");
+
+					scope(exit) pFile.SetTool(tool);
+
+					string cmd = cfg.GetCompileCommand(pFile, true);
+					if(cmd.length)
+					{
+						string workdir = cfg.GetProjectDir();
+						string outfile = cfg.GetOutputFile(pFile);
+						string cmdfile = makeFilenameAbsolute(outfile ~ ".syntax", workdir);
+						removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
+						auto pane = getBuildOutputPane();
+						clearBuildOutputPane();
+						if(pane)
+							pane.Activate();
+						HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
+					}
+				}
+			}
+
+		return S_OK;
+	}
+
+	//////////////////////////////
+
 	void initCompletion()
 	{
 		CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet();
@@ -467,6 +551,7 @@ version(tip)
 			case ECMD_GOTOBRACE_EXT:
 			case ECMD_OUTLN_STOP_HIDING_ALL:
 			case ECMD_OUTLN_TOGGLE_ALL:
+			case ECMD_COMPILE:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
@@ -1334,7 +1419,8 @@ class TextTipData : DisposingComObject, IVsTextTipData
 	this()
 	{
 		mTipText = "Tipp";
-		mTipWindow = VsLocalCreateInstance!IVsTextTipWindow (&uuid_coclass_VsTextTipWindow, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
+		auto uuid = uuid_coclass_VsTextTipWindow;
+		mTipWindow = VsLocalCreateInstance!IVsTextTipWindow (&uuid, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
 		if (mTipWindow)
 			mTipWindow.SetTextTipData(this);
 	}

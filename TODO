@@ -33,7 +33,10 @@ Project:
 - project config: edit all configurations only changes current config
 - breaking into build does not stop dmd
 - environment variables with parenthesis don't work $(ProgramFiles(x86))
-- GDC: separate compile + link does not write to object dir
+- GDC: 
+  - separate compile + link does not write to object dir
+  - ddoc files
+- remove D2.043
 
 Language service:
 -----------------
@@ -89,6 +92,7 @@ Lexer/Parser:
 - octal numbers
 - do not parse file if it is D1
 - deprecated syntax
+- support for => delegates
 - __vector(T) type
 
 C++ to D
