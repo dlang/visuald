@@ -130,6 +130,64 @@ bool tryWithExceptionToBuildOutputPane(T)(T dg, string errInfo = "")
 }
 
 ///////////////////////////////////////////////////////////////////////
+// version = DEBUG_GC;
+version(DEBUG_GC)
+{
+import rsgc.gc;
+import rsgc.gcx;
+import rsgc.gcstats;
+import std.string;
+
+void writeGCStatsToOutputPane()
+{
+	GCStats stats =	gc_stats();
+	writeToBuildOutputPane(format("numpools = %s, poolsize = %s, usedsize = %s, freelistsize = %s\n",
+		   stats.numpools, stats.poolsize, stats.usedsize, stats.freelistsize));
+    writeToBuildOutputPane(format("pool[B_16]    = %s\n", stats.numpool[B_16]   ));
+    writeToBuildOutputPane(format("pool[B_32]    = %s\n", stats.numpool[B_32]   ));
+    writeToBuildOutputPane(format("pool[B_64]    = %s\n", stats.numpool[B_64]   ));
+    writeToBuildOutputPane(format("pool[B_128]   = %s\n", stats.numpool[B_128]  ));
+    writeToBuildOutputPane(format("pool[B_256]   = %s\n", stats.numpool[B_256]  ));
+    writeToBuildOutputPane(format("pool[B_512]   = %s\n", stats.numpool[B_512]  ));
+    writeToBuildOutputPane(format("pool[B_1024]  = %s\n", stats.numpool[B_1024] ));
+    writeToBuildOutputPane(format("pool[B_2048]  = %s\n", stats.numpool[B_2048] ));
+    writeToBuildOutputPane(format("pool[B_PAGE]  = %s\n", stats.numpool[B_PAGE] ));
+    writeToBuildOutputPane(format("pool[B_PAGE+] = %s\n", stats.numpool[B_PAGEPLUS]));
+    writeToBuildOutputPane(format("pool[B_FREE]  = %s\n", stats.numpool[B_FREE] ));
+    writeToBuildOutputPane(format("pool[B_UNCOM] = %s\n", stats.numpool[B_UNCOMMITTED]));
+	writeClasses();
+}
+
+extern extern(C) __gshared ModuleInfo*[] _moduleinfo_array;
+
+void writeClasses()
+{
+	foreach(mi; _moduleinfo_array)
+	{
+		auto classes = mi.localClasses();
+		foreach(c; classes)
+		{
+			string flags;
+			if(c.m_flags & 1) flags ~= " IUnknown";
+			if(c.m_flags & 2) flags ~= " NoGC";
+			if(c.m_flags & 4) flags ~= " OffTI";
+			if(c.m_flags & 8) flags ~= " Constr";
+			if(c.m_flags & 16) flags ~= " xgetM";
+			if(c.m_flags & 32) flags ~= " tinfo";
+			if(c.m_flags & 64) flags ~= " abstract";
+			writeToBuildOutputPane(text(c.name, ": ", c.init.length, " bytes, flags: ", flags, "\n"));
+
+			foreach(m; c.getMembers([]))
+			{
+				auto cm = cast() m;
+				writeToBuildOutputPane(text("    ", cm.name(), "\n"));
+			}
+		}
+	}
+}
+}
+
+///////////////////////////////////////////////////////////////////////
 HRESULT GetSelectionForward(IVsTextView view, int*startLine, int*startCol, int*endLine, int*endCol)
 {
 	HRESULT hr = view.GetSelection(startLine, startCol, endLine, endCol);

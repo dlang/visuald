@@ -184,6 +184,7 @@ class NonEmptyStatement : Statement
 			case TOK_pragma:
 				return PragmaStatement.enter(p);
 			case TOK_mixin:
+				p.pushRollback(&rollbackDeclFailure);
 				p.pushState(&shiftMixin);
 				return Accept;
 
@@ -314,6 +315,7 @@ class NonEmptyStatement : Statement
 				p.pushState(&shiftDeclaration);
 				return TemplateMixinDeclaration.enterAfterMixin(p);
 			case TOK_lparen:
+				p.pushState(&shiftMixInStatement);
 				return MixinStatement.enterAfterMixin(p);
 			default:
 				return TemplateMixin.enterAfterMixin(p);
@@ -335,6 +337,19 @@ class NonEmptyStatement : Statement
 	{
 		p.appendReplaceTopNode(new ast.DeclarationStatement(p.topNode().span));
 		return Forward;
+	}
+
+	static Action shiftMixInStatement(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_semicolon:
+				p.popRollback();
+				return Accept;
+			default:
+				// roll back for mixin expression
+				return p.parseError("';' expected after mixin statement");
+		}
 	}
 
 	static Action shiftImport(Parser p)
@@ -1163,7 +1178,7 @@ class PragmaStatement : Statement
 //    mixin ( AssignExpression ) ;
 class MixinStatement : Statement
 {
-	mixin SequenceNode!(ast.MixinStatement, TOK_mixin, TOK_lparen, AssignExpression, TOK_rparen, TOK_semicolon);
+	mixin SequenceNode!(ast.MixinStatement, TOK_mixin, TOK_lparen, AssignExpression, TOK_rparen);
 
 	static Action enterAfterMixin(Parser p)
 	{

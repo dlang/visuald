@@ -28,6 +28,97 @@ import std.algorithm;
 
 import stdext.util;
 
+//version = COUNT;
+//version = NODE_ALLOC;
+
+version(COUNT) import visuald.windows;
+
+version(NODE_ALLOC)
+class NodeAllocData
+{
+	enum kSize = 0x4000;
+	byte* pos;
+
+	private byte** data;
+	private int    numdata;
+
+	byte* base() { return data[numdata-1]; }
+
+	void moreData()
+	{
+		byte* arr = cast(byte*) gc_calloc(kSize, 0);
+		// when appending to the array, ensure that no old reference is dangling
+		byte** ndata = cast(byte**) gc_malloc((numdata + 1) * data[0].sizeof, 0);
+		ndata[0..numdata] = data[0..numdata];
+		data[0..numdata] = null;
+		ndata[numdata] = arr;
+		gc_free(data);
+		data = ndata;
+		numdata++;
+		pos = arr;
+	}
+
+	~this()
+	{
+		destroy(false); // must not call back into GC
+	}
+
+	void destroy(bool free)
+	{
+		while(numdata > 0)
+		{
+			size_t sz;
+			byte* beg = data[--numdata];
+			byte* end = beg + kSize;
+			for(byte* p = beg; p < end && *cast(size_t*)p != 0; p += sz)
+			{
+				Node n = cast(Node) p;
+				sz = n.classinfo.init.length;
+				sz = (sz + 15) & ~15;
+				assert(sz > 0);
+				clear(n); // calls rt_finalize
+			}
+			if(free)
+				gc_free(beg);
+			data[numdata] = null;
+		}
+		if(data && free)
+			gc_free(data);
+		data = null;
+		pos = null;
+	}
+
+	static NodeAllocData current;
+
+	static NodeAllocData detachCurrent()
+	{
+		auto cur = current;
+		current = null;
+		return cur;
+	}
+
+	static void checkAlloc(size_t sz)
+	{
+		if(!current)
+			current = new NodeAllocData;
+		if(!current.pos)
+			current.moreData();
+		if(current.pos + sz > current.base() + kSize)
+			current.moreData();
+	}
+
+	static void* alloc(size_t sz)
+	{
+		sz = (sz + 15) & ~15;
+		checkAlloc(sz);
+		void* p = current.pos;
+		current.pos += sz;
+		//if(current.pos < current.base() + kSize)
+		//	*cast(size_t*)current.pos = 0;
+		return p;
+	}
+}
+
 class Node
 {
 	TokenId id;
@@ -42,26 +133,46 @@ class Node
 	// semantic data
 	int semanticSearches;
 	Scope scop;
-	
+
+	version(COUNT) static __gshared int countNodes;
+
+	version(NODE_ALLOC)
+	new(size_t sz)
+	{
+		assert(sz < NodeAllocData.kSize / 2);
+			//return gc_malloc(sz, 1); // BlkAttr.FINALIZE
+		void* p = NodeAllocData.alloc(sz);
+		return p;
+	}
+
 	this()
 	{
+		version(COUNT) InterlockedIncrement(&countNodes);
 		// default constructor needed for clone()
 	}
 	
 	this(ref const(TextSpan) _span)
 	{
+		version(COUNT) InterlockedIncrement(&countNodes);
 		fulspan = span = _span;
 	}
 	this(Token tok)
 	{
+		version(COUNT) InterlockedIncrement(&countNodes);
 		id = tok.id;
 		span = tok.span;
 		fulspan = tok.span;
 	}
 	this(TokenId _id, ref const(TextSpan) _span)
 	{
+		version(COUNT) InterlockedIncrement(&countNodes);
 		id = _id;
 		fulspan = span = _span;
+	}
+
+	version(COUNT) ~this()
+	{
+		version(COUNT) InterlockedDecrement(&countNodes);
 	}
 
 	mixin template ForwardCtor()
@@ -152,6 +263,32 @@ class Node
 		return true;
 	}
 	
+	////////////////////////////////////////////////////////////
+	Node visit(DG)(DG dg)
+	{
+		if(!dg(this))
+			return this;
+		for(int m = 0; m < members.length; m++)
+			if(auto n = members[m].visit(dg))
+				return n;
+		return null;
+	}
+
+	bool detachFromModule(Module mod)
+	{
+		return true;
+	}
+
+	void disconnect()
+	{
+		for(int m = 0; m < members.length; m++)
+			members[m].disconnect();
+
+		for(int m = 0; m < members.length; m++)
+			members[m].parent = null;
+		members = members.init;
+	}
+
 	////////////////////////////////////////////////////////////
 	abstract void toD(CodeWriter writer)
 	{
@@ -359,6 +496,7 @@ class Node
 	}
 	
 	////////////////////////////////////////////////////////////
+	version(COUNT) {} else // invariant does not work with destructor
 	invariant()
 	{
 		if(!__ctfe)

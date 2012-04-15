@@ -56,8 +56,8 @@ void assume(T)(T cond, string msg, int line = __LINE__, string file = __FILE__)
 
 string getNameWithoutExt(string fname)
 {
-	string bname = getBaseName(fname);
-	string name = getName(bname);
+	string bname = baseName(fname);
+	string name = stripExtension(bname);
 	if(name.length == 0)
 		name = bname;
 	return name;

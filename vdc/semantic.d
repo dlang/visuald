@@ -504,13 +504,18 @@ class Project : Node
 		}
 		else
 			src = new SourceModule;
+		if(src.parsed)
+			src.parsed.disconnect();
 		src.parsed = mod;
 
 		if(std.file.exists(fname)) // could be pseudo name
 			src.lastModified = std.file.timeLastModified(fname);
 
 		if(src.analyzed)
+		{
 			removeMember(src.analyzed);
+			src.analyzed.disconnect();
+		}
 		src.analyzed = mod.clone();
 		addMember(src.analyzed);
 		mSourcesByModName[modname] = src;

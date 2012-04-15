@@ -35,7 +35,7 @@ string canonicalPath(string path)
 
 string makeFilenameAbsolute(string file, string workdir)
 {
-	if(!isabs(file) && workdir.length)
+	if(!isAbsolute(file) && workdir.length)
 	{
 		if(file == ".")
 			file = workdir;
@@ -49,7 +49,7 @@ void makeFilenamesAbsolute(string[] files, string workdir)
 {
 	foreach(ref file; files)
 	{
-		if(!isabs(file) && workdir.length)
+		if(!isAbsolute(file) && workdir.length)
 			file = makeFilenameAbsolute(file, workdir);
 	}
 }
@@ -125,8 +125,8 @@ string quoteNormalizeFilename(string fname)
 
 string getNameWithoutExt(string fname)
 {
-	string bname = getBaseName(fname);
-	string name = getName(bname);
+	string bname = baseName(fname);
+	string name = stripExtension(bname);
 	if(name.length == 0)
 		name = bname;
 	return name;
@@ -142,9 +142,9 @@ string safeFilename(string fname, string rep = "-") // - instead of _ to not pos
 
 string makeRelative(string file, string path)
 {
-	if(!isabs(file))
+	if(!isAbsolute(file))
 		return file;
-	if(!isabs(path))
+	if(!isAbsolute(path))
 		return file;
 
 	file = replace(file, "/", "\\");

@@ -79,6 +79,12 @@ void disableStacktrace()
 		info.o.ctor = null;
 }
 
+void clearStack()
+{
+	// fill stack with zeroes, so the chance of having false pointers is reduced
+	int[1000] arr;
+}
+
 extern (Windows)
 BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 {
@@ -99,6 +105,9 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 		case DLL_PROCESS_DETACH:
 			logCall("DllMain(DLL_PROCESS_DETACH, tid=%x)", GetCurrentThreadId());
 			global_exit();
+			debug clearStack();
+			debug rsgc.gc.gc_collect();
+			debug DComObject.showCOMleaks();
 			dll_process_detach( hInstance, true );
 			
 			debug if(DComObject.sCountReferenced != 0 || DComObject.sCountInstances != 0)

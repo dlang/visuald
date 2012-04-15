@@ -44,6 +44,8 @@ VDC_SRC = $(VDC)/parser/aggr.d \
         $(VDC)/logger.d \
         $(VDC)/lexer.d
 
+RSGC_SRC = ../rsgc/gc.d ../rsgc/gcx.d ../rsgc/gcstats.d ../rsgc/gcalloc.d ../rsgc/gcbits.d
+
 STDEXT_SRC = ../stdext/file.d ../stdext/array.d ../stdext/path.d ../stdext/util.d \
              ../stdext/string.d
 # FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
@@ -62,6 +64,7 @@ SRC = workaround.d \
       tokenreplace.d tokenreplacedialog.d library.d \
       help.d cppwizard.d \
       $(STDEXT_SRC)
+# $(RSGC_SRC)
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
        resources/DAboutLogo.ico resources/GroupByType.ico resources/CombineColumns.ico \
@@ -98,6 +101,8 @@ OPTLINKS = /SCANLIB
 DBG_VSI_LIB = $(DBGDIR)/vsi.lib 
 REL_VSI_LIB = $(RELDIR)/vsi.lib 
 
+C2D_LIB = c2d_vd.lib 
+
 DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 
@@ -123,19 +128,19 @@ $(DBGDIR)\vdc.lib : $(VDC_SRC) Makefile
 		$(VDC_SRC)
 <<NOKEEP
 
-$(DBGDIR)\c2d.lib : $(C2D_SRC) Makefile
+$(DBGDIR)\$(C2D_LIB) : $(C2D_SRC) Makefile
 	"$(DMD2)" -of$@ -lib -g $(DFLAGS) @<<
 		$(C2D_SRC)
 <<NOKEEP
 
 #-mixin=$(DBGDIR)\$(PROJECT).mixin
-$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DBGDIR)\vdc.lib $(DBGDIR)\c2d.lib $(DEPS)
+$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DBGDIR)\vdc.lib $(DBGDIR)\$(C2D_LIB) $(DEPS)
 	"$(DMD2)" -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
-		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES) $(DBGDIR)\vdc.lib $(DBGDIR)\c2d.lib
+		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES) $(DBGDIR)\vdc.lib $(DBGDIR)\$(C2D_LIB)
 <<NOKEEP
 
-$(DBGDIR)\cpp2d.exe : $(DBGDIR)\c2d.lib ..\c2d\cpp2d_main.d $(STDEXT_SRC) Makefile
-	"$(DMD2)" -of$@ -O -inline -release -g $(DFLAGS) $(DBGDIR)\c2d.lib ..\c2d\cpp2d_main.d $(STDEXT_SRC)
+$(DBGDIR)\cpp2d.exe : $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(STDEXT_SRC) Makefile
+	"$(DMD2)" -of$@ -O -inline -release -g $(DFLAGS) $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(STDEXT_SRC)
 
 #-----
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
@@ -147,20 +152,20 @@ $(RELDIR)\vdc.lib : $(VDC_SRC) Makefile
 <<NOKEEP
 
 INLINE=-inline
-
-$(RELDIR)\c2d.lib : $(C2D_SRC) Makefile
-	"$(DMD2)" -of$@ -O $(INLINE) -release -lib -g $(DFLAGS) @<<
+# -O 
+$(RELDIR)\$(C2D_LIB) : $(C2D_SRC) Makefile
+	"$(DMD2)" -of$@ $(INLINE) -release -lib -g $(DFLAGS) @<<
 		$(C2D_SRC)
 <<NOKEEP
 
 # -c -od$(RELDIR)
-$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\c2d.lib $(DEPS)
+$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB) $(DEPS)
 	"$(DMD2)" -of$@ -O $(INLINE) -release -g $(DFLAGS) -map $@.map @<<
-		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib $(RELDIR)\c2d.lib
+		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB)
 <<NOKEEP
 
-$(RELDIR)\cpp2d.exe : $(RELDIR)\c2d.lib ..\c2d\cpp2d_main.d $(STDEXT_SRC) Makefile
-	"$(DMD2)" -of$@ -O $(INLINE) -release $(DFLAGS) $(RELDIR)\c2d.lib ..\c2d\cpp2d_main.d $(STDEXT_SRC)
+$(RELDIR)\cpp2d.exe : $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(STDEXT_SRC) Makefile
+	"$(DMD2)" -of$@ -O $(INLINE) -release $(DFLAGS) $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(STDEXT_SRC)
 
 #-----
 $(DBGRES) : $(RC) $(RSRC)

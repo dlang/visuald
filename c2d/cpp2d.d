@@ -21,7 +21,6 @@ import stdext.path;
 import std.string;
 import std.file;
 import std.path;
-import std.stdio;
 import std.ascii;
 import std.array;
 import std.algorithm;
@@ -2275,7 +2274,11 @@ class Cpp2DConverter
 
 	void writemsg(string s)
 	{
-		writeln(s);
+		debug
+		{
+			import std.stdio;
+			writeln(s);
+		}
 	}
 
 	Source findSource(AST ast)

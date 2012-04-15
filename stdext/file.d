@@ -129,11 +129,11 @@ string[] expandFileListPattern(string file, string workdir)
 		mode = SpanMode.depth;
 		file = file[1..$];
 	}
-	string path = dirname(file);
+	string path = dirName(file);
 	path = makeFilenameAbsolute(path, workdir);
-	string pattern = basename(file);
+	string pattern = baseName(file);
 	foreach (string name; dirEntries(path, mode))
-		if (globMatch(basename(name), pattern))
+		if (globMatch(baseName(name), pattern))
 			addunique(files, makeRelative(name, workdir));
 	return files;
 }

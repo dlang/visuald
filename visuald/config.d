@@ -567,10 +567,11 @@ class ProjectOptions
 
 		static string plusList(string[] lnkfiles, string ext)
 		{
+			ext = "." ~ ext;
 			string s;
 			foreach(i, file; lnkfiles)
 			{
-				if(getExt(file) != ext)
+				if(extension(file) != ext)
 					continue;
 				if(s.length > 0)
 					s ~= "+";
@@ -1543,12 +1544,12 @@ class Config :	DisposingComObject,
 		if (prg.length == 0)
 			return S_OK;
 
-		if(!isabs(prg))
+		if(!isAbsolute(prg))
 			prg = GetProjectDir() ~ "\\" ~ prg;
 		//prg = quoteFilename(prg);
 
 		string workdir = mProjectOptions.replaceEnvironment(mProjectOptions.debugworkingdir, this);
-		if(!isabs(workdir))
+		if(!isAbsolute(workdir))
 			workdir = GetProjectDir() ~ "\\" ~ workdir;
 
 		string args = mProjectOptions.replaceEnvironment(mProjectOptions.debugarguments, this);
@@ -1805,7 +1806,7 @@ class Config :	DisposingComObject,
 
 	CProjectNode GetProjectNode() { return mProvider.mProject.GetProjectNode(); }
 	string GetProjectPath() { return mProvider.mProject.GetFilename(); }
-	string GetProjectDir() { return getDirName(mProvider.mProject.GetFilename()); }
+	string GetProjectDir() { return dirName(mProvider.mProject.GetFilename()); }
 	string GetProjectName() { return mProvider.mProject.GetProjectNode().GetName(); }
 	Project GetProject() { return mProvider.mProject; }
 
@@ -1906,7 +1907,7 @@ class Config :	DisposingComObject,
 	{
 		string tool = file.GetTool();
 		if(tool == "")
-			if(toLower(getExt(file.GetFilename())) == "rc")
+			if(toLower(extension(file.GetFilename())) == ".rc")
 				return true;
 		return tool == kToolResourceCompiler;
 	}
@@ -1917,8 +1918,8 @@ class Config :	DisposingComObject,
 		if(tool == "")
 		{
 			string fname = file.GetFilename();
-			string ext = toLower(getExt(fname));
-			if(isIn(ext, "d", "ddoc", "def", "lib", "obj", "o", "res"))
+			string ext = toLower(extension(fname));
+			if(isIn(ext, ".d", ".ddoc", ".def", ".lib", ".obj", ".o", ".res"))
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
@@ -1932,10 +1933,10 @@ class Config :	DisposingComObject,
 		if(tool == "")
 		{
 			string fname = file.GetFilename();
-			string ext = toLower(getExt(fname));
-			if(ext == "d" && mProjectOptions.singleFileCompilation == ProjectOptions.kSingleFileCompilation)
+			string ext = toLower(extension(fname));
+			if(ext == ".d" && mProjectOptions.singleFileCompilation == ProjectOptions.kSingleFileCompilation)
 				tool = "DMDsingle";
-			else if(isIn(ext, "d", "ddoc", "def", "lib", "obj", "o", "res"))
+			else if(isIn(ext, ".d", ".ddoc", ".def", ".lib", ".obj", ".o", ".res"))
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
@@ -1950,9 +1951,9 @@ class Config :	DisposingComObject,
 		if(tool == "DMD")
 			return file.GetFilename();
 		if(tool == "DMDsingle")
-			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(getName(file.GetFilename())) ~ "." ~ mProjectOptions.objectFileExtension();
+			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename())) ~ "." ~ mProjectOptions.objectFileExtension();
 		if(tool == kToolResourceCompiler)
-			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(getName(file.GetFilename()), "_") ~ ".res";
+			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename()), "_") ~ ".res";
 		if(tool == "Custom")
 			fname = file.GetOutFile();
 		if(fname.length)
@@ -1991,7 +1992,7 @@ class Config :	DisposingComObject,
 		if(mProjectOptions.usesCv2pdb())
 		{
 			files ~= target ~ "_cv";
-			files ~= addExt(target, "pdb");
+			files ~= setExtension(target, "pdb");
 		}
 		string mapfile = expandedAbsoluteFilename("$(INTDIR)\\$(SAFEPROJECTNAME).map");
 		files ~= mapfile;
@@ -1999,7 +2000,7 @@ class Config :	DisposingComObject,
 		files ~= buildlog;
 
 		if(mProjectOptions.createImplib)
-			files ~= addExt(target, "lib");
+			files ~= setExtension(target, "lib");
 
 		if(mProjectOptions.doDocComments)
 		{
@@ -2117,14 +2118,14 @@ class Config :	DisposingComObject,
 
 	string getModuleName(string fname)
 	{
-		string ext = toLower(getExt(fname));
-		if(ext != "d" && ext != "di")
+		string ext = toLower(extension(fname));
+		if(ext != ".d" && ext != ".di")
 			return "";
 		
 		string modname = getModuleDeclarationName(fname);
 		if(modname.length > 0)
 			return modname;
-		return getName(getBaseName(fname));
+		return stripExtension(baseName(fname));
 	}
 
 	string getModulesDDocCommandLine(string[] files, ref string modules_ddoc)
@@ -2181,9 +2182,9 @@ class Config :	DisposingComObject,
 		foreach(ref f; files)
 			if(f.endsWith(".d") || f.endsWith(".D"))
 			{
-				string fname = getName(f);
+				string fname = stripExtension(f);
 				if(!mProjectOptions.preservePaths)
-					fname = getBaseName(fname);
+					fname = baseName(fname);
 				if(mProjectOptions.compiler == Compiler.DMD)
 					f = mProjectOptions.objdir ~ "\\" ~ fname ~ "." ~ mProjectOptions.objectFileExtension();
 				else

@@ -31,12 +31,14 @@ string ellipseString(string s, int maxlen)
 void addFileMacros(string path, string base, ref string[string] replacements)
 {
 	replacements[base ~ "PATH"] = path;
-	replacements[base ~ "DIR"] = getDirName(path);
-	string filename = getBaseName(path);
-	string ext = getExt(path);
+	replacements[base ~ "DIR"] = dirName(path);
+	string filename = baseName(path);
+	string ext = extension(path);
+	if(ext.startsWith("."))
+		ext = ext[1..$];
 	replacements[base ~ "FILENAME"] = filename;
 	replacements[base ~ "EXT"] = ext;
-	string name = getName(filename);
+	string name = stripExtension(filename);
 	replacements[base ~ "NAME"] = name.length == 0 ? filename : name;
 }
 

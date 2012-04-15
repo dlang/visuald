@@ -67,7 +67,7 @@ bool CheckFileName(string fileName)
 	if (fileName.length == 0 || fileName.length >= _MAX_PATH)
 		return false;
 	
-	string base = getBaseName(fileName);
+	string base = baseName(fileName);
 	if(base.length == 0)
 		return false;
 	if(ContainsInvalidFileChars(base))
@@ -501,7 +501,7 @@ HRESULT FindFileInSolution(IVsUIShellOpenDocument pIVsUIShellOpenDocument, strin
 	
 	HRESULT hr;
 	hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
-	if(hr != S_OK || !bstrAbsPath || !isabs(to_string(bstrAbsPath)))
+	if(hr != S_OK || !bstrAbsPath || !isAbsolute(to_string(bstrAbsPath)))
 	{
 		// search import paths
 		string[] imps = GetImportPaths(srcfile);
@@ -612,13 +612,13 @@ HRESULT OpenFileInSolutionWithScope(string fname, int line, string scop, bool ad
 {
 	HRESULT hr = OpenFileInSolution(fname, line, "", adjustLineToChanges);
 	
-	if(hr != S_OK && !isabs(fname) && scop.length)
+	if(hr != S_OK && !isAbsolute(fname) && scop.length)
 	{
 		// guess import path from filename (e.g. "src\core\mem.d") and 
 		//  scope (e.g. "core.mem.gc.Proxy") to try opening
 		// the file ("core\mem.d")
 		string inScope = toLower(scop);
-		string path = normalizeDir(getDirName(toLower(fname)));
+		string path = normalizeDir(dirName(toLower(fname)));
 		inScope = replace(inScope, ".", "\\");
 		
 		int i;
@@ -660,7 +660,7 @@ Config getProjectConfig(string file)
 
 	if(srpSolution && solutionBuildManager)
 	{
-		bool isJSON = toLower(getExt(file)) == "json";
+		bool isJSON = toLower(extension(file)) == ".json";
 		auto wfile = _toUTF16z(file);
 		IEnumHierarchies pEnum;
 		if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &g_projectFactoryCLSID, &pEnum) == S_OK)

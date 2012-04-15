@@ -25,9 +25,10 @@ import sdk.win32.objbase;
 version = GC_COM;
 debug debug = COM;
 // debug(COM) debug = COM_DTOR; // causes crashes because logCall needs GC, but finalizer called from within GC
-// debug(COM) debug = COM_ADDREL;
+debug(COM) debug = COM_ADDREL;
 
 import core.runtime;
+debug static import rsgc.gc;
 import core.memory;
 
 import visuald.logutil;
@@ -161,6 +162,7 @@ class DComObject : IUnknown
 		__gshared LONG sCountInstances;
 		__gshared LONG sCountReferenced;
 		__gshared int[LONG] sReferencedObjects;
+		enum size_t WEAK_PTR_XOR = 0x80000000;
 	}
 
 	new(uint size)
@@ -193,7 +195,7 @@ debug
 	{
 		void* vthis = cast(void*) this;
 		debug(COM) logCall("ctor %s this = %s", this, vthis);
-		debug(COM_ADDREL) synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = 0;
+		debug(COM_ADDREL) synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^WEAK_PTR_XOR] = 0;
 		InterlockedIncrement(&sCountInstances);
 		InterlockedIncrement(&sCountCreated);
 	}
@@ -204,22 +206,48 @@ debug
 		debug(COM_DTOR) logCall("dtor %s this = %s", this, vthis);
 		debug(COM_ADDREL) 
 			synchronized(DComObject.classinfo) 
-				if(auto p = (cast(size_t)vthis^1) in sReferencedObjects)
+				if(auto p = (cast(size_t)vthis^WEAK_PTR_XOR) in sReferencedObjects)
 					*p = -1,
 		InterlockedDecrement(&sCountInstances);
 	}
-	shared static ~this()
+
+	import core.stdc.stdio;
+
+	static void showCOMleaks()
 	{
-		logCall("%d COM objects created", sCountCreated);
-		logCall("%d COM objects never destroyed (no final collection run yet!)", sCountInstances);
-		logCall("%d COM objects not fully dereferenced", sCountReferenced);
+		alias OutputDebugStringA ods;
+
+		char[1024] sbuf;
+		sprintf(sbuf.ptr, "%d COM objects created\n", sCountCreated); ods(sbuf.ptr);
+		sprintf(sbuf.ptr, "%d COM objects never destroyed (no final collection run yet!)\n", sCountInstances); ods(sbuf.ptr);
+		sprintf(sbuf.ptr, "%d COM objects not fully dereferenced\n", sCountReferenced); ods(sbuf.ptr);
 		debug(COM_ADDREL) 
 			foreach(p, b; sReferencedObjects)
 			{
+				void* q = cast(void*)(p^WEAK_PTR_XOR);
 				if(b > 0)
-					logCall("   leaked COM object: %s", cast(void*)(p^1));
+				{
+					sprintf(sbuf.ptr, "   leaked COM object: %p %s\n", q, (cast(Object)q).classinfo.name.ptr); ods(sbuf.ptr);
+				}
 				else if(b == 0)
-					logCall("   not collected:     %s", cast(void*)(p^1));
+				{
+					sprintf(sbuf.ptr, "   not collected:     %p %s\n", q, (cast(Object)q).classinfo.name.ptr); ods(sbuf.ptr);
+				}
+
+				if(b >= 0)
+				{
+					auto r = rsgc.gc.gc_findReference(q, (cast(Object)q).classinfo.init.length);
+					auto base = rsgc.gc.gc_addrOf(r);
+					string type = "unknown";
+					if(base)
+					{
+						int attr = rsgc.gc.gc_getAttr(base);
+						if(attr & 1)
+							type = (cast(Object)base).classinfo.name;
+					}
+
+					sprintf(sbuf.ptr, "   referenced by %p inside %p %s\n", r, base, type.ptr); ods(sbuf.ptr);
+				}
 			}
 	}
 }
@@ -269,7 +297,7 @@ version(GC_COM)
 			GC.addRoot(vthis);
 			debug(COM) logCall("addroot %s this = %s", this, vthis);
 			debug(COM_ADDREL) 
-				synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = 1;
+				synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^WEAK_PTR_XOR] = 1;
 		}
 }
 		return lRef;
@@ -290,7 +318,7 @@ version(GC_COM)
 			GC.removeRoot(vthis);
 			debug InterlockedDecrement(&sCountReferenced);
 			debug(COM_ADDREL) 
-				synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^1] = 0;
+				synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^WEAK_PTR_XOR] = 0;
 }
 else
 {

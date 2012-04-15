@@ -874,7 +874,7 @@ class GlobalOptions
 				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
 				// InstallDir is ../Common7/IDE/
 				VSInstallDir = normalizeDir(VSInstallDir);
-				VSInstallDir = getDirName(getDirName(getDirName(VSInstallDir)));
+				VSInstallDir = dirName(dirName(dirName(VSInstallDir)));
 			}
 			VSInstallDir = normalizeDir(VSInstallDir);
 		}
@@ -885,10 +885,10 @@ class GlobalOptions
 		}
 
 		wstring dllPath = GetDLLName(g_hInst);
-		VisualDInstallDir = normalizeDir(getDirName(toUTF8(dllPath)));
+		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
 
 		wstring idePath = GetDLLName(null);
-		DevEnvDir = normalizeDir(getDirName(toUTF8(idePath)));
+		DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
 
 		return rc;
 	}
@@ -946,6 +946,9 @@ class GlobalOptions
 		if(updateColorizer)
 			if(auto svc = Package.s_instance.mLangsvc)
 				svc.OnActiveProjectCfgChange(null);
+
+		if(!projectSemantics)
+			Package.GetLanguageService().ClearSemanticProject();
 
 		Package.scheduleUpdateLibrary();
 		return true;
@@ -1043,7 +1046,7 @@ class GlobalOptions
 		{
 			if(isExistingDir(path))
 				foreach (string name; dirEntries(path, SpanMode.shallow))
-					if (fnmatch(basename(name), "*.json"))
+					if (globMatch(baseName(name), "*.json"))
 						addunique(jsonfiles, name);
 		}
 		return jsonfiles;
@@ -1058,15 +1061,15 @@ class GlobalOptions
 		{
 			if(_startsWith(file, path))
 				file = file[path.length .. $];
-			string bname = basename(file);
-			if(fnmatch(bname, "openrj.d"))
+			string bname = baseName(file);
+			if(globMatch(bname, "openrj.d"))
 				continue;
-			if(fnmatch(bname, "*.d"))
+			if(globMatch(bname, "*.d"))
 				if(string* pfile = contains(files, file ~ "i"))
 					*pfile = file;
 				else
 					files ~= file;
-			else if(fnmatch(bname, "*.di"))
+			else if(globMatch(bname, "*.di"))
 			{
 				// use the d file instead if available
 				string dfile = "..\\src\\" ~ file[0..$-1];

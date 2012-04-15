@@ -300,7 +300,7 @@ public:
 	// VSHPROPID_Caption
 	string GetDisplayCaption() 
 	{ 
-		return getBaseName(m_strName);
+		return baseName(m_strName);
 	}
 
 	// VSHPROPID_Parent

@@ -1356,7 +1356,7 @@ else
 				{
 					scope(exit) release(cfg);
 					string workdir = cfg.GetProjectOptions().replaceEnvironment(cfg.GetProjectOptions().debugworkingdir, cfg);
-					if(!isabs(workdir))
+					if(!isAbsolute(workdir))
 						workdir = cfg.GetProjectDir() ~ "\\" ~ workdir;
 					string tracelog = workdir ~ "trace.log";
 					_wndFileWheel.SetWindowText(tracelog);

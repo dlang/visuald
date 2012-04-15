@@ -134,6 +134,7 @@ class Aggregate : Type
 			sc.addSymbol(ident, this);
 	}
 
+	// always tree internal references
 	int mapDeclOffset;
 	size_t[Declarator] mapDecl2Value;
 	size_t[string] mapName2Value;

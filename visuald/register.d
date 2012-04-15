@@ -559,8 +559,8 @@ wstring GetDLLName(HINSTANCE inst)
 wstring GetTemplatePath(wstring dllpath)
 {
 	string path = toUTF8(dllpath);
-	path = getDirName(path);
-	debug path = getDirName(getDirName(path)) ~ "\\visuald";
+	path = dirName(path);
+	debug path = dirName(dirName(path)) ~ "\\visuald";
 	path = path ~ "\\Templates";
 	return toUTF16(path);
 }

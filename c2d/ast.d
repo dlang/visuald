@@ -14,7 +14,6 @@ import c2d.dgutil;
 import c2d.tokutil;
 
 import std.conv;
-import std.stdio;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2909,8 +2908,11 @@ AST findIdentifier(AST ast)
 	return null;
 }
 
+debug
 void dumpIdentifier(Declaration decl)
 {
+	import std.stdio;
+
 	string txt;
 	ASTIterator it = decl.children.begin();
 	DeclType decltype = cast(DeclType) *it;

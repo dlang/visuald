@@ -364,7 +364,7 @@ else
 			{
 				modules_ddoc = unquoteArgument(modules_ddoc);
 				modules_ddoc = mConfig.GetProjectOptions().replaceEnvironment(modules_ddoc, mConfig);
-				string modpath = dirname(modules_ddoc);
+				string modpath = dirName(modules_ddoc);
 				modpath = makeFilenameAbsolute(modpath, workdir);
 				if(!exists(modpath))
 					mkdirRecurse(modpath);
@@ -454,11 +454,11 @@ else
 			{
 				if(std.string.indexOf(file,'*') >= 0 || std.string.indexOf(file,'?') >= 0)
 				{
-					string dir = dirname(file);
-					string pattern = basename(file);
+					string dir = dirName(file);
+					string pattern = stripExtension(file);
 					if(isExistingDir(dir))
 						foreach(string f; dirEntries(dir, SpanMode.shallow))
-							if(fnmatch(f, pattern))
+							if(globMatch(f, pattern))
 								std.file.remove(f);
 				}
 				else if(std.file.exists(file))

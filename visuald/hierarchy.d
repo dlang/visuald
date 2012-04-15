@@ -53,7 +53,7 @@ class CFileNode : CHierNode,
 	this(string filename)
 	{
 		mFilename = filename;
-		SetName(getBaseName(filename));
+		SetName(baseName(filename));
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -145,7 +145,7 @@ class CFileNode : CHierNode,
 	HRESULT Rename(string newname)
 	{
 		string oldpath = GetFullPath();
-		string newpath = normalizeDir(getDirName(oldpath)) ~ newname;
+		string newpath = normalizeDir(dirName(oldpath)) ~ newname;
 		if(toLower(newname) == toLower(mFilename))
 			return S_OK;
 		
@@ -157,7 +157,7 @@ class CFileNode : CHierNode,
 
 			string projDir = GetCVsHierarchy().GetProjectDir();
 			mFilename = makeRelative(newpath, projDir);
-			SetName(getBaseName(mFilename));
+			SetName(baseName(mFilename));
 			
 			GetCVsHierarchy().GetProjectNode().SetProjectFileDirty(true);
 		}
@@ -171,10 +171,10 @@ class CFileNode : CHierNode,
 
 	override string GetFullPath()
 	{
-		if(isabs(mFilename))
+		if(isAbsolute(mFilename))
 			return mFilename;
 		string root = GetRootNode().GetFullPath();
-		root = getDirName(root);
+		root = dirName(root);
 		return removeDotDotPath(root ~ "\\" ~ mFilename);
 	}
 
@@ -1523,7 +1523,7 @@ public: // IVsHierarchyEvent propagation
 		return S_OK;
 	}
 
-	string GetProjectDir() { return getDirName(m_pRootNode.GetFullPath()); }
+	string GetProjectDir() { return dirName(m_pRootNode.GetFullPath()); }
 	CProjectNode GetProjectNode() { return m_pRootNode; }
 
 	CHierContainer GetRootNode() { return m_pRootNode; }
@@ -1933,7 +1933,7 @@ public: // IVsHierarchyEvent propagation
 			return null;
 		}
 
-		if(!isabs(strNewFileName))
+		if(!isAbsolute(strNewFileName))
 			strNewFileName = GetProjectDir() ~ "\\" ~ strNewFileName;
 
 		bool dir = isExistingDir(strFullPathSource);
@@ -1983,7 +1983,7 @@ public: // IVsHierarchyEvent propagation
 		if(dir)
 		{
 			CFolderNode pFolder = new CFolderNode;
-			string strThisFolder = getBaseName(strNewFileName);
+			string strThisFolder = baseName(strNewFileName);
 			pFolder.SetName(strThisFolder);
 			pNode.Add(pFolder);
 			return pFolder;
@@ -2044,7 +2044,7 @@ public: // IVsHierarchyEvent propagation
 		{
 			if(dir)
 			{
-				string bname = basename(strFullPath);
+				string bname = baseName(strFullPath);
 				for(CHierNode node = pNode.GetHeadEx(true); node; node = node.GetNext(true))
 					if(toLower(bname) == node.GetName())
 					{
@@ -2064,7 +2064,7 @@ public: // IVsHierarchyEvent propagation
 		CHierNode pNewNode;
 		if(dir)
 		{
-			pNewNode = new CFolderNode(basename(strFullPath));
+			pNewNode = new CFolderNode(baseName(strFullPath));
 		}
 		else
 		{
@@ -2089,7 +2089,7 @@ public: // IVsHierarchyEvent propagation
 			CHierContainer cont = cast(CHierContainer) pNewNode;
 			assert(cont);
 			foreach(string fname; dirEntries(strFullPath, SpanMode.shallow))
-				if(!startsWith(basename(fname), "."))
+				if(!startsWith(baseName(fname), "."))
 					if(!AddExistingFile(cont, fname, fSilent))
 						return null;
 		}

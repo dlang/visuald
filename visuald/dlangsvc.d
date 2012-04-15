@@ -28,6 +28,9 @@ import visuald.windows;
 import visuald.simpleparser;
 import visuald.config;
 
+//version = DEBUG_GC;
+//import rsgc.gc;
+
 import vdc.lexer;
 
 import ast = vdc.ast.all;
@@ -86,7 +89,7 @@ class LanguageService : DisposingComObject,
 		
 	this(Package pkg)
 	{
-		mPackage = pkg;
+		//mPackage = pkg;
 		mUpdateSolutionEvents = new UpdateSolutionEvents(this);
 	}
 
@@ -634,6 +637,11 @@ class LanguageService : DisposingComObject,
 		}
 	}
 
+	void ClearSemanticProject()
+	{
+		mSemanticProject = null;
+	}
+
 	void UpdateSemanticModule(Source src)
 	{
 		if(!src.mAST)
@@ -663,7 +671,7 @@ class LanguageService : DisposingComObject,
 		string fname = src.GetFileName();
 		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
 		bool astUptodate = (src.mAST && src.mModificationCountAST == src.mModificationCount);
-		if(sm && sm.parsed == src.mAST && astUptodate)
+		if(sm && sm.parsed is src.mAST && astUptodate)
 			mod = sm.analyzed;
 		else if(astUptodate)
 			mod = mSemanticProject.addSource(fname, src.mAST);
@@ -734,8 +742,27 @@ version(none)
 		return txt;
 	}
 
+	void PrepareSemanticModuleForDeletion(Source src)
+	{
+		if(!mSemanticProject)
+			return;
+		string fname = src.GetFileName();
+		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
+
+		//mSemanticProject.clearDependentSemanticModules(sm);
+			version(none)
+		foreach(src; mSources)
+			if(src.mAST && (src.mAST !is mod))
+				src.mAST.visit( delegate bool (ast.Node n) 
+				{
+					if(!n.detachFromModule(mod))
+						return false;
+					return true; 
+				} );
+	}
+
 private:
-	Package              mPackage;
+	//Package              mPackage;
 	Source[]             mSources;
 	CodeWindowManager[]  mCodeWinMgrs;
 	DBGMODE              mDbgMode;
@@ -2953,7 +2980,9 @@ else
 		if(Package.GetGlobalOptions().parseSource)
 		{
 			string txt = to!string(mParseText);
-			
+			version(DEBUG_GC)
+				int nodes = ast.Node.countNodes;
+
 			mParser = new Parser;
 			mParser.saveErrors = true;
 			ast.Node n;
@@ -2969,9 +2998,19 @@ else
 			{
 				OutputDebugLog(t.msg);
 			}
+
+			if(mAST)
+				mAST.disconnect();
 			mAST = cast(ast.Module) n;
 			mParseErrors = mParser.errors;
 			mParser = null;
+
+			version(DEBUG_GC)
+			{
+				import rsgc.gcx;
+				gc_collect();
+				fprintf(prof_fh, "%d => %d nodes\n", nodes, ast.Node.countNodes);
+			}
 		}
 		if(mOutlining)
 		{

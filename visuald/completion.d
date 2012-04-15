@@ -149,8 +149,8 @@ class Declarations
 				continue;
 			foreach(string name; dirEntries(impdir, SpanMode.shallow))
 			{
-				string base = getBaseName(name);
-				string ext = toLower(getExt(name));
+				string base = baseName(name);
+				string ext = toLower(extension(name));
 				bool canImport = false;
 				bool issubdir = isDir(name);
 				if(issubdir)
@@ -322,6 +322,7 @@ class Declarations
 				}
 			}
 			vdc.semantic.Scope sc = n.getScope();
+			
 			if(!sc)
 				return false;
 			auto syms = sc.search(tok ~ "*", !inDotExpr, true, true);

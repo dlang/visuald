@@ -747,6 +747,15 @@ void setupDmd()
 }
 
 ///////////////////////////////////////////////////////////////
+class StdIo_Cpp2DConverter : Cpp2DConverter
+{
+	void writemsg(string s)
+	{
+		writeln(s);
+	}
+}
+
+///////////////////////////////////////////////////////////////
 int main(string[] argv)
 {
 	bool dmd;
@@ -756,7 +765,7 @@ int main(string[] argv)
 		   "dmd", &dmd,
 		   "config", &cfg_path);
 
-	Cpp2DConverter dg = new Cpp2DConverter;
+	Cpp2DConverter dg = new StdIo_Cpp2DConverter;
 	if(dmd)
 	{
 		setupDmd();

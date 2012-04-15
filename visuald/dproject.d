@@ -51,7 +51,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 {
 	this(Package pkg)
 	{
-		mPackage = pkg;
+		//mPackage = pkg;
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -104,7 +104,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 		if(grfCreateFlags & CPF_OPENFILE)
 		{
 			string filename = to_string(pszFilename);
-			string name = getBaseName(filename);
+			string name = baseName(filename);
 
 			Project prj = new Project(this, name, filename);
 			*pfCanceled = 0;
@@ -153,8 +153,8 @@ class ProjectFactory : DComObject, IVsProjectFactory
 	{
 		try
 		{
-			string srcdir = getDirName(src) ~ "\\";
-			string destdir = getDirName(dest) ~ "\\";
+			string srcdir = dirName(src) ~ "\\";
+			string destdir = dirName(dest) ~ "\\";
 
 			auto doc = Project.readXML(src);
 			if(!doc)
@@ -177,7 +177,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 	}
 
 private:
-	Package mPackage;
+	//Package mPackage;
 }
 
 class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
@@ -743,9 +743,9 @@ class Project : CVsHierarchy,
 		mixin(LogCallMix);
 
 		string docName = to_string(pszMkDocument);
-		if(!isabs(docName))
+		if(!isAbsolute(docName))
 		{
-			string root = getDirName(GetRootNode().GetFullPath());
+			string root = dirName(GetRootNode().GetFullPath());
 			docName = root ~ "\\" ~ docName;
 		}
 		docName = toLower(docName);
@@ -801,7 +801,7 @@ class Project : CVsHierarchy,
 		mixin(LogCallMix);
 
 		// as we are using virtual folders, just suggest a file in the project directory
-		string dir = getDirName(GetProjectNode().GetFullPath());
+		string dir = dirName(GetProjectNode().GetFullPath());
 		string root = pszSuggestedRoot ? to_string(pszSuggestedRoot) : "File";
 		string ext = pszExt ? to_string(pszExt) : ".d";
 
@@ -2089,7 +2089,7 @@ class Project : CVsHierarchy,
 
 		CFolderNode pFolder = new CFolderNode;
 		
-		string strThisFolder = getBaseName(name);
+		string strThisFolder = baseName(name);
 		pFolder.SetName(strThisFolder);
 		
 		VARIANT var;

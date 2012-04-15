@@ -90,7 +90,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>1</debugEngine>
+  <debugEngine>0</debugEngine>
   <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
   <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj</filesToClean>
@@ -138,8 +138,8 @@
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>0</otherDMD>
-  <program>m:\s\d\dmd\src2\dmd_pdb.exe</program>
+  <otherDMD>1</otherDMD>
+  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -217,6 +217,13 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File path="Resources\settrace.ico" />
    <File tool="Resource Compiler" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" />
    <File path="Resources\WholeWord.ico" />
+  </Folder>
+  <Folder name="rsgc">
+   <File path="..\rsgc\gc.d" />
+   <File path="..\rsgc\gcalloc.d" />
+   <File path="..\rsgc\gcbits.d" />
+   <File path="..\rsgc\gcstats.d" />
+   <File path="..\rsgc\gcx.d" />
   </Folder>
   <File path="build.d" />
   <File path="chiercontainer.d" />

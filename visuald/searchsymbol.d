@@ -1768,13 +1768,13 @@ else
 {
 			hr = _OpenSolutionItem(fname, psiWeak.GetLine(), "");
 			
-			if(hr != S_OK && !_iqp.searchFile && !isabs(fname))
+			if(hr != S_OK && !_iqp.searchFile && !isAbsolute(fname))
 			{
 				// guess import path from filename (e.g. "src\core\mem.d") and 
 				//  scope (e.g. "core.mem.gc.Proxy") to try opening
 				// the file ("core\mem.d")
 				string inScope = toLower(psiWeak.GetScope());
-				string path = normalizeDir(getDirName(toLower(psiWeak.GetPath())));
+				string path = normalizeDir(dirName(toLower(psiWeak.GetPath())));
 				inScope = replace(inScope, ".", "\\");
 				
 				int i;
@@ -2059,7 +2059,7 @@ class SolutionItemIndex //: IUnknown
 		if (piqp.searchFile)
 		{
 			string solutionpath = GetSolutionFilename();
-			string solutiondir = normalizeDir(getDirName(solutionpath));
+			string solutiondir = normalizeDir(dirName(solutionpath));
 			
 			searchSolutionItem(delegate bool(string s)
 				{
@@ -2075,7 +2075,7 @@ class SolutionItemIndex //: IUnknown
 					
 					if(piqp.colidGroup == COLUMNID.KIND)
 					{
-						string ext = getExt(s);
+						string ext = extension(s);
 						arr.addByGroup(ext, new SolutionItem(s, f));
 					}
 					else

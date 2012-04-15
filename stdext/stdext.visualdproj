@@ -139,7 +139,7 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
-  <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
+  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath />
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>

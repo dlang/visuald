@@ -1000,7 +1000,7 @@ version(all)
 		if(name == nname)
 			return fname;
 
-		string dir = getDirName(fname);
+		string dir = dirName(fname);
 		if(dir == ".")
 			dir = "";
 		else
