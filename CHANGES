@@ -401,3 +401,11 @@ Version history
   * project config: shown command line now updated when pressing "Apply"
   * fix resource include with spaces
   * fix always rebuilding if a dependent library project target has spaces in the path name
+
+unreleased Version 0.3.32
+
+  * new version of ccv2pdb with better handling of unicode characters in path names
+  * new version of mago with string literal support for associative array keys and easier stepping into main
+  * some changes to reduce memory leaks due to false pointers
+  * fixed parser to disambiguate MixinStatement and MixinExpression
+

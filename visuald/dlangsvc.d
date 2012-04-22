@@ -30,6 +30,9 @@ import visuald.config;
 
 //version = DEBUG_GC;
 //import rsgc.gc;
+import rsgc.gcstats;
+import core.memory;
+extern (C) GCStats gc_stats();
 
 import vdc.lexer;
 
@@ -547,10 +550,50 @@ class LanguageService : DisposingComObject,
 		
 		return jumpToDefinitionInCodeWindow("", abspath, defs[0].line, 0);
 	}
-	
+
+	//////////////////////////////////////////////////////////////
+	bool mGCdisabled;
+	SysTime mLastExecTime;
+	size_t mGCUsedSize;
+	enum PAGESIZE = 4096;
+
+	void OnExec()
+	{
+		if(false && !mGCdisabled)
+		{
+			GC.disable();
+			mGCdisabled = true;
+			//auto stats = gc_stats();
+			//mGCUsedSize = stats.usedsize + PAGESIZE * stats.pageblocks;
+		}
+		mLastExecTime = Clock.currTime() + dur!"seconds"(2);
+	}
+
+	void CheckGC(bool forceEnable)
+	{
+		if(!mGCdisabled)
+			return;
+
+		SysTime now = Clock.currTime();
+		if(forceEnable || mLastExecTime < now)
+		{
+			GC.enable();
+			auto stats = gc_stats();
+			auto usedSize = stats.usedsize + PAGESIZE * stats.pageblocks;
+			if(usedSize > mGCUsedSize + (20<<20))
+			{
+				GC.collect();
+				stats = gc_stats();
+				mGCUsedSize = stats.usedsize + PAGESIZE * stats.pageblocks;
+			}
+			mGCdisabled = false;
+		}
+	}
+
 	//////////////////////////////////////////////////////////////
 	bool OnIdle()
 	{
+		CheckGC(false);
 		for(int i = 0; i < mSources.length; i++)
 			if(mSources[i].OnIdle())
 				return true;

@@ -191,6 +191,8 @@ version(tip)
 				        this, cast(void*) this, _toLog(pguidCmdGroup), nCmdID, cmd2string(*pguidCmdGroup, nCmdID));
 		}
 		
+		Package.GetLanguageService().OnExec();
+
 		ushort lo = (nCmdexecopt & 0xffff);
 		ushort hi = (nCmdexecopt >> 16);
 

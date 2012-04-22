@@ -26,6 +26,7 @@ import vdc.parser.stmt;
 
 import vdc.ast.node;
 
+// debug version = TraceParser;
 // version = recoverError;
 
 class ParseException : Exception
@@ -160,8 +161,8 @@ class Parser
 		Stack!Token errTokenStack;
 	}
 
-	debug State[] traceState;
-	debug string[] traceToken;
+	version(TraceParser) State[] traceState;
+	version(TraceParser) string[] traceToken;
 
 	bool recovering;
 	bool abort;
@@ -189,7 +190,7 @@ class Parser
 	T popNode(T = Node)()
 	{
 		Node n = nodeStack.pop();
-		debug nodeStack.stack[nodeStack.depth] = null;
+		nodeStack.stack[nodeStack.depth] = null;
 		return static_cast!T(n);
 	}
 
@@ -226,7 +227,7 @@ class Parser
 	State popState()
 	{
 		State s = stateStack.pop();
-		debug stateStack.stack[stateStack.depth] = null;
+		stateStack.stack[stateStack.depth] = null;
 		return s;
 	}
 	
@@ -592,7 +593,7 @@ class Parser
 			while(recoverStack.depth > 0 && stateStack.depth < recoverStack.top().stateStackDepth)
 				popRocoverState();
 			
-			debug 
+			version(TraceParser)
 			{ 
 				traceState ~= fn;
 				traceToken ~= tok.txt;
