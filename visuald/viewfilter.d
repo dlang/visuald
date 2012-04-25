@@ -53,6 +53,7 @@ import std.ascii;
 import std.utf;
 import std.conv;
 import std.algorithm;
+import std.array;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1139,6 +1140,25 @@ else
 	//////////////////////////////////////////////////////////////
 	int HandleGotoDef()
 	{
+		int line, idx;
+		if(mView.GetCaretPos(&line, &idx) != S_OK)
+			return S_FALSE;
+		
+		string file = mCodeWinMgr.mSource.GetFileName();
+		wstring impw = mCodeWinMgr.mSource.GetImportModule(line, idx);
+		if(impw.length)
+		{
+			string imp = to!string(impw);
+			imp = replace(imp, ".", "\\") ~ ".d";
+			HRESULT hr = OpenFileInSolution(imp, -1, file, false);
+			if(hr != S_OK)
+			{
+				imp ~= "i";
+				hr = OpenFileInSolution(imp, -1, file, false);
+			}
+			return hr;
+		}
+
 		string word = toUTF8(GetWordAtCaret());
 		if(word.length <= 0)
 			return S_FALSE;
@@ -1157,7 +1177,6 @@ else
 			return S_FALSE;
 		}
 
-		string file = mCodeWinMgr.mSource.GetFileName();
 		HRESULT hr = OpenFileInSolution(defs[0].filename, defs[0].line, file, true);
 		if(hr != S_OK)
 			showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", defs[0].filename, defs[0].line, word));

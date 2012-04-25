@@ -28,7 +28,7 @@ debug debug = COM;
 // debug(COM) debug = COM_ADDREL;
 
 import core.runtime;
-debug static import rsgc.gc;
+debug(COM_ADDREL) debug static import rsgc.gc;
 import core.memory;
 
 import visuald.logutil;

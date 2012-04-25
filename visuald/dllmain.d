@@ -106,7 +106,7 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 			logCall("DllMain(DLL_PROCESS_DETACH, tid=%x)", GetCurrentThreadId());
 			global_exit();
 			debug clearStack();
-			debug rsgc.gc.gc_collect();
+			debug GC.collect();
 			debug DComObject.showCOMleaks();
 			dll_process_detach( hInstance, true );
 			

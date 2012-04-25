@@ -29,10 +29,13 @@ import visuald.simpleparser;
 import visuald.config;
 
 //version = DEBUG_GC;
+//version = TWEAK_GC;
 //import rsgc.gc;
+version(TWEAK_GC) {
 import rsgc.gcstats;
 import core.memory;
 extern (C) GCStats gc_stats();
+}
 
 import vdc.lexer;
 
@@ -559,6 +562,7 @@ class LanguageService : DisposingComObject,
 
 	void OnExec()
 	{
+		version(TWEAK_GC)
 		if(false && !mGCdisabled)
 		{
 			GC.disable();
@@ -575,6 +579,7 @@ class LanguageService : DisposingComObject,
 			return;
 
 		SysTime now = Clock.currTime();
+		version(TWEAK_GC)
 		if(forceEnable || mLastExecTime < now)
 		{
 			GC.enable();
@@ -2931,7 +2936,45 @@ else
 		}
 		return ""w;
 	}
-	
+
+	//////////////////////////////////////////////////////////////
+
+	wstring GetImportModule(int line, int index)
+	{
+		LineTokenIterator lntokIt = LineTokenIterator(this, line, 0);
+		while(lntokIt.line < line || (lntokIt.getIndex() <= index && lntokIt.line == line))
+			if (!lntokIt.advanceOverComments())
+				break;
+		lntokIt.retreatOverComments();
+		wstring tok = lntokIt.getText();
+		while(tok != "import" && (tok == "." || dLex.isIdentifier(tok)))
+		{
+			if(!lntokIt.retreatOverComments())
+				break;
+			tok = lntokIt.getText();
+		}
+		LineTokenIterator lntokIt2 = lntokIt;
+		while(tok != "import" && (tok == "," || tok == "." || dLex.isIdentifier(tok)))
+		{
+			if(!lntokIt.retreatOverComments())
+				break;
+			tok = lntokIt.getText();
+		}
+		if(tok != "import")
+			return null;
+		lntokIt2.advanceOverComments();
+		tok = lntokIt2.getText();
+		wstring imp;
+		while(tok == "." || dLex.isIdentifier(tok))
+		{
+			imp ~= tok;
+			if(!lntokIt2.advanceOverComments())
+				break;
+			tok = lntokIt2.getText();
+		}
+		return imp;
+	}
+
 	//////////////////////////////////////////////////////////////
 	
 	// create our own task pool to be able to destroy it (it keeps a the
