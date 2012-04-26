@@ -1258,7 +1258,7 @@ string genOperatorParser(string getch)
 		{
 			string case_txt = "case '" ~ op[matchlen-1] ~ "':";
 			if(isAlphaNum(op[matchlen-1]))
-				case_txt ~= " ch = getch(); if(isAlphaNum(ch)) goto default;\n" ~ indent ~ "  ";
+				case_txt ~= " ch = getch(); if(isAlphaNum(ch) || ch == '_') goto default;\n" ~ indent ~ "  ";
 			txt ~= indent ~ case_txt ~ " len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]][0] ~ "; // " ~ op ~ "\n";
 		
 			while(nextop.length < matchlen || (matchlen > 0 && !_stringEqual(op, nextop, matchlen-1)))

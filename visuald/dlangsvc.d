@@ -2947,19 +2947,19 @@ else
 				break;
 		lntokIt.retreatOverComments();
 		wstring tok = lntokIt.getText();
-		while(tok != "import" && (tok == "." || dLex.isIdentifier(tok)))
-		{
-			if(!lntokIt.retreatOverComments())
-				break;
+		while((tok == "static" || tok == "public" || tok == "private") 
+			  && lntokIt.advanceOverComments())
 			tok = lntokIt.getText();
-		}
+
+		while(tok != "import" && (tok == "." || dLex.isIdentifier(tok))
+			  && lntokIt.retreatOverComments())
+			tok = lntokIt.getText();
+
 		LineTokenIterator lntokIt2 = lntokIt;
-		while(tok != "import" && (tok == "," || tok == "." || dLex.isIdentifier(tok)))
-		{
-			if(!lntokIt.retreatOverComments())
-				break;
+		while(tok != "import" && (tok == "," || tok == "." || dLex.isIdentifier(tok))
+			  && lntokIt.retreatOverComments())
 			tok = lntokIt.getText();
-		}
+
 		if(tok != "import")
 			return null;
 		lntokIt2.advanceOverComments();

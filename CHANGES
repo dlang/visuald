@@ -408,4 +408,5 @@ unreleased Version 0.3.32
   * new version of mago with string literal support for associative array keys and easier stepping into main
   * some changes to reduce memory leaks due to false pointers
   * fixed parser to disambiguate MixinStatement and MixinExpression
-
+  * goto definition: if executed on an import statement, now searching file through import paths
+  * fixed lexer to not treat !in_x as an operator followed by an identifier "_x"
