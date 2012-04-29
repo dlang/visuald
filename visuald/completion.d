@@ -155,7 +155,7 @@ class Declarations
 				bool issubdir = isDir(name);
 				if(issubdir)
 					canImport = (ext.length == 0);
-				else if(ext == "d" || ext == "di")
+				else if(ext == ".d" || ext == ".di")
 				{
 					base = base[0 .. $-1-ext.length];
 					canImport = true;

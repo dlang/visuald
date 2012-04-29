@@ -413,6 +413,7 @@ class Initializer
 //    Typeof
 //    Typeof . IdentifierList
 //    ModifiedType
+//    VectorType
 //
 //ModifiedType:
 //    const ( Type )
@@ -442,7 +443,10 @@ class BasicType
 				p.pushToken(p.tok);
 				p.pushState(&shiftTypeModifier);
 				return Accept;
-				
+
+			case TOK___vector:
+				return VectorType.enter(p);
+
 			default:
 				return p.parseError("unexpected token in BasicType");
 		}
@@ -589,6 +593,14 @@ bool isBasicTypeX(TokenId tok)
 		default:
 			return false;
 	}
+}
+
+//-- GRAMMAR_BEGIN --
+//VectorType:
+//    __vector ( Type )
+class VectorType
+{
+	mixin SequenceNode!(ast.VectorType, TOK___vector, TOK_lparen, Type, TOK_rparen);
 }
 
 //-- GRAMMAR_BEGIN --

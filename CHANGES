@@ -408,5 +408,10 @@ unreleased Version 0.3.32
   * new version of mago with string literal support for associative array keys and easier stepping into main
   * some changes to reduce memory leaks due to false pointers
   * fixed parser to disambiguate MixinStatement and MixinExpression
+  * added support for __vector(T) to parser
   * goto definition: if executed on an import statement, now searching file through import paths
   * fixed lexer to not treat !in_x as an operator followed by an identifier "_x"
+  * fixed regression: import expansions only listed folders, no modules
+  * fixed custom command: project would not restore if multiple commands are used
+  * project properties: added output type DLL for easier switching between DMD and GDC
+  * project properties: added subsystem option, use "not set" if you have to specify a specific windows version

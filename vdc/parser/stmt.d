@@ -236,6 +236,7 @@ class NonEmptyStatement : Statement
 			// case TOK_scope:
 			case TOK___gshared:
 			case TOK___thread:
+			case TOK___vector:
 			case TOK_shared:
 			case TOK_immutable:
 			case TOK_inout:

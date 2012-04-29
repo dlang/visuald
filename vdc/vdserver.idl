@@ -1,0 +1,32 @@
+// bring in core IDL files, 
+// notice the semicolon
+import "oaidl.idl";
+
+
+[
+	object,
+	uuid(002a2de9-8bb6-484d-9901-7e4ad4084715),
+	dual,
+	nonextensible,
+	helpstring("IVDServer Interface"),
+	pointer_default(unique)
+]
+interface IVDServer : IUnknown
+{
+	HRESULT ExecCommand([in]BSTR cmd, [out,retval] BSTR* answer);
+	HRESULT ExecCommandAsync([in]BSTR cmd, [out,retval] ULONG* cmdID);
+};
+
+// library statement
+[uuid(002a2de9-8bb6-484d-9903-7e4ad4084715), version(1.0),
+ helpstring("Visual D Server")]
+library VDServerLib
+{
+   importlib("stdole32.tlb");
+   [uuid(002a2de9-8bb6-484d-9902-7e4ad4084715)]
+   coclass VDServerClassFactory
+   {
+      [default] interface IVDServer;
+   };
+};
+

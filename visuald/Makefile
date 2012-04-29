@@ -47,7 +47,7 @@ VDC_SRC = $(VDC)/parser/aggr.d \
 RSGC_SRC = ../rsgc/gc.d ../rsgc/gcx.d ../rsgc/gcstats.d ../rsgc/gcalloc.d ../rsgc/gcbits.d
 
 STDEXT_SRC = ../stdext/file.d ../stdext/array.d ../stdext/path.d ../stdext/util.d \
-             ../stdext/string.d
+             ../stdext/string.d ../stdext/com.d
 # FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
 
 C2D_SRC = ../c2d/cpp2d.d ../c2d/ast.d ../c2d/dlist.d ../c2d/dgutil.d \
@@ -62,8 +62,8 @@ SRC = workaround.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
       profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d \
       tokenreplace.d tokenreplacedialog.d library.d \
-      help.d cppwizard.d \
-      $(STDEXT_SRC)
+      help.d cppwizard.d
+# $(STDEXT_SRC)
 # $(RSGC_SRC)
 
 RSRC = resources/dimagelist.bmp resources/pkgcmd.cto resources/resources.h \
@@ -102,6 +102,7 @@ DBG_VSI_LIB = $(DBGDIR)/vsi.lib
 REL_VSI_LIB = $(RELDIR)/vsi.lib 
 
 C2D_LIB = c2d_vd.lib 
+STDEXT_LIB = stdext.lib 
 
 DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
@@ -133,14 +134,19 @@ $(DBGDIR)\$(C2D_LIB) : $(C2D_SRC) Makefile
 		$(C2D_SRC)
 <<NOKEEP
 
-#-mixin=$(DBGDIR)\$(PROJECT).mixin
-$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DBGDIR)\vdc.lib $(DBGDIR)\$(C2D_LIB) $(DEPS)
-	"$(DMD2)" -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
-		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES) $(DBGDIR)\vdc.lib $(DBGDIR)\$(C2D_LIB)
+$(DBGDIR)\$(STDEXT_LIB) : $(STDEXT_SRC) Makefile
+	"$(DMD2)" -of$@ -lib -g $(DFLAGS) @<<
+		$(STDEXT_SRC)
 <<NOKEEP
 
-$(DBGDIR)\cpp2d.exe : $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(STDEXT_SRC) Makefile
-	"$(DMD2)" -of$@ -O -inline -release -g $(DFLAGS) $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(STDEXT_SRC)
+#-mixin=$(DBGDIR)\$(PROJECT).mixin
+$(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DBGDIR)\vdc.lib $(DBGDIR)\$(C2D_LIB) $(DBGDIR)\$(STDEXT_LIB) $(DEPS)
+	"$(DMD2)" -of$@ -Xf$(DBGDIR)\$(PROJECT).json -g -debug $(DFLAGS) -map $@.map @<<
+		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES) $(DBGDIR)\vdc.lib $(DBGDIR)\$(C2D_LIB) $(DBGDIR)\$(STDEXT_LIB)
+<<NOKEEP
+
+$(DBGDIR)\cpp2d.exe : $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEXT_LIB) Makefile
+	"$(DMD2)" -of$@ -O -inline -release -g $(DFLAGS) $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEXT_LIB)
 
 #-----
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
@@ -158,14 +164,19 @@ $(RELDIR)\$(C2D_LIB) : $(C2D_SRC) Makefile
 		$(C2D_SRC)
 <<NOKEEP
 
-# -c -od$(RELDIR)
-$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB) $(DEPS)
-	"$(DMD2)" -of$@ -O $(INLINE) -release -g $(DFLAGS) -map $@.map @<<
-		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB)
+$(RELDIR)\$(STDEXT_LIB) : $(STDEXT_SRC) Makefile
+	"$(DMD2)" -of$@ $(INLINE) -release -lib -g $(DFLAGS) @<<
+		$(STDEXT_SRC)
 <<NOKEEP
 
-$(RELDIR)\cpp2d.exe : $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(STDEXT_SRC) Makefile
-	"$(DMD2)" -of$@ -O $(INLINE) -release $(DFLAGS) $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(STDEXT_SRC)
+# -c -od$(RELDIR)
+$(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB) $(RELDIR)\$(STDEXT_LIB) $(DEPS)
+	"$(DMD2)" -of$@ -O $(INLINE) -release -g $(DFLAGS) -map $@.map @<<
+		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB) $(RELDIR)\$(STDEXT_LIB)
+<<NOKEEP
+
+$(RELDIR)\cpp2d.exe : $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(RELDIR)\$(STDEXT_LIB) Makefile
+	"$(DMD2)" -of$@ -O $(INLINE) -release $(DFLAGS) $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(RELDIR)\$(STDEXT_LIB)
 
 #-----
 $(DBGRES) : $(RC) $(RSRC)

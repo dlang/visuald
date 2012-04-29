@@ -68,9 +68,6 @@ version(all)
 {
 	public import sdk.port.base;
 	
-	const GUID GUID_NULL;
-	const IID IID_IUnknown = uuid("00000000-0000-0000-C000-000000000046");
-
 	HRESULT HRESULT_FROM_WIN32(uint x)
 	{
 		return cast(HRESULT)(x) <= 0 ? cast(HRESULT)(x) 

@@ -11,6 +11,7 @@ module visuald.winctrl;
 import visuald.windows;
 import std.utf;
 import std.string;
+import std.array;
 import std.exception;
 import sdk.port.base;
 import sdk.win32.prsht;
@@ -552,7 +553,9 @@ class Text : Widget
 		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		scope buffer = new wchar[len+1];
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
-		return toUTF8(buffer[0..$-1]);
+		string s = toUTF8(buffer[0..$-1]);
+		s = replace(s, "\r", "");
+		return s;
 	}
 
 	wstring getWText() 
@@ -560,6 +563,7 @@ class Text : Widget
 		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		auto buffer = new wchar[len+1];
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
+		buffer = replace(buffer, "\r", "");
 		return assumeUnique(buffer[0..$-1]);
 	}
 }

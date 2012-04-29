@@ -867,7 +867,8 @@ class PrimaryExpression : Expression
 			case TOK_typeof: // cannot make this part of Type, because it will also eat the property
 				p.pushState(&shiftType);
 				return Typeof.enter(p);
-				
+			
+			case TOK___vector:
 			mixin(case_TOKs_TypeModifier);
 			mixin(case_TOKs_BasicTypeX);
 				p.pushState(&shiftType);

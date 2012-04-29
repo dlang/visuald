@@ -663,12 +663,15 @@ class GeneralPropertyPage : ProjectPropertyPage
 		
 		AddControl("Compiler",      mCompiler = new ComboBox(mCanvas, [ "DMD", "GDC" ], false));
 		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
-		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, [ "Executable", "Library" ], false));
+		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, 
+																 [ "Executable", "Library", "DLL" ], false));
+		AddControl("Subsystem",     mCbSubsystem = new ComboBox(mCanvas, 
+																[ "Not set", "Console", "Windows", "Native", "Posix" ], false));
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
 		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
 		AddControl("",              mOtherDMD = new CheckBox(mCanvas, "Use other compiler"));
-		AddControl("DMD Path",      mDmdPath = new Text(mCanvas));
+		AddControl("Compiler Path", mDmdPath = new Text(mCanvas));
 		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas, 
 			[ "Combined compile and link", "Single file compilation", 
 			  "Separate compile and link", "Compile only (use Post-build command to link)" ], false));
@@ -696,6 +699,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		mCompiler.setSelection(options.compiler);
 		mSingleFileComp.setSelection(options.singleFileCompilation);
 		mCbOutputType.setSelection(options.lib);
+		mCbSubsystem.setSelection(options.subsystem);
 		mDmdPath.setText(options.program);
 		mOutputPath.setText(options.outdir);
 		mIntermediatePath.setText(options.objdir);
@@ -711,7 +715,8 @@ class GeneralPropertyPage : ProjectPropertyPage
 		changes += changeOption(mOtherDMD.isChecked(), options.otherDMD, refoptions.otherDMD);
 		changes += changeOption(cast(ubyte) mCompiler.getSelection(), options.compiler, refoptions.compiler);
 		changes += changeOption(cast(uint) mSingleFileComp.getSelection(), options.singleFileCompilation, refoptions.singleFileCompilation);
-		changes += changeOption(mCbOutputType.getSelection() != 0, options.lib, refoptions.lib);
+		changes += changeOption(cast(ubyte) mCbOutputType.getSelection(), options.lib, refoptions.lib);
+		changes += changeOption(cast(ubyte) mCbSubsystem.getSelection(), options.subsystem, refoptions.subsystem);
 		changes += changeOption(mDmdPath.getText(), options.program, refoptions.program);
 		changes += changeOption(ver, options.Dversion, refoptions.Dversion);
 		changes += changeOption(mOutputPath.getText(), options.outdir, refoptions.outdir);
@@ -725,6 +730,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 	ComboBox mSingleFileComp;
 	Text mDmdPath;
 	ComboBox mCbOutputType;
+	ComboBox mCbSubsystem;
 	ComboBox mDVersion;
 	Text mOutputPath;
 	Text mIntermediatePath;
@@ -807,7 +813,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 
 class DmdGeneralPropertyPage : ProjectPropertyPage
 {
-	override string GetCategoryName() { return "DMD"; }
+	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "General"; }
 
 	override void CreateControls()
@@ -849,7 +855,7 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 
 class DmdDebugPropertyPage : ProjectPropertyPage
 {
-	override string GetCategoryName() { return "DMD"; }
+	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Debug"; }
 
 	override void CreateControls()
@@ -899,7 +905,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 
 class DmdCodeGenPropertyPage : ProjectPropertyPage
 {
-	override string GetCategoryName() { return "DMD"; }
+	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Code Generation"; }
 
 	override void CreateControls()
@@ -955,7 +961,7 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 
 class DmdMessagesPropertyPage : ProjectPropertyPage
 {
-	override string GetCategoryName() { return "DMD"; }
+	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Messages"; }
 
 	override void CreateControls()
@@ -1011,7 +1017,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 
 class DmdDocPropertyPage : ProjectPropertyPage
 {
-	override string GetCategoryName() { return "DMD"; }
+	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Documentation"; }
 
 	override void CreateControls()
@@ -1090,7 +1096,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 
 class DmdOutputPropertyPage : ProjectPropertyPage
 {
-	override string GetCategoryName() { return "DMD"; }
+	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Output"; }
 
 	override void CreateControls()

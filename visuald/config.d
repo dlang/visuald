@@ -87,11 +87,28 @@ enum Compiler
 	LDC
 }
 
+enum OutputType
+{
+	Executable,
+	StaticLib,
+	DLL
+};
+
+enum Subsystem
+{
+	NotSet,
+	Console,
+	Windows,
+	Native,
+	Posix
+};
+
 class ProjectOptions
 {
 	bool obj;		// write object file
 	bool link;		// perform link
-	bool lib;		// write library file instead of object file(s)
+	ubyte lib;		// write library file instead of object file(s) (1: static, 2:dynamic)
+	ubyte subsystem;
 	bool multiobj;		// break one object file into multiple ones
 	bool oneobj;		// write one object file instead of multiple ones
 	bool trace;		// insert profiling hooks
@@ -248,7 +265,7 @@ class ProjectOptions
 		else
 			cmd = "dmd";
 
-		if(lib && performLink)
+		if(lib == OutputType.StaticLib && performLink)
 			cmd ~= " -lib";
 		if(multiobj)
 			cmd ~= " -multiobj";
@@ -364,6 +381,12 @@ class ProjectOptions
 //			cmd ~= " -lib";
 //		if(multiobj)
 //			cmd ~= " -multiobj";
+		if(lib == OutputType.DLL)
+			cmd ~= " -mdll";
+		if(subsystem == Subsystem.Windows)
+			cmd ~= " -mwindows";
+		else if(subsystem == Subsystem.Console)
+			cmd ~= " -mconsole";
 		if(isX86_64)
 			cmd ~= " -m64";
 		else
@@ -474,7 +497,7 @@ class ProjectOptions
 		if(compiler == Compiler.DMD)
 			return buildDMDCommandLine(compile, performLink, deps, syntaxOnly);
 
-		if(!compile && performLink && lib)
+		if(!compile && performLink && lib == OutputType.StaticLib)
 			return buildARCommandLine();
 
 		return buildGDCCommandLine(compile, performLink, deps, syntaxOnly);
@@ -506,7 +529,7 @@ class ProjectOptions
 			default: break;
 		}
 
-		if(!lib)
+		if(lib != OutputType.StaticLib)
 		{
 			if(createImplib)
 				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
@@ -518,6 +541,16 @@ class ProjectOptions
 				cmd ~= " " ~ libfiles;
 			if(resfile.length)
 				cmd ~= " " ~ resfile;
+
+			switch(subsystem)
+			{
+				default:
+				case Subsystem.NotSet: break;
+				case Subsystem.Console: cmd ~= " -L/SUBSYSTEM:CONSOLE"; break;
+				case Subsystem.Windows: cmd ~= " -L/SUBSYSTEM:WINDOWS"; break;
+				case Subsystem.Native:  cmd ~= " -L/SUBSYSTEM:NATIVE"; break;
+				case Subsystem.Posix:   cmd ~= " -L/SUBSYSTEM:POSIX"; break;
+			}
 		}
 		return cmd;
 	}
@@ -540,7 +573,7 @@ class ProjectOptions
 				break;
 		}
 
-		if(!lib)
+		if(lib != OutputType.StaticLib)
 		{
 //			if(createImplib)
 //				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
@@ -611,7 +644,7 @@ class ProjectOptions
 			default: break;
 		}
 
-		if(!lib)
+		if(lib != OutputType.StaticLib)
 		{
 			if(createImplib)
 				cmd ~= "/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
@@ -638,7 +671,7 @@ class ProjectOptions
 	{
 		if(exefile.length)
 			return normalizePath(exefile);
-		if(lib)
+		if(lib == OutputType.StaticLib)
 			return "$(OutDir)\\$(ProjectName).lib";
 		return "$(OutDir)\\$(ProjectName).exe";
 	}
@@ -655,7 +688,7 @@ class ProjectOptions
 
 	bool usesCv2pdb()
 	{
-		return (/*compiler == Compiler.DMD && */symdebug && runCv2pdb && !lib && debugEngine != 1);
+		return (/*compiler == Compiler.DMD && */symdebug && runCv2pdb && lib != OutputType.StaticLib && debugEngine != 1);
 	}
 	
 	string appendCv2pdb()
@@ -707,6 +740,7 @@ class ProjectOptions
 		elem ~= new xml.Element("obj", toElem(obj));
 		elem ~= new xml.Element("link", toElem(link));
 		elem ~= new xml.Element("lib", toElem(lib));
+		elem ~= new xml.Element("subsystem", toElem(subsystem));
 		elem ~= new xml.Element("multiobj", toElem(multiobj));
 		elem ~= new xml.Element("singleFileCompilation", toElem(singleFileCompilation));
 		elem ~= new xml.Element("oneobj", toElem(oneobj));
@@ -821,6 +855,7 @@ class ProjectOptions
 		fromElem(elem, "obj", obj);
 		fromElem(elem, "link", link);
 		fromElem(elem, "lib", lib);
+		fromElem(elem, "subsystem", subsystem);
 		fromElem(elem, "multiobj", multiobj);
 		fromElem(elem, "singleFileCompilation", singleFileCompilation);
 		fromElem(elem, "oneobj", oneobj);
@@ -2252,7 +2287,7 @@ class Config :	DisposingComObject,
 	{
 		bool doLink = mProjectOptions.singleFileCompilation != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.singleFileCompilation == ProjectOptions.kSeparateCompileAndLink;
-		if (mProjectOptions.compiler == Compiler.GDC && mProjectOptions.lib)
+		if (mProjectOptions.compiler == Compiler.GDC && mProjectOptions.lib == OutputType.StaticLib)
 			separateLink = true;
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
 		if(mProjectOptions.additionalOptions.length)

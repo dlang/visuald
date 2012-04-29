@@ -164,6 +164,7 @@ class IdentifierOrTemplateInstance
 				p.pushState(&shiftSingleArgument);
 				return PrimaryExpression.enter(p);
 			
+			case TOK___vector:
 			mixin(case_TOKs_BasicTypeX);
 				auto n = new ast.TemplateArgumentList(p.tok);
 				n.addMember(new ast.BasicType(p.tok));

@@ -93,7 +93,6 @@ Lexer/Parser:
 - do not parse file if it is D1
 - deprecated syntax
 - support for => delegates
-- __vector(T) type
 
 C++ to D
 ---------
@@ -113,6 +112,7 @@ Debugger:
 - stepping through function call jumps to default assignment
 - Mago: set instruction pointer
 - local functions/delegates should have debug info for closure vars ("this" exists)
+- GDC: x64: function arguments not shown
 
 GUI-Designer:
 -------------

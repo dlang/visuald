@@ -360,6 +360,9 @@ GUID uuid(string g)
 
 const GUID const_GUID_NULL = { 0, 0, 0, [ 0, 0, 0, 0,  0, 0, 0, 0 ] };
 
+const GUID GUID_NULL;
+const IID IID_IUnknown = uuid("00000000-0000-0000-C000-000000000046");
+
 ///////////////////////////////////////////////////////////////////////////////
 // functions declared in headers, but not found in import libraries
 ///////////////////////////////////////////////////////////////////////////////

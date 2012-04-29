@@ -56,6 +56,12 @@ Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "c2d", "c2d\c2d.visualdproj"
 		{2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D} = {2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D}
 	EndProjectSection
 EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vdserver", "vdc\vdserver.visualdproj", "{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{32872753-4812-40DA-9B24-1C2114621E78} = {32872753-4812-40DA-9B24-1C2114621E78}
+		{2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D} = {2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug GDC|Win32 = Debug GDC|Win32
@@ -180,6 +186,18 @@ Global
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Test|Win32.ActiveCfg = Test|Win32
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Test|Win32.Build.0 = Test|Win32
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Test|x64.ActiveCfg = Test|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Debug GDC|Win32.ActiveCfg = Debug|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Debug GDC|Win32.Build.0 = Debug|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Debug GDC|x64.ActiveCfg = Debug|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Debug|Win32.Build.0 = Debug|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Debug|x64.ActiveCfg = Debug|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Release|Win32.ActiveCfg = Release|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Release|Win32.Build.0 = Release|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Release|x64.ActiveCfg = Release|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Test|Win32.ActiveCfg = Release|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Test|Win32.Build.0 = Release|Win32
+		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Test|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

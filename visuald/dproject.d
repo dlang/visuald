@@ -16,6 +16,7 @@ import std.utf;
 import std.file;
 import std.path;
 import std.conv;
+import std.array;
 
 import stdext.path;
 

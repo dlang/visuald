@@ -3,9 +3,11 @@
   <Config name="Debug">
     <!-- default to defaults -->
     <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+	<lib>2</lib>
   </Config>
   <Config name="Release">
     <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+	<lib>2</lib>
   </Config>
   <Folder name="$safeprojectname$">
     <File path="dllmain.d"></File>

@@ -47,6 +47,9 @@ import visuald.colorizer;
 import visuald.dllmain;
 
 import sdk.win32.winreg;
+import sdk.win32.oaidl;
+import sdk.win32.objbase;
+import sdk.win32.oleauto;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vssplash;
@@ -214,6 +217,60 @@ class ClassFactory : DComObject, IClassFactory
 	int lockCount;
 }
 
+///////////////////////////////////////////////////////////////////////
+//version = VDServer;
+
+interface IVDServer : IUnknown
+{
+	static GUID iid = uuid("002a2de9-8bb6-484d-9901-7e4ad4084715");
+
+public:
+	HRESULT ExecCommand(in BSTR cmd, BSTR* answer);
+	HRESULT ExecCommandAsync(in BSTR cmd, ULONG* cmdID);
+}
+
+static GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+
+__gshared IClassFactory gVDClassFactory;
+__gshared IVDServer gVDServer;
+
+bool startVDServer()
+{
+	version(VDServer)
+	{
+		if(gVDServer)
+			return false;
+
+		GUID factory_iid = IID_IClassFactory;
+		HRESULT hr = CoGetClassObject(VDServerClassFactory_iid, CLSCTX_LOCAL_SERVER, null, factory_iid, cast(void**)&gVDClassFactory);
+		if(FAILED(hr))
+			return false;
+
+		hr = gVDClassFactory.CreateInstance(null, &IVDServer.iid, cast(void**)&gVDServer);
+		if (FAILED(hr))
+		{
+			gVDClassFactory = release(gVDClassFactory);
+			return false;
+		}
+	}
+	return true;
+}
+
+bool stopVDServer()
+{
+	version(VDServer)
+	{
+		if(!gVDServer)
+			return false;
+
+		gVDServer = release(gVDServer);
+		gVDClassFactory = release(gVDClassFactory);
+	}
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////
+
 static const GUID SOleComponentManager_iid = { 0x000C060B,0x0000,0x0000,[ 0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46 ] }; 
 			
 ///////////////////////////////////////////////////////////////////////
@@ -233,6 +290,8 @@ class Package : DisposingComObject,
 		mProjFactory = addref(new ProjectFactory(this));
 		mOptions = new GlobalOptions();
 		mLibInfos = new LibraryInfos();
+
+		startVDServer();
 	}
 
 	~this()
@@ -316,6 +375,7 @@ class Package : DisposingComObject,
 			}
 			mHostSP = release(mHostSP);
 		}
+		stopVDServer();
 		return S_OK;
 	}
 

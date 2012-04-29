@@ -539,6 +539,18 @@ class AutoType : Type
 	}
 }
 
+class VectorType : Type
+{
+	mixin ForwardCtor!();
+
+	override bool propertyNeedsParens() const { return true; }
+
+	override void toD(CodeWriter writer)
+	{
+		writer("__vector(", getMember(0), ")");
+	}
+}
+
 //ModifiedType:
 //    [Type]
 class ModifiedType : Type
