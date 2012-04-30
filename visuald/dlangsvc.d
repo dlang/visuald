@@ -27,6 +27,9 @@ import visuald.colorizer;
 import visuald.windows;
 import visuald.simpleparser;
 import visuald.config;
+import visuald.vdserverclient;
+
+//version = VDServer;
 
 //version = DEBUG_GC;
 //version = TWEAK_GC;
@@ -39,11 +42,14 @@ extern (C) GCStats gc_stats();
 
 import vdc.lexer;
 
-import ast = vdc.ast.all;
-static import vdc.util;
-import vdc.parser.engine;
-import vdc.semantic;
-import vdc.interpret;
+version(VDServer) {}
+else {
+	import ast = vdc.ast.all;
+	static import vdc.util;
+	import vdc.parser.engine;
+	import vdc.semantic;
+	import vdc.interpret;
+}
 
 import stdext.array;
 import stdext.string;
@@ -97,6 +103,8 @@ class LanguageService : DisposingComObject,
 	{
 		//mPackage = pkg;
 		mUpdateSolutionEvents = new UpdateSolutionEvents(this);
+
+		startVDServer();
 	}
 
 	~this()
@@ -130,10 +138,16 @@ class LanguageService : DisposingComObject,
 
 	void stopAllParsing()
 	{
-		foreach(Source src; mSources)
-			if(auto parser = src.mParser)
-				parser.abort = true;
-		
+		version(VDServer)
+		{
+		}
+		else
+		{
+			foreach(Source src; mSources)
+				if(auto parser = src.mParser)
+					parser.abort = true;
+		}
+
 		if(Source.parseTaskPool)
 		{
 			//Source.parseTaskPool.finish();
@@ -158,6 +172,8 @@ class LanguageService : DisposingComObject,
 		foreach(CodeWindowManager mgr; mCodeWinMgrs)
 			mgr.Release();
 		mCodeWinMgrs = mCodeWinMgrs.init;
+
+		stopVDServer();
 
 		if(mUpdateSolutionEventsCookie != VSCOOKIE_NIL)
 		{
@@ -665,6 +681,29 @@ class LanguageService : DisposingComObject,
 	}
 
 	// semantic completion ///////////////////////////////////
+	version(VDServer)
+	{
+		string GetType(Source src, TextSpan* pSpan)
+		{
+			return null;
+		}
+		string[] GetSemanticExpansions(Source src, string tok, int line, int idx)
+		{
+			return null;
+		}
+		bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
+		{
+			return false;
+		}
+		void UpdateSemanticModule(Source src)
+		{
+		}
+		void ClearSemanticProject()
+		{
+		}
+	}
+	else
+	{
 	void ConfigureSemanticProject(Source src)
 	{
 		if(!mSemanticProject)
@@ -790,23 +829,60 @@ version(none)
 		return txt;
 	}
 
-	void PrepareSemanticModuleForDeletion(Source src)
+	string[] GetSemanticExpansions(Source src, string tok, int line, int idx)
 	{
-		if(!mSemanticProject)
-			return;
-		string fname = src.GetFileName();
-		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
+		ast.Module mod = GetSemanticModule(src);
+		if(!mod)
+			return null;
 
-		//mSemanticProject.clearDependentSemanticModules(sm);
-			version(none)
-		foreach(src; mSources)
-			if(src.mAST && (src.mAST !is mod))
-				src.mAST.visit( delegate bool (ast.Node n) 
-				{
-					if(!n.detachFromModule(mod))
-						return false;
-					return true; 
-				} );
+		bool inDotExpr;
+		TextSpan span;
+		span.iStartLine = span.iEndLine = line;
+		span.iStartIndex = span.iEndIndex = idx;
+		ast.Node n = GetNode(mod, &span, &inDotExpr);
+		if(!n)
+			return null;
+
+		if(auto r = cast(ast.ParseRecoverNode)n)
+		{
+			wstring wexpr = src.FindExpressionBefore(line, idx);
+			if(wexpr)
+			{
+				string expr = to!string(wexpr);
+				Parser parser = new Parser;
+				ast.Node inserted = parser.parseExpression(expr, r.fulspan);
+				if(!inserted)
+					return null;
+				r.addMember(inserted);
+				n = inserted.calcType();
+				r.removeMember(inserted);
+				inDotExpr = true;
+			}
+		}
+		vdc.semantic.Scope sc = n.getScope();
+
+		if(!sc)
+			return null;
+		auto syms = sc.search(tok ~ "*", !inDotExpr, true, true);
+
+		string[] symbols;
+
+		foreach(s, b; syms)
+			if(auto decl = cast(ast.Declarator) s)
+				symbols.addunique(decl.ident);
+			else if(auto em = cast(ast.EnumMember) s)
+				symbols.addunique(em.ident);
+
+		return symbols;
+	}
+
+	bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
+	{
+		if(!src.mAST)
+			return false;
+		return ast.isBinaryOperator(src.mAST, startLine, startIndex, endLine, endIndex);
+	}
+
 	}
 
 private:
@@ -815,7 +891,13 @@ private:
 	CodeWindowManager[]  mCodeWinMgrs;
 	DBGMODE              mDbgMode;
 	
-	vdc.semantic.Project mSemanticProject;
+	version(VDServer)
+	{
+	}
+	else
+	{
+		vdc.semantic.Project mSemanticProject;
+	}
 
 	IVsDebugger          mDebugger;
 	VSCOOKIE             mCookieDebuggerEvents = VSCOOKIE_NIL;
@@ -1114,6 +1196,12 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	}
 }
 
+struct ParseError
+{
+	ParserSpan span;
+	string msg;
+}
+
 class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTextMarkerClient
 {
 	Colorizer mColorizer;
@@ -1131,10 +1219,13 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	LineChange[] mLineChanges;
 	TextLineChange mLastTextLineChange;
 
-	Parser mParser;
-	ast.Module mAST;
-	ParseError[] mParseErrors;
+	version(VDServer) {} else
+	{
+		Parser mParser;
+		ast.Module mAST;
+	}
 	wstring mParseText;
+	ParseError[] mParseErrors;
 	NewHiddenRegion[] mOutlineRegions;
 
 	int mParsingState;
@@ -3004,6 +3095,7 @@ else
 		if(mParsingState > 1)
 			return finishParsing();
 		
+		version(VDServer) {} else
 		if(mModificationCountAST != mModificationCount)
 			if(auto parser = mParser)
 				parser.abort = true;
@@ -3034,10 +3126,10 @@ else
 		}
 		for(int i = 0; i < mParseErrors.length; i++)
 		{
-			auto span = mParseErrors[0].span;
+			auto span = mParseErrors[i].span;
 			IVsTextLineMarker marker;
-			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.start.line - 1, span.start.index, 
-									 span.end.line - 1, span.end.index, this, &marker);
+			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex, 
+									 span.iEndLine - 1, span.iEndIndex, this, &marker);
 		}
 		
 		if(mOutlining)
@@ -3052,8 +3144,9 @@ else
 					session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
 			mOutlineRegions = mOutlineRegions.init;
 		}
-		if(mAST && (Package.GetGlobalOptions().projectSemantics || Package.GetGlobalOptions().showTypeInTooltip))
-			Package.GetLanguageService().UpdateSemanticModule(this);
+		version(VDServer) {} else
+			if(mAST && (Package.GetGlobalOptions().projectSemantics || Package.GetGlobalOptions().showTypeInTooltip))
+				Package.GetLanguageService().UpdateSemanticModule(this);
 
 		mParseText = null;
 		mParsingState = 0;
@@ -3065,32 +3158,41 @@ else
 	{
 		if(Package.GetGlobalOptions().parseSource)
 		{
-			string txt = to!string(mParseText);
 			version(DEBUG_GC)
 				int nodes = ast.Node.countNodes;
 
-			mParser = new Parser;
-			mParser.saveErrors = true;
-			ast.Node n;
-			try
+			version(VDServer) {} else
 			{
-				n = mParser.parseModule(txt);
-			}
-			catch(ParseException e)
-			{
-				OutputDebugLog(e.msg);
-			}
-			catch(Throwable t)
-			{
-				OutputDebugLog(t.msg);
-			}
+				string txt = to!string(mParseText);
+				mParser = new Parser;
+				mParser.saveErrors = true;
+				ast.Node n;
+				try
+				{
+					n = mParser.parseModule(txt);
+				}
+				catch(ParseException e)
+				{
+					OutputDebugLog(e.msg);
+				}
+				catch(Throwable t)
+				{
+					OutputDebugLog(t.msg);
+				}
 
-			if(mAST)
-				mAST.disconnect();
-			mAST = cast(ast.Module) n;
-			mParseErrors = mParser.errors;
-			mParser = null;
-
+				if(mAST)
+					mAST.disconnect();
+				mAST = cast(ast.Module) n;
+				mParseErrors = mParseErrors.init;
+				foreach(e; mParser.errors)
+				{
+					ParseError error;
+					error.span = ParserSpan(e.span.start.index, e.span.start.line, e.span.end.index, e.span.end.line);
+					error.msg = e.msg;
+					mParseErrors ~= error;
+				}
+				mParser = null;
+			}
 			version(DEBUG_GC)
 			{
 				import rsgc.gcx;
@@ -3108,7 +3210,7 @@ else
 	bool hasParseError(ParserSpan span)
 	{
 		for(int i = 0; i < mParseErrors.length; i++)
-			if(spanContains(span, mParseErrors[i].span.start.line-1, mParseErrors[i].span.start.index))
+			if(spanContains(span, mParseErrors[i].span.iStartLine-1, mParseErrors[i].span.iStartIndex))
 				return true;
 		return false;
 	}
@@ -3116,7 +3218,7 @@ else
 	string getParseError(int line, int index)
 	{
 		for(int i = 0; i < mParseErrors.length; i++)
-			if(vdc.util.textSpanContains(mParseErrors[i].span, line+1, index))
+			if(spanContains(mParseErrors[i].span, line+1, index))
 				return mParseErrors[i].msg;
 		return null;
 	}
@@ -3273,3 +3375,4 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 	}
 }
 
+///////////////////////////////////////////////////////////////////////

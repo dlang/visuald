@@ -27,8 +27,7 @@ import visuald.dlangsvc;
 import visuald.config;
 
 import vdc.lexer;
-import vdc.semantic;
-import vdc.ast.node;
+import vdc.versions;
 
 import stdext.string;
 
@@ -299,7 +298,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		uint pos = 0;
 		bool inTokenString = (Lexer.tokenStringLevel(state) > 0);
 		
-		Node ast = mSource.mAST;
+		LanguageService langsvc = Package.GetLanguageService();
 		while(pos < iLength)
 		{
 			uint prevpos = pos;
@@ -313,10 +312,10 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			else
 				span = ParserSpan(prevpos, iLine, pos, iLine);
 
-			if(ast && tok[0] == 'i')
+			if(tok[0] == 'i')
 				if(tok == "in" || tok == "is")
 				{
-					if(isBinaryOperator(ast, iLine + 1, prevpos, iLine + 1, pos))
+					if(langsvc.isBinaryOperator(mSource, iLine + 1, prevpos, iLine + 1, pos))
 						type = TokenColor.Operator;
 					else
 						type = TokenColor.Keyword;
@@ -557,7 +556,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	__gshared int[wstring] predefinedVersions;
 	shared static this()
 	{
-		foreach(v, p; vdc.semantic.Options.sPredefinedVersions)
+		foreach(v, p; vdc.versions.sPredefinedVersions)
 			predefinedVersions[to!wstring(v)] = p;
 	}
 

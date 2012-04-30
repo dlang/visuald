@@ -4,6 +4,7 @@
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
+  <subsystem>0</subsystem>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
@@ -43,7 +44,7 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -82,10 +83,10 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
-  <additionalOptions>-debuglib=phobos_d</additionalOptions>
+  <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>c:\l\vs9\common7\ide\devenv.exe</debugtarget>
+  <debugtarget>c:\l\vs9shell\common7\ide\devenv.exe</debugtarget>
   <debugarguments>/RootSuffix D</debugarguments>
   <debugworkingdir />
   <debugattach>0</debugattach>
@@ -99,6 +100,7 @@
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
+  <subsystem>0</subsystem>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
@@ -204,10 +206,7 @@
    <File path="Resources\DSplashScreenIcon.bmp" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
-   <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set PATH=%PATH%;c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
-set PATH=%PATH%;$(DevEnvDir)
-set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin
-CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
+   <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set PATH=%PATH%;c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin&#10;set PATH=%PATH%;$(DevEnvDir)&#10;set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin&#10;CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
    <File path="Resources\refresh.ico" />
    <File path="Resources\RegExp.ico" />
    <File path="Resources\removetrace.ico" />
@@ -219,11 +218,15 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File path="Resources\WholeWord.ico" />
   </Folder>
   <Folder name="rsgc">
-   <File path="..\rsgc\gc.d" />
-   <File path="..\rsgc\gcalloc.d" />
-   <File path="..\rsgc\gcbits.d" />
-   <File path="..\rsgc\gcstats.d" />
-   <File path="..\rsgc\gcx.d" />
+   <File tool="None" path="..\rsgc\gc.d" />
+   <File tool="None" path="..\rsgc\gcalloc.d" />
+   <File tool="None" path="..\rsgc\gcbits.d" />
+   <File tool="None" path="..\rsgc\gcstats.d" />
+   <File tool="None" path="..\rsgc\gcx.d" />
+  </Folder>
+  <Folder name="vdc">
+   <File tool="None" path="..\vdc\lexer.d" />
+   <File tool="None" path="..\vdc\versions.d" />
   </Folder>
   <File path="build.d" />
   <File path="chiercontainer.d" />
@@ -258,6 +261,7 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="tokenreplace.d" />
   <File path="tokenreplacedialog.d" />
   <File path="trackprojectdocument.d" />
+  <File path="vdserverclient.d" />
   <File path="viewfilter.d" />
   <File path="visuald.def" />
   <File path="vscommands.d" />

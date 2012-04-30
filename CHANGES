@@ -404,7 +404,7 @@ Version history
 
 unreleased Version 0.3.32
 
-  * new version of ccv2pdb with better handling of unicode characters in path names
+  * new version of cv2pdb with better handling of unicode characters in path names
   * new version of mago with string literal support for associative array keys and easier stepping into main
   * some changes to reduce memory leaks due to false pointers
   * fixed parser to disambiguate MixinStatement and MixinExpression
@@ -415,3 +415,6 @@ unreleased Version 0.3.32
   * fixed custom command: project would not restore if multiple commands are used
   * project properties: added output type DLL for easier switching between DMD and GDC
   * project properties: added subsystem option, use "not set" if you have to specify a specific windows version
+  * fixed underlining syntax errors shows only first error
+  * fixed option "Show expansions when" not saving state "writing an identifier"
+  * added icon for disabled project item (tool set to "None")

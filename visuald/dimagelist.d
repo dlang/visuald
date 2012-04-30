@@ -21,6 +21,7 @@ const kImageFolderOpened = 3;
 const kImageResource = 4;
 const kImageDocument = 5;
 const kImageScript = 6;
+const kImageDisabled = 7;
 
 const IDC_TOOLBAR = 1010;
 const IDC_FILEWHEEL = 1011;

@@ -190,6 +190,8 @@ class CFileNode : CHierNode,
 	void SetTool(string tool)
 	{
 		mTool = tool;
+		if(CVsHierarchy hier = GetCVsHierarchy())
+			hier.OnPropertyChanged(this, VSHPROPID_IconIndex, 0);
 	}
 
 	string GetDependencies()
@@ -1079,6 +1081,7 @@ version(none)
 			case "DMD":                 return kImageDSource;
 			case kToolResourceCompiler: return kImageResource;
 			case "Custom":              return kImageScript;
+			case "None":                return kImageDisabled;
 			default:                    return kImageDocument;
 			}
 		}

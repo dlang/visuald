@@ -36,8 +36,6 @@ import visuald.config;
 import visuald.intellisense;
 
 import vdc.lexer;
-import vdc.parser.engine;
-import ast = vdc.ast.all;
 
 import sdk.port.vsi;
 import sdk.win32.commctrl;
@@ -157,7 +155,7 @@ class Declarations
 					canImport = (ext.length == 0);
 				else if(ext == ".d" || ext == ".di")
 				{
-					base = base[0 .. $-1-ext.length];
+					base = base[0 .. $-ext.length];
 					canImport = true;
 				}
 				if(canImport && base.startsWith(imp) && arrIndex(mNames, base) < 0)
@@ -293,47 +291,13 @@ class Declarations
 			int hr = textView.GetCaretPos(&line, &idx);
 
 			auto langsvc = Package.GetLanguageService();
-			ast.Module mod = langsvc.GetSemanticModule(src);
-			if(!mod)
+			string[] symbols = langsvc.GetSemanticExpansions(src, tok, line, idx);
+			if(symbols.length == 0)
 				return false;
 
-			bool inDotExpr;
-			TextSpan span;
-			span.iStartLine = span.iEndLine = line;
-			span.iStartIndex = span.iEndIndex = idx;
-			ast.Node n = langsvc.GetNode(mod, &span, &inDotExpr);
-			if(!n)
-				return false;
-
-			if(auto r = cast(ast.ParseRecoverNode)n)
-			{
-				wstring wexpr = src.FindExpressionBefore(line, idx);
-				if(wexpr)
-				{
-					string expr = to!string(wexpr);
-					Parser parser = new Parser;
-					ast.Node inserted = parser.parseExpression(expr, r.fulspan);
-					if(!inserted)
-						return false;
-					r.addMember(inserted);
-					n = inserted.calcType();
-					r.removeMember(inserted);
-					inDotExpr = true;
-				}
-			}
-			vdc.semantic.Scope sc = n.getScope();
-			
-			if(!sc)
-				return false;
-			auto syms = sc.search(tok ~ "*", !inDotExpr, true, true);
-
-			int namesLength = mNames.length;
-
-			foreach(s, b; syms)
-				if(auto decl = cast(ast.Declarator) s)
-					mNames.addunique(decl.ident);
-				else if(auto em = cast(ast.EnumMember) s)
-					mNames.addunique(em.ident);
+			size_t namesLength = mNames.length;
+			foreach(s; symbols)
+				mNames.addunique(s);
 
 			sort!("icmp(a, b) < 0", SwapStrategy.stable)(mNames);
 			return mNames.length > namesLength;

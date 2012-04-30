@@ -4,6 +4,7 @@
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
+  <subsystem>0</subsystem>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
@@ -43,7 +44,7 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -99,6 +100,7 @@
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
+  <subsystem>0</subsystem>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
@@ -192,6 +194,6 @@
  </Config>
  <Folder name="vdserver">
   <File path="vdserver.d" />
-  <File tool="Custom" path="vdserver.idl" customcmd="path %path%;c:\l\vs9\vc\bin;c:\l\vs9\common7\IDE&#10;midl /I &quot;c:\Program Files\Microsoft SDKs\Windows\v6.0A\Include&quot; /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(OutDir) /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
+  <File tool="Custom" path="vdserver.idl" customcmd="path %path%;c:\l\vs9\vc\bin;c:\l\vs9\common7\IDE&#10;midl /I &quot;$(WindowsSdkDir)\Include&quot; /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(OutDir) /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
  </Folder>
 </DProject>
