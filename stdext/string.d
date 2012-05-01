@@ -14,7 +14,7 @@ import std.ascii;
 import std.conv;
 import std.array;
 
-uint endofStringCStyle(string text, uint pos, dchar term = '\"', dchar esc = '\\')
+size_t endofStringCStyle(string text, size_t pos, dchar term = '\"', dchar esc = '\\')
 {
 	while(pos < text.length)
 	{
@@ -34,15 +34,15 @@ uint endofStringCStyle(string text, uint pos, dchar term = '\"', dchar esc = '\\
 string[] tokenizeArgs(string text, bool semi_is_seperator = true, bool space_is_seperator = true)
 {
 	string[] args;
-	uint pos = 0;
+	size_t pos = 0;
 	while(pos < text.length)
 	{
-		uint startpos = pos;
+		size_t startpos = pos;
 		dchar ch = decode(text, pos);
 		if(isWhite(ch))
 			continue;
 
-		uint endpos = pos;
+		size_t endpos = pos;
 		while(pos < text.length)
 		{
 			if(ch == '\"')
@@ -86,7 +86,7 @@ string insertCr(string s)
 	string ns;
 	while(s.length > 0)
 	{
-		int p = s.indexOf('\n');
+		auto p = s.indexOf('\n');
 		if(p < 0)
 			break;
 		if(p > 0 && s[p-1] == '\r')

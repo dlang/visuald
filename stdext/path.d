@@ -60,24 +60,24 @@ string removeDotDotPath(string file)
 	for( ; ; )
 	{
 		// remove duplicate back slashes
-		int pos = indexOf(file[1..$], "\\\\");
+		auto pos = indexOf(file[1..$], "\\\\");
 		if(pos < 0)
 			break;
 		file = file[0..pos+1] ~ file[pos + 2 .. $];
 	}
 	for( ; ; )
 	{
-		int pos = indexOf(file, "\\..\\");
+		auto pos = indexOf(file, "\\..\\");
 		if(pos < 0)
 			break;
-		int lpos = lastIndexOf(file[0..pos], '\\');
+		auto lpos = lastIndexOf(file[0..pos], '\\');
 		if(lpos < 0)
 			break;
 		file = file[0..lpos] ~ file[pos + 3 .. $];
 	}
 	for( ; ; )
 	{
-		int pos = indexOf(file, "\\.\\");
+		auto pos = indexOf(file, "\\.\\");
 		if(pos < 0)
 			break;
 		file = file[0..pos] ~ file[pos + 2 .. $];
@@ -158,8 +158,8 @@ string makeRelative(string file, string path)
 	int posfile = 0;
 	for( ; ; )
 	{
-		int idxfile = indexOf(lfile, '\\');
-		int idxpath = indexOf(lpath, '\\');
+		auto idxfile = indexOf(lfile, '\\');
+		auto idxpath = indexOf(lpath, '\\');
 		assert(idxpath >= 0);
 
 		if(idxfile < 0 || idxfile != idxpath || lfile[0..idxfile] != lpath[0 .. idxpath])

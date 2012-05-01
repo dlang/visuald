@@ -329,10 +329,10 @@ class Node
 	}
 	int semanticState;
 	
-	void expandNonScopeSimple(Scope sc, int i, int j)
+	void expandNonScopeSimple(Scope sc, size_t i, size_t j)
 	{
 		Node[1] narray;
-		for(int m = i; m < j; )
+		for(size_t m = i; m < j; )
 		{
 			Node n = members[m];
 			narray[0] = n;
@@ -514,32 +514,32 @@ class Node
 
 	Node removeMember(Node m) 
 	{
-		int n = std.algorithm.countUntil(members, m);
+		auto n = std.algorithm.countUntil(members, m);
 		assert(n >= 0);
 		return removeMember(n);
 	}
 
-	Node removeMember(int m) 
+	Node removeMember(size_t m) 
 	{
 		Node n = members[m];
 		removeMember(m, 1);
 		return n;
 	}
 
-	void removeMember(int m, int cnt) 
+	void removeMember(size_t m, size_t cnt) 
 	{
 		assert(m >= 0 && m + cnt <= members.length);
-		for (int i = 0; i < cnt; i++)
+		for (size_t i = 0; i < cnt; i++)
 			members[m + i].parent = null;
 			
-		for (int n = m + cnt; n < members.length; n++)
+		for (size_t n = m + cnt; n < members.length; n++)
 			members[n - cnt] = members[n];
 		members.length = members.length - cnt;
 	}
 	
 	Node[] removeAll() 
 	{
-		for (int m = 0; m < members.length; m++)
+		for (size_t m = 0; m < members.length; m++)
 			members[m].parent = null;
 		Node[] nm = members;
 		members = members.init;
@@ -548,12 +548,12 @@ class Node
 
 	void replaceMember(Node m, Node[] nm) 
 	{
-		int n = std.algorithm.countUntil(members, m);
+		auto n = std.algorithm.countUntil(members, m);
 		assert(n >= 0);
 		replaceMember(n, nm);
 	}
 	
-	void replaceMember(int m, Node[] nm) 
+	void replaceMember(size_t m, Node[] nm) 
 	{
 		if(m < members.length)
 			members[m].parent = null;
@@ -565,7 +565,7 @@ class Node
 			n.parent = this;
 	}
 	
-	T getMember(T = Node)(int idx) 
+	T getMember(T = Node)(size_t idx) 
 	{ 
 		if (idx < 0 || idx >= members.length)
 			return null;

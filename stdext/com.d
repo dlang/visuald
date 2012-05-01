@@ -26,7 +26,7 @@ extern(C) void* gc_malloc(size_t sz, uint ba = 0);
 
 class ComObject : IUnknown
 {
-	new(uint size)
+	new(size_t size)
 	{
 		void* p = gc_malloc(size, 1); // BlkAttr.FINALIZE
 		return p;
@@ -186,13 +186,13 @@ string GUID2string(in GUID clsid)
 
 BSTR allocwBSTR(wstring s)
 {
-	return SysAllocStringLen(s.ptr, s.length);
+	return SysAllocStringLen(s.ptr, cast(UINT) s.length);
 }
 
 BSTR allocBSTR(string s)
 {
 	wstring ws = toUTF16(s);
-	return SysAllocStringLen(ws.ptr, ws.length);
+	return SysAllocStringLen(ws.ptr, cast(UINT) ws.length);
 }
 
 wstring wdetachBSTR(ref BSTR bstr)
@@ -224,7 +224,7 @@ void freeBSTR(BSTR bstr)
 
 wchar* wstring2OLESTR(wstring s)
 {
-	int sz = (s.length + 1) * 2;
+	size_t sz = (s.length + 1) * 2;
 	wchar* p = cast(wchar*) CoTaskMemAlloc(sz);
 	p[0 .. s.length] = s[0 .. $];
 	p[s.length] = 0;
@@ -234,7 +234,7 @@ wchar* wstring2OLESTR(wstring s)
 wchar* string2OLESTR(string s)
 {
 	wstring ws = toUTF16(s);
-	int sz = (ws.length + 1) * 2;
+	size_t sz = (ws.length + 1) * 2;
 	wchar* p = cast(wchar*) CoTaskMemAlloc(sz);
 	p[0 .. ws.length] = ws[0 .. $];
 	p[ws.length] = 0;
@@ -280,7 +280,7 @@ wchar* _toUTF16zw(wstring s)
 	return cast(wchar*)sz.ptr;
 }
 
-string to_string(in wchar* pText, int iLength)
+string to_string(in wchar* pText, size_t iLength)
 {
 	if(!pText)
 		return "";
@@ -292,11 +292,11 @@ string to_string(in wchar* pText)
 {
 	if(!pText)
 		return "";
-	int len = wcslen(pText);
+	size_t len = wcslen(pText);
 	return to_string(pText, len);
 }
 
-wstring to_wstring(in wchar* pText, int iLength)
+wstring to_wstring(in wchar* pText, size_t iLength)
 {
 	if(!pText)
 		return ""w;
@@ -304,7 +304,7 @@ wstring to_wstring(in wchar* pText, int iLength)
 	return text;
 }
 
-wstring to_cwstring(in wchar* pText, int iLength)
+wstring to_cwstring(in wchar* pText, size_t iLength)
 {
 	if(!pText)
 		return ""w;
@@ -316,7 +316,7 @@ wstring to_wstring(in wchar* pText)
 {
 	if(!pText)
 		return ""w;
-	int len = wcslen(pText);
+	size_t len = wcslen(pText);
 	return to_wstring(pText, len);
 }
 
@@ -324,7 +324,7 @@ wstring to_cwstring(in wchar* pText)
 {
 	if(!pText)
 		return ""w;
-	int len = wcslen(pText);
+	size_t len = wcslen(pText);
 	return to_cwstring(pText, len);
 }
 
@@ -332,7 +332,7 @@ wstring to_wstring(in char* pText)
 {
 	if(!pText)
 		return ""w;
-	int len = strlen(pText);
+	size_t len = strlen(pText);
 	return toUTF16(pText[0 .. len]);
 }
 

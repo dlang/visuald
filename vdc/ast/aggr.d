@@ -135,7 +135,7 @@ class Aggregate : Type
 	}
 
 	// always tree internal references
-	int mapDeclOffset;
+	size_t mapDeclOffset;
 	size_t[Declarator] mapDecl2Value;
 	size_t[string] mapName2Value;
 	Declarator[string] mapName2Method;

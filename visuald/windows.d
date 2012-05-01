@@ -68,6 +68,7 @@ version(all)
 {
 	public import sdk.port.base;
 	
+	version(none)
 	HRESULT HRESULT_FROM_WIN32(uint x)
 	{
 		return cast(HRESULT)(x) <= 0 ? cast(HRESULT)(x) 

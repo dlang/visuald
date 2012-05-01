@@ -214,7 +214,7 @@ class Declarators : Node
 {
 	mixin ForwardCtor!();
 
-	Declarator getDeclarator(int n)
+	Declarator getDeclarator(size_t n)
 	{
 		if(auto decl = cast(Declarator) getMember(n))
 			return decl;

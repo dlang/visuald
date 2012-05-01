@@ -380,10 +380,11 @@ class idl2d
 		case "FALSE":
 			return -2; // not defined for expression, but for #define
 			
+		case "_WIN64":
+			return 4;  // special cased
 		case "0":
 		case "MAC":
 		case "_MAC":
-		case "_WIN64":
 		case "_WIN32_WCE":
 		case "_IA64_":
 		case "_M_AMD64":
@@ -414,6 +415,7 @@ class idl2d
 		case "_DCOM_OC_REMOTING_":
 		case "_SLIST_HEADER_":
 		case "_RTL_RUN_ONCE_DEF":
+		case "__midl":
 			return -1;
 
 		case "WINAPI":
@@ -430,7 +432,6 @@ class idl2d
 		case "UNICODE": 
 		case "DEFINE_GUID": 
 		case "UNIX":
-		case "__midl":
 		case "_X86_":
 		case "_M_IX86":
 		case "MULTIPLE_WATCH_WINDOWS":
@@ -627,13 +628,15 @@ class idl2d
 			predef = -predef;
 		if(predef < 0)
 		{
-			tokIt.text = "version(none) /* " ~ tokIt.text;
+			string ver = (predef == -4 ? "Win32" : "none");
+			tokIt.text = "version(" ~ ver ~ ") /* " ~ tokIt.text;
 			lastIt.text ~= " */ {/+";
 			elif_braces = "+/} ";
 		}
 		else if(predef > 0)
 		{
-			tokIt.text = "version(all) /* " ~ tokIt.text;
+			string ver = (predef == 4 ? "Win64" : "all");
+			tokIt.text = "version(" ~ ver ~ ") /* " ~ tokIt.text;
 			lastIt.text ~= " */ {";
 			elif_braces = "} ";
 		}
@@ -1167,6 +1170,7 @@ version(all)
 				~ "#pragma intrinsic(_rotr16)\n", "/+\n$*\n+/", false);
 
 			replaceTokenSequence(tokens, "typedef struct DECLSPEC_ALIGN($_num)", "align($_num) typedef struct", true);
+			replaceTokenSequence(tokens, "typedef union DECLSPEC_ALIGN($_num)", "align($_num) typedef union", true);
 			replaceTokenSequence(tokens, "struct DECLSPEC_ALIGN($_num)", "align($_num) struct", true);
 		}
 
@@ -1202,6 +1206,8 @@ version(all)
 		replaceTokenSequence(tokens, "__RPC_API", "extern(Windows)", true);
 		replaceTokenSequence(tokens, "RPC_MGR_EPV", "void", true);
 		replaceTokenSequence(tokens, "__RPC_FAR", "", true);
+		replaceTokenSequence(tokens, "POINTER_32", "", true);
+		replaceTokenSequence(tokens, "POINTER_64", "", true);
 		replaceTokenSequence(tokens, "UNREFERENCED_PARAMETER($arg);", "/*UNREFERENCED_PARAMETER($arg);*/", true);
 		
 		// windef.h and ktmtypes.h
@@ -1360,6 +1366,8 @@ version(all)
 					tok.text = tok.text[0..$-1];
 				else if(tok.type == Token.Number && tok.text._endsWith("i64"))
 					tok.text = tok.text[0..$-3] ~ "L";
+				else if(tok.type == Token.Number && tok.text._endsWith("UI64"))
+					tok.text = tok.text[0..$-4] ~ "UL";
 				else if(tok.type == Token.String && tok.text.startsWith("L\""))
 					tok.text = tok.text[1..$] ~ "w.ptr";
 				else if(tok.type == Token.String && tok.text.startsWith("L\'"))
@@ -2207,7 +2215,7 @@ version(remove_pp) {} else
 		disabled_defines["WINBASEAPI"] = 1;
 		disabled_defines["WINADVAPI"] = 1;
 		disabled_defines["FORCEINLINE"] = 1;
-		disabled_defines["POINTER_64"] = 1;
+		//disabled_defines["POINTER_64"] = 1;
 		disabled_defines["UNALIGNED"] = 1;
 		disabled_defines["RESTRICTED_POINTER"] = 1;
 		disabled_defines["RTL_CONST_CAST"] = 1;

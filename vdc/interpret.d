@@ -812,7 +812,7 @@ class ArrayValueBase : Value
 		first.getElement(idx).opBin(ctx, TOK_assign, v);
 	}
 
-	ArrayValueBase createResultArray(Context ctx, Value fv, int nlen)
+	ArrayValueBase createResultArray(Context ctx, Value fv, size_t nlen)
 	{
 		auto dim = new IntegerLiteralExpression();
 		dim.txt = to!string(nlen);
@@ -1693,7 +1693,7 @@ Value doCall(CallableNode funcNode, Context sc, ParameterList params, Value varg
 	auto ctx = new Context(sc);
 
 	auto args = static_cast!TupleValue(vargs);
-	int numparams = params.members.length;
+	auto numparams = params.members.length;
 	if(params.anonymous_varargs)
 	{
 		if(args.values.length < numparams)

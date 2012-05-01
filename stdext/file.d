@@ -79,7 +79,7 @@ string[string][string] parseIniText(string txt)
 	foreach(string ln; txt.splitLines())
 	{
 		ln = strip(ln);
-		int pos = indexOf(ln, ']');
+		auto pos = indexOf(ln, ']');
 		if(pos >= 0 && startsWith(ln, "["))
 		{
 			if(currentSection.length)

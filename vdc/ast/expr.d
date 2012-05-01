@@ -2005,12 +2005,12 @@ class StringLiteralExpression : PrimaryExpression
 			return s[2..$-1];
 		
 		// TODO: missing hex/escape translation and delimiter string handling
-		int p = 0;
+		size_t p = 0;
 		while(p < s.length && s[p] != '"' && s[p] != '`')
 			p++;
 		if(p >= s.length)
 			return s;
-		int q = s.length - 1;
+		size_t q = s.length - 1;
 		while(q > p && s[q] != s[p])
 			q--;
 		if(q <= p)

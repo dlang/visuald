@@ -101,17 +101,17 @@ struct Lexer
 		return idx;
 	}
 
-	int scanIdentifier(S)(S text, int startpos, ref uint pos)
+	int scanIdentifier(S)(S text, size_t startpos, ref size_t pos)
 	{
 		int pid;
 		return scanIdentifier(text, startpos, pos, pid);
 	}
 	
-	int scanIdentifier(S)(S text, int startpos, ref uint pos, ref int pid)
+	int scanIdentifier(S)(S text, size_t startpos, ref size_t pos, ref int pid)
 	{
 		while(pos < text.length)
 		{
-			uint nextpos = pos;
+			auto nextpos = pos;
 			dchar ch = decode(text, nextpos);
 			if(!isIdentifierCharOrDigit(ch))
 				break;
@@ -128,9 +128,9 @@ struct Lexer
 		return TokenCat.Identifier;
 	}
 
-	static int scanOperator(S)(S text, uint startpos, ref uint pos, ref int pid)
+	static int scanOperator(S)(S text, size_t startpos, ref size_t pos, ref int pid)
 	{
-		int len;
+		size_t len;
 		int id = parseOperator(text, startpos, len);
 		if(id == TOK_error)
 			return TokenCat.Text;
@@ -140,7 +140,7 @@ struct Lexer
 		return TokenCat.Operator;
 	}
 	
-	static dchar trydecode(S)(S text, ref uint pos)
+	static dchar trydecode(S)(S text, ref size_t pos)
 	{
 		if(pos >= text.length)
 			return 0;
@@ -148,11 +148,11 @@ struct Lexer
 		return ch;
 	}
 
-	static void skipDigits(S)(S text, ref uint pos, int base)
+	static void skipDigits(S)(S text, ref size_t pos, int base)
 	{
 		while(pos < text.length)
 		{
-			uint nextpos = pos;
+			auto nextpos = pos;
 			dchar ch = decode(text, nextpos);
 			if(ch != '_')
 			{
@@ -165,23 +165,23 @@ struct Lexer
 		}
 	}
 
-	static int scanNumber(S)(S text, dchar ch, ref uint pos)
+	static int scanNumber(S)(S text, dchar ch, ref size_t pos)
 	{
 		int pid;
 		return scanNumber(text, ch, pos, pid);
 	}
 	
-	static int scanNumber(S)(S text, dchar ch, ref uint pos, ref int pid)
+	static int scanNumber(S)(S text, dchar ch, ref size_t pos, ref int pid)
 	{
 		// pos after first digit
 		int base = 10;
-		uint nextpos = pos;
+		size_t nextpos = pos;
 		if(ch == '.')
 			goto L_float;
 
 		if(ch == '0')
 		{
-			uint prevpos = pos;
+			size_t prevpos = pos;
 			ch = trydecode(text, pos);
 			ch = toLower(ch);
 			if(ch == 'b')
@@ -204,7 +204,7 @@ struct Lexer
 
 		if((base == 10 && toLower(ch) == 'e') || (base == 16 && toLower(ch) == 'p'))
 			goto L_exponent;
-		uint trypos = nextpos;
+		size_t trypos = nextpos;
 		if(base >= 8 && ch == '.' && trydecode(text, trypos) != '.') // ".." is the slice token
 		{
 			// float
@@ -270,7 +270,7 @@ L_complexLiteral:
 		return TokenCat.Literal;
 	}
 
-	static State scanBlockComment(S)(S text, ref uint pos)
+	static State scanBlockComment(S)(S text, ref size_t pos)
 	{
 		while(pos < text.length)
 		{
@@ -287,7 +287,7 @@ L_complexLiteral:
 		return State.kBlockComment;
 	}
 
-	State scanNestedComment(S)(S text, uint startpos, ref uint pos, ref int nesting)
+	State scanNestedComment(S)(S text, size_t startpos, ref size_t pos, ref int nesting)
 	{
 		while(pos < text.length)
 		{
@@ -328,16 +328,16 @@ L_complexLiteral:
 		return State.kNestedComment;
 	}
 
-	static State scanStringPostFix(S)(S text, ref uint pos)
+	static State scanStringPostFix(S)(S text, ref size_t pos)
 	{
-		uint nextpos = pos;
+		size_t nextpos = pos;
 		dchar ch = trydecode(text, nextpos);
 		if(ch == 'c' || ch == 'w' || ch == 'd')
 			pos = nextpos;
 		return State.kWhite;
 	}
 	
-	static State scanStringWysiwyg(S)(S text, ref uint pos)
+	static State scanStringWysiwyg(S)(S text, ref size_t pos)
 	{
 		while(pos < text.length)
 		{
@@ -348,7 +348,7 @@ L_complexLiteral:
 		return State.kStringWysiwyg;
 	}
 
-	static State scanStringAltWysiwyg(S)(S text, ref uint pos)
+	static State scanStringAltWysiwyg(S)(S text, ref size_t pos)
 	{
 		while(pos < text.length)
 		{
@@ -359,7 +359,7 @@ L_complexLiteral:
 		return State.kStringAltWysiwyg;
 	}
 
-	static State scanStringCStyle(S)(S text, ref uint pos, dchar term)
+	static State scanStringCStyle(S)(S text, ref size_t pos, dchar term)
 	{
 		while(pos < text.length)
 		{
@@ -376,11 +376,11 @@ L_complexLiteral:
 		return State.kStringCStyle;
 	}
 
-	State startDelimiterString(S)(S text, ref uint pos, ref int nesting)
+	State startDelimiterString(S)(S text, ref size_t pos, ref int nesting)
 	{
 		nesting = 1;
 
-		uint startpos = pos;
+		auto startpos = pos;
 		dchar ch = trydecode(text, pos);
 		State s = State.kStringDelimited;
 		if(ch == '[')
@@ -403,7 +403,7 @@ L_complexLiteral:
 		return s;
 	}
 
-	State scanTokenString(S)(S text, ref uint pos, ref int tokLevel)
+	State scanTokenString(S)(S text, ref size_t pos, ref int tokLevel)
 	{
 		int state = toState(State.kWhite, 0, 0, 0);
 		int id = -1;
@@ -418,7 +418,7 @@ L_complexLiteral:
 		return (tokLevel > 0 ? State.kStringToken : State.kWhite);
 	}
 
-	static bool isStartingComment(S)(S txt, ref int idx)
+	static bool isStartingComment(S)(S txt, ref size_t idx)
 	{
 		if(idx >= 0 && idx < txt.length-1 && txt[idx] == '/' && (txt[idx+1] == '*' || txt[idx+1] == '+'))
 			return true;
@@ -430,7 +430,7 @@ L_complexLiteral:
 		return false;
 	}
 	
-	static bool isEndingComment(S)(S txt, ref int pos)
+	static bool isEndingComment(S)(S txt, ref size_t pos)
 	{
 		if(pos < txt.length && pos > 0 && txt[pos] == '/' && (txt[pos-1] == '*' || txt[pos-1] == '+'))
 		{
@@ -459,7 +459,7 @@ L_complexLiteral:
 		if(text.length == 0)
 			return false;
 		
-		uint pos;
+		size_t pos;
 		dchar ch = decode(text, pos);
 		if(!isIdentifierChar(ch))
 			return false;
@@ -478,7 +478,7 @@ L_complexLiteral:
 		if(text.length == 0)
 			return false;
 
-		uint pos;
+		size_t pos;
 		while(pos < text.length)
 		{
 			dchar ch = decode(text, pos);
@@ -543,7 +543,7 @@ L_complexLiteral:
 		return (type == TokenCat.Comment || (type == TokenCat.Text && isWhite(text[0])));
 	}
 
-	static State scanNestedDelimiterString(S)(S text, ref uint pos, State s, ref int nesting)
+	static State scanNestedDelimiterString(S)(S text, ref size_t pos, State s, ref int nesting)
 	{
 		dchar open  = openingBracket(s);
 		dchar close = closingBracket(s);
@@ -561,13 +561,13 @@ L_complexLiteral:
 		return s;
 	}
 
-	State scanDelimitedString(S)(S text, ref uint pos, ref int delim)
+	State scanDelimitedString(S)(S text, ref size_t pos, ref int delim)
 	{
 		string delimiter = s_delimiters[delim];
 
 		while(pos < text.length)
 		{
-			uint startpos = pos;
+			auto startpos = pos;
 			dchar ch = decode(text, pos);
 			if(isIdentifierChar(ch))
 				scanIdentifier(text, startpos, pos);
@@ -585,7 +585,7 @@ L_complexLiteral:
 		return State.kStringDelimited;
 	}
 
-	int scan(S)(ref int state, in S text, ref uint pos, ref int id)
+	int scan(S)(ref int state, in S text, ref size_t pos, ref int id)
 	{
 		State s = scanState(state);
 		int nesting = nestingLevel(state);
@@ -593,7 +593,7 @@ L_complexLiteral:
 		int otherState = getOtherState(state);
 
 		int type = TokenCat.Text;
-		uint startpos = pos;
+		size_t startpos = pos;
 		dchar ch;
 
 		id = TOK_Space;
@@ -604,7 +604,7 @@ L_complexLiteral:
 			ch = decode(text, pos);
 			if(ch == 'r' || ch == 'x' || ch == 'q')
 			{
-				int prevpos = pos;
+				size_t prevpos = pos;
 				dchar nch = trydecode(text, pos);
 				if(nch == '"' && ch == 'q')
 				{
@@ -648,7 +648,7 @@ L_complexLiteral:
 				type = scanNumber(text, ch, pos, id);
 			else if (ch == '.')
 			{
-				uint nextpos = pos;
+				size_t nextpos = pos;
 				ch = trydecode(text, nextpos);
 				if(isDigit(ch))
 					type = scanNumber(text, '.', pos, id);
@@ -657,7 +657,7 @@ L_complexLiteral:
 			}
 			else if (ch == '/')
 			{
-				int prevpos = pos;
+				size_t prevpos = pos;
 				ch = trydecode(text, pos);
 				if (ch == '/')
 				{
@@ -793,7 +793,7 @@ L_complexLiteral:
 		return type;
 	}
 	
-	int scan(S)(ref int state, in S text, ref uint pos)
+	int scan(S)(ref int state, in S text, ref size_t pos)
 	{
 		int id;
 		return scan(state, text, pos, id);
@@ -803,7 +803,7 @@ L_complexLiteral:
 	TokenInfo[] ScanLine(S)(int iState, S text)
 	{
 		TokenInfo[] lineInfo;
-		for(uint pos = 0; pos < text.length; )
+		for(size_t pos = 0; pos < text.length; )
 		{
 			TokenInfo info;
 			info.StartIndex = pos;
@@ -838,7 +838,7 @@ bool findKeyword(string ident, ref int id)
 		foreach(i, k; keywords)
 			if(k == ident)
 			{
-				id = TOK_begin_Keywords + i;
+				id = cast(int) (TOK_begin_Keywords + i);
 				return true;
 			}
 	}
@@ -1275,7 +1275,7 @@ string genOperatorParser(string getch)
 	return txt;
 }
 
-int parseOperator(S)(S txt, uint pos, ref int len)
+int parseOperator(S)(S txt, size_t pos, ref size_t len)
 {
 	dchar getch() 
 	{

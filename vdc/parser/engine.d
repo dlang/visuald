@@ -719,18 +719,18 @@ class Parser
 		Lexer lex;
 		lex.mTokenizeTokenString = false;
 		lineno = 1;
-		int linepos = 0; // position after last line break
+		size_t linepos = 0; // position after last line break
 		int tokid;
-		for(uint pos = 0; pos < text.length && !abort; )
+		for(size_t pos = 0; pos < text.length && !abort; )
 		{
 			int prevlineno = lineno;
-			int prevlinepos = linepos;
-			uint prevpos = pos;
+			size_t prevlinepos = linepos;
+			size_t prevpos = pos;
 			TokenCat type = cast(TokenCat) lex.scan(state, text, pos, tokid);
 
 			if(tokid == TOK_Space || tokid == TOK_Comment || tokid == TOK_StringLiteral || tokid == TOK_CharacterLiteral)
 			{
-				for(uint lpos = prevpos; lpos < pos; lpos++)
+				for(size_t lpos = prevpos; lpos < pos; lpos++)
 					if(text[lpos] == '\n')
 					{
 						lineno++;
@@ -743,8 +743,8 @@ class Parser
 				lexerTok.id = tokid;
 				lexerTok.span.start.line = prevlineno;
 				lexerTok.span.end.line = lineno;
-				lexerTok.span.start.index = prevpos - prevlinepos;
-				lexerTok.span.end.index = pos - linepos;
+				lexerTok.span.start.index = cast(int) (prevpos - prevlinepos);
+				lexerTok.span.end.index   = cast(int) (pos - linepos);
 				shift(lexerTok);
 			}
 		}

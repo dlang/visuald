@@ -8,6 +8,8 @@ import sdk.win32.oaidl;
 import sdk.win32.objbase;
 import sdk.win32.oleauto;
 
+import vdc.semantic;
+
 static this()
 {
 	CoInitialize(null);
@@ -29,6 +31,11 @@ public:
 
 class VDServer : ComObject, IVDServer
 {
+	this()
+	{
+		mSemanticProject = new vdc.semantic.Project;
+	}
+
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 //		MessageBoxW(null, "Object1.QueryInterface"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
@@ -47,6 +54,33 @@ class VDServer : ComObject, IVDServer
 	{
 		return E_NOTIMPL;
 	}
+
+	HRESULT ConfigureSemanticProject(in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags)
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT ClearSemanticProject()
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT UpdateModule(in BSTR filename, in BSTR srcText)
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT GetType(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex, BSTR* answer)
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, int line, int idx, BSTR* stringList)
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT isBinaryOperator(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
+	{
+		return S_FALSE;
+	}
+private:
+	vdc.semantic.Project mSemanticProject;
 }
 
 class VDServerClassFactory : ComObject, IClassFactory

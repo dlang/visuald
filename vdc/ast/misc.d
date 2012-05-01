@@ -266,7 +266,7 @@ class EnumMember : Node
 			ival = expr.interpret(sc);
 		else if(auto em = cast(EnumMembers)parent)
 		{
-			int n = countUntil(parent.members, this);
+			auto n = countUntil(parent.members, this);
 			if(n > 0)
 			{
 				ival = parent.members[n - 1].interpret(sc);
