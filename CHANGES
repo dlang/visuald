@@ -404,7 +404,8 @@ Version history
 
 unreleased Version 0.3.32
 
-  * new version of cv2pdb with better handling of unicode characters in path names
+  * new version of cv2pdb with better handling of unicode characters in path names and better
+    support for local variables in DWARF debug info
   * new version of mago with string literal support for associative array keys and easier stepping into main
   * some changes to reduce memory leaks due to false pointers
   * fixed parser to disambiguate MixinStatement and MixinExpression
