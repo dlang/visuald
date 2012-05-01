@@ -505,7 +505,7 @@ class ProjectOptions
 
 	string buildARCommandLine()
 	{
-		string cmd = "ar cru " ~ getTargetPath();
+		string cmd = "ar cru " ~ quoteNormalizeFilename(getTargetPath());
 		return cmd;
 	}
 

@@ -418,3 +418,5 @@ unreleased Version 0.3.32
   * fixed underlining syntax errors shows only first error
   * fixed option "Show expansions when" not saving state "writing an identifier"
   * added icon for disabled project item (tool set to "None")
+  * version highlighting now supports versions DigitalMars/GNU and Win32/Win64
+  * fixed building static lib with GDC and a name in the library file name

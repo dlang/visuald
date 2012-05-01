@@ -217,6 +217,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	string mConfigVersions[2];
 	bool mConfigRelease;
 	bool mConfigUnittest;
+	bool mConfigGDC;
+	bool mConfigX64;
 	
 	enum VersionParseState
 	{
@@ -564,6 +566,14 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		if(ident == "unittest")
 			return mConfigUnittest ? 1 : -1;
+		if(ident == "Win32")
+			return mConfigX64 ? -1 : 1;
+		if(ident == "Win64")
+			return mConfigX64 ? 1 : -1;
+		if(ident == "GNU")
+			return mConfigGDC ? 1 : -1;
+		if(ident == "DigitalMars")
+			return mConfigGDC ? -1 : 1;
 		if(int*p = ident in predefinedVersions)
 			return *p;
 		return 0;
@@ -1221,6 +1231,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			changes += modifyValue(mConfig.GetProjectOptions().debugids,   mConfigVersions[kIndexDebug]);
 			changes += modifyValue(mConfig.GetProjectOptions().release,    mConfigRelease);
 			changes += modifyValue(mConfig.GetProjectOptions().useUnitTests, mConfigUnittest);
+			changes += modifyValue(mConfig.GetProjectOptions().isX86_64,   mConfigX64);
+			changes += modifyValue(mConfig.GetProjectOptions().compiler == Compiler.GDC, mConfigGDC);
 		}
 		return changes != 0;
 	}

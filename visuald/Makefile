@@ -42,6 +42,7 @@ VDC_SRC = $(VDC)/parser/aggr.d \
         $(VDC)/interpret.d \
         $(VDC)/parsertest.d \
         $(VDC)/logger.d \
+        $(VDC)/versions.d \
         $(VDC)/lexer.d
 
 RSGC_SRC = ../rsgc/gc.d ../rsgc/gcx.d ../rsgc/gcstats.d ../rsgc/gcalloc.d ../rsgc/gcbits.d
@@ -62,7 +63,7 @@ SRC = workaround.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
       profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d \
       tokenreplace.d tokenreplacedialog.d library.d \
-      help.d cppwizard.d
+      help.d cppwizard.d vdserverclient.d
 # $(STDEXT_SRC)
 # $(RSGC_SRC)
 
