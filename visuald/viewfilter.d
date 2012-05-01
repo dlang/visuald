@@ -580,8 +580,10 @@ version(tip)
 	{
 		int iState, tokidx;
 		uint pos;
-		if(Lexer.isStartingComment(txt, idx))
+		size_t idxpos = idx;
+		if(Lexer.isStartingComment(txt, idxpos))
 		{
+			idx = cast(ViewCol) idxpos;
 			tokidx = mCodeWinMgr.mSource.FindLineToken(line, idx, iState, pos);
 			if(pos == idx)
 			{
@@ -608,8 +610,9 @@ version(tip)
 				}
 			}
 		}
-		if(Lexer.isEndingComment(txt, idx))
+		if(Lexer.isEndingComment(txt, idxpos))
 		{
+			idx = cast(ViewCol) idxpos;
 			tokidx = mCodeWinMgr.mSource.FindLineToken(line, idx, iState, pos);
 			if(tokidx >= 0)
 			{
