@@ -402,7 +402,7 @@ Version history
   * fix resource include with spaces
   * fix always rebuilding if a dependent library project target has spaces in the path name
 
-unreleased Version 0.3.32
+2012-05-01 Version 0.3.32
 
   * new version of cv2pdb with better handling of unicode characters in path names and better
     support for local variables in DWARF debug info
@@ -421,3 +421,7 @@ unreleased Version 0.3.32
   * added icon for disabled project item (tool set to "None")
   * version highlighting now supports versions DigitalMars/GNU and Win32/Win64
   * fixed building static lib with GDC and a name in the library file name
+
+unreleased Version 0.3.33
+
+  * debugger project settings now stored in solution options file, not in project file

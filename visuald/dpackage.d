@@ -17,6 +17,7 @@ import std.path;
 import std.file;
 import std.conv;
 import std.array;
+import std.exception;
 
 import stdext.path;
 import stdext.array;
@@ -661,17 +662,93 @@ version(none)
 		mixin(LogCallMix);
 		return pPersistence.LoadPackageUserOpts(this, slnPersistenceOpts.ptr);
 	}
+
+	///////////////////////////
+	static HRESULT writeUint(IStream pStream, uint num)
+	{
+		ULONG written;
+		HRESULT hr = pStream.Write(&num, num.sizeof, &written);
+		if(hr == S_OK && written != num.sizeof)
+			hr = E_FAIL;
+		return hr;
+	}
+	static HRESULT writeGUID(IStream pStream, ref GUID uid)
+	{
+		ULONG written;
+		HRESULT hr = pStream.Write(&uid, uid.sizeof, &written);
+		if(hr == S_OK && written != uid.sizeof)
+			hr = E_FAIL;
+		return hr;
+	}
+	static HRESULT writeString(IStream pStream, string s)
+	{
+		if(HRESULT hr = writeUint(pStream, cast(uint) s.length))
+			return hr;
+
+		ULONG written;
+		HRESULT hr = pStream.Write(s.ptr, s.length, &written);
+		if(hr == S_OK && written != s.length)
+			hr = E_FAIL;
+		return hr;
+	}
+	static HRESULT writeConfig(IStream pStream, Config cfg)
+	{
+		if(auto hr = writeString(pStream, cfg.getName()))
+			return hr;
+		if(auto hr = writeString(pStream, cfg.getPlatform()))
+			return hr;
+
+		xml.Document doc = xml.newDocument("SolutionOptions");
+		cfg.GetProjectOptions().writeDebuggerXML(doc);
+		string[] result = xml.writeDocument(doc);
+		string res = std.string.join(result, "\n");
+		if(auto hr = writeString(pStream, res))
+			return hr;
+
+		return S_OK;
+	}
+	///////////////////////////
+	static HRESULT readUint(IStream pStream, ref uint num)
+	{
+		ULONG read;
+		HRESULT hr = pStream.Read(&num, num.sizeof, &read);
+		if(hr == S_OK && read != num.sizeof)
+			hr = E_FAIL;
+		return hr;
+	}
+	static HRESULT readGUID(IStream pStream, ref GUID uid)
+	{
+		ULONG read;
+		HRESULT hr = pStream.Read(&uid, uid.sizeof, &read);
+		if(hr == S_OK && read != uid.sizeof)
+			hr = E_FAIL;
+		return hr;
+	}
+	static HRESULT readString(IStream pStream, ref string s)
+	{
+		uint len;
+		if(HRESULT hr = readUint(pStream, len))
+			return hr;
+
+		if(len == -1)
+			return S_FALSE;
+		char[] buf = new char[len];
+		ULONG read;
+		HRESULT hr = pStream.Read(buf.ptr, len, &read);
+		if(hr == S_OK && read != len)
+			hr = E_FAIL;
+		s = assumeUnique(buf);
+		return hr;
+	}
+
 	HRESULT WriteUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
 	{
 		mixin(LogCallMix);
 
 		auto srpSolution = queryService!(IVsSolution);
-		scope(exit) release(srpSolution);
-		auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
-		scope(exit) release(solutionBuildManager);
-
-		if(srpSolution && solutionBuildManager)
+		if(srpSolution)
 		{
+			scope(exit) release(srpSolution);
 			IEnumHierarchies pEnum;
 			if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &g_projectFactoryCLSID, &pEnum) == S_OK)
 			{
@@ -680,34 +757,122 @@ version(none)
 				while(pEnum.Next(1, &pHierarchy, null) == S_OK)
 				{
 					scope(exit) release(pHierarchy);
-					if(IVsCfgProvider cfgProvider = qi_cast!IVsCfgProvider(pHierarchy))
+					if(IVsGetCfgProvider getCfgProvider = qi_cast!IVsGetCfgProvider(pHierarchy))
 					{
-						scope(exit) release(cfgProvider);
-						ULONG cnt;
-						if(cfgProvider.GetCfgs(0, null, &cnt, null) == S_OK)
+						scope(exit) release(getCfgProvider);
+						IVsCfgProvider cfgProvider;
+						if(getCfgProvider.GetCfgProvider(&cfgProvider) == S_OK)
 						{
-							IVsCfg[] cfgs = new IVsCfg[cnt];
-							scope(exit) foreach(c; cfgs) release(c);
-							if(cfgProvider.GetCfgs(cnt, cfgs.ptr, &cnt, null) == S_OK)
+							scope(exit) release(cfgProvider);
+							
+							GUID uid;
+							pHierarchy.GetGuidProperty(VSITEMID_ROOT, VSHPROPID_ProjectIDGuid, &uid);
+							if(auto hr = writeGUID(pOptionsStream, uid))
+								return hr;
+
+							ULONG cnt;
+							if(cfgProvider.GetCfgs(0, null, &cnt, null) == S_OK)
 							{
-								foreach(c; cfgs)
+								IVsCfg[] cfgs = new IVsCfg[cnt];
+								scope(exit) foreach(c; cfgs) release(c);
+								if(cfgProvider.GetCfgs(cnt, cfgs.ptr, &cnt, null) == S_OK)
 								{
-									if(Config cfg = qi_cast!Config(c))
+									foreach(c; cfgs)
 									{
-										scope(exit) release(cfg);
+										if(Config cfg = qi_cast!Config(c))
+										{
+											scope(exit) release(cfg);
+											if(auto hr = writeConfig(pOptionsStream, cfg))
+												return hr;
+										}
 									}
 								}
 							}
+							// length -1 as end marker
+							if(auto hr = writeUint(pOptionsStream, -1))
+								return hr;
+						}
+					}
+				}
+			}
+			GUID uid; // empty GUID as end marker
+			if(auto hr = writeGUID(pOptionsStream, uid))
+				return hr;
+		}
+		return S_OK;
+	}
+
+	HRESULT ReadUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
+	{
+ 		mixin(LogCallMix);
+		auto srpSolution = queryService!(IVsSolution);
+		if(!srpSolution)
+			return E_FAIL;
+		scope(exit) release(srpSolution);
+
+		for(;;)
+		{
+			GUID uid;
+			if(auto hr = readGUID(pOptionsStream, uid))
+				return hr;
+			if(uid == GUID_NULL)
+				break;
+
+			IVsHierarchy pHierarchy;
+			if (HRESULT hr = srpSolution.GetProjectOfGuid(&uid, &pHierarchy))
+				return hr;
+
+			scope(exit) release(pHierarchy);
+			IVsGetCfgProvider getCfgProvider = qi_cast!IVsGetCfgProvider(pHierarchy);
+			if (!getCfgProvider)
+				return E_FAIL;
+
+			scope(exit) release(getCfgProvider);
+			IVsCfgProvider cfgProvider;
+			if(auto hr = getCfgProvider.GetCfgProvider(&cfgProvider))
+				return hr;
+			scope(exit) release(cfgProvider);
+
+			IVsCfgProvider2 cfgProvider2 = qi_cast!IVsCfgProvider2(cfgProvider);
+			if(!cfgProvider2)
+				return E_FAIL;
+			scope(exit) release(cfgProvider2);
+			
+			for(;;)
+			{
+				string name, platform, xmltext;
+				HRESULT hrName = readString(pOptionsStream, name);
+				if(hrName == S_FALSE)
+					break;
+				if(hrName != S_OK)
+					return hrName;
+				if (auto hr = readString(pOptionsStream, platform))
+					return hr;
+				if (auto hr = readString(pOptionsStream, xmltext))
+					return hr;
+
+				IVsCfg pCfg;
+				if (cfgProvider2.GetCfgOfName(_toUTF16z(name), _toUTF16z(platform), &pCfg) == S_OK)
+				{
+					scope(exit) release(pCfg);
+					if(Config cfg = qi_cast!Config(pCfg))
+					{
+						scope(exit) release(cfg);
+						try
+						{
+							xmltext = `<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>` ~ xmltext;
+							xml.Document doc = xml.readDocument(xmltext);
+							cfg.GetProjectOptions().readXML(doc);
+						}
+						catch(Exception e)
+						{
+							writeToBuildOutputPane(e.toString());
+							logCall(e.toString());
 						}
 					}
 				}
 			}
 		}
-		return S_OK;
-	}
-	HRESULT ReadUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
-	{
-		mixin(LogCallMix);
 		return S_OK;
 	}
 

@@ -54,7 +54,7 @@ Element getElement(Element e, string s)
 
 Document newDocument(string root)
 {
-	return new Document(new std.xml.Tag("DProject"));
+	return new Document(new std.xml.Tag(root));
 }
 
 Document readDocument(string text)

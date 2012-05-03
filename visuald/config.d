@@ -837,6 +837,10 @@ class ProjectOptions
 		elem ~= new xml.Element("preBuildCommand", toElem(preBuildCommand));
 		elem ~= new xml.Element("postBuildCommand", toElem(postBuildCommand));
 	
+		elem ~= new xml.Element("filesToClean", toElem(filesToClean));
+	}
+	void writeDebuggerXML(xml.Element elem)
+	{
 		elem ~= new xml.Element("debugtarget", toElem(debugtarget));
 		elem ~= new xml.Element("debugarguments", toElem(debugarguments));
 		elem ~= new xml.Element("debugworkingdir", toElem(debugworkingdir));
@@ -845,9 +849,6 @@ class ProjectOptions
 		elem ~= new xml.Element("debugEngine", toElem(debugEngine));
 		elem ~= new xml.Element("debugStdOutToOutputWindow", toElem(debugStdOutToOutputWindow));
 		elem ~= new xml.Element("pauseAfterRunning", toElem(pauseAfterRunning));
-		
-		elem ~= new xml.Element("filesToClean", toElem(filesToClean));
-		
 	}
 
 	void readXML(xml.Element elem)
@@ -2544,6 +2545,9 @@ class Config :	DisposingComObject,
 	}
 
 	CBuilderThread getBuilder() { return mBuilder; }
+
+	string getName() { return mName; }
+	string getPlatform() { return mPlatform; }
 
 private:
 	string mName;
