@@ -224,7 +224,8 @@ class Package : DisposingComObject,
 		IServiceProvider,
 		IVsInstalledProduct,
 		IOleCommandTarget,
-		IOleComponent
+		IOleComponent,
+		IVsPersistSolutionProps // inherits IVsPersistSolutionOpts
 {
 	__gshared Package s_instance;
 
@@ -252,6 +253,10 @@ class Package : DisposingComObject,
 		if(queryInterface!(IOleCommandTarget) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IOleComponent) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsPersistSolutionOpts) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsPersistSolutionProps) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -640,6 +645,134 @@ version(none)
 	{
 		return null;
 	}
+
+	/////////////////////////////////////////////////////////////
+	// IVsPersistSolutionOpts (writes to suo file)
+
+	enum slnPersistenceOpts  = "VisualDProjectSolutionOptions"w;
+
+	HRESULT SaveUserOptions(IVsSolutionPersistence pPersistence)
+	{
+		mixin(LogCallMix);
+		return pPersistence.SavePackageUserOpts(this, slnPersistenceOpts.ptr);
+	}
+	HRESULT LoadUserOptions(IVsSolutionPersistence pPersistence, in VSLOADUSEROPTS grfLoadOpts)
+	{
+		mixin(LogCallMix);
+		return pPersistence.LoadPackageUserOpts(this, slnPersistenceOpts.ptr);
+	}
+	HRESULT WriteUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
+	{
+		mixin(LogCallMix);
+
+		auto srpSolution = queryService!(IVsSolution);
+		scope(exit) release(srpSolution);
+		auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+		scope(exit) release(solutionBuildManager);
+
+		if(srpSolution && solutionBuildManager)
+		{
+			IEnumHierarchies pEnum;
+			if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &g_projectFactoryCLSID, &pEnum) == S_OK)
+			{
+				scope(exit) release(pEnum);
+				IVsHierarchy pHierarchy;
+				while(pEnum.Next(1, &pHierarchy, null) == S_OK)
+				{
+					scope(exit) release(pHierarchy);
+					if(IVsCfgProvider cfgProvider = qi_cast!IVsCfgProvider(pHierarchy))
+					{
+						scope(exit) release(cfgProvider);
+						ULONG cnt;
+						if(cfgProvider.GetCfgs(0, null, &cnt, null) == S_OK)
+						{
+							IVsCfg[] cfgs = new IVsCfg[cnt];
+							scope(exit) foreach(c; cfgs) release(c);
+							if(cfgProvider.GetCfgs(cnt, cfgs.ptr, &cnt, null) == S_OK)
+							{
+								foreach(c; cfgs)
+								{
+									if(Config cfg = qi_cast!Config(c))
+									{
+										scope(exit) release(cfg);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return S_OK;
+	}
+	HRESULT ReadUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
+	{
+		mixin(LogCallMix);
+		return S_OK;
+	}
+
+	/////////////////////////////////////////////////////////////
+	// IVsPersistSolutionProps (writes to sln file)
+
+	enum slnPersistenceKey   = "VisualDProjectSolutionProperties"w;
+	enum slnPersistenceValue = "TestValue"w;
+
+	override HRESULT QuerySaveSolutionProps(IVsHierarchy pHierarchy, VSQUERYSAVESLNPROPS *pqsspSave)
+	{
+		mixin(LogCallMix);
+		Project prj = qi_cast!Project(pHierarchy);
+		if(!prj)
+			return E_NOINTERFACE;
+		*pqsspSave = QSP_HasNoProps;
+		return S_OK;
+	}
+	override HRESULT SaveSolutionProps(IVsHierarchy pHierarchy, IVsSolutionPersistence pPersistence)
+	{
+		mixin(LogCallMix);
+		return pPersistence.SavePackageSolutionProps(false, pHierarchy, this, slnPersistenceKey.ptr);
+	}
+	override HRESULT WriteSolutionProps(IVsHierarchy pHierarchy, in LPCOLESTR pszKey, IPropertyBag pPropBag)
+	{
+		mixin(LogCallMix);
+		Project prj = qi_cast!Project(pHierarchy);
+		if(!prj)
+			return E_NOINTERFACE;
+
+		version(none)
+		{
+			VARIANT var;
+			var.vt = VT_BSTR;
+			var.bstrVal = allocBSTR("Test");
+			HRESULT hr = pPropBag.Write(slnPersistenceValue.ptr, &var);
+			freeBSTR(var.bstrVal);
+		}
+		return S_OK;
+	}
+	override HRESULT ReadSolutionProps(IVsHierarchy pHierarchy, in LPCOLESTR pszProjectName,
+									   in LPCOLESTR pszProjectMk, in LPCOLESTR pszKey,
+									   in BOOL fPreLoad, /+[in]+/ IPropertyBag pPropBag)
+	{
+		mixin(LogCallMix);
+		if(slnPersistenceKey == to_wstring(pszKey))
+		{
+			VARIANT var;
+			if(pPropBag.Read(slnPersistenceValue.ptr, &var, null) == S_OK)
+			{
+				if (var.vt == VT_BSTR)
+				{
+					string value = detachBSTR(var.bstrVal);
+				}
+			}
+		}
+		return S_OK;
+	}
+	override HRESULT OnProjectLoadFailure(IVsHierarchy pStubHierarchy, in LPCOLESTR pszProjectName,
+										  in LPCOLESTR pszProjectMk, in LPCOLESTR pszKey)
+	{
+		mixin(LogCallMix);
+		return S_OK;
+	}
+
 	/////////////////////////////////////////////////////////////
 	HRESULT InitLibraryManager()
 	{
