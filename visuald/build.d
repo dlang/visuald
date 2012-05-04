@@ -455,9 +455,9 @@ else
 				if(std.string.indexOf(file,'*') >= 0 || std.string.indexOf(file,'?') >= 0)
 				{
 					string dir = dirName(file);
-					string pattern = stripExtension(file);
+					string pattern = baseName(file);
 					if(isExistingDir(dir))
-						foreach(string f; dirEntries(dir, SpanMode.shallow))
+						foreach(string f; dirEntries(dir, SpanMode.depth))
 							if(globMatch(f, pattern))
 								std.file.remove(f);
 				}

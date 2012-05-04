@@ -425,3 +425,4 @@ Version history
 unreleased Version 0.3.33
 
   * debugger project settings now stored in solution options file, not in project file
+  * regression: clean project failed, now deletes files given by wildcard recursively

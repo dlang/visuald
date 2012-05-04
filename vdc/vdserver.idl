@@ -1,7 +1,13 @@
-// bring in core IDL files, 
-// notice the semicolon
-import "oaidl.idl";
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2012 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
 
+// bring in core IDL files
+import "oaidl.idl";
 
 [
 	object,
@@ -15,11 +21,18 @@ interface IVDServer : IUnknown
 {
 	HRESULT ExecCommand([in]BSTR cmd, [out,retval] BSTR* answer);
 	HRESULT ExecCommandAsync([in]BSTR cmd, [out,retval] ULONG* cmdID);
+
+	HRESULT ConfigureSemanticProject([in] BSTR imp, [in] BSTR stringImp, [in] BSTR versionids, [in] BSTR debugids, [in] DWORD flags);
+	HRESULT ClearSemanticProject();
+	HRESULT UpdateModule([in] BSTR filename, [in] BSTR srcText);
+	HRESULT GetType([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BSTR* answer);
+	HRESULT GetSemanticExpansions([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx, [out,retval] BSTR* stringList);
+	HRESULT isBinaryOperator([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BOOL* pIsOp);
 };
 
 // library statement
 [uuid(002a2de9-8bb6-484d-9903-7e4ad4084715), version(1.0),
- helpstring("Visual D Server")]
+ helpstring("Visual D Semantic Server")]
 library VDServerLib
 {
    importlib("stdole32.tlb");

@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2012 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
 module vdc.vdserver;
 
 import std.stdio;
@@ -10,6 +18,14 @@ import sdk.win32.oleauto;
 
 import vdc.semantic;
 
+///////////////////////////////////////////////////////////////
+
+// server object: 002a2de9-8bb6-484d-9901-7e4ad4084715
+// class factory: 002a2de9-8bb6-484d-9902-7e4ad4084715
+// type library : 002a2de9-8bb6-484d-9903-7e4ad4084715
+
+///////////////////////////////////////////////////////////////
+
 static this()
 {
 	CoInitialize(null);
@@ -19,6 +35,8 @@ static ~this()
 {
 	CoUninitialize();
 }
+
+///////////////////////////////////////////////////////////////
 
 interface IVDServer : IUnknown
 {
@@ -67,21 +85,23 @@ class VDServer : ComObject, IVDServer
 	{
 		return E_NOTIMPL;
 	}
-	HRESULT GetType(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex, BSTR* answer)
+	HRESULT GetType(in BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BSTR* answer)
 	{
 		return E_NOTIMPL;
 	}
-	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, int line, int idx, BSTR* stringList)
+	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, BSTR* stringList)
 	{
 		return E_NOTIMPL;
 	}
-	HRESULT isBinaryOperator(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
+	HRESULT isBinaryOperator(in BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BOOL* pIsOp)
 	{
 		return S_FALSE;
 	}
 private:
 	vdc.semantic.Project mSemanticProject;
 }
+
+///////////////////////////////////////////////////////////////
 
 class VDServerClassFactory : ComObject, IClassFactory
 {
@@ -124,6 +144,8 @@ class VDServerClassFactory : ComObject, IClassFactory
 
 	int lockCount;
 }
+
+///////////////////////////////////////////////////////////////
 
 int main(string[] argv)
 {

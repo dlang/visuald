@@ -1,0 +1,77 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// License for redistribution is given by the Artistic License 2.0
+// see file LICENSE for further details
+
+/////////////////////////////////////////////////////////////////////////////
+// Resources for the Visual D semantic server
+//
+1 TYPELIB vdserver.tlb
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+#define __str(x) #x
+#define _str(x) __str(x)
+
+#include "../version"
+
+#define VER_COMPANYNAME_STR     "Rainer Schuetze"
+#define VER_FILEVERSION         VERSION_MAJOR,VERSION_MINOR,VERSION_REVISION
+#define VER_FILEVERSION_STR     _str(VERSION_MAJOR.VERSION_MINOR.VERSION_REVISION)
+#define VER_PRODUCTVERSION      VER_FILEVERSION
+#define VER_PRODUCTVERSION_STR  VER_FILEVERSION_STR
+#define VER_LEGALCOPYRIGHT_STR  "(c) 2012 Rainer Schuetze"
+
+#define VER_FILEDESCRIPTION_STR  "Visual D Semantic Server\0"
+#define VER_PRODUCTNAME_STR      "VDServer\0"
+#define VER_INTERNALNAME_STR     "vdserver.exe\0"
+#define VER_ORIGINALFILENAME_STR "vdserver.exe\0"
+#define VER_LANGUAGENEUTRAL
+
+#define VER_FILEFLAGSMASK 0x3fL
+#define VER_FILEFLAGS     0x8L
+#define VER_FILEOS        0x40004L
+#define VER_FILETYPE      0x1L // VS_APP
+#define VER_FILESUBTYPE   0x0L // unknown
+
+#define VER_BLOCKHEADER   "040904b0"
+#define VER_TRANSLATION   0x409
+
+/////////////////////////////////////////////////////////////////////////////
+#define VS_VERSION_INFO         1
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    VER_FILEVERSION
+PRODUCTVERSION VER_PRODUCTVERSION
+FILEFLAGSMASK  VER_FILEFLAGSMASK
+FILEFLAGS      VER_FILEFLAGS
+FILEOS         VER_FILEOS
+FILETYPE       VER_FILETYPE
+FILESUBTYPE    VER_FILESUBTYPE
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK VER_BLOCKHEADER
+        BEGIN
+            VALUE "CompanyName",     VER_COMPANYNAME_STR
+            VALUE "FileDescription", VER_FILEDESCRIPTION_STR
+            VALUE "FileVersion",     VER_FILEVERSION_STR
+            VALUE "InternalName",    VER_INTERNALNAME_STR
+            VALUE "LegalCopyright",  VER_LEGALCOPYRIGHT_STR
+            VALUE "OriginalFilename",VER_ORIGINALFILENAME_STR
+            VALUE "ProductName",     VER_PRODUCTNAME_STR
+            VALUE "ProductVersion",  VER_PRODUCTVERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", VER_TRANSLATION, 0x04B0
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////
