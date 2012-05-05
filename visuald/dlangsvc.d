@@ -29,7 +29,7 @@ import visuald.simpleparser;
 import visuald.config;
 import visuald.vdserverclient;
 
-//version = VDServer;
+version = VDServer;
 
 //version = DEBUG_GC;
 //version = TWEAK_GC;
@@ -685,7 +685,13 @@ class LanguageService : DisposingComObject,
 	{
 		string GetType(Source src, TextSpan* pSpan)
 		{
-			return null;
+			BSTR fname = allocBSTR(src.GetFileName());
+			BSTR btype;
+			HRESULT rc = gVDServer.GetType(fname, pSpan.iStartLine, pSpan.iStartIndex, pSpan.iEndLine, pSpan.iEndIndex, &btype);
+			freeBSTR(fname);
+			if(rc != S_OK)
+				return null;
+			return detachBSTR(btype);
 		}
 		string[] GetSemanticExpansions(Source src, string tok, int line, int idx)
 		{
@@ -693,13 +699,23 @@ class LanguageService : DisposingComObject,
 		}
 		bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			return false;
+			if(!gVDServer)
+				return false;
+			
+			BOOL res;
+			BSTR fname = allocBSTR(src.GetFileName());
+			HRESULT rc = gVDServer.IsBinaryOperator(fname, startLine, startIndex, endLine, endIndex, &res);
+			freeBSTR(fname);
+			return rc == S_OK && res != 0;
 		}
+
 		void UpdateSemanticModule(Source src)
 		{
 		}
 		void ClearSemanticProject()
 		{
+			if(!gVDServer)
+				gVDServer.ClearSemanticProject();
 		}
 	}
 	else
@@ -739,7 +755,7 @@ class LanguageService : DisposingComObject,
 		string fname = src.GetFileName();
 		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
 		if(!sm || sm.parsed != src.mAST)
-			mSemanticProject.addSource(fname, src.mAST);
+			mSemanticProject.addSource(fname, src.mAST, null);
 	}
 
 	ast.Module GetSemanticModule(Source src)
@@ -761,7 +777,7 @@ class LanguageService : DisposingComObject,
 		if(sm && sm.parsed is src.mAST && astUptodate)
 			mod = sm.analyzed;
 		else if(astUptodate)
-			mod = mSemanticProject.addSource(fname, src.mAST);
+			mod = mSemanticProject.addSource(fname, src.mAST, null);
 		else
 		{
 			wstring wtxt = src.GetText(); // should not be read from another thread
@@ -1229,6 +1245,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	NewHiddenRegion[] mOutlineRegions;
 
 	int mParsingState;
+	int mModificationCountErrors;
 	int mModificationCountAST;
 	int mModificationCount;
 
@@ -1240,6 +1257,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 
 		mOutlining = Package.GetGlobalOptions().autoOutlining;
 		mModificationCountAST = -1;
+		mModificationCountErrors = -1;
 	}
 	~this()
 	{
@@ -3083,7 +3101,7 @@ else
 			parseTaskPool.isDaemon = true;
 			parseTaskPool.priority(core.thread.Thread.PRIORITY_MIN);
 		}
-		auto task = task(&doParse);
+		auto task = task(dg);
 		parseTaskPool.put(task);
 	}
 	
@@ -3101,17 +3119,66 @@ else
 				parser.abort = true;
 
 		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
+		{
+			version(VDServer)
+			{
+				if(!gVDServer || mModificationCountErrors == mModificationCountAST)
+					return false;
+
+				BSTR fname = allocBSTR(GetFileName());
+				scope(exit) freeBSTR(fname);
+				BSTR errors;
+				if(gVDServer.GetParseErrors(fname, &errors) != S_OK)
+					return false;
+				string err = detachBSTR(errors);
+				
+				string[] errs = splitLines(err);
+				mParseErrors = mParseErrors.init;
+				foreach(e; errs)
+				{
+					auto idx = countUntil(e, ':');
+					if(idx > 0)
+					{
+						string[] num = split(e[0..idx], ",");
+						if(num.length == 4)
+						{
+							ParseError error;
+							error.span.iStartLine  = parse!int(num[0]);
+							error.span.iStartIndex = parse!int(num[1]);
+							error.span.iEndLine    = parse!int(num[2]);
+							error.span.iEndIndex   = parse!int(num[3]);
+							error.msg = e[idx+1..$];
+							mParseErrors ~= error;
+						}
+					}
+				}
+				finishParseErrros();
+				mModificationCountErrors = mModificationCountAST;
+			}
 			return false;
+		}
 		
 		mParseText = GetText(); // should not be read from another thread
 		mParsingState = 1;
 		mModificationCountAST = mModificationCount;
 		runTask(&doParse);
 		
+		version(VDServer)
+		{
+			if(Package.GetGlobalOptions().parseSource && gVDServer)
+			{
+				BSTR btxt = allocwBSTR(mParseText);
+				BSTR bfname = allocBSTR(GetFileName());
+				gVDServer.UpdateModule(bfname, btxt);
+				freeBSTR(bfname);
+				freeBSTR(btxt);
+			}
+		}
+
 		return true;
 	}
-	
-	bool finishParsing()
+
+	void finishParseErrros()
 	{
 		IVsEnumLineMarkers pEnum;
 		if(mBuffer.EnumMarkers(0, 0, 0, 0, MARKER_CODESENSE_ERROR, EM_ENTIREBUFFER, &pEnum) == S_OK)
@@ -3124,6 +3191,7 @@ else
 				marker.Release();
 			}
 		}
+
 		for(int i = 0; i < mParseErrors.length; i++)
 		{
 			auto span = mParseErrors[i].span;
@@ -3131,7 +3199,13 @@ else
 			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex, 
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
 		}
-		
+	}
+
+	bool finishParsing()
+	{
+		version(VDServer) {} else
+			finishParseErrros();
+
 		if(mOutlining)
 		{
 			if(mStopOutlining)
@@ -3161,7 +3235,8 @@ else
 			version(DEBUG_GC)
 				int nodes = ast.Node.countNodes;
 
-			version(VDServer) {} else
+			version(VDServer) {
+			} else
 			{
 				string txt = to!string(mParseText);
 				mParser = new Parser;

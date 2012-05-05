@@ -25,9 +25,10 @@ interface IVDServer : IUnknown
 	HRESULT ConfigureSemanticProject([in] BSTR imp, [in] BSTR stringImp, [in] BSTR versionids, [in] BSTR debugids, [in] DWORD flags);
 	HRESULT ClearSemanticProject();
 	HRESULT UpdateModule([in] BSTR filename, [in] BSTR srcText);
-	HRESULT GetType([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BSTR* answer);
+	HRESULT GetType([in] BSTR filename, [in,out] DWORD *startLine, [in,out] DWORD *startIndex, [in,out] DWORD *endLine, [in,out] DWORD *endIndex, [out,retval] BSTR* answer);
 	HRESULT GetSemanticExpansions([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx, [out,retval] BSTR* stringList);
-	HRESULT isBinaryOperator([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BOOL* pIsOp);
+	HRESULT IsBinaryOperator([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BOOL* pIsOp);
+	HRESULT GetParseErrors([in] BSTR filename, [out,retval] BSTR* errors);
 };
 
 // library statement

@@ -452,10 +452,12 @@ class SourceModule
 	// filename already in Module
 	SysTime lastModified;
 	int optionsChangeCount;
+	bool parsing;
 
 	string txt;
 	Module parsed;
 	Module analyzed;
+	ParseError[] parseErrors;
 }
 
 class Project : Node
@@ -486,7 +488,7 @@ class Project : Node
 		threadContext = new Context(null);
 	}
 
-	Module addSource(string fname, Module mod, bool imported = false)
+	Module addSource(string fname, Module mod, ParseError[] errors, bool imported = false)
 	{
 		mod.filename = fname;
 		mod.imported = imported;
@@ -508,6 +510,8 @@ class Project : Node
 		if(src.parsed)
 			src.parsed.disconnect();
 		src.parsed = mod;
+		src.parseErrors = errors;
+		src.parsing = false;
 
 		if(std.file.exists(fname)) // could be pseudo name
 			src.lastModified = std.file.timeLastModified(fname);
@@ -546,7 +550,7 @@ class Project : Node
 			return null;
 
 		auto mod = static_cast!(Module)(n);
-		return addSource(fname, mod, imported);
+		return addSource(fname, mod, p.errors, imported);
 	}
 	
 	Module addAndParseFile(string fname, bool imported = false)
@@ -637,6 +641,17 @@ class Project : Node
 	////////////////////////////////////////////////////////////
 	void update()
 	{
+	}
+
+	void disconnectAll()
+	{
+		foreach(s; mSourcesByFileName)
+		{
+			if(s.parsed)
+				s.parsed.disconnect();
+			if(s.analyzed)
+				s.analyzed.disconnect();
+		}
 	}
 
 	////////////////////////////////////////////////////////////
@@ -818,12 +833,13 @@ struct VersionDebug
 }
 
 class Options
-{
-	bool unittestOn;
-	
+{	
 	string[] importDirs;
+	string[] stringImportDirs;
 	
 	public /* debug & version handling */ {
+	bool unittestOn;
+	bool x64;
 	bool debugOn;
 	VersionDebug debugIds;
 	VersionDebug versionIds;

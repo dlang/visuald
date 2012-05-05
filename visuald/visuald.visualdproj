@@ -91,7 +91,7 @@
   <debugworkingdir />
   <debugattach>0</debugattach>
   <debugremote />
-  <debugEngine>1</debugEngine>
+  <debugEngine>0</debugEngine>
   <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
   <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj</filesToClean>
@@ -206,7 +206,10 @@
    <File path="Resources\DSplashScreenIcon.bmp" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
-   <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set PATH=%PATH%;c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin&#10;set PATH=%PATH%;$(DevEnvDir)&#10;set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin&#10;CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
+   <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set PATH=%PATH%;c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
+set PATH=%PATH%;$(DevEnvDir)
+set PATH=%PATH%;$(DevEnvDir)\..\..\VC\bin
+CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)\$(InputName).cto" />
    <File path="Resources\refresh.ico" />
    <File path="Resources\RegExp.ico" />
    <File path="Resources\removetrace.ico" />
@@ -225,8 +228,9 @@
    <File tool="None" path="..\rsgc\gcx.d" />
   </Folder>
   <Folder name="vdc">
-   <File tool="None" path="..\vdc\lexer.d" />
-   <File tool="None" path="..\vdc\versions.d" />
+   <File path="..\vdc\ivdserver.d" />
+   <File path="..\vdc\lexer.d" />
+   <File path="..\vdc\versions.d" />
   </Folder>
   <File path="build.d" />
   <File path="chiercontainer.d" />

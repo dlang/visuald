@@ -8,6 +8,8 @@
 
 module visuald.vdserverclient;
 
+import vdc.ivdserver;
+
 import sdk.win32.oaidl;
 import sdk.win32.objbase;
 import sdk.win32.oleauto;
@@ -16,16 +18,7 @@ import sdk.port.base;
 
 import stdext.com;
 
-//version = VDServer;
-
-interface IVDServer : IUnknown
-{
-	static GUID iid = uuid("002a2de9-8bb6-484d-9901-7e4ad4084715");
-
-public:
-	HRESULT ExecCommand(in BSTR cmd, BSTR* answer);
-	HRESULT ExecCommandAsync(in BSTR cmd, ULONG* cmdID);
-}
+version = VDServer;
 
 static GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
 
