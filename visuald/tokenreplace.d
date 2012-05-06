@@ -712,6 +712,8 @@ TokenList createReplacementTokenList(RTYPE) (RTYPE[] replace, TokenRange match, 
 int _replaceTokenSequence(RTYPE)(TokenList srctoken, _string[] search, RTYPE[] replace, 
 								 ref const ReplaceOptions opt, ReplaceRange[]* ranges)
 {
+	if(search.length == 0) // do not replace an empty token list (everything?)
+		return 0;
 	for(int i = 0; i < search.length; i++)
 		search[i] = strip(search[i]);
 

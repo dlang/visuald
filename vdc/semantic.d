@@ -452,12 +452,15 @@ class SourceModule
 	// filename already in Module
 	SysTime lastModified;
 	int optionsChangeCount;
-	bool parsing;
 
 	string txt;
 	Module parsed;
 	Module analyzed;
+	
+	Parser parser;
 	ParseError[] parseErrors;
+
+	bool parsing() { return parser !is null; }
 }
 
 class Project : Node
@@ -501,17 +504,19 @@ class Project : Node
 			{
 				semanticErrorFile(fname, "module name " ~ modname ~ " already used by " ~ pm.parsed.filename);
 				countErrors++;
-				return null;
+				//return null;
 			}
 			src = *pm;
 		}
+		else if(auto pm = fname in mSourcesByFileName)
+			src = *pm;
 		else
 			src = new SourceModule;
+
 		if(src.parsed)
 			src.parsed.disconnect();
 		src.parsed = mod;
 		src.parseErrors = errors;
-		src.parsing = false;
 
 		if(std.file.exists(fname)) // could be pseudo name
 			src.lastModified = std.file.timeLastModified(fname);
@@ -531,7 +536,16 @@ class Project : Node
 	////////////////////////////////////////////////////////////
 	Module addText(string fname, string txt, bool imported = false)
 	{
+		SourceModule src;
+		if(auto pm = fname in mSourcesByFileName)
+			src = *pm;
+		else
+			src = new SourceModule;
+
 		Parser p = new Parser;
+		src.parser = p;
+		scope(exit) src.parser = null;
+
 		p.filename = fname;
 		Node n;
 		try
