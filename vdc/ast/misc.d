@@ -18,6 +18,7 @@ import vdc.ast.expr;
 import vdc.ast.decl;
 import vdc.ast.stmt;
 import vdc.ast.type;
+import vdc.ast.writer;
 
 import stdext.util;
 

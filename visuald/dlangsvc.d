@@ -41,11 +41,11 @@ extern (C) GCStats gc_stats();
 }
 
 import vdc.lexer;
+static import vdc.util;
 
 version(VDServer) {}
 else {
 	import ast = vdc.ast.all;
-	static import vdc.util;
 	import vdc.parser.engine;
 	import vdc.semantic;
 	import vdc.interpret;
@@ -53,6 +53,7 @@ else {
 
 import stdext.array;
 import stdext.string;
+import stdext.path;
 
 import std.string;
 import std.ascii;
@@ -104,7 +105,8 @@ class LanguageService : DisposingComObject,
 		//mPackage = pkg;
 		mUpdateSolutionEvents = new UpdateSolutionEvents(this);
 
-		startVDServer();
+		version(VDServer)
+			mVDServerClient = new VDServerClient;
 	}
 
 	~this()
@@ -173,7 +175,7 @@ class LanguageService : DisposingComObject,
 			mgr.Release();
 		mCodeWinMgrs = mCodeWinMgrs.init;
 
-		stopVDServer();
+		mVDServerClient.shutDown();
 
 		if(mUpdateSolutionEventsCookie != VSCOOKIE_NIL)
 		{
@@ -614,6 +616,9 @@ class LanguageService : DisposingComObject,
 	//////////////////////////////////////////////////////////////
 	bool OnIdle()
 	{
+		version(VDServer)
+			mVDServerClient.onIdle();
+
 		CheckGC(false);
 		for(int i = 0; i < mSources.length; i++)
 			if(mSources[i].OnIdle())
@@ -681,42 +686,49 @@ class LanguageService : DisposingComObject,
 	}
 
 	// semantic completion ///////////////////////////////////
+
 	version(VDServer)
 	{
-		string GetType(Source src, TextSpan* pSpan)
+		uint GetType(Source src, TextSpan* pSpan, GetTypeCallBack cb)
 		{
-			BSTR fname = allocBSTR(src.GetFileName());
-			BSTR btype;
-			HRESULT rc = gVDServer.GetType(fname, pSpan.iStartLine, pSpan.iStartIndex, pSpan.iEndLine, pSpan.iEndIndex, &btype);
-			freeBSTR(fname);
-			if(rc != S_OK)
-				return null;
-			return detachBSTR(btype);
+			return mVDServerClient.GetType(src.GetFileName(), pSpan, cb);
 		}
-		string[] GetSemanticExpansions(Source src, string tok, int line, int idx)
+		uint GetSemanticExpansions(Source src, string tok, int line, int idx, GetExpansionsCallBack cb)
 		{
-			return null;
+			return mVDServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, cb);
 		}
-		bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
-		{
-			if(!gVDServer)
-				return false;
-			
-			BOOL res;
-			BSTR fname = allocBSTR(src.GetFileName());
-			HRESULT rc = gVDServer.IsBinaryOperator(fname, startLine, startIndex, endLine, endIndex, &res);
-			freeBSTR(fname);
-			return rc == S_OK && res != 0;
-		}
-
 		void UpdateSemanticModule(Source src)
 		{
 		}
 		void ClearSemanticProject()
 		{
-			if(!gVDServer)
-				gVDServer.ClearSemanticProject();
+			mVDServerClient.ClearSemanticProject();
 		}
+
+		void ConfigureSemanticProject(Source src)
+		{
+			string file = src.GetFileName();
+			string[] imp = GetImportPaths(file);
+			if(Config cfg = getProjectConfig(file))
+			{
+				scope(exit) release(cfg);
+				auto cfgopts = cfg.GetProjectOptions();
+				uint flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
+											   cfgopts.versionlevel, cfgopts.debuglevel);
+				string[] stringImp = tokenizeArgs(cfgopts.fileImppath);
+				makeFilenamesAbsolute(stringImp, cfg.GetProjectDir());
+				string[] versionids = tokenizeArgs(cfgopts.versionids);
+				string[] debugids = tokenizeArgs(cfgopts.debugids); 
+				mVDServerClient.ConfigureSemanticProject(imp, stringImp, versionids, debugids, flags);
+			}
+		}
+		bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
+		{
+			auto pos = vdc.util.TextPos(startIndex, startLine);
+			return src.mBinaryIsIn.contains(pos) !is null;
+			//return mVDServerClient.isBinaryOperator(src.GetFileName(), startLine, startIndex, endLine, endIndex);
+		}
+
 	}
 	else
 	{
@@ -808,7 +820,7 @@ class LanguageService : DisposingComObject,
 		return n;
 	}
 
-	string GetType(Source src, TextSpan* pSpan)
+	string GetType(Source src, TextSpan* pSpan, GetTypeCallBack cb)
 	{
 		string txt;
 		try
@@ -909,6 +921,7 @@ private:
 	
 	version(VDServer)
 	{
+		VDServerClient   mVDServerClient;
 	}
 	else
 	{
@@ -1242,6 +1255,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	}
 	wstring mParseText;
 	ParseError[] mParseErrors;
+	vdc.util.TextPos[] mBinaryIsIn;
 	NewHiddenRegion[] mOutlineRegions;
 
 	int mParsingState;
@@ -1359,14 +1373,14 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		return S_OK;
 	}
 
-	HRESULT ReColorizeLines (int iTopLine, int iBottomLine)
+	HRESULT ReColorizeLines(int iTopLine, int iBottomLine)
 	{
 		if(IVsTextColorState colorState = qi_cast!IVsTextColorState(mBuffer))
 		{
 			scope(exit) release(colorState);
 			if(iBottomLine == -1)
 				iBottomLine = GetLineCount() - 1;
-			colorState.ReColorizeLines (iTopLine, iBottomLine);
+			colorState.ReColorizeLines(iTopLine, iBottomLine);
 		}
 		return S_OK;
 	}
@@ -3120,39 +3134,16 @@ else
 
 		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
 		{
-			version(VDServer)
+			version(old_VDServer)
 			{
-				if(!gVDServer || mModificationCountErrors == mModificationCountAST)
+				if(mModificationCountErrors == mModificationCountAST)
 					return false;
 
-				BSTR fname = allocBSTR(GetFileName());
-				scope(exit) freeBSTR(fname);
-				BSTR errors;
-				if(gVDServer.GetParseErrors(fname, &errors) != S_OK)
+				string err;
+				if(!Package.GetLanguageService().mVDServerClient.GetParseErrors(GetFileName(), err))
 					return false;
-				string err = detachBSTR(errors);
 				
-				string[] errs = splitLines(err);
-				mParseErrors = mParseErrors.init;
-				foreach(e; errs)
-				{
-					auto idx = countUntil(e, ':');
-					if(idx > 0)
-					{
-						string[] num = split(e[0..idx], ",");
-						if(num.length == 4)
-						{
-							ParseError error;
-							error.span.iStartLine  = parse!int(num[0]);
-							error.span.iStartIndex = parse!int(num[1]);
-							error.span.iEndLine    = parse!int(num[2]);
-							error.span.iEndIndex   = parse!int(num[3]);
-							error.msg = e[idx+1..$];
-							mParseErrors ~= error;
-						}
-					}
-				}
-				finishParseErrros();
+				updateParseErrors(err);
 				mModificationCountErrors = mModificationCountAST;
 			}
 			return false;
@@ -3165,17 +3156,54 @@ else
 		
 		version(VDServer)
 		{
-			if(Package.GetGlobalOptions().parseSource && gVDServer)
+			if(Package.GetGlobalOptions().parseSource)
 			{
 				BSTR btxt = allocwBSTR(mParseText);
 				BSTR bfname = allocBSTR(GetFileName());
-				gVDServer.UpdateModule(bfname, btxt);
+				Package.GetLanguageService().mVDServerClient.UpdateModule(GetFileName(), mParseText, &OnUpdateModule);
 				freeBSTR(bfname);
 				freeBSTR(btxt);
 			}
 		}
 
 		return true;
+	}
+
+	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn)
+	{
+		updateParseErrors(parseErrors);
+		mBinaryIsIn = binaryIsIn;
+		if(IVsTextColorState colorState = qi_cast!IVsTextColorState(mBuffer))
+		{
+			scope(exit) release(colorState);
+			foreach(pos; mBinaryIsIn)
+				colorState.ReColorizeLines(pos.line - 1, pos.line - 1);
+		}
+	}
+
+	void updateParseErrors(string err)
+	{
+		string[] errs = splitLines(err);
+		mParseErrors = mParseErrors.init;
+		foreach(e; errs)
+		{
+			auto idx = countUntil(e, ':');
+			if(idx > 0)
+			{
+				string[] num = split(e[0..idx], ",");
+				if(num.length == 4)
+				{
+					ParseError error;
+					error.span.iStartLine  = parse!int(num[0]);
+					error.span.iStartIndex = parse!int(num[1]);
+					error.span.iEndLine    = parse!int(num[2]);
+					error.span.iEndIndex   = parse!int(num[3]);
+					error.msg = e[idx+1..$];
+					mParseErrors ~= error;
+				}
+			}
+		}
+		finishParseErrros();
 	}
 
 	void finishParseErrros()
@@ -3224,7 +3252,7 @@ else
 
 		mParseText = null;
 		mParsingState = 0;
-		ReColorizeLines (0, -1);
+		ReColorizeLines(0, -1);
 		return true;
 	}
 	

@@ -37,6 +37,7 @@ import vdc.ast.type;
 import vdc.ast.aggr;
 import vdc.ast.expr;
 import vdc.ast.node;
+import vdc.ast.writer;
 
 import stdext.util;
 

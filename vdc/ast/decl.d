@@ -22,6 +22,7 @@ import vdc.ast.tmpl;
 import vdc.ast.stmt;
 import vdc.ast.type;
 import vdc.ast.mod;
+import vdc.ast.writer;
 
 import std.conv;
 import stdext.util;

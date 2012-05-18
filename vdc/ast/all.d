@@ -18,3 +18,4 @@ public import vdc.ast.node;
 public import vdc.ast.stmt;
 public import vdc.ast.tmpl;
 public import vdc.ast.type;
+public import vdc.ast.writer;

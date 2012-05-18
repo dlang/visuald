@@ -291,34 +291,71 @@ class Declarations
 			int hr = textView.GetCaretPos(&line, &idx);
 
 			auto langsvc = Package.GetLanguageService();
-			string[] symbols = langsvc.GetSemanticExpansions(src, tok, line, idx);
-			if(symbols.length == 0)
-				return false;
+			mPendingSource = src;
+			mPendingView = textView;
+			mPendingRequest = langsvc.GetSemanticExpansions(src, tok, line, idx, &OnExpansions);
+			return true;
+		}
+		catch(Error e)
+		{
+			writeToBuildOutputPane(e.msg);
+		}
+		return false;
+	}
 
+	extern(D) void OnExpansions(uint request, string filename, string tok, int line, int idx, string[] symbols)
+	{
+		if(request != mPendingRequest)
+			return;
+
+		if(symbols.length > 0 && mPendingSource)
+		{
 			size_t namesLength = mNames.length;
 			foreach(s; symbols)
 				mNames.addunique(s);
 
 			sort!("icmp(a, b) < 0", SwapStrategy.stable)(mNames);
-			return mNames.length > namesLength;
+			mPendingSource.GetCompletionSet().Init(mPendingView, this, false);
 		}
-		catch(Error e)
-		{
-			writeToBuildOutputPane(e.msg);
-			return false;
-		}
+		mPendingRequest = 0;
+		mPendingView = null;
+		mPendingSource = null;
 	}
 
+	uint mPendingRequest;
+	IVsTextView mPendingView;
+	Source mPendingSource;
+
 	////////////////////////////////////////////////////////////////////////
-	bool StartExpansions(IVsTextView textView, Source src)
+	bool StartExpansions(IVsTextView textView, Source src, bool autoInsert)
 	{
 		mNames = mNames.init;
 		mExpansionState = kStateInit;
 		
-		return MoreExpansions(textView, src);
+		if(!_MoreExpansions(textView, src))
+			return false;
+
+		if(autoInsert)
+		{
+			while(GetCount() == 1 && _MoreExpansions(textView, src)) {}
+			if(GetCount() == 1)
+			{
+				int line, idx, startIdx, endIdx;
+				textView.GetCaretPos(&line, &idx);
+				if(src.GetWordExtent(line, idx, WORDEXT_FINDTOKEN, startIdx, endIdx))
+				{
+					wstring txt = to!wstring(GetName(0));
+					TextSpan changedSpan;
+					src.mBuffer.ReplaceLines(line, startIdx, line, endIdx, txt.ptr, txt.length, &changedSpan);
+					return true;
+				}
+			}
+		}
+		src.GetCompletionSet().Init(textView, this, false);
+		return true;
 	}
 
-	bool MoreExpansions(IVsTextView textView, Source src)
+	bool _MoreExpansions(IVsTextView textView, Source src)
 	{
 		switch(mExpansionState)
 		{
@@ -356,6 +393,12 @@ class Declarations
 		return false;
 	}
 
+	bool MoreExpansions(IVsTextView textView, Source src)
+	{
+		_MoreExpansions(textView, src);
+		src.GetCompletionSet().Init(textView, this, false);
+		return true;
+	}
 }
 
 class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx

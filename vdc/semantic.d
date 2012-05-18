@@ -16,6 +16,7 @@ import vdc.ast.aggr;
 import vdc.ast.decl;
 import vdc.ast.expr;
 import vdc.ast.tmpl;
+import vdc.ast.writer;
 import vdc.parser.engine;
 import vdc.logger;
 import vdc.interpret;
@@ -57,12 +58,7 @@ enum MessageType
 	Message
 }
 
-void semanticWriteError(MessageType, string msg)
-{
-	writeln(msg);
-}
-
-void function(MessageType,string) fnSemanticWriteError = &semanticWriteError;
+void delegate(MessageType,string) fnSemanticWriteError = null;
 
 string semanticErrorWriteLoc(string filename, ref const(TextPos) pos)
 {
@@ -82,7 +78,8 @@ void semanticErrorLoc(T...)(string filename, ref const(TextPos) pos, T args)
 	
 	string msg = semanticErrorWriteLoc(filename, pos);
 	msg ~= text(args);
-	fnSemanticWriteError(MessageType.Error, msg);
+	if(fnSemanticWriteError)
+		fnSemanticWriteError(MessageType.Error, msg);
 	logInfo(msg);
 }
 
@@ -110,7 +107,8 @@ void semanticErrorFile(T...)(string fname, T args)
 
 void semanticMessage(string msg)
 {
-	fnSemanticWriteError(MessageType.Message, msg);
+	if(fnSemanticWriteError)
+		fnSemanticWriteError(MessageType.Message, msg);
 }
 
 ErrorValue semanticErrorValue(T...)(T args)
@@ -555,7 +553,8 @@ class Project : Node
 		}
 		catch(Exception e)
 		{
-			fnSemanticWriteError(MessageType.Error, e.msg);
+			if(fnSemanticWriteError)
+				fnSemanticWriteError(MessageType.Error, e.msg);
 			countErrors += p.countErrors + 1;
 			return null;
 		}

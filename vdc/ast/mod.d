@@ -18,6 +18,7 @@ import vdc.ast.expr;
 import vdc.ast.misc;
 import vdc.ast.aggr;
 import vdc.ast.tmpl;
+import vdc.ast.writer;
 
 import vdc.parser.engine;
 import vdc.interpret;

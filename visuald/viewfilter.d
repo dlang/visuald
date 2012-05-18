@@ -249,7 +249,7 @@ version(tip)
 				if(mCodeWinMgr.mSource.IsCompletorActive())
 					moreCompletions();
 				else
-					initCompletion();
+					initCompletion(true);
 				return S_OK;
 
 			case ECMD_SURROUNDWITH:
@@ -364,7 +364,7 @@ version(tip)
 			case ECMD_RIGHT:
 			case ECMD_BACKSPACE:
 				if(mCodeWinMgr.mSource.IsCompletorActive())
-					initCompletion();
+					initCompletion(false);
 				goto case;
 			case ECMD_UP:
 			case ECMD_DOWN:
@@ -376,12 +376,12 @@ version(tip)
 				dchar ch = pvaIn.uiVal;
 				if(ch == '.' && Package.GetGlobalOptions().expandTrigger >= 1 
 				   && Package.GetGlobalOptions().projectSemantics)
-					initCompletion();
+					initCompletion(false);
 				
 				else if(mCodeWinMgr.mSource.IsCompletorActive() || Package.GetGlobalOptions().expandTrigger >= 2)
 				{
 					if(isAlphaNum(ch) || ch == '_')
-						initCompletion();
+						initCompletion(false);
 					else
 						mCodeWinMgr.mSource.DismissCompletor();
 				}
@@ -488,35 +488,17 @@ version(tip)
 
 	//////////////////////////////
 
-	void initCompletion()
+	void initCompletion(bool autoInsert)
 	{
 		CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet();
 		Declarations decl = new Declarations;
-		decl.StartExpansions(mView, mCodeWinMgr.mSource);
-		if(!mCodeWinMgr.mSource.IsCompletorActive())
-		{
-			while(decl.GetCount() == 1 && decl.MoreExpansions(mView, mCodeWinMgr.mSource)) {}
-			if(decl.GetCount() == 1)
-			{
-				int line, idx, startIdx, endIdx;
-				mView.GetCaretPos(&line, &idx);
-				if(mCodeWinMgr.mSource.GetWordExtent(line, idx, WORDEXT_FINDTOKEN, startIdx, endIdx))
-				{
-					wstring txt = to!wstring(decl.GetName(0));
-					TextSpan changedSpan;
-					mCodeWinMgr.mSource.mBuffer.ReplaceLines(line, startIdx, line, endIdx, txt.ptr, txt.length, &changedSpan);
-					return;
-				}
-			}
-		}
-		cs.Init(mView, decl, false);
+		decl.StartExpansions(mView, mCodeWinMgr.mSource, autoInsert);
 	}
 	void moreCompletions()
 	{
 		CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet();
 		Declarations decl = cs.mDecls;
 		decl.MoreExpansions(mView, mCodeWinMgr.mSource);
-		cs.Init(mView, decl, false);
 	}
 		
 	int QueryCommandStatus(in GUID *guidCmdGroup, uint cmdID)
@@ -1338,11 +1320,19 @@ version(none) // quick info tooltips not good enough yet
 }
 		if(Package.GetGlobalOptions().showTypeInTooltip)
 		{
-			string txt = Package.GetLanguageService().GetType(mCodeWinMgr.mSource, &span);
-			if(txt.length)
+			if(mPendingSpan == span && mTipRequest == mPendingRequest)
 			{
-				*pbstrText = allocBSTR(txt);
-				*pSpan = span;
+				*pbstrText = allocBSTR(mTipText);
+				*pSpan = mTipSpan;
+			}
+			else
+			{
+				if(mPendingSpan != span)
+				{
+					mPendingSpan = span;
+					mPendingRequest = Package.GetLanguageService().GetType(mCodeWinMgr.mSource, &span, &OnGetTipText);
+				}
+				return E_PENDING;
 			}
 		}
 
@@ -1402,6 +1392,30 @@ version(none) // quick info tooltips not good enough yet
 	{
 		mixin(LogCallMix);
 		return S_OK;
+	}
+
+	//////////////////////////////
+	TextSpan mPendingSpan;
+	uint mPendingRequest;
+	TextSpan mTipSpan;
+	string mTipText;
+	uint mTipRequest;
+
+	extern(D) void OnGetTipText(uint request, string filename, string text, TextSpan span)
+	{
+		mTipText = text;
+		mTipSpan = span;
+		mTipRequest = request;
+		version(none)
+		{
+			if(type.length)
+			{
+				mTextTipData.Init(mView, type);
+				mTextTipData.UpdateView();
+			}
+			else
+				mTextTipData.Dismiss();
+		}
 	}
 
 	bool OnIdle()

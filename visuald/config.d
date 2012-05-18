@@ -191,7 +191,11 @@ class ProjectOptions
 	string runargs;		// arguments for executable
 
 	bool runCv2pdb;		// run cv2pdb on executable
+	bool cv2pdbPre2043;		// pass version before 2.043 for older aa implementation
+	bool cv2pdbNoDemangle;	// do not demangle symbols
+	bool cv2pdbEnumType;	// use enumerator type 
 	string pathCv2pdb;	// exe path for cv2pdb 
+	string cv2pdbOptions;	// more options for cv2pdb 
 
 	enum
 	{
@@ -581,8 +585,9 @@ class ProjectOptions
 				cmd ~= " " ~ objfiles;
 			if(deffile.length)
 				cmd ~= " " ~ deffile;
-			if(libfiles.length)
-				cmd ~= " " ~ libfiles;
+// added later in getCommandFileList
+//			if(libfiles.length)
+//				cmd ~= " " ~ libfiles;
 			if(resfile.length)
 				cmd ~= " " ~ resfile;
 		}
@@ -696,8 +701,19 @@ class ProjectOptions
 		if(usesCv2pdb())
 		{
 			string target = getTargetPath();
-			string cmd = quoteFilename(pathCv2pdb) ~ " -D" ~ to!(string)(Dversion) ~ " ";
-			cmd ~= quoteFilename(target ~ "_cv") ~ " " ~ quoteFilename(target);
+			string cmd = quoteFilename(pathCv2pdb);
+			if(Dversion < 2)
+				cmd = " -D" ~ to!(string)(Dversion) ~ " ";
+			else if(cv2pdbPre2043)
+				cmd ~= " -D2.001";
+			if(cv2pdbEnumType)
+				cmd ~= " -e";
+			if(cv2pdbNoDemangle)
+				cmd ~= " -n";
+			if(cv2pdbOptions.length)
+				cmd ~= " " ~ cv2pdbOptions;
+
+			cmd ~= " " ~ quoteFilename(target ~ "_cv") ~ " " ~ quoteFilename(target);
 			return cmd;
 		}
 		return "";
@@ -823,7 +839,11 @@ class ProjectOptions
 
 		elem ~= new xml.Element("runCv2pdb", toElem(runCv2pdb));
 		elem ~= new xml.Element("pathCv2pdb", toElem(pathCv2pdb));
-		
+		elem ~= new xml.Element("cv2pdbPre2043", toElem(cv2pdbPre2043));
+		elem ~= new xml.Element("cv2pdbNoDemangle", toElem(cv2pdbNoDemangle));
+		elem ~= new xml.Element("cv2pdbEnumType", toElem(cv2pdbEnumType));
+		elem ~= new xml.Element("cv2pdbOptions", toElem(cv2pdbOptions));
+
 		// Linker stuff
 		elem ~= new xml.Element("objfiles", toElem(objfiles));
 		elem ~= new xml.Element("linkswitches", toElem(linkswitches));
@@ -939,6 +959,10 @@ class ProjectOptions
 
 		fromElem(elem, "runCv2pdb", runCv2pdb);
 		fromElem(elem, "pathCv2pdb", pathCv2pdb);
+		fromElem(elem, "cv2pdbPre2043", cv2pdbPre2043);
+		fromElem(elem, "cv2pdbNoDemangle", cv2pdbNoDemangle);
+		fromElem(elem, "cv2pdbEnumType", cv2pdbEnumType);
+		fromElem(elem, "cv2pdbOptions", cv2pdbOptions);
 
 		// Linker stuff
 		fromElem(elem, "objfiles", objfiles);
@@ -2209,6 +2233,9 @@ class Config :	DisposingComObject,
 		else
 			fcmd = " " ~ fcmd;
 		
+		if(mProjectOptions.compiler == Compiler.GDC && mProjectOptions.libfiles.length)
+			fcmd ~= " " ~ replace(mProjectOptions.libfiles, "\\", "/");
+
 		return fcmd;
 	}
 

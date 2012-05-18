@@ -20,6 +20,7 @@ import vdc.ast.aggr;
 import vdc.ast.tmpl;
 import vdc.ast.stmt;
 import vdc.ast.decl;
+import vdc.ast.writer;
 
 import stdext.util;
 import std.conv;

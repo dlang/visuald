@@ -11,6 +11,7 @@ module vdc.ast.iasm;
 import vdc.util;
 import vdc.lexer;
 import vdc.ast.node;
+import vdc.ast.writer;
 
 class AsmInstruction : Node
 {

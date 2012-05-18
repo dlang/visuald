@@ -17,6 +17,7 @@ import vdc.ast.mod;
 import vdc.ast.tmpl;
 import vdc.ast.decl;
 import vdc.ast.misc;
+import vdc.ast.writer;
 import vdc.logger;
 import vdc.interpret;
 
@@ -693,7 +694,7 @@ TextPos maximumTextPos(Node node)
 }
 
 // prefer start
-bool nodeContains(Node node, TextPos pos)
+bool nodeContains(Node node, in TextPos pos)
 {
 	TextPos start = minimumTextPos(node);
 	if(start > pos)
@@ -704,7 +705,7 @@ bool nodeContains(Node node, TextPos pos)
 	return true;
 }
 
-bool nodeContains(Node node, ref TextSpan span)
+bool nodeContains(Node node, in TextSpan* span)
 {
 	TextPos start = minimumTextPos(node);
 	if(start > span.start)
@@ -716,13 +717,13 @@ bool nodeContains(Node node, ref TextSpan span)
 }
 
 // prefer end
-bool nodeContainsEnd(Node node, TextPos pos)
+bool nodeContainsEnd(Node node, in TextPos* pos)
 {
 	TextPos start = minimumTextPos(node);
-	if(start >= pos)
+	if(start >= *pos)
 		return false;
 	TextPos end = maximumTextPos(node);
-	if(end < pos)
+	if(end < *pos)
 		return false;
 	return true;
 }
@@ -752,14 +753,14 @@ L_loop:
 	return false;
 }
 
-Node getTextPosNode(Node root, TextSpan* span, bool *inDotExpr)
+Node getTextPosNode(Node root, in TextSpan* span, bool *inDotExpr)
 {
-	if(!nodeContains(root, *span))
+	if(!nodeContains(root, span))
 		return null;
 
 L_loop:
 	foreach(m; root.members)
-		if(nodeContains(m, *span))
+		if(nodeContains(m, span))
 		{
 			root = m;
 			goto L_loop;

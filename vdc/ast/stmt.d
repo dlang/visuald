@@ -18,6 +18,7 @@ import vdc.ast.node;
 import vdc.ast.expr;
 import vdc.ast.decl;
 import vdc.ast.type;
+import vdc.ast.writer;
 import vdc.semantic;
 import vdc.interpret;
 

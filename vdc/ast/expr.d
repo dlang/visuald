@@ -20,6 +20,7 @@ import vdc.ast.tmpl;
 import vdc.ast.aggr;
 import vdc.ast.mod;
 import vdc.ast.type;
+import vdc.ast.writer;
 
 import vdc.parser.engine;
 

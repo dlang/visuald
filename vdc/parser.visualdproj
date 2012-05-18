@@ -781,6 +781,7 @@
    <File path="ast\stmt.d" />
    <File path="ast\tmpl.d" />
    <File path="ast\type.d" />
+   <File path="ast\writer.d" />
   </Folder>
   <Folder name="parser">
    <File path="parser\aggr.d" />

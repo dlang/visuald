@@ -129,6 +129,7 @@ debug
 					sprintf(sbuf.ptr, "   not collected:     %p %s\n", q, (cast(Object)q).classinfo.name.ptr); ods(sbuf.ptr);
 				}
 
+				version(none)
 				if(b >= 0)
 				{
 					auto r = rsgc.gc.gc_findReference(q, (cast(Object)q).classinfo.init.length);

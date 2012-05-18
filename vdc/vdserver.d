@@ -10,9 +10,12 @@ module vdc.vdserver;
 
 import vdc.ivdserver;
 import vdc.semantic;
+import vdc.interpret;
 import vdc.logger;
 import vdc.util;
+import vdc.lexer;
 import vdc.parser.engine;
+import vdc.parser.expr;
 import ast = vdc.ast.all;
 
 import sdk.port.base;
@@ -22,10 +25,13 @@ import sdk.win32.oleauto;
 
 import stdext.com;
 import stdext.string;
+import stdext.array;
 
 //import std.stdio;
 import std.parallelism;
 import std.string;
+import std.conv;
+import std.array;
 
 ///////////////////////////////////////////////////////////////
 
@@ -52,6 +58,7 @@ class VDServer : ComObject, IVDServer
 	this()
 	{
 		mSemanticProject = new vdc.semantic.Project;
+		fnSemanticWriteError = &semanticWriteError;
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -118,7 +125,7 @@ class VDServer : ComObject, IVDServer
 
 			synchronized(mSemanticProject)
 				if(auto src = mSemanticProject.getModuleByFilename(fname))
-					src.parsing = true;
+					src.parser = parser;
 
 			ast.Node n;
 			try
@@ -141,6 +148,7 @@ class VDServer : ComObject, IVDServer
 		runTask(&doParse);
 		return S_OK;
 	}
+
 	override HRESULT GetType(in BSTR filename, ref int startLine, ref int startIndex, ref int endLine, ref int endIndex, BSTR* answer)
 	{
 		string txt;
@@ -162,22 +170,22 @@ class VDServer : ComObject, IVDServer
 				ast.Type t = n.calcType();
 				if(!cast(ast.ErrorType) t)
 				{
-					vdc.util.DCodeWriter writer = new vdc.util.DCodeWriter(vdc.util.getStringSink(txt));
+					ast.DCodeWriter writer = new ast.DCodeWriter(ast.getStringSink(txt));
 					writer.writeImplementations = false;
 					writer.writeClassImplementations = false;
 					writer(n, "\ntype: ", t);
 
-					version(none)
+					if(cast(ast.EnumDeclaration) t) // version(none)
 						if(!cast(ast.Statement) n && !cast(ast.Type) n)
 						{
 							Value v = n.interpret(globalContext);
 							if(!cast(ErrorValue) v && !cast(TypeValue) v)
 								txt ~= "\nvalue: " ~ v.toStr();
 						}
-					startLine  = span.start.line;
-					startIndex = span.start.index;
-					endLine    = span.end.line;
-					endIndex   = span.end.index;
+					startLine  = n.span.start.line;
+					startIndex = n.span.start.index;
+					endLine    = n.span.end.line;
+					endIndex   = n.span.end.index;
 				}
 			}
 		}
@@ -189,10 +197,108 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, BSTR* stringList)
+	ast.Node GetNode(ast.Module mod, vdc.util.TextSpan* pSpan, bool* inDotExpr)
 	{
-		return E_NOTIMPL;
+		mSemanticProject.initScope();
+
+		ast.Node n = ast.getTextPosNode(mod, pSpan, inDotExpr);
+		if(n)
+			*pSpan = n.fulspan;
+		return n;
 	}
+
+	string[] _GetSemanticExpansions(SourceModule src, string tok, uint line, uint idx)
+	{
+		ast.Module mod = src.analyzed;
+		if(!mod)
+			return null;
+
+		bool inDotExpr;
+		vdc.util.TextSpan span;
+		span.start.line = line;
+		span.start.index = idx;
+		span.end = span.start;
+		ast.Node n = GetNode(mod, &span, &inDotExpr);
+		if(!n)
+			return null;
+
+		if(auto r = cast(ast.ParseRecoverNode)n)
+		{
+			wstring wexpr = null; // src.FindExpressionBefore(line, idx);
+			if(wexpr)
+			{
+				string expr = to!string(wexpr);
+				Parser parser = new Parser;
+				ast.Node inserted = parser.parseExpression(expr, r.fulspan);
+				if(!inserted)
+					return null;
+				r.addMember(inserted);
+				n = inserted.calcType();
+				r.removeMember(inserted);
+				inDotExpr = true;
+			}
+		}
+		vdc.semantic.Scope sc = n.getScope();
+
+		if(!sc)
+			return null;
+		auto syms = sc.search(tok ~ "*", !inDotExpr, true, true);
+
+		string[] symbols;
+
+		foreach(s, b; syms)
+			if(auto decl = cast(ast.Declarator) s)
+				symbols.addunique(decl.ident);
+			else if(auto em = cast(ast.EnumMember) s)
+				symbols.addunique(em.ident);
+			else if(auto aggr = cast(ast.Aggregate) s)
+				symbols.addunique(aggr.ident);
+
+		return symbols;
+	}
+
+	override HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx)
+	{
+		string[] symbols;
+		string fname = to_string(filename);
+		auto src = mSemanticProject.getModuleByFilename(fname);
+		if(!src)
+			return S_FALSE;
+
+		string stok = to_string(tok);
+		void calcExpansions()
+		{
+			fnSemanticWriteError = &semanticWriteError;
+			try
+			{
+				mLastSymbols = _GetSemanticExpansions(src, stok, line, idx);
+			}
+			catch(Error e)
+			{
+			}
+			mSemanticsRunning = false;
+		}
+		mLastSymbols = null;
+		mSemanticsRunning = true;
+		runTask(&calcExpansions);
+		return S_OK;
+	}
+
+	override HRESULT GetSemanticExpansionsResult(BSTR* stringList)
+	{
+		if(mSemanticsRunning)
+			return S_FALSE;
+
+		Appender!string slist;
+		foreach(sym; mLastSymbols)
+		{
+			slist.put(sym);
+			slist.put('\n');
+		}
+		*stringList = allocBSTR(slist.data);
+		return S_OK;
+	}
+
 	override HRESULT IsBinaryOperator(in BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BOOL* pIsOp)
 	{
 		if(!pIsOp)
@@ -208,6 +314,7 @@ class VDServer : ComObject, IVDServer
 				}
 		return S_FALSE;
 	}
+
 	override HRESULT GetParseErrors(in BSTR filename, BSTR* errors)
 	{
 		string fname = to_string(filename);
@@ -223,6 +330,48 @@ class VDServer : ComObject, IVDServer
 					return S_OK;
 				}
 		return S_FALSE;
+	}
+
+	HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs)
+	{
+		// array of pairs of DWORD
+		int[] locData;
+		string fname = to_string(filename);
+
+		synchronized(mSemanticProject)
+			if(auto src = mSemanticProject.getModuleByFilename(fname))
+				if(auto mod = src.parsed)
+				{
+					mod.visit(delegate bool (ast.Node n) {
+						if(n.id == TOK_in || n.id == TOK_is)
+							if(cast(ast.BinaryExpression) n)
+							{
+								locData ~= n.span.start.line;
+								locData ~= n.span.start.index;
+							}
+						return true;
+					});
+				}
+
+		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, locData.length);
+		if(!sa)
+			return E_OUTOFMEMORY;
+
+		for(LONG index = 0; index < locData.length; index++)
+			SafeArrayPutElement(sa, &index, &locData[index]);
+		
+		locs.vt = VT_ARRAY;
+		locs.parray = sa;
+		return S_OK;
+	}
+
+	override HRESULT GetLastMessage(BSTR* message)
+	{
+		if(!mLastMessage.length)
+			return S_FALSE;
+		*message = allocBSTR(mLastMessage);
+		mLastMessage = null;
+		return S_OK;
 	}
 
 	///////////////////////////////////////////////////////////////
@@ -245,8 +394,20 @@ class VDServer : ComObject, IVDServer
 		parseTaskPool.put(task);
 	}
 
+	extern(D) void semanticWriteError(vdc.semantic.MessageType type, string msg)
+	{
+		if(type == MessageType.Message)
+			mLastMessage = msg;
+		else
+			mLastError = msg;
+	}
+
 private:
 	vdc.semantic.Project mSemanticProject;
+	bool mSemanticsRunning;
+	string[] mLastSymbols;
+	string mLastMessage;
+	string mLastError;
 }
 
 ///////////////////////////////////////////////////////////////

@@ -52,6 +52,7 @@ Language service:
 - check indentation of multiple string literals on several lines
 - show help in standard browser
 - VS no longer remembers position inside file across restart?
+- goto import does not work on "import mod = pkg.mod;"
 
 Semantics:
 ---------------

@@ -355,12 +355,13 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		{
 			lines = mLinesPerMultiLine;
 		}
+		int labelWidth = 0;
 		if(label.length)
 		{
 			Label lab = new Label(mCanvas, label);
 			int off = ((kLineHeight - kLineSpacing) - 16) / 2;
-			int width = w ? kLabelWidth : kPageWidth - 2*kMargin;
-			lab.setRect(0, mLines*kLineHeight + off, width, kLineHeight - kLineSpacing); 
+			labelWidth = w ? kLabelWidth : kPageWidth - 2*kMargin;
+			lab.setRect(0, mLines*kLineHeight + off, labelWidth, kLineHeight - kLineSpacing); 
 		} 
 		else if (cb)
 		{
@@ -378,7 +379,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 
 		int y = mLines*kLineHeight + (lines * kLineHeight - kLineSpacing - h) / 2;
 		if(w)
-			w.setRect(x, y, kPageWidth - 2*kMargin - kLabelWidth, h); 
+			w.setRect(x, y, kPageWidth - 2*kMargin - labelWidth, h); 
 		mLines += lines;
 		if(w)
 			mResizableWidgets ~= w;
@@ -443,7 +444,7 @@ class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 		super.Dispose();
 	}
 
-	void OnConfigModified()
+	override void OnConfigModified()
 	{
 	}
 
@@ -652,14 +653,14 @@ class GeneralPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return ""; }
 	override string GetPageName() { return "General"; }
 
-	const float[] selectableVersions = [ 1, 2, 2.043 ];
+	const float[] selectableVersions = [ 1, 2 ];
 	
 	override void CreateControls()
 	{
 		string[] versions;
 		foreach(ver; selectableVersions)
 			versions ~= "D" ~ to!(string)(ver);
-		versions[$-1] ~= "+";
+		//versions[$-1] ~= "+";
 		
 		AddControl("Compiler",      mCompiler = new ComboBox(mCanvas, [ "DMD", "GDC" ], false));
 		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
@@ -864,6 +865,10 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, [ "None", "Symbolic", "Symbolic (pretend to be C)" ], false));
 		AddControl("",           mRunCv2pdb = new CheckBox(mCanvas, "Run cv2pdb to Convert Debug Info"));
 		AddControl("Path to cv2pdb", mPathCv2pdb = new Text(mCanvas));
+		AddControl("",           mCv2pdbPre2043  = new CheckBox(mCanvas, "Assume old associative array implementation (before dmd 2.043)"));
+		AddControl("",           mCv2pdbNoDemangle = new CheckBox(mCanvas, "Do not demangle symbols"));
+		AddControl("",           mCv2pdbEnumType = new CheckBox(mCanvas, "Use enumerator types"));
+		AddControl("More options", mCv2pdbOptions  = new Text(mCanvas));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -875,6 +880,10 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	void EnableControls()
 	{
 		mPathCv2pdb.setEnabled(mRunCv2pdb.isChecked());
+		mCv2pdbOptions.setEnabled(mRunCv2pdb.isChecked());
+		mCv2pdbEnumType.setEnabled(mRunCv2pdb.isChecked());
+		mCv2pdbPre2043.setEnabled(mRunCv2pdb.isChecked());
+		mCv2pdbNoDemangle.setEnabled(mRunCv2pdb.isChecked());
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -883,7 +892,11 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		mDebugInfo.setSelection(options.symdebug);
 		mRunCv2pdb.setChecked(options.runCv2pdb);
 		mPathCv2pdb.setText(options.pathCv2pdb);
-		
+		mCv2pdbOptions.setText(options.cv2pdbOptions);
+		mCv2pdbPre2043.setChecked(options.cv2pdbPre2043);
+		mCv2pdbNoDemangle.setChecked(options.cv2pdbNoDemangle);
+		mCv2pdbEnumType.setChecked(options.cv2pdbEnumType);
+
 		EnableControls();
 	}
 
@@ -894,6 +907,10 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		changes += changeOption(cast(ubyte) mDebugInfo.getSelection(), options.symdebug, refoptions.symdebug);
 		changes += changeOption(mRunCv2pdb.isChecked(), options.runCv2pdb, refoptions.runCv2pdb);
 		changes += changeOption(mPathCv2pdb.getText(), options.pathCv2pdb, refoptions.pathCv2pdb);
+		changes += changeOption(mCv2pdbOptions.getText(), options.cv2pdbOptions, refoptions.cv2pdbOptions);
+		changes += changeOption(mCv2pdbPre2043.isChecked(), options.cv2pdbPre2043, refoptions.cv2pdbPre2043);
+		changes += changeOption(mCv2pdbNoDemangle.isChecked(), options.cv2pdbNoDemangle, refoptions.cv2pdbNoDemangle);
+		changes += changeOption(mCv2pdbEnumType.isChecked(), options.cv2pdbEnumType, refoptions.cv2pdbEnumType);
 		return changes;
 	}
 
@@ -901,6 +918,10 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	ComboBox mDebugInfo;
 	CheckBox mRunCv2pdb;
 	Text mPathCv2pdb;
+	CheckBox mCv2pdbPre2043;
+	CheckBox mCv2pdbNoDemangle;
+	CheckBox mCv2pdbEnumType;
+	Text mCv2pdbOptions;
 }
 
 class DmdCodeGenPropertyPage : ProjectPropertyPage

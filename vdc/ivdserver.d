@@ -25,8 +25,11 @@ public:
 	HRESULT ClearSemanticProject();
 	HRESULT UpdateModule(in BSTR filename, in BSTR srcText);
 	HRESULT GetType(in BSTR filename, ref int startLine, ref int startIndex, ref int endLine, ref int endIndex, BSTR* answer);
-	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, BSTR* stringList);
+	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx);
+	HRESULT GetSemanticExpansionsResult(BSTR* stringList);
 	HRESULT IsBinaryOperator(in BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BOOL* pIsOp);
 	HRESULT GetParseErrors(in BSTR filename, BSTR* errors);
+	HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs); // array of pairs of DWORD
+	HRESULT GetLastMessage(BSTR* message);
 }
 

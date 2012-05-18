@@ -427,3 +427,5 @@ unreleased Version 0.3.33
   * debugger project settings now stored in solution options file, not in project file
   * regression: clean project failed, now deletes files given by wildcard recursively
   * token replace: fixed freeze when trying to replace no tokens
+  * cv2pdb: new version 0.25 that allows specifying a different pdb file being embedded into the binary
+  * cv2pdb: exposed command line options in the project options

@@ -25,6 +25,7 @@ import vdc.parser.mod;
 import vdc.parser.stmt;
 
 import vdc.ast.node;
+import vdc.ast.writer;
 
 // debug version = TraceParser;
 // version = recoverError;
