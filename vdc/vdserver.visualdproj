@@ -6,7 +6,7 @@
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
+  <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -53,7 +53,7 @@
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
-  <docdir />
+  <docdir>..\doc</docdir>
   <docname />
   <modules_ddoc />
   <ddocfiles />

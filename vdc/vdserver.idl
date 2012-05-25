@@ -19,13 +19,11 @@ import "oaidl.idl";
 ]
 interface IVDServer : IUnknown
 {
-	HRESULT ExecCommand([in]BSTR cmd, [out,retval] BSTR* answer);
-	HRESULT ExecCommandAsync([in]BSTR cmd, [out,retval] ULONG* cmdID);
-
-	HRESULT ConfigureSemanticProject([in] BSTR imp, [in] BSTR stringImp, [in] BSTR versionids, [in] BSTR debugids, [in] DWORD flags);
+	HRESULT ConfigureSemanticProject([in] BSTR filename, [in] BSTR imp, [in] BSTR stringImp, [in] BSTR versionids, [in] BSTR debugids, [in] DWORD flags);
 	HRESULT ClearSemanticProject();
 	HRESULT UpdateModule([in] BSTR filename, [in] BSTR srcText);
-	HRESULT GetType([in] BSTR filename, [in,out] DWORD *startLine, [in,out] DWORD *startIndex, [in,out] DWORD *endLine, [in,out] DWORD *endIndex, [out,retval] BSTR* answer);
+	HRESULT GetTip([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex);
+	HRESULT GetTipResult([out] DWORD *startLine, [out] DWORD *startIndex, [out] DWORD *endLine, [out] DWORD *endIndex, [out,retval] BSTR* answer);
 	HRESULT GetSemanticExpansions([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx);
 	HRESULT GetSemanticExpansionsResult([out,retval] BSTR* stringList);
 	HRESULT IsBinaryOperator([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BOOL* pIsOp);

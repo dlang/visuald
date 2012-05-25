@@ -568,7 +568,7 @@ class Project : Node
 	
 	Module addAndParseFile(string fname, bool imported = false)
 	{
-		debug writeln(fname, ":");
+		//debug writeln(fname, ":");
 		string txt = readUtf8(fname);
 		return addText(fname, txt, imported);
 	}
@@ -598,7 +598,7 @@ class Project : Node
 		return null;
 	}
 
-	Module importModule(string modname)
+	Module importModule(string modname, Node importFrom)
 	{
 		if(auto mod = getModule(modname))
 			return mod;
@@ -612,7 +612,7 @@ class Project : Node
 		}
 		if(srcfile.length == 0)
 		{
-			semanticError("cannot find imported module " ~ modname);
+			importFrom.semanticError("cannot find imported module " ~ modname);
 			return null;
 		}
 		srcfile = normalizePath(srcfile);
@@ -632,9 +632,15 @@ class Project : Node
 	void initScope()
 	{
 		if(!mObjectModule)
-			mObjectModule = importModule("object");
+			mObjectModule = importModule("object", this);
 
 		scop = new Scope;
+	}
+
+	// for error messages
+	override string getModuleFilename()
+	{
+		return "<global scope>";
 	}
 
 	void semantic()

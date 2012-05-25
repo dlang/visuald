@@ -429,3 +429,4 @@ unreleased Version 0.3.33
   * token replace: fixed freeze when trying to replace no tokens
   * cv2pdb: new version 0.25 that allows specifying a different pdb file being embedded into the binary
   * cv2pdb: exposed command line options in the project options
+  * intellisense tool tip now shows enumerator value

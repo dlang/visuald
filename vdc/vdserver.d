@@ -69,18 +69,7 @@ class VDServer : ComObject, IVDServer
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override HRESULT ExecCommand(in BSTR cmd, BSTR* answer)
-	{
-		*answer = SysAllocString("Answer"w.ptr);
-		return S_OK;
-	}
-
-	override HRESULT ExecCommandAsync(in BSTR cmd, ULONG* cmdID)
-	{
-		return E_NOTIMPL;
-	}
-
-	override HRESULT ConfigureSemanticProject(in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags)
+	override HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags)
 	{
 		synchronized(mSemanticProject)
 		{
@@ -149,51 +138,68 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT GetType(in BSTR filename, ref int startLine, ref int startIndex, ref int endLine, ref int endIndex, BSTR* answer)
+	override HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
 	{
-		string txt;
-		try
+		string fname = to_string(filename);
+		auto src = mSemanticProject.getModuleByFilename(fname);
+		if(!src)
+			return S_FALSE;
+
+		ast.Module mod = src.analyzed;
+		if(!mod)
+			return S_FALSE;
+
+		void _getTip()
 		{
-			string fname = to_string(filename);
-			auto src = mSemanticProject.getModuleByFilename(fname);
-			if(!src)
-				return S_FALSE;
-
-			ast.Module mod = src.analyzed;
-			if(!mod)
-				return S_FALSE;
-
-			TextSpan span = TextSpan(TextPos(startIndex, startLine), TextPos(endIndex, endLine));
-			ast.Node n = ast.getTextPosNode(mod, &span, null);
-			if(n && n !is mod)
+			string txt;
+			fnSemanticWriteError = &semanticWriteError;
+			mSemanticTipRunning = true;
+			try
 			{
-				ast.Type t = n.calcType();
-				if(!cast(ast.ErrorType) t)
+				TextSpan span = TextSpan(TextPos(startIndex, startLine), TextPos(endIndex, endLine));
+				ast.Node n = ast.getTextPosNode(mod, &span, null);
+				if(n && n !is mod)
 				{
-					ast.DCodeWriter writer = new ast.DCodeWriter(ast.getStringSink(txt));
-					writer.writeImplementations = false;
-					writer.writeClassImplementations = false;
-					writer(n, "\ntype: ", t);
+					ast.Type t = n.calcType();
+					if(!cast(ast.ErrorType) t)
+					{
+						ast.DCodeWriter writer = new ast.DCodeWriter(ast.getStringSink(txt));
+						writer.writeImplementations = false;
+						writer.writeClassImplementations = false;
+						writer(n, "\ntype: ", t);
 
-					if(cast(ast.EnumDeclaration) t) // version(none)
-						if(!cast(ast.Statement) n && !cast(ast.Type) n)
-						{
-							Value v = n.interpret(globalContext);
-							if(!cast(ErrorValue) v && !cast(TypeValue) v)
-								txt ~= "\nvalue: " ~ v.toStr();
-						}
-					startLine  = n.span.start.line;
-					startIndex = n.span.start.index;
-					endLine    = n.span.end.line;
-					endIndex   = n.span.end.index;
+						if(cast(ast.EnumDeclaration) t) // version(none)
+							if(!cast(ast.Statement) n && !cast(ast.Type) n)
+							{
+								Value v = n.interpret(globalContext);
+								if(!cast(ErrorValue) v && !cast(TypeValue) v)
+									txt ~= "\nvalue: " ~ v.toStr();
+							}
+						mTipSpan = n.span;
+					}
 				}
 			}
+			catch(Error e)
+			{
+				txt = e.msg;
+			}
+			mLastTip = txt;
+			mSemanticTipRunning = false;
 		}
-		catch(Error e)
-		{
-			txt = e.msg;
-		}
-		*answer = allocBSTR(txt);
+		runTask(&_getTip);
+		return S_OK;
+	}
+
+	override HRESULT GetTipResult(ref int startLine, ref int startIndex, ref int endLine, ref int endIndex, BSTR* answer)
+	{
+		if(mSemanticTipRunning)
+			return S_FALSE;
+
+		startLine  = mTipSpan.start.line;
+		startIndex = mTipSpan.start.index;
+		endLine    = mTipSpan.end.line;
+		endIndex   = mTipSpan.end.index;
+		*answer = allocBSTR(mLastTip);
 		return S_OK;
 	}
 
@@ -276,17 +282,17 @@ class VDServer : ComObject, IVDServer
 			catch(Error e)
 			{
 			}
-			mSemanticsRunning = false;
+			mSemanticExpansionsRunning = false;
 		}
 		mLastSymbols = null;
-		mSemanticsRunning = true;
+		mSemanticExpansionsRunning = true;
 		runTask(&calcExpansions);
 		return S_OK;
 	}
 
 	override HRESULT GetSemanticExpansionsResult(BSTR* stringList)
 	{
-		if(mSemanticsRunning)
+		if(mSemanticExpansionsRunning)
 			return S_FALSE;
 
 		Appender!string slist;
@@ -404,7 +410,10 @@ class VDServer : ComObject, IVDServer
 
 private:
 	vdc.semantic.Project mSemanticProject;
-	bool mSemanticsRunning;
+	bool mSemanticExpansionsRunning;
+	bool mSemanticTipRunning;
+	string mLastTip;
+	TextSpan mTipSpan;
 	string[] mLastSymbols;
 	string mLastMessage;
 	string mLastError;

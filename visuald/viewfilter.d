@@ -1330,7 +1330,7 @@ version(none) // quick info tooltips not good enough yet
 				if(mPendingSpan != span)
 				{
 					mPendingSpan = span;
-					mPendingRequest = Package.GetLanguageService().GetType(mCodeWinMgr.mSource, &span, &OnGetTipText);
+					mPendingRequest = Package.GetLanguageService().GetTip(mCodeWinMgr.mSource, &span, &OnGetTipText);
 				}
 				return E_PENDING;
 			}

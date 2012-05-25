@@ -271,7 +271,7 @@ class EnumMember : Node
 			if(n > 0)
 			{
 				ival = parent.members[n - 1].interpret(sc);
-				ival = ival.opBin(sc, TOK_addass, Value.create(cast(byte)1));
+				ival = ival.opBin(sc, TOK_add, Value.create(cast(byte)1));
 			}
 		}
 		value = calcType().createValue(sc, ival);

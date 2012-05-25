@@ -28,6 +28,8 @@ import std.string;
 import std.windows.charset;
 import core.thread;
 
+// debug version = DebugCmd;
+
 ///////////////////////////////////////////////////////////////////////
 uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, int versionLevel, int debugLevel)
 {
@@ -166,11 +168,11 @@ class FileCommand : Command
 
 //////////////////////////////////////
 
-class ConfigureProjectCommand : Command
+class ConfigureProjectCommand : FileCommand
 {
-	this(string[] imp, string[] stringImp, string[] versionids, string[] debugids, uint flags)
+	this(string filename, string[] imp, string[] stringImp, string[] versionids, string[] debugids, uint flags)
 	{
-		super("ConfigureProject");
+		super("ConfigureProject", filename);
 		mImp = imp;
 		mStringImp = stringImp;
 		mVersionids = versionids;
@@ -188,12 +190,20 @@ class ConfigureProjectCommand : Command
 		string jversionids = join(mVersionids, "\n");
 		string jdebugids = join(mDebugids, "\n");
 
+		auto bfilename = allocBSTR(mFilename);
 		auto bimp = allocBSTR(jimp);
 		auto bstringImp = allocBSTR(jstringImp);
 		auto bversionids = allocBSTR(jversionids);
 		auto bdebugids = allocBSTR(jdebugids);
 
-		HRESULT hr = gVDServer.ConfigureSemanticProject(bimp, bstringImp, bversionids, bdebugids, mFlags);
+		HRESULT hr = gVDServer.ConfigureSemanticProject(bfilename, bimp, bstringImp, bversionids, bdebugids, mFlags);
+
+		freeBSTR(bfilename);
+		freeBSTR(bimp);
+		freeBSTR(bstringImp);
+		freeBSTR(bversionids);
+		freeBSTR(bdebugids);
+		
 		return hr == S_OK;
 	}
 
@@ -212,7 +222,7 @@ class GetTypeCommand : FileCommand
 {
 	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetTypeCallBack cb)
 	{
-		super("GetType", filename);
+		super("GetTip", filename);
 		mSpan = span;
 		mCallback = cb;
 	}
@@ -223,21 +233,29 @@ class GetTypeCommand : FileCommand
 			return false;
 
 		BSTR fname = allocBSTR(mFilename);
-		BSTR btype;
 		int iStartLine = mSpan.iStartLine + 1;
 		int iStartIndex = mSpan.iStartIndex;
 		int iEndLine = mSpan.iEndLine + 1;
 		int iEndIndex = mSpan.iEndIndex;
-		HRESULT rc = gVDServer.GetType(fname, iStartLine, iStartIndex, iEndLine, iEndIndex, &btype);
+		HRESULT rc = gVDServer.GetTip(fname, iStartLine, iStartIndex, iEndLine, iEndIndex);
 		freeBSTR(fname);
-
-		mType = detachBSTR(btype);
-		mSpan = sdk.vsi.sdk_shared.TextSpan(iStartIndex, iStartLine - 1, iEndIndex, iEndLine - 1);
 		return rc == S_OK;
 	}
 
 	override bool answer()
 	{
+		if(!gVDServer)
+			return false;
+
+		BSTR btype;
+		int iStartLine, iStartIndex, iEndLine, iEndIndex;
+		HRESULT rc = gVDServer.GetTipResult(iStartLine, iStartIndex, iEndLine, iEndIndex, &btype);
+		if(rc != S_OK)
+			return false;
+
+		mType = detachBSTR(btype);
+		mSpan = sdk.vsi.sdk_shared.TextSpan(iStartIndex, iStartLine - 1, iEndIndex, iEndLine - 1);
+
 		send(gUITid, cast(immutable)this);
 		return true;
 	}
@@ -340,7 +358,7 @@ class GetExpansionsCommand : FileCommand
 {
 	this(string filename, string tok, int line, int idx, GetExpansionsCallBack cb)
 	{
-		super("GetType", filename);
+		super("GetExpansions", filename);
 		mTok = tok;
 		mLine = line;
 		mIndex = idx;
@@ -437,14 +455,14 @@ class VDServerClient
 	}
 
 	//////////////////////////////////////
-	uint ConfigureSemanticProject(string[] imp, string[] stringImp, string[] versionids, string[] debugids, uint flags)
+	uint ConfigureSemanticProject(string filename, string[] imp, string[] stringImp, string[] versionids, string[] debugids, uint flags)
 	{
-		auto cmd = new immutable(ConfigureProjectCommand)(imp, stringImp, versionids, debugids, flags);
+		auto cmd = new immutable(ConfigureProjectCommand)(filename, imp, stringImp, versionids, debugids, flags);
 		send(mTid, cmd);
 		return cmd.mRequest;
 	}
 
-	uint GetType(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, GetTypeCallBack cb)
+	uint GetTip(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, GetTypeCallBack cb)
 	{
 		auto cmd = new immutable(GetTypeCommand)(filename, *pSpan, cb);
 		send(mTid, cmd);
@@ -520,7 +538,7 @@ class VDServerClient
 				receiveTimeout(dur!"msecs"(50),
 					(Command cmd)
 					{
-						OutputDebugStringA(toMBSz("clientLoop: " ~ cmd.mCommand ~ "\n"));
+						version(DebugCmd) OutputDebugStringA(toMBSz("clientLoop: " ~ cmd.mCommand ~ "\n"));
 						if(cmd.exec())
 							toAnswer ~= cmd;
 					},
@@ -556,7 +574,7 @@ class VDServerClient
 			while(receiveTimeout(dur!"msecs"(0),
 				(Command cmd)
 				{
-					OutputDebugStringA(toMBSz("idleLoop: " ~ cmd.mCommand ~ "\n"));
+					version(DebugCmd) OutputDebugStringA(toMBSz("idleLoop: " ~ cmd.mCommand ~ "\n"));
 					cmd.forward();
 				},
 				(Variant var)

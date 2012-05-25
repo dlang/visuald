@@ -643,7 +643,7 @@ class Import : Node
 	{
 		if(!mod)
 			if(auto prj = sc.mod.getProject())
-				mod = prj.importModule(getModuleName());
+				mod = prj.importModule(getModuleName(), this);
 		
 		if(!mod)
 			return Scope.SearchSet();

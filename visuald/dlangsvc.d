@@ -689,9 +689,9 @@ class LanguageService : DisposingComObject,
 
 	version(VDServer)
 	{
-		uint GetType(Source src, TextSpan* pSpan, GetTypeCallBack cb)
+		uint GetTip(Source src, TextSpan* pSpan, GetTypeCallBack cb)
 		{
-			return mVDServerClient.GetType(src.GetFileName(), pSpan, cb);
+			return mVDServerClient.GetTip(src.GetFileName(), pSpan, cb);
 		}
 		uint GetSemanticExpansions(Source src, string tok, int line, int idx, GetExpansionsCallBack cb)
 		{
@@ -709,19 +709,33 @@ class LanguageService : DisposingComObject,
 		{
 			string file = src.GetFileName();
 			string[] imp = GetImportPaths(file);
-			if(Config cfg = getProjectConfig(file))
+			string[] stringImp;
+			string[] versionids;
+			string[] debugids;
+			uint flags = 0;
+
+			Config cfg = getProjectConfig(file);
+			if(!cfg)
+				cfg = getCurrentStartupConfig();
+			if(cfg)
 			{
 				scope(exit) release(cfg);
 				auto cfgopts = cfg.GetProjectOptions();
-				uint flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
-											   cfgopts.versionlevel, cfgopts.debuglevel);
-				string[] stringImp = tokenizeArgs(cfgopts.fileImppath);
+				flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
+										  cfgopts.versionlevel, cfgopts.debuglevel);
+				
+				string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
+				stringImp = tokenizeArgs(strimp);
+				foreach(ref i; stringImp)
+					i = normalizeDir(unquoteArgument(i));
 				makeFilenamesAbsolute(stringImp, cfg.GetProjectDir());
-				string[] versionids = tokenizeArgs(cfgopts.versionids);
-				string[] debugids = tokenizeArgs(cfgopts.debugids); 
-				mVDServerClient.ConfigureSemanticProject(imp, stringImp, versionids, debugids, flags);
+
+				versionids = tokenizeArgs(cfgopts.versionids);
+				debugids = tokenizeArgs(cfgopts.debugids); 
 			}
+			mVDServerClient.ConfigureSemanticProject(file, imp, stringImp, versionids, debugids, flags);
 		}
+
 		bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
 		{
 			auto pos = vdc.util.TextPos(startIndex, startLine);
@@ -820,7 +834,7 @@ class LanguageService : DisposingComObject,
 		return n;
 	}
 
-	string GetType(Source src, TextSpan* pSpan, GetTypeCallBack cb)
+	string GetTip(Source src, TextSpan* pSpan, GetTypeCallBack cb)
 	{
 		string txt;
 		try
