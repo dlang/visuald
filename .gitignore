@@ -1,0 +1,8 @@
+
+/bin
+*.suo
+/sdk/lib
+/sdk/win32
+/sdk/sdk_libs
+/sdk/vsi_sources
+/sdk/vsi

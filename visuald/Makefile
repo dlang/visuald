@@ -203,16 +203,16 @@ resources\pkgcmd.cto: resources\pkgcmd.ctc
 
 #-----
 $(DBGDIR)\vdserver.tlb : ..\vdc\vdserver.idl
-	midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(DBGDIR) /error stub_data $<
+	midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(DBGDIR) /error stub_data $?
 # /I "$(WindowsSdkDir)\Include" 
 
 $(RELDIR)\vdserver.tlb : ..\vdc\vdserver.idl
-	midl /nologo /char signed /env win32 /Oicf  /out $(RELDIR) /error stub_data $<
+	midl /nologo /char signed /env win32 /Oicf  /out $(RELDIR) /error stub_data $?
 
 $(DBGDIR)\vdserver.res : ..\vdc\vdserver.rc $(DBGDIR)\vdserver.tlb 
 	rc /fo$@ /I$(DBGDIR) ..\vdc\vdserver.rc
 
-$(RELDIR)\vdserver.res : ..\vdc\vdserver.rc $(DBGDIR)\vdserver.tlb 
+$(RELDIR)\vdserver.res : ..\vdc\vdserver.rc $(RELDIR)\vdserver.tlb 
 	rc /fo$@ /I$(RELDIR) ..\vdc\vdserver.rc
 
 ######################
