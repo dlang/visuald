@@ -43,8 +43,9 @@ extern (C) GCStats gc_stats();
 import vdc.lexer;
 static import vdc.util;
 
-version(VDServer) {}
-else {
+version(VDServer) {
+	import vdc.ivdserver;
+} else {
 	import ast = vdc.ast.all;
 	import vdc.parser.engine;
 	import vdc.semantic;
@@ -3172,11 +3173,10 @@ else
 		{
 			if(Package.GetGlobalOptions().parseSource)
 			{
-				BSTR btxt = allocwBSTR(mParseText);
-				BSTR bfname = allocBSTR(GetFileName());
-				Package.GetLanguageService().mVDServerClient.UpdateModule(GetFileName(), mParseText, &OnUpdateModule);
-				freeBSTR(bfname);
-				freeBSTR(btxt);
+				auto langsvc = Package.GetLanguageService();
+				langsvc.mVDServerClient.UpdateModule(GetFileName(), mParseText, &OnUpdateModule);
+				if(Package.GetGlobalOptions().projectSemantics)
+					langsvc.ConfigureSemanticProject(this);
 			}
 		}
 

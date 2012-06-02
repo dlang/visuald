@@ -6,7 +6,7 @@
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>2</singleFileCompilation>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -140,12 +140,12 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>0</otherDMD>
-  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath />
+  <otherDMD>1</otherDMD>
+  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
+  <imppath>..</imppath>
   <fileImppath />
-  <outdir>$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\vdserver</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -174,7 +174,7 @@
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <objfiles />
   <linkswitches />
-  <libfiles />
+  <libfiles>ole32.lib oleaut32.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -577,11 +577,10 @@
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="vdserver">
-  <File path="ivdserver.d" />
-  <File path="vdserver.d" />
   <File tool="Custom" path="vdserver.idl" customcmd="path %path%;c:\l\vs9\vc\bin;c:\l\vs9\common7\IDE
 midl /I &quot;$(WindowsSdkDir)\Include&quot; /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(OutDir) /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
   <File tool="Custom" path="vdserver.rc" dependencies="$(OutDir)\vdserver.tlb ..\version" customcmd="rc /fo$(OutDir)\vdserver.res &quot;/I$(OutDir)&quot; &quot;/I$(WindowsSdkDir)\include&quot; &quot;/I$(DevEnvDir)..\..\VC\include&quot; $(InputPath)" outfile="$(OutDir)\vdserver.res" linkoutput="true" />
   <File path="vdserver.reg" />
+  <File path="vdserverfactory.d" />
  </Folder>
 </DProject>

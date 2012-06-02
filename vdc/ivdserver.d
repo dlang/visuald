@@ -31,3 +31,13 @@ public:
 	HRESULT GetLastMessage(BSTR* message);
 }
 
+///////////////////////////////////////////////////////////////////////
+uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, int versionLevel, int debugLevel)
+{
+	return (unittestOn ? 1 : 0)
+		|  (debugOn    ? 2 : 0)
+		|  (x64        ? 4 : 0)
+		| ((versionLevel & 0xff) << 8)
+		| ((debugLevel & 0xff) << 8);
+}
+

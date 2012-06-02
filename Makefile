@@ -40,7 +40,7 @@ VSI2D_EXE   = $(BINDIR)\vsi2d.exe
 VSI_LIB     = $(BINDIR)\vsi.lib
 VISUALD     = $(BINDIR)\visuald.dll
 
-all: dte_idl vsi2d package
+all: dte_idl vsi2d package vdserver_exe
 
 sdk: dte_idl vsi_dirs sdk\vsi_sources sdk_lib
 
@@ -99,6 +99,9 @@ sdk_lib:
 package:
 	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
 
+vdserver_exe:
+	cd visuald && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" ..\$(BINDIR)\vdserver.exe
+
 cpp2d_exe:
 	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" ..\$(BINDIR)\cpp2d.exe
 	copy $(BINDIR)\cpp2d.exe ..\downloads
@@ -109,7 +112,7 @@ idl2d_exe: $(VSI2D_EXE)
 ##################################
 # create installer
 
-install: dte_idl vsi2d package cpp2d_exe idl2d_exe
+install: dte_idl vsi2d package cpp2d_exe idl2d_exe vdserver_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb
 
@@ -120,11 +123,12 @@ install_only:
 # clean build results
 
 clean:
-	if exist $(BINDIR)\vsi.lib     del $(BINDIR)\vsi.lib
-	if exist $(BINDIR)\vdc.lib     del $(BINDIR)\vdc.lib
-	if exist $(BINDIR)\visuald.dll del $(BINDIR)\visuald.dll
-	if exist $(TLB2IDL_EXE)        del $(TLB2IDL_EXE)
-	if exist $(VSI2D_EXE)          del $(VSI2D_EXE)
+	if exist $(BINDIR)\vsi.lib      del $(BINDIR)\vsi.lib
+	if exist $(BINDIR)\vdc.lib      del $(BINDIR)\vdc.lib
+	if exist $(BINDIR)\visuald.dll  del $(BINDIR)\visuald.dll
+	if exist $(BINDIR)\vdserver.exe del $(BINDIR)\vdserver.exe
+	if exist $(TLB2IDL_EXE)         del $(TLB2IDL_EXE)
+	if exist $(VSI2D_EXE)           del $(VSI2D_EXE)
 	if exist $(DTE_IDL_PATH)\nul   (del /Q $(DTE_IDL_PATH) && rd $(DTE_IDL_PATH))
 	if exist sdk\vsi\nul           (del /Q sdk\vsi && rd sdk\vsi)
 	if exist sdk\win32\nul         (del /Q sdk\win32 && rd sdk\win32)

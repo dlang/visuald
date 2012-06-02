@@ -29,16 +29,9 @@ import std.windows.charset;
 import core.thread;
 
 // debug version = DebugCmd;
+debug version = InProc;
 
-///////////////////////////////////////////////////////////////////////
-uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, int versionLevel, int debugLevel)
-{
-	return (unittestOn ? 1 : 0)
-		|  (debugOn    ? 2 : 0)
-		|  (x64        ? 4 : 0)
-		| ((versionLevel & 0xff) << 8)
-		| ((debugLevel & 0xff) << 8);
-}
+version(InProc) import vdc.vdserver;
 
 ///////////////////////////////////////////////////////////////////////
 static GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
@@ -53,6 +46,10 @@ bool startVDServer()
 
 	CoInitialize(null);
 
+	version(InProc) 
+		gVDServer = new VDServer;
+	else
+	{
 	GUID factory_iid = IID_IClassFactory;
 	HRESULT hr = CoGetClassObject(VDServerClassFactory_iid, CLSCTX_LOCAL_SERVER, null, factory_iid, cast(void**)&gVDClassFactory);
 	if(FAILED(hr))
@@ -63,6 +60,7 @@ bool startVDServer()
 	{
 		gVDClassFactory = release(gVDClassFactory);
 		return false;
+	}
 	}
 	return true;
 }

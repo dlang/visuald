@@ -158,6 +158,7 @@ Section "Visual Studio package" SecPackage
   ${SetOutPath} "$INSTDIR"
   
   ${File} ..\bin\${CONFIG}\ ${DLLNAME}
+  ${File} ..\bin\${CONFIG}\ vdserver.exe
   ${File} ..\ README
   ${File} ..\ LICENSE
   ${File} ..\ CHANGES
@@ -198,6 +199,8 @@ Section "Visual Studio package" SecPackage
   
   ${SetOutPath} "$INSTDIR\Templates\CodeSnippets\Snippets"
   ${File} ..\visuald\Templates\CodeSnippets\Snippets\ *.snippet
+
+  Call RegisterVDServer
 
   ;Store installation folder
   WriteRegStr HKCU "Software\${APPNAME}" "" $INSTDIR
@@ -465,6 +468,8 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2011_REGISTRY_KEY}\InstalledProducts\Mago"
 !endif
   
+  Call un.RegisterVDServer
+
   Call un.installedFiles
   ;ADD YOUR OWN FILES HERE...
   ;Delete "$INSTDIR\${DLLNAME}"
@@ -715,4 +720,33 @@ NoInstall:
   Pop $2
   Pop $0
   Pop $1
+FunctionEnd
+
+;---------------------------------------
+!define VDSERVER_REG_ROOT                   HKCR
+!define VDSERVER_FACTORY_NAME               visuald.vdserver.factory
+!define VDSERVER_FACTORY_CLSID              {002a2de9-8bb6-484d-9902-7e4ad4084715}
+!define VDSERVER_TYPELIB_CLSID              {002a2de9-8bb6-484d-9903-7e4ad4084715}
+!define VDSERVER_INTERFACE_NAME             IVDServer
+!define VDSERVER_INTERFACE_CLSID            {002a2de9-8bb6-484d-9901-7e4ad4084715}
+
+Function RegisterVDServer
+
+  WriteRegStr ${VDSERVER_REG_ROOT} "${VDSERVER_FACTORY_NAME}\CLSID"                "" ${VDSERVER_FACTORY_CLSID}
+  WriteRegStr ${VDSERVER_REG_ROOT} "CLSID\${VDSERVER_FACTORY_CLSID}\LocalServer32" "" $INSTDIR\vdserver.exe
+  WriteRegStr ${VDSERVER_REG_ROOT} "CLSID\${VDSERVER_FACTORY_CLSID}\TypeLib"       "" ${VDSERVER_TYPELIB_CLSID}
+  WriteRegStr ${VDSERVER_REG_ROOT} "TypeLib\${VDSERVER_TYPELIB_CLSID}\1.0\0\win32" "" $INSTDIR\vdserver.exe
+  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}"         "" ${VDSERVER_INTERFACE_NAME}
+  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}\ProxyStubClsid32" "" {00020424-0000-0000-C000-000000000046}
+  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}\TypeLib" "" ${VDSERVER_TYPELIB_CLSID}
+
+FunctionEnd
+
+Function un.RegisterVDServer
+
+  DeleteRegKey ${VDSERVER_REG_ROOT} "${VDSERVER_FACTORY_NAME}" 
+  DeleteRegKey ${VDSERVER_REG_ROOT} "CLSID\${VDSERVER_FACTORY_CLSID}"
+  DeleteRegKey ${VDSERVER_REG_ROOT} "TypeLib\${VDSERVER_TYPELIB_CLSID}" 
+  DeleteRegKey ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}" 
+
 FunctionEnd

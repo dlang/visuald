@@ -37,7 +37,10 @@ VDC_SRC = $(VDC)/parser/aggr.d \
         $(VDC)/ast/all.d \
         $(VDC)/ast/iasm.d \
         $(VDC)/ast/type.d \
+        $(VDC)/ast/writer.d \
         $(VDC)/util.d \
+        $(VDC)/vdserver.d \
+        $(VDC)/ivdserver.d \
         $(VDC)/semantic.d \
         $(VDC)/interpret.d \
         $(VDC)/parsertest.d \
@@ -93,6 +96,7 @@ RELRES = $(RELDIR)\visuald.res
 DMD2 = m:\s\d\dmd2\dmd\src\dmd_pdb.exe
 CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 
+WINSDK = $(WINDOWSSDKDIR:\=/)
 VSISDK = c:\l\vs9SDK
 CTC = $(VSISDK)\VisualStudioIntegration\Tools\Bin\CTC.exe
 
@@ -146,8 +150,12 @@ $(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DBGDIR)\v
 		$(SRC) $(DBG_VSI_LIB) $(LIBS) $(DEF) $(DBGRES) $(DBGDIR)\vdc.lib $(DBGDIR)\$(C2D_LIB) $(DBGDIR)\$(STDEXT_LIB)
 <<NOKEEP
 
+$(DBGDIR)\vdserver.exe : ..\vdc\vdserverfactory.d $(DBGDIR)\$(STDEXT_LIB) $(DBGDIR)\vdc.lib $(DBG_VSI_LIB) $(DBGDIR)\vdserver.res Makefile
+	"$(DMD2)" -of$@_cv -g $(DFLAGS) $(DBGDIR)\vdc.lib ..\vdc\vdserverfactory.d $(DBGDIR)\vdserver.res $(DBGDIR)\$(STDEXT_LIB) $(DBG_VSI_LIB) ole32.lib oleaut32.lib -L/SUBSYSTEM:WINDOWS
+	"$(CV2PDB)" $@_cv $@
+
 $(DBGDIR)\cpp2d.exe : $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEXT_LIB) Makefile
-	"$(DMD2)" -of$@ -O -inline -release -g $(DFLAGS) $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEXT_LIB)
+	"$(DMD2)" -of$@ -g $(DFLAGS) $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEXT_LIB)
 
 #-----
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
@@ -176,6 +184,10 @@ $(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\v
 		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB) $(RELDIR)\$(STDEXT_LIB)
 <<NOKEEP
 
+$(RELDIR)\vdserver.exe : ..\vdc\vdserverfactory.d $(RELDIR)\$(STDEXT_LIB) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\vdserver.res Makefile
+	"$(DMD2)" -of$@_cv -g $(DFLAGS) $(RELDIR)\vdc.lib ..\vdc\vdserverfactory.d $(RELDIR)\vdserver.res $(REL_VSI_LIB) $(RELDIR)\$(STDEXT_LIB) ole32.lib oleaut32.lib -L/SUBSYSTEM:WINDOWS
+	"$(CV2PDB)" $@_cv $@
+
 $(RELDIR)\cpp2d.exe : $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(RELDIR)\$(STDEXT_LIB) Makefile
 	"$(DMD2)" -of$@ -O $(INLINE) -release $(DFLAGS) $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(RELDIR)\$(STDEXT_LIB)
 
@@ -188,6 +200,20 @@ $(RELRES) : $(RC) $(RSRC)
 
 resources\pkgcmd.cto: resources\pkgcmd.ctc
 	"$(CTC)" $? $@ -Ccl -I.
+
+#-----
+$(DBGDIR)\vdserver.tlb : ..\vdc\vdserver.idl
+	midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(DBGDIR) /error stub_data $<
+# /I "$(WindowsSdkDir)\Include" 
+
+$(RELDIR)\vdserver.tlb : ..\vdc\vdserver.idl
+	midl /nologo /char signed /env win32 /Oicf  /out $(RELDIR) /error stub_data $<
+
+$(DBGDIR)\vdserver.res : ..\vdc\vdserver.rc $(DBGDIR)\vdserver.tlb 
+	rc /fo$@ /I$(DBGDIR) ..\vdc\vdserver.rc
+
+$(RELDIR)\vdserver.res : ..\vdc\vdserver.rc $(DBGDIR)\vdserver.tlb 
+	rc /fo$@ /I$(RELDIR) ..\vdc\vdserver.rc
 
 ######################
 $(DBGDIR)\$(PROJECT).exe : $(DBGDIR)\$(PROJECT)_cv.exe

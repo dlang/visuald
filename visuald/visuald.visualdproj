@@ -227,11 +227,6 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File tool="None" path="..\rsgc\gcstats.d" />
    <File tool="None" path="..\rsgc\gcx.d" />
   </Folder>
-  <Folder name="vdc">
-   <File path="..\vdc\ivdserver.d" />
-   <File path="..\vdc\lexer.d" />
-   <File path="..\vdc\versions.d" />
-  </Folder>
   <File path="build.d" />
   <File path="chiercontainer.d" />
   <File path="chiernode.d" />

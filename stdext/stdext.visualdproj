@@ -142,7 +142,7 @@
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath />
+  <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\obj</objdir>

@@ -35,24 +35,6 @@ import std.array;
 
 ///////////////////////////////////////////////////////////////
 
-// server object: 002a2de9-8bb6-484d-9901-7e4ad4084715
-// class factory: 002a2de9-8bb6-484d-9902-7e4ad4084715
-// type library : 002a2de9-8bb6-484d-9903-7e4ad4084715
-
-///////////////////////////////////////////////////////////////
-
-static this()
-{
-	CoInitialize(null);
-}
-
-static ~this()
-{
-	CoUninitialize();
-}
-
-///////////////////////////////////////////////////////////////
-
 class VDServer : ComObject, IVDServer
 {
 	this()
@@ -71,12 +53,20 @@ class VDServer : ComObject, IVDServer
 
 	override HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags)
 	{
+		string fname = to_string(filename);
+
 		synchronized(mSemanticProject)
 		{
 			auto opts = mSemanticProject.options;
+			if(fname.length)
+				if(auto sm = fname in mSemanticProject.mSourcesByFileName)
+					if(sm.analyzed)
+						opts = sm.analyzed.getOptions();
 
 			string imports = to_string(imp);
 			string strImports = to_string(stringImp);
+
+			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64, 0, 0);
 
 			opts.unittestOn = (flags & 1) != 0;
 			opts.debugOn    = (flags & 2) != 0;
@@ -87,8 +77,10 @@ class VDServer : ComObject, IVDServer
 			string verids = to_string(versionids);
 			string dbgids = to_string(debugids);
 
-			opts.setVersionIds(versionlevel, tokenizeArgs(verids)); 
-			opts.setDebugIds(debuglevel, tokenizeArgs(dbgids)); 
+			int changed = (oldflags != (flags & 7));
+			changed += opts.setImportDirs(tokenizeArgs(imports));
+			changed += opts.setVersionIds(versionlevel, tokenizeArgs(verids)); 
+			changed += opts.setDebugIds(debuglevel, tokenizeArgs(dbgids)); 
 		}
 		return S_OK;
 	}
@@ -130,6 +122,10 @@ class VDServer : ComObject, IVDServer
 				logInfo(t.msg);
 			}
 
+			synchronized(mSemanticProject)
+				if(auto src = mSemanticProject.getModuleByFilename(fname))
+					src.parser = null;
+
 			if(auto mod = cast(ast.Module) n)
 				synchronized(mSemanticProject)
 					mSemanticProject.addSource(fname, mod, parser.errors);
@@ -153,7 +149,6 @@ class VDServer : ComObject, IVDServer
 		{
 			string txt;
 			fnSemanticWriteError = &semanticWriteError;
-			mSemanticTipRunning = true;
 			try
 			{
 				TextSpan span = TextSpan(TextPos(startIndex, startLine), TextPos(endIndex, endLine));
@@ -175,7 +170,7 @@ class VDServer : ComObject, IVDServer
 								if(!cast(ErrorValue) v && !cast(TypeValue) v)
 									txt ~= "\nvalue: " ~ v.toStr();
 							}
-						mTipSpan = n.span;
+						mTipSpan = n.fulspan;
 					}
 				}
 			}
@@ -186,6 +181,7 @@ class VDServer : ComObject, IVDServer
 			mLastTip = txt;
 			mSemanticTipRunning = false;
 		}
+		mSemanticTipRunning = true;
 		runTask(&_getTip);
 		return S_OK;
 	}
@@ -417,97 +413,5 @@ private:
 	string[] mLastSymbols;
 	string mLastMessage;
 	string mLastError;
-}
-
-///////////////////////////////////////////////////////////////
-
-class VDServerClassFactory : ComObject, IClassFactory
-{
-	static GUID iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
-
-	override HRESULT QueryInterface(in IID* riid, void** pvObject)
-	{
-		if(queryInterface!(IClassFactory) (this, riid, pvObject))
-			return S_OK;
-		return super.QueryInterface(riid, pvObject);
-	}
-
-	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
-	{
-		if(*riid == IVDServer.iid)
-		{
-			//MessageBoxW(null, "CreateInstance IVDServer"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
-			assert(!UnkOuter);
-			VDServer srv = new VDServer;
-			return srv.QueryInterface(riid, pvObject);
-		}
-		return E_NOINTERFACE;
-	}
-	override HRESULT LockServer(in BOOL fLock)
-	{
-		if(fLock)
-		{
-			//MessageBoxW(null, "LockServer"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
-			lockCount++;
-		}
-		else
-		{
-			//MessageBoxW(null, "UnlockServer"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
-			lockCount--;
-		}
-		if(lockCount == 0)
-			PostQuitMessage(0);
-		return S_OK;
-	}
-
-	int lockCount;
-}
-
-///////////////////////////////////////////////////////////////
-
-int main(string[] argv)
-{
-	HRESULT hr;
-
-	// Create the MyCar class object.
-	VDServerClassFactory cf = new VDServerClassFactory;
-
-	// Register the Factory.
-	DWORD regID = 0;
-	hr = CoRegisterClassObject(VDServerClassFactory.iid, cf, CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &regID);
-	if(FAILED(hr))
-	{
-		ShowErrorMessage("CoRegisterClassObject()", hr);
-		return 1;
-	}
-
-	//MessageBoxW(null, "comserverd registered"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
-
-	// Now just run until a quit message is sent,
-	// in responce to the final release.
-	MSG ms;
-	while(GetMessage(&ms, null, 0, 0))
-	{
-		TranslateMessage(&ms);
-		DispatchMessage(&ms);
-	}
-
-	// All done, so remove class object.
-	CoRevokeClassObject(regID);	
-	return 0;
-}
-
-int MAKELANGID(int p, int s) { return ((cast(WORD)s) << 10) | cast(WORD)p; }
-
-void ShowErrorMessage(LPCTSTR header, HRESULT hr)
-{
-	wchar* pMsg;
-
-	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,null,hr,
-		           MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),cast(LPTSTR)&pMsg,0,null);
-
-	MessageBoxW(null, pMsg, "[LOCAL] error", MB_OK|MB_SETFOREGROUND);
-
-	LocalFree(pMsg);
 }
 

@@ -449,7 +449,8 @@ class Node
 		if(parent)
 		{
 			Scope sc = parent.getScope();
-			if(createsScope())
+			assert(sc);
+			if(sc && createsScope())
 				sc = enterScope(sc);
 			return sc;
 		}

@@ -449,7 +449,7 @@ class SourceModule
 {
 	// filename already in Module
 	SysTime lastModified;
-	int optionsChangeCount;
+	Options options;
 
 	string txt;
 	Module parsed;
@@ -476,6 +476,8 @@ class Project : Node
 		super(initspan);
 		options = new Options;
 
+		version(none)
+		{
 		options.importDirs ~= r"c:\l\dmd-2.055\src\druntime\import\";
 		options.importDirs ~= r"c:\l\dmd-2.055\src\phobos\";
 		
@@ -484,15 +486,16 @@ class Project : Node
 
 		options.importDirs ~= r"m:\s\d\rainers\dmd\test\";
 		options.importDirs ~= r"m:\s\d\rainers\dmd\test\imports\";
+		}
 
 		globalContext = new Context(null);
 		threadContext = new Context(null);
 	}
 
-	Module addSource(string fname, Module mod, ParseError[] errors, bool imported = false)
+	Module addSource(string fname, Module mod, ParseError[] errors, Node importFrom = null)
 	{
 		mod.filename = fname;
-		mod.imported = imported;
+		mod.imported = importFrom !is null;
 
 		SourceModule src;
 		string modname = mod.getModuleName();
@@ -526,19 +529,26 @@ class Project : Node
 		}
 		src.analyzed = mod.clone();
 		addMember(src.analyzed);
+		src.options = options;
+		if(importFrom)
+			if(auto m = importFrom.getModule())
+				src.options = m.getOptions();
+
 		mSourcesByModName[modname] = src;
 		mSourcesByFileName[fname] = src;
 		return src.analyzed;
 	}
 
 	////////////////////////////////////////////////////////////
-	Module addText(string fname, string txt, bool imported = false)
+	Module addText(string fname, string txt, Node importFrom = null)
 	{
 		SourceModule src;
 		if(auto pm = fname in mSourcesByFileName)
 			src = *pm;
 		else
 			src = new SourceModule;
+
+		logInfo("parsing " ~ fname);
 
 		Parser p = new Parser;
 		src.parser = p;
@@ -563,14 +573,14 @@ class Project : Node
 			return null;
 
 		auto mod = static_cast!(Module)(n);
-		return addSource(fname, mod, p.errors, imported);
+		return addSource(fname, mod, p.errors, importFrom);
 	}
 	
-	Module addAndParseFile(string fname, bool imported = false)
+	Module addAndParseFile(string fname, Node importFrom = null)
 	{
 		//debug writeln(fname, ":");
 		string txt = readUtf8(fname);
-		return addText(fname, txt, imported);
+		return addText(fname, txt, importFrom);
 	}
 	
 	bool addFile(string fname)
@@ -604,11 +614,11 @@ class Project : Node
 			return mod;
 		
 		string dfile = replace(modname, ".", "/") ~ ".di";
-		string srcfile = searchImportFile(dfile);
+		string srcfile = searchImportFile(dfile, importFrom);
 		if(srcfile.length == 0)
 		{
 			dfile = replace(modname, ".", "/") ~ ".d";
-			srcfile = searchImportFile(dfile);
+			srcfile = searchImportFile(dfile, importFrom);
 		}
 		if(srcfile.length == 0)
 		{
@@ -616,14 +626,20 @@ class Project : Node
 			return null;
 		}
 		srcfile = normalizePath(srcfile);
-		return addAndParseFile(srcfile, true);
+		return addAndParseFile(srcfile, importFrom);
 	}
 	
-	string searchImportFile(string dfile)
+	string searchImportFile(string dfile, Node importFrom)
 	{
 		if(std.file.exists(dfile))
 			return dfile;
-		foreach(dir; options.importDirs)
+		
+		Options opt = options;
+		if(importFrom)
+			if(auto mod = importFrom.getModule())
+				opt = mod.getOptions();
+
+		foreach(dir; opt.importDirs)
 			if(std.file.exists(dir ~ dfile))
 				return dir ~ dfile;
 		return null;
@@ -631,10 +647,15 @@ class Project : Node
 	
 	void initScope()
 	{
-		if(!mObjectModule)
-			mObjectModule = importModule("object", this);
-
+		getObjectModule(null);
 		scop = new Scope;
+	}
+
+	Module getObjectModule(Module importFrom)
+	{
+		if(!mObjectModule)
+			mObjectModule = importModule("object", importFrom);
+		return mObjectModule;
 	}
 
 	// for error messages

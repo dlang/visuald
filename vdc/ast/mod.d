@@ -40,7 +40,8 @@ class Module : Node
 
 	string filename;
 	bool imported;
-	
+	Options options;
+
 	override Module clone()
 	{
 		Module n = static_cast!Module(super.clone());
@@ -135,6 +136,12 @@ class Module : Node
 		return super.enterScope(sc);
 	}
 
+	override Scope getScope()
+	{
+		initScope();
+		return scop;
+	}
+
 	void initScope()
 	{
 		if(!scop)
@@ -145,11 +152,12 @@ class Module : Node
 
 			// add implicite import of module object
 			if(auto prj = getProject())
-				if(prj.mObjectModule && prj.mObjectModule !is this)
-				{
-					auto imp = Import.create(prj.mObjectModule); // only needs module name
-					scop.addImport(imp);
-				}
+				if(auto objmod = prj.getObjectModule(this))
+					if(objmod !is this)
+					{
+						auto imp = Import.create(objmod); // only needs module name
+						scop.addImport(imp);
+					}
 			
 			super.addMemberSymbols(scop);
 		}
@@ -195,10 +203,19 @@ class Module : Node
 	VersionDebug debugIds;
 	VersionDebug versionIds;
 	
+	Options getOptions()
+	{
+		if(options)
+			return options;
+		if(auto prj = getProject())
+			return prj.options;
+		return null;
+	}
+
 	void specifyVersion(string ident, TextPos pos)
 	{
-		if(auto prj = getProject())
-			if(prj.options.versionPredefined(ident) != 0)
+		if(Options opt = getOptions())
+			if(opt.versionPredefined(ident) != 0)
 				semanticError("cannot define predefined version identifier " ~ ident);
 		versionIds.define(ident, pos);
 	}
@@ -210,8 +227,8 @@ class Module : Node
 
 	bool versionEnabled(string ident, TextPos pos)
 	{
-		if(auto prj = getProject())
-			if(prj.options.versionEnabled(ident))
+		if(Options opt = getOptions())
+			if(opt.versionEnabled(ident))
 				return true;
 		if(versionIds.defined(ident, pos))
 			return true;
@@ -220,8 +237,8 @@ class Module : Node
 	
 	bool versionEnabled(int level)
 	{
-		if(auto prj = getProject())
-			if(prj.options.versionEnabled(level))
+		if(Options opt = getOptions())
+			if(opt.versionEnabled(level))
 				return true;
 		return level <= versionIds.level;
 	}
@@ -238,11 +255,11 @@ class Module : Node
 
 	bool debugEnabled(string ident, TextPos pos)
 	{
-		if(auto prj = getProject())
+		if(Options opt = getOptions())
 		{
-			if(!prj.options.debugOn)
+			if(!opt.debugOn)
 				return false;
-			if(prj.options.debugEnabled(ident))
+			if(opt.debugEnabled(ident))
 				return true;
 		}
 		if(debugIds.defined(ident, pos))
@@ -252,19 +269,19 @@ class Module : Node
 	
 	bool debugEnabled(int level)
 	{
-		if(auto prj = getProject())
+		if(Options opt = getOptions())
 		{
-			if(!prj.options.debugOn)
+			if(!opt.debugOn)
 				return false;
-			if(prj.options.debugEnabled(level))
+			if(opt.debugEnabled(level))
 				return true;
 		}
 		return level <= debugIds.level;
 	}
 	bool debugEnabled()
 	{
-		if(auto prj = getProject())
-			return prj.options.debugOn;
+		if(Options opt = getOptions())
+			return opt.debugOn;
 		return false;
 	}
 	

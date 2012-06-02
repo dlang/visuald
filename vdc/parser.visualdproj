@@ -795,11 +795,13 @@
    <File path="parser\tmpl.d" />
   </Folder>
   <File path="interpret.d" />
+  <File path="ivdserver.d" />
   <File path="lexer.d" />
   <File path="logger.d" />
   <File path="parsertest.d" />
   <File path="semantic.d" />
   <File path="util.d" />
+  <File path="vdserver.d" />
   <File path="versions.d" />
  </Folder>
 </DProject>
