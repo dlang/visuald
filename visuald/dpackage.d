@@ -1047,6 +1047,7 @@ class GlobalOptions
 	bool stopSolutionBuild;
 	bool demangleError = true;
 	bool autoOutlining;
+	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete
 	bool parseSource;
 	bool pasteIndent;
 	bool projectSemantics;
@@ -1127,11 +1128,12 @@ class GlobalOptions
 			stopSolutionBuild = keyToolOpts.GetDWORD("stopSolutionBuild", 0) != 0;
 			demangleError     = keyToolOpts.GetDWORD("demangleError", 1) != 0;
 			autoOutlining     = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
+			deleteFiles       = cast(byte) keyToolOpts.GetDWORD("deleteFiles", 0);
 			parseSource       = keyToolOpts.GetDWORD("parseSource", 1) != 0;
 			projectSemantics  = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
 			expandFromBuffer  = keyToolOpts.GetDWORD("expandFromBuffer", 1) != 0;
 			expandFromJSON    = keyToolOpts.GetDWORD("expandFromJSON", 1) != 0;
-			expandTrigger     = cast(ubyte) keyToolOpts.GetDWORD("expandTrigger", 0);
+			expandTrigger     = cast(byte) keyToolOpts.GetDWORD("expandTrigger", 0);
 			showTypeInTooltip = keyToolOpts.GetDWORD("showTypeInTooltip", 0) != 0;
 			pasteIndent       = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
@@ -1150,12 +1152,13 @@ class GlobalOptions
 			sortProjects         = keyUserOpts.GetDWORD("sortProjects",      sortProjects) != 0;
 			stopSolutionBuild    = keyUserOpts.GetDWORD("stopSolutionBuild", stopSolutionBuild) != 0;
 			demangleError        = keyUserOpts.GetDWORD("demangleError",     demangleError) != 0;
+			deleteFiles          = cast(byte) keyUserOpts.GetDWORD("deleteFiles",       deleteFiles);
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",     autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",       parseSource) != 0;
 			projectSemantics     = keyUserOpts.GetDWORD("projectSemantics",  projectSemantics) != 0;
 			expandFromBuffer     = keyUserOpts.GetDWORD("expandFromBuffer",  expandFromBuffer) != 0;
 			expandFromJSON       = keyUserOpts.GetDWORD("expandFromJSON",    expandFromJSON) != 0;
-			expandTrigger        = cast(ubyte) keyUserOpts.GetDWORD("expandTrigger",     expandTrigger);
+			expandTrigger        = cast(byte) keyUserOpts.GetDWORD("expandTrigger",     expandTrigger);
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",       pasteIndent) != 0;
 			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip", showTypeInTooltip) != 0;
 			lastColorizeVersions = ColorizeVersions;
@@ -1215,6 +1218,7 @@ class GlobalOptions
 			keyToolOpts.Set("stopSolutionBuild", stopSolutionBuild);
 			keyToolOpts.Set("demangleError", demangleError);
 			keyToolOpts.Set("autoOutlining", autoOutlining);
+			keyToolOpts.Set("deleteFiles", deleteFiles);
 			keyToolOpts.Set("parseSource", parseSource);
 			keyToolOpts.Set("projectSemantics", projectSemantics);
 			keyToolOpts.Set("expandFromBuffer", expandFromBuffer);

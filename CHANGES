@@ -432,3 +432,7 @@ unreleased Version 0.3.33
   * cv2pdb: exposed command line options in the project options
   * intellisense tool tip now shows enumerator value
   * moved parser and semantic analysis into another process
+  * GDC: user specified libraries are now appended after the source files to the command 
+    line to avoid linker problems
+  * improved performance when indenting muliple lines of code
+  * remove project item: now asks whether file on disk should also be removed

@@ -2193,13 +2193,13 @@ else
 	}
 	
 	//////////////////////////////////////////////////////////////
-	int ReplaceLineIndent(int line, LANGPREFERENCES* langPrefs)
+	int ReplaceLineIndent(int line, LANGPREFERENCES* langPrefs, ref CacheLineIndentInfo cacheInfo)
 	{
 		wstring linetxt = GetText(line, 0, line, -1);
 		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
 		int n = 0;
 		if(p < linetxt.length)
-			n = CalcLineIndent(line, 0, langPrefs);
+			n = CalcLineIndent(line, 0, langPrefs, cacheInfo);
 		if(n < 0)
 			n = 0;
 		if(n == orgn)
@@ -2387,6 +2387,19 @@ else
 		}
 	}
 	
+	static struct CacheLineIndentInfo
+	{
+		bool hasOpenBraceInfoValid;
+		bool hasOpenBrace;
+		int  hasOpenBraceLine;
+		int  hasOpenBraceTok;
+		LineTokenIterator hasOpenBraceIt;
+
+		bool findCommaInfoValid;
+		int  findCommaIndent;
+		int  findCommaIndentLine;
+	}
+
 	// calculate the indentation of the given line
 	// - if ch != 0, assume it being inserted at the beginning of the line
 	// - find the beginning of the previous statement
@@ -2402,7 +2415,7 @@ else
 	// - case/default
 	// - label:
 
-	int CalcLineIndent(int line, dchar ch, LANGPREFERENCES* langPrefs)
+	int CalcLineIndent(int line, dchar ch, LANGPREFERENCES* langPrefs, ref CacheLineIndentInfo cacheInfo)
 	{
 		LineTokenIterator lntokIt = LineTokenIterator(this, line, 0);
 		wstring startTok;
@@ -2448,14 +2461,34 @@ else
 		}
 		bool findOpenBrace(ref LineTokenIterator it)
 		{
+			int itline = it.line;
+			int ittok  = it.tok;
+
+			bool saveCacheInfo(bool res)
+			{
+				cacheInfo.hasOpenBraceInfoValid = true;
+				cacheInfo.hasOpenBrace = res;
+				cacheInfo.hasOpenBraceIt = it;
+				cacheInfo.hasOpenBraceLine = itline;
+				cacheInfo.hasOpenBraceTok = ittok;
+				return res;
+			}
+
 			do
 			{
 				txt = it.getText();
 				if(txt == "{" || txt == "[" || txt == "(")
-					return true;
+					return saveCacheInfo(true);
+
+				if(cacheInfo.hasOpenBraceInfoValid && it.line == cacheInfo.hasOpenBraceLine && it.tok == cacheInfo.hasOpenBraceTok)
+				{
+					it = cacheInfo.hasOpenBraceIt;
+					return cacheInfo.hasOpenBrace;
+				}
 			}
 			while(it.retreatOverBraces());
-			return false;
+
+			return saveCacheInfo(false);
 		}
 		
 		int findPreviousCaseIndent()
@@ -2475,15 +2508,28 @@ else
 
 		int findCommaIndent()
 		{
+			int itline = lntokIt.line;
+
+			int saveCacheInfo(int indent)
+			{
+				cacheInfo.findCommaInfoValid = true;
+				cacheInfo.findCommaIndent = indent;
+				cacheInfo.findCommaIndentLine = itline;
+				return indent;
+			}
+
 			wstring txt;
 			int commaIndent = countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
 			do
 			{
+				if(cacheInfo.findCommaInfoValid && lntokIt.line < cacheInfo.findCommaIndentLine)
+					return saveCacheInfo(cacheInfo.findCommaIndent);
+
 				txt = lntokIt.getText();
 				if(txt == "(")
-					return visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1);
+					return saveCacheInfo(visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1));
 				if(txt == "[")
-					return commaIndent;
+					return saveCacheInfo(commaIndent);
 				if(txt == ",")
 					commaIndent = countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
 				if(txt == "{")
@@ -2494,14 +2540,14 @@ else
 						wstring prev = txt;
 						txt = lntokIt.getText();
 						if(txt == "=") // struct initializer
-							return commaIndent;
+							return saveCacheInfo(commaIndent);
 						do
 						{
 							txt = lntokIt.getText();
 							if(txt == "{" || txt == "}" || txt == ";")
 							{
 								if(prev == "enum")
-									return commaIndent;
+									return saveCacheInfo(commaIndent);
 								else
 									break;
 							}
@@ -2509,22 +2555,22 @@ else
 						}
 						while(lntokIt.retreatOverBraces());
 					}
-					return commaIndent + langPrefs.uTabSize;
+					return saveCacheInfo(commaIndent + langPrefs.uTabSize);
 				}
 				if(isOpenBraceOrCase(lntokIt))
-					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
+					return saveCacheInfo(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize);
 				
 				if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
 				{
 					// indent once from line with first comma
-					return commaIndent + langPrefs.uTabSize;
+					return saveCacheInfo(commaIndent + langPrefs.uTabSize);
 //					lntokIt.advanceOverComments();
 //					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
 				}
 			}
 			while(lntokIt.retreatOverBraces());
 
-			return 0;
+			return saveCacheInfo(0);
 		}
 
 		if(startTok == "else")
@@ -2612,9 +2658,10 @@ else
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
 			return S_FALSE;
 		
+		CacheLineIndentInfo cacheInfo;
 		for(int line = startline; line <= endline; line++)
 		{
-			int rc = ReplaceLineIndent(line, &langPrefs);
+			int rc = ReplaceLineIndent(line, &langPrefs, cacheInfo);
 			if(FAILED(rc))
 				return rc;
 		}

@@ -12,6 +12,7 @@ import visuald.windows;
 import std.path;
 import std.file;
 import std.string;
+import std.conv;
 
 import stdext.path;
 
@@ -89,4 +90,18 @@ bool compareCommandFile(string cmdfile, string cmdline)
 		return false;
 	}
 	return true;
+}
+
+bool moveFileToRecycleBin(string fname)
+{
+	SHFILEOPSTRUCT fop;
+	fop.wFunc = FO_DELETE;
+	fop.fFlags = FOF_NO_UI | FOF_NORECURSION | FOF_FILESONLY | FOF_ALLOWUNDO;
+	wstring wname = to!wstring(fname);
+	wname ~= "\000\000";
+	fop.pFrom = wname.ptr;
+
+	if(SHFileOperation(&fop) != 0)
+		return false;
+	return !fop.fAnyOperationsAborted;
 }

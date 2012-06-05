@@ -1400,6 +1400,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in Error List"));
+		AddControl("Remove project item", mDeleteFiles = 
+				   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1408,6 +1410,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		mSortProjects.setChecked(opts.sortProjects);
 		mStopSlnBuild.setChecked(opts.stopSolutionBuild);
 		mDemangleError.setChecked(opts.demangleError);
+		mDeleteFiles.setSelection(opts.deleteFiles + 1);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1417,6 +1420,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
 		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild); 
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
+		changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles); 
 		return changes;
 	}
 
@@ -1424,6 +1428,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	CheckBox mSortProjects;
 	CheckBox mStopSlnBuild;
 	CheckBox mDemangleError;
+	ComboBox mDeleteFiles;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

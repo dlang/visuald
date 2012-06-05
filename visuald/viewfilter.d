@@ -934,7 +934,8 @@ version(tip)
 		if(idx > p || (ch != '\n' && linetxt[p] != ch))
 			return S_FALSE; // do nothing if not at beginning of line
 
-		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &langPrefs);
+		Source.CacheLineIndentInfo cacheInfo;
+		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &langPrefs, cacheInfo);
 		if(n < 0 || n == orgn)
 			return S_OK;
 		

@@ -114,7 +114,7 @@ idl2d_exe: $(VSI2D_EXE)
 
 install: dte_idl vsi2d package cpp2d_exe idl2d_exe vdserver_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
-	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb
+	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
 install_only:
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi

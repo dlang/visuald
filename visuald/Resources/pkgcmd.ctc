@@ -18,6 +18,8 @@
 #define guidOfficeIcon         { 0xd309f794, 0x903f, 0x11d0, { 0x9e, 0xfc, 0x00, 0xa0, 0xc9, 0x11, 0x00, 0x4f } }
 #define guidSHLMainMenu        { 0xd309f791, 0x903f, 0x11d0, { 0x9e, 0xfc, 0x00, 0xa0, 0xc9, 0x11, 0x00, 0x4f } }
 
+#define guidSharedMenuGroup    { 0x234a7fc1, 0xcfe9, 0x4335, { 0x9e, 0x82, 0x6, 0x1f, 0x86, 0xe4, 0x2, 0xc1 } }
+
 ///////////////////////////////////////////////////////////////////////////////
 // Menu IDs
 
@@ -37,6 +39,10 @@
 #define IDG_VS_WNDO_FINDRESULTS       0x0724
 #define IDG_VS_EDIT_GOTO              0x012D
 #define IDG_VS_EDIT_COMMANDWELL       0x012E
+#define IDG_VS_PROJ_ADDREMOVE         0x0147
+#define IDG_VS_SOLNITEMS_PROJITEM     0x01BD
+#define IDG_VS_CTXT_DELETE            0x022F
+#define IDG_VS_EDIT_CUTCOPY           0x012A
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bitmap IDs
@@ -77,6 +83,8 @@ CMDS_SECTION g_packageCLSID
 		g_commandSetCLSID:CmdConvSelection, g_packageCLSID:IDG_VD_CONVERSION,    0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "C++ Convert Selection",    "C++ Convert Selection",     "C++ Convert Selection",       , "ConvertSelection",       "ConvertSelection";
 		g_commandSetCLSID:CmdShowWebsite,   g_packageCLSID:IDG_VD_WEB,           0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Visual D Website",         "Visual D &Website",         "Open Visual D Website",       , "OpenWebsite",            "OpenWebsite";
 		
+		//g_commandSetCLSID:CmdDeleteFile,    guidSHLMainMenu:IDG_VS_EDIT_CUTCOPY, 0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Delete File",         "Delete File",         "Delete File",       , "DeleteFile",            "DeleteFile";
+
 		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID
 		// as the command set GUID. Also, by specifying blank for the FLAGS, this command is
 		// default visible and enabled. Other valid values for FLAGS are the following:
@@ -92,7 +100,8 @@ CMDS_SECTION g_packageCLSID
 CMDS_END
 
 CMDPLACEMENT_SECTION
-    // Command                             Group                                Priority
+    // Command                             Group                                        Priority
+	//	g_commandSetCLSID:CmdDeleteFile,   guidSharedMenuGroup:IDG_VS_EDIT_COMMANDWELL, 0xF100;
 CMDPLACEMENT_END
 
 VISIBILITY_SECTION

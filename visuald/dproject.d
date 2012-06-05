@@ -977,14 +977,37 @@ class Project : CVsHierarchy,
 			return E_INVALIDARG;
 
 		CHierNode[] nodes = VSITEMID2Nodes(itemid);
+		if(nodes.length == 0)
+			return S_OK;
+
+		int delFiles = Package.GetGlobalOptions().deleteFiles;
+		if(delFiles == 0)
+		{
+			string sfiles = (nodes.length == 1 ? "file" : to!string(nodes.length) ~ " files");
+			int answer = UtilMessageBox("Do you want to delete the " ~ sfiles ~ " on disk?\n\n" ~
+										"You can permanently answer this dialog in the global Visual D settings.", MB_YESNOCANCEL | MB_ICONEXCLAMATION, 
+										"Remove file from project");
+			if(answer == IDCANCEL)
+				return S_FALSE;
+			if(answer == IDYES)
+				delFiles = 1;
+			else
+				delFiles = -1;
+		}
 		foreach(node; nodes)
 		{
 			if(!node)
 				return E_INVALIDARG;
 
 			if(CFileNode fnode = cast(CFileNode) node)
+			{
+				string fname = fnode.GetFullPath();
 				if(HRESULT hr = fnode.CloseDoc(SLNSAVEOPT_PromptSave))
 					return hr;
+				if(delFiles > 0)
+					moveFileToRecycleBin(fname);
+					//std.file.remove(fname);
+			}
 
 			if(node.GetParent()) // might be already removed because folder has been removed?
 				node.GetParent().Delete(node, this);

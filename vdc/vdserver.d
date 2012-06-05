@@ -99,15 +99,15 @@ class VDServer : ComObject, IVDServer
 		string fname = to_string(filename);
 		string text  = to_string(srcText);
 		
+		auto parser = new Parser;
+		parser.saveErrors = true;
+
+		synchronized(mSemanticProject)
+			if(auto src = mSemanticProject.getModuleByFilename(fname))
+				src.parser = parser;
+
 		void doParse()
 		{
-			auto parser = new Parser;
-			parser.saveErrors = true;
-
-			synchronized(mSemanticProject)
-				if(auto src = mSemanticProject.getModuleByFilename(fname))
-					src.parser = parser;
-
 			ast.Node n;
 			try
 			{
