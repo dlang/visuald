@@ -424,6 +424,10 @@ class idl2d
 		case "NTAPI":
 		case "NTAPI_INLINE":
 		case "interface":
+		case "PtrToPtr64":
+		case "Ptr64ToPtr":
+		case "HandleToHandle64":
+		case "Handle64ToHandle":
 			return 3; // predefined for #define, but not in normal text
 		case "TRUE":
 			return 2; // predefined for expression, but not for #define
@@ -2470,8 +2474,8 @@ unittest
 #define CONTEXT_CONTROL (CONTEXT_i386 | 0x00000001L) // SS:SP, CS:IP, FLAGS, BP
 ";
 	string exptxt = "
-const CONTEXT_i386 = 0x00010000;    // this assumes that i386 and
-const CONTEXT_CONTROL = (CONTEXT_i386 | 0x00000001); // SS:SP, CS:IP, FLAGS, BP
+enum CONTEXT_i386 = 0x00010000;    // this assumes that i386 and
+enum CONTEXT_CONTROL = (CONTEXT_i386 | 0x00000001); // SS:SP, CS:IP, FLAGS, BP
 ";
 	testConvert(txt, exptxt);
 }
@@ -2497,7 +2501,7 @@ cpp_quote(\"#define prjBuildActionMax  prjBuildActionCustom\")
 ";
 	string exptxt = "
 enum { prjBuildActionNone }
-const prjBuildActionMin =  prjBuildActionNone;
+enum prjBuildActionMin =  prjBuildActionNone;
 alias prjBuildActionEmbeddedResource  prjBuildActionMax;
 ";
 	testConvert(txt, exptxt);
@@ -2525,7 +2529,7 @@ unittest
                                   &  (~SYNCHRONIZE))
 ";
 	string exptxt = "
-const KEY_READ =                ((STANDARD_RIGHTS_READ       |
+enum KEY_READ =                ((STANDARD_RIGHTS_READ       |
                                  KEY_QUERY_VALUE)
                                   &  (~SYNCHRONIZE));
 ";
@@ -2557,3 +2561,23 @@ alias _PROPSHEETPAGEA_V1 _PROPSHEETPAGEA;
 	testConvert(txt, exptxt, "prsht");
 }
 
+unittest
+{
+	string txt = "
+#define PtrToPtr64( p )         ((void * POINTER_64) p)
+__inline
+void * POINTER_64 PtrToPtr64(const void *p)
+{
+    return((void * POINTER_64) (unsigned __int64) (ULONG_PTR)p );
+}
+";
+string exptxt = "
+// #define PtrToPtr64( p )         ((void * POINTER_64) p)
+/*__inline*/
+void * PtrToPtr64(const( void)*p)
+{
+    return( cast(void*) cast(ulong)cast(ULONG_PTR)p );
+}
+";
+	testConvert(txt, exptxt, "prsht");
+}

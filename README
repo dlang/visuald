@@ -2,15 +2,20 @@
 This is the README file for visuald, a 
 Visual Studio package providing both project management and language services
 
-Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+Copyright (c) 2010-2012 by Rainer Schuetze, All Rights Reserved
 
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
 
+For downloading installer, more documentation, build instructions, forum and
+issue reporting, please visit the web site
+
+    http://www.dsource.org/projects/visuald
+
 Major Features
 ---------------
 * Project management
-  - all DMD command line options accessable
+  - all DMD and GDC command line options accessable
   - support for resource compiler
   - custom build commands
   - pre/post custom build steps
@@ -20,16 +25,23 @@ Major Features
   - new project templates
 
 * Language Service
-  - syntax highlighting
+  - syntax highlighting with special version/debug and token string support
+  - underlining of syntactical errors 
   - simple word-completion
   - import statement completion
   - goto definition (using JSON file from compilation)
+  - parameter info tooltips 
   - smart indentation
+  - comment/uncomment selection 
   - highlight/jump-to matching braces
   - code snippets
-  - parameter tooltips
   - display of scope at caret position
   - code outlining
+  - paste visually from clipboard ring
+  - code definition window
+  - search and replace dialog based on D tokenizer
+  - browse information displayed in object browser and class view 
+  - help on language and runtime library
 
 * Other
   - symbol/file search window
@@ -40,6 +52,7 @@ Major Features
   - VS 2005
   - VS 2008
   - VS 2010
+  - VS 2012
   Unfortunately, Express versions of Visual Studio do not support this 
   kind of extensions. Use the Visual Studio Shell instead (see the Visual
   D home page for links).
