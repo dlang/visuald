@@ -16,6 +16,7 @@ Major Features
 ---------------
 * Project management
   - all DMD and GDC command line options accessable
+  - support for x64 builds with GDC
   - support for resource compiler
   - custom build commands
   - pre/post custom build steps
