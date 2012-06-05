@@ -1,5 +1,5 @@
 
-This is the README file for visuald, a 
+This is the README file for Visual D, a 
 Visual Studio package providing both project management and language services
 
 Copyright (c) 2010-2012 by Rainer Schuetze, All Rights Reserved
@@ -7,7 +7,7 @@ Copyright (c) 2010-2012 by Rainer Schuetze, All Rights Reserved
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
 
-For downloading installer, more documentation, build instructions, forum and
+For installer download, more documentation, build instructions, forum and
 issue reporting, please visit the web site
 
     http://www.dsource.org/projects/visuald
@@ -42,10 +42,12 @@ Major Features
   - search and replace dialog based on D tokenizer
   - browse information displayed in object browser and class view 
   - help on language and runtime library
+  - experimental: semantic analysis for code completion and tool tips
 
 * Other
   - symbol/file search window
   - profiler window 
+  - C++ to D conversion wizard 
     
 * Supported Visual Studio versions
   - VS.NET 2003 (some limitations apply)
