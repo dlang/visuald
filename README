@@ -79,11 +79,16 @@ This code is distributed under the terms of the Artistic License 2.0.
 For more details, see the full text of the license in the file LICENSE.
 
 Building
-------------
+--------
 In a nutshell:
 - adjust environment variables in the root Makefile
 - run "nmake sdk"
-- 
+- start Visual Studio and load solution visuald_vs9.sln (VS 2008) or
+  visuald_vs10.sln (VS 2010)
+- build project "VisualD"
+
+For more information, visit
+	http://www.dsource.org/projects/visuald/wiki/Build_from_source
 
 Installation
 ------------
