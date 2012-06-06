@@ -22,8 +22,11 @@ Major Features
   - pre/post custom build steps
   - automatic dependency generation
   - automatic link between dependend projects
-  - integrates cv2pdb for seamless debugger integration 
   - new project templates
+
+* Debugger
+  - integrates cv2pdb for seamless integration with the VS native debugger 
+  - integrates mago, a debug engine dedicated to D
 
 * Language Service
   - syntax highlighting with special version/debug and token string support
@@ -55,7 +58,6 @@ Major Features
   - VS 2005
   - VS 2008
   - VS 2010
-  - VS 2012
   Unfortunately, Express versions of Visual Studio do not support this 
   kind of extensions. Use the Visual Studio Shell instead (see the Visual
   D home page for links).
@@ -75,6 +77,13 @@ License information
 
 This code is distributed under the terms of the Artistic License 2.0.
 For more details, see the full text of the license in the file LICENSE.
+
+Building
+------------
+In a nutshell:
+- adjust environment variables in the root Makefile
+- run "nmake sdk"
+- 
 
 Installation
 ------------
