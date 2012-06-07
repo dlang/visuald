@@ -15,7 +15,7 @@ import sdk.win32.oleauto;
 
 interface IVDServer : IUnknown
 {
-	static GUID iid = uuid("002a2de9-8bb6-484d-9901-7e4ad4084715");
+	static const GUID iid = uuid("002a2de9-8bb6-484d-9901-7e4ad4084715");
 
 public:
 	HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags);

@@ -78,8 +78,8 @@ License information
 This code is distributed under the terms of the Artistic License 2.0.
 For more details, see the full text of the license in the file LICENSE.
 
-Building
---------
+Building Visual D
+-----------------
 In a nutshell:
 - adjust environment variables in the root Makefile
 - run "nmake sdk"

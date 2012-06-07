@@ -36,7 +36,6 @@ Project:
 - GDC: 
   - separate compile + link does not write to object dir
   - ddoc files
-- remove D2.043
 - additional options for resource compiler
 
 Language service:

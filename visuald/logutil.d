@@ -620,6 +620,9 @@ string _getJustName(string mangle)
 string _getArgs(string func)
 {
 	int sidx = 0;
+	if(startsWith(func, "extern ("))
+		sidx += 8;
+
 	while(sidx < func.length && func[sidx] != '(')
 		sidx++;
 

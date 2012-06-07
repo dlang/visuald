@@ -2458,7 +2458,7 @@ const enumName[] VSDebugCommandCmdIds_names =
 		
 string enum_string(in enumName[] names, uint cmd)
 {
-	foreach(ref enumName en; names)
+	foreach(ref const(enumName) en; names)
 		if(en.id == cmd)
 			return en.name;
 	return "";

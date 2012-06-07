@@ -14,12 +14,13 @@ import vdc.parser.engine;
 import vdc.parser.expr;
 import vdc.parser.misc;
 import vdc.parser.tmpl;
+import vdc.parser.mod;
 
 import ast = vdc.ast.all;
 
 //-- GRAMMAR_BEGIN --
 //Declaration:
-//    alias Decl
+//    alias LinkageAttribute_opt Decl
 //    typedef Decl /* for legacy code */
 //    Decl
 //    alias Identifier this
@@ -46,6 +47,11 @@ class Declaration
 	{
 		switch(p.tok.id)
 		{
+			case TOK_extern:
+				p.pushState(&shiftAliasLinkage);
+				p.pushState(&Decl!true.enter);
+				return LinkageAttribute.enter(p);
+
 			case TOK_Identifier:
 				p.pushToken(p.tok);
 				p.pushState(&shiftAliasIdentifier);
@@ -55,6 +61,15 @@ class Declaration
 				p.pushState(&shiftTypedef);
 				return Decl!true.enter(p);
 		}
+	}
+
+	static Action shiftAliasLinkage(Parser p)
+	{
+		auto decl = p.popNode!(ast.Decl)();
+		auto link = p.popNode!(ast.AttributeSpecifier)();
+		p.combineAttributes(decl.attr, link.attr);
+		p.pushNode(decl);
+		return Forward;
 	}
 
 	// assumes identifier token on the info stack

@@ -2506,6 +2506,34 @@ else
 			return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
 		}
 
+		// called when previous line ends with a comma
+		// use cases:
+		//
+		// enum ID {
+		//     E1,
+		//--------------
+		// function(arg1,
+		//--------------
+		// int[] arr = [
+		//     expression,
+		//--------------
+		// Struct s = {
+		//     expression,
+		//--------------
+		// case C1,
+		//--------------
+		// case C1:
+		//     expression,
+		//--------------
+		// label:
+		//     expression,
+		//--------------
+		// public import mod1,
+		//--------------
+		// ulong var,
+		//--------------
+		// const(UDT) var,
+
 		int findCommaIndent()
 		{
 			int itline = lntokIt.line;
@@ -2527,6 +2555,7 @@ else
 
 				txt = lntokIt.getText();
 				if(txt == "(")
+					// TODO: should scan for first non-white after '('
 					return saveCacheInfo(visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1));
 				if(txt == "[")
 					return saveCacheInfo(commaIndent);

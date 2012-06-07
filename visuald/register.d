@@ -338,7 +338,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyLang.Set("Package"w, packageGuid);
 		keyLang.Set("Extensions"w, fileExtensions);
 		keyLang.Set("LangResId"w, 0);
-		foreach (ref LanguageProperty prop; g_languageProperties)
+		foreach (ref const(LanguageProperty) prop; g_languageProperties)
 			keyLang.Set(prop.name, prop.value);
 		
 		// colorizer settings

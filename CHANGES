@@ -436,3 +436,4 @@ unreleased Version 0.3.33
     line to avoid linker problems
   * improved performance when indenting muliple lines of code
   * remove project item: now asks whether file on disk should also be removed
+  * parser: added support for linkage specification inside alias
