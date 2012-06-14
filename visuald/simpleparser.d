@@ -319,6 +319,23 @@ class CurlyBracedStatement(S) : BracedStatement!(S, TOK_lcurly, TOK_rcurly)
 	mixin ForwardConstructor;
 }
 
+// do not eat closing } when reducing
+class OpenCurlyBracedStatement(S) : CurlyBracedStatement!(S)
+{
+	mixin ForwardConstructor;
+
+	override bool shift(Parser parser, ref ParserToken!S tok)
+	{
+		if(tok.id == TOK_rcurly)
+		{
+			parser.reduce();
+			return false;
+		}
+		extendSpan(tok.span);
+		return super.shift(parser, tok);
+	}
+}
+
 class SquareBracedExpression(S) : BracedStatement!(S, TOK_lbracket, TOK_rbracket)
 {
 	mixin ForwardConstructor;
@@ -376,6 +393,17 @@ class IfDebugVersionStatement(S, string keyword) : LocationBase!S
 		{
 then_statement:
 			extendSpan(tok.span);
+			if(tok.id == TOK_colon)
+			{
+				// version(X): is terminated by EOF or }, so
+				// treat version(X): stmts
+				// as    version(X) { stmts }
+				auto stmt = new OpenCurlyBracedStatement!S(this, tok.span);
+				stmt.span.iStartLine  = stmt.span.iEndLine  = tok.span.iEndLine;
+				stmt.span.iStartIndex = stmt.span.iEndIndex = tok.span.iEndIndex;
+				parser.push(stmt);
+				return true;
+			}
 			Statement!S stmt = new Statement!S(this, tok.span);
 			parser.push(stmt);
 			return false;

@@ -1900,7 +1900,7 @@ public: // IVsHierarchyEvent propagation
 		}
 
 		case VSADDITEMOP_RUNWIZARD: // Wizard was selected        
-			return RunWizard(
+			return RunWizard(pNode,
 				/* [in]  LPCOLESTR     pszItemName       */ pszItemName,
 				/* [in]  ULONG         cFilesToOpen      */ cFilesToOpen,
 				/* [in]  LPCOLESTR     rgpszFilesToOpen[]*/ rgpszFilesToOpen,
@@ -2100,13 +2100,32 @@ public: // IVsHierarchyEvent propagation
 		return pNewNode;
 	}
 
-	HRESULT RunWizard(
+	HRESULT RunWizard(CHierContainer pNode,
 		/* [in]                        */ in wchar*       pszItemName,
 		/* [in]                        */ ULONG           cFilesToOpen,
 		/* [in, size_is(cFilesToOpen)] */ in wchar**      rgpszFilesToOpen,
 		/* [in]                        */ in HWND         hwndDlg,
 		/* [out, retval]               */ VSADDRESULT*    pResult)
 	{
+		if(cFilesToOpen < 1)
+			return E_FAIL;
+		string itemName = to_string(pszItemName);
+		string vszFile = to_string(rgpszFilesToOpen[0]);
+		if(icmp(baseName(vszFile), "package.vsz") == 0)
+		{
+			*pResult = ADDRESULT_Failure;
+			try
+			{
+				mkdir(itemName);
+
+				if(AddExistingFile(pNode, itemName))
+					*pResult = ADDRESULT_Success;
+			}
+			catch(Exception)
+			{
+			}
+			return S_OK;
+		}
 		return E_NOTIMPL;
 	}
 

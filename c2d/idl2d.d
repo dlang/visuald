@@ -35,6 +35,7 @@ version = static_if_to_version;
 version = vsi;
 version = macro2template;
 version = targetD2;
+version = Win8;
 
 class Source
 {
@@ -55,7 +56,14 @@ class idl2d
 {
 	///////////////////////////////////////////////////////
 	// configuration
-	version(all)
+	version(Win8)
+	{
+		string vsi_base_path = r"c:\l\vs9SDK"; // r"c:\l\vs9SDK";
+		string dte_path   = r"m:\s\d\visuald\trunk\sdk\vsi\idl\";
+		string win_path   = r"c:\l\vs11\Windows Kits\8.0\Include\";
+		string sdk_d_path = r"m:\s\d\visuald\trunk\sdk\";
+	}
+	else version(all)
 	{
 		string vsi_base_path;
 		string dte_path;
@@ -108,7 +116,7 @@ class idl2d
 			"iphlpapi.h", "iprtrmib.h", "ipexport.h", "iptypes.h", "tcpestats.h",
 			/*"inaddr.h", "in6addr.h",*/
 			"ipifcons.h", "ipmib.h", "tcpmib.h", "udpmib.h",
-			"ifmib.h", "ifdef.h", "nldef.h",
+			"ifmib.h", "ifdef.h", "nldef.h", "winnls.h",
 			"shellapi.h", "rpcdce.h" /*, "rpcdcep.h"*/ ];
 		
 		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "wtypes.idl", "oleidl.idl", 
@@ -117,13 +125,28 @@ class idl2d
 			"activdbg.id*", "activscp.id*", "dbgprop.id*", // only available in Windows SDK v7.x
 		];
 
+		// only available (and are required for successfull compilation) in Windows SDK v8];
+		foreach(f; [ "wtypesbase.idl", 
+			//"winapifamily.h", "apisetcconv.h", "apiset.h", // commented because it is difficult to convert this file
+			"minwinbase.h", "processenv.h", 
+			"minwindef.h", "fileapi.h", "debugapi.h", "handleapi.h", "errhandlingapi.h",
+			"fibersapi.h", "namedpipeapi.h", "profileapi.h", "heapapi.h", "synchapi.h",
+			"interlockedapi.h", "processthreadsapi.h", "sysinfoapi.h", "memoryapi.h", 
+			"threadpoollegacyapiset.h", "utilapiset.h", "ioapiset.h", 
+			"threadpoolprivateapiset.h", "threadpoolapiset.h",  "bemapiset.h", "wow64apiset.h",
+			"jobapi.h", "timezoneapi.h", "datetimeapi.h", "stringapiset.h",
+			"libloaderapi.h", "securitybaseapi.h", "namespaceapi.h", "systemtopologyapi.h", "processtopologyapi.h",
+			"securityappcontainer.h", "realtimeapiset.h", "unknwnbase.idl", "objidlbase.idl", "combaseapi.h"
+		])
+			win_idl_files ~= f ~ "*"; // make it optional
+
 		if(vsi)
 		{
 			vsi_idl_files = [ "shared.idh", "vsshell.idl", "*.idl", "*.idh" ];
 			vsi_h_files   = [ "completionuuids.h", "contextuuids.h", "textmgruuids.h", "vsshelluuids.h", "vsdbgcmd.h",
 				"venusids.h", "stdidcmd.h", "vsshlids.h", "mnuhelpids.h", "WCFReferencesIds.h",
 				"vsdebugguids.h", "VSRegKeyNames.h", "SCGuids.h", "wbids.h", "sharedids.h",
-				"vseeguids.h", "version.h",
+				"vseeguids.h", "version.h", "scc.h",
 				"vsplatformuiuuids.*", // only in VS2010 SDK
 			// no longer in SDK2010: "DSLToolsCmdID.h", 
 			 ];
@@ -416,6 +439,9 @@ class idl2d
 		case "_SLIST_HEADER_":
 		case "_RTL_RUN_ONCE_DEF":
 		case "__midl":
+
+		// Windows SDK 8.0
+		case "NOAPISET":
 			return -1;
 
 		case "WINAPI":
@@ -468,6 +494,8 @@ class idl2d
 		case "DTE":
 		case "Project":
 		case "ProjectItem":
+		case "CodeModel":
+		case "FileCodeModel":
 		case "IDebugMachine2_V7":
 		case "EnumMachines_V7":
 		case "IEnumDebugMachines2_V7":
@@ -522,6 +550,10 @@ class idl2d
 			//if(!vsi)
 				return 1;
 			//break;
+
+		// Windows SDK 8.0
+		case "_CONTRACT_GEN":
+			return -1;
 		default: 
 			break;
 		}
@@ -539,11 +571,15 @@ class idl2d
 		if(cond == "_" ~ toUpper(currentModule) ~ "_")
 			return -1;
 
+		if(startsWith(cond, "WINAPI_FAMILY_PARTITION"))
+			return 1;
+
 		if(indexOf(cond, "(") < 0 && indexOf(cond, "|") < 0 && indexOf(cond, "&") < 0)
 		{
 			if (startsWith(cond, "CMD_ZOOM_"))
 				return 1;
 
+			cond = cond.replace(" ", "");
 			if(startsWith(cond, "WINVER>") || startsWith(cond, "_WIN32_WINNT>") || startsWith(cond, "NTDDI_VERSION>"))
 				return 1;
 			if(startsWith(cond, "WINVER<") || startsWith(cond, "_WIN32_WINNT<") || startsWith(cond, "NTDDI_VERSION<"))
@@ -1000,12 +1036,17 @@ version(all)
 		return name;
 	}
 
+	string translatePackageName(string fname)
+	{
+		return fname.replace("\\shared\\", "\\").replace("\\um\\", "\\");
+	}
+
 	string translateFilename(string fname)
 	{
 		string name = getNameWithoutExt(fname);
 		string nname = translateModuleName(name);
 		if(name == nname)
-			return fname;
+			return translatePackageName(fname);
 
 		string dir = dirName(fname);
 		if(dir == ".")
@@ -1015,7 +1056,7 @@ version(all)
 		string ext = getExt(fname);
 		if(ext.length > 0)
 			ext = "." ~ ext;
-		return dir ~ nname ~ ext;
+		return translatePackageName(dir ~ nname ~ ext);
 	}
 
 	string _fixImport(string text)
@@ -1201,6 +1242,7 @@ version(all)
 		replaceTokenSequence(tokens, "STDAPICALLTYPE", "extern(Windows)", true);
 		replaceTokenSequence(tokens, "WINOLEAPI_($_rettype)", "extern(Windows) $_rettype", true);
 		replaceTokenSequence(tokens, "WINOLEAPI", "extern(Windows) HRESULT", true);
+		replaceTokenSequence(tokens, "$_ident WINAPIV", "extern(C) $_ident", true);
 		
 		replaceTokenSequence(tokens, "RPCRTAPI", "export", true);
 		replaceTokenSequence(tokens, "RPC_STATUS", "int", true);
@@ -1313,6 +1355,8 @@ version(all)
 
 			case "version":
 			case "align":
+			case "package":
+			case "function":
 				if(tokIt[1].text != "(")
 					tok.text = keywordPrefix ~ tok.text;
 				break;
@@ -1363,6 +1407,24 @@ version(all)
 					(tokIt + 1).erase();
 				break;
 			}
+				// Windows SDK 8.0 => 7.1
+			case "_Null_terminated_":     tok.text = "__nullterminated"; break;
+			case "_NullNull_terminated_": tok.text = "__nullnullterminated"; break;
+			case "_Success_":             tok.text = "__success"; break;
+			case "_In_":                  tok.text = "__in"; break;
+			case "_Inout_":               tok.text = "__inout"; break;
+			case "_In_opt_":              tok.text = "__in_opt"; break;
+			case "_Inout_opt_":           tok.text = "__inout_opt"; break;
+			case "_Inout_z_":             tok.text = "__inout_z"; break;
+			case "_Deref_out_":           tok.text = "__deref_out"; break;
+			case "_Out_":                 tok.text = "__out"; break;
+			case "_Out_opt_":             tok.text = "__out_opt"; break;
+			case "_Field_range_":         tok.text = "__range"; break;
+			case "_Field_size_":          tok.text = "__field_ecount"; break;
+			case "_Field_size_opt_":      tok.text = "__field_ecount_opt"; break;
+			case "_Field_size_bytes_":    tok.text = "__field_bcount"; break;
+			case "_Field_size_bytes_opt_":tok.text = "__field_bcount_opt"; break;
+
 			default:
 				if(tok.type == Token.Macro && tok.text.startsWith("$"))
 					tok.text = "_d_" ~ tok.text[1..$];
@@ -1462,10 +1524,14 @@ version(none) version(vsi)
 			replaceTokenSequence(tokens, "const OLECHAR *COLE_DEFAULT_PRINCIPAL", "denum const OLECHAR *COLE_DEFAULT_PRINCIPAL", true);
 			replaceTokenSequence(tokens, "const void    *COLE_DEFAULT_AUTHINFO",  "denum const void    *COLE_DEFAULT_AUTHINFO", true);
 		}
+		if(currentModule == "combaseapi")
+		{
+			replaceTokenSequence(tokens, "typedef enum CWMO_FLAGS", "typedef enum tagCWMO_FLAGS", true);
+		}
 
 		replaceTokenSequence(tokens, "extern const __declspec(selectany)", "dconst", true);
 		replaceTokenSequence(tokens, "EXTERN_C $args;", "/+EXTERN_C $args;+/", true);
-		replaceTokenSequence(tokens, "SAFEARRAY($_ident)", "SAFEARRAY/*($_ident)*/", true);
+		replaceTokenSequence(tokens, "SAFEARRAY($args)", "SAFEARRAY/*($args)*/", true);
 
 		// remove forward declarations
 		replaceTokenSequence(tokens, "enum $_ident;", "/+ enum $_ident; +/", true);
@@ -1516,6 +1582,8 @@ version(remove_pp)
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\ndconst $_ident = $expr; __eo_interface", true) > 0
 		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { const $_identtype $_ident = $expr; $data } $tail __eo_interface", 
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nconst $_identtype $_ident = $expr; __eo_interface", true) > 0
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { const $_identtype *$_ident = $expr; $data } $tail __eo_interface", 
+						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nconst $_identtype *$_ident = $expr; __eo_interface", true) > 0
 		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { struct $args; $data } $tail __eo_interface", 
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nstruct $args; __eo_interface", true) > 0
 		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { union $args; $data } $tail __eo_interface", 
@@ -1561,6 +1629,7 @@ version(none)
 		replaceTokenSequence(tokens, "typedef enum $_ident1 $_ident1;", "/+ typedef enum $_ident1 $_ident1; +/", true);
 		replaceTokenSequence(tokens, "enum $_ident1 $_ident2", "$_ident1 $_ident2", true);
 }
+		replaceTokenSequence(tokens, "typedef _Struct_size_bytes_($args)", "typedef", true);
 
 		replaceTokenSequence(tokens, "__struct_bcount($args)", "[__struct_bcount($args)]", true);
 		replaceTokenSequence(tokens, "struct $_ident : $_opt public $_ident2 {", "struct $_ident { $_ident2 base;", true);
@@ -1656,7 +1725,24 @@ version(none)
 			replaceTokenSequence(tokens, "$_not . UIHierarchyItems*", "$_not . UIHierarchyItems*", true);
 			replaceTokenSequence(tokens, "Collection([$data] ProjectItems $arg)", "Collection([$data] .ProjectItems $arg)", true);
 		}
-			
+		// VS2012 SDK
+		if(currentModule == "webproperties")
+		{
+			replaceTokenSequence(tokens, "ClassFileItem([$data] ProjectItem $arg)", "ClassFileItem([$data] .ProjectItem $arg)", true);
+			replaceTokenSequence(tokens, "Discomap([$data] ProjectItem $arg)", "Discomap([$data] .ProjectItem $arg)", true);
+		}
+		if(currentModule == "vsshell110")
+		{
+			// not inside #ifdef PROXYSTUB_BUILD
+			replaceTokenSequence(tokens, "alias IID_SVsFileMergeService SID_SVsFileMergeService;", "// $*", true);
+
+		}
+		if(currentModule == "vapiemp")
+		{
+			// CLSID_CVapiEMPDataSource undefined, create one
+			replaceTokenSequence(tokens, "CVapiEMPDataSource.iid;", "uuid(\"{F1357394-9545-4cfd-AE2B-219C2A30C096}\");", true);
+		}
+
 		// interface without base class is used as namespace
 		replaceTokenSequence(tokens, "interface $_notIFace IUnknown { $_not static $data }", 
 			"/+interface $_notIFace {+/ $_not $data /+} interface $_notIFace+/", true);
@@ -1731,7 +1817,8 @@ version(all) {
 		replaceTokenSequence(tokens, "__range($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__declspec($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__in_range($args)", "/+$*+/", true);
-		
+		replaceTokenSequence(tokens, "__transfer($args)", "/+$*+/", true);
+
 		replaceTokenSequence(tokens, "__drv_functionClass($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__drv_maxIRQL($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__drv_when($args)", "/+$*+/", true);
@@ -1739,6 +1826,55 @@ version(all) {
 		replaceTokenSequence(tokens, "__drv_preferredFunction($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__drv_allocatesMem($args)", "/+$*+/", true);
 	
+		// Win SDK 8.0
+		replaceTokenSequence(tokens, "_IRQL_requires_same_", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Function_class_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Inout_cap_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Inout_count_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Inout_updates_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Inout_updates_z_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Inout_updates_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Inout_updates_bytes_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Inout_updates_bytes_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Inout_updates_bytes_to_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Interlocked_operand_", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Struct_size_bytes_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_to_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_to_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_bytes_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_bytes_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_bytes_to_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_bytes_to_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_writes_bytes_all_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_cap_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Out_z_cap_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_In_reads_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_In_count_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_In_reads_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_In_reads_bytes_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_In_reads_bytes_opt_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_In_NLS_string_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_When_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_At_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Post_readable_size_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Post_writable_byte_size_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Post_equal_to_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Ret_writes_maybenull_z_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Ret_writes_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Ret_range_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Return_type_success_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Outptr_result_buffer_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Outptr_result_bytebuffer_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Outptr_result_buffer_maybenull_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Outptr_opt_result_bytebuffer_all_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Outptr_opt_result_buffer_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Releases_exclusive_lock_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Releases_shared_lock_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Acquires_exclusive_lock_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Acquires_shared_lock_($args)", "/+$*+/", true);
+
 		replaceTokenSequence(tokens, "__assume_bound($args);", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__asm{$args}$_opt;", "assert(false, \"asm not translated\"); asm{naked; nop; /+$args+/}", true);
 		replaceTokenSequence(tokens, "__asm $_not{$stmt}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$_not $stmt+/} }", true);
@@ -1795,6 +1931,8 @@ version(all) {
 }
 version(targetD2)
 {
+		replaceTokenSequence(tokens, "$_ident const volatile*", "volatile dconst($_ident)*", true);
+		replaceTokenSequence(tokens, "CONST FAR*", "CONST*", true);
 		replaceTokenSequence(tokens, "$_ident const*", "dconst($_ident)*", true);
 		replaceTokenSequence(tokens, "const $_ident*", "dconst($_ident)*", true);
 		replaceTokenSequence(tokens, "CONST $_ident*", "dconst($_ident)*", true);
@@ -1808,20 +1946,28 @@ else
 
 		if(currentModule == "vsshelluuids")
 		{
-			replaceTokenSequence(tokens, "dconst GUID uuid_IVsDebugger3 = uuid($uid);$data dconst GUID uuid_IVsDebugger3",
-			                             "$data\ndconst GUID uuid_IVsDebugger3",true);
-			replaceTokenSequence(tokens, "dconst GUID uuid_IVsDebugLaunchHook = uuid($uid);$data dconst GUID uuid_IVsDebugLaunchHook",
-			                             "$data\ndconst GUID uuid_IVsDebugLaunchHook",true);
+			replaceTokenSequence(tokens, "denum GUID uuid_IVsDebugger3 = uuid($uid);$data denum GUID uuid_IVsDebugger3",
+			                             "$data\ndenum GUID uuid_IVsDebugger3",true);
+			replaceTokenSequence(tokens, "denum GUID uuid_IVsDebugLaunchHook = uuid($uid);$data denum GUID uuid_IVsDebugLaunchHook",
+			                             "$data\ndenum GUID uuid_IVsDebugLaunchHook",true);
 		}
 		if(currentModule == "mnuhelpids")
 		{
-			replaceTokenSequence(tokens, "dconst icmdHelpManager = $data; dconst icmdHelpManager", "dconst icmdHelpManager", true);
+			replaceTokenSequence(tokens, "denum icmdHelpManager = $data; denum icmdHelpManager", "denum icmdHelpManager", true);
 		}
 		
 		if(currentModule == "prsht")
 		{
 			replaceTokenSequence(tokens, "alias _PROPSHEETPAGEA $_ident;", "alias $_ident _PROPSHEETPAGEA;", true);
 			replaceTokenSequence(tokens, "alias _PROPSHEETPAGEW $_ident;", "alias $_ident _PROPSHEETPAGEW;", true);
+		}
+		if(currentModule == "vsscceng")
+		{
+			replaceTokenSequence(tokens, "extern(C++) { $data }", "/+ $* +/", true);
+		}
+		if(currentModule)
+		{
+			replaceTokenSequence(tokens, "alias MUI_CALLBACK_FLAG_UPGRADED_INSTALLATION $_ident;", "// $*", true);
 		}
 		//replaceTokenSequence(tokens, "[$args]", "\n\t\t/+[$args]+/", true);
 
@@ -1928,6 +2074,9 @@ else
 			"const GUID $_ident = { $_num1,$_num2,$_num3, [ $_num4,$_num5,$_num6,$_num7,$_num8,$_num9,$_numA,$_numB ] }", true);
 		replaceTokenSequence(tokens, "EXTERN_GUID($_ident,$_num1,$_num2,$_num3,$_num4,$_num5,$_num6,$_num7,$_num8,$_num9,$_numA,$_numB)",
 			"const GUID $_ident = { $_num1,$_num2,$_num3, [ $_num4,$_num5,$_num6,$_num7,$_num8,$_num9,$_numA,$_numB ] }", true);
+
+		// combaseapi.h:
+		replaceTokenSequence(tokens, "alias int $_ident = $_num;", "enum int $_ident = $_num;", true);
 		string txt = tokenListToString(tokens, true);
 
 		return txt;
@@ -1969,6 +2118,7 @@ else
 		case "__out_opt":
 		case "__out_z":
 		case "__inout":
+		case "__inout_z":
 		case "__deref":
 		case "__deref_inout_opt":
 		case "__deref_out_opt":
@@ -1995,8 +2145,33 @@ else
 		case "__post":
 		case "__notvalid":
 		case "__analysis_noreturn":
+
+		// Windows SDK 8.0
+		case "_Outptr_":
+		case "_Outptr_opt_":
+		case "_COM_Outptr_":
+		case "_In_z_":
+		case "_In_opt_z_":
+		case "_Pre_":
+		case "_Pre_valid_":
+		case "_Pre_z_":
+		case "_Pre_opt_valid_":
+		case "_Pre_maybenull_":
+		case "_Post_valid_":
+		case "_Post_invalid_":
+		case "_Post_":
+		case "_Post_z_":
+		case "_Deref_opt_out_opt_":
+		case "_Post_equals_last_error_":
+		case "_Outptr_opt_result_maybenull_":
+		case "_Check_return_":
+		case "_Must_inspect_result_":
+		case "_Frees_ptr_opt_":
+		case "_Reserved_":
+		case "_Ret_maybenull_":
+		case "_Ret_opt_":
+		case "_Printf_format_string_":
 			return "/*" ~ text ~ "*/";
-			
 
 		case "__checkReturn": return "/*__checkReturn*/";
 		case "volatile":  return "/*volatile*/";
@@ -2057,8 +2232,14 @@ else
 	{
 		if (indexOf(file, '*') >= 0 || indexOf(file, '?') >= 0)
 			addSourceByPattern("+" ~ file);
-		else
+		else 
+		{
+			if(!exists(file))
+				file = dirName(file) ~ "\\shared\\" ~ baseName(file);
+			if(!exists(file))
+				file = replace(file, "\\shared\\", "\\um\\");
 			addSource(file);
+		}
 	}
 
 	string fileToModule(string file)
@@ -2116,7 +2297,9 @@ else
 			hdr ~= "import " ~ packageWin ~ "iprtrmib;\n";
 		else if(currentModule == "udpmib")
 			hdr ~= "import " ~ packageWin ~ "iprtrmib;\n";
-		
+		else if(currentModule == "vssolutn")
+			hdr ~= "import " ~ packageWin ~ "winnls;\n";
+
 		hdr ~= "\n";
 
 version(static_if_to_version)
@@ -2126,6 +2309,48 @@ version(remove_pp) {} else
 }
 
 		return hdr;
+	}
+
+	void rewrite_vsiproject(string sources)
+	{
+		string projfile = sdk_d_path ~ "vsi.visualdproj";
+		if(!exists(projfile))
+			return;
+		string txt = cast(string)(std.file.read(projfile));
+
+		auto pos = indexOf(txt, "<Folder");
+		if(pos < 0)
+			return;
+		auto pos2 = indexOf(txt[pos .. $], '\n');
+		if(pos < 0)
+			return;
+
+		string ins = "  <Folder name=\"port\">\n";
+		string portdir = sdk_d_path ~ "port";
+		foreach (string name; dirEntries(portdir, SpanMode.shallow))
+			if (fnmatch(basename(name), "*.d"))
+				ins ~= "   <File path=\"port\\" ~ basename(name) ~ "\" />\n";
+		
+		string folder = "port";
+
+		string[] files = split(sources);
+		foreach(file; files)
+		{
+			if(file == "\\" || file == "SRC" || file == "=")
+				continue;
+			string dir = dirName(file);
+			if(dir != folder)
+			{
+				ins ~= "  </Folder>\n";
+				ins ~= "  <Folder name=\"" ~ dir ~ "\">\n";
+				folder = dir;
+			}
+			ins ~= "   <File path=\"" ~ file ~ "\" />\n";
+		}
+		ins ~= "  </Folder>\n";
+		ins ~= " </Folder>\n";
+		ins ~= "</DProject>\n";
+		std.file.write(projfile, txt[0 .. pos + pos2 + 1] ~ ins);
 	}
 
 	void setCurrentFile(string file)
@@ -2295,6 +2520,7 @@ version(remove_pp) {} else
 			else
 				string srcfile = sdk_d_path ~ "\\sources";
 			std.file.write(srcfile, sources);
+			rewrite_vsiproject(sources);
 		}
 		return 0;
 	}

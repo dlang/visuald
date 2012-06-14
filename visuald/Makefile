@@ -113,7 +113,7 @@ DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 
 LIBS = phobos.lib ..\sdk\lib\comctl32.lib uuid.lib advapi32.lib comdlg32.lib \
-	ole32.lib oleaut32.lib user32.lib shell32.lib gdi32.lib
+	ole32.lib ..\sdk\lib\oleaut32.lib user32.lib shell32.lib gdi32.lib
 
 DEPS = Makefile ..\VERSION $(DMD2)
 

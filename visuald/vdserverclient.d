@@ -30,11 +30,22 @@ import core.thread;
 
 // debug version = DebugCmd;
 debug version = InProc;
+// debug version = ABothe;
 
 version(InProc) import vdc.vdserver;
 
 ///////////////////////////////////////////////////////////////////////
-static GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+version(ABothe)
+{
+	static GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-AA05-7e4ad4084715");
+	static GUID IVDServer_iid = uuid("002a2de9-8bb6-484d-AA01-7e4ad4084715");
+	static GUID VDServer_iid = uuid("002a2de9-8bb6-484d-AA05-7e4ad4084715");
+}
+else
+{
+	static GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+	static GUID IVDServer_iid = IVDServer.iid;
+}
 
 __gshared IClassFactory gVDClassFactory;
 __gshared IVDServer gVDServer;
@@ -50,17 +61,17 @@ bool startVDServer()
 		gVDServer = new VDServer;
 	else
 	{
-	GUID factory_iid = IID_IClassFactory;
-	HRESULT hr = CoGetClassObject(VDServerClassFactory_iid, CLSCTX_LOCAL_SERVER, null, factory_iid, cast(void**)&gVDClassFactory);
-	if(FAILED(hr))
-		return false;
+		GUID factory_iid = IID_IClassFactory;
+		HRESULT hr = CoGetClassObject(VDServerClassFactory_iid, CLSCTX_LOCAL_SERVER|CLSCTX_INPROC_SERVER, null, factory_iid, cast(void**)&gVDClassFactory);
+		if(FAILED(hr))
+			return false;
 
-	hr = gVDClassFactory.CreateInstance(null, &IVDServer.iid, cast(void**)&gVDServer);
-	if (FAILED(hr))
-	{
-		gVDClassFactory = release(gVDClassFactory);
-		return false;
-	}
+		hr = gVDClassFactory.CreateInstance(null, &IVDServer_iid, cast(void**)&gVDServer);
+		if (FAILED(hr))
+		{
+			gVDClassFactory = release(gVDClassFactory);
+			return false;
+		}
 	}
 	return true;
 }

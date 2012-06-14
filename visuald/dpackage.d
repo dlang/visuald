@@ -48,6 +48,7 @@ import visuald.colorizer;
 import visuald.dllmain;
 
 import sdk.win32.winreg;
+import sdk.win32.oleauto;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vssplash;
@@ -97,6 +98,7 @@ const GUID    g_CppWizardWinCLSID        = uuid("002a2de9-8bb6-484d-980a-7e4ad40
 
 const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-980b-7e4ad4084715");
 const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-980c-7e4ad4084715");
+const GUID    g_ProjectItemWizardCLSID   = uuid("002a2de9-8bb6-484d-980d-7e4ad4084715");
 // more guids in propertypage.d starting with 9810
 
 GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
@@ -161,6 +163,11 @@ HRESULT DllGetClassObject(CLSID* rclsid, IID* riid, LPVOID* ppv)
 	{
 		DEnumOutFactory eof = new DEnumOutFactory;
 		return eof.QueryInterface(riid, ppv);
+	}
+	if(*rclsid == g_ProjectItemWizardCLSID)
+	{
+		auto wiz = new WizardFactory;
+		return wiz.QueryInterface(riid, ppv);
 	}
 	if(PropertyPageFactory factory = PropertyPageFactory.create(rclsid))
 		return factory.QueryInterface(riid, ppv);
@@ -1523,67 +1530,98 @@ class GlobalOptions
 	}
 }
 
-
-// not used:
-class CommandManager
+///////////////////////////////////////////////////////////////////////
+class WizardFactory : DComObject, IClassFactory
 {
-	HRESULT AddCommand(string name)
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
-		dte2.DTE2 spvsDTE = GetDTE();
-		if(!spvsDTE)
-			return E_FAIL;
-		scope(exit) release(spvsDTE);
-		
-		HRESULT hr = S_OK;
+		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
 
-		ComPtr!(dte.Commands) spvsCmds;
-		hr = spvsDTE.Commands(&spvsCmds.ptr);
-		if (SUCCEEDED(hr))
+	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
+	{
+		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
+
+		assert(!UnkOuter);
+		auto wiz = new ItemWizard;
+		return wiz.QueryInterface(riid, pvObject);
+	}
+
+	override HRESULT LockServer(in BOOL fLock)
+	{
+		if(fLock)
+			InterlockedIncrement(&g_dllRefCount);
+		else
+			InterlockedDecrement(&g_dllRefCount);
+		return S_OK;
+	}
+
+	int lockCount;
+}
+
+class ItemWizard : DisposingDispatchObject, dte.IDTWizard
+{
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(dte.IDTWizard) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+	override void Dispose()
+	{
+	}
+	override ComTypeInfoHolder getTypeHolder () 
+	{ 
+		mixin(LogCallMix);
+		return null; 
+	}
+
+	override HRESULT Execute(/+[in]+/ IDispatch Application, 
+							 in int hwndOwner, 
+							 in SAFEARRAY* ContextParams, 
+							 in SAFEARRAY* CustomParams, 
+							 /+[in, out]+/ dte.wizardResult* retval)
+	{
+		mixin(LogCallMix);
+
+		SAFEARRAY* sa = *cast(SAFEARRAY**)ContextParams;
+		assert(SafeArrayGetDim(sa) == 1);
+		LONG lbound, ubound;
+		SafeArrayGetLBound(sa, 1, &lbound);
+		SafeArrayGetUBound(sa, 1, &ubound);
+		size_t cnt = (ubound - lbound + 1);
+
+		string WizardType, ProjectName, /*ProjectItems,*/ LocalDirectory, ItemName, InstallationDirectory;
+		bool silent;
+
+		VARTYPE vt;
+		SafeArrayGetVartype(sa, &vt);
+		if(vt == VT_VARIANT)
 		{
-			// See if the command already exists
-			VARIANT svarCmdID;
-			svarCmdID.bstrVal = _toUTF16z(name);
-			svarCmdID.vt = VT_BSTR;
-			ComPtr!(dte.Command) spvsCmd;
-			hr = spvsCmds.Item(svarCmdID, -1, &spvsCmd.ptr);
-			if (FAILED(hr))
-			{
-				// Command is not present.  Add it to the pool of commands.
-				auto spvsCmds2 = ComPtr!(dte2.Commands2)(spvsCmds.ptr);
-				if (spvsCmds2)
-				{
-/+
-                    hr = spvsCmds2->AddNamedCommand2(_spvsAddin, sbstrCmdID, sbstrCmdName, sbstrCmdDescription, VARIANT_FALSE, CComVariant(IDB_FSECMD),
-                                                     NULL, vsCommandStatusSupported+vsCommandStatusEnabled, vsCommandStylePictAndText,
-                                                     vsCommandControlTypeButton, &spvsCmd);
-                    hr = (SUCCEEDED(hr) && spvsCmd) ? S_OK : E_FAIL;
-                    //if (SUCCEEDED(hr))
-                    //   hr = _AddCommandToViewMenu(spvsCmd);
-
-                    hr = sbstrCmdID.Append(L"ViewFlatSolutionExplorer");
-                    if (SUCCEEDED(hr))
-                    {
-                        CComBSTR sbstrCmdName;
-                        hr = sbstrCmdName.LoadString(IDS_COMMANDNAME) ? S_OK : E_OUTOFMEMORY;
-                        if (SUCCEEDED(hr))
-                        {
-                            CComBSTR sbstrCmdDescription;
-                            hr = sbstrCmdDescription.LoadString(IDS_COMMANDDESCRIPTION) ? S_OK : E_OUTOFMEMORY;
-                            if (SUCCEEDED(hr))
-                            {
-                                hr = spvsCmds2->AddNamedCommand2(_spvsAddin, sbstrCmdID, sbstrCmdName, sbstrCmdDescription, VARIANT_FALSE, CComVariant(IDB_FSECMD),
-                                                                 NULL, vsCommandStatusSupported+vsCommandStatusEnabled, vsCommandStylePictAndText,
-                                                                 vsCommandControlTypeButton, &spvsCmd);
-                                hr = (SUCCEEDED(hr) && spvsCmd) ? S_OK : E_FAIL;
-                                //if (SUCCEEDED(hr))
-                                //   hr = _AddCommandToViewMenu(spvsCmd);
-                            }
-                        }
-					}
-		+/
-				}
-			}
+			VARIANT var;
+			LONG idx = lbound;
+			if(SafeArrayGetElement(sa, &idx, &var) == S_OK && var.vt == VT_BSTR)
+				WizardType = to_string(var.bstrVal);
+			if(SafeArrayGetElement(sa, &++idx, &var) == S_OK && var.vt == VT_BSTR)
+				ProjectName = to_string(var.bstrVal);
+			++idx;
+			if(SafeArrayGetElement(sa, &++idx, &var) == S_OK && var.vt == VT_BSTR)
+				LocalDirectory = to_string(var.bstrVal);
+			if(SafeArrayGetElement(sa, &++idx, &var) == S_OK && var.vt == VT_BSTR)
+				ItemName = to_string(var.bstrVal);
+			if(SafeArrayGetElement(sa, &++idx, &var) == S_OK && var.vt == VT_BSTR)
+				InstallationDirectory = to_string(var.bstrVal);
+			if(SafeArrayGetElement(sa, &++idx, &var) == S_OK && var.vt == VT_BOOL)
+				silent = var.boolVal != 0;
 		}
-		return hr;
+
+		UtilMessageBox("Sorry, it does not make sense to add a package without specifying a folder.\n"
+					   "Please use the \"Add new item\" command from the project context menu.",
+					   MB_OK, "Visual D - Add package");
+		if(retval)
+			*retval = dte.wizardResultCancel;
+		return S_OK;
 	}
 }

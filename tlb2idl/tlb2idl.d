@@ -5,6 +5,7 @@ import std.c.windows.com;
 import std.c.string;
 import std.stdio;
 import std.file;
+import std.path;
 
 import std.utf;
 
@@ -31,6 +32,7 @@ static CLSID CLSID_ITypeLibViewer = { 0x57efbf49, 0x4a8b, 0x11ce, [ 0x87, 0xb,  
 //DEFINE_GUID(CLSID_IDataObjectViewer, 0x28d8aba0, 0x4b78, 0x11ce, 0xb2, 0x7d, 0x0,  0xaa, 0x0,  0x1f, 0x73, 0xc1);
 //DEFINE_GUID(CLSID_IDispatchViewer,   0xd2af7a60, 0x4c42, 0x11ce, 0xb2, 0x7d, 0x00, 0xaa, 0x00, 0x1f, 0x73, 0xc1) ;
 
+nothrow {
 extern(Windows)
 HRESULT LoadTypeLib(wchar* path, ITypeLib *pLib);
 
@@ -57,10 +59,10 @@ extern(Windows)
 BOOL fnEnumWindows(HWND hwnd, LPARAM lParam);
 
 extern(Windows)
-BOOL EnumWindows(fnEnumWindows* lpEnumFunc, LPARAM lParam);
+BOOL EnumWindows(fnEnumWindows* lpEnumFunc, LPARAM lParam) nothrow;
 
 extern(Windows)
-BOOL EnumChildWindows(HWND hWndParent, WNDENUMPROC lpEnumFunc, LPARAM lParam);
+BOOL EnumChildWindows(HWND hWndParent, WNDENUMPROC lpEnumFunc, LPARAM lParam) nothrow;
 
 const GA_ROOTOWNER = 3;
 
@@ -68,24 +70,25 @@ extern(Windows)
 HWND GetAncestor(HWND hwnd, UINT gaFlags);
 
 extern(Windows)
-HWND GetWindow(HWND hWnd, UINT uCmd);
+HWND GetWindow(HWND hWnd, UINT uCmd) nothrow;
 
 const GW_OWNER = 4;
 
 extern(Windows)
-int GetClassNameA(HWND hWnd, LPTSTR lpClassName, int nMaxCount);
+int GetClassNameA(HWND hWnd, LPTSTR lpClassName, int nMaxCount) nothrow;
 
 extern(Windows)
 BOOL CloseWindow(HWND hWnd);
 
 extern(Windows)
 BOOL PostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+} // nothrow
 
 HWND myWindow;
 HWND foundWindow;
 
 extern(Windows)
-BOOL EnumWindowsProcIdl(HWND hwnd, LPARAM lParam)
+BOOL EnumWindowsProcIdl(HWND hwnd, LPARAM lParam) nothrow
 {
 	if(GetWindow(hwnd, GW_OWNER) == myWindow)
 	{
@@ -98,7 +101,7 @@ BOOL EnumWindowsProcIdl(HWND hwnd, LPARAM lParam)
 }
 
 extern(Windows)
-BOOL EnumChild(HWND hwnd, LPARAM lParam)
+BOOL EnumChild(HWND hwnd, LPARAM lParam) nothrow
 {
 	char[100] cname;
 	GetClassNameA(hwnd, cname.ptr, 100);
@@ -112,7 +115,7 @@ BOOL EnumChild(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
-HWND FindRichEdit(HWND root)
+HWND FindRichEdit(HWND root) nothrow
 {
 	HWND found;
 	EnumChildWindows(root, &EnumChild, cast(LPARAM) &found);
@@ -120,7 +123,7 @@ HWND FindRichEdit(HWND root)
 }
 
 extern(Windows)
-int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) nothrow
 {
 	if(myWindow)
 		EnumWindows(&EnumWindowsProcIdl, 0);
@@ -132,7 +135,13 @@ int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 			int len = SendMessageW(hnd, WM_GETTEXTLENGTH, 0, 0);
 			scope buffer = new wchar[len+1];
 			SendMessageW(hnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
-			idltext = toUTF8(buffer[0..$-1]);
+			try
+			{
+				idltext = toUTF8(buffer[0..$-1]);
+			}
+			catch
+			{
+			}
 			if(idltext.length > 0)
 			{
 				PostMessageA(foundWindow, WM_CLOSE, 0, 0);
@@ -165,7 +174,15 @@ void main(string[] argv)
 	
 	wchar* ivdllpath = cast(wchar*)toUTF16z(ivdll);
 	HANDLE m = LoadLibraryW(ivdllpath);
-
+	if(!m)
+	{
+		// try subfolder x86 for Windows SDK 8.0
+		string ivdll2 = dirName(ivdll) ~ "\\x86\\" ~ baseName(ivdll);
+		ivdllpath = cast(wchar*)toUTF16z(ivdll2);
+		m = LoadLibraryW(ivdllpath);
+		if(m)
+			ivdll = ivdll2;
+	}
 	if(!m)
 		throw new Exception("LoadLibrary failed on " ~ ivdll);
 

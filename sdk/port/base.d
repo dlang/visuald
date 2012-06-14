@@ -8,6 +8,7 @@
 
 module sdk.port.base;
 
+version = Win8;
 version = sdk;
 version(sdk) {} else version = vsi;
 
@@ -52,7 +53,10 @@ version(sdk)
 //	alias short SHORT;
 	alias int LONG;
 	alias int HRESULT;
+
+// needed by Windows SDK 8.0
 //	alias int INT;
+//	alias uint UINT;
 
 	struct GUID { uint Data1; ushort Data2; ushort Data3; ubyte Data4[ 8 ]; }
 	alias GUID *LPGUID;
@@ -268,6 +272,7 @@ UINT RegisterClipboardFormatW(wstring format)
 
 // alias /+[unique]+/ FLAGGED_WORD_BLOB * wireBSTR;
 
+version(Win8) {} else
 struct FLAGGED_WORD_BLOB
 {
                         uint    fFlags;
@@ -379,3 +384,52 @@ GetFiberData
 GetCurrentFiber
 NtCurrentTeb
 +/
+
+version(Win8) {
+///////////////////////////////////////////////////////////////////////////////
+// used as intrinsics in Windows SDK 8.0
+extern(Windows) LONG InterlockedAdd (LONG /*volatile*/ *Destination, LONG Value);
+alias InterlockedAdd _InterlockedAdd;
+
+extern(Windows) LONG InterlockedAnd (LONG /*volatile*/ *Destination, LONG Value);
+alias InterlockedAnd _InterlockedAnd;
+
+extern(Windows) LONG InterlockedOr (LONG /*volatile*/ *Destination, LONG Value);
+alias InterlockedOr _InterlockedOr;
+
+extern(Windows) LONG InterlockedXor (LONG /*volatile*/ *Destination, LONG Value);
+alias InterlockedXor _InterlockedXor;
+
+extern(Windows) LONG InterlockedIncrement (/*__inout*/ LONG /*volatile*/ *Addend);
+extern(Windows) LONG InterlockedDecrement (/*__inout*/ LONG /*volatile*/ *Addend);
+
+extern(Windows) LONG InterlockedExchange (/*__inout*/ LONG /*volatile*/ *Target, /*__in*/ LONG Value);
+extern(Windows) LONG InterlockedExchangeAdd (/*__inout*/ LONG /*volatile*/ *Target, /*__in*/ LONG Value);
+
+extern(Windows) LONG InterlockedCompareExchange (/*__inout*/ LONG /*volatile*/ *Destination, /*__in*/ LONG ExChange, /*__in*/ LONG Comperand);
+
+extern(Windows) 
+LONGLONG /*__cdecl*/ InterlockedCompareExchange64 (
+								  /*__inout*/ LONGLONG /*volatile*/ *Destination,
+								  /*__in*/    LONGLONG ExChange,
+								  /*__in*/    LONGLONG Comperand
+								  );
+
+alias void ReadULongPtrAcquire;
+alias void ReadULongPtrNoFence;
+alias void ReadULongPtrRaw;
+alias void WriteULongPtrRelease;
+alias void WriteULongPtrNoFence;
+alias void WriteULongPtrRaw;
+
+enum TRUE = 1;
+public import sdk.win32.winbase;
+//enum FALSE = 0;
+
+alias void _CONTRACT_DESCRIPTION;
+alias void _BEM_REFERENCE;
+
+struct tagPROPVARIANT;
+
+public import sdk.port.propidl;
+}

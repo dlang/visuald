@@ -45,9 +45,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "visuald", "visuald", "{B10D
 	EndProjectSection
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "c2d", "c2d\c2d.visualdproj", "{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}"
-	ProjectSection(ProjectDependencies) = postProject
-		{2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D} = {2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D}
-	EndProjectSection
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vdserver", "vdc\vdserver.visualdproj", "{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}"
 	ProjectSection(ProjectDependencies) = postProject

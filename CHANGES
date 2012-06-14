@@ -437,3 +437,6 @@ unreleased Version 0.3.33
   * improved performance when indenting muliple lines of code
   * remove project item: now asks whether file on disk should also be removed
   * parser: added support for linkage specification inside alias
+  * version highlighting now supports the "version(V):" syntax
+  * tweaked vsi2d to also convert the Windos 8 SDK and VS2011 SDK
+  * added wizard to create packages from the new item dialog

@@ -2237,7 +2237,7 @@ const enumName[] VSDebugCommandCmdIds_names =
 	{ cmdidBreakpointConstraints, "cmdidBreakpointConstraints" },
 	{ cmdidBreakpointAction, "cmdidBreakpointAction" },
 	{ cmdidCreateObjectID, "cmdidCreateObjectID" },
-	{ cmdidRunMacrosForBreakpointsJustHit, "cmdidRunMacrosForBreakpointsJustHit" },
+	// not in VS11 SDK: { cmdidRunMacrosForBreakpointsJustHit, "cmdidRunMacrosForBreakpointsJustHit" },
 	{ cmdidCopyExpression, "cmdidCopyExpression" },
 	{ cmdidCopyValue, "cmdidCopyValue" },
 	{ cmdidDestroyObjectID, "cmdidDestroyObjectID" },

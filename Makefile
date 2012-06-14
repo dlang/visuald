@@ -18,10 +18,16 @@ DMD2 = m:\s\d\rainers\windows\bin\dmd_msc.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 # avoid trailing '\', it ruins the command line
-WINSDK = $(WINDOWSSDKDIR:\=/)
+# WINSDK = $(WINDOWSSDKDIR:\=/)
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
+WINSDK = $(PROGRAMW6432)\Microsoft SDKs\Windows\v6.0A
+# WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.0A
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
+# WINSDK = $(PROGRAMFILES)\Windows Kits\8.0
+# WINSDK = c:\l\vs11\Windows Kits\8.0
 VSISDK = c:\l\vs9SDK
+# VSISDK = c:\l\vs10SDK
+# VSISDK = c:\l\vs11\VSSDK
 # VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2008 SDK
 # VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2010 SDK
 MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
@@ -125,6 +131,8 @@ install_only:
 clean:
 	if exist $(BINDIR)\vsi.lib      del $(BINDIR)\vsi.lib
 	if exist $(BINDIR)\vdc.lib      del $(BINDIR)\vdc.lib
+	if exist $(BINDIR)\stdext.lib   del $(BINDIR)\stdext.lib
+	if exist $(BINDIR)\c2d_vd.lib   del $(BINDIR)\c2d_vd.lib
 	if exist $(BINDIR)\visuald.dll  del $(BINDIR)\visuald.dll
 	if exist $(BINDIR)\vdserver.exe del $(BINDIR)\vdserver.exe
 	if exist $(TLB2IDL_EXE)         del $(TLB2IDL_EXE)

@@ -1,3 +1,3 @@
 hello.d|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Hello world Module|1|Create "Hello world" module|0|#1000|0|module
 empty.d|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Empty Module|1|Create empty module|0|#1000|0|module
-package|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Package|1|Create package folder in project and file system|0|#1000|0|package
+..\Wizards\package.vsz|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Package|1|Create package folder in project and file system|0|#1000|8|package

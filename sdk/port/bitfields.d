@@ -3,9 +3,9 @@ module sdk.port.bitfields;
 private template myToString(ulong n, string suffix = n > uint.max ? "UL" : "U")
 {
     static if (n < 10)
-        const myToString = cast(char) (n + '0') ~ suffix;
+        enum myToString = cast(char) (n + '0') ~ suffix;
     else
-        const myToString = .myToString!(n / 10, "")
+        enum myToString = .myToString!(n / 10, "")
             ~ .myToString!(n % 10, "") ~ suffix;
 }
 
@@ -15,12 +15,12 @@ private template createAccessors(
     static if (!name.length)
     {
         // No need to create any accessor
-        const result = "";
+        enum result = "";
     }
     else static if (len == 0)
     {
         // Fields of length 0 are always zero
-        const result = "const "~T.stringof~" "~name~" = 0;\n";
+        enum result = "const "~T.stringof~" "~name~" = 0;\n";
     }
     else
     {
@@ -28,25 +28,25 @@ private template createAccessors(
             alias uint MasksType;
         else
             alias ulong MasksType;
-        const MasksType
+        enum MasksType
             maskAllElse = ((1uL << len) - 1u) << offset,
             signBitCheck = 1uL << (len - 1),
             extendSign = ~((cast(MasksType)1u << len) - 1);
         static if (T.min < 0)
         {
-            const long minVal = -(1uL << (len - 1));
-            const ulong maxVal = (1uL << (len - 1)) - 1;
+            enum long minVal = -(1uL << (len - 1));
+            enum ulong maxVal = (1uL << (len - 1)) - 1;
         }
         else
         {
-            const ulong minVal = 0;
-            const ulong maxVal = (1uL << len) - 1;
+            enum ulong minVal = 0;
+            enum ulong maxVal = (1uL << len) - 1;
         }
 
         static if (is(T == bool))
         {
             static assert(len == 1);
-            const result = 
+            enum result = 
             // getter
                 "bool " ~ name ~ "() { return "
                 ~"("~store~" & "~myToString!(maskAllElse)~") != 0;}\n"
@@ -58,7 +58,7 @@ private template createAccessors(
         else
         {
             // getter
-            const result = T.stringof~" "~name~"() { auto result = "
+            enum result = T.stringof~" "~name~"() { auto result = "
                 "("~store~" & "
                 ~ myToString!(maskAllElse) ~ ") >>"
                 ~ myToString!(offset) ~ ";"
@@ -76,9 +76,9 @@ private template createAccessors(
                 " | ((cast(typeof("~store~")) v << "~myToString!(offset)~")"
                 " & "~myToString!(maskAllElse)~"));}\n"
             // constants
-                ~"const "~T.stringof~" "~name~"_min = cast("~T.stringof~")"
+                ~"enum "~T.stringof~" "~name~"_min = cast("~T.stringof~")"
                 ~myToString!(minVal)~"; "
-                ~" const "~T.stringof~" "~name~"_max = cast("~T.stringof~")"
+                ~" enum "~T.stringof~" "~name~"_max = cast("~T.stringof~")"
                 ~myToString!(maxVal)~"; ";
         }
     }
@@ -87,9 +87,9 @@ private template createAccessors(
 private template createStoreName(Ts...)
 {
     static if (Ts.length < 2)
-        const createStoreName = "_val";
+        enum createStoreName = "_val";
     else
-        const createStoreName = Ts[1] ~ createStoreName!(Ts[3 .. $]);
+        enum createStoreName = Ts[1] ~ createStoreName!(Ts[3 .. $]);
 }
 
 private template createFields(string store, size_t offset, Ts...)
@@ -109,11 +109,11 @@ private template createFields(string store, size_t offset, Ts...)
             static assert(false, "Field widths must less than 64");
             alias ulong StoreType; // just to avoid another error msg
         }
-        const result = "private " ~ StoreType.stringof ~ " " ~ store ~ ";";
+        enum result = "private " ~ StoreType.stringof ~ " " ~ store ~ ";";
     }
     else
     {
-        const result
+        enum result
             = createAccessors!(store, Ts[0], Ts[1], Ts[2], offset).result
             ~ createFields!(store, offset + Ts[2], Ts[3 .. $]).result;
     }
@@ -168,7 +168,7 @@ bool), followed by unsigned types, followed by signed types.
 
 template bitfields(T...)
 {
-    const bitfields = createFields!(createStoreName!(T), 0, T).result;
+    enum bitfields = createFields!(createStoreName!(T), 0, T).result;
 }
 
 //pragma(msg,bitfields!(uint, "x",    5));
