@@ -35,7 +35,7 @@ version = static_if_to_version;
 version = vsi;
 version = macro2template;
 version = targetD2;
-version = Win8;
+//version = Win8;
 
 class Source
 {
@@ -125,7 +125,7 @@ class idl2d
 			"activdbg.id*", "activscp.id*", "dbgprop.id*", // only available in Windows SDK v7.x
 		];
 
-		// only available (and are required for successfull compilation) in Windows SDK v8];
+		// only available (and are required for successfull compilation) in Windows SDK v8
 		foreach(f; [ "wtypesbase.idl", 
 			//"winapifamily.h", "apisetcconv.h", "apiset.h", // commented because it is difficult to convert this file
 			"minwinbase.h", "processenv.h", 

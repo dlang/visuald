@@ -256,10 +256,12 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 
 	wstring packageGuid = GUID2wstring(g_packageCLSID);
 	wstring languageGuid = GUID2wstring(g_languageCLSID);
+	wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
 
 	HRESULT hr = S_OK;
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ languageGuid);
+	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ wizardGuid);
 
 	foreach (wstring fileExt; g_languageFileExtensions)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathFileExts ~ "\\"w ~ fileExt);
@@ -300,6 +302,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		wstring languageGuid = GUID2wstring(g_languageCLSID);
 		wstring debugLangGuid = GUID2wstring(g_debuggerLanguage);
 		wstring exprEvalGuid = GUID2wstring(g_expressionEvaluator);
+		wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
 
 		// package
 		scope RegKey keyPackage = new RegKey(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
@@ -320,6 +323,11 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		scope RegKey keyCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ languageGuid);
 		keyCLSID.Set("InprocServer32"w, dllPath);
 		keyCLSID.Set("ThreadingModel"w, "Free"w); // Appartment?
+
+		// Wizards
+		scope RegKey keyWizardCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ wizardGuid);
+		keyWizardCLSID.Set("InprocServer32"w, dllPath);
+		keyWizardCLSID.Set("ThreadingModel"w, "Appartment"w);
 
 		// file extensions
 		wstring fileExtensions;

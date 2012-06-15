@@ -12,7 +12,6 @@ import "oaidl.idl";
 [
 	object,
 	uuid(002a2de9-8bb6-484d-9901-7e4ad4084715),
-	dual,
 	nonextensible,
 	helpstring("IVDServer Interface"),
 	pointer_default(unique)
