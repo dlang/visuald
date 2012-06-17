@@ -1,7 +1,7 @@
 module winmain;
 
 import core.runtime;
-import std.c.windows.windows;
+import core.sys.windows.windows;
 
 extern (Windows)
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
