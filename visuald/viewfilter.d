@@ -1131,7 +1131,7 @@ else
 			return S_FALSE;
 		
 		string file = mCodeWinMgr.mSource.GetFileName();
-		wstring impw = mCodeWinMgr.mSource.GetImportModule(line, idx);
+		wstring impw = mCodeWinMgr.mSource.GetImportModule(line, idx, false);
 		if(impw.length)
 		{
 			string imp = to!string(impw);

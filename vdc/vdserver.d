@@ -27,13 +27,24 @@ import stdext.com;
 import stdext.string;
 import stdext.array;
 
+version = SingleThread;
+
 //import std.stdio;
 import std.parallelism;
 import std.string;
 import std.conv;
 import std.array;
+import std.concurrency;
+import std.datetime;
+import core.thread;
 
 ///////////////////////////////////////////////////////////////
+
+struct delegate_fake
+{
+	ptrdiff_t ptr;
+	ptrdiff_t context;
+}
 
 class VDServer : ComObject, IVDServer
 {
@@ -41,6 +52,24 @@ class VDServer : ComObject, IVDServer
 	{
 		mSemanticProject = new vdc.semantic.Project;
 		fnSemanticWriteError = &semanticWriteError;
+		version(SingleThread) mTid = spawn(&taskLoop, thisTid);
+	}
+
+	override ULONG Release()
+	{
+		if(count == 1 && mTid != mTid.init)
+		{
+			// avoid recursive calls if the object is temporarily ref-counted
+			// while executing Dispose()
+			count = 0x12345678;
+
+			send(mTid, "stop");
+			receive((string val) { assert(val == "done"); });
+
+			assert(count == 0x12345678);
+			count = 1;
+		}
+		return super.Release();
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -49,6 +78,45 @@ class VDServer : ComObject, IVDServer
 		if(queryInterface!(IVDServer) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
+	}
+
+	extern(D) static void taskLoop(Tid tid)
+	{
+		try
+		{
+			bool cont = true;
+			while(cont)
+			{
+				receiveTimeout(dur!"msecs"(50),
+							   (delegate_fake dg_fake)
+							   {
+								   void delegate() dg = *(cast(void delegate()*)&dg_fake);
+								   dg();
+							   },
+							   (string cmd)
+							   {
+									if(cmd == "stop")
+										cont = false;
+							   },
+							   (Variant var)
+							   {
+								   var = var;
+							   }
+							   );
+			}
+		}
+		catch(Throwable)
+		{
+		}
+		prioritySend(tid, "done");
+	}
+
+	extern(D) void schedule(void delegate() dg)
+	{
+		version(SingleThread) 
+			send(mTid, *cast(delegate_fake*)&dg);
+		else
+			runTask(dg);
 	}
 
 	override HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags)
@@ -130,18 +198,18 @@ class VDServer : ComObject, IVDServer
 				synchronized(mSemanticProject)
 					mSemanticProject.addSource(fname, mod, parser.errors);
 		}
-		runTask(&doParse);
+		schedule(&doParse);
 		return S_OK;
 	}
 
 	override HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
 	{
 		string fname = to_string(filename);
-		auto src = mSemanticProject.getModuleByFilename(fname);
-		if(!src)
-			return S_FALSE;
+		ast.Module mod;
+		synchronized(mSemanticProject)
+			if(auto src = mSemanticProject.getModuleByFilename(fname))
+				mod = src.analyzed;
 
-		ast.Module mod = src.analyzed;
 		if(!mod)
 			return S_FALSE;
 
@@ -182,7 +250,7 @@ class VDServer : ComObject, IVDServer
 			mSemanticTipRunning = false;
 		}
 		mSemanticTipRunning = true;
-		runTask(&_getTip);
+		schedule(&_getTip);
 		return S_OK;
 	}
 
@@ -282,7 +350,7 @@ class VDServer : ComObject, IVDServer
 		}
 		mLastSymbols = null;
 		mSemanticExpansionsRunning = true;
-		runTask(&calcExpansions);
+		schedule(&calcExpansions);
 		return S_OK;
 	}
 
@@ -405,6 +473,8 @@ class VDServer : ComObject, IVDServer
 	}
 
 private:
+	version(SingleThread) Tid mTid;
+
 	vdc.semantic.Project mSemanticProject;
 	bool mSemanticExpansionsRunning;
 	bool mSemanticTipRunning;

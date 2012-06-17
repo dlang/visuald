@@ -328,7 +328,7 @@ class ModuleFullyQualifiedName : Node
 
 	override void addSymbols(Scope sc)
 	{
-		foreach(m; 0..members.length)
+		for(int m = 0; m < members.length; m++)
 		{
 			auto id = getMember!Identifier(m);
 			string name = id.ident;

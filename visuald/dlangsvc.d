@@ -1928,15 +1928,19 @@ else
 	
 	TokenInfo[] GetLineInfo(int line, wstring *ptext = null)
 	{
-		TokenInfo[] lineInfo;
+		wstring text = GetText(line, 0, line, -1);
+		if(ptext)
+			*ptext = text;
+		return GetLineInfoFromText(line, text);
+	}
 
+	TokenInfo[] GetLineInfoFromText(int line, wstring text)
+	{
+		TokenInfo[] lineInfo;
 		int iState = mColorizer.GetLineState(line);
 		if(iState == -1)
 			return lineInfo;
 
-		wstring text = GetText(line, 0, line, -1);
-		if(ptext)
-			*ptext = text;
 		lineInfo = dLex.ScanLine(iState, text);
 		return lineInfo;
 	}
@@ -2218,16 +2222,16 @@ else
 		return mBuffer.ReplaceLines(line, 0, line, idx, wspc.ptr, wspc.length, &changedSpan);
 	}
 
-	static struct LineTokenIterator
+	static struct _LineTokenIterator(SRC)
 	{
 		int line;
 		int tok;
-		Source src;
+		SRC src;
 		
 		wstring lineText;
 		TokenInfo[] lineInfo;
 		
-		this(Source _src, int _line, int _tok)
+		this(SRC _src, int _line, int _tok)
 		{
 			src = _src;
 			set(_line, _tok);
@@ -2373,20 +2377,22 @@ else
 
 		wstring getPrevToken(int n = 1)
 		{
-			LineTokenIterator it = this;
+			auto it = this;
 			foreach(i; 0..n)
 				it.retreatOverComments();
 			return it.getText();
 		}
 		wstring getNextToken(int n = 1)
 		{
-			LineTokenIterator it = this;
+			auto it = this;
 			foreach(i; 0..n)
 				it.advanceOverComments();
 			return it.getText();
 		}
 	}
 	
+	alias _LineTokenIterator!Source LineTokenIterator;
+
 	static struct CacheLineIndentInfo
 	{
 		bool hasOpenBraceInfoValid;
@@ -3153,9 +3159,72 @@ else
 
 	//////////////////////////////////////////////////////////////
 
-	wstring GetImportModule(int line, int index)
+	class ClippingSource
 	{
-		LineTokenIterator lntokIt = LineTokenIterator(this, line, 0);
+		Source mSrc;
+		int mClipLine;
+		int mClipIndex;
+
+		this(Source src)
+		{
+			mSrc = src;
+			mClipLine = int.max;
+		}
+
+		void setClip(int line, int idx)
+		{
+			mClipLine = line;
+			mClipIndex = idx;
+		}
+
+		int GetLineCount()
+		{
+			int lines = mSrc.GetLineCount();
+			if(lines - 1 > mClipLine)
+				lines = mClipLine + 1;
+			return lines;
+		}
+
+		TokenInfo[] GetLineInfo(int line, wstring *ptext = null)
+		{
+			if(line > mClipLine)
+				return null;
+			if(line < mClipLine)
+				return mSrc.GetLineInfo(line, ptext);
+
+			wstring text = GetText(line, 0, line, -1);
+			if(text.length > mClipIndex)
+				text = text[0 .. mClipIndex];
+			if(ptext)
+				*ptext = text;
+			return mSrc.GetLineInfoFromText(line, text);
+		}
+
+		int FindLineToken(int line, int idx, out int iState, out uint pos)
+		{
+			// only used in brace matched search
+			return mSrc.FindLineToken(line, idx, iState, pos);
+		}
+		bool FindOpeningBracketBackward(int line, int tok, out int otherLine, out int otherIndex,
+										int* pCountComma = null)
+		{
+			// no brace matching needed for finding imports
+			return mSrc.FindOpeningBracketBackward(line, tok, otherLine, otherIndex, pCountComma);
+		}
+		bool FindClosingBracketForward(int line, int idx, out int otherLine, out int otherIndex)
+		{
+			// no brace matching needed for finding imports
+			return mSrc.FindClosingBracketForward(line, idx, otherLine, otherIndex);
+		}
+	}
+
+	wstring GetImportModule(int line, int index, bool clipSource)
+	{
+		auto clipsrc = new ClippingSource(this);
+		if(clipSource)
+			clipsrc.setClip(line, index);
+
+		auto lntokIt = _LineTokenIterator!ClippingSource(clipsrc, line, 0);
 		while(lntokIt.line < line || (lntokIt.getIndex() <= index && lntokIt.line == line))
 			if (!lntokIt.advanceOverComments())
 				break;
@@ -3169,8 +3238,8 @@ else
 			  && lntokIt.retreatOverComments())
 			tok = lntokIt.getText();
 
-		LineTokenIterator lntokIt2 = lntokIt;
-		while(tok != "import" && (tok == "," || tok == "." || dLex.isIdentifier(tok))
+		auto lntokIt2 = lntokIt;
+		while(tok != "import" && (tok == "," || tok == "=" || tok == ":" || tok == "." || dLex.isIdentifier(tok))
 			  && lntokIt.retreatOverComments())
 			tok = lntokIt.getText();
 

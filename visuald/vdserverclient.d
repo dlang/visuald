@@ -58,7 +58,7 @@ bool startVDServer()
 	CoInitialize(null);
 
 	version(InProc) 
-		gVDServer = new VDServer;
+		gVDServer = addref(new VDServer);
 	else
 	{
 		GUID factory_iid = IID_IClassFactory;

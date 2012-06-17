@@ -440,3 +440,4 @@ unreleased Version 0.3.33
   * version highlighting now supports the "version(V):" syntax
   * tweaked vsi2d to also convert the Windos 8 SDK and VS2011 SDK
   * added wizard to create packages from the new item dialog
+  * improved import statement detection for expansion and goto definition

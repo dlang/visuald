@@ -337,15 +337,19 @@ class Node
 		{
 			Node n = members[m];
 			narray[0] = n;
+			int mlen = members.length;
 			Node[] nm = n.expandNonScopeBlock(sc, narray);
+			assert(members.length == mlen);
 			if(nm.length == 1 && nm[0] == n)
 			{
 				n.addSymbols(sc);
+				assert(members.length == mlen);
 				m++;
 			}
 			else
 			{
 				replaceMember(m, nm);
+				assert(members.length == mlen + nm.length - 1);
 				j += nm.length - 1;
 			}
 		}

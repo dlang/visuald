@@ -174,28 +174,10 @@ class Declarations
 		if(int hr = textView.GetCaretPos(&line, &idx))
 			return false;
 
-		TokenInfo[] info = src.GetLineInfo(line);
-		if(info.length <= 0)
+		wstring wimp = src.GetImportModule(line, idx, true);
+		if(wimp.empty)
 			return false;
-		
-		wstring text = src.GetText(line, 0, line, -1);
-		int t = 0;
-		while(t < info.length)
-		{
-			wstring tok = text[ info[t].StartIndex .. info[t].EndIndex ];
-			if(tok == "import")
-				break;
-			if(tok != "public" && tok != "static" && tok != "private")
-				return false;
-			t++;
-		}
-		if(t >= info.length)
-			return false; // no import found
-		if(idx < info[t].EndIndex)
-			return false; // not after import
-
-		string txt = toUTF8(text[info[t].EndIndex .. idx]);
-		txt = strip(txt);
+		string txt = to!string(wimp);
 		ImportExpansions(txt, src.GetFileName());
 		return true;
 	}
