@@ -778,7 +778,7 @@ L_loop:
 	{
 		if(inDotExpr)
 		{
-			root = dotexpr.getExpression().calcType();
+			root = dotexpr.getExpression();
 			*inDotExpr = true;
 		}
 	}
@@ -790,7 +790,7 @@ L_loop:
 			{
 				if(inDotExpr)
 				{
-					root = dotexpr.getExpression().calcType();
+					root = dotexpr.getExpression();
 					*inDotExpr = true;
 				}
 				else

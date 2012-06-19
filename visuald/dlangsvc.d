@@ -696,7 +696,8 @@ class LanguageService : DisposingComObject,
 		}
 		uint GetSemanticExpansions(Source src, string tok, int line, int idx, GetExpansionsCallBack cb)
 		{
-			return mVDServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, cb);
+			wstring expr = src.FindExpressionBefore(line, idx);
+			return mVDServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, expr, cb);
 		}
 		void UpdateSemanticModule(Source src)
 		{

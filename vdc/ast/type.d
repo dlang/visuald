@@ -25,12 +25,18 @@ import vdc.ast.writer;
 import stdext.util;
 import std.conv;
 
-class BuiltinProperty(T) : Symbol
+class BuiltinPropertyBase : Symbol
+{
+	string ident;
+}
+
+class BuiltinProperty(T) : BuiltinPropertyBase
 {
 	Value value;
 	
-	this(T val)
+	this(string id, T val)
 	{
+		ident = id;
 		value = Value.create(val);
 	}
 	
@@ -49,9 +55,11 @@ class BuiltinProperty(T) : Symbol
 	}
 }
 
-Symbol newBuiltinProperty(T)(T val)
+Symbol newBuiltinProperty(T)(Scope sc, string id, T val)
 {
-	return new BuiltinProperty!T(val);
+	auto bp = new BuiltinProperty!T(id, val);
+	sc.addSymbol(id, bp);
+	return bp;
 }
 
 class BuiltinType(T) : Node
@@ -73,17 +81,17 @@ Scope getBuiltinBasicTypeScope(int tokid)
 		{
 			alias Token2BasicType!(tok) BT;
 			
-			sc.addSymbol("init",     newBuiltinProperty(BT.init));
-			sc.addSymbol("sizeof",   newBuiltinProperty(BT.sizeof));
-			sc.addSymbol("mangleof", newBuiltinProperty(BT.mangleof));
-			sc.addSymbol("alignof",  newBuiltinProperty(BT.alignof));
-			sc.addSymbol("stringof", newBuiltinProperty(BT.stringof));
+			newBuiltinProperty(sc, "init",     BT.init);
+			newBuiltinProperty(sc, "sizeof",   BT.sizeof);
+			newBuiltinProperty(sc, "mangleof", BT.mangleof);
+			newBuiltinProperty(sc, "alignof",  BT.alignof);
+			newBuiltinProperty(sc, "stringof", BT.stringof);
 			static if(__traits(compiles, BT.min))
-				sc.addSymbol("min", newBuiltinProperty(BT.min));
+				newBuiltinProperty(sc, "min", BT.min);
 			static if(__traits(compiles, BT.max))
-				sc.addSymbol("max", newBuiltinProperty(BT.max));
+				newBuiltinProperty(sc, "max", BT.max);
 			static if(__traits(compiles, BT.nan))
-				sc.addSymbol("nan", newBuiltinProperty(BT.nan));
+				newBuiltinProperty(sc, "nan", BT.nan);
 		}
 	}
 	builtInScopes[tokid] = sc;
@@ -959,7 +967,7 @@ class TypeStaticArray : TypeIndirection
 			Context ctx = new Context(nullContext);
 			ctx.scop = scop;
 			size_t len = getDimension().interpret(ctx).toInt();
-			scop.addSymbol("length", newBuiltinProperty(len));
+			newBuiltinProperty(scop, "length", len);
 		}
 		return scop;
 	}

@@ -1437,7 +1437,10 @@ class MixinExpression : Expression
 	
 	override void toD(CodeWriter writer)
 	{
-		writer("mixin(", getMember!Expression(0), ")");
+		if(resolved)
+			resolved.toD(writer);
+		else
+			writer("mixin(", getMember!Expression(0), ")");
 	}
 
 	override void _semantic(Scope sc)
@@ -1450,10 +1453,17 @@ class MixinExpression : Expression
 		Parser parser = new Parser;
 		Node n = parser.parseExpression(s, span);
 		resolved = cast(Expression) n;
+		if(resolved)
+		{
+			addMember(resolved);
+			resolved.semantic(sc);
+		}
 	}
 
 	override Type calcType()
 	{
+		if(!resolved)
+			semantic(getScope());
 		if(resolved)
 			return resolved.calcType();
 		return new ErrorType;
@@ -1461,6 +1471,8 @@ class MixinExpression : Expression
 	
 	override Value interpret(Context sc)
 	{
+		if(!resolved)
+			semantic(getScope());
 		if(resolved)
 			return resolved.interpret(sc);
 		return semanticErrorValue("cannot interpret mixin");

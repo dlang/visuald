@@ -16,6 +16,8 @@ import sdk.win32.oleauto;
 ////////////////////////////////////////////////////////////////////////////////
 // interface IVDServer
 //
+// This interface is under development and subject to change without notice
+//
 // This is the interface that is used by Visual D to retrieve parser and semantic
 // information about edited files. Visual D instantiates an object of IVDServer
 // in-process or out-of-process, depending on the registration of the COM class.
@@ -31,6 +33,9 @@ import sdk.win32.oleauto;
 // so, GetLastMessage is called to get status line messages (e.g. "parsing module...")
 //
 // All methods reference modules by their file name.
+//
+// Line numbers are 1-based
+// Column index are 0-based
 
 interface IVDServer : IUnknown
 {
@@ -48,8 +53,12 @@ public:
 	//
 	// Options are taken from the project that contains the file. If the file
 	// is used in multiple projects, which one is chosen is undefined.
-	// if the file is not contained in a project, the options of the current
+	// If the file is not contained in a project, the options of the current
 	// startup-project are used.
+	// 
+	// This function is usually called after UpdateModule, assuming that parsing does
+	// not depend on compilation options, so any semantic analysis should be deferred
+	// until ConfigureSemanticProject is called.
 	HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags);
 	
 	// delete all semantic and parser information
@@ -62,6 +71,10 @@ public:
 	//
 	// it is assumed that the actual parsing is forwarded to some other thread
 	// and that the status can be polled by GetParseErrors
+	//
+	// ConfigureSemanticProject is usually called after UpdateModule, assuming that parsing does
+	// not depend on compilation options, so any semantic analysis should be deferred
+	// until ConfigureSemanticProject is invoked.
 	HRESULT UpdateModule(in BSTR filename, in BSTR srcText);
 	
 	// request tool tip text for a given text location
@@ -88,10 +101,11 @@ public:
 	// filename:   file name 
 	// tok:        the prefix of the identifier to expand, allowing filtering results
 	// line, idx:  the location of the caret in the text editor
-	//
+	// expr:       the expression to evaluate at the insertion point in case of parser issues
+	//             with the current text
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetSemanticExpansionsResult
-	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx);
+	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr);
 	
 	// get the result of the previous GetSemanticExpansions
 	//

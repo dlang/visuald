@@ -24,7 +24,7 @@ interface IVDServer : IUnknown
 	HRESULT UpdateModule([in] BSTR filename, [in] BSTR srcText);
 	HRESULT GetTip([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex);
 	HRESULT GetTipResult([out] DWORD *startLine, [out] DWORD *startIndex, [out] DWORD *endLine, [out] DWORD *endIndex, [out,retval] BSTR* answer);
-	HRESULT GetSemanticExpansions([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx);
+	HRESULT GetSemanticExpansions([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx, [in] BSTR expr);
 	HRESULT GetSemanticExpansionsResult([out,retval] BSTR* stringList);
 	HRESULT IsBinaryOperator([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BOOL* pIsOp);
 	HRESULT GetParseErrors([in] BSTR filename, [out,retval] BSTR* errors);

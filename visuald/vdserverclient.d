@@ -29,7 +29,7 @@ import std.windows.charset;
 import core.thread;
 
 // debug version = DebugCmd;
-debug version = InProc;
+// debug version = InProc;
 // debug version = ABothe;
 
 version(InProc) import vdc.vdserver;
@@ -114,14 +114,14 @@ class Command
 	}
 
 	// called from clientLoop (might block due to server garbage collecting)
-	bool exec()
+	HRESULT exec()
 	{
 		assert(false);
 	}
 	// polled from clientLoop (might block due to server garbage collecting)
-	bool answer()
+	HRESULT answer()
 	{
-		return true;
+		return S_OK;
 	}
 	// called from onIdle
 	bool forward()
@@ -142,10 +142,10 @@ class ExitCommand : Command
 		super("exit");
 	}
 
-	override bool exec()
+	override HRESULT exec()
 	{
 		stopVDServer();
-		return true;
+		return S_OK;
 	}
 }
 
@@ -156,11 +156,11 @@ class ClearProjectCommand : Command
 		super("ClearProject");
 	}
 
-	override bool exec()
+	override HRESULT exec()
 	{
 		if(!gVDServer)
-			return false;
-		return gVDServer.ClearSemanticProject() == S_OK;
+			return S_FALSE;
+		return gVDServer.ClearSemanticProject();
 	}
 }
 
@@ -189,10 +189,10 @@ class ConfigureProjectCommand : FileCommand
 		mFlags = flags;
 	}
 
-	override bool exec()
+	override HRESULT exec()
 	{
 		if(!gVDServer)
-			return false;
+			return S_FALSE;
 
 		string jimp = join(mImp, "\n");
 		string jstringImp = join(mStringImp, "\n");
@@ -213,7 +213,7 @@ class ConfigureProjectCommand : FileCommand
 		freeBSTR(bversionids);
 		freeBSTR(bdebugids);
 		
-		return hr == S_OK;
+		return hr;
 	}
 
 	string[] mImp;
@@ -236,10 +236,10 @@ class GetTypeCommand : FileCommand
 		mCallback = cb;
 	}
 
-	override bool exec()
+	override HRESULT exec()
 	{
 		if(!gVDServer)
-			return false;
+			return S_FALSE;
 
 		BSTR fname = allocBSTR(mFilename);
 		int iStartLine = mSpan.iStartLine + 1;
@@ -248,25 +248,25 @@ class GetTypeCommand : FileCommand
 		int iEndIndex = mSpan.iEndIndex;
 		HRESULT rc = gVDServer.GetTip(fname, iStartLine, iStartIndex, iEndLine, iEndIndex);
 		freeBSTR(fname);
-		return rc == S_OK;
+		return rc;
 	}
 
-	override bool answer()
+	override HRESULT answer()
 	{
 		if(!gVDServer)
-			return false;
+			return S_FALSE;
 
 		BSTR btype;
 		int iStartLine, iStartIndex, iEndLine, iEndIndex;
 		HRESULT rc = gVDServer.GetTipResult(iStartLine, iStartIndex, iEndLine, iEndIndex, &btype);
 		if(rc != S_OK)
-			return false;
+			return rc;
 
 		mType = detachBSTR(btype);
 		mSpan = sdk.vsi.sdk_shared.TextSpan(iStartIndex, iStartLine - 1, iEndIndex, iEndLine - 1);
 
 		send(gUITid, cast(immutable)this);
-		return true;
+		return S_OK;
 	}
 
 	override bool forward()
@@ -294,30 +294,30 @@ class UpdateModuleCommand : FileCommand
 		mCallback = cb;
 	}
 
-	override bool exec()
+	override HRESULT exec()
 	{
 		if(!gVDServer)
-			return false;
+			return S_FALSE;
 
 		BSTR bfname = allocBSTR(mFilename);
 
 		BSTR btxt = allocwBSTR(mText);
-		gVDServer.UpdateModule(bfname, btxt);
+		HRESULT hr = gVDServer.UpdateModule(bfname, btxt);
 		freeBSTR(btxt);
 		freeBSTR(bfname);
-		return true;
+		return hr;
 	}
 
-	override bool answer()
+	override HRESULT answer()
 	{
 		if(!gVDServer)
-			return false;
+			return S_FALSE;
 
 		BSTR fname = allocBSTR(mFilename);
 		scope(exit) freeBSTR(fname);
 		BSTR errors;
-		if(gVDServer.GetParseErrors(fname, &errors) != S_OK)
-			return false;
+		if(auto hr = gVDServer.GetParseErrors(fname, &errors))
+			return hr;
 
 		mErrors = detachBSTR(errors);
 
@@ -343,7 +343,7 @@ class UpdateModuleCommand : FileCommand
 		}
 
 		send(gUITid, cast(immutable)this);
-		return true;
+		return S_OK;
 	}
 
 	override bool forward()
@@ -365,39 +365,42 @@ alias void delegate(uint request, string filename, string tok, int line, int idx
 
 class GetExpansionsCommand : FileCommand
 {
-	this(string filename, string tok, int line, int idx, GetExpansionsCallBack cb)
+	this(string filename, string tok, int line, int idx, wstring expr, GetExpansionsCallBack cb)
 	{
 		super("GetExpansions", filename);
 		mTok = tok;
 		mLine = line;
 		mIndex = idx;
+		mExpr = expr;
 		mCallback = cb;
 	}
 
-	override bool exec()
+	override HRESULT exec()
 	{
 		if(!gVDServer)
-			return false;
+			return S_FALSE;
 
 		BSTR fname = allocBSTR(mFilename);
 		BSTR tok = allocBSTR(mTok);
-		HRESULT rc = gVDServer.GetSemanticExpansions(fname, tok, mLine + 1, mIndex);
+		BSTR expr = allocwBSTR(mExpr);
+		HRESULT rc = gVDServer.GetSemanticExpansions(fname, tok, mLine + 1, mIndex, expr);
+		freeBSTR(expr);
 		freeBSTR(tok);
 		freeBSTR(fname);
-		return rc == S_OK;
+		return rc;
 	}
 
-	override bool answer()
+	override HRESULT answer()
 	{
 		BSTR stringList;
 		HRESULT rc = gVDServer.GetSemanticExpansionsResult(&stringList);
 		if(rc != S_OK)
-			return false;
+			return rc;
 
 		string slist = detachBSTR(stringList);
 		mExpansions = splitLines(slist);
 		send(gUITid, cast(immutable)this);
-		return true;
+		return S_OK;
 	}
 
 	override bool forward()
@@ -409,6 +412,7 @@ class GetExpansionsCommand : FileCommand
 
 	GetExpansionsCallBack mCallback;
 	string mTok;
+	wstring mExpr;
 	int mLine;
 	int mIndex;
 	string[] mExpansions;
@@ -478,9 +482,9 @@ class VDServerClient
 		return cmd.mRequest;
 	}
 
-	int GetSemanticExpansions(string filename, string tok, int line, int idx, GetExpansionsCallBack cb)
+	int GetSemanticExpansions(string filename, string tok, int line, int idx, wstring expr, GetExpansionsCallBack cb)
 	{
-		auto cmd = new immutable(GetExpansionsCommand)(filename, tok, line, idx, cb);
+		auto cmd = new immutable(GetExpansionsCommand)(filename, tok, line, idx, expr, cb);
 		send(mTid, cmd);
 		return cmd.mRequest;
 	}
@@ -544,30 +548,49 @@ class VDServerClient
 			Command[] toAnswer;
 			while(gVDServer)
 			{
+				bool restartServer = false;
 				receiveTimeout(dur!"msecs"(50),
 					(Command cmd)
 					{
 						version(DebugCmd) OutputDebugStringA(toMBSz("clientLoop: " ~ cmd.mCommand ~ "\n"));
-						if(cmd.exec())
+						HRESULT hr = cmd.exec();
+						if(hr == S_OK)
 							toAnswer ~= cmd;
+						else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
+							restartServer = true;
 					},
 					(Variant var)
 					{
 						var = var;
 					}
 				);
-				for(int i = 0; i < toAnswer.length; )
+				for(int i = 0; i < toAnswer.length && !restartServer; )
 				{
 					auto cmd = toAnswer[i];
-					if(toAnswer[i].answer())
+					HRESULT hr = toAnswer[i].answer();
+					if(hr == S_OK)
 						toAnswer = toAnswer[0..i] ~ toAnswer[i+1..$];
+					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
+						restartServer = true;
 					else
 						i++;
 				}
 
 				BSTR msg;
-				if(gVDServer && gVDServer.GetLastMessage(&msg) == S_OK)
-					send(gUITid, new immutable(GetMessageCommand)(detachBSTR(msg)));
+				if(gVDServer && !restartServer)
+				{
+					HRESULT hr = gVDServer.GetLastMessage(&msg);
+					if(hr == S_OK)
+						send(gUITid, new immutable(GetMessageCommand)(detachBSTR(msg)));
+					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
+						restartServer = true;
+				}
+
+				if(restartServer)
+				{
+					stopVDServer();
+					startVDServer();
+				}
 			}
 		}
 		catch(Throwable)

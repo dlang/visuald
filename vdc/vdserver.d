@@ -181,10 +181,6 @@ class VDServer : ComObject, IVDServer
 			{
 				n = parser.parseModule(text);
 			}
-			catch(ParseException e)
-			{
-				logInfo(e.msg);
-			}
 			catch(Throwable t)
 			{
 				logInfo(t.msg);
@@ -242,9 +238,9 @@ class VDServer : ComObject, IVDServer
 					}
 				}
 			}
-			catch(Error e)
+			catch(Throwable t)
 			{
-				txt = e.msg;
+				logInfo(t.msg);
 			}
 			mLastTip = txt;
 			mSemanticTipRunning = false;
@@ -267,49 +263,47 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	ast.Node GetNode(ast.Module mod, vdc.util.TextSpan* pSpan, bool* inDotExpr)
-	{
-		mSemanticProject.initScope();
-
-		ast.Node n = ast.getTextPosNode(mod, pSpan, inDotExpr);
-		if(n)
-			*pSpan = n.fulspan;
-		return n;
-	}
-
-	string[] _GetSemanticExpansions(SourceModule src, string tok, uint line, uint idx)
+	string[] _GetSemanticExpansions(SourceModule src, string tok, uint line, uint idx, string expr)
 	{
 		ast.Module mod = src.analyzed;
 		if(!mod)
 			return null;
+
+		mSemanticProject.initScope();
 
 		bool inDotExpr;
 		vdc.util.TextSpan span;
 		span.start.line = line;
 		span.start.index = idx;
 		span.end = span.start;
-		ast.Node n = GetNode(mod, &span, &inDotExpr);
+
+		ast.Node n = ast.getTextPosNode(mod, &span, &inDotExpr);
 		if(!n)
 			return null;
 
+		ast.Type t;
 		if(auto r = cast(ast.ParseRecoverNode)n)
 		{
-			wstring wexpr = null; // src.FindExpressionBefore(line, idx);
-			if(wexpr)
+			if(expr.length)
 			{
-				string expr = to!string(wexpr);
 				Parser parser = new Parser;
 				ast.Node inserted = parser.parseExpression(expr, r.fulspan);
 				if(!inserted)
 					return null;
 				r.addMember(inserted);
-				n = inserted.calcType();
+				t = inserted.calcType();
 				r.removeMember(inserted);
 				inDotExpr = true;
 			}
 		}
-		vdc.semantic.Scope sc = n.getScope();
+		else
+			t = n.calcType();
 
+		vdc.semantic.Scope sc;
+		if(t)
+			sc = t.getScope();
+		if(!sc)
+			sc = n.getScope();
 		if(!sc)
 			return null;
 		auto syms = sc.search(tok ~ "*", !inDotExpr, true, true);
@@ -323,11 +317,13 @@ class VDServer : ComObject, IVDServer
 				symbols.addunique(em.ident);
 			else if(auto aggr = cast(ast.Aggregate) s)
 				symbols.addunique(aggr.ident);
+			else if(auto builtin = cast(ast.BuiltinPropertyBase) s)
+				symbols.addunique(builtin.ident);
 
 		return symbols;
 	}
 
-	override HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx)
+	override HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
 	{
 		string[] symbols;
 		string fname = to_string(filename);
@@ -336,15 +332,17 @@ class VDServer : ComObject, IVDServer
 			return S_FALSE;
 
 		string stok = to_string(tok);
+		string sexpr = to_string(expr);
 		void calcExpansions()
 		{
 			fnSemanticWriteError = &semanticWriteError;
 			try
 			{
-				mLastSymbols = _GetSemanticExpansions(src, stok, line, idx);
+				mLastSymbols = _GetSemanticExpansions(src, stok, line, idx, sexpr);
 			}
-			catch(Error e)
+			catch(Throwable t)
 			{
+				logInfo(t.msg);
 			}
 			mSemanticExpansionsRunning = false;
 		}

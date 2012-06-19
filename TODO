@@ -46,16 +46,14 @@ Language service:
 - showScope: function/delegate literal not shown correctly, in/out/body
 - collapse disabled version/debug blocks
 - disable parsing/outlining for large files?
-- version highlighting does not support version(x): syntax
 - replace token: empty dialog when opened without resizing
 - check indentation of multiple string literals on several lines
 - show help in standard browser
 - VS no longer remembers position inside file across restart?
-- goto import does not work on "import mod = pkg.mod;"
+- goto import jumps to "mod" if run on "import mod = pkg.mod;"
 
 Semantics:
 ---------------
-- move into background thread
 - import paths for source files not in any project
 - invalidate after changes
 - templates
@@ -91,7 +89,7 @@ Lexer/Parser:
 ---------------
 - fix Cmp/ShiftExpression
 - octal numbers
-- do not parse file if it is D1
+- do not parse file if it is D1?
 - deprecated syntax
 - support for => delegates
 
