@@ -19,16 +19,8 @@ import std.parallelism;
 
 import core.runtime;
 import core.memory;
-version(dmd_2_052)
-{
-	import core.dll_helper;
-	import threadaux = core.thread_helper;
-}
-else
-{
-	import core.sys.windows.dll;
-	import threadaux = core.sys.windows.threadaux;
-}
+import core.sys.windows.dll;
+import threadaux = core.sys.windows.threadaux;
 
 import std.conv;
 
@@ -108,21 +100,14 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 			debug clearStack();
 			debug GC.collect();
 			debug DComObject.showCOMleaks();
-			dll_process_detach( hInstance, true );
+			dll_process_detach(hInstance, true);
 			
 			debug if(DComObject.sCountReferenced != 0 || DComObject.sCountInstances != 0)
 				asm { int 3; } // use continue, not terminate in the debugger
 			break;
 
-debug // allow std 2.052 in debug builds
-	enum isPatchedLib = __traits(compiles, { bool b = dll_thread_attach( true, true ); });
-else // ensure patched runtime in release
-	enum isPatchedLib = true;
-		
-	static if(isPatchedLib)
-	{
 		case DLL_THREAD_ATTACH:
-			if(!dll_thread_attach( true, true ))
+			if(!dll_thread_attach(true, true))
 				return false;
 			logCall("DllMain(DLL_THREAD_ATTACH, id=%x)", GetCurrentThreadId());
 			break;
@@ -130,20 +115,8 @@ else // ensure patched runtime in release
 		case DLL_THREAD_DETACH:
 			if(threadaux.GetTlsDataAddress(GetCurrentThreadId())) //, _tls_index))
 				logCall("DllMain(DLL_THREAD_DETACH, id=%x)", GetCurrentThreadId());
-			dll_thread_detach( true, true );
+			dll_thread_detach(true, true);
 			break;
-	}
-	else
-	{
-		pragma(msg, text(__FILE__, "(", __LINE__, "): DllMain uses compatibility mode, this can cause crashes on a 64-bit OS"));
-		case DLL_THREAD_ATTACH:
-			dll_thread_attach( true, true );
-			break;
-
-		case DLL_THREAD_DETACH:
-			dll_thread_detach( true, true );
-			break;
-	}
 			
 		default:
 			assert(_false);

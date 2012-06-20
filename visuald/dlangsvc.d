@@ -41,16 +41,8 @@ extern (C) GCStats gc_stats();
 }
 
 import vdc.lexer;
+import vdc.ivdserver;
 static import vdc.util;
-
-version(VDServer) {
-	import vdc.ivdserver;
-} else {
-	import ast = vdc.ast.all;
-	import vdc.parser.engine;
-	import vdc.semantic;
-	import vdc.interpret;
-}
 
 import stdext.array;
 import stdext.string;
@@ -105,9 +97,7 @@ class LanguageService : DisposingComObject,
 	{
 		//mPackage = pkg;
 		mUpdateSolutionEvents = new UpdateSolutionEvents(this);
-
-		version(VDServer)
-			mVDServerClient = new VDServerClient;
+		mVDServerClient = new VDServerClient;
 	}
 
 	~this()
@@ -141,16 +131,6 @@ class LanguageService : DisposingComObject,
 
 	void stopAllParsing()
 	{
-		version(VDServer)
-		{
-		}
-		else
-		{
-			foreach(Source src; mSources)
-				if(auto parser = src.mParser)
-					parser.abort = true;
-		}
-
 		if(Source.parseTaskPool)
 		{
 			//Source.parseTaskPool.finish();
@@ -617,8 +597,7 @@ class LanguageService : DisposingComObject,
 	//////////////////////////////////////////////////////////////
 	bool OnIdle()
 	{
-		version(VDServer)
-			mVDServerClient.onIdle();
+		mVDServerClient.onIdle();
 
 		CheckGC(false);
 		for(int i = 0; i < mSources.length; i++)
@@ -688,245 +667,59 @@ class LanguageService : DisposingComObject,
 
 	// semantic completion ///////////////////////////////////
 
-	version(VDServer)
+	uint GetTip(Source src, TextSpan* pSpan, GetTypeCallBack cb)
 	{
-		uint GetTip(Source src, TextSpan* pSpan, GetTypeCallBack cb)
-		{
-			return mVDServerClient.GetTip(src.GetFileName(), pSpan, cb);
-		}
-		uint GetSemanticExpansions(Source src, string tok, int line, int idx, GetExpansionsCallBack cb)
-		{
-			wstring expr = src.FindExpressionBefore(line, idx);
-			return mVDServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, expr, cb);
-		}
-		void UpdateSemanticModule(Source src)
-		{
-		}
-		void ClearSemanticProject()
-		{
-			mVDServerClient.ClearSemanticProject();
-		}
-
-		void ConfigureSemanticProject(Source src)
-		{
-			string file = src.GetFileName();
-			string[] imp = GetImportPaths(file);
-			string[] stringImp;
-			string[] versionids;
-			string[] debugids;
-			uint flags = 0;
-
-			Config cfg = getProjectConfig(file);
-			if(!cfg)
-				cfg = getCurrentStartupConfig();
-			if(cfg)
-			{
-				scope(exit) release(cfg);
-				auto cfgopts = cfg.GetProjectOptions();
-				flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
-										  cfgopts.versionlevel, cfgopts.debuglevel);
-				
-				string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
-				stringImp = tokenizeArgs(strimp);
-				foreach(ref i; stringImp)
-					i = normalizeDir(unquoteArgument(i));
-				makeFilenamesAbsolute(stringImp, cfg.GetProjectDir());
-
-				versionids = tokenizeArgs(cfgopts.versionids);
-				debugids = tokenizeArgs(cfgopts.debugids); 
-			}
-			mVDServerClient.ConfigureSemanticProject(file, imp, stringImp, versionids, debugids, flags);
-		}
-
-		bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
-		{
-			auto pos = vdc.util.TextPos(startIndex, startLine);
-			return src.mBinaryIsIn.contains(pos) !is null;
-			//return mVDServerClient.isBinaryOperator(src.GetFileName(), startLine, startIndex, endLine, endIndex);
-		}
-
+		return mVDServerClient.GetTip(src.GetFileName(), pSpan, cb);
 	}
-	else
+	uint GetSemanticExpansions(Source src, string tok, int line, int idx, GetExpansionsCallBack cb)
 	{
+		wstring expr = src.FindExpressionBefore(line, idx);
+		return mVDServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, expr, cb);
+	}
+	void UpdateSemanticModule(Source src)
+	{
+	}
+	void ClearSemanticProject()
+	{
+		mVDServerClient.ClearSemanticProject();
+	}
+
 	void ConfigureSemanticProject(Source src)
 	{
-		if(!mSemanticProject)
-			mSemanticProject = new vdc.semantic.Project;
-
 		string file = src.GetFileName();
-		auto opts = mSemanticProject.options;
 		string[] imp = GetImportPaths(file);
-		opts.setImportDirs(imp);
-		if(Config cfg = getProjectConfig(file))
+		string[] stringImp;
+		string[] versionids;
+		string[] debugids;
+		uint flags = 0;
+
+		Config cfg = getProjectConfig(file);
+		if(!cfg)
+			cfg = getCurrentStartupConfig();
+		if(cfg)
 		{
 			scope(exit) release(cfg);
 			auto cfgopts = cfg.GetProjectOptions();
-			opts.unittestOn = cfgopts.useUnitTests;
-			opts.debugOn = !cfgopts.release;
-			opts.setVersionIds(cfgopts.versionlevel, tokenizeArgs(cfgopts.versionids)); 
-			opts.setDebugIds(cfgopts.debuglevel, tokenizeArgs(cfgopts.debugids)); 
+			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
+									  cfgopts.versionlevel, cfgopts.debuglevel);
+			
+			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
+			stringImp = tokenizeArgs(strimp);
+			foreach(ref i; stringImp)
+				i = normalizeDir(unquoteArgument(i));
+			makeFilenamesAbsolute(stringImp, cfg.GetProjectDir());
+
+			versionids = tokenizeArgs(cfgopts.versionids);
+			debugids = tokenizeArgs(cfgopts.debugids); 
 		}
-	}
-
-	void ClearSemanticProject()
-	{
-		mSemanticProject = null;
-	}
-
-	void UpdateSemanticModule(Source src)
-	{
-		if(!src.mAST)
-			return;
-
-		ConfigureSemanticProject(src);
-
-		string fname = src.GetFileName();
-		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
-		if(!sm || sm.parsed != src.mAST)
-			mSemanticProject.addSource(fname, src.mAST, null);
-	}
-
-	ast.Module GetSemanticModule(Source src)
-	{
-		ConfigureSemanticProject(src);
-
-		static void semanticWriteError(vdc.semantic.MessageType type, string msg)
-		{
-			if(type == MessageType.Message)
-				showStatusBarText(msg);
-			else
-				writeToBuildOutputPane(msg ~ "\n");
-		}
-		fnSemanticWriteError = &semanticWriteError;
-		ast.Module mod;
-		string fname = src.GetFileName();
-		SourceModule sm = mSemanticProject.getModuleByFilename(fname);
-		bool astUptodate = (src.mAST && src.mModificationCountAST == src.mModificationCount);
-		if(sm && sm.parsed is src.mAST && astUptodate)
-			mod = sm.analyzed;
-		else if(astUptodate)
-			mod = mSemanticProject.addSource(fname, src.mAST, null);
-		else
-		{
-			wstring wtxt = src.GetText(); // should not be read from another thread
-			string txt = to!string(wtxt);
-			mod = mSemanticProject.addText(fname, txt);
-		}
-		return mod;
-	}
-
-	ast.Node GetNode(ast.Module mod, TextSpan* pSpan, bool* inDotExpr)
-	{
-		mSemanticProject.initScope();
-
-		vdc.util.TextSpan span;
-		span.start.line = pSpan.iStartLine + 1;
-		span.start.index = pSpan.iStartIndex;
-		span.end.line = pSpan.iEndLine + 1;
-		span.end.index = pSpan.iEndIndex;
-
-		ast.Node n = ast.getTextPosNode(mod, &span, inDotExpr);
-		if(n)
-		{
-			pSpan.iStartLine = n.fulspan.start.line - 1;
-			pSpan.iStartIndex = n.fulspan.start.index;
-			pSpan.iEndLine = n.fulspan.end.line - 1;
-			pSpan.iEndIndex = n.fulspan.end.index;
-		}
-		return n;
-	}
-
-	string GetTip(Source src, TextSpan* pSpan, GetTypeCallBack cb)
-	{
-		string txt;
-		try
-		{
-			ast.Module mod = GetSemanticModule(src);
-			if(!mod)
-				return null;
-
-			ast.Node n = GetNode(mod, pSpan, null);
-			if(n && n !is mod)
-			{
-				ast.Type t = n.calcType();
-				if(!cast(ast.ErrorType) t)
-				{
-					vdc.util.DCodeWriter writer = new vdc.util.DCodeWriter(vdc.util.getStringSink(txt));
-					writer.writeImplementations = false;
-					writer.writeClassImplementations = false;
-					writer(n, "\ntype: ", t);
-
-version(none)
-					if(!cast(ast.Statement) n && !cast(ast.Type) n)
-					{
-						Value v = n.interpret(globalContext);
-						if(!cast(ErrorValue) v && !cast(TypeValue) v)
-							txt ~= "\nvalue: " ~ v.toStr();
-					}
-				}
-			}
-		}
-		catch(Error e)
-		{
-			txt = e.msg;
-		}
-		return txt;
-	}
-
-	string[] GetSemanticExpansions(Source src, string tok, int line, int idx)
-	{
-		ast.Module mod = GetSemanticModule(src);
-		if(!mod)
-			return null;
-
-		bool inDotExpr;
-		TextSpan span;
-		span.iStartLine = span.iEndLine = line;
-		span.iStartIndex = span.iEndIndex = idx;
-		ast.Node n = GetNode(mod, &span, &inDotExpr);
-		if(!n)
-			return null;
-
-		if(auto r = cast(ast.ParseRecoverNode)n)
-		{
-			wstring wexpr = src.FindExpressionBefore(line, idx);
-			if(wexpr)
-			{
-				string expr = to!string(wexpr);
-				Parser parser = new Parser;
-				ast.Node inserted = parser.parseExpression(expr, r.fulspan);
-				if(!inserted)
-					return null;
-				r.addMember(inserted);
-				n = inserted.calcType();
-				r.removeMember(inserted);
-				inDotExpr = true;
-			}
-		}
-		vdc.semantic.Scope sc = n.getScope();
-
-		if(!sc)
-			return null;
-		auto syms = sc.search(tok ~ "*", !inDotExpr, true, true);
-
-		string[] symbols;
-
-		foreach(s, b; syms)
-			if(auto decl = cast(ast.Declarator) s)
-				symbols.addunique(decl.ident);
-			else if(auto em = cast(ast.EnumMember) s)
-				symbols.addunique(em.ident);
-
-		return symbols;
+		mVDServerClient.ConfigureSemanticProject(file, imp, stringImp, versionids, debugids, flags);
 	}
 
 	bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
 	{
-		if(!src.mAST)
-			return false;
-		return ast.isBinaryOperator(src.mAST, startLine, startIndex, endLine, endIndex);
-	}
-
+		auto pos = vdc.util.TextPos(startIndex, startLine);
+		return src.mBinaryIsIn.contains(pos) !is null;
+		//return mVDServerClient.isBinaryOperator(src.GetFileName(), startLine, startIndex, endLine, endIndex);
 	}
 
 private:
@@ -935,15 +728,7 @@ private:
 	CodeWindowManager[]  mCodeWinMgrs;
 	DBGMODE              mDbgMode;
 	
-	version(VDServer)
-	{
-		VDServerClient   mVDServerClient;
-	}
-	else
-	{
-		vdc.semantic.Project mSemanticProject;
-	}
-
+	VDServerClient       mVDServerClient;
 	IVsDebugger          mDebugger;
 	VSCOOKIE             mCookieDebuggerEvents = VSCOOKIE_NIL;
 	VSCOOKIE             mUpdateSolutionEventsCookie = VSCOOKIE_NIL;
@@ -1264,18 +1049,12 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	LineChange[] mLineChanges;
 	TextLineChange mLastTextLineChange;
 
-	version(VDServer) {} else
-	{
-		Parser mParser;
-		ast.Module mAST;
-	}
 	wstring mParseText;
 	ParseError[] mParseErrors;
 	vdc.util.TextPos[] mBinaryIsIn;
 	NewHiddenRegion[] mOutlineRegions;
 
 	int mParsingState;
-	int mModificationCountErrors;
 	int mModificationCountAST;
 	int mModificationCount;
 
@@ -1287,7 +1066,6 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 
 		mOutlining = Package.GetGlobalOptions().autoOutlining;
 		mModificationCountAST = -1;
-		mModificationCountErrors = -1;
 	}
 	~this()
 	{
@@ -3288,42 +3066,20 @@ else
 		if(mParsingState > 1)
 			return finishParsing();
 		
-		version(VDServer) {} else
-		if(mModificationCountAST != mModificationCount)
-			if(auto parser = mParser)
-				parser.abort = true;
-
 		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
-		{
-			version(old_VDServer)
-			{
-				if(mModificationCountErrors == mModificationCountAST)
-					return false;
-
-				string err;
-				if(!Package.GetLanguageService().mVDServerClient.GetParseErrors(GetFileName(), err))
-					return false;
-				
-				updateParseErrors(err);
-				mModificationCountErrors = mModificationCountAST;
-			}
 			return false;
-		}
-		
+
 		mParseText = GetText(); // should not be read from another thread
 		mParsingState = 1;
 		mModificationCountAST = mModificationCount;
 		runTask(&doParse);
 		
-		version(VDServer)
+		if(Package.GetGlobalOptions().parseSource)
 		{
-			if(Package.GetGlobalOptions().parseSource)
-			{
-				auto langsvc = Package.GetLanguageService();
-				langsvc.mVDServerClient.UpdateModule(GetFileName(), mParseText, &OnUpdateModule);
-				if(Package.GetGlobalOptions().projectSemantics)
-					langsvc.ConfigureSemanticProject(this);
-			}
+			auto langsvc = Package.GetLanguageService();
+			langsvc.mVDServerClient.UpdateModule(GetFileName(), mParseText, &OnUpdateModule);
+			if(Package.GetGlobalOptions().projectSemantics)
+				langsvc.ConfigureSemanticProject(this);
 		}
 
 		return true;
@@ -3391,9 +3147,6 @@ else
 
 	bool finishParsing()
 	{
-		version(VDServer) {} else
-			finishParseErrros();
-
 		if(mOutlining)
 		{
 			if(mStopOutlining)
@@ -3406,9 +3159,6 @@ else
 					session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
 			mOutlineRegions = mOutlineRegions.init;
 		}
-		version(VDServer) {} else
-			if(mAST && (Package.GetGlobalOptions().projectSemantics || Package.GetGlobalOptions().showTypeInTooltip))
-				Package.GetLanguageService().UpdateSemanticModule(this);
 
 		mParseText = null;
 		mParsingState = 0;
@@ -3418,51 +3168,6 @@ else
 	
 	void doParse()
 	{
-		if(Package.GetGlobalOptions().parseSource)
-		{
-			version(DEBUG_GC)
-				int nodes = ast.Node.countNodes;
-
-			version(VDServer) {
-			} else
-			{
-				string txt = to!string(mParseText);
-				mParser = new Parser;
-				mParser.saveErrors = true;
-				ast.Node n;
-				try
-				{
-					n = mParser.parseModule(txt);
-				}
-				catch(ParseException e)
-				{
-					OutputDebugLog(e.msg);
-				}
-				catch(Throwable t)
-				{
-					OutputDebugLog(t.msg);
-				}
-
-				if(mAST)
-					mAST.disconnect();
-				mAST = cast(ast.Module) n;
-				mParseErrors = mParseErrors.init;
-				foreach(e; mParser.errors)
-				{
-					ParseError error;
-					error.span = ParserSpan(e.span.start.index, e.span.start.line, e.span.end.index, e.span.end.line);
-					error.msg = e.msg;
-					mParseErrors ~= error;
-				}
-				mParser = null;
-			}
-			version(DEBUG_GC)
-			{
-				import rsgc.gcx;
-				gc_collect();
-				fprintf(prof_fh, "%d => %d nodes\n", nodes, ast.Node.countNodes);
-			}
-		}
 		if(mOutlining)
 		{
 			mOutlineRegions = CreateOutlineRegions(mParseText, hrsExpanded);

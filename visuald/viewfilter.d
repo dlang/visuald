@@ -1407,16 +1407,6 @@ version(none) // quick info tooltips not good enough yet
 		mTipText = text;
 		mTipSpan = span;
 		mTipRequest = request;
-		version(none)
-		{
-			if(type.length)
-			{
-				mTextTipData.Init(mView, type);
-				mTextTipData.UpdateView();
-			}
-			else
-				mTextTipData.Dismiss();
-		}
 	}
 
 	bool OnIdle()

@@ -29,7 +29,7 @@ import std.windows.charset;
 import core.thread;
 
 // debug version = DebugCmd;
-// debug version = InProc;
+debug version = InProc;
 // debug version = ABothe;
 
 version(InProc) import vdc.vdserver;
