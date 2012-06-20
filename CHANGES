@@ -422,7 +422,7 @@ Version history
   * version highlighting now supports versions DigitalMars/GNU and Win32/Win64
   * fixed building static lib with GDC and a name in the library file name
 
-unreleased Version 0.3.33
+2012-06-19 Version 0.3.33
 
   * debugger project settings now stored in solution options file, not in project file
   * regression: clean project failed, now deletes files given by wildcard recursively
@@ -434,10 +434,14 @@ unreleased Version 0.3.33
   * moved parser and semantic analysis into another process
   * GDC: user specified libraries are now appended after the source files to the command 
     line to avoid linker problems
-  * improved performance when indenting muliple lines of code
+  * improved performance when indenting multiple lines of code
   * remove project item: now asks whether file on disk should also be removed
   * parser: added support for linkage specification inside alias
   * version highlighting now supports the "version(V):" syntax
-  * tweaked vsi2d to also convert the Windos 8 SDK and VS2011 SDK
+  * tweaked vsi2d to also convert the Windows 8 SDK and VS2011 SDK
   * added wizard to create packages from the new item dialog
   * improved import statement detection for expansion and goto definition
+
+unreleased Version 0.3.34
+
+  * fix exceptions in NDepend when opening context menu on D project

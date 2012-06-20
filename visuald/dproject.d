@@ -382,7 +382,11 @@ class ExtProject : DisposingDispatchObject, dte.Project
 		/* [retval][out] */ dte.DTE	*lppaReturn)
 	{
 		logCall("%s.get_DTE()", this);
-		return returnError(E_NOTIMPL);
+		dte._DTE _dte = queryService!(dte._DTE);
+		if(!_dte)
+			return returnError(E_NOINTERFACE);
+		scope(exit) _dte.Release();
+		return _dte.DTE(lppaReturn);
 	}
 
 	override int Kind( 
