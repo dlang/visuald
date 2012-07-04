@@ -647,7 +647,8 @@ class ParserBase(S = string)
 	}
 }
 
-version(MAIN)
+version(all) {}
+else version(MAIN)
 {
 import parser.engine;
 

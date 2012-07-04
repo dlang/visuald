@@ -14,6 +14,7 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.register;
 import visuald.dpackage;
+import visuald.getmsobj;
 
 import std.parallelism;
 
@@ -27,13 +28,15 @@ import std.conv;
 __gshared HINSTANCE g_hInst;
 
 ///////////////////////////////////////////////////////////////////////
+//version = MAIN;
+
 version(MAIN)
 {
 	int main()
 	{
-		VSDllRegisterServer(("Software\\Microsoft\\VisualStudio\\9.0D"w).ptr);
-		//VSDllUnregisterServerUser(("Software\\Microsoft\\VisualStudio\\9.0D"w).ptr);
-		return 0;
+		return VerifyMSObj(("Software\\Microsoft\\VisualStudio\\9.0D"w).ptr);
+		//return VSDllRegisterServer(("Software\\Microsoft\\VisualStudio\\9.0D"w).ptr);
+		//return VSDllUnregisterServerUser(("Software\\Microsoft\\VisualStudio\\9.0D"w).ptr);
 	}
 }
 else // !version(MAIN)
@@ -77,6 +80,7 @@ void clearStack()
 	int[1000] arr;
 }
 
+version(MAIN) {} else
 extern (Windows)
 BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 {
@@ -152,6 +156,13 @@ void RunDLLUnregisterUser(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCm
 {
 	wstring ws = to_wstring(lpszCmdLine) ~ cast(wchar)0;
 	VSDllUnregisterServerUser(ws.ptr);
+}
+
+extern(Windows)
+void VerifyMSObj(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+{
+	wstring ws = to_wstring(lpszCmdLine);
+	VerifyMSObjectParser(ws);
 }
 
 ///////////////////////////////////////////////////////////////////////

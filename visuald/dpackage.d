@@ -1440,6 +1440,7 @@ class GlobalOptions
 			string[] files;
 			string cmdline = "@echo off\n";
 			string jsonfile;
+			string opts = " -d -c -o-";
 			
 			if(std.file.exists(s ~ "std\\algorithm.d")) // D2
 			{
@@ -1461,6 +1462,7 @@ class GlobalOptions
 			}
 			if(std.file.exists(s ~ "object.di"))
 			{
+				opts ~= " -I" ~ buildPath(s, "..\\src"); // needed since dmd 2.059
 				files ~= "object.di";
 				files ~= findDFiles(s, "core");
 				files ~= findDFiles(s, "core\\stdc");
@@ -1473,7 +1475,7 @@ class GlobalOptions
 			if(files.length)
 			{
 				string sfiles = std.string.join(files, " ");
-				cmdline ~= quoteFilename(dmdpath) ~ " -d -c -Xf" ~ quoteFilename(jsonfile) ~ " -o- " ~ sfiles ~ "\n\n";
+				cmdline ~= quoteFilename(dmdpath) ~ opts ~ " -Xf" ~ quoteFilename(jsonfile) ~ " " ~ sfiles ~ "\n\n";
 				pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " from import " ~ s ~ "\n"));
 				if(!launchBuildPhobosBrowseInfo(s, cmdfile, cmdline, pane))
 					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " failed!\n"));
@@ -1484,6 +1486,8 @@ class GlobalOptions
 	
 	bool launchBuildPhobosBrowseInfo(string workdir, string cmdfile, string cmdline, IVsOutputWindowPane pane)
 	{
+		mixin(LogCallMix);
+
 		/////////////
 		auto srpIVsLaunchPadFactory = queryService!(IVsLaunchPadFactory);
 		if (!srpIVsLaunchPadFactory)

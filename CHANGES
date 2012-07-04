@@ -445,3 +445,5 @@ Version history
 unreleased Version 0.3.34
 
   * fix exceptions in NDepend when opening context menu on D project
+  * delete file from project now uses VS environment dialog (avoiding dialog when moving project items)
+  * fixed "build phobos browse info" failing for dmd 2.059

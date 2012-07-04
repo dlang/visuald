@@ -9,12 +9,14 @@
 module visuald.fileutil;
 
 import visuald.windows;
+
+import stdext.path;
+
 import std.path;
 import std.file;
 import std.string;
 import std.conv;
-
-import stdext.path;
+import std.utf;
 
 //-----------------------------------------------------------------------------
 long[string] gCachedFileTimes;
@@ -104,4 +106,23 @@ bool moveFileToRecycleBin(string fname)
 	if(SHFileOperation(&fop) != 0)
 		return false;
 	return !fop.fAnyOperationsAborted;
+}
+
+string shortFilename(string fname)
+{
+	wchar* sptr;
+	auto wfname = toUTF16z(fname);
+	wchar[256] spath;
+	DWORD len = GetShortPathNameW(wfname, spath.ptr, spath.length);
+	if(len > spath.length)
+	{
+		wchar[] sbuf = new wchar[len];
+		len = GetShortPathNameW(wfname, sbuf.ptr, sbuf.length);
+		sptr = sbuf.ptr;
+	}
+	else
+		sptr = spath.ptr;
+	if(len == 0)
+		return "";
+	return to!string(sptr[0..len]);
 }

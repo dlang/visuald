@@ -188,6 +188,24 @@
   <Folder name="a_workaround">
    <File path="workaround.d" />
   </Folder>
+  <Folder name="language">
+   <File path="colorizer.d" />
+   <File path="completion.d" />
+   <File path="cppwizard.d" />
+   <File path="dlangsvc.d" />
+   <File path="expansionprovider.d" />
+   <File path="simpleparser.d" />
+   <File path="vdserverclient.d" />
+   <File path="viewfilter.d" />
+  </Folder>
+  <Folder name="project">
+   <File path="build.d" />
+   <File path="chiercontainer.d" />
+   <File path="chiernode.d" />
+   <File path="config.d" />
+   <File path="dproject.d" />
+   <File path="hierarchy.d" />
+  </Folder>
   <Folder name="Resources">
    <File path="Resources\AlternateRowColor.ico" />
    <File path="Resources\ascend.ico" />
@@ -219,23 +237,13 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File tool="None" path="..\rsgc\gcstats.d" />
    <File tool="None" path="..\rsgc\gcx.d" />
   </Folder>
-  <File path="build.d" />
-  <File path="chiercontainer.d" />
-  <File path="chiernode.d" />
-  <File path="colorizer.d" />
-  <File path="completion.d" />
   <File path="comutil.d" />
-  <File path="config.d" />
-  <File path="cppwizard.d" />
   <File path="dimagelist.d" />
-  <File path="dlangsvc.d" />
   <File path="dllmain.d" />
   <File path="dpackage.d" />
-  <File path="dproject.d" />
-  <File path="expansionprovider.d" />
   <File path="fileutil.d" />
+  <File path="getmsobj.d" />
   <File path="help.d" />
-  <File path="hierarchy.d" />
   <File path="hierutil.d" />
   <File path="intellisense.d" />
   <File path="lexutil.d" />
@@ -247,13 +255,10 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
   <File path="propertypage.d" />
   <File path="register.d" />
   <File path="searchsymbol.d" />
-  <File path="simpleparser.d" />
   <File path="stringutil.d" />
   <File path="tokenreplace.d" />
   <File path="tokenreplacedialog.d" />
   <File path="trackprojectdocument.d" />
-  <File path="vdserverclient.d" />
-  <File path="viewfilter.d" />
   <File path="visuald.def" />
   <File path="vscommands.d" />
   <File path="winctrl.d" />

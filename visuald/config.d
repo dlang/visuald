@@ -1222,7 +1222,7 @@ class ConfigProvider : DisposingComObject,
 		/* [in] */ in wchar* pszOldName,
 		/* [in] */ in wchar* pszNewName)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 
 		string strOldName = to_string(pszOldName);
 		string strNewName = to_string(pszNewName);
@@ -2836,7 +2836,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 
 	override HRESULT ReleaseMarshalData(/+[in, unique]+/ IStream pStm)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 		return returnError(E_NOTIMPL);
 	}
 

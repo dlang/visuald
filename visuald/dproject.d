@@ -966,7 +966,17 @@ class Project : CVsHierarchy,
 	{
 //		mixin(LogCallMix);
 
-		*pfCanDelete = (dwDelItemOp == DELITEMOP_RemoveFromProject);
+		bool canDelete = true;
+		if(dwDelItemOp == DELITEMOP_DeleteFromStorage)
+		{
+			CHierNode[] nodes = VSITEMID2Nodes(itemid);
+			if(nodes.length > 0)
+				return S_OK;
+			foreach(n; nodes)
+				if(cast(CHierContainer) n)
+					canDelete = false;
+		}
+		*pfCanDelete = canDelete; //(dwDelItemOp == DELITEMOP_RemoveFromProject);
 		return S_OK;
 	}
 
@@ -977,13 +987,15 @@ class Project : CVsHierarchy,
 		mixin(LogCallMix);
 
 		// the root item will be removed without asking the project itself
-		if(itemid == VSITEMID_ROOT || itemid == VSITEMID_NIL || dwDelItemOp != DELITEMOP_RemoveFromProject)
+		if(itemid == VSITEMID_ROOT || itemid == VSITEMID_NIL) // || dwDelItemOp != DELITEMOP_RemoveFromProject)
 			return E_INVALIDARG;
 
 		CHierNode[] nodes = VSITEMID2Nodes(itemid);
 		if(nodes.length == 0)
 			return S_OK;
 
+		version(none)
+		{
 		int delFiles = Package.GetGlobalOptions().deleteFiles;
 		if(delFiles == 0)
 		{
@@ -998,6 +1010,7 @@ class Project : CVsHierarchy,
 			else
 				delFiles = -1;
 		}
+		}
 		foreach(node; nodes)
 		{
 			if(!node)
@@ -1008,7 +1021,7 @@ class Project : CVsHierarchy,
 				string fname = fnode.GetFullPath();
 				if(HRESULT hr = fnode.CloseDoc(SLNSAVEOPT_PromptSave))
 					return hr;
-				if(delFiles > 0)
+				if(dwDelItemOp == DELITEMOP_DeleteFromStorage)
 					moveFileToRecycleBin(fname);
 					//std.file.remove(fname);
 			}

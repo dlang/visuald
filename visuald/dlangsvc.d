@@ -447,7 +447,7 @@ class LanguageService : DisposingComObject,
 	// IVsFormatFilterProvider //////////////////////////////////////
 	override HRESULT CurFileExtensionFormat(in BSTR bstrFileName, uint* pdwExtnIndex)
 	{
-		mixin(LogCallMix);
+		mixin(LogCallMix2);
 		return E_NOTIMPL;
 	}
 

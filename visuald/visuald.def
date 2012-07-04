@@ -19,3 +19,4 @@ EXPORTS
 	RunDLLUnregister           = RunDLLUnregister           PRIVATE
 	RunDLLRegisterUser         = RunDLLRegisterUser         PRIVATE
 	RunDLLUnregisterUser       = RunDLLUnregisterUser       PRIVATE
+	VerifyMSObj                = VerifyMSObj                PRIVATE

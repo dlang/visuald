@@ -111,7 +111,7 @@ public:
 		}
 		if(m_hwnd == null)
 		{
-			assert(false);
+			//assert(false);
 			m_hwnd = GetActiveWindow();
 		}
 		EnableModeless(false);
@@ -290,6 +290,9 @@ CHierNode searchNode(CHierNode root, bool delegate(CHierNode) pred, bool fDispla
 ///////////////////////////////////////////////////////////////////////
 I queryService(SVC,I)()
 {
+	if(!visuald.dpackage.Package.s_instance)
+		return null;
+
 	IServiceProvider sp = visuald.dpackage.Package.s_instance.getServiceProvider();
 	if(!sp)
 		return null;

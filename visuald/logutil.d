@@ -391,6 +391,7 @@ string varToString(in VARIANT arg)
 string _toLog(GUID arg) { return GUID2utf8(arg); }
 string _toLog(in GUID* arg) { return GUID2utf8(*arg); }
 string _toLog(in VARIANT arg) { return format("VAR(%d,%s)", arg.vt, varToString(arg)); }
+string _toLog(string arg) { return arg; }
 
 wstring _toLog(in wchar* arg) { return arg ? to_wstring(arg) : "null"; }
 void* _toLog(IUnknown arg) { return cast(void*) arg; }

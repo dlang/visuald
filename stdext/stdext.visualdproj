@@ -76,6 +76,10 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -86,14 +90,6 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Release" platform="Win32">
@@ -172,6 +168,10 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -182,14 +182,6 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Debug GDC" platform="Win32">
@@ -268,6 +260,10 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -278,14 +274,6 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Debug" platform="x64">
@@ -364,6 +352,10 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -374,14 +366,6 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Release" platform="x64">
@@ -460,6 +444,10 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -470,14 +458,6 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Debug GDC" platform="x64">
@@ -556,6 +536,10 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -566,20 +550,13 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="stdext">
   <File path="array.d" />
   <File path="com.d" />
   <File path="file.d" />
+  <File path="httpget.d" />
   <File path="path.d" />
   <File path="string.d" />
   <File path="util.d" />

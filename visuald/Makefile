@@ -51,7 +51,7 @@ VDC_SRC = $(VDC)/parser/aggr.d \
 RSGC_SRC = ../rsgc/gc.d ../rsgc/gcx.d ../rsgc/gcstats.d ../rsgc/gcalloc.d ../rsgc/gcbits.d
 
 STDEXT_SRC = ../stdext/file.d ../stdext/array.d ../stdext/path.d ../stdext/util.d \
-             ../stdext/string.d ../stdext/com.d
+             ../stdext/string.d ../stdext/com.d ../stdext/httpget.d
 # FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
 
 C2D_SRC = ../c2d/cpp2d.d ../c2d/ast.d ../c2d/dlist.d ../c2d/dgutil.d \
@@ -66,7 +66,7 @@ SRC = workaround.d \
       intellisense.d oledatasource.d searchsymbol.d windows.d wmmsg.d \
       profiler.d simpleparser.d colorizer.d viewfilter.d lexutil.d \
       tokenreplace.d tokenreplacedialog.d library.d \
-      help.d cppwizard.d vdserverclient.d
+      help.d cppwizard.d vdserverclient.d getmsobj.d
 # $(STDEXT_SRC)
 # $(RSGC_SRC)
 

@@ -14,6 +14,7 @@ Settings:
 Project:
 ---------------
 - clean/build/rebuild only project not working
+- no dependency on def file
 - midl compiler?
 - manifest compiler?
 - no automatic lib dependencies
@@ -37,6 +38,8 @@ Project:
   - separate compile + link does not write to object dir
   - ddoc files
 - additional options for resource compiler
+- regression: moving items in the project tree asks for file removal
+- compile single file: report success
 
 Language service:
 -----------------
@@ -49,7 +52,7 @@ Language service:
 - replace token: empty dialog when opened without resizing
 - check indentation of multiple string literals on several lines
 - show help in standard browser
-- VS no longer remembers position inside file across restart?
+- VS sometimes does not remember position inside file across restart?
 - goto import jumps to "mod" if run on "import mod = pkg.mod;"
 
 Semantics:
@@ -58,6 +61,8 @@ Semantics:
 - invalidate after changes
 - templates
 - operator overloads
+- completion at the beginning of an identifier lists its members
+- package/module specifier before symbol
 
 Search:
 ---------------
