@@ -38,7 +38,6 @@ Project:
   - separate compile + link does not write to object dir
   - ddoc files
 - additional options for resource compiler
-- regression: moving items in the project tree asks for file removal
 - compile single file: report success
 
 Language service:

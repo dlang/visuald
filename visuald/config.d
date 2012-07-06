@@ -2307,7 +2307,13 @@ class Config :	DisposingComObject,
 			});
 
 		string[] libs = getLibsFromDependentProjects();
-		files ~= libs;
+		foreach(lib; libs)
+		{
+			// dmd also understands ".json", ".map" and ".exe", but these are shortcuts for output files
+			string ext = toLower(extension(lib));
+			if(ext.isIn(".d", ".di", ".o", ".obj", ".lib", ".a", ".ddoc", ".res", ".def", ".dd", ".htm", ".html", ".xhtml"))
+				files ~= lib;
+		}
 		return files;
 	}
 	
