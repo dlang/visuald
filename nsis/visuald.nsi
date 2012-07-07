@@ -159,6 +159,7 @@ Section "Visual Studio package" SecPackage
   
   ${File} ..\bin\${CONFIG}\ ${DLLNAME}
   ${File} ..\bin\${CONFIG}\ vdserver.exe
+  ${File} ..\bin\${CONFIG}\ pipedmd.exe
   ${File} ..\ README
   ${File} ..\ LICENSE
   ${File} ..\ CHANGES
@@ -251,7 +252,7 @@ ${MementoSection} "Register with VS 2010" SecVS2010
 ${MementoSectionEnd}
 
 ;--------------------------------
-${MementoSection} "Register with VS 11" SecVS2011
+${MementoSection} "Register with VS 2012" SecVS2011
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2011_REGISTRY_KEY}'
   WriteRegStr ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
@@ -374,7 +375,7 @@ SectionEnd
   LangString DESC_SecVS2005 ${LANG_ENGLISH} "Register for usage in Visual Studio 2005."
   LangString DESC_SecVS2008 ${LANG_ENGLISH} "Register for usage in Visual Studio 2008."
   LangString DESC_SecVS2010 ${LANG_ENGLISH} "Register for usage in Visual Studio 2010."
-  LangString DESC_SecVS2011 ${LANG_ENGLISH} "Register for usage in Visual Studio 11."
+  LangString DESC_SecVS2011 ${LANG_ENGLISH} "Register for usage in Visual Studio 2012."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -600,6 +601,8 @@ enabled:
     IfErrors SkipVisualizer
       !insertmacro InsertToFile "$1${AutoExpPath}" "[Visualizer]" "$INSTDIR\cv2pdb\autoexp.visualizer" NoBackup
     SkipVisualizer:
+    
+    ;;; ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" VerifyMSObj $1'
     
   NoInstall:
 

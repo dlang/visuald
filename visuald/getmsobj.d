@@ -40,7 +40,7 @@ import core.stdc.stdlib;
 
 HRESULT VerifyMSObjectParser(wstring winstallDir)
 {
-	UtilMessageBox("VerifyMSObj(dir=" ~ to!string(winstallDir) ~ ")", MB_OK, "Visual D Installer");
+	debug UtilMessageBox("VerifyMSObj(dir=" ~ to!string(winstallDir) ~ ")", MB_OK, "Visual D Installer");
 
 	if(!winstallDir.length)
 		return S_FALSE;
@@ -48,13 +48,13 @@ HRESULT VerifyMSObjectParser(wstring winstallDir)
 
 	HRESULT checkMSObj(string ver, string url, ulong cab_start, ulong cab_length)
 	{
-		UtilMessageBox("checkMSObj(ver=" ~ ver ~ ")", MB_OK, "Visual D Installer");
+		debug UtilMessageBox("checkMSObj(ver=" ~ ver ~ ")", MB_OK, "Visual D Installer");
 
 		string mspdb = "mspdb" ~ ver ~ ".dll";
 		string absmspdb = buildPath(installDir, mspdb);
 		if(exists(absmspdb))
 		{
-			UtilMessageBox(absmspdb ~ " exists", MB_OK, "Visual D Installer");
+			debug UtilMessageBox(absmspdb ~ " exists", MB_OK, "Visual D Installer");
 
 			string msobj = "msobj" ~ ver ~ ".dll";
 			string absmsobj = buildPath(installDir, msobj);

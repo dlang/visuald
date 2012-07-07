@@ -1399,7 +1399,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
-		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in Error List"));
+		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors"));
 		AddControl("Remove project item", mDeleteFiles = 
 				   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 	}

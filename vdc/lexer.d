@@ -9,6 +9,7 @@
 module vdc.lexer;
 
 import std.ascii;
+import std.uni : isAlpha;
 import std.utf;
 import std.conv;
 

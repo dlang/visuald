@@ -33,7 +33,7 @@ VSISDK = c:\l\vs9SDK
 MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
 NSIS   = $(PROGRAMFILES)\NSIS
 CV2PDB = $(PROGRAMFILES)\VisualD\cv2pdb\cv2pdb.exe
-ZIP    = c:\u\unix\usr\local\wbin\zip.exe
+ZIP    = c:\u\unix\zip.exe
 
 ##############################################################
 # no more changes should be necessary starting from here
@@ -42,11 +42,12 @@ BINDIR = bin\Release
 IVIEWER = $(WINSDK)\bin\iviewers.dll
 
 TLB2IDL_EXE = $(BINDIR)\tlb2idl.exe
+PIPEDMD_EXE = $(BINDIR)\pipedmd.exe
 VSI2D_EXE   = $(BINDIR)\vsi2d.exe
 VSI_LIB     = $(BINDIR)\vsi.lib
 VISUALD     = $(BINDIR)\visuald.dll
 
-all: dte_idl vsi2d package vdserver_exe
+all: dte_idl vsi2d package vdserver_exe $(PIPEDMD_EXE)
 
 sdk: dte_idl vsi_dirs sdk\vsi_sources sdk_lib
 
@@ -70,8 +71,11 @@ sdk\vsi\idl\dte80a.idl : $(TLB2IDL_EXE) "$(MSENV)\dte80a.olb"
 sdk\vsi\idl\dte90.idl : $(TLB2IDL_EXE) "$(MSENV)\dte90.olb"
 	$(TLB2IDL_EXE) "$(MSENV)\dte90.olb" $@ "$(IVIEWER)"
 
-$(TLB2IDL_EXE) : tlb2idl\tlb2idl.d
-	$(DMD2) -map $@.map -of$@ tlb2idl\tlb2idl.d oleaut32.lib uuid.lib snn.lib kernel32.lib
+$(TLB2IDL_EXE) : tools\tlb2idl.d
+	$(DMD2) -map $@.map -of$@ tools\tlb2idl.d oleaut32.lib uuid.lib snn.lib kernel32.lib
+
+$(PIPEDMD_EXE) : tools\pipedmd.d
+	$(DMD2) -map $@.map -of$@ tools\pipedmd.d
 
 ##################################
 # generate VSI d files from h and idl
@@ -118,7 +122,7 @@ idl2d_exe: $(VSI2D_EXE)
 ##################################
 # create installer
 
-install: dte_idl vsi2d package cpp2d_exe idl2d_exe vdserver_exe
+install: all cpp2d_exe idl2d_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
@@ -136,6 +140,7 @@ clean:
 	if exist $(BINDIR)\visuald.dll  del $(BINDIR)\visuald.dll
 	if exist $(BINDIR)\vdserver.exe del $(BINDIR)\vdserver.exe
 	if exist $(TLB2IDL_EXE)         del $(TLB2IDL_EXE)
+	if exist $(PIPEDMD_EXE)         del $(PIPEDMD_EXE)
 	if exist $(VSI2D_EXE)           del $(VSI2D_EXE)
 	if exist $(DTE_IDL_PATH)\nul   (del /Q $(DTE_IDL_PATH) && rd $(DTE_IDL_PATH))
 	if exist sdk\vsi\nul           (del /Q sdk\vsi && rd sdk\vsi)

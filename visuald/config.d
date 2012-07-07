@@ -268,7 +268,9 @@ class ProjectOptions
 			cmd = quoteNormalizeFilename(program);
 		else
 			cmd = "dmd";
-
+		if(Package.GetGlobalOptions().demangleError)
+			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
+		
 		if(lib == OutputType.StaticLib && performLink)
 			cmd ~= " -lib";
 		if(multiobj)

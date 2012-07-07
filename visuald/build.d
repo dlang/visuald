@@ -722,8 +722,8 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText, mCompiler))
 			return S_FALSE;
 		
-		if(Package.GetGlobalOptions().demangleError)
-			taskItemText = demangleText(taskItemText);
+		//if(Package.GetGlobalOptions().demangleError)
+		//	taskItemText = demangleText(taskItemText);
 
 		filename = makeFilenameCanonical(filename, mProjectDir);
 		if(pnPriority)

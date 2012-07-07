@@ -448,3 +448,5 @@ unreleased Version 0.3.34
   * delete file from project now uses VS environment dialog (avoiding dialog when moving project items)
   * fixed "build phobos browse info" failing for dmd 2.059
   * dependency on other projects: only output files with known file types are now passed to the dmd/gdc command line
+  * linker error messages can now be decompressed and demangled (thanks to Benjamin Thaut for providing the tool)
+  * lexer now allows unicode characters from std.uni.isAlpha in identifiers
