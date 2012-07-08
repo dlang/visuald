@@ -46,6 +46,7 @@ import visuald.library;
 import visuald.pkgutil;
 import visuald.colorizer;
 import visuald.dllmain;
+import visuald.vdserverclient;
 
 import sdk.win32.winreg;
 import sdk.win32.oleauto;
@@ -240,9 +241,9 @@ class Package : DisposingComObject,
 	this()
 	{
 		s_instance = this;
+		mOptions = new GlobalOptions();
 		mLangsvc = addref(new LanguageService(this));
 		mProjFactory = addref(new ProjectFactory(this));
-		mOptions = new GlobalOptions();
 		mLibInfos = new LibraryInfos();
 	}
 
@@ -437,6 +438,7 @@ version(none)
 		}
 		
 		mOptions.initFromRegistry();
+		mLangsvc.startVDServer();
 
 		//register with ComponentManager for Idle processing
 		IOleComponentManager componentManager;
@@ -1062,7 +1064,8 @@ class GlobalOptions
 	bool expandFromJSON;
 	byte expandTrigger;
 	bool showTypeInTooltip;
-	
+	string VDServerIID;
+
 	bool ColorizeVersions = true;
 	bool lastColorizeVersions;
 	
@@ -1129,6 +1132,7 @@ class GlobalOptions
 			wstring wJSNSearchPath = keyToolOpts.GetString("JSNSearchPath");
 			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
 			wstring wUserTypesSpec = keyToolOpts.GetString("UserTypesSpec", defUserTypesSpec);
+			wstring wVDServerIID   = keyToolOpts.GetString("VDServerIID");
 			ColorizeVersions  = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
 			timeBuilds        = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
 			sortProjects      = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
@@ -1153,6 +1157,7 @@ class GlobalOptions
 			JSNSearchPath = toUTF8(keyUserOpts.GetString("JSNSearchPath", wJSNSearchPath));
 			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
 			UserTypesSpec = toUTF8(keyUserOpts.GetString("UserTypesSpec", wUserTypesSpec));
+			VDServerIID   = toUTF8(keyUserOpts.GetString("VDServerIID",   wVDServerIID));
 
 			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions",  ColorizeVersions) != 0;
 			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",        timeBuilds) != 0;
@@ -1170,6 +1175,8 @@ class GlobalOptions
 			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip", showTypeInTooltip) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			UserTypes = parseUserTypes(UserTypesSpec);
+			
+			VDServerClassFactory_iid = uuid(VDServerIID);
 
 			CHierNode.setContainerIsSorted(sortProjects);
 			

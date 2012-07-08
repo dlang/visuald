@@ -41,7 +41,7 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
@@ -76,24 +76,20 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles>ole32.lib oleaut32.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <exefile>$(OutDir)\$(ProjectName)_d.exe</exefile>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Release" platform="Win32">
@@ -172,6 +168,10 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles>ole32.lib oleaut32.lib</libfiles>
@@ -182,14 +182,6 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Debug" platform="x64">
@@ -268,6 +260,10 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles>ole32.lib oleaut32.lib</libfiles>
@@ -278,14 +274,6 @@
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Release" platform="x64">
@@ -364,6 +352,10 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -374,14 +366,6 @@
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Debug GDC" platform="Win32">
@@ -460,6 +444,10 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles>ole32.lib oleaut32.lib</libfiles>
@@ -470,14 +458,6 @@
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config name="Debug GDC" platform="x64">
@@ -556,6 +536,10 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
   <objfiles />
   <linkswitches />
   <libfiles>ole32.lib oleaut32.lib</libfiles>
@@ -566,14 +550,6 @@
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
-  <debugtarget>$(TARGETPATH)</debugtarget>
-  <debugarguments />
-  <debugworkingdir />
-  <debugattach>0</debugattach>
-  <debugremote />
-  <debugEngine>0</debugEngine>
-  <debugStdOutToOutputWindow>0</debugStdOutToOutputWindow>
-  <pauseAfterRunning>0</pauseAfterRunning>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="vdserver">

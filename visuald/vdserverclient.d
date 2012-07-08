@@ -29,7 +29,7 @@ import std.windows.charset;
 import core.thread;
 
 // debug version = DebugCmd;
-debug version = InProc;
+// debug version = InProc;
 // debug version = ABothe;
 
 version(InProc) import vdc.vdserver;
@@ -43,8 +43,8 @@ version(ABothe)
 }
 else
 {
-	static GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
-	static GUID IVDServer_iid = IVDServer.iid;
+	__gshared GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+	__gshared GUID IVDServer_iid = IVDServer.iid;
 }
 
 __gshared IClassFactory gVDClassFactory;
@@ -445,13 +445,17 @@ class VDServerClient
 	this()
 	{
 		gServerCache = new ServerCache;
-		gUITid = thisTid();
-		mTid = spawn(&clientLoop);
 	}
 	
 	~this()
 	{
 		shutDown();
+	}
+
+	void start()
+	{
+		gUITid = thisTid();
+		mTid = spawn(&clientLoop);
 	}
 
 	//////////////////////////////////////

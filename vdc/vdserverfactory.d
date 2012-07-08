@@ -20,6 +20,7 @@ import stdext.com;
 
 ///////////////////////////////////////////////////////////////
 
+// -9A0n- for debug
 // server object: 002a2de9-8bb6-484d-9901-7e4ad4084715
 // class factory: 002a2de9-8bb6-484d-9902-7e4ad4084715
 // type library : 002a2de9-8bb6-484d-9903-7e4ad4084715
@@ -40,7 +41,8 @@ static ~this()
 
 class VDServerClassFactory : ComObject, IClassFactory
 {
-	static GUID iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+	debug static GUID iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
+	else  static GUID iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{

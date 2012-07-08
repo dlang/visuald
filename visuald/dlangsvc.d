@@ -104,6 +104,11 @@ class LanguageService : DisposingComObject,
 	{
 	}
 
+	void startVDServer()
+	{
+		mVDServerClient.start();
+	}
+
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsLanguageInfo) (this, riid, pvObject))

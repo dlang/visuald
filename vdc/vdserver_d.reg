@@ -1,0 +1,9 @@
+REGEDIT
+HKEY_CLASSES_ROOT\visuald.vdserver_d.factory\CLSID = {002a2de9-8bb6-484d-9A02-7e4ad4084715}
+HKEY_CLASSES_ROOT\CLSID\{002a2de9-8bb6-484d-9A02-7e4ad4084715} = visuald.vdserver_d.factory
+HKEY_CLASSES_ROOT\CLSID\{002a2de9-8bb6-484d-9A02-7e4ad4084715}\LocalServer32 = m:\s\d\visuald\trunk\bin\Debug\vdserver_d.exe
+HKEY_CLASSES_ROOT\CLSID\{002a2de9-8bb6-484d-9A02-7e4ad4084715}\TypeLib = {002a2de9-8bb6-484d-9A03-7e4ad4084715}
+HKEY_CLASSES_ROOT\TypeLib\{002a2de9-8bb6-484d-9A03-7e4ad4084715}\1.0\0\win32 = m:\s\d\visuald\trunk\bin\Debug\vdserver_d.exe
+HKEY_CLASSES_ROOT\Interface\{002a2de9-8bb6-484d-9A01-7e4ad4084715} = IVDServer
+HKEY_CLASSES_ROOT\Interface\{002a2de9-8bb6-484d-9A01-7e4ad4084715}\ProxyStubClsid32 = {00020424-0000-0000-C000-000000000046}
+HKEY_CLASSES_ROOT\Interface\{002a2de9-8bb6-484d-9A01-7e4ad4084715}\TypeLib = {002a2de9-8bb6-484d-9A03-7e4ad4084715}
