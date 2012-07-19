@@ -450,3 +450,7 @@ unreleased Version 0.3.34
   * dependency on other projects: only output files with known file types are now passed to the dmd/gdc command line
   * linker error messages can now be decompressed and demangled (thanks to Benjamin Thaut for providing the tool)
   * lexer now allows unicode characters from std.uni.isAlpha in identifiers
+  * fix: when building phobos browse info the implicitely added JSON path was not saved to options
+  * completion from browse info: template arguments and contraint stripped from symbol now
+  * fix calling cv2pdb for D1
+  

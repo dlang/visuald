@@ -1176,7 +1176,8 @@ class GlobalOptions
 			lastColorizeVersions = ColorizeVersions;
 			UserTypes = parseUserTypes(UserTypesSpec);
 			
-			VDServerClassFactory_iid = uuid(VDServerIID);
+			if(VDServerIID.length > 0)
+				VDServerClassFactory_iid = uuid(VDServerIID);
 
 			CHierNode.setContainerIsSorted(sortProjects);
 			
@@ -1281,8 +1282,11 @@ class GlobalOptions
 		replacements["VISUALDINSTALLDIR"] = VisualDInstallDir;
 	}
 	
-	string findDmdBinDir()
+	string findDmdBinDir(string dmdpath = null)
 	{
+		if(dmdpath.length && std.file.exists(dmdpath))
+			return normalizeDir(dirName(dmdpath));
+
 		string installdir = normalizeDir(DMDInstallDir);
 		string bindir = installdir ~ "windows\\bin\\";
 		if(std.file.exists(bindir ~ "dmd.exe"))
@@ -1305,6 +1309,29 @@ class GlobalOptions
 		return installdir;
 	}
 	
+	string getOptlinkPath(string dmdpath, string *libs = null, string* options = null)
+	{
+		string path = "link.exe";
+		string bindir = findDmdBinDir(dmdpath);
+		string inifile = bindir ~ "sc.ini";
+		if(std.file.exists(inifile))
+		{
+			string[string][string] ini = parseIni(inifile);
+			if(auto pEnv = "Environment" in ini)
+			{
+				if(string* pLink = "LINKCMD" in *pEnv)
+					path = replace(*pLink, "%@P%", bindir);
+				if(options)
+					if(string* pFlags = "DFLAGS" in *pEnv)
+						*options = replace(*pFlags, "%@P%", bindir);
+				if(libs)
+					if(string* pLibs = "LIB" in *pEnv)
+						*libs = replace(*pLibs, "%@P%", bindir);
+			}
+		}
+		return path;
+	}
+
 	string[] getIniImportPaths()
 	{
 		string[] imports;
@@ -1414,6 +1441,7 @@ class GlobalOptions
 		if(jsonPath.length == 0)
 		{
 			JSNSearchPath ~= "\"$(APPDATA)\\VisualD\\json\\\"";
+			saveToRegistry();
 			jsonPath = getJSONPaths()[0];
 		}
 		

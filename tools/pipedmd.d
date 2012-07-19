@@ -230,11 +230,11 @@ int main(string[] argv)
         break;
 
       bytesRead--; //remove \n
-      while(bytesRead > 0 && buffer[bytesRead] == '\r') // remove \r
+      while(bytesRead > 0 && buffer[bytesRead-1] == '\r') // remove \r
         bytesRead--; 
       DWORD skip = 0;
-	  while(skip < bytesRead && buffer[skip] == '\r') // remove \r
-	    skip++;
+      while(skip < bytesRead && buffer[skip] == '\r') // remove \r
+        skip++;
 
       char[] output = buffer[skip..bytesRead];
       size_t writepos = 0;
@@ -242,67 +242,67 @@ int main(string[] argv)
       if(output.startsWith("OPTLINK (R)"))
         optlinkFound = true;
 
-	  if(optlinkFound)
+      if(optlinkFound)
         for(int p = 0; p < output.length; p++)
-		  if(isIdentifierChar(output[p]))
-		  {
-			int q = p;
-			while(p < output.length && isIdentifierChar(output[p]))
-			  p++;
+          if(isIdentifierChar(output[p]))
+          {
+            int q = p;
+            while(p < output.length && isIdentifierChar(output[p]))
+              p++;
 
-			auto symbolName = output[q..p];
-			size_t pos = 0;
-			const(char)[] realSymbolName = decodeDmdString(symbolName, pos);
-			if(pos != p - q)
-			{
-				// could not decode, might contain UTF8 elements, so try translating to the current code page
-				// (demangling will not work anyway)
-				try
-				{
-				  auto szName = toMBSz(symbolName, cp);
-				  auto plen = strlen(szName);
-				  realSymbolName = szName[0..plen];
-				  pos = p - q;
-				}
-				catch(Exception)
-				{
-				}
-			}
-			if(pos == p - q)
-			{
-			  if(realSymbolName != symbolName)
-			  {
-				// not sure if output is UTF8 encoded, so avoid any translation
-			    if(q > writepos)
-				  fwrite(output.ptr + writepos, q - writepos, 1, stdout);
-				fwrite(realSymbolName.ptr, realSymbolName.length, 1, stdout);
-				writepos = p;
-			  }
-			  if(realSymbolName.length > 2 && realSymbolName[0] == '_' && realSymbolName[1] == 'D')
-			  {
-				symbolName = demangle(realSymbolName);
-				if(realSymbolName != symbolName)
-				{
-				  if(p > writepos)
-					fwrite(output.ptr + writepos, p - writepos, 1, stdout);
-				  writepos = p;
-				  fwrite(" (".ptr, 2, 1, stdout);
-				  fwrite(symbolName.ptr, symbolName.length, 1, stdout);
-				  fwrite(")".ptr, 1, 1, stdout);
-				}
-			  }
-			}
-		  }
-	  if(writepos < output.length)
-		fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
-	  //fputc('\n', stdout);
+            auto symbolName = output[q..p];
+            size_t pos = 0;
+            const(char)[] realSymbolName = decodeDmdString(symbolName, pos);
+            if(pos != p - q)
+            {
+                // could not decode, might contain UTF8 elements, so try translating to the current code page
+                // (demangling will not work anyway)
+                try
+                {
+                  auto szName = toMBSz(symbolName, cp);
+                  auto plen = strlen(szName);
+                  realSymbolName = szName[0..plen];
+                  pos = p - q;
+                }
+                catch(Exception)
+                {
+                }
+            }
+            if(pos == p - q)
+            {
+              if(realSymbolName != symbolName)
+              {
+                // not sure if output is UTF8 encoded, so avoid any translation
+                if(q > writepos)
+                  fwrite(output.ptr + writepos, q - writepos, 1, stdout);
+                fwrite(realSymbolName.ptr, realSymbolName.length, 1, stdout);
+                writepos = p;
+              }
+              if(realSymbolName.length > 2 && realSymbolName[0] == '_' && realSymbolName[1] == 'D')
+              {
+                symbolName = demangle(realSymbolName);
+                if(realSymbolName != symbolName)
+                {
+                  if(p > writepos)
+                    fwrite(output.ptr + writepos, p - writepos, 1, stdout);
+                  writepos = p;
+                  fwrite(" (".ptr, 2, 1, stdout);
+                  fwrite(symbolName.ptr, symbolName.length, 1, stdout);
+                  fwrite(")".ptr, 1, 1, stdout);
+                }
+              }
+            }
+          }
+      if(writepos < output.length)
+        fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
+      fputc('\n', stdout);
     }
     else
     {
       bSuccess = GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
       if(!bSuccess || exitCode != 259) //259 == STILL_ACTIVE
         break;
-	  Sleep(5);
+      Sleep(5);
     }
   }
 

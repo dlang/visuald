@@ -260,6 +260,7 @@ class ProjectOptions
 	}
 
 	string objectFileExtension() { return compiler == 0 ? "obj" : "o"; }
+	string otherCompilerPath() { return otherDMD ? program : null; }
 
 	string buildDMDCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
@@ -596,10 +597,9 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string optlinkCommandLine(string[] lnkfiles)
+	string optlinkCommandLine(string[] lnkfiles, string inioptions)
 	{
 		string cmd;
-
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
 			dmdoutfile ~= "_cv";
@@ -607,17 +607,30 @@ class ProjectOptions
 
 		static string plusList(string[] lnkfiles, string ext)
 		{
-			ext = "." ~ ext;
+			if(ext.length == 0 || ext[0] != '.')
+				ext = "." ~ ext;
 			string s;
 			foreach(i, file; lnkfiles)
 			{
-				if(extension(file) != ext)
+				if(toLower(extension(file)) != ext)
 					continue;
 				if(s.length > 0)
 					s ~= "+";
 				s ~= quoteNormalizeFilename(file);
 			}
 			return s;
+		}
+
+		inioptions ~= " " ~ additionalOptions;
+		string[] opts = tokenizeArgs(inioptions, false);
+		string addopts;
+		foreach(ref opt; opts)
+		{
+			opt = unquoteArgument(opt);
+			if(opt.startsWith("-L"))
+				addopts ~= " " ~ quoteFilename(opt[2..$]);
+			if(opt[0] != '-')
+				lnkfiles ~= opt;
 		}
 
 		cmd ~= plusList(lnkfiles, objectFileExtension());
@@ -630,17 +643,20 @@ class ProjectOptions
 		string[] libs = tokenizeArgs(libfiles);
 		libs ~= "user32.lib";
 		libs ~= "kernel32.lib";
-		cmd ~= plusList(lnkfiles, ".lib");
+		cmd ~= plusList(lnkfiles ~ libs, ".lib");
 		cmd ~= ",";
-		cmd ~= plusList(lnkfiles, ".def");
+		if(deffile.length)
+			cmd ~= quoteNormalizeFilename(deffile);
+		else
+			cmd ~= plusList(lnkfiles, ".def");
 		cmd ~= ",";
-		cmd ~= plusList(lnkfiles, ".res");
-
-		if(symdebug)
-			cmd ~= "/CO";
-		cmd ~= "/NOI";
+		if(resfile.length)
+			cmd ~= quoteNormalizeFilename(resfile);
+		else
+			cmd ~= plusList(lnkfiles, ".res");
 
 		// options
+		// "/m" to geneate map?
 		switch(mapverbosity)
 		{
 			case 0: cmd ~= "/NOMAP"; break; // actually still creates map file
@@ -651,11 +667,16 @@ class ProjectOptions
 			default: break;
 		}
 
+		if(symdebug)
+			cmd ~= "/CO";
+		cmd ~= "/NOI";
+
 		if(lib != OutputType.StaticLib)
 		{
 			if(createImplib)
 				cmd ~= "/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
 		}
+		cmd ~= addopts;
 		return cmd;
 	}
 
@@ -705,7 +726,7 @@ class ProjectOptions
 			string target = getTargetPath();
 			string cmd = quoteFilename(pathCv2pdb);
 			if(Dversion < 2)
-				cmd = " -D" ~ to!(string)(Dversion) ~ " ";
+				cmd ~= " -D" ~ to!(string)(Dversion) ~ " ";
 			else if(cv2pdbPre2043)
 				cmd ~= " -D2.001";
 			if(cv2pdbEnumType)
@@ -2325,6 +2346,7 @@ class Config :	DisposingComObject,
 		bool separateLink = mProjectOptions.singleFileCompilation == ProjectOptions.kSeparateCompileAndLink;
 		if (mProjectOptions.compiler == Compiler.GDC && mProjectOptions.lib == OutputType.StaticLib)
 			separateLink = true;
+		bool useOptlink = mProjectOptions.compiler == Compiler.DMD && separateLink && mProjectOptions.lib != OutputType.StaticLib;
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
 		if(mProjectOptions.additionalOptions.length)
 			opt ~= " " ~ mProjectOptions.additionalOptions;
@@ -2353,11 +2375,27 @@ class Config :	DisposingComObject,
 		
 		if(separateLink && doLink)
 		{
-			string lnkcmd = mProjectOptions.buildCommandLine(false, true, false);
-			if(mProjectOptions.additionalOptions.length)
-				lnkcmd ~= " " ~ mProjectOptions.additionalOptions;
-			string prelnk;
-			lnkcmd ~= getLinkFileList(files, prelnk);
+			string prelnk, lnkcmd;
+			if(useOptlink)
+			{
+				string libs, options;
+				string linkpath = Package.GetGlobalOptions().getOptlinkPath(mProjectOptions.otherCompilerPath(), &libs, &options);
+				lnkcmd = linkpath ~ " ";
+				if(Package.GetGlobalOptions().demangleError)
+					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ lnkcmd;
+				string[] lnkfiles = getObjectFileList(files);
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options);
+				lnkcmd ~= getLinkFileList([cmdfiles], prelnk);
+				if(libs.length)
+					prelnk = "set LIB=" ~ libs ~ "\n" ~ prelnk;
+			}
+			else
+			{
+				lnkcmd = mProjectOptions.buildCommandLine(false, true, false);
+				if(mProjectOptions.additionalOptions.length)
+					lnkcmd ~= " " ~ mProjectOptions.additionalOptions;
+				lnkcmd ~= getLinkFileList(files, prelnk);
+			}
 			cmd = cmd ~ "\n" ~ prelnk ~ lnkcmd ~ "\n";
 			cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 		}

@@ -2498,7 +2498,7 @@ Error:
 		fmtetc.dwAspect = DVASPECT_CONTENT;
 		fmtetc.lindex   = -1;
 		fmtetc.tymed    = TYMED_HGLOBAL;
-		fmtetc.cfFormat = cast(ushort) CF_VSREFPROJECTITEMS;
+		fmtetc.cfFormat = cast(ushort) CF_VSREFPROJECTITEMS();
 
 		STGMEDIUM stgmedium;
 		stgmedium.tymed          = TYMED_HGLOBAL;

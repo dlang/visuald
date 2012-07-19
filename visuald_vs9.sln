@@ -53,6 +53,11 @@ Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vdserver", "vdc\vdserver.vi
 		{FE3A959D-6CFA-43BF-8637-62125B571770} = {FE3A959D-6CFA-43BF-8637-62125B571770}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{FD4D75A4-1CD9-49E0-A35B-2B79B13E5AF6}"
+	ProjectSection(SolutionItems) = preProject
+		tools\pipedmd.d = tools\pipedmd.d
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug GDC|Win32 = Debug GDC|Win32
@@ -171,5 +176,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B10D4330-4E7B-4F8F-A7F2-E85DF5949EC1} = {2BD51E62-6604-48AE-9E01-C940C0CA1C68}
+		{FD4D75A4-1CD9-49E0-A35B-2B79B13E5AF6} = {2BD51E62-6604-48AE-9E01-C940C0CA1C68}
 	EndGlobalSection
 EndGlobal

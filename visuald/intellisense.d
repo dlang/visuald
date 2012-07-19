@@ -461,7 +461,14 @@ class LibraryInfo
 			if(JSONValue* n = "name" in memberobj)
 				if(n.type == JSON_TYPE.STRING)
 					if(startsWith(n.str, sd.names[0]))
-						addunique(cplts, n.str);
+					{
+						// strip template arguments and constraint
+						string s = n.str;
+						int pos = countUntil(s, '(');
+						if(pos >= 0)
+							s = s[0..pos];
+						addunique(cplts, s);
+					}
 			return 0;
 		}
 		iterateObjects(&findCplt);
@@ -978,7 +985,14 @@ class BrowseInfo
 		int findCplt(BrowseNode node)
 		{
 			if(startsWith(node.name, sd.names[0]))
-				addunique(cplts, node.name);
+			{
+				// strip template arguments and constraint
+				string s = node.name;
+				int pos = countUntil(s, '(');
+				if(pos >= 0)
+					s = s[0..pos];
+				addunique(cplts, s);
+			}
 			return 0;
 		}
 		iterateNodes(&findCplt);

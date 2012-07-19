@@ -179,7 +179,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		if (expansionActive)
 			EndTemplateEditing(true);
 
-		if (mSource.IsCompletorActive)
+		if (mSource.IsCompletorActive())
 			mSource.DismissCompletor();
 
 		mView = view;
@@ -228,7 +228,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		if (expansionActive)
 			EndTemplateEditing(true);
 
-		if (mSource.IsCompletorActive)
+		if (mSource.IsCompletorActive())
 			mSource.DismissCompletor();
 
 		mView = view;
@@ -252,7 +252,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 	bool IsCompletorActive(IVsTextView view)
 	{
-		if (mSource.IsCompletorActive)
+		if (mSource.IsCompletorActive())
 			return true;
 
 		IVsTextViewEx viewex = qi_cast!(IVsTextViewEx)(view);
@@ -264,7 +264,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 	bool InsertNamedExpansion(IVsTextView view, BSTR title, BSTR path, TextSpan pos, bool showDisambiguationUI)
 	{
-		if (mSource.IsCompletorActive)
+		if (mSource.IsCompletorActive())
 			mSource.DismissCompletor();
 
 		mView = view;

@@ -139,8 +139,10 @@ clean:
 	if exist $(BINDIR)\c2d_vd.lib   del $(BINDIR)\c2d_vd.lib
 	if exist $(BINDIR)\visuald.dll  del $(BINDIR)\visuald.dll
 	if exist $(BINDIR)\vdserver.exe del $(BINDIR)\vdserver.exe
-	if exist $(TLB2IDL_EXE)         del $(TLB2IDL_EXE)
 	if exist $(PIPEDMD_EXE)         del $(PIPEDMD_EXE)
+
+cleanall: clean
+	if exist $(TLB2IDL_EXE)         del $(TLB2IDL_EXE)
 	if exist $(VSI2D_EXE)           del $(VSI2D_EXE)
 	if exist $(DTE_IDL_PATH)\nul   (del /Q $(DTE_IDL_PATH) && rd $(DTE_IDL_PATH))
 	if exist sdk\vsi\nul           (del /Q sdk\vsi && rd sdk\vsi)

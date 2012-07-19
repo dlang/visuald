@@ -1010,6 +1010,12 @@ unittest
 	assert(strFilename == "file.d");
 	assert(nLineNum == 37);
 	assert(strTaskItemText == "huhu");
+
+	rc = parseOutputStringForTaskItem("main.d(10): Error: undefined identifier A, did you mean B?", nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+	assert(rc);
+	assert(strFilename == "main.d");
+	assert(nLineNum == 10);
+	assert(strTaskItemText == "Error: undefined identifier A, did you mean B?");
 }
 
 string unEscapeFilename(string file)

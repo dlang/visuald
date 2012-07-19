@@ -10,7 +10,7 @@ module vdc.versions;
 
 __gshared int[string] predefinedVersions;
 
-static int[string] sPredefinedVersions()
+static @property int[string] sPredefinedVersions()
 {
 	if(!predefinedVersions)
 	{

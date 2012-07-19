@@ -216,7 +216,7 @@ TokenIterator insertTokenList(TokenIterator insBefore, TokenList tokenList)
 	if(endit.type == Token.EOF && !insBefore.atEnd())
 	{
 		insBefore.pretext = endit.pretext ~ insBefore.pretext;
-		endit.erase;
+		endit.erase();
 	}
 	return insBefore.insertListBefore(tokenList);
 }
@@ -695,7 +695,7 @@ TokenList createReplacementTokenList(RTYPE) (RTYPE[] replace, TokenRange match, 
 				throwException(0, "no submatch for " ~ reptext);
 
 			TokenList list = copyTokenList(submatch[idx].start, submatch[idx].end);
-			if(!list.empty && pretext.length)
+			if(!list.empty() && pretext.length)
 				list.begin().pretext = pretext ~ list.begin().pretext;
 			tokenList.appendList(list);
 		}

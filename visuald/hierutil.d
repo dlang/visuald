@@ -288,7 +288,7 @@ CHierNode searchNode(CHierNode root, bool delegate(CHierNode) pred, bool fDispla
 
 
 ///////////////////////////////////////////////////////////////////////
-I queryService(SVC,I)()
+@property I queryService(SVC,I)()
 {
 	if(!visuald.dpackage.Package.s_instance)
 		return null;
@@ -303,7 +303,7 @@ I queryService(SVC,I)()
 	return svc;
 }
 
-I queryService(I)()
+@property I queryService(I)()
 {
 	return queryService!(I,I);
 }
