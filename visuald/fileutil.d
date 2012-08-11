@@ -48,7 +48,15 @@ void getOldestNewestFileTime(string[] files, out long oldest, out long newest)
 		{
 			if(!exists(file))
 				goto L_fileNotFound;
+version(all)
 			ftm = timeLastModified(file).stdTime();
+else
+{
+			WIN32_FILE_ATTRIBUTE_DATA fad;
+			if(!GetFileAttributesExW(std.utf.toUTF16z(file), /*GET_FILEEX_INFO_LEVELS.*/GetFileExInfoStandard, &fad))
+				goto L_fileNotFound;
+			ftm = *cast(long*) &fad.ftLastWriteTime;
+}
 			gCachedFileTimes[file] = ftm;
 		}
 		if(ftm > newest)

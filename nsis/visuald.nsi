@@ -160,6 +160,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\bin\${CONFIG}\ ${DLLNAME}
   ${File} ..\bin\${CONFIG}\ vdserver.exe
   ${File} ..\bin\${CONFIG}\ pipedmd.exe
+  ${File} ..\bin\${CONFIG}\ filemonitor.dll
   ${File} ..\ README
   ${File} ..\ LICENSE
   ${File} ..\ CHANGES

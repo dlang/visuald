@@ -1,4 +1,4 @@
-module $safeitemname$;
+module $modulename$;
 
 import std.stdio;
 

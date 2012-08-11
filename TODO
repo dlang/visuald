@@ -14,12 +14,9 @@ Settings:
 Project:
 ---------------
 - clean/build/rebuild only project not working
-- no dependency on def file
 - midl compiler?
 - manifest compiler?
-- no automatic lib dependencies
 - no dependencies to files referenced by import expressions
-- lib path not passed to dmd (needs patched sc.ini in dmd installation)
 - remove auto-tool?
 - automation objects incomplete?
 - exceptions when opening rc-file with project
@@ -53,6 +50,7 @@ Language service:
 - show help in standard browser
 - VS sometimes does not remember position inside file across restart?
 - goto import jumps to "mod" if run on "import mod = pkg.mod;"
+- support DDoc comment in JSON file
 
 Semantics:
 ---------------
@@ -62,6 +60,7 @@ Semantics:
 - operator overloads
 - completion at the beginning of an identifier lists its members
 - package/module specifier before symbol
+! navigating code should not show completions
 
 Search:
 ---------------
@@ -96,6 +95,9 @@ Lexer/Parser:
 - do not parse file if it is D1?
 - deprecated syntax
 - support for => delegates
+! error in module declaration causes parser to bail out
+! syntax errors not removed from previous parser run
+! completion shown from old insertion point
 
 C++ to D
 ---------

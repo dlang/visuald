@@ -9,15 +9,15 @@
 module stdext.util;
 
 ////////////////////////////////////////////////////////////////
-T static_cast(T, S = Object)(S p)
+inout(T) static_cast(T, S = Object)(inout(S) p)
 {
 	if(!p)
 		return null;
 	if(__ctfe)
-		return cast(T) p;
-	assert(cast(T) p);
+		return cast(inout(T)) p;
+	assert(cast(inout(T)) p);
 	void* vp = cast(void*)p;
-	return cast(T) vp;
+	return cast(inout(T)) vp;
 }
 
 ////////////////////////////////////////////////////////////////

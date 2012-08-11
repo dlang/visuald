@@ -114,7 +114,7 @@ class Command
 	}
 
 	// called from clientLoop (might block due to server garbage collecting)
-	HRESULT exec()
+	HRESULT exec() const
 	{
 		assert(false);
 	}
@@ -127,6 +127,11 @@ class Command
 	bool forward()
 	{
 		return true;
+	}
+
+	void send(Tid id) const
+	{
+		.send(id, cast(size_t) cast(void*) this);
 	}
 
 	static uint mLastRequest;
@@ -142,7 +147,7 @@ class ExitCommand : Command
 		super("exit");
 	}
 
-	override HRESULT exec()
+	override HRESULT exec() const
 	{
 		stopVDServer();
 		return S_OK;
@@ -156,7 +161,7 @@ class ClearProjectCommand : Command
 		super("ClearProject");
 	}
 
-	override HRESULT exec()
+	override HRESULT exec() const
 	{
 		if(!gVDServer)
 			return S_FALSE;
@@ -189,15 +194,16 @@ class ConfigureProjectCommand : FileCommand
 		mFlags = flags;
 	}
 
-	override HRESULT exec()
+	override HRESULT exec() const
 	{
 		if(!gVDServer)
 			return S_FALSE;
+import std.array;
 
-		string jimp = join(mImp, "\n");
-		string jstringImp = join(mStringImp, "\n");
-		string jversionids = join(mVersionids, "\n");
-		string jdebugids = join(mDebugids, "\n");
+		string jimp = joinImpl(mImp, "\n");
+		string jstringImp = joinImpl(mStringImp, "\n");
+		string jversionids = joinImpl(mVersionids, "\n");
+		string jdebugids = joinImpl(mDebugids, "\n");
 
 		auto bfilename = allocBSTR(mFilename);
 		auto bimp = allocBSTR(jimp);
@@ -236,7 +242,7 @@ class GetTypeCommand : FileCommand
 		mCallback = cb;
 	}
 
-	override HRESULT exec()
+	override HRESULT exec() const
 	{
 		if(!gVDServer)
 			return S_FALSE;
@@ -265,7 +271,7 @@ class GetTypeCommand : FileCommand
 		mType = detachBSTR(btype);
 		mSpan = sdk.vsi.sdk_shared.TextSpan(iStartIndex, iStartLine - 1, iEndIndex, iEndLine - 1);
 
-		send(gUITid, cast(immutable)this);
+		send(gUITid);
 		return S_OK;
 	}
 
@@ -294,7 +300,7 @@ class UpdateModuleCommand : FileCommand
 		mCallback = cb;
 	}
 
-	override HRESULT exec()
+	override HRESULT exec() const
 	{
 		if(!gVDServer)
 			return S_FALSE;
@@ -342,7 +348,7 @@ class UpdateModuleCommand : FileCommand
 			SafeArrayDestroy(sa);
 		}
 
-		send(gUITid, cast(immutable)this);
+		send(gUITid);
 		return S_OK;
 	}
 
@@ -375,7 +381,7 @@ class GetExpansionsCommand : FileCommand
 		mCallback = cb;
 	}
 
-	override HRESULT exec()
+	override HRESULT exec() const
 	{
 		if(!gVDServer)
 			return S_FALSE;
@@ -399,7 +405,7 @@ class GetExpansionsCommand : FileCommand
 
 		string slist = detachBSTR(stringList);
 		mExpansions = splitLines(slist);
-		send(gUITid, cast(immutable)this);
+		send(gUITid);
 		return S_OK;
 	}
 
@@ -463,7 +469,7 @@ class VDServerClient
 	{
 		if(gVDServer)
 		{
-			send(mTid, new immutable(ExitCommand));
+			(new ExitCommand).send(mTid);
 			while(gVDServer)
 			{
 				Thread.sleep(dur!"msecs"(50));  // sleep for 50 milliseconds
@@ -475,34 +481,34 @@ class VDServerClient
 	uint ConfigureSemanticProject(string filename, string[] imp, string[] stringImp, string[] versionids, string[] debugids, uint flags)
 	{
 		auto cmd = new immutable(ConfigureProjectCommand)(filename, imp, stringImp, versionids, debugids, flags);
-		send(mTid, cmd);
+		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 
 	uint GetTip(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, GetTypeCallBack cb)
 	{
 		auto cmd = new immutable(GetTypeCommand)(filename, *pSpan, cb);
-		send(mTid, cmd);
+		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 
 	int GetSemanticExpansions(string filename, string tok, int line, int idx, wstring expr, GetExpansionsCallBack cb)
 	{
 		auto cmd = new immutable(GetExpansionsCommand)(filename, tok, line, idx, expr, cb);
-		send(mTid, cmd);
+		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 
 	uint UpdateModule(string filename, wstring text, UpdateModuleCallBack cb)
 	{
 		auto cmd = new immutable(UpdateModuleCommand)(filename, text, cb);
-		send(mTid, cmd);
+		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 	uint ClearSemanticProject()
 	{
 		auto cmd = new immutable(ClearProjectCommand);
-		send(mTid, cmd);
+		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 
@@ -554,8 +560,11 @@ class VDServerClient
 			{
 				bool restartServer = false;
 				receiveTimeout(dur!"msecs"(50),
-					(Command cmd)
+					// as of dmd 2.060, fixes of const handling expose that std.variant is not capable of working sinsibly with class objects
+					// (Command cmd)
+				    (size_t icmd)
 					{
+						auto cmd = cast(Command) cast(void*) icmd;
 						version(DebugCmd) OutputDebugStringA(toMBSz("clientLoop: " ~ cmd.mCommand ~ "\n"));
 						HRESULT hr = cmd.exec();
 						if(hr == S_OK)
@@ -571,7 +580,7 @@ class VDServerClient
 				for(int i = 0; i < toAnswer.length && !restartServer; )
 				{
 					auto cmd = toAnswer[i];
-					HRESULT hr = toAnswer[i].answer();
+					HRESULT hr = cmd.answer();
 					if(hr == S_OK)
 						toAnswer = toAnswer[0..i] ~ toAnswer[i+1..$];
 					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
@@ -585,7 +594,7 @@ class VDServerClient
 				{
 					HRESULT hr = gVDServer.GetLastMessage(&msg);
 					if(hr == S_OK)
-						send(gUITid, new immutable(GetMessageCommand)(detachBSTR(msg)));
+						(new GetMessageCommand(detachBSTR(msg))).send(gUITid);
 					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 						restartServer = true;
 				}
@@ -608,8 +617,9 @@ class VDServerClient
 		try
 		{
 			while(receiveTimeout(dur!"msecs"(0),
-				(Command cmd)
+				(size_t icmd)
 				{
+					auto cmd = cast(Command) cast(void*) icmd;
 					version(DebugCmd) OutputDebugStringA(toMBSz("idleLoop: " ~ cmd.mCommand ~ "\n"));
 					cmd.forward();
 				},

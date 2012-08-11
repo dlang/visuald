@@ -970,8 +970,6 @@ class Project : CVsHierarchy,
 		if(dwDelItemOp == DELITEMOP_DeleteFromStorage)
 		{
 			CHierNode[] nodes = VSITEMID2Nodes(itemid);
-			if(nodes.length > 0)
-				return S_OK;
 			foreach(n; nodes)
 				if(cast(CHierContainer) n)
 					canDelete = false;

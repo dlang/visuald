@@ -15,6 +15,7 @@
 
 DMD2 = m:\s\d\rainers\windows\bin\dmd_msc.exe
 # DMD2 = c:\l\dmd2\windows\bin\dmd.exe
+# DMD2 = c:\l\dmd2beta\windows\bin\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 # avoid trailing '\', it ruins the command line
@@ -43,11 +44,12 @@ IVIEWER = $(WINSDK)\bin\iviewers.dll
 
 TLB2IDL_EXE = $(BINDIR)\tlb2idl.exe
 PIPEDMD_EXE = $(BINDIR)\pipedmd.exe
+FILEMON_DLL = $(BINDIR)\filemonitor.dll
 VSI2D_EXE   = $(BINDIR)\vsi2d.exe
 VSI_LIB     = $(BINDIR)\vsi.lib
 VISUALD     = $(BINDIR)\visuald.dll
 
-all: dte_idl vsi2d package vdserver_exe $(PIPEDMD_EXE)
+all: dte_idl vsi2d package vdserver_exe $(PIPEDMD_EXE) $(FILEMON_DLL)
 
 sdk: dte_idl vsi_dirs sdk\vsi_sources sdk_lib
 
@@ -75,7 +77,10 @@ $(TLB2IDL_EXE) : tools\tlb2idl.d
 	$(DMD2) -map $@.map -of$@ tools\tlb2idl.d oleaut32.lib uuid.lib snn.lib kernel32.lib
 
 $(PIPEDMD_EXE) : tools\pipedmd.d
-	$(DMD2) -map $@.map -of$@ tools\pipedmd.d
+	$(DMD2) -map $@.map -of$@ -g tools\pipedmd.d
+
+$(FILEMON_DLL) : tools\filemonitor.d
+	$(DMD2) -map $@.map -of$@ -defaultlib=user32.lib -L/ENTRY:_DllMain@12 tools\filemonitor.d
 
 ##################################
 # generate VSI d files from h and idl
@@ -140,6 +145,7 @@ clean:
 	if exist $(BINDIR)\visuald.dll  del $(BINDIR)\visuald.dll
 	if exist $(BINDIR)\vdserver.exe del $(BINDIR)\vdserver.exe
 	if exist $(PIPEDMD_EXE)         del $(PIPEDMD_EXE)
+	if exist $(FILEMON_DLL)         del $(FILEMON_DLL)
 
 cleanall: clean
 	if exist $(TLB2IDL_EXE)         del $(TLB2IDL_EXE)

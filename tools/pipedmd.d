@@ -1,6 +1,9 @@
 //
 // Written and provided by Benjamin Thaut
+// Complications improved by Rainer Schuetze
 //
+// file access monitoring added by Rainer Schuetze, needs filemonitor.dll in the same 
+//  directory as pipedmd.exe
 
 module main;
 
@@ -13,6 +16,8 @@ import std.regex;
 import core.demangle;
 import std.array;
 import std.algorithm;
+import std.conv;
+import std.path;
 
 extern(C)
 {
@@ -110,6 +115,8 @@ enum uint STARTF_FORCEONFEEDBACK = 0x00000040;
 enum uint STARTF_FORCEOFFFEEDBACK = 0x00000080;
 enum uint STARTF_USESTDHANDLES   = 0x00000100;
 
+enum uint CREATE_SUSPENDED = 0x00000004;
+
 alias std.c.stdio.stdout stdout;
 
 static bool isIdentifierChar(char ch)
@@ -118,20 +125,36 @@ static bool isIdentifierChar(char ch)
   return ch >= 0x80 || (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
 }
 
+static bool isDigit(char ch)
+{
+  return (ch >= '0' && ch <= '9');
+}
+
 int main(string[] argv)
 {
   if(argv.length < 2)
   {
     printf("pipedmd V0.1, written 2012 by Benjamin Thaut, complications improved by Rainer Schuetze\n");
-    printf("decompresses and demangles names in the DMD error messages\n");
+    printf("decompresses and demangles names in OPTLINK messages\n");
     printf("\n");
-    printf("usage: %s [executable] [arguments]\n", argv[0].ptr);
+    printf("usage: %s [-nodemangle] [-deps depfile] [executable] [arguments]\n", argv[0].ptr);
     return -1;
   }
-  string command; // = "dmd";
-  for(int i=1;i<argv.length;i++)
+  int skipargs;
+  string depsfile;
+  bool doDemangle = true;
+  if(argv.length >= 2 && argv[1] == "-nodemangle")
   {
-    if(i > 1)
+    doDemangle = false;
+    skipargs = 1;
+  }
+  if(argv.length > skipargs + 2 && argv[skipargs + 1] == "-deps")
+    depsfile = argv[skipargs += 2];
+  
+  string command; // = "dmd";
+  for(int i = skipargs + 1;i < argv.length; i++)
+  {
+    if(command.length > 0)
       command ~= " ";
     if(countUntil(argv[i], ' ') < argv[i].length)
       command ~= "\"" ~ argv[i] ~ "\"";
@@ -186,13 +209,14 @@ int main(string[] argv)
   siStartInfo.hStdInput = hStdInRead;
   siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-  auto szCommand = toStringz(command);
+  int cp = GetKBCodePage();
+  auto szCommand = toMBSz(command, cp);
   bSuccess = CreateProcessA(null, 
                             cast(char*)szCommand,     // command line 
                             null,          // process security attributes 
                             null,          // primary thread security attributes 
                             TRUE,          // handles are inherited 
-                            0,             // creation flags 
+                            CREATE_SUSPENDED,             // creation flags 
                             null,          // use parent's environment 
                             null,          // use parent's current directory 
                             &siStartInfo,  // STARTUPINFO pointer 
@@ -204,13 +228,16 @@ int main(string[] argv)
     return 1;
   }
 
+  if(depsfile.length)
+    InjectDLL(piProcInfo.hProcess, depsfile);
+  ResumeThread(piProcInfo.hThread);
+
   char[] buffer = new char[2048];
   DWORD bytesRead = 0;
   DWORD bytesAvaiable = 0;
   DWORD exitCode = 0;
   bool optlinkFound = false;
 
-  int cp = GetKBCodePage();
   while(true)
   {
     bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr, buffer.length, &bytesRead, &bytesAvaiable, null);
@@ -242,7 +269,7 @@ int main(string[] argv)
       if(output.startsWith("OPTLINK (R)"))
         optlinkFound = true;
 
-      if(optlinkFound)
+      if(doDemangle && optlinkFound)
         for(int p = 0; p < output.length; p++)
           if(isIdentifierChar(output[p]))
           {
@@ -278,7 +305,9 @@ int main(string[] argv)
                 fwrite(realSymbolName.ptr, realSymbolName.length, 1, stdout);
                 writepos = p;
               }
-              if(realSymbolName.length > 2 && realSymbolName[0] == '_' && realSymbolName[1] == 'D')
+              while(realSymbolName.length > 1 && realSymbolName[0] == '_')
+                  realSymbolName = realSymbolName[1..$];
+              if(realSymbolName.length > 2 && realSymbolName[0] == 'D' && isDigit(realSymbolName[1]))
               {
                 symbolName = demangle(realSymbolName);
                 if(realSymbolName != symbolName)
@@ -315,3 +344,51 @@ int main(string[] argv)
 
   return exitCode;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// inject DLL into linker process to monitor file reads
+
+alias extern(Windows) DWORD function(LPVOID lpThreadParameter) LPTHREAD_START_ROUTINE;
+extern(Windows) BOOL
+WriteProcessMemory(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T * lpNumberOfBytesWritten);
+extern(Windows) HANDLE
+CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
+				   LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+
+void InjectDLL(HANDLE hProcess, string depsfile)
+{
+	HANDLE hThread, hRemoteModule;
+
+	HMODULE appmod = GetModuleHandleA(null);
+	wchar[] wmodname = new wchar[260];
+	DWORD len = GetModuleFileNameW(appmod, wmodname.ptr, wmodname.length);
+	if(len > wmodname.length)
+	{
+		wmodname = new wchar[len + 1];
+		GetModuleFileNameW(null, wmodname.ptr, len + 1);
+	}
+	string modpath = to!string(wmodname);
+	string dll = buildPath(std.path.dirName(modpath), "filemonitor.dll");
+	// copy path to other process
+	auto wdll = to!wstring(dll) ~ cast(wchar)0;
+	auto wdllRemote = VirtualAllocEx(hProcess, null, wdll.length * 2, MEM_COMMIT, PAGE_READWRITE);
+	WriteProcessMemory(hProcess, wdllRemote, wdll.ptr, wdll.length * 2, null);
+
+	// load dll into other process, assuming LoadLibraryW is at the same address in all processes
+	HMODULE mod = GetModuleHandleA("Kernel32");
+	auto proc = GetProcAddress(mod, "LoadLibraryW");
+	hThread = CreateRemoteThread(hProcess, null, 0, cast(LPTHREAD_START_ROUTINE)proc, wdllRemote, 0, null);
+	WaitForSingleObject(hThread, INFINITE);
+
+	// Get handle of the loaded module
+	GetExitCodeThread(hThread, cast(DWORD*) &hRemoteModule);
+
+	// Clean up
+	CloseHandle(hThread);
+	VirtualFreeEx(hProcess, wdllRemote, wdll.length * 2, MEM_RELEASE);
+
+	void* pDumpFile = cast(char*)hRemoteModule + 0x3000; // offset taken from map file
+	auto szDepsFile = toMBSz(depsfile);
+	WriteProcessMemory(hProcess, pDumpFile, szDepsFile, strlen(szDepsFile) + 1, null);
+}
+

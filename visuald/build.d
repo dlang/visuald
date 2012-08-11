@@ -304,6 +304,7 @@ else
 		return true;
 	}
 	
+	/** build non-D files */
 	bool doCustomBuilds()
 	{
 		mixin(LogCallMix2);
@@ -376,7 +377,7 @@ else
 			string cmdline = mConfig.getCommandLine();
 			string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
 			hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
-			if(hr == S_OK && mConfig.GetProjectOptions().singleFileCompilation == ProjectOptions.kSingleFileCompilation)
+			if(hr == S_OK && mConfig.GetProjectOptions().compilationModel == ProjectOptions.kSingleFileCompilation)
 				mConfig.writeLinkDependencyFile();
 			return (hr == S_OK);
 		}
@@ -409,6 +410,31 @@ else
 		return node is null;
 	}
 
+	bool getTargetDependencies(ref string[] files)
+	{
+		string workdir = mConfig.GetProjectDir();
+
+		string deppath = makeFilenameAbsolute(mConfig.GetDependenciesPath(), workdir);
+		if(!std.file.exists(deppath))
+			return false;
+		if(!getFilenamesFromDepFile(deppath, files))
+			return false;
+
+		if(mConfig.hasLinkDependencies())
+		{
+			string lnkdeppath = makeFilenameAbsolute(mConfig.GetLinkDependenciesPath(), workdir);
+			if(!std.file.exists(lnkdeppath))
+				return false;
+			auto lnkdepz = cast(immutable(char)[])std.file.read(lnkdeppath) ~ "\0";
+			int cp = GetKBCodePage();
+			string lnkdeps = fromMBSz(lnkdepz.ptr, cp);
+			string[] lnkfiles = splitLines(lnkdeps);
+			makeFilenamesAbsolute(lnkfiles, workdir);
+			files ~= lnkfiles;
+		}
+		return true;
+	}
+
 	bool DoCheckIsUpToDate()
 	{
 		mixin(LogCallMix2);
@@ -428,13 +454,11 @@ else
 
 		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
 		long targettm = getOldestFileTime( [ target ] );
-		
-		string deppath = makeFilenameAbsolute(mConfig.GetDependenciesPath(), workdir);
-		if(!std.file.exists(deppath))
-			return false;
+
 		string[] files;
-		if(!getFilenamesFromDepFile(deppath, files))
+		if(!getTargetDependencies(files))
 			return false;
+
 		string[] libs = mConfig.getLibsFromDependentProjects();
 		files ~= libs;
 		makeFilenamesAbsolute(files, workdir);

@@ -55,8 +55,11 @@ Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vdserver", "vdc\vdserver.vi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{FD4D75A4-1CD9-49E0-A35B-2B79B13E5AF6}"
 	ProjectSection(SolutionItems) = preProject
+		tools\filemonitor.d = tools\filemonitor.d
 		tools\pipedmd.d = tools\pipedmd.d
 	EndProjectSection
+EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "test", "test\test.visualdproj", "{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -170,6 +173,18 @@ Global
 		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Test|Win32.ActiveCfg = Release|Win32
 		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Test|Win32.Build.0 = Release|Win32
 		{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}.Test|x64.ActiveCfg = Release|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Debug GDC|Win32.ActiveCfg = Debug|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Debug GDC|Win32.Build.0 = Debug|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Debug GDC|x64.ActiveCfg = Debug|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Debug|Win32.Build.0 = Debug|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Debug|x64.ActiveCfg = Debug|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Release|Win32.ActiveCfg = Release|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Release|Win32.Build.0 = Release|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Release|x64.ActiveCfg = Release|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Test|Win32.ActiveCfg = Release|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Test|Win32.Build.0 = Release|Win32
+		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Test|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

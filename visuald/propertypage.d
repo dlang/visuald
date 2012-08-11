@@ -698,7 +698,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		
 		mOtherDMD.setChecked(options.otherDMD);
 		mCompiler.setSelection(options.compiler);
-		mSingleFileComp.setSelection(options.singleFileCompilation);
+		mSingleFileComp.setSelection(options.compilationModel);
 		mCbOutputType.setSelection(options.lib);
 		mCbSubsystem.setSelection(options.subsystem);
 		mDmdPath.setText(options.program);
@@ -715,7 +715,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		int changes = 0;
 		changes += changeOption(mOtherDMD.isChecked(), options.otherDMD, refoptions.otherDMD);
 		changes += changeOption(cast(ubyte) mCompiler.getSelection(), options.compiler, refoptions.compiler);
-		changes += changeOption(cast(uint) mSingleFileComp.getSelection(), options.singleFileCompilation, refoptions.singleFileCompilation);
+		changes += changeOption(cast(uint) mSingleFileComp.getSelection(), options.compilationModel, refoptions.compilationModel);
 		changes += changeOption(cast(ubyte) mCbOutputType.getSelection(), options.lib, refoptions.lib);
 		changes += changeOption(cast(ubyte) mCbSubsystem.getSelection(), options.subsystem, refoptions.subsystem);
 		changes += changeOption(mDmdPath.getText(), options.program, refoptions.program);
@@ -1400,8 +1400,9 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors"));
-		AddControl("Remove project item", mDeleteFiles = 
-				   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
+		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor OPTLINK dependencies"));
+		//AddControl("Remove project item", mDeleteFiles = 
+		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1410,7 +1411,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		mSortProjects.setChecked(opts.sortProjects);
 		mStopSlnBuild.setChecked(opts.stopSolutionBuild);
 		mDemangleError.setChecked(opts.demangleError);
-		mDeleteFiles.setSelection(opts.deleteFiles + 1);
+		mOptlinkDeps.setChecked(opts.optlinkDeps);
+		//mDeleteFiles.setSelection(opts.deleteFiles + 1);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1420,7 +1422,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
 		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild); 
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
-		changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles); 
+		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps); 
+		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles); 
 		return changes;
 	}
 
@@ -1428,7 +1431,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 	CheckBox mSortProjects;
 	CheckBox mStopSlnBuild;
 	CheckBox mDemangleError;
-	ComboBox mDeleteFiles;
+	CheckBox mOptlinkDeps;
+	//ComboBox mDeleteFiles;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

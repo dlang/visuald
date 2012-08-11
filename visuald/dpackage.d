@@ -1055,8 +1055,9 @@ class GlobalOptions
 	bool sortProjects = true;
 	bool stopSolutionBuild;
 	bool demangleError = true;
+	bool optlinkDeps = true;
 	bool autoOutlining;
-	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete
+	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
 	bool parseSource;
 	bool pasteIndent;
 	bool projectSemantics;
@@ -1138,6 +1139,7 @@ class GlobalOptions
 			sortProjects      = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
 			stopSolutionBuild = keyToolOpts.GetDWORD("stopSolutionBuild", 0) != 0;
 			demangleError     = keyToolOpts.GetDWORD("demangleError", 1) != 0;
+			optlinkDeps       = keyToolOpts.GetDWORD("optlinkDeps", 1) != 0;
 			autoOutlining     = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			deleteFiles       = cast(byte) keyToolOpts.GetDWORD("deleteFiles", 0);
 			parseSource       = keyToolOpts.GetDWORD("parseSource", 1) != 0;
@@ -1164,6 +1166,7 @@ class GlobalOptions
 			sortProjects         = keyUserOpts.GetDWORD("sortProjects",      sortProjects) != 0;
 			stopSolutionBuild    = keyUserOpts.GetDWORD("stopSolutionBuild", stopSolutionBuild) != 0;
 			demangleError        = keyUserOpts.GetDWORD("demangleError",     demangleError) != 0;
+			optlinkDeps          = keyUserOpts.GetDWORD("optlinkDeps",       optlinkDeps) != 0;
 			deleteFiles          = cast(byte) keyUserOpts.GetDWORD("deleteFiles",       deleteFiles);
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",     autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",       parseSource) != 0;
@@ -1227,20 +1230,20 @@ class GlobalOptions
 			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
 			keyToolOpts.Set("UserTypesSpec", toUTF16(UserTypesSpec));
 			
-			keyToolOpts.Set("ColorizeVersions", ColorizeVersions);
-			keyToolOpts.Set("timeBuilds", timeBuilds);
-			keyToolOpts.Set("sortProjects", sortProjects);
+			keyToolOpts.Set("ColorizeVersions",  ColorizeVersions);
+			keyToolOpts.Set("timeBuilds",        timeBuilds);
+			keyToolOpts.Set("sortProjects",      sortProjects);
 			keyToolOpts.Set("stopSolutionBuild", stopSolutionBuild);
-			keyToolOpts.Set("demangleError", demangleError);
-			keyToolOpts.Set("autoOutlining", autoOutlining);
-			keyToolOpts.Set("deleteFiles", deleteFiles);
-			keyToolOpts.Set("parseSource", parseSource);
-			keyToolOpts.Set("projectSemantics", projectSemantics);
-			keyToolOpts.Set("expandFromBuffer", expandFromBuffer);
-			keyToolOpts.Set("expandFromJSON", expandFromJSON);
-			keyToolOpts.Set("expandTrigger", expandTrigger);
+			keyToolOpts.Set("optlinkDeps",       optlinkDeps);
+			keyToolOpts.Set("autoOutlining",     autoOutlining);
+			keyToolOpts.Set("deleteFiles",       deleteFiles);
+			keyToolOpts.Set("parseSource",       parseSource);
+			keyToolOpts.Set("projectSemantics",  projectSemantics);
+			keyToolOpts.Set("expandFromBuffer",  expandFromBuffer);
+			keyToolOpts.Set("expandFromJSON",    expandFromJSON);
+			keyToolOpts.Set("expandTrigger",     expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip", showTypeInTooltip);
-			keyToolOpts.Set("pasteIndent", pasteIndent);
+			keyToolOpts.Set("pasteIndent",       pasteIndent);
 
 			CHierNode.setContainerIsSorted(sortProjects);
 		}

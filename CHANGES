@@ -448,9 +448,12 @@ unreleased Version 0.3.34
   * delete file from project now uses VS environment dialog (avoiding dialog when moving project items)
   * fixed "build phobos browse info" failing for dmd 2.059
   * dependency on other projects: only output files with known file types are now passed to the dmd/gdc command line
-  * linker error messages can now be decompressed and demangled (thanks to Benjamin Thaut for providing the tool)
+  * linker error messages can now be decompressed and demangled (thanks to Benjamin Thaut for providing the code)
   * lexer now allows unicode characters from std.uni.isAlpha in identifiers
   * fix: when building phobos browse info the implicitely added JSON path was not saved to options
   * completion from browse info: template arguments and contraint stripped from symbol now
   * fix calling cv2pdb for D1
-  
+  * goto definition: if ".." is used to reference the source file path, it could be opened twice in the editor
+  * new item: package and module name now filled with some guess
+  * optlink now called directly with file monitoring: this allows passing library path directly (making the DMD_LIB 
+    patch in sc.ini redundant) and detecting library and source dependencies

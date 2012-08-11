@@ -204,7 +204,7 @@ class ProjectOptions
 		kSeparateCompileAndLink,
 		kSeparateCompileOnly,
 	}
-	uint singleFileCompilation = kCombinedCompileAndLink;
+	uint compilationModel = kCombinedCompileAndLink;
 	
 	// Linker stuff
 	string objfiles;
@@ -269,7 +269,7 @@ class ProjectOptions
 			cmd = quoteNormalizeFilename(program);
 		else
 			cmd = "dmd";
-		if(Package.GetGlobalOptions().demangleError)
+		if(performLink && Package.GetGlobalOptions().demangleError)
 			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
 		
 		if(lib == OutputType.StaticLib && performLink)
@@ -580,6 +580,10 @@ class ProjectOptions
 				break;
 		}
 
+		string[] lpaths = tokenizeArgs(libpaths);
+		foreach(lp; lpaths)
+			cmd ~= " -Wl,-L," ~ quoteFilename(lp);
+
 		if(lib != OutputType.StaticLib)
 		{
 //			if(createImplib)
@@ -644,12 +648,17 @@ class ProjectOptions
 		libs ~= "user32.lib";
 		libs ~= "kernel32.lib";
 		cmd ~= plusList(lnkfiles ~ libs, ".lib");
+		string[] lpaths = tokenizeArgs(libpaths);
+		foreach(lp; lpaths)
+			cmd ~= "+" ~ quoteFilename(normalizeDir(lp));
 		cmd ~= ",";
+
 		if(deffile.length)
 			cmd ~= quoteNormalizeFilename(deffile);
 		else
 			cmd ~= plusList(lnkfiles, ".def");
 		cmd ~= ",";
+
 		if(resfile.length)
 			cmd ~= quoteNormalizeFilename(resfile);
 		else
@@ -695,6 +704,7 @@ class ProjectOptions
 		else
 			return " -od" ~ quoteFilename(objdir);
 	}
+
 	string getTargetPath()
 	{
 		if(exefile.length)
@@ -781,7 +791,7 @@ class ProjectOptions
 		elem ~= new xml.Element("lib", toElem(lib));
 		elem ~= new xml.Element("subsystem", toElem(subsystem));
 		elem ~= new xml.Element("multiobj", toElem(multiobj));
-		elem ~= new xml.Element("singleFileCompilation", toElem(singleFileCompilation));
+		elem ~= new xml.Element("singleFileCompilation", toElem(compilationModel));
 		elem ~= new xml.Element("oneobj", toElem(oneobj));
 		elem ~= new xml.Element("trace", toElem(trace));
 		elem ~= new xml.Element("quiet", toElem(quiet));
@@ -901,7 +911,7 @@ class ProjectOptions
 		fromElem(elem, "lib", lib);
 		fromElem(elem, "subsystem", subsystem);
 		fromElem(elem, "multiobj", multiobj);
-		fromElem(elem, "singleFileCompilation", singleFileCompilation);
+		fromElem(elem, "singleFileCompilation", compilationModel);
 		fromElem(elem, "oneobj", oneobj);
 		fromElem(elem, "trace", trace);
 		fromElem(elem, "quiet", quiet);
@@ -1907,6 +1917,23 @@ class Config :	DisposingComObject,
 		return mProjectOptions.replaceEnvironment(exe, this);
 	}
 
+	string GetLinkDependenciesPath()
+	{
+		string dep = GetDependenciesPath();
+		assert(dep[$-4..$] == ".dep");
+		return dep[0..$-4] ~ ".lnkdep";
+	}
+
+	bool hasLinkDependencies()
+	{
+		bool doLink = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
+		bool separateLink = mProjectOptions.compilationModel == ProjectOptions.kSeparateCompileAndLink;
+		if (mProjectOptions.compiler == Compiler.GDC && mProjectOptions.lib == OutputType.StaticLib)
+			separateLink = true;
+		bool useOptlink = mProjectOptions.compiler == Compiler.DMD && separateLink && mProjectOptions.lib != OutputType.StaticLib;
+		return doLink && useOptlink && Package.GetGlobalOptions().optlinkDeps;
+	}
+
 	string GetCommandLinePath()
 	{
 		string exe = mProjectOptions.getCommandLinePath();
@@ -2017,7 +2044,7 @@ class Config :	DisposingComObject,
 		{
 			string fname = file.GetFilename();
 			string ext = toLower(extension(fname));
-			if(ext == ".d" && mProjectOptions.singleFileCompilation == ProjectOptions.kSingleFileCompilation)
+			if(ext == ".d" && mProjectOptions.compilationModel == ProjectOptions.kSingleFileCompilation)
 				tool = "DMDsingle";
 			else if(isIn(ext, ".d", ".ddoc", ".def", ".lib", ".obj", ".o", ".res"))
 				tool = "DMD";
@@ -2071,6 +2098,7 @@ class Config :	DisposingComObject,
 		files ~= cmdfile;
 		files ~= cmdfile ~ ".rsp";
 		files ~= makeFilenameAbsolute(GetDependenciesPath(), workdir);
+		files ~= makeFilenameAbsolute(GetLinkDependenciesPath(), workdir);
 		
 		if(mProjectOptions.usesCv2pdb())
 		{
@@ -2265,24 +2293,43 @@ class Config :	DisposingComObject,
 	string[] getObjectFileList(string[] dfiles)
 	{
 		string[] files = dfiles.dup;
+		string[] remove;
+		bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+		string targetObj;
 		foreach(ref f; files)
 			if(f.endsWith(".d") || f.endsWith(".D"))
 			{
-				string fname = stripExtension(f);
-				if(!mProjectOptions.preservePaths)
-					fname = baseName(fname);
-				if(mProjectOptions.compiler == Compiler.DMD)
-					f = mProjectOptions.objdir ~ "\\" ~ fname ~ "." ~ mProjectOptions.objectFileExtension();
+				if(singleObj)
+				{
+					if(targetObj.length)
+						remove ~= f;
+					else
+					{
+						targetObj = "$(OutDir)\\$(ProjectName).obj";
+						f = targetObj;
+					}
+				}
 				else
-					f = fname ~ "." ~ mProjectOptions.objectFileExtension();
+				{
+					string fname = stripExtension(f);
+					if(!mProjectOptions.preservePaths)
+						fname = baseName(fname);
+					if(mProjectOptions.compiler == Compiler.DMD)
+						f = mProjectOptions.objdir ~ "\\" ~ fname ~ "." ~ mProjectOptions.objectFileExtension();
+					else
+						f = fname ~ "." ~ mProjectOptions.objectFileExtension();
+				}
 			}
+
+		foreach(r; remove)
+			files.remove(r);
 		return files;
 	}
 	
 	string getLinkFileList(string[] dfiles, ref string precmd)
 	{
 		string[] files = getObjectFileList(dfiles);
-		string responsefile = GetCommandLinePath() ~ ".lnk";
+		string responsefile = GetCommandLinePath() ~ ".lnkarg";
 		return getCommandFileList(files, responsefile, precmd);
 	}
 	
@@ -2342,9 +2389,11 @@ class Config :	DisposingComObject,
 	
 	string getCommandLine()
 	{
-		bool doLink = mProjectOptions.singleFileCompilation != ProjectOptions.kSeparateCompileOnly;
-		bool separateLink = mProjectOptions.singleFileCompilation == ProjectOptions.kSeparateCompileAndLink;
+		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
+		bool separateLink = mProjectOptions.compilationModel == ProjectOptions.kSeparateCompileAndLink;
 		if (mProjectOptions.compiler == Compiler.GDC && mProjectOptions.lib == OutputType.StaticLib)
+			separateLink = true;
+		if (mProjectOptions.compiler == Compiler.DMD && mProjectOptions.lib != OutputType.StaticLib && doLink)
 			separateLink = true;
 		bool useOptlink = mProjectOptions.compiler == Compiler.DMD && separateLink && mProjectOptions.lib != OutputType.StaticLib;
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
@@ -2367,9 +2416,15 @@ class Config :	DisposingComObject,
 			fcmd ~= " " ~ modules_ddoc;
 		}
 
-		if(separateLink || !doLink)   
-			opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
-
+		auto globOpts = Package.GetGlobalOptions();
+		if(separateLink || !doLink)
+		{
+			bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+			if(singleObj)
+				opt ~= " -c -of\"$(OutDir)\\$(ProjectName).obj\"";
+			else
+				opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
+		}
 		string cmd = precmd ~ opt ~ fcmd ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 		
@@ -2379,10 +2434,13 @@ class Config :	DisposingComObject,
 			if(useOptlink)
 			{
 				string libs, options;
-				string linkpath = Package.GetGlobalOptions().getOptlinkPath(mProjectOptions.otherCompilerPath(), &libs, &options);
+				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), &libs, &options);
 				lnkcmd = linkpath ~ " ";
-				if(Package.GetGlobalOptions().demangleError)
-					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ lnkcmd;
+				if(globOpts.demangleError || globOpts.optlinkDeps)
+					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
+						~ (globOpts.demangleError ? null : "-nodemangle ")
+						~ (globOpts.optlinkDeps ? "-deps " ~ quoteFilename(GetLinkDependenciesPath()) ~ " " : null)
+						~ lnkcmd;
 				string[] lnkfiles = getObjectFileList(files);
 				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options);
 				lnkcmd ~= getLinkFileList([cmdfiles], prelnk);
@@ -2543,7 +2601,7 @@ class Config :	DisposingComObject,
 					cnt++;
 				}
 			}
-			if(opt.singleFileCompilation == ProjectOptions.kSingleFileCompilation)
+			if(opt.compilationModel == ProjectOptions.kSingleFileCompilation)
 			{
 				searchNode(mProvider.mProject.GetRootNode(), 
 					delegate (CHierNode n) { 

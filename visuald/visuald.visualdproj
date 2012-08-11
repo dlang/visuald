@@ -52,10 +52,10 @@
   <objdir>$(OutDir)\obj</objdir>
   <objname />
   <libname />
-  <doDocComments>0</doDocComments>
-  <docdir>..\doc</docdir>
+  <doDocComments>1</doDocComments>
+  <docdir>$(IntDir)\doc</docdir>
   <docname />
-  <modules_ddoc>..\doc\modules.ddoc</modules_ddoc>
+  <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />

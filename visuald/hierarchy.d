@@ -15,6 +15,8 @@ import std.string;
 import std.path;
 import std.file;
 import std.utf;
+import std.array;
+import std.algorithm;
 
 import stdext.path;
 import stdext.file;
@@ -28,6 +30,7 @@ import sdk.vsi.ivssccmanager2;
 //import vsshlids;
 import visuald.comutil;
 import visuald.logutil;
+import visuald.lexutil;
 import visuald.trackprojectdocument;
 import visuald.hierutil;
 import visuald.chiernode;
@@ -517,6 +520,70 @@ class CFolderNode : CHierContainer
 		SetName(to_string(pEditLabel));
 		GetCVsHierarchy().OnPropertyChanged(this, VSHPROPID_Name, 0);
 		return S_OK;
+	}
+
+	string GuessPackageName()
+	{
+		string pkgname = _GuessPackageName(true, null);
+		if(pkgname.endsWith("."))
+			pkgname = pkgname[0..$-1];
+		return pkgname;
+	}
+	
+	// package always comes wth trailing '.'
+	string _GuessPackageName(bool recurseUp, CFolderNode exclude)
+	{
+		static string stripModule(string mod)
+		{
+			auto pos = lastIndexOf(mod, '.');
+			if(pos >= 0)
+				return mod[0..pos+1];
+			return ".";
+		}
+		static string stripPackage(string pkg, string folder)
+		{
+			assert(pkg.length && pkg[$-1] == '.');
+			auto pos = lastIndexOf(pkg[0..$-1], '.');
+			if(pos >= 0 && icmp(pkg[pos+1 .. $-1], folder) == 0)
+				return pkg[0..pos+1];
+			if(pos >= 0)
+				return pkg;
+			return ".";
+		}
+
+		// check files in folder
+		for(CHierNode pNode = GetHead(); pNode; pNode = pNode.GetNext())
+			if(auto file = cast(CFileNode) pNode)
+				if(file.GetTool() == "DMD" || (file.GetTool() == "" && toLower(extension(file.GetName())) == ".d"))
+				{
+					string fname = file.GetFullPath();
+					string modname = getModuleDeclarationName(fname);
+					if(modname.length)
+						return stripModule(modname);
+				}
+
+		// check sub folder
+		string pkgname;
+		for(CHierNode pNode = GetHead(); pNode; pNode = pNode.GetNext())
+			if(auto folder = cast(CFolderNode) pNode)
+				if(folder !is exclude)
+				{
+					pkgname = folder._GuessPackageName(false, null);
+					if(pkgname.length)
+					{
+						pkgname = stripPackage(pkgname, folder.GetName());
+						return pkgname;
+					}
+				}
+
+		// check parents
+		if(pkgname.empty && recurseUp)
+			if(auto parent = cast(CFolderNode) GetParent())
+				pkgname = parent._GuessPackageName(true, this);
+
+		if(pkgname.length)
+			pkgname ~= GetName() ~ ".";
+		return pkgname;
 	}
 
 	// Property functions
@@ -1969,7 +2036,21 @@ public: // IVsHierarchyEvent propagation
 				if(dir)
 					std.file.mkdir(strNewFileName);
 				else
-					std.file.copy(strFullPathSource, strNewFileName);
+				{
+					string txt = cast(string) std.file.read(strFullPathSource);
+					string modname = safeFilename(stripExtension(baseName(strNewFileName)));
+					txt = replace(txt, "$safeitemname$", modname);
+					if(txt.countUntil("$modulename$") >= 0)
+					{
+						string pkg;
+						if(auto folder = cast(CFolderNode) pNode)
+							pkg = folder.GuessPackageName();
+						if(pkg.length)
+							modname = pkg ~ "." ~ modname;
+						txt = replace(txt, "$modulename$", modname);
+					}
+					std.file.write(strNewFileName, txt);
+				}
 			}
 			catch(Exception e)
 			{

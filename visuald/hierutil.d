@@ -510,7 +510,7 @@ HRESULT FindFileInSolution(IVsUIShellOpenDocument pIVsUIShellOpenDocument, strin
 		string[] imps = GetImportPaths(srcfile);
 		foreach(imp; imps)
 		{
-			string file = normalizeDir(imp) ~ filename;
+			string file = makeFilenameCanonical(filename, imp);
 			if(std.file.exists(file))
 			{
 				detachBSTR(bstrAbsPath);
