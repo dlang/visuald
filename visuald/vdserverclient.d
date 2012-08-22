@@ -25,6 +25,7 @@ import stdext.com;
 
 import std.concurrency;
 import std.string;
+import std.conv;
 import std.windows.charset;
 import core.thread;
 
@@ -105,12 +106,12 @@ class ServerCache
 __gshared ServerCache gServerCache;
 
 ///////////////////////////////////////////////////////////////////////
-class Command
+shared class Command
 {
 	this(string cmd)
 	{
 		mCommand = cmd;
-		mRequest = mLastRequest++;
+		mRequest = sLastRequest++;
 	}
 
 	// called from clientLoop (might block due to server garbage collecting)
@@ -131,10 +132,11 @@ class Command
 
 	void send(Tid id) const
 	{
-		.send(id, cast(size_t) cast(void*) this);
+//		.send(id, cast(size_t) cast(void*) this);
+		.send(id, cast(shared)this);
 	}
 
-	static uint mLastRequest;
+	static uint sLastRequest;
 
 	uint mRequest;
 	string mCommand;
@@ -184,7 +186,8 @@ class FileCommand : Command
 
 class ConfigureProjectCommand : FileCommand
 {
-	this(string filename, string[] imp, string[] stringImp, string[] versionids, string[] debugids, uint flags)
+	this(string filename, immutable(string[]) imp, immutable(string[]) stringImp, 
+		 immutable(string[]) versionids, immutable(string[]) debugids, uint flags)
 	{
 		super("ConfigureProject", filename);
 		mImp = imp;
@@ -222,10 +225,10 @@ import std.array;
 		return hr;
 	}
 
-	string[] mImp;
-	string[] mStringImp;
-	string[] mVersionids;
-	string[] mDebugids;
+	immutable(string[]) mImp;
+	immutable(string[]) mStringImp;
+	immutable(string[]) mVersionids;
+	immutable(string[]) mDebugids;
 	uint mFlags;
 }
 
@@ -341,9 +344,12 @@ class UpdateModuleCommand : FileCommand
 			for(size_t i = 0; i < cnt; i++)
 			{
 				LONG index = lbound + 2 * i;
-				SafeArrayGetElement(sa, &index, &mBinaryIsIn[i].line);
+				int line, col;
+				SafeArrayGetElement(sa, &index, &line);
+				mBinaryIsIn[i].line = line;
 				index++;
-				SafeArrayGetElement(sa, &index, &mBinaryIsIn[i].index);
+				SafeArrayGetElement(sa, &index, &col);
+				mBinaryIsIn[i].index = col;
 			}
 			SafeArrayDestroy(sa);
 		}
@@ -354,8 +360,10 @@ class UpdateModuleCommand : FileCommand
 
 	override bool forward()
 	{
+		version(DebugCmd)
+			OutputDebugStringA(toMBSz("forward: " ~ mCommand ~ " " ~ to!string(mRequest) ~ ": " ~ mErrors ~ "\n"));
 		if(mCallback)
-			mCallback(mRequest, mFilename, mErrors, mBinaryIsIn);
+			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn);
 		return true;
 	}
 
@@ -404,7 +412,7 @@ class GetExpansionsCommand : FileCommand
 			return rc;
 
 		string slist = detachBSTR(stringList);
-		mExpansions = splitLines(slist);
+		mExpansions = cast(shared(string[])) splitLines(slist);
 		send(gUITid);
 		return S_OK;
 	}
@@ -412,7 +420,7 @@ class GetExpansionsCommand : FileCommand
 	override bool forward()
 	{
 		if(mCallback)
-			mCallback(mRequest, mFilename, mTok, mLine, mIndex, mExpansions);
+			mCallback(mRequest, mFilename, mTok, mLine, mIndex, cast(string[])mExpansions);
 		return true;
 	}
 
@@ -469,7 +477,7 @@ class VDServerClient
 	{
 		if(gVDServer)
 		{
-			(new ExitCommand).send(mTid);
+			(new immutable(ExitCommand)).send(mTid);
 			while(gVDServer)
 			{
 				Thread.sleep(dur!"msecs"(50));  // sleep for 50 milliseconds
@@ -478,7 +486,8 @@ class VDServerClient
 	}
 
 	//////////////////////////////////////
-	uint ConfigureSemanticProject(string filename, string[] imp, string[] stringImp, string[] versionids, string[] debugids, uint flags)
+	uint ConfigureSemanticProject(string filename, immutable(string[]) imp, immutable(string[]) stringImp, 
+								  immutable(string[]) versionids, immutable(string[]) debugids, uint flags)
 	{
 		auto cmd = new immutable(ConfigureProjectCommand)(filename, imp, stringImp, versionids, debugids, flags);
 		cmd.send(mTid);
@@ -555,20 +564,20 @@ class VDServerClient
 
 		try
 		{
-			Command[] toAnswer;
+			shared(Command)[] toAnswer;
 			while(gVDServer)
 			{
 				bool restartServer = false;
 				receiveTimeout(dur!"msecs"(50),
 					// as of dmd 2.060, fixes of const handling expose that std.variant is not capable of working sinsibly with class objects
-					// (Command cmd)
-				    (size_t icmd)
+					(shared(Command) icmd)
+				    //(size_t icmd)
 					{
 						auto cmd = cast(Command) cast(void*) icmd;
-						version(DebugCmd) OutputDebugStringA(toMBSz("clientLoop: " ~ cmd.mCommand ~ "\n"));
-						HRESULT hr = cmd.exec();
+						version(DebugCmd) OutputDebugStringA(toMBSz("clientLoop: " ~ cmd.mCommand ~ " " ~ to!string(cmd.mRequest) ~ "\n"));
+						HRESULT hr = icmd.exec();
 						if(hr == S_OK)
-							toAnswer ~= cmd;
+							toAnswer ~= icmd;
 						else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 							restartServer = true;
 					},
@@ -594,7 +603,7 @@ class VDServerClient
 				{
 					HRESULT hr = gVDServer.GetLastMessage(&msg);
 					if(hr == S_OK)
-						(new GetMessageCommand(detachBSTR(msg))).send(gUITid);
+						(new immutable(GetMessageCommand)(detachBSTR(msg))).send(gUITid);
 					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 						restartServer = true;
 				}
@@ -617,11 +626,14 @@ class VDServerClient
 		try
 		{
 			while(receiveTimeout(dur!"msecs"(0),
-				(size_t icmd)
+				(shared(Command) icmd)
+				//(size_t icmd)
 				{
 					auto cmd = cast(Command) cast(void*) icmd;
-					version(DebugCmd) OutputDebugStringA(toMBSz("idleLoop: " ~ cmd.mCommand ~ "\n"));
-					cmd.forward();
+					version(DebugCmd) 
+						if(cmd.mCommand != "GetMessage")
+							OutputDebugStringA(toMBSz("idleLoop: " ~ cmd.mCommand ~ " " ~ to!string(cmd.mRequest) ~ "\n"));
+					icmd.forward();
 				},
 				(Variant var)
 				{

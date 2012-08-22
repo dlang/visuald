@@ -77,7 +77,7 @@ $(TLB2IDL_EXE) : tools\tlb2idl.d
 	$(DMD2) -map $@.map -of$@ tools\tlb2idl.d oleaut32.lib uuid.lib snn.lib kernel32.lib
 
 $(PIPEDMD_EXE) : tools\pipedmd.d
-	$(DMD2) -map $@.map -of$@ -g tools\pipedmd.d
+	$(DMD2) -map $@.map -of$@ tools\pipedmd.d
 
 $(FILEMON_DLL) : tools\filemonitor.d
 	$(DMD2) -map $@.map -of$@ -defaultlib=user32.lib -L/ENTRY:_DllMain@12 tools\filemonitor.d

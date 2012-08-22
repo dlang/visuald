@@ -37,6 +37,8 @@ class Module
 		
 		if(p.tok.id == TOK_module)
 		{
+			p.pushRecoverState(&recoverModuleDeclaration);
+
 			p.pushState(&shiftModuleDeclaration);
 			return ModuleDeclaration.enter(p);
 		}
@@ -65,6 +67,21 @@ class Module
 		
 		return Accept;
 	}
+
+	static Action recoverModuleDeclaration(Parser p)
+	{
+		p.pushState(&afterRecover);
+		return Parser.recoverSemiCurly(p);
+	}
+
+	static Action afterRecover(Parser p)
+	{
+		if(p.tok.id == TOK_EOF)
+			return Accept;
+
+		p.pushState(&shiftModuleDeclDefs);
+		return DeclDefs.enter(p);
+	}
 }
 
 //-- GRAMMAR_BEGIN --
@@ -76,7 +93,9 @@ class ModuleDeclaration
 	{
 		if(p.tok.id != TOK_module)
 			return p.parseError("module expected");
+
 		p.pushNode(new ast.ModuleDeclaration(p.tok));
+
 		p.pushState(&shiftName);
 		p.pushState(&ModuleFullyQualifiedName.enter);
 		return Accept;

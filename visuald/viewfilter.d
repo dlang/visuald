@@ -362,10 +362,14 @@ version(tip)
 
 			case ECMD_LEFT:
 			case ECMD_RIGHT:
+				stopCompletions();
+				goto case ECMD_UP;
+
 			case ECMD_BACKSPACE:
 				if(mCodeWinMgr.mSource.IsCompletorActive())
 					initCompletion(false);
 				goto case;
+
 			case ECMD_UP:
 			case ECMD_DOWN:
 				if(mCodeWinMgr.mSource.IsMethodTipActive())
@@ -374,8 +378,7 @@ version(tip)
 				
 			case ECMD_TYPECHAR:
 				dchar ch = pvaIn.uiVal;
-				if(ch == '.' && Package.GetGlobalOptions().expandTrigger >= 1 
-				   && Package.GetGlobalOptions().projectSemantics)
+				if(ch == '.' && Package.GetGlobalOptions().expandTrigger >= 1 && Package.GetGlobalOptions().projectSemantics)
 					initCompletion(false);
 				
 				else if(mCodeWinMgr.mSource.IsCompletorActive() || Package.GetGlobalOptions().expandTrigger >= 2)
@@ -383,7 +386,7 @@ version(tip)
 					if(isAlphaNum(ch) || ch == '_')
 						initCompletion(false);
 					else
-						mCodeWinMgr.mSource.DismissCompletor();
+						stopCompletions();
 				}
 				
 				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' || 
@@ -403,6 +406,8 @@ version(tip)
 				}
 				break;
 			default:
+				if(nCmdID < ECMD_FINAL && nCmdID != ECMD_HANDLEIMEMESSAGE)
+					stopCompletions();
 				break;
 			}
 		}
@@ -500,7 +505,14 @@ version(tip)
 		Declarations decl = cs.mDecls;
 		decl.MoreExpansions(mView, mCodeWinMgr.mSource);
 	}
-		
+	void stopCompletions()
+	{
+		if(CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet())
+			if(Declarations decl = cs.mDecls)
+				decl.StopExpansions();
+		mCodeWinMgr.mSource.DismissCompletor();
+	}
+
 	int QueryCommandStatus(in GUID *guidCmdGroup, uint cmdID)
 	{
 		if(*guidCmdGroup == CMDSETID_StandardCommandSet97) 

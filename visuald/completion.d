@@ -292,9 +292,19 @@ class Declarations
 
 		if(symbols.length > 0 && mPendingSource)
 		{
-			size_t namesLength = mNames.length;
-			foreach(s; symbols)
-				mNames.addunique(s);
+			if(symbols.length > 10 && mNames.length + symbols.length > 50)
+			{
+				// go through assoc array for faster uniqueness check
+				bool[string] names;
+				foreach(n; mNames)
+					names[n] = true;
+				foreach(s; symbols)
+					names[s] = true;
+				mNames = names.keys();
+			}
+			else
+				foreach(s; symbols)
+					mNames.addunique(s);
 
 			sort!("icmp(a, b) < 0", SwapStrategy.stable)(mNames);
 			mPendingSource.GetCompletionSet().Init(mPendingView, this, false);
@@ -380,6 +390,13 @@ class Declarations
 		_MoreExpansions(textView, src);
 		src.GetCompletionSet().Init(textView, this, false);
 		return true;
+	}
+
+	void StopExpansions()
+	{
+		mPendingRequest = 0;
+		mPendingView = null;
+		mPendingSource = null;
 	}
 }
 

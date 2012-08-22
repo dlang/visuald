@@ -581,6 +581,7 @@ class ProjectOptions
 		}
 
 		string[] lpaths = tokenizeArgs(libpaths);
+		lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
 		foreach(lp; lpaths)
 			cmd ~= " -Wl,-L," ~ quoteFilename(lp);
 
@@ -649,6 +650,7 @@ class ProjectOptions
 		libs ~= "kernel32.lib";
 		cmd ~= plusList(lnkfiles ~ libs, ".lib");
 		string[] lpaths = tokenizeArgs(libpaths);
+		lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
 		foreach(lp; lpaths)
 			cmd ~= "+" ~ quoteFilename(normalizeDir(lp));
 		cmd ~= ",";

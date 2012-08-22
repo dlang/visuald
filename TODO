@@ -51,6 +51,8 @@ Language service:
 - VS sometimes does not remember position inside file across restart?
 - goto import jumps to "mod" if run on "import mod = pkg.mod;"
 - support DDoc comment in JSON file
+- hide parsing message when done
+- goto definition might jump to wrong file if identically named files in solution
 
 Semantics:
 ---------------
@@ -95,9 +97,6 @@ Lexer/Parser:
 - do not parse file if it is D1?
 - deprecated syntax
 - support for => delegates
-! error in module declaration causes parser to bail out
-! syntax errors not removed from previous parser run
-! completion shown from old insertion point
 
 C++ to D
 ---------

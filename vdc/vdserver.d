@@ -34,9 +34,15 @@ import std.parallelism;
 import std.string;
 import std.conv;
 import std.array;
+
 import std.concurrency;
 import std.datetime;
 import core.thread;
+
+// debug version = DebugServer;
+
+version(DebugServer)
+	import std.windows.charset;
 
 ///////////////////////////////////////////////////////////////
 
@@ -172,10 +178,23 @@ class VDServer : ComObject, IVDServer
 
 		synchronized(mSemanticProject)
 			if(auto src = mSemanticProject.getModuleByFilename(fname))
+			{
+				if(src.parser)
+					src.parser.abort = true;
 				src.parser = parser;
+			}
 
 		void doParse()
 		{
+			version(DebugServer)
+			{
+				auto lines = splitLines(text);
+				string line;
+				if(lines.length >= 7044)
+					line = lines[7042];
+				sdk.win32.winbase.OutputDebugStringA(toMBSz("doParse: " ~ line ~ "\n"));
+			}
+
 			ast.Node n;
 			try
 			{
@@ -188,7 +207,8 @@ class VDServer : ComObject, IVDServer
 
 			synchronized(mSemanticProject)
 				if(auto src = mSemanticProject.getModuleByFilename(fname))
-					src.parser = null;
+					if(src.parser is parser)
+						src.parser = null;
 
 			if(auto mod = cast(ast.Module) n)
 				synchronized(mSemanticProject)
@@ -308,7 +328,7 @@ class VDServer : ComObject, IVDServer
 			return null;
 		auto syms = sc.search(tok ~ "*", !inDotExpr, true, true);
 
-		string[] symbols;
+		Set!string symbols;
 
 		foreach(s, b; syms)
 			if(auto decl = cast(ast.Declarator) s)
@@ -320,7 +340,7 @@ class VDServer : ComObject, IVDServer
 			else if(auto builtin = cast(ast.BuiltinPropertyBase) s)
 				symbols.addunique(builtin.ident);
 
-		return symbols;
+		return symbols.keys();
 	}
 
 	override HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
@@ -394,6 +414,10 @@ class VDServer : ComObject, IVDServer
 					string err;
 					foreach(e; src.parseErrors)
 						err ~= format("%d,%d,%d,%d:%s\n", e.span.start.line, e.span.start.index, e.span.end.line, e.span.end.index, e.msg);
+
+					version(DebugServer)
+						sdk.win32.winbase.OutputDebugStringA(toMBSz("GetParseErrors: " ~ err ~ "\n"));
+
 					*errors = allocBSTR(err);
 					return S_OK;
 				}

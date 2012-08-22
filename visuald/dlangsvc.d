@@ -55,6 +55,7 @@ import std.conv;
 import std.algorithm;
 import std.array;
 import std.datetime;
+import std.exception;
 
 import std.parallelism;
 
@@ -717,7 +718,7 @@ class LanguageService : DisposingComObject,
 			versionids = tokenizeArgs(cfgopts.versionids);
 			debugids = tokenizeArgs(cfgopts.debugids); 
 		}
-		mVDServerClient.ConfigureSemanticProject(file, imp, stringImp, versionids, debugids, flags);
+		mVDServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp), assumeUnique(versionids), assumeUnique(debugids), flags);
 	}
 
 	bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
@@ -3159,10 +3160,13 @@ else
 				mOutlineRegions = mOutlineRegions.init;
 				mOutlining = false;
 			}
-			if(auto session = GetHiddenTextSession())
-				if(DiffRegions(session, mOutlineRegions))
-					session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
-			mOutlineRegions = mOutlineRegions.init;
+			if(mModificationCountAST == mModificationCount)
+			{
+				if(auto session = GetHiddenTextSession())
+					if(DiffRegions(session, mOutlineRegions))
+						session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
+				mOutlineRegions = mOutlineRegions.init;
+			}
 		}
 
 		mParseText = null;

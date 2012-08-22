@@ -1156,7 +1156,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		AddControl("Object Files", mObjFiles = new Text(mCanvas));
 		AddControl("Library Files", mLibFiles = new Text(mCanvas));
 		AddControl("Library Search Path", mLibPaths = new Text(mCanvas));
-		AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
 		AddControl("Definition File", mDefFile = new Text(mCanvas));
 		AddControl("Resource File",   mResFile = new Text(mCanvas));
 		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas, 
@@ -1348,7 +1348,7 @@ class ToolsPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 2;
 		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
 		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
-		AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
 		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
 		AddControl("Resource includes", mIncPath = new Text(mCanvas));
 	}
