@@ -18,6 +18,8 @@ import sdk.win32.prsht;
 import sdk.win32.commctrl;
 
 private Widget[Widget] createdWindows; // collection of all windows with HWND to avoid garbage collection
+alias AssociativeArray!(Widget, Widget) _wa1; // fully instantiate type info
+
 private HINSTANCE hInst;
 private HFONT winFont;
 

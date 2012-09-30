@@ -93,6 +93,9 @@ bool[string] keywordsMap;
 string[string] tokenMap;
 string[string] filenameMap;
 
+alias object.AssociativeArray!(string, string[]) _wa1; // fully instantiate type info for string[][string]
+
+
 struct PatchRule
 {
 	string filenamePattern;

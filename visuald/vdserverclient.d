@@ -9,6 +9,7 @@
 module visuald.vdserverclient;
 
 import visuald.pkgutil;
+import visuald.logutil;
 
 import vdc.ivdserver;
 //import vdc.semantic;
@@ -22,31 +23,37 @@ import sdk.vsi.sdk_shared;
 import sdk.port.base;
 
 import stdext.com;
+import stdext.container;
+import stdext.string;
 
 import std.concurrency;
 import std.string;
 import std.conv;
+import std.path;
 import std.windows.charset;
 import core.thread;
 
-// debug version = DebugCmd;
-// debug version = InProc;
-// debug version = ABothe;
+alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully instantiate type info for string[Tid]
+alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
+
+debug version = DebugCmd;
+//debug version = InProc;
 
 version(InProc) import vdc.vdserver;
 
 ///////////////////////////////////////////////////////////////////////
-version(ABothe)
+private void dbglog(string s) 
 {
-	static GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-AA05-7e4ad4084715");
-	static GUID IVDServer_iid = uuid("002a2de9-8bb6-484d-AA01-7e4ad4084715");
-	static GUID VDServer_iid = uuid("002a2de9-8bb6-484d-AA05-7e4ad4084715");
+	version(all) 
+		logCall("VDClient: ", s);
+	else
+		OutputDebugStringA(toMBSz("VDClient: " ~ s ~ "\n"));
 }
-else
-{
-	__gshared GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
-	__gshared GUID IVDServer_iid = IVDServer.iid;
-}
+
+///////////////////////////////////////////////////////////////////////
+// can be changed through registry entry
+__gshared GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+__gshared GUID IVDServer_iid = IVDServer.iid;
 
 __gshared IClassFactory gVDClassFactory;
 __gshared IVDServer gVDServer;
@@ -59,7 +66,7 @@ bool startVDServer()
 	CoInitialize(null);
 
 	version(InProc) 
-		gVDServer = addref(new VDServer);
+		gVDServer = addref(newCom!VDServer);
 	else
 	{
 		GUID factory_iid = IID_IClassFactory;
@@ -103,10 +110,14 @@ class ServerCache
 	FileCacheData[string] mCache;
 }
 
-__gshared ServerCache gServerCache;
-
 ///////////////////////////////////////////////////////////////////////
-shared class Command
+template _shared(T)
+{
+	alias T _shared;
+	// alias shared(T) _shared;
+}
+
+/*shared*/ class Command
 {
 	this(string cmd)
 	{
@@ -130,10 +141,11 @@ shared class Command
 		return true;
 	}
 
-	void send(Tid id) const
+	void send(Tid id)
 	{
 //		.send(id, cast(size_t) cast(void*) this);
 		.send(id, cast(shared)this);
+//		.send(id, this);
 	}
 
 	static uint sLastRequest;
@@ -175,6 +187,7 @@ class FileCommand : Command
 {
 	this(string cmd, string filename)
 	{
+		version(DebugCmd) cmd ~= ":" ~ baseName(filename);
 		super(cmd);
 		mFilename = filename;
 	}
@@ -299,6 +312,7 @@ class UpdateModuleCommand : FileCommand
 	this(string filename, wstring text, UpdateModuleCallBack cb)
 	{
 		super("UpdateModule", filename);
+		version(DebugCmd) mCommand ~= " " ~ to!string(firstLine(text));
 		mText = text;
 		mCallback = cb;
 	}
@@ -361,7 +375,7 @@ class UpdateModuleCommand : FileCommand
 	override bool forward()
 	{
 		version(DebugCmd)
-			OutputDebugStringA(toMBSz("forward: " ~ mCommand ~ " " ~ to!string(mRequest) ~ ": " ~ mErrors ~ "\n"));
+			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mErrors);
 		if(mCallback)
 			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn);
 		return true;
@@ -412,7 +426,7 @@ class GetExpansionsCommand : FileCommand
 			return rc;
 
 		string slist = detachBSTR(stringList);
-		mExpansions = cast(shared(string[])) splitLines(slist);
+		mExpansions = /*cast(shared(string[]))*/ splitLines(slist);
 		send(gUITid);
 		return S_OK;
 	}
@@ -458,7 +472,6 @@ class VDServerClient
 
 	this()
 	{
-		gServerCache = new ServerCache;
 	}
 	
 	~this()
@@ -477,7 +490,7 @@ class VDServerClient
 	{
 		if(gVDServer)
 		{
-			(new immutable(ExitCommand)).send(mTid);
+			(new _shared!(ExitCommand)).send(mTid);
 			while(gVDServer)
 			{
 				Thread.sleep(dur!"msecs"(50));  // sleep for 50 milliseconds
@@ -489,34 +502,34 @@ class VDServerClient
 	uint ConfigureSemanticProject(string filename, immutable(string[]) imp, immutable(string[]) stringImp, 
 								  immutable(string[]) versionids, immutable(string[]) debugids, uint flags)
 	{
-		auto cmd = new immutable(ConfigureProjectCommand)(filename, imp, stringImp, versionids, debugids, flags);
+		auto cmd = new _shared!(ConfigureProjectCommand)(filename, imp, stringImp, versionids, debugids, flags);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 
 	uint GetTip(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, GetTypeCallBack cb)
 	{
-		auto cmd = new immutable(GetTypeCommand)(filename, *pSpan, cb);
+		auto cmd = new _shared!(GetTypeCommand)(filename, *pSpan, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 
 	int GetSemanticExpansions(string filename, string tok, int line, int idx, wstring expr, GetExpansionsCallBack cb)
 	{
-		auto cmd = new immutable(GetExpansionsCommand)(filename, tok, line, idx, expr, cb);
+		auto cmd = new _shared!(GetExpansionsCommand)(filename, tok, line, idx, expr, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 
 	uint UpdateModule(string filename, wstring text, UpdateModuleCallBack cb)
 	{
-		auto cmd = new immutable(UpdateModuleCommand)(filename, text, cb);
+		auto cmd = new _shared!(UpdateModuleCommand)(filename, text, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}
 	uint ClearSemanticProject()
 	{
-		auto cmd = new immutable(ClearProjectCommand);
+		auto cmd = new _shared!(ClearProjectCommand);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}
@@ -564,22 +577,24 @@ class VDServerClient
 
 		try
 		{
-			shared(Command)[] toAnswer;
+			Queue!(_shared!(Command)) toAnswer;
 			while(gVDServer)
 			{
 				bool restartServer = false;
+				bool changed = false;
 				receiveTimeout(dur!"msecs"(50),
-					// as of dmd 2.060, fixes of const handling expose that std.variant is not capable of working sinsibly with class objects
+					// as of dmd 2.060, fixes of const handling expose that std.variant is not capable of working sensibly with class objects
 					(shared(Command) icmd)
 				    //(size_t icmd)
 					{
 						auto cmd = cast(Command) cast(void*) icmd;
-						version(DebugCmd) OutputDebugStringA(toMBSz("clientLoop: " ~ cmd.mCommand ~ " " ~ to!string(cmd.mRequest) ~ "\n"));
-						HRESULT hr = icmd.exec();
+						version(DebugCmd) dbglog(to!string(cmd.mRequest) ~ " clientLp: " ~ cmd.mCommand);
+						HRESULT hr = cmd.exec();
 						if(hr == S_OK)
-							toAnswer ~= icmd;
+							toAnswer ~= cmd;
 						else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 							restartServer = true;
+						changed = true;
 					},
 					(Variant var)
 					{
@@ -591,7 +606,10 @@ class VDServerClient
 					auto cmd = toAnswer[i];
 					HRESULT hr = cmd.answer();
 					if(hr == S_OK)
-						toAnswer = toAnswer[0..i] ~ toAnswer[i+1..$];
+					{
+						toAnswer.remove(i);
+						changed = true;
+					}
 					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 						restartServer = true;
 					else
@@ -603,13 +621,21 @@ class VDServerClient
 				{
 					HRESULT hr = gVDServer.GetLastMessage(&msg);
 					if(hr == S_OK)
-						(new immutable(GetMessageCommand)(detachBSTR(msg))).send(gUITid);
+						(new _shared!(GetMessageCommand)(detachBSTR(msg))).send(gUITid);
 					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 						restartServer = true;
 				}
 
+				version(DebugCmd) if (changed)
+				{
+					string s = "   answerQ = [";
+					for(int i = 0; i < toAnswer.length; i++)
+						s ~= (i > 0 ? " " : "") ~ to!string(toAnswer[i].mRequest);
+					dbglog(s ~ "]");
+				}
 				if(restartServer)
 				{
+					version(DebugCmd) dbglog("*** clientLoop: restarting server ***");
 					stopVDServer();
 					startVDServer();
 				}
@@ -632,8 +658,8 @@ class VDServerClient
 					auto cmd = cast(Command) cast(void*) icmd;
 					version(DebugCmd) 
 						if(cmd.mCommand != "GetMessage")
-							OutputDebugStringA(toMBSz("idleLoop: " ~ cmd.mCommand ~ " " ~ to!string(cmd.mRequest) ~ "\n"));
-					icmd.forward();
+							dbglog(to!string(cmd.mRequest) ~ " " ~ "idleLoop: " ~ cmd.mCommand);
+					cmd.forward();
 				},
 				(Variant var)
 				{

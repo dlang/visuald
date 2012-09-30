@@ -414,7 +414,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 	ExpansionFunction CreateExpansionFunction(string functionName)
 	{
-		return new ExpansionFunction(this);
+		return newCom!ExpansionFunction(this);
 	}
 
 	void PrepareTemplate(string title, string path)

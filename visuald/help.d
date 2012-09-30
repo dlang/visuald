@@ -28,6 +28,7 @@ import std.array;
 
 //////////////////////////////////////////////////////////////////////
 static string[][string] tags;
+alias AssociativeArray!(string, string[]) _wa1; // fully instantiate type info
 
 static bool[string] searchAnchors(string file)
 {

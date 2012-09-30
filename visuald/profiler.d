@@ -49,7 +49,7 @@ bool showProfilerWindow()
 		if(!pIVsUIShell)
 			return false;
 
-		sProfilePane = new ProfilePane();
+		sProfilePane = newCom!ProfilePane;
 		const(wchar)* caption = "Visual D Profiler"w.ptr;
 		HRESULT hr;
 		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sProfilePane, 
@@ -101,7 +101,7 @@ enum COLUMNID
 	MAX
 }
 
-static_COLUMNINFO[] s_rgColumns =
+const static_COLUMNINFO[] s_rgColumns =
 [
 	//{ "none", LVCFMT_LEFT, 80 },
 	{ "Function",  LVCFMT_LEFT, 80 },
@@ -120,14 +120,14 @@ const COLUMNINFO[] default_Columns =
 	{ COLUMNID.CALLTIME, true, 100 },
 ];
 
-static_COLUMNINFO[] s_rgFanInColumns =
+const static_COLUMNINFO[] s_rgFanInColumns =
 [
 	//{ "none", LVCFMT_LEFT, 80 },
 	{ "Caller",  LVCFMT_LEFT, 80 },
 	{ "Calls",   LVCFMT_LEFT, 80 },
 ];
 
-static_COLUMNINFO[] s_rgFanOutColumns =
+const static_COLUMNINFO[] s_rgFanOutColumns =
 [
 	//{ "none", LVCFMT_LEFT, 80 },
 	{ "Callee",  LVCFMT_LEFT, 80 },
@@ -391,7 +391,7 @@ private:
 		return 0;
 	}
 
-	this()
+	public this()
 	{
 		_fAlternateRowColor = true;
 		_closeOnReturn = true;

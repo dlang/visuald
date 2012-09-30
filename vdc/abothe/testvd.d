@@ -1,4 +1,10 @@
+// compile with
+// m:\s\d\rainers\windows\bin\dmd.exe -g testvd.d -I..\.. oleaut32.lib ole32.lib 
+
 module testvd;
+
+import std.stdio;
+import std.conv;
 
 import sdk.win32.oaidl;
 import sdk.win32.objbase;
@@ -41,8 +47,8 @@ int main()
 	BSTR source = SysAllocString("void main() { int abc; }");
 	hr = gVDServer.UpdateModule(fname, source);
 
-	version(none)
-	{
+	version(all)
+	{{
 		int iStartLine = 1;
 		int iStartIndex = 6;
 		int iEndLine = 1;
@@ -51,10 +57,11 @@ int main()
 
 		BSTR btype;
 		hr = gVDServer.GetTipResult(iStartLine, iStartIndex, iEndLine, iEndIndex, &btype);
-	}
+		writeln("Tip: ", to!wstring(btype));
+	}}
 
 	version(all)
-	{
+	{{
 		int iStartLine = 1;
 		int iStartIndex = 6;
 		BSTR tok = SysAllocString("m");
@@ -63,7 +70,8 @@ int main()
 
 		BSTR expansions;
 		hr = gVDServer.GetSemanticExpansionsResult(&expansions);
-	}
+		writeln("Expansion: ", to!wstring(expansions));
+	}}
 
 	BSTR msg;
 	hr = gVDServer.GetLastMessage(&msg);

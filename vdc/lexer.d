@@ -821,6 +821,8 @@ L_complexLiteral:
 // converted int[string] to short[string] due to bug #2500
 __gshared short[string] keywords_map; // maps to TOK enumerator
 __gshared short[string] specials_map; // maps to TOK enumerator
+alias AssociativeArray!(string, short) _wa1; // fully instantiate type info
+alias AssociativeArray!(int, const(int)) _wa2; // fully instantiate type info
 
 shared static this() 
 {

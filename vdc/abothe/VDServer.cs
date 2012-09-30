@@ -1,4 +1,9 @@
-﻿using System;
+﻿//
+// To be used by Visual D, set registry entry
+// HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\9.0D\ToolsOptionsPages\Projects\Visual D Settings\VDServerIID
+// to "{002a2de9-8bb6-484d-AA05-7e4ad4084715}"
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -120,9 +125,9 @@ namespace ABothe
         static int getCodeOffset(string s, CodeLocation loc)
         {
             int off = 0;
-            for (int ln = 0; ln < loc.Y; ln++)
+            for (int ln = 0; ln < loc.Line; ln++)
                 off = s.IndexOf('\n', off) + 1;
-            return off + loc.X + 1;
+            return off + loc.Column + 1;
         }
 
         public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex)
@@ -131,10 +136,8 @@ namespace ABothe
             if (!_modules.TryGetValue(filename, out ast))
                 throw new COMException("module not found", 1);
 
-            _tipStart.Y = startLine;
-            _tipStart.X = startIndex;
-            _tipEnd.Y = startLine;
-            _tipEnd.X = startIndex + 1;
+            _tipStart = new CodeLocation(startLine, startIndex);
+            _tipEnd = new CodeLocation(startLine, startIndex + 1);
             _tipText = "";
 
             EditorData editorData = new EditorData();
@@ -154,10 +157,10 @@ namespace ABothe
         }
         public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
         {
-            startLine = _tipStart.Y;
-            startIndex = _tipStart.X;
-            endLine = _tipEnd.Y;
-            endIndex = _tipEnd.X;
+            startLine = _tipStart.Line;
+            startIndex = _tipStart.Column;
+            endLine = _tipEnd.Line;
+            endIndex = _tipEnd.Column;
             answer = _tipText;
             //MessageBox.Show("GetTipResult()");
             //throw new NotImplementedException();
@@ -208,7 +211,7 @@ namespace ABothe
             for (int i = 0; i < cnt; i++)
             {
                 var err = asterrors[i];
-                errs += String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Y, err.Location.X, err.Location.Y, err.Location.X + 1, err.Message);
+                errs += String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Line, err.Location.Column, err.Location.Line, err.Location.Column + 1, err.Message);
             }
             errors = errs;
             //MessageBox.Show("GetParseErrors()");

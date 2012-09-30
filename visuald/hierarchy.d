@@ -720,7 +720,7 @@ class CFolderNode : CHierContainer
 		CProjectNode pProject = GetCVsHierarchy().GetProjectNode();
 
 		// Create a new folder in the Project's folder
-		CFolderNode pFolder = new CFolderNode;
+		CFolderNode pFolder = newCom!CFolderNode;
 		string strThisFolder = "Folder";
 		pFolder.SetName(strThisFolder);
 
@@ -2066,7 +2066,7 @@ public: // IVsHierarchyEvent propagation
 
 		if(dir)
 		{
-			CFolderNode pFolder = new CFolderNode;
+			CFolderNode pFolder = newCom!CFolderNode;
 			string strThisFolder = baseName(strNewFileName);
 			pFolder.SetName(strThisFolder);
 			pNode.Add(pFolder);
@@ -2148,12 +2148,12 @@ public: // IVsHierarchyEvent propagation
 		CHierNode pNewNode;
 		if(dir)
 		{
-			pNewNode = new CFolderNode(baseName(strFullPath));
+			pNewNode = newCom!CFolderNode(baseName(strFullPath));
 		}
 		else
 		{
 			string relPath = makeRelative(strFullPath, projDir);
-			pNewNode = new CFileNode(relPath);
+			pNewNode = newCom!CFileNode(relPath);
 		}
 		pNode.Add(pNewNode);
 

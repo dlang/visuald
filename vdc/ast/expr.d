@@ -641,7 +641,7 @@ class CastExpression : Expression
 	override void toD(CodeWriter writer)
 	{
 		writer("cast(");
-		writer.writeAttributes(attr);
+		writer.writeAttributesAndAnnotations(attr, annotation);
 		if(Type type = getType())
 			writer(getType());
 		writer(")");
@@ -1243,7 +1243,7 @@ class FunctionLiteral : Expression
 		if(Type type = getType())
 			writer(type, " ");
 		writer(getParameterList(), " ");
-		writer.writeAttributes(attr, false);
+		writer.writeAttributesAndAnnotations(attr, annotation, false);
 		writer(getFunctionBody());
 	}
 
@@ -1343,15 +1343,43 @@ class Lambda : Expression
 class TypeFunctionLiteral : TypeFunction
 {
 	ParameterList paramList;
-	
+	Type returnType;
+
 	override ParameterList getParameters() { return paramList; }
+
+	override Type getReturnType() 
+	{
+		if (returnType)
+			return returnType;
+		if(members.length)
+			returnType = getMember!Type(0);
+
+		// TODO: infer return type from code
+		if (!returnType)
+			returnType = new AutoType;
+		return returnType;
+	}
 }
 
 class TypeDelegateLiteral : TypeDelegate
 {
 	ParameterList paramList;
-	
+	Type returnType;
+
 	override ParameterList getParameters() { return paramList; }
+
+	override Type getReturnType() 
+	{
+		if (returnType)
+			return returnType;
+		if(members.length)
+			returnType = getMember!Type(0);
+
+		// TODO: infer return type from code
+		if (!returnType)
+			returnType = new AutoType;
+		return returnType;
+	}
 }
 
 class FuncLiteralDeclarator : Declarator
@@ -1451,6 +1479,9 @@ class MixinExpression : Expression
 		Value v = getMember(0).interpretCatch(nullContext);
 		string s = v.toMixin();
 		Parser parser = new Parser;
+		if(auto prj = sc.getProject())
+			parser.saveErrors = prj.saveErrors;
+
 		Node n = parser.parseExpression(s, span);
 		resolved = cast(Expression) n;
 		if(resolved)

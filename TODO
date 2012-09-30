@@ -10,6 +10,7 @@ Settings:
 ---------------
 - different global settings for D1/D2?
 - browse-buttons for path input lines
+- sometimes renames Visual Studio to VisualD in windows header
 
 Project:
 ---------------
@@ -36,6 +37,8 @@ Project:
   - ddoc files
 - additional options for resource compiler
 - compile single file: report success
+- compile and run current buffer
+- filemonitor does not work anymore?
 
 Language service:
 -----------------
@@ -53,6 +56,8 @@ Language service:
 - support DDoc comment in JSON file
 - hide parsing message when done
 - goto definition might jump to wrong file if identically named files in solution
+- file source navigation menus
+- spurious display of completion box
 
 Semantics:
 ---------------
@@ -60,9 +65,12 @@ Semantics:
 - invalidate after changes
 - templates
 - operator overloads
+- UFCS
 - completion at the beginning of an identifier lists its members
 - package/module specifier before symbol
-! navigating code should not show completions
+- vdserver.exe should remove semantic project if devenv.exe terminates
+- vdserver.exe should terminate if devenv.exe crashes
+- vdserver.exe should be LARGEADRESSAWARE
 
 Search:
 ---------------

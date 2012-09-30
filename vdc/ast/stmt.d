@@ -1246,6 +1246,8 @@ class MixinStatement : Statement
 		Value v = getMember(0).interpretCatch(ctx);
 		string s = v.toMixin();
 		Parser parser = new Parser;
+		if(auto prj = sc.getProject())
+			parser.saveErrors = prj.saveErrors;
 		Node[] n = parser.parseStatements(s, span);
 		parent.replaceMember(this, n);
 	}

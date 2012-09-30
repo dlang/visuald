@@ -76,7 +76,7 @@ MyCreateFileA(
 	{
 		if(dumpFile[0] && hndDumpFile == INVALID_HANDLE_VALUE)
 		{
-			hndDumpFile = origCreateFileA(dumpFile.ptr, GENERIC_WRITE, 0, null, CREATE_ALWAYS, 0, null);
+			hndDumpFile = origCreateFileA(dumpFile.ptr, GENERIC_WRITE, 0, null, CREATE_ALWAYS|TRUNCATE_EXISTING, 0, null);
 			hndMutex = CreateMutexA(null, false, null);
 		}
 		if(hndDumpFile != INVALID_HANDLE_VALUE)
@@ -102,4 +102,12 @@ size_t mystrlen(const(char)* str) nothrow
 	while(*str++)
 		len++;
 	return len;
+}
+
+///////// shut up compiler generated GC info failing to link
+extern(C)
+{
+	int D10TypeInfo_v6__initZ;
+	int D16TypeInfo_Pointer6__vtblZ;
+	int D17TypeInfo_Function6__vtblZ;
 }

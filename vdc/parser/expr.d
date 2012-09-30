@@ -1221,14 +1221,16 @@ class FunctionLiteral(bool allowLambda) : Expression
 				return FunctionBody.enter(p);
 			
 			static if(allowLambda)
+			{
 			case TOK_lambda:
 				p.pushState(&shiftLambda);
 				p.pushState(&AssignExpression.enter);
 				return Accept;
-
+			}
 			mixin(case_TOKs_FunctionAttribute);
 				auto lit = p.topNode!(ast.FunctionLiteral)();
 				p.combineAttributes(lit.attr, tokenToAttribute(p.tok.id));
+				p.combineAnnotations(lit.annotation, tokenToAnnotation(p.tok.id));
 				p.pushState(&shiftFunctionAttribute);
 				return Accept;
 				

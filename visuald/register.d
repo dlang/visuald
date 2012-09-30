@@ -15,6 +15,7 @@ import std.string;
 import std.conv;
 import std.utf;
 import std.path;
+import std.datetime;
 
 import visuald.dpackage;
 import visuald.dllmain;
@@ -127,8 +128,18 @@ class RegKey
 	{
 		if(!key)
 			throw new RegistryException(E_FAIL);
-		
+
 		HRESULT hr = RegCreateDwordValue(key, name, value);
+		if(FAILED(hr))
+			throw new RegistryException(hr);
+	}
+
+	void Set(wstring name, long value)
+	{
+		if(!key)
+			throw new RegistryException(E_FAIL);
+
+		HRESULT hr = RegCreateQwordValue(key, name, value);
 		if(FAILED(hr))
 			throw new RegistryException(hr);
 	}
@@ -249,6 +260,32 @@ wstring GetRegistrationRoot(in wchar* pszRegRoot, bool useRanu)
 	return szRegistrationRoot;
 }
 
+int guessVSVersion(wstring registrationRoot)
+{
+	auto idx = lastIndexOf(registrationRoot, '\\');
+	if(idx < 0)
+		return 0;
+	wstring txt = registrationRoot[idx + 1 .. $];
+	return parse!int(txt);
+}
+
+void updateConfigurationChanged(HKEY keyRoot, wstring registrationRoot)
+{
+	if(guessVSVersion(registrationRoot) >= 11)
+	{
+		scope RegKey keyRegRoot = new RegKey(keyRoot, registrationRoot);
+
+		FILETIME fileTime;
+		GetSystemTimeAsFileTime(&fileTime);
+		ULARGE_INTEGER ul;
+		ul.HighPart = fileTime.dwHighDateTime;
+		ul.LowPart = fileTime.dwLowDateTime;
+		ulong tempHNSecs = ul.QuadPart;
+
+		keyRegRoot.Set("ConfigurationChanged", tempHNSecs);
+	}
+}
+
 HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 {
 	HKEY keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
@@ -286,6 +323,7 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
 	keyToolMenu.Delete(packageGuid);
 
+	updateConfigurationChanged(keyRoot, registrationRoot);
 	return hr;
 }
 
@@ -475,6 +513,8 @@ version(none){
 
 		scope RegKey keyMarshal2 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocHandler32"w);
 		keyMarshal2.Set(null, dllPath);
+
+		updateConfigurationChanged(keyRoot, registrationRoot);
 	}
 	catch(RegistryException e)
 	{
@@ -499,6 +539,13 @@ HRESULT RegCreateDwordValue(HKEY key, in wstring name, in DWORD value)
 {
 	wstring szName = name ~ cast(wchar)0;
 	LONG lRetCode = RegSetValueExW(key, szName.ptr, 0, REG_DWORD, cast(ubyte*)(&value), value.sizeof);
+	return HRESULT_FROM_WIN32(lRetCode);
+}
+
+HRESULT RegCreateQwordValue(HKEY key, in wstring name, in long value)
+{
+	wstring szName = name ~ cast(wchar)0;
+	LONG lRetCode = RegSetValueExW(key, szName.ptr, 0, REG_QWORD, cast(ubyte*)(&value), value.sizeof);
 	return HRESULT_FROM_WIN32(lRetCode);
 }
 

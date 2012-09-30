@@ -796,7 +796,7 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	}
 	assert(srpIVsLaunchPad.ptr);
 
-	CLaunchPadEvents pLaunchPadEvents = new CLaunchPadEvents(pBuilder);
+	CLaunchPadEvents pLaunchPadEvents = newCom!CLaunchPadEvents(pBuilder);
 
 	BSTR bstrOutput;
 version(none)
@@ -833,7 +833,7 @@ version(none)
 	DWORD result;
 	if(IVsLaunchPad2 pad2 = qi_cast!IVsLaunchPad2(srpIVsLaunchPad))
 	{
-		CLaunchPadOutputParser pLaunchPadOutputParser = new CLaunchPadOutputParser(pBuilder);
+		CLaunchPadOutputParser pLaunchPadOutputParser = newCom!CLaunchPadOutputParser(pBuilder);
 		hr = pad2.ExecCommandEx(
 			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
 			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),

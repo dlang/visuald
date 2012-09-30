@@ -89,7 +89,7 @@ void testParse(string txt, string filename = "")
 	debug
 	{
 	string app;
-	DCodeWriter writer = new DCodeWriter(getStringSink(app));
+	ast.DCodeWriter writer = new ast.DCodeWriter(ast.getStringSink(app));
 	writer(n);
 
 	version(log)
@@ -116,7 +116,7 @@ version(all)
 else
 {
 	string app2;
-	DCodeWriter writer2 = new DCodeWriter(getStringSink(app2));
+	ast.DCodeWriter writer2 = new ast.DCodeWriter(ast.getStringSink(app2));
 	writer2(n2);
 	
 	if(filename.length)
@@ -137,7 +137,7 @@ else
 }
 
 	string app3;
-	CCodeWriter writer3 = new CCodeWriter(getStringSink(app3));
+	ast.CCodeWriter writer3 = new ast.CCodeWriter(ast.getStringSink(app3));
 	writer3.writeNode(n);
 
 	if(filename.length)
@@ -324,7 +324,7 @@ string ctfeParser(string txt)
 	class DSink { string s; void write(string txt) { s ~= txt; } }
 	DSink sink = new DSink;
 
-	DCodeWriter writer = new DCodeWriter(&sink.write);
+	ast.DCodeWriter writer = new ast.DCodeWriter(&sink.write);
 	writer(n);
 
 	return sink.s;
@@ -340,7 +340,7 @@ const string mixinCTFEParser = q{
 //		class DSink { string s; void write(string txt) { s ~= txt; } }
 //		DSink sink = new DSink;
 
-//		DCodeWriter writer = new DCodeWriter(&sink.write);
+//		ast.DCodeWriter writer = new ast.DCodeWriter(&sink.write);
 //		writer(n);
 
 //		return sink.s;

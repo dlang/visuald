@@ -28,7 +28,7 @@ debug debug = COM;
 // debug(COM) debug = COM_ADDREL;
 
 import core.runtime;
-debug(COM_ADDREL) debug static import rsgc.gc;
+//debug(COM_ADDREL) debug static import rsgc.gc;
 import core.memory;
 
 import visuald.logutil;
@@ -82,6 +82,8 @@ class DComObject : ComObject
 		__gshared LONG sCountReferenced;
 		__gshared int[LONG] sReferencedObjects;
 		enum size_t WEAK_PTR_XOR = 0x80000000;
+        alias AssociativeArray!(LONG, int) _wa1; // fully instantiate type info
+
 	}
 
 debug
@@ -172,7 +174,7 @@ version(none) // copy for debugging
 	override ULONG AddRef()
 	{
 		LONG lRef = super.AddRef();
-		debug(COM_ADDREL) logCall("addref  %s this = %s", this, cast(void*)this);
+		debug(COM_ADDREL) logCall("addref  %s this = %s ref = %d", this, cast(void*)this, lRef);
 		
 		if(lRef == 1)
 		{
@@ -190,7 +192,7 @@ version(none) // copy for debugging
 	{
 		ULONG lRef = super.Release();
 
-		debug(COM_ADDREL) logCall("release %s this = %s", this, cast(void*)this);
+		debug(COM_ADDREL) logCall("release %s this = %s ref = %d", this, cast(void*)this, lRef);
 	
 		if (lRef == 0)
 		{
@@ -202,14 +204,13 @@ version(none) // copy for debugging
 		}
 		return lRef;
 	}
-
-	LONG count = 0;		// object reference count
 }
 
 class DisposingComObject : DComObject
 {
 	override ULONG Release()
 	{
+		assert(count > 0);
 		if(count == 1)
 		{
 			// avoid recursive delete if the object is temporarily ref-counted

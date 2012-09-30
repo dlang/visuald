@@ -243,7 +243,34 @@ class EnumDeclaration
 //    { EnumMembers }
 class EnumBody
 {
-	mixin SequenceNode!(ast.EnumBody, TOK_lcurly, EnumMembers, TOK_rcurly);
+	mixin SequenceNode!(ast.EnumBody, TOK_lcurly, EnumMembersRecover, TOK_rcurly);
+}
+class EnumMembersRecover
+{
+	static Action enter(Parser p)
+	{
+		p.pushNode(new ast.EnumMembers(p.tok));
+
+		// recover code inserted into EnumMembers.enter
+		p.pushRecoverState(&recover);
+		p.pushState(&Parser.keepRecover);   // add a "guard" state to avoid popping recover
+		p.pushState(&verifyCurly);
+
+		p.pushState(&EnumMembers.shift);
+		return EnumMember.enter(p);
+	}
+
+	static Action verifyCurly(Parser p)
+	{
+		if(p.tok.id != TOK_rcurly)
+			return p.parseError("'}' expected after enum");
+		return Forward;
+	}
+
+	static Action recover(Parser p)
+	{
+		return Parser.recoverSemiCurly(p);
+	}
 }
 
 //-- GRAMMAR_BEGIN --
@@ -279,7 +306,7 @@ class EnumMember
 	
 	static Action shiftIdentifierOrType(Parser p)
 	{
-		if(p.tok.id != TOK_assign && p.tok.id != TOK_comma && p.tok.id == TOK_lcurly)
+		if(p.tok.id != TOK_assign && p.tok.id != TOK_comma && p.tok.id != TOK_rcurly)
 		{
 			p.pushState(&shiftType);
 			return Type.enterIdentifier(p);

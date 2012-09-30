@@ -90,8 +90,7 @@ class Decl : Node
 	{
 		if(isAlias)
 			writer(TOK_alias, " ");
-		writer.writeAttributes(attr);
-		writer.writeAnnotations(annotation);
+		writer.writeAttributesAndAnnotations(attr, annotation);
 		
 		writer(getType(), " ", getDeclarators());
 		bool semi = true;
@@ -131,8 +130,7 @@ class Decl : Node
 			writer.nl;
 			if(isAlias)
 				writer(TOK_alias, " ");
-			writer.writeAttributes(attr | (addExtern ? Attr_Extern : 0));
-			writer.writeAnnotations(annotation);
+			writer.writeAttributesAndAnnotations(attr | (addExtern ? Attr_Extern : 0), annotation);
 			
 			bool semi = true;
 			writer(getType(), " ", getDeclarators());
@@ -157,8 +155,7 @@ class Decl : Node
 				
 				if(isAlias)
 					writer(TOK_alias, " ");
-				writer.writeAttributes(attr | (addExtern ? Attr_Extern : 0));
-				writer.writeAnnotations(annotation);
+				writer.writeAttributesAndAnnotations(attr | (addExtern ? Attr_Extern : 0), annotation);
 				
 				writer(getType(), " ", d, ";");
 				writer.nl();
@@ -833,8 +830,7 @@ class ParameterList : Node
 		writer(")");
 		if(attr)
 		{
-			writer(" ");
-			writer.writeAttributes(attr);
+			writer.writeAttributesAndAnnotations(attr, annotation, true);
 		}
 	}
 	
@@ -903,7 +899,7 @@ class ParameterDeclarator : Node
 	
 	override void toD(CodeWriter writer)
 	{
-		writer.writeAttributes(attr);
+		writer.writeAttributesAndAnnotations(attr, annotation);
 		writer(getType());
 		if(auto decl = getDeclarator())
 			writer(" ", decl);

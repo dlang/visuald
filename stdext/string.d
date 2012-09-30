@@ -265,3 +265,10 @@ char[] parseNonSpace(ref char[] txt)
 	return res;
 }
 
+T[] firstLine(T)(T[] s)
+{
+	for(size_t i = 0; i < s.length; i++)
+		if(s[i] == '\n' || s[i] == '\r')
+			return s[0..i];
+	return s;
+}

@@ -67,6 +67,7 @@ class BuiltinType(T) : Node
 }
 
 Scope[int] builtInScopes;
+alias AssociativeArray!(int, Scope) _wa1; // fully instantiate type info
 
 Scope getBuiltinBasicTypeScope(int tokid)
 {
@@ -1132,7 +1133,7 @@ class TypeFunction : Type
 	override bool propertyNeedsParens() const { return true; }
 	
 	Type getReturnType() { return getMember!Type(0); }
-	ParameterList getParameters() { return getMember!ParameterList(1); }
+	ParameterList getParameters() { return getMember!ParameterList(1); } // overwritten in TypeFunctionLiteral/TypeDelegateLiteral
 	
 	Declarator funcDecl; // the actual function pointer
 	
@@ -1176,7 +1177,7 @@ class TypeFunction : Type
 	override void toD(CodeWriter writer)
 	{
 		writer(getReturnType(), " function", getParameters());
-		writer.writeAttributes(attr, true);
+		writer.writeAttributesAndAnnotations(attr, annotation, true);
 	}
 }
 
@@ -1226,7 +1227,7 @@ class TypeDelegate : TypeFunction
 	override void toD(CodeWriter writer)
 	{
 		writer(getReturnType(), " delegate", getParameters());
-		writer.writeAttributes(attr, true);
+		writer.writeAttributesAndAnnotations(attr, annotation, true);
 	}
 }
 

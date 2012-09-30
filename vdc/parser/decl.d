@@ -135,6 +135,7 @@ class Decl(bool checkSemi = true)
 		if(isStorageClass(p.tok.id))
 		{
 			p.combineAttributes(decl.attr, tokenToAttribute(p.tok.id));
+			p.combineAnnotations(decl.annotation, tokenToAnnotation(p.tok.id));
 			p.pushState(&shiftStorageClass);
 			return Accept;
 		}
@@ -199,6 +200,7 @@ class Decl(bool checkSemi = true)
 		{
 			auto decl = p.topNode!(ast.Decl)();
 			p.combineAttributes(decl.attr, tokenToAttribute(p.tok.id));
+			p.combineAnnotations(decl.annotation, tokenToAnnotation(p.tok.id));
 			p.pushState(&shiftStorageClass);
 			return Accept;
 		}
@@ -1409,6 +1411,7 @@ class ParameterDeclarator
 		{
 			auto decl = p.topNode!(ast.ParameterDeclarator)();
 			p.combineAttributes(decl.attr, tokenToAttribute(p.tok.id));
+			p.combineAnnotations(decl.annotation, tokenToAnnotation(p.tok.id));
 			p.pushState(&shiftStorageClass);
 			return Accept;
 		}
@@ -1445,6 +1448,7 @@ class ParameterDeclarator
 		{
 			auto decl = p.topNode!(ast.ParameterDeclarator)();
 			p.combineAttributes(decl.attr, tokenToAttribute(p.tok.id));
+			p.combineAnnotations(decl.annotation, tokenToAnnotation(p.tok.id));
 			p.pushState(&shiftStorageClass);
 			return Accept;
 		}

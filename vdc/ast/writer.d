@@ -128,8 +128,10 @@ class CodeWriter
 		write(ident);
 	}
 
-	void writeAttributes(Attribute attr, bool spaceBefore = false)
+	bool writeAttributes(Attribute attr, bool spaceBefore = false)
 	{
+		if(!attr)
+			return false;
 		while(attr)
 		{
 			Attribute a = attr & -attr;
@@ -140,19 +142,31 @@ class CodeWriter
 				write(" ");
 			attr -= a;
 		}
+		return true;
 	}
 
-	void writeAnnotations(Annotation annot)
+	bool writeAnnotations(Annotation annot, bool spaceBefore = false)
 	{
+		if(!annot)
+			return false;
 		while(annot)
 		{
 			Annotation a = annot & -annot;
+			if(spaceBefore)
+				write(" ");
 			write(annotationToString(a));
-			write(" ");
+			if(!spaceBefore)
+				write(" ");
 			annot -= a;
 		}
+		return true;
 	}
 
+	void writeAttributesAndAnnotations(Attribute attr, Annotation annot, bool spaceBefore = false)
+	{
+		writeAttributes(attr, spaceBefore);
+		writeAnnotations(annot, spaceBefore);
+	}
 }
 
 class DCodeWriter : CodeWriter
@@ -213,8 +227,10 @@ class CCodeWriter : CodeWriter
 		}
 	}
 
-	override void writeAttributes(Annotation attr, bool spaceBefore = false)
+	override bool writeAttributes(Annotation attr, bool spaceBefore = false)
 	{
+		if(!attr)
+			return false;
 		while(attr)
 		{
 			Attribute a = attr & -attr;
@@ -229,10 +245,12 @@ class CCodeWriter : CodeWriter
 			}
 			attr -= a;
 		}
+		return true;
 	}
 
-	override void writeAnnotations(Annotation annot)
+	override bool writeAnnotations(Annotation annot, bool spaceBefore = false)
 	{
+		return true;
 	}
 }
 

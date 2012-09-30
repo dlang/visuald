@@ -1039,7 +1039,7 @@ class ConfigProvider : DisposingComObject,
 
 	Config addConfig(string name, string platform)
 	{
-		Config cfg = new Config(this, name, platform);
+		Config cfg = newCom!Config(this, name, platform);
 		mConfigs ~= addref(cfg);
 		return cfg;
 	}
@@ -1222,7 +1222,7 @@ class ConfigProvider : DisposingComObject,
 		for(int i = 0; i < cnt; i++)
 			if(mConfigs[i].mName == strCloneCfgName)
 			{
-				Config config = new Config(this, strCfgName, mConfigs[i].mPlatform, mConfigs[i].mProjectOptions);
+				Config config = newCom!Config(this, strCfgName, mConfigs[i].mPlatform, mConfigs[i].mProjectOptions);
 				mConfigs ~= addref(config);
 			}
 
@@ -1312,7 +1312,7 @@ class ConfigProvider : DisposingComObject,
 		for(int i = 0; i < cnt; i++)
 			if(mConfigs[i].mPlatform == strClonePlatformName)
 			{
-				Config config = new Config(this, mConfigs[i].mName, strPlatformName, mConfigs[i].mProjectOptions);
+				Config config = newCom!Config(this, mConfigs[i].mName, strPlatformName, mConfigs[i].mProjectOptions);
 				mConfigs ~= addref(config);
 			}
 
@@ -1423,7 +1423,7 @@ class Config :	DisposingComObject,
 		IVsBuildableProjectCfg,
 		ISpecifyPropertyPages
 {
-	static GUID iid = { 0x402744c1, 0xe382, 0x4877, [ 0x9e, 0x38, 0x26, 0x9c, 0xb7, 0xa3, 0xb8, 0x9d ] };
+	static const GUID iid = { 0x402744c1, 0xe382, 0x4877, [ 0x9e, 0x38, 0x26, 0x9c, 0xb7, 0xa3, 0xb8, 0x9d ] };
 
 	this(ConfigProvider provider, string name, string platform, ProjectOptions opts = null)
 	{
@@ -1514,7 +1514,7 @@ class Config :	DisposingComObject,
 	{
 		mixin(LogCallMix);
 
-		*ppIVsEnumOutputs = addref(new DEnumOutputs(this, 0));
+		*ppIVsEnumOutputs = addref(newCom!DEnumOutputs(this, 0));
 		return S_OK;
 	}
 
@@ -2712,7 +2712,7 @@ class DEnumOutFactory : DComObject, IClassFactory
 		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
 
 		assert(!UnkOuter);
-		DEnumOutputs eo = new DEnumOutputs(null, 0);
+		DEnumOutputs eo = newCom!DEnumOutputs(null, 0);
 		return eo.QueryInterface(riid, pvObject);
 	}
 	override HRESULT LockServer(in BOOL fLock)
@@ -2776,7 +2776,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		
 		if(pcElementsFetched)
 			*pcElementsFetched = 1;
-		*rgpIVsOutput = addref(new VsOutput(mTargets[mPos]));
+		*rgpIVsOutput = addref(newCom!VsOutput(mTargets[mPos]));
 		mPos++;
 		return S_OK;
 	}
@@ -2798,7 +2798,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	{
 		mixin(LogCallMix);
 
-		*ppIVsEnumOutputs = addref(new DEnumOutputs(this));
+		*ppIVsEnumOutputs = addref(newCom!DEnumOutputs(this));
 		return S_OK;
 	}
 
@@ -2923,7 +2923,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		if(HRESULT hr = pStm.Read(&cnt, cnt.sizeof, null))
 			return hr;
 
-		DEnumOutputs eo = new DEnumOutputs(null, 0);
+		DEnumOutputs eo = newCom!DEnumOutputs(null, 0);
 		for(int i = 0; i < cnt; i++)
 		{
 			int length;

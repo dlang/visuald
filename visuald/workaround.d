@@ -8,6 +8,8 @@ import std.conv;
 // this must be *parsed* before other usage of the template
 static if(__traits(compiles,std.conv.parse!(real,string))){}
 
+__gshared int[string] x;
+
 version(none) debug
 {
 	

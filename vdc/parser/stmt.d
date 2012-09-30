@@ -378,6 +378,7 @@ class BlockStatement : Statement
 			case TOK_lcurly:
 				p.pushNode(new ast.BlockStatement(p.tok));
 				p.pushRecoverState(&recover);
+				p.pushState(&Parser.keepRecover);   // add a "guard" state to avoid popping recover
 				p.pushState(&shiftLcurly);
 				return Accept;
 			default:

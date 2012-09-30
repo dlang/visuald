@@ -177,7 +177,7 @@ class Parser
 	}
 	
 	// node stack //////////////////
-	T topNode(T = Node)()
+	@property T topNode(T = Node)()
 	{
 		Node n = nodeStack.top();
 		return static_cast!T(n);
@@ -385,7 +385,7 @@ class Parser
 		recoverStack.push(ss);
 	}
 
-	void popRocoverState()
+	void popRecoverState()
 	{
 		recoverStack.pop();
 	}
@@ -408,6 +408,12 @@ class Parser
 		pushState(ss.rollbackState);
 	}
 
+
+	static Action keepRecover(Parser p)
+	{
+		// can be inserted into the state stack to avoid implicitely removing an entry of the recover stack
+		return Forward;
+	}
 	static Action recoverSemiCurly(Parser p)
 	{
 		switch(p.tok.id)
@@ -591,8 +597,8 @@ class Parser
 			State fn = popState();
 			lastState = fn;
 
-			while(recoverStack.depth > 0 && stateStack.depth < recoverStack.top().stateStackDepth)
-				popRocoverState();
+			while(recoverStack.depth > 0 && stateStack.depth <= recoverStack.top().stateStackDepth)
+				popRecoverState();
 			
 			version(TraceParser)
 			{ 
@@ -860,11 +866,11 @@ string readUtf8(string fname)
 	 * FF FE        UTF-16LE, little-endian
 	 * EF BB BF     UTF-8
 	 */
-	static ubyte[4] bomUTF32BE = [ 0x00, 0x00, 0xFE, 0xFF ]; // UTF-32, big-endian
-	static ubyte[4] bomUTF32LE = [ 0xFF, 0xFE, 0x00, 0x00 ]; // UTF-32, little-endian
-	static ubyte[2] bomUTF16BE = [ 0xFE, 0xFF ];             // UTF-16, big-endian
-	static ubyte[2] bomUTF16LE = [ 0xFF, 0xFE ];             // UTF-16, little-endian
-	static ubyte[3] bomUTF8    = [ 0xEF, 0xBB, 0xBF ];       // UTF-8
+	static const ubyte[4] bomUTF32BE = [ 0x00, 0x00, 0xFE, 0xFF ]; // UTF-32, big-endian
+	static const ubyte[4] bomUTF32LE = [ 0xFF, 0xFE, 0x00, 0x00 ]; // UTF-32, little-endian
+	static const ubyte[2] bomUTF16BE = [ 0xFE, 0xFF ];             // UTF-16, big-endian
+	static const ubyte[2] bomUTF16LE = [ 0xFF, 0xFE ];             // UTF-16, little-endian
+	static const ubyte[3] bomUTF8    = [ 0xEF, 0xBB, 0xBF ];       // UTF-8
 	
 	ubyte[] data = cast(ubyte[]) std.file.read(fname);
 	if(data.length >= 4 && data[0..4] == bomUTF32BE[])

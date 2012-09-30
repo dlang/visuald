@@ -49,7 +49,7 @@ import sdk.vsi.encbuild;
 
 ///////////////////////////////////////////////////////////////
 
-bool _false; // used in assert(false) to avoid semantic change of assert
+__gshared bool _false; // used in assert(false) to avoid semantic change of assert
 
 ///////////////////////////////////////////////////////////////
 
@@ -478,7 +478,7 @@ void logIndent(int n)
 	gLogIndent += n;
 }
 
-FILE* gcLogFh;
+__gshared FILE* gcLogFh;
 
 extern(C) void log_printf(string fmt, ...)
 {
@@ -559,7 +559,7 @@ version(test) {
 		else
 			synchronized(logSync.classinfo)
 			{
-				static bool canLog;
+				static __gshared bool canLog;
 				if(gLogFirst)
 				{
 					gLogFirst = false;
@@ -568,7 +568,7 @@ version(test) {
 					try
 					{
 						string bar = "\n" ~ replicate("=", 80) ~ "\n";
-						std.file.append(gLogFile, bar);
+						std.file.write(gLogFile, bar); // append?
 						canLog = true;
 					}
 					catch(Exception e)

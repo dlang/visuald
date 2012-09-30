@@ -6,7 +6,7 @@
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
+  <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -46,7 +46,7 @@
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
+  <imppath>.. m:\s\d\rainers\druntime\src</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\obj</objdir>
@@ -87,7 +87,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
-  <additionalOptions />
+  <additionalOptions>-debuglib=phobos</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
@@ -174,7 +174,7 @@
   <cv2pdbOptions />
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -234,6 +234,7 @@ CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I." outfile="$(InputDir)
    <File tool="None" path="..\rsgc\gc.d" />
    <File tool="None" path="..\rsgc\gcalloc.d" />
    <File tool="None" path="..\rsgc\gcbits.d" />
+   <File path="..\rsgc\gcdump.d" />
    <File tool="None" path="..\rsgc\gcstats.d" />
    <File tool="None" path="..\rsgc\gcx.d" />
   </Folder>

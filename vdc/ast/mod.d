@@ -393,8 +393,7 @@ class AttributeSpecifier : Node
 
 	override void toD(CodeWriter writer)
 	{
-		writer.writeAttributes(attr);
-		writer.writeAnnotations(annotation);
+		writer.writeAttributesAndAnnotations(attr, annotation);
 		
 		switch(id)
 		{
@@ -743,6 +742,8 @@ class MixinDeclaration : Node
 		Value v = getMember(0).interpret(ctx);
 		string s = v.toMixin();
 		Parser parser = new Parser;
+		if(auto prj = sc.getProject())
+			parser.saveErrors = prj.saveErrors;
 		return parser.parseDeclarations(s, span);
 	}
 

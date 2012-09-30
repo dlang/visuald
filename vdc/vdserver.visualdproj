@@ -6,7 +6,7 @@
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
+  <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -557,6 +557,7 @@
 midl /I &quot;$(WindowsSdkDir)\Include&quot; /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(OutDir) /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
   <File tool="Custom" path="vdserver.rc" dependencies="$(OutDir)\vdserver.tlb ..\version" customcmd="rc /fo$(OutDir)\vdserver.res &quot;/I$(OutDir)&quot; &quot;/I$(WindowsSdkDir)\include&quot; &quot;/I$(DevEnvDir)..\..\VC\include&quot; $(InputPath)" outfile="$(OutDir)\vdserver.res" linkoutput="true" />
   <File path="vdserver.reg" />
+  <File path="vdserver_d.reg" />
   <File path="vdserverfactory.d" />
  </Folder>
 </DProject>

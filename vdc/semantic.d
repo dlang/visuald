@@ -465,7 +465,8 @@ class Project : Node
 {
 	Options options;
 	int countErrors;
-	
+	bool saveErrors;
+
 	Module mObjectModule; // object.d
 	SourceModule[string] mSourcesByModName;
 	SourceModule[string] mSourcesByFileName;
@@ -551,6 +552,7 @@ class Project : Node
 		logInfo("parsing " ~ fname);
 
 		Parser p = new Parser;
+		p.saveErrors = saveErrors;
 		src.parser = p;
 		scope(exit) src.parser = null;
 

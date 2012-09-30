@@ -97,7 +97,7 @@ class LanguageService : DisposingComObject,
 	this(Package pkg)
 	{
 		//mPackage = pkg;
-		mUpdateSolutionEvents = new UpdateSolutionEvents(this);
+		mUpdateSolutionEvents = newCom!UpdateSolutionEvents(this);
 		mVDServerClient = new VDServerClient;
 	}
 
@@ -186,7 +186,7 @@ class LanguageService : DisposingComObject,
 		if(pCodeWin.GetBuffer(&buffer) == S_OK)
 		{
 			Source src = GetSource(buffer);
-			CodeWindowManager mgr = new CodeWindowManager(this, pCodeWin, src);
+			CodeWindowManager mgr = newCom!CodeWindowManager(this, pCodeWin, src);
 			mCodeWinMgrs ~= addref(mgr);
 			*ppCodeWinMgr = addref(mgr);
 		}
@@ -265,7 +265,7 @@ class LanguageService : DisposingComObject,
 		if(!src)
 			return E_FAIL;
 
-		*ppEnum = addref(new EnumProximityExpressions(src, iLine, iCol, cLines));
+		*ppEnum = addref(newCom!EnumProximityExpressions(src, iLine, iCol, cLines));
 		return S_OK;
 	}
 
@@ -368,43 +368,43 @@ class LanguageService : DisposingComObject,
 	{
 		colorableItems = [
 			// The first 6 items in this list MUST be these default items.
-			new ColorableItem("Keyword",    CI_BLUE,        CI_USERTEXT_BK),
-			new ColorableItem("Comment",    CI_DARKGREEN,   CI_USERTEXT_BK),
-			new ColorableItem("Identifier", CI_USERTEXT_FG, CI_USERTEXT_BK),
-			new ColorableItem("String",     CI_MAROON,      CI_USERTEXT_BK),
-			new ColorableItem("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
-			new ColorableItem("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
+			newCom!ColorableItem("Keyword",    CI_BLUE,        CI_USERTEXT_BK),
+			newCom!ColorableItem("Comment",    CI_DARKGREEN,   CI_USERTEXT_BK),
+			newCom!ColorableItem("Identifier", CI_USERTEXT_FG, CI_USERTEXT_BK),
+			newCom!ColorableItem("String",     CI_MAROON,      CI_USERTEXT_BK),
+			newCom!ColorableItem("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
+			newCom!ColorableItem("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
 			
 			// Visual D specific (must match Lexer.TokenCat)
-			new ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
-			new ColorableItem("Visual D Register",         CI_PURPLE,      CI_USERTEXT_BK),
-			new ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
-			new ColorableItem("Visual D Type",                -1,          CI_USERTEXT_BK, RGB(0, 0, 160)),
-			new ColorableItem("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0)),
+			newCom!ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
+			newCom!ColorableItem("Visual D Register",         CI_PURPLE,      CI_USERTEXT_BK),
+			newCom!ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
+			newCom!ColorableItem("Visual D Type",                -1,          CI_USERTEXT_BK, RGB(0, 0, 160)),
+			newCom!ColorableItem("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0)),
 				
-			new ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
-			new ColorableItem("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
-			new ColorableItem("Visual D Disabled Identifier", CI_DARKGRAY, CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled String",     -1,          CI_USERTEXT_BK, RGB(192, 160, 160)),
-			new ColorableItem("Visual D Disabled Number",     CI_DARKGRAY, CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Text",       CI_DARKGRAY, CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK),
-			new ColorableItem("Visual D Disabled Register",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
-			new ColorableItem("Visual D Disabled Mnemonic",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
-			new ColorableItem("Visual D Disabled Type",       -1,          CI_USERTEXT_BK, RGB(64, 112, 208)),
-			new ColorableItem("Visual D Disabled Version",    -1,          CI_USERTEXT_BK, RGB(160, 128, 128)),
+			newCom!ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+			newCom!ColorableItem("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
+			newCom!ColorableItem("Visual D Disabled Identifier", CI_DARKGRAY, CI_USERTEXT_BK),
+			newCom!ColorableItem("Visual D Disabled String",     -1,          CI_USERTEXT_BK, RGB(192, 160, 160)),
+			newCom!ColorableItem("Visual D Disabled Number",     CI_DARKGRAY, CI_USERTEXT_BK),
+			newCom!ColorableItem("Visual D Disabled Text",       CI_DARKGRAY, CI_USERTEXT_BK),
+			newCom!ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK),
+			newCom!ColorableItem("Visual D Disabled Register",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+			newCom!ColorableItem("Visual D Disabled Mnemonic",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+			newCom!ColorableItem("Visual D Disabled Type",       -1,          CI_USERTEXT_BK, RGB(64, 112, 208)),
+			newCom!ColorableItem("Visual D Disabled Version",    -1,          CI_USERTEXT_BK, RGB(160, 128, 128)),
 
-			new ColorableItem("Visual D Token String Keyword",    -1,      CI_USERTEXT_BK, RGB(160,0,128)),
-			new ColorableItem("Visual D Token String Comment",    -1,      CI_USERTEXT_BK, RGB(128,160,80)),
-			new ColorableItem("Visual D Token String Identifier", -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			new ColorableItem("Visual D Token String String",     -1,      CI_USERTEXT_BK, RGB(255,64,64)),
-			new ColorableItem("Visual D Token String Number",     -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			new ColorableItem("Visual D Token String Text",       -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			new ColorableItem("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			new ColorableItem("Visual D Token String Register",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
-			new ColorableItem("Visual D Token String Mnemonic",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
-			new ColorableItem("Visual D Token String Type",       -1,      CI_USERTEXT_BK, RGB(112,0,80)),
-			new ColorableItem("Visual D Token String Version",    -1,      CI_USERTEXT_BK, RGB(224, 0, 0)),
+			newCom!ColorableItem("Visual D Token String Keyword",    -1,      CI_USERTEXT_BK, RGB(160,0,128)),
+			newCom!ColorableItem("Visual D Token String Comment",    -1,      CI_USERTEXT_BK, RGB(128,160,80)),
+			newCom!ColorableItem("Visual D Token String Identifier", -1,      CI_USERTEXT_BK, RGB(128,32,32)),
+			newCom!ColorableItem("Visual D Token String String",     -1,      CI_USERTEXT_BK, RGB(255,64,64)),
+			newCom!ColorableItem("Visual D Token String Number",     -1,      CI_USERTEXT_BK, RGB(128,32,32)),
+			newCom!ColorableItem("Visual D Token String Text",       -1,      CI_USERTEXT_BK, RGB(128,32,32)),
+			newCom!ColorableItem("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,32,32)),
+			newCom!ColorableItem("Visual D Token String Register",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
+			newCom!ColorableItem("Visual D Token String Mnemonic",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
+			newCom!ColorableItem("Visual D Token String Type",       -1,      CI_USERTEXT_BK, RGB(112,0,80)),
+			newCom!ColorableItem("Visual D Token String Version",    -1,      CI_USERTEXT_BK, RGB(224, 0, 0)),
 		];
 	};
 	static void shared_static_dtor()
@@ -634,7 +634,7 @@ class LanguageService : DisposingComObject,
 		}
 		if(!create)
 			return null;
-		src = new Source(buffer);
+		src = newCom!Source(buffer);
 		mSources ~= src;
 		src.AddRef();
 	L_found:
@@ -865,7 +865,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 	{
 		mixin(LogCallMix);
 
-		ViewFilter vf = new ViewFilter(this, pView);
+		ViewFilter vf = newCom!ViewFilter(this, pView);
 		mViewFilters ~= vf;
 		return S_OK;
 	}
@@ -955,7 +955,7 @@ bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int 
 	if (cdv.IsVisible() != S_OK)
 		return false;
 
-	CodeDefViewContext context = new CodeDefViewContext(symbol, filename, line, col);
+	CodeDefViewContext context = newCom!CodeDefViewContext(symbol, filename, line, col);
 	cdv.SetContext(context);
 	return true;
 }
@@ -1067,8 +1067,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	this(IVsTextLines buffer)
 	{
 		mBuffer = addref(buffer);
-		mColorizer = new Colorizer(this);
-		mSourceEvents = new SourceEvents(this, mBuffer);
+		mColorizer = newCom!Colorizer(this);
+		mSourceEvents = newCom!SourceEvents(this, mBuffer);
 
 		mOutlining = Package.GetGlobalOptions().autoOutlining;
 		mModificationCountAST = -1;
@@ -1503,6 +1503,12 @@ version(threadedOutlining) {} else
 		return rgns;
 	}
 	
+	unittest
+	{
+		const(void)* p = typeid(NewHiddenRegion).rtInfo;
+		assert(p !is rtinfoNoPointers && p !is rtinfoHasPointers);
+	}
+
 	bool DiffRegions(IVsHiddenTextSession session, ref NewHiddenRegion[] rgns)
 	{
 		// Compare the existing regions with the new regions and 
@@ -3205,7 +3211,7 @@ else
 	ExpansionProvider GetExpansionProvider()
 	{
 		if(!mExpansionProvider)
-			mExpansionProvider = addref(new ExpansionProvider(this));
+			mExpansionProvider = addref(newCom!ExpansionProvider(this));
 		return mExpansionProvider;
 	}
 
@@ -3215,14 +3221,14 @@ else
 	CompletionSet GetCompletionSet()
 	{
 		if(!mCompletionSet)
-			mCompletionSet = addref(new CompletionSet(null, this));
+			mCompletionSet = addref(newCom!CompletionSet(null, this));
 		return mCompletionSet;
 	}
 
 	MethodData GetMethodData()
 	{
 		if(!mMethodData)
-			mMethodData = addref(new MethodData());
+			mMethodData = addref(newCom!MethodData());
 		return mMethodData;
 	}
 
@@ -3340,7 +3346,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 
 	override int Clone(IVsEnumBSTR* ppenum)
 	{
-		auto clone = new EnumProximityExpressions(this);
+		auto clone = newCom!EnumProximityExpressions(this);
 		*ppenum = addref(clone);
 		return S_OK;
 	}

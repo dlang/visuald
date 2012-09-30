@@ -473,7 +473,7 @@ class OleDataSource : DComObject, IDataObject
 		*ppenumFormatEtc = null;
 
 		// generate a format list from the cache
-		CEnumFormatEtc pFormatList = new CEnumFormatEtc(this, dwDirection);
+		CEnumFormatEtc pFormatList = newCom!CEnumFormatEtc(this, dwDirection);
 		*ppenumFormatEtc = addref(pFormatList);
 		return S_OK;
 	}
@@ -573,7 +573,7 @@ class CEnumFormatEtc : DComObject, IEnumFORMATETC
 
     override HRESULT Clone(/+[out]+/ IEnumFORMATETC *ppenum)
 	{
-		*ppenum = addref(new CEnumFormatEtc(mSrc, mDirection));
+		*ppenum = addref(newCom!CEnumFormatEtc(mSrc, mDirection));
 		return S_OK;
 	}
 	

@@ -6,7 +6,7 @@
   <lib>1</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
+  <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -41,7 +41,7 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
@@ -555,6 +555,7 @@
  <Folder name="stdext">
   <File path="array.d" />
   <File path="com.d" />
+  <File path="container.d" />
   <File path="file.d" />
   <File path="httpget.d" />
   <File path="path.d" />

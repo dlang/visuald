@@ -53,7 +53,7 @@ bool showSearchWindow()
 		if(!pIVsUIShell)
 			return false;
 
-		sSearchPane = new SearchPane();
+		sSearchPane = newCom!SearchPane;
 		const(wchar)* caption = "Visual D Search"w.ptr;
 		HRESULT hr;
 		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sSearchPane, 
@@ -137,7 +137,7 @@ enum COLUMNID
 	MAX
 }
 
-static_COLUMNINFO[] s_rgColumns =
+const static_COLUMNINFO[] s_rgColumns =
 [
 	//{ "none", LVCFMT_LEFT, 80 },
 	{ "Name", LVCFMT_LEFT, 80 },
@@ -424,7 +424,7 @@ private:
 		return 0;
 	}
 
-	this()
+	public this()
 	{
 		_fAlternateRowColor = true;
 		_closeOnReturn = true;

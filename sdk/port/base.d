@@ -47,7 +47,7 @@ union CY
 
 version(sdk)
 {
-	const _WIN32_WINNT = 0x600;
+	enum _WIN32_WINNT = 0x600;
 
 	alias char CHAR;
 //	alias short SHORT;
@@ -123,7 +123,7 @@ version(D_Version2) {} else
 	alias LONG SCODE;
 }
 
-const uint UINT_MAX = uint.max;
+enum uint UINT_MAX = uint.max;
 
 alias LONG NTSTATUS;
 
@@ -170,7 +170,7 @@ struct _DSA;
 struct _DPA;
 interface IImageList {}
 // 7.1
-const CCM_TRANSLATEACCELERATOR = (WM_USER+97);
+enum CCM_TRANSLATEACCELERATOR = (WM_USER+97);
 	
 version(sdk) {}
 else {
@@ -226,15 +226,15 @@ struct LOGFONTW
 alias LOGFONTW* PLOGFONTW, NPLOGFONTW, LPLOGFONTW;
 } // !sdk
 
-const OLE_E_LAST = 0x800400FF;
+enum OLE_E_LAST = 0x800400FF;
 
 version(vsi)
 {
-const WM_USER = 0x400;
+enum WM_USER = 0x400;
 
 // from winerror.h
-const SEVERITY_SUCCESS    = 0;
-const SEVERITY_ERROR      = 1;
+enum SEVERITY_SUCCESS    = 0;
+enum SEVERITY_ERROR      = 1;
 
 }
 HRESULT MAKE_HRESULT(uint sev, uint fac, uint code) { return cast(HRESULT) ((sev<<31) | (fac<<16) | code); }
@@ -244,19 +244,19 @@ version(none)
 {
 
 // from adserr.h
-const FACILITY_WINDOWS                 = 8;
-const FACILITY_STORAGE                 = 3;
-const FACILITY_RPC                     = 1;
-const FACILITY_SSPI                    = 9;
-const FACILITY_WIN32                   = 7;
-const FACILITY_CONTROL                 = 10;
-const FACILITY_NULL                    = 0;
-const FACILITY_ITF                     = 4;
-const FACILITY_DISPATCH                = 2;
+enum FACILITY_WINDOWS                 = 8;
+enum FACILITY_STORAGE                 = 3;
+enum FACILITY_RPC                     = 1;
+enum FACILITY_SSPI                    = 9;
+enum FACILITY_WIN32                   = 7;
+enum FACILITY_CONTROL                 = 10;
+enum FACILITY_NULL                    = 0;
+enum FACILITY_ITF                     = 4;
+enum FACILITY_DISPATCH                = 2;
 
 // from commctrl.h
-const TV_FIRST                = 0x1100;      // treeview messages
-const TVN_FIRST               = (0U-400U);   // treeview notifications
+enum TV_FIRST                = 0x1100;      // treeview messages
+enum TVN_FIRST               = (0U-400U);   // treeview notifications
 }
 
 version(none)
@@ -282,7 +282,7 @@ struct FLAGGED_WORD_BLOB
 
 version(vsi)
 {
-const prjBuildActionCustom = 3;
+enum prjBuildActionCustom = 3;
 
 }
 

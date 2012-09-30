@@ -44,7 +44,7 @@ bool showTokenReplaceWindow(bool replace)
 		if(!pIVsUIShell)
 			return false;
 
-		sSearchPane = new TokenReplacePane();
+		sSearchPane = newCom!TokenReplacePane();
 		const(wchar)* caption = "Visual D Token Search/Replace"w.ptr;
 		HRESULT hr;
 		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sSearchPane, 

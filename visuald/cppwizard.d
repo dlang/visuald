@@ -60,7 +60,7 @@ bool createCppWizardWindow()
 		if(!pIVsUIShell)
 			return false;
 
-		sWizardPane = new CppWizardPane();
+		sWizardPane = newCom!CppWizardPane();
 		const(wchar)* caption = "Visual D C++ Conversion Wizard"w.ptr;
 		HRESULT hr;
 		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sWizardPane, 

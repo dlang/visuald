@@ -27,6 +27,10 @@ import stdext.com;
 
 ///////////////////////////////////////////////////////////////
 
+alias object.AssociativeArray!(string, int) _wa1; // fully instantiate type info for string[Tid]
+
+///////////////////////////////////////////////////////////////
+
 static this()
 {
 	CoInitialize(null);
@@ -57,7 +61,7 @@ class VDServerClassFactory : ComObject, IClassFactory
 		{
 			//MessageBoxW(null, "CreateInstance IVDServer"w.ptr, "[LOCAL] message", MB_OK|MB_SETFOREGROUND);
 			assert(!UnkOuter);
-			VDServer srv = new VDServer;
+			VDServer srv = newCom!VDServer;
 			return srv.QueryInterface(riid, pvObject);
 		}
 		return E_NOINTERFACE;
@@ -89,7 +93,7 @@ int main(string[] argv)
 	HRESULT hr;
 
 	// Create the MyCar class object.
-	VDServerClassFactory cf = new VDServerClassFactory;
+	VDServerClassFactory cf = newCom!VDServerClassFactory;
 
 	// Register the Factory.
 	DWORD regID = 0;

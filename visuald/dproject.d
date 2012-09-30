@@ -107,7 +107,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 			string filename = to_string(pszFilename);
 			string name = baseName(filename);
 
-			Project prj = new Project(this, name, filename);
+			Project prj = newCom!Project(this, name, filename);
 			*pfCanceled = 0;
 			return prj.QueryInterface(iidProject, ppvProject);
 		}
@@ -121,7 +121,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 				return returnError(E_FAIL);
 
 			//std.file.copy(to_wstring(pszFilename), to_wstring(pszLocation));
-			Project prj = new Project(this, name, dest);
+			Project prj = newCom!Project(this, name, dest);
 			*pfCanceled = 0;
 			return prj.QueryInterface(iidProject, ppvProject);
 		}
@@ -308,7 +308,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 	this(Project prj)
 	{
 		mProject = prj;
-		mProjectItems = addref(new ExtProjectItems(this));
+		mProjectItems = addref(newCom!ExtProjectItems(this));
 	}
 
 	override void Dispose()
@@ -556,7 +556,8 @@ class ExtProject : DisposingDispatchObject, dte.Project
 	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
-		mTypeHolder = new class ComTypeInfoHolder {
+		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		{
 			override int GetIDsOfNames( 
 				/* [size_is][in] */ in LPOLESTR *rgszNames,
 				/* [in] */ in UINT cNames,
@@ -570,7 +571,8 @@ class ExtProject : DisposingDispatchObject, dte.Project
 				}
 				return returnError(E_NOTIMPL);
 			}
-		};
+		}
+		mTypeHolder = newCom!_ComTypeInfoHolder;
 		addref(mTypeHolder);
 	}
 	static void shared_static_dtor_typeHolder()
@@ -613,15 +615,15 @@ class Project : CVsHierarchy,
 		//IReferenceContainerProvider,
 		IVsProjectSpecialFiles
 {
-	static GUID iid = { 0x5840c881, 0x9d9e, 0x4a85, [ 0xb7, 0x6b, 0x50, 0xa9, 0x68, 0xdb, 0x22, 0xf9 ] };
+	static const GUID iid = { 0x5840c881, 0x9d9e, 0x4a85, [ 0xb7, 0x6b, 0x50, 0xa9, 0x68, 0xdb, 0x22, 0xf9 ] };
 
 	this(ProjectFactory factory, string name, string filename)
 	{
 		mFactory = factory;
 		mCaption = mName = name;
 		mFilename = filename;
-		mExtProject = addref(new ExtProject(this));
-		mConfigProvider = addref(new ConfigProvider(this));
+		mExtProject = addref(newCom!ExtProject(this));
+		mConfigProvider = addref(newCom!ConfigProvider(this));
 		
 		parseXML();
 	}
@@ -647,8 +649,8 @@ class Project : CVsHierarchy,
 			return S_OK;
 		if(queryInterface!(IVsHierarchyDeleteHandler) (this, riid, pvObject))
 			return S_OK;
-		if(queryInterface!(IVsParentProject) (this, riid, pvObject))
-			return S_OK;
+//		if(queryInterface!(IVsParentProject) (this, riid, pvObject))
+//			return S_OK;
 		if(queryInterface!(IVsGetCfgProvider) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(ISpecifyPropertyPages) (this, riid, pvObject))
@@ -693,7 +695,8 @@ class Project : CVsHierarchy,
 	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
-		mTypeHolder = new class ComTypeInfoHolder {
+		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		{
 			override int GetIDsOfNames( 
 				/* [size_is][in] */ in LPOLESTR *rgszNames,
 				/* [in] */ in UINT cNames,
@@ -712,7 +715,8 @@ class Project : CVsHierarchy,
 				}
 				return returnError(E_NOTIMPL);
 			}
-		};
+		}
+		mTypeHolder = newCom!_ComTypeInfoHolder;
 		addref(mTypeHolder);
 	}
 	static void shared_static_dtor_typeHolder()
@@ -2126,7 +2130,7 @@ class Project : CVsHierarchy,
 			return hr;
 		string name = detachBSTR(cbstrMoniker);
 
-		CFolderNode pFolder = new CFolderNode;
+		CFolderNode pFolder = newCom!CFolderNode;
 		
 		string strThisFolder = baseName(name);
 		pFolder.SetName(strThisFolder);
@@ -2489,7 +2493,7 @@ Error:
 		pFiles[nCurPos] = 0;
 		
 		int res = GlobalUnlock(hGlobal);
-		OleDataSource pDataObject = new OleDataSource;  // has ref count of 0
+		OleDataSource pDataObject = newCom!OleDataSource;  // has ref count of 0
 
 		FORMATETC fmtetc;
 		fmtetc.ptd      = null;
@@ -2679,7 +2683,7 @@ Error:
 				mProjectGUID = uuid(el.text());
 
 			string projectName = getNameWithoutExt(fileName);
-			CProjectNode rootnode = new CProjectNode(fileName, this);
+			CProjectNode rootnode = newCom!CProjectNode(fileName, this);
 			xml.Element[] propItems = xml.elementsById(root, "Folder");
 			foreach(item; propItems)
 			{
@@ -2710,7 +2714,7 @@ Error:
 
 	fail:
 		string projectName = getNameWithoutExt(fileName);
-		CProjectNode rootnode = new CProjectNode("", this);
+		CProjectNode rootnode = newCom!CProjectNode("", this);
 		rootnode.SetName("Failed to load " ~ projectName);
 		SetRootNode(rootnode);
 		
@@ -2723,7 +2727,7 @@ Error:
 		foreach(folder; folderItems)
 		{
 			string name = xml.getAttribute(folder, "name");
-			CHierContainer node = new CFolderNode(name);
+			CHierContainer node = newCom!CFolderNode(name);
 			cont.Add(node);
 			parseContainer(node, folder);
 		}
@@ -2732,7 +2736,7 @@ Error:
 		foreach(file; fileItems)
 		{
 			string fileName = xml.getAttribute(file, "path");
-			CFileNode node = new CFileNode(fileName);
+			CFileNode node = newCom!CFileNode(fileName);
 			node.SetTool(xml.getAttribute(file, "tool"));
 			node.SetDependencies(xml.getAttribute(file, "dependencies"));
 			node.SetOutFile(xml.getAttribute(file, "outfile"));

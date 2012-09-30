@@ -456,10 +456,15 @@ unreleased Version 0.3.34
   * new item: package and module name now filled with some guess
   * optlink now called directly with file monitoring: this allows passing the library path directly (making the DMD_LIB 
     patch in sc.ini redundant) and detecting library and source dependencies
-  * parser could not recover from error in module statement
+  * parser could not recover from error in module statement, also improved recovery from error in enum declaration
+  * parse errors in modules imported during semantic analysis could cause dramatic troubles
+  * fixed parsing problems with function literal attributes and enumerators
   * outlining: adding lines before collapsed region could unfold the regions
   * fix: underlined syntax error could lag behind by a keystroke
   * tweak completion box:
     - from browse info: template arguments and contraint stripped from symbol now
     - avoid delayed opening of completion box when typing non-identifier characters
     - completion box now closed for a lot of navigation and editing commands
+    - improved speed for large symbol lists
+  * status line now cleared after parsing of imports has finished
+  * fix installation for VS2012

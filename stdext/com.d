@@ -22,13 +22,36 @@ import sdk.win32.objbase;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-extern(C) void* gc_malloc(size_t sz, uint ba = 0); 
+extern(C) void* gc_malloc(size_t sz, uint ba = 0, const TypeInfo ti=null); 
+
+C _newCom(C, T...)(T arguments)
+{
+	// avoid special casing in _d_newclass, where COM objects are not garbage collected
+	size_t size = C.classinfo.init.length;
+	void* p = gc_malloc(size, 1, C.classinfo); // BlkAttr.FINALIZE
+	memcpy(p, C.classinfo.init.ptr, size);
+	C c = cast(C) p;
+	static if(arguments.length || __traits(compiles,c.__ctor(arguments)))
+		c.__ctor(arguments);
+	return c;
+}
+
+C newCom(C, T...)(T arguments) if(is(C : ComObject) && T.length > 0)
+{
+    return _newCom!C(arguments);
+}
+
+@property C newCom(C)() if(is(C : ComObject))
+{
+	return _newCom!C();
+}
 
 class ComObject : IUnknown
 {
-	new(size_t size)
+	@disable new(size_t size)
 	{
-		void* p = gc_malloc(size, 1); // BlkAttr.FINALIZE
+		assert(false); // should not be called because we don't have enough type info
+		void* p = gc_malloc(size, 1, typeid(ComObject)); // BlkAttr.FINALIZE
 		return p;
 	}
 

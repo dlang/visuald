@@ -30,7 +30,7 @@ class LibraryManager : DComObject, IVsLibraryMgr
 	///////////////////////////
 	this()
 	{
-		mLibraries ~= new Library;
+		mLibraries ~= newCom!Library;
 	}
 
 	~this()
@@ -156,6 +156,8 @@ class Library : DComObject,
 
 	HRESULT Initialize()
 	{
+		mixin(LogCallMix2);
+
 		mCheckState = LCS_CHECKED;
 		
 		if(auto solution = queryService!IVsSolution())
@@ -169,6 +171,8 @@ class Library : DComObject,
 	
 	HRESULT Close()
 	{
+		mixin(LogCallMix2);
+
 		if(mIVsSolutionEventsCookie != 0)
 			if(auto solution = queryService!IVsSolution())
 			{
@@ -369,7 +373,7 @@ class Library : DComObject,
 //			return E_NOTIMPL;
 
 		assert(ppList);
-		auto ol = new ObjectList(this, eListType, eFlags, pobSrch);
+		auto ol = newCom!ObjectList(this, eListType, eFlags, pobSrch);
 		return ol.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
 	}
 
@@ -1372,7 +1376,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		if(!obj)
 			return E_UNEXPECTED;
 
-		auto list = new ObjectList(mLibrary, mLibInfo, this, obj, ListType, Flags, pobSrch);
+		auto list = newCom!ObjectList(mLibrary, mLibInfo, this, obj, ListType, Flags, pobSrch);
 		return list.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
 	}
 	

@@ -51,7 +51,7 @@ VDC_SRC = $(VDC)/parser/aggr.d \
 RSGC_SRC = ../rsgc/gc.d ../rsgc/gcx.d ../rsgc/gcstats.d ../rsgc/gcalloc.d ../rsgc/gcbits.d
 
 STDEXT_SRC = ../stdext/file.d ../stdext/array.d ../stdext/path.d ../stdext/util.d \
-             ../stdext/string.d ../stdext/com.d ../stdext/httpget.d
+             ../stdext/string.d ../stdext/com.d ../stdext/httpget.d ../stdext/container.d
 # FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
 
 C2D_SRC = ../c2d/cpp2d.d ../c2d/ast.d ../c2d/dlist.d ../c2d/dgutil.d \
@@ -98,7 +98,8 @@ CV2PDB = ..\..\..\cv2pdb\trunk\bin\Debug\cv2pdb.exe
 
 WINSDK = $(WINDOWSSDKDIR:\=/)
 VSISDK = c:\l\vs9SDK
-CTC = $(VSISDK)\VisualStudioIntegration\Tools\Bin\CTC.exe
+CTC    = $(VSISDK)\VisualStudioIntegration\Tools\Bin\CTC.exe
+RCC    = $(WINDOWSSDKDIR)\bin\rc.exe
 
 LIB = ..\sdk\lib
 OPTLINKS = /SCANLIB
@@ -193,10 +194,10 @@ $(RELDIR)\cpp2d.exe : $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(RELDIR)\$(STDEX
 
 #-----
 $(DBGRES) : $(RC) $(RSRC)
-	rc /fo$(DBGRES) $(RC)
+	"$(RCC)" /fo$(DBGRES) $(RC)
 
 $(RELRES) : $(RC) $(RSRC)
-	rc /fo$(RELRES) $(RC)
+	"$(RCC)" /fo$(RELRES) $(RC)
 
 resources\pkgcmd.cto: resources\pkgcmd.ctc
 	"$(CTC)" $? $@ -Ccl -I.

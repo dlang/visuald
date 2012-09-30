@@ -102,7 +102,7 @@ const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-980c-7e4ad40
 const GUID    g_ProjectItemWizardCLSID   = uuid("002a2de9-8bb6-484d-980d-7e4ad4084715");
 // more guids in propertypage.d starting with 9810
 
-GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
+const GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
 
 const LanguageProperty g_languageProperties[] =
 [
@@ -139,6 +139,7 @@ void global_exit()
 	CHierNode.shared_static_dtor_typeHolder();
 	ExtProject.shared_static_dtor_typeHolder();
 	Project.shared_static_dtor_typeHolder();
+	Package.s_instance = null;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -157,17 +158,17 @@ HRESULT DllGetClassObject(CLSID* rclsid, IID* riid, LPVOID* ppv)
 
 	if(*rclsid == g_packageCLSID)
 	{
-		auto factory = new ClassFactory;
+		auto factory = newCom!ClassFactory;
 		return factory.QueryInterface(riid, ppv);
 	}
 	if(*rclsid == g_unmarshalCLSID)
 	{
-		DEnumOutFactory eof = new DEnumOutFactory;
+		DEnumOutFactory eof = newCom!DEnumOutFactory;
 		return eof.QueryInterface(riid, ppv);
 	}
 	if(*rclsid == g_ProjectItemWizardCLSID)
 	{
-		auto wiz = new WizardFactory;
+		auto wiz = newCom!WizardFactory;
 		return wiz.QueryInterface(riid, ppv);
 	}
 	if(PropertyPageFactory factory = PropertyPageFactory.create(rclsid))
@@ -179,6 +180,8 @@ HRESULT DllGetClassObject(CLSID* rclsid, IID* riid, LPVOID* ppv)
 ///////////////////////////////////////////////////////////////////////
 class ClassFactory : DComObject, IClassFactory
 {
+	this() {}
+
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
@@ -193,19 +196,19 @@ class ClassFactory : DComObject, IClassFactory
 		if(*riid == g_languageCLSID)
 		{
 			assert(!UnkOuter);
-			LanguageService service = new LanguageService(null);
+			LanguageService service = newCom!LanguageService(null);
 			return service.QueryInterface(riid, pvObject);
 		}
 		if(*riid == IVsPackage.iid)
 		{
 			assert(!UnkOuter);
-			Package pkg = new Package;
+			Package pkg = newCom!Package;
 			return pkg.QueryInterface(riid, pvObject);
 		}
 		if(*riid == g_unmarshalCLSID)
 		{
 			assert(!UnkOuter);
-			DEnumOutputs eo = new DEnumOutputs(null, 0);
+			DEnumOutputs eo = newCom!DEnumOutputs(null, 0);
 			return eo.QueryInterface(riid, pvObject);
 		}
 		return S_FALSE;
@@ -242,8 +245,8 @@ class Package : DisposingComObject,
 	{
 		s_instance = this;
 		mOptions = new GlobalOptions();
-		mLangsvc = addref(new LanguageService(this));
-		mProjFactory = addref(new ProjectFactory(this));
+		mLangsvc = addref(newCom!LanguageService(this));
+		mProjFactory = addref(newCom!ProjectFactory(this));
 		mLibInfos = new LibraryInfos();
 	}
 
@@ -352,13 +355,13 @@ class Package : DisposingComObject,
 
 		GlobalPropertyPage tpp;
 		if(*rguidPage == g_ToolsPropertyPage)
-			tpp = new ToolsPropertyPage(mOptions);
+			tpp = newCom!ToolsPropertyPage(mOptions);
 		else if(*rguidPage == g_ToolsProperty2Page)
-			tpp = new ToolsProperty2Page(mOptions);
+			tpp = newCom!ToolsProperty2Page(mOptions);
 		else if(*rguidPage == g_ColorizerPropertyPage)
-			tpp = new ColorizerPropertyPage(mOptions);
+			tpp = newCom!ColorizerPropertyPage(mOptions);
 		else if(*rguidPage == g_IntellisensePropertyPage)
-			tpp = new IntellisensePropertyPage(mOptions);
+			tpp = newCom!IntellisensePropertyPage(mOptions);
 		else
 			return E_NOTIMPL;
 
@@ -379,8 +382,12 @@ class Package : DisposingComObject,
 
 		win.destroyDelegate = delegate void(Widget w)
 		{
-			tpp.Deactivate();
-			release(tpp);
+			if(auto o = tpp)
+			{
+				tpp = null;
+				o.Deactivate();
+				release(o);
+			}
 		};
 		win.applyDelegate = delegate void(Widget w)
 		{
@@ -897,6 +904,7 @@ version(none)
 		Project prj = qi_cast!Project(pHierarchy);
 		if(!prj)
 			return E_NOINTERFACE;
+		release(prj);
 		*pqsspSave = QSP_HasNoProps;
 		return S_OK;
 	}
@@ -958,10 +966,10 @@ version(none)
 		{
 			scope(exit) release(om);
 			
-			auto lib = new Library;
-			hr = om.RegisterSimpleLibrary(lib, &mOmLibraryCookie);
+			mLibrary = newCom!Library;
+			hr = om.RegisterSimpleLibrary(mLibrary, &mOmLibraryCookie);
 			if(SUCCEEDED(hr))
-				lib.Initialize();
+				mLibrary.Initialize();
 		}
 		return hr;
 	}
@@ -976,6 +984,8 @@ version(none)
 		{
 			scope(exit) release(om);
 			hr = om.UnregisterLibrary(mOmLibraryCookie);
+			mLibrary.Close(); // attaches itself to SolutionEvents, so we need to break circular reference
+			mLibrary = null;
 		}
 		mOmLibraryCookie = 0;
 		return hr;
@@ -1026,6 +1036,7 @@ private:
 	GlobalOptions    mOptions;
 	LibraryInfos     mLibInfos;
 	bool             mWantsUpdateLibInfos;
+	Library          mLibrary;
 }
 
 class GlobalOptions
@@ -1185,7 +1196,12 @@ class GlobalOptions
 			CHierNode.setContainerIsSorted(sortProjects);
 			
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
-			WindowsSdkDir = normalizeDir(toUTF8(keySdk.GetString("CurrentInstallFolder")));
+			WindowsSdkDir = toUTF8(keySdk.GetString("CurrentInstallFolder"));
+			if(WindowsSdkDir.empty)
+				if(char* psdk = getenv("WindowsSdkDir"))
+					WindowsSdkDir = fromMBSz(cast(immutable)psdk);
+			if(!WindowsSdkDir.empty)
+				WindowsSdkDir = normalizeDir(WindowsSdkDir);
 
 			if(char* pe = getenv("VSINSTALLDIR"))
 				VSInstallDir = fromMBSz(cast(immutable)pe);
@@ -1587,7 +1603,7 @@ class WizardFactory : DComObject, IClassFactory
 		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
 
 		assert(!UnkOuter);
-		auto wiz = new ItemWizard;
+		auto wiz = newCom!ItemWizard;
 		return wiz.QueryInterface(riid, pvObject);
 	}
 

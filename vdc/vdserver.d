@@ -39,10 +39,25 @@ import std.concurrency;
 import std.datetime;
 import core.thread;
 
-// debug version = DebugServer;
+//debug version = DebugServer;
 
+///////////////////////////////////////////////////////////////////////
 version(DebugServer)
+{
 	import std.windows.charset;
+	import visuald.logutil;
+
+	void dbglog(string s) 
+	{
+		version(all) 
+			logCall("VDServer: ", s);
+		else
+			OutputDebugStringA(toMBSz("VDServer: " ~ s ~ "\n"));
+	}
+}
+
+alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully instantiate type info for string[Tid]
+alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
 ///////////////////////////////////////////////////////////////
 
@@ -57,6 +72,7 @@ class VDServer : ComObject, IVDServer
 	this()
 	{
 		mSemanticProject = new vdc.semantic.Project;
+		mSemanticProject.saveErrors = true;
 		fnSemanticWriteError = &semanticWriteError;
 		version(SingleThread) mTid = spawn(&taskLoop, thisTid);
 	}
@@ -165,6 +181,7 @@ class VDServer : ComObject, IVDServer
 			mSemanticProject.disconnectAll();
 		
 		mSemanticProject = new vdc.semantic.Project;
+		mSemanticProject.saveErrors = true;
 		return S_OK;
 	}
 
@@ -186,14 +203,7 @@ class VDServer : ComObject, IVDServer
 
 		void doParse()
 		{
-			version(DebugServer)
-			{
-				auto lines = splitLines(text);
-				string line;
-				if(lines.length >= 7044)
-					line = lines[7042];
-				sdk.win32.winbase.OutputDebugStringA(toMBSz("doParse: " ~ line ~ "\n"));
-			}
+			version(DebugServer) dbglog("    doParse: " ~ firstLine(text));
 
 			ast.Node n;
 			try
@@ -214,6 +224,7 @@ class VDServer : ComObject, IVDServer
 				synchronized(mSemanticProject)
 					mSemanticProject.addSource(fname, mod, parser.errors);
 		}
+		version(DebugServer) dbglog("  scheduleParse: " ~ firstLine(text));
 		schedule(&doParse);
 		return S_OK;
 	}
@@ -275,6 +286,7 @@ class VDServer : ComObject, IVDServer
 		if(mSemanticTipRunning)
 			return S_FALSE;
 
+		writeReadyMessage();
 		startLine  = mTipSpan.start.line;
 		startIndex = mTipSpan.start.index;
 		endLine    = mTipSpan.end.line;
@@ -307,6 +319,7 @@ class VDServer : ComObject, IVDServer
 			if(expr.length)
 			{
 				Parser parser = new Parser;
+				parser.saveErrors = true;
 				ast.Node inserted = parser.parseExpression(expr, r.fulspan);
 				if(!inserted)
 					return null;
@@ -384,6 +397,8 @@ class VDServer : ComObject, IVDServer
 			slist.put('\n');
 		}
 		*stringList = allocBSTR(slist.data);
+
+		writeReadyMessage();
 		return S_OK;
 	}
 
@@ -416,7 +431,7 @@ class VDServer : ComObject, IVDServer
 						err ~= format("%d,%d,%d,%d:%s\n", e.span.start.line, e.span.start.index, e.span.end.line, e.span.end.index, e.msg);
 
 					version(DebugServer)
-						sdk.win32.winbase.OutputDebugStringA(toMBSz("GetParseErrors: " ~ err ~ "\n"));
+						dbglog("GetParseErrors: " ~ err);
 
 					*errors = allocBSTR(err);
 					return S_OK;
@@ -489,9 +504,21 @@ class VDServer : ComObject, IVDServer
 	extern(D) void semanticWriteError(vdc.semantic.MessageType type, string msg)
 	{
 		if(type == MessageType.Message)
+		{
 			mLastMessage = msg;
+			mHadMessage = true;
+		}
 		else
 			mLastError = msg;
+	}
+
+	void writeReadyMessage()
+	{
+		if(mHadMessage)
+		{
+			semanticWriteError(MessageType.Message, "Ready");
+			mHadMessage = false;
+		}
 	}
 
 private:
@@ -505,5 +532,6 @@ private:
 	string[] mLastSymbols;
 	string mLastMessage;
 	string mLastError;
+	bool mHadMessage;
 }
 

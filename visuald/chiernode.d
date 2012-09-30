@@ -498,7 +498,8 @@ public:
 	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
-		mTypeHolder = new class ComTypeInfoHolder {
+		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		{
 			override int GetIDsOfNames( 
 				/* [size_is][in] */ in LPOLESTR *rgszNames,
 				/* [in] */ in UINT cNames,
@@ -512,7 +513,8 @@ public:
 				}
 				return returnError(E_NOTIMPL);
 			}
-		};
+		}
+		mTypeHolder = newCom!_ComTypeInfoHolder;
 		addref(mTypeHolder);
 	}
 	static void shared_static_dtor_typeHolder()

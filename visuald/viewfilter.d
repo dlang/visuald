@@ -89,7 +89,7 @@ version(tip)
 		mView.AddCommandFilter(this, &mNextTarget);
 		
 version(tip)
-		mTextTipData = addref(new TextTipData);
+		mTextTipData = addref(newCom!TextTipData);
 	}
 	~this()
 	{

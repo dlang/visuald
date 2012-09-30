@@ -145,6 +145,7 @@ class DeclDefs
 			return Forward;
 		
 		p.pushRecoverState(&recover);
+		p.pushState(&Parser.keepRecover);   // add a "guard" state to avoid popping recover
 
 		p.pushState(&shiftDeclDef);
 		return DeclDef.enter(p);

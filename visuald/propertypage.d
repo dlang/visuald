@@ -541,7 +541,7 @@ class NodePropertyPage : PropertyPage
 		if(mWindow)
 			if(CFileNode node = GetNode())
 			{
-				scope CFileNode n = new CFileNode("");
+				scope CFileNode n = newCom!CFileNode("");
 				return DoApply(n, node) > 0 ? S_OK : S_FALSE;
 			}
 		return S_FALSE;
@@ -1581,7 +1581,7 @@ class PropertyPageFactory : DComObject, IClassFactory
 	{
 		foreach(id; guids_propertyPages)
 			if(*id == *rclsid)
-				return new PropertyPageFactory(rclsid);
+				return newCom!PropertyPageFactory(rclsid);
 		return null;
 	}
 
@@ -1603,31 +1603,31 @@ class PropertyPageFactory : DComObject, IClassFactory
 		assert(!UnkOuter);
 
 		     if(mClsid == g_GeneralPropertyPage)
-			ppp = new GeneralPropertyPage();
+			ppp = newCom!GeneralPropertyPage();
 		else if(mClsid == g_DebuggingPropertyPage)
-			ppp = new DebuggingPropertyPage();
+			ppp = newCom!DebuggingPropertyPage();
 		else if(mClsid == g_DmdGeneralPropertyPage)
-			ppp = new DmdGeneralPropertyPage();
+			ppp = newCom!DmdGeneralPropertyPage();
 		else if(mClsid == g_DmdDebugPropertyPage)
-			ppp = new DmdDebugPropertyPage();
+			ppp = newCom!DmdDebugPropertyPage();
 		else if(mClsid == g_DmdCodeGenPropertyPage)
-			ppp = new DmdCodeGenPropertyPage();
+			ppp = newCom!DmdCodeGenPropertyPage();
 		else if(mClsid == g_DmdMessagesPropertyPage)
-			ppp = new DmdMessagesPropertyPage();
+			ppp = newCom!DmdMessagesPropertyPage();
 		else if(mClsid == g_DmdDocPropertyPage)
-			ppp = new DmdDocPropertyPage();
+			ppp = newCom!DmdDocPropertyPage();
 		else if(mClsid == g_DmdOutputPropertyPage)
-			ppp = new DmdOutputPropertyPage();
+			ppp = newCom!DmdOutputPropertyPage();
 		else if(mClsid == g_DmdLinkerPropertyPage)
-			ppp = new DmdLinkerPropertyPage();
+			ppp = newCom!DmdLinkerPropertyPage();
 		else if(mClsid == g_DmdEventsPropertyPage)
-			ppp = new DmdEventsPropertyPage();
+			ppp = newCom!DmdEventsPropertyPage();
 		else if(mClsid == g_DmdCmdLinePropertyPage)
-			ppp = new DmdCmdLinePropertyPage();
+			ppp = newCom!DmdCmdLinePropertyPage();
 		else if(mClsid == g_CommonPropertyPage)
-			ppp = new CommonPropertyPage();
+			ppp = newCom!CommonPropertyPage();
 		else if(mClsid == g_FilePropertyPage)
-			ppp = new FilePropertyPage();
+			ppp = newCom!FilePropertyPage();
 		else
 			return E_INVALIDARG;
 

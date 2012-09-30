@@ -20,6 +20,7 @@ import std.utf;
 
 //-----------------------------------------------------------------------------
 long[string] gCachedFileTimes;
+alias AssociativeArray!(string, long) _wa1; // fully instantiate type info
 
 void clearCachedFileTimes()
 {
