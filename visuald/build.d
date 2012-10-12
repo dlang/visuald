@@ -453,7 +453,8 @@ else
 			return false;
 
 		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
-		long targettm = getOldestFileTime( [ target ] );
+		string oldestFile;
+		long targettm = getOldestFileTime( [ target ], oldestFile );
 
 		string[] files;
 		if(!getTargetDependencies(files))
@@ -462,7 +463,8 @@ else
 		string[] libs = mConfig.getLibsFromDependentProjects();
 		files ~= libs;
 		makeFilenamesAbsolute(files, workdir);
-		long sourcetm = getNewestFileTime(files);
+		string newestFile;
+		long sourcetm = getNewestFileTime(files, newestFile);
 
 		return targettm > sourcetm;
 	}

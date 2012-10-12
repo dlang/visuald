@@ -35,7 +35,7 @@ void removeCachedFileTime(string file)
 }
 
 //-----------------------------------------------------------------------------
-void getOldestNewestFileTime(string[] files, out long oldest, out long newest)
+void getOldestNewestFileTime(string[] files, out long oldest, out long newest, out string oldestFile, out string newestFile)
 {
 	oldest = long.max;
 	newest = long.min;
@@ -48,7 +48,13 @@ void getOldestNewestFileTime(string[] files, out long oldest, out long newest)
 		else
 		{
 			if(!exists(file))
-				goto L_fileNotFound;
+			{
+			L_fileNotFound:
+				oldest = long.min;
+				newest = long.max;
+				oldestFile = newestFile = file;
+				break;
+			}
 version(all)
 			ftm = timeLastModified(file).stdTime();
 else
@@ -61,28 +67,31 @@ else
 			gCachedFileTimes[file] = ftm;
 		}
 		if(ftm > newest)
+		{
 			newest = ftm;
+			newestFile = file;
+		}
 		if(ftm < oldest)
+		{
 			oldest = ftm;
+			oldestFile = file;
+		}
 	}
-	return;
-
-L_fileNotFound:
-	oldest = long.min;
-	newest = long.max;
 }
 
-long getNewestFileTime(string[] files)
+long getNewestFileTime(string[] files, out string newestFile)
 {
+	string oldestFile;
 	long oldest, newest;
-	getOldestNewestFileTime(files, oldest, newest);
+	getOldestNewestFileTime(files, oldest, newest, oldestFile, newestFile);
 	return newest;
 }
 
-long getOldestFileTime(string[] files)
+long getOldestFileTime(string[] files, out string oldestFile)
 {
+	string newestFile;
 	long oldest, newest;
-	getOldestNewestFileTime(files, oldest, newest);
+	getOldestNewestFileTime(files, oldest, newest, oldestFile, newestFile);
 	return oldest;
 }
 

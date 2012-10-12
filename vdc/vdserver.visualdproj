@@ -554,7 +554,7 @@
  </Config>
  <Folder name="vdserver">
   <File tool="Custom" path="vdserver.idl" customcmd="path %path%;c:\l\vs9\vc\bin;c:\l\vs9\common7\IDE
-midl /I &quot;$(WindowsSdkDir)\Include&quot; /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(OutDir) /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
+midl /I &quot;c:\Program Files (x86)\Windows Kits\8.0\Include\shared&quot; /I &quot;c:\Program Files (x86)\Windows Kits\8.0\Include\um&quot; /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(OutDir) /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
   <File tool="Custom" path="vdserver.rc" dependencies="$(OutDir)\vdserver.tlb ..\version" customcmd="rc /fo$(OutDir)\vdserver.res &quot;/I$(OutDir)&quot; &quot;/I$(WindowsSdkDir)\include&quot; &quot;/I$(DevEnvDir)..\..\VC\include&quot; $(InputPath)" outfile="$(OutDir)\vdserver.res" linkoutput="true" />
   <File path="vdserver.reg" />
   <File path="vdserver_d.reg" />

@@ -2009,8 +2009,9 @@ class Config :	DisposingComObject,
 		string[] deps = GetDependencies(file);
 		
 		outfile = makeFilenameAbsolute(outfile, workdir);
-		long targettm = getOldestFileTime( [ outfile ] );
-		long sourcetm = getNewestFileTime(deps);
+		string oldestFile, newestFile;
+		long targettm = getOldestFileTime( [ outfile ], oldestFile );
+		long sourcetm = getNewestFileTime(deps, newestFile);
 
 		return targettm > sourcetm;
 	}

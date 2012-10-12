@@ -39,20 +39,39 @@ import std.concurrency;
 import std.datetime;
 import core.thread;
 
-//debug version = DebugServer;
+debug version = DebugServer;
 
 ///////////////////////////////////////////////////////////////////////
 version(DebugServer)
 {
 	import std.windows.charset;
-	import visuald.logutil;
+	import std.datetime;
+	debug import visuald.logutil;
+	import core.stdc.stdio : fprintf, fopen, fputc, fflush, FILE;
+	__gshared FILE* dbgfh;
 
 	void dbglog(string s) 
 	{
-		version(all) 
-			logCall("VDServer: ", s);
+		debug
+		{
+			version(all) 
+				logCall("VDServer: ", s);
+			else
+				OutputDebugStringA(toMBSz("VDServer: " ~ s ~ "\n"));
+		}
 		else
-			OutputDebugStringA(toMBSz("VDServer: " ~ s ~ "\n"));
+		{
+			if(!dbgfh) 
+				dbgfh = fopen("c:/tmp/vdserver.log", "w");
+
+			SysTime now = Clock.currTime();
+			uint tid = sdk.win32.winbase.GetCurrentThreadId();
+			auto len = fprintf(dbgfh, "%02d:%02d:%02d - %04x - ",
+							   now.hour, now.minute, now.second, tid);
+			fprintf(dbgfh, "%.*s", s.length, s.ptr);
+			fputc('\n', dbgfh);
+			fflush(dbgfh);
+		}
 	}
 }
 
@@ -104,10 +123,10 @@ class VDServer : ComObject, IVDServer
 
 	extern(D) static void taskLoop(Tid tid)
 	{
-		try
+		bool cont = true;
+		while(cont)
 		{
-			bool cont = true;
-			while(cont)
+			try
 			{
 				receiveTimeout(dur!"msecs"(50),
 							   (delegate_fake dg_fake)
@@ -126,9 +145,10 @@ class VDServer : ComObject, IVDServer
 							   }
 							   );
 			}
-		}
-		catch(Throwable)
-		{
+			catch(Throwable e)
+			{
+				version(DebugCmd) dbglog ("taskLoop exception: " ~ e.msg);
+			}
 		}
 		prioritySend(tid, "done");
 	}
@@ -212,6 +232,7 @@ class VDServer : ComObject, IVDServer
 			}
 			catch(Throwable t)
 			{
+				version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.msg);
 				logInfo(t.msg);
 			}
 
@@ -271,11 +292,13 @@ class VDServer : ComObject, IVDServer
 			}
 			catch(Throwable t)
 			{
+				version(DebugServer) dbglog("GetTip._getTip: exception " ~ t.msg);
 				logInfo(t.msg);
 			}
 			mLastTip = txt;
 			mSemanticTipRunning = false;
 		}
+		version(DebugServer) dbglog("  schedule GetTip: " ~ fname);
 		mSemanticTipRunning = true;
 		schedule(&_getTip);
 		return S_OK;
@@ -286,6 +309,7 @@ class VDServer : ComObject, IVDServer
 		if(mSemanticTipRunning)
 			return S_FALSE;
 
+		version(DebugServer) dbglog("GetTipResult: " ~ mLastTip);
 		writeReadyMessage();
 		startLine  = mTipSpan.start.line;
 		startIndex = mTipSpan.start.index;
@@ -375,10 +399,12 @@ class VDServer : ComObject, IVDServer
 			}
 			catch(Throwable t)
 			{
+				version(DebugServer) dbglog("GetSemanticExpansions.calcExpansions: exception " ~ t.msg);
 				logInfo(t.msg);
 			}
 			mSemanticExpansionsRunning = false;
 		}
+		version(DebugServer) dbglog("  schedule GetSemanticExpansions: " ~ fname);
 		mLastSymbols = null;
 		mSemanticExpansionsRunning = true;
 		schedule(&calcExpansions);
@@ -398,6 +424,7 @@ class VDServer : ComObject, IVDServer
 		}
 		*stringList = allocBSTR(slist.data);
 
+		version(DebugServer) dbglog("GetSemanticExpansionsResult: " ~ slist.data);
 		writeReadyMessage();
 		return S_OK;
 	}

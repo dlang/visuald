@@ -13,6 +13,7 @@
   <TemplateContent>
     <Project File="DynamicLib.visualdproj" ReplaceParameters="true">
       <ProjectItem ReplaceParameters="true" OpenInEditor="true">dllmain.d</ProjectItem>
+      <ProjectItem ReplaceParameters="true" OpenInEditor="false">dll.def</ProjectItem>
     </Project>
   </TemplateContent>
 </VSTemplate>

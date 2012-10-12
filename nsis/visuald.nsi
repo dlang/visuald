@@ -186,6 +186,7 @@ Section "Visual Studio package" SecPackage
 
   ${SetOutPath} "$INSTDIR\Templates\ProjectItems\DynamicLib"
   ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ dllmain.d
+  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ dll.def
   ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ DynamicLib.vstemplate
   ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ DynamicLib.visualdproj
 

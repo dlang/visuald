@@ -37,8 +37,7 @@ Project:
   - ddoc files
 - additional options for resource compiler
 - compile single file: report success
-- compile and run current buffer
-- filemonitor does not work anymore?
+- compile and run current buffer/selection
 
 Language service:
 -----------------

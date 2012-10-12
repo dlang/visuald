@@ -21,10 +21,10 @@ COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 # avoid trailing '\', it ruins the command line
 # WINSDK = $(WINDOWSSDKDIR:\=/)
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
-WINSDK = $(PROGRAMW6432)\Microsoft SDKs\Windows\v6.0A
+# WINSDK = $(PROGRAMW6432)\Microsoft SDKs\Windows\v6.0A
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.0A
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
-# WINSDK = $(PROGRAMFILES)\Windows Kits\8.0
+WINSDK = $(PROGRAMFILES)\Windows Kits\8.0
 # WINSDK = c:\l\vs11\Windows Kits\8.0
 VSISDK = c:\l\vs9SDK
 # VSISDK = c:\l\vs10SDK
@@ -44,6 +44,7 @@ IVIEWER = $(WINSDK)\bin\iviewers.dll
 
 TLB2IDL_EXE = $(BINDIR)\tlb2idl.exe
 PIPEDMD_EXE = $(BINDIR)\pipedmd.exe
+LARGEADR_EXE= $(BINDIR)\largeadr.exe
 FILEMON_DLL = $(BINDIR)\filemonitor.dll
 VSI2D_EXE   = $(BINDIR)\vsi2d.exe
 VSI_LIB     = $(BINDIR)\vsi.lib
@@ -82,6 +83,9 @@ $(PIPEDMD_EXE) : tools\pipedmd.d
 $(FILEMON_DLL) : tools\filemonitor.d
 	$(DMD2) -map $@.map -of$@ -defaultlib=user32.lib -L/ENTRY:_DllMain@12 tools\filemonitor.d
 
+$(LARGEADR_EXE) : tools\largeadr.d
+	$(DMD2) -of$@ tools\largeadr.d
+
 ##################################
 # generate VSI d files from h and idl
 
@@ -114,7 +118,7 @@ sdk_lib:
 package:
 	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
 
-vdserver_exe:
+vdserver_exe: $(LARGEADR_EXE)
 	cd visuald && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" ..\$(BINDIR)\vdserver.exe
 
 cpp2d_exe:
@@ -145,6 +149,7 @@ clean:
 	if exist $(BINDIR)\visuald.dll  del $(BINDIR)\visuald.dll
 	if exist $(BINDIR)\vdserver.exe del $(BINDIR)\vdserver.exe
 	if exist $(PIPEDMD_EXE)         del $(PIPEDMD_EXE)
+	if exist $(LARGEADR_EXE)        del $(LARGEADR_EXE)
 	if exist $(FILEMON_DLL)         del $(FILEMON_DLL)
 
 cleanall: clean

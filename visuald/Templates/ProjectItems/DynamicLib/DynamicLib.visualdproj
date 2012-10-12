@@ -11,5 +11,6 @@
   </Config>
   <Folder name="$safeprojectname$">
     <File path="dllmain.d"></File>
+    <File path="dll.def"></File>
   </Folder>
 </DProject>

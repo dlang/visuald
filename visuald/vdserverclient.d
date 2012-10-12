@@ -37,17 +37,39 @@ alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully insta
 alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
 debug version = DebugCmd;
-//debug version = InProc;
+debug version = InProc;
 
 version(InProc) import vdc.vdserver;
 
 ///////////////////////////////////////////////////////////////////////
+version(DebugCmd)
+{
+import std.datetime;
+import core.stdc.stdio : fprintf, fopen, fflush, fputc, FILE;
+__gshared FILE* dbgfh;
+
 private void dbglog(string s) 
 {
-	version(all) 
-		logCall("VDClient: ", s);
+	debug
+	{
+		version(all) 
+			logCall("VDClient: ", s);
+		else
+			OutputDebugStringA(toMBSz("VDClient: " ~ s ~ "\n"));
+	}
 	else
-		OutputDebugStringA(toMBSz("VDClient: " ~ s ~ "\n"));
+	{
+		if(!dbgfh) 
+			dbgfh = fopen("c:/tmp/vdclient.log", "w");
+		SysTime now = Clock.currTime();
+		uint tid = sdk.win32.winbase.GetCurrentThreadId();
+		auto len = fprintf(dbgfh, "%02d:%02d:%02d - %04x - ",
+						   now.hour, now.minute, now.second, tid);
+		fprintf(dbgfh, "%.*s", s.length, s.ptr);
+		fputc('\n', dbgfh);
+		fflush(dbgfh);
+	}
+}
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -81,6 +103,7 @@ bool startVDServer()
 			return false;
 		}
 	}
+	version(DebugCmd) dbglog ("VDServer startet successfully");
 	return true;
 }
 
@@ -89,6 +112,7 @@ bool stopVDServer()
 	if(!gVDServer)
 		return false;
 
+	version(DebugCmd) dbglog ("stopping VDServer");
 	gVDServer = release(gVDServer);
 	gVDClassFactory = release(gVDClassFactory);
 
@@ -641,8 +665,9 @@ class VDServerClient
 				}
 			}
 		}
-		catch(Throwable)
+		catch(Throwable e)
 		{
+			version(DebugCmd) dbglog ("clientLoop exception: " ~ e.msg);
 		}
 		stopVDServer();
 	}
@@ -669,8 +694,9 @@ class VDServerClient
 			{
 			}
 		}
-		catch(Throwable)
+		catch(Throwable e)
 		{
+			version(DebugCmd) dbglog ("clientLoop exception: " ~ e.msg);
 		}
 	}
 }

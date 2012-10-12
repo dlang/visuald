@@ -468,3 +468,5 @@ unreleased Version 0.3.34
     - improved speed for large symbol lists
   * status line now cleared after parsing of imports has finished
   * fix installation for VS2012
+  * now runs on an almost precise garbage collector
+  * DLL project template now has a linker definition file
