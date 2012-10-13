@@ -2441,7 +2441,7 @@ class Config :	DisposingComObject,
 			if(useOptlink)
 			{
 				string libs, options;
-				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), (useStdLibPath) ? &libs : null, &options);
+				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), (mProjectOptions.useStdLibPath) ? &libs : null, &options);
 				lnkcmd = linkpath ~ " ";
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
