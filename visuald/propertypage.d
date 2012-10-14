@@ -1162,7 +1162,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas, 
 			[ "Minimum", "Symbols By Address", "Standard", "Full", "With cross references" ], false));
 		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
-		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use standard library paths"));
+		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use standard library search paths"));
 	}
 
 	override void SetControls(ProjectOptions options)
