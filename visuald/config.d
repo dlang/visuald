@@ -214,6 +214,7 @@ class ProjectOptions
 	string deffile;
 	string resfile;
 	string exefile;
+	bool useStdLibPath;
 
 	string additionalOptions;
 	string preBuildCommand;
@@ -242,6 +243,7 @@ class ProjectOptions
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
 		xfilename = "$(IntDir)\\$(TargetName).json";
 		doXGeneration = true;
+		useStdLibPath = true;
 		
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
 		setDebug(dbg);
@@ -887,6 +889,7 @@ class ProjectOptions
 		elem ~= new xml.Element("deffile", toElem(deffile));
 		elem ~= new xml.Element("resfile", toElem(resfile));
 		elem ~= new xml.Element("exefile", toElem(exefile));
+		elem ~= new xml.Element("useStdLibPath", toElem(useStdLibPath));
 
 		elem ~= new xml.Element("additionalOptions", toElem(additionalOptions));
 		elem ~= new xml.Element("preBuildCommand", toElem(preBuildCommand));
@@ -1007,6 +1010,7 @@ class ProjectOptions
 		fromElem(elem, "deffile", deffile);
 		fromElem(elem, "resfile", resfile);
 		fromElem(elem, "exefile", exefile);
+		fromElem(elem, "useStdLibPath", useStdLibPath);
 	
 		fromElem(elem, "additionalOptions", additionalOptions);
 		fromElem(elem, "preBuildCommand", preBuildCommand);
@@ -2437,7 +2441,7 @@ class Config :	DisposingComObject,
 			if(useOptlink)
 			{
 				string libs, options;
-				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), &libs, &options);
+				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), (mProjectOptions.useStdLibPath) ? &libs : null, &options);
 				lnkcmd = linkpath ~ " ";
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "

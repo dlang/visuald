@@ -1162,6 +1162,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas, 
 			[ "Minimum", "Symbols By Address", "Standard", "Full", "With cross references" ], false));
 		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
+		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use standard library search paths"));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1173,7 +1174,8 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		mDefFile.setText(options.deffile); 
 		mResFile.setText(options.resfile); 
 		mGenMap.setSelection(options.mapverbosity); 
-		mImplib.setChecked(options.createImplib); 
+		mImplib.setChecked(options.createImplib);
+		mUseStdLibPath.setChecked(options.useStdLibPath);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1187,6 +1189,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		changes += changeOption(mResFile.getText(), options.resfile, refoptions.resfile); 
 		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity); 
 		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib); 
+		changes += changeOption(mUseStdLibPath.isChecked(), options.useStdLibPath, refoptions.useStdLibPath);
 		return changes;
 	}
 
@@ -1198,6 +1201,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	Text mResFile;
 	ComboBox mGenMap;
 	CheckBox mImplib;
+	CheckBox mUseStdLibPath;
 }
 
 class DmdEventsPropertyPage : ProjectPropertyPage
