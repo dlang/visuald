@@ -583,7 +583,10 @@ class ProjectOptions
 		}
 
 		string[] lpaths = tokenizeArgs(libpaths);
-		lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
+		if(useStdLibPath)
+			lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
+		else
+			cmd ~= " -Wl,-nostdlib";
 		foreach(lp; lpaths)
 			cmd ~= " -Wl,-L," ~ quoteFilename(lp);
 
@@ -652,7 +655,8 @@ class ProjectOptions
 		libs ~= "kernel32.lib";
 		cmd ~= plusList(lnkfiles ~ libs, ".lib");
 		string[] lpaths = tokenizeArgs(libpaths);
-		lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
+		if(useStdLibPath)
+			lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
 		foreach(lp; lpaths)
 			cmd ~= "+" ~ quoteFilename(normalizeDir(lp));
 		cmd ~= ",";
@@ -2222,9 +2226,13 @@ class Config :	DisposingComObject,
 		if(globOpt.ExeSearchPath.length)
 			cmd ~= "set PATH=" ~ replaceCrLf(globOpt.ExeSearchPath) ~ ";%PATH%\n";
 		
-		if(globOpt.LibSearchPath.length || mProjectOptions.libpaths.length)
+		bool hasGlobalPath = mProjectOptions.useStdLibPath && globOpt.LibSearchPath.length;
+		if(hasGlobalPath || mProjectOptions.libpaths.length)
 		{
-			string lpath = replaceCrLf(globOpt.LibSearchPath);
+			// obsolete?
+			string lpath;
+			if(hasGlobalPath)
+				lpath = replaceCrLf(globOpt.LibSearchPath);
 			if(mProjectOptions.libpaths.length && !_endsWith(lpath, ";"))
 				lpath ~= ";";
 			lpath ~= mProjectOptions.libpaths;
@@ -2441,7 +2449,8 @@ class Config :	DisposingComObject,
 			if(useOptlink)
 			{
 				string libs, options;
-				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), (mProjectOptions.useStdLibPath) ? &libs : null, &options);
+				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), 
+														  mProjectOptions.useStdLibPath ? &libs : null, &options);
 				lnkcmd = linkpath ~ " ";
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
@@ -2451,7 +2460,7 @@ class Config :	DisposingComObject,
 				string[] lnkfiles = getObjectFileList(files);
 				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options);
 				lnkcmd ~= getLinkFileList([cmdfiles], prelnk);
-				if(libs.length)
+				//if(libs.length)
 					prelnk = "set LIB=" ~ libs ~ "\n" ~ prelnk;
 			}
 			else
