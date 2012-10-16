@@ -470,3 +470,7 @@ Version history
   * fix installation for VS2012
   * now runs on an almost precise garbage collector
   * DLL project template now has a linker definition file
+
+unreleased Version 0.3.35
+
+  * new linker option to disable using global and stnadrd library search paths

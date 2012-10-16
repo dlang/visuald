@@ -2449,8 +2449,7 @@ class Config :	DisposingComObject,
 			if(useOptlink)
 			{
 				string libs, options;
-				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), 
-														  mProjectOptions.useStdLibPath ? &libs : null, &options);
+				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), &libs, &options);
 				lnkcmd = linkpath ~ " ";
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
@@ -2460,8 +2459,10 @@ class Config :	DisposingComObject,
 				string[] lnkfiles = getObjectFileList(files);
 				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options);
 				lnkcmd ~= getLinkFileList([cmdfiles], prelnk);
-				//if(libs.length)
-					prelnk = "set LIB=" ~ libs ~ "\n" ~ prelnk;
+				
+				if(!mProjectOptions.useStdLibPath)
+					prelnk = "set OPTLINKS=%OPTLINKS% /NOSCANLIB\n" ~ prelnk;
+				prelnk = "set LIB=" ~ libs ~ "\n" ~ prelnk;
 			}
 			else
 			{
