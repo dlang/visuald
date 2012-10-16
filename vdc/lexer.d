@@ -1191,7 +1191,7 @@ bool _stringEqual(string s1, string s2, int length)
 	return true;
 }
 
-string genOperatorParser(string getch)
+int[] sortedOperatorIndexArray()
 {
 	// create sorted list of operators
 	int[] opIndex;
@@ -1216,7 +1216,21 @@ string genOperatorParser(string getch)
 			nIndex ~= opIndex[i];
 		opIndex = nIndex;
 	}
-	
+	return opIndex;
+}
+
+string[] sortedOperatorArray()
+{
+	string[] array;
+	foreach(o; sortedOperatorIndexArray())
+		array ~= operators[o][1];
+	return array;
+}
+
+string genOperatorParser(string getch)
+{
+	int[] opIndex = sortedOperatorIndexArray();
+
 	int matchlen = 0;
 	string indent = "";
 	string[] defaults = [ "error" ];
@@ -1295,6 +1309,7 @@ version(none)
 {
 	pragma(msg, genKeywordsEnum(keywords, "TOK_end_Generic"));
 	pragma(msg, genOperatorEnum(operators, "TOK_end_Keywords"));
+	pragma(msg, sortedOperatorArray());
 	pragma(msg, genOperatorParser("getch()"));
 }
 

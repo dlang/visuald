@@ -775,8 +775,8 @@ class ProjectOptions
 		replacements["SAFEPROJECTNAME"] = config.GetProjectName().replace(" ", "_");
 		addFileMacros(inputfile.length ? inputfile : projectpath, "INPUT", replacements);
 		replacements["CONFIGURATIONNAME"] = configname;
-		replacements["OUTDIR"] = outdir;
-		replacements["INTDIR"] = objdir;
+		replacements["OUTDIR"] = normalizePath(outdir);
+		replacements["INTDIR"] = normalizePath(objdir);
 		Package.GetGlobalOptions().addReplacements(replacements);
 
 		string targetpath = outputfile.length ? outputfile : getTargetPath();

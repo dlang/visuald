@@ -442,7 +442,7 @@ Version history
   * added wizard to create packages from the new item dialog
   * improved import statement detection for expansion and goto definition
 
-unreleased Version 0.3.34
+2012-10-12 Version 0.3.34
 
   * fix exceptions in NDepend when opening context menu on D project
   * delete file from project now uses VS environment dialog (avoiding dialog when moving project items)
