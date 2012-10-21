@@ -44,7 +44,7 @@
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -87,6 +87,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -136,7 +137,7 @@
   <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -179,6 +180,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -271,6 +273,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -363,6 +366,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -455,6 +459,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -547,6 +552,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).a</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />

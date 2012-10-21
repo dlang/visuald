@@ -347,6 +347,7 @@ const string mixinCTFEParser = q{
 	//}
 };
 
+version(testCTFEParser)
 unittest
 {
 	assert(ctfeParser(q{int /* comment to skip */ a;}) == "int a;\n");

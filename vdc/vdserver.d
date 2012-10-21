@@ -40,13 +40,14 @@ import std.datetime;
 import core.thread;
 
 debug version = DebugServer;
+//debug version = vdlog; // log through visual D logging (needs version = InProc in vdserverclient)
 
 ///////////////////////////////////////////////////////////////////////
 version(DebugServer)
 {
 	import std.windows.charset;
 	import std.datetime;
-	debug import visuald.logutil;
+	version(vdlog) debug import visuald.logutil;
 	import core.stdc.stdio : fprintf, fopen, fputc, fflush, FILE;
 	__gshared FILE* dbgfh;
 
@@ -54,10 +55,10 @@ version(DebugServer)
 	{
 		debug
 		{
-			version(all) 
+			version(vdlog) 
 				logCall("VDServer: ", s);
 			else
-				OutputDebugStringA(toMBSz("VDServer: " ~ s ~ "\n"));
+				sdk.win32.winbase.OutputDebugStringA(toMBSz("VDServer: " ~ s ~ "\n"));
 		}
 		else
 		{

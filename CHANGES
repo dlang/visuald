@@ -473,4 +473,8 @@ Version history
 
 unreleased Version 0.3.35
 
-  * new linker option to disable using global and stnadrd library search paths
+  * new linker option to disable using global and standard library search paths
+  * add support for upcoming dmd win64 support
+  * add '/' to '\' translation for macro replacements of $(OUTDIR) and $(INTDIR)
+  * fixed build variable $(VSINSTALLDIR) (pointed to parent directory of expected dir)
+  * added build project to translate sdk to D

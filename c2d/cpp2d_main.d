@@ -749,7 +749,7 @@ void setupDmd()
 ///////////////////////////////////////////////////////////////
 class StdIo_Cpp2DConverter : Cpp2DConverter
 {
-	void writemsg(string s)
+	override void writemsg(string s)
 	{
 		writeln(s);
 	}

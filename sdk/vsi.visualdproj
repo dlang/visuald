@@ -44,7 +44,7 @@
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -87,6 +87,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -105,7 +106,7 @@
   <verbose>0</verbose>
   <vtls>0</vtls>
   <symdebug>0</symdebug>
-  <optimize>0</optimize>
+  <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -120,10 +121,10 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <noboundscheck>1</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
+  <useInline>1</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -133,10 +134,10 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -179,6 +180,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -271,6 +273,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -363,6 +366,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -455,6 +459,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -547,6 +552,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).a</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -644,7 +650,46 @@
    <File path="win32\xmldomdid.d" />
    <File path="win32\xmldsodid.d" />
    <File path="win32\idispids.d" />
+   <File path="win32\activdbg.d" />
    <File path="win32\activscp.d" />
+   <File path="win32\dbgprop.d" />
+   <File path="win32\wtypesbase.d" />
+   <File path="win32\minwinbase.d" />
+   <File path="win32\processenv.d" />
+   <File path="win32\minwindef.d" />
+   <File path="win32\fileapi.d" />
+   <File path="win32\debugapi.d" />
+   <File path="win32\handleapi.d" />
+   <File path="win32\errhandlingapi.d" />
+   <File path="win32\fibersapi.d" />
+   <File path="win32\namedpipeapi.d" />
+   <File path="win32\profileapi.d" />
+   <File path="win32\heapapi.d" />
+   <File path="win32\synchapi.d" />
+   <File path="win32\interlockedapi.d" />
+   <File path="win32\processthreadsapi.d" />
+   <File path="win32\sysinfoapi.d" />
+   <File path="win32\memoryapi.d" />
+   <File path="win32\threadpoollegacyapiset.d" />
+   <File path="win32\utilapiset.d" />
+   <File path="win32\ioapiset.d" />
+   <File path="win32\threadpoolapiset.d" />
+   <File path="win32\bemapiset.d" />
+   <File path="win32\wow64apiset.d" />
+   <File path="win32\jobapi.d" />
+   <File path="win32\timezoneapi.d" />
+   <File path="win32\datetimeapi.d" />
+   <File path="win32\stringapiset.d" />
+   <File path="win32\libloaderapi.d" />
+   <File path="win32\securitybaseapi.d" />
+   <File path="win32\namespaceapi.d" />
+   <File path="win32\systemtopologyapi.d" />
+   <File path="win32\processtopologyapi.d" />
+   <File path="win32\securityappcontainer.d" />
+   <File path="win32\realtimeapiset.d" />
+   <File path="win32\unknwnbase.d" />
+   <File path="win32\objidlbase.d" />
+   <File path="win32\combaseapi.d" />
   </Folder>
   <Folder name="vsi">
    <File path="vsi\sdk_shared.d" />

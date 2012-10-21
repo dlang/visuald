@@ -1211,7 +1211,7 @@ class GlobalOptions
 				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
 				// InstallDir is ../Common7/IDE/
 				VSInstallDir = normalizeDir(VSInstallDir);
-				VSInstallDir = dirName(dirName(dirName(VSInstallDir)));
+				VSInstallDir = dirName(dirName(VSInstallDir));
 			}
 			VSInstallDir = normalizeDir(VSInstallDir);
 		}

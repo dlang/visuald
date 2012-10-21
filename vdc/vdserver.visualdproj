@@ -44,7 +44,7 @@
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -87,6 +87,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName)_d.exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -133,10 +134,10 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -179,6 +180,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -271,6 +273,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -363,6 +366,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -455,6 +459,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -547,15 +552,19 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="vdserver">
-  <File tool="Custom" path="vdserver.idl" customcmd="path %path%;c:\l\vs9\vc\bin;c:\l\vs9\common7\IDE
-midl /I &quot;c:\Program Files (x86)\Windows Kits\8.0\Include\shared&quot; /I &quot;c:\Program Files (x86)\Windows Kits\8.0\Include\um&quot; /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(OutDir) /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
-  <File tool="Custom" path="vdserver.rc" dependencies="$(OutDir)\vdserver.tlb ..\version" customcmd="rc /fo$(OutDir)\vdserver.res &quot;/I$(OutDir)&quot; &quot;/I$(WindowsSdkDir)\include&quot; &quot;/I$(DevEnvDir)..\..\VC\include&quot; $(InputPath)" outfile="$(OutDir)\vdserver.res" linkoutput="true" />
+  <File tool="Custom" path="vdserver.idl" customcmd="call $(VSINSTALLDIR)\Common7\Tools\vsvars32.bat
+if errorlevel 1 goto reportError
+midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /out $(OutDir) /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
+  <File tool="Custom" path="vdserver.rc" dependencies="$(OutDir)\vdserver.tlb ..\version" customcmd="call $(VSINSTALLDIR)\Common7\Tools\vsvars32.bat
+if errorlevel 1 goto reportError
+rc /fo$(OutDir)\vdserver.res &quot;/I$(OutDir)&quot; $(InputPath)" outfile="$(OutDir)\vdserver.res" linkoutput="true" />
   <File path="vdserver.reg" />
   <File path="vdserver_d.reg" />
   <File path="vdserverfactory.d" />

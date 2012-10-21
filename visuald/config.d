@@ -278,6 +278,8 @@ class ProjectOptions
 			cmd ~= " -lib";
 		if(multiobj)
 			cmd ~= " -multiobj";
+		if(isX86_64)
+			cmd ~= " -m64";
 		if(trace)
 			cmd ~= " -profile";
 		if(quiet)
@@ -530,11 +532,11 @@ class ProjectOptions
 		cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
 		switch(mapverbosity)
 		{
-			case 0: cmd ~= " -L/NOMAP"; break; // actually still creates map file
-			case 1: cmd ~= " -L/MAP:ADDRESS"; break;
+			case 0: cmd ~= isX86_64 ? "" : " -L/NOMAP"; break; // actually still creates map file
+			case 1: cmd ~= isX86_64 ? "-L/MAPINFO:EXPORTS" : " -L/MAP:ADDRESS"; break;
 			case 2: break;
-			case 3: cmd ~= " -L/MAP:FULL"; break;
-			case 4: cmd ~= " -L/MAP:FULL -L/XREF"; break;
+			case 3: cmd ~= isX86_64 ? "-L/MAPINFO:EXPORTS,LINES" : " -L/MAP:FULL"; break;
+			case 4: cmd ~= isX86_64 ? "-L/MAPINFO:EXPORTS,LINES,FIXUPS" : " -L/MAP:FULL -L/XREF"; break;
 			default: break;
 		}
 
@@ -732,8 +734,29 @@ class ProjectOptions
 		return normalizeDir(objdir) ~ "$(ProjectName)." ~ kCmdLogFileExtension;
 	}
 
+	// "linking" includes building library (through ar with GDC, internal with DMD)
+	bool doSeparateLink()
+	{
+		if(compilationModel == ProjectOptions.kSeparateCompileOnly)
+			return false;
+		bool separateLink = compilationModel == ProjectOptions.kSeparateCompileAndLink;
+		if (compiler == Compiler.GDC && lib == OutputType.StaticLib)
+			separateLink = true;
+		if (compiler == Compiler.DMD && lib != OutputType.StaticLib)
+			separateLink = true;
+		return separateLink;
+	}
+
+	bool usesOptlink()
+	{
+		bool dmdlink = compiler == Compiler.DMD && doSeparateLink() && lib != OutputType.StaticLib;
+		return dmdlink && !isX86_64;
+	}
+
 	bool usesCv2pdb()
 	{
+		if(compiler == Compiler.DMD && isX86_64)
+			return false; // should generate correct debug info directly
 		return (/*compiler == Compiler.DMD && */symdebug && runCv2pdb && lib != OutputType.StaticLib && debugEngine != 1);
 	}
 	
@@ -1936,12 +1959,7 @@ class Config :	DisposingComObject,
 
 	bool hasLinkDependencies()
 	{
-		bool doLink = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
-		bool separateLink = mProjectOptions.compilationModel == ProjectOptions.kSeparateCompileAndLink;
-		if (mProjectOptions.compiler == Compiler.GDC && mProjectOptions.lib == OutputType.StaticLib)
-			separateLink = true;
-		bool useOptlink = mProjectOptions.compiler == Compiler.DMD && separateLink && mProjectOptions.lib != OutputType.StaticLib;
-		return doLink && useOptlink && Package.GetGlobalOptions().optlinkDeps;
+		return mProjectOptions.usesOptlink() && Package.GetGlobalOptions().optlinkDeps;
 	}
 
 	string GetCommandLinePath()
@@ -2212,7 +2230,7 @@ class Config :	DisposingComObject,
 		}
 		if(cmd.length)
 		{
-			cmd = getEnvironmentChanges() ~ cmd ~ "\n";
+			cmd = getEnvironmentChanges() ~ cmd ~ "\n:reportError\n";
 			cmd ~= "if errorlevel 1 echo Building " ~ outfile ~ " failed!\n";
 			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
@@ -2296,7 +2314,7 @@ class Config :	DisposingComObject,
 			precmd ~= "\n";
 			fcmd = " @" ~ quoteFilename(responsefile);
 		}
-		else
+		else if (fcmd.length)
 			fcmd = " " ~ fcmd;
 		
 		if(mProjectOptions.compiler == Compiler.GDC && mProjectOptions.libfiles.length)
@@ -2405,12 +2423,7 @@ class Config :	DisposingComObject,
 	string getCommandLine()
 	{
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
-		bool separateLink = mProjectOptions.compilationModel == ProjectOptions.kSeparateCompileAndLink;
-		if (mProjectOptions.compiler == Compiler.GDC && mProjectOptions.lib == OutputType.StaticLib)
-			separateLink = true;
-		if (mProjectOptions.compiler == Compiler.DMD && mProjectOptions.lib != OutputType.StaticLib && doLink)
-			separateLink = true;
-		bool useOptlink = mProjectOptions.compiler == Compiler.DMD && separateLink && mProjectOptions.lib != OutputType.StaticLib;
+		bool separateLink = mProjectOptions.doSeparateLink();
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
 		if(mProjectOptions.additionalOptions.length)
 			opt ~= " " ~ mProjectOptions.additionalOptions;
@@ -2435,7 +2448,9 @@ class Config :	DisposingComObject,
 		if(separateLink || !doLink)
 		{
 			bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
-			if(singleObj)
+			if(fcmd.length == 0)
+				opt = ""; // don't try to build zero files
+			else if(singleObj)
 				opt ~= " -c -of\"$(OutDir)\\$(ProjectName).obj\"";
 			else
 				opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
@@ -2446,7 +2461,7 @@ class Config :	DisposingComObject,
 		if(separateLink && doLink)
 		{
 			string prelnk, lnkcmd;
-			if(useOptlink)
+			if(mProjectOptions.usesOptlink())
 			{
 				string libs, options;
 				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), &libs, &options);

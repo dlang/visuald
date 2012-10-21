@@ -1736,6 +1736,7 @@ version(none)
 			// not inside #ifdef PROXYSTUB_BUILD
 			replaceTokenSequence(tokens, "alias IID_SVsFileMergeService SID_SVsFileMergeService;", "// $*", true);
 
+			replaceTokenSequence(tokens, "__uuidof(SVsHierarchyManipulation)", "SVsHierarchyManipulation.iid", true);
 		}
 		if(currentModule == "vapiemp")
 		{

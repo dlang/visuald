@@ -62,6 +62,9 @@ extern(Windows)
 BOOL EnumWindows(fnEnumWindows* lpEnumFunc, LPARAM lParam) nothrow;
 
 extern(Windows)
+alias BOOL function(HWND, LPARAM) nothrow WNDENUMPROC;
+
+extern(Windows)
 BOOL EnumChildWindows(HWND hWndParent, WNDENUMPROC lpEnumFunc, LPARAM lParam) nothrow;
 
 const GA_ROOTOWNER = 3;
@@ -225,7 +228,7 @@ void main(string[] argv)
 				CW_USEDEFAULT, CW_USEDEFAULT, 10, 10,
 				null, null, hInst, null);
 
-	writefln("hwnd = %s", cast(void*)hwnd);
+	//writefln("hwnd = %s", cast(void*)hwnd);
 	myWindow = hwnd;
 	viewer.View(hwnd, IID_ITypeLib, lib);
 
