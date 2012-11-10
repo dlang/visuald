@@ -673,12 +673,19 @@ class LanguageService : DisposingComObject,
 
 	// semantic completion ///////////////////////////////////
 
-	uint GetTip(Source src, TextSpan* pSpan, GetTypeCallBack cb)
+	uint GetTip(Source src, TextSpan* pSpan, GetTipCallBack cb)
 	{
+		ConfigureSemanticProject(src);
 		return mVDServerClient.GetTip(src.GetFileName(), pSpan, cb);
+	}
+	uint GetDefinition(Source src, TextSpan* pSpan, GetDefinitionCallBack cb)
+	{
+		ConfigureSemanticProject(src);
+		return mVDServerClient.GetDefinition(src.GetFileName(), pSpan, cb);
 	}
 	uint GetSemanticExpansions(Source src, string tok, int line, int idx, GetExpansionsCallBack cb)
 	{
+		ConfigureSemanticProject(src);
 		wstring expr = src.FindExpressionBefore(line, idx);
 		return mVDServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, expr, cb);
 	}
@@ -1695,6 +1702,34 @@ else
 		endIdx = min(length, info.EndIndex);
 		return true;
 }
+	}
+
+	bool GetTipSpan(TextSpan* pSpan)
+	{
+		if(pSpan.iStartLine == pSpan.iEndLine && pSpan.iStartIndex == pSpan.iEndIndex)
+		{
+			int startIdx, endIdx;
+			if(!GetWordExtent(pSpan.iStartLine, pSpan.iStartIndex, WORDEXT_CURRENT, startIdx, endIdx))
+				return false;
+			pSpan.iStartIndex = startIdx;
+			pSpan.iEndIndex = endIdx;
+
+			wstring txt = GetText(pSpan.iStartLine, 0, pSpan.iStartLine, -1);
+		L_again:
+			int idx = pSpan.iStartIndex - 1;
+			while(idx >= 0 && isWhite(txt[idx]))
+				idx--;
+			if(idx >= 0 && txt[idx] == '.')
+			{
+				while(idx > 0 && isWhite(txt[idx - 1]))
+					idx--;
+				while(idx > 0 && dLex.isIdentifierCharOrDigit(txt[idx - 1]))
+					idx--;
+				pSpan.iStartIndex = idx;
+				goto L_again;
+			}
+		}
+		return true;
 	}
 
 	static bool MatchToken(WORDEXTFLAGS flags, TokenInfo info)
@@ -3081,6 +3116,7 @@ else
 		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
 			return false;
 
+		bool verbose = (mModificationCountAST == -1);
 		mParseText = GetText(); // should not be read from another thread
 		mParsingState = 1;
 		mModificationCountAST = mModificationCount;
@@ -3089,9 +3125,7 @@ else
 		if(Package.GetGlobalOptions().parseSource)
 		{
 			auto langsvc = Package.GetLanguageService();
-			langsvc.mVDServerClient.UpdateModule(GetFileName(), mParseText, &OnUpdateModule);
-			if(Package.GetGlobalOptions().projectSemantics)
-				langsvc.ConfigureSemanticProject(this);
+			langsvc.mVDServerClient.UpdateModule(GetFileName(), mParseText, verbose, &OnUpdateModule);
 		}
 
 		return true;

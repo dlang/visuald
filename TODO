@@ -10,7 +10,6 @@ Settings:
 ---------------
 - different global settings for D1/D2?
 - browse-buttons for path input lines
-- sometimes renames Visual Studio to VisualD in windows header
 
 Project:
 ---------------
@@ -53,7 +52,6 @@ Language service:
 - VS sometimes does not remember position inside file across restart?
 - goto import jumps to "mod" if run on "import mod = pkg.mod;"
 - support DDoc comment in JSON file
-- hide parsing message when done
 - goto definition might jump to wrong file if identically named files in solution
 - file source navigation menus
 - spurious display of completion box
@@ -104,7 +102,11 @@ Lexer/Parser:
 - octal numbers
 - do not parse file if it is D1?
 - deprecated syntax
-- support for => delegates
+- semantic support for => delegates
+- support deprecated("msg")
+- support alias name|this = type;
+- syntax error with "@disable new()"
+- integrate d_parser.dll
 
 C++ to D
 ---------
@@ -125,8 +127,22 @@ Debugger:
 - Mago: set instruction pointer
 - local functions/delegates should have debug info for closure vars ("this" exists)
 - GDC: x64: function arguments not shown
-- VS2012: autoexp.dat does not work
+- VS2012: autoexp.dat does not work?
 
 GUI-Designer:
 -------------
 - Form designer: see IVSMDDesignerService
+
+
+Unsorted
+=========
+- parse all files in project at startup
+- COM leaks in VS2012 (VS2010?)
+- hovering over function argument shows hint for function
+- display location of definition in tool tip
+- implement goto definition through semantic analysis
+- compile from selection/buffer (through rdmd)
+- virustotal reports malicious software
+- vdserver: terminate if no client left
+- make Visual D install as extension and make it available through extension manager
+- reset semantic analysis data

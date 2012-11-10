@@ -271,11 +271,11 @@ import std.array;
 
 //////////////////////////////////////
 
-alias void delegate(uint request, string fname, string type, sdk.vsi.sdk_shared.TextSpan span) GetTypeCallBack;
+alias void delegate(uint request, string fname, string type, sdk.vsi.sdk_shared.TextSpan span) GetTipCallBack;
 
-class GetTypeCommand : FileCommand
+class GetTipCommand : FileCommand
 {
-	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetTypeCallBack cb)
+	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetTipCallBack cb)
 	{
 		super("GetTip", filename);
 		mSpan = span;
@@ -322,9 +322,67 @@ class GetTypeCommand : FileCommand
 		return true;
 	}
 
-	GetTypeCallBack mCallback;
+	GetTipCallBack mCallback;
 	sdk.vsi.sdk_shared.TextSpan mSpan;
 	string mType;
+}
+
+//////////////////////////////////////
+
+alias void delegate(uint request, string fname, sdk.vsi.sdk_shared.TextSpan span) GetDefinitionCallBack;
+
+class GetDefinitionCommand : FileCommand
+{
+	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetDefinitionCallBack cb)
+	{
+		super("GetDefinition", filename);
+		mSpan = span;
+		mCallback = cb;
+	}
+
+	override HRESULT exec() const
+	{
+		if(!gVDServer)
+			return S_FALSE;
+
+		BSTR fname = allocBSTR(mFilename);
+		int iStartLine = mSpan.iStartLine + 1;
+		int iStartIndex = mSpan.iStartIndex;
+		int iEndLine = mSpan.iEndLine + 1;
+		int iEndIndex = mSpan.iEndIndex;
+		HRESULT rc = gVDServer.GetDefinition(fname, iStartLine, iStartIndex, iEndLine, iEndIndex);
+		freeBSTR(fname);
+		return rc;
+	}
+
+	override HRESULT answer()
+	{
+		if(!gVDServer)
+			return S_FALSE;
+
+		BSTR fname;
+		int iStartLine, iStartIndex, iEndLine, iEndIndex;
+		HRESULT rc = gVDServer.GetDefinitionResult(iStartLine, iStartIndex, iEndLine, iEndIndex, &fname);
+		if(rc != S_OK)
+			return rc;
+
+		mDefFile = detachBSTR(fname);
+		mSpan = sdk.vsi.sdk_shared.TextSpan(iStartIndex, iStartLine - 1, iEndIndex, iEndLine - 1);
+
+		send(gUITid);
+		return S_OK;
+	}
+
+	override bool forward()
+	{
+		if(mCallback)
+			mCallback(mRequest, mDefFile, mSpan);
+		return true;
+	}
+
+	GetDefinitionCallBack mCallback;
+	sdk.vsi.sdk_shared.TextSpan mSpan;
+	string mDefFile;
 }
 
 //////////////////////////////////////
@@ -333,12 +391,13 @@ alias void delegate(uint request, string filename, string parseErrors, TextPos[]
 
 class UpdateModuleCommand : FileCommand
 {
-	this(string filename, wstring text, UpdateModuleCallBack cb)
+	this(string filename, wstring text, bool verbose, UpdateModuleCallBack cb)
 	{
 		super("UpdateModule", filename);
 		version(DebugCmd) mCommand ~= " " ~ to!string(firstLine(text));
 		mText = text;
 		mCallback = cb;
+		mVerbose = verbose;
 	}
 
 	override HRESULT exec() const
@@ -349,7 +408,7 @@ class UpdateModuleCommand : FileCommand
 		BSTR bfname = allocBSTR(mFilename);
 
 		BSTR btxt = allocwBSTR(mText);
-		HRESULT hr = gVDServer.UpdateModule(bfname, btxt);
+		HRESULT hr = gVDServer.UpdateModule(bfname, btxt, mVerbose);
 		freeBSTR(btxt);
 		freeBSTR(bfname);
 		return hr;
@@ -408,6 +467,7 @@ class UpdateModuleCommand : FileCommand
 	UpdateModuleCallBack mCallback;
 	wstring mText;
 	string mErrors;
+	bool mVerbose;
 	TextPos[] mBinaryIsIn;
 }
 
@@ -531,9 +591,16 @@ class VDServerClient
 		return cmd.mRequest;
 	}
 
-	uint GetTip(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, GetTypeCallBack cb)
+	uint GetTip(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, GetTipCallBack cb)
 	{
-		auto cmd = new _shared!(GetTypeCommand)(filename, *pSpan, cb);
+		auto cmd = new _shared!(GetTipCommand)(filename, *pSpan, cb);
+		cmd.send(mTid);
+		return cmd.mRequest;
+	}
+
+	uint GetDefinition(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, GetDefinitionCallBack cb)
+	{
+		auto cmd = new _shared!(GetDefinitionCommand)(filename, *pSpan, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}
@@ -545,9 +612,9 @@ class VDServerClient
 		return cmd.mRequest;
 	}
 
-	uint UpdateModule(string filename, wstring text, UpdateModuleCallBack cb)
+	uint UpdateModule(string filename, wstring text, bool verbose, UpdateModuleCallBack cb)
 	{
-		auto cmd = new _shared!(UpdateModuleCommand)(filename, text, cb);
+		auto cmd = new _shared!(UpdateModuleCommand)(filename, text, verbose, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}

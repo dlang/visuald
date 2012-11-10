@@ -19,6 +19,7 @@ import visuald.stringutil;
 import visuald.config;
 import visuald.dpackage;
 import visuald.windows;
+import visuald.pkgutil;
 
 import stdext.path;
 import stdext.file;
@@ -53,6 +54,7 @@ import xml = visuald.xmlwrap;
 // threaded builds cause Visual Studio to close the solution
 // version = threadedBuild;
 // version = taskedBuild;
+// version = showUptodateFailure;
 
 version(taskedBuild)
 {
@@ -402,7 +404,11 @@ else
 				if(CFileNode file = cast(CFileNode) n)
 				{
 					if(!mConfig.isUptodate(file))
+					{
+						version(showUptodateFailure)
+							writeToBuildOutputPane(file.GetName() ~ " not uptodate\n");
 						return true;
+					}
 				}
 				return false;
 			});
@@ -416,15 +422,27 @@ else
 
 		string deppath = makeFilenameAbsolute(mConfig.GetDependenciesPath(), workdir);
 		if(!std.file.exists(deppath))
+		{
+			version(showUptodateFailure)
+				writeToBuildOutputPane("dependency file " ~ deppath ~ " does not exist\n");
 			return false;
+		}
 		if(!getFilenamesFromDepFile(deppath, files))
+		{
+			version(showUptodateFailure)
+				writeToBuildOutputPane("dependency file " ~ deppath ~ " cannot be read\n");
 			return false;
+		}
 
 		if(mConfig.hasLinkDependencies())
 		{
 			string lnkdeppath = makeFilenameAbsolute(mConfig.GetLinkDependenciesPath(), workdir);
 			if(!std.file.exists(lnkdeppath))
+			{
+				version(showUptodateFailure)
+					writeToBuildOutputPane("link dependency file " ~ lnkdeppath ~ " does not exist\n");
 				return false;
+			}
 			auto lnkdepz = cast(immutable(char)[])std.file.read(lnkdeppath) ~ "\0";
 			int cp = GetKBCodePage();
 			string lnkdeps = fromMBSz(lnkdepz.ptr, cp);
@@ -450,7 +468,11 @@ else
 
 		string cmdline = mConfig.getCommandLine();
 		if(!compareCommandFile(cmdfile, cmdline))
+		{
+			version(showUptodateFailure)
+				writeToBuildOutputPane("command line changed\n");
 			return false;
+		}
 
 		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
 		string oldestFile;
@@ -466,7 +488,13 @@ else
 		string newestFile;
 		long sourcetm = getNewestFileTime(files, newestFile);
 
-		return targettm > sourcetm;
+		if(targettm <= sourcetm)
+		{
+			version(showUptodateFailure)
+				writeToBuildOutputPane(newestFile ~ " newer than " ~ oldestFile ~ "\n");
+			return false;
+		}
+		return true;
 	}
 
 	bool DoClean()
@@ -1117,8 +1145,10 @@ else
 			else if(ch == ')' && openpos > 0)
 			{
 				// only check lines that import "object", these are written once per file
-				const string kCheck = " : public : object ";
-				if(pos + kCheck.length <= txt.length && txt[pos .. pos + kCheck.length] == kCheck)
+				const string kCheck1 = " : public : object ";
+				const string kCheck2 = " : private : object "; // added after 2.060
+				if((pos + kCheck1.length <= txt.length && txt[pos .. pos + kCheck1.length] == kCheck1) ||
+				   (pos + kCheck2.length <= txt.length && txt[pos .. pos + kCheck2.length] == kCheck2))
 				{
 					string file = txt[openpos .. pos-1];
 					file = unEscapeFilename(file);

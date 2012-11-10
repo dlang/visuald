@@ -38,6 +38,7 @@ import std.array;
 import std.concurrency;
 import std.datetime;
 import core.thread;
+import core.time;
 
 debug version = DebugServer;
 //debug version = vdlog; // log through visual D logging (needs version = InProc in vdserverclient)
@@ -189,9 +190,10 @@ class VDServer : ComObject, IVDServer
 			string dbgids = to_string(debugids);
 
 			int changed = (oldflags != (flags & 7));
-			changed += opts.setImportDirs(tokenizeArgs(imports));
-			changed += opts.setVersionIds(versionlevel, tokenizeArgs(verids)); 
-			changed += opts.setDebugIds(debuglevel, tokenizeArgs(dbgids)); 
+			changed += opts.setImportDirs(splitLines(imports));
+			changed += opts.setImportDirs(splitLines(imports));
+			changed += opts.setVersionIds(versionlevel, splitLines(verids)); 
+			changed += opts.setDebugIds(debuglevel, splitLines(dbgids)); 
 		}
 		return S_OK;
 	}
@@ -206,7 +208,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText)
+	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in BOOL verbose)
 	{
 		string fname = to_string(filename);
 		string text  = to_string(srcText);
@@ -226,6 +228,9 @@ class VDServer : ComObject, IVDServer
 		{
 			version(DebugServer) dbglog("    doParse: " ~ firstLine(text));
 
+			if (verbose)
+				semanticWriteError(MessageType.Message, fname ~ ": parsing...");
+
 			ast.Node n;
 			try
 			{
@@ -236,6 +241,9 @@ class VDServer : ComObject, IVDServer
 				version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.msg);
 				logInfo(t.msg);
 			}
+
+			if(verbose)
+				writeReadyMessage();
 
 			synchronized(mSemanticProject)
 				if(auto src = mSemanticProject.getModuleByFilename(fname))
@@ -289,6 +297,13 @@ class VDServer : ComObject, IVDServer
 							}
 						mTipSpan = n.fulspan;
 					}
+					if(auto res = n.resolve())
+					{
+						string fname = res.getModuleFilename();
+						if(auto mod = res.getModule())
+							fname = mod.getModuleName();
+						txt ~= "\ndecl: " ~ fname ~ "(" ~ to!string(res.span.start.line) ~ ")";
+					}
 				}
 			}
 			catch(Throwable t)
@@ -317,6 +332,64 @@ class VDServer : ComObject, IVDServer
 		endLine    = mTipSpan.end.line;
 		endIndex   = mTipSpan.end.index;
 		*answer = allocBSTR(mLastTip);
+		return S_OK;
+	}
+
+	override HRESULT GetDefinition(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
+	{
+		string fname = to_string(filename);
+		ast.Module mod;
+		synchronized(mSemanticProject)
+			if(auto src = mSemanticProject.getModuleByFilename(fname))
+				mod = src.analyzed;
+
+		if(!mod)
+			return S_FALSE;
+
+		void _getDefinition()
+		{
+			string txt;
+			fnSemanticWriteError = &semanticWriteError;
+			string deffilename;
+			try
+			{
+				TextSpan span = TextSpan(TextPos(startIndex, startLine), TextPos(endIndex, endLine));
+				ast.Node n = ast.getTextPosNode(mod, &span, null);
+				if(n && n !is mod)
+				{
+					if(auto res = n.resolve())
+					{
+						deffilename = res.getModuleFilename();
+						mDefSpan = res.span;
+					}
+				}
+			}
+			catch(Throwable t)
+			{
+				version(DebugServer) dbglog("GetDefinition._getDefinition: exception " ~ t.msg);
+				logInfo(t.msg);
+			}
+			mLastDefFile = deffilename;
+			mSemanticDefinitionRunning = false;
+		}
+		version(DebugServer) dbglog("  schedule GetDefinition: " ~ fname);
+		mSemanticDefinitionRunning = true;
+		schedule(&_getDefinition);
+		return S_OK;
+	}
+
+	override HRESULT GetDefinitionResult(ref int startLine, ref int startIndex, ref int endLine, ref int endIndex, BSTR* answer)
+	{
+		if(mSemanticDefinitionRunning)
+			return S_FALSE;
+
+		version(DebugServer) dbglog("GetDefinitionResult: " ~ mLastDefFile);
+		writeReadyMessage();
+		startLine  = mDefSpan.start.line;
+		startIndex = mDefSpan.start.index;
+		endLine    = mDefSpan.end.line;
+		endIndex   = mDefSpan.end.index;
+		*answer = allocBSTR(mLastDefFile);
 		return S_OK;
 	}
 
@@ -503,7 +576,13 @@ class VDServer : ComObject, IVDServer
 	override HRESULT GetLastMessage(BSTR* message)
 	{
 		if(!mLastMessage.length)
-			return S_FALSE;
+		{
+			if(mNextReadyMessage > Clock.currTime())
+				return S_FALSE;
+			
+			mLastMessage = "Ready";
+			mNextReadyMessage = Clock.currTime().add!"years"(1);
+		}
 		*message = allocBSTR(mLastMessage);
 		mLastMessage = null;
 		return S_OK;
@@ -544,7 +623,7 @@ class VDServer : ComObject, IVDServer
 	{
 		if(mHadMessage)
 		{
-			semanticWriteError(MessageType.Message, "Ready");
+			mNextReadyMessage = Clock.currTime() + dur!"seconds"(2);
 			mHadMessage = false;
 		}
 	}
@@ -555,11 +634,15 @@ private:
 	vdc.semantic.Project mSemanticProject;
 	bool mSemanticExpansionsRunning;
 	bool mSemanticTipRunning;
+	bool mSemanticDefinitionRunning;
 	string mLastTip;
 	TextSpan mTipSpan;
+	string mLastDefFile;
+	TextSpan mDefSpan;
 	string[] mLastSymbols;
 	string mLastMessage;
 	string mLastError;
 	bool mHadMessage;
+	SysTime mNextReadyMessage;
 }
 

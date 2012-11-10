@@ -804,6 +804,7 @@ class ProjectOptions
 		replacements["SAFEPROJECTNAME"] = config.GetProjectName().replace(" ", "_");
 		addFileMacros(inputfile.length ? inputfile : projectpath, "INPUT", replacements);
 		replacements["CONFIGURATIONNAME"] = configname;
+		replacements["CONFIGURATION"] = configname;
 		replacements["OUTDIR"] = normalizePath(outdir);
 		replacements["INTDIR"] = normalizePath(objdir);
 		Package.GetGlobalOptions().addReplacements(replacements);
@@ -2304,6 +2305,8 @@ class Config :	DisposingComObject,
 			foreach(ref f; files)
 				f = replace(f, "\\", "/");
 
+		files = files.dup;
+		quoteFilenames(files);
 		string fcmd = std.string.join(files, " ");
 		if(fcmd.length > 100)
 		{
@@ -2430,7 +2433,7 @@ class Config :	DisposingComObject,
 
 		string precmd = getEnvironmentChanges();
 		string[] files = getInputFileList();
-		quoteFilenames(files);
+		//quoteFilenames(files);
 
 		string responsefile = GetCommandLinePath() ~ ".rsp";
 		string fcmd = getCommandFileList(files, responsefile, precmd);
@@ -2463,21 +2466,30 @@ class Config :	DisposingComObject,
 			string prelnk, lnkcmd;
 			if(mProjectOptions.usesOptlink())
 			{
-				string libs, options;
-				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), &libs, &options);
+				string libpaths, options;
+				string linkpath = globOpts.getOptlinkPath(mProjectOptions.otherCompilerPath(), &libpaths, &options);
 				lnkcmd = linkpath ~ " ";
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
 						~ (globOpts.demangleError ? null : "-nodemangle ")
 						~ (globOpts.optlinkDeps ? "-deps " ~ quoteFilename(GetLinkDependenciesPath()) ~ " " : null)
 						~ lnkcmd;
-				string[] lnkfiles = getObjectFileList(files);
+				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
 				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options);
-				lnkcmd ~= getLinkFileList([cmdfiles], prelnk);
+				if(cmdfiles.length > 100)
+				{
+					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";
+					prelnk ~= "echo. > " ~ lnkresponsefile ~ "\n";
+					prelnk ~= "echo " ~ cmdfiles.replace("+", "+ >> " ~ lnkresponsefile ~ "\necho ");
+					prelnk ~= " >> " ~ lnkresponsefile ~ "\n\n";
+					lnkcmd ~= "@" ~ lnkresponsefile;
+				}
+				else
+					lnkcmd ~= cmdfiles;
 				
 				if(!mProjectOptions.useStdLibPath)
 					prelnk = "set OPTLINKS=%OPTLINKS% /NOSCANLIB\n" ~ prelnk;
-				prelnk = "set LIB=" ~ libs ~ "\n" ~ prelnk;
+				prelnk = "set LIB=" ~ libpaths ~ "\n" ~ prelnk;
 			}
 			else
 			{
@@ -2604,6 +2616,8 @@ class Config :	DisposingComObject,
 					{
 						ScopedBSTR target;
 						if(pIVsOutput.get_CanonicalName(&target.bstr) == S_OK)
+						//if(pIVsOutput.get_DeploySourceURL(&target.bstr) == S_OK)
+						//if(pIVsOutput.get_DisplayName(&target.bstr) == S_OK)
 						{
 							string targ = target.detach();
 							libs ~= targ;

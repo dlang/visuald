@@ -1157,31 +1157,64 @@ else
 			return hr;
 		}
 
-		string word = toUTF8(GetWordAtCaret());
-		if(word.length <= 0)
-			return S_FALSE;
+		string deffile;
+		int defline;
+		string word;
 
-		Definition[] defs = Package.GetLibInfos().findDefinition(word);
-		if(defs.length == 0)
+		if(Package.GetGlobalOptions().showTypeInTooltip)
 		{
-			showStatusBarText("No definition found for '" ~ word ~ "'");
+			TextSpan span;
+			span.iStartLine  = span.iEndLine  = line;
+			span.iStartIndex = span.iEndIndex = idx;
+			if (!mCodeWinMgr.mSource.GetTipSpan(&span))
+				return S_FALSE;
+			mLastGotoDef = to!string(mCodeWinMgr.mSource.GetText(span.iStartLine, span.iStartIndex, span.iEndLine, span.iEndIndex));
+			Package.GetLanguageService().GetDefinition(mCodeWinMgr.mSource, &span, &GotoDefinitionCallBack);
 			return S_FALSE;
 		}
-
-		if(defs.length > 1)
+		else
 		{
-			showStatusBarText("Multiple definitions found for '" ~ word ~ "'");
-			showSearchWindow(false, word);
-			return S_FALSE;
+			word = toUTF8(GetWordAtCaret());
+			if(word.length <= 0)
+				return S_FALSE;
+
+			Definition[] defs = Package.GetLibInfos().findDefinition(word);
+			if(defs.length == 0)
+			{
+				showStatusBarText("No definition found for '" ~ word ~ "'");
+				return S_FALSE;
+			}
+
+			if(defs.length > 1)
+			{
+				showStatusBarText("Multiple definitions found for '" ~ word ~ "'");
+				showSearchWindow(false, word);
+				return S_FALSE;
+			}
+			deffile = defs[0].filename;
+			defline = defs[0].line;
+
+			HRESULT hr = OpenFileInSolution(deffile, defline, file, true);
+			if(hr != S_OK)
+				showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", deffile, defline, word));
+			return hr;
 		}
-
-		HRESULT hr = OpenFileInSolution(defs[0].filename, defs[0].line, file, true);
-		if(hr != S_OK)
-			showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", defs[0].filename, defs[0].line, word));
-
-		return hr;
 	}
 
+	extern(D)
+	void GotoDefinitionCallBack(uint request, string fname, sdk.vsi.sdk_shared.TextSpan span)
+	{
+		if (fname.length)
+		{
+			HRESULT hr = OpenFileInSolution(fname, span.iStartLine, null, false);
+			if(hr != S_OK)
+				showStatusBarText(format("Cannot open %s(%d) for goto definition", fname, span.iStartLine));
+		}
+		else
+			showStatusBarText("No definition found for '" ~ mLastGotoDef ~ "'");
+	}
+
+	//////////////////////////////////////////////////////////////
 	int HandleHelp()
 	{
 		string word = toUTF8(GetWordAtCaret());
@@ -1270,27 +1303,9 @@ else
 
 		HRESULT resFwd = TIP_S_ONLYIFNOMARKER; // enable and prefer TextMarker tooltips
 		TextSpan span = *pSpan;
-		if(pSpan.iStartLine == pSpan.iEndLine && pSpan.iStartIndex == pSpan.iEndIndex)
-		{
-			if(HRESULT hr = GetWordExtent(pSpan.iStartLine, pSpan.iStartIndex, WORDEXT_CURRENT, pSpan))
-				return resFwd;
+		if(!mCodeWinMgr.mSource.GetTipSpan(pSpan))
+			return resFwd;
 
-			wstring txt = mCodeWinMgr.mSource.GetText(pSpan.iStartLine, 0, pSpan.iStartLine, -1);
-		L_again:
-			int idx = pSpan.iStartIndex - 1;
-			while(idx >= 0 && isWhite(txt[idx]))
-				idx--;
-			if(idx >= 0 && txt[idx] == '.')
-			{
-				while(idx > 0 && isWhite(txt[idx - 1]))
-					idx--;
-				while(idx > 0 && dLex.isIdentifierCharOrDigit(txt[idx - 1]))
-					idx--;
-				pSpan.iStartIndex = idx;
-				goto L_again;
-			}
-		}
-		
 		// when implementing IVsTextViewFilter, VS2010 will no longer ask the debugger
 		//  for tooltips, so we have to do it ourselves
 		if(IVsDebugger srpVsDebugger = queryService!(IVsDebugger))
@@ -1413,6 +1428,7 @@ version(none) // quick info tooltips not good enough yet
 	TextSpan mTipSpan;
 	string mTipText;
 	uint mTipRequest;
+	string mLastGotoDef;
 
 	extern(D) void OnGetTipText(uint request, string filename, string text, TextSpan span)
 	{

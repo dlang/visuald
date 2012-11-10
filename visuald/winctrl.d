@@ -413,6 +413,7 @@ class Window : Widget
 				if(hdr.code == PSN_APPLY)
 					applyDelegate(this);
 			break;
+
 		default:
 			break;
 		}
@@ -520,7 +521,7 @@ class Text : Widget
 	this(Widget parent, string text, int id, int style, int exstyle)
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
-		createWidget(parent, "EDIT", text, style | WS_CHILD | WS_VISIBLE, exstyle, id);
+		createWidget(parent, "EDIT", text, style | WS_CHILD | WS_VISIBLE | WS_TABSTOP, exstyle, id);
 		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		super(parent);
 	}
@@ -581,6 +582,43 @@ class MultiLineText : Text
 		if(readonly)
 			exstyle = (exstyle & ~(WS_HSCROLL | ES_AUTOHSCROLL)) | ES_READONLY;
 		super(parent, winstr, id, exstyle, 0);
+
+		defWndProc = cast(WNDPROC)cast(void*)GetWindowLongA(hwnd, GWL_WNDPROC);
+		SetWindowLongA(hwnd, GWL_WNDPROC, cast(int)cast(void*)&MLTWindowProc);
+	}
+
+	extern(Windows) static int MLTWindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		if (MultiLineText mlt = cast(MultiLineText) fromHWND(hWnd))
+			return mlt.WindowProc(hWnd,uMsg,wParam,lParam);
+		return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+	}
+
+	WNDPROC defWndProc;
+
+	static HWND FindDialog(HWND hWnd)
+	{
+		while(hWnd && (GetWindowLongA(hWnd, GWL_STYLE) & (WS_POPUP | WS_SYSMENU)) == 0)
+			hWnd = GetParent(hWnd);
+		return hWnd;
+	}
+
+	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	{
+		if(uMsg == WM_CHAR)
+		{
+			switch(wParam)
+			{
+				case VK_TAB:
+					bool shift = (0x80 & GetKeyState(VK_SHIFT)) != 0;
+					.SetFocus(GetNextDlgTabItem(FindDialog(hWnd), hWnd, shift));
+					break;
+				default:
+					break;
+			}
+		}
+		//return DefWindowProcA(hWnd, uMsg, wParam, lParam);
+		return CallWindowProcA(cast(FARPROC) defWndProc, hWnd, uMsg, wParam, lParam);
 	}
 }
 
@@ -590,7 +628,7 @@ class ComboBox : Widget
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		DWORD style = editable ? CBS_DROPDOWN | CBS_AUTOHSCROLL : CBS_DROPDOWNLIST;
-		createWidget(parent, "COMBOBOX", "", style | WS_VSCROLL | WS_HSCROLL | WS_CHILD | WS_VISIBLE, 0, id);
+		createWidget(parent, "COMBOBOX", "", style | WS_VSCROLL | WS_HSCROLL | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, id);
 
 		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		foreach (s; texts)
@@ -651,7 +689,7 @@ class CheckBox : ButtonBase
 	this(Widget parent, string intext, int id = 0) 
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
-		createWidget(parent, "BUTTON", intext, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE, 0, id);
+		createWidget(parent, "BUTTON", intext, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, id);
 		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		super(parent);
 	}
@@ -662,7 +700,7 @@ class Button : ButtonBase
 	this(Widget parent, string intext, int id = 0) 
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
-		createWidget(parent, "BUTTON", intext, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, id);
+		createWidget(parent, "BUTTON", intext, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, id);
 		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
 		super(parent);
 	}
@@ -694,7 +732,7 @@ class ListView : Widget
 	this(Widget parent, uint style, uint exstyle, int id = 0) 
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
-		createWidget(parent, "SysListView32", "", style | WS_CHILD | WS_VISIBLE, exstyle, id);
+		createWidget(parent, "SysListView32", "", style | WS_CHILD | WS_VISIBLE | WS_TABSTOP, exstyle, id);
 		super(parent);
 	}
 

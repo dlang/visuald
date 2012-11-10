@@ -57,6 +57,8 @@ BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 alias typeof(&CreateFileA) fnCreateFileA;
 __gshared fnCreateFileA origCreateFileA;
 
+alias typeof(&VirtualProtect) fnVirtualProtect;
+
 void RedirectCreateFileA()
 {
 	version(msgbox) MessageBoxA(null, "RedirectCreateFileA", "filemonitor", MB_OK);
@@ -65,9 +67,33 @@ void RedirectCreateFileA()
 	origCreateFileA = *impTableEntry;
 
 	DWORD oldProtect, newProtect;
-	VirtualProtect(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
-	*impTableEntry = &MyCreateFileA;
-	VirtualProtect(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
+	version(all)
+	{
+		VirtualProtect(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
+		*impTableEntry = &MyCreateFileA;
+		VirtualProtect(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
+	}
+	else
+	{
+		char[16] func;
+		char*p = func.ptr;
+		mixin({ 
+			string s; 
+			foreach(c; [ 'V','i','r','t','u','a','l','P','r','o','t','e','c','t' ]) 
+			{ s ~= "*p++ = '"; s ~= c; s ~= "';"; } 
+			return s; 
+		}());
+		*p = 0;
+
+		HANDLE krnl = GetModuleHandleA("kernel32.dll");
+		if(fnVirtualProtect fn = cast(fnVirtualProtect) GetProcAddress(krnl, func.ptr))
+		{
+			DWORD oldProtect, newProtect;
+			fn(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
+			*impTableEntry = &MyCreateFileA;
+			fn(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
+		}
+	}
 }
 
 extern(Windows) HANDLE

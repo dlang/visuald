@@ -6,7 +6,7 @@
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>2</singleFileCompilation>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -46,7 +46,7 @@
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>.. m:\s\d\rainers\druntime\src</imppath>
+  <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\obj</objdir>
@@ -220,11 +220,12 @@
    <File path="Resources\GroupByType.ico" />
    <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set VS9SDKBIN=c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
 set CTC=%VS9SDKBIN%\CTC.exe
-if not exist %CTC% goto no_CTC
+if not exist &quot;%CTC%&quot; goto no_CTC
+if not exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; goto no_CTC
 set PATH=%PATH%;%VS9SDKBIN%
-call $(VSINSTALLDIR)\Common7\Tools\vsvars32.bat
+call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
-CTC.exe $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I.
+&quot;%CTC%&quot; $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I.
 goto reportError
 
 :no_CTC
@@ -241,9 +242,9 @@ echo If the project rebuilt again and again with this message, touch $(InputDir)
    <File path="Resources\SearchFile.ico" />
    <File path="Resources\SearchSymbol.ico" />
    <File path="Resources\settrace.ico" />
-   <File tool="Custom" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" customcmd="call $(VSINSTALLDIR)\Common7\Tools\vsvars32.bat
+   <File tool="Custom" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
-rc /fo$(OutDir)\vdserver.res $(InputPath)" outfile="$(OutDir)\vdserver.res" linkoutput="true" />
+rc /fo$(OutDir)\visuald.res $(InputPath)" outfile="$(OutDir)\visuald.res" linkoutput="true" />
    <File path="Resources\WholeWord.ico" />
   </Folder>
   <File path="comutil.d" />

@@ -461,6 +461,11 @@ class Node
 		return null;
 	}
 	
+	Node resolve()
+	{
+		return null;
+	}
+
 	Type calcType()
 	{
 		return semanticErrorType(this, ".calcType not implemented");

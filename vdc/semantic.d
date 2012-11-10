@@ -624,7 +624,10 @@ class Project : Node
 		}
 		if(srcfile.length == 0)
 		{
-			importFrom.semanticError("cannot find imported module " ~ modname);
+			if (importFrom)
+				importFrom.semanticError("cannot find imported module " ~ modname);
+			else
+				.semanticError("cannot find imported module " ~ modname);
 			return null;
 		}
 		srcfile = normalizePath(srcfile);
@@ -892,8 +895,17 @@ class Options
 	{
 		if(dirs == importDirs)
 			return false;
-		
+
 		importDirs = dirs.dup;
+		changeCount++;
+		return true;
+	}
+	bool setStringImportDirs(string[] dirs)
+	{
+		if(dirs == stringImportDirs)
+			return false;
+
+		stringImportDirs = dirs.dup;
 		changeCount++;
 		return true;
 	}

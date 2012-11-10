@@ -1099,10 +1099,13 @@ class Project : CVsHierarchy,
 			var.bstrVal = allocBSTR(mFilename);
 			break;
 
+		version(none)
+		{
 		case VSHPROPID_ProductBrandName:
 			var.vt = VT_BSTR;
 			var.bstrVal = allocBSTR("VisualD");
 			break;
+		}
 
 		case VSHPROPID_BrowseObject:
 			var.vt = VT_DISPATCH;

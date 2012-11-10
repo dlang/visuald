@@ -26,11 +26,11 @@ import sdk.win32.oleauto;
 // the current D runtime, 200MB are enough to make this annoying).
 //
 // Visual D creates a single thread for communicating with the server and expects 
-// expensive calls to be asynchronous: methods GetTip, GetSemanticExpansions
+// expensive calls to be asynchronous: methods GetTip, GetDefinition, GetSemanticExpansions
 // and UpdateModule return immediately, but start some background processing.
-// The client (aka Visual D) polls the result with GetTipResult, GetSemanticExpansionsResult
-// and GetParseErrors, repectively, until they return successfully. While doing
-// so, GetLastMessage is called to get status line messages (e.g. "parsing module...")
+// The client (aka Visual D) polls the result with GetTipResult, GetDefinitionResult,
+// GetSemanticExpansionsResult // and GetParseErrors, repectively, until they return successfully. 
+// While doing so, GetLastMessage is called to get status line messages (e.g. "parsing module...")
 //
 // All methods reference modules by their file name.
 //
@@ -68,6 +68,7 @@ public:
 	//
 	// filename:   file name 
 	// srcText:    current text in editor
+	// verbose:    display parsing message?
 	//
 	// it is assumed that the actual parsing is forwarded to some other thread
 	// and that the status can be polled by GetParseErrors
@@ -75,7 +76,7 @@ public:
 	// ConfigureSemanticProject is usually called after UpdateModule, assuming that parsing does
 	// not depend on compilation options, so any semantic analysis should be deferred
 	// until ConfigureSemanticProject is invoked.
-	HRESULT UpdateModule(in BSTR filename, in BSTR srcText);
+	HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in BOOL verbose);
 	
 	// request tool tip text for a given text location
 	//
@@ -142,6 +143,24 @@ public:
 	// it is assumed that a message is returned only once. 
 	// return S_FALSE if there is no new message to display
 	HRESULT GetLastMessage(BSTR* message);
+
+	// request location of definition for a given text location
+	//
+	// filename:   file name 
+	// startLine, startIndex, endLine, endIndex: selected range in the editor
+	//                                           if start==end, mouse hovers without selection
+	//
+	// it is assumed that the semantic analysis is forwarded to some other thread
+	// and that the status can be polled by GetDefinitionResult
+	HRESULT GetDefinition(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex);
+
+	// get the result of the previous GetDefinition
+	//
+	// file name: file where the declaration can be found
+	// startLine, startIndex, endLine, endIndex: return the text span of the declaration
+	//
+	// return S_FALSE as long as the semantic analysis is still running
+	HRESULT GetDefinitionResult(ref int startLine, ref int startIndex, ref int endLine, ref int endIndex, BSTR* filename);
 }
 
 ///////////////////////////////////////////////////////////////////////

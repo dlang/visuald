@@ -379,7 +379,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 
 		int y = mLines*kLineHeight + (lines * kLineHeight - kLineSpacing - h) / 2;
 		if(w)
-			w.setRect(x, y, kPageWidth - 2*kMargin - labelWidth, h); 
+			w.setRect(x, y, kPageWidth - 2*kMargin - labelWidth, h);
 		mLines += lines;
 		if(w)
 			mResizableWidgets ~= w;

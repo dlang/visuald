@@ -28,6 +28,7 @@ Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vsi2d", "c2d\vsi2d.visualdp
 EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "cpp2d", "c2d\cpp2d.visualdproj", "{E2073B79-635A-48FA-A5A3-6E500D3A5DD8}"
 	ProjectSection(ProjectDependencies) = postProject
+		{32872753-4812-40DA-9B24-1C2114621E78} = {32872753-4812-40DA-9B24-1C2114621E78}
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8} = {E2073B79-635A-48FA-A5A3-6E760D3A5DD8}
 		{2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D} = {2070DF9A-6D80-4E3C-950A-C1BBA1B20F4D}
 	EndProjectSection
@@ -53,13 +54,9 @@ Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "vdserver", "vdc\vdserver.vi
 		{FE3A959D-6CFA-43BF-8637-62125B571770} = {FE3A959D-6CFA-43BF-8637-62125B571770}
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{FD4D75A4-1CD9-49E0-A35B-2B79B13E5AF6}"
-	ProjectSection(SolutionItems) = preProject
-		tools\filemonitor.d = tools\filemonitor.d
-		tools\pipedmd.d = tools\pipedmd.d
-	EndProjectSection
-EndProject
 Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "test", "test\test.visualdproj", "{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}"
+EndProject
+Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "build", "build\build.visualdproj", "{CD26A145-F663-473D-8908-0254FE377D48}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -185,12 +182,23 @@ Global
 		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Test|Win32.ActiveCfg = Release|Win32
 		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Test|Win32.Build.0 = Release|Win32
 		{8FD67EB3-40BF-47A8-9D0D-790C6063ED14}.Test|x64.ActiveCfg = Release|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Debug GDC|Win32.ActiveCfg = Debug|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Debug GDC|Win32.Build.0 = Debug|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Debug GDC|x64.ActiveCfg = Debug|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Debug|Win32.Build.0 = Debug|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Debug|x64.ActiveCfg = Debug|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Release|Win32.ActiveCfg = Release|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Release|Win32.Build.0 = Release|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Release|x64.ActiveCfg = Release|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Test|Win32.ActiveCfg = Release|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Test|Win32.Build.0 = Release|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.Test|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B10D4330-4E7B-4F8F-A7F2-E85DF5949EC1} = {2BD51E62-6604-48AE-9E01-C940C0CA1C68}
-		{FD4D75A4-1CD9-49E0-A35B-2B79B13E5AF6} = {2BD51E62-6604-48AE-9E01-C940C0CA1C68}
 	EndGlobalSection
 EndGlobal

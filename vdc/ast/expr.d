@@ -896,11 +896,11 @@ class DotExpression : PostfixExpression
 
 	Node resolved;
 	
-	override Type calcType()
+	override Node resolve()
 	{
-		if(type)
-			return type;
-		
+		if(resolved)
+			return resolved;
+
 		auto expr = getExpression();
 		auto etype = expr.calcType();
 		auto id = getMember!Identifier(1);
@@ -908,10 +908,18 @@ class DotExpression : PostfixExpression
 			etype = pt.getNextType();
 		Scope s = etype.getScope();
 		resolved = s ? s.resolve(id.ident, id, false) : null;
-		if(resolved)
-			type = resolved.calcType();
+		return resolved;
+	}
+
+	override Type calcType()
+	{
+		if(type)
+			return type;
+		
+		if(auto n = resolve())
+			type = n.calcType();
 		else
-			type = semanticErrorType("cannot resolve type of property ", id.ident);
+			type = semanticErrorType("cannot resolve type of property ", getMember!Identifier(1).ident);
 		return type;
 	}
 
@@ -1684,6 +1692,7 @@ class IdentifierExpression : PrimaryExpression
 
 	override void toC(CodeWriter writer)
 	{
+		resolve();
 		if(resolved)
 		{
 			Module thisMod = getModule();
@@ -1696,15 +1705,26 @@ class IdentifierExpression : PrimaryExpression
 		writer(getIdentifier());
 	}
 
+	override Node resolve()
+	{
+		if(resolved)
+			return resolved;
+
+		if(!scop)
+			semantic(getScope());
+		auto id = getIdentifier();
+		resolved = scop.resolveWithTemplate(id.ident, scop, id);
+		return resolved;
+	}
+
 	override void _semantic(Scope sc)
 	{
 		if(global)
 			scop = getModule().scop;
 		else
 			scop = sc;
-		
-		auto id = getIdentifier();
-		resolved = scop.resolveWithTemplate(id.ident, sc, id);
+
+		resolve();
 	}
 	
 	override Type calcType()
@@ -2239,17 +2259,25 @@ class TypeProperty : PrimaryExpression
 			writer(getType(), ".", getProperty());
 	}
 
+	override Node resolve()
+	{
+		if(resolved)
+			return resolved;
+
+		auto id = getProperty();
+		resolved = getType().getScope().resolve(id.ident, id);
+		return resolved;
+	}
+
 	override Type calcType()
 	{
 		if(type)
 			return type;
 		
-		auto id = getProperty();
-		resolved = getType().getScope().resolve(id.ident, id);
-		if(resolved)
-			type = resolved.calcType();
+		if(auto n = resolve())
+			type = n.calcType();
 		else
-			type = semanticErrorType("cannot determine type of property ", id.ident);
+			type = semanticErrorType("cannot determine type of property ", getProperty().ident);
 		return type;
 	}
 

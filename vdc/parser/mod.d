@@ -179,6 +179,10 @@ class DeclDefs
 	static Action afterRecover(Parser p)
 	{
 		p.popAppendTopNode!(ast.Node, ast.ParseRecoverNode)();
+
+		p.pushRecoverState(&recover);
+		p.pushState(&Parser.keepRecover);   // add a "guard" state to avoid popping recover
+
 		return next(p);
 	}
 }

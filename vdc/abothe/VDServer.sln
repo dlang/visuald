@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VDServer", "VDServer.csproj", "{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42} = {0290A229-9AA1-41C3-B525-CAFB86D8BC42}

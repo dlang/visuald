@@ -458,7 +458,12 @@ class Declarator : Identifier, CallableNode
 		}
 		return t;
 	}
-	
+
+	override Node resolve()
+	{
+		return this;
+	}
+
 	override Type calcType()
 	{
 		if(type)
@@ -664,7 +669,7 @@ class IdentifierList : Node
 		return tn.global == global;
 	}
 	
-	Node resolve()
+	override Node resolve()
 	{
 		if(resolved)
 			return resolved;
@@ -756,6 +761,13 @@ class Identifier : Node
 		if(parent)
 			return parent.getFunctionArguments();
 		return null;
+	}
+
+	override Node resolve()
+	{
+		if(parent)
+			return parent.resolve();
+		return super.resolve();
 	}
 
 	override Type calcType()

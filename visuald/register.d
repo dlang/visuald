@@ -16,6 +16,7 @@ import std.conv;
 import std.utf;
 import std.path;
 import std.datetime;
+import std.array;
 
 import visuald.dpackage;
 import visuald.dllmain;
@@ -69,6 +70,8 @@ HRESULT DllUnregisterServer()
 
 ///////////////////////////////////////////////////////////////////////
 
+wstring registryDump;
+
 class RegistryException : Exception
 {
 	this(HRESULT hr)
@@ -104,7 +107,11 @@ class RegKey
 	void Create(HKEY root, wstring keyname, bool write = true)
 	{
 		HRESULT hr;
-		if(write)
+		if(write && registryDump.length)
+		{
+			registryDump ~= "\n[$RootKey$\\"w ~ keyname ~ "]\n"w;
+		}
+		else if(write)
 		{
 			hr = hrRegCreateKeyEx(root, keyname, 0, null, REG_OPTION_NON_VOLATILE, KEY_WRITE, null, &key, null);
 			if(FAILED(hr))
@@ -116,6 +123,12 @@ class RegKey
 
 	void Set(wstring name, wstring value)
 	{
+		if(registryDump.length)
+		{
+			registryDump ~= "\""w ~ replace(name, "\\"w, "\\\\"w) ~ "\"="w;
+			registryDump ~= "\""w ~ replace(value, "\\"w, "\\\\"w) ~ "\"\n"w;
+			return;
+		}
 		if(!key)
 			throw new RegistryException(E_FAIL);
 			
@@ -126,6 +139,12 @@ class RegKey
 
 	void Set(wstring name, uint value)
 	{
+		if(registryDump.length)
+		{
+			registryDump ~= "\""w ~ replace(name, "\\"w, "\\\\"w) ~ "\"=dword:"w;
+			registryDump ~= to!wstring(value, 16) ~ "\n";
+			return;
+		}
 		if(!key)
 			throw new RegistryException(E_FAIL);
 
@@ -136,6 +155,12 @@ class RegKey
 
 	void Set(wstring name, long value)
 	{
+		if(registryDump.length)
+		{
+			registryDump ~= "\""w ~ replace(name, "\\"w, "\\\\"w) ~ "\"=qword:"w;
+			registryDump ~= to!wstring(value, 16) ~ "\n";
+			return;
+		}
 		if(!key)
 			throw new RegistryException(E_FAIL);
 
@@ -146,6 +171,8 @@ class RegKey
 
 	void Set(wstring name, void[] data)
 	{
+		if(registryDump.length)
+			throw new RegistryException(E_FAIL);
 		if(!key)
 			throw new RegistryException(E_FAIL);
 		
@@ -156,6 +183,8 @@ class RegKey
 	
 	bool Delete(wstring name)
 	{
+		if(registryDump.length)
+			return true; // ignore
 		if(!key)
 			return false;
 		wchar* szName = _toUTF16zw(name);
