@@ -20,3 +20,4 @@ EXPORTS
 	RunDLLRegisterUser         = RunDLLRegisterUser         PRIVATE
 	RunDLLUnregisterUser       = RunDLLUnregisterUser       PRIVATE
 	VerifyMSObj                = VerifyMSObj                PRIVATE
+	WritePackageDef            = WritePackageDef            PRIVATE

@@ -15,6 +15,7 @@ import std.string;
 import std.conv;
 import std.utf;
 import std.path;
+import std.file;
 import std.datetime;
 import std.array;
 
@@ -68,9 +69,35 @@ HRESULT DllUnregisterServer()
 	return VSDllUnregisterServer(null);
 }
 
+extern(Windows)
+HRESULT WriteExtensionPackageDefinition(in wchar* fileName)
+{
+	registryDump = "Windows Registry Editor Version 5.00\n"w;
+	registryRoot = "Software\\Microsoft\\VisualStudio\\10.0"w;
+	string fname = to_string(fileName);
+	try
+	{
+		HRESULT rc = VSDllRegisterServerInternal(registryRoot.ptr, false);
+		if(rc != S_OK)
+			return rc;
+		string dir = dirName(fname);
+		if(!exists(dir))
+			mkdirRecurse(dir);
+
+		std.file.write(fname, (cast(wchar) 0xfeff) ~ registryDump); // add BOM
+		return S_OK;
+	}
+	catch(Exception e)
+	{
+		MessageBox(null, toUTF16z(e.msg), fileName, MB_OK);
+	}
+	return E_FAIL;
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 wstring registryDump;
+wstring registryRoot;
 
 class RegistryException : Exception
 {
@@ -104,12 +131,30 @@ class RegKey
 		}
 	}
 
+	static wstring escapeString(wstring s)
+	{
+		s = replace(s, "\\"w, "\\\\"w);
+		s = replace(s, "\t"w, "\\t"w);
+		s = replace(s, "\r"w, "\\r"w);
+		s = replace(s, "\n"w, "\\n"w);
+		return s;
+	}
+	static wstring registryName(wstring name)
+	{
+		if(name.length == 0)
+			return "@"w;
+		return  "\""w ~ escapeString(name) ~ "\""w;
+	}
+
 	void Create(HKEY root, wstring keyname, bool write = true)
 	{
 		HRESULT hr;
-		if(write && registryDump.length)
+		if(write && registryRoot.length && keyname.startsWith(registryRoot))
 		{
-			registryDump ~= "\n[$RootKey$\\"w ~ keyname ~ "]\n"w;
+			if (keyname.startsWith(registryRoot))
+				registryDump ~= "\n[$RootKey$"w ~ keyname[registryRoot.length..$] ~ "]\n"w;
+			else
+				registryDump ~= "\n[\\"w ~ keyname ~ "]\n"w;
 		}
 		else if(write)
 		{
@@ -123,10 +168,9 @@ class RegKey
 
 	void Set(wstring name, wstring value)
 	{
-		if(registryDump.length)
+		if(!key && registryRoot.length)
 		{
-			registryDump ~= "\""w ~ replace(name, "\\"w, "\\\\"w) ~ "\"="w;
-			registryDump ~= "\""w ~ replace(value, "\\"w, "\\\\"w) ~ "\"\n"w;
+			registryDump ~= registryName(name) ~ "=\""w ~ escapeString(value) ~ "\"\n"w;
 			return;
 		}
 		if(!key)
@@ -139,10 +183,10 @@ class RegKey
 
 	void Set(wstring name, uint value)
 	{
-		if(registryDump.length)
+		if(!key && registryRoot.length)
 		{
-			registryDump ~= "\""w ~ replace(name, "\\"w, "\\\\"w) ~ "\"=dword:"w;
-			registryDump ~= to!wstring(value, 16) ~ "\n";
+			registryDump ~= registryName(name) ~ "=dword:"w;
+			registryDump ~= to!wstring(format("%08x", value)) ~ "\n";
 			return;
 		}
 		if(!key)
@@ -155,9 +199,9 @@ class RegKey
 
 	void Set(wstring name, long value)
 	{
-		if(registryDump.length)
+		if(!key && registryRoot.length)
 		{
-			registryDump ~= "\""w ~ replace(name, "\\"w, "\\\\"w) ~ "\"=qword:"w;
+			registryDump ~= registryName(name) ~ "=qword:"w;
 			registryDump ~= to!wstring(value, 16) ~ "\n";
 			return;
 		}
@@ -171,8 +215,6 @@ class RegKey
 
 	void Set(wstring name, void[] data)
 	{
-		if(registryDump.length)
-			throw new RegistryException(E_FAIL);
 		if(!key)
 			throw new RegistryException(E_FAIL);
 		
@@ -183,7 +225,7 @@ class RegKey
 	
 	bool Delete(wstring name)
 	{
-		if(registryDump.length)
+		if(!key && registryRoot.length)
 			return true; // ignore
 		if(!key)
 			return false;
@@ -343,6 +385,7 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regMiscFiles ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid);
 
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsOptions);
+	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsDirs);
 
 	foreach(guid; guids_propertyPages)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
@@ -537,8 +580,8 @@ version(none){
 
 		// global registry keys for marshalled objects
 		scope RegKey keyMarshal1 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocServer32"w);
-		keyMarshal1.Set("InprocServer32"w, dllPath);
-		keyMarshal1.Set("ThreadingModel"w, "Appartment"w);
+		keyMarshal1.Set(null, dllPath);
+		keyMarshal1.Set("ThreadingModel"w, "Apartment"w);
 
 		scope RegKey keyMarshal2 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocHandler32"w);
 		keyMarshal2.Set(null, dllPath);

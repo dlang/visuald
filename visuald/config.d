@@ -2913,7 +2913,11 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	{
 		mixin(LogCallMixNoRet);
 
-		*pSize = 256;
+		DWORD size = iid.sizeof + int.sizeof;
+		foreach(s; mTargets)
+			size += int.sizeof + s.length;
+		size += mPos.sizeof;
+		*pSize = size;
 		return S_OK;
 		//return returnError(E_NOTIMPL);
 	}

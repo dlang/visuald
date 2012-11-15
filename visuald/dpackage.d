@@ -100,9 +100,9 @@ const GUID    g_CppWizardWinCLSID        = uuid("002a2de9-8bb6-484d-980a-7e4ad40
 const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-980b-7e4ad4084715");
 const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-980c-7e4ad4084715");
 const GUID    g_ProjectItemWizardCLSID   = uuid("002a2de9-8bb6-484d-980d-7e4ad4084715");
-// more guids in propertypage.d starting with 9810
 
-const GUID g_unmarshalCLSID  = { 1, 1, 0, [ 0x1,0x1,0x1,0x1, 0x1,0x1,0x1,0x1 ] };
+const GUID    g_unmarshalCLSID           = uuid("002a2de9-8bb6-484d-980e-7e4ad4084715");
+// more guids in propertypage.d starting with 9810
 
 const LanguageProperty g_languageProperties[] =
 [
@@ -1071,11 +1071,12 @@ class GlobalOptions
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
 	bool parseSource;
 	bool pasteIndent;
-	bool projectSemantics;
+	bool expandFromSemantics;
 	bool expandFromBuffer;
 	bool expandFromJSON;
 	byte expandTrigger;
 	bool showTypeInTooltip;
+	bool semanticGotoDef;
 	string VDServerIID;
 
 	bool ColorizeVersions = true;
@@ -1154,11 +1155,12 @@ class GlobalOptions
 			autoOutlining     = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
 			deleteFiles       = cast(byte) keyToolOpts.GetDWORD("deleteFiles", 0);
 			parseSource       = keyToolOpts.GetDWORD("parseSource", 1) != 0;
-			projectSemantics  = keyToolOpts.GetDWORD("projectSemantics", 0) != 0;
+			expandFromSemantics = keyToolOpts.GetDWORD("expandFromSemantics", 1) != 0;
 			expandFromBuffer  = keyToolOpts.GetDWORD("expandFromBuffer", 1) != 0;
 			expandFromJSON    = keyToolOpts.GetDWORD("expandFromJSON", 1) != 0;
 			expandTrigger     = cast(byte) keyToolOpts.GetDWORD("expandTrigger", 0);
-			showTypeInTooltip = keyToolOpts.GetDWORD("showTypeInTooltip", 0) != 0;
+			showTypeInTooltip = keyToolOpts.GetDWORD("showTypeInTooltip2", 1) != 0; // changed default
+			semanticGotoDef   = keyToolOpts.GetDWORD("semanticGotoDef", 1) != 0;
 			pasteIndent       = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
 			// overwrite by user config
@@ -1181,12 +1183,13 @@ class GlobalOptions
 			deleteFiles          = cast(byte) keyUserOpts.GetDWORD("deleteFiles",       deleteFiles);
 			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",     autoOutlining) != 0;
 			parseSource          = keyUserOpts.GetDWORD("parseSource",       parseSource) != 0;
-			projectSemantics     = keyUserOpts.GetDWORD("projectSemantics",  projectSemantics) != 0;
+			expandFromSemantics  = keyUserOpts.GetDWORD("expandFromSemantics", expandFromSemantics) != 0;
 			expandFromBuffer     = keyUserOpts.GetDWORD("expandFromBuffer",  expandFromBuffer) != 0;
 			expandFromJSON       = keyUserOpts.GetDWORD("expandFromJSON",    expandFromJSON) != 0;
-			expandTrigger        = cast(byte) keyUserOpts.GetDWORD("expandTrigger",     expandTrigger);
+			expandTrigger        = cast(byte) keyUserOpts.GetDWORD("expandTrigger", expandTrigger);
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",       pasteIndent) != 0;
-			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip", showTypeInTooltip) != 0;
+			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip2", showTypeInTooltip) != 0;
+			semanticGotoDef      = keyUserOpts.GetDWORD("semanticGotoDef",   semanticGotoDef) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			UserTypes = parseUserTypes(UserTypesSpec);
 			
@@ -1254,11 +1257,12 @@ class GlobalOptions
 			keyToolOpts.Set("autoOutlining",     autoOutlining);
 			keyToolOpts.Set("deleteFiles",       deleteFiles);
 			keyToolOpts.Set("parseSource",       parseSource);
-			keyToolOpts.Set("projectSemantics",  projectSemantics);
+			keyToolOpts.Set("expandFromSemantics", expandFromSemantics);
 			keyToolOpts.Set("expandFromBuffer",  expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON",    expandFromJSON);
 			keyToolOpts.Set("expandTrigger",     expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip", showTypeInTooltip);
+			keyToolOpts.Set("semanticGotoDef",   semanticGotoDef);
 			keyToolOpts.Set("pasteIndent",       pasteIndent);
 
 			CHierNode.setContainerIsSorted(sortProjects);
@@ -1285,7 +1289,7 @@ class GlobalOptions
 			if(auto svc = Package.s_instance.mLangsvc)
 				svc.OnActiveProjectCfgChange(null);
 
-		if(!projectSemantics)
+		if(!expandFromSemantics)
 			Package.GetLanguageService().ClearSemanticProject();
 
 		Package.scheduleUpdateLibrary();

@@ -139,10 +139,8 @@ Unsorted
 - parse all files in project at startup
 - COM leaks in VS2012 (VS2010?)
 - hovering over function argument shows hint for function
-- display location of definition in tool tip
-- implement goto definition through semantic analysis
 - compile from selection/buffer (through rdmd)
 - virustotal reports malicious software
-- vdserver: terminate if no client left
-- make Visual D install as extension and make it available through extension manager
 - reset semantic analysis data
+- goto definition/completion for labels, versions
+- add visuald.ico to VDServer.exe

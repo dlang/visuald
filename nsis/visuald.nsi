@@ -32,6 +32,7 @@
   
   !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}"
   !echo "VERSION = ${VERSION}"
+  !define AUTHOR "Rainer Schuetze"
   !define APPNAME "VisualD"
   !define LONG_APPNAME "Visual D"
   !define VERYLONG_APPNAME "Visual D - Visual Studio Integration of the D Programming Language"
@@ -60,6 +61,9 @@
   !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
 !endif
   !define VDSETTINGS_KEY          "\ToolsOptionsPages\Projects\Visual D Settings"
+  
+  !define EXTENSION_DIR_ROOT      "\Extensions\${AUTHOR}"
+  !define EXTENSION_DIR           "\Extensions\${AUTHOR}\${APPNAME}\${VERSION_MAJOR}.${VERSION_MINOR}"
   
   !define WIN32_EXCEPTION_KEY     AD7Metrics\Exception\{3B476D35-A401-11D2-AAD4-00C04F990171}
   
@@ -213,7 +217,7 @@ Section "Visual Studio package" SecPackage
   WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "DisplayName" "${VERYLONG_APPNAME}"
   WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\${DLLNAME}"
   WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
-  WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "Publisher" "Rainer Schuetze"
+  WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${AUTHOR}"
   WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "Comments" "${VERYLONG_APPNAME}"
   WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "UninstallString" "$INSTDIR\uninstall.exe"
   
@@ -251,18 +255,30 @@ ${MementoSectionEnd}
 ;--------------------------------
 ${MementoSection} "Register with VS 2010" SecVS2010
 
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2010_REGISTRY_KEY}'
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2010_REGISTRY_KEY}'
   WriteRegStr ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS2010_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
   
 ${MementoSectionEnd}
 
 ;--------------------------------
 ${MementoSection} "Register with VS 2012" SecVS2012
 
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2012_REGISTRY_KEY}'
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2012_REGISTRY_KEY}'
   WriteRegStr ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS2012_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
   
 ${MementoSectionEnd}
 
@@ -430,6 +446,20 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
+  IfErrors NoVS2012pkgdef
+    RMDir /r '$1${EXTENSION_DIR}'
+    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2012pkgdef:
+  
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
+  IfErrors NoVS2010pkgdef
+    RMDir /r '$1${EXTENSION_DIR}'
+    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2010pkgdef:
 
 !ifdef CV2PDB
   Push ${VS_NET_REGISTRY_KEY}

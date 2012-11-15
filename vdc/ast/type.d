@@ -805,14 +805,14 @@ class TypePointer : TypeIndirection
 class LengthProperty : Symbol
 {
 	Type type;
-	
+
 	override Type calcType()
 	{
 		if(!type)
 			type = BasicType.createType(TOK_uint);
 		return type;
 	}
-		
+
 	override Value interpret(Context sc)
 	{
 		if(auto ac = cast(AggrContext)sc)
@@ -827,6 +827,39 @@ class LengthProperty : Symbol
 	override void toD(CodeWriter writer)
 	{
 		writer("length");
+	}
+}
+
+class PtrProperty : Symbol
+{
+	Type type;
+
+	this(Type t)
+	{
+		auto tp = new TypePointer(TOK_mul, t.span);
+		tp.setNextType(t);
+		type = tp;
+	}
+
+	override Type calcType()
+	{
+		return type;
+	}
+
+	override Value interpret(Context sc)
+	{
+		if(auto ac = cast(AggrContext)sc)
+		{
+			if(auto dav = cast(DynArrayValue) ac.instance)
+				return dav.first.opRefPointer();
+			return semanticErrorValue("cannot calulate ptr of ", ac.instance);
+		}
+		return semanticErrorValue("no context to ptr of ", sc);
+	}
+
+	override void toD(CodeWriter writer)
+	{
+		writer("ptr");
 	}
 }
 
@@ -878,6 +911,7 @@ class TypeDynamicArray : TypeIndirection
 			Scope sc = parent ? parent.getScope() : null;
 			scop = sc ? sc.pushClone() : new Scope;
 			scop.addSymbol("length", new LengthProperty);
+			scop.addSymbol("ptr", new PtrProperty(getNextType()));
 		}
 		return scop;
 	}

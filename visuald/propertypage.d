@@ -1502,40 +1502,44 @@ class IntellisensePropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		AddControl("", mSemantics = new CheckBox(mCanvas, "Expansions from semantics (very experimental)"));
+		AddControl("", mExpandSemantics = new CheckBox(mCanvas, "Expansions from semantic analysis"));
 		AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
 		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
 		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "writing '.'", "writing an identifier" ], false));
-		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip (experimental)"));
+		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip"));
+		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (instead of JSON info)"));
 	}
 
 	override void SetControls(GlobalOptions opts)
 	{
-		mSemantics.setChecked(opts.projectSemantics);
+		mExpandSemantics.setChecked(opts.expandFromSemantics);
 		mExpandFromBuffer.setChecked(opts.expandFromBuffer);
 		mExpandFromJSON.setChecked(opts.expandFromJSON);
 		mExpandTrigger.setSelection(opts.expandTrigger);
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
+		mSemanticGotoDef.setChecked(opts.semanticGotoDef);
 
-		//mSemantics.setEnabled(false);
+		//mExpandSemantics.setEnabled(false);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
-		changes += changeOption(mSemantics.isChecked(), opts.projectSemantics, refopts.projectSemantics); 
+		changes += changeOption(mExpandSemantics.isChecked(), opts.expandFromSemantics, refopts.expandFromSemantics); 
 		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer); 
 		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON); 
 		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger); 
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip); 
+		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef); 
 		return changes;
 	}
 
-	CheckBox mSemantics;
+	CheckBox mExpandSemantics;
 	CheckBox mExpandFromBuffer;
 	CheckBox mExpandFromJSON;
 	ComboBox mExpandTrigger;
 	CheckBox mShowTypeInTooltip;
+	CheckBox mSemanticGotoDef;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

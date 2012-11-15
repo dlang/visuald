@@ -9,9 +9,27 @@
     <Version>0.3</Version>
     <Description>Extension to provide support for the D programming language.</Description>
     <Locale>1033</Locale>
+    <MoreInfoUrl>http://www.dsource.org/projects/visuald</MoreInfoUrl>
+    <GettingStartedGuide>http://www.dsource.org/projects/visuald</GettingStartedGuide>
+    <InstalledByMsi>true</InstalledByMsi>
+    <Icon>vdlogo.ico</Icon>
+    <PreviewImage>vdlogo.ico</PreviewImage>
     <SupportedProducts>
       <VisualStudio Version="10.0">
+        <Edition>Ultimate</Edition>
+        <Edition>Premium</Edition>
         <Edition>Pro</Edition>
+        <Edition>IntegratedShell</Edition>
+        <Edition>VSTS</Edition>
+        <Edition>VSTD</Edition>
+      </VisualStudio>
+      <VisualStudio Version="11.0">
+        <Edition>Ultimate</Edition>
+        <Edition>Premium</Edition>
+        <Edition>Pro</Edition>
+        <Edition>IntegratedShell</Edition>
+        <Edition>VSTS</Edition>
+        <Edition>VSTD</Edition>
       </VisualStudio>
     </SupportedProducts>
     <SupportedFrameworkRuntimeEdition MinVersion="4.0" MaxVersion="4.0" />

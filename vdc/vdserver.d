@@ -302,7 +302,8 @@ class VDServer : ComObject, IVDServer
 						string fname = res.getModuleFilename();
 						if(auto mod = res.getModule())
 							fname = mod.getModuleName();
-						txt ~= "\ndecl: " ~ fname ~ "(" ~ to!string(res.span.start.line) ~ ")";
+						if(fname.length)
+							txt ~= "\ndecl: " ~ fname ~ "(" ~ to!string(res.span.start.line) ~ ")";
 					}
 				}
 			}

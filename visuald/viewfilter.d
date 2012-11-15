@@ -378,7 +378,7 @@ version(tip)
 				
 			case ECMD_TYPECHAR:
 				dchar ch = pvaIn.uiVal;
-				if(ch == '.' && Package.GetGlobalOptions().expandTrigger >= 1 && Package.GetGlobalOptions().projectSemantics)
+				if(ch == '.' && Package.GetGlobalOptions().expandTrigger >= 1 && Package.GetGlobalOptions().expandFromSemantics)
 					initCompletion(false);
 				
 				else if(mCodeWinMgr.mSource.IsCompletorActive() || Package.GetGlobalOptions().expandTrigger >= 2)
@@ -1161,7 +1161,7 @@ else
 		int defline;
 		string word;
 
-		if(Package.GetGlobalOptions().showTypeInTooltip)
+		if(Package.GetGlobalOptions().semanticGotoDef)
 		{
 			TextSpan span;
 			span.iStartLine  = span.iEndLine  = line;

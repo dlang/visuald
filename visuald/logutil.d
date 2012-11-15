@@ -576,7 +576,15 @@ version(test) {
 					}
 				}
 				if(canLog)
-					std.file.append(gLogFile, s);
+				{
+					try
+					{
+						std.file.append(gLogFile, s);
+					}
+					catch(Exception e)
+					{
+					}
+				}
 			}
 	}
 }

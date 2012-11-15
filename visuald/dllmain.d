@@ -165,6 +165,13 @@ void VerifyMSObj(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
 	VerifyMSObjectParser(ws);
 }
 
+extern(Windows)
+void WritePackageDef(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+{
+	wstring ws = to_wstring(lpszCmdLine) ~ cast(wchar)0;
+	WriteExtensionPackageDefinition(ws.ptr);
+}
+
 ///////////////////////////////////////////////////////////////////////
 // only the first export has a '_' prefix
 //extern(C) export void dummy () { }

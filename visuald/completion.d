@@ -260,7 +260,7 @@ class Declarations
 
 	bool SemanticExpansions(IVsTextView textView, Source src)
 	{
-		if(!Package.GetGlobalOptions().projectSemantics)
+		if(!Package.GetGlobalOptions().expandFromSemantics)
 			return false;
 
 		try

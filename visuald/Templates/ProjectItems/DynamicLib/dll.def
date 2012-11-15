@@ -1,0 +1,17 @@
+; linker definition file
+;
+; when creating DLLs a definition file should always be specified because of
+;  http://d.puremagic.com/issues/show_bug.cgi?id=8130
+
+EXETYPE      NT
+LIBRARY      "$safeprojectname$.dll"
+CODE         PRELOAD DISCARDABLE
+DATA         PRELOAD MULTIPLE
+
+; there's also bug http://d.puremagic.com/issues/show_bug.cgi?id=3956 causing 
+; inconsistent naming for symbols with "export" specifier
+; The workaround is to list the names in the EXPORT section translating the name to itself:
+; EXPORTS
+;    Symbol Symbol
+
+EXPORTS
