@@ -183,6 +183,11 @@ Section "Visual Studio package" SecPackage
   ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ ConsoleApp.vstemplate
   ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ ConsoleApp.visualdproj
 
+  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleAppDMDGDC"
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleAppDMDGDC\ main.d
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleAppDMDGDC\ ConsoleApp.vstemplate
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleAppDMDGDC\ ConsoleApp.visualdproj
+
   ${SetOutPath} "$INSTDIR\Templates\ProjectItems\WindowsApp"
   ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ winmain.d
   ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ WindowsApp.vstemplate

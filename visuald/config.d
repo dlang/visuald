@@ -13,6 +13,7 @@ import std.conv;
 import std.path;
 import std.utf;
 import std.array;
+import std.exception;
 
 import stdext.path;
 import stdext.array;
@@ -667,7 +668,7 @@ class ProjectOptions
 		if(def.length)
 			cmd ~= "," ~ def;
 		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res");
-		if(resfile.length)
+		if(res.length)
 			cmd ~= "," ~ res;
 
 		// options
@@ -2479,6 +2480,14 @@ class Config :	DisposingComObject,
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";
+					if(lnkresponsefile != quoteFilename(lnkresponsefile))
+					{
+						// optlink does not support quoted response files
+						lnkresponsefile = makeFilenameAbsolute(lnkresponsefile, workdir);
+						if(!std.file.exists(lnkresponsefile))
+							collectException(std.file.write(lnkresponsefile, ""));
+						lnkresponsefile = shortFilename(lnkresponsefile);
+					}
 					prelnk ~= "echo. > " ~ lnkresponsefile ~ "\n";
 					prelnk ~= "echo " ~ cmdfiles.replace("+", "+ >> " ~ lnkresponsefile ~ "\necho ");
 					prelnk ~= " >> " ~ lnkresponsefile ~ "\n\n";

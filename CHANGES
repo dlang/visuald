@@ -494,3 +494,4 @@ unreleased Version 0.3.35
   * now expanding response files in sc.ini or additional compiler options when looking for
     import or linker directives
   * add D icon to vdserver.exe
+  * added console application project template with cnfigurations for DMD and GDC for Win32 and x86
