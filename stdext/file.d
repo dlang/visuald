@@ -10,6 +10,7 @@ module stdext.file;
 
 import stdext.path;
 import stdext.array;
+import stdext.string;
 
 import std.file;
 import std.path;
@@ -162,4 +163,28 @@ string[] expandFileList(string[] filespecs, string workdir)
 			files = addFileListPattern(files, file, workdir);
 	}
 	return files;
+}
+
+//-----------------------------------------------------------------------------
+string[] expandResponseFiles(string[] args, string workdir)
+{
+	for(size_t a = 0; a < args.length; a++)
+	{
+		string arg = unquoteArgument(args[a]);
+		if(arg.startsWith("@"))
+		{
+			// read arguments from response file
+			try
+			{
+				string rsp = makeFilenameAbsolute(arg[1..$], workdir);
+				string[] fargs = tokenizeArgs(to!string(std.file.read(rsp)));
+				args = args[0..a] ~ fargs ~ args[a+1 .. $];
+				--a;
+			}
+			catch(Exception e)
+			{
+			}
+		}
+	}
+	return args;
 }

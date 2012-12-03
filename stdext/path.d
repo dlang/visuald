@@ -93,12 +93,24 @@ string makeFilenameCanonical(string file, string workdir)
 	return file;
 }
 
+string makeDirnameCanonical(string dir, string workdir)
+{
+	dir = makeFilenameAbsolute(dir, workdir);
+	dir = normalizeDir(dir);
+	dir = removeDotDotPath(dir);
+	return dir;
+}
+
 void makeFilenamesCanonical(string[] files, string workdir)
 {
 	foreach(ref file; files)
-	{
 		file = makeFilenameCanonical(file, workdir);
-	}
+}
+
+void makeDirnamesCanonical(string[] dirs, string workdir)
+{
+	foreach(ref dir; dirs)
+		dir = makeDirnameCanonical(dir, workdir);
 }
 
 string quoteFilename(string fname)

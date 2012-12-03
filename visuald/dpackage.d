@@ -1253,6 +1253,7 @@ class GlobalOptions
 			keyToolOpts.Set("timeBuilds",        timeBuilds);
 			keyToolOpts.Set("sortProjects",      sortProjects);
 			keyToolOpts.Set("stopSolutionBuild", stopSolutionBuild);
+			keyToolOpts.Set("demangleError",     demangleError);
 			keyToolOpts.Set("optlinkDeps",       optlinkDeps);
 			keyToolOpts.Set("autoOutlining",     autoOutlining);
 			keyToolOpts.Set("deleteFiles",       deleteFiles);
@@ -1305,6 +1306,33 @@ class GlobalOptions
 		replacements["VISUALDINSTALLDIR"] = VisualDInstallDir;
 	}
 	
+	string replaceGlobalMacros(string s)
+	{
+		if(s.indexOf('$') < 0)
+			return s;
+
+		string[string] replacements;
+		addReplacements(replacements);
+		return replaceMacros(s, replacements);
+	}
+
+	string findInPath(string exe)
+	{
+		string searchpaths = replaceGlobalMacros(ExeSearchPath);
+		string[] paths = tokenizeArgs(searchpaths, true, false);
+		if(char* p = getenv("PATH"))
+			paths ~= tokenizeArgs(to!string(p), true, false);
+
+		foreach(path; paths)
+		{
+			path = unquoteArgument(path);
+			path = normalizeDir(path);
+			if(std.file.exists(path ~ exe))
+				return path;
+		}
+		return null;
+	}
+
 	string findDmdBinDir(string dmdpath = null)
 	{
 		if(dmdpath.length && std.file.exists(dmdpath))
@@ -1315,44 +1343,48 @@ class GlobalOptions
 		if(std.file.exists(bindir ~ "dmd.exe"))
 			return bindir;
 		
-		string[string] replacements;
-		addReplacements(replacements);
-		string searchpaths = replaceMacros(ExeSearchPath, replacements);
-		string[] paths = tokenizeArgs(searchpaths, true, false);
-		if(char* p = getenv("PATH"))
-			paths ~= tokenizeArgs(to!string(p), true, false);
-		
-		foreach(path; paths)
-		{
-			path = unquoteArgument(path);
-			path = normalizeDir(path);
-			if(std.file.exists(path ~ "dmd.exe"))
-				return path;
-		}
-		return installdir;
+		string dmd = findInPath("dmd.exe");
+		return empty(dmd) ? null : dirName(dmd);
 	}
 	
 	string getOptlinkPath(string dmdpath, string *libs = null, string* options = null)
 	{
 		string path = "link.exe";
 		string bindir = findDmdBinDir(dmdpath);
-		string inifile = bindir ~ "sc.ini";
-		if(std.file.exists(inifile))
+		if(!empty(bindir))
 		{
-			string[string][string] ini = parseIni(inifile);
-			if(auto pEnv = "Environment" in ini)
+			string inifile = bindir ~ "sc.ini";
+			if(std.file.exists(inifile))
 			{
-				if(string* pLink = "LINKCMD" in *pEnv)
-					path = replace(*pLink, "%@P%", bindir);
-				if(options)
-					if(string* pFlags = "DFLAGS" in *pEnv)
-						*options = replace(*pFlags, "%@P%", bindir);
-				if(libs)
-					if(string* pLibs = "LIB" in *pEnv)
-						*libs = replace(*pLibs, "%@P%", bindir);
+				string[string][string] ini = parseIni(inifile);
+				if(auto pEnv = "Environment" in ini)
+				{
+					if(string* pLink = "LINKCMD" in *pEnv)
+						path = replace(*pLink, "%@P%", bindir);
+					if(options)
+						if(string* pFlags = "DFLAGS" in *pEnv)
+							*options = replace(*pFlags, "%@P%", bindir);
+					if(libs)
+						if(string* pLibs = "LIB" in *pEnv)
+							*libs = replace(*pLibs, "%@P%", bindir);
+				}
 			}
 		}
 		return path;
+	}
+
+	static string[] getOptionImportPaths(string opts, string workdir)
+	{
+		string[] imports;
+		string[] args = tokenizeArgs(opts);
+		args = expandResponseFiles(args, workdir);
+		foreach(arg; args)
+		{
+			arg = unquoteArgument(arg);
+			if(arg.startsWith("-I"))
+				imports ~= removeDotDotPath(normalizeDir(arg[2..$]));
+		}
+		return imports;
 	}
 
 	string[] getIniImportPaths()
@@ -1367,13 +1399,7 @@ class GlobalOptions
 				if(string* pFlags = "DFLAGS" in *pEnv)
 				{
 					string opts = replace(*pFlags, "%@P%", bindir);
-					string[] args = tokenizeArgs(opts);
-					foreach(arg; args)
-					{
-						arg = unquoteArgument(arg);
-						if(arg.startsWith("-I"))
-							imports ~= removeDotDotPath(normalizeDir(arg[2..$]));
-					}
+					imports ~= getOptionImportPaths(opts, bindir);
 				}
 		}
 		return imports;
@@ -1382,10 +1408,7 @@ class GlobalOptions
 	string[] getImportPaths()
 	{
 		string[] imports = getIniImportPaths();
-		
-		string[string] replacements;
-		addReplacements(replacements);
-		string searchpaths = replaceMacros(ImpSearchPath, replacements);
+		string searchpaths = replaceGlobalMacros(ImpSearchPath);
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
 			imports ~= removeDotDotPath(normalizeDir(unquoteArgument(arg)));
@@ -1396,9 +1419,7 @@ class GlobalOptions
 	string[] getJSONPaths()
 	{
 		string[] jsonpaths;
-		string[string] replacements;
-		addReplacements(replacements);
-		string searchpaths = replaceMacros(JSNSearchPath, replacements);
+		string searchpaths = replaceGlobalMacros(JSNSearchPath);
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
 			jsonpaths ~= normalizeDir(unquoteArgument(arg));
@@ -1481,7 +1502,7 @@ class GlobalOptions
 			}
 			catch(Exception)
 			{
-				msg = format("cannot create directory " ~ jsonPath);
+				msg = "cannot create directory " ~ jsonPath;
 				pane.OutputString(toUTF16z(msg));
 				return false;
 			}
@@ -1492,7 +1513,14 @@ class GlobalOptions
 			pane.OutputString(toUTF16z("Using import " ~ s ~ "\n"));
 
 		string cmdfile = jsonPath ~ "buildjson.bat";
-		string dmdpath = findDmdBinDir() ~ "dmd.exe";
+		string dmddir = findDmdBinDir();
+		string dmdpath = dmddir ~ "dmd.exe";
+		if(!std.file.exists(dmdpath))
+		{
+			msg = "dmd.exe not found in DMDInstallDir=" ~ DMDInstallDir ~ " or through PATH";
+			pane.OutputString(toUTF16z(msg));
+			return false;
+		}
 		foreach(s; imports)
 		{
 			string[] files;

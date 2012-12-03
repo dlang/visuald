@@ -120,6 +120,51 @@ class NodeAllocData
 	}
 }
 
+// moved out of Node due to regression http://d.puremagic.com/issues/show_bug.cgi?id=9101
+mixin template ForwardCtor()
+{
+	this()
+	{
+		// default constructor needed for clone()
+	}
+	this(ref const(TextSpan) _span)
+	{
+		super(_span);
+	}
+	this(Token tok)
+	{
+		super(tok);
+	}
+	this(TokenId _id, ref const(TextSpan) _span)
+	{
+		super(_id, _span);
+	}
+}
+
+mixin template ForwardCtorTok()
+{
+	this() {} // default constructor needed for clone()
+
+	this(Token tok)
+	{
+		super(tok);
+	}
+}
+
+mixin template ForwardCtorNoId()
+{
+	this() {} // default constructor needed for clone()
+
+	this(ref const(TextSpan) _span)
+	{
+		super(_span);
+	}
+	this(Token tok)
+	{
+		super(tok.span);
+	}
+}
+
 class Node
 {
 	TokenId id;
@@ -176,50 +221,6 @@ class Node
 		version(COUNT) InterlockedDecrement(&countNodes);
 	}
 
-	mixin template ForwardCtor()
-	{
-		this()
-		{
-			// default constructor needed for clone()
-		}
-		this(ref const(TextSpan) _span)
-		{
-			super(_span);
-		}
-		this(Token tok)
-		{
-			super(tok);
-		}
-		this(TokenId _id, ref const(TextSpan) _span)
-		{
-			super(_id, _span);
-		}
-	}
-		
-	mixin template ForwardCtorTok()
-	{
-		this() {} // default constructor needed for clone()
-		
-		this(Token tok)
-		{
-			super(tok);
-		}
-	}
-	
-	mixin template ForwardCtorNoId()
-	{
-		this() {} // default constructor needed for clone()
-		
-		this(ref const(TextSpan) _span)
-		{
-			super(_span);
-		}
-		this(Token tok)
-		{
-			super(tok.span);
-		}
-	}
-	
 	void reinit()
 	{
 		id = 0;

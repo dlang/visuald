@@ -1148,7 +1148,7 @@ else
 		{
 			string imp = to!string(impw);
 			imp = replace(imp, ".", "\\") ~ ".d";
-			HRESULT hr = OpenFileInSolution(imp, -1, file, false);
+			HRESULT hr = OpenFileInSolution(imp, -1, file, false); // also searches import paths
 			if(hr != S_OK)
 			{
 				imp ~= "i";

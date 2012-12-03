@@ -202,8 +202,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	bool mColorizeVersions;
 	bool mParseSource;
 	
-	const int kIndexVersion = 0;
-	const int kIndexDebug   = 1;
+	enum int kIndexVersion = 0;
+	enum int kIndexDebug   = 1;
 	
 	// index 0 for version, index 1 for debug
 	int[wstring][2] mVersionIds; // positive: lineno defined

@@ -21,10 +21,10 @@ COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 # avoid trailing '\', it ruins the command line
 # WINSDK = $(WINDOWSSDKDIR:\=/)
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v6.0A
-# WINSDK = $(PROGRAMW6432)\Microsoft SDKs\Windows\v6.0A
+WINSDK = $(PROGRAMW6432)\Microsoft SDKs\Windows\v6.0A
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.0A
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
-WINSDK = $(PROGRAMFILES)\Windows Kits\8.0
+# WINSDK = $(PROGRAMFILES)\Windows Kits\8.0
 # WINSDK = c:\l\vs11\Windows Kits\8.0
 VSISDK = c:\l\vs9SDK
 # VSISDK = c:\l\vs10SDK
@@ -116,7 +116,7 @@ sdk_lib:
 # compile visuald package
 
 package:
-	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
+	cd visuald && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
 
 vdserver_exe: $(LARGEADR_EXE)
 	cd visuald && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" ..\$(BINDIR)\vdserver.exe

@@ -741,13 +741,18 @@ string[] GetImportPaths(string file)
 	{
 		scope(exit) release(cfg);
 		ProjectOptions opt = cfg.GetProjectOptions();
-		string imp = cfg.GetProjectOptions().imppath;
+		string projectpath = cfg.GetProjectDir();
+
+		string imp = opt.imppath;
 		imp = opt.replaceEnvironment(imp, cfg);
 		imports = tokenizeArgs(imp);
+
+		string addopts = opt.replaceEnvironment(opt.additionalOptions, cfg);
+		addunique(imports, GlobalOptions.getOptionImportPaths(addopts, projectpath));
+
 		foreach(ref i; imports)
-			i = normalizeDir(unquoteArgument(i));
-		string projectpath = cfg.GetProjectDir();
-		makeFilenamesCanonical(imports, projectpath);
+			i = makeDirnameCanonical(unquoteArgument(i), projectpath);
+
 		addunique(imports, projectpath);
 	}
 	imports ~= Package.GetGlobalOptions().getImportPaths();

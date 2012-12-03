@@ -100,8 +100,10 @@ LARGEADR = $(RELDIR)\largeadr.exe
 WINSDK = $(WINDOWSSDKDIR:\=/)
 VSISDK = c:\l\vs9SDK
 CTC    = $(VSISDK)\VisualStudioIntegration\Tools\Bin\CTC.exe
-# RCC    = $(WINDOWSSDKDIR)\bin\rc.exe
-RCC    = $(WINDOWSSDKDIR)\bin\x86\rc.exe
+# for Windows SDK prior v8
+RCC    = $(WINSDK)\bin\rc.exe
+# for Windows SDK 8
+# RCC    = $(WINSDK)\bin\x86\rc.exe
 
 LIB = ..\sdk\lib
 OPTLINKS = /SCANLIB
@@ -115,6 +117,7 @@ STDEXT_LIB = stdext.lib
 DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 RELFLAGS = -release -O -inline -noboundscheck
+# RELDBG = -g
 
 LIBS = phobos.lib ..\sdk\lib\comctl32.lib uuid.lib advapi32.lib comdlg32.lib \
 	ole32.lib ..\sdk\lib\oleaut32.lib user32.lib shell32.lib gdi32.lib
@@ -164,32 +167,40 @@ $(DBGDIR)\cpp2d.exe : $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEX
 
 #-----
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
+!IF "$(RELDBG)" == ""
+	copy $? $@
+!ELSE
 	"$(CV2PDB)" -D2.043 $? $@
+!ENDIF
 
 $(RELDIR)\vdc.lib : $(VDC_SRC) Makefile
-	"$(DMD2)" -of$@ $(RELFLAGS) -lib -g $(DFLAGS) @<<
+	"$(DMD2)" -of$@ $(RELFLAGS) -lib $(RELDBG) $(DFLAGS) @<<
 		$(VDC_SRC)
 <<NOKEEP
 
 $(RELDIR)\$(C2D_LIB) : $(C2D_SRC) Makefile
-	"$(DMD2)" -of$@ $(RELFLAGS) -lib -g $(DFLAGS) @<<
+	"$(DMD2)" -of$@ $(RELFLAGS) -lib $(RELDBG) $(DFLAGS) @<<
 		$(C2D_SRC)
 <<NOKEEP
 
 $(RELDIR)\$(STDEXT_LIB) : $(STDEXT_SRC) Makefile
-	"$(DMD2)" -of$@ $(RELFLAGS) -lib -g $(DFLAGS) @<<
+	"$(DMD2)" -of$@ $(RELFLAGS) -lib $(RELDBG) $(DFLAGS) @<<
 		$(STDEXT_SRC)
 <<NOKEEP
 
 # -c -od$(RELDIR)
 $(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB) $(RELDIR)\$(STDEXT_LIB) $(DEPS)
-	"$(DMD2)" -of$@ $(RELFLAGS) -g $(DFLAGS) -map $@.map @<<
+	"$(DMD2)" -of$@ $(RELFLAGS) $(DFLAGS) $(RELDBG) -map $@.map @<<
 		$(SRC) $(REL_VSI_LIB) $(LIBS) $(DEF) $(RELRES) $(RELDIR)\vdc.lib $(RELDIR)\$(C2D_LIB) $(RELDIR)\$(STDEXT_LIB)
 <<NOKEEP
 
 $(RELDIR)\vdserver.exe : ..\vdc\vdserverfactory.d $(RELDIR)\$(STDEXT_LIB) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\vdserver.res Makefile
-	"$(DMD2)" -of$@_cv -g $(RELFLAGS) $(DFLAGS) $(RELDIR)\vdc.lib ..\vdc\vdserverfactory.d $(RELDIR)\vdserver.res $(REL_VSI_LIB) $(RELDIR)\$(STDEXT_LIB) ole32.lib oleaut32.lib -L/SUBSYSTEM:WINDOWS
+	"$(DMD2)" -of$@_cv $(RELDBG) $(RELFLAGS) $(DFLAGS) $(RELDIR)\vdc.lib ..\vdc\vdserverfactory.d $(RELDIR)\vdserver.res $(REL_VSI_LIB) $(RELDIR)\$(STDEXT_LIB) ole32.lib oleaut32.lib -L/SUBSYSTEM:WINDOWS
+!IF "$(RELDBG)" == ""
+	copy $@_cv $@
+!ELSE
 	"$(CV2PDB)" $@_cv $@
+!ENDIF
 	if exist $(LARGEADR) $(LARGEADR) $@
 
 $(RELDIR)\cpp2d.exe : $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(RELDIR)\$(STDEXT_LIB) Makefile

@@ -489,4 +489,8 @@ unreleased Version 0.3.35
   * semantics: add .ptr property to dynamic array
   * now installed as an "extension" to VS 2010 and VS 2012
   * fixed missing output files when a VC project has a project dependency on a D library project
-
+  * setting "Demangle names in link errors" never saved
+  * fixed macros not expanded in "other compiler" when figuring out what linker to be called directly
+  * now expanding response files in sc.ini or additional compiler options when looking for
+    import or linker directives
+ 
