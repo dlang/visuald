@@ -1,0 +1,46 @@
+<DProject>
+  <ProjectGuid>$guid1$</ProjectGuid>
+  <Config name="Debug DMD" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>0</compiler>
+    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
+  </Config>
+  <Config name="Release DMD" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>0</compiler>
+    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
+  </Config>
+  <Config name="Debug DMD" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>0</compiler>
+    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
+  </Config>
+  <Config name="Release DMD" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>0</compiler>
+    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
+  </Config>
+  <Config name="Debug GDC" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>1</compiler>
+    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
+  </Config>
+  <Config name="Release GDC" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>1</compiler>
+    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
+  </Config>
+  <Config name="Debug GDC" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>1</compiler>
+    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
+  </Config>
+  <Config name="Release GDC" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>1</compiler>
+    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
+  </Config>
+  <Folder name="$safeprojectname$">
+    <File path="main.d"></File>
+  </Folder>
+</DProject>

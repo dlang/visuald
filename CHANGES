@@ -474,15 +474,14 @@ Version history
 unreleased Version 0.3.35
 
   * new linker option to disable using global and standard library search paths
-  * add preliminary support for upcoming dmd win64 support
+  * add preliminary support for upcoming dmd win64 compiler
   * add '/' to '\' translation for macro replacements of $(OUTDIR) and $(INTDIR)
   * fixed build variable $(VSINSTALLDIR) (pointed to parent directory of expected dir)
   * added build project to translate sdk to D
   * adjusted to changes to dependency file in dmd 2.061
   * fixed Visual Studio sometimes renamed to VisualD in the window title
-  * fixed recovery with multiple syntax errors at module scope
-  * project options: added $(Configuration) to expand to the same as 
-    $(ConfigurationName) for compatibility with VC++ projects
+  * fixed parser recovery with multiple syntax errors at module scope
+  * project options: added $(Configuration) to expand to the same as $(ConfigurationName) for compatibility with VC++ projects
   * project config: controls now have style WS_TABSTOP to allow keyboard navigation
   * goto definition now uses semantic analysis to find declaration
   * semantic analysis now enabled by default (removed experimental status)
@@ -491,7 +490,7 @@ unreleased Version 0.3.35
   * fixed missing output files when a VC project has a project dependency on a D library project
   * setting "Demangle names in link errors" never saved
   * fixed macros not expanded in "other compiler" when figuring out what linker to be called directly
-  * now expanding response files in sc.ini or additional compiler options when looking for
-    import or linker directives
-  * add D icon to vdserver.exe
-  * added console application project template with cnfigurations for DMD and GDC for Win32 and x86
+  * now expanding response files in sc.ini or additional compiler options when looking for import or linker directives
+  * added D icon to vdserver.exe
+  * added console application project template with configurations for DMD and GDC for Win32 and x86
+  * fixed spurious crashes due to bug in precise garbage collection
