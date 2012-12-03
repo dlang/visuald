@@ -493,4 +493,4 @@ unreleased Version 0.3.35
   * fixed macros not expanded in "other compiler" when figuring out what linker to be called directly
   * now expanding response files in sc.ini or additional compiler options when looking for
     import or linker directives
- 
+  * add D icon to vdserver.exe

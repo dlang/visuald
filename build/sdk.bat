@@ -12,6 +12,8 @@ if "%2" == "" (echo please specify the output path to remember succesful builds 
 set OUT=%2
 if exist %OUT% del %OUT%
 
+if "%WindowsSdkDir%" == "" (echo environment variable WindowsSdkDir not set && exit /B 1)
+
 set DTE_IDL_PATH=..\sdk\vsi\idl
 if not exist ..\sdk\vsi\nul     md ..\sdk\vsi
 if not exist ..\sdk\win32\nul   md ..\sdk\win32

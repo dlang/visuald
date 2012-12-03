@@ -609,7 +609,7 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string optlinkCommandLine(string[] lnkfiles, string inioptions)
+	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir)
 	{
 		string cmd;
 		string dmdoutfile = getTargetPath();
@@ -635,6 +635,7 @@ class ProjectOptions
 
 		inioptions ~= " " ~ additionalOptions;
 		string[] opts = tokenizeArgs(inioptions, false);
+		opts = expandResponseFiles(opts, workdir);
 		string addopts;
 		foreach(ref opt; opts)
 		{
@@ -661,18 +662,13 @@ class ProjectOptions
 			lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
 		foreach(lp; lpaths)
 			cmd ~= "+" ~ quoteFilename(normalizeDir(lp));
-		cmd ~= ",";
-
-		if(deffile.length)
-			cmd ~= quoteNormalizeFilename(deffile);
-		else
-			cmd ~= plusList(lnkfiles, ".def");
-		cmd ~= ",";
-
+		
+		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def");
+		if(def.length)
+			cmd ~= "," ~ def;
+		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res");
 		if(resfile.length)
-			cmd ~= quoteNormalizeFilename(resfile);
-		else
-			cmd ~= plusList(lnkfiles, ".res");
+			cmd ~= "," ~ res;
 
 		// options
 		// "/m" to geneate map?
@@ -2470,13 +2466,16 @@ class Config :	DisposingComObject,
 				string otherCompiler = mProjectOptions.replaceEnvironment(mProjectOptions.otherCompilerPath(), this);
 				string linkpath = globOpts.getOptlinkPath(otherCompiler, &libpaths, &options);
 				lnkcmd = linkpath ~ " ";
+
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
 						~ (globOpts.demangleError ? null : "-nodemangle ")
 						~ (globOpts.optlinkDeps ? "-deps " ~ quoteFilename(GetLinkDependenciesPath()) ~ " " : null)
 						~ lnkcmd;
+
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options);
+				string workdir = normalizeDir(GetProjectDir());
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";
