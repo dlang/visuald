@@ -154,6 +154,8 @@ void testSemantic(string txt, string filename = "")
 	writeln(filename ~":");
 
 	Project prj = new Project;
+	prj.options.setImportDirs([ r"m:\s\d\rainers\druntime\import\", r"m:\s\d\rainers\phobos\" ]);
+
 	auto mod = prj.addText(filename, txt);
 	assert(mod);
 	prj.semantic();
@@ -296,12 +298,12 @@ int[] ctfeLexer(string s)
 {
 	Lexer lex;
 	int state;
-	uint pos;
+	size_t pos;
 	
 	int[] ids;
 	while(pos < s.length)
 	{
-		uint prevpos = pos;
+		size_t prevpos = pos;
 		int id;
 		int type = lex.scan(state, s, pos, id);
 		assert(prevpos < pos);
@@ -596,6 +598,31 @@ unittest
 	//uint[test] arr;
 	//pragma(msg,arr.sizeof);
 
+unittest
+{
+	string txt = q{
+		@userattr int x;
+		@userattr(arg1) int y;
+		@("tst") int z;
+		@() int z;
+		deprecated("hu") int z;
+	};
+	testSemantic(txt, "uda");
+}
+
+unittest
+{
+	string txt = q{
+		alias int a1;
+		alias a2 = int;
+		struct S {
+			alias s1 this;
+			alias this = s1;
+		}
+	};
+	testSemantic(txt, "alias");
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 
@@ -649,6 +676,7 @@ int main(string[] argv)
 	{
 		foreach_file((string fname){
 			Project prj = new Project;
+			prj.options.setImportDirs([ r"m:\s\d\rainers\druntime\import\", r"m:\s\d\rainers\phobos\" ]);
 			semanticErrors = 0;
 			logInfo("### testSemantic " ~ fname ~ " ###");
 			prj.addAndParseFile(fname);

@@ -17,6 +17,7 @@ import std.ascii;
 import std.array;
 //static import std.regexp;
 static import std.regex;
+static import std.conv;
 
 //////////////////////////////////////////////////////////////////////////////
 alias DList!(c2d.tokenizer.Token) TokenList;
@@ -417,7 +418,7 @@ static void scanAny(TL)(ref TL tokenList, string text, int lineno = 1, bool comb
 	}
 	catch(Exception e)
 	{
-		string msg = "(" ~ format(tokenizer.lineno) ~ "):" ~ e.toString();
+		string msg = "(" ~ std.conv.text(tokenizer.lineno) ~ "):" ~ e.toString();
 		throw new Exception(msg);
 	}
 }

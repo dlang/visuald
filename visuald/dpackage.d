@@ -1077,6 +1077,7 @@ class GlobalOptions
 	byte expandTrigger;
 	bool showTypeInTooltip;
 	bool semanticGotoDef;
+	bool useDParser;
 	string VDServerIID;
 
 	bool ColorizeVersions = true;
@@ -1161,6 +1162,7 @@ class GlobalOptions
 			expandTrigger     = cast(byte) keyToolOpts.GetDWORD("expandTrigger", 0);
 			showTypeInTooltip = keyToolOpts.GetDWORD("showTypeInTooltip2", 1) != 0; // changed default
 			semanticGotoDef   = keyToolOpts.GetDWORD("semanticGotoDef", 1) != 0;
+			useDParser        = keyToolOpts.GetDWORD("useDParser", 0) != 0;
 			pasteIndent       = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
 
 			// overwrite by user config
@@ -1190,11 +1192,14 @@ class GlobalOptions
 			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",       pasteIndent) != 0;
 			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip2", showTypeInTooltip) != 0;
 			semanticGotoDef      = keyUserOpts.GetDWORD("semanticGotoDef",   semanticGotoDef) != 0;
+			useDParser           = keyUserOpts.GetDWORD("useDParser",        useDParser) != 0;
 			lastColorizeVersions = ColorizeVersions;
 			UserTypes = parseUserTypes(UserTypesSpec);
 			
 			if(VDServerIID.length > 0)
 				VDServerClassFactory_iid = uuid(VDServerIID);
+			else if(useDParser)
+				VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-AA05-7e4ad4084715");
 
 			CHierNode.setContainerIsSorted(sortProjects);
 			
@@ -1264,6 +1269,7 @@ class GlobalOptions
 			keyToolOpts.Set("expandTrigger",     expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip", showTypeInTooltip);
 			keyToolOpts.Set("semanticGotoDef",   semanticGotoDef);
+			keyToolOpts.Set("useDParser",        useDParser);
 			keyToolOpts.Set("pasteIndent",       pasteIndent);
 
 			CHierNode.setContainerIsSorted(sortProjects);

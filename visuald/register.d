@@ -70,11 +70,15 @@ HRESULT DllUnregisterServer()
 }
 
 extern(Windows)
-HRESULT WriteExtensionPackageDefinition(in wchar* fileName)
+HRESULT WriteExtensionPackageDefinition(in wchar* args)
 {
+	wstring wargs = to_wstring(args);
+	auto idx = indexOf(wargs, ' ');
+	if(idx < 1)
+		return E_FAIL;
 	registryDump = "Windows Registry Editor Version 5.00\n"w;
-	registryRoot = "Software\\Microsoft\\VisualStudio\\10.0"w;
-	string fname = to_string(fileName);
+	registryRoot = wargs[0 .. idx] ~ "\0"w;
+	string fname = to!string(wargs[idx + 1 .. $]);
 	try
 	{
 		HRESULT rc = VSDllRegisterServerInternal(registryRoot.ptr, false);
@@ -89,7 +93,7 @@ HRESULT WriteExtensionPackageDefinition(in wchar* fileName)
 	}
 	catch(Exception e)
 	{
-		MessageBox(null, toUTF16z(e.msg), fileName, MB_OK);
+		MessageBox(null, toUTF16z(e.msg), args, MB_OK);
 	}
 	return E_FAIL;
 }
@@ -331,18 +335,20 @@ wstring GetRegistrationRoot(in wchar* pszRegRoot, bool useRanu)
 	return szRegistrationRoot;
 }
 
-int guessVSVersion(wstring registrationRoot)
+float guessVSVersion(wstring registrationRoot)
 {
 	auto idx = lastIndexOf(registrationRoot, '\\');
 	if(idx < 0)
 		return 0;
 	wstring txt = registrationRoot[idx + 1 .. $];
-	return parse!int(txt);
+	return parse!float(txt);
 }
 
 void updateConfigurationChanged(HKEY keyRoot, wstring registrationRoot)
 {
-	if(guessVSVersion(registrationRoot) >= 11)
+	float ver = guessVSVersion(registrationRoot);
+	//MessageBoxA(null, text("version: ", ver, "\nregkey: ", to!string(registrationRoot)).ptr, to!string(registrationRoot).ptr, MB_OK);
+	if(ver >= 11)
 	{
 		scope RegKey keyRegRoot = new RegKey(keyRoot, registrationRoot);
 
@@ -562,7 +568,7 @@ version(none){
 		keyToolOpts.Set("Page"w, GUID2wstring(g_ToolsProperty2Page));
 
 		if(keyToolOpts.GetString("ExeSearchPath"w).length == 0)
-			keyToolOpts.Set("ExeSearchPath"w, "$(DMDInstallDir)windows\\bin\n$(WindowsSdkDir)\\bin"w);
+			keyToolOpts.Set("ExeSearchPath"w, "$(DMDInstallDir)windows\\bin;$(WindowsSdkDir)\\bin"w);
 		if(keyToolOpts.GetString("IncSearchPath"w).length == 0)
 			keyToolOpts.Set("IncSearchPath"w, "$(WindowsSdkDir)\\include;$(DevEnvDir)..\\..\\VC\\include"w);
 

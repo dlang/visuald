@@ -1692,7 +1692,7 @@ class IdentifierExpression : PrimaryExpression
 
 	override void toC(CodeWriter writer)
 	{
-		resolve();
+		//resolve();
 		if(resolved)
 		{
 			Module thisMod = getModule();

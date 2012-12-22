@@ -265,7 +265,7 @@ ${MementoSection} "Register with VS 2010" SecVS2010
   ${RegisterWin32Exception} ${VS2010_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef $1${EXTENSION_DIR}\visuald.pkgdef'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2010_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
@@ -280,7 +280,7 @@ ${MementoSection} "Register with VS 2012" SecVS2012
   ${RegisterWin32Exception} ${VS2012_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef $1${EXTENSION_DIR}\visuald.pkgdef'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2012_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico

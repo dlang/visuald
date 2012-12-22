@@ -445,6 +445,36 @@ class AttributeSpecifier : Node
 	}
 }
 
+//UserAttributeSpecifier:
+//    ident [ArgumentList_opt]
+class UserAttributeSpecifier : Node
+{
+	mixin ForwardCtor!();
+
+	string ident;
+
+	ArgumentList getArgumentList() { return getMember!ArgumentList(0); }
+
+	override void toD(CodeWriter writer)
+	{
+		writer(ident);
+		if(members.length)
+		{
+			writer("(");
+			writer.writeArray(members);
+			writer(")");
+		}
+	}
+
+	override void addSymbols(Scope sc)
+	{
+		addMemberSymbols(sc);
+	}
+	override void _semantic(Scope sc)
+	{
+	}
+}
+
 //DeclarationBlock:
 //    [DeclDef...]
 class DeclarationBlock : Node

@@ -14,7 +14,7 @@ import std.algorithm : min;
 
 ulong httpget(string url, string dstfile, ulong partial_start = 0, ulong partial_length = ulong.max)
 {
-	int i = indexOf(url, "://");
+	auto i = indexOf(url, "://");
 	if (i != -1)
 	{
 		if (icmp(url[0 .. i], "http"))
@@ -98,7 +98,7 @@ ulong httpget(string domain, ushort port, string url, string dstfile, ulong part
 	bool testLF = true; // switching from readLine to readBlock might leave a pending LF in the input stream
 
 	ulong sumRead = 0;
-	uint read;
+	size_t read;
 	while ((read = ss.readBlock(buf.ptr, bufSize)) > 0)
 	{
 		int skip = (testLF && buf[0] == '\n' ? 1 : 0);

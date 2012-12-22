@@ -669,11 +669,8 @@ class IdentifierList : Node
 		return tn.global == global;
 	}
 	
-	override Node resolve()
+	Node doResolve(bool isMixin)
 	{
-		if(resolved)
-			return resolved;
-		
 		// TODO: does not work for package qualified symbols
 		Scope sc;
 		if(global)
@@ -685,14 +682,24 @@ class IdentifierList : Node
 		if(!sc)
 			sc = getScope();
 
+		Node res;
 		for(int m = 0; sc && m < members.length; m++)
 		{
 			auto id = getMember!Identifier(m);
-			resolved = sc.resolveWithTemplate(id.ident, sc, id);
-			sc = (resolved ? resolved.getScope() : null);
+			res = sc.resolveWithTemplate(id.ident, sc, id);
+			sc = (res ? res.getScope() : null);
 		}
-		if(!sc)
-			resolved = semanticErrorType("cannot resolve ", writeD(this));
+		if(!sc && !isMixin)
+			res = semanticErrorType("cannot resolve ", writeD(this));
+		return res;
+	}
+
+	override Node resolve()
+	{
+		if(resolved)
+			return resolved;
+		
+		resolved = doResolve(false);
 		return resolved;
 	}
 	
@@ -809,7 +816,7 @@ class ParameterList : Node
 {
 	mixin ForwardCtor!();
 
-	Parameter getParameter(int i) { return getMember!Parameter(i); }
+	Parameter getParameter(size_t i) { return getMember!Parameter(i); }
 
 	bool varargs;
 	bool anonymous_varargs;

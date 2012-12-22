@@ -24,6 +24,7 @@ import ast = vdc.ast.all;
 //    typedef Decl /* for legacy code */
 //    Decl
 //    alias Identifier this
+//    alias this = Identifier
 class Declaration
 {
 	static Action enter(Parser p)
@@ -56,7 +57,11 @@ class Declaration
 				p.pushToken(p.tok);
 				p.pushState(&shiftAliasIdentifier);
 				return Accept;
-				
+
+			case TOK_this:
+				p.pushState(&shiftThis);
+				return Accept;
+
 			default:
 				p.pushState(&shiftTypedef);
 				return Decl!true.enter(p);
@@ -88,6 +93,31 @@ class Declaration
 		}
 	}
 	
+	static Action shiftThis(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_assign:
+				p.pushState(&shiftThisAssign);
+				return Accept;
+			default:
+				return p.parseError("'=' expected after alias this");
+		}
+	}
+
+	static Action shiftThisAssign(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_Identifier:
+				p.pushNode(new ast.AliasThis(p.tok));
+				p.pushState(&shiftAliasThis);
+				return Accept;
+			default:
+				return p.parseError("identifier expected after alias this =");
+		}
+	}
+
 	static Action shiftAliasThis(Parser p)
 	{
 		switch(p.tok.id)

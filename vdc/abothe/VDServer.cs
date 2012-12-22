@@ -23,7 +23,7 @@ namespace ABothe
     {
 	    void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags);
 	    void ClearSemanticProject();
-	    void UpdateModule(string filename, string srcText);
+		void UpdateModule(string filename, string srcText, bool verbose);
 	    void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex);
         void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer);
         void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr);
@@ -32,16 +32,24 @@ namespace ABothe
         void GetParseErrors(string filename, out string errors);
 	    void GetBinaryIsInLocations(string filename, out uint[] locs); // array of pairs of DWORD
 	    void GetLastMessage(out string message);
-    }
+		void GetDefinition(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex);
+		void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename);
+	}
 
     class VDServerCompletionDataGenerator : ICompletionDataGenerator
     {
+		public VDServerCompletionDataGenerator (string pre)
+		{
+			prefix = pre;
+		}
+
         /// <summary>
         /// Adds a token entry
         /// </summary>
-        public void Add(int Token)
+        public void Add(byte Token)
         {
-            expansions += DTokens.Keywords[Token] + "\n";
+			if(DTokens.Keywords[Token].StartsWith(prefix))
+            	expansions += DTokens.Keywords[Token] + "\n";
         }
 
         /// <summary>
@@ -49,12 +57,14 @@ namespace ABothe
         /// </summary>
         public void AddPropertyAttribute(string AttributeText)
         {
-            expansions += AttributeText + "\n";
+			if(AttributeText.StartsWith(prefix))
+				expansions += AttributeText + "\n";
         }
 
         public void AddTextItem(string Text, string Description)
         {
-            expansions += Text + "\n";
+			if(Text.StartsWith(prefix))
+				expansions += Text + "\n";
         }
 
         /// <summary>
@@ -63,7 +73,8 @@ namespace ABothe
         /// <param name="Node"></param>
         public void Add(INode Node)
         {
-            expansions += Node.ToString() + "\n";
+			if(Node.Name.StartsWith(prefix))
+				expansions += Node.Name + "\n";
         }
 
         /// <summary>
@@ -77,12 +88,14 @@ namespace ABothe
         }
 
         public string expansions;
+        public string prefix;
     }
 
     [ComVisible(true), Guid("002a2de9-8bb6-484d-AA05-7e4ad4084715")]
     [ClassInterface(ClassInterfaceType.None)]
     public class VDServer : IVDServer
     {
+        private ParseCacheList _parseCacheList;
         private ParseCache _parseCache;
         private CodeLocation _tipStart, _tipEnd;
         private string _tipText;
@@ -93,7 +106,10 @@ namespace ABothe
 
         public VDServer()
         {
+			_parseCacheList = new ParseCacheList();
             _parseCache = new ParseCache();
+			_parseCacheList.Add(_parseCache);
+
             // MessageBox.Show("VDServer()");
         }
 
@@ -107,7 +123,7 @@ namespace ABothe
             MessageBox.Show("ClearSemanticProject()");
             //throw new NotImplementedException();
         }
-        public void UpdateModule(string filename, string srcText)
+        public void UpdateModule(string filename, string srcText, bool verbose)
         {
             try
             {
@@ -124,10 +140,11 @@ namespace ABothe
         }
         static int getCodeOffset(string s, CodeLocation loc)
         {
+			// column/line 1-based
             int off = 0;
-            for (int ln = 0; ln < loc.Line; ln++)
+            for (int ln = 1; ln < loc.Line; ln++)
                 off = s.IndexOf('\n', off) + 1;
-            return off + loc.Column + 1;
+            return off + loc.Column - 1;
         }
 
         public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex)
@@ -136,14 +153,15 @@ namespace ABothe
             if (!_modules.TryGetValue(filename, out ast))
                 throw new COMException("module not found", 1);
 
-            _tipStart = new CodeLocation(startLine, startIndex);
-            _tipEnd = new CodeLocation(startLine, startIndex + 1);
+            _tipStart = new CodeLocation(startIndex + 1, startLine);
+            _tipEnd = new CodeLocation(startIndex + 2, startLine);
             _tipText = "";
 
             EditorData editorData = new EditorData();
             editorData.CaretLocation = _tipStart;
             editorData.SyntaxTree = ast as DModule;
             editorData.ModuleCode = _sources[filename];
+			editorData.ParseCache = _parseCacheList;
             editorData.CaretOffset = getCodeOffset(editorData.ModuleCode, _tipStart);
             AbstractTooltipContent[] content = AbstractTooltipProvider.BuildToolTip(editorData);
             if(content == null || content.Length == 0)
@@ -158,9 +176,9 @@ namespace ABothe
         public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
         {
             startLine = _tipStart.Line;
-            startIndex = _tipStart.Column;
+            startIndex = _tipStart.Column - 1;
             endLine = _tipEnd.Line;
-            endIndex = _tipEnd.Column;
+            endIndex = _tipEnd.Column - 1;
             answer = _tipText;
             //MessageBox.Show("GetTipResult()");
             //throw new NotImplementedException();
@@ -171,13 +189,14 @@ namespace ABothe
             if (!_modules.TryGetValue(filename, out ast))
                 throw new COMException("module not found", 1);
 
-            CodeLocation loc = new CodeLocation((int)idx, (int) line);
+            CodeLocation loc = new CodeLocation((int)idx + 1, (int) line);
             EditorData editorData = new EditorData();
             editorData.CaretLocation = loc;
             editorData.SyntaxTree = ast as DModule;
             editorData.ModuleCode = _sources[filename];
             editorData.CaretOffset = getCodeOffset(editorData.ModuleCode, loc);
-            VDServerCompletionDataGenerator cdgen = new VDServerCompletionDataGenerator();
+			editorData.ParseCache = _parseCacheList;
+            VDServerCompletionDataGenerator cdgen = new VDServerCompletionDataGenerator(tok);
             AbstractCompletionProvider provider = AbstractCompletionProvider.BuildCompletionData(cdgen, editorData, tok);
             _expansions = cdgen.expansions;
             //MessageBox.Show("GetSemanticExpansions()");
@@ -211,7 +230,7 @@ namespace ABothe
             for (int i = 0; i < cnt; i++)
             {
                 var err = asterrors[i];
-                errs += String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Line, err.Location.Column, err.Location.Line, err.Location.Column + 1, err.Message);
+                errs += String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Line, err.Location.Column - 1, err.Location.Line, err.Location.Column, err.Message);
             }
             errors = errs;
             //MessageBox.Show("GetParseErrors()");
@@ -229,5 +248,17 @@ namespace ABothe
             message = "";
             //throw new COMException("No Message", 1);
         }
-    }
+		public void GetDefinition(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex)
+		{
+		}
+
+		public void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename)
+		{
+			startLine = _tipStart.Line;
+			startIndex = _tipStart.Column - 1;
+			endLine = _tipEnd.Line;
+			endIndex = _tipEnd.Column - 1;
+			filename = "";
+		}
+	}
 }

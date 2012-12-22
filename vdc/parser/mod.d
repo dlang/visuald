@@ -339,6 +339,12 @@ class AttributeSpecifier
 			case TOK_extern:
 				p.pushState(&shiftAttribute);
 				return LinkageAttribute.enter(p);
+			case TOK_Identifier:
+				if(p.tok.txt[0] != '@')
+					return Forward;
+				return UserAttributeSpecifier.enter(p);
+			case TOK_deprecated:
+				return UserAttributeSpecifier.enter(p);
 
 			default:
 				if(tokenToAnnotation(p.tok.id) == 0 && 
@@ -506,6 +512,49 @@ class AttributeSpecifier
 				p.pushState(&shiftDeclDef);
 				return Decl!true.enterTypeIdentifier(p);
 		}
+	}
+}
+
+//-- GRAMMAR_BEGIN --
+//UserAttributeSpecifier:
+//    deprectated
+//    @identifier
+//    deprecated ( ArgumentList )
+//    @identifier ( ArgumentList )
+class UserAttributeSpecifier
+{
+	static Action enter(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_deprecated:
+			case TOK_Identifier:
+				auto attr = new ast.UserAttributeSpecifier(p.tok);
+				attr.ident = p.tok.txt;
+				p.pushNode(attr);
+				p.pushState(&shiftIdentifier);
+				return Accept;
+			default:
+				return p.parseError("@identifier expected in user attribute");
+		}
+	}
+
+	static Action shiftIdentifier(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_lparen:
+				p.pushState(&shiftArgumentList);
+				return Arguments.enter(p);
+			default:
+				return Forward;
+		}
+	}
+
+	static Action shiftArgumentList(Parser p)
+	{
+		p.popAppendTopNode!(ast.UserAttributeSpecifier, ast.ArgumentList)();
+		return Forward;
 	}
 }
 

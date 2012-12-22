@@ -45,7 +45,7 @@ int main()
 
 	BSTR fname = SysAllocString("filename");
 	BSTR source = SysAllocString("void main() { int abc; }");
-	hr = gVDServer.UpdateModule(fname, source);
+	hr = gVDServer.UpdateModule(fname, source, false);
 
 	version(all)
 	{{

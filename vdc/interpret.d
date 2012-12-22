@@ -1710,7 +1710,7 @@ Value doCall(CallableNode funcNode, Context sc, ParameterList params, Value varg
 	else if(args.values.length != numparams)
 		return semanticErrorValue("incorrect number of arguments");
 
-	for(int p = 0; p < numparams; p++)
+	for(size_t p = 0; p < numparams; p++)
 	{
 		if(auto decl = params.getParameter(p).getParameterDeclarator().getDeclarator())
 		{
@@ -1731,7 +1731,7 @@ Value doCall(CallableNode funcNode, Context sc, ParameterList params, Value varg
 		if(auto darr = cast(DynArrayValue) arr)
 		{
 			darr.setLength(ctx, args.values.length - numparams);
-			for(int n = numparams; n < args.values.length; n++)
+			for(size_t n = numparams; n < args.values.length; n++)
 			{
 				Value v = args.values[n];
 				Type t = v.getType();

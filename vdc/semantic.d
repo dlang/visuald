@@ -673,9 +673,10 @@ class Project : Node
 	{
 		try
 		{
+			int cnt = members.length; // do not fully analyze imported modules
 			initScope();
 
-			for(int m = 0; m < members.length; m++)
+			for(int m = 0; m < cnt; m++)
 				members[m].semantic(scop);
 		}
 		catch(InterpretException)

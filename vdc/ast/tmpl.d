@@ -455,24 +455,28 @@ class TemplateMixin : Node
 
 	override Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
 	{
-		if(auto idlist = getMember!IdentifierList(0))
+		Node tmpl = getMember(0);
+		Node n;
+		if(auto prop = cast(TypeProperty) tmpl)
+			n = prop.resolve();
+		else if(auto idlist = cast(IdentifierList) tmpl)
+			n = idlist.doResolve(true);
+
+		if(!n)
+			semanticError("cannot resolve ", tmpl);
+		else if(auto tmi = cast(TemplateMixinInstance) n)
 		{
-			if(Node n = idlist.resolve())
+			// TODO: match constraints, replace parameters
+			if(members.length > 1)
 			{
-				if(auto tmi = cast(TemplateMixinInstance) n)
-				{
-					// TODO: match constraints, replace parameters
-					if(members.length > 1)
-					{
-						// named instance
-						string name = getMember!Identifier(1).ident;
-						tmi.instanceName = name;
-					}
-					return [ tmi ];
-				}
-				semanticError(n, " is not a TemplateMixinInstance");
+				// named instance
+				string name = getMember!Identifier(1).ident;
+				tmi.instanceName = name;
 			}
+			return [ tmi ];
 		}
+		else
+			semanticError(n, " is not a TemplateMixinInstance");
 		return athis;
 	}
 }

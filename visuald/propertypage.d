@@ -28,6 +28,8 @@ import stdext.array;
 import std.string;
 import std.conv;
 
+debug version = DParser;
+
 class PropertyWindow : Window
 {
 	this(Widget parent, uint style, string title, PropertyPage page)
@@ -1508,6 +1510,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "writing '.'", "writing an identifier" ], false));
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip"));
 		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (instead of JSON info)"));
+		version(DParser) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use D_Parser for semantic analysis"));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1518,6 +1521,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mExpandTrigger.setSelection(opts.expandTrigger);
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 		mSemanticGotoDef.setChecked(opts.semanticGotoDef);
+		version(DParser) mUseDParser.setChecked(opts.useDParser);
 
 		//mExpandSemantics.setEnabled(false);
 	}
@@ -1531,6 +1535,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger); 
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip); 
 		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef); 
+		version(DParser) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser); 
 		return changes;
 	}
 
@@ -1540,6 +1545,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	ComboBox mExpandTrigger;
 	CheckBox mShowTypeInTooltip;
 	CheckBox mSemanticGotoDef;
+	version(DParser) CheckBox mUseDParser;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

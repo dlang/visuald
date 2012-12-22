@@ -1182,7 +1182,7 @@ class TypeFunction : Type
 		
 		ti_fn.next = rtype.typeinfo;
 		ti_fn.parameters = new TypeInfo_Tuple;
-		for(int p = 0; p < params.members.length; p++)
+		for(size_t p = 0; p < params.members.length; p++)
 			ti_fn.parameters.elements ~= params.getParameter(p).getParameterDeclarator().getType().typeinfo;
 		ti_fn.attributes = combineAttributes(attr, params.attr);
 		typeinfo = ti_fn;
@@ -1232,7 +1232,7 @@ class TypeDelegate : TypeFunction
 		
 		ti_dg.next = rtype.typeinfo;
 		ti_dg.parameters = new TypeInfo_Tuple;
-		for(int p = 0; p < params.members.length; p++)
+		for(size_t p = 0; p < params.members.length; p++)
 			ti_dg.parameters.elements ~= params.getParameter(p).getParameterDeclarator().getType().typeinfo;
 		ti_dg.attributes = combineAttributes(attr, params.attr);
 		// no context information when defining the type, only with an instance

@@ -471,7 +471,7 @@ Version history
   * now runs on an almost precise garbage collector
   * DLL project template now has a linker definition file
 
-unreleased Version 0.3.35
+2012-12-03 Version 0.3.35
 
   * new linker option to disable using global and standard library search paths
   * add preliminary support for upcoming dmd win64 compiler
@@ -494,3 +494,12 @@ unreleased Version 0.3.35
   * added D icon to vdserver.exe
   * added console application project template with configurations for DMD and GDC for Win32 and x86
   * fixed spurious crashes due to bug in precise garbage collection
+
+unreleased Version 0.3.36
+
+  * added debug settings to new DMD/GDC project template 
+  * regressions caused by switching installing as VS2010/VS2010 extension:
+    - executable path contained untranslated \n
+    - no Visual D colors added
+  * only force separate link if "Monitor OPTLINK dependencies" is enabled
+ 

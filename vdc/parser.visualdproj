@@ -227,7 +227,7 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -260,7 +260,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>1</runCv2pdb>
+  <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
@@ -268,13 +268,13 @@
   <cv2pdbOptions />
   <objfiles />
   <linkswitches />
-  <libfiles />
+  <libfiles>ole32.lib oleaut32.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions />
+  <additionalOptions>-m32ms</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
@@ -477,7 +477,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
-  <symdebug>0</symdebug>
+  <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -497,7 +497,7 @@
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
-  <release>1</release>
+  <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
@@ -506,7 +506,7 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -553,7 +553,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions />
+  <additionalOptions>-debuglib=phobos64_d</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>

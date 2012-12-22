@@ -37,6 +37,7 @@ Project:
 - additional options for resource compiler
 - compile single file: report success
 - compile and run current buffer/selection
+- pass import path from static lib project to dependent projects
 
 Language service:
 -----------------
@@ -63,6 +64,7 @@ Semantics:
 - templates
 - operator overloads
 - UFCS
+- make it win64 aware
 - completion at the beginning of an identifier lists its members
 - package/module specifier before symbol
 - vdserver.exe should remove semantic project if devenv.exe terminates

@@ -338,7 +338,7 @@ class Node
 		{
 			Node n = members[m];
 			narray[0] = n;
-			int mlen = members.length;
+			size_t mlen = members.length;
 			Node[] nm = n.expandNonScopeBlock(sc, narray);
 			assert(members.length == mlen);
 			if(nm.length == 1 && nm[0] == n)

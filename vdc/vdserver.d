@@ -8,6 +8,9 @@
 
 module vdc.vdserver;
 
+version(MAIN) {} else version = noServer;
+
+version(noServer):
 import vdc.ivdserver;
 import vdc.semantic;
 import vdc.interpret;

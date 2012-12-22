@@ -37,7 +37,7 @@ alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully insta
 alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
 debug version = DebugCmd;
-debug version = InProc;
+// debug version = InProc;
 
 version(InProc) import vdc.vdserver;
 

@@ -739,7 +739,7 @@ class ProjectOptions
 		bool separateLink = compilationModel == ProjectOptions.kSeparateCompileAndLink;
 		if (compiler == Compiler.GDC && lib == OutputType.StaticLib)
 			separateLink = true;
-		if (compiler == Compiler.DMD && lib != OutputType.StaticLib)
+		if (compiler == Compiler.DMD && lib != OutputType.StaticLib && Package.GetGlobalOptions().optlinkDeps)
 			separateLink = true;
 		return separateLink;
 	}

@@ -8,6 +8,9 @@
 
 module vdc.ivdserver;
 
+version(MAIN) {} else version = noServer;
+
+version(noServer):
 import sdk.port.base;
 import sdk.win32.oaidl;
 import sdk.win32.objbase;
