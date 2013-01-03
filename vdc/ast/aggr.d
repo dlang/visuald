@@ -258,28 +258,26 @@ class Aggregate : Type
 	
 	override Value getProperty(Value sv, string prop)
 	{
-		if(1)
-		assert(false);
-		else {
-		if(auto rv = cast(ReferenceValue) sv)
-			sv = rv.instance;
-		AggrValue av = static_cast!AggrValue(sv);
 		if(auto pidx = prop in mapName2Value)
-			return av.values[*pidx];
-		if(auto pdecl = prop in mapName2Method)
 		{
-			auto func = pdecl.calcType();
-			auto cv = new AggrContext(nullContext, av);
-			cv.scop = scop;
-			Value dgv = func.createValue(cv, null);
-			return dgv;
+			if(AggrValue av = cast(AggrValue)sv)
+				return av.values[*pidx];
+		}
+		else if(auto pdecl = prop in mapName2Method)
+		{
+			return getProperty(sv, *pdecl);
 		}
 		return null;
-		}
 	}
 	
 	override Value getProperty(Value sv, Declarator decl)
 	{
+		if(auto tv = cast(TypeValue) sv)
+		{
+			if(decl.needsContext)
+				return new TypeValue(decl.calcType());
+			return decl.interpret(nullContext);
+		}
 		if(auto rv = cast(ReferenceValue) sv)
 			sv = rv.instance;
 		AggrValue av = static_cast!AggrValue(sv);

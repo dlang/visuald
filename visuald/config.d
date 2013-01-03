@@ -665,9 +665,9 @@ class ProjectOptions
 			cmd ~= "+" ~ quoteFilename(normalizeDir(lp));
 		
 		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def");
-		if(def.length)
-			cmd ~= "," ~ def;
 		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res");
+		if(def.length || res.length)
+			cmd ~= "," ~ def;
 		if(res.length)
 			cmd ~= "," ~ res;
 
@@ -691,6 +691,16 @@ class ProjectOptions
 		{
 			if(createImplib)
 				cmd ~= "/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+
+			switch(subsystem)
+			{
+				default:
+				case Subsystem.NotSet: break;
+				case Subsystem.Console: cmd ~= "/SUBSYSTEM:CONSOLE"; break;
+				case Subsystem.Windows: cmd ~= "/SUBSYSTEM:WINDOWS"; break;
+				case Subsystem.Native:  cmd ~= "/SUBSYSTEM:NATIVE"; break;
+				case Subsystem.Posix:   cmd ~= "/SUBSYSTEM:POSIX"; break;
+			}
 		}
 		cmd ~= addopts;
 		return cmd;

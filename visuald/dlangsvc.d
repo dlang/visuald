@@ -3324,8 +3324,9 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 					ident ~= txt;
 					if(ident.length > 4 && ident[0..5] == "this."w)
 						ident = "this->"w ~ ident[5..$];
-					if(arrIndex(mExpressions, ident) < 0)
-						mExpressions ~= ident;
+					addunique(mExpressions, ident);
+//					if(!ident.startsWith("this."w))
+//						addunique(mExpressions, "this."w ~ ident);
 				}
 				else if (type == TokenCat.Operator && txt == "."w)
 					ident ~= "."w;

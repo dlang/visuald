@@ -104,7 +104,7 @@ debug
 		debug(COM_ADDREL) 
 			synchronized(DComObject.classinfo) 
 				if(auto p = (cast(size_t)vthis^WEAK_PTR_XOR) in sReferencedObjects)
-					*p = -1,
+					*p = -1;
 		InterlockedDecrement(&sCountInstances);
 	}
 

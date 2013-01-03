@@ -502,4 +502,4 @@ unreleased Version 0.3.36
     - executable path contained untranslated \n
     - no Visual D colors added
   * only force separate link if "Monitor OPTLINK dependencies" is enabled
- 
+  * /SUBSYSTEM switches lost when building through optlink directly

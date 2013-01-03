@@ -40,6 +40,7 @@ import vdc.ast.node;
 import vdc.ast.writer;
 
 import stdext.util;
+import stdext.string;
 
 import std.variant;
 import std.conv;
@@ -723,7 +724,7 @@ class CharValue : ValueT!char
 {
 	override string toStr()
 	{
-		return "'" ~ to!string(*pval) ~ "'";
+		return "'" ~ toUTF8Safe(pval[0..1]) ~ "'";
 	}
 }
 
@@ -731,7 +732,7 @@ class WCharValue : ValueT!wchar
 {
 	override string toStr()
 	{
-		return "'" ~ to!string(*pval) ~ "'w";
+		return "'" ~ toUTF8Safe(pval[0..1]) ~ "'w";
 	}
 }
 
@@ -739,7 +740,7 @@ class DCharValue : ValueT!dchar
 {
 	override string toStr()
 	{
-		return "'" ~ to!string(*pval) ~ "'d";
+		return "'" ~ toUTF8Safe(pval[0..1]) ~ "'d";
 	}
 }
 
@@ -827,7 +828,7 @@ class ArrayValueBase : Value
 		return narr;
 	}
 
-	Value getItem(size_t idx)
+	private Value getItem(size_t idx)
 	{
 		return first.getElement(idx);
 	}
@@ -1025,7 +1026,10 @@ class ArrayValue(T) : ArrayValueBase
 		auto nv = type.opSlice(idxb, idxe).createValue(nullContext, null);
 		if(auto arr = cast(ArrayValueBase) nv)
 		{
-			arr.first = first.getElement(idxb);
+			if(idxb == 0)
+				arr.first = first;
+			else
+				arr.first = first.getElement(idxb);
 			arr.len = idxe - idxb;
 		}
 		debug nv.sval = nv.toStr();
@@ -1214,11 +1218,11 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 			if(len == 0)
 				return "";
 			if(auto cv = cast(CharValue)first)
-				return toUTF8(cv.pval[0..len]);
+				return toUTF8Safe(cv.pval[0..len]);
 			if(auto wv = cast(WCharValue)first)
-				return toUTF8(wv.pval[0..len]);
+				return toUTF8Safe(wv.pval[0..len]);
 			if(auto dv = cast(DCharValue)first)
-				return toUTF8(dv.pval[0..len]);
+				return toUTF8Safe(dv.pval[0..len]);
 		}
 		return super.toMixin();
 	}
@@ -1870,7 +1874,7 @@ class AggrValue : TupleValue
 		switch(tokid)
 		{
 			case TOK_equal:
-				if(Value fv = getType().getProperty(this, "opEqual"))
+				if(Value fv = getType().getProperty(this, "opEquals"))
 				{
 					auto tctx = new AggrContext(ctx, this);
 					auto tv = new TupleValue;

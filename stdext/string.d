@@ -272,3 +272,77 @@ T[] firstLine(T)(T[] s)
 			return s[0..i];
 	return s;
 }
+
+char kInvalidUTF8Replacement = '?';
+
+string toUTF8Safe(const(char)[] text)
+{
+	char[] modtext;
+	for(size_t p = 0; p < text.length; p++)
+	{
+		ubyte ch = text[p];
+		if((ch & 0xc0) == 0xc0)
+		{
+			auto q = p;
+			for(int s = 0; s < 5 && ((ch << s) & 0xc0) == 0xc0; s++, q++)
+				if(q >= text.length || (text[q] & 0xc0) != 0x80)
+					goto L_invalid;
+			p = q;
+		}
+		else if(ch & 0x80)
+		{
+		L_invalid:
+			if(modtext.length == 0)
+				modtext = text.dup;
+			modtext[p] = kInvalidUTF8Replacement;
+		}
+	}
+	if(modtext.length)
+		return cast(string) modtext;
+	return cast(string) text;
+}
+
+string toUTF8Safe(const(wchar)[] text)
+{
+	wchar[] modtext;
+	void invalidChar(size_t pos)
+	{
+		if(modtext.length == 0)
+			modtext = text.dup;
+		modtext[pos] = kInvalidUTF8Replacement;
+	}
+
+	for(size_t p = 0; p < text.length; p++)
+	{
+		ushort ch = text[p];
+		if(ch >= 0xD800 && ch <= 0xDFFF)
+		{
+			if(p + 1 >= text.length)
+				invalidChar(p);
+			else
+			{
+				if (text[p+1] < 0xD800 || text[p+1] > 0xDFFF)
+				{
+					invalidChar(p);   // invalid surragate pair
+					invalidChar(p+1);
+				}
+				p++;
+			}
+		}
+	}
+	return toUTF8(modtext.length ? modtext : text);
+}
+
+string toUTF8Safe(const(dchar)[] text)
+{
+	dchar[] modtext;
+	for(size_t p = 0; p < text.length; p++)
+		if(!isValidDchar(text[p]))
+		{
+			if(modtext.length == 0)
+				modtext = text.dup;
+			modtext[p] = kInvalidUTF8Replacement;
+		}
+	return toUTF8(modtext.length ? modtext : text);
+}
+

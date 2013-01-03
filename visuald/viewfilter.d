@@ -1157,10 +1157,6 @@ else
 			return hr;
 		}
 
-		string deffile;
-		int defline;
-		string word;
-
 		if(Package.GetGlobalOptions().semanticGotoDef)
 		{
 			TextSpan span;
@@ -1174,31 +1170,37 @@ else
 		}
 		else
 		{
-			word = toUTF8(GetWordAtCaret());
-			if(word.length <= 0)
-				return S_FALSE;
-
-			Definition[] defs = Package.GetLibInfos().findDefinition(word);
-			if(defs.length == 0)
-			{
-				showStatusBarText("No definition found for '" ~ word ~ "'");
-				return S_FALSE;
-			}
-
-			if(defs.length > 1)
-			{
-				showStatusBarText("Multiple definitions found for '" ~ word ~ "'");
-				showSearchWindow(false, word);
-				return S_FALSE;
-			}
-			deffile = defs[0].filename;
-			defline = defs[0].line;
-
-			HRESULT hr = OpenFileInSolution(deffile, defline, file, true);
-			if(hr != S_OK)
-				showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", deffile, defline, word));
-			return hr;
+			return GotoDefinitionJSON(file);
 		}
+	}
+
+	HRESULT GotoDefinitionJSON(string file)
+	{
+		string word = toUTF8(GetWordAtCaret());
+		if(word.length <= 0)
+			return S_FALSE;
+
+		Definition[] defs = Package.GetLibInfos().findDefinition(word);
+		if(defs.length == 0)
+		{
+			showStatusBarText("No definition found for '" ~ word ~ "'");
+			return S_FALSE;
+		}
+
+		if(defs.length > 1)
+		{
+			showStatusBarText("Multiple definitions found for '" ~ word ~ "'");
+			showSearchWindow(false, word);
+			return S_FALSE;
+		}
+
+		string deffile = defs[0].filename;
+		int    defline = defs[0].line;
+
+		HRESULT hr = OpenFileInSolution(deffile, defline, file, true);
+		if(hr != S_OK)
+			showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", deffile, defline, word));
+		return hr;
 	}
 
 	extern(D)

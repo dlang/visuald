@@ -35,6 +35,16 @@ version = run;
 
 ////////////////////////////////////////////////////////////////
 
+static this()
+{
+	void semanticWriteError(vdc.semantic.MessageType type, string msg)
+	{
+		writeln(msg);
+	}
+
+	fnSemanticWriteError = &semanticWriteError;
+}
+
 ast.Node parse(TokenId[ ] tokens)
 {
 	Parser p = new Parser;
@@ -262,6 +272,8 @@ unittest
 	string txt = q{
 		public alias uint AReserved;
 		private typedef uint TReserved;
+		private alias a1 = int;
+		//private alias a2 = int, b1 = uint;
 	};
 	testParse(txt, "unittest5");
 }
@@ -625,7 +637,6 @@ unittest
 
 ///////////////////////////////////////////////////////////////////////
 
-
 import core.exception;
 import std.file;
 	
@@ -633,6 +644,9 @@ int main(string[] argv)
 {
 	Runtime.traceHandler = null;
 	
+	string[] imps = [ r"m:\s\d\rainers\druntime\import\", r"m:\s\d\rainers\phobos\" ];
+	imps ~= r"c:\tmp\d\runnable\";
+
 	void foreach_file(void delegate (string fname) dg)
 	{
 		foreach(file; argv[1..$])
@@ -676,7 +690,7 @@ int main(string[] argv)
 	{
 		foreach_file((string fname){
 			Project prj = new Project;
-			prj.options.setImportDirs([ r"m:\s\d\rainers\druntime\import\", r"m:\s\d\rainers\phobos\" ]);
+			prj.options.setImportDirs(imps);
 			semanticErrors = 0;
 			logInfo("### testSemantic " ~ fname ~ " ###");
 			prj.addAndParseFile(fname);

@@ -18,6 +18,8 @@ import vdc.parser.mod;
 
 import ast = vdc.ast.all;
 
+import stdext.util;
+
 //-- GRAMMAR_BEGIN --
 //Declaration:
 //    alias LinkageAttribute_opt Decl
@@ -87,6 +89,10 @@ class Declaration
 				p.pushNode(new ast.AliasThis(tok));
 				p.pushState(&shiftAliasThis);
 				return Accept;
+			case TOK_assign:
+				p.pushState(&shiftAliasAssign);
+				p.pushState(&Type.enter);
+				return Accept;
 			default:
 				p.pushState(&shiftTypedef);
 				return Decl!true.enterTypeIdentifier(p);
@@ -129,6 +135,32 @@ class Declaration
 		}
 	}
 	
+	// assumes identifier token on the info stack
+	static Action shiftAliasAssign(Parser p)
+	{
+		auto type = static_cast!(ast.Type)(p.popNode());
+
+		auto tok = p.popToken();
+		auto decl = new ast.Decl(type.id, type.span);
+		auto decls = new ast.Declarators(tok);
+		decls.addMember(new ast.Declarator(tok));
+		// insert type before declarator identifier
+		decl.addMember(type);
+		decl.addMember(decls);
+		decl.isAlias = true;
+		decl.hasSemi = true;
+		p.pushNode(decl);
+
+		switch(p.tok.id)
+		{
+			case TOK_semicolon:
+				return Accept;
+			case TOK_comma:
+			default:
+				return p.parseError("semicolon expected after alias identifier = type");
+		}
+	}
+
 	static Action shiftTypedef(Parser p)
 	{
 		//p.appendReplaceTopNode(new ast.AliasDeclaration(p.tok));

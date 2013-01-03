@@ -220,6 +220,13 @@ class ErrorType : Type
 
 	override bool propertyNeedsParens() const { return false; }
 	override void toD(CodeWriter writer) { writer("_errortype_"); }
+	
+	override Scope getScope() 
+	{
+		if(!scop)
+			scop = new Scope();
+		return scop;
+	}
 }
 
 //BasicType only created for standard types associated with tokens
@@ -933,10 +940,12 @@ class TypeDynamicArray : TypeIndirection
 	
 	override Type opSlice(int b, int e)
 	{
-		//return this;
+		return this;
+		/+
 		auto da = new TypeStaticArray;
 		da.setNextType(getNextType()); //addMember(nextType().clone());
 		return da;
+		+/
 	}
 
 /+	Value deepCopy(Context sc, Value initValue)
@@ -1038,10 +1047,10 @@ class TypeStaticArray : TypeIndirection
 	
 	override Type opSlice(int b, int e)
 	{
-		//auto da = new TypeDynamicArray;
-		//da.setNextType(getNextType()); //addMember(nextType().clone());
-		//return da;
-		return this;
+		auto da = new TypeDynamicArray;
+		da.setNextType(getNextType()); //addMember(nextType().clone());
+		return da;
+		//return this;
 	}
 	
 }

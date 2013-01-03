@@ -576,7 +576,7 @@ class Declarator : Identifier, CallableNode
 		if(auto fbody = getFunctionBody())
 			return fbody.interpret(sc);
 
-		return semanticErrorValue(ident, " is not a interpretable function");
+		return semanticErrorValue(ident, " is not an interpretable function");
 	}
 }
 

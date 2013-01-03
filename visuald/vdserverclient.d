@@ -240,10 +240,10 @@ class ConfigureProjectCommand : FileCommand
 			return S_FALSE;
 import std.array;
 
-		string jimp = joinImpl(mImp, "\n");
-		string jstringImp = joinImpl(mStringImp, "\n");
-		string jversionids = joinImpl(mVersionids, "\n");
-		string jdebugids = joinImpl(mDebugids, "\n");
+		string jimp        = join(cast(string[])(mImp[]), "\n");
+		string jstringImp  = join(cast(string[])(mStringImp[]), "\n");
+		string jversionids = join(cast(string[])(mVersionids[]), "\n");
+		string jdebugids   = join(cast(string[])(mDebugids[]), "\n");
 
 		auto bfilename = allocBSTR(mFilename);
 		auto bimp = allocBSTR(jimp);

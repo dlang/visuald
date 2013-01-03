@@ -224,7 +224,7 @@ void main(string[] argv)
 	ATOM atom = RegisterClassA(&wc);
 	assert(atom);
 
-	HWND hwnd = CreateWindowA("DummyWindow".ptr, "".ptr, WS_OVERLAPPED,
+	HWND hwnd = CreateWindowExA(0, "DummyWindow".ptr, "".ptr, WS_OVERLAPPED,
 				CW_USEDEFAULT, CW_USEDEFAULT, 10, 10,
 				null, null, hInst, null);
 

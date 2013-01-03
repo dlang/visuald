@@ -211,6 +211,7 @@ AggrContext noThisContext;
 
 Context globalContext;
 Context threadContext;
+Context errorContext;
 
 class Scope
 {
@@ -491,6 +492,7 @@ class Project : Node
 
 		globalContext = new Context(null);
 		threadContext = new Context(null);
+		errorContext = new Context(null);
 	}
 
 	Module addSource(string fname, Module mod, ParseError[] errors, Node importFrom = null)
