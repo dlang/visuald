@@ -467,7 +467,9 @@ class FunctionBody
 		if(p.tok.id != TOK_Identifier)
 			return p.parseError("identifier expected for return value in out contract");
 		
-		p.topNode!(ast.FunctionBody)().outIdentifier = p.tok.txt;
+		auto outid = new ast.OutIdentifier(p.tok);
+		p.topNode!(ast.FunctionBody)().addMember(outid);
+		p.topNode!(ast.FunctionBody)().outIdentifier = outid;
 		p.pushState(&shiftOutIdentifier);
 		return Accept;
 	}
@@ -634,6 +636,7 @@ class Condition
 //    version ( Integer )
 //    version ( Identifier )
 //    version ( unittest )
+//    version ( assert )
 class VersionCondition
 {
 	// version ( Integer $ )
@@ -647,8 +650,15 @@ class VersionCondition
 		p.topNode!(ast.VersionCondition).id = TOK_unittest;
 		return stateRparen.shift(p);
 	}
-	
+
+	static Action shiftAssert(Parser p)
+	{
+		p.topNode!(ast.VersionCondition).id = TOK_assert;
+		return stateRparen.shift(p);
+	}
+
 	mixin stateShiftToken!(TOK_unittest, shiftUnittest,
+						   TOK_assert, shiftAssert,
 							-1, stateArgument2.shift) stateArgument;
 	
 	// version $ ( Integer )

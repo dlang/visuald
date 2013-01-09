@@ -635,6 +635,17 @@ unittest
 	testSemantic(txt, "alias");
 }
 
+version(none) unittest
+{
+	string txt = q{
+		int exp(real r) { return 1; }
+		int exp(float f) { return 2; }
+		static assert(exp(0.1f) == 2);
+		static assert(exp(0.1) == 1);
+	};
+	testSemantic(txt, "overload");
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 import core.exception;

@@ -1490,7 +1490,7 @@ class PointerValue : Value
 			case TOK_notequal:
 				auto pv = cast(PointerValue)v;
 				if(!pv || (!pv.type.convertableFromImplicite(type) && !type.convertableFromImplicite(pv.type)))
-					return semanticErrorValue("cannot compare types ", pv.type, " and ", type);
+					return semanticErrorValue("cannot compare types ", v.getType(), " and ", type);
 				if(tokid == TOK_equal)
 					return Value.create(pv.pval is pval);
 				else
@@ -1699,19 +1699,20 @@ Value doCall(CallableNode funcNode, Context sc, ParameterList params, Value varg
 
 	auto args = static_cast!TupleValue(vargs);
 	auto numparams = params.members.length;
+	auto numargs = args ? args.values.length : 0;
 	if(params.anonymous_varargs)
 	{
-		if(args.values.length < numparams)
+		if(numargs < numparams)
 			return semanticErrorValue("too few arguments");
 		// TODO: add _arguments and _argptr variables
 	}
 	else if(params.varargs)
 	{
-		if(args.values.length < numparams - 1)
+		if(numargs < numparams - 1)
 			return semanticErrorValue("too few arguments");
 		numparams--;
 	}
-	else if(args.values.length != numparams)
+	else if(numargs != numparams)
 		return semanticErrorValue("incorrect number of arguments");
 
 	for(size_t p = 0; p < numparams; p++)
@@ -1730,7 +1731,10 @@ Value doCall(CallableNode funcNode, Context sc, ParameterList params, Value varg
 	if(params.varargs)
 	{
 		// TODO: pack remaining arguments into array
-		auto vdecl = params.getParameter(numparams).getParameterDeclarator().getDeclarator();
+		auto decl = params.getParameter(numparams).getParameterDeclarator();
+		auto vdecl = decl.getDeclarator();
+		if(!vdecl)
+			return semanticErrorValue("cannot pack remaining arguments into parameter", decl);
 		Value arr = vdecl.calcType().createValue(ctx, null);
 		if(auto darr = cast(DynArrayValue) arr)
 		{
@@ -1853,7 +1857,7 @@ class AggrValue : TupleValue
 	@disable override Value _interpretProperty(Context ctx, string prop)
 	{
 		auto type = getType();
-		if(Value v = type.getProperty(this, prop))
+		if(Value v = type.getProperty(this, prop, true))
 			return v;
 		if(Value v = type.getStaticProperty(prop))
 			return v;
@@ -1874,7 +1878,7 @@ class AggrValue : TupleValue
 		switch(tokid)
 		{
 			case TOK_equal:
-				if(Value fv = getType().getProperty(this, "opEquals"))
+				if(Value fv = getType().getProperty(this, "opEquals", true))
 				{
 					auto tctx = new AggrContext(ctx, this);
 					auto tv = new TupleValue;
@@ -1935,11 +1939,16 @@ class ClassInstanceValue : AggrValueT!Class
 class ReferenceValue : Value
 {
 	ClassInstanceValue instance;
+	bool insideToStr;
 
 	override string toStr()
 	{
 		if(!instance)
 			return "null";
+		if(insideToStr)
+			return "recursive-toStr";
+		insideToStr = true;
+		scope(exit) insideToStr = false;
 		return instance.toStr();
 	}
 	

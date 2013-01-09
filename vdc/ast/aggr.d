@@ -251,12 +251,13 @@ class Aggregate : Type
 			});
 			
 			bdy.iterateConstructors(false, (Constructor ctor) {
-				constructors ~= ctor;
+				if(!ctor.isPostBlit())
+					constructors ~= ctor;
 			});
 		}
 	}
 	
-	override Value getProperty(Value sv, string prop)
+	override Value getProperty(Value sv, string prop, bool virtualCall)
 	{
 		if(auto pidx = prop in mapName2Value)
 		{
@@ -265,12 +266,12 @@ class Aggregate : Type
 		}
 		else if(auto pdecl = prop in mapName2Method)
 		{
-			return getProperty(sv, *pdecl);
+			return getProperty(sv, *pdecl, virtualCall);
 		}
 		return null;
 	}
 	
-	override Value getProperty(Value sv, Declarator decl)
+	override Value getProperty(Value sv, Declarator decl, bool virtualCall)
 	{
 		if(auto tv = cast(TypeValue) sv)
 		{
@@ -281,14 +282,14 @@ class Aggregate : Type
 		if(auto rv = cast(ReferenceValue) sv)
 			sv = rv.instance;
 		AggrValue av = static_cast!AggrValue(sv);
-		if(Value v = _getProperty(av, decl))
+		if(Value v = _getProperty(av, decl, virtualCall))
 			return v;
 		if(av && av.outer)
 			return av.outer.getValue(decl);
 		return null;
 	}
 	
-	Value _getProperty(AggrValue av, Declarator decl)
+	Value _getProperty(AggrValue av, Declarator decl, bool virtualCall)
 	{
 		if(auto pidx = decl in mapDecl2Value)
 		{
@@ -298,8 +299,11 @@ class Aggregate : Type
 		}
 		if(decl in isMethod)
 		{
-			auto odecl = findOverride(av, decl);
-			auto func = odecl.calcType();
+			if(!av)
+				return semanticErrorValue("method access needs non-null instance pointer");
+			if(virtualCall)
+				decl = findOverride(av, decl);
+			auto func = decl.calcType();
 			auto cv = new AggrContext(nullContext, av);
 			cv.scop = scop;
 			Value dgv = func.createValue(cv, null);
@@ -318,7 +322,7 @@ class Aggregate : Type
 			if(auto rv = cast(ReferenceValue) vt)
 				av = rv.instance;
 		if(av)
-			if(Value v = getProperty(av, prop))
+			if(Value v = getProperty(av, prop, true))
 				return v;
 		return super._interpretProperty(ctx, prop);
 	}
@@ -553,13 +557,13 @@ class InheritingAggregate : Aggregate
 		super._initValues(thisctx, initValues);
 	}
 	
-	override Value _getProperty(AggrValue av, Declarator decl)
+	override Value _getProperty(AggrValue av, Declarator decl, bool virtualCall)
 	{
-		if(Value v = super._getProperty(av, decl))
+		if(Value v = super._getProperty(av, decl, virtualCall))
 			return v;
 		if(baseClasses.length > 0)
 			if(auto bc = baseClasses[0].getClass())
-				if(Value v = bc._getProperty(av, decl))
+				if(Value v = bc._getProperty(av, decl, virtualCall))
 					return v;
 		return null;
 	}
@@ -883,6 +887,8 @@ class Constructor : Node, CallableNode
 	override ParameterList getParameterList() { return members.length > 1 ? getMember!ParameterList(isTemplate() ? 1 : 0) : null; }
 	override FunctionBody getFunctionBody() { return getMember!FunctionBody(members.length - 1); }
 	
+	bool isPostBlit() {	return members.length <= 1; }
+
 	override void toD(CodeWriter writer)
 	{
 		writer("this");

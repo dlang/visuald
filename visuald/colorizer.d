@@ -219,6 +219,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	bool mConfigUnittest;
 	bool mConfigGDC;
 	bool mConfigX64;
+	bool mConfigCoverage;
+	bool mConfigDoc;
+	bool mConfigNoBoundsCheck;
 	
 	enum VersionParseState
 	{
@@ -564,19 +567,39 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 
 	int versionPredefined(wstring ident)
 	{
-		if(ident == "unittest")
-			return mConfigUnittest ? 1 : -1;
-		if(ident == "Win32")
-			return mConfigX64 ? -1 : 1;
-		if(ident == "Win64")
-			return mConfigX64 ? 1 : -1;
-		if(ident == "GNU")
-			return mConfigGDC ? 1 : -1;
-		if(ident == "DigitalMars")
-			return mConfigGDC ? -1 : 1;
-		if(int*p = ident in predefinedVersions)
+		int* p = ident in predefinedVersions;
+		if(!p)
+			return 0;
+		if(*p != 0)
 			return *p;
-		return 0;
+		switch(ident)
+		{
+			case "unittest":
+				return mConfigUnittest ? 1 : -1;
+			case "assert":
+				return mConfigUnittest || !mConfigRelease ? 1 : -1;
+			case "D_Coverage":
+				return mConfigCoverage ? 1 : -1;
+			case "D_Ddoc":
+				return mConfigDoc ? 1 : -1;
+			case "D_NoBoundsChecks":
+				return mConfigNoBoundsCheck ? 1 : -1;
+			case "Win32":
+			case "X86":
+			case "D_InlineAsm_X86":
+				return mConfigX64 ? -1 : 1;
+			case "Win64":
+			case "X86_64":
+			case "D_InlineAsm_X86_64":
+			case "D_LP64":
+				return mConfigX64 ? 1 : -1;
+			case "GNU":
+				return mConfigGDC ? 1 : -1;
+			case "DigitalMars":
+				return mConfigGDC ? -1 : 1;
+			default:
+				assert(false, "inconsistent predefined versions");
+		}
 	}
 	
 	bool isVersionEnabled(int line, wstring ident, int debugOrVersion)
@@ -1227,11 +1250,14 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		
 		if(mConfig)
 		{
-			changes += modifyValue(mConfig.GetProjectOptions().versionids, mConfigVersions[kIndexVersion]);
-			changes += modifyValue(mConfig.GetProjectOptions().debugids,   mConfigVersions[kIndexDebug]);
-			changes += modifyValue(mConfig.GetProjectOptions().release,    mConfigRelease);
-			changes += modifyValue(mConfig.GetProjectOptions().useUnitTests, mConfigUnittest);
-			changes += modifyValue(mConfig.GetProjectOptions().isX86_64,   mConfigX64);
+			changes += modifyValue(mConfig.GetProjectOptions().versionids,    mConfigVersions[kIndexVersion]);
+			changes += modifyValue(mConfig.GetProjectOptions().debugids,      mConfigVersions[kIndexDebug]);
+			changes += modifyValue(mConfig.GetProjectOptions().release,       mConfigRelease);
+			changes += modifyValue(mConfig.GetProjectOptions().useUnitTests,  mConfigUnittest);
+			changes += modifyValue(mConfig.GetProjectOptions().isX86_64,      mConfigX64);
+			changes += modifyValue(mConfig.GetProjectOptions().cov,           mConfigCoverage);
+			changes += modifyValue(mConfig.GetProjectOptions().doDocComments, mConfigDoc);
+			changes += modifyValue(mConfig.GetProjectOptions().noboundscheck, mConfigNoBoundsCheck);
 			changes += modifyValue(mConfig.GetProjectOptions().compiler == Compiler.GDC, mConfigGDC);
 		}
 		return changes != 0;

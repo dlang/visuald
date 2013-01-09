@@ -503,3 +503,22 @@ unreleased Version 0.3.36
     - no Visual D colors added
   * only force separate link if "Monitor OPTLINK dependencies" is enabled
   * /SUBSYSTEM switches lost when building through optlink directly
+  * added project option "Use of Deprecated Features causes Error" that maps to -de
+  * tweaked parser to support new language features:
+    - version(assert)
+    - user defined attributes @identifier_opt(arguments) or @identifier
+    - alias id = type
+    - alias this = id
+    - deprecated("message")
+    - added keyword __parameters
+  * tweaked parser to support undocumented language features:
+    - ref anywhere in foreach type to support "foreach(const ref x; range)"
+    - prefix lambda with function/delegate
+    - added keyword __argTypes
+    
+  * syntax highlighting and semantic now fully support version identifiers according 
+    to http://dlang.org/version.html
+  * improved parser/semantics: 
+    - fix "forgetting" type of function parameters after first evaluation
+    - fix a number of crashes during semantics
+    - improved parser recovery after too many closing braces

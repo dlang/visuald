@@ -991,11 +991,7 @@ class DeclaratorSuffixes
 		{
 			case TOK_rbracket:
 				auto node = p.popNode();
-				ast.Node n;
-				if(cast(Type) node)
-					n = new ast.SuffixAssocArray(p.tok);
-				else
-					n = new ast.SuffixStaticArray(p.tok);
+				ast.Node n = new ast.SuffixArray(p.tok);
 				n.addMember(node);
 				p.topNode().addMember(n);
 				p.pushState(&nextSuffix);
@@ -1261,6 +1257,7 @@ class Type
 		return BasicType.enterIdentifier(p);
 	}
 	
+	// assumes modifier token on the info stack
 	static Action enterTypeModifier(Parser p)
 	{
 		p.pushState(&shiftBasicType);

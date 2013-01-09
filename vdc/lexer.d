@@ -995,6 +995,8 @@ const string keywords[] =
 	"__thread",
 	"__traits",
 	"__overloadset",
+	"__parameters",
+	"__argTypes",
 	"__vector",
 	
 	"__FILE__",

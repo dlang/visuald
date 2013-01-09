@@ -37,7 +37,7 @@ alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully insta
 alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
 debug version = DebugCmd;
-// debug version = InProc;
+debug version = InProc;
 
 version(InProc) import vdc.vdserver;
 
@@ -278,6 +278,8 @@ class GetTipCommand : FileCommand
 	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetTipCallBack cb)
 	{
 		super("GetTip", filename);
+		version(DebugCmd) mCommand ~= " {" ~ to!string(span.iStartLine) ~ "," ~ to!string(span.iStartIndex) 
+			~ " - " ~ to!string(span.iEndLine) ~ "," ~ to!string(span.iEndIndex) ~ "}";
 		mSpan = span;
 		mCallback = cb;
 	}
@@ -336,6 +338,8 @@ class GetDefinitionCommand : FileCommand
 	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetDefinitionCallBack cb)
 	{
 		super("GetDefinition", filename);
+		version(DebugCmd) mCommand ~= " {" ~ to!string(span.iStartLine) ~ "," ~ to!string(span.iStartIndex) 
+			~ " - " ~ to!string(span.iEndLine) ~ "," ~ to!string(span.iEndIndex) ~ "}";
 		mSpan = span;
 		mCallback = cb;
 	}

@@ -166,12 +166,12 @@ class Type : Node
 		return new TypeValue(this);
 	}
 	
-	Value getProperty(Value sv, string ident)
+	Value getProperty(Value sv, string ident, bool virtualCall)
 	{
 		return null;
 	}
 	
-	Value getProperty(Value sv, Declarator decl)
+	Value getProperty(Value sv, Declarator decl, bool virtualCall)
 	{
 		return null;
 	}
@@ -719,6 +719,14 @@ class TypeIndirection : Type
 {
 	mixin ForwardCtor!();
 
+	override TypeIndirection clone()
+	{
+		auto n = static_cast!TypeIndirection(super.clone());
+		if(members.length == 0)
+			n.setNextType(_next);
+		return n;
+	}
+
 	Type _next;
 
 	override bool propertyNeedsParens() const { return true; }
@@ -858,8 +866,13 @@ class PtrProperty : Symbol
 		if(auto ac = cast(AggrContext)sc)
 		{
 			if(auto dav = cast(DynArrayValue) ac.instance)
-				return dav.first.opRefPointer();
-			return semanticErrorValue("cannot calulate ptr of ", ac.instance);
+			{
+				if(dav.first)
+					return dav.first.opRefPointer();
+				else
+					return type.createValue(sc, null);
+			}
+			return semanticErrorValue("cannot calculate ptr of ", ac.instance);
 		}
 		return semanticErrorValue("no context to ptr of ", sc);
 	}
@@ -982,14 +995,39 @@ class SuffixDynamicArray : Node
 	}
 }
 
+// can be both static or assoc, which one is correct cannot be decided by the parser in general
+//SuffixArray:
+//    [Expression|Type]
+class SuffixArray : Node
+{
+	mixin ForwardCtor!();
+
+	Expression getDimension() { return getMember!Expression(0); }
+	Type getKeyType() { return getMember!Type(0); }
+
+	override void toD(CodeWriter writer)
+	{
+		writer("[", getMember(0), "]");
+	}
+}
+
 //TypeStaticArray:
 //    [Type Expression]
 class TypeStaticArray : TypeIndirection
 {
 	mixin ForwardCtor!();
 
-	Expression getDimension() { return getMember!Expression(1); }
+	override TypeStaticArray clone()
+	{
+		auto n = static_cast!TypeStaticArray(super.clone());
+		n.dimExpr = dimExpr;
+		return n;
+	}
+
+	Expression getDimension() { return dimExpr ? dimExpr : getMember!Expression(1); }
 	
+	Expression dimExpr;
+
 	override void typeSemantic(Scope sc)
 	{
 		auto type = getNextType();
@@ -1055,28 +1093,23 @@ class TypeStaticArray : TypeIndirection
 	
 }
 
-//SuffixStaticArray:
-//    [Expression]
-class SuffixStaticArray : Node
-{
-	mixin ForwardCtor!();
-
-	Expression getDimension() { return getMember!Expression(0); }
-	
-	override void toD(CodeWriter writer)
-	{
-		writer("[", getMember(0), "]");
-	}
-}
-
 //TypeAssocArray:
 //    [Type Type]
 class TypeAssocArray : TypeIndirection
 {
 	mixin ForwardCtor!();
 
-	Type getKeyType() { return getMember!Type(1); }
+	override TypeAssocArray clone()
+	{
+		auto n = static_cast!TypeAssocArray(super.clone());
+		n.keyType = keyType;
+		return n;
+	}
+
+	Type getKeyType() { return keyType ? keyType : getMember!Type(1); }
 	
+	Type keyType;
+
 	override void typeSemantic(Scope sc)
 	{
 		auto vtype = getNextType();
@@ -1104,20 +1137,6 @@ class TypeAssocArray : TypeIndirection
 	override void toD(CodeWriter writer)
 	{
 		writer(getMember(0), "[", getMember(1), "]");
-	}
-}
-
-//SuffixAssocArray:
-//    [Type]
-class SuffixAssocArray : Node
-{
-	mixin ForwardCtor!();
-
-	Type getKeyType() { return getMember!Type(0); }
-	
-	override void toD(CodeWriter writer)
-	{
-		writer("[", getMember(0), "]");
 	}
 }
 
@@ -1173,11 +1192,23 @@ class TypeFunction : Type
 {
 	mixin ForwardCtor!();
 
+	override TypeFunction clone()
+	{
+		auto n = static_cast!TypeFunction(super.clone());
+		n.paramList = paramList;
+		n.returnType = returnType;
+		n.funcDecl = funcDecl;
+		return n;
+	}
+
 	override bool propertyNeedsParens() const { return true; }
 	
-	Type getReturnType() { return getMember!Type(0); }
-	ParameterList getParameters() { return getMember!ParameterList(1); } // overwritten in TypeFunctionLiteral/TypeDelegateLiteral
+	Type getReturnType() { return returnType ? returnType : getMember!Type(0); } // overwritten in TypeFunctionLiteral/TypeDelegateLiteral
+	ParameterList getParameters() { return paramList ? paramList : getMember!ParameterList(1); } 
 	
+	ParameterList paramList;
+	Type returnType;
+
 	Declarator funcDecl; // the actual function pointer
 	
 	override void typeSemantic(Scope sc)

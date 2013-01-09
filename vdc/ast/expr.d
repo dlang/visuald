@@ -892,7 +892,7 @@ class DotExpression : PostfixExpression
 {
 	mixin ForwardCtor!();
 
-	Identifier getIdentifier() { return getMember!Identifier(1); }
+	Identifier getIdentifier() { return id == TOK_new ? null : getMember!Identifier(1); }
 
 	Node resolved;
 	
@@ -903,11 +903,20 @@ class DotExpression : PostfixExpression
 
 		auto expr = getExpression();
 		auto etype = expr.calcType();
-		auto id = getMember!Identifier(1);
-		if(auto pt = cast(TypePointer)etype)
-			etype = pt.getNextType();
-		Scope s = etype.getScope();
-		resolved = s ? s.resolve(id.ident, id, false) : null;
+		switch(id)
+		{
+			case TOK_new:
+				auto nexpr = getMember!NewExpression(1);
+				resolved = nexpr.calcType();
+				break;
+			default:
+				auto id = getMember!Identifier(1);
+				if(auto pt = cast(TypePointer)etype)
+					etype = pt.getNextType();
+				Scope s = etype.getScope();
+				resolved = s ? s.resolve(id.ident, id, false) : null;
+				break;
+		}
 		return resolved;
 	}
 
@@ -918,6 +927,8 @@ class DotExpression : PostfixExpression
 		
 		if(auto n = resolve())
 			type = n.calcType();
+		else if(id == TOK_new)
+			type = semanticErrorType("cannot resolve type of new expression ", getMember(1));
 		else
 			type = semanticErrorType("cannot resolve type of property ", getMember!Identifier(1).ident);
 		return type;
@@ -932,8 +943,11 @@ class DotExpression : PostfixExpression
 			calcType();
 		if(!resolved)
 			return Singleton!ErrorValue.get(); // calcType already produced an error
-		auto id = getMember!Identifier(1);
-		Context ctx = new AggrContext(sc, val);
+
+		//auto id = getMember!Identifier(1);
+		auto ctx = new AggrContext(sc, val);
+		if(expr.id == TOK_super)
+			ctx.virtualCall = false;
 		return resolved.interpret(ctx);
 	}
 }
@@ -1020,6 +1034,7 @@ class PrimaryExpression : Expression
 	{
 		switch(id)
 		{
+			case TOK_super:
 			case TOK_this:
 				Value v = sc ? sc.getThis() : null;
 				if(!v)
@@ -1031,7 +1046,6 @@ class PrimaryExpression : Expression
 			case TOK_null:  return new NullValue;
 			case TOK___LINE__: return Value.create(span.start.line);
 			case TOK___FILE__: return createStringValue(getModuleFilename());
-			case TOK_super:
 			case TOK_dollar:
 			default:        return super.interpret(sc);
 		}
@@ -1350,11 +1364,6 @@ class Lambda : Expression
 
 class TypeFunctionLiteral : TypeFunction
 {
-	ParameterList paramList;
-	Type returnType;
-
-	override ParameterList getParameters() { return paramList; }
-
 	override Type getReturnType() 
 	{
 		if (returnType)
@@ -1371,11 +1380,6 @@ class TypeFunctionLiteral : TypeFunction
 
 class TypeDelegateLiteral : TypeDelegate
 {
-	ParameterList paramList;
-	Type returnType;
-
-	override ParameterList getParameters() { return paramList; }
-
 	override Type getReturnType() 
 	{
 		if (returnType)
@@ -1809,7 +1813,6 @@ class IntegerLiteralExpression : PrimaryExpression
 			else
 			{
 				radix = 8;
-				val = val[1..$];
 			}
 			unsigned = true;
 		}

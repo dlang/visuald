@@ -306,6 +306,7 @@ class Declarator : Identifier, CallableNode
 	bool isRef;
 	bool needsContext;
 	bool _isTemplate;
+	bool _inReinit;
 	TemplateInstantiation[] tmpl;
 	
 	override Declarator clone()
@@ -314,7 +315,17 @@ class Declarator : Identifier, CallableNode
 		n.type = type;
 		return n;
 	}
-	
+
+	final Declarator cloneDeclaratorShallow()
+	{
+		auto decl = static_cast!Declarator(_cloneShallow());
+		decl.ident = ident;
+		if(parameterList)
+			decl.addMember(parameterList.clone());
+		// copy info from applySuffixes
+		return decl;
+	}
+
 	Expression getInitializer()
 	{
 		if(auto di = cast(DeclaratorInitializer) parent)
@@ -365,6 +376,7 @@ class Declarator : Identifier, CallableNode
 	{
 		assert(_isTemplate);
 		
+		calcType(); // ensure suffixes applied
 		TemplateParameterList tpl = getTemplateParameterList();
 		
 		ArgMatch[] vargs = matchTemplateArgs(ident, sc, args, tpl);
@@ -377,8 +389,8 @@ class Declarator : Identifier, CallableNode
 		// new instantiation has template parameters as parameterlist and contains
 		//  a copy of the function declaration without template arguments
 		auto tmpl = new TemplateInstantiation(this, vargs);
-		parent.addMember(tmpl); // add as suffix
-		tmpl.semantic(parent.getScope());
+		addMember(tmpl); // add as suffix
+		tmpl.semantic(getScope());
 		return tmpl.getDeclarator();
 	}
 
@@ -405,57 +417,61 @@ class Declarator : Identifier, CallableNode
 
 	Type applySuffixes(Type t)
 	{
+		// assumed to be only called once by calcType
 		isAlias = _isAlias();
 		needsContext = _needsContext();
 		
 		// template parameters and function parameters and constraint
-		for(int m = 0; m < members.length; )
+		size_t mlen = members.length;
+		for(int m = 0; m < members.length; m++)
 		{
 			auto member = members[m];
 			if(auto pl = cast(ParameterList) member)
 			{
 				auto tf = needsContext ? new TypeDelegate(pl.id, pl.span) : new TypeFunction(pl.id, pl.span);
 				tf.funcDecl = this;
-				tf.addMember(t.clone());
-				removeMember(m);
-				tf.addMember(pl);
+				tf.returnType = t; // need clones?
+				tf.paramList = pl;
 				tf.scop = getScope(); // not fully added to node tree
 				t = tf;
 				parameterList = pl;
 			}
-			else if(auto saa = cast(SuffixAssocArray) member)
+			else if(auto sa = cast(SuffixArray) member)
 			{
-				auto taa = new TypeAssocArray(saa.id, saa.span);
-				taa.addMember(t.clone());
-				removeMember(m);
-				taa.addMember(saa.getKeyType());
-				t = taa;
-				taa.scop = getScope(); // not fully added to node tree
+				auto idx = sa.getMember(0);
+				if(auto tidx = cast(Type) idx) // TODO: need to resolve identifiers?
+				{
+					auto taa = new TypeAssocArray(sa.id, sa.span);
+					taa.setNextType(t);  // need clones?
+					taa.keyType = tidx;
+					t = taa;
+				}
+				else
+				{
+					auto tsa = new TypeStaticArray(sa.id, sa.span);
+					tsa.setNextType(t);  // need clones?
+					tsa.dimExpr = static_cast!Expression(idx);
+					t = tsa;
+				}
+				t.scop = getScope(); // not fully added to node tree
 			}
 			else if(auto sda = cast(SuffixDynamicArray) member)
 			{
 				auto tda = new TypeDynamicArray(sda.id, sda.span);
 				tda.addMember(t.clone());
-				removeMember(m);
 				t = tda;
 				tda.scop = getScope(); // not fully added to node tree
 			}
-			else if(auto ssa = cast(SuffixStaticArray) member)
-			{
-				auto tsa = new TypeStaticArray(ssa.id, ssa.span);
-				tsa.addMember(t.clone());
-				removeMember(m);
-				auto dim = ssa.getDimension();
-				assert(dim == ssa.getMember(0));
-				ssa.removeMember(0);
-				tsa.addMember(dim);
-				t = tsa;
-				tsa.scop = getScope(); // not fully added to node tree
-			}
-			else
-				m++;
 			// TODO: slice suffix? template parameters, constraint
 		}
+
+		//// after removal, limit span to remaining members
+		//if(mlen > members.length)
+		//{
+		//    fulspan = span;
+		//    foreach(m; members)
+		//        extendSpan(m.fulspan);
+		//}
 		return t;
 	}
 
@@ -524,6 +540,11 @@ class Declarator : Identifier, CallableNode
 	
 	Value interpretReinit(Context sc)
 	{
+		if(_inReinit)
+			return semanticErrorValue("initializing ", ident, " refers to itself");
+		_inReinit = true;
+		scope(exit) _inReinit = false;
+
 		if(aliasTo)
 			return aliasTo.interpret(sc); // TODO: alias not restricted to types
 		Type type = calcType();
@@ -580,6 +601,8 @@ class Declarator : Identifier, CallableNode
 	}
 }
 
+//TemplateInstantiation:
+//    [ParameterList Decl]
 class TemplateInstantiation : Node
 {
 	ArgMatch[] args;
@@ -591,7 +614,7 @@ class TemplateInstantiation : Node
 	this(Declarator ddec, ArgMatch[] vargs)
 	{
 		Decl decl = new Decl;
-		dec = ddec.clone();
+		dec = ddec.cloneDeclaratorShallow();
 		args = vargs;
 		
 		for(Node p = ddec.parent; p; p = p.parent)
@@ -608,16 +631,10 @@ class TemplateInstantiation : Node
 			}
 		assert(decl.members.length > 0);
 		
-		for(int m = 0; m < dec.members.length; m++)
-		{
-			if(auto tpl = cast(TemplateParameterList) dec.members[m])
-			{
-				dec.removeMember(m);
-				ParameterList pl = createTemplateParameterList(vargs);
-				addMember(pl);
-				break;
-			}
-		}
+		if(auto tpl = ddec.getTemplateParameterList())
+			addMember(createTemplateParameterList(vargs));
+		else
+			addMember(new ParameterList);
 		addMember(decl);
 		logInfo("created template instance of ", dec.ident, " with args ", vargs);
 	}

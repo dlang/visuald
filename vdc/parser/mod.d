@@ -63,8 +63,12 @@ class Module
 	static Action shiftModuleDeclDefs(Parser p)
 	{
 		if(p.tok.id != TOK_EOF)
+		{
+			// recover by assuming the mismatched braces, trying to add more declarations to the module
+			p.pushRecoverState(&recoverModuleDeclaration);
+
 			return p.parseError("EOF expected");
-		
+		}
 		return Accept;
 	}
 
@@ -74,11 +78,23 @@ class Module
 		return Parser.recoverSemiCurly(p);
 	}
 
+	static Action recoverDeclDef(Parser p)
+	{
+		p.pushState(&afterRecover);
+			return Parser.recoverSemiCurly(p);
+	}
+
 	static Action afterRecover(Parser p)
 	{
 		if(p.tok.id == TOK_EOF)
 			return Accept;
 
+		if(p.tok.id == TOK_rcurly)
+		{
+			// eat pending '}'
+			p.pushState(&afterRecover);
+			return Accept;
+		}
 		p.pushState(&shiftModuleDeclDefs);
 		return DeclDefs.enter(p);
 	}

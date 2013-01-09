@@ -419,6 +419,10 @@ class BlockStatement : Statement
 	static Action afterRecover(Parser p)
 	{
 		p.popAppendTopNode!(ast.BlockStatement, ast.ParseRecoverNode)();
+
+		p.pushRecoverState(&recover);
+		p.pushState(&Parser.keepRecover);   // add a "guard" state to avoid popping recover
+
 		return shiftLcurly(p);
 	}
 }
@@ -704,37 +708,51 @@ class ForeachType
 	{
 		auto n = new ast.ForeachType(p.tok);
 		p.pushNode(n);
-		
-		switch(p.tok.id)
-		{
-			case TOK_ref:
-				n.isRef = true;
-				p.pushState(&shiftRef);
-				return Accept;
-				
-			case TOK_Identifier:
-				p.pushToken(p.tok);
-				p.pushState(&shiftIdentifier);
-				return Accept;
-			
-			default:
-				p.pushState(&shiftType);
-				return Type.enter(p);
-		}
+		return shiftRef(p);
 	}
 	
 	static Action shiftRef(Parser p)
 	{
 		switch(p.tok.id)
 		{
+			case TOK_ref:
+				auto n = p.topNode!(ast.ForeachType)();
+				n.isRef = true;
+				p.pushState(&shiftRef);
+				return Accept;
+
 			case TOK_Identifier:
 				p.pushToken(p.tok);
 				p.pushState(&shiftIdentifier);
 				return Accept;
 			
+			case TOK_const:
+			case TOK_immutable:
+			case TOK_shared:
+			case TOK_inout:
+				p.pushToken(p.tok);
+				p.pushState(&shiftTypeModifier);
+				return Accept;
+
 			default:
 				p.pushState(&shiftType);
 				return Type.enter(p);
+		}
+	}
+
+	static Action shiftTypeModifier(Parser p)
+	{
+		switch(p.tok.id)
+		{
+			case TOK_lparen:
+				p.pushState(&shiftType);
+				return Type.enterTypeModifier(p);
+
+			default:
+				auto tok = p.popToken();
+				auto n = p.topNode!(ast.ForeachType)();
+				combineAttributes(n.attr, tokenToAttribute(tok.id));
+				return shiftRef(p);
 		}
 	}
 

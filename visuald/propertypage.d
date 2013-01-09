@@ -821,7 +821,7 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
-		AddControl("",                    mUseStandard = new CheckBox(mCanvas, "Use Standard Import Paths"));
+		//AddControl("",                    mUseStandard = new CheckBox(mCanvas, "Use Standard Import Paths"));
 		AddControl("Additional Imports",  mAddImports = new Text(mCanvas));
 		AddControl("String Imports",      mStringImports = new Text(mCanvas));
 		AddControl("Version Identifiers", mVersionIdentifiers = new Text(mCanvas));
@@ -830,8 +830,8 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		mUseStandard.setChecked(true);
-		mUseStandard.setEnabled(false);
+		//mUseStandard.setChecked(true);
+		//mUseStandard.setEnabled(false);
 
 		mAddImports.setText(options.imppath);
 		mStringImports.setText(options.fileImppath);
@@ -849,7 +849,7 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 		return changes;
 	}
 
-	CheckBox mUseStandard;
+	//CheckBox mUseStandard;
 	Text mAddImports;
 	Text mStringImports;
 	Text mVersionIdentifiers;
@@ -995,7 +995,8 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		AddControl("", mQuiet         = new CheckBox(mCanvas, "Suppress Non-Error Messages"));
 		AddControl("", mVerbose       = new CheckBox(mCanvas, "Verbose Compile"));
 		AddControl("", mVtls          = new CheckBox(mCanvas, "Show TLS Variables"));
-		AddControl("", mUseDeprecated = new CheckBox(mCanvas, "Allow Deprecated Features"));
+		AddControl("", mUseDeprecated = new CheckBox(mCanvas, "Silently Allow Deprecated Features"));
+		AddControl("", mErrDeprecated = new CheckBox(mCanvas, "Use of Deprecated Features causes Error (DMD 2.061+)"));
 		AddControl("", mIgnorePragmas = new CheckBox(mCanvas, "Ignore Unsupported Pragmas"));
 		AddControl("", mCheckProperty = new CheckBox(mCanvas, "Enforce Property Syntax (DMD 2.055+)"));
 	}
@@ -1008,6 +1009,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		mVerbose.setChecked(options.verbose);
 		mVtls.setChecked(options.vtls);
 		mUseDeprecated.setChecked(options.useDeprecated);
+		mErrDeprecated.setChecked(options.errDeprecated);
 		mIgnorePragmas.setChecked(options.ignoreUnsupportedPragmas);
 		mCheckProperty.setChecked(options.checkProperty);
 
@@ -1023,6 +1025,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		changes += changeOption(mVerbose.isChecked(), options.verbose, refoptions.verbose);
 		changes += changeOption(mVtls.isChecked(), options.vtls, refoptions.vtls);
 		changes += changeOption(mUseDeprecated.isChecked(), options.useDeprecated, refoptions.useDeprecated);
+		changes += changeOption(mErrDeprecated.isChecked(), options.errDeprecated, refoptions.errDeprecated);
 		changes += changeOption(mIgnorePragmas.isChecked(), options.ignoreUnsupportedPragmas, refoptions.ignoreUnsupportedPragmas);
 		changes += changeOption(mCheckProperty.isChecked(), options.checkProperty, refoptions.checkProperty);
 		return changes;
@@ -1034,6 +1037,7 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	CheckBox mVerbose;
 	CheckBox mVtls;
 	CheckBox mUseDeprecated;
+	CheckBox mErrDeprecated;
 	CheckBox mIgnorePragmas;
 	CheckBox mCheckProperty;
 }

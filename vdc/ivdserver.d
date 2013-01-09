@@ -167,12 +167,17 @@ public:
 }
 
 ///////////////////////////////////////////////////////////////////////
-uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, int versionLevel, int debugLevel)
+uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
+					  int versionLevel, int debugLevel)
 {
 	return (unittestOn ? 1 : 0)
 		|  (debugOn    ? 2 : 0)
 		|  (x64        ? 4 : 0)
+		|  (cov        ? 8 : 0)
+		|  (doc        ? 16 : 0)
+		|  (nobounds   ? 32 : 0)
+		|  (gdc        ? 64 : 0)
 		| ((versionLevel & 0xff) << 8)
-		| ((debugLevel & 0xff) << 16);
+		| ((debugLevel   & 0xff) << 16);
 }
 

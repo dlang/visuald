@@ -105,8 +105,6 @@ Lexer/Parser:
 - do not parse file if it is D1?
 - deprecated syntax
 - semantic support for => delegates
-- support deprecated("msg")
-- support alias name|this = type;
 - syntax error with "@disable new()"
 - integrate d_parser.dll
 
@@ -140,10 +138,10 @@ Unsorted
 =========
 - parse all files in project at startup
 - COM leaks in VS2012 (VS2010?)
-- hovering over function argument shows hint for function
 - compile from selection/buffer (through rdmd)
 - virustotal reports malicious software
 - reset semantic analysis data
 - goto definition/completion for labels, versions
+- goto definition fallback to JSON
 - highlight compiler-magic identifiers
 - new configuration does not clone selected config?

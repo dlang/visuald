@@ -901,7 +901,7 @@ class PrimaryExpression : Expression
 			
 			case TOK_delegate:
 			case TOK_function:
-				return FunctionLiteral!false.enter(p);
+				return FunctionLiteral!true.enter(p); // SPEC: allowing lambda not in the language spec
 			case TOK_lcurly:
 				p.pushRollback(&rollbackFunctionLiteralFailure);
 				p.pushState(&shiftFunctionLiteral);
@@ -923,9 +923,17 @@ class PrimaryExpression : Expression
 		switch(p.tok.id)
 		{
 			case TOK_lambda:
+				// id => expr
 				auto tok = p.popToken();
 				auto lambda = new ast.Lambda(p.tok);
-				lambda.addMember(new ast.IdentifierExpression(tok));
+				auto pdecl = new ast.ParameterDeclarator;
+				auto type = new ast.AutoType;
+				auto id = new ast.Declarator(tok);
+				pdecl.addMember(type);
+				pdecl.addMember(id);
+				auto pl = new ast.ParameterList;
+				pl.addMember(pdecl);
+				lambda.addMember(pl);
 				p.pushNode(lambda);
 				p.pushState(&shiftLambda);
 				p.pushState(&AssignExpression.enter);
@@ -1248,8 +1256,16 @@ class FunctionLiteral(bool allowLambda) : Expression
 	static Action shiftLambda(Parser p)
 	{
 		auto expr = p.popNode!(ast.Expression)();
+		auto ret = new ast.ReturnStatement;
+		ret.addMember(expr);
+		auto blk = new ast.BlockStatement;
+		blk.addMember(ret);
+		auto bdy = new ast.FunctionBody;
+		bdy.addMember(blk);
+		bdy.bodyStatement = blk;
+
 		auto lit = p.topNode!(ast.FunctionLiteral)();
-		lit.addMember(expr);
+		lit.addMember(bdy);
 		return Forward;
 	}
 }

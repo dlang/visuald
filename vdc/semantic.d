@@ -80,7 +80,7 @@ void semanticErrorLoc(T...)(string filename, ref const(TextPos) pos, T args)
 	msg ~= text(args);
 	if(fnSemanticWriteError)
 		fnSemanticWriteError(MessageType.Error, msg);
-	logInfo(msg);
+	logInfo("%s", msg); // avoid interpreting % in message
 }
 
 void semanticErrorPos(T...)(ref const(TextPos) pos, T args)
@@ -168,11 +168,13 @@ class Context
 class AggrContext : Context
 {
 	Value instance;
+	bool virtualCall;
 
 	this(Context p, Value inst)
 	{
 		super(p);
 		instance = inst;
+		virtualCall = true;
 	}
 	
 	override Value getThis()
@@ -188,7 +190,7 @@ class AggrContext : Context
 			return *pn;
 		if(auto decl = cast(Declarator) n)
 			//if(Value v = instance._interpretProperty(this, decl.ident))
-			if(Value v = instance.getType().getProperty(instance, decl))
+			if(Value v = instance.getType().getProperty(instance, decl, virtualCall))
 				return v;
 		if(parent)
 			return parent.getValue(n);
@@ -401,6 +403,9 @@ class Scope
 			id.semanticError("ambiguous identifier " ~ ident);
 			foreach(s, b; n)
 				s.semanticError("possible candidate");
+			
+			if(!collectSymbols(ident))
+				return null;
 		}
 		return n.first();
 	}
@@ -889,6 +894,10 @@ class Options
 	bool unittestOn;
 	bool x64;
 	bool debugOn;
+	bool coverage;
+	bool doDoc;
+	bool noBoundsCheck;
+	bool gdcCompiler;
 	VersionDebug debugIds;
 	VersionDebug versionIds;
 
@@ -953,11 +962,40 @@ class Options
 	
 	int versionPredefined(string ident)
 	{
-		if(ident == "unittest")
-			return unittestOn ? 1 : -1;
-		if(int*p = ident in sPredefinedVersions)
+		int* p = ident in sPredefinedVersions;
+		if(!p)
+			return 0;
+		if(*p)
 			return *p;
-		return 0;
+
+		switch(ident)
+		{
+			case "unittest":
+				return unittestOn ? 1 : -1;
+			case "assert":
+				return unittestOn || debugOn ? 1 : -1;
+			case "D_Coverage":
+				return coverage ? 1 : -1;
+			case "D_Ddoc":
+				return doDoc ? 1 : -1;
+			case "D_NoBoundsChecks":
+				return noBoundsCheck ? 1 : -1;
+			case "Win32":
+			case "X86":
+			case "D_InlineAsm_X86":
+				return x64 ? -1 : 1;
+			case "Win64":
+			case "X86_64":
+			case "D_InlineAsm_X86_64":
+			case "D_LP64":
+				return x64 ? 1 : -1;
+			case "GNU":
+				return gdcCompiler ? 1 : -1;
+			case "DigitalMars":
+				return gdcCompiler ? -1 : 1;
+			default:
+				assert(false, "inconsistent predefined versions");
+		}
 	}
 
 	}

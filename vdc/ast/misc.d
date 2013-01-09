@@ -281,23 +281,7 @@ class EnumMember : Node
 
 ////////////////////////////////////////////////////////////////
 //FunctionBody:
-//    BlockStatement
-//    BodyStatement
-//    InStatement BodyStatement
-//    OutStatement BodyStatement
-//    InStatement OutStatement BodyStatement
-//    OutStatement InStatement BodyStatement
-//
-//InStatement:
-//    in BlockStatement
-//
-//OutStatement:
-//    out BlockStatement
-//    out ( Identifier ) BlockStatement
-//
-//BodyStatement:
-//    body BlockStatement
-//
+//    [InStatement_opt OutStatement_opt BodyStatement] outIdentifier
 class FunctionBody : Node
 {
 	mixin ForwardCtor!();
@@ -305,7 +289,7 @@ class FunctionBody : Node
 	Statement inStatement;
 	Statement outStatement;
 	Statement bodyStatement;
-	string outIdentifier;
+	OutIdentifier outIdentifier;
 
 	Scope inScop;
 	Scope outScop;
@@ -321,18 +305,10 @@ class FunctionBody : Node
 				n.outStatement = static_cast!Statement(n.members[m]);
 			if(members[m] is bodyStatement)
 				n.bodyStatement = static_cast!Statement(n.members[m]);
+			if(members[m] is outIdentifier)
+				n.outIdentifier = static_cast!OutIdentifier(n.members[m]);
 		}
-		n.outIdentifier = outIdentifier;
 		return n;
-	}
-	
-	override bool compare(const(Node) n) const
-	{
-		if(!super.compare(n))
-			return false;
-
-		auto tn = static_cast!(typeof(this))(n);
-		return tn.outIdentifier == outIdentifier;
 	}
 	
 	override void toD(CodeWriter writer)
@@ -345,7 +321,7 @@ class FunctionBody : Node
 		}
 		if(outStatement)
 		{
-			if(outIdentifier.length)
+			if(outIdentifier)
 				writer("out(", outIdentifier, ")");
 			else
 				writer("out");
@@ -409,8 +385,8 @@ class FunctionBody : Node
 		{
 			// TODO: put into scope of inStatement?
 			sc = enterScope(outScop, sc);
-			if(outIdentifier.length)
-				sc.addSymbol(outIdentifier, this); // TODO: create Symbol for outIdentifier
+			if(outIdentifier)
+				sc.addSymbol(outIdentifier.ident, outIdentifier); // TODO: create Symbol for outIdentifier
 			outStatement.semantic(sc);
 			sc = sc.pop();
 		}
@@ -435,6 +411,23 @@ class FunctionBody : Node
 		if(!value)
 			return theVoidValue;
 		return value;
+	}
+}
+
+class OutIdentifier : Identifier
+{
+	mixin ForwardCtorTok!();
+
+	override Type calcType()
+	{
+		auto fb = cast(FunctionBody)parent;
+		if(fb)
+		{
+			auto type = fb.parent.calcType();
+			if(auto tf = cast(TypeFunction) type)
+				return tf.getReturnType();
+		}
+		return semanticErrorType("cannot calculate type of out identifier ", ident);
 	}
 }
 
@@ -609,10 +602,10 @@ class VersionCondition : Condition
 	{
 		if(members.length == 0)
 		{
-			assert(id == TOK_unittest);
+			assert(id == TOK_unittest || id == TOK_assert);
 			if(auto mod = getModule())
 				if(auto prj = mod.getProject())
-					return prj.options.unittestOn;
+					return prj.options.unittestOn || (id == TOK_assert && prj.options.debugOn);
 			return false;
 		}
 		auto mod = getModule();
@@ -676,7 +669,7 @@ class StaticIfCondition : Condition
 
 //Aggregate:
 //    [ArgumentList]
-class StaticAssert : Node
+class StaticAssert : Statement
 {
 	mixin ForwardCtor!();
 
@@ -710,5 +703,10 @@ class StaticAssert : Node
 				txt = "static assertion " ~ writeD(expr) ~ " failed";
 			semanticErrorPos(span.start, txt);
 		}
+	}
+
+	override Value interpret(Context sc)
+	{
+		return null; // "execution" done in _sementic
 	}
 }

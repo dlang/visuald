@@ -230,19 +230,24 @@ class Node
 		clearSpan();
 	}
 
-	Node clone()
+	final Node _cloneShallow()
 	{
 		Node	n = static_cast!Node(this.classinfo.create());
-		
+
 		n.id = id;
 		n.attr = attr;
 		n.annotation = annotation;
 		n.span = span;
 		n.fulspan = fulspan;
-		
+
+		return n;
+	}
+
+	Node clone()
+	{
+		Node n = _cloneShallow();
 		foreach(m; members)
 			n.addMember(m.clone());
-		
 		return n;
 	}
 

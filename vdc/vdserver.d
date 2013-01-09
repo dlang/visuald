@@ -181,18 +181,25 @@ class VDServer : ComObject, IVDServer
 			string imports = to_string(imp);
 			string strImports = to_string(stringImp);
 
-			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64, 0, 0);
+			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64, 
+											  opts.coverage, opts.doDoc, opts.noBoundsCheck, opts.gdcCompiler,
+											  0, 0); // no need to compare version levels, done in setVersionIds
 
-			opts.unittestOn = (flags & 1) != 0;
-			opts.debugOn    = (flags & 2) != 0;
-			opts.x64        = (flags & 4) != 0;
+			opts.unittestOn    = (flags & 1) != 0;
+			opts.debugOn       = (flags & 2) != 0;
+			opts.x64           = (flags & 4) != 0;
+			opts.coverage      = (flags & 8) != 0;
+			opts.doDoc         = (flags & 16) != 0;
+			opts.noBoundsCheck = (flags & 32) != 0;
+			opts.gdcCompiler   = (flags & 64) != 0;
+
 			int versionlevel = (flags >> 8)  & 0xff;
 			int debuglevel   = (flags >> 16) & 0xff;
 
 			string verids = to_string(versionids);
 			string dbgids = to_string(debugids);
 
-			int changed = (oldflags != (flags & 7));
+			int changed = (oldflags != (flags & 0xff));
 			changed += opts.setImportDirs(splitLines(imports));
 			changed += opts.setImportDirs(splitLines(imports));
 			changed += opts.setVersionIds(versionlevel, splitLines(verids)); 

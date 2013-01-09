@@ -714,6 +714,8 @@ class LanguageService : DisposingComObject,
 			scope(exit) release(cfg);
 			auto cfgopts = cfg.GetProjectOptions();
 			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
+									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck, 
+									  cfgopts.compiler == Compiler.GDC, 
 									  cfgopts.versionlevel, cfgopts.debuglevel);
 			
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);

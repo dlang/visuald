@@ -127,6 +127,7 @@ class ProjectOptions
 	bool isSolaris;		// generate code for Solaris
 	bool scheduler;		// which scheduler to use
 	bool useDeprecated;	// allow use of deprecated features
+	bool errDeprecated;	// error when using deprecated features (2.061+)
 	bool useAssert;		// generate runtime code for assert()'s
 	bool useInvariants;	// generate class invariant checks
 	bool useIn;		// generate precondition checks
@@ -297,6 +298,8 @@ class ProjectOptions
 			cmd ~= " -O";
 		if(useDeprecated)
 			cmd ~= " -d";
+		else if(errDeprecated)
+			cmd ~= " -de";
 		if(Dversion >= 2 && noboundscheck)
 			cmd ~= " -noboundscheck";
 		if(useUnitTests)
@@ -847,6 +850,7 @@ class ProjectOptions
 		elem ~= new xml.Element("isSolaris", toElem(isSolaris));
 		elem ~= new xml.Element("scheduler", toElem(scheduler));
 		elem ~= new xml.Element("useDeprecated", toElem(useDeprecated));
+		elem ~= new xml.Element("errDeprecated", toElem(errDeprecated));
 		elem ~= new xml.Element("useAssert", toElem(useAssert));
 		elem ~= new xml.Element("useInvariants", toElem(useInvariants));
 		elem ~= new xml.Element("useIn", toElem(useIn));
@@ -968,6 +972,7 @@ class ProjectOptions
 		fromElem(elem, "isSolaris", isSolaris);
 		fromElem(elem, "scheduler", scheduler);
 		fromElem(elem, "useDeprecated", useDeprecated);
+		fromElem(elem, "errDeprecated", errDeprecated);
 		fromElem(elem, "useAssert", useAssert);
 		fromElem(elem, "useInvariants", useInvariants);
 		fromElem(elem, "useIn", useIn);

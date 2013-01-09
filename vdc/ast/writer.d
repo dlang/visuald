@@ -276,6 +276,8 @@ string writeD(ast.Node n)
 {
 	string txt;
 	DCodeWriter writer = new DCodeWriter(getStringSink(txt));
+	writer.writeImplementations = false;
+	writer.writeClassImplementations = false;
 	writer(n);
 	return txt;
 }
