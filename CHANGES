@@ -522,3 +522,6 @@ unreleased Version 0.3.36
     - fix "forgetting" type of function parameters after first evaluation
     - fix a number of crashes during semantics
     - improved parser recovery after too many closing braces
+  * when cloning a configuration in the configuation manager, debug info settings were lost
+  * compiling a single file now reports success
+  * avoid asking to save project file when closing VS and the project has already been saved

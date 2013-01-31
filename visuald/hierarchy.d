@@ -402,6 +402,8 @@ class CFileNode : CHierNode,
 		if (FAILED(hr))
 			return hr;
 
+		scope(exit) release(srpIVsHierarchy);
+		scope(exit) release(srpIVsPersistDocData);
 		if (!srpIVsHierarchy || (vsDocCookie == VSDOCCOOKIE_NIL))
 			return S_OK;
 

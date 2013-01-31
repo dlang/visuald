@@ -37,7 +37,7 @@ alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully insta
 alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
 debug version = DebugCmd;
-debug version = InProc;
+// debug version = InProc;
 
 version(InProc) import vdc.vdserver;
 
@@ -716,7 +716,11 @@ class VDServerClient
 				{
 					HRESULT hr = gVDServer.GetLastMessage(&msg);
 					if(hr == S_OK)
-						(new _shared!(GetMessageCommand)(detachBSTR(msg))).send(gUITid);
+					{
+						string m = detachBSTR(msg);
+						if(m != "__no_message__")
+							(new _shared!(GetMessageCommand)(m)).send(gUITid);
+					}
 					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 						restartServer = true;
 				}

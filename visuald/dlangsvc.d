@@ -509,6 +509,7 @@ class LanguageService : DisposingComObject,
 		GetSource(pTextLines).mOutlining = true;
 		if(auto session = qi_cast!IVsHiddenTextSession(pSession))
 		{
+			scope(exit) release(session);
 			GetSource(pTextLines).UpdateOutlining(session, hrsDefault);
 			GetSource(pTextLines).CollapseAllHiddenRegions(session, true);
 		}

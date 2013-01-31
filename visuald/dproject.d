@@ -1300,6 +1300,10 @@ class Project : CVsHierarchy,
 	{
 		logCall("SaveCompleted(pszFilename=%s)", _toLog(pszFilename));
 
+		if(mFilename == to_string(pszFilename)) // autosave?
+			if(CProjectNode pProjectNode = GetProjectNode())
+				pProjectNode.SetProjectFileDirty(false);
+
 		return S_OK; //returnError(E_NOTIMPL);
 	}
         

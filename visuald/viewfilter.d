@@ -442,13 +442,14 @@ version(tip)
 		Project proj = qi_cast!Project(pUIH);
 		if(!proj)
 			return S_OK;
+		scope(exit) release(proj);
 
 		CHierNode pNode = proj.VSITEMID2Node(itemid);
 		if(!pNode)
 			return returnError(E_INVALIDARG);
 		CFileNode pFile = cast(CFileNode) pNode;
 		if(!pFile)
-			string S_OK;
+			return S_OK;
 
 		if(pFile.SaveDoc(SLNSAVEOPT_SaveIfDirty) != S_OK)
 			return returnError(E_FAIL);
@@ -465,21 +466,20 @@ version(tip)
 				{
 					scope(exit) release(cfg);
 
-					string tool = pFile.GetTool();
 					string stool = cfg.GetStaticCompileTool(pFile);
 					if(stool == "DMD")
-						pFile.SetTool("DMDsingle");
+						stool = "DMDsingle";
 
-					scope(exit) pFile.SetTool(tool);
-
-					string cmd = cfg.GetCompileCommand(pFile, true);
+					string cmd = cfg.GetCompileCommand(pFile, true, stool);
 					if(cmd.length)
 					{
+						cmd ~= "if not errorlevel 1 echo Compilation successful.\n";
 						string workdir = cfg.GetProjectDir();
 						string outfile = cfg.GetOutputFile(pFile);
 						string cmdfile = makeFilenameAbsolute(outfile ~ ".syntax", workdir);
 						removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
 						auto pane = getBuildOutputPane();
+						scope(exit) release(pane);
 						clearBuildOutputPane();
 						if(pane)
 							pane.Activate();

@@ -1262,6 +1262,7 @@ class ConfigProvider : DisposingComObject,
 		//if(!mProject.QueryEditProjectFile())
 		//	return returnError(E_ABORT);
     
+		// copy configs for all platforms
 		int cnt = mConfigs.length;
 		for(int i = 0; i < cnt; i++)
 			if(mConfigs[i].mName == strCloneCfgName)
@@ -1475,7 +1476,7 @@ class Config :	DisposingComObject,
 		if (opts)
 		{
 			mProjectOptions = clone(opts);
-			mProjectOptions.setDebug(name == "Debug");
+			//mProjectOptions.setDebug(name == "Debug");
 			mProjectOptions.setX64(platform == "x64");
 		}
 		else
@@ -2096,9 +2097,10 @@ class Config :	DisposingComObject,
 		return tool;
 	}
 
-	string GetOutputFile(CFileNode file)
+	string GetOutputFile(CFileNode file, string tool = null)
 	{
-		string tool = GetCompileTool(file);
+		if(tool.empty)
+			tool = GetCompileTool(file);
 		string fname;
 		if(tool == "DMD")
 			return file.GetFilename();
@@ -2202,11 +2204,12 @@ class Config :	DisposingComObject,
 		return files;
 	}
 
-	string GetCompileCommand(CFileNode file, bool syntaxOnly = false)
+	string GetCompileCommand(CFileNode file, bool syntaxOnly = false, string tool = null)
 	{
-		string tool = GetCompileTool(file);
+		if(tool.empty)
+			tool = GetCompileTool(file);
 		string cmd;
-		string outfile = GetOutputFile(file);
+		string outfile = GetOutputFile(file, tool);
 		if(tool == kToolResourceCompiler)
 		{
 			cmd = "rc /fo" ~ quoteFilename(outfile);
@@ -2226,7 +2229,7 @@ class Config :	DisposingComObject,
 		}
 		if(tool == "DMDsingle")
 		{
-			string depfile = GetOutputFile(file) ~ ".dep";
+			string depfile = GetOutputFile(file, tool) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
 			cmd ~= mProjectOptions.buildCommandLine(true, false, false, syntaxOnly);
 			if(syntaxOnly && mProjectOptions.compiler == Compiler.DMD)

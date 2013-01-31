@@ -28,14 +28,12 @@ Project:
 - different icon for project items after changing tool
 - what happens without d file on the command line?
 - template to create a Visual D project from an existing source tree
-- project config: edit all configurations only changes current config
 - breaking into build does not stop dmd
 - environment variables with parenthesis don't work $(ProgramFiles(x86))
 - GDC: 
   - separate compile + link does not write to object dir
   - ddoc files
 - additional options for resource compiler
-- compile single file: report success
 - compile and run current buffer/selection
 - pass import path from static lib project to dependent projects
 
@@ -57,6 +55,16 @@ Language service:
 - file source navigation menus
 - spurious display of completion box
 
+Lexer/Parser:
+---------------
+- fix Cmp/ShiftExpression
+- octal numbers
+- do not parse file if it is D1?
+- deprecated syntax
+- semantic support for => delegates
+- syntax error with "@disable new()"
+- integrate d_parser.dll
+
 Semantics:
 ---------------
 - import paths for source files not in any project
@@ -64,12 +72,13 @@ Semantics:
 - templates
 - operator overloads
 - UFCS
-- make it win64 aware
 - completion at the beginning of an identifier lists its members
 - package/module specifier before symbol
 - vdserver.exe should remove semantic project if devenv.exe terminates
 - vdserver.exe should terminate if devenv.exe crashes
 - vdserver.exe should be LARGEADRESSAWARE
+- expansion fails too often
+- handle parser error at caret better for expansion/definition
 
 Search:
 ---------------
@@ -98,16 +107,6 @@ Profile:
 - splitter for fan in/out windows
 - switch window layout to fan in/out side by side
 
-Lexer/Parser:
----------------
-- fix Cmp/ShiftExpression
-- octal numbers
-- do not parse file if it is D1?
-- deprecated syntax
-- semantic support for => delegates
-- syntax error with "@disable new()"
-- integrate d_parser.dll
-
 C++ to D
 ---------
 - documentation
@@ -127,7 +126,7 @@ Debugger:
 - Mago: set instruction pointer
 - local functions/delegates should have debug info for closure vars ("this" exists)
 - GDC: x64: function arguments not shown
-- VS2012: autoexp.dat does not work?
+- VS2012: autoexp.dat does not work? depends on debug engine => edit and continue
 
 GUI-Designer:
 -------------
@@ -144,4 +143,5 @@ Unsorted
 - goto definition/completion for labels, versions
 - goto definition fallback to JSON
 - highlight compiler-magic identifiers
-- new configuration does not clone selected config?
+- open intellisense settings
+

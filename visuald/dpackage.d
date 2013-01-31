@@ -842,8 +842,8 @@ version(none)
 			IVsGetCfgProvider getCfgProvider = qi_cast!IVsGetCfgProvider(pHierarchy);
 			if (!getCfgProvider)
 				return E_FAIL;
-
 			scope(exit) release(getCfgProvider);
+
 			IVsCfgProvider cfgProvider;
 			if(auto hr = getCfgProvider.GetCfgProvider(&cfgProvider))
 				return hr;
@@ -919,6 +919,7 @@ version(none)
 		Project prj = qi_cast!Project(pHierarchy);
 		if(!prj)
 			return E_NOINTERFACE;
+		release(prj);
 
 		version(none)
 		{
