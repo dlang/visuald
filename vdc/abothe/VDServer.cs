@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.IO;
 
 using D_Parser.Parser;
 using D_Parser.Misc;
@@ -87,6 +88,19 @@ namespace ABothe
             expansions += ModuleName + "\n";
         }
 
+		public void AddModule(IAbstractSyntaxTree module, string nameOverride = null)
+		{
+			if(nameOverride.Length > 0)
+				expansions += nameOverride + "\n";
+			else
+				expansions += module.Name + "\n";
+		}
+
+		public void AddPackage(string packageName)
+		{
+			expansions += packageName + "\n";
+		}
+
         public string expansions;
         public string prefix;
     }
@@ -96,10 +110,16 @@ namespace ABothe
     public class VDServer : IVDServer
     {
         private ParseCacheList _parseCacheList;
-        private ParseCache _parseCache;
-        private CodeLocation _tipStart, _tipEnd;
+        private ParseCache     _parseCache;
+        private CodeLocation   _tipStart, _tipEnd;
         private string _tipText;
         private string _expansions;
+		private string _imports;
+		private string _stringImports;
+		private string _versionIds;
+		private string _debugIds;
+		private uint   _flags;
+		EditorData _editorData = new EditorData();
 
         public Dictionary<string, IAbstractSyntaxTree> _modules = new Dictionary<string, IAbstractSyntaxTree>();
         public Dictionary<string, string> _sources = new Dictionary<string, string>();
@@ -114,7 +134,19 @@ namespace ABothe
         }
 
         public void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags)
-        {
+		{
+			if (_imports != imp) 
+			{
+				var impDirs = imp.Split('\n');
+				if(_parseCache.UpdateRequired(impDirs))
+					_parseCache.BeginParse(impDirs, "");
+			}
+			_imports = imp;
+			_stringImports = stringImp;
+			_versionIds = versionids;
+			_debugIds = debugids;
+			_flags = flags;
+			_setupEditorData();
             //MessageBox.Show("ConfigureSemanticProject()");
             //throw new NotImplementedException();
         }
@@ -125,17 +157,25 @@ namespace ABothe
         }
         public void UpdateModule(string filename, string srcText, bool verbose)
         {
+			IAbstractSyntaxTree ast;
             try
             {
-                IAbstractSyntaxTree ast = DParser.ParseString(srcText, false);
-                //_parseCache.AddOrUpdate(ast);
-                _modules[filename] = ast;
-                _sources[filename] = srcText;
+                ast = DParser.ParseString(srcText, false);
             }
-            catch(Exception)
+            catch(Exception ex)
             {
+				ast = new DModule{ ParseErrors = new System.Collections.ObjectModel.ReadOnlyCollection<ParserError>(
+						new List<ParserError>{
+						new ParserError(false, ex.Message + "\n\n" + ex.StackTrace, DTokens.Invariant, CodeLocation.Empty)
+					}) }; //WTF
             }
-            //MessageBox.Show("UpdateModule(" + filename + ")");
+			if(string.IsNullOrEmpty(ast.ModuleName))
+				ast.ModuleName = Path.GetFileNameWithoutExtension(filename);
+			ast.FileName = filename;
+			_parseCache.AddOrUpdate(ast);
+			_modules[filename] = ast;
+			_sources[filename] = srcText;
+			//MessageBox.Show("UpdateModule(" + filename + ")");
             //throw new NotImplementedException();
         }
         static int getCodeOffset(string s, CodeLocation loc)
@@ -157,13 +197,11 @@ namespace ABothe
             _tipEnd = new CodeLocation(startIndex + 2, startLine);
             _tipText = "";
 
-            EditorData editorData = new EditorData();
-            editorData.CaretLocation = _tipStart;
-            editorData.SyntaxTree = ast as DModule;
-            editorData.ModuleCode = _sources[filename];
-			editorData.ParseCache = _parseCacheList;
-            editorData.CaretOffset = getCodeOffset(editorData.ModuleCode, _tipStart);
-            AbstractTooltipContent[] content = AbstractTooltipProvider.BuildToolTip(editorData);
+            _editorData.CaretLocation = _tipStart;
+            _editorData.SyntaxTree = ast as DModule;
+            _editorData.ModuleCode = _sources[filename];
+            _editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart);
+            AbstractTooltipContent[] content = AbstractTooltipProvider.BuildToolTip(_editorData);
             if(content == null || content.Length == 0)
                 _tipText = "";
             else
@@ -190,17 +228,16 @@ namespace ABothe
                 throw new COMException("module not found", 1);
 
             CodeLocation loc = new CodeLocation((int)idx + 1, (int) line);
-            EditorData editorData = new EditorData();
-            editorData.CaretLocation = loc;
-            editorData.SyntaxTree = ast as DModule;
-            editorData.ModuleCode = _sources[filename];
-            editorData.CaretOffset = getCodeOffset(editorData.ModuleCode, loc);
-			editorData.ParseCache = _parseCacheList;
-            VDServerCompletionDataGenerator cdgen = new VDServerCompletionDataGenerator(tok);
-            AbstractCompletionProvider provider = AbstractCompletionProvider.BuildCompletionData(cdgen, editorData, tok);
+            
+            _editorData.CaretLocation = loc;
+            _editorData.SyntaxTree = ast as DModule;
+            _editorData.ModuleCode = _sources[filename];
+            _editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
+
+			VDServerCompletionDataGenerator cdgen = new VDServerCompletionDataGenerator(tok);
+            AbstractCompletionProvider provider = AbstractCompletionProvider.BuildCompletionData(cdgen, _editorData, null); //tok
+
             _expansions = cdgen.expansions;
-            //MessageBox.Show("GetSemanticExpansions()");
-            //throw new NotImplementedException();
         }
         public void GetSemanticExpansionsResult(out string stringList)
         {
@@ -245,7 +282,7 @@ namespace ABothe
         public void GetLastMessage(out string message)
         {
             //MessageBox.Show("GetLastMessage()");
-            message = "";
+			message = "__no_message__"; // avoid throwing exception
             //throw new COMException("No Message", 1);
         }
 		public void GetDefinition(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex)
@@ -259,6 +296,38 @@ namespace ABothe
 			endLine = _tipEnd.Line;
 			endIndex = _tipEnd.Column - 1;
 			filename = "";
+		}
+
+		///////////////////////////////////
+		void _setupEditorData()
+		{
+			string versions = _versionIds;
+			versions += "Windows\n" + "LittleEndian\n";
+			if ((_flags & 1) != 0)
+				versions += "unittest\n";
+			if ((_flags & 3) != 0)
+				versions += "assert\n";
+			if ((_flags & 4) != 0)
+				versions += "Win64\n" + "X86_64\n" + "D_InlineAsm_X86_64\n" + "D_LP64\n";
+			else
+				versions += "Win32\n" + "X86\n" + "D_InlineAsm_X86\n";
+			if ((_flags & 8) != 0)
+				versions += "D_Coverage\n";
+			if ((_flags & 16) != 0)
+				versions += "D_Ddoc\n";
+			if ((_flags & 32) != 0)
+				versions += "D_NoBoundsChecks\n";
+			if ((_flags & 64) != 0)
+				versions += "GNU\n";
+			else
+				versions += "DigitalMars\n";
+				
+			_editorData.ParseCache = _parseCacheList;
+			_editorData.IsDebug = (_flags & 2) != 0;
+			_editorData.DebugLevel = (int)(_flags >> 16) & 0xff;
+			_editorData.VersionNumber = (int)(_flags >> 8) & 0xff;
+			_editorData.GlobalVersionIds = versions.Split('\n');
+			_editorData.GlobalDebugIds = _debugIds.Split('\n');
 		}
 	}
 }
