@@ -143,7 +143,7 @@ int main(string[] argv)
   int skipargs;
   string depsfile;
   bool doDemangle = true;
-  bool gdcMode = true;
+  bool gdcMode = false;
   if(argv.length >= 2 && argv[1] == "-nodemangle")
   {
     doDemangle = false;
@@ -157,7 +157,7 @@ int main(string[] argv)
   if(argv.length > skipargs + 2 && argv[skipargs + 1] == "-deps")
     depsfile = argv[skipargs += 2];
   
-  string command; // = "gdc";
+  string command; //= "gdc";
   for(int i = skipargs + 1;i < argv.length; i++)
   {
     if(command.length > 0)
@@ -286,14 +286,17 @@ int main(string[] argv)
                 if(startIndex >= 0 && startIndex < endIndex)
                 {
                     auto symbolName = output[startIndex+1..endIndex];
-                    if(symbolName.length > 2 && symbolName[1] == 'D')
+                    if(symbolName.length > 2 && symbolName[0] == '_' && symbolName[1] == 'D')
                     {
-                        symbolName = demangle(symbolName);
-                        fwrite(output.ptr, endIndex, 1, stdout);
-                        writepos = endIndex;
-                        fwrite(" (".ptr, 2, 1, stdout);
-                        fwrite(symbolName.ptr, symbolName.length, 1, stdout);
-                        fwrite(")".ptr, 1, 1, stdout);
+                        auto demangeledSymbolName = demangle(symbolName);
+						if(demangeledSymbolName != symbolName)
+						{
+							fwrite(output.ptr, endIndex+1, 1, stdout);
+							writepos = endIndex+1;
+							fwrite(" (".ptr, 2, 1, stdout);
+							fwrite(demangeledSymbolName.ptr, demangeledSymbolName.length, 1, stdout);
+							fwrite(")".ptr, 1, 1, stdout);
+						}
                     }
                 }
             }
@@ -352,10 +355,10 @@ int main(string[] argv)
                   }
                 }
               }
-          if(writepos < output.length)
-            fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
-          fputc('\n', stdout);
         }
+        if(writepos < output.length)
+          fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
+        fputc('\n', stdout);
       }
     }
     else
