@@ -289,14 +289,14 @@ int main(string[] argv)
                     if(symbolName.length > 2 && symbolName[0] == '_' && symbolName[1] == 'D')
                     {
                         auto demangeledSymbolName = demangle(symbolName);
-						if(demangeledSymbolName != symbolName)
-						{
-							fwrite(output.ptr, endIndex+1, 1, stdout);
-							writepos = endIndex+1;
-							fwrite(" (".ptr, 2, 1, stdout);
-							fwrite(demangeledSymbolName.ptr, demangeledSymbolName.length, 1, stdout);
-							fwrite(")".ptr, 1, 1, stdout);
-						}
+                        if(demangeledSymbolName != symbolName)
+                        {
+                            fwrite(output.ptr, endIndex+1, 1, stdout);
+                            writepos = endIndex+1;
+                            fwrite(" (".ptr, 2, 1, stdout);
+                            fwrite(demangeledSymbolName.ptr, demangeledSymbolName.length, 1, stdout);
+                            fwrite(")".ptr, 1, 1, stdout);
+                        }
                     }
                 }
             }
