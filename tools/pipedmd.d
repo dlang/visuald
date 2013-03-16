@@ -134,24 +134,30 @@ int main(string[] argv)
 {
   if(argv.length < 2)
   {
-    printf("pipedmd V0.1, written 2012 by Benjamin Thaut, complications improved by Rainer Schuetze\n");
-    printf("decompresses and demangles names in OPTLINK messages\n");
+    printf("pipedmd V0.2, written 2012 by Benjamin Thaut, complications improved by Rainer Schuetze\n");
+    printf("decompresses and demangles names in OPTLINK and ld messages\n");
     printf("\n");
-    printf("usage: %s [-nodemangle] [-deps depfile] [executable] [arguments]\n", argv[0].ptr);
+    printf("usage: %s [-nodemangle] [-gdcmode] [-deps depfile] [executable] [arguments]\n", argv[0].ptr);
     return -1;
   }
   int skipargs;
   string depsfile;
   bool doDemangle = true;
+  bool gdcMode = true;
   if(argv.length >= 2 && argv[1] == "-nodemangle")
   {
     doDemangle = false;
     skipargs = 1;
   }
+  if(argv.length >= skipargs + 2 && argv[skipargs + 1] == "-gdcmode")
+  {
+    gdcMode = true;
+    skipargs++;
+  }
   if(argv.length > skipargs + 2 && argv[skipargs + 1] == "-deps")
     depsfile = argv[skipargs += 2];
   
-  string command; // = "dmd";
+  string command; // = "gdc";
   for(int i = skipargs + 1;i < argv.length; i++)
   {
     if(command.length > 0)
@@ -236,7 +242,7 @@ int main(string[] argv)
   DWORD bytesRead = 0;
   DWORD bytesAvaiable = 0;
   DWORD exitCode = 0;
-  bool optlinkFound = false;
+  bool linkerFound = gdcMode;
 
   while(true)
   {
@@ -266,65 +272,91 @@ int main(string[] argv)
       char[] output = buffer[skip..bytesRead];
       size_t writepos = 0;
 
-      if(output.startsWith("OPTLINK (R)"))
-        optlinkFound = true;
+      if(!linkerFound && output.startsWith("OPTLINK (R)"))
+        linkerFound = true;
 
-      if(doDemangle && optlinkFound)
-        for(int p = 0; p < output.length; p++)
-          if(isIdentifierChar(output[p]))
-          {
-            int q = p;
-            while(p < output.length && isIdentifierChar(output[p]))
-              p++;
-
-            auto symbolName = output[q..p];
-            size_t pos = 0;
-            const(char)[] realSymbolName = decodeDmdString(symbolName, pos);
-            if(pos != p - q)
+      if(doDemangle && linkerFound)
+      {
+        if(gdcMode)
+        {
+            if(output.countUntil("undefined reference to") >= 0 || output.countUntil("In function") >= 0)
             {
-                // could not decode, might contain UTF8 elements, so try translating to the current code page
-                // (demangling will not work anyway)
-                try
+                auto startIndex = output.lastIndexOf('`');
+                auto endIndex = output.lastIndexOf('\'');
+                if(startIndex >= 0 && startIndex < endIndex)
                 {
-                  auto szName = toMBSz(symbolName, cp);
-                  auto plen = strlen(szName);
-                  realSymbolName = szName[0..plen];
-                  pos = p - q;
-                }
-                catch(Exception)
-                {
+                    auto symbolName = output[startIndex+1..endIndex];
+                    if(symbolName.length > 2 && symbolName[1] == 'D')
+                    {
+                        symbolName = demangle(symbolName);
+                        fwrite(output.ptr, endIndex, 1, stdout);
+                        writepos = endIndex;
+                        fwrite(" (".ptr, 2, 1, stdout);
+                        fwrite(symbolName.ptr, symbolName.length, 1, stdout);
+                        fwrite(")".ptr, 1, 1, stdout);
+                    }
                 }
             }
-            if(pos == p - q)
-            {
-              if(realSymbolName != symbolName)
+        }
+        else
+        {
+            for(int p = 0; p < output.length; p++)
+              if(isIdentifierChar(output[p]))
               {
-                // not sure if output is UTF8 encoded, so avoid any translation
-                if(q > writepos)
-                  fwrite(output.ptr + writepos, q - writepos, 1, stdout);
-                fwrite(realSymbolName.ptr, realSymbolName.length, 1, stdout);
-                writepos = p;
-              }
-              while(realSymbolName.length > 1 && realSymbolName[0] == '_')
-                  realSymbolName = realSymbolName[1..$];
-              if(realSymbolName.length > 2 && realSymbolName[0] == 'D' && isDigit(realSymbolName[1]))
-              {
-                symbolName = demangle(realSymbolName);
-                if(realSymbolName != symbolName)
+                int q = p;
+                while(p < output.length && isIdentifierChar(output[p]))
+                  p++;
+
+                auto symbolName = output[q..p];
+                size_t pos = 0;
+                const(char)[] realSymbolName = decodeDmdString(symbolName, pos);
+                if(pos != p - q)
                 {
-                  if(p > writepos)
-                    fwrite(output.ptr + writepos, p - writepos, 1, stdout);
-                  writepos = p;
-                  fwrite(" (".ptr, 2, 1, stdout);
-                  fwrite(symbolName.ptr, symbolName.length, 1, stdout);
-                  fwrite(")".ptr, 1, 1, stdout);
+                    // could not decode, might contain UTF8 elements, so try translating to the current code page
+                    // (demangling will not work anyway)
+                    try
+                    {
+                      auto szName = toMBSz(symbolName, cp);
+                      auto plen = strlen(szName);
+                      realSymbolName = szName[0..plen];
+                      pos = p - q;
+                    }
+                    catch(Exception)
+                    {
+                    }
+                }
+                if(pos == p - q)
+                {
+                  if(realSymbolName != symbolName)
+                  {
+                    // not sure if output is UTF8 encoded, so avoid any translation
+                    if(q > writepos)
+                      fwrite(output.ptr + writepos, q - writepos, 1, stdout);
+                    fwrite(realSymbolName.ptr, realSymbolName.length, 1, stdout);
+                    writepos = p;
+                  }
+                  while(realSymbolName.length > 1 && realSymbolName[0] == '_')
+                      realSymbolName = realSymbolName[1..$];
+                  if(realSymbolName.length > 2 && realSymbolName[0] == 'D' && isDigit(realSymbolName[1]))
+                  {
+                    symbolName = demangle(realSymbolName);
+                    if(realSymbolName != symbolName)
+                    {
+                      if(p > writepos)
+                        fwrite(output.ptr + writepos, p - writepos, 1, stdout);
+                      writepos = p;
+                      fwrite(" (".ptr, 2, 1, stdout);
+                      fwrite(symbolName.ptr, symbolName.length, 1, stdout);
+                      fwrite(")".ptr, 1, 1, stdout);
+                    }
+                  }
                 }
               }
-            }
-          }
-      if(writepos < output.length)
-        fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
-      fputc('\n', stdout);
+          if(writepos < output.length)
+            fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
+          fputc('\n', stdout);
+        }
+      }
     }
     else
     {
@@ -353,42 +385,42 @@ extern(Windows) BOOL
 WriteProcessMemory(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T * lpNumberOfBytesWritten);
 extern(Windows) HANDLE
 CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
-				   LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+                   LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
 
 void InjectDLL(HANDLE hProcess, string depsfile)
 {
-	HANDLE hThread, hRemoteModule;
+    HANDLE hThread, hRemoteModule;
 
-	HMODULE appmod = GetModuleHandleA(null);
-	wchar[] wmodname = new wchar[260];
-	DWORD len = GetModuleFileNameW(appmod, wmodname.ptr, wmodname.length);
-	if(len > wmodname.length)
-	{
-		wmodname = new wchar[len + 1];
-		GetModuleFileNameW(null, wmodname.ptr, len + 1);
-	}
-	string modpath = to!string(wmodname);
-	string dll = buildPath(std.path.dirName(modpath), "filemonitor.dll");
-	// copy path to other process
-	auto wdll = to!wstring(dll) ~ cast(wchar)0;
-	auto wdllRemote = VirtualAllocEx(hProcess, null, wdll.length * 2, MEM_COMMIT, PAGE_READWRITE);
-	WriteProcessMemory(hProcess, wdllRemote, wdll.ptr, wdll.length * 2, null);
+    HMODULE appmod = GetModuleHandleA(null);
+    wchar[] wmodname = new wchar[260];
+    DWORD len = GetModuleFileNameW(appmod, wmodname.ptr, wmodname.length);
+    if(len > wmodname.length)
+    {
+        wmodname = new wchar[len + 1];
+        GetModuleFileNameW(null, wmodname.ptr, len + 1);
+    }
+    string modpath = to!string(wmodname);
+    string dll = buildPath(std.path.dirName(modpath), "filemonitor.dll");
+    // copy path to other process
+    auto wdll = to!wstring(dll) ~ cast(wchar)0;
+    auto wdllRemote = VirtualAllocEx(hProcess, null, wdll.length * 2, MEM_COMMIT, PAGE_READWRITE);
+    WriteProcessMemory(hProcess, wdllRemote, wdll.ptr, wdll.length * 2, null);
 
-	// load dll into other process, assuming LoadLibraryW is at the same address in all processes
-	HMODULE mod = GetModuleHandleA("Kernel32");
-	auto proc = GetProcAddress(mod, "LoadLibraryW");
-	hThread = CreateRemoteThread(hProcess, null, 0, cast(LPTHREAD_START_ROUTINE)proc, wdllRemote, 0, null);
-	WaitForSingleObject(hThread, INFINITE);
+    // load dll into other process, assuming LoadLibraryW is at the same address in all processes
+    HMODULE mod = GetModuleHandleA("Kernel32");
+    auto proc = GetProcAddress(mod, "LoadLibraryW");
+    hThread = CreateRemoteThread(hProcess, null, 0, cast(LPTHREAD_START_ROUTINE)proc, wdllRemote, 0, null);
+    WaitForSingleObject(hThread, INFINITE);
 
-	// Get handle of the loaded module
-	GetExitCodeThread(hThread, cast(DWORD*) &hRemoteModule);
+    // Get handle of the loaded module
+    GetExitCodeThread(hThread, cast(DWORD*) &hRemoteModule);
 
-	// Clean up
-	CloseHandle(hThread);
-	VirtualFreeEx(hProcess, wdllRemote, wdll.length * 2, MEM_RELEASE);
+    // Clean up
+    CloseHandle(hThread);
+    VirtualFreeEx(hProcess, wdllRemote, wdll.length * 2, MEM_RELEASE);
 
-	void* pDumpFile = cast(char*)hRemoteModule + 0x3000; // offset taken from map file
-	auto szDepsFile = toMBSz(depsfile);
-	WriteProcessMemory(hProcess, pDumpFile, szDepsFile, strlen(szDepsFile) + 1, null);
+    void* pDumpFile = cast(char*)hRemoteModule + 0x3000; // offset taken from map file
+    auto szDepsFile = toMBSz(depsfile);
+    WriteProcessMemory(hProcess, pDumpFile, szDepsFile, strlen(szDepsFile) + 1, null);
 }
 
