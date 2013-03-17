@@ -805,15 +805,20 @@ int main(string[] argv)
 }
 
 ///////////////////////////////////////////////////////////////
-extern(C) void D3c2d5cpp2d12__unittest48FZv();
-extern extern(C) __gshared ModuleInfo D3c2d5cpp2d12__ModuleInfoZ;
+version(unittest)
+{
+//extern(C) void D3c2d3ast17__unittestL3053_1FZv();
+//extern extern(C) __gshared ModuleInfo D3c2d5cpp2d12__ModuleInfoZ;
 
 unittest
 {
-	ModuleInfo* info = &D3c2d5cpp2d12__ModuleInfoZ;
-	if(auto test = info.unitTest())
-		test();
-	void* p = cast(void*) &D3c2d5cpp2d12__unittest48FZv;
+	cpp2d_test();
+
+	//ModuleInfo* info = &D3c2d5cpp2d12__ModuleInfoZ;
+	//if(auto test = info.unitTest())
+	//    test();
+	//void* p = cast(void*) &D3c2d3ast17__unittestL3053_1FZv;
+}
 }
 
 ///////////////////////////////////////////////////////////////

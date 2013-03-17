@@ -949,6 +949,10 @@ void expandPPdefines(TokenList srctokens, TokenList[string] defines, MixinMode m
 
 			if(TokenList* list = tokIt[1].text in defines)
 			{
+				// remove trailing comments
+				while((defList.end()-1).text.empty())
+					(defList.end()-1).erase();
+
 				*list = defList;
 				if(mixinMode != MixinMode.ExpandDefine)
 				{
@@ -962,6 +966,33 @@ void expandPPdefines(TokenList srctokens, TokenList[string] defines, MixinMode m
 					it.pretext = pretext ~ it.pretext;
 					continue;
 				}
+			}
+			else
+			{
+				// expand content of define
+				tokIt = tokIt + 2;
+				if(tokIt.text == "(" && tokIt.pretext == "")
+					advanceToClosingBracket(tokIt);
+				bool changed = false;
+				while(!tokIt.atEnd())
+				{
+					if(tokIt.type == Token.Identifier)
+						if(TokenList* list = tokIt.text in defines)
+						{
+							if(*list !is null)
+							{
+								if(mixinMode != MixinMode.ExpandDefine)
+									invokeMixin(tokIt, mixinMode);
+								else
+									expandDefine(tokIt, *list, null);
+								changed = true;
+								continue;
+							}
+						}
+					tokIt.advance();
+				}
+				if(changed)
+					it.text = tokenListToString(defList) ~ "\n";
 			}
 		}
 		else if(it.type == Token.PPundef)

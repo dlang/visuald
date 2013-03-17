@@ -206,7 +206,7 @@ class RegKey
 		if(!key && registryRoot.length)
 		{
 			registryDump ~= registryName(name) ~ "=qword:"w;
-			registryDump ~= to!wstring(value, 16) ~ "\n";
+			registryDump ~= to!wstring(to!string(value, 16) ~ "\n");
 			return;
 		}
 		if(!key)

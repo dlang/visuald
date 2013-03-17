@@ -1784,6 +1784,7 @@ class Statement : AST
 			checkToken(tokIt, Token.ParenL);
 			Expression expr = Expression.parseFullExpression(tokIt);
 			checkToken(tokIt, Token.ParenR);
+			checkToken(tokIt, Token.Semicolon);
 			stmt = new Statement(type, bodystmt, expr);
 			break;
 

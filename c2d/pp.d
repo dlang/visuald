@@ -16,6 +16,7 @@ import c2d.tokutil;
 import std.string;
 import std.conv;
 import std.ascii;
+import std.array;
 
 class ConditionalCode
 {
@@ -904,7 +905,7 @@ class PP
 	}
 
 
-	void convertDefinesToEnums(TokenList tokenList)
+	static void convertDefinesToEnums(TokenList tokenList)
 	{
 		for(TokenIterator tokIt = tokenList.begin(); !tokIt.atEnd(); ++tokIt)
 			if(tokIt.type == Token.PPdefine)
@@ -1100,6 +1101,7 @@ string convertDefineToEnum(string deftext, string function(string) fixNumber)
 				if(ret.length && text.length && (isAlphaNum(text[0]) || text[0] == '_'))
 					ret ~= " ";
 
+				text = text.replace("\\\n", "\n");
 				text = "template< " ~ types ~ " > " 
 					~ rettype ~ " " ~ ident ~ "(" ~ args ~") { " ~ ret ~ text ~ "; }" ~ posttext;
 				return text;

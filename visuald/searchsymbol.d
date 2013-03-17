@@ -2068,8 +2068,8 @@ class SolutionItemIndex //: IUnknown
 						f = s[solutiondir.length .. $];
 					//makeRelative(s, solutiondir);
 					
-					if(!sd.matchNames(f, "", ""))
-							return false;
+					if(!sd.matchNames(f, "", "", ""))
+						return false;
 					if(f == s)
 						f = "";
 					

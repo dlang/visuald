@@ -478,7 +478,7 @@ class ValueT(T) : Value
 	{
 		static Type instance;
 		if(!instance)
-			instance = BasicType.createType(BasicTypeTokens[getTypeIndex()]);
+			instance = createBasicType(BasicTypeTokens[getTypeIndex()]);
 		return instance;
 	}
 	
@@ -1376,7 +1376,7 @@ class StringValue : Value
 		// TODO: implementation here just to satisfy string -> C const char* conversion
 		PointerValue pv = new PointerValue;
 		pv.type = new TypePointer;
-		pv.type.addMember(BasicType.createType(TOK_char));
+		pv.type.addMember(createBasicType(TOK_char));
 		pv.pval = this;
 		debug pv.sval = pv.toStr();
 		return pv;

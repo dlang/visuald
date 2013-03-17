@@ -105,7 +105,6 @@ RCC    = $(WINSDK)\bin\rc.exe
 # for Windows SDK 8
 # RCC    = $(WINSDK)\bin\x86\rc.exe
 
-LIB = ..\sdk\lib
 OPTLINKS = /SCANLIB
 
 DBG_VSI_LIB = $(DBGDIR)/vsi.lib 
@@ -114,13 +113,21 @@ REL_VSI_LIB = $(RELDIR)/vsi.lib
 C2D_LIB = c2d_vd.lib 
 STDEXT_LIB = stdext.lib 
 
+FMT = OMF
+!IF "$(FMT)" == "COFF"
+DFLAGS = -d -I.. -J.. -Jresources -m32ms -L/DLL -L/LARGEADDRESSAWARE -op -defaultlib=druntime32,phobos
+LIB = $(WINSDK)\lib
+!ELSE
 DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL
+LIB = ..\sdk\lib
+!ENDIF
+
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 RELFLAGS = -release -O -inline -noboundscheck
 RELDBG = -g
 
-LIBS = phobos.lib ..\sdk\lib\comctl32.lib uuid.lib advapi32.lib comdlg32.lib \
-	ole32.lib ..\sdk\lib\oleaut32.lib user32.lib shell32.lib gdi32.lib
+LIBS = phobos.lib "$(LIB)\comctl32.lib" uuid.lib advapi32.lib comdlg32.lib \
+	ole32.lib "$(LIB)\oleaut32.lib" user32.lib shell32.lib gdi32.lib
 
 DEPS = Makefile ..\VERSION $(DMD2)
 
@@ -134,7 +141,11 @@ exe:     $(DBGDIR)\$(PROJECT).exe
 ######################
 # dll
 $(DBGDIR)\$(PROJECT).dll : $(DBGDIR)\$(PROJECT)_cv.dll
-	"$(CV2PDB)" -D2.043 $? $@
+!IF "$(FMT)" == "COFF"
+	copy $@_cv $@
+!ELSE
+	"$(CV2PDB)" $? $@
+!ENDIF
 
 $(DBGDIR)\vdc.lib : $(VDC_SRC) Makefile
 	"$(DMD2)" -of$@ -lib -g $(DFLAGS) @<<
@@ -158,9 +169,13 @@ $(DBGDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(DBGRES) $(DBG_VSI_LIB) $(DBGDIR)\v
 <<NOKEEP
 
 $(DBGDIR)\vdserver.exe : ..\vdc\vdserverfactory.d $(DBGDIR)\$(STDEXT_LIB) $(DBGDIR)\vdc.lib $(DBG_VSI_LIB) $(DBGDIR)\vdserver.res Makefile
-	"$(DMD2)" -of$@_cv -g $(DFLAGS) $(DBGDIR)\vdc.lib ..\vdc\vdserverfactory.d $(DBGDIR)\vdserver.res $(DBGDIR)\$(STDEXT_LIB) $(DBG_VSI_LIB) ole32.lib oleaut32.lib -L/SUBSYSTEM:WINDOWS
+	"$(DMD2)" -of$@_cv -g $(DFLAGS) $(DBGDIR)\vdc.lib ..\vdc\vdserverfactory.d $(DBGDIR)\vdserver.res $(DBGDIR)\$(STDEXT_LIB) $(DBG_VSI_LIB) ole32.lib oleaut32.lib user32.lib -L/SUBSYSTEM:WINDOWS
+!IF "$(FMT)" == "COFF"
+	copy $@_cv $@
+!ELSE
 	"$(CV2PDB)" $@_cv $@
 	if exist $(LARGEADR) $(LARGEADR) $@
+!ENDIF
 
 $(DBGDIR)\cpp2d.exe : $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEXT_LIB) Makefile
 	"$(DMD2)" -of$@ -g $(DFLAGS) $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEXT_LIB)
@@ -169,8 +184,10 @@ $(DBGDIR)\cpp2d.exe : $(DBGDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(DBGDIR)\$(STDEX
 $(RELDIR)\$(PROJECT).dll : $(RELDIR)\$(PROJECT)_cv.dll
 !IF "$(RELDBG)" == ""
 	copy $? $@
+!ELSEIF "$(FMT)" == "COFF"
+	copy $? $@
 !ELSE
-	"$(CV2PDB)" -D2.043 $? $@
+	"$(CV2PDB)" $? $@
 !ENDIF
 
 $(RELDIR)\vdc.lib : $(VDC_SRC) Makefile
@@ -195,13 +212,17 @@ $(RELDIR)\$(PROJECT)_cv.dll : $(SRC) $(DEF) $(RELRES) $(REL_VSI_LIB) $(RELDIR)\v
 <<NOKEEP
 
 $(RELDIR)\vdserver.exe : ..\vdc\vdserverfactory.d $(RELDIR)\$(STDEXT_LIB) $(REL_VSI_LIB) $(RELDIR)\vdc.lib $(RELDIR)\vdserver.res Makefile
-	"$(DMD2)" -of$@_cv $(RELDBG) $(RELFLAGS) $(DFLAGS) $(RELDIR)\vdc.lib ..\vdc\vdserverfactory.d $(RELDIR)\vdserver.res $(REL_VSI_LIB) $(RELDIR)\$(STDEXT_LIB) ole32.lib oleaut32.lib -L/SUBSYSTEM:WINDOWS
+	"$(DMD2)" -of$@_cv $(RELDBG) $(RELFLAGS) $(DFLAGS) $(RELDIR)\vdc.lib ..\vdc\vdserverfactory.d $(RELDIR)\vdserver.res $(REL_VSI_LIB) $(RELDIR)\$(STDEXT_LIB) ole32.lib oleaut32.lib user32.lib -L/SUBSYSTEM:WINDOWS
 !IF "$(RELDBG)" == ""
+	copy $@_cv $@
+!ELSEIF "$(FMT)" == "COFF"
 	copy $@_cv $@
 !ELSE
 	"$(CV2PDB)" $@_cv $@
 !ENDIF
+!IF "$(FMT)" != "COFF"
 	if exist $(LARGEADR) $(LARGEADR) $@
+!ENDIF
 
 $(RELDIR)\cpp2d.exe : $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(RELDIR)\$(STDEXT_LIB) Makefile
 	"$(DMD2)" -of$@ $(RELFLAGS) $(DFLAGS) $(RELDIR)\$(C2D_LIB) ..\c2d\cpp2d_main.d $(RELDIR)\$(STDEXT_LIB)

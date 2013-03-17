@@ -82,7 +82,7 @@ class DComObject : ComObject
 		__gshared LONG sCountReferenced;
 		debug(COM_ADDREL) __gshared int[LONG] sReferencedObjects;
 		enum size_t WEAK_PTR_XOR = 0x80000000;
-        alias AssociativeArray!(LONG, int) _wa1; // fully instantiate type info
+		alias AssociativeArray!(LONG, int) _wa1; // fully instantiate type info
 
 	}
 

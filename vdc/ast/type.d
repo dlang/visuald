@@ -229,6 +229,14 @@ class ErrorType : Type
 	}
 }
 
+// moved out of BasicType due to BUG9672
+Type createBasicType(int tokid)
+{
+	BasicType type = new BasicType;
+	type.id = tokid;
+	return type;
+}
+
 //BasicType only created for standard types associated with tokens
 class BasicType : Type
 {
@@ -236,13 +244,6 @@ class BasicType : Type
 	
 	override bool propertyNeedsParens() const { return false; }
 	
-	static Type createType(int tokid)
-	{
-		BasicType type = new BasicType;
-		type.id = tokid;
-		return type;
-	}
-
 	static Type getSizeType()
 	{
 		return getType(TOK_uint); // TOK_ulong if compiling for 64-bit
@@ -254,7 +255,7 @@ class BasicType : Type
 		if(tokid >= cachedTypes.length)
 			cachedTypes.length = tokid + 1;
 		if(!cachedTypes[tokid])
-			cachedTypes[tokid] = createType(tokid);
+			cachedTypes[tokid] = createBasicType(tokid);
 		return cachedTypes[tokid];
 	}
 
@@ -824,7 +825,7 @@ class LengthProperty : Symbol
 	override Type calcType()
 	{
 		if(!type)
-			type = BasicType.createType(TOK_uint);
+			type = createBasicType(TOK_uint);
 		return type;
 	}
 

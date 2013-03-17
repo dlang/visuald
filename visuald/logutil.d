@@ -796,16 +796,16 @@ string _getLogReturn(string func, string type)
 }
 
 const string nl = " "; // "\n";
-const string FuncNameMix = "struct __FUNCTION {} static const string __FUNCTION__ = _getJustName(__FUNCTION.mangleof);" ~ nl;
+const string FuncNameMix = "struct __FUNCTION {} static const string _FUNCTION_ = _getJustName(__FUNCTION.mangleof);" ~ nl;
 const string _hasThisMix = "static const bool hasThis = true;" ~ nl;
 
-const string _LogCallMix = "static const string __LOGCALL__ = _getLogCall(__FUNCTION__, typeof(&mixin(__FUNCTION__)).stringof, hasThis, 0);" ~ nl;
-const string _LogReturnMix = "static const string __LOGRETURN__ = _getLogReturn(__FUNCTION__, typeof(&mixin(__FUNCTION__)).stringof);" ~ nl;
+const string _LogCallMix = "static const string __LOGCALL__ = _getLogCall(_FUNCTION_, typeof(&mixin(_FUNCTION_)).stringof, hasThis, 0);" ~ nl;
+const string _LogReturnMix = "static const string __LOGRETURN__ = _getLogReturn(_FUNCTION_, typeof(&mixin(_FUNCTION_)).stringof);" ~ nl;
 
 const string _getEBP = "byte* _ebp; asm { mov _ebp,EBP; } _ebp = _ebp + 8;" ~ nl;
-const string _LogCallArgType = "static const string __ARGTYPES__ = \"alias ParameterTypeTuple!(\" ~ __FUNCTION__ ~ \") _argtypes;\";" ~ nl;
+const string _LogCallArgType = "static const string __ARGTYPES__ = \"alias ParameterTypeTuple!(\" ~ _FUNCTION_ ~ \") _argtypes;\";" ~ nl;
 const string _LogCallArgOff  = "static int _argoff(int n) { int off = 0; foreach(i, T; _argtypes) if(i < n) off += T.sizeof; return off; }" ~ nl;
-const string _LogCallMix2 = "static const string __LOGCALL__ = _getLogCall(__FUNCTION__, typeof(&mixin(__FUNCTION__)).stringof, hasThis, 1);" ~ nl;
+const string _LogCallMix2 = "static const string __LOGCALL__ = _getLogCall(_FUNCTION_, typeof(&mixin(_FUNCTION_)).stringof, hasThis, 1);" ~ nl;
 
 const string _LogIndent = "logIndent(1); scope(exit) { " ~ "mixin(__LOGRETURN__);" ~ "logIndent(-1); }" ~ nl;
 const string _LogIndentNoRet = "logIndent(1); scope(exit) logIndent(-1);" ~ nl;
@@ -824,9 +824,9 @@ const string LogCallMixNoRet = "";
 void test(int a0, Object o)
 {
     mixin(FuncNameMix);
-    pragma(msg, __FUNCTION__); // shows "test"    
-    pragma(msg,typeof(&mixin(__FUNCTION__)).stringof); // shows "void function(int a0, Object o)"
-    pragma(msg,_getLogCall(__FUNCTION__, typeof(&mixin(__FUNCTION__)).stringof, false)); // shows "void function(int a0, Object o)"
+    pragma(msg, _FUNCTION_); // shows "test"    
+    pragma(msg,typeof(&mixin(_FUNCTION_)).stringof); // shows "void function(int a0, Object o)"
+    pragma(msg,_getLogCall(_FUNCTION_, typeof(&mixin(_FUNCTION_)).stringof, false)); // shows "void function(int a0, Object o)"
 }
 +/
 
@@ -834,11 +834,11 @@ void test(int a0, Object o)
 template tLogCall(alias s)
 {
 	struct __STRUCT {};
-	static const string __FUNCTION__ = _getJustName(__STRUCT.mangleof);
+	static const string _FUNCTION_ = _getJustName(__STRUCT.mangleof);
 
 	//pragma(msg, s.mangleof); // shows "test"    
 	pragma(msg, __STRUCT.mangleof); // shows "test"    
-	pragma(msg, __FUNCTION__); // shows "test"    
+	pragma(msg, _FUNCTION_); // shows "test"    
 	alias ParameterTypeTuple!(test2) types;
 
 	void* pthis = cast(void*)this;

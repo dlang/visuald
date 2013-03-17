@@ -2019,7 +2019,10 @@ class ProfileItemIndex
 				{
 					int pos = std.string.indexOf(buf, "Timer Is");
 					if(pos > 0)
-						mTicksPerSec = parse!long(buf[pos + 9 .. $]);
+					{
+						char[] txt = buf[pos + 9 .. $];
+						mTicksPerSec = parse!long(txt);
+					}
 					break;
 				}
 				else if(curItem)

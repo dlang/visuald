@@ -272,6 +272,8 @@ class Declarations
 			int line, idx;
 			int hr = textView.GetCaretPos(&line, &idx);
 
+			src.ensureCurrentTextParsed(); // pass new text before expansion request
+
 			auto langsvc = Package.GetLanguageService();
 			mPendingSource = src;
 			mPendingView = textView;
@@ -428,6 +430,8 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 			return S_OK;
 		if(queryInterface!(IVsCompletionSet) (this, riid, pvObject))
 			return S_OK;
+		if(*riid == uuid_IVsCoTaskMemFreeMyStrings) // avoid log message, implement?
+			return E_NOTIMPL;
 		return super.QueryInterface(riid, pvObject);
 	}
 
@@ -518,7 +522,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 	override int GetDisplayText(in int index, WCHAR** text, int* glyph)
 	{
-		mixin(LogCallMix);
+		//mixin(LogCallMix);
 
 		if (glyph)
 			*glyph = mDecls.GetGlyph(index);

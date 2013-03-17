@@ -1264,11 +1264,11 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 				name = scp ~ "." ~ name;
 		}
 		Definition def;
-		def.kind = GetInfoKind(val);
+		if(val)
+			def.setFromBrowseNode(val);
+
 		if(HasFunctionPrototype(def.kind))
 		{
-			def.name = name;
-			def.type = GetInfoType(val);
 			string ret = def.GetReturnType();
 			name = ret ~ " " ~ name ~ "(";
 			for(int i = 0; i < def.GetParameterCount(); i++)
@@ -1637,11 +1637,9 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		
 		auto val = GetObject(Index);
 		Definition def;
-		def.name = GetInfoName(val);
-		def.type = GetInfoType(val);
-		def.kind = GetInfoKind(val);
-		def.line = GetInfoLine(val);
-		if(def.line < -1)
+		if(val)
+			def.setFromBrowseNode(val);
+		if(!val || def.line < -1)
 			return S_OK; // no description for auto generated nodes
 		
 		if(HasFunctionPrototype(def.kind))

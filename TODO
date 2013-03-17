@@ -61,12 +61,12 @@ Lexer/Parser:
 - octal numbers
 - do not parse file if it is D1?
 - deprecated syntax
-- semantic support for => delegates
 - syntax error with "@disable new()"
 - integrate d_parser.dll
 
 Semantics:
 ---------------
+- semantic support for => delegates
 - import paths for source files not in any project
 - invalidate after changes
 - templates
@@ -76,7 +76,6 @@ Semantics:
 - package/module specifier before symbol
 - vdserver.exe should remove semantic project if devenv.exe terminates
 - vdserver.exe should terminate if devenv.exe crashes
-- vdserver.exe should be LARGEADRESSAWARE
 - expansion fails too often
 - handle parser error at caret better for expansion/definition
 

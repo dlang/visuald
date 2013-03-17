@@ -515,7 +515,6 @@ unreleased Version 0.3.36
     - ref anywhere in foreach type to support "foreach(const ref x; range)"
     - prefix lambda with function/delegate
     - added keyword __argTypes
-    
   * syntax highlighting and semantic now fully support version identifiers according 
     to http://dlang.org/version.html
   * improved parser/semantics: 
@@ -525,3 +524,5 @@ unreleased Version 0.3.36
   * when cloning a configuration in the configuation manager, debug info settings were lost
   * compiling a single file now reports success
   * avoid asking to save project file when closing VS and the project has already been saved
+  * fixed crashes due to bug in precise GC with arrays just below page size
+  * adjusted JSON interpretation for symbol lookup and parameter tooltips to new format in dmd 2.062

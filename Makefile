@@ -49,6 +49,9 @@ FILEMON_DLL = $(BINDIR)\filemonitor.dll
 VSI2D_EXE   = $(BINDIR)\vsi2d.exe
 VSI_LIB     = $(BINDIR)\vsi.lib
 VISUALD     = $(BINDIR)\visuald.dll
+FMT         = OMF
+
+PASS_ENV    = "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" FMT=$(FMT)
 
 all: dte_idl vsi2d package vdserver_exe $(PIPEDMD_EXE) $(FILEMON_DLL)
 
@@ -107,22 +110,22 @@ sdk\vsi_sources: $(VSI2D_EXE)
 
 # $(VSI_LIB) : sdk\vsi_sources
 vsi_lib:
-	cd sdk && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" vsi_$(DBGREL) libs
+	cd sdk && nmake $(PASS_ENV) vsi_$(DBGREL) libs
 
 sdk_lib:
-	cd sdk && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" libs
+	cd sdk && nmake $(PASS_ENV) libs
 
 ##################################
 # compile visuald package
 
 package:
-	cd visuald && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" $(DBGREL)
+	cd visuald && nmake $(PASS_ENV) $(DBGREL)
 
 vdserver_exe: $(LARGEADR_EXE)
-	cd visuald && nmake "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" ..\$(BINDIR)\vdserver.exe
+	cd visuald && nmake $(PASS_ENV) ..\$(BINDIR)\vdserver.exe
 
 cpp2d_exe:
-	cd visuald && nmake "DMD2=$(DMD2)" "VSISDK=$(VSISDK)" "CV2PDB=$(CV2PDB)" ..\$(BINDIR)\cpp2d.exe
+	cd visuald && nmake $(PASS_ENV) ..\$(BINDIR)\cpp2d.exe
 	copy $(BINDIR)\cpp2d.exe ..\downloads
 
 idl2d_exe: $(VSI2D_EXE) 

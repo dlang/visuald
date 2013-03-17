@@ -82,7 +82,7 @@ string reindent(string txt, int indent, int tabsize)
 			if(txt[p] == ' ')
 				indentation++;
 			else if(txt[p] == '\t')
-				indentation = ((indentation + tabsize) / tabsize) * tabsize;
+				indentation = tabsize == 0 ? (indentation + 8) & ~7 : ((indentation + tabsize) / tabsize) * tabsize;
 			else
 				break;
 		}
@@ -90,7 +90,8 @@ string reindent(string txt, int indent, int tabsize)
 		if(indentation < 0)
 			indentation = 0;
 		
-		string spaces = replicate("\t", indentation / tabsize) ~ replicate(" ", indentation % tabsize);
+		string spaces = replicate("\t", tabsize == 0 ? 0 : indentation / tabsize) 
+			          ~ replicate(" ", tabsize == 0 ? indentation : indentation % tabsize);
 		ntxt ~= spaces;
 		pos = p;
 	}

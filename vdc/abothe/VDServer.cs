@@ -248,15 +248,18 @@ namespace ABothe
 				throw new COMException("module not found", 1);
 
 			CodeLocation loc = new CodeLocation((int)idx + 1, (int) line);
-			
-			_editorData.CaretLocation = loc;
 			_editorData.SyntaxTree = ast as DModule;
 			_editorData.ModuleCode = _sources[filename];
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
 			// step back to beginning of identifier
 			while(_editorData.CaretOffset > 0 && isIdentifierCharacter(_editorData.ModuleCode[_editorData.CaretOffset-1]))
-				  _editorData.CaretOffset--;
-
+			{
+				_editorData.CaretOffset--;
+				if(idx > 0)
+					idx--;
+			}
+			_editorData.CaretLocation = new CodeLocation((int)idx + 1, (int) line);
+			
 			VDServerCompletionDataGenerator cdgen = new VDServerCompletionDataGenerator(tok);
 			AbstractCompletionProvider provider = AbstractCompletionProvider.BuildCompletionData(cdgen, _editorData, null); //tok
 

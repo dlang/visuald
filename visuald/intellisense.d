@@ -17,12 +17,14 @@ import std.string;
 import std.algorithm;
 
 import std.regex;
+import std.array;
 //import stdext.fred;
 
 import stdext.path;
 import stdext.array;
 
 import core.memory;
+import core.demangle;
 import visuald.windows;
 
 import sdk.port.vsi;
@@ -56,7 +58,8 @@ struct SearchData
 	{ 
 		kFieldName = 1 << 0,
 		kFieldType = 1 << 1,
-		kFieldScope = 1 << 2
+		kFieldScope = 1 << 2,
+		kFieldDeco = 1 << 3,
 	}
 	
 	ubyte searchFields = kFieldName;
@@ -111,7 +114,7 @@ struct SearchData
 		if((!useRegExp && names.length == 0) || (useRegExp && res.length == 0))
 			return true;
 		
-		string name, type, inScope;
+		string name, type, deco, inScope;
 		if(searchFields & kFieldName)
 			if(JSONValue* n = "name" in obj)
 				if(n.type == JSON_TYPE.STRING)
@@ -122,10 +125,15 @@ struct SearchData
 				if(typ.type == JSON_TYPE.STRING)
 					type = caseSensitive ? typ.str : toLower(typ.str);
 
+		if(searchFields & kFieldDeco)
+			if(JSONValue* dec = "deco" in obj)
+				if(dec.type == JSON_TYPE.STRING)
+					deco = caseSensitive ? dec.str : toLower(dec.str);
+
 		if(searchFields & kFieldScope)
 			inScope = sc ? (caseSensitive ? sc.toString() : toLower(sc.toString())) : "";
 		
-		return matchNames(name, type, inScope);
+		return matchNames(name, type, deco, inScope);
 	}
 
 	bool matchDefinition(BrowseNode node)
@@ -136,17 +144,20 @@ struct SearchData
 		if((!useRegExp && names.length == 0) || (useRegExp && res.length == 0))
 			return true;
 		
-		string name, type, inScope;
+		string name, type, deco, inScope;
 		if(searchFields & kFieldName)
 			name = caseSensitive ? node.name : toLower(node.name);
 		
 		if(searchFields & kFieldType)
-			type = caseSensitive ? node.type : toLower(node.type);
+			type = caseSensitive ? node._type : toLower(node._type);
+
+		if(searchFields & kFieldDeco)
+			deco = caseSensitive ? node.deco : toLower(node.deco);
 
 		if(searchFields & kFieldScope)
 			inScope = caseSensitive ? node.GetScope() : toLower(node.GetScope());
 		
-		return matchNames(name, type, inScope);
+		return matchNames(name, type, deco, inScope);
 	}
 
 	void addDefinition(ref Definition[] defs, ref Definition def)
@@ -191,7 +202,7 @@ struct SearchData
 		return !isIdentChar(ch1) || !isIdentChar(ch2);
 	}
 
-	bool matchNames(string name, string type, string inScope)
+	bool matchNames(string name, string type, string deco, string inScope)
 	{
 		bool matches = false;
 		if(useRegExp)
@@ -217,6 +228,9 @@ struct SearchData
 						continue;
 				if(searchFields & kFieldType)
 					if(matchRegex(type, res[i]))
+						continue;
+				if(searchFields & kFieldDeco)
+					if(matchRegex(deco, res[i]))
 						continue;
 				if(searchFields & kFieldScope)
 					if(matchRegex(inScope, res[i]))
@@ -254,6 +268,9 @@ struct SearchData
 				if(searchFields & kFieldType)
 					if(matchString(type, names[i]))
 						continue;
+				if(searchFields & kFieldDeco)
+					if(matchString(deco, names[i]))
+						continue;
 				if(searchFields & kFieldScope)
 					if(matchString(inScope, names[i]))
 						continue;
@@ -279,7 +296,55 @@ struct JSONscope
 		return nm;
 	}
 }
-	
+
+// filter out stuff written by dmd 2.062alpha
+bool isDeclarationKind(string kind)
+{
+	switch(kind)
+	{
+		case "import":
+		case "static import":
+		case "alias this":
+		case "static assert":
+		case "template instance":
+		case "mixin":
+			return false;
+		default:
+			return true;
+	}
+}
+
+string demangleType(string type, string name)
+{
+	string sym = "_D7__Sym__" ~ type;
+	string s = cast(string) demangle(sym);
+	if(s == sym) // cannot demangle
+		return type;
+	s = s.replace("__Sym__", "");
+	return s;
+}
+
+void getDeclarationInfo(D)(D def, JSONValue[string] obj)
+{
+	if(JSONValue* n = "name" in obj)
+		if(n.type == JSON_TYPE.STRING)
+			def.name = n.str;
+
+	if(JSONValue* ln = "line" in obj)
+		if(ln.type == JSON_TYPE.INTEGER)
+			def.line = cast(int)ln.integer - 1;
+
+	if(JSONValue* typ = "type" in obj)
+	{
+		if(typ.type == JSON_TYPE.STRING)
+			def._type = typ.str;
+	}
+	// dmd 2.062:
+	if(JSONValue* dec = "deco" in obj)
+		if(dec.type == JSON_TYPE.STRING)
+			def.deco = dec.str;
+}
+
 class LibraryInfo
 {
 	bool readJSON(string fileName)
@@ -428,19 +493,13 @@ class LibraryInfo
 				def.filename = filename;
 				def.inScope = sc ? sc.toString() : "";
 				
-				if(JSONValue* n = "name" in memberobj)
-					if(n.type == JSON_TYPE.STRING)
-						def.name = n.str;
 				if(JSONValue* k = "kind" in memberobj)
 					if(k.type == JSON_TYPE.STRING)
 						def.kind = k.str;
-				if(JSONValue* ln = "line" in memberobj)
-					if(ln.type == JSON_TYPE.INTEGER)
-						def.line = cast(int)ln.integer - 1;
-				if(JSONValue* typ = "type" in memberobj)
-					if(typ.type == JSON_TYPE.STRING)
-						def.type = typ.str;
-				
+				if(!isDeclarationKind(def.kind))
+					return 2;
+
+				getDeclarationInfo(def, memberobj);
 				sd.addDefinition(defs, def);
 			}
 			return 0;
@@ -547,8 +606,16 @@ struct Definition
 	string name;
 	string kind;
 	string filename;
-	string type;
+	string deco;
 	int line;
+
+	private string _type;
+	@property string type() const
+	{
+		if(_type.length == 0 && deco.length)
+			(cast()this)._type = demangleType(deco, name);
+		return _type; 
+	}
 
 	string inScope; // enclosing scope
 
@@ -582,6 +649,17 @@ struct Definition
 		name = info.name[parameter];
 		display = info.display[parameter];
 		description = info.desc[parameter];
+	}
+
+	void setFromBrowseNode(BrowseNode node)
+	{
+		filename = node.GetFile();
+		line = node.line;
+		inScope = node.GetScope();
+		name = node.name;
+		kind = node.kind;
+		_type = node._type;
+		deco = node.deco;
 	}
 }
 
@@ -734,8 +812,11 @@ class BrowseNode
 {
 	string name;
 	string kind;
-	string type;
+	string deco;
 	
+	private string _type;
+	@property string type() { return _type; }
+
 	int line;
 	
 	BrowseNode parent;
@@ -856,15 +937,7 @@ class BrowseInfo
 			node = new BrowseNode;
 
 		node.kind = kind;
-		if(JSONValue* n = "name" in memberobj)
-			if(n.type == JSON_TYPE.STRING)
-				node.name = n.str;
-		if(JSONValue* ln = "line" in memberobj)
-			if(ln.type == JSON_TYPE.INTEGER)
-				node.line = cast(int)ln.integer - 1;
-		if(JSONValue* typ = "type" in memberobj)
-			if(typ.type == JSON_TYPE.STRING)
-				node.type = typ.str;
+		getDeclarationInfo(node, memberobj);
 			
 		return node;
 	}
@@ -960,15 +1033,12 @@ class BrowseInfo
 		{
 			if(sd.pruneSubtree(node))
 				return 2;
+			if(!isDeclarationKind(node.kind))
+				return 2;
 			if(sd.matchDefinition(node))
 			{
 				Definition def;
-				def.filename = node.GetFile();
-				def.line = node.line;
-				def.inScope = node.GetScope();
-				def.name = node.name;
-				def.kind = node.kind;
-				def.type = node.type;
+				def.setFromBrowseNode(node);
 				sd.addDefinition(defs, def);
 			}
 			return 0;

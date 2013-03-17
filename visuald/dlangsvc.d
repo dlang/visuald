@@ -3134,6 +3134,13 @@ else
 		return true;
 	}
 
+	bool ensureCurrentTextParsed()
+	{
+		if(mModificationCountAST != mModificationCount)
+			return startParsing();
+		return false;
+	}
+
 	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn)
 	{
 		updateParseErrors(parseErrors);
@@ -3158,13 +3165,19 @@ else
 				string[] num = split(e[0..idx], ",");
 				if(num.length == 4)
 				{
-					ParseError error;
-					error.span.iStartLine  = parse!int(num[0]);
-					error.span.iStartIndex = parse!int(num[1]);
-					error.span.iEndLine    = parse!int(num[2]);
-					error.span.iEndIndex   = parse!int(num[3]);
-					error.msg = e[idx+1..$];
-					mParseErrors ~= error;
+					try
+					{
+						ParseError error;
+						error.span.iStartLine  = parse!int(num[0]);
+						error.span.iStartIndex = parse!int(num[1]);
+						error.span.iEndLine    = parse!int(num[2]);
+						error.span.iEndIndex   = parse!int(num[3]);
+						error.msg = e[idx+1..$];
+						mParseErrors ~= error;
+					}
+					catch(ConvException)
+					{
+					}
 				}
 			}
 		}

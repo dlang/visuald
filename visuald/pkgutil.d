@@ -77,15 +77,20 @@ class OutputPaneBuffer
 {
 	static shared(string) buffer;
 
-	static synchronized void push(string msg)
+	static void push(string msg)
 	{
-		buffer ~= msg;
+		synchronized(OutputPaneBuffer.classinfo)
+			buffer ~= msg;
 	}
 
-	static synchronized string pop()
+	static string pop()
 	{
-		string msg = buffer;
-		buffer = buffer.init;
+		string msg;
+		synchronized(OutputPaneBuffer.classinfo)
+		{
+			msg = buffer;
+			buffer = buffer.init;
+		}
 		return msg;
 	}
 

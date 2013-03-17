@@ -677,8 +677,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	}
 	
 	__gshared int[wstring] asmIdentifiers;
-	const wstring[] asmKeywords = [ "__LOCAL_SIZE", "dword", "even", "far", "naked", "near", "ptr", "qword", "seg", "word", ];
-	const wstring[] asmRegisters = [
+	static const wstring[] asmKeywords = [ "__LOCAL_SIZE", "dword", "even", "far", "naked", "near", "ptr", "qword", "seg", "word", ];
+	static const wstring[] asmRegisters = [
 		"AL",   "AH",   "AX",   "EAX",
 		"BL",   "BH",   "BX",   "EBX",
 		"CL",   "CH",   "CX",   "ECX",
@@ -692,7 +692,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		"MM0",  "MM1",  "MM2",  "MM3",  "MM4",  "MM5",  "MM6",  "MM7",  
 		"XMM0", "XMM1", "XMM2", "XMM3", "XMM4", "XMM5", "XMM6", "XMM7", 
 	];
-	const wstring[] asmMnemonics = [
+	static const wstring[] asmMnemonics = [
 		"__emit",     "_emit",      "aaa",        "aad",        "aam",        "aas",        
 		"adc",        "add",        "addpd",      "addps",      "addsd",      "addss",      
 		"addsubpd",   "addsubps",   "and",        "andnpd",     "andnps",     "andpd",      

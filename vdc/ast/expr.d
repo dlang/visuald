@@ -329,7 +329,7 @@ class OrOrExpression : BinaryExpression
 	override Type calcType()
 	{
 		if(!type)
-			type = BasicType.createType(TOK_bool);
+			type = createBasicType(TOK_bool);
 		return type;
 	}
 
@@ -350,7 +350,7 @@ class AndAndExpression : BinaryExpression
 	override Type calcType()
 	{
 		if(!type)
-			type = BasicType.createType(TOK_bool);
+			type = createBasicType(TOK_bool);
 		return type;
 	}
 
@@ -412,7 +412,7 @@ class CmpExpression : BinaryExpression
 					type = semanticErrorType("cannot calculate type of operator in on ", t);
 			}
 			else
-				type = BasicType.createType(TOK_bool);
+				type = createBasicType(TOK_bool);
 		}
 		return type;
 	}
@@ -471,10 +471,10 @@ class UnaryExpression : Expression
 					type = exprtype;
 					break;
 				case TOK_delete:
-					type = BasicType.createType(TOK_void);
+					type = createBasicType(TOK_void);
 					break;
 				case TOK_not:
-					type = BasicType.createType(TOK_bool);
+					type = createBasicType(TOK_bool);
 					break;
 			}
 		}
@@ -1072,7 +1072,7 @@ class PrimaryExpression : Expression
 
 			case TOK_true:
 			case TOK_false:
-				type = BasicType.createType(TOK_bool);
+				type = createBasicType(TOK_bool);
 				break;
 
 			case TOK_null:  
@@ -1081,7 +1081,7 @@ class PrimaryExpression : Expression
 
 			case TOK_dollar:
 			case TOK___LINE__:
-				type = BasicType.createType(TOK_uint);
+				type = createBasicType(TOK_uint);
 				break;
 
 			case TOK___FILE__:
@@ -1198,7 +1198,7 @@ class VoidInitializer : Expression
 	override Type calcType()
 	{
 		if(!type)
-			type = BasicType.createType(TOK_void);
+			type = createBasicType(TOK_void);
 		return type;
 	}
 	override void toD(CodeWriter writer)
@@ -1635,7 +1635,7 @@ class IsExpression : PrimaryExpression
 	override Type calcType()
 	{
 		if(!type)
-			type = BasicType.createType(TOK_bool);
+			type = createBasicType(TOK_bool);
 		return type;
 	}
 }

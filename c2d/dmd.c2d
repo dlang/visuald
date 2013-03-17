@@ -5,12 +5,14 @@ outputDir=c:\tmp\d\dmd2
 inputDir=c:\tmp\d\dmd
 keywordPrefix=d_
 packagePrefix=dmd
+tabSize=8
 
 [inputFiles]
 *.h *.c
 -impcnvgen.c -idgen.c
 -libmach.c -libelf.c
 -toelfdebug.c -toir.c -iasm.c
+-utf.c
 
 [codePrefix]
 // converted
@@ -29,6 +31,12 @@ TARGET_WINDOS=1
 TARGET_OSX=0
 TARGET_LINUX=0
 TARGET_NET=0
+TARGET_FREEBSD=0
+TARGET_OPENBSD=0
+TARGET_SOLARIS=0
+OMFOBJ=1
+ELFOBJ=0
+MACHOBJ=0
 0=0 1=1
 WINDOWS_SEH=0
 MEM_DEBUG=0
@@ -43,6 +51,7 @@ ASSIGNEXP
 BIN_INTERPRET2
 BIN_INTERPRET
 BIN_ASSIGN_INTERPRET
+BIN_ASSIGN_INTERPRET_CTFE
 UNA_INTERPRET
 DOUBLE SINGLE
 ISTYPE ISDSYMBOL DUMP

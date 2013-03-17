@@ -19,7 +19,13 @@ VSI_SRC = $(SRC) port/servprov.d port/stdole2.d port/msxml.d port/dte.d port/bas
 DBGDIR = ..\bin\Debug
 RELDIR = ..\bin\Release
 
+FMT = OMF
+!IF "$(FMT)" == "COFF"
+DFLAGS = -d -I.. -m32ms
+!ELSE
 DFLAGS = -d -L/DELEXECUTABLE -I..
+!ENDIF
+
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS 
 
 vsi: vsi_debug

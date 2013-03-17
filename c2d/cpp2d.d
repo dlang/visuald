@@ -124,6 +124,7 @@ struct C2DIni
 	string replaceTokenPost;
 
 	bool writeIntermediate;
+	int  tabSize = 8;
 
 	// syntax:
 	// filepattern:: search => replace
@@ -196,6 +197,8 @@ struct C2DIni
 		{
 			if(auto p = "inputType" in *set)
 				inputType = parse!int(*p);
+			if(auto p = "tabSize" in *set)
+				tabSize = parse!int(*p);
 			if(auto p = "writeIntermediate" in *set)
 				writeIntermediate = parse!bool(*p);
 			if(auto p = "outputDir" in *set)
@@ -238,6 +241,7 @@ struct C2DIni
 	{
 		string s = "[Settings]\n";
 		s ~= "inputType=" ~ to!string(inputType) ~ "\n";
+		s ~= "tabSize=" ~ to!string(tabSize) ~ "\n";
 		s ~= "writeIntermediate=" ~ to!string(writeIntermediate) ~ "\n";
 		s ~= "outputDir=" ~ outputDir ~ "\n";
 		s ~= "inputDir=" ~ inputDir ~ "\n";
@@ -260,6 +264,7 @@ struct C2DIni
 	{
 		opt.enableDmdSpecifics = false;
 		opt.writeIntermediate = writeIntermediate;
+		opt.tabSize = tabSize;
 		opt.keywordsPrefix = keywordPrefix;
 		opt.packagePrefix = packagePrefix;
 		opt.codePrefix = codePrefix;
@@ -505,7 +510,6 @@ static this()
 		"__in"      : "in",
 		"__out"     : "out",
 		"__body"    : "body",
-		"__real"    : "real",
 		"typedef"   : "alias",
 
 		// temporary renames
@@ -537,6 +541,12 @@ static this()
 		"register"  : "",
 		"volatile"  : "/*volatile*/",
 		"typename"  : "",
+
+		"__real"    : "real",
+		"__byte"    : "byte",
+		"__ubyte"   : "ubyte",
+		"__uint"    : "uint",
+		"__ulong"   : "ulong",
 	];
 
 	/*
@@ -822,16 +832,16 @@ void patchBasicDeclType(AST ast)
 	case TF_BIT.ENUM:                                  basic = "__enum"; break;
 	case TF_BIT.VOID:                                  basic = "void"; break;
 	case TF_BIT.BOOL:                                  basic = "bool"; break;
-	case TF_BIT.INT | TF_BIT.SIZE8  | TF_BIT.UNSIGNED: basic = "ubyte"; break;
+	case TF_BIT.INT | TF_BIT.SIZE8  | TF_BIT.UNSIGNED: basic = "__ubyte"; break;
 	case TF_BIT.INT | TF_BIT.SIZE8  | TF_BIT.SIGNED:   basic = "char"; break; // byte?
 	case TF_BIT.INT | TF_BIT.SIZE16 | TF_BIT.UNSIGNED: basic = "ushort"; break;
 	case TF_BIT.INT | TF_BIT.SIZE16 | TF_BIT.SIGNED:   basic = "short"; break;
 	case TF_BIT.INT | TF_BIT.SIZE16 | TF_BIT.UNSIGNED | TF_BIT.CHAR:   basic = "wchar_t"; break;
 	case TF_BIT.INT |                 TF_BIT.UNSIGNED:
-	case TF_BIT.INT | TF_BIT.SIZE32 | TF_BIT.UNSIGNED: basic = "uint"; break;
+	case TF_BIT.INT | TF_BIT.SIZE32 | TF_BIT.UNSIGNED: basic = "__uint"; break;
 	case TF_BIT.INT |                 TF_BIT.SIGNED:
 	case TF_BIT.INT | TF_BIT.SIZE32 | TF_BIT.SIGNED:   basic = "int"; break;
-	case TF_BIT.INT | TF_BIT.SIZE64 | TF_BIT.UNSIGNED: basic = "ulong"; break;
+	case TF_BIT.INT | TF_BIT.SIZE64 | TF_BIT.UNSIGNED: basic = "__ulong"; break;
 	case TF_BIT.INT | TF_BIT.SIZE64 | TF_BIT.SIGNED:   basic = "long"; break;
 
 	case TF_BIT.FLOAT | TF_BIT.SIZE32:                 basic = "float"; break;
@@ -1133,7 +1143,7 @@ void patchAssignCast(Expression expr)
 		{
 		case "sz":
 			if(e2.start.text != "sz")
-				casttext = "cast(ubyte)"; 
+				casttext = "cast(__d_ubyte)"; 
 			break;
 		default:
 			return;
@@ -2225,7 +2235,6 @@ class Source
 	{
 		PP pp = new PP;
 		pp.fixConditionalCompilation(_tokenList);
-		pp.convertDefinesToEnums(_tokenList);
 	}
 
 	void createAST()
@@ -2667,16 +2676,20 @@ class Cpp2DConverter
 
 		// cannot remove decl immediately, because iterators in iterateTopLevelDeclarations will become invalid
 		declsToRemove ~= decl;
+		
+		currentSource._ast.verify();
 	}
 
 	void moveAllMethods()
 	{
 		declsToRemove.length = 0;
 
-		foreach(currentSource; sources)
+		foreach(src; sources)
 		{
+			currentSource = src;
 			currentSource._ast.verify();
 			iterateTopLevelDeclarations(currentSource._ast, &moveMethods);
+			currentSource._ast.verify();
 		}
 
 		foreach(AST decl; declsToRemove)
@@ -2688,18 +2701,23 @@ class Cpp2DConverter
 	///////////////////////////////////////////////////////////////////////
 	void moveAllCtorInitializers()
 	{
-		foreach(currentSource; sources)
+		foreach(src; sources)
 		{
+			currentSource = src;
 			currentSource._ast.verify();
 			iterateTopLevelDeclarations(currentSource._ast, &moveCtorInitializers);
+			currentSource._ast.verify();
 		}
 	}
 
 	///////////////////////////////////////////////////////////////////////
 	void patchAllAST()
 	{
-		foreach(currentSource; sources)
+		foreach(src; sources)
+		{
+			currentSource = src;
 			patchAST(currentSource._ast);
+		}
 	}
 
 	void writeFiles(int pass)
@@ -2714,8 +2732,9 @@ class Cpp2DConverter
 			writeDirAndFile(options.outputDir ~ "sources", srcAll);
 		}
 
-		foreach(currentSource; sources)
+		foreach(src; sources)
 		{
+			currentSource = src;
 			if(pass == 0 && currentSource.postpatch)
 				currentSource.postpatch(currentSource._tokenList);
 			if(pass == 0)
@@ -2750,8 +2769,9 @@ class Cpp2DConverter
 				txt = "module " ~ modname ~ ";\n\n" ~ txt;
 		}
 
-		foreach(currentSource; sources)
+		foreach(src; sources)
 		{
+			currentSource = src;
 			string file = genOutFilename(currentSource._filename, 0);
 			string mod = createModuleName(file);
 
@@ -2802,6 +2822,9 @@ class Cpp2DConverter
 			expandPPdefines(src._tokenList, options.expandDefines, MixinMode.ExpandDefine);
 			rescanPP(src._tokenList);
 		}
+		PP.convertDefinesToEnums(src._tokenList);
+		src.rescanPP();
+
 		src.patchRules(options.preRules);
 
 		src.postpatch = postpatch;
@@ -3013,7 +3036,8 @@ string testDmdGen(string txt, int countRemove = 1, int countNoImpl = 0, TokenLis
 	for(TokenIterator it = tokenList.begin(); !it.atEnd(); ++it)
 		res ~= it.pretext ~ mapTokenText(*it);
 
-	res = detab(res, options.tabSize);
+	if(options.tabSize > 0)
+		res = detab(res, options.tabSize);
 	return res;
 }
 
@@ -3732,6 +3756,25 @@ unittest
 
 	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
+}
+
+void cpp2d_test()
+{
+	string txt = 
+	    "#define EXP 1 // EXP1\n"
+	    "#define WSL EXP // comment\n"
+	    ;
+	string exp =
+	    "enum WSL = 1; // comment\n"
+		;
+
+//	PP.expandConditionals["EXP"] = true;
+	TokenList[string] defines = [ "EXP" : scanText("1") ];
+
+	string res = testDmdGen(txt, 0, 0, defines);
+	assert(res == exp);
+
+	PP.expandConditionals = PP.expandConditionals.init;
 }
 
 version(MAIN)
