@@ -2414,9 +2414,9 @@ class Config :	DisposingComObject,
 				lpath ~= ";";
 			lpath ~= mProjectOptions.libpaths;
 
-			if(compiler == Compiler.DMD)
+			if(mProjectOptions.compiler == Compiler.DMD)
 				cmd ~= "set DMD_LIB=" ~ lpath ~ "\n";
-			else if(compiler == Compiler.LDC)
+			else if(mProjectOptions.compiler == Compiler.LDC)
 				cmd ~= "set LIB=" ~ lpath ~ "\n";
 		}
 		return cmd;
