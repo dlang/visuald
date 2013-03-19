@@ -303,7 +303,10 @@ static const wstring regPathCodeExpansions = "\\Languages\\CodeExpansions"w;
 static const wstring regPathPrjTemplates   = "\\NewProjectTemplates\\TemplateDirs"w;
 static const wstring regPathProjects       = "\\Projects"w;
 static const wstring regPathToolsOptions   = "\\ToolsOptionsPages\\Projects\\Visual D Settings"w;
-static const wstring regPathToolsDirs      = "\\ToolsOptionsPages\\Projects\\Visual D Directories"w;
+static const wstring regPathToolsDirsOld   = "\\ToolsOptionsPages\\Projects\\Visual D Directories"w;
+static const wstring regPathToolsDirsDmd   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\DMD Directories"w;
+static const wstring regPathToolsDirsGdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\GDC Directories"w;
+static const wstring regPathToolsDirsLdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\LDC Directories"w;
 static const wstring regMiscFiles          = regPathProjects ~ "\\{A2FE74E1-B743-11d0-AE1A-00A0C90FFFC3}"w;
 static const wstring regPathMetricsExcpt   = "\\AD7Metrics\\Exception"w;
 static const wstring regPathMetricsEE      = "\\AD7Metrics\\ExpressionEvaluator"w;
@@ -391,7 +394,6 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regMiscFiles ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid);
 
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsOptions);
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsDirs);
 
 	foreach(guid; guids_propertyPages)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
@@ -559,7 +561,7 @@ version(none){
 
 		// menu
 		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
-		keyToolMenu.Set(packageGuid, ",2001,12"); // CTMENU,version
+		keyToolMenu.Set(packageGuid, ",2001,14"); // CTMENU,version
 		
 		// Visual D settings
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);
@@ -572,10 +574,23 @@ version(none){
 		if(keyToolOpts.GetString("IncSearchPath"w).length == 0)
 			keyToolOpts.Set("IncSearchPath"w, "$(WindowsSdkDir)\\include;$(DevEnvDir)..\\..\\VC\\include"w);
 
-		scope RegKey keyToolOpts2 = new RegKey(keyRoot, registrationRoot ~ regPathToolsDirs);
-		keyToolOpts2.Set(null, "Visual D Directories");
-		keyToolOpts2.Set("Package"w, packageGuid);
-		keyToolOpts2.Set("Page"w, GUID2wstring(g_ToolsPropertyPage));
+		// remove old page
+		RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsDirsOld);
+
+		scope RegKey keyToolOptsDmd = new RegKey(keyRoot, registrationRoot ~ regPathToolsDirsDmd);
+		keyToolOptsDmd.Set(null, "DMD Directories");
+		keyToolOptsDmd.Set("Package"w, packageGuid);
+		keyToolOptsDmd.Set("Page"w, GUID2wstring(g_DmdDirPropertyPage));
+
+		scope RegKey keyToolOptsGdc = new RegKey(keyRoot, registrationRoot ~ regPathToolsDirsGdc);
+		keyToolOptsGdc.Set(null, "GDC Directories");
+		keyToolOptsGdc.Set("Package"w, packageGuid);
+		keyToolOptsGdc.Set("Page"w, GUID2wstring(g_GdcDirPropertyPage));
+
+		scope RegKey keyToolOptsLdc = new RegKey(keyRoot, registrationRoot ~ regPathToolsDirsLdc);
+		keyToolOptsLdc.Set(null, "LDC Directories");
+		keyToolOptsLdc.Set("Package"w, packageGuid);
+		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_LdcDirPropertyPage));
 
 		// remove "SkipLoading" entry from user settings
 		scope RegKey userKeyPackage = new RegKey(HKEY_CURRENT_USER, registrationRoot ~ "\\Packages\\"w ~ packageGuid);

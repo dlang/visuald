@@ -526,3 +526,8 @@ unreleased Version 0.3.36
   * avoid asking to save project file when closing VS and the project has already been saved
   * fixed crashes due to bug in precise GC with arrays just below page size
   * adjusted JSON interpretation for symbol lookup and parameter tooltips to new format in dmd 2.062
+  * some tweaks to C++ to D converter
+  * basic LDC support
+  * added new option pages for DMD/GDC/LDC directories
+  * linker messages from GDC can now be demangled aswell
+  * additional command line arguments now placed at the very end to avoid GDC linker troubles

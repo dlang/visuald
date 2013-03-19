@@ -354,8 +354,12 @@ class Package : DisposingComObject,
 		mixin(LogCallMix2);
 
 		GlobalPropertyPage tpp;
-		if(*rguidPage == g_ToolsPropertyPage)
-			tpp = newCom!ToolsPropertyPage(mOptions);
+		if(*rguidPage == g_DmdDirPropertyPage)
+			tpp = newCom!DmdDirPropertyPage(mOptions);
+		else if(*rguidPage == g_GdcDirPropertyPage)
+			tpp = newCom!GdcDirPropertyPage(mOptions);
+		else if(*rguidPage == g_LdcDirPropertyPage)
+			tpp = newCom!LdcDirPropertyPage(mOptions);
 		else if(*rguidPage == g_ToolsProperty2Page)
 			tpp = newCom!ToolsProperty2Page(mOptions);
 		else if(*rguidPage == g_ColorizerPropertyPage)
@@ -1040,6 +1044,14 @@ private:
 	Library          mLibrary;
 }
 
+struct CompilerDirectories
+{
+	string InstallDir;
+	string ExeSearchPath;
+	string ImpSearchPath;
+	string LibSearchPath;
+}
+
 class GlobalOptions
 {
 	HKEY hConfigKey;
@@ -1047,10 +1059,9 @@ class GlobalOptions
 	wstring regConfigRoot;
 	wstring regUserRoot;
 
-	string DMDInstallDir;
-	string ExeSearchPath;
-	string ImpSearchPath;
-	string LibSearchPath;
+	CompilerDirectories DMD;
+	CompilerDirectories GDC;
+	CompilerDirectories LDC;
 	string IncSearchPath;
 	string JSNSearchPath;
 
@@ -1141,11 +1152,20 @@ class GlobalOptions
 			// get defaults from global config
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
 			wstring wDMDInstallDir = keyToolOpts.GetString("DMDInstallDir");
+			wstring wGDCInstallDir = keyToolOpts.GetString("GDCInstallDir");
+			wstring wLDCInstallDir = keyToolOpts.GetString("LDCInstallDir");
 			wstring wExeSearchPath = keyToolOpts.GetString("ExeSearchPath");
 			wstring wLibSearchPath = keyToolOpts.GetString("LibSearchPath");
 			wstring wImpSearchPath = keyToolOpts.GetString("ImpSearchPath");
 			wstring wJSNSearchPath = keyToolOpts.GetString("JSNSearchPath");
 			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
+			wstring wGDCExeSearchPath = keyToolOpts.GetString("GDC.ExeSearchPath");
+			wstring wGDCLibSearchPath = keyToolOpts.GetString("GDC.LibSearchPath");
+			wstring wGDCImpSearchPath = keyToolOpts.GetString("GDC.ImpSearchPath");
+			wstring wLDCExeSearchPath = keyToolOpts.GetString("LDC.ExeSearchPath");
+			wstring wLDCLibSearchPath = keyToolOpts.GetString("LDC.LibSearchPath");
+			wstring wLDCImpSearchPath = keyToolOpts.GetString("LDC.ImpSearchPath");
+
 			wstring wUserTypesSpec = keyToolOpts.GetString("UserTypesSpec", defUserTypesSpec);
 			wstring wVDServerIID   = keyToolOpts.GetString("VDServerIID");
 			ColorizeVersions  = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
@@ -1168,10 +1188,19 @@ class GlobalOptions
 
 			// overwrite by user config
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
-			DMDInstallDir = toUTF8(keyUserOpts.GetString("DMDInstallDir", wDMDInstallDir));
-			ExeSearchPath = toUTF8(keyUserOpts.GetString("ExeSearchPath", wExeSearchPath));
-			LibSearchPath = toUTF8(keyUserOpts.GetString("LibSearchPath", wLibSearchPath));
-			ImpSearchPath = toUTF8(keyUserOpts.GetString("ImpSearchPath", wImpSearchPath));
+			DMD.InstallDir    = toUTF8(keyUserOpts.GetString("DMDInstallDir", wDMDInstallDir));
+			GDC.InstallDir    = toUTF8(keyUserOpts.GetString("GDCInstallDir", wGDCInstallDir));
+			LDC.InstallDir    = toUTF8(keyUserOpts.GetString("LDCInstallDir", wLDCInstallDir));
+			DMD.ExeSearchPath = toUTF8(keyUserOpts.GetString("ExeSearchPath", wExeSearchPath));
+			DMD.LibSearchPath = toUTF8(keyUserOpts.GetString("LibSearchPath", wLibSearchPath));
+			DMD.ImpSearchPath = toUTF8(keyUserOpts.GetString("ImpSearchPath", wImpSearchPath));
+			GDC.ExeSearchPath = toUTF8(keyUserOpts.GetString("GDC.ExeSearchPath", wGDCExeSearchPath));
+			GDC.LibSearchPath = toUTF8(keyUserOpts.GetString("GDC.LibSearchPath", wGDCLibSearchPath));
+			GDC.ImpSearchPath = toUTF8(keyUserOpts.GetString("GDC.ImpSearchPath", wGDCImpSearchPath));
+			LDC.ExeSearchPath = toUTF8(keyUserOpts.GetString("LDC.ExeSearchPath", wLDCExeSearchPath));
+			LDC.LibSearchPath = toUTF8(keyUserOpts.GetString("LDC.LibSearchPath", wLDCLibSearchPath));
+			LDC.ImpSearchPath = toUTF8(keyUserOpts.GetString("LDC.ImpSearchPath", wLDCImpSearchPath));
+
 			JSNSearchPath = toUTF8(keyUserOpts.GetString("JSNSearchPath", wJSNSearchPath));
 			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
 			UserTypesSpec = toUTF8(keyUserOpts.GetString("UserTypesSpec", wUserTypesSpec));
@@ -1247,10 +1276,18 @@ class GlobalOptions
 		try
 		{
 			scope RegKey keyToolOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions);
-			keyToolOpts.Set("DMDInstallDir", toUTF16(DMDInstallDir));
-			keyToolOpts.Set("ExeSearchPath", toUTF16(ExeSearchPath));
-			keyToolOpts.Set("LibSearchPath", toUTF16(LibSearchPath));
-			keyToolOpts.Set("ImpSearchPath", toUTF16(ImpSearchPath));
+			keyToolOpts.Set("DMDInstallDir", toUTF16(DMD.InstallDir));
+			keyToolOpts.Set("GDCInstallDir", toUTF16(GDC.InstallDir));
+			keyToolOpts.Set("LDCInstallDir", toUTF16(LDC.InstallDir));
+			keyToolOpts.Set("ExeSearchPath", toUTF16(DMD.ExeSearchPath));
+			keyToolOpts.Set("LibSearchPath", toUTF16(DMD.LibSearchPath));
+			keyToolOpts.Set("ImpSearchPath", toUTF16(DMD.ImpSearchPath));
+			keyToolOpts.Set("GDC.ExeSearchPath", toUTF16(GDC.ExeSearchPath));
+			keyToolOpts.Set("GDC.LibSearchPath", toUTF16(GDC.LibSearchPath));
+			keyToolOpts.Set("GDC.ImpSearchPath", toUTF16(GDC.ImpSearchPath));
+			keyToolOpts.Set("LDC.ExeSearchPath", toUTF16(LDC.ExeSearchPath));
+			keyToolOpts.Set("LDC.LibSearchPath", toUTF16(LDC.LibSearchPath));
+			keyToolOpts.Set("LDC.ImpSearchPath", toUTF16(LDC.ImpSearchPath));
 			keyToolOpts.Set("JSNSearchPath", toUTF16(JSNSearchPath));
 			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
 			keyToolOpts.Set("UserTypesSpec", toUTF16(UserTypesSpec));
@@ -1306,7 +1343,9 @@ class GlobalOptions
 
 	void addReplacements(ref string[string] replacements)
 	{
-		replacements["DMDINSTALLDIR"] = normalizeDir(DMDInstallDir);
+		replacements["DMDINSTALLDIR"] = normalizeDir(DMD.InstallDir);
+		replacements["GDCINSTALLDIR"] = normalizeDir(GDC.InstallDir);
+		replacements["LDCINSTALLDIR"] = normalizeDir(LDC.InstallDir);
 		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
 		replacements["DEVENVDIR"] = DevEnvDir;
 		replacements["VSINSTALLDIR"] = VSInstallDir;
@@ -1325,7 +1364,7 @@ class GlobalOptions
 
 	string findInPath(string exe)
 	{
-		string searchpaths = replaceGlobalMacros(ExeSearchPath);
+		string searchpaths = replaceGlobalMacros(DMD.ExeSearchPath);
 		string[] paths = tokenizeArgs(searchpaths, true, false);
 		if(char* p = getenv("PATH"))
 			paths ~= tokenizeArgs(to!string(p), true, false);
@@ -1345,7 +1384,7 @@ class GlobalOptions
 		if(dmdpath.length && std.file.exists(dmdpath))
 			return normalizeDir(dirName(dmdpath));
 
-		string installdir = normalizeDir(DMDInstallDir);
+		string installdir = normalizeDir(DMD.InstallDir);
 		string bindir = installdir ~ "windows\\bin\\";
 		if(std.file.exists(bindir ~ "dmd.exe"))
 			return bindir;
@@ -1415,7 +1454,7 @@ class GlobalOptions
 	string[] getImportPaths()
 	{
 		string[] imports = getIniImportPaths();
-		string searchpaths = replaceGlobalMacros(ImpSearchPath);
+		string searchpaths = replaceGlobalMacros(DMD.ImpSearchPath);
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
 			imports ~= removeDotDotPath(normalizeDir(unquoteArgument(arg)));
@@ -1524,7 +1563,7 @@ class GlobalOptions
 		string dmdpath = dmddir ~ "dmd.exe";
 		if(!std.file.exists(dmdpath))
 		{
-			msg = "dmd.exe not found in DMDInstallDir=" ~ DMDInstallDir ~ " or through PATH";
+			msg = "dmd.exe not found in DMDInstallDir=" ~ DMD.InstallDir ~ " or through PATH";
 			pane.OutputString(toUTF16z(msg));
 			return false;
 		}

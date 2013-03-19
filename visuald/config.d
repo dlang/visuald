@@ -265,7 +265,16 @@ class ProjectOptions
 
 	string objectFileExtension() { return compiler == 0 ? "obj" : "o"; }
 	string otherCompilerPath() { return otherDMD ? program : null; }
-
+	@property ref CompilerDirectories compilerDirectories() 
+	{
+		switch(compiler)
+		{
+			default:
+			case Compiler.DMD: return Package.GetGlobalOptions().DMD;
+			case Compiler.GDC: return Package.GetGlobalOptions().GDC;
+			case Compiler.LDC: return Package.GetGlobalOptions().LDC;
+		}
+	}
 	string buildDMDCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		string cmd;
@@ -357,7 +366,7 @@ class ProjectOptions
 			if(strip(imp).length)
 				cmd ~= " -I" ~ quoteNormalizeFilename(strip(imp));
 
-		string[] globalimports = tokenizeArgs(Package.GetGlobalOptions().ImpSearchPath);
+		string[] globalimports = tokenizeArgs(compilerDirectories.ImpSearchPath);
 		foreach(gimp; globalimports)
 			if(strip(gimp).length)
 				cmd ~= " -I" ~ quoteNormalizeFilename(strip(gimp));
@@ -391,6 +400,9 @@ class ProjectOptions
 			cmd = quoteNormalizeFilename(program);
 		else
 			cmd = "gdc";
+
+		if(performLink && Package.GetGlobalOptions().demangleError)
+			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" -gdcmode " ~ cmd;
 
 //		if(lib && performLink)
 //			cmd ~= " -lib";
@@ -480,7 +492,7 @@ class ProjectOptions
 			if(strip(imp).length)
 				cmd ~= " -I" ~ quoteNormalizeFilename(strip(imp));
 
-		string[] globalimports = tokenizeArgs(Package.GetGlobalOptions().ImpSearchPath);
+		string[] globalimports = tokenizeArgs(compilerDirectories.ImpSearchPath);
 		foreach(gimp; globalimports)
 			if(strip(gimp).length)
 				cmd ~= " -I" ~ quoteNormalizeFilename(strip(gimp));
@@ -507,6 +519,106 @@ class ProjectOptions
 		return cmd;
 	}
 
+	string buildLDCCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	{
+		string cmd;
+		if(otherDMD && program.length)
+			cmd = quoteNormalizeFilename(program);
+		else
+			cmd = "ldc2";
+		if(performLink && Package.GetGlobalOptions().demangleError)
+			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
+
+		if(lib == OutputType.StaticLib && performLink)
+			cmd ~= " -lib";
+		if(isX86_64)
+			cmd ~= " -m64";
+		else
+			cmd ~= " -m32";
+		if(verbose)
+			cmd ~= " -v";
+		if(symdebug == 1)
+			cmd ~= " -g";
+		if(symdebug == 2)
+			cmd ~= " -gc";
+		if(optimize)
+			cmd ~= " -O";
+		if(useDeprecated)
+			cmd ~= " -d";
+		else if(errDeprecated)
+			cmd ~= " -de";
+		if(useUnitTests)
+			cmd ~= " -unittest";
+		if(release)
+			cmd ~= " -release";
+		if(preservePaths)
+			cmd ~= " -op";
+		if(warnings)
+			cmd ~= " -w";
+		if(infowarnings)
+			cmd ~= " -wi";
+		if(checkProperty)
+			cmd ~= " -property";
+		if(ignoreUnsupportedPragmas)
+			cmd ~= " -ignore";
+
+		if(doDocComments && compile && !syntaxOnly)
+		{
+			cmd ~= " -D";
+			if(docdir.length)
+				cmd ~= " -Dd=" ~ quoteNormalizeFilename(docdir);
+			if(docname.length)
+				cmd ~= " -Df=" ~ quoteNormalizeFilename(docname);
+		}
+
+		if(doHdrGeneration && compile && !syntaxOnly)
+		{
+			cmd ~= " -H";
+			if(hdrdir.length)
+				cmd ~= " -Hd=" ~ quoteNormalizeFilename(hdrdir);
+			if(hdrname.length)
+				cmd ~= " -Hf=" ~ quoteNormalizeFilename(hdrname);
+		}
+
+		if(doXGeneration && compile && !syntaxOnly)
+		{
+			cmd ~= " -X";
+			if(xfilename.length)
+				cmd ~= " -Xf=" ~ quoteNormalizeFilename(xfilename);
+		}
+
+		string[] imports = tokenizeArgs(imppath);
+		foreach(imp; imports)
+			if(strip(imp).length)
+				cmd ~= " -I=" ~ quoteNormalizeFilename(strip(imp));
+
+		string[] globalimports = tokenizeArgs(compilerDirectories.ImpSearchPath);
+		foreach(gimp; globalimports)
+			if(strip(gimp).length)
+				cmd ~= " -I=" ~ quoteNormalizeFilename(strip(gimp));
+
+		string[] fileImports = tokenizeArgs(fileImppath);
+		foreach(imp; fileImports)
+			if(strip(imp).length)
+				cmd ~= " -J=" ~ quoteNormalizeFilename(strip(imp));
+
+		string[] versions = tokenizeArgs(versionids);
+		foreach(ver; versions)
+			if(strip(ver).length)
+				cmd ~= " -d-version=" ~ strip(ver);
+
+		string[] ids = tokenizeArgs(debugids);
+		foreach(id; ids)
+			if(strip(id).length)
+				cmd ~= " -d-debug=" ~ strip(id);
+
+		if(deps && !syntaxOnly)
+			cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
+		if(performLink)
+			cmd ~= linkCommandLine();
+		return cmd;
+	}
+
 	string buildCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		if(compiler == Compiler.DMD)
@@ -514,6 +626,9 @@ class ProjectOptions
 
 		if(!compile && performLink && lib == OutputType.StaticLib)
 			return buildARCommandLine();
+
+		if(compiler == Compiler.LDC)
+			return buildLDCCommandLine(compile, performLink, deps, syntaxOnly);
 
 		return buildGDCCommandLine(compile, performLink, deps, syntaxOnly);
 	}
@@ -524,7 +639,7 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string linkDMDCommandLine()
+	string linkDMDCommandLine(bool mslink)
 	{
 		string cmd;
 		
@@ -532,15 +647,18 @@ class ProjectOptions
 		if(usesCv2pdb())
 			dmdoutfile ~= "_cv";
 
-		cmd ~= " -of" ~ quoteNormalizeFilename(dmdoutfile);
-		cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+		cmd ~= getOutputFileOption(dmdoutfile);
+		if(mslink && compiler != Compiler.DMD)
+			cmd ~= " -L/MAP:\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+		else
+			cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
 		switch(mapverbosity)
 		{
-			case 0: cmd ~= isX86_64 ? "" : " -L/NOMAP"; break; // actually still creates map file
-			case 1: cmd ~= isX86_64 ? "-L/MAPINFO:EXPORTS" : " -L/MAP:ADDRESS"; break;
+			case 0: cmd ~= mslink ? "" : " -L/NOMAP"; break; // actually still creates map file
+			case 1: cmd ~= mslink ? "-L/MAPINFO:EXPORTS" : " -L/MAP:ADDRESS"; break;
 			case 2: break;
-			case 3: cmd ~= isX86_64 ? "-L/MAPINFO:EXPORTS,LINES" : " -L/MAP:FULL"; break;
-			case 4: cmd ~= isX86_64 ? "-L/MAPINFO:EXPORTS,LINES,FIXUPS" : " -L/MAP:FULL -L/XREF"; break;
+			case 3: cmd ~= mslink ? "-L/MAPINFO:EXPORTS,LINES" : " -L/MAP:FULL"; break;
+			case 4: cmd ~= mslink ? "-L/MAPINFO:EXPORTS,LINES,FIXUPS" : " -L/MAP:FULL -L/XREF"; break;
 			default: break;
 		}
 
@@ -590,7 +708,7 @@ class ProjectOptions
 
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
-			lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
+			lpaths ~= tokenizeArgs(compilerDirectories.LibSearchPath);
 		else
 			cmd ~= " -Wl,-nostdlib";
 		foreach(lp; lpaths)
@@ -663,7 +781,7 @@ class ProjectOptions
 		cmd ~= plusList(lnkfiles ~ libs, ".lib");
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
-			lpaths ~= tokenizeArgs(Package.GetGlobalOptions().LibSearchPath);
+			lpaths ~= tokenizeArgs(compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
 			cmd ~= "+" ~ quoteFilename(normalizeDir(lp));
 		
@@ -713,16 +831,40 @@ class ProjectOptions
 	{
 		if(compiler == Compiler.GDC)
 			return linkGDCCommandLine();
+		else if(compiler == Compiler.LDC)
+			return linkDMDCommandLine(true);
 		else
-			return linkDMDCommandLine();
+			return linkDMDCommandLine(isX86_64);
 	}
 
 	string getOutputDirOption()
 	{
-		if(compiler != Compiler.DMD)
-			return ""; // does not work with GDC
+		switch(compiler)
+		{
+			default:
+			case Compiler.DMD: return " -od" ~ quoteFilename(objdir);
+			case Compiler.LDC: return " -od=" ~ quoteFilename(objdir);
+			case Compiler.GDC: return ""; // does not work with GDC
+		}
+	}
+
+	string getOutputFileOption(string file)
+	{
+		switch(compiler)
+		{
+			default:
+			case Compiler.DMD: return " -of" ~ quoteFilename(file);
+			case Compiler.LDC: return " -of=" ~ quoteFilename(file);
+			case Compiler.GDC: return " -o " ~ quoteFilename(file);
+		}
+	}
+
+	string getDependenciesFileOption(string file)
+	{
+		if(compiler == Compiler.GDC)
+			return " -fdeps=" ~ quoteFilename(file);
 		else
-			return " -od" ~ quoteFilename(objdir);
+			return " -deps=" ~ quoteFilename(file);
 	}
 
 	string getTargetPath()
@@ -2236,10 +2378,9 @@ class Config :	DisposingComObject,
 				cmd ~= " -c -o-";
 			else if(syntaxOnly)
 				cmd ~= " -c -fsyntax-only";
-			else if(mProjectOptions.compiler == Compiler.DMD)
-				cmd ~= " -c -of" ~ quoteFilename(outfile) ~ " -deps=" ~ quoteFilename(depfile);
 			else
-				cmd ~= " -c -o " ~ quoteFilename(outfile) ~ " -fdeps=" ~ quoteFilename(depfile);
+				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile) 
+				              ~ mProjectOptions.getDependenciesFileOption(depfile);
 			cmd ~= " " ~ file.GetFilename();
 			foreach(ddoc; getDDocFileList())
 				cmd ~= " " ~ ddoc;
@@ -2257,21 +2398,26 @@ class Config :	DisposingComObject,
 	{
 		string cmd;
 		GlobalOptions globOpt = Package.GetGlobalOptions();
-		if(globOpt.ExeSearchPath.length)
-			cmd ~= "set PATH=" ~ replaceCrLf(globOpt.ExeSearchPath) ~ ";%PATH%\n";
+		string exeSearchPath = mProjectOptions.compilerDirectories.ExeSearchPath;
+		if(exeSearchPath.length)
+			cmd ~= "set PATH=" ~ replaceCrLf(exeSearchPath) ~ ";%PATH%\n";
 		
-		bool hasGlobalPath = mProjectOptions.useStdLibPath && globOpt.LibSearchPath.length;
+		string libSearchPath = mProjectOptions.compilerDirectories.LibSearchPath;
+		bool hasGlobalPath = mProjectOptions.useStdLibPath && libSearchPath.length;
 		if(hasGlobalPath || mProjectOptions.libpaths.length)
 		{
 			// obsolete?
 			string lpath;
 			if(hasGlobalPath)
-				lpath = replaceCrLf(globOpt.LibSearchPath);
+				lpath = replaceCrLf(libSearchPath);
 			if(mProjectOptions.libpaths.length && !_endsWith(lpath, ";"))
 				lpath ~= ";";
 			lpath ~= mProjectOptions.libpaths;
-			
-			cmd ~= "set DMD_LIB=" ~ lpath ~ "\n";
+
+			if(compiler == Compiler.DMD)
+				cmd ~= "set DMD_LIB=" ~ lpath ~ "\n";
+			else if(compiler == Compiler.LDC)
+				cmd ~= "set LIB=" ~ lpath ~ "\n";
 		}
 		return cmd;
 	}
@@ -2443,8 +2589,6 @@ class Config :	DisposingComObject,
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.doSeparateLink();
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
-		if(mProjectOptions.additionalOptions.length)
-			opt ~= " " ~ mProjectOptions.additionalOptions;
 
 		string precmd = getEnvironmentChanges();
 		string[] files = getInputFileList();
@@ -2469,11 +2613,14 @@ class Config :	DisposingComObject,
 			if(fcmd.length == 0)
 				opt = ""; // don't try to build zero files
 			else if(singleObj)
-				opt ~= " -c -of\"$(OutDir)\\$(ProjectName).obj\"";
+				opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(OutDir)\\$(ProjectName).obj");
 			else
 				opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
 		}
-		string cmd = precmd ~ opt ~ fcmd ~ "\n";
+		string addopt;
+		if(mProjectOptions.additionalOptions.length)
+			addopt = " " ~ mProjectOptions.additionalOptions;
+		string cmd = precmd ~ opt ~ fcmd ~ addopt ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 		
 		if(separateLink && doLink)
@@ -2521,9 +2668,9 @@ class Config :	DisposingComObject,
 			else
 			{
 				lnkcmd = mProjectOptions.buildCommandLine(false, true, false);
+				lnkcmd ~= getLinkFileList(files, prelnk);
 				if(mProjectOptions.additionalOptions.length)
 					lnkcmd ~= " " ~ mProjectOptions.additionalOptions;
-				lnkcmd ~= getLinkFileList(files, prelnk);
 			}
 			cmd = cmd ~ "\n" ~ prelnk ~ lnkcmd ~ "\n";
 			cmd = cmd ~ "if errorlevel 1 goto reportError\n";

@@ -356,10 +356,10 @@ int main(string[] argv)
                             }
                         }
                 }
-                if(writepos < output.length)
-                    fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
-                fputc('\n', stdout);
             }
+            if(writepos < output.length)
+                fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
+            fputc('\n', stdout);
         }
         else
         {

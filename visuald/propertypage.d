@@ -664,7 +664,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 			versions ~= "D" ~ to!(string)(ver);
 		//versions[$-1] ~= "+";
 		
-		AddControl("Compiler",      mCompiler = new ComboBox(mCanvas, [ "DMD", "GDC" ], false));
+		AddControl("Compiler",      mCompiler = new ComboBox(mCanvas, [ "DMD", "GDC", "LDC" ], false));
 		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
 		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, 
 																 [ "Executable", "Library", "DLL" ], false));
@@ -674,7 +674,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
 		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
 		AddControl("",              mOtherDMD = new CheckBox(mCanvas, "Use other compiler"));
-		AddControl("Compiler Path", mDmdPath = new Text(mCanvas));
+		AddControl("Compiler Path", mCompilerPath = new Text(mCanvas));
 		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas, 
 			[ "Combined compile and link", "Single file compilation", 
 			  "Separate compile and link", "Compile only (use Post-build command to link)" ], false));
@@ -688,7 +688,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 	
 	void EnableControls()
 	{
-		mDmdPath.setEnabled(mOtherDMD.isChecked());
+		mCompilerPath.setEnabled(mOtherDMD.isChecked());
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -703,7 +703,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		mSingleFileComp.setSelection(options.compilationModel);
 		mCbOutputType.setSelection(options.lib);
 		mCbSubsystem.setSelection(options.subsystem);
-		mDmdPath.setText(options.program);
+		mCompilerPath.setText(options.program);
 		mOutputPath.setText(options.outdir);
 		mIntermediatePath.setText(options.objdir);
 		mFilesToClean.setText(options.filesToClean);
@@ -720,7 +720,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		changes += changeOption(cast(uint) mSingleFileComp.getSelection(), options.compilationModel, refoptions.compilationModel);
 		changes += changeOption(cast(ubyte) mCbOutputType.getSelection(), options.lib, refoptions.lib);
 		changes += changeOption(cast(ubyte) mCbSubsystem.getSelection(), options.subsystem, refoptions.subsystem);
-		changes += changeOption(mDmdPath.getText(), options.program, refoptions.program);
+		changes += changeOption(mCompilerPath.getText(), options.program, refoptions.program);
 		changes += changeOption(ver, options.Dversion, refoptions.Dversion);
 		changes += changeOption(mOutputPath.getText(), options.outdir, refoptions.outdir);
 		changes += changeOption(mIntermediatePath.getText(), options.objdir, refoptions.objdir);
@@ -731,7 +731,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 	CheckBox mOtherDMD;
 	ComboBox mCompiler;
 	ComboBox mSingleFileComp;
-	Text mDmdPath;
+	Text mCompilerPath;
 	ComboBox mCbOutputType;
 	ComboBox mCbSubsystem;
 	ComboBox mDVersion;
@@ -1339,14 +1339,13 @@ class FilePropertyPage : NodePropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class ToolsPropertyPage : GlobalPropertyPage
+class DmdDirPropertyPage : GlobalPropertyPage
 {
-	override string GetCategoryName() { return "Projects"; }
-	override string GetPageName() { return "D Directories"; }
+	override string GetCategoryName() { return "D Options"; }
+	override string GetPageName() { return "DMD Directories"; }
 
 	this(GlobalOptions options)
 	{
-		kNeededLines = 13;
 		super(options);
 	}
 
@@ -1359,38 +1358,122 @@ class ToolsPropertyPage : GlobalPropertyPage
 		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
 		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
 		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
-		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
-		AddControl("Resource includes", mIncPath = new Text(mCanvas));
 	}
 
 	override void SetControls(GlobalOptions opts)
 	{
-		mDmdPath.setText(opts.DMDInstallDir);
-		mExePath.setText(opts.ExeSearchPath);
-		mImpPath.setText(opts.ImpSearchPath);
-		mLibPath.setText(opts.LibSearchPath);
-		mIncPath.setText(opts.IncSearchPath);
-		mJSNPath.setText(opts.JSNSearchPath);
+		mDmdPath.setText(opts.DMD.InstallDir);
+		mExePath.setText(opts.DMD.ExeSearchPath);
+		mImpPath.setText(opts.DMD.ImpSearchPath);
+		mLibPath.setText(opts.DMD.LibSearchPath);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
-		changes += changeOption(mDmdPath.getText(), opts.DMDInstallDir, refopts.DMDInstallDir); 
-		changes += changeOption(mExePath.getText(), opts.ExeSearchPath, refopts.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(), opts.ImpSearchPath, refopts.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(), opts.LibSearchPath, refopts.LibSearchPath); 
-		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
-		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
+		changes += changeOption(mDmdPath.getText(), opts.DMD.InstallDir,    refopts.DMD.InstallDir); 
+		changes += changeOption(mExePath.getText(), opts.DMD.ExeSearchPath, refopts.DMD.ExeSearchPath); 
+		changes += changeOption(mImpPath.getText(), opts.DMD.ImpSearchPath, refopts.DMD.ImpSearchPath); 
+		changes += changeOption(mLibPath.getText(), opts.DMD.LibSearchPath, refopts.DMD.LibSearchPath); 
 		return changes;
 	}
 
 	Text mDmdPath;
-	Text mIncPath;
 	MultiLineText mExePath;
 	MultiLineText mImpPath;
 	MultiLineText mLibPath;
-	MultiLineText mJSNPath;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+class GdcDirPropertyPage : GlobalPropertyPage
+{
+	override string GetCategoryName() { return "D Options"; }
+	override string GetPageName() { return "GDC Directories"; }
+
+	this(GlobalOptions options)
+	{
+		super(options);
+	}
+
+	override void CreateControls()
+	{
+		mLinesPerMultiLine = 3;
+		AddControl("GDC install path", mGdcPath = new Text(mCanvas));
+		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 2;
+		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
+		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
+		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+	}
+
+	override void SetControls(GlobalOptions opts)
+	{
+		mGdcPath.setText(opts.GDC.InstallDir);
+		mExePath.setText(opts.GDC.ExeSearchPath);
+		mImpPath.setText(opts.GDC.ImpSearchPath);
+		mLibPath.setText(opts.GDC.LibSearchPath);
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mGdcPath.getText(), opts.GDC.InstallDir,    refopts.GDC.InstallDir); 
+		changes += changeOption(mExePath.getText(), opts.GDC.ExeSearchPath, refopts.GDC.ExeSearchPath); 
+		changes += changeOption(mImpPath.getText(), opts.GDC.ImpSearchPath, refopts.GDC.ImpSearchPath); 
+		changes += changeOption(mLibPath.getText(), opts.GDC.LibSearchPath, refopts.GDC.LibSearchPath); 
+		return changes;
+	}
+
+	Text mGdcPath;
+	MultiLineText mExePath;
+	MultiLineText mImpPath;
+	MultiLineText mLibPath;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+class LdcDirPropertyPage : GlobalPropertyPage
+{
+	override string GetCategoryName() { return "D Options"; }
+	override string GetPageName() { return "LDC Directories"; }
+
+	this(GlobalOptions options)
+	{
+		super(options);
+	}
+
+	override void CreateControls()
+	{
+		mLinesPerMultiLine = 3;
+		AddControl("LDC install path", mLdcPath = new Text(mCanvas));
+		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 2;
+		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
+		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
+		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+	}
+
+	override void SetControls(GlobalOptions opts)
+	{
+		mLdcPath.setText(opts.LDC.InstallDir);
+		mExePath.setText(opts.LDC.ExeSearchPath);
+		mImpPath.setText(opts.LDC.ImpSearchPath);
+		mLibPath.setText(opts.LDC.LibSearchPath);
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mLdcPath.getText(), opts.LDC.InstallDir,    refopts.LDC.InstallDir); 
+		changes += changeOption(mExePath.getText(), opts.LDC.ExeSearchPath, refopts.LDC.ExeSearchPath); 
+		changes += changeOption(mImpPath.getText(), opts.LDC.ImpSearchPath, refopts.LDC.ImpSearchPath); 
+		changes += changeOption(mLibPath.getText(), opts.LDC.LibSearchPath, refopts.LDC.LibSearchPath); 
+		return changes;
+	}
+
+	Text mLdcPath;
+	MultiLineText mExePath;
+	MultiLineText mImpPath;
+	MultiLineText mLibPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1413,6 +1496,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor OPTLINK dependencies"));
 		//AddControl("Remove project item", mDeleteFiles = 
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
+		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
+		AddControl("Resource includes", mIncPath = new Text(mCanvas));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1423,6 +1508,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		mDemangleError.setChecked(opts.demangleError);
 		mOptlinkDeps.setChecked(opts.optlinkDeps);
 		//mDeleteFiles.setSelection(opts.deleteFiles + 1);
+		mIncPath.setText(opts.IncSearchPath);
+		mJSNPath.setText(opts.JSNSearchPath);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1434,6 +1521,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
 		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps); 
 		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles); 
+		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
+		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
 		return changes;
 	}
 
@@ -1443,6 +1532,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 	CheckBox mDemangleError;
 	CheckBox mOptlinkDeps;
 	//ComboBox mDeleteFiles;
+	Text mIncPath;
+	MultiLineText mJSNPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1569,7 +1660,9 @@ const GUID    g_DmdDocPropertyPage       = uuid("002a2de9-8bb6-484d-981b-7e4ad40
 const GUID    g_DmdCmdLinePropertyPage   = uuid("002a2de9-8bb6-484d-981c-7e4ad4084715");
 
 // does not need to be registered, created explicitely by package
-const GUID    g_ToolsPropertyPage        = uuid("002a2de9-8bb6-484d-9820-7e4ad4084715");
+const GUID    g_DmdDirPropertyPage       = uuid("002a2de9-8bb6-484d-9820-7e4ad4084715");
+const GUID    g_GdcDirPropertyPage       = uuid("002a2de9-8bb6-484d-9824-7e4ad4084715");
+const GUID    g_LdcDirPropertyPage       = uuid("002a2de9-8bb6-484d-9825-7e4ad4084715");
 const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad4084715");
 
 // registered under Languages\\Language Services\\D\\EditorToolsOptions\\Colorizer, created explicitely by package

@@ -75,7 +75,7 @@ fulltext:
 
 void loadTags()
 {
-	string installdir = normalizeDir(Package.GetGlobalOptions().DMDInstallDir) ~ "html/d/";
+	string installdir = normalizeDir(Package.GetGlobalOptions().DMD.InstallDir) ~ "html/d/";
 	if(!std.file.exists(installdir ~ "index.html"))
 	{
 		writeToBuildOutputPane("no documentation found at " ~ installdir);
@@ -129,7 +129,7 @@ string replaceRef(string s, string path)
 
 string createDisambiguationPage(string word, string[] files)
 {
-	string installdir = normalizeDir(Package.GetGlobalOptions().DMDInstallDir) ~ "html/d/";
+	string installdir = normalizeDir(Package.GetGlobalOptions().DMD.InstallDir) ~ "html/d/";
 	string fallback = `<html lang="en-US"><head></head><body class="hyphenate"><div id="content"></div>`
 		`<div id="footernav"></div></body></html>`;
 	string html = fallback;
