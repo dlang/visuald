@@ -263,7 +263,7 @@ class ProjectOptions
 		isX86_64 = x64;
 	}
 
-	string objectFileExtension() { return compiler == 0 ? "obj" : "o"; }
+	string objectFileExtension() { return compiler != Compiler.GDC ? "obj" : "o"; }
 	string otherCompilerPath() { return otherDMD ? program : null; }
 	@property ref CompilerDirectories compilerDirectories() 
 	{
@@ -865,6 +865,14 @@ class ProjectOptions
 			return " -fdeps=" ~ quoteFilename(file);
 		else
 			return " -deps=" ~ quoteFilename(file);
+	}
+
+	string getAdditionalLinkOptions()
+	{
+		if(compiler != Compiler.DMD && lib == OutputType.StaticLib)
+			return ""; // no options to ar
+
+		return additionalOptions; // always filtered through compiler
 	}
 
 	string getTargetPath()
@@ -2502,7 +2510,7 @@ class Config :	DisposingComObject,
 						remove ~= f;
 					else
 					{
-						targetObj = "$(OutDir)\\$(ProjectName).obj";
+						targetObj = "$(OutDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension();
 						f = targetObj;
 					}
 				}
@@ -2613,7 +2621,7 @@ class Config :	DisposingComObject,
 			if(fcmd.length == 0)
 				opt = ""; // don't try to build zero files
 			else if(singleObj)
-				opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(OutDir)\\$(ProjectName).obj");
+				opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(OutDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension());
 			else
 				opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
 		}
@@ -2669,8 +2677,9 @@ class Config :	DisposingComObject,
 			{
 				lnkcmd = mProjectOptions.buildCommandLine(false, true, false);
 				lnkcmd ~= getLinkFileList(files, prelnk);
-				if(mProjectOptions.additionalOptions.length)
-					lnkcmd ~= " " ~ mProjectOptions.additionalOptions;
+				string addlnkopt = mProjectOptions.getAdditionalLinkOptions();
+				if(addlnkopt.length)
+					lnkcmd ~= " " ~ addlnkopt;
 			}
 			cmd = cmd ~ "\n" ~ prelnk ~ lnkcmd ~ "\n";
 			cmd = cmd ~ "if errorlevel 1 goto reportError\n";
