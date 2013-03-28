@@ -46,3 +46,5 @@
 #define CmdShowWebsite   0x112
 
 #define CmdDeleteFile    0x113
+#define CmdCompileAndRun 0x114
+#define CmdShowLangPage  0x115

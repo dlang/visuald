@@ -9,17 +9,27 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
 using System.IO;
+using Microsoft.Win32;
+using System.Reflection;
 
 using D_Parser.Parser;
 using D_Parser.Misc;
 using D_Parser.Dom;
 using D_Parser.Completion;
 using D_Parser.Resolver;
+using D_Parser.Resolver.TypeResolution;
 
-namespace ABothe
+namespace DParserCOMServer
 {
-	[ComVisible(true), Guid("002a2de9-8bb6-484d-9901-7e4ad4084715")]
+	class IID
+	{
+		public const string IVDServer = "002a2de9-8bb6-484d-9901-7e4ad4084715";
+		public const string VDServer = "002a2de9-8bb6-484d-AA05-7e4ad4084715";
+	}
+
+	[ComVisible(true), Guid(IID.IVDServer)]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	public interface IVDServer
 	{
@@ -34,7 +44,7 @@ namespace ABothe
 		void GetParseErrors(string filename, out string errors);
 		void GetBinaryIsInLocations(string filename, out uint[] locs); // array of pairs of DWORD
 		void GetLastMessage(out string message);
-		void GetDefinition(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex);
+		void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex);
 		void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename);
 	}
 
@@ -80,12 +90,7 @@ namespace ABothe
 		/// </summary>
 		/// <param name="ModuleName"></param>
 		/// <param name="AssocModule"></param>
-		public void Add(string ModuleName, IAbstractSyntaxTree Module = null, string PathOverride = null)
-		{
-			addExpansion(ModuleName);
-		}
-
-		public void AddModule(IAbstractSyntaxTree module, string nameOverride = null)
+		public void AddModule(DModule module,string nameOverride)
 		{
 			if(string.IsNullOrEmpty(nameOverride))
 				addExpansion(module.Name);
@@ -109,7 +114,7 @@ namespace ABothe
 		public string prefix;
 	}
 
-	[ComVisible(true), Guid("002a2de9-8bb6-484d-AA05-7e4ad4084715")]
+	[ComVisible(true), Guid(IID.VDServer)]
 	[ClassInterface(ClassInterfaceType.None)]
 	public class VDServer : IVDServer
 	{
@@ -125,7 +130,7 @@ namespace ABothe
 		private uint   _flags;
 		EditorData _editorData = new EditorData();
 
-		public Dictionary<string, IAbstractSyntaxTree> _modules = new Dictionary<string, IAbstractSyntaxTree>();
+		public Dictionary<string, DModule> _modules = new Dictionary<string, DModule>();
 		public Dictionary<string, string> _sources = new Dictionary<string, string>();
 
 		public VDServer()
@@ -161,7 +166,7 @@ namespace ABothe
 		}
 		public void UpdateModule(string filename, string srcText, bool verbose)
 		{
-			IAbstractSyntaxTree ast;
+			DModule ast;
 			try
 			{
 				ast = DParser.ParseString(srcText, false);
@@ -177,10 +182,10 @@ namespace ABothe
 				ast.ModuleName = Path.GetFileNameWithoutExtension(filename);
 			ast.FileName = filename;
 
-			IAbstractSyntaxTree oldast = null;
+			DModule oldast = null;
 			if (_modules.TryGetValue(filename, out oldast))
 			{
-				_parseCache.UfcsCache.RemoveModuleItems(oldast); 
+				//_parseCache.UfcsCache.RemoveModuleItems(oldast); 
 				_parseCache.Remove(oldast);
 			}
 			_parseCache.AddOrUpdate(ast);
@@ -208,7 +213,7 @@ namespace ABothe
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			IAbstractSyntaxTree ast = null;
+			DModule ast = null;
 			if (!_modules.TryGetValue(filename, out ast))
 				throw new COMException("module not found", 1);
 
@@ -226,7 +231,10 @@ namespace ABothe
 				_tipText = "";
 			else
 				foreach (var c in content)
-				   _tipText += c.Title + ":" + c.Description + "\n";
+					if(string.IsNullOrWhiteSpace(c.Description))
+				        _tipText += c.Title + "\n";
+					else
+				        _tipText += c.Title + ":" + c.Description + "\n";
 
 			//MessageBox.Show("GetTip()");
 			//throw new NotImplementedException();
@@ -243,7 +251,7 @@ namespace ABothe
 		}
 		public void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr)
 		{
-			IAbstractSyntaxTree ast = null;
+			DModule ast = null;
 			if (!_modules.TryGetValue(filename, out ast))
 				throw new COMException("module not found", 1);
 
@@ -273,7 +281,7 @@ namespace ABothe
 		}
 		public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
 		{
-			IAbstractSyntaxTree ast = null;
+			DModule ast = null;
 			if (!_modules.TryGetValue(filename, out ast))
 				throw new COMException("module not found", 1);
 
@@ -282,7 +290,7 @@ namespace ABothe
 		}
 		public void GetParseErrors(string filename, out string errors)
 		{
-			IAbstractSyntaxTree ast = null;
+			DModule ast = null;
 			if (!_modules.TryGetValue(filename, out ast))
 				throw new COMException("module not found", 1);
 
@@ -311,8 +319,37 @@ namespace ABothe
 			message = "__no_message__"; // avoid throwing exception
 			//throw new COMException("No Message", 1);
 		}
-		public void GetDefinition(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex)
+		public void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
+			DModule ast = null;
+			if (!_modules.TryGetValue(filename, out ast))
+				throw new COMException("module not found", 1);
+			
+			_tipStart = new CodeLocation(startIndex + 1, startLine);
+			_tipEnd = new CodeLocation(endIndex + 1, endLine);
+			_tipText = "";
+			
+			_editorData.CaretLocation = _tipEnd;
+			_editorData.SyntaxTree = ast as DModule;
+			_editorData.ModuleCode = _sources[filename];
+			// codeOffset+1 because otherwise it does not work on the first character
+			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
+
+			var ctxt=ResolutionContext.Create(_editorData);
+			var rr = DResolver.ResolveType(_editorData, ctxt, DResolver.AstReparseOptions.AlsoParseBeyondCaret);
+
+			_tipText = "";
+			if (rr != null && rr.Length > 0)
+			{
+				var res = rr[rr.Length - 1];				
+				var n = DResolver.GetResultMember(res);
+				
+				_tipStart = n.Location;
+				_tipEnd = n.EndLocation;
+				INode node = n.NodeRoot;
+				if(node is DModule)
+					_tipText = (node as DModule).FileName;
+			}
 		}
 
 		public void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename)
@@ -321,14 +358,14 @@ namespace ABothe
 			startIndex = _tipStart.Column - 1;
 			endLine = _tipEnd.Line;
 			endIndex = _tipEnd.Column - 1;
-			filename = "";
+			filename = _tipText;
 		}
 
 		///////////////////////////////////
 		void _setupEditorData()
 		{
 			string versions = _versionIds;
-			versions += "Windows\n" + "LittleEndian\n";
+			versions += "Windows\n" + "LittleEndian\n" + "D_HardFloat\n" + "all\n" + "D_Version2\n";
 			if ((_flags & 1) != 0)
 				versions += "unittest\n";
 			if ((_flags & 3) != 0)
@@ -354,7 +391,87 @@ namespace ABothe
 			_editorData.VersionNumber = (int)(_flags >> 8) & 0xff;
 			_editorData.GlobalVersionIds = versions.Split('\n');
 			_editorData.GlobalDebugIds = _debugIds.Split('\n');
-			_editorData.Options = new CompletionOptions { ShowUFCSItems = true };
+			CompletionOptions.Instance.ShowUFCSItems = true;
 		}
+
+
+#if false
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		[ComRegisterFunction()]
+		public static void Register(Type t)
+		{
+			try
+			{
+				RegasmRegisterLocalServer(t);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message); // Log the error
+				throw ex; // Re-throw the exception
+			}
+		}
+		
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		[ComUnregisterFunction()]
+		public static void Unregister(Type t)
+		{
+			try
+			{
+				RegasmUnregisterLocalServer(t);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message); // Log the error
+				throw ex; // Re-throw the exception
+			}
+		}
+
+		/// <summary>
+		/// Register the component as a local server.
+		/// </summary>
+		/// <param name="t"></param>
+		public static void RegasmRegisterLocalServer(Type t)
+		{
+			GuardNullType(t, "t");  // Check the argument
+			
+			// Open the CLSID key of the component.
+			using (RegistryKey keyCLSID = Registry.ClassesRoot.OpenSubKey(
+				@"CLSID\" + t.GUID.ToString("B"), /*writable*/true))
+			{
+				// Remove the auto-generated InprocServer32 key after registration
+				// (REGASM puts it there but we are going out-of-proc).
+				keyCLSID.DeleteSubKeyTree("InprocServer32");
+				
+				// Create "LocalServer32" under the CLSID key
+				using (RegistryKey subkey = keyCLSID.CreateSubKey("LocalServer32"))
+				{
+					subkey.SetValue("", Assembly.GetExecutingAssembly().Location,
+					                RegistryValueKind.String);
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Unregister the component.
+		/// </summary>
+		/// <param name="t"></param>
+		public static void RegasmUnregisterLocalServer(Type t)
+		{
+			GuardNullType(t, "t");  // Check the argument
+			
+			// Delete the CLSID key of the component
+			Registry.ClassesRoot.DeleteSubKeyTree(@"CLSID\" + t.GUID.ToString("B"));
+		}
+		
+		private static void GuardNullType(Type t, String param)
+		{
+			if (t == null)
+			{
+				throw new ArgumentException("The CLR type must be specified.", param);
+			}
+		}
+#endif
 	}
 }
+
+

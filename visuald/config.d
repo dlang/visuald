@@ -2256,6 +2256,8 @@ class Config :	DisposingComObject,
 			return file.GetFilename();
 		if(tool == "DMDsingle")
 			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename())) ~ "." ~ mProjectOptions.objectFileExtension();
+		if(tool == "RDMD")
+			fname = mProjectOptions.outdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename())) ~ ".exe";
 		if(tool == kToolResourceCompiler)
 			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename()), "_") ~ ".res";
 		if(tool == "Custom")
@@ -2354,7 +2356,7 @@ class Config :	DisposingComObject,
 		return files;
 	}
 
-	string GetCompileCommand(CFileNode file, bool syntaxOnly = false, string tool = null)
+	string GetCompileCommand(CFileNode file, bool syntaxOnly = false, string tool = null, string addopt = null)
 	{
 		if(tool.empty)
 			tool = GetCompileTool(file);
@@ -2393,10 +2395,33 @@ class Config :	DisposingComObject,
 			foreach(ddoc; getDDocFileList())
 				cmd ~= " " ~ ddoc;
 		}
+		if(tool == "RDMD")
+		{
+			// temporarily switch to "rdmd"
+			string othercompiler = mProjectOptions.program;
+			bool useother = mProjectOptions.otherDMD;
+			scope(exit)
+			{
+				mProjectOptions.program = othercompiler;
+				mProjectOptions.otherDMD = useother;
+			}
+			mProjectOptions.program = "rdmd";
+			mProjectOptions.otherDMD = true;
+
+			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
+			cmd ~= mProjectOptions.buildCommandLine(true, true, false, syntaxOnly);
+			if(syntaxOnly)
+				cmd ~= " --build-only";
+			cmd ~= addopt ~ " " ~ file.GetFilename();
+			addopt = ""; // must be before filename for rdmd
+		}
 		if(cmd.length)
 		{
-			cmd = getEnvironmentChanges() ~ cmd ~ "\n:reportError\n";
-			cmd ~= "if errorlevel 1 echo Building " ~ outfile ~ " failed!\n";
+			cmd = getEnvironmentChanges() ~ cmd ~ addopt ~ "\n:reportError\n";
+			if(syntaxOnly)
+				cmd ~= "if errorlevel 1 echo Compiling " ~ file.GetFilename() ~ " failed!\n";
+			else
+				cmd ~= "if errorlevel 1 echo Building " ~ outfile ~ " failed!\n";
 			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
 		return cmd;

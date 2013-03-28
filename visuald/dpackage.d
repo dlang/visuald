@@ -539,6 +539,7 @@ version(none)
 				case CmdConvWizard:
 				case CmdBuildPhobos:
 				case CmdShowProfile:
+				case CmdShowLangPage:
 				case CmdShowWebsite:
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
@@ -598,6 +599,17 @@ version(none)
 		if(nCmdID == CmdShowProfile)
 		{
 			showProfilerWindow();
+			return S_OK;
+		}
+		if(nCmdID == CmdShowLangPage)
+		{
+			auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false);
+			GUID targetGUID = uuid("734A5DE2-DEBA-11d0-A6D0-00C04FB67F6A");
+			VARIANT var;
+			var.vt = VT_BSTR;
+			var.bstrVal = allocBSTR("002A2DE9-8BB6-484D-9823-7E4AD4084715");
+			pIVsUIShell.PostExecCommand(&CMDSETID_StandardCommandSet97, cmdidToolsOptions, OLECMDEXECOPT_DODEFAULT, &var);
+			freeBSTR(var.bstrVal);
 			return S_OK;
 		}
 		if(nCmdID == CmdShowWebsite)
@@ -1094,6 +1106,7 @@ class GlobalOptions
 
 	bool ColorizeVersions = true;
 	bool lastColorizeVersions;
+	bool lastUseDParser;
 	
 	this()
 	{
@@ -1224,12 +1237,13 @@ class GlobalOptions
 			semanticGotoDef      = keyUserOpts.GetDWORD("semanticGotoDef",   semanticGotoDef) != 0;
 			useDParser           = keyUserOpts.GetDWORD("useDParser",        useDParser) != 0;
 			lastColorizeVersions = ColorizeVersions;
+			lastUseDParser       = useDParser;
 			UserTypes = parseUserTypes(UserTypesSpec);
 			
 			if(VDServerIID.length > 0)
-				VDServerClassFactory_iid = uuid(VDServerIID);
-			else if(useDParser)
-				VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-AA05-7e4ad4084715");
+				gServerClassFactory_iid = uuid(VDServerIID);
+			else 
+				updateVDServer();
 
 			CHierNode.setContainerIsSorted(sortProjects);
 			
@@ -1266,6 +1280,14 @@ class GlobalOptions
 		DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
 
 		return rc;
+	}
+
+	void updateVDServer()
+	{
+		if(useDParser)
+			gServerClassFactory_iid = DParserClassFactory_iid;
+		else
+			gServerClassFactory_iid = VDServerClassFactory_iid;
 	}
 
 	bool saveToRegistry()
@@ -1334,7 +1356,13 @@ class GlobalOptions
 			if(auto svc = Package.s_instance.mLangsvc)
 				svc.OnActiveProjectCfgChange(null);
 
-		if(!expandFromSemantics)
+		if(lastUseDParser != useDParser)
+		{
+			updateVDServer();
+			lastUseDParser = useDParser;
+			VDServerClient.restartServer = true;
+		}
+		else if(!expandFromSemantics)
 			Package.GetLanguageService().ClearSemanticProject();
 
 		Package.scheduleUpdateLibrary();

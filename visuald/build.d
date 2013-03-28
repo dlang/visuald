@@ -853,6 +853,9 @@ version(none)
 		int cp = GetKBCodePage();
 		const(char)*p = toMBSz(batchFileText, cp);
 		int plen = strlen(p);
+		string dir = dirName(cmdfile);
+		if(!std.file.exists(dir))
+			mkdirRecurse(dir);
 		std.file.write(cmdfile, p[0..plen]);
 	}
 	catch(FileException e)

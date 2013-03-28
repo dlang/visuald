@@ -163,7 +163,7 @@ int main(string[] argv)
         if(command.length > 0)
             command ~= " ";
         if(countUntil(argv[i], ' ') < argv[i].length)
-            command ~= "\"" ~ argv[i] ~ "\"";
+            command ~= "\"" ~ replace(argv[i], "\"", "\\\"") ~ "\"";
         else
             command ~= argv[i];
     }

@@ -78,6 +78,11 @@ License information
 This code is distributed under the terms of the Artistic License 2.0.
 For more details, see the full text of the license in the file LICENSE.
 
+The installer comes with a number of additional products:
+- cv2pdb: http://dsource.org/projects/cv2pdb by Rainer Schuetze
+- mago: http://dsource.org/projects/mago_debugger by Aldo Nunez
+- DParser: https://github.com/aBothe/D_Parser by Alexander Bothe
+
 Building Visual D
 -----------------
 In a nutshell:

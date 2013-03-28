@@ -19,6 +19,8 @@ import std.file;
 import std.datetime;
 import std.array;
 
+import stdext.string;
+
 import visuald.dpackage;
 import visuald.dllmain;
 import visuald.propertypage;
@@ -135,14 +137,6 @@ class RegKey
 		}
 	}
 
-	static wstring escapeString(wstring s)
-	{
-		s = replace(s, "\\"w, "\\\\"w);
-		s = replace(s, "\t"w, "\\t"w);
-		s = replace(s, "\r"w, "\\r"w);
-		s = replace(s, "\n"w, "\\n"w);
-		return s;
-	}
 	static wstring registryName(wstring name)
 	{
 		if(name.length == 0)
@@ -561,7 +555,7 @@ version(none){
 
 		// menu
 		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
-		keyToolMenu.Set(packageGuid, ",2001,14"); // CTMENU,version
+		keyToolMenu.Set(packageGuid, ",2001,15"); // CTMENU,version
 		
 		// Visual D settings
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);

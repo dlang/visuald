@@ -74,7 +74,13 @@ private void dbglog(string s)
 
 ///////////////////////////////////////////////////////////////////////
 // can be changed through registry entry
-__gshared GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+debug(debugServer)
+const GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
+else
+const GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+const GUID DParserClassFactory_iid  = uuid("002a2de9-8bb6-484d-AA05-7e4ad4084715"); // needs VDServer, not factory
+
+__gshared GUID gServerClassFactory_iid = VDServerClassFactory_iid;
 __gshared GUID IVDServer_iid = IVDServer.iid;
 
 __gshared IClassFactory gVDClassFactory;
@@ -92,7 +98,7 @@ bool startVDServer()
 	else
 	{
 		GUID factory_iid = IID_IClassFactory;
-		HRESULT hr = CoGetClassObject(VDServerClassFactory_iid, CLSCTX_LOCAL_SERVER|CLSCTX_INPROC_SERVER, null, factory_iid, cast(void**)&gVDClassFactory);
+		HRESULT hr = CoGetClassObject(gServerClassFactory_iid, CLSCTX_LOCAL_SERVER|CLSCTX_INPROC_SERVER, null, factory_iid, cast(void**)&gVDClassFactory);
 		if(FAILED(hr))
 			return false;
 
@@ -238,7 +244,6 @@ class ConfigureProjectCommand : FileCommand
 	{
 		if(!gVDServer)
 			return S_FALSE;
-import std.array;
 
 		string jimp        = join(cast(string[])(mImp[]), "\n");
 		string jstringImp  = join(cast(string[])(mStringImp[]), "\n");
@@ -666,6 +671,8 @@ class VDServerClient
 	}
 
 	//////////////////////////////////////
+	static shared bool restartServer = false;
+
 	static void clientLoop()
 	{
 		startVDServer();
@@ -675,7 +682,6 @@ class VDServerClient
 			Queue!(_shared!(Command)) toAnswer;
 			while(gVDServer)
 			{
-				bool restartServer = false;
 				bool changed = false;
 				receiveTimeout(dur!"msecs"(50),
 					// as of dmd 2.060, fixes of const handling expose that std.variant is not capable of working sensibly with class objects
@@ -734,6 +740,7 @@ class VDServerClient
 				}
 				if(restartServer)
 				{
+					restartServer = false;
 					version(DebugCmd) dbglog("*** clientLoop: restarting server ***");
 					stopVDServer();
 					startVDServer();

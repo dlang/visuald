@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VDServer", "VDServer.csproj", "{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42} = {0290A229-9AA1-41C3-B525-CAFB86D8BC42}
@@ -8,20 +8,33 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VDServer", "VDServer.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DParser2", "..\..\..\..\abothe\D_Parser\DParser2\DParser2.csproj", "{0290A229-9AA1-41C3-B525-CAFB86D8BC42}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DParserCOMServer", "comserver\DParserCOMServer.csproj", "{7B4FB722-905A-4851-8399-1E0F3361CCD8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6BB5BC5-9598-45EF-A4CF-D4363782DA8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4168BEA-8E67-4598-A25A-1C690764F440}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4168BEA-8E67-4598-A25A-1C690764F440}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4168BEA-8E67-4598-A25A-1C690764F440}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4168BEA-8E67-4598-A25A-1C690764F440}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = comserver\DParserCOMServer.csproj
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

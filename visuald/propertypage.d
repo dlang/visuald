@@ -28,7 +28,7 @@ import stdext.array;
 import std.string;
 import std.conv;
 
-debug version = DParser;
+/*debug*/ version = DParser;
 
 class PropertyWindow : Window
 {
@@ -1605,7 +1605,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "writing '.'", "writing an identifier" ], false));
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip"));
 		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (instead of JSON info)"));
-		version(DParser) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use D_Parser for semantic analysis"));
+		version(DParser) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
 	}
 
 	override void SetControls(GlobalOptions opts)

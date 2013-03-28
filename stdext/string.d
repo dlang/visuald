@@ -105,6 +105,15 @@ unittest
 	assert(t == "a\r\nb\r\ncd\r\n\r\ne\r\n\r\nf");
 }
 
+S escapeString(S)(S s)
+{
+	s = replace(s, "\\"w, "\\\\"w);
+	s = replace(s, "\t"w, "\\t"w);
+	s = replace(s, "\r"w, "\\r"w);
+	s = replace(s, "\n"w, "\\n"w);
+	return s;
+}
+
 int countVisualSpaces(S)(S txt, int tabSize, int* txtpos = null)
 {
 	int p = 0;

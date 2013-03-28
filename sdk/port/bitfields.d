@@ -1,5 +1,40 @@
 module sdk.port.bitfields;
 
+version(bitmanip)
+{
+import std.typetuple;
+import std.traits;
+static import std.bitmanip;
+
+template CountBits(T...)
+{
+	static if(T.length == 0)
+		enum CountBits = 0;
+	else
+		enum CountBits = T[2] + CountBits!(T[3..$]);
+}
+
+template PadBits(T...)
+{
+	enum bits = CountBits!T;
+	static if(bits == 8 || bits == 16 || bits == 32 || bits == 64)
+		alias PadBits = T;
+	else static if(bits < 8)
+		alias PadBits = TypeTuple!(T, uint, "", 8 - bits);
+	else static if(bits < 16)
+		alias PadBits = TypeTuple!(T, uint, "", 16 - bits);
+	else static if(bits < 32)
+		alias PadBits = TypeTuple!(T, uint, "", 32 - bits);
+	else 
+		alias PadBits = TypeTuple!(T, uint, "", 64 - bits);
+}
+
+template bitfields(T...)
+{
+    enum bitfields = std.bitmanip.bitfields!(PadBits!T);
+}
+
+} else {
 private template myToString(ulong n, string suffix = n > uint.max ? "UL" : "U")
 {
     static if (n < 10)
@@ -172,10 +207,11 @@ template bitfields(T...)
 }
 
 //pragma(msg,bitfields!(uint, "x",    5));
+}
 
 unittest
 {
-	struct A
+	static struct A
 	{
 	    mixin(bitfields!(
 		uint, "x",    8,

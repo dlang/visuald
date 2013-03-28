@@ -226,7 +226,7 @@ struct LOGFONTW
 alias LOGFONTW* PLOGFONTW, NPLOGFONTW, LPLOGFONTW;
 } // !sdk
 
-enum OLE_E_LAST = 0x800400FF;
+//enum OLE_E_LAST = 0x800400FF;
 
 version(vsi)
 {

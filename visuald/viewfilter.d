@@ -32,6 +32,7 @@ import visuald.cppwizard;
 import visuald.config;
 import visuald.build;
 import visuald.help;
+import visuald.lexutil;
 
 import vdc.lexer;
 
@@ -54,6 +55,8 @@ import std.utf;
 import std.conv;
 import std.algorithm;
 import std.array;
+import std.file;
+import std.path;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -139,6 +142,7 @@ version(tip)
 		for (uint i = 0; i < cCmds; i++) 
 		{
 			int rc = QueryCommandStatus(pguidCmdGroup, prgCmds[i].cmdID);
+
 			if(rc == E_FAIL) 
 			{
 				if(mNextTarget)
@@ -264,7 +268,7 @@ version(tip)
 				break;
 			
 			case ECMD_COMPILE:
-				return CompileDoc();
+				return CompileDoc(false, false, false);
 
 			case ECMD_GOTOBRACE:
 				return GotoMatchingPair(false);
@@ -295,6 +299,9 @@ version(tip)
 				
 			case CmdConvSelection:
 				return ConvertSelection();
+
+			case CmdCompileAndRun:
+				return CompileDoc(true, true, true);
 
 			default:
 				break;
@@ -418,7 +425,7 @@ version(tip)
 
 	//////////////////////////////
 
-	HRESULT CompileDoc()
+	HRESULT CompileDoc(bool rdmd, bool run, bool withUnittest)
 	{
 		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
 		if(!pIVsUIShellOpenDocument)
@@ -427,67 +434,132 @@ version(tip)
 
 		string fname = mCodeWinMgr.mSource.GetFileName();
 		wchar* wfname = _toUTF16z(fname);
+		string addopt;
+
+		Config cfg;
+		CFileNode pFile;
+
 		IVsUIHierarchy pUIH;
 		uint itemid;
 		IServiceProvider pSP;
 		VSDOCINPROJECT docInProj;
 		if(pIVsUIShellOpenDocument.IsDocumentInAProject(wfname, &pUIH, &itemid, &pSP, &docInProj) != S_OK)
 			return S_OK;
-
+		
 		scope(exit) release(pSP);
 		scope(exit) release(pUIH);
 
 		if(!pUIH)
 			return returnError(E_FAIL);
 		Project proj = qi_cast!Project(pUIH);
-		if(!proj)
-			return S_OK;
 		scope(exit) release(proj);
 
-		CHierNode pNode = proj.VSITEMID2Node(itemid);
-		if(!pNode)
-			return returnError(E_INVALIDARG);
-		CFileNode pFile = cast(CFileNode) pNode;
-		if(!pFile)
-			return S_OK;
+		BSTR bstrSelText;
+		string selText;
+		if(mView.GetSelectedText(&bstrSelText) == S_OK)
+			selText = detachBSTR(bstrSelText);
 
-		if(pFile.SaveDoc(SLNSAVEOPT_SaveIfDirty) != S_OK)
-			return returnError(E_FAIL);
+		if(!proj)
+		{
+			// not in Visual D project, but in workspace project
+			ProjectFactory factory = newCom!ProjectFactory(Package.s_instance);
+			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
+			string srcfile = Package.GetGlobalOptions().VisualDInstallDir ~ "Templates/ProjectItems/ConsoleApp/ConsoleApp.visualdproj";
 
-		auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
-		scope(exit) release(solutionBuildManager);
-		IVsProjectCfg activeCfg;
-		scope(exit) release(activeCfg);
+			proj = newCom!Project(factory, "__compile__", filename, "Win32", "Debug").addref();
+			pFile = newCom!CFileNode(fname);
+			proj.GetProjectNode().Add(pFile);
 
-		if(solutionBuildManager)
-			if(solutionBuildManager.FindActiveProjectCfg(null, null, proj, &activeCfg) == S_OK)
+			IVsCfgProvider pCfgProvider;
+			IVsCfg icfg;
+			scope(exit) release(pCfgProvider);
+			scope(exit) release(icfg);
+			if(proj.GetCfgProvider(&pCfgProvider) == S_OK)
+				if(pCfgProvider.GetCfgs(1, &icfg, null, null) == S_OK)
+					cfg = qi_cast!Config(icfg);
+			if(cfg)
 			{
-				if(Config cfg = qi_cast!Config(activeCfg))
-				{
-					scope(exit) release(cfg);
-
-					string stool = cfg.GetStaticCompileTool(pFile);
-					if(stool == "DMD")
-						stool = "DMDsingle";
-
-					string cmd = cfg.GetCompileCommand(pFile, true, stool);
-					if(cmd.length)
-					{
-						cmd ~= "if not errorlevel 1 echo Compilation successful.\n";
-						string workdir = cfg.GetProjectDir();
-						string outfile = cfg.GetOutputFile(pFile);
-						string cmdfile = makeFilenameAbsolute(outfile ~ ".syntax", workdir);
-						removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
-						auto pane = getBuildOutputPane();
-						scope(exit) release(pane);
-						clearBuildOutputPane();
-						if(pane)
-							pane.Activate();
-						HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
-					}
-				}
+				cfg.GetProjectOptions().outdir = normalizeDir(tempDir()) ~ "__vdcompile";
+				cfg.GetProjectOptions().release = false;
 			}
 
+			string modname = getModuleDeclarationName(fname);
+			if(modname.length)
+			{
+				string ipath;
+				while(findSkip(modname, "."))
+					ipath ~= "/..";
+				if(ipath.length)
+					addopt ~= " -I" ~ normalizeDir(dirName(fname)) ~ ipath[1..$];
+			}
+		}
+		else
+		{
+			CHierNode pNode = proj.VSITEMID2Node(itemid);
+			if(!pNode)
+				return returnError(E_INVALIDARG);
+			pFile = cast(CFileNode) pNode;
+			if(!pFile)
+				return S_OK;
+
+			if(pFile.SaveDoc(SLNSAVEOPT_SaveIfDirty) != S_OK)
+				return returnError(E_FAIL);
+
+			auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+			scope(exit) release(solutionBuildManager);
+			IVsProjectCfg activeCfg;
+			scope(exit) release(activeCfg);
+
+			if(solutionBuildManager)
+				if(solutionBuildManager.FindActiveProjectCfg(null, null, proj, &activeCfg) == S_OK)
+					cfg = qi_cast!Config(activeCfg);
+		}
+		if(!cfg || !pFile)
+			return S_OK;
+
+		scope(exit) release(cfg);
+
+		string stool = cfg.GetStaticCompileTool(pFile);
+		if(stool == "DMD")
+			stool = "DMDsingle";
+		if(stool == "DMDsingle" && withUnittest)
+			addopt ~= " -unittest";
+		if(stool == "DMDsingle")
+		{
+			if(rdmd)
+			{
+				stool = "RDMD";
+				if(selText.length)
+				{
+					string[] lines = splitLines(selText);
+					foreach(ln; lines)
+					{
+						string line = strip(detab(ln));
+						if(line.length)
+							addopt ~= " \"--eval=" ~ replace(line, "\"", "\\\"") ~ "\"";
+					}
+				}
+				else
+					addopt ~= " --main";
+			}
+			else if(run)
+				addopt ~= " -run";
+		}
+		string cmd = cfg.GetCompileCommand(pFile, !run, stool, addopt);
+		if(cmd.length)
+		{
+			cmd ~= "if not errorlevel 1 echo Compilation successful.\n";
+			string workdir = cfg.GetProjectDir();
+			string outfile = cfg.GetOutputFile(pFile, stool);
+			string cmdfile = makeFilenameAbsolute(outfile ~ ".syntax", workdir);
+			removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
+			auto pane = getBuildOutputPane();
+			scope(exit) release(pane);
+			clearBuildOutputPane();
+			if(pane)
+				pane.Activate();
+			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
+		}
 		return S_OK;
 	}
 
@@ -562,6 +634,7 @@ version(tip)
 			case CmdShowMethodTip:
 			case CmdToggleComment:
 			case CmdConvSelection:
+			case CmdCompileAndRun:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;

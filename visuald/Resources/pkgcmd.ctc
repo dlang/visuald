@@ -43,6 +43,8 @@
 #define IDG_VS_SOLNITEMS_PROJITEM     0x01BD
 #define IDG_VS_CTXT_DELETE            0x022F
 #define IDG_VS_EDIT_CUTCOPY           0x012A
+#define IDG_VS_BUILD_MISC             0x0282
+#define IDG_VS_BUILD_CANCEL           0x0283
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bitmap IDs
@@ -71,7 +73,7 @@ CMDS_SECTION g_packageCLSID
 		// Command ID,                      Group ID,                            Priority, Icon ID,                 Button Type, Flags, Button Text,                Menu Text,                   ToolTip Text, Command Well Text, English Command,          Localized Command Name;
 		g_commandSetCLSID:CmdSearchSymbol,  g_packageCLSID:IDG_VD_SEARCH,        0xF000,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search Symbol",            "Search S&ymbol",            "Search Symbol in D Projects", , "SearchSymbol",           "SearchSymbol";
 		g_commandSetCLSID:CmdSearchFile,    g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search File",              "Search &File",              "Search File in Solution",     , "SearchFile",             "SearchFile";
-		g_commandSetCLSID:CmdReplaceTokens, g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search/Replace Tokens",    "Search/&Replace Tokens",    "Search/Replace Tokens",       , "SearchReplaceTokens",    "SearchReplaceTokens";
+		g_commandSetCLSID:CmdReplaceTokens, g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search/Replace Tokens",    "Search/&Replace Tokens...", "Search/Replace Tokens",       , "SearchReplaceTokens",    "SearchReplaceTokens";
 		g_commandSetCLSID:CmdSearchTokNext, g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search Next Tokens",       "Search &Next Tokens",       "Search Next Tokens",          , "SearchTokensNext",       "SearchTokensNext";
 		g_commandSetCLSID:CmdSearchTokPrev, g_packageCLSID:IDG_VD_SEARCH,        0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Search Previous Tokens",   "Search Pre&vious Tokens",   "Search Previous Tokens",      , "SearchTokensPrev",       "SearchTokensPrev";
 		g_commandSetCLSID:CmdShowScope,     g_packageCLSID:IDG_VD_EDIT,          0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Show Scope",               "Show &Scope",               "Show Scope of Cursor",        , "ShowScope",              "ShowScope";
@@ -79,8 +81,10 @@ CMDS_SECTION g_packageCLSID
 		g_commandSetCLSID:CmdToggleComment, g_packageCLSID:IDG_VD_EDIT,          0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Toggle Comment Selection", "Toggle &Comment Selection", "Toggle Comment Selection",    , "ToggleCommentSelection", "ToggleCommentSelection";
 		g_commandSetCLSID:CmdBuildPhobos,   g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Build Phobos Browse Info", "Build Phobos &Browse Info", "Build Phobos Browse Info",    , "BuildPhobosBrowseInfo",  "BuildPhobosBrowseInfo";
 		g_commandSetCLSID:CmdShowProfile,   g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Open Profiler Window",     "&Open Profiler Window",     "Open Profiler Window",        , "OpenProfilerWindow",     "OpenProfilerWindow";
-		g_commandSetCLSID:CmdConvWizard,    g_packageCLSID:IDG_VD_CONVERSION,    0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "C++ Conversion Wizard",    "C++ Conversion &Wizard",    "C++ Conversion Wizard",       , "ConversionWizard",       "ConversionWizard";
+		g_commandSetCLSID:CmdCompileAndRun, g_packageCLSID:IDG_VD_BUILD,         0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Compile and Run",          "Compile and Run",           "Compile and Run",             , "CompileAndRun",          "CompileAndRun";
+		g_commandSetCLSID:CmdConvWizard,    g_packageCLSID:IDG_VD_CONVERSION,    0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "C++ Conversion Wizard",    "C++ Conversion &Wizard...", "C++ Conversion Wizard",       , "ConversionWizard",       "ConversionWizard";
 		g_commandSetCLSID:CmdConvSelection, g_packageCLSID:IDG_VD_CONVERSION,    0xF300,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "C++ Convert Selection",    "C++ Convert Selection",     "C++ Convert Selection",       , "ConvertSelection",       "ConvertSelection";
+		g_commandSetCLSID:CmdShowLangPage,  g_packageCLSID:IDG_VD_WEB,           0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Language Options",         "Open Language &Options...", "Open Language Options",       , "OpenLanguageOptions",    "OpenLanguageOptions";
 		g_commandSetCLSID:CmdShowWebsite,   g_packageCLSID:IDG_VD_WEB,           0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Visual D Website",         "Visual D &Website",         "Open Visual D Website",       , "OpenWebsite",            "OpenWebsite";
 		
 		//g_commandSetCLSID:CmdDeleteFile,    guidSHLMainMenu:IDG_VS_EDIT_CUTCOPY, 0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Delete File",         "Delete File",         "Delete File",       , "DeleteFile",            "DeleteFile";

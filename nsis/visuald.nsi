@@ -9,6 +9,9 @@
 ; define MAGO to include mago installation (expected at ../../../mago)
 !define MAGO
 
+; define DPARSER to include DParser COM server installation (expected at ../bin/Release/DParserCOMServer)
+!define DPARSER
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -385,6 +388,18 @@ ${MementoSection} "mago" SecMago
 ${MementoSectionEnd}
 !endif
 
+!ifdef DPARSER
+;--------------------------------
+${MementoSection} "DParser" SecDParser
+
+  ${SetOutPath} "$INSTDIR\DParser"
+  ${File} ..\bin\Release\DParserCOMServer\ DParserCOMServer.exe
+  ${File} ..\bin\Release\DParserCOMServer\ D_Parser.dll
+
+  Call RegisterDParser
+
+${MementoSectionEnd}
+!endif
 
 ${MementoSectionDone}
 
@@ -415,6 +430,10 @@ SectionEnd
   LangString DESC_SecMago ${LANG_ENGLISH} "Mago is a debug engine especially designed for the D-Language."
   LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. It is in an early alpha stage, so some things are still in an experimental stage."
 !endif  
+!ifdef DPARSER
+  LangString DESC_SecDParser ${LANG_ENGLISH} "DParser is a Parser & Resolver & Completion library for D."
+  LangString DESC_SecDParser2 ${LANG_ENGLISH} "$\r$\nDParser is written by Alexander Bothe. See https://github.com/aBothe/D_Parser"
+!endif  
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -433,6 +452,9 @@ SectionEnd
 !endif
 !ifdef MAGO
     !insertmacro MUI_DESCRIPTION_TEXT ${SecMago} $(DESC_SecMago)$(DESC_SecMago2)
+!endif
+!ifdef DPARSER
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecDParser} $(DESC_SecDParser)$(DESC_SecDParser2)
 !endif
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -512,6 +534,7 @@ Section "Uninstall"
 !endif
   
   Call un.RegisterVDServer
+  Call un.RegisterDParser
 
   Call un.installedFiles
   ;ADD YOUR OWN FILES HERE...
@@ -793,5 +816,33 @@ Function un.RegisterVDServer
   DeleteRegKey ${VDSERVER_REG_ROOT} "CLSID\${VDSERVER_FACTORY_CLSID}"
   DeleteRegKey ${VDSERVER_REG_ROOT} "TypeLib\${VDSERVER_TYPELIB_CLSID}" 
   DeleteRegKey ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}" 
+
+FunctionEnd
+
+;---------------------------------------
+!define DPARSER_REG_ROOT                   HKCR
+!define DPARSER_FACTORY_NAME               DParserCOMServer.VDServerClassFactory
+!define DPARSER_FACTORY_CLSID              {002a2de9-8bb6-484d-aa02-7e4ad4084715}
+!define DPARSER_VDSERVER_CLSID             {002a2de9-8bb6-484d-aa05-7e4ad4084715}
+; typelib and IVDServer interface inherited from vdserver.exe
+
+Function RegisterDParser
+
+;  WriteRegStr ${DPARSER_REG_ROOT} "${DPARSER_FACTORY_NAME}\CLSID"                "" ${DPARSER_FACTORY_CLSID}
+;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\LocalServer32" "" $INSTDIR\DParser\DParserCOMServer.exe
+;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\ProgId"        "" DParserCOMServer.VDServer
+;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
+
+  WriteRegStr ${DPARSER_REG_ROOT} "${DPARSER_VDSERVER_NAME}\CLSID"                "" ${DPARSER_VDSERVER_CLSID}
+  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\LocalServer32" "" $INSTDIR\DParser\DParserCOMServer.exe
+  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\ProgId"        "" DParserCOMServer.VDServer
+  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
+
+FunctionEnd
+
+Function un.RegisterDParser
+
+  DeleteRegKey ${DPARSER_REG_ROOT} "${DPARSER_FACTORY_NAME}" 
+  DeleteRegKey ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}"
 
 FunctionEnd

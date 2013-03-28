@@ -627,7 +627,20 @@ class Project : CVsHierarchy,
 		
 		parseXML();
 	}
+	this(ProjectFactory factory, string name, string filename, string platform, string config)
+	{
+		mFactory = factory;
+		mCaption = mName = name;
+		mFilename = filename;
+		mExtProject = addref(newCom!ExtProject(this));
+		mConfigProvider = addref(newCom!ConfigProvider(this));
 	
+		mConfigProvider.addConfig(platform, config);
+		CProjectNode rootnode = newCom!CProjectNode(filename, this);
+		rootnode.SetName(name);
+		SetRootNode(rootnode);
+	}
+
 	override void Dispose()
 	{
 		mConfigProvider = release(mConfigProvider);
