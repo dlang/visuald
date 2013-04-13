@@ -18,6 +18,7 @@ import std.array;
 import std.algorithm;
 import std.conv;
 import std.path;
+import std.utf;
 
 extern(C)
 {
@@ -52,6 +53,17 @@ extern(C)
     }
 
     alias STARTUPINFOA* LPSTARTUPINFOA;
+    
+    enum
+    {
+      CP_ACP                   = 0,
+      CP_OEMCP                 = 1,
+      CP_MACCP                 = 2,
+      CP_THREAD_ACP            = 3,
+      CP_SYMBOL                = 42,
+      CP_UTF7                  = 65000,
+      CP_UTF8                  = 65001
+    }
 }
 
 extern(System)
@@ -137,13 +149,15 @@ int main(string[] argv)
         printf("pipedmd V0.2, written 2012 by Benjamin Thaut, complications improved by Rainer Schuetze\n");
         printf("decompresses and demangles names in OPTLINK and ld messages\n");
         printf("\n");
-        printf("usage: %s [-nodemangle] [-gdcmode] [-deps depfile] [executable] [arguments]\n", argv[0].ptr);
+        printf("usage: %s [-nodemangle] [-gdcmode | -msmode] [-deps depfile] [executable] [arguments]\n", argv[0].ptr);
         return -1;
     }
     int skipargs;
     string depsfile;
     bool doDemangle = true;
-    bool gdcMode = false;
+    bool gdcMode = false; //gcc linker 
+    bool msMode = false; //microsft linker
+    writefln(argv[1]);
     if(argv.length >= 2 && argv[1] == "-nodemangle")
     {
         doDemangle = false;
@@ -152,6 +166,11 @@ int main(string[] argv)
     if(argv.length >= skipargs + 2 && argv[skipargs + 1] == "-gdcmode")
     {
         gdcMode = true;
+        skipargs++;
+    }
+    if(argv.length >= skipargs + 2 && argv[skipargs + 1] == "-msmode")
+    {
+        msMode = true;
         skipargs++;
     }
     if(argv.length > skipargs + 2 && argv[skipargs + 1] == "-deps")
@@ -239,10 +258,12 @@ int main(string[] argv)
     ResumeThread(piProcInfo.hThread);
 
     char[] buffer = new char[2048];
+    WCHAR[] decodeBufferWide = new WCHAR[2048];
+    char[] decodeBuffer = new char[2048];
     DWORD bytesRead = 0;
     DWORD bytesAvaiable = 0;
     DWORD exitCode = 0;
-    bool linkerFound = gdcMode;
+    bool linkerFound = gdcMode || msMode;
 
     while(true)
     {
@@ -270,6 +291,12 @@ int main(string[] argv)
                 skip++;
 
             char[] output = buffer[skip..bytesRead];
+            if(msMode) //the microsoft linker outputs the error messages in the default ANSI codepage so we need to convert it to UTF-8
+            {
+                auto numDecoded = MultiByteToWideChar(CP_ACP, 0, output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
+                auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, decodeBuffer.ptr, decodeBuffer.length, null, null);
+                output = decodeBuffer[0..numEncoded];
+            }
             size_t writepos = 0;
 
             if(!linkerFound && output.startsWith("OPTLINK (R)"))
@@ -277,26 +304,42 @@ int main(string[] argv)
 
             if(doDemangle && linkerFound)
             {
-                if(gdcMode)
+                if(gdcMode || msMode)
                 {
-                    if(output.countUntil("undefined reference to") >= 0 || output.countUntil("In function") >= 0)
+                    ptrdiff_t startIndex, endIndex;
+                    if(gdcMode)
                     {
-                        auto startIndex = output.lastIndexOf('`');
-                        auto endIndex = output.lastIndexOf('\'');
-                        if(startIndex >= 0 && startIndex < endIndex)
+                        if(output.countUntil("undefined reference to") >= 0 || output.countUntil("In function") >= 0)
                         {
-                            auto symbolName = output[startIndex+1..endIndex];
-                            if(symbolName.length > 2 && symbolName[0] == '_' && symbolName[1] == 'D')
+                            startIndex = output.lastIndexOf('`');
+                            endIndex = output.lastIndexOf('\'');
+                        }
+                    }
+                    else if(msMode)
+                    {
+                        if(output.countUntil("LNK") >= 0)
+                        {
+                            startIndex = endIndex = 0;
+                            if( (startIndex = toUTFindex(output, output.countUntil('"'))) >= 0 &&
+                                (endIndex = toUTFindex(output[startIndex+1..$], output[startIndex+1..$].countUntil('"'))) >= 0)
                             {
-                                auto demangeledSymbolName = demangle(symbolName);
-                                if(demangeledSymbolName != symbolName)
-                                {
-                                    fwrite(output.ptr, endIndex+1, 1, stdout);
-                                    writepos = endIndex+1;
-                                    fwrite(" (".ptr, 2, 1, stdout);
-                                    fwrite(demangeledSymbolName.ptr, demangeledSymbolName.length, 1, stdout);
-                                    fwrite(")".ptr, 1, 1, stdout);
-                                }
+                                endIndex += startIndex+1;    
+                            }
+                        }
+                    }
+                    if(startIndex >= 0 && startIndex < endIndex)
+                    {
+                        auto symbolName = output[startIndex+1..endIndex];
+                        if(symbolName.length > 2 && symbolName[0] == '_' && symbolName[1] == 'D')
+                        {
+                            auto demangeledSymbolName = demangle(symbolName);
+                            if(demangeledSymbolName != symbolName)
+                            {
+                                fwrite(output.ptr, endIndex+1, 1, stdout);
+                                writepos = endIndex+1;
+                                fwrite(" (".ptr, 2, 1, stdout);
+                                fwrite(demangeledSymbolName.ptr, demangeledSymbolName.length, 1, stdout);
+                                fwrite(")".ptr, 1, 1, stdout);
                             }
                         }
                     }
