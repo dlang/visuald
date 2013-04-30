@@ -1053,9 +1053,7 @@ version(all)
 			dir = "";
 		else
 			dir ~= "\\";
-		string ext = getExt(fname);
-		if(ext.length > 0)
-			ext = "." ~ ext;
+		string ext = extension(fname);
 		return translatePackageName(dir ~ nname ~ ext);
 	}
 
@@ -2206,7 +2204,7 @@ else
 
 	void addSource(string file)
 	{
-		string base = basename(file);
+		string base = baseName(file);
 		if(excludefiles.contains(base))
 			return;
 		
@@ -2222,10 +2220,10 @@ else
 			mode = SpanMode.depth;
 			file = file[1..$];
 		}
-		string path = dirname(file);
-		string pattern = basename(file);
+		string path = dirName(file);
+		string pattern = baseName(file);
 		foreach (string name; dirEntries(path, mode))
-			if (fnmatch(basename(name), pattern))
+			if (globMatch(baseName(name), pattern))
 				addSource(name);
 	}
 
@@ -2329,8 +2327,8 @@ version(remove_pp) {} else
 		string ins = "  <Folder name=\"port\">\n";
 		string portdir = sdk_d_path ~ "port";
 		foreach (string name; dirEntries(portdir, SpanMode.shallow))
-			if (fnmatch(basename(name), "*.d"))
-				ins ~= "   <File path=\"port\\" ~ basename(name) ~ "\" />\n";
+			if (globMatch(baseName(name), "*.d"))
+				ins ~= "   <File path=\"port\\" ~ baseName(name) ~ "\" />\n";
 		
 		string folder = "port";
 
@@ -2376,7 +2374,7 @@ version(remove_pp) {} else
 	{
 		if(argv.length <= 1)
 		{
-			writeln("usage: ", basename(argv[0]), " {-vsi|-dte|-win|-sdk|-prefix|-verbose|-define} [files...]");
+			writeln("usage: ", baseName(argv[0]), " {-vsi|-dte|-win|-sdk|-prefix|-verbose|-define} [files...]");
 			writeln();
 			writeln(" -vsi=DIR   specify path to Visual Studio Integration SDK");
 			writeln(" -dte=DIR   specify path to additional IDL files from VSI SDK");
@@ -2385,8 +2383,8 @@ version(remove_pp) {} else
 			writeln(" -prefix=P  prefix used for identifiers that are D keywords");
 			writeln(" -verbose   report undefined definitions in preprocessor conditions");
 			writeln();
-			writeln("Example: ", basename(argv[0]), ` test.idl`);
-			writeln("         ", basename(argv[0]), ` -win="%WindowsSdkDir%\Include" -vsi="%VSSDK110Install%" -sdk=sdk`);
+			writeln("Example: ", baseName(argv[0]), ` test.idl`);
+			writeln("         ", baseName(argv[0]), ` -win="%WindowsSdkDir%\Include" -vsi="%VSSDK110Install%" -sdk=sdk`);
 			return -1;
 		}
 

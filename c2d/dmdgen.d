@@ -2244,8 +2244,8 @@ int firstPathSeparator(string path)
 
 string createImportAll(string filename, bool makefile)
 {
-	string path = dirname(filename);
-	string ext = getExt(filename);
+	string path = dirName(filename);
+	string ext = extension(filename)[1 .. $];
 	string bname = filename[path.length + 1..$-ext.length-1];
 	
 	string txt;
@@ -2288,13 +2288,13 @@ string createImportAll(string filename, bool makefile)
 
 string genOutFilename(string filename, int pass)
 {
-	string path = dirname(filename);
+	string path = dirName(filename);
 	string gendir = pass == 0 ? "dmdgen" : "gen" ~ format("%d", pass);
 	string genpath = replace(path, "dmd", gendir);
 	if(!exists(genpath))
 		mkdirRecurse(genpath);
 
-	string ext = getExt(filename);
+	string ext = extension(filename)[1 .. $];
 	string bname = filename[path.length + 1..$-ext.length-1];
 
 	if(pass == 0)
