@@ -40,7 +40,7 @@
   <checkProperty>1</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
-  <cov>0</cov>
+  <cov>1</cov>
   <nofloat>0</nofloat>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
@@ -191,7 +191,7 @@
  <Config name="TestDebug" platform="Win32">
   <obj>0</obj>
   <link>0</link>
-  <lib>2</lib>
+  <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
@@ -200,8 +200,8 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
-  <symdebug>1</symdebug>
-  <optimize>0</optimize>
+  <symdebug>0</symdebug>
+  <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -217,11 +217,11 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <noboundscheck>1</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
-  <release>0</release>
+  <useInline>1</useInline>
+  <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>1</infowarnings>
@@ -235,7 +235,7 @@
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
+  <imppath>..;m:\s\d\rainers\druntime\src</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\obj</objdir>
@@ -254,7 +254,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>TESTMAIN$(TEST_OPTIONS)</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>3</mapverbosity>
   <createImplib>0</createImplib>
@@ -272,12 +272,12 @@
   <objfiles />
   <linkswitches />
   <libfiles>user32.lib kernel32.lib uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
-  <libpaths />
+  <libpaths>..\sdk\lib</libpaths>
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions>-debuglib=phobos -m32ms -L/DLL</additionalOptions>
+  <additionalOptions>-gx</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
@@ -285,6 +285,13 @@
  <Folder name="VisualD">
   <Folder name="a_workaround">
    <File path="workaround.d" />
+  </Folder>
+  <Folder name="gc">
+   <File tool="None" path="..\..\..\rainers\druntime\src\gc\gcdump.d" />
+   <File tool="None" path="..\..\..\rainers\druntime\src\gc\gcx.d" />
+   <File tool="None" path="..\..\..\rainers\druntime\src\rt\lifetime.d" />
+   <File tool="None" path="..\..\..\rainers\druntime\src\rt\sections_win32.d" />
+   <File tool="None" path="..\vdc\semantic.d" />
   </Folder>
   <Folder name="language">
    <File path="colorizer.d" />

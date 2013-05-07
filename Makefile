@@ -35,6 +35,7 @@ MSENV  = $(COMMONPROGRAMFILES)\Microsoft Shared\MSEnv
 NSIS   = $(PROGRAMFILES)\NSIS
 CV2PDB = $(PROGRAMFILES)\VisualD\cv2pdb\cv2pdb.exe
 ZIP    = c:\u\unix\zip.exe
+MSBUILD = c:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe 
 
 ##############################################################
 # no more changes should be necessary starting from here
@@ -130,6 +131,10 @@ cpp2d_exe:
 
 idl2d_exe: $(VSI2D_EXE) 
 	copy $(VSI2D_EXE) ..\downloads\idl2d.exe
+
+dparser:
+	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /t:Rebuild
+
 
 ##################################
 # create installer

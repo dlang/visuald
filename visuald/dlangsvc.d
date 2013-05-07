@@ -405,6 +405,9 @@ class LanguageService : DisposingComObject,
 			newCom!ColorableItem("Visual D Token String Mnemonic",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
 			newCom!ColorableItem("Visual D Token String Type",       -1,      CI_USERTEXT_BK, RGB(112,0,80)),
 			newCom!ColorableItem("Visual D Token String Version",    -1,      CI_USERTEXT_BK, RGB(224, 0, 0)),
+
+			newCom!ColorableItem("Text Coverage",     CI_USERTEXT_FG, -1, 0,  RGB(192, 255, 192)),
+			newCom!ColorableItem("Text Non-Coverage", CI_USERTEXT_FG, -1, 0,  RGB(255, 192, 192)),
 		];
 	};
 	static void shared_static_dtor()
@@ -1202,7 +1205,15 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 				line += chg.newLine - chg.oldLine;
 		return line;
 	}
-	
+
+	int adjustLineNumberSinceLastBuildReverse(int line)
+	{
+		foreach_reverse(ref chg; mLineChanges)
+			if(line >= chg.newLine)
+				line -= chg.newLine - chg.oldLine;
+		return line;
+	}
+
 	// IVsTextMarkerClient //////////////////////////////////////
 	override HRESULT MarkerInvalidated()
 	{
@@ -1274,6 +1285,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	
 	bool OnIdle()
 	{
+		if(mColorizer.UpdateCoverage(false))
+			return true;
+
 		if(startParsing())
 			return true;
 

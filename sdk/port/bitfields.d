@@ -224,4 +224,7 @@ unittest
 	A obj;
 	obj.x = 2;
 	obj.z = obj.x;
+
+	import std.stdio;
+	writeln("done");
 }

@@ -36,6 +36,8 @@ Project:
 - additional options for resource compiler
 - compile and run current buffer/selection
 - pass import path from static lib project to dependent projects
+- file properties per configuration
+- single file compilation for file configuration
 
 Language service:
 -----------------
@@ -142,5 +144,7 @@ Unsorted
 - goto definition/completion for labels, versions
 - goto definition fallback to JSON
 - highlight compiler-magic identifiers
-- open intellisense settings
 
+- save file before "Compile & run"
+- coverage line highlight after "Compile & run" doesn't update
+- better keeping track of line changes

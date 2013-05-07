@@ -14,6 +14,7 @@ import std.ascii;
 import std.utf;
 import std.conv;
 import std.algorithm;
+import std.datetime;
 
 import visuald.comutil;
 import visuald.logutil;
@@ -78,6 +79,9 @@ enum TokenColor
 	StringAsmMnemonic,
 	StringUserType,
 	StringVersion,
+
+	CoverageKeyword,
+	NonCoverageKeyword,
 }
 
 int[wstring] parseUserTypes(string spec)
@@ -200,6 +204,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	ParserBase!wstring mParser;
 	Config mConfig;
 	bool mColorizeVersions;
+	bool mColorizeCoverage = true;
 	bool mParseSource;
 	
 	enum int kIndexVersion = 0;
@@ -223,6 +228,10 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	bool mConfigDoc;
 	bool mConfigNoBoundsCheck;
 	
+	int[] mCoverage;
+	SysTime mLastTestCoverageFile;
+	SysTime mLastModifiedCoverageFile;
+
 	enum VersionParseState
 	{
 		IdleEnabled,
@@ -251,6 +260,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		mColorizeVersions = Package.GetGlobalOptions().ColorizeVersions;
 		mParseSource = Package.GetGlobalOptions().parseSource;
 		UpdateConfig();
+
+		UpdateCoverage(true);
 	}
 
 	~this()
@@ -303,6 +314,15 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		uint pos = 0;
 		bool inTokenString = (Lexer.tokenStringLevel(state) > 0);
 		
+		int cov = -1;
+		int covtype = TokenColor.CoverageKeyword;
+		if(mColorizeCoverage)
+		{
+			int covLine = mSource.adjustLineNumberSinceLastBuildReverse(iLine);
+			cov = covLine >= mCoverage.length ? -1 : mCoverage[covLine];
+			covtype = cov == 0 ? TokenColor.NonCoverageKeyword : TokenColor.CoverageKeyword;
+		}
+		int back = 0; // COLOR_MARKER_MASK;
 		LanguageService langsvc = Package.GetLanguageService();
 		while(pos < iLength)
 		{
@@ -326,31 +346,38 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 						type = TokenColor.Keyword;
 				}
 
-			if(mColorizeVersions)
+			if(cov >= 0)
 			{
-				if(Lexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
-				{
-					int parseState = getParseState(state);
-					if(type == TokenColor.Identifier)
-						type = userColorType(tok);
-					if(parseState == VersionParseState.IdleDisabled || parseState == VersionParseState.IdleDisabledVerify)
-						type = disabledColorType(type);
-				}
-				else
-				{
-					type = parseVersions(span, type, tok, state, versionsChanged);
-				}
+				type = covtype;
 			}
-			if(inTokenString || nowInTokenString)
-				type = stringColorType(type);
-			//else if(mParseSource)
-			//	type = parseErrors(span, type, tok);
+			else
+			{
+				if(mColorizeVersions)
+				{
+					if(Lexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
+					{
+						int parseState = getParseState(state);
+						if(type == TokenColor.Identifier)
+							type = userColorType(tok);
+						if(parseState == VersionParseState.IdleDisabled || parseState == VersionParseState.IdleDisabledVerify)
+							type = disabledColorType(type);
+					}
+					else
+					{
+						type = parseVersions(span, type, tok, state, versionsChanged);
+					}
+				}
+				if(inTokenString || nowInTokenString)
+					type = stringColorType(type);
+				//else if(mParseSource)
+				//	type = parseErrors(span, type, tok);
+			}
 			inTokenString = nowInTokenString;
 				
 			while(prevpos < pos)
-				pAttributes[prevpos++] = type;
+				pAttributes[prevpos++] = type | back;
 		}
-		pAttributes[iLength] = TokenColor.Text;
+		pAttributes[iLength] = (cov >= 0 ? covtype : TokenColor.Text) | back;
 
 		return S_OK;
 	}
@@ -1276,6 +1303,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		int changes = UpdateConfig();
 		changes += modifyValue(Package.GetGlobalOptions().ColorizeVersions, mColorizeVersions);
+		changes += modifyValue(Package.GetGlobalOptions().ColorizeCoverage, mColorizeCoverage);
 		
 		if(changes)
 		{
@@ -1284,5 +1312,64 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 	}
 	
+	//////////////////////////////////////////////////////////
+
+	static int[] ReadCoverageFile(string lstname)
+	{
+		try
+		{
+			char[] lst = cast(char[]) std.file.read(lstname);
+			char[][] lines = splitLines(lst);
+			int[] coverage = new int[lines.length];
+			foreach(i, ln; lines)
+			{
+				auto pos = std.string.indexOf(ln, '|');
+				int cov = -1;
+				if(pos > 0)
+				{
+					auto num = strip(ln[0..pos]);
+					if(num.length)
+						cov = parse!int(num);
+				}
+				coverage[i] = cov;
+			}
+			return coverage;
+		}
+		catch(Error)
+		{
+		}
+		return null;
+	}
+
+	bool UpdateCoverage(bool force)
+	{
+		if(mColorizeCoverage)
+		{
+			auto now = Clock.currTime();
+			if(!force && mLastTestCoverageFile + dur!"seconds"(2) >= now)
+				return false;
+
+			mLastTestCoverageFile = now;
+			string fname = mSource.GetFileName();
+			string lstname = std.path.stripExtension(fname) ~ ".lst";
+			
+			if(std.file.exists(lstname) && std.file.isFile(lstname))
+			{
+				auto tm = std.file.timeLastModified(lstname);
+				if(force || tm != mLastModifiedCoverageFile)
+				{
+					mLastModifiedCoverageFile = tm;
+					mCoverage = ReadCoverageFile(lstname);
+					mSource.ReColorizeLines(0, -1);
+				}
+				return true;
+			}
+		}
+		else
+		{
+			mCoverage = mCoverage.init;
+		}
+		return false;
+	}
 }
 

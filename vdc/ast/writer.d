@@ -105,7 +105,7 @@ class CodeWriter
 			write(sep);
 	}
 
-	void nl(bool force = true)
+	@property void nl(bool force = true)
 	{
 		if(!lastLineEmpty)
 			force = true;

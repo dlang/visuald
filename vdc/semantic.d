@@ -467,6 +467,10 @@ class SourceModule
 	bool parsing() { return parser !is null; }
 }
 
+//version = no_syntaxcopy;
+//version = no_disconnect;
+//version = free_ast;
+
 class Project : Node
 {
 	Options options;
@@ -523,7 +527,12 @@ class Project : Node
 			src = new SourceModule;
 
 		if(src.parsed)
-			src.parsed.disconnect();
+		{
+			version(no_disconnect) {} else
+				src.parsed.disconnect();
+			version(free_ast)
+				src.parsed.free();
+		}
 		src.parsed = mod;
 		src.parseErrors = errors;
 
@@ -533,10 +542,16 @@ class Project : Node
 		if(src.analyzed)
 		{
 			removeMember(src.analyzed);
-			src.analyzed.disconnect();
+			version(disconnect) {} else
+				src.analyzed.disconnect();
+			version(free_ast)
+				src.analyzed.free();
 		}
-		src.analyzed = mod.clone();
-		addMember(src.analyzed);
+		version(no_syntaxcopy) {} else
+		{
+			src.analyzed = mod.clone();
+			addMember(src.analyzed);
+		}
 		src.options = options;
 		if(importFrom)
 			if(auto m = importFrom.getModule())
@@ -544,7 +559,10 @@ class Project : Node
 
 		mSourcesByModName[modname] = src;
 		mSourcesByFileName[fname] = src;
-		return src.analyzed;
+		version(no_syntaxcopy)
+			return src.parsed;
+		else
+			return src.analyzed;
 	}
 
 	////////////////////////////////////////////////////////////

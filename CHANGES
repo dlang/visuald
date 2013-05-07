@@ -531,3 +531,8 @@ unreleased Version 0.3.36
   * added new option pages for DMD/GDC/LDC directories
   * linker messages from GDC can now be demangled aswell
   * additional command line arguments now placed at the very end to avoid GDC linker troubles
+  * DParser by Alexander Bothe (https://github.com/aBothe/D_Parser) integrated as an alternative
+    semantic engine
+  * added command "Compile and Run" to execute current text buffer or selection via rdmd
+  * added command "Open Language Options" for easier access to the settings page
+  * added option "Colorize coverage from .LST file" to highlight lines from code coverage output

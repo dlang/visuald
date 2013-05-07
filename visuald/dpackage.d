@@ -1103,8 +1103,11 @@ class GlobalOptions
 	bool semanticGotoDef;
 	bool useDParser;
 	string VDServerIID;
+	string compileAndRunOpts;
 
+	bool ColorizeCoverage = true;
 	bool ColorizeVersions = true;
+	bool lastColorizeCoverage;
 	bool lastColorizeVersions;
 	bool lastUseDParser;
 	
@@ -1164,82 +1167,72 @@ class GlobalOptions
 			                           "hash_t ptrdiff_t size_t sizediff_t";
 			// get defaults from global config
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
-			wstring wDMDInstallDir = keyToolOpts.GetString("DMDInstallDir");
-			wstring wGDCInstallDir = keyToolOpts.GetString("GDCInstallDir");
-			wstring wLDCInstallDir = keyToolOpts.GetString("LDCInstallDir");
-			wstring wExeSearchPath = keyToolOpts.GetString("ExeSearchPath");
-			wstring wLibSearchPath = keyToolOpts.GetString("LibSearchPath");
-			wstring wImpSearchPath = keyToolOpts.GetString("ImpSearchPath");
-			wstring wJSNSearchPath = keyToolOpts.GetString("JSNSearchPath");
-			wstring wIncSearchPath = keyToolOpts.GetString("IncSearchPath");
-			wstring wGDCExeSearchPath = keyToolOpts.GetString("GDC.ExeSearchPath");
-			wstring wGDCLibSearchPath = keyToolOpts.GetString("GDC.LibSearchPath");
-			wstring wGDCImpSearchPath = keyToolOpts.GetString("GDC.ImpSearchPath");
-			wstring wLDCExeSearchPath = keyToolOpts.GetString("LDC.ExeSearchPath");
-			wstring wLDCLibSearchPath = keyToolOpts.GetString("LDC.LibSearchPath");
-			wstring wLDCImpSearchPath = keyToolOpts.GetString("LDC.ImpSearchPath");
+			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
 
-			wstring wUserTypesSpec = keyToolOpts.GetString("UserTypesSpec", defUserTypesSpec);
-			wstring wVDServerIID   = keyToolOpts.GetString("VDServerIID");
-			ColorizeVersions  = keyToolOpts.GetDWORD("ColorizeVersions", 1) != 0;
-			timeBuilds        = keyToolOpts.GetDWORD("timeBuilds", 0) != 0;
-			sortProjects      = keyToolOpts.GetDWORD("sortProjects", 1) != 0;
-			stopSolutionBuild = keyToolOpts.GetDWORD("stopSolutionBuild", 0) != 0;
-			demangleError     = keyToolOpts.GetDWORD("demangleError", 1) != 0;
-			optlinkDeps       = keyToolOpts.GetDWORD("optlinkDeps", 1) != 0;
-			autoOutlining     = keyToolOpts.GetDWORD("autoOutlining", 1) != 0;
-			deleteFiles       = cast(byte) keyToolOpts.GetDWORD("deleteFiles", 0);
-			parseSource       = keyToolOpts.GetDWORD("parseSource", 1) != 0;
-			expandFromSemantics = keyToolOpts.GetDWORD("expandFromSemantics", 1) != 0;
-			expandFromBuffer  = keyToolOpts.GetDWORD("expandFromBuffer", 1) != 0;
-			expandFromJSON    = keyToolOpts.GetDWORD("expandFromJSON", 1) != 0;
-			expandTrigger     = cast(byte) keyToolOpts.GetDWORD("expandTrigger", 0);
-			showTypeInTooltip = keyToolOpts.GetDWORD("showTypeInTooltip2", 1) != 0; // changed default
-			semanticGotoDef   = keyToolOpts.GetDWORD("semanticGotoDef", 1) != 0;
-			useDParser        = keyToolOpts.GetDWORD("useDParser", 0) != 0;
-			pasteIndent       = keyToolOpts.GetDWORD("pasteIndent", 1) != 0;
+			wstring getWStringOpt(wstring tag, wstring def = null)
+			{
+				wstring ws = keyToolOpts.GetString(tag, def);
+				return keyUserOpts.GetString(tag, ws);
+			}
+			string getStringOpt(wstring tag, wstring def = null)
+			{
+				return toUTF8(getWStringOpt(tag, def));
+			}
+			int getIntOpt(wstring tag, int def = 0)
+			{
+				int v = keyToolOpts.GetDWORD(tag, def);
+				return keyUserOpts.GetDWORD(tag, v);
+			}
+			bool getBoolOpt(wstring tag, bool def = false)
+			{
+				return getIntOpt(tag, def ? 1 : 0) != 0;
+			}
+
+			ColorizeVersions  = getBoolOpt("ColorizeVersions", true);
+			ColorizeCoverage  = getBoolOpt("ColorizeCoverage", true);
+			timeBuilds        = getBoolOpt("timeBuilds", false);
+			sortProjects      = getBoolOpt("sortProjects", true);
+			stopSolutionBuild = getBoolOpt("stopSolutionBuild", false);
+			demangleError     = getBoolOpt("demangleError", true);
+			optlinkDeps       = getBoolOpt("optlinkDeps", true);
+			autoOutlining     = getBoolOpt("autoOutlining", true);
+			deleteFiles       = cast(byte) getIntOpt("deleteFiles", 0);
+			parseSource       = getBoolOpt("parseSource", true);
+			expandFromSemantics = getBoolOpt("expandFromSemantics", true);
+			expandFromBuffer  = getBoolOpt("expandFromBuffer", true);
+			expandFromJSON    = getBoolOpt("expandFromJSON", true);
+			expandTrigger     = cast(byte) getIntOpt("expandTrigger", 0);
+			showTypeInTooltip = getBoolOpt("showTypeInTooltip2", true); // changed default
+			semanticGotoDef   = getBoolOpt("semanticGotoDef", true);
+			useDParser        = getBoolOpt("useDParser", false);
+			pasteIndent       = getBoolOpt("pasteIndent", true);
 
 			// overwrite by user config
-			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
-			DMD.InstallDir    = toUTF8(keyUserOpts.GetString("DMDInstallDir", wDMDInstallDir));
-			GDC.InstallDir    = toUTF8(keyUserOpts.GetString("GDCInstallDir", wGDCInstallDir));
-			LDC.InstallDir    = toUTF8(keyUserOpts.GetString("LDCInstallDir", wLDCInstallDir));
-			DMD.ExeSearchPath = toUTF8(keyUserOpts.GetString("ExeSearchPath", wExeSearchPath));
-			DMD.LibSearchPath = toUTF8(keyUserOpts.GetString("LibSearchPath", wLibSearchPath));
-			DMD.ImpSearchPath = toUTF8(keyUserOpts.GetString("ImpSearchPath", wImpSearchPath));
-			GDC.ExeSearchPath = toUTF8(keyUserOpts.GetString("GDC.ExeSearchPath", wGDCExeSearchPath));
-			GDC.LibSearchPath = toUTF8(keyUserOpts.GetString("GDC.LibSearchPath", wGDCLibSearchPath));
-			GDC.ImpSearchPath = toUTF8(keyUserOpts.GetString("GDC.ImpSearchPath", wGDCImpSearchPath));
-			LDC.ExeSearchPath = toUTF8(keyUserOpts.GetString("LDC.ExeSearchPath", wLDCExeSearchPath));
-			LDC.LibSearchPath = toUTF8(keyUserOpts.GetString("LDC.LibSearchPath", wLDCLibSearchPath));
-			LDC.ImpSearchPath = toUTF8(keyUserOpts.GetString("LDC.ImpSearchPath", wLDCImpSearchPath));
+			DMD.InstallDir    = getStringOpt("DMDInstallDir");
+			GDC.InstallDir    = getStringOpt("GDCInstallDir");
+			LDC.InstallDir    = getStringOpt("LDCInstallDir");
+			DMD.ExeSearchPath = getStringOpt("ExeSearchPath");
+			DMD.LibSearchPath = getStringOpt("LibSearchPath");
+			DMD.ImpSearchPath = getStringOpt("ImpSearchPath");
+			GDC.ExeSearchPath = getStringOpt("GDC.ExeSearchPath");
+			GDC.LibSearchPath = getStringOpt("GDC.LibSearchPath");
+			GDC.ImpSearchPath = getStringOpt("GDC.ImpSearchPath");
+			LDC.ExeSearchPath = getStringOpt("LDC.ExeSearchPath");
+			LDC.LibSearchPath = getStringOpt("LDC.LibSearchPath");
+			LDC.ImpSearchPath = getStringOpt("LDC.ImpSearchPath");
 
-			JSNSearchPath = toUTF8(keyUserOpts.GetString("JSNSearchPath", wJSNSearchPath));
-			IncSearchPath = toUTF8(keyUserOpts.GetString("IncSearchPath", wIncSearchPath));
-			UserTypesSpec = toUTF8(keyUserOpts.GetString("UserTypesSpec", wUserTypesSpec));
-			VDServerIID   = toUTF8(keyUserOpts.GetString("VDServerIID",   wVDServerIID));
+			JSNSearchPath     = getStringOpt("JSNSearchPath");
+			IncSearchPath     = getStringOpt("IncSearchPath");
+			VDServerIID       = getStringOpt("VDServerIID");
+			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
 
-			ColorizeVersions     = keyUserOpts.GetDWORD("ColorizeVersions",  ColorizeVersions) != 0;
-			timeBuilds           = keyUserOpts.GetDWORD("timeBuilds",        timeBuilds) != 0;
-			sortProjects         = keyUserOpts.GetDWORD("sortProjects",      sortProjects) != 0;
-			stopSolutionBuild    = keyUserOpts.GetDWORD("stopSolutionBuild", stopSolutionBuild) != 0;
-			demangleError        = keyUserOpts.GetDWORD("demangleError",     demangleError) != 0;
-			optlinkDeps          = keyUserOpts.GetDWORD("optlinkDeps",       optlinkDeps) != 0;
-			deleteFiles          = cast(byte) keyUserOpts.GetDWORD("deleteFiles",       deleteFiles);
-			autoOutlining        = keyUserOpts.GetDWORD("autoOutlining",     autoOutlining) != 0;
-			parseSource          = keyUserOpts.GetDWORD("parseSource",       parseSource) != 0;
-			expandFromSemantics  = keyUserOpts.GetDWORD("expandFromSemantics", expandFromSemantics) != 0;
-			expandFromBuffer     = keyUserOpts.GetDWORD("expandFromBuffer",  expandFromBuffer) != 0;
-			expandFromJSON       = keyUserOpts.GetDWORD("expandFromJSON",    expandFromJSON) != 0;
-			expandTrigger        = cast(byte) keyUserOpts.GetDWORD("expandTrigger", expandTrigger);
-			pasteIndent          = keyUserOpts.GetDWORD("pasteIndent",       pasteIndent) != 0;
-			showTypeInTooltip    = keyUserOpts.GetDWORD("showTypeInTooltip2", showTypeInTooltip) != 0;
-			semanticGotoDef      = keyUserOpts.GetDWORD("semanticGotoDef",   semanticGotoDef) != 0;
-			useDParser           = keyUserOpts.GetDWORD("useDParser",        useDParser) != 0;
+			string UserTypesSpec = getStringOpt("UserTypesSpec", defUserTypesSpec);
+			UserTypes = parseUserTypes(UserTypesSpec);
+
+			lastColorizeCoverage = ColorizeCoverage;
 			lastColorizeVersions = ColorizeVersions;
 			lastUseDParser       = useDParser;
-			UserTypes = parseUserTypes(UserTypesSpec);
-			
+
 			if(VDServerIID.length > 0)
 				gServerClassFactory_iid = uuid(VDServerIID);
 			else 
@@ -1315,6 +1308,7 @@ class GlobalOptions
 			keyToolOpts.Set("UserTypesSpec", toUTF16(UserTypesSpec));
 			
 			keyToolOpts.Set("ColorizeVersions",  ColorizeVersions);
+			keyToolOpts.Set("ColorizeCoverage",  ColorizeCoverage);
 			keyToolOpts.Set("timeBuilds",        timeBuilds);
 			keyToolOpts.Set("sortProjects",      sortProjects);
 			keyToolOpts.Set("stopSolutionBuild", stopSolutionBuild);
@@ -1331,6 +1325,7 @@ class GlobalOptions
 			keyToolOpts.Set("semanticGotoDef",   semanticGotoDef);
 			keyToolOpts.Set("useDParser",        useDParser);
 			keyToolOpts.Set("pasteIndent",       pasteIndent);
+			keyToolOpts.Set("compileAndRunOpts", toUTF16(compileAndRunOpts));
 
 			CHierNode.setContainerIsSorted(sortProjects);
 		}
@@ -1350,6 +1345,11 @@ class GlobalOptions
 		if(lastColorizeVersions != ColorizeVersions)
 		{
 			lastColorizeVersions = ColorizeVersions;
+			updateColorizer = true;
+		}
+		if(lastColorizeCoverage != ColorizeCoverage)
+		{
+			lastColorizeCoverage = ColorizeCoverage;
 			updateColorizer = true;
 		}
 		if(updateColorizer)

@@ -9,6 +9,7 @@
 module vdc.versions;
 
 __gshared int[string] predefinedVersions;
+alias AssociativeArray!(string, int) _wa1; // fully instantiate type info
 
 static @property int[string] sPredefinedVersions()
 {

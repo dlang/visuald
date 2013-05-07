@@ -1485,6 +1485,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
+		kNeededLines = 11;
 	}
 
 	override void CreateControls()
@@ -1498,6 +1499,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
 		AddControl("Resource includes", mIncPath = new Text(mCanvas));
+		AddControl("Compile and Run options", mCompileAndRunOpts = new Text(mCanvas));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1510,6 +1512,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		//mDeleteFiles.setSelection(opts.deleteFiles + 1);
 		mIncPath.setText(opts.IncSearchPath);
 		mJSNPath.setText(opts.JSNSearchPath);
+		mCompileAndRunOpts.setText(opts.compileAndRunOpts);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1523,6 +1526,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles); 
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
 		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
+		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts); 
 		return changes;
 	}
 
@@ -1533,6 +1537,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	CheckBox mOptlinkDeps;
 	//ComboBox mDeleteFiles;
 	Text mIncPath;
+	Text mCompileAndRunOpts;
 	MultiLineText mJSNPath;
 }
 
@@ -1551,6 +1556,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override void CreateControls()
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
+		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
@@ -1560,6 +1566,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override void SetControls(GlobalOptions opts)
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
+		mColorizeCoverage.setChecked(opts.ColorizeCoverage);
 		mAutoOutlining.setChecked(opts.autoOutlining);
 		mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
@@ -1572,6 +1579,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
+		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage); 
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
 		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
@@ -1580,6 +1588,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	}
 
 	CheckBox mColorizeVersions;
+	CheckBox mColorizeCoverage;
 	CheckBox mAutoOutlining;
 	CheckBox mParseSource;
 	CheckBox mPasteIndent;

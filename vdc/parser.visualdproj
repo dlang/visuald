@@ -191,7 +191,7 @@
  <Config name="TestDebug" platform="Win32">
   <obj>0</obj>
   <link>0</link>
-  <lib>0</lib>
+  <lib>1</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
@@ -200,8 +200,8 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
-  <symdebug>1</symdebug>
-  <optimize>0</optimize>
+  <symdebug>0</symdebug>
+  <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -217,14 +217,14 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <noboundscheck>1</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>1</useUnitTests>
-  <useInline>0</useInline>
-  <release>0</release>
+  <useUnitTests>0</useUnitTests>
+  <useInline>1</useInline>
+  <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
-  <infowarnings>0</infowarnings>
+  <infowarnings>1</infowarnings>
   <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
@@ -254,7 +254,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>MAIN</versionids>
+  <versionids />
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -275,9 +275,9 @@
   <libpaths />
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions>-m32ms</additionalOptions>
+  <additionalOptions>-gx</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>

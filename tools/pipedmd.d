@@ -5,7 +5,7 @@
 // file access monitoring added by Rainer Schuetze, needs filemonitor.dll in the same 
 //  directory as pipedmd.exe
 
-module main;
+module pipedmd;
 
 import std.stdio;
 import std.c.windows.windows;
@@ -157,7 +157,7 @@ int main(string[] argv)
     bool doDemangle = true;
     bool gdcMode = false; //gcc linker 
     bool msMode = false; //microsft linker
-    writefln(argv[1]);
+
     if(argv.length >= 2 && argv[1] == "-nodemangle")
     {
         doDemangle = false;
@@ -258,8 +258,8 @@ int main(string[] argv)
     ResumeThread(piProcInfo.hThread);
 
     char[] buffer = new char[2048];
-    WCHAR[] decodeBufferWide = new WCHAR[2048];
-    char[] decodeBuffer = new char[2048];
+    WCHAR[] decodeBufferWide;
+    char[] decodeBuffer;
     DWORD bytesRead = 0;
     DWORD bytesAvaiable = 0;
     DWORD exitCode = 0;
@@ -293,60 +293,31 @@ int main(string[] argv)
             char[] output = buffer[skip..bytesRead];
             if(msMode) //the microsoft linker outputs the error messages in the default ANSI codepage so we need to convert it to UTF-8
             {
+                if(decodeBufferWide.length < output.length + 1)
+                {
+                    decodeBufferWide.length = output.length + 1;
+                    decodeBuffer.length = 2 * output.length + 1;
+                }
                 auto numDecoded = MultiByteToWideChar(CP_ACP, 0, output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
                 auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, decodeBuffer.ptr, decodeBuffer.length, null, null);
                 output = decodeBuffer[0..numEncoded];
             }
             size_t writepos = 0;
 
-            if(!linkerFound && output.startsWith("OPTLINK (R)"))
-                linkerFound = true;
+            if(!linkerFound)
+            {
+                if (output.startsWith("OPTLINK (R)"))
+                    linkerFound = true;
+                else if(output.countUntil("error LNK") >= 0 || output.countUntil("warning LNK") >= 0)
+                    linkerFound = msMode = true;
+            }
 
             if(doDemangle && linkerFound)
             {
-                if(gdcMode || msMode)
-                {
-                    ptrdiff_t startIndex, endIndex;
-                    if(gdcMode)
-                    {
-                        if(output.countUntil("undefined reference to") >= 0 || output.countUntil("In function") >= 0)
-                        {
-                            startIndex = output.lastIndexOf('`');
-                            endIndex = output.lastIndexOf('\'');
-                        }
-                    }
-                    else if(msMode)
-                    {
-                        if(output.countUntil("LNK") >= 0)
-                        {
-                            startIndex = endIndex = 0;
-                            if( (startIndex = toUTFindex(output, output.countUntil('"'))) >= 0 &&
-                                (endIndex = toUTFindex(output[startIndex+1..$], output[startIndex+1..$].countUntil('"'))) >= 0)
-                            {
-                                endIndex += startIndex+1;    
-                            }
-                        }
-                    }
-                    if(startIndex >= 0 && startIndex < endIndex)
-                    {
-                        auto symbolName = output[startIndex+1..endIndex];
-                        if(symbolName.length > 2 && symbolName[0] == '_' && symbolName[1] == 'D')
-                        {
-                            auto demangeledSymbolName = demangle(symbolName);
-                            if(demangeledSymbolName != symbolName)
-                            {
-                                fwrite(output.ptr, endIndex+1, 1, stdout);
-                                writepos = endIndex+1;
-                                fwrite(" (".ptr, 2, 1, stdout);
-                                fwrite(demangeledSymbolName.ptr, demangeledSymbolName.length, 1, stdout);
-                                fwrite(")".ptr, 1, 1, stdout);
-                            }
-                        }
-                    }
-                }
-                else
+                void processLine(bool optlink)
                 {
                     for(int p = 0; p < output.length; p++)
+                    {
                         if(isIdentifierChar(output[p]))
                         {
                             int q = p;
@@ -354,24 +325,29 @@ int main(string[] argv)
                                 p++;
 
                             auto symbolName = output[q..p];
-                            size_t pos = 0;
-                            const(char)[] realSymbolName = decodeDmdString(symbolName, pos);
-                            if(pos != p - q)
+                            const(char)[] realSymbolName = symbolName;
+                            if(optlink)
                             {
-                                // could not decode, might contain UTF8 elements, so try translating to the current code page
-                                // (demangling will not work anyway)
-                                try
+                                size_t pos = 0;
+                                realSymbolName = decodeDmdString(symbolName, pos);
+                                if(pos != p - q)
                                 {
-                                    auto szName = toMBSz(symbolName, cp);
-                                    auto plen = strlen(szName);
-                                    realSymbolName = szName[0..plen];
-                                    pos = p - q;
-                                }
-                                catch(Exception)
-                                {
+                                    // could not decode, might contain UTF8 elements, so try translating to the current code page
+                                    // (demangling will not work anyway)
+                                    try
+                                    {
+                                        auto szName = toMBSz(symbolName, cp);
+                                        auto plen = strlen(szName);
+                                        realSymbolName = szName[0..plen];
+                                        pos = p - q;
+                                    }
+                                    catch(Exception)
+                                    {
+                                        realSymbolName = null;
+                                    }
                                 }
                             }
-                            if(pos == p - q)
+                            if(realSymbolName.length)
                             {
                                 if(realSymbolName != symbolName)
                                 {
@@ -385,9 +361,18 @@ int main(string[] argv)
                                     realSymbolName = realSymbolName[1..$];
                                 if(realSymbolName.length > 2 && realSymbolName[0] == 'D' && isDigit(realSymbolName[1]))
                                 {
-                                    symbolName = demangle(realSymbolName);
+                                    try
+                                    {
+                                        symbolName = demangle(realSymbolName);
+                                    }
+                                    catch(Exception)
+                                    {
+                                    }
                                     if(realSymbolName != symbolName)
                                     {
+                                        // skip a trailing quote
+                                        if(p + 1 < output.length && (output[p+1] == '\'' || output[p+1] == '\"'))
+                                            p++;
                                         if(p > writepos)
                                             fwrite(output.ptr + writepos, p - writepos, 1, stdout);
                                         writepos = p;
@@ -398,6 +383,26 @@ int main(string[] argv)
                                 }
                             }
                         }
+                    }
+                }
+
+                if(gdcMode)
+                {
+                    if(output.countUntil("undefined reference to") >= 0 || output.countUntil("In function") >= 0)
+                    {
+                        processLine(false);
+                    }
+                }
+                else if(msMode)
+                {
+                    if(output.countUntil("LNK") >= 0)
+                    {
+                        processLine(false);
+                    }
+                }
+                else
+                {
+                    processLine(true);
                 }
             }
             if(writepos < output.length)

@@ -268,7 +268,7 @@ version(tip)
 				break;
 			
 			case ECMD_COMPILE:
-				return CompileDoc(false, false, false);
+				return CompileDoc(false, false);
 
 			case ECMD_GOTOBRACE:
 				return GotoMatchingPair(false);
@@ -301,7 +301,7 @@ version(tip)
 				return ConvertSelection();
 
 			case CmdCompileAndRun:
-				return CompileDoc(true, true, true);
+				return CompileDoc(true, true);
 
 			default:
 				break;
@@ -425,7 +425,7 @@ version(tip)
 
 	//////////////////////////////
 
-	HRESULT CompileDoc(bool rdmd, bool run, bool withUnittest)
+	HRESULT CompileDoc(bool rdmd, bool run)
 	{
 		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
 		if(!pIVsUIShellOpenDocument)
@@ -522,8 +522,6 @@ version(tip)
 		string stool = cfg.GetStaticCompileTool(pFile);
 		if(stool == "DMD")
 			stool = "DMDsingle";
-		if(stool == "DMDsingle" && withUnittest)
-			addopt ~= " -unittest";
 		if(stool == "DMDsingle")
 		{
 			if(rdmd)
@@ -545,6 +543,8 @@ version(tip)
 			else if(run)
 				addopt ~= " -run";
 		}
+		if(stool == "RDMD")
+			addopt = " " ~ Package.GetGlobalOptions().compileAndRunOpts ~ addopt;
 		string cmd = cfg.GetCompileCommand(pFile, !run, stool, addopt);
 		if(cmd.length)
 		{

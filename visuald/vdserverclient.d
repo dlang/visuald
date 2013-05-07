@@ -36,6 +36,7 @@ import core.thread;
 alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully instantiate type info for string[Tid]
 alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
+version(TESTMAIN) version = InProc;
 debug version = DebugCmd;
 // debug version = InProc;
 
@@ -245,10 +246,10 @@ class ConfigureProjectCommand : FileCommand
 		if(!gVDServer)
 			return S_FALSE;
 
-		string jimp        = join(cast(string[])(mImp[]), "\n");
-		string jstringImp  = join(cast(string[])(mStringImp[]), "\n");
-		string jversionids = join(cast(string[])(mVersionids[]), "\n");
-		string jdebugids   = join(cast(string[])(mDebugids[]), "\n");
+		string jimp        = std.string.join(cast(string[])(mImp[]), "\n");
+		string jstringImp  = std.string.join(cast(string[])(mStringImp[]), "\n");
+		string jversionids = std.string.join(cast(string[])(mVersionids[]), "\n");
+		string jdebugids   = std.string.join(cast(string[])(mDebugids[]), "\n");
 
 		auto bfilename = allocBSTR(mFilename);
 		auto bimp = allocBSTR(jimp);

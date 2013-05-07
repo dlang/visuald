@@ -39,7 +39,36 @@ version(MAIN)
 		//return VSDllUnregisterServerUser(("Software\\Microsoft\\VisualStudio\\9.0D"w).ptr);
 	}
 }
-else // !version(MAIN)
+else version(TESTMAIN)
+{
+	import vdc.semantic;
+	__gshared extern(C) extern long gcdump_userData;
+	__gshared extern(C) extern bool gcdump_pools;
+
+	int main()
+	{
+		Project prj = new Project;
+		string[] imps = [ r"m:\s\d\rainers\druntime\import\", r"m:\s\d\rainers\phobos\" ];
+		string fname = r"m:\s\d\rainers\phobos\std\datetime.d";
+		
+		prj.options.setImportDirs(imps);
+		prj.addAndParseFile(fname);
+		
+//		gcdump_pools = true;
+//		GC.collect();
+//		gcdump_pools = false;
+
+//		prj.semantic();
+
+		foreach(i; 1..100)
+		{
+			gcdump_userData = i;
+			prj.addAndParseFile(fname);
+		}
+		return 0;
+	}
+}
+else // !version(TESTMAIN)
 {
 } // !version(D_Version2)
 
@@ -80,20 +109,20 @@ void clearStack()
 	int[1000] arr;
 }
 
-version(MAIN) {} else
+version(MAIN) {} else version(TESTMAIN) {} else
 extern (Windows)
 BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 {
 	switch (ulReason)
 	{
 		case DLL_PROCESS_ATTACH:
+			//MessageBoxA(cast(HANDLE)0, "Hi", "there", 0);
 			disableStacktrace();
 			if(!dll_process_attach(hInstance, true))
 				return false;
 			g_hInst = cast(HINSTANCE) hInstance;
 //	GC.disable();
 			global_init();
-			//MessageBoxA(cast(HANDLE)0, "Hi", "there", 0);
 
 			logCall("DllMain(DLL_PROCESS_ATTACH, tid=%x)", GetCurrentThreadId());
 			break;

@@ -576,7 +576,7 @@ class ValueT(T) : Value
 		}
 	}
 	
-	static const int unOps[] = [ TOK_plusplus, TOK_minusminus, TOK_min, TOK_add, TOK_not, TOK_tilde ];
+	enum int unOps[] = [ TOK_plusplus, TOK_minusminus, TOK_min, TOK_add, TOK_not, TOK_tilde ];
 	
 	static string genMixinUnOpAll()
 	{
@@ -648,7 +648,7 @@ class VoidValue : Value
 
 VoidValue _theVoidValue;
 
-VoidValue theVoidValue()
+@property VoidValue theVoidValue()
 {
 	if(!_theVoidValue)
 	{

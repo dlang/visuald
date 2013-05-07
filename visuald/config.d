@@ -2400,13 +2400,19 @@ class Config :	DisposingComObject,
 			// temporarily switch to "rdmd"
 			string othercompiler = mProjectOptions.program;
 			bool useother = mProjectOptions.otherDMD;
+			auto lib = mProjectOptions.lib;
+			auto exefile = mProjectOptions.exefile;
 			scope(exit)
 			{
 				mProjectOptions.program = othercompiler;
 				mProjectOptions.otherDMD = useother;
+				mProjectOptions.lib = lib;
+				mProjectOptions.exefile = exefile;
 			}
 			mProjectOptions.program = "rdmd";
 			mProjectOptions.otherDMD = true;
+			mProjectOptions.lib = OutputType.Executable;
+			mProjectOptions.exefile = "$(OutDir)\\" ~ baseName(stripExtension(outfile)) ~ ".exe";
 
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
 			cmd ~= mProjectOptions.buildCommandLine(true, true, false, syntaxOnly);

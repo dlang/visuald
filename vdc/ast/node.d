@@ -296,6 +296,23 @@ class Node
 		members = members.init;
 	}
 
+	void free()
+	{
+		for(int m = 0; m < members.length; m++)
+			members[m].free();
+
+		for(int m = 0; m < members.length; m++)
+			members[m].parent = null;
+
+		import core.memory;
+
+		for(int m = 0; m < members.length; m++)
+			GC.free(cast(void*) (members[m]));
+
+		GC.free(cast(void*) (members.ptr));
+		members = members.init;
+	}
+
 	////////////////////////////////////////////////////////////
 	abstract void toD(CodeWriter writer)
 	{

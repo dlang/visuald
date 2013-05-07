@@ -697,7 +697,7 @@ int main(string[] argv)
 		writeln(prj.countErrors + semanticErrors, " errors");
 		return prj.countErrors + semanticErrors > 0 ? 1 : 0;
 	}
-	else
+	else if(false)
 	{
 		foreach_file((string fname){
 			Project prj = new Project;
@@ -710,6 +710,17 @@ int main(string[] argv)
 			writeln(prj.countErrors + semanticErrors, " errors");
 		});
 		return semanticErrors > 0 ? 1 : 0;
+	}
+	else
+	{
+		Project prj = new Project;
+		prj.options.setImportDirs(imps);
+		foreach(i; 0..100)
+		{
+			string fname = imps[1] ~ r"std\datetime.d";
+			prj.addAndParseFile(fname);
+		}
+		return 0;
 	}
 }
 }

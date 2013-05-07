@@ -1341,7 +1341,7 @@ TypeDynamicArray createTypeString(C)(ref const(TextSpan) span)
 {
 	auto arr = new TypeString(span);
 			
-	BasicType ct = new BasicType(BasicType2Token!C, span);
+	BasicType ct = new BasicType(BasicType2Token!C(), span);
 	ModifiedType mt = new ModifiedType(TOK_immutable, span);
 	mt.addMember(ct);
 	arr.addMember(mt);
