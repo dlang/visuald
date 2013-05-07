@@ -367,6 +367,12 @@ class LibraryInfo
 			writeToBuildOutputPane(fileName ~ ": " ~ msg);
 			logCall("EXCEPTION: " ~ msg);
 		} 
+		catch(UTFException rc)
+		{
+			string msg = rc.toString();
+			writeToBuildOutputPane(fileName ~ ": " ~ msg);
+			logCall("EXCEPTION: " ~ msg);
+		}
 		catch(FileException rc)
 		{
 			string msg = rc.toString();
