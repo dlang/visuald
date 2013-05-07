@@ -1047,7 +1047,7 @@ class Source
 			string txt = tok.pretext ~ tok.text;
 			undoText(txt);
 			// figure out a unique name
-			ident = structype ~ "_" ~ replace(basename(_file), ".", "_") ~ "_" ~ format("%d", _tokenizer.lineno);
+			ident = structype ~ "_" ~ replace(baseName(_file), ".", "_") ~ "_" ~ format("%d", _tokenizer.lineno);
 			appendText(" " ~ ident ~ " " ~ txt);
 		}
 		else
@@ -2699,7 +2699,7 @@ class Source
 
 			foreach(src; _dmd2d.hdrfiles)
 			{
-				if(basename(src, ".h") == mod)
+				if(baseName(src, ".h") == mod)
 				{
 					mod = moduleName(src) ~ "_h";
 					break;
@@ -2714,7 +2714,7 @@ class Source
 		string oname;
 		if(outputName.length == 0)
 		{
-			string ext = (getExt(_file) == "h" ? "_h.d" : "_c.d");
+			string ext = (extension(_file) == ".h" ? "_h.d" : "_c.d");
 			oname = getName(_file) ~ ext;
 		}
 		else if (find(outputName, "=") >= 0)
@@ -2812,9 +2812,9 @@ struct PatchData
 
 string patchFileText(string file, string text, ref PatchData[] patches)
 {
-	string fname = basename(file);
+	string fname = baseName(file);
 	for(int i = 0; i < patches.length; i++)
-		if (fnmatch(fname, patches[i].file))
+		if (globMatch(fname, patches[i].file))
 			if (patches[i].regexp)
 				text = sub(text, patches[i].match, patches[i].replace, "g");
 			else
@@ -2935,12 +2935,12 @@ class DMD2D
 
 	void addSource(string file)
 	{
-		string base = basename(file);
+		string base = baseName(file);
 		foreach(excl; excludefiles)
 			if(excl == base)
 				return;
 
-		if(getExt(file) == "h")
+		if(extension(file) == ".h")
 			hdrfiles ~= file;
 		else
 			srcfiles ~= file;
@@ -2954,10 +2954,10 @@ class DMD2D
 			mode = SpanMode.depth;
 			file = file[1..$];
 		}
-		string path = dirname(file);
-		string pattern = basename(file);
+		string path = dirName(file);
+		string pattern = baseName(file);
 		foreach (string name; dirEntries(path, mode))
-			if (fnmatch(basename(name), pattern))
+			if (globMatch(baseName(name), pattern))
 				addSource(name);
 	}
 
