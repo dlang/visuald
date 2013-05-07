@@ -1078,7 +1078,7 @@ class pp4d
 	//////////////////////////////////////////////////////////////
 	void addSource(string file)
 	{
-		string base = basename(file);
+		string base = baseName(file);
 		if(excludefiles.contains(base))
 			return;
 		
@@ -1094,10 +1094,10 @@ class pp4d
 			mode = SpanMode.depth;
 			file = file[1..$];
 		}
-		string path = dirname(file);
-		string pattern = basename(file);
+		string path = dirName(file);
+		string pattern = baseName(file);
 		foreach (string name; dirEntries(path, mode))
-			if (fnmatch(basename(name), pattern))
+			if (globMatch(baseName(name), pattern))
 				addSource(name);
 	}
 

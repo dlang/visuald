@@ -682,7 +682,7 @@ class j2d
 
 	void addSource(string file)
 	{
-		string base = basename(file);
+		string base = baseName(file);
 		foreach(excl; excludefiles)
 			if(excl == base)
 				return;
@@ -698,10 +698,10 @@ class j2d
 			mode = SpanMode.depth;
 			file = file[1..$];
 		}
-		string path = dirname(file);
-		string pattern = basename(file);
+		string path = dirName(file);
+		string pattern = baseName(file);
 		foreach (string name; dirEntries(path, mode))
-			if (fnmatch(basename(name), pattern))
+			if (globMatch(baseName(name), pattern))
 				addSource(name);
 	}
 
@@ -735,7 +735,7 @@ class j2d
 				txt ~= (isInterface ? "interface" : "class") ~ " " ~ imp[pos + 1 .. $] ~ "\n";
 				txt ~= "{\n}\n";
 
-				string path = dirname(d_file);
+				string path = dirName(d_file);
 				if(!exists(path))
 					std.file.mkdirRecurse(path);
 				std.file.write(d_file, txt);
