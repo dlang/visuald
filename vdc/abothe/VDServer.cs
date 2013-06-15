@@ -392,6 +392,8 @@ namespace DParserCOMServer
 			_editorData.GlobalVersionIds = versions.Split('\n');
 			_editorData.GlobalDebugIds = _debugIds.Split('\n');
 			CompletionOptions.Instance.ShowUFCSItems = true;
+			CompletionOptions.Instance.DisableMixinAnalysis = false;
+			CompletionOptions.Instance.HideDeprecatedNodes = (_flags & 128) != 0;
 		}
 
 

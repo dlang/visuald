@@ -183,7 +183,7 @@ class VDServer : ComObject, IVDServer
 
 			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64, 
 											  opts.coverage, opts.doDoc, opts.noBoundsCheck, opts.gdcCompiler,
-											  0, 0); // no need to compare version levels, done in setVersionIds
+											  0, 0, opts.noDeprecated); // no need to compare version levels, done in setVersionIds
 
 			opts.unittestOn    = (flags & 1) != 0;
 			opts.debugOn       = (flags & 2) != 0;
@@ -192,6 +192,7 @@ class VDServer : ComObject, IVDServer
 			opts.doDoc         = (flags & 16) != 0;
 			opts.noBoundsCheck = (flags & 32) != 0;
 			opts.gdcCompiler   = (flags & 64) != 0;
+			opts.noDeprecated  = (flags & 128) != 0;
 
 			int versionlevel = (flags >> 8)  & 0xff;
 			int debuglevel   = (flags >> 16) & 0xff;

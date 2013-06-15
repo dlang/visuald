@@ -1,5 +1,8 @@
 module sdk.port.bitfields;
 
+version(Win64)
+version = bitmanip;
+
 version(bitmanip)
 {
 import std.typetuple;
@@ -18,15 +21,15 @@ template PadBits(T...)
 {
 	enum bits = CountBits!T;
 	static if(bits == 8 || bits == 16 || bits == 32 || bits == 64)
-		alias PadBits = T;
+		alias T PadBits;
 	else static if(bits < 8)
-		alias PadBits = TypeTuple!(T, uint, "", 8 - bits);
+		alias TypeTuple!(T, uint, "", 8 - bits) PadBits;
 	else static if(bits < 16)
-		alias PadBits = TypeTuple!(T, uint, "", 16 - bits);
+		alias TypeTuple!(T, uint, "", 16 - bits) PadBits;
 	else static if(bits < 32)
-		alias PadBits = TypeTuple!(T, uint, "", 32 - bits);
+		alias TypeTuple!(T, uint, "", 32 - bits) PadBits;
 	else 
-		alias PadBits = TypeTuple!(T, uint, "", 64 - bits);
+		alias TypeTuple!(T, uint, "", 64 - bits) PadBits;
 }
 
 template bitfields(T...)

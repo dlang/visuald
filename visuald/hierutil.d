@@ -596,7 +596,7 @@ HRESULT OpenFileInSolution(string filename, int line, string srcfile = "", bool 
 		return S_OK;
 	if(adjustLineToChanges)
 		if(auto src = Package.GetLanguageService().GetSource(textBuffer))
-			line = src.adjustLineNumberSinceLastBuild(line);
+			line = src.adjustLineNumberSinceLastBuild(line, false);
 	
 	return NavigateTo(textBuffer, line, 0, line, 0);
 }

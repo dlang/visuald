@@ -204,7 +204,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	ParserBase!wstring mParser;
 	Config mConfig;
 	bool mColorizeVersions;
-	bool mColorizeCoverage = true;
+	bool mColorizeCoverage;
 	bool mParseSource;
 	
 	enum int kIndexVersion = 0;
@@ -258,6 +258,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		mParser = new ParserBase!wstring;
 		
 		mColorizeVersions = Package.GetGlobalOptions().ColorizeVersions;
+		mColorizeCoverage = Package.GetGlobalOptions().ColorizeCoverage;
 		mParseSource = Package.GetGlobalOptions().parseSource;
 		UpdateConfig();
 
@@ -316,9 +317,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		
 		int cov = -1;
 		int covtype = TokenColor.CoverageKeyword;
-		if(mColorizeCoverage)
+		if(mColorizeCoverage && mCoverage.length)
 		{
-			int covLine = mSource.adjustLineNumberSinceLastBuildReverse(iLine);
+			int covLine = mSource.adjustLineNumberSinceLastBuildReverse(iLine, true);
 			cov = covLine >= mCoverage.length ? -1 : mCoverage[covLine];
 			covtype = cov == 0 ? TokenColor.NonCoverageKeyword : TokenColor.CoverageKeyword;
 		}
@@ -1353,13 +1354,26 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			string fname = mSource.GetFileName();
 			string lstname = std.path.stripExtension(fname) ~ ".lst";
 			
-			if(std.file.exists(lstname) && std.file.isFile(lstname))
+			if(std.file.exists(lstname) && std.file.isFile(lstname) &&
+			   std.file.exists(fname) && std.file.isFile(fname))
 			{
-				auto tm = std.file.timeLastModified(lstname);
-				if(force || tm != mLastModifiedCoverageFile)
+				auto lsttm = std.file.timeLastModified(lstname);
+				auto srctm = std.file.timeLastModified(fname);
+
+				if (lsttm < srctm)
 				{
-					mLastModifiedCoverageFile = tm;
+					mCoverage = mCoverage.init;
+					if(mLastModifiedCoverageFile != SysTime(0))
+					{
+						mLastModifiedCoverageFile = SysTime(0);
+						mSource.ReColorizeLines(0, -1);
+					}
+				}
+				else if(force || lsttm != mLastModifiedCoverageFile)
+				{
+					mLastModifiedCoverageFile = lsttm;
 					mCoverage = ReadCoverageFile(lstname);
+
 					mSource.ReColorizeLines(0, -1);
 				}
 				return true;

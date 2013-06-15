@@ -62,7 +62,7 @@ else version(TESTMAIN)
 
 		foreach(i; 1..100)
 		{
-			gcdump_userData = i;
+//			gcdump_userData = i;
 			prj.addAndParseFile(fname);
 		}
 		return 0;

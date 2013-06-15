@@ -95,6 +95,7 @@ string[string] filenameMap;
 
 alias object.AssociativeArray!(string, string[]) _wa1; // fully instantiate type info for string[][string]
 alias object.AssociativeArray!(string, bool) _wa2; // fully instantiate type info for bool[string]
+alias object.AssociativeArray!(string, const(bool)) _wa3; // fully instantiate type info for const(bool)[string]
 
 
 struct PatchRule
@@ -2994,7 +2995,7 @@ string testDmdGen(string txt, int countRemove = 1, int countNoImpl = 0, TokenLis
 
 	TokenList tokenList = scanText(txt);
 
-	if(defines)
+	if(defines is null)
 	{
 		expandPPdefines(tokenList, defines, MixinMode.ExpandDefine);
 		rescanPP(tokenList);

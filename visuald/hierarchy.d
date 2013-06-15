@@ -532,7 +532,7 @@ class CFolderNode : CHierContainer
 		return pkgname;
 	}
 	
-	// package always comes wth trailing '.'
+	// package always comes with trailing '.'
 	string _GuessPackageName(bool recurseUp, CFolderNode exclude)
 	{
 		static string stripModule(string mod)
@@ -586,6 +586,23 @@ class CFolderNode : CHierContainer
 		if(pkgname.length)
 			pkgname ~= GetName() ~ ".";
 		return pkgname;
+	}
+
+	string _GuessFolderPath()
+	{
+		// check files in folder
+		for(CHierNode pNode = GetHead(); pNode; pNode = pNode.GetNext())
+			if(auto file = cast(CFileNode) pNode)
+				return dirName(pNode.GetFullPath());
+
+		for(CHierNode pNode = GetHead(); pNode; pNode = pNode.GetNext())
+			if(auto folder = cast(CFolderNode) pNode)
+			{
+				string s = folder._GuessFolderPath();
+				if(s.length)
+					return dirName(s);
+			}
+		return null;
 	}
 
 	// Property functions
@@ -646,6 +663,20 @@ class CFolderNode : CHierContainer
 				break;
 			}
 		}
+		else if (*pguidCmdGroup == CMDSETID_StandardCommandSet2K)
+		{
+			switch(Cmd.cmdID)
+			{
+				case cmdidExploreFolderInWindows:
+					fSupported = true;
+					string s = _GuessFolderPath();
+					fEnabled = s.length > 0 && std.file.isDir(s);
+					break;
+				default:
+					hr = OLECMDERR_E_NOTSUPPORTED;
+					break;
+			}
+		}
 		else 
 		{
 			hr = OLECMDERR_E_NOTSUPPORTED;
@@ -689,6 +720,17 @@ class CFolderNode : CHierContainer
 				break;
 			default:
 				break;
+			}
+		}
+		else if (*pguidCmdGroup == CMDSETID_StandardCommandSet2K)
+		{
+			switch(nCmdID)
+			{
+				case cmdidExploreFolderInWindows:
+					hr = OnExploreFolderInWindows();
+					break;
+				default:
+					break;
 			}
 		}
 
@@ -810,6 +852,14 @@ class CFolderNode : CHierContainer
 		// NOTE: AddItem() will be called via the hierarchy IVsProject to add items.
 		return hr;
 	}
+
+	HRESULT OnExploreFolderInWindows()
+	{
+		string s = _GuessFolderPath();
+		if(s.length && std.file.isDir(s))
+			std.process.browse(s);
+		return S_OK;
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -902,6 +952,7 @@ class CProjectNode : CFolderNode
 			case cmdidBuildOnlyProject:
 			case cmdidRebuildOnlyProject:
 			case cmdidCleanOnlyProject:
+			case cmdidExploreFolderInWindows:
 				fSupported = true;
 				fEnabled = true;
 				break;
@@ -961,6 +1012,9 @@ class CProjectNode : CFolderNode
 						}
 					}
 				}
+				break;
+			case cmdidExploreFolderInWindows:
+				std.process.browse(dirName(mFilename));
 				break;
 			default:
 				break;

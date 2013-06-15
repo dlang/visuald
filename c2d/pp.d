@@ -983,6 +983,7 @@ bool isExpressionToken(TokenIterator tokIt, bool first)
 					//return tokIt.text !in disabled_defines;
 					break;
 			}
+			return true;
 		case Token.String:
 		case Token.Number:
 		case Token.ParenL:

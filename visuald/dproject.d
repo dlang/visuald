@@ -1995,7 +1995,7 @@ class Project : CVsHierarchy,
 		DDT_VSREF
 	};
 
-	const ushort CF_HDROP = 15; // winuser.h
+	enum ushort CF_HDROP = 15; // winuser.h
 
 	int QueryDropDataType(IDataObject pDataObject)
 	{

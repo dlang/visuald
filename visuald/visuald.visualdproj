@@ -89,7 +89,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions>-debuglib=phobos,druntime</additionalOptions>
+  <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
@@ -225,7 +225,7 @@
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>1</infowarnings>
-  <checkProperty>1</checkProperty>
+  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>

@@ -31,6 +31,8 @@ import core.runtime;
 //debug(COM_ADDREL) debug static import rsgc.gc;
 import core.memory;
 
+debug import core.stdc.stdio;
+
 import visuald.logutil;
 
 extern (C) void _d_callfinalizer(void *p);
@@ -107,8 +109,6 @@ debug
 					*p = -1;
 		InterlockedDecrement(&sCountInstances);
 	}
-
-	import core.stdc.stdio;
 
 	static void showCOMleaks()
 	{

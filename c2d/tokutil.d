@@ -23,6 +23,8 @@ static import std.conv;
 alias DList!(c2d.tokenizer.Token) TokenList;
 alias DListIterator!(c2d.tokenizer.Token) TokenIterator;
 
+alias object.AssociativeArray!(string, const(TokenList)) _wa2; // fully instantiate type info for TokenList[string]
+
 struct TokenRange
 {
 	TokenIterator start;

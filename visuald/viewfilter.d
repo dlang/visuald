@@ -486,6 +486,7 @@ version(tip)
 			string modname = getModuleDeclarationName(fname);
 			if(modname.length)
 			{
+				// add the path that seems to be the root of the package
 				string ipath;
 				while(findSkip(modname, "."))
 					ipath ~= "/..";
@@ -502,9 +503,6 @@ version(tip)
 			if(!pFile)
 				return S_OK;
 
-			if(pFile.SaveDoc(SLNSAVEOPT_SaveIfDirty) != S_OK)
-				return returnError(E_FAIL);
-
 			auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
 			scope(exit) release(solutionBuildManager);
 			IVsProjectCfg activeCfg;
@@ -516,6 +514,11 @@ version(tip)
 		}
 		if(!cfg || !pFile)
 			return S_OK;
+
+		if(pFile.SaveDoc(SLNSAVEOPT_SaveIfDirty) != S_OK)
+			return returnError(E_FAIL);
+
+		mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position
 
 		scope(exit) release(cfg);
 
@@ -534,11 +537,9 @@ version(tip)
 					{
 						string line = strip(detab(ln));
 						if(line.length)
-							addopt ~= " \"--eval=" ~ replace(line, "\"", "\\\"") ~ "\"";
+							addopt ~= " \"--eval=" ~ replace(line, "\"", "\\\\\\\"") ~ "\"";
 					}
 				}
-				else
-					addopt ~= " --main";
 			}
 			else if(run)
 				addopt ~= " -run";

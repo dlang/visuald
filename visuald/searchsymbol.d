@@ -609,8 +609,8 @@ private:
 	}
 
 	// Special icon dimensions for the sort direction indicator
-	const int c_cxSortIcon = 7;
-	const int c_cySortIcon = 6;
+	enum int c_cxSortIcon = 7;
+	enum int c_cySortIcon = 6;
 
 	HRESULT _CreateSortImageList(out HIMAGELIST phiml)
 	{
@@ -774,8 +774,8 @@ private:
 	}
 
 	// Special icon dimensions for the toolbar images
-	const int c_cxToolbarIcon = 16;
-	const int c_cyToolbarIcon = 15;
+	enum int c_cxToolbarIcon = 16;
+	enum int c_cyToolbarIcon = 15;
 
 	HRESULT _CreateToolbarImageList(out HIMAGELIST phiml)
 	{

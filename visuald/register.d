@@ -79,7 +79,7 @@ HRESULT WriteExtensionPackageDefinition(in wchar* args)
 	if(idx < 1)
 		return E_FAIL;
 	registryDump = "Windows Registry Editor Version 5.00\n"w;
-	registryRoot = wargs[0 .. idx] ~ "\0"w;
+	registryRoot = (wargs[0 .. idx] ~ "\0"w)[0 .. idx];
 	string fname = to!string(wargs[idx + 1 .. $]);
 	try
 	{
@@ -118,9 +118,9 @@ class RegistryException : Exception
 
 class RegKey
 {
-	this(HKEY root, wstring keyname, bool write = true)
+	this(HKEY root, wstring keyname, bool write = true, bool chkDump = true)
 	{
-		Create(root, keyname, write);
+		Create(root, keyname, write, chkDump);
 	}
 
 	~this()
@@ -144,10 +144,10 @@ class RegKey
 		return  "\""w ~ escapeString(name) ~ "\""w;
 	}
 
-	void Create(HKEY root, wstring keyname, bool write = true)
+	void Create(HKEY root, wstring keyname, bool write = true, bool chkDump = true)
 	{
 		HRESULT hr;
-		if(write && registryRoot.length && keyname.startsWith(registryRoot))
+		if(write && chkDump && registryRoot.length && keyname.startsWith(registryRoot))
 		{
 			if (keyname.startsWith(registryRoot))
 				registryDump ~= "\n[$RootKey$"w ~ keyname[registryRoot.length..$] ~ "]\n"w;
@@ -164,11 +164,13 @@ class RegKey
 			hr = hrRegOpenKeyEx(root, keyname, 0, KEY_READ, &key);
 	}
 
-	void Set(wstring name, wstring value)
+	void Set(wstring name, wstring value, bool escape = true)
 	{
 		if(!key && registryRoot.length)
 		{
-			registryDump ~= registryName(name) ~ "=\""w ~ escapeString(value) ~ "\"\n"w;
+			if(escape)
+				value = escapeString(value);
+			registryDump ~= registryName(name) ~ "=\""w ~ value ~ "\"\n"w;
 			return;
 		}
 		if(!key)
@@ -347,7 +349,7 @@ void updateConfigurationChanged(HKEY keyRoot, wstring registrationRoot)
 	//MessageBoxA(null, text("version: ", ver, "\nregkey: ", to!string(registrationRoot)).ptr, to!string(registrationRoot).ptr, MB_OK);
 	if(ver >= 11)
 	{
-		scope RegKey keyRegRoot = new RegKey(keyRoot, registrationRoot);
+		scope RegKey keyRegRoot = new RegKey(keyRoot, registrationRoot, true, false);
 
 		FILETIME fileTime;
 		GetSystemTimeAsFileTime(&fileTime);
@@ -357,6 +359,17 @@ void updateConfigurationChanged(HKEY keyRoot, wstring registrationRoot)
 		ulong tempHNSecs = ul.QuadPart;
 
 		keyRegRoot.Set("ConfigurationChanged", tempHNSecs);
+	}
+}
+
+void fixVS2012Shellx64Debugger(HKEY keyRoot, wstring registrationRoot)
+{
+	float ver = guessVSVersion(registrationRoot);
+	//MessageBoxA(null, text("version: ", ver, "\nregkey: ", to!string(registrationRoot)).ptr, to!string(registrationRoot).ptr, MB_OK);
+	if(ver >= 11)
+	{
+		scope RegKey keyDebugger = new RegKey(keyRoot, registrationRoot ~ "\\Debugger"w);
+		keyDebugger.Set("msvsmon-pseudo_remote"w, r"$ShellFolder$\Common7\Packages\Debugger\X64\msvsmon.exe"w, false);
 	}
 }
 
@@ -600,6 +613,8 @@ version(none){
 
 		scope RegKey keyMarshal2 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocHandler32"w);
 		keyMarshal2.Set(null, dllPath);
+
+		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
 
 		updateConfigurationChanged(keyRoot, registrationRoot);
 	}

@@ -168,7 +168,7 @@ public:
 
 ///////////////////////////////////////////////////////////////////////
 uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
-					  int versionLevel, int debugLevel)
+					  int versionLevel, int debugLevel, bool noDeprecated)
 {
 	return (unittestOn ? 1 : 0)
 		|  (debugOn    ? 2 : 0)
@@ -177,6 +177,7 @@ uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool do
 		|  (doc        ? 16 : 0)
 		|  (nobounds   ? 32 : 0)
 		|  (gdc        ? 64 : 0)
+		|  (noDeprecated ? 128 : 0)
 		| ((versionLevel & 0xff) << 8)
 		| ((debugLevel   & 0xff) << 16);
 }

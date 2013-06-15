@@ -495,10 +495,10 @@ Version history
   * added console application project template with configurations for DMD and GDC for Win32 and x86
   * fixed spurious crashes due to bug in precise garbage collection
 
-unreleased Version 0.3.36
+2013-05-10 Version 0.3.36
 
   * added debug settings to new DMD/GDC project template 
-  * regressions caused by switching installing as VS2010/VS2010 extension:
+  * regressions caused by switching to installation as VS2010/VS2012 extension:
     - executable path contained untranslated \n
     - no Visual D colors added
   * only force separate link if "Monitor OPTLINK dependencies" is enabled
@@ -536,3 +536,17 @@ unreleased Version 0.3.36
   * added command "Compile and Run" to execute current text buffer or selection via rdmd
   * added command "Open Language Options" for easier access to the settings page
   * added option "Colorize coverage from .LST file" to highlight lines from code coverage output
+
+unreleased Version 0.3.37
+
+  * installs with cv2pdb 0.27 which fixes a crash when converting DWARF from GDC 4.8
+  * editor always started with coverage highlighting enabled
+  * added command "Open Folder in Windows Explorer" to project and folder context menu
+  * fixed regression: VS 2010/2012 extension pkgdef files almost empty
+  * installer now has workaround for x64 debugger of Visual Studio 2012 Shell 
+  * DParser: updated to recent version, enabled mixin analysis, respect deprecation flag
+  * "Compile and Run" no longer adds "--main" automatically, removed some other implicite 
+    command line options that confused rdmd, fixed quotes in --eval arguments
+  * Colorize coverage: disabled if lst file older than source file, tweaked line number translation
+  * update DParser, now mixin-analysis enabled, pass -deprecated to analysis
+  

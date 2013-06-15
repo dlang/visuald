@@ -720,7 +720,8 @@ class LanguageService : DisposingComObject,
 			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck, 
 									  cfgopts.compiler == Compiler.GDC, 
-									  cfgopts.versionlevel, cfgopts.debuglevel);
+									  cfgopts.versionlevel, cfgopts.debuglevel,
+									  cfgopts.errDeprecated);
 			
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
 			stringImp = tokenizeArgs(strimp);
@@ -1066,6 +1067,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	
 	static struct LineChange { int oldLine, newLine; }
 	LineChange[] mLineChanges;
+	size_t mLastSaveLineChangePos;
 	TextLineChange mLastTextLineChange;
 
 	wstring mParseText;
@@ -1179,6 +1181,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	void ClearLineChanges()
 	{
 		mLineChanges = mLineChanges.init;
+		mLastSaveLineChangePos = 0;
 	}
 	
 	override int OnChangeLineAttributes(in int iFirstLine, in int iLastLine)
@@ -1198,17 +1201,19 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		return S_OK;
 	}
 
-	int adjustLineNumberSinceLastBuild(int line)
+	int adjustLineNumberSinceLastBuild(int line, bool sinceSave)
 	{
-		foreach(ref chg; mLineChanges)
+		size_t pos = sinceSave ? mLastSaveLineChangePos : 0;
+		foreach(ref chg; mLineChanges[pos..$])
 			if(line >= chg.oldLine)
 				line += chg.newLine - chg.oldLine;
 		return line;
 	}
 
-	int adjustLineNumberSinceLastBuildReverse(int line)
+	int adjustLineNumberSinceLastBuildReverse(int line, bool sinceSave)
 	{
-		foreach_reverse(ref chg; mLineChanges)
+		size_t pos = sinceSave ? mLastSaveLineChangePos : 0;
+		foreach_reverse(ref chg; mLineChanges[pos..$])
 			if(line >= chg.newLine)
 				line -= chg.newLine - chg.oldLine;
 		return line;
@@ -1242,6 +1247,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 
 	override HRESULT OnBufferSave(LPCOLESTR pszFileName)
 	{
+		mLastSaveLineChangePos = mLineChanges.length;
 		return S_OK;
 	}
 

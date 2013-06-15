@@ -35,6 +35,10 @@ import std.datetime;
 
 int semanticErrors;
 
+alias object.AssociativeArray!(Node, const(bool)) _wa1; // fully instantiate type info for bool[Node]
+alias object.AssociativeArray!(string, const(VersionInfo)) _wa2; // fully instantiate type info for VersionInfo[string]
+alias object.AssociativeArray!(string, const(bool)) _wa3; // fully instantiate type info for bool[string]
+
 class SemanticException : Exception
 {
 	this(string msg)
@@ -916,6 +920,7 @@ class Options
 	bool doDoc;
 	bool noBoundsCheck;
 	bool gdcCompiler;
+	bool noDeprecated;
 	VersionDebug debugIds;
 	VersionDebug versionIds;
 

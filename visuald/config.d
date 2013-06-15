@@ -2398,24 +2398,21 @@ class Config :	DisposingComObject,
 		if(tool == "RDMD")
 		{
 			// temporarily switch to "rdmd"
-			string othercompiler = mProjectOptions.program;
-			bool useother = mProjectOptions.otherDMD;
-			auto lib = mProjectOptions.lib;
-			auto exefile = mProjectOptions.exefile;
-			scope(exit)
-			{
-				mProjectOptions.program = othercompiler;
-				mProjectOptions.otherDMD = useother;
-				mProjectOptions.lib = lib;
-				mProjectOptions.exefile = exefile;
-			}
-			mProjectOptions.program = "rdmd";
-			mProjectOptions.otherDMD = true;
-			mProjectOptions.lib = OutputType.Executable;
-			mProjectOptions.exefile = "$(OutDir)\\" ~ baseName(stripExtension(outfile)) ~ ".exe";
+			ProjectOptions opts = clone(mProjectOptions);
+			opts.compiler = Compiler.DMD;
+			opts.program = "rdmd";
+			opts.otherDMD = true;
+			opts.mapverbosity = 2; // no map option
+			opts.otherDMD = true;
+			opts.doXGeneration = false;
+			opts.doHdrGeneration = false;
+			opts.doDocComments = false;
+			opts.lib = OutputType.Executable;
+			opts.runCv2pdb = false;
+			opts.exefile = "$(OutDir)\\" ~ baseName(stripExtension(outfile)) ~ ".exe";
 
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
-			cmd ~= mProjectOptions.buildCommandLine(true, true, false, syntaxOnly);
+			cmd ~= opts.buildCommandLine(true, false, false, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";
 			cmd ~= addopt ~ " " ~ file.GetFilename();

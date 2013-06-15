@@ -655,7 +655,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return ""; }
 	override string GetPageName() { return "General"; }
 
-	const float[] selectableVersions = [ 1, 2 ];
+	__gshared const float[] selectableVersions = [ 1, 2 ];
 	
 	override void CreateControls()
 	{
