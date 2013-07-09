@@ -118,12 +118,13 @@ FMT = OMF
 DFLAGS = -d -I.. -J.. -Jresources -m32ms -L/DLL -L/LARGEADDRESSAWARE -op -defaultlib=druntime32,phobos
 LIB = $(WINSDK)\lib
 !ELSE
-DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL
+DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL 
 LIB = ..\sdk\lib
 !ENDIF
 
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 RELFLAGS = -release -O -inline -noboundscheck
+# -gs -defaultlib=druntime_d,phobos_d
 RELDBG = -g
 
 LIBS = phobos.lib "$(LIB)\comctl32.lib" uuid.lib advapi32.lib comdlg32.lib \

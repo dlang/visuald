@@ -406,8 +406,8 @@ class LanguageService : DisposingComObject,
 			newCom!ColorableItem("Visual D Token String Type",       -1,      CI_USERTEXT_BK, RGB(112,0,80)),
 			newCom!ColorableItem("Visual D Token String Version",    -1,      CI_USERTEXT_BK, RGB(224, 0, 0)),
 
-			newCom!ColorableItem("Text Coverage",     CI_USERTEXT_FG, -1, 0,  RGB(192, 255, 192)),
-			newCom!ColorableItem("Text Non-Coverage", CI_USERTEXT_FG, -1, 0,  RGB(255, 192, 192)),
+			newCom!ColorableItem("Visual D Text Coverage",     CI_USERTEXT_FG, -1, 0,  RGB(192, 255, 192)),
+			newCom!ColorableItem("Visual D Text Non-Coverage", CI_USERTEXT_FG, -1, 0,  RGB(255, 192, 192)),
 		];
 	};
 	static void shared_static_dtor()
@@ -499,10 +499,14 @@ class LanguageService : DisposingComObject,
 	
 	HRESULT OnActiveProjectCfgChange(/+[in]+/   IVsHierarchy pIVsHierarchy)
 	{
-		foreach(src; mSources)
-			src.mColorizer.OnConfigModified();
-		
+		UpdateColorizer(false);		
 		return S_OK;
+	}
+
+	void UpdateColorizer(bool force)
+	{
+		foreach(src; mSources)
+			src.mColorizer.OnConfigModified(force);
 	}
 
 	// IVsOutliningCapableLanguage ///////////////////////////////

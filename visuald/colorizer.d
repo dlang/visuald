@@ -41,7 +41,7 @@ import sdk.vsi.textmgr2;
 enum TokenColor
 {
 	// assumed to match lexer.TokenCat and colorableItems in dlangsvc.d
-	Text       = TokenCat.Text,
+	Text       = cast(int) TokenCat.Text,
 	Keyword    = TokenCat.Keyword,
 	Comment    = TokenCat.Comment,
 	Identifier = TokenCat.Identifier,
@@ -358,8 +358,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 					if(Lexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
 					{
 						int parseState = getParseState(state);
-						if(type == TokenColor.Identifier)
-							type = userColorType(tok);
+						if(type == TokenColor.Identifier || type == TokenColor.Keyword)
+							type = userColorType(tok, type);
 						if(parseState == VersionParseState.IdleDisabled || parseState == VersionParseState.IdleDisabledVerify)
 							type = disabledColorType(type);
 					}
@@ -850,11 +850,11 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return TokenColor.Identifier;
 	}
 
-	private int userColorType(wstring text)
+	private int userColorType(wstring text, int type)
 	{
 		if(auto p = text in Package.GetGlobalOptions().UserTypes)
 			return *p;
-		return TokenColor.Identifier;
+		return type;
 	}
 
 	private static int getParseState(int iState)
@@ -897,8 +897,8 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		int parseState = getParseState(iState);
 		int debugOrVersion = getDebugOrVersion(iState);
 		int ntype = type;
-		if(ntype == TokenColor.Identifier)
-			ntype = userColorType(text);
+		if(ntype == TokenColor.Identifier || ntype == TokenColor.Keyword)
+			ntype = userColorType(text, ntype);
 
 		final switch(cast(VersionParseState) parseState)
 		{
@@ -1299,14 +1299,20 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		return mConfig;
 	}
-	
-	void OnConfigModified()
+
+	// ConfigModifiedListener
+	override void OnConfigModified()
+	{
+		OnConfigModified(false);
+	}
+
+	void OnConfigModified(bool force)
 	{
 		int changes = UpdateConfig();
 		changes += modifyValue(Package.GetGlobalOptions().ColorizeVersions, mColorizeVersions);
 		changes += modifyValue(Package.GetGlobalOptions().ColorizeCoverage, mColorizeCoverage);
 		
-		if(changes)
+		if(changes || force)
 		{
 			mLineState[] = -1;
 			mSource.ReColorizeLines(0, -1);

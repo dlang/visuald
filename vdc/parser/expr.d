@@ -860,6 +860,9 @@ class PrimaryExpression : Expression
 			case TOK_dollar:
 			case TOK___FILE__:
 			case TOK___LINE__:
+			case TOK___FUNCTION__:
+			case TOK___PRETTY_FUNCTION__:
+			case TOK___MODULE__:
 				auto expr = new ast.PrimaryExpression(p.tok);
 				p.pushNode(expr);
 				return Accept;
@@ -1381,6 +1384,7 @@ class TypeOrExpression(ops...)
 //    inout
 //    shared
 //    return
+//    __parameters
 //
 // !is specially treated, because it's a token to the lexer
 class IsExpression : Expression
@@ -1478,6 +1482,7 @@ class TypeSpecialization
 			case TOK_super:
 			case TOK_return:
 			case TOK_typedef:
+			case TOK___parameters:
 				p.pushNode(new ast.TypeSpecialization(p.tok));
 				return Accept;
 			case TOK_const:

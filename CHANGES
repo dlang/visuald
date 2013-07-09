@@ -2,7 +2,7 @@
 This is the CHANGES file for visuald, a 
 Visual Studio package providing both project management and language services
 
-Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+Copyright (c) 2010-2013 by Rainer Schuetze, All Rights Reserved
 
 Version history
 ---------------
@@ -544,9 +544,14 @@ unreleased Version 0.3.37
   * added command "Open Folder in Windows Explorer" to project and folder context menu
   * fixed regression: VS 2010/2012 extension pkgdef files almost empty
   * installer now has workaround for x64 debugger of Visual Studio 2012 Shell 
-  * DParser: updated to recent version, enabled mixin analysis, respect deprecation flag
   * "Compile and Run" no longer adds "--main" automatically, removed some other implicite 
     command line options that confused rdmd, fixed quotes in --eval arguments
   * Colorize coverage: disabled if lst file older than source file, tweaked line number translation
-  * update DParser, now mixin-analysis enabled, pass -deprecated to analysis
+  * DParser: updated to recent version, enabled mixin analysis, respect deprecation flag
+  * vdserver: add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords and primary expression
+  * vdserver: add __parameters as specification in is-expression
+  * keywords can now also be colored by adding them to the "Colored types"
+  * after changing the "Colored types" the current editor did not update immediately
+  * user type colorizer settings were forgotten after editing options
+  * goto definition now falls back to JSON information if semantic analysis yields no result
   

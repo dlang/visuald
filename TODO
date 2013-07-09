@@ -138,13 +138,13 @@ Unsorted
 =========
 - parse all files in project at startup
 - COM leaks in VS2012 (VS2010?)
-- compile from selection/buffer (through rdmd)
 - virustotal reports malicious software
 - reset semantic analysis data
 - goto definition/completion for labels, versions
 - goto definition fallback to JSON
 - highlight compiler-magic identifiers
 
+- compile from selection/buffer (through rdmd)
 - save file before "Compile & run"
 - coverage line highlight after "Compile & run" doesn't update
 - better keeping track of line changes

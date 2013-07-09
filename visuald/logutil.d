@@ -795,7 +795,57 @@ string _getLogReturn(string func, string type)
 	return call;
 }
 
+
+///////////////////////////////////////////////
+
 const string nl = " "; // "\n";
+
+debug {
+version(all)
+{
+	string genLogMixin(PI...)(string fn, bool hasThis)
+	{
+		string fmt;
+		string args;
+		if(hasThis)
+		{
+			fmt = "this=%s";
+			args = ", cast(void*) this";
+		}
+		foreach(id; PI)
+		{
+			args ~= ", _toLog(" ~ id ~ ")";
+			if(fmt.length > 0)
+				fmt ~= ", ";
+			fmt ~= id ~ "=%s";
+		}
+		return "logCall(\"" ~ fn ~ "(" ~ fmt ~ ")\"" ~ args ~ ");";
+	}
+
+	template logParameterIdentifier(alias sym)
+	{
+		import std.typetuple;
+		import std.traits;
+		alias TypeTuple!(__traits(parent,sym)) func;
+		alias ParameterIdentifierTuple!(func[0]) logParameterIdentifier;
+		//alias ParameterTypeTuple!(func[0]) PT;
+	}
+
+const string _logMix = q{
+enum LogCall = genLogMixin!(logParameterIdentifier!hasThis)(__FUNCTION__, hasThis);
+mixin(LogCall);
+};
+
+	const string _hasThisMix = "const bool hasThis = true;" ~ nl;
+	const string _LogIndentNoRet = "logIndent(1); scope(exit) logIndent(-1);" ~ nl;
+
+	const string LogCallMix = _hasThisMix ~ _logMix ~ _LogIndentNoRet;
+	const string LogCallMix2 = _hasThisMix ~ _logMix ~ _LogIndentNoRet;
+	const string LogCallMixNoRet = _hasThisMix ~ _logMix ~ _LogIndentNoRet;
+}
+else
+{
+
 const string FuncNameMix = "struct __FUNCTION {} static const string _FUNCTION_ = _getJustName(__FUNCTION.mangleof);" ~ nl;
 const string _hasThisMix = "static const bool hasThis = true;" ~ nl;
 
@@ -810,10 +860,10 @@ const string _LogCallMix2 = "static const string __LOGCALL__ = _getLogCall(_FUNC
 const string _LogIndent = "logIndent(1); scope(exit) { " ~ "mixin(__LOGRETURN__);" ~ "logIndent(-1); }" ~ nl;
 const string _LogIndentNoRet = "logIndent(1); scope(exit) logIndent(-1);" ~ nl;
 
-debug {
 const string LogCallMix = FuncNameMix ~ _hasThisMix ~ _LogCallMix ~ _LogReturnMix ~ "mixin(__LOGCALL__);" ~ _LogIndent;
 const string LogCallMix2 = FuncNameMix ~ _hasThisMix ~ _getEBP ~ _LogCallArgType ~ "mixin(__ARGTYPES__);" ~ _LogCallArgOff ~ _LogCallMix2 ~ "mixin(__LOGCALL__);" ~ _LogIndentNoRet;
 const string LogCallMixNoRet = FuncNameMix ~ _hasThisMix ~ _LogCallMix ~ "mixin(__LOGCALL__);" ~ _LogIndentNoRet;
+}
 } else {
 const string LogCallMix = "";
 const string LogCallMix2 = "";

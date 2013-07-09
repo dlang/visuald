@@ -1001,6 +1001,9 @@ const string keywords[] =
 	
 	"__FILE__",
 	"__LINE__",
+	"__FUNCTION__",
+	"__PRETTY_FUNCTION__",
+	"__MODULE__",
 	
 	"shared",
 	"immutable",

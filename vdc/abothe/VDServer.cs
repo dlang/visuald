@@ -368,7 +368,7 @@ namespace DParserCOMServer
 			versions += "Windows\n" + "LittleEndian\n" + "D_HardFloat\n" + "all\n" + "D_Version2\n";
 			if ((_flags & 1) != 0)
 				versions += "unittest\n";
-			if ((_flags & 3) != 0)
+			if ((_flags & 2) != 0)
 				versions += "assert\n";
 			if ((_flags & 4) != 0)
 				versions += "Win64\n" + "X86_64\n" + "D_InlineAsm_X86_64\n" + "D_LP64\n";

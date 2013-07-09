@@ -1188,24 +1188,24 @@ class GlobalOptions
 				return getIntOpt(tag, def ? 1 : 0) != 0;
 			}
 
-			ColorizeVersions  = getBoolOpt("ColorizeVersions", true);
-			ColorizeCoverage  = getBoolOpt("ColorizeCoverage", true);
-			timeBuilds        = getBoolOpt("timeBuilds", false);
-			sortProjects      = getBoolOpt("sortProjects", true);
-			stopSolutionBuild = getBoolOpt("stopSolutionBuild", false);
-			demangleError     = getBoolOpt("demangleError", true);
-			optlinkDeps       = getBoolOpt("optlinkDeps", true);
-			autoOutlining     = getBoolOpt("autoOutlining", true);
-			deleteFiles       = cast(byte) getIntOpt("deleteFiles", 0);
-			parseSource       = getBoolOpt("parseSource", true);
+			ColorizeVersions    = getBoolOpt("ColorizeVersions", true);
+			ColorizeCoverage    = getBoolOpt("ColorizeCoverage", true);
+			timeBuilds          = getBoolOpt("timeBuilds", false);
+			sortProjects        = getBoolOpt("sortProjects", true);
+			stopSolutionBuild   = getBoolOpt("stopSolutionBuild", false);
+			demangleError       = getBoolOpt("demangleError", true);
+			optlinkDeps         = getBoolOpt("optlinkDeps", true);
+			autoOutlining       = getBoolOpt("autoOutlining", true);
+			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
+			parseSource         = getBoolOpt("parseSource", true);
 			expandFromSemantics = getBoolOpt("expandFromSemantics", true);
-			expandFromBuffer  = getBoolOpt("expandFromBuffer", true);
-			expandFromJSON    = getBoolOpt("expandFromJSON", true);
-			expandTrigger     = cast(byte) getIntOpt("expandTrigger", 0);
-			showTypeInTooltip = getBoolOpt("showTypeInTooltip2", true); // changed default
-			semanticGotoDef   = getBoolOpt("semanticGotoDef", true);
-			useDParser        = getBoolOpt("useDParser", false);
-			pasteIndent       = getBoolOpt("pasteIndent", true);
+			expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
+			expandFromJSON      = getBoolOpt("expandFromJSON", true);
+			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
+			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
+			semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
+			useDParser          = getBoolOpt("useDParser", false);
+			pasteIndent         = getBoolOpt("pasteIndent", true);
 
 			// overwrite by user config
 			DMD.InstallDir    = getStringOpt("DMDInstallDir");
@@ -1226,7 +1226,7 @@ class GlobalOptions
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
 
-			string UserTypesSpec = getStringOpt("UserTypesSpec", defUserTypesSpec);
+			UserTypesSpec     = getStringOpt("UserTypesSpec", defUserTypesSpec);
 			UserTypes = parseUserTypes(UserTypesSpec);
 
 			lastColorizeCoverage = ColorizeCoverage;
@@ -1291,41 +1291,41 @@ class GlobalOptions
 		try
 		{
 			scope RegKey keyToolOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions);
-			keyToolOpts.Set("DMDInstallDir", toUTF16(DMD.InstallDir));
-			keyToolOpts.Set("GDCInstallDir", toUTF16(GDC.InstallDir));
-			keyToolOpts.Set("LDCInstallDir", toUTF16(LDC.InstallDir));
-			keyToolOpts.Set("ExeSearchPath", toUTF16(DMD.ExeSearchPath));
-			keyToolOpts.Set("LibSearchPath", toUTF16(DMD.LibSearchPath));
-			keyToolOpts.Set("ImpSearchPath", toUTF16(DMD.ImpSearchPath));
+			keyToolOpts.Set("DMDInstallDir",     toUTF16(DMD.InstallDir));
+			keyToolOpts.Set("GDCInstallDir",     toUTF16(GDC.InstallDir));
+			keyToolOpts.Set("LDCInstallDir",     toUTF16(LDC.InstallDir));
+			keyToolOpts.Set("ExeSearchPath",     toUTF16(DMD.ExeSearchPath));
+			keyToolOpts.Set("LibSearchPath",     toUTF16(DMD.LibSearchPath));
+			keyToolOpts.Set("ImpSearchPath",     toUTF16(DMD.ImpSearchPath));
 			keyToolOpts.Set("GDC.ExeSearchPath", toUTF16(GDC.ExeSearchPath));
 			keyToolOpts.Set("GDC.LibSearchPath", toUTF16(GDC.LibSearchPath));
 			keyToolOpts.Set("GDC.ImpSearchPath", toUTF16(GDC.ImpSearchPath));
 			keyToolOpts.Set("LDC.ExeSearchPath", toUTF16(LDC.ExeSearchPath));
 			keyToolOpts.Set("LDC.LibSearchPath", toUTF16(LDC.LibSearchPath));
 			keyToolOpts.Set("LDC.ImpSearchPath", toUTF16(LDC.ImpSearchPath));
-			keyToolOpts.Set("JSNSearchPath", toUTF16(JSNSearchPath));
-			keyToolOpts.Set("IncSearchPath", toUTF16(IncSearchPath));
-			keyToolOpts.Set("UserTypesSpec", toUTF16(UserTypesSpec));
+			keyToolOpts.Set("JSNSearchPath",     toUTF16(JSNSearchPath));
+			keyToolOpts.Set("IncSearchPath",     toUTF16(IncSearchPath));
+			keyToolOpts.Set("UserTypesSpec",     toUTF16(UserTypesSpec));
 			
-			keyToolOpts.Set("ColorizeVersions",  ColorizeVersions);
-			keyToolOpts.Set("ColorizeCoverage",  ColorizeCoverage);
-			keyToolOpts.Set("timeBuilds",        timeBuilds);
-			keyToolOpts.Set("sortProjects",      sortProjects);
-			keyToolOpts.Set("stopSolutionBuild", stopSolutionBuild);
-			keyToolOpts.Set("demangleError",     demangleError);
-			keyToolOpts.Set("optlinkDeps",       optlinkDeps);
-			keyToolOpts.Set("autoOutlining",     autoOutlining);
-			keyToolOpts.Set("deleteFiles",       deleteFiles);
-			keyToolOpts.Set("parseSource",       parseSource);
+			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
+			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);
+			keyToolOpts.Set("timeBuilds",          timeBuilds);
+			keyToolOpts.Set("sortProjects",        sortProjects);
+			keyToolOpts.Set("stopSolutionBuild",   stopSolutionBuild);
+			keyToolOpts.Set("demangleError",       demangleError);
+			keyToolOpts.Set("optlinkDeps",         optlinkDeps);
+			keyToolOpts.Set("autoOutlining",       autoOutlining);
+			keyToolOpts.Set("deleteFiles",         deleteFiles);
+			keyToolOpts.Set("parseSource",         parseSource);
 			keyToolOpts.Set("expandFromSemantics", expandFromSemantics);
-			keyToolOpts.Set("expandFromBuffer",  expandFromBuffer);
-			keyToolOpts.Set("expandFromJSON",    expandFromJSON);
-			keyToolOpts.Set("expandTrigger",     expandTrigger);
-			keyToolOpts.Set("showTypeInTooltip", showTypeInTooltip);
-			keyToolOpts.Set("semanticGotoDef",   semanticGotoDef);
-			keyToolOpts.Set("useDParser",        useDParser);
-			keyToolOpts.Set("pasteIndent",       pasteIndent);
-			keyToolOpts.Set("compileAndRunOpts", toUTF16(compileAndRunOpts));
+			keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
+			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
+			keyToolOpts.Set("expandTrigger",       expandTrigger);
+			keyToolOpts.Set("showTypeInTooltip",   showTypeInTooltip);
+			keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
+			keyToolOpts.Set("useDParser",          useDParser);
+			keyToolOpts.Set("pasteIndent",         pasteIndent);
+			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
 
 			CHierNode.setContainerIsSorted(sortProjects);
 		}
@@ -1354,7 +1354,7 @@ class GlobalOptions
 		}
 		if(updateColorizer)
 			if(auto svc = Package.s_instance.mLangsvc)
-				svc.OnActiveProjectCfgChange(null);
+				svc.UpdateColorizer(true);
 
 		if(lastUseDParser != useDParser)
 		{

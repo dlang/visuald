@@ -1172,7 +1172,8 @@ else
 		// file read error
 	}
 
-	files ~= aafiles.keys;
+	string[] keys = aafiles.keys; // workaround for bad codegen with files ~= aafiles.keys
+	files ~= keys;
 	files.sort; // for faster file access?
 	return cntValid > 0;
 }

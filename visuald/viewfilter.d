@@ -1244,16 +1244,16 @@ else
 		}
 		else
 		{
-			return GotoDefinitionJSON(file);
+			string word = toUTF8(GetWordAtCaret());
+			if(word.length <= 0)
+				return S_FALSE;
+
+			return GotoDefinitionJSON(file, word);
 		}
 	}
 
-	HRESULT GotoDefinitionJSON(string file)
+	HRESULT GotoDefinitionJSON(string file, string word)
 	{
-		string word = toUTF8(GetWordAtCaret());
-		if(word.length <= 0)
-			return S_FALSE;
-
 		Definition[] defs = Package.GetLibInfos().findDefinition(word);
 		if(defs.length == 0)
 		{
@@ -1287,7 +1287,11 @@ else
 				showStatusBarText(format("Cannot open %s(%d) for goto definition", fname, span.iStartLine));
 		}
 		else
-			showStatusBarText("No definition found for '" ~ mLastGotoDef ~ "'");
+		{
+			string word = split(mLastGotoDef, ".")[$-1];
+			GotoDefinitionJSON(mCodeWinMgr.mSource.GetFileName(), word);
+			//showStatusBarText("No definition found for '" ~ mLastGotoDef ~ "'");
+		}
 	}
 
 	//////////////////////////////////////////////////////////////
