@@ -540,18 +540,31 @@ Version history
 unreleased Version 0.3.37
 
   * installs with cv2pdb 0.27 which fixes a crash when converting DWARF from GDC 4.8
-  * editor always started with coverage highlighting enabled
   * added command "Open Folder in Windows Explorer" to project and folder context menu
-  * fixed regression: VS 2010/2012 extension pkgdef files almost empty
-  * installer now has workaround for x64 debugger of Visual Studio 2012 Shell 
-  * "Compile and Run" no longer adds "--main" automatically, removed some other implicite 
-    command line options that confused rdmd, fixed quotes in --eval arguments
-  * Colorize coverage: disabled if lst file older than source file, tweaked line number translation
-  * DParser: updated to recent version, enabled mixin analysis, respect deprecation flag
-  * vdserver: add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords and primary expression
-  * vdserver: add __parameters as specification in is-expression
-  * keywords can now also be colored by adding them to the "Colored types"
-  * after changing the "Colored types" the current editor did not update immediately
-  * user type colorizer settings were forgotten after editing options
+  * installer:
+    - fixed regression: VS 2010/2012 extension pkgdef files almost empty
+    - now has workaround for x64 debugger of Visual Studio 2012 Shell 
+  * "Compile and Run":
+    - no longer adds "--main" automatically
+    - removed some other implicite command line options that confused rdmd
+    - fixed quotes in --eval arguments
+    - didn't save file if it is not part of a project in the solution
+  * syntax/coverage highlighiting
+    - editor always started with coverage highlighting enabled
+    - Colorize coverage: 
+      * disabled if lst file older than source file or deleted
+      * tweaked line number translation
+      * now searches for lst files in last execution folders
+      * added new command "Delete Coverage Files"
+    - after changing the "Colored types" the current editor did not update immediately
+    - user type colorizer settings were forgotten after editing options
+    - keywords can now also be colored by adding them to the "Colored types"
+  * DParser
+    - updated to recent version (ba4225b3a0e6ed346347fd7df3be727f03d266e3)
+    - enabled mixin analysis
+    - pass deprecation flag to engine
+  * vdserver
+    - add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords and primary expression
+    - add __parameters as specification in is-expression
   * goto definition now falls back to JSON information if semantic analysis yields no result
   

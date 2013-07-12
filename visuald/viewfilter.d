@@ -560,6 +560,9 @@ version(tip)
 			if(pane)
 				pane.Activate();
 			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
+
+			if(run)
+				Package.GetGlobalOptions().addExecutionPath(cfg.GetProjectDir(), null);
 		}
 		return S_OK;
 	}

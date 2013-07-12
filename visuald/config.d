@@ -1842,6 +1842,8 @@ class Config :	DisposingComObject,
 		if(!isAbsolute(workdir))
 			workdir = GetProjectDir() ~ "\\" ~ workdir;
 
+		Package.GetGlobalOptions().addExecutionPath(workdir);
+
 		string args = mProjectOptions.replaceEnvironment(mProjectOptions.debugarguments, this);
 		if(DBGLAUNCH_NoDebug & grfLaunch)
 		{

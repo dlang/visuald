@@ -450,7 +450,7 @@ class CFileNode : CHierNode,
 			/* [out, opt] BOOL*  pfDirty    */ &fDirty, // true if the doc is dirty
 			/* [out, opt] BOOL*  pfOpenByUs */ &fOpenByUs, // true if opened by our project
 			/* [out, opt] VSDOCCOOKIE* pVsDocCookie*/ &vsDocCookie);// VSDOCCOOKIE if open
-		if (FAILED(hr) || !fOpenByUs || vsDocCookie == VSDOCCOOKIE_NIL)
+		if (FAILED(hr) || /*!fOpenByUs ||*/ vsDocCookie == VSDOCCOOKIE_NIL)
 			return hr;
 
 		IVsSolution pIVsSolution = queryService!(IVsSolution);

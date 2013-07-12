@@ -543,6 +543,12 @@ version(none)
 				case CmdShowWebsite:
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
+				case CmdDelLstFiles:
+					if(GetGlobalOptions().coverageExecutionDirs.length > 0)
+						prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+					else
+						prgCmds[i].cmdf = OLECMDF_SUPPORTED;
+					break;
 				default:
 					break;
 				}
@@ -620,6 +626,19 @@ version(none)
 				spvsDTE.ExecuteCommand("View.WebBrowser"w.ptr, "http://www.dsource.org/projects/visuald"w.ptr);
 			}
 			return S_OK;
+		}
+		if(nCmdID == CmdDelLstFiles)
+		{
+			foreach(dir; GetGlobalOptions().coverageExecutionDirs)
+				if(std.file.exists(dir) && std.file.isDir(dir))
+				{
+					string[] lstfiles; 
+					foreach(f; std.file.dirEntries(dir, SpanMode.shallow))
+						if(icmp(extension(f), ".lst") == 0)
+							lstfiles ~= f;
+					foreach(lst; lstfiles)
+						collectException(std.file.remove(lst));
+				}
 		}
 		return OLECMDERR_E_NOTSUPPORTED;
 	}
@@ -1105,6 +1124,9 @@ class GlobalOptions
 	string VDServerIID;
 	string compileAndRunOpts;
 
+	string[] coverageBuildDirs;
+	string[] coverageExecutionDirs;
+
 	bool ColorizeCoverage = true;
 	bool ColorizeVersions = true;
 	bool lastColorizeCoverage;
@@ -1226,6 +1248,11 @@ class GlobalOptions
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
 
+			string execDirs   = getStringOpt("coverageExecutionDirs", "");
+			coverageExecutionDirs = split(execDirs, ";");
+			string buildDirs  = getStringOpt("coverageBuildDirs", "");
+			coverageBuildDirs = split(buildDirs, ";");
+
 			UserTypesSpec     = getStringOpt("UserTypesSpec", defUserTypesSpec);
 			UserTypes = parseUserTypes(UserTypesSpec);
 
@@ -1326,6 +1353,9 @@ class GlobalOptions
 			keyToolOpts.Set("useDParser",          useDParser);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
+
+			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
+			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));
 
 			CHierNode.setContainerIsSorted(sortProjects);
 		}
@@ -1691,6 +1721,77 @@ class GlobalOptions
 			/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
 
 		return hr == S_OK && result == 0;
+	}
+
+	string findCoverageFile(string srcfile)
+	{
+		import stdext.path;
+		import std.path;
+		import std.file;
+		import std.string;
+
+		string lstname = std.path.stripExtension(srcfile) ~ ".lst";
+		if(std.file.exists(lstname) && std.file.isFile(lstname))
+			return lstname;
+
+		string srcpath = stripExtension(toLower(makeFilenameCanonical(srcfile, "")));
+
+		foreach(dir; coverageExecutionDirs)
+		{
+			if(!std.file.exists(dir) || !std.file.isDir(dir))
+				continue;
+
+			foreach(string f; dirEntries(dir, SpanMode.shallow))
+			{
+				char[] fn = baseName(f).dup;
+				toLowerInPlace(fn);
+				auto ext = extension(fn);
+				if(ext != ".lst")
+					continue;
+
+				// assume no '-' in file name, cov replaced '\\' with these
+				bool isAbs = false;
+				if(std.ascii.isAlpha(fn[0]) && fn[1] == '-' && fn[2] == '-')
+				{
+					// absolute path
+					fn[1] = ':';
+					isAbs = true;
+				}
+				for(size_t i = 0; i < fn.length; i++)
+					if(fn[i] == '-')
+						fn[i] = '\\';
+
+				string fs = to!string(fn);
+				if(isAbs)
+				{
+					fs = removeDotDotPath(fs);
+					if(fs[0 .. $-4] == srcpath)
+						return std.path.buildPath(dir, f);
+				}
+				else
+				{
+					foreach(bdir; coverageBuildDirs)
+					{
+						string bfile = toLower(makeFilenameCanonical(fs, bdir));
+						if(bfile[0 .. $-4] == srcpath)
+							return std.path.buildPath(dir, f);
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	void addExecutionPath(string dir, string workdir = null)
+	{
+		dir = makeDirnameCanonical(dir, workdir);
+		adduniqueLRU(coverageExecutionDirs, dir, 4);
+	}
+
+	void addBuildPath(string dir, string workdir = null)
+	{
+		dir = makeDirnameCanonical(dir, workdir);
+		adduniqueLRU(coverageBuildDirs, dir, 4);
 	}
 }
 

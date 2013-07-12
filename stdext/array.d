@@ -60,6 +60,22 @@ void remove(T)(ref T[] arr, T val)
 		arr = arr[0..idx] ~ arr[idx+1..$];
 }
 
+void adduniqueLRU(T)(ref T[] arr, T val, size_t maxEntries)
+{
+	for(size_t i = 0; i < arr.length; i++)
+		if(val == arr[i])
+		{
+			// move to front
+			if(i > 0)
+				arr = [val] ~ arr[0..i] ~ arr[i+1 .. $];
+			return;
+		}
+
+	if(arr.length >= maxEntries)
+		arr.length = maxEntries - 1;
+	arr = [val] ~ arr;
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 struct Set(T)

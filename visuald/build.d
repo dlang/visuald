@@ -814,6 +814,8 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	string batchFileText = insertCr(cmdline);
 	string output;
 	
+	Package.GetGlobalOptions().addBuildPath(strProjectDir);
+
 	string cmdfile = buildfile ~ ".cmd";
 	
 	assert(pBuilder.m_srpIVsLaunchPadFactory);

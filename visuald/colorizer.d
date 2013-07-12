@@ -229,6 +229,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	bool mConfigNoBoundsCheck;
 	
 	int[] mCoverage;
+	string  mLastCoverageFile;
 	SysTime mLastTestCoverageFile;
 	SysTime mLastModifiedCoverageFile;
 
@@ -1348,6 +1349,20 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return null;
 	}
 
+	bool lastCoverageFileIsValid()
+	{
+		return (mLastCoverageFile.length > 0 && std.file.exists(mLastCoverageFile) && std.file.isFile(mLastCoverageFile));
+	}
+
+	bool FindCoverageFile()
+	{
+		if(lastCoverageFileIsValid())
+			return true;
+
+		mLastCoverageFile = Package.GetGlobalOptions().findCoverageFile(mSource.GetFileName());
+		return lastCoverageFileIsValid();
+	}
+
 	bool UpdateCoverage(bool force)
 	{
 		if(mColorizeCoverage)
@@ -1357,39 +1372,39 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				return false;
 
 			mLastTestCoverageFile = now;
-			string fname = mSource.GetFileName();
-			string lstname = std.path.stripExtension(fname) ~ ".lst";
-			
-			if(std.file.exists(lstname) && std.file.isFile(lstname) &&
-			   std.file.exists(fname) && std.file.isFile(fname))
+
+			if(FindCoverageFile())
 			{
-				auto lsttm = std.file.timeLastModified(lstname);
-				auto srctm = std.file.timeLastModified(fname);
+				auto lsttm = std.file.timeLastModified(mLastCoverageFile);
+				auto srctm = std.file.timeLastModified(mSource.GetFileName());
 
 				if (lsttm < srctm)
 				{
-					mCoverage = mCoverage.init;
-					if(mLastModifiedCoverageFile != SysTime(0))
-					{
-						mLastModifiedCoverageFile = SysTime(0);
-						mSource.ReColorizeLines(0, -1);
-					}
+					ClearCoverage();
 				}
 				else if(force || lsttm != mLastModifiedCoverageFile)
 				{
 					mLastModifiedCoverageFile = lsttm;
-					mCoverage = ReadCoverageFile(lstname);
+					mCoverage = ReadCoverageFile(mLastCoverageFile);
 
 					mSource.ReColorizeLines(0, -1);
 				}
 				return true;
 			}
 		}
-		else
-		{
-			mCoverage = mCoverage.init;
-		}
+		ClearCoverage();
 		return false;
+	}
+
+	void ClearCoverage()
+	{
+		mCoverage = mCoverage.init;
+		if(mLastModifiedCoverageFile != SysTime(0))
+		{
+			mLastCoverageFile = null;
+			mLastModifiedCoverageFile = SysTime(0);
+			mSource.ReColorizeLines(0, -1);
+		}
 	}
 }
 

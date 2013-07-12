@@ -568,7 +568,7 @@ version(none){
 
 		// menu
 		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
-		keyToolMenu.Set(packageGuid, ",2001,15"); // CTMENU,version
+		keyToolMenu.Set(packageGuid, ",2001,16"); // CTMENU,version
 		
 		// Visual D settings
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);
