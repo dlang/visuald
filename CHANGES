@@ -539,11 +539,11 @@ Version history
 
 unreleased Version 0.3.37
 
-  * installs with cv2pdb 0.27 which fixes a crash when converting DWARF from GDC 4.8
-  * added command "Open Folder in Windows Explorer" to project and folder context menu
   * installer:
     - fixed regression: VS 2010/2012 extension pkgdef files almost empty
     - now has workaround for x64 debugger of Visual Studio 2012 Shell 
+    - installs cv2pdb 0.27 which fixes a crash when converting DWARF from GDC 4.8
+    - installs mago 0.8 with pdb and embedded breakpoints support 
   * "Compile and Run":
     - no longer adds "--main" automatically
     - removed some other implicite command line options that confused rdmd
@@ -554,7 +554,7 @@ unreleased Version 0.3.37
     - Colorize coverage: 
       * disabled if lst file older than source file or deleted
       * tweaked line number translation
-      * now searches for lst files in last execution folders
+      * now searches for coverage generated files in last execution folders
       * added new command "Delete Coverage Files"
     - after changing the "Colored types" the current editor did not update immediately
     - user type colorizer settings were forgotten after editing options
@@ -566,5 +566,6 @@ unreleased Version 0.3.37
   * vdserver
     - add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords and primary expression
     - add __parameters as specification in is-expression
+  * added command "Open Folder in Windows Explorer" to project and folder context menu
   * goto definition now falls back to JSON information if semantic analysis yields no result
-  
+  * fixed building with -op and source files on different drive than project

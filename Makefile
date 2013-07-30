@@ -26,8 +26,8 @@ WINSDK = $(PROGRAMW6432)\Microsoft SDKs\Windows\v6.0A
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
 # WINSDK = $(PROGRAMFILES)\Windows Kits\8.0
 # WINSDK = c:\l\vs11\Windows Kits\8.0
-VSISDK = c:\l\vs9SDK
-# VSISDK = c:\l\vs10SDK
+# VSISDK = c:\l\vs9SDK
+VSISDK = c:\l\vs10SDK
 # VSISDK = c:\l\vs11\VSSDK
 # VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2008 SDK
 # VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2010 SDK
@@ -135,6 +135,8 @@ idl2d_exe: $(VSI2D_EXE)
 dparser:
 	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /t:Rebuild
 
+mago:
+	cd ..\..\mago && devenv /Build "Release|Win32" magodbg.sln
 
 ##################################
 # create installer

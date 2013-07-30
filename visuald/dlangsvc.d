@@ -659,7 +659,12 @@ class LanguageService : DisposingComObject,
 		}
 		return null;
 	}
-	
+
+	Source[] GetSources()
+	{
+		return mSources;
+	}
+
 	void setDebugger(IVsDebugger debugger)
 	{
 		if(mCookieDebuggerEvents && mDebugger)

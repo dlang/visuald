@@ -541,13 +541,8 @@ version(none)
 				case CmdShowProfile:
 				case CmdShowLangPage:
 				case CmdShowWebsite:
-					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
-					break;
 				case CmdDelLstFiles:
-					if(GetGlobalOptions().coverageExecutionDirs.length > 0)
-						prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
-					else
-						prgCmds[i].cmdf = OLECMDF_SUPPORTED;
+					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
 				default:
 					break;
@@ -629,16 +624,7 @@ version(none)
 		}
 		if(nCmdID == CmdDelLstFiles)
 		{
-			foreach(dir; GetGlobalOptions().coverageExecutionDirs)
-				if(std.file.exists(dir) && std.file.isDir(dir))
-				{
-					string[] lstfiles; 
-					foreach(f; std.file.dirEntries(dir, SpanMode.shallow))
-						if(icmp(extension(f), ".lst") == 0)
-							lstfiles ~= f;
-					foreach(lst; lstfiles)
-						collectException(std.file.remove(lst));
-				}
+			GetGlobalOptions().DeleteCoverageFiles();
 		}
 		return OLECMDERR_E_NOTSUPPORTED;
 	}
@@ -1780,6 +1766,27 @@ class GlobalOptions
 			}
 		}
 		return null;
+	}
+
+	void DeleteCoverageFiles()
+	{
+		string[] dirs = coverageExecutionDirs;
+		Source[] srcs = Package.GetLanguageService().GetSources();
+		foreach(src; srcs)
+			dirs.addunique(dirName(src.GetFileName()));
+
+		foreach(dir; dirs)
+			if(std.file.exists(dir) && std.file.isDir(dir))
+			{
+				string[] lstfiles; 
+				foreach(f; std.file.dirEntries(dir, SpanMode.shallow))
+					if(icmp(extension(f), ".lst") == 0)
+						lstfiles ~= f;
+				foreach(lst; lstfiles)
+					collectException(std.file.remove(lst));
+			}
+
+		coverageExecutionDirs = null;
 	}
 
 	void addExecutionPath(string dir, string workdir = null)

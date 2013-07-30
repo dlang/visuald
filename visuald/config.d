@@ -2549,10 +2549,11 @@ class Config :	DisposingComObject,
 					string fname = stripExtension(f);
 					if(!mProjectOptions.preservePaths)
 						fname = baseName(fname);
-					if(mProjectOptions.compiler == Compiler.DMD)
-						f = mProjectOptions.objdir ~ "\\" ~ fname ~ "." ~ mProjectOptions.objectFileExtension();
+					fname ~= "." ~ mProjectOptions.objectFileExtension();
+					if(mProjectOptions.compiler == Compiler.DMD && !isAbsolute(fname))
+						f = mProjectOptions.objdir ~ "\\" ~ fname;
 					else
-						f = fname ~ "." ~ mProjectOptions.objectFileExtension();
+						f = fname;
 				}
 			}
 

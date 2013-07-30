@@ -1385,6 +1385,7 @@ class TypeOrExpression(ops...)
 //    shared
 //    return
 //    __parameters
+//    __argTypes
 //
 // !is specially treated, because it's a token to the lexer
 class IsExpression : Expression
@@ -1483,6 +1484,7 @@ class TypeSpecialization
 			case TOK_return:
 			case TOK_typedef:
 			case TOK___parameters:
+			case TOK___argTypes:
 				p.pushNode(new ast.TypeSpecialization(p.tok));
 				return Accept;
 			case TOK_const:
