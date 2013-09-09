@@ -88,7 +88,7 @@ class VDServerClassFactory : ComObject, IClassFactory
 
 ///////////////////////////////////////////////////////////////
 
-int main(string[] argv)
+int vdserver_main(string[] argv)
 {
 	HRESULT hr;
 
@@ -134,3 +134,27 @@ void ShowErrorMessage(LPCTSTR header, HRESULT hr)
 	LocalFree(pMsg);
 }
 
+import std.compiler;
+import std.conv;
+
+static if(version_minor < 64)
+{
+	// dmd 2.064 implicitely adds C main with D main
+	int main(string[] argv)
+	{
+		return vdserver_main(argv);
+	}
+}
+else
+{
+	extern(C) int _d_run_main(int argc, char **argv, void* mainFunc);
+
+	extern (Windows)
+	int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+	{
+		char*[2] argv;
+		argv[0] = lpCmdLine;
+		argv[1] = null;
+		return _d_run_main(1, argv.ptr, &vdserver_main);
+	}
+}

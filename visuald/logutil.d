@@ -831,7 +831,7 @@ version(all)
 		//alias ParameterTypeTuple!(func[0]) PT;
 	}
 
-const string _logMix = q{
+	const string _logMix = q{
 enum LogCall = genLogMixin!(logParameterIdentifier!hasThis)(__FUNCTION__, hasThis);
 mixin(LogCall);
 };

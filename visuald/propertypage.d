@@ -23,6 +23,7 @@ import visuald.config;
 import visuald.winctrl;
 import visuald.hierarchy;
 import visuald.hierutil;
+import visuald.chiernode;
 
 import stdext.array;
 import std.string;
@@ -1277,13 +1278,92 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 	MultiLineText mAddOpt;
 }
 
-class FilePropertyPage : NodePropertyPage
+class ConfigNodePropertyPage : ProjectPropertyPage
+{
+	abstract void SetControls(CFileNode node);
+	abstract int  DoApply(CFileNode node, CFileNode refnode, Config cfg);
+
+	override void SetControls(ProjectOptions options)
+	{
+		if(auto node = GetNode())
+			SetControls(node);
+	}
+
+	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
+	{
+		return 0;
+	}
+
+	CHierNode[] GetSelectedNodes()
+	{
+		if(auto cfg = GetConfig()) // any config works
+		{
+			auto prj = cfg.GetProject();
+			CHierNode[] nodes;
+			prj.GetSelectedNodes(nodes);
+			return nodes;
+		}
+		return null;
+	}
+
+	CFileNode GetNode()
+	{
+		auto nodes = GetSelectedNodes();
+		for(size_t i = 0; i < nodes.length; i++)
+			if(auto node = cast(CFileNode)nodes[i])
+				return node;
+		return null;
+	}
+
+	override int IsPageDirty()
+	{
+		mixin(LogCallMix);
+		if(mWindow)
+			if(CFileNode node = GetNode())
+			{
+				Config cfg = GetConfig();
+				scope CFileNode n = newCom!CFileNode("");
+				return DoApply(n, node, cfg) > 0 ? S_OK : S_FALSE;
+			}
+		return S_FALSE;
+	}
+
+	override int Apply()
+	{
+		mixin(LogCallMix);
+
+		if(CFileNode rnode = GetNode())
+		{
+			auto refnode = rnode.cloneDeep();
+			auto nodes = GetSelectedNodes();
+			for(int i = 0; i < mObjects.length; i++)
+			{
+				auto config = ComPtr!(Config)(mObjects[i]);
+				if(config)
+				{
+					for(size_t n = 0; n < nodes.length; n++)
+						if(auto node = cast(CFileNode)nodes[n])
+						{
+							DoApply(node, refnode, config);
+							if(CProjectNode pn = cast(CProjectNode) node.GetRootNode())
+								pn.SetProjectFileDirty(true);
+						}
+				}
+				return S_OK;
+			}
+		}
+		return returnError(E_FAIL);
+	}
+}
+
+class FilePropertyPage : ConfigNodePropertyPage
 {
 	override string GetCategoryName() { return ""; }
 	override string GetPageName() { return "File"; }
 
 	override void CreateControls()
 	{
+		AddControl("", mPerConfig = new CheckBox(mCanvas, "per Configuration Options (apply and reopen dialog to update)"));
 		AddControl("Build Tool", mTool = new ComboBox(mCanvas, [ "Auto", "DMD", kToolResourceCompiler, "Custom", "None" ], false));
 		AddControl("Build Command", mCustomCmd = new MultiLineText(mCanvas));
 		AddControl("Other Dependencies", mDependencies = new Text(mCanvas));
@@ -1291,46 +1371,69 @@ class FilePropertyPage : NodePropertyPage
 		AddControl("", mLinkOut = new CheckBox(mCanvas, "Add output to link"));
 	}
 
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+
+		enableControls(mTool.getText());
+	}
+
 	void enableControls(string tool)
 	{
+		bool perConfigChanged = mInitPerConfig != mPerConfig.isChecked();
 		bool isCustom = (tool == "Custom");
 		bool isRc = (tool == kToolResourceCompiler);
-		mCustomCmd.setEnabled(isCustom);
-		mDependencies.setEnabled(isCustom || isRc);
-		mOutFile.setEnabled(isCustom);
-		mLinkOut.setEnabled(isCustom);
+		mTool.setEnabled(!perConfigChanged);
+		mCustomCmd.setEnabled(!perConfigChanged && isCustom);
+		mDependencies.setEnabled(!perConfigChanged && (isCustom || isRc));
+		mOutFile.setEnabled(!perConfigChanged && isCustom);
+		mLinkOut.setEnabled(!perConfigChanged && isCustom);
+	}
+
+	string GetCfgName()
+	{
+		return GetConfig().getCfgName();
 	}
 
 	override void SetControls(CFileNode node)
 	{
-		string tool = node.GetTool();
+		string cfgname = GetCfgName();
+		string tool = node.GetTool(cfgname);
 		if(tool.length == 0)
 			mTool.setSelection(0);
 		else
 			mTool.setSelection(mTool.findString(tool));
 
+		mInitPerConfig = node.GetPerConfigOptions();
+		mPerConfig.setChecked(mInitPerConfig);
+		mCustomCmd.setText(node.GetCustomCmd(cfgname)); 
+		mDependencies.setText(node.GetDependencies(cfgname)); 
+		mOutFile.setText(node.GetOutFile(cfgname)); 
+		mLinkOut.setChecked(node.GetLinkOutput(cfgname)); 
+
 		enableControls(tool);
-		mCustomCmd.setText(node.GetCustomCmd()); 
-		mDependencies.setText(node.GetDependencies()); 
-		mOutFile.setText(node.GetOutFile()); 
-		mLinkOut.setChecked(node.GetLinkOutput()); 
 	}
 
-	override int DoApply(CFileNode node, CFileNode refnode)
+	override int DoApply(CFileNode node, CFileNode refnode, Config cfg)
 	{
+		string cfgname = GetCfgName();
 		int changes = 0;
 		string tool = mTool.getText();
 		if(tool == "Auto")
 			tool = "";
-		changes += changeOptionDg!string(tool, &node.SetTool, refnode.GetTool()); 
-		changes += changeOptionDg!string(mCustomCmd.getText(), &node.SetCustomCmd, refnode.GetCustomCmd()); 
-		changes += changeOptionDg!string(mDependencies.getText(), &node.SetDependencies, refnode.GetDependencies()); 
-		changes += changeOptionDg!string(mOutFile.getText(), &node.SetOutFile, refnode.GetOutFile()); 
-		changes += changeOptionDg!bool(mLinkOut.isChecked(), &node.SetLinkOutput, refnode.GetLinkOutput()); 
+		changes += changeOptionDg!bool(mPerConfig.isChecked(), &node.SetPerConfigOptions, refnode.GetPerConfigOptions()); 
+		changes += changeOptionDg!string(tool,                    (s) => node.SetTool(cfgname, s),         refnode.GetTool(cfgname)); 
+		changes += changeOptionDg!string(mCustomCmd.getText(),    (s) => node.SetCustomCmd(cfgname, s),    refnode.GetCustomCmd(cfgname)); 
+		changes += changeOptionDg!string(mDependencies.getText(), (s) => node.SetDependencies(cfgname, s), refnode.GetDependencies(cfgname)); 
+		changes += changeOptionDg!string(mOutFile.getText(),      (s) => node.SetOutFile(cfgname, s),      refnode.GetOutFile(cfgname)); 
+		changes += changeOptionDg!bool(mLinkOut.isChecked(),      (b) => node.SetLinkOutput(cfgname, b),   refnode.GetLinkOutput(cfgname)); 
 		enableControls(tool);
 		return changes;
 	}
 
+	bool mInitPerConfig;
+
+	CheckBox mPerConfig;
 	ComboBox mTool;
 	MultiLineText mCustomCmd;
 	Text mDependencies;
@@ -1759,25 +1862,28 @@ class PropertyPageFactory : DComObject, IClassFactory
 		return S_OK;
 	}
 
-	static int GetProjectPages(CAUUID *pPages)
+	static int GetProjectPages(CAUUID *pPages, bool addFile)
 	{
 version(all) {
-		pPages.cElems = 11;
+		pPages.cElems = (addFile ? 12 : 11);
 		pPages.pElems = cast(GUID*)CoTaskMemAlloc(pPages.cElems*GUID.sizeof);
 		if (!pPages.pElems)
 			return E_OUTOFMEMORY;
 
-		pPages.pElems[0] = g_GeneralPropertyPage;
-		pPages.pElems[1] = g_DebuggingPropertyPage;
-		pPages.pElems[2] = g_DmdGeneralPropertyPage;
-		pPages.pElems[3] = g_DmdDebugPropertyPage;
-		pPages.pElems[4] = g_DmdCodeGenPropertyPage;
-		pPages.pElems[5] = g_DmdMessagesPropertyPage;
-		pPages.pElems[6] = g_DmdDocPropertyPage;
-		pPages.pElems[7] = g_DmdOutputPropertyPage;
-		pPages.pElems[8] = g_DmdLinkerPropertyPage;
-		pPages.pElems[9] = g_DmdCmdLinePropertyPage;
-		pPages.pElems[10] = g_DmdEventsPropertyPage;
+		int idx = 0;
+		if(addFile)
+			pPages.pElems[idx++] = g_FilePropertyPage;
+		pPages.pElems[idx++] = g_GeneralPropertyPage;
+		pPages.pElems[idx++] = g_DebuggingPropertyPage;
+		pPages.pElems[idx++] = g_DmdGeneralPropertyPage;
+		pPages.pElems[idx++] = g_DmdDebugPropertyPage;
+		pPages.pElems[idx++] = g_DmdCodeGenPropertyPage;
+		pPages.pElems[idx++] = g_DmdMessagesPropertyPage;
+		pPages.pElems[idx++] = g_DmdDocPropertyPage;
+		pPages.pElems[idx++] = g_DmdOutputPropertyPage;
+		pPages.pElems[idx++] = g_DmdLinkerPropertyPage;
+		pPages.pElems[idx++] = g_DmdCmdLinePropertyPage;
+		pPages.pElems[idx++] = g_DmdEventsPropertyPage;
 		return S_OK;
 } else {
 		return returnError(E_NOTIMPL);

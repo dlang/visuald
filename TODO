@@ -38,6 +38,7 @@ Project:
 - pass import path from static lib project to dependent projects
 - file properties per configuration
 - single file compilation for file configuration
+- custom command: quotes in dependencies not supported
 
 Language service:
 -----------------

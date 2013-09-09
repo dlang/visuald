@@ -74,7 +74,7 @@ class CFileNode : CHierNode,
 	override int GetPages( /* [out] */ CAUUID *pPages)
 	{
 		mixin(LogCallMix);
-		return PropertyPageFactory.GetFilePages(pPages);
+		return PropertyPageFactory.GetCommonPages(pPages);
 	}
 
 	// IVsGetCfgProvider 
@@ -186,52 +186,67 @@ class CFileNode : CHierNode,
 		return mFilename;
 	}
 
-	string GetTool()
+	bool GetPerConfigOptions()
 	{
-		return mTool;
+		return mPerConfigOptions;
 	}
-	void SetTool(string tool)
+	void SetPerConfigOptions(bool perConfig)
 	{
-		mTool = tool;
+		mPerConfigOptions = perConfig;
+		if(!mPerConfigOptions)
+			mConfigOptions = mConfigOptions.init;
 		if(CVsHierarchy hier = GetCVsHierarchy())
 			hier.OnPropertyChanged(this, VSHPROPID_IconIndex, 0);
 	}
 
-	string GetDependencies()
+	string GetTool(string cfg)
 	{
-		return mDependencies;
+		return getOptions(cfg).mTool;
 	}
-	void SetDependencies(string dep)
+	void SetTool(string cfg, string tool)
 	{
-		mDependencies = dep;
-	}
-
-	string GetOutFile()
-	{
-		return mOutFile;
-	}
-	void SetOutFile(string file)
-	{
-		mOutFile = file;
+		createOptions(cfg).mTool = tool;
+		if(CVsHierarchy hier = GetCVsHierarchy())
+			hier.OnPropertyChanged(this, VSHPROPID_IconIndex, 0);
 	}
 
-	string GetCustomCmd()
+	string GetDependencies(string cfg)
 	{
-		return mCustomCmd;
+		return getOptions(cfg).mDependencies;
 	}
-	void SetCustomCmd(string cmd)
+	void SetDependencies(string cfg, string dep)
 	{
-		mCustomCmd = cmd;
+		createOptions(cfg).mDependencies = dep;
+	}
+
+	string GetOutFile(string cfg)
+	{
+		return getOptions(cfg).mOutFile;
+	}
+	void SetOutFile(string cfg, string file)
+	{
+		createOptions(cfg).mOutFile = file;
+	}
+
+	string GetCustomCmd(string cfg)
+	{
+		return getOptions(cfg).mCustomCmd;
+	}
+	void SetCustomCmd(string cfg, string cmd)
+	{
+		createOptions(cfg).mCustomCmd = cmd;
 	}
 	
-	bool GetLinkOutput()
+	bool GetLinkOutput(string cfg)
 	{
-		return mLinkOut;
+		return getOptions(cfg).mLinkOut;
 	}
-	void SetLinkOutput(bool lnk)
+	void SetLinkOutput(string cfg, bool lnk)
 	{
-		mLinkOut = lnk;
+		createOptions(cfg).mLinkOut = lnk;
 	}
+
+	Options[string] GetConfigOptions() { return mConfigOptions; }
 
 	override int DoDefaultAction()
 	{
@@ -493,13 +508,50 @@ class CFileNode : CHierNode,
 			/* [in] VSCOOKIE docCookie             */ vsDocCookie);
 	}
 
+	CFileNode cloneDeep()
+	{
+		CFileNode n = clone(this);
+		n.mConfigOptions = mConfigOptions.dup;
+		return n;
+	}
+
 private:
-	string mTool;
-	string mDependencies;
-	string mOutFile;
-	string mCustomCmd;
+	Options* _getOptions(string cfg, bool create) 
+	{
+		if(mPerConfigOptions && cfg.length)
+		{
+			if(Options* opt = cfg in mConfigOptions)
+				return opt;
+			else if(create)
+			{
+				mConfigOptions[cfg] = mGlobalOptions;
+				return cfg in mConfigOptions;
+			}
+		}
+		return &mGlobalOptions;
+	}
+	Options* getOptions(string cfg)
+	{
+		return _getOptions(cfg, false);
+	}
+	Options* createOptions(string cfg) 
+	{
+		return _getOptions(cfg, true);
+	}
+
+	static struct Options
+	{
+		string mTool;
+		string mDependencies;
+		string mOutFile;
+		string mCustomCmd;
+		bool mLinkOut;
+	}
+	Options mGlobalOptions;
+	Options[string] mConfigOptions;
+
 	string mFilename; // relative or absolute
-	bool mLinkOut;
+	bool mPerConfigOptions;
 }
 
 // virtual folder
@@ -556,13 +608,16 @@ class CFolderNode : CHierContainer
 		// check files in folder
 		for(CHierNode pNode = GetHead(); pNode; pNode = pNode.GetNext())
 			if(auto file = cast(CFileNode) pNode)
-				if(file.GetTool() == "DMD" || (file.GetTool() == "" && toLower(extension(file.GetName())) == ".d"))
+			{
+				string tool = file.GetTool(null);
+				if(tool == "DMD" || (tool == "" && toLower(extension(file.GetName())) == ".d"))
 				{
 					string fname = file.GetFullPath();
 					string modname = getModuleDeclarationName(fname);
 					if(modname.length)
 						return stripModule(modname);
 				}
+			}
 
 		// check sub folder
 		string pkgname;
@@ -1198,7 +1253,7 @@ version(none)
 	{
 		if(CFileNode fnode = cast(CFileNode) pNode)
 		{
-			string tool = Config.GetStaticCompileTool(fnode);
+			string tool = Config.GetStaticCompileTool(fnode, null);
 			switch(tool)
 			{
 			case "DMD":                 return kImageDSource;

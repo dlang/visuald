@@ -27,6 +27,8 @@ extern(C) void* gc_malloc(size_t sz, uint ba = 0, const TypeInfo ti=null);
 
 C _newCom(C, T...)(T arguments)
 {
+	static assert(!__traits(isAbstractClass,C));
+
 	// avoid special casing in _d_newclass, where COM objects are not garbage collected
 	size_t size = C.classinfo.init.length;
 	void* p = gc_malloc(size, 1, C.classinfo); // BlkAttr.FINALIZE

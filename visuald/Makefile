@@ -115,17 +115,18 @@ STDEXT_LIB = stdext.lib
 
 FMT = OMF
 !IF "$(FMT)" == "COFF"
-DFLAGS = -d -I.. -J.. -Jresources -m32ms -L/DLL -L/LARGEADDRESSAWARE -op -defaultlib=druntime32,phobos
+DFLAGS = -d -I.. -J.. -Jresources -m32ms -L/DLL -L/LARGEADDRESSAWARE -op -defaultlib=druntime,phobos
 LIB = $(WINSDK)\lib
+RELDBG = -g
 !ELSE
 DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL 
 LIB = ..\sdk\lib
+RELDBG = 
 !ENDIF
 
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
 RELFLAGS = -release -O -inline -noboundscheck
 # -gs -defaultlib=druntime_d,phobos_d
-RELDBG = -g
 
 LIBS = phobos.lib "$(LIB)\comctl32.lib" uuid.lib advapi32.lib comdlg32.lib \
 	ole32.lib "$(LIB)\oleaut32.lib" user32.lib shell32.lib gdi32.lib

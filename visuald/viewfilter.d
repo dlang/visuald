@@ -522,7 +522,7 @@ version(tip)
 
 		scope(exit) release(cfg);
 
-		string stool = cfg.GetStaticCompileTool(pFile);
+		string stool = cfg.GetStaticCompileTool(pFile, cfg.getCfgName());
 		if(stool == "DMD")
 			stool = "DMDsingle";
 		if(stool == "DMDsingle")

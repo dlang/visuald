@@ -77,6 +77,37 @@ extern extern(C) __gshared ModuleInfo D4core3sys7windows10stacktrace12__ModuleIn
 void disableStacktrace()
 {
 	ModuleInfo* info = &D4core3sys7windows10stacktrace12__ModuleInfoZ;
+static if(__traits(compiles,info.isNew))
+{
+	// dmd 2.063
+	if (info.isNew)
+	{
+		enum
+		{
+			MItlsctor    = 8,
+			MItlsdtor    = 0x10,
+			MIctor       = 0x20,
+			MIdtor       = 0x40,
+			MIxgetMembers = 0x80,
+		}
+		if (info.n.flags & MIctor)
+		{
+			size_t off = info.New.sizeof;
+			if (info.n.flags & MItlsctor)
+				off += info.o.tlsctor.sizeof;
+			if (info.n.flags & MItlsdtor)
+				off += info.o.tlsdtor.sizeof;
+			if (info.n.flags & MIxgetMembers)
+				off += info.o.xgetMembers.sizeof;
+			*cast(typeof(info.o.ctor)*)(cast(void*)info + off) = null;
+		}
+	}
+	else
+		info.o.ctor = null;
+}
+else 
+{
+	// dmd 2.064alpha
 	enum
 	{
 		MItlsctor    = 8,
@@ -96,6 +127,7 @@ void disableStacktrace()
 			off += info.xgetMembers.sizeof;
 		*cast(typeof(info.ctor)*)(cast(void*)info + off) = null;
 	}
+}
 }
 
 void clearStack()

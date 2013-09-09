@@ -569,3 +569,5 @@ unreleased Version 0.3.37
   * added command "Open Folder in Windows Explorer" to project and folder context menu
   * goto definition now falls back to JSON information if semantic analysis yields no result
   * fixed building with -op and source files on different drive than project
+  * added file options per configuration
+  * fixed invoking bad command when no files to compile, but additional arguments set

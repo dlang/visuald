@@ -1676,7 +1676,22 @@ class Config :	DisposingComObject,
 	override int GetPages( /* [out] */ CAUUID *pPages)
 	{
 		mixin(LogCallMix);
-		return PropertyPageFactory.GetProjectPages(pPages);
+		CHierNode[] nodes;
+		CFileNode file;
+		CProjectNode proj;
+		if(GetProject().GetSelectedNodes(nodes) == S_OK)
+		{
+			foreach(n; nodes)
+			{
+				if(!file)
+					file = cast(CFileNode) n;
+				if(!proj)
+					proj = cast(CProjectNode) n;
+			}
+		}
+		if (!proj)
+			return PropertyPageFactory.GetFilePages(pPages);
+		return PropertyPageFactory.GetProjectPages(pPages, false);
 	}
 
 	// IVsCfg
@@ -1684,7 +1699,7 @@ class Config :	DisposingComObject,
 	{
 		logCall("%s.get_DisplayName(pbstrDisplayName=%s)", this, _toLog(pbstrDisplayName));
 
-		*pbstrDisplayName = allocBSTR(mName ~ "|" ~ mPlatform);
+		*pbstrDisplayName = allocBSTR(getCfgName());
 		return S_OK;
 	}
     
@@ -2150,7 +2165,7 @@ class Config :	DisposingComObject,
 		if(tool == "Custom" || tool == kToolResourceCompiler)
 		{
 			string outfile = GetOutputFile(file);
-			string dep = file.GetDependencies();
+			string dep = file.GetDependencies(getCfgName());
 			dep = mProjectOptions.replaceEnvironment(dep, this, file.GetFilename(), outfile);
 			string[] deps = tokenizeArgs(dep);
 			deps ~= file.GetFilename();
@@ -2210,16 +2225,16 @@ class Config :	DisposingComObject,
 
 	static bool IsResource(CFileNode file)
 	{
-		string tool = file.GetTool();
+		string tool = file.GetTool(null);
 		if(tool == "")
 			if(toLower(extension(file.GetFilename())) == ".rc")
 				return true;
 		return tool == kToolResourceCompiler;
 	}
 	
-	static string GetStaticCompileTool(CFileNode file)
+	static string GetStaticCompileTool(CFileNode file, string cfgname)
 	{
-		string tool = file.GetTool();
+		string tool = file.GetTool(cfgname);
 		if(tool == "")
 		{
 			string fname = file.GetFilename();
@@ -2234,7 +2249,7 @@ class Config :	DisposingComObject,
 	
 	string GetCompileTool(CFileNode file)
 	{
-		string tool = file.GetTool();
+		string tool = file.GetTool(getCfgName());
 		if(tool == "")
 		{
 			string fname = file.GetFilename();
@@ -2263,7 +2278,7 @@ class Config :	DisposingComObject,
 		if(tool == kToolResourceCompiler)
 			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename()), "_") ~ ".res";
 		if(tool == "Custom")
-			fname = file.GetOutFile();
+			fname = file.GetOutFile(getCfgName());
 		if(fname.length)
 			fname = mProjectOptions.replaceEnvironment(fname, this, file.GetFilename());
 		return fname;
@@ -2379,7 +2394,7 @@ class Config :	DisposingComObject,
 		}
 		if(tool == "Custom")
 		{
-			cmd = file.GetCustomCmd();
+			cmd = file.GetCustomCmd(getCfgName());
 		}
 		if(tool == "DMDsingle")
 		{
@@ -2606,7 +2621,7 @@ class Config :	DisposingComObject,
 				{
 					string fname = GetOutputFile(file);
 					if(fname.length)
-						if(file.GetTool() != "Custom" || file.GetLinkOutput())
+						if(file.GetTool(getCfgName()) != "Custom" || file.GetLinkOutput(getCfgName()))
 							files ~= fname;
 				}
 				return false;
@@ -2657,7 +2672,7 @@ class Config :	DisposingComObject,
 				opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
 		}
 		string addopt;
-		if(mProjectOptions.additionalOptions.length)
+		if(mProjectOptions.additionalOptions.length && fcmd.length)
 			addopt = " " ~ mProjectOptions.additionalOptions;
 		string cmd = precmd ~ opt ~ fcmd ~ addopt ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
@@ -2939,6 +2954,7 @@ class Config :	DisposingComObject,
 
 	string getName() { return mName; }
 	string getPlatform() { return mPlatform; }
+	string getCfgName() { return mName ~ "|" ~ mPlatform; }
 
 private:
 	string mName;
