@@ -59,6 +59,7 @@
   !define VS2008_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\9.0
   !define VS2010_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\10.0
   !define VS2012_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\11.0
+  !define VS2013_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\12.0
 !ifdef EXPRESS
   !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
   !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
@@ -290,6 +291,21 @@ ${MementoSection} "Register with VS 2012" SecVS2012
   
 ${MementoSectionEnd}
 
+;--------------------------------
+${MementoSection} "Register with VS 2013" SecVS2013
+
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2013_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ${RegisterWin32Exception} ${VS2013_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2013_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+  
+${MementoSectionEnd}
+
 !ifdef EXPRESS
 ;--------------------------------
 ${MementoUnselectedSection} "Register with VC-Express 2008" SecVCExpress2008
@@ -348,6 +364,10 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   Push ${VS2012_REGISTRY_KEY}
   Call PatchAutoExp
   
+  Push ${SecVS2013}
+  Push ${VS2013_REGISTRY_KEY}
+  Call PatchAutoExp
+  
 ${MementoSectionEnd}
 !endif
 
@@ -385,6 +405,10 @@ ${MementoSection} "mago" SecMago
   Push ${VS2012_REGISTRY_KEY}
   Call RegisterMago
   
+  Push ${SecVS2013}
+  Push ${VS2013_REGISTRY_KEY}
+  Call RegisterMago
+  
 ${MementoSectionEnd}
 !endif
 
@@ -418,6 +442,7 @@ SectionEnd
   LangString DESC_SecVS2008 ${LANG_ENGLISH} "Register for usage in Visual Studio 2008."
   LangString DESC_SecVS2010 ${LANG_ENGLISH} "Register for usage in Visual Studio 2010."
   LangString DESC_SecVS2012 ${LANG_ENGLISH} "Register for usage in Visual Studio 2012."
+  LangString DESC_SecVS2013 ${LANG_ENGLISH} "Register for usage in Visual Studio 2013."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -443,6 +468,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2008} $(DESC_SecVS2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2010} $(DESC_SecVS2010)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2012} $(DESC_SecVS2012)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2013} $(DESC_SecVS2013)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
@@ -469,11 +495,19 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2010_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2012_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2013_REGISTRY_KEY}'
 !ifdef EXPRESS
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
+  IfErrors NoVS2013pkgdef
+    RMDir /r '$1${EXTENSION_DIR}'
+    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2013pkgdef:
+  
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2012pkgdef
     RMDir /r '$1${EXTENSION_DIR}'
@@ -503,6 +537,9 @@ Section "Uninstall"
 
   Push ${VS2012_REGISTRY_KEY}
   Call un.PatchAutoExp
+
+  Push ${VS2013_REGISTRY_KEY}
+  Call un.PatchAutoExp
 !endif
 
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
@@ -510,6 +547,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
 
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
@@ -519,18 +557,21 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
 
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
 
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\InstalledProducts\Mago"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\InstalledProducts\Mago"
 !endif
   
   Call un.RegisterVDServer
@@ -596,6 +637,13 @@ Function .onInit
   IfErrors 0 Installed_VS2012
     SectionSetFlags ${SecVS2012} ${SF_RO}
   Installed_VS2012:
+
+  ; detect VS2013
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
+  IfErrors 0 Installed_VS2013
+    SectionSetFlags ${SecVS2013} ${SF_RO}
+  Installed_VS2013:
 
 !ifdef EXPRESS
   ; detect VCExpress 2008
