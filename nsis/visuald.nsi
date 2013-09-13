@@ -171,8 +171,8 @@ Section "Visual Studio package" SecPackage
   ${File} ..\bin\${CONFIG}\ vdserver.exe
   ${File} ..\bin\${CONFIG}\ pipedmd.exe
   ${File} ..\bin\${CONFIG}\ filemonitor.dll
-  ${File} ..\ README
-  ${File} ..\ LICENSE
+  ${File} ..\ README.md
+  ${File} ..\ LICENSE_1_0.txt
   ${File} ..\ CHANGES
   
   ${SetOutPath} "$INSTDIR\Templates"

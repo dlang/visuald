@@ -1,4 +1,5 @@
-<img src="/doc/images/vd_logo.png?format=raw" width="72"> Visual D
+<img src="/doc/images/vd_logo.png?format=raw" width="72">
+Visual D
 ============================================================
 
 This is the README file for Visual D, a 
@@ -78,8 +79,8 @@ Major Features
 License information
 -------------------
 
-This code is distributed under the terms of the Artistic License 2.0.
-For more details, see the full text of the license in the file LICENSE.
+This code is distributed under the terms of the Boost Software License, Version 1.0.
+For more details, see the full text of the license in the file LICENSE_1.0.txt.
 
 The installer comes with a number of additional products:
 - cv2pdb: http://dsource.org/projects/cv2pdb by Rainer Schuetze
