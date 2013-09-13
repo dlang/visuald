@@ -1,0 +1,229 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>Global Options
+ - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/visuald">Visual D</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="../images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language - Visual D</a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="Visual D" onFocus='if(this.value == "Visual D"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/visuald">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul><h2><a href="../index.html" title="D Programming Language">D</a></h2>
+	<li><a href="../download.html" title="Download a D compiler">Downloads &amp; Tools</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+    </ul>
+
+</div>
+</div>
+
+    
+<div class="navblock">
+ <h2><a href="StartPage.html" title="Visual Studio Plugin for D">Visual D</a></h2>
+ <ul>  <li><a href="VersionHistory.html" title="Latest changes">News</a></li>
+  <li><a href="Features.html" title="Visual D Features">Features</a></li>
+  <li><a href="Installation.html" title="Installation">Installation</a></li>
+  <li>
+   <h2>Tour</h2>
+   <ul>    <li><a href="GlobalOptions.html" title="Global Options">Global options</a></li>
+    <li><a href="ProjectWizard.html" title="Project Wizard to create new projects">Project Wizard</a></li>
+    <li><a href="Editor.html" title="Language support in the editor">Editor</a></li>
+    <li><a href="Search.html" title="Search symbols and files">Search Window</a></li>
+    <li><a href="TokenReplace.html" title="Token Search and Replace">Token Replace</a></li>
+    <li><a href="ProjectConfig.html" title="Setting up build settings">Project Config</a></li>
+    <li><a href="CppConversion.html" title="C++ to D Converter">C++ to D</a></li>
+    <li><a href="Debugging.html" title="Debugger support">Debugging</a></li>
+    <li><a href="Profiling.html" title="Profiler window">Profiling</a></li>
+    <li><a href="BrowseInfo.html" title="Browse information">Browse Info</a></li>
+   </ul>
+
+  </li>
+  <li><a href="KnownIssues.html" title="Installation">Known Issues</a></li>
+  <li><a href="BuildFromSource.html" title="Building from source">Building from Source</a></li>
+ </ul>
+
+</div>
+
+
+<div class="navblock">
+<h2>Community</h2>
+<ul>	<li><a href="http://forum.dlang.org/" title="User forums">Forums</a></li>
+
+	<li><a href="http://github.com/D-Programming-Language" title="D on github">GitHub</a></li>
+
+	<li><a href="http://wiki.dlang.org" title="Wiki for the D Programming Language">Wiki</a></li>
+
+	<li><a href="http://wiki.dlang.org/Review_Queue" title="Queue of current and upcoming standard library additions">Review Queue</a></li>
+
+	<li><a href="http://twitter.com/#search?q=%23d_lang" title="#d_lang on twitter.com">Twitter</a></li>
+
+</ul>
+
+</div>
+
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/visuald/edit/master/GlobalOptions.dd" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/visuald" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>Global Options
+</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from GlobalOptions.dd -->
+
+
+<p>When starting Visual Studio for the first time after installation of Visual D, you might 
+want to check the global settings that can be reached from the Menu Tools -&gt; Options -&gt; Projects:
+</p>
+
+<div align="center"><img src="images/visuald_settings.png" /></div>
+
+
+<br />
+<p>The <b>Visual D Settings</b> will allow you to enable and disable</p>
+<ul> <li>showing the build time for each project in the output window</li>
+ <li>sorting the projects alphabetically</li>
+ <li>stop building the solution as soon as a project fails to compile</li>
+ <li>showing demangled names in the error list and linker output</li>
+ <li>monitor the linker for additional library dependencies</li>
+ <li>JSON paths: Directories to search for *.json files to find symbol definitions.</li>
+ <li>Resource includes: include paths to pass to the resource compiler when building resource files.</li>
+ <li>additional command line options for the "Compile and Run" command</li>
+</ul>
+
+
+<p>For each supported compiler, there is a separate page to setup directories to be used during compilation:</p>
+
+<div align="center"><img src="images/dmd_directories.png" /></div>
+
+
+<br />
+<ul> <li>Install path: The path to the compiler installation folder you entered within the installer.
+  <ul>
+   <li>DMD: this is not the path to the executable dmd.exe, but the folder that contains the full installation so 
+        that the compiler is found as <DMD install path>\windows\bin\dmd.exe </li>
+   <li>GDC: this is not the path to the executable gdc.exe, but the folder that contains the full installation so 
+        that the compiler is found as <DMD install path>\bin\gdc.exe </li>
+   <li>LDC: this is not the path to the executable ldc.exe, but the folder that contains the full installation so 
+    that the compiler is found as <DMD install path>\bin\ldc2.exe </li>
+  </ul>
+
+ </li>
+ <li>Executable paths: Directories to be added to the PATH environment variable before executing build commands.</li>
+ <li>Import paths: Directories to be added to the import paths specified in the project configuration and in the
+      DMD configuration file (also used for import statement completion and finding symbol definition).</li>
+ <li>Library paths: Directories to be added to the LIB environment variable before executing build commands.</li>
+</ul>
+
+
+<p>Available text replacements: </p>
+<ul> <li>$(DMDINSTALLDIR): DMD Install path from the "DMD directories page" </li>
+ <li>$(DMDINSTALLDIR): GDC Install path from the "GDC directories page" </li>
+ <li>$(DMDINSTALLDIR): LDC Install path from the "LDC directories page" </li>
+ <li>$(WINDOWSSDKDIR): Windows SDK Directory </li>
+ <li>$(DEVENVDIR): Directory of Visual Studio executable devenv.exe </li>
+ <li>$(VSINSTALLDIR): Root directory of Visual Studio installation </li>
+ <li>$(VISUALDINSTALLDIR): Installation folder of Visual D </li>
+ <li>any variable from the system environment enclosed in $() </li>
+</ul>
+
+
+<p>Please note that you'll also find a new entry "D" in the Text Editor branch to setup 
+[wiki:Tour/Editor syntax highlighting] and more. </p>
+
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright &copy; 1999-2013 by Digital Mars, All Rights Reserved
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+
