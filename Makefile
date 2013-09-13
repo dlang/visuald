@@ -11,10 +11,10 @@
 
 ##############################################################
 # update the following variables to match the installation 
-# paths on your system
+# paths on your system or pass on the command line to nmake
 
+DMD2 = dmd
 # DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
-DMD2 = c:\l\dmd2.063\windows\bin\dmd.exe
 # DMD2 = c:\l\dmd2beta\windows\bin\dmd.exe
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 

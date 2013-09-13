@@ -54,7 +54,9 @@
   !define MEMENTO_REGISTRY_KEY    ${UNINSTALL_REGISTRY_KEY}
   
   !define VS_REGISTRY_ROOT        HKLM
+!ifdef VS_NET
   !define VS_NET_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\7.1
+!endif
   !define VS2005_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\8.0
   !define VS2008_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\9.0
   !define VS2010_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\10.0
@@ -234,6 +236,7 @@ Section "Visual Studio package" SecPackage
  
 SectionEnd
 
+!ifdef VS_NET
 ;--------------------------------
 ${MementoSection} "Register with VS.NET" SecVS_NET
 
@@ -242,6 +245,7 @@ ${MementoSection} "Register with VS.NET" SecVS_NET
   ${RegisterWin32Exception} ${VS_NET_REGISTRY_KEY} "Win32 Exceptions\D Exception"
   
 ${MementoSectionEnd}
+!endif
 
 ;--------------------------------
 ${MementoSection} "Register with VS 2005" SecVS2005
@@ -344,9 +348,11 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   GetFullPathName /SHORT $0 $INSTDIR
   !insertmacro ReplaceInFile "$INSTDIR\cv2pdb\autoexp.expand" "dviewhelper" "$0\cv2pdb\DViewHelper" NoBackup
 
+!ifdef VS_NET
   Push ${SecVS_NET}
   Push ${VS_NET_REGISTRY_KEY}
   Call PatchAutoExp
+!endif
   
   Push ${SecVS2005}
   Push ${VS2005_REGISTRY_KEY}
@@ -385,9 +391,11 @@ ${MementoSection} "mago" SecMago
 
   ExecWait 'regsvr32 /s "$INSTDIR\Mago\MagoNatDE.dll"'
 
+!ifdef VS_NET
   Push ${SecVS_NET}
   Push ${VS_NET_REGISTRY_KEY}
   Call RegisterMago
+!endif
   
   Push ${SecVS2005}
   Push ${VS2005_REGISTRY_KEY}
@@ -437,7 +445,9 @@ SectionEnd
 
   ;Language strings
   LangString DESC_SecPackage ${LANG_ENGLISH} "The package containing the language service."
+!ifdef VS_NET
   LangString DESC_SecVS_NET ${LANG_ENGLISH} "Register for usage in Visual Studio .NET"
+!endif
   LangString DESC_SecVS2005 ${LANG_ENGLISH} "Register for usage in Visual Studio 2005."
   LangString DESC_SecVS2008 ${LANG_ENGLISH} "Register for usage in Visual Studio 2008."
   LangString DESC_SecVS2010 ${LANG_ENGLISH} "Register for usage in Visual Studio 2010."
@@ -463,7 +473,9 @@ SectionEnd
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecPackage} $(DESC_SecPackage)
+!ifdef VS_NET
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS_NET} $(DESC_SecVS_NET)
+!endif
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2005} $(DESC_SecVS2005)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2008} $(DESC_SecVS2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2010} $(DESC_SecVS2010)
@@ -490,7 +502,9 @@ SectionEnd
 
 Section "Uninstall"
 
+!ifdef VS_NET
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS_NET_REGISTRY_KEY}'
+!endif
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2005_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2010_REGISTRY_KEY}'
@@ -523,8 +537,10 @@ Section "Uninstall"
   NoVS2010pkgdef:
 
 !ifdef CV2PDB
+!ifdef VS_NET
   Push ${VS_NET_REGISTRY_KEY}
   Call un.PatchAutoExp
+!endif
   
   Push ${VS2005_REGISTRY_KEY}
   Call un.PatchAutoExp
@@ -542,7 +558,9 @@ Section "Uninstall"
   Call un.PatchAutoExp
 !endif
 
+!ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+!endif
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
@@ -552,21 +570,27 @@ Section "Uninstall"
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
   
+!ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+!endif
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
 
+!ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+!endif
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
 
+!ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\InstalledProducts\Mago"
+!endif
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\InstalledProducts\Mago"
@@ -603,12 +627,14 @@ Function .onInit
 
   ${MementoSectionRestore}
 
+!ifdef VS_NET
   ; detect VS.NET
   ClearErrors
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS_NET
     SectionSetFlags ${SecVS_NET} ${SF_RO}
   Installed_VS_NET:
+!endif
   
   ; detect VS2005
   ClearErrors
@@ -671,6 +697,9 @@ Function DMDInstallPage
   !insertmacro MUI_HEADER_TEXT "DMD Installation Folder" "Specify the directory where DMD is installed"
 
   ReadRegStr $DMDInstallDir HKLM "Software\${APPNAME}" "DMDInstallDir" 
+  IfErrors 0 NoDMDInstallDir
+    ReadRegStr $DMDInstallDir HKLM "SOFTWARE\D" "Install_Dir" 
+  NoDMDInstallDir:
   
   WriteINIStr "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State" $DMDInstallDir
   !insertmacro INSTALLOPTIONS_DISPLAY "dmdinstall.ini"
