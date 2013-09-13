@@ -1,4 +1,4 @@
-![Visual D Logo](http://www.dsource.org/projects/visuald/browser/wiki/vd_logo.png?format=raw) Visual D
+<img src="/doc/images/vd_logo.png?format=raw" width="72"> Visual D
 ============================================================
 
 This is the README file for Visual D, a 
