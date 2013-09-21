@@ -5,7 +5,7 @@ $(H2 Visual Studio Debugger)
 $(P Thanks to $(LINK2 http://www.dsource.org/projects/cv2pdb, cv2pdb), debugging in Visual Studio integrates well.
 Here is an example debugging session)
 
-	$(IMG_CENTER images/debug.png, 90%)
+	<div align="center"><img src="images/debug.png" width="90%"/></div>
 
 $(P Using cv2pdb has a few quirks, like displaying '@' instead of '.'. This is happening because the C++ debugger 
 that comes with Visual Studio is used and it is confused if there is a '.' in a symbol name.)
@@ -39,6 +39,13 @@ simply enable the "D Exceptions" entry, but must select the specific exceptions 
 "D Exceptions" entry unchecked. So, the dialog should look something like this:)
 
 $(IMG_CENTER images/d_exceptions.png)
+
+$(H2 Visual Studio 2012)
+
+Visual Studio 2012 introduced a new debug engine that loses some of the capabilities of the
+preceding debug engine. This includes displaying variables in the Watch Window. You
+can switch back to the old debug engine by going to Tools->Options and then under the debugger 
+settings, turn on native edit and continue. This will also reenable the visualizer macros in autoexp.dat.
 
 Macros:
 	TITLE=Debugging
