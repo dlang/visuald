@@ -1,0 +1,1195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.traits - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+function listanchors()
+{
+    if (typeof inhibitQuickIndex !== 'undefined') return;
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        // ignore anchors from DDOC_PSYMBOL
+        if (text[0] != '.') continue;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+        values[n++] = a.name
+    }
+
+    // we won't display the qualifying names to save space, so sort by last name
+    var lastName = function(a){
+        var li = a.lastIndexOf('.');
+        return a.slice(li + 1);
+    }
+    values.sort(function(a,b){return lastName(a) > lastName(b)});
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        var text = lastName(a);
+        newText += ' \x3Ca href="\x23' + a +
+            '"\x3E\x3Cspan class="d_psymbol"\x3E' + text + '\x3C/span\x3E\x3C/a\x3E';
+    }
+    if (newText != "") newText = "\x3Cp\x3E\x3Cb\x3EJump to:\x3C/b\x3E" + newText + "\x3C/p\x3E";
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+jQuery(document).ready(listanchors);
+</script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/phobos">Library Reference</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="/images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language </a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/phobos">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+	<li><a href="../phobos-prerelease/index.html" title="D Runtime Library (prerelease)">Phobos (prerelease)</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="index.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_ascii.html" title="Functions which operate on ASCII characters">std.ascii</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_csv.html" title="CSV file parser">std.csv</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_parallelism.html" title="High-level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_process.html" title="Create/destroy processes">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_uuid.html" title="Generate and use UUIDs">std.uuid</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_net_curl.html" title="High level curl wrapper">std.net.curl</a></li>
+	<li><a href="std_net_isemail.html" title="Validate e-mail addresses">std.net.isemail</a></li>
+	<li><a href="std_digest_crc.html" title="CRC digest functions">std.digest.crc</a></li>
+	<li><a href="std_digest_digest.html" title="API for digest functions">std.digest.digest</a></li>
+	<li><a href="std_digest_md.html" title="MD digest functions">std.digest.md</a></li>
+	<li><a href="std_digest_ripemd.html" title="RIPEMD digest functions">std.digest.ripemd</a></li>
+	<li><a href="std_digest_sha.html" title="SHA digest functions">std.digest.sha</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+    </ul>
+    <h2><a href="index.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_sqlite3.html" title="Interface to sqlite3 library">etc.c.sqlite3</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="index.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_demangle.html" title="D symbol mangling">core.demangle</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_simd.html" title="Builtin SIMD intrinsics">core.simd</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_time.html" title="Core time functionality">core.time</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/phobos/edit/master/std\traits.d" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/Phobos/StdTraits" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>std.traits</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\traits.d -->
+Templates with which to extract information about types and symbols at
+ compile time.
+<p></p>
+<b>License:</b><br><a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+<p></p>
+<b>Authors:</b><br><a href="http://digitalmars.com">Walter Bright</a>,
+            Tomasz Stachowiak (<span class="d_inlinecode">isExpressionTuple</span>),
+            <a href="http://erdani.org">Andrei Alexandrescu</a>,
+            Shin Fujishiro,
+            <a href="http://octarineparrot.com">Robert Clipsham</a>,
+            <a href="http://klickverbot.at">David Nadlinger</a>,
+            Kenji Hara,
+            Shoichi Kato
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/traits.d">std/traits.d</a><p></p>
+
+<dl><dt class="d_decl"><a name=".packageName"></a>template <a name="packageName"></a><span class="ddoc_psymbol">packageName</span>(alias T)</dt>
+<dd>Get the full package name for the given symbol.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">packageName</span>!<span class="d_psymbol">packageName</span> == <span class="d_string">"std"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".moduleName"></a>template <a name="moduleName"></a><span class="ddoc_psymbol">moduleName</span>(alias T)</dt>
+<dd>Get the module name (including package) for the given symbol.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">moduleName</span>!<span class="d_psymbol">moduleName</span> == <span class="d_string">"std.traits"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".fullyQualifiedName"></a>template <a name="fullyQualifiedName"></a><span class="ddoc_psymbol">fullyQualifiedName</span>(T...) if (T.length == 1)</dt>
+<dd>Get the fully qualified name of a type or a symbol. Can act as an intelligent type/symbol to string  converter.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">module</span> mymodule;
+<span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">struct</span> MyStruct {}
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">fullyQualifiedName</span>!(<span class="d_keyword">const</span> MyStruct[]) == <span class="d_string">"const(mymodule.MyStruct[])"</span>);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">fullyQualifiedName</span>!<span class="d_psymbol">fullyQualifiedName</span> == <span class="d_string">"std.traits.fullyQualifiedName"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ReturnType"></a>template <a name="ReturnType"></a><span class="ddoc_psymbol">ReturnType</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Get the type of the return value from a function,
+ a pointer to function, a delegate, a struct
+ with an opCall, a pointer to a struct with an opCall,
+ or a class with an <span class="d_inlinecode">opCall</span>. Please note that <span class="d_keyword">ref</span>
+ is not part of a type, but the attribute of the function
+ (see template <a href="#functionAttributes"><span class="d_inlinecode">functionAttributes</span></a>).
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">int</span> foo();
+<span class="d_psymbol">ReturnType</span>!foo x;   <span class="d_comment">// x is declared as int
+</span></pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ParameterTypeTuple"></a>template <a name="ParameterTypeTuple"></a><span class="ddoc_psymbol">ParameterTypeTuple</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Get, as a tuple, the types of the parameters to a function, a pointer
+to function, a delegate, a struct with an <span class="d_inlinecode">opCall</span>, a pointer to a
+struct with an <span class="d_inlinecode">opCall</span>, or a class with an <span class="d_inlinecode">opCall</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">int</span> foo(<span class="d_keyword">int</span>, <span class="d_keyword">long</span>);
+<span class="d_keyword">void</span> bar(<span class="d_psymbol">ParameterTypeTuple</span>!foo);      <span class="d_comment">// declares void bar(int, long);
+</span><span class="d_keyword">void</span> abc(<span class="d_psymbol">ParameterTypeTuple</span>!foo[1]);   <span class="d_comment">// declares void abc(long);
+</span></pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".arity"></a>template <a name="arity"></a><span class="ddoc_psymbol">arity</span>(alias func) if (isCallable!func &amp;&amp; variadicFunctionStyle!func == Variadic.no)</dt>
+<dd>Returns the number of arguments of function <span class="d_inlinecode">func</span>.
+<a name="arity"></a><span class="ddoc_psymbol">arity</span> is undefined for variadic functions.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">void</span> foo(){}
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">arity</span>!foo==0);
+<span class="d_keyword">void</span> bar(<span class="d_keyword">uint</span>){}
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">arity</span>!bar==1);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ParameterStorageClass"></a>enum <a name="ParameterStorageClass"></a><span class="ddoc_psymbol">ParameterStorageClass</span>: uint;
+<br><a name=".ParameterStorageClassTuple"></a>template <a name="ParameterStorageClassTuple"></a><span class="ddoc_psymbol">ParameterStorageClassTuple</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Returns a tuple consisting of the storage classes of the parameters of a
+function <span class="d_inlinecode">func</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">alias</span> <span class="d_psymbol">ParameterStorageClass</span> STC; <span class="d_comment">// shorten the enum name
+</span>
+<span class="d_keyword">void</span> func(<span class="d_keyword">ref</span> <span class="d_keyword">int</span> ctx, <span class="d_keyword">out</span> <span class="d_keyword">real</span> result, <span class="d_keyword">real</span> param)
+{
+}
+<span class="d_keyword">alias</span> ParameterStorageClassTuple!func pstc;
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(pstc.length == 3); <span class="d_comment">// three parameters
+</span><span class="d_keyword">static</span> <span class="d_keyword">assert</span>(pstc[0] == STC.ref_);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(pstc[1] == STC.out_);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(pstc[2] == STC.none);
+</pre>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".ParameterStorageClass.none"></a><a name="none"></a><span class="ddoc_psymbol">none</span><br><a name=".ParameterStorageClass.scope_"></a><a name="scope_"></a><span class="ddoc_psymbol">scope_</span><br><a name=".ParameterStorageClass.out_"></a><a name="out_"></a><span class="ddoc_psymbol">out_</span><br><a name=".ParameterStorageClass.ref_"></a><a name="ref_"></a><span class="ddoc_psymbol">ref_</span><br><a name=".ParameterStorageClass.lazy_"></a><a name="lazy_"></a><span class="ddoc_psymbol">lazy_</span></dt>
+<dd>These flags can be bitwise OR-ed together to represent complex storage
+ class.
+     
+ ditto<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".ParameterIdentifierTuple"></a>template <a name="ParameterIdentifierTuple"></a><span class="ddoc_psymbol">ParameterIdentifierTuple</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Get, as a tuple, the identifiers of the parameters to a function symbol.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">int</span> foo(<span class="d_keyword">int</span> num, string name);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>([<span class="d_psymbol">ParameterIdentifierTuple</span>!foo] == [<span class="d_string">"num"</span>, <span class="d_string">"name"</span>]);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ParameterDefaultValueTuple"></a>template <a name="ParameterDefaultValueTuple"></a><span class="ddoc_psymbol">ParameterDefaultValueTuple</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Get, as a tuple, the default value of the parameters to a function symbol.
+If a parameter doesn't have the default value, <span class="d_inlinecode">void</span> is returned instead.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">int</span> foo(<span class="d_keyword">int</span> num, string name = <span class="d_string">"hello"</span>, <span class="d_keyword">int</span>[] arr = [1,2,3]);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">ParameterDefaultValueTuple</span>!foo[0] == <span class="d_keyword">void</span>));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(   <span class="d_psymbol">ParameterDefaultValueTuple</span>!foo[1] == <span class="d_string">"hello"</span>);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(   <span class="d_psymbol">ParameterDefaultValueTuple</span>!foo[2] == [1,2,3]);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FunctionAttribute"></a>enum <a name="FunctionAttribute"></a><span class="ddoc_psymbol">FunctionAttribute</span>: uint;
+<br><a name=".functionAttributes"></a>template <a name="functionAttributes"></a><span class="ddoc_psymbol">functionAttributes</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Returns the attributes attached to a function <span class="d_inlinecode">func</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">alias</span> <span class="d_psymbol">FunctionAttribute</span> FA; <span class="d_comment">// shorten the enum name
+</span>
+<span class="d_keyword">real</span> func(<span class="d_keyword">real</span> x) <span class="d_keyword">pure</span> <span class="d_keyword">nothrow</span> @safe
+{
+    <span class="d_keyword">return</span> x;
+}
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(functionAttributes!func &amp; FA.pure_);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(functionAttributes!func &amp; FA.safe);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!(functionAttributes!func &amp; FA.trusted)); <span class="d_comment">// not @trusted
+</span></pre>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".FunctionAttribute.none"></a><a name="none"></a><span class="ddoc_psymbol">none</span><br><a name=".FunctionAttribute.pure_"></a><a name="pure_"></a><span class="ddoc_psymbol">pure_</span><br><a name=".FunctionAttribute.nothrow_"></a><a name="nothrow_"></a><span class="ddoc_psymbol">nothrow_</span><br><a name=".FunctionAttribute.ref_"></a><a name="ref_"></a><span class="ddoc_psymbol">ref_</span><br><a name=".FunctionAttribute.property"></a><a name="property"></a><span class="ddoc_psymbol">property</span><br><a name=".FunctionAttribute.trusted"></a><a name="trusted"></a><span class="ddoc_psymbol">trusted</span><br><a name=".FunctionAttribute.safe"></a><a name="safe"></a><span class="ddoc_psymbol">safe</span></dt>
+<dd>These flags can be bitwise OR-ed together to represent complex attribute.
+     
+ ditto<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".isSafe"></a>template <a name="isSafe"></a><span class="ddoc_psymbol">isSafe</span>(alias func) if (isCallable!func)</dt>
+<dd><span class="d_inlinecode"><b>true</b></span> if <span class="d_inlinecode">func</span> is <span class="d_inlinecode">@safe</span> or <span class="d_inlinecode">@trusted</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">@safe    <span class="d_keyword">int</span> add(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a+b;}
+@trusted <span class="d_keyword">int</span> sub(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a-b;}
+@system  <span class="d_keyword">int</span> mul(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a*b;}
+
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>( <span class="d_psymbol">isSafe</span>!add);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>( <span class="d_psymbol">isSafe</span>!sub);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_psymbol">isSafe</span>!mul);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isUnsafe"></a>template <a name="isUnsafe"></a><span class="ddoc_psymbol">isUnsafe</span>(alias func)</dt>
+<dd><span class="d_inlinecode"><b>true</b></span> if <span class="d_inlinecode">func</span> is <span class="d_inlinecode">@system</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">@safe    <span class="d_keyword">int</span> add(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a+b;}
+@trusted <span class="d_keyword">int</span> sub(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a-b;}
+@system  <span class="d_keyword">int</span> mul(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a*b;}
+
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_psymbol">isUnsafe</span>!add);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_psymbol">isUnsafe</span>!sub);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>( <span class="d_psymbol">isUnsafe</span>!mul);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".areAllSafe"></a>template <a name="areAllSafe"></a><span class="ddoc_psymbol">areAllSafe</span>(funcs...) if (funcs.length &gt; 0)</dt>
+<dd><span style="color:red">Scheduled for deprecation in January 2013. It's badly named and provides
+redundant functionality. It was also badly broken prior to 2.060 (bug# 8362), so
+any code which uses it probably needs to be changed anyway. Please use
+<span class="d_inlinecode">allSatisfy(isSafe, ...)</span> instead.</span>
+<p></p>
+<span class="d_inlinecode"><b>true</b></span> all functions are <span class="d_inlinecode">isSafe</span>.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">@safe    <span class="d_keyword">int</span> add(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a+b;}
+@trusted <span class="d_keyword">int</span> sub(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a-b;}
+@system  <span class="d_keyword">int</span> mul(<span class="d_keyword">int</span> a, <span class="d_keyword">int</span> b) {<span class="d_keyword">return</span> a*b;}
+
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>( <span class="d_psymbol">areAllSafe</span>!(add, add));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>( <span class="d_psymbol">areAllSafe</span>!(add, sub));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_psymbol">areAllSafe</span>!(sub, mul));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".functionLinkage"></a>template <a name="functionLinkage"></a><span class="ddoc_psymbol">functionLinkage</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Returns the calling convention of function as a string.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">string a = <span class="d_psymbol">functionLinkage</span>!(writeln!(string, <span class="d_keyword">int</span>));
+<span class="d_keyword">assert</span>(a == <span class="d_string">"D"</span>); <span class="d_comment">// extern(D)
+</span>
+<span class="d_keyword">auto</span> fp = &amp;printf;
+string b = <span class="d_psymbol">functionLinkage</span>!fp;
+<span class="d_keyword">assert</span>(b == <span class="d_string">"C"</span>); <span class="d_comment">// extern(C)
+</span></pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Variadic"></a>enum <a name="Variadic"></a><span class="ddoc_psymbol">Variadic</span>: int;
+<br><a name=".variadicFunctionStyle"></a>template <a name="variadicFunctionStyle"></a><span class="ddoc_psymbol">variadicFunctionStyle</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Determines what kind of variadic parameters function has.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">void</span> func() {}
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(variadicFunctionStyle!func == <span class="d_psymbol">Variadic</span>.no);
+
+<span class="d_keyword">extern</span>(C) <span class="d_keyword">int</span> printf(<span class="d_keyword">in</span> <span class="d_keyword">char</span>*, ...);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(variadicFunctionStyle!printf == <span class="d_psymbol">Variadic</span>.c);
+</pre>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".Variadic.no"></a><a name="no"></a><span class="ddoc_psymbol">no</span></dt>
+<dd>Function is not variadic.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Variadic.c"></a><a name="c"></a><span class="ddoc_psymbol">c</span></dt>
+<dd>Function is a C-style variadic function.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Variadic.d"></a><a name="d"></a><span class="ddoc_psymbol">d</span></dt>
+<dd>Function is a D-style variadic function, which uses
+ _argptr and _arguments.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Variadic.typesafe"></a><a name="typesafe"></a><span class="ddoc_psymbol">typesafe</span></dt>
+<dd>Function is a <a name="typesafe"></a><span class="ddoc_psymbol">typesafe</span> variadic function.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".FunctionTypeOf"></a>template <a name="FunctionTypeOf"></a><span class="ddoc_psymbol">FunctionTypeOf</span>(func...) if (func.length == 1 &amp;&amp; isCallable!func)</dt>
+<dd>Get the function type from a callable object <span class="d_inlinecode">func</span>.
+<p></p>
+Using builtin <span class="d_inlinecode">typeof</span> on a property function yields the types of the
+property value, not of the property function itself.  Still,
+<span class="d_inlinecode"><a name="FunctionTypeOf"></a><span class="ddoc_psymbol">FunctionTypeOf</span></span> is able to obtain function types of properties.
+<pre class="d_code"><span class="d_keyword">class</span> C
+{
+    <span class="d_keyword">int</span> value() @property;
+}
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>( <span class="d_keyword">typeof</span>(C.value) == <span class="d_keyword">int</span> ));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>( <span class="d_psymbol">FunctionTypeOf</span>!(C.value) == <span class="d_keyword">function</span> ));
+</pre>
+
+<p></p>
+<b>Note:</b><br>
+Do not confuse function types with function pointer types; function types are
+usually used for compile-time reflection purposes.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SetFunctionAttributes"></a>template <a name="SetFunctionAttributes"></a><span class="ddoc_psymbol">SetFunctionAttributes</span>(T, string linkage, uint attrs) if (isFunctionPointer!T || isDelegate!T)<br><a name=".SetFunctionAttributes"></a>template <a name="SetFunctionAttributes"></a><span class="ddoc_psymbol">SetFunctionAttributes</span>(T, string linkage, uint attrs) if (is(T == function))</dt>
+<dd>Constructs a new function or delegate type with the same basic signature
+ as the given one, but different attributes (including linkage).
+<p></p>
+This is especially useful for adding/removing attributes to/from types in
+ generic code, where the actual type name cannot be spelt out.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>T</td>
+<td valign=top>The base type.</td></tr>
+<tr><td valign=top>linkage</td>
+<td valign=top>The desired linkage of the result type.</td></tr>
+<tr><td valign=top>attrs</td>
+<td valign=top>The desired <a href="#FunctionAttribute"><span class="d_inlinecode">FunctionAttribute</span></a>s of the result type.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">template</span> ExternC(T)
+    <span class="d_keyword">if</span> (isFunctionPointer!T || isDelegate!T || <span class="d_keyword">is</span>(T == <span class="d_keyword">function</span>))
+{
+    <span class="d_keyword">alias</span> <span class="d_psymbol">SetFunctionAttributes</span>!(T, <span class="d_string">"C"</span>, functionAttributes!T) ExternC;
+}
+</pre>
+<p></p>
+
+<pre class="d_code"><span class="d_keyword">auto</span> assumePure(T)(T t)
+    <span class="d_keyword">if</span> (isFunctionPointer!T || isDelegate!T)
+{
+    <span class="d_keyword">enum</span> attrs = functionAttributes!T | FunctionAttribute.pure_;
+    <span class="d_keyword">return</span> <span class="d_keyword">cast</span>(<span class="d_psymbol">SetFunctionAttributes</span>!(T, functionLinkage!T, attrs)) t;
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isNested"></a>template <a name="isNested"></a><span class="ddoc_psymbol">isNested</span>(T) if (is(T == class) || is(T == struct) || is(T == union))</dt>
+<dd>Determines whether <span class="d_inlinecode">T</span> has its own context pointer.
+<span class="d_inlinecode">T</span> must be either <span class="d_inlinecode">class</span>, <span class="d_inlinecode">struct</span>, or <span class="d_inlinecode">union</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".hasNested"></a>template <a name="hasNested"></a><span class="ddoc_psymbol">hasNested</span>(T)</dt>
+<dd>Determines whether <span class="d_inlinecode">T</span> or any of its representation types
+have a context pointer.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FieldTypeTuple"></a>template <a name="FieldTypeTuple"></a><span class="ddoc_psymbol">FieldTypeTuple</span>(T)</dt>
+<dd>Get as a typetuple the types of the fields of a struct, class, or union.
+ This consists of the fields that take up memory space,
+ excluding the hidden fields like the virtual function
+ table pointer or a context pointer for nested types.
+ If <span class="d_inlinecode">T</span> isn't a struct, class, or union returns typetuple
+ with one element <span class="d_inlinecode">T</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".RepresentationTypeTuple"></a>template <a name="RepresentationTypeTuple"></a><span class="ddoc_psymbol">RepresentationTypeTuple</span>(T)</dt>
+<dd>Get the primitive types of the fields of a struct or class, in
+topological order.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">struct</span> S1 { <span class="d_keyword">int</span> a; <span class="d_keyword">float</span> b; }
+<span class="d_keyword">struct</span> S2 { <span class="d_keyword">char</span>[] a; <span class="d_keyword">union</span> { S1 b; S1 * c; } }
+<span class="d_keyword">alias</span> <span class="d_psymbol">RepresentationTypeTuple</span>!S2 R;
+<span class="d_keyword">assert</span>(R.length == 4
+    &amp;&amp; <span class="d_keyword">is</span>(R[0] == <span class="d_keyword">char</span>[]) &amp;&amp; <span class="d_keyword">is</span>(R[1] == <span class="d_keyword">int</span>)
+    &amp;&amp; <span class="d_keyword">is</span>(R[2] == <span class="d_keyword">float</span>) &amp;&amp; <span class="d_keyword">is</span>(R[3] == S1*));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".hasAliasing"></a>template <a name="hasAliasing"></a><span class="ddoc_psymbol">hasAliasing</span>(T...)</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">T</span>'s representation includes at
+least one of the following: <ol><li>a raw pointer <span class="d_inlinecode">U*</span> and <span class="d_inlinecode">U</span>
+is not immutable;</li> <li>an array <span class="d_inlinecode">U[]</span> and <span class="d_inlinecode">U</span> is not
+immutable;</li> <li>a reference to a class or interface type <span class="d_inlinecode">C</span> and <span class="d_inlinecode">C</span> is
+not immutable.</li> <li>an associative array that is not immutable.</li>
+<li>a delegate.</li></ol><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".hasIndirections"></a>template <a name="hasIndirections"></a><span class="ddoc_psymbol">hasIndirections</span>(T)</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">T</span>'s representation includes at
+least one of the following: <ol><li>a raw pointer <span class="d_inlinecode">U*</span>;</li> <li>an
+array <span class="d_inlinecode">U[]</span>;</li> <li>a reference to a class type <span class="d_inlinecode">C</span>.</li>
+<li>an associative array.</li> <li>a delegate.</li></ol><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".hasUnsharedAliasing"></a>template <a name="hasUnsharedAliasing"></a><span class="ddoc_psymbol">hasUnsharedAliasing</span>(T...)</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">T</span>'s representation includes at
+least one of the following: <ol><li>a raw pointer <span class="d_inlinecode">U*</span> and <span class="d_inlinecode">U</span>
+is not immutable or shared;</li> <li>an array <span class="d_inlinecode">U[]</span> and <span class="d_inlinecode">U</span> is not
+immutable or shared;</li> <li>a reference to a class type <span class="d_inlinecode">C</span> and
+<span class="d_inlinecode">C</span> is not immutable or shared.</li> <li>an associative array that is not
+immutable or shared.</li> <li>a delegate that is not shared.</li></ol><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".hasElaborateCopyConstructor"></a>template <a name="hasElaborateCopyConstructor"></a><span class="ddoc_psymbol">hasElaborateCopyConstructor</span>(S)</dt>
+<dd>True if <span class="d_inlinecode">S</span> or any type embedded directly in the representation of <span class="d_inlinecode">S</span>
+ defines an elaborate copy constructor. Elaborate copy constructors are
+ introduced by defining <span class="d_inlinecode">this(this)</span> for a <span class="d_inlinecode">struct</span>.
+<p></p>
+Classes and unions never have elaborate copy constructors.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".hasElaborateAssign"></a>template <a name="hasElaborateAssign"></a><span class="ddoc_psymbol">hasElaborateAssign</span>(S)</dt>
+<dd>True if <span class="d_inlinecode">S</span> or any type directly embedded in the representation of <span class="d_inlinecode">S</span>
+   defines an elaborate assignment. Elaborate assignments are introduced by
+   defining <span class="d_inlinecode">opAssign(typeof(this))</span> or <span class="d_inlinecode">opAssign(ref typeof(this))</span>
+   for a <span class="d_inlinecode">struct</span> or when there is a compiler-generated <span class="d_inlinecode">opAssign</span>
+   (in case <span class="d_inlinecode">S</span> has an elaborate copy constructor or destructor).
+<p></p>
+Classes and unions never have elaborate assignments.
+
+<p></p>
+<b>Note:</b><br>
+Structs with (possibly nested) postblit operator(s) will have a
+   hidden yet elaborate compiler generated assignement operator (unless
+   explicitly disabled).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".hasElaborateDestructor"></a>template <a name="hasElaborateDestructor"></a><span class="ddoc_psymbol">hasElaborateDestructor</span>(S)</dt>
+<dd>True if <span class="d_inlinecode">S</span> or any type directly embedded in the representation
+   of <span class="d_inlinecode">S</span> defines an elaborate destructor. Elaborate destructors
+   are introduced by defining <span class="d_inlinecode">~this()</span> for a <span class="d_inlinecode">  struct</span>.
+<p></p>
+Classes and unions never have elaborate destructors, even
+   though classes may define <span class="d_inlinecode">~this()</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".hasMember"></a>template <a name="hasMember"></a><span class="ddoc_psymbol">hasMember</span>(T, string name)</dt>
+<dd>Yields <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">T</span> is an aggregate that defines
+   a symbol called <span class="d_inlinecode">name</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".EnumMembers"></a>template <a name="EnumMembers"></a><span class="ddoc_psymbol">EnumMembers</span>(E) if (is(E == enum))</dt>
+<dd>Retrieves the members of an enumerated type <span class="d_inlinecode">enum E</span>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>E</td>
+<td valign=top>An enumerated type. <span class="d_inlinecode">E</span> may have duplicated values.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>Static tuple composed of the members of the enumerated type <span class="d_inlinecode">E</span>.
+ The members are arranged in the same order as declared in <span class="d_inlinecode">E</span>.
+
+<p></p>
+<b>Note:</b><br>
+An enum can have multiple members which have the same value. If you want
+ to use <a name="EnumMembers"></a><span class="ddoc_psymbol">EnumMembers</span> to e.g. generate switch cases at compile-time,
+ you should use the <a href="std_typetuple.html#NoDuplicates"><span class="d_inlinecode">std.typetuple.NoDuplicates</span></a> template to avoid
+ generating duplicate switch cases.
+
+<p></p>
+<b>Note:</b><br>
+ Returned values are strictly typed with <span class="d_inlinecode">E</span>. Thus, the following code
+ does not work without the explicit cast:
+<pre class="d_code"><span class="d_keyword">enum</span> E : <span class="d_keyword">int</span> { a, b, c }
+<span class="d_keyword">int</span>[] abc = <span class="d_keyword">cast</span>(<span class="d_keyword">int</span>[]) [ <span class="d_psymbol">EnumMembers</span>!E ];
+</pre>
+ Cast is not necessary if the type of the variable is inferred. See the
+ example below.
+
+<p></p>
+<b>Examples:</b><br>Creating an array of enumerated values:
+<pre class="d_code"><span class="d_keyword">enum</span> Sqrts : <span class="d_keyword">real</span>
+{
+    one   = 1,
+    two   = 1.41421,
+    three = 1.73205,
+}
+<span class="d_keyword">auto</span> sqrts = [ <span class="d_psymbol">EnumMembers</span>!Sqrts ];
+<span class="d_keyword">assert</span>(sqrts == [ Sqrts.one, Sqrts.two, Sqrts.three ]);
+</pre>
+<p></p>
+
+ A generic function <span class="d_inlinecode">rank(v)</span> in the following example uses this
+ template for finding a member <span class="d_inlinecode">e</span> in an enumerated type <span class="d_inlinecode">E</span>.
+<pre class="d_code"><span class="d_comment">// Returns i if e is the i-th enumerator of E.
+</span>size_t rank(E)(E e)
+    <span class="d_keyword">if</span> (<span class="d_keyword">is</span>(E == <span class="d_keyword">enum</span>))
+{
+    <span class="d_keyword">foreach</span> (i, member; <span class="d_psymbol">EnumMembers</span>!E)
+    {
+        <span class="d_keyword">if</span> (e == member)
+            <span class="d_keyword">return</span> i;
+    }
+    <span class="d_keyword">assert</span>(0, <span class="d_string">"Not an enum member"</span>);
+}
+
+<span class="d_keyword">enum</span> Mode
+{
+    read  = 1,
+    write = 2,
+    map   = 4,
+}
+<span class="d_keyword">assert</span>(rank(Mode.read ) == 0);
+<span class="d_keyword">assert</span>(rank(Mode.write) == 1);
+<span class="d_keyword">assert</span>(rank(Mode.map  ) == 2);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BaseTypeTuple"></a>template <a name="BaseTypeTuple"></a><span class="ddoc_psymbol">BaseTypeTuple</span>(A)</dt>
+<dd>Get a <span class="d_param">TypeTuple</span> of the base class and base interfaces of
+ this class or interface. <span class="d_param"><a name="BaseTypeTuple"></a><span class="ddoc_psymbol">BaseTypeTuple</span>!Object</span> returns
+ the empty type tuple.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits, std.typetuple, std.stdio;
+<span class="d_keyword">interface</span> I { }
+<span class="d_keyword">class</span> A { }
+<span class="d_keyword">class</span> B : A, I { }
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_keyword">alias</span> <span class="d_psymbol">BaseTypeTuple</span>!B TL;
+    writeln(<span class="d_keyword">typeid</span>(TL));        <span class="d_comment">// prints: (A,I)
+</span>}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BaseClassesTuple"></a>template <a name="BaseClassesTuple"></a><span class="ddoc_psymbol">BaseClassesTuple</span>(T) if (is(T == class))</dt>
+<dd>Get a <span class="d_param">TypeTuple</span> of <i>all</i> base classes of this class,
+ in decreasing order. Interfaces are not included. <span class="d_param"><a name="BaseClassesTuple"></a><span class="ddoc_psymbol">BaseClassesTuple</span>!Object</span> yields the empty type tuple.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits, std.typetuple, std.stdio;
+<span class="d_keyword">interface</span> I { }
+<span class="d_keyword">class</span> A { }
+<span class="d_keyword">class</span> B : A, I { }
+<span class="d_keyword">class</span> C : B { }
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_keyword">alias</span> <span class="d_psymbol">BaseClassesTuple</span>!C TL;
+    writeln(<span class="d_keyword">typeid</span>(TL));        <span class="d_comment">// prints: (B,A,Object)
+</span>}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InterfacesTuple"></a>template <a name="InterfacesTuple"></a><span class="ddoc_psymbol">InterfacesTuple</span>(T)</dt>
+<dd>Get a <span class="d_param">TypeTuple</span> of <i>all</i> interfaces directly or
+ indirectly inherited by this class or interface. Interfaces do not
+ repeat if multiply implemented. <span class="d_param"><a name="InterfacesTuple"></a><span class="ddoc_psymbol">InterfacesTuple</span>!Object</span>
+ yields the empty type tuple.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits, std.typetuple, std.stdio;
+<span class="d_keyword">interface</span> I1 { }
+<span class="d_keyword">interface</span> I2 { }
+<span class="d_keyword">class</span> A : I1, I2 { }
+<span class="d_keyword">class</span> B : A, I1 { }
+<span class="d_keyword">class</span> C : B { }
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_keyword">alias</span> <span class="d_psymbol">InterfacesTuple</span>!C TL;
+    writeln(<span class="d_keyword">typeid</span>(TL));        <span class="d_comment">// prints: (I1, I2)
+</span>}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TransitiveBaseTypeTuple"></a>template <a name="TransitiveBaseTypeTuple"></a><span class="ddoc_psymbol">TransitiveBaseTypeTuple</span>(T)</dt>
+<dd>Get a <span class="d_param">TypeTuple</span> of <i>all</i> base classes of <span class="d_param">T</span>, in decreasing order, followed by <span class="d_param">T</span>'s
+ interfaces. <span class="d_param"><a name="TransitiveBaseTypeTuple"></a><span class="ddoc_psymbol">TransitiveBaseTypeTuple</span>!Object</span> yields the
+ empty type tuple.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits, std.typetuple, std.stdio;
+<span class="d_keyword">interface</span> I { }
+<span class="d_keyword">class</span> A { }
+<span class="d_keyword">class</span> B : A, I { }
+<span class="d_keyword">class</span> C : B { }
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_keyword">alias</span> <span class="d_psymbol">TransitiveBaseTypeTuple</span>!C TL;
+    writeln(<span class="d_keyword">typeid</span>(TL));        <span class="d_comment">// prints: (B,A,Object,I)
+</span>}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".MemberFunctionsTuple"></a>template <a name="MemberFunctionsTuple"></a><span class="ddoc_psymbol">MemberFunctionsTuple</span>(C, string name) if (is(C == class) || is(C == interface))</dt>
+<dd>Returns a tuple of non-static functions with the name <span class="d_inlinecode">name</span> declared in the
+class or interface <span class="d_inlinecode">C</span>.  Covariant duplicates are shrunk into the most
+derived one.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">interface</span> I { I foo(); }
+<span class="d_keyword">class</span> B
+{
+    <span class="d_keyword">real</span> foo(<span class="d_keyword">real</span> v) { <span class="d_keyword">return</span> v; }
+}
+<span class="d_keyword">class</span> C : B, I
+{
+    <span class="d_keyword">override</span> C foo() { <span class="d_keyword">return</span> <span class="d_keyword">this</span>; } <span class="d_comment">// covariant overriding of I.foo()
+</span>}
+<span class="d_keyword">alias</span> <span class="d_psymbol">MemberFunctionsTuple</span>!(C, <span class="d_string">"foo"</span>) foos;
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(foos.length == 2);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">__traits</span>(isSame, foos[0], C.foo));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">__traits</span>(isSame, foos[1], B.foo));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".classInstanceAlignment"></a>template <a name="classInstanceAlignment"></a><span class="ddoc_psymbol">classInstanceAlignment</span>(T) if (is(T == class))</dt>
+<dd>Returns class instance alignment.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">class</span> A { <span class="d_keyword">byte</span> b; }
+<span class="d_keyword">class</span> B { <span class="d_keyword">long</span> l; }
+
+<span class="d_comment">// As class instance always has a hidden pointer
+</span><span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">classInstanceAlignment</span>!A == (<span class="d_keyword">void</span>*).alignof);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">classInstanceAlignment</span>!B == <span class="d_keyword">long</span>.alignof);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".CommonType"></a>template <a name="CommonType"></a><span class="ddoc_psymbol">CommonType</span>(T...)</dt>
+<dd>Get the type that all types can be implicitly converted to. Useful
+e.g. in figuring out an array type from a bunch of initializing
+values. Returns <span class="d_param">void</span> if passed an empty list, or if the
+types have no common type.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">alias</span> <span class="d_psymbol">CommonType</span>!(<span class="d_keyword">int</span>, <span class="d_keyword">long</span>, <span class="d_keyword">short</span>) X;
+<span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(X == <span class="d_keyword">long</span>));
+<span class="d_keyword">alias</span> <span class="d_psymbol">CommonType</span>!(<span class="d_keyword">int</span>, <span class="d_keyword">char</span>[], <span class="d_keyword">short</span>) Y;
+<span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(Y == <span class="d_keyword">void</span>));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ImplicitConversionTargets"></a>template <a name="ImplicitConversionTargets"></a><span class="ddoc_psymbol">ImplicitConversionTargets</span>(T)</dt>
+<dd>Returns a tuple with all possible target types of an implicit
+ conversion of a value of type <span class="d_param">T</span>.
+<p></p>
+Important note:
+<p></p>
+
+ The possible targets are computed more conservatively than the D
+ 2.005 compiler does, eliminating all dangerous conversions. For
+ example, <span class="d_param"><a name="ImplicitConversionTargets"></a><span class="ddoc_psymbol">ImplicitConversionTargets</span>!double</span> does not
+ include <span class="d_param">float</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isImplicitlyConvertible"></a>template <a name="isImplicitlyConvertible"></a><span class="ddoc_psymbol">isImplicitlyConvertible</span>(From, To)</dt>
+<dd>Is <span class="d_inlinecode">From</span> implicitly convertible to <span class="d_inlinecode">To</span>?<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isAssignable"></a>template <a name="isAssignable"></a><span class="ddoc_psymbol">isAssignable</span>(Lhs, Rhs = Lhs)</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> iff a value of type <span class="d_inlinecode">Rhs</span> can be assigned to a variable of
+type <span class="d_inlinecode">Lhs</span>.
+<p></p>
+If you omit <span class="d_inlinecode">Rhs</span>, <span class="d_inlinecode"><a name="isAssignable"></a><span class="ddoc_psymbol">isAssignable</span></span> will check identity assignable of <span class="d_inlinecode">Lhs</span>.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">isAssignable</span>!(<span class="d_keyword">long</span>, <span class="d_keyword">int</span>));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_psymbol">isAssignable</span>!(<span class="d_keyword">int</span>, <span class="d_keyword">long</span>));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>( <span class="d_psymbol">isAssignable</span>!(<span class="d_keyword">const</span>(<span class="d_keyword">char</span>)[], string));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_psymbol">isAssignable</span>!(string, <span class="d_keyword">char</span>[]));
+
+<span class="d_comment">// int is assignable to int
+</span><span class="d_keyword">static</span> <span class="d_keyword">assert</span>( <span class="d_psymbol">isAssignable</span>!<span class="d_keyword">int</span>);
+
+<span class="d_comment">// immutable int is not assinable to immutable int
+</span><span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_psymbol">isAssignable</span>!(<span class="d_keyword">immutable</span> <span class="d_keyword">int</span>));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isCovariantWith"></a>template <a name="isCovariantWith"></a><span class="ddoc_psymbol">isCovariantWith</span>(F, G) if (is(F == function) &amp;&amp; is(G == function))</dt>
+<dd>Determines whether the function type <span class="d_inlinecode">F</span> is covariant with <span class="d_inlinecode">G</span>, i.e.,
+functions of the type <span class="d_inlinecode">F</span> can override ones of the type <span class="d_inlinecode">G</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">interface</span> I { I clone(); }
+<span class="d_keyword">interface</span> J { J clone(); }
+<span class="d_keyword">class</span> C : I
+{
+    <span class="d_keyword">override</span> C clone()   <span class="d_comment">// covariant overriding of I.clone()
+</span>    {
+        <span class="d_keyword">return</span> <span class="d_keyword">new</span> C;
+    }
+}
+
+<span class="d_comment">// C.clone() can override I.clone(), indeed.
+</span><span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">isCovariantWith</span>!(<span class="d_keyword">typeof</span>(C.clone), <span class="d_keyword">typeof</span>(I.clone)));
+
+<span class="d_comment">// C.clone() can't override J.clone(); the return type C is not implicitly
+</span><span class="d_comment">// convertible to J.
+</span><span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_psymbol">isCovariantWith</span>!(<span class="d_keyword">typeof</span>(C.clone), <span class="d_keyword">typeof</span>(J.clone)));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isBoolean"></a>template <a name="isBoolean"></a><span class="ddoc_psymbol">isBoolean</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a built-in boolean type.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isIntegral"></a>template <a name="isIntegral"></a><span class="ddoc_psymbol">isIntegral</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a built-in integral type. Types <span class="d_inlinecode">bool</span>,
+ <span class="d_inlinecode">char</span>, <span class="d_inlinecode">wchar</span>, and <span class="d_inlinecode">dchar</span> are not considered integral.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isFloatingPoint"></a>template <a name="isFloatingPoint"></a><span class="ddoc_psymbol">isFloatingPoint</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a built-in floating point type.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isNumeric"></a>template <a name="isNumeric"></a><span class="ddoc_psymbol">isNumeric</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a built-in numeric type (integral or floating
+point).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isScalarType"></a>template <a name="isScalarType"></a><span class="ddoc_psymbol">isScalarType</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a scalar type.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isBasicType"></a>template <a name="isBasicType"></a><span class="ddoc_psymbol">isBasicType</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a basic type.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isUnsigned"></a>template <a name="isUnsigned"></a><span class="ddoc_psymbol">isUnsigned</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a built-in unsigned numeric type.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isSigned"></a>template <a name="isSigned"></a><span class="ddoc_psymbol">isSigned</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a built-in signed numeric type.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isSomeChar"></a>template <a name="isSomeChar"></a><span class="ddoc_psymbol">isSomeChar</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is one of the built-in character types.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isSomeString"></a>template <a name="isSomeString"></a><span class="ddoc_psymbol">isSomeString</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is one of the built-in string types.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isStaticArray"></a>template <a name="isStaticArray"></a><span class="ddoc_psymbol">isStaticArray</span>(T)</dt>
+<dd>Detect whether type <span class="d_inlinecode">T</span> is a static array.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isDynamicArray"></a>template <a name="isDynamicArray"></a><span class="ddoc_psymbol">isDynamicArray</span>(T)</dt>
+<dd>Detect whether type <span class="d_inlinecode">T</span> is a dynamic array.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isArray"></a>template <a name="isArray"></a><span class="ddoc_psymbol">isArray</span>(T)</dt>
+<dd>Detect whether type <span class="d_inlinecode">T</span> is an array.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isAssociativeArray"></a>template <a name="isAssociativeArray"></a><span class="ddoc_psymbol">isAssociativeArray</span>(T)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is an associative array type<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isPointer"></a>template <a name="isPointer"></a><span class="ddoc_psymbol">isPointer</span>(T)</dt>
+<dd>Detect whether type <span class="d_inlinecode">T</span> is a pointer.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".PointerTarget"></a>template <a name="PointerTarget"></a><span class="ddoc_psymbol">PointerTarget</span>(T : T*)</dt>
+<dd>Returns the target type of a pointer.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".pointerTarget"></a>alias <a name="pointerTarget"></a><span class="ddoc_psymbol">pointerTarget</span> = PointerTarget(T : T*);
+</dt>
+<dd><span style="color:red">Scheduled for deprecation. Please use <a href="#PointerTarget"><span class="d_inlinecode">PointerTarget</span></a> instead.</span><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isAggregateType"></a>template <a name="isAggregateType"></a><span class="ddoc_psymbol">isAggregateType</span>(T)</dt>
+<dd>Detect whether type <span class="d_inlinecode">T</span> is an aggregate type.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isIterable"></a>template <a name="isIterable"></a><span class="ddoc_psymbol">isIterable</span>(T)</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if T can be iterated over using a <span class="d_inlinecode">foreach</span> loop with
+ a single loop variable of automatically inferred type, regardless of how
+ the <span class="d_inlinecode">foreach</span> loop is implemented.  This includes ranges, structs/classes
+ that define <span class="d_inlinecode">opApply</span> with a single loop variable, and builtin dynamic,
+ static and associative arrays.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isMutable"></a>template <a name="isMutable"></a><span class="ddoc_psymbol">isMutable</span>(T)</dt>
+<dd>Returns <b>true</b> if T is not const or immutable.  Note that <a name="isMutable"></a><span class="ddoc_psymbol">isMutable</span> is <b>true</b> for
+ string, or immutable(char)[], because the 'head' is mutable.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isInstanceOf"></a>template <a name="isInstanceOf"></a><span class="ddoc_psymbol">isInstanceOf</span>(alias S, T)</dt>
+<dd>Returns <b>true</b> if T is an instance of the template S.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isExpressionTuple"></a>template <a name="isExpressionTuple"></a><span class="ddoc_psymbol">isExpressionTuple</span>(T...)</dt>
+<dd>Tells whether the tuple T is an expression tuple.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isTypeTuple"></a>template <a name="isTypeTuple"></a><span class="ddoc_psymbol">isTypeTuple</span>(T...)</dt>
+<dd>Detect whether tuple <span class="d_inlinecode">T</span> is a type tuple.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isFunctionPointer"></a>template <a name="isFunctionPointer"></a><span class="ddoc_psymbol">isFunctionPointer</span>(T...) if (T.length == 1)</dt>
+<dd>Detect whether symbol or type <span class="d_inlinecode">T</span> is a function pointer.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isDelegate"></a>template <a name="isDelegate"></a><span class="ddoc_psymbol">isDelegate</span>(T...) if (T.length == 1)</dt>
+<dd>Detect whether symbol or type <span class="d_inlinecode">T</span> is a delegate.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isSomeFunction"></a>template <a name="isSomeFunction"></a><span class="ddoc_psymbol">isSomeFunction</span>(T...) if (T.length == 1)</dt>
+<dd>Detect whether symbol or type <span class="d_inlinecode">T</span> is a function, a function pointer or a delegate.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isCallable"></a>template <a name="isCallable"></a><span class="ddoc_psymbol">isCallable</span>(T...) if (T.length == 1)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a callable object, which can be called with the
+function call operator <span class="d_inlinecode">(...)</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isAbstractFunction"></a>template <a name="isAbstractFunction"></a><span class="ddoc_psymbol">isAbstractFunction</span>(T...) if (T.length == 1)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a an abstract function.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isFinalFunction"></a>template <a name="isFinalFunction"></a><span class="ddoc_psymbol">isFinalFunction</span>(T...) if (T.length == 1)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a a final function.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isNestedFunction"></a>template <a name="isNestedFunction"></a><span class="ddoc_psymbol">isNestedFunction</span>(alias f)</dt>
+<dd>Determines whether function <span class="d_inlinecode">f</span> requires a context pointer.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isAbstractClass"></a>template <a name="isAbstractClass"></a><span class="ddoc_psymbol">isAbstractClass</span>(T...) if (T.length == 1)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a an abstract class.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isFinalClass"></a>template <a name="isFinalClass"></a><span class="ddoc_psymbol">isFinalClass</span>(T...) if (T.length == 1)</dt>
+<dd>Detect whether <span class="d_inlinecode">T</span> is a a final class.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Unqual"></a>template <a name="Unqual"></a><span class="ddoc_psymbol">Unqual</span>(T)</dt>
+<dd>Removes all qualifiers, if any, from type <span class="d_inlinecode">T</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">Unqual</span>!<span class="d_keyword">int</span> == <span class="d_keyword">int</span>));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">Unqual</span>!(<span class="d_keyword">const</span> <span class="d_keyword">int</span>) == <span class="d_keyword">int</span>));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">Unqual</span>!(<span class="d_keyword">immutable</span> <span class="d_keyword">int</span>) == <span class="d_keyword">int</span>));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">Unqual</span>!(<span class="d_keyword">shared</span> <span class="d_keyword">int</span>) == <span class="d_keyword">int</span>));
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">Unqual</span>!(<span class="d_keyword">shared</span>(<span class="d_keyword">const</span> <span class="d_keyword">int</span>)) == <span class="d_keyword">int</span>));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ForeachType"></a>template <a name="ForeachType"></a><span class="ddoc_psymbol">ForeachType</span>(T)</dt>
+<dd>Returns the inferred type of the loop variable when a variable of type T
+is iterated over using a <span class="d_inlinecode">foreach</span> loop with a single loop variable and
+automatically inferred return type.  Note that this may not be the same as
+<span class="d_inlinecode">std.range.ElementType!Range</span> in the case of narrow strings, or if T
+has both opApply and a range interface.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OriginalType"></a>template <a name="OriginalType"></a><span class="ddoc_psymbol">OriginalType</span>(T)</dt>
+<dd>Strips off all <span class="d_inlinecode">typedef</span>s (including <span class="d_inlinecode">enum</span> ones) from type <span class="d_inlinecode">T</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">enum</span> E : <span class="d_keyword">int</span> { a }
+<span class="d_keyword">typedef</span> E F;
+<span class="d_keyword">typedef</span> <span class="d_keyword">const</span> F G;
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">OriginalType</span>!G == <span class="d_keyword">const</span> <span class="d_keyword">int</span>));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".KeyType"></a>template <a name="KeyType"></a><span class="ddoc_psymbol">KeyType</span>(V : V[K], K)</dt>
+<dd>Get the Key type of an Associative Array.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">alias</span> <span class="d_keyword">int</span>[string] Hash;
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">KeyType</span>!Hash == string));
+<span class="d_psymbol">KeyType</span>!Hash str = <span class="d_string">"string"</span>;   <span class="d_comment">// str is declared as string
+</span></pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ValueType"></a>template <a name="ValueType"></a><span class="ddoc_psymbol">ValueType</span>(V : V[K], K)</dt>
+<dd>Get the Value type of an Associative Array.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.traits;
+<span class="d_keyword">alias</span> <span class="d_keyword">int</span>[string] Hash;
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">ValueType</span>!Hash == <span class="d_keyword">int</span>));
+<span class="d_psymbol">ValueType</span>!Hash num = 1;   <span class="d_comment">// num is declared as int
+</span></pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Unsigned"></a>template <a name="Unsigned"></a><span class="ddoc_psymbol">Unsigned</span>(T)</dt>
+<dd>Returns the corresponding unsigned type for T. T must be a numeric
+ integral type, otherwise a compile-time error occurs.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Largest"></a>template <a name="Largest"></a><span class="ddoc_psymbol">Largest</span>(T...) if (T.length &gt;= 1)</dt>
+<dd>Returns the largest type, i.e. T such that T.sizeof is the largest.  If more
+than one type is of the same size, the leftmost argument of these in will be
+returned.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Signed"></a>template <a name="Signed"></a><span class="ddoc_psymbol">Signed</span>(T)</dt>
+<dd>Returns the corresponding signed type for T. T must be a numeric integral type,
+otherwise a compile-time error occurs.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".mostNegative"></a>template <a name="mostNegative"></a><span class="ddoc_psymbol">mostNegative</span>(T) if (isNumeric!T || isSomeChar!T || isBoolean!T)</dt>
+<dd>Returns the most negative value of the numeric type T.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".mangledName"></a>template <a name="mangledName"></a><span class="ddoc_psymbol">mangledName</span>(sth...) if (sth.length == 1)</dt>
+<dd>Returns the mangled name of symbol or type <span class="d_inlinecode">sth</span>.
+<p></p>
+<span class="d_inlinecode"><a name="mangledName"></a><span class="ddoc_psymbol">mangledName</span></span> is the same as builtin <span class="d_inlinecode">.mangleof</span> property, except that
+the correct names of property functions are obtained.
+<pre class="d_code"><span class="d_keyword">module</span> test;
+<span class="d_keyword">import</span> std.traits : <span class="d_psymbol">mangledName</span>;
+
+<span class="d_keyword">class</span> C
+{
+    <span class="d_keyword">int</span> value() @property;
+}
+<span class="d_keyword">pragma</span>(msg, C.value.mangleof);      <span class="d_comment">// prints "i"
+</span><span class="d_keyword">pragma</span>(msg, <span class="d_psymbol">mangledName</span>!(C.value)); <span class="d_comment">// prints "_D4test1C5valueMFNdZi"
+</span></pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Select"></a>template <a name="Select"></a><span class="ddoc_psymbol">Select</span>(bool condition, T...) if (T.length == 2)</dt>
+<dd>Aliases itself to <span class="d_inlinecode">T[0]</span> if the boolean <span class="d_inlinecode">condition</span> is <span class="d_inlinecode"><b>true</b></span>
+and to <span class="d_inlinecode">T[1]</span> otherwise.<p></p>
+<b>Examples:</b><br><pre class="d_code">
+    <span class="d_comment">// can select types
+</span>    <span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">Select</span>!(<span class="d_keyword">true</span>, <span class="d_keyword">int</span>, <span class="d_keyword">long</span>) == <span class="d_keyword">int</span>));
+    <span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_psymbol">Select</span>!(<span class="d_keyword">false</span>, <span class="d_keyword">int</span>, <span class="d_keyword">long</span>) == <span class="d_keyword">long</span>));
+
+    <span class="d_comment">// can select symbols
+</span>    <span class="d_keyword">int</span> a = 1;
+    <span class="d_keyword">int</span> b = 2;
+    <span class="d_keyword">alias</span> selA = <span class="d_psymbol">Select</span>!(<span class="d_keyword">true</span>, a, b);
+    <span class="d_keyword">alias</span> selB = <span class="d_psymbol">Select</span>!(<span class="d_keyword">false</span>, a, b);
+    <span class="d_keyword">assert</span>(selA == 1);
+    <span class="d_keyword">assert</span>(selB == 2);
+</pre>
+<p></p>
+</dd>
+<dt class="d_decl"><a name=".select"></a>A <a name="select"></a><span class="ddoc_psymbol">select</span>(bool cond : true, A, B)(A <i>a</i>, lazy B <i>b</i>);
+<br><a name=".select"></a>B <a name="select"></a><span class="ddoc_psymbol">select</span>(bool cond : false, A, B)(lazy A <i>a</i>, B <i>b</i>);
+</dt>
+<dd>If <span class="d_inlinecode">cond</span> is <span class="d_inlinecode"><b>true</b></span>, returns <span class="d_inlinecode">a</span> without evaluating <span class="d_inlinecode">b</span>. Otherwise, returns <span class="d_inlinecode">b</span> without evaluating <span class="d_inlinecode">a</span>.<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright Digital Mars 2005 - 2009.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

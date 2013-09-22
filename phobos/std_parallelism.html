@@ -1,0 +1,1367 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.parallelism - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+function listanchors()
+{
+    if (typeof inhibitQuickIndex !== 'undefined') return;
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        // ignore anchors from DDOC_PSYMBOL
+        if (text[0] != '.') continue;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+        values[n++] = a.name
+    }
+
+    // we won't display the qualifying names to save space, so sort by last name
+    var lastName = function(a){
+        var li = a.lastIndexOf('.');
+        return a.slice(li + 1);
+    }
+    values.sort(function(a,b){return lastName(a) > lastName(b)});
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        var text = lastName(a);
+        newText += ' \x3Ca href="\x23' + a +
+            '"\x3E\x3Cspan class="d_psymbol"\x3E' + text + '\x3C/span\x3E\x3C/a\x3E';
+    }
+    if (newText != "") newText = "\x3Cp\x3E\x3Cb\x3EJump to:\x3C/b\x3E" + newText + "\x3C/p\x3E";
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+jQuery(document).ready(listanchors);
+</script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/phobos">Library Reference</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="/images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language </a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/phobos">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+	<li><a href="../phobos-prerelease/index.html" title="D Runtime Library (prerelease)">Phobos (prerelease)</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="index.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_ascii.html" title="Functions which operate on ASCII characters">std.ascii</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_csv.html" title="CSV file parser">std.csv</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_parallelism.html" title="High-level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_process.html" title="Create/destroy processes">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_uuid.html" title="Generate and use UUIDs">std.uuid</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_net_curl.html" title="High level curl wrapper">std.net.curl</a></li>
+	<li><a href="std_net_isemail.html" title="Validate e-mail addresses">std.net.isemail</a></li>
+	<li><a href="std_digest_crc.html" title="CRC digest functions">std.digest.crc</a></li>
+	<li><a href="std_digest_digest.html" title="API for digest functions">std.digest.digest</a></li>
+	<li><a href="std_digest_md.html" title="MD digest functions">std.digest.md</a></li>
+	<li><a href="std_digest_ripemd.html" title="RIPEMD digest functions">std.digest.ripemd</a></li>
+	<li><a href="std_digest_sha.html" title="SHA digest functions">std.digest.sha</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+    </ul>
+    <h2><a href="index.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_sqlite3.html" title="Interface to sqlite3 library">etc.c.sqlite3</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="index.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_demangle.html" title="D symbol mangling">core.demangle</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_simd.html" title="Builtin SIMD intrinsics">core.simd</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_time.html" title="Core time functionality">core.time</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/phobos/edit/master/std\parallelism.d" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>std.parallelism</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\parallelism.d -->
+<span class="d_inlinecode">std.parallelism</span> implements high-level primitives for SMP parallelism.
+These include parallel foreach, parallel reduce, parallel eager map, pipelining
+and future/promise parallelism.  <span class="d_inlinecode">std.parallelism</span> is recommended when the
+same operation is to be executed in parallel on different data, or when a
+function is to be executed in a background thread and its result returned to a
+well-defined main thread.  For communication between arbitrary threads, see
+<span class="d_inlinecode">std.concurrency</span>.
+<p></p>
+<span class="d_inlinecode">std.parallelism</span> is based on the concept of a <span class="d_inlinecode">Task</span>.  A <span class="d_inlinecode">Task</span> is an
+object that represents the fundamental unit of work in this library and may be
+executed in parallel with any other <span class="d_inlinecode">Task</span>.  Using <span class="d_inlinecode">Task</span>
+directly allows programming with a future/promise paradigm.  All other
+supported parallelism paradigms (parallel foreach, map, reduce, pipelining)
+represent an additional level of abstraction over <span class="d_inlinecode">Task</span>.  They
+automatically create one or more <span class="d_inlinecode">Task</span> objects, or closely related types
+that are conceptually identical but not part of the public API.
+<p></p>
+
+After creation, a <span class="d_inlinecode">Task</span> may be executed in a new thread, or submitted
+to a <span class="d_inlinecode">TaskPool</span> for execution.  A <span class="d_inlinecode">TaskPool</span> encapsulates a task queue
+and its worker threads.  Its purpose is to efficiently map a large
+number of <span class="d_inlinecode">Task</span>s onto a smaller number of threads.  A task queue is a
+FIFO queue of <span class="d_inlinecode">Task</span> objects that have been submitted to the
+<span class="d_inlinecode">TaskPool</span> and are awaiting execution.  A worker thread is a thread that
+is associated with exactly one task queue.  It executes the <span class="d_inlinecode">Task</span> at the
+front of its queue when the queue has work available, or sleeps when
+no work is available.  Each task queue is associated with zero or
+more worker threads.  If the result of a <span class="d_inlinecode">Task</span> is needed before execution
+by a worker thread has begun, the <span class="d_inlinecode">Task</span> can be removed from the task queue
+and executed immediately in the thread where the result is needed.
+
+<p></p>
+<b>Warning:</b><br>
+Unless marked as <span class="d_inlinecode">@trusted</span> or <span class="d_inlinecode">@safe</span>, artifacts in
+          this module allow implicit data sharing between threads and cannot
+          guarantee that client code is free from low level data races.
+
+<p></p>
+<b>Synopsis:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.algorithm, std.<span class="d_psymbol">parallelism</span>, std.range;
+
+<span class="d_keyword">void</span> main() {
+    <span class="d_comment">// Parallel reduce can be combined with
+</span>    <span class="d_comment">// std.algorithm.map to interesting effect.
+</span>    <span class="d_comment">// The following example (thanks to Russel Winder)
+</span>    <span class="d_comment">// calculates pi by quadrature  using
+</span>    <span class="d_comment">// std.algorithm.map and TaskPool.reduce.
+</span>    <span class="d_comment">// getTerm is evaluated in parallel as needed by
+</span>    <span class="d_comment">// TaskPool.reduce.
+</span>    <span class="d_comment">//
+</span>    <span class="d_comment">// Timings on an Athlon 64 X2 dual core machine:
+</span>    <span class="d_comment">//
+</span>    <span class="d_comment">// TaskPool.reduce:       12.170 s
+</span>    <span class="d_comment">// std.algorithm.reduce:  24.065 s
+</span>
+    <span class="d_keyword">immutable</span> n = 1_000_000_000;
+    <span class="d_keyword">immutable</span> delta = 1.0 / n;
+
+    <span class="d_keyword">real</span> getTerm(<span class="d_keyword">int</span> i)
+    {
+        <span class="d_keyword">immutable</span> x = ( i - 0.5 ) * delta;
+        <span class="d_keyword">return</span> delta / ( 1.0 + x * x ) ;
+    }
+
+    <span class="d_keyword">immutable</span> pi = 4.0 * taskPool.reduce!<span class="d_string">"a + b"</span>(
+        std.algorithm.map!getTerm(iota(n))
+    );
+}
+</pre>
+
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/parallelism.d">std/parallelism.d</a>
+<p></p>
+<b>Author:</b><br>
+David Simcha
+<p></p>
+<b>License:</b><br><a href="http://boost.org/LICENSE_1_0.txt">Boost License 1.0</a><p></p>
+
+<dl><dt class="d_decl"><a name=".Task"></a>struct <a name="Task"></a><span class="ddoc_psymbol">Task</span>(alias fun, Args...);
+</dt>
+<dd><span class="d_inlinecode"><a name="Task"></a><span class="ddoc_psymbol">Task</span></span> represents the fundamental unit of work.  A <span class="d_inlinecode"><a name="Task"></a><span class="ddoc_psymbol">Task</span></span> may be
+executed in parallel with any other <span class="d_inlinecode"><a name="Task"></a><span class="ddoc_psymbol">Task</span></span>.  Using this struct directly
+allows future/promise parallelism.  In this paradigm, a function (or delegate
+or other callable) is executed in a thread other than the one it was called
+from.  The calling thread does not block while the function is being executed.
+A call to <span class="d_inlinecode">workForce</span>, <span class="d_inlinecode">yieldForce</span>, or <span class="d_inlinecode">spinForce</span> is used to
+ensure that the <span class="d_inlinecode"><a name="Task"></a><span class="ddoc_psymbol">Task</span></span> has finished executing and to obtain the return
+value, if any.  These functions and <span class="d_inlinecode">done</span> also act as full memory barriers,
+meaning that any memory writes made in the thread that executed the <span class="d_inlinecode"><a name="Task"></a><span class="ddoc_psymbol">Task</span></span>
+are guaranteed to be visible in the calling thread after one of these functions
+returns.
+<p></p>
+The <a href="std_parallelism.html#task"><span class="d_inlinecode">std.parallelism.task</span></a> and <a href="std_parallelism.html#scopedTask"><span class="d_inlinecode">std.parallelism.scopedTask</span></a> functions can
+be used to create an instance of this struct.  See <span class="d_inlinecode">task</span> for usage examples.
+<p></p>
+
+Function results are returned from <span class="d_inlinecode">yieldForce</span>, <span class="d_inlinecode">spinForce</span> and
+<span class="d_inlinecode">workForce</span> by ref.  If <span class="d_inlinecode">fun</span> returns by ref, the reference will point
+to the returned reference of <span class="d_inlinecode">fun</span>.  Otherwise it will point to a
+field in this struct.
+<p></p>
+
+Copying of this struct is disabled, since it would provide no useful semantics.
+If you want to pass this struct around, you should do so by reference or
+pointer.
+
+<p></p>
+<span style="color:red">BUGS:</span><br>Changes to <span class="d_inlinecode">ref</span> and <span class="d_inlinecode">out</span> arguments are not propagated to the
+       call site, only to <span class="d_inlinecode">args</span> in this struct.<p></p>
+
+<dl><dt class="d_decl"><a name=".args"></a>alias <a name="args"></a><span class="ddoc_psymbol">args</span> = _args[1 .. __dollar];
+</dt>
+<dd>The arguments the function was called with.  Changes to <span class="d_inlinecode">out</span> and
+    <span class="d_inlinecode">ref</span> arguments will be visible here.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ReturnType"></a>alias <a name="ReturnType"></a><span class="ddoc_psymbol">ReturnType</span> = typeof(fun(_args));
+</dt>
+<dd>The return type of the function called by this <span class="d_inlinecode">Task</span>.  This can be
+    <span class="d_inlinecode">void</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".spinForce"></a>@trusted ReturnType <a name="spinForce"></a><span class="ddoc_psymbol">spinForce</span>();
+</dt>
+<dd>If the <span class="d_inlinecode">Task</span> isn't started yet, execute it in the current thread.
+    If it's done, return its return value, if any.  If it's in progress,
+    busy spin until it's done, then return the return value.  If it threw
+    an exception, rethrow that exception.
+<p></p>
+This function should be used when you expect the result of the
+    <span class="d_inlinecode">Task</span> to be available on a timescale shorter than that of an OS
+    context switch.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".yieldForce"></a>@trusted ReturnType <a name="yieldForce"></a><span class="ddoc_psymbol">yieldForce</span>();
+</dt>
+<dd>If the <span class="d_inlinecode">Task</span> isn't started yet, execute it in the current thread.
+    If it's done, return its return value, if any.  If it's in progress,
+    wait on a condition variable.  If it threw an exception, rethrow that
+    exception.
+<p></p>
+This function should be used for expensive functions, as waiting on a
+    condition variable introduces latency, but avoids wasted CPU cycles.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".workForce"></a>@trusted ReturnType <a name="workForce"></a><span class="ddoc_psymbol">workForce</span>();
+</dt>
+<dd>If this <span class="d_inlinecode">Task</span> was not started yet, execute it in the current
+    thread.  If it is finished, return its result.  If it is in progress,
+    execute any other <span class="d_inlinecode">Task</span> from the <span class="d_inlinecode">TaskPool</span> instance that
+    this <span class="d_inlinecode">Task</span> was submitted to until this one
+    is finished.  If it threw an exception, rethrow that exception.
+    If no other tasks are available or this <span class="d_inlinecode">Task</span> was executed using
+    <span class="d_inlinecode">executeInNewThread</span>, wait on a condition variable.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".done"></a>@trusted bool <a name="done"></a><span class="ddoc_psymbol">done</span>();
+</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if the <span class="d_inlinecode">Task</span> is finished executing.
+<p></p>
+<b>Throws:</b><br>Rethrows any exception thrown during the execution of the
+             <span class="d_inlinecode">Task</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".executeInNewThread"></a>@trusted void <a name="executeInNewThread"></a><span class="ddoc_psymbol">executeInNewThread</span>();
+<br><a name=".executeInNewThread"></a>@trusted void <a name="executeInNewThread"></a><span class="ddoc_psymbol">executeInNewThread</span>(int <i>priority</i>);
+</dt>
+<dd>Create a new thread for executing this <span class="d_inlinecode">Task</span>, execute it in the
+    newly created thread, then terminate the thread.  This can be used for
+    future/promise parallelism.  An explicit priority may be given
+    to the <span class="d_inlinecode">Task</span>.  If one is provided, its value is forwarded to
+    <span class="d_inlinecode">core.thread.Thread.priority</span>. See <a href="std_parallelism.html#task"><span class="d_inlinecode">std.parallelism.task</span></a> for
+    usage example.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".task"></a>auto <a name="task"></a><span class="ddoc_psymbol">task</span>(alias fun, Args...)(Args <i>args</i>);
+</dt>
+<dd>Creates a <span class="d_inlinecode">Task</span> on the GC heap that calls an alias.  This may be executed
+via <span class="d_inlinecode">Task.executeInNewThread</span> or by submitting to a
+<a href="std_parallelism.html#TaskPool"><span class="d_inlinecode">std.parallelism.TaskPool</span></a>.  A globally accessible instance of
+<span class="d_inlinecode">TaskPool</span> is provided by <a href="std_parallelism.html#taskPool"><span class="d_inlinecode">std.parallelism.taskPool</span></a>.
+<p></p>
+<b>Returns:</b><br>A pointer to the <span class="d_inlinecode">Task</span>.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_comment">// Read two files into memory at the same time.
+</span><span class="d_keyword">import</span> std.file;
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_comment">// Create and execute a Task for reading
+</span>    <span class="d_comment">// foo.txt.
+</span>    <span class="d_keyword">auto</span> file1Task = <span class="d_psymbol">task</span>!read(<span class="d_string">"foo.txt"</span>);
+    file1Task.executeInNewThread();
+
+    <span class="d_comment">// Read bar.txt in parallel.
+</span>    <span class="d_keyword">auto</span> file2Data = read(<span class="d_string">"bar.txt"</span>);
+
+    <span class="d_comment">// Get the results of reading foo.txt.
+</span>    <span class="d_keyword">auto</span> file1Data = file1Task.yieldForce;
+}
+</pre>
+<p></p>
+
+<pre class="d_code"><span class="d_comment">// Sorts an array using a parallel quick sort algorithm.
+</span><span class="d_comment">// The first partition is done serially.  Both recursion
+</span><span class="d_comment">// branches are then executed in parallel.
+</span><span class="d_comment">//
+</span><span class="d_comment">// Timings for sorting an array of 1,000,000 doubles on
+</span><span class="d_comment">// an Athlon 64 X2 dual core machine:
+</span><span class="d_comment">//
+</span><span class="d_comment">// This implementation:               176 milliseconds.
+</span><span class="d_comment">// Equivalent serial implementation:  280 milliseconds
+</span><span class="d_keyword">void</span> parallelSort(T)(T[] data)
+{
+    <span class="d_comment">// Sort small subarrays serially.
+</span>    <span class="d_keyword">if</span>(data.length &lt; 100)
+    {
+         std.algorithm.sort(data);
+         <span class="d_keyword">return</span>;
+    }
+
+    <span class="d_comment">// Partition the array.
+</span>    swap(data[$ / 2], data[$ - 1]);
+    <span class="d_keyword">auto</span> pivot = data[$ - 1];
+    <span class="d_keyword">bool</span> lessThanPivot(T elem) { <span class="d_keyword">return</span> elem &lt; pivot; }
+
+    <span class="d_keyword">auto</span> greaterEqual = partition!lessThanPivot(data[0..$ - 1]);
+    swap(data[$ - greaterEqual.length - 1], data[$ - 1]);
+
+    <span class="d_keyword">auto</span> less = data[0..$ - greaterEqual.length - 1];
+    greaterEqual = data[$ - greaterEqual.length..$];
+
+    <span class="d_comment">// Execute both recursion branches in parallel.
+</span>    <span class="d_keyword">auto</span> recurseTask = <span class="d_psymbol">task</span>!parallelSort(greaterEqual);
+    taskPool.put(recurseTask);
+    parallelSort(less);
+    recurseTask.yieldForce;
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".task"></a>auto <a name="task"></a><span class="ddoc_psymbol">task</span>(F, Args...)(F <i>delegateOrFp</i>, Args <i>args</i>) if (is(typeof(<i>delegateOrFp</i>(<i>args</i>))) &amp;&amp; !isSafeTask!F);
+</dt>
+<dd>Creates a <span class="d_inlinecode">Task</span> on the GC heap that calls a function pointer, delegate, or
+class/struct with overloaded opCall.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_comment">// Read two files in at the same time again,
+</span><span class="d_comment">// but this time use a function pointer instead
+</span><span class="d_comment">// of an alias to represent std.file.read.
+</span><span class="d_keyword">import</span> std.file;
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_comment">// Create and execute a Task for reading
+</span>    <span class="d_comment">// foo.txt.
+</span>    <span class="d_keyword">auto</span> file1Task = <span class="d_psymbol">task</span>(&amp;read, <span class="d_string">"foo.txt"</span>);
+    file1Task.executeInNewThread();
+
+    <span class="d_comment">// Read bar.txt in parallel.
+</span>    <span class="d_keyword">auto</span> file2Data = read(<span class="d_string">"bar.txt"</span>);
+
+    <span class="d_comment">// Get the results of reading foo.txt.
+</span>    <span class="d_keyword">auto</span> file1Data = file1Task.yieldForce;
+}
+</pre>
+
+<p></p>
+<b>Notes:</b><br>
+This function takes a non-scope delegate, meaning it can be
+       used with closures.  If you can't allocate a closure due to objects
+       on the stack that have scoped destruction, see <span class="d_inlinecode">scopedTask</span>, which
+       takes a scope delegate.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".task"></a>@trusted auto <a name="task"></a><span class="ddoc_psymbol">task</span>(F, Args...)(F <i>fun</i>, Args <i>args</i>) if (is(typeof(<i>fun</i>(<i>args</i>))) &amp;&amp; isSafeTask!F);
+</dt>
+<dd>Version of <span class="d_inlinecode"><a name="task"></a><span class="ddoc_psymbol">task</span></span> usable from <span class="d_inlinecode">@safe</span> code.  Usage mechanics are
+identical to the non-@safe case, but safety introduces some restrictions:
+<p></p>
+1.  <span class="d_inlinecode">fun</span> must be @safe or @trusted.
+<p></p>
+
+2.  <span class="d_inlinecode">F</span> must not have any unshared aliasing as defined by
+    <a href="std_traits.html#hasUnsharedAliasing"><span class="d_inlinecode">std.traits.hasUnsharedAliasing</span></a>.  This means it
+    may not be an unshared delegate or a non-shared class or struct
+    with overloaded <span class="d_inlinecode">opCall</span>.  This also precludes accepting template
+    alias parameters.
+<p></p>
+
+3.  <span class="d_inlinecode">Args</span> must not have unshared aliasing.
+<p></p>
+
+4.  <span class="d_inlinecode">fun</span> must not return by reference.
+<p></p>
+
+5.  The return type must not have unshared aliasing unless <span class="d_inlinecode">fun</span> is
+    <span class="d_inlinecode">pure</span> or the <span class="d_inlinecode">Task</span> is executed via <span class="d_inlinecode">executeInNewThread</span> instead
+    of using a <span class="d_inlinecode">TaskPool</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".scopedTask"></a>auto <a name="scopedTask"></a><span class="ddoc_psymbol">scopedTask</span>(alias fun, Args...)(Args <i>args</i>);
+<br><a name=".scopedTask"></a>auto <a name="scopedTask"></a><span class="ddoc_psymbol">scopedTask</span>(F, Args...)(scope F <i>delegateOrFp</i>, Args <i>args</i>) if (is(typeof(<i>delegateOrFp</i>(<i>args</i>))) &amp;&amp; !isSafeTask!F);
+<br><a name=".scopedTask"></a>@trusted auto <a name="scopedTask"></a><span class="ddoc_psymbol">scopedTask</span>(F, Args...)(F <i>fun</i>, Args <i>args</i>) if (is(typeof(<i>fun</i>(<i>args</i>))) &amp;&amp; isSafeTask!F);
+</dt>
+<dd>These functions allow the creation of <span class="d_inlinecode">Task</span> objects on the stack rather
+than the GC heap.  The lifetime of a <span class="d_inlinecode">Task</span> created by <span class="d_inlinecode"><a name="scopedTask"></a><span class="ddoc_psymbol">scopedTask</span></span>
+cannot exceed the lifetime of the scope it was created in.
+<p></p>
+<span class="d_inlinecode"><a name="scopedTask"></a><span class="ddoc_psymbol">scopedTask</span></span> might be preferred over <span class="d_inlinecode">task</span>:
+<p></p>
+
+1.  When a <span class="d_inlinecode">Task</span> that calls a delegate is being created and a closure
+    cannot be allocated due to objects on the stack that have scoped
+    destruction.  The delegate overload of <span class="d_inlinecode"><a name="scopedTask"></a><span class="ddoc_psymbol">scopedTask</span></span> takes a <span class="d_inlinecode">scope</span>
+    delegate.
+<p></p>
+
+2.  As a micro-optimization, to avoid the heap allocation associated with
+    <span class="d_inlinecode">task</span> or with the creation of a closure.
+<p></p>
+
+Usage is otherwise identical to <span class="d_inlinecode">task</span>.
+
+<p></p>
+<b>Notes:</b><br>
+<span class="d_inlinecode">Task</span> objects created using <span class="d_inlinecode"><a name="scopedTask"></a><span class="ddoc_psymbol">scopedTask</span></span> will automatically
+call <span class="d_inlinecode">Task.yieldForce</span> in their destructor if necessary to ensure
+the <span class="d_inlinecode">Task</span> is complete before the stack frame they reside on is destroyed.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".totalCPUs"></a>immutable uint <a name="totalCPUs"></a><span class="ddoc_psymbol">totalCPUs</span>;
+</dt>
+<dd>The total number of CPU cores available on the current machine, as reported by
+the operating system.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool"></a>class <a name="TaskPool"></a><span class="ddoc_psymbol">TaskPool</span>;
+</dt>
+<dd>This class encapsulates a task queue and a set of worker threads.  Its purpose
+is to efficiently map a large number of <span class="d_inlinecode">Task</span>s onto a smaller number of
+threads.  A task queue is a FIFO queue of <span class="d_inlinecode">Task</span> objects that have been
+submitted to the <span class="d_inlinecode"><a name="TaskPool"></a><span class="ddoc_psymbol">TaskPool</span></span> and are awaiting execution.  A worker thread is a
+thread that executes the <span class="d_inlinecode">Task</span> at the front of the queue when one is
+available and sleeps when the queue is empty.
+<p></p>
+This class should usually be used via the global instantiation
+available via the <a href="std_parallelism.html#taskPool"><span class="d_inlinecode">std.parallelism.taskPool</span></a> property.
+Occasionally it is useful to explicitly instantiate a <span class="d_inlinecode"><a name="TaskPool"></a><span class="ddoc_psymbol">TaskPool</span></span>:
+<p></p>
+
+1.  When you want <span class="d_inlinecode"><a name="TaskPool"></a><span class="ddoc_psymbol">TaskPool</span></span> instances with multiple priorities, for example
+    a low priority pool and a high priority pool.
+<p></p>
+
+2.  When the threads in the global task pool are waiting on a synchronization
+    primitive (for example a mutex), and you want to parallelize the code that
+    needs to run before these threads can be resumed.<p></p>
+
+<dl><dt class="d_decl"><a name=".TaskPool.this"></a>@trusted  this();
+</dt>
+<dd>Default constructor that initializes a <span class="d_inlinecode">TaskPool</span> with
+    <span class="d_inlinecode">totalCPUs</span> - 1 worker threads.  The minus 1 is included because the
+    main thread will also be available to do work.
+<p></p>
+<b>Note:</b><br>
+On single-core machines, the primitives provided by <span class="d_inlinecode">TaskPool</span>
+           operate transparently in single-threaded mode.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.this"></a>@trusted  this(size_t <i>nWorkers</i>);
+</dt>
+<dd>Allows for custom number of worker threads.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.parallel"></a>ParallelForeach!R <a name="parallel"></a><span class="ddoc_psymbol">parallel</span>(R)(R <i>range</i>, size_t <i>workUnitSize</i>);
+<br><a name=".TaskPool.parallel"></a>ParallelForeach!R <a name="parallel"></a><span class="ddoc_psymbol">parallel</span>(R)(R <i>range</i>);
+</dt>
+<dd>Implements a <a name="parallel"></a><span class="ddoc_psymbol">parallel</span> foreach loop over a range.  This works by implicitly
+    creating and submitting one <span class="d_inlinecode">Task</span> to the <span class="d_inlinecode">TaskPool</span> for each worker
+    thread.  A work unit is a set of consecutive elements of <span class="d_inlinecode">range</span> to
+    be processed by a worker thread between communication with any other
+    thread.  The number of elements processed per work unit is controlled by the
+    <span class="d_inlinecode">workUnitSize</span> parameter.  Smaller work units provide better load
+    balancing, but larger work units avoid the overhead of communicating
+    with other threads frequently to fetch the next work unit.  Large work
+    units also avoid <b>false</b> sharing in cases where the range is being modified.
+    The less time a single iteration of the loop takes, the larger
+    <span class="d_inlinecode">workUnitSize</span> should be.  For very expensive loop bodies,
+    <span class="d_inlinecode">workUnitSize</span> should  be 1.  An overload that chooses a default work
+    unit size is also available.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_comment">// Find the logarithm of every number from 1 to
+</span><span class="d_comment">// 10_000_000 in parallel.
+</span><span class="d_keyword">auto</span> logs = <span class="d_keyword">new</span> <span class="d_keyword">double</span>[10_000_000];
+
+<span class="d_comment">// Parallel foreach works with or without an index
+</span><span class="d_comment">// variable.  It can be iterate by ref if range.front
+</span><span class="d_comment">// returns by ref.
+</span>
+<span class="d_comment">// Iterate over logs using work units of size 100.
+</span><span class="d_keyword">foreach</span>(i, <span class="d_keyword">ref</span> elem; taskPool.<span class="d_psymbol">parallel</span>(logs, 100))
+{
+    elem = log(i + 1.0);
+}
+
+<span class="d_comment">// Same thing, but use the default work unit size.
+</span><span class="d_comment">//
+</span><span class="d_comment">// Timings on an Athlon 64 X2 dual core machine:
+</span><span class="d_comment">//
+</span><span class="d_comment">// Parallel foreach:  388 milliseconds
+</span><span class="d_comment">// Regular foreach:   619 milliseconds
+</span><span class="d_keyword">foreach</span>(i, <span class="d_keyword">ref</span> elem; taskPool.<span class="d_psymbol">parallel</span>(logs))
+{
+    elem = log(i + 1.0);
+}
+</pre>
+
+<p></p>
+<b>Notes:</b><br>
+The memory usage of this implementation is guaranteed to be constant
+    in <span class="d_inlinecode">range.length</span>.
+<p></p>
+
+    Breaking from a <a name="parallel"></a><span class="ddoc_psymbol">parallel</span> foreach loop via a break, labeled break,
+    labeled continue, return or goto statement throws a
+    <span class="d_inlinecode">ParallelForeachError</span>.
+<p></p>
+
+    In the case of non-random access ranges, <a name="parallel"></a><span class="ddoc_psymbol">parallel</span> foreach buffers lazily
+    to an array of size <span class="d_inlinecode">workUnitSize</span> before executing the <a name="parallel"></a><span class="ddoc_psymbol">parallel</span> portion
+    of the loop.  The exception is that, if a <a name="parallel"></a><span class="ddoc_psymbol">parallel</span> foreach is executed
+    over a range returned by <span class="d_inlinecode">asyncBuf</span> or <span class="d_inlinecode">map</span>, the copying is elided
+    and the buffers are simply swapped.  In this case <span class="d_inlinecode">workUnitSize</span> is
+    ignored and the work unit size is set to the  buffer size of <span class="d_inlinecode">range</span>.
+<p></p>
+
+    A memory barrier is guaranteed to be executed on exit from the loop,
+    so that results produced by all threads are visible in the calling thread.
+<p></p>
+
+    <b>Exception Handling</b>:
+<p></p>
+
+    When at least one exception is thrown from inside a <a name="parallel"></a><span class="ddoc_psymbol">parallel</span> foreach loop,
+    the submission of additional <span class="d_inlinecode">Task</span> objects is terminated as soon as
+    possible, in a non-deterministic manner.  All executing or
+    enqueued work units are allowed to complete.  Then, all exceptions that
+    were thrown by any work unit are chained using <span class="d_inlinecode">Throwable.next</span> and
+    rethrown.  The order of the exception chaining is non-deterministic.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.amap"></a>template <a name="amap"></a><span class="ddoc_psymbol">amap</span>(functions...)</dt>
+<dd>Eager parallel map.  The eagerness of this function means it has less
+    overhead than the lazily evaluated <span class="d_inlinecode">TaskPool.map</span> and should be
+    preferred where the memory requirements of eagerness are acceptable.
+    <span class="d_inlinecode">functions</span> are the functions to be evaluated, passed as template alias
+    parameters in a style similar to <a href="std_algorithm.html#map"><span class="d_inlinecode">std.algorithm.map</span></a>.  The first
+    argument must be a random access range.
+<p></p>
+<pre class="d_code"><span class="d_keyword">auto</span> numbers = iota(100_000_000.0);
+
+<span class="d_comment">// Find the square roots of numbers.
+</span><span class="d_comment">//
+</span><span class="d_comment">// Timings on an Athlon 64 X2 dual core machine:
+</span><span class="d_comment">//
+</span><span class="d_comment">// Parallel eager map:                   0.802 s
+</span><span class="d_comment">// Equivalent serial implementation:     1.768 s
+</span><span class="d_keyword">auto</span> squareRoots = taskPool.<span class="d_psymbol">amap</span>!sqrt(numbers);
+</pre>
+<p></p>
+
+    Immediately after the range argument, an optional work unit size argument
+    may be provided.  Work units as used by <span class="d_inlinecode"><a name="amap"></a><span class="ddoc_psymbol">amap</span></span> are identical to those
+    defined for parallel foreach.  If no work unit size is provided, the
+    default work unit size is used.
+<p></p>
+
+<pre class="d_code"><span class="d_comment">// Same thing, but make work unit size 100.
+</span><span class="d_keyword">auto</span> squareRoots = taskPool.<span class="d_psymbol">amap</span>!sqrt(numbers, 100);
+</pre>
+<p></p>
+
+    An output range for returning the results may be provided as the last
+    argument.  If one is not provided, an array of the proper type will be
+    allocated on the garbage collected heap.  If one is provided, it must be a
+    random access range with assignable elements, must have reference
+    semantics with respect to assignment to its elements, and must have the
+    same length as the input range.  Writing to adjacent elements from
+    different threads must be safe.
+<p></p>
+
+<pre class="d_code"><span class="d_comment">// Same thing, but explicitly allocate an array
+</span><span class="d_comment">// to return the results in.  The element type
+</span><span class="d_comment">// of the array may be either the exact type
+</span><span class="d_comment">// returned by functions or an implicit conversion
+</span><span class="d_comment">// target.
+</span><span class="d_keyword">auto</span> squareRoots = <span class="d_keyword">new</span> <span class="d_keyword">float</span>[numbers.length];
+taskPool.<span class="d_psymbol">amap</span>!sqrt(numbers, squareRoots);
+
+<span class="d_comment">// Multiple functions, explicit output range, and
+</span><span class="d_comment">// explicit work unit size.
+</span><span class="d_keyword">auto</span> results = <span class="d_keyword">new</span> Tuple!(<span class="d_keyword">float</span>, <span class="d_keyword">real</span>)[numbers.length];
+taskPool.<span class="d_psymbol">amap</span>!(sqrt, log)(numbers, 100, results);
+</pre>
+
+<p></p>
+<b>Note:</b><br>
+A memory barrier is guaranteed to be executed after all results are written
+    but before returning so that results produced by all threads are visible
+    in the calling thread.
+
+<p></p>
+<b>Tips:</b><br>
+To perform the mapping operation in place, provide the same range for the
+    input and output range.
+<p></p>
+
+    To parallelize the copying of a range with expensive to evaluate elements
+    to an array, pass an identity function (a function that just returns
+    whatever argument is provided to it) to <span class="d_inlinecode"><a name="amap"></a><span class="ddoc_psymbol">amap</span></span>.
+<p></p>
+
+    <b>Exception Handling</b>:
+<p></p>
+
+    When at least one exception is thrown from inside the map functions,
+    the submission of additional <span class="d_inlinecode">Task</span> objects is terminated as soon as
+    possible, in a non-deterministic manner.  All currently executing or
+    enqueued work units are allowed to complete.  Then, all exceptions that
+    were thrown from any work unit are chained using <span class="d_inlinecode">Throwable.next</span> and
+    rethrown.  The order of the exception chaining is non-deterministic.<p></p>
+
+<dl><dt class="d_decl"><a name=".TaskPool.amap"></a>auto <a name="amap"></a><span class="ddoc_psymbol">amap</span>(Args...)(Args <i>args</i>) if (isRandomAccessRange!(Args[0]));
+</dt>
+<dd><p></p>
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".TaskPool.map"></a>template <a name="map"></a><span class="ddoc_psymbol">map</span>(functions...)</dt>
+<dd>A semi-lazy parallel <a name="map"></a><span class="ddoc_psymbol">map</span> that can be used for pipelining.  The <a name="map"></a><span class="ddoc_psymbol">map</span>
+    functions are evaluated for the first <span class="d_inlinecode">bufSize</span> elements and stored in a
+    buffer and made available to <span class="d_inlinecode">popFront</span>.  Meanwhile, in the
+    background a second buffer of the same size is filled.  When the first
+    buffer is exhausted, it is swapped with the second buffer and filled while
+    the values from what was originally the second buffer are read.  This
+    implementation allows for elements to be written to the buffer without
+    the need for atomic operations or synchronization for each write, and
+    enables the mapping function to be evaluated efficiently in parallel.
+<p></p>
+<span class="d_inlinecode"><a name="map"></a><span class="ddoc_psymbol">map</span></span> has more overhead than the simpler procedure used by <span class="d_inlinecode">amap</span>
+    but avoids the need to keep all results in memory simultaneously and works
+    with non-random access ranges.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>source</td>
+<td valign=top>The input range to be mapped.  If <span class="d_inlinecode">source</span> is not random
+    access it will be lazily buffered to an array of size <span class="d_inlinecode">bufSize</span> before
+    the <a name="map"></a><span class="ddoc_psymbol">map</span> function is evaluated.  (For an exception to this rule, see Notes.)</td></tr>
+<tr><td valign=top>bufSize</td>
+<td valign=top>The size of the buffer to store the evaluated elements.</td></tr>
+<tr><td valign=top>workUnitSize</td>
+<td valign=top>The number of elements to evaluate in a single
+    <span class="d_inlinecode">Task</span>.  Must be less than or equal to <span class="d_inlinecode">bufSize</span>, and
+    should be a fraction of <span class="d_inlinecode">bufSize</span> such that all worker threads can be
+    used.  If the default of size_t.max is used, workUnitSize will be set to
+    the pool-wide default.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>An input range representing the results of the <a name="map"></a><span class="ddoc_psymbol">map</span>.  This range
+              has a length iff <span class="d_inlinecode">source</span> has a length.
+
+<p></p>
+<b>Notes:</b><br>
+If a range returned by <span class="d_inlinecode"><a name="map"></a><span class="ddoc_psymbol">map</span></span> or <span class="d_inlinecode">asyncBuf</span> is used as an input to
+    <span class="d_inlinecode"><a name="map"></a><span class="ddoc_psymbol">map</span></span>, then as an optimization the copying from the output buffer
+    of the first range to the input buffer of the second range is elided, even
+    though the ranges returned by <span class="d_inlinecode"><a name="map"></a><span class="ddoc_psymbol">map</span></span> and <span class="d_inlinecode">asyncBuf</span> are non-random
+    access ranges.  This means that the <span class="d_inlinecode">bufSize</span> parameter passed to the
+    current call to <span class="d_inlinecode"><a name="map"></a><span class="ddoc_psymbol">map</span></span> will be ignored and the size of the buffer
+    will be the buffer size of <span class="d_inlinecode">source</span>.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_comment">// Pipeline reading a file, converting each line
+</span><span class="d_comment">// to a number, taking the logarithms of the numbers,
+</span><span class="d_comment">// and performing the additions necessary to find
+</span><span class="d_comment">// the sum of the logarithms.
+</span>
+<span class="d_keyword">auto</span> lineRange = File(<span class="d_string">"numberList.txt"</span>).byLine();
+<span class="d_keyword">auto</span> dupedLines = std.algorithm.<span class="d_psymbol">map</span>!<span class="d_string">"a.idup"</span>(lineRange);
+<span class="d_keyword">auto</span> nums = taskPool.<span class="d_psymbol">map</span>!(to!<span class="d_keyword">double</span>)(dupedLines);
+<span class="d_keyword">auto</span> logs = taskPool.<span class="d_psymbol">map</span>!log10(nums);
+
+<span class="d_keyword">double</span> sum = 0;
+<span class="d_keyword">foreach</span>(elem; logs)
+{
+    sum += elem;
+}
+</pre>
+<p></p>
+
+    <b>Exception Handling</b>:
+<p></p>
+
+    Any exceptions thrown while iterating over <span class="d_inlinecode">source</span>
+    or computing the <a name="map"></a><span class="ddoc_psymbol">map</span> function are re-thrown on a call to <span class="d_inlinecode">popFront</span> or,
+    if thrown during construction, are simply allowed to propagate to the
+    caller.  In the case of exceptions thrown while computing the <a name="map"></a><span class="ddoc_psymbol">map</span> function,
+    the exceptions are chained as in <span class="d_inlinecode">TaskPool.amap</span>.<p></p>
+
+<dl><dt class="d_decl"><a name=".TaskPool.map"></a>auto <a name="map"></a><span class="ddoc_psymbol">map</span>(S)(S <i>source</i>, size_t <i>bufSize</i> = 100, size_t <i>workUnitSize</i> = size_t.max) if (isInputRange!S);
+</dt>
+<dd><p></p>
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".TaskPool.asyncBuf"></a>auto <a name="asyncBuf"></a><span class="ddoc_psymbol">asyncBuf</span>(S)(S <i>source</i>, size_t <i>bufSize</i> = 100) if (isInputRange!S);
+</dt>
+<dd>Given a <span class="d_inlinecode">source</span> range that is expensive to iterate over, returns an
+    input range that asynchronously buffers the contents of
+    <span class="d_inlinecode">source</span> into a buffer of <span class="d_inlinecode">bufSize</span> elements in a worker thread,
+    while making prevously buffered elements from a second buffer, also of size
+    <span class="d_inlinecode">bufSize</span>, available via the range interface of the returned
+    object.  The returned range has a length iff <span class="d_inlinecode">hasLength!S</span>.
+    <span class="d_inlinecode"><a name="asyncBuf"></a><span class="ddoc_psymbol">asyncBuf</span></span> is useful, for example, when performing expensive operations
+    on the elements of ranges that represent data on a disk or network.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">import</span> std.conv, std.stdio;
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_comment">// Fetch lines of a file in a background thread
+</span>    <span class="d_comment">// while processing prevously fetched lines,
+</span>    <span class="d_comment">// dealing with byLine's buffer recycling by
+</span>    <span class="d_comment">// eagerly duplicating every line.
+</span>    <span class="d_keyword">auto</span> lines = File(<span class="d_string">"foo.txt"</span>).byLine();
+    <span class="d_keyword">auto</span> duped = std.algorithm.map!<span class="d_string">"a.idup"</span>(lines);
+
+    <span class="d_comment">// Fetch more lines in the background while we
+</span>    <span class="d_comment">// process the lines already read into memory
+</span>    <span class="d_comment">// into a matrix of doubles.
+</span>    <span class="d_keyword">double</span>[][] matrix;
+    <span class="d_keyword">auto</span> asyncReader = taskPool.<span class="d_psymbol">asyncBuf</span>(duped);
+
+    <span class="d_keyword">foreach</span>(line; asyncReader)
+    {
+        <span class="d_keyword">auto</span> ls = line.split(<span class="d_string">"\t"</span>);
+        matrix ~= to!(<span class="d_keyword">double</span>[])(ls);
+    }
+}
+</pre>
+<p></p>
+
+    <b>Exception Handling</b>:
+<p></p>
+
+    Any exceptions thrown while iterating over <span class="d_inlinecode">source</span> are re-thrown on a
+    call to <span class="d_inlinecode">popFront</span> or, if thrown during construction, simply
+    allowed to propagate to the caller.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.asyncBuf"></a>auto <a name="asyncBuf"></a><span class="ddoc_psymbol">asyncBuf</span>(C1, C2)(C1 <i>next</i>, C2 <i>empty</i>, size_t <i>initialBufSize</i> = 0, size_t <i>nBuffers</i> = 100) if (is(typeof(C2.init()) : bool) &amp;&amp; ParameterTypeTuple!C1.length == 1 &amp;&amp; ParameterTypeTuple!C2.length == 0 &amp;&amp; isArray!(ParameterTypeTuple!C1[0]));
+</dt>
+<dd>Given a callable object <span class="d_inlinecode">next</span> that writes to a user-provided buffer and
+    a second callable object <span class="d_inlinecode">empty</span> that determines whether more data is
+    available to write via <span class="d_inlinecode">next</span>, returns an input range that
+    asynchronously calls <span class="d_inlinecode">next</span> with a set of size <span class="d_inlinecode">nBuffers</span> of buffers
+    and makes the results available in the order they were obtained via the
+    input range interface of the returned object.  Similarly to the
+    input range overload of <span class="d_inlinecode"><a name="asyncBuf"></a><span class="ddoc_psymbol">asyncBuf</span></span>, the first half of the buffers
+    are made available via the range interface while the second half are
+    filled and vice-versa.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>C1 next</td>
+<td valign=top>A callable object that takes a single argument that must be an array
+           with mutable elements.  When called, <span class="d_inlinecode">next</span> writes data to
+           the array provided by the caller.</td></tr>
+<tr><td valign=top>C2 empty</td>
+<td valign=top>A callable object that takes no arguments and returns a type
+            implicitly convertible to <span class="d_inlinecode">bool</span>.  This is used to signify
+            that no more data is available to be obtained by calling <span class="d_inlinecode">next</span>.</td></tr>
+<tr><td valign=top>size_t initialBufSize</td>
+<td valign=top>The initial size of each buffer.  If <span class="d_inlinecode">next</span> takes its
+                     array by reference, it may resize the buffers.</td></tr>
+<tr><td valign=top>size_t nBuffers</td>
+<td valign=top>The number of buffers to cycle through when calling <span class="d_inlinecode">next</span>.</td></tr>
+</table><p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_comment">// Fetch lines of a file in a background
+</span><span class="d_comment">// thread while processing prevously fetched
+</span><span class="d_comment">// lines, without duplicating any lines.
+</span><span class="d_keyword">auto</span> file = File(<span class="d_string">"foo.txt"</span>);
+
+<span class="d_keyword">void</span> next(<span class="d_keyword">ref</span> <span class="d_keyword">char</span>[] buf)
+{
+    file.readln(buf);
+}
+
+<span class="d_comment">// Fetch more lines in the background while we
+</span><span class="d_comment">// process the lines already read into memory
+</span><span class="d_comment">// into a matrix of doubles.
+</span><span class="d_keyword">double</span>[][] matrix;
+<span class="d_keyword">auto</span> asyncReader = taskPool.<span class="d_psymbol">asyncBuf</span>(&amp;next, &amp;file.eof);
+
+<span class="d_keyword">foreach</span>(line; asyncReader)
+{
+    <span class="d_keyword">auto</span> ls = line.split(<span class="d_string">"\t"</span>);
+    matrix ~= to!(<span class="d_keyword">double</span>[])(ls);
+}
+</pre>
+<p></p>
+
+    <b>Exception Handling</b>:
+<p></p>
+
+    Any exceptions thrown while iterating over <span class="d_inlinecode">range</span> are re-thrown on a
+    call to <span class="d_inlinecode">popFront</span>.
+
+<p></p>
+<b>Warning:</b><br>
+Using the range returned by this function in a parallel foreach loop
+    will not work because buffers may be overwritten while the task that
+    processes them is in queue.  This is checked for at compile time
+    and will result in a static assertion failure.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.reduce"></a>template <a name="reduce"></a><span class="ddoc_psymbol">reduce</span>(functions...)</dt>
+<dd>Parallel <a name="reduce"></a><span class="ddoc_psymbol">reduce</span> on a random access range.  Except as otherwise noted, usage
+    is similar to <a href="std_algorithm.html#reduce"><span class="d_inlinecode">std.algorithm.reduce</span></a>.  This function works by splitting
+    the range to be reduced into work units, which are slices to be reduced in
+    parallel.  Once the results from all work units are computed, a final serial
+    reduction is performed on these results to compute the final answer.
+    Therefore, care must be taken to choose the seed value appropriately.
+<p></p>
+   Because the reduction is being performed in parallel,
+    <span class="d_inlinecode">functions</span> must be associative.  For notational simplicity, let # be an
+    infix operator representing <span class="d_inlinecode">functions</span>.  Then, (a # b) # c must equal
+    a # (b # c).  Floating point addition is not associative
+    even though addition in exact arithmetic is.  Summing floating
+    point numbers using this function may give different results than summing
+    serially.  However, for many practical purposes floating point addition
+    can be treated as associative.
+<p></p>
+
+    Note that, since <span class="d_inlinecode">functions</span> are assumed to be associative, additional
+    optimizations are made to the serial portion of the reduction algorithm.
+    These take advantage of the instruction level parallelism of modern CPUs,
+    in addition to the thread-level parallelism that the rest of this
+    module exploits.  This can lead to better than linear speedups relative
+    to <a href="std_algorithm.html#reduce"><span class="d_inlinecode">std.algorithm.reduce</span></a>, especially for fine-grained benchmarks
+    like dot products.
+<p></p>
+
+    An explicit seed may be provided as the first argument.  If
+    provided, it is used as the seed for all work units and for the final
+    reduction of results from all work units.  Therefore, if it is not the
+    identity value for the operation being performed, results may differ from
+    those generated by <a href="std_algorithm.html#reduce"><span class="d_inlinecode">std.algorithm.reduce</span></a> or depending on how many work
+    units are used.  The next argument must be the range to be reduced.
+<pre class="d_code"><span class="d_comment">// Find the sum of squares of a range in parallel, using
+</span><span class="d_comment">// an explicit seed.
+</span><span class="d_comment">//
+</span><span class="d_comment">// Timings on an Athlon 64 X2 dual core machine:
+</span><span class="d_comment">//
+</span><span class="d_comment">// Parallel reduce:                     72 milliseconds
+</span><span class="d_comment">// Using std.algorithm.reduce instead:  181 milliseconds
+</span><span class="d_keyword">auto</span> nums = iota(10_000_000.0f);
+<span class="d_keyword">auto</span> sumSquares = taskPool.<span class="d_psymbol">reduce</span>!<span class="d_string">"a + b"</span>(
+    0.0, std.algorithm.map!<span class="d_string">"a * a"</span>(nums)
+);
+</pre>
+<p></p>
+
+    If no explicit seed is provided, the first element of each work unit
+    is used as a seed.  For the final reduction, the result from the first
+    work unit is used as the seed.
+<pre class="d_code"><span class="d_comment">// Find the sum of a range in parallel, using the first
+</span><span class="d_comment">// element of each work unit as the seed.
+</span><span class="d_keyword">auto</span> sum = taskPool.<span class="d_psymbol">reduce</span>!<span class="d_string">"a + b"</span>(nums);
+</pre>
+<p></p>
+
+    An explicit work unit size may be specified as the last argument.
+    Specifying too small a work unit size will effectively serialize the
+    reduction, as the final reduction of the result of each work unit will
+    dominate computation time.  If <span class="d_inlinecode">TaskPool.size</span> for this instance
+    is zero, this parameter is ignored and one work unit is used.
+<pre class="d_code"><span class="d_comment">// Use a work unit size of 100.
+</span><span class="d_keyword">auto</span> sum2 = taskPool.<span class="d_psymbol">reduce</span>!<span class="d_string">"a + b"</span>(nums, 100);
+
+<span class="d_comment">// Work unit size of 100 and explicit seed.
+</span><span class="d_keyword">auto</span> sum3 = taskPool.<span class="d_psymbol">reduce</span>!<span class="d_string">"a + b"</span>(0.0, nums, 100);
+</pre>
+<p></p>
+
+    Parallel <a name="reduce"></a><span class="ddoc_psymbol">reduce</span> supports multiple functions, like
+    <span class="d_inlinecode">std.algorithm.<a name="reduce"></a><span class="ddoc_psymbol">reduce</span></span>.
+<pre class="d_code"><span class="d_comment">// Find both the min and max of nums.
+</span><span class="d_keyword">auto</span> minMax = taskPool.<span class="d_psymbol">reduce</span>!(min, max)(nums);
+<span class="d_keyword">assert</span>(minMax[0] == <span class="d_psymbol">reduce</span>!min(nums));
+<span class="d_keyword">assert</span>(minMax[1] == <span class="d_psymbol">reduce</span>!max(nums));
+</pre>
+<p></p>
+
+    <b>Exception Handling</b>:
+<p></p>
+
+    After this function is finished executing, any exceptions thrown
+    are chained together via <span class="d_inlinecode">Throwable.next</span> and rethrown.  The chaining
+    order is non-deterministic.<p></p>
+
+<dl><dt class="d_decl"><a name=".TaskPool.reduce"></a>auto <a name="reduce"></a><span class="ddoc_psymbol">reduce</span>(Args...)(Args <i>args</i>);
+</dt>
+<dd><p></p>
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".TaskPool.workerIndex"></a>const nothrow @property @safe size_t <a name="workerIndex"></a><span class="ddoc_psymbol">workerIndex</span>();
+</dt>
+<dd>Gets the index of the current thread relative to this <span class="d_inlinecode">TaskPool</span>.  Any
+    thread not in this pool will receive an index of 0.  The worker threads in
+    this pool receive unique indices of 1 through <span class="d_inlinecode">this.size</span>.
+<p></p>
+This function is useful for maintaining worker-local resources.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_comment">// Execute a loop that computes the greatest common
+</span><span class="d_comment">// divisor of every number from 0 through 999 with
+</span><span class="d_comment">// 42 in parallel.  Write the results out to
+</span><span class="d_comment">// a set of files, one for each thread.  This allows
+</span><span class="d_comment">// results to be written out without any synchronization.
+</span>
+<span class="d_keyword">import</span> std.conv, std.range, std.numeric, std.stdio;
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_keyword">auto</span> filesHandles = <span class="d_keyword">new</span> File[taskPool.size + 1];
+    <span class="d_keyword">scope</span>(exit) {
+        <span class="d_keyword">foreach</span>(<span class="d_keyword">ref</span> handle; fileHandles) {
+            handle.close();
+        }
+    }
+
+    <span class="d_keyword">foreach</span>(i, <span class="d_keyword">ref</span> handle; fileHandles)
+    {
+        handle = File(<span class="d_string">"workerResults"</span> ~ to!string(i) ~ <span class="d_string">".txt"</span>);
+    }
+
+    <span class="d_keyword">foreach</span>(num; parallel(iota(1_000)))
+    {
+        <span class="d_keyword">auto</span> outHandle = fileHandles[taskPool.<span class="d_psymbol">workerIndex</span>];
+        outHandle.writeln(num, '\t', gcd(num, 42));
+    }
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.WorkerLocalStorage"></a>struct <a name="WorkerLocalStorage"></a><span class="ddoc_psymbol">WorkerLocalStorage</span>(T);
+</dt>
+<dd>Struct for creating worker-local storage.  Worker-local storage is
+    thread-local storage that exists only for worker threads in a given
+    <span class="d_inlinecode">TaskPool</span> plus a single thread outside the pool.  It is allocated on the
+    garbage collected heap in a way that avoids false sharing, and doesn't
+    necessarily have global scope within any thread.  It can be accessed from
+    any worker thread in the <span class="d_inlinecode">TaskPool</span> that created it, and one thread
+    outside this <span class="d_inlinecode">TaskPool</span>.  All threads outside the pool that created a
+    given instance of worker-local storage share a single slot.
+<p></p>
+Since the underlying data for this struct is heap-allocated, this struct
+    has reference semantics when passed between functions.
+<p></p>
+
+    The main uses cases for <span class="d_inlinecode">WorkerLocalStorageStorage</span> are:
+<p></p>
+
+    1.  Performing parallel reductions with an imperative, as opposed to
+    functional, programming style.  In this case, it's useful to treat
+    <span class="d_inlinecode">WorkerLocalStorageStorage</span> as local to each thread for only the parallel
+    portion of an algorithm.
+<p></p>
+
+    2.  Recycling temporary buffers across iterations of a parallel foreach loop.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_comment">// Calculate pi as in our synopsis example, but
+</span><span class="d_comment">// use an imperative instead of a functional style.
+</span><span class="d_keyword">immutable</span> n = 1_000_000_000;
+<span class="d_keyword">immutable</span> delta = 1.0L / n;
+
+<span class="d_keyword">auto</span> sums = taskPool.workerLocalStorage(0.0L);
+<span class="d_keyword">foreach</span>(i; parallel(iota(n)))
+{
+    <span class="d_keyword">immutable</span> x = ( i - 0.5L ) * delta;
+    <span class="d_keyword">immutable</span> toAdd = delta / ( 1.0 + x * x );
+    sums.get += toAdd;
+}
+
+<span class="d_comment">// Add up the results from each worker thread.
+</span><span class="d_keyword">real</span> pi = 0;
+<span class="d_keyword">foreach</span>(threadResult; sums.toRange)
+{
+    pi += 4.0L * threadResult;
+}
+</pre>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".get"></a>@property T <a name="get"></a><span class="ddoc_psymbol">get</span>();
+</dt>
+<dd>Get the current thread's instance.  Returns by ref.
+        Note that calling <span class="d_inlinecode"><a name="get"></a><span class="ddoc_psymbol">get</span></span> from any thread
+        outside the <span class="d_inlinecode">TaskPool</span> that created this instance will return the
+        same reference, so an instance of worker-local storage should only be
+        accessed from one thread outside the pool that created it.  If this
+        rule is violated, undefined behavior will result.
+<p></p>
+If assertions are enabled and <span class="d_inlinecode">toRange</span> has been called, then this
+        WorkerLocalStorage instance is no longer worker-local and an assertion
+        failure will result when calling this method.  This is not checked
+        when assertions are disabled for performance reasons.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".get"></a>@property void <a name="get"></a><span class="ddoc_psymbol">get</span>(T <i>val</i>);
+</dt>
+<dd>Assign a value to the current thread's instance.  This function has
+        the same caveats as its overload.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toRange"></a>@property WorkerLocalStorageRange!T <a name="toRange"></a><span class="ddoc_psymbol">toRange</span>();
+</dt>
+<dd>Returns a range view of the values for all threads, which can be used
+        to further process the results of each thread after running the parallel
+        part of your algorithm.  Do not use this method in the parallel portion
+        of your algorithm.
+<p></p>
+Calling this function sets a flag indicating that this struct is no
+        longer worker-local, and attempting to use the <span class="d_inlinecode">get</span> method again
+        will result in an assertion failure if assertions are enabled.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".TaskPool.WorkerLocalStorageRange"></a>struct <a name="WorkerLocalStorageRange"></a><span class="ddoc_psymbol">WorkerLocalStorageRange</span>(T);
+</dt>
+<dd>Range primitives for worker-local storage.  The purpose of this is to
+    access results produced by each worker thread from a single thread once you
+    are no longer using the worker-local storage from multiple threads.
+    Do not use this struct in the parallel portion of your algorithm.
+<p></p>
+The proper way to instantiate this object is to call
+    <span class="d_inlinecode">WorkerLocalStorage.toRange</span>.  Once instantiated, this object behaves
+    as a finite random-access range with assignable, lvalue elemends and
+    a length equal to the number of worker threads in the <span class="d_inlinecode">TaskPool</span> that
+    created it plus 1.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.workerLocalStorage"></a>WorkerLocalStorage!T <a name="workerLocalStorage"></a><span class="ddoc_psymbol">workerLocalStorage</span>(T)(lazy T <i>initialVal</i> = T.init);
+</dt>
+<dd>Creates an instance of worker-local storage, initialized with a given
+    value.  The value is <span class="d_inlinecode">lazy</span> so that you can, for example, easily
+    create one instance of a class for each worker.  For usage example,
+    see the <span class="d_inlinecode">WorkerLocalStorage</span> struct.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.stop"></a>@trusted void <a name="stop"></a><span class="ddoc_psymbol">stop</span>();
+</dt>
+<dd>Signals to all worker threads to terminate as soon as they are finished
+    with their current <span class="d_inlinecode">Task</span>, or immediately if they are not executing a
+    <span class="d_inlinecode">Task</span>.  <span class="d_inlinecode">Task</span>s that were in queue will not be executed unless
+    a call to <span class="d_inlinecode">Task.workForce</span>, <span class="d_inlinecode">Task.yieldForce</span> or <span class="d_inlinecode">Task.spinForce</span>
+    causes them to be executed.
+<p></p>
+Use only if you have waitied on every <span class="d_inlinecode">Task</span> and therefore know the
+    queue is empty, or if you speculatively executed some tasks and no longer
+    need the results.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.finish"></a>@trusted void <a name="finish"></a><span class="ddoc_psymbol">finish</span>(bool <i>blocking</i> = false);
+</dt>
+<dd>Signals worker threads to terminate when the queue becomes empty.
+<p></p>
+If <i>blocking</i> argument is <b>true</b>, wait for all worker threads to terminate
+    before returning.  This option might be used in applications where
+    task results are never consumed-- e.g. when <span class="d_inlinecode">TaskPool</span> is employed as a
+    rudimentary scheduler for tasks which communicate by means other than
+    return values.
+
+<p></p>
+<b>Warning:</b><br>
+Calling this function with <span class="d_inlinecode"><i>blocking</i> = <b>true</b></span> from a worker
+              thread that is a member of the same <span class="d_inlinecode">TaskPool</span> that
+              <span class="d_inlinecode"><a name="finish"></a><span class="ddoc_psymbol">finish</span></span> is being called on will result in a deadlock.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.size"></a>const pure nothrow @property @safe size_t <a name="size"></a><span class="ddoc_psymbol">size</span>();
+</dt>
+<dd>Returns the number of worker threads in the pool.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.put"></a>void <a name="put"></a><span class="ddoc_psymbol">put</span>(alias fun, Args...)(ref Task!(fun, Args) <i>task</i>) if (!isSafeReturn!(typeof(<i>task</i>)));
+<br><a name=".TaskPool.put"></a>void <a name="put"></a><span class="ddoc_psymbol">put</span>(alias fun, Args...)(Task!(fun, Args)* <i>task</i>) if (!isSafeReturn!(typeof(*<i>task</i>)));
+</dt>
+<dd>Put a <span class="d_inlinecode">Task</span> object on the back of the task queue.  The <span class="d_inlinecode">Task</span>
+    object may be passed by pointer or reference.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.file;
+
+<span class="d_comment">// Create a task.
+</span><span class="d_keyword">auto</span> t = task!read(<span class="d_string">"foo.txt"</span>);
+
+<span class="d_comment">// Add it to the queue to be executed.
+</span>taskPool.<span class="d_psymbol">put</span>(t);
+</pre>
+
+<p></p>
+<b>Notes:</b><br>
+@trusted overloads of this function are called for <span class="d_inlinecode">Task</span>s if
+    <a href="std_traits.html#hasUnsharedAliasing"><span class="d_inlinecode">std.traits.hasUnsharedAliasing</span></a> is <b>false</b> for the <span class="d_inlinecode">Task</span>'s
+    return type or the function the <span class="d_inlinecode">Task</span> executes is <span class="d_inlinecode">pure</span>.
+    <span class="d_inlinecode">Task</span> objects that meet all other requirements specified in the
+    <span class="d_inlinecode">@trusted</span> overloads of <span class="d_inlinecode">task</span> and <span class="d_inlinecode">scopedTask</span> may be created
+    and executed from <span class="d_inlinecode">@safe</span> code via <span class="d_inlinecode">Task.executeInNewThread</span> but
+    not via <span class="d_inlinecode">TaskPool</span>.
+<p></p>
+
+    While this function takes the address of variables that may
+    be on the stack, some overloads are marked as @trusted.
+    <span class="d_inlinecode">Task</span> includes a destructor that waits for the task to complete
+    before destroying the stack frame it is allocated on.  Therefore,
+    it is impossible for the stack frame to be destroyed before the task is
+    complete and no longer referenced by a <span class="d_inlinecode">TaskPool</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.isDaemon"></a>@property @trusted bool <a name="isDaemon"></a><span class="ddoc_psymbol">isDaemon</span>();
+<br><a name=".TaskPool.isDaemon"></a>@property @trusted void <a name="isDaemon"></a><span class="ddoc_psymbol">isDaemon</span>(bool <i>newVal</i>);
+</dt>
+<dd>These properties control whether the worker threads are daemon threads.
+    A daemon thread is automatically terminated when all non-daemon threads
+    have terminated.  A non-daemon thread will prevent a program from
+    terminating as long as it has not terminated.
+<p></p>
+If any <span class="d_inlinecode">TaskPool</span> with non-daemon threads is active, either <span class="d_inlinecode">stop</span>
+    or <span class="d_inlinecode">finish</span> must be called on it before the program can terminate.
+<p></p>
+
+    The worker treads in the <span class="d_inlinecode">TaskPool</span> instance returned by the
+    <span class="d_inlinecode">taskPool</span> property are daemon by default.  The worker threads of
+    manually instantiated task pools are non-daemon by default.
+
+<p></p>
+<b>Note:</b><br>
+For a size zero pool, the getter arbitrarily returns <b>true</b> and the
+           setter has no effect.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".TaskPool.priority"></a>@property @trusted int <a name="priority"></a><span class="ddoc_psymbol">priority</span>();
+<br><a name=".TaskPool.priority"></a>@property @trusted void <a name="priority"></a><span class="ddoc_psymbol">priority</span>(int <i>newPriority</i>);
+</dt>
+<dd>These functions allow getting and setting the OS scheduling <a name="priority"></a><span class="ddoc_psymbol">priority</span> of
+    the worker threads in this <span class="d_inlinecode">TaskPool</span>.  They forward to
+    <span class="d_inlinecode">core.thread.Thread.<a name="priority"></a><span class="ddoc_psymbol">priority</span></span>, so a given <a name="priority"></a><span class="ddoc_psymbol">priority</span> value here means the
+    same thing as an identical <a name="priority"></a><span class="ddoc_psymbol">priority</span> value in <span class="d_inlinecode">core.thread</span>.
+<p></p>
+<b>Note:</b><br>
+For a size zero pool, the getter arbitrarily returns
+           <span class="d_inlinecode">core.thread.Thread.PRIORITY_MIN</span> and the setter has no effect.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".taskPool"></a>@property @trusted TaskPool <a name="taskPool"></a><span class="ddoc_psymbol">taskPool</span>();
+</dt>
+<dd>Returns a lazily initialized global instantiation of <span class="d_inlinecode">TaskPool</span>.
+This function can safely be called concurrently from multiple non-worker
+threads.  The worker threads in this pool are daemon threads, meaning that it
+is not necessary to call <span class="d_inlinecode">TaskPool.stop</span> or <span class="d_inlinecode">TaskPool.finish</span> before
+terminating the main thread.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".defaultPoolThreads"></a>@property @trusted uint <a name="defaultPoolThreads"></a><span class="ddoc_psymbol">defaultPoolThreads</span>();
+<br><a name=".defaultPoolThreads"></a>@property @trusted void <a name="defaultPoolThreads"></a><span class="ddoc_psymbol">defaultPoolThreads</span>(uint <i>newVal</i>);
+</dt>
+<dd>These properties get and set the number of worker threads in the <span class="d_inlinecode">TaskPool</span>
+instance returned by <span class="d_inlinecode">taskPool</span>.  The default value is <span class="d_inlinecode">totalCPUs</span> - 1.
+Calling the setter after the first call to <span class="d_inlinecode">taskPool</span> does not changes
+number of worker threads in the instance returned by <span class="d_inlinecode">taskPool</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".parallel"></a>ParallelForeach!R <a name="parallel"></a><span class="ddoc_psymbol">parallel</span>(R)(R <i>range</i>);
+<br><a name=".parallel"></a>ParallelForeach!R <a name="parallel"></a><span class="ddoc_psymbol">parallel</span>(R)(R <i>range</i>, size_t <i>workUnitSize</i>);
+</dt>
+<dd>Convenience functions that forwards to <span class="d_inlinecode">taskPool.<a name="parallel"></a><span class="ddoc_psymbol">parallel</span></span>.  The
+purpose of these is to make <a name="parallel"></a><span class="ddoc_psymbol">parallel</span> foreach less verbose and more
+readable.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_comment">// Find the logarithm of every number from
+</span><span class="d_comment">// 1 to 1_000_000 in parallel, using the
+</span><span class="d_comment">// default TaskPool instance.
+</span><span class="d_keyword">auto</span> logs = <span class="d_keyword">new</span> <span class="d_keyword">double</span>[1_000_000];
+
+<span class="d_keyword">foreach</span>(i, <span class="d_keyword">ref</span> elem; <span class="d_psymbol">parallel</span>(logs)) {
+    elem = log(i + 1.0);
+}
+</pre>
+<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright (c) 2009-2011, David Simcha.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

@@ -1,0 +1,692 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.conv - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+function listanchors()
+{
+    if (typeof inhibitQuickIndex !== 'undefined') return;
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        // ignore anchors from DDOC_PSYMBOL
+        if (text[0] != '.') continue;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+        values[n++] = a.name
+    }
+
+    // we won't display the qualifying names to save space, so sort by last name
+    var lastName = function(a){
+        var li = a.lastIndexOf('.');
+        return a.slice(li + 1);
+    }
+    values.sort(function(a,b){return lastName(a) > lastName(b)});
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        var text = lastName(a);
+        newText += ' \x3Ca href="\x23' + a +
+            '"\x3E\x3Cspan class="d_psymbol"\x3E' + text + '\x3C/span\x3E\x3C/a\x3E';
+    }
+    if (newText != "") newText = "\x3Cp\x3E\x3Cb\x3EJump to:\x3C/b\x3E" + newText + "\x3C/p\x3E";
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+jQuery(document).ready(listanchors);
+</script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/phobos">Library Reference</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="/images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language </a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/phobos">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+	<li><a href="../phobos-prerelease/index.html" title="D Runtime Library (prerelease)">Phobos (prerelease)</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="index.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_ascii.html" title="Functions which operate on ASCII characters">std.ascii</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_csv.html" title="CSV file parser">std.csv</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_parallelism.html" title="High-level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_process.html" title="Create/destroy processes">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_uuid.html" title="Generate and use UUIDs">std.uuid</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_net_curl.html" title="High level curl wrapper">std.net.curl</a></li>
+	<li><a href="std_net_isemail.html" title="Validate e-mail addresses">std.net.isemail</a></li>
+	<li><a href="std_digest_crc.html" title="CRC digest functions">std.digest.crc</a></li>
+	<li><a href="std_digest_digest.html" title="API for digest functions">std.digest.digest</a></li>
+	<li><a href="std_digest_md.html" title="MD digest functions">std.digest.md</a></li>
+	<li><a href="std_digest_ripemd.html" title="RIPEMD digest functions">std.digest.ripemd</a></li>
+	<li><a href="std_digest_sha.html" title="SHA digest functions">std.digest.sha</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+    </ul>
+    <h2><a href="index.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_sqlite3.html" title="Interface to sqlite3 library">etc.c.sqlite3</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="index.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_demangle.html" title="D symbol mangling">core.demangle</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_simd.html" title="Builtin SIMD intrinsics">core.simd</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_time.html" title="Core time functionality">core.time</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/phobos/edit/master/std\conv.d" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/Phobos/StdConv" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>std.conv</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\conv.d -->
+A one-stop shop for converting values from one type to another.
+<p></p>
+<b>License:</b><br><a href="http://boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+
+<p></p>
+<b>Authors:</b><br><a href="http://digitalmars.com">Walter Bright</a>,
+           <a href="http://erdani.org">Andrei Alexandrescu</a>,
+           Shin Fujishiro,
+           Adam D. Ruppe,
+           Kenji Hara
+
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/conv.d">std/conv.d</a>
+
+<p></p>
+
+<dl><dt class="d_decl"><a name=".ConvException"></a>class <a name="ConvException"></a><span class="ddoc_psymbol">ConvException</span>: object.Exception;
+</dt>
+<dd>Thrown on conversion errors.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ConvOverflowException"></a>class <a name="ConvOverflowException"></a><span class="ddoc_psymbol">ConvOverflowException</span>: std.conv.ConvException;
+</dt>
+<dd>Thrown on conversion overflow errors.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".to"></a>template <a name="to"></a><span class="ddoc_psymbol">to</span>(T)</dt>
+<dd>The <span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span></span> family of functions converts a value from type
+<span class="d_param">Source</span> <a name="to"></a><span class="ddoc_psymbol">to</span> type <span class="d_param">Target</span>. The source type is
+deduced and the target type must be specified, for example the
+expression <span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span>!int(42.0)</span> converts the number 42 from
+<span class="d_param">double</span> <a name="to"></a><span class="ddoc_psymbol">to</span> <span class="d_param">int</span>. The conversion is "safe", i.e.,
+it checks for overflow; <span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span>!int(4.2e10)</span> would throw the
+<span class="d_param">ConvOverflowException</span> exception. Overflow checks are only
+inserted when necessary, e.g., <span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span>!double(42)</span> does not do
+any checking because any int fits in a double.
+<p></p>
+Converting a value <a name="to"></a><span class="ddoc_psymbol">to</span> its own type (useful mostly for generic code)
+simply returns its argument.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">int</span> a = 42;
+<span class="d_keyword">auto</span> b = <span class="d_psymbol">to</span>!<span class="d_keyword">int</span>(a); <span class="d_comment">// b is int with value 42
+</span><span class="d_keyword">auto</span> c = <span class="d_psymbol">to</span>!<span class="d_keyword">double</span>(3.14); <span class="d_comment">// c is double with value 3.14
+</span></pre>
+<p></p>
+
+Converting among numeric types is a safe way <a name="to"></a><span class="ddoc_psymbol">to</span> cast them around.
+<p></p>
+
+Conversions from floating-point types <a name="to"></a><span class="ddoc_psymbol">to</span> integral types allow loss of
+precision (the fractional part of a floating-point number). The
+conversion is truncating towards zero, the same way a cast would
+truncate. (To round a floating point value when casting <a name="to"></a><span class="ddoc_psymbol">to</span> an
+integral, use <span class="d_param">roundTo</span>.)
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">int</span> a = 420;
+<span class="d_keyword">auto</span> b = <span class="d_psymbol">to</span>!<span class="d_keyword">long</span>(a); <span class="d_comment">// same as long b = a;
+</span><span class="d_keyword">auto</span> c = <span class="d_psymbol">to</span>!<span class="d_keyword">byte</span>(a / 10); <span class="d_comment">// fine, c = 42
+</span><span class="d_keyword">auto</span> d = <span class="d_psymbol">to</span>!<span class="d_keyword">byte</span>(a); <span class="d_comment">// throw ConvOverflowException
+</span><span class="d_keyword">double</span> e = 4.2e6;
+<span class="d_keyword">auto</span> f = <span class="d_psymbol">to</span>!<span class="d_keyword">int</span>(e); <span class="d_comment">// f == 4200000
+</span>e = -3.14;
+<span class="d_keyword">auto</span> g = <span class="d_psymbol">to</span>!<span class="d_keyword">uint</span>(e); <span class="d_comment">// fails: floating-to-integral negative overflow
+</span>e = 3.14;
+<span class="d_keyword">auto</span> h = <span class="d_psymbol">to</span>!<span class="d_keyword">uint</span>(e); <span class="d_comment">// h = 3
+</span>e = 3.99;
+h = <span class="d_psymbol">to</span>!<span class="d_keyword">uint</span>(a); <span class="d_comment">// h = 3
+</span>e = -3.99;
+f = <span class="d_psymbol">to</span>!<span class="d_keyword">int</span>(a); <span class="d_comment">// f = -3
+</span></pre>
+<p></p>
+
+Conversions from integral types <a name="to"></a><span class="ddoc_psymbol">to</span> floating-point types always
+succeed, but might lose accuracy. The largest integers with a
+predecessor representable in floating-point format are 2^24-1 for
+float, 2^53-1 for double, and 2^64-1 for <span class="d_param">real</span> (when
+<span class="d_param">real</span> is 80-bit, e.g. on Intel machines).
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">int</span> a = 16_777_215; <span class="d_comment">// 2^24 - 1, largest proper integer representable as float
+</span><span class="d_keyword">assert</span>(<span class="d_psymbol">to</span>!<span class="d_keyword">int</span>(<span class="d_psymbol">to</span>!<span class="d_keyword">float</span>(a)) == a);
+<span class="d_keyword">assert</span>(<span class="d_psymbol">to</span>!<span class="d_keyword">int</span>(<span class="d_psymbol">to</span>!<span class="d_keyword">float</span>(-a)) == -a);
+a += 2;
+<span class="d_keyword">assert</span>(<span class="d_psymbol">to</span>!<span class="d_keyword">int</span>(<span class="d_psymbol">to</span>!<span class="d_keyword">float</span>(a)) == a); <span class="d_comment">// fails!
+</span></pre>
+<p></p>
+
+Conversions from string <a name="to"></a><span class="ddoc_psymbol">to</span> numeric types differ from the C equivalents
+<span class="d_param">atoi()</span> and <span class="d_param">atol()</span> by checking for overflow and
+not allowing whitespace.
+<p></p>
+
+For conversion of strings <a name="to"></a><span class="ddoc_psymbol">to</span> signed types, the grammar recognized is:
+<pre>
+<i>Integer</i>: <i>Sign UnsignedInteger</i>
+<i>UnsignedInteger</i>
+<i>Sign</i>:
+    <b>+</b>
+    <b>-</b>
+</pre>
+<p></p>
+
+For conversion <a name="to"></a><span class="ddoc_psymbol">to</span> unsigned types, the grammar recognized is:
+<pre>
+<i>UnsignedInteger</i>:
+    <i>DecimalDigit</i>
+    <i>DecimalDigit</i> <i>UnsignedInteger</i>
+</pre>
+<p></p>
+
+Converting an array <a name="to"></a><span class="ddoc_psymbol">to</span> another array type works by converting each
+element in turn. Associative arrays can be converted <a name="to"></a><span class="ddoc_psymbol">to</span> associative
+arrays as long as keys and values can in turn be converted.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">int</span>[] a = ([1, 2, 3]).dup;
+<span class="d_keyword">auto</span> b = <span class="d_psymbol">to</span>!(<span class="d_keyword">float</span>[])(a);
+<span class="d_keyword">assert</span>(b == [1.0f, 2, 3]);
+string str = <span class="d_string">"1 2 3 4 5 6"</span>;
+<span class="d_keyword">auto</span> numbers = <span class="d_psymbol">to</span>!(<span class="d_keyword">double</span>[])(split(str));
+<span class="d_keyword">assert</span>(numbers == [1.0, 2, 3, 4, 5, 6]);
+<span class="d_keyword">int</span>[string] c;
+c[<span class="d_string">"a"</span>] = 1;
+c[<span class="d_string">"b"</span>] = 2;
+<span class="d_keyword">auto</span> d = <span class="d_psymbol">to</span>!(<span class="d_keyword">double</span>[wstring])(c);
+<span class="d_keyword">assert</span>(d[<span class="d_string">"a"w</span>] == 1 &amp;&amp; d[<span class="d_string">"b"w</span>] == 2);
+</pre>
+<p></p>
+
+Conversions operate transitively, meaning that they work on arrays and
+associative arrays of any complexity:
+<p></p>
+
+<pre class="d_code"><span class="d_keyword">int</span>[string][<span class="d_keyword">double</span>[<span class="d_keyword">int</span>[]]] a;
+...
+<span class="d_keyword">auto</span> b = <span class="d_psymbol">to</span>!(<span class="d_keyword">short</span>[wstring][string[<span class="d_keyword">double</span>[]]])(a);
+</pre>
+<p></p>
+
+This conversion works because <span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span>!short</span> applies <a name="to"></a><span class="ddoc_psymbol">to</span> an
+<span class="d_param">int</span>, <span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span>!wstring</span> applies <a name="to"></a><span class="ddoc_psymbol">to</span> a <span class="d_param">string</span>, <span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span>!string</span> applies <a name="to"></a><span class="ddoc_psymbol">to</span> a <span class="d_param">double</span>, and
+<span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span>!(double[])</span> applies <a name="to"></a><span class="ddoc_psymbol">to</span> an <span class="d_param">int[]</span>. The
+conversion might throw an exception because <span class="d_param"><a name="to"></a><span class="ddoc_psymbol">to</span>!short</span>
+might fail the range check.
+<p></p>
+
+ 
+<p></p>
+
+   Entry point that dispatches <a name="to"></a><span class="ddoc_psymbol">to</span> the appropriate conversion
+   primitive. Client code normally calls <span class="d_inlinecode">to!TargetType(value)</span>
+   (and not some variant of <span class="d_inlinecode">toImpl</span>).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (isImplicitlyConvertible!(S, T) &amp;&amp; !isEnumStrToStr!(S, T) &amp;&amp; !isNullToStr!(S, T));
+</dt>
+<dd>If the source type is implicitly convertible to the target type, <span class="d_inlinecode">to</span> simply performs the implicit conversion.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (is(typeof(S.init.opCast!T()) : T) &amp;&amp; !isExactSomeString!T);
+</dt>
+<dd>When source type supports member template function opCast, is is used.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (!isImplicitlyConvertible!(S, T) &amp;&amp; is(T == struct) &amp;&amp; is(typeof(T(<i>value</i>))));
+<br><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (!isImplicitlyConvertible!(S, T) &amp;&amp; is(T == class) &amp;&amp; is(typeof(new T(<i>value</i>))));
+</dt>
+<dd>When target type supports 'converting construction', it is used.
+<ul><li>If target type is struct, <span class="d_inlinecode">T(value)</span> is used.</li>
+     <li>If target type is class, <span class="d_inlinecode">new T(value)</span> is used.</li></ul><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (!isImplicitlyConvertible!(S, T) &amp;&amp; (is(S == class) || is(S == interface)) &amp;&amp; !is(typeof(<i>value</i>.opCast!T()) : T) &amp;&amp; (is(T == class) || is(T == interface)) &amp;&amp; !is(typeof(new T(<i>value</i>))));
+</dt>
+<dd>Object-to-object conversions by dynamic casting throw exception when the source is
+non-<b>null</b> and the target is <b>null</b>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (!(isImplicitlyConvertible!(S, T) &amp;&amp; !isEnumStrToStr!(S, T) &amp;&amp; !isNullToStr!(S, T)) &amp;&amp; isExactSomeString!T);
+<br><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>, uint <i>radix</i>, LetterCase <i>letterCase</i> = LetterCase.upper) if (isIntegral!S &amp;&amp; isExactSomeString!T);
+</dt>
+<dd>Stringize conversion from all types is supported.
+<ul> <li>String to string conversion works for any two string types having
+       (<span class="d_inlinecode">char</span>, <span class="d_inlinecode">wchar</span>, <span class="d_inlinecode">dchar</span>) character widths and any
+       combination of qualifiers (mutable, <span class="d_inlinecode">const</span>, or <span class="d_inlinecode">immutable</span>).</li>
+  <li>Converts array (other than strings) to string.
+       Each element is converted by calling <span class="d_inlinecode">to!T</span>.</li>
+  <li>Associative array to string conversion.
+       Each element is printed by calling <span class="d_inlinecode">to!T</span>.</li>
+  <li>Object to string conversion calls <span class="d_inlinecode">toString</span> against the object or
+       returns <span class="d_inlinecode">"<b>null</b>"</span> if the object is <b>null</b>.</li>
+  <li>Struct to string conversion calls <span class="d_inlinecode">toString</span> against the struct if
+       it is defined.</li>
+  <li>For structs that do not define <span class="d_inlinecode">toString</span>, the conversion to string
+       produces the list of fields.</li>
+  <li>Enumerated types are converted to strings as their symbolic names.</li>
+  <li>Boolean values are printed as <span class="d_inlinecode">"<b>true</b>"</span> or <span class="d_inlinecode">"<b>false</b>"</span>.</li>
+  <li><span class="d_inlinecode">char</span>, <span class="d_inlinecode">wchar</span>, <span class="d_inlinecode">dchar</span> to a string type.</li>
+  <li>Unsigned or signed integers to strings.
+       <dl><dt>[special case]</dt>
+            <dd>Convert integral value to string in <span class="d_param">radix</span> radix.
+            radix must be a value from 2 to 36.
+            value is treated as a signed value only if radix is 10.
+            The characters A through Z are used to represent values 10 through 36
+            and their case is determined by the <span class="d_param">letterCase</span> parameter.</dd></dl></li>
+  <li>All floating point types to all string types.</li>
+  <li>Pointer to string conversions prints the pointer as a <span class="d_inlinecode">size_t</span> value.
+       If pointer is <span class="d_inlinecode">char*</span>, treat it as C-style strings.
+       In that case, this function is <span class="d_inlinecode">@system</span>.</li></ul><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (!isImplicitlyConvertible!(S, T) &amp;&amp; (isNumeric!S || isSomeChar!S || isBoolean!S) &amp;&amp; (isNumeric!T || isSomeChar!T || isBoolean!T) &amp;&amp; !is(T == enum));
+</dt>
+<dd>Narrowing numeric-numeric conversions throw when the value does not
+fit in the narrower type.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (!isImplicitlyConvertible!(S, T) &amp;&amp; !isSomeString!S &amp;&amp; isDynamicArray!S &amp;&amp; !isExactSomeString!T &amp;&amp; isArray!T);
+</dt>
+<dd>Array-to-array conversion (except when target is a string type)
+converts each element in turn by using <span class="d_inlinecode">to</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (isAssociativeArray!S &amp;&amp; isAssociativeArray!T &amp;&amp; !is(T == enum));
+</dt>
+<dd>Associative array to associative array conversion converts each key
+and each value in turn.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (isExactSomeString!S &amp;&amp; isDynamicArray!S &amp;&amp; !isExactSomeString!T &amp;&amp; is(typeof(parse!T(<i>value</i>))));
+<br><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>, uint <i>radix</i>) if (isExactSomeString!S &amp;&amp; isDynamicArray!S &amp;&amp; !isExactSomeString!T &amp;&amp; is(typeof(parse!T(<i>value</i>, <i>radix</i>))));
+</dt>
+<dd>String to non-string conversion runs parsing.
+<ul> <li>When the source is a wide string, it is first converted to a narrow
+       string and then parsed.</li>
+  <li>When the source is a narrow string, normal text parsing occurs.</li></ul><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toImpl"></a>T <a name="toImpl"></a><span class="ddoc_psymbol">toImpl</span>(T, S)(S <i>value</i>) if (is(T == enum) &amp;&amp; !is(S == enum) &amp;&amp; is(typeof(<i>value</i> == OriginalType!T.init)) &amp;&amp; !isFloatingPoint!(OriginalType!T) &amp;&amp; !isSomeString!(OriginalType!T));
+</dt>
+<dd>Convert a value that is implicitly convertible to the enum base type
+into an Enum value. If the value does not match any enum member values
+a ConvException is thrown.
+Enums with floating-point or string base types are not supported.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".roundTo"></a>template <a name="roundTo"></a><span class="ddoc_psymbol">roundTo</span>(Target)</dt>
+<dd>Rounded conversion from floating point to integral.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">assert</span>(<span class="d_psymbol">roundTo</span>!<span class="d_keyword">int</span>(3.14) == 3);
+<span class="d_keyword">assert</span>(<span class="d_psymbol">roundTo</span>!<span class="d_keyword">int</span>(3.49) == 3);
+<span class="d_keyword">assert</span>(<span class="d_psymbol">roundTo</span>!<span class="d_keyword">int</span>(3.5) == 4);
+<span class="d_keyword">assert</span>(<span class="d_psymbol">roundTo</span>!<span class="d_keyword">int</span>(3.999) == 4);
+<span class="d_keyword">assert</span>(<span class="d_psymbol">roundTo</span>!<span class="d_keyword">int</span>(-3.14) == -3);
+<span class="d_keyword">assert</span>(<span class="d_psymbol">roundTo</span>!<span class="d_keyword">int</span>(-3.49) == -3);
+<span class="d_keyword">assert</span>(<span class="d_psymbol">roundTo</span>!<span class="d_keyword">int</span>(-3.5) == -4);
+<span class="d_keyword">assert</span>(<span class="d_psymbol">roundTo</span>!<span class="d_keyword">int</span>(-3.999) == -4);
+</pre>
+Rounded conversions do not work with non-integral target types.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".parse"></a>Target <a name="parse"></a><span class="ddoc_psymbol">parse</span>(Target, Source)(ref Source <i>s</i>) if (isSomeChar!(ElementType!Source) &amp;&amp; isIntegral!Target &amp;&amp; !is(Target == enum));
+<br><a name=".parse"></a>Target <a name="parse"></a><span class="ddoc_psymbol">parse</span>(Target, Source)(ref Source <i>s</i>, uint <i>radix</i>) if (isSomeChar!(ElementType!Source) &amp;&amp; isIntegral!Target &amp;&amp; !is(Target == enum));
+</dt>
+<dd>The <span class="d_param"><a name="parse"></a><span class="ddoc_psymbol">parse</span></span> family of functions works quite like the
+ <span class="d_param">to</span> family, except that (1) it only works with character ranges
+ as input, (2) takes the input by reference and advances it to
+ the position following the conversion, and (3) does not throw if it
+ could not convert the entire input. It still throws if an overflow
+ occurred during conversion or if no character of the input
+ was meaningfully converted.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">string test = <span class="d_string">"123 \t  76.14"</span>;
+<span class="d_keyword">auto</span> a = <span class="d_psymbol">parse</span>!<span class="d_keyword">uint</span>(test);
+<span class="d_keyword">assert</span>(a == 123);
+<span class="d_keyword">assert</span>(test == <span class="d_string">" \t  76.14"</span>); <span class="d_comment">// parse bumps string
+</span>munch(test, <span class="d_string">" \t\n\r"</span>); <span class="d_comment">// skip ws
+</span><span class="d_keyword">assert</span>(test == <span class="d_string">"76.14"</span>);
+<span class="d_keyword">auto</span> b = <span class="d_psymbol">parse</span>!<span class="d_keyword">double</span>(test);
+<span class="d_keyword">assert</span>(b == 76.14);
+<span class="d_keyword">assert</span>(test == <span class="d_string">""</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".parse"></a>Target <a name="parse"></a><span class="ddoc_psymbol">parse</span>(Target, Source)(ref Source <i>s</i>) if (isExactSomeString!Source &amp;&amp; staticIndexOf!(Unqual!Target, dchar, Unqual!(ElementEncodingType!Source)) &gt;= 0);
+</dt>
+<dd>Parsing one character off a string returns the character and bumps the
+string up one position.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".parse"></a>Target <a name="parse"></a><span class="ddoc_psymbol">parse</span>(Target, Source)(ref Source <i>s</i>, dchar <i>lbracket</i> = '[', dchar <i>rbracket</i> = ']', dchar <i>comma</i> = ',') if (isExactSomeString!Source &amp;&amp; isDynamicArray!Target &amp;&amp; !is(Target == enum));
+<br><a name=".parse"></a>Target <a name="parse"></a><span class="ddoc_psymbol">parse</span>(Target, Source)(ref Source <i>s</i>, dchar <i>lbracket</i> = '[', dchar <i>rbracket</i> = ']', dchar <i>comma</i> = ',') if (isExactSomeString!Source &amp;&amp; isStaticArray!Target &amp;&amp; !is(Target == enum));
+</dt>
+<dd>Parses an array from a string given the left bracket (default <span class="d_inlinecode">'['</span>), right bracket (default <span class="d_inlinecode">']'</span>), and element separator (by
+ default <span class="d_inlinecode">','</span>).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".parse"></a>Target <a name="parse"></a><span class="ddoc_psymbol">parse</span>(Target, Source)(ref Source <i>s</i>, dchar <i>lbracket</i> = '[', dchar <i>rbracket</i> = ']', dchar <i>keyval</i> = ':', dchar <i>comma</i> = ',') if (isExactSomeString!Source &amp;&amp; isAssociativeArray!Target &amp;&amp; !is(Target == enum));
+</dt>
+<dd>Parses an associative array from a string given the left bracket (default <span class="d_inlinecode">'['</span>), right bracket (default <span class="d_inlinecode">']'</span>), key-value separator (default <span class="d_inlinecode">':'</span>), and element seprator (by default <span class="d_inlinecode">','</span>).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".text"></a>string <a name="text"></a><span class="ddoc_psymbol">text</span>(T...)(T <i>args</i>);
+<br><a name=".wtext"></a>wstring <a name="wtext"></a><span class="ddoc_psymbol">wtext</span>(T...)(T <i>args</i>);
+<br><a name=".dtext"></a>dstring <a name="dtext"></a><span class="ddoc_psymbol">dtext</span>(T...)(T <i>args</i>);
+</dt>
+<dd>Convenience functions for converting any number and types of
+ arguments into text (the three character widths).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".octal"></a>int <a name="octal"></a><span class="ddoc_psymbol">octal</span>(string num)() if (octalFitsInInt!num &amp;&amp; !literalIsLong!num &amp;&amp; !literalIsUnsigned!num);
+<br><a name=".octal"></a>long <a name="octal"></a><span class="ddoc_psymbol">octal</span>(string num)() if ((!octalFitsInInt!num || literalIsLong!num) &amp;&amp; !literalIsUnsigned!num);
+<br><a name=".octal"></a>uint <a name="octal"></a><span class="ddoc_psymbol">octal</span>(string num)() if (octalFitsInInt!num &amp;&amp; !literalIsLong!num &amp;&amp; literalIsUnsigned!num);
+<br><a name=".octal"></a>ulong <a name="octal"></a><span class="ddoc_psymbol">octal</span>(string num)() if ((!octalFitsInInt!num || literalIsLong!num) &amp;&amp; literalIsUnsigned!num);
+<br><a name=".octal"></a>template <a name="octal"></a><span class="ddoc_psymbol">octal</span>(alias s) if (isIntegral!(typeof(s)))</dt>
+<dd>The <span class="d_inlinecode"><a name="octal"></a><span class="ddoc_psymbol">octal</span></span> facility is intended as an experimental facility to
+replace octal literals starting with <span class="d_inlinecode">'0'</span>, which many find
+confusing. Using <span class="d_inlinecode"><a name="octal"></a><span class="ddoc_psymbol">octal</span>!177</span> or <span class="d_inlinecode"><a name="octal"></a><span class="ddoc_psymbol">octal</span>!"177"</span> instead of <span class="d_inlinecode">0177</span> as an octal literal makes code clearer and the intent more
+visible. If use of this facility becomes preponderent, a future
+version of the language may deem old-style octal literals deprecated.
+<p></p>
+The rules for strings are the usual for literals: If it can fit in an
+<span class="d_inlinecode">int</span>, it is an <span class="d_inlinecode">int</span>. Otherwise, it is a <span class="d_inlinecode">long</span>. But, if the
+user specifically asks for a <span class="d_inlinecode">long</span> with the <span class="d_inlinecode">L</span> suffix, always
+give the <span class="d_inlinecode">long</span>. Give an unsigned iff it is asked for with the <span class="d_inlinecode">U</span> or <span class="d_inlinecode">u</span> suffix. Octals created from integers preserve the type
+of the passed-in integral.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_comment">// same as 0177
+</span><span class="d_keyword">auto</span> x = <span class="d_psymbol">octal</span>!177;
+<span class="d_comment">// octal is a compile-time device
+</span><span class="d_keyword">enum</span> y = <span class="d_psymbol">octal</span>!160;
+<span class="d_comment">// Create an unsigned octal
+</span><span class="d_keyword">auto</span> z = <span class="d_psymbol">octal</span>!<span class="d_string">"1_000_000u"</span>;
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".emplace"></a>pure nothrow @safe T* <a name="emplace"></a><span class="ddoc_psymbol">emplace</span>(T)(T* <i>chunk</i>);
+</dt>
+<dd>Given a pointer <span class="d_inlinecode">chunk</span> to uninitialized memory (but already typed
+as <span class="d_inlinecode">T</span>), constructs an object of non-<span class="d_inlinecode">class</span> type <span class="d_inlinecode">T</span> at that
+address.
+<p></p>
+<b>Returns:</b><br>A pointer to the newly constructed object (which is the same
+as <span class="d_inlinecode">chunk</span>).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".emplace"></a>T* <a name="emplace"></a><span class="ddoc_psymbol">emplace</span>(T, Args...)(T* <i>chunk</i>, Args <i>args</i>) if (!is(T == struct) &amp;&amp; Args.length == 1);
+</dt>
+<dd>Given a pointer <span class="d_inlinecode">chunk</span> to uninitialized memory (but already typed
+as a non-class type <span class="d_inlinecode">T</span>), constructs an object of type <span class="d_inlinecode">T</span> at
+that address from arguments <span class="d_inlinecode">args</span>.
+<p></p>
+This function can be <span class="d_inlinecode">@trusted</span> if the corresponding constructor of
+<span class="d_inlinecode">T</span> is <span class="d_inlinecode">@safe</span>.
+
+<p></p>
+<b>Returns:</b><br>A pointer to the newly constructed object (which is the same
+as <span class="d_inlinecode">chunk</span>).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".emplace"></a>T <a name="emplace"></a><span class="ddoc_psymbol">emplace</span>(T, Args...)(void[] <i>chunk</i>, auto ref Args <i>args</i>) if (is(T == class));
+</dt>
+<dd>Given a raw memory area <span class="d_inlinecode">chunk</span>, constructs an object of <span class="d_inlinecode">class</span>
+type <span class="d_inlinecode">T</span> at that address. The constructor is passed the arguments
+<span class="d_inlinecode">Args</span>. The <span class="d_inlinecode">chunk</span> must be as least as large as <span class="d_inlinecode">T</span> needs
+and should have an alignment multiple of <span class="d_inlinecode">T</span>'s alignment. (The size
+of a <span class="d_inlinecode">class</span> instance is obtained by using <span class="d_inlinecode">_traits(classInstanceSize, T)</span>).
+<p></p>
+This function can be <span class="d_inlinecode">@trusted</span> if the corresponding constructor of
+<span class="d_inlinecode">T</span> is <span class="d_inlinecode">@safe</span>.
+
+<p></p>
+<b>Returns:</b><br>A pointer to the newly constructed object.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".emplace"></a>T* <a name="emplace"></a><span class="ddoc_psymbol">emplace</span>(T, Args...)(void[] <i>chunk</i>, auto ref Args <i>args</i>) if (!is(T == class));
+</dt>
+<dd>Given a raw memory area <span class="d_inlinecode">chunk</span>, constructs an object of non-<span class="d_inlinecode">class</span> type <span class="d_inlinecode">T</span> at that address. The constructor is passed the
+arguments <span class="d_inlinecode">args</span>, if any. The <span class="d_inlinecode">chunk</span> must be as least as large
+as <span class="d_inlinecode">T</span> needs and should have an alignment multiple of <span class="d_inlinecode">T</span>'s
+alignment.
+<p></p>
+This function can be <span class="d_inlinecode">@trusted</span> if the corresponding constructor of
+<span class="d_inlinecode">T</span> is <span class="d_inlinecode">@safe</span>.
+
+<p></p>
+<b>Returns:</b><br>A pointer to the newly constructed object.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".unsigned"></a>auto <a name="unsigned"></a><span class="ddoc_psymbol">unsigned</span>(T)(T <i>x</i>) if (isIntegral!T);
+</dt>
+<dd>Returns the corresponding <a name="unsigned"></a><span class="ddoc_psymbol">unsigned</span> value for <span class="d_inlinecode">x</span> (e.g. if <span class="d_inlinecode">x</span> has type
+    <span class="d_inlinecode">int</span>, it returns <span class="d_inlinecode">cast(uint) x</span>). The advantage compared to the cast
+    is that you do not need to rewrite the cast if <span class="d_inlinecode">x</span> later changes type
+    (e.g from <span class="d_inlinecode">int</span> to <span class="d_inlinecode">long</span>).
+<p></p>
+Note that the result is always mutable even if the original type was const
+    or immutable. In order to retain the constness, use <a href="std_traits.html#Unsigned"><span class="d_inlinecode">std.traits.Unsigned</span></a>.<p></p>
+<b>Examples:</b><br><pre class="d_code">
+    <span class="d_keyword">uint</span> s = 42;
+    <span class="d_keyword">auto</span> u1 = <span class="d_psymbol">unsigned</span>(s); <span class="d_comment">//not qualified
+</span>    Unsigned!(<span class="d_keyword">typeof</span>(s)) u2 = <span class="d_psymbol">unsigned</span>(s); <span class="d_comment">//same qualification
+</span>    <span class="d_keyword">immutable</span> u3 = <span class="d_psymbol">unsigned</span>(s); <span class="d_comment">//totally qualified
+</span></pre>
+<p></p>
+</dd>
+<dt class="d_decl"><a name=".signed"></a>auto <a name="signed"></a><span class="ddoc_psymbol">signed</span>(T)(T <i>x</i>) if (isIntegral!T);
+</dt>
+<dd>Returns the corresponding <a name="signed"></a><span class="ddoc_psymbol">signed</span> value for <span class="d_inlinecode">x</span> (e.g. if <span class="d_inlinecode">x</span> has type
+    <span class="d_inlinecode">uint</span>, it returns <span class="d_inlinecode">cast(int) x</span>). The advantage compared to the cast
+    is that you do not need to rewrite the cast if <span class="d_inlinecode">x</span> later changes type
+    (e.g from <span class="d_inlinecode">uint</span> to <span class="d_inlinecode">ulong</span>).
+<p></p>
+Note that the result is always mutable even if the original type was const
+    or immutable. In order to retain the constness, use <a href="std_traits.html#Signed"><span class="d_inlinecode">std.traits.Signed</span></a>.<p></p>
+<b>Examples:</b><br><pre class="d_code">
+    <span class="d_keyword">uint</span> u = 42;
+    <span class="d_keyword">auto</span> s1 = unsigned(u); <span class="d_comment">//not qualified
+</span>    Unsigned!(<span class="d_keyword">typeof</span>(u)) s2 = unsigned(u); <span class="d_comment">//same qualification
+</span>    <span class="d_keyword">immutable</span> s3 = unsigned(u); <span class="d_comment">//totally qualified
+</span></pre>
+<p></p>
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright Digital Mars 2007-.
+
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

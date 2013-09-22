@@ -1,0 +1,1050 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.path - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+function listanchors()
+{
+    if (typeof inhibitQuickIndex !== 'undefined') return;
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        // ignore anchors from DDOC_PSYMBOL
+        if (text[0] != '.') continue;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+        values[n++] = a.name
+    }
+
+    // we won't display the qualifying names to save space, so sort by last name
+    var lastName = function(a){
+        var li = a.lastIndexOf('.');
+        return a.slice(li + 1);
+    }
+    values.sort(function(a,b){return lastName(a) > lastName(b)});
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        var text = lastName(a);
+        newText += ' \x3Ca href="\x23' + a +
+            '"\x3E\x3Cspan class="d_psymbol"\x3E' + text + '\x3C/span\x3E\x3C/a\x3E';
+    }
+    if (newText != "") newText = "\x3Cp\x3E\x3Cb\x3EJump to:\x3C/b\x3E" + newText + "\x3C/p\x3E";
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+jQuery(document).ready(listanchors);
+</script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/phobos">Library Reference</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="/images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language </a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/phobos">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+	<li><a href="../phobos-prerelease/index.html" title="D Runtime Library (prerelease)">Phobos (prerelease)</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="index.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_ascii.html" title="Functions which operate on ASCII characters">std.ascii</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_csv.html" title="CSV file parser">std.csv</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_parallelism.html" title="High-level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_process.html" title="Create/destroy processes">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_uuid.html" title="Generate and use UUIDs">std.uuid</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_net_curl.html" title="High level curl wrapper">std.net.curl</a></li>
+	<li><a href="std_net_isemail.html" title="Validate e-mail addresses">std.net.isemail</a></li>
+	<li><a href="std_digest_crc.html" title="CRC digest functions">std.digest.crc</a></li>
+	<li><a href="std_digest_digest.html" title="API for digest functions">std.digest.digest</a></li>
+	<li><a href="std_digest_md.html" title="MD digest functions">std.digest.md</a></li>
+	<li><a href="std_digest_ripemd.html" title="RIPEMD digest functions">std.digest.ripemd</a></li>
+	<li><a href="std_digest_sha.html" title="SHA digest functions">std.digest.sha</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+    </ul>
+    <h2><a href="index.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_sqlite3.html" title="Interface to sqlite3 library">etc.c.sqlite3</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="index.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_demangle.html" title="D symbol mangling">core.demangle</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_simd.html" title="Builtin SIMD intrinsics">core.simd</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_time.html" title="Core time functionality">core.time</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/phobos/edit/master/std\path.d" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/Phobos/StdPath" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>std.path</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\path.d -->
+This module is used to manipulate path strings.
+<p></p>
+All functions, with the exception of <a href="#expandTilde"><span class="d_inlinecode">expandTilde</span></a> (and in some
+    cases <a href="#absolutePath"><span class="d_inlinecode">absolutePath</span></a> and <a href="#relativePath"><span class="d_inlinecode">relativePath</span></a>), are pure
+    string manipulation functions; they don't depend on any state outside
+    the program, nor do they perform any actual file system actions.
+    This has the consequence that the module does not make any distinction
+    between a path that points to a directory and a path that points to a
+    file, and it does not know whether or not the object pointed to by the
+    path actually exists in the file system.
+    To differentiate between these cases, use <a href="std_file.html#isDir"><span class="d_inlinecode">std.file.isDir</span></a> and
+    <a href="std_file.html#exists"><span class="d_inlinecode">std.file.exists</span></a>.
+<p></p>
+
+    Note that on Windows, both the backslash (<span class="d_inlinecode">`\`</span>) and the slash (<span class="d_inlinecode">`/`</span>)
+    are in principle valid directory separators.  This module treats them
+    both on equal footing, but in cases where a <i>new</i> separator is
+    added, a backslash will be used.  Furthermore, the <a href="#buildNormalizedPath"><span class="d_inlinecode">buildNormalizedPath</span></a>
+    function will replace all slashes with backslashes on that platform.
+<p></p>
+
+    In general, the functions in this module assume that the input paths
+    are well-formed.  (That is, they should not contain invalid characters,
+    they should follow the file system's path format, etc.)  The result
+    of calling a function on an ill-formed path is undefined.  When there
+    is a chance that a path or a file name is invalid (for instance, when it
+    has been input by the user), it may sometimes be desirable to use the
+    <a href="#isValidFilename"><span class="d_inlinecode">isValidFilename</span></a> and <a href="#isValidPath"><span class="d_inlinecode">isValidPath</span></a> functions to check
+    this.
+<p></p>
+
+    Most functions do not perform any memory allocations, and if a string is
+    returned, it is usually a slice of an input string.  If a function
+    allocates, this is explicitly mentioned in the documentation.
+
+<p></p>
+<b>Authors:</b><br>Lars Tandle Kyllingstad,
+        <a href="http://digitalmars.com">Walter Bright</a>,
+        Grzegorz Adam Hankiewicz,
+        Thomas Kühne,
+        <a href="http://erdani.org">Andrei Alexandrescu</a>
+<p></p>
+<b>License:</b><br><a href="http://boost.org/LICENSE_1_0.txt">Boost License 1.0</a>
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/path.d">std/path.d</a>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".dirSeparator"></a>string <a name="dirSeparator"></a><span class="ddoc_psymbol">dirSeparator</span>;
+</dt>
+<dd>String used to separate directory names in a path.  Under
+    POSIX this is a slash, under Windows a backslash.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".pathSeparator"></a>string <a name="pathSeparator"></a><span class="ddoc_psymbol">pathSeparator</span>;
+</dt>
+<dd>Path separator string.  A colon under POSIX, a semicolon
+    under Windows.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isDirSeparator"></a>pure nothrow @safe bool <a name="isDirSeparator"></a><span class="ddoc_psymbol">isDirSeparator</span>(dchar <i>c</i>);
+</dt>
+<dd>Determines whether the given character is a directory separator.
+<p></p>
+On Windows, this includes both <span class="d_inlinecode">`\`</span> and <span class="d_inlinecode">`/`</span>.
+    On POSIX, it's just <span class="d_inlinecode">`/`</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".CaseSensitive"></a>enum <a name="CaseSensitive"></a><span class="ddoc_psymbol">CaseSensitive</span>: bool;
+</dt>
+<dd>This <span class="d_inlinecode">enum</span> is used as a template argument to functions which
+    compare file names, and determines whether the comparison is
+    case sensitive or not.<p></p>
+
+<dl><dt class="d_decl"><a name=".CaseSensitive.no"></a><a name="no"></a><span class="ddoc_psymbol">no</span></dt>
+<dd>File names are case insensitive<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".CaseSensitive.yes"></a><a name="yes"></a><span class="ddoc_psymbol">yes</span></dt>
+<dd>File names are case sensitive<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".CaseSensitive.osDefault"></a><a name="osDefault"></a><span class="ddoc_psymbol">osDefault</span></dt>
+<dd>The default (or most common) setting for the current platform.
+        That is, <span class="d_inlinecode">no</span> on Windows and Mac OS X, and <span class="d_inlinecode">yes</span> on all
+        POSIX systems except OS X (Linux, *BSD, etc.).<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".baseName"></a>pure @trusted inout(C)[] <a name="baseName"></a><span class="ddoc_psymbol">baseName</span>(C)(inout(C)[] <i>path</i>) if (isSomeChar!C);
+<br><a name=".baseName"></a>pure @safe inout(C)[] <a name="baseName"></a><span class="ddoc_psymbol">baseName</span>(CaseSensitive cs = CaseSensitive.osDefault, C, C1)(inout(C)[] <i>path</i>, in C1[] <i>suffix</i>) if (isSomeChar!C &amp;&amp; isSomeChar!C1);
+</dt>
+<dd>Returns the name of a file, without any leading directory
+    and with an optional suffix chopped off.
+<p></p>
+If <span class="d_inlinecode">suffix</span> is specified, it will be compared to <span class="d_inlinecode">path</span>
+    using <span class="d_inlinecode">filenameCmp!cs</span>,
+    where <span class="d_inlinecode">cs</span> is an optional template parameter determining whether
+    the comparison is case sensitive or not.  See the
+    <a href="#filenameCmp"><span class="d_inlinecode">filenameCmp</span></a> documentation for details.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">baseName</span>(<span class="d_string">"dir/file.ext"</span>)         == <span class="d_string">"file.ext"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">baseName</span>(<span class="d_string">"dir/file.ext"</span>, <span class="d_string">".ext"</span>) == <span class="d_string">"file"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">baseName</span>(<span class="d_string">"dir/file.ext"</span>, <span class="d_string">".xyz"</span>) == <span class="d_string">"file.ext"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">baseName</span>(<span class="d_string">"dir/filename"</span>, <span class="d_string">"name"</span>) == <span class="d_string">"file"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">baseName</span>(<span class="d_string">"dir/subdir/"</span>)          == <span class="d_string">"subdir"</span>);
+
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">baseName</span>(<span class="d_string">`d:file.ext`</span>)      == <span class="d_string">"file.ext"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">baseName</span>(<span class="d_string">`d:\dir\file.ext`</span>) == <span class="d_string">"file.ext"</span>);
+}
+</pre>
+
+<p></p>
+<b>Note:</b><br>
+    This function <i>only</i> strips away the specified suffix, which
+    doesn't necessarily have to represent an extension.  If you want
+    to remove the extension from a path, regardless of what the extension
+    is, use <a href="#stripExtension"><span class="d_inlinecode">stripExtension</span></a>.
+    If you want the filename without leading directories and without
+    an extension, combine the functions like this:
+<pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">baseName</span>(stripExtension(<span class="d_string">"dir/file.ext"</span>)) == <span class="d_string">"file"</span>);
+</pre>
+
+<p></p>
+<b>Standards:</b><br>This function complies with
+    <a href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/basename.html">    the POSIX requirements for the 'basename' shell utility</a>
+    (with suitable adaptations for Windows paths).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".dirName"></a>C[] <a name="dirName"></a><span class="ddoc_psymbol">dirName</span>(C)(C[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Returns the directory part of a path.  On Windows, this
+    includes the drive letter if present.
+<p></p>
+This function performs a memory allocation if and only if <span class="d_inlinecode">path</span>
+    is mutable and does not have a directory (in which case a new mutable
+    string is needed to hold the returned current-directory symbol,
+    <span class="d_inlinecode">"."</span>).
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">dirName</span>(<span class="d_string">"file"</span>)        == <span class="d_string">"."</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">dirName</span>(<span class="d_string">"dir/file"</span>)    == <span class="d_string">"dir"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">dirName</span>(<span class="d_string">"/file"</span>)       == <span class="d_string">"/"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">dirName</span>(<span class="d_string">"dir/subdir/"</span>) == <span class="d_string">"dir"</span>);
+
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">dirName</span>(<span class="d_string">"d:file"</span>)      == <span class="d_string">"d:"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">dirName</span>(<span class="d_string">`d:\dir\file`</span>) == <span class="d_string">`d:\dir`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">dirName</span>(<span class="d_string">`d:\file`</span>)     == <span class="d_string">`d:\`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">dirName</span>(<span class="d_string">`dir\subdir\`</span>) == <span class="d_string">`dir`</span>);
+}
+</pre>
+
+<p></p>
+<b>Standards:</b><br>This function complies with
+    <a href="http://pubs.opengroup.org/onlinepubs/9699919799/utilities/dirname.html">    the POSIX requirements for the 'dirname' shell utility</a>
+    (with suitable adaptations for Windows paths).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".rootName"></a>pure nothrow @safe inout(C)[] <a name="rootName"></a><span class="ddoc_psymbol">rootName</span>(C)(inout(C)[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Returns the root directory of the specified path, or <span class="d_inlinecode"><b>null</b></span> if the
+    path is not rooted.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">rootName</span>(<span class="d_string">"foo"</span>) <span class="d_keyword">is</span> <span class="d_keyword">null</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">rootName</span>(<span class="d_string">"/foo"</span>) == <span class="d_string">"/"</span>);
+
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">rootName</span>(<span class="d_string">`\foo`</span>) == <span class="d_string">`\`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">rootName</span>(<span class="d_string">`c:\foo`</span>) == <span class="d_string">`c:\`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">rootName</span>(<span class="d_string">`\\server\share\foo`</span>) == <span class="d_string">`\\server\share`</span>);
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".driveName"></a>pure nothrow @safe inout(C)[] <a name="driveName"></a><span class="ddoc_psymbol">driveName</span>(C)(inout(C)[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Returns the drive of a path, or <span class="d_inlinecode"><b>null</b></span> if the drive
+    is not specified.  In the case of UNC paths, the network share
+    is returned.
+<p></p>
+Always returns <span class="d_inlinecode"><b>null</b></span> on POSIX.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">driveName</span>(<span class="d_string">`d:\file`</span>) == <span class="d_string">"d:"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">driveName</span>(<span class="d_string">`\\server\share\file`</span>) == <span class="d_string">`\\server\share`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">driveName</span>(<span class="d_string">`dir\file`</span>).empty);
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".stripDrive"></a>pure nothrow @safe inout(C)[] <a name="stripDrive"></a><span class="ddoc_psymbol">stripDrive</span>(C)(inout(C)[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Strips the drive from a Windows path.  On POSIX, the path is returned
+    unaltered.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">stripDrive</span>(<span class="d_string">`d:\dir\file`</span>) == <span class="d_string">`\dir\file`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">stripDrive</span>(<span class="d_string">`\\server\share\dir\file`</span>) == <span class="d_string">`\dir\file`</span>);
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".extension"></a>pure nothrow @safe inout(C)[] <a name="extension"></a><span class="ddoc_psymbol">extension</span>(C)(inout(C)[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Returns the extension part of a file name, including the dot.
+<p></p>
+If there is no extension, <span class="d_inlinecode"><b>null</b></span> is returned.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">extension</span>(<span class="d_string">"file"</span>).empty);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">extension</span>(<span class="d_string">"file.ext"</span>)       == <span class="d_string">".ext"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">extension</span>(<span class="d_string">"file.ext1.ext2"</span>) == <span class="d_string">".ext2"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">extension</span>(<span class="d_string">"file."</span>)          == <span class="d_string">"."</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">extension</span>(<span class="d_string">".file"</span>).empty);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">extension</span>(<span class="d_string">".file.ext"</span>)      == <span class="d_string">".ext"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".stripExtension"></a>pure nothrow @safe inout(C)[] <a name="stripExtension"></a><span class="ddoc_psymbol">stripExtension</span>(C)(inout(C)[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Returns the path with the extension stripped off.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">stripExtension</span>(<span class="d_string">"file"</span>)           == <span class="d_string">"file"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">stripExtension</span>(<span class="d_string">"file.ext"</span>)       == <span class="d_string">"file"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">stripExtension</span>(<span class="d_string">"file.ext1.ext2"</span>) == <span class="d_string">"file.ext1"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">stripExtension</span>(<span class="d_string">"file."</span>)          == <span class="d_string">"file"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">stripExtension</span>(<span class="d_string">".file"</span>)          == <span class="d_string">".file"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">stripExtension</span>(<span class="d_string">".file.ext"</span>)      == <span class="d_string">".file"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">stripExtension</span>(<span class="d_string">"dir/file.ext"</span>)   == <span class="d_string">"dir/file"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".setExtension"></a>pure nothrow @trusted immutable(Unqual!C1)[] <a name="setExtension"></a><span class="ddoc_psymbol">setExtension</span>(C1, C2)(in C1[] <i>path</i>, in C2[] <i>ext</i>) if (isSomeChar!C1 &amp;&amp; !is(C1 == immutable) &amp;&amp; is(Unqual!C1 == Unqual!C2));
+<br><a name=".setExtension"></a>pure nothrow @trusted immutable(C1)[] <a name="setExtension"></a><span class="ddoc_psymbol">setExtension</span>(C1, C2)(immutable(C1)[] <i>path</i>, const(C2)[] <i>ext</i>) if (isSomeChar!C1 &amp;&amp; is(Unqual!C1 == Unqual!C2));
+</dt>
+<dd>Returns a string containing the path given by <span class="d_inlinecode">path</span>, but where
+    the extension has been set to <span class="d_inlinecode">ext</span>.
+<p></p>
+If the filename already has an extension, it is replaced.   If not, the
+    extension is simply appended to the filename.  Including a leading dot
+    in <span class="d_inlinecode">ext</span> is optional.
+<p></p>
+
+    If the extension is empty, this function is equivalent to
+    <a href="#stripExtension"><span class="d_inlinecode">stripExtension</span></a>.
+<p></p>
+
+    This function normally allocates a new string (the possible exception
+    being the case when path is immutable and doesn't already have an
+    extension).
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">setExtension</span>(<span class="d_string">"file"</span>, <span class="d_string">"ext"</span>)      == <span class="d_string">"file.ext"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">setExtension</span>(<span class="d_string">"file"</span>, <span class="d_string">".ext"</span>)     == <span class="d_string">"file.ext"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">setExtension</span>(<span class="d_string">"file.old"</span>, <span class="d_string">""</span>)     == <span class="d_string">"file"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">setExtension</span>(<span class="d_string">"file.old"</span>, <span class="d_string">"new"</span>)  == <span class="d_string">"file.new"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">setExtension</span>(<span class="d_string">"file.old"</span>, <span class="d_string">".new"</span>) == <span class="d_string">"file.new"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".defaultExtension"></a>pure @trusted immutable(Unqual!C1)[] <a name="defaultExtension"></a><span class="ddoc_psymbol">defaultExtension</span>(C1, C2)(in C1[] <i>path</i>, in C2[] <i>ext</i>) if (isSomeChar!C1 &amp;&amp; is(Unqual!C1 == Unqual!C2));
+</dt>
+<dd>Returns the path given by <span class="d_inlinecode">path</span>, with the extension given by
+    <span class="d_inlinecode">ext</span> appended if the path doesn't already have one.
+<p></p>
+Including the dot in the extension is optional.
+<p></p>
+
+    This function always allocates a new string, except in the case when
+    path is immutable and already has an extension.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">defaultExtension</span>(<span class="d_string">"file"</span>, <span class="d_string">"ext"</span>)      == <span class="d_string">"file.ext"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">defaultExtension</span>(<span class="d_string">"file"</span>, <span class="d_string">".ext"</span>)     == <span class="d_string">"file.ext"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">defaultExtension</span>(<span class="d_string">"file."</span>, <span class="d_string">"ext"</span>)     == <span class="d_string">"file."</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">defaultExtension</span>(<span class="d_string">"file.old"</span>, <span class="d_string">"new"</span>)  == <span class="d_string">"file.old"</span>);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">defaultExtension</span>(<span class="d_string">"file.old"</span>, <span class="d_string">".new"</span>) == <span class="d_string">"file.old"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".buildPath"></a>immutable(ElementEncodingType!(ElementType!Range))[] <a name="buildPath"></a><span class="ddoc_psymbol">buildPath</span>(Range)(Range <i>segments</i>) if (isInputRange!Range &amp;&amp; isSomeString!(ElementType!Range));
+<br><a name=".buildPath"></a>pure nothrow @safe immutable(C)[] <a name="buildPath"></a><span class="ddoc_psymbol">buildPath</span>(C)(const(C[])[] <i>paths</i>...) if (isSomeChar!C);
+</dt>
+<dd>Combines one or more path segments.
+<p></p>
+This function takes a set of path segments, given as an input
+    range of string elements or as a set of string arguments,
+    and concatenates them with each other.  Directory separators
+    are inserted between segments if necessary.  If any of the
+    path segments are absolute (as defined by <a href="#isAbsolute"><span class="d_inlinecode">isAbsolute</span></a>), the
+    preceding segments will be dropped.
+<p></p>
+
+    On Windows, if one of the path segments are rooted, but not absolute
+    (e.g. <span class="d_inlinecode">`\foo`</span>), all preceding path segments down to the previous
+    root will be dropped.  (See below for an example.)
+<p></p>
+
+    This function always allocates memory to hold the resulting path.
+    The variadic overload is guaranteed to only perform a single
+    allocation, as is the range version if <span class="d_inlinecode">paths</span> is a forward
+    range.<p></p>
+
+<b>Examples:</b><br><pre class="d_code">
+    <span class="d_keyword">version</span> (Posix)
+    {
+        <span class="d_keyword">assert</span> (<span class="d_psymbol">buildPath</span>(<span class="d_string">"foo"</span>, <span class="d_string">"bar"</span>, <span class="d_string">"baz"</span>) == <span class="d_string">"foo/bar/baz"</span>);
+        <span class="d_keyword">assert</span> (<span class="d_psymbol">buildPath</span>(<span class="d_string">"/foo/"</span>, <span class="d_string">"bar/baz"</span>)  == <span class="d_string">"/foo/bar/baz"</span>);
+        <span class="d_keyword">assert</span> (<span class="d_psymbol">buildPath</span>(<span class="d_string">"/foo"</span>, <span class="d_string">"/bar"</span>)      == <span class="d_string">"/bar"</span>);
+    }
+
+    <span class="d_keyword">version</span> (Windows)
+    {
+        <span class="d_keyword">assert</span> (<span class="d_psymbol">buildPath</span>(<span class="d_string">"foo"</span>, <span class="d_string">"bar"</span>, <span class="d_string">"baz"</span>) == <span class="d_string">`foo\bar\baz`</span>);
+        <span class="d_keyword">assert</span> (<span class="d_psymbol">buildPath</span>(<span class="d_string">`c:\foo`</span>, <span class="d_string">`bar\baz`</span>) == <span class="d_string">`c:\foo\bar\baz`</span>);
+        <span class="d_keyword">assert</span> (<span class="d_psymbol">buildPath</span>(<span class="d_string">"foo"</span>, <span class="d_string">`d:\bar`</span>)     == <span class="d_string">`d:\bar`</span>);
+        <span class="d_keyword">assert</span> (<span class="d_psymbol">buildPath</span>(<span class="d_string">"foo"</span>, <span class="d_string">`\bar`</span>)       == <span class="d_string">`\bar`</span>);
+        <span class="d_keyword">assert</span> (<span class="d_psymbol">buildPath</span>(<span class="d_string">`c:\foo`</span>, <span class="d_string">`\bar`</span>)    == <span class="d_string">`c:\bar`</span>);
+    }
+</pre>
+<p></p></dd>
+<dt class="d_decl"><a name=".buildNormalizedPath"></a>pure nothrow @trusted immutable(C)[] <a name="buildNormalizedPath"></a><span class="ddoc_psymbol">buildNormalizedPath</span>(C)(const(C[])[] <i>paths</i>...) if (isSomeChar!C);
+</dt>
+<dd>Performs the same task as <a href="#buildPath"><span class="d_inlinecode">buildPath</span></a>,
+    while at the same time resolving current/parent directory
+    symbols (<span class="d_inlinecode">"."</span> and <span class="d_inlinecode">".."</span>) and removing superfluous
+    directory separators.
+    On Windows, slashes are replaced with backslashes.
+<p></p>
+Note that this function does not resolve symbolic links.
+<p></p>
+
+    This function always allocates memory to hold the resulting path.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">version</span> (Posix)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">"/foo/./bar/..//baz/"</span>) == <span class="d_string">"/foo/baz"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">"../foo/."</span>) == <span class="d_string">"../foo"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">"/foo"</span>, <span class="d_string">"bar/baz/"</span>) == <span class="d_string">"/foo/bar/baz"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">"/foo"</span>, <span class="d_string">"/bar/.."</span>, <span class="d_string">"baz"</span>) == <span class="d_string">"/baz"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">"foo/./bar"</span>, <span class="d_string">"../../"</span>, <span class="d_string">"../baz"</span>) == <span class="d_string">"../baz"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">"/foo/./bar"</span>, <span class="d_string">"../../baz"</span>) == <span class="d_string">"/baz"</span>);
+}
+
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">`c:\foo\.\bar/..\\baz\`</span>) == <span class="d_string">`c:\foo\baz`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">`..\foo\.`</span>) == <span class="d_string">`..\foo`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">`c:\foo`</span>, <span class="d_string">`bar\baz\`</span>) == <span class="d_string">`c:\foo\bar\baz`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">`c:\foo`</span>, <span class="d_string">`bar/..`</span>) == <span class="d_string">`c:\foo`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">buildNormalizedPath</span>(<span class="d_string">`\\server\share\foo`</span>, <span class="d_string">`..\bar`</span>) == <span class="d_string">`\\server\share\bar`</span>);
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".pathSplitter"></a>pure nothrow @safe auto <a name="pathSplitter"></a><span class="ddoc_psymbol">pathSplitter</span>(C)(const(C)[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Returns a bidirectional range that iterates over the elements of a path.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (equal(<span class="d_psymbol">pathSplitter</span>(<span class="d_string">"/"</span>), [<span class="d_string">"/"</span>]));
+<span class="d_keyword">assert</span> (equal(<span class="d_psymbol">pathSplitter</span>(<span class="d_string">"/foo/bar"</span>), [<span class="d_string">"/"</span>, <span class="d_string">"foo"</span>, <span class="d_string">"bar"</span>]));
+<span class="d_keyword">assert</span> (equal(<span class="d_psymbol">pathSplitter</span>(<span class="d_string">"//foo/bar"</span>), [<span class="d_string">"//foo"</span>, <span class="d_string">"bar"</span>]));
+<span class="d_keyword">assert</span> (equal(<span class="d_psymbol">pathSplitter</span>(<span class="d_string">"foo/../bar//./"</span>), [<span class="d_string">"foo"</span>, <span class="d_string">".."</span>, <span class="d_string">"bar"</span>, <span class="d_string">"."</span>]));
+
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (equal(<span class="d_psymbol">pathSplitter</span>(<span class="d_string">`foo\..\bar\/.\`</span>), [<span class="d_string">"foo"</span>, <span class="d_string">".."</span>, <span class="d_string">"bar"</span>, <span class="d_string">"."</span>]));
+    <span class="d_keyword">assert</span> (equal(<span class="d_psymbol">pathSplitter</span>(<span class="d_string">"c:"</span>), [<span class="d_string">"c:"</span>]));
+    <span class="d_keyword">assert</span> (equal(<span class="d_psymbol">pathSplitter</span>(<span class="d_string">`c:\foo\bar`</span>), [<span class="d_string">`c:\`</span>, <span class="d_string">"foo"</span>, <span class="d_string">"bar"</span>]));
+    <span class="d_keyword">assert</span> (equal(<span class="d_psymbol">pathSplitter</span>(<span class="d_string">`c:foo\bar`</span>), [<span class="d_string">"c:foo"</span>, <span class="d_string">"bar"</span>]));
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isRooted"></a>pure nothrow @safe bool <a name="isRooted"></a><span class="ddoc_psymbol">isRooted</span>(C)(in C[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Determines whether a path starts at a root directory.
+<p></p>
+   On POSIX, this function returns <b>true</b> if and only if the path starts
+    with a slash (/).
+<pre class="d_code"><span class="d_keyword">version</span> (Posix)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isRooted</span>(<span class="d_string">"/"</span>));
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isRooted</span>(<span class="d_string">"/foo"</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isRooted</span>(<span class="d_string">"foo"</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isRooted</span>(<span class="d_string">"../foo"</span>));
+}
+</pre>
+<p></p>
+
+    On Windows, this function returns <b>true</b> if the path starts at
+    the root directory of the current drive, of some other drive,
+    or of a network drive.
+<pre class="d_code"><span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isRooted</span>(<span class="d_string">`\`</span>));
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isRooted</span>(<span class="d_string">`\foo`</span>));
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isRooted</span>(<span class="d_string">`d:\foo`</span>));
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isRooted</span>(<span class="d_string">`\\foo\bar`</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isRooted</span>(<span class="d_string">"foo"</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isRooted</span>(<span class="d_string">"d:foo"</span>));
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isAbsolute"></a>pure nothrow @safe bool <a name="isAbsolute"></a><span class="ddoc_psymbol">isAbsolute</span>(C)(in C[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Determines whether a path is absolute or not.
+<p></p>
+<b>Examples:</b><br>   On POSIX, an absolute path starts at the root directory.
+    (In fact, <span class="d_inlinecode">isAbsolute</span> is just an alias for <a href="#isRooted"><span class="d_inlinecode">isRooted</span></a>.)
+<pre class="d_code"><span class="d_keyword">version</span> (Posix)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isAbsolute</span>(<span class="d_string">"/"</span>));
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isAbsolute</span>(<span class="d_string">"/foo"</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isAbsolute</span>(<span class="d_string">"foo"</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isAbsolute</span>(<span class="d_string">"../foo"</span>));
+}
+</pre>
+<p></p>
+
+    On Windows, an absolute path starts at the root directory of
+    a specific drive.  Hence, it must start with <span class="d_inlinecode">`d:\`</span> or <span class="d_inlinecode">`d:/`</span>,
+    where <span class="d_inlinecode">d</span> is the drive letter.  Alternatively, it may be a
+    network path, i.e. a path starting with a double (back)slash.
+<pre class="d_code"><span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isAbsolute</span>(<span class="d_string">`d:\`</span>));
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isAbsolute</span>(<span class="d_string">`d:\foo`</span>));
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">isAbsolute</span>(<span class="d_string">`\\foo\bar`</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isAbsolute</span>(<span class="d_string">`\`</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isAbsolute</span>(<span class="d_string">`\foo`</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">isAbsolute</span>(<span class="d_string">"d:foo"</span>));
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".absolutePath"></a>pure @safe string <a name="absolutePath"></a><span class="ddoc_psymbol">absolutePath</span>(string <i>path</i>, lazy string <i>base</i> = getcwd());
+</dt>
+<dd>Translates <span class="d_inlinecode"><i>path</i></span> into an absolute path.
+<p></p>
+The following algorithm is used:
+    <ol>       <li>If <span class="d_inlinecode"><i>path</i></span> is empty, return <span class="d_inlinecode"><b>null</b></span>.</li>
+        <li>If <span class="d_inlinecode"><i>path</i></span> is already absolute, return it.</li>
+        <li>Otherwise, append <span class="d_inlinecode"><i>path</i></span> to <span class="d_inlinecode"><i>base</i></span> and return
+            the result. If <span class="d_inlinecode"><i>base</i></span> is not specified, the current
+            working directory is used.</li>
+    </ol>
+    The function allocates memory if and only if it gets to the third stage
+    of this algorithm.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">version</span> (Posix)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">absolutePath</span>(<span class="d_string">"some/file"</span>, <span class="d_string">"/foo/bar"</span>)  == <span class="d_string">"/foo/bar/some/file"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">absolutePath</span>(<span class="d_string">"../file"</span>, <span class="d_string">"/foo/bar"</span>)    == <span class="d_string">"/foo/bar/../file"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">absolutePath</span>(<span class="d_string">"/some/file"</span>, <span class="d_string">"/foo/bar"</span>) == <span class="d_string">"/some/file"</span>);
+}
+
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">absolutePath</span>(<span class="d_string">`some\file`</span>, <span class="d_string">`c:\foo\bar`</span>)    == <span class="d_string">`c:\foo\bar\some\file`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">absolutePath</span>(<span class="d_string">`..\file`</span>, <span class="d_string">`c:\foo\bar`</span>)      == <span class="d_string">`c:\foo\bar\..\file`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">absolutePath</span>(<span class="d_string">`c:\some\file`</span>, <span class="d_string">`c:\foo\bar`</span>) == <span class="d_string">`c:\some\file`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">absolutePath</span>(<span class="d_string">`\file`</span>, <span class="d_string">`c:\foo\bar`</span>)        == <span class="d_string">`c:\file`</span>);
+}
+</pre>
+
+<p></p>
+<b>Throws:</b><br><span class="d_inlinecode">Exception</span> if the specified base directory is not absolute.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".relativePath"></a>string <a name="relativePath"></a><span class="ddoc_psymbol">relativePath</span>(CaseSensitive cs = CaseSensitive.osDefault)(string <i>path</i>, lazy string <i>base</i> = getcwd());
+</dt>
+<dd>Translates <span class="d_inlinecode">path</span> into a relative path.
+<p></p>
+The returned path is relative to <span class="d_inlinecode">base</span>, which is by default
+    taken to be the current working directory.  If specified,
+    <span class="d_inlinecode">base</span> must be an absolute path, and it is always assumed
+    to refer to a directory.  If <span class="d_inlinecode">path</span> and <span class="d_inlinecode">base</span> refer to
+    the same directory, the function returns <span class="d_inlinecode">`.`</span>.
+<p></p>
+
+    The following algorithm is used:
+    <ol>       <li>If <span class="d_inlinecode">path</span> is a relative directory, return it unaltered.</li>
+        <li>Find a common root between <span class="d_inlinecode">path</span> and <span class="d_inlinecode">base</span>.
+            If there is no common root, return <span class="d_inlinecode">path</span> unaltered.</li>
+        <li>Prepare a string with as many <span class="d_inlinecode">`../`</span> or <span class="d_inlinecode">`..\`</span> as
+            necessary to reach the common root from base path.</li>
+        <li>Append the remaining segments of <span class="d_inlinecode">path</span> to the string
+            and return.</li>
+    </ol>
+<p></p>
+
+    In the second step, path components are compared using <span class="d_inlinecode">filenameCmp!cs</span>,
+    where <span class="d_inlinecode">cs</span> is an optional template parameter determining whether
+    the comparison is case sensitive or not.  See the
+    <a href="#filenameCmp"><span class="d_inlinecode">filenameCmp</span></a> documentation for details.
+<p></p>
+
+    The function allocates memory if and only if it reaches the third stage
+    of the above algorithm.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">"foo"</span>) == <span class="d_string">"foo"</span>);
+
+<span class="d_keyword">version</span> (Posix)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">"foo"</span>, <span class="d_string">"/bar"</span>) == <span class="d_string">"foo"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">"/foo/bar"</span>, <span class="d_string">"/foo/bar"</span>) == <span class="d_string">"."</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">"/foo/bar"</span>, <span class="d_string">"/foo/baz"</span>) == <span class="d_string">"../bar"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">"/foo/bar/baz"</span>, <span class="d_string">"/foo/woo/wee"</span>) == <span class="d_string">"../../bar/baz"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">"/foo/bar/baz"</span>, <span class="d_string">"/foo/bar"</span>) == <span class="d_string">"baz"</span>);
+}
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">"foo"</span>, <span class="d_string">`c:\bar`</span>) == <span class="d_string">"foo"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">`c:\foo\bar`</span>, <span class="d_string">`c:\foo\bar`</span>) == <span class="d_string">"."</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">`c:\foo\bar`</span>, <span class="d_string">`c:\foo\baz`</span>) == <span class="d_string">`..\bar`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">`c:\foo\bar\baz`</span>, <span class="d_string">`c:\foo\woo\wee`</span>) == <span class="d_string">`..\..\bar\baz`</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">`c:\foo\bar\baz`</span>, <span class="d_string">`c:\foo\bar`</span>) == <span class="d_string">"baz"</span>);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">relativePath</span>(<span class="d_string">`c:\foo\bar`</span>, <span class="d_string">`d:\foo`</span>) == <span class="d_string">`c:\foo\bar`</span>);
+}
+</pre>
+
+<p></p>
+<b>Throws:</b><br><span class="d_inlinecode">Exception</span> if the specified base directory is not absolute.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".filenameCharCmp"></a>pure nothrow @safe int <a name="filenameCharCmp"></a><span class="ddoc_psymbol">filenameCharCmp</span>(CaseSensitive cs = CaseSensitive.osDefault)(dchar <i>a</i>, dchar <i>b</i>);
+</dt>
+<dd>Compares filename characters and return <span class="d_inlinecode">&lt; 0</span> if <span class="d_inlinecode">a &lt; b</span>, <span class="d_inlinecode">0</span> if
+    <span class="d_inlinecode">a == b</span> and <span class="d_inlinecode">&gt; 0</span> if <span class="d_inlinecode">a &gt; b</span>.
+<p></p>
+This function can perform a case-sensitive or a case-insensitive
+    comparison.  This is controlled through the <span class="d_inlinecode">cs</span> template parameter
+    which, if not specified, is given by
+    <a href="#CaseSensitive"><span class="d_inlinecode">CaseSensitive</span></a><span class="d_inlinecode">.osDefault</span>.
+<p></p>
+
+    On Windows, the backslash and slash characters (<span class="d_inlinecode">`\`</span> and <span class="d_inlinecode">`/`</span>)
+    are considered equal.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCharCmp</span>('a', 'a') == 0);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCharCmp</span>('a', 'b') &lt; 0);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCharCmp</span>('b', 'a') &gt; 0);
+
+<span class="d_keyword">version</span> (linux)
+{
+    <span class="d_comment">// Same as calling filenameCharCmp!(CaseSensitive.yes)(a, b)
+</span>    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCharCmp</span>('A', 'a') &lt; 0);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCharCmp</span>('a', 'A') &gt; 0);
+}
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_comment">// Same as calling filenameCharCmp!(CaseSensitive.no)(a, b)
+</span>    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCharCmp</span>('a', 'A') == 0);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCharCmp</span>('a', 'B') &lt; 0);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCharCmp</span>('A', 'b') &lt; 0);
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".filenameCmp"></a>pure @safe int <a name="filenameCmp"></a><span class="ddoc_psymbol">filenameCmp</span>(CaseSensitive cs = CaseSensitive.osDefault, C1, C2)(const(C1)[] <i>filename1</i>, const(C2)[] <i>filename2</i>) if (isSomeChar!C1 &amp;&amp; isSomeChar!C2);
+</dt>
+<dd>Compares file names and returns
+    <span class="d_inlinecode">&lt; 0</span> if <span class="d_inlinecode">filename1 &lt; filename2</span>,
+    <span class="d_inlinecode">0</span> if <span class="d_inlinecode">filename1 == filename2</span> and
+    <span class="d_inlinecode">&gt; 0</span> if <span class="d_inlinecode">filename1 &gt; filename2</span>.
+<p></p>
+Individual characters are compared using <span class="d_inlinecode">filenameCharCmp!cs</span>,
+    where <span class="d_inlinecode">cs</span> is an optional template parameter determining whether
+    the comparison is case sensitive or not.  See the
+    <a href="#filenameCharCmp"><span class="d_inlinecode">filenameCharCmp</span></a> documentation for details.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"abc"</span>, <span class="d_string">"abc"</span>) == 0);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"abc"</span>, <span class="d_string">"abd"</span>) &lt; 0);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"abc"</span>, <span class="d_string">"abb"</span>) &gt; 0);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"abc"</span>, <span class="d_string">"abcd"</span>) &lt; 0);
+<span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"abcd"</span>, <span class="d_string">"abc"</span>) &gt; 0);
+
+<span class="d_keyword">version</span> (linux)
+{
+    <span class="d_comment">// Same as calling filenameCmp!(CaseSensitive.yes)(filename1, filename2)
+</span>    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"Abc"</span>, <span class="d_string">"abc"</span>) &lt; 0);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"abc"</span>, <span class="d_string">"Abc"</span>) &gt; 0);
+}
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_comment">// Same as calling filenameCmp!(CaseSensitive.no)(filename1, filename2)
+</span>    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"Abc"</span>, <span class="d_string">"abc"</span>) == 0);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"abc"</span>, <span class="d_string">"Abc"</span>) == 0);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"Abc"</span>, <span class="d_string">"abD"</span>) &lt; 0);
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">filenameCmp</span>(<span class="d_string">"abc"</span>, <span class="d_string">"AbB"</span>) &gt; 0);
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".globMatch"></a>pure nothrow @safe bool <a name="globMatch"></a><span class="ddoc_psymbol">globMatch</span>(CaseSensitive cs = CaseSensitive.osDefault, C)(const(C)[] <i>path</i>, const(C)[] <i>pattern</i>) if (isSomeChar!C);
+</dt>
+<dd>Matches a pattern against a path.
+<p></p>
+Some characters of pattern have a special meaning (they are
+    <i>meta-characters</i>) and can't be escaped. These are:
+<p></p>
+
+    <table cellspacing=0 cellpadding=5 class=book><caption></caption>    <tr><td valign=top><span class="d_inlinecode">*</span></td>
+         <td valign=top>Matches 0 or more instances of any character.</td></tr>
+    <tr><td valign=top><span class="d_inlinecode">?</span></td>
+         <td valign=top>Matches exactly one instance of any character.</td></tr>
+    <tr><td valign=top><span class="d_inlinecode">[</span><i>chars</i><span class="d_inlinecode">]</span></td>
+         <td valign=top>Matches one instance of any character that appears
+              between the brackets.</td></tr>
+    <tr><td valign=top><span class="d_inlinecode">[!</span><i>chars</i><span class="d_inlinecode">]</span></td>
+         <td valign=top>Matches one instance of any character that does not
+              appear between the brackets after the exclamation mark.</td></tr>
+    <tr><td valign=top><span class="d_inlinecode">{</span><i>string1</i><span class="d_inlinecode">,</span><i>string2</i><span class="d_inlinecode">,</span>&hellip;<span class="d_inlinecode">}</span></td>
+         <td valign=top>Matches either of the specified strings.</td></tr>
+    </table>
+<p></p>
+
+    Individual characters are compared using <span class="d_inlinecode">filenameCharCmp!cs</span>,
+    where <span class="d_inlinecode">cs</span> is an optional template parameter determining whether
+    the comparison is case sensitive or not.  See the
+    <a href="#filenameCharCmp"><span class="d_inlinecode">filenameCharCmp</span></a> documentation for details.
+<p></p>
+
+    Note that directory
+    separators and dots don't stop a meta-character from matching
+    further portions of the path.
+
+<p></p>
+<b>Returns:</b><br><span class="d_inlinecode"><b>true</b></span> if pattern matches path, <span class="d_inlinecode"><b>false</b></span> otherwise.
+
+<p></p>
+<b>See Also:</b><br><a href="http://en.wikipedia.org/wiki/Glob_%28programming%29">Wikipedia: glob (programming)</a>
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"foo.bar"</span>, <span class="d_string">"*"</span>));
+<span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"foo.bar"</span>, <span class="d_string">"*.*"</span>));
+<span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">`foo/foo\bar`</span>, <span class="d_string">"f*b*r"</span>));
+<span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"foo.bar"</span>, <span class="d_string">"f???bar"</span>));
+<span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"foo.bar"</span>, <span class="d_string">"[fg]???bar"</span>));
+<span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"foo.bar"</span>, <span class="d_string">"[!gh]*bar"</span>));
+<span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"bar.fooz"</span>, <span class="d_string">"bar.{foo,bif}z"</span>));
+<span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"bar.bifz"</span>, <span class="d_string">"bar.{foo,bif}z"</span>));
+
+<span class="d_keyword">version</span> (Windows)
+{
+    <span class="d_comment">// Same as calling globMatch!(CaseSensitive.no)(path, pattern)
+</span>    <span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"foo"</span>, <span class="d_string">"Foo"</span>));
+    <span class="d_keyword">assert</span> (<span class="d_psymbol">globMatch</span>(<span class="d_string">"Goo.bar"</span>, <span class="d_string">"[fg]???bar"</span>));
+}
+<span class="d_keyword">version</span> (linux)
+{
+    <span class="d_comment">// Same as calling globMatch!(CaseSensitive.yes)(path, pattern)
+</span>    <span class="d_keyword">assert</span> (!<span class="d_psymbol">globMatch</span>(<span class="d_string">"foo"</span>, <span class="d_string">"Foo"</span>));
+    <span class="d_keyword">assert</span> (!<span class="d_psymbol">globMatch</span>(<span class="d_string">"Goo.bar"</span>, <span class="d_string">"[fg]???bar"</span>));
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isValidFilename"></a>pure nothrow @safe bool <a name="isValidFilename"></a><span class="ddoc_psymbol">isValidFilename</span>(C)(in C[] <i>filename</i>) if (isSomeChar!C);
+</dt>
+<dd>Checks that the given file or directory name is valid.
+<p></p>
+This function returns <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">filename</span> is not
+    empty, not too long, and does not contain invalid characters.
+<p></p>
+
+    The maximum length of <span class="d_inlinecode">filename</span> is given by the constant
+    <span class="d_inlinecode">core.stdc.stdio.FILENAME_MAX</span>.  (On Windows, this number is
+    defined as the maximum number of UTF-16 code points, and the
+    test will therefore only yield strictly correct results when
+    <span class="d_inlinecode">filename</span> is a string of <span class="d_inlinecode">wchar</span>s.)
+<p></p>
+
+    On Windows, the following criteria must be satisfied
+    (<a href="http://msdn.microsoft.com/en-us/library/aa365247(v=vs.85).aspx">source</a>):
+    <ul>       <li><span class="d_inlinecode">filename</span> must not contain any characters whose integer
+            representation is in the range 0-31.</li>
+        <li><span class="d_inlinecode">filename</span> must not contain any of the following <i>reserved
+            characters</i>: &lt;&gt;:"/\|?*</li>
+        <li><span class="d_inlinecode">filename</span> may not end with a space (<span class="d_inlinecode">' '</span>) or a period
+            (<span class="d_inlinecode">'.'</span>).</li>
+    </ul>
+<p></p>
+
+    On POSIX, <span class="d_inlinecode">filename</span> may not contain a forward slash (<span class="d_inlinecode">'/'</span>) or
+    the <b>null</b> character (<span class="d_inlinecode">'\0'</span>).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isValidPath"></a>pure nothrow @safe bool <a name="isValidPath"></a><span class="ddoc_psymbol">isValidPath</span>(C)(in C[] <i>path</i>) if (isSomeChar!C);
+</dt>
+<dd>Checks whether <span class="d_inlinecode">path</span> is a valid path.
+<p></p>
+Generally, this function checks that <span class="d_inlinecode">path</span> is not empty, and that
+    each component of the path either satisfies <a href="#isValidFilename"><span class="d_inlinecode">isValidFilename</span></a>
+    or is equal to <span class="d_inlinecode">"."</span> or <span class="d_inlinecode">".."</span>.
+    It does <i>not</i> check whether the path points to an existing file
+    or directory; use <a href="std_file.html#exists"><span class="d_inlinecode">std.file.exists</span></a> for this purpose.
+<p></p>
+
+    On Windows, some special rules apply:
+    <ul>       <li>If the second character of <span class="d_inlinecode">path</span> is a colon (<span class="d_inlinecode">':'</span>),
+            the first character is interpreted as a drive letter, and
+            must be in the range A-Z (case insensitive).</li>
+        <li>If <span class="d_inlinecode">path</span> is on the form <span class="d_inlinecode">`\\<i>server</i>\<i>share</i>\...`</span>
+            (UNC path), <a href="#isValidFilename"><span class="d_inlinecode">isValidFilename</span></a> is applied to <i>server</i>
+            and <i>share</i> as well.</li>
+        <li>If <span class="d_inlinecode">path</span> starts with <span class="d_inlinecode">`\\?\`</span> (long UNC path), the
+            only requirement for the rest of the string is that it does
+            not contain the <b>null</b> character.</li>
+        <li>If <span class="d_inlinecode">path</span> starts with <span class="d_inlinecode">`\\.\`</span> (Win32 device namespace)
+            this function returns <span class="d_inlinecode"><b>false</b></span>; such paths are beyond the scope
+            of this module.</li>
+    </ul><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".expandTilde"></a>string <a name="expandTilde"></a><span class="ddoc_psymbol">expandTilde</span>(string <i>inputPath</i>);
+</dt>
+<dd>Performs tilde expansion in paths on POSIX systems.
+    On Windows, this function does nothing.
+<p></p>
+There are two ways of using tilde expansion in a path. One
+    involves using the tilde alone or followed by a path separator. In
+    this case, the tilde will be expanded with the value of the
+    environment variable <span class="d_inlinecode">HOME</span>.  The second way is putting
+    a username after the tilde (i.e. <span class="d_inlinecode">~john/Mail</span>). Here,
+    the username will be searched for in the user database
+    (i.e. <span class="d_inlinecode">/etc/passwd</span> on Unix systems) and will expand to
+    whatever path is stored there.  The username is considered the
+    string after the tilde ending at the first instance of a path
+    separator.
+<p></p>
+
+    Note that using the <span class="d_inlinecode">~user</span> syntax may give different
+    values from just <span class="d_inlinecode">~</span> if the environment variable doesn't
+    match the value stored in the user database.
+<p></p>
+
+    When the environment variable version is used, the path won't
+    be modified if the environment variable doesn't exist or it
+    is empty. When the database version is used, the path won't be
+    modified if the user doesn't exist in the database or there is
+    not enough memory to perform the query.
+<p></p>
+
+    This function performs several memory allocations.
+
+<p></p>
+<b>Returns:</b><br><span class="d_inlinecode"><i>inputPath</i></span> with the tilde expanded, or just <span class="d_inlinecode"><i>inputPath</i></span>
+    if it could not be expanded.
+    For Windows, <span class="d_inlinecode"><a name="expandTilde"></a><span class="ddoc_psymbol">expandTilde</span></span> merely returns its argument <span class="d_inlinecode"><i>inputPath</i></span>.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">void</span> processFile(string path)
+{
+    <span class="d_comment">// Allow calling this function with paths such as ~/foo
+</span>    <span class="d_keyword">auto</span> fullPath = <span class="d_psymbol">expandTilde</span>(path);
+    ...
+}
+</pre>
+<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright (c) 2000–2011, the authors. All rights reserved.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

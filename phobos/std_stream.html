@@ -1,0 +1,1071 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.stream - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+function listanchors()
+{
+    if (typeof inhibitQuickIndex !== 'undefined') return;
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        // ignore anchors from DDOC_PSYMBOL
+        if (text[0] != '.') continue;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+        values[n++] = a.name
+    }
+
+    // we won't display the qualifying names to save space, so sort by last name
+    var lastName = function(a){
+        var li = a.lastIndexOf('.');
+        return a.slice(li + 1);
+    }
+    values.sort(function(a,b){return lastName(a) > lastName(b)});
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        var text = lastName(a);
+        newText += ' \x3Ca href="\x23' + a +
+            '"\x3E\x3Cspan class="d_psymbol"\x3E' + text + '\x3C/span\x3E\x3C/a\x3E';
+    }
+    if (newText != "") newText = "\x3Cp\x3E\x3Cb\x3EJump to:\x3C/b\x3E" + newText + "\x3C/p\x3E";
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+jQuery(document).ready(listanchors);
+</script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/phobos">Library Reference</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="/images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language </a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/phobos">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+	<li><a href="../phobos-prerelease/index.html" title="D Runtime Library (prerelease)">Phobos (prerelease)</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="index.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_ascii.html" title="Functions which operate on ASCII characters">std.ascii</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_csv.html" title="CSV file parser">std.csv</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_parallelism.html" title="High-level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_process.html" title="Create/destroy processes">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_uuid.html" title="Generate and use UUIDs">std.uuid</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_net_curl.html" title="High level curl wrapper">std.net.curl</a></li>
+	<li><a href="std_net_isemail.html" title="Validate e-mail addresses">std.net.isemail</a></li>
+	<li><a href="std_digest_crc.html" title="CRC digest functions">std.digest.crc</a></li>
+	<li><a href="std_digest_digest.html" title="API for digest functions">std.digest.digest</a></li>
+	<li><a href="std_digest_md.html" title="MD digest functions">std.digest.md</a></li>
+	<li><a href="std_digest_ripemd.html" title="RIPEMD digest functions">std.digest.ripemd</a></li>
+	<li><a href="std_digest_sha.html" title="SHA digest functions">std.digest.sha</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+    </ul>
+    <h2><a href="index.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_sqlite3.html" title="Interface to sqlite3 library">etc.c.sqlite3</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="index.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_demangle.html" title="D symbol mangling">core.demangle</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_simd.html" title="Builtin SIMD intrinsics">core.simd</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_time.html" title="Core time functionality">core.time</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/phobos/edit/master/std\stream.d" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/Phobos/StdStream" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>std.stream</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\stream.d -->
+<span style="color:red">Warning: This module is considered out-dated and not up to Phobos'
+       current standards. It will remain until we have a suitable replacement,
+       but be aware that it will not remain long term.</span>
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/stream.d">std/stream.d</a>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".StreamException"></a>class <a name="StreamException"></a><span class="ddoc_psymbol">StreamException</span>: object.Exception;
+</dt>
+<dd>A base class for stream exceptions.<p></p>
+
+<dl><dt class="d_decl"><a name=".StreamException.this"></a> this(string <i>msg</i>);
+</dt>
+<dd>Construct a StreamException with given error message.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".ReadException"></a>class <a name="ReadException"></a><span class="ddoc_psymbol">ReadException</span>: std.stream.StreamException;
+</dt>
+<dd>Thrown when unable to read data from Stream.<p></p>
+
+<dl><dt class="d_decl"><a name=".ReadException.this"></a> this(string <i>msg</i>);
+</dt>
+<dd>Construct a ReadException with given error message.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".WriteException"></a>class <a name="WriteException"></a><span class="ddoc_psymbol">WriteException</span>: std.stream.StreamException;
+</dt>
+<dd>Thrown when unable to write data to Stream.<p></p>
+
+<dl><dt class="d_decl"><a name=".WriteException.this"></a> this(string <i>msg</i>);
+</dt>
+<dd>Construct a WriteException with given error message.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".SeekException"></a>class <a name="SeekException"></a><span class="ddoc_psymbol">SeekException</span>: std.stream.StreamException;
+</dt>
+<dd>Thrown when unable to move Stream pointer.<p></p>
+
+<dl><dt class="d_decl"><a name=".SeekException.this"></a> this(string <i>msg</i>);
+</dt>
+<dd>Construct a SeekException with given error message.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".InputStream"></a>interface <a name="InputStream"></a><span class="ddoc_psymbol">InputStream</span>;
+</dt>
+<dd><a name="InputStream"></a><span class="ddoc_psymbol">InputStream</span> is the interface for readable streams.<p></p>
+
+<dl><dt class="d_decl"><a name=".InputStream.readExact"></a>abstract void <a name="readExact"></a><span class="ddoc_psymbol">readExact</span>(void* <i>buffer</i>, size_t <i>size</i>);
+</dt>
+<dd>Read exactly <i>size</i> bytes into the <i>buffer</i>.
+<p></p>
+Throws a ReadException if it is not correct.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.read"></a>abstract size_t <a name="read"></a><span class="ddoc_psymbol">read</span>(ubyte[] <i>buffer</i>);
+</dt>
+<dd>Read a block of data big enough to fill the given array <i>buffer</i>.
+<p></p>
+<b>Returns:</b><br>the actual number of bytes <a name="read"></a><span class="ddoc_psymbol">read</span>. Unfilled bytes are not modified.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out byte <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out ubyte <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out short <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out ushort <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out int <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out uint <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out long <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out ulong <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out float <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out double <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out real <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out ifloat <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out idouble <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out ireal <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out cfloat <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out cdouble <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out creal <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out char <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out wchar <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out dchar <i>x</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out char[] <i>s</i>);
+<br><a name=".InputStream.read"></a>abstract void <a name="read"></a><span class="ddoc_psymbol">read</span>(out wchar[] <i>s</i>);
+</dt>
+<dd>Read a basic type or counted string.
+<p></p>
+Throw a ReadException if it could not be <a name="read"></a><span class="ddoc_psymbol">read</span>.
+ Outside of byte, ubyte, and char, the format is
+ implementation-specific and should not be used except as opposite actions
+ to write.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.readLine"></a>abstract char[] <a name="readLine"></a><span class="ddoc_psymbol">readLine</span>();
+<br><a name=".InputStream.readLine"></a>abstract char[] <a name="readLine"></a><span class="ddoc_psymbol">readLine</span>(char[] <i>result</i>);
+<br><a name=".InputStream.readLineW"></a>abstract wchar[] <a name="readLineW"></a><span class="ddoc_psymbol">readLineW</span>();
+<br><a name=".InputStream.readLineW"></a>abstract wchar[] <a name="readLineW"></a><span class="ddoc_psymbol">readLineW</span>(wchar[] <i>result</i>);
+</dt>
+<dd>Read a line that is terminated with some combination of carriage return and
+ line feed or end-of-file.
+<p></p>
+The terminators are not included. The wchar version
+ is identical. The optional buffer parameter is filled (reallocating
+ it if necessary) and a slice of the result is returned.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.opApply"></a>abstract int <a name="opApply"></a><span class="ddoc_psymbol">opApply</span>(scope int delegate(ref char[] line) <i>dg</i>);
+<br><a name=".InputStream.opApply"></a>abstract int <a name="opApply"></a><span class="ddoc_psymbol">opApply</span>(scope int delegate(ref ulong n, ref char[] line) <i>dg</i>);
+<br><a name=".InputStream.opApply"></a>abstract int <a name="opApply"></a><span class="ddoc_psymbol">opApply</span>(scope int delegate(ref wchar[] line) <i>dg</i>);
+<br><a name=".InputStream.opApply"></a>abstract int <a name="opApply"></a><span class="ddoc_psymbol">opApply</span>(scope int delegate(ref ulong n, ref wchar[] line) <i>dg</i>);
+</dt>
+<dd>Overload foreach statements to read the stream line by line and call the
+ supplied delegate with each line or with each line with line number.
+<p></p>
+The string passed in line may be reused between calls to the delegate.
+ Line numbering starts at 1.
+ Breaking out of the foreach will leave the stream
+ position at the beginning of the next line to be read.
+ For example, to echo a file line-by-line with line numbers run:
+<pre class="d_code">Stream file = <span class="d_keyword">new</span> BufferedFile(<span class="d_string">"sample.txt"</span>);
+<span class="d_keyword">foreach</span>(<span class="d_keyword">ulong</span> n, <span class="d_keyword">char</span>[] line; file)
+{
+    writefln(<span class="d_string">"line %d: %s"</span>, n, line);
+}
+file.close();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.readString"></a>abstract char[] <a name="readString"></a><span class="ddoc_psymbol">readString</span>(size_t <i>length</i>);
+</dt>
+<dd>Read a string of the given <i>length</i>,
+ throwing ReadException if there was a problem.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.readStringW"></a>abstract wchar[] <a name="readStringW"></a><span class="ddoc_psymbol">readStringW</span>(size_t <i>length</i>);
+</dt>
+<dd>Read a string of the given <i>length</i>, throwing ReadException if there was a
+ problem.
+<p></p>
+The file format is implementation-specific and should not be used
+ except as opposite actions to <b>write</b>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.getc"></a>abstract char <a name="getc"></a><span class="ddoc_psymbol">getc</span>();
+<br><a name=".InputStream.getcw"></a>abstract wchar <a name="getcw"></a><span class="ddoc_psymbol">getcw</span>();
+</dt>
+<dd>Read and return the next character in the stream.
+<p></p>
+This is the only method that will handle ungetc properly.
+ getcw's format is implementation-specific.
+ If EOF is reached then <a name="getc"></a><span class="ddoc_psymbol">getc</span> returns char.init and getcw returns wchar.init.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.ungetc"></a>abstract char <a name="ungetc"></a><span class="ddoc_psymbol">ungetc</span>(char <i>c</i>);
+<br><a name=".InputStream.ungetcw"></a>abstract wchar <a name="ungetcw"></a><span class="ddoc_psymbol">ungetcw</span>(wchar <i>c</i>);
+</dt>
+<dd>Push a character back onto the stream.
+<p></p>
+They will be returned in first-in last-out order from getc/getcw.
+ Only has effect on further calls to getc() and getcw().<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.vreadf"></a>abstract int <a name="vreadf"></a><span class="ddoc_psymbol">vreadf</span>(TypeInfo[] <i>arguments</i>, void* <i>args</i>);
+<br><a name=".InputStream.readf"></a>abstract int <a name="readf"></a><span class="ddoc_psymbol">readf</span>(...);
+</dt>
+<dd>Scan a string from the input using a similar form to C's scanf
+ and <a href="std_format.html">std.format</a>.
+<p></p>
+An argument of type string is interpreted as a format string.
+ All other <i>arguments</i> must be pointer types.
+ If a format string is not present a default will be supplied computed from
+ the base type of the pointer type. An argument of type string* is filled
+ (possibly with appending characters) and a slice of the result is assigned
+ back into the argument. For example the following readf statements
+ are equivalent:
+<pre class="d_code"><span class="d_keyword">int</span> x;
+<span class="d_keyword">double</span> y;
+string s;
+file.readf(&amp;x, <span class="d_string">" hello "</span>, &amp;y, &amp;s);
+file.readf(<span class="d_string">"%d hello %f %s"</span>, &amp;x, &amp;y, &amp;s);
+file.readf(<span class="d_string">"%d hello %f"</span>, &amp;x, &amp;y, <span class="d_string">"%s"</span>, &amp;s);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.available"></a>abstract @property size_t <a name="available"></a><span class="ddoc_psymbol">available</span>();
+</dt>
+<dd>Retrieve the number of bytes <a name="available"></a><span class="ddoc_psymbol">available</span> for immediate reading.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.eof"></a>abstract @property bool <a name="eof"></a><span class="ddoc_psymbol">eof</span>();
+</dt>
+<dd>Return whether the current file position is the same as the end of the
+ file.
+<p></p>
+This does not require actually reading past the end, as with stdio. For
+ non-seekable streams this might only return <b>true</b> after attempting to read
+ past the end.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".InputStream.isOpen"></a>abstract @property bool <a name="isOpen"></a><span class="ddoc_psymbol">isOpen</span>();
+</dt>
+<dd>Return <b>true</b> if the stream is currently open.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".OutputStream"></a>interface <a name="OutputStream"></a><span class="ddoc_psymbol">OutputStream</span>;
+</dt>
+<dd>Interface for writable streams.<p></p>
+
+<dl><dt class="d_decl"><a name=".OutputStream.writeExact"></a>abstract void <a name="writeExact"></a><span class="ddoc_psymbol">writeExact</span>(const void* <i>buffer</i>, size_t <i>size</i>);
+</dt>
+<dd>Write exactly <i>size</i> bytes from <i>buffer</i>, or throw a WriteException if that
+ could not be done.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.write"></a>abstract size_t <a name="write"></a><span class="ddoc_psymbol">write</span>(const(ubyte)[] <i>buffer</i>);
+</dt>
+<dd>Write as much of the <i>buffer</i> as possible,
+ returning the number of bytes written.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(byte <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(ubyte <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(short <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(ushort <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(int <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(uint <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(long <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(ulong <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(float <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(double <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(real <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(ifloat <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(idouble <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(ireal <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(cfloat <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(cdouble <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(creal <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(char <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(wchar <i>x</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(dchar <i>x</i>);
+</dt>
+<dd>Write a basic type.
+<p></p>
+Outside of byte, ubyte, and char, the format is implementation-specific
+ and should only be used in conjunction with read.
+ Throw WriteException on error.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(const(char)[] <i>s</i>);
+<br><a name=".OutputStream.write"></a>abstract void <a name="write"></a><span class="ddoc_psymbol">write</span>(const(wchar)[] <i>s</i>);
+</dt>
+<dd>Writes a string, together with its length.
+<p></p>
+The format is implementation-specific
+ and should only be used in conjunction with read.
+ Throw WriteException on error.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.writeLine"></a>abstract void <a name="writeLine"></a><span class="ddoc_psymbol">writeLine</span>(const(char)[] <i>s</i>);
+</dt>
+<dd>Write a line of text,
+ appending the line with an operating-system-specific line ending.
+<p></p>
+Throws WriteException on error.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.writeLineW"></a>abstract void <a name="writeLineW"></a><span class="ddoc_psymbol">writeLineW</span>(const(wchar)[] <i>s</i>);
+</dt>
+<dd>Write a line of text,
+ appending the line with an operating-system-specific line ending.
+<p></p>
+The format is implementation-specific.
+ Throws WriteException on error.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.writeString"></a>abstract void <a name="writeString"></a><span class="ddoc_psymbol">writeString</span>(const(char)[] <i>s</i>);
+</dt>
+<dd>Write a string of text.
+<p></p>
+Throws WriteException if it could not be fully written.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.writeStringW"></a>abstract void <a name="writeStringW"></a><span class="ddoc_psymbol">writeStringW</span>(const(wchar)[] <i>s</i>);
+</dt>
+<dd>Write a string of text.
+<p></p>
+The format is implementation-specific.
+ Throws WriteException if it could not be fully written.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.vprintf"></a>abstract size_t <a name="vprintf"></a><span class="ddoc_psymbol">vprintf</span>(const(char)[] <i>format</i>, va_list <i>args</i>);
+<br><a name=".OutputStream.printf"></a>abstract size_t <a name="printf"></a><span class="ddoc_psymbol">printf</span>(const(char)[] <i>format</i>, ...);
+</dt>
+<dd>Print a formatted string into the stream using printf-style syntax,
+ returning the number of bytes written.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.writef"></a>abstract OutputStream <a name="writef"></a><span class="ddoc_psymbol">writef</span>(...);
+<br><a name=".OutputStream.writefln"></a>abstract OutputStream <a name="writefln"></a><span class="ddoc_psymbol">writefln</span>(...);
+<br><a name=".OutputStream.writefx"></a>abstract OutputStream <a name="writefx"></a><span class="ddoc_psymbol">writefx</span>(TypeInfo[] <i>arguments</i>, void* <i>argptr</i>, int <i>newline</i> = false);
+</dt>
+<dd>Print a formatted string into the stream using <a name="writef"></a><span class="ddoc_psymbol">writef</span>-style syntax.
+<p></p>
+<b>References:</b><br>
+<a href="std_format.html">std.format</a>.
+<p></p>
+<b>Returns:</b><br>self to chain with other stream commands like flush.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.flush"></a>abstract void <a name="flush"></a><span class="ddoc_psymbol">flush</span>();
+</dt>
+<dd>Flush pending output if appropriate.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.close"></a>abstract void <a name="close"></a><span class="ddoc_psymbol">close</span>();
+</dt>
+<dd>Close the stream, flushing output if appropriate.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".OutputStream.isOpen"></a>abstract @property bool <a name="isOpen"></a><span class="ddoc_psymbol">isOpen</span>();
+</dt>
+<dd>Return <b>true</b> if the stream is currently open.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".Stream"></a>abstract class <a name="Stream"></a><span class="ddoc_psymbol">Stream</span>: std.stream.InputStream, std.stream.OutputStream;
+</dt>
+<dd><a name="Stream"></a><span class="ddoc_psymbol">Stream</span> is the base abstract class from which the other stream classes derive.
+<p></p>
+<a name="Stream"></a><span class="ddoc_psymbol">Stream</span>'s byte order is the format native to the computer.
+
+<p></p>
+<b>Reading:</b><br>
+These methods require that the readable flag be set.
+ Problems with reading result in a ReadException being thrown.
+ <a name="Stream"></a><span class="ddoc_psymbol">Stream</span> implements the InputStream interface in addition to the
+ readBlock method.
+
+<p></p>
+<b>Writing:</b><br>
+These methods require that the writeable flag be set. Problems with writing
+ result in a WriteException being thrown. <a name="Stream"></a><span class="ddoc_psymbol">Stream</span> implements the OutputStream
+ interface in addition to the following methods:
+ writeBlock
+ copyFrom
+ copyFrom
+
+<p></p>
+<b>Seeking:</b><br>
+These methods require that the seekable flag be set.
+ Problems with seeking result in a SeekException being thrown.
+ seek, seekSet, seekCur, seekEnd, position, size, toString, toHash<p></p>
+
+<dl><dt class="d_decl"><a name=".Stream.readable"></a>bool <a name="readable"></a><span class="ddoc_psymbol">readable</span>;
+</dt>
+<dd>Indicates whether this stream can be read from.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.writeable"></a>bool <a name="writeable"></a><span class="ddoc_psymbol">writeable</span>;
+</dt>
+<dd>Indicates whether this stream can be written to.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.seekable"></a>bool <a name="seekable"></a><span class="ddoc_psymbol">seekable</span>;
+</dt>
+<dd>Indicates whether this stream can be seeked within.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.isopen"></a>protected bool <a name="isopen"></a><span class="ddoc_psymbol">isopen</span>;
+</dt>
+<dd>Indicates whether this stream is open.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.readEOF"></a>protected bool <a name="readEOF"></a><span class="ddoc_psymbol">readEOF</span>;
+</dt>
+<dd>Indicates whether this stream is at eof
+ after the last read attempt.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.prevCr"></a>protected bool <a name="prevCr"></a><span class="ddoc_psymbol">prevCr</span>;
+</dt>
+<dd>For a non-seekable stream indicates that
+ the last readLine or readLineW ended on a
+ '\r' character.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.readBlock"></a>abstract size_t <a name="readBlock"></a><span class="ddoc_psymbol">readBlock</span>(void* <i>buffer</i>, size_t <i>size</i>);
+</dt>
+<dd>Read up to <i>size</i> bytes into the <i>buffer</i> and return the number of bytes
+ actually read. A return value of 0 indicates end-of-file.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.writeBlock"></a>abstract size_t <a name="writeBlock"></a><span class="ddoc_psymbol">writeBlock</span>(const void* <i>buffer</i>, size_t <i>size</i>);
+</dt>
+<dd>Write up to <i>size</i> bytes from <i>buffer</i> in the stream, returning the actual
+ number of bytes that were written.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.copyFrom"></a>void <a name="copyFrom"></a><span class="ddoc_psymbol">copyFrom</span>(Stream <i>s</i>);
+</dt>
+<dd>Copies all data from <i>s</i> into this stream.
+ This may throw ReadException or WriteException on failure.
+ This restores the file position of <i>s</i> so that it is unchanged.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.copyFrom"></a>void <a name="copyFrom"></a><span class="ddoc_psymbol">copyFrom</span>(Stream <i>s</i>, ulong <i>count</i>);
+</dt>
+<dd>Copy a specified number of bytes from the given stream into this one.
+ This may throw ReadException or WriteException on failure.
+ Unlike the previous form, this doesn't restore the file position of <i>s</i>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.seek"></a>abstract ulong <a name="seek"></a><span class="ddoc_psymbol">seek</span>(long <i>offset</i>, SeekPos <i>whence</i>);
+</dt>
+<dd>Change the current position of the stream. <i>whence</i> is either SeekPos.Set, in
+   which case the <i>offset</i> is an absolute index from the beginning of the stream,
+   SeekPos.Current, in which case the <i>offset</i> is a delta from the current
+   position, or SeekPos.End, in which case the <i>offset</i> is a delta from the end of
+   the stream (negative or zero offsets only make sense in that case). This
+   returns the new file position.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.seekSet"></a>ulong <a name="seekSet"></a><span class="ddoc_psymbol">seekSet</span>(long <i>offset</i>);
+<br><a name=".Stream.seekCur"></a>ulong <a name="seekCur"></a><span class="ddoc_psymbol">seekCur</span>(long <i>offset</i>);
+<br><a name=".Stream.seekEnd"></a>ulong <a name="seekEnd"></a><span class="ddoc_psymbol">seekEnd</span>(long <i>offset</i>);
+</dt>
+<dd>Aliases for their normal seek counterparts.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.position"></a>@property void <a name="position"></a><span class="ddoc_psymbol">position</span>(ulong <i>pos</i>);
+</dt>
+<dd>Sets file <a name="position"></a><span class="ddoc_psymbol">position</span>. Equivalent to calling seek(<i>pos</i>, SeekPos.Set).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.position"></a>@property ulong <a name="position"></a><span class="ddoc_psymbol">position</span>();
+</dt>
+<dd>Returns current file <a name="position"></a><span class="ddoc_psymbol">position</span>. Equivalent to seek(0, SeekPos.Current).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.size"></a>@property ulong <a name="size"></a><span class="ddoc_psymbol">size</span>();
+</dt>
+<dd>Retrieve the <a name="size"></a><span class="ddoc_psymbol">size</span> of the stream in bytes.
+ The stream must be seekable or a SeekException is thrown.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.toString"></a>string <a name="toString"></a><span class="ddoc_psymbol">toString</span>();
+</dt>
+<dd>Read the entire stream and return it as a string.
+ If the stream is not seekable the contents from the current position to eof
+ is read and returned.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Stream.toHash"></a>nothrow @trusted size_t <a name="toHash"></a><span class="ddoc_psymbol">toHash</span>();
+</dt>
+<dd>Get a hash of the stream by reading each byte and using it in a CRC-32
+ checksum.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".FilterStream"></a>class <a name="FilterStream"></a><span class="ddoc_psymbol">FilterStream</span>: std.stream.Stream;
+</dt>
+<dd>A base class for streams that wrap a source stream with additional
+ functionality.
+<p></p>
+The method implementations forward read/write/seek calls to the
+ source stream. A <a name="FilterStream"></a><span class="ddoc_psymbol">FilterStream</span> can change the position of the source stream
+ arbitrarily and may not keep the source stream state in sync with the
+ <a name="FilterStream"></a><span class="ddoc_psymbol">FilterStream</span>, even upon flushing and closing the <a name="FilterStream"></a><span class="ddoc_psymbol">FilterStream</span>. It is
+ recommended to not make any assumptions about the state of the source position
+ and read/write state after a <a name="FilterStream"></a><span class="ddoc_psymbol">FilterStream</span> has acted upon it. Specifc subclasses
+ of <a name="FilterStream"></a><span class="ddoc_psymbol">FilterStream</span> should document how they modify the source stream and if any
+ invariants hold <b>true</b> between the source and filter.<p></p>
+
+<dl><dt class="d_decl"><a name=".FilterStream.nestClose"></a>bool <a name="nestClose"></a><span class="ddoc_psymbol">nestClose</span>;
+</dt>
+<dd>Property indicating when this stream closes to close the source stream as
+ well.
+ Defaults to <b>true</b>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FilterStream.this"></a> this(Stream <i>source</i>);
+</dt>
+<dd>Construct a FilterStream for the given <i>source</i>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FilterStream.source"></a>final Stream <a name="source"></a><span class="ddoc_psymbol">source</span>();
+</dt>
+<dd>Get the current <a name="source"></a><span class="ddoc_psymbol">source</span> stream.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FilterStream.source"></a>void <a name="source"></a><span class="ddoc_psymbol">source</span>(Stream <i>s</i>);
+</dt>
+<dd>Set the current <a name="source"></a><span class="ddoc_psymbol">source</span> stream.
+<p></p>
+Setting the <a name="source"></a><span class="ddoc_psymbol">source</span> stream closes this stream before attaching the new
+ <a name="source"></a><span class="ddoc_psymbol">source</span>. Attaching an open stream reopens this stream and resets the stream
+ state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FilterStream.resetSource"></a>void <a name="resetSource"></a><span class="ddoc_psymbol">resetSource</span>();
+</dt>
+<dd>Indicates the source stream changed state and that this stream should reset
+ any readable, writeable, seekable, isopen and buffering flags.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".BufferedStream"></a>class <a name="BufferedStream"></a><span class="ddoc_psymbol">BufferedStream</span>: std.stream.FilterStream;
+</dt>
+<dd>This subclass is for buffering a source stream.
+<p></p>
+A buffered stream must be
+ closed explicitly to ensure the final buffer content is written to the source
+ stream. The source stream position is changed according to the block size so
+ reading or writing to the <a name="BufferedStream"></a><span class="ddoc_psymbol">BufferedStream</span> may not change the source stream
+ position by the same amount.<p></p>
+
+<dl><dt class="d_decl"><a name=".BufferedStream.this"></a> this(Stream <i>source</i>, size_t <i>bufferSize</i> = DefaultBufferSize);
+</dt>
+<dd>Create a buffered stream for the stream <i>source</i> with the buffer size
+ <i>bufferSize</i>.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".StreamFileException"></a>class <a name="StreamFileException"></a><span class="ddoc_psymbol">StreamFileException</span>: std.stream.StreamException;
+</dt>
+<dd>An exception for File errors.<p></p>
+
+<dl><dt class="d_decl"><a name=".StreamFileException.this"></a> this(string <i>msg</i>);
+</dt>
+<dd>Construct a StreamFileException with given error message.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".OpenException"></a>class <a name="OpenException"></a><span class="ddoc_psymbol">OpenException</span>: std.stream.StreamFileException;
+</dt>
+<dd>An exception for errors during File.open.<p></p>
+
+<dl><dt class="d_decl"><a name=".OpenException.this"></a> this(string <i>msg</i>);
+</dt>
+<dd>Construct an OpenFileException with given error message.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".File"></a>class <a name="File"></a><span class="ddoc_psymbol">File</span>: std.stream.Stream;
+</dt>
+<dd>This subclass is for unbuffered file system streams.<p></p>
+
+<dl><dt class="d_decl"><a name=".File.this"></a> this(string <i>filename</i>, FileMode <i>mode</i> = FileMode.In);
+</dt>
+<dd>Create the stream with no open file, an open file in read <i>mode</i>, or an open
+ file with explicit file <i>mode</i>.
+ <i>mode</i>, if given, is a combination of FileMode.In
+ (indicating a file that can be read) and FileMode.Out (indicating a file
+ that can be written).
+ Opening a file for reading that doesn't exist will error.
+ Opening a file for writing that doesn't exist will create the file.
+ The FileMode.OutNew <i>mode</i> will open the file for writing and reset the
+ length to zero.
+ The FileMode.Append <i>mode</i> will open the file for writing and move the
+ file position to the end of the file.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".File.open"></a>void <a name="open"></a><span class="ddoc_psymbol">open</span>(string <i>filename</i>, FileMode <i>mode</i> = FileMode.In);
+</dt>
+<dd>Open a file for the stream, in an identical manner to the constructors.
+ If an error occurs an OpenException is thrown.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".File.create"></a>void <a name="create"></a><span class="ddoc_psymbol">create</span>(string <i>filename</i>);
+<br><a name=".File.create"></a>void <a name="create"></a><span class="ddoc_psymbol">create</span>(string <i>filename</i>, FileMode <i>mode</i>);
+</dt>
+<dd>Create a file for writing.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".File.close"></a>void <a name="close"></a><span class="ddoc_psymbol">close</span>();
+</dt>
+<dd>Close the current file if it is open; otherwise it does nothing.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".File.available"></a>@property size_t <a name="available"></a><span class="ddoc_psymbol">available</span>();
+</dt>
+<dd>For a seekable file returns the difference of the size and position and
+ otherwise returns 0.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".BufferedFile"></a>class <a name="BufferedFile"></a><span class="ddoc_psymbol">BufferedFile</span>: std.stream.BufferedStream;
+</dt>
+<dd>This subclass is for buffered file system streams.
+<p></p>
+It is a convenience class for wrapping a File in a BufferedStream.
+ A buffered stream must be closed explicitly to ensure the final buffer
+ content is written to the file.<p></p>
+
+<dl><dt class="d_decl"><a name=".BufferedFile.this"></a> this();
+</dt>
+<dd>opens file for reading<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BufferedFile.this"></a> this(string <i>filename</i>, FileMode <i>mode</i> = FileMode.In, size_t <i>bufferSize</i> = DefaultBufferSize);
+</dt>
+<dd>opens file in requested <i>mode</i> and buffer size<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BufferedFile.this"></a> this(File <i>file</i>, size_t <i>bufferSize</i> = DefaultBufferSize);
+</dt>
+<dd>opens <i>file</i> for reading with requested buffer size<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BufferedFile.this"></a> this(HANDLE <i>hFile</i>, FileMode <i>mode</i>, size_t <i>buffersize</i> = DefaultBufferSize);
+</dt>
+<dd>opens existing handle; use with care!<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BufferedFile.open"></a>void <a name="open"></a><span class="ddoc_psymbol">open</span>(string <i>filename</i>, FileMode <i>mode</i> = FileMode.In);
+</dt>
+<dd>opens file in requested <i>mode</i><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BufferedFile.create"></a>void <a name="create"></a><span class="ddoc_psymbol">create</span>(string <i>filename</i>, FileMode <i>mode</i> = FileMode.OutNew);
+</dt>
+<dd>creates file in requested <i>mode</i><p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".BOM"></a>enum <a name="BOM"></a><span class="ddoc_psymbol">BOM</span>: int;
+</dt>
+<dd>UTF byte-order-mark signatures<p></p>
+
+<dl><dt class="d_decl"><a name=".BOM.UTF8"></a><a name="UTF8"></a><span class="ddoc_psymbol">UTF8</span></dt>
+<dd>UTF-8<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BOM.UTF16LE"></a><a name="UTF16LE"></a><span class="ddoc_psymbol">UTF16LE</span></dt>
+<dd>UTF-16 Little Endian<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BOM.UTF16BE"></a><a name="UTF16BE"></a><span class="ddoc_psymbol">UTF16BE</span></dt>
+<dd>UTF-16 Big Endian<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BOM.UTF32LE"></a><a name="UTF32LE"></a><span class="ddoc_psymbol">UTF32LE</span></dt>
+<dd>UTF-32 Little Endian<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BOM.UTF32BE"></a><a name="UTF32BE"></a><span class="ddoc_psymbol">UTF32BE</span></dt>
+<dd>UTF-32 Big Endian<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".EndianStream"></a>class <a name="EndianStream"></a><span class="ddoc_psymbol">EndianStream</span>: std.stream.FilterStream;
+</dt>
+<dd>This subclass wraps a stream with big-endian or little-endian byte order
+ swapping.
+<p></p>
+UTF Byte-Order-Mark (BOM) signatures can be read and deduced or
+ written.
+ Note that an <a name="EndianStream"></a><span class="ddoc_psymbol">EndianStream</span> should not be used as the source of another
+ FilterStream since a FilterStream call the source with byte-oriented
+ read/write requests and the <a name="EndianStream"></a><span class="ddoc_psymbol">EndianStream</span> will not perform any byte swapping.
+ The <a name="EndianStream"></a><span class="ddoc_psymbol">EndianStream</span> reads and writes binary data (non-getc functions) in a
+ one-to-one
+ manner with the source stream so the source stream's position and state will be
+ kept in sync with the <a name="EndianStream"></a><span class="ddoc_psymbol">EndianStream</span> if only non-getc functions are called.<p></p>
+
+<dl><dt class="d_decl"><a name=".EndianStream.endian"></a>Endian <a name="endian"></a><span class="ddoc_psymbol">endian</span>;
+</dt>
+<dd>Endianness property of the source stream.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".EndianStream.this"></a> this(Stream <i>source</i>, Endian <i>end</i> = std.system.endian);
+</dt>
+<dd>Create the endian stream for the <i>source</i> stream <i>source</i> with endianness <i>end</i>.
+ The default endianness is the native byte order.
+ The Endian type is defined
+ in the std.system module.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".EndianStream.readBOM"></a>int <a name="readBOM"></a><span class="ddoc_psymbol">readBOM</span>(int <i>ungetCharSize</i> = 1);
+</dt>
+<dd>Return -1 if no BOM and otherwise read the BOM and return it.
+<p></p>
+If there is no BOM or if bytes beyond the BOM are read then the bytes read
+ are pushed back onto the ungetc buffer or ungetcw buffer.
+ Pass <i>ungetCharSize</i> == 2 to use
+ ungetcw instead of ungetc when no BOM is present.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".EndianStream.fixBO"></a>final void <a name="fixBO"></a><span class="ddoc_psymbol">fixBO</span>(const(void)* <i>buffer</i>, size_t <i>size</i>);
+</dt>
+<dd>Correct the byte order of <i>buffer</i> to match native endianness.
+ <i>size</i> must be even.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".EndianStream.fixBlockBO"></a>final void <a name="fixBlockBO"></a><span class="ddoc_psymbol">fixBlockBO</span>(void* <i>buffer</i>, uint <i>size</i>, size_t <i>repeat</i>);
+</dt>
+<dd>Correct the byte order of the given <i>buffer</i> in blocks of the given <i>size</i> and
+ repeated the given number of times.
+ <i>size</i> must be even.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".EndianStream.writeBOM"></a>void <a name="writeBOM"></a><span class="ddoc_psymbol">writeBOM</span>(BOM <i>b</i>);
+</dt>
+<dd>Write the specified BOM <i>b</i> to the source stream.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".TArrayStream"></a>class <a name="TArrayStream"></a><span class="ddoc_psymbol">TArrayStream</span>(Buffer): Stream;
+</dt>
+<dd>Parameterized subclass that wraps an array-like buffer with a stream
+ interface.
+<p></p>
+The type Buffer must support the length property, opIndex and opSlice.
+ Compile in release mode when directly instantiating a <a name="TArrayStream"></a><span class="ddoc_psymbol">TArrayStream</span> to avoid
+ link errors.<p></p>
+
+<dl><dt class="d_decl"><a name=".this"></a> this(Buffer <i>buf</i>);
+</dt>
+<dd>Create the stream for the the buffer <i>buf</i>. Non-copying.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".data"></a>ubyte[] <a name="data"></a><span class="ddoc_psymbol">data</span>();
+</dt>
+<dd>Get the current memory <a name="data"></a><span class="ddoc_psymbol">data</span> in total.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".MemoryStream"></a>class <a name="MemoryStream"></a><span class="ddoc_psymbol">MemoryStream</span>: std.stream.TArrayStream!(ubyte[]).TArrayStream;
+</dt>
+<dd>This subclass reads and constructs an array of bytes in memory.<p></p>
+
+<dl><dt class="d_decl"><a name=".MemoryStream.this"></a> this();
+</dt>
+<dd>Create the output buffer and setup for reading, writing, and seeking.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".MemoryStream.this"></a> this(ubyte[] <i>buf</i>);
+<br><a name=".MemoryStream.this"></a> this(byte[] <i>buf</i>);
+<br><a name=".MemoryStream.this"></a> this(char[] <i>buf</i>);
+</dt>
+<dd>Create the output buffer and setup for reading, writing, and seeking.
+ Load it with specific input data.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".MemoryStream.reserve"></a>void <a name="reserve"></a><span class="ddoc_psymbol">reserve</span>(size_t <i>count</i>);
+</dt>
+<dd>Ensure the stream can hold <i>count</i> bytes.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".MmFileStream"></a>class <a name="MmFileStream"></a><span class="ddoc_psymbol">MmFileStream</span>: std.stream.TArrayStream!(std.mmfile.MmFile).TArrayStream;
+</dt>
+<dd>This subclass wraps a memory-mapped file with the stream API.
+ See std.mmfile module.<p></p>
+
+<dl><dt class="d_decl"><a name=".MmFileStream.this"></a> this(MmFile <i>file</i>);
+</dt>
+<dd>Create stream wrapper for <i>file</i>.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".SliceStream"></a>class <a name="SliceStream"></a><span class="ddoc_psymbol">SliceStream</span>: std.stream.FilterStream;
+</dt>
+<dd>This subclass slices off a portion of another stream, making seeking relative
+ to the boundaries of the slice.
+<p></p>
+It could be used to section a large file into a
+ set of smaller files, such as with tar archives. Reading and writing a
+ <a name="SliceStream"></a><span class="ddoc_psymbol">SliceStream</span> does not modify the position of the source stream if it is
+ seekable.<p></p>
+
+<dl><dt class="d_decl"><a name=".SliceStream.this"></a> this(Stream <i>s</i>, ulong <i>low</i>);
+</dt>
+<dd>Indicate both the source stream to use for reading from and the <i>low</i> part of
+ the slice.
+<p></p>
+The high part of the slice is dependent upon the end of the source
+ stream, so that if you write beyond the end it resizes the stream normally.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SliceStream.this"></a> this(Stream <i>s</i>, ulong <i>low</i>, ulong <i>high</i>);
+</dt>
+<dd>Indicate the <i>high</i> index as well.
+<p></p>
+Attempting to read or write past the <i>high</i>
+ index results in the end being clipped off.<p></p>
+
+</dd>
+</dl>
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright &copy; 1999-2013 by Digital Mars, All Rights Reserved
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

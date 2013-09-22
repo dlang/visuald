@@ -1,0 +1,2177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.net.curl - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+function listanchors()
+{
+    if (typeof inhibitQuickIndex !== 'undefined') return;
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        // ignore anchors from DDOC_PSYMBOL
+        if (text[0] != '.') continue;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+        values[n++] = a.name
+    }
+
+    // we won't display the qualifying names to save space, so sort by last name
+    var lastName = function(a){
+        var li = a.lastIndexOf('.');
+        return a.slice(li + 1);
+    }
+    values.sort(function(a,b){return lastName(a) > lastName(b)});
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        var text = lastName(a);
+        newText += ' \x3Ca href="\x23' + a +
+            '"\x3E\x3Cspan class="d_psymbol"\x3E' + text + '\x3C/span\x3E\x3C/a\x3E';
+    }
+    if (newText != "") newText = "\x3Cp\x3E\x3Cb\x3EJump to:\x3C/b\x3E" + newText + "\x3C/p\x3E";
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+jQuery(document).ready(listanchors);
+</script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/phobos">Library Reference</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="/images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language </a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/phobos">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+	<li><a href="../phobos-prerelease/index.html" title="D Runtime Library (prerelease)">Phobos (prerelease)</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="index.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_ascii.html" title="Functions which operate on ASCII characters">std.ascii</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_csv.html" title="CSV file parser">std.csv</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_parallelism.html" title="High-level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_process.html" title="Create/destroy processes">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_uuid.html" title="Generate and use UUIDs">std.uuid</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_net_curl.html" title="High level curl wrapper">std.net.curl</a></li>
+	<li><a href="std_net_isemail.html" title="Validate e-mail addresses">std.net.isemail</a></li>
+	<li><a href="std_digest_crc.html" title="CRC digest functions">std.digest.crc</a></li>
+	<li><a href="std_digest_digest.html" title="API for digest functions">std.digest.digest</a></li>
+	<li><a href="std_digest_md.html" title="MD digest functions">std.digest.md</a></li>
+	<li><a href="std_digest_ripemd.html" title="RIPEMD digest functions">std.digest.ripemd</a></li>
+	<li><a href="std_digest_sha.html" title="SHA digest functions">std.digest.sha</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+    </ul>
+    <h2><a href="index.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_sqlite3.html" title="Interface to sqlite3 library">etc.c.sqlite3</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="index.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_demangle.html" title="D symbol mangling">core.demangle</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_simd.html" title="Builtin SIMD intrinsics">core.simd</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_time.html" title="Core time functionality">core.time</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/phobos/edit/master/std\net\curl.d" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>std.net.curl</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\net\curl.d -->
+<script type="text/javascript">inhibitQuickIndex = 1</script>
+<p></p>
+<table cellspacing=0 cellpadding=5 class=book><caption></caption><tr><th>Category</th> <th>Functions</th>
+</tr>
+<tr><td valign=top class="donthyphenate">High level</td> <td valign=top><font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#download">download</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#upload">upload</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#get">get</a>&nbsp;</font>
+<font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#post">post</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#put">put</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#del">del</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#options">options</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#trace">trace</a>&nbsp;</font>
+<font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#connect">connect</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#byLine">byLine</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#byChunk">byChunk</a>&nbsp;</font>
+<font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#byLineAsync">byLineAsync</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#byChunkAsync">byChunkAsync</a>&nbsp;</font> </td>
+</tr>
+<tr><td valign=top class="donthyphenate">Low level</td> <td valign=top><font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#HTTP">HTTP</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#FTP">FTP</a>&nbsp;</font> <font face='Consolas, "Bitstream Vera Sans Mono", "Andale Mono", Monaco, "DejaVu Sans Mono", "Lucida Console", monospace'><a href="#SMTP">SMTP</a>&nbsp;</font> </td>
+</tr>
+</table>
+<p></p>
+
+Networking client functionality as provided by <a href="http://curl.haxx.se/libcurl">libcurl</a>. The libcurl library must be installed on the system in order to use
+this module.
+<p></p>
+
+Compared to using libcurl directly this module allows simpler client code for
+common uses, requires no unsafe operations, and integrates better with the rest
+of the language. Futhermore it provides <a href="std_range.html"><span class="d_inlinecode">range</span></a>
+access to protocols supported by libcurl both synchronously and asynchronously.
+<p></p>
+
+A high level and a low level API are available. The high level API is built
+entirely on top of the low level one.
+<p></p>
+
+The high level API is for commonly used functionality such as HTTP/FTP get. The
+<a href="#byLineAsync"><span class="d_inlinecode">byLineAsync</span></a> and <a href="#byChunkAsync"><span class="d_inlinecode">byChunkAsync</span></a> provides asynchronous <a
+href="std_range.html"><span class="d_inlinecode">ranges</span></a> that performs the request in another
+thread while handling a line/chunk in the current thread.
+<p></p>
+
+The low level API allows for streaming and other advanced features.
+<p></p>
+
+<table cellspacing=0 cellpadding=5 class=book><caption>Cheat Sheet</caption><tr><th>Function Name</th> <th>Description</th>
+</tr>
+<tr class=leadingrow><td colspan=2><b><em>&nbsp;&nbsp;&nbsp;&nbsp;High level</em></b></td></tr>
+<tr><td valign=top class="donthyphenate"><a href="#download"><span class="d_inlinecode">download</span></a></td> <td valign=top><span class="d_inlinecode">download("ftp.digitalmars.com/sieve.ds", "/tmp/downloaded-ftp-file")</span>
+downloads file from URL to file system.</td>
+</tr>
+<tr><td valign=top class="donthyphenate"><a href="#upload"><span class="d_inlinecode">upload</span></a></td> <td valign=top><span class="d_inlinecode">upload("/tmp/downloaded-ftp-file", "ftp.digitalmars.com/sieve.ds");</span>
+uploads file from file system to URL.</td>
+</tr>
+<tr><td valign=top class="donthyphenate"><a href="#get"><span class="d_inlinecode">get</span></a></td> <td valign=top><span class="d_inlinecode">get("dlang.org")</span> returns a string containing the dlang.org web page.</td>
+</tr>
+<tr><td valign=top class="donthyphenate"><a href="#put"><span class="d_inlinecode">put</span></a></td> <td valign=top><span class="d_inlinecode">put("dlang.org", "Hi")</span> returns a string containing
+the dlang.org web page. after a HTTP PUT of "hi"</td>
+</tr>
+<tr><td valign=top class="donthyphenate"><a href="#post"><span class="d_inlinecode">post</span></a></td> <td valign=top><span class="d_inlinecode">post("dlang.org", "Hi")</span> returns a string containing
+the dlang.org web page. after a HTTP POST of "hi"</td>
+</tr>
+<tr><td valign=top class="donthyphenate"><a href="#byLine"><span class="d_inlinecode">byLine</span></a></td> <td valign=top><span class="d_inlinecode">byLine("dlang.org")</span> returns a range of strings containing the
+dlang.org web page.</td>
+</tr>
+<tr><td valign=top class="donthyphenate"><a href="#byChunk"><span class="d_inlinecode">byChunk</span></a></td> <td valign=top><span class="d_inlinecode">byChunk("dlang.org", 10)</span> returns a range of ubyte[10] containing the
+dlang.org web page.</td>
+</tr>
+<tr><td valign=top class="donthyphenate"><a href="#byLineAsync"><span class="d_inlinecode">byLineAsync</span></a></td> <td valign=top><span class="d_inlinecode">byLineAsync("dlang.org")</span> returns a range of strings containing the dlang.org web
+ page asynchronously.</td>
+</tr>
+<tr><td valign=top class="donthyphenate"><a href="#byChunkAsync"><span class="d_inlinecode">byChunkAsync</span></a></td> <td valign=top><span class="d_inlinecode">byChunkAsync("dlang.org", 10)</span> returns a range of ubyte[10] containing the
+dlang.org web page asynchronously.</td>
+</tr>
+<tr class=leadingrow><td colspan=2><b><em>&nbsp;&nbsp;&nbsp;&nbsp;Low level
+</em></b></td></tr>
+<tr><td valign=top class="donthyphenate"><a href="#HTTP"><span class="d_inlinecode">HTTP</span></a></td> <td valign=top><span class="d_inlinecode">HTTP</span> struct for advanced usage</td></tr>
+<tr><td valign=top class="donthyphenate"><a href="#FTP"><span class="d_inlinecode">FTP</span></a></td> <td valign=top><span class="d_inlinecode">FTP</span> struct for advanced usage</td></tr>
+<tr><td valign=top class="donthyphenate"><a href="#SMTP"><span class="d_inlinecode">SMTP</span></a></td> <td valign=top><span class="d_inlinecode">SMTP</span> struct for advanced usage</td></tr>
+</table>
+<p></p>
+
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.<span class="d_psymbol">curl</span>, std.stdio;
+
+<span class="d_comment">// Return a string containing the content specified by an URL
+</span>string content = get(<span class="d_string">"dlang.org"</span>);
+
+<span class="d_comment">// Post data and return a string containing the content specified by an URL
+</span>string content = post(<span class="d_string">"mydomain.com/here.cgi"</span>, <span class="d_string">"post data"</span>);
+
+<span class="d_comment">// Get content of file from ftp server
+</span>string content = get(<span class="d_string">"ftp.digitalmars.com/sieve.ds"</span>);
+
+<span class="d_comment">// Post and print out content line by line. The request is done in another thread.
+</span><span class="d_keyword">foreach</span> (line; byLineAsync(<span class="d_string">"dlang.org"</span>, <span class="d_string">"Post data"</span>))
+    writeln(line);
+
+<span class="d_comment">// Get using a line range and proxy settings
+</span><span class="d_keyword">auto</span> client = HTTP();
+client.proxy = <span class="d_string">"1.2.3.4"</span>;
+<span class="d_keyword">foreach</span> (line; byLine(<span class="d_string">"dlang.org"</span>, client))
+    writeln(line);
+</pre>
+<p></p>
+
+For more control than the high level functions provide, use the low level API:
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.<span class="d_psymbol">curl</span>, std.stdio;
+
+<span class="d_comment">// GET with custom data receivers
+</span><span class="d_keyword">auto</span> http = HTTP(<span class="d_string">"dlang.org"</span>);
+http.onReceiveHeader =
+    (<span class="d_keyword">in</span> <span class="d_keyword">char</span>[] key, <span class="d_keyword">in</span> <span class="d_keyword">char</span>[] value) { writeln(key, <span class="d_string">": "</span>, value); };
+http.onReceive = (<span class="d_keyword">ubyte</span>[] data) { <span class="d_comment">/+ drop +/</span> <span class="d_keyword">return</span> data.length; };
+http.perform();
+</pre>
+<p></p>
+
+First, an instance of the reference-counted HTTP struct is created. Then the
+custom delegates are set. These will be called whenever the HTTP instance
+receives a header and a data buffer, respectively. In this simple example, the
+headers are writting to stdout and the data is ignored. If the request should be
+stopped before it has finished then return something less than data.length from
+the onReceive callback. See <a href="#onReceiveHeader"><span class="d_inlinecode">onReceiveHeader</span></a>/<a href="#onReceive"><span class="d_inlinecode">onReceive</span></a> for more
+information. Finally the HTTP request is effected by calling perform(), which is
+synchronous.
+
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/net/curl.d">std/net/curl.d</a>
+
+<p></p>
+<b>License:</b><br><a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+<p></p>
+<b>Authors:</b><br>Jonas Drewsen. Some of the SMTP code contributed by Jimmy Cao.
+
+<p></p>
+<b>Credits:</b><br>
+The functionally is based on <a href="http://curl.haxx.se/libcurl">libcurl</a>.
+         LibCurl is licensed under an MIT/X derivate license.<p></p>
+
+<dl><dt class="d_decl"><a name=".AutoProtocol"></a>struct <a name="AutoProtocol"></a><span class="ddoc_psymbol">AutoProtocol</span>;
+</dt>
+<dd>Connection type used when the URL should be used to auto detect the protocol.
+<p></p>
+This struct is used as placeholder for the connection parameter when calling
+ the high level API and the connection type (HTTP/FTP) should be guessed by
+ inspecting the URL parameter.
+<p></p>
+
+ The rules for guessing the protocol are:
+ 1, if URL starts with ftp://, ftps:// or ftp. then FTP connection is assumed.
+ 2, HTTP connection otherwise.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_comment">// Two requests below will do the same.
+</span>string content;
+
+<span class="d_comment">// Explicit connection provided
+</span>content = get!HTTP(<span class="d_string">"dlang.org"</span>);
+
+<span class="d_comment">// Guess connection type by looking at the URL
+</span>content = get!<span class="d_psymbol">AutoProtocol</span>(<span class="d_string">"ftp://foo.com/file"</span>);
+<span class="d_comment">// and since AutoProtocol is default this is the same as
+</span>connect = get(<span class="d_string">"ftp://foo.com/file"</span>);
+<span class="d_comment">// and will end up detecting FTP from the url and be the same as
+</span>connect = get!FTP(<span class="d_string">"ftp://foo.com/file"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".download"></a>void <a name="download"></a><span class="ddoc_psymbol">download</span>(Conn = AutoProtocol)(const(char)[] <i>url</i>, string <i>saveToPath</i>, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn);
+</dt>
+<dd>HTTP/FTP <a name="download"></a><span class="ddoc_psymbol">download</span> to local file system.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource to <a name="download"></a><span class="ddoc_psymbol">download</span></td></tr>
+<tr><td valign=top>string saveToPath</td>
+<td valign=top>path to store the downloaded content on local disk</td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_psymbol">download</span>(<span class="d_string">"ftp.digitalmars.com/sieve.ds"</span>, <span class="d_string">"/tmp/downloaded-ftp-file"</span>);
+<span class="d_psymbol">download</span>(<span class="d_string">"d-lang.appspot.com/testUrl2"</span>, <span class="d_string">"/tmp/downloaded-http-file"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".upload"></a>void <a name="upload"></a><span class="ddoc_psymbol">upload</span>(Conn = AutoProtocol)(string <i>loadFromPath</i>, const(char)[] <i>url</i>, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn);
+</dt>
+<dd>Upload file from local files system using the HTTP or FTP protocol.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>string loadFromPath</td>
+<td valign=top>path load data from local disk.</td></tr>
+<tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource to <a name="upload"></a><span class="ddoc_psymbol">upload</span> to</td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_psymbol">upload</span>(<span class="d_string">"/tmp/downloaded-ftp-file"</span>, <span class="d_string">"ftp.digitalmars.com/sieve.ds"</span>);
+<span class="d_psymbol">upload</span>(<span class="d_string">"/tmp/downloaded-http-file"</span>, <span class="d_string">"d-lang.appspot.com/testUrl2"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".get"></a>T[] <a name="get"></a><span class="ddoc_psymbol">get</span>(Conn = AutoProtocol, T = char)(const(char)[] <i>url</i>, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn &amp;&amp; (is(T == char) || is(T == ubyte)));
+</dt>
+<dd>HTTP/FTP <a name="get"></a><span class="ddoc_psymbol">get</span> content.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource to <a name="get"></a><span class="ddoc_psymbol">get</span></td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.
+<p></p>
+
+ The template parameter <span class="d_inlinecode">T</span> specifies the type to return. Possible values
+ are <span class="d_inlinecode">char</span> and <span class="d_inlinecode">ubyte</span> to return <span class="d_inlinecode">char[]</span> or <span class="d_inlinecode">ubyte[]</span>.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+string content = <span class="d_psymbol">get</span>(<span class="d_string">"d-lang.appspot.com/testUrl2"</span>);
+</pre>
+
+<p></p>
+<b>Returns:</b><br>A T[] range containing the content of the resource pointed to by the URL.
+
+<p></p>
+<b>See Also:</b><br><a href="#HTTP.Method"><span class="d_inlinecode">HTTP.Method</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".post"></a>T[] <a name="post"></a><span class="ddoc_psymbol">post</span>(T = char, PostUnit)(const(char)[] <i>url</i>, const(PostUnit)[] <i>postData</i>, HTTP <i>conn</i> = HTTP()) if (is(T == char) || is(T == ubyte));
+</dt>
+<dd>HTTP <a name="post"></a><span class="ddoc_psymbol">post</span> content.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource to <a name="post"></a><span class="ddoc_psymbol">post</span> to</td></tr>
+<tr><td valign=top>const(PostUnit)[] postData</td>
+<td valign=top>data to send as the body of the request. An array
+            of an arbitrary type is accepted and will be cast to ubyte[]
+            before sending it.</td></tr>
+<tr><td valign=top>HTTP conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.
+<p></p>
+
+ The template parameter <span class="d_inlinecode">T</span> specifies the type to return. Possible values
+ are <span class="d_inlinecode">char</span> and <span class="d_inlinecode">ubyte</span> to return <span class="d_inlinecode">char[]</span> or <span class="d_inlinecode">ubyte[]</span>.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+string content = <span class="d_psymbol">post</span>(<span class="d_string">"d-lang.appspot.com/testUrl2"</span>, [1,2,3,4]);
+</pre>
+
+<p></p>
+<b>Returns:</b><br>A T[] range containing the content of the resource pointed to by the URL.
+
+<p></p>
+<b>See Also:</b><br><a href="#HTTP.Method"><span class="d_inlinecode">HTTP.Method</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".put"></a>T[] <a name="put"></a><span class="ddoc_psymbol">put</span>(Conn = AutoProtocol, T = char, PutUnit)(const(char)[] <i>url</i>, const(PutUnit)[] <i>putData</i>, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn &amp;&amp; (is(T == char) || is(T == ubyte)));
+</dt>
+<dd>HTTP/FTP <a name="put"></a><span class="ddoc_psymbol">put</span> content.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource to <a name="put"></a><span class="ddoc_psymbol">put</span></td></tr>
+<tr><td valign=top>const(PutUnit)[] putData</td>
+<td valign=top>data to send as the body of the request. An array
+           of an arbitrary type is accepted and will be cast to ubyte[]
+           before sending it.</td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.
+<p></p>
+
+ The template parameter <span class="d_inlinecode">T</span> specifies the type to return. Possible values
+ are <span class="d_inlinecode">char</span> and <span class="d_inlinecode">ubyte</span> to return <span class="d_inlinecode">char[]</span> or <span class="d_inlinecode">ubyte[]</span>.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+string content = <span class="d_psymbol">put</span>(<span class="d_string">"d-lang.appspot.com/testUrl2"</span>,
+                     <span class="d_string">"Putting this data"</span>);
+</pre>
+
+<p></p>
+<b>Returns:</b><br>A T[] range containing the content of the resource pointed to by the URL.
+
+<p></p>
+<b>See Also:</b><br><a href="#HTTP.Method"><span class="d_inlinecode">HTTP.Method</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".del"></a>void <a name="del"></a><span class="ddoc_psymbol">del</span>(Conn = AutoProtocol)(const(char)[] <i>url</i>, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn);
+</dt>
+<dd>HTTP/FTP delete content.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource to delete</td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_psymbol">del</span>(<span class="d_string">"d-lang.appspot.com/testUrl2"</span>);
+</pre>
+
+<p></p>
+<b>See Also:</b><br><a href="#HTTP.Method"><span class="d_inlinecode">HTTP.Method</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".options"></a>T[] <a name="options"></a><span class="ddoc_psymbol">options</span>(T = char, OptionsUnit)(const(char)[] <i>url</i>, const(OptionsUnit)[] <i>optionsData</i> = null, HTTP <i>conn</i> = HTTP()) if (is(T == char) || is(T == ubyte));
+</dt>
+<dd>HTTP <a name="options"></a><span class="ddoc_psymbol">options</span> request.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource make a option call to</td></tr>
+<tr><td valign=top>const(OptionsUnit)[] optionsData</td>
+<td valign=top><a name="options"></a><span class="ddoc_psymbol">options</span> data to send as the body of the request. An array
+               of an arbitrary type is accepted and will be cast to ubyte[]
+               before sending it.</td></tr>
+<tr><td valign=top>HTTP conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.
+<p></p>
+
+ The template parameter <span class="d_inlinecode">T</span> specifies the type to return. Possible values
+ are <span class="d_inlinecode">char</span> and <span class="d_inlinecode">ubyte</span> to return <span class="d_inlinecode">char[]</span> or <span class="d_inlinecode">ubyte[]</span>.
+ Currently the HTTP RFC does not specify any usage of the optionsData and
+ for this reason the example below does not send optionsData to the server.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_keyword">auto</span> http = HTTP();
+<span class="d_psymbol">options</span>(<span class="d_string">"d-lang.appspot.com/testUrl2"</span>, <span class="d_keyword">null</span>, http);
+writeln(<span class="d_string">"Allow set to "</span> ~ http.responseHeaders[<span class="d_string">"Allow"</span>]);
+</pre>
+
+<p></p>
+<b>Returns:</b><br>A T[] range containing the <a name="options"></a><span class="ddoc_psymbol">options</span> of the resource pointed to by the URL.
+
+<p></p>
+<b>See Also:</b><br><a href="#HTTP.Method"><span class="d_inlinecode">HTTP.Method</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".trace"></a>T[] <a name="trace"></a><span class="ddoc_psymbol">trace</span>(T = char)(const(char)[] <i>url</i>, HTTP <i>conn</i> = HTTP()) if (is(T == char) || is(T == ubyte));
+</dt>
+<dd>HTTP <a name="trace"></a><span class="ddoc_psymbol">trace</span> request.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource make a <a name="trace"></a><span class="ddoc_psymbol">trace</span> call to</td></tr>
+<tr><td valign=top>HTTP conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.
+<p></p>
+
+ The template parameter <span class="d_inlinecode">T</span> specifies the type to return. Possible values
+ are <span class="d_inlinecode">char</span> and <span class="d_inlinecode">ubyte</span> to return <span class="d_inlinecode">char[]</span> or <span class="d_inlinecode">ubyte[]</span>.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_psymbol">trace</span>(<span class="d_string">"d-lang.appspot.com/testUrl1"</span>);
+</pre>
+
+<p></p>
+<b>Returns:</b><br>A T[] range containing the <a name="trace"></a><span class="ddoc_psymbol">trace</span> info of the resource pointed to by the URL.
+
+<p></p>
+<b>See Also:</b><br><a href="#HTTP.Method"><span class="d_inlinecode">HTTP.Method</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".connect"></a>T[] <a name="connect"></a><span class="ddoc_psymbol">connect</span>(T = char)(const(char)[] <i>url</i>, HTTP <i>conn</i> = HTTP()) if (is(T == char) || is(T == ubyte));
+</dt>
+<dd>HTTP <a name="connect"></a><span class="ddoc_psymbol">connect</span> request.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>resource make a <a name="connect"></a><span class="ddoc_psymbol">connect</span> to</td></tr>
+<tr><td valign=top>HTTP conn</td>
+<td valign=top>connection to use e.g. FTP or HTTP. The default AutoProtocol will
+        guess connection type and create a new instance for this call only.
+<p></p>
+
+ The template parameter <span class="d_inlinecode">T</span> specifies the type to return. Possible values
+ are <span class="d_inlinecode">char</span> and <span class="d_inlinecode">ubyte</span> to return <span class="d_inlinecode">char[]</span> or <span class="d_inlinecode">ubyte[]</span>.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_psymbol">connect</span>(<span class="d_string">"d-lang.appspot.com/testUrl1"</span>);
+</pre>
+
+<p></p>
+<b>Returns:</b><br>A T[] range containing the <a name="connect"></a><span class="ddoc_psymbol">connect</span> info of the resource pointed to by the URL.
+
+<p></p>
+<b>See Also:</b><br><a href="#HTTP.Method"><span class="d_inlinecode">HTTP.Method</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".byLine"></a>auto <a name="byLine"></a><span class="ddoc_psymbol">byLine</span>(Conn = AutoProtocol, Terminator = char, Char = char)(const(char)[] <i>url</i>, KeepTerminator <i>keepTerminator</i> = KeepTerminator.no, Terminator <i>terminator</i> = '\x0a', Conn <i>conn</i> = Conn()) if (isCurlConn!Conn &amp;&amp; isSomeChar!Char &amp;&amp; isSomeChar!Terminator);
+</dt>
+<dd>struct ByLineBuffer(Char)
+{
+    bool linePresent;
+    bool EOF;
+    Char[] buffer;
+    ubyte[] decodeRemainder;
+<p></p>
+bool append(const(ubyte)[] data)
+    {
+        byLineBuffer ~= data;
+    }
+<p></p>
+
+    @property bool linePresent()
+    {
+        return byLinePresent;
+    }
+<p></p>
+
+    Char[] get()
+    {
+        if (!linePresent)
+        {
+            // Decode ubyte[] into Char[] until a Terminator is found.
+            // If not Terminator is found and EOF is <b>false</b> then raise an
+            // exception.
+        }
+        return byLineBuffer;
+    }
+<p></p>
+
+}
+ HTTP/FTP fetch content as a range of lines.
+<p></p>
+
+ A range of lines is returned when the request is complete. If the method or
+ other request properties is to be customized then set the <span class="d_inlinecode">conn</span> parameter
+ with a HTTP/FTP instance that has these properties set.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_keyword">foreach</span> (line; <span class="d_psymbol">byLine</span>(<span class="d_string">"dlang.org"</span>))
+    writeln(line);
+</pre>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>The url to receive content from</td></tr>
+<tr><td valign=top>KeepTerminator keepTerminator</td>
+<td valign=top>KeepTerminator.yes signals that the line terminator should be
+                  returned as part of the lines in the range.</td></tr>
+<tr><td valign=top>Terminator terminator</td>
+<td valign=top>The character that terminates a line</td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>The connection to use e.g. HTTP or FTP.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>A range of Char[] with the content of the resource pointer to by the URL<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".byChunk"></a>auto <a name="byChunk"></a><span class="ddoc_psymbol">byChunk</span>(Conn = AutoProtocol)(const(char)[] <i>url</i>, size_t <i>chunkSize</i> = 1024, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn);
+</dt>
+<dd>HTTP/FTP fetch content as a range of chunks.
+<p></p>
+A range of chunks is returned when the request is complete. If the method or
+ other request properties is to be customized then set the <span class="d_inlinecode">conn</span> parameter
+ with a HTTP/FTP instance that has these properties set.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_keyword">foreach</span> (chunk; <span class="d_psymbol">byChunk</span>(<span class="d_string">"dlang.org"</span>, 100))
+    writeln(chunk); <span class="d_comment">// chunk is ubyte[100]
+</span></pre>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>The url to receive content from</td></tr>
+<tr><td valign=top>size_t chunkSize</td>
+<td valign=top>The size of each chunk</td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>The connection to use e.g. HTTP or FTP.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>A range of ubyte[chunkSize] with the content of the resource pointer to by the URL<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".byLineAsync"></a>auto <a name="byLineAsync"></a><span class="ddoc_psymbol">byLineAsync</span>(Conn = AutoProtocol, Terminator = char, Char = char, PostUnit)(const(char)[] <i>url</i>, const(PostUnit)[] <i>postData</i>, KeepTerminator <i>keepTerminator</i> = KeepTerminator.no, Terminator <i>terminator</i> = '\x0a', size_t <i>transmitBuffers</i> = 10, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn &amp;&amp; isSomeChar!Char &amp;&amp; isSomeChar!Terminator);
+<br><a name=".byLineAsync"></a>auto <a name="byLineAsync"></a><span class="ddoc_psymbol">byLineAsync</span>(Conn = AutoProtocol, Terminator = char, Char = char)(const(char)[] <i>url</i>, KeepTerminator <i>keepTerminator</i> = KeepTerminator.no, Terminator <i>terminator</i> = '\x0a', size_t <i>transmitBuffers</i> = 10, Conn <i>conn</i> = Conn());
+</dt>
+<dd>HTTP/FTP fetch content as a range of lines asynchronously.
+<p></p>
+A range of lines is returned immediately and the request that fetches the
+ lines is performed in another thread. If the method or other request
+ properties is to be customized then set the <span class="d_inlinecode">conn</span> parameter with a
+ HTTP/FTP instance that has these properties set.
+<p></p>
+
+ If <span class="d_inlinecode">postData</span> is non-null the method will be set to <span class="d_inlinecode">post</span> for HTTP
+ requests.
+<p></p>
+
+ The background thread will buffer up to transmitBuffers number of lines
+ before it stops receiving data from network. When the main thread reads the
+ lines from the range it frees up buffers and allows for the background thread
+ to receive more data from the network.
+<p></p>
+
+ If no data is available and the main thread accesses the range it will block
+ until data becomes available. An exception to this is the <span class="d_inlinecode">wait(Duration)</span> method on
+ the <a href="#AsyncLineInputRange"><span class="d_inlinecode">AsyncLineInputRange</span></a>. This method will wait at maximum for the
+ specified duration and return <b>true</b> if data is available.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_comment">// Get some pages in the background
+</span><span class="d_keyword">auto</span> range1 = <span class="d_psymbol">byLineAsync</span>(<span class="d_string">"www.google.com"</span>);
+<span class="d_keyword">auto</span> range2 = <span class="d_psymbol">byLineAsync</span>(<span class="d_string">"www.wikipedia.org"</span>);
+<span class="d_keyword">foreach</span> (line; <span class="d_psymbol">byLineAsync</span>(<span class="d_string">"dlang.org"</span>))
+    writeln(line);
+
+<span class="d_comment">// Lines already fetched in the background and ready
+</span><span class="d_keyword">foreach</span> (line; range1) writeln(line);
+<span class="d_keyword">foreach</span> (line; range2) writeln(line);
+</pre>
+<p></p>
+
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_comment">// Get a line in a background thread and wait in
+</span><span class="d_comment">// main thread for 2 seconds for it to arrive.
+</span><span class="d_keyword">auto</span> range3 = <span class="d_psymbol">byLineAsync</span>(<span class="d_string">"dlang.com"</span>);
+<span class="d_keyword">if</span> (range.wait(dur!<span class="d_string">"seconds"</span>(2)))
+    writeln(range.front);
+<span class="d_keyword">else</span>
+    writeln(<span class="d_string">"No line received after 2 seconds!"</span>);
+</pre>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>The url to receive content from</td></tr>
+<tr><td valign=top>const(PostUnit)[] postData</td>
+<td valign=top>Data to HTTP Post</td></tr>
+<tr><td valign=top>KeepTerminator keepTerminator</td>
+<td valign=top>KeepTerminator.yes signals that the line terminator should be
+                  returned as part of the lines in the range.</td></tr>
+<tr><td valign=top>Terminator terminator</td>
+<td valign=top>The character that terminates a line</td></tr>
+<tr><td valign=top>size_t transmitBuffers</td>
+<td valign=top>The number of lines buffered asynchronously</td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>The connection to use e.g. HTTP or FTP.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>A range of Char[] with the content of the resource pointer to by the
+ URL.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".byChunkAsync"></a>auto <a name="byChunkAsync"></a><span class="ddoc_psymbol">byChunkAsync</span>(Conn = AutoProtocol, PostUnit)(const(char)[] <i>url</i>, const(PostUnit)[] <i>postData</i>, size_t <i>chunkSize</i> = 1024, size_t <i>transmitBuffers</i> = 10, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn);
+<br><a name=".byChunkAsync"></a>auto <a name="byChunkAsync"></a><span class="ddoc_psymbol">byChunkAsync</span>(Conn = AutoProtocol)(const(char)[] <i>url</i>, size_t <i>chunkSize</i> = 1024, size_t <i>transmitBuffers</i> = 10, Conn <i>conn</i> = Conn()) if (isCurlConn!Conn);
+</dt>
+<dd>HTTP/FTP fetch content as a range of chunks asynchronously.
+<p></p>
+A range of chunks is returned immediately and the request that fetches the
+ chunks is performed in another thread. If the method or other request
+ properties is to be customized then set the <span class="d_inlinecode">conn</span> parameter with a
+ HTTP/FTP instance that has these properties set.
+<p></p>
+
+ If <span class="d_inlinecode">postData</span> is non-null the method will be set to <span class="d_inlinecode">post</span> for HTTP
+ requests.
+<p></p>
+
+ The background thread will buffer up to transmitBuffers number of chunks
+ before is stops receiving data from network. When the main thread reads the
+ chunks from the range it frees up buffers and allows for the background
+ thread to receive more data from the network.
+<p></p>
+
+ If no data is available and the main thread access the range it will block
+ until data becomes available. An exception to this is the <span class="d_inlinecode">wait(Duration)</span>
+ method on the <a href="#AsyncChunkInputRange"><span class="d_inlinecode">AsyncChunkInputRange</span></a>. This method will wait at maximum for the specified
+ duration and return <b>true</b> if data is available.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_comment">// Get some pages in the background
+</span><span class="d_keyword">auto</span> range1 = <span class="d_psymbol">byChunkAsync</span>(<span class="d_string">"www.google.com"</span>, 100);
+<span class="d_keyword">auto</span> range2 = <span class="d_psymbol">byChunkAsync</span>(<span class="d_string">"www.wikipedia.org"</span>);
+<span class="d_keyword">foreach</span> (chunk; <span class="d_psymbol">byChunkAsync</span>(<span class="d_string">"dlang.org"</span>))
+    writeln(chunk); <span class="d_comment">// chunk is ubyte[100]
+</span>
+<span class="d_comment">// Chunks already fetched in the background and ready
+</span><span class="d_keyword">foreach</span> (chunk; range1) writeln(chunk);
+<span class="d_keyword">foreach</span> (chunk; range2) writeln(chunk);
+</pre>
+<p></p>
+
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_comment">// Get a line in a background thread and wait in
+</span><span class="d_comment">// main thread for 2 seconds for it to arrive.
+</span><span class="d_keyword">auto</span> range3 = <span class="d_psymbol">byChunkAsync</span>(<span class="d_string">"dlang.com"</span>, 10);
+<span class="d_keyword">if</span> (range.wait(dur!<span class="d_string">"seconds"</span>(2)))
+    writeln(range.front);
+<span class="d_keyword">else</span>
+    writeln(<span class="d_string">"No chunk received after 2 seconds!"</span>);
+</pre>
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] url</td>
+<td valign=top>The url to receive content from</td></tr>
+<tr><td valign=top>const(PostUnit)[] postData</td>
+<td valign=top>Data to HTTP Post</td></tr>
+<tr><td valign=top>size_t chunkSize</td>
+<td valign=top>The size of the chunks</td></tr>
+<tr><td valign=top>size_t transmitBuffers</td>
+<td valign=top>The number of chunks buffered asynchronously</td></tr>
+<tr><td valign=top>Conn conn</td>
+<td valign=top>The connection to use e.g. HTTP or FTP.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>A range of ubyte[chunkSize] with the content of the resource pointer to by
+ the URL.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP"></a>struct <a name="HTTP"></a><span class="ddoc_psymbol">HTTP</span>;
+</dt>
+<dd><a name="HTTP"></a><span class="ddoc_psymbol">HTTP</span> client functionality.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+
+<span class="d_comment">// Get with custom data receivers
+</span><span class="d_keyword">auto</span> http = <span class="d_psymbol">HTTP</span>(<span class="d_string">"dlang.org"</span>);
+http.onReceiveHeader =
+    (<span class="d_keyword">in</span> <span class="d_keyword">char</span>[] key, <span class="d_keyword">in</span> <span class="d_keyword">char</span>[] value) { writeln(key ~ <span class="d_string">": "</span> ~ value); };
+http.onReceive = (<span class="d_keyword">ubyte</span>[] data) { <span class="d_comment">/+ drop +/</span> <span class="d_keyword">return</span> data.length; };
+http.perform();
+
+<span class="d_comment">// Put with data senders
+</span><span class="d_keyword">auto</span> msg = <span class="d_string">"Hello world"</span>;
+http.contentLength = msg.length;
+http.onSend = (<span class="d_keyword">void</span>[] data)
+{
+    <span class="d_keyword">auto</span> m = <span class="d_keyword">cast</span>(<span class="d_keyword">void</span>[])msg;
+    size_t len = m.length &gt; data.length ? data.length : m.length;
+    <span class="d_keyword">if</span> (len == 0) <span class="d_keyword">return</span> len;
+    data[0..len] = m[0..len];
+    msg = msg[len..$];
+    <span class="d_keyword">return</span> len;
+};
+http.perform();
+
+<span class="d_comment">// Track progress
+</span>http.method = <span class="d_psymbol">HTTP</span>.Method.get;
+http.url = <span class="d_string">"http://upload.wikimedia.org/wikipedia/commons/"</span>
+           <span class="d_string">"5/53/Wikipedia-logo-en-big.png"</span>;
+http.onReceive = (<span class="d_keyword">ubyte</span>[] data) { <span class="d_keyword">return</span> data.length; };
+http.onProgress = (<span class="d_keyword">double</span> dltotal, <span class="d_keyword">double</span> dlnow,
+                   <span class="d_keyword">double</span> ultotal, <span class="d_keyword">double</span> ulnow)
+{
+    writeln(<span class="d_string">"Progress "</span>, dltotal, <span class="d_string">", "</span>, dlnow, <span class="d_string">", "</span>, ultotal, <span class="d_string">", "</span>, ulnow);
+    <span class="d_keyword">return</span> 0;
+};
+http.perform();
+</pre>
+
+<p></p>
+<b>See Also:</b><br><a href="http://www.ietf.org/rfc/rfc2616.txt">RFC2616</a><p></p>
+
+<dl><dt class="d_decl"><a name=".HTTP.AuthMethod"></a>alias <a name="AuthMethod"></a><span class="ddoc_psymbol">AuthMethod</span> = etc.c.curl.CurlAuth;
+</dt>
+<dd>Authentication method equal to <a href="etc_c_curl.html#CurlAuth"><span class="d_inlinecode">etc.c.curl.CurlAuth</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.TimeCond"></a>alias <a name="TimeCond"></a><span class="ddoc_psymbol">TimeCond</span> = etc.c.curl.CurlTimeCond;
+</dt>
+<dd>Time condition enumeration as an alias of <a href="etc_c_curl.html#CurlTimeCond"><span class="d_inlinecode">etc.c.curl.CurlTimeCond</span></a>
+<p></p>
+<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.25">RFC2616 Section 14.25</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.this"></a> this(const(char)[] <i>url</i>);
+</dt>
+<dd>Constructor taking the <i>url</i> as parameter.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.perform"></a>void <a name="perform"></a><span class="ddoc_psymbol">perform</span>();
+</dt>
+<dd>Perform a http request.
+<p></p>
+After the HTTP client has been setup and possibly assigned callbacks the
+       <span class="d_inlinecode"><a name="perform"></a><span class="ddoc_psymbol">perform</span>()</span> method will start performing the request towards the
+       specified server.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.url"></a>@property void <a name="url"></a><span class="ddoc_psymbol">url</span>(const(char)[] <a name="url"></a><span class="ddoc_psymbol">url</span>);
+</dt>
+<dd>The URL to specify the location of the resource.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.requestPause"></a>alias <a name="requestPause"></a><span class="ddoc_psymbol">requestPause</span> = etc.c.curl.CurlReadFunc.pause;
+</dt>
+<dd>Value to return from <span class="d_inlinecode">onSend</span>/<span class="d_inlinecode">onReceive</span> delegates in order to
+ pause a request<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.requestAbort"></a>alias <a name="requestAbort"></a><span class="ddoc_psymbol">requestAbort</span> = etc.c.curl.CurlReadFunc.abort;
+</dt>
+<dd>Value to return from onSend delegate in order to abort a request<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.isStopped"></a>@property bool <a name="isStopped"></a><span class="ddoc_psymbol">isStopped</span>();
+</dt>
+<dd>True if the instance is stopped. A stopped instance is not usable.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.shutdown"></a>void <a name="shutdown"></a><span class="ddoc_psymbol">shutdown</span>();
+</dt>
+<dd>Stop and invalidate this instance.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.verbose"></a>@property void <a name="verbose"></a><span class="ddoc_psymbol">verbose</span>(bool <i>on</i>);
+</dt>
+<dd>Set <a name="verbose"></a><span class="ddoc_psymbol">verbose</span>.
+            This will print request information to stderr.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.dataTimeout"></a>@property void <a name="dataTimeout"></a><span class="ddoc_psymbol">dataTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set timeout for activity on connection.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.operationTimeout"></a>@property void <a name="operationTimeout"></a><span class="ddoc_psymbol">operationTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set maximum time an operation is allowed to take.
+            This includes dns resolution, connecting, data transfer, etc.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.connectTimeout"></a>@property void <a name="connectTimeout"></a><span class="ddoc_psymbol">connectTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set timeout for connecting.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.proxy"></a>@property void <a name="proxy"></a><span class="ddoc_psymbol">proxy</span>(const(char)[] <i>host</i>);
+</dt>
+<dd>Proxy
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXY">proxy</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.proxyPort"></a>@property void <a name="proxyPort"></a><span class="ddoc_psymbol">proxyPort</span>(ushort <i>port</i>);
+</dt>
+<dd>Proxy <i>port</i>
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXYPORT">proxy_port</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.CurlProxy"></a>alias <a name="CurlProxy"></a><span class="ddoc_psymbol">CurlProxy</span> = etc.c.curl.<a name="CurlProxy"></a><span class="ddoc_psymbol">CurlProxy</span>;
+</dt>
+<dd>Type of proxy<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.proxyType"></a>@property void <a name="proxyType"></a><span class="ddoc_psymbol">proxyType</span>(CurlProxy <i>type</i>);
+</dt>
+<dd>Proxy <i>type</i>
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXY">proxy_type</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.dnsTimeout"></a>@property void <a name="dnsTimeout"></a><span class="ddoc_psymbol">dnsTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>DNS lookup timeout.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(const(char)[] <i>i</i>);
+<br><a name=".HTTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(const(ubyte)[4] <i>i</i>);
+<br><a name=".HTTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(InternetAddress <i>i</i>);
+</dt>
+<dd>The network interface to use in form of the the IP of the interface.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">theprotocol.<span class="d_psymbol">netInterface</span> = <span class="d_string">"192.168.1.32"</span>;
+theprotocol.<span class="d_psymbol">netInterface</span> = [ 192, 168, 1, 32 ];
+</pre>
+
+<p></p>
+<b>See:</b><br>
+<a href="std_socket.html#InternetAddress"><span class="d_inlinecode">std.socket.InternetAddress</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.localPort"></a>@property void <a name="localPort"></a><span class="ddoc_psymbol">localPort</span>(ushort <i>port</i>);
+</dt>
+<dd>Set the local outgoing <i>port</i> to use.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>ushort <i>port</i></td>
+<td valign=top>the first outgoing <i>port</i> number to try and use</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.localPortRange"></a>@property void <a name="localPortRange"></a><span class="ddoc_psymbol">localPortRange</span>(ushort <i>range</i>);
+</dt>
+<dd>Set the local outgoing port <i>range</i> to use.
+           This can be used together with the localPort property.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>ushort <i>range</i></td>
+<td valign=top>if the first port is occupied then try this many
+           port number forwards</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.tcpNoDelay"></a>@property void <a name="tcpNoDelay"></a><span class="ddoc_psymbol">tcpNoDelay</span>(bool <i>on</i>);
+</dt>
+<dd>Set the tcp no-delay socket option <i>on</i> or off.
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTTCPNODELAY">nodelay</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.setAuthentication"></a>void <a name="setAuthentication"></a><span class="ddoc_psymbol">setAuthentication</span>(const(char)[] <i>username</i>, const(char)[] <i>password</i>, const(char)[] <i>domain</i> = "");
+</dt>
+<dd>Set the user name, <i>password</i> and optionally <i>domain</i> for authentication
+           purposes.
+<p></p>
+Some protocols may need authentication in some cases. Use this
+           function to provide credentials.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] <i>username</i></td>
+<td valign=top>the <i>username</i></td></tr>
+<tr><td valign=top>const(char)[] <i>password</i></td>
+<td valign=top>the <i>password</i></td></tr>
+<tr><td valign=top>const(char)[] <i>domain</i></td>
+<td valign=top>used for NTLM authentication only and is set to the NTLM <i>domain</i>
+           name</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.onSend"></a>@property void <a name="onSend"></a><span class="ddoc_psymbol">onSend</span>(size_t delegate(void[]) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called when data is needed for sending. The
+ length of the <span class="d_inlinecode">void[]</span> specifies the maximum number of bytes that can
+ be sent.
+<p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the number of elements in the buffer that have been
+ filled and are ready to send.
+ The special value <span class="d_inlinecode">.abortRequest</span> can be returned in order to abort the
+ current request.
+ The special value <span class="d_inlinecode">.pauseRequest</span> can be returned in order to pause the
+ current request.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+string msg = <span class="d_string">"Hello world"</span>;
+<span class="d_keyword">auto</span> client = HTTP(<span class="d_string">"dlang.org"</span>);
+client.<span class="d_psymbol">onSend</span> = <span class="d_keyword">delegate</span> size_t(<span class="d_keyword">void</span>[] data)
+{
+    <span class="d_keyword">auto</span> m = <span class="d_keyword">cast</span>(<span class="d_keyword">void</span>[])msg;
+    size_t length = m.length &gt; data.length ? data.length : m.length;
+    <span class="d_keyword">if</span> (length == 0) <span class="d_keyword">return</span> 0;
+    data[0..length] = m[0..length];
+    msg = msg[length..$];
+    <span class="d_keyword">return</span> length;
+};
+client.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.onReceive"></a>@property void <a name="onReceive"></a><span class="ddoc_psymbol">onReceive</span>(size_t delegate(ubyte[]) <i>callback</i>);
+</dt>
+<dd>The event handler that receives incoming data. Be sure to copy the
+ incoming ubyte[] since it is not guaranteed to be valid after the
+ <i>callback</i> returns.
+<p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the incoming bytes read. If not the entire array is
+ the request will abort.
+ The special value .pauseRequest can be returned in order to pause the
+ current request.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_keyword">auto</span> client = HTTP(<span class="d_string">"dlang.org"</span>);
+client.<span class="d_psymbol">onReceive</span> = (<span class="d_keyword">ubyte</span>[] data)
+{
+    writeln(<span class="d_string">"Got data"</span>, to!(<span class="d_keyword">const</span>(<span class="d_keyword">char</span>)[])(data));
+    <span class="d_keyword">return</span> data.length;
+};
+client.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.onProgress"></a>@property void <a name="onProgress"></a><span class="ddoc_psymbol">onProgress</span>(int delegate(size_t dlTotal, size_t dlNow, size_t ulTotal, size_t ulNow) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called to inform of upload/download progress.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dlTotal</td>
+<td valign=top>total bytes to download</td></tr>
+<tr><td valign=top>dlNow</td>
+<td valign=top>currently downloaded bytes</td></tr>
+<tr><td valign=top>ulTotal</td>
+<td valign=top>total bytes to upload</td></tr>
+<tr><td valign=top>ulNow</td>
+<td valign=top>currently uploaded bytes</td></tr>
+</table><p></p>
+<b>Returns:</b><br>Return 0 from the <i>callback</i> to signal success, return non-zero to abort
+          transfer
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_keyword">auto</span> client = HTTP(<span class="d_string">"dlang.org"</span>);
+client.<span class="d_psymbol">onProgress</span> = <span class="d_keyword">delegate</span> <span class="d_keyword">int</span>(size_t dl, size_t dln, size_t ul, size_t ult)
+{
+    writeln(<span class="d_string">"Progress: downloaded "</span>, dln, <span class="d_string">" of "</span>, dl);
+    writeln(<span class="d_string">"Progress: uploaded "</span>, uln, <span class="d_string">" of "</span>, ul);
+};
+client.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.clearRequestHeaders"></a>void <a name="clearRequestHeaders"></a><span class="ddoc_psymbol">clearRequestHeaders</span>();
+</dt>
+<dd>Clear all outgoing headers.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.addRequestHeader"></a>void <a name="addRequestHeader"></a><span class="ddoc_psymbol">addRequestHeader</span>(const(char)[] <i>name</i>, const(char)[] <i>value</i>);
+</dt>
+<dd>Add a header e.g. "X-CustomField: Something is fishy".
+<p></p>
+There is no remove header functionality. Do a <a href="#clearRequestHeaders"><span class="d_inlinecode">clearRequestHeaders</span></a>
+ and set the needed headers instead.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_keyword">auto</span> client = HTTP();
+client.<span class="d_psymbol">addRequestHeader</span>(<span class="d_string">"X-Custom-ABC"</span>, <span class="d_string">"This is the custom value"</span>);
+string content = get(<span class="d_string">"dlang.org"</span>, client);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.responseHeaders"></a>@property string[string] <a name="responseHeaders"></a><span class="ddoc_psymbol">responseHeaders</span>();
+</dt>
+<dd>The headers read from a successful response.
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.method"></a>@property void <a name="method"></a><span class="ddoc_psymbol">method</span>(Method <i>m</i>);
+<br><a name=".HTTP.method"></a>@property Method <a name="method"></a><span class="ddoc_psymbol">method</span>();
+</dt>
+<dd>HTTP <a name="method"></a><span class="ddoc_psymbol">method</span> used.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.statusLine"></a>@property StatusLine <a name="statusLine"></a><span class="ddoc_psymbol">statusLine</span>();
+</dt>
+<dd>HTTP status line of last response. One call to perform may
+       result in several requests because of redirection.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.setCookieJar"></a>void <a name="setCookieJar"></a><span class="ddoc_psymbol">setCookieJar</span>(const(char)[] <i>path</i>);
+</dt>
+<dd>Set a file <i>path</i> to where a cookie jar should be read/stored.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.flushCookieJar"></a>void <a name="flushCookieJar"></a><span class="ddoc_psymbol">flushCookieJar</span>();
+</dt>
+<dd>Flush cookie jar to disk.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.clearSessionCookies"></a>void <a name="clearSessionCookies"></a><span class="ddoc_psymbol">clearSessionCookies</span>();
+</dt>
+<dd>Clear session cookies.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.clearAllCookies"></a>void <a name="clearAllCookies"></a><span class="ddoc_psymbol">clearAllCookies</span>();
+</dt>
+<dd>Clear all cookies.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.setTimeCondition"></a>void <a name="setTimeCondition"></a><span class="ddoc_psymbol">setTimeCondition</span>(HTTP.TimeCond <i>cond</i>, SysTime <i>timestamp</i>);
+</dt>
+<dd>Set time condition on the request.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>HTTP.TimeCond <i>cond</i></td>
+<td valign=top><span class="d_inlinecode">CurlTimeCond.{none,ifmodsince,ifunmodsince,lastmod}</span></td></tr>
+<tr><td valign=top>SysTime <i>timestamp</i></td>
+<td valign=top>Timestamp for the condition
+<p></p>
+
+       <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.25">RFC2616 Section 14.25</a></td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.postData"></a>@property void <a name="postData"></a><span class="ddoc_psymbol">postData</span>(const(void)[] <i>data</i>);
+</dt>
+<dd>Specifying <i>data</i> to post when not using the onSend callback.
+<p></p>
+The <i>data</i> is NOT copied by the library.  Content-Type will default to
+ application/octet-stream.  Data is not converted or encoded by this
+ method.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_keyword">auto</span> http = HTTP(<span class="d_string">"http://www.mydomain.com"</span>);
+http.onReceive = (<span class="d_keyword">ubyte</span>[] <span class="d_param">data</span>) { writeln(to!(<span class="d_keyword">const</span>(<span class="d_keyword">char</span>)[])(<span class="d_param">data</span>)); <span class="d_keyword">return</span> <span class="d_param">data</span>.length; };
+http.<span class="d_psymbol">postData</span> = [1,2,3,4,5];
+http.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.postData"></a>@property void <a name="postData"></a><span class="ddoc_psymbol">postData</span>(const(char)[] <i>data</i>);
+</dt>
+<dd>Specifying <i>data</i> to post when not using the onSend callback.
+<p></p>
+The <i>data</i> is NOT copied by the library.  Content-Type will default to
+ text/plain.  Data is not converted or encoded by this method.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_keyword">auto</span> http = HTTP(<span class="d_string">"http://www.mydomain.com"</span>);
+http.onReceive = (<span class="d_keyword">ubyte</span>[] <span class="d_param">data</span>) { writeln(to!(<span class="d_keyword">const</span>(<span class="d_keyword">char</span>)[])(<span class="d_param">data</span>)); <span class="d_keyword">return</span> <span class="d_param">data</span>.length; };
+http.<span class="d_psymbol">postData</span> = <span class="d_string">"The quick...."</span>;
+http.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.onReceiveHeader"></a>@property void <a name="onReceiveHeader"></a><span class="ddoc_psymbol">onReceiveHeader</span>(void delegate(in char[] key, in char[] value) <i>callback</i>);
+</dt>
+<dd>Set the event handler that receives incoming headers.
+<p></p>
+The <i>callback</i> will receive a header field key, value as parameter. The
+ <span class="d_inlinecode">const(char)[]</span> arrays are not valid after the delegate has returned.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+<span class="d_keyword">auto</span> http = HTTP(<span class="d_string">"dlang.org"</span>);
+http.onReceive = (<span class="d_keyword">ubyte</span>[] data) { writeln(to!(<span class="d_keyword">const</span>(<span class="d_keyword">char</span>)[])(data)); <span class="d_keyword">return</span> data.length; };
+http.<span class="d_psymbol">onReceiveHeader</span> = (<span class="d_keyword">in</span> <span class="d_keyword">char</span>[] key, <span class="d_keyword">in</span> <span class="d_keyword">char</span>[] value) { writeln(key, <span class="d_string">" = "</span>, value); };
+http.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.onReceiveStatusLine"></a>@property void <a name="onReceiveStatusLine"></a><span class="ddoc_psymbol">onReceiveStatusLine</span>(void delegate(StatusLine) <i>callback</i>);
+</dt>
+<dd>Callback for each received StatusLine.
+<p></p>
+Notice that several callbacks can be done for each call to
+       <span class="d_inlinecode">perform()</span> due to redirections.
+
+<p></p>
+<b>See Also:</b><br><a href="#StatusLine"><span class="d_inlinecode">StatusLine</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.contentLength"></a>@property void <a name="contentLength"></a><span class="ddoc_psymbol">contentLength</span>(size_t <i>len</i>);
+</dt>
+<dd>The content length in bytes when using request that has content
+       e.g. POST/PUT and not using chunked transfer. Is set as the
+       "Content-Length" header.  Set to size_t.max to reset to chunked transfer.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.authenticationMethod"></a>@property void <a name="authenticationMethod"></a><span class="ddoc_psymbol">authenticationMethod</span>(AuthMethod <i>authMethod</i>);
+</dt>
+<dd>Authentication method as specified in <a href="#AuthMethod"><span class="d_inlinecode">AuthMethod</span></a>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.maxRedirects"></a>@property void <a name="maxRedirects"></a><span class="ddoc_psymbol">maxRedirects</span>(uint <i>maxRedirs</i>);
+</dt>
+<dd>Set max allowed redirections using the location header.
+       uint.max for infinite.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.Method"></a>enum <a name="Method"></a><span class="ddoc_psymbol">Method</span>: int;
+</dt>
+<dd><a name="HTTP.Method"/ >The standard HTTP methods :
+  <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html#sec5.1.1">RFC2616 Section 5.1.1</a><p></p>
+
+<dl><dt class="d_decl"><a name=".HTTP.Method.head"></a><a name="head"></a><span class="ddoc_psymbol">head</span></dt>
+<dd><p></p>
+</dd>
+<dt class="d_decl"><a name=".HTTP.Method.get"></a><a name="get"></a><span class="ddoc_psymbol">get</span></dt>
+<dd><p></p>
+</dd>
+<dt class="d_decl"><a name=".HTTP.Method.post"></a><a name="post"></a><span class="ddoc_psymbol">post</span></dt>
+<dd><p></p>
+</dd>
+<dt class="d_decl"><a name=".HTTP.Method.put"></a><a name="put"></a><span class="ddoc_psymbol">put</span></dt>
+<dd><p></p>
+</dd>
+<dt class="d_decl"><a name=".HTTP.Method.del"></a><a name="del"></a><span class="ddoc_psymbol">del</span></dt>
+<dd><p></p>
+</dd>
+<dt class="d_decl"><a name=".HTTP.Method.options"></a><a name="options"></a><span class="ddoc_psymbol">options</span></dt>
+<dd><p></p>
+</dd>
+<dt class="d_decl"><a name=".HTTP.Method.trace"></a><a name="trace"></a><span class="ddoc_psymbol">trace</span></dt>
+<dd><p></p>
+</dd>
+<dt class="d_decl"><a name=".HTTP.Method.connect"></a><a name="connect"></a><span class="ddoc_psymbol">connect</span></dt>
+<dd><p></p>
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".HTTP.StatusLine"></a>struct <a name="StatusLine"></a><span class="ddoc_psymbol">StatusLine</span>;
+</dt>
+<dd>HTTP status line ie. the first line returned in an HTTP response.
+<p></p>
+If authentication or redirections are done then the status will be for
+       the last response received.<p></p>
+
+<dl><dt class="d_decl"><a name=".HTTP.StatusLine.majorVersion"></a>ushort <a name="majorVersion"></a><span class="ddoc_psymbol">majorVersion</span>;
+</dt>
+<dd>Major HTTP version ie. 1 in HTTP/1.0.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.StatusLine.minorVersion"></a>ushort <a name="minorVersion"></a><span class="ddoc_psymbol">minorVersion</span>;
+</dt>
+<dd>Minor HTTP version ie. 0 in HTTP/1.0.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.StatusLine.code"></a>ushort <a name="code"></a><span class="ddoc_psymbol">code</span>;
+</dt>
+<dd>HTTP status line <a name="code"></a><span class="ddoc_psymbol">code</span> e.g. 200.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.StatusLine.reason"></a>string <a name="reason"></a><span class="ddoc_psymbol">reason</span>;
+</dt>
+<dd>HTTP status line <a name="reason"></a><span class="ddoc_psymbol">reason</span> string.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.StatusLine.reset"></a>@safe void <a name="reset"></a><span class="ddoc_psymbol">reset</span>();
+</dt>
+<dd>Reset this status line<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".HTTP.StatusLine.toString"></a>string <a name="toString"></a><span class="ddoc_psymbol">toString</span>();
+</dt>
+<dd><p></p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".FTP"></a>struct <a name="FTP"></a><span class="ddoc_psymbol">FTP</span>;
+</dt>
+<dd><a name="FTP"></a><span class="ddoc_psymbol">FTP</span> client functionality.
+<p></p>
+<b>See Also:</b><br><a href="http://tools.ietf.org/html/rfc959">RFC959</a><p></p>
+
+<dl><dt class="d_decl"><a name=".FTP.this"></a> this(const(char)[] <i>url</i>);
+</dt>
+<dd>FTP access to the specified <i>url</i>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.perform"></a>void <a name="perform"></a><span class="ddoc_psymbol">perform</span>();
+</dt>
+<dd>Performs the ftp request as it has been configured.
+<p></p>
+After a FTP client has been setup and possibly assigned callbacks the <span class="d_inlinecode">      <a name="perform"></a><span class="ddoc_psymbol">perform</span>()</span> method will start performing the actual communication with the
+       server.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.url"></a>@property void <a name="url"></a><span class="ddoc_psymbol">url</span>(const(char)[] <a name="url"></a><span class="ddoc_psymbol">url</span>);
+</dt>
+<dd>The URL to specify the location of the resource.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.requestPause"></a>alias <a name="requestPause"></a><span class="ddoc_psymbol">requestPause</span> = etc.c.curl.CurlReadFunc.pause;
+</dt>
+<dd>Value to return from <span class="d_inlinecode">onSend</span>/<span class="d_inlinecode">onReceive</span> delegates in order to
+ pause a request<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.requestAbort"></a>alias <a name="requestAbort"></a><span class="ddoc_psymbol">requestAbort</span> = etc.c.curl.CurlReadFunc.abort;
+</dt>
+<dd>Value to return from onSend delegate in order to abort a request<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.isStopped"></a>@property bool <a name="isStopped"></a><span class="ddoc_psymbol">isStopped</span>();
+</dt>
+<dd>True if the instance is stopped. A stopped instance is not usable.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.shutdown"></a>void <a name="shutdown"></a><span class="ddoc_psymbol">shutdown</span>();
+</dt>
+<dd>Stop and invalidate this instance.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.verbose"></a>@property void <a name="verbose"></a><span class="ddoc_psymbol">verbose</span>(bool <i>on</i>);
+</dt>
+<dd>Set <a name="verbose"></a><span class="ddoc_psymbol">verbose</span>.
+            This will print request information to stderr.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.dataTimeout"></a>@property void <a name="dataTimeout"></a><span class="ddoc_psymbol">dataTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set timeout for activity on connection.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.operationTimeout"></a>@property void <a name="operationTimeout"></a><span class="ddoc_psymbol">operationTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set maximum time an operation is allowed to take.
+            This includes dns resolution, connecting, data transfer, etc.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.connectTimeout"></a>@property void <a name="connectTimeout"></a><span class="ddoc_psymbol">connectTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set timeout for connecting.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.proxy"></a>@property void <a name="proxy"></a><span class="ddoc_psymbol">proxy</span>(const(char)[] <i>host</i>);
+</dt>
+<dd>Proxy
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXY">proxy</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.proxyPort"></a>@property void <a name="proxyPort"></a><span class="ddoc_psymbol">proxyPort</span>(ushort <i>port</i>);
+</dt>
+<dd>Proxy <i>port</i>
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXYPORT">proxy_port</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.CurlProxy"></a>alias <a name="CurlProxy"></a><span class="ddoc_psymbol">CurlProxy</span> = etc.c.curl.<a name="CurlProxy"></a><span class="ddoc_psymbol">CurlProxy</span>;
+</dt>
+<dd>Type of proxy<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.proxyType"></a>@property void <a name="proxyType"></a><span class="ddoc_psymbol">proxyType</span>(CurlProxy <i>type</i>);
+</dt>
+<dd>Proxy <i>type</i>
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXY">proxy_type</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.dnsTimeout"></a>@property void <a name="dnsTimeout"></a><span class="ddoc_psymbol">dnsTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>DNS lookup timeout.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(const(char)[] <i>i</i>);
+<br><a name=".FTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(const(ubyte)[4] <i>i</i>);
+<br><a name=".FTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(InternetAddress <i>i</i>);
+</dt>
+<dd>The network interface to use in form of the the IP of the interface.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">theprotocol.<span class="d_psymbol">netInterface</span> = <span class="d_string">"192.168.1.32"</span>;
+theprotocol.<span class="d_psymbol">netInterface</span> = [ 192, 168, 1, 32 ];
+</pre>
+
+<p></p>
+<b>See:</b><br>
+<a href="std_socket.html#InternetAddress"><span class="d_inlinecode">std.socket.InternetAddress</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.localPort"></a>@property void <a name="localPort"></a><span class="ddoc_psymbol">localPort</span>(ushort <i>port</i>);
+</dt>
+<dd>Set the local outgoing <i>port</i> to use.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>ushort <i>port</i></td>
+<td valign=top>the first outgoing <i>port</i> number to try and use</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.localPortRange"></a>@property void <a name="localPortRange"></a><span class="ddoc_psymbol">localPortRange</span>(ushort <i>range</i>);
+</dt>
+<dd>Set the local outgoing port <i>range</i> to use.
+           This can be used together with the localPort property.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>ushort <i>range</i></td>
+<td valign=top>if the first port is occupied then try this many
+           port number forwards</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.tcpNoDelay"></a>@property void <a name="tcpNoDelay"></a><span class="ddoc_psymbol">tcpNoDelay</span>(bool <i>on</i>);
+</dt>
+<dd>Set the tcp no-delay socket option <i>on</i> or off.
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTTCPNODELAY">nodelay</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.setAuthentication"></a>void <a name="setAuthentication"></a><span class="ddoc_psymbol">setAuthentication</span>(const(char)[] <i>username</i>, const(char)[] <i>password</i>, const(char)[] <i>domain</i> = "");
+</dt>
+<dd>Set the user name, <i>password</i> and optionally <i>domain</i> for authentication
+           purposes.
+<p></p>
+Some protocols may need authentication in some cases. Use this
+           function to provide credentials.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] <i>username</i></td>
+<td valign=top>the <i>username</i></td></tr>
+<tr><td valign=top>const(char)[] <i>password</i></td>
+<td valign=top>the <i>password</i></td></tr>
+<tr><td valign=top>const(char)[] <i>domain</i></td>
+<td valign=top>used for NTLM authentication only and is set to the NTLM <i>domain</i>
+           name</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.onSend"></a>@property void <a name="onSend"></a><span class="ddoc_psymbol">onSend</span>(size_t delegate(void[]) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called when data is needed for sending. The
+ length of the <span class="d_inlinecode">void[]</span> specifies the maximum number of bytes that can
+ be sent.
+<p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the number of elements in the buffer that have been
+ filled and are ready to send.
+ The special value <span class="d_inlinecode">.abortRequest</span> can be returned in order to abort the
+ current request.
+ The special value <span class="d_inlinecode">.pauseRequest</span> can be returned in order to pause the
+ current request.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.onReceive"></a>@property void <a name="onReceive"></a><span class="ddoc_psymbol">onReceive</span>(size_t delegate(ubyte[]) <i>callback</i>);
+</dt>
+<dd>The event handler that receives incoming data. Be sure to copy the
+ incoming ubyte[] since it is not guaranteed to be valid after the
+ <i>callback</i> returns.
+<p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the incoming bytes read. If not the entire array is
+ the request will abort.
+ The special value .pauseRequest can be returned in order to pause the
+ current request.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.onProgress"></a>@property void <a name="onProgress"></a><span class="ddoc_psymbol">onProgress</span>(int delegate(size_t dlTotal, size_t dlNow, size_t ulTotal, size_t ulNow) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called to inform of upload/download progress.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dlTotal</td>
+<td valign=top>total bytes to download</td></tr>
+<tr><td valign=top>dlNow</td>
+<td valign=top>currently downloaded bytes</td></tr>
+<tr><td valign=top>ulTotal</td>
+<td valign=top>total bytes to upload</td></tr>
+<tr><td valign=top>ulNow</td>
+<td valign=top>currently uploaded bytes</td></tr>
+</table><p></p>
+<b>Returns:</b><br>Return 0 from the <i>callback</i> to signal success, return non-zero to abort
+          transfer<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.clearCommands"></a>void <a name="clearCommands"></a><span class="ddoc_psymbol">clearCommands</span>();
+</dt>
+<dd>Clear all commands send to ftp server.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.addCommand"></a>void <a name="addCommand"></a><span class="ddoc_psymbol">addCommand</span>(const(char)[] <i>command</i>);
+</dt>
+<dd>Add a <i>command</i> to send to ftp server.
+<p></p>
+There is no remove <i>command</i> functionality. Do a <a href="#clearCommands"><span class="d_inlinecode">clearCommands</span></a> and
+ set the needed commands instead.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+<span class="d_keyword">auto</span> client = FTP();
+client.<span class="d_psymbol">addCommand</span>(<span class="d_string">"RNFR my_file.txt"</span>);
+client.<span class="d_psymbol">addCommand</span>(<span class="d_string">"RNTO my_renamed_file.txt"</span>);
+upload(<span class="d_string">"my_file.txt"</span>, <span class="d_string">"ftp.digitalmars.com"</span>, client);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FTP.contentLength"></a>@property void <a name="contentLength"></a><span class="ddoc_psymbol">contentLength</span>(size_t <i>len</i>);
+</dt>
+<dd>The content length in bytes of the ftp data.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".SMTP"></a>struct <a name="SMTP"></a><span class="ddoc_psymbol">SMTP</span>;
+</dt>
+<dd>Basic <a name="SMTP"></a><span class="ddoc_psymbol">SMTP</span> protocol support.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+
+<span class="d_comment">// Send an email with SMTPS
+</span><span class="d_keyword">auto</span> smtp = <span class="d_psymbol">SMTP</span>(<span class="d_string">"smtps://smtp.gmail.com"</span>);
+smtp.setAuthentication(<span class="d_string">"from.addr@gmail.com"</span>, <span class="d_string">"password"</span>);
+smtp.mailTo = [<span class="d_string">"&lt;to.addr@gmail.com&gt;"</span>];
+smtp.mailFrom = <span class="d_string">"&lt;from.addr@gmail.com&gt;"</span>;
+smtp.message = <span class="d_string">"Example Message"</span>;
+smtp.perform();
+</pre>
+
+<p></p>
+<b>See Also:</b><br><a href="http://www.ietf.org/rfc/rfc2821.txt">RFC2821</a><p></p>
+
+<dl><dt class="d_decl"><a name=".SMTP.this"></a> this(const(char)[] <i>url</i>);
+</dt>
+<dd>Sets to the URL of the SMTP server.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.perform"></a>void <a name="perform"></a><span class="ddoc_psymbol">perform</span>();
+</dt>
+<dd>Performs the request as configured.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.url"></a>@property void <a name="url"></a><span class="ddoc_psymbol">url</span>(const(char)[] <a name="url"></a><span class="ddoc_psymbol">url</span>);
+</dt>
+<dd>The URL to specify the location of the resource.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.requestPause"></a>alias <a name="requestPause"></a><span class="ddoc_psymbol">requestPause</span> = etc.c.curl.CurlReadFunc.pause;
+</dt>
+<dd>Value to return from <span class="d_inlinecode">onSend</span>/<span class="d_inlinecode">onReceive</span> delegates in order to
+ pause a request<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.requestAbort"></a>alias <a name="requestAbort"></a><span class="ddoc_psymbol">requestAbort</span> = etc.c.curl.CurlReadFunc.abort;
+</dt>
+<dd>Value to return from onSend delegate in order to abort a request<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.isStopped"></a>@property bool <a name="isStopped"></a><span class="ddoc_psymbol">isStopped</span>();
+</dt>
+<dd>True if the instance is stopped. A stopped instance is not usable.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.shutdown"></a>void <a name="shutdown"></a><span class="ddoc_psymbol">shutdown</span>();
+</dt>
+<dd>Stop and invalidate this instance.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.verbose"></a>@property void <a name="verbose"></a><span class="ddoc_psymbol">verbose</span>(bool <i>on</i>);
+</dt>
+<dd>Set <a name="verbose"></a><span class="ddoc_psymbol">verbose</span>.
+            This will print request information to stderr.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.dataTimeout"></a>@property void <a name="dataTimeout"></a><span class="ddoc_psymbol">dataTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set timeout for activity on connection.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.operationTimeout"></a>@property void <a name="operationTimeout"></a><span class="ddoc_psymbol">operationTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set maximum time an operation is allowed to take.
+            This includes dns resolution, connecting, data transfer, etc.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.connectTimeout"></a>@property void <a name="connectTimeout"></a><span class="ddoc_psymbol">connectTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>Set timeout for connecting.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.proxy"></a>@property void <a name="proxy"></a><span class="ddoc_psymbol">proxy</span>(const(char)[] <i>host</i>);
+</dt>
+<dd>Proxy
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXY">proxy</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.proxyPort"></a>@property void <a name="proxyPort"></a><span class="ddoc_psymbol">proxyPort</span>(ushort <i>port</i>);
+</dt>
+<dd>Proxy <i>port</i>
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXYPORT">proxy_port</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.CurlProxy"></a>alias <a name="CurlProxy"></a><span class="ddoc_psymbol">CurlProxy</span> = etc.c.curl.<a name="CurlProxy"></a><span class="ddoc_psymbol">CurlProxy</span>;
+</dt>
+<dd>Type of proxy<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.proxyType"></a>@property void <a name="proxyType"></a><span class="ddoc_psymbol">proxyType</span>(CurlProxy <i>type</i>);
+</dt>
+<dd>Proxy <i>type</i>
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPROXY">proxy_type</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.dnsTimeout"></a>@property void <a name="dnsTimeout"></a><span class="ddoc_psymbol">dnsTimeout</span>(Duration <i>d</i>);
+</dt>
+<dd>DNS lookup timeout.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(const(char)[] <i>i</i>);
+<br><a name=".SMTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(const(ubyte)[4] <i>i</i>);
+<br><a name=".SMTP.netInterface"></a>@property void <a name="netInterface"></a><span class="ddoc_psymbol">netInterface</span>(InternetAddress <i>i</i>);
+</dt>
+<dd>The network interface to use in form of the the IP of the interface.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code">theprotocol.<span class="d_psymbol">netInterface</span> = <span class="d_string">"192.168.1.32"</span>;
+theprotocol.<span class="d_psymbol">netInterface</span> = [ 192, 168, 1, 32 ];
+</pre>
+
+<p></p>
+<b>See:</b><br>
+<a href="std_socket.html#InternetAddress"><span class="d_inlinecode">std.socket.InternetAddress</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.localPort"></a>@property void <a name="localPort"></a><span class="ddoc_psymbol">localPort</span>(ushort <i>port</i>);
+</dt>
+<dd>Set the local outgoing <i>port</i> to use.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>ushort <i>port</i></td>
+<td valign=top>the first outgoing <i>port</i> number to try and use</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.localPortRange"></a>@property void <a name="localPortRange"></a><span class="ddoc_psymbol">localPortRange</span>(ushort <i>range</i>);
+</dt>
+<dd>Set the local outgoing port <i>range</i> to use.
+           This can be used together with the localPort property.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>ushort <i>range</i></td>
+<td valign=top>if the first port is occupied then try this many
+           port number forwards</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.tcpNoDelay"></a>@property void <a name="tcpNoDelay"></a><span class="ddoc_psymbol">tcpNoDelay</span>(bool <i>on</i>);
+</dt>
+<dd>Set the tcp no-delay socket option <i>on</i> or off.
+<p></p>
+<b>See:</b><br>
+<a href="http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTTCPNODELAY">nodelay</a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.setAuthentication"></a>void <a name="setAuthentication"></a><span class="ddoc_psymbol">setAuthentication</span>(const(char)[] <i>username</i>, const(char)[] <i>password</i>, const(char)[] <i>domain</i> = "");
+</dt>
+<dd>Set the user name, <i>password</i> and optionally <i>domain</i> for authentication
+           purposes.
+<p></p>
+Some protocols may need authentication in some cases. Use this
+           function to provide credentials.
+
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>const(char)[] <i>username</i></td>
+<td valign=top>the <i>username</i></td></tr>
+<tr><td valign=top>const(char)[] <i>password</i></td>
+<td valign=top>the <i>password</i></td></tr>
+<tr><td valign=top>const(char)[] <i>domain</i></td>
+<td valign=top>used for NTLM authentication only and is set to the NTLM <i>domain</i>
+           name</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.onSend"></a>@property void <a name="onSend"></a><span class="ddoc_psymbol">onSend</span>(size_t delegate(void[]) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called when data is needed for sending. The
+ length of the <span class="d_inlinecode">void[]</span> specifies the maximum number of bytes that can
+ be sent.
+<p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the number of elements in the buffer that have been
+ filled and are ready to send.
+ The special value <span class="d_inlinecode">.abortRequest</span> can be returned in order to abort the
+ current request.
+ The special value <span class="d_inlinecode">.pauseRequest</span> can be returned in order to pause the
+ current request.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.onReceive"></a>@property void <a name="onReceive"></a><span class="ddoc_psymbol">onReceive</span>(size_t delegate(ubyte[]) <i>callback</i>);
+</dt>
+<dd>The event handler that receives incoming data. Be sure to copy the
+ incoming ubyte[] since it is not guaranteed to be valid after the
+ <i>callback</i> returns.
+<p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the incoming bytes read. If not the entire array is
+ the request will abort.
+ The special value .pauseRequest can be returned in order to pause the
+ current request.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.onProgress"></a>@property void <a name="onProgress"></a><span class="ddoc_psymbol">onProgress</span>(int delegate(size_t dlTotal, size_t dlNow, size_t ulTotal, size_t ulNow) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called to inform of upload/download progress.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>dlTotal</td>
+<td valign=top>total bytes to download</td></tr>
+<tr><td valign=top>dlNow</td>
+<td valign=top>currently downloaded bytes</td></tr>
+<tr><td valign=top>ulTotal</td>
+<td valign=top>total bytes to upload</td></tr>
+<tr><td valign=top>ulNow</td>
+<td valign=top>currently uploaded bytes</td></tr>
+</table><p></p>
+<b>Returns:</b><br>Return 0 from the <i>callback</i> to signal success, return non-zero to abort
+          transfer<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.mailFrom"></a>void <a name="mailFrom"></a><span class="ddoc_psymbol">mailFrom</span>()(const(char)[] <i>sender</i>);
+</dt>
+<dd>Setter for the sender's email address.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.mailTo"></a>void <a name="mailTo"></a><span class="ddoc_psymbol">mailTo</span>()(const(char)[][] <i>recipients</i>...);
+</dt>
+<dd>Setter for the recipient email addresses.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".SMTP.message"></a>@property void <a name="message"></a><span class="ddoc_psymbol">message</span>(string <i>msg</i>);
+</dt>
+<dd>Sets the <a name="message"></a><span class="ddoc_psymbol">message</span> body text.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".CurlException"></a>class <a name="CurlException"></a><span class="ddoc_psymbol">CurlException</span>: object.Exception;
+</dt>
+<dd>Exception thrown on errors in std.net.curl functions.<p></p>
+
+<dl><dt class="d_decl"><a name=".CurlException.this"></a> this(string <i>msg</i>, string <i>file</i> = __FILE__, size_t <i>line</i> = __LINE__, Throwable <i>next</i> = null);
+</dt>
+<dd><b>Parameters:</b><table class=parms><tr><td valign=top>string <i>msg</i></td>
+<td valign=top>The message for the exception.</td></tr>
+<tr><td valign=top>string <i>file</i></td>
+<td valign=top>The <i>file</i> where the exception occurred.</td></tr>
+<tr><td valign=top>size_t <i>line</i></td>
+<td valign=top>The <i>line</i> number where the exception occurred.</td></tr>
+<tr><td valign=top>Throwable <i>next</i></td>
+<td valign=top>The previous exception in the chain of exceptions, if any.</td></tr>
+</table><p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".CurlTimeoutException"></a>class <a name="CurlTimeoutException"></a><span class="ddoc_psymbol">CurlTimeoutException</span>: std.net.curl.CurlException;
+</dt>
+<dd>Exception thrown on timeout errors in std.net.curl functions.<p></p>
+
+<dl><dt class="d_decl"><a name=".CurlTimeoutException.this"></a> this(string <i>msg</i>, string <i>file</i> = __FILE__, size_t <i>line</i> = __LINE__, Throwable <i>next</i> = null);
+</dt>
+<dd><b>Parameters:</b><table class=parms><tr><td valign=top>string <i>msg</i></td>
+<td valign=top>The message for the exception.</td></tr>
+<tr><td valign=top>string <i>file</i></td>
+<td valign=top>The <i>file</i> where the exception occurred.</td></tr>
+<tr><td valign=top>size_t <i>line</i></td>
+<td valign=top>The <i>line</i> number where the exception occurred.</td></tr>
+<tr><td valign=top>Throwable <i>next</i></td>
+<td valign=top>The previous exception in the chain of exceptions, if any.</td></tr>
+</table><p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".CurlCode"></a>alias <a name="CurlCode"></a><span class="ddoc_psymbol">CurlCode</span> = int;
+</dt>
+<dd>Equal to <a href="etc_c_curl.html#CURLcode"><span class="d_inlinecode">etc.c.curl.CURLcode</span></a><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl"></a>struct <a name="Curl"></a><span class="ddoc_psymbol">Curl</span>;
+</dt>
+<dd>Wrapper to provide a better interface to libcurl than using the plain C API.
+  It is recommended to use the <span class="d_inlinecode">HTTP</span>/<span class="d_inlinecode">FTP</span> etc. structs instead unless
+  raw access to libcurl is needed.<p></p>
+
+<dl><dt class="d_decl"><a name=".Curl.initialize"></a>void <a name="initialize"></a><span class="ddoc_psymbol">initialize</span>();
+</dt>
+<dd>Initialize the instance by creating a working curl handle.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.dup"></a>Curl <a name="dup"></a><span class="ddoc_psymbol">dup</span>();
+</dt>
+<dd>Duplicate this handle.
+<p></p>
+The new handle will have all options set as the one it was duplicated
+       from. An exception to this is that all options that cannot be shared
+       across threads are reset thereby making it safe to use the duplicate
+       in a new thread.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.shutdown"></a>void <a name="shutdown"></a><span class="ddoc_psymbol">shutdown</span>();
+</dt>
+<dd>Stop and invalidate this curl instance.
+<p></p>
+<b>Warning:</b><br>
+Do not call this from inside a callback handler e.g. <span class="d_inlinecode">onReceive</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.pause"></a>void <a name="pause"></a><span class="ddoc_psymbol">pause</span>(bool <i>sendingPaused</i>, bool <i>receivingPaused</i>);
+</dt>
+<dd>Pausing and continuing transfers.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.set"></a>void <a name="set"></a><span class="ddoc_psymbol">set</span>(CurlOption <i>option</i>, const(char)[] <i>value</i>);
+</dt>
+<dd>Set a string curl <i>option</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>CurlOption <i>option</i></td>
+<td valign=top>A <a href="etc_c_curl.html#CurlOption"><span class="d_inlinecode">etc.c.curl.CurlOption</span></a> as found in the curl documentation</td></tr>
+<tr><td valign=top>const(char)[] <i>value</i></td>
+<td valign=top>The string</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.set"></a>void <a name="set"></a><span class="ddoc_psymbol">set</span>(CurlOption <i>option</i>, long <i>value</i>);
+</dt>
+<dd>Set a long curl <i>option</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>CurlOption <i>option</i></td>
+<td valign=top>A <a href="etc_c_curl.html#CurlOption"><span class="d_inlinecode">etc.c.curl.CurlOption</span></a> as found in the curl documentation</td></tr>
+<tr><td valign=top>long <i>value</i></td>
+<td valign=top>The long</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.set"></a>void <a name="set"></a><span class="ddoc_psymbol">set</span>(CurlOption <i>option</i>, void* <i>value</i>);
+</dt>
+<dd>Set a void* curl <i>option</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>CurlOption <i>option</i></td>
+<td valign=top>A <a href="etc_c_curl.html#CurlOption"><span class="d_inlinecode">etc.c.curl.CurlOption</span></a> as found in the curl documentation</td></tr>
+<tr><td valign=top>void* <i>value</i></td>
+<td valign=top>The pointer</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.clear"></a>void <a name="clear"></a><span class="ddoc_psymbol">clear</span>(CurlOption <i>option</i>);
+</dt>
+<dd>Clear a pointer <i>option</i>.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>CurlOption <i>option</i></td>
+<td valign=top>A <a href="etc_c_curl.html#CurlOption"><span class="d_inlinecode">etc.c.curl.CurlOption</span></a> as found in the curl documentation</td></tr>
+</table><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.perform"></a>CurlCode <a name="perform"></a><span class="ddoc_psymbol">perform</span>(bool <i>throwOnError</i> = true);
+</dt>
+<dd><a name="perform"></a><span class="ddoc_psymbol">perform</span> the curl request by doing the HTTP,FTP etc. as it has
+       been setup beforehand.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.onReceive"></a>@property void <a name="onReceive"></a><span class="ddoc_psymbol">onReceive</span>(size_t delegate(InData) <i>callback</i>);
+</dt>
+<dd>The event handler that receives incoming data.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>size_t delegate(InData) <i>callback</i></td>
+<td valign=top>the <i>callback</i> that receives the <span class="d_inlinecode">ubyte[]</span> data.
+ Be sure to copy the incoming data and not store
+ a slice.</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the incoming bytes read. If not the entire array is
+ the request will abort.
+ The special value HTTP.pauseRequest can be returned in order to pause the
+ current request.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+Curl curl;
+curl.initialize();
+curl.set(CurlOption.url, <span class="d_string">"http://dlang.org"</span>);
+curl.<span class="d_psymbol">onReceive</span> = (<span class="d_keyword">ubyte</span>[] data) { writeln(<span class="d_string">"Got data"</span>, to!(<span class="d_keyword">const</span>(<span class="d_keyword">char</span>)[])(data)); <span class="d_keyword">return</span> data.length;};
+curl.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.onReceiveHeader"></a>@property void <a name="onReceiveHeader"></a><span class="ddoc_psymbol">onReceiveHeader</span>(void delegate(in char[]) <i>callback</i>);
+</dt>
+<dd>The event handler that receives incoming headers for protocols
+ that uses headers.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>void delegate(in char[]) <i>callback</i></td>
+<td valign=top>the <i>callback</i> that receives the header string.
+ Make sure the <i>callback</i> copies the incoming params if
+ it needs to store it because they are references into
+ the backend and may very likely change.</td></tr>
+</table><p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl, std.stdio;
+Curl curl;
+curl.initialize();
+curl.set(CurlOption.url, <span class="d_string">"http://dlang.org"</span>);
+curl.<span class="d_psymbol">onReceiveHeader</span> = (<span class="d_keyword">in</span> <span class="d_keyword">char</span>[] header) { writeln(header); };
+curl.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.onSend"></a>@property void <a name="onSend"></a><span class="ddoc_psymbol">onSend</span>(size_t delegate(OutData) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called when data is needed for sending.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>size_t delegate(OutData) <i>callback</i></td>
+<td valign=top>the <i>callback</i> that has a <span class="d_inlinecode">void[]</span> buffer to be filled</td></tr>
+</table><p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the number of elements in the buffer that have been
+ filled and are ready to send.
+ The special value <span class="d_inlinecode">Curl.abortRequest</span> can be returned in
+ order to abort the current request.
+ The special value <span class="d_inlinecode">Curl.pauseRequest</span> can be returned in order to
+ pause the current request.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+Curl curl;
+curl.initialize();
+curl.set(CurlOption.url, <span class="d_string">"http://dlang.org"</span>);
+
+string msg = <span class="d_string">"Hello world"</span>;
+curl.<span class="d_psymbol">onSend</span> = (<span class="d_keyword">void</span>[] data)
+{
+    <span class="d_keyword">auto</span> m = <span class="d_keyword">cast</span>(<span class="d_keyword">void</span>[])msg;
+    size_t length = m.length &gt; data.length ? data.length : m.length;
+    <span class="d_keyword">if</span> (length == 0) <span class="d_keyword">return</span> 0;
+    data[0..length] = m[0..length];
+    msg = msg[length..$];
+    <span class="d_keyword">return</span> length;
+};
+curl.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.onSeek"></a>@property void <a name="onSeek"></a><span class="ddoc_psymbol">onSeek</span>(CurlSeek delegate(long, CurlSeekPos) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called when the curl backend needs to seek
+ the data to be sent.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>CurlSeek delegate(long, CurlSeekPos) <i>callback</i></td>
+<td valign=top>the <i>callback</i> that receives a seek offset and a seek position
+            <a href="etc_c_curl.html#CurlSeekPos"><span class="d_inlinecode">etc.c.curl.CurlSeekPos</span></a></td></tr>
+</table><p></p>
+<b>Returns:</b><br>The <i>callback</i> returns the success state of the seeking
+ <a href="etc_c_curl.html#CurlSeek"><span class="d_inlinecode">etc.c.curl.CurlSeek</span></a>
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+Curl curl;
+curl.initialize();
+curl.set(CurlOption.url, <span class="d_string">"http://dlang.org"</span>);
+curl.<span class="d_psymbol">onSeek</span> = (<span class="d_keyword">long</span> p, CurlSeekPos sp)
+{
+    <span class="d_keyword">return</span> CurlSeek.cantseek;
+};
+curl.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.onSocketOption"></a>@property void <a name="onSocketOption"></a><span class="ddoc_psymbol">onSocketOption</span>(int delegate(curl_socket_t, CurlSockType) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called when the net socket has been created
+ but a <span class="d_inlinecode">connect()</span> call has not yet been done. This makes it possible to set
+ misc. socket options.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>int delegate(curl_socket_t, CurlSockType) <i>callback</i></td>
+<td valign=top>the <i>callback</i> that receives the socket and socket type
+ <a href="etc_c_curl.html#CurlSockType"><span class="d_inlinecode">etc.c.curl.CurlSockType</span></a></td></tr>
+</table><p></p>
+<b>Returns:</b><br>Return 0 from the <i>callback</i> to signal success, return 1 to signal error
+ and make curl close the socket
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+Curl curl;
+curl.initialize();
+curl.set(CurlOption.url, <span class="d_string">"http://dlang.org"</span>);
+curl.<span class="d_psymbol">onSocketOption</span> = <span class="d_keyword">delegate</span> <span class="d_keyword">int</span>(curl_socket_t s, CurlSockType t) { <span class="d_comment">/+ do stuff +/</span> };
+curl.perform();
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Curl.onProgress"></a>@property void <a name="onProgress"></a><span class="ddoc_psymbol">onProgress</span>(int delegate(size_t dlTotal, size_t dlNow, size_t ulTotal, size_t ulNow) <i>callback</i>);
+</dt>
+<dd>The event handler that gets called to inform of upload/download progress.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>int delegate(size_t dlTotal, size_t dlNow, size_t ulTotal, size_t ulNow) <i>callback</i></td>
+<td valign=top>the <i>callback</i> that receives the (total bytes to download,
+ currently downloaded bytes, total bytes to upload, currently uploaded
+ bytes).</td></tr>
+</table><p></p>
+<b>Returns:</b><br>Return 0 from the <i>callback</i> to signal success, return non-zero to abort
+ transfer
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">import</span> std.net.curl;
+Curl curl;
+curl.initialize();
+curl.set(CurlOption.url, <span class="d_string">"http://dlang.org"</span>);
+curl.<span class="d_psymbol">onProgress</span> = <span class="d_keyword">delegate</span> <span class="d_keyword">int</span>(size_t dltotal, size_t dlnow, size_t ultotal, size_t uln)
+{
+    writeln(<span class="d_string">"Progress: downloaded bytes "</span>, dlnow, <span class="d_string">" of "</span>, dltotal);
+    writeln(<span class="d_string">"Progress: uploaded bytes "</span>, ulnow, <span class="d_string">" of "</span>, ultotal);
+    curl.perform();
+};
+</pre>
+<p></p>
+
+</dd>
+</dl>
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright Jonas Drewsen 2011-2012
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

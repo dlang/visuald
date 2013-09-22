@@ -1,0 +1,1196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.typecons - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+function listanchors()
+{
+    if (typeof inhibitQuickIndex !== 'undefined') return;
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        // ignore anchors from DDOC_PSYMBOL
+        if (text[0] != '.') continue;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+        values[n++] = a.name
+    }
+
+    // we won't display the qualifying names to save space, so sort by last name
+    var lastName = function(a){
+        var li = a.lastIndexOf('.');
+        return a.slice(li + 1);
+    }
+    values.sort(function(a,b){return lastName(a) > lastName(b)});
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        var text = lastName(a);
+        newText += ' \x3Ca href="\x23' + a +
+            '"\x3E\x3Cspan class="d_psymbol"\x3E' + text + '\x3C/span\x3E\x3C/a\x3E';
+    }
+    if (newText != "") newText = "\x3Cp\x3E\x3Cb\x3EJump to:\x3C/b\x3E" + newText + "\x3C/p\x3E";
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+jQuery(document).ready(listanchors);
+</script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/phobos">Library Reference</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="/images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language </a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/phobos">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+	<li><a href="../phobos-prerelease/index.html" title="D Runtime Library (prerelease)">Phobos (prerelease)</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="index.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_ascii.html" title="Functions which operate on ASCII characters">std.ascii</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_csv.html" title="CSV file parser">std.csv</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_parallelism.html" title="High-level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_process.html" title="Create/destroy processes">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_uuid.html" title="Generate and use UUIDs">std.uuid</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_net_curl.html" title="High level curl wrapper">std.net.curl</a></li>
+	<li><a href="std_net_isemail.html" title="Validate e-mail addresses">std.net.isemail</a></li>
+	<li><a href="std_digest_crc.html" title="CRC digest functions">std.digest.crc</a></li>
+	<li><a href="std_digest_digest.html" title="API for digest functions">std.digest.digest</a></li>
+	<li><a href="std_digest_md.html" title="MD digest functions">std.digest.md</a></li>
+	<li><a href="std_digest_ripemd.html" title="RIPEMD digest functions">std.digest.ripemd</a></li>
+	<li><a href="std_digest_sha.html" title="SHA digest functions">std.digest.sha</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+    </ul>
+    <h2><a href="index.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_sqlite3.html" title="Interface to sqlite3 library">etc.c.sqlite3</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="index.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_demangle.html" title="D symbol mangling">core.demangle</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_simd.html" title="Builtin SIMD intrinsics">core.simd</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_time.html" title="Core time functionality">core.time</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/phobos/edit/master/std\typecons.d" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/Phobos/StdVariant" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>std.typecons</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\typecons.d -->
+This module implements a variety of type constructors, i.e., templates
+that allow construction of new, useful general-purpose types.
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/typecons.d">std/typecons.d</a>
+
+<p></p>
+<b>Synopsis:</b><br>
+<pre class="d_code"><span class="d_comment">// value tuples
+</span><span class="d_keyword">alias</span> Tuple!(<span class="d_keyword">float</span>, <span class="d_string">"x"</span>, <span class="d_keyword">float</span>, <span class="d_string">"y"</span>, <span class="d_keyword">float</span>, <span class="d_string">"z"</span>) Coord;
+Coord c;
+c[1] = 1;       <span class="d_comment">// access by index
+</span>c.z = 1;        <span class="d_comment">// access by given name
+</span><span class="d_keyword">alias</span> Tuple!(string, string) DicEntry; <span class="d_comment">// names can be omitted
+</span>
+<span class="d_comment">// Rebindable references to const and immutable objects
+</span><span class="d_keyword">void</span> bar()
+{
+    <span class="d_keyword">const</span> w1 = <span class="d_keyword">new</span> Widget, w2 = <span class="d_keyword">new</span> Widget;
+    w1.foo();
+    <span class="d_comment">// w1 = w2 would not work; can't rebind const object
+</span>    <span class="d_keyword">auto</span> r = Rebindable!(<span class="d_keyword">const</span> Widget)(w1);
+    <span class="d_comment">// invoke method as if r were a Widget object
+</span>    r.foo();
+    <span class="d_comment">// rebind r to refer to another object
+</span>    r = w2;
+}
+</pre>
+
+<p></p>
+<b>License:</b><br><a href="http://boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+<p></p>
+<b>Authors:</b><br><a href="http://erdani.org">Andrei Alexandrescu</a>,
+           <a href="http://bartoszmilewski.wordpress.com">Bartosz Milewski</a>,
+           Don Clugston,
+           Shin Fujishiro,
+           Kenji Hara<p></p>
+
+<dl><dt class="d_decl"><a name=".Unique"></a>struct <a name="Unique"></a><span class="ddoc_psymbol">Unique</span>(T);
+</dt>
+<dd>Encapsulates unique ownership of a resource.  Resource of type T is
+deleted at the end of the scope, unless it is transferred.  The
+transfer can be explicit, by calling <span class="d_inlinecode">release</span>, or implicit, when
+returning <a name="Unique"></a><span class="ddoc_psymbol">Unique</span> from a function. The resource can be a polymorphic
+class object, in which case <a name="Unique"></a><span class="ddoc_psymbol">Unique</span> behaves polymorphically too.
+<p></p>
+<b>Example:</b><br>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".this"></a> this(RefT <i>p</i>);
+</dt>
+<dd>   Constructor that takes an rvalue.
+    It will ensure uniqueness, as long as the rvalue
+    isn't just a view on an lvalue (e.g., a cast)
+    Typical usage:
+<pre class="d_code">Unique!(Foo) f = <span class="d_keyword">new</span> Foo;
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".this"></a> this(ref RefT <i>p</i>);
+</dt>
+<dd>Constructor that takes an lvalue. It nulls its source.
+    The nulling will ensure uniqueness as long as there
+    are no previous aliases to the source.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".release"></a>Unique <a name="release"></a><span class="ddoc_psymbol">release</span>();
+</dt>
+<dd>Returns a unique rvalue. Nullifies the current contents <p></p>
+
+</dd>
+<dt class="d_decl"><a name=".opDot"></a>RefT <a name="opDot"></a><span class="ddoc_psymbol">opDot</span>();
+</dt>
+<dd>Forwards member access to contents <p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".Tuple"></a>struct <a name="Tuple"></a><span class="ddoc_psymbol">Tuple</span>(Specs...);
+</dt>
+<dd><a name="Tuple"></a><span class="ddoc_psymbol">Tuple</span> of values, for example <span class="d_inlinecode"><a name="Tuple"></a><span class="ddoc_psymbol">Tuple</span>!(int, string)</span> is a record that
+stores an <span class="d_inlinecode">int</span> and a <span class="d_inlinecode">string</span>. <span class="d_inlinecode"><a name="Tuple"></a><span class="ddoc_psymbol">Tuple</span></span> can be used to bundle
+values together, notably when returning multiple values from a
+function. If <span class="d_inlinecode">obj</span> is a tuple, the individual members are
+accessible with the syntax <span class="d_inlinecode">obj[0]</span> for the first field, <span class="d_inlinecode">obj[1]</span>
+for the second, and so on.
+<p></p>
+The choice of zero-based indexing instead of one-base indexing was
+motivated by the ability to use value tuples with various compile-time
+loop constructs (e.g. type tuple iteration), all of which use
+zero-based indexing.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_psymbol">Tuple</span>!(<span class="d_keyword">int</span>, <span class="d_keyword">int</span>) point;
+<span class="d_comment">// assign coordinates
+</span>point[0] = 5;
+point[1] = 6;
+<span class="d_comment">// read coordinates
+</span><span class="d_keyword">auto</span> x = point[0];
+<span class="d_keyword">auto</span> y = point[1];
+</pre>
+<p></p>
+
+<a name="Tuple"></a><span class="ddoc_psymbol">Tuple</span> members can be named. It is legal to mix named and unnamed
+members. The method above is still applicable to all fields.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">alias</span> <span class="d_psymbol">Tuple</span>!(<span class="d_keyword">int</span>, <span class="d_string">"index"</span>, string, <span class="d_string">"value"</span>) Entry;
+Entry e;
+e.index = 4;
+e.value = <span class="d_string">"Hello"</span>;
+<span class="d_keyword">assert</span>(e[1] == <span class="d_string">"Hello"</span>);
+<span class="d_keyword">assert</span>(e[0] == 4);
+</pre>
+<p></p>
+
+Tuples with named fields are distinct types from tuples with unnamed
+fields, i.e. each naming imparts a separate type for the tuple. Two
+tuple differing in naming only are still distinct, even though they
+might have the same structure.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_psymbol">Tuple</span>!(<span class="d_keyword">int</span>, <span class="d_string">"x"</span>, <span class="d_keyword">int</span>, <span class="d_string">"y"</span>) point1;
+<span class="d_psymbol">Tuple</span>!(<span class="d_keyword">int</span>, <span class="d_keyword">int</span>) point2;
+<span class="d_keyword">assert</span>(!<span class="d_keyword">is</span>(<span class="d_keyword">typeof</span>(point1) == <span class="d_keyword">typeof</span>(point2))); <span class="d_comment">// passes
+</span></pre>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".Types"></a>alias <a name="Types"></a><span class="ddoc_psymbol">Types</span> = staticMap!(extractType, fieldSpecs);
+</dt>
+<dd>The type of the tuple's components.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".expand"></a>Types <a name="expand"></a><span class="ddoc_psymbol">expand</span>;
+</dt>
+<dd>Use <span class="d_inlinecode">t.<a name="expand"></a><span class="ddoc_psymbol">expand</span></span> for a tuple <span class="d_inlinecode">t</span> to <a name="expand"></a><span class="ddoc_psymbol">expand</span> it into its
+ components. The result of <span class="d_inlinecode"><a name="expand"></a><span class="ddoc_psymbol">expand</span></span> acts as if the tuple components
+ were listed as a list of values. (Ordinarily, a <span class="d_inlinecode">Tuple</span> acts as a
+ single value.)
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">auto</span> t = tuple(1, <span class="d_string">" hello "</span>, 2.3);
+writeln(t);        <span class="d_comment">// Tuple!(int, string, double)(1, " hello ", 2.3)
+</span>writeln(t.<span class="d_psymbol">expand</span>); <span class="d_comment">// 1 hello 2.3
+</span></pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".this"></a> this()(Types <i>values</i>);
+</dt>
+<dd>Constructor taking one value for each field. Each argument must be
+ implicitly assignable to the respective element of the target.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".this"></a> this(U, size_t n)(U[n] <i>values</i>) if (n == Types.length &amp;&amp; is(typeof(()
+{
+foreach (i, _; Types)
+{
+field[i] = <i>values</i>[i];
+}
+}
+)));
+</dt>
+<dd>Constructor taking a compatible array. The array element type must
+ be implicitly assignable to each element of the target.
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">int</span>[2] ints;
+Tuple!(<span class="d_keyword">int</span>, <span class="d_keyword">int</span>) t = ints;
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".this"></a> this(U)(U <i>another</i>) if (areCompatibleTuples!(typeof(this), U, "="));
+</dt>
+<dd>Constructor taking a compatible tuple. Each element of the source
+ must be implicitly assignable to the respective element of the
+ target.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".opEquals"></a>bool <a name="opEquals"></a><span class="ddoc_psymbol">opEquals</span>(R)(R <i>rhs</i>) if (areCompatibleTuples!(typeof(this), R, "=="));
+<br><a name=".opEquals"></a>const bool <a name="opEquals"></a><span class="ddoc_psymbol">opEquals</span>(R)(R <i>rhs</i>) if (areCompatibleTuples!(typeof(this), R, "=="));
+</dt>
+<dd>Comparison for equality.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".opCmp"></a>int <a name="opCmp"></a><span class="ddoc_psymbol">opCmp</span>(R)(R <i>rhs</i>) if (areCompatibleTuples!(typeof(this), R, "&lt;"));
+<br><a name=".opCmp"></a>const int <a name="opCmp"></a><span class="ddoc_psymbol">opCmp</span>(R)(R <i>rhs</i>) if (areCompatibleTuples!(typeof(this), R, "&lt;"));
+</dt>
+<dd>Comparison for ordering.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".opAssign"></a>void <a name="opAssign"></a><span class="ddoc_psymbol">opAssign</span>(R)(auto ref R <i>rhs</i>) if (areCompatibleTuples!(typeof(this), R, "="));
+</dt>
+<dd>Assignment from another tuple. Each element of the source must be
+ implicitly assignable to the respective element of the target.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".slice"></a>@trusted Tuple!(sliceSpecs!(from, to)) <a name="slice"></a><span class="ddoc_psymbol">slice</span>(size_t from, size_t to)() if (from &lt;= to &amp;&amp; to &lt;= Types.length);
+</dt>
+<dd>Takes a <a name="slice"></a><span class="ddoc_psymbol">slice</span> of the tuple.
+<p></p>
+<b>Examples:</b><br><pre class="d_code">Tuple!(<span class="d_keyword">int</span>, string, <span class="d_keyword">float</span>, <span class="d_keyword">double</span>) a;
+a[1] = <span class="d_string">"abc"</span>;
+a[2] = 4.5;
+<span class="d_keyword">auto</span> s = a.<span class="d_psymbol">slice</span>!(1, 3);
+<span class="d_keyword">static</span> <span class="d_keyword">assert</span>(<span class="d_keyword">is</span>(<span class="d_keyword">typeof</span>(s) == Tuple!(string, <span class="d_keyword">float</span>)));
+<span class="d_keyword">assert</span>(s[0] == <span class="d_string">"abc"</span> &amp;&amp; s[1] == 4.5);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".toString"></a>string <a name="toString"></a><span class="ddoc_psymbol">toString</span>();
+</dt>
+<dd>Converts to string.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".tuple"></a>Tuple!T <a name="tuple"></a><span class="ddoc_psymbol">tuple</span>(T...)(T <i>args</i>);
+</dt>
+<dd>Returns a <span class="d_inlinecode">Tuple</span> object instantiated and initialized according to
+the arguments.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">auto</span> value = <span class="d_psymbol">tuple</span>(5, 6.7, <span class="d_string">"hello"</span>);
+<span class="d_keyword">assert</span>(value[0] == 5);
+<span class="d_keyword">assert</span>(value[1] == 6.7);
+<span class="d_keyword">assert</span>(value[2] == <span class="d_string">"hello"</span>);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isTuple"></a>template <a name="isTuple"></a><span class="ddoc_psymbol">isTuple</span>(T)</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">T</span> is an instance of the
+<span class="d_inlinecode">Tuple</span> struct template.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Rebindable"></a>template <a name="Rebindable"></a><span class="ddoc_psymbol">Rebindable</span>(T) if (is(T == class) || is(T == interface) || isArray!T)</dt>
+<dd><span class="d_inlinecode"><a name="Rebindable"></a><span class="ddoc_psymbol">Rebindable</span>!(T)</span> is a simple, efficient wrapper that behaves just
+like an object of type <span class="d_inlinecode">T</span>, except that you can reassign it to
+refer to another object. For completeness, <span class="d_inlinecode"><a name="Rebindable"></a><span class="ddoc_psymbol">Rebindable</span>!(T)</span> aliases
+itself away to <span class="d_inlinecode">T</span> if <span class="d_inlinecode">T</span> is a non-const object type. However,
+<span class="d_inlinecode"><a name="Rebindable"></a><span class="ddoc_psymbol">Rebindable</span>!(T)</span> does not compile if <span class="d_inlinecode">T</span> is a non-class type.
+<p></p>
+Regular <span class="d_inlinecode">const</span> object references cannot be reassigned:
+<p></p>
+
+<pre class="d_code"><span class="d_keyword">class</span> Widget { <span class="d_keyword">int</span> x; <span class="d_keyword">int</span> y() <span class="d_keyword">const</span> { <span class="d_keyword">return</span> x; } }
+<span class="d_keyword">const</span> a = <span class="d_keyword">new</span> Widget;
+a.y();          <span class="d_comment">// fine
+</span>a.x = 5;        <span class="d_comment">// error! can't modify const a
+</span>a = <span class="d_keyword">new</span> Widget; <span class="d_comment">// error! can't modify const a
+</span></pre>
+<p></p>
+
+However, <span class="d_inlinecode"><a name="Rebindable"></a><span class="ddoc_psymbol">Rebindable</span>!(Widget)</span> does allow reassignment, while
+otherwise behaving exactly like a <span class="d_inlinecode">const Widget</span>:
+<p></p>
+
+<pre class="d_code"><span class="d_keyword">auto</span> a = <span class="d_psymbol">Rebindable</span>!(<span class="d_keyword">const</span> Widget)(<span class="d_keyword">new</span> Widget);
+a.y();          <span class="d_comment">// fine
+</span>a.x = 5;        <span class="d_comment">// error! can't modify const a
+</span>a = <span class="d_keyword">new</span> Widget; <span class="d_comment">// fine
+</span></pre>
+<p></p>
+
+You may want to use <span class="d_inlinecode"><a name="Rebindable"></a><span class="ddoc_psymbol">Rebindable</span></span> when you want to have mutable
+storage referring to <span class="d_inlinecode">const</span> objects, for example an array of
+references that must be sorted in place. <span class="d_inlinecode"><a name="Rebindable"></a><span class="ddoc_psymbol">Rebindable</span></span> does not
+break the soundness of D's type system and does not incur any of the
+risks usually associated with <span class="d_inlinecode">cast</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".rebindable"></a>Rebindable!T <a name="rebindable"></a><span class="ddoc_psymbol">rebindable</span>(T)(T <i>obj</i>) if (is(T == class) || is(T == interface) || isArray!T);
+</dt>
+<dd>Convenience function for creating a <span class="d_inlinecode">Rebindable</span> using automatic type
+inference.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".rebindable"></a>Rebindable!T <a name="rebindable"></a><span class="ddoc_psymbol">rebindable</span>(T)(Rebindable!T <i>obj</i>);
+</dt>
+<dd>This function simply returns the <span class="d_inlinecode">Rebindable</span> object passed in.  It's useful
+in generic programming cases when a given object may be either a regular
+<span class="d_inlinecode">class</span> or a <span class="d_inlinecode">Rebindable</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".alignForSize"></a>string <a name="alignForSize"></a><span class="ddoc_psymbol">alignForSize</span>(E...)(string[] <i>names</i>...);
+</dt>
+<dd>Order the provided members to minimize size while preserving alignment.
+  Returns a declaration to be mixed in.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">struct</span> Banner {
+  <span class="d_keyword">mixin</span>(<span class="d_psymbol">alignForSize</span>!(<span class="d_keyword">byte</span>[6], <span class="d_keyword">double</span>)([<span class="d_string">"name"</span>, <span class="d_string">"height"</span>]));
+}
+</pre>
+<p></p>
+
+  Alignment is not always optimal for 80-bit reals, nor for structs declared
+  as align(1).<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Nullable"></a>struct <a name="Nullable"></a><span class="ddoc_psymbol">Nullable</span>(T);
+</dt>
+<dd>Defines a value paired with a distinctive "<b>null</b>" state that denotes
+the absence of a value. If default constructed, a <span class="d_inlinecode"><a name="Nullable"></a><span class="ddoc_psymbol">Nullable</span>!T</span> object starts in the <b>null</b> state. Assigning it renders it
+non-<b>null</b>. Calling <span class="d_inlinecode">nullify</span> can nullify it again.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_psymbol">Nullable</span>!<span class="d_keyword">int</span> a;
+<span class="d_keyword">assert</span>(a.isNull);
+a = 5;
+<span class="d_keyword">assert</span>(!a.isNull);
+<span class="d_keyword">assert</span>(a == 5);
+</pre>
+<p></p>
+
+Practically <span class="d_inlinecode"><a name="Nullable"></a><span class="ddoc_psymbol">Nullable</span>!T</span> stores a <span class="d_inlinecode">T</span> and a <span class="d_inlinecode">bool</span>.<p></p>
+
+<dl><dt class="d_decl"><a name=".this"></a>inout  this(U : T)(U <i>value</i>);
+</dt>
+<dd>Constructor initializing <span class="d_inlinecode">this</span> with <span class="d_inlinecode">value</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isNull"></a>const pure nothrow @safe bool <a name="isNull"></a><span class="ddoc_psymbol">isNull</span>();
+</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">this</span> is in the <b>null</b> state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".nullify"></a>void <a name="nullify"></a><span class="ddoc_psymbol">nullify</span>()();
+</dt>
+<dd>Forces <span class="d_inlinecode">this</span> to the <b>null</b> state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".opAssign"></a>void <a name="opAssign"></a><span class="ddoc_psymbol">opAssign</span>()(T <i>value</i>);
+</dt>
+<dd>Assigns <span class="d_inlinecode">value</span> to the internally-held state. If the assignment
+succeeds, <span class="d_inlinecode">this</span> becomes non-<b>null</b>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".get"></a>inout pure nothrow @safe inout(T) <a name="get"></a><span class="ddoc_psymbol">get</span>();
+</dt>
+<dd>Gets the value. <span class="d_inlinecode">this</span> must not be in the <b>null</b> state.
+This function is also called for the implicit conversion to <span class="d_inlinecode">T</span>.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".Nullable"></a>struct <a name="Nullable"></a><span class="ddoc_psymbol">Nullable</span>(T, T nullValue);
+</dt>
+<dd>Just like <span class="d_inlinecode"><a name="Nullable"></a><span class="ddoc_psymbol">Nullable</span>!T</span>, except that the <b>null</b> state is defined as a
+particular value. For example, <span class="d_inlinecode"><a name="Nullable"></a><span class="ddoc_psymbol">Nullable</span>!(uint, uint.max)</span> is an
+<span class="d_inlinecode">uint</span> that sets aside the value <span class="d_inlinecode">uint.max</span> to denote a <b>null</b>
+state. <span class="d_inlinecode"><a name="Nullable"></a><span class="ddoc_psymbol">Nullable</span>!(T, nullValue)</span> is more storage-efficient than <span class="d_inlinecode"><a name="Nullable"></a><span class="ddoc_psymbol">Nullable</span>!T</span> because it does not need to store an extra <span class="d_inlinecode">bool</span>.<p></p>
+
+<dl><dt class="d_decl"><a name=".this"></a> this()(T <i>value</i>);
+</dt>
+<dd>Constructor initializing <span class="d_inlinecode">this</span> with <span class="d_inlinecode">value</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isNull"></a>const bool <a name="isNull"></a><span class="ddoc_psymbol">isNull</span>()();
+</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">this</span> is in the <b>null</b> state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".nullify"></a>void <a name="nullify"></a><span class="ddoc_psymbol">nullify</span>()();
+</dt>
+<dd>Forces <span class="d_inlinecode">this</span> to the <b>null</b> state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".opAssign"></a>void <a name="opAssign"></a><span class="ddoc_psymbol">opAssign</span>()(T <i>value</i>);
+</dt>
+<dd>Assigns <span class="d_inlinecode">value</span> to the internally-held state. No <b>null</b> checks are
+made. Note that the assignment may leave <span class="d_inlinecode">this</span> in the <b>null</b> state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".get"></a>inout inout(T) <a name="get"></a><span class="ddoc_psymbol">get</span>()();
+</dt>
+<dd>Gets the value. <span class="d_inlinecode">this</span> must not be in the <b>null</b> state.
+This function is also called for the implicit conversion to <span class="d_inlinecode">T</span>.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".NullableRef"></a>struct <a name="NullableRef"></a><span class="ddoc_psymbol">NullableRef</span>(T);
+</dt>
+<dd>Just like <span class="d_inlinecode">Nullable!T</span>, except that the object refers to a value
+sitting elsewhere in memory. This makes assignments overwrite the
+initially assigned value. Internally <span class="d_inlinecode"><a name="NullableRef"></a><span class="ddoc_psymbol">NullableRef</span>!T</span> only stores a
+pointer to <span class="d_inlinecode">T</span> (i.e., <span class="d_inlinecode">Nullable!T.sizeof == (T*).sizeof</span>).<p></p>
+
+<dl><dt class="d_decl"><a name=".this"></a>pure nothrow @safe  this(T* <i>value</i>);
+</dt>
+<dd>Constructor binding <span class="d_inlinecode">this</span> with <span class="d_inlinecode"><i>value</i></span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".bind"></a>pure nothrow @safe void <a name="bind"></a><span class="ddoc_psymbol">bind</span>(T* <i>value</i>);
+</dt>
+<dd>Binds the internal state to <span class="d_inlinecode"><i>value</i></span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".isNull"></a>const pure nothrow @safe bool <a name="isNull"></a><span class="ddoc_psymbol">isNull</span>();
+</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if and only if <span class="d_inlinecode">this</span> is in the <b>null</b> state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".nullify"></a>pure nothrow @safe void <a name="nullify"></a><span class="ddoc_psymbol">nullify</span>();
+</dt>
+<dd>Forces <span class="d_inlinecode">this</span> to the <b>null</b> state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".opAssign"></a>void <a name="opAssign"></a><span class="ddoc_psymbol">opAssign</span>()(T <i>value</i>) if (isAssignable!T);
+</dt>
+<dd>Assigns <span class="d_inlinecode">value</span> to the internally-held state.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".get"></a>inout pure nothrow @safe inout(T) <a name="get"></a><span class="ddoc_psymbol">get</span>();
+</dt>
+<dd>Gets the value. <span class="d_inlinecode">this</span> must not be in the <b>null</b> state.
+This function is also called for the implicit conversion to <span class="d_inlinecode">T</span>.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".BlackHole"></a>template <a name="BlackHole"></a><span class="ddoc_psymbol">BlackHole</span>(Base)</dt>
+<dd><span class="d_inlinecode"><a name="BlackHole"></a><span class="ddoc_psymbol">BlackHole</span>!Base</span> is a subclass of <span class="d_inlinecode">Base</span> which automatically implements
+all abstract member functions in <span class="d_inlinecode">Base</span> as do-nothing functions.  Each
+auto-implemented function just returns the default value of the return type
+without doing anything.
+<p></p>
+The name came from
+<a href="http://search.cpan.org/~sburke/Class-BlackHole-0.04/lib/Class/BlackHole.pm">Class::BlackHole</a>
+Perl module by Sean M. Burke.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">abstract</span> <span class="d_keyword">class</span> C
+{
+    <span class="d_keyword">int</span> m_value;
+    <span class="d_keyword">this</span>(<span class="d_keyword">int</span> v) { m_value = v; }
+    <span class="d_keyword">int</span> value() @property { <span class="d_keyword">return</span> m_value; }
+
+    <span class="d_keyword">abstract</span> <span class="d_keyword">real</span> realValue() @property;
+    <span class="d_keyword">abstract</span> <span class="d_keyword">void</span> doSomething();
+}
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_keyword">auto</span> c = <span class="d_keyword">new</span> <span class="d_psymbol">BlackHole</span>!C(42);
+    writeln(c.value);     <span class="d_comment">// prints "42"
+</span>
+    <span class="d_comment">// Abstract functions are implemented as do-nothing:
+</span>    writeln(c.realValue); <span class="d_comment">// prints "NaN"
+</span>    c.doSomething();      <span class="d_comment">// does nothing
+</span>}
+</pre>
+
+<p></p>
+<b>See Also:</b><br>AutoImplement, generateEmptyFunction<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".WhiteHole"></a>template <a name="WhiteHole"></a><span class="ddoc_psymbol">WhiteHole</span>(Base)</dt>
+<dd><span class="d_inlinecode"><a name="WhiteHole"></a><span class="ddoc_psymbol">WhiteHole</span>!Base</span> is a subclass of <span class="d_inlinecode">Base</span> which automatically implements
+all abstract member functions as throw-always functions.  Each auto-implemented
+function fails with throwing an <span class="d_inlinecode">Error</span> and does never return.  Useful for
+trapping use of not-yet-implemented functions.
+<p></p>
+The name came from
+<a href="http://search.cpan.org/~mschwern/Class-WhiteHole-0.04/lib/Class/WhiteHole.pm">Class::WhiteHole</a>
+Perl module by Michael G Schwern.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">class</span> C
+{
+    <span class="d_keyword">abstract</span> <span class="d_keyword">void</span> notYetImplemented();
+}
+
+<span class="d_keyword">void</span> main()
+{
+    <span class="d_keyword">auto</span> c = <span class="d_keyword">new</span> <span class="d_psymbol">WhiteHole</span>!C;
+    c.notYetImplemented(); <span class="d_comment">// throws an Error
+</span>}
+</pre>
+
+<p></p>
+<span style="color:red">BUGS:</span><br>Nothrow functions cause program to abort in release mode because the trap is
+  implemented with <span class="d_inlinecode">assert(0)</span> for nothrow functions.
+
+<p></p>
+<b>See Also:</b><br>AutoImplement, generateAssertTrap<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".AutoImplement"></a>class <a name="AutoImplement"></a><span class="ddoc_psymbol">AutoImplement</span>(Base, alias how, alias what = isAbstractFunction): Base;
+</dt>
+<dd><span class="d_inlinecode"><a name="AutoImplement"></a><span class="ddoc_psymbol">AutoImplement</span></span> automatically implements (by default) all abstract member
+functions in the class or interface <span class="d_inlinecode">Base</span> in specified way.
+<p></p>
+<b>Parameters:</b><table class=parms><tr><td valign=top>how</td>
+<td valign=top>template which specifies how functions will be implemented/overridden.
+<p></p>
+
+         Two arguments are passed to <span class="d_inlinecode">how</span>: the type <span class="d_inlinecode">Base</span> and an alias
+         to an implemented function.  Then <span class="d_inlinecode">how</span> must return an implemented
+         function body as a string.
+<p></p>
+
+         The generated function body can use these keywords:
+         <ul>           <li><span class="d_inlinecode">a0</span>, <span class="d_inlinecode">a1</span>, &hellip;: arguments passed to the function;</li>
+            <li><span class="d_inlinecode">args</span>: a tuple of the arguments;</li>
+            <li><span class="d_inlinecode">self</span>: an alias to the function itself;</li>
+            <li><span class="d_inlinecode">parent</span>: an alias to the overridden function (if any).</li>
+         </ul>
+<p></p>
+
+        You may want to use templated property functions (instead of Implicit
+        Template Properties) to generate complex functions:
+<pre class="d_code"><span class="d_comment">// Prints log messages for each call to overridden functions.
+</span>string generateLogger(C, <span class="d_keyword">alias</span> fun)() @property
+{
+    <span class="d_keyword">import</span> std.traits;
+    <span class="d_keyword">enum</span> qname = C.stringof ~ <span class="d_string">"."</span> ~ <span class="d_keyword">__traits</span>(identifier, fun);
+    string stmt;
+
+    stmt ~= <span class="d_string">q{ struct Importer { import std.stdio; } }</span>;
+    stmt ~= <span class="d_string">`Importer.writeln$(LPAREN)"Log: `</span> ~ qname ~ <span class="d_string">`(", args, ")"$(RPAREN);`</span>;
+    <span class="d_keyword">static</span> <span class="d_keyword">if</span> (!<span class="d_keyword">__traits</span>(isAbstractFunction, fun))
+    {
+        <span class="d_keyword">static</span> <span class="d_keyword">if</span> (<span class="d_keyword">is</span>(ReturnType!fun == <span class="d_keyword">void</span>))
+            stmt ~= <span class="d_string">q{ parent(args); }</span>;
+        <span class="d_keyword">else</span>
+            stmt ~= <span class="d_string">q{
+                auto r = parent(args);
+                Importer.writeln("--&gt; ", r);
+                return r;
+            }</span>;
+    }
+    <span class="d_keyword">return</span> stmt;
+}
+</pre>
+</td></tr>
+<tr><td valign=top>what</td>
+<td valign=top>template which determines what functions should be
+         implemented/overridden.
+<p></p>
+
+         An argument is passed to <span class="d_inlinecode">what</span>: an alias to a non-final member
+         function in <span class="d_inlinecode">Base</span>.  Then <span class="d_inlinecode">what</span> must return a boolean value.
+         Return <span class="d_inlinecode"><b>true</b></span> to indicate that the passed function should be
+         implemented/overridden.
+<p></p>
+
+<pre class="d_code"><span class="d_comment">// Sees if fun returns something.
+</span><span class="d_keyword">template</span> hasValue(<span class="d_keyword">alias</span> fun)
+{
+    <span class="d_keyword">enum</span> <span class="d_keyword">bool</span> hasValue = !<span class="d_keyword">is</span>(ReturnType!(fun) == <span class="d_keyword">void</span>);
+}
+</pre>
+</td></tr>
+</table><p></p>
+<b>Note:</b><br>
+Generated code is inserted in the scope of <span class="d_inlinecode">std.typecons</span> module.  Thus,
+any useful functions outside <span class="d_inlinecode">std.typecons</span> cannot be used in the generated
+code.  To workaround this problem, you may <span class="d_inlinecode">import</span> necessary things in a
+local struct, as done in the <span class="d_inlinecode">generateLogger()</span> template in the above
+example.
+<p></p>
+
+
+<p></p>
+<span style="color:red">BUGS:</span><br><ul><li>Variadic arguments to constructors are not forwarded to super.</li>
+ <li>Deep interface inheritance causes compile error with messages like
+      "Error: function std.typecons.AutoImplement!(Foo).AutoImplement.bar
+      does not override any function".  [<a href="http://d.puremagic.com/issues/show_bug.cgi?id=2525">Bugzilla 2525</a>, <a href="http://d.puremagic.com/issues/show_bug.cgi?id=3525">Bugzilla 3525</a>] </li>
+ <li>The <span class="d_inlinecode">parent</span> keyword is actually a delegate to the super class'
+      corresponding member function.  [<a href="http://d.puremagic.com/issues/show_bug.cgi?id=2540">Bugzilla 2540</a>] </li>
+ <li>Using alias template parameter in <span class="d_inlinecode">how</span> and/or <span class="d_inlinecode">what</span> may cause
+     strange compile error.  Use template tuple parameter instead to workaround
+     this problem.  [<a href="http://d.puremagic.com/issues/show_bug.cgi?id=4217">Bugzilla 4217</a>] </li>
+</ul><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".generateEmptyFunction"></a>template <a name="generateEmptyFunction"></a><span class="ddoc_psymbol">generateEmptyFunction</span>(C, func...)<br><a name=".generateAssertTrap"></a>template <a name="generateAssertTrap"></a><span class="ddoc_psymbol">generateAssertTrap</span>(C, func...)</dt>
+<dd>Predefined how-policies for <span class="d_inlinecode">AutoImplement</span>.  These templates are used by
+<span class="d_inlinecode">BlackHole</span> and <span class="d_inlinecode">WhiteHole</span>, respectively.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".wrap"></a>template <a name="wrap"></a><span class="ddoc_psymbol">wrap</span>(Targets...) if (Targets.length &gt;= 1 &amp;&amp; allSatisfy!(isMutable, Targets))<br><a name=".wrap"></a>template <a name="wrap"></a><span class="ddoc_psymbol">wrap</span>(Targets...) if (Targets.length &gt;= 1 &amp;&amp; !allSatisfy!(isMutable, Targets))</dt>
+<dd>Supports structural based typesafe conversion.
+<p></p>
+If <span class="d_inlinecode">Source</span> has structural conformance with the <span class="d_inlinecode">interface</span> <span class="d_inlinecode">Targets</span>,
+ <a name="wrap"></a><span class="ddoc_psymbol">wrap</span> creates internal wrapper class which inherits <span class="d_inlinecode">Targets</span> and
+ <a name="wrap"></a><span class="ddoc_psymbol">wrap</span> <span class="d_inlinecode">src</span> object, then return it.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".unwrap"></a>template <a name="unwrap"></a><span class="ddoc_psymbol">unwrap</span>(Target) if (isMutable!Target)<br><a name=".unwrap"></a>template <a name="unwrap"></a><span class="ddoc_psymbol">unwrap</span>(Target) if (!isMutable!Target)</dt>
+<dd>Extract object which wrapped by <span class="d_inlinecode">wrap</span>.<p></p>
+
+<b>Examples:</b><br><pre class="d_code">
+    <span class="d_keyword">interface</span> Quack
+    {
+        <span class="d_keyword">int</span> quack();
+        @property <span class="d_keyword">int</span> height();
+    }
+    <span class="d_keyword">interface</span> Flyer
+    {
+        @property <span class="d_keyword">int</span> height();
+    }
+    <span class="d_keyword">class</span> Duck : Quack
+    {
+        <span class="d_keyword">int</span> quack() { <span class="d_keyword">return</span> 1; }
+        @property <span class="d_keyword">int</span> height() { <span class="d_keyword">return</span> 10; }
+    }
+    <span class="d_keyword">class</span> Human
+    {
+        <span class="d_keyword">int</span> quack() { <span class="d_keyword">return</span> 2; }
+        @property <span class="d_keyword">int</span> height() { <span class="d_keyword">return</span> 20; }
+    }
+
+    Duck d1 = <span class="d_keyword">new</span> Duck();
+    Human h1 = <span class="d_keyword">new</span> Human();
+
+    <span class="d_keyword">interface</span> Refleshable
+    {
+        <span class="d_keyword">int</span> reflesh();
+    }
+    <span class="d_comment">// does not have structural conformance
+</span>    <span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_keyword">__traits</span>(compiles, d1.wrap!Refleshable));
+    <span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_keyword">__traits</span>(compiles, h1.wrap!Refleshable));
+
+    <span class="d_comment">// strict upcast
+</span>    Quack qd = d1.wrap!Quack;
+    <span class="d_keyword">assert</span>(qd <span class="d_keyword">is</span> d1);
+    <span class="d_keyword">assert</span>(qd.quack() == 1);    <span class="d_comment">// calls Duck.quack
+</span>    <span class="d_comment">// strict downcast
+</span>    Duck d2 = qd.<span class="d_psymbol">unwrap</span>!Duck;
+    <span class="d_keyword">assert</span>(d2 <span class="d_keyword">is</span> d1);
+
+    <span class="d_comment">// structural upcast
+</span>    Quack qh = h1.wrap!Quack;
+    <span class="d_keyword">assert</span>(qh.quack() == 2);    <span class="d_comment">// calls Human.quack
+</span>    <span class="d_comment">// structural downcast
+</span>    Human h2 = qh.<span class="d_psymbol">unwrap</span>!Human;
+    <span class="d_keyword">assert</span>(h2 <span class="d_keyword">is</span> h1);
+
+    <span class="d_comment">// structural upcast (two steps)
+</span>    Quack qx = h1.wrap!Quack;   <span class="d_comment">// Human -&gt; Quack
+</span>    Flyer fx = qx.wrap!Flyer;   <span class="d_comment">// Quack -&gt; Flyer
+</span>    <span class="d_keyword">assert</span>(fx.height == 20);    <span class="d_comment">// calls Human.height
+</span>    <span class="d_comment">// strucural downcast (two steps)
+</span>    Quack qy = fx.<span class="d_psymbol">unwrap</span>!Quack; <span class="d_comment">// Flyer -&gt; Quack
+</span>    Human hy = qy.<span class="d_psymbol">unwrap</span>!Human; <span class="d_comment">// Quack -&gt; Human
+</span>    <span class="d_keyword">assert</span>(hy <span class="d_keyword">is</span> h1);
+    <span class="d_comment">// strucural downcast (one step)
+</span>    Human hz = fx.<span class="d_psymbol">unwrap</span>!Human; <span class="d_comment">// Flyer -&gt; Human
+</span>    <span class="d_keyword">assert</span>(hz <span class="d_keyword">is</span> h1);
+</pre>
+<p></p><b>Examples:</b><br><pre class="d_code">
+    <span class="d_keyword">interface</span> A { <span class="d_keyword">int</span> run(); }
+    <span class="d_keyword">interface</span> B { <span class="d_keyword">int</span> stop(); @property <span class="d_keyword">int</span> status(); }
+    <span class="d_keyword">class</span> X
+    {
+        <span class="d_keyword">int</span> run() { <span class="d_keyword">return</span> 1; }
+        <span class="d_keyword">int</span> stop() { <span class="d_keyword">return</span> 2; }
+        @property <span class="d_keyword">int</span> status() { <span class="d_keyword">return</span> 3; }
+    }
+
+    <span class="d_keyword">auto</span> x = <span class="d_keyword">new</span> X();
+    <span class="d_keyword">auto</span> ab = x.wrap!(A, B);
+    A a = ab;
+    B b = ab;
+    <span class="d_keyword">assert</span>(a.run() == 1);
+    <span class="d_keyword">assert</span>(b.stop() == 2);
+    <span class="d_keyword">assert</span>(b.status == 3);
+    <span class="d_keyword">static</span> <span class="d_keyword">assert</span>(functionAttributes!(<span class="d_keyword">typeof</span>(ab).status) &amp; FunctionAttribute.property);
+</pre>
+<p></p></dd>
+<dt class="d_decl"><a name=".RefCountedAutoInitialize"></a>enum <a name="RefCountedAutoInitialize"></a><span class="ddoc_psymbol">RefCountedAutoInitialize</span>: int;
+</dt>
+<dd>Options regarding auto-initialization of a <span class="d_inlinecode">RefCounted</span> object (see
+the definition of <span class="d_inlinecode">RefCounted</span> below).<p></p>
+
+<dl><dt class="d_decl"><a name=".RefCountedAutoInitialize.no"></a><a name="no"></a><span class="ddoc_psymbol">no</span></dt>
+<dd>Do not auto-initialize the object<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".RefCountedAutoInitialize.yes"></a><a name="yes"></a><span class="ddoc_psymbol">yes</span></dt>
+<dd>Auto-initialize the object<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".RefCounted"></a>struct <a name="RefCounted"></a><span class="ddoc_psymbol">RefCounted</span>(T, RefCountedAutoInitialize autoInit = RefCountedAutoInitialize.yes) if (!is(T == class));
+</dt>
+<dd>Defines a reference-counted object containing a <span class="d_inlinecode">T</span> value as
+payload. <span class="d_inlinecode"><a name="RefCounted"></a><span class="ddoc_psymbol">RefCounted</span></span> keeps track of all references of an object,
+and when the reference count goes down to zero, frees the underlying
+store. <span class="d_inlinecode"><a name="RefCounted"></a><span class="ddoc_psymbol">RefCounted</span></span> uses <span class="d_inlinecode">malloc</span> and <span class="d_inlinecode">free</span> for operation.
+<p></p>
+<span class="d_inlinecode"><a name="RefCounted"></a><span class="ddoc_psymbol">RefCounted</span></span> is unsafe and should be used with care. No references
+to the payload should be escaped outside the <span class="d_inlinecode"><a name="RefCounted"></a><span class="ddoc_psymbol">RefCounted</span></span> object.
+<p></p>
+
+The <span class="d_inlinecode">autoInit</span> option makes the object ensure the store is
+automatically initialized. Leaving <span class="d_inlinecode">autoInit ==
+RefCountedAutoInitialize.yes</span> (the default option) is convenient but
+has the cost of a test whenever the payload is accessed. If <span class="d_inlinecode">autoInit == RefCountedAutoInitialize.no</span>, user code must call either
+<span class="d_inlinecode">refCountedStore.isInitialized</span> or <span class="d_inlinecode">refCountedStore.ensureInitialized</span>
+before attempting to access the payload. Not doing so results in <b>null</b>
+pointer dereference.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_comment">// A pair of an $(D int) and a $(D size_t) - the latter being the
+</span><span class="d_comment">// reference count - will be dynamically allocated
+</span><span class="d_keyword">auto</span> rc1 = <span class="d_psymbol">RefCounted</span>!<span class="d_keyword">int</span>(5);
+<span class="d_keyword">assert</span>(rc1 == 5);
+<span class="d_comment">// No more allocation, add just one extra reference count
+</span><span class="d_keyword">auto</span> rc2 = rc1;
+<span class="d_comment">// Reference semantics
+</span>rc2 = 42;
+<span class="d_keyword">assert</span>(rc1 == 42);
+<span class="d_comment">// the pair will be freed when rc1 and rc2 go out of scope
+</span></pre>
+<p></p>
+
+<dl><dt class="d_decl"><a name=".RefCountedStore"></a>struct <a name="RefCountedStore"></a><span class="ddoc_psymbol">RefCountedStore</span>;
+</dt>
+<dd><span class="d_inlinecode">RefCounted</span> storage implementation.<p></p>
+
+<dl><dt class="d_decl"><a name=".isInitialized"></a>const bool <a name="isInitialized"></a><span class="ddoc_psymbol">isInitialized</span>();
+</dt>
+<dd>Returns <span class="d_inlinecode"><b>true</b></span> if and only if the underlying store has been
+           allocated and initialized.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".refCount"></a>const size_t <a name="refCount"></a><span class="ddoc_psymbol">refCount</span>();
+</dt>
+<dd>Returns underlying reference count if it is allocated and initialized
+           (a positive integer), and <span class="d_inlinecode">0</span> otherwise.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".ensureInitialized"></a>void <a name="ensureInitialized"></a><span class="ddoc_psymbol">ensureInitialized</span>();
+</dt>
+<dd>Makes sure the payload was properly initialized. Such a
+           call is typically inserted before using the payload.<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".refCountedStore"></a>inout inout(RefCountedStore) <a name="refCountedStore"></a><span class="ddoc_psymbol">refCountedStore</span>();
+</dt>
+<dd>Returns storage implementation struct.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".this"></a> this(A...)(auto ref A <i>args</i>) if (A.length &gt; 0);
+</dt>
+<dd>Constructor that initializes the payload.
+<p></p>
+<b>Postcondition:</b><br>
+<span class="d_inlinecode">refCountedStore.isInitialized</span><p></p>
+
+</dd>
+<dt class="d_decl"><a name=".opAssign"></a>void <a name="opAssign"></a><span class="ddoc_psymbol">opAssign</span>(typeof(this) <i>rhs</i>);
+<br><a name=".opAssign"></a>void <a name="opAssign"></a><span class="ddoc_psymbol">opAssign</span>(T <i>rhs</i>);
+</dt>
+<dd>Assignment operators<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".refCountedPayload"></a>T <a name="refCountedPayload"></a><span class="ddoc_psymbol">refCountedPayload</span>();
+<br><a name=".refCountedPayload"></a>inout inout(T) <a name="refCountedPayload"></a><span class="ddoc_psymbol">refCountedPayload</span>();
+</dt>
+<dd>Returns a reference to the payload. If (autoInit ==
+        RefCountedAutoInitialize.yes), calls <span class="d_inlinecode">       refCountedStore.ensureInitialized</span>. Otherwise, just issues <span class="d_inlinecode">       assert(refCountedStore.isInitialized)</span>. Used with <span class="d_inlinecode">alias
+        <a name="refCountedPayload"></a><span class="ddoc_psymbol">refCountedPayload</span> this;</span>, so callers can just use the <span class="d_inlinecode">RefCounted</span>
+        object as a <span class="d_inlinecode">T</span>.
+<p></p>
+<span style="color:blue">The first overload exists only if <span class="d_inlinecode">autoInit == RefCountedAutoInitialize.yes</span>.</span>
+        So if <span class="d_inlinecode">autoInit == RefCountedAutoInitialize.no</span>
+        or called for a constant or immutable object, then
+        <span class="d_inlinecode"><a name="refCountedPayload"></a><span class="ddoc_psymbol">refCountedPayload</span></span> will also be qualified as safe and nothrow
+        (but will still assert if not initialized).<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".Proxy"></a>template <a name="Proxy"></a><span class="ddoc_psymbol">Proxy</span>(alias a)</dt>
+<dd>Make proxy for <span class="d_inlinecode">a</span>.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">struct</span> MyInt
+{
+    <span class="d_keyword">private</span> <span class="d_keyword">int</span> value;
+    <span class="d_keyword">mixin</span> <span class="d_psymbol">Proxy</span>!value;
+
+    <span class="d_keyword">this</span>(<span class="d_keyword">int</span> n){ value = n; }
+}
+
+MyInt n = 10;
+
+<span class="d_comment">// Enable operations that original type has.
+</span>++n;
+<span class="d_keyword">assert</span>(n == 11);
+<span class="d_keyword">assert</span>(n * 2 == 22);
+
+<span class="d_keyword">void</span> func(<span class="d_keyword">int</span> n) { }
+
+<span class="d_comment">// Disable implicit conversions to original type.
+</span><span class="d_comment">//int x = n;
+</span><span class="d_comment">//func(n);
+</span></pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".Typedef"></a>template <a name="Typedef"></a><span class="ddoc_psymbol">Typedef</span>(T)<br><a name=".Typedef"></a>struct <a name="Typedef"></a><span class="ddoc_psymbol">Typedef</span>(T, T init, string cookie = null);
+</dt>
+<dd>Library typedef.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".scoped"></a>template <a name="scoped"></a><span class="ddoc_psymbol">scoped</span>(T) if (is(T == class))</dt>
+<dd>Allocates a <span class="d_inlinecode">class</span> object right inside the current scope,
+therefore avoiding the overhead of <span class="d_inlinecode">new</span>. This facility is unsafe;
+it is the responsibility of the user to not escape a reference to the
+object outside the scope.
+<p></p>
+<b>Note:</b><br>
+it's illegal to move a class reference even if you are sure there
+are no pointers to it. As such, it is illegal to move a <a name="scoped"></a><span class="ddoc_psymbol">scoped</span> object.<p></p>
+<b>Examples:</b><br><pre class="d_code">
+    <span class="d_keyword">class</span> A
+    {
+        <span class="d_keyword">int</span> x;
+        <span class="d_keyword">this</span>()     {x = 0;}
+        <span class="d_keyword">this</span>(<span class="d_keyword">int</span> i){x = i;}
+    }
+
+    <span class="d_comment">// Standard usage
+</span>    <span class="d_keyword">auto</span> a1 = <span class="d_psymbol">scoped</span>!A();
+    <span class="d_keyword">auto</span> a2 = <span class="d_psymbol">scoped</span>!A(1);
+    a1.x = 42;
+    <span class="d_keyword">assert</span>(a1.x == 42);
+    <span class="d_keyword">assert</span>(a2.x ==  1);
+
+    <span class="d_comment">// Restrictions
+</span>    <span class="d_keyword">static</span> <span class="d_keyword">assert</span>(!<span class="d_keyword">is</span>(<span class="d_keyword">typeof</span>({
+        <span class="d_keyword">auto</span> e1 = a1; <span class="d_comment">// illegal, scoped objects can't be copied
+</span>        <span class="d_keyword">assert</span>([a2][0].x == 42); <span class="d_comment">// ditto
+</span>        <span class="d_keyword">alias</span> ScopedObject = <span class="d_keyword">typeof</span>(a1);
+        <span class="d_keyword">auto</span> e2 = ScopedObject();  <span class="d_comment">//Illegal, must be built via scoped!A
+</span>        <span class="d_keyword">auto</span> e3 = ScopedObject(1); <span class="d_comment">//Illegal, must be built via scoped!A
+</span>    })));
+
+    <span class="d_comment">// Use with alias
+</span>    <span class="d_keyword">alias</span> makeScopedA = <span class="d_psymbol">scoped</span>!A;
+    <span class="d_keyword">auto</span> a6 = makeScopedA();
+    <span class="d_keyword">auto</span> a7 = makeScopedA();
+</pre>
+<p></p>
+<dl><dt class="d_decl"><a name=".scoped"></a>@system auto <a name="scoped"></a><span class="ddoc_psymbol">scoped</span>(Args...)(auto ref Args <i>args</i>);
+</dt>
+<dd>Returns the <a name="scoped"></a><span class="ddoc_psymbol">scoped</span> object<p></p>
+
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".Flag"></a>template <a name="Flag"></a><span class="ddoc_psymbol">Flag</span>(string name)</dt>
+<dd>Defines a simple, self-documenting yes/no flag. This makes it easy for
+APIs to define functions accepting flags without resorting to <span class="d_inlinecode">bool</span>, which is opaque in calls, and without needing to define an
+enumerated type separately. Using <span class="d_inlinecode"><a name="Flag"></a><span class="ddoc_psymbol">Flag</span>!"Name"</span> instead of <span class="d_inlinecode">bool</span> makes the flag's meaning visible in calls. Each yes/no flag has
+its own type, which makes confusions and mix-ups impossible.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_comment">// Before
+</span>string getLine(<span class="d_keyword">bool</span> keepTerminator)
+{
+    ...
+    <span class="d_keyword">if</span> (keepTerminator) ...
+    ...
+}
+...
+<span class="d_comment">// Code calling getLine (usually far away from its definition) can't
+</span><span class="d_comment">// be understood without looking at the documentation, even by users
+</span><span class="d_comment">// familiar with the API. Assuming the reverse meaning
+</span><span class="d_comment">// (i.e. "ignoreTerminator") and inserting the wrong code compiles and
+</span><span class="d_comment">// runs with erroneous results.
+</span><span class="d_keyword">auto</span> line = getLine(<span class="d_keyword">false</span>);
+
+<span class="d_comment">// After
+</span>string getLine(<span class="d_psymbol">Flag</span>!<span class="d_string">"KeepTerminator"</span> keepTerminator)
+{
+    ...
+    <span class="d_keyword">if</span> (keepTerminator) ...
+    ...
+}
+...
+<span class="d_comment">// Code calling getLine can be easily read and understood even by
+</span><span class="d_comment">// people not fluent with the API.
+</span><span class="d_keyword">auto</span> line = getLine(<span class="d_psymbol">Flag</span>!<span class="d_string">"KeepTerminator"</span>.yes);
+</pre>
+<p></p>
+
+Passing categorical data by means of unstructured <span class="d_inlinecode">bool</span>
+parameters is classified under "simple-data coupling" by Steve
+McConnell in the <a href="http://google.com/search?btnI=I%27m+Feeling+Lucky&amp;ie=UTF-8&amp;oe=UTF-8&amp;q=Code Complete">Code Complete</a> book, along with three other
+kinds of coupling. The author argues citing several studies that
+coupling has a negative effect on code quality. <span class="d_inlinecode"><a name="Flag"></a><span class="ddoc_psymbol">Flag</span></span> offers a
+simple structuring method for passing yes/no flags to APIs.
+<p></p>
+
+As a perk, the flag's name may be any string and as such can include
+characters not normally allowed in identifiers, such as
+spaces and dashes.<p></p>
+
+<dl><dt class="d_decl"><a name=".Flag"></a>enum <a name="Flag"></a><span class="ddoc_psymbol">Flag</span>: bool;
+</dt>
+<dd><p></p>
+<dl><dt class="d_decl"><a name=".no"></a><a name="no"></a><span class="ddoc_psymbol">no</span></dt>
+<dd>When creating a value of type <span class="d_inlinecode">Flag!"Name"</span>, use <span class="d_inlinecode">        Flag!"Name".<a name="no"></a><span class="ddoc_psymbol">no</span></span> for the negative option. When using a value
+         of type <span class="d_inlinecode">Flag!"Name"</span>, compare it against <span class="d_inlinecode">        Flag!"Name".<a name="no"></a><span class="ddoc_psymbol">no</span></span> or just <span class="d_inlinecode"><b>false</b></span> or <span class="d_inlinecode">0</span>.  <p></p>
+
+</dd>
+<dt class="d_decl"><a name=".yes"></a><a name="yes"></a><span class="ddoc_psymbol">yes</span></dt>
+<dd>When creating a value of type <span class="d_inlinecode">Flag!"Name"</span>, use <span class="d_inlinecode">        Flag!"Name".<a name="yes"></a><span class="ddoc_psymbol">yes</span></span> for the affirmative option. When using a
+         value of type <span class="d_inlinecode">Flag!"Name"</span>, compare it against <span class="d_inlinecode">        Flag!"Name".<a name="yes"></a><span class="ddoc_psymbol">yes</span></span>.<p></p>
+
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".Yes"></a>struct <a name="Yes"></a><span class="ddoc_psymbol">Yes</span>;
+<br><a name=".No"></a>struct <a name="No"></a><span class="ddoc_psymbol">No</span>;
+</dt>
+<dd>Convenience names that allow using e.g. <span class="d_inlinecode"><a name="Yes"></a><span class="ddoc_psymbol">Yes</span>.encryption</span> instead of
+<span class="d_inlinecode">Flag!"encryption".yes</span> and <span class="d_inlinecode">No.encryption</span> instead of <span class="d_inlinecode">Flag!"encryption".no</span>.<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright the respective authors, 2008-
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+

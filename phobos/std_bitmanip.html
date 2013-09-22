@@ -1,0 +1,791 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>std.bitmanip - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="/js/codemirror.js"></script>
+<script src="/js/d.js"></script>
+<script src="/js/run.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+function listanchors()
+{
+    if (typeof inhibitQuickIndex !== 'undefined') return;
+    var a = document.getElementById("quickindex");
+    if (!a) return;
+    var newText = "";
+    var hash = new Array;
+    var n = 0;
+    var values = new Array;
+    // List all anchors.
+    for (var i = 0; i < document.anchors.length; i++)
+    {
+        var a = document.anchors[i];
+        var text = a.name;
+        // ignore anchors from DDOC_PSYMBOL
+        if (text[0] != '.') continue;
+        if (hash[text] > 0) continue;
+        hash[text] = 1;
+        values[n++] = a.name
+    }
+
+    // we won't display the qualifying names to save space, so sort by last name
+    var lastName = function(a){
+        var li = a.lastIndexOf('.');
+        return a.slice(li + 1);
+    }
+    values.sort(function(a,b){return lastName(a) > lastName(b)});
+
+    for(var i = 0; i < values.length; i++) {
+        var a = values[i];
+        var text = lastName(a);
+        newText += ' \x3Ca href="\x23' + a +
+            '"\x3E\x3Cspan class="d_psymbol"\x3E' + text + '\x3C/span\x3E\x3C/a\x3E';
+    }
+    if (newText != "") newText = "\x3Cp\x3E\x3Cb\x3EJump to:\x3C/b\x3E" + newText + "\x3C/p\x3E";
+    var a = document.getElementById("quickindex");
+    a.innerHTML = newText;
+}
+jQuery(document).ready(listanchors);
+</script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/phobos">Library Reference</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="/images/dlogo.png"></a>
+		<a id="d-language" href="/">D Programming Language </a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="RTL Search" onFocus='if(this.value == "RTL Search"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="dlang.org/phobos">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul>	<li><a href="../index.html" title="D Programming Language">D</a></li>
+	<li><a href="../spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="../phobos/index.html" title="D Runtime Library">Phobos </a></li>
+	<li><a href="../phobos-prerelease/index.html" title="D Runtime Library (prerelease)">Phobos (prerelease)</a></li>
+	<li><a href="../comparison.html" title="Language Comparisons">Comparisons</a></li>
+    </ul>
+</div>
+</div>
+
+    
+<div class="navblock">
+    <ul>	<li><a href="object.html" title="root of object hierarchy">object</a></li>
+    </ul>
+    <h2><a href="index.html#std" title="D standard modules">std</a></h2>
+    <ul>	<li><a href="std_algorithm.html" title="General-purpose algorithms">std.algorithm</a></li>
+	<li><a href="std_array.html" title="Array functions">std.array</a></li>
+	<li><a href="std_ascii.html" title="Functions which operate on ASCII characters">std.ascii</a></li>
+	<li><a href="std_base64.html" title="Encode/decode base64 format">std.base64</a></li>
+	<li><a href="std_bigint.html" title="Arbitrary-precision ('bignum') arithmetic">std.bigint</a></li>
+	<li><a href="std_bitmanip.html" title="Bit-level manipulation">std.bitmanip</a></li>
+	<li><a href="std_compiler.html" title="Information about the D compiler implementation">std.compiler</a></li>
+	<li><a href="std_complex.html" title="Complex numbers">std.complex</a></li>
+	<li><a href="std_concurrency.html" title="Message Passing">std.concurrency</a></li>
+	<li><a href="std_container.html" title="Containers">std.container</a></li>
+	<li><a href="std_conv.html" title="Conversion of strings to integers">std.conv</a></li>
+	<li><a href="std_csv.html" title="CSV file parser">std.csv</a></li>
+	<li><a href="std_datetime.html" title="Date and time-related types and functions">std.datetime</a></li>
+	<li><a href="std_encoding.html" title="Character and string encoding">std.encoding</a></li>
+	<li><a href="std_exception.html" title="Exceptions and error handling">std.exception</a></li>
+	<li><a href="std_file.html" title="Basic file operations">std.file</a></li>
+	<li><a href="std_format.html" title="Formatted conversions of values to strings">std.format</a></li>
+	<li><a href="std_functional.html" title="functional">std.functional</a></li>
+	<li><a href="std_getopt.html" title="Command line options">std.getopt</a></li>
+	<li><a href="std_json.html" title="JSON reader">std.json</a></li>
+	<li><a href="std_math.html" title="the usual math functions">std.math</a></li>
+	<li><a href="std_mathspecial.html" title="mathematical special functions">std.mathspecial</a></li>
+	<li><a href="std_metastrings.html" title="Metaprogramming with strings">std.metastrings</a></li>
+	<li><a href="std_mmfile.html" title="Memory mapped files">std.mmfile</a></li>
+	<li><a href="std_numeric.html" title="Numeric algorithms">std.numeric</a></li>
+	<li><a href="std_outbuffer.html" title="Assemble data into an array of bytes">std.outbuffer</a></li>
+	<li><a href="std_parallelism.html" title="High-level primitives for SMP parallelism">std.parallelism</a></li>
+	<li><a href="std_path.html" title="Manipulate file names, path names, etc.">std.path</a></li>
+	<li><a href="std_process.html" title="Create/destroy processes">std.process</a></li>
+	<li><a href="std_random.html" title="Random number generation">std.random</a></li>
+	<li><a href="std_range.html" title="Ranges">std.range</a></li>
+	<li><a href="std_regex.html" title="regular expressions">std.regex</a></li>
+	<li><a href="std_signals.html" title="Signals">std.signals</a></li>
+	<li><a href="std_socket.html" title="Sockets">std.socket</a></li>
+	<li><a href="std_socketstream.html" title="Stream for a blocking, connected Socket">std.socketstream</a></li>
+	<li><a href="std_stdio.html" title="Standard I/O">std.stdio</a></li>
+	<li><a href="std_cstream.html" title="Stream I/O">std.cstream</a></li>
+	<li><a href="std_stream.html" title="Stream I/O">std.stream</a></li>
+	<li><a href="std_string.html" title="Basic string operations">std.string</a></li>
+	<li><a href="std_system.html" title="Inquire about the CPU, operating system">std.system</a></li>
+	<li><a href="std_traits.html" title="Type traits">std.traits</a></li>
+	<li><a href="std_typecons.html" title="Type constructors">std.typecons</a></li>
+	<li><a href="std_typetuple.html" title="Type tuples">std.typetuple</a></li>
+	<li><a href="std_uni.html" title="Unicode classification">std.uni</a></li>
+	<li><a href="std_uri.html" title="Encode and decode Uniform Resource Identifiers (URIs)">std.uri</a></li>
+	<li><a href="std_utf.html" title="Encode and decode utf character encodings">std.utf</a></li>
+	<li><a href="std_uuid.html" title="Generate and use UUIDs">std.uuid</a></li>
+	<li><a href="std_variant.html" title="Stores all types in a uniform, dynamically-checked representation">std.variant</a></li>
+	<li><a href="std_xml.html" title="XML file processing">std.xml</a></li>
+	<li><a href="std_zip.html" title="Read/write zip archives">std.zip</a></li>
+	<li><a href="std_zlib.html" title="Compression / Decompression of data">std.zlib</a></li>
+	<li><a href="std_net_curl.html" title="High level curl wrapper">std.net.curl</a></li>
+	<li><a href="std_net_isemail.html" title="Validate e-mail addresses">std.net.isemail</a></li>
+	<li><a href="std_digest_crc.html" title="CRC digest functions">std.digest.crc</a></li>
+	<li><a href="std_digest_digest.html" title="API for digest functions">std.digest.digest</a></li>
+	<li><a href="std_digest_md.html" title="MD digest functions">std.digest.md</a></li>
+	<li><a href="std_digest_ripemd.html" title="RIPEMD digest functions">std.digest.ripemd</a></li>
+	<li><a href="std_digest_sha.html" title="SHA digest functions">std.digest.sha</a></li>
+	<li><a href="std_windows_charset.html" title="Conversion to/from Windows character sets">std.windows.charset</a></li>
+    </ul>
+    <h2><a href="index.html#etc" title="D etc modules">etc</a></h2>
+    <ul>	<li><a href="etc_c_curl.html" title="Interface to libcurl library">etc.c.curl</a></li>
+	<li><a href="etc_c_sqlite3.html" title="Interface to sqlite3 library">etc.c.sqlite3</a></li>
+	<li><a href="etc_c_zlib.html" title="Interface to zlib library">etc.c.zlib</a></li>
+    </ul>
+    <h2><a href="index.html#core" title="D core modules">core</a></h2>
+    <ul>	<li><a href="core_atomic.html" title="Atomic operations">core.atomic</a></li>
+	<li><a href="core_bitop.html" title="Bitwise operations">core.bitop</a></li>
+	<li><a href="core_cpuid.html" title="CPU identification">core.cpuid</a></li>
+	<li><a href="core_demangle.html" title="D symbol mangling">core.demangle</a></li>
+	<li><a href="core_exception.html" title="Root of exception hierarchy">core.exception</a></li>
+	<li><a href="core_memory.html" title="Interface to memory management">core.memory</a></li>
+	<li><a href="core_runtime.html" title="Interface to D runtime library internals">core.runtime</a></li>
+	<li><a href="core_simd.html" title="Builtin SIMD intrinsics">core.simd</a></li>
+	<li><a href="core_thread.html" title="Thread management">core.thread</a></li>
+	<li><a href="core_time.html" title="Core time functionality">core.time</a></li>
+	<li><a href="core_vararg.html" title="Variable function arguments">core.vararg</a></li>
+	<li><a href="core_sync_barrier.html" title="Synchronizing progress of a group of threads">core.sync.barrier</a></li>
+	<li><a href="core_sync_condition.html" title="Synchronized condition checking">core.sync.condition</a></li>
+	<li><a href="core_sync_config.html" title="Stuff for core.sync">core.sync.config</a></li>
+	<li><a href="core_sync_exception.html" title="SyncException">core.sync.exception</a></li>
+	<li><a href="core_sync_mutex.html" title="Mutexes">core.sync.mutex</a></li>
+	<li><a href="core_sync_rwmutex.html" title="R/W mutually exclusive access">core.sync.rwmutex</a></li>
+	<li><a href="core_sync_semaphore.html" title="Semaphores">core.sync.semaphore</a></li>
+    </ul>
+</div>
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/phobos/edit/master/std\bitmanip.d" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/StdBitarray" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>std.bitmanip</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from std\bitmanip.d -->
+Bit-level manipulation facilities.
+<p></p>
+<b>License:</b><br><a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
+<p></p>
+<b>Authors:</b><br><a href="http://digitalmars.com">Walter Bright</a>,
+           <a href="http://erdani.org">Andrei Alexandrescu</a>,
+           Jonathan M Davis,
+           Alex Rønne Petersen,
+           Damian Ziemba
+<p></p>
+<b>Source:</b><br>
+<a href="https://github.com/D-Programming-Language/phobos/blob/master/std/bitmanip.d">std/bitmanip.d</a><p></p>
+
+<dl><dt class="d_decl"><a name=".bitfields"></a>template <a name="bitfields"></a><span class="ddoc_psymbol">bitfields</span>(T...)</dt>
+<dd>Allows creating bit fields inside <span class="d_param">struct</span>s and <span class="d_param">class</span>es.
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">struct</span> A
+{
+    <span class="d_keyword">int</span> a;
+    <span class="d_keyword">mixin</span>(<span class="d_psymbol">bitfields</span>!(
+        <span class="d_keyword">uint</span>, <span class="d_string">"x"</span>,    2,
+        <span class="d_keyword">int</span>,  <span class="d_string">"y"</span>,    3,
+        <span class="d_keyword">uint</span>, <span class="d_string">"z"</span>,    2,
+        <span class="d_keyword">bool</span>, <span class="d_string">"flag"</span>, 1));
+}
+A obj;
+obj.x = 2;
+obj.z = obj.x;
+</pre>
+<p></p>
+
+The example above creates a bitfield pack of eight bits, which fit in
+one <span class="d_param">ubyte</span>. The <a name="bitfields"></a><span class="ddoc_psymbol">bitfields</span> are allocated starting from the
+least significant bit, i.e. x occupies the two least significant bits
+of the <a name="bitfields"></a><span class="ddoc_psymbol">bitfields</span> storage.
+<p></p>
+
+The sum of all bit lengths in one <span class="d_param">bitfield</span> instantiation
+must be exactly 8, 16, 32, or 64. If padding is needed, just allocate
+one bitfield with an empty name.
+
+<p></p>
+<b>Example:</b><br>
+<pre class="d_code"><span class="d_keyword">struct</span> A
+{
+    <span class="d_keyword">mixin</span>(<span class="d_psymbol">bitfields</span>!(
+        <span class="d_keyword">bool</span>, <span class="d_string">"flag1"</span>,    1,
+        <span class="d_keyword">bool</span>, <span class="d_string">"flag2"</span>,    1,
+        <span class="d_keyword">uint</span>, <span class="d_string">""</span>,         6));
+}
+</pre>
+<p></p>
+
+The type of a bit field can be any integral type or enumerated
+type. The most efficient type to store in <a name="bitfields"></a><span class="ddoc_psymbol">bitfields</span> is <span class="d_param">bool</span>, followed by unsigned types, followed by signed types.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".FloatRep"></a>struct <a name="FloatRep"></a><span class="ddoc_psymbol">FloatRep</span>;
+</dt>
+<dd>Allows manipulating the fraction, exponent, and sign parts of a
+   <span class="d_param">float</span> separately. The definition is:
+<p></p>
+<pre class="d_code"><span class="d_keyword">struct</span> <span class="d_psymbol">FloatRep</span>
+{
+    <span class="d_keyword">union</span>
+    {
+        <span class="d_keyword">float</span> value;
+        <span class="d_keyword">mixin</span>(bitfields!(
+                  <span class="d_keyword">uint</span>,  <span class="d_string">"fraction"</span>, 23,
+                  <span class="d_keyword">ubyte</span>, <span class="d_string">"exponent"</span>,  8,
+                  <span class="d_keyword">bool</span>,  <span class="d_string">"sign"</span>,      1));
+    }
+    <span class="d_keyword">enum</span> <span class="d_keyword">uint</span> bias = 127, fractionBits = 23, exponentBits = 8, signBits = 1;
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".DoubleRep"></a>struct <a name="DoubleRep"></a><span class="ddoc_psymbol">DoubleRep</span>;
+</dt>
+<dd>Allows manipulating the fraction, exponent, and sign parts of a
+   <span class="d_param">double</span> separately. The definition is:
+<p></p>
+<pre class="d_code"><span class="d_keyword">struct</span> <span class="d_psymbol">DoubleRep</span>
+{
+    <span class="d_keyword">union</span>
+    {
+        <span class="d_keyword">double</span> value;
+        <span class="d_keyword">mixin</span>(bitfields!(
+                  <span class="d_keyword">ulong</span>,   <span class="d_string">"fraction"</span>, 52,
+                  <span class="d_keyword">ushort</span>,  <span class="d_string">"exponent"</span>, 11,
+                  <span class="d_keyword">bool</span>,    <span class="d_string">"sign"</span>,      1));
+    }
+    <span class="d_keyword">enum</span> <span class="d_keyword">uint</span> bias = 1023, signBits = 1, fractionBits = 52, exponentBits = 11;
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray"></a>struct <a name="BitArray"></a><span class="ddoc_psymbol">BitArray</span>;
+</dt>
+<dd>An array of bits.<p></p>
+
+<dl><dt class="d_decl"><a name=".BitArray.dim"></a>const @property size_t <a name="dim"></a><span class="ddoc_psymbol">dim</span>();
+</dt>
+<dd>Gets the amount of native words backing this <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.length"></a>const @property size_t <a name="length"></a><span class="ddoc_psymbol">length</span>();
+</dt>
+<dd>Gets the amount of bits in the <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.length"></a>@property size_t <a name="length"></a><span class="ddoc_psymbol">length</span>(size_t <i>newlen</i>);
+</dt>
+<dd>Sets the amount of bits in the <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opIndex"></a>const bool <a name="opIndex"></a><span class="ddoc_psymbol">opIndex</span>(size_t <i>i</i>);
+</dt>
+<dd>Gets the <span class="d_inlinecode"><i>i</i></span>'th bit in the <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opIndexAssign"></a>bool <a name="opIndexAssign"></a><span class="ddoc_psymbol">opIndexAssign</span>(bool <i>b</i>, size_t <i>i</i>);
+</dt>
+<dd>Sets the <span class="d_inlinecode"><i>i</i></span>'th bit in the <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.dup"></a>const @property BitArray <a name="dup"></a><span class="ddoc_psymbol">dup</span>();
+</dt>
+<dd>Duplicates the <span class="d_inlinecode">BitArray</span> and its contents.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opApply"></a>int <a name="opApply"></a><span class="ddoc_psymbol">opApply</span>(scope int delegate(ref bool) <i>dg</i>);
+<br><a name=".BitArray.opApply"></a>const int <a name="opApply"></a><span class="ddoc_psymbol">opApply</span>(scope int delegate(bool) <i>dg</i>);
+<br><a name=".BitArray.opApply"></a>int <a name="opApply"></a><span class="ddoc_psymbol">opApply</span>(scope int delegate(ref size_t, ref bool) <i>dg</i>);
+<br><a name=".BitArray.opApply"></a>const int <a name="opApply"></a><span class="ddoc_psymbol">opApply</span>(scope int delegate(size_t, bool) <i>dg</i>);
+</dt>
+<dd>Support for <span class="d_inlinecode">foreach</span> loops for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.reverse"></a>@property BitArray <a name="reverse"></a><span class="ddoc_psymbol">reverse</span>();
+</dt>
+<dd>Reverses the bits of the <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.sort"></a>@property BitArray <a name="sort"></a><span class="ddoc_psymbol">sort</span>();
+</dt>
+<dd>Sorts the <span class="d_inlinecode">BitArray</span>'s elements.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opEquals"></a>const bool <a name="opEquals"></a><span class="ddoc_psymbol">opEquals</span>(ref const BitArray <i>a2</i>);
+</dt>
+<dd>Support for operators == and != for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opCmp"></a>const int <a name="opCmp"></a><span class="ddoc_psymbol">opCmp</span>(BitArray <i>a2</i>);
+</dt>
+<dd>Supports comparison operators for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.toHash"></a>const pure nothrow size_t <a name="toHash"></a><span class="ddoc_psymbol">toHash</span>();
+</dt>
+<dd>Support for hashing for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.init"></a>void <a name="init"></a><span class="ddoc_psymbol">init</span>(bool[] <i>ba</i>);
+</dt>
+<dd>Set this <span class="d_inlinecode">BitArray</span> to the contents of <span class="d_inlinecode"><i>ba</i></span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.init"></a>void <a name="init"></a><span class="ddoc_psymbol">init</span>(void[] <i>v</i>, size_t <i>numbits</i>);
+</dt>
+<dd>Map the <span class="d_inlinecode">BitArray</span> onto <span class="d_inlinecode"><i>v</i></span>, with <span class="d_inlinecode"><i>numbits</i></span> being the number of bits
+ in the array. Does not copy the data.
+<p></p>
+This is the inverse of <span class="d_inlinecode">opCast</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opCast"></a>void[] <a name="opCast"></a><span class="ddoc_psymbol">opCast</span>(T : void[])();
+</dt>
+<dd>Convert to <span class="d_inlinecode">void[]</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opCast"></a>size_t[] <a name="opCast"></a><span class="ddoc_psymbol">opCast</span>(T : size_t[])();
+</dt>
+<dd>Convert to <span class="d_inlinecode">size_t[]</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opCom"></a>BitArray <a name="opCom"></a><span class="ddoc_psymbol">opCom</span>();
+</dt>
+<dd>Support for unary operator ~ for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opAnd"></a>BitArray <a name="opAnd"></a><span class="ddoc_psymbol">opAnd</span>(BitArray <i>e2</i>);
+</dt>
+<dd>Support for binary operator &amp; for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opOr"></a>const BitArray <a name="opOr"></a><span class="ddoc_psymbol">opOr</span>(BitArray <i>e2</i>);
+</dt>
+<dd>Support for binary operator | for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opXor"></a>const BitArray <a name="opXor"></a><span class="ddoc_psymbol">opXor</span>(BitArray <i>e2</i>);
+</dt>
+<dd>Support for binary operator ^ for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opSub"></a>const BitArray <a name="opSub"></a><span class="ddoc_psymbol">opSub</span>(BitArray <i>e2</i>);
+</dt>
+<dd>Support for binary operator - for <span class="d_inlinecode">BitArray</span>.
+<p></p>
+<span class="d_inlinecode">a - b</span> for <span class="d_inlinecode">BitArray</span> means the same thing as <span class="d_inlinecode">a &amp; ~b</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opAndAssign"></a>BitArray <a name="opAndAssign"></a><span class="ddoc_psymbol">opAndAssign</span>(BitArray <i>e2</i>);
+</dt>
+<dd>Support for operator &amp;= for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opOrAssign"></a>BitArray <a name="opOrAssign"></a><span class="ddoc_psymbol">opOrAssign</span>(BitArray <i>e2</i>);
+</dt>
+<dd>Support for operator |= for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opXorAssign"></a>BitArray <a name="opXorAssign"></a><span class="ddoc_psymbol">opXorAssign</span>(BitArray <i>e2</i>);
+</dt>
+<dd>Support for operator ^= for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opSubAssign"></a>BitArray <a name="opSubAssign"></a><span class="ddoc_psymbol">opSubAssign</span>(BitArray <i>e2</i>);
+</dt>
+<dd>Support for operator -= for <span class="d_inlinecode">BitArray</span>.
+<p></p>
+<span class="d_inlinecode">a -= b</span> for <span class="d_inlinecode">BitArray</span> means the same thing as <span class="d_inlinecode">a &amp;= ~b</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opCatAssign"></a>BitArray <a name="opCatAssign"></a><span class="ddoc_psymbol">opCatAssign</span>(bool <i>b</i>);
+<br><a name=".BitArray.opCatAssign"></a>BitArray <a name="opCatAssign"></a><span class="ddoc_psymbol">opCatAssign</span>(BitArray <i>b</i>);
+</dt>
+<dd>Support for operator ~= for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.opCat"></a>const BitArray <a name="opCat"></a><span class="ddoc_psymbol">opCat</span>(bool <i>b</i>);
+<br><a name=".BitArray.opCat_r"></a>const BitArray <a name="opCat_r"></a><span class="ddoc_psymbol">opCat_r</span>(bool <i>b</i>);
+<br><a name=".BitArray.opCat"></a>const BitArray <a name="opCat"></a><span class="ddoc_psymbol">opCat</span>(BitArray <i>b</i>);
+</dt>
+<dd>Support for binary operator ~ for <span class="d_inlinecode">BitArray</span>.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".BitArray.toString"></a>const void <a name="toString"></a><span class="ddoc_psymbol">toString</span>(scope void delegate(const(char)[]) <i>sink</i>, FormatSpec!char <i>fmt</i>);
+</dt>
+<dd>Return a string representation of this BitArray.
+<p></p>
+Two format specifiers are supported:
+ <li><b>%s</b> which prints the bits as an array, and</li>
+ <li><b>%b</b> which prints the bits as 8-bit byte packets</li>
+ separated with an underscore.<p></p>
+<b>Examples:</b><br><pre class="d_code">
+        BitArray b;
+        b.init([0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1]);
+
+        <span class="d_keyword">auto</span> s1 = format(<span class="d_string">"%s"</span>, b);
+        <span class="d_keyword">assert</span>(s1 == <span class="d_string">"[0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1]"</span>);
+
+        <span class="d_keyword">auto</span> s2 = format(<span class="d_string">"%b"</span>, b);
+        <span class="d_keyword">assert</span>(s2 == <span class="d_string">"00001111_00001111"</span>);
+</pre>
+<p></p>
+</dd>
+</dl>
+</dd>
+<dt class="d_decl"><a name=".swapEndian"></a>pure nothrow @safe T <a name="swapEndian"></a><span class="ddoc_psymbol">swapEndian</span>(T)(T <i>val</i>) if (isIntegral!T || isSomeChar!T || isBoolean!T);
+</dt>
+<dd>Swaps the endianness of the given integral value or character.<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".nativeToBigEndian"></a>pure nothrow @safe auto <a name="nativeToBigEndian"></a><span class="ddoc_psymbol">nativeToBigEndian</span>(T)(T <i>val</i>) if (canSwapEndianness!T);
+</dt>
+<dd>Converts the given value from the native endianness to big endian and
+    returns it as a <span class="d_inlinecode">ubyte[n]</span> where <span class="d_inlinecode">n</span> is the size of the given type.
+<p></p>
+Returning a <span class="d_inlinecode">ubyte[n]</span> helps prevent accidentally using a swapped value
+    as a regular one (and in the case of floating point values, it's necessary,
+    because the FPU will mess up any swapped floating point values. So, you
+    can't actually have swapped floating point values as floating point values).
+<p></p>
+
+    <span class="d_inlinecode">real</span> is not supported, because its size is implementation-dependent
+    and therefore could vary from machine to machine (which could make it
+    unusable if you tried to transfer it to another machine).
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">int</span> i = 12345;
+<span class="d_keyword">ubyte</span>[4] swappedI = <span class="d_psymbol">nativeToBigEndian</span>(i);
+<span class="d_keyword">assert</span>(i == bigEndianToNative!<span class="d_keyword">int</span>(swappedI));
+
+<span class="d_keyword">double</span> d = 123.45;
+<span class="d_keyword">ubyte</span>[8] swappedD = <span class="d_psymbol">nativeToBigEndian</span>(d);
+<span class="d_keyword">assert</span>(d == bigEndianToNative!<span class="d_keyword">double</span>(swappedD));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".bigEndianToNative"></a>pure nothrow @safe T <a name="bigEndianToNative"></a><span class="ddoc_psymbol">bigEndianToNative</span>(T, size_t n)(ubyte[n] <i>val</i>) if (canSwapEndianness!T &amp;&amp; n == T.sizeof);
+</dt>
+<dd>Converts the given value from big endian to the native endianness and
+    returns it. The value is given as a <span class="d_inlinecode">ubyte[n]</span> where <span class="d_inlinecode">n</span> is the size
+    of the target type. You must give the target type as a template argument,
+    because there are multiple types with the same size and so the type of the
+    argument is not enough to determine the return type.
+<p></p>
+Taking a <span class="d_inlinecode">ubyte[n]</span> helps prevent accidentally using a swapped value
+    as a regular one (and in the case of floating point values, it's necessary,
+    because the FPU will mess up any swapped floating point values. So, you
+    can't actually have swapped floating point values as floating point values).
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">ushort</span> i = 12345;
+<span class="d_keyword">ubyte</span>[2] swappedI = nativeToBigEndian(i);
+<span class="d_keyword">assert</span>(i == <span class="d_psymbol">bigEndianToNative</span>!<span class="d_keyword">ushort</span>(swappedI));
+
+<span class="d_keyword">dchar</span> c = 'D';
+<span class="d_keyword">ubyte</span>[4] swappedC = nativeToBigEndian(c);
+<span class="d_keyword">assert</span>(c == <span class="d_psymbol">bigEndianToNative</span>!<span class="d_keyword">dchar</span>(swappedC));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".nativeToLittleEndian"></a>pure nothrow @safe auto <a name="nativeToLittleEndian"></a><span class="ddoc_psymbol">nativeToLittleEndian</span>(T)(T <i>val</i>) if (canSwapEndianness!T);
+</dt>
+<dd>Converts the given value from the native endianness to little endian and
+    returns it as a <span class="d_inlinecode">ubyte[n]</span> where <span class="d_inlinecode">n</span> is the size of the given type.
+<p></p>
+Returning a <span class="d_inlinecode">ubyte[n]</span> helps prevent accidentally using a swapped value
+    as a regular one (and in the case of floating point values, it's necessary,
+    because the FPU will mess up any swapped floating point values. So, you
+    can't actually have swapped floating point values as floating point values).
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">int</span> i = 12345;
+<span class="d_keyword">ubyte</span>[4] swappedI = <span class="d_psymbol">nativeToLittleEndian</span>(i);
+<span class="d_keyword">assert</span>(i == littleEndianToNative!<span class="d_keyword">int</span>(swappedI));
+
+<span class="d_keyword">double</span> d = 123.45;
+<span class="d_keyword">ubyte</span>[8] swappedD = <span class="d_psymbol">nativeToLittleEndian</span>(d);
+<span class="d_keyword">assert</span>(d == littleEndianToNative!<span class="d_keyword">double</span>(swappedD));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".littleEndianToNative"></a>pure nothrow @safe T <a name="littleEndianToNative"></a><span class="ddoc_psymbol">littleEndianToNative</span>(T, size_t n)(ubyte[n] <i>val</i>) if (canSwapEndianness!T &amp;&amp; n == T.sizeof);
+</dt>
+<dd>Converts the given value from little endian to the native endianness and
+    returns it. The value is given as a <span class="d_inlinecode">ubyte[n]</span> where <span class="d_inlinecode">n</span> is the size
+    of the target type. You must give the target type as a template argument,
+    because there are multiple types with the same size and so the type of the
+    argument is not enough to determine the return type.
+<p></p>
+Taking a <span class="d_inlinecode">ubyte[n]</span> helps prevent accidentally using a swapped value
+    as a regular one (and in the case of floating point values, it's necessary,
+    because the FPU will mess up any swapped floating point values. So, you
+    can't actually have swapped floating point values as floating point values).
+<p></p>
+
+    <span class="d_inlinecode">real</span> is not supported, because its size is implementation-dependent
+    and therefore could vary from machine to machine (which could make it
+    unusable if you tried to transfer it to another machine).
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">ushort</span> i = 12345;
+<span class="d_keyword">ubyte</span>[2] swappedI = nativeToLittleEndian(i);
+<span class="d_keyword">assert</span>(i == <span class="d_psymbol">littleEndianToNative</span>!<span class="d_keyword">ushort</span>(swappedI));
+
+<span class="d_keyword">dchar</span> c = 'D';
+<span class="d_keyword">ubyte</span>[4] swappedC = nativeToLittleEndian(c);
+<span class="d_keyword">assert</span>(c == <span class="d_psymbol">littleEndianToNative</span>!<span class="d_keyword">dchar</span>(swappedC));
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".peek"></a>T <a name="peek"></a><span class="ddoc_psymbol">peek</span>(T, Endian endianness = Endian.bigEndian, R)(R <i>range</i>) if (canSwapEndianness!T &amp;&amp; isForwardRange!R &amp;&amp; is(ElementType!R : const(ubyte)));
+<br><a name=".peek"></a>T <a name="peek"></a><span class="ddoc_psymbol">peek</span>(T, Endian endianness = Endian.bigEndian, R)(R <i>range</i>, size_t <i>index</i>) if (canSwapEndianness!T &amp;&amp; isForwardRange!R &amp;&amp; hasSlicing!R &amp;&amp; is(ElementType!R : const(ubyte)));
+<br><a name=".peek"></a>T <a name="peek"></a><span class="ddoc_psymbol">peek</span>(T, Endian endianness = Endian.bigEndian, R)(R <i>range</i>, size_t* <i>index</i>) if (canSwapEndianness!T &amp;&amp; isForwardRange!R &amp;&amp; hasSlicing!R &amp;&amp; is(ElementType!R : const(ubyte)));
+</dt>
+<dd>Takes a range of <span class="d_inlinecode">ubyte</span>s and converts the first <span class="d_inlinecode">T.sizeof</span> bytes to
+    <span class="d_inlinecode">T</span>. The value returned is converted from the given endianness to the
+    native endianness. The range is not consumed.
+<p></p>
+<b>Parems:</b><br>
+T     = The integral type to convert the first <span class="d_inlinecode">T.sizeof</span> bytes to.
+        endianness = The endianness that the bytes are assumed to be in.
+        range = The range to read from.
+        index = The index to start reading from (instead of starting at the
+                front). If index is a pointer, then it is updated to the index
+                after the bytes read. The overloads with index are only
+                available if <span class="d_inlinecode">hasSlicing!R</span> is <span class="d_inlinecode"><b>true</b></span>.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">ubyte</span>[] buffer = [1, 5, 22, 9, 44, 255, 8];
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">uint</span>() == 17110537);
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">ushort</span>() == 261);
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">ubyte</span>() == 1);
+
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">uint</span>(2) == 369700095);
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">ushort</span>(2) == 5641);
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">ubyte</span>(2) == 22);
+
+size_t index = 0;
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">ushort</span>(&amp;index) == 261);
+<span class="d_keyword">assert</span>(index == 2);
+
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">uint</span>(&amp;index) == 369700095);
+<span class="d_keyword">assert</span>(index == 6);
+
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">peek</span>!<span class="d_keyword">ubyte</span>(&amp;index) == 8);
+<span class="d_keyword">assert</span>(index == 7);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".read"></a>T <a name="read"></a><span class="ddoc_psymbol">read</span>(T, Endian endianness = Endian.bigEndian, R)(ref R <i>range</i>) if (canSwapEndianness!T &amp;&amp; isInputRange!R &amp;&amp; is(ElementType!R : const(ubyte)));
+</dt>
+<dd>Takes a range of <span class="d_inlinecode">ubyte</span>s and converts the first <span class="d_inlinecode">T.sizeof</span> bytes to
+    <span class="d_inlinecode">T</span>. The value returned is converted from the given endianness to the
+    native endianness. The <span class="d_inlinecode">T.sizeof</span> bytes which are <a name="read"></a><span class="ddoc_psymbol">read</span> are consumed from
+    the range.
+<p></p>
+<b>Parems:</b><br>
+T     = The integral type to convert the first <span class="d_inlinecode">T.sizeof</span> bytes to.
+        endianness = The endianness that the bytes are assumed to be in.
+        range = The range to <a name="read"></a><span class="ddoc_psymbol">read</span> from.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">ubyte</span>[] buffer = [1, 5, 22, 9, 44, 255, 8];
+<span class="d_keyword">assert</span>(buffer.length == 7);
+
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">read</span>!<span class="d_keyword">ushort</span>() == 261);
+<span class="d_keyword">assert</span>(buffer.length == 5);
+
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">read</span>!<span class="d_keyword">uint</span>() == 369700095);
+<span class="d_keyword">assert</span>(buffer.length == 1);
+
+<span class="d_keyword">assert</span>(buffer.<span class="d_psymbol">read</span>!<span class="d_keyword">ubyte</span>() == 8);
+<span class="d_keyword">assert</span>(buffer.empty);
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".write"></a>void <a name="write"></a><span class="ddoc_psymbol">write</span>(T, Endian endianness = Endian.bigEndian, R)(R <i>range</i>, T <i>value</i>, size_t <i>index</i>) if (canSwapEndianness!T &amp;&amp; isForwardRange!R &amp;&amp; hasSlicing!R &amp;&amp; is(ElementType!R : ubyte));
+<br><a name=".write"></a>void <a name="write"></a><span class="ddoc_psymbol">write</span>(T, Endian endianness = Endian.bigEndian, R)(R <i>range</i>, T <i>value</i>, size_t* <i>index</i>) if (canSwapEndianness!T &amp;&amp; isForwardRange!R &amp;&amp; hasSlicing!R &amp;&amp; is(ElementType!R : ubyte));
+</dt>
+<dd>Takes an integral value, converts it to the given endianness, and writes it
+    to the given range of <span class="d_inlinecode">ubyte</span>s as a sequence of <span class="d_inlinecode">T.sizeof</span> <span class="d_inlinecode">ubyte</span>s
+    starting at index. <span class="d_inlinecode">hasSlicing!R</span> must be <span class="d_inlinecode"><b>true</b></span>.
+<p></p>
+<b>Parems:</b><br>
+T     = The integral type to convert the first <span class="d_inlinecode">T.sizeof</span> bytes to.
+        endianness = The endianness to <a name="write"></a><span class="ddoc_psymbol">write</span> the bytes in.
+        range = The range to <a name="write"></a><span class="ddoc_psymbol">write</span> to.
+        index = The index to start writing to. If index is a pointer, then it
+                is updated to the index after the bytes read.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code">{
+    <span class="d_keyword">ubyte</span>[] buffer = [0, 0, 0, 0, 0, 0, 0, 0];
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">uint</span>(29110231u, 0);
+    <span class="d_keyword">assert</span>(buffer == [1, 188, 47, 215, 0, 0, 0, 0]);
+
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">ushort</span>(927, 0);
+    <span class="d_keyword">assert</span>(buffer == [3, 159, 47, 215, 0, 0, 0, 0]);
+
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">ubyte</span>(42, 0);
+    <span class="d_keyword">assert</span>(buffer == [42, 159, 47, 215, 0, 0, 0, 0]);
+}
+
+{
+    <span class="d_keyword">ubyte</span>[] buffer = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">uint</span>(142700095u, 2);
+    <span class="d_keyword">assert</span>(buffer == [0, 0, 8, 129, 110, 63, 0, 0, 0]);
+
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">ushort</span>(19839, 2);
+    <span class="d_keyword">assert</span>(buffer == [0, 0, 77, 127, 110, 63, 0, 0, 0]);
+
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">ubyte</span>(132, 2);
+    <span class="d_keyword">assert</span>(buffer == [0, 0, 132, 127, 110, 63, 0, 0, 0]);
+}
+
+{
+    <span class="d_keyword">ubyte</span>[] buffer = [0, 0, 0, 0, 0, 0, 0, 0];
+    size_t index = 0;
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">ushort</span>(261, &amp;index);
+    <span class="d_keyword">assert</span>(buffer == [1, 5, 0, 0, 0, 0, 0, 0]);
+    <span class="d_keyword">assert</span>(index == 2);
+
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">uint</span>(369700095u, &amp;index);
+    <span class="d_keyword">assert</span>(buffer == [1, 5, 22, 9, 44, 255, 0, 0]);
+    <span class="d_keyword">assert</span>(index == 6);
+
+    buffer.<span class="d_psymbol">write</span>!<span class="d_keyword">ubyte</span>(8, &amp;index);
+    <span class="d_keyword">assert</span>(buffer == [1, 5, 22, 9, 44, 255, 8, 0]);
+    <span class="d_keyword">assert</span>(index == 7);
+}
+</pre>
+<p></p>
+
+</dd>
+<dt class="d_decl"><a name=".append"></a>void <a name="append"></a><span class="ddoc_psymbol">append</span>(T, Endian endianness = Endian.bigEndian, R)(R <i>range</i>, T <i>value</i>) if (canSwapEndianness!T &amp;&amp; isOutputRange!(R, ubyte));
+</dt>
+<dd>Takes an integral value, converts it to the given endianness, and appends
+    it to the given range of <span class="d_inlinecode">ubyte</span>s (using <span class="d_inlinecode">put</span>) as a sequence of
+    <span class="d_inlinecode">T.sizeof</span> <span class="d_inlinecode">ubyte</span>s starting at index. <span class="d_inlinecode">hasSlicing!R</span> must be
+    <span class="d_inlinecode"><b>true</b></span>.
+<p></p>
+<b>Parems:</b><br>
+T     = The integral type to convert the first <span class="d_inlinecode">T.sizeof</span> bytes to.
+        endianness = The endianness to write the bytes in.
+        range = The range to <a name="append"></a><span class="ddoc_psymbol">append</span> to.
+
+<p></p>
+<b>Examples:</b><br><pre class="d_code"><span class="d_keyword">auto</span> buffer = appender!(<span class="d_keyword">const</span> <span class="d_keyword">ubyte</span>[])();
+buffer.<span class="d_psymbol">append</span>!<span class="d_keyword">ushort</span>(261);
+<span class="d_keyword">assert</span>(buffer.data == [1, 5]);
+
+buffer.<span class="d_psymbol">append</span>!<span class="d_keyword">uint</span>(369700095u);
+<span class="d_keyword">assert</span>(buffer.data == [1, 5, 22, 9, 44, 255]);
+
+buffer.<span class="d_psymbol">append</span>!<span class="d_keyword">ubyte</span>(8);
+<span class="d_keyword">assert</span>(buffer.data == [1, 5, 22, 9, 44, 255, 8]);
+</pre>
+<p></p>
+
+</dd>
+</dl>
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright Digital Mars 2007 - 2011.
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+
