@@ -34,9 +34,7 @@ Project:
   - separate compile + link does not write to object dir
   - ddoc files
 - additional options for resource compiler
-- compile and run current buffer/selection
 - pass import path from static lib project to dependent projects
-- file properties per configuration
 - single file compilation for file configuration
 - custom command: quotes in dependencies not supported
 
@@ -66,6 +64,7 @@ Lexer/Parser:
 - deprecated syntax
 - syntax error with "@disable new()"
 - integrate d_parser.dll
+- 0.ident
 
 Semantics:
 ---------------

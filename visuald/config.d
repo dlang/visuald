@@ -2198,7 +2198,7 @@ class Config :	DisposingComObject,
 		return null;
 	}
 
-	bool isUptodate(CFileNode file)
+	bool isUptodate(CFileNode file, string* preason)
 	{
 		string fcmd = GetCompileCommand(file);
 		if(fcmd.length == 0)
@@ -2211,7 +2211,11 @@ class Config :	DisposingComObject,
 		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
 		
 		if(!compareCommandFile(cmdfile, fcmd))
+		{
+			if(preason)
+				*preason = "command line has changed";
 			return false;
+		}
 
 		string[] deps = GetDependencies(file);
 		
@@ -2220,7 +2224,11 @@ class Config :	DisposingComObject,
 		long targettm = getOldestFileTime( [ outfile ], oldestFile );
 		long sourcetm = getNewestFileTime(deps, newestFile);
 
-		return targettm > sourcetm;
+		if(targettm > sourcetm)
+			return true;
+		if(preason)
+			*preason = newestFile ~ " is newer";
+		return false;
 	}
 
 	static bool IsResource(CFileNode file)

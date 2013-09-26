@@ -88,7 +88,7 @@ class VDServerClassFactory : ComObject, IClassFactory
 
 ///////////////////////////////////////////////////////////////
 
-int vdserver_main(string[] argv)
+extern(C) int vdserver_main(char[][] argv)
 {
 	HRESULT hr;
 
@@ -140,20 +140,21 @@ import std.conv;
 static if(version_minor < 64)
 {
 	// dmd 2.064 implicitely adds C main with D main
-	int main(string[] argv)
+	int main(char[][] argv)
 	{
 		return vdserver_main(argv);
 	}
 }
 else
 {
-	extern(C) int _d_run_main(int argc, char **argv, void* mainFunc);
+	private alias extern(C) int function(char[][] args) MainFunc;
+	extern(C) int _d_run_main(int argc, char **argv, MainFunc func);
 
 	extern (Windows)
 	int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 	{
 		char*[2] argv;
-		argv[0] = lpCmdLine;
+		argv[0] = cast(char*)("prg".ptr);
 		argv[1] = null;
 		return _d_run_main(1, argv.ptr, &vdserver_main);
 	}

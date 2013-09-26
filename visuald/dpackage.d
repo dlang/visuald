@@ -1094,6 +1094,7 @@ class GlobalOptions
 	bool timeBuilds;
 	bool sortProjects = true;
 	bool stopSolutionBuild;
+	bool showUptodateFailure;
 	bool demangleError = true;
 	bool optlinkDeps = true;
 	bool autoOutlining;
@@ -1201,6 +1202,7 @@ class GlobalOptions
 			timeBuilds          = getBoolOpt("timeBuilds", false);
 			sortProjects        = getBoolOpt("sortProjects", true);
 			stopSolutionBuild   = getBoolOpt("stopSolutionBuild", false);
+			showUptodateFailure = getBoolOpt("showUptodateFailure", false);
 			demangleError       = getBoolOpt("demangleError", true);
 			optlinkDeps         = getBoolOpt("optlinkDeps", true);
 			autoOutlining       = getBoolOpt("autoOutlining", true);
@@ -1325,6 +1327,7 @@ class GlobalOptions
 			keyToolOpts.Set("timeBuilds",          timeBuilds);
 			keyToolOpts.Set("sortProjects",        sortProjects);
 			keyToolOpts.Set("stopSolutionBuild",   stopSolutionBuild);
+			keyToolOpts.Set("showUptodateFailure", showUptodateFailure);
 			keyToolOpts.Set("demangleError",       demangleError);
 			keyToolOpts.Set("optlinkDeps",         optlinkDeps);
 			keyToolOpts.Set("autoOutlining",       autoOutlining);

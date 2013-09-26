@@ -151,10 +151,10 @@ TOP=
 </div>
 </form>
 <div id="toctop">
-    $(UL $(H2 <a href="../index.html" title="D Programming Language">D</a>)
-	$(LI <a href="../download.html" title="Download a D compiler">Downloads &amp; Tools</a>)
-	$(LI <a href="../spec.html" title="D Language Specification">Language</a>)
-	$(LI <a href="../phobos/index.html" title="D Runtime Library">Phobos $(LATEST)</a>)
+    $(UL $(H2 <a href="$(DLANG_ORG)/index.html" title="D Programming Language">D</a>)
+	$(LI <a href="$(DLANG_ORG)/download.html" title="Download a D compiler">Downloads &amp; Tools</a>)
+	$(LI <a href="$(DLANG_ORG)/spec.html" title="D Language Specification">Language</a>)
+	$(LI <a href="$(DLANG_ORG)/phobos/index.html" title="D Runtime Library">Runtime Library $(LATEST)</a>)
     )
 </div>
 </div>
@@ -163,7 +163,7 @@ NAVIGATION_VISUALD=
 <div class="navblock">
  $(H2 <a href="StartPage.html" title="Visual Studio Plugin for D">Visual D</a>)
  $(UL
-  $(LI <a href="VersionHistory.html" title="Latest changes">News</a>)
+  $(LI <a href="VersionHistory.html" title="Latest changes">Version History</a>)
   $(LI <a href="Features.html" title="Visual D Features">Features</a>)
   $(LI <a href="Installation.html" title="Installation">Installation</a>)
   $(LI 
@@ -247,6 +247,8 @@ TD = <td valign=top>$0</td>
 TDNW = <td valign=top class="donthyphenate">$0</td>
 SUB = <sub>$0</sub>
 
+DLANG_ORG=..
+_=http://www.dlang.org
 COPYRIGHT= Copyright &copy; 1999-$(YEAR) by Digital Mars, All Rights Reserved
 
 H2=<h2>$0</h2>
