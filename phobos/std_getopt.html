@@ -399,16 +399,16 @@ set <span class="d_inlinecode">tuningParms</span> to [ "alpha" : 0.5, "beta" : 0
 keys and values can be of any parsable types.</li>
 <p></p>
 
-<li><i>Delegate options.</i> An option can be bound to a delegate with
-the signature <span class="d_inlinecode">void delegate()</span>, <span class="d_inlinecode">void delegate(string option)</span>
-or <span class="d_inlinecode">void delegate(string option, string value)</span>.
+<li><i>Callback options.</i> An option can be bound to a function or
+delegate with the signature <span class="d_inlinecode">void function()</span>, <span class="d_inlinecode">void function(string option)</span>,
+<span class="d_inlinecode">void function(string option, string value)</span>, or their delegate equivalents.
 <p></p>
 
-<ul><li>In the <span class="d_inlinecode">void delegate()</span> case, the delegate is invoked
-whenever the option is seen.</li> <li>In the <span class="d_inlinecode">void delegate(string
-option)</span> case, the option string (without the leading dash(es)) is
-passed to the delegate. After that, the option string is considered
-handled and removed from the options array.
+<ul><li>If the callback doesn't take any arguments, the callback is invoked
+whenever the option is seen.</li> <li>If the callback takes one string argument,
+the option string (without the leading dash(es)) is passed to the callback.
+After that, the option string is considered handled and removed from the
+options array.
 <p></p>
 
 <pre class="d_code"><span class="d_keyword">void</span> main(string[] args)
@@ -431,10 +431,10 @@ handled and removed from the options array.
 </pre>
 <p></p>
 
-</li><li>In the <span class="d_inlinecode">void delegate(string option, string value)</span> case, the
+</li><li>If the callback takes two string arguments, the
 option string is handled as an option with one argument, and parsed
 accordingly. The option and its value are passed to the
-delegate. After that, whatever was passed to the delegate is
+callback. After that, whatever was passed to the callback is
 considered handled and removed from the list.
 <p></p>
 

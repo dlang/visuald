@@ -389,8 +389,9 @@ All of the functions in std.<a name="ascii"></a><span class="ddoc_psymbol">ascii
     letter is returned. Otherwise, <span class="d_inlinecode">c</span> is returned.
 <p></p>
 <span class="d_inlinecode">C</span> can be any type which implicitly converts to <span class="d_inlinecode">dchar</span>. In the case
-    where it's a built-in type, <span class="d_inlinecode">Unqual!C</span> is returned, whereas if it's a
-    user-defined type, <span class="d_inlinecode">dchar</span> is returned.<p></p>
+    where it's a built-in type, or enum of a built-in type,
+    <span class="d_inlinecode">Unqual!(OriginalType!C)</span> is returned, whereas if it's a user-defined
+    type, <span class="d_inlinecode">dchar</span> is returned.<p></p>
 
 </dd>
 <dt class="d_decl"><a name=".toUpper"></a>auto <a name="toUpper"></a><span class="ddoc_psymbol">toUpper</span>(C)(C <i>c</i>) if (is(C : dchar));
@@ -399,8 +400,9 @@ All of the functions in std.<a name="ascii"></a><span class="ddoc_psymbol">ascii
     letter is returned. Otherwise, <span class="d_inlinecode">c</span> is returned.
 <p></p>
 <span class="d_inlinecode">C</span> can be any type which implicitly converts to <span class="d_inlinecode">dchar</span>. In the case
-    where it's a built-in type, <span class="d_inlinecode">Unqual!C</span> is returned, whereas if it's a
-    user-defined type, <span class="d_inlinecode">dchar</span> is returned.<p></p>
+    where it's a built-in type, or enum of a built-in type,
+    <span class="d_inlinecode">Unqual!(OriginalType!C)</span> is returned, whereas if it's a user-defined
+    type, <span class="d_inlinecode">dchar</span> is returned.<p></p>
 
 </dd>
 </dl>
