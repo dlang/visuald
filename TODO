@@ -63,7 +63,7 @@ Lexer/Parser:
 - do not parse file if it is D1?
 - deprecated syntax
 - syntax error with "@disable new()"
-- integrate d_parser.dll
++ integrate d_parser.dll
 - 0.ident
 
 Semantics:

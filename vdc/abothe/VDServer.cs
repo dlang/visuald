@@ -118,8 +118,6 @@ namespace DParserCOMServer
 	[ClassInterface(ClassInterfaceType.None)]
 	public class VDServer : IVDServer
 	{
-		private ParseCacheList _parseCacheList;
-		private ParseCache     _parseCache;
 		private CodeLocation   _tipStart, _tipEnd;
 		private string _tipText;
 		private string _expansions;
@@ -135,10 +133,6 @@ namespace DParserCOMServer
 
 		public VDServer()
 		{
-			_parseCacheList = new ParseCacheList();
-			_parseCache = new ParseCache();
-			_parseCacheList.Add(_parseCache);
-
 			// MessageBox.Show("VDServer()");
 		}
 
@@ -147,8 +141,7 @@ namespace DParserCOMServer
 			if (_imports != imp) 
 			{
 				var impDirs = imp.Split('\n');
-				if(_parseCache.UpdateRequired(impDirs))
-					_parseCache.BeginParse(impDirs, "");
+				GlobalParseCache.BeginAddOrUpdatePaths(impDirs);
 			}
 			_imports = imp;
 			_stringImports = stringImp;
@@ -186,11 +179,11 @@ namespace DParserCOMServer
 			if (_modules.TryGetValue(filename, out oldast))
 			{
 				//_parseCache.UfcsCache.RemoveModuleItems(oldast); 
-				_parseCache.Remove(oldast);
+				GlobalParseCache.RemoveModule(oldast);
 			}
-			_parseCache.AddOrUpdate(ast);
+			GlobalParseCache.AddOrUpdateModule(ast);
 			ConditionalCompilationFlags cflags = new ConditionalCompilationFlags(_editorData);
-			_parseCache.UfcsCache.CacheModuleMethods(ast, ResolutionContext.Create(_parseCacheList, cflags, null, null)); 
+			//GlobalParseCache.UfcsCache.CacheModuleMethods(ast, ResolutionContext.Create(_parseCacheList, cflags, null, null)); 
 
 			_modules[filename] = ast;
 			_sources[filename] = srcText;
@@ -221,6 +214,7 @@ namespace DParserCOMServer
 			_tipEnd = new CodeLocation(startIndex + 2, startLine);
 			_tipText = "";
 
+			_setupEditorData();
 			_editorData.CaretLocation = _tipStart;
 			_editorData.SyntaxTree = ast as DModule;
 			_editorData.ModuleCode = _sources[filename];
@@ -255,6 +249,7 @@ namespace DParserCOMServer
 			if (!_modules.TryGetValue(filename, out ast))
 				throw new COMException("module not found", 1);
 
+			_setupEditorData();
 			CodeLocation loc = new CodeLocation((int)idx + 1, (int) line);
 			_editorData.SyntaxTree = ast as DModule;
 			_editorData.ModuleCode = _sources[filename];
@@ -329,6 +324,7 @@ namespace DParserCOMServer
 			_tipEnd = new CodeLocation(endIndex + 1, endLine);
 			_tipText = "";
 			
+			_setupEditorData();
 			_editorData.CaretLocation = _tipEnd;
 			_editorData.SyntaxTree = ast as DModule;
 			_editorData.ModuleCode = _sources[filename];
@@ -385,7 +381,7 @@ namespace DParserCOMServer
 			else
 				versions += "DigitalMars\n";
 				
-			_editorData.ParseCache = _parseCacheList;
+			_editorData.ParseCache = new ParseCacheView(_imports.Split('\n'));
 			_editorData.IsDebug = (_flags & 2) != 0;
 			_editorData.DebugLevel = (int)(_flags >> 16) & 0xff;
 			_editorData.VersionNumber = (int)(_flags >> 8) & 0xff;
@@ -395,7 +391,6 @@ namespace DParserCOMServer
 			CompletionOptions.Instance.DisableMixinAnalysis = false;
 			CompletionOptions.Instance.HideDeprecatedNodes = (_flags & 128) != 0;
 		}
-
 
 #if false
 		[EditorBrowsable(EditorBrowsableState.Never)]

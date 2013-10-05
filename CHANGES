@@ -572,5 +572,6 @@ unreleased Version 0.3.37
   * added file options per configuration
   * fixed invoking bad command when no files to compile, but additional arguments set
   * added support for VS 2013 to installer, removed VS.NET 2003
+  * changed license to Boost
   * added global option to display the reason for building a target
   * fixed custom build rules executed twice sometimes
