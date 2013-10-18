@@ -24,6 +24,7 @@ import visuald.pkgutil;
 import stdext.path;
 import stdext.file;
 import stdext.string;
+import stdext.array;
 
 import std.c.stdlib;
 import std.windows.charset;
@@ -54,7 +55,6 @@ import xml = visuald.xmlwrap;
 // threaded builds cause Visual Studio to close the solution
 // version = threadedBuild;
 // version = taskedBuild;
-// version = showUptodateFailure;
 
 version(taskedBuild)
 {
@@ -289,7 +289,8 @@ else
 	//////////////////////////////////////////////////////////////////////
 	bool buildCustomFile(CFileNode file)
 	{
-		if(!mConfig.isUptodate(file))
+		string reason;
+		if(!mConfig.isUptodate(file, &reason))
 		{
 			string cmdline = mConfig.GetCompileCommand(file);
 			if(cmdline.length)
@@ -297,6 +298,7 @@ else
 				string workdir = mConfig.GetProjectDir();
 				string outfile = mConfig.GetOutputFile(file);
 				string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+				showUptodateFailure(reason, outfile);
 				removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
 				HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
 				if (hr != S_OK)
@@ -326,6 +328,8 @@ else
 			delegate (CHierNode n) { 
 				if(CFileNode file = cast(CFileNode) n)
 				{
+					if(files.contains(file))
+						return false;
 					if(isStopped())
 						return true;
 					if(!buildCustomFile(file))
@@ -376,6 +380,9 @@ else
 			if(!doCustomBuilds())
 				return false;
 
+			if(!mLastUptodateFailure.empty)
+				showUptodateFailure(mLastUptodateFailure);
+
 			string cmdline = mConfig.getCommandLine();
 			string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
 			hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
@@ -403,12 +410,8 @@ else
 					return true;
 				if(CFileNode file = cast(CFileNode) n)
 				{
-					if(!mConfig.isUptodate(file))
-					{
-						version(showUptodateFailure)
-							writeToBuildOutputPane(file.GetName() ~ " not uptodate\n");
+					if(!mConfig.isUptodate(file, null))
 						return true;
-					}
 				}
 				return false;
 			});
@@ -422,27 +425,16 @@ else
 
 		string deppath = makeFilenameAbsolute(mConfig.GetDependenciesPath(), workdir);
 		if(!std.file.exists(deppath))
-		{
-			version(showUptodateFailure)
-				writeToBuildOutputPane("dependency file " ~ deppath ~ " does not exist\n");
-			return false;
-		}
+			return showUptodateFailure("dependency file " ~ deppath ~ " does not exist");
+
 		if(!getFilenamesFromDepFile(deppath, files))
-		{
-			version(showUptodateFailure)
-				writeToBuildOutputPane("dependency file " ~ deppath ~ " cannot be read\n");
-			return false;
-		}
+			return showUptodateFailure("dependency file " ~ deppath ~ " cannot be read");
 
 		if(mConfig.hasLinkDependencies())
 		{
 			string lnkdeppath = makeFilenameAbsolute(mConfig.GetLinkDependenciesPath(), workdir);
 			if(!std.file.exists(lnkdeppath))
-			{
-				version(showUptodateFailure)
-					writeToBuildOutputPane("link dependency file " ~ lnkdeppath ~ " does not exist\n");
-				return false;
-			}
+				return showUptodateFailure("link dependency file " ~ lnkdeppath ~ " does not exist");
 			auto lnkdepz = cast(immutable(char)[])std.file.read(lnkdeppath) ~ "\0";
 			int cp = GetKBCodePage();
 			string lnkdeps = fromMBSz(lnkdepz.ptr, cp);
@@ -460,6 +452,7 @@ else
 		clearCachedFileTimes();
 		scope(exit) clearCachedFileTimes();
 		
+		mLastUptodateFailure = null;
 		if(!customFilesUpToDate())
 			return false;
 
@@ -468,15 +461,14 @@ else
 
 		string cmdline = mConfig.getCommandLine();
 		if(!compareCommandFile(cmdfile, cmdline))
-		{
-			version(showUptodateFailure)
-				writeToBuildOutputPane("command line changed\n");
-			return false;
-		}
+			return showUptodateFailure("command line changed");
 
 		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
 		string oldestFile;
 		long targettm = getOldestFileTime( [ target ], oldestFile );
+
+		if(targettm == long.min)
+			return showUptodateFailure("target does not exist");
 
 		string[] files;
 		if(!getTargetDependencies(files))
@@ -489,11 +481,7 @@ else
 		long sourcetm = getNewestFileTime(files, newestFile);
 
 		if(targettm <= sourcetm)
-		{
-			version(showUptodateFailure)
-				writeToBuildOutputPane(newestFile ~ " newer than " ~ oldestFile ~ "\n");
-			return false;
-		}
+			return showUptodateFailure("older than " ~ newestFile);
 		return true;
 	}
 
@@ -573,6 +561,20 @@ else
 			scope(exit) release(solutionBuildManager);
 			solutionBuildManager.CancelUpdateSolutionConfiguration();
 		}
+	}
+
+	bool showUptodateFailure(string msg, string target = null)
+	{
+		if(!m_pIVsOutputWindowPane)
+			mLastUptodateFailure = msg;
+		else if(Package.GetGlobalOptions().showUptodateFailure)
+		{
+			if(target.empty)
+				target = mConfig.GetTargetPath();
+			msg = target ~ " not up to date: " ~ msg;
+			OutputText(msg); // writeToBuildOutputPane
+		}
+		return false;
 	}
 
 	void beginLog()
@@ -676,6 +678,7 @@ else
 	bool mSuccess = false;
 	bool mCreateLog = true;
 	string mBuildLog;
+	string mLastUptodateFailure;
 };
 
 class CLaunchPadEvents : DComObject, IVsLaunchPadEvents

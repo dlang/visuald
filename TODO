@@ -34,11 +34,11 @@ Project:
   - separate compile + link does not write to object dir
   - ddoc files
 - additional options for resource compiler
-- compile and run current buffer/selection
 - pass import path from static lib project to dependent projects
-- file properties per configuration
 - single file compilation for file configuration
 - custom command: quotes in dependencies not supported
+- different lib paths for Win32/Win64
+- support [Environment64] in sc.ini
 
 Language service:
 -----------------
@@ -46,7 +46,6 @@ Language service:
 - use spell-checker on completion?
 - case insensitive completion?
 - showScope: function/delegate literal not shown correctly, in/out/body
-- collapse disabled version/debug blocks
 - disable parsing/outlining for large files?
 - replace token: empty dialog when opened without resizing
 - check indentation of multiple string literals on several lines
@@ -65,7 +64,8 @@ Lexer/Parser:
 - do not parse file if it is D1?
 - deprecated syntax
 - syntax error with "@disable new()"
-- integrate d_parser.dll
++ integrate d_parser.dll
+- 0.ident
 
 Semantics:
 ---------------

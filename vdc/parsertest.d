@@ -711,7 +711,7 @@ int main(string[] argv)
 		});
 		return semanticErrors > 0 ? 1 : 0;
 	}
-	else
+	else if (false)
 	{
 		Project prj = new Project;
 		prj.options.setImportDirs(imps);
@@ -720,8 +720,8 @@ int main(string[] argv)
 			string fname = imps[1] ~ r"std\datetime.d";
 			prj.addAndParseFile(fname);
 		}
-		return 0;
 	}
+	return 0;
 }
 }
 

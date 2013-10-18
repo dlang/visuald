@@ -219,6 +219,9 @@ class Module(S) : LocationBase!S
 			case TOK_debug:
 				loc = new DebugStatement!S(this, tok.span);
 				break;
+			case TOK_unittest:
+				loc = new UnittestStatement!S(this, tok.span);
+				break;
 			default:
 				Statement!S stmt = new Statement!S(this, tok.span);
 				parser.push(stmt);
@@ -248,6 +251,9 @@ class Statement(S) : LocationBase!S
 				break;
 			case TOK_debug:
 				loc = new DebugStatement!S(this, tok.span);
+				break;
+			case TOK_unittest:
+				loc = new UnittestStatement!S(this, tok.span);
 				break;
 			case TOK_lcurly:
 				loc = new CurlyBracedStatement!S(this, tok.span);
@@ -317,6 +323,40 @@ class BracedStatement(S, int openid, int closeid) : LocationBase!S
 class CurlyBracedStatement(S) : BracedStatement!(S, TOK_lcurly, TOK_rcurly)
 {
 	mixin ForwardConstructor;
+}
+
+class UnittestStatement(S) : CurlyBracedStatement!S
+{
+	mixin ForwardConstructor;
+
+	override bool shift(Parser parser, ref ParserToken!S tok)
+	{
+		if(spanEmpty(span))
+		{
+			extendSpan(tok.span);
+			assert(tok.id == TOK_unittest);
+			return true;
+		}
+		// if we have only parsed the "unittest", skip the following '{'
+		bool testCurly = span.iStartLine == span.iEndLine && span.iEndIndex == span.iStartIndex + 8;
+		if(testCurly)
+		{
+			if(tok.id == TOK_lcurly)
+			{
+				extendSpan(tok.span);
+				return true;
+			}
+			parser.reduce(); // bail out
+			return false;
+		}
+		return super.shift(parser, tok);
+	}
+
+	override bool reduce(Parser parser, Location loc)
+	{
+		super.reduce(parser, loc);
+		return false; // always continue reduce after unittest statement
+	}
 }
 
 // do not eat closing } when reducing

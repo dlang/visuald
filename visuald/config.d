@@ -731,15 +731,16 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir)
+	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir, bool mslink)
 	{
 		string cmd;
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
 			dmdoutfile ~= "_cv";
 		string mapfile = "\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+		string plus = mslink ? " " : "+";
 
-		static string plusList(string[] lnkfiles, string ext)
+		static string plusList(string[] lnkfiles, string ext, string sep)
 		{
 			if(ext.length == 0 || ext[0] != '.')
 				ext = "." ~ ext;
@@ -749,7 +750,7 @@ class ProjectOptions
 				if(toLower(extension(file)) != ext)
 					continue;
 				if(s.length > 0)
-					s ~= "+";
+					s ~= sep;
 				s ~= quoteNormalizeFilename(file);
 			}
 			return s;
@@ -768,59 +769,69 @@ class ProjectOptions
 				lnkfiles ~= opt;
 		}
 
-		cmd ~= plusList(lnkfiles, objectFileExtension());
-		cmd ~= ",";
+		cmd ~= plusList(lnkfiles, objectFileExtension(), plus);
+		cmd ~= mslink ? " /OUT:" : ",";
 		cmd ~= quoteNormalizeFilename(dmdoutfile);
-		cmd ~= ",";
+		cmd ~= mslink ? " /MAP:" : ",";
 		cmd ~= mapfile;
 		cmd ~= ",";
 
 		string[] libs = tokenizeArgs(libfiles);
 		libs ~= "user32.lib";
 		libs ~= "kernel32.lib";
-		cmd ~= plusList(lnkfiles ~ libs, ".lib");
+		cmd ~= plusList(lnkfiles ~ libs, ".lib", plus);
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
 			lpaths ~= tokenizeArgs(compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
-			cmd ~= "+" ~ quoteFilename(normalizeDir(lp));
+			cmd ~= (mslink ? " /LIBPATH:" : "+") ~ quoteFilename(normalizeDir(lp));
 		
-		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def");
-		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res");
-		if(def.length || res.length)
-			cmd ~= "," ~ def;
-		if(res.length)
-			cmd ~= "," ~ res;
-
+		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def", mslink ? " /DEF:" : plus);
+		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res", plus);
+		if(mslink)
+		{
+			if(def.length)
+				cmd ~= " /DEF:" ~ def;
+			if(res.length)
+				cmd ~= " " ~ res;
+		}
+		else
+		{
+			if(def.length || res.length)
+				cmd ~= "," ~ def;
+			if(res.length)
+				cmd ~= "," ~ res;
+		}
 		// options
 		// "/m" to geneate map?
-		switch(mapverbosity)
-		{
-			case 0: cmd ~= "/NOMAP"; break; // actually still creates map file
-			case 1: cmd ~= "/MAP:ADDRESS"; break;
-			case 2: break;
-			case 3: cmd ~= "/MAP:FULL"; break;
-			case 4: cmd ~= "/MAP:FULL/XREF"; break;
-			default: break;
-		}
+		if(!mslink)
+			switch(mapverbosity)
+			{
+				case 0: cmd ~= "/NOMAP"; break; // actually still creates map file
+				case 1: cmd ~= "/MAP:ADDRESS"; break;
+				case 2: break;
+				case 3: cmd ~= "/MAP:FULL"; break;
+				case 4: cmd ~= "/MAP:FULL/XREF"; break;
+				default: break;
+			}
 
 		if(symdebug)
-			cmd ~= "/CO";
+			cmd ~= mslink ? " /DEBUG" : "/CO";
 		cmd ~= "/NOI";
 
 		if(lib != OutputType.StaticLib)
 		{
 			if(createImplib)
-				cmd ~= "/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+				cmd ~= " /IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
 
 			switch(subsystem)
 			{
 				default:
 				case Subsystem.NotSet: break;
-				case Subsystem.Console: cmd ~= "/SUBSYSTEM:CONSOLE"; break;
-				case Subsystem.Windows: cmd ~= "/SUBSYSTEM:WINDOWS"; break;
-				case Subsystem.Native:  cmd ~= "/SUBSYSTEM:NATIVE"; break;
-				case Subsystem.Posix:   cmd ~= "/SUBSYSTEM:POSIX"; break;
+				case Subsystem.Console: cmd ~= " /SUBSYSTEM:CONSOLE"; break;
+				case Subsystem.Windows: cmd ~= " /SUBSYSTEM:WINDOWS"; break;
+				case Subsystem.Native:  cmd ~= " /SUBSYSTEM:NATIVE"; break;
+				case Subsystem.Posix:   cmd ~= " /SUBSYSTEM:POSIX"; break;
 			}
 		}
 		cmd ~= addopts;
@@ -910,7 +921,7 @@ class ProjectOptions
 	bool usesOptlink()
 	{
 		bool dmdlink = compiler == Compiler.DMD && doSeparateLink() && lib != OutputType.StaticLib;
-		return dmdlink && !isX86_64;
+		return dmdlink; // && !isX86_64;
 	}
 
 	bool usesCv2pdb()
@@ -2198,7 +2209,7 @@ class Config :	DisposingComObject,
 		return null;
 	}
 
-	bool isUptodate(CFileNode file)
+	bool isUptodate(CFileNode file, string* preason)
 	{
 		string fcmd = GetCompileCommand(file);
 		if(fcmd.length == 0)
@@ -2211,7 +2222,11 @@ class Config :	DisposingComObject,
 		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
 		
 		if(!compareCommandFile(cmdfile, fcmd))
+		{
+			if(preason)
+				*preason = "command line has changed";
 			return false;
+		}
 
 		string[] deps = GetDependencies(file);
 		
@@ -2220,7 +2235,11 @@ class Config :	DisposingComObject,
 		long targettm = getOldestFileTime( [ outfile ], oldestFile );
 		long sourcetm = getNewestFileTime(deps, newestFile);
 
-		return targettm > sourcetm;
+		if(targettm > sourcetm)
+			return true;
+		if(preason)
+			*preason = newestFile ~ " is newer";
+		return false;
 	}
 
 	static bool IsResource(CFileNode file)
@@ -2695,7 +2714,7 @@ class Config :	DisposingComObject,
 
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
 				string workdir = normalizeDir(GetProjectDir());
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir);
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, mProjectOptions.isX86_64);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";

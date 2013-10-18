@@ -408,6 +408,7 @@ class LanguageService : DisposingComObject,
 
 			newCom!ColorableItem("Visual D Text Coverage",     CI_USERTEXT_FG, -1, 0,  RGB(192, 255, 192)),
 			newCom!ColorableItem("Visual D Text Non-Coverage", CI_USERTEXT_FG, -1, 0,  RGB(255, 192, 192)),
+			newCom!ColorableItem("Visual D Margin No Coverage", CI_USERTEXT_FG, -1, 0, RGB(192, 192, 192)),
 		];
 	};
 	static void shared_static_dtor()
@@ -682,6 +683,28 @@ class LanguageService : DisposingComObject,
 	bool IsDebugging()
 	{
 		return (mDbgMode & ~ DBGMODE_EncMask) != DBGMODE_Design;
+	}
+
+	bool GetCoverageData(string filename, uint line, uint* data, uint cnt)
+	{
+		if(!Package.GetGlobalOptions().showCoverageMargin)
+			return false;
+
+		Source src = GetSource(filename);
+		if(!src)
+			return false;
+
+		auto cov = src.mColorizer.mCoverage;
+		if(cov.length == 0)
+			return false;
+
+		for(uint ln = 0; ln < cnt; ln++)
+		{
+			uint covLine = src.adjustLineNumberSinceLastBuildReverse(line + ln, true);
+			data[ln] = covLine >= cov.length ? -1 : cov[covLine];
+		}
+
+		return true;
 	}
 
 	// semantic completion ///////////////////////////////////
@@ -1607,6 +1630,69 @@ version(threadedOutlining) {} else
 		return found != enumerated || rgns.length != 0;
 	}
 
+	static bool lessRegionStart(IVsHiddenRegion a, IVsHiddenRegion b)
+	{
+		TextSpan aspan, bspan;
+		a.GetSpan(&aspan);
+		b.GetSpan(&bspan);
+		return aspan.iStartLine < bspan.iStartLine ||
+		       (aspan.iStartLine == bspan.iStartLine && aspan.iStartIndex < bspan.iStartIndex);
+	}
+
+	HRESULT CollapseDisabled(bool unittests, bool disabled)
+	{
+		auto session = GetHiddenTextSession();
+		if(!session)
+			return S_OK;
+
+		IVsEnumHiddenRegions penum;
+		TextSpan span = TextSpan(0, 0, 0, GetLineCount());
+		session.EnumHiddenRegions(FHR_BY_CLIENT_DATA, kHiddenRegionCookie, &span, &penum);
+
+		mColorizer.syncParser(span.iEndLine);
+
+		IVsHiddenRegion[] rgns;
+		IVsHiddenRegion region;
+		uint fetched;
+		while (penum.Next(1, &region, &fetched) == S_OK && fetched == 1)
+			rgns ~= region;
+
+		// sort regions by start
+		auto sortedrgns = sort!lessRegionStart(rgns);
+		int nextLine = 0;
+		foreach(rgn; sortedrgns)
+		{
+			DWORD state;
+			rgn.GetState(&state);
+			if((state & hrsExpanded) != 0)
+			{
+				rgn.GetSpan(&span);
+				int len;
+				if(mBuffer.GetLengthOfLine(span.iStartLine, &len) == S_OK && span.iStartIndex >= len)
+				{
+					span.iStartLine++;
+					span.iStartIndex = 0;
+				}
+				if(span.iStartLine >= nextLine)
+				{
+					bool collapse = unittests && mColorizer.isInUnittest(span.iStartLine, span.iStartIndex);
+					if (!collapse)
+						collapse = disabled && !mColorizer.isAddressEnabled(span.iStartLine, span.iStartIndex);
+					if(collapse)
+					{
+						rgn.SetState(hrsDefault, chrDefault);
+						nextLine = span.iEndLine; // do not collapse recursively
+					}
+				}
+			}
+		}
+			
+		foreach(rgn; rgns)
+			release(rgn);
+		release(penum);
+		return S_OK;
+	}
+
 	///////////////////////////////////////////////////////////////////////////////
 	wstring GetText(int startLine, int startCol, int endLine, int endCol)
 	{
@@ -2117,12 +2203,26 @@ else
 			return true;
 		}
 
+		bool onSpace()
+		{
+			return (lineInfo[tok].type == TokenCat.Text && isWhite(lineText[lineInfo[tok].StartIndex]));
+		}
+
 		bool onCommentOrSpace()
 		{
 			return (lineInfo[tok].type == TokenCat.Comment ||
-			       (lineInfo[tok].type == TokenCat.Text && isWhite(lineText[lineInfo[tok].StartIndex])));
+			        (lineInfo[tok].type == TokenCat.Text && isWhite(lineText[lineInfo[tok].StartIndex])));
 		}
 		
+		bool advanceOverSpaces()
+		{
+			while(advance())
+			{
+				if(!onSpace())
+					return true;
+			}
+			return false;
+		}
 		bool advanceOverComments()
 		{
 			while(advance())
@@ -2474,7 +2574,11 @@ else
 		LineTokenIterator it = lntokIt;
 		bool hasOpenBrace = findOpenBrace(it);
 		if(hasOpenBrace && txt == "(")
-			return visiblePosition(it.lineText, langPrefs.uTabSize, it.getIndex() + 1);
+		{
+			LineTokenIterator nit = it;
+			if(nit.advanceOverSpaces() && nit.line < line)
+				return visiblePosition(nit.lineText, langPrefs.uTabSize, nit.getIndex());
+		}
 
 		if(startTok == "}" || startTok == "]")
 		{

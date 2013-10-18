@@ -183,7 +183,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions />
+  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
@@ -948,7 +948,7 @@ midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /out &quot;$(OutDir)&quot;
 if errorlevel 1 goto reportError
 rc /fo&quot;$(OutDir)\vdserver.res&quot; &quot;/I$(OutDir)&quot; $(InputPath)" outfile="$(OutDir)\vdserver.res" linkoutput="true" />
   <File path="vdserver.reg" />
-  <File path="vdserver_d.reg" />
   <File path="vdserverfactory.d" />
+  <File path="vdserver_d.reg" />
  </Folder>
 </DProject>

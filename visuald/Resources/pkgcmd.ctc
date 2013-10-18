@@ -19,6 +19,7 @@
 #define guidSHLMainMenu        { 0xd309f791, 0x903f, 0x11d0, { 0x9e, 0xfc, 0x00, 0xa0, 0xc9, 0x11, 0x00, 0x4f } }
 
 #define guidSharedMenuGroup    { 0x234a7fc1, 0xcfe9, 0x4335, { 0x9e, 0x82, 0x6, 0x1f, 0x86, 0xe4, 0x2, 0xc1 } }
+#define guidStdEditor          { 0x9ADF33D0, 0x8AAD, 0x11d0, { 0xB6, 0x06, 0x00, 0xA0, 0xC9, 0x22, 0xE8, 0x51 } }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Menu IDs
@@ -33,6 +34,7 @@
 #define IDG_VD_BUILD                  0x0102
 #define IDG_VD_WEB                    0x0103
 #define IDG_VD_CONVERSION             0x0104
+#define IDG_VD_OUTLINE                0x0105
 
 #define IDG_VS_MM_FILEEDITVIEW        0x0101
 #define IDG_VS_VIEW_BROWSER           0x0130
@@ -45,6 +47,11 @@
 #define IDG_VS_EDIT_CUTCOPY           0x012A
 #define IDG_VS_BUILD_MISC             0x0282
 #define IDG_VS_BUILD_CANCEL           0x0283
+
+#define IDG_VS_EDITOR_OUTLINING_CMDS  0x3E90
+#define IDM_VS_EDITOR_OUTLINING_MENU  0x3EA1
+#define IDG_VS_CODEWIN_TEXTEDIT       0x01C0
+#define IDG_VS_CODEWIN_OUTLINING      0x02B3
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bitmap IDs
@@ -89,6 +96,8 @@ CMDS_SECTION g_packageCLSID
 		g_commandSetCLSID:CmdShowWebsite,   g_packageCLSID:IDG_VD_WEB,           0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Visual D Website",         "Visual D &Website",         "Open Visual D Website",       , "OpenWebsite",            "OpenWebsite";
 		
 		//g_commandSetCLSID:CmdDeleteFile,    guidSHLMainMenu:IDG_VS_EDIT_CUTCOPY, 0xF100,   guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Delete File",         "Delete File",         "Delete File",       , "DeleteFile",            "DeleteFile";
+		g_commandSetCLSID:CmdCollapseUnittest, guidStdEditor:IDG_VS_EDITOR_OUTLINING_CMDS, 0xF100, guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Collapse Unittests",   "Collapse Unittests",     "Collapse Unittests",         , "CollapseUnittests",      "CollapseUnittests";
+		g_commandSetCLSID:CmdCollapseDisabled, guidStdEditor:IDG_VS_EDITOR_OUTLINING_CMDS, 0xF100, guidOfficeIcon:msotcidNoIcon, BUTTON, ,      "Collapse Disabled",    "Collapse Disabled Code", "Collapse Disabled Code",     , "CollapseDisabledCode",   "CollapseDisabledCode";
 
 		// This icmdMyCommand is not defined as a shared command, so it uses our package CLSID
 		// as the command set GUID. Also, by specifying blank for the FLAGS, this command is

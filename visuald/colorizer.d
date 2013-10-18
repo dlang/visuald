@@ -35,6 +35,7 @@ import stdext.string;
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
+import sdk.vsi.vsshell80;
 
 // version = LOG;
 
@@ -462,6 +463,91 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		version(LOG) mixin(LogCallMix);
 		
 		return S_OK;
+	}
+
+	//////////////////////////////////////////////////////////////
+	void drawCoverageOverlay(HWND hwnd, WPARAM wParam, LPARAM lParam, IVsTextView view)
+	{
+		if(!mColorizeCoverage || !mCoverage.length)
+			return;
+
+		HDC hDC = GetDC(hwnd);
+		RECT r;
+		GetClientRect(hwnd, &r);
+		SelectObject(hDC, GetStockObject(BLACK_PEN));
+		int h = 10;
+		view.GetLineHeight(&h);
+		int iMinUnit, iMaxUnit, iVisibleUnits, iFirstVisibleUnit;
+		view.GetScrollInfo (1, &iMinUnit, &iMaxUnit, &iVisibleUnits, &iFirstVisibleUnit);
+
+		LOGFONTW logfont;
+		FontInfo fontInfo;
+		ColorableItemInfo textColor, covColor, noncovColor, nocovColor;
+
+		IVsFontAndColorStorage pIVsFontAndColorStorage = queryService!(IVsFontAndColorStorage);
+		if(pIVsFontAndColorStorage)
+		{
+			scope(exit) release(pIVsFontAndColorStorage);
+			auto flags = FCSF_READONLY|FCSF_LOADDEFAULTS|FCSF_NOAUTOCOLORS;
+			if(pIVsFontAndColorStorage.OpenCategory(&GUID_TextEditorFC, flags) == S_OK)
+			{
+				pIVsFontAndColorStorage.GetFont(&logfont, &fontInfo);
+
+				pIVsFontAndColorStorage.GetItem("Plain Text", &textColor);
+				pIVsFontAndColorStorage.GetItem("Indicator Margin", &covColor);
+				textColor.bBackgroundValid = covColor.bBackgroundValid;
+				textColor.crBackground = covColor.crBackground;
+
+				pIVsFontAndColorStorage.GetItem("Visual D Text Coverage", &covColor);
+				pIVsFontAndColorStorage.GetItem("Visual D Text Non-Coverage", &noncovColor);
+				pIVsFontAndColorStorage.GetItem("Visual D Margin No Coverage", &nocovColor);
+
+				pIVsFontAndColorStorage.CloseCategory();
+			}
+		}
+		HFONT fnt = CreateFontIndirect(&logfont);
+		if(fnt)
+			SelectObject(hDC, fnt);
+		SetTextAlign(hDC, TA_RIGHT);
+
+		int x0 = r.right - 40;
+
+		for(int i = 0; i <= iVisibleUnits; i++)
+		{
+			RECT tr = { x0, h * i, r.right, h * i + h };
+
+			int iLine = iFirstVisibleUnit + i;
+			int covLine = mSource.adjustLineNumberSinceLastBuildReverse(iLine, true);
+			int cov = covLine >= mCoverage.length ? -1 : mCoverage[covLine];
+
+			string s;
+			ColorableItemInfo *info = &covColor;
+			if(cov < 0)
+				info = &nocovColor;
+			else if(cov == 0)
+			{
+				s = "0";
+				info = &noncovColor;
+			}
+			else if(cov > 9999)
+				s = ">9999";
+			else
+				s = text(cov);
+
+			if(info.bForegroundValid)
+				SetTextColor(hDC, info.crForeground);
+			if(info.bBackgroundValid)
+				SetBkColor(hDC, info.crBackground);
+
+			ExtTextOutA(hDC, tr.right - 1, tr.top, ETO_OPAQUE, &tr, s.ptr, s.length, null);
+		}
+
+		MoveToEx(hDC, x0, r.top, null);
+		LineTo(hDC, x0, r.bottom);
+
+		if(fnt)
+			DeleteObject(fnt);
+		ReleaseDC(hwnd, hDC);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1146,6 +1232,23 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return false;
 	}
 
+	bool isInUnittest(int iLine, int iIndex)
+	{
+		mParser.fixExtend();
+		LocationBase!wstring loc = mParser.findLocation(iLine, iIndex, true);
+		LocationBase!wstring child = null;
+
+		while(loc)
+		{
+			if(auto utloc = cast(UnittestStatement!wstring) loc)
+				return true;
+
+			child = loc;
+			loc = loc.parent;
+		}
+		return false;
+	}
+
 	//////////////////////////////////////////////////////////////
 	void SaveLineState(int iLine, int state)
 	{
@@ -1338,6 +1441,19 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 					auto num = strip(ln[0..pos]);
 					if(num.length)
 						cov = parse!int(num);
+				}
+				else version(none)
+				{
+					pos = std.string.indexOf(ln, "% covered");
+					if(pos > 0)
+					{
+						auto end = pos;
+						while(pos > 0 && isDigit(ln[pos-1]))
+							pos--;
+						auto num = ln[pos..end];
+						if(num.length)
+							cov = parse!int(num); // very last entry is percent
+					}
 				}
 				coverage[i] = cov;
 			}

@@ -1588,13 +1588,14 @@ class ToolsProperty2Page : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 11;
+		kNeededLines = 12;
 	}
 
 	override void CreateControls()
 	{
-		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
+		AddControl("", mShowUptodate  = new CheckBox(mCanvas, "Show why a target is rebuilt"));
+		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors"));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor OPTLINK dependencies"));
@@ -1609,6 +1610,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	{
 		mTimeBuilds.setChecked(opts.timeBuilds);
 		mSortProjects.setChecked(opts.sortProjects);
+		mShowUptodate.setChecked(opts.showUptodateFailure);
 		mStopSlnBuild.setChecked(opts.stopSolutionBuild);
 		mDemangleError.setChecked(opts.demangleError);
 		mOptlinkDeps.setChecked(opts.optlinkDeps);
@@ -1623,6 +1625,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
 		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
+		changes += changeOption(mShowUptodate.isChecked(), opts.showUptodateFailure, refopts.showUptodateFailure); 
 		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild); 
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
 		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps); 
@@ -1635,6 +1638,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 
 	CheckBox mTimeBuilds;
 	CheckBox mSortProjects;
+	CheckBox mShowUptodate;
 	CheckBox mStopSlnBuild;
 	CheckBox mDemangleError;
 	CheckBox mOptlinkDeps;
@@ -1660,6 +1664,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
+debug	AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
@@ -1670,6 +1675,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
 		mColorizeCoverage.setChecked(opts.ColorizeCoverage);
+debug	mShowCoverageMargin.setChecked(opts.showCoverageMargin);
 		mAutoOutlining.setChecked(opts.autoOutlining);
 		mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
@@ -1683,6 +1689,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
 		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage); 
+debug	changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin); 
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
 		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
@@ -1692,6 +1699,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 
 	CheckBox mColorizeVersions;
 	CheckBox mColorizeCoverage;
+debug CheckBox mShowCoverageMargin;
 	CheckBox mAutoOutlining;
 	CheckBox mParseSource;
 	CheckBox mPasteIndent;

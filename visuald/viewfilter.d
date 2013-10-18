@@ -41,6 +41,7 @@ import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.stdidcmd;
 import sdk.vsi.vsshell;
+import sdk.vsi.vsshell80;
 import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
@@ -90,7 +91,8 @@ version(tip)
 		mCookieTextViewEvents = Advise!(IVsTextViewEvents)(mView, this);
 
 		mView.AddCommandFilter(this, &mNextTarget);
-		
+		hookWindowProc(cast(HWND) mView.GetWindowHandle());
+
 version(tip)
 		mTextTipData = addref(newCom!TextTipData);
 	}
@@ -115,7 +117,54 @@ version(tip)
 			mTextTipData.Dispose();
 			mTextTipData = release(mTextTipData);
 		}
+		unhookWindowProc();
 		mCodeWinMgr = null;
+	}
+
+	WNDPROC mPrevProc;
+	HWND mHwnd;
+
+	static ViewFilter[HWND] sHooks;
+
+	extern(Windows) static int WindowProcHook(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		WNDPROC proc;
+		ViewFilter* pvf = hWnd in sHooks;
+		if (pvf)
+			proc = pvf.mPrevProc;
+		if(!proc)
+			proc = &DefWindowProcA;
+		int res = proc(hWnd,uMsg,wParam,lParam);
+		
+		if(Package.GetGlobalOptions().showCoverageMargin)
+			if(uMsg == WM_PAINT && pvf)
+				pvf.mCodeWinMgr.mSource.mColorizer.drawCoverageOverlay(hWnd, wParam, lParam, pvf.mView);
+		
+		return res;
+	}
+
+	bool hookWindowProc(HWND hwnd)
+	{
+		if(mHwnd)
+			return false;
+		
+		mPrevProc = cast(WNDPROC)GetWindowLongPtr(hwnd, GWL_WNDPROC);
+		mHwnd = hwnd;
+		sHooks[mHwnd] = this;
+		SetWindowLongPtr(hwnd, GWL_WNDPROC, cast(uint) &WindowProcHook);
+		return true;
+	}
+
+	bool unhookWindowProc()
+	{
+		if(!mHwnd)
+			return false;
+
+		SetWindowLongPtr(mHwnd, GWL_WNDPROC, cast(uint) mPrevProc);
+		sHooks.remove(mHwnd);
+		mHwnd = null;
+		mPrevProc = null;
+		return true;
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -302,6 +351,12 @@ version(tip)
 
 			case CmdCompileAndRun:
 				return CompileDoc(true, true);
+
+			case CmdCollapseUnittest:
+				return mCodeWinMgr.mSource.CollapseDisabled(true, false);
+
+			case CmdCollapseDisabled:
+				return mCodeWinMgr.mSource.CollapseDisabled(false, true);
 
 			default:
 				break;
@@ -639,6 +694,8 @@ version(tip)
 			case CmdToggleComment:
 			case CmdConvSelection:
 			case CmdCompileAndRun:
+			case CmdCollapseUnittest:
+			case CmdCollapseDisabled:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
