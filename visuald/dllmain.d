@@ -14,6 +14,7 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.register;
 import visuald.dpackage;
+import visuald.dlangsvc;
 import visuald.getmsobj;
 
 import std.parallelism;
@@ -226,6 +227,13 @@ void WritePackageDef(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow
 {
 	wstring ws = to_wstring(lpszCmdLine) ~ cast(wchar)0;
 	WriteExtensionPackageDefinition(ws.ptr);
+}
+
+extern(Windows)
+bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt)
+{
+	string filename = to!string(fname);
+	return Package.GetLanguageService().GetCoverageData(filename, line, data, cnt);
 }
 
 ///////////////////////////////////////////////////////////////////////

@@ -37,6 +37,8 @@ Project:
 - pass import path from static lib project to dependent projects
 - single file compilation for file configuration
 - custom command: quotes in dependencies not supported
+- different lib paths for Win32/Win64
+- support [Environment64] in sc.ini
 
 Language service:
 -----------------
@@ -44,7 +46,6 @@ Language service:
 - use spell-checker on completion?
 - case insensitive completion?
 - showScope: function/delegate literal not shown correctly, in/out/body
-- collapse disabled version/debug blocks
 - disable parsing/outlining for large files?
 - replace token: empty dialog when opened without resizing
 - check indentation of multiple string literals on several lines

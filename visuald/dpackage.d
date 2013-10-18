@@ -1114,6 +1114,7 @@ class GlobalOptions
 	string[] coverageBuildDirs;
 	string[] coverageExecutionDirs;
 
+	bool showCoverageMargin;
 	bool ColorizeCoverage = true;
 	bool ColorizeVersions = true;
 	bool lastColorizeCoverage;
@@ -1199,6 +1200,7 @@ class GlobalOptions
 
 			ColorizeVersions    = getBoolOpt("ColorizeVersions", true);
 			ColorizeCoverage    = getBoolOpt("ColorizeCoverage", true);
+			showCoverageMargin  = getBoolOpt("showCoverageMargin", false);
 			timeBuilds          = getBoolOpt("timeBuilds", false);
 			sortProjects        = getBoolOpt("sortProjects", true);
 			stopSolutionBuild   = getBoolOpt("stopSolutionBuild", false);
@@ -1324,6 +1326,7 @@ class GlobalOptions
 			
 			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
 			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);
+			keyToolOpts.Set("showCoverageMargin",  showCoverageMargin);
 			keyToolOpts.Set("timeBuilds",          timeBuilds);
 			keyToolOpts.Set("sortProjects",        sortProjects);
 			keyToolOpts.Set("stopSolutionBuild",   stopSolutionBuild);

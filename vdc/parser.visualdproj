@@ -191,7 +191,7 @@
  <Config name="TestDebug" platform="Win32">
   <obj>0</obj>
   <link>0</link>
-  <lib>1</lib>
+  <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
@@ -254,7 +254,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MAIN</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -1138,10 +1138,10 @@
    <File path="ast\misc.d" />
    <File path="ast\mod.d" />
    <File path="ast\node.d" />
-   <File path="ast\stmt.d" />
    <File path="ast\tmpl.d" />
    <File path="ast\type.d" />
    <File path="ast\writer.d" />
+   <File path="ast\stmt.d" />
   </Folder>
   <Folder name="parser">
    <File path="parser\aggr.d" />
@@ -1151,17 +1151,17 @@
    <File path="parser\iasm.d" />
    <File path="parser\misc.d" />
    <File path="parser\mod.d" />
-   <File path="parser\stmt.d" />
    <File path="parser\tmpl.d" />
+   <File path="parser\stmt.d" />
   </Folder>
   <File path="interpret.d" />
   <File path="ivdserver.d" />
   <File path="lexer.d" />
   <File path="logger.d" />
   <File path="parsertest.d" />
-  <File path="semantic.d" />
   <File path="util.d" />
   <File path="vdserver.d" />
   <File path="versions.d" />
+  <File path="semantic.d" />
  </Folder>
 </DProject>

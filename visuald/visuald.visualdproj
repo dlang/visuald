@@ -463,9 +463,9 @@
   <libpaths>..\sdk\lib</libpaths>
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <exefile>$(OutDir)\..\Debug\$(ProjectName).dll</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions>-debuglib=phobos_d,druntime_d -m32ms -L/DLL</additionalOptions>
+  <additionalOptions>-debuglib=phobos_d,druntime_d -m32ms -L/DLL -L/FORCE:UNRESOLVED</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>

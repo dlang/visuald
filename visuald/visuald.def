@@ -21,3 +21,4 @@ EXPORTS
 	RunDLLUnregisterUser       = RunDLLUnregisterUser       PRIVATE
 	VerifyMSObj                = VerifyMSObj                PRIVATE
 	WritePackageDef            = WritePackageDef            PRIVATE
+	GetCoverageData            = GetCoverageData            PRIVATE

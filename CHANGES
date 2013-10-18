@@ -572,6 +572,9 @@ unreleased Version 0.3.37
   * added file options per configuration
   * fixed invoking bad command when no files to compile, but additional arguments set
   * added support for VS 2013 to installer, removed VS.NET 2003
+  * installer now picks up dmd2 folder from DMD installation
   * changed license to Boost
   * added global option to display the reason for building a target
   * fixed custom build rules executed twice sometimes
+  * improved indentation after opening parenthesis to follow next token
+  * added commands "Collapse unittests" and "Collapse disabled" to the outlining menu
