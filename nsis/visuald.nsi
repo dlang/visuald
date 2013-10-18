@@ -77,7 +77,7 @@
   !define MAGO_CLSID              {97348AC0-2B6B-4B99-A245-4C7E2C09D403}
   !define MAGO_ENGINE_KEY         AD7Metrics\Engine\${MAGO_CLSID}
   !define MAGO_EXCEPTION_KEY      AD7Metrics\Exception\${MAGO_CLSID}
-  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010 Aldo J. Nunez"
+  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010-2013 Aldo J. Nunez"
 
   !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
   !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MINOR " MAGO_VERSION_MINOR
@@ -120,6 +120,7 @@
 ;--------------------------------
 ;installation time variables
   Var DMDInstallDir
+  Var DInstallDir
 
 ;--------------------------------
 ;Interface Settings
@@ -458,16 +459,16 @@ SectionEnd
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
 !endif
 !ifdef CV2PDB
-  LangString DESC_SecCv2pdb ${LANG_ENGLISH} "cv2pdb is necessary to debug executables in Visual Studio."
+  LangString DESC_SecCv2pdb ${LANG_ENGLISH} "cv2pdb is necessary to debug Win32 executables in Visual Studio."
   LangString DESC_SecCv2pdb2 ${LANG_ENGLISH} "$\r$\nYou might not want to install it, if you have already installed it elsewhere."
 !endif  
 !ifdef MAGO
   LangString DESC_SecMago ${LANG_ENGLISH} "Mago is a debug engine especially designed for the D-Language."
-  LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. It is in an early alpha stage, so some things are still in an experimental stage."
+  LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. Distributed under the Apache License Version 2.0. See www.dsource.org/ projects/mago_debugger"
 !endif  
 !ifdef DPARSER
-  LangString DESC_SecDParser ${LANG_ENGLISH} "DParser is a Parser & Resolver & Completion library for D."
-  LangString DESC_SecDParser2 ${LANG_ENGLISH} "$\r$\nDParser is written by Alexander Bothe. See https://github.com/aBothe/D_Parser"
+  LangString DESC_SecDParser ${LANG_ENGLISH} "DParser is a Parser && Resolver && Completion library for D."
+  LangString DESC_SecDParser2 ${LANG_ENGLISH} "$\r$\nDParser is written by Alexander Bothe. Distributed under the Apache License Version 2.0. See https://github.com/ aBothe/D_Parser"
 !endif  
 
   ;Assign language strings to sections
@@ -697,9 +698,13 @@ Function DMDInstallPage
   !insertmacro MUI_HEADER_TEXT "DMD Installation Folder" "Specify the directory where DMD is installed"
 
   ReadRegStr $DMDInstallDir HKLM "Software\${APPNAME}" "DMDInstallDir" 
-  IfErrors 0 NoDMDInstallDir
-    ReadRegStr $DMDInstallDir HKLM "SOFTWARE\D" "Install_Dir" 
-  NoDMDInstallDir:
+  IfErrors DMDInstallDirEmpty
+  StrCmp "$DMDInstallDir" "" DMDInstallDirEmpty HasDMDInstallDir
+  DMDInstallDirEmpty:
+    ReadRegStr $DInstallDir HKLM "SOFTWARE\D" "Install_Dir" 
+    IfErrors HasDmdInstallDir
+      StrCpy $DmdInstallDir $DInstallDir\dmd2
+  HasDMDInstallDir:
   
   WriteINIStr "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State" $DMDInstallDir
   !insertmacro INSTALLOPTIONS_DISPLAY "dmdinstall.ini"
