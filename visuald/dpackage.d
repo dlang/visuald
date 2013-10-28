@@ -1176,6 +1176,12 @@ class GlobalOptions
 		if(!getRegistryRoot())
 			return false;
 
+		wstring dllPath = GetDLLName(g_hInst);
+		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
+
+		wstring idePath = GetDLLName(null);
+		DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
+
 		bool rc = true;
 		try
 		{
@@ -1222,8 +1228,10 @@ class GlobalOptions
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
 			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
 			semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
-			useDParser          = getBoolOpt("useDParser", false);
 			pasteIndent         = getBoolOpt("pasteIndent", true);
+
+			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
+			useDParser          = getBoolOpt("useDParser2", keyDParser.key !is null);
 
 			// overwrite by user config
 			void readCompilerOptions(string compiler)(ref CompilerDirectories opt)
@@ -1305,12 +1313,6 @@ class GlobalOptions
 			rc = false;
 		}
 
-		wstring dllPath = GetDLLName(g_hInst);
-		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
-
-		wstring idePath = GetDLLName(null);
-		DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
-
 		return rc;
 	}
 
@@ -1371,7 +1373,7 @@ class GlobalOptions
 			keyToolOpts.Set("expandTrigger",       expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip",   showTypeInTooltip);
 			keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
-			keyToolOpts.Set("useDParser",          useDParser);
+			keyToolOpts.Set("useDParser2",         useDParser);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
 

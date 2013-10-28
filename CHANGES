@@ -562,9 +562,10 @@ unreleased Version 0.3.37
     - user type colorizer settings were forgotten after editing options
     - keywords can now also be colored by adding them to the "Colored types"
   * DParser
-    - updated to recent version (7fa55a843e2c36a28e8ce08a697b7972fc26d737)
+    - updated to recent version (https://github.com/aBothe/D_Parser/commit/72f1bc54f2426954f463f03b215e044174fc1468)
     - enabled mixin analysis
     - pass deprecation flag to engine
+	- DParser engine now used by default if installed
   * vdserver
     - add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords and primary expression
     - add __parameters as specification in is-expression
@@ -574,6 +575,7 @@ unreleased Version 0.3.37
     - fixed invoking bad command when no files to compile, but additional arguments set
     - added global option to display the reason for building a target
     - fixed custom build rules executed twice sometimes
+	- fixed sc.ini evaluation, added support for sections [Environment32] and [Environment32] 
 	- link dependencies can now also be monitored for the 32-bit MS linker
 	- added VCINSTALLDIR to the list of available macros
 	- added different options for executable and librarie search paths to be used for Win32/x64
