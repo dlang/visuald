@@ -175,12 +175,7 @@ namespace DParserCOMServer
 				ast.ModuleName = Path.GetFileNameWithoutExtension(filename);
 			ast.FileName = filename;
 
-			DModule oldast = null;
-			if (_modules.TryGetValue(filename, out oldast))
-			{
-				//_parseCache.UfcsCache.RemoveModuleItems(oldast); 
-				GlobalParseCache.RemoveModule(oldast);
-			}
+			//GlobalParseCache.RemoveModule(filename);
 			GlobalParseCache.AddOrUpdateModule(ast);
 			ConditionalCompilationFlags cflags = new ConditionalCompilationFlags(_editorData);
 			//GlobalParseCache.UfcsCache.CacheModuleMethods(ast, ResolutionContext.Create(_parseCacheList, cflags, null, null)); 

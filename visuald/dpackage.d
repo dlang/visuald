@@ -1067,6 +1067,11 @@ struct CompilerDirectories
 	string ExeSearchPath;
 	string ImpSearchPath;
 	string LibSearchPath;
+	string ExeSearchPath64;
+	string LibSearchPath64;
+	bool   overrideIni64;
+	string overrideLinker64;
+	string overrideOptions64;
 }
 
 class GlobalOptions
@@ -1089,6 +1094,7 @@ class GlobalOptions
 	string WindowsSdkDir;
 	string DevEnvDir;
 	string VSInstallDir;
+	string VCInstallDir;
 	string VisualDInstallDir;
 
 	bool timeBuilds;
@@ -1220,18 +1226,25 @@ class GlobalOptions
 			pasteIndent         = getBoolOpt("pasteIndent", true);
 
 			// overwrite by user config
-			DMD.InstallDir    = getStringOpt("DMDInstallDir");
-			GDC.InstallDir    = getStringOpt("GDCInstallDir");
-			LDC.InstallDir    = getStringOpt("LDCInstallDir");
-			DMD.ExeSearchPath = getStringOpt("ExeSearchPath");
-			DMD.LibSearchPath = getStringOpt("LibSearchPath");
-			DMD.ImpSearchPath = getStringOpt("ImpSearchPath");
-			GDC.ExeSearchPath = getStringOpt("GDC.ExeSearchPath");
-			GDC.LibSearchPath = getStringOpt("GDC.LibSearchPath");
-			GDC.ImpSearchPath = getStringOpt("GDC.ImpSearchPath");
-			LDC.ExeSearchPath = getStringOpt("LDC.ExeSearchPath");
-			LDC.LibSearchPath = getStringOpt("LDC.LibSearchPath");
-			LDC.ImpSearchPath = getStringOpt("LDC.ImpSearchPath");
+			void readCompilerOptions(string compiler)(ref CompilerDirectories opt)
+			{
+				enum bool dmd = compiler == "DMD";
+				enum string prefix = dmd ? "" : compiler ~ ".";
+				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
+
+				opt.ExeSearchPath = getStringOpt(prefix ~ "ExeSearchPath");
+				opt.LibSearchPath = getStringOpt(prefix ~ "LibSearchPath");
+				opt.ImpSearchPath = getStringOpt(prefix ~ "ImpSearchPath");
+				opt.ExeSearchPath64 = getStringOpt(prefix ~ "ExeSearchPath64", to!wstring(opt.ExeSearchPath));
+				opt.LibSearchPath64 = getStringOpt(prefix ~ "LibSearchPath64");
+
+				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
+				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
+				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
+			}
+			readCompilerOptions!"DMD"(DMD);
+			readCompilerOptions!"GDC"(GDC);
+			readCompilerOptions!"LDC"(LDC);
 
 			JSNSearchPath     = getStringOpt("JSNSearchPath");
 			IncSearchPath     = getStringOpt("IncSearchPath");
@@ -1276,6 +1289,15 @@ class GlobalOptions
 				VSInstallDir = dirName(dirName(VSInstallDir));
 			}
 			VSInstallDir = normalizeDir(VSInstallDir);
+
+			if(char* pe = getenv("VCINSTALLDIR"))
+				VCInstallDir = fromMBSz(cast(immutable)pe);
+			else
+			{
+				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
+				VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
+			}
+			VCInstallDir = normalizeDir(VCInstallDir);
 		}
 		catch(Exception e)
 		{
@@ -1324,6 +1346,13 @@ class GlobalOptions
 			keyToolOpts.Set("IncSearchPath",     toUTF16(IncSearchPath));
 			keyToolOpts.Set("UserTypesSpec",     toUTF16(UserTypesSpec));
 			
+			keyToolOpts.Set("DMD.ExeSearchPath64", toUTF16(DMD.ExeSearchPath));
+			keyToolOpts.Set("DMD.LibSearchPath64", toUTF16(DMD.LibSearchPath));
+			keyToolOpts.Set("GDC.ExeSearchPath64", toUTF16(GDC.ExeSearchPath));
+			keyToolOpts.Set("GDC.LibSearchPath64", toUTF16(GDC.LibSearchPath));
+			keyToolOpts.Set("LDC.ExeSearchPath64", toUTF16(LDC.ExeSearchPath));
+			keyToolOpts.Set("LDC.LibSearchPath64", toUTF16(LDC.LibSearchPath));
+
 			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
 			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);
 			keyToolOpts.Set("showCoverageMargin",  showCoverageMargin);
@@ -1398,6 +1427,7 @@ class GlobalOptions
 		replacements["LDCINSTALLDIR"] = normalizeDir(LDC.InstallDir);
 		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
 		replacements["DEVENVDIR"] = DevEnvDir;
+		replacements["VCINSTALLDIR"] = VCInstallDir;
 		replacements["VSINSTALLDIR"] = VSInstallDir;
 		replacements["VISUALDINSTALLDIR"] = VisualDInstallDir;
 	}
@@ -1443,28 +1473,73 @@ class GlobalOptions
 		return empty(dmd) ? null : dirName(dmd);
 	}
 	
-	string getOptlinkPath(string dmdpath, string *libs = null, string* options = null)
+	string findScIni(string workdir, string dmdpath, bool optlink)
 	{
-		string path = "link.exe";
-		string bindir = findDmdBinDir(dmdpath);
-		if(!empty(bindir))
+		string inifile;
+		if(workdir.length)
+			inifile = buildPath(workdir, "sc.ini");
+		
+		if(inifile.empty || !std.file.exists(inifile))
 		{
-			string inifile = bindir ~ "sc.ini";
-			if(std.file.exists(inifile))
+			inifile = null;
+			if(auto home = getenv("HOME"))
+				inifile = buildPath(fromMBSz(cast(immutable)home), "sc.ini");
+		}
+		if(inifile.empty || !std.file.exists(inifile))
+		{
+			inifile = null;
+			string dmddir = findDmdBinDir(dmdpath);
+			if(!dmddir.empty)
 			{
-				string[string][string] ini = parseIni(inifile);
-				if(auto pEnv = "Environment" in ini)
-				{
-					if(string* pLink = "LINKCMD" in *pEnv)
-						path = replace(*pLink, "%@P%", bindir);
-					if(options)
-						if(string* pFlags = "DFLAGS" in *pEnv)
-							*options = replace(*pFlags, "%@P%", bindir);
-					if(libs)
-						if(string* pLibs = "LIB" in *pEnv)
-							*libs = replace(*pLibs, "%@P%", bindir);
-				}
+				if(optlink)
+					dmddir = dmddir; // TODO: in case link is elsewhere it uses a different sc.ini
+				inifile = buildPath(dmddir, "sc.ini");
 			}
+		}
+		if(inifile.empty || !std.file.exists(inifile))
+			inifile = null;
+		return inifile;
+	}
+
+	string getLinkerPath(bool x64, string workdir, string dmdpath, string *libs = null, string* options = null)
+	{
+		getVCLibraryPaths();
+
+		string path = "link.exe";
+		string inifile = findScIni(workdir, dmdpath, false);
+		if(!inifile.empty)
+		{
+			string[string] env = [ "@P" : dirName(inifile) ];
+			addReplacements(env);
+			string[string][string] ini = parseIni(inifile);
+			
+			if(auto pEnv = "Environment" in ini)
+				env = expandIniSectionEnvironment((*pEnv)[""], env);
+			
+			string envArch = x64 ? "Environment64" : "Environment32";
+			if(auto pEnv = envArch in ini)
+				env = expandIniSectionEnvironment((*pEnv)[""], env);
+
+			if(string* pLink = "LINKCMD" in env)
+				path = *pLink;
+			if(x64)
+			{
+				if(DMD.overrideIni64)
+					path = DMD.overrideLinker64;
+				else if(string* pLink = "LINKCMD64" in env)
+					path = *pLink;
+			}
+
+			if(options)
+			{
+				if(x64 && DMD.overrideIni64)
+					*options = DMD.overrideOptions64;
+				else if(string* pFlags = "DFLAGS" in env)
+					*options = *pFlags;
+			}
+			if(libs)
+				if(string* pLibs = "LIB" in env)
+					*libs = *pLibs;
 		}
 		return path;
 	}
@@ -1535,6 +1610,58 @@ class GlobalOptions
 						addunique(jsonfiles, name);
 		}
 		return jsonfiles;
+	}
+
+	void logSettingsTree(IVsProfileSettingsTree settingsTree)
+	{
+		logIndent(1); scope(exit) logIndent(-1);
+		BSTR bname;
+		string name, desc, cat, regname, nameForId, fullPath, pkg;
+		if(SUCCEEDED(settingsTree.GetDisplayName(&bname)))
+			name = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetDescription(&bname)))
+			desc = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetCategory(&bname)))
+			cat = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetRegisteredName(&bname)))
+			regname = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetNameForID(&bname)))
+			nameForId = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetFullPath(&bname)))
+			fullPath = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetPackage(&bname)))
+			pkg = detachBSTR(bname);
+		logCall("Name: " ~ name ~ ", Desc: " ~ desc ~ ", Cat: " ~ cat ~ ", regname: " ~ regname, ", nameForId: " ~ nameForId ~ ", fullpath: " ~ fullPath ~ ", pkg: " ~ pkg);
+
+		int count;
+		if(SUCCEEDED(settingsTree.GetChildCount(&count)))
+			for(int i = 0; i < count; i++)
+			{
+				IVsProfileSettingsTree child;
+				if(SUCCEEDED(settingsTree.GetChild(i, &child)))
+				{
+					scope(exit) release(child);
+					logSettingsTree(child);
+				}
+			}
+	}
+
+	string[] getVCLibraryPaths()
+	{
+		IVsProfileDataManager pdm = queryService!(SVsProfileDataManager,IVsProfileDataManager)();
+		if(!pdm)
+			return null;
+		scope(exit) release(pdm);
+		
+		IVsProfileSettingsTree settingsTree;
+		HRESULT hr = pdm.GetSettingsForExport(&settingsTree);
+		if(SUCCEEDED(hr))
+		{
+			scope(exit) release(settingsTree);
+			logSettingsTree(settingsTree);
+		}
+		//pdm.ShowProfilesUI();
+		return null;
 	}
 
 	string[] findDFiles(string path, string sub)

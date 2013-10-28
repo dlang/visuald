@@ -50,12 +50,17 @@ BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 	}
 	g_hInst = hInstance;
 	if(ulReason == DLL_PROCESS_ATTACH)
+	{
 		RedirectCreateFileA();
+		RedirectCreateFileW();
+	}
 	return true;
 }
 
 alias typeof(&CreateFileA) fnCreateFileA;
+alias typeof(&CreateFileW) fnCreateFileW;
 __gshared fnCreateFileA origCreateFileA;
+__gshared fnCreateFileW origCreateFileW;
 
 alias typeof(&VirtualProtect) fnVirtualProtect;
 
@@ -96,6 +101,22 @@ void RedirectCreateFileA()
 	}
 }
 
+void RedirectCreateFileW()
+{
+	version(msgbox) MessageBoxA(null, "RedirectCreateFileW", "filemonitor", MB_OK);
+	ubyte* jmpAdr = cast(ubyte*)&CreateFileW;
+	auto impTableEntry = cast(fnCreateFileW*) (*cast(void**)(jmpAdr + 2));
+	origCreateFileW = *impTableEntry;
+
+	DWORD oldProtect, newProtect;
+	version(all)
+	{
+		VirtualProtect(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
+		*impTableEntry = &MyCreateFileW;
+		VirtualProtect(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
+	}
+}
+
 extern(Windows) HANDLE
 MyCreateFileA(
 			/*__in*/     in char* lpFileName,
@@ -111,7 +132,7 @@ MyCreateFileA(
 	//	printf("CreateFileA(%s)\n", lpFileName);
 	auto hnd = origCreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, 
 							   dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-	if(hnd != INVALID_HANDLE_VALUE && (dwDesiredAccess & GENERIC_READ))
+	if(hnd != INVALID_HANDLE_VALUE && isLoggableOpen(dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes))
 	{
 		if(dumpFile[0] && hndDumpFile == INVALID_HANDLE_VALUE)
 		{
@@ -135,7 +156,79 @@ MyCreateFileA(
 	return hnd;
 }
 
+extern(Windows) HANDLE
+MyCreateFileW(
+			/*__in*/     LPCWSTR lpFileName,
+			/*__in*/     DWORD dwDesiredAccess,
+			/*__in*/     DWORD dwShareMode,
+			/*__in_opt*/ LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+			/*__in*/     DWORD dwCreationDisposition,
+			/*__in*/     DWORD dwFlagsAndAttributes,
+			/*__in_opt*/ HANDLE hTemplateFile
+			) nothrow
+{
+	version(msgbox) MessageBoxA(null, lpFileName, dumpFile.ptr/*"CreateFile"*/, MB_OK);
+	//	printf("CreateFileA(%s)\n", lpFileName);
+	auto hnd = origCreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, 
+							   dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+	if(hnd != INVALID_HANDLE_VALUE && isLoggableOpen(dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes))
+	{
+		if(dumpFile[0] && hndDumpFile == INVALID_HANDLE_VALUE)
+		{
+			hndMutex = CreateMutexA(null, false, null);
+			if(hndMutex != INVALID_HANDLE_VALUE)
+				WaitForSingleObject(hndMutex, INFINITE);
+			
+			if(hndDumpFile == INVALID_HANDLE_VALUE)
+				hndDumpFile = origCreateFileA(dumpFile.ptr, GENERIC_WRITE, FILE_SHARE_READ, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null);
+
+			ushort bom = 0xFEFF;
+			size_t written;
+			if(hndDumpFile != INVALID_HANDLE_VALUE)
+				WriteFile(hndDumpFile, &bom, 2, &written, null);
+
+			if(hndMutex != INVALID_HANDLE_VALUE)
+				ReleaseMutex(hndMutex);
+		}
+		if(hndDumpFile != INVALID_HANDLE_VALUE)
+		{
+			// combine writes to "atomic" write to avoid wrong placing of newlines
+			if(hndMutex != INVALID_HANDLE_VALUE)
+				WaitForSingleObject(hndMutex, INFINITE);
+
+			size_t length = mystrlen(lpFileName);
+			WriteFile(hndDumpFile, lpFileName, 2*length, &length, null);
+			WriteFile(hndDumpFile, "\n".ptr, 2, &length, null);
+
+			if(hndMutex != INVALID_HANDLE_VALUE)
+				ReleaseMutex(hndMutex);
+		}
+	}
+	return hnd;
+}
+
+bool isLoggableOpen(DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) nothrow
+{
+	if(!(dwDesiredAccess & GENERIC_READ))
+		return false;
+	if(!(dwDesiredAccess & GENERIC_WRITE))
+		return true;
+	if(dwCreationDisposition == CREATE_ALWAYS || dwCreationDisposition == TRUNCATE_EXISTING)
+		return false;
+	if(dwFlagsAndAttributes & FILE_ATTRIBUTE_TEMPORARY)
+		return false;
+	return true;
+}
+
 size_t mystrlen(const(char)* str) nothrow
+{
+	size_t len = 0;
+	while(*str++)
+		len++;
+	return len;
+}
+
+size_t mystrlen(const(wchar)* str) nothrow
 {
 	size_t len = 0;
 	while(*str++)

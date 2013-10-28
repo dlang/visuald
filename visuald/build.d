@@ -435,9 +435,20 @@ else
 			string lnkdeppath = makeFilenameAbsolute(mConfig.GetLinkDependenciesPath(), workdir);
 			if(!std.file.exists(lnkdeppath))
 				return showUptodateFailure("link dependency file " ~ lnkdeppath ~ " does not exist");
-			auto lnkdepz = cast(immutable(char)[])std.file.read(lnkdeppath) ~ "\0";
-			int cp = GetKBCodePage();
-			string lnkdeps = fromMBSz(lnkdepz.ptr, cp);
+
+			string lnkdeps;
+			auto lnkdepData = cast(ubyte[])std.file.read(lnkdeppath);
+			if(lnkdepData.length > 1 && lnkdepData[0] == 0xFF && lnkdepData[1] == 0xFE)
+			{
+				wstring lnkdepw = cast(wstring)lnkdepData[2..$];
+				lnkdeps = to!string(lnkdepw);
+			}
+			else
+			{
+				auto lnkdepz = cast(string)lnkdepData ~ "\0";
+				int cp = GetKBCodePage();
+				lnkdeps = fromMBSz(lnkdepz.ptr, cp);
+			}
 			string[] lnkfiles = splitLines(lnkdeps);
 			makeFilenamesAbsolute(lnkfiles, workdir);
 			files ~= lnkfiles;

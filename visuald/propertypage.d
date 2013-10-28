@@ -41,11 +41,20 @@ class PropertyWindow : Window
 
 	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
 	{
+		import sdk.win32.commctrl;
+
 		switch (uMsg) {
 			case WM_SIZE:
 				int w = LOWORD(lParam);
 				mPropertyPage.updateSizes(w);
 				break;
+
+			case TCN_SELCHANGING:
+			case TCN_SELCHANGE:
+				// Return FALSE to allow the selection to change.
+				auto tc = cast(TabControl) this;
+				return FALSE;
+
 			default:
 				break;
 		}
@@ -152,11 +161,12 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 			}
 		}
 
+		DelegateWrapper delegateWrapper = new DelegateWrapper;
+		mCanvas.commandDelegate = &delegateWrapper.OnCommand;
+
 		CreateControls();
 		UpdateControls();
 
-		DelegateWrapper delegateWrapper = new DelegateWrapper;
-		mCanvas.commandDelegate = &delegateWrapper.OnCommand;
 		mEnableUpdateDirty = true;
 
 		return S_OK;
@@ -349,24 +359,25 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	void AddControl(string label, Widget w)
 	{
 		int x = kLabelWidth;
-		CheckBox cb = cast(CheckBox) w;
+		auto cb = cast(CheckBox) w;
+		auto tc = cast(TabControl) w;
+		auto mt = cast(MultiLineText) w;
 		//if(cb)
 		//	cb.cmd = 1; // enable actionDelegate
 
 		int lines = 1;
-		if(MultiLineText mt = cast(MultiLineText) w)
-		{
+		if(mt || tc)
 			lines = mLinesPerMultiLine;
-		}
+
 		int labelWidth = 0;
 		if(label.length)
 		{
-			Label lab = new Label(mCanvas, label);
+			Label lab = new Label(w ? w.parent : null, label);
 			int off = ((kLineHeight - kLineSpacing) - 16) / 2;
 			labelWidth = w ? kLabelWidth : kPageWidth - 2*kMargin;
 			lab.setRect(0, mLines*kLineHeight + off, labelWidth, kLineHeight - kLineSpacing); 
 		} 
-		else if (cb)
+		else if (cb || tc)
 		{
 			x -= mUnindentCheckBox;
 		}
@@ -1442,7 +1453,124 @@ class FilePropertyPage : ConfigNodePropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class DmdDirPropertyPage : GlobalPropertyPage
+class DirPropertyPage : GlobalPropertyPage
+{
+	this(GlobalOptions options)
+	{
+		super(options);
+		kNeededLines = 13;
+	}
+
+	void dirCreateControls(string name, string overrideIni)
+	{
+		AddControl(name ~ " install path", mDmdPath = new Text(mCanvas));
+		mLinesPerMultiLine = 2;
+		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 10;
+		AddControl("", mTabArch = new TabControl(mCanvas, ["Win32", "x64"]));
+
+		auto page32 = mTabArch.pages[0];
+		if(auto w = cast(Window)page32)
+			w.commandDelegate = mCanvas.commandDelegate;
+
+		kPageWidth -= 6;
+		mLines = 0;
+		mLinesPerMultiLine = 3;
+		AddControl("Executable paths", mExePath = new MultiLineText(page32));
+		mLinesPerMultiLine = 2;
+		AddControl("Library paths",    mLibPath = new MultiLineText(page32));
+
+		auto page64 = mTabArch.pages[1];
+		if(auto w = cast(Window)page64)
+			w.commandDelegate = mCanvas.commandDelegate;
+
+		mLines = 0;
+		mLinesPerMultiLine = 3;
+		AddControl("Executable paths", mExePath64 = new MultiLineText(page64));
+		mLinesPerMultiLine = 2;
+		AddControl("Library paths", mLibPath64 = new MultiLineText(page64));
+	
+		if(overrideIni.length)
+		{
+			AddControl("", mOverrideIni64 = new CheckBox(page64, overrideIni));
+			AddControl("Linker", mLinkerExecutable64 = new Text(page64));
+			AddControl("Additional options", mLinkerOptions64 = new Text(page64));
+		}
+	}
+
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+
+		enableControls();
+	}
+
+	void enableControls()
+	{
+		if(mOverrideIni64)
+		{
+			mLinkerExecutable64.setEnabled(mOverrideIni64.isChecked());
+			mLinkerOptions64.setEnabled(mOverrideIni64.isChecked());
+		}
+	}
+
+	abstract CompilerDirectories* getCompilerOptions(GlobalOptions opts);
+
+	override void SetControls(GlobalOptions opts)
+	{
+		CompilerDirectories* opt = getCompilerOptions(opts);
+
+		mDmdPath.setText(opt.InstallDir);
+		mExePath.setText(opt.ExeSearchPath);
+		mImpPath.setText(opt.ImpSearchPath);
+		mLibPath.setText(opt.LibSearchPath);
+		mExePath64.setText(opt.ExeSearchPath64);
+		mLibPath64.setText(opt.LibSearchPath64);
+		if(mOverrideIni64)
+		{
+			mOverrideIni64.setChecked(opt.overrideIni64);
+			mLinkerExecutable64.setText(opt.overrideLinker64);
+			mLinkerOptions64.setText(opt.overrideOptions64);
+		}
+
+		enableControls();
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		CompilerDirectories* opt = getCompilerOptions(opts);
+		CompilerDirectories* refopt = getCompilerOptions(refopts);
+
+		int changes = 0;
+		changes += changeOption(mDmdPath.getText(),            opt.InstallDir,        refopt.InstallDir); 
+		changes += changeOption(mExePath.getText(),            opt.ExeSearchPath,     refopt.ExeSearchPath); 
+		changes += changeOption(mImpPath.getText(),            opt.ImpSearchPath,     refopt.ImpSearchPath); 
+		changes += changeOption(mLibPath.getText(),            opt.LibSearchPath,     refopt.LibSearchPath); 
+		changes += changeOption(mExePath64.getText(),          opt.ExeSearchPath64,   refopt.ExeSearchPath64); 
+		changes += changeOption(mLibPath64.getText(),          opt.LibSearchPath64,   refopt.LibSearchPath64);
+		if(mOverrideIni64)
+		{
+			changes += changeOption(mOverrideIni64.isChecked(),    opt.overrideIni64,     refopt.overrideIni64); 
+			changes += changeOption(mLinkerExecutable64.getText(), opt.overrideLinker64,  refopt.overrideLinker64); 
+			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64); 
+		}
+		return changes;
+	}
+
+	TabControl mTabArch;
+	Text mDmdPath;
+	MultiLineText mExePath;
+	MultiLineText mImpPath;
+	MultiLineText mLibPath;
+	MultiLineText mExePath64;
+	MultiLineText mLibPath64;
+	CheckBox mOverrideIni64;
+	Text mLinkerExecutable64;
+	Text mLinkerOptions64;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+class DmdDirPropertyPage : DirPropertyPage
 {
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "DMD Directories"; }
@@ -1454,41 +1582,17 @@ class DmdDirPropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		mLinesPerMultiLine = 3;
-		AddControl("DMD install path", mDmdPath = new Text(mCanvas));
-		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
-		mLinesPerMultiLine = 2;
-		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
-		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
-		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+		dirCreateControls("DMD", "override linker settings from dmd configuration in sc.ini.");
 	}
 
-	override void SetControls(GlobalOptions opts)
+	override CompilerDirectories* getCompilerOptions(GlobalOptions opts)
 	{
-		mDmdPath.setText(opts.DMD.InstallDir);
-		mExePath.setText(opts.DMD.ExeSearchPath);
-		mImpPath.setText(opts.DMD.ImpSearchPath);
-		mLibPath.setText(opts.DMD.LibSearchPath);
+		return &opts.DMD;
 	}
-
-	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
-	{
-		int changes = 0;
-		changes += changeOption(mDmdPath.getText(), opts.DMD.InstallDir,    refopts.DMD.InstallDir); 
-		changes += changeOption(mExePath.getText(), opts.DMD.ExeSearchPath, refopts.DMD.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(), opts.DMD.ImpSearchPath, refopts.DMD.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(), opts.DMD.LibSearchPath, refopts.DMD.LibSearchPath); 
-		return changes;
-	}
-
-	Text mDmdPath;
-	MultiLineText mExePath;
-	MultiLineText mImpPath;
-	MultiLineText mLibPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class GdcDirPropertyPage : GlobalPropertyPage
+class GdcDirPropertyPage : DirPropertyPage
 {
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "GDC Directories"; }
@@ -1500,41 +1604,17 @@ class GdcDirPropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		mLinesPerMultiLine = 3;
-		AddControl("GDC install path", mGdcPath = new Text(mCanvas));
-		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
-		mLinesPerMultiLine = 2;
-		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
-		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
-		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+		dirCreateControls("GDC", "");
 	}
 
-	override void SetControls(GlobalOptions opts)
+	override CompilerDirectories* getCompilerOptions(GlobalOptions opts)
 	{
-		mGdcPath.setText(opts.GDC.InstallDir);
-		mExePath.setText(opts.GDC.ExeSearchPath);
-		mImpPath.setText(opts.GDC.ImpSearchPath);
-		mLibPath.setText(opts.GDC.LibSearchPath);
+		return &opts.GDC;
 	}
-
-	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
-	{
-		int changes = 0;
-		changes += changeOption(mGdcPath.getText(), opts.GDC.InstallDir,    refopts.GDC.InstallDir); 
-		changes += changeOption(mExePath.getText(), opts.GDC.ExeSearchPath, refopts.GDC.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(), opts.GDC.ImpSearchPath, refopts.GDC.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(), opts.GDC.LibSearchPath, refopts.GDC.LibSearchPath); 
-		return changes;
-	}
-
-	Text mGdcPath;
-	MultiLineText mExePath;
-	MultiLineText mImpPath;
-	MultiLineText mLibPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class LdcDirPropertyPage : GlobalPropertyPage
+class LdcDirPropertyPage : DirPropertyPage
 {
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "LDC Directories"; }
@@ -1546,37 +1626,13 @@ class LdcDirPropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		mLinesPerMultiLine = 3;
-		AddControl("LDC install path", mLdcPath = new Text(mCanvas));
-		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
-		mLinesPerMultiLine = 2;
-		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
-		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
-		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+		dirCreateControls("LDC", "");
 	}
 
-	override void SetControls(GlobalOptions opts)
+	override CompilerDirectories* getCompilerOptions(GlobalOptions opts)
 	{
-		mLdcPath.setText(opts.LDC.InstallDir);
-		mExePath.setText(opts.LDC.ExeSearchPath);
-		mImpPath.setText(opts.LDC.ImpSearchPath);
-		mLibPath.setText(opts.LDC.LibSearchPath);
+		return &opts.LDC;
 	}
-
-	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
-	{
-		int changes = 0;
-		changes += changeOption(mLdcPath.getText(), opts.LDC.InstallDir,    refopts.LDC.InstallDir); 
-		changes += changeOption(mExePath.getText(), opts.LDC.ExeSearchPath, refopts.LDC.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(), opts.LDC.ImpSearchPath, refopts.LDC.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(), opts.LDC.LibSearchPath, refopts.LDC.LibSearchPath); 
-		return changes;
-	}
-
-	Text mLdcPath;
-	MultiLineText mExePath;
-	MultiLineText mImpPath;
-	MultiLineText mLibPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -31,7 +31,7 @@
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
+  <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
@@ -534,9 +534,63 @@ echo If the project rebuilt again and again with this message, touch $(InputDir)
    <File path="Resources\SearchSymbol.ico" />
    <File path="Resources\settrace.ico" />
    <File tool="Custom" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if errorlevel 1 goto reportError
+rem if errorlevel 1 goto reportError
 rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" outfile="$(OutDir)\visuald.res" linkoutput="true" />
    <File path="Resources\WholeWord.ico" />
+  </Folder>
+  <Folder name="Templates">
+   <Folder name="CodeSnippets">
+    <Folder name="Snippets">
+     <File path="Templates\CodeSnippets\Snippets\blockcomment.snippet" />
+     <File path="Templates\CodeSnippets\Snippets\class.snippet" />
+     <File path="Templates\CodeSnippets\Snippets\ctor.snippet" />
+     <File path="Templates\CodeSnippets\Snippets\else.snippet" />
+     <File path="Templates\CodeSnippets\Snippets\for.snippet" />
+     <File path="Templates\CodeSnippets\Snippets\if.snippet" />
+     <File path="Templates\CodeSnippets\Snippets\version.snippet" />
+     <File path="Templates\CodeSnippets\Snippets\while.snippet" />
+    </Folder>
+    <File path="Templates\CodeSnippets\SnippetsIndex.xml" />
+   </Folder>
+   <Folder name="Items">
+    <File tool="None" path="Templates\Items\empty.d" />
+    <File tool="None" path="Templates\Items\hello.d" />
+    <File path="Templates\Items\items.vsdir" />
+   </Folder>
+   <Folder name="ProjectItems">
+    <Folder name="ConsoleApp">
+     <File path="Templates\ProjectItems\ConsoleApp\ConsoleApp.visualdproj" />
+     <File path="Templates\ProjectItems\ConsoleApp\ConsoleApp.vstemplate" />
+     <File tool="None" path="Templates\ProjectItems\ConsoleApp\main.d" />
+    </Folder>
+    <Folder name="ConsoleDMDGDC">
+     <File path="Templates\ProjectItems\ConsoleDMDGDC\ConsoleApp.visualdproj" />
+     <File path="Templates\ProjectItems\ConsoleDMDGDC\ConsoleApp.vstemplate" />
+     <File tool="None" path="Templates\ProjectItems\ConsoleDMDGDC\main.d" />
+    </Folder>
+    <Folder name="DynamicLib">
+     <File tool="None" path="Templates\ProjectItems\DynamicLib\dll.def" />
+     <File tool="None" path="Templates\ProjectItems\DynamicLib\dllmain.d" />
+     <File path="Templates\ProjectItems\DynamicLib\DynamicLib.visualdproj" />
+     <File path="Templates\ProjectItems\DynamicLib\DynamicLib.vstemplate" />
+    </Folder>
+    <Folder name="StaticLib">
+     <File tool="None" path="Templates\ProjectItems\StaticLib\lib.d" />
+     <File path="Templates\ProjectItems\StaticLib\StaticLib.visualdproj" />
+     <File path="Templates\ProjectItems\StaticLib\StaticLib.vstemplate" />
+    </Folder>
+    <Folder name="WindowsApp">
+     <File path="Templates\ProjectItems\WindowsApp\WindowsApp.visualdproj" />
+     <File path="Templates\ProjectItems\WindowsApp\WindowsApp.vstemplate" />
+     <File tool="None" path="Templates\ProjectItems\WindowsApp\winmain.d" />
+    </Folder>
+   </Folder>
+   <Folder name="Projects">
+    <File path="Templates\Projects\DTemplates.vsdir" />
+   </Folder>
+   <Folder name="Wizards">
+    <File path="Templates\Wizards\package.vsz" />
+   </Folder>
   </Folder>
   <File path="comutil.d" />
   <File path="dimagelist.d" />
