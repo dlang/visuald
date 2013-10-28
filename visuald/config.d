@@ -708,7 +708,7 @@ class ProjectOptions
 
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
-			lpaths ~= tokenizeArgs(compilerDirectories.LibSearchPath);
+			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		else
 			cmd ~= " -Wl,-nostdlib";
 		foreach(lp; lpaths)
@@ -774,7 +774,7 @@ class ProjectOptions
 		cmd ~= quoteNormalizeFilename(dmdoutfile);
 		cmd ~= mslink ? " /MAP:" : ",";
 		cmd ~= mapfile;
-		cmd ~= ",";
+		cmd ~= mslink ? " " : ",";
 
 		string[] libs = tokenizeArgs(libfiles);
 		libs ~= "user32.lib";
@@ -782,7 +782,7 @@ class ProjectOptions
 		cmd ~= plusList(lnkfiles ~ libs, ".lib", plus);
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
-			lpaths ~= tokenizeArgs(compilerDirectories.LibSearchPath);
+			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
 			cmd ~= (mslink ? " /LIBPATH:" : "+") ~ quoteFilename(normalizeDir(lp));
 		
@@ -817,7 +817,7 @@ class ProjectOptions
 
 		if(symdebug)
 			cmd ~= mslink ? " /DEBUG" : "/CO";
-		cmd ~= "/NOI";
+		cmd ~= mslink ? " /INCREMENTAL:NO /NOLOGO" : "/NOI";
 
 		if(lib != OutputType.StaticLib)
 		{
@@ -2469,12 +2469,13 @@ class Config :	DisposingComObject,
 	string getEnvironmentChanges()
 	{
 		string cmd;
+		bool x64 = mProjectOptions.isX86_64;
 		GlobalOptions globOpt = Package.GetGlobalOptions();
-		string exeSearchPath = mProjectOptions.compilerDirectories.ExeSearchPath;
+		string exeSearchPath = x64 ? mProjectOptions.compilerDirectories.ExeSearchPath64 : mProjectOptions.compilerDirectories.ExeSearchPath;
 		if(exeSearchPath.length)
 			cmd ~= "set PATH=" ~ replaceCrLf(exeSearchPath) ~ ";%PATH%\n";
 		
-		string libSearchPath = mProjectOptions.compilerDirectories.LibSearchPath;
+		string libSearchPath = x64 ? mProjectOptions.compilerDirectories.LibSearchPath64 : mProjectOptions.compilerDirectories.LibSearchPath;
 		bool hasGlobalPath = mProjectOptions.useStdLibPath && libSearchPath.length;
 		if(hasGlobalPath || mProjectOptions.libpaths.length)
 		{
@@ -2490,6 +2491,13 @@ class Config :	DisposingComObject,
 				cmd ~= "set DMD_LIB=" ~ lpath ~ "\n";
 			else if(mProjectOptions.compiler == Compiler.LDC)
 				cmd ~= "set LIB=" ~ lpath ~ "\n";
+		}
+		if(mProjectOptions.isX86_64)
+		{
+			if(globOpt.WindowsSdkDir.length)
+				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
+			if(globOpt.VCInstallDir.length)
+				cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
 		}
 		return cmd;
 	}
@@ -2662,6 +2670,8 @@ class Config :	DisposingComObject,
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.doSeparateLink();
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
+		string workdir = normalizeDir(GetProjectDir());
+		bool x64 = mProjectOptions.isX86_64;
 
 		string precmd = getEnvironmentChanges();
 		string[] files = getInputFileList();
@@ -2703,8 +2713,8 @@ class Config :	DisposingComObject,
 			{
 				string libpaths, options;
 				string otherCompiler = mProjectOptions.replaceEnvironment(mProjectOptions.otherCompilerPath(), this);
-				string linkpath = globOpts.getOptlinkPath(otherCompiler, &libpaths, &options);
-				lnkcmd = linkpath ~ " ";
+				string linkpath = globOpts.getLinkerPath(x64, workdir, otherCompiler, &libpaths, &options);
+				lnkcmd = quoteFilename(linkpath) ~ " ";
 
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
@@ -2713,8 +2723,7 @@ class Config :	DisposingComObject,
 						~ lnkcmd;
 
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
-				string workdir = normalizeDir(GetProjectDir());
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, mProjectOptions.isX86_64);
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";

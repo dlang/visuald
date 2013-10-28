@@ -544,6 +544,8 @@ unreleased Version 0.3.37
     - now has workaround for x64 debugger of Visual Studio 2012 Shell 
     - installs cv2pdb 0.27 which fixes a crash when converting DWARF from GDC 4.8
     - installs mago 0.8 with pdb and embedded breakpoints support 
+    - installer now picks up dmd2 folder from DMD installation
+    - added support for VS 2013 to installer, removed VS.NET 2003
   * "Compile and Run":
     - no longer adds "--main" automatically
     - removed some other implicite command line options that confused rdmd
@@ -560,21 +562,28 @@ unreleased Version 0.3.37
     - user type colorizer settings were forgotten after editing options
     - keywords can now also be colored by adding them to the "Colored types"
   * DParser
-    - updated to recent version (ba4225b3a0e6ed346347fd7df3be727f03d266e3)
+    - updated to recent version (https://github.com/aBothe/D_Parser/commit/72f1bc54f2426954f463f03b215e044174fc1468)
     - enabled mixin analysis
     - pass deprecation flag to engine
+	- DParser engine now used by default if installed
   * vdserver
     - add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords and primary expression
     - add __parameters as specification in is-expression
-  * added command "Open Folder in Windows Explorer" to project and folder context menu
-  * goto definition now falls back to JSON information if semantic analysis yields no result
-  * fixed building with -op and source files on different drive than project
-  * added file options per configuration
-  * fixed invoking bad command when no files to compile, but additional arguments set
-  * added support for VS 2013 to installer, removed VS.NET 2003
-  * installer now picks up dmd2 folder from DMD installation
+  * build system
+    - fixed building with -op and source files on different drive than project
+    - added file options per configuration
+    - fixed invoking bad command when no files to compile, but additional arguments set
+    - added global option to display the reason for building a target
+    - fixed custom build rules executed twice sometimes
+	- fixed sc.ini evaluation, added support for sections [Environment32] and [Environment32] 
+	- link dependencies can now also be monitored for the 32-bit MS linker
+	- added VCINSTALLDIR to the list of available macros
+	- added different options for executable and librarie search paths to be used for Win32/x64
+	- x64: linker settings from sc.ini can be overwritten 
+	- x64: linker no longer invoked through dmd
+  * miscellaneous
+    - added command "Open Folder in Windows Explorer" to project and folder context menu
+    - goto definition now falls back to JSON information if semantic analysis yields no result
+    - improved indentation after opening parenthesis to follow next token
+    - added commands "Collapse unittests" and "Collapse disabled" to the outlining menu
   * changed license to Boost
-  * added global option to display the reason for building a target
-  * fixed custom build rules executed twice sometimes
-  * improved indentation after opening parenthesis to follow next token
-  * added commands "Collapse unittests" and "Collapse disabled" to the outlining menu
