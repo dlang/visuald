@@ -141,10 +141,12 @@
 Visual Studio Version for which you want Visual D to be installed. It will always install
 for all users, not only for a single user.</p>
 
-<p>To compile your application, you must have <a href="http://www.digitalmars.com/d/download.html">DMD</a> or 
-<a href="https://bitbucket.org/goshawk/gdc/wiki/Home">GDC</a> installed.</p>
+$(P To compile your application, you must have <a href="http://www.digitalmars.com/d/download.html">DMD</a>,
+<a href="https://github.com/D-Programming-GDC/GDC">GDC</a> or <a href="https://github.com/ldc-developers/ldc">LDC</a>
+installed. Not all functionality 
+has been thoroughly tested with GDC and LDC, so having DMD available for cross-checking is recommended.
 
-<p>Visual D does <b>not</b> work with any of the <b>Express</b> version of Visual Studio. Other than the 
+<p>Visual D does <b>not</b> work with any of the <b>Express</b> versions of Visual Studio. Other than the 
 commercial editions, the Express versions do not support loading third party extensions and add-ins.</p>
 
 <p>A <b>free</b> alternative are the integrated <b>Visual Studio Shell</b> distributions, that can be downloaded
@@ -165,10 +167,14 @@ You might also find it installed by other Microsoft products.
 Put this file alongside mspdbcore.dll, normally in &lt;VS-installation-path&gt;\Common7\IDE.</p>
 
 <p>The Visual Studio Shell 2012 is installed with two packages, the 
-<a href="http://www.microsoft.com/en-us/download/details.aspx?id=30670">isolated shell</a> followed by the 
+<a href="http://www.microsoft.com/en-us/download/details.aspx?id=40752">isolated shell</a> followed by the 
 <a href="http://www.microsoft.com/en-us/download/details.aspx?id=30663">integrated package</a>. Fortunately it
 has all the files needed for debugging, and the Visual D installer patches the installation to 
 make the x64 debugger work.</p>
+
+<p>The Visual Studio Shell 2013 is installed similar to VS Shell 2012, the 
+<a href="http://go.microsoft.com/?linkid=9832180">isolated shell</a> and the 
+<a href="http://go.microsoft.com/?linkid=9832180">integrated package</a>.</p>
 
 <h2>Using GDC</h2>
 
