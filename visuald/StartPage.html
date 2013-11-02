@@ -188,6 +188,19 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
 <a href="VersionHistory.html">Full version history and complete details...</a>
 <br />
 
+2013-11-02 Version 0.3.37
+<ul>  <li>Installer now supports VS 2013, updated to cv2pdb 0.27, mago 0.8, fixes x64 deubgger in VS 2012 Shell</li>
+  <li>improvements to "Compile and Run"</li>
+  <li>improvements to syntax/coverage highlighting</li>
+  <li>DParser engine now used by default, updated to recent version</li>
+  <li>single file options now available per project configuration</li>
+  <li>added global option to display the reason for building a target</li>
+  <li>added different options for executable and library search paths to be used for Win32/x64</li>
+  <li>link dependencies can now also be monitored for the 32-bit MS linker</li>
+  <li>added commands "Collapse unittests" and "Collapse disabled" to the outlining menu</li>
+</ul>
+
+
 2013-05-10 <a href="News36.html">Version 0.3.36</a>
 <ul>  <li>updated to new features of the language and tooling as of dmd 2.062</li>
   <li>basic LDC support</li>
@@ -199,28 +212,12 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
 </ul>
 
 
-2012-12-03 Version 0.3.35
-<ul>  <li>a number of bugfixes and improvements to the build system, e.g.
-   <ul>    <li>new linker option to disable using global and standard library search paths</li>
-    <li>added preliminary support for upcoming dmd win64 compiler</li>
-    <li>added console application project template with configurations for DMD and GDC for Win32 and x86</li>
-   </ul>
-
-  </li>
-  <li>added build project to build Visual D from VS itself without the need to modify makefiles</li>
-  <li>goto definition now uses semantic analysis to find declaration</li>
-  <li>semantic analysis now enabled by default (removed experimental status)</li>
-  <li>now installed as an "extension" to VS 2010 and VS 2012</li>
-  <li>fixed spurious crashes due to bug in precise garbage collection</li>
-</ul>
-
-
 <a href="VersionHistory.html">more...</a>
 
 <h2>Download</h2>
 
-<p>The latest installer can be downloaded 
-<a href="http:/www.dsource.org/projects/visuald/browser/downloads/VisualD-v0.3.36.exe?format=raw&FixForIE=.exe">here</a>.
+<p>The latest installer can also be downloaded 
+<a href="http:/www.dsource.org/projects/visuald/browser/downloads/VisualD-v0.3.37.exe?format=raw&FixForIE=.exe">here</a>.
 You can find older versions and some additional files in 
 the <a href="http:/www.dsource.org/projects/visuald/browser/downloads/">download directory</a>.</p>
 
