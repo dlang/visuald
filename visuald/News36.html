@@ -1,0 +1,309 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html lang='en-US'>
+
+<!--
+	Copyright (c) 1999-2010 by Digital Mars
+	All Rights Reserved Written by Walter Bright
+	http://www.digitalmars.com
+  -->
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" >
+<title>Version 0.3.36
+
+ - D Programming Language - Digital Mars</title>
+<link rel="stylesheet" type="text/css" href="http://www.dlang.org/css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="http://www.dlang.org/css/style.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="http://www.dlang.org/js/codemirror.js"></script>
+<script src="http://www.dlang.org/js/d.js"></script>
+<script src="http://www.dlang.org/js/run.js" type="text/javascript"></script>
+
+</head>
+
+<body class='hyphenate'>
+
+<div id="top">
+	<div id="search-box">
+		<form method="get" action="http://google.com/search">
+			<img src="/images/search-left.gif" width="11" height="22" alt=""><input id="q" name="q"><input type="image" id="search-submit" name="submit" src="/images/search-button.gif">
+			<input type="hidden" id="domains" name="domains" value="dlang.org">
+			<input type="hidden" id="sourceid" name="sourceid" value="google-search">
+			<div id="search-dropdown">
+				<select id="sitesearch" name="sitesearch" size="1">
+					<option value="dlang.org">Entire D  Site</option>
+					<option value="dlang.org/visuald">Visual D</option>
+					<option value="www.digitalmars.com/d/archives">Newsgroup Archives</option>
+				</select>
+			</div>
+		</form>
+	</div>
+	<div id="header">
+		<a href="http://www.dlang.org"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="http://www.dlang.org/images/dlogo.png"></a>
+		<a id="d-language" href="http://www.dlang.org">D Programming Language - Visual D</a>
+	</div>
+</div>
+
+<div id="navigation">
+    
+<div class="navblock">
+<form method="get" action="http://www.google.com/search">
+<div id="searchbox">
+<input name="q" size="10" value="Visual D" onFocus='if(this.value == "Visual D"){this.value="";}'>
+<input type="hidden" name="domains" value="www.digitalmars.com">
+<input type="hidden" name="sitesearch" value="rainers.github.io/visuald/">
+<input type="hidden" name="sourceid" value="google-search">
+<input type="submit" name="submit" value="Go">
+</div>
+</form>
+<div id="toctop">
+    <ul><h2><a href="http://www.dlang.org/index.html" title="D Programming Language">D</a></h2>
+	<li><a href="http://www.dlang.org/download.html" title="Download a D compiler">Downloads &amp; Tools</a></li>
+	<li><a href="http://www.dlang.org/spec.html" title="D Language Specification">Language</a></li>
+	<li><a href="http://www.dlang.org/phobos/index.html" title="D Runtime Library">Runtime Library </a></li>
+    </ul>
+
+</div>
+</div>
+
+    
+<div class="navblock">
+ <h2><a href="StartPage.html" title="Visual Studio Plugin for D">Visual D</a></h2>
+ <ul>  <li><a href="https://github.com/D-Programming-Language/visuald/releases" title="Releases and Downloads">Downloads</a></li>
+  <li><a href="Installation.html" title="Installation">Installation</a></li>
+  <li><a href="Features.html" title="Visual D Features">Features</a>
+   <ul>    <li><a href="GlobalOptions.html" title="Global Options">Global options</a></li>
+    <li><a href="ProjectWizard.html" title="Project Wizard to create new projects">Project Wizard</a></li>
+    <li><a href="Editor.html" title="Language support in the editor">Editor</a></li>
+    <li><a href="Search.html" title="Search symbols and files">Search Window</a></li>
+    <li><a href="TokenReplace.html" title="Token Search and Replace">Token Replace</a></li>
+    <li><a href="ProjectConfig.html" title="Setting up build settings">Project Config</a></li>
+    <li><a href="CppConversion.html" title="C++ to D Converter">C++ to D</a></li>
+    <li><a href="Debugging.html" title="Debugger support">Debugging</a></li>
+    <li><a href="Profiling.html" title="Profiler window">Profiling</a></li>
+    <li><a href="BrowseInfo.html" title="Browse information">Browse Info</a></li>
+   </ul>
+
+  </li>
+  <li><a href="VersionHistory.html" title="Latest changes">Version History</a></li>
+  <li><a href="KnownIssues.html" title="Installation">Known Issues</a></li>
+  <li><a href="BuildFromSource.html" title="Building from source">Building from Source</a></li>
+ </ul>
+
+</div>
+
+
+<div class="navblock">
+<h2>Community</h2>
+<ul>	<li><a href="http://forum.dlang.org/" title="User forums">Forums</a></li>
+
+	<li><a href="http://github.com/D-Programming-Language" title="D on github">GitHub</a></li>
+
+	<li><a href="http://wiki.dlang.org" title="Wiki for the D Programming Language">Wiki</a></li>
+
+	<li><a href="http://wiki.dlang.org/Review_Queue" title="Queue of current and upcoming standard library additions">Review Queue</a></li>
+
+	<li><a href="http://twitter.com/#search?q=%23d_lang" title="#d_lang on twitter.com">Twitter</a></li>
+
+</ul>
+
+</div>
+
+
+</div><!--/navigation-->
+<div id="content">
+    
+<div id="tools">
+	<!--span id="lastupdate">Last update </span-->
+	<span class="tip">
+		<a href="https://github.com/D-Programming-Language/visuald/edit/master/News36.dd" class="button">Improve this page</a>
+		<span>
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">
+		<a href="http://wiki.dlang.org/DocComments/visuald" class="button">Page wiki</a>
+		<span>
+			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+
+    <h1>Version 0.3.36
+
+</h1>
+    <div id=quickindex class=quickindex></div>
+    <!-- Generated by Ddoc from News36.dd -->
+
+
+<p>The latest release 0.3.36 of Visual D included a considerable number of bug fixes and improvements 
+(you can find all of them listed in the <a href="VersionHistory.html">history</a>), but I'd like to detail on a few 
+bigger highlights.
+</p>
+
+<h2>Unit testing and code coverage</h2>
+
+<p>With unittesting built into the D programming language testing your code gets even simpler in
+combination with Visual D. With the new command "Compile and Run" from the Visual D menu you can compile
+the current D source file through rdmd which will pick up imported modules automatically
+and add them to the compilation. If the file is part of a project in the solution
+the current compiler settings will be used, otherwise the defaults from the !ConsoleApp
+project template are taken. You can add other options in Visual D's global
+project settings. 
+</p>
+
+<div align="center"><img src="images/compile_and_run_opt.png" /></div>
+
+
+<p>The standard is "-unittest --main" so after successfully building the
+source file to an executable ("--main" adds an empty main function to the source to automatically create a valid executable), your unit tests will run and you will see 
+the result in the output pane.
+</p>
+
+<p>[Actually, while writing this text a number of issues have been fixed and improvements
+have been made, so please try the latest release candidate for next version of Visual D 
+from the download folder (0.3.37rc1 as of now). Especially, it will remove some of the 
+command line options used to call rdmd that make it crash pretty often.]
+</p>
+
+<table><tr><td valign="top" width="45%">
+<p>If you add "-cov" to the command line aswell the executable will be instrumented to record
+the source code lines that have been executed and will mark the lines that have 
+code generated but are never executed. This information is written into files named as the 
+source files but with extension ".lst". If you enable option "Colorize Coverage" in
+the Visual D colorizer settings (easily reachable through the new entry in the Visual D
+menu), these lines will be highlighted in the editor. The highlighting will not show
+up unless the lst-file is newer than the source file as it will probably be out of sync
+otherwise.
+</p>
+
+<p>If you fix the last test and add the line
+<span class="d_inlinecode">assert(fib(19) == 4181);</span>
+to the unittest, and run the unittest again, all lines will become green.
+</p>
+
+<p>If you start editing the source file Visual D will try to keep coverage information in sync. 
+If you want to get rid of the coverage coloring, just resave the source file. 
+Visual D will assume the coverage is invalid then and stop displaying it.
+</p>
+
+<p>If you don't want syntax highlighting from coverage generated .LST files, you can disable 
+it by disabling the respective option on the Tools-&gt;Options-&gt;Text Editor-&gt;D-&gt;Colorizer page.
+</p>
+</td><td width="55%">
+<div align="center"><img src="images/coverage.png" /></div>
+
+</td></tr></table>
+
+<p>If you select code within the editor and issue the command "Compile and Run", only
+the selected code will be passed to rdmd through the --eval option. This allows to
+execute just a code snippet like a script and see whether it compiles and how it behaves.
+</p>
+
+<h1>New code completion engine by Alexander Bothe</h1>
+
+<p>While Visual D has been running a semantic analysis for about a year now to
+support code completion and type information in tool tips, I didn't have much time
+to complete it to support all aspects of the D programming language. It is especially
+lacking on topics like template instantiation, function overload resolution and 
+unified function call syntax (UFCS). Also, compile time function evaluation (CTFE) is
+pretty incomplete. 
+Due to its pretty large memory foot print the
+stop-the-world garbage collector has been interrupting the source code editing to
+inacceptable degrees, so the analyzer had been
+moved into a separate process communicating with Visual D as a local COM server.
+</p>
+
+<p>This also opens the door to easily exchange the semantic analyzer with a different engine,
+so this is where Alexander Bothe's parsing engine enters the scene, the engine that
+also powers Mono-D and D-IDE.
+</p>
+
+<div align="center"><img src="images/intellisense_options.png" /></div>
+
+
+<p>Alex has put much more effort into making the semantic
+analysis complete, and it obviously does it more efficiently. I wrapped the library
+as a local COM server implementing the same interfaces as Visual D's engine (having to do
+this in C# was a bit of a downer) and just using a different factory now allows switching
+between the two. Right now, Visual D's engine is the default, but you can select 
+Alex's engine by enabling the respective checkbox in the Intellisense 
+settings page (there is a new menu entry for faster access). It provides UFCS 
+expansion and also displays DDoc help strings in tool tips.
+</p>
+
+<p>There is currently work being done on the D front end implemented by DMD
+to be converted from C++ to D, bringing it within reach of using it as a library for IDEs.
+This might produce
+another semantic engine in the future which easily keeps in lock step with the latest 
+compiler updates.
+</p>
+
+<h2>LDC support</h2>
+
+<p>LDC, the D compiler built on top of the LLVM compiler infrastructure is getting
+close to being useful on Windows aswell (at least on Win64 the longest standing
+blocker exception handling is starting to work). You can grab pre-compiled binaries 
+here: http://www.redstar.de/ldc/LDC.zip (after extracting to any directory just update
+the paths specified in LDC2\etc\ldc2.conf).
+In the Visual D project options, path settings for the three major compilers have been
+separated to different pages allowing for different import and library paths aswell.
+The specified install directories are mapped to macros like , so they
+can be reused in other places of your project configuration.
+To use LDC by your project, select the compiler with the respective option on the
+General page of your project's property page.
+</p>
+
+<div align="center"><img src="images/ldc_compiler.png" /></div>
+
+
+<p>Please be aware that both LDC for Windows aswell as the Visual D support for 
+it are pretty experimental, so expect some glitches. Known issue: there is no debug 
+information in the built executable that can be used by the VS debugger.
+</p>
+
+<h2>Trivia</h2>
+
+<p>If you ever wondered why Visual D versions are numbered 0.3.x, here is the explanation:
+Each package to be loaded in Visual Studio 2008 needs to be equipped with a valid identification
+called a package load key (PLK). This key is generated by Microsoft and includes
+author and package name aswell as the major and minor version of the package. It
+is used to authenticate the package to Visual Studio.
+Unfortunately the PLK generation service is no longer available as it is no more necessary
+to have a PLK for Visual Studio 2010 or 2012 extensions. Unless I choose to be inconsistent
+with the registered version and the displayed version, Visual D is stuck at version 0.3.
+</p>
+
+
+    
+<br><br>
+<br><br>
+<!-- Google ad -->
+<script type="text/javascript"><!--
+/**/google_ad_client = "pub-5628673096434613";
+/**/google_ad_width = 728;
+/**/google_ad_height = 90;
+/**/google_ad_format = "728x90_as";
+/**/google_ad_channel ="6203743411";
+/**/google_page_url = document.location;
+//--></script>
+<script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+</div><!--/content-->
+
+
+<div id="copyright">
+Copyright &copy; 2010-2013 by Rainer Schuetze, All Rights Reserved
+ |
+Page generated by <a href="http://www.digitalmars.com/d/2.0/ddoc.html">Ddoc</a>.
+</div>
+
+</body>
+</html>
+
