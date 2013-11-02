@@ -537,7 +537,7 @@ Version history
   * added command "Open Language Options" for easier access to the settings page
   * added option "Colorize coverage from .LST file" to highlight lines from code coverage output
 
-unreleased Version 0.3.37
+2013-11-02 Version 0.3.37
 
   * installer:
     - fixed regression: VS 2010/2012 extension pkgdef files almost empty
@@ -586,4 +586,5 @@ unreleased Version 0.3.37
     - goto definition now falls back to JSON information if semantic analysis yields no result
     - improved indentation after opening parenthesis to follow next token
     - added commands "Collapse unittests" and "Collapse disabled" to the outlining menu
+    - dviewhelper.dll from cv2pdb now avoids being unloaded after debugger expression evaluation using visualizers
   * changed license to Boost
