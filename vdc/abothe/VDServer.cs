@@ -154,7 +154,7 @@ namespace DParserCOMServer
 		}
 		public void ClearSemanticProject()
 		{
-			MessageBox.Show("ClearSemanticProject()");
+			//MessageBox.Show("ClearSemanticProject()");
 			//throw new NotImplementedException();
 		}
 		public void UpdateModule(string filename, string srcText, bool verbose)

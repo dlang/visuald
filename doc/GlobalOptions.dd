@@ -35,12 +35,26 @@ $(UL
     that the compiler is found as <DMD install path>\bin\ldc2.exe )
   )
  )
- $(LI Executable paths: Directories to be added to the PATH environment variable before executing build commands.)
  $(LI Import paths: Directories to be added to the import paths specified in the project configuration and in the
       DMD configuration file (also used for import statement completion and finding symbol definition).)
+ $(LI Executable paths: Directories to be added to the PATH environment variable before executing build commands.)
  $(LI Library paths: Directories to be added to the LIB environment variable before executing build commands.)
 )
-
+Executable and library search paths are given depending on the target architecture. When using DMD for Win64,
+options from its configuration file can be overwritten by specifying the linker to be used and additional options.
+$(UL
+ $(LI override sc.ini: $(P The latest Windows installer for DMD modifies the default sc.ini by expanding variables
+   according to the most recent Visual C++ installation and Windows SDK installation directories. This is necessary
+   to allow building Win64 executables from the command line without having additional environment variables set.
+   Unfortunately this makes it difficult to use libraries from the current Visual C++ installation if you have
+   multiple Visaul Studio versions installed.
+   )
+   $(P Enabling this option allows to override the linker settings from sc.ini. At the same time the
+    library search paths are added to the command line.
+    Also note that using a 32-bit linker executable is necessary to monitor link dependencies.
+   )
+ )
+)
 $(P Available text replacements: )
 $(UL
  $(LI $(DOLLAR)(DMDINSTALLDIR): DMD Install path from the "DMD directories page" )
@@ -49,12 +63,13 @@ $(UL
  $(LI $(DOLLAR)(WINDOWSSDKDIR): Windows SDK Directory )
  $(LI $(DOLLAR)(DEVENVDIR): Directory of Visual Studio executable devenv.exe )
  $(LI $(DOLLAR)(VSINSTALLDIR): Root directory of Visual Studio installation )
+ $(LI $(DOLLAR)(VCINSTALLDIR): The directory of the Visual C installation that comes with the running Visual Studio)
  $(LI $(DOLLAR)(VISUALDINSTALLDIR): Installation folder of Visual D )
  $(LI any variable from the system environment enclosed in $(DOLLAR)() )
 )
 
 $(P Please note that you'll also find a new entry "D" in the Text Editor branch to setup 
-[wiki:Tour/Editor syntax highlighting] and more. )
+$(DDLINK Editor,syntax highlighting) and more. )
 
 Macros:
 	TITLE=Global Options
