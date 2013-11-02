@@ -154,7 +154,7 @@ namespace DParserCOMServer
 		}
 		public void ClearSemanticProject()
 		{
-			MessageBox.Show("ClearSemanticProject()");
+			//MessageBox.Show("ClearSemanticProject()");
 			//throw new NotImplementedException();
 		}
 		public void UpdateModule(string filename, string srcText, bool verbose)
@@ -275,7 +275,7 @@ namespace DParserCOMServer
 			if (!_modules.TryGetValue(filename, out ast))
 				throw new COMException("module not found", 1);
 
-			MessageBox.Show("IsBinaryOperator()");
+			//MessageBox.Show("IsBinaryOperator()");
 			throw new NotImplementedException();
 		}
 		public void GetParseErrors(string filename, out string errors)

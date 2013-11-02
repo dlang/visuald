@@ -537,7 +537,7 @@ Version history
   * added command "Open Language Options" for easier access to the settings page
   * added option "Colorize coverage from .LST file" to highlight lines from code coverage output
 
-unreleased Version 0.3.37
+2013-11-02 Version 0.3.37
 
   * installer:
     - fixed regression: VS 2010/2012 extension pkgdef files almost empty
@@ -565,7 +565,7 @@ unreleased Version 0.3.37
     - updated to recent version (https://github.com/aBothe/D_Parser/commit/72f1bc54f2426954f463f03b215e044174fc1468)
     - enabled mixin analysis
     - pass deprecation flag to engine
-	- DParser engine now used by default if installed
+    - DParser engine now used by default if installed
   * vdserver
     - add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords and primary expression
     - add __parameters as specification in is-expression
@@ -575,15 +575,16 @@ unreleased Version 0.3.37
     - fixed invoking bad command when no files to compile, but additional arguments set
     - added global option to display the reason for building a target
     - fixed custom build rules executed twice sometimes
-	- fixed sc.ini evaluation, added support for sections [Environment32] and [Environment32] 
-	- link dependencies can now also be monitored for the 32-bit MS linker
-	- added VCINSTALLDIR to the list of available macros
-	- added different options for executable and librarie search paths to be used for Win32/x64
-	- x64: linker settings from sc.ini can be overwritten 
-	- x64: linker no longer invoked through dmd
+    - fixed sc.ini evaluation, added support for sections [Environment32] and [Environment64] 
+    - link dependencies can now also be monitored for the 32-bit MS linker
+    - added VCINSTALLDIR to the list of available macros
+    - added different options for executable and librarie search paths to be used for Win32/x64
+    - x64: linker settings from sc.ini can be overwritten 
+    - x64: linker no longer invoked through dmd
   * miscellaneous
     - added command "Open Folder in Windows Explorer" to project and folder context menu
     - goto definition now falls back to JSON information if semantic analysis yields no result
     - improved indentation after opening parenthesis to follow next token
     - added commands "Collapse unittests" and "Collapse disabled" to the outlining menu
+    - dviewhelper.dll from cv2pdb now avoids being unloaded after debugger expression evaluation using visualizers
   * changed license to Boost

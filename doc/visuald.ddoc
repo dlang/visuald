@@ -50,13 +50,13 @@ DDOC = <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" >
 <title>$(TITLE) - D Programming Language - Digital Mars</title>
-<link rel="stylesheet" type="text/css" href="../css/codemirror.css" />
-<link rel="stylesheet" type="text/css" href="../css/style.css">
+<link rel="stylesheet" type="text/css" href="$(DLANG_ORG)/css/codemirror.css" />
+<link rel="stylesheet" type="text/css" href="$(DLANG_ORG)/css/style.css">
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
-<script src="/js/codemirror.js"></script>
-<script src="/js/d.js"></script>
-<script src="/js/run.js" type="text/javascript"></script>
+<script src="$(DLANG_ORG)/js/codemirror.js"></script>
+<script src="$(DLANG_ORG)/js/d.js"></script>
+<script src="$(DLANG_ORG)/js/run.js" type="text/javascript"></script>
 
 </head>
 
@@ -78,8 +78,8 @@ DDOC = <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 		</form>
 	</div>
 	<div id="header">
-		<a href="/"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="../images/dlogo.png"></a>
-		<a id="d-language" href="/">D Programming Language - Visual D</a>
+		<a href="$(DLANG_ORG)"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="$(DLANG_ORG)/images/dlogo.png"></a>
+		<a id="d-language" href="$(DLANG_ORG)">D Programming Language - Visual D</a>
 	</div>
 </div>
 
@@ -145,7 +145,7 @@ TOP=
 <div id="searchbox">
 <input name="q" size="10" value="Visual D" onFocus='if(this.value == "Visual D"){this.value="";}'>
 <input type="hidden" name="domains" value="www.digitalmars.com">
-<input type="hidden" name="sitesearch" value="dlang.org/visuald">
+<input type="hidden" name="sitesearch" value="rainers.github.io/visuald/">
 <input type="hidden" name="sourceid" value="google-search">
 <input type="submit" name="submit" value="Go">
 </div>
@@ -163,11 +163,9 @@ NAVIGATION_VISUALD=
 <div class="navblock">
  $(H2 <a href="StartPage.html" title="Visual Studio Plugin for D">Visual D</a>)
  $(UL
-  $(LI <a href="VersionHistory.html" title="Latest changes">Version History</a>)
-  $(LI <a href="Features.html" title="Visual D Features">Features</a>)
+  $(LI <a href="https://github.com/D-Programming-Language/visuald/releases" title="Releases and Downloads">Downloads</a>)
   $(LI <a href="Installation.html" title="Installation">Installation</a>)
-  $(LI 
-   $(H2 Tour)
+  $(LI <a href="Features.html" title="Visual D Features">Features</a>
    $(UL
     $(LI <a href="GlobalOptions.html" title="Global Options">Global options</a>)
     $(LI <a href="ProjectWizard.html" title="Project Wizard to create new projects">Project Wizard</a>)
@@ -181,6 +179,7 @@ NAVIGATION_VISUALD=
     $(LI <a href="BrowseInfo.html" title="Browse information">Browse Info</a>)
    )
   )
+  $(LI <a href="VersionHistory.html" title="Latest changes">Version History</a>)
   $(LI <a href="KnownIssues.html" title="Installation">Known Issues</a>)
   $(LI <a href="BuildFromSource.html" title="Building from source">Building from Source</a>)
  )
@@ -220,6 +219,7 @@ LESS = &lt;
 GREATER = &gt;
 HTTP = $(LINK2 http://$1,$2)
 HTTPS = $(LINK2 https://$1,$2)
+DDLINK = $(LINK2 $1.html,$2)
 WEB = $(HTTP $1,$2)
 LUCKY = $(HTTP
 google.com/search?btnI=I%27m+Feeling+Lucky&amp;ie=UTF-8&amp;oe=UTF-8&amp;q=$0,$0)
@@ -247,9 +247,8 @@ TD = <td valign=top>$0</td>
 TDNW = <td valign=top class="donthyphenate">$0</td>
 SUB = <sub>$0</sub>
 
-DLANG_ORG=..
-_=http://www.dlang.org
-COPYRIGHT= Copyright &copy; 1999-$(YEAR) by Digital Mars, All Rights Reserved
+DLANG_ORG=http://www.dlang.org
+COPYRIGHT= Copyright &copy; 2010-$(YEAR) by Rainer Schuetze, All Rights Reserved
 
 H2=<h2>$0</h2>
 H3=<h3>$0</h3>

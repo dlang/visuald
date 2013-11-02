@@ -1472,6 +1472,7 @@ class DirPropertyPage : GlobalPropertyPage
 		auto page32 = mTabArch.pages[0];
 		if(auto w = cast(Window)page32)
 			w.commandDelegate = mCanvas.commandDelegate;
+		mResizableWidgets ~= page32;
 
 		kPageWidth -= 6;
 		mLines = 0;
@@ -1483,6 +1484,7 @@ class DirPropertyPage : GlobalPropertyPage
 		auto page64 = mTabArch.pages[1];
 		if(auto w = cast(Window)page64)
 			w.commandDelegate = mCanvas.commandDelegate;
+		mResizableWidgets ~= page64;
 
 		mLines = 0;
 		mLinesPerMultiLine = 3;

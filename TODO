@@ -37,8 +37,6 @@ Project:
 - pass import path from static lib project to dependent projects
 - single file compilation for file configuration
 - custom command: quotes in dependencies not supported
-- different lib paths for Win32/Win64
-- support [Environment64] in sc.ini
 - property pages don't follow resize
 
 Language service:
@@ -65,7 +63,6 @@ Lexer/Parser:
 - do not parse file if it is D1?
 - deprecated syntax
 - syntax error with "@disable new()"
-+ integrate d_parser.dll
 - 0.ident
 
 Semantics:

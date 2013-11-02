@@ -1191,6 +1191,35 @@ class GlobalOptions
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
 
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
+			WindowsSdkDir = toUTF8(keySdk.GetString("CurrentInstallFolder"));
+			if(WindowsSdkDir.empty)
+				if(char* psdk = getenv("WindowsSdkDir"))
+					WindowsSdkDir = fromMBSz(cast(immutable)psdk);
+			if(!WindowsSdkDir.empty)
+				WindowsSdkDir = normalizeDir(WindowsSdkDir);
+
+			if(char* pe = getenv("VSINSTALLDIR"))
+				VSInstallDir = fromMBSz(cast(immutable)pe);
+			else
+			{
+				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
+				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
+				// InstallDir is ../Common7/IDE/
+				VSInstallDir = normalizeDir(VSInstallDir);
+				VSInstallDir = dirName(dirName(VSInstallDir));
+			}
+			VSInstallDir = normalizeDir(VSInstallDir);
+
+			if(char* pe = getenv("VCINSTALLDIR"))
+				VCInstallDir = fromMBSz(cast(immutable)pe);
+			else
+			{
+				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
+				VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
+			}
+			VCInstallDir = normalizeDir(VCInstallDir);
+
 			wstring getWStringOpt(wstring tag, wstring def = null)
 			{
 				wstring ws = keyToolOpts.GetString(tag, def);
@@ -1233,8 +1262,21 @@ class GlobalOptions
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
 			useDParser          = getBoolOpt("useDParser2", keyDParser.key !is null);
 
+			wstring getDefaultDMDLibPath64()
+			{
+				wstring libpath = r"$(VCInstallDir)\lib\amd64";
+				if(WindowsSdkDir.length)
+				{
+					if(std.file.exists(WindowsSdkDir ~ r"lib\x64"))
+						libpath ~= to!wstring("\n" ~ WindowsSdkDir ~ r"lib\x64");
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64"))
+						libpath ~= to!wstring("\n" ~ WindowsSdkDir ~ r"Lib\win8\um\x64");
+				}
+				return libpath;
+			}
+
 			// overwrite by user config
-			void readCompilerOptions(string compiler)(ref CompilerDirectories opt)
+			void readCompilerOptions(string compiler)(ref CompilerDirectories opt, wstring defLibPath64)
 			{
 				enum bool dmd = compiler == "DMD";
 				enum string prefix = dmd ? "" : compiler ~ ".";
@@ -1244,15 +1286,15 @@ class GlobalOptions
 				opt.LibSearchPath = getStringOpt(prefix ~ "LibSearchPath");
 				opt.ImpSearchPath = getStringOpt(prefix ~ "ImpSearchPath");
 				opt.ExeSearchPath64 = getStringOpt(prefix ~ "ExeSearchPath64", to!wstring(opt.ExeSearchPath));
-				opt.LibSearchPath64 = getStringOpt(prefix ~ "LibSearchPath64");
+				opt.LibSearchPath64 = getStringOpt(prefix ~ "LibSearchPath64", defLibPath64);
 
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
 				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
 			}
-			readCompilerOptions!"DMD"(DMD);
-			readCompilerOptions!"GDC"(GDC);
-			readCompilerOptions!"LDC"(LDC);
+			readCompilerOptions!"DMD"(DMD, getDefaultDMDLibPath64());
+			readCompilerOptions!"GDC"(GDC, null);
+			readCompilerOptions!"LDC"(LDC, null);
 
 			JSNSearchPath     = getStringOpt("JSNSearchPath");
 			IncSearchPath     = getStringOpt("IncSearchPath");
@@ -1277,35 +1319,6 @@ class GlobalOptions
 				updateVDServer();
 
 			CHierNode.setContainerIsSorted(sortProjects);
-			
-			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
-			WindowsSdkDir = toUTF8(keySdk.GetString("CurrentInstallFolder"));
-			if(WindowsSdkDir.empty)
-				if(char* psdk = getenv("WindowsSdkDir"))
-					WindowsSdkDir = fromMBSz(cast(immutable)psdk);
-			if(!WindowsSdkDir.empty)
-				WindowsSdkDir = normalizeDir(WindowsSdkDir);
-
-			if(char* pe = getenv("VSINSTALLDIR"))
-				VSInstallDir = fromMBSz(cast(immutable)pe);
-			else
-			{
-				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
-				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
-				// InstallDir is ../Common7/IDE/
-				VSInstallDir = normalizeDir(VSInstallDir);
-				VSInstallDir = dirName(dirName(VSInstallDir));
-			}
-			VSInstallDir = normalizeDir(VSInstallDir);
-
-			if(char* pe = getenv("VCINSTALLDIR"))
-				VCInstallDir = fromMBSz(cast(immutable)pe);
-			else
-			{
-				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
-				VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
-			}
-			VCInstallDir = normalizeDir(VCInstallDir);
 		}
 		catch(Exception e)
 		{

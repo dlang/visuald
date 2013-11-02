@@ -1,6 +1,6 @@
 Ddoc
 
-2013-05-10 Version 0.3.36
+2013-05-10 $(DDLINK News36,Version 0.3.36)
  $(UL
   $(LI added debug settings to new DMD/GDC project template )
   $(LI regressions caused by switching to installation as VS2010/VS2012 extension:

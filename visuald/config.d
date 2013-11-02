@@ -910,15 +910,22 @@ class ProjectOptions
 	{
 		if(compilationModel == ProjectOptions.kSeparateCompileOnly)
 			return false;
+		
 		bool separateLink = compilationModel == ProjectOptions.kSeparateCompileAndLink;
 		if (compiler == Compiler.GDC && lib == OutputType.StaticLib)
 			separateLink = true;
-		if (compiler == Compiler.DMD && lib != OutputType.StaticLib && Package.GetGlobalOptions().optlinkDeps)
-			separateLink = true;
+		
+		if (compiler == Compiler.DMD && lib != OutputType.StaticLib)
+		{
+			if(Package.GetGlobalOptions().optlinkDeps)
+				separateLink = true;
+			else if(isX86_64 && Package.GetGlobalOptions().DMD.overrideIni64)
+				separateLink = true;
+		}
 		return separateLink;
 	}
 
-	bool usesOptlink()
+	bool callLinkerDirectly()
 	{
 		bool dmdlink = compiler == Compiler.DMD && doSeparateLink() && lib != OutputType.StaticLib;
 		return dmdlink; // && !isX86_64;
@@ -2151,7 +2158,7 @@ class Config :	DisposingComObject,
 
 	bool hasLinkDependencies()
 	{
-		return mProjectOptions.usesOptlink() && Package.GetGlobalOptions().optlinkDeps;
+		return mProjectOptions.callLinkerDirectly() && Package.GetGlobalOptions().optlinkDeps;
 	}
 
 	string GetCommandLinePath()
@@ -2709,7 +2716,7 @@ class Config :	DisposingComObject,
 		if(separateLink && doLink)
 		{
 			string prelnk, lnkcmd;
-			if(mProjectOptions.usesOptlink())
+			if(mProjectOptions.callLinkerDirectly())
 			{
 				string libpaths, options;
 				string otherCompiler = mProjectOptions.replaceEnvironment(mProjectOptions.otherCompilerPath(), this);

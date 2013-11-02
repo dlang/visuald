@@ -4,11 +4,16 @@ $(TABLE ,
 $(TD $(IMG images/vd_logo.png))
 $(TD
 $(P Visual D is a Visual Studio package providing both project management and language services. 
-It works with Visual Studio 2005, 2008, 2010 and 2012 as well as the free Visual Studio Shells. 
+It works with Visual Studio 2005, 2008, 2010, 2012 and 2013 as well as the free Visual Studio Shells. 
 See the $(LINK2 Installation.html, Installation) instructions, especially if not using a commercial edition of Visual Studio.)
 
-$(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.))
-)
+$(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.)
+
+<div align="right">
+$(LINK2 https://github.com/D-Programming-Language/visuald/releases/download/v0.3.37/VisualD-v0.3.37.exe, $(IMG images/download.png))
+$(P $(LINK2 https://github.com/D-Programming-Language/visuald/releases, Beta releases))
+</div>
+))
 
 
 $(H2 Overview)
