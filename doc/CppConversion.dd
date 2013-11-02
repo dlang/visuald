@@ -4,6 +4,7 @@ $(P Visual D can help you converting your C++ code base to D. Even though it is
 capable of some quite extensive reorganization of the code, don't expect to get 
 compilable and runnable code out of the box. Helping the converter with additional
 replacement rules and manual additional editing of the result might be necessary. 
+)
 
 $(P The conversion consists of a number of steps:)
 $(UL
@@ -52,7 +53,7 @@ $(UL
 	  conditionals are used.)
     $(LI Pre and post token replacements: some constructs are not parsable or 
 	  don't convert well. With the token replacements you can inject some replacement 
-	  rules into the conversion process. The replacement follows the $(LINK2 TokenReplace.html
+	  rules into the conversion process. The replacement follows the $(LINK2 TokenReplace.html,
 	  Token Search and Replace) functionality. The syntax of the rule is
 	 $(PRE [filename-pattern::] search-pattern => replacement )
 	 If you want to span the rule across multiple lines, use the \ line splicing mechanism.

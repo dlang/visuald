@@ -1,5 +1,6 @@
 set DMD=m:\s\d\rainers\windows\bin\dmd.exe
-set WEB=m:\s\d\rainers\web\visuald
+rem set WEB=m:\s\d\rainers\web\visuald
+set WEB=m:\s\d\visuald\gh-pages\visuald
 
 set SRC=ReportingBugs.dd
 set SRC=%SRC% StartPage.dd
@@ -19,6 +20,7 @@ set SRC=%SRC% ProjectWizard.dd
 set SRC=%SRC% GlobalOptions.dd
 set SRC=%SRC% Features.dd
 set SRC=%SRC% VersionHistory.dd
+set SRC=%SRC% News36.dd
 
 set DDOC=macros.ddoc html.ddoc visuald.ddoc
 
