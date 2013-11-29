@@ -749,11 +749,12 @@ class LanguageService : DisposingComObject,
 		{
 			scope(exit) release(cfg);
 			auto cfgopts = cfg.GetProjectOptions();
+			auto globopts = Package.GetGlobalOptions();
 			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck, 
 									  cfgopts.compiler == Compiler.GDC, 
 									  cfgopts.versionlevel, cfgopts.debuglevel,
-									  cfgopts.errDeprecated);
+									  cfgopts.errDeprecated, globopts.mixinAnalysis, globopts.UFCSExpansions);
 			
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
 			stringImp = tokenizeArgs(strimp);

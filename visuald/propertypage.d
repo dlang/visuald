@@ -1784,6 +1784,22 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip"));
 		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
 		version(DParser) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
+		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
+		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
+	}
+
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+
+	void EnableControls()
+	{
+		version(DParser) bool useDParser = mUseDParser.isChecked();
+		else             bool useDParser = false;
+		mMixinAnalysis.setEnabled(useDParser);
+		mUFCSExpansions.setEnabled(useDParser);
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1795,6 +1811,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 		mSemanticGotoDef.setChecked(opts.semanticGotoDef);
 		version(DParser) mUseDParser.setChecked(opts.useDParser);
+		mMixinAnalysis.setChecked(opts.mixinAnalysis);
+		mUFCSExpansions.setChecked(opts.UFCSExpansions);
 
 		//mExpandSemantics.setEnabled(false);
 	}
@@ -1809,6 +1827,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip); 
 		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef); 
 		version(DParser) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser); 
+		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis); 
+		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions); 
 		return changes;
 	}
 
@@ -1819,6 +1839,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	CheckBox mShowTypeInTooltip;
 	CheckBox mSemanticGotoDef;
 	version(DParser) CheckBox mUseDParser;
+	CheckBox mUFCSExpansions;
+	CheckBox mMixinAnalysis;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

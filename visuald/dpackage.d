@@ -67,10 +67,13 @@ struct LanguageProperty
 	DWORD value;
 }
 
-const string plk_version = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
-                           extractDefine(import("version"), "VERSION_MINOR");
+const string plk_version  = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
+                            extractDefine(import("version"), "VERSION_MINOR");
+const string bld_version  = extractDefine(import("version"), "VERSION_BUILD");
+const string beta_version = extractDefine(import("version"), "VERSION_BETA");
 const string full_version = plk_version  ~ "." ~
-                           extractDefine(import("version"), "VERSION_REVISION");
+                            extractDefine(import("version"), "VERSION_REVISION") ~
+                            (bld_version != "0" ? beta_version ~ bld_version : "");
 
 /*---------------------------------------------------------
  * Globals
@@ -1114,6 +1117,8 @@ class GlobalOptions
 	bool showTypeInTooltip;
 	bool semanticGotoDef;
 	bool useDParser;
+	bool mixinAnalysis;
+	bool UFCSExpansions;
 	string VDServerIID;
 	string compileAndRunOpts;
 
@@ -1261,6 +1266,8 @@ class GlobalOptions
 
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
 			useDParser          = getBoolOpt("useDParser2", keyDParser.key !is null);
+			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
+			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
 
 			wstring getDefaultDMDLibPath64()
 			{
@@ -1268,9 +1275,11 @@ class GlobalOptions
 				if(WindowsSdkDir.length)
 				{
 					if(std.file.exists(WindowsSdkDir ~ r"lib\x64"))
-						libpath ~= to!wstring("\n" ~ WindowsSdkDir ~ r"lib\x64");
-					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64"))
-						libpath ~= to!wstring("\n" ~ WindowsSdkDir ~ r"Lib\win8\um\x64");
+						libpath ~= to!wstring(r"\n$(WindowsSdkDir)lib\x64");
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64")) // SDK 8.0
+						libpath ~= to!wstring(r"\n$(WindowsSdkDir)Lib\win8\um\x64");
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\winv6.3\um\x64")) // SDK 8.1
+						libpath ~= to!wstring(r"\n$(WindowsSdkDir)Lib\winv6.3\um\x64");
 				}
 				return libpath;
 			}
@@ -1387,6 +1396,8 @@ class GlobalOptions
 			keyToolOpts.Set("showTypeInTooltip",   showTypeInTooltip);
 			keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
 			keyToolOpts.Set("useDParser2",         useDParser);
+			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
+			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
 

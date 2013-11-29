@@ -588,3 +588,18 @@ Version history
     - added commands "Collapse unittests" and "Collapse disabled" to the outlining menu
     - dviewhelper.dll from cv2pdb now avoids being unloaded after debugger expression evaluation using visualizers
   * changed license to Boost
+
+unreleased Version 0.3.38
+
+  * updated to cv2pdb 0.28 
+    - support mspdb120.dll from VS 2013
+    - bugzilla 11537: improved search for appropriate mspdb*.dll if multiple version of VS installed
+  * updated to mago 0.9
+    - bugzilla 11547: remove error message when stopping debugging
+    - bugzilla 11437: debug info rejected if records don't have "recommended" order
+  * updated dparser to 08f760b6181d1e40a29f3e03a7eafcd40bf4dc34
+    - added options to enable/disable mixin analysis and UFCS expansions
+  * added support for string import dependencies (needs dmd 2.065)
+  * fixed default library path for x64 (contained spaces, but were not quoted,
+    added default for 8.1 SDK)
+  * fixed passing quoted library paths to linker

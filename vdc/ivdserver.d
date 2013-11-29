@@ -168,7 +168,8 @@ public:
 
 ///////////////////////////////////////////////////////////////////////
 uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
-					  int versionLevel, int debugLevel, bool noDeprecated)
+					  int versionLevel, int debugLevel, bool noDeprecated, 
+					  bool mixinAnalysis, bool ufcsExpansions)
 {
 	return (unittestOn ? 1 : 0)
 		|  (debugOn    ? 2 : 0)
@@ -179,6 +180,8 @@ uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool do
 		|  (gdc        ? 64 : 0)
 		|  (noDeprecated ? 128 : 0)
 		| ((versionLevel & 0xff) << 8)
-		| ((debugLevel   & 0xff) << 16);
+		| ((debugLevel   & 0xff) << 16)
+		|  (mixinAnalysis  ? 0x1_00_00_00 : 0)
+		|  (ufcsExpansions ? 0x2_00_00_00 : 0);
 }
 

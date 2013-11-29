@@ -125,7 +125,8 @@ RELDBG =
 !ENDIF
 
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
-RELFLAGS = -release -O -inline -noboundscheck
+RELFLAGS = -release -O -inline 
+# -noboundscheck
 # -gs -defaultlib=druntime_d,phobos_d
 
 LIBS = phobos.lib "$(LIB)\comctl32.lib" uuid.lib advapi32.lib comdlg32.lib \

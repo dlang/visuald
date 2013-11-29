@@ -205,9 +205,16 @@ struct Lexer
 
 		if((base == 10 && toLower(ch) == 'e') || (base == 16 && toLower(ch) == 'p'))
 			goto L_exponent;
-		size_t trypos = nextpos;
-		if(base >= 8 && ch == '.' && trydecode(text, trypos) != '.') // ".." is the slice token
+		if(base >= 8 && ch == '.') // ".." is the slice token
 		{
+			{ // mute errors about goto skipping declaration
+				size_t trypos = nextpos;
+				dchar trych = trydecode(text, trypos);
+				if (trych == '.')
+					goto L_integer;
+				//if (isAlpha(trych) || trych == '_' || (p[1] & 0x80))
+				//    goto done;
+			}
 			// float
 			if(base < 10)
 				base = 10;
@@ -266,9 +273,21 @@ L_complexLiteral:
 				if(toUpper(ch) == 'U')
 					pos = nextpos;
 			}
+L_integer:
 			pid = TOK_IntegerLiteral;
 		}
 		return TokenCat.Literal;
+	}
+
+	unittest
+	{
+		int pid;
+		size_t pos = 1;
+		auto cat = scanNumber("0.0i", '0', pos, pid);
+		assert(pid == TOK_FloatLiteral);
+		pos = 1;
+		cat = scanNumber("0.i", '0', pos, pid);
+		assert(pid == TOK_IntegerLiteral);
 	}
 
 	static State scanBlockComment(S)(S text, ref size_t pos)

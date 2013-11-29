@@ -835,10 +835,12 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	assert(pBuilder.m_srpIVsLaunchPadFactory);
 	ComPtr!(IVsLaunchPad) srpIVsLaunchPad;
 	hr = pBuilder.m_srpIVsLaunchPadFactory.CreateLaunchPad(&srpIVsLaunchPad.ptr);
+	scope(exit) pBuilder.addCommandLog(target, cmdline, output);
+
 	if(FAILED(hr))
 	{
 		output = format("internal error: IVsLaunchPadFactory.CreateLaunchPad failed with rc=%x", hr);
-		goto failure;
+		return hr;
 	}
 	assert(srpIVsLaunchPad.ptr);
 
@@ -861,7 +863,7 @@ version(none)
 	if(FAILED(hr))
 	{
 		output = format("internal error: IVsLaunchPad.ptr.ExecBatchScript failed with rc=%x", hr);
-		goto failure;
+		return hr;
 	}
 } else {
 	try
@@ -915,9 +917,9 @@ version(none)
 	if(FAILED(hr))
 	{
 		output = format("internal error: IVsLaunchPad.ptr.ExecCommand failed with rc=%x", hr);
-		goto failure;
+		return hr;
 	}
-	else if(result != 0)
+	if(result != 0)
 		hr = S_FALSE;
 }
 	// don't know how to get at the exit code, so check output string
@@ -939,8 +941,6 @@ version(none)
 			hr = S_FALSE;
 		}
 	}
-failure:
-	pBuilder.addCommandLog(target, cmdline, output);
 	return hr;
 }
 
@@ -1149,6 +1149,7 @@ else
 		uint pos = 0;
 		uint openpos = 0;
 		bool skipNext = false;
+		bool stringImport = false;
 		while(pos < txt.length)
 		{
 			dchar ch = decode(txt, pos);
@@ -1166,20 +1167,31 @@ else
 				// only check lines that import "object", these are written once per file
 				const string kCheck1 = " : public : object ";
 				const string kCheck2 = " : private : object "; // added after 2.060
+				const string kCheck3 = " : string : "; // string imports added after 2.064
 				if((pos + kCheck1.length <= txt.length && txt[pos .. pos + kCheck1.length] == kCheck1) ||
-				   (pos + kCheck2.length <= txt.length && txt[pos .. pos + kCheck2.length] == kCheck2))
+				   (pos + kCheck2.length <= txt.length && txt[pos .. pos + kCheck2.length] == kCheck2) ||
+				   stringImport)
 				{
 					string file = txt[openpos .. pos-1];
 					file = unEscapeFilename(file);
 					aafiles[file] = 1;
 					openpos = 0;
+					stringImport = false;
 					cntValid++;
+				}
+				else if(pos + kCheck3.length <= txt.length && txt[pos .. pos + kCheck3.length] == kCheck3)
+				{
+					// wait for the next file name in () on the same line
+					openpos = 0;
+					stringImport = true;
 				}
 			}
 			else if(ch == '\n')
+			{
 				openpos = 0;
+				stringImport = false;
+			}
 		}
-				
 }
 	}
 	catch(Exception e)

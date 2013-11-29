@@ -552,17 +552,18 @@ class CastExpression : UnaryExpression
 
 	static Action shiftModifier(Parser p)
 	{
+		Token tok;
 		switch(p.tok.id)
 		{
 			case TOK_rparen:
-				auto tok = p.popToken();
+				tok = p.popToken();
 				p.topNode!(ast.CastExpression)().attr = tokenToAttribute(tok.id);
 				p.pushState(&stateExpression.shift);
 				return Accept;
 
 			case TOK_const:
 			case TOK_inout:
-				auto tok = p.topToken();
+				tok = p.topToken();
 				if(tok.id != TOK_shared)
 					goto default;
 			L_combineAttr:
@@ -574,7 +575,7 @@ class CastExpression : UnaryExpression
 				return Accept;
 
 			case TOK_shared:
-				auto tok = p.topToken();
+				tok = p.topToken();
 				if(tok.id != TOK_inout && tok.id != TOK_const)
 					goto default;
 				goto L_combineAttr;

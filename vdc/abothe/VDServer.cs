@@ -215,8 +215,8 @@ namespace DParserCOMServer
 			_editorData.ModuleCode = _sources[filename];
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
-			AbstractTooltipContent[] content = AbstractTooltipProvider.BuildToolTip(_editorData);
-			if(content == null || content.Length == 0)
+			List<AbstractTooltipContent> content = AbstractTooltipProvider.BuildToolTip(_editorData);
+			if(content == null || content.Count == 0)
 				_tipText = "";
 			else
 				foreach (var c in content)
@@ -257,9 +257,10 @@ namespace DParserCOMServer
 					idx--;
 			}
 			_editorData.CaretLocation = new CodeLocation((int)idx + 1, (int) line);
-			
+
+			char triggerChar = string.IsNullOrEmpty(tok) ?  '\0' : tok[0];
 			VDServerCompletionDataGenerator cdgen = new VDServerCompletionDataGenerator(tok);
-			AbstractCompletionProvider provider = AbstractCompletionProvider.BuildCompletionData(cdgen, _editorData, null); //tok
+			CodeCompletion.GenerateCompletionData(_editorData, cdgen, triggerChar);
 
 			_expansions = cdgen.expansions;
 		}
@@ -327,7 +328,7 @@ namespace DParserCOMServer
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
 
 			var ctxt=ResolutionContext.Create(_editorData);
-			var rr = DResolver.ResolveType(_editorData, ctxt, DResolver.AstReparseOptions.AlsoParseBeyondCaret);
+			var rr = DResolver.ResolveType(_editorData, DResolver.AstReparseOptions.AlsoParseBeyondCaret, ctxt);
 
 			_tipText = "";
 			if (rr != null && rr.Length > 0)
@@ -382,8 +383,8 @@ namespace DParserCOMServer
 			_editorData.VersionNumber = (int)(_flags >> 8) & 0xff;
 			_editorData.GlobalVersionIds = versions.Split('\n');
 			_editorData.GlobalDebugIds = _debugIds.Split('\n');
-			CompletionOptions.Instance.ShowUFCSItems = true;
-			CompletionOptions.Instance.DisableMixinAnalysis = false;
+            CompletionOptions.Instance.ShowUFCSItems = (_flags & 0x2000000) != 0;
+            CompletionOptions.Instance.DisableMixinAnalysis = (_flags & 0x1000000) == 0;
 			CompletionOptions.Instance.HideDeprecatedNodes = (_flags & 128) != 0;
 		}
 

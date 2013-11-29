@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DParser2", "..\..\..\..\abo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DParserCOMServer", "comserver\DParserCOMServer.csproj", "{7B4FB722-905A-4851-8399-1E0F3361CCD8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vdextensions", "..\..\vdextensions\vdextensions.csproj", "{3A338E86-A08A-4F9A-8DB1-A5C280773BA3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A338E86-A08A-4F9A-8DB1-A5C280773BA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A338E86-A08A-4F9A-8DB1-A5C280773BA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A338E86-A08A-4F9A-8DB1-A5C280773BA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A338E86-A08A-4F9A-8DB1-A5C280773BA3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Release|Any CPU.ActiveCfg = Release|Any CPU

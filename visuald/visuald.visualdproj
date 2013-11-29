@@ -6,7 +6,7 @@
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
+  <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
   <trace>0</trace>
   <quiet>0</quiet>
@@ -31,14 +31,14 @@
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>1</useUnitTests>
+  <useUnitTests>0</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>1</infowarnings>
   <checkProperty>0</checkProperty>
-  <genStackFrame>0</genStackFrame>
+  <genStackFrame>1</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>

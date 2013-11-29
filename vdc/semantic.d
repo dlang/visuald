@@ -921,6 +921,8 @@ class Options
 	bool noBoundsCheck;
 	bool gdcCompiler;
 	bool noDeprecated;
+	bool mixinAnalysis;
+	bool UFCSExpansions;
 	VersionDebug debugIds;
 	VersionDebug versionIds;
 
