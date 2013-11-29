@@ -542,11 +542,11 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 	{
 		mixin(LogCallMix);
 
+		int idx;
 		int hr = S_OK;
 		if (mDecls.GetInitialExtent(mTextView, line, startIdx, endIdx))
 			goto done;
 
-		int idx;
 		hr = mTextView.GetCaretPos(line, &idx);
 		assert(hr == S_OK);
 		hr = GetTokenExtent(*line, idx, *startIdx, *endIdx);

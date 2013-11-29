@@ -28,12 +28,21 @@
   !searchparse /file ../version "#define VERSION_MAJOR " VERSION_MAJOR
   !searchparse /file ../version "#define VERSION_MINOR " VERSION_MINOR
   !searchparse /file ../version "#define VERSION_REVISION " VERSION_REVISION
+  !searchparse /file ../version "#define VERSION_BETA " VERSION_BETA
+  !searchparse /file ../version "#define VERSION_BUILD " VERSION_BUILD
 
   !searchreplace VERSION_MAJOR ${VERSION_MAJOR} " " ""
   !searchreplace VERSION_MINOR ${VERSION_MINOR} " " ""
   !searchreplace VERSION_REVISION ${VERSION_REVISION} " " ""
+  !searchreplace VERSION_BETA ${VERSION_BETA}   " " ""
+  !searchreplace VERSION_BUILD ${VERSION_BUILD} " " ""
   
-  !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}"
+  !if "${VERSION_BUILD}" == "0"
+    !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}"
+  !else
+    !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}${VERSION_BETA}${VERSION_BUILD}"
+  !endif
+  
   !echo "VERSION = ${VERSION}"
   !define AUTHOR "Rainer Schuetze"
   !define APPNAME "VisualD"

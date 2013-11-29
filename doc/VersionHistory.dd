@@ -1,5 +1,74 @@
 Ddoc
 
+2013-11-02 Version 0.3.37
+ $(UL
+  $(LI installer:
+   $(UL
+    $(LI fixed regression: VS 2010/2012 extension pkgdef files almost empty)
+    $(LI now has workaround for x64 debugger of Visual Studio 2012 Shell )
+    $(LI installs cv2pdb 0.27 which fixes a crash when converting DWARF from GDC 4.8)
+    $(LI installs mago 0.8 with pdb and embedded breakpoints support )
+    $(LI installer now picks up dmd2 folder from DMD installation)
+    $(LI added support for VS 2013 to installer, removed VS.NET 2003)
+   ))
+  $(LI "Compile and Run":
+   $(UL
+    $(LI no longer adds "--main" automatically)
+    $(LI removed some other implicite command line options that confused rdmd)
+    $(LI fixed quotes in --eval arguments)
+    $(LI didn't save file if it is not part of a project in the solution)
+   ))
+  $(LI syntax/coverage highlighting
+   $(UL
+    $(LI editor always started with coverage highlighting enabled)
+    $(LI Colorize coverage: 
+     $(UL
+      $(LI disabled if lst file older than source file or deleted)
+      $(LI tweaked line number translation)
+      $(LI now searches for coverage generated files in last execution folders)
+      $(LI added new command "Delete Coverage Files")
+     ))
+    $(LI after changing the "Colored types" the current editor did not update immediately)
+    $(LI user type colorizer settings were forgotten after editing options)
+    $(LI keywords can now also be colored by adding them to the "Colored types")
+   ))
+  $(LI DParser
+   $(UL
+    $(LI updated to $(LINK2 https://github.com/aBothe/D_Parser/commit/72f1bc54f2426954f463f03b215e044174fc1468, recent version))
+    $(LI enabled mixin analysis)
+    $(LI pass deprecation flag to engine)
+    $(LI DParser engine now used by default if installed)
+   ))
+  $(LI vdserver
+   $(UL
+    $(LI add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords and primary expression)
+    $(LI add __parameters as specification in is-expression)
+   ))
+  $(LI build system
+   $(UL
+    $(LI fixed building with -op and source files on different drive than project)
+    $(LI added file options per configuration)
+    $(LI fixed invoking bad command when no files to compile, but additional arguments set)
+    $(LI added global option to display the reason for building a target)
+    $(LI fixed custom build rules executed twice sometimes)
+    $(LI fixed sc.ini evaluation, added support for sections [Environment32] and [Environment64] )
+    $(LI link dependencies can now also be monitored for the 32-bit MS linker)
+    $(LI added VCINSTALLDIR to the list of available macros)
+    $(LI added different options for executable and library search paths to be used for Win32/x64)
+    $(LI x64: linker settings from sc.ini can be overwritten )
+    $(LI x64: linker no longer invoked through dmd)
+   ))
+  $(LI miscellaneous
+   $(UL
+    $(LI added command "Open Folder in Windows Explorer" to project and folder context menu)
+    $(LI goto definition now falls back to JSON information if semantic analysis yields no result)
+    $(LI improved indentation after opening parenthesis to follow next token)
+    $(LI added commands "Collapse unittests" and "Collapse disabled" to the outlining menu)
+    $(LI dviewhelper.dll from cv2pdb now avoids being unloaded after debugger expression evaluation using visualizers)
+   ))
+  $(LI changed license to Boost)
+ )
+
 2013-05-10 $(DDLINK News36,Version 0.3.36)
  $(UL
   $(LI added debug settings to new DMD/GDC project template )

@@ -784,7 +784,7 @@ class ProjectOptions
 		if(useStdLibPath)
 			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
-			cmd ~= (mslink ? " /LIBPATH:" : "+") ~ quoteFilename(normalizeDir(lp));
+			cmd ~= (mslink ? " /LIBPATH:" : "+") ~ quoteFilename(normalizeDir(unquoteArgument(lp)));
 		
 		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def", mslink ? " /DEF:" : plus);
 		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res", plus);

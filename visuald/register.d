@@ -668,32 +668,31 @@ HRESULT RegDeleteRecursive(HKEY keyRoot, wstring path)
 	wstring[] keyNames;
 
 	hr = hrRegOpenKeyEx(keyRoot, path, 0, (KEY_READ & SECURE_ACCESS), &key);
-	if (FAILED(hr)) goto fail;
-
-	LONG lRetCode = RegQueryInfoKeyW(key, null, null, null, &subKeys, &maxKeyLen, 
-	                                 null, null, null, null, null, null);
-	if (ERROR_SUCCESS != lRetCode)
+	if (!FAILED(hr))
 	{
-		hr = HRESULT_FROM_WIN32(lRetCode);
-		goto fail;
-	}
-	if (subKeys > 0)
-	{
-		wchar[] keyName = new wchar[maxKeyLen+1];
-		for (currentKey = 0; currentKey < subKeys; currentKey++)
+		LONG lRetCode = RegQueryInfoKeyW(key, null, null, null, &subKeys, &maxKeyLen, 
+										 null, null, null, null, null, null);
+		if (ERROR_SUCCESS != lRetCode)
 		{
-			ULONG keyLen = maxKeyLen+1;
-			lRetCode = RegEnumKeyExW(key, currentKey, keyName.ptr, &keyLen, null, null, null, null);
-			if (ERROR_SUCCESS == lRetCode)
-				keyNames ~= to_wstring(keyName.ptr, keyLen);
+			hr = HRESULT_FROM_WIN32(lRetCode);
 		}
-		foreach(wstring subkey; keyNames)
-			RegDeleteRecursive(key, subkey);
+		else if (subKeys > 0)
+		{
+			wchar[] keyName = new wchar[maxKeyLen+1];
+			for (currentKey = 0; currentKey < subKeys; currentKey++)
+			{
+				ULONG keyLen = maxKeyLen+1;
+				lRetCode = RegEnumKeyExW(key, currentKey, keyName.ptr, &keyLen, null, null, null, null);
+				if (ERROR_SUCCESS == lRetCode)
+					keyNames ~= to_wstring(keyName.ptr, keyLen);
+			}
+			foreach(wstring subkey; keyNames)
+				RegDeleteRecursive(key, subkey);
+		}
 	}
-
 fail:
 	wstring szPath = path ~ cast(wchar)0;
-	lRetCode = RegDeleteKeyW(keyRoot, szPath.ptr);
+	LONG lRetCode = RegDeleteKeyW(keyRoot, szPath.ptr);
 	if (SUCCEEDED(hr) && (ERROR_SUCCESS != lRetCode))
 		hr = HRESULT_FROM_WIN32(lRetCode);
 	if (key) RegCloseKey(key);
