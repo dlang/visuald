@@ -597,9 +597,13 @@ unreleased Version 0.3.38
   * updated to mago 0.9
     - bugzilla 11547: remove error message when stopping debugging
     - bugzilla 11437: debug info rejected if records don't have "recommended" order
+    - bugzilla 11030: set breakpoint in all template instances
   * updated dparser to 08f760b6181d1e40a29f3e03a7eafcd40bf4dc34
     - added options to enable/disable mixin analysis and UFCS expansions
   * added support for string import dependencies (needs dmd 2.065)
   * fixed default library path for x64 (contained spaces, but were not quoted,
     added default for 8.1 SDK)
   * fixed passing quoted library paths to linker
+  * fixed project and completion icons being converted to 16 color bitmaps
+  * completion box now displays appropriate icons and tooltip with dparser
+  * tool tips now expand some Ddoc macros for better readability

@@ -37,7 +37,8 @@ Project:
 - pass import path from static lib project to dependent projects
 - single file compilation for file configuration
 - custom command: quotes in dependencies not supported
-- property pages don't follow resize
+- VS2013: property pages don't follow resize
+- custom command: writes build batch to souce folder
 
 Language service:
 -----------------

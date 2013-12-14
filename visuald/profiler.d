@@ -439,8 +439,7 @@ private:
 		_wndFuncList.SendMessage(LVM_DELETEALLITEMS);
 		_wndFuncList.SendMessage(LVM_REMOVEALLGROUPS);
 
-		HIMAGELIST himl = ImageList_LoadImageA(getInstance(), kImageBmp.ptr, 16, 10, CLR_DEFAULT,
-											IMAGE_BITMAP, LR_LOADTRANSPARENT);
+		HIMAGELIST himl = LoadImageList(getInstance(), kImageBmp.ptr, 16, 16);
 		if(himl)
 			_wndFuncList.SendMessage(LVM_SETIMAGELIST, LVSIL_SMALL, cast(LPARAM)himl);
 

@@ -77,7 +77,7 @@ IDR_FULLDECO                ICON    "resources/fulldeco.ico"
 BMP_DIMAGELIST  BITMAP "resources/dimagelist.bmp"
 BMP_SPLASHSCRN  BITMAP "resources/dsplashscreenicon.bmp"
 //BMP_VSIMAGELIST BITMAP "resources/vsimagelist.bmp"
-//BMP_COMPLETION  BITMAP "resources/completionset.bmp"
+BMP_COMPLETION  BITMAP "resources/completionset.bmp"
 
 2001  CTMENU       "Resources/PkgCmd.cto"
 

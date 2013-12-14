@@ -1196,15 +1196,15 @@ version(none)
 			case UIHWCMDID_EnterKey:
 				hr = node.DoDefaultAction();
 				break;
-                
+
 			case UIHWCMDID_StartLabelEdit:
 				hr = node.OnStartLabelEdit();
 				break;
-                
+
 			case UIHWCMDID_CommitLabelEdit:
 				hr = node.OnCommitLabelEdit();
 				break;
-                
+
 			case UIHWCMDID_CancelLabelEdit:
 				hr = node.OnCancelLabelEdit();
 				break;
@@ -1228,8 +1228,8 @@ version(none)
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
-        
-        override int GetSite(IServiceProvider *ppSP)
+
+	override int GetSite(IServiceProvider *ppSP)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
@@ -1337,8 +1337,8 @@ version(none)
 			break;
 		case VSHPROPID_IconImgList:
 			var.vt = VT_I4;
-			var.lVal = cast(int) ImageList_LoadImageA(g_hInst, kImageBmp.ptr, 16, 10, CLR_DEFAULT,
-								  IMAGE_BITMAP, LR_LOADTRANSPARENT);
+			auto himagelst = LoadImageList(g_hInst, kImageBmp.ptr, 16, 16);
+			var.lVal = cast(int) himagelst;
 			break;
 		case VSHPROPID_IconHandle:
 		case VSHPROPID_IconIndex:

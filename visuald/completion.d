@@ -20,6 +20,7 @@ import std.conv;
 
 import stdext.array;
 import stdext.file;
+import stdext.ddocmacros;
 
 import visuald.comutil;
 import visuald.logutil;
@@ -83,11 +84,72 @@ class Declarations
 	{ 
 		return 0;
 	}
+
+	bool splitName(int index, string* pname, string* ptype, string* pdesc)
+	{
+		if(index < 0 || index >= mNames.length)
+			return false;
+		string s = mNames[index];
+		auto pos1 = countUntil(s, ':');
+		string name, type, desc;
+		if(pos1 >= 0)
+		{
+			name = s[0 .. pos1];
+			auto pos2 = countUntil(s[pos1 + 1 .. $], ':');
+			if(pos2 >= 0)
+			{
+				type = s[pos1 + 1 .. pos1 + 1 + pos2];
+				desc = s[pos1 + 1 + pos2 + 1 .. $];
+			}
+			else
+				type = s[pos1 + 1 .. $];
+		}
+		else
+			name = s;
+
+		if(pname)
+			*pname = name;
+		if(ptype)
+			*ptype = type;
+		if(pdesc)
+			*pdesc = desc;
+		return true;
+	}
+
 	int GetGlyph(int index)
 	{
-		if(index < 0 || index >= mGlyphs.length)
-			return 0;
-		return mGlyphs[index];
+		version(none)
+		{
+			if(index < 0 || index >= mGlyphs.length)
+				return 0;
+			return mGlyphs[index];
+		}
+		else
+		{
+			string type;
+			if(!splitName(index, null, &type, null))
+				return CSIMG_DMODULE;
+
+			switch(type)
+			{
+				case "KW":   return CSIMG_KEYWORD;
+				case "PROP": return CSIMG_PROPERTY;
+				case "TEXT": return 3;
+				case "MOD":  return CSIMG_DMODULE;
+				case "PKG":  return CSIMG_PACKAGE;
+				case "MTHD": return CSIMG_MEMBER;
+				case "STRU": return CSIMG_STRUCT;
+				case "UNIO": return CSIMG_UNION;
+				case "CLSS": return CSIMG_CLASS;
+				case "IFAC": return CSIMG_INTERFACE;
+				case "TMPL": return CSIMG_TEMPLATE;
+				case "ENUM": return CSIMG_ENUM;
+				case "EVAL": return CSIMG_ENUMMEMBER;
+				case "NMIX": return CSIMG_UNKNOWN2;
+				case "VAR":  return CSIMG_FIELD;
+				default:     return 0;
+			}
+		}
 	}
 	string GetDisplayText(int index)
 	{
@@ -95,15 +157,28 @@ class Declarations
 	}
 	string GetDescription(int index)
 	{
-		if(index < 0 || index >= mDescriptions.length)
-			return "";
-		return mDescriptions[index];
+		version(none)
+		{
+			if(index < 0 || index >= mDescriptions.length)
+				return "";
+			return mDescriptions[index];
+		}
+		else
+		{
+			string desc;
+			splitName(index, null, null, &desc);
+			desc = replace(desc, "\a", "\n");
+			
+			string res = phobosDdocExpand(desc);
+
+			return res;
+		}
 	}
 	string GetName(int index)
 	{
-		if(index < 0 || index >= mNames.length)
-			return "";
-		return mNames[index];
+		string name;
+		splitName(index, &name, null, null);
+		return name;
 	}
 
 	bool GetInitialExtent(IVsTextView textView, int* line, int* startIdx, int* endIdx)
@@ -419,8 +494,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 	this(ImageList imageList, Source source)
 	{
-		mImageList = ImageList_LoadImageA(g_hInst, kImageBmp.ptr, 16, 10, CLR_DEFAULT,
-						  IMAGE_BITMAP, LR_LOADTRANSPARENT);
+		mImageList = LoadImageList(g_hInst, kImageCompletion.ptr, 16, 16);
 		mSource = source;
 	}
 

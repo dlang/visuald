@@ -51,7 +51,8 @@ VDC_SRC = $(VDC)/parser/aggr.d \
 RSGC_SRC = ../rsgc/gc.d ../rsgc/gcx.d ../rsgc/gcstats.d ../rsgc/gcalloc.d ../rsgc/gcbits.d
 
 STDEXT_SRC = ../stdext/file.d ../stdext/array.d ../stdext/path.d ../stdext/util.d \
-             ../stdext/string.d ../stdext/com.d ../stdext/httpget.d ../stdext/container.d
+             ../stdext/string.d ../stdext/com.d ../stdext/httpget.d ../stdext/container.d \
+             ../stdext/ddocmacros.d
 # FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
 
 C2D_SRC = ../c2d/cpp2d.d ../c2d/ast.d ../c2d/dlist.d ../c2d/dgutil.d \
