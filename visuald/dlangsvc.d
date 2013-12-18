@@ -98,16 +98,20 @@ class LanguageService : DisposingComObject,
 	{
 		//mPackage = pkg;
 		mUpdateSolutionEvents = newCom!UpdateSolutionEvents(this);
-		mVDServerClient = new VDServerClient;
 	}
 
 	~this()
 	{
 	}
 
-	void startVDServer()
+	@property VDServerClient vdServerClient()
 	{
-		mVDServerClient.start();
+		if(!mVDServerClient)
+		{
+			mVDServerClient = new VDServerClient;
+			mVDServerClient.start();
+		}
+		return mVDServerClient;
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -162,7 +166,8 @@ class LanguageService : DisposingComObject,
 			mgr.Release();
 		mCodeWinMgrs = mCodeWinMgrs.init;
 
-		mVDServerClient.shutDown();
+		if(mVDServerClient)
+			mVDServerClient.shutDown();
 
 		if(mUpdateSolutionEventsCookie != VSCOOKIE_NIL)
 		{
@@ -612,7 +617,8 @@ class LanguageService : DisposingComObject,
 	//////////////////////////////////////////////////////////////
 	bool OnIdle()
 	{
-		mVDServerClient.onIdle();
+		if(mVDServerClient)
+			mVDServerClient.onIdle();
 
 		CheckGC(false);
 		for(int i = 0; i < mSources.length; i++)
@@ -712,25 +718,25 @@ class LanguageService : DisposingComObject,
 	uint GetTip(Source src, TextSpan* pSpan, GetTipCallBack cb)
 	{
 		ConfigureSemanticProject(src);
-		return mVDServerClient.GetTip(src.GetFileName(), pSpan, cb);
+		return vdServerClient.GetTip(src.GetFileName(), pSpan, cb);
 	}
 	uint GetDefinition(Source src, TextSpan* pSpan, GetDefinitionCallBack cb)
 	{
 		ConfigureSemanticProject(src);
-		return mVDServerClient.GetDefinition(src.GetFileName(), pSpan, cb);
+		return vdServerClient.GetDefinition(src.GetFileName(), pSpan, cb);
 	}
 	uint GetSemanticExpansions(Source src, string tok, int line, int idx, GetExpansionsCallBack cb)
 	{
 		ConfigureSemanticProject(src);
 		wstring expr = src.FindExpressionBefore(line, idx);
-		return mVDServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, expr, cb);
+		return vdServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, expr, cb);
 	}
 	void UpdateSemanticModule(Source src)
 	{
 	}
 	void ClearSemanticProject()
 	{
-		mVDServerClient.ClearSemanticProject();
+		vdServerClient.ClearSemanticProject();
 	}
 
 	void ConfigureSemanticProject(Source src)
@@ -765,14 +771,14 @@ class LanguageService : DisposingComObject,
 			versionids = tokenizeArgs(cfgopts.versionids);
 			debugids = tokenizeArgs(cfgopts.debugids); 
 		}
-		mVDServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp), assumeUnique(versionids), assumeUnique(debugids), flags);
+		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp), assumeUnique(versionids), assumeUnique(debugids), flags);
 	}
 
 	bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)
 	{
 		auto pos = vdc.util.TextPos(startIndex, startLine);
 		return src.mBinaryIsIn.contains(pos) !is null;
-		//return mVDServerClient.isBinaryOperator(src.GetFileName(), startLine, startIndex, endLine, endIndex);
+		//return vdServerClient.isBinaryOperator(src.GetFileName(), startLine, startIndex, endLine, endIndex);
 	}
 
 private:
@@ -3262,7 +3268,7 @@ else
 		if(Package.GetGlobalOptions().parseSource)
 		{
 			auto langsvc = Package.GetLanguageService();
-			langsvc.mVDServerClient.UpdateModule(GetFileName(), mParseText, verbose, &OnUpdateModule);
+			langsvc.vdServerClient.UpdateModule(GetFileName(), mParseText, verbose, &OnUpdateModule);
 		}
 
 		return true;

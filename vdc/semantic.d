@@ -282,7 +282,7 @@ class Scope
 		if(auto sym = ident in symbols)
 			addunique(*sym, s);
 		else
-			symbols[ident] = [s : true];
+			symbols[ident] = Set!Symbol([s : true]);
 	}
 	
 	void addImport(Import imp)

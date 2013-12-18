@@ -503,6 +503,7 @@
    <File path="Resources\AlternateRowColor.ico" />
    <File path="Resources\ascend.ico" />
    <File path="Resources\CaseSensitive.ico" />
+   <File path="Resources\completionset.bmp" />
    <File path="Resources\DAboutBox.ico" />
    <File path="Resources\descend.ico" />
    <File path="Resources\DImageList.bmp" />
@@ -533,7 +534,7 @@ echo If the project rebuilt again and again with this message, touch $(InputDir)
    <File path="Resources\SearchFile.ico" />
    <File path="Resources\SearchSymbol.ico" />
    <File path="Resources\settrace.ico" />
-   <File tool="Custom" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+   <File tool="Custom" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version;resources\dimagelist.bmp" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 rem if errorlevel 1 goto reportError
 rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" outfile="$(OutDir)\visuald.res" linkoutput="true" />
    <File path="Resources\WholeWord.ico" />

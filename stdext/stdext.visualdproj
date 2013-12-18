@@ -1132,6 +1132,7 @@
   <File path="array.d" />
   <File path="com.d" />
   <File path="container.d" />
+  <File path="ddocmacros.d" />
   <File path="file.d" />
   <File path="httpget.d" />
   <File path="path.d" />

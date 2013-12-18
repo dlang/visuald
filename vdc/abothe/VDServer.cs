@@ -1,4 +1,4 @@
-﻿//
+﻿﻿﻿//
 // To be used by Visual D, set registry entry
 // HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\9.0D\ToolsOptionsPages\Projects\Visual D Settings\VDServerIID
 // to "{002a2de9-8bb6-484d-AA05-7e4ad4084715}"
@@ -60,7 +60,7 @@ namespace DParserCOMServer
 		/// </summary>
 		public void Add(byte Token)
 		{
-			addExpansion(DTokens.Keywords[Token]);
+			addExpansion(DTokens.Keywords[Token], "KW", "");
 		}
 
 		/// <summary>
@@ -68,12 +68,12 @@ namespace DParserCOMServer
 		/// </summary>
 		public void AddPropertyAttribute(string AttributeText)
 		{
-			addExpansion(AttributeText);
+			addExpansion(AttributeText, "PROP", "");
 		}
 
 		public void AddTextItem(string Text, string Description)
 		{
-			addExpansion(Text);
+			addExpansion(Text, "TEXT", Description);
 		}
 
 		/// <summary>
@@ -82,7 +82,45 @@ namespace DParserCOMServer
 		/// <param name="Node"></param>
 		public void Add(INode Node)
 		{
-			addExpansion(Node.Name);
+			string name = Node.Name;
+			if(string.IsNullOrEmpty(name) || !name.StartsWith(prefix))
+				return;
+
+			string type = "I"; // Node.GetType().ToString()
+			if (Node is DMethod)
+				type = "MTHD";
+			else if (Node is DClassLike)
+			{
+				var ctype = (Node as DClassLike).ClassType;
+				if (ctype == DTokens.Struct)
+					type = "STRU";
+				else if (ctype == DTokens.Class)
+					type = "CLSS";
+				else if (ctype == DTokens.Interface)
+					type = "IFAC";
+				else if (ctype == DTokens.Template)
+					type = "TMPL";
+				else if (ctype == DTokens.Union)
+					type = "UNIO";
+			}
+			else if (Node is DEnum)
+				type = "ENUM";
+			else if (Node is DEnumValue)
+				type = "EVAL";
+			else if (Node is NamedTemplateMixinNode)
+				type = "NMIX";
+			else if (Node is DVariable)
+				type = "VAR";
+			else if (Node is DModule)
+				type = "MOD";
+
+			string desc = Node.Description.Trim();
+			string proto = VDServerCompletionDataGenerator.GeneratePrototype(Node);
+
+			if (!string.IsNullOrEmpty(proto) && !string.IsNullOrEmpty(desc))
+				proto = proto + "\n\n";
+			desc = proto + desc;
+			addExpansion(name, type, desc);
 		}
 
 		/// <summary>
@@ -93,21 +131,237 @@ namespace DParserCOMServer
 		public void AddModule(DModule module,string nameOverride)
 		{
 			if(string.IsNullOrEmpty(nameOverride))
-				addExpansion(module.Name);
+				addExpansion(module.Name, "MOD", "");
 			else
-				addExpansion(nameOverride);
+				addExpansion(nameOverride, "MOD", "");
 		}
 
 		public void AddPackage(string packageName)
 		{
-			addExpansion(packageName);
+			addExpansion(packageName, "PKG", "");
 		}
 
-		void addExpansion(string name)
+		void addExpansion(string name, string type, string desc)
 		{
 			if(!string.IsNullOrEmpty(name))
 				if(name.StartsWith(prefix))
-					expansions += name + "\n";
+					expansions += name + ":" + type + ":" + desc.Replace("\r\n", "\a").Replace('\n', '\a')  + "\n";
+		}
+
+		// generate prototype
+		public static string GeneratePrototype(INode node, int currentParameter = -1, bool isInTemplateArgInsight = false)
+		{
+			if(node is DMethod)
+				return VDServerCompletionDataGenerator.GeneratePrototype(node as DMethod, isInTemplateArgInsight, currentParameter);
+			if(node is DVariable)
+				return VDServerCompletionDataGenerator.GeneratePrototype(node as DVariable);
+			if(node is DelegateType)
+				return VDServerCompletionDataGenerator.GeneratePrototype(node as DelegateType, currentParameter);
+			if(node is DelegateDeclaration)
+				return VDServerCompletionDataGenerator.GeneratePrototype(node as DelegateDeclaration, currentParameter);
+			if(node is AbstractType)
+				return VDServerCompletionDataGenerator.GeneratePrototype(node as AbstractType, currentParameter, isInTemplateArgInsight);
+			return null;
+		}
+
+		public static string GeneratePrototype(AbstractType t, int currentParameter = -1, bool isInTemplateArgInsight = false)
+		{
+			var ms = t as MemberSymbol;
+			if (ms != null)
+			{
+				if (ms.Definition is DVariable)
+				{
+					var bt = DResolver.StripAliasSymbol(ms.Base);
+					if (bt is DelegateType)
+						return VDServerCompletionDataGenerator.GeneratePrototype(bt as DelegateType, currentParameter);
+				}
+				else if (ms.Definition is DMethod)
+					return VDServerCompletionDataGenerator.GeneratePrototype(ms.Definition as DMethod, isInTemplateArgInsight, currentParameter);
+			}
+			else if (t is TemplateIntermediateType)
+				return VDServerCompletionDataGenerator.GeneratePrototype(t as TemplateIntermediateType, currentParameter);
+
+			return null;
+		}
+
+		public static string GeneratePrototype(DelegateType dt, int currentParam = -1)
+		{
+			var dd = dt.TypeDeclarationOf as DelegateDeclaration;
+			if (dd != null)
+				return VDServerCompletionDataGenerator.GeneratePrototype(dd, currentParam);
+
+			return null;
+		}
+
+		public static string GeneratePrototype(DelegateDeclaration dd, int currentParam = -1)
+		{
+			var sb = new StringBuilder("Delegate: ");
+
+			if (dd.ReturnType != null)
+				sb.Append(dd.ReturnType.ToString(true)).Append(' ');
+
+			if (dd.IsFunction)
+				sb.Append("function");
+			else
+				sb.Append("delegate");
+
+			sb.Append('(');
+			if (dd.Parameters != null && dd.Parameters.Count != 0)
+			{
+				for (int i = 0; i < dd.Parameters.Count; i++)
+				{
+					var p = dd.Parameters[i] as DNode;
+					if (i == currentParam)
+					{
+						sb.Append(p.ToString(false)).Append(',');
+					}
+					else
+						sb.Append(p.ToString(false)).Append(',');
+				}
+
+				sb.Remove(sb.Length - 1, 1);
+			}
+			sb.Append(')');
+
+			return sb.ToString();
+		}
+
+		public static string GeneratePrototype(DVariable dv)
+		{
+			var sb = new StringBuilder("Variable in ");
+			sb.Append(AbstractNode.GetNodePath (dv, false));
+			sb.Append(": ");
+
+			sb.Append(dv.ToString (false));
+			return sb.ToString();
+		}
+
+		public static string GeneratePrototype(DMethod dm, bool isTemplateParamInsight=false, int currentParam=-1)
+		{
+			var sb = new StringBuilder("");
+
+			string name;
+			switch (dm.SpecialType)
+			{
+			case DMethod.MethodType.Constructor:
+				sb.Append("Constructor");
+				name = dm.Parent.Name;
+				break;
+			case DMethod.MethodType.Destructor:
+				sb.Append("Destructor");
+				name = dm.Parent.Name;
+				break;
+			case DMethod.MethodType.Allocator:
+				sb.Append("Allocator");
+				name = dm.Parent.Name;
+				break;
+			default:
+				sb.Append("Method");
+				name = dm.Name;
+				break;
+			}
+			sb.Append(" in ");
+			sb.Append(AbstractNode.GetNodePath (dm, false));
+			sb.Append(": ");
+
+			if (dm.Attributes != null && dm.Attributes.Count > 0)
+				sb.Append(dm.AttributeString + ' ');
+
+			if (dm.Type != null)
+			{
+				sb.Append(dm.Type.ToString(true));
+				sb.Append(" ");
+			}
+			else if (dm.Attributes != null && dm.Attributes.Count != 0)
+			{
+				foreach (var attr in dm.Attributes)
+				{
+					var m = attr as Modifier;
+					if (m != null && DTokens.StorageClass[m.Token])
+					{
+						sb.Append(DTokens.GetTokenString(m.Token));
+						sb.Append(" ");
+						break;
+					}
+				}
+			}
+
+			sb.Append(name);
+
+			// Template parameters
+			if (dm.TemplateParameters != null && dm.TemplateParameters.Length > 0)
+			{
+				sb.Append("(");
+
+				for (int i = 0; i < dm.TemplateParameters.Length; i++)
+				{
+					var p = dm.TemplateParameters[i];
+					if (isTemplateParamInsight && i == currentParam)
+					{
+						sb.Append(p.ToString());
+					}
+					else
+						sb.Append(p.ToString());
+
+					if (i < dm.TemplateParameters.Length - 1)
+						sb.Append(",");
+				}
+
+				sb.Append(")");
+			}
+
+			// Parameters
+			sb.Append("(");
+
+			for (int i = 0; i < dm.Parameters.Count; i++)
+			{
+				var p = dm.Parameters[i] as DNode;
+				if (!isTemplateParamInsight && i == currentParam)
+				{
+					sb.Append(p.ToString(true, false));
+				}
+				else
+					sb.Append(p.ToString(true, false));
+
+				if (i < dm.Parameters.Count - 1)
+					sb.Append(",");
+			}
+
+			sb.Append(")");
+			return sb.ToString();
+		}
+
+		public static string GeneratePrototype(TemplateIntermediateType tit, int currentParam = -1)
+		{
+			var sb = new StringBuilder("");
+
+			if (tit is ClassType)
+				sb.Append("Class");
+			else if (tit is InterfaceType)
+				sb.Append("Interface");
+			else if (tit is TemplateType)
+				sb.Append("Template");
+			else if (tit is StructType)
+				sb.Append("Struct");
+			else if (tit is UnionType)
+				sb.Append("Union");
+
+			var dc = tit.Definition;
+			sb.Append(" in ");
+			sb.Append(AbstractNode.GetNodePath (dc, false));
+			sb.Append(": ").Append(tit.Name);
+			if (dc.TemplateParameters != null && dc.TemplateParameters.Length != 0)
+			{
+				sb.Append('(');
+				for (int i = 0; i < dc.TemplateParameters.Length; i++)
+				{
+					sb.Append(dc.TemplateParameters[i].ToString());
+					sb.Append(',');
+				}
+				sb.Remove(sb.Length - 1, 1).Append(')');
+			}
+
+			return sb.ToString ();
 		}
 
 		public string expansions;
@@ -216,14 +470,18 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
 			List<AbstractTooltipContent> content = AbstractTooltipProvider.BuildToolTip(_editorData);
-			if(content == null || content.Count == 0)
+			if (content == null || content.Count == 0)
 				_tipText = "";
 			else
-				foreach (var c in content)
-					if(string.IsNullOrWhiteSpace(c.Description))
-				        _tipText += c.Title + "\n";
+				foreach (var c in content) 
+				{
+					if (!string.IsNullOrEmpty (_tipText))
+						_tipText += "\n\n";
+					if (string.IsNullOrWhiteSpace (c.Description))
+						_tipText += c.Title;
 					else
-				        _tipText += c.Title + ":" + c.Description + "\n";
+						_tipText += c.Title + ":\n" + c.Description;
+				}
 
 			//MessageBox.Show("GetTip()");
 			//throw new NotImplementedException();

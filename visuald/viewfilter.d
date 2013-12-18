@@ -49,6 +49,7 @@ import sdk.vsi.msdbg;
 import stdext.array;
 import stdext.path;
 import stdext.string;
+import stdext.ddocmacros;
 
 import std.string;
 import std.ascii;
@@ -1572,9 +1573,16 @@ version(none) // quick info tooltips not good enough yet
 
 	extern(D) void OnGetTipText(uint request, string filename, string text, TextSpan span)
 	{
-		mTipText = text;
+		mTipText = phobosDdocExpand(text);
+
 		mTipSpan = span;
 		mTipRequest = request;
+
+		version(tip)
+		{
+			mTextTipData.Init(mView, "Huu: " ~ text);
+			mTextTipData.UpdateView();
+		}
 	}
 
 	bool OnIdle()
@@ -1657,7 +1665,7 @@ class TextTipData : DisposingComObject, IVsTextTipData
 		mTipWindow = release(mTipWindow);
 	}
 
-	HRESULT GetTipText (/+[out, custom(uuid_IVsTextTipData, "optional")]+/ BSTR *pbstrText, 
+	HRESULT GetTipText(/+[out, custom(uuid_IVsTextTipData, "optional")]+/ BSTR *pbstrText, 
 		/+[out]+/ BOOL *pfGetFontInfo)
 	{
 		if(pbstrText)
@@ -1668,8 +1676,10 @@ class TextTipData : DisposingComObject, IVsTextTipData
 	}
 
 	// NOTE: *pdwFontAttr will already have been memset-ed to zeroes, so you can set only the indices that are not normal
-    HRESULT GetTipFontInfo (in int cChars, /+[out, size_is(cChars)]+/ ULONG *pdwFontAttr)
+    HRESULT GetTipFontInfo(in int cChars, /+[out, size_is(cChars)]+/ ULONG *pdwFontAttr)
 	{
+		// needs *pfGetFontInfo = TRUE; above
+		// 1 for bold
 		return E_NOTIMPL;
 	}
 	
@@ -1685,14 +1695,14 @@ class TextTipData : DisposingComObject, IVsTextTipData
 		return S_OK;
 	}
 	
-	HRESULT OnDismiss ()
+	HRESULT OnDismiss()
 	{
 		mTextView = null;
 		mDisplayed = false;
 		return S_OK;
 	}
 	
-	HRESULT UpdateView ()
+	HRESULT UpdateView()
 	{
 		if (mTextView && mTipWindow)
 		{
