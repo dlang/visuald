@@ -452,7 +452,6 @@ version(none)
 		}
 		
 		mOptions.initFromRegistry();
-		mLangsvc.startVDServer();
 
 		//register with ComponentManager for Idle processing
 		IOleComponentManager componentManager;
