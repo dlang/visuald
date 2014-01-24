@@ -549,4 +549,8 @@ unreleased Version 0.3.37
     command line options that confused rdmd, fixed quotes in --eval arguments
   * Colorize coverage: disabled if lst file older than source file, tweaked line number translation
   * update DParser, now mixin-analysis enabled, pass -deprecated to analysis
+  * add __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__ as keywords
+  * keywords can now also be colored by adding them to the "Colored types"
+  * after changing the "Colored types" the current editor did not update immediately
+  
   
