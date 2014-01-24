@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.build;
 
@@ -24,6 +24,7 @@ import visuald.pkgutil;
 import stdext.path;
 import stdext.file;
 import stdext.string;
+import stdext.array;
 
 import std.c.stdlib;
 import std.windows.charset;
@@ -54,7 +55,6 @@ import xml = visuald.xmlwrap;
 // threaded builds cause Visual Studio to close the solution
 // version = threadedBuild;
 // version = taskedBuild;
-// version = showUptodateFailure;
 
 version(taskedBuild)
 {
@@ -289,7 +289,8 @@ else
 	//////////////////////////////////////////////////////////////////////
 	bool buildCustomFile(CFileNode file)
 	{
-		if(!mConfig.isUptodate(file))
+		string reason;
+		if(!mConfig.isUptodate(file, &reason))
 		{
 			string cmdline = mConfig.GetCompileCommand(file);
 			if(cmdline.length)
@@ -297,6 +298,7 @@ else
 				string workdir = mConfig.GetProjectDir();
 				string outfile = mConfig.GetOutputFile(file);
 				string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+				showUptodateFailure(reason, outfile);
 				removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
 				HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
 				if (hr != S_OK)
@@ -326,6 +328,8 @@ else
 			delegate (CHierNode n) { 
 				if(CFileNode file = cast(CFileNode) n)
 				{
+					if(files.contains(file))
+						return false;
 					if(isStopped())
 						return true;
 					if(!buildCustomFile(file))
@@ -376,6 +380,9 @@ else
 			if(!doCustomBuilds())
 				return false;
 
+			if(!mLastUptodateFailure.empty)
+				showUptodateFailure(mLastUptodateFailure);
+
 			string cmdline = mConfig.getCommandLine();
 			string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
 			hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
@@ -403,12 +410,8 @@ else
 					return true;
 				if(CFileNode file = cast(CFileNode) n)
 				{
-					if(!mConfig.isUptodate(file))
-					{
-						version(showUptodateFailure)
-							writeToBuildOutputPane(file.GetName() ~ " not uptodate\n");
+					if(!mConfig.isUptodate(file, null))
 						return true;
-					}
 				}
 				return false;
 			});
@@ -422,30 +425,30 @@ else
 
 		string deppath = makeFilenameAbsolute(mConfig.GetDependenciesPath(), workdir);
 		if(!std.file.exists(deppath))
-		{
-			version(showUptodateFailure)
-				writeToBuildOutputPane("dependency file " ~ deppath ~ " does not exist\n");
-			return false;
-		}
+			return showUptodateFailure("dependency file " ~ deppath ~ " does not exist");
+
 		if(!getFilenamesFromDepFile(deppath, files))
-		{
-			version(showUptodateFailure)
-				writeToBuildOutputPane("dependency file " ~ deppath ~ " cannot be read\n");
-			return false;
-		}
+			return showUptodateFailure("dependency file " ~ deppath ~ " cannot be read");
 
 		if(mConfig.hasLinkDependencies())
 		{
 			string lnkdeppath = makeFilenameAbsolute(mConfig.GetLinkDependenciesPath(), workdir);
 			if(!std.file.exists(lnkdeppath))
+				return showUptodateFailure("link dependency file " ~ lnkdeppath ~ " does not exist");
+
+			string lnkdeps;
+			auto lnkdepData = cast(ubyte[])std.file.read(lnkdeppath);
+			if(lnkdepData.length > 1 && lnkdepData[0] == 0xFF && lnkdepData[1] == 0xFE)
 			{
-				version(showUptodateFailure)
-					writeToBuildOutputPane("link dependency file " ~ lnkdeppath ~ " does not exist\n");
-				return false;
+				wstring lnkdepw = cast(wstring)lnkdepData[2..$];
+				lnkdeps = to!string(lnkdepw);
 			}
-			auto lnkdepz = cast(immutable(char)[])std.file.read(lnkdeppath) ~ "\0";
-			int cp = GetKBCodePage();
-			string lnkdeps = fromMBSz(lnkdepz.ptr, cp);
+			else
+			{
+				auto lnkdepz = cast(string)lnkdepData ~ "\0";
+				int cp = GetKBCodePage();
+				lnkdeps = fromMBSz(lnkdepz.ptr, cp);
+			}
 			string[] lnkfiles = splitLines(lnkdeps);
 			makeFilenamesAbsolute(lnkfiles, workdir);
 			files ~= lnkfiles;
@@ -460,6 +463,7 @@ else
 		clearCachedFileTimes();
 		scope(exit) clearCachedFileTimes();
 		
+		mLastUptodateFailure = null;
 		if(!customFilesUpToDate())
 			return false;
 
@@ -468,15 +472,14 @@ else
 
 		string cmdline = mConfig.getCommandLine();
 		if(!compareCommandFile(cmdfile, cmdline))
-		{
-			version(showUptodateFailure)
-				writeToBuildOutputPane("command line changed\n");
-			return false;
-		}
+			return showUptodateFailure("command line changed");
 
 		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
 		string oldestFile;
 		long targettm = getOldestFileTime( [ target ], oldestFile );
+
+		if(targettm == long.min)
+			return showUptodateFailure("target does not exist");
 
 		string[] files;
 		if(!getTargetDependencies(files))
@@ -489,11 +492,7 @@ else
 		long sourcetm = getNewestFileTime(files, newestFile);
 
 		if(targettm <= sourcetm)
-		{
-			version(showUptodateFailure)
-				writeToBuildOutputPane(newestFile ~ " newer than " ~ oldestFile ~ "\n");
-			return false;
-		}
+			return showUptodateFailure("older than " ~ newestFile);
 		return true;
 	}
 
@@ -573,6 +572,20 @@ else
 			scope(exit) release(solutionBuildManager);
 			solutionBuildManager.CancelUpdateSolutionConfiguration();
 		}
+	}
+
+	bool showUptodateFailure(string msg, string target = null)
+	{
+		if(!m_pIVsOutputWindowPane)
+			mLastUptodateFailure = msg;
+		else if(Package.GetGlobalOptions().showUptodateFailure)
+		{
+			if(target.empty)
+				target = mConfig.GetTargetPath();
+			msg = target ~ " not up to date: " ~ msg;
+			OutputText(msg); // writeToBuildOutputPane
+		}
+		return false;
 	}
 
 	void beginLog()
@@ -676,6 +689,7 @@ else
 	bool mSuccess = false;
 	bool mCreateLog = true;
 	string mBuildLog;
+	string mLastUptodateFailure;
 };
 
 class CLaunchPadEvents : DComObject, IVsLaunchPadEvents
@@ -814,15 +828,19 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	string batchFileText = insertCr(cmdline);
 	string output;
 	
+	Package.GetGlobalOptions().addBuildPath(strProjectDir);
+
 	string cmdfile = buildfile ~ ".cmd";
 	
 	assert(pBuilder.m_srpIVsLaunchPadFactory);
 	ComPtr!(IVsLaunchPad) srpIVsLaunchPad;
 	hr = pBuilder.m_srpIVsLaunchPadFactory.CreateLaunchPad(&srpIVsLaunchPad.ptr);
+	scope(exit) pBuilder.addCommandLog(target, cmdline, output);
+
 	if(FAILED(hr))
 	{
 		output = format("internal error: IVsLaunchPadFactory.CreateLaunchPad failed with rc=%x", hr);
-		goto failure;
+		return hr;
 	}
 	assert(srpIVsLaunchPad.ptr);
 
@@ -845,7 +863,7 @@ version(none)
 	if(FAILED(hr))
 	{
 		output = format("internal error: IVsLaunchPad.ptr.ExecBatchScript failed with rc=%x", hr);
-		goto failure;
+		return hr;
 	}
 } else {
 	try
@@ -899,9 +917,9 @@ version(none)
 	if(FAILED(hr))
 	{
 		output = format("internal error: IVsLaunchPad.ptr.ExecCommand failed with rc=%x", hr);
-		goto failure;
+		return hr;
 	}
-	else if(result != 0)
+	if(result != 0)
 		hr = S_FALSE;
 }
 	// don't know how to get at the exit code, so check output string
@@ -923,8 +941,6 @@ version(none)
 			hr = S_FALSE;
 		}
 	}
-failure:
-	pBuilder.addCommandLog(target, cmdline, output);
 	return hr;
 }
 
@@ -1133,6 +1149,7 @@ else
 		uint pos = 0;
 		uint openpos = 0;
 		bool skipNext = false;
+		bool stringImport = false;
 		while(pos < txt.length)
 		{
 			dchar ch = decode(txt, pos);
@@ -1150,20 +1167,31 @@ else
 				// only check lines that import "object", these are written once per file
 				const string kCheck1 = " : public : object ";
 				const string kCheck2 = " : private : object "; // added after 2.060
+				const string kCheck3 = " : string : "; // string imports added after 2.064
 				if((pos + kCheck1.length <= txt.length && txt[pos .. pos + kCheck1.length] == kCheck1) ||
-				   (pos + kCheck2.length <= txt.length && txt[pos .. pos + kCheck2.length] == kCheck2))
+				   (pos + kCheck2.length <= txt.length && txt[pos .. pos + kCheck2.length] == kCheck2) ||
+				   stringImport)
 				{
 					string file = txt[openpos .. pos-1];
 					file = unEscapeFilename(file);
 					aafiles[file] = 1;
 					openpos = 0;
+					stringImport = false;
 					cntValid++;
+				}
+				else if(pos + kCheck3.length <= txt.length && txt[pos .. pos + kCheck3.length] == kCheck3)
+				{
+					// wait for the next file name in () on the same line
+					openpos = 0;
+					stringImport = true;
 				}
 			}
 			else if(ch == '\n')
+			{
 				openpos = 0;
+				stringImport = false;
+			}
 		}
-				
 }
 	}
 	catch(Exception e)
@@ -1172,7 +1200,8 @@ else
 		// file read error
 	}
 
-	files ~= aafiles.keys;
+	string[] keys = aafiles.keys; // workaround for bad codegen with files ~= aafiles.keys
+	files ~= keys;
 	files.sort; // for faster file access?
 	return cntValid > 0;
 }

@@ -34,10 +34,11 @@ Project:
   - separate compile + link does not write to object dir
   - ddoc files
 - additional options for resource compiler
-- compile and run current buffer/selection
 - pass import path from static lib project to dependent projects
-- file properties per configuration
 - single file compilation for file configuration
+- custom command: quotes in dependencies not supported
+- VS2013: property pages don't follow resize
+- custom command: writes build batch to souce folder
 
 Language service:
 -----------------
@@ -45,7 +46,6 @@ Language service:
 - use spell-checker on completion?
 - case insensitive completion?
 - showScope: function/delegate literal not shown correctly, in/out/body
-- collapse disabled version/debug blocks
 - disable parsing/outlining for large files?
 - replace token: empty dialog when opened without resizing
 - check indentation of multiple string literals on several lines
@@ -64,7 +64,7 @@ Lexer/Parser:
 - do not parse file if it is D1?
 - deprecated syntax
 - syntax error with "@disable new()"
-- integrate d_parser.dll
+- 0.ident
 
 Semantics:
 ---------------
@@ -138,13 +138,13 @@ Unsorted
 =========
 - parse all files in project at startup
 - COM leaks in VS2012 (VS2010?)
-- compile from selection/buffer (through rdmd)
 - virustotal reports malicious software
 - reset semantic analysis data
 - goto definition/completion for labels, versions
 - goto definition fallback to JSON
 - highlight compiler-magic identifiers
 
+- compile from selection/buffer (through rdmd)
 - save file before "Compile & run"
 - coverage line highlight after "Compile & run" doesn't update
 - better keeping track of line changes

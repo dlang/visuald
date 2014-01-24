@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.viewfilter;
 
@@ -41,6 +41,7 @@ import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.stdidcmd;
 import sdk.vsi.vsshell;
+import sdk.vsi.vsshell80;
 import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
@@ -48,6 +49,7 @@ import sdk.vsi.msdbg;
 import stdext.array;
 import stdext.path;
 import stdext.string;
+import stdext.ddocmacros;
 
 import std.string;
 import std.ascii;
@@ -90,7 +92,8 @@ version(tip)
 		mCookieTextViewEvents = Advise!(IVsTextViewEvents)(mView, this);
 
 		mView.AddCommandFilter(this, &mNextTarget);
-		
+		hookWindowProc(cast(HWND) mView.GetWindowHandle());
+
 version(tip)
 		mTextTipData = addref(newCom!TextTipData);
 	}
@@ -115,7 +118,54 @@ version(tip)
 			mTextTipData.Dispose();
 			mTextTipData = release(mTextTipData);
 		}
+		unhookWindowProc();
 		mCodeWinMgr = null;
+	}
+
+	WNDPROC mPrevProc;
+	HWND mHwnd;
+
+	static ViewFilter[HWND] sHooks;
+
+	extern(Windows) static int WindowProcHook(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		WNDPROC proc;
+		ViewFilter* pvf = hWnd in sHooks;
+		if (pvf)
+			proc = pvf.mPrevProc;
+		if(!proc)
+			proc = &DefWindowProcA;
+		int res = proc(hWnd,uMsg,wParam,lParam);
+		
+		if(Package.GetGlobalOptions().showCoverageMargin)
+			if(uMsg == WM_PAINT && pvf)
+				pvf.mCodeWinMgr.mSource.mColorizer.drawCoverageOverlay(hWnd, wParam, lParam, pvf.mView);
+		
+		return res;
+	}
+
+	bool hookWindowProc(HWND hwnd)
+	{
+		if(mHwnd)
+			return false;
+		
+		mPrevProc = cast(WNDPROC)GetWindowLongPtr(hwnd, GWL_WNDPROC);
+		mHwnd = hwnd;
+		sHooks[mHwnd] = this;
+		SetWindowLongPtr(hwnd, GWL_WNDPROC, cast(uint) &WindowProcHook);
+		return true;
+	}
+
+	bool unhookWindowProc()
+	{
+		if(!mHwnd)
+			return false;
+
+		SetWindowLongPtr(mHwnd, GWL_WNDPROC, cast(uint) mPrevProc);
+		sHooks.remove(mHwnd);
+		mHwnd = null;
+		mPrevProc = null;
+		return true;
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -302,6 +352,12 @@ version(tip)
 
 			case CmdCompileAndRun:
 				return CompileDoc(true, true);
+
+			case CmdCollapseUnittest:
+				return mCodeWinMgr.mSource.CollapseDisabled(true, false);
+
+			case CmdCollapseDisabled:
+				return mCodeWinMgr.mSource.CollapseDisabled(false, true);
 
 			default:
 				break;
@@ -522,7 +578,7 @@ version(tip)
 
 		scope(exit) release(cfg);
 
-		string stool = cfg.GetStaticCompileTool(pFile);
+		string stool = cfg.GetStaticCompileTool(pFile, cfg.getCfgName());
 		if(stool == "DMD")
 			stool = "DMDsingle";
 		if(stool == "DMDsingle")
@@ -560,6 +616,9 @@ version(tip)
 			if(pane)
 				pane.Activate();
 			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
+
+			if(run)
+				Package.GetGlobalOptions().addExecutionPath(cfg.GetProjectDir(), null);
 		}
 		return S_OK;
 	}
@@ -636,6 +695,8 @@ version(tip)
 			case CmdToggleComment:
 			case CmdConvSelection:
 			case CmdCompileAndRun:
+			case CmdCollapseUnittest:
+			case CmdCollapseDisabled:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
@@ -1244,16 +1305,16 @@ else
 		}
 		else
 		{
-			return GotoDefinitionJSON(file);
+			string word = toUTF8(GetWordAtCaret());
+			if(word.length <= 0)
+				return S_FALSE;
+
+			return GotoDefinitionJSON(file, word);
 		}
 	}
 
-	HRESULT GotoDefinitionJSON(string file)
+	HRESULT GotoDefinitionJSON(string file, string word)
 	{
-		string word = toUTF8(GetWordAtCaret());
-		if(word.length <= 0)
-			return S_FALSE;
-
 		Definition[] defs = Package.GetLibInfos().findDefinition(word);
 		if(defs.length == 0)
 		{
@@ -1287,7 +1348,11 @@ else
 				showStatusBarText(format("Cannot open %s(%d) for goto definition", fname, span.iStartLine));
 		}
 		else
-			showStatusBarText("No definition found for '" ~ mLastGotoDef ~ "'");
+		{
+			string word = split(mLastGotoDef, ".")[$-1];
+			GotoDefinitionJSON(mCodeWinMgr.mSource.GetFileName(), word);
+			//showStatusBarText("No definition found for '" ~ mLastGotoDef ~ "'");
+		}
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1508,9 +1573,16 @@ version(none) // quick info tooltips not good enough yet
 
 	extern(D) void OnGetTipText(uint request, string filename, string text, TextSpan span)
 	{
-		mTipText = text;
+		mTipText = phobosDdocExpand(text);
+
 		mTipSpan = span;
 		mTipRequest = request;
+
+		version(tip)
+		{
+			mTextTipData.Init(mView, "Huu: " ~ text);
+			mTextTipData.UpdateView();
+		}
 	}
 
 	bool OnIdle()
@@ -1593,7 +1665,7 @@ class TextTipData : DisposingComObject, IVsTextTipData
 		mTipWindow = release(mTipWindow);
 	}
 
-	HRESULT GetTipText (/+[out, custom(uuid_IVsTextTipData, "optional")]+/ BSTR *pbstrText, 
+	HRESULT GetTipText(/+[out, custom(uuid_IVsTextTipData, "optional")]+/ BSTR *pbstrText, 
 		/+[out]+/ BOOL *pfGetFontInfo)
 	{
 		if(pbstrText)
@@ -1604,8 +1676,10 @@ class TextTipData : DisposingComObject, IVsTextTipData
 	}
 
 	// NOTE: *pdwFontAttr will already have been memset-ed to zeroes, so you can set only the indices that are not normal
-    HRESULT GetTipFontInfo (in int cChars, /+[out, size_is(cChars)]+/ ULONG *pdwFontAttr)
+    HRESULT GetTipFontInfo(in int cChars, /+[out, size_is(cChars)]+/ ULONG *pdwFontAttr)
 	{
+		// needs *pfGetFontInfo = TRUE; above
+		// 1 for bold
 		return E_NOTIMPL;
 	}
 	
@@ -1621,14 +1695,14 @@ class TextTipData : DisposingComObject, IVsTextTipData
 		return S_OK;
 	}
 	
-	HRESULT OnDismiss ()
+	HRESULT OnDismiss()
 	{
 		mTextView = null;
 		mDisplayed = false;
 		return S_OK;
 	}
 	
-	HRESULT UpdateView ()
+	HRESULT UpdateView()
 	{
 		if (mTextView && mTipWindow)
 		{

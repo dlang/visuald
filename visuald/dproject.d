@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.dproject;
 
@@ -2757,11 +2757,26 @@ Error:
 		{
 			string fileName = xml.getAttribute(file, "path");
 			CFileNode node = newCom!CFileNode(fileName);
-			node.SetTool(xml.getAttribute(file, "tool"));
-			node.SetDependencies(xml.getAttribute(file, "dependencies"));
-			node.SetOutFile(xml.getAttribute(file, "outfile"));
-			node.SetCustomCmd(xml.getAttribute(file, "customcmd"));
-			node.SetLinkOutput(xml.getAttribute(file, "linkoutput") == "true");
+
+			static parseFileOptions(CFileNode node, string cfg, xml.Element file)
+			{
+				node.SetTool(cfg, xml.getAttribute(file, "tool"));
+				node.SetDependencies(cfg, xml.getAttribute(file, "dependencies"));
+				node.SetOutFile(cfg, xml.getAttribute(file, "outfile"));
+				node.SetCustomCmd(cfg, xml.getAttribute(file, "customcmd"));
+				node.SetLinkOutput(cfg, xml.getAttribute(file, "linkoutput") == "true");
+			}
+
+			parseFileOptions(node, null, file);
+			node.SetPerConfigOptions(xml.getAttribute(file, "perConfig") == "true");
+
+			xml.Element[] cfgItems = xml.elementsById(file, "Config");
+			foreach(cfgItem; cfgItems)
+			{
+				string cfg = xml.getAttribute(cfgItem, "name");
+				parseFileOptions(node, cfg, cfgItem);
+			}
+
 			cont.Add(node);
 		}
 	}
@@ -2815,18 +2830,33 @@ Error:
 				auto xmlfile = new xml.Element("File");
 				
 				xml.setAttribute(xmlfile, "path", file.GetFilename());
+				if(file.GetPerConfigOptions())
+					xml.setAttribute(xmlfile, "perConfig", "true");
 
-				void setAttrIfNotEmpty(string attr, string val)
+				static void setAttrIfNotEmpty(xml.Element xmlFile, string attr, string val)
 				{
 					if(val.length)
-						xml.setAttribute(xmlfile, attr, val);
+						xml.setAttribute(xmlFile, attr, val);
 				}
-				setAttrIfNotEmpty("tool", file.GetTool());
-				setAttrIfNotEmpty("dependencies", file.GetDependencies());
-				setAttrIfNotEmpty("outfile", file.GetOutFile());
-				setAttrIfNotEmpty("customcmd", file.GetCustomCmd());
-				if(file.GetLinkOutput())
-					xml.setAttribute(xmlfile, "linkoutput", "true");
+				static void writeFileConfig(xml.Element xmlFile, CFileNode file, string cfg)
+				{
+					setAttrIfNotEmpty(xmlFile, "tool", file.GetTool(cfg));
+					setAttrIfNotEmpty(xmlFile, "dependencies", file.GetDependencies(cfg));
+					setAttrIfNotEmpty(xmlFile, "outfile", file.GetOutFile(cfg));
+					setAttrIfNotEmpty(xmlFile, "customcmd", file.GetCustomCmd(cfg));
+					if(file.GetLinkOutput(cfg))
+						xml.setAttribute(xmlFile, "linkoutput", "true");
+				}
+				writeFileConfig(xmlfile, file, null);
+
+				auto cfgs = file.GetConfigOptions().keys;
+				foreach(cfg; cfgs)
+				{
+					auto xmlcfg = new xml.Element("Config");
+					xml.setAttribute(xmlcfg, "name", cfg);
+					writeFileConfig(xmlcfg, file, cfg);
+					xmlfile ~= xmlcfg;
+				}
 				xmlcontainer ~= xmlfile;
 			}
 		}

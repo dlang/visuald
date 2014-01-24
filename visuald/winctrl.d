@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.winctrl;
 
@@ -412,6 +412,19 @@ class Window : Widget
 			if(applyDelegate)
 				if(hdr.code == PSN_APPLY)
 					applyDelegate(this);
+
+			switch(hdr.code)
+			{
+			case TCN_SELCHANGING:
+				// Return FALSE to allow the selection to change.
+				return FALSE;
+			case TCN_SELCHANGE:
+				if(auto tc = cast(TabControl) fromHWND(hdr.hwndFrom))
+					tc.raiseWidget(tc.getCurSel());
+				return FALSE;
+			default:
+				break;
+			}
 			break;
 
 		default:
@@ -706,6 +719,17 @@ class Button : ButtonBase
 	}
 }
 
+class Frame : ButtonBase
+{
+	this(Widget parent, string intext = "", int id = 0) 
+	{
+		HWND parenthwnd = parent ? parent.hwnd : null;
+		createWidget(parent, "BUTTON", intext, BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 0, id);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
+		super(parent);
+	}
+}
+
 class ToolBar : Widget
 {
 	this(Widget parent, uint style, uint exstyle, int id = 0) 
@@ -740,6 +764,82 @@ class ListView : Widget
 	{
 		return .SendMessage(hwnd, msg, 0, cast(LPARAM)&lvi);
 	}
+}
+
+class TabControl : Widget
+{
+	this(Widget parent, string[] tabs, uint style = 0, uint exstyle = 0, int id = 0) 
+	{
+		HWND parenthwnd = parent ? parent.hwnd : null;
+		createWidget(parent, "SysTabControl32", "", style | WS_CHILD | WS_VISIBLE | WS_TABSTOP, exstyle, id);
+		SendMessageA(hwnd, WM_SETFONT, cast(WPARAM)getDialogFont(), 0);
+		super(parent);
+		foreach(i, t; tabs)
+		{
+			TCITEM item;
+			item.mask = TCIF_TEXT;
+			item.iImage = -1;
+			item.pszText = cast(wchar*)toUTF16z(t);
+			SendMessageW(hwnd, TCM_INSERTITEMW, i, cast(LPARAM)&item);
+			auto p = new Window(parent);
+			pages ~= p;
+		}
+		raiseWidget(0);
+	}
+
+	override bool SetWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags)
+	{
+		if(!super.SetWindowPos(hWndInsertAfter, X, Y, cx, cy, uFlags))
+			return false;
+		if(uFlags & SWP_NOSIZE)
+			return false;
+		setPageSize(X, Y, cx, cy);
+		return true;
+	}
+
+	void setPageSize(int X, int Y, int cx, int cy)
+	{
+		RECT r;
+		r.left = X;
+		r.right = X + cx;
+		r.top = Y;
+		r.bottom = Y + cy;
+		SendMessage(TCM_ADJUSTRECT, false, cast(LPARAM)&r);
+
+		foreach(p; pages)
+			p.SetWindowPos(null, &r, SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+
+	void setHeaderSize(int X, int Y, int cx, int cy)
+	{
+		RECT r;
+		r.left = X;
+		r.right = X + cx;
+		r.top = Y;
+		r.bottom = Y + cy;
+		SendMessage(TCM_ADJUSTRECT, false, cast(LPARAM)&r);
+
+		super.setRect(X, Y, cx, r.top - Y);
+	}
+
+	override void setRect(int left, int top, int w, int h)
+	{
+		setHeaderSize(left, top, w, h);
+		setPageSize(left, top, w, h);
+	}
+
+	int getCurSel()
+	{
+		return SendMessage(TCM_GETCURSEL, 0, 0);
+	}
+
+	void raiseWidget(size_t idx)
+	{
+		foreach(i, p; pages)
+			p.setVisible(i == idx);
+	}
+
+	Widget[] pages;
 }
 
 int PopupContextMenu(HWND hwnd, POINT pt, wstring[] entries, int check = -1, int presel = -1)

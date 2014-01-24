@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010-2011 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module vdc.parser.expr;
 
@@ -552,17 +552,18 @@ class CastExpression : UnaryExpression
 
 	static Action shiftModifier(Parser p)
 	{
+		Token tok;
 		switch(p.tok.id)
 		{
 			case TOK_rparen:
-				auto tok = p.popToken();
+				tok = p.popToken();
 				p.topNode!(ast.CastExpression)().attr = tokenToAttribute(tok.id);
 				p.pushState(&stateExpression.shift);
 				return Accept;
 
 			case TOK_const:
 			case TOK_inout:
-				auto tok = p.topToken();
+				tok = p.topToken();
 				if(tok.id != TOK_shared)
 					goto default;
 			L_combineAttr:
@@ -574,7 +575,7 @@ class CastExpression : UnaryExpression
 				return Accept;
 
 			case TOK_shared:
-				auto tok = p.topToken();
+				tok = p.topToken();
 				if(tok.id != TOK_inout && tok.id != TOK_const)
 					goto default;
 				goto L_combineAttr;
@@ -860,6 +861,9 @@ class PrimaryExpression : Expression
 			case TOK_dollar:
 			case TOK___FILE__:
 			case TOK___LINE__:
+			case TOK___FUNCTION__:
+			case TOK___PRETTY_FUNCTION__:
+			case TOK___MODULE__:
 				auto expr = new ast.PrimaryExpression(p.tok);
 				p.pushNode(expr);
 				return Accept;
@@ -1381,6 +1385,8 @@ class TypeOrExpression(ops...)
 //    inout
 //    shared
 //    return
+//    __parameters
+//    __argTypes
 //
 // !is specially treated, because it's a token to the lexer
 class IsExpression : Expression
@@ -1478,6 +1484,8 @@ class TypeSpecialization
 			case TOK_super:
 			case TOK_return:
 			case TOK_typedef:
+			case TOK___parameters:
+			case TOK___argTypes:
 				p.pushNode(new ast.TypeSpecialization(p.tok));
 				return Accept;
 			case TOK_const:

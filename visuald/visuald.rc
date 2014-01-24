@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 /////////////////////////////////////////////////////////////////////////////
 // Resources for Visual D
@@ -77,7 +77,7 @@ IDR_FULLDECO                ICON    "resources/fulldeco.ico"
 BMP_DIMAGELIST  BITMAP "resources/dimagelist.bmp"
 BMP_SPLASHSCRN  BITMAP "resources/dsplashscreenicon.bmp"
 //BMP_VSIMAGELIST BITMAP "resources/vsimagelist.bmp"
-//BMP_COMPLETION  BITMAP "resources/completionset.bmp"
+BMP_COMPLETION  BITMAP "resources/completionset.bmp"
 
 2001  CTMENU       "Resources/PkgCmd.cto"
 
@@ -88,9 +88,15 @@ BMP_SPLASHSCRN  BITMAP "resources/dsplashscreenicon.bmp"
 
 #include "../version"
 
+#if VERSION_BUILD > 0
+#define VERSION_POSTFIX         _str(VERSION_BETA) _str(VERSION_BUILD)
+#else
+#define VERSION_POSTFIX
+#endif
+
 #define VER_COMPANYNAME_STR     "Rainer Schuetze"
 #define VER_FILEVERSION         VERSION_MAJOR,VERSION_MINOR,VERSION_REVISION
-#define VER_FILEVERSION_STR     _str(VERSION_MAJOR.VERSION_MINOR.VERSION_REVISION)
+#define VER_FILEVERSION_STR     _str(VERSION_MAJOR.VERSION_MINOR.VERSION_REVISION) VERSION_POSTFIX
 #define VER_PRODUCTVERSION      VER_FILEVERSION
 #define VER_PRODUCTVERSION_STR  VER_FILEVERSION_STR
 #define VER_LEGALCOPYRIGHT_STR  "(c) 2010-2012 Rainer Schuetze"

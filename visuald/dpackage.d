@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.dpackage;
 
@@ -67,10 +67,13 @@ struct LanguageProperty
 	DWORD value;
 }
 
-const string plk_version = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
-                           extractDefine(import("version"), "VERSION_MINOR");
+const string plk_version  = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
+                            extractDefine(import("version"), "VERSION_MINOR");
+const string bld_version  = extractDefine(import("version"), "VERSION_BUILD");
+const string beta_version = extractDefine(import("version"), "VERSION_BETA");
 const string full_version = plk_version  ~ "." ~
-                           extractDefine(import("version"), "VERSION_REVISION");
+                            extractDefine(import("version"), "VERSION_REVISION") ~
+                            (bld_version != "0" ? beta_version ~ bld_version : "");
 
 /*---------------------------------------------------------
  * Globals
@@ -449,7 +452,6 @@ version(none)
 		}
 		
 		mOptions.initFromRegistry();
-		mLangsvc.startVDServer();
 
 		//register with ComponentManager for Idle processing
 		IOleComponentManager componentManager;
@@ -541,6 +543,7 @@ version(none)
 				case CmdShowProfile:
 				case CmdShowLangPage:
 				case CmdShowWebsite:
+				case CmdDelLstFiles:
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
 				default:
@@ -620,6 +623,10 @@ version(none)
 				spvsDTE.ExecuteCommand("View.WebBrowser"w.ptr, "http://www.dsource.org/projects/visuald"w.ptr);
 			}
 			return S_OK;
+		}
+		if(nCmdID == CmdDelLstFiles)
+		{
+			GetGlobalOptions().DeleteCoverageFiles();
 		}
 		return OLECMDERR_E_NOTSUPPORTED;
 	}
@@ -1062,6 +1069,11 @@ struct CompilerDirectories
 	string ExeSearchPath;
 	string ImpSearchPath;
 	string LibSearchPath;
+	string ExeSearchPath64;
+	string LibSearchPath64;
+	bool   overrideIni64;
+	string overrideLinker64;
+	string overrideOptions64;
 }
 
 class GlobalOptions
@@ -1084,11 +1096,13 @@ class GlobalOptions
 	string WindowsSdkDir;
 	string DevEnvDir;
 	string VSInstallDir;
+	string VCInstallDir;
 	string VisualDInstallDir;
 
 	bool timeBuilds;
 	bool sortProjects = true;
 	bool stopSolutionBuild;
+	bool showUptodateFailure;
 	bool demangleError = true;
 	bool optlinkDeps = true;
 	bool autoOutlining;
@@ -1102,9 +1116,15 @@ class GlobalOptions
 	bool showTypeInTooltip;
 	bool semanticGotoDef;
 	bool useDParser;
+	bool mixinAnalysis;
+	bool UFCSExpansions;
 	string VDServerIID;
 	string compileAndRunOpts;
 
+	string[] coverageBuildDirs;
+	string[] coverageExecutionDirs;
+
+	bool showCoverageMargin;
 	bool ColorizeCoverage = true;
 	bool ColorizeVersions = true;
 	bool lastColorizeCoverage;
@@ -1160,6 +1180,12 @@ class GlobalOptions
 		if(!getRegistryRoot())
 			return false;
 
+		wstring dllPath = GetDLLName(g_hInst);
+		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
+
+		wstring idePath = GetDLLName(null);
+		DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
+
 		bool rc = true;
 		try
 		{
@@ -1168,6 +1194,35 @@ class GlobalOptions
 			// get defaults from global config
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
+
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
+			WindowsSdkDir = toUTF8(keySdk.GetString("CurrentInstallFolder"));
+			if(WindowsSdkDir.empty)
+				if(char* psdk = getenv("WindowsSdkDir"))
+					WindowsSdkDir = fromMBSz(cast(immutable)psdk);
+			if(!WindowsSdkDir.empty)
+				WindowsSdkDir = normalizeDir(WindowsSdkDir);
+
+			if(char* pe = getenv("VSINSTALLDIR"))
+				VSInstallDir = fromMBSz(cast(immutable)pe);
+			else
+			{
+				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
+				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
+				// InstallDir is ../Common7/IDE/
+				VSInstallDir = normalizeDir(VSInstallDir);
+				VSInstallDir = dirName(dirName(VSInstallDir));
+			}
+			VSInstallDir = normalizeDir(VSInstallDir);
+
+			if(char* pe = getenv("VCINSTALLDIR"))
+				VCInstallDir = fromMBSz(cast(immutable)pe);
+			else
+			{
+				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
+				VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
+			}
+			VCInstallDir = normalizeDir(VCInstallDir);
 
 			wstring getWStringOpt(wstring tag, wstring def = null)
 			{
@@ -1190,9 +1245,11 @@ class GlobalOptions
 
 			ColorizeVersions    = getBoolOpt("ColorizeVersions", true);
 			ColorizeCoverage    = getBoolOpt("ColorizeCoverage", true);
+			showCoverageMargin  = getBoolOpt("showCoverageMargin", false);
 			timeBuilds          = getBoolOpt("timeBuilds", false);
 			sortProjects        = getBoolOpt("sortProjects", true);
 			stopSolutionBuild   = getBoolOpt("stopSolutionBuild", false);
+			showUptodateFailure = getBoolOpt("showUptodateFailure", false);
 			demangleError       = getBoolOpt("demangleError", true);
 			optlinkDeps         = getBoolOpt("optlinkDeps", true);
 			autoOutlining       = getBoolOpt("autoOutlining", true);
@@ -1204,27 +1261,58 @@ class GlobalOptions
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
 			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
 			semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
-			useDParser          = getBoolOpt("useDParser", false);
 			pasteIndent         = getBoolOpt("pasteIndent", true);
 
+			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
+			useDParser          = getBoolOpt("useDParser2", keyDParser.key !is null);
+			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
+			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
+
+			wstring getDefaultDMDLibPath64()
+			{
+				wstring libpath = r"$(VCInstallDir)\lib\amd64";
+				if(WindowsSdkDir.length)
+				{
+					if(std.file.exists(WindowsSdkDir ~ r"lib\x64"))
+						libpath ~= to!wstring(r"\n$(WindowsSdkDir)lib\x64");
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64")) // SDK 8.0
+						libpath ~= to!wstring(r"\n$(WindowsSdkDir)Lib\win8\um\x64");
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\winv6.3\um\x64")) // SDK 8.1
+						libpath ~= to!wstring(r"\n$(WindowsSdkDir)Lib\winv6.3\um\x64");
+				}
+				return libpath;
+			}
+
 			// overwrite by user config
-			DMD.InstallDir    = getStringOpt("DMDInstallDir");
-			GDC.InstallDir    = getStringOpt("GDCInstallDir");
-			LDC.InstallDir    = getStringOpt("LDCInstallDir");
-			DMD.ExeSearchPath = getStringOpt("ExeSearchPath");
-			DMD.LibSearchPath = getStringOpt("LibSearchPath");
-			DMD.ImpSearchPath = getStringOpt("ImpSearchPath");
-			GDC.ExeSearchPath = getStringOpt("GDC.ExeSearchPath");
-			GDC.LibSearchPath = getStringOpt("GDC.LibSearchPath");
-			GDC.ImpSearchPath = getStringOpt("GDC.ImpSearchPath");
-			LDC.ExeSearchPath = getStringOpt("LDC.ExeSearchPath");
-			LDC.LibSearchPath = getStringOpt("LDC.LibSearchPath");
-			LDC.ImpSearchPath = getStringOpt("LDC.ImpSearchPath");
+			void readCompilerOptions(string compiler)(ref CompilerDirectories opt, wstring defLibPath64)
+			{
+				enum bool dmd = compiler == "DMD";
+				enum string prefix = dmd ? "" : compiler ~ ".";
+				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
+
+				opt.ExeSearchPath = getStringOpt(prefix ~ "ExeSearchPath");
+				opt.LibSearchPath = getStringOpt(prefix ~ "LibSearchPath");
+				opt.ImpSearchPath = getStringOpt(prefix ~ "ImpSearchPath");
+				opt.ExeSearchPath64 = getStringOpt(prefix ~ "ExeSearchPath64", to!wstring(opt.ExeSearchPath));
+				opt.LibSearchPath64 = getStringOpt(prefix ~ "LibSearchPath64", defLibPath64);
+
+				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
+				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
+				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
+			}
+			readCompilerOptions!"DMD"(DMD, getDefaultDMDLibPath64());
+			readCompilerOptions!"GDC"(GDC, null);
+			readCompilerOptions!"LDC"(LDC, null);
 
 			JSNSearchPath     = getStringOpt("JSNSearchPath");
 			IncSearchPath     = getStringOpt("IncSearchPath");
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
+
+			string execDirs   = getStringOpt("coverageExecutionDirs", "");
+			coverageExecutionDirs = split(execDirs, ";");
+			string buildDirs  = getStringOpt("coverageBuildDirs", "");
+			coverageBuildDirs = split(buildDirs, ";");
 
 			UserTypesSpec     = getStringOpt("UserTypesSpec", defUserTypesSpec);
 			UserTypes = parseUserTypes(UserTypesSpec);
@@ -1239,38 +1327,12 @@ class GlobalOptions
 				updateVDServer();
 
 			CHierNode.setContainerIsSorted(sortProjects);
-			
-			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
-			WindowsSdkDir = toUTF8(keySdk.GetString("CurrentInstallFolder"));
-			if(WindowsSdkDir.empty)
-				if(char* psdk = getenv("WindowsSdkDir"))
-					WindowsSdkDir = fromMBSz(cast(immutable)psdk);
-			if(!WindowsSdkDir.empty)
-				WindowsSdkDir = normalizeDir(WindowsSdkDir);
-
-			if(char* pe = getenv("VSINSTALLDIR"))
-				VSInstallDir = fromMBSz(cast(immutable)pe);
-			else
-			{
-				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
-				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
-				// InstallDir is ../Common7/IDE/
-				VSInstallDir = normalizeDir(VSInstallDir);
-				VSInstallDir = dirName(dirName(VSInstallDir));
-			}
-			VSInstallDir = normalizeDir(VSInstallDir);
 		}
 		catch(Exception e)
 		{
 			writeToBuildOutputPane(e.msg);
 			rc = false;
 		}
-
-		wstring dllPath = GetDLLName(g_hInst);
-		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
-
-		wstring idePath = GetDLLName(null);
-		DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
 
 		return rc;
 	}
@@ -1307,11 +1369,20 @@ class GlobalOptions
 			keyToolOpts.Set("IncSearchPath",     toUTF16(IncSearchPath));
 			keyToolOpts.Set("UserTypesSpec",     toUTF16(UserTypesSpec));
 			
+			keyToolOpts.Set("DMD.ExeSearchPath64", toUTF16(DMD.ExeSearchPath));
+			keyToolOpts.Set("DMD.LibSearchPath64", toUTF16(DMD.LibSearchPath));
+			keyToolOpts.Set("GDC.ExeSearchPath64", toUTF16(GDC.ExeSearchPath));
+			keyToolOpts.Set("GDC.LibSearchPath64", toUTF16(GDC.LibSearchPath));
+			keyToolOpts.Set("LDC.ExeSearchPath64", toUTF16(LDC.ExeSearchPath));
+			keyToolOpts.Set("LDC.LibSearchPath64", toUTF16(LDC.LibSearchPath));
+
 			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
 			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);
+			keyToolOpts.Set("showCoverageMargin",  showCoverageMargin);
 			keyToolOpts.Set("timeBuilds",          timeBuilds);
 			keyToolOpts.Set("sortProjects",        sortProjects);
 			keyToolOpts.Set("stopSolutionBuild",   stopSolutionBuild);
+			keyToolOpts.Set("showUptodateFailure", showUptodateFailure);
 			keyToolOpts.Set("demangleError",       demangleError);
 			keyToolOpts.Set("optlinkDeps",         optlinkDeps);
 			keyToolOpts.Set("autoOutlining",       autoOutlining);
@@ -1323,9 +1394,14 @@ class GlobalOptions
 			keyToolOpts.Set("expandTrigger",       expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip",   showTypeInTooltip);
 			keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
-			keyToolOpts.Set("useDParser",          useDParser);
+			keyToolOpts.Set("useDParser2",         useDParser);
+			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
+			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
+
+			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
+			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));
 
 			CHierNode.setContainerIsSorted(sortProjects);
 		}
@@ -1376,6 +1452,7 @@ class GlobalOptions
 		replacements["LDCINSTALLDIR"] = normalizeDir(LDC.InstallDir);
 		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
 		replacements["DEVENVDIR"] = DevEnvDir;
+		replacements["VCINSTALLDIR"] = VCInstallDir;
 		replacements["VSINSTALLDIR"] = VSInstallDir;
 		replacements["VISUALDINSTALLDIR"] = VisualDInstallDir;
 	}
@@ -1421,28 +1498,73 @@ class GlobalOptions
 		return empty(dmd) ? null : dirName(dmd);
 	}
 	
-	string getOptlinkPath(string dmdpath, string *libs = null, string* options = null)
+	string findScIni(string workdir, string dmdpath, bool optlink)
 	{
-		string path = "link.exe";
-		string bindir = findDmdBinDir(dmdpath);
-		if(!empty(bindir))
+		string inifile;
+		if(workdir.length)
+			inifile = buildPath(workdir, "sc.ini");
+		
+		if(inifile.empty || !std.file.exists(inifile))
 		{
-			string inifile = bindir ~ "sc.ini";
-			if(std.file.exists(inifile))
+			inifile = null;
+			if(auto home = getenv("HOME"))
+				inifile = buildPath(fromMBSz(cast(immutable)home), "sc.ini");
+		}
+		if(inifile.empty || !std.file.exists(inifile))
+		{
+			inifile = null;
+			string dmddir = findDmdBinDir(dmdpath);
+			if(!dmddir.empty)
 			{
-				string[string][string] ini = parseIni(inifile);
-				if(auto pEnv = "Environment" in ini)
-				{
-					if(string* pLink = "LINKCMD" in *pEnv)
-						path = replace(*pLink, "%@P%", bindir);
-					if(options)
-						if(string* pFlags = "DFLAGS" in *pEnv)
-							*options = replace(*pFlags, "%@P%", bindir);
-					if(libs)
-						if(string* pLibs = "LIB" in *pEnv)
-							*libs = replace(*pLibs, "%@P%", bindir);
-				}
+				if(optlink)
+					dmddir = dmddir; // TODO: in case link is elsewhere it uses a different sc.ini
+				inifile = buildPath(dmddir, "sc.ini");
 			}
+		}
+		if(inifile.empty || !std.file.exists(inifile))
+			inifile = null;
+		return inifile;
+	}
+
+	string getLinkerPath(bool x64, string workdir, string dmdpath, string *libs = null, string* options = null)
+	{
+		getVCLibraryPaths();
+
+		string path = "link.exe";
+		string inifile = findScIni(workdir, dmdpath, false);
+		if(!inifile.empty)
+		{
+			string[string] env = [ "@P" : dirName(inifile) ];
+			addReplacements(env);
+			string[string][string] ini = parseIni(inifile);
+			
+			if(auto pEnv = "Environment" in ini)
+				env = expandIniSectionEnvironment((*pEnv)[""], env);
+			
+			string envArch = x64 ? "Environment64" : "Environment32";
+			if(auto pEnv = envArch in ini)
+				env = expandIniSectionEnvironment((*pEnv)[""], env);
+
+			if(string* pLink = "LINKCMD" in env)
+				path = *pLink;
+			if(x64)
+			{
+				if(DMD.overrideIni64)
+					path = DMD.overrideLinker64;
+				else if(string* pLink = "LINKCMD64" in env)
+					path = *pLink;
+			}
+
+			if(options)
+			{
+				if(x64 && DMD.overrideIni64)
+					*options = DMD.overrideOptions64;
+				else if(string* pFlags = "DFLAGS" in env)
+					*options = *pFlags;
+			}
+			if(libs)
+				if(string* pLibs = "LIB" in env)
+					*libs = *pLibs;
 		}
 		return path;
 	}
@@ -1513,6 +1635,58 @@ class GlobalOptions
 						addunique(jsonfiles, name);
 		}
 		return jsonfiles;
+	}
+
+	void logSettingsTree(IVsProfileSettingsTree settingsTree)
+	{
+		logIndent(1); scope(exit) logIndent(-1);
+		BSTR bname;
+		string name, desc, cat, regname, nameForId, fullPath, pkg;
+		if(SUCCEEDED(settingsTree.GetDisplayName(&bname)))
+			name = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetDescription(&bname)))
+			desc = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetCategory(&bname)))
+			cat = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetRegisteredName(&bname)))
+			regname = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetNameForID(&bname)))
+			nameForId = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetFullPath(&bname)))
+			fullPath = detachBSTR(bname);
+		if(SUCCEEDED(settingsTree.GetPackage(&bname)))
+			pkg = detachBSTR(bname);
+		logCall("Name: " ~ name ~ ", Desc: " ~ desc ~ ", Cat: " ~ cat ~ ", regname: " ~ regname, ", nameForId: " ~ nameForId ~ ", fullpath: " ~ fullPath ~ ", pkg: " ~ pkg);
+
+		int count;
+		if(SUCCEEDED(settingsTree.GetChildCount(&count)))
+			for(int i = 0; i < count; i++)
+			{
+				IVsProfileSettingsTree child;
+				if(SUCCEEDED(settingsTree.GetChild(i, &child)))
+				{
+					scope(exit) release(child);
+					logSettingsTree(child);
+				}
+			}
+	}
+
+	string[] getVCLibraryPaths()
+	{
+		IVsProfileDataManager pdm = queryService!(SVsProfileDataManager,IVsProfileDataManager)();
+		if(!pdm)
+			return null;
+		scope(exit) release(pdm);
+		
+		IVsProfileSettingsTree settingsTree;
+		HRESULT hr = pdm.GetSettingsForExport(&settingsTree);
+		if(SUCCEEDED(hr))
+		{
+			scope(exit) release(settingsTree);
+			logSettingsTree(settingsTree);
+		}
+		//pdm.ShowProfilesUI();
+		return null;
 	}
 
 	string[] findDFiles(string path, string sub)
@@ -1691,6 +1865,98 @@ class GlobalOptions
 			/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
 
 		return hr == S_OK && result == 0;
+	}
+
+	string findCoverageFile(string srcfile)
+	{
+		import stdext.path;
+		import std.path;
+		import std.file;
+		import std.string;
+
+		string lstname = std.path.stripExtension(srcfile) ~ ".lst";
+		if(std.file.exists(lstname) && std.file.isFile(lstname))
+			return lstname;
+
+		string srcpath = stripExtension(toLower(makeFilenameCanonical(srcfile, "")));
+
+		foreach(dir; coverageExecutionDirs)
+		{
+			if(!std.file.exists(dir) || !std.file.isDir(dir))
+				continue;
+
+			foreach(string f; dirEntries(dir, SpanMode.shallow))
+			{
+				char[] fn = baseName(f).dup;
+				toLowerInPlace(fn);
+				auto ext = extension(fn);
+				if(ext != ".lst")
+					continue;
+
+				// assume no '-' in file name, cov replaced '\\' with these
+				bool isAbs = false;
+				if(std.ascii.isAlpha(fn[0]) && fn[1] == '-' && fn[2] == '-')
+				{
+					// absolute path
+					fn[1] = ':';
+					isAbs = true;
+				}
+				for(size_t i = 0; i < fn.length; i++)
+					if(fn[i] == '-')
+						fn[i] = '\\';
+
+				string fs = to!string(fn);
+				if(isAbs)
+				{
+					fs = removeDotDotPath(fs);
+					if(fs[0 .. $-4] == srcpath)
+						return std.path.buildPath(dir, f);
+				}
+				else
+				{
+					foreach(bdir; coverageBuildDirs)
+					{
+						string bfile = toLower(makeFilenameCanonical(fs, bdir));
+						if(bfile[0 .. $-4] == srcpath)
+							return std.path.buildPath(dir, f);
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	void DeleteCoverageFiles()
+	{
+		string[] dirs = coverageExecutionDirs;
+		Source[] srcs = Package.GetLanguageService().GetSources();
+		foreach(src; srcs)
+			dirs.addunique(dirName(src.GetFileName()));
+
+		foreach(dir; dirs)
+			if(std.file.exists(dir) && std.file.isDir(dir))
+			{
+				string[] lstfiles; 
+				foreach(f; std.file.dirEntries(dir, SpanMode.shallow))
+					if(icmp(extension(f), ".lst") == 0)
+						lstfiles ~= f;
+				foreach(lst; lstfiles)
+					collectException(std.file.remove(lst));
+			}
+
+		coverageExecutionDirs = null;
+	}
+
+	void addExecutionPath(string dir, string workdir = null)
+	{
+		dir = makeDirnameCanonical(dir, workdir);
+		adduniqueLRU(coverageExecutionDirs, dir, 4);
+	}
+
+	void addBuildPath(string dir, string workdir = null)
+	{
+		dir = makeDirnameCanonical(dir, workdir);
+		adduniqueLRU(coverageBuildDirs, dir, 4);
 	}
 }
 

@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010-2011 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module stdext.file;
 
@@ -18,6 +18,7 @@ import std.utf;
 import std.conv;
 import std.array;
 import std.string;
+import std.ascii;
 
 import core.sys.windows.windows;
 import core.bitop;
@@ -104,6 +105,25 @@ string[string][string] parseIniText(string txt)
 	if(currentSection.length)
 		ini[currentSection][""] ~= content;
 	return ini;
+}
+
+// extract assignments from a section
+string[2][] parseIniSectionAssignments(string txt)
+{
+	string[2][] values;
+	foreach(string ln; txt.splitLines())
+	{
+		auto pos = indexOf(ln, '=');
+		if (pos >= 1)
+		{
+			// stripping is not done by cmd when using "SET", but dmd does it (optlink does not)
+			string id = strip(ln[0..pos]);
+			string val = strip(ln[pos+1..$]);
+			if(id.length && id[0] != ';')
+				values ~= [id, val];
+		}
+	}
+	return values;
 }
 
 string[string][string] parseIni(string fname)

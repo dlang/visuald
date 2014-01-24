@@ -3,8 +3,8 @@
 # Visual D integrates the D programming language into Visual Studio
 # Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 #
-# License for redistribution is given by the Artistic License 2.0
-# see file LICENSE for further details
+# Distributed under the Boost Software License, Version 1.0.
+# See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 PROJECT = visuald
 
@@ -51,7 +51,8 @@ VDC_SRC = $(VDC)/parser/aggr.d \
 RSGC_SRC = ../rsgc/gc.d ../rsgc/gcx.d ../rsgc/gcstats.d ../rsgc/gcalloc.d ../rsgc/gcbits.d
 
 STDEXT_SRC = ../stdext/file.d ../stdext/array.d ../stdext/path.d ../stdext/util.d \
-             ../stdext/string.d ../stdext/com.d ../stdext/httpget.d ../stdext/container.d
+             ../stdext/string.d ../stdext/com.d ../stdext/httpget.d ../stdext/container.d \
+             ../stdext/ddocmacros.d
 # FRED_SRC = ../stdext/fred.d ../stdext/fred_uni.d ../stdext/regionallocator.d
 
 C2D_SRC = ../c2d/cpp2d.d ../c2d/ast.d ../c2d/dlist.d ../c2d/dgutil.d \
@@ -115,16 +116,19 @@ STDEXT_LIB = stdext.lib
 
 FMT = OMF
 !IF "$(FMT)" == "COFF"
-DFLAGS = -d -I.. -J.. -Jresources -m32ms -L/DLL -L/LARGEADDRESSAWARE -op -defaultlib=druntime32,phobos
+DFLAGS = -d -I.. -J.. -Jresources -m32ms -L/DLL -L/LARGEADDRESSAWARE -op -defaultlib=druntime,phobos
 LIB = $(WINSDK)\lib
+RELDBG = -g
 !ELSE
-DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL
+DFLAGS = -d -L/DELEXECUTABLE -L/LINENUMBERS -I.. -J.. -Jresources -L/MAP:FULL 
 LIB = ..\sdk\lib
+RELDBG = 
 !ENDIF
 
 # -version=LOGSEMANTIC  -L/IMPLIB -L/LINENUMBERS -I../../xmlp 
-RELFLAGS = -release -O -inline -noboundscheck
-RELDBG = -g
+RELFLAGS = -release -O -inline 
+# -noboundscheck
+# -gs -defaultlib=druntime_d,phobos_d
 
 LIBS = phobos.lib "$(LIB)\comctl32.lib" uuid.lib advapi32.lib comdlg32.lib \
 	ole32.lib "$(LIB)\oleaut32.lib" user32.lib shell32.lib gdi32.lib

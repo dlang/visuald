@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.dimagelist;
 
@@ -13,6 +13,7 @@ import stdext.string;
 mixin(extractDefines(import("resources.h")));
 
 const kImageBmp = "BMP_DIMAGELIST";
+const kImageCompletion = "BMP_COMPLETION";
 
 const kImageDSource = 0;
 const kImageProject = 1;
@@ -107,3 +108,6 @@ enum CSIMG_JSTRUCT        = 168;
 enum CSIMG_JNAMESPACE     = 174;
 enum CSIMG_JINTERFACE     = 180;
 enum CSIMG_STOP           = 186; // series of single bitmaps follow
+
+enum CSIMG_DMODULE        = 194;
+enum CSIMG_KEYWORD        = 206;

@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2012 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module vdc.vdserverfactory;
 
@@ -88,7 +88,7 @@ class VDServerClassFactory : ComObject, IClassFactory
 
 ///////////////////////////////////////////////////////////////
 
-int main(string[] argv)
+extern(C) int vdserver_main(char[][] argv)
 {
 	HRESULT hr;
 
@@ -134,3 +134,28 @@ void ShowErrorMessage(LPCTSTR header, HRESULT hr)
 	LocalFree(pMsg);
 }
 
+import std.compiler;
+import std.conv;
+
+static if(version_minor < 64)
+{
+	// dmd 2.064 implicitely adds C main with D main
+	int main(char[][] argv)
+	{
+		return vdserver_main(argv);
+	}
+}
+else
+{
+	private alias extern(C) int function(char[][] args) MainFunc;
+	extern(C) int _d_run_main(int argc, char **argv, MainFunc func);
+
+	extern (Windows)
+	int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+	{
+		char*[2] argv;
+		argv[0] = cast(char*)("prg".ptr);
+		argv[1] = null;
+		return _d_run_main(1, argv.ptr, &vdserver_main);
+	}
+}

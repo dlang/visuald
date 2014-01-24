@@ -3,8 +3,8 @@
 # Visual D integrates the D programming language into Visual Studio
 # Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 #
-# License for redistribution is given by the Artistic License 2.0
-# see file LICENSE for further details
+# Distributed under the Boost Software License, Version 1.0.
+# See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 DMD2 = c:\l\dmd-2.055\windows\bin\dmd.exe
 # DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
@@ -14,7 +14,8 @@ COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 include vsi_sources
 VSI_SRC = $(SRC) port/servprov.d port/stdole2.d port/msxml.d port/dte.d port/base.d \
-	port\vsi.d port\propidl.d port\rpc.d port\string.d port\in6addr.d port\inaddr.d
+	port\vsi.d port\propidl.d port\rpc.d port\string.d port\in6addr.d port\inaddr.d \
+	port\ctype.d
 
 DBGDIR = ..\bin\Debug
 RELDIR = ..\bin\Release

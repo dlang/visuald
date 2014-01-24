@@ -5,7 +5,7 @@ import std.range;
 import std.ascii;
 import std.string;
 
-version = LOG;
+// version = LOG;
 
 version(LOG) import std.stdio;
 
@@ -128,13 +128,13 @@ struct RangeStack(R)
 		if(n == '+')
 			return joinArgs(arguments[$-1], 1);
 		size_t a = n - '0';
-		if(a < arguments[$-1].length)
+		if(a <= arguments[$-1].length)
 			return arguments[$-1][a - 1];
 		return null;
 	}
 }
 
-S ddocExpand(S,AA)(S s, AA defs) if(isInputRange!S)
+S ddocExpand(S,AA)(S s, AA defs, bool keepUnknown) if(isInputRange!S)
 {
 	alias C = ElementEncodingType!S;
 	alias K = KeyType!AA;
@@ -162,6 +162,14 @@ S ddocExpand(S,AA)(S s, AA defs) if(isInputRange!S)
 					{
 						src.push(*p, args);
 					}
+					else if(keepUnknown)
+					{
+						res ~= c;
+						res ~= d;
+						res ~= id;
+						string keepArgs = " $0)";
+						src.push(keepArgs, args);
+					}
 					break;
 				}
 				else if(isAlpha(d))
@@ -170,6 +178,11 @@ S ddocExpand(S,AA)(S s, AA defs) if(isInputRange!S)
 					if(auto p = id in defs)
 					{
 						src.push(*p, null);
+					}
+					else if(keepUnknown)
+					{
+						res ~= c;
+						res ~= id;
 					}
 					break;
 				}
@@ -189,6 +202,19 @@ S ddocExpand(S,AA)(S s, AA defs) if(isInputRange!S)
 	return res;
 }
 
+string phobosDdocExpand(string txt)
+{
+	string[string] macros =
+	[ 
+		"D" : "`$0`",
+		"LINK" : "$0",
+		"LINK2" : "$2",
+		"XREF" : "$2",
+		"UL" : "\n$0",
+		"LI" : "\n* $0",
+	];
+	return ddocExpand(txt, macros, true);
+}
 
 unittest
 {

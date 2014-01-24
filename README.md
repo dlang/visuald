@@ -1,16 +1,17 @@
+<img src="/doc/images/vd_logo.png?format=raw" width="72">
+Visual D
+============================================================
 
 This is the README file for Visual D, a 
 Visual Studio package providing both project management and language services
 
-Copyright (c) 2010-2012 by Rainer Schuetze, All Rights Reserved
+Copyright (c) 2010-2013 by Rainer Schuetze, All Rights Reserved
 
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
 
 For installer download, more documentation, build instructions, forum and
-issue reporting, please visit the web site
-
-    http://www.dsource.org/projects/visuald
+issue reporting, please visit the http://www.dsource.org/projects/visuald.
 
 Major Features
 ---------------
@@ -46,7 +47,7 @@ Major Features
   - search and replace dialog based on D tokenizer
   - browse information displayed in object browser and class view 
   - help on language and runtime library
-  - experimental: semantic analysis for code completion and tool tips
+  - semantic analysis for code completion and tool tips
 
 * Other
   - symbol/file search window
@@ -54,13 +55,16 @@ Major Features
   - C++ to D conversion wizard 
     
 * Supported Visual Studio versions
-  - VS.NET 2003 (some limitations apply)
   - VS 2005
   - VS 2008
   - VS 2010
+  - VS 2012
   Unfortunately, Express versions of Visual Studio do not support this 
-  kind of extensions. Use the Visual Studio Shell instead (see the Visual
-  D home page for links).
+  kind of extensions. Use the Visual Studio Shell instead:
+  - VS 2008 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=9771
+  - VS 2010 Shell: no longer available
+  - VS 2012 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=30670
+                 + http://www.microsoft.com/en-us/download/details.aspx?id=30663
   
 * Includes tools to
   - convert some idl/h files of the Windows SDK to D
@@ -75,8 +79,8 @@ Major Features
 License information
 -------------------
 
-This code is distributed under the terms of the Artistic License 2.0.
-For more details, see the full text of the license in the file LICENSE.
+This code is distributed under the terms of the Boost Software License, Version 1.0.
+For more details, see the full text of the license in the file LICENSE_1.0.txt.
 
 The installer comes with a number of additional products:
 - cv2pdb: http://dsource.org/projects/cv2pdb by Rainer Schuetze
@@ -86,6 +90,7 @@ The installer comes with a number of additional products:
 Building Visual D
 -----------------
 In a nutshell:
+
 - adjust environment variables in the root Makefile
 - run "nmake sdk"
 - start Visual Studio and load solution visuald_vs9.sln (VS 2008) or
@@ -124,12 +129,12 @@ previous versions, please see the file CHANGES.
 More Information
 ----------------
 For more information on installation, a quick tour of Visual D with some
-screen shots and feedback, please visit the project home for Visual D here:
-
-    http://www.dsource.org/projects/visuald
+screen shots and feedback, please visit the project home for Visual D at 
+[http://www.dsource.org/projects/visuald](http://www.dsource.org/projects/visuald).
 
 There's also a forum, where you can leave your comments and suggestions.
-Bug reports can be filed into the ticket system.
+Bug reports can be filed to the [D bugzilla database](http://d.puremagic.com/issues/enter_bug.cgi?product=D) 
+for Component VisualD.
 
 Have fun,
 Rainer Schuetze

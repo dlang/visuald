@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.dllmain;
 
@@ -14,6 +14,7 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.register;
 import visuald.dpackage;
+import visuald.dlangsvc;
 import visuald.getmsobj;
 
 import std.parallelism;
@@ -77,6 +78,9 @@ extern extern(C) __gshared ModuleInfo D4core3sys7windows10stacktrace12__ModuleIn
 void disableStacktrace()
 {
 	ModuleInfo* info = &D4core3sys7windows10stacktrace12__ModuleInfoZ;
+static if(__traits(compiles,info.isNew))
+{
+	// dmd 2.063
 	if (info.isNew)
 	{
 		enum
@@ -101,6 +105,30 @@ void disableStacktrace()
 	}
 	else
 		info.o.ctor = null;
+}
+else 
+{
+	// dmd 2.064alpha
+	enum
+	{
+		MItlsctor    = 8,
+		MItlsdtor    = 0x10,
+		MIctor       = 0x20,
+		MIdtor       = 0x40,
+		MIxgetMembers = 0x80,
+	}
+	if (info.flags & MIctor)
+	{
+		size_t off = info.sizeof;
+		if (info.flags & MItlsctor)
+			off += info.tlsctor.sizeof;
+		if (info.flags & MItlsdtor)
+			off += info.tlsdtor.sizeof;
+		if (info.flags & MIxgetMembers)
+			off += info.xgetMembers.sizeof;
+		*cast(typeof(info.ctor)*)(cast(void*)info + off) = null;
+	}
+}
 }
 
 void clearStack()
@@ -199,6 +227,13 @@ void WritePackageDef(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow
 {
 	wstring ws = to_wstring(lpszCmdLine) ~ cast(wchar)0;
 	WriteExtensionPackageDefinition(ws.ptr);
+}
+
+extern(Windows)
+bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt)
+{
+	string filename = to!string(fname);
+	return Package.GetLanguageService().GetCoverageData(filename, line, data, cnt);
 }
 
 ///////////////////////////////////////////////////////////////////////

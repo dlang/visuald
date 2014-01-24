@@ -28,12 +28,21 @@
   !searchparse /file ../version "#define VERSION_MAJOR " VERSION_MAJOR
   !searchparse /file ../version "#define VERSION_MINOR " VERSION_MINOR
   !searchparse /file ../version "#define VERSION_REVISION " VERSION_REVISION
+  !searchparse /file ../version "#define VERSION_BETA " VERSION_BETA
+  !searchparse /file ../version "#define VERSION_BUILD " VERSION_BUILD
 
   !searchreplace VERSION_MAJOR ${VERSION_MAJOR} " " ""
   !searchreplace VERSION_MINOR ${VERSION_MINOR} " " ""
   !searchreplace VERSION_REVISION ${VERSION_REVISION} " " ""
+  !searchreplace VERSION_BETA ${VERSION_BETA}   " " ""
+  !searchreplace VERSION_BUILD ${VERSION_BUILD} " " ""
   
-  !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}"
+  !if "${VERSION_BUILD}" == "0"
+    !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}"
+  !else
+    !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}${VERSION_BETA}${VERSION_BUILD}"
+  !endif
+  
   !echo "VERSION = ${VERSION}"
   !define AUTHOR "Rainer Schuetze"
   !define APPNAME "VisualD"
@@ -54,11 +63,14 @@
   !define MEMENTO_REGISTRY_KEY    ${UNINSTALL_REGISTRY_KEY}
   
   !define VS_REGISTRY_ROOT        HKLM
+!ifdef VS_NET
   !define VS_NET_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\7.1
+!endif
   !define VS2005_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\8.0
   !define VS2008_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\9.0
   !define VS2010_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\10.0
   !define VS2012_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\11.0
+  !define VS2013_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\12.0
 !ifdef EXPRESS
   !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
   !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
@@ -74,7 +86,7 @@
   !define MAGO_CLSID              {97348AC0-2B6B-4B99-A245-4C7E2C09D403}
   !define MAGO_ENGINE_KEY         AD7Metrics\Engine\${MAGO_CLSID}
   !define MAGO_EXCEPTION_KEY      AD7Metrics\Exception\${MAGO_CLSID}
-  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010 Aldo J. Nunez"
+  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010-2013 Aldo J. Nunez"
 
   !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
   !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MINOR " MAGO_VERSION_MINOR
@@ -117,6 +129,7 @@
 ;--------------------------------
 ;installation time variables
   Var DMDInstallDir
+  Var DInstallDir
 
 ;--------------------------------
 ;Interface Settings
@@ -168,8 +181,8 @@ Section "Visual Studio package" SecPackage
   ${File} ..\bin\${CONFIG}\ vdserver.exe
   ${File} ..\bin\${CONFIG}\ pipedmd.exe
   ${File} ..\bin\${CONFIG}\ filemonitor.dll
-  ${File} ..\ README
-  ${File} ..\ LICENSE
+  ${File} ..\ README.md
+  ${File} ..\ LICENSE_1_0.txt
   ${File} ..\ CHANGES
   
   ${SetOutPath} "$INSTDIR\Templates"
@@ -233,6 +246,7 @@ Section "Visual Studio package" SecPackage
  
 SectionEnd
 
+!ifdef VS_NET
 ;--------------------------------
 ${MementoSection} "Register with VS.NET" SecVS_NET
 
@@ -241,6 +255,7 @@ ${MementoSection} "Register with VS.NET" SecVS_NET
   ${RegisterWin32Exception} ${VS_NET_REGISTRY_KEY} "Win32 Exceptions\D Exception"
   
 ${MementoSectionEnd}
+!endif
 
 ;--------------------------------
 ${MementoSection} "Register with VS 2005" SecVS2005
@@ -290,6 +305,21 @@ ${MementoSection} "Register with VS 2012" SecVS2012
   
 ${MementoSectionEnd}
 
+;--------------------------------
+${MementoSection} "Register with VS 2013" SecVS2013
+
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2013_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ${RegisterWin32Exception} ${VS2013_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2013_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+  
+${MementoSectionEnd}
+
 !ifdef EXPRESS
 ;--------------------------------
 ${MementoUnselectedSection} "Register with VC-Express 2008" SecVCExpress2008
@@ -328,9 +358,11 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   GetFullPathName /SHORT $0 $INSTDIR
   !insertmacro ReplaceInFile "$INSTDIR\cv2pdb\autoexp.expand" "dviewhelper" "$0\cv2pdb\DViewHelper" NoBackup
 
+!ifdef VS_NET
   Push ${SecVS_NET}
   Push ${VS_NET_REGISTRY_KEY}
   Call PatchAutoExp
+!endif
   
   Push ${SecVS2005}
   Push ${VS2005_REGISTRY_KEY}
@@ -346,6 +378,10 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   
   Push ${SecVS2012}
   Push ${VS2012_REGISTRY_KEY}
+  Call PatchAutoExp
+  
+  Push ${SecVS2013}
+  Push ${VS2013_REGISTRY_KEY}
   Call PatchAutoExp
   
 ${MementoSectionEnd}
@@ -365,9 +401,11 @@ ${MementoSection} "mago" SecMago
 
   ExecWait 'regsvr32 /s "$INSTDIR\Mago\MagoNatDE.dll"'
 
+!ifdef VS_NET
   Push ${SecVS_NET}
   Push ${VS_NET_REGISTRY_KEY}
   Call RegisterMago
+!endif
   
   Push ${SecVS2005}
   Push ${VS2005_REGISTRY_KEY}
@@ -383,6 +421,10 @@ ${MementoSection} "mago" SecMago
   
   Push ${SecVS2012}
   Push ${VS2012_REGISTRY_KEY}
+  Call RegisterMago
+  
+  Push ${SecVS2013}
+  Push ${VS2013_REGISTRY_KEY}
   Call RegisterMago
   
 ${MementoSectionEnd}
@@ -413,36 +455,42 @@ SectionEnd
 
   ;Language strings
   LangString DESC_SecPackage ${LANG_ENGLISH} "The package containing the language service."
+!ifdef VS_NET
   LangString DESC_SecVS_NET ${LANG_ENGLISH} "Register for usage in Visual Studio .NET"
+!endif
   LangString DESC_SecVS2005 ${LANG_ENGLISH} "Register for usage in Visual Studio 2005."
   LangString DESC_SecVS2008 ${LANG_ENGLISH} "Register for usage in Visual Studio 2008."
   LangString DESC_SecVS2010 ${LANG_ENGLISH} "Register for usage in Visual Studio 2010."
   LangString DESC_SecVS2012 ${LANG_ENGLISH} "Register for usage in Visual Studio 2012."
+  LangString DESC_SecVS2013 ${LANG_ENGLISH} "Register for usage in Visual Studio 2013."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
 !endif
 !ifdef CV2PDB
-  LangString DESC_SecCv2pdb ${LANG_ENGLISH} "cv2pdb is necessary to debug executables in Visual Studio."
+  LangString DESC_SecCv2pdb ${LANG_ENGLISH} "cv2pdb is necessary to debug Win32 executables in Visual Studio."
   LangString DESC_SecCv2pdb2 ${LANG_ENGLISH} "$\r$\nYou might not want to install it, if you have already installed it elsewhere."
 !endif  
 !ifdef MAGO
   LangString DESC_SecMago ${LANG_ENGLISH} "Mago is a debug engine especially designed for the D-Language."
-  LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. It is in an early alpha stage, so some things are still in an experimental stage."
+  LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. Distributed under the Apache License Version 2.0. See www.dsource.org/ projects/mago_debugger"
 !endif  
 !ifdef DPARSER
-  LangString DESC_SecDParser ${LANG_ENGLISH} "DParser is a Parser & Resolver & Completion library for D."
-  LangString DESC_SecDParser2 ${LANG_ENGLISH} "$\r$\nDParser is written by Alexander Bothe. See https://github.com/aBothe/D_Parser"
+  LangString DESC_SecDParser ${LANG_ENGLISH} "DParser is a Parser && Resolver && Completion library for D."
+  LangString DESC_SecDParser2 ${LANG_ENGLISH} "$\r$\nDParser is written by Alexander Bothe. Distributed under the Apache License Version 2.0. See https://github.com/ aBothe/D_Parser"
 !endif  
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecPackage} $(DESC_SecPackage)
+!ifdef VS_NET
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS_NET} $(DESC_SecVS_NET)
+!endif
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2005} $(DESC_SecVS2005)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2008} $(DESC_SecVS2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2010} $(DESC_SecVS2010)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2012} $(DESC_SecVS2012)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2013} $(DESC_SecVS2013)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
@@ -464,16 +512,26 @@ SectionEnd
 
 Section "Uninstall"
 
+!ifdef VS_NET
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS_NET_REGISTRY_KEY}'
+!endif
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2005_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2010_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2012_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2013_REGISTRY_KEY}'
 !ifdef EXPRESS
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
+  IfErrors NoVS2013pkgdef
+    RMDir /r '$1${EXTENSION_DIR}'
+    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2013pkgdef:
+  
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2012pkgdef
     RMDir /r '$1${EXTENSION_DIR}'
@@ -489,8 +547,10 @@ Section "Uninstall"
   NoVS2010pkgdef:
 
 !ifdef CV2PDB
+!ifdef VS_NET
   Push ${VS_NET_REGISTRY_KEY}
   Call un.PatchAutoExp
+!endif
   
   Push ${VS2005_REGISTRY_KEY}
   Call un.PatchAutoExp
@@ -503,34 +563,49 @@ Section "Uninstall"
 
   Push ${VS2012_REGISTRY_KEY}
   Call un.PatchAutoExp
+
+  Push ${VS2013_REGISTRY_KEY}
+  Call un.PatchAutoExp
 !endif
 
+!ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+!endif
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
 
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
   
+!ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+!endif
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
 
+!ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+!endif
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
 
+!ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\InstalledProducts\Mago"
+!endif
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\InstalledProducts\Mago"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\InstalledProducts\Mago"
 !endif
   
   Call un.RegisterVDServer
@@ -562,12 +637,14 @@ Function .onInit
 
   ${MementoSectionRestore}
 
+!ifdef VS_NET
   ; detect VS.NET
   ClearErrors
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS_NET
     SectionSetFlags ${SecVS_NET} ${SF_RO}
   Installed_VS_NET:
+!endif
   
   ; detect VS2005
   ClearErrors
@@ -597,6 +674,13 @@ Function .onInit
     SectionSetFlags ${SecVS2012} ${SF_RO}
   Installed_VS2012:
 
+  ; detect VS2013
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
+  IfErrors 0 Installed_VS2013
+    SectionSetFlags ${SecVS2013} ${SF_RO}
+  Installed_VS2013:
+
 !ifdef EXPRESS
   ; detect VCExpress 2008
   ClearErrors
@@ -623,6 +707,13 @@ Function DMDInstallPage
   !insertmacro MUI_HEADER_TEXT "DMD Installation Folder" "Specify the directory where DMD is installed"
 
   ReadRegStr $DMDInstallDir HKLM "Software\${APPNAME}" "DMDInstallDir" 
+  IfErrors DMDInstallDirEmpty
+  StrCmp "$DMDInstallDir" "" DMDInstallDirEmpty HasDMDInstallDir
+  DMDInstallDirEmpty:
+    ReadRegStr $DInstallDir HKLM "SOFTWARE\D" "Install_Dir" 
+    IfErrors HasDmdInstallDir
+      StrCpy $DmdInstallDir $DInstallDir\dmd2
+  HasDMDInstallDir:
   
   WriteINIStr "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State" $DMDInstallDir
   !insertmacro INSTALLOPTIONS_DISPLAY "dmdinstall.ini"
@@ -833,7 +924,7 @@ Function RegisterDParser
 ;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\ProgId"        "" DParserCOMServer.VDServer
 ;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
 
-  WriteRegStr ${DPARSER_REG_ROOT} "${DPARSER_VDSERVER_NAME}\CLSID"                "" ${DPARSER_VDSERVER_CLSID}
+  WriteRegStr ${DPARSER_REG_ROOT} "${DPARSER_FACTORY_NAME}\CLSID"                 "" ${DPARSER_VDSERVER_CLSID}
   WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\LocalServer32" "" $INSTDIR\DParser\DParserCOMServer.exe
   WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\ProgId"        "" DParserCOMServer.VDServer
   WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""

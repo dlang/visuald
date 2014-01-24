@@ -11,11 +11,12 @@
 
 ##############################################################
 # update the following variables to match the installation 
-# paths on your system
+# paths on your system or pass on the command line to nmake
 
-DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
-# DMD2 = c:\l\dmd2\windows\bin\dmd.exe
+DMD2 = dmd
+# DMD2 = m:\s\d\rainers\windows\bin\dmd.exe
 # DMD2 = c:\l\dmd2beta\windows\bin\dmd.exe
+DMD2_ = $(DMD2:/=\)
 COFFIMPLIB = c:\l\dmc\bin\coffimplib.exe
 
 # avoid trailing '\', it ruins the command line
@@ -26,8 +27,8 @@ WINSDK = $(PROGRAMW6432)\Microsoft SDKs\Windows\v6.0A
 # WINSDK = $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.1
 # WINSDK = $(PROGRAMFILES)\Windows Kits\8.0
 # WINSDK = c:\l\vs11\Windows Kits\8.0
-VSISDK = c:\l\vs9SDK
-# VSISDK = c:\l\vs10SDK
+# VSISDK = c:\l\vs9SDK
+VSISDK = c:\l\vs10SDK
 # VSISDK = c:\l\vs11\VSSDK
 # VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2008 SDK
 # VSISDK = $(PROGRAMFILES)\Microsoft Visual Studio 2010 SDK
@@ -52,7 +53,7 @@ VSI_LIB     = $(BINDIR)\vsi.lib
 VISUALD     = $(BINDIR)\visuald.dll
 FMT         = OMF
 
-PASS_ENV    = "DMD2=$(DMD2)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" FMT=$(FMT)
+PASS_ENV    = "DMD2=$(DMD2_)" "WINSDK=$(WINSDK)" "COFFIMPLIB=$(COFFIMPLIB)" FMT=$(FMT)
 
 all: dte_idl vsi2d package vdserver_exe $(PIPEDMD_EXE) $(FILEMON_DLL)
 
@@ -79,16 +80,16 @@ sdk\vsi\idl\dte90.idl : $(TLB2IDL_EXE) "$(MSENV)\dte90.olb"
 	$(TLB2IDL_EXE) "$(MSENV)\dte90.olb" $@ "$(IVIEWER)"
 
 $(TLB2IDL_EXE) : tools\tlb2idl.d
-	$(DMD2) -map $@.map -of$@ tools\tlb2idl.d oleaut32.lib uuid.lib snn.lib kernel32.lib
+	$(DMD2_) -map $@.map -of$@ tools\tlb2idl.d oleaut32.lib uuid.lib snn.lib kernel32.lib
 
 $(PIPEDMD_EXE) : tools\pipedmd.d
-	$(DMD2) -map $@.map -of$@ tools\pipedmd.d
+	$(DMD2_) -map $@.map -of$@ tools\pipedmd.d
 
 $(FILEMON_DLL) : tools\filemonitor.d
-	$(DMD2) -map $@.map -of$@ -defaultlib=user32.lib -L/ENTRY:_DllMain@12 tools\filemonitor.d
+	$(DMD2_) -map $@.map -of$@ -defaultlib=user32.lib -L/ENTRY:_DllMain@12 tools\filemonitor.d
 
 $(LARGEADR_EXE) : tools\largeadr.d
-	$(DMD2) -of$@ tools\largeadr.d
+	$(DMD2_) -of$@ tools\largeadr.d
 
 ##################################
 # generate VSI d files from h and idl
@@ -104,7 +105,7 @@ vsi_dirs:
 	if not exist sdk\win32\nul md sdk\win32
 
 $(VSI2D_EXE) : $(VSI2D_SRC)
-	$(DMD2) -d -map $@.map -of$@ -version=vsi $(VSI2D_SRC)
+	$(DMD2_) -d -map $@.map -of$@ -version=vsi $(VSI2D_SRC)
 
 sdk\vsi_sources: $(VSI2D_EXE)
 	$(VSI2D_EXE) -vsi="$(VSISDK)" -win="$(WINSDK)\Include" -dte="$(DTE_IDL_PATH)" -sdk=sdk
@@ -135,6 +136,11 @@ idl2d_exe: $(VSI2D_EXE)
 dparser:
 	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /t:Rebuild
 
+mago:
+	cd ..\..\mago && devenv /Build "Release|Win32" magodbg.sln
+
+cv2pdb:
+	cd ..\..\cv2pdb\trunk && devenv /Build "Release|Win32" src\cv2pdb.sln
 
 ##################################
 # create installer

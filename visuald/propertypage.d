@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.propertypage;
 
@@ -23,6 +23,7 @@ import visuald.config;
 import visuald.winctrl;
 import visuald.hierarchy;
 import visuald.hierutil;
+import visuald.chiernode;
 
 import stdext.array;
 import std.string;
@@ -40,11 +41,20 @@ class PropertyWindow : Window
 
 	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
 	{
+		import sdk.win32.commctrl;
+
 		switch (uMsg) {
 			case WM_SIZE:
 				int w = LOWORD(lParam);
 				mPropertyPage.updateSizes(w);
 				break;
+
+			case TCN_SELCHANGING:
+			case TCN_SELCHANGE:
+				// Return FALSE to allow the selection to change.
+				auto tc = cast(TabControl) this;
+				return FALSE;
+
 			default:
 				break;
 		}
@@ -151,11 +161,12 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 			}
 		}
 
+		DelegateWrapper delegateWrapper = new DelegateWrapper;
+		mCanvas.commandDelegate = &delegateWrapper.OnCommand;
+
 		CreateControls();
 		UpdateControls();
 
-		DelegateWrapper delegateWrapper = new DelegateWrapper;
-		mCanvas.commandDelegate = &delegateWrapper.OnCommand;
 		mEnableUpdateDirty = true;
 
 		return S_OK;
@@ -348,24 +359,25 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	void AddControl(string label, Widget w)
 	{
 		int x = kLabelWidth;
-		CheckBox cb = cast(CheckBox) w;
+		auto cb = cast(CheckBox) w;
+		auto tc = cast(TabControl) w;
+		auto mt = cast(MultiLineText) w;
 		//if(cb)
 		//	cb.cmd = 1; // enable actionDelegate
 
 		int lines = 1;
-		if(MultiLineText mt = cast(MultiLineText) w)
-		{
+		if(mt || tc)
 			lines = mLinesPerMultiLine;
-		}
+
 		int labelWidth = 0;
 		if(label.length)
 		{
-			Label lab = new Label(mCanvas, label);
+			Label lab = new Label(w ? w.parent : null, label);
 			int off = ((kLineHeight - kLineSpacing) - 16) / 2;
 			labelWidth = w ? kLabelWidth : kPageWidth - 2*kMargin;
 			lab.setRect(0, mLines*kLineHeight + off, labelWidth, kLineHeight - kLineSpacing); 
 		} 
-		else if (cb)
+		else if (cb || tc)
 		{
 			x -= mUnindentCheckBox;
 		}
@@ -1277,13 +1289,92 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 	MultiLineText mAddOpt;
 }
 
-class FilePropertyPage : NodePropertyPage
+class ConfigNodePropertyPage : ProjectPropertyPage
+{
+	abstract void SetControls(CFileNode node);
+	abstract int  DoApply(CFileNode node, CFileNode refnode, Config cfg);
+
+	override void SetControls(ProjectOptions options)
+	{
+		if(auto node = GetNode())
+			SetControls(node);
+	}
+
+	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
+	{
+		return 0;
+	}
+
+	CHierNode[] GetSelectedNodes()
+	{
+		if(auto cfg = GetConfig()) // any config works
+		{
+			auto prj = cfg.GetProject();
+			CHierNode[] nodes;
+			prj.GetSelectedNodes(nodes);
+			return nodes;
+		}
+		return null;
+	}
+
+	CFileNode GetNode()
+	{
+		auto nodes = GetSelectedNodes();
+		for(size_t i = 0; i < nodes.length; i++)
+			if(auto node = cast(CFileNode)nodes[i])
+				return node;
+		return null;
+	}
+
+	override int IsPageDirty()
+	{
+		mixin(LogCallMix);
+		if(mWindow)
+			if(CFileNode node = GetNode())
+			{
+				Config cfg = GetConfig();
+				scope CFileNode n = newCom!CFileNode("");
+				return DoApply(n, node, cfg) > 0 ? S_OK : S_FALSE;
+			}
+		return S_FALSE;
+	}
+
+	override int Apply()
+	{
+		mixin(LogCallMix);
+
+		if(CFileNode rnode = GetNode())
+		{
+			auto refnode = rnode.cloneDeep();
+			auto nodes = GetSelectedNodes();
+			for(int i = 0; i < mObjects.length; i++)
+			{
+				auto config = ComPtr!(Config)(mObjects[i]);
+				if(config)
+				{
+					for(size_t n = 0; n < nodes.length; n++)
+						if(auto node = cast(CFileNode)nodes[n])
+						{
+							DoApply(node, refnode, config);
+							if(CProjectNode pn = cast(CProjectNode) node.GetRootNode())
+								pn.SetProjectFileDirty(true);
+						}
+				}
+				return S_OK;
+			}
+		}
+		return returnError(E_FAIL);
+	}
+}
+
+class FilePropertyPage : ConfigNodePropertyPage
 {
 	override string GetCategoryName() { return ""; }
 	override string GetPageName() { return "File"; }
 
 	override void CreateControls()
 	{
+		AddControl("", mPerConfig = new CheckBox(mCanvas, "per Configuration Options (apply and reopen dialog to update)"));
 		AddControl("Build Tool", mTool = new ComboBox(mCanvas, [ "Auto", "DMD", kToolResourceCompiler, "Custom", "None" ], false));
 		AddControl("Build Command", mCustomCmd = new MultiLineText(mCanvas));
 		AddControl("Other Dependencies", mDependencies = new Text(mCanvas));
@@ -1291,46 +1382,69 @@ class FilePropertyPage : NodePropertyPage
 		AddControl("", mLinkOut = new CheckBox(mCanvas, "Add output to link"));
 	}
 
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+
+		enableControls(mTool.getText());
+	}
+
 	void enableControls(string tool)
 	{
+		bool perConfigChanged = mInitPerConfig != mPerConfig.isChecked();
 		bool isCustom = (tool == "Custom");
 		bool isRc = (tool == kToolResourceCompiler);
-		mCustomCmd.setEnabled(isCustom);
-		mDependencies.setEnabled(isCustom || isRc);
-		mOutFile.setEnabled(isCustom);
-		mLinkOut.setEnabled(isCustom);
+		mTool.setEnabled(!perConfigChanged);
+		mCustomCmd.setEnabled(!perConfigChanged && isCustom);
+		mDependencies.setEnabled(!perConfigChanged && (isCustom || isRc));
+		mOutFile.setEnabled(!perConfigChanged && isCustom);
+		mLinkOut.setEnabled(!perConfigChanged && isCustom);
+	}
+
+	string GetCfgName()
+	{
+		return GetConfig().getCfgName();
 	}
 
 	override void SetControls(CFileNode node)
 	{
-		string tool = node.GetTool();
+		string cfgname = GetCfgName();
+		string tool = node.GetTool(cfgname);
 		if(tool.length == 0)
 			mTool.setSelection(0);
 		else
 			mTool.setSelection(mTool.findString(tool));
 
+		mInitPerConfig = node.GetPerConfigOptions();
+		mPerConfig.setChecked(mInitPerConfig);
+		mCustomCmd.setText(node.GetCustomCmd(cfgname)); 
+		mDependencies.setText(node.GetDependencies(cfgname)); 
+		mOutFile.setText(node.GetOutFile(cfgname)); 
+		mLinkOut.setChecked(node.GetLinkOutput(cfgname)); 
+
 		enableControls(tool);
-		mCustomCmd.setText(node.GetCustomCmd()); 
-		mDependencies.setText(node.GetDependencies()); 
-		mOutFile.setText(node.GetOutFile()); 
-		mLinkOut.setChecked(node.GetLinkOutput()); 
 	}
 
-	override int DoApply(CFileNode node, CFileNode refnode)
+	override int DoApply(CFileNode node, CFileNode refnode, Config cfg)
 	{
+		string cfgname = GetCfgName();
 		int changes = 0;
 		string tool = mTool.getText();
 		if(tool == "Auto")
 			tool = "";
-		changes += changeOptionDg!string(tool, &node.SetTool, refnode.GetTool()); 
-		changes += changeOptionDg!string(mCustomCmd.getText(), &node.SetCustomCmd, refnode.GetCustomCmd()); 
-		changes += changeOptionDg!string(mDependencies.getText(), &node.SetDependencies, refnode.GetDependencies()); 
-		changes += changeOptionDg!string(mOutFile.getText(), &node.SetOutFile, refnode.GetOutFile()); 
-		changes += changeOptionDg!bool(mLinkOut.isChecked(), &node.SetLinkOutput, refnode.GetLinkOutput()); 
+		changes += changeOptionDg!bool(mPerConfig.isChecked(), &node.SetPerConfigOptions, refnode.GetPerConfigOptions()); 
+		changes += changeOptionDg!string(tool,                    (s) => node.SetTool(cfgname, s),         refnode.GetTool(cfgname)); 
+		changes += changeOptionDg!string(mCustomCmd.getText(),    (s) => node.SetCustomCmd(cfgname, s),    refnode.GetCustomCmd(cfgname)); 
+		changes += changeOptionDg!string(mDependencies.getText(), (s) => node.SetDependencies(cfgname, s), refnode.GetDependencies(cfgname)); 
+		changes += changeOptionDg!string(mOutFile.getText(),      (s) => node.SetOutFile(cfgname, s),      refnode.GetOutFile(cfgname)); 
+		changes += changeOptionDg!bool(mLinkOut.isChecked(),      (b) => node.SetLinkOutput(cfgname, b),   refnode.GetLinkOutput(cfgname)); 
 		enableControls(tool);
 		return changes;
 	}
 
+	bool mInitPerConfig;
+
+	CheckBox mPerConfig;
 	ComboBox mTool;
 	MultiLineText mCustomCmd;
 	Text mDependencies;
@@ -1339,7 +1453,126 @@ class FilePropertyPage : NodePropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class DmdDirPropertyPage : GlobalPropertyPage
+class DirPropertyPage : GlobalPropertyPage
+{
+	this(GlobalOptions options)
+	{
+		super(options);
+		kNeededLines = 13;
+	}
+
+	void dirCreateControls(string name, string overrideIni)
+	{
+		AddControl(name ~ " install path", mDmdPath = new Text(mCanvas));
+		mLinesPerMultiLine = 2;
+		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 10;
+		AddControl("", mTabArch = new TabControl(mCanvas, ["Win32", "x64"]));
+
+		auto page32 = mTabArch.pages[0];
+		if(auto w = cast(Window)page32)
+			w.commandDelegate = mCanvas.commandDelegate;
+		mResizableWidgets ~= page32;
+
+		kPageWidth -= 6;
+		mLines = 0;
+		mLinesPerMultiLine = 3;
+		AddControl("Executable paths", mExePath = new MultiLineText(page32));
+		mLinesPerMultiLine = 2;
+		AddControl("Library paths",    mLibPath = new MultiLineText(page32));
+
+		auto page64 = mTabArch.pages[1];
+		if(auto w = cast(Window)page64)
+			w.commandDelegate = mCanvas.commandDelegate;
+		mResizableWidgets ~= page64;
+
+		mLines = 0;
+		mLinesPerMultiLine = 3;
+		AddControl("Executable paths", mExePath64 = new MultiLineText(page64));
+		mLinesPerMultiLine = 2;
+		AddControl("Library paths", mLibPath64 = new MultiLineText(page64));
+	
+		if(overrideIni.length)
+		{
+			AddControl("", mOverrideIni64 = new CheckBox(page64, overrideIni));
+			AddControl("Linker", mLinkerExecutable64 = new Text(page64));
+			AddControl("Additional options", mLinkerOptions64 = new Text(page64));
+		}
+	}
+
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+
+		enableControls();
+	}
+
+	void enableControls()
+	{
+		if(mOverrideIni64)
+		{
+			mLinkerExecutable64.setEnabled(mOverrideIni64.isChecked());
+			mLinkerOptions64.setEnabled(mOverrideIni64.isChecked());
+		}
+	}
+
+	abstract CompilerDirectories* getCompilerOptions(GlobalOptions opts);
+
+	override void SetControls(GlobalOptions opts)
+	{
+		CompilerDirectories* opt = getCompilerOptions(opts);
+
+		mDmdPath.setText(opt.InstallDir);
+		mExePath.setText(opt.ExeSearchPath);
+		mImpPath.setText(opt.ImpSearchPath);
+		mLibPath.setText(opt.LibSearchPath);
+		mExePath64.setText(opt.ExeSearchPath64);
+		mLibPath64.setText(opt.LibSearchPath64);
+		if(mOverrideIni64)
+		{
+			mOverrideIni64.setChecked(opt.overrideIni64);
+			mLinkerExecutable64.setText(opt.overrideLinker64);
+			mLinkerOptions64.setText(opt.overrideOptions64);
+		}
+
+		enableControls();
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		CompilerDirectories* opt = getCompilerOptions(opts);
+		CompilerDirectories* refopt = getCompilerOptions(refopts);
+
+		int changes = 0;
+		changes += changeOption(mDmdPath.getText(),            opt.InstallDir,        refopt.InstallDir); 
+		changes += changeOption(mExePath.getText(),            opt.ExeSearchPath,     refopt.ExeSearchPath); 
+		changes += changeOption(mImpPath.getText(),            opt.ImpSearchPath,     refopt.ImpSearchPath); 
+		changes += changeOption(mLibPath.getText(),            opt.LibSearchPath,     refopt.LibSearchPath); 
+		changes += changeOption(mExePath64.getText(),          opt.ExeSearchPath64,   refopt.ExeSearchPath64); 
+		changes += changeOption(mLibPath64.getText(),          opt.LibSearchPath64,   refopt.LibSearchPath64);
+		if(mOverrideIni64)
+		{
+			changes += changeOption(mOverrideIni64.isChecked(),    opt.overrideIni64,     refopt.overrideIni64); 
+			changes += changeOption(mLinkerExecutable64.getText(), opt.overrideLinker64,  refopt.overrideLinker64); 
+			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64); 
+		}
+		return changes;
+	}
+
+	TabControl mTabArch;
+	Text mDmdPath;
+	MultiLineText mExePath;
+	MultiLineText mImpPath;
+	MultiLineText mLibPath;
+	MultiLineText mExePath64;
+	MultiLineText mLibPath64;
+	CheckBox mOverrideIni64;
+	Text mLinkerExecutable64;
+	Text mLinkerOptions64;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+class DmdDirPropertyPage : DirPropertyPage
 {
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "DMD Directories"; }
@@ -1351,41 +1584,17 @@ class DmdDirPropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		mLinesPerMultiLine = 3;
-		AddControl("DMD install path", mDmdPath = new Text(mCanvas));
-		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
-		mLinesPerMultiLine = 2;
-		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
-		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
-		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+		dirCreateControls("DMD", "override linker settings from dmd configuration in sc.ini.");
 	}
 
-	override void SetControls(GlobalOptions opts)
+	override CompilerDirectories* getCompilerOptions(GlobalOptions opts)
 	{
-		mDmdPath.setText(opts.DMD.InstallDir);
-		mExePath.setText(opts.DMD.ExeSearchPath);
-		mImpPath.setText(opts.DMD.ImpSearchPath);
-		mLibPath.setText(opts.DMD.LibSearchPath);
+		return &opts.DMD;
 	}
-
-	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
-	{
-		int changes = 0;
-		changes += changeOption(mDmdPath.getText(), opts.DMD.InstallDir,    refopts.DMD.InstallDir); 
-		changes += changeOption(mExePath.getText(), opts.DMD.ExeSearchPath, refopts.DMD.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(), opts.DMD.ImpSearchPath, refopts.DMD.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(), opts.DMD.LibSearchPath, refopts.DMD.LibSearchPath); 
-		return changes;
-	}
-
-	Text mDmdPath;
-	MultiLineText mExePath;
-	MultiLineText mImpPath;
-	MultiLineText mLibPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class GdcDirPropertyPage : GlobalPropertyPage
+class GdcDirPropertyPage : DirPropertyPage
 {
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "GDC Directories"; }
@@ -1397,41 +1606,17 @@ class GdcDirPropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		mLinesPerMultiLine = 3;
-		AddControl("GDC install path", mGdcPath = new Text(mCanvas));
-		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
-		mLinesPerMultiLine = 2;
-		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
-		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
-		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+		dirCreateControls("GDC", "");
 	}
 
-	override void SetControls(GlobalOptions opts)
+	override CompilerDirectories* getCompilerOptions(GlobalOptions opts)
 	{
-		mGdcPath.setText(opts.GDC.InstallDir);
-		mExePath.setText(opts.GDC.ExeSearchPath);
-		mImpPath.setText(opts.GDC.ImpSearchPath);
-		mLibPath.setText(opts.GDC.LibSearchPath);
+		return &opts.GDC;
 	}
-
-	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
-	{
-		int changes = 0;
-		changes += changeOption(mGdcPath.getText(), opts.GDC.InstallDir,    refopts.GDC.InstallDir); 
-		changes += changeOption(mExePath.getText(), opts.GDC.ExeSearchPath, refopts.GDC.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(), opts.GDC.ImpSearchPath, refopts.GDC.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(), opts.GDC.LibSearchPath, refopts.GDC.LibSearchPath); 
-		return changes;
-	}
-
-	Text mGdcPath;
-	MultiLineText mExePath;
-	MultiLineText mImpPath;
-	MultiLineText mLibPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class LdcDirPropertyPage : GlobalPropertyPage
+class LdcDirPropertyPage : DirPropertyPage
 {
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "LDC Directories"; }
@@ -1443,37 +1628,13 @@ class LdcDirPropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		mLinesPerMultiLine = 3;
-		AddControl("LDC install path", mLdcPath = new Text(mCanvas));
-		AddControl("Executable paths", mExePath = new MultiLineText(mCanvas));
-		mLinesPerMultiLine = 2;
-		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
-		AddControl("Library paths",    mLibPath = new MultiLineText(mCanvas));
-		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
+		dirCreateControls("LDC", "");
 	}
 
-	override void SetControls(GlobalOptions opts)
+	override CompilerDirectories* getCompilerOptions(GlobalOptions opts)
 	{
-		mLdcPath.setText(opts.LDC.InstallDir);
-		mExePath.setText(opts.LDC.ExeSearchPath);
-		mImpPath.setText(opts.LDC.ImpSearchPath);
-		mLibPath.setText(opts.LDC.LibSearchPath);
+		return &opts.LDC;
 	}
-
-	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
-	{
-		int changes = 0;
-		changes += changeOption(mLdcPath.getText(), opts.LDC.InstallDir,    refopts.LDC.InstallDir); 
-		changes += changeOption(mExePath.getText(), opts.LDC.ExeSearchPath, refopts.LDC.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(), opts.LDC.ImpSearchPath, refopts.LDC.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(), opts.LDC.LibSearchPath, refopts.LDC.LibSearchPath); 
-		return changes;
-	}
-
-	Text mLdcPath;
-	MultiLineText mExePath;
-	MultiLineText mImpPath;
-	MultiLineText mLibPath;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1485,13 +1646,14 @@ class ToolsProperty2Page : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 11;
+		kNeededLines = 12;
 	}
 
 	override void CreateControls()
 	{
-		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
+		AddControl("", mShowUptodate  = new CheckBox(mCanvas, "Show why a target is rebuilt"));
+		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors"));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor OPTLINK dependencies"));
@@ -1506,6 +1668,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	{
 		mTimeBuilds.setChecked(opts.timeBuilds);
 		mSortProjects.setChecked(opts.sortProjects);
+		mShowUptodate.setChecked(opts.showUptodateFailure);
 		mStopSlnBuild.setChecked(opts.stopSolutionBuild);
 		mDemangleError.setChecked(opts.demangleError);
 		mOptlinkDeps.setChecked(opts.optlinkDeps);
@@ -1520,6 +1683,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
 		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
+		changes += changeOption(mShowUptodate.isChecked(), opts.showUptodateFailure, refopts.showUptodateFailure); 
 		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild); 
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
 		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps); 
@@ -1532,6 +1696,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 
 	CheckBox mTimeBuilds;
 	CheckBox mSortProjects;
+	CheckBox mShowUptodate;
 	CheckBox mStopSlnBuild;
 	CheckBox mDemangleError;
 	CheckBox mOptlinkDeps;
@@ -1557,6 +1722,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
+debug	AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
@@ -1567,6 +1733,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
 		mColorizeCoverage.setChecked(opts.ColorizeCoverage);
+debug	mShowCoverageMargin.setChecked(opts.showCoverageMargin);
 		mAutoOutlining.setChecked(opts.autoOutlining);
 		mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
@@ -1580,6 +1747,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
 		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage); 
+debug	changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin); 
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
 		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
@@ -1589,6 +1757,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 
 	CheckBox mColorizeVersions;
 	CheckBox mColorizeCoverage;
+debug CheckBox mShowCoverageMargin;
 	CheckBox mAutoOutlining;
 	CheckBox mParseSource;
 	CheckBox mPasteIndent;
@@ -1613,8 +1782,24 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
 		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "writing '.'", "writing an identifier" ], false));
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip"));
-		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (instead of JSON info)"));
+		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
 		version(DParser) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
+		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
+		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
+	}
+
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+
+	void EnableControls()
+	{
+		version(DParser) bool useDParser = mUseDParser.isChecked();
+		else             bool useDParser = false;
+		mMixinAnalysis.setEnabled(useDParser);
+		mUFCSExpansions.setEnabled(useDParser);
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1626,6 +1811,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 		mSemanticGotoDef.setChecked(opts.semanticGotoDef);
 		version(DParser) mUseDParser.setChecked(opts.useDParser);
+		mMixinAnalysis.setChecked(opts.mixinAnalysis);
+		mUFCSExpansions.setChecked(opts.UFCSExpansions);
 
 		//mExpandSemantics.setEnabled(false);
 	}
@@ -1640,6 +1827,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip); 
 		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef); 
 		version(DParser) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser); 
+		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis); 
+		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions); 
 		return changes;
 	}
 
@@ -1650,6 +1839,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	CheckBox mShowTypeInTooltip;
 	CheckBox mSemanticGotoDef;
 	version(DParser) CheckBox mUseDParser;
+	CheckBox mUFCSExpansions;
+	CheckBox mMixinAnalysis;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1759,25 +1950,28 @@ class PropertyPageFactory : DComObject, IClassFactory
 		return S_OK;
 	}
 
-	static int GetProjectPages(CAUUID *pPages)
+	static int GetProjectPages(CAUUID *pPages, bool addFile)
 	{
 version(all) {
-		pPages.cElems = 11;
+		pPages.cElems = (addFile ? 12 : 11);
 		pPages.pElems = cast(GUID*)CoTaskMemAlloc(pPages.cElems*GUID.sizeof);
 		if (!pPages.pElems)
 			return E_OUTOFMEMORY;
 
-		pPages.pElems[0] = g_GeneralPropertyPage;
-		pPages.pElems[1] = g_DebuggingPropertyPage;
-		pPages.pElems[2] = g_DmdGeneralPropertyPage;
-		pPages.pElems[3] = g_DmdDebugPropertyPage;
-		pPages.pElems[4] = g_DmdCodeGenPropertyPage;
-		pPages.pElems[5] = g_DmdMessagesPropertyPage;
-		pPages.pElems[6] = g_DmdDocPropertyPage;
-		pPages.pElems[7] = g_DmdOutputPropertyPage;
-		pPages.pElems[8] = g_DmdLinkerPropertyPage;
-		pPages.pElems[9] = g_DmdCmdLinePropertyPage;
-		pPages.pElems[10] = g_DmdEventsPropertyPage;
+		int idx = 0;
+		if(addFile)
+			pPages.pElems[idx++] = g_FilePropertyPage;
+		pPages.pElems[idx++] = g_GeneralPropertyPage;
+		pPages.pElems[idx++] = g_DebuggingPropertyPage;
+		pPages.pElems[idx++] = g_DmdGeneralPropertyPage;
+		pPages.pElems[idx++] = g_DmdDebugPropertyPage;
+		pPages.pElems[idx++] = g_DmdCodeGenPropertyPage;
+		pPages.pElems[idx++] = g_DmdMessagesPropertyPage;
+		pPages.pElems[idx++] = g_DmdDocPropertyPage;
+		pPages.pElems[idx++] = g_DmdOutputPropertyPage;
+		pPages.pElems[idx++] = g_DmdLinkerPropertyPage;
+		pPages.pElems[idx++] = g_DmdCmdLinePropertyPage;
+		pPages.pElems[idx++] = g_DmdEventsPropertyPage;
 		return S_OK;
 } else {
 		return returnError(E_NOTIMPL);

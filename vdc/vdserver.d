@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2012 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module vdc.vdserver;
 
@@ -183,16 +183,19 @@ class VDServer : ComObject, IVDServer
 
 			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64, 
 											  opts.coverage, opts.doDoc, opts.noBoundsCheck, opts.gdcCompiler,
-											  0, 0, opts.noDeprecated); // no need to compare version levels, done in setVersionIds
+											  0, 0, // no need to compare version levels, done in setVersionIds
+											  opts.noDeprecated, opts.mixinAnalysis, opts.UFCSExpansions);
 
-			opts.unittestOn    = (flags & 1) != 0;
-			opts.debugOn       = (flags & 2) != 0;
-			opts.x64           = (flags & 4) != 0;
-			opts.coverage      = (flags & 8) != 0;
-			opts.doDoc         = (flags & 16) != 0;
-			opts.noBoundsCheck = (flags & 32) != 0;
-			opts.gdcCompiler   = (flags & 64) != 0;
-			opts.noDeprecated  = (flags & 128) != 0;
+			opts.unittestOn     = (flags & 1) != 0;
+			opts.debugOn        = (flags & 2) != 0;
+			opts.x64            = (flags & 4) != 0;
+			opts.coverage       = (flags & 8) != 0;
+			opts.doDoc          = (flags & 16) != 0;
+			opts.noBoundsCheck  = (flags & 32) != 0;
+			opts.gdcCompiler    = (flags & 64) != 0;
+			opts.noDeprecated   = (flags & 128) != 0;
+			opts.mixinAnalysis  = (flags & 0x1_00_00_00) != 0;
+			opts.UFCSExpansions = (flags & 0x2_00_00_00) != 0;
 
 			int versionlevel = (flags >> 8)  & 0xff;
 			int debuglevel   = (flags >> 16) & 0xff;
@@ -200,7 +203,7 @@ class VDServer : ComObject, IVDServer
 			string verids = to_string(versionids);
 			string dbgids = to_string(debugids);
 
-			int changed = (oldflags != (flags & 0xff));
+			int changed = (oldflags != (flags & 0xff0000ff));
 			changed += opts.setImportDirs(splitLines(imports));
 			changed += opts.setImportDirs(splitLines(imports));
 			changed += opts.setVersionIds(versionlevel, splitLines(verids)); 

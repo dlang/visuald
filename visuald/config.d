@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module visuald.config;
 
@@ -708,7 +708,7 @@ class ProjectOptions
 
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
-			lpaths ~= tokenizeArgs(compilerDirectories.LibSearchPath);
+			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		else
 			cmd ~= " -Wl,-nostdlib";
 		foreach(lp; lpaths)
@@ -731,15 +731,16 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir)
+	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir, bool mslink)
 	{
 		string cmd;
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
 			dmdoutfile ~= "_cv";
 		string mapfile = "\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+		string plus = mslink ? " " : "+";
 
-		static string plusList(string[] lnkfiles, string ext)
+		static string plusList(string[] lnkfiles, string ext, string sep)
 		{
 			if(ext.length == 0 || ext[0] != '.')
 				ext = "." ~ ext;
@@ -749,7 +750,7 @@ class ProjectOptions
 				if(toLower(extension(file)) != ext)
 					continue;
 				if(s.length > 0)
-					s ~= "+";
+					s ~= sep;
 				s ~= quoteNormalizeFilename(file);
 			}
 			return s;
@@ -768,59 +769,69 @@ class ProjectOptions
 				lnkfiles ~= opt;
 		}
 
-		cmd ~= plusList(lnkfiles, objectFileExtension());
-		cmd ~= ",";
+		cmd ~= plusList(lnkfiles, objectFileExtension(), plus);
+		cmd ~= mslink ? " /OUT:" : ",";
 		cmd ~= quoteNormalizeFilename(dmdoutfile);
-		cmd ~= ",";
+		cmd ~= mslink ? " /MAP:" : ",";
 		cmd ~= mapfile;
-		cmd ~= ",";
+		cmd ~= mslink ? " " : ",";
 
 		string[] libs = tokenizeArgs(libfiles);
 		libs ~= "user32.lib";
 		libs ~= "kernel32.lib";
-		cmd ~= plusList(lnkfiles ~ libs, ".lib");
+		cmd ~= plusList(lnkfiles ~ libs, ".lib", plus);
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
-			lpaths ~= tokenizeArgs(compilerDirectories.LibSearchPath);
+			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
-			cmd ~= "+" ~ quoteFilename(normalizeDir(lp));
+			cmd ~= (mslink ? " /LIBPATH:" : "+") ~ quoteFilename(normalizeDir(unquoteArgument(lp)));
 		
-		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def");
-		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res");
-		if(def.length || res.length)
-			cmd ~= "," ~ def;
-		if(res.length)
-			cmd ~= "," ~ res;
-
+		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def", mslink ? " /DEF:" : plus);
+		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res", plus);
+		if(mslink)
+		{
+			if(def.length)
+				cmd ~= " /DEF:" ~ def;
+			if(res.length)
+				cmd ~= " " ~ res;
+		}
+		else
+		{
+			if(def.length || res.length)
+				cmd ~= "," ~ def;
+			if(res.length)
+				cmd ~= "," ~ res;
+		}
 		// options
 		// "/m" to geneate map?
-		switch(mapverbosity)
-		{
-			case 0: cmd ~= "/NOMAP"; break; // actually still creates map file
-			case 1: cmd ~= "/MAP:ADDRESS"; break;
-			case 2: break;
-			case 3: cmd ~= "/MAP:FULL"; break;
-			case 4: cmd ~= "/MAP:FULL/XREF"; break;
-			default: break;
-		}
+		if(!mslink)
+			switch(mapverbosity)
+			{
+				case 0: cmd ~= "/NOMAP"; break; // actually still creates map file
+				case 1: cmd ~= "/MAP:ADDRESS"; break;
+				case 2: break;
+				case 3: cmd ~= "/MAP:FULL"; break;
+				case 4: cmd ~= "/MAP:FULL/XREF"; break;
+				default: break;
+			}
 
 		if(symdebug)
-			cmd ~= "/CO";
-		cmd ~= "/NOI";
+			cmd ~= mslink ? " /DEBUG" : "/CO";
+		cmd ~= mslink ? " /INCREMENTAL:NO /NOLOGO" : "/NOI";
 
 		if(lib != OutputType.StaticLib)
 		{
 			if(createImplib)
-				cmd ~= "/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+				cmd ~= " /IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
 
 			switch(subsystem)
 			{
 				default:
 				case Subsystem.NotSet: break;
-				case Subsystem.Console: cmd ~= "/SUBSYSTEM:CONSOLE"; break;
-				case Subsystem.Windows: cmd ~= "/SUBSYSTEM:WINDOWS"; break;
-				case Subsystem.Native:  cmd ~= "/SUBSYSTEM:NATIVE"; break;
-				case Subsystem.Posix:   cmd ~= "/SUBSYSTEM:POSIX"; break;
+				case Subsystem.Console: cmd ~= " /SUBSYSTEM:CONSOLE"; break;
+				case Subsystem.Windows: cmd ~= " /SUBSYSTEM:WINDOWS"; break;
+				case Subsystem.Native:  cmd ~= " /SUBSYSTEM:NATIVE"; break;
+				case Subsystem.Posix:   cmd ~= " /SUBSYSTEM:POSIX"; break;
 			}
 		}
 		cmd ~= addopts;
@@ -899,18 +910,25 @@ class ProjectOptions
 	{
 		if(compilationModel == ProjectOptions.kSeparateCompileOnly)
 			return false;
+		
 		bool separateLink = compilationModel == ProjectOptions.kSeparateCompileAndLink;
 		if (compiler == Compiler.GDC && lib == OutputType.StaticLib)
 			separateLink = true;
-		if (compiler == Compiler.DMD && lib != OutputType.StaticLib && Package.GetGlobalOptions().optlinkDeps)
-			separateLink = true;
+		
+		if (compiler == Compiler.DMD && lib != OutputType.StaticLib)
+		{
+			if(Package.GetGlobalOptions().optlinkDeps)
+				separateLink = true;
+			else if(isX86_64 && Package.GetGlobalOptions().DMD.overrideIni64)
+				separateLink = true;
+		}
 		return separateLink;
 	}
 
-	bool usesOptlink()
+	bool callLinkerDirectly()
 	{
 		bool dmdlink = compiler == Compiler.DMD && doSeparateLink() && lib != OutputType.StaticLib;
-		return dmdlink && !isX86_64;
+		return dmdlink; // && !isX86_64;
 	}
 
 	bool usesCv2pdb()
@@ -1676,7 +1694,22 @@ class Config :	DisposingComObject,
 	override int GetPages( /* [out] */ CAUUID *pPages)
 	{
 		mixin(LogCallMix);
-		return PropertyPageFactory.GetProjectPages(pPages);
+		CHierNode[] nodes;
+		CFileNode file;
+		CProjectNode proj;
+		if(GetProject().GetSelectedNodes(nodes) == S_OK)
+		{
+			foreach(n; nodes)
+			{
+				if(!file)
+					file = cast(CFileNode) n;
+				if(!proj)
+					proj = cast(CProjectNode) n;
+			}
+		}
+		if (!proj)
+			return PropertyPageFactory.GetFilePages(pPages);
+		return PropertyPageFactory.GetProjectPages(pPages, false);
 	}
 
 	// IVsCfg
@@ -1684,7 +1717,7 @@ class Config :	DisposingComObject,
 	{
 		logCall("%s.get_DisplayName(pbstrDisplayName=%s)", this, _toLog(pbstrDisplayName));
 
-		*pbstrDisplayName = allocBSTR(mName ~ "|" ~ mPlatform);
+		*pbstrDisplayName = allocBSTR(getCfgName());
 		return S_OK;
 	}
     
@@ -1841,6 +1874,8 @@ class Config :	DisposingComObject,
 		string workdir = mProjectOptions.replaceEnvironment(mProjectOptions.debugworkingdir, this);
 		if(!isAbsolute(workdir))
 			workdir = GetProjectDir() ~ "\\" ~ workdir;
+
+		Package.GetGlobalOptions().addExecutionPath(workdir);
 
 		string args = mProjectOptions.replaceEnvironment(mProjectOptions.debugarguments, this);
 		if(DBGLAUNCH_NoDebug & grfLaunch)
@@ -2123,7 +2158,7 @@ class Config :	DisposingComObject,
 
 	bool hasLinkDependencies()
 	{
-		return mProjectOptions.usesOptlink() && Package.GetGlobalOptions().optlinkDeps;
+		return mProjectOptions.callLinkerDirectly() && Package.GetGlobalOptions().optlinkDeps;
 	}
 
 	string GetCommandLinePath()
@@ -2148,7 +2183,7 @@ class Config :	DisposingComObject,
 		if(tool == "Custom" || tool == kToolResourceCompiler)
 		{
 			string outfile = GetOutputFile(file);
-			string dep = file.GetDependencies();
+			string dep = file.GetDependencies(getCfgName());
 			dep = mProjectOptions.replaceEnvironment(dep, this, file.GetFilename(), outfile);
 			string[] deps = tokenizeArgs(dep);
 			deps ~= file.GetFilename();
@@ -2181,7 +2216,7 @@ class Config :	DisposingComObject,
 		return null;
 	}
 
-	bool isUptodate(CFileNode file)
+	bool isUptodate(CFileNode file, string* preason)
 	{
 		string fcmd = GetCompileCommand(file);
 		if(fcmd.length == 0)
@@ -2194,7 +2229,11 @@ class Config :	DisposingComObject,
 		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
 		
 		if(!compareCommandFile(cmdfile, fcmd))
+		{
+			if(preason)
+				*preason = "command line has changed";
 			return false;
+		}
 
 		string[] deps = GetDependencies(file);
 		
@@ -2203,21 +2242,25 @@ class Config :	DisposingComObject,
 		long targettm = getOldestFileTime( [ outfile ], oldestFile );
 		long sourcetm = getNewestFileTime(deps, newestFile);
 
-		return targettm > sourcetm;
+		if(targettm > sourcetm)
+			return true;
+		if(preason)
+			*preason = newestFile ~ " is newer";
+		return false;
 	}
 
 	static bool IsResource(CFileNode file)
 	{
-		string tool = file.GetTool();
+		string tool = file.GetTool(null);
 		if(tool == "")
 			if(toLower(extension(file.GetFilename())) == ".rc")
 				return true;
 		return tool == kToolResourceCompiler;
 	}
 	
-	static string GetStaticCompileTool(CFileNode file)
+	static string GetStaticCompileTool(CFileNode file, string cfgname)
 	{
-		string tool = file.GetTool();
+		string tool = file.GetTool(cfgname);
 		if(tool == "")
 		{
 			string fname = file.GetFilename();
@@ -2232,7 +2275,7 @@ class Config :	DisposingComObject,
 	
 	string GetCompileTool(CFileNode file)
 	{
-		string tool = file.GetTool();
+		string tool = file.GetTool(getCfgName());
 		if(tool == "")
 		{
 			string fname = file.GetFilename();
@@ -2261,7 +2304,7 @@ class Config :	DisposingComObject,
 		if(tool == kToolResourceCompiler)
 			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename()), "_") ~ ".res";
 		if(tool == "Custom")
-			fname = file.GetOutFile();
+			fname = file.GetOutFile(getCfgName());
 		if(fname.length)
 			fname = mProjectOptions.replaceEnvironment(fname, this, file.GetFilename());
 		return fname;
@@ -2377,7 +2420,7 @@ class Config :	DisposingComObject,
 		}
 		if(tool == "Custom")
 		{
-			cmd = file.GetCustomCmd();
+			cmd = file.GetCustomCmd(getCfgName());
 		}
 		if(tool == "DMDsingle")
 		{
@@ -2433,12 +2476,13 @@ class Config :	DisposingComObject,
 	string getEnvironmentChanges()
 	{
 		string cmd;
+		bool x64 = mProjectOptions.isX86_64;
 		GlobalOptions globOpt = Package.GetGlobalOptions();
-		string exeSearchPath = mProjectOptions.compilerDirectories.ExeSearchPath;
+		string exeSearchPath = x64 ? mProjectOptions.compilerDirectories.ExeSearchPath64 : mProjectOptions.compilerDirectories.ExeSearchPath;
 		if(exeSearchPath.length)
 			cmd ~= "set PATH=" ~ replaceCrLf(exeSearchPath) ~ ";%PATH%\n";
 		
-		string libSearchPath = mProjectOptions.compilerDirectories.LibSearchPath;
+		string libSearchPath = x64 ? mProjectOptions.compilerDirectories.LibSearchPath64 : mProjectOptions.compilerDirectories.LibSearchPath;
 		bool hasGlobalPath = mProjectOptions.useStdLibPath && libSearchPath.length;
 		if(hasGlobalPath || mProjectOptions.libpaths.length)
 		{
@@ -2454,6 +2498,13 @@ class Config :	DisposingComObject,
 				cmd ~= "set DMD_LIB=" ~ lpath ~ "\n";
 			else if(mProjectOptions.compiler == Compiler.LDC)
 				cmd ~= "set LIB=" ~ lpath ~ "\n";
+		}
+		if(mProjectOptions.isX86_64)
+		{
+			if(globOpt.WindowsSdkDir.length)
+				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
+			if(globOpt.VCInstallDir.length)
+				cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
 		}
 		return cmd;
 	}
@@ -2547,10 +2598,11 @@ class Config :	DisposingComObject,
 					string fname = stripExtension(f);
 					if(!mProjectOptions.preservePaths)
 						fname = baseName(fname);
-					if(mProjectOptions.compiler == Compiler.DMD)
-						f = mProjectOptions.objdir ~ "\\" ~ fname ~ "." ~ mProjectOptions.objectFileExtension();
+					fname ~= "." ~ mProjectOptions.objectFileExtension();
+					if(mProjectOptions.compiler == Compiler.DMD && !isAbsolute(fname))
+						f = mProjectOptions.objdir ~ "\\" ~ fname;
 					else
-						f = fname ~ "." ~ mProjectOptions.objectFileExtension();
+						f = fname;
 				}
 			}
 
@@ -2603,7 +2655,7 @@ class Config :	DisposingComObject,
 				{
 					string fname = GetOutputFile(file);
 					if(fname.length)
-						if(file.GetTool() != "Custom" || file.GetLinkOutput())
+						if(file.GetTool(getCfgName()) != "Custom" || file.GetLinkOutput(getCfgName()))
 							files ~= fname;
 				}
 				return false;
@@ -2625,6 +2677,8 @@ class Config :	DisposingComObject,
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.doSeparateLink();
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
+		string workdir = normalizeDir(GetProjectDir());
+		bool x64 = mProjectOptions.isX86_64;
 
 		string precmd = getEnvironmentChanges();
 		string[] files = getInputFileList();
@@ -2654,7 +2708,7 @@ class Config :	DisposingComObject,
 				opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
 		}
 		string addopt;
-		if(mProjectOptions.additionalOptions.length)
+		if(mProjectOptions.additionalOptions.length && fcmd.length)
 			addopt = " " ~ mProjectOptions.additionalOptions;
 		string cmd = precmd ~ opt ~ fcmd ~ addopt ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
@@ -2662,12 +2716,12 @@ class Config :	DisposingComObject,
 		if(separateLink && doLink)
 		{
 			string prelnk, lnkcmd;
-			if(mProjectOptions.usesOptlink())
+			if(mProjectOptions.callLinkerDirectly())
 			{
 				string libpaths, options;
 				string otherCompiler = mProjectOptions.replaceEnvironment(mProjectOptions.otherCompilerPath(), this);
-				string linkpath = globOpts.getOptlinkPath(otherCompiler, &libpaths, &options);
-				lnkcmd = linkpath ~ " ";
+				string linkpath = globOpts.getLinkerPath(x64, workdir, otherCompiler, &libpaths, &options);
+				lnkcmd = quoteFilename(linkpath) ~ " ";
 
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
@@ -2676,8 +2730,7 @@ class Config :	DisposingComObject,
 						~ lnkcmd;
 
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
-				string workdir = normalizeDir(GetProjectDir());
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir);
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";
@@ -2936,6 +2989,7 @@ class Config :	DisposingComObject,
 
 	string getName() { return mName; }
 	string getPlatform() { return mPlatform; }
+	string getCfgName() { return mName ~ "|" ~ mPlatform; }
 
 private:
 	string mName;

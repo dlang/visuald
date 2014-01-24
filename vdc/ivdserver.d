@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2012 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module vdc.ivdserver;
 
@@ -168,7 +168,8 @@ public:
 
 ///////////////////////////////////////////////////////////////////////
 uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
-					  int versionLevel, int debugLevel, bool noDeprecated)
+					  int versionLevel, int debugLevel, bool noDeprecated, 
+					  bool mixinAnalysis, bool ufcsExpansions)
 {
 	return (unittestOn ? 1 : 0)
 		|  (debugOn    ? 2 : 0)
@@ -179,6 +180,8 @@ uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool do
 		|  (gdc        ? 64 : 0)
 		|  (noDeprecated ? 128 : 0)
 		| ((versionLevel & 0xff) << 8)
-		| ((debugLevel   & 0xff) << 16);
+		| ((debugLevel   & 0xff) << 16)
+		|  (mixinAnalysis  ? 0x1_00_00_00 : 0)
+		|  (ufcsExpansions ? 0x2_00_00_00 : 0);
 }
 

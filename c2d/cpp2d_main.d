@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module c2d.cpp2d_main;
 
@@ -827,8 +827,37 @@ extern extern(C) __gshared ModuleInfo D4core3sys7windows10stacktrace12__ModuleIn
 void disableStacktrace()
 {
 	ModuleInfo* info = &D4core3sys7windows10stacktrace12__ModuleInfoZ;
-	if (info.isNew)
+	static if(__traits(compiles,info.isNew))
 	{
+		// dmd 2.063
+		if (info.isNew)
+		{
+			enum
+			{
+				MItlsctor    = 8,
+				MItlsdtor    = 0x10,
+				MIctor       = 0x20,
+				MIdtor       = 0x40,
+				MIxgetMembers = 0x80,
+			}
+			if (info.n.flags & MIctor)
+			{
+				size_t off = info.New.sizeof;
+				if (info.n.flags & MItlsctor)
+					off += info.o.tlsctor.sizeof;
+				if (info.n.flags & MItlsdtor)
+					off += info.o.tlsdtor.sizeof;
+				if (info.n.flags & MIxgetMembers)
+					off += info.o.xgetMembers.sizeof;
+				*cast(typeof(info.o.ctor)*)(cast(void*)info + off) = null;
+			}
+		}
+		else
+			info.o.ctor = null;
+	}
+	else 
+	{
+		// dmd 2.064alpha
 		enum
 		{
 			MItlsctor    = 8,
@@ -837,21 +866,20 @@ void disableStacktrace()
 			MIdtor       = 0x40,
 			MIxgetMembers = 0x80,
 		}
-		if (info.n.flags & MIctor)
+		if (info.flags & MIctor)
 		{
-			size_t off = info.New.sizeof;
-			if (info.n.flags & MItlsctor)
-				off += info.o.tlsctor.sizeof;
-			if (info.n.flags & MItlsdtor)
-				off += info.o.tlsdtor.sizeof;
-			if (info.n.flags & MIxgetMembers)
-				off += info.o.xgetMembers.sizeof;
-			*cast(typeof(info.o.ctor)*)(cast(void*)info + off) = null;
+			size_t off = info.sizeof;
+			if (info.flags & MItlsctor)
+				off += info.tlsctor.sizeof;
+			if (info.flags & MItlsdtor)
+				off += info.tlsdtor.sizeof;
+			if (info.flags & MIxgetMembers)
+				off += info.xgetMembers.sizeof;
+			*cast(typeof(info.ctor)*)(cast(void*)info + off) = null;
 		}
 	}
-	else
-		info.o.ctor = null;
 }
+
 
 shared static this() 
 {

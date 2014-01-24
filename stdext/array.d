@@ -3,8 +3,8 @@
 // Visual D integrates the D programming language into Visual Studio
 // Copyright (c) 2010-2011 by Rainer Schuetze, All Rights Reserved
 //
-// License for redistribution is given by the Artistic License 2.0
-// see file LICENSE for further details
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module stdext.array;
 
@@ -58,6 +58,22 @@ void remove(T)(ref T[] arr, T val)
 	int idx = arrIndex(arr, val);
 	if(idx >= 0)
 		arr = arr[0..idx] ~ arr[idx+1..$];
+}
+
+void adduniqueLRU(T)(ref T[] arr, T val, size_t maxEntries)
+{
+	for(size_t i = 0; i < arr.length; i++)
+		if(val == arr[i])
+		{
+			// move to front
+			if(i > 0)
+				arr = [val] ~ arr[0..i] ~ arr[i+1 .. $];
+			return;
+		}
+
+	if(arr.length >= maxEntries)
+		arr.length = maxEntries - 1;
+	arr = [val] ~ arr;
 }
 
 ///////////////////////////////////////////////////////////////////////
