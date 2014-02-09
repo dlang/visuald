@@ -136,7 +136,9 @@ class idl2d
 			"threadpoolprivateapiset.h", "threadpoolapiset.h",  "bemapiset.h", "wow64apiset.h",
 			"jobapi.h", "timezoneapi.h", "datetimeapi.h", "stringapiset.h",
 			"libloaderapi.h", "securitybaseapi.h", "namespaceapi.h", "systemtopologyapi.h", "processtopologyapi.h",
-			"securityappcontainer.h", "realtimeapiset.h", "unknwnbase.idl", "objidlbase.idl", "combaseapi.h"
+			"securityappcontainer.h", "realtimeapiset.h", "unknwnbase.idl", "objidlbase.idl", "combaseapi.h",
+			// Win SDK 8.1
+			"mprapidef.h", "lmerr.h", "lmcons.h",
 		])
 			win_idl_files ~= f ~ "*"; // make it optional
 
@@ -1215,6 +1217,11 @@ version(all)
 			replaceTokenSequence(tokens, "typedef struct DECLSPEC_ALIGN($_num)", "align($_num) typedef struct", true);
 			replaceTokenSequence(tokens, "typedef union DECLSPEC_ALIGN($_num)", "align($_num) typedef union", true);
 			replaceTokenSequence(tokens, "struct DECLSPEC_ALIGN($_num)", "align($_num) struct", true);
+
+			// win 8.1: remove template _ENUM_FLAG_INTEGER_FOR_SIZE
+			replaceTokenSequence(tokens, "template $args _ENUM_FLAG_INTEGER_FOR_SIZE;", "/*$0*/", true);
+			replaceTokenSequence(tokens, "template <> struct _ENUM_FLAG_INTEGER_FOR_SIZE <$arg> { $def };", "/*$0*/", true);
+			replaceTokenSequence(tokens, "template <$arg> struct _ENUM_FLAG_SIZED_INTEGER { $def };", "/*$0*/", true);
 		}
 
 		if(currentModule == "commctrl")
@@ -1494,6 +1501,9 @@ version(none) version(vsi)
 			replaceTokenSequence(tokens, "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000, OLECMDIDF_REFRESH_THROUGHSCRIPT   = 0x4000 $_not,",
 										 "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000,\nOLECMDIDF_REFRESH_THROUGHSCRIPT   = 0x4000, $_not", true);
 			replaceTokenSequence(tokens, "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000 $_not,", "OLECMDIDF_REFRESH_PROMPTIFOFFLINE = 0x2000, $_not", true);
+
+			// win SDK 8.1: double define
+			replaceTokenSequence(tokens, "typedef struct tagPAGESET {} PAGESET;", "", true);
 		}
 		
 		//vsshell.idl
@@ -1525,6 +1535,23 @@ version(none) version(vsi)
 		if(currentModule == "combaseapi")
 		{
 			replaceTokenSequence(tokens, "typedef enum CWMO_FLAGS", "typedef enum tagCWMO_FLAGS", true);
+		}
+		if(currentModule == "lmcons")
+		{
+			replaceTokenSequence(tokens, "alias NERR_BASE MIN_LANMAN_MESSAGE_ID;", "enum MIN_LANMAN_MESSAGE_ID = 2100;", true); // missing lmerr.h
+		}
+		if(currentModule == "winnt")
+		{
+			// Win SDK 8.1: remove translation to intrinsics
+			replaceTokenSequence(tokens, "alias _InterlockedAnd InterlockedAnd;", "/+ $*", true);
+			replaceTokenSequence(tokens, "InterlockedCompareExchange($args __in LONG ExChange, __in LONG Comperand);", "$* +/", true);
+			replaceTokenSequence(tokens, "InterlockedOr(&Barrier, 0);", "InterlockedExchangeAdd(&Barrier, 0);", true); // InterlockedOr exist only as intrinsic
+		}
+		if(currentModule == "ocidl")
+		{
+			// move alias out of interface declaration, it causes circular definitions with dmd 2.065+
+			replaceTokenSequence(tokens, "interface IOleUndoManager : IUnknown { alias IID_IOleUndoManager SID_SOleUndoManager; $data }", 
+								 "interface IOleUndoManager : IUnknown { $data }\n\nalias IID_IOleUndoManager SID_SOleUndoManager;", true);
 		}
 
 		replaceTokenSequence(tokens, "extern const __declspec(selectany)", "dconst", true);
@@ -1723,6 +1750,10 @@ version(none)
 			replaceTokenSequence(tokens, "$_not . UIHierarchyItems*", "$_not . UIHierarchyItems*", true);
 			replaceTokenSequence(tokens, "Collection([$data] ProjectItems $arg)", "Collection([$data] .ProjectItems $arg)", true);
 		}
+		if(currentModule == "dte80a")
+		{
+			replaceTokenSequence(tokens, "[id($_num), propputref $attr] HRESULT Value", "[id($_num), propputref $attr]\nHRESULT putref_Value", true);
+		}
 		// VS2012 SDK
 		if(currentModule == "webproperties")
 		{
@@ -1873,6 +1904,11 @@ version(all) {
 		replaceTokenSequence(tokens, "_Releases_shared_lock_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Acquires_exclusive_lock_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Acquires_shared_lock_($args)", "/+$*+/", true);
+
+		// Win SDK 8.1
+		replaceTokenSequence(tokens, "_Post_satisfies_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Post_readable_byte_size_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Ret_reallocated_bytes_($args)", "/+$*+/", true);
 
 		replaceTokenSequence(tokens, "__assume_bound($args);", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__asm{$args}$_opt;", "assert(false, \"asm not translated\"); asm{naked; nop; /+$args+/}", true);
@@ -2170,6 +2206,11 @@ else
 		case "_Ret_maybenull_":
 		case "_Ret_opt_":
 		case "_Printf_format_string_":
+
+		// Windows SDK 8.1
+		case "_Field_z_":
+		case "_Pre_notnull_":
+		case "_Frees_ptr_":
 			return "/*" ~ text ~ "*/";
 
 		case "__checkReturn": return "/*__checkReturn*/";

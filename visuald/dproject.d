@@ -181,6 +181,38 @@ private:
 	//Package mPackage;
 }
 
+class EmptyEnumerator : DComObject, IEnumVARIANT
+{
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IEnumVARIANT) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	HRESULT Next(in ULONG celt,
+				 /+[out, size_is(celt), length_is(*pCeltFetched)]+/ VARIANT * rgVar,
+				 /+[out]+/ ULONG * pCeltFetched)
+	{
+		if(pCeltFetched)
+			*pCeltFetched = 0;
+		return S_FALSE;
+	}
+	HRESULT Skip(in ULONG celt)
+	{
+		return S_OK;
+	}
+	HRESULT Reset()
+	{
+		return S_OK;
+	}
+	HRESULT Clone(/+[out]+/ IEnumVARIANT * ppEnum)
+	{
+		*ppEnum = addref(this);
+		return S_OK;
+	}
+}
+
 class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 {
 	this(ExtProject prj)
@@ -233,7 +265,8 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		/* [retval][out] */ IUnknown *lppiuReturn)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		*lppiuReturn = addref(newCom!EmptyEnumerator());
+		return S_OK;
 	}
 
 	override int DTE( 
@@ -303,17 +336,291 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 	ExtProject mExtProject;
 };
 
+
+class ExtProperties : DisposingDispatchObject, dte.Properties
+{
+	this(ExtProject prj)
+	{
+		mProject = addref(prj);
+	}
+
+	override void Dispose()
+	{
+		mProject = release(mProject);
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		//mixin(LogCallMix);
+
+		if(queryInterface!(dte.Properties) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	override HRESULT Item(in VARIANT index, dte.Property * lplppReturn)
+	{
+		mixin(LogCallMix);
+		if(index.vt != VT_BSTR)
+			return E_INVALIDARG;
+
+		string prop = to_string(index.bstrVal);
+		if(prop == "FullPath")
+		{
+			string fullpath = mProject.mProject.mFilename;
+			*lplppReturn = addref(newCom!ExtProperty(this, prop, fullpath));
+			return S_OK;
+		}
+		if(prop == "ProjectDirectory")
+		{
+			string fullpath = dirName(mProject.mProject.mFilename);
+			*lplppReturn = addref(newCom!ExtProperty(this, prop, fullpath));
+			return S_OK;
+		}
+		return returnError(E_NOTIMPL);
+	}
+
+	/+[id(0x00000001), propget, restricted, hidden]+/
+	override HRESULT Application(/+[out, retval]+/ IDispatch * lppidReturn)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+	/+[id(0x00000002), propget, helpstring("Returns the parent object."), helpcontext(0x0000eaf2)]+/
+	override HRESULT Parent(/+[out, retval]+/ IDispatch * lppidReturn)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+	/+[id(0x00000028), propget, helpstring("Returns value indicating the count of objects in the collection."), helpcontext(0x0000eabb)]+/
+	override HRESULT Count(/+[out, retval]+/ int* lplReturn)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+	/+[id(0xfffffffc), restricted]+/
+	override HRESULT _NewEnum(/+[out, retval]+/ IUnknown * lppiuReturn)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+	/+[id(0x00000064), propget, helpstring("Returns the top-level extensibility object."), helpcontext(0x0000eac1)]+/
+	override HRESULT DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
+	{
+		mixin(LogCallMix);
+		return mProject.DTE(lppaReturn);
+	}
+
+	//////////////////////////////////////////////////////////////
+	__gshared ComTypeInfoHolder mTypeHolder;
+	static void shared_static_this_typeHolder()
+	{
+		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		{
+			override int GetIDsOfNames( 
+									   /* [size_is][in] */ in LPOLESTR *rgszNames,
+									   /* [in] */ in UINT cNames,
+									   /* [size_is][out] */ MEMBERID *pMemId)
+			{
+				//mixin(LogCallMix);
+				if (cNames == 1 && to_string(*rgszNames) == "Name")
+				{
+					*pMemId = 1;
+					return S_OK;
+				}
+				return returnError(E_NOTIMPL);
+			}
+		}
+		mTypeHolder = newCom!_ComTypeInfoHolder;
+		addref(mTypeHolder);
+	}
+	static void shared_static_dtor_typeHolder()
+	{
+		mTypeHolder = release(mTypeHolder);
+	}
+
+	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }
+
+private:
+	ExtProject mProject;
+}
+
+class ExtProperty : DisposingDispatchObject, dte.Property
+{
+	this(ExtProperties props, string name, string value)
+	{
+		mProperties = addref(props);
+		mName = name;
+		mValue = value;
+	}
+
+	override void Dispose()
+	{
+		mProperties = release(mProperties);
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		//mixin(LogCallMix);
+
+		if(queryInterface!(dte.Property) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	HRESULT Value(/+[out, retval]+/ VARIANT* lppvReturn)
+	{
+		mixin(LogCallMix);
+		lppvReturn.vt = VT_BSTR;
+		lppvReturn.bstrVal = allocBSTR(mValue);
+		return S_OK;
+	}
+
+	/+[id(00000000), propput, helpstring("Sets/ returns the value of property returned by the Property object."), helpcontext(0x0000eb08)]+/
+	HRESULT Value(in VARIANT lppvReturn)
+	{
+		mixin(LogCallMix);
+		return returnError(S_FALSE);
+	}
+
+	/+[id(00000000), propputref, helpstring("Sets/ returns the value of property returned by the Property object."), helpcontext(0x0000eb08)]+/
+	HRESULT putref_Value(in VARIANT lppvReturn)
+	{
+		mixin(LogCallMix);
+		return returnError(S_FALSE);
+	}
+
+	/+[id(0x00000003), propget, helpstring("Returns one element of a list."), helpcontext(0x0000ead6)]+/
+	HRESULT IndexedValue(in VARIANT Index1, 
+						 /+[ optional]+/ in VARIANT Index2, 
+						 /+[ optional]+/ in VARIANT Index3, 
+						 /+[ optional]+/ in VARIANT Index4, 
+						 /+[out, retval]+/ VARIANT* Val)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+	/+[id(0x00000003), propput, helpstring("Returns one element of a list."), helpcontext(0x0000ead6)]+/
+	HRESULT IndexedValue(in VARIANT Index1, 
+						 /+[ optional]+/ in VARIANT Index2, 
+						 /+[ optional]+/ in VARIANT Index3, 
+						 /+[ optional]+/ in VARIANT Index4, 
+						 in VARIANT Val)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+	/+[id(0x00000004), propget, helpstring("Returns a value representing the number of items in the list value."), helpcontext(0x0000eaea)]+/
+	HRESULT NumIndices(/+[out, retval]+/ short* lpiRetVal)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+	/+[id(0x00000001), propget, restricted, hidden]+/
+	HRESULT Application(/+[out, retval]+/ IDispatch * lppidReturn)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+	/+[id(0x00000002), propget, restricted, hidden]+/
+	HRESULT Parent(/+[out, retval]+/ dte.Properties * lpppReturn)
+	{
+		mixin(LogCallMix);
+		*lpppReturn = addref(mProperties);
+		return S_OK;
+	}
+
+	/+[id(0x00000028), propget, helpstring("Returns the name of the object."), helpcontext(0x0000edbb)]+/
+	HRESULT Name(/+[out, retval]+/ BSTR* lpbstrReturn)
+	{
+		mixin(LogCallMix);
+		*lpbstrReturn = allocBSTR(mName);
+		return S_OK;
+	}
+
+	/+[id(0x0000002a), propget, helpstring("Returns the collection containing the object supporting this property."), helpcontext(0x0000eab1)]+/
+	HRESULT Collection(/+[out, retval]+/ dte.Properties * lpppReturn)
+	{
+		mixin(LogCallMix);
+		*lpppReturn = addref(mProperties);
+		return S_OK;
+	}
+
+	/+[id(0x0000002d), propget, helpstring("Sets/returns value of Property object when type of value is Object."), helpcontext(0x0000eaed)]+/
+	HRESULT Object(/+[out, retval]+/ IDispatch * lppunk)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+	/+[id(0x0000002d), propputref, helpstring("Sets/returns value of Property object when type of value is Object."), helpcontext(0x0000eaed)]+/
+	HRESULT Object(/+[in]+/ IUnknown lppunk)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+	/+[id(0x00000064), propget, helpstring("Returns the top-level extensibility object."), helpcontext(0x0000eac1)]+/
+	HRESULT DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
+	{
+		mixin(LogCallMix);
+		return mProperties.DTE(lppaReturn);
+	}
+
+
+	//////////////////////////////////////////////////////////////
+	__gshared ComTypeInfoHolder mTypeHolder;
+	static void shared_static_this_typeHolder()
+	{
+		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		{
+			override int GetIDsOfNames( 
+									   /* [size_is][in] */ in LPOLESTR *rgszNames,
+									   /* [in] */ in UINT cNames,
+									   /* [size_is][out] */ MEMBERID *pMemId)
+			{
+				//mixin(LogCallMix);
+				if (cNames == 1 && to_string(*rgszNames) == "Name")
+				{
+					*pMemId = 1;
+					return S_OK;
+				}
+				return returnError(E_NOTIMPL);
+			}
+		}
+		mTypeHolder = newCom!_ComTypeInfoHolder;
+		addref(mTypeHolder);
+	}
+	static void shared_static_dtor_typeHolder()
+	{
+		mTypeHolder = release(mTypeHolder);
+	}
+
+	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }
+
+private:
+	string mName;
+	string mValue;
+	ExtProperties mProperties;
+}
+
 class ExtProject : DisposingDispatchObject, dte.Project
 {
 	this(Project prj)
 	{
 		mProject = prj;
 		mProjectItems = addref(newCom!ExtProjectItems(this));
+		mProperties = addref(newCom!ExtProperties(this));
 	}
 
 	override void Dispose()
 	{
 		mProjectItems = release(mProjectItems);
+		mProperties = release(mProperties);
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -410,7 +717,8 @@ class ExtProject : DisposingDispatchObject, dte.Project
 		/* [retval][out] */ dte.Properties *ppObject)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		*ppObject = addref(mProperties);
+		return S_OK;
 	}
 
 	override int UniqueName( 
@@ -584,6 +892,7 @@ class ExtProject : DisposingDispatchObject, dte.Project
 	
 	Project mProject;
 	dte.ProjectItems mProjectItems;
+	dte.Properties mProperties;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1386,7 +1695,8 @@ class Project : CVsHierarchy,
 	{
 //		mixin(LogCallMix);
 
-		return returnError(E_NOTIMPL);
+		*pBuildSystemKind = 0;
+		return S_OK;
 	}
 
 	// IVsBuildPropertyStorage

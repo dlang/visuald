@@ -1175,6 +1175,36 @@ class GlobalOptions
 		return false;
 	}
 
+	void detectWindowsSDKDir()
+	{
+		if(WindowsSdkDir.empty)
+		{
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.1"w, false);
+			WindowsSdkDir = toUTF8(keySdk.GetString("InstallationFolder"));
+			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
+				WindowsSdkDir = "";
+		}
+		if(WindowsSdkDir.empty)
+		{
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.0"w, false);
+			WindowsSdkDir = toUTF8(keySdk.GetString("InstallationFolder"));
+			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
+				WindowsSdkDir = "";
+		}
+		if(WindowsSdkDir.empty)
+		{
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
+			WindowsSdkDir = toUTF8(keySdk.GetString("CurrentInstallFolder"));
+			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
+				WindowsSdkDir = "";
+		}
+		if(WindowsSdkDir.empty)
+			if(char* psdk = getenv("WindowsSdkDir"))
+				WindowsSdkDir = fromMBSz(cast(immutable)psdk);
+		if(!WindowsSdkDir.empty)
+			WindowsSdkDir = normalizeDir(WindowsSdkDir);
+	}
+
 	bool initFromRegistry()
 	{
 		if(!getRegistryRoot())
@@ -1195,13 +1225,7 @@ class GlobalOptions
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
 
-			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
-			WindowsSdkDir = toUTF8(keySdk.GetString("CurrentInstallFolder"));
-			if(WindowsSdkDir.empty)
-				if(char* psdk = getenv("WindowsSdkDir"))
-					WindowsSdkDir = fromMBSz(cast(immutable)psdk);
-			if(!WindowsSdkDir.empty)
-				WindowsSdkDir = normalizeDir(WindowsSdkDir);
+			detectWindowsSDKDir();
 
 			if(char* pe = getenv("VSINSTALLDIR"))
 				VSInstallDir = fromMBSz(cast(immutable)pe);
@@ -1274,11 +1298,11 @@ class GlobalOptions
 				if(WindowsSdkDir.length)
 				{
 					if(std.file.exists(WindowsSdkDir ~ r"lib\x64"))
-						libpath ~= to!wstring(r"\n$(WindowsSdkDir)lib\x64");
+						libpath ~= to!wstring("\n$(WindowsSdkDir)lib\\x64");
 					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64")) // SDK 8.0
-						libpath ~= to!wstring(r"\n$(WindowsSdkDir)Lib\win8\um\x64");
-					else if(std.file.exists(WindowsSdkDir ~ r"Lib\winv6.3\um\x64")) // SDK 8.1
-						libpath ~= to!wstring(r"\n$(WindowsSdkDir)Lib\winv6.3\um\x64");
+						libpath ~= to!wstring("\n$(WindowsSdkDir)Lib\\win8\\um\\x64");
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\\winv6.3\\um\\x64")) // SDK 8.1
+						libpath ~= to!wstring("\n$(WindowsSdkDir)Lib\\winv6.3\\um\\x64");
 				}
 				return libpath;
 			}
@@ -1320,6 +1344,8 @@ class GlobalOptions
 			lastColorizeCoverage = ColorizeCoverage;
 			lastColorizeVersions = ColorizeVersions;
 			lastUseDParser       = useDParser;
+		
+			updateDefaultColors();
 
 			if(VDServerIID.length > 0)
 				gServerClassFactory_iid = uuid(VDServerIID);
@@ -1369,12 +1395,12 @@ class GlobalOptions
 			keyToolOpts.Set("IncSearchPath",     toUTF16(IncSearchPath));
 			keyToolOpts.Set("UserTypesSpec",     toUTF16(UserTypesSpec));
 			
-			keyToolOpts.Set("DMD.ExeSearchPath64", toUTF16(DMD.ExeSearchPath));
-			keyToolOpts.Set("DMD.LibSearchPath64", toUTF16(DMD.LibSearchPath));
-			keyToolOpts.Set("GDC.ExeSearchPath64", toUTF16(GDC.ExeSearchPath));
-			keyToolOpts.Set("GDC.LibSearchPath64", toUTF16(GDC.LibSearchPath));
-			keyToolOpts.Set("LDC.ExeSearchPath64", toUTF16(LDC.ExeSearchPath));
-			keyToolOpts.Set("LDC.LibSearchPath64", toUTF16(LDC.LibSearchPath));
+			keyToolOpts.Set("ExeSearchPath64",     toUTF16(DMD.ExeSearchPath64));
+			keyToolOpts.Set("LibSearchPath64",     toUTF16(DMD.LibSearchPath64));
+			keyToolOpts.Set("GDC.ExeSearchPath64", toUTF16(GDC.ExeSearchPath64));
+			keyToolOpts.Set("GDC.LibSearchPath64", toUTF16(GDC.LibSearchPath64));
+			keyToolOpts.Set("LDC.ExeSearchPath64", toUTF16(LDC.ExeSearchPath64));
+			keyToolOpts.Set("LDC.LibSearchPath64", toUTF16(LDC.LibSearchPath64));
 
 			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
 			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);
@@ -1957,6 +1983,35 @@ class GlobalOptions
 	{
 		dir = makeDirnameCanonical(dir, workdir);
 		adduniqueLRU(coverageBuildDirs, dir, 4);
+	}
+
+	//////////////////////////////////////////////////////////////////////////////
+	void updateDefaultColors()
+	{
+		scope RegKey keyUserOpts = new RegKey(hUserKey, regConfigRoot ~ regPathToolsOptions, false);
+		bool wasDark = keyUserOpts.GetDWORD("lastThemeWasDark") != 0;
+		bool isDark = isDarkTheme();
+		if (wasDark != isDark)
+		{
+			scope RegKey keyUserOptsWr = new RegKey(hUserKey, regConfigRoot ~ regPathToolsOptions, true);
+			removeColorCache();
+			keyUserOptsWr.Set("lastThemeWasDark", isDark);
+		}
+		LanguageService.updateThemeColors();
+	}
+
+
+	bool isDarkTheme()
+	{
+		scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ r"\General", false);
+		string theme = toUTF8(keyUserOpts.GetString("CurrentTheme")).toLower;
+		return theme == "1ded0138-47ce-435e-84ef-9ec1f439b749" || theme == "{1ded0138-47ce-435e-84ef-9ec1f439b749}";
+	}
+
+	bool removeColorCache()
+	{
+		auto hr = RegDeleteRecursive(hUserKey, regUserRoot ~ r"\FontAndColors\Cache\{E0187991-B458-4F7E-8CA9-42C9A573B56C}");
+		return SUCCEEDED(hr);
 	}
 }
 

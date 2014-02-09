@@ -18,7 +18,9 @@ set LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib
 set LIBS=%LIBS% comdlg32.lib gdi32.lib ole32.lib rpcrt4.lib shell32.lib winmm.lib
 set LIBS=%LIBS% wsock32.lib comctl32.lib oleaut32.lib ws2_32.lib odbc32.lib
 
+echo WindowsSdkDir=%WindowsSdkDir%
 set WINSDKLIB=
+if "%WINSDKLIB%" == "" if exist "%WindowsSdkDir%\lib\winv6.3\um\x86\kernel32.lib" set WINSDKLIB=%WindowsSdkDir%\lib\winv6.3\um\x86
 if "%WINSDKLIB%" == "" if exist "%WindowsSdkDir%\lib\win8\um\x86\kernel32.lib" set WINSDKLIB=%WindowsSdkDir%\lib\win8\um\x86
 if "%WINSDKLIB%" == "" if exist "%WindowsSdkDir%\lib\kernel32.lib" set WINSDKLIB=%WindowsSdkDir%\lib
 if "%WINSDKLIB%" == "" (echo could not detect the Windows SDK library folder && exit /B 1)

@@ -41,6 +41,8 @@ import visuald.stringutil;
 import visuald.fileutil;
 import visuald.lexutil;
 
+// version = hasOutputGroup;
+
 ///////////////////////////////////////////////////////////////
 
 const string[] kPlatforms = [ "Win32", "x64" ];
@@ -1650,6 +1652,8 @@ class Config :	DisposingComObject,
 		else
 			mProjectOptions = new ProjectOptions(name == "Debug", platform == "x64");
 		mBuilder = new CBuilderThread(this);
+		version(hasOutputGroup)
+			mOutputGroup = newCom!VsOutputGroup(this);
 		mName = name;
 		mPlatform = platform;
 	}
@@ -1825,7 +1829,18 @@ class Config :	DisposingComObject,
 		/* [optional][out] */ ULONG *pcActual)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		version(hasOutputGroup)
+		{
+			if(celt >= 1)
+				*rgpcfg = addref(mOutputGroup);
+			if(pcActual)
+				*pcActual = 1;
+			return S_OK;
+		}
+		else
+		{
+			return returnError(E_NOTIMPL);
+		}
 	}
 
 	override int OpenOutputGroup( 
@@ -1833,7 +1848,17 @@ class Config :	DisposingComObject,
 		/* [out] */ IVsOutputGroup *ppIVsOutputGroup)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		version(hasOutputGroup)
+		{
+			if(to_wstring(szCanonicalName) != to_wstring(VS_OUTPUTGROUP_CNAME_Built))
+				return returnError(E_INVALIDARG);
+			*ppIVsOutputGroup = addref(mOutputGroup);
+			return S_OK;
+		}
+		else
+		{
+			return returnError(E_NOTIMPL);
+		}
 	}
 
 	override int OutputsRequireAppRoot( 
@@ -2997,6 +3022,8 @@ private:
 	ConfigProvider mProvider;
 	ProjectOptions mProjectOptions;
 	CBuilderThread mBuilder;
+	version(hasOutputGroup)
+		VsOutputGroup mOutputGroup;
 
 	ConfigModifiedListener[] mModifiedListener;
 	IVsBuildStatusCallback[VSCOOKIE] mBuildStatusCallbacks;
@@ -3267,7 +3294,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 
 }
 
-class VsOutput : DComObject, IVsOutput
+class VsOutput : DComObject, IVsOutput2
 {
 	string mTarget;
 
@@ -3278,6 +3305,9 @@ class VsOutput : DComObject, IVsOutput
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
+	version(hasOutputGroup)
+		if(queryInterface!(IVsOutput2) (this, riid, pvObject))
+			return S_OK;
 		if(queryInterface!(IVsOutput) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
@@ -3313,7 +3343,101 @@ class VsOutput : DComObject, IVsOutput
 		*pguidType = GUID_NULL;
 		return S_OK;
 	}
+
+	// IVsOutput2
+	HRESULT get_RootRelativeURL(/+[out]+/ BSTR *pbstrRelativePath)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+	HRESULT get_Property(in LPCOLESTR szProperty, /+[out]+/ VARIANT *pvar)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
 }
+
+class VsOutputGroup : DComObject, IVsOutputGroup
+{
+	this(Config cfg)
+	{
+		mConfig = cfg;
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsOutputGroup) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	// These return identical information regardless of cfg setting:
+	HRESULT get_CanonicalName(/+[out]+/ BSTR *pbstrCanonicalName)
+	{
+		mixin(LogCallMix);
+		*pbstrCanonicalName = allocBSTR(to_string(VS_OUTPUTGROUP_CNAME_Built));
+		return S_OK;
+	}
+
+	HRESULT get_DisplayName(/+[out]+/ BSTR *pbstrDisplayName)
+	{
+		mixin(LogCallMix);
+		*pbstrDisplayName = allocBSTR("Project build target");
+		return S_OK;
+	}
+
+    // The results of these will vary based on the configuration:
+    HRESULT get_KeyOutput(/+[out]+/ BSTR *pbstrCanonicalName)
+	{
+		mixin(LogCallMix);
+		*pbstrCanonicalName = allocBSTR("");
+		return S_OK;
+	}
+
+    // Back pointer to project cfg:
+    HRESULT get_ProjectCfg(/+[out]+/ IVsProjectCfg2 *ppIVsProjectCfg2)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+    // The list of outputs.  There might be none!  Not all files go out
+    // on every configuration, and a groups files might all be configuration
+    // dependent!
+    HRESULT get_Outputs(in ULONG celt,
+						/+[in, out, size_is(celt)]+/ IVsOutput2  *rgpcfg,
+						/+[out, optional]+/ ULONG *pcActual)
+	{
+		mixin(LogCallMix);
+		if(celt >= 1)
+		{
+			string target = makeFilenameAbsolute(mConfig.GetTargetPath(), mConfig.GetProjectDir());
+			*rgpcfg = addref(newCom!VsOutput(target));
+		}
+		if(pcActual)
+			*pcActual = 1;
+		return S_OK;
+	}
+
+    HRESULT get_DeployDependencies(in ULONG celt,
+								   /+[in,    out, size_is(celt)]+/ IVsDeployDependency  *rgpdpd,
+								   /+[out, optional]+/ ULONG *pcActual)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+    HRESULT get_Description(/+[out]+/ BSTR *pbstrDescription)
+	{
+		mixin(LogCallMix);
+		return returnError(E_NOTIMPL);
+	}
+
+private:
+	Config mConfig;
+};
+
 
 Config GetActiveConfig(IVsHierarchy pHierarchy)
 {

@@ -187,6 +187,17 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 		}
 		return E_NOTIMPL;
 	}
+
+	final HRESULT SetDefaultForegroundColor(COLORREF color)
+	{
+		mRgbForeground = color;
+		return S_OK;
+	}
+	final string GetDisplayName()
+	{
+		return mDisplayName;
+	}
+
 } 
 
 class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener

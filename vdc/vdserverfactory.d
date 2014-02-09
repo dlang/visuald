@@ -88,7 +88,7 @@ class VDServerClassFactory : ComObject, IClassFactory
 
 ///////////////////////////////////////////////////////////////
 
-extern(C) int vdserver_main(char[][] argv)
+extern(C) int vdserver_main()
 {
 	HRESULT hr;
 
@@ -142,20 +142,33 @@ static if(version_minor < 64)
 	// dmd 2.064 implicitely adds C main with D main
 	int main(char[][] argv)
 	{
-		return vdserver_main(argv);
+		return vdserver_main();
 	}
 }
 else
 {
-	private alias extern(C) int function(char[][] args) MainFunc;
-	extern(C) int _d_run_main(int argc, char **argv, MainFunc func);
+	extern (C) int rt_init();
+	extern (C) int rt_term();
+	extern (C) bool runModuleUnitTests();
+	enum EXIT_SUCCESS = 0;
+	enum EXIT_FAILURE = -1;
 
 	extern (Windows)
 	int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 	{
-		char*[2] argv;
-		argv[0] = cast(char*)("prg".ptr);
-		argv[1] = null;
-		return _d_run_main(1, argv.ptr, &vdserver_main);
+		int result = EXIT_FAILURE;
+		try
+		{
+			if (rt_init() && runModuleUnitTests())
+				result = vdserver_main();
+
+			if (!rt_term())
+				result = (result == EXIT_SUCCESS) ? EXIT_FAILURE : result;
+		}
+		catch(Throwable)
+		{
+			result = EXIT_FAILURE;
+		}
+		return result;
 	}
 }

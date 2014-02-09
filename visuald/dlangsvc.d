@@ -382,7 +382,7 @@ class LanguageService : DisposingComObject,
 			
 			// Visual D specific (must match Lexer.TokenCat)
 			newCom!ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D Register",         CI_PURPLE,      CI_USERTEXT_BK),
+			newCom!ColorableItem("Visual D Register",            -1,          CI_USERTEXT_BK, RGB(128, 0, 128)),
 			newCom!ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
 			newCom!ColorableItem("Visual D Type",                -1,          CI_USERTEXT_BK, RGB(0, 0, 160)),
 			newCom!ColorableItem("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0)),
@@ -420,6 +420,35 @@ class LanguageService : DisposingComObject,
 	{
 		clear(colorableItems); // to keep GC leak detection happy
 		Source.parseTaskPool = null;
+	}
+
+	static void updateThemeColors()
+	{
+		bool dark = Package.GetGlobalOptions().isDarkTheme();
+		foreach(ci; colorableItems)
+		{
+			if(ci.GetDisplayName() == "Visual D Type")
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 128, 160) : RGB(0, 0, 160));
+			if(ci.GetDisplayName() == "Visual D Register")
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 128) : RGB(128, 0, 128));
+			if(ci.GetDisplayName() == "Visual D Token String Identifier")
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64) : RGB(128,32,32));
+			if(ci.GetDisplayName() == "Visual D Token String Number")
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64) : RGB(128,32,32));
+			if(ci.GetDisplayName() == "Visual D Token String Operator")
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64) : RGB(128,32,32));
+			if(ci.GetDisplayName() == "Visual D Token String Type")
+				ci.SetDefaultForegroundColor(dark ? RGB(160, 128, 160) : RGB(112, 0, 80));
+		}
+
+		version(none)
+		{
+			// only resets user colors?
+			IVsTextManager2 textmgr = queryService!(VsTextManager, IVsTextManager2);
+			if(textmgr)
+				textmgr.ResetColorableItems(g_languageCLSID);
+			release(textmgr);
+		}
 	}
 
 	override HRESULT GetColorableItem(in int iIndex, IVsColorableItem* ppItem)

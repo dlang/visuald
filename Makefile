@@ -108,7 +108,7 @@ $(VSI2D_EXE) : $(VSI2D_SRC)
 	$(DMD2_) -d -map $@.map -of$@ -version=vsi $(VSI2D_SRC)
 
 sdk\vsi_sources: $(VSI2D_EXE)
-	$(VSI2D_EXE) -vsi="$(VSISDK)" -win="$(WINSDK)\Include" -dte="$(DTE_IDL_PATH)" -sdk=sdk
+	$(VSI2D_EXE) --vsi="$(VSISDK)" --win="$(WINSDK)\Include" --dte="$(DTE_IDL_PATH)" --sdk=sdk
 
 # $(VSI_LIB) : sdk\vsi_sources
 vsi_lib:
@@ -133,14 +133,24 @@ cpp2d_exe:
 idl2d_exe: $(VSI2D_EXE) 
 	copy $(VSI2D_EXE) ..\downloads\idl2d.exe
 
+prerequisites:
+	devenv /Project "build"     /Build "Release|Win32" visuald_vs10.sln
+
+visuald_vs:
+	devenv /Project "visuald"   /Build "Release|Win32" visuald_vs10.sln
+
+vdserver:
+	devenv /Project "vdserver"  /Build "Release|Win32" visuald_vs10.sln
+
 dparser:
 	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /t:Rebuild
 
 mago:
-	cd ..\..\mago && devenv /Build "Release|Win32" magodbg.sln
+	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
 
 cv2pdb:
-	cd ..\..\cv2pdb\trunk && devenv /Build "Release|Win32" src\cv2pdb.sln
+	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln
+	cd ..\..\cv2pdb\trunk && devenv /Project "dviewhelper" /Build "Release|Win32" src\cv2pdb_vs12.sln
 
 ##################################
 # create installer
@@ -148,6 +158,9 @@ cv2pdb:
 install: all cpp2d_exe idl2d_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
+
+#prerequisites 
+install_vs: visuald_vs vdserver cv2pdb dparser mago install_only
 
 install_only:
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi

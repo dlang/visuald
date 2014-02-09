@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2BD51E62-6604-48AE-9E01-C940C0CA1C68}"
 	ProjectSection(SolutionItems) = preProject
 		CHANGES = CHANGES
@@ -178,7 +180,8 @@ Global
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Release|Win32.Build.0 = Release|Win32
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Release|x64.ActiveCfg = Release|Win32
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Test|Win32.ActiveCfg = Release|Win32
-		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Test|x64.ActiveCfg = Test|Win32
+		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Test|x64.ActiveCfg = TestDebug|x64
+		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.Test|x64.Build.0 = TestDebug|x64
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.TestDebug|Win32.ActiveCfg = Debug|Win32
 		{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}.TestDebug|x64.ActiveCfg = Debug|Win32
 		{E2073B79-635A-48FA-A5A3-6E500D3A5DD8}.Debug GDC|Win32.ActiveCfg = Debug GDC|Win32

@@ -84,7 +84,7 @@
   <objfiles />
   <linkswitches />
   <libfiles>ole32.lib oleaut32.lib</libfiles>
-  <libpaths />
+  <libpaths>..\sdk\lib</libpaths>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName)_d.exe</exefile>
@@ -178,7 +178,7 @@
   <objfiles />
   <linkswitches />
   <libfiles>ole32.lib oleaut32.lib</libfiles>
-  <libpaths />
+  <libpaths>..\sdk\lib</libpaths>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
