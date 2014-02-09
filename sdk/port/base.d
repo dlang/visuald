@@ -422,6 +422,8 @@ alias void WriteULongPtrRelease;
 alias void WriteULongPtrNoFence;
 alias void WriteULongPtrRaw;
 
+extern(C) DWORD __readfsdword (DWORD Offset) { asm { naked; mov EAX,[ESP+4]; mov EAX, FS:[EAX]; } }
+
 enum TRUE = 1;
 public import sdk.win32.winbase;
 //enum FALSE = 0;

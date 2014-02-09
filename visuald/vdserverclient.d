@@ -75,7 +75,7 @@ private void dbglog(string s)
 
 ///////////////////////////////////////////////////////////////////////
 // can be changed through registry entry
-debug(debugServer)
+version(debugServer)
 const GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
 else
 const GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
@@ -174,8 +174,8 @@ template _shared(T)
 
 	void send(Tid id)
 	{
-//		.send(id, cast(size_t) cast(void*) this);
-		.send(id, cast(shared)this);
+		.send(id, cast(size_t) cast(void*) this);
+//		.send(id, cast(shared)this);
 //		.send(id, this);
 	}
 
@@ -686,8 +686,8 @@ class VDServerClient
 				bool changed = false;
 				receiveTimeout(dur!"msecs"(50),
 					// as of dmd 2.060, fixes of const handling expose that std.variant is not capable of working sensibly with class objects
-					(shared(Command) icmd)
-				    //(size_t icmd)
+					//(shared(Command) icmd)
+				    (size_t icmd)
 					{
 						auto cmd = cast(Command) cast(void*) icmd;
 						version(DebugCmd) dbglog(to!string(cmd.mRequest) ~ " clientLp: " ~ cmd.mCommand);
@@ -700,7 +700,7 @@ class VDServerClient
 					},
 					(Variant var)
 					{
-						var = var;
+						Variant var2 = var;
 					}
 				);
 				for(int i = 0; i < toAnswer.length && !restartServer; )
@@ -760,8 +760,8 @@ class VDServerClient
 		try
 		{
 			while(receiveTimeout(dur!"msecs"(0),
-				(shared(Command) icmd)
-				//(size_t icmd)
+				//(shared(Command) icmd)
+				(size_t icmd)
 				{
 					auto cmd = cast(Command) cast(void*) icmd;
 					version(DebugCmd) 
@@ -771,7 +771,7 @@ class VDServerClient
 				},
 				(Variant var)
 				{
-					var = var;
+					Variant var2 = var;
 				}
 			))
 			{

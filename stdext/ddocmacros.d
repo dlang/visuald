@@ -231,5 +231,5 @@ unittest
 	assert(strip(res) == `link = <a href="1">2,3,4</a>`);
 }
 
-version(unittest) {}
-void main() {}
+//version(unittest) {}
+//void main() {}

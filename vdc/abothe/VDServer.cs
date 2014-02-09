@@ -586,7 +586,7 @@ namespace DParserCOMServer
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
 
 			var ctxt=ResolutionContext.Create(_editorData);
-			var rr = DResolver.ResolveType(_editorData, DResolver.AstReparseOptions.AlsoParseBeyondCaret, ctxt);
+			var rr = DResolver.ResolveType(_editorData, ctxt);
 
 			_tipText = "";
 			if (rr != null && rr.Length > 0)

@@ -279,7 +279,7 @@ L_integer:
 		return TokenCat.Literal;
 	}
 
-	unittest
+	version(unspecified) unittest
 	{
 		int pid;
 		size_t pos = 1;

@@ -607,3 +607,10 @@ unreleased Version 0.3.38
   * fixed project and completion icons being converted to 16 color bitmaps
   * completion box now displays appropriate icons and tooltip with dparser
   * tool tips now expand some Ddoc macros for better readability
+
+  * update SDK conversion for VS2013 and Windws SDK 8.1
+  * change some default colors when using dark theme in VS 2012+ (restart required)
+  * Windows SDK 8.0/8.1 detection
+  * fix bad "\n" in default x64 library search path
+  * x64 executable and library search path not correctly saved for next VS start
+  * improve project automation to mute NuGet (still empty project pretended)

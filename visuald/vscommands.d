@@ -2189,6 +2189,9 @@ const enumName[] VsUIHierarchyWindowCmdIds_names =
 	{ UIHWCMDID_CancelLabelEdit, "UIHWCMDID_CancelLabelEdit" },
 ];
 
+// removed in VS12 SDK
+static if(!is(typeof(cmdidLoadSymbolsDisabled))) enum cmdidLoadSymbolsDisabled = 0x15c;
+
 const enumName[] VSDebugCommandCmdIds_names =
 [
 { cmdidBreakpointsWindowShow, "cmdidBreakpointsWindowShow" },
