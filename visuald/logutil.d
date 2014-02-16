@@ -89,6 +89,8 @@ string GUID2utf8(ref const(GUID) guid)
 	mixin(mixinGUID2string("IUnknown"));
 	mixin(mixinGUID2string("IClassFactory"));
 	mixin(mixinGUID2string("IMarshal"));
+	mixin(mixinGUID2string("INoMarshal"));
+	mixin(mixinGUID2string("IAgileObject"));
 	mixin(mixinGUID2string("IMallocSpy"));
 	mixin(mixinGUID2string("IStdMarshalInfo"));
 	mixin(mixinGUID2string("IExternalConnection"));
@@ -316,6 +318,7 @@ version(none)
 	mixin(mixinGUID2string("IPropertyBag"));
 	mixin(mixinGUID2string("IErrorLog"));
 	mixin(mixinGUID2string("IProvideMultipleClassInfo"));
+	mixin(mixinGUID2string("ISupportErrorInfo"));
 
 	mixin(mixinGUID2string("IUseImmediateCommitPropertyPages"));
 	mixin(mixinGUID2string("SolutionProperties"));

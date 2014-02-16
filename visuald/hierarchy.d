@@ -105,7 +105,8 @@ class CFileNode : CHierNode,
 				scope(exit) release(sccmgr);
 				auto path = _toUTF16z(GetFullPath());
 				VsStateIcon icon;
-				if(sccmgr.GetSccGlyph(1, &path, &icon, null) == S_OK)
+				DWORD sccStatus;
+				if(sccmgr.GetSccGlyph(1, &path, &icon, &sccStatus) == S_OK)
 					var.lVal = icon;
 			}
 			return S_OK;

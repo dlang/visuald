@@ -529,6 +529,13 @@ class CEnumFormatEtc : DComObject, IEnumFORMATETC
 		mPos = 0;
 	}
 
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IEnumFORMATETC) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
 	bool findValid()
 	{
 		while(mPos < mSrc.mCache.length)

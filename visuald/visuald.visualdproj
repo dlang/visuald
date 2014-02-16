@@ -492,6 +492,7 @@
    <File path="viewfilter.d" />
   </Folder>
   <Folder name="project">
+   <File path="automation.d" />
    <File path="build.d" />
    <File path="chiercontainer.d" />
    <File path="chiernode.d" />

@@ -39,6 +39,7 @@ Project:
 - custom command: quotes in dependencies not supported
 - VS2013: property pages don't follow resize
 - custom command: writes build batch to souce folder
+- does not work with VS2013 git integration
 
 Language service:
 -----------------
@@ -148,3 +149,4 @@ Unsorted
 - save file before "Compile & run"
 - coverage line highlight after "Compile & run" doesn't update
 - better keeping track of line changes
+

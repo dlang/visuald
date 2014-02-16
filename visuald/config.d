@@ -786,7 +786,10 @@ class ProjectOptions
 		if(useStdLibPath)
 			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
-			cmd ~= (mslink ? " /LIBPATH:" : "+") ~ quoteFilename(normalizeDir(unquoteArgument(lp)));
+			if(mslink)
+				cmd ~= " /LIBPATH:" ~ quoteFilename(normalizeDir(unquoteArgument(lp))[0..$-1]); // avoid trailing \ for quoted files
+			else
+				cmd ~= "+" ~ quoteFilename(normalizeDir(unquoteArgument(lp))); // optlink needs trailing \
 		
 		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def", mslink ? " /DEF:" : plus);
 		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res", plus);
@@ -2895,6 +2898,34 @@ class Config :	DisposingComObject,
 			{
 				scope(exit) release(prjcfg);
 
+				version(none)
+				if(auto prjcfg2 = qi_cast!IVsProjectCfg2(prjcfg))
+				{
+					scope(exit) release(prjcfg2);
+					IVsOutputGroup outputGroup;
+					if(prjcfg2.OpenOutputGroup(VS_OUTPUTGROUP_CNAME_Built, &outputGroup) == S_OK)
+					{
+						scope(exit) release(outputGroup);
+						ULONG cnt;
+						if(outputGroup.get_Outputs(0, null, &cnt) == S_OK)
+						{
+							auto outs = new IVsOutput2[cnt];
+							if(outputGroup.get_Outputs(cnt, outs.ptr, null) == S_OK)
+							{
+								foreach(o; outs)
+								{
+									ScopedBSTR target;
+									if(o.get_CanonicalName(&target.bstr) == S_OK)
+									{
+										string targ = target.detach();
+										libs ~= targ;
+									}
+									release(o);
+								}
+							}
+						}
+					}
+				}
 				IVsEnumOutputs eo;
 				if(prjcfg.EnumOutputs(&eo) == S_OK)
 				{
