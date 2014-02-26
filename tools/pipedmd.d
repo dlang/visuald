@@ -455,12 +455,13 @@ void InjectDLL(HANDLE hProcess, string depsfile)
     // copy path to other process
     auto wdll = to!wstring(dll) ~ cast(wchar)0;
     auto wdllRemote = VirtualAllocEx(hProcess, null, wdll.length * 2, MEM_COMMIT, PAGE_READWRITE);
-    WriteProcessMemory(hProcess, wdllRemote, wdll.ptr, wdll.length * 2, null);
+    auto procWrite = getWriteProcFunc();
+    procWrite(hProcess, wdllRemote, wdll.ptr, wdll.length * 2, null);
 
     // load dll into other process, assuming LoadLibraryW is at the same address in all processes
     HMODULE mod = GetModuleHandleA("Kernel32");
     auto proc = GetProcAddress(mod, "LoadLibraryW");
-    hThread = CreateRemoteThread(hProcess, null, 0, cast(LPTHREAD_START_ROUTINE)proc, wdllRemote, 0, null);
+    hThread = getCreateRemoteThreadFunc()(hProcess, null, 0, cast(LPTHREAD_START_ROUTINE)proc, wdllRemote, 0, null);
     WaitForSingleObject(hThread, INFINITE);
 
     // Get handle of the loaded module
@@ -472,6 +473,19 @@ void InjectDLL(HANDLE hProcess, string depsfile)
 
     void* pDumpFile = cast(char*)hRemoteModule + 0x3000; // offset taken from map file
     auto szDepsFile = toMBSz(depsfile);
-    WriteProcessMemory(hProcess, pDumpFile, szDepsFile, strlen(szDepsFile) + 1, null);
+    procWrite(hProcess, pDumpFile, szDepsFile, strlen(szDepsFile) + 1, null);
 }
 
+typeof(WriteProcessMemory)* getWriteProcFunc ()
+{
+    HMODULE mod = GetModuleHandleA("Kernel32");
+    auto proc = GetProcAddress(mod, "WriteProcessMemory");
+    return cast(typeof(WriteProcessMemory)*)proc;
+}
+
+typeof(CreateRemoteThread)* getCreateRemoteThreadFunc ()
+{
+    HMODULE mod = GetModuleHandleA("Kernel32");
+    auto proc = GetProcAddress(mod, "CreateRemoteThread");
+    return cast(typeof(CreateRemoteThread)*)proc;
+}

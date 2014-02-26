@@ -147,6 +147,7 @@ class Declarations
 				case "EVAL": return CSIMG_ENUMMEMBER;
 				case "NMIX": return CSIMG_UNKNOWN2;
 				case "VAR":  return CSIMG_FIELD;
+				case "OVR":  return CSIMG_UNKNOWN3;
 				default:     return 0;
 			}
 		}

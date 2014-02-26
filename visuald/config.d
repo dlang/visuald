@@ -2898,6 +2898,8 @@ class Config :	DisposingComObject,
 			{
 				scope(exit) release(prjcfg);
 
+				debug logOutputGroups(prjcfg);
+
 				version(none)
 				if(auto prjcfg2 = qi_cast!IVsProjectCfg2(prjcfg))
 				{
@@ -2950,6 +2952,54 @@ class Config :	DisposingComObject,
 			release(pHier[i]);
 		}
 		return libs;
+	}
+
+	void logOutputGroups(IVsProjectCfg prjcfg)
+	{
+		if(auto prjcfg2 = qi_cast!IVsProjectCfg2(prjcfg))
+		{
+			scope(exit) release(prjcfg2);
+
+			ULONG cntGroups;
+			if(SUCCEEDED(prjcfg2.get_OutputGroups(0, null, &cntGroups)))
+			{
+				auto groups = new IVsOutputGroup[cntGroups];
+				if(prjcfg2.get_OutputGroups(cntGroups, groups.ptr, &cntGroups) == S_OK)
+				{
+					foreach(outputGroup; groups)
+					{
+						scope(exit) release(outputGroup);
+
+						BSTR bstrCanName, bstrDispName, bstrKeyOut, bstrDesc;
+						outputGroup.get_CanonicalName(&bstrCanName);
+						outputGroup.get_DisplayName(&bstrDispName);
+						outputGroup.get_KeyOutput(&bstrKeyOut);
+						outputGroup.get_Description(&bstrDesc);
+
+						logCall("Group: %s Disp: %s KeyOut: %s Desc: %s", detachBSTR(bstrCanName), detachBSTR(bstrDispName), detachBSTR(bstrKeyOut), detachBSTR(bstrDesc));
+
+						ULONG cnt;
+						if(outputGroup.get_Outputs(0, null, &cnt) == S_OK)
+						{
+							auto outs = new IVsOutput2[cnt];
+							if(outputGroup.get_Outputs(cnt, outs.ptr, &cnt) == S_OK)
+							{
+								foreach(o; outs)
+								{
+									BSTR target, display, url;
+									o.get_CanonicalName(&target);
+									o.get_DisplayName(&display);
+									o.get_DeploySourceURL(&url);
+									logCall("  Out: %s Disp: %s URL: %s", detachBSTR(target), detachBSTR(display), detachBSTR(url));
+
+									release(o);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	int addJSONFiles(ref string[] files)

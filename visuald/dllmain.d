@@ -73,63 +73,6 @@ else // !version(TESTMAIN)
 {
 } // !version(D_Version2)
 
-extern extern(C) __gshared ModuleInfo D4core3sys7windows10stacktrace12__ModuleInfoZ;
-
-void disableStacktrace()
-{
-	ModuleInfo* info = &D4core3sys7windows10stacktrace12__ModuleInfoZ;
-static if(__traits(compiles,info.isNew))
-{
-	// dmd 2.063
-	if (info.isNew)
-	{
-		enum
-		{
-			MItlsctor    = 8,
-			MItlsdtor    = 0x10,
-			MIctor       = 0x20,
-			MIdtor       = 0x40,
-			MIxgetMembers = 0x80,
-		}
-		if (info.n.flags & MIctor)
-		{
-			size_t off = info.New.sizeof;
-			if (info.n.flags & MItlsctor)
-				off += info.o.tlsctor.sizeof;
-			if (info.n.flags & MItlsdtor)
-				off += info.o.tlsdtor.sizeof;
-			if (info.n.flags & MIxgetMembers)
-				off += info.o.xgetMembers.sizeof;
-			*cast(typeof(info.o.ctor)*)(cast(void*)info + off) = null;
-		}
-	}
-	else
-		info.o.ctor = null;
-}
-else 
-{
-	// dmd 2.064alpha
-	enum
-	{
-		MItlsctor    = 8,
-		MItlsdtor    = 0x10,
-		MIctor       = 0x20,
-		MIdtor       = 0x40,
-		MIxgetMembers = 0x80,
-	}
-	if (info.flags & MIctor)
-	{
-		size_t off = info.sizeof;
-		if (info.flags & MItlsctor)
-			off += info.tlsctor.sizeof;
-		if (info.flags & MItlsdtor)
-			off += info.tlsdtor.sizeof;
-		if (info.flags & MIxgetMembers)
-			off += info.xgetMembers.sizeof;
-		*cast(typeof(info.ctor)*)(cast(void*)info + off) = null;
-	}
-}
-}
 
 void clearStack()
 {
@@ -145,7 +88,6 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 	{
 		case DLL_PROCESS_ATTACH:
 			//MessageBoxA(cast(HANDLE)0, "Hi", "there", 0);
-			disableStacktrace();
 			if(!dll_process_attach(hInstance, true))
 				return false;
 			g_hInst = cast(HINSTANCE) hInstance;

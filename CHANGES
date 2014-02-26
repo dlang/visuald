@@ -594,6 +594,7 @@ unreleased Version 0.3.38
   * updated to cv2pdb 0.28 
     - support mspdb120.dll from VS 2013
     - bugzilla 11537: improved search for appropriate mspdb*.dll if multiple version of VS installed
+	- fix support for DWARF conversion for gcc 4.8
   * updated to mago 0.9
     - bugzilla 11547: remove error message when stopping debugging
     - bugzilla 11437: debug info rejected if records don't have "recommended" order
@@ -614,3 +615,8 @@ unreleased Version 0.3.38
   * fix bad "\n" in default x64 library search path
   * x64 executable and library search path not correctly saved for next VS start
   * improve project automation to mute NuGet (still empty project pretended)
+
+  * add source control support for git in VS2013 (and maybe others)
+  * fix DnD of project items in VS2013
+  * disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
+    most anti-virus checks

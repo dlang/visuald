@@ -51,18 +51,52 @@ BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 	g_hInst = hInstance;
 	if(ulReason == DLL_PROCESS_ATTACH)
 	{
-		RedirectCreateFileA();
-		RedirectCreateFileW();
+		if (dumpFile[0]) // only execute if it was injected by pipedmd
+		{
+			//origWriteFile = getWriteFileFunc();
+			RedirectCreateFileA();
+			RedirectCreateFileW();
+		}
 	}
 	return true;
 }
 
 alias typeof(&CreateFileA) fnCreateFileA;
 alias typeof(&CreateFileW) fnCreateFileW;
+alias typeof(&WriteFile) fnWriteFile;
 __gshared fnCreateFileA origCreateFileA;
 __gshared fnCreateFileW origCreateFileW;
+__gshared fnWriteFile origWriteFile;
+
+__gshared fnCreateFileA myCF = &MyCreateFileA;
 
 alias typeof(&VirtualProtect) fnVirtualProtect;
+
+fnVirtualProtect getVirtualProtectFunc()
+{
+	version(all)
+	{
+		HANDLE krnl = GetModuleHandleA("kernel32.dll");
+		return cast(fnVirtualProtect) GetProcAddress(krnl, "VirtualProtect");
+	}
+	else
+	{
+		return &VirtualProtect;
+	}
+}
+
+fnWriteFile getWriteFileFunc()
+{
+	version(all)
+	{
+		HANDLE krnl = GetModuleHandleA("kernel32.dll");
+		return cast(fnWriteFile) GetProcAddress(krnl, "WriteFile");
+	}
+	else
+	{
+		return &WriteFile;
+	}
+}
 
 void RedirectCreateFileA()
 {
@@ -72,33 +106,10 @@ void RedirectCreateFileA()
 	origCreateFileA = *impTableEntry;
 
 	DWORD oldProtect, newProtect;
-	version(all)
-	{
-		VirtualProtect(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
-		*impTableEntry = &MyCreateFileA;
-		VirtualProtect(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
-	}
-	else
-	{
-		char[16] func;
-		char*p = func.ptr;
-		mixin({ 
-			string s; 
-			foreach(c; [ 'V','i','r','t','u','a','l','P','r','o','t','e','c','t' ]) 
-			{ s ~= "*p++ = '"; s ~= c; s ~= "';"; } 
-			return s; 
-		}());
-		*p = 0;
-
-		HANDLE krnl = GetModuleHandleA("kernel32.dll");
-		if(fnVirtualProtect fn = cast(fnVirtualProtect) GetProcAddress(krnl, func.ptr))
-		{
-			DWORD oldProtect, newProtect;
-			fn(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
-			*impTableEntry = &MyCreateFileA;
-			fn(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
-		}
-	}
+	auto pfnVirtualProtect = getVirtualProtectFunc();
+	pfnVirtualProtect(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
+	*impTableEntry = &MyCreateFileA;
+	pfnVirtualProtect(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
 }
 
 void RedirectCreateFileW()
@@ -109,12 +120,10 @@ void RedirectCreateFileW()
 	origCreateFileW = *impTableEntry;
 
 	DWORD oldProtect, newProtect;
-	version(all)
-	{
-		VirtualProtect(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
-		*impTableEntry = &MyCreateFileW;
-		VirtualProtect(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
-	}
+	auto pfnVirtualProtect = getVirtualProtectFunc();
+	pfnVirtualProtect(impTableEntry, (*impTableEntry).sizeof, PAGE_READWRITE, &oldProtect);
+	*impTableEntry = &MyCreateFileW;
+	pfnVirtualProtect(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
 }
 
 extern(Windows) HANDLE
@@ -146,8 +155,8 @@ MyCreateFileA(
 				WaitForSingleObject(hndMutex, INFINITE);
 
 			size_t length = mystrlen(lpFileName);
-			WriteFile(hndDumpFile, lpFileName, length, &length, null);
-			WriteFile(hndDumpFile, "\n".ptr, 1, &length, null);
+			origWriteFile(hndDumpFile, lpFileName, length, &length, null);
+			origWriteFile(hndDumpFile, "\n".ptr, 1, &length, null);
 
 			if(hndMutex != INVALID_HANDLE_VALUE)
 				ReleaseMutex(hndMutex);
@@ -185,7 +194,7 @@ MyCreateFileW(
 			ushort bom = 0xFEFF;
 			size_t written;
 			if(hndDumpFile != INVALID_HANDLE_VALUE)
-				WriteFile(hndDumpFile, &bom, 2, &written, null);
+				origWriteFile(hndDumpFile, &bom, 2, &written, null);
 
 			if(hndMutex != INVALID_HANDLE_VALUE)
 				ReleaseMutex(hndMutex);
@@ -197,8 +206,8 @@ MyCreateFileW(
 				WaitForSingleObject(hndMutex, INFINITE);
 
 			size_t length = mystrlen(lpFileName);
-			WriteFile(hndDumpFile, lpFileName, 2*length, &length, null);
-			WriteFile(hndDumpFile, "\n".ptr, 2, &length, null);
+			origWriteFile(hndDumpFile, lpFileName, 2*length, &length, null);
+			origWriteFile(hndDumpFile, "\n".ptr, 2, &length, null);
 
 			if(hndMutex != INVALID_HANDLE_VALUE)
 				ReleaseMutex(hndMutex);
@@ -239,6 +248,7 @@ size_t mystrlen(const(wchar)* str) nothrow
 ///////// shut up compiler generated GC info failing to link
 extern(C)
 {
+	__gshared int D10TypeInfo_i6__initZ;
 	__gshared int D10TypeInfo_v6__initZ;
 	__gshared int D16TypeInfo_Pointer6__vtblZ;
 	__gshared int D17TypeInfo_Function6__vtblZ;

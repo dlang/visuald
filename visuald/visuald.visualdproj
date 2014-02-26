@@ -606,6 +606,7 @@ rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" outfile="$(OutDir)\visuald
   <File path="lexutil.d" />
   <File path="library.d" />
   <File path="logutil.d" />
+  <File path="..\tools\nostacktrace.d" />
   <File path="oledatasource.d" />
   <File path="pkgutil.d" />
   <File path="profiler.d" />
