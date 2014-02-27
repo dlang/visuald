@@ -29,6 +29,7 @@ import visuald.hierutil;
 import visuald.stringutil;
 import visuald.fileutil;
 import visuald.dproject;
+import visuald.automation;
 import visuald.config;
 import visuald.chiernode;
 import visuald.dlangsvc;
@@ -132,7 +133,7 @@ void global_init()
 	LanguageService.shared_static_this();
 	CHierNode.shared_static_this();
 	CHierNode.shared_static_this_typeHolder();
-	ExtProject.shared_static_this_typeHolder();
+	automation_shared_static_this_typeHolder();
 	Project.shared_static_this_typeHolder();
 }
 
@@ -140,7 +141,7 @@ void global_exit()
 {
 	LanguageService.shared_static_dtor();
 	CHierNode.shared_static_dtor_typeHolder();
-	ExtProject.shared_static_dtor_typeHolder();
+	automation_shared_static_dtor_typeHolder();
 	Project.shared_static_dtor_typeHolder();
 	Package.s_instance = null;
 }

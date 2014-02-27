@@ -141,6 +141,11 @@ namespace DParserCOMServer
 			addExpansion(packageName, "PKG", "");
 		}
 
+		public void AddCodeGeneratingNodeItem(INode node, string codeToGenerate)
+		{
+			addExpansion(codeToGenerate, "OVR", codeToGenerate);
+		}
+
 		void addExpansion(string name, string type, string desc)
 		{
 			if(!string.IsNullOrEmpty(name))
@@ -277,7 +282,7 @@ namespace DParserCOMServer
 				foreach (var attr in dm.Attributes)
 				{
 					var m = attr as Modifier;
-					if (m != null && DTokens.StorageClass[m.Token])
+					if (m != null && DTokens.IsStorageClass(m.Token))
 					{
 						sb.Append(DTokens.GetTokenString(m.Token));
 						sb.Append(" ");

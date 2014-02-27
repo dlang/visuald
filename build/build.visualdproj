@@ -185,7 +185,8 @@
   <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;$(TargetPath)</postBuildCommand>
+  <postBuildCommand>echo Success &gt;$(TargetPath)
+echo. &gt;$(TargetDir)\build.dep</postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="build">
@@ -194,7 +195,7 @@ if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\tlb2idl.exe&quot; &quot;$(OutDir)\dte_idl.success&quot;" outfile="$(OutDir)\dte_idl.success" />
   <File tool="Custom" path="..\tools\filemonitor.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).dll -defaultlib=user32.lib -L/ENTRY:_DllMain@12 $(InputPath)" outfile="$(OutDir)\$(InputName).dll" />
   <File tool="Custom" path="..\tools\largeadr.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath)" outfile="$(OutDir)\$(InputName).exe" />
-  <File tool="Custom" path="..\tools\pipedmd.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath)" outfile="$(OutDir)\$(InputName).exe" />
+  <File tool="Custom" path="..\tools\pipedmd.d" dependencies="..\tools\nostacktrace.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
   <File tool="Custom" path="sdk.bat" dependencies="$(OutDir)\dte_idl.success $(OutDir)\vsi2d.exe" customcmd="call $(VSINSTALLDIR)\Common7\Tools\vsvars32.bat
 if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk.success&quot;" outfile="$(OutDir)\sdk.success" />

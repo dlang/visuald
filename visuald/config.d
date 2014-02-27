@@ -106,6 +106,15 @@ enum Subsystem
 	Posix
 };
 
+enum CRuntime
+{
+	None,
+	StaticRelease,
+	StaticDebug,
+	DynamicRelease,
+	DynamicDebug,
+}
+
 class ProjectOptions
 {
 	bool obj;		// write object file
@@ -218,7 +227,8 @@ class ProjectOptions
 	string deffile;
 	string resfile;
 	string exefile;
-	bool useStdLibPath;
+	bool   useStdLibPath;
+	uint   cRuntime;
 
 	string additionalOptions;
 	string preBuildCommand;
@@ -248,7 +258,8 @@ class ProjectOptions
 		xfilename = "$(IntDir)\\$(TargetName).json";
 		doXGeneration = true;
 		useStdLibPath = true;
-		
+		cRuntime = CRuntime.StaticRelease;
+
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
 		setDebug(dbg);
 		setX64(x64);
@@ -786,7 +797,10 @@ class ProjectOptions
 		if(useStdLibPath)
 			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
-			cmd ~= (mslink ? " /LIBPATH:" : "+") ~ quoteFilename(normalizeDir(unquoteArgument(lp)));
+			if(mslink)
+				cmd ~= " /LIBPATH:" ~ quoteFilename(normalizeDir(unquoteArgument(lp))[0..$-1]); // avoid trailing \ for quoted files
+			else
+				cmd ~= "+" ~ quoteFilename(normalizeDir(unquoteArgument(lp))); // optlink needs trailing \
 		
 		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def", mslink ? " /DEF:" : plus);
 		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res", plus);
@@ -820,6 +834,19 @@ class ProjectOptions
 		if(symdebug)
 			cmd ~= mslink ? " /DEBUG" : "/CO";
 		cmd ~= mslink ? " /INCREMENTAL:NO /NOLOGO" : "/NOI";
+
+		if(mslink)
+		{
+			switch(cRuntime)
+			{
+				case CRuntime.None:           cmd ~= " /NODEFAULTLIB:libcmt"; break;
+				case CRuntime.StaticRelease:  break;
+				case CRuntime.StaticDebug:    cmd ~= " /NODEFAULTLIB:libcmt libcmtd.lib"; break;
+				case CRuntime.DynamicRelease: cmd ~= " /NODEFAULTLIB:libcmt msvcrt.lib"; break;
+				case CRuntime.DynamicDebug:   cmd ~= " /NODEFAULTLIB:libcmt msvcrtd.lib"; break;
+				default: break;
+			}
+		}
 
 		if(lib != OutputType.StaticLib)
 		{
@@ -1099,6 +1126,7 @@ class ProjectOptions
 		elem ~= new xml.Element("resfile", toElem(resfile));
 		elem ~= new xml.Element("exefile", toElem(exefile));
 		elem ~= new xml.Element("useStdLibPath", toElem(useStdLibPath));
+		elem ~= new xml.Element("cRuntime", toElem(cRuntime));
 
 		elem ~= new xml.Element("additionalOptions", toElem(additionalOptions));
 		elem ~= new xml.Element("preBuildCommand", toElem(preBuildCommand));
@@ -1221,6 +1249,7 @@ class ProjectOptions
 		fromElem(elem, "resfile", resfile);
 		fromElem(elem, "exefile", exefile);
 		fromElem(elem, "useStdLibPath", useStdLibPath);
+		fromElem(elem, "cRuntime", cRuntime);
 	
 		fromElem(elem, "additionalOptions", additionalOptions);
 		fromElem(elem, "preBuildCommand", preBuildCommand);
@@ -2895,6 +2924,36 @@ class Config :	DisposingComObject,
 			{
 				scope(exit) release(prjcfg);
 
+				debug logOutputGroups(prjcfg);
+
+				version(none)
+				if(auto prjcfg2 = qi_cast!IVsProjectCfg2(prjcfg))
+				{
+					scope(exit) release(prjcfg2);
+					IVsOutputGroup outputGroup;
+					if(prjcfg2.OpenOutputGroup(VS_OUTPUTGROUP_CNAME_Built, &outputGroup) == S_OK)
+					{
+						scope(exit) release(outputGroup);
+						ULONG cnt;
+						if(outputGroup.get_Outputs(0, null, &cnt) == S_OK)
+						{
+							auto outs = new IVsOutput2[cnt];
+							if(outputGroup.get_Outputs(cnt, outs.ptr, null) == S_OK)
+							{
+								foreach(o; outs)
+								{
+									ScopedBSTR target;
+									if(o.get_CanonicalName(&target.bstr) == S_OK)
+									{
+										string targ = target.detach();
+										libs ~= targ;
+									}
+									release(o);
+								}
+							}
+						}
+					}
+				}
 				IVsEnumOutputs eo;
 				if(prjcfg.EnumOutputs(&eo) == S_OK)
 				{
@@ -2919,6 +2978,54 @@ class Config :	DisposingComObject,
 			release(pHier[i]);
 		}
 		return libs;
+	}
+
+	void logOutputGroups(IVsProjectCfg prjcfg)
+	{
+		if(auto prjcfg2 = qi_cast!IVsProjectCfg2(prjcfg))
+		{
+			scope(exit) release(prjcfg2);
+
+			ULONG cntGroups;
+			if(SUCCEEDED(prjcfg2.get_OutputGroups(0, null, &cntGroups)))
+			{
+				auto groups = new IVsOutputGroup[cntGroups];
+				if(prjcfg2.get_OutputGroups(cntGroups, groups.ptr, &cntGroups) == S_OK)
+				{
+					foreach(outputGroup; groups)
+					{
+						scope(exit) release(outputGroup);
+
+						BSTR bstrCanName, bstrDispName, bstrKeyOut, bstrDesc;
+						outputGroup.get_CanonicalName(&bstrCanName);
+						outputGroup.get_DisplayName(&bstrDispName);
+						outputGroup.get_KeyOutput(&bstrKeyOut);
+						outputGroup.get_Description(&bstrDesc);
+
+						logCall("Group: %s Disp: %s KeyOut: %s Desc: %s", detachBSTR(bstrCanName), detachBSTR(bstrDispName), detachBSTR(bstrKeyOut), detachBSTR(bstrDesc));
+
+						ULONG cnt;
+						if(outputGroup.get_Outputs(0, null, &cnt) == S_OK)
+						{
+							auto outs = new IVsOutput2[cnt];
+							if(outputGroup.get_Outputs(cnt, outs.ptr, &cnt) == S_OK)
+							{
+								foreach(o; outs)
+								{
+									BSTR target, display, url;
+									o.get_CanonicalName(&target);
+									o.get_DisplayName(&display);
+									o.get_DeploySourceURL(&url);
+									logCall("  Out: %s Disp: %s URL: %s", detachBSTR(target), detachBSTR(display), detachBSTR(url));
+
+									release(o);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	int addJSONFiles(ref string[] files)

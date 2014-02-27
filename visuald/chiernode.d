@@ -15,12 +15,14 @@ import std.utf;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
+import sdk.vsi.ivssccmanager2;
 
 import visuald.hierarchy;
 import visuald.comutil;
 import visuald.logutil;
 import visuald.hierutil;
 import visuald.stringutil;
+import visuald.automation;
 
 //import dproject;
 
@@ -80,6 +82,7 @@ class CHierNode : DisposingDispatchObject
 	
 	override void Dispose()
 	{
+		m_extNode = release(m_extNode);
 	}
 
 	static void setContainerIsSorted(bool sort)
@@ -212,6 +215,15 @@ public:
 		case VSHPROPID_StateIconIndex:
 			pvar.vt = VT_I4;
 			pvar.lVal = STATEICON_NOSTATEICON;
+			if(IVsSccManager2 sccmgr = queryService!(SVsSccManager, IVsSccManager2)())
+			{
+				scope(exit) release(sccmgr);
+				auto path = _toUTF16z(GetFullPath());
+				VsStateIcon icon;
+				DWORD sccStatus;
+				if(sccmgr.GetSccGlyph(1, &path, &icon, &sccStatus) == S_OK)
+					pvar.lVal = icon;
+			}
 			return S_OK;
 
 		case VSHPROPID_OverlayIconIndex:
@@ -228,6 +240,18 @@ public:
 		case VSHPROPID_BrowseObject:
 			pvar.vt = VT_UNKNOWN;
 			return QueryInterface(&IDispatch.iid, cast(void **)&pvar.pdispVal);
+
+		case VSHPROPID_ExtObject:
+			static if(!HideProjectItems)
+			{
+				pvar.vt = VT_DISPATCH;
+				if(!m_extNode)
+					m_extNode = addref(newCom!ExtProjectItem(null, null, this));
+				pvar.pdispVal = addref(m_extNode);
+				return S_OK;
+			}
+			else
+				break;
 
 		default:
 			break;
@@ -550,6 +574,7 @@ protected:
 	CHierContainer m_pNodeParent;
 	CHierNode      m_pNodeNext;    // to form a singly-linked list
 	string         m_strName;      // this node's name
+	ExtProjectItem m_extNode;
 
 	uint           m_grfStateFlags;        // ChildrenEnumerated, etc
 	enum    // m_grfStateFlags
