@@ -1168,6 +1168,12 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return "Linker"; }
 	override string GetPageName() { return "General"; }
 
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+
 	override void CreateControls()
 	{
 		AddControl("Output File", mExeFile = new Text(mCanvas));
@@ -1181,8 +1187,15 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 			[ "Minimum", "Symbols By Address", "Standard", "Full", "With cross references" ], false));
 		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
 		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use global and standard library search paths"));
+		AddControl("C Runtime", mCRuntime = new ComboBox(mCanvas, [ "None", "Static Release (LIBCMT)", "Static Debug (LIBCMTD)", "Dynamic Release (MSCVRT)", "Dynamic Release (MSCVRTD)" ], false));
 	}
 
+	void EnableControls()
+	{
+		if(ProjectOptions options = GetProjectOptions())
+			mCRuntime.setEnabled(options.isX86_64);
+	}
+	
 	override void SetControls(ProjectOptions options)
 	{
 		mExeFile.setText(options.exefile); 
@@ -1194,6 +1207,9 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		mGenMap.setSelection(options.mapverbosity); 
 		mImplib.setChecked(options.createImplib);
 		mUseStdLibPath.setChecked(options.useStdLibPath);
+		mCRuntime.setSelection(options.cRuntime); 
+
+		EnableControls();
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1208,6 +1224,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity); 
 		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib); 
 		changes += changeOption(mUseStdLibPath.isChecked(), options.useStdLibPath, refoptions.useStdLibPath);
+		changes += changeOption(cast(uint) mCRuntime.getSelection(), options.cRuntime, refoptions.cRuntime); 
 		return changes;
 	}
 
@@ -1220,6 +1237,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	ComboBox mGenMap;
 	CheckBox mImplib;
 	CheckBox mUseStdLibPath;
+	ComboBox mCRuntime;
 }
 
 class DmdEventsPropertyPage : ProjectPropertyPage
@@ -1491,7 +1509,7 @@ class DirPropertyPage : GlobalPropertyPage
 		AddControl("Executable paths", mExePath64 = new MultiLineText(page64));
 		mLinesPerMultiLine = 2;
 		AddControl("Library paths", mLibPath64 = new MultiLineText(page64));
-	
+
 		if(overrideIni.length)
 		{
 			AddControl("", mOverrideIni64 = new CheckBox(page64, overrideIni));

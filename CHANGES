@@ -620,3 +620,4 @@ unreleased Version 0.3.38
   * fix DnD of project items in VS2013
   * disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
     most anti-virus checks
+  * added option to select the C runtime library when compiling for x64

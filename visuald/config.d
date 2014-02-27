@@ -106,6 +106,15 @@ enum Subsystem
 	Posix
 };
 
+enum CRuntime
+{
+	None,
+	StaticRelease,
+	StaticDebug,
+	DynamicRelease,
+	DynamicDebug,
+}
+
 class ProjectOptions
 {
 	bool obj;		// write object file
@@ -218,7 +227,8 @@ class ProjectOptions
 	string deffile;
 	string resfile;
 	string exefile;
-	bool useStdLibPath;
+	bool   useStdLibPath;
+	uint   cRuntime;
 
 	string additionalOptions;
 	string preBuildCommand;
@@ -248,7 +258,8 @@ class ProjectOptions
 		xfilename = "$(IntDir)\\$(TargetName).json";
 		doXGeneration = true;
 		useStdLibPath = true;
-		
+		cRuntime = CRuntime.StaticRelease;
+
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
 		setDebug(dbg);
 		setX64(x64);
@@ -824,6 +835,19 @@ class ProjectOptions
 			cmd ~= mslink ? " /DEBUG" : "/CO";
 		cmd ~= mslink ? " /INCREMENTAL:NO /NOLOGO" : "/NOI";
 
+		if(mslink)
+		{
+			switch(cRuntime)
+			{
+				case CRuntime.None:           cmd ~= " /NODEFAULTLIB:libcmt"; break;
+				case CRuntime.StaticRelease:  break;
+				case CRuntime.StaticDebug:    cmd ~= " /NODEFAULTLIB:libcmt libcmtd.lib"; break;
+				case CRuntime.DynamicRelease: cmd ~= " /NODEFAULTLIB:libcmt msvcrt.lib"; break;
+				case CRuntime.DynamicDebug:   cmd ~= " /NODEFAULTLIB:libcmt msvcrtd.lib"; break;
+				default: break;
+			}
+		}
+
 		if(lib != OutputType.StaticLib)
 		{
 			if(createImplib)
@@ -1102,6 +1126,7 @@ class ProjectOptions
 		elem ~= new xml.Element("resfile", toElem(resfile));
 		elem ~= new xml.Element("exefile", toElem(exefile));
 		elem ~= new xml.Element("useStdLibPath", toElem(useStdLibPath));
+		elem ~= new xml.Element("cRuntime", toElem(cRuntime));
 
 		elem ~= new xml.Element("additionalOptions", toElem(additionalOptions));
 		elem ~= new xml.Element("preBuildCommand", toElem(preBuildCommand));
@@ -1224,6 +1249,7 @@ class ProjectOptions
 		fromElem(elem, "resfile", resfile);
 		fromElem(elem, "exefile", exefile);
 		fromElem(elem, "useStdLibPath", useStdLibPath);
+		fromElem(elem, "cRuntime", cRuntime);
 	
 		fromElem(elem, "additionalOptions", additionalOptions);
 		fromElem(elem, "preBuildCommand", preBuildCommand);
