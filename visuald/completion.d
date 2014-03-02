@@ -85,13 +85,13 @@ class Declarations
 		return 0;
 	}
 
-	bool splitName(int index, string* pname, string* ptype, string* pdesc)
+	bool splitName(int index, string* pname, string* ptext, string* ptype, string* pdesc)
 	{
 		if(index < 0 || index >= mNames.length)
 			return false;
 		string s = mNames[index];
 		auto pos1 = countUntil(s, ':');
-		string name, type, desc;
+		string name, text, type, desc;
 		if(pos1 >= 0)
 		{
 			name = s[0 .. pos1];
@@ -107,8 +107,19 @@ class Declarations
 		else
 			name = s;
 
+		auto pos3 = countUntil(name, "|");
+		if(pos3 >= 0)
+		{
+			text = name[pos3 + 1 .. $];
+			name = name[0 .. pos3];
+		}
+		else
+			text = name;
+
 		if(pname)
 			*pname = name;
+		if(ptext)
+			*ptext = text;
 		if(ptype)
 			*ptype = type;
 		if(pdesc)
@@ -127,7 +138,7 @@ class Declarations
 		else
 		{
 			string type;
-			if(!splitName(index, null, &type, null))
+			if(!splitName(index, null, null, &type, null))
 				return CSIMG_DMODULE;
 
 			switch(type)
@@ -136,6 +147,7 @@ class Declarations
 				case "PROP": return CSIMG_PROPERTY;
 				case "TEXT": return 3;
 				case "MOD":  return CSIMG_DMODULE;
+				case "DIR":  return CSIMG_DFOLDER;
 				case "PKG":  return CSIMG_PACKAGE;
 				case "MTHD": return CSIMG_MEMBER;
 				case "STRU": return CSIMG_STRUCT;
@@ -148,6 +160,7 @@ class Declarations
 				case "NMIX": return CSIMG_UNKNOWN2;
 				case "VAR":  return CSIMG_FIELD;
 				case "OVR":  return CSIMG_UNKNOWN3;
+				case "ICN":  return CSIMG_UNKNOWN3;
 				default:     return 0;
 			}
 		}
@@ -167,7 +180,7 @@ class Declarations
 		else
 		{
 			string desc;
-			splitName(index, null, null, &desc);
+			splitName(index, null, null, null, &desc);
 			desc = replace(desc, "\a", "\n");
 			
 			string res = phobosDdocExpand(desc);
@@ -178,8 +191,55 @@ class Declarations
 	string GetName(int index)
 	{
 		string name;
-		splitName(index, &name, null, null);
+		splitName(index, &name, null, null, null);
 		return name;
+	}
+
+	string GetText(IVsTextView view, int index)
+	{
+		string text;
+		splitName(index, null, &text, null, null);
+		if(text.indexOf('\a') >= 0)
+		{
+			string nl = "\r\n";
+			if(view)
+			{
+				// copy indentation from current line
+				int line, idx;
+				if(view.GetCaretPos(&line, &idx) == S_OK)
+				{
+					IVsTextLines pBuffer;
+					if(view.GetBuffer(&pBuffer) == S_OK)
+					{
+						LINEDATA lineData;
+						if(pBuffer.GetLineData(line, &lineData, null) == S_OK)
+						{
+							switch(lineData.iEolType)
+							{
+								default:
+								case eolCRLF: nl = "\r\n"; break;
+								case eolCR: nl = "\r"; break;
+								case eolLF: nl = "\n"; break;
+							}
+							pBuffer.ReleaseLineData(&lineData);
+						}
+
+						BSTR btext;
+						if(pBuffer.GetLineText(line, 0, line, idx, &btext) == S_OK)
+						{
+							string txt = detachBSTR(btext);
+							size_t p = 0;
+							while(p < txt.length && isWhite(txt[p]))
+								p++;
+							nl ~= txt[0 .. p];
+						}
+						release(pBuffer);
+					}
+				}
+			}
+			text = text.replace("\a", nl);
+		}
+		return text;
 	}
 
 	bool GetInitialExtent(IVsTextView textView, int* line, int* startIdx, int* endIdx)
@@ -199,7 +259,7 @@ class Declarations
 	}
 	string OnCommit(IVsTextView textView, string textSoFar, dchar ch, int index, ref TextSpan initialExtent)
 	{
-		return GetName(index); // textSoFar;
+		return GetText(textView, index); // textSoFar;
 	}
 
 	///////////////////////////////////////////////////////////////
@@ -234,10 +294,10 @@ class Declarations
 					base = base[0 .. $-ext.length];
 					canImport = true;
 				}
-				if(canImport && base.startsWith(imp) && arrIndex(mNames, base) < 0)
+				if(canImport && base.startsWith(imp))
 				{
-					addunique(mNames, base);
-					mGlyphs ~= issubdir ? kImageFolderClosed : kImageDSource;
+					string txt = base ~ (issubdir ? ":DIR" : ":MOD");
+					addunique(mNames, txt);
 				}
 			}
 		}
@@ -414,7 +474,7 @@ class Declarations
 				textView.GetCaretPos(&line, &idx);
 				if(src.GetWordExtent(line, idx, WORDEXT_FINDTOKEN, startIdx, endIdx))
 				{
-					wstring txt = to!wstring(GetName(0));
+					wstring txt = to!wstring(GetText(textView, 0));
 					TextSpan changedSpan;
 					src.mBuffer.ReplaceLines(line, startIdx, line, endIdx, txt.ptr, txt.length, &changedSpan);
 					return true;
@@ -710,7 +770,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 			int i = textSoFar.length;
 			for (int j = 0, n = mDecls.GetCount(); j < n; j++)
 			{
-				string name = mDecls.GetName(j);
+				string name = mDecls.GetText(mTextView, j);
 				if (name.length > i && name[i] == commitChar)
 				{
 					if (i == 0 || name[0 .. i] == textSoFar)

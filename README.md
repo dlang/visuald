@@ -10,8 +10,9 @@ Copyright (c) 2010-2013 by Rainer Schuetze, All Rights Reserved
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
 
-For installer download, more documentation, build instructions, forum and
-issue reporting, please visit the http://www.dsource.org/projects/visuald.
+For installer download, more documentation and build instructions, please visit http://rainers.github.io/visuald/visuald/StartPage.html.
+Use forum http://forum.dlang.org/group/digitalmars.D.ide for questions and the D bug tracker https://d.puremagic.com/issues/ to report issues.
+
 
 Major Features
 ---------------
@@ -59,6 +60,7 @@ Major Features
   - VS 2008
   - VS 2010
   - VS 2012
+  - VS 2013
   Unfortunately, Express versions of Visual Studio do not support this 
   kind of extensions. Use the Visual Studio Shell instead:
   - VS 2008 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=9771
@@ -91,14 +93,15 @@ Building Visual D
 -----------------
 In a nutshell:
 
-- adjust environment variables in the root Makefile
-- run "nmake sdk"
+- install the Visual Studio SDK
 - start Visual Studio and load solution visuald_vs9.sln (VS 2008) or
   visuald_vs10.sln (VS 2010)
+- build project "build"
 - build project "VisualD"
 
 For more information, visit
-	http://www.dsource.org/projects/visuald/wiki/Build_from_source
+http://rainers.github.io/visuald/visuald/BuildFromSource.html
+
 
 Installation
 ------------
@@ -130,9 +133,9 @@ More Information
 ----------------
 For more information on installation, a quick tour of Visual D with some
 screen shots and feedback, please visit the project home for Visual D at 
-[http://www.dsource.org/projects/visuald](http://www.dsource.org/projects/visuald).
+[http://rainers.github.io/visuald/visuald/StartPage.html](http://rainers.github.io/visuald/visuald/StartPage.html).
 
-There's also a forum, where you can leave your comments and suggestions.
+There's a forum dedicated to IDE discussions (http://forum.dlang.org/group/digitalmars.D.ide), where you can leave your comments and suggestions.
 Bug reports can be filed to the [D bugzilla database](http://d.puremagic.com/issues/enter_bug.cgi?product=D) 
 for Component VisualD.
 

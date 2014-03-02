@@ -1188,6 +1188,12 @@ class Project : CVsHierarchy,
 			case cmdidRebuildOnlyProject:
 			case cmdidCleanOnlyProject:
 				return GetProjectNode().QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+			case ECMD_SHOWALLFILES:
+				debug
+				{
+					Cmd.cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
+					return hr;
+				}
 			default:
 				break;
 			}

@@ -274,6 +274,8 @@ class ProjectOptions
 	void setX64(bool x64)
 	{
 		isX86_64 = x64;
+		if(!release && cRuntime == CRuntime.StaticRelease)
+			cRuntime = CRuntime.StaticDebug;
 	}
 
 	string objectFileExtension() { return compiler != Compiler.GDC ? "obj" : "o"; }

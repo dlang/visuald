@@ -114,9 +114,11 @@ namespace DParserCOMServer
 			else if (Node is DModule)
 				type = "MOD";
 
-			string desc = Node.Description.Trim();
-			string proto = VDServerCompletionDataGenerator.GeneratePrototype(Node);
+			string desc = Node.Description;
+            if(!string.IsNullOrEmpty(desc))
+                desc = desc.Trim();
 
+			string proto = VDServerCompletionDataGenerator.GeneratePrototype(Node);
 			if (!string.IsNullOrEmpty(proto) && !string.IsNullOrEmpty(desc))
 				proto = proto + "\n\n";
 			desc = proto + desc;
@@ -143,14 +145,19 @@ namespace DParserCOMServer
 
 		public void AddCodeGeneratingNodeItem(INode node, string codeToGenerate)
 		{
-			addExpansion(codeToGenerate, "OVR", codeToGenerate);
+			addExpansion(node.Name + "|" + codeToGenerate, "OVR", codeToGenerate);
+		}
+
+		public void AddIconItem(string iconName, string text, string description)
+		{
+			addExpansion(iconName + "|" + text, "ICN", description);
 		}
 
 		void addExpansion(string name, string type, string desc)
 		{
 			if(!string.IsNullOrEmpty(name))
 				if(name.StartsWith(prefix))
-					expansions += name + ":" + type + ":" + desc.Replace("\r\n", "\a").Replace('\n', '\a')  + "\n";
+					expansions += name.Replace("\r\n", "\a").Replace('\n', '\a') + ":" + type + ":" + desc.Replace("\r\n", "\a").Replace('\n', '\a') + "\n";
 		}
 
 		// generate prototype
