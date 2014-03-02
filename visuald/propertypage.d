@@ -1187,7 +1187,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 			[ "Minimum", "Symbols By Address", "Standard", "Full", "With cross references" ], false));
 		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
 		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use global and standard library search paths"));
-		AddControl("C Runtime", mCRuntime = new ComboBox(mCanvas, [ "None", "Static Release (LIBCMT)", "Static Debug (LIBCMTD)", "Dynamic Release (MSCVRT)", "Dynamic Release (MSCVRTD)" ], false));
+		AddControl("C Runtime", mCRuntime = new ComboBox(mCanvas, [ "None", "Static Release (LIBCMT)", "Static Debug (LIBCMTD)", "Dynamic Release (MSCVRT)", "Dynamic Debug (MSCVRTD)" ], false));
 	}
 
 	void EnableControls()

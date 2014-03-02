@@ -3239,7 +3239,11 @@ else
 		auto lntokIt2 = lntokIt;
 		while(tok != "import" && (tok == "," || tok == "=" || tok == ":" || tok == "." || dLex.isIdentifier(tok))
 			  && lntokIt.retreatOverComments())
+		{
+			if(tok == ":")
+				return null; // no import handling on selective import identifier
 			tok = lntokIt.getText();
+		}
 
 		if(tok != "import")
 			return null;
