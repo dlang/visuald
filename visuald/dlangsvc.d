@@ -3225,8 +3225,9 @@ else
 		auto lntokIt = _LineTokenIterator!ClippingSource(clipsrc, line, 0);
 		while(lntokIt.line < line || (lntokIt.getIndex() <= index && lntokIt.line == line))
 			if (!lntokIt.advanceOverComments())
-				break;
+				goto L_eol;
 		lntokIt.retreatOverComments();
+	L_eol:
 		wstring tok = lntokIt.getText();
 		while((tok == "static" || tok == "public" || tok == "private") 
 			  && lntokIt.advanceOverComments())
@@ -3239,7 +3240,11 @@ else
 		auto lntokIt2 = lntokIt;
 		while(tok != "import" && (tok == "," || tok == "=" || tok == ":" || tok == "." || dLex.isIdentifier(tok))
 			  && lntokIt.retreatOverComments())
+		{
+			if(tok == ":")
+				return null; // no import handling on selective import identifier
 			tok = lntokIt.getText();
+		}
 
 		if(tok != "import")
 			return null;

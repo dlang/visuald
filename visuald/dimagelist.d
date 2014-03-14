@@ -110,4 +110,5 @@ enum CSIMG_JINTERFACE     = 180;
 enum CSIMG_STOP           = 186; // series of single bitmaps follow
 
 enum CSIMG_DMODULE        = 194;
+enum CSIMG_DFOLDER        = 201;
 enum CSIMG_KEYWORD        = 206;

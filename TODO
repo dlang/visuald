@@ -38,8 +38,8 @@ Project:
 - single file compilation for file configuration
 - custom command: quotes in dependencies not supported
 - VS2013: property pages don't follow resize
-- custom command: writes build batch to souce folder
-- does not work with VS2013 git integration
+- custom command: writes build batch to source folder
+- VS2013: moving project item with DnD does not remove source
 
 Language service:
 -----------------
