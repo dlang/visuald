@@ -626,3 +626,5 @@ unreleased Version 0.3.38
   * completion on selective import now lists identifiers from imported module
   * dparser: fixed completion for symbols without description
   * dparser: added support for multi line completions (including override completion)
+
+  * cv2pdb: modified visualizer for void[] to also show bytes

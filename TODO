@@ -39,6 +39,7 @@ Project:
 - custom command: quotes in dependencies not supported
 - VS2013: property pages don't follow resize
 - custom command: writes build batch to source folder
+- VS2013: moving project item with DnD does not remove source
 
 Language service:
 -----------------

@@ -3225,8 +3225,9 @@ else
 		auto lntokIt = _LineTokenIterator!ClippingSource(clipsrc, line, 0);
 		while(lntokIt.line < line || (lntokIt.getIndex() <= index && lntokIt.line == line))
 			if (!lntokIt.advanceOverComments())
-				break;
+				goto L_eol;
 		lntokIt.retreatOverComments();
+	L_eol:
 		wstring tok = lntokIt.getText();
 		while((tok == "static" || tok == "public" || tok == "private") 
 			  && lntokIt.advanceOverComments())
