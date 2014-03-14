@@ -46,11 +46,11 @@ Ddoc
   )
   $(LI Supported Visual Studio versions
    $(UL
-    $(LI VS.NET 2003 (some limitations apply))
     $(LI VS 2005)
     $(LI VS 2008)
     $(LI VS 2010)
     $(LI VS 2012)
+    $(LI VS 2013)
    )
    Unfortunately, Express versions of Visual Studio do not support this kind of extensions. 
    But you can use the (integrated) Visual Studio Shell (download 

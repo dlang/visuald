@@ -19,20 +19,6 @@ the debug information by cv2pdb. This is msobj80.dll for VS2008 and msobj100.dll
 be extracted from a standard installation, the Visual C Express edition or the Windows SDK. You might
 also find it installed by other Microsoft products.)
 
-$(H2 Library search path not passed to linker)
-
-$(P Even though Visual D allows to set a library search path, this does not work with 
-the default installation of DMD. Optlink, the linker used by DMD, only accepts the path 
-in the LIB environment variable (this is set by Visual D), but dmd overwrites it with 
-the settings in its configuration file sc.ini.)
-
-$(P You should change the LIB setting in <dmd-installation-path>\windows\bin\sc.ini to this:
-$(PRE
-  LIB="%@P%\..\lib";\dm\lib;%DMD_LIB% 
-)
-to pass through the value set by Visual D. Since version 0.3.14, DMD_LIB is used instead of LIB to avoid conflicts
-with the environment variable LIB being used by other compilers.)
-
 $(H2 No parameter tool tips when running alongside Visual Assist)
 
 $(P Visual Assist is an extension to Visual Studio that adds a lot of editing functionality 

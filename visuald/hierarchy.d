@@ -785,6 +785,7 @@ class CFolderNode : CHierContainer
 				case cmdidExploreFolderInWindows:
 					hr = OnExploreFolderInWindows();
 					break;
+				case ECMD_SHOWALLFILES:
 				default:
 					break;
 			}

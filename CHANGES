@@ -621,3 +621,8 @@ unreleased Version 0.3.38
   * disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
     most anti-virus checks
   * added option to select the C runtime library when compiling for x64
+
+  * completion on import statements no longer showed folder icons
+  * completion on selective import now lists identifiers from imported module
+  * dparser: fixed completion for symbols without description
+  * dparser: added support for multi line completions (including override completion)
