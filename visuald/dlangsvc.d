@@ -3120,7 +3120,7 @@ else
 		return false;
 	}
 	
-	wstring FindIdentifierBackward(int line, int tok)
+	wstring FindIdentifierBackward(int line, int tok, int* pline, int* pindex)
 	{
 		while(line >= 0)
 		{
@@ -3144,7 +3144,13 @@ else
 			{
 				pos = tokpos[p];
 				if(toktype[p] == TokenCat.Identifier)
+				{
+					if(pline)
+						*pline = line;
+					if(pindex)
+						*pindex = pos;
 					return text[pos .. ppos];
+				}
 				if(ppos > pos + 1 || !isWhite(text[pos]))
 					return ""w;
 				ppos = pos;

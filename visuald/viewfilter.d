@@ -424,7 +424,9 @@ version(tip)
 				break;
 
 			case ECMD_LEFT:
+			case ECMD_WORDPREV:
 			case ECMD_RIGHT:
+			case ECMD_WORDNEXT:
 				stopCompletions();
 				goto case ECMD_UP;
 
@@ -1400,7 +1402,7 @@ else
 			return S_FALSE;
 
 		tok = mCodeWinMgr.mSource.FindLineToken(otherLine, otherIndex, iState, pos);
-		string word = toUTF8(src.FindIdentifierBackward(otherLine, tok));
+		string word = toUTF8(src.FindIdentifierBackward(otherLine, tok, &line, &idx));
 		if(word.length <= 0)
 		{
 			line = otherLine;
@@ -1410,18 +1412,64 @@ else
 			goto stepUp;
 		}
 
-		Definition[] defs = Package.GetLibInfos().findDefinition(word);
-		if(defs.length == 0)
-			return S_FALSE;
-		
-		MethodData md = src.GetMethodData();
-		span.iEndLine = span.iStartLine;
-		span.iEndIndex = span.iStartIndex + 1;
-		md.Refresh(mView, defs, cntComma, span);
-		
+		span.iStartIndex = idx;
+		span.iStartLine = line;
+		span.iEndIndex = idx + 1;
+		span.iEndLine = line;
+
+		mPendingMethodTipWord = word;
+		mPendingMethodTipComma = cntComma;
+		mPendingRequest = Package.GetLanguageService().GetTip(mCodeWinMgr.mSource, &span, &OnGetMethodTipText);
 		return S_OK;
 	}
-	
+
+	extern(D) void OnGetMethodTipText(uint request, string filename, string text, TextSpan span)
+	{
+		Definition[] defs;
+		string[] funcs = split(text, "\a");
+		if(funcs.empty)
+		{
+			defs = Package.GetLibInfos().findDefinition(mPendingMethodTipWord);
+		}
+		else
+		{
+			foreach(fn; funcs)
+			{
+				Definition def;
+				def.name = mPendingMethodTipWord;
+				int pos = fn.indexOf("\n");
+				if(pos >= 0)
+				{
+					def.help = fn[pos + 1 .. $];
+					if(def.help.startsWith("(Deduced Type"))
+						if(!findSkip(def.help, "\n"))
+							def.help = "";
+					fn = fn[0 .. pos];
+				}
+				if(fn.endsWith("\r"))
+					fn = fn[0..$-1];
+				if(fn.endsWith(":"))
+					fn = fn[0..$-1];
+				def.setType(fn);
+				defs ~= def;
+			}
+		}
+		RefreshMethodTip(defs, span);
+	}
+
+	int RefreshMethodTip(Definition[] defs, TextSpan span)
+	{
+		if(defs.length == 0)
+			return S_FALSE;
+
+		MethodData md = mCodeWinMgr.mSource.GetMethodData();
+		span.iEndLine = span.iStartLine;
+		span.iEndIndex = span.iStartIndex + 1;
+		md.Refresh(mView, defs, mPendingMethodTipComma, span);
+
+		return S_OK;
+	}
+
 	// IVsTextViewFilter //////////////////////////////////////
 	override int GetWordExtent(in int iLine, in CharIndex iIndex, in uint dwFlags, /* [out] */ TextSpan *pSpan)
 	{
@@ -1566,6 +1614,8 @@ version(none) // quick info tooltips not good enough yet
 	//////////////////////////////
 	TextSpan mPendingSpan;
 	uint mPendingRequest;
+	int mPendingMethodTipComma;
+	string mPendingMethodTipWord;
 	TextSpan mTipSpan;
 	string mTipText;
 	uint mTipRequest;
@@ -1573,6 +1623,7 @@ version(none) // quick info tooltips not good enough yet
 
 	extern(D) void OnGetTipText(uint request, string filename, string text, TextSpan span)
 	{
+		text = replace(text, "\a", "\n\n");
 		mTipText = phobosDdocExpand(text);
 
 		mTipSpan = span;
