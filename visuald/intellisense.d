@@ -613,6 +613,7 @@ struct Definition
 	string kind;
 	string filename;
 	string deco;
+	string help;
 	int line;
 
 	private string _type;
@@ -621,6 +622,10 @@ struct Definition
 		if(_type.length == 0 && deco.length)
 			(cast()this)._type = demangleType(deco, name);
 		return _type; 
+	}
+	void setType(string t)
+	{
+		_type = t;
 	}
 
 	string inScope; // enclosing scope

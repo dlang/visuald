@@ -2,4 +2,4 @@
 #define VERSION_MINOR      3
 #define VERSION_REVISION   38
 #define VERSION_BETA       -rc
-#define VERSION_BUILD      1
+#define VERSION_BUILD      2

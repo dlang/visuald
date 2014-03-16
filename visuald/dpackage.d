@@ -1419,7 +1419,7 @@ class GlobalOptions
 			keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
 			keyToolOpts.Set("expandTrigger",       expandTrigger);
-			keyToolOpts.Set("showTypeInTooltip",   showTypeInTooltip);
+			keyToolOpts.Set("showTypeInTooltip2",  showTypeInTooltip);
 			keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
 			keyToolOpts.Set("useDParser2",         useDParser);
 			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);

@@ -55,6 +55,11 @@ namespace DParserCOMServer
 			prefix = pre;
 		}
 
+		public void NotifyTimeout()
+		{
+
+		}
+
 		/// <summary>
 		/// Adds a token entry
 		/// </summary>
@@ -115,8 +120,8 @@ namespace DParserCOMServer
 				type = "MOD";
 
 			string desc = Node.Description;
-            if(!string.IsNullOrEmpty(desc))
-                desc = desc.Trim();
+			if(!string.IsNullOrEmpty(desc))
+				desc = desc.Trim();
 
 			string proto = VDServerCompletionDataGenerator.GeneratePrototype(Node);
 			if (!string.IsNullOrEmpty(proto) && !string.IsNullOrEmpty(desc))
@@ -169,8 +174,6 @@ namespace DParserCOMServer
 				return VDServerCompletionDataGenerator.GeneratePrototype(node as DVariable);
 			if(node is DelegateType)
 				return VDServerCompletionDataGenerator.GeneratePrototype(node as DelegateType, currentParameter);
-			if(node is DelegateDeclaration)
-				return VDServerCompletionDataGenerator.GeneratePrototype(node as DelegateDeclaration, currentParameter);
 			if(node is AbstractType)
 				return VDServerCompletionDataGenerator.GeneratePrototype(node as AbstractType, currentParameter, isInTemplateArgInsight);
 			return null;
@@ -183,57 +186,56 @@ namespace DParserCOMServer
 			{
 				if (ms.Definition is DVariable)
 				{
-					var bt = DResolver.StripAliasSymbol(ms.Base);
+					var bt = ms.Base;
 					if (bt is DelegateType)
-						return VDServerCompletionDataGenerator.GeneratePrototype(bt as DelegateType, currentParameter);
+                        return VDServerCompletionDataGenerator.GeneratePrototype(bt as DelegateType, isInTemplateArgInsight, currentParameter);
 				}
 				else if (ms.Definition is DMethod)
 					return VDServerCompletionDataGenerator.GeneratePrototype(ms.Definition as DMethod, isInTemplateArgInsight, currentParameter);
 			}
-			else if (t is TemplateIntermediateType)
-				return VDServerCompletionDataGenerator.GeneratePrototype(t as TemplateIntermediateType, currentParameter);
+            else if (t is TemplateIntermediateType || t is EponymousTemplateType)
+				return VDServerCompletionDataGenerator.GeneratePrototype(t as DSymbol, currentParameter);
 
 			return null;
 		}
 
-		public static string GeneratePrototype(DelegateType dt, int currentParam = -1)
-		{
-			var dd = dt.TypeDeclarationOf as DelegateDeclaration;
-			if (dd != null)
-				return VDServerCompletionDataGenerator.GeneratePrototype(dd, currentParam);
-
-			return null;
-		}
-
-		public static string GeneratePrototype(DelegateDeclaration dd, int currentParam = -1)
+		public static string GeneratePrototype(DelegateType dd, bool isInTemplateArgInsight, int currentParam = -1)
 		{
 			var sb = new StringBuilder("Delegate: ");
 
 			if (dd.ReturnType != null)
-				sb.Append(dd.ReturnType.ToString(true)).Append(' ');
+				sb.Append(dd.ReturnType.ToString()).Append(' ');
 
 			if (dd.IsFunction)
 				sb.Append("function");
 			else
 				sb.Append("delegate");
 
-			sb.Append('(');
-			if (dd.Parameters != null && dd.Parameters.Count != 0)
+			var fn = dd.DeclarationOrExpressionBase as D_Parser.Dom.Expressions.FunctionLiteral;
+			if (fn != null)
+				RenderParametersAndFooters(fn.AnonymousMethod, sb, isInTemplateArgInsight, currentParam);
+			else
 			{
-				for (int i = 0; i < dd.Parameters.Count; i++)
+				sb.Append('(');
+				var parms = dd.Parameters;
+				if (parms != null && parms.Length != 0)
 				{
-					var p = dd.Parameters[i] as DNode;
-					if (i == currentParam)
+					for (int i = 0; i < parms.Length; i++)
 					{
-						sb.Append(p.ToString(false)).Append(',');
-					}
-					else
-						sb.Append(p.ToString(false)).Append(',');
-				}
+						if (i == currentParam)
+							sb.Append("<u>");
 
-				sb.Remove(sb.Length - 1, 1);
+						sb.Append(parms[i] is DSymbol ? (parms[i] as DSymbol).Definition.ToString(true, false) : parms[i].ToCode());
+
+						if (i == currentParam)
+							sb.Append("</u>");
+						sb.Append(',');
+					}
+
+					sb.Remove(sb.Length - 1, 1);
+				}
+				sb.Append(')');
 			}
-			sb.Append(')');
 
 			return sb.ToString();
 		}
@@ -300,6 +302,12 @@ namespace DParserCOMServer
 
 			sb.Append(name);
 
+			RenderParametersAndFooters(dm, sb, isTemplateParamInsight, currentParam);
+			return sb.ToString();
+		}
+
+		static void RenderParametersAndFooters(DMethod dm, StringBuilder sb, bool isTemplateParamInsight, int currentParam = -1)
+		{
 			// Template parameters
 			if (dm.TemplateParameters != null && dm.TemplateParameters.Length > 0)
 			{
@@ -340,7 +348,6 @@ namespace DParserCOMServer
 			}
 
 			sb.Append(")");
-			return sb.ToString();
 		}
 
 		public static string GeneratePrototype(TemplateIntermediateType tit, int currentParam = -1)
@@ -488,7 +495,7 @@ namespace DParserCOMServer
 				foreach (var c in content) 
 				{
 					if (!string.IsNullOrEmpty (_tipText))
-						_tipText += "\n\n";
+						_tipText += "\a";
 					if (string.IsNullOrWhiteSpace (c.Description))
 						_tipText += c.Title;
 					else
@@ -601,10 +608,9 @@ namespace DParserCOMServer
 			var rr = DResolver.ResolveType(_editorData, ctxt);
 
 			_tipText = "";
-			if (rr != null && rr.Length > 0)
+			if (rr != null)
 			{
-				var res = rr[rr.Length - 1];				
-				var n = DResolver.GetResultMember(res);
+				var n = DResolver.GetResultMember(rr);
 				
 				_tipStart = n.Location;
 				_tipEnd = n.EndLocation;
@@ -656,6 +662,7 @@ namespace DParserCOMServer
             CompletionOptions.Instance.ShowUFCSItems = (_flags & 0x2000000) != 0;
             CompletionOptions.Instance.DisableMixinAnalysis = (_flags & 0x1000000) == 0;
 			CompletionOptions.Instance.HideDeprecatedNodes = (_flags & 128) != 0;
+            CompletionOptions.Instance.CompletionTimeout = 500;
 		}
 
 #if false

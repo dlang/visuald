@@ -610,21 +610,23 @@ unreleased Version 0.3.38
   * tool tips now expand some Ddoc macros for better readability
 
   * update SDK conversion for VS2013 and Windws SDK 8.1
-  * change some default colors when using dark theme in VS 2012+ (restart required)
+  * bugzilla 11786: change some default colors when using dark theme in VS 2012+ (restart required)
   * Windows SDK 8.0/8.1 detection
   * fix bad "\n" in default x64 library search path
   * x64 executable and library search path not correctly saved for next VS start
-  * improve project automation to mute NuGet (still empty project pretended)
+  * bugzilla 12052: improve project automation to mute NuGet (still empty project pretended)
 
   * add source control support for git in VS2013 (and maybe others)
   * fix DnD of project items in VS2013
-  * disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
+  * bugzilla 12187: disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
     most anti-virus checks
-  * added option to select the C runtime library when compiling for x64
+  * bugzilla 11962: added option to select the C runtime library when compiling for x64
 
-  * completion on import statements no longer showed folder icons
-  * completion on selective import now lists identifiers from imported module
+  * bugzilla 11940: completion on import statements no longer showed folder icons
+  * bugzilla 11649: completion on selective import now lists identifiers from imported module
   * dparser: fixed completion for symbols without description
   * dparser: added support for multi line completions (including override completion)
+  * parameter tool tips now use prototype from dparser and shows documentation
 
-  * cv2pdb: modified visualizer for void[] to also show bytes
+  * bugzilla 11898: cv2pdb: modified visualizer for void[] to also show bytes
+  * bugzilla 12353: option "Show Type In Tooltip" not saved and restored across restart
