@@ -380,10 +380,6 @@ namespace DParserCOMServer
 				off = s.IndexOf('\n', off) + 1;
 			return off + loc.Column - 1;
 		}
-		static bool isIdentifierCharacter(Char ch)
-		{
-			return Char.IsLetterOrDigit(ch) || ch == '_';
-		}
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
@@ -443,7 +439,7 @@ namespace DParserCOMServer
 			_editorData.ModuleCode = _sources[filename];
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
 			// step back to beginning of identifier
-			while(_editorData.CaretOffset > 0 && isIdentifierCharacter(_editorData.ModuleCode[_editorData.CaretOffset-1]))
+			while(_editorData.CaretOffset > 0 && Lexer.IsIdentifierPart(_editorData.ModuleCode[_editorData.CaretOffset-1]))
 			{
 				_editorData.CaretOffset--;
 				if(idx > 0)
