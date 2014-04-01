@@ -289,12 +289,12 @@ namespace DParserCOMServer
 
 		void addExpansion(string name, string type, string desc)
 		{
-			if(!string.IsNullOrEmpty(name))
-				if(name.StartsWith(prefix))
-					expansions += name.Replace("\r\n", "\a").Replace('\n', '\a') + ":" + type + ":" + desc.Replace("\r\n", "\a").Replace('\n', '\a') + "\n";
+			if(name != null && name.StartsWith(prefix))
+				expansions.Append(name.Replace("\r\n", "\a").Replace('\n', '\a')).Append(':')
+					.Append(type).Append(':').Append(desc.Replace("\r\n", "\a").Replace('\n', '\a')).Append('\n');
 		}
 
-		public string expansions;
+		public readonly StringBuilder expansions = new StringBuilder();
 		public string prefix;
 	}
 
@@ -304,7 +304,7 @@ namespace DParserCOMServer
 	{
 		private CodeLocation   _tipStart, _tipEnd;
 		private string _tipText;
-		private string _expansions;
+		private StringBuilder _expansions;
 		private string _imports;
 		private string _stringImports;
 		private string _versionIds;
@@ -454,7 +454,7 @@ namespace DParserCOMServer
 		}
 		public void GetSemanticExpansionsResult(out string stringList)
 		{
-			stringList = _expansions;
+			stringList = _expansions.ToString();
 			//MessageBox.Show("GetSemanticExpansionsResult()");
 			//throw new NotImplementedException();
 		}
