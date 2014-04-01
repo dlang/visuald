@@ -604,14 +604,17 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
 
-			var ctxt=ResolutionContext.Create(_editorData);
-			var rr = DResolver.ResolveType(_editorData, ctxt);
+			DResolver.NodeResolutionAttempt attempt;
+			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt);
 
 			_tipText = "";
 			if (rr != null)
 			{
-				var n = DResolver.GetResultMember(rr);
-				
+				var n = DResolver.GetResultMember(rr, true);
+
+				if (n == null)
+					return;
+
 				_tipStart = n.Location;
 				_tipEnd = n.EndLocation;
 				INode node = n.NodeRoot;
