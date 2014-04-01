@@ -1,0 +1,3 @@
+[submodule "vdc/abothe/Parser"]
+	path = vdc/abothe/Parser
+	url = https://github.com/aBothe/D_Parser.git
