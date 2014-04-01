@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="VDServer.cs" />
+    <Compile Include="VDServerCompletionDataGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Parser\DParser2\DParser2.csproj">
