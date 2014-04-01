@@ -34,6 +34,7 @@ enum TokenCat : int
 struct TokenInfo
 {
 	TokenCat type;
+	int tokid;
 	int StartIndex;
 	int EndIndex;
 }
@@ -827,7 +828,7 @@ L_integer:
 		{
 			TokenInfo info;
 			info.StartIndex = pos;
-			info.type = cast(TokenCat) scan(iState, text, pos);
+			info.type = cast(TokenCat) scan(iState, text, pos, info.tokid);
 			info.EndIndex = pos;
 			lineInfo ~= info;
 		}

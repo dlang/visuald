@@ -65,6 +65,32 @@ Project("{002A2DE9-8BB6-484D-9802-7E4AD4084715}") = "build", "build\build.visual
 		{8760F45A-69D9-4B68-BE63-0E055B51D447} = {8760F45A-69D9-4B68-BE63-0E055B51D447}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{36148913-8F44-4286-865F-7B140456DA36}"
+	ProjectSection(SolutionItems) = preProject
+		doc\BrowseInfo.dd = doc\BrowseInfo.dd
+		doc\build_doc.bat = doc\build_doc.bat
+		doc\BuildFromSource.dd = doc\BuildFromSource.dd
+		doc\CppConversion.dd = doc\CppConversion.dd
+		doc\Debugging.dd = doc\Debugging.dd
+		doc\Editor.dd = doc\Editor.dd
+		doc\Features.dd = doc\Features.dd
+		doc\GlobalOptions.dd = doc\GlobalOptions.dd
+		doc\html.ddoc = doc\html.ddoc
+		doc\Installation.dd = doc\Installation.dd
+		doc\KnownIssues.dd = doc\KnownIssues.dd
+		doc\macros.ddoc = doc\macros.ddoc
+		doc\news36.dd = doc\news36.dd
+		doc\Profiling.dd = doc\Profiling.dd
+		doc\ProjectConfig.dd = doc\ProjectConfig.dd
+		doc\ProjectWizard.dd = doc\ProjectWizard.dd
+		doc\ReportingBugs.dd = doc\ReportingBugs.dd
+		doc\Search.dd = doc\Search.dd
+		doc\StartPage.dd = doc\StartPage.dd
+		doc\TokenReplace.dd = doc\TokenReplace.dd
+		doc\VersionHistory.dd = doc\VersionHistory.dd
+		doc\visuald.ddoc = doc\visuald.ddoc
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug GDC|Win32 = Debug GDC|Win32
@@ -237,5 +263,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{832B817E-DCF9-46DC-8440-6418B93E62B6} = {2BD51E62-6604-48AE-9E01-C940C0CA1C68}
 		{342DCC0D-9F76-4AFE-B2BF-4FEFEB438D17} = {2BD51E62-6604-48AE-9E01-C940C0CA1C68}
+		{36148913-8F44-4286-865F-7B140456DA36} = {2BD51E62-6604-48AE-9E01-C940C0CA1C68}
 	EndGlobalSection
 EndGlobal
