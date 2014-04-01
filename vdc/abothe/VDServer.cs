@@ -20,6 +20,7 @@ using D_Parser.Dom;
 using D_Parser.Completion;
 using D_Parser.Resolver;
 using D_Parser.Resolver.TypeResolution;
+using D_Parser.Completion.ToolTips;
 
 namespace DParserCOMServer
 {
@@ -215,6 +216,13 @@ namespace DParserCOMServer
 			#endregion
 		}
 
+		class NodeToolTipContentGen : NodeTooltipRepresentationGen
+		{
+
+		}
+
+		readonly static NodeToolTipContentGen tooltipContentGen = new NodeToolTipContentGen();
+
 		/// <summary>
 		/// Adds a node to the completion data
 		/// </summary>
@@ -227,14 +235,28 @@ namespace DParserCOMServer
 			if(!name.StartsWith(prefix))
 				return;
 
-			var desc = Node.Description != null ? Node.Description.Trim() : "";
+			var sb = new StringBuilder(tooltipContentGen.GenTooltipSignature(Node as DNode));
+			
+			Dictionary<string,string> cats;
+			string summary;
+			tooltipContentGen.GenToolTipBody(Node as DNode, out summary, out cats);
 
-			// TODO: Let D_Parser generate a proper node type description --> Is Pango-notation with span color,b,u,i tags supported? 
-			var proto = VDServerCompletionDataGenerator.GeneratePrototype(Node);
-			if (!string.IsNullOrEmpty(proto))
-				desc = string.IsNullOrEmpty(desc) ? proto : (proto + "\n\n" + desc); 
+			if(!string.IsNullOrEmpty(summary) || (cats != null && cats.Count > 0))
+				sb.Append("\n\n");
 
-			addExpansion(name, Node.Accept(NodeTypeNameVisitor.Instance), desc);
+			if (!string.IsNullOrEmpty(summary))
+				sb.Append(summary);
+
+			if (cats != null)
+			{
+				foreach (var kv in cats)
+				{
+					sb.Append("\n<b>").Append(kv.Key).Append("</b>\n");
+					sb.Append(kv.Value);
+				}
+			}
+
+			addExpansion(name, Node.Accept(NodeTypeNameVisitor.Instance), sb.ToString());
 		}
 
 		/// <summary>
@@ -270,224 +292,6 @@ namespace DParserCOMServer
 			if(!string.IsNullOrEmpty(name))
 				if(name.StartsWith(prefix))
 					expansions += name.Replace("\r\n", "\a").Replace('\n', '\a') + ":" + type + ":" + desc.Replace("\r\n", "\a").Replace('\n', '\a') + "\n";
-		}
-
-		// generate prototype
-		public static string GeneratePrototype(INode node, int currentParameter = -1, bool isInTemplateArgInsight = false)
-		{
-			if(node is DMethod)
-				return VDServerCompletionDataGenerator.GeneratePrototype(node as DMethod, isInTemplateArgInsight, currentParameter);
-			if(node is DVariable)
-				return VDServerCompletionDataGenerator.GeneratePrototype(node as DVariable);
-			if(node is DelegateType)
-				return VDServerCompletionDataGenerator.GeneratePrototype(node as DelegateType, currentParameter);
-			if(node is AbstractType)
-				return VDServerCompletionDataGenerator.GeneratePrototype(node as AbstractType, currentParameter, isInTemplateArgInsight);
-			return null;
-		}
-
-		public static string GeneratePrototype(AbstractType t, int currentParameter = -1, bool isInTemplateArgInsight = false)
-		{
-			var ms = t as MemberSymbol;
-			if (ms != null)
-			{
-				if (ms.Definition is DVariable)
-				{
-					var bt = ms.Base;
-					if (bt is DelegateType)
-                        return VDServerCompletionDataGenerator.GeneratePrototype(bt as DelegateType, isInTemplateArgInsight, currentParameter);
-				}
-				else if (ms.Definition is DMethod)
-					return VDServerCompletionDataGenerator.GeneratePrototype(ms.Definition as DMethod, isInTemplateArgInsight, currentParameter);
-			}
-            else if (t is TemplateIntermediateType || t is EponymousTemplateType)
-				return VDServerCompletionDataGenerator.GeneratePrototype(t as DSymbol, currentParameter);
-
-			return null;
-		}
-
-		public static string GeneratePrototype(DelegateType dd, bool isInTemplateArgInsight, int currentParam = -1)
-		{
-			var sb = new StringBuilder("Delegate: ");
-
-			if (dd.ReturnType != null)
-				sb.Append(dd.ReturnType.ToString()).Append(' ');
-
-			if (dd.IsFunction)
-				sb.Append("function");
-			else
-				sb.Append("delegate");
-
-			var fn = dd.DeclarationOrExpressionBase as D_Parser.Dom.Expressions.FunctionLiteral;
-			if (fn != null)
-				RenderParametersAndFooters(fn.AnonymousMethod, sb, isInTemplateArgInsight, currentParam);
-			else
-			{
-				sb.Append('(');
-				var parms = dd.Parameters;
-				if (parms != null && parms.Length != 0)
-				{
-					for (int i = 0; i < parms.Length; i++)
-					{
-						if (i == currentParam)
-							sb.Append("<u>");
-
-						sb.Append(parms[i] is DSymbol ? (parms[i] as DSymbol).Definition.ToString(true, false) : parms[i].ToCode());
-
-						if (i == currentParam)
-							sb.Append("</u>");
-						sb.Append(',');
-					}
-
-					sb.Remove(sb.Length - 1, 1);
-				}
-				sb.Append(')');
-			}
-
-			return sb.ToString();
-		}
-
-		public static string GeneratePrototype(DVariable dv)
-		{
-			var sb = new StringBuilder("Variable in ");
-			sb.Append(AbstractNode.GetNodePath (dv, false));
-			sb.Append(": ");
-
-			sb.Append(dv.ToString (false));
-			return sb.ToString();
-		}
-
-		public static string GeneratePrototype(DMethod dm, bool isTemplateParamInsight=false, int currentParam=-1)
-		{
-			var sb = new StringBuilder("");
-
-			string name;
-			switch (dm.SpecialType)
-			{
-			case DMethod.MethodType.Constructor:
-				sb.Append("Constructor");
-				name = dm.Parent.Name;
-				break;
-			case DMethod.MethodType.Destructor:
-				sb.Append("Destructor");
-				name = dm.Parent.Name;
-				break;
-			case DMethod.MethodType.Allocator:
-				sb.Append("Allocator");
-				name = dm.Parent.Name;
-				break;
-			default:
-				sb.Append("Method");
-				name = dm.Name;
-				break;
-			}
-			sb.Append(" in ");
-			sb.Append(AbstractNode.GetNodePath (dm, false));
-			sb.Append(": ");
-
-			if (dm.Attributes != null && dm.Attributes.Count > 0)
-				sb.Append(dm.AttributeString + ' ');
-
-			if (dm.Type != null)
-			{
-				sb.Append(dm.Type.ToString(true));
-				sb.Append(" ");
-			}
-			else if (dm.Attributes != null && dm.Attributes.Count != 0)
-			{
-				foreach (var attr in dm.Attributes)
-				{
-					var m = attr as Modifier;
-					if (m != null && DTokens.IsStorageClass(m.Token))
-					{
-						sb.Append(DTokens.GetTokenString(m.Token));
-						sb.Append(" ");
-						break;
-					}
-				}
-			}
-
-			sb.Append(name);
-
-			RenderParametersAndFooters(dm, sb, isTemplateParamInsight, currentParam);
-			return sb.ToString();
-		}
-
-		static void RenderParametersAndFooters(DMethod dm, StringBuilder sb, bool isTemplateParamInsight, int currentParam = -1)
-		{
-			// Template parameters
-			if (dm.TemplateParameters != null && dm.TemplateParameters.Length > 0)
-			{
-				sb.Append("(");
-
-				for (int i = 0; i < dm.TemplateParameters.Length; i++)
-				{
-					var p = dm.TemplateParameters[i];
-					if (isTemplateParamInsight && i == currentParam)
-					{
-						sb.Append(p.ToString());
-					}
-					else
-						sb.Append(p.ToString());
-
-					if (i < dm.TemplateParameters.Length - 1)
-						sb.Append(",");
-				}
-
-				sb.Append(")");
-			}
-
-			// Parameters
-			sb.Append("(");
-
-			for (int i = 0; i < dm.Parameters.Count; i++)
-			{
-				var p = dm.Parameters[i] as DNode;
-				if (!isTemplateParamInsight && i == currentParam)
-				{
-					sb.Append(p.ToString(true, false));
-				}
-				else
-					sb.Append(p.ToString(true, false));
-
-				if (i < dm.Parameters.Count - 1)
-					sb.Append(",");
-			}
-
-			sb.Append(")");
-		}
-
-		public static string GeneratePrototype(TemplateIntermediateType tit, int currentParam = -1)
-		{
-			var sb = new StringBuilder("");
-
-			if (tit is ClassType)
-				sb.Append("Class");
-			else if (tit is InterfaceType)
-				sb.Append("Interface");
-			else if (tit is TemplateType)
-				sb.Append("Template");
-			else if (tit is StructType)
-				sb.Append("Struct");
-			else if (tit is UnionType)
-				sb.Append("Union");
-
-			var dc = tit.Definition;
-			sb.Append(" in ");
-			sb.Append(AbstractNode.GetNodePath (dc, false));
-			sb.Append(": ").Append(tit.Name);
-			if (dc.TemplateParameters != null && dc.TemplateParameters.Length != 0)
-			{
-				sb.Append('(');
-				for (int i = 0; i < dc.TemplateParameters.Length; i++)
-				{
-					sb.Append(dc.TemplateParameters[i].ToString());
-					sb.Append(',');
-				}
-				sb.Remove(sb.Length - 1, 1).Append(')');
-			}
-
-			return sb.ToString ();
 		}
 
 		public string expansions;
