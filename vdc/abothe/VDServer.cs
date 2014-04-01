@@ -504,7 +504,7 @@ namespace DParserCOMServer
 			
 			_tipStart = new CodeLocation(startIndex + 1, startLine);
 			_tipEnd = new CodeLocation(endIndex + 1, endLine);
-			_tipText = "";
+			_tipText.Clear();
 			
 			_setupEditorData();
 			_editorData.CaretLocation = _tipEnd;
@@ -516,7 +516,7 @@ namespace DParserCOMServer
 			DResolver.NodeResolutionAttempt attempt;
 			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt);
 
-			_tipText = "";
+			_tipText.Clear();
 			if (rr != null)
 			{
 				var n = DResolver.GetResultMember(rr, true);
@@ -528,7 +528,7 @@ namespace DParserCOMServer
 				_tipEnd = n.EndLocation;
 				INode node = n.NodeRoot;
 				if(node is DModule)
-					_tipText = (node as DModule).FileName;
+					_tipText.Append((node as DModule).FileName);
 			}
 		}
 
@@ -538,7 +538,7 @@ namespace DParserCOMServer
 			startIndex = _tipStart.Column - 1;
 			endLine = _tipEnd.Line;
 			endIndex = _tipEnd.Column - 1;
-			filename = _tipText;
+			filename = _tipText.ToString();
 		}
 
 		///////////////////////////////////
