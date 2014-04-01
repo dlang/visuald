@@ -8,11 +8,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VDServer", "VDServer.csproj
 		{0290A229-9AA1-41C3-B525-CAFB86D8BC42} = {0290A229-9AA1-41C3-B525-CAFB86D8BC42}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DParser2", "..\..\..\..\abothe\D_Parser\DParser2\DParser2.csproj", "{0290A229-9AA1-41C3-B525-CAFB86D8BC42}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DParserCOMServer", "comserver\DParserCOMServer.csproj", "{7B4FB722-905A-4851-8399-1E0F3361CCD8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vdextensions", "..\..\vdextensions\vdextensions.csproj", "{3A338E86-A08A-4F9A-8DB1-A5C280773BA3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DParser2", "Parser\DParser2\DParser2.csproj", "{0290A229-9AA1-41C3-B525-CAFB86D8BC42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
