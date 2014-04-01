@@ -229,11 +229,12 @@ namespace DParserCOMServer
 
 			var desc = Node.Description != null ? Node.Description.Trim() : "";
 
-			string proto = VDServerCompletionDataGenerator.GeneratePrototype(Node);
-			if (!string.IsNullOrEmpty(proto) && !string.IsNullOrEmpty(desc))
-				proto = proto + "\n\n"; 
+			// TODO: Let D_Parser generate a proper node type description --> Is Pango-notation with span color,b,u,i tags supported? 
+			var proto = VDServerCompletionDataGenerator.GeneratePrototype(Node);
+			if (!string.IsNullOrEmpty(proto))
+				desc = string.IsNullOrEmpty(desc) ? proto : (proto + "\n\n" + desc); 
 
-			addExpansion(name, Node.Accept(NodeTypeNameVisitor.Instance), proto + desc);
+			addExpansion(name, Node.Accept(NodeTypeNameVisitor.Instance), desc);
 		}
 
 		/// <summary>
