@@ -49,6 +49,13 @@ namespace DParserCOMServer
 		void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename);
 	}
 
+	class NodeToolTipContentGen : NodeTooltipRepresentationGen
+	{
+		public static readonly NodeToolTipContentGen Instance = new NodeToolTipContentGen();
+
+		private NodeToolTipContentGen() { }
+	}
+
 	class VDServerCompletionDataGenerator : ICompletionDataGenerator
 	{
 		public VDServerCompletionDataGenerator (string pre)
@@ -216,11 +223,6 @@ namespace DParserCOMServer
 			#endregion
 		}
 
-		class NodeToolTipContentGen : NodeTooltipRepresentationGen
-		{
-
-		}
-
 		readonly static NodeToolTipContentGen tooltipContentGen = new NodeToolTipContentGen();
 
 		/// <summary>
@@ -303,7 +305,7 @@ namespace DParserCOMServer
 	public class VDServer : IVDServer
 	{
 		private CodeLocation   _tipStart, _tipEnd;
-		private string _tipText;
+		private readonly StringBuilder _tipText = new StringBuilder();
 		private StringBuilder _expansions;
 		private string _imports;
 		private string _stringImports;
@@ -391,7 +393,7 @@ namespace DParserCOMServer
 
 			_tipStart = new CodeLocation(startIndex + 1, startLine);
 			_tipEnd = new CodeLocation(startIndex + 2, startLine);
-			_tipText = "";
+			_tipText.Clear();
 
 			_setupEditorData();
 			_editorData.CaretLocation = _tipStart;
@@ -399,22 +401,25 @@ namespace DParserCOMServer
 			_editorData.ModuleCode = _sources[filename];
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
-			List<AbstractTooltipContent> content = AbstractTooltipProvider.BuildToolTip(_editorData);
-			if (content == null || content.Count == 0)
-				_tipText = "";
-			else
-				foreach (var c in content) 
+
+			DResolver.NodeResolutionAttempt attempt;
+			var types = DResolver.ResolveTypeLoosely(_editorData, out attempt);
+
+			_tipText.Clear();
+
+			if (types != null)
+			{
+				if (types.DeclarationOrExpressionBase != null)
 				{
-					if (!string.IsNullOrEmpty (_tipText))
-						_tipText += "\a";
-					if (string.IsNullOrWhiteSpace (c.Description))
-						_tipText += c.Title;
-					else
-						_tipText += c.Title + ":\n" + c.Description;
+					_tipStart = types.DeclarationOrExpressionBase.Location;
+					_tipEnd = types.DeclarationOrExpressionBase.EndLocation;
 				}
 
-			//MessageBox.Show("GetTip()");
-			//throw new NotImplementedException();
+				foreach (var t in AmbiguousType.TryDissolve(types))
+				{
+					_tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t)).Append("\a");
+				}
+			}
 		}
 		public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
 		{
@@ -422,7 +427,7 @@ namespace DParserCOMServer
 			startIndex = _tipStart.Column - 1;
 			endLine = _tipEnd.Line;
 			endIndex = _tipEnd.Column - 1;
-			answer = _tipText;
+			answer = _tipText.ToString();
 			//MessageBox.Show("GetTipResult()");
 			//throw new NotImplementedException();
 		}
