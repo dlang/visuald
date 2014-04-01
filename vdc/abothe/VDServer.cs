@@ -454,7 +454,7 @@ namespace DParserCOMServer
 		}
 		public void GetSemanticExpansionsResult(out string stringList)
 		{
-			stringList = _expansions.ToString();
+			stringList = _expansions != null ? _expansions.ToString() : null;
 			//MessageBox.Show("GetSemanticExpansionsResult()");
 			//throw new NotImplementedException();
 		}
