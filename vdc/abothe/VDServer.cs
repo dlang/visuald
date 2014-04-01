@@ -81,53 +81,159 @@ namespace DParserCOMServer
 			addExpansion(Text, "TEXT", Description);
 		}
 
+		class NodeTypeNameVisitor : NodeVisitor<string>
+		{
+			const string InvalidType = "I";
+			const string TemplateType = "TMPL";
+
+			public static readonly NodeTypeNameVisitor Instance = new NodeTypeNameVisitor();
+
+			public string Visit(DEnumValue dEnumValue)
+			{
+				return "EVAL";
+			}
+
+			public string Visit(DVariable dVariable)
+			{
+				return "VAR";
+			}
+
+			public string Visit(DMethod n)
+			{
+				if (n.ContainsPropertyAttribute(BuiltInAtAttribute.BuiltInAttributes.Property))
+					return "PROP";
+				return "MTHD";
+			}
+
+			public string Visit(DClassLike dClassLike)
+			{
+				switch (dClassLike.ClassType)
+				{
+					case DTokens.Struct:
+						return "STRU";
+					default:
+						return "CLSS";
+					case DTokens.Interface:
+						return "IFAC";
+					case DTokens.Template:
+						return TemplateType;
+					case DTokens.Union:
+						return "UNIO";
+				}
+			}
+
+			public string Visit(DEnum dEnum)
+			{
+				return "ENUM";
+			}
+
+			public string Visit(DModule dModule)
+			{
+				return "MOD";
+			}
+
+			public string Visit(DBlockNode dBlockNode)
+			{
+				return InvalidType;
+			}
+
+			public string Visit(TemplateParameter.Node templateParameterNode)
+			{
+				return TemplateType; // ? or a more special type ?
+			}
+
+			public string Visit(NamedTemplateMixinNode n)
+			{
+				return "NMIX";
+			}
+
+			public string Visit(EponymousTemplate ep)
+			{
+				return TemplateType;
+			}
+
+			public string Visit(ModuleAliasNode moduleAliasNode)
+			{
+				return "VAR";
+			}
+
+			public string Visit(ImportSymbolNode importSymbolNode)
+			{
+				return "VAR";
+			}
+
+			public string Visit(ImportSymbolAlias importSymbolAlias)
+			{
+				return "VAR";
+			}
+
+			#region Not needed
+			public string VisitAttribute(Modifier attr)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string VisitAttribute(DeprecatedAttribute a)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string VisitAttribute(PragmaAttribute attr)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string VisitAttribute(BuiltInAtAttribute a)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string VisitAttribute(UserDeclarationAttribute a)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string VisitAttribute(VersionCondition a)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string VisitAttribute(DebugCondition a)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string VisitAttribute(StaticIfCondition a)
+			{
+				throw new NotImplementedException();
+			}
+
+			public string VisitAttribute(NegatedDeclarationCondition a)
+			{
+				throw new NotImplementedException();
+			}
+			#endregion
+		}
+
 		/// <summary>
 		/// Adds a node to the completion data
 		/// </summary>
 		/// <param name="Node"></param>
 		public void Add(INode Node)
 		{
-			string name = Node.Name;
-			if(string.IsNullOrEmpty(name) || !name.StartsWith(prefix))
+			if (Node.NameHash == 0)
+				return;
+			var name = Node.Name;
+			if(!name.StartsWith(prefix))
 				return;
 
-			string type = "I"; // Node.GetType().ToString()
-			if (Node is DMethod)
-				type = "MTHD";
-			else if (Node is DClassLike)
-			{
-				var ctype = (Node as DClassLike).ClassType;
-				if (ctype == DTokens.Struct)
-					type = "STRU";
-				else if (ctype == DTokens.Class)
-					type = "CLSS";
-				else if (ctype == DTokens.Interface)
-					type = "IFAC";
-				else if (ctype == DTokens.Template)
-					type = "TMPL";
-				else if (ctype == DTokens.Union)
-					type = "UNIO";
-			}
-			else if (Node is DEnum)
-				type = "ENUM";
-			else if (Node is DEnumValue)
-				type = "EVAL";
-			else if (Node is NamedTemplateMixinNode)
-				type = "NMIX";
-			else if (Node is DVariable)
-				type = "VAR";
-			else if (Node is DModule)
-				type = "MOD";
-
-			string desc = Node.Description;
-			if(!string.IsNullOrEmpty(desc))
-				desc = desc.Trim();
+			var desc = Node.Description != null ? Node.Description.Trim() : "";
 
 			string proto = VDServerCompletionDataGenerator.GeneratePrototype(Node);
 			if (!string.IsNullOrEmpty(proto) && !string.IsNullOrEmpty(desc))
-				proto = proto + "\n\n";
-			desc = proto + desc;
-			addExpansion(name, type, desc);
+				proto = proto + "\n\n"; 
+
+			addExpansion(name, Node.Accept(NodeTypeNameVisitor.Instance), proto + desc);
 		}
 
 		/// <summary>
