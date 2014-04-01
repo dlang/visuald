@@ -223,8 +223,6 @@ namespace DParserCOMServer
 			#endregion
 		}
 
-		readonly static NodeToolTipContentGen tooltipContentGen = new NodeToolTipContentGen();
-
 		/// <summary>
 		/// Adds a node to the completion data
 		/// </summary>
@@ -237,11 +235,11 @@ namespace DParserCOMServer
 			if(!name.StartsWith(prefix))
 				return;
 
-			var sb = new StringBuilder(tooltipContentGen.GenTooltipSignature(Node as DNode));
+			var sb = new StringBuilder(NodeToolTipContentGen.Instance.GenTooltipSignature(Node as DNode));
 			
 			Dictionary<string,string> cats;
 			string summary;
-			tooltipContentGen.GenToolTipBody(Node as DNode, out summary, out cats);
+			NodeToolTipContentGen.Instance.GenToolTipBody(Node as DNode, out summary, out cats);
 
 			if(!string.IsNullOrEmpty(summary) || (cats != null && cats.Count > 0))
 				sb.Append("\n\n");
