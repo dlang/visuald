@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.ComponentModel;
 
-using ABothe;
+using DParserCOMServer;
 
 namespace vdcomserver
 {
@@ -90,14 +90,16 @@ namespace vdcomserver
 	//[ClassInterface(ClassInterfaceType.None)]
 	public class VDServerClassFactory : IClassFactory
 	{
+		static readonly Guid VDServerGUID = new Guid (DParserCOMServer.IID.IVDServer);
+		static readonly Guid IUnknownGUID = new Guid(COM.guidIUnknown);
+
 		public int CreateInstance(IntPtr UnkOuter, ref Guid riid, out IntPtr pvObject)
 		{
 			pvObject = IntPtr.Zero;
-			MessageBox.Show("CreateInstance", "[LOCAL] message");
-			if(riid == new Guid(ABothe.IID.IVDServer) ||
-			   riid == new Guid(COM.guidIUnknown))
+			//MessageBox.Show("CreateInstance", "[LOCAL] message");
+			if(riid.Equals(VDServerGUID) || riid.Equals(IUnknownGUID))
 			{
-				MessageBox.Show("CreateInstance IVDServer", "[LOCAL] message");
+				//MessageBox.Show("CreateInstance IVDServer", "[LOCAL] message");
 				VDServer srv = new VDServer();
 				pvObject = Marshal.GetComInterfaceForObject(srv, typeof(IVDServer));
 				return COM.S_OK;
@@ -109,12 +111,12 @@ namespace vdcomserver
 		{
 			if(fLock)
 			{
-				MessageBox.Show("LockServer", "[LOCAL] message");
+				//MessageBox.Show("LockServer", "[LOCAL] message");
 				lockCount++;
 			}
 			else
 			{
-				MessageBox.Show("UnlockServer", "[LOCAL] message");
+				//MessageBox.Show("UnlockServer", "[LOCAL] message");
 				lockCount--;
 			}
 			if(lockCount == 0)
@@ -125,7 +127,7 @@ namespace vdcomserver
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		[ComRegisterFunction()]
 		public static void Register(Type t)
-		{
+		{/*
 			try
 			{
 				VDServer.RegasmRegisterLocalServer(t);
@@ -134,12 +136,12 @@ namespace vdcomserver
 			{
 				Console.WriteLine(ex.Message); // Log the error
 				throw ex; // Re-throw the exception
-			}
+			}*/
 		}
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		[ComUnregisterFunction()]
 		public static void Unregister(Type t)
-		{
+		{/*
 			try
 			{
 				VDServer.RegasmUnregisterLocalServer(t);
@@ -148,7 +150,7 @@ namespace vdcomserver
 			{
 				Console.WriteLine(ex.Message); // Log the error
 				throw ex; // Re-throw the exception
-			}
+			}*/
 		}
 
 		int lockCount;
@@ -162,7 +164,7 @@ namespace vdcomserver
 			VDServerClassFactory cf = new VDServerClassFactory();
 
 			int regID;
-			Guid CLSID_MyObject = new Guid(ABothe.IID.VDServer);
+			Guid CLSID_MyObject = new Guid(DParserCOMServer.IID.VDServer);
 			UInt32 hResult = COM.CoRegisterClassObject(ref CLSID_MyObject, cf, COM.CLSCTX_LOCAL_SERVER, 
 			                                           COM.REGCLS_MULTIPLEUSE | COM.REGCLS_SUSPENDED, out regID);
 			if (hResult != 0)
