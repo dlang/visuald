@@ -312,7 +312,6 @@ namespace DParserCOMServer
 		private uint   _flags;
 		EditorData _editorData = new EditorData();
 
-		public Dictionary<string, DModule> _modules = new Dictionary<string, DModule>();
 		public Dictionary<string, string> _sources = new Dictionary<string, string>();
 
 		public VDServer()
@@ -361,7 +360,6 @@ namespace DParserCOMServer
 
 			GlobalParseCache.AddOrUpdateModule(ast);
 
-			_modules[filename] = ast;
 			_sources[filename] = srcText;
 			//MessageBox.Show("UpdateModule(" + filename + ")");
 			//throw new NotImplementedException();
@@ -378,8 +376,9 @@ namespace DParserCOMServer
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			DModule ast = null;
-			if (!_modules.TryGetValue(filename, out ast))
+			var ast = GlobalParseCache.GetModule(filename);
+
+			if (ast == null)
 				throw new COMException("module not found", 1);
 
 			_tipStart = new CodeLocation(startIndex + 1, startLine);
@@ -424,8 +423,9 @@ namespace DParserCOMServer
 		}
 		public void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr)
 		{
-			DModule ast = null;
-			if (!_modules.TryGetValue(filename, out ast))
+			var ast = GlobalParseCache.GetModule(filename);
+
+			if (ast == null)
 				throw new COMException("module not found", 1);
 
 			_setupEditorData();
@@ -456,8 +456,9 @@ namespace DParserCOMServer
 		}
 		public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
 		{
-			DModule ast = null;
-			if (!_modules.TryGetValue(filename, out ast))
+			var ast = GlobalParseCache.GetModule(filename);
+
+			if (ast == null)
 				throw new COMException("module not found", 1);
 
 			//MessageBox.Show("IsBinaryOperator()");
@@ -465,8 +466,9 @@ namespace DParserCOMServer
 		}
 		public void GetParseErrors(string filename, out string errors)
 		{
-			DModule ast = null;
-			if (!_modules.TryGetValue(filename, out ast))
+			var ast = GlobalParseCache.GetModule(filename);
+
+			if (ast == null)
 				throw new COMException("module not found", 1);
 
 			var asterrors = ast.ParseErrors;
@@ -496,8 +498,9 @@ namespace DParserCOMServer
 		}
 		public void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			DModule ast = null;
-			if (!_modules.TryGetValue(filename, out ast))
+			var ast = GlobalParseCache.GetModule(filename);
+
+			if (ast == null)
 				throw new COMException("module not found", 1);
 			
 			_tipStart = new CodeLocation(startIndex + 1, startLine);
