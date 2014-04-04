@@ -242,8 +242,10 @@ namespace DParserCOMServer
 		void addExpansion(string name, string type, string desc)
 		{
 			if (name != null && name.StartsWith(prefix))
-				expansions.Append(name.Replace("\r\n", "\a").Replace('\n', '\a')).Append(':')
-					.Append(type).Append(':').Append(desc.Replace("\r\n", "\a").Replace('\n', '\a')).Append('\n');
+			{
+				expansions.Append(name.Replace("\r", string.Empty).Replace('\n', '\a')).Append(':').Append(type).Append(':');
+				expansions.Append(desc.Replace("\r", string.Empty).Replace('\n', '\a')).Append('\n');
+			}
 		}
 
 		public readonly StringBuilder expansions = new StringBuilder();
