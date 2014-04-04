@@ -182,9 +182,20 @@ namespace DParserCOMServer
 					_tipEnd = types.DeclarationOrExpressionBase.EndLocation;
 				}
 
-				foreach (var t in AmbiguousType.TryDissolve(types))
+				DNode dn = null;
+
+				foreach (var t in AmbiguousType.TryDissolve(types)){
 					_tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t)).Append("\a");
-				
+					if (t is DSymbol)
+						dn = (t as DSymbol).Definition;
+				}
+
+				while (_tipText.Length > 0 && _tipText[_tipText.Length - 1] == '\a')
+					_tipText.Length--;
+
+				if (dn != null)
+					VDServerCompletionDataGenerator.GenerateNodeTooltipBody(dn, _tipText);
+
 				while (_tipText.Length > 0 && _tipText[_tipText.Length - 1] == '\a')
 					_tipText.Length--;
 			}

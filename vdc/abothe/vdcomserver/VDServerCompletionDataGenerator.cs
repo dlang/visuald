@@ -189,12 +189,19 @@ namespace DParserCOMServer
 
 			var sb = new StringBuilder(NodeToolTipContentGen.Instance.GenTooltipSignature(Node as DNode));
 
+			GenerateNodeTooltipBody(Node as DNode, sb);
+
+			addExpansion(name, Node.Accept(NodeTypeNameVisitor.Instance), sb.ToString());
+		}
+
+		public static void GenerateNodeTooltipBody(DNode Node, StringBuilder sb)
+		{
 			Dictionary<string, string> cats;
 			string summary;
-			NodeToolTipContentGen.Instance.GenToolTipBody(Node as DNode, out summary, out cats);
+			NodeToolTipContentGen.Instance.GenToolTipBody(Node, out summary, out cats);
 
 			if (!string.IsNullOrEmpty(summary) || (cats != null && cats.Count > 0))
-				sb.Append("\n\n");
+				sb.Append("\a");
 
 			if (!string.IsNullOrEmpty(summary))
 				sb.Append(summary);
@@ -207,8 +214,6 @@ namespace DParserCOMServer
 					sb.Append(kv.Value);
 				}
 			}
-
-			addExpansion(name, Node.Accept(NodeTypeNameVisitor.Instance), sb.ToString());
 		}
 
 		/// <summary>
