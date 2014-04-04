@@ -201,7 +201,7 @@ namespace DParserCOMServer
 			NodeToolTipContentGen.Instance.GenToolTipBody(Node, out summary, out cats);
 
 			if (!string.IsNullOrEmpty(summary) || (cats != null && cats.Count > 0))
-				sb.Append("\a");
+				sb.Append("\n");
 
 			if (!string.IsNullOrEmpty(summary))
 				sb.Append(summary);
