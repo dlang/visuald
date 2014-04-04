@@ -183,9 +183,10 @@ namespace DParserCOMServer
 				}
 
 				foreach (var t in AmbiguousType.TryDissolve(types))
-				{
 					_tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t)).Append("\a");
-				}
+				
+				while (_tipText.Length > 0 && _tipText[_tipText.Length - 1] == '\a')
+					_tipText.Length--;
 			}
 		}
 		public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
