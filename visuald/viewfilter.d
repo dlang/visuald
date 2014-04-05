@@ -1402,7 +1402,7 @@ else
 			return S_FALSE;
 
 		tok = mCodeWinMgr.mSource.FindLineToken(otherLine, otherIndex, iState, pos);
-		string word = toUTF8(src.FindIdentifierBackward(otherLine, tok, &line, &idx));
+		string word = toUTF8(src.FindMethodIdentifierBackward(otherLine, tok, &line, &idx));
 		if(word.length <= 0)
 		{
 			line = otherLine;

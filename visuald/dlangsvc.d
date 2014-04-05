@@ -41,6 +41,8 @@ extern (C) GCStats gc_stats();
 }
 
 import vdc.lexer;
+import vdc.parser.tmpl;
+import vdc.parser.decl;
 import vdc.ivdserver;
 static import vdc.util;
 
@@ -2369,6 +2371,13 @@ else
 			return -1;
 		}
 
+		int getTokenId()
+		{
+			if(tok < lineInfo.length)
+				return lineInfo[tok].tokid;
+			return -1;
+		}
+
 		wstring getPrevToken(int n = 1)
 		{
 			auto it = this;
@@ -3120,45 +3129,57 @@ else
 		return false;
 	}
 	
-	wstring FindIdentifierBackward(int line, int tok, int* pline, int* pindex)
+	// tok is sitting on the opening parenthesis, return method name and its position
+	wstring FindMethodIdentifierBackward(int line, int tok, int* pline, int* pindex)
 	{
-		while(line >= 0)
+		LineTokenIterator it = LineTokenIterator(this, line, tok);
+		scope(exit)
 		{
-			wstring text = GetText(line, 0, line, -1);
-			int[] tokpos;
-			int[] toktype;
-			uint pos = 0;
-			
-			int iState = mColorizer.GetLineState(line);
-			if(iState == -1)
-				break;
-			
-			while(pos < text.length)
-			{
-				tokpos ~= pos;
-				toktype ~= dLex.scan(iState, text, pos);
-			}
-			int p = (tok >= 0 ? tok : tokpos.length) - 1;
-			uint ppos = (p >= tokpos.length - 1 ? text.length : tokpos[p+1]);
-			for( ; p >= 0; p--)
-			{
-				pos = tokpos[p];
-				if(toktype[p] == TokenCat.Identifier)
-				{
-					if(pline)
-						*pline = line;
-					if(pindex)
-						*pindex = pos;
-					return text[pos .. ppos];
-				}
-				if(ppos > pos + 1 || !isWhite(text[pos]))
-					return ""w;
-				ppos = pos;
-			}
-			line--;
-			tok = -1;
+			if(pline)
+				*pline = it.line;
+			if(pindex)
+				*pindex = it.getIndex();
 		}
-		return ""w;
+		if(!it.retreatOverComments())
+			return null;
+
+		if(it.getText() == ")")
+		{
+			// skip over template arguments
+			if(it.retreatOverBraces() &&
+			   it.getText() == "!" &&
+			   it.retreatOverComments() &&
+			   it.getTokenType() == TokenCat.Identifier)
+				return it.getText();
+			return null;
+		}
+		if(it.getText() == "!")
+		{
+			// inside template argument list
+			if(it.retreatOverComments() &&
+			   it.getTokenType() == TokenCat.Identifier)
+				return it.getText();
+			return null;
+		}
+		switch(it.getTokenId())
+		{
+			case TOK___vector:
+			mixin(case_TOKs_BasicTypeX);
+			mixin(case_TOKs_TemplateSingleArgument);
+			{
+				LineTokenIterator it2 = it;
+				if(it2.retreatOverComments() &&
+				   it2.getText() == "!" &&
+				   it2.retreatOverComments())
+					it = it2;
+				break;
+			}
+			default:
+				break;
+		}
+		if (it.getTokenType() == TokenCat.Identifier)
+			return it.getText();
+		return null;
 	}
 
 	//////////////////////////////////////////////////////////////

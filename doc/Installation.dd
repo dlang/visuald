@@ -1,6 +1,6 @@
 Ddoc
 
-$(P The click-through-installer will guide you through the intallation process. The installer lets you select the
+$(P The click-through-installer will guide you through the installation process. The installer lets you select the
 Visual Studio Version for which you want Visual D to be installed. It will always install
 for all users, not only for a single user.)
 
@@ -23,7 +23,7 @@ Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoe
 not mix with previous manual installations of $(LINK2 http://svn.dsource.org/projects/cv2pdb, cv2pdb). 
 Visual D also installs the alternative debug engine mago that does not need cv2pdb.)
 
-$(P Unfortunately, the Visual Studio Shells 2008 and 2010 are missing one file, that is needed for 
+$(P Unfortunately, the Visual Studio Shells 2008 and 2010 are missing one file that is needed for 
 the conversion of the debug information by cv2pdb. This is $(B msobj80.dll) for VS2008 and $(B msobj100.dll) for VS2010 
 and must be extracted from a standard installation, the Visual C Express edition or the Windows SDK. 
 You might also find it installed by other Microsoft products.
