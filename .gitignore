@@ -6,6 +6,6 @@
 /sdk/sdk_libs
 /sdk/vsi_sources
 /sdk/vsi
-vdc/abothe/vdcomserver/obj
+vdc/abothe/comserver/obj
 vdextensions/obj
 *.userprefs

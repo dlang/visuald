@@ -45,10 +45,9 @@
     <Compile Include="COMHelper.cs" />
     <Compile Include="NativeMethod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\VDServer.cs">
-      <Link>VDServer.cs</Link>
-    </Compile>
     <Compile Include="DParserCOMServer.cs" />
+    <Compile Include="VDServer.cs" />
+    <Compile Include="VDServerCompletionDataGenerator.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
