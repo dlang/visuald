@@ -235,18 +235,6 @@ class TemplateArgumentList
 //    null
 //    __FILE__
 //    __LINE__
-enum case_TOKs_TemplateSingleArgument = q{
-	case TOK_Identifier:
-	case TOK_CharacterLiteral:
-	case TOK_StringLiteral:
-	case TOK_IntegerLiteral:
-	case TOK_FloatLiteral:
-	case TOK_true:
-	case TOK_false:
-	case TOK_null:
-	case TOK___FILE__:
-	case TOK___LINE__:
-}; // case_TOKs_BasicTypeX;
 
 //-- GRAMMAR_BEGIN --
 //TemplateTypeParameter:
