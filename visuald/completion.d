@@ -430,19 +430,40 @@ class Declarations
 
 		if(symbols.length > 0 && mPendingSource)
 		{
-			if(symbols.length > 10 && mNames.length + symbols.length > 50)
+			// split after second ':' to combine same name and type
+			static string splitName(string name, ref string desc)
 			{
-				// go through assoc array for faster uniqueness check
-				bool[string] names;
-				foreach(n; mNames)
-					names[n] = true;
-				foreach(s; symbols)
-					names[s] = true;
-				mNames = names.keys();
+				auto pos = name.indexOf(':');
+				if(pos < 0)
+					return name;
+				pos = name.indexOf(':', pos + 1);
+				if(pos < 0)
+					return name;
+				desc = name[pos..$];
+				return name[0..pos];
 			}
-			else
-				foreach(s; symbols)
-					mNames.addunique(s);
+
+			// go through assoc array for faster uniqueness check
+			string[string] names;
+			foreach(n; mNames)
+			{
+				string desc;
+				string name = splitName(n, desc);
+				names[name] = desc;
+			}
+			foreach(s; symbols)
+			{
+				string desc;
+				string name = splitName(s, desc);
+				if(auto p = name in names)
+					*p ~= "\a\a" ~ desc[1..$]; // strip ":"
+				else
+					names[name] = desc;
+			}
+			mNames.length = names.length;
+			size_t i = 0;
+			foreach(n, desc; names)
+				mNames[i++] = n ~ desc;
 
 			sort!("icmp(a, b) < 0", SwapStrategy.stable)(mNames);
 			mPendingSource.GetCompletionSet().Init(mPendingView, this, false);

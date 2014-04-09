@@ -1370,3 +1370,41 @@ string operatorName(int id)
 			assert(false);
 	}
 }
+
+enum case_TOKs_BasicTypeX = q{
+	case TOK_bool:
+	case TOK_byte:
+	case TOK_ubyte:
+	case TOK_short:
+	case TOK_ushort:
+	case TOK_int:
+	case TOK_uint:
+	case TOK_long:
+	case TOK_ulong:
+	case TOK_char:
+	case TOK_wchar:
+	case TOK_dchar:
+	case TOK_float:
+	case TOK_double:
+	case TOK_real:
+	case TOK_ifloat:
+	case TOK_idouble:
+	case TOK_ireal:
+	case TOK_cfloat:
+	case TOK_cdouble:
+	case TOK_creal:
+	case TOK_void:
+};
+
+enum case_TOKs_TemplateSingleArgument = q{
+	case TOK_Identifier:
+	case TOK_CharacterLiteral:
+	case TOK_StringLiteral:
+	case TOK_IntegerLiteral:
+	case TOK_FloatLiteral:
+	case TOK_true:
+	case TOK_false:
+	case TOK_null:
+	case TOK___FILE__:
+	case TOK___LINE__:
+}; // + case_TOKs_BasicTypeX;

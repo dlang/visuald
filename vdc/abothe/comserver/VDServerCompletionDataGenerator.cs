@@ -175,6 +175,8 @@ namespace DParserCOMServer
 			#endregion
 		}
 
+		public void SetSuggestedItem(string item) { }
+
 		/// <summary>
 		/// Adds a node to the completion data
 		/// </summary>

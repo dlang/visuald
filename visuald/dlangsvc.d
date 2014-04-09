@@ -41,8 +41,6 @@ extern (C) GCStats gc_stats();
 }
 
 import vdc.lexer;
-import vdc.parser.tmpl;
-import vdc.parser.decl;
 import vdc.ivdserver;
 static import vdc.util;
 
