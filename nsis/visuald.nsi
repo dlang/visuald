@@ -34,8 +34,8 @@
   !searchreplace VERSION_MAJOR ${VERSION_MAJOR} " " ""
   !searchreplace VERSION_MINOR ${VERSION_MINOR} " " ""
   !searchreplace VERSION_REVISION ${VERSION_REVISION} " " ""
-  !searchreplace VERSION_BETA ${VERSION_BETA}   " " ""
-  !searchreplace VERSION_BUILD ${VERSION_BUILD} " " ""
+  !searchreplace VERSION_BETA  "${VERSION_BETA}"   " " ""
+  !searchreplace VERSION_BUILD "${VERSION_BUILD}" " " ""
   
   !if "${VERSION_BUILD}" == "0"
     !define VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}"
