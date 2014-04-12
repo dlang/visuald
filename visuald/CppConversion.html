@@ -69,10 +69,12 @@
     
 <div class="navblock">
  <h2><a href="StartPage.html" title="Visual Studio Plugin for D">Visual D</a></h2>
- <ul>  <li><a href="https://github.com/D-Programming-Language/visuald/releases" title="Releases and Downloads">Downloads</a></li>
+ <ul>
+  <li><a href="https://github.com/D-Programming-Language/visuald/releases" title="Releases and Downloads">Downloads</a></li>
   <li><a href="Installation.html" title="Installation">Installation</a></li>
   <li><a href="Features.html" title="Visual D Features">Features</a>
-   <ul>    <li><a href="GlobalOptions.html" title="Global Options">Global options</a></li>
+   <ul>
+    <li><a href="GlobalOptions.html" title="Global Options">Global options</a></li>
     <li><a href="ProjectWizard.html" title="Project Wizard to create new projects">Project Wizard</a></li>
     <li><a href="Editor.html" title="Language support in the editor">Editor</a></li>
     <li><a href="Search.html" title="Search symbols and files">Search Window</a></li>
@@ -95,7 +97,8 @@
 
 <div class="navblock">
 <h2>Community</h2>
-<ul>	<li><a href="http://forum.dlang.org/" title="User forums">Forums</a></li>
+<ul>
+	<li><a href="http://forum.dlang.org/" title="User forums">Forums</a></li>
 
 	<li><a href="http://github.com/D-Programming-Language" title="D on github">GitHub</a></li>
 
@@ -144,7 +147,8 @@ replacement rules and manual additional editing of the result might be necessary
 </p>
 
 <p>The conversion consists of a number of steps:</p>
-<ul>    <li>convert text into a stream of tokens with preceding white space or comments</li>
+<ul>
+    <li>convert text into a stream of tokens with preceding white space or comments</li>
     <li>convert/expand preprocessor directives, so that the text is no longer a mixture 
 	  of two languages. Conditionals are replaced by constructs that should fit into a 
 	  tree hierarchy similar to "static if" in D.</li>
@@ -162,7 +166,8 @@ replacement rules and manual additional editing of the result might be necessary
 
 
 <p>Options:</p>
-<ul>    <li>Convert: Input files/Current document/Current selection. When selecting 
+<ul>
+    <li>Convert: Input files/Current document/Current selection. When selecting 
 	  "Input files", a whole source code base can be converted, writing files to 
 	  the output directory. Otherwise, the text in the editor is replaced. If you
 	  have not changed the text and selection after the last conversion, redoing 
@@ -242,6 +247,7 @@ Move member and field implementation into class declaration.
 <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
 <tr bgcolor="#C0C0C0"><th>C++</th><th>D</th></tr>
 <tr><td width="45%" bgcolor="#FFF0F0"><pre style="background-color: #FFF0F0; border: 0px;margin: 0 0 0em 0em;">
+
 class C {
   // comments are usually kept
   static int x;
@@ -268,6 +274,7 @@ Convert constructor and call super constructor
 <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
 <tr bgcolor="#C0C0C0"><th>C++</th><th>D</th></tr>
 <tr><td width="45%" bgcolor="#FFF0F0"><pre style="background-color: #FFF0F0; border: 0px;margin: 0 0 0em 0em;">
+
 struct A : B {
     A() : B(1) { }
     A(int x) : B(x) { }
@@ -290,6 +297,7 @@ Split declarations for variables with different types
 <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
 <tr bgcolor="#C0C0C0"><th>C++</th><th>D</th></tr>
 <tr><td width="45%" bgcolor="#FFF0F0"><pre style="background-color: #FFF0F0; border: 0px;margin: 0 0 0em 0em;">
+
 int a = sizeof(void *);
 int x, *y = (int*)null;
 
@@ -309,6 +317,7 @@ Add enumerator type to constants of named enumerator values
 <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
 <tr bgcolor="#C0C0C0"><th>C++</th><th>D</th></tr>
 <tr><td width="45%" bgcolor="#FFF0F0"><pre style="background-color: #FFF0F0; border: 0px;margin: 0 0 0em 0em;">
+
 typedef enum { e1, e2 } EX;
 enum ENUM { kEnum };
 int foo() {
@@ -333,6 +342,7 @@ Simple template translations
 <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
 <tr bgcolor="#C0C0C0"><th>C++</th><th>D</th></tr>
 <tr><td width="45%" bgcolor="#FFF0F0"><pre style="background-color: #FFF0F0; border: 0px;margin: 0 0 0em 0em;">
+
 template&lt;typename TYPE&gt;
 struct ArrayBase : Array { 
     TYPE* data;
@@ -358,6 +368,7 @@ Preprocessor macros are converted to enum, alias or templates
 <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
 <tr bgcolor="#C0C0C0"><th>C++</th><th>D</th></tr>
 <tr><td width="45%" bgcolor="#FFF0F0"><pre style="background-color: #FFF0F0; border: 0px;margin: 0 0 0em 0em;">
+
 #define K1 1 // keep comment
 #define K2 (K1+K1)
 #define K3 K1
@@ -380,6 +391,7 @@ Preprocessor conditionals are converted to static if or can be removed when spec
 <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
 <tr bgcolor="#C0C0C0"><th>C++</th><th>D</th></tr>
 <tr><td width="45%" bgcolor="#FFF0F0"><pre style="background-color: #FFF0F0; border: 0px;margin: 0 0 0em 0em;">
+
 #define ABC 1
   a = 1;
 #if ABC
@@ -407,6 +419,7 @@ It can deal with a number of complicated uses of preprocessor conditionals, but 
 <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
 <tr bgcolor="#C0C0C0"><th>C++</th><th>D</th></tr>
 <tr><td width="45%" bgcolor="#FFF0F0"><pre style="background-color: #FFF0F0; border: 0px;margin: 0 0 0em 0em;">
+
 void foo(x) {
   if (x)
     c = 0;

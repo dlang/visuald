@@ -69,10 +69,12 @@
     
 <div class="navblock">
  <h2><a href="StartPage.html" title="Visual Studio Plugin for D">Visual D</a></h2>
- <ul>  <li><a href="https://github.com/D-Programming-Language/visuald/releases" title="Releases and Downloads">Downloads</a></li>
+ <ul>
+  <li><a href="https://github.com/D-Programming-Language/visuald/releases" title="Releases and Downloads">Downloads</a></li>
   <li><a href="Installation.html" title="Installation">Installation</a></li>
   <li><a href="Features.html" title="Visual D Features">Features</a>
-   <ul>    <li><a href="GlobalOptions.html" title="Global Options">Global options</a></li>
+   <ul>
+    <li><a href="GlobalOptions.html" title="Global Options">Global options</a></li>
     <li><a href="ProjectWizard.html" title="Project Wizard to create new projects">Project Wizard</a></li>
     <li><a href="Editor.html" title="Language support in the editor">Editor</a></li>
     <li><a href="Search.html" title="Search symbols and files">Search Window</a></li>
@@ -95,7 +97,8 @@
 
 <div class="navblock">
 <h2>Community</h2>
-<ul>	<li><a href="http://forum.dlang.org/" title="User forums">Forums</a></li>
+<ul>
+	<li><a href="http://forum.dlang.org/" title="User forums">Forums</a></li>
 
 	<li><a href="http://github.com/D-Programming-Language" title="D on github">GitHub</a></li>
 
@@ -139,14 +142,15 @@
 
 <table cellspacing=0 cellpadding=5><caption></caption>
 <td valign=top><img src="images/vd_logo.png" /></td>
-<td valign=top><p>Visual D is a Visual Studio package providing both project management and language services. 
+<td valign=top>
+<p>Visual D is a Visual Studio package providing both project management and language services. 
 It works with Visual Studio 2005, 2008, 2010, 2012 and 2013 as well as the free Visual Studio Shells. 
 See the <a href="Installation.html">Installation</a> instructions, especially if not using a commercial edition of Visual Studio.</p>
 
 <p>Visual D aims at providing seamless integration of the D programming language into Visual Studio.</p>
 
 <div align="right">
-<a href="https://github.com/D-Programming-Language/visuald/releases/download/v0.3.37/VisualD-v0.3.37.exe"><img src="images/download.png" /></a>
+<a href="https://github.com/D-Programming-Language/visuald/releases/download/v0.3.38/VisualD-v0.3.38.exe"><img src="images/download.png" /></a>
 <p><a href="https://github.com/D-Programming-Language/visuald/releases">Beta releases</a></p>
 </div>
 </td></table>
@@ -158,7 +162,8 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
 
 <table cellspacing=0 cellpadding=5><caption></caption>
 <td valign=top>
-<ul> <li>Project management with all DMD options available through the UI</li>
+<ul>
+ <li>Project management with all DMD options available through the UI</li>
  <li>Syntax highlighting with special version and token string support</li>
  <li>Import statement completion, semantic word-completion</li>
  <li>Underlining of syntactical errors</li>
@@ -188,8 +193,29 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
 <a href="VersionHistory.html">Full version history and complete details...</a>
 <br />
 
+2014-04-12 Version 0.3.38
+<ul>
+ <li>added support for string import dependencies (needs dmd 2.065)</li>
+ <li>improved library path handling and defaults for x64</li>
+ <li>added source control support for git in VS2013 (and maybe others)</li>
+ <li>mute flood of errors by NuGet when building</li>
+ <li>improved completion and tooltip support with dparser
+  <ul>
+   <li>completion box now displays appropriate icons and tooltip with some DDOC expansions</li>
+   <li>bugzilla 11649: completion on selective import now lists identifiers from imported module</li>
+   <li>fixed completion for symbols without description</li>
+   <li>added options to enable/disable mixin analysis and UFCS expansions</li>
+   <li>parameter tool tips now use prototype from dparser and shows documentation</li>
+ </ul>
+</li>
+ <li>updated to cv2pdb 0.31 with support for VS2013 and DWARF support for gcc 4.8</li>
+ <li>updated to mago 0.9 </li>
+</ul>
+
+
 2013-11-02 Version 0.3.37
-<ul>  <li>Installer now supports VS 2013, updated to cv2pdb 0.27, mago 0.8, fixes x64 deubgger in VS 2012 Shell</li>
+<ul>
+  <li>Installer now supports VS 2013, updated to cv2pdb 0.27, mago 0.8, fixes x64 deubgger in VS 2012 Shell</li>
   <li>improvements to "Compile and Run"</li>
   <li>improvements to syntax/coverage highlighting</li>
   <li>DParser engine now used by default, updated to recent version</li>
@@ -201,23 +227,12 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
 </ul>
 
 
-2013-05-10 <a href="News36.html">Version 0.3.36</a>
-<ul>  <li>updated to new features of the language and tooling as of dmd 2.062</li>
-  <li>basic LDC support</li>
-  <li>added new option pages for DMD/GDC/LDC directories</li>
-  <li>DParser by Alexander Bothe <a href="https://github.com/aBothe/D_Parser">https://github.com/aBothe/D_Parser</a> integrated as an alternative
-    semantic engine</li>
-  <li>added command "Compile and Run" to execute current text buffer or selection via rdmd</li>
-  <li>added option "Colorize coverage from .LST file" to highlight lines from code coverage output</li>
-</ul>
-
-
 <a href="VersionHistory.html">more...</a>
 
 <h2>Download</h2>
 
 <p>The latest installer can also be downloaded 
-<a href="http:/www.dsource.org/projects/visuald/browser/downloads/VisualD-v0.3.37.exe?format=raw&FixForIE=.exe">here</a>.
+<a href="http:/www.dsource.org/projects/visuald/browser/downloads/VisualD-v0.3.38.exe?format=raw&FixForIE=.exe">here</a>.
 You can find older versions and some additional files in 
 the <a href="http:/www.dsource.org/projects/visuald/browser/downloads/">download directory</a>.</p>
 

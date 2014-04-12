@@ -70,10 +70,12 @@
     
 <div class="navblock">
  <h2><a href="StartPage.html" title="Visual Studio Plugin for D">Visual D</a></h2>
- <ul>  <li><a href="https://github.com/D-Programming-Language/visuald/releases" title="Releases and Downloads">Downloads</a></li>
+ <ul>
+  <li><a href="https://github.com/D-Programming-Language/visuald/releases" title="Releases and Downloads">Downloads</a></li>
   <li><a href="Installation.html" title="Installation">Installation</a></li>
   <li><a href="Features.html" title="Visual D Features">Features</a>
-   <ul>    <li><a href="GlobalOptions.html" title="Global Options">Global options</a></li>
+   <ul>
+    <li><a href="GlobalOptions.html" title="Global Options">Global options</a></li>
     <li><a href="ProjectWizard.html" title="Project Wizard to create new projects">Project Wizard</a></li>
     <li><a href="Editor.html" title="Language support in the editor">Editor</a></li>
     <li><a href="Search.html" title="Search symbols and files">Search Window</a></li>
@@ -96,7 +98,8 @@
 
 <div class="navblock">
 <h2>Community</h2>
-<ul>	<li><a href="http://forum.dlang.org/" title="User forums">Forums</a></li>
+<ul>
+	<li><a href="http://forum.dlang.org/" title="User forums">Forums</a></li>
 
 	<li><a href="http://github.com/D-Programming-Language" title="D on github">GitHub</a></li>
 
@@ -148,7 +151,8 @@ want to check the global settings that can be reached from the Menu Tools -&gt; 
 
 <br />
 <p>The <b>Visual D Settings</b> will allow you to enable and disable</p>
-<ul> <li>showing the build time for each project in the output window</li>
+<ul>
+ <li>showing the build time for each project in the output window</li>
  <li>sorting the projects alphabetically</li>
  <li>stop building the solution as soon as a project fails to compile</li>
  <li>showing demangled names in the error list and linker output</li>
@@ -165,7 +169,8 @@ want to check the global settings that can be reached from the Menu Tools -&gt; 
 
 
 <br />
-<ul> <li>Install path: The path to the compiler installation folder you entered within the installer.
+<ul>
+ <li>Install path: The path to the compiler installation folder you entered within the installer.
   <ul>
    <li>DMD: this is not the path to the executable dmd.exe, but the folder that contains the full installation so 
         that the compiler is found as <DMD install path>\windows\bin\dmd.exe </li>
@@ -184,7 +189,8 @@ want to check the global settings that can be reached from the Menu Tools -&gt; 
 
 Executable and library search paths are given depending on the target architecture. When using DMD for Win64,
 options from its configuration file can be overwritten by specifying the linker to be used and additional options.
-<ul> <li>override sc.ini: <p>The latest Windows installer for DMD modifies the default sc.ini by expanding variables
+<ul>
+ <li>override sc.ini: <p>The latest Windows installer for DMD modifies the default sc.ini by expanding variables
    according to the most recent Visual C++ installation and Windows SDK installation directories. This is necessary
    to allow building Win64 executables from the command line without having additional environment variables set.
    Unfortunately this makes it difficult to use libraries from the current Visual C++ installation if you have
@@ -198,7 +204,8 @@ options from its configuration file can be overwritten by specifying the linker 
 </ul>
 
 <p>Available text replacements: </p>
-<ul> <li>$(DMDINSTALLDIR): DMD Install path from the "DMD directories page" </li>
+<ul>
+ <li>$(DMDINSTALLDIR): DMD Install path from the "DMD directories page" </li>
  <li>$(DMDINSTALLDIR): GDC Install path from the "GDC directories page" </li>
  <li>$(DMDINSTALLDIR): LDC Install path from the "LDC directories page" </li>
  <li>$(WINDOWSSDKDIR): Windows SDK Directory </li>
