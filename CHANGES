@@ -589,44 +589,49 @@ Version history
     - dviewhelper.dll from cv2pdb now avoids being unloaded after debugger expression evaluation using visualizers
   * changed license to Boost
 
-unreleased Version 0.3.38
+2014-04-12 Version 0.3.38
 
-  * updated to cv2pdb 0.28 
+  * updated to cv2pdb 0.31
     - support mspdb120.dll from VS 2013
     - bugzilla 11537: improved search for appropriate mspdb*.dll if multiple version of VS installed
 	- fix support for DWARF conversion for gcc 4.8
+    - bugzilla 11898: cv2pdb: modified visualizer for void[] to also show bytes
+
   * updated to mago 0.9
     - bugzilla 11547: remove error message when stopping debugging
     - bugzilla 11437: debug info rejected if records don't have "recommended" order
     - bugzilla 11030: set breakpoint in all template instances
-  * updated dparser to 08f760b6181d1e40a29f3e03a7eafcd40bf4dc34
-    - added options to enable/disable mixin analysis and UFCS expansions
-  * added support for string import dependencies (needs dmd 2.065)
-  * fixed default library path for x64 (contained spaces, but were not quoted,
-    added default for 8.1 SDK)
-  * fixed passing quoted library paths to linker
-  * fixed project and completion icons being converted to 16 color bitmaps
-  * completion box now displays appropriate icons and tooltip with dparser
-  * tool tips now expand some Ddoc macros for better readability
 
-  * update SDK conversion for VS2013 and Windws SDK 8.1
-  * bugzilla 11786: change some default colors when using dark theme in VS 2012+ (restart required)
-  * Windows SDK 8.0/8.1 detection
-  * fix bad "\n" in default x64 library search path
-  * x64 executable and library search path not correctly saved for next VS start
-  * bugzilla 12052: improve project automation to mute NuGet (still empty project pretended)
+  * build system
+    - added support for string import dependencies (needs dmd 2.065)
+    - Windows SDK 8.0/8.1 detection
+    - fix bad "\n" in default x64 library search path
+    - fixed default library path for x64 (contained spaces, but were not quoted, added default for 8.1 SDK)
+    - fixed passing quoted library paths to linker
+    - x64 executable and library search path not correctly saved for next VS start
+    - bugzilla 11962: added option to select the C runtime library when compiling for x64
 
-  * add source control support for git in VS2013 (and maybe others)
-  * fix DnD of project items in VS2013
-  * bugzilla 12187: disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
-    most anti-virus checks
-  * bugzilla 11962: added option to select the C runtime library when compiling for x64
+  * project management
+    - fixed project and completion icons being converted to 16 color bitmaps
+    - add source control support for git in VS2013 (and maybe others)
+    - bugzilla 12052: improve project automation to mute NuGet (still empty project pretended)
+    - fix DnD of project items in VS2013
 
-  * bugzilla 11940: completion on import statements no longer showed folder icons
-  * bugzilla 11649: completion on selective import now lists identifiers from imported module
-  * dparser: fixed completion for symbols without description
-  * dparser: added support for multi line completions (including override completion)
-  * parameter tool tips now use prototype from dparser and shows documentation
+  * language service
+    - completion box now displays appropriate icons and tooltip with dparser
+    - tool tips now expand some Ddoc macros for better readability
+    - bugzilla 11940: completion on import statements no longer showed folder icons
+    - bugzilla 11649: completion on selective import now lists identifiers from imported module
+    - improved integration of Alex Bothe's dparser
+      - updated dparser to 1bb6dc6e0a3069a07d8e7f15070161b717bd94c4
+	  - fixed completion for symbols without description
+      - added options to enable/disable mixin analysis and UFCS expansions
+      - added support for multi line completions (including override completion)
+      - parameter tool tips now use prototype from dparser and shows documentation
+    - bugzilla 12353: option "Show Type In Tooltip" not saved and restored across restart
 
-  * bugzilla 11898: cv2pdb: modified visualizer for void[] to also show bytes
-  * bugzilla 12353: option "Show Type In Tooltip" not saved and restored across restart
+  * miscellanea
+    - update SDK conversion for VS2013 and Windws SDK 8.1
+    - bugzilla 11786: change some default colors when using dark theme in VS 2012+ (restart required)
+    - bugzilla 12187: disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
+      most anti-virus checks
