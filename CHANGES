@@ -635,3 +635,8 @@ Version history
     - bugzilla 11786: change some default colors when using dark theme in VS 2012+ (restart required)
     - bugzilla 12187: disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
       most anti-virus checks
+
+2014-04-15 Version 0.3.38-1
+
+  * build mago with static C runtime to avoid dependencies on msvcrt120.dll
+
