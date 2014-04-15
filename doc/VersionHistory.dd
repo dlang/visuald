@@ -1,5 +1,65 @@
 Ddoc
 
+2014-04-12 Version 0.3.38
+ $(UL
+  $(LI build system
+   $(UL
+    $(LI added support for string import dependencies (needs dmd 2.065))
+    $(LI Windows SDK 8.0/8.1 detection)
+    $(LI fix bad "\n" in default x64 library search path)
+    $(LI fixed default library path for x64 (contained spaces, but were not quoted, added default for 8.1 SDK))
+    $(LI fixed passing quoted library paths to linker)
+    $(LI x64 executable and library search path not correctly saved for next VS start)
+    $(LI bugzilla 11962: added option to select the C runtime library when compiling for x64)
+   ))
+  $(LI project management
+   $(UL
+    $(LI fixed project and completion icons being converted to 16 color bitmaps)
+    $(LI add source control support for git in VS2013 (and maybe others))
+    $(LI bugzilla 12052: improve project automation to mute NuGet (still empty project pretended))
+    $(LI fix DnD of project items in VS2013)
+   ))
+  $(LI language service
+   $(UL
+    $(LI completion box now displays appropriate icons and tooltip with dparser)
+    $(LI tool tips now expand some Ddoc macros for better readability)
+    $(LI bugzilla 11940: completion on import statements no longer showed folder icons)
+    $(LI bugzilla 11649: completion on selective import now lists identifiers from imported module)
+    $(LI improved integration of Alex Bothe's dparser)
+     $(UL
+      $(LI updated dparser to 1bb6dc6e0a3069a07d8e7f15070161b717bd94c4)
+      $(LI fixed completion for symbols without description)
+      $(LI added options to enable/disable mixin analysis and UFCS expansions)
+      $(LI added support for multi line completions (including override completion))
+      $(LI parameter tool tips now use prototype from dparser and shows documentation)
+     )
+    $(LI bugzilla 12353: option "Show Type In Tooltip" not saved and restored across restart)
+   ))
+  $(LI debugger
+   $(UL
+    $(LI updated to cv2pdb 0.31
+     $(UL
+      $(LI support mspdb120.dll from VS 2013)
+      $(LI bugzilla 11537: improved search for appropriate mspdb*.dll if multiple version of VS installed)
+      $(LI fix support for DWARF conversion for gcc 4.8)
+      $(LI bugzilla 11898: cv2pdb: modified visualizer for void[] to also show bytes)
+     ))
+    $(LI updated to mago 0.9
+     $(UL
+      $(LI bugzilla 11547: remove error message when stopping debugging)
+      $(LI bugzilla 11437: debug info rejected if records don't have "recommended" order)
+      $(LI bugzilla 11030: set breakpoint in all template instances)
+     ))
+   ))
+  $(LI miscellanea
+   $(UL
+    $(LI update SDK conversion for VS2013 and Windws SDK 8.1)
+    $(LI bugzilla 11786: change some default colors when using dark theme in VS 2012+ (restart required))
+    $(LI bugzilla 12187: disguise functionality of pipedmd.exe and filemonitor.dll to let it pass
+      most anti-virus checks)
+   ))
+ )
+
 2013-11-02 Version 0.3.37
  $(UL
   $(LI installer:
