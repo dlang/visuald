@@ -10,7 +10,7 @@ See the $(LINK2 Installation.html, Installation) instructions, especially if not
 $(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.)
 
 <div align="right">
-$(LINK2 https://github.com/D-Programming-Language/visuald/releases/download/v0.3.38/VisualD-v0.3.38.exe, $(IMG images/download.png))
+$(LINK2 https://github.com/D-Programming-Language/visuald/releases/download/v0.3.38-1/VisualD-v0.3.38-1.exe, $(IMG images/download.png))
 $(P $(LINK2 https://github.com/D-Programming-Language/visuald/releases, Beta releases))
 </div>
 ))
@@ -51,6 +51,11 @@ $(H2 News)
 
 $(LINK2 VersionHistory.html, Full version history and complete details...)
 $(BR)
+
+2014-04-15 Version 0.3.38-1
+$(UL
+ $(LI build mago with static C runtime to avoid dependencies on msvcrt120.dll)
+)
 
 2014-04-12 Version 0.3.38
 $(UL
