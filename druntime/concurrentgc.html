@@ -208,8 +208,8 @@ when a collection is needed (e.g. no more free memory available),
 </ul>
 </p>
 
-<p>This will results in objects staying alive that were referenced either when taking the first or the
-second snapshot.
+<p>This will results in objects staying alive that were referenced when taking the first or the
+second snapshot is taken.
 </p>
 
 <h3>Current GC</h3>
@@ -327,7 +327,7 @@ structures from different threads has to be guaranteed. </p>
 <p>Implementation details:</p>
 <ul>
     <li>the pool table is now preallocated to avoid accessing it while being reallocated</li>
-    <li>the freebits flags have to mantained during a collection to account for new allocations
+    <li>the freebits flags have to be mantained during a collection to account for new allocations
          when doing the second heap scan
     <ul>
         <li>prepare: now sets all free bits</li>
