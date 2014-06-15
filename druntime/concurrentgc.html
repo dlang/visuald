@@ -115,6 +115,17 @@ When the collection is done these copies can just be thrown away without
 affecting the application.
 </p>
 
+<p>[Update 2014/6/15] Dimitry Olshansky proposed a way out of the dilemma: instead of using 
+multiple processes that have to copy memory with slow operations ReadProcessMemory/
+WriteProcessMemory, the collection can be done by a thread in the same process
+with the capability of fast memory access. When starting a collection, GC managed 
+memory is mapped to a secondary shared view within the same process, and the memory is
+set to copy-on-write by VirtualProtect. When collection is done, modified pages
+are copied back into the shared view. The COW view is released and replaced
+by a mapping of the shared memory at the very same virtual address using
+MapViewOfFileEx. The GC view of the memory can be released. [/Update]
+</p>
+
 <p>Another issue is how to detect modified pages:
 there is a function GetWriteWatch that does exactly that in combination with ResetWriteWatch,
 but it only works on memory
@@ -122,6 +133,8 @@ allocated with VirtualAlloc using the MEM_WRITE_WATCH flag. It
 cannot be applied later to shared memory created with CreateFileMapping.
 Using QueryWorkingSet to detect whether a page is still shared
 seems to work, though you'll have to walk all the pages yourself.
+[Update 2014/6/15] Another option is VirtualQuery that returns regions of identical page protection,
+but it seems slightly slower than QueryWorkingSet. [/Update]
 </p>
 
 <h2>COW on Windows?</h2>
@@ -134,11 +147,11 @@ be found here <a href="https://github.com/rainers/druntime/blob/concurrent_gc2/b
 <div align="center">
         <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
         
-<tr><td valign=top>page allocated with VirtualAlloc:                        </td> <td valign=top>1800 cycles</td></tr>
-<tr><td valign=top>page allocated with VirtualAlloc+MEM_WRITE_WATCH:        </td> <td valign=top>1800 cycles</td></tr>
-<tr><td valign=top>page allocated with VirtualAlloc+ResetWriteWatch:        </td> <td valign=top>1100 cycles</td></tr>
-<tr><td valign=top>page allocated with CreateFileMapping+MapViewOfFile:     </td> <td valign=top>2200 cycles</td></tr>
-<tr><td valign=top>page allocated with CreateFileMapping+MapViewOfFile+COW: </td> <td valign=top>4600 cycles</td></tr>
+<tr><td>page allocated with VirtualAlloc:                        </td> <td>1800 cycles</td></tr>
+<tr><td>page allocated with VirtualAlloc+MEM_WRITE_WATCH:        </td> <td>1800 cycles</td></tr>
+<tr><td>page allocated with VirtualAlloc+ResetWriteWatch:        </td> <td>1100 cycles</td></tr>
+<tr><td>page allocated with CreateFileMapping+MapViewOfFile:     </td> <td>2200 cycles</td></tr>
+<tr><td>page allocated with CreateFileMapping+MapViewOfFile+COW: </td> <td>4600 cycles</td></tr>
 
         </table>
     </div>
@@ -175,11 +188,11 @@ the page takes more than 2000 cycles if done by the OS):
 <div align="center">
         <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
         
-<tr><td valign=top>                                                       </td> <td valign=top>         Win32</td> <td valign=top>         Win64</td> </tr>
-<tr><td valign=top>User mode callback for page fault exceptions:          </td> <td valign=top>  28000 cycles</td> <td valign=top>   7000 cycles</td> </tr>
-<tr><td valign=top>Page fault handled by the first SEH exception handler: </td> <td valign=top>  30000 cycles</td> <td valign=top>  not measured</td> </tr>
-<tr><td valign=top>Page fault handled by catch(Throwable):                </td> <td valign=top>4000000 cycles</td> <td valign=top>   unavailable</td> </tr>
-<tr><td valign=top>A standard D exception using try { throw } catch:      </td> <td valign=top>  18500 cycles</td> <td valign=top>   4200 cycles</td> </tr>
+<tr><td>                                                       </td> <td>         Win32</td> <td>         Win64</td> </tr>
+<tr><td>User mode callback for page fault exceptions:          </td> <td>  28000 cycles</td> <td>   7000 cycles</td> </tr>
+<tr><td>Page fault handled by the first SEH exception handler: </td> <td>  30000 cycles</td> <td>  not measured</td> </tr>
+<tr><td>Page fault handled by catch(Throwable):                </td> <td>4000000 cycles</td> <td>   unavailable</td> </tr>
+<tr><td>A standard D exception using try { throw } catch:      </td> <td>  18500 cycles</td> <td>   4200 cycles</td> </tr>
 
         </table>
     </div>
@@ -273,21 +286,36 @@ of a concurrent GC:
         <ul>
             <li>stop the world</li>
             <li>if the background GC is done with a previous mark
-            <ul>
-                <li>mark all the roots that are active now</li>
-                <li>mark references from pages that have been written to since the last reset</li>
-                <li>scan heap for new references by new roots/modified pages
-                  (in the hope that there are only a few left. if the number of new references
-                   exceeds some threshold, this could be delegated to the background thread again) </li>
+            <ul>                <li>if memory watches are used
+                <ul>
+                    <li>mark all the roots that are active now</li>
+                    <li>mark references from pages that have been written to since the last reset</li>
+                    <li>scan heap for new references by new roots/modified pages
+                      (in the hope that there are only a few left. if the number of new references
+                       exceeds some threshold, this could be delegated to the background thread again) </li>
+                </ul>
+</li>
+                <li>[Update 2014/6/15] if copy-on-write is used
+                <ul>
+                    <li>copy modified pages from primary view to secondary view</li>
+                    <li>unmap primary view, remap memory at same address as read-write</li>
+                    <li>release secondary view</li>
+                </ul>
+ [/Update]</li>
                 <li>resume the world</li>
                 <li>sweep unreferenced objects and recover empty pages/pools
-                  (this could be deferred into allocations that reuse the memory) </li>
+                    (this could be deferred into allocations that reuse the memory) </li>
             </ul>
 </li>
             <li>else
             <ul>
                 <li>collect all roots: scan stacks/registers/roots/ranges and record to array </li>
-                <li>reset write watches on GC managed memory</li>
+                <li>if memory watches are used: reset write watches on GC managed memory</li>
+                <li>[Update 2014/6/15] if copy-on-write is used:
+                <ul>                    <li>create secondary view of GC managed memory</li>
+                    <li>protect protect primary by copy-on-write</li>
+                </ul>
+ [/Update]</li>
                 <li>prepare scanning </li>
                 <li>trigger the background thread</li>
                 <li>resume the world</li>
@@ -324,20 +352,24 @@ structures from different threads has to be guaranteed. </p>
 </ul>
 
 
-<p>Implementation details:</p>
+<p>Implementation details:
+[Update 2014/6/15] 
 <ul>
-    <li>the pool table is now preallocated to avoid accessing it while being reallocated</li>
+    <li>a snapshot of the pool table is taken at collection start to avoid 
+         accessing it while being reallocated. Only memory within the snapshot is
+         scanned or collected.</li>
     <li>the freebits flags have to be mantained during a collection to account for new allocations
-         when doing the second heap scan
+         when doing the second heap scan or when sweeping memory. They are now simply
+         kept consistent with an entry being linked in any of the free-lists.
     <ul>
-        <li>prepare: now sets all free bits</li>
         <li>malloc: clears free bit </li>
-        <li> sweep: clears free bit for marked objects </li>
+        <li>free: sets free bit </li>
+        <li>sweep: sets free bit for unmarked objects </li>
     </ul>
 </li>
 </ul>
 
-
+[/Update]</p>
 
 <h3>Interaction with GC calls on a user thread during collection</h3>
 
@@ -347,7 +379,7 @@ structures from different threads has to be guaranteed. </p>
     <li> malloc:  clears freebits: OK</li>
     <li> realloc:</li>
     <li> extend:</li>
-    <li> free:    object added to free-list, but freebits unchanged</li>
+    <li> free:    object added to free-list, sets freebits: OK</li>
     <li> setAttr/clrAttr/getAttr</li>
     <li> enable/disable</li>
     <li> reserve</li>
@@ -358,45 +390,213 @@ structures from different threads has to be guaranteed. </p>
 </ul>
 
 
-<p>Concurrent operations not marked "OK" still have to be analyzed for these functions.
+<p>Concurrent operations not marked "OK" still have to be analyzed.
 </p>
 
 <h2>Implementation of a concurrent GC</h2>
 
 <p>You can find an implementation of this cuncurrent GC here: <a href="https://github.com/rainers/druntime/tree/concurrent_gc2">https://github.com/rainers/druntime/tree/concurrent_gc2</a>
+It has some configuration switches enabled by the environment variable D_GC and some 
+versions to be defined when compiling the GC.
 </p>
 
-<p>Comparing the result of the benchmark suite <a href="https://github.com/rainers/druntime/tree/gc_bench/benchmark">https://github.com/rainers/druntime/tree/gc_bench/benchmark</a>
-this is the result for Win64:
+<p>A benchmark suite has recently been added to druntime, these are the result for Win64 (I have disabled tree2.d as it
+seems sensitive to false pointers which can skew results unpredictively):
 </p>
 
-<div align="center">
-        <table width="90%" style="border: 1px solid #ccc;margin: 0 0 0em 0em;" bgcolor="#F0F0F0">
-        <tr><th></th><th colspan=3>Standard</th><th colspan=3>Concurrent</th></tr>
-<tr><th>Test             </th> <th>ExecTime</th> <th>Memory</th>  <th>PauseTime</th> <th>ExecTime</th>  <th>Memory</th> <th>PauseTime</th></tr>
-<tr><td valign=top>bh.d             </td> <td valign=top>11.121 s</td> <td valign=top>  25 MB</td> <td valign=top>  1933 ms</td> <td valign=top> 10.706 s</td> <td valign=top> 256 MB</td> <td valign=top> 1248 ms</td></tr>
-<tr><td valign=top>bigarr.d         </td> <td valign=top> 5.529 s</td> <td valign=top>  36 MB</td> <td valign=top>  4067 ms</td> <td valign=top>  3.136 s</td> <td valign=top> 480 MB</td> <td valign=top> 1357 ms</td></tr>
-<tr><td valign=top>bisort.d         </td> <td valign=top> 1.025 s</td> <td valign=top>  36 MB</td> <td valign=top>    68 ms</td> <td valign=top>  1.041 s</td> <td valign=top>  36 MB</td> <td valign=top>   16 ms</td></tr>
-<tr><td valign=top>conalloc.d       </td> <td valign=top> 2.209 s</td> <td valign=top>   9 MB</td> <td valign=top>   347 ms</td> <td valign=top>  2.273 s</td> <td valign=top> 544 MB</td> <td valign=top>   28 ms</td></tr>
-<tr><td valign=top>concpu.d         </td> <td valign=top> 4.216 s</td> <td valign=top>   4 MB</td> <td valign=top>  2408 ms</td> <td valign=top>  2.257 s</td> <td valign=top> 544 MB</td> <td valign=top>  119 ms</td></tr>
-<tr><td valign=top>em3d.d           </td> <td valign=top> 3.176 s</td> <td valign=top> 169 MB</td> <td valign=top>  1339 ms</td> <td valign=top>  2.669 s</td> <td valign=top> 169 MB</td> <td valign=top>  440 ms</td></tr>
-<tr><td valign=top>huge_single.d    </td> <td valign=top> 0.089 s</td> <td valign=top>   1 MB</td> <td valign=top>     0 ms</td> <td valign=top>  0.024 s</td> <td valign=top>   1 MB</td> <td valign=top>    0 ms</td></tr>
-<tr><td valign=top>mcore.d          </td> <td valign=top> 0.110 s</td> <td valign=top>  81 MB</td> <td valign=top>     4 ms</td> <td valign=top>  0.221 s</td> <td valign=top> 100 MB</td> <td valign=top>    9 ms</td></tr>
-<tr><td valign=top>rand_large.d     </td> <td valign=top> 2.250 s</td> <td valign=top>  81 MB</td> <td valign=top>  1132 ms</td> <td valign=top>  0.639 s</td> <td valign=top>2112 MB</td> <td valign=top>  185 ms</td></tr>
-<tr><td valign=top>rand_small.d     </td> <td valign=top> 1.024 s</td> <td valign=top>  16 MB</td> <td valign=top>   421 ms</td> <td valign=top>  2.091 s</td> <td valign=top> 576 MB</td> <td valign=top>  130 ms</td></tr>
-<tr><td valign=top>sbtree.d         </td> <td valign=top> 0.032 s</td> <td valign=top>   1 MB</td> <td valign=top>     0 ms</td> <td valign=top>  0.125 s</td> <td valign=top>   1 MB</td> <td valign=top>    0 ms</td></tr>
-<tr><td valign=top>split.d          </td> <td valign=top> 0.885 s</td> <td valign=top> 778 MB</td> <td valign=top>     3 ms</td> <td valign=top>  1.119 s</td> <td valign=top> 819 MB</td> <td valign=top>  154 ms</td></tr>
-<tr><td valign=top>testgc3.d        </td> <td valign=top>28.667 s</td> <td valign=top> 672 MB</td> <td valign=top> 17077 ms</td> <td valign=top> 15.650 s</td> <td valign=top> 896 MB</td> <td valign=top> 2485 ms</td></tr>
-<tr><td valign=top>tree1.d          </td> <td valign=top>30.871 s</td> <td valign=top> 169 MB</td> <td valign=top> 16818 ms</td> <td valign=top> 21.286 s</td> <td valign=top> 896 MB</td> <td valign=top> 6184 ms</td></tr>
-<tr><td valign=top>tree2.d          </td> <td valign=top> 0.259 s</td> <td valign=top>   1 MB</td> <td valign=top>    30 ms</td> <td valign=top>  0.354 s</td> <td valign=top>  25 MB</td> <td valign=top>   18 ms</td></tr>
-<tr><td valign=top>tsp.d            </td> <td valign=top> 1.312 s</td> <td valign=top>  81 MB</td> <td valign=top>   261 ms</td> <td valign=top>  1.195 s</td> <td valign=top>  81 MB</td> <td valign=top>   50 ms</td></tr>
-<tr><td valign=top>voronoi.d        </td> <td valign=top> 4.384 s</td> <td valign=top> 144 MB</td> <td valign=top>  3199 ms</td> <td valign=top>  1.749 s</td> <td valign=top> 288 MB</td> <td valign=top>  346 ms</td></tr>
-<tr><td valign=top>bulk.d           </td> <td valign=top>142.11 s</td> <td valign=top>1346 MB</td> <td valign=top> 74018 ms</td> <td valign=top> 97.032 s</td> <td valign=top>3365 MB</td> <td valign=top>22002 ms</td></tr>
-<tr><td valign=top>resize.d         </td> <td valign=top> 1.863 s</td> <td valign=top>   9 MB</td> <td valign=top>     2 ms</td> <td valign=top>  1.938 s</td> <td valign=top>   9 MB</td> <td valign=top>    1 ms</td></tr>
-<tr><td valign=top>string.d         </td> <td valign=top> 0.074 s</td> <td valign=top>   9 MB</td> <td valign=top>     3 ms</td> <td valign=top>  0.464 s</td> <td valign=top>   9 MB</td> <td valign=top>    3 ms</td></tr>
+<center><table border=1><caption> Standard GC</caption>D_GC=profile=1:
+<tr><th> Test             </th><th>Exec Time</th><th> Memory</th><th>Collections</th><th>Pausetime</th><th>max Pause</th></tr>
+<tr><td> bulk.d </td><td style="text-align:right"> 4.121 s</td><td style="text-align:right">105 MB</td><td style="text-align:right">19 </td><td style="text-align:right"> 974 ms </td><td style="text-align:right"> 166 ms </td></tr>
 
-        </table>
-    </div>
+<tr><td> resize.d </td><td style="text-align:right"> 1.861 s</td><td style="text-align:right">9 MB</td><td style="text-align:right">3 </td><td style="text-align:right"> 1 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> string.d </td><td style="text-align:right"> 0.075 s</td><td style="text-align:right">9 MB</td><td style="text-align:right">3 </td><td style="text-align:right"> 2 ms </td><td style="text-align:right"> 2 ms </td></tr>
+
+<tr><td> conalloc.d </td><td style="text-align:right"> 3.120 s</td><td style="text-align:right">4 MB</td><td style="text-align:right">6442 </td><td style="text-align:right"> 982 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> conappend.d </td><td style="text-align:right"> 0.426 s</td><td style="text-align:right">4 MB</td><td style="text-align:right">19 </td><td style="text-align:right"> 4 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> concpu.d </td><td style="text-align:right"> 3.171 s</td><td style="text-align:right">9 MB</td><td style="text-align:right">2134 </td><td style="text-align:right"> 924 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> dlist.d </td><td style="text-align:right"> 4.113 s</td><td style="text-align:right">16 MB</td><td style="text-align:right">102 </td><td style="text-align:right"> 1840 ms </td><td style="text-align:right"> 19 ms </td></tr>
+
+<tr><td> huge_single.d </td><td style="text-align:right"> 0.033 s</td><td style="text-align:right">1501 MB</td><td style="text-align:right">3 </td><td style="text-align:right"> 2 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> rand_large.d </td><td style="text-align:right"> 2.461 s</td><td style="text-align:right">81 MB</td><td style="text-align:right">5187 </td><td style="text-align:right"> 972 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> rand_small.d </td><td style="text-align:right"> 1.016 s</td><td style="text-align:right">16 MB</td><td style="text-align:right">1168 </td><td style="text-align:right"> 419 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> slist.d </td><td style="text-align:right"> 4.286 s</td><td style="text-align:right">16 MB</td><td style="text-align:right">102 </td><td style="text-align:right"> 2036 ms </td><td style="text-align:right"> 23 ms </td></tr>
+
+<tr><td> testgc3.d </td><td style="text-align:right"> 3.441 s</td><td style="text-align:right">196 MB</td><td style="text-align:right">17 </td><td style="text-align:right"> 1498 ms </td><td style="text-align:right"> 262 ms </td></tr>
+
+<tr><td> tree1.d </td><td style="text-align:right"> 1.886 s</td><td style="text-align:right">16 MB</td><td style="text-align:right">149 </td><td style="text-align:right"> 1199 ms </td><td style="text-align:right"> 14 ms </td></tr>
+
+<tr><td> words.d </td><td style="text-align:right"> 1.658 s</td><td style="text-align:right">379 MB</td><td style="text-align:right">7 </td><td style="text-align:right"> 89 ms </td><td style="text-align:right"> 57 ms </td></tr>
+
+<tr><td></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
+
+<tr><td><b>Average/Max</b></td><td style="text-align:right"><b>2.262 s</b></td><td style="text-align:right"><b>168 MB</b></td><td style="text-align:right"></td><td style="text-align:right"><b>781 ms</b></td><td style="text-align:right"><b>262 ms</b></td></tr>
+
+</table></center>
+
+<p>There is a gratuitious collection running at the very end of the application,
+let's take this out. Also we segregate pools into memory that might contain
+references and plain data:
+</p>
+
+<center><table border=1><caption> Standard GC</caption>D_GC=profile=1 finalCollect=0, version=POOL_NOSCAN:
+<tr><th> Test             </th><th>Exec Time</th><th> Memory</th><th>Collections</th><th>Pausetime</th><th>max Pause</th></tr>
+<tr><td> bulk.d </td><td style="text-align:right"> 4.573 s</td><td style="text-align:right">105 MB</td><td style="text-align:right">19 </td><td style="text-align:right"> 934 ms </td><td style="text-align:right"> 158 ms </td></tr>
+
+<tr><td> resize.d </td><td style="text-align:right"> 1.871 s</td><td style="text-align:right">9 MB</td><td style="text-align:right">3 </td><td style="text-align:right"> 1 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> string.d </td><td style="text-align:right"> 0.058 s</td><td style="text-align:right">18 MB</td><td style="text-align:right">4 </td><td style="text-align:right"> 2 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> conalloc.d </td><td style="text-align:right"> 2.651 s</td><td style="text-align:right">9 MB</td><td style="text-align:right">2469 </td><td style="text-align:right"> 424 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> conappend.d </td><td style="text-align:right"> 0.041 s</td><td style="text-align:right">9 MB</td><td style="text-align:right">8 </td><td style="text-align:right"> 1 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> concpu.d </td><td style="text-align:right"> 3.785 s</td><td style="text-align:right">16 MB</td><td style="text-align:right">2459 </td><td style="text-align:right"> 1227 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> dlist.d </td><td style="text-align:right"> 5.159 s</td><td style="text-align:right">38 MB</td><td style="text-align:right">54 </td><td style="text-align:right"> 2900 ms </td><td style="text-align:right"> 64 ms </td></tr>
+
+<tr><td> huge_single.d </td><td style="text-align:right"> 0.031 s</td><td style="text-align:right">1504 MB</td><td style="text-align:right">3 </td><td style="text-align:right"> 1 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> rand_large.d </td><td style="text-align:right"> 1.741 s</td><td style="text-align:right">102 MB</td><td style="text-align:right">3371 </td><td style="text-align:right"> 842 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> rand_small.d </td><td style="text-align:right"> 1.033 s</td><td style="text-align:right">16 MB</td><td style="text-align:right">1156 </td><td style="text-align:right"> 472 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> slist.d </td><td style="text-align:right"> 5.458 s</td><td style="text-align:right">18 MB</td><td style="text-align:right">102 </td><td style="text-align:right"> 3207 ms </td><td style="text-align:right"> 33 ms </td></tr>
+
+<tr><td> testgc3.d </td><td style="text-align:right"> 3.130 s</td><td style="text-align:right">185 MB</td><td style="text-align:right">16 </td><td style="text-align:right"> 1220 ms </td><td style="text-align:right"> 212 ms </td></tr>
+
+<tr><td> tree1.d </td><td style="text-align:right"> 1.496 s</td><td style="text-align:right">16 MB</td><td style="text-align:right">81 </td><td style="text-align:right"> 799 ms </td><td style="text-align:right"> 11 ms </td></tr>
+
+<tr><td> words.d </td><td style="text-align:right"> 1.659 s</td><td style="text-align:right">467 MB</td><td style="text-align:right">9 </td><td style="text-align:right"> 66 ms </td><td style="text-align:right"> 38 ms </td></tr>
+
+<tr><td></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
+
+<tr><td><b>Average/Max</b></td><td style="text-align:right"><b>2.334 s</b></td><td style="text-align:right"><b>179 MB</b></td><td style="text-align:right"></td><td style="text-align:right"><b>864 ms</b></td><td style="text-align:right"><b>212 ms</b></td></tr>
+
+</table></center>
+
+<p>This is a run with the GC disabled. It will still collect if it doesn't get more memory
+from the OS (I have disabled paging).
+</p>
+
+<center><table border=1><caption> Standard GC</caption>D_GC=profile=1 finalCollect=0 disable=1, version=POOL_NOSCAN:
+<tr><th> Test             </th><th>Exec Time</th><th> Memory</th><th>Collections</th><th>Pausetime</th><th>max Pause</th></tr>
+<tr><td> bulk.d </td><td style="text-align:right"> 3.405 s</td><td style="text-align:right">741 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> resize.d </td><td style="text-align:right"> 2.283 s</td><td style="text-align:right">16 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> string.d </td><td style="text-align:right"> 0.060 s</td><td style="text-align:right">25 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> conalloc.d </td><td style="text-align:right"> 3.368 s</td><td style="text-align:right">4096 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> conappend.d </td><td style="text-align:right"> 0.044 s</td><td style="text-align:right">25 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> concpu.d </td><td style="text-align:right"> 2.784 s</td><td style="text-align:right">4096 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> dlist.d </td><td style="text-align:right"> 2.415 s</td><td style="text-align:right">512 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> huge_single.d </td><td style="text-align:right"> 0.031 s</td><td style="text-align:right">1504 MB</td><td style="text-align:right">1 </td><td style="text-align:right"> 1 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> rand_large.d </td><td style="text-align:right"> 0.505 s</td><td style="text-align:right">5664 MB</td><td style="text-align:right">11 </td><td style="text-align:right"> 73 ms </td><td style="text-align:right"> 6 ms </td></tr>
+
+<tr><td> rand_small.d </td><td style="text-align:right"> 4.102 s</td><td style="text-align:right">5376 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> slist.d </td><td style="text-align:right"> 2.423 s</td><td style="text-align:right">512 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> testgc3.d </td><td style="text-align:right"> 2.472 s</td><td style="text-align:right">704 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> tree1.d </td><td style="text-align:right"> 0.844 s</td><td style="text-align:right">416 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> words.d </td><td style="text-align:right"> 1.609 s</td><td style="text-align:right">470 MB</td><td style="text-align:right">0 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
+
+<tr><td><b>Average/Max</b></td><td style="text-align:right"><b>1.881 s</b></td><td style="text-align:right"><b>1725 MB</b></td><td style="text-align:right"></td><td style="text-align:right"><b>5 ms</b></td><td style="text-align:right"><b>6 ms</b></td></tr>
+
+
+</table></center>
+
+<p>This is the concurrent GC with write watches:</p>
+
+<center><table border=1><caption> Concurrent GC</caption>D_GC=profile=1 finalCollect=0 concurrent=1, version=POOL_NOSCAN:
+<tr><th> Test             </th><th>Exec Time</th><th> Memory</th><th>Collections</th><th>Pausetime</th><th>max Pause</th></tr>
+<tr><td> bulk.d </td><td style="text-align:right"> 4.476 s</td><td style="text-align:right">293 MB</td><td style="text-align:right">15 </td><td style="text-align:right"> 941 ms </td><td style="text-align:right"> 159 ms </td></tr>
+
+<tr><td> resize.d </td><td style="text-align:right"> 2.295 s</td><td style="text-align:right">9 MB</td><td style="text-align:right">2 </td><td style="text-align:right"> 0 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> string.d </td><td style="text-align:right"> 0.584 s</td><td style="text-align:right">25 MB</td><td style="text-align:right">4 </td><td style="text-align:right"> 3 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> conalloc.d </td><td style="text-align:right"> 2.584 s</td><td style="text-align:right">576 MB</td><td style="text-align:right">25 </td><td style="text-align:right"> 15 ms </td><td style="text-align:right"> 14 ms </td></tr>
+
+<tr><td> conappend.d </td><td style="text-align:right"> 0.154 s</td><td style="text-align:right">25 MB</td><td style="text-align:right">4 </td><td style="text-align:right"> 1 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> concpu.d </td><td style="text-align:right"> 2.581 s</td><td style="text-align:right">576 MB</td><td style="text-align:right">25 </td><td style="text-align:right"> 49 ms </td><td style="text-align:right"> 14 ms </td></tr>
+
+<tr><td> dlist.d </td><td style="text-align:right"> 3.065 s</td><td style="text-align:right">225 MB</td><td style="text-align:right">11 </td><td style="text-align:right"> 522 ms </td><td style="text-align:right"> 133 ms </td></tr>
+
+<tr><td> huge_single.d </td><td style="text-align:right"> 0.133 s</td><td style="text-align:right">1504 MB</td><td style="text-align:right">1 </td><td style="text-align:right"> 1 ms </td><td style="text-align:right"> 0 ms </td></tr>
+
+<tr><td> rand_large.d </td><td style="text-align:right"> 0.529 s</td><td style="text-align:right">2144 MB</td><td style="text-align:right">74 </td><td style="text-align:right"> 95 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> rand_small.d </td><td style="text-align:right"> 1.963 s</td><td style="text-align:right">576 MB</td><td style="text-align:right">25 </td><td style="text-align:right"> 108 ms </td><td style="text-align:right"> 15 ms </td></tr>
+
+<tr><td> slist.d </td><td style="text-align:right"> 3.013 s</td><td style="text-align:right">169 MB</td><td style="text-align:right">10 </td><td style="text-align:right"> 603 ms </td><td style="text-align:right"> 132 ms </td></tr>
+
+<tr><td> testgc3.d </td><td style="text-align:right"> 2.898 s</td><td style="text-align:right">288 MB</td><td style="text-align:right">12 </td><td style="text-align:right"> 687 ms </td><td style="text-align:right"> 156 ms </td></tr>
+
+<tr><td> tree1.d </td><td style="text-align:right"> 1.019 s</td><td style="text-align:right">121 MB</td><td style="text-align:right">10 </td><td style="text-align:right"> 243 ms </td><td style="text-align:right"> 69 ms </td></tr>
+
+<tr><td> words.d </td><td style="text-align:right"> 1.770 s</td><td style="text-align:right">470 MB</td><td style="text-align:right">8 </td><td style="text-align:right"> 87 ms </td><td style="text-align:right"> 47 ms </td></tr>
+
+<tr><td></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
+
+<tr><td><b>Average/Max</b></td><td style="text-align:right"><b>1.933 s</b></td><td style="text-align:right"><b>500 MB</b></td><td style="text-align:right"></td><td style="text-align:right"><b>239 ms</b></td><td style="text-align:right"><b>159 ms</b></td></tr>
+
+</table></center>
+
+<p>This is the concurrent GC with copy-on-write:</p>
+
+<center><table border=1><caption> Concurrent GC</caption>D_GC=profile=1 finalCollect=0 concurrent=1, version=POOL_NOSCAN version=COW:
+<tr><th> Test             </th><th>Exec Time</th><th> Memory</th><th>Collections</th><th>Pausetime</th><th>max Pause</th></tr>
+<tr><td> bulk.d </td><td style="text-align:right"> 4.812 s</td><td style="text-align:right">261 MB</td><td style="text-align:right">14 </td><td style="text-align:right"> 502 ms </td><td style="text-align:right"> 85 ms </td></tr>
+
+<tr><td> resize.d </td><td style="text-align:right"> 1.987 s</td><td style="text-align:right">9 MB</td><td style="text-align:right">2 </td><td style="text-align:right"> 2 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> string.d </td><td style="text-align:right"> 0.592 s</td><td style="text-align:right">25 MB</td><td style="text-align:right">4 </td><td style="text-align:right"> 6 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> conalloc.d </td><td style="text-align:right"> 2.508 s</td><td style="text-align:right">704 MB</td><td style="text-align:right">29 </td><td style="text-align:right"> 54 ms </td><td style="text-align:right"> 2 ms </td></tr>
+
+<tr><td> conappend.d </td><td style="text-align:right"> 0.145 s</td><td style="text-align:right">25 MB</td><td style="text-align:right">3 </td><td style="text-align:right"> 4 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> concpu.d </td><td style="text-align:right"> 3.048 s</td><td style="text-align:right">544 MB</td><td style="text-align:right">24 </td><td style="text-align:right"> 575 ms </td><td style="text-align:right"> 60 ms </td></tr>
+
+<tr><td> dlist.d </td><td style="text-align:right"> 2.743 s</td><td style="text-align:right">225 MB</td><td style="text-align:right">10 </td><td style="text-align:right"> 198 ms </td><td style="text-align:right"> 59 ms </td></tr>
+
+<tr><td> huge_single.d </td><td style="text-align:right"> 0.126 s</td><td style="text-align:right">1504 MB</td><td style="text-align:right">1 </td><td style="text-align:right"> 2 ms </td><td style="text-align:right"> 1 ms </td></tr>
+
+<tr><td> rand_large.d </td><td style="text-align:right"> 1.232 s</td><td style="text-align:right">2144 MB</td><td style="text-align:right">73 </td><td style="text-align:right"> 361 ms </td><td style="text-align:right"> 6 ms </td></tr>
+
+<tr><td> rand_small.d </td><td style="text-align:right"> 1.531 s</td><td style="text-align:right">576 MB</td><td style="text-align:right">25 </td><td style="text-align:right"> 196 ms </td><td style="text-align:right"> 13 ms </td></tr>
+
+<tr><td> slist.d </td><td style="text-align:right"> 2.734 s</td><td style="text-align:right">225 MB</td><td style="text-align:right">10 </td><td style="text-align:right"> 255 ms </td><td style="text-align:right"> 84 ms </td></tr>
+
+<tr><td> testgc3.d </td><td style="text-align:right"> 2.988 s</td><td style="text-align:right">320 MB</td><td style="text-align:right">12 </td><td style="text-align:right"> 451 ms </td><td style="text-align:right"> 124 ms </td></tr>
+
+<tr><td> tree1.d </td><td style="text-align:right"> 1.099 s</td><td style="text-align:right">121 MB</td><td style="text-align:right">10 </td><td style="text-align:right"> 320 ms </td><td style="text-align:right"> 89 ms </td></tr>
+
+<tr><td> words.d </td><td style="text-align:right"> 2.482 s</td><td style="text-align:right">470 MB</td><td style="text-align:right">8 </td><td style="text-align:right"> 48 ms </td><td style="text-align:right"> 26 ms </td></tr>
+
+<tr><td></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td><td style="text-align:right"></td></tr>
+
+<tr><td><b>Average/Max</b></td><td style="text-align:right"><b>2.001 s</b></td><td style="text-align:right"><b>510 MB</b></td><td style="text-align:right"></td><td style="text-align:right"><b>212 ms</b></td><td style="text-align:right"><b>124 ms</b></td></tr>
+
+</table></center>
 
 <p>Most of the applications are faster with the concurrent GC than with the traditional 
 implementation, mostly by shorter pause times, i.e. the time the application thread is
