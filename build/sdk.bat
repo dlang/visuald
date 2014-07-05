@@ -28,7 +28,7 @@ if "%VSISDKINC%" == "" if not "%VSSDK90Install%" == "" set VSISDKINC=%VSSDK90Ins
 if "%VSISDKINC%" == "" if not "%VSSDK80Install%" == "" set VSISDKINC=%VSSDK80Install%
 if "%VSISDKINC%" == "" (echo could not detect the Visual Studio SDK && exit /B 1)
 
-if not exist "%VSISDKINC%\VisualStudioIntegration\Common\Inc\textmgr.h" (echo unexpected Visual Studio SDK installation at %VSISDKINC% && exit /B 1)
+if not exist "%VSISDKINC%\VisualStudioIntegration\Common\Inc\textmgr.h" (echo unexpected Visual Studio SDK installation at "%VSISDKINC%" && exit /B 1)
 
 echo Translating Windows SDK and Visual Studio SDK to D, this can take several minutes. Please be patient.
 echo %VSI2D% --vsi="%VSISDKINC:\=/%" --win="%WINSDKINC:\=/%" --dte="%DTE_IDL_PATH%" --sdk=..\sdk

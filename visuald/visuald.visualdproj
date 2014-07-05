@@ -493,6 +493,7 @@
    <File path="dlangsvc.d" />
    <File path="expansionprovider.d" />
    <File path="simpleparser.d" />
+   <File path="vdextensions.d" />
    <File path="vdserverclient.d" />
    <File path="viewfilter.d" />
   </Folder>
@@ -516,7 +517,7 @@
    <File path="Resources\DSplashScreenIcon.bmp" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
-   <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="set VS9SDKBIN=c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
+   <File tool="Custom" path="Resources\pkgcmd.ctc" customcmd="if &quot;%VS9SDKBIN%&quot; == &quot;&quot; set VS9SDKBIN=c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
 set CTC=%VS9SDKBIN%\CTC.exe
 if not exist &quot;%CTC%&quot; goto no_CTC
 if not exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; goto no_CTC

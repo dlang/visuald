@@ -1965,7 +1965,7 @@ class GlobalOptions
 			{
 				string[] lstfiles; 
 				foreach(f; std.file.dirEntries(dir, SpanMode.shallow))
-					if(icmp(extension(f), ".lst") == 0)
+					if(icmp(extension(f.name), ".lst") == 0)
 						lstfiles ~= f;
 				foreach(lst; lstfiles)
 					collectException(std.file.remove(lst));

@@ -10,10 +10,13 @@ using System;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Runtime.InteropServices; // DllImport
 
+using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Utilities;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.TextManager.Interop;
@@ -22,14 +25,20 @@ using Microsoft.VisualStudio.Shell.Interop;
 
 namespace vdextensions
 {
-	#region covmargin Factory
+/*    [PackageRegistration(UseManagedResourcesOnly=true)]
+    class VDExtensionPackage : Package
+    {
+    }
+*/
+
+    #region covmargin Factory
 	/// <summary>
 	/// Export a <see cref="IWpfTextViewMarginProvider"/>, which returns an 
 	/// instance of the margin for the editor to use.
 	/// </summary>
 	[Export(typeof(IWpfTextViewMarginProvider))]
 	[Name(CoverageMargin.MarginName)]
-	[Order(After = PredefinedMarginNames.LineNumber)]
+	[Order(After = "Wpf Line Number Margin")] //PredefinedMarginNames.LineNumber)]
 	[MarginContainer(PredefinedMarginNames.Left)]
 	[ContentType("code")]
 	[TextViewRole(PredefinedTextViewRoles.Document)]
@@ -37,9 +46,14 @@ namespace vdextensions
 	{
 		[Import]
 		internal IEditorFormatMapService FormatMapService = null;
-		
-		public IWpfTextViewMargin CreateMargin(IWpfTextViewHost textViewHost, IWpfTextViewMargin containerMargin)
+
+        [Import(typeof(IVsEditorAdaptersFactoryService))]
+        internal IVsEditorAdaptersFactoryService editorFactory = null;
+
+        public IWpfTextViewMargin CreateMargin(IWpfTextViewHost textViewHost, IWpfTextViewMargin containerMargin)
 		{
+            VisualDHelper.testRegister(editorFactory);
+            //MessageBox.Show("CreateMargin");
 			return new CoverageMargin(textViewHost.TextView, FormatMapService.GetEditorFormatMap(textViewHost.TextView));
 		}
 	}
@@ -69,8 +83,20 @@ namespace vdextensions
 		private Color[] _foregroundColor = new Color[2];
 		#endregion
 
-		[DllImport("visuald.dll")]
-		public static extern bool GetCoverageData(string fname, int line, int[] data, int cnt);
+        [DllImport("visuald.dll")]
+        public static extern bool GetCoverageData(string fname, int line, int[] data, int cnt);
+
+        static bool GetCoverage(string fname, int line, int[] data, int cnt)
+        {
+        	try
+        	{
+        		return GetCoverageData(fname, line, data, cnt);
+        	}
+        	catch
+        	{
+        		return false;
+        	}
+        }
 
 		#region Constructor
 		/// <summary>
@@ -119,9 +145,9 @@ namespace vdextensions
 
 		private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
 		{
-			if (e.VerticalTranslation || e.NewOrReformattedLines.Count > 1)
+			//if (e.VerticalTranslation || e.NewOrReformattedLines.Count > 1)
 			{
-				DrawLineNumbers();
+                OnFormatMappingChanged();
 			}
 		}
 
@@ -129,8 +155,12 @@ namespace vdextensions
 		{
 			_fontFamily = _textView.FormattedLineSource.DefaultTextProperties.Typeface.FontFamily;
 			_fontEmSize = _textView.FormattedLineSource.DefaultTextProperties.FontRenderingEmSize;
-			
-			this.Width = GetMarginWidth(new Typeface(_fontFamily.Source), _fontEmSize) + 2 * _labelOffsetX;
+
+            if (GetCoverage(_fileName, 0, null, 0))
+                this.MinWidth = GetMarginWidth(new Typeface(_fontFamily.Source), _fontEmSize) + 2 * _labelOffsetX;
+            else
+                this.MinWidth = 0;
+            this.Width = this.MinWidth;
 
 			DrawLineNumbers();
 		}
@@ -140,6 +170,9 @@ namespace vdextensions
 
 		private void DrawLineNumbers()
 		{
+			if (this.Width <= 0)
+				return;
+
 			// Get the index from the line collection where the cursor is currently sitting
 			IVsTextBuffer buffer;
 			_textView.TextBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out buffer);
@@ -160,7 +193,7 @@ namespace vdextensions
 
 			int lines = lastLine + 1 - firstLine;
 			int[] covdata = new int[lines];
-			bool hasCoverage = GetCoverageData(_fileName, firstLine, covdata, lines);
+			bool hasCoverage = GetCoverage(_fileName, firstLine, covdata, lines);
 //			GetColors();
 			if(!hasCoverage)
 				return;
@@ -201,16 +234,17 @@ namespace vdextensions
 				if(cov < 0)
 					continue;
 
+                double zoom = _textView.ZoomLevel * 0.01;
 				TextBlock tb = new TextBlock();
 				tb.Text = string.Format("{0,4}", cov);
 				tb.FontFamily = _fontFamily;
-				tb.FontSize = _fontEmSize;
+				tb.FontSize = _fontEmSize * zoom;
 				tb.Foreground = hasNonCov ? fgBrush2    : fgBrush;
 				tb.FontWeight = hasNonCov ? fontWeight2 : fontWeight;
 				tb.Background = hasNonCov ? bgBrush2    : bgBrush;
 				Canvas.SetLeft(tb, _labelOffsetX);
 
-				Canvas.SetTop(tb, _textView.TextViewLines[i].TextTop - _textView.ViewportTop);
+				Canvas.SetTop(tb, (_textView.TextViewLines[i].TextTop - _textView.ViewportTop) * zoom);
 				_canvas.Children.Add(tb);
 			}
 		}
@@ -263,7 +297,7 @@ namespace vdextensions
 			FormattedText formattedText = new FormattedText("9999+", System.Globalization.CultureInfo.GetCultureInfo("en-us"),
 										                    System.Windows.FlowDirection.LeftToRight, fontTypeFace, fontSize, Brushes.Black);
 
-			return formattedText.MinWidth;
+            return formattedText.MinWidth * _textView.ZoomLevel * 0.01;
 		}
 
 		#endregion
@@ -294,7 +328,7 @@ namespace vdextensions
 			get
 			{
 				ThrowIfDisposed();
-				if (GetCoverageData(_fileName, 0, null, 0))
+				if (GetCoverage(_fileName, 0, null, 0))
 					return this.ActualWidth;
 				return 0;
 			}
@@ -305,7 +339,7 @@ namespace vdextensions
 			get
 			{
 				ThrowIfDisposed();
-				return GetCoverageData(_fileName, 0, null, 0);
+				return GetCoverage(_fileName, 0, null, 0);
 			}
 		}
 
@@ -325,4 +359,73 @@ namespace vdextensions
 
 		#endregion
 	}
+
+    public class IID
+	{
+        public const string IVisualDHelper = "002a2de9-8bb6-484d-9910-7e4ad4084715";
+        public const string VisualDHelper = "002a2de9-8bb6-484d-AA10-7e4ad4084715";
+    }
+
+    [ComVisible(true), Guid(IID.IVisualDHelper)]
+	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	public interface IVisualDHelper
+	{
+        int GetTextOptions(IVsTextView view, out int flags, out int tabsize, out int indentsize);
+    }
+
+    [ComVisible(true), Guid(IID.VisualDHelper)]
+    [ClassInterface(ClassInterfaceType.None)]
+    public class VisualDHelper : IVisualDHelper, IDisposable
+    {
+        [DllImport("visuald.dll")]
+        public static extern int RegisterHelper(IVisualDHelper helper);
+        [DllImport("visuald.dll")]
+        public static extern int UnregisterHelper(IVisualDHelper helper);
+
+        public static VisualDHelper instance;
+        static IVsEditorAdaptersFactoryService editorFactory;
+        
+        public static void testRegister(IVsEditorAdaptersFactoryService factory)
+        {
+            if (instance == null)
+            {
+            	try
+            	{
+            		RegisterHelper(null); // verify the DLL is loaded
+            	}
+            	catch
+            	{
+            		return;
+            	}
+                instance = new VisualDHelper();
+                editorFactory = factory;
+            }
+        }
+
+        public VisualDHelper()
+        {
+            RegisterHelper(this);
+        }
+
+        public void Dispose()
+        {
+            UnregisterHelper(this);
+        }
+
+        public int GetTextOptions(IVsTextView view, out int flags, out int tabsize, out int indentsize)
+        {
+            IWpfTextView wv = editorFactory.GetWpfTextView(view);
+            if (wv is IWpfTextView)
+            {
+                bool spaces = wv.Options.GetOptionValue<bool>(DefaultOptions.ConvertTabsToSpacesOptionId);
+                flags = spaces ? 1 : 0;
+                tabsize = wv.Options.GetOptionValue<int>(DefaultOptions.TabSizeOptionId);
+                indentsize = wv.Options.GetOptionValue<int>(DefaultOptions.IndentSizeOptionId);
+                return 0;
+            }
+ 
+            throw new COMException("GetTextOptions failed", 1);
+        }
+
+    }
 }

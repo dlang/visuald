@@ -145,8 +145,12 @@ vdserver:
 dparser:
 	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /t:Rebuild
 
+vdextension:
+	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release /t:Rebuild
+
 mago:
-	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
+	cd ..\..\mago64 && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
+	cd ..\..\mago64 && devenv /Build "Release|x64" /Project "MagoRemote" magodbg_2010.sln
 
 cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln
@@ -160,7 +164,7 @@ install: all cpp2d_exe idl2d_exe
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
 #prerequisites 
-install_vs: visuald_vs vdserver cv2pdb dparser mago install_only
+install_vs: visuald_vs vdserver cv2pdb dparser vdextension mago install_only
 
 install_only:
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi

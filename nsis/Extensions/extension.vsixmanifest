@@ -9,8 +9,8 @@
     <Version>0.3</Version>
     <Description>Extension to provide support for the D programming language.</Description>
     <Locale>1033</Locale>
-    <MoreInfoUrl>http://www.dsource.org/projects/visuald</MoreInfoUrl>
-    <GettingStartedGuide>http://www.dsource.org/projects/visuald</GettingStartedGuide>
+    <MoreInfoUrl>http://rainers.github.io/visuald/visuald/StartPage.html</MoreInfoUrl>
+    <GettingStartedGuide>http://rainers.github.io/visuald/visuald/StartPage.html</GettingStartedGuide>
     <InstalledByMsi>true</InstalledByMsi>
     <Icon>vdlogo.ico</Icon>
     <PreviewImage>vdlogo.ico</PreviewImage>
@@ -37,5 +37,6 @@
   <References />
   <Content>
     <VsPackage>visuald.pkgdef</VsPackage>
+    <MefComponent>VDINSTALLPATH\vdextensions.dll</MefComponent>
   </Content>
 </Vsix>

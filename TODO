@@ -149,4 +149,8 @@ Unsorted
 - save file before "Compile & run"
 - coverage line highlight after "Compile & run" doesn't update
 - better keeping track of line changes
+- compile & debug
+- margin for profiler
 
++ formatting does not work with .editorConfig
+- custom file props: switch and apply changes next file

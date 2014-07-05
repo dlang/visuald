@@ -40,6 +40,7 @@ import visuald.propertypage;
 import visuald.stringutil;
 import visuald.fileutil;
 import visuald.lexutil;
+import visuald.vdextensions;
 
 // version = hasOutputGroup;
 
@@ -1944,7 +1945,11 @@ class Config :	DisposingComObject,
 			ShellExecuteW(null, null, toUTF16z(quoteFilename(prg)), toUTF16z(args), toUTF16z(workdir), SW_SHOWNORMAL);
 			return(S_OK);
 		}
+		return _DebugLaunch(prg, workdir, args);
+	}
 
+	HRESULT _DebugLaunch(string prg, string workdir, string args)
+	{
 		HRESULT hr = E_NOTIMPL;
 		// When the debug target is the project build output, the project have to use 
 		// IVsSolutionDebuggingAssistant2 to determine if the target was deployed.

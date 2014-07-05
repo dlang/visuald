@@ -28,6 +28,7 @@ import visuald.windows;
 import visuald.simpleparser;
 import visuald.config;
 import visuald.vdserverclient;
+import visuald.vdextensions;
 
 version = VDServer;
 
@@ -418,7 +419,7 @@ class LanguageService : DisposingComObject,
 	};
 	static void shared_static_dtor()
 	{
-		clear(colorableItems); // to keep GC leak detection happy
+		destroy(colorableItems); // to keep GC leak detection happy
 		Source.parseTaskPool = null;
 	}
 
@@ -1044,7 +1045,7 @@ bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int GetUserPreferences(LANGPREFERENCES *langPrefs)
+int GetUserPreferences(LANGPREFERENCES *langPrefs, IVsTextView view)
 {
 	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
 	if(!textmgr)
@@ -1054,6 +1055,17 @@ int GetUserPreferences(LANGPREFERENCES *langPrefs)
 	langPrefs.guidLang = g_languageCLSID;
 	if(int rc = textmgr.GetUserPreferences(null, null, langPrefs, null))
 		return rc;
+
+	if (view && vdhelper)
+	{
+		int flags, tabsize, indentsize;
+		if(vdhelper.GetTextOptions(view, &flags, &tabsize, &indentsize) == S_OK)
+		{
+			langPrefs.uTabSize = tabsize;
+			langPrefs.uIndentSize = indentsize;
+			langPrefs.fInsertTabs = (flags & 1) == 0;
+		}
+	}
 	return S_OK;
 }
 
@@ -2690,10 +2702,10 @@ else
 		return indent + labelIndent;
 	}
 
-	int ReindentLines(int startline, int endline)
+	int ReindentLines(IVsTextView view, int startline, int endline)
 	{
 		LANGPREFERENCES langPrefs;
-		if(int rc = GetUserPreferences(&langPrefs))
+		if(int rc = GetUserPreferences(&langPrefs, view))
 			return rc;
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
 			return S_FALSE;
@@ -2761,10 +2773,10 @@ else
 		ForceUncomment,
 	}
 
-	int CommentLines(int startline, int endline, int commentMode)
+	int CommentLines(IVsTextView view, int startline, int endline, int commentMode)
 	{
 		LANGPREFERENCES langPrefs;
-		if(int rc = GetUserPreferences(&langPrefs))
+		if(int rc = GetUserPreferences(&langPrefs, view))
 			return rc;
 		
 		wstring[] lines;
