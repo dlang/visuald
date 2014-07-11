@@ -8,6 +8,9 @@ import sdk.win32.oleauto;
 import sdk.vsi.textmgr;
 import sdk.vsi.vsshell;
 
+import visuald.hierutil;
+import visuald.dpackage;
+
 __gshared IVisualDHelper vdhelper;
 
 interface IVisualDHelper : IUnknown
@@ -17,15 +20,16 @@ interface IVisualDHelper : IUnknown
 	int GetTextOptions(IVsTextView view, int* flags, int* tabsize, int* indentsize);
 }
 
-export extern(Windows) int RegisterHelper(IVisualDHelper helper)
+IVisualDHelper createHelper()
 {
-	vdhelper = helper;
-	return S_OK;
+	if (!vdhelper)
+		vdhelper = VsLocalCreateInstance!IVisualDHelper (&g_VisualDHelperCLSID, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
+	return vdhelper;
 }
 
-export extern(Windows) int UnregisterHelper(IVisualDHelper helper)
+int vdhelper_GetTextOptions(IVsTextView view, int* flags, int* tabsize, int* indentsize)
 {
-	if(vdhelper is helper)
-		vdhelper = null;
-	return S_OK;
+	if (!createHelper())
+		return S_FALSE;
+	return vdhelper.GetTextOptions(view, flags, tabsize, indentsize);
 }

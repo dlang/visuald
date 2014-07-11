@@ -381,11 +381,13 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	wstring packageGuid = GUID2wstring(g_packageCLSID);
 	wstring languageGuid = GUID2wstring(g_languageCLSID);
 	wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
+	wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
 
 	HRESULT hr = S_OK;
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ languageGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ wizardGuid);
+	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
 
 	foreach (wstring fileExt; g_languageFileExtensions)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathFileExts ~ "\\"w ~ fileExt);
@@ -420,6 +422,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	wstring registrationRoot = GetRegistrationRoot(pszRegRoot, useRanu);
 	wstring dllPath = GetDLLName(g_hInst);
 	wstring templatePath = GetTemplatePath(dllPath);
+	wstring vdextPath = dirName(dllPath) ~ "/vdextensions.dll"w;
 
 	try
 	{
@@ -428,6 +431,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		wstring debugLangGuid = GUID2wstring(g_debuggerLanguage);
 		wstring exprEvalGuid = GUID2wstring(g_expressionEvaluator);
 		wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
+		wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
 
 		// package
 		scope RegKey keyPackage = new RegKey(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
@@ -453,6 +457,14 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		scope RegKey keyWizardCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ wizardGuid);
 		keyWizardCLSID.Set("InprocServer32"w, dllPath);
 		keyWizardCLSID.Set("ThreadingModel"w, "Appartment"w);
+
+		// VDExtensions
+		scope RegKey keyHelperCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
+		keyHelperCLSID.Set("InprocServer32"w, "mscoree.dll");
+		keyHelperCLSID.Set("ThreadingModel"w, "Both"w);
+		keyHelperCLSID.Set(null, "vdextensions.VisualDHelper"w);
+		keyHelperCLSID.Set("Class"w, "vdextensions.VisualDHelper"w);
+		keyHelperCLSID.Set("CodeBase"w, vdextPath);
 
 		// file extensions
 		wstring fileExtensions;

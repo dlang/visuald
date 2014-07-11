@@ -106,6 +106,9 @@ const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-980c-7e4ad40
 const GUID    g_ProjectItemWizardCLSID   = uuid("002a2de9-8bb6-484d-980d-7e4ad4084715");
 
 const GUID    g_unmarshalCLSID           = uuid("002a2de9-8bb6-484d-980e-7e4ad4084715");
+
+const GUID    g_VisualDHelperCLSID       = uuid("002a2de9-8bb6-484d-aa10-7e4ad4084715");
+
 // more guids in propertypage.d starting with 9810
 
 const LanguageProperty g_languageProperties[] =

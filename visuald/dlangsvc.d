@@ -721,7 +721,7 @@ class LanguageService : DisposingComObject,
 		return (mDbgMode & ~ DBGMODE_EncMask) != DBGMODE_Design;
 	}
 
-	bool GetCoverageData(string filename, uint line, uint* data, uint cnt)
+	bool GetCoverageData(string filename, uint line, uint* data, uint cnt, float* covPrecent)
 	{
 		if(!Package.GetGlobalOptions().showCoverageMargin)
 			return false;
@@ -739,6 +739,8 @@ class LanguageService : DisposingComObject,
 			uint covLine = src.adjustLineNumberSinceLastBuildReverse(line + ln, true);
 			data[ln] = covLine >= cov.length ? -1 : cov[covLine];
 		}
+		if (covPrecent)
+			*covPrecent = src.mColorizer.mCoveragePercent;
 
 		return true;
 	}
@@ -1056,13 +1058,13 @@ int GetUserPreferences(LANGPREFERENCES *langPrefs, IVsTextView view)
 	if(int rc = textmgr.GetUserPreferences(null, null, langPrefs, null))
 		return rc;
 
-	if (view && vdhelper)
+	if (view)
 	{
 		int flags, tabsize, indentsize;
-		if(vdhelper.GetTextOptions(view, &flags, &tabsize, &indentsize) == S_OK)
+		if(vdhelper_GetTextOptions(view, &flags, &tabsize, &indentsize) == S_OK)
 		{
-			langPrefs.uTabSize = tabsize;
-			langPrefs.uIndentSize = indentsize;
+			langPrefs.uTabSize = max(1, tabsize);
+			langPrefs.uIndentSize = max(1, indentsize);
 			langPrefs.fInsertTabs = (flags & 1) == 0;
 		}
 	}

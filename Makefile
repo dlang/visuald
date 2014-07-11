@@ -146,7 +146,7 @@ dparser:
 	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /t:Rebuild
 
 vdextension:
-	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release /t:Rebuild
+	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
 
 mago:
 	cd ..\..\mago64 && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
