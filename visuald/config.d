@@ -40,6 +40,7 @@ import visuald.propertypage;
 import visuald.stringutil;
 import visuald.fileutil;
 import visuald.lexutil;
+import visuald.vdextensions;
 
 // version = hasOutputGroup;
 
@@ -835,7 +836,7 @@ class ProjectOptions
 
 		if(symdebug)
 			cmd ~= mslink ? " /DEBUG" : "/CO";
-		cmd ~= mslink ? " /INCREMENTAL:NO /NOLOGO" : "/NOI";
+		cmd ~= mslink ? " /INCREMENTAL:NO /NOLOGO" : "/NOI/DELEXE";
 
 		if(mslink)
 		{
@@ -1944,7 +1945,11 @@ class Config :	DisposingComObject,
 			ShellExecuteW(null, null, toUTF16z(quoteFilename(prg)), toUTF16z(args), toUTF16z(workdir), SW_SHOWNORMAL);
 			return(S_OK);
 		}
+		return _DebugLaunch(prg, workdir, args, mProjectOptions.debugEngine);
+	}
 
+	HRESULT _DebugLaunch(string prg, string workdir, string args, int engine)
+	{
 		HRESULT hr = E_NOTIMPL;
 		// When the debug target is the project build output, the project have to use 
 		// IVsSolutionDebuggingAssistant2 to determine if the target was deployed.
@@ -1987,7 +1992,7 @@ class Config :	DisposingComObject,
 
 			dbgi.dlo = DLO_CreateProcess; // DLO_Custom;    // specifies how this process should be launched
 			// clsidCustom is the clsid of the debug engine to use to launch the debugger
-			switch(mProjectOptions.debugEngine)
+			switch(engine)
 			{
 			case 1:
 				GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
@@ -2507,15 +2512,21 @@ class Config :	DisposingComObject,
 			opts.doHdrGeneration = false;
 			opts.doDocComments = false;
 			opts.lib = OutputType.Executable;
-			opts.runCv2pdb = false;
+			//opts.runCv2pdb = false;
 			opts.exefile = "$(OutDir)\\" ~ baseName(stripExtension(outfile)) ~ ".exe";
 
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
-			cmd ~= opts.buildCommandLine(true, false, false, syntaxOnly);
+			cmd ~= opts.buildCommandLine(true, !syntaxOnly, false, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";
 			cmd ~= addopt ~ " " ~ file.GetFilename();
 			addopt = ""; // must be before filename for rdmd
+			if (!syntaxOnly)
+			{
+				string cv2pdb = opts.appendCv2pdb();
+				if (cv2pdb.length)
+					cmd ~= "\nif errorlevel 1 goto reportError\n" ~ opts.appendCv2pdb();
+			}
 		}
 		if(cmd.length)
 		{
@@ -2961,6 +2972,7 @@ class Config :	DisposingComObject,
 				{
 					scope(exit) release(eo);
 					ULONG fetched;
+					string lastTarg;
 					IVsOutput pIVsOutput;
 					while(eo.Next(1, &pIVsOutput, &fetched) == S_OK && fetched == 1)
 					{
@@ -2970,7 +2982,20 @@ class Config :	DisposingComObject,
 						//if(pIVsOutput.get_DisplayName(&target.bstr) == S_OK)
 						{
 							string targ = target.detach();
-							libs ~= targ;
+							if (lastTarg.length && targ.indexOf('$') >= 0)
+							{
+								// VC projects report the import library without expanding macros
+								//  (even if building static libraries), so assume it lies along side the DLL
+								if (targ.extension().toLower() == ".lib" && lastTarg.extension().toLower() != ".lib")
+									targ = lastTarg.stripExtension() ~ ".lib";
+								else
+									targ = null;
+							}
+							if (targ.length)
+							{
+								libs ~= targ;
+								lastTarg = targ;
+							}
 						}
 						release(pIVsOutput);
 					}

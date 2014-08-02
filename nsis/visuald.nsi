@@ -12,6 +12,9 @@
 ; define DPARSER to include DParser COM server installation (expected at ../bin/Release/DParserCOMServer)
 !define DPARSER
 
+; define VDEXTENSIONS to include C# extensions (expected at ../bin/Release/vdextensions)
+!define VDEXTENSIONS
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -87,10 +90,11 @@
   !define MAGO_ENGINE_KEY         AD7Metrics\Engine\${MAGO_CLSID}
   !define MAGO_EXCEPTION_KEY      AD7Metrics\Exception\${MAGO_CLSID}
   !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010-2013 Aldo J. Nunez"
+  !define MAGO_SOURCE             ..\..\..\mago
 
-  !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
-  !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_MINOR " MAGO_VERSION_MINOR
-  !searchparse /file ../../../mago/include/magoversion.h "#define MAGO_VERSION_BUILD " MAGO_VERSION_BUILD
+  !searchparse /file ${MAGO_SOURCE}/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
+  !searchparse /file ${MAGO_SOURCE}/include/magoversion.h "#define MAGO_VERSION_MINOR " MAGO_VERSION_MINOR
+  !searchparse /file ${MAGO_SOURCE}/include/magoversion.h "#define MAGO_VERSION_BUILD " MAGO_VERSION_BUILD
 
   !searchreplace MAGO_VERSION_MAJOR ${MAGO_VERSION_MAJOR} " " ""
   !searchreplace MAGO_VERSION_MINOR ${MAGO_VERSION_MINOR} " " ""
@@ -184,7 +188,11 @@ Section "Visual Studio package" SecPackage
   ${File} ..\ README.md
   ${File} ..\ LICENSE_1_0.txt
   ${File} ..\ CHANGES
-  
+
+  !ifdef VDEXTENSIONS
+  ${File} ..\bin\${CONFIG}\vdextensions\ vdextensions.dll
+  !endif
+
   ${SetOutPath} "$INSTDIR\Templates"
   ${SetOutPath} "$INSTDIR\Templates\Items"
   ${File} ..\visuald\Templates\Items\ empty.d
@@ -284,10 +292,16 @@ ${MementoSection} "Register with VS 2010" SecVS2010
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2010_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   
+  !ifdef VDEXTENSIONS
+    GetFullPathName /SHORT $0 $INSTDIR
+    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !endif
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -299,10 +313,16 @@ ${MementoSection} "Register with VS 2012" SecVS2012
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2012_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   
+  !ifdef VDEXTENSIONS
+    GetFullPathName /SHORT $0 $INSTDIR
+    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !endif
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -314,10 +334,16 @@ ${MementoSection} "Register with VS 2013" SecVS2013
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2013_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
-  
+
+  !ifdef VDEXTENSIONS
+    GetFullPathName /SHORT $0 $INSTDIR
+    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !endif
+
 ${MementoSectionEnd}
 
 !ifdef EXPRESS
@@ -392,12 +418,13 @@ ${MementoSectionEnd}
 ${MementoSection} "mago" SecMago
 
   ${SetOutPath} "$INSTDIR\Mago"
-  ${File} ..\..\..\mago\Release\ MagoNatDE.dll
-  ${File} ..\..\..\mago\Release\ MagoNatEE.dll
-  ${File} ..\..\..\mago\Release\ udis86.dll
-  ${File} ..\..\..\mago\Release\ CVSTI.dll
-  ${File} ..\..\..\mago\ LICENSE.TXT
-  ${File} ..\..\..\mago\ NOTICE.TXT
+  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatDE.dll
+;;  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatEE.dll
+  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ udis86.dll
+;;  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ CVSTI.dll
+  ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoRemote.exe
+  ${File} ${MAGO_SOURCE}\ LICENSE.TXT
+  ${File} ${MAGO_SOURCE}\ NOTICE.TXT
 
   ExecWait 'regsvr32 /s "$INSTDIR\Mago\MagoNatDE.dll"'
 
@@ -427,6 +454,8 @@ ${MementoSection} "mago" SecMago
   Push ${VS2013_REGISTRY_KEY}
   Call RegisterMago
   
+  WriteRegStr HKLM "SOFTWARE\Wow6432Node\MagoDebugger" "Remote_x64" "$INSTDIR\Mago\MagoRemote.exe"
+
 ${MementoSectionEnd}
 !endif
 
@@ -710,9 +739,12 @@ Function DMDInstallPage
   IfErrors DMDInstallDirEmpty
   StrCmp "$DMDInstallDir" "" DMDInstallDirEmpty HasDMDInstallDir
   DMDInstallDirEmpty:
+    ReadRegStr $DInstallDir HKLM "SOFTWARE\DMD" "InstallationFolder" 
+    IfErrors 0 HasDInstallationFolder
     ReadRegStr $DInstallDir HKLM "SOFTWARE\D" "Install_Dir" 
     IfErrors HasDmdInstallDir
-      StrCpy $DmdInstallDir $DInstallDir\dmd2
+  HasDInstallationFolder:
+    StrCpy $DmdInstallDir $DInstallDir\dmd2
   HasDMDInstallDir:
   
   WriteINIStr "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State" $DMDInstallDir
@@ -809,6 +841,7 @@ enabled:
   WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "ENC" 0
   WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "Disassembly" 1
   WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "Exceptions" 1
+  WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "AlwaysLoadLocal" 1
 
   ${RegisterException} $1 "D Exceptions"
   ${RegisterException} $1 "D Exceptions\core.exception.AssertError"

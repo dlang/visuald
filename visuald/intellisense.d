@@ -904,7 +904,7 @@ class BrowseInfo
 		
 		mFilename = info.mFilename;
 		mModified = info.mModified;
-		clear(mModules);
+		destroy(mModules);
 		
 		createModules(info);
 		if(Config cfg = getProjectConfig(mFilename))

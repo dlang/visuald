@@ -631,7 +631,7 @@ Version history
     - bugzilla 12353: option "Show Type In Tooltip" not saved and restored across restart
 
   * miscellanea
-    - update SDK conversion for VS2013 and Windws SDK 8.1
+    - update SDK conversion for VS2013 and Windows SDK 8.1
     - bugzilla 11786: change some default colors when using dark theme in VS 2012+ (restart required)
     - bugzilla 12187: disguise functionality of pipedmd.exe and filemonitor.dll to let it pass 
       most anti-virus checks
@@ -640,3 +640,17 @@ Version history
 
   * build mago with static C runtime to avoid dependencies on msvcrt120.dll
 
+2014-07-20 Version 0.3.39
+
+  * added editor margin to display coverage counters and percentage
+  * support tab/indentation settings set by .editorconfig plugin
+  * optlink now always called with /DELEXE to avoid keeping broken binary
+  * added workaround for bad import library being passed by C/C++ projects
+  * tweaked "Compile & Run" to distinguish between compile and execution errors
+  * added "Compile & Debug" command
+  * new mago version 1.0
+    - now supports debugging x64 executables
+    - displays static members of classes and structs
+    - fixed not closing executable file causing linker to fail when rebuilding
+    - fixed breakpoints not set in all instances of a template
+  * new dparser version: 78a007c9aaee915e2824f30c5c7293e8853343c4

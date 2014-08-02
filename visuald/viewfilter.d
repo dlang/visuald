@@ -318,7 +318,7 @@ version(tip)
 				break;
 			
 			case ECMD_COMPILE:
-				return CompileDoc(false, false);
+				return CompileDoc(false, false, false);
 
 			case ECMD_GOTOBRACE:
 				return GotoMatchingPair(false);
@@ -351,7 +351,10 @@ version(tip)
 				return ConvertSelection();
 
 			case CmdCompileAndRun:
-				return CompileDoc(true, true);
+				return CompileDoc(true, true, false);
+
+			case CmdCompileAndDbg:
+				return CompileDoc(true, false, true);
 
 			case CmdCollapseUnittest:
 				return mCodeWinMgr.mSource.CollapseDisabled(true, false);
@@ -466,7 +469,7 @@ version(tip)
 				else if(ch == '(')
 				{
 					LANGPREFERENCES langPrefs;
-					if(GetUserPreferences(&langPrefs) == S_OK && langPrefs.fAutoListParams)
+					if(GetUserPreferences(&langPrefs, null) == S_OK && langPrefs.fAutoListParams)
 						_HandleMethodTip(false);
 				}
 				break;
@@ -483,7 +486,7 @@ version(tip)
 
 	//////////////////////////////
 
-	HRESULT CompileDoc(bool rdmd, bool run)
+	HRESULT CompileDoc(bool rdmd, bool run, bool dbg)
 	{
 		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
 		if(!pIVsUIShellOpenDocument)
@@ -524,7 +527,7 @@ version(tip)
 			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
 			string srcfile = Package.GetGlobalOptions().VisualDInstallDir ~ "Templates/ProjectItems/ConsoleApp/ConsoleApp.visualdproj";
 
-			proj = newCom!Project(factory, "__compile__", filename, "Win32", "Debug").addref();
+			proj = newCom!Project(factory, "__compile__", filename, "Debug", "Win32").addref();
 			pFile = newCom!CFileNode(fname);
 			proj.GetProjectNode().Add(pFile);
 
@@ -583,35 +586,41 @@ version(tip)
 		string stool = cfg.GetStaticCompileTool(pFile, cfg.getCfgName());
 		if(stool == "DMD")
 			stool = "DMDsingle";
-		if(stool == "DMDsingle")
+		if(stool == "DMDsingle" && rdmd)
 		{
-			if(rdmd)
+			stool = "RDMD";
+			if(selText.length)
 			{
-				stool = "RDMD";
-				if(selText.length)
+				string[] lines = splitLines(selText);
+				foreach(ln; lines)
 				{
-					string[] lines = splitLines(selText);
-					foreach(ln; lines)
-					{
-						string line = strip(detab(ln));
-						if(line.length)
-							addopt ~= " \"--eval=" ~ replace(line, "\"", "\\\\\\\"") ~ "\"";
-					}
+					string line = strip(detab(ln));
+					if(line.length)
+						addopt ~= " \"--eval=" ~ replace(line, "\"", "\\\\\\\"") ~ "\"";
 				}
 			}
-			else if(run)
-				addopt ~= " -run";
 		}
-		if(stool == "RDMD")
-			addopt = " " ~ Package.GetGlobalOptions().compileAndRunOpts ~ addopt;
-		string cmd = cfg.GetCompileCommand(pFile, !run, stool, addopt);
+		if(stool == "RDMD" && run)
+			addopt = " --build-only " ~ Package.GetGlobalOptions().compileAndRunOpts ~ addopt;
+		else if(stool == "RDMD" && dbg)
+			addopt = " --build-only " ~ Package.GetGlobalOptions().compileAndDbgOpts ~ addopt;
+
+		string cmd = cfg.GetCompileCommand(pFile, !dbg && !run, stool, addopt);
 		if(cmd.length)
 		{
 			cmd ~= "if not errorlevel 1 echo Compilation successful.\n";
 			string workdir = cfg.GetProjectDir();
 			string outfile = cfg.GetOutputFile(pFile, stool);
-			string cmdfile = makeFilenameAbsolute(outfile ~ ".syntax", workdir);
-			removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
+			outfile = makeFilenameAbsolute(outfile, workdir);
+			string cmdfile = outfile ~ ".syntax";
+			removeCachedFileTime(outfile);
+
+			if(run)
+			{
+				cmd ~= "if errorlevel 1 exit %ERRORLEVEL% /B\n";
+				cmd ~= quoteFilename(outfile) ~ "\n";
+				cmd ~= "echo Execution result code: %ERRORLEVEL%\n";
+			}
 			auto pane = getBuildOutputPane();
 			scope(exit) release(pane);
 			clearBuildOutputPane();
@@ -620,7 +629,12 @@ version(tip)
 			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
 
 			if(run)
-				Package.GetGlobalOptions().addExecutionPath(cfg.GetProjectDir(), null);
+				Package.GetGlobalOptions().addExecutionPath(workdir, null);
+
+			if(dbg && hr == S_OK)
+			{
+				cfg._DebugLaunch(outfile, dirName(fname), null, Package.GetGlobalOptions().compileAndDbgEngine);
+			}
 		}
 		return S_OK;
 	}
@@ -697,6 +711,7 @@ version(tip)
 			case CmdToggleComment:
 			case CmdConvSelection:
 			case CmdCompileAndRun:
+			case CmdCompileAndDbg:
 			case CmdCollapseUnittest:
 			case CmdCollapseDisabled:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
@@ -1062,7 +1077,7 @@ version(tip)
 	int HandleSmartIndent(dchar ch)
 	{
 		LANGPREFERENCES langPrefs;
-		if(int rc = GetUserPreferences(&langPrefs))
+		if(int rc = GetUserPreferences(&langPrefs, mView))
 			return rc;
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
 			return S_FALSE;
@@ -1112,7 +1127,7 @@ version(tip)
 		if(compAct)
 			compAct.OpenCompoundAction("ReindentLines"w.ptr);
 		
-		int hr = mCodeWinMgr.mSource.ReindentLines(iStartLine, iEndLine);
+		int hr = mCodeWinMgr.mSource.ReindentLines(mView, iStartLine, iEndLine);
 
 		if(compAct)
 		{
@@ -1145,7 +1160,7 @@ version(tip)
 		if(compAct)
 			compAct.OpenCompoundAction("CommentLines"w.ptr);
 		
-		hr = mCodeWinMgr.mSource.CommentLines(iStartLine, iEndLine, commentMode);
+		hr = mCodeWinMgr.mSource.CommentLines(mView, iStartLine, iEndLine, commentMode);
 		if(compAct)
 		{
 			compAct.CloseCompoundAction();

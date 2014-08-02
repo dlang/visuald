@@ -241,6 +241,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	bool mConfigNoBoundsCheck;
 	
 	int[] mCoverage;
+	float mCoveragePercent;
 	string  mLastCoverageFile;
 	SysTime mLastTestCoverageFile;
 	SysTime mLastModifiedCoverageFile;
@@ -534,7 +535,11 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			string s;
 			ColorableItemInfo *info = &covColor;
 			if(cov < 0)
+			{
+				if (iLine == 0 && mCoveragePercent >= 0)
+					s = text(mCoveragePercent) ~ "%";
 				info = &nocovColor;
+			}
 			else if(cov == 0)
 			{
 				s = "0";
@@ -1436,8 +1441,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	
 	//////////////////////////////////////////////////////////
 
-	static int[] ReadCoverageFile(string lstname)
+	static int[] ReadCoverageFile(string lstname, out float coveragePercent)
 	{
+		coveragePercent = -1;
 		try
 		{
 			char[] lst = cast(char[]) std.file.read(lstname);
@@ -1453,20 +1459,21 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 					if(num.length)
 						cov = parse!int(num);
 				}
-				else version(none)
-				{
-					pos = std.string.indexOf(ln, "% covered");
-					if(pos > 0)
-					{
-						auto end = pos;
-						while(pos > 0 && isDigit(ln[pos-1]))
-							pos--;
-						auto num = ln[pos..end];
-						if(num.length)
-							cov = parse!int(num); // very last entry is percent
-					}
-				}
 				coverage[i] = cov;
+			}
+			if (lines.length > 0)
+			{
+				char[] ln = lines[$-1];
+				auto pos = std.string.indexOf(ln, "% covered");
+				if(pos > 0)
+				{
+					auto end = pos;
+					while(pos > 0 && isDigit(ln[pos-1]) || ln[pos - 1] == '.')
+						pos--;
+					auto num = ln[pos..end];
+					if(num.length)
+						coveragePercent = parse!float(num); // very last entry is percent
+				}
 			}
 			return coverage;
 		}
@@ -1512,7 +1519,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				else if(force || lsttm != mLastModifiedCoverageFile)
 				{
 					mLastModifiedCoverageFile = lsttm;
-					mCoverage = ReadCoverageFile(mLastCoverageFile);
+					mCoverage = ReadCoverageFile(mLastCoverageFile, mCoveragePercent);
 
 					mSource.ReColorizeLines(0, -1);
 				}

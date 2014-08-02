@@ -106,6 +106,9 @@ const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-980c-7e4ad40
 const GUID    g_ProjectItemWizardCLSID   = uuid("002a2de9-8bb6-484d-980d-7e4ad4084715");
 
 const GUID    g_unmarshalCLSID           = uuid("002a2de9-8bb6-484d-980e-7e4ad4084715");
+
+const GUID    g_VisualDHelperCLSID       = uuid("002a2de9-8bb6-484d-aa10-7e4ad4084715");
+
 // more guids in propertypage.d starting with 9810
 
 const LanguageProperty g_languageProperties[] =
@@ -1121,6 +1124,8 @@ class GlobalOptions
 	bool UFCSExpansions;
 	string VDServerIID;
 	string compileAndRunOpts;
+	string compileAndDbgOpts;
+	int compileAndDbgEngine;
 
 	string[] coverageBuildDirs;
 	string[] coverageExecutionDirs;
@@ -1333,6 +1338,8 @@ class GlobalOptions
 			IncSearchPath     = getStringOpt("IncSearchPath");
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
+			compileAndDbgOpts = getStringOpt("compileAndDbgOpts", "-g");
+			compileAndDbgEngine = getIntOpt("compileAndDbgEngine", 0);
 
 			string execDirs   = getStringOpt("coverageExecutionDirs", "");
 			coverageExecutionDirs = split(execDirs, ";");
@@ -1426,6 +1433,8 @@ class GlobalOptions
 			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
+			keyToolOpts.Set("compileAndDbgOpts",   toUTF16(compileAndDbgOpts));
+			keyToolOpts.Set("compileAndDbgEngine", compileAndDbgEngine);
 
 			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
 			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));
@@ -1555,8 +1564,6 @@ class GlobalOptions
 
 	string getLinkerPath(bool x64, string workdir, string dmdpath, string *libs = null, string* options = null)
 	{
-		getVCLibraryPaths();
-
 		string path = "link.exe";
 		string inifile = findScIni(workdir, dmdpath, false);
 		if(!inifile.empty)
@@ -1698,6 +1705,7 @@ class GlobalOptions
 			}
 	}
 
+	version(none)
 	string[] getVCLibraryPaths()
 	{
 		IVsProfileDataManager pdm = queryService!(SVsProfileDataManager,IVsProfileDataManager)();
@@ -1965,7 +1973,7 @@ class GlobalOptions
 			{
 				string[] lstfiles; 
 				foreach(f; std.file.dirEntries(dir, SpanMode.shallow))
-					if(icmp(extension(f), ".lst") == 0)
+					if(icmp(extension(f.name), ".lst") == 0)
 						lstfiles ~= f;
 				foreach(lst; lstfiles)
 					collectException(std.file.remove(lst));

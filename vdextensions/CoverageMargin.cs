@@ -10,10 +10,13 @@ using System;
 using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Runtime.InteropServices; // DllImport
 
+using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Utilities;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.TextManager.Interop;
@@ -22,14 +25,20 @@ using Microsoft.VisualStudio.Shell.Interop;
 
 namespace vdextensions
 {
-	#region covmargin Factory
+/*    [PackageRegistration(UseManagedResourcesOnly=true)]
+    class VDExtensionPackage : Package
+    {
+    }
+*/
+
+    #region covmargin Factory
 	/// <summary>
 	/// Export a <see cref="IWpfTextViewMarginProvider"/>, which returns an 
 	/// instance of the margin for the editor to use.
 	/// </summary>
 	[Export(typeof(IWpfTextViewMarginProvider))]
 	[Name(CoverageMargin.MarginName)]
-	[Order(After = PredefinedMarginNames.LineNumber)]
+	[Order(After = "Wpf Line Number Margin")] //PredefinedMarginNames.LineNumber)]
 	[MarginContainer(PredefinedMarginNames.Left)]
 	[ContentType("code")]
 	[TextViewRole(PredefinedTextViewRoles.Document)]
@@ -37,9 +46,16 @@ namespace vdextensions
 	{
 		[Import]
 		internal IEditorFormatMapService FormatMapService = null;
-		
-		public IWpfTextViewMargin CreateMargin(IWpfTextViewHost textViewHost, IWpfTextViewMargin containerMargin)
+
+        [Import(typeof(IVsEditorAdaptersFactoryService))]
+        internal IVsEditorAdaptersFactoryService editorFactory = null;
+
+        public IWpfTextViewMargin CreateMargin(IWpfTextViewHost textViewHost, IWpfTextViewMargin containerMargin)
 		{
+            if (!VisualDHelper.setFactory(editorFactory))
+                return null;
+
+            //MessageBox.Show("CreateMargin");
 			return new CoverageMargin(textViewHost.TextView, FormatMapService.GetEditorFormatMap(textViewHost.TextView));
 		}
 	}
@@ -50,8 +66,6 @@ namespace vdextensions
 	/// </summary>
 	class CoverageMargin : Canvas, IWpfTextViewMargin //, IClassifier
 	{
-		#region Member Variables
-
 		public const string MarginName = "CoverageMargin";
 		public const string CovColorName = "Visual D Text Coverage";
 		public const string NoCovColorName = "Visual D Text Non-Coverage";
@@ -67,12 +81,23 @@ namespace vdextensions
 		private string _fileName;
 		private Color[] _backgroundColor = new Color[2];
 		private Color[] _foregroundColor = new Color[2];
-		#endregion
 
-		[DllImport("visuald.dll")]
-		public static extern bool GetCoverageData(string fname, int line, int[] data, int cnt);
+        [DllImport("visuald.dll")]
+        public static extern bool GetCoverageData(string fname, int line, int[] data, int cnt, out float covPercent);
 
-		#region Constructor
+        static bool GetCoverage(string fname, int line, int[] data, int cnt, out float covPercent)
+        {
+        	try
+        	{
+        		return GetCoverageData(fname, line, data, cnt, out covPercent);
+        	}
+        	catch
+        	{
+                covPercent = -1;
+        		return false;
+        	}
+        }
+
 		/// <summary>
 		/// Creates a <see cref="CoverageMargin"/> for a given <see cref="IWpfTextView"/>.
 		/// </summary>
@@ -100,10 +125,7 @@ namespace vdextensions
 
 			this.ClipToBounds = true;
 
-			_fontFamily = _textView.FormattedLineSource.DefaultTextProperties.Typeface.FontFamily;
-			_fontEmSize = _textView.FormattedLineSource.DefaultTextProperties.FontRenderingEmSize;
-
-			this.Width = GetMarginWidth(new Typeface(_fontFamily.Source), _fontEmSize) + 2 * _labelOffsetX;
+			OnFormatMappingChanged();
 
 			_textView.ViewportHeightChanged += (sender, args) => DrawLineNumbers();
 			_textView.LayoutChanged += new EventHandler<TextViewLayoutChangedEventArgs>(OnLayoutChanged);
@@ -113,15 +135,11 @@ namespace vdextensions
 			               "  Tools -> Options -> Fonts and Colors -> " + CovColorName;
 		}
 
-		#endregion
-
-		#region Event Handlers
-
 		private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
 		{
-			if (e.VerticalTranslation || e.NewOrReformattedLines.Count > 1)
+			//if (e.VerticalTranslation || e.NewOrReformattedLines.Count > 1)
 			{
-				DrawLineNumbers();
+                OnFormatMappingChanged();
 			}
 		}
 
@@ -129,18 +147,25 @@ namespace vdextensions
 		{
 			_fontFamily = _textView.FormattedLineSource.DefaultTextProperties.Typeface.FontFamily;
 			_fontEmSize = _textView.FormattedLineSource.DefaultTextProperties.FontRenderingEmSize;
-			
-			this.Width = GetMarginWidth(new Typeface(_fontFamily.Source), _fontEmSize) + 2 * _labelOffsetX;
+
+            float covPercent;
+            if (GetCoverage(_fileName, 0, null, 0, out covPercent))
+                this.MinWidth = GetMarginWidth(new Typeface(_fontFamily.Source), _fontEmSize) + 2 * _labelOffsetX;
+            else
+                this.MinWidth = 0;
+            this.Width = this.MinWidth;
 
 			DrawLineNumbers();
 		}
-		#endregion
-
-		#region DrawLineNumbers
 
 		private void DrawLineNumbers()
 		{
-			// Get the index from the line collection where the cursor is currently sitting
+			if (this.Width <= 0)
+				return;
+            if (_textView.InLayout)
+                return;
+
+            // Get the index from the line collection where the cursor is currently sitting
 			IVsTextBuffer buffer;
 			_textView.TextBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out buffer);
 			int firstLine = 0;
@@ -160,7 +185,8 @@ namespace vdextensions
 
 			int lines = lastLine + 1 - firstLine;
 			int[] covdata = new int[lines];
-			bool hasCoverage = GetCoverageData(_fileName, firstLine, covdata, lines);
+            float covPercent;
+            bool hasCoverage = GetCoverage(_fileName, firstLine, covdata, lines, out covPercent);
 //			GetColors();
 			if(!hasCoverage)
 				return;
@@ -188,7 +214,8 @@ namespace vdextensions
 				buffer.GetLineIndexOfPosition(line.End, out last, out col);
 				int cov = -1;
 				bool hasNonCov = false;
-				for(int ln = first; ln <= last; ln++)
+                bool showPercent = false;
+                for (int ln = first; ln <= last; ln++)
 				{
 					int c = ln < firstLine || ln > lastLine ? -1 : covdata[ln - firstLine];
 					if(c == 0)
@@ -198,24 +225,32 @@ namespace vdextensions
 					else if(c >= 0)
 						cov += c;
 				}
-				if(cov < 0)
-					continue;
+                if (cov < 0)
+                {
+                    if (first > 0 || covPercent < 0)
+                        continue;
+                    showPercent = true;
+                }
 
+                double zoom = _textView.ZoomLevel * 0.01;
 				TextBlock tb = new TextBlock();
-				tb.Text = string.Format("{0,4}", cov);
-				tb.FontFamily = _fontFamily;
-				tb.FontSize = _fontEmSize;
-				tb.Foreground = hasNonCov ? fgBrush2    : fgBrush;
-				tb.FontWeight = hasNonCov ? fontWeight2 : fontWeight;
-				tb.Background = hasNonCov ? bgBrush2    : bgBrush;
-				Canvas.SetLeft(tb, _labelOffsetX);
+                tb.FontFamily = _fontFamily;
+                tb.FontSize = _fontEmSize * zoom;
+                if (showPercent)
+                    tb.Text = string.Format("{0,3}%", (int)covPercent);
+                else
+                {
+                    tb.Text = string.Format("{0,4}", cov);
+                    tb.Foreground = hasNonCov ? fgBrush2 : fgBrush;
+                    tb.FontWeight = hasNonCov ? fontWeight2 : fontWeight;
+                    tb.Background = hasNonCov ? bgBrush2 : bgBrush;
+                }
+			    Canvas.SetLeft(tb, _labelOffsetX);
 
-				Canvas.SetTop(tb, _textView.TextViewLines[i].TextTop - _textView.ViewportTop);
+				Canvas.SetTop(tb, (_textView.TextViewLines[i].TextTop - _textView.ViewportTop) * zoom);
 				_canvas.Children.Add(tb);
 			}
 		}
-
-		#endregion
 
 		private SolidColorBrush toBrush(object obj)
 		{
@@ -256,25 +291,20 @@ namespace vdextensions
             byte b = (byte)((color & 0x00FF0000) >> 16);
 			return Color.FromRgb(r, g, b);
 		}
-		#region GetMarginWidth
 
 		private double GetMarginWidth(Typeface fontTypeFace, double fontSize)
 		{
 			FormattedText formattedText = new FormattedText("9999+", System.Globalization.CultureInfo.GetCultureInfo("en-us"),
 										                    System.Windows.FlowDirection.LeftToRight, fontTypeFace, fontSize, Brushes.Black);
 
-			return formattedText.MinWidth;
+            return formattedText.MinWidth * _textView.ZoomLevel * 0.01;
 		}
-
-		#endregion
 
 		private void ThrowIfDisposed()
 		{
 			if (_isDisposed)
 				throw new ObjectDisposedException(MarginName);
 		}
-
-		#region IWpfTextViewMargin Members
 
 		public System.Windows.FrameworkElement VisualElement
 		{
@@ -285,16 +315,13 @@ namespace vdextensions
 			}
 		}
 
-		#endregion
-
-		#region ITextViewMargin Members
-
 		public double MarginSize
 		{
 			get
 			{
 				ThrowIfDisposed();
-				if (GetCoverageData(_fileName, 0, null, 0))
+                float covPercent;
+                if (GetCoverage(_fileName, 0, null, 0, out covPercent))
 					return this.ActualWidth;
 				return 0;
 			}
@@ -305,7 +332,8 @@ namespace vdextensions
 			get
 			{
 				ThrowIfDisposed();
-				return GetCoverageData(_fileName, 0, null, 0);
+                float covPercent;
+                return GetCoverage(_fileName, 0, null, 0, out covPercent);
 			}
 		}
 
@@ -322,7 +350,60 @@ namespace vdextensions
 				_isDisposed = true;
 			}
 		}
-
-		#endregion
 	}
+
+    public class IID
+	{
+        public const string IVisualDHelper = "002a2de9-8bb6-484d-9910-7e4ad4084715";
+        public const string VisualDHelper = "002a2de9-8bb6-484d-AA10-7e4ad4084715";
+    }
+
+    [ComVisible(true), Guid(IID.IVisualDHelper)]
+	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+	public interface IVisualDHelper
+	{
+        void GetTextOptions(IVsTextView view, out int flags, out int tabsize, out int indentsize);
+    }
+
+    [ComVisible(true), Guid(IID.VisualDHelper)]
+    [ClassInterface(ClassInterfaceType.None)]
+    public class VisualDHelper : IVisualDHelper
+    {
+        [DllImport("visuald.dll")]
+        public static extern int RegisterHelper(IVisualDHelper helper);
+        [DllImport("visuald.dll")]
+        public static extern int UnregisterHelper(IVisualDHelper helper);
+
+        static IVsEditorAdaptersFactoryService editorFactory;
+
+        public static bool setFactory(IVsEditorAdaptersFactoryService factory)
+        {
+            editorFactory = factory;
+            return true;
+        }
+
+        public VisualDHelper()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+
+        public void GetTextOptions(IVsTextView view, out int flags, out int tabsize, out int indentsize)
+        {
+            if (editorFactory == null)
+                throw new COMException();
+
+            IWpfTextView wv = editorFactory.GetWpfTextView(view);
+            if (wv == null || wv.Options == null)
+                throw new COMException();
+            
+            bool spaces = wv.Options.GetOptionValue<bool>(DefaultOptions.ConvertTabsToSpacesOptionId);
+            flags = spaces ? 1 : 0;
+            tabsize = wv.Options.GetOptionValue<int>(DefaultOptions.TabSizeOptionId);
+            indentsize = wv.Options.GetOptionValue<int>(DefaultOptions.IndentSizeOptionId);
+        }
+
+    }
 }

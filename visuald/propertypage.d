@@ -1677,9 +1677,12 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor OPTLINK dependencies"));
 		//AddControl("Remove project item", mDeleteFiles = 
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
-		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 2;
+		AddControl("JSON paths",        mJSNPath = new MultiLineText(mCanvas));
 		AddControl("Resource includes", mIncPath = new Text(mCanvas));
-		AddControl("Compile and Run options", mCompileAndRunOpts = new Text(mCanvas));
+		AddControl("Compile + Run options", mCompileAndRunOpts = new Text(mCanvas));
+		AddControl("Compile + Debug options", mCompileAndDbgOpts = new Text(mCanvas));
+		AddControl("   Debugger",       mCompileAndDbgEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1694,6 +1697,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		mIncPath.setText(opts.IncSearchPath);
 		mJSNPath.setText(opts.JSNSearchPath);
 		mCompileAndRunOpts.setText(opts.compileAndRunOpts);
+		mCompileAndDbgOpts.setText(opts.compileAndDbgOpts);
+		mCompileAndDbgEngine.setSelection(opts.compileAndDbgEngine);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1709,6 +1714,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
 		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
 		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts); 
+		changes += changeOption(mCompileAndDbgOpts.getText(), opts.compileAndDbgOpts, refopts.compileAndDbgOpts); 
+		changes += changeOption(mCompileAndDbgEngine.getSelection(), opts.compileAndDbgEngine, refopts.compileAndDbgEngine); 
 		return changes;
 	}
 
@@ -1721,6 +1728,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 	//ComboBox mDeleteFiles;
 	Text mIncPath;
 	Text mCompileAndRunOpts;
+	Text mCompileAndDbgOpts;
+	ComboBox mCompileAndDbgEngine;
 	MultiLineText mJSNPath;
 }
 
@@ -1740,7 +1749,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
-debug	AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
+		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
@@ -1751,7 +1760,7 @@ debug	AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage 
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
 		mColorizeCoverage.setChecked(opts.ColorizeCoverage);
-debug	mShowCoverageMargin.setChecked(opts.showCoverageMargin);
+		mShowCoverageMargin.setChecked(opts.showCoverageMargin);
 		mAutoOutlining.setChecked(opts.autoOutlining);
 		mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
@@ -1765,7 +1774,7 @@ debug	mShowCoverageMargin.setChecked(opts.showCoverageMargin);
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
 		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage); 
-debug	changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin); 
+		changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin); 
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
 		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
@@ -1775,7 +1784,7 @@ debug	changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverage
 
 	CheckBox mColorizeVersions;
 	CheckBox mColorizeCoverage;
-debug CheckBox mShowCoverageMargin;
+	CheckBox mShowCoverageMargin;
 	CheckBox mAutoOutlining;
 	CheckBox mParseSource;
 	CheckBox mPasteIndent;

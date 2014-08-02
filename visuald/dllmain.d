@@ -172,10 +172,12 @@ void WritePackageDef(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow
 }
 
 extern(Windows)
-bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt)
+bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt, float* covPercent)
 {
+	if (!Package.s_instance)
+		return false; // not yet loaded as a package
 	string filename = to!string(fname);
-	return Package.GetLanguageService().GetCoverageData(filename, line, data, cnt);
+	return Package.GetLanguageService().GetCoverageData(filename, line, data, cnt, covPercent);
 }
 
 ///////////////////////////////////////////////////////////////////////
