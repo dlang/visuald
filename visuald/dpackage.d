@@ -1124,6 +1124,8 @@ class GlobalOptions
 	bool UFCSExpansions;
 	string VDServerIID;
 	string compileAndRunOpts;
+	string compileAndDbgOpts;
+	int compileAndDbgEngine;
 
 	string[] coverageBuildDirs;
 	string[] coverageExecutionDirs;
@@ -1336,6 +1338,8 @@ class GlobalOptions
 			IncSearchPath     = getStringOpt("IncSearchPath");
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
+			compileAndDbgOpts = getStringOpt("compileAndDbgOpts", "-g");
+			compileAndDbgEngine = getIntOpt("compileAndDbgEngine", 0);
 
 			string execDirs   = getStringOpt("coverageExecutionDirs", "");
 			coverageExecutionDirs = split(execDirs, ";");
@@ -1429,6 +1433,8 @@ class GlobalOptions
 			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
+			keyToolOpts.Set("compileAndDbgOpts",   toUTF16(compileAndDbgOpts));
+			keyToolOpts.Set("compileAndDbgEngine", compileAndDbgEngine);
 
 			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
 			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));
@@ -1558,8 +1564,6 @@ class GlobalOptions
 
 	string getLinkerPath(bool x64, string workdir, string dmdpath, string *libs = null, string* options = null)
 	{
-		getVCLibraryPaths();
-
 		string path = "link.exe";
 		string inifile = findScIni(workdir, dmdpath, false);
 		if(!inifile.empty)
@@ -1701,6 +1705,7 @@ class GlobalOptions
 			}
 	}
 
+	version(none)
 	string[] getVCLibraryPaths()
 	{
 		IVsProfileDataManager pdm = queryService!(SVsProfileDataManager,IVsProfileDataManager)();

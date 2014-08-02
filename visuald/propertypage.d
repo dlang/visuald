@@ -1677,9 +1677,12 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor OPTLINK dependencies"));
 		//AddControl("Remove project item", mDeleteFiles = 
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
-		AddControl("JSON paths",       mJSNPath = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 2;
+		AddControl("JSON paths",        mJSNPath = new MultiLineText(mCanvas));
 		AddControl("Resource includes", mIncPath = new Text(mCanvas));
-		AddControl("Compile and Run options", mCompileAndRunOpts = new Text(mCanvas));
+		AddControl("Compile + Run options", mCompileAndRunOpts = new Text(mCanvas));
+		AddControl("Compile + Debug options", mCompileAndDbgOpts = new Text(mCanvas));
+		AddControl("   Debugger",       mCompileAndDbgEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1694,6 +1697,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		mIncPath.setText(opts.IncSearchPath);
 		mJSNPath.setText(opts.JSNSearchPath);
 		mCompileAndRunOpts.setText(opts.compileAndRunOpts);
+		mCompileAndDbgOpts.setText(opts.compileAndDbgOpts);
+		mCompileAndDbgEngine.setSelection(opts.compileAndDbgEngine);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -1709,6 +1714,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
 		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
 		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts); 
+		changes += changeOption(mCompileAndDbgOpts.getText(), opts.compileAndDbgOpts, refopts.compileAndDbgOpts); 
+		changes += changeOption(mCompileAndDbgEngine.getSelection(), opts.compileAndDbgEngine, refopts.compileAndDbgEngine); 
 		return changes;
 	}
 
@@ -1721,6 +1728,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 	//ComboBox mDeleteFiles;
 	Text mIncPath;
 	Text mCompileAndRunOpts;
+	Text mCompileAndDbgOpts;
+	ComboBox mCompileAndDbgEngine;
 	MultiLineText mJSNPath;
 }
 

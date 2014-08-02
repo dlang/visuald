@@ -149,8 +149,8 @@ vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
 
 mago:
-	cd ..\..\mago64 && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
-	cd ..\..\mago64 && devenv /Build "Release|x64" /Project "MagoRemote" magodbg_2010.sln
+	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
+	cd ..\..\mago && devenv /Build "Release|x64" /Project "MagoRemote" magodbg_2010.sln
 
 cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln

@@ -57,5 +57,17 @@ $(P As a result, Windows Defender can harm performance of Visual D. To avoid thi
 add the Visual Studio process devenv.exe to the list of Excluded Processes in the 
 settings of Windows Defender.)
 
+$(H2 Import libraries from C/C++ projects )
+
+$(P A Visual C/C++ DLL project reports two outputs to dependent projects: the DLL and the import library.)
+
+$(P Unfortunately, the import library reported still contains unexpanded macros and the current working directory prepended 
+instead of the project directory. The actual replacements are not accessible to Visual D, so it assumes the
+the import library to be placed along-side the DLL.)
+
+$(P If the C++ DLL project is converted to a static library project, the import library setting is kept, though 
+unaccessible from the configuration page. The import library is falsely reported as an output. To mitigate
+this problem, Visual D ignores the import library if the main output is also a library.)
+
 Macros:
 	TITLE=Known Issues

@@ -586,36 +586,41 @@ version(tip)
 		string stool = cfg.GetStaticCompileTool(pFile, cfg.getCfgName());
 		if(stool == "DMD")
 			stool = "DMDsingle";
-		if(stool == "DMDsingle")
+		if(stool == "DMDsingle" && rdmd)
 		{
-			if(rdmd)
+			stool = "RDMD";
+			if(selText.length)
 			{
-				stool = "RDMD";
-				if(selText.length)
+				string[] lines = splitLines(selText);
+				foreach(ln; lines)
 				{
-					string[] lines = splitLines(selText);
-					foreach(ln; lines)
-					{
-						string line = strip(detab(ln));
-						if(line.length)
-							addopt ~= " \"--eval=" ~ replace(line, "\"", "\\\\\\\"") ~ "\"";
-					}
+					string line = strip(detab(ln));
+					if(line.length)
+						addopt ~= " \"--eval=" ~ replace(line, "\"", "\\\\\\\"") ~ "\"";
 				}
 			}
-			else if(run)
-				addopt ~= " -run";
 		}
-		if(stool == "RDMD")
-			addopt = " " ~ Package.GetGlobalOptions().compileAndRunOpts ~ addopt;
+		if(stool == "RDMD" && run)
+			addopt = " --build-only " ~ Package.GetGlobalOptions().compileAndRunOpts ~ addopt;
+		else if(stool == "RDMD" && dbg)
+			addopt = " --build-only " ~ Package.GetGlobalOptions().compileAndDbgOpts ~ addopt;
 
-		string cmd = cfg.GetCompileCommand(pFile, !run, stool, addopt);
+		string cmd = cfg.GetCompileCommand(pFile, !dbg && !run, stool, addopt);
 		if(cmd.length)
 		{
 			cmd ~= "if not errorlevel 1 echo Compilation successful.\n";
 			string workdir = cfg.GetProjectDir();
 			string outfile = cfg.GetOutputFile(pFile, stool);
-			string cmdfile = makeFilenameAbsolute(outfile ~ ".syntax", workdir);
-			removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
+			outfile = makeFilenameAbsolute(outfile, workdir);
+			string cmdfile = outfile ~ ".syntax";
+			removeCachedFileTime(outfile);
+
+			if(run)
+			{
+				cmd ~= "if errorlevel 1 exit %ERRORLEVEL% /B\n";
+				cmd ~= quoteFilename(outfile) ~ "\n";
+				cmd ~= "echo Execution result code: %ERRORLEVEL%\n";
+			}
 			auto pane = getBuildOutputPane();
 			scope(exit) release(pane);
 			clearBuildOutputPane();
@@ -624,12 +629,11 @@ version(tip)
 			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
 
 			if(run)
-				Package.GetGlobalOptions().addExecutionPath(cfg.GetProjectDir(), null);
+				Package.GetGlobalOptions().addExecutionPath(workdir, null);
 
 			if(dbg && hr == S_OK)
 			{
-				string prg = stool == "RDMD" ? stripExtension(fname) ~ ".exe" : outfile;
-				cfg._DebugLaunch(prg, dirName(fname), null);
+				cfg._DebugLaunch(outfile, dirName(fname), null, Package.GetGlobalOptions().compileAndDbgEngine);
 			}
 		}
 		return S_OK;

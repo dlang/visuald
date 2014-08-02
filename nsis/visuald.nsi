@@ -90,7 +90,7 @@
   !define MAGO_ENGINE_KEY         AD7Metrics\Engine\${MAGO_CLSID}
   !define MAGO_EXCEPTION_KEY      AD7Metrics\Exception\${MAGO_CLSID}
   !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010-2013 Aldo J. Nunez"
-  !define MAGO_SOURCE             ..\..\..\mago64
+  !define MAGO_SOURCE             ..\..\..\mago
 
   !searchparse /file ${MAGO_SOURCE}/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
   !searchparse /file ${MAGO_SOURCE}/include/magoversion.h "#define MAGO_VERSION_MINOR " MAGO_VERSION_MINOR
@@ -419,9 +419,9 @@ ${MementoSection} "mago" SecMago
 
   ${SetOutPath} "$INSTDIR\Mago"
   ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatDE.dll
-  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatEE.dll
+;;  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatEE.dll
   ${File} ${MAGO_SOURCE}\bin\Win32\Release\ udis86.dll
-  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ CVSTI.dll
+;;  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ CVSTI.dll
   ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoRemote.exe
   ${File} ${MAGO_SOURCE}\ LICENSE.TXT
   ${File} ${MAGO_SOURCE}\ NOTICE.TXT

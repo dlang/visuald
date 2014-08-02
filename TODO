@@ -145,12 +145,20 @@ Unsorted
 - goto definition fallback to JSON
 - highlight compiler-magic identifiers
 
-- compile from selection/buffer (through rdmd)
-- save file before "Compile & run"
-- coverage line highlight after "Compile & run" doesn't update
-- better keeping track of line changes
-- compile & debug
-- margin for profiler
++ compile from selection/buffer (through rdmd)
++ save file before "Compile & run"
++ coverage line highlight after "Compile & run" doesn't update
++ better keeping track of line changes
+
++ compile & debug
++ margin for profiler
 
 + formatting does not work with .editorConfig
++ do not report build failure when run returns non-zero result
 - custom file props: switch and apply changes next file
+
+- compile and run : set VCInstallDir for -m64
++ mago keeps image locked when terminating debugger
+- -gc/-g depending on debug engine
+- dub upport
+- dustmite support

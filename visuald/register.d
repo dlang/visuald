@@ -422,7 +422,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	wstring registrationRoot = GetRegistrationRoot(pszRegRoot, useRanu);
 	wstring dllPath = GetDLLName(g_hInst);
 	wstring templatePath = GetTemplatePath(dllPath);
-	wstring vdextPath = dirName(dllPath) ~ "/vdextensions.dll"w;
+	wstring vdextPath = dirName(dllPath) ~ "\\vdextensions.dll"w;
 
 	try
 	{
