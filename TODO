@@ -16,7 +16,7 @@ Project:
 - clean/build/rebuild only project not working
 - midl compiler?
 - manifest compiler?
-- no dependencies to files referenced by import expressions
++ no dependencies to files referenced by import expressions
 - remove auto-tool?
 - automation objects incomplete?
 - exceptions when opening rc-file with project
@@ -155,10 +155,11 @@ Unsorted
 
 + formatting does not work with .editorConfig
 + do not report build failure when run returns non-zero result
-- custom file props: switch and apply changes next file
+- custom file props: switch and apply changes next file?
 
 - compile and run : set VCInstallDir for -m64
 + mago keeps image locked when terminating debugger
 - -gc/-g depending on debug engine
-- dub upport
+- dub support
 - dustmite support
+- configuration of dependent project not read from configuration manager

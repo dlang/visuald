@@ -105,7 +105,8 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	override HRESULT Collection(/+[out, retval]+/ dte.ProjectItems * lppcReturn)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		*lppcReturn = addref(mParent);
+		return S_OK;
 	}
 
 	/+[id(0x00000038), propget, helpstring("Returns the Properties collection."), helpcontext(0x0000eaf9)]+/
@@ -118,8 +119,8 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	/+[id(0x000000c8), propget, helpstring("Returns the top-level extensibility object."), helpcontext(0x0000eac1)]+/
 	override HRESULT DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
 	{
-		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		logCall("%s.get_DTE()", this);
+		return GetDTE(lppaReturn);
 	}
 
 	/+[id(0x000000c9), propget, helpstring("Returns a GUID String indicating the kind or type of the object."), helpcontext(0x0000eadd)]+/
@@ -514,7 +515,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		/* [retval][out] */ dte.DTE	*lppaReturn)
 	{
 		logCall("%s.get_DTE()", this);
-		return returnError(E_NOTIMPL);
+		return GetDTE(lppaReturn);
 	}
 
 	override int Kind( 
@@ -664,8 +665,8 @@ class ExtProperties : DisposingDispatchObject, dte.Properties
 	/+[id(0x00000064), propget, helpstring("Returns the top-level extensibility object."), helpcontext(0x0000eac1)]+/
 	override HRESULT DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
 	{
-		mixin(LogCallMix);
-		return mProject.DTE(lppaReturn);
+		logCall("%s.get_DTE()", this);
+		return GetDTE(lppaReturn);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -824,8 +825,8 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 	/+[id(0x00000064), propget, helpstring("Returns the top-level extensibility object."), helpcontext(0x0000eac1)]+/
 	HRESULT DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
 	{
-		mixin(LogCallMix);
-		return mProperties.DTE(lppaReturn);
+		logCall("%s.get_DTE()", this);
+		return GetDTE(lppaReturn);
 	}
 
 
@@ -931,7 +932,22 @@ class ExtProject : ExtProjectItem, dte.Project
 		/* [retval][out] */ dte.Projects *lppaReturn)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		dte2.DTE2 _dte = GetDTE();
+		if(!_dte)
+			return returnError(E_FAIL);
+		scope(exit) release(_dte);
+
+		IUnknown solution; // dte.Solution not derived from IUnknown?!
+		if(_dte.Solution(cast(dte.Solution*)&solution) != S_OK || !solution)
+			return returnError(E_FAIL);
+		scope(exit) release(solution);
+
+		dte._Solution _solution = qi_cast!(dte._Solution)(solution);
+		if(!_solution)
+			return returnError(E_FAIL);
+		scope(exit) release(_solution);
+
+		return _solution.Projects(lppaReturn);
 	}
 
 	override int SaveAs( 
@@ -945,11 +961,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		/* [retval][out] */ dte.DTE	*lppaReturn)
 	{
 		logCall("%s.get_DTE()", this);
-		dte._DTE _dte = queryService!(dte._DTE);
-		if(!_dte)
-			return returnError(E_NOINTERFACE);
-		scope(exit) _dte.Release();
-		return _dte.DTE(lppaReturn);
+		return GetDTE(lppaReturn);
 	}
 
 	override int Kind( 

@@ -645,7 +645,7 @@ Version history
   * added editor margin to display coverage counters and percentage
   * support tab/indentation settings set by .editorconfig plugin
   * optlink now always called with /DELEXE to avoid keeping broken binary
-  * added workaround for bad import library being passed by C/C++ projects
+  * bugzilla 11035: added workaround for bad import library being passed by C/C++ projects
   * tweaked "Compile & Run" to distinguish between compile and execution errors
   * added "Compile & Debug" command
   * new mago version 1.0
@@ -654,3 +654,8 @@ Version history
     - fixed not closing executable file causing linker to fail when rebuilding
     - fixed breakpoints not set in all instances of a template
   * new dparser version: 78a007c9aaee915e2824f30c5c7293e8853343c4
+  * add option "up to date with same time" to custom build
+  * target no longer rebuilt if only custom builds necessary
+  * add options for -gx and -allinst
+  * bugzilla 12584: fixed global options disappearing when resizing window
+  * bugzilla 13360: implemented automation object methods "DTE" and "Collection"
