@@ -338,6 +338,16 @@ dte2.DTE2 GetDTE()
 	return spvsDTE;
 }
 
+int GetDTE(dte.DTE *lppaReturn)
+{
+	dte._DTE _dte = queryService!(dte._DTE);
+	if(!_dte)
+		return returnError(E_NOINTERFACE);
+	scope(exit) _dte.Release();
+	return _dte.DTE(lppaReturn);
+}
+
+
 string getStringProperty(dte.Properties props, string propName, string def = null)
 {
 	VARIANT index;

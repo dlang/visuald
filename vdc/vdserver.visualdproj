@@ -89,6 +89,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName)_d.exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>2</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -183,6 +184,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -230,10 +232,10 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -277,6 +279,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>2</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -371,6 +374,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -465,6 +469,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -559,6 +564,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -653,6 +659,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -747,6 +754,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -841,6 +849,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName)_d.exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS -m32ms -debuglib=phobos,druntime</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -935,6 +944,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />

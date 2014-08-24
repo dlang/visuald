@@ -161,6 +161,8 @@ class ProjectOptions
 	bool cov;		// generate code coverage data
 	bool nofloat;		// code should not pull in floating point support
 	bool ignoreUnsupportedPragmas;	// rather than error on them
+	bool allinst;		// generate code for all template instantiations
+	bool stackStomp;	// add stack stomp code
 	float Dversion;		// D version number
 
 	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
@@ -351,6 +353,10 @@ class ProjectOptions
 			cmd ~= " -nofloat";
 		if(ignoreUnsupportedPragmas)
 			cmd ~= " -ignore";
+		if(allinst)
+			cmd ~= " -allinst";
+		if(stackStomp)
+			cmd ~= " -gx";
 
 		if(doDocComments && compile && !syntaxOnly)
 		{
@@ -1071,6 +1077,8 @@ class ProjectOptions
 		elem ~= new xml.Element("nofloat", toElem(nofloat));
 		elem ~= new xml.Element("Dversion", toElem(Dversion));
 		elem ~= new xml.Element("ignoreUnsupportedPragmas", toElem(ignoreUnsupportedPragmas));
+		elem ~= new xml.Element("allinst", toElem(allinst));
+		elem ~= new xml.Element("stackStomp", toElem(stackStomp));
 
 		elem ~= new xml.Element("compiler", toElem(compiler));
 		elem ~= new xml.Element("otherDMD", toElem(otherDMD));
@@ -1193,7 +1201,9 @@ class ProjectOptions
 		fromElem(elem, "cov", cov);
 		fromElem(elem, "nofloat", nofloat);
 		fromElem(elem, "Dversion", Dversion);
-		fromElem(elem, "ignoreUnsupportedPragmas", ignoreUnsupportedPragmas );
+		fromElem(elem, "ignoreUnsupportedPragmas", ignoreUnsupportedPragmas);
+		fromElem(elem, "allinst", allinst);
+		fromElem(elem, "stackStomp", stackStomp);
 
 		fromElem(elem, "compiler", compiler);
 		fromElem(elem, "otherDMD", otherDMD);
@@ -2304,6 +2314,8 @@ class Config :	DisposingComObject,
 		long sourcetm = getNewestFileTime(deps, newestFile);
 
 		if(targettm > sourcetm)
+			return true;
+		if(file.GetUptodateWithSameTime(getCfgName()) && targettm == sourcetm)
 			return true;
 		if(preason)
 			*preason = newestFile ~ " is newer";

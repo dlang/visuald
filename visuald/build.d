@@ -287,7 +287,7 @@ else
 		}
 	}
 	//////////////////////////////////////////////////////////////////////
-	bool buildCustomFile(CFileNode file)
+	bool buildCustomFile(CFileNode file, ref bool built)
 	{
 		string reason;
 		if(!mConfig.isUptodate(file, &reason))
@@ -304,23 +304,28 @@ else
 				if (hr != S_OK)
 					return false; // stop compiling
 			}
+			built = true;
 		}
 		return true;
 	}
 	
 	/** build non-D files */
-	bool doCustomBuilds()
+	bool doCustomBuilds(out bool hasCustomBuilds, out int numCustomBuilds)
 	{
 		mixin(LogCallMix2);
 		
+		bool built;
 		// first build custom files with dependency graph
 		CFileNode[] files = BuildDependencyList();
 		foreach(file; files)
 		{
 			if(isStopped())
 				return false;
-			if(!buildCustomFile(file))
+			if(!buildCustomFile(file, built))
 				return false;
+			hasCustomBuilds = true;
+			if(built)
+				numCustomBuilds++;
 		}
 		
 		// now build files not in the dependency graph (d files in single compilation modes)
@@ -332,8 +337,12 @@ else
 						return false;
 					if(isStopped())
 						return true;
-					if(!buildCustomFile(file))
+					if(!buildCustomFile(file, built))
 						return true;
+
+					hasCustomBuilds = true;
+					if(built)
+						numCustomBuilds++;
 				}
 				return false;
 			});
@@ -377,8 +386,14 @@ else
 					mkdirRecurse(modpath);
 			}
 			
-			if(!doCustomBuilds())
+			bool hasCustomBuilds;
+			int numCustomBuilds;
+			if(!doCustomBuilds(hasCustomBuilds, numCustomBuilds))
 				return false;
+
+			if(hasCustomBuilds)
+				if(targetIsUpToDate()) // only recheck target if custom builds exist
+					return true; // no need to rebuild target if custom builds did not change target dependencies
 
 			if(!mLastUptodateFailure.empty)
 				showUptodateFailure(mLastUptodateFailure);
@@ -467,6 +482,11 @@ else
 		if(!customFilesUpToDate())
 			return false;
 
+		return targetIsUpToDate();
+	}
+
+	bool targetIsUpToDate()
+	{
 		string workdir = mConfig.GetProjectDir();
 		string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
 

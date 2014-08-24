@@ -247,6 +247,15 @@ class CFileNode : CHierNode,
 		createOptions(cfg).mLinkOut = lnk;
 	}
 
+	bool GetUptodateWithSameTime(string cfg)
+	{
+		return getOptions(cfg).mUptodateWithSameTime;
+	}
+	void SetUptodateWithSameTime(string cfg, bool uptodateWithSameTime)
+	{
+		createOptions(cfg).mUptodateWithSameTime = uptodateWithSameTime;
+	}
+
 	Options[string] GetConfigOptions() { return mConfigOptions; }
 
 	override int DoDefaultAction()
@@ -547,6 +556,7 @@ private:
 		string mOutFile;
 		string mCustomCmd;
 		bool mLinkOut;
+		bool mUptodateWithSameTime;
 	}
 	Options mGlobalOptions;
 	Options[string] mConfigOptions;

@@ -45,8 +45,10 @@ class PropertyWindow : Window
 
 		switch (uMsg) {
 			case WM_SIZE:
+				RECT r;
+				GetWindowRect(&r);
 				int w = LOWORD(lParam);
-				mPropertyPage.updateSizes(w);
+				mPropertyPage.updateSizes(r.left, w);
 				break;
 
 			case TCN_SELCHANGING:
@@ -186,7 +188,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		//return returnError(E_NOTIMPL);
 	}
 
-	void updateSizes(int width)
+	void updateSizes(int windowLeft, int width)
 	{
 		foreach(w; mResizableWidgets)
 		{
@@ -194,7 +196,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 			if(w && w.hwnd)
 			{
 				w.GetWindowRect(&r);
-				r.right = width - kMargin;
+				r.right = windowLeft + width - kMargin;
 				w.SetWindowPos(null, &r, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 			}
 		}
@@ -940,6 +942,11 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 
 class DmdCodeGenPropertyPage : ProjectPropertyPage
 {
+	this()
+	{
+		kNeededLines = 12;
+	}
+
 	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Code Generation"; }
 
@@ -954,6 +961,8 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		AddControl("", mInline        = new CheckBox(mCanvas, "Expand Inline Functions"));
 		AddControl("", mNoFloat       = new CheckBox(mCanvas, "No Floating Point Support"));
 		AddControl("", mGenStackFrame = new CheckBox(mCanvas, "Always generate stack frame (DMD 2.056+)"));
+		AddControl("", mStackStomp    = new CheckBox(mCanvas, "add stack stomp code (DMD 2.062+)"));
+		AddControl("", mAllInst       = new CheckBox(mCanvas, "generate code for all template instantiations (DMD 2.064+)"));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -966,6 +975,8 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		mInline.setChecked(options.useInline);
 		mNoFloat.setChecked(options.nofloat);
 		mGenStackFrame.setChecked(options.genStackFrame);
+		mStackStomp.setChecked(options.stackStomp);
+		mAllInst.setChecked(options.allinst);
 
 		mNoboundscheck.setEnabled(options.Dversion > 1);
 	}
@@ -981,6 +992,8 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		changes += changeOption(mInline.isChecked(), options.useInline, refoptions.useInline);
 		changes += changeOption(mNoFloat.isChecked(), options.nofloat, refoptions.nofloat);
 		changes += changeOption(mGenStackFrame.isChecked(), options.genStackFrame, refoptions.genStackFrame);
+		changes += changeOption(mStackStomp.isChecked(), options.stackStomp, refoptions.stackStomp);
+		changes += changeOption(mAllInst.isChecked(), options.allinst, refoptions.allinst);
 		return changes;
 	}
 
@@ -992,6 +1005,8 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 	CheckBox mInline;
 	CheckBox mNoFloat;
 	CheckBox mGenStackFrame;
+	CheckBox mStackStomp;
+	CheckBox mAllInst;
 }
 
 class DmdMessagesPropertyPage : ProjectPropertyPage
@@ -1398,6 +1413,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 		AddControl("Other Dependencies", mDependencies = new Text(mCanvas));
 		AddControl("Output File", mOutFile = new Text(mCanvas));
 		AddControl("", mLinkOut = new CheckBox(mCanvas, "Add output to link"));
+		AddControl("", mUptodateWithSameTime = new CheckBox(mCanvas, "Assume output up to date with same time as input"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -1417,6 +1433,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 		mDependencies.setEnabled(!perConfigChanged && (isCustom || isRc));
 		mOutFile.setEnabled(!perConfigChanged && isCustom);
 		mLinkOut.setEnabled(!perConfigChanged && isCustom);
+		mUptodateWithSameTime.setEnabled(!perConfigChanged && isCustom);
 	}
 
 	string GetCfgName()
@@ -1439,6 +1456,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 		mDependencies.setText(node.GetDependencies(cfgname)); 
 		mOutFile.setText(node.GetOutFile(cfgname)); 
 		mLinkOut.setChecked(node.GetLinkOutput(cfgname)); 
+		mUptodateWithSameTime.setChecked(node.GetUptodateWithSameTime(cfgname)); 
 
 		enableControls(tool);
 	}
@@ -1456,6 +1474,8 @@ class FilePropertyPage : ConfigNodePropertyPage
 		changes += changeOptionDg!string(mDependencies.getText(), (s) => node.SetDependencies(cfgname, s), refnode.GetDependencies(cfgname)); 
 		changes += changeOptionDg!string(mOutFile.getText(),      (s) => node.SetOutFile(cfgname, s),      refnode.GetOutFile(cfgname)); 
 		changes += changeOptionDg!bool(mLinkOut.isChecked(),      (b) => node.SetLinkOutput(cfgname, b),   refnode.GetLinkOutput(cfgname)); 
+		changes += changeOptionDg!bool(mUptodateWithSameTime.isChecked(), 
+									   (b) => node.SetUptodateWithSameTime(cfgname, b), refnode.GetUptodateWithSameTime(cfgname)); 
 		enableControls(tool);
 		return changes;
 	}
@@ -1468,6 +1488,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 	Text mDependencies;
 	Text mOutFile;
 	CheckBox mLinkOut;
+	CheckBox mUptodateWithSameTime;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

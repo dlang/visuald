@@ -2395,6 +2395,7 @@ Error:
 				node.SetOutFile(cfg, xml.getAttribute(file, "outfile"));
 				node.SetCustomCmd(cfg, xml.getAttribute(file, "customcmd"));
 				node.SetLinkOutput(cfg, xml.getAttribute(file, "linkoutput") == "true");
+				node.SetUptodateWithSameTime(cfg, xml.getAttribute(file, "uptodateWithSameTime") == "true");
 			}
 
 			parseFileOptions(node, null, file);
@@ -2476,6 +2477,8 @@ Error:
 					setAttrIfNotEmpty(xmlFile, "customcmd", file.GetCustomCmd(cfg));
 					if(file.GetLinkOutput(cfg))
 						xml.setAttribute(xmlFile, "linkoutput", "true");
+					if(file.GetUptodateWithSameTime(cfg))
+						xml.setAttribute(xmlFile, "uptodateWithSameTime", "true");
 				}
 				writeFileConfig(xmlfile, file, null);
 
