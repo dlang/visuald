@@ -576,7 +576,7 @@ class VDServer : ComObject, IVDServer
 					});
 				}
 
-		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, locData.length);
+		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, cast(ULONG) locData.length);
 		if(!sa)
 			return E_OUTOFMEMORY;
 

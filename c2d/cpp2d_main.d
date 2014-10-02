@@ -822,6 +822,8 @@ unittest
 }
 
 ///////////////////////////////////////////////////////////////
+version(Win32) // different mangling for Win64
+{
 extern extern(C) __gshared ModuleInfo D4core3sys7windows10stacktrace12__ModuleInfoZ;
 
 void disableStacktrace()
@@ -886,3 +888,4 @@ shared static this()
 	disableStacktrace();
 }
 
+}

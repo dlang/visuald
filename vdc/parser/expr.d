@@ -172,11 +172,18 @@ class AndExpression : BinaryExpression
 //    ShiftExpression !in ShiftExpression
 class CmpExpression : BinaryExpression
 {
-	mixin BinaryExpr!(ast.CmpExpression, PREC.rel, "N", ShiftExpression, 
-					  TOK_equal, TOK_notequal, TOK_is, TOK_notidentity,
-					  TOK_lt, TOK_le, TOK_gt, TOK_ge, 
-					  TOK_unord, TOK_ue, TOK_lg, TOK_leg, TOK_ule, TOK_ul, TOK_uge, TOK_ug,
-					  TOK_in, TOK_notcontains);
+	version(GNU) 
+		mixin BinaryExpr!(ast.CmpExpression, PREC.rel, "N", ShiftExpression, 
+						  TOK_equal, TOK_notequal, TOK_is, TOK_notidentity,
+						  TOK_lt, TOK_le, TOK_gt, TOK_ge, 
+						  // TOK_unord, TOK_ue, TOK_lg, TOK_leg, TOK_ule, TOK_ul, TOK_uge, TOK_ug,
+						  TOK_in, TOK_notcontains);
+	else
+		mixin BinaryExpr!(ast.CmpExpression, PREC.rel, "N", ShiftExpression, 
+						  TOK_equal, TOK_notequal, TOK_is, TOK_notidentity,
+						  TOK_lt, TOK_le, TOK_gt, TOK_ge, 
+						  TOK_unord, TOK_ue, TOK_lg, TOK_leg, TOK_ule, TOK_ul, TOK_uge, TOK_ug,
+						  TOK_in, TOK_notcontains);
 }
 
 //-- GRAMMAR_BEGIN --

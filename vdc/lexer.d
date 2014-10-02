@@ -1203,6 +1203,8 @@ enum TOK_binaryOperatorFirst = TOK_xor;
 enum TOK_binaryOperatorLast  = TOK_catass;
 enum TOK_assignOperatorFirst = TOK_assign;
 enum TOK_assignOperatorLast  = TOK_catass;
+enum TOK_unorderedOperatorFirst = TOK_unord;
+enum TOK_unorderedOperatorLast  = TOK_ug;
 
 enum TOK_error = -1;
 
