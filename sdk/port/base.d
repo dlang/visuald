@@ -400,6 +400,43 @@ alias InterlockedOr _InterlockedOr;
 extern(Windows) LONG InterlockedXor (LONG /*volatile*/ *Destination, LONG Value);
 alias InterlockedXor _InterlockedXor;
 
+version(Win64)
+{
+	private import core.atomic;
+
+	LONG InterlockedIncrement (/*__inout*/ LONG /*volatile*/ *Addend)
+	{
+		return atomicOp!"+"(*cast(shared(LONG)*)Addend, 1);
+	}
+	LONG InterlockedDecrement (/*__inout*/ LONG /*volatile*/ *Addend)
+	{
+		return atomicOp!"+"(*cast(shared(LONG)*)Addend, -1);
+	}
+	LONG InterlockedExchange (/*__inout*/ LONG /*volatile*/ *Target, /*__in*/ LONG Value)
+	{
+		LONG old;
+		do
+			old = *Target;
+		while( !cas( cast(shared(LONG)*)Target, old, Value ) );
+		return old;
+	}
+	LONG InterlockedExchangeAdd (/*__inout*/ LONG /*volatile*/ *Target, /*__in*/ LONG Value)
+	{
+		LONG old;
+		do
+			old = *Target;
+		while( !cas( cast(shared(LONG)*)Target, old, old + Value ) );
+		return old;
+	}
+	LONG InterlockedCompareExchange (/*__inout*/ LONG /*volatile*/ *Destination, /*__in*/ LONG ExChange, /*__in*/ LONG Comperand)
+	{
+		if( cas( cast(shared(LONG)*)Destination, Comperand, ExChange ) )
+			return Comperand;
+		return Comperand - 1;
+	}
+}
+else
+{
 extern(Windows) LONG InterlockedIncrement (/*__inout*/ LONG /*volatile*/ *Addend);
 extern(Windows) LONG InterlockedDecrement (/*__inout*/ LONG /*volatile*/ *Addend);
 
@@ -407,6 +444,7 @@ extern(Windows) LONG InterlockedExchange (/*__inout*/ LONG /*volatile*/ *Target,
 extern(Windows) LONG InterlockedExchangeAdd (/*__inout*/ LONG /*volatile*/ *Target, /*__in*/ LONG Value);
 
 extern(Windows) LONG InterlockedCompareExchange (/*__inout*/ LONG /*volatile*/ *Destination, /*__in*/ LONG ExChange, /*__in*/ LONG Comperand);
+}
 
 extern(Windows) 
 LONGLONG /*__cdecl*/ InterlockedCompareExchange64 (
@@ -422,7 +460,8 @@ alias void WriteULongPtrRelease;
 alias void WriteULongPtrNoFence;
 alias void WriteULongPtrRaw;
 
-extern(C) DWORD __readfsdword (DWORD Offset) { asm { naked; mov EAX,[ESP+4]; mov EAX, FS:[EAX]; } }
+version(GNU) extern(C) DWORD __readfsdword (DWORD Offset) { assert(0); }
+else         extern(C) DWORD __readfsdword (DWORD Offset) { asm { naked; mov EAX,[ESP+4]; mov EAX, FS:[EAX]; } }
 
 enum TRUE = 1;
 public import sdk.win32.winbase;

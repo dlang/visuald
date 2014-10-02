@@ -68,10 +68,10 @@ string getNameWithoutExt(string fname)
 string reindent(string txt, int indent, int tabsize)
 {
 	string ntxt;
-	int pos = 0;
+	size_t pos = 0;
 	for( ; ; )
 	{
-		int p = indexOf(txt[pos .. $], '\n');
+		ptrdiff_t p = indexOf(txt[pos .. $], '\n');
 		if(p < 0)
 			break;
 		ntxt ~= txt[pos .. pos + p + 1];
@@ -133,16 +133,16 @@ string cpp_string(string txt)
 string removeDuplicateEmptyLines(string txt)
 {
 	string ntxt;
-	uint npos = 0;
-	uint pos = 0;
+	size_t npos = 0;
+	size_t pos = 0;
 	while(pos < txt.length)
 	{
 		dchar ch = decode(txt, pos);
 		if(ch == '\n')
 		{
 			uint nl = 0;
-			uint nlpos = pos; // positions after nl
-			uint lastnlpos = pos;
+			size_t nlpos = pos; // positions after nl
+			size_t lastnlpos = pos;
 			while(pos < txt.length)
 			{
 				ch = decode(txt, pos);

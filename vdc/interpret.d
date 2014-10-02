@@ -526,10 +526,14 @@ class ValueT(T) : Value
 	{
 		string s;
 		for(int i = TOK_binaryOperatorFirst; i <= TOK_binaryOperatorLast; i++)
+		{
+			version(GNU) if(i >= TOK_unorderedOperatorFirst && i <= TOK_unorderedOperatorLast)
+				continue;
 			if(i >= TOK_assignOperatorFirst && i <= TOK_assignOperatorLast)
 				s ~= text("mixin mixinAssignOp!(\"", tokenString(i), "\", RHS_BasicTypeValues) ass_", operatorName(i), ";\n");
 			else
 				s ~= text("mixin mixinBinaryOp!(\"", tokenString(i), "\", RHS_BasicTypeValues) bin_", operatorName(i), ";\n");
+		}
 		return s;
 	}
 	
@@ -540,10 +544,14 @@ class ValueT(T) : Value
 	{
 		string s;
 		for(int i = TOK_binaryOperatorFirst; i <= TOK_binaryOperatorLast; i++)
+		{
+			version(GNU) if(i >= TOK_unorderedOperatorFirst && i <= TOK_unorderedOperatorLast)
+				continue;
 			if(i >= TOK_assignOperatorFirst && i <= TOK_assignOperatorLast)
 				s ~= text("case ", i, ": return ass_", operatorName(i), ".assOp(v);\n");
 			else
 				s ~= text("case ", i, ": return bin_", operatorName(i), ".binOp(v);\n");
+		}
 		return s;
 	}
 	
@@ -849,6 +857,7 @@ class ArrayValueBase : Value
 			case TOK_le:
 			case TOK_gt:
 			case TOK_ge:
+		version(GNU) {} else {
 			case TOK_unord:
 			case TOK_ue:
 			case TOK_lg:
@@ -857,6 +866,7 @@ class ArrayValueBase : Value
 			case TOK_ul:
 			case TOK_uge:
 			case TOK_ug:
+		}
 			//case TOK_notcontains:
 			//case TOK_notidentity:
 			//case TOK_is:

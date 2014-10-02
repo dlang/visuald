@@ -500,13 +500,13 @@ bool findTokenSequence(TokenIterator it, string[] search, bool checkBracketsSear
 		return strip(s) == strip(txt);
 	}
 
-	int p = 0;
+	size_t p = 0;
 	while(p < search.length && search[p].length == 0)
 		p++;
 	if(p >= search.length)
 		return false;
 
-	int prevsubmatchLength = submatch.length;
+	size_t prevsubmatchLength = submatch.length;
 
 	while(!it.atEnd() && (stopText.length == 0 || it.text != stopText || search[p] == stopText))
 	{
@@ -514,7 +514,7 @@ bool findTokenSequence(TokenIterator it, string[] search, bool checkBracketsSear
 		if(strip(it.text) == search[p] || dollar)
 		{
 			TokenIterator mit = it + (dollar ? 0 : 1);
-			int i = p + (dollar ? 0 : 1);
+			size_t i = p + (dollar ? 0 : 1);
 			while(i < search.length && search[i].length == 0)
 				i++;
 			while(!mit.atEnd() && i < search.length)
@@ -625,7 +625,7 @@ bool findTokenSequence(TokenIterator it, string[] search, bool checkBracketsSear
 				}
 				else
 				{
-					int idx = indexOf(search[i], '$');
+					ptrdiff_t idx = indexOf(search[i], '$');
 					if(idx < 0)
 					{
 						if (mittext != search[i])

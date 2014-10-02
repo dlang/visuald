@@ -131,7 +131,7 @@ struct C2DIni
 	// filepattern:: search => replace
 	static bool parsePatchRule(ref PatchRule rule, string line)
 	{
-		int pos = std.string.indexOf(line, "::");
+		ptrdiff_t pos = std.string.indexOf(line, "::");
 		if(pos >= 0)
 		{
 			rule.filenamePattern = std.string.strip(line[0..pos]);
@@ -294,7 +294,7 @@ struct C2DIni
 		foreach(v; split(expandConditionals))
 		{
 			bool b = true;
-			int pos = indexOf(v, '=');
+			ptrdiff_t pos = indexOf(v, '=');
 			string def;
 			if(pos > 0)
 			{
@@ -1493,7 +1493,7 @@ void extractStructDefinition(Declaration decl)
 	{
 		if(indexOf(ndtype.start.pretext, "\n") < 0)
 		{
-			int pos = lastIndexOf(begIt.pretext, "\n");
+			ptrdiff_t pos = lastIndexOf(begIt.pretext, "\n");
 			if(pos >= 0)
 				ndtype.start.pretext = begIt.pretext[pos .. $] ~ strip(ndtype.start.pretext);
 		}
@@ -1634,7 +1634,7 @@ void splitNonSimpleVarList(Declaration decl)
 			{
 				DeclType ndtype = dtype.clone();
 				TokenList typeTokens = ndtype.cloneTokens(true);
-				int pos = lastIndexOf(typeTokens.begin().pretext, "\n");
+				ptrdiff_t pos = lastIndexOf(typeTokens.begin().pretext, "\n");
 				if(pos > 0)
 					typeTokens.begin().pretext = typeTokens.begin().pretext[pos .. $];
 
@@ -2168,10 +2168,10 @@ bool isClassType(string ident)
 
 ///////////////////////////////////////////////////////////////
 
-int firstPathSeparator(string path)
+ptrdiff_t firstPathSeparator(string path)
 {
-	int fslash = indexOf(path, '/');
-	int bslash = indexOf(path, '\\');
+	ptrdiff_t fslash = indexOf(path, '/');
+	ptrdiff_t bslash = indexOf(path, '\\');
 	if(fslash < 0)
 		return bslash;
 	if(bslash < 0)
@@ -2326,7 +2326,7 @@ class Cpp2DConverter
 		
 		if(msg.indexOf("SyntaxException") > 0)
 		{
-			int pos = msg.indexOf("):");
+			ptrdiff_t pos = msg.indexOf("):");
 			if(pos > 0)
 				msg = strip(msg[pos + 2 .. $]);
 			if(msg.startsWith("("))

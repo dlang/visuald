@@ -653,6 +653,8 @@ Version history
     - displays static members of classes and structs
     - fixed not closing executable file causing linker to fail when rebuilding
     - fixed breakpoints not set in all instances of a template
+    - breakpoints no longer span multiple lines
+    - disassembly now shows a maximum of 8 lines of source code before instruction
   * new dparser version: 78a007c9aaee915e2824f30c5c7293e8853343c4
   * add option "up to date with same time" to custom build
   * target no longer rebuilt if only custom builds necessary
