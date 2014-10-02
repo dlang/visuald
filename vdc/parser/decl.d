@@ -1572,6 +1572,7 @@ enum case_TOKs_FunctionAttribute = q{
 		case TOK_trusted:
 		case TOK_property:
 		case TOK_disable:
+		case TOK_nogc:
 };
 
 bool isFunctionAttribute(TokenId tok)

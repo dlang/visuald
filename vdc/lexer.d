@@ -1030,6 +1030,7 @@ const string keywords[] =
 	
 	"@disable",
 	"@property",
+	"@nogc",
 	"@safe",	
 	"@system",
 	"@trusted",

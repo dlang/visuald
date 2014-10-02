@@ -661,3 +661,4 @@ Version history
   * add options for -gx and -allinst
   * bugzilla 12584: fixed global options disappearing when resizing window
   * bugzilla 13360: implemented automation object methods "DTE" and "Collection"
+  * syntax highlighting: @nogc added as a keyword

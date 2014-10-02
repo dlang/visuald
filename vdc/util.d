@@ -279,6 +279,7 @@ enum AnnotationBits
 	Private,
 	Package,
 	Protected,
+	Nogc,
 	Public,
 	Export,
 	Disable,
@@ -303,6 +304,7 @@ Annotation tokenToAnnotation(TokenId tok)
 		case TOK_override:   return Annotation_Override;
 		case TOK_disable:    return Annotation_Disable;
 		case TOK_property:   return Annotation_Property;
+		case TOK_nogc:       return Annotation_Nogc;
 		case TOK_safe:       return Annotation_Safe;
 		case TOK_system:     return Annotation_System;
 		case TOK_trusted:    return Annotation_Trusted;
@@ -340,6 +342,7 @@ string annotationToString(Annotation annot)
 		case Annotation_Override:  return "override";
 		case Annotation_Disable:   return "@disable";
 		case Annotation_Property:  return "@property";
+		case Annotation_Nogc:      return "@nogc";
 		case Annotation_Safe:      return "@safe";
 		case Annotation_System:    return "@system";
 		case Annotation_Trusted:   return "@trusted";
