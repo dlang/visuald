@@ -566,7 +566,7 @@ string createModuleName(string filename)
 {
 	filename = stripExtension(filename);
 	filename = replace(filename, "\\", "/");
-	string names[] = split(filename, "/");
+	string[] names = split(filename, "/");
 	string modname = options.packagePrefix;
 	foreach(n; names)
 	{

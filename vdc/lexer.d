@@ -899,7 +899,7 @@ bool findSpecial(string ident, ref int id)
 	return false;
 }
 
-const string keywords[] = 
+const string[] keywords = 
 [
 	"this",
 	"super",
@@ -1038,7 +1038,7 @@ const string keywords[] =
 ];
 
 // not listed as keywords, but "special tokens"
-const string specials[] = 
+const string[] specials = 
 [
 	"__DATE__",
 	"__EOF__",

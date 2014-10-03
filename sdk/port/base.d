@@ -58,7 +58,7 @@ version(sdk)
 //	alias int INT;
 //	alias uint UINT;
 
-	struct GUID { uint Data1; ushort Data2; ushort Data3; ubyte Data4[ 8 ]; }
+	struct GUID { uint Data1; ushort Data2; ushort Data3; ubyte[8] Data4; }
 	alias GUID *LPGUID;
 	alias GUID *LPCGUID;
 	alias GUID *REFGUID;
@@ -221,7 +221,7 @@ struct LOGFONTW
     BYTE      lfClipPrecision;
     BYTE      lfQuality;
     BYTE      lfPitchAndFamily;
-    WCHAR     lfFaceName[32 ];
+    WCHAR[32] lfFaceName;
 }
 alias LOGFONTW* PLOGFONTW, NPLOGFONTW, LPLOGFONTW;
 } // !sdk
@@ -277,7 +277,7 @@ struct FLAGGED_WORD_BLOB
 {
                         uint    fFlags;
                         uint    clSize;
-    /+[size_is(clSize)]+/   ushort   asData[0];
+    /+[size_is(clSize)]+/   ushort[0]   asData;
 }
 
 version(vsi)

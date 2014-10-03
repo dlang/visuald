@@ -9,8 +9,8 @@ import sdk.port.base;
 struct in6_addr
 {
     union _S6_union {
-        UCHAR       Byte[16];
-        USHORT      Word[8];
+        UCHAR[16]      Byte;
+        USHORT[8]      Word;
 
 	alias Byte _S6_u8;
     };

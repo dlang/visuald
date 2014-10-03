@@ -83,7 +83,7 @@ const wstring g_languageName             = "D"w;
 const wstring g_packageName              = "Visual D"w;
 const  string g_packageVersion           = plk_version;
 const wstring g_packageCompany           = "Rainer Schuetze"w;
-const wstring g_languageFileExtensions[] = [ ".d"w, ".di"w, ".mixin"w ];
+const wstring[] g_languageFileExtensions = [ ".d"w, ".di"w, ".mixin"w ];
 const wstring g_projectFileExtensions    = "visualdproj"w;
 
 // CLSID registered in extensibility center (PLK)
@@ -111,7 +111,7 @@ const GUID    g_VisualDHelperCLSID       = uuid("002a2de9-8bb6-484d-aa10-7e4ad40
 
 // more guids in propertypage.d starting with 9810
 
-const LanguageProperty g_languageProperties[] =
+const LanguageProperty[] g_languageProperties =
 [
   // see http://msdn.microsoft.com/en-us/library/bb166421.aspx
   { "RequestStockColors"w,           0 },

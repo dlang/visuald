@@ -1917,7 +1917,7 @@ const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad40
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");
 const GUID    g_IntellisensePropertyPage = uuid("002a2de9-8bb6-484d-9823-7e4ad4084715");
 
-const GUID* guids_propertyPages[] = 
+const GUID*[] guids_propertyPages = 
 [ 
 	&g_GeneralPropertyPage,
 	&g_DmdGeneralPropertyPage,

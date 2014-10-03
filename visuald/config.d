@@ -2877,7 +2877,7 @@ class Config :	DisposingComObject,
 	{
 		string workdir = normalizeDir(GetProjectDir());
 		string depfile = makeFilenameAbsolute(GetDependenciesPath(), workdir);
-		string files[] = getInputFileList();
+		string[] files = getInputFileList();
 		files = getObjectFileList(files);
 		string prefix = "target (";
 		string postfix = ") : public : object \n";

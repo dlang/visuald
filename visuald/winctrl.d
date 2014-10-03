@@ -198,7 +198,7 @@ class Widget
 	
 	string GetWindowText() 
 	{
-		WCHAR txt[256];
+		WCHAR[256] txt;
 		int len = GetWindowTextW(hwnd, txt.ptr, txt.length);
 		if(len < txt.length)
 			return toUTF8(txt[0..len]);

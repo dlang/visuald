@@ -239,7 +239,7 @@ class RegKey
 		if(!key)
 			return def;
 		
-		wchar buf[260];
+		wchar[260] buf;
 		DWORD cnt = 260 * wchar.sizeof;
 		wchar* szName = _toUTF16zw(name);
 		DWORD type;
@@ -714,7 +714,7 @@ fail:
 wstring GetDLLName(HINSTANCE inst)
 {
 	//get dll path
-	wchar dllPath[MAX_PATH+1];
+	wchar[MAX_PATH+1] dllPath;
 	DWORD dwLen = GetModuleFileNameW(inst, dllPath.ptr, MAX_PATH);
 	if (dwLen == 0)
 		throw new RegistryException(HRESULT_FROM_WIN32(GetLastError()));

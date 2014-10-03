@@ -160,7 +160,7 @@ string createDisambiguationPage(string word, string[] files)
 	string end = replaceRef(html[pe..$], installdir);
 	string nhtml = beg ~ gen ~ "</div>" ~ end;
 
-	wchar path[MAX_PATH];
+	wchar[MAX_PATH] path;
 	uint len = GetTempPath(MAX_PATH, path.ptr);
 	string fname = normalizeDir(to_string(path.ptr, len)) ~ "vd_disambiguation.html";
 	std.file.write(fname, nhtml);
