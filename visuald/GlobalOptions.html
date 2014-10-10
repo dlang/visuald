@@ -84,6 +84,7 @@
     <li><a href="CppConversion.html" title="C++ to D Converter">C++ to D</a></li>
     <li><a href="Debugging.html" title="Debugger support">Debugging</a></li>
     <li><a href="Profiling.html" title="Profiler window">Profiling</a></li>
+    <li><a href="Coverage.html" title="Code Coverage">Code Coverage</a></li>
     <li><a href="BrowseInfo.html" title="Browse information">Browse Info</a></li>
    </ul>
 
@@ -152,14 +153,17 @@ want to check the global settings that can be reached from the Menu Tools -&gt; 
 <br />
 <p>The <b>Visual D Settings</b> will allow you to enable and disable</p>
 <ul>
- <li>showing the build time for each project in the output window</li>
  <li>sorting the projects alphabetically</li>
+ <li>showing the reason for rebuilding a target in the output window</li>
+ <li>showing the build time for each project in the output window</li>
  <li>stop building the solution as soon as a project fails to compile</li>
  <li>showing demangled names in the error list and linker output</li>
  <li>monitor the linker for additional library dependencies</li>
  <li>JSON paths: Directories to search for *.json files to find symbol definitions.</li>
  <li>Resource includes: include paths to pass to the resource compiler when building resource files.</li>
  <li>additional command line options for the "Compile and Run" command</li>
+ <li>additional command line options for the "Compile and Debug" command</li>
+ <li>the debug engine to be used by the "Compile and Debug" command</li>
 </ul>
 
 
@@ -173,11 +177,11 @@ want to check the global settings that can be reached from the Menu Tools -&gt; 
  <li>Install path: The path to the compiler installation folder you entered within the installer.
   <ul>
    <li>DMD: this is not the path to the executable dmd.exe, but the folder that contains the full installation so 
-        that the compiler is found as <DMD install path>\windows\bin\dmd.exe </li>
+        that the compiler is found as &lt;DMD install path&gt;\windows\bin\dmd.exe </li>
    <li>GDC: this is not the path to the executable gdc.exe, but the folder that contains the full installation so 
-        that the compiler is found as <DMD install path>\bin\gdc.exe </li>
+        that the compiler is found as &lt;DMD install path&gt;\bin\gdc.exe </li>
    <li>LDC: this is not the path to the executable ldc.exe, but the folder that contains the full installation so 
-    that the compiler is found as <DMD install path>\bin\ldc2.exe </li>
+    that the compiler is found as &lt;DMD install path&gt;\bin\ldc2.exe </li>
   </ul>
 
  </li>

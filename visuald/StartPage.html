@@ -83,6 +83,7 @@
     <li><a href="CppConversion.html" title="C++ to D Converter">C++ to D</a></li>
     <li><a href="Debugging.html" title="Debugger support">Debugging</a></li>
     <li><a href="Profiling.html" title="Profiler window">Profiling</a></li>
+    <li><a href="Coverage.html" title="Code Coverage">Code Coverage</a></li>
     <li><a href="BrowseInfo.html" title="Browse information">Browse Info</a></li>
    </ul>
 
@@ -150,7 +151,7 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
 <p>Visual D aims at providing seamless integration of the D programming language into Visual Studio.</p>
 
 <div align="right">
-<a href="https://github.com/D-Programming-Language/visuald/releases/download/v0.3.38-1/VisualD-v0.3.38-1.exe"><img src="images/download.png" /></a>
+<a href="https://github.com/D-Programming-Language/visuald/releases/download/v0.3.39/VisualD-v0.3.39.exe"><img src="images/download.png" /></a>
 <p><a href="https://github.com/D-Programming-Language/visuald/releases">Beta releases</a></p>
 </div>
 </td></table>
@@ -174,6 +175,7 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
  <li>Integration of <a href="http://dsource.org/projects/cv2pdb">cv2pdb</a> and 
       <a href="http://dsource.org/projects/mago_debugger">Mago</a> for nice debugging experience</li>
  <li>Profiler browse window</li>
+ <li>Code Coverage support</li>
  <li>Support for Error List, Code Definition window, Object Browser and Class View</li>
  <li>C++ to D Conversion Wizard</li>
  <li>Code completion and tooltips from semantic analysis of source code</li>
@@ -190,8 +192,18 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
 
 <h2>News</h2>
 
-<a href="VersionHistory.html">Full version history and complete details...</a>
-<br />
+<p><a href="VersionHistory.html">Full version history and complete details...</a>
+</p>
+
+2014-10-10 Version 0.3.39
+<ul>
+ <li>mago 1.0: now can debug 64-bit applications</li>
+ <li>updated dparser to latest version</li>
+ <li>new "Compile &amp; Debug" command</li>
+ <li>updated to support dmd 2.066 command line options</li>
+ <li>support tab/indentation settings set by .editorconfig plugin</li>
+</ul>
+
 
 2014-04-15 Version 0.3.38-1
 <ul>
@@ -216,20 +228,6 @@ See the <a href="Installation.html">Installation</a> instructions, especially if
 </li>
  <li>updated to cv2pdb 0.31 with support for VS2013 and DWARF support for gcc 4.8</li>
  <li>updated to mago 0.9 </li>
-</ul>
-
-
-2013-11-02 Version 0.3.37
-<ul>
-  <li>Installer now supports VS 2013, updated to cv2pdb 0.27, mago 0.8, fixes x64 deubgger in VS 2012 Shell</li>
-  <li>improvements to "Compile and Run"</li>
-  <li>improvements to syntax/coverage highlighting</li>
-  <li>DParser engine now used by default, updated to recent version</li>
-  <li>single file options now available per project configuration</li>
-  <li>added global option to display the reason for building a target</li>
-  <li>added different options for executable and library search paths to be used for Win32/x64</li>
-  <li>link dependencies can now also be monitored for the 32-bit MS linker</li>
-  <li>added commands "Collapse unittests" and "Collapse disabled" to the outlining menu</li>
 </ul>
 
 
