@@ -79,7 +79,7 @@ DDOC = <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 	</div>
 	<div id="header">
 		<a href="$(DLANG_ORG)"><img id="logo" width="125" height="95" border="0" alt="D Logo" src="$(DLANG_ORG)/images/dlogo.png"></a>
-		<a id="d-language" href="$(DLANG_ORG)">D Programming Language - Visual D</a>
+		<a id="d-language" href="http://rainers.github.io/visuald/visuald/StartPage.html">D Programming Language - Visual D</a>
 	</div>
 </div>
 
