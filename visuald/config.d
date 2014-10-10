@@ -2320,7 +2320,7 @@ class Config :	DisposingComObject,
 		long targettm = getOldestFileTime( [ outfile ], oldestFile );
 		long sourcetm = getNewestFileTime(deps, newestFile);
 
-		if(targettm > sourcetm)
+		if(targettm >= sourcetm)
 			return true;
 		if(file.GetUptodateWithSameTime(getCfgName()) && targettm == sourcetm)
 			return true;
