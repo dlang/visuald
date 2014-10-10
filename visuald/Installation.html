@@ -145,18 +145,16 @@
 Visual Studio Version for which you want Visual D to be installed. It will always install
 for all users, not only for a single user.</p>
 
-$(P To compile your application, you must have <a href="http://www.digitalmars.com/d/download.html">DMD</a>,
+<p>To compile your application, you must have <a href="http://www.digitalmars.com/d/download.html">DMD</a>,
 <a href="https://github.com/D-Programming-GDC/GDC">GDC</a> or <a href="https://github.com/ldc-developers/ldc">LDC</a>
 installed. Not all functionality 
-has been thoroughly tested with GDC and LDC, so having DMD available for cross-checking is recommended.
+has been thoroughly tested with GDC and LDC, so having DMD available for cross-checking is recommended.</p>
 
 <p>Visual D does <b>not</b> work with any of the <b>Express</b> versions of Visual Studio. Other than the 
 commercial editions, the Express versions do not support loading third party extensions and add-ins.</p>
 
 <p>A <b>free</b> alternative are the integrated <b>Visual Studio Shell</b> distributions, that can be downloaded
-here: (<a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=40646580-97FA-4698-B65F-620D4B4B1ED7&displaylang=en">VS Shell 2008</a>,
-<a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=8e5aa7b6-8436-43f0-b778-00c3bca733d3&displaylang=en">VS Shell 2010</a>) and 
-VS Shell 2012 (see below for links). The shells are identical with the Visual Studio IDE, but stripped of any language support. It
+from Microsoft (see below for links). The shells are identical with the Visual Studio IDE, but stripped of any language support. It
 still contains the native debugger that can be used to debug D applications.</p>
 
 <p>For debugging applications, you should also install cv2pdb which is now included in the
@@ -164,28 +162,34 @@ Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoe
 not mix with previous manual installations of <a href="http://svn.dsource.org/projects/cv2pdb">cv2pdb</a>. 
 Visual D also installs the alternative debug engine mago that does not need cv2pdb.</p>
 
+<p>VS Shell 2008 can be found
+<a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=40646580-97FA-4698-B65F-620D4B4B1ED7&displaylang=en">here</a>,
+though a newer version is recommended. Some functionality is not supported in VS2008.</p>
+
+<p>VS Shell 2010 can be used, but there don't seem to be any installers available from Microsoft anymore.</p>
+
 <p>Unfortunately, the Visual Studio Shells 2008 and 2010 are missing one file that is needed for 
 the conversion of the debug information by cv2pdb. This is <b>msobj80.dll</b> for VS2008 and <b>msobj100.dll</b> for VS2010 
 and must be extracted from a standard installation, the Visual C Express edition or the Windows SDK. 
 You might also find it installed by other Microsoft products.
 Put this file alongside mspdbcore.dll, normally in &lt;VS-installation-path&gt;\Common7\IDE.</p>
 
-<p>The Visual Studio Shell 2012 is installed with two packages, the 
-<a href="http://www.microsoft.com/en-us/download/details.aspx?id=40752">isolated shell</a> followed by the 
+<p>The <b>Visual Studio Shell 2012</b> is installed with two packages, the 
+<a href="http://www.microsoft.com/en-us/download/details.aspx?id=30671">isolated shell</a> followed by the 
 <a href="http://www.microsoft.com/en-us/download/details.aspx?id=30663">integrated package</a>. Fortunately it
 has all the files needed for debugging, and the Visual D installer patches the installation to 
 make the x64 debugger work.</p>
 
-<p>The Visual Studio Shell 2013 is installed similar to VS Shell 2012, the 
-<a href="http://go.microsoft.com/?linkid=9832180">isolated shell</a> and the 
-<a href="http://go.microsoft.com/?linkid=9832180">integrated package</a>.</p>
+<p>The <b>Visual Studio Shell 2013</b> is installed similar to VS Shell 2012, the 
+<a href="http://www.microsoft.com/en-us/download/details.aspx?id=40764">isolated shell</a> and the 
+<a href="http://www.microsoft.com/en-us/download/details.aspx?id=40777">integrated package</a>.</p>
 
 <h2>Using GDC</h2>
 
 <p>To use GDC as the compiler to build D files, you will first have to install the MinGW environment and the GDC compiler:</p>
 <ul>
   <li>MinGW64 installer: <a href="http://tdm-gcc.tdragon.net/">http://tdm-gcc.tdragon.net/</a></li>
-  <li>GDC binaries: <a href="https://bitbucket.org/goshawk/gdc/downloads">https://bitbucket.org/goshawk/gdc/downloads</a></li>
+  <li>GDC binaries: <a href="http://gdcproject.org/downloads">http://gdcproject.org/downloads</a></li>
 </ul>
 
 
@@ -202,6 +206,10 @@ in the configuration manager.</p>
     intermediate directory, because there seems to be no GDC option to change the output folder for multiple files.</li>
 </ul>
 
+
+<h2>Using LDC</h2>
+
+<p>The latest releases can be found at <a href="https://github.com/ldc-developers/ldc/releases/">https://github.com/ldc-developers/ldc/releases/</a></p>
 
 <h3>Debugging</h3>
 
