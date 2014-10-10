@@ -176,6 +176,7 @@ NAVIGATION_VISUALD=
     $(LI <a href="CppConversion.html" title="C++ to D Converter">C++ to D</a>)
     $(LI <a href="Debugging.html" title="Debugger support">Debugging</a>)
     $(LI <a href="Profiling.html" title="Profiler window">Profiling</a>)
+    $(LI <a href="Coverage.html" title="Code Coverage">Code Coverage</a>)
     $(LI <a href="BrowseInfo.html" title="Browse information">Browse Info</a>)
    )
   )

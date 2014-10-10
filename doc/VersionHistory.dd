@@ -1,5 +1,50 @@
 Ddoc
 
+2014-10-10 Version 0.3.39
+ $(UL
+  $(LI build system
+   $(UL
+    $(LI optlink now always called with /DELEXE to avoid keeping broken binary)
+    $(LI bugzilla 11035: added workaround for bad import library being passed by C/C++ projects)
+    $(LI tweaked "Compile & Run" to distinguish between compile and execution errors)
+    $(LI added "Compile & Debug" command)
+    $(LI add option "up to date with same time" to custom build)
+    $(LI target no longer rebuilt if only custom builds necessary)
+    $(LI add options for -vgc, -gx and -allinst)
+    $(LI removed checkbox for dmd option -quiet)
+    $(LI slightly improved configuration pages by grouping related options)
+    $(LI bugzilla 12584: fixed global options disappearing when resizing window)
+   ))
+  $(LI project management
+   $(UL
+    $(LI bugzilla 13360: implemented automation object methods "DTE" and "Collection")
+   ))
+  $(LI language service
+   $(UL
+    $(LI added editor margin to display coverage counters and percentage)
+    $(LI support tab/indentation settings set by .editorconfig plugin)
+    $(LI new dparser version: a28aaf67777733b2b70d56fc8cab8b5f296b9745)
+    $(LI syntax highlighting: @nogc added as a keyword)
+   ))
+  $(LI debugger
+   $(UL
+    $(LI new mago version 1.0
+     $(UL
+      $(LI now supports debugging x64 executables)
+      $(LI displays static members of classes and structs)
+      $(LI fixed not closing executable file causing linker to fail when rebuilding)
+      $(LI fixed breakpoints not set in all instances of a template)
+      $(LI breakpoints no longer span multiple lines)
+      $(LI disassembly now shows a maximum of 8 lines of source code before instruction)
+     ))
+    $(LI new cv2pdb version 0.32
+     $(UL
+      $(LI DWARF: fixed relocations in .debug_line section)
+      $(LI tweaked visualizer macros to display void[], limit array preview to 64 entries)
+     ))
+   ))
+ )
+
 2014-04-12 Version 0.3.38
  $(UL
   $(LI build system

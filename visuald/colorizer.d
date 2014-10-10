@@ -224,14 +224,14 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	
 	// index 0 for version, index 1 for debug
 	int[wstring][2] mVersionIds; // positive: lineno defined
-	int mVersionLevel[2] = [ -1, -1 ];
-	int mVersionLevelLine[2] = [ -2, -2 ];  // -2 never defined, -1 if set on command line
+	int[2] mVersionLevel = [ -1, -1 ];
+	int[2] mVersionLevelLine = [ -2, -2 ];  // -2 never defined, -1 if set on command line
 
 	int[wstring] mDebugIds; // positive: lineno defined
 	int mDebugLevel = -1;
 	int mDebugLevelLine = -2;  // -2 never defined, -1 if set on command line
 
-	string mConfigVersions[2];
+	string[2] mConfigVersions;
 	bool mConfigRelease;
 	bool mConfigUnittest;
 	bool mConfigGDC;

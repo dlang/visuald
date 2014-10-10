@@ -95,7 +95,7 @@ public:
 
 		VSADDFILEFLAGS fInputFlags = (flags & ProjectEventFlags.IsNestedProject) ? VSADDFILEFLAGS_IsNestedProjectFile : VSADDFILEFLAGS_NoFlags;
 		
-		wchar* rgstrDocuments[] = [ cbstrMkDokument.bstr ];
+		wchar*[] rgstrDocuments = [ cbstrMkDokument.bstr ];
 		hr = srpIVsTrackProjectDocuments2.OnAfterAddFilesEx(pIVsProject, 1, rgstrDocuments.ptr, &fInputFlags);
 		assert(SUCCEEDED(hr));
 	}

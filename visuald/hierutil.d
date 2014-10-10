@@ -76,7 +76,7 @@ bool CheckFileName(string fileName)
 	if(base.length == 0)
 		return true; // file starts with '.'
 
-	static string reservedNames[] = 
+	static string[] reservedNames = 
 	[
 		"CON", "PRN", "AUX", "CLOCK$", "NUL", 
 		"COM1","COM2", "COM3","COM4","COM5", "COM6", "COM7","COM8", "COM9",
@@ -786,7 +786,7 @@ string getOpenFileDialog(HWND hwnd, string title, string dir, string filter)
 	auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell));
 	if(pIVsUIShell)
 	{
-		wchar filename[260];
+		wchar[260] filename;
 		VSOPENFILENAMEW ofn;
 		ofn.lStructSize = ofn.sizeof;
 		ofn.hwndOwner = hwnd;
@@ -811,7 +811,7 @@ string getSaveFileDialog(HWND hwnd, string title, string dir, string filter)
 	auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell));
 	if(pIVsUIShell)
 	{
-		wchar filename[260];
+		wchar[260] filename;
 		VSSAVEFILENAMEW ofn;
 		ofn.lStructSize = ofn.sizeof;
 		ofn.hwndOwner = hwnd;

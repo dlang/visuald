@@ -830,7 +830,7 @@ private:
 				{
 					return TBBUTTON(id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, [0,0], 0, 0);
 				}
-				static const TBBUTTON s_tbb[] = [
+				static const TBBUTTON[] s_tbb = [
 					initButton(IDR_SEARCHFILE,        BTNS_CHECKGROUP),
 					initButton(IDR_SEARCHSYMBOL,      BTNS_CHECKGROUP),
 					initButton(-1, BTNS_SEP),
@@ -1208,7 +1208,7 @@ private:
 		COLUMNID colid;
 	}
 	
-	static const CmdToColID s_rgCmdToColIDMap[] = 
+	static const CmdToColID[] s_rgCmdToColIDMap = 
 	[
 		// { IDR_UNGROUPED, COLUMNID.NONE },
 		{ IDR_GROUPBYKIND, COLUMNID.KIND }

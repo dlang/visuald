@@ -42,6 +42,7 @@ import sdk.vsi.textmgr2;
 import sdk.vsi.stdidcmd;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
+import sdk.vsi.vsshell90;
 import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
@@ -1293,7 +1294,7 @@ else
 		int line, idx;
 		if(mView.GetCaretPos(&line, &idx) != S_OK)
 			return S_FALSE;
-		
+
 		string file = mCodeWinMgr.mSource.GetFileName();
 		wstring impw = mCodeWinMgr.mSource.GetImportModule(line, idx, false);
 		if(impw.length)
@@ -1328,6 +1329,46 @@ else
 
 			return GotoDefinitionJSON(file, word);
 		}
+	}
+
+	HRESULT GotoDefinitionCPP()
+	{
+		if(auto navmgr = queryService!(SVsSymbolicNavigationManager, IVsSymbolicNavigationManager))
+		{
+			scope(exit) release(navmgr);
+
+			string word = toUTF8(GetWordAtCaret());
+
+			IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
+			if(!pIVsUIShellOpenDocument)
+				return returnError(E_FAIL);
+			scope(exit) release(pIVsUIShellOpenDocument);
+
+			string fname = mCodeWinMgr.mSource.GetFileName();
+			wchar* wfname = _toUTF16z(fname);
+			string addopt;
+
+			IVsUIHierarchy pUIH;
+			uint itemid;
+			IServiceProvider pSP;
+			VSDOCINPROJECT docInProj;
+			if(pIVsUIShellOpenDocument.IsDocumentInAProject(wfname, &pUIH, &itemid, &pSP, &docInProj) != S_OK)
+				return S_OK;
+
+			scope(exit) release(pSP);
+			scope(exit) release(pUIH);
+
+			if(!pUIH)
+				return returnError(E_FAIL);
+			Project proj = qi_cast!Project(pUIH);
+			scope(exit) release(proj);
+
+			BOOL handled;
+			HRESULT hr = navmgr.OnBeforeNavigateToSymbol(proj, itemid, _toUTF16z(word), &handled);
+			if(hr == S_OK && handled)
+				return hr;
+		}
+		return S_FALSE;
 	}
 
 	HRESULT GotoDefinitionJSON(string file, string word)

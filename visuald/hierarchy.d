@@ -1187,7 +1187,7 @@ version(none)
 		mixin(LogCallMix);
 		logCall("nCmdID = %s", cmd2string(*pguidCmdGroup, nCmdID));
 
-		CHierNode rgNodes[] = VSITEMID2Nodes(itemid);
+		CHierNode[] rgNodes = VSITEMID2Nodes(itemid);
 		if (rgNodes.length == 0)
 			return OLECMDERR_E_NOTSUPPORTED;
 		
@@ -1744,7 +1744,7 @@ public: // IVsHierarchyEvent propagation
 	//---------------------------------------------------------------------------
 	// fill out an array of selected nodes
 	//---------------------------------------------------------------------------
-	HRESULT GetSelectedNodes(ref CHierNode rgNodes[])
+	HRESULT GetSelectedNodes(ref CHierNode[] rgNodes)
 	{
 		IVsMonitorSelection srpMonSel = queryService!(IVsMonitorSelection);
 		if(!srpMonSel)
@@ -1820,7 +1820,7 @@ public: // IVsHierarchyEvent propagation
 		return hr;
 	}
 
-	uint GetContextMenu(CHierNode rgSelection[])
+	uint GetContextMenu(CHierNode[] rgSelection)
 	{
 		bool IsItemNodeCtx(uint idmx) 
 		{

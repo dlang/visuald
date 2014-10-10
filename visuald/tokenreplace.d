@@ -830,7 +830,7 @@ unittest
 		;
 	
 	ReplaceOptions opt;
-	ReplaceRange rng1[];
+	ReplaceRange[] rng1;
 	_string res1 = replaceTokenSequence(txt, 1, 0, "if($1) { $2 }", "$2", opt, &rng1);
 
 	_string exp1 = 
@@ -845,7 +845,7 @@ unittest
 	assert(rng1[0].endlineno   == 4 && rng1[0].endcolumn   == 3);
 	
 	opt.includePretext = true;
-	ReplaceRange rng2[];
+	ReplaceRange[] rng2;
 	_string res2 = replaceTokenSequence(txt, 1, 0, "if($1) { $2 }", "$2", opt, &rng2);
 
 	_string exp2 = 

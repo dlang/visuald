@@ -85,8 +85,8 @@ class idl2d
 		string sdk_d_path = r"c:\s\d\visuald\trunk\sdk\";
 	}
 	
-	const string dirVSI = "vsi";
-	const string dirWin = "win32";
+	static const string dirVSI = "vsi";
+	static const string dirWin = "win32";
 	
 	string packageVSI = "sdk." ~ dirVSI ~ ".";
 	string packageWin = "sdk." ~ dirWin ~ ".";
@@ -1260,7 +1260,11 @@ version(all)
 		replaceTokenSequence(tokens, "POINTER_32", "", true);
 		replaceTokenSequence(tokens, "POINTER_64", "", true);
 		replaceTokenSequence(tokens, "UNREFERENCED_PARAMETER($arg);", "/*UNREFERENCED_PARAMETER($arg);*/", true);
-		
+		if(currentModule == "rpcdce")
+		{
+			replaceTokenSequence(tokens, "RPC_INTERFACE_GROUP_IDLE_CALLBACK_FN($args);", 
+										 "function($args) RPC_INTERFACE_GROUP_IDLE_CALLBACK_FN;", true);
+		}
 		// windef.h and ktmtypes.h
 		replaceTokenSequence(tokens, "UOW UOW;", "UOW uow;", true);
 
@@ -2112,8 +2116,18 @@ else
 
 		// combaseapi.h:
 		replaceTokenSequence(tokens, "alias int $_ident = $_num;", "enum int $_ident = $_num;", true);
-		string txt = tokenListToString(tokens, true);
 
+		// C style array declarations to S style
+		replaceTokenSequence(tokens, "$_identtype $_identvar[$dim]", "$_identtype[$dim] $_identvar", true);
+		replaceTokenSequence(tokens, "$_identtype[$dim1] $_identvar[$dim2]", "$_identtype[$dim1][$dim2] $_identvar", true);
+		// handle some pointer array explicitely to avoid ambiguities with expressions
+		replaceTokenSequence(tokens, "void* $_identvar[$dim]",      "void*[$dim] $_identvar", true);
+		replaceTokenSequence(tokens, "ubyte* $_identvar[$dim]",     "ubyte*[$dim] $_identvar", true);
+		replaceTokenSequence(tokens, "ushort* $_identvar[$dim]",    "ushort*[$dim] $_identvar", true);
+		replaceTokenSequence(tokens, "UUID* $_identvar[$dim]",      "UUID*[$dim] $_identvar", true);
+		replaceTokenSequence(tokens, "RPC_IF_ID* $_identvar[$dim]", "RPC_IF_ID*[$dim] $_identvar", true);
+
+		string txt = tokenListToString(tokens, true);
 		return txt;
 	}
 
@@ -2284,7 +2298,7 @@ else
 
 	string fileToModule(string file)
 	{
-		int len = file.startsWith(win_d_path) ? win_d_path.length : vsi_d_path.length;
+		auto len = file.startsWith(win_d_path) ? win_d_path.length : vsi_d_path.length;
 
 		file = file[len .. $];
 		if (_endsWith(file,".d"))
@@ -2398,7 +2412,7 @@ version(remove_pp) {} else
 		currentFile = file;
 		
 		currentFullModule = fixImport(file);
-		int p = lastIndexOf(currentFullModule, '.');
+		auto p = lastIndexOf(currentFullModule, '.');
 		if(p >= 0)
 			currentModule = currentFullModule[p+1 .. $];
 		else
@@ -2846,4 +2860,12 @@ void * PtrToPtr64(const( void)*p)
 }
 ";
 	testConvert(txt, exptxt, "prsht");
+}
+
+unittest
+{
+	string txt = "int x[3];";
+	string exptxt = "int[3] x;";
+
+	testConvert(txt, exptxt);
 }

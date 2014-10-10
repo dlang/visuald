@@ -15,6 +15,9 @@ import core.stdc.stdio;
 import core.stdc.string;
 
 // version = msgbox;
+// check for @nogc support
+static if(!__traits(compiles, () { @nogc void fn(); }))
+	struct nogc {};
 
 __gshared HINSTANCE g_hInst;
 extern(C) __gshared int _acrtused_dll;
@@ -23,8 +26,8 @@ __gshared char[260] dumpFile = [ 0 ];
 __gshared HANDLE hndDumpFile = INVALID_HANDLE_VALUE;
 __gshared HANDLE hndMutex = INVALID_HANDLE_VALUE;
 
-extern(Windows) HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName) nothrow;
-extern(Windows) BOOL ReleaseMutex(HANDLE hMutex) nothrow;
+extern(Windows) HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName) nothrow @nogc;
+extern(Windows) BOOL ReleaseMutex(HANDLE hMutex) nothrow @nogc;
 
 version(TEST)
 {
@@ -135,7 +138,7 @@ MyCreateFileA(
 			/*__in*/     DWORD dwCreationDisposition,
 			/*__in*/     DWORD dwFlagsAndAttributes,
 			/*__in_opt*/ HANDLE hTemplateFile
-			) nothrow
+			) nothrow @nogc
 {
 	version(msgbox) MessageBoxA(null, lpFileName, dumpFile.ptr/*"CreateFile"*/, MB_OK);
 	//	printf("CreateFileA(%s)\n", lpFileName);
@@ -174,7 +177,7 @@ MyCreateFileW(
 			/*__in*/     DWORD dwCreationDisposition,
 			/*__in*/     DWORD dwFlagsAndAttributes,
 			/*__in_opt*/ HANDLE hTemplateFile
-			) nothrow
+			) nothrow @nogc
 {
 	version(msgbox) MessageBoxA(null, lpFileName, dumpFile.ptr/*"CreateFile"*/, MB_OK);
 	//	printf("CreateFileA(%s)\n", lpFileName);
@@ -216,7 +219,7 @@ MyCreateFileW(
 	return hnd;
 }
 
-bool isLoggableOpen(DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) nothrow
+bool isLoggableOpen(DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes) nothrow @nogc
 {
 	if(!(dwDesiredAccess & GENERIC_READ))
 		return false;
@@ -229,7 +232,7 @@ bool isLoggableOpen(DWORD dwDesiredAccess, DWORD dwCreationDisposition, DWORD dw
 	return true;
 }
 
-size_t mystrlen(const(char)* str) nothrow
+size_t mystrlen(const(char)* str) nothrow @nogc
 {
 	size_t len = 0;
 	while(*str++)
@@ -237,7 +240,7 @@ size_t mystrlen(const(char)* str) nothrow
 	return len;
 }
 
-size_t mystrlen(const(wchar)* str) nothrow
+size_t mystrlen(const(wchar)* str) nothrow @nogc
 {
 	size_t len = 0;
 	while(*str++)

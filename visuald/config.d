@@ -128,6 +128,7 @@ class ProjectOptions
 	bool quiet;		// suppress non-error messages
 	bool verbose;		// verbose compile
 	bool vtls;		// identify thread local variables
+	bool vgc;		// List all gc allocations including hidden ones (DMD 2.066+)
 	ubyte symdebug;		// insert debug symbolic information
 	bool optimize;		// run optimizer
 	ubyte cpu;		// target CPU
@@ -317,6 +318,8 @@ class ProjectOptions
 			cmd ~= " -v";
 		if(Dversion >= 2 && vtls)
 			cmd ~= " -vtls";
+		if(Dversion >= 2 && vgc)
+			cmd ~= " -vgc";
 		if(symdebug == 1)
 			cmd ~= " -g";
 		if(symdebug == 2)
@@ -450,6 +453,8 @@ class ProjectOptions
 			cmd ~= " -fd-version=1";
 		if(Dversion >= 2 && vtls)
 			cmd ~= " -fd-vtls";
+		if(Dversion >= 2 && vgc)
+			cmd ~= " -fd-vgc";
 		if(symdebug == 1)
 			cmd ~= " -g";
 		if(symdebug == 2)
@@ -1045,6 +1050,7 @@ class ProjectOptions
 		elem ~= new xml.Element("quiet", toElem(quiet));
 		elem ~= new xml.Element("verbose", toElem(verbose));
 		elem ~= new xml.Element("vtls", toElem(vtls));
+		elem ~= new xml.Element("vgc", toElem(vgc));
 		elem ~= new xml.Element("symdebug", toElem(symdebug));
 		elem ~= new xml.Element("optimize", toElem(optimize));
 		elem ~= new xml.Element("cpu", toElem(cpu));
@@ -1170,6 +1176,7 @@ class ProjectOptions
 		fromElem(elem, "quiet", quiet);
 		fromElem(elem, "verbose", verbose);
 		fromElem(elem, "vtls", vtls);
+		fromElem(elem, "vgc", vgc);
 		fromElem(elem, "symdebug", symdebug);
 		fromElem(elem, "optimize", optimize);
 		fromElem(elem, "cpu", cpu);
@@ -2877,7 +2884,7 @@ class Config :	DisposingComObject,
 	{
 		string workdir = normalizeDir(GetProjectDir());
 		string depfile = makeFilenameAbsolute(GetDependenciesPath(), workdir);
-		string files[] = getInputFileList();
+		string[] files = getInputFileList();
 		files = getObjectFileList(files);
 		string prefix = "target (";
 		string postfix = ") : public : object \n";

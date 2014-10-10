@@ -198,7 +198,7 @@ static const size_t clsidSize = clsidLen + 1;
 wstring GUID2wstring(in GUID clsid)
 {
 	//get clsid's as string
-	wchar oleCLSID_arr[clsidLen+1];
+	wchar[clsidLen+1] oleCLSID_arr;
 	if (StringFromGUID2(*cast(GUID*)&clsid, oleCLSID_arr.ptr, clsidLen) == 0)
 		return "";
 	wstring oleCLSID = to_wstring(oleCLSID_arr.ptr);

@@ -10,6 +10,7 @@ set SRC=%SRC% KnownIssues.dd
 set SRC=%SRC% Installation.dd
 set SRC=%SRC% BrowseInfo.dd
 set SRC=%SRC% Profiling.dd
+set SRC=%SRC% Coverage.dd
 set SRC=%SRC% CppConversion.dd
 set SRC=%SRC% Debugging.dd
 set SRC=%SRC% ProjectConfig.dd

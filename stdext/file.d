@@ -30,7 +30,7 @@ bool isExistingDir(string dir)
 
 string getCmdPath()
 {
-	wchar buffer[260];
+	wchar[260] buffer;
 	UINT len = GetSystemDirectoryW(buffer.ptr, 260);
 	string p = toUTF8(buffer[0 .. len]);
 	return normalizeDir(p) ~ "cmd.exe";
@@ -143,7 +143,7 @@ string[string][string] parseIni(string fname)
 //-----------------------------------------------------------------------------
 string[] expandFileListPattern(string file, string workdir)
 {
-	string files[];
+	string[] files;
 	SpanMode mode = SpanMode.shallow;
 	if (file[0] == '+')
 	{
@@ -170,7 +170,7 @@ string[] addFileListPattern(string[] files, string file, string workdir)
 
 string[] expandFileList(string[] filespecs, string workdir)
 {
-	string files[];
+	string[] files;
 	foreach(file; filespecs)
 	{
 		if (file.startsWith("-"))

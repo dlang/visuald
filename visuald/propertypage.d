@@ -377,7 +377,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 			Label lab = new Label(w ? w.parent : null, label);
 			int off = ((kLineHeight - kLineSpacing) - 16) / 2;
 			labelWidth = w ? kLabelWidth : kPageWidth - 2*kMargin;
-			lab.setRect(0, mLines*kLineHeight + off, labelWidth, kLineHeight - kLineSpacing); 
+			lab.setRect(0, mLineY + off, labelWidth, kLineHeight - kLineSpacing); 
 		} 
 		else if (cb || tc)
 		{
@@ -393,12 +393,21 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		//else if(cast(ComboBox) w)
 		//    h -= 4;
 
-		int y = mLines*kLineHeight + (lines * kLineHeight - kLineSpacing - h) / 2;
+		int y = mLineY + (lines * kLineHeight - kLineSpacing - h) / 2;
 		if(w)
 			w.setRect(x, y, kPageWidth - 2*kMargin - labelWidth, h);
-		mLines += lines;
+		mLineY += lines * kLineHeight;
 		if(w)
 			mResizableWidgets ~= w;
+	}
+
+	void AddHorizontalLine()
+	{
+		auto w = new Label(mCanvas);
+		w.AddWindowStyle(SS_ETCHEDFRAME, SS_TYPEMASK);
+		w.setRect(0, mLineY + 2, kPageWidth - 2*kMargin, 2);
+		mResizableWidgets ~= w;
+		mLineY += 6;
 	}
 
 	int changeOption(V)(V val, ref V optval, ref V refval)
@@ -428,7 +437,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	Window mWindow;
 	Window mCanvas;
 	bool mEnableUpdateDirty;
-	int mLines;
+	int mLineY;
 	int mLinesPerMultiLine = 4;
 	int mUnindentCheckBox = 120; //16;
 }
@@ -878,7 +887,8 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	override void CreateControls()
 	{
 		AddControl("Debug Mode", mDebugMode = new ComboBox(mCanvas, [ "Off (release)", "On" ], false));
-		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, [ "None", "Symbolic", "Symbolic (pretend to be C)" ], false));
+		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, [ "None", "Symbolic (suitable for Mago)", "Symbolic (suitable for VS debug engine)" ], false));
+		AddHorizontalLine();
 		AddControl("",           mRunCv2pdb = new CheckBox(mCanvas, "Run cv2pdb to Convert Debug Info"));
 		AddControl("Path to cv2pdb", mPathCv2pdb = new Text(mCanvas));
 		AddControl("",           mCv2pdbPre2043  = new CheckBox(mCanvas, "Assume old associative array implementation (before dmd 2.043)"));
@@ -895,11 +905,14 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	
 	void EnableControls()
 	{
-		mPathCv2pdb.setEnabled(mRunCv2pdb.isChecked());
-		mCv2pdbOptions.setEnabled(mRunCv2pdb.isChecked());
-		mCv2pdbEnumType.setEnabled(mRunCv2pdb.isChecked());
-		mCv2pdbPre2043.setEnabled(mRunCv2pdb.isChecked());
-		mCv2pdbNoDemangle.setEnabled(mRunCv2pdb.isChecked());
+		mRunCv2pdb.setEnabled(!mIsX64);
+		bool runcv2pdb = !mIsX64 && mRunCv2pdb.isChecked();
+
+		mPathCv2pdb.setEnabled(runcv2pdb);
+		mCv2pdbOptions.setEnabled(runcv2pdb);
+		mCv2pdbEnumType.setEnabled(runcv2pdb);
+		mCv2pdbPre2043.setEnabled(runcv2pdb);
+		mCv2pdbNoDemangle.setEnabled(runcv2pdb);
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -913,6 +926,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		mCv2pdbNoDemangle.setChecked(options.cv2pdbNoDemangle);
 		mCv2pdbEnumType.setChecked(options.cv2pdbEnumType);
 
+		mIsX64 = options.isX86_64;
 		EnableControls();
 	}
 
@@ -930,6 +944,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		return changes;
 	}
 
+	bool mIsX64;
 	ComboBox mDebugMode;
 	ComboBox mDebugInfo;
 	CheckBox mRunCv2pdb;
@@ -955,14 +970,16 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		mUnindentCheckBox = kLabelWidth;
 		AddControl("", mProfiling     = new CheckBox(mCanvas, "Insert Profiling Hooks"));
 		AddControl("", mCodeCov       = new CheckBox(mCanvas, "Generate Code Coverage"));
+		AddControl("", mUnitTests     = new CheckBox(mCanvas, "Generate Unittest Code"));
+		AddHorizontalLine();
 		AddControl("", mOptimizer     = new CheckBox(mCanvas, "Run Optimizer"));
 		AddControl("", mNoboundscheck = new CheckBox(mCanvas, "No Array Bounds Checking"));
-		AddControl("", mUnitTests     = new CheckBox(mCanvas, "Generate Unittest Code"));
 		AddControl("", mInline        = new CheckBox(mCanvas, "Expand Inline Functions"));
+		AddHorizontalLine();
 		AddControl("", mNoFloat       = new CheckBox(mCanvas, "No Floating Point Support"));
 		AddControl("", mGenStackFrame = new CheckBox(mCanvas, "Always generate stack frame (DMD 2.056+)"));
-		AddControl("", mStackStomp    = new CheckBox(mCanvas, "add stack stomp code (DMD 2.062+)"));
-		AddControl("", mAllInst       = new CheckBox(mCanvas, "generate code for all template instantiations (DMD 2.064+)"));
+		AddControl("", mStackStomp    = new CheckBox(mCanvas, "Add stack stomp code (DMD 2.062+)"));
+		AddControl("", mAllInst       = new CheckBox(mCanvas, "Generate code for all template instantiations (DMD 2.064+)"));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1019,11 +1036,13 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		mUnindentCheckBox = kLabelWidth;
 		AddControl("", mWarnings      = new CheckBox(mCanvas, "Enable Warnings"));
 		AddControl("", mInfoWarnings  = new CheckBox(mCanvas, "Enable Informational Warnings (DMD 2.041+)"));
-		AddControl("", mQuiet         = new CheckBox(mCanvas, "Suppress Non-Error Messages"));
-		AddControl("", mVerbose       = new CheckBox(mCanvas, "Verbose Compile"));
-		AddControl("", mVtls          = new CheckBox(mCanvas, "Show TLS Variables"));
+		AddHorizontalLine();
 		AddControl("", mUseDeprecated = new CheckBox(mCanvas, "Silently Allow Deprecated Features"));
 		AddControl("", mErrDeprecated = new CheckBox(mCanvas, "Use of Deprecated Features causes Error (DMD 2.061+)"));
+		AddHorizontalLine();
+		AddControl("", mVerbose       = new CheckBox(mCanvas, "Verbose Compile"));
+		AddControl("", mVtls          = new CheckBox(mCanvas, "Show TLS Variables"));
+		AddControl("", mVgc           = new CheckBox(mCanvas, "List all gc allocations including hidden ones (DMD 2.066+)"));
 		AddControl("", mIgnorePragmas = new CheckBox(mCanvas, "Ignore Unsupported Pragmas"));
 		AddControl("", mCheckProperty = new CheckBox(mCanvas, "Enforce Property Syntax (DMD 2.055+)"));
 	}
@@ -1032,15 +1051,16 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	{
 		mWarnings.setChecked(options.warnings);
 		mInfoWarnings.setChecked(options.infowarnings);
-		mQuiet.setChecked(options.quiet);
 		mVerbose.setChecked(options.verbose);
 		mVtls.setChecked(options.vtls);
+		mVgc.setChecked(options.vgc);
 		mUseDeprecated.setChecked(options.useDeprecated);
 		mErrDeprecated.setChecked(options.errDeprecated);
 		mIgnorePragmas.setChecked(options.ignoreUnsupportedPragmas);
 		mCheckProperty.setChecked(options.checkProperty);
 
 		mVtls.setEnabled(options.Dversion > 1);
+		mVgc.setEnabled(options.Dversion > 1);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1048,9 +1068,9 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		int changes = 0;
 		changes += changeOption(mWarnings.isChecked(), options.warnings, refoptions.warnings);
 		changes += changeOption(mInfoWarnings.isChecked(), options.infowarnings, refoptions.infowarnings);
-		changes += changeOption(mQuiet.isChecked(), options.quiet, refoptions.quiet);
 		changes += changeOption(mVerbose.isChecked(), options.verbose, refoptions.verbose);
 		changes += changeOption(mVtls.isChecked(), options.vtls, refoptions.vtls);
+		changes += changeOption(mVgc.isChecked(), options.vgc, refoptions.vgc);
 		changes += changeOption(mUseDeprecated.isChecked(), options.useDeprecated, refoptions.useDeprecated);
 		changes += changeOption(mErrDeprecated.isChecked(), options.errDeprecated, refoptions.errDeprecated);
 		changes += changeOption(mIgnorePragmas.isChecked(), options.ignoreUnsupportedPragmas, refoptions.ignoreUnsupportedPragmas);
@@ -1060,9 +1080,9 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 
 	CheckBox mWarnings;
 	CheckBox mInfoWarnings;
-	CheckBox mQuiet;
 	CheckBox mVerbose;
 	CheckBox mVtls;
+	CheckBox mVgc;
 	CheckBox mUseDeprecated;
 	CheckBox mErrDeprecated;
 	CheckBox mIgnorePragmas;
@@ -1514,7 +1534,7 @@ class DirPropertyPage : GlobalPropertyPage
 		mResizableWidgets ~= page32;
 
 		kPageWidth -= 6;
-		mLines = 0;
+		mLineY = 0;
 		mLinesPerMultiLine = 3;
 		AddControl("Executable paths", mExePath = new MultiLineText(page32));
 		mLinesPerMultiLine = 2;
@@ -1525,7 +1545,7 @@ class DirPropertyPage : GlobalPropertyPage
 			w.commandDelegate = mCanvas.commandDelegate;
 		mResizableWidgets ~= page64;
 
-		mLines = 0;
+		mLineY = 0;
 		mLinesPerMultiLine = 3;
 		AddControl("Executable paths", mExePath64 = new MultiLineText(page64));
 		mLinesPerMultiLine = 2;
@@ -1685,7 +1705,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 12;
+		kNeededLines = 13;
 	}
 
 	override void CreateControls()
@@ -1694,15 +1714,18 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mShowUptodate  = new CheckBox(mCanvas, "Show why a target is rebuilt"));
 		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
+		AddHorizontalLine();
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors"));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor OPTLINK dependencies"));
+		AddHorizontalLine();
 		//AddControl("Remove project item", mDeleteFiles = 
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 		mLinesPerMultiLine = 2;
 		AddControl("JSON paths",        mJSNPath = new MultiLineText(mCanvas));
 		AddControl("Resource includes", mIncPath = new Text(mCanvas));
-		AddControl("Compile + Run options", mCompileAndRunOpts = new Text(mCanvas));
-		AddControl("Compile + Debug options", mCompileAndDbgOpts = new Text(mCanvas));
+		AddHorizontalLine();
+		AddControl("Compile+Run options", mCompileAndRunOpts = new Text(mCanvas));
+		AddControl("Compile+Debug options", mCompileAndDbgOpts = new Text(mCanvas));
 		AddControl("   Debugger",       mCompileAndDbgEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
 	}
 
@@ -1769,12 +1792,14 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override void CreateControls()
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
+		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
+		AddHorizontalLine();
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
+		AddHorizontalLine();
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
-		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -1917,7 +1942,7 @@ const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad40
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");
 const GUID    g_IntellisensePropertyPage = uuid("002a2de9-8bb6-484d-9823-7e4ad4084715");
 
-const GUID* guids_propertyPages[] = 
+const GUID*[] guids_propertyPages = 
 [ 
 	&g_GeneralPropertyPage,
 	&g_DmdGeneralPropertyPage,

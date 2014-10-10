@@ -46,7 +46,7 @@ void addFileMacros(string path, string base, ref string[string] replacements)
 
 string getEnvVar(string var)
 {
-	wchar wbuf[256];
+	wchar[256] wbuf;
 	const(wchar)* wvar = toUTF16z(var);
 	uint cnt = GetEnvironmentVariable(wvar, wbuf.ptr, 256);
 	if(cnt < 256)
