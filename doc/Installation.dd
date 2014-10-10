@@ -36,7 +36,7 @@ has all the files needed for debugging, and the Visual D installer patches the i
 make the x64 debugger work.)
 
 $(P The Visual Studio Shell 2013 is installed similar to VS Shell 2012, the 
-$(LINK2 http://go.microsoft.com/?linkid=9832180, isolated shell) and the 
+$(LINK2 http://download.microsoft.com/download/B/F/E/BFE2AA75-B6E4-493D-B564-70086B3EAD4A/vs_isoshell.exe, isolated shell) and the 
 $(LINK2 http://go.microsoft.com/?linkid=9832180, integrated package).)
 
 $(H2 Using GDC)
