@@ -1,7 +1,7 @@
 Ddoc
 
 $(P The latest sources of Visual D are available from the github repository at 
-https://github.com/D-programming-Language/visuald.)
+$(LINK2 https://github.com/D-programming-Language/visuald, https://github.com/D-programming-Language/visuald).)
 
 $(H2 Prerequisites)
 
