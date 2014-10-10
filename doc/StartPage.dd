@@ -10,7 +10,7 @@ See the $(LINK2 Installation.html, Installation) instructions, especially if not
 $(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.)
 
 <div align="right">
-$(LINK2 https://github.com/D-Programming-Language/visuald/releases/download/v0.3.38-1/VisualD-v0.3.38-1.exe, $(IMG images/download.png))
+$(LINK2 https://github.com/D-Programming-Language/visuald/releases/download/v0.3.39/VisualD-v0.3.39.exe, $(IMG images/download.png))
 $(P $(LINK2 https://github.com/D-Programming-Language/visuald/releases, Beta releases))
 </div>
 ))
@@ -34,6 +34,7 @@ $(UL
  $(LI Integration of $(LINK2 http://dsource.org/projects/cv2pdb, cv2pdb) and 
       $(LINK2 http://dsource.org/projects/mago_debugger, Mago) for nice debugging experience)
  $(LI Profiler browse window)
+ $(LI Code Coverage support)
  $(LI Support for Error List, Code Definition window, Object Browser and Class View)
  $(LI C++ to D Conversion Wizard)
  $(LI Code completion and tooltips from semantic analysis of source code)
@@ -49,8 +50,17 @@ $(LINK2 Features.html, Read more...)
 
 $(H2 News)
 
-$(LINK2 VersionHistory.html, Full version history and complete details...)
-$(BR)
+$(P $(LINK2 VersionHistory.html, Full version history and complete details...)
+)
+
+2014-10-10 Version 0.3.39
+$(UL
+ $(LI mago 1.0: now can debug 64-bit applications)
+ $(LI updated dparser to latest version)
+ $(LI new "Compile & Debug" command)
+ $(LI updated to support dmd 2.066 command line options)
+ $(LI support tab/indentation settings set by .editorconfig plugin)
+)
 
 2014-04-15 Version 0.3.38-1
 $(UL
@@ -73,19 +83,6 @@ $(UL
  ))
  $(LI updated to cv2pdb 0.31 with support for VS2013 and DWARF support for gcc 4.8)
  $(LI updated to mago 0.9 )
-)
-
-2013-11-02 Version 0.3.37
-$(UL
-  $(LI Installer now supports VS 2013, updated to cv2pdb 0.27, mago 0.8, fixes x64 deubgger in VS 2012 Shell)
-  $(LI improvements to "Compile and Run")
-  $(LI improvements to syntax/coverage highlighting)
-  $(LI DParser engine now used by default, updated to recent version)
-  $(LI single file options now available per project configuration)
-  $(LI added global option to display the reason for building a target)
-  $(LI added different options for executable and library search paths to be used for Win32/x64)
-  $(LI link dependencies can now also be monitored for the 32-bit MS linker)
-  $(LI added commands "Collapse unittests" and "Collapse disabled" to the outlining menu)
 )
 
 $(LINK2 VersionHistory.html, more...)

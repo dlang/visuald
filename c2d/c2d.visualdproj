@@ -439,7 +439,7 @@
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
   <objdir>$(OutDir)</objdir>
   <objname />
   <libname />

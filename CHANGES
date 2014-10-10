@@ -640,7 +640,7 @@ Version history
 
   * build mago with static C runtime to avoid dependencies on msvcrt120.dll
 
-2014-07-20 Version 0.3.39
+2014-10-10 Version 0.3.39
 
   * added editor margin to display coverage counters and percentage
   * support tab/indentation settings set by .editorconfig plugin
@@ -655,10 +655,12 @@ Version history
     - fixed breakpoints not set in all instances of a template
     - breakpoints no longer span multiple lines
     - disassembly now shows a maximum of 8 lines of source code before instruction
-  * new dparser version: 78a007c9aaee915e2824f30c5c7293e8853343c4
+  * new dparser version: a28aaf67777733b2b70d56fc8cab8b5f296b9745
   * add option "up to date with same time" to custom build
   * target no longer rebuilt if only custom builds necessary
-  * add options for -gx and -allinst
+  * add options for -vgc, -gx and -allinst
+  * removed checkbox for dmd option -quiet
+  * slightly improved configuration pages by grouping related options
   * bugzilla 12584: fixed global options disappearing when resizing window
   * bugzilla 13360: implemented automation object methods "DTE" and "Collection"
   * syntax highlighting: @nogc added as a keyword

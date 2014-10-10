@@ -9,14 +9,17 @@ $(IMG_CENTER images/visuald_settings.png)
 $(BR)
 $(P The $(B Visual D Settings) will allow you to enable and disable)
 $(UL
- $(LI showing the build time for each project in the output window)
  $(LI sorting the projects alphabetically)
+ $(LI showing the reason for rebuilding a target in the output window)
+ $(LI showing the build time for each project in the output window)
  $(LI stop building the solution as soon as a project fails to compile)
  $(LI showing demangled names in the error list and linker output)
  $(LI monitor the linker for additional library dependencies)
  $(LI JSON paths: Directories to search for *.json files to find symbol definitions.)
  $(LI Resource includes: include paths to pass to the resource compiler when building resource files.)
  $(LI additional command line options for the "Compile and Run" command)
+ $(LI additional command line options for the "Compile and Debug" command)
+ $(LI the debug engine to be used by the "Compile and Debug" command)
 )
 
 $(P For each supported compiler, there is a separate page to setup directories to be used during compilation:)
@@ -28,11 +31,11 @@ $(UL
  $(LI Install path: The path to the compiler installation folder you entered within the installer.
   $(UL 
    $(LI DMD: this is not the path to the executable dmd.exe, but the folder that contains the full installation so 
-        that the compiler is found as <DMD install path>\windows\bin\dmd.exe )
+        that the compiler is found as $(LESS)DMD install path$(GREATER)\windows\bin\dmd.exe )
    $(LI GDC: this is not the path to the executable gdc.exe, but the folder that contains the full installation so 
-        that the compiler is found as <DMD install path>\bin\gdc.exe )
+        that the compiler is found as $(LESS)DMD install path$(GREATER)\bin\gdc.exe )
    $(LI LDC: this is not the path to the executable ldc.exe, but the folder that contains the full installation so 
-    that the compiler is found as <DMD install path>\bin\ldc2.exe )
+    that the compiler is found as $(LESS)DMD install path$(GREATER)\bin\ldc2.exe )
   )
  )
  $(LI Import paths: Directories to be added to the import paths specified in the project configuration and in the
