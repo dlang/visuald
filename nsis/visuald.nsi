@@ -74,6 +74,7 @@
   !define VS2010_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\10.0
   !define VS2012_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\11.0
   !define VS2013_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\12.0
+  !define VS2014_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\14.0
 !ifdef EXPRESS
   !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
   !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
@@ -89,7 +90,7 @@
   !define MAGO_CLSID              {97348AC0-2B6B-4B99-A245-4C7E2C09D403}
   !define MAGO_ENGINE_KEY         AD7Metrics\Engine\${MAGO_CLSID}
   !define MAGO_EXCEPTION_KEY      AD7Metrics\Exception\${MAGO_CLSID}
-  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010-2013 Aldo J. Nunez"
+  !define MAGO_ABOUT              "A debug engine dedicated to debugging applications written in the D programming language. See the project website at http://www.dsource.org/projects/mago_debugger for more information. Copyright (c) 2010-2014 Aldo J. Nunez"
   !define MAGO_SOURCE             ..\..\..\mago
 
   !searchparse /file ${MAGO_SOURCE}/include/magoversion.h "#define MAGO_VERSION_MAJOR " MAGO_VERSION_MAJOR
@@ -346,6 +347,27 @@ ${MementoSection} "Register with VS 2013" SecVS2013
 
 ${MementoSectionEnd}
 
+;--------------------------------
+${MementoSection} "Register with VS 14" SecVS2014
+
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2014_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2014_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ${RegisterWin32Exception} ${VS2014_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2014_REGISTRY_KEY}" InstallDir
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2014_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+
+  !ifdef VDEXTENSIONS
+    GetFullPathName /SHORT $0 $INSTDIR
+    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !endif
+
+${MementoSectionEnd}
+
 !ifdef EXPRESS
 ;--------------------------------
 ${MementoUnselectedSection} "Register with VC-Express 2008" SecVCExpress2008
@@ -410,6 +432,10 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   Push ${VS2013_REGISTRY_KEY}
   Call PatchAutoExp
   
+  Push ${SecVS2014}
+  Push ${VS2014_REGISTRY_KEY}
+  Call PatchAutoExp
+  
 ${MementoSectionEnd}
 !endif
 
@@ -454,6 +480,10 @@ ${MementoSection} "mago" SecMago
   Push ${VS2013_REGISTRY_KEY}
   Call RegisterMago
   
+  Push ${SecVS2014}
+  Push ${VS2014_REGISTRY_KEY}
+  Call RegisterMago
+  
   WriteRegStr HKLM "SOFTWARE\Wow6432Node\MagoDebugger" "Remote_x64" "$INSTDIR\Mago\MagoRemote.exe"
 
 ${MementoSectionEnd}
@@ -492,6 +522,7 @@ SectionEnd
   LangString DESC_SecVS2010 ${LANG_ENGLISH} "Register for usage in Visual Studio 2010."
   LangString DESC_SecVS2012 ${LANG_ENGLISH} "Register for usage in Visual Studio 2012."
   LangString DESC_SecVS2013 ${LANG_ENGLISH} "Register for usage in Visual Studio 2013."
+  LangString DESC_SecVS2014 ${LANG_ENGLISH} "Register for usage in Visual Studio 14."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -520,6 +551,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2010} $(DESC_SecVS2010)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2012} $(DESC_SecVS2012)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2013} $(DESC_SecVS2013)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2014} $(DESC_SecVS2014)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
@@ -549,11 +581,19 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2010_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2012_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2013_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2014_REGISTRY_KEY}'
 !ifdef EXPRESS
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2014_REGISTRY_KEY}" InstallDir
+  IfErrors NoVS2014pkgdef
+    RMDir /r '$1${EXTENSION_DIR}'
+    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2014pkgdef:
+  
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2013pkgdef
     RMDir /r '$1${EXTENSION_DIR}'
@@ -595,6 +635,9 @@ Section "Uninstall"
 
   Push ${VS2013_REGISTRY_KEY}
   Call un.PatchAutoExp
+
+  Push ${VS2014_REGISTRY_KEY}
+  Call un.PatchAutoExp
 !endif
 
 !ifdef VS_NET
@@ -605,6 +648,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2014_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
 
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
@@ -617,6 +661,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2014_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
 
 !ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
@@ -626,6 +671,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2014_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
 
 !ifdef VS_NET
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\InstalledProducts\Mago"
@@ -635,6 +681,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\InstalledProducts\Mago"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\InstalledProducts\Mago"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2014_REGISTRY_KEY}\InstalledProducts\Mago"
 !endif
   
   Call un.RegisterVDServer
@@ -709,6 +756,13 @@ Function .onInit
   IfErrors 0 Installed_VS2013
     SectionSetFlags ${SecVS2013} ${SF_RO}
   Installed_VS2013:
+
+  ; detect VS2014
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2014_REGISTRY_KEY}" InstallDir
+  IfErrors 0 Installed_VS2014
+    SectionSetFlags ${SecVS2014} ${SF_RO}
+  Installed_VS2014:
 
 !ifdef EXPRESS
   ; detect VCExpress 2008

@@ -2728,7 +2728,8 @@ else
 		int startLine, startIndex;
 		LineTokenIterator lntokIt = LineTokenIterator(this, caretLine + 1, 0);
 		while(lntokIt.line > caretLine || (lntokIt.getIndex() >= caretIndex && lntokIt.line == caretLine))
-			lntokIt.retreatOverComments();
+			if(!lntokIt.retreatOverComments())
+				break;
 
 		if(lntokIt.getTokenType() == TokenColor.Identifier && lntokIt.getEndIndex() >= caretIndex && lntokIt.line == caretLine)
 			lntokIt.retreatOverComments();

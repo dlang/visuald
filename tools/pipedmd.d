@@ -149,7 +149,8 @@ int main(string[] argv)
         printf("pipedmd V0.2, written 2012 by Benjamin Thaut, complications improved by Rainer Schuetze\n");
         printf("decompresses and demangles names in OPTLINK and ld messages\n");
         printf("\n");
-        printf("usage: %s [-nodemangle] [-gdcmode | -msmode] [-deps depfile] [executable] [arguments]\n", argv[0].ptr);
+        printf("usage: %.*s [-nodemangle] [-gdcmode | -msmode] [-deps depfile] [executable] [arguments]\n", 
+               argv[0].length, argv[0].ptr);
         return -1;
     }
     int skipargs;
@@ -452,9 +453,20 @@ void InjectDLL(HANDLE hProcess, string depsfile)
     }
     string modpath = to!string(wmodname);
     string dll = buildPath(std.path.dirName(modpath), "filemonitor.dll");
-    // copy path to other process
+    
     auto wdll = to!wstring(dll) ~ cast(wchar)0;
-    auto wdllRemote = VirtualAllocEx(hProcess, null, wdll.length * 2, MEM_COMMIT, PAGE_READWRITE);
+    // detect offset of dumpFile
+    HMODULE fmod = LoadLibraryW(wdll.ptr);
+    if(!fmod)
+        return;
+    size_t addr = cast(size_t)GetProcAddress(fmod, "_D11filemonitor8dumpFileG260a");
+    FreeLibrary(fmod);
+    if(addr == 0)
+        return;
+    addr = addr - cast(size_t)fmod;
+
+    // copy path to other process
+	auto wdllRemote = VirtualAllocEx(hProcess, null, wdll.length * 2, MEM_COMMIT, PAGE_READWRITE);
     auto procWrite = getWriteProcFunc();
     procWrite(hProcess, wdllRemote, wdll.ptr, wdll.length * 2, null);
 
@@ -471,8 +483,10 @@ void InjectDLL(HANDLE hProcess, string depsfile)
     CloseHandle(hThread);
     VirtualFreeEx(hProcess, wdllRemote, wdll.length * 2, MEM_RELEASE);
 
-    void* pDumpFile = cast(char*)hRemoteModule + 0x3000; // offset taken from map file
+    void* pDumpFile = cast(char*)hRemoteModule + addr;
+    // printf("remotemod = %p, addr = %p\n", hRemoteModule, pDumpFile);
     auto szDepsFile = toMBSz(depsfile);
+
     procWrite(hProcess, pDumpFile, szDepsFile, strlen(szDepsFile) + 1, null);
 }
 

@@ -22,7 +22,7 @@ static if(!__traits(compiles, () { @nogc void fn(); }))
 __gshared HINSTANCE g_hInst;
 extern(C) __gshared int _acrtused_dll;
 
-__gshared char[260] dumpFile = [ 0 ];
+export __gshared char[260] dumpFile = [ 0 ];
 __gshared HANDLE hndDumpFile = INVALID_HANDLE_VALUE;
 __gshared HANDLE hndMutex = INVALID_HANDLE_VALUE;
 
@@ -52,13 +52,15 @@ BOOL DllMain(HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 			MessageBoxA(null, "DLL_THREAD_DETACH", "filemonitor", MB_OK);
 	}
 	g_hInst = hInstance;
-	if(ulReason == DLL_PROCESS_ATTACH)
+	if(ulReason == DLL_PROCESS_ATTACH || ulReason == DLL_THREAD_ATTACH)
 	{
 		if (dumpFile[0]) // only execute if it was injected by pipedmd
 		{
-			//origWriteFile = getWriteFileFunc();
-			RedirectCreateFileA();
-			RedirectCreateFileW();
+			origWriteFile = getWriteFileFunc();
+			if(!origCreateFileA)
+				RedirectCreateFileA();
+			if(!origCreateFileW)
+				RedirectCreateFileW();
 		}
 	}
 	return true;
@@ -179,7 +181,7 @@ MyCreateFileW(
 			/*__in_opt*/ HANDLE hTemplateFile
 			) nothrow @nogc
 {
-	version(msgbox) MessageBoxA(null, lpFileName, dumpFile.ptr/*"CreateFile"*/, MB_OK);
+	version(msgbox) MessageBoxW(null, lpFileName, "CreateFileW", MB_OK);
 	//	printf("CreateFileA(%s)\n", lpFileName);
 	auto hnd = origCreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, 
 							   dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
@@ -255,4 +257,5 @@ extern(C)
 	__gshared int D10TypeInfo_v6__initZ;
 	__gshared int D16TypeInfo_Pointer6__vtblZ;
 	__gshared int D17TypeInfo_Function6__vtblZ;
+	__gshared int D15TypeInfo_Struct6__vtblZ;
 }
