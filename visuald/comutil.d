@@ -9,8 +9,8 @@
 module visuald.comutil;
 
 import visuald.windows;
-import std.c.string;
-import std.c.stdlib;
+import core.stdc.string;
+import core.stdc.stdlib;
 import std.string;
 import std.utf;
 import std.traits;

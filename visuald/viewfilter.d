@@ -1310,6 +1310,14 @@ else
 			return hr;
 		}
 
+		version(v40) debug
+		{
+			wstring wword = GetWordAtCaret();
+			if(wword.length > 0)
+				if(GotoDefinitionCPP(wword) == S_OK)
+					return S_OK;
+		}
+
 		if(Package.GetGlobalOptions().semanticGotoDef)
 		{
 			TextSpan span;
@@ -1331,6 +1339,54 @@ else
 		}
 	}
 
+version(v40)
+	HRESULT GotoDefinitionCPP(wstring word)
+	{
+		if(auto objmgr = queryService!(IVsObjectManager))
+		{
+			scope(exit) release(objmgr);
+			if(auto objmgr2 = qi_cast!IVsObjectManager2(objmgr))
+			{
+				scope(exit) release(objmgr2);
+				IVsEnumLibraries2 enumLibs;
+				if(objmgr2.EnumLibraries(&enumLibs) == S_OK)
+				{
+					VSOBSEARCHCRITERIA2 searchOpts;
+					searchOpts.szName = _toUTF16zw(word);
+					searchOpts.eSrchType = SO_ENTIREWORD;
+					searchOpts.grfOptions = VSOBSO_CASESENSITIVE;
+
+					scope(exit) release(enumLibs);
+					DWORD fetched;
+					IVsLibrary2 lib;
+					while(enumLibs.Next(1, &lib, &fetched) == S_OK && fetched == 1)
+					{
+						scope(exit) release(lib);
+						if(auto slib = qi_cast!IVsSimpleLibrary2(lib))
+						{
+							scope(exit) release(slib);
+							IVsSimpleObjectList2 reslist;
+							if(slib.GetList2(LLT_MEMBERS, LLF_USESEARCHFILTER, &searchOpts, &reslist) == S_OK)
+							{
+								scope(exit) release(reslist);
+								ULONG items;
+								if(reslist.GetItemCount(&items) == S_OK && items > 0)
+								{
+									BOOL ok;
+									for(ULONG it = 0; it < items; it++)
+										if(reslist.CanGoToSource(it, GS_DEFINITION, &ok) == S_OK && ok)
+											if(reslist.GoToSource(it, GS_DEFINITION) == S_OK)
+												return S_OK;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return S_FALSE;
+	}
+else
 	HRESULT GotoDefinitionCPP()
 	{
 		if(auto navmgr = queryService!(SVsSymbolicNavigationManager, IVsSymbolicNavigationManager))

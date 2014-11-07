@@ -51,7 +51,7 @@ Visual D will assume the coverage is invalid then and stop displaying it.
 )
 
 $(P If you don't want syntax highlighting from coverage generated .LST files, you can disable 
-it by disabling the respective option on the Tools->Options->Text Editor->D->Colorizer page.
+it by unchecking the respective option on the Tools->Options->Text Editor->D->Colorizer page.
 )
 </td><td width="55%">
 $(IMG_CENTER images/coverage.png)

@@ -11,7 +11,7 @@ module stdext.com;
 //version(none):
 import std.utf;
 import std.string;
-import std.c.string;
+import core.stdc.string;
 
 import core.memory;
 

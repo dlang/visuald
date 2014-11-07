@@ -13,7 +13,7 @@ import visuald.comutil;
 
 import stdext.file;
 
-import std.c.stdlib;
+import core.stdc.stdlib;
 //import std.windows.charset;
 import std.path;
 import std.utf;

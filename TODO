@@ -43,7 +43,7 @@ Project:
 
 Language service:
 -----------------
-- goto definition does not know about scope
++ goto definition does not know about scope
 - use spell-checker on completion?
 - case insensitive completion?
 - showScope: function/delegate literal not shown correctly, in/out/body
@@ -137,12 +137,12 @@ GUI-Designer:
 
 Unsorted
 =========
-- parse all files in project at startup
++ parse all files in project at startup
 - COM leaks in VS2012 (VS2010?)
 - virustotal reports malicious software
 - reset semantic analysis data
 - goto definition/completion for labels, versions
-- goto definition fallback to JSON
++ goto definition fallback to JSON
 - highlight compiler-magic identifiers
 
 + compile from selection/buffer (through rdmd)
@@ -155,11 +155,12 @@ Unsorted
 
 + formatting does not work with .editorConfig
 + do not report build failure when run returns non-zero result
-- custom file props: switch and apply changes next file?
 
 - compile and run : set VCInstallDir for -m64
 + mago keeps image locked when terminating debugger
 - -gc/-g depending on debug engine
 - dub support
 - dustmite support
+- dfix support
 - configuration of dependent project not read from configuration manager
+- jump to assertion error

@@ -664,3 +664,20 @@ Version history
   * bugzilla 12584: fixed global options disappearing when resizing window
   * bugzilla 13360: implemented automation object methods "DTE" and "Collection"
   * syntax highlighting: @nogc added as a keyword
+
+unreleased Version 0.3.40
+
+  * cv2pdb: did not run on XP anymore due to bad OS version requirements
+  * add installation for VS2014
+  * bugzilla 13452: fix file monitoring
+  * bugzilla 13616: fix freeze when starting completion at the very first line and column of source
+  * custom file properties: edit, change selection and apply could change new selected file
+  * moved "Other Compiler" option from main project page to compiler page
+  * added additional options to the resource compiler tool
+  * added basic support to compile C/C++ files:
+    * new tool "C/C++" that is also auto-deteted for usual file extensions
+    * common command line options can be specified on the compiler page of the project 
+    * special command line options can be added per file
+    * $(CC) expands to the compiler executable of the current D compiler: dmc, cl, gcc or clang
+    * if "Translate D options" is checked, dmd options for -g, -release, -O are translated to 
+      the respective C/C++ compiler option

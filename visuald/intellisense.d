@@ -945,7 +945,13 @@ class BrowseInfo
 			node = n;
 		}
 		else
+		{
 			node = new BrowseNode;
+version(v40)
+			if(kind == "function")
+				if(!("endline" in memberobj))
+					kind = "funcdecl";
+		}
 
 		node.kind = kind;
 		getDeclarationInfo(node, memberobj);

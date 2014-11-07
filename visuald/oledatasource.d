@@ -8,7 +8,7 @@
 
 module visuald.oledatasource;
 
-import std.c.string : memcmp, memset, memcpy;
+import core.stdc.string : memcmp, memset, memcpy;
 
 import visuald.windows;
 import sdk.win32.objbase;

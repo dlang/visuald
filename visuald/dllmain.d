@@ -8,7 +8,7 @@
 
 module visuald.dllmain;
 
-import stdwin = std.c.windows.windows;
+import stdwin = core.sys.windows.windows;
 import visuald.windows;
 import visuald.comutil;
 import visuald.logutil;

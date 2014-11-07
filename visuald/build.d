@@ -26,7 +26,7 @@ import stdext.file;
 import stdext.string;
 import stdext.array;
 
-import std.c.stdlib;
+import core.stdc.stdlib;
 import std.windows.charset;
 import std.utf;
 import std.string;
@@ -240,7 +240,7 @@ else
 				if(CFileNode file = cast(CFileNode) n)
 				{
 					string tool = config.GetCompileTool(file);
-					if(tool == "Custom" || tool == kToolResourceCompiler)
+					if(tool == "Custom" || tool == kToolResourceCompiler || tool == kToolCpp)
 					{
 						FileDep dep;
 						dep.outfile = config.GetOutputFile(file);
