@@ -9,7 +9,7 @@
 module visuald.dproject;
 
 import visuald.windows;
-import std.c.string : memcpy;
+import core.stdc.string : memcpy;
 import std.windows.charset;
 import std.string;
 import std.utf;
@@ -2394,6 +2394,7 @@ Error:
 				node.SetDependencies(cfg, xml.getAttribute(file, "dependencies"));
 				node.SetOutFile(cfg, xml.getAttribute(file, "outfile"));
 				node.SetCustomCmd(cfg, xml.getAttribute(file, "customcmd"));
+				node.SetAdditionalOptions(cfg, xml.getAttribute(file, "addopt"));
 				node.SetLinkOutput(cfg, xml.getAttribute(file, "linkoutput") == "true");
 				node.SetUptodateWithSameTime(cfg, xml.getAttribute(file, "uptodateWithSameTime") == "true");
 			}
@@ -2475,6 +2476,7 @@ Error:
 					setAttrIfNotEmpty(xmlFile, "dependencies", file.GetDependencies(cfg));
 					setAttrIfNotEmpty(xmlFile, "outfile", file.GetOutFile(cfg));
 					setAttrIfNotEmpty(xmlFile, "customcmd", file.GetCustomCmd(cfg));
+					setAttrIfNotEmpty(xmlFile, "addopt", file.GetAdditionalOptions(cfg));
 					if(file.GetLinkOutput(cfg))
 						xml.setAttribute(xmlFile, "linkoutput", "true");
 					if(file.GetUptodateWithSameTime(cfg))

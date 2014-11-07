@@ -40,7 +40,7 @@ import std.file;
 import std.conv;
 import std.exception;
 import std.array;
-import std.c.stdio : sprintf;
+import core.stdc.stdio : sprintf;
 
 private IVsWindowFrame sWindowFrame;
 private	SearchPane sSearchPane;

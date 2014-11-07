@@ -42,7 +42,7 @@ $(IMG_CENTER images/coveragemargin_forever.png)
 </td></tr></table>
 
 This option can be combined with the "Compile and Run" command to easily test
-the code coverage of unittests within a module. See $(LINK2 news36.html, Unit testing and code coverage)
+the code coverage of unittests within a module. See $(LINK2 News36.html, Unit testing and code coverage)
 for an example.
 
 Macros:

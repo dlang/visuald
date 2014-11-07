@@ -9,7 +9,7 @@
 module visuald.dpackage;
 
 import visuald.windows;
-import std.c.stdlib;
+import core.stdc.stdlib;
 import std.windows.charset;
 import std.string;
 import std.utf;

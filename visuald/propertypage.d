@@ -696,22 +696,9 @@ class GeneralPropertyPage : ProjectPropertyPage
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
 		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
-		AddControl("",              mOtherDMD = new CheckBox(mCanvas, "Use other compiler"));
-		AddControl("Compiler Path", mCompilerPath = new Text(mCanvas));
 		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas, 
 			[ "Combined compile and link", "Single file compilation", 
 			  "Separate compile and link", "Compile only (use Post-build command to link)" ], false));
-	}
-
-	override void UpdateDirty(bool bDirty)
-	{
-		super.UpdateDirty(bDirty);
-		EnableControls();
-	}
-	
-	void EnableControls()
-	{
-		mCompilerPath.setEnabled(mOtherDMD.isChecked());
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -721,29 +708,23 @@ class GeneralPropertyPage : ProjectPropertyPage
 			ver++;
 		mDVersion.setSelection(ver);
 		
-		mOtherDMD.setChecked(options.otherDMD);
 		mCompiler.setSelection(options.compiler);
 		mSingleFileComp.setSelection(options.compilationModel);
 		mCbOutputType.setSelection(options.lib);
 		mCbSubsystem.setSelection(options.subsystem);
-		mCompilerPath.setText(options.program);
 		mOutputPath.setText(options.outdir);
 		mIntermediatePath.setText(options.objdir);
 		mFilesToClean.setText(options.filesToClean);
-		
-		EnableControls();
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		float ver = selectableVersions[mDVersion.getSelection()];
 		int changes = 0;
-		changes += changeOption(mOtherDMD.isChecked(), options.otherDMD, refoptions.otherDMD);
-		changes += changeOption(cast(ubyte) mCompiler.getSelection(), options.compiler, refoptions.compiler);
 		changes += changeOption(cast(uint) mSingleFileComp.getSelection(), options.compilationModel, refoptions.compilationModel);
 		changes += changeOption(cast(ubyte) mCbOutputType.getSelection(), options.lib, refoptions.lib);
 		changes += changeOption(cast(ubyte) mCbSubsystem.getSelection(), options.subsystem, refoptions.subsystem);
-		changes += changeOption(mCompilerPath.getText(), options.program, refoptions.program);
+		changes += changeOption(cast(ubyte) mCompiler.getSelection(), options.compiler, refoptions.compiler);
 		changes += changeOption(ver, options.Dversion, refoptions.Dversion);
 		changes += changeOption(mOutputPath.getText(), options.outdir, refoptions.outdir);
 		changes += changeOption(mIntermediatePath.getText(), options.objdir, refoptions.objdir);
@@ -751,10 +732,8 @@ class GeneralPropertyPage : ProjectPropertyPage
 		return changes;
 	}
 
-	CheckBox mOtherDMD;
 	ComboBox mCompiler;
 	ComboBox mSingleFileComp;
-	Text mCompilerPath;
 	ComboBox mCbOutputType;
 	ComboBox mCbSubsystem;
 	ComboBox mDVersion;
@@ -849,6 +828,24 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 		AddControl("String Imports",      mStringImports = new Text(mCanvas));
 		AddControl("Version Identifiers", mVersionIdentifiers = new Text(mCanvas));
 		AddControl("Debug Identifiers",   mDebugIdentifiers = new Text(mCanvas));
+		AddHorizontalLine();
+		AddControl("",                    mOtherDMD = new CheckBox(mCanvas, "Use other compiler"));
+		AddControl("Compiler Path",       mCompilerPath = new Text(mCanvas));
+		AddHorizontalLine();
+		AddControl("C/C++ Compiler Cmd",  mCCCmd = new Text(mCanvas));
+		AddControl("",                    mTransOpt = new CheckBox(mCanvas, "Translate D options (debug, optimizations)"));
+	}
+
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+
+		EnableControls();
+	}
+
+	void EnableControls()
+	{
+		mCompilerPath.setEnabled(mOtherDMD.isChecked());
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -860,6 +857,13 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 		mStringImports.setText(options.fileImppath);
 		mVersionIdentifiers.setText(options.versionids);
 		mDebugIdentifiers.setText(options.debugids);
+
+		mOtherDMD.setChecked(options.otherDMD);
+		mCompilerPath.setText(options.program);
+		mCCCmd.setText(options.cccmd);
+		mTransOpt.setChecked(options.ccTransOpt);
+
+		EnableControls();
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -869,6 +873,11 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 		changes += changeOption(mStringImports.getText(), options.fileImppath, refoptions.fileImppath);
 		changes += changeOption(mVersionIdentifiers.getText(), options.versionids, refoptions.versionids);
 		changes += changeOption(mDebugIdentifiers.getText(), options.debugids, refoptions.debugids);
+
+		changes += changeOption(mOtherDMD.isChecked(), options.otherDMD, refoptions.otherDMD);
+		changes += changeOption(mCompilerPath.getText(), options.program, refoptions.program);
+		changes += changeOption(mCCCmd.getText(), options.cccmd, refoptions.cccmd);
+		changes += changeOption(mTransOpt.isChecked(), options.ccTransOpt, refoptions.ccTransOpt);
 		return changes;
 	}
 
@@ -877,6 +886,11 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 	Text mStringImports;
 	Text mVersionIdentifiers;
 	Text mDebugIdentifiers;
+
+	CheckBox mOtherDMD;
+	Text mCompilerPath;
+	Text mCCCmd;
+	CheckBox mTransOpt;
 }
 
 class DmdDebugPropertyPage : ProjectPropertyPage
@@ -1349,6 +1363,7 @@ class ConfigNodePropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
+		mNodes = GetSelectedNodes();
 		if(auto node = GetNode())
 			SetControls(node);
 	}
@@ -1372,9 +1387,8 @@ class ConfigNodePropertyPage : ProjectPropertyPage
 
 	CFileNode GetNode()
 	{
-		auto nodes = GetSelectedNodes();
-		for(size_t i = 0; i < nodes.length; i++)
-			if(auto node = cast(CFileNode)nodes[i])
+		for(size_t i = 0; i < mNodes.length; i++)
+			if(auto node = cast(CFileNode)mNodes[i])
 				return node;
 		return null;
 	}
@@ -1399,14 +1413,13 @@ class ConfigNodePropertyPage : ProjectPropertyPage
 		if(CFileNode rnode = GetNode())
 		{
 			auto refnode = rnode.cloneDeep();
-			auto nodes = GetSelectedNodes();
 			for(int i = 0; i < mObjects.length; i++)
 			{
 				auto config = ComPtr!(Config)(mObjects[i]);
 				if(config)
 				{
-					for(size_t n = 0; n < nodes.length; n++)
-						if(auto node = cast(CFileNode)nodes[n])
+					for(size_t n = 0; n < mNodes.length; n++)
+						if(auto node = cast(CFileNode)mNodes[n])
 						{
 							DoApply(node, refnode, config);
 							if(CProjectNode pn = cast(CProjectNode) node.GetRootNode())
@@ -1418,6 +1431,8 @@ class ConfigNodePropertyPage : ProjectPropertyPage
 		}
 		return returnError(E_FAIL);
 	}
+
+	CHierNode[] mNodes;
 }
 
 class FilePropertyPage : ConfigNodePropertyPage
@@ -1427,8 +1442,10 @@ class FilePropertyPage : ConfigNodePropertyPage
 
 	override void CreateControls()
 	{
+		mLinesPerMultiLine = 3;
 		AddControl("", mPerConfig = new CheckBox(mCanvas, "per Configuration Options (apply and reopen dialog to update)"));
-		AddControl("Build Tool", mTool = new ComboBox(mCanvas, [ "Auto", "DMD", kToolResourceCompiler, "Custom", "None" ], false));
+		AddControl("Build Tool", mTool = new ComboBox(mCanvas, [ "Auto", "DMD", kToolCpp, kToolResourceCompiler, "Custom", "None" ], false));
+		AddControl("Additional Options", mAddOpt = new Text(mCanvas));
 		AddControl("Build Command", mCustomCmd = new MultiLineText(mCanvas));
 		AddControl("Other Dependencies", mDependencies = new Text(mCanvas));
 		AddControl("Output File", mOutFile = new Text(mCanvas));
@@ -1448,8 +1465,10 @@ class FilePropertyPage : ConfigNodePropertyPage
 		bool perConfigChanged = mInitPerConfig != mPerConfig.isChecked();
 		bool isCustom = (tool == "Custom");
 		bool isRc = (tool == kToolResourceCompiler);
+		bool isCpp = (tool == kToolCpp);
 		mTool.setEnabled(!perConfigChanged);
 		mCustomCmd.setEnabled(!perConfigChanged && isCustom);
+		mAddOpt.setEnabled(!perConfigChanged && (isRc || isCpp));
 		mDependencies.setEnabled(!perConfigChanged && (isCustom || isRc));
 		mOutFile.setEnabled(!perConfigChanged && isCustom);
 		mLinkOut.setEnabled(!perConfigChanged && isCustom);
@@ -1473,6 +1492,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 		mInitPerConfig = node.GetPerConfigOptions();
 		mPerConfig.setChecked(mInitPerConfig);
 		mCustomCmd.setText(node.GetCustomCmd(cfgname)); 
+		mAddOpt.setText(node.GetAdditionalOptions(cfgname)); 
 		mDependencies.setText(node.GetDependencies(cfgname)); 
 		mOutFile.setText(node.GetOutFile(cfgname)); 
 		mLinkOut.setChecked(node.GetLinkOutput(cfgname)); 
@@ -1491,6 +1511,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 		changes += changeOptionDg!bool(mPerConfig.isChecked(), &node.SetPerConfigOptions, refnode.GetPerConfigOptions()); 
 		changes += changeOptionDg!string(tool,                    (s) => node.SetTool(cfgname, s),         refnode.GetTool(cfgname)); 
 		changes += changeOptionDg!string(mCustomCmd.getText(),    (s) => node.SetCustomCmd(cfgname, s),    refnode.GetCustomCmd(cfgname)); 
+		changes += changeOptionDg!string(mAddOpt.getText(),       (s) => node.SetAdditionalOptions(cfgname, s), refnode.GetAdditionalOptions(cfgname)); 
 		changes += changeOptionDg!string(mDependencies.getText(), (s) => node.SetDependencies(cfgname, s), refnode.GetDependencies(cfgname)); 
 		changes += changeOptionDg!string(mOutFile.getText(),      (s) => node.SetOutFile(cfgname, s),      refnode.GetOutFile(cfgname)); 
 		changes += changeOptionDg!bool(mLinkOut.isChecked(),      (b) => node.SetLinkOutput(cfgname, b),   refnode.GetLinkOutput(cfgname)); 
@@ -1505,6 +1526,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 	CheckBox mPerConfig;
 	ComboBox mTool;
 	MultiLineText mCustomCmd;
+	Text mAddOpt;
 	Text mDependencies;
 	Text mOutFile;
 	CheckBox mLinkOut;

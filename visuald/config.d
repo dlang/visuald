@@ -49,6 +49,7 @@ import visuald.vdextensions;
 const string[] kPlatforms = [ "Win32", "x64" ];
 
 enum string kToolResourceCompiler = "Resource Compiler";
+enum string kToolCpp = "C/C++";
 const string kCmdLogFileExtension = "build";
 
 ///////////////////////////////////////////////////////////////
@@ -168,6 +169,8 @@ class ProjectOptions
 
 	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
 	bool otherDMD;		// use explicit program path 
+	bool ccTransOpt;	// translate D options to C where applicable
+	string cccmd;		// C/C++ compiler command prefix
 	string program;		// program name
 	string imppath;		// array of char*'s of where to look for import modules
 	string fileImppath;	// array of char*'s of where to look for file import modules
@@ -260,6 +263,8 @@ class ProjectOptions
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
 		xfilename = "$(IntDir)\\$(TargetName).json";
+		cccmd = "$(CC) -c";
+		ccTransOpt = true;
 		doXGeneration = true;
 		useStdLibPath = true;
 		cRuntime = CRuntime.StaticRelease;
@@ -913,6 +918,41 @@ class ProjectOptions
 		}
 	}
 
+	string getCppCommandLine(string file)
+	{
+		int cc; // 0-3 for dmc,cl,clang,gdc
+		switch(compiler)
+		{
+			default:
+			case Compiler.DMD: cc = (isX86_64 ? 1 : 0); break;
+			case Compiler.LDC: cc = 2; break;
+			case Compiler.GDC: cc = 3; break;
+		}
+
+		string cmd = cccmd;
+		if(cc == 1)
+			cmd = "call %VCINSTALLDIR%\\vcvarsall.bat x64\n" ~ cmd;
+
+		static string[4] outObj = [ " -o", " -Fo", " -o", " -o " ];
+		cmd ~= outObj[cc] ~ quoteFilename(file);
+
+		if (!ccTransOpt)
+			return cmd;
+
+		static string[4] dbg = [ " -g", " -Zi", " -g", " -g" ];
+		if(symdebug)
+			cmd ~= dbg[cc];
+
+		if (release)
+			cmd ~= " -DNDEBUG";
+
+		static string[4] opt = [ " -O", " -Ox", " -O3", " -O3" ];
+		if(optimize)
+			cmd ~= opt[cc];
+
+		return cmd;
+	}
+
 	string getDependenciesFileOption(string file)
 	{
 		if(compiler == Compiler.GDC)
@@ -1030,6 +1070,8 @@ class ProjectOptions
 		replacements["INTDIR"] = normalizePath(objdir);
 		Package.GetGlobalOptions().addReplacements(replacements);
 
+		replacements["CC"] = config.GetCppCompiler();
+
 		string targetpath = outputfile.length ? outputfile : getTargetPath();
 		string target = replaceMacros(targetpath, replacements);
 		addFileMacros(target, "TARGET", replacements);
@@ -1088,6 +1130,8 @@ class ProjectOptions
 
 		elem ~= new xml.Element("compiler", toElem(compiler));
 		elem ~= new xml.Element("otherDMD", toElem(otherDMD));
+		elem ~= new xml.Element("cccmd", toElem(cccmd));
+		elem ~= new xml.Element("ccTransOpt", toElem(ccTransOpt));
 		elem ~= new xml.Element("program", toElem(program));
 		elem ~= new xml.Element("imppath", toElem(imppath));
 		elem ~= new xml.Element("fileImppath", toElem(fileImppath));
@@ -1214,6 +1258,8 @@ class ProjectOptions
 
 		fromElem(elem, "compiler", compiler);
 		fromElem(elem, "otherDMD", otherDMD);
+		fromElem(elem, "cccmd", cccmd);
+		fromElem(elem, "ccTransOpt", ccTransOpt);
 		fromElem(elem, "program", program);
 		fromElem(elem, "imppath", imppath);
 		fromElem(elem, "fileImppath", fileImppath);
@@ -2234,6 +2280,17 @@ class Config :	DisposingComObject,
 		return dep[0..$-4] ~ ".lnkdep";
 	}
 
+	string GetCppCompiler()
+	{
+		switch(mProjectOptions.compiler)
+		{
+			default:
+			case 0: return mProjectOptions.isX86_64 ? "cl" : "dmc";
+			case 1: return "gcc";
+			case 2: return "clang";
+		}
+	}
+
 	bool hasLinkDependencies()
 	{
 		return mProjectOptions.callLinkerDirectly() && Package.GetGlobalOptions().optlinkDeps;
@@ -2258,7 +2315,7 @@ class Config :	DisposingComObject,
 	string[] GetDependencies(CFileNode file)
 	{
 		string tool = GetCompileTool(file);
-		if(tool == "Custom" || tool == kToolResourceCompiler)
+		if(tool == "Custom" || tool == kToolResourceCompiler || tool == kToolCpp)
 		{
 			string outfile = GetOutputFile(file);
 			string dep = file.GetDependencies(getCfgName());
@@ -2349,6 +2406,8 @@ class Config :	DisposingComObject,
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
+			else if(isIn(ext, ".c", ".cpp", ".cxx", ".cc"))
+				tool = kToolCpp;
 		}
 		return tool;
 	}
@@ -2366,6 +2425,8 @@ class Config :	DisposingComObject,
 				tool = "DMD";
 			else if(ext == "rc")
 				tool = kToolResourceCompiler;
+			else if(isIn(ext, ".c", ".cpp", ".cxx", ".cc"))
+				tool = kToolCpp;
 		}
 		return tool;
 	}
@@ -2383,6 +2444,8 @@ class Config :	DisposingComObject,
 			fname = mProjectOptions.outdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename())) ~ ".exe";
 		if(tool == kToolResourceCompiler)
 			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename()), "_") ~ ".res";
+		if(tool == kToolCpp)
+			fname = mProjectOptions.objdir ~ "\\" ~ safeFilename(stripExtension(file.GetFilename()), "_") ~ ".obj";
 		if(tool == "Custom")
 			fname = file.GetOutFile(getCfgName());
 		if(fname.length)
@@ -2496,6 +2559,17 @@ class Config :	DisposingComObject,
 					cmd ~= " /I" ~ quoteFilename(inc);
 				cmd = mProjectOptions.replaceEnvironment(cmd, this, outfile);
 			}
+			string addOpts = file.GetAdditionalOptions(getCfgName());
+			if(addOpts.length)
+				cmd ~= " " ~ addOpts;
+			cmd ~= " " ~ quoteFilename(file.GetFilename());
+		}
+		if(tool == kToolCpp)
+		{
+			cmd = mProjectOptions.getCppCommandLine(outfile);
+			string addOpts = file.GetAdditionalOptions(getCfgName());
+			if(addOpts.length)
+				cmd ~= " " ~ addOpts;
 			cmd ~= " " ~ quoteFilename(file.GetFilename());
 		}
 		if(tool == "Custom")

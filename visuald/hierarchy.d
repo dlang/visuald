@@ -237,7 +237,16 @@ class CFileNode : CHierNode,
 	{
 		createOptions(cfg).mCustomCmd = cmd;
 	}
-	
+
+	string GetAdditionalOptions(string cfg)
+	{
+		return getOptions(cfg).mAddOpt;
+	}
+	void SetAdditionalOptions(string cfg, string opt)
+	{
+		createOptions(cfg).mAddOpt = opt;
+	}
+
 	bool GetLinkOutput(string cfg)
 	{
 		return getOptions(cfg).mLinkOut;
@@ -555,6 +564,7 @@ private:
 		string mDependencies;
 		string mOutFile;
 		string mCustomCmd;
+		string mAddOpt;
 		bool mLinkOut;
 		bool mUptodateWithSameTime;
 	}

@@ -960,6 +960,7 @@ bool HasFunctionPrototype(string kind)
 		case "deallocator":
 		case "delegate":
 		case "function":
+version(v40)		case "funcdecl":
 			return true;
 		default:
 			return false;
@@ -988,6 +989,7 @@ LIB_LISTTYPE2 GetListType(string kind)
 		case "alias":
 		case "typedef":
 		case "delegate":
+version(v40)		case "funcdecl":
 		case "function":         return LLT_MEMBERS;
 			
 		// not expected to show up in json file
@@ -1315,6 +1317,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 			case "destructor":
 			case "allocator":
 			case "deallocator":
+version(v40)			case "funcdecl":
 			case "function":         pData.Image = CSIMG_MEMBER; break;
 			case "delegate":         pData.Image = CSIMG_MEMBER; break;
 			case "interface":        pData.Image = CSIMG_INTERFACE; break;
@@ -1543,8 +1546,17 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 		/+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
-		if(SrcType != GS_ANY && SrcType != GS_DEFINITION)
-			return E_FAIL;
+version(v40) {		if(SrcType != GS_ANY)
+		{
+			if(SrcType == GS_DEFINITION && GetKind(Index) == "funcdecl")
+				return E_FAIL;
+			if(SrcType == GS_DECLARATION && GetKind(Index) != "funcdecl")
+				return E_FAIL;
+			if(SrcType != GS_DECLARATION && SrcType != GS_DEFINITION)
+				return E_FAIL;
+		}
+} else {		if(SrcType != GS_ANY && SrcType != GS_DEFINITION)
+			return E_FAIL; }
 		*pfOK = TRUE;
 		return S_OK;
 	}
