@@ -76,9 +76,14 @@ string unquoteArgument(string arg)
 	return arg[1..$-1];
 }
 
-string replaceCrLf(string s)
+string replaceCrLfSemi(string s)
 {
 	return replace(replace(s, "\n", ";"), "\r", "");
+}
+
+string replaceSemiCrLf(string s)
+{
+	return replace(s, ";", "\r\n");
 }
 
 string insertCr(string s)

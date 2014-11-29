@@ -15,6 +15,7 @@ import std.utf;
 import std.stream;
 import std.array;
 import std.conv;
+import core.stdc.wchar_ : wcslen;
 
 import stdext.path;
 import stdext.array;

@@ -1005,10 +1005,12 @@ class Options
 				return doDoc ? 1 : -1;
 			case "D_NoBoundsChecks":
 				return noBoundsCheck ? 1 : -1;
+			case "CRuntime_DigitalMars":
 			case "Win32":
 			case "X86":
 			case "D_InlineAsm_X86":
 				return x64 ? -1 : 1;
+			case "CRuntime_Microsoft":
 			case "Win64":
 			case "X86_64":
 			case "D_InlineAsm_X86_64":

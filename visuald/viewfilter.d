@@ -1306,6 +1306,11 @@ else
 			{
 				imp ~= "i";
 				hr = OpenFileInSolution(imp, -1, file, false);
+				if(hr != S_OK)
+				{
+					imp = imp[0 .. $-3] ~ "\\package.d";
+					hr = OpenFileInSolution(imp, -1, file, false);
+				}
 			}
 			return hr;
 		}
