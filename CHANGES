@@ -675,9 +675,14 @@ unreleased Version 0.3.40
   * moved "Other Compiler" option from main project page to compiler page
   * added additional options to the resource compiler tool
   * added basic support to compile C/C++ files:
-    * new tool "C/C++" that is also auto-deteted for usual file extensions
+    * new tool "C/C++" that is also auto-detected for usual file extensions
     * common command line options can be specified on the compiler page of the project 
     * special command line options can be added per file
     * $(CC) expands to the compiler executable of the current D compiler: dmc, cl, gcc or clang
     * if "Translate D options" is checked, dmd options for -g, -release, -O are translated to 
       the respective C/C++ compiler option
+  * updated version identifiers according to http://dlang.org/version.html
+  * separate link could fail if configuration name contains spaces
+  * really updated dparser to a6207d6db5e54c68aa4b9db53b702681242d81d5
+  * goto definition on import now supports package.d
+  * bugzilla 13759: $(VSINSTALLDIR)\Common7\IDE now added to the default executable paths

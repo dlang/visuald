@@ -179,8 +179,3 @@ bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt, float*
 	string filename = to!string(fname);
 	return Package.GetLanguageService().GetCoverageData(filename, line, data, cnt, covPercent);
 }
-
-///////////////////////////////////////////////////////////////////////
-// only the first export has a '_' prefix
-//extern(C) export void dummy () { }
-

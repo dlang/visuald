@@ -1263,6 +1263,10 @@ class GlobalOptions
 			{
 				return toUTF8(getWStringOpt(tag, def));
 			}
+			string getPathsOpt(wstring tag, wstring def = null)
+			{
+				return replaceSemiCrLf(toUTF8(getWStringOpt(tag, def)));
+			}
 			int getIntOpt(wstring tag, int def = 0)
 			{
 				int v = keyToolOpts.GetDWORD(tag, def);
@@ -1320,12 +1324,12 @@ class GlobalOptions
 				enum string prefix = dmd ? "" : compiler ~ ".";
 				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
 
-				opt.ExeSearchPath = getStringOpt(prefix ~ "ExeSearchPath");
-				opt.LibSearchPath = getStringOpt(prefix ~ "LibSearchPath");
-				opt.ImpSearchPath = getStringOpt(prefix ~ "ImpSearchPath");
-				opt.ExeSearchPath64 = getStringOpt(prefix ~ "ExeSearchPath64", to!wstring(opt.ExeSearchPath));
-				opt.LibSearchPath64 = getStringOpt(prefix ~ "LibSearchPath64", defLibPath64);
-
+				opt.ExeSearchPath = getPathsOpt(prefix ~ "ExeSearchPath");
+				opt.LibSearchPath = getPathsOpt(prefix ~ "LibSearchPath");
+				opt.ImpSearchPath = getPathsOpt(prefix ~ "ImpSearchPath");
+				opt.ExeSearchPath64 = getPathsOpt(prefix ~ "ExeSearchPath64", to!wstring(opt.ExeSearchPath));
+				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", defLibPath64);
+				
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
 				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
@@ -1334,7 +1338,7 @@ class GlobalOptions
 			readCompilerOptions!"GDC"(GDC, null);
 			readCompilerOptions!"LDC"(LDC, null);
 
-			JSNSearchPath     = getStringOpt("JSNSearchPath");
+			JSNSearchPath     = getPathsOpt("JSNSearchPath");
 			IncSearchPath     = getStringOpt("IncSearchPath");
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");

@@ -10,6 +10,7 @@ module visuald.dproject;
 
 import visuald.windows;
 import core.stdc.string : memcpy;
+import core.stdc.wchar_ : wcslen;
 import std.windows.charset;
 import std.string;
 import std.utf;

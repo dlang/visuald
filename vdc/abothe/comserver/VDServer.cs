@@ -357,8 +357,8 @@ namespace DParserCOMServer
 				
 			_editorData.ParseCache = new ParseCacheView(_imports.Split('\n'));
 			_editorData.IsDebug = (_flags & 2) != 0;
-			_editorData.DebugLevel = (int)(_flags >> 16) & 0xff;
-			_editorData.VersionNumber = (int)(_flags >> 8) & 0xff;
+			_editorData.DebugLevel = (_flags >> 16) & 0xff;
+			_editorData.VersionNumber = (_flags >> 8) & 0xff;
 			_editorData.GlobalVersionIds = versions.Split('\n');
 			_editorData.GlobalDebugIds = _debugIds.Split('\n');
             CompletionOptions.Instance.ShowUFCSItems = (_flags & 0x2000000) != 0;

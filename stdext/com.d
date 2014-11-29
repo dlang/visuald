@@ -12,6 +12,7 @@ module stdext.com;
 import std.utf;
 import std.string;
 import core.stdc.string;
+import core.stdc.wchar_ : wcslen;
 
 import core.memory;
 

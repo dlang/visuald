@@ -129,6 +129,7 @@ Debugger:
 - local functions/delegates should have debug info for closure vars ("this" exists)
 - GDC: x64: function arguments not shown
 - VS2012: autoexp.dat does not work? depends on debug engine => edit and continue
+- mago64: modules window does not show 64-bit addresses
 
 GUI-Designer:
 -------------
@@ -164,3 +165,5 @@ Unsorted
 - dfix support
 - configuration of dependent project not read from configuration manager
 - jump to assertion error
++ import std.container: jump to package
+- renaming configuration does not change project config

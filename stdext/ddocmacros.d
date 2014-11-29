@@ -222,11 +222,11 @@ unittest
 
 	string txt = "$(D d-code)";
 	string[string] macros = [ "D" : "$0", "LINK" : `<a href="$1">$+</a>` ];
-	string res = ddocExpand(txt, macros);
+	string res = ddocExpand(txt, macros, true);
 	version(LOG) writeln(res);
 	assert(strip(res) == "d-code");
 
-	res = ddocExpand("link = $(LINK 1,2, 3,4)", macros);
+	res = ddocExpand("link = $(LINK 1,2, 3,4)", macros, true);
 	version(LOG) writeln(res);
 	assert(strip(res) == `link = <a href="1">2,3,4</a>`);
 }

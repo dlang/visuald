@@ -17,6 +17,7 @@ import std.file;
 import std.utf;
 import std.array;
 import std.algorithm;
+import std.process : browse;
 
 import stdext.path;
 import stdext.file;

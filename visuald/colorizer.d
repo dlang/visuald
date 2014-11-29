@@ -234,12 +234,12 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	string[2] mConfigVersions;
 	bool mConfigRelease;
 	bool mConfigUnittest;
-	bool mConfigGDC;
 	bool mConfigX64;
 	bool mConfigCoverage;
 	bool mConfigDoc;
 	bool mConfigNoBoundsCheck;
-	
+	ubyte mConfigCompiler;
+
 	int[] mCoverage;
 	float mCoveragePercent;
 	string  mLastCoverageFile;
@@ -725,9 +725,15 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case "D_LP64":
 				return mConfigX64 ? 1 : -1;
 			case "GNU":
-				return mConfigGDC ? 1 : -1;
+				return mConfigCompiler == Compiler.GDC ? 1 : -1;
+			case "LDC":
+				return mConfigCompiler == Compiler.LDC ? 1 : -1;
 			case "DigitalMars":
-				return mConfigGDC ? -1 : 1;
+				return mConfigCompiler == Compiler.DMD ? 1 : -1;
+			case "CRuntime_DigitalMars":
+				return mConfigCompiler == Compiler.DMD && !mConfigX64 ? 1 : -1;
+			case "CRuntime_Microsoft":
+				return mConfigCompiler == Compiler.DMD && mConfigX64 ? 1 : -1;
 			default:
 				assert(false, "inconsistent predefined versions");
 		}
@@ -1406,7 +1412,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			changes += modifyValue(mConfig.GetProjectOptions().cov,           mConfigCoverage);
 			changes += modifyValue(mConfig.GetProjectOptions().doDocComments, mConfigDoc);
 			changes += modifyValue(mConfig.GetProjectOptions().noboundscheck, mConfigNoBoundsCheck);
-			changes += modifyValue(mConfig.GetProjectOptions().compiler == Compiler.GDC, mConfigGDC);
+			changes += modifyValue(mConfig.GetProjectOptions().compiler,      mConfigCompiler);
 		}
 		return changes != 0;
 	}

@@ -2640,7 +2640,7 @@ class Config :	DisposingComObject,
 		GlobalOptions globOpt = Package.GetGlobalOptions();
 		string exeSearchPath = x64 ? mProjectOptions.compilerDirectories.ExeSearchPath64 : mProjectOptions.compilerDirectories.ExeSearchPath;
 		if(exeSearchPath.length)
-			cmd ~= "set PATH=" ~ replaceCrLf(exeSearchPath) ~ ";%PATH%\n";
+			cmd ~= "set PATH=" ~ replaceCrLfSemi(exeSearchPath) ~ ";%PATH%\n";
 		
 		string libSearchPath = x64 ? mProjectOptions.compilerDirectories.LibSearchPath64 : mProjectOptions.compilerDirectories.LibSearchPath;
 		bool hasGlobalPath = mProjectOptions.useStdLibPath && libSearchPath.length;
@@ -2649,7 +2649,7 @@ class Config :	DisposingComObject,
 			// obsolete?
 			string lpath;
 			if(hasGlobalPath)
-				lpath = replaceCrLf(libSearchPath);
+				lpath = replaceCrLfSemi(libSearchPath);
 			if(mProjectOptions.libpaths.length && !_endsWith(lpath, ";"))
 				lpath ~= ";";
 			lpath ~= mProjectOptions.libpaths;
@@ -2894,10 +2894,10 @@ class Config :	DisposingComObject,
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";
+					lnkresponsefile = makeFilenameAbsolute(lnkresponsefile, workdir);
 					if(lnkresponsefile != quoteFilename(lnkresponsefile))
 					{
 						// optlink does not support quoted response files
-						lnkresponsefile = makeFilenameAbsolute(lnkresponsefile, workdir);
 						if(!std.file.exists(lnkresponsefile))
 							collectException(std.file.write(lnkresponsefile, ""));
 						lnkresponsefile = shortFilename(lnkresponsefile);
