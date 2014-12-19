@@ -195,7 +195,7 @@ struct SearchData
 	
 	static bool isIdentChar(dchar ch)
 	{
-		return isAlphaNum(ch) || ch == '_';
+		return dLex.isIdentifierCharOrDigit(ch);
 	}
 	static bool isWordBoundary(dchar ch1, dchar ch2)
 	{
@@ -529,7 +529,7 @@ class LibraryInfo
 					{
 						// strip template arguments and constraint
 						string s = n.str;
-						int pos = countUntil(s, '(');
+						int pos = indexOf(s, '(');
 						if(pos >= 0)
 							s = s[0..pos];
 						addunique(cplts, s);
@@ -1075,7 +1075,7 @@ version(v40)
 			{
 				// strip template arguments and constraint
 				string s = node.name;
-				int pos = countUntil(s, '(');
+				int pos = indexOf(s, '(');
 				if(pos >= 0)
 					s = s[0..pos];
 				addunique(cplts, s);

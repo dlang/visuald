@@ -689,3 +689,5 @@ unreleased Version 0.3.40
   * build phobos browse info: operated on outdated folder structure of phobos/druntime
   * DMD/x64 linker override settings not saved
   * revamped pipedmd: now uses tracker.exe from MSBuild or WinSDK to monitor dependencies
+  * Win32/COFF support: check box on Compiler->Output page, new tab in global options
+  * bugzilla 13817: VisualD cannot list members with utf-8 wide characters

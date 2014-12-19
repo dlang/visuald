@@ -36,7 +36,7 @@ static bool isDigit(char ch)
 
 string quoteArg(string arg)
 {
-	if(countUntil(arg, ' ') < arg.length)
+	if(indexOf(arg, ' ') < arg.length)
 		return "\"" ~ replace(arg, "\"", "\\\"") ~ "\"";
 	else
 		return arg;

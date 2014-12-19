@@ -1775,10 +1775,8 @@ version(all)
 		wstring txt = GetText(line, 0, line, -1);
 		if(idx > txt.length)
 			return false;
-		while(endIdx < txt.length && dLex.isIdentifierCharOrDigit(txt[endIdx]))
-			endIdx++;
-		while(startIdx > 0 && dLex.isIdentifierCharOrDigit(txt[startIdx-1]))
-			startIdx--;
+		for(size_t p = endIdx; p < txt.length && dLex.isIdentifierCharOrDigit(decode(txt, p)); endIdx = p) {}
+		for(size_t p = startIdx; p > 0 && dLex.isIdentifierCharOrDigit(decodeBwd(txt, p)); startIdx = p) {}
 		return startIdx < endIdx;
 }
 else
@@ -1884,15 +1882,14 @@ else
 
 			wstring txt = GetText(pSpan.iStartLine, 0, pSpan.iStartLine, -1);
 		L_again:
-			int idx = pSpan.iStartIndex - 1;
-			while(idx >= 0 && isWhite(txt[idx]))
-				idx--;
-			if(idx >= 0 && txt[idx] == '.')
+			size_t idx = pSpan.iStartIndex;
+			dchar c;
+			for (size_t p = idx; p > 0 && isWhite(c = decodeBwd(txt, p)); idx = p) {}
+			if(idx >= 0 && c == '.')
 			{
-				while(idx > 0 && isWhite(txt[idx - 1]))
-					idx--;
-				while(idx > 0 && dLex.isIdentifierCharOrDigit(txt[idx - 1]))
-					idx--;
+				idx--; // skip '.'
+				for (size_t p = idx; p > 0 && isWhite(decodeBwd(txt, p)); idx = p) {}
+				for (size_t p = idx; p > 0 && dLex.isIdentifierCharOrDigit(decodeBwd(txt, p)); idx = p) {}
 				pSpan.iStartIndex = idx;
 				goto L_again;
 			}
@@ -3373,7 +3370,7 @@ else
 		mParseErrors = mParseErrors.init;
 		foreach(e; errs)
 		{
-			auto idx = countUntil(e, ':');
+			auto idx = indexOf(e, ':');
 			if(idx > 0)
 			{
 				string[] num = split(e[0..idx], ",");

@@ -90,12 +90,12 @@ class Declarations
 		if(index < 0 || index >= mNames.length)
 			return false;
 		string s = mNames[index];
-		auto pos1 = countUntil(s, ':');
+		auto pos1 = indexOf(s, ':');
 		string name, text, type, desc;
 		if(pos1 >= 0)
 		{
 			name = s[0 .. pos1];
-			auto pos2 = countUntil(s[pos1 + 1 .. $], ':');
+			auto pos2 = indexOf(s[pos1 + 1 .. $], ':');
 			if(pos2 >= 0)
 			{
 				type = s[pos1 + 1 .. pos1 + 1 + pos2];
@@ -107,7 +107,7 @@ class Declarations
 		else
 			name = s;
 
-		auto pos3 = countUntil(name, "|");
+		auto pos3 = indexOf(name, "|");
 		if(pos3 >= 0)
 		{
 			text = name[pos3 + 1 .. $];
@@ -347,7 +347,7 @@ class Declarations
 		int end = min(lineCount, line + kCompletionSearchLines);
 
 		string tok = GetTokenBeforeCaret(textView, src);
-		if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
+		if(tok.length && !dLex.isIdentifierCharOrDigit(tok.front))
 			tok = "";
 
 		int iState = src.mColorizer.GetLineState(start);
@@ -382,7 +382,7 @@ class Declarations
 			return false;
 
 		string tok = GetTokenBeforeCaret(textView, src);
-		if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
+		if(tok.length && !dLex.isIdentifierCharOrDigit(tok.front))
 			tok = "";
 		if(!tok.length)
 			return false;
@@ -402,7 +402,7 @@ class Declarations
 		try
 		{
 			string tok = GetTokenBeforeCaret(textView, src);
-			if(tok.length && !isAlphaNum(tok[0]) && tok[0] != '_')
+			if(tok.length && !dLex.isIdentifierCharOrDigit(tok.front))
 				tok = "";
 
 			int line, idx;

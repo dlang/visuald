@@ -452,7 +452,7 @@ version(tip)
 				
 				else if(mCodeWinMgr.mSource.IsCompletorActive() || Package.GetGlobalOptions().expandTrigger >= 2)
 				{
-					if(isAlphaNum(ch) || ch == '_')
+					if(dLex.isIdentifierChar(ch))
 						initCompletion(false);
 					else
 						stopCompletions();

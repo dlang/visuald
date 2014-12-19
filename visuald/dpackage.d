@@ -1075,11 +1075,18 @@ struct CompilerDirectories
 	string ExeSearchPath;
 	string ImpSearchPath;
 	string LibSearchPath;
+
 	string ExeSearchPath64;
 	string LibSearchPath64;
 	bool   overrideIni64;
 	string overrideLinker64;
 	string overrideOptions64;
+
+	string ExeSearchPath32coff;
+	string LibSearchPath32coff;
+	bool   overrideIni32coff;
+	string overrideLinker32coff;
+	string overrideOptions32coff;
 }
 
 class GlobalOptions
@@ -1320,7 +1327,7 @@ class GlobalOptions
 			}
 
 			// overwrite by user config
-			void readCompilerOptions(string compiler)(ref CompilerDirectories opt, wstring defLibPath64)
+			void readCompilerOptions(string compiler)(ref CompilerDirectories opt, wstring defLibPath64, wstring defLibPath32coff = null)
 			{
 				enum bool dmd = compiler == "DMD";
 				enum string prefix = dmd ? "" : compiler ~ ".";
@@ -1335,6 +1342,15 @@ class GlobalOptions
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
 				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
+
+				if (dmd)
+				{
+					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", to!wstring(opt.ExeSearchPath));
+					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", defLibPath32coff);
+					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", dmd);
+					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
+					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
+				}
 			}
 			readCompilerOptions!"DMD"(DMD, getDefaultDMDLibPath64());
 			readCompilerOptions!"GDC"(GDC, null);
@@ -1414,6 +1430,13 @@ class GlobalOptions
 			keyToolOpts.Set("overrideIni64",       DMD.overrideIni64);
 			keyToolOpts.Set("overrideLinker64",    toUTF16(DMD.overrideLinker64));
 			keyToolOpts.Set("overrideOptions64",   toUTF16(DMD.overrideOptions64));
+
+			keyToolOpts.Set("ExeSearchPath32coff",     toUTF16(DMD.ExeSearchPath32coff));
+			keyToolOpts.Set("LibSearchPath32coff",     toUTF16(DMD.LibSearchPath32coff));
+			keyToolOpts.Set("overrideIni32coff",       DMD.overrideIni32coff);
+			keyToolOpts.Set("overrideLinker32coff",    toUTF16(DMD.overrideLinker32coff));
+			keyToolOpts.Set("overrideOptions32coff",   toUTF16(DMD.overrideOptions32coff));
+
 			keyToolOpts.Set("GDC.ExeSearchPath64", toUTF16(GDC.ExeSearchPath64));
 			keyToolOpts.Set("GDC.LibSearchPath64", toUTF16(GDC.LibSearchPath64));
 			keyToolOpts.Set("LDC.ExeSearchPath64", toUTF16(LDC.ExeSearchPath64));
@@ -1571,7 +1594,7 @@ class GlobalOptions
 		return inifile;
 	}
 
-	string getLinkerPath(bool x64, string workdir, string dmdpath, string *libs = null, string* options = null)
+	string getLinkerPath(bool x64, bool mscoff, string workdir, string dmdpath, string *libs = null, string* options = null)
 	{
 		string path = "link.exe";
 		string inifile = findScIni(workdir, dmdpath, false);
@@ -1584,7 +1607,7 @@ class GlobalOptions
 			if(auto pEnv = "Environment" in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
 			
-			string envArch = x64 ? "Environment64" : "Environment32";
+			string envArch = x64 ? "Environment64" : mscoff ? "Environment32mscoff" : "Environment32";
 			if(auto pEnv = envArch in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
 
@@ -1597,11 +1620,18 @@ class GlobalOptions
 				else if(string* pLink = "LINKCMD64" in env)
 					path = *pLink;
 			}
+			else if(mscoff)
+			{
+				if(DMD.overrideIni32coff)
+					path = DMD.overrideLinker32coff;
+			}
 
 			if(options)
 			{
 				if(x64 && DMD.overrideIni64)
 					*options = DMD.overrideOptions64;
+				else if(!x64 && mscoff && DMD.overrideIni32coff)
+					*options = DMD.overrideOptions32coff;
 				else if(string* pFlags = "DFLAGS" in env)
 					*options = *pFlags;
 			}
