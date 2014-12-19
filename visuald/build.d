@@ -465,8 +465,11 @@ else
 				lnkdeps = fromMBSz(lnkdepz.ptr, cp);
 			}
 			string[] lnkfiles = splitLines(lnkdeps);
-			makeFilenamesAbsolute(lnkfiles, workdir);
-			files ~= lnkfiles;
+			foreach(lnkfile; lnkfiles)
+			{
+				if(!lnkfile.startsWith("#Command:"))
+					files ~= makeFilenameAbsolute(lnkfile, workdir);
+			}
 		}
 		return true;
 	}

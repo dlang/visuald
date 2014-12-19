@@ -686,3 +686,6 @@ unreleased Version 0.3.40
   * really updated dparser to a6207d6db5e54c68aa4b9db53b702681242d81d5
   * goto definition on import now supports package.d
   * bugzilla 13759: $(VSINSTALLDIR)\Common7\IDE now added to the default executable paths
+  * build phobos browse info: operated on outdated folder structure of phobos/druntime
+  * DMD/x64 linker override settings not saved
+  * revamped pipedmd: now uses tracker.exe from MSBuild or WinSDK to monitor dependencies

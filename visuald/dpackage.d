@@ -18,11 +18,13 @@ import std.file;
 import std.conv;
 import std.array;
 import std.exception;
+import std.algorithm;
 
 import stdext.path;
 import stdext.array;
 import stdext.file;
 import stdext.string;
+import stdext.registry;
 
 import visuald.comutil;
 import visuald.hierutil;
@@ -1409,6 +1411,9 @@ class GlobalOptions
 			
 			keyToolOpts.Set("ExeSearchPath64",     toUTF16(DMD.ExeSearchPath64));
 			keyToolOpts.Set("LibSearchPath64",     toUTF16(DMD.LibSearchPath64));
+			keyToolOpts.Set("overrideIni64",       DMD.overrideIni64);
+			keyToolOpts.Set("overrideLinker64",    toUTF16(DMD.overrideLinker64));
+			keyToolOpts.Set("overrideOptions64",   toUTF16(DMD.overrideOptions64));
 			keyToolOpts.Set("GDC.ExeSearchPath64", toUTF16(GDC.ExeSearchPath64));
 			keyToolOpts.Set("GDC.LibSearchPath64", toUTF16(GDC.LibSearchPath64));
 			keyToolOpts.Set("LDC.ExeSearchPath64", toUTF16(LDC.ExeSearchPath64));
@@ -1728,7 +1733,7 @@ class GlobalOptions
 		return null;
 	}
 
-	string[] findDFiles(string path, string sub)
+	string[] findDFiles(string path, string sub, bool deep)
 	{
 		string[] files;
 		if(!isExistingDir(path ~ sub))
@@ -1737,6 +1742,13 @@ class GlobalOptions
 		{
 			if(_startsWith(file, path))
 				file = file[path.length .. $];
+			if (deep && isExistingDir(path ~ file))
+			{
+				string[] exclude = [ "\\internal", "\\freebsd", "\\linux", "\\osx", "\\posix", "\\solaris" ];
+				if (!any!(e => file.endsWith(e))(exclude))
+					files ~= findDFiles(path, file, deep);
+				continue;
+			}
 			string bname = baseName(file);
 			if(globMatch(bname, "openrj.d"))
 				continue;
@@ -1817,31 +1829,24 @@ class GlobalOptions
 			
 			if(std.file.exists(s ~ "std\\algorithm.d")) // D2
 			{
-				files ~= findDFiles(s, "std");
-				files ~= findDFiles(s, "std\\c");
-				files ~= findDFiles(s, "std\\c\\windows");
-				files ~= findDFiles(s, "std\\internal\\math");
-				files ~= findDFiles(s, "std\\windows");
-				files ~= findDFiles(s, "etc\\c");
+				files ~= findDFiles(s, "std", true);
+				files ~= findDFiles(s, "etc\\c", true);
 				jsonfile = jsonPath ~ "phobos.json";
 			}
 			if(std.file.exists(s ~ "std\\gc.d")) // D1
 			{
-				files ~= findDFiles(s, "std");
-				files ~= findDFiles(s, "std\\c");
-				files ~= findDFiles(s, "std\\c\\windows");
-				files ~= findDFiles(s, "std\\windows");
+				files ~= findDFiles(s, "std", false);
+				files ~= findDFiles(s, "std\\c", false);
+				files ~= findDFiles(s, "std\\c\\windows", false);
+				files ~= findDFiles(s, "std\\windows", false);
 				jsonfile = jsonPath ~ "phobos1.json";
 			}
 			if(std.file.exists(s ~ "object.di"))
 			{
 				opts ~= " -I" ~ buildPath(s, "..\\src"); // needed since dmd 2.059
 				files ~= "object.di";
-				files ~= findDFiles(s, "core");
-				files ~= findDFiles(s, "core\\stdc");
-				files ~= findDFiles(s, "core\\sync");
-				files ~= findDFiles(s, "core\\sys\\windows");
-				files ~= findDFiles(s, "std");
+				files ~= findDFiles(s, "core", true);
+				files ~= findDFiles(s, "std", false);  // D1?
 				jsonfile = jsonPath ~ "druntime.json";
 			}
 

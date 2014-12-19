@@ -49,6 +49,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath />
   <fileImppath />
@@ -147,6 +149,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath />
   <fileImppath />
@@ -201,7 +205,7 @@ echo. &gt;$(TargetDir)\build.dep</postBuildCommand>
   <File tool="Custom" path="dte_idl.bat" dependencies="$(OutDir)\tlb2idl.exe" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\tlb2idl.exe&quot; &quot;$(OutDir)\dte_idl.success&quot;" outfile="$(OutDir)\dte_idl.success" />
-  <File tool="Custom" path="..\tools\filemonitor.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).dll -defaultlib=user32.lib -L/ENTRY:_DllMain@12 $(InputPath)" outfile="$(OutDir)\$(InputName).dll" />
+  <File tool="Custom" path="..\tools\filemonitor.d" customcmd="dmd -g -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).dll -defaultlib=user32.lib -L/ENTRY:_DllMain@12 $(InputPath)" outfile="$(OutDir)\$(InputName).dll" />
   <File tool="Custom" path="..\tools\largeadr.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath)" outfile="$(OutDir)\$(InputName).exe" />
   <File tool="Custom" path="..\tools\pipedmd.d" dependencies="..\tools\nostacktrace.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
   <File tool="Custom" path="sdk.bat" dependencies="$(OutDir)\dte_idl.success $(OutDir)\vsi2d.exe" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
