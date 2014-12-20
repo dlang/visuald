@@ -696,3 +696,4 @@ unreleased Version 0.3.40
   * bugzilla 13213: there are now both "goto definition" and "goto declaration", where the former
     will try to find the forward declared symbols through the object browser (including C/C++)
   * object browser/symbol search: now filters out __unittest and __invariant symbols
+  * cv2pdb: updated to 0.33 with better DWARF location support
