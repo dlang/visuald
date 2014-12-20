@@ -360,3 +360,13 @@ string toUTF8Safe(const(dchar)[] text)
 	return toUTF8(modtext.length ? modtext : text);
 }
 
+dchar decodeBwd(Char)(const(Char) txt, ref size_t pos)
+{
+	assert(pos > 0);
+	uint len = strideBack(txt, pos);
+	pos -= len;
+	size_t p = pos;
+	dchar ch = decode(txt, p);
+	assert(pos + len == p);
+	return ch;
+}

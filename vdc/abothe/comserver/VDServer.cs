@@ -314,7 +314,16 @@ namespace DParserCOMServer
 				if (n == null)
 					return;
 
-				_tipStart = n.Location;
+				bool decl = false;
+				var mthd = n as DMethod;
+				if (mthd != null)
+					decl = mthd.Body == null;
+				else if (n.ContainsAttribute(DTokens.Extern))
+					decl = true;
+				if (decl)
+					_tipText.Append("EXTERN:");
+
+                _tipStart = n.Location;
 				_tipEnd = n.EndLocation;
 				INode node = n.NodeRoot;
 				if(node is DModule)

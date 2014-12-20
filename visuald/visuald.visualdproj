@@ -12,6 +12,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -31,7 +32,7 @@
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
+  <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
@@ -48,6 +49,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -109,6 +112,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>1</optimize>
   <cpu>0</cpu>
@@ -145,6 +149,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -206,6 +212,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>1</optimize>
   <cpu>0</cpu>
@@ -242,6 +249,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..;m:\s\d\rainers\druntime\src</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -303,6 +312,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -339,6 +349,8 @@
   <stackStomp>0</stackStomp>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -400,6 +412,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -436,6 +449,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>

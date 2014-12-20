@@ -18,11 +18,13 @@ import std.file;
 import std.conv;
 import std.array;
 import std.exception;
+import std.algorithm;
 
 import stdext.path;
 import stdext.array;
 import stdext.file;
 import stdext.string;
+import stdext.registry;
 
 import visuald.comutil;
 import visuald.hierutil;
@@ -1073,11 +1075,18 @@ struct CompilerDirectories
 	string ExeSearchPath;
 	string ImpSearchPath;
 	string LibSearchPath;
+
 	string ExeSearchPath64;
 	string LibSearchPath64;
 	bool   overrideIni64;
 	string overrideLinker64;
 	string overrideOptions64;
+
+	string ExeSearchPath32coff;
+	string LibSearchPath32coff;
+	bool   overrideIni32coff;
+	string overrideLinker32coff;
+	string overrideOptions32coff;
 }
 
 class GlobalOptions
@@ -1318,7 +1327,7 @@ class GlobalOptions
 			}
 
 			// overwrite by user config
-			void readCompilerOptions(string compiler)(ref CompilerDirectories opt, wstring defLibPath64)
+			void readCompilerOptions(string compiler)(ref CompilerDirectories opt, wstring defLibPath64, wstring defLibPath32coff = null)
 			{
 				enum bool dmd = compiler == "DMD";
 				enum string prefix = dmd ? "" : compiler ~ ".";
@@ -1333,6 +1342,15 @@ class GlobalOptions
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
 				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
+
+				if (dmd)
+				{
+					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", to!wstring(opt.ExeSearchPath));
+					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", defLibPath32coff);
+					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", dmd);
+					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
+					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
+				}
 			}
 			readCompilerOptions!"DMD"(DMD, getDefaultDMDLibPath64());
 			readCompilerOptions!"GDC"(GDC, null);
@@ -1409,6 +1427,16 @@ class GlobalOptions
 			
 			keyToolOpts.Set("ExeSearchPath64",     toUTF16(DMD.ExeSearchPath64));
 			keyToolOpts.Set("LibSearchPath64",     toUTF16(DMD.LibSearchPath64));
+			keyToolOpts.Set("overrideIni64",       DMD.overrideIni64);
+			keyToolOpts.Set("overrideLinker64",    toUTF16(DMD.overrideLinker64));
+			keyToolOpts.Set("overrideOptions64",   toUTF16(DMD.overrideOptions64));
+
+			keyToolOpts.Set("ExeSearchPath32coff",     toUTF16(DMD.ExeSearchPath32coff));
+			keyToolOpts.Set("LibSearchPath32coff",     toUTF16(DMD.LibSearchPath32coff));
+			keyToolOpts.Set("overrideIni32coff",       DMD.overrideIni32coff);
+			keyToolOpts.Set("overrideLinker32coff",    toUTF16(DMD.overrideLinker32coff));
+			keyToolOpts.Set("overrideOptions32coff",   toUTF16(DMD.overrideOptions32coff));
+
 			keyToolOpts.Set("GDC.ExeSearchPath64", toUTF16(GDC.ExeSearchPath64));
 			keyToolOpts.Set("GDC.LibSearchPath64", toUTF16(GDC.LibSearchPath64));
 			keyToolOpts.Set("LDC.ExeSearchPath64", toUTF16(LDC.ExeSearchPath64));
@@ -1566,7 +1594,7 @@ class GlobalOptions
 		return inifile;
 	}
 
-	string getLinkerPath(bool x64, string workdir, string dmdpath, string *libs = null, string* options = null)
+	string getLinkerPath(bool x64, bool mscoff, string workdir, string dmdpath, string *libs = null, string* options = null)
 	{
 		string path = "link.exe";
 		string inifile = findScIni(workdir, dmdpath, false);
@@ -1579,7 +1607,7 @@ class GlobalOptions
 			if(auto pEnv = "Environment" in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
 			
-			string envArch = x64 ? "Environment64" : "Environment32";
+			string envArch = x64 ? "Environment64" : mscoff ? "Environment32mscoff" : "Environment32";
 			if(auto pEnv = envArch in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
 
@@ -1592,11 +1620,18 @@ class GlobalOptions
 				else if(string* pLink = "LINKCMD64" in env)
 					path = *pLink;
 			}
+			else if(mscoff)
+			{
+				if(DMD.overrideIni32coff)
+					path = DMD.overrideLinker32coff;
+			}
 
 			if(options)
 			{
 				if(x64 && DMD.overrideIni64)
 					*options = DMD.overrideOptions64;
+				else if(!x64 && mscoff && DMD.overrideIni32coff)
+					*options = DMD.overrideOptions32coff;
 				else if(string* pFlags = "DFLAGS" in env)
 					*options = *pFlags;
 			}
@@ -1728,7 +1763,7 @@ class GlobalOptions
 		return null;
 	}
 
-	string[] findDFiles(string path, string sub)
+	string[] findDFiles(string path, string sub, bool deep)
 	{
 		string[] files;
 		if(!isExistingDir(path ~ sub))
@@ -1737,6 +1772,13 @@ class GlobalOptions
 		{
 			if(_startsWith(file, path))
 				file = file[path.length .. $];
+			if (deep && isExistingDir(path ~ file))
+			{
+				string[] exclude = [ "\\internal", "\\freebsd", "\\linux", "\\osx", "\\posix", "\\solaris" ];
+				if (!any!(e => file.endsWith(e))(exclude))
+					files ~= findDFiles(path, file, deep);
+				continue;
+			}
 			string bname = baseName(file);
 			if(globMatch(bname, "openrj.d"))
 				continue;
@@ -1817,31 +1859,24 @@ class GlobalOptions
 			
 			if(std.file.exists(s ~ "std\\algorithm.d")) // D2
 			{
-				files ~= findDFiles(s, "std");
-				files ~= findDFiles(s, "std\\c");
-				files ~= findDFiles(s, "std\\c\\windows");
-				files ~= findDFiles(s, "std\\internal\\math");
-				files ~= findDFiles(s, "std\\windows");
-				files ~= findDFiles(s, "etc\\c");
+				files ~= findDFiles(s, "std", true);
+				files ~= findDFiles(s, "etc\\c", true);
 				jsonfile = jsonPath ~ "phobos.json";
 			}
 			if(std.file.exists(s ~ "std\\gc.d")) // D1
 			{
-				files ~= findDFiles(s, "std");
-				files ~= findDFiles(s, "std\\c");
-				files ~= findDFiles(s, "std\\c\\windows");
-				files ~= findDFiles(s, "std\\windows");
+				files ~= findDFiles(s, "std", false);
+				files ~= findDFiles(s, "std\\c", false);
+				files ~= findDFiles(s, "std\\c\\windows", false);
+				files ~= findDFiles(s, "std\\windows", false);
 				jsonfile = jsonPath ~ "phobos1.json";
 			}
 			if(std.file.exists(s ~ "object.di"))
 			{
 				opts ~= " -I" ~ buildPath(s, "..\\src"); // needed since dmd 2.059
 				files ~= "object.di";
-				files ~= findDFiles(s, "core");
-				files ~= findDFiles(s, "core\\stdc");
-				files ~= findDFiles(s, "core\\sync");
-				files ~= findDFiles(s, "core\\sys\\windows");
-				files ~= findDFiles(s, "std");
+				files ~= findDFiles(s, "core", true);
+				files ~= findDFiles(s, "std", false);  // D1?
 				jsonfile = jsonPath ~ "druntime.json";
 			}
 

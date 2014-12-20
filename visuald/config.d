@@ -125,6 +125,7 @@ class ProjectOptions
 	ubyte subsystem;
 	bool multiobj;		// break one object file into multiple ones
 	bool oneobj;		// write one object file instead of multiple ones
+	bool mscoff;		// use mscoff object files for Win32
 	bool trace;		// insert profiling hooks
 	bool quiet;		// suppress non-error messages
 	bool verbose;		// verbose compile
@@ -289,6 +290,7 @@ class ProjectOptions
 
 	string objectFileExtension() { return compiler != Compiler.GDC ? "obj" : "o"; }
 	string otherCompilerPath() { return otherDMD ? program : null; }
+
 	@property ref CompilerDirectories compilerDirectories() 
 	{
 		switch(compiler)
@@ -315,6 +317,8 @@ class ProjectOptions
 			cmd ~= " -multiobj";
 		if(isX86_64)
 			cmd ~= " -m64";
+		else if(mscoff)
+			cmd ~= " -m32mscoff";
 		if(trace)
 			cmd ~= " -profile";
 		if(quiet)
@@ -814,7 +818,8 @@ class ProjectOptions
 		cmd ~= plusList(lnkfiles ~ libs, ".lib", plus);
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
-			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
+			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : 
+								   mscoff   ? compilerDirectories.LibSearchPath32coff : compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
 			if(mslink)
 				cmd ~= " /LIBPATH:" ~ quoteFilename(normalizeDir(unquoteArgument(lp))[0..$-1]); // avoid trailing \ for quoted files
@@ -1004,6 +1009,8 @@ class ProjectOptions
 				separateLink = true;
 			else if(isX86_64 && Package.GetGlobalOptions().DMD.overrideIni64)
 				separateLink = true;
+			else if(!isX86_64 && mscoff && Package.GetGlobalOptions().DMD.overrideIni32coff)
+				separateLink = true;
 		}
 		return separateLink;
 	}
@@ -1016,7 +1023,7 @@ class ProjectOptions
 
 	bool usesCv2pdb()
 	{
-		if(compiler == Compiler.DMD && isX86_64)
+		if(compiler == Compiler.DMD && (isX86_64 || mscoff))
 			return false; // should generate correct debug info directly
 		return (/*compiler == Compiler.DMD && */symdebug && runCv2pdb && lib != OutputType.StaticLib && debugEngine != 1);
 	}
@@ -1088,6 +1095,7 @@ class ProjectOptions
 		elem ~= new xml.Element("multiobj", toElem(multiobj));
 		elem ~= new xml.Element("singleFileCompilation", toElem(compilationModel));
 		elem ~= new xml.Element("oneobj", toElem(oneobj));
+		elem ~= new xml.Element("mscoff", toElem(mscoff));
 		elem ~= new xml.Element("trace", toElem(trace));
 		elem ~= new xml.Element("quiet", toElem(quiet));
 		elem ~= new xml.Element("verbose", toElem(verbose));
@@ -1216,6 +1224,7 @@ class ProjectOptions
 		fromElem(elem, "multiobj", multiobj);
 		fromElem(elem, "singleFileCompilation", compilationModel);
 		fromElem(elem, "oneobj", oneobj);
+		fromElem(elem, "mscoff", mscoff);
 		fromElem(elem, "trace", trace);
 		fromElem(elem, "quiet", quiet);
 		fromElem(elem, "verbose", verbose);
@@ -2637,12 +2646,15 @@ class Config :	DisposingComObject,
 	{
 		string cmd;
 		bool x64 = mProjectOptions.isX86_64;
+		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
 		GlobalOptions globOpt = Package.GetGlobalOptions();
-		string exeSearchPath = x64 ? mProjectOptions.compilerDirectories.ExeSearchPath64 : mProjectOptions.compilerDirectories.ExeSearchPath;
+		string exeSearchPath = x64    ? mProjectOptions.compilerDirectories.ExeSearchPath64 : 
+		                       mscoff ? mProjectOptions.compilerDirectories.ExeSearchPath32coff : mProjectOptions.compilerDirectories.ExeSearchPath;
 		if(exeSearchPath.length)
 			cmd ~= "set PATH=" ~ replaceCrLfSemi(exeSearchPath) ~ ";%PATH%\n";
 		
-		string libSearchPath = x64 ? mProjectOptions.compilerDirectories.LibSearchPath64 : mProjectOptions.compilerDirectories.LibSearchPath;
+		string libSearchPath = x64    ? mProjectOptions.compilerDirectories.LibSearchPath64 : 
+		                       mscoff ? mProjectOptions.compilerDirectories.LibSearchPath32coff : mProjectOptions.compilerDirectories.LibSearchPath;
 		bool hasGlobalPath = mProjectOptions.useStdLibPath && libSearchPath.length;
 		if(hasGlobalPath || mProjectOptions.libpaths.length)
 		{
@@ -2839,6 +2851,7 @@ class Config :	DisposingComObject,
 		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
 		string workdir = normalizeDir(GetProjectDir());
 		bool x64 = mProjectOptions.isX86_64;
+		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
 
 		string precmd = getEnvironmentChanges();
 		string[] files = getInputFileList();
@@ -2880,7 +2893,7 @@ class Config :	DisposingComObject,
 			{
 				string libpaths, options;
 				string otherCompiler = mProjectOptions.replaceEnvironment(mProjectOptions.otherCompilerPath(), this);
-				string linkpath = globOpts.getLinkerPath(x64, workdir, otherCompiler, &libpaths, &options);
+				string linkpath = globOpts.getLinkerPath(x64, mscoff, workdir, otherCompiler, &libpaths, &options);
 				lnkcmd = quoteFilename(linkpath) ~ " ";
 
 				if(globOpts.demangleError || globOpts.optlinkDeps)
@@ -2890,7 +2903,7 @@ class Config :	DisposingComObject,
 						~ lnkcmd;
 
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64);
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";

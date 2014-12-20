@@ -163,8 +163,7 @@ install: all cpp2d_exe idl2d_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
-#prerequisites 
-install_vs: visuald_vs vdserver cv2pdb dparser vdextension mago install_only
+install_vs: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago install_only
 
 install_only:
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi

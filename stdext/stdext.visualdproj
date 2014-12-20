@@ -12,6 +12,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -48,6 +49,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -109,6 +112,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -145,6 +149,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -206,6 +212,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -242,6 +249,8 @@
   <stackStomp>0</stackStomp>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>&quot;c:\u\MinGW\msys\1.0\bin\sh.exe&quot; -c &quot;gdmd&quot;</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -303,6 +312,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -339,6 +349,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -400,6 +412,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -436,6 +449,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath />
   <fileImppath />
@@ -497,6 +512,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -533,6 +549,8 @@
   <stackStomp>0</stackStomp>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>&quot;c:\u\MinGW\msys\1.0\bin\sh.exe&quot; -c &quot;gdmd&quot;</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -594,6 +612,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>1</optimize>
   <cpu>0</cpu>
@@ -630,6 +649,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -691,6 +712,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -727,6 +749,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -788,6 +812,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -824,6 +849,8 @@
   <stackStomp>0</stackStomp>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>&quot;c:\u\MinGW\msys\1.0\bin\sh.exe&quot; -c &quot;gdmd&quot;</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -885,6 +912,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -921,6 +949,8 @@
   <stackStomp>0</stackStomp>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>&quot;c:\u\MinGW\msys\1.0\bin\sh.exe&quot; -c &quot;gdmd&quot;</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -982,6 +1012,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -1018,6 +1049,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -1079,6 +1112,7 @@
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -1115,6 +1149,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -1172,6 +1208,7 @@
   <File path="file.d" />
   <File path="httpget.d" />
   <File path="path.d" />
+  <File path="registry.d" />
   <File path="string.d" />
   <File path="util.d" />
  </Folder>

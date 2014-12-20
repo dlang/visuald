@@ -33,7 +33,7 @@ Project:
 - GDC: 
   - separate compile + link does not write to object dir
   - ddoc files
-- additional options for resource compiler
++ additional options for resource compiler
 - pass import path from static lib project to dependent projects
 - single file compilation for file configuration
 - custom command: quotes in dependencies not supported
@@ -167,3 +167,6 @@ Unsorted
 - jump to assertion error
 + import std.container: jump to package
 - renaming configuration does not change project config
++ win32coff support
+- file search: replace . with \ in path search?
++ run cv2pdb disabled for GDC/x64

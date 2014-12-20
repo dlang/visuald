@@ -919,8 +919,8 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	
 	void EnableControls()
 	{
-		mRunCv2pdb.setEnabled(!mIsX64);
-		bool runcv2pdb = !mIsX64 && mRunCv2pdb.isChecked();
+		mRunCv2pdb.setEnabled(mCanRunCv2PDB);
+		bool runcv2pdb = mCanRunCv2PDB && mRunCv2pdb.isChecked();
 
 		mPathCv2pdb.setEnabled(runcv2pdb);
 		mCv2pdbOptions.setEnabled(runcv2pdb);
@@ -940,7 +940,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		mCv2pdbNoDemangle.setChecked(options.cv2pdbNoDemangle);
 		mCv2pdbEnumType.setChecked(options.cv2pdbEnumType);
 
-		mIsX64 = options.isX86_64;
+		mCanRunCv2PDB = options.compiler != Compiler.DMD || (!options.isX86_64 && !options.mscoff);
 		EnableControls();
 	}
 
@@ -958,7 +958,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		return changes;
 	}
 
-	bool mIsX64;
+	bool mCanRunCv2PDB;
 	ComboBox mDebugMode;
 	ComboBox mDebugInfo;
 	CheckBox mRunCv2pdb;
@@ -1192,12 +1192,14 @@ class DmdOutputPropertyPage : ProjectPropertyPage
 		mUnindentCheckBox = kLabelWidth;
 		AddControl("", mMultiObj = new CheckBox(mCanvas, "Multiple Object Files"));
 		AddControl("", mPreservePaths = new CheckBox(mCanvas, "Keep Path From Source File"));
+		AddControl("", mMsCoff32 = new CheckBox(mCanvas, "Use MS-COFF object file format for Win32 (DMD 2.067+)"));
 	}
 
 	override void SetControls(ProjectOptions options)
 	{
 		mMultiObj.setChecked(options.multiobj); 
 		mPreservePaths.setChecked(options.preservePaths); 
+		mMsCoff32.setChecked(options.mscoff); 
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1205,11 +1207,13 @@ class DmdOutputPropertyPage : ProjectPropertyPage
 		int changes = 0;
 		changes += changeOption(mMultiObj.isChecked(), options.multiobj, refoptions.multiobj); 
 		changes += changeOption(mPreservePaths.isChecked(), options.preservePaths, refoptions.preservePaths); 
+		changes += changeOption(mMsCoff32.isChecked(), options.mscoff, refoptions.mscoff); 
 		return changes;
 	}
 
 	CheckBox mMultiObj;
 	CheckBox mPreservePaths;
+	CheckBox mMsCoff32;
 }
 
 class DmdLinkerPropertyPage : ProjectPropertyPage
@@ -1548,7 +1552,10 @@ class DirPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 2;
 		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
 		mLinesPerMultiLine = 10;
-		AddControl("", mTabArch = new TabControl(mCanvas, ["Win32", "x64"]));
+		string[] archs = ["Win32", "x64"];
+		if(overrideIni)
+			archs ~= "Win32-COFF";
+		AddControl("", mTabArch = new TabControl(mCanvas, archs));
 
 		auto page32 = mTabArch.pages[0];
 		if(auto w = cast(Window)page32)
@@ -1578,6 +1585,21 @@ class DirPropertyPage : GlobalPropertyPage
 			AddControl("", mOverrideIni64 = new CheckBox(page64, overrideIni));
 			AddControl("Linker", mLinkerExecutable64 = new Text(page64));
 			AddControl("Additional options", mLinkerOptions64 = new Text(page64));
+
+			auto page32coff = mTabArch.pages[2];
+			if(auto w = cast(Window)page32coff)
+				w.commandDelegate = mCanvas.commandDelegate;
+			mResizableWidgets ~= page32coff;
+
+			mLineY = 0;
+			mLinesPerMultiLine = 3;
+			AddControl("Executable paths", mExePath32coff = new MultiLineText(page32coff));
+			mLinesPerMultiLine = 2;
+			AddControl("Library paths", mLibPath32coff = new MultiLineText(page32coff));
+
+			AddControl("", mOverrideIni32coff = new CheckBox(page32coff, overrideIni));
+			AddControl("Linker", mLinkerExecutable32coff = new Text(page32coff));
+			AddControl("Additional options", mLinkerOptions32coff = new Text(page32coff));
 		}
 	}
 
@@ -1594,6 +1616,11 @@ class DirPropertyPage : GlobalPropertyPage
 		{
 			mLinkerExecutable64.setEnabled(mOverrideIni64.isChecked());
 			mLinkerOptions64.setEnabled(mOverrideIni64.isChecked());
+		}
+		if(mOverrideIni32coff)
+		{
+			mLinkerExecutable32coff.setEnabled(mOverrideIni32coff.isChecked());
+			mLinkerOptions32coff.setEnabled(mOverrideIni32coff.isChecked());
 		}
 	}
 
@@ -1614,6 +1641,14 @@ class DirPropertyPage : GlobalPropertyPage
 			mOverrideIni64.setChecked(opt.overrideIni64);
 			mLinkerExecutable64.setText(opt.overrideLinker64);
 			mLinkerOptions64.setText(opt.overrideOptions64);
+		}
+		if(mOverrideIni32coff)
+		{
+			mExePath32coff.setText(opt.ExeSearchPath32coff);
+			mLibPath32coff.setText(opt.LibSearchPath32coff);
+			mOverrideIni32coff.setChecked(opt.overrideIni32coff);
+			mLinkerExecutable32coff.setText(opt.overrideLinker32coff);
+			mLinkerOptions32coff.setText(opt.overrideOptions32coff);
 		}
 
 		enableControls();
@@ -1637,6 +1672,14 @@ class DirPropertyPage : GlobalPropertyPage
 			changes += changeOption(mLinkerExecutable64.getText(), opt.overrideLinker64,  refopt.overrideLinker64); 
 			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64); 
 		}
+		if(mOverrideIni32coff)
+		{
+			changes += changeOption(mExePath32coff.getText(),          opt.ExeSearchPath32coff,   refopt.ExeSearchPath32coff); 
+			changes += changeOption(mLibPath32coff.getText(),          opt.LibSearchPath32coff,   refopt.LibSearchPath32coff);
+			changes += changeOption(mOverrideIni32coff.isChecked(),    opt.overrideIni32coff,     refopt.overrideIni32coff); 
+			changes += changeOption(mLinkerExecutable32coff.getText(), opt.overrideLinker32coff,  refopt.overrideLinker32coff); 
+			changes += changeOption(mLinkerOptions32coff.getText(),    opt.overrideOptions32coff, refopt.overrideOptions32coff); 
+		}
 		return changes;
 	}
 
@@ -1645,11 +1688,18 @@ class DirPropertyPage : GlobalPropertyPage
 	MultiLineText mExePath;
 	MultiLineText mImpPath;
 	MultiLineText mLibPath;
+
 	MultiLineText mExePath64;
 	MultiLineText mLibPath64;
 	CheckBox mOverrideIni64;
 	Text mLinkerExecutable64;
 	Text mLinkerOptions64;
+
+	MultiLineText mExePath32coff;
+	MultiLineText mLibPath32coff;
+	CheckBox mOverrideIni32coff;
+	Text mLinkerExecutable32coff;
+	Text mLinkerOptions32coff;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1738,7 +1788,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddHorizontalLine();
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors"));
-		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor OPTLINK dependencies"));
+		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor linker dependencies"));
 		AddHorizontalLine();
 		//AddControl("Remove project item", mDeleteFiles = 
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));

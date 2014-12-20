@@ -2174,7 +2174,7 @@ public: // IVsHierarchyEvent propagation
 					string txt = cast(string) std.file.read(strFullPathSource);
 					string modname = safeFilename(stripExtension(baseName(strNewFileName)));
 					txt = replace(txt, "$safeitemname$", modname);
-					if(txt.countUntil("$modulename$") >= 0)
+					if(txt.indexOf("$modulename$") >= 0)
 					{
 						string pkg;
 						if(auto folder = cast(CFolderNode) pNode)

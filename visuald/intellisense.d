@@ -18,6 +18,7 @@ import std.algorithm;
 
 import std.regex;
 import std.array;
+import std.path : baseName, stripExtension;
 //import stdext.fred;
 
 import stdext.path;
@@ -195,7 +196,7 @@ struct SearchData
 	
 	static bool isIdentChar(dchar ch)
 	{
-		return isAlphaNum(ch) || ch == '_';
+		return dLex.isIdentifierCharOrDigit(ch);
 	}
 	static bool isWordBoundary(dchar ch1, dchar ch2)
 	{
@@ -529,7 +530,7 @@ class LibraryInfo
 					{
 						// strip template arguments and constraint
 						string s = n.str;
-						int pos = countUntil(s, '(');
+						int pos = indexOf(s, '(');
 						if(pos >= 0)
 							s = s[0..pos];
 						addunique(cplts, s);
@@ -930,6 +931,8 @@ class BrowseInfo
 				if(v.type == JSON_TYPE.STRING)
 					n.file = v.str;
 			node = n;
+			if("name" !in memberobj)
+				node.name = stripExtension(baseName(n.file));
 		}
 		else if (kind == "class" || kind == "interface")
 		{
@@ -946,16 +949,22 @@ class BrowseInfo
 		}
 		else
 		{
-			node = new BrowseNode;
-version(v40)
 			if(kind == "function")
+			{
+				if(JSONValue* n = "name" in memberobj)
+					if(n.type == JSON_TYPE.STRING)
+						if (n.str.startsWith("__unittest") || n.str.startsWith("__invariant"))
+							return null;
+
 				if(!("endline" in memberobj))
-					kind = "funcdecl";
+					kind = "function decl";
+			}
+			node = new BrowseNode;
 		}
 
 		node.kind = kind;
 		getDeclarationInfo(node, memberobj);
-			
+		
 		return node;
 	}
 	
@@ -986,6 +995,9 @@ version(v40)
 					void iterate(JSONValue[string] object, BrowseNode parent)
 					{
 						BrowseNode node = createNode(object);
+						if(!node)
+							return;
+
 						if(parent)
 						{
 							parent.members ~= node;
@@ -1075,7 +1087,7 @@ version(v40)
 			{
 				// strip template arguments and constraint
 				string s = node.name;
-				int pos = countUntil(s, '(');
+				int pos = indexOf(s, '(');
 				if(pos >= 0)
 					s = s[0..pos];
 				addunique(cplts, s);
