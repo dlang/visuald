@@ -691,3 +691,8 @@ unreleased Version 0.3.40
   * revamped pipedmd: now uses tracker.exe from MSBuild or WinSDK to monitor dependencies
   * Win32/COFF support: check box on Compiler->Output page, new tab in global options
   * bugzilla 13817: VisualD cannot list members with utf-8 wide characters
+  * bugzilla 13342: mixin error message now interpreted
+  * when running/unittesting from within visuald, exception/callstack locations can be jumped to
+  * bugzilla 13213: there are now both "goto definition" and "goto declaration", where the former
+    will try to find the forward declared symbols through the object browser (including C/C++)
+  * object browser/symbol search: now filters out __unittest and __invariant symbols

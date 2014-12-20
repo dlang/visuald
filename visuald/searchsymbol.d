@@ -1174,7 +1174,7 @@ private:
 	HRESULT _OpenSolutionItem(string pszPath, int line, string scop)
 	{
 		HRESULT hr = S_OK;
-		hr = OpenFileInSolutionWithScope(pszPath, line, scop, true);
+		hr = OpenFileInSolutionWithScope(pszPath, line, 0, scop, true);
 		if(hr == S_OK && _closeOnReturn)
 			sWindowFrame.Hide();
 		return hr;

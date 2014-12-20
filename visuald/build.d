@@ -1029,18 +1029,55 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 	outputLine = strip(outputLine);
 	
 	// DMD compile error
-	static Regex!char re1dmd, re1gdc, re2, re3, re4;
+	__gshared static Regex!char re1dmd, re1gdc, remixin, re2, re3, re4, re5, re6;
+
+	if(!isInitializedRE(remixin))
+		remixin = regex(r"^(.*?)-mixin-([0-9]+)\(([0-9]+)\):(.*)$");
+
+	auto rematch = match(outputLine, remixin);
+	if(!rematch.empty())
+	{
+		auto captures = rematch.captures();
+		filename = replace(captures[1], "\\\\", "\\");
+		string lineno = captures[2];
+		string lineno2 = captures[3];
+		nLineNum = to!uint(lineno);
+		uint nMixinLine = to!uint(lineno2) - nLineNum + 1;
+		itemText = "mixin(" ~ to!string(nMixinLine) ~ ") " ~ strip(captures[4]);
+		if(itemText.startsWith("Warning:")) // make these errors if not building with -wi?
+			nPriority = TP_NORMAL;
+		else
+			nPriority = TP_HIGH;
+		return true;
+	}
+
+	// exception/error when running
+	if(!isInitializedRE(re5))
+		re5 = regex(r"^[^ @]*@(.*?)\(([0-9]+)\):(.*)$");
+
+	rematch = match(outputLine, re5);
+	if(!rematch.empty())
+	{
+		auto captures = rematch.captures();
+		nPriority = TP_HIGH;
+		filename = replace(captures[1], "\\\\", "\\");
+		string lineno = captures[2];
+		nLineNum = to!uint(lineno);
+		itemText = strip(captures[3]);
+		return true;
+	}
+
 	if(!isInitializedRE(re1dmd))
 		re1dmd = regex(r"^(.*?)\(([0-9]+)\):(.*)$"); // replace . with [\x00-\x7f] for std.regex
 	if(!isInitializedRE(re1gdc))
 		re1gdc = regex(r"^(.*?):([0-9]+):(.*)$");
 
-	auto rematch = match(outputLine, compiler == Compiler.GDC ? re1gdc : re1dmd);
+	rematch = match(outputLine, compiler == Compiler.GDC ? re1gdc : re1dmd);
 	if(!rematch.empty())
 	{
 		auto captures = rematch.captures();
 		filename = replace(captures[1], "\\\\", "\\");
-		string lineno = replace(captures[2], "\\\\", "\\");
+		string lineno = captures[2];
 		nLineNum = to!uint(lineno);
 		itemText = strip(captures[3]);
 		if(itemText.startsWith("Warning:")) // make these errors if not building with -wi?
@@ -1074,7 +1111,7 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 		auto captures = rematch.captures();
 		nPriority = TP_HIGH;
 		filename = replace(captures[1], "\\\\", "\\");
-		string lineno = replace(captures[2], "\\\\", "\\");
+		string lineno = captures[2];
 		nLineNum = to!uint(lineno);
 		itemText = strip(captures[3]);
 		return true;
@@ -1094,6 +1131,22 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 		return true;
 	}
 
+	// entry in exception call stack
+	if(!isInitializedRE(re6))
+		re6 = regex(r"^0x[0-9a-fA-F]* in .* at (.*?)\(([0-9]+)\)(.*)$");
+
+	rematch = match(outputLine, re6);
+	if(!rematch.empty())
+	{
+		auto captures = rematch.captures();
+		nPriority = TP_LOW;
+		filename = replace(captures[1], "\\\\", "\\");
+		string lineno = captures[2];
+		nLineNum = to!uint(lineno);
+		itemText = strip(captures[3]);
+		return true;
+	}
+
 	return false;
 }
 
@@ -1107,11 +1160,33 @@ unittest
 	assert(nLineNum == 37);
 	assert(strTaskItemText == "huhu");
 
-	rc = parseOutputStringForTaskItem("main.d(10): Error: undefined identifier A, did you mean B?", nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+	rc = parseOutputStringForTaskItem("main.d(10): Error: undefined identifier A, did you mean B?", 
+									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
 	assert(rc);
 	assert(strFilename == "main.d");
 	assert(nLineNum == 10);
 	assert(strTaskItemText == "Error: undefined identifier A, did you mean B?");
+
+	rc = parseOutputStringForTaskItem(r"object.Exception@C:\tmp\d\forever.d(28): what?",
+									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+	assert(rc);
+	assert(strFilename == r"C:\tmp\d\forever.d");
+	assert(nLineNum == 28);
+	assert(strTaskItemText == "what?");
+
+	rc = parseOutputStringForTaskItem(r"0x004020C8 in void test.__modtest() at C:\tmp\d\forever.d(34)",
+									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+	assert(rc);
+	assert(strFilename == r"C:\tmp\d\forever.d");
+	assert(nLineNum == 34);
+	assert(strTaskItemText == "");
+
+	rc = parseOutputStringForTaskItem(r"D:\LuaD\luad\conversions\structs.d-mixin-36(36): Error: cast(MFVector)(*_this).x is not an lvalue",
+									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+	assert(rc);
+	assert(strFilename == r"D:\LuaD\luad\conversions\structs.d");
+	assert(nLineNum == 36);
+	assert(strTaskItemText == "mixin(1) Error: cast(MFVector)(*_this).x is not an lvalue");
 }
 
 string unEscapeFilename(string file)

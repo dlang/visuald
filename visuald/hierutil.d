@@ -550,7 +550,7 @@ HRESULT FindFileInSolution(string filename, string srcfile, out string absPath)
 	return S_OK;
 }
 
-HRESULT OpenFileInSolution(string filename, int line, string srcfile = "", bool adjustLineToChanges = false)
+HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfile = "", bool adjustLineToChanges = false)
 {
 	// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
 	IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
@@ -609,7 +609,7 @@ HRESULT OpenFileInSolution(string filename, int line, string srcfile = "", bool 
 		if(auto src = Package.GetLanguageService().GetSource(textBuffer))
 			line = src.adjustLineNumberSinceLastBuild(line, false);
 	
-	return NavigateTo(textBuffer, line, 0, line, 0);
+	return NavigateTo(textBuffer, line, col, line, col);
 }
 
 HRESULT NavigateTo(IVsTextBuffer textBuffer, int line1, int col1, int line2, int col2)
@@ -622,9 +622,9 @@ HRESULT NavigateTo(IVsTextBuffer textBuffer, int line1, int col1, int line2, int
 	return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, line1, col1, line2, col2);
 }
 
-HRESULT OpenFileInSolutionWithScope(string fname, int line, string scop, bool adjustLineToChanges = false)
+HRESULT OpenFileInSolutionWithScope(string fname, int line, int col, string scop, bool adjustLineToChanges = false)
 {
-	HRESULT hr = OpenFileInSolution(fname, line, "", adjustLineToChanges);
+	HRESULT hr = OpenFileInSolution(fname, line, col, "", adjustLineToChanges);
 	
 	if(hr != S_OK && !isAbsolute(fname) && scop.length)
 	{
@@ -642,7 +642,7 @@ HRESULT OpenFileInSolutionWithScope(string fname, int line, string scop, bool ad
 		if(i < path.length)
 		{
 			fname = fname[i .. $];
-			hr = OpenFileInSolution(fname, line, "", adjustLineToChanges);
+			hr = OpenFileInSolution(fname, line, col, "", adjustLineToChanges);
 		}
 	}
 	return hr;

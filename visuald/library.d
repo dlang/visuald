@@ -960,7 +960,7 @@ bool HasFunctionPrototype(string kind)
 		case "deallocator":
 		case "delegate":
 		case "function":
-version(v40)		case "funcdecl":
+		case "function decl":
 			return true;
 		default:
 			return false;
@@ -989,7 +989,7 @@ LIB_LISTTYPE2 GetListType(string kind)
 		case "alias":
 		case "typedef":
 		case "delegate":
-version(v40)		case "funcdecl":
+		case "function decl":
 		case "function":         return LLT_MEMBERS;
 			
 		// not expected to show up in json file
@@ -1317,7 +1317,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 			case "destructor":
 			case "allocator":
 			case "deallocator":
-version(v40)			case "funcdecl":
+			case "function decl":
 			case "function":         pData.Image = CSIMG_MEMBER; break;
 			case "delegate":         pData.Image = CSIMG_MEMBER; break;
 			case "interface":        pData.Image = CSIMG_INTERFACE; break;
@@ -1546,17 +1546,15 @@ version(v40)			case "funcdecl":
 		/+[out]+/ BOOL *pfOK)
 	{
 		mixin(LogCallMix2);
-version(v40) {		if(SrcType != GS_ANY)
+		if(SrcType != GS_ANY)
 		{
-			if(SrcType == GS_DEFINITION && GetKind(Index) == "funcdecl")
+			if(SrcType == GS_DEFINITION && GetKind(Index) == "function decl")
 				return E_FAIL;
-			if(SrcType == GS_DECLARATION && GetKind(Index) != "funcdecl")
+			if(SrcType == GS_DECLARATION && GetKind(Index) != "function decl")
 				return E_FAIL;
 			if(SrcType != GS_DECLARATION && SrcType != GS_DEFINITION)
 				return E_FAIL;
 		}
-} else {		if(SrcType != GS_ANY && SrcType != GS_DEFINITION)
-			return E_FAIL; }
 		*pfOK = TRUE;
 		return S_OK;
 	}
@@ -1581,7 +1579,7 @@ version(v40) {		if(SrcType != GS_ANY)
 		if(file.length == 0)
 			file = GetInfoFilename(obj);
 
-		return OpenFileInSolution(file, line, modname, true);
+		return OpenFileInSolution(file, line, 0, modname, true);
 	}
 	
 	override HRESULT GetContextMenu(in ULONG Index, 
@@ -1892,4 +1890,54 @@ private:
 	ULONG m_cChanges;
 	BOOL  m_fIsCounterDirty;
 	VSTREELISTITEMCHANGE m_listChanges = { NULINDEX, TCT_NOCHANGE };
+}
+
+Definition[] GetObjectLibraryDefinitions(wstring word)
+{
+	Definition[] defs;
+
+	if(auto objmgr = queryService!(IVsObjectManager))
+	{
+		scope(exit) release(objmgr);
+		if(auto objmgr2 = qi_cast!IVsObjectManager2(objmgr))
+		{
+			scope(exit) release(objmgr2);
+			IVsEnumLibraries2 enumLibs;
+			if(objmgr2.EnumLibraries(&enumLibs) == S_OK)
+			{
+				VSOBSEARCHCRITERIA2 searchOpts;
+				searchOpts.szName = _toUTF16zw(word);
+				searchOpts.eSrchType = SO_ENTIREWORD;
+				searchOpts.grfOptions = VSOBSO_CASESENSITIVE;
+
+				scope(exit) release(enumLibs);
+				DWORD fetched;
+				IVsLibrary2 lib;
+				while(enumLibs.Next(1, &lib, &fetched) == S_OK && fetched == 1)
+				{
+					scope(exit) release(lib);
+					if(auto slib = qi_cast!IVsSimpleLibrary2(lib))
+					{
+						scope(exit) release(slib);
+						IVsSimpleObjectList2 reslist;
+						if(slib.GetList2(LLT_MEMBERS, LLF_USESEARCHFILTER, &searchOpts, &reslist) == S_OK)
+						{
+							scope(exit) release(reslist);
+							ULONG items;
+							if(reslist.GetItemCount(&items) == S_OK && items > 0)
+							{
+								BOOL ok;
+								for(ULONG it = 0; it < items; it++)
+									if(reslist.CanGoToSource(it, GS_DEFINITION, &ok) == S_OK && ok)
+									{
+										
+									}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return defs;
 }

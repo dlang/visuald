@@ -268,7 +268,9 @@ version(tip)
 					return S_OK;
 				break;
 			case cmdidGotoDefn:
-				return HandleGotoDef();
+				return HandleGotoDef(false);
+			case cmdidGotoDecl:
+				return HandleGotoDef(true);
 			case cmdidF1Help:
 				return HandleHelp();
 			default:
@@ -671,6 +673,7 @@ version(tip)
 			case cmdidPasteNextTBXCBItem:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			case cmdidGotoDefn:
+			case cmdidGotoDecl:
 			//case VsCommands.GotoDecl:
 			//case VsCommands.GotoRef:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
@@ -1289,7 +1292,7 @@ else
 	}
 	
 	//////////////////////////////////////////////////////////////
-	int HandleGotoDef()
+	int HandleGotoDef(bool decl)
 	{
 		int line, idx;
 		if(mView.GetCaretPos(&line, &idx) != S_OK)
@@ -1301,26 +1304,18 @@ else
 		{
 			string imp = to!string(impw);
 			imp = replace(imp, ".", "\\") ~ ".d";
-			HRESULT hr = OpenFileInSolution(imp, -1, file, false); // also searches import paths
+			HRESULT hr = OpenFileInSolution(imp, -1, 0, file, false); // also searches import paths
 			if(hr != S_OK)
 			{
 				imp ~= "i";
-				hr = OpenFileInSolution(imp, -1, file, false);
+				hr = OpenFileInSolution(imp, -1, 0, file, false);
 				if(hr != S_OK)
 				{
 					imp = imp[0 .. $-3] ~ "\\package.d";
-					hr = OpenFileInSolution(imp, -1, file, false);
+					hr = OpenFileInSolution(imp, -1, 0, file, false);
 				}
 			}
 			return hr;
-		}
-
-		version(v40) debug
-		{
-			wstring wword = GetWordAtCaret();
-			if(wword.length > 0)
-				if(GotoDefinitionCPP(wword) == S_OK)
-					return S_OK;
 		}
 
 		if(Package.GetGlobalOptions().semanticGotoDef)
@@ -1330,6 +1325,7 @@ else
 			span.iStartIndex = span.iEndIndex = idx;
 			if (!mCodeWinMgr.mSource.GetTipSpan(&span))
 				return S_FALSE;
+			mLastGotoDecl = decl;
 			mLastGotoDef = to!string(mCodeWinMgr.mSource.GetText(span.iStartLine, span.iStartIndex, span.iEndLine, span.iEndIndex));
 			Package.GetLanguageService().GetDefinition(mCodeWinMgr.mSource, &span, &GotoDefinitionCallBack);
 			return S_FALSE;
@@ -1344,8 +1340,8 @@ else
 		}
 	}
 
-version(v40)
-	HRESULT GotoDefinitionCPP(wstring word)
+version(all)
+	HRESULT GotoDefinitionCPP(string word)
 	{
 		if(auto objmgr = queryService!(IVsObjectManager))
 		{
@@ -1357,7 +1353,7 @@ version(v40)
 				if(objmgr2.EnumLibraries(&enumLibs) == S_OK)
 				{
 					VSOBSEARCHCRITERIA2 searchOpts;
-					searchOpts.szName = _toUTF16zw(word);
+					searchOpts.szName = _toUTF16z(word);
 					searchOpts.eSrchType = SO_ENTIREWORD;
 					searchOpts.grfOptions = VSOBSO_CASESENSITIVE;
 
@@ -1451,7 +1447,7 @@ else
 		string deffile = defs[0].filename;
 		int    defline = defs[0].line;
 
-		HRESULT hr = OpenFileInSolution(deffile, defline, file, true);
+		HRESULT hr = OpenFileInSolution(deffile, defline, 0, file, true);
 		if(hr != S_OK)
 			showStatusBarText(format("Cannot open %s(%d) for definition of '%s'", deffile, defline, word));
 		return hr;
@@ -1460,9 +1456,19 @@ else
 	extern(D)
 	void GotoDefinitionCallBack(uint request, string fname, sdk.vsi.sdk_shared.TextSpan span)
 	{
+		bool extrn = fname.startsWith("EXTERN:");
+		if (extrn)
+			fname = fname[7..$];
+		
+		if (extrn && !mLastGotoDecl)
+		{
+			string word = split(mLastGotoDef, ".")[$-1];
+			if(GotoDefinitionCPP(word) == S_OK)
+				return;
+		}
 		if (fname.length)
 		{
-			HRESULT hr = OpenFileInSolution(fname, span.iStartLine, null, false);
+			HRESULT hr = OpenFileInSolution(fname, span.iStartLine, span.iStartIndex, null, false);
 			if(hr != S_OK)
 				showStatusBarText(format("Cannot open %s(%d) for goto definition", fname, span.iStartLine));
 		}
@@ -1737,6 +1743,7 @@ version(none) // quick info tooltips not good enough yet
 	string mTipText;
 	uint mTipRequest;
 	string mLastGotoDef;
+	bool mLastGotoDecl;
 
 	extern(D) void OnGetTipText(uint request, string filename, string text, TextSpan span)
 	{

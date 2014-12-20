@@ -1615,7 +1615,7 @@ version(threadedOutlining) {} else
 		return rgns;
 	}
 	
-	unittest
+	version(none) unittest
 	{
 		const(void)* p = typeid(NewHiddenRegion).rtInfo;
 		assert(p !is rtinfoNoPointers && p !is rtinfoHasPointers);

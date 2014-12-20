@@ -167,6 +167,6 @@ Unsorted
 - jump to assertion error
 + import std.container: jump to package
 - renaming configuration does not change project config
-- win32coff support
++ win32coff support
 - file search: replace . with \ in path search?
-- run cv2pdb disabled for GDC/x64
++ run cv2pdb disabled for GDC/x64
