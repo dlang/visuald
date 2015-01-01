@@ -929,14 +929,14 @@ class ProjectOptions
 		switch(compiler)
 		{
 			default:
-			case Compiler.DMD: cc = (isX86_64 ? 1 : 0); break;
+			case Compiler.DMD: cc = (isX86_64 || mscoff ? 1 : 0); break;
 			case Compiler.LDC: cc = 2; break;
 			case Compiler.GDC: cc = 3; break;
 		}
 
 		string cmd = cccmd;
 		if(cc == 1)
-			cmd = "call %VCINSTALLDIR%\\vcvarsall.bat x64\n" ~ cmd;
+			cmd = `call "%VCINSTALLDIR%\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
 
 		static string[4] outObj = [ " -o", " -Fo", " -o", " -o " ];
 		cmd ~= outObj[cc] ~ quoteFilename(file);
