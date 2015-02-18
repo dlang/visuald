@@ -23,7 +23,7 @@ set SRC=%SRC% Features.dd
 set SRC=%SRC% VersionHistory.dd
 set SRC=%SRC% News36.dd
 
-set DDOC=macros.ddoc html.ddoc visuald.ddoc
+set DDOC=macros.ddoc html.ddoc visuald.ddoc dlang.org.ddoc
 
 if not exist %WEB% md %WEB%
 if not exist %WEB%\images md %WEB%\images
