@@ -169,17 +169,18 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
 
+            ISyntaxRegion sr;
 			DResolver.NodeResolutionAttempt attempt;
-			var types = DResolver.ResolveTypeLoosely(_editorData, out attempt);
+			var types = DResolver.ResolveTypeLoosely(_editorData, out attempt, out sr);
 
 			_tipText.Clear();
 
 			if (types != null)
 			{
-				if (types.DeclarationOrExpressionBase != null)
+				if (sr != null)
 				{
-					_tipStart = types.DeclarationOrExpressionBase.Location;
-					_tipEnd = types.DeclarationOrExpressionBase.EndLocation;
+					_tipStart = sr.Location;
+					_tipEnd = sr.EndLocation;
 				}
 
 				DNode dn = null;
@@ -303,8 +304,9 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
 
-			DResolver.NodeResolutionAttempt attempt;
-			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt);
+            ISyntaxRegion sr;
+            DResolver.NodeResolutionAttempt attempt;
+			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt, out sr);
 
 			_tipText.Clear();
 			if (rr != null)
