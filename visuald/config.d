@@ -2913,7 +2913,11 @@ class Config :	DisposingComObject,
 						// optlink does not support quoted response files
 						if(!std.file.exists(lnkresponsefile))
 							collectException(std.file.write(lnkresponsefile, ""));
-						lnkresponsefile = shortFilename(lnkresponsefile);
+						string shortresponsefile = shortFilename(lnkresponsefile);
+						if (shortresponsefile.empty || shortresponsefile != quoteFilename(shortresponsefile))
+							lnkresponsefile = baseName(lnkresponsefile); // if short name generation fails, move it into the project folder
+						else
+							lnkresponsefile = shortresponsefile;
 					}
 					prelnk ~= "echo. > " ~ lnkresponsefile ~ "\n";
 					prelnk ~= "echo " ~ cmdfiles.replace("+", "+ >> " ~ lnkresponsefile ~ "\necho ");

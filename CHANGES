@@ -665,7 +665,7 @@ Version history
   * bugzilla 13360: implemented automation object methods "DTE" and "Collection"
   * syntax highlighting: @nogc added as a keyword
 
-unreleased Version 0.3.40
+2015-01-01 Version 0.3.40
 
   * cv2pdb: did not run on XP anymore due to bad OS version requirements
   * add installation for VS2014
@@ -697,3 +697,17 @@ unreleased Version 0.3.40
     will try to find the forward declared symbols through the object browser (including C/C++)
   * object browser/symbol search: now filters out __unittest and __invariant symbols
   * cv2pdb: updated to 0.33 with better DWARF location support
+
+unreleased Version 0.3.41
+
+  * mago:
+    - module list now shows x64 addresses correctly
+    - verboser output for DLL load/unload
+    - implement "set next statement"
+    - callstack: parameter list alo showed locals
+    - disassembly: show symbols, address labels
+    - fix dstring display
+  * cv2pdb:
+    - improvements for DWARF conversion
+  * dparser updated to c89aa45334b8c768559bc243da73b87c518a9a58 with support for new 
+    language features in dmd 2.067
