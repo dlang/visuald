@@ -127,8 +127,9 @@ Any/dmd:
 - arguments to local functions treated as locals
 - local functions/delegates should have debug info for closure vars ("this" exists)
 - extern(D) function arguments shown in the wrong order
-- x64: no type information for dAssocArray
 - support GDC+mago
+- bugzilla 14286: x64: no type information for dAssocArray
+- bugzilla 4014: no debug info from libraries
 
 Mago:
 - show derived class
@@ -144,7 +145,7 @@ Mago:
   - allow symbolic address input
 + no symbols for publics without debug info
 - improve stepping through C
-- load symbols from Microsoft Symbol Server, respect symbol settings
++ load symbols from Microsoft Symbol Server, respect symbol settings
 + stack: arguments show locals aswell
 - identically named locals show the same value
 + dstring shows as uint[] without string representation

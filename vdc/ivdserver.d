@@ -164,6 +164,18 @@ public:
 	//
 	// return S_FALSE as long as the semantic analysis is still running
 	HRESULT GetDefinitionResult(ref int startLine, ref int startIndex, ref int endLine, ref int endIndex, BSTR* filename);
+
+	// request a list of references for a given text location
+	//
+	// filename:   file name 
+	// tok:        the identifier to reference
+	// line, idx:  the location of the caret in the text editor
+	// expr:       the expression to evaluate at the insertion point in case of parser issues
+	//             with the current text
+	// it is assumed that the reference finding is forwarded to some other thread
+	// and that the status can be polled by GetReferencesResult
+	HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr);
+	HRESULT GetReferencesResult(BSTR* stringList);
 }
 
 ///////////////////////////////////////////////////////////////////////

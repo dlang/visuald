@@ -271,6 +271,8 @@ version(tip)
 				return HandleGotoDef(false);
 			case cmdidGotoDecl:
 				return HandleGotoDef(true);
+			case cmdidFindReferences:
+				return HandleFindReferences();
 			case cmdidF1Help:
 				return HandleHelp();
 			default:
@@ -674,6 +676,7 @@ version(tip)
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			case cmdidGotoDefn:
 			case cmdidGotoDecl:
+			case cmdidFindReferences:
 			//case VsCommands.GotoDecl:
 			//case VsCommands.GotoRef:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
@@ -1477,6 +1480,38 @@ else
 			string word = split(mLastGotoDef, ".")[$-1];
 			GotoDefinitionJSON(mCodeWinMgr.mSource.GetFileName(), word);
 			//showStatusBarText("No definition found for '" ~ mLastGotoDef ~ "'");
+		}
+	}
+
+	//////////////////////////////////////////////////////////////
+	int HandleFindReferences()
+	{
+		int line, idx;
+		if(mView.GetCaretPos(&line, &idx) != S_OK)
+			return S_FALSE;
+
+		Package.GetLanguageService().GetReferences(mCodeWinMgr.mSource, "", line, idx, &FindReferencesCallBack);
+		return S_FALSE;
+	}
+
+	extern(D)
+	void FindReferencesCallBack(uint request, string filename, string tok, int line, int idx, string[] exps)
+	{
+		if(IVsFindSymbol fs = queryService!(IVsObjectSearch, IVsFindSymbol))
+		{
+			scope(exit) release(fs);
+
+			VSOBSEARCHCRITERIA2 criteria;
+			criteria.dwCustom = 0; // FindReferencesResults;
+			criteria.eSrchType = SO_ENTIREWORD,
+			criteria.grfOptions = VSOBSO_LISTREFERENCES,
+			criteria.pIVsNavInfo = null,
+			criteria.szName = "Find All References";
+
+			if (auto lib = Package.s_instance.GetLibrary())
+				lib.mLastFindReferencesResult = exps;
+
+			fs.DoSearch(&GUID_VsSymbolScope_All, &criteria);
 		}
 	}
 

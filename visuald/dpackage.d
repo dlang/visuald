@@ -1044,7 +1044,13 @@ version(none)
 		assert(s_instance);
 		return s_instance.mLibInfos;
 	}
-	
+
+	static Library GetLibrary()
+	{
+		assert(s_instance);
+		return s_instance.mLibrary;
+	}
+
 	static void scheduleUpdateLibrary()
 	{
 		assert(s_instance);

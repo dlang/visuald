@@ -540,6 +540,66 @@ class GetExpansionsCommand : FileCommand
 	string[] mExpansions;
 }
 
+///////////////////////////////////////
+alias void delegate(uint request, string filename, string tok, int line, int idx, string[] exps) GetReferencesCallBack;
+
+class GetReferencesCommand : FileCommand
+{
+	this(string filename, string tok, int line, int idx, wstring expr, GetReferencesCallBack cb)
+	{
+		super("GetReferences", filename);
+		mTok = tok;
+		mLine = line;
+		mIndex = idx;
+		mExpr = expr;
+		mCallback = cb;
+	}
+
+	override HRESULT exec() const
+	{
+		if(!gVDServer)
+			return S_FALSE;
+
+		BSTR fname = allocBSTR(mFilename);
+		BSTR tok = allocBSTR(mTok);
+		BSTR expr = allocwBSTR(mExpr);
+		HRESULT rc = gVDServer.GetReferences(fname, tok, mLine + 1, mIndex, expr);
+		freeBSTR(expr);
+		freeBSTR(tok);
+		freeBSTR(fname);
+		return rc;
+	}
+
+	override HRESULT answer()
+	{
+		BSTR stringList;
+		HRESULT rc = gVDServer.GetReferencesResult(&stringList);
+		if(rc != S_OK)
+			return rc;
+
+		string slist = detachBSTR(stringList);
+		mReferences = /*cast(shared(string[]))*/ splitLines(slist);
+		send(gUITid);
+		return S_OK;
+	}
+
+	override bool forward()
+	{
+		if(mCallback)
+			mCallback(mRequest, mFilename, mTok, mLine, mIndex, cast(string[])mReferences);
+		return true;
+	}
+
+	GetReferencesCallBack mCallback;
+	string mTok;
+	wstring mExpr;
+	int mLine;
+	int mIndex;
+	string[] mReferences;
+}
+
+
+///////////////////////////////////////
 class GetMessageCommand : Command
 {
 	this(string message)
@@ -618,6 +678,13 @@ class VDServerClient
 	int GetSemanticExpansions(string filename, string tok, int line, int idx, wstring expr, GetExpansionsCallBack cb)
 	{
 		auto cmd = new _shared!(GetExpansionsCommand)(filename, tok, line, idx, expr, cb);
+		cmd.send(mTid);
+		return cmd.mRequest;
+	}
+
+	int GetReferences(string filename, string tok, int line, int idx, wstring expr, GetReferencesCallBack cb)
+	{
+		auto cmd = new _shared!(GetReferencesCommand)(filename, tok, line, idx, expr, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}
