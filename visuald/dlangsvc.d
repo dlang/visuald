@@ -763,6 +763,12 @@ class LanguageService : DisposingComObject,
 		wstring expr = src.FindExpressionBefore(line, idx);
 		return vdServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, expr, cb);
 	}
+	uint GetReferences(Source src, string tok, int line, int idx, GetReferencesCallBack cb)
+	{
+		ConfigureSemanticProject(src);
+		wstring expr;
+		return vdServerClient.GetReferences(src.GetFileName(), tok, line, idx, expr, cb);
+	}
 	void UpdateSemanticModule(Source src)
 	{
 	}

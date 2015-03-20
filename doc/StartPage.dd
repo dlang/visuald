@@ -1,16 +1,16 @@
 Ddoc
 
-$(TABLE ,
+$(TABLE_NOBORDER
 $(TD $(IMG images/vd_logo.png))
 $(TD
 $(P Visual D is a Visual Studio package providing both project management and language services. 
-It works with Visual Studio 2005, 2008, 2010, 2012 and 2013 as well as the free Visual Studio Shells. 
+It works with Visual Studio 2005 - 2015 including Visual Studio Community 2013 as well as the free Visual Studio Shells. 
 See the $(LINK2 Installation.html, Installation) instructions, especially if not using a commercial edition of Visual Studio.)
 
 $(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.)
 
 <div align="right">
-$(LINK2 https://github.com/D-Programming-Language/visuald/releases/download/v0.3.39/VisualD-v0.3.39.exe, $(IMG images/download.png))
+$(LINK2 https://github.com/D-Programming-Language/visuald/releases/download/v$(VERSION)/VisualD-v$(VERSION).exe, $(IMG images/download.png))
 $(P $(LINK2 https://github.com/D-Programming-Language/visuald/releases, Beta releases))
 </div>
 ))
@@ -20,7 +20,7 @@ $(H2 Overview)
 
 $(P Use the navigation bar on the left to take a tour of Visual D including a lot of screen shots.)
 
-$(TABLE ,
+$(TABLE_NOBORDER
 $(TD 
 $(UL
  $(LI Project management with all DMD options available through the UI)
@@ -53,6 +53,15 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2015-1-1 Version 0.3.40
+$(UL
+ $(LI added basic support to compile C/C++ files)
+ $(LI Win32/COFF support for dmd 2.067+)
+ $(LI link dependency monitor now uses tracker.exe from MSBuild or WinSDK)
+ $(LI dparser: updated semantic engine to recent version)
+ $(LI goto file/line for mixin errors and exception dumps)
+)
+
 2014-10-10 Version 0.3.39
 $(UL
  $(LI mago 1.0: now can debug 64-bit applications)
@@ -67,32 +76,14 @@ $(UL
  $(LI build mago with static C runtime to avoid dependencies on msvcrt120.dll)
 )
 
-2014-04-12 Version 0.3.38
-$(UL
- $(LI added support for string import dependencies (needs dmd 2.065))
- $(LI improved library path handling and defaults for x64)
- $(LI added source control support for git in VS2013 (and maybe others))
- $(LI mute flood of errors by NuGet when building)
- $(LI improved completion and tooltip support with dparser
-  $(UL
-   $(LI completion box now displays appropriate icons and tooltip with some DDOC expansions)
-   $(LI bugzilla 11649: completion on selective import now lists identifiers from imported module)
-   $(LI fixed completion for symbols without description)
-   $(LI added options to enable/disable mixin analysis and UFCS expansions)
-   $(LI parameter tool tips now use prototype from dparser and shows documentation)
- ))
- $(LI updated to cv2pdb 0.31 with support for VS2013 and DWARF support for gcc 4.8)
- $(LI updated to mago 0.9 )
-)
-
 $(LINK2 VersionHistory.html, more...)
 
 $(H2 Download)
 
-$(P The latest installer can also be downloaded 
-$(LINK2 http:/www.dsource.org/projects/visuald/browser/downloads/VisualD-v0.3.38.exe?format=raw&FixForIE=.exe, here).
-You can find older versions and some additional files in 
-the $(LINK2 http:/www.dsource.org/projects/visuald/browser/downloads/, download directory).)
+$(P The latest installer and older versions can be downloaded 
+$(LINK2 https://github.com/D-Programming-Language/visuald/releases, here).
+You can find even older versions and some additional files in 
+the $(LINK2 http:/www.dsource.org/projects/visuald/browser/downloads/, dsource download directory).)
 
 Macros:
 	TITLE=Visual D

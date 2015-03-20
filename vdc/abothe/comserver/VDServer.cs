@@ -21,6 +21,7 @@ using D_Parser.Completion;
 using D_Parser.Resolver;
 using D_Parser.Resolver.TypeResolution;
 using D_Parser.Completion.ToolTips;
+using D_Parser.Refactoring;
 
 namespace DParserCOMServer
 {
@@ -47,6 +48,8 @@ namespace DParserCOMServer
 		void GetLastMessage(out string message);
 		void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex);
 		void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename);
+		void GetReferences(string filename, string tok, uint line, uint idx, string expr);
+        void GetReferencesResult(out string stringList);
 	}
 
 	class NodeToolTipContentGen : NodeTooltipRepresentationGen
@@ -72,7 +75,8 @@ namespace DParserCOMServer
 	{
 		private CodeLocation   _tipStart, _tipEnd;
 		private readonly StringBuilder _tipText = new StringBuilder();
-		private StringBuilder _expansions;
+        private StringBuilder _expansions;
+        private StringBuilder _references;
 		private string _imports;
 		private string _stringImports;
 		private string _versionIds;
@@ -80,13 +84,16 @@ namespace DParserCOMServer
 		private uint   _flags;
 		EditorData _editorData = new EditorData();
 
+        // remember modules, the global cache might not yet be ready or might have forgotten a module
 		public Dictionary<string, DModule> _modules = new Dictionary<string, DModule>();
+
 		public DModule GetModule(string fileName)
 		{
 			DModule mod;
-			if (!_modules.TryGetValue (fileName, out mod))
-				GlobalParseCache.GetModule (fileName);
-			return mod;
+			mod = GlobalParseCache.GetModule (fileName);
+            if (mod == null)
+                _modules.TryGetValue(fileName, out mod);
+            return mod;
 		}
 		public Dictionary<string, string> _sources = new Dictionary<string, string>();
 
@@ -169,17 +176,18 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
 
+            ISyntaxRegion sr;
 			DResolver.NodeResolutionAttempt attempt;
-			var types = DResolver.ResolveTypeLoosely(_editorData, out attempt);
+			var types = DResolver.ResolveTypeLoosely(_editorData, out attempt, out sr);
 
 			_tipText.Clear();
 
 			if (types != null)
 			{
-				if (types.DeclarationOrExpressionBase != null)
+				if (sr != null)
 				{
-					_tipStart = types.DeclarationOrExpressionBase.Location;
-					_tipEnd = types.DeclarationOrExpressionBase.EndLocation;
+					_tipStart = sr.Location;
+					_tipEnd = sr.EndLocation;
 				}
 
 				DNode dn = null;
@@ -210,7 +218,8 @@ namespace DParserCOMServer
 			//MessageBox.Show("GetTipResult()");
 			//throw new NotImplementedException();
 		}
-		public void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr)
+		
+        public void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr)
 		{
 			var ast = GetModule(filename);
 
@@ -243,17 +252,8 @@ namespace DParserCOMServer
 			//MessageBox.Show("GetSemanticExpansionsResult()");
 			//throw new NotImplementedException();
 		}
-		public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
-		{
-			var ast = GetModule(filename);
 
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
-			//MessageBox.Show("IsBinaryOperator()");
-			throw new NotImplementedException();
-		}
-		public void GetParseErrors(string filename, out string errors)
+        public void GetParseErrors(string filename, out string errors)
 		{
 			var ast = GetModule(filename);
 
@@ -273,18 +273,31 @@ namespace DParserCOMServer
 			//MessageBox.Show("GetParseErrors()");
 			//throw new COMException("No Message", 1);
 		}
-		public void GetBinaryIsInLocations(string filename, out uint[] locs) // array of pairs of DWORD
+
+        public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
+        {
+            var ast = GetModule(filename);
+
+            if (ast == null)
+                throw new COMException("module not found", 1);
+
+            //MessageBox.Show("IsBinaryOperator()");
+            throw new NotImplementedException();
+        }
+        public void GetBinaryIsInLocations(string filename, out uint[] locs) // array of pairs of DWORD
 		{
 			//MessageBox.Show("GetBinaryIsInLocations()");
 			locs = null;
 			//throw new COMException("No Message", 1);
 		}
-		public void GetLastMessage(out string message)
+		
+        public void GetLastMessage(out string message)
 		{
 			//MessageBox.Show("GetLastMessage()");
 			message = "__no_message__"; // avoid throwing exception
 			//throw new COMException("No Message", 1);
 		}
+
 		public void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
 			var ast = GetModule(filename);
@@ -303,8 +316,9 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
 
-			DResolver.NodeResolutionAttempt attempt;
-			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt);
+            ISyntaxRegion sr;
+            DResolver.NodeResolutionAttempt attempt;
+			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt, out sr);
 
 			_tipText.Clear();
 			if (rr != null)
@@ -330,7 +344,6 @@ namespace DParserCOMServer
 					_tipText.Append((node as DModule).FileName);
 			}
 		}
-
 		public void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename)
 		{
 			startLine = _tipStart.Line;
@@ -340,7 +353,71 @@ namespace DParserCOMServer
 			filename = _tipText.ToString();
 		}
 
-		///////////////////////////////////
+        public void GetReferences(string filename, string tok, uint line, uint idx, string expr)
+        {
+            var ast = GetModule(filename);
+
+            if (ast == null)
+                throw new COMException("module not found", 1);
+
+            _setupEditorData();
+            CodeLocation loc = new CodeLocation((int)idx + 1, (int)line);
+            _editorData.CaretLocation = loc;
+            _editorData.SyntaxTree = ast as DModule;
+            _editorData.ModuleCode = _sources[filename];
+            _editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
+
+            _references = null;
+
+            ISyntaxRegion sr;
+            DResolver.NodeResolutionAttempt attempt;
+			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt, out sr);
+
+            StringBuilder refs = new StringBuilder();
+			if (rr != null)
+			{
+				var n = DResolver.GetResultMember(rr, true);
+
+				if (n != null)
+                {
+                    var ctxt = ResolutionContext.Create(_editorData, true);
+                    if (n.ContainsAttribute(DTokens.Private) || ((n is DVariable) && (n as DVariable).IsLocal))
+                    {
+                        GetReferencesInModule(ast, refs, n, ctxt);
+                    }
+                    else
+                    {
+                        foreach (var basePath in _imports.Split('\n'))
+                            foreach (var mod in GlobalParseCache.EnumModulesRecursively(basePath))
+                                GetReferencesInModule(mod, refs, n, ctxt);
+                    }
+                }
+                //var res = TypeReferenceFinder.Scan(_editorData, System.Threading.CancellationToken.None, null);
+            }
+            _references = refs;
+        }
+
+        private static void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
+        {
+            var res = ReferencesFinder.Scan(ast, n, ctxt);
+
+            int cnt = res.Count();
+            foreach (var r in res)
+            {
+                var rfilename = ast.FileName;
+                var rloc = r.Location;
+                var ln = String.Format("{0},{1},{2},{3}:{4}\n", rloc.Line, rloc.Column - 1, rloc.Line, rloc.Column, rfilename);
+                refs.Append(ln);
+            }
+        }
+        public void GetReferencesResult(out string stringList)
+        {
+            stringList = _references != null ? _references.ToString() : null;
+            //MessageBox.Show("GetSemanticExpansionsResult()");
+            //throw new NotImplementedException();
+        }
+
+        ///////////////////////////////////
 		void _setupEditorData()
 		{
 			string versions = _versionIds;

@@ -139,6 +139,9 @@ class Library : DComObject,
 	LibraryItem[]   mLibraryItems;
 	
 	BrowseCounter   mCounterLibList;
+
+	// Find References result
+	string[]        mLastFindReferencesResult;
 	
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
@@ -373,8 +376,18 @@ class Library : DComObject,
 //			return E_NOTIMPL;
 
 		assert(ppList);
-		auto ol = newCom!ObjectList(this, eListType, eFlags, pobSrch);
-		return ol.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
+		if(pobSrch && to_tmpwstring(pobSrch.szName) == "Find All References"w) // (pobSrch.grfOptions & VSOBSO_LISTREFERENCES))
+		{
+			if (eListType != LLT_MEMBERS) // also called with LLT_NAMESPACES and LLT_CLASSES, so avoid duplicates
+				return E_FAIL;
+			auto frl = newCom!FindReferencesList(mLastFindReferencesResult);
+			return frl.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
+		}
+		else
+		{
+			auto ol = newCom!ObjectList(this, eListType, eFlags, pobSrch);
+			return ol.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
+		}
 	}
 
     //Get various settings for the library
@@ -1761,6 +1774,306 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 	}
 
 }
+
+class FindReferencesList : DComObject, IVsSimpleObjectList2
+{
+	string[] mReferences;
+
+	this(string[] refs)
+	{
+		mReferences = refs;
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsSimpleObjectList2) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	bool IsValidIndex(uint uIndex)
+	{
+		return uIndex < mReferences.length;
+	}
+
+	string getSourceLoc(uint Index, int* line = null, int *col = null)
+	{
+		if (!IsValidIndex(Index))
+			return null;
+
+		string r = mReferences[Index];
+
+		auto idx = indexOf(r, ':');
+		if(idx > 0)
+		{
+			string[] num = split(r[0..idx], ",");
+			if(num.length == 4)
+			{
+				try
+				{
+					if(line)
+						*line = parse!int(num[0]) - 1;
+					if(col)
+						*col = parse!int(num[1]);
+					return r[idx+1..$];
+				}
+				catch(ConvException)
+				{
+				}
+			}
+		}
+		return null;
+	}
+
+	///////////////////////////////////////////////////////////////////
+    HRESULT GetFlags(/+[out]+/ VSTREEFLAGS *pFlags)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetCapabilities2(/+[out]+/  LIB_LISTCAPABILITIES2 *pgrfCapabilities)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT UpdateCounter(/+[out]+/ ULONG *pCurUpdate)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetItemCount(/+[out]+/ ULONG* pCount)
+	{
+		mixin(LogCallMix2);
+		*pCount = mReferences.length;
+		return S_OK;
+	}
+    /+[local]+/ HRESULT GetDisplayData(in ULONG Index, 
+									   /+[out]+/ VSTREEDISPLAYDATA *pData)
+	{
+		mixin(LogCallMix2);
+		if (!IsValidIndex(Index))
+			return E_UNEXPECTED;
+
+		pData.Mask = TDM_IMAGE | TDM_SELECTEDIMAGE;
+		pData.Image = CSIMG_BLITZ; 
+		pData.SelectedImage = pData.Image;
+
+		return S_OK;
+	}
+    HRESULT GetTextWithOwnership(in ULONG Index, in VSTREETEXTOPTIONS tto, 
+								 /+[out]+/ BSTR *pbstrText)
+	{
+		mixin(LogCallMix2);
+		switch(tto)
+		{
+			case TTO_DEFAULT:
+			case TTO_SORTTEXT:
+			case TTO_SEARCHTEXT:
+				int line, col;
+				string file = getSourceLoc(Index, &line, &col);
+				file ~= "(" ~ to!string(line) ~ "," ~ to!string(col) ~ ")";
+				*pbstrText = allocBSTR(file);
+				return S_OK;
+			default:
+				break;
+		}
+		return E_FAIL;
+	}
+    HRESULT GetTipTextWithOwnership(in ULONG Index, in VSTREETOOLTIPTYPE eTipType, 
+									/+[out]+/ BSTR *pbstrText)
+	{
+		mixin(LogCallMix2);
+		if (!IsValidIndex(Index))
+			return E_UNEXPECTED;
+
+		*pbstrText = allocBSTR(mReferences[Index]);
+		return S_OK;
+	}
+    HRESULT GetCategoryField2(in ULONG Index, in LIB_CATEGORY2 Category, 
+							  /+[out,retval]+/ DWORD *pfCatField)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetBrowseObject(in ULONG Index, 
+							/+[out]+/ IDispatch *ppdispBrowseObj)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetUserContext(in ULONG Index, 
+						   /+[out]+/ IUnknown *ppunkUserCtx)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT ShowHelp(in ULONG Index)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetSourceContextWithOwnership(in ULONG Index, 
+										  /+[out]+/ BSTR *pbstrFileName, 
+										  /+[out]+/ ULONG *pulLineNum)
+	{
+		mixin(LogCallMix2);
+		version(none)
+		{
+			int line;
+			string file = getSourceLoc(Index, &line);
+			if (!file)
+				return E_FAIL;
+
+			*pbstrFileName = allocBSTR(file);
+			*pulLineNum = line;
+			return S_OK;
+		}
+		else
+			return E_NOTIMPL;
+	}
+    HRESULT CountSourceItems(in ULONG Index, 
+							 /+[out]+/ IVsHierarchy *ppHier, 
+							 /+[out]+/ VSITEMID *pitemid, 
+							 /+[out, retval]+/ ULONG *pcItems)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetMultipleSourceItems(in ULONG Index, in VSGSIFLAGS grfGSI, in ULONG cItems, 
+								   /+[out, size_is(cItems)]+/ VSITEMSELECTION *rgItemSel)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT CanGoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType, 
+						  /+[out]+/ BOOL *pfOK)
+	{
+		mixin(LogCallMix2);
+		if (!IsValidIndex(Index) || !pfOK)
+			return E_UNEXPECTED;
+		
+		*pfOK = (SrcType == GS_ANY || SrcType == GS_REFERENCE);
+		return S_OK;
+	}
+    HRESULT GoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType)
+	{
+		mixin(LogCallMix2);
+
+		int line, col;
+		string file = getSourceLoc(Index, &line, &col);
+		string modname;
+
+		if(!file)
+			return E_FAIL;
+		return OpenFileInSolution(file, line, col, modname, true);
+	}
+    HRESULT GetContextMenu(in ULONG Index, 
+						   /+[out]+/ CLSID *pclsidActive, 
+						   /+[out]+/ LONG *pnMenuId, 
+						   /+[out]+/ IOleCommandTarget *ppCmdTrgtActive)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT QueryDragDrop(in ULONG Index, /+[in]+/ IDataObject pDataObject, in DWORD grfKeyState, 
+						  /+[in, out]+/DWORD * pdwEffect)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT DoDragDrop(in ULONG Index, /+[in]+/ IDataObject  pDataObject, in DWORD grfKeyState, 
+					   /+[in, out]+/DWORD * pdwEffect)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT CanRename(in ULONG Index, in LPCOLESTR pszNewName, 
+					  /+[out]+/ BOOL *pfOK)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT DoRename(in ULONG Index, in LPCOLESTR pszNewName, in VSOBJOPFLAGS grfFlags)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT CanDelete(in ULONG Index, 
+					  /+[out]+/ BOOL *pfOK)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT DoDelete(in ULONG Index, in VSOBJOPFLAGS grfFlags)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT FillDescription2(in ULONG Index, in VSOBJDESCOPTIONS grfOptions, /+[in]+/ IVsObjectBrowserDescription3 pobDesc)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT EnumClipboardFormats(in ULONG Index, in VSOBJCFFLAGS grfFlags, in ULONG  celt, 
+								 /+[in, out, size_is(celt)]+/ VSOBJCLIPFORMAT *rgcfFormats, 
+								 /+[out, optional]+/ ULONG *pcActual)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetClipboardFormat(in ULONG Index, in VSOBJCFFLAGS grfFlags, in FORMATETC *pFormatetc, in STGMEDIUM *pMedium)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetExtendedClipboardVariant(in ULONG Index, in VSOBJCFFLAGS grfFlags, in const( VSOBJCLIPFORMAT)*pcfFormat, 
+										/+[out]+/ VARIANT *pvarFormat)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetProperty(in ULONG Index, in VSOBJLISTELEMPROPID propid, 
+						/+[out]+/ VARIANT *pvar)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetNavInfo(in ULONG Index, 
+					   /+[out]+/ IVsNavInfo * ppNavInfo)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetNavInfoNode(in ULONG Index, 
+						   /+[out]+/ IVsNavInfoNode * ppNavInfoNode)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT LocateNavInfoNode(/+[in]+/ IVsNavInfoNode  pNavInfoNode, 
+							  /+[out]+/ ULONG * pulIndex)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetExpandable3(in ULONG Index, in LIB_LISTTYPE2 ListTypeExcluded, 
+						   /+[out]+/ BOOL *pfExpandable)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT GetList2(in ULONG Index, in LIB_LISTTYPE2 ListType, in LIB_LISTFLAGS Flags, in VSOBSEARCHCRITERIA2 *pobSrch, 
+					 /+[out, retval]+/ IVsSimpleObjectList2 *ppIVsSimpleObjectList2)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+    HRESULT OnClose(/+[out]+/ VSTREECLOSEACTIONS *ptca)
+	{
+		mixin(LogCallMix2);
+		return E_NOTIMPL;
+	}
+};
 
 class LibraryItem
 {

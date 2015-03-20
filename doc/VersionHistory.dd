@@ -1,5 +1,53 @@
 Ddoc
 
+2015-1-1 Version 0.3.40
+ $(UL
+  $(LI build system
+   $(UL
+     $(LI added basic support to compile C/C++ files:
+       $(UL
+         $(LI new tool "C/C++" that is also auto-detected for usual file extensions)
+         $(LI common command line options can be specified on the compiler page of the project)
+         $(LI special command line options can be added per file)
+         $(LI $(CC) expands to the compiler executable of the current D compiler: dmc, cl, gcc or clang)
+         $(LI if "Translate D options" is checked, dmd options for -g, -release, -O are translated to 
+              the respective C/C++ compiler option)
+       ))
+     $(LI Win32/COFF support: check box on Compiler->Output page, new tab in global options)
+     $(LI revamped pipedmd: now uses tracker.exe from MSBuild or WinSDK to monitor dependencies)
+     $(LI custom file properties: edit, change selection and apply could change new selected file)
+     $(LI moved "Other Compiler" option from main project page to compiler page)
+     $(LI added additional options to the resource compiler tool)
+     $(LI separate link could fail if configuration name contains spaces)
+     $(LI bugzilla 13759: $(DOLLAR)(VSINSTALLDIR)\Common7\IDE now added to the default executable paths)
+     $(LI DMD/x64 linker override settings not saved)
+     $(LI bugzilla 13452: fix file monitoring)
+   ))
+  $(LI language service
+   $(UL
+     $(LI really updated dparser to a6207d6db5e54c68aa4b9db53b702681242d81d5)
+     $(LI updated version identifiers according to $(LINK http://dlang.org/version.html))
+     $(LI goto definition on import now supports package.d)
+     $(LI build phobos browse info: operated on outdated folder structure of phobos/druntime)
+     $(LI bugzilla 13817: VisualD cannot list members with utf-8 wide characters)
+     $(LI bugzilla 13342: mixin error message now interpreted)
+     $(LI when running/unittesting from within visuald, exception/callstack locations can be jumped to)
+     $(LI bugzilla 13213: there are now both "goto definition" and "goto declaration", where the former
+          will try to find the forward declared symbols through the object browser (including C/C++))
+     $(LI object browser/symbol search: now filters out __unittest and __invariant symbols)
+     $(LI bugzilla 13616: fix freeze when starting completion at the very first line and column of source)
+   ))
+  $(LI debugger
+   $(UL
+    $(LI new cv2pdb version 0.33
+     $(UL
+      $(LI did not run on XP anymore due to bad OS version requirements)
+      $(LI better DWARF location support)
+     ))
+   ))
+  $(LI add installation for VS2015)
+ )
+
 2014-10-10 Version 0.3.39
  $(UL
   $(LI build system

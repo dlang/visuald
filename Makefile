@@ -143,7 +143,7 @@ vdserver:
 	devenv /Project "vdserver"  /Build "Release|Win32" visuald_vs10.sln
 
 dparser:
-	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /t:Rebuild
+	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
 
 vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild

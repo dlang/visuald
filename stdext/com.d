@@ -11,6 +11,7 @@ module stdext.com;
 //version(none):
 import std.utf;
 import std.string;
+import std.exception;
 import core.stdc.string;
 import core.stdc.wchar_ : wcslen;
 
@@ -361,6 +362,14 @@ wstring to_wstring(in char* pText)
 		return ""w;
 	size_t len = strlen(pText);
 	return toUTF16(pText[0 .. len]);
+}
+
+wstring to_tmpwstring(in wchar* pText)
+{
+	if(!pText)
+		return ""w;
+	size_t len = wcslen(pText);
+	return assumeUnique(pText[0 .. len]);
 }
 
 ///////////////////////////////////////////////////////////////////////

@@ -603,6 +603,16 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
+	HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
+	{
+		return E_NOTIMPL;
+	}
+
+	HRESULT GetReferencesResult(BSTR* stringList)
+	{
+		return E_NOTIMPL;
+	}
+
 	///////////////////////////////////////////////////////////////
 	// create our own task pool to be able to destroy it (it keeps a the
 	//  arguments to the last task, so they are never collected)

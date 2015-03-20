@@ -122,14 +122,48 @@ Installation:
 
 Debugger:
 ---------------
+Any/dmd:
+- stepping through function call jumps to default assignment
+- arguments to local functions treated as locals
+- local functions/delegates should have debug info for closure vars ("this" exists)
+- extern(D) function arguments shown in the wrong order
+- support GDC+mago
+- bugzilla 14286: x64: no type information for dAssocArray
+- bugzilla 4014: no debug info from libraries
+
+Mago:
 - show derived class
 - step after exception
-- stepping through function call jumps to default assignment
-- Mago: set instruction pointer
-- local functions/delegates should have debug info for closure vars ("this" exists)
-- GDC: x64: function arguments not shown
+- exceptions on x64
++ set instruction pointer
++ modules window does not show 64-bit addresses
+- symbols in disassembly
+  + absolute code/data adresses
+  - symbols relative to ebp/rbp
+  + symbols relative to RIP
+  + show labels for disasm address
+  - allow symbolic address input
++ no symbols for publics without debug info
+- improve stepping through C
++ load symbols from Microsoft Symbol Server, respect symbol settings
++ stack: arguments show locals aswell
+- identically named locals show the same value
++ dstring shows as uint[] without string representation
+- string/wstring shown as char/wchar[], but with correct string representation
+- AA indexing
+- AA preview/expand
+- Array preview
+- delegate value/type
+- struct preview
++ verboser output when loading/unloading DLLs
+- attach to process
+- hardware breakpoints
+
+VS:
 - VS2012: autoexp.dat does not work? depends on debug engine => edit and continue
-- mago64: modules window does not show 64-bit addresses
+- "old" debug engine crashes with COFF32
+
+- GDC: x64: function arguments not shown
 
 GUI-Designer:
 -------------
@@ -164,9 +198,11 @@ Unsorted
 - dustmite support
 - dfix support
 - configuration of dependent project not read from configuration manager
-- jump to assertion error
++ jump to assertion error
 + import std.container: jump to package
 - renaming configuration does not change project config
 + win32coff support
 - file search: replace . with \ in path search?
 + run cv2pdb disabled for GDC/x64
+
+- hide Visual D menu if inactive

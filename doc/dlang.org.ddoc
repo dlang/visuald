@@ -1,0 +1,284 @@
+_=Macros for the dlang.org site look and feel. Please keep sorted by name. Multiline macros should keep one _= line before and after for clarity. Also, one _= line should be present when the first letter changes. (The "_="" is needed so there's no extra newline after the last macro defined in a group.)
+
+ACRONYM = <acronym title="$+">$1</acronym> ($+)
+ASSIGNEXPRESSION = $(GLINK2 expression, AssignExpression)
+_=
+
+BIGOH = $(SPANC bigoh, &Omicron;($(D $0)))
+BLOCKQUOTE = $(T blockquote, $(P $0))
+BLOCKQUOTE_BY = $(BLOCKQUOTE $+ $(T cite, $1))
+BLACK=$(SPANC black, $0)
+BLUE=$(SPANC blue, $0)
+BODY_PREFIX=
+BOOKTABLE = $(TC table, book, $(T caption, $1)$+)
+BUGZILLA = $(SPANC bugzilla, $(AHTTPS issues.dlang.org/show_bug.cgi?id=$0, Bugzilla $0))
+_=
+
+CCODE=$(TC pre, ccode notranslate, $0)
+CODE=$(D $0)
+CODE_AMP=$(D &amp;)
+CODE_DOLLAR=$(D $)
+CODE_HIGHLIGHT=$(B $(I $0))
+CODE_LCURL=$(D {)
+CODE_PERCENT=$(D %)
+CODE_PIPE=$(D |)
+CODE_RCURL=$(D })
+_=
+
+COMMON_SCRIPTS =
+    $(SCRIPTLOAD https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js)
+    $(SCRIPT window.jQuery || document.write('<script src="$(ROOT_DIR)js/jquery-1.7.2.min.js">\x3C/script>'))
+    $(SCRIPTLOAD $(ROOT_DIR)js/codemirror-compressed.js)
+    $(SCRIPTLOAD $(ROOT_DIR)js/run.js)
+    $(SCRIPTLOAD $(ROOT_DIR)js/cssmenu.js)
+_=
+
+CONSOLE=$(TC pre, console notranslate, $0)
+COPYRIGHT=Copyright &copy; 1999-$(YEAR) by Digital Mars $(REG), All Rights Reserved
+CPPCODE=$(TC pre, cppcode notranslate, $0)
+CPPLISTING=$(CPPCODE $0)
+CROSS=&#x2718;
+_=
+
+D=$(SPANC d_inlinecode donthyphenate notranslate, $0)
+D_CODE=$(TC pre, d_code notranslate, $0)
+_=
+
+DDOC=
+<!DOCTYPE html>
+<html lang="en-US">
+<!--
+    Copyright (c) 1999-$(YEAR) by Digital Mars
+    All Rights Reserved Written by Walter Bright
+    http://digitalmars.com
+  -->
+<head>
+<meta charset="utf-8" />
+<meta name="keywords" content="$(META_KEYWORDS)" />
+<meta name="description" content="$(META_DESCRIPTION)" />
+$(T title, $(TITLE) - D Programming Language)
+<link rel="stylesheet" href="$(ROOT_DIR)css/codemirror.css" />
+<link rel="stylesheet" href="$(ROOT_DIR)css/style.css" />
+<link rel="stylesheet" href="$(ROOT_DIR)css/print.css" media="print" />
+<link rel="stylesheet" href="$(ROOT_DIR)css/cssmenu.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+<link rel="shortcut icon" href="$(ROOT_DIR)favicon.ico" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0" />
+</head>
+<body id='$(TITLE)' class='$(BODYCLASS)'>
+$(SCRIPT document.body.className += ' have-javascript';)
+$(DIVID top,
+	$(DIVID header,
+		<a class="logo" href="$(ROOT)"><img id="logo" width="125" height="95" alt="D Logo" src="$(ROOT_DIR)images/dlogo.svg"></a>
+		<span id="d-language-mobilehelper"><a href="$(ROOT)" id="d-language">D Programming Language</a></span>
+	)
+)
+$(DIVID navigation,
+    $(DIVID search-box,
+        <form method="get" action="http://google.com/search">
+            <input type="hidden" id="domains" name="domains" value="dlang.org" />
+            <input type="hidden" id="sourceid" name="sourceid" value="google-search" />
+            $(SPANID search-query, <input id="q" name="q" placeholder="Search" />)$(SPANID search-dropdown,
+                <select id="sitesearch" name="sitesearch" size="1">
+                    <option value="dlang.org">Entire D Site</option>
+                    <option value="rainers.github.io/visuald">Visual D</option>
+                    <option value="digitalmars.com/d/archives">Newsgroup Archives</option>
+                </select>
+            )$(SPANID search-submit, <button type="submit"><i class="fa fa-search"></i><span>go</span></button>)
+        </form>
+    )
+    $(NAVIGATION)
+)
+$(LAYOUT_PREFIX)
+$(DIVCID hyphenate, content,
+    $(PAGE_TOOLS)
+    $(LAYOUT_TITLE)
+    $(BODY_PREFIX)
+    $(BODY)
+)
+$(FOOTER)
+$(COMMON_SCRIPTS)
+$(LAYOUT_SUFFIX)
+</body>
+</html>
+_=
+
+DDLINK=$(LINK2 $1.html, $3)
+DDOC_BACKQUOTED = $(D $0)
+DDOC_SUMMARY   = $(DIVC summary, $0)
+DDOC_DESCRIPTION = $(DIVC description, $0)
+DDOC_AUTHORS   = $(DDOCKEYVAL Authors, $0)
+DDOC_BUGS      = $(DDOCKEYVAL Bugs, $0)
+DDOC_COPYRIGHT = $(DDOCKEYVAL Copyright, $0)
+DDOC_DATE      = $(DDOCKEYVAL Date, $0)
+DDOC_DEPRECATED = $(DDOCKEYVAL Deprecated, $0)
+DDOC_EXAMPLES  = $(DDOCKEYVAL Examples, $0)
+DDOC_HISTORY   = $(DDOCKEYVAL History, $0)
+DDOC_LICENSE   = $(DDOCKEYVAL License, $0)
+DDOC_RETURNS   = $(DDOCKEYVAL Returns, $0)
+DDOC_SEE_ALSO  = $(DDOCKEYVAL SeeAlso, $0)
+DDOC_STANDARDS = $(DDOCKEYVAL Standards, $0)
+DDOC_THROWS    = $(DDOCKEYVAL Throws, $0)
+DDOC_VERSION   = $(DDOCKEYVAL Version, $0)
+DDOC_SECTION_H = <p class="keyval Section">$(SPANC key keySection, $0)
+DDOC_SECTION   = $(DIVC val, $0)
+DDOC_PARAM_ROW = <tr class="param">$0</tr>
+DDOC_PARAM_ID  = <td class="param_id">$0</td>
+DDOC_PARAM_DESC  = <td class="param_desc">$0</td>
+DDOC_PARAMS    = $(DDOCKEYVAL Parameters, <table class=params>$0</table>)
+DDOC_BLANKLINE	= $(P)
+DDOC_PSYMBOL = $(ADEF $0)$(SPANC ddoc_psymbol, $0)
+DDOC_ANCHOR = $(ADEF .$1)$(DIVCID quickindex, quickindex.$1, )
+DDOC_DECL  = $(TC dt, d_decl, $0)
+DDOC_UNDEFINED_MACRO = $(DDOC_COMMENT UNDEFINED MACRO: "$1")
+DDOCCODE=$(TC pre, ddoccode notranslate, $0)
+DDOCKEYVAL=$(DIVC keyval $1, $(SPANC key key$1, $1:) $(DIVC val val$1, $+))
+DDSUBLINK=$(LINK2 $1.html#$2, $3)
+_=
+
+DRUNTIMESRC=$(HTTPS github.com/D-Programming-Language/druntime/blob/master/src/$0, $0)
+DPLLINK=$(LINK2 $1,$+)
+_=
+
+ELABORATE_HEADER=$(TR <th rowspan=2>D</th><th colspan=2>C</th>)
+$(TR <th scope="col">32 bit</th><th scope="col">64 bit</th>)
+_=
+
+FOOTER = $(DIV id="copyright", $(COPYRIGHT) | Page generated by $(WEB dlang.org/ddoc.html, Ddoc) on $(GEN_DATETIME))
+FOOTNOTE=$(SPANC footnote, $0)
+FULL_XREF=$(XREF $1, $2)
+_=
+
+GEN_DATETIME=$(DATETIME)
+GLINK=$(RELATIVE_LINK2 $0, $(I $0))
+GLINK2=$(DDSUBLINK $1,$2,$(I $2))
+GLOSSARY = $(WEB dlang.org/glossary.html#$0, $0)
+GNAME=<a id="$0">$(SPANC gname, $0)</a>
+GRAMMAR=$(TC pre, bnf notranslate, $0)
+GREEN=$(SPANC green, $0)
+GT=&gt;
+_=
+
+HASH=#
+HTMLTAG3=<$1 $2>$(TAIL $+)</$1>
+_=
+
+ISEXPRESSION=$(GLINK2 expression, IsExpression)
+_=
+
+LAYOUT_PREFIX=
+LAYOUT_SUFFIX=
+LAYOUT_TITLE=$(H1 $(TITLE))
+LEGACY_LNAME2=<span id="$1">$(LNAME2 $+)</span>
+LIST=$(UL $(LIX $1, $+))
+LIX=$(LI $1)$(LIX $+)
+LNAME2=<a class="anchor" title="Permalink to this section" id="$1" href="#$1">$+</a>
+LONGTABLE_2COLS=$(TABLE2 $2,$3 $4)
+LONGTABLE_3COLS=$(TABLE2 $2,$3 $4)
+LONGTABLE_5COLS=$(TABLE2 $1,$2 $3)
+LT=&lt;
+LUCKY = $(HTTP google.com/search?btnI=I%27m+Feeling+Lucky&amp;ie=UTF-8&amp;oe=UTF-8&amp;q=$0,$0)
+LUCKY2 = $(HTTP google.com/search?btnI=I%27m+Feeling+Lucky&q=$+,$1)
+_=
+
+MDASH=$(T nobr, &#x200A;&mdash;&#x200A;)
+METACODE=$(SPANC metacode, $0)
+MENU = <li><a href='$1'><span>$+</span></a></li>
+MENU_W_SUBMENU = <li class='has-sub'><a href='#'><span>$0</span></a>
+META_KEYWORDS=D programming language
+META_DESCRIPTION=D Programming Language
+MODDEFFILE=$(TC pre, moddeffile notranslate, $0)
+MULTICOL_CELL=<td colspan=$1>$+</td>
+MULTICOL_HEADER=<th colspan=$1>$+</th>
+MULTICOLS=$+
+MULTIROW_HEADER=<th rowspan=$1>$+</th>
+_=
+
+NEWS=http://digitalmars.com/webnews/newsgroups.php?search_txt=&group=$1&article_id=$+
+NG_digitalmars_D = <a href="$(NEWS digitalmars.D,$0)">D/$0</a>
+NG_digitalmars_D_announce = <a href="$(NEWS digitalmars.D.announce,$0)">D.announce/$0</a>
+NOTRANSLATE=$(SPANC notranslate, $0)
+NO=
+NOT_EBOOK=$0
+_=
+
+OPT=$(SUBSCRIPT opt)
+_=
+
+PAGE_TOOLS=
+$(DIVID tools,
+	$(SPANC tip,
+		<a href="https://github.com/D-Programming-Language/$(PROJECT)/edit/master/doc/$(SRCFILENAME)" class="button">Improve this page</a>
+		$(SPAN,
+			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		)
+	)
+	$(SPANC tip,
+		<a href="http://wiki.dlang.org/DocComments/$(WIKI)" class="button">Page wiki</a>
+		$(SPAN,
+			View or edit the community-maintained wiki page associated with this page.
+		)
+	)
+)
+_=
+
+PC=$(TC p, $1, $+)
+_=
+
+PHOBOS=$(SPANC phobos, $(AHTTP dlang.org/phobos/std_$1.html#$2, $(TAIL $3)))
+PHOBOSSRC=$(SPANC phobos_src, $(AHTTPS github.com/D-Programming-Language/phobos/blob/master/$0, $0))
+_=
+
+RED=$(SPANC red, $0)
+RELATIVE_LINK2=$(ALOCAL $1, $+)
+_=
+
+SAMPLESRC=$(SPANC sample_src, $(AHTTPS github.com/D-Programming-Language/dmd/blob/master/samples/$0, /dmd/samples/d/$0))
+SCINI=$(TC pre, scini notranslate, $0)
+SCRIPTLOAD=<script type="text/javascript" src="$0"></script>
+SECTION1=$(H1 $1)$+
+SECTION2=$(H2 $1)$+
+SECTION3=$(H3 $1)$+
+SECTION4=$(H4 $1)$+
+SECTION5=$(H5 $1)$+
+SUBMENU=<ul>$(SUBMENU2 $1,$+)</ul>
+SUBMENU2=<li><a href='$1'>$2</a></li>$(SUBMENU3 $+)
+SUBMENU3=$(SUBMENU2 $+)
+_=
+
+TABLE_10=$(TABLE2 $1,$+)
+TABLE_2COLS=$(TABLE2 $1, $+)
+TABLE_3COLS=$(TABLE2 $1, $+)
+TABLE_SPECIAL=$(TABLE2 $1,$+)
+TABLE2=$(T center, $(T table, $(T caption, $1)$+))
+TDX=$(TD $1)$(TDX $+)
+TH=<th scope="col">$0</th>
+THEAD=$(TR $(THX $1, $+))
+THX=$(TC th, donthyphenate, $(B $1))$(THX $+)
+TOC=$(SPEC_S $1,$+)
+TR2=$(TR $1 $2)
+TR3=$(TR $1 $2 $3)
+TROW=$(TR $(TDX $1, $+))
+TROW_EXPLANATORY=<td colspan=10>$0</td>
+_=
+
+UNDERSCORE=_
+_=
+
+VERTROW=$(TR $(TDX $1, $+))
+_=
+
+WHITE=$(SPANC white, $0)
+WIKI=$(TITLE)
+_=
+
+XREF=$(XREF2 $1, $2, $(D std.$1.$2))
+XREF2=$(SPANC libref, $(AHTTP dlang.org/phobos/std_$1.html#$2, $(TAIL $+)))
+_=
+
+YELLOW=$(SPANC yellow, $0)
+YES=$(CHECKMARK)
+_=

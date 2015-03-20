@@ -32,6 +32,8 @@ interface IVDServer : IUnknown
 	HRESULT GetLastMessage([out,retval] BSTR* message);
 	HRESULT GetDefinition([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex);
 	HRESULT GetDefinitionResult([out] DWORD *startLine, [out] DWORD *startIndex, [out] DWORD *endLine, [out] DWORD *endIndex, [out,retval] BSTR* filename);
+	HRESULT GetReferences([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx, [in] BSTR expr);
+	HRESULT GetReferencesResult([out,retval] BSTR* stringList);
 };
 
 // library statement

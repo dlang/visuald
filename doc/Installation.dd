@@ -12,14 +12,15 @@ has been thoroughly tested with GDC and LDC, so having DMD available for cross-c
 $(P Visual D does $(B not) work with any of the $(B Express) versions of Visual Studio. Other than the 
 commercial editions, the Express versions do not support loading third party extensions and add-ins.)
 
+$(P In November 2014 Microsoft released $(B $(LINK2 http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx,
+Visual Studio Community 2013)), a version similar to Visual Studio Professional, but free for most users unless 
+working in larger companies. Visual D integrates just as well as with the commercial versions.)
+
+$(H2 Visual Studio Shell)
+
 $(P A $(B free) alternative are the integrated $(B Visual Studio Shell) distributions, that can be downloaded
 from Microsoft (see below for links). The shells are identical with the Visual Studio IDE, but stripped of any language support. It
 still contains the native debugger that can be used to debug D applications.)
-
-$(P For debugging applications, you should also install cv2pdb which is now included in the
-Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoexp.dat do
-not mix with previous manual installations of $(LINK2 http://svn.dsource.org/projects/cv2pdb, cv2pdb). 
-Visual D also installs the alternative debug engine mago that does not need cv2pdb.)
 
 $(P VS Shell 2008 can be found
 $(LINK2 http://www.microsoft.com/downloads/details.aspx?FamilyID=40646580-97FA-4698-B65F-620D4B4B1ED7&displaylang=en, here),
@@ -69,6 +70,11 @@ $(H2 Using LDC)
 $(P The latest releases can be found at $(LINK https://github.com/ldc-developers/ldc/releases/))
 
 $(H3 Debugging)
+
+$(P For debugging applications, you should also install cv2pdb which is now included in the
+Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoexp.dat do
+not mix with previous manual installations of $(LINK2 http://svn.dsource.org/projects/cv2pdb, cv2pdb). 
+Visual D also installs the alternative debug engine mago that does not need cv2pdb.)
 
 $(P cv2pdb has been extended to also convert from DWARF debug information to PDB, so it 
 is possible to debug applications built with GDC in Visual Studio. Be sure to select
