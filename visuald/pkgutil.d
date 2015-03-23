@@ -14,6 +14,7 @@ import visuald.logutil;
 import visuald.dpackage;
 
 import std.conv;
+import std.utf;
 import sdk.vsi.vsshell;
 
 void showStatusBarText(wstring txt)
@@ -114,6 +115,16 @@ void writeToBuildOutputPane(string msg)
 	}
 	else
 		OutputPaneBuffer.push(msg);
+}
+
+bool OutputErrorString(string msg)
+{
+	if (IVsOutputWindowPane pane = getBuildOutputPane())
+	{
+		scope(exit) release(pane);
+		pane.OutputString(toUTF16z(msg));
+	}
+	return false;
 }
 
 bool tryWithExceptionToBuildOutputPane(T)(T dg, string errInfo = "")

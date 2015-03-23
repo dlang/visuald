@@ -32,6 +32,7 @@ import visuald.stringutil;
 import visuald.fileutil;
 import visuald.dproject;
 import visuald.automation;
+import visuald.build;
 import visuald.config;
 import visuald.chiernode;
 import visuald.dlangsvc;
@@ -1769,43 +1770,6 @@ class GlobalOptions
 		return null;
 	}
 
-	string[] findDFiles(string path, string sub, bool deep)
-	{
-		string[] files;
-		if(!isExistingDir(path ~ sub))
-			return files;
-		foreach(string file; dirEntries(path ~ sub, SpanMode.shallow))
-		{
-			if(_startsWith(file, path))
-				file = file[path.length .. $];
-			if (deep && isExistingDir(path ~ file))
-			{
-				string[] exclude = [ "\\internal", "\\freebsd", "\\linux", "\\osx", "\\posix", "\\solaris" ];
-				if (!any!(e => file.endsWith(e))(exclude))
-					files ~= findDFiles(path, file, deep);
-				continue;
-			}
-			string bname = baseName(file);
-			if(globMatch(bname, "openrj.d"))
-				continue;
-			if(globMatch(bname, "*.d"))
-				if(string* pfile = contains(files, file ~ "i"))
-					*pfile = file;
-				else
-					files ~= file;
-			else if(globMatch(bname, "*.di"))
-			{
-				// use the d file instead if available
-				string dfile = "..\\src\\" ~ file[0..$-1];
-				if(std.file.exists(path ~ dfile))
-					file = dfile;
-				if(!contains(files, file[0..$-1]))
-					files ~= file;
-			}
-		}
-		return files;
-	}
-
 	bool buildPhobosBrowseInfo()
 	{
 		IVsOutputWindowPane pane = getBuildOutputPane();
@@ -1837,9 +1801,7 @@ class GlobalOptions
 			}
 			catch(Exception)
 			{
-				msg = "cannot create directory " ~ jsonPath;
-				pane.OutputString(toUTF16z(msg));
-				return false;
+				return OutputErrorString(msg = "cannot create directory " ~ jsonPath);
 			}
 		}
 		
@@ -1851,11 +1813,8 @@ class GlobalOptions
 		string dmddir = findDmdBinDir();
 		string dmdpath = dmddir ~ "dmd.exe";
 		if(!std.file.exists(dmdpath))
-		{
-			msg = "dmd.exe not found in DMDInstallDir=" ~ DMD.InstallDir ~ " or through PATH";
-			pane.OutputString(toUTF16z(msg));
-			return false;
-		}
+			return OutputErrorString(msg = "dmd.exe not found in DMDInstallDir=" ~ DMD.InstallDir ~ " or through PATH");
+
 		foreach(s; imports)
 		{
 			string[] files;
@@ -1865,24 +1824,24 @@ class GlobalOptions
 			
 			if(std.file.exists(s ~ "std\\algorithm.d")) // D2
 			{
-				files ~= findDFiles(s, "std", true);
-				files ~= findDFiles(s, "etc\\c", true);
+				files ~= findDRuntimeFiles(s, "std", true);
+				files ~= findDRuntimeFiles(s, "etc\\c", true);
 				jsonfile = jsonPath ~ "phobos.json";
 			}
 			if(std.file.exists(s ~ "std\\gc.d")) // D1
 			{
-				files ~= findDFiles(s, "std", false);
-				files ~= findDFiles(s, "std\\c", false);
-				files ~= findDFiles(s, "std\\c\\windows", false);
-				files ~= findDFiles(s, "std\\windows", false);
+				files ~= findDRuntimeFiles(s, "std", false);
+				files ~= findDRuntimeFiles(s, "std\\c", false);
+				files ~= findDRuntimeFiles(s, "std\\c\\windows", false);
+				files ~= findDRuntimeFiles(s, "std\\windows", false);
 				jsonfile = jsonPath ~ "phobos1.json";
 			}
 			if(std.file.exists(s ~ "object.di"))
 			{
 				opts ~= " -I" ~ buildPath(s, "..\\src"); // needed since dmd 2.059
 				files ~= "object.di";
-				files ~= findDFiles(s, "core", true);
-				files ~= findDFiles(s, "std", false);  // D1?
+				files ~= findDRuntimeFiles(s, "core", true);
+				files ~= findDRuntimeFiles(s, "std", false);  // D1?
 				jsonfile = jsonPath ~ "druntime.json";
 			}
 
@@ -1891,62 +1850,15 @@ class GlobalOptions
 				string sfiles = std.string.join(files, " ");
 				cmdline ~= quoteFilename(dmdpath) ~ opts ~ " -Xf" ~ quoteFilename(jsonfile) ~ " " ~ sfiles ~ "\n\n";
 				pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " from import " ~ s ~ "\n"));
-				if(!launchBuildPhobosBrowseInfo(s, cmdfile, cmdline, pane))
+				if(!launchBuildPhobos(s, cmdfile, cmdline, pane))
 					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " failed!\n"));
+				else
+					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " successful!\n"));
 			}
 		}
 		return true;
 	}
 	
-	bool launchBuildPhobosBrowseInfo(string workdir, string cmdfile, string cmdline, IVsOutputWindowPane pane)
-	{
-		mixin(LogCallMix);
-
-		/////////////
-		auto srpIVsLaunchPadFactory = queryService!(IVsLaunchPadFactory);
-		if (!srpIVsLaunchPadFactory)
-			return false;
-		scope(exit) release(srpIVsLaunchPadFactory);
-
-		ComPtr!(IVsLaunchPad) srpIVsLaunchPad;
-		HRESULT hr = srpIVsLaunchPadFactory.CreateLaunchPad(&srpIVsLaunchPad.ptr);
-		if(FAILED(hr) || !srpIVsLaunchPad.ptr)
-		{
-			string msg = format("internal error: IVsLaunchPadFactory.CreateLaunchPad failed with rc=%x", hr);
-			pane.OutputString(toUTF16z(msg));
-			return false;
-		}
-
-		try
-		{
-			std.file.write(cmdfile, cmdline);
-		}
-		catch(FileException e)
-		{
-			string msg = format("internal error: cannot write file " ~ cmdfile ~ "\n");
-			pane.OutputString(toUTF16z(msg));
-			return false;
-		}
-		scope(exit) std.file.remove(cmdfile);
-		
-		BSTR bstrOutput;
-		DWORD result;
-		hr = srpIVsLaunchPad.ExecCommand(
-			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
-			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
-			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(workdir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
-			/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
-			/* [in] IVsOutputWindowPane *pOutputWindowPane */ pane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
-			/* [in] ULONG nTaskItemCategory                */ 0, // if LPF_PipeStdoutToTaskList is specified
-			/* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
-			/* [in] LPCOLESTR pszTaskListSubcategory       */ null, // "Build"w.ptr, // if LPF_PipeStdoutToTaskList is specified
-			/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ null, //pLaunchPadEvents,
-			/* [out] DWORD *pdwProcessExitCode             */ &result,
-			/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
-
-		return hr == S_OK && result == 0;
-	}
-
 	string findCoverageFile(string srcfile)
 	{
 		import stdext.path;

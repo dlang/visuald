@@ -1221,6 +1221,11 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return "Linker"; }
 	override string GetPageName() { return "General"; }
 
+	this()
+	{
+		kNeededLines = 11;
+	}
+
 	override void UpdateDirty(bool bDirty)
 	{
 		super.UpdateDirty(bDirty);
@@ -1239,6 +1244,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas, 
 			[ "Minimum", "Symbols By Address", "Standard", "Full", "With cross references" ], false));
 		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
+		AddControl("", mPrivatePhobos = new CheckBox(mCanvas, "Build and use local version of phobos with same compiler options"));
 		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use global and standard library search paths"));
 		AddControl("C Runtime", mCRuntime = new ComboBox(mCanvas, [ "None", "Static Release (LIBCMT)", "Static Debug (LIBCMTD)", "Dynamic Release (MSCVRT)", "Dynamic Debug (MSCVRTD)" ], false));
 	}
@@ -1246,7 +1252,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	void EnableControls()
 	{
 		if(ProjectOptions options = GetProjectOptions())
-			mCRuntime.setEnabled(options.isX86_64);
+			mCRuntime.setEnabled(options.isX86_64 || options.mscoff);
 	}
 	
 	override void SetControls(ProjectOptions options)
@@ -1260,6 +1266,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		mGenMap.setSelection(options.mapverbosity); 
 		mImplib.setChecked(options.createImplib);
 		mUseStdLibPath.setChecked(options.useStdLibPath);
+		mPrivatePhobos.setChecked(options.privatePhobos);
 		mCRuntime.setSelection(options.cRuntime); 
 
 		EnableControls();
@@ -1277,6 +1284,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity); 
 		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib); 
 		changes += changeOption(mUseStdLibPath.isChecked(), options.useStdLibPath, refoptions.useStdLibPath);
+		changes += changeOption(mPrivatePhobos.isChecked(), options.privatePhobos, refoptions.privatePhobos);
 		changes += changeOption(cast(uint) mCRuntime.getSelection(), options.cRuntime, refoptions.cRuntime); 
 		return changes;
 	}
@@ -1290,6 +1298,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	ComboBox mGenMap;
 	CheckBox mImplib;
 	CheckBox mUseStdLibPath;
+	CheckBox mPrivatePhobos;
 	ComboBox mCRuntime;
 }
 

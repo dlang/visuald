@@ -10,6 +10,7 @@ module visuald.config;
 
 import std.string;
 import std.conv;
+import std.file;
 import std.path;
 import std.utf;
 import std.array;
@@ -40,6 +41,7 @@ import visuald.propertypage;
 import visuald.stringutil;
 import visuald.fileutil;
 import visuald.lexutil;
+import visuald.pkgutil;
 import visuald.vdextensions;
 
 // version = hasOutputGroup;
@@ -237,6 +239,7 @@ class ProjectOptions
 	string exefile;
 	bool   useStdLibPath;
 	uint   cRuntime;
+	bool   privatePhobos;
 
 	string additionalOptions;
 	string preBuildCommand;
@@ -301,28 +304,16 @@ class ProjectOptions
 			case Compiler.LDC: return Package.GetGlobalOptions().LDC;
 		}
 	}
-	string buildDMDCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+
+	// common options with building phobos.lib
+	string dmdCommonCompileOptions()
 	{
 		string cmd;
-		if(otherDMD && program.length)
-			cmd = quoteNormalizeFilename(program);
-		else
-			cmd = "dmd";
-		if(performLink && Package.GetGlobalOptions().demangleError)
-			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
-		
-		if(lib == OutputType.StaticLib && performLink)
-			cmd ~= " -lib";
-		if(multiobj)
-			cmd ~= " -multiobj";
+
 		if(isX86_64)
 			cmd ~= " -m64";
 		else if(mscoff)
 			cmd ~= " -m32mscoff";
-		if(trace)
-			cmd ~= " -profile";
-		if(quiet)
-			cmd ~= " -quiet";
 		if(verbose)
 			cmd ~= " -v";
 		if(Dversion >= 2 && vtls)
@@ -337,20 +328,12 @@ class ProjectOptions
 			cmd ~= " -O";
 		if(useDeprecated)
 			cmd ~= " -d";
-		else if(errDeprecated)
-			cmd ~= " -de";
-		if(Dversion >= 2 && noboundscheck)
-			cmd ~= " -noboundscheck";
-		if(useUnitTests)
-			cmd ~= " -unittest";
 		if(useInline)
 			cmd ~= " -inline";
 		if(release)
 			cmd ~= " -release";
 		else
 			cmd ~= " -debug";
-		if(preservePaths)
-			cmd ~= " -op";
 		if(warnings)
 			cmd ~= " -w";
 		if(infowarnings)
@@ -359,6 +342,40 @@ class ProjectOptions
 			cmd ~= " -property";
 		if(genStackFrame)
 			cmd ~= " -gs";
+		if(stackStomp)
+			cmd ~= " -gx";
+
+		return cmd;
+	}
+
+	string buildDMDCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	{
+		string cmd;
+		if(otherDMD && program.length)
+			cmd = quoteNormalizeFilename(program);
+		else
+			cmd = "dmd";
+		if(performLink && Package.GetGlobalOptions().demangleError)
+			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
+
+		cmd ~= dmdCommonCompileOptions();
+
+		if(lib == OutputType.StaticLib && performLink)
+			cmd ~= " -lib";
+		if(multiobj)
+			cmd ~= " -multiobj";
+		if(trace)
+			cmd ~= " -profile";
+		if(quiet)
+			cmd ~= " -quiet";
+		else if(errDeprecated)
+			cmd ~= " -de";
+		if(Dversion >= 2 && noboundscheck)
+			cmd ~= " -noboundscheck";
+		if(useUnitTests)
+			cmd ~= " -unittest";
+		if(preservePaths)
+			cmd ~= " -op";
 		if(cov)
 			cmd ~= " -cov";
 		if(nofloat)
@@ -367,8 +384,9 @@ class ProjectOptions
 			cmd ~= " -ignore";
 		if(allinst)
 			cmd ~= " -allinst";
-		if(stackStomp)
-			cmd ~= " -gx";
+
+		if(privatePhobos)
+			cmd ~= " -defaultlib=" ~ quoteFilename(normalizeDir(outdir) ~ "privatephobos.lib");
 
 		if(doDocComments && compile && !syntaxOnly)
 		{
@@ -923,7 +941,7 @@ class ProjectOptions
 		}
 	}
 
-	string getCppCommandLine(string file)
+	string getCppCommandLine(string file, bool setenv)
 	{
 		int cc; // 0-3 for dmc,cl,clang,gdc
 		switch(compiler)
@@ -935,16 +953,17 @@ class ProjectOptions
 		}
 
 		string cmd = cccmd;
-		if(cc == 1)
+		if(cc == 1 && setenv)
 			cmd = `call "%VCINSTALLDIR%\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
 
 		static string[4] outObj = [ " -o", " -Fo", " -o", " -o " ];
-		cmd ~= outObj[cc] ~ quoteFilename(file);
+		if (file.length)
+			cmd ~= outObj[cc] ~ quoteFilename(file);
 
 		if (!ccTransOpt)
 			return cmd;
 
-		static string[4] dbg = [ " -g", " -Zi", " -g", " -g" ];
+		static string[4] dbg = [ " -g", " -Z7", " -g", " -g" ];
 		if(symdebug)
 			cmd ~= dbg[cc];
 
@@ -954,6 +973,9 @@ class ProjectOptions
 		static string[4] opt = [ " -O", " -Ox", " -O3", " -O3" ];
 		if(optimize)
 			cmd ~= opt[cc];
+
+		if (quiet && cc == 1)
+			cmd ~= " /NOLOGO";
 
 		return cmd;
 	}
@@ -1196,6 +1218,7 @@ class ProjectOptions
 		elem ~= new xml.Element("exefile", toElem(exefile));
 		elem ~= new xml.Element("useStdLibPath", toElem(useStdLibPath));
 		elem ~= new xml.Element("cRuntime", toElem(cRuntime));
+		elem ~= new xml.Element("privatePhobos", toElem(privatePhobos));
 
 		elem ~= new xml.Element("additionalOptions", toElem(additionalOptions));
 		elem ~= new xml.Element("preBuildCommand", toElem(preBuildCommand));
@@ -1325,6 +1348,7 @@ class ProjectOptions
 		fromElem(elem, "exefile", exefile);
 		fromElem(elem, "useStdLibPath", useStdLibPath);
 		fromElem(elem, "cRuntime", cRuntime);
+		fromElem(elem, "privatePhobos", privatePhobos);
 	
 		fromElem(elem, "additionalOptions", additionalOptions);
 		fromElem(elem, "preBuildCommand", preBuildCommand);
@@ -2294,9 +2318,9 @@ class Config :	DisposingComObject,
 		switch(mProjectOptions.compiler)
 		{
 			default:
-			case 0: return mProjectOptions.isX86_64 ? "cl" : "dmc";
-			case 1: return "gcc";
-			case 2: return "clang";
+			case Compiler.DMD: return mProjectOptions.mscoff || mProjectOptions.isX86_64 ? "cl" : "dmc";
+			case Compiler.GDC: return "gcc";
+			case Compiler.LDC: return "clang";
 		}
 	}
 
@@ -2575,7 +2599,7 @@ class Config :	DisposingComObject,
 		}
 		if(tool == kToolCpp)
 		{
-			cmd = mProjectOptions.getCppCommandLine(outfile);
+			cmd = mProjectOptions.getCppCommandLine(outfile, true);
 			string addOpts = file.GetAdditionalOptions(getCfgName());
 			if(addOpts.length)
 				cmd ~= " " ~ addOpts;
@@ -2671,7 +2695,7 @@ class Config :	DisposingComObject,
 			else if(mProjectOptions.compiler == Compiler.LDC)
 				cmd ~= "set LIB=" ~ lpath ~ "\n";
 		}
-		if(mProjectOptions.isX86_64)
+		if(x64 || mscoff)
 		{
 			if(globOpt.WindowsSdkDir.length)
 				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
@@ -2844,6 +2868,149 @@ class Config :	DisposingComObject,
 		return files;
 	}
 	
+	string GetPhobosPath()
+	{
+		string libpath = normalizeDir(GetIntermediateDir());
+		string libfile = "privatephobos.lib";
+		return libpath ~ libfile;
+	}
+
+	string GetPhobosCommandLine()
+	{
+		string libpath = normalizeDir(GetIntermediateDir());
+
+		bool x64 = mProjectOptions.isX86_64;
+		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
+		string model = "32";
+		if(x64)
+			model = "64";
+		else if (mscoff)
+			model = "32mscoff";
+
+		string libfile = "privatephobos.lib";
+		string lib = libpath ~ libfile;
+
+		string cmdfile = libpath ~ "buildphobos.bat";
+		string dmddir = Package.GetGlobalOptions().findDmdBinDir();
+		string dmdpath = dmddir ~ "dmd.exe";
+		string installDir = normalizeDir(Package.GetGlobalOptions().DMD.InstallDir);
+
+		if(!std.file.exists(dmdpath))
+			return "echo dmd.exe not found in DMDInstallDir=" ~ installDir ~ " or through PATH\nexit /B 1";
+
+		string druntimePath = "src\\druntime\\src\\";
+		if(!std.file.exists(installDir ~ druntimePath ~ "object_.d"))
+			druntimePath = "druntime\\src\\";
+		if(!std.file.exists(installDir ~ druntimePath ~ "object_.d"))
+			return "echo druntime source not found in DMDInstallDir=" ~ installDir ~ "\nexit /B 1";
+
+		string phobosPath = "src\\phobos\\";
+		if(!std.file.exists(installDir ~ phobosPath ~ "std"))
+			phobosPath = "phobos\\";
+		if(!std.file.exists(installDir ~ phobosPath ~ "std"))
+			return "echo phobos source not found in DMDInstallDir=" ~ installDir ~ "\nexit /B 1";
+
+		string cmdline = "@echo off\n";
+		cmdline ~= "echo Building " ~ lib ~ "\n";
+		cmdline ~= getEnvironmentChanges();
+
+		string opts = " -lib -d " ~ mProjectOptions.dmdCommonCompileOptions();
+
+		// collect C files
+		string[] cfiles;
+		cfiles ~= findDRuntimeFiles(installDir, druntimePath ~ "core", true, true, true);
+		cfiles ~= findDRuntimeFiles(installDir, phobosPath ~ "etc\\c", true, true, true);
+		if (cfiles.length)
+		{
+			foreach(i, ref file; cfiles)
+			{
+				file = installDir ~ file;
+				string outfile = libpath ~ "phobos-" ~ baseName(file) ~ ".obj";
+				string cccmd = mProjectOptions.getCppCommandLine(outfile, i == 0);
+				cmdline ~= cccmd ~ " -DNO_snprintf " ~ file ~ "\n";
+				cmdline ~= "if errorlevel 1 exit /B %ERRORLEVEL%\n\n";
+				file = outfile;
+			}
+		}
+
+		// collect druntime D files
+		string[] files;
+		files ~= druntimePath ~ "object_.d";
+		files ~= findDRuntimeFiles(installDir, druntimePath ~ "rt",   true, false, true);
+		files ~= findDRuntimeFiles(installDir, druntimePath ~ "core", true, false, true);
+		files ~= findDRuntimeFiles(installDir, druntimePath ~ "gc",   true, false, true);
+		foreach(ref file; files)
+			file = installDir ~ file;
+		files ~= cfiles;
+		if(model == "32")
+			files ~= installDir ~ druntimePath ~ "rt\\minit.obj";
+
+		string dmd;
+		if(mProjectOptions.otherDMD && mProjectOptions.program.length)
+			dmd = quoteNormalizeFilename(mProjectOptions.program);
+		else
+			dmd = "dmd";
+
+		static string buildFiles(string dmd, string outlib, string[] files)
+		{
+			string rspfile = outlib ~ ".rsp";
+			string qrspfile = quoteFilename(rspfile);
+			string cmdline = "echo. >" ~ qrspfile ~ "\n";
+			foreach(file; files)
+				cmdline ~= "echo " ~ quoteFilename(file) ~ " >>" ~ qrspfile ~ "\n";
+			cmdline ~= dmd ~ " -of" ~ quoteFilename(outlib) ~ " @" ~ qrspfile ~ "\n\n";
+			return cmdline;
+		}
+
+		// because of inconsistent object.di and object_.d in dmd <2.067 we have to build 
+		//  druntime and phobos seperately
+
+		string druntimelib = libpath ~ "privatedruntime.lib";
+		cmdline ~= buildFiles(dmd ~ opts, druntimelib, files);
+		cmdline ~= "if errorlevel 1 exit /B %ERRORLEVEL%\n\n";
+
+		// collect phobos D files
+		files = null;
+		files ~= findDRuntimeFiles(installDir, phobosPath ~ "std",    true, false, true);
+		files ~= findDRuntimeFiles(installDir, phobosPath ~ "etc\\c", true, false, true);
+		foreach(ref file; files)
+			file = installDir ~ file;
+
+		cmdline ~= buildFiles(dmd ~ opts ~ " " ~ quoteFilename(druntimelib), lib, files);
+
+		cmdline = mProjectOptions.replaceEnvironment(cmdline, this, null, lib);
+
+		return cmdline;
+	}
+
+	bool isPhobosUptodate(string* preason)
+	{
+		string workdir = GetProjectDir();
+		string outfile = GetPhobosPath();
+		string lib = makeFilenameAbsolute(outfile, workdir);
+		if (!std.file.exists(lib))
+		{
+			if(preason)
+				*preason = "does not exist";
+			return false;
+		}
+		string cmd = GetPhobosCommandLine();
+		if(cmd.length == 0)
+			return true;
+
+		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+		if(!compareCommandFile(cmdfile, cmd))
+		{
+			if(preason)
+				*preason = "command line has changed";
+			return false;
+		}
+
+		// no further dependency checks
+		return true;
+	}
+
+
 	string getCommandLine()
 	{
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;

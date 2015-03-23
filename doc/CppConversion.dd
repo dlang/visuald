@@ -103,6 +103,9 @@ class C {
   static int x;
   DECL *foo(int flags = 0);
 };
+int C::x = 3;
+// moved with the implementation
+DECL *C::foo(int flags) { return NULL; }
 ,
 struct C {
   // comments are usually kept
@@ -144,7 +147,7 @@ int foo() {
     Ident id = (op == kEnum) ? 0 : 1;
 }
 ,
- enum unnamed_1 { e1$_j e2 }alias unnamed_1 EX;
+ enum unnamed_1 { e1$(_j) e2 }alias unnamed_1 EX;
 enum ENUM { kEnum };
 int foo() {
     Ident id = (op == ENUM.kEnum) ? 0 : 1;
@@ -157,14 +160,14 @@ template&lt;typename TYPE&gt;
 struct ArrayBase : Array { 
     TYPE* data;
 };
-template&lt;typename S$_j class T&gt;
-double foo(S s$_j T t) { return s+t; }
+template&lt;typename S$(_j) class T&gt;
+double foo(S s$(_j) T t) { return s+t; }
 ,
 class ArrayBase( TYPE) : Array { 
     TYPE* data;
 };
 
-double foo( S$_j T)(S s$_j T t) { return s+t; }
+double foo( S$(_j) T)(S s$(_j) T t) { return s+t; }
 )
 
 Preprocessor macros are converted to enum, alias or templates

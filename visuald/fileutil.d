@@ -10,8 +10,12 @@ module visuald.fileutil;
 
 import visuald.windows;
 
+import stdext.array;
+import stdext.file;
 import stdext.path;
+import stdext.string;
 
+import std.algorithm;
 import std.path;
 import std.file;
 import std.string;
@@ -144,3 +148,51 @@ string shortFilename(string fname)
 		return "";
 	return to!string(sptr[0..len]);
 }
+
+string[] findDRuntimeFiles(string path, string sub, bool deep, bool cfiles = false, bool internals = false)
+{
+	string[] files;
+	if(!isExistingDir(path ~ sub))
+		return files;
+	foreach(string file; dirEntries(path ~ sub, SpanMode.shallow))
+	{
+		if(_startsWith(file, path))
+			file = file[path.length .. $];
+		if (deep && isExistingDir(path ~ file))
+		{
+			string[] exclude = [ "\\internal", "\\freebsd", "\\linux", "\\osx", "\\posix", "\\solaris" ];
+			if (internals)
+				exclude = exclude[1..$];
+			if (!any!(e => file.endsWith(e))(exclude))
+				files ~= findDRuntimeFiles(path, file, deep, cfiles);
+			continue;
+		}
+		string bname = baseName(file);
+		if(globMatch(bname, "openrj.d"))
+			continue;
+		if(globMatch(bname, "minigzip.c") || globMatch(bname, "example.c"))
+			continue;
+		if(cfiles)
+		{
+			if(globMatch(bname, "*.c"))
+				if(!contains(files, file))
+					files ~= file;
+		}
+		else if(globMatch(bname, "*.d"))
+			if(string* pfile = contains(files, file ~ "i"))
+				*pfile = file;
+			else
+				files ~= file;
+		else if(globMatch(bname, "*.di"))
+		{
+			// use the d file instead if available
+			string dfile = "..\\src\\" ~ file[0..$-1];
+			if(std.file.exists(path ~ dfile))
+				file = dfile;
+			if(!contains(files, file[0..$-1]))
+				files ~= file;
+		}
+	}
+	return files;
+}
+
