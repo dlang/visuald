@@ -67,7 +67,45 @@ namespace DParserCOMServer
 		}
 	}
 
-	
+    public class VDserverParseCacheView : ParseCacheView
+    {
+        #region Properties
+        readonly List<RootPackage> packs;
+        #endregion
+
+        #region Constructors
+        public VDserverParseCacheView(IEnumerable<string> packageRoots)
+        {
+            this.packs = new List<RootPackage>();
+            Add(packageRoots);
+        }
+
+        public VDserverParseCacheView(IEnumerable<RootPackage> packages)
+        {
+            this.packs = new List<RootPackage>(packages);
+        }
+        #endregion
+
+        public override IEnumerable<RootPackage> EnumRootPackagesSurroundingModule(DModule module)
+        {
+            return packs;
+        }
+
+        public void Add(RootPackage pack)
+        {
+            if (pack != null && !packs.Contains(pack))
+                packs.Add(pack);
+        }
+
+        public void Add(IEnumerable<string> roots)
+        {
+            RootPackage rp;
+            foreach (var r in roots)
+                if ((rp = GlobalParseCache.GetRootPackage(r)) != null && !packs.Contains(rp))
+                    packs.Add(rp);
+        }
+    }
+
 
 	[ComVisible(true), Guid(IID.VDServer)]
 	[ClassInterface(ClassInterfaceType.None)]
@@ -102,12 +140,50 @@ namespace DParserCOMServer
 			// MessageBox.Show("VDServer()");
 		}
 
-		public void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags)
+        private static string normalizePath(string path)
+        {
+            path = Path.GetFullPath(path);
+            return path.ToLower();
+        }
+
+        private static string normalizeDir(string dir)
+        {
+            dir = normalizePath(dir);
+            if (!dir.EndsWith("\\"))
+                dir += '\\';
+            return dir;
+        }
+
+        private string[] uniqueDirectories(string imp)
+        {
+            var impDirs = imp.Split('\n');
+            string[] normDirs = new string[impDirs.Length];
+            for (int i = 0; i < impDirs.Length; i++)
+                normDirs[i] = normalizeDir(impDirs[i]);
+
+            string[] uniqueDirs = new string[impDirs.Length];
+            int unique = 0;
+            for (int i = 0; i < normDirs.Length; i++)
+            {
+                int j;
+                for (j = 0; j < normDirs.Length; j++)
+                    if (i != j && normDirs[i].StartsWith(normDirs[j]))
+                        if (normDirs[i] != normDirs[j] || j < i)
+                            break;
+                if (j >= normDirs.Length)
+                    uniqueDirs[unique++] = normDirs[i];
+            }
+
+            Array.Resize(ref uniqueDirs, unique);
+            return uniqueDirs;
+        }
+
+        public void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags)
 		{
 			if (_imports != imp) 
 			{
-				var impDirs = imp.Split('\n');
-				GlobalParseCache.BeginAddOrUpdatePaths(impDirs);
+                string[] uniqueDirs = uniqueDirectories(imp);
+				GlobalParseCache.BeginAddOrUpdatePaths(uniqueDirs);
 			}
 			_imports = imp;
 			_stringImports = stringImp;
@@ -125,6 +201,7 @@ namespace DParserCOMServer
 		}
 		public void UpdateModule(string filename, string srcText, bool verbose)
 		{
+            filename = normalizePath(filename);
 			DModule ast;
 			try
 			{
@@ -160,7 +237,8 @@ namespace DParserCOMServer
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			var ast = GetModule(filename);
+            filename = normalizePath(filename);
+            var ast = GetModule(filename);
 
 			if (ast == null)
 				throw new COMException("module not found", 1);
@@ -176,9 +254,9 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
 
-            ISyntaxRegion sr;
-			DResolver.NodeResolutionAttempt attempt;
-			var types = DResolver.ResolveTypeLoosely(_editorData, out attempt, out sr);
+            ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
+            LooseResolution.NodeResolutionAttempt attempt;
+            var types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt) : null;
 
 			_tipText.Clear();
 
@@ -221,7 +299,8 @@ namespace DParserCOMServer
 		
         public void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr)
 		{
-			var ast = GetModule(filename);
+            filename = normalizePath(filename);
+            var ast = GetModule(filename);
 
 			if (ast == null)
 				throw new COMException("module not found", 1);
@@ -255,7 +334,8 @@ namespace DParserCOMServer
 
         public void GetParseErrors(string filename, out string errors)
 		{
-			var ast = GetModule(filename);
+            filename = normalizePath(filename);
+            var ast = GetModule(filename);
 
 			if (ast == null)
 				throw new COMException("module not found", 1);
@@ -276,6 +356,7 @@ namespace DParserCOMServer
 
         public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
         {
+            filename = normalizePath(filename);
             var ast = GetModule(filename);
 
             if (ast == null)
@@ -300,7 +381,8 @@ namespace DParserCOMServer
 
 		public void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			var ast = GetModule(filename);
+            filename = normalizePath(filename);
+            var ast = GetModule(filename);
 
 			if (ast == null)
 				throw new COMException("module not found", 1);
@@ -316,9 +398,9 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
 
-            ISyntaxRegion sr;
-            DResolver.NodeResolutionAttempt attempt;
-			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt, out sr);
+            ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
+            LooseResolution.NodeResolutionAttempt attempt;
+            var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt) : null;
 
 			_tipText.Clear();
 			if (rr != null)
@@ -355,6 +437,7 @@ namespace DParserCOMServer
 
         public void GetReferences(string filename, string tok, uint line, uint idx, string expr)
         {
+            filename = normalizePath(filename);
             var ast = GetModule(filename);
 
             if (ast == null)
@@ -369,9 +452,9 @@ namespace DParserCOMServer
 
             _references = null;
 
-            ISyntaxRegion sr;
-            DResolver.NodeResolutionAttempt attempt;
-			var rr = DResolver.ResolveTypeLoosely(_editorData, out attempt, out sr);
+            ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
+            LooseResolution.NodeResolutionAttempt attempt;
+            var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt) : null;
 
             StringBuilder refs = new StringBuilder();
 			if (rr != null)
@@ -399,7 +482,7 @@ namespace DParserCOMServer
 
         private static void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
         {
-            var res = ReferencesFinder.Scan(ast, n, ctxt);
+            var res = ReferencesFinder.SearchModuleForASTNodeReferences(ast, n, ctxt);
 
             int cnt = res.Count();
             foreach (var r in res)
@@ -440,8 +523,9 @@ namespace DParserCOMServer
 				versions += "GNU\n";
 			else
 				versions += "DigitalMars\n";
-				
-			_editorData.ParseCache = new ParseCacheView(_imports.Split('\n'));
+
+            string[] uniqueDirs = uniqueDirectories(_imports);
+            _editorData.ParseCache = new VDserverParseCacheView(uniqueDirs);
 			_editorData.IsDebug = (_flags & 2) != 0;
 			_editorData.DebugLevel = (_flags >> 16) & 0xff;
 			_editorData.VersionNumber = (_flags >> 8) & 0xff;

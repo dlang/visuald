@@ -1620,7 +1620,7 @@ class ConfigProvider : DisposingComObject,
 
 		foreach(c; mConfigs)
 			if(c.mName == strOldName)
-				config.mName = strNewName;
+				c.mName = strNewName;
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnCfgNameRenamed(pszOldName, pszNewName); });
 
