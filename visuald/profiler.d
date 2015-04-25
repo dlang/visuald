@@ -588,6 +588,16 @@ private:
 		else // ensure patched runtime in release
 			enum hasTypeArg = true;
 
+		static bool isDSymbolChar(char c)
+		{
+			if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') || c == '_')
+				return true;
+			return (0x80 & c) != 0; // any compressed or unicode symbol
+		}
+		for (size_t i = 0; i < txt.length; i++)
+			if (!isDSymbolChar(txt[i]))
+				return txt;
+
 		txt = decodeDmdString(txt, p);
 		if(txt.length > 2 && txt[0] == '_' && txt[1] == 'D')
 		{

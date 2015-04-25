@@ -124,12 +124,14 @@ Debugger:
 ---------------
 Any/dmd:
 - stepping through function call jumps to default assignment
+- bad line info for scope(exit), for increment expression, constants
 - arguments to local functions treated as locals
 - local functions/delegates should have debug info for closure vars ("this" exists)
 - extern(D) function arguments shown in the wrong order
 - support GDC+mago
-- bugzilla 14286: x64: no type information for dAssocArray
++ bugzilla 14286: x64: no type information for dAssocArray
 - bugzilla 4014: no debug info from libraries
+
 
 Mago:
 - show derived class
@@ -150,14 +152,15 @@ Mago:
 - identically named locals show the same value
 + dstring shows as uint[] without string representation
 - string/wstring shown as char/wchar[], but with correct string representation
-- AA indexing
-- AA preview/expand
++ AA indexing
++ AA preview/expand
 - Array preview
 - delegate value/type
 - struct preview
 + verboser output when loading/unloading DLLs
 - attach to process
 - hardware breakpoints
++ does not work with variable scope
 
 VS:
 - VS2012: autoexp.dat does not work? depends on debug engine => edit and continue
@@ -200,7 +203,7 @@ Unsorted
 - configuration of dependent project not read from configuration manager
 + jump to assertion error
 + import std.container: jump to package
-- renaming configuration does not change project config
++ renaming configuration does not change project config
 + win32coff support
 - file search: replace . with \ in path search?
 + run cv2pdb disabled for GDC/x64

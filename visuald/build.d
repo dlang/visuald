@@ -286,6 +286,7 @@ else
 			assert(std.string.indexOf(e.msg, "circular") >= 0);
 		}
 	}
+	
 	//////////////////////////////////////////////////////////////////////
 	bool buildCustomFile(CFileNode file, ref bool built)
 	{
@@ -308,13 +309,44 @@ else
 		}
 		return true;
 	}
-	
+
+	//////////////////////////////////////////////////////////////////////
+	bool buildPhobos(ref bool built)
+	{
+		string reason;
+		if(!mConfig.isPhobosUptodate(&reason))
+		{
+			string cmdline = mConfig.GetPhobosCommandLine();
+			if(cmdline.length)
+			{
+				string workdir = mConfig.GetProjectDir();
+				string outfile = mConfig.GetPhobosPath();
+				string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+				showUptodateFailure(reason, outfile);
+				removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
+				HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
+				if (hr != S_OK)
+					return false; // stop compiling
+			}
+			built = true;
+		}
+		return true;
+	}
+
 	/** build non-D files */
 	bool doCustomBuilds(out bool hasCustomBuilds, out int numCustomBuilds)
 	{
 		mixin(LogCallMix2);
 		
 		bool built;
+		if(mConfig.GetProjectOptions().privatePhobos)
+		{
+			if (!buildPhobos(built))
+				return false;
+			if(built)
+				numCustomBuilds++;
+		}
+
 		// first build custom files with dependency graph
 		CFileNode[] files = BuildDependencyList();
 		foreach(file; files)
@@ -418,6 +450,10 @@ else
 
 	bool customFilesUpToDate()
 	{
+		if(mConfig.GetProjectOptions().privatePhobos)
+			if (!mConfig.isPhobosUptodate(null))
+				return false;
+
 		CHierNode node = searchNode(mConfig.GetProjectNode(), 
 			delegate (CHierNode n) 
 			{
@@ -1324,5 +1360,45 @@ unittest
 	assert(match[0] == line);
 	assert(match[1] == r"c:\\dmd\\phobos\\std\\file.d");
 	assert(match[2] == r"c:\\dmd\\phobos\\std\\utf.d");
+}
+
+bool launchBuildPhobos(string workdir, string cmdfile, string cmdline, IVsOutputWindowPane pane)
+{
+	/////////////
+	auto srpIVsLaunchPadFactory = queryService!(IVsLaunchPadFactory);
+	if (!srpIVsLaunchPadFactory)
+		return false;
+	scope(exit) release(srpIVsLaunchPadFactory);
+
+	ComPtr!(IVsLaunchPad) srpIVsLaunchPad;
+	HRESULT hr = srpIVsLaunchPadFactory.CreateLaunchPad(&srpIVsLaunchPad.ptr);
+	if(FAILED(hr) || !srpIVsLaunchPad.ptr)
+		return OutputErrorString(format("internal error: IVsLaunchPadFactory.CreateLaunchPad failed with rc=%x", hr));
+
+	try
+	{
+		std.file.write(cmdfile, cmdline);
+	}
+	catch(FileException e)
+	{
+		return OutputErrorString(format("internal error: cannot write file " ~ cmdfile ~ "\n"));
+	}
+	//		scope(exit) std.file.remove(cmdfile);
+
+	BSTR bstrOutput;
+	DWORD result;
+	hr = srpIVsLaunchPad.ExecCommand(/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
+									 /* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
+									 /* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(workdir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
+									 /* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
+									 /* [in] IVsOutputWindowPane *pOutputWindowPane */ pane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
+									 /* [in] ULONG nTaskItemCategory                */ 0, // if LPF_PipeStdoutToTaskList is specified
+									 /* [in] ULONG nTaskItemBitmap                  */ 0, // if LPF_PipeStdoutToTaskList is specified
+									 /* [in] LPCOLESTR pszTaskListSubcategory       */ null, // "Build"w.ptr, // if LPF_PipeStdoutToTaskList is specified
+									 /* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ null, //pLaunchPadEvents,
+									 /* [out] DWORD *pdwProcessExitCode             */ &result,
+									 /* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
+
+	return hr == S_OK && result == 0;
 }
 
