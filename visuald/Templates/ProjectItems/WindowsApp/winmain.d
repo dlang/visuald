@@ -8,23 +8,18 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 {
     int result;
 
-    void exceptionHandler(Throwable e)
-    {
-        throw e;
-    }
-
     try
     {
-        Runtime.initialize(&exceptionHandler);
+        Runtime.initialize();
 
         result = myWinMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
 
-        Runtime.terminate(&exceptionHandler);
+        Runtime.terminate();
     }
-    catch (Throwable o)		// catch any uncaught exceptions
+    catch (Throwable o) // catch any uncaught exceptions
     {
         MessageBoxA(null, cast(char *)o.toString(), "Error", MB_OK | MB_ICONEXCLAMATION);
-        result = 0;		// failed
+        result = 0;     // failed
     }
 
     return result;
