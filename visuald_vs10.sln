@@ -68,6 +68,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{36148913-8F4
 		doc\BrowseInfo.dd = doc\BrowseInfo.dd
 		doc\build_doc.bat = doc\build_doc.bat
 		doc\BuildFromSource.dd = doc\BuildFromSource.dd
+		doc\CompileCommands.dd = doc\CompileCommands.dd
 		doc\Coverage.dd = doc\Coverage.dd
 		doc\CppConversion.dd = doc\CppConversion.dd
 		doc\Debugging.dd = doc\Debugging.dd

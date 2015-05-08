@@ -796,15 +796,15 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 
 	override int GetFunctionType(DWORD* pFuncType)
 	{
-		if (!list)
+		if (!list.length)
 			list = GetIntellisenseList();
-		*pFuncType = list ? eft_List : eft_Value;
+		*pFuncType = list.length ? eft_List : eft_Value;
 		return S_OK;
         }
 
 	override int GetListCount(int* iListCount)
 	{
-		if (!list)
+		if (!list.length)
 			list = GetIntellisenseList();
 		*iListCount = list.length;
 		return S_OK;
@@ -812,7 +812,7 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 
 	override int GetListText(in int iIndex, BSTR* ppszText)
 	{
-		if (!list)
+		if (!list.length)
 			list = GetIntellisenseList();
 		if (iIndex < list.length)
 			*ppszText = allocBSTR(list[iIndex]);

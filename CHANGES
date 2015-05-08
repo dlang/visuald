@@ -717,10 +717,13 @@ unreleased Version 0.3.41
   * cv2pdb:
     - improvements for DWARF conversion
   * dparser updated to cf26dbe426b10957f6364313cc7121e41083bebe with support for new 
-    language features in dmd 2.067
+    language features in dmd 2.067 and fixing a number of exceptions
   * some initial support for finding symbol references
   * new linker option "build and use local phobos library" to get a COFF32 version (dmd 2.067+)
     or add missing debug info (dmd 2.065+)
   * renaming project configuration did not change respective config on all platforms 
   * workaround for link response file with spaces, but disabled short names on NTFS volume
   * profiler window: non-D symbols (e.g. C++ mangled functions) are no longer displayed empty
+  * new command "Compile and Disassemble" to show the disassembly of the current file in
+    the code context window that is automatically synchronized with editor movements
+

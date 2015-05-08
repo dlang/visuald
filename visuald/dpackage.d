@@ -1082,18 +1082,21 @@ struct CompilerDirectories
 	string ExeSearchPath;
 	string ImpSearchPath;
 	string LibSearchPath;
+	string DisasmCommand;
 
 	string ExeSearchPath64;
 	string LibSearchPath64;
 	bool   overrideIni64;
 	string overrideLinker64;
 	string overrideOptions64;
+	string DisasmCommand64;
 
 	string ExeSearchPath32coff;
 	string LibSearchPath32coff;
 	bool   overrideIni32coff;
 	string overrideLinker32coff;
 	string overrideOptions32coff;
+	string DisasmCommand32coff;
 }
 
 class GlobalOptions
@@ -1340,12 +1343,18 @@ class GlobalOptions
 				enum string prefix = dmd ? "" : compiler ~ ".";
 				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
 
+				wstring defDisasm32omf = `"obj2asm" -x "$(InputPath)" >"$(TargetPath)"`;
+				wstring defDisasm32 = `"$(VCInstallDir)\bin\dumpbin" /disasm "$(InputPath)" >"$(TargetPath)"`;
+				wstring defDisasm64 = `"$(VCInstallDir)\bin\amd64\dumpbin" /disasm "$(InputPath)" >"$(TargetPath)"`;
+
 				opt.ExeSearchPath = getPathsOpt(prefix ~ "ExeSearchPath");
 				opt.LibSearchPath = getPathsOpt(prefix ~ "LibSearchPath");
 				opt.ImpSearchPath = getPathsOpt(prefix ~ "ImpSearchPath");
+				opt.DisasmCommand = getPathsOpt(prefix ~ "DisasmCommand", dmd ? defDisasm32omf : defDisasm32);
 				opt.ExeSearchPath64 = getPathsOpt(prefix ~ "ExeSearchPath64", to!wstring(opt.ExeSearchPath));
 				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", defLibPath64);
-				
+				opt.DisasmCommand64 = getPathsOpt(prefix ~ "DisasmCommand64", defDisasm64);
+
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
 				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
@@ -1354,6 +1363,7 @@ class GlobalOptions
 				{
 					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", to!wstring(opt.ExeSearchPath));
 					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", defLibPath32coff);
+					opt.DisasmCommand32coff   = getPathsOpt(prefix ~ "DisasmCommand32coff", defDisasm32);
 					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", dmd);
 					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
@@ -1422,32 +1432,39 @@ class GlobalOptions
 			keyToolOpts.Set("ExeSearchPath",     toUTF16(DMD.ExeSearchPath));
 			keyToolOpts.Set("LibSearchPath",     toUTF16(DMD.LibSearchPath));
 			keyToolOpts.Set("ImpSearchPath",     toUTF16(DMD.ImpSearchPath));
+			keyToolOpts.Set("DisasmCommand",     toUTF16(DMD.DisasmCommand));
 			keyToolOpts.Set("GDC.ExeSearchPath", toUTF16(GDC.ExeSearchPath));
 			keyToolOpts.Set("GDC.LibSearchPath", toUTF16(GDC.LibSearchPath));
 			keyToolOpts.Set("GDC.ImpSearchPath", toUTF16(GDC.ImpSearchPath));
+			keyToolOpts.Set("GDC.DisasmCommand", toUTF16(GDC.DisasmCommand));
 			keyToolOpts.Set("LDC.ExeSearchPath", toUTF16(LDC.ExeSearchPath));
 			keyToolOpts.Set("LDC.LibSearchPath", toUTF16(LDC.LibSearchPath));
 			keyToolOpts.Set("LDC.ImpSearchPath", toUTF16(LDC.ImpSearchPath));
+			keyToolOpts.Set("LDC.DisasmCommand", toUTF16(LDC.DisasmCommand));
 			keyToolOpts.Set("JSNSearchPath",     toUTF16(JSNSearchPath));
 			keyToolOpts.Set("IncSearchPath",     toUTF16(IncSearchPath));
 			keyToolOpts.Set("UserTypesSpec",     toUTF16(UserTypesSpec));
 			
 			keyToolOpts.Set("ExeSearchPath64",     toUTF16(DMD.ExeSearchPath64));
 			keyToolOpts.Set("LibSearchPath64",     toUTF16(DMD.LibSearchPath64));
+			keyToolOpts.Set("DisasmCommand64",     toUTF16(DMD.DisasmCommand64));
 			keyToolOpts.Set("overrideIni64",       DMD.overrideIni64);
 			keyToolOpts.Set("overrideLinker64",    toUTF16(DMD.overrideLinker64));
 			keyToolOpts.Set("overrideOptions64",   toUTF16(DMD.overrideOptions64));
 
 			keyToolOpts.Set("ExeSearchPath32coff",     toUTF16(DMD.ExeSearchPath32coff));
 			keyToolOpts.Set("LibSearchPath32coff",     toUTF16(DMD.LibSearchPath32coff));
+			keyToolOpts.Set("DisasmCommand32coff",     toUTF16(DMD.DisasmCommand32coff));
 			keyToolOpts.Set("overrideIni32coff",       DMD.overrideIni32coff);
 			keyToolOpts.Set("overrideLinker32coff",    toUTF16(DMD.overrideLinker32coff));
 			keyToolOpts.Set("overrideOptions32coff",   toUTF16(DMD.overrideOptions32coff));
 
 			keyToolOpts.Set("GDC.ExeSearchPath64", toUTF16(GDC.ExeSearchPath64));
 			keyToolOpts.Set("GDC.LibSearchPath64", toUTF16(GDC.LibSearchPath64));
+			keyToolOpts.Set("GDC.DisasmCommand64", toUTF16(GDC.DisasmCommand64));
 			keyToolOpts.Set("LDC.ExeSearchPath64", toUTF16(LDC.ExeSearchPath64));
 			keyToolOpts.Set("LDC.LibSearchPath64", toUTF16(LDC.LibSearchPath64));
+			keyToolOpts.Set("LDC.DisasmCommand64", toUTF16(LDC.DisasmCommand64));
 
 			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
 			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);

@@ -8,12 +8,13 @@
 
 module visuald.fileutil;
 
-import visuald.windows;
+import sdk.port.base;
+import sdk.win32.shellapi;
 
 import stdext.array;
 import stdext.file;
-import stdext.path;
 import stdext.string;
+import stdext.path;
 
 import std.algorithm;
 import std.path;
@@ -21,6 +22,8 @@ import std.file;
 import std.string;
 import std.conv;
 import std.utf;
+import std.stdio;
+import std.regex;
 
 //-----------------------------------------------------------------------------
 long[string] gCachedFileTimes;
@@ -139,7 +142,7 @@ string shortFilename(string fname)
 	if(len > spath.length)
 	{
 		wchar[] sbuf = new wchar[len];
-		len = GetShortPathNameW(wfname, sbuf.ptr, sbuf.length);
+		len = GetShortPathNameW(wfname, sbuf.ptr, cast(DWORD)sbuf.length);
 		sptr = sbuf.ptr;
 	}
 	else
@@ -196,3 +199,218 @@ string[] findDRuntimeFiles(string path, string sub, bool deep, bool cfiles = fal
 	return files;
 }
 
+///////////////////////////////////////////////////////////////
+static struct SymLineInfo
+{
+	string sym;
+	int firstLine;
+	int[] offsets;
+}
+
+// map symbol + offset to line in disasm dump
+SymLineInfo[string] readDisasmFile(string asmfile)
+{
+	SymLineInfo[string] symInfos;
+
+	__gshared static Regex!char resym, resym2, resym3, resym4, reoff, reoff2;
+
+	if(resym.ir is null) // dumpbin/llvm-objdump
+		resym = regex(r"^([A-Za-z_][^ \t:]*):$");   // <non numeric symbol>:
+	if(resym2.ir is null) // obj2asm
+		resym2 = regex(r"^[ \t]*assume[ \t]+[Cc][Ss]:([A-Za-z_][^ \t]*)[ \t]*$");   // assume CS:<non numeric symbol>
+	if(resym3.ir is null) // objconv
+		resym3 = regex(r"^([A-Za-z_][^ \t]*)[ \t]+PROC[ \t]+NEAR[ \t]*$");   // <non numeric symbol> PROC NEAR
+	if(resym4.ir is null) // gcc-objdump
+		resym4 = regex(r"^[0-9A-Fa-f]+[ \t]*\<([A-Za-z_][^>]*)\>:[ \t]*$");  // 000000 <non numeric symbol>
+
+	if(reoff.ir is null)
+		reoff = regex(r"^([0-9A-Fa-f]+):.*$"); // <hex number>:
+	if(reoff2.ir is null)
+		reoff2 = regex(r"[^;]*;[ \t:]*([0-9A-Fa-f]+) _.*$"); // ; <hex number> _
+
+	int ln = 0;
+	SymLineInfo info;
+	File asmf = File(asmfile);
+	foreach(line; asmf.byLine())
+	{
+		ln++;
+		if (line.length == 0)
+		{
+			// intermediate lines in objconv output happen to contain a \t
+			if (info.offsets.length)
+			{
+				symInfos[info.sym] = info;
+				info.sym = null;
+				info.offsets = null;
+			}
+			continue;
+		}
+		line = toUTF8Safe(line);
+		line = strip(line);
+		auto rematch = match(line, resym);
+		if (rematch.empty())
+			rematch = match(line, resym2);
+		if (rematch.empty())
+			rematch = match(line, resym3);
+		if (rematch.empty())
+			rematch = match(line, resym4);
+		if (!rematch.empty())
+		{
+			if (info.offsets.length)
+				symInfos[info.sym] = info;
+
+			info.sym = rematch.captures[1].idup;
+			info.firstLine = ln;
+			info.offsets = null;
+			continue;
+		}
+		rematch = match(line, reoff);
+		if (rematch.empty())
+			rematch = match(line, reoff2);
+		if (!rematch.empty())
+		{
+			int off = rematch.captures[1].to!int(16);
+			info.offsets ~= off;
+		}
+		else if (info.sym.length)
+		{
+			if (info.offsets.length)
+				info.offsets ~= info.offsets[$-1];
+			else
+				info.offsets ~= 0;
+		}
+	}
+	if (info.offsets.length)
+		symInfos[info.sym] = info;
+	return symInfos;
+}
+
+unittest
+{
+	string dumpbin = r"
+Dump of file Debug\winmain.obj
+
+File Type: COFF OBJECT
+
+WinMain:
+  0000000000000000: 55                 push        rbp
+  0000000000000001: 48 8B EC           mov         rbp,rsp
+                    00
+  0000000000000004: 48 83 EC 28        sub         rsp,28h
+
+; obj2asm style
+	assume CS:_D7winmain9myWinMainFPvPvPaiZi
+  0000000000000000: 55                 push        rbp
+  0000000000000001: 48 8B EC           mov         rbp,rsp
+  0000000000000004: 48 83 EC 30        sub         rsp,30h
+
+; objconv style
+_WinMain@16 PROC NEAR
+;  COMDEF _WinMain@16
+        push    ebp                                     ; 0000 _ 55
+        mov     ebp, esp                                ; 0001 _ 8B. EC
+ASSUME  fs:NOTHING
+        push    48                                      ; 0003 _ 6A, 30
+	" /* explicite trailing spaces before nl */ "
+; Note: No jump seems to point here
+        mov     ecx, offset FLAT:?_009                  ; 0005 _ B9, 00000000(segrel)
+
+Disassembly of section .text: GNU objdump
+
+0000000000000000 <_foo>:
+   0:	55                   	push   %rbp
+   1:	48 89 e5             	mov    %rsp,%rbp
+";
+	auto deleteme = "deleteme";
+	std.file.write(deleteme, dumpbin);
+	scope(exit) std.file.remove(deleteme);
+
+	auto symInfo = readDisasmFile(deleteme);
+	assert(symInfo.length == 4);
+	assert(symInfo["WinMain"].firstLine == 6);
+	assert(symInfo["WinMain"].offsets.length == 4);
+	assert(symInfo["_D7winmain9myWinMainFPvPvPaiZi"].offsets.length == 3);
+	assert(symInfo["_WinMain@16"].firstLine == 19);
+	assert(symInfo["_WinMain@16"].offsets.length == 8);
+	assert(symInfo["_WinMain@16"].offsets[3] == 1);
+	assert(symInfo["_foo"].offsets.length == 2);
+}
+
+struct LineInfo
+{
+	string sym;
+	int offset;
+}
+
+// map line in source to symbol and offset in object file
+LineInfo[] readLineInfoFile(string linefile, string srcfile)
+{
+	__gshared static Regex!char reoffline;
+	if(reoffline.ir is null)
+		reoffline = regex(r"^Off 0x([0-9A-Fa-f]+): *Line ([0-9]+)$");   // Off 0x%x: Line %d
+
+	srcfile = toLower(normalizePath(srcfile));
+	string sym;
+	bool curfile;
+	LineInfo[] lineInfos;
+
+	File linef = File(linefile);
+	foreach(line; linef.byLine())
+	{
+		line = toUTF8Safe(line);
+		line = strip(line);
+		if (line.startsWith("Sym:"))
+			sym = strip(line[4 .. $]).idup;
+		else if (line.startsWith("File:"))
+		{
+			auto file = toLower(normalizePath(strip(line[5 .. $])));
+			if (srcfile.contains('\\') != file.contains('\\'))
+			{
+				srcfile = srcfile[lastIndexOf(srcfile, '\\')+1 .. $];
+				file = file[lastIndexOf(file, '\\')+1 .. $];
+			}
+			curfile = (srcfile == file);
+		}
+		else if (curfile)
+		{
+			auto rematch = match(line, reoffline);
+			if (!rematch.empty())
+			{
+				int off = rematch.captures[1].to!int(16);
+				int ln = rematch.captures[2].to!int(10);
+				if (ln >= lineInfos.length)
+					lineInfos.length = ln + 100;
+				if (lineInfos[ln].sym.ptr is null)
+					lineInfos[ln] = LineInfo(sym, off);
+			}
+		}
+	}
+	return lineInfos;
+}
+
+unittest
+{
+	string dumpline = r"
+Sym: WinMain
+File: WindowsApp1\winmain.d
+	Off 0x0: Line 7
+	Off 0x23: Line 9
+	Off 0x2a: Line 18
+	Off 0x37: Line 20
+Sym: _D7winmain7WinMainWPvPvPaiZ2ehMFC6object9ThrowableZv
+File: WindowsApp1\winmain.d
+	Off 0x0: Line 11
+	Off 0xc: Line 13
+	Off 0x19: Line 14
+";
+	auto deleteme = "deleteme";
+	std.file.write(deleteme, dumpline);
+	scope(exit) std.file.remove(deleteme);
+
+	auto infos = readLineInfoFile(deleteme, r"WindowsApp1\winmain.d");
+	assert(infos.length > 20);
+	assert(infos[7].sym == "WinMain" && infos[7].offset == 0);
+	assert(infos[20].sym == "WinMain" && infos[20].offset == 0x37);
+	assert(infos[13].sym == "_D7winmain7WinMainWPvPvPaiZ2ehMFC6object9ThrowableZv" && infos[13].offset == 0xc);
+	assert(infos[14].sym == "_D7winmain7WinMainWPvPvPaiZ2ehMFC6object9ThrowableZv" && infos[14].offset == 0x19);
+}

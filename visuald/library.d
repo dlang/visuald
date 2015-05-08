@@ -1963,7 +1963,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		string file = getSourceLoc(Index, &line, &col);
 		string modname;
 
-		if(!file)
+		if(!file.length)
 			return E_FAIL;
 		return OpenFileInSolution(file, line, col, modname, true);
 	}

@@ -41,7 +41,7 @@ HRESULT RegCreateValue(HKEY key, in wstring name, in wstring value)
 {
 	wstring szName = name ~ cast(wchar)0;
 	wstring szValue = value ~ cast(wchar)0;
-	DWORD dwDataSize = value is null ? 0 : wchar.sizeof * (value.length+1);
+	DWORD dwDataSize = value is null ? 0 : cast(DWORD) (wchar.sizeof * (value.length+1));
 	LONG lRetCode = RegSetValueExW(key, szName.ptr, 0, REG_SZ, cast(ubyte*)(szValue.ptr), dwDataSize);
 	return HRESULT_FROM_WIN32(lRetCode);
 }
@@ -63,7 +63,7 @@ HRESULT RegCreateQwordValue(HKEY key, in wstring name, in long value)
 HRESULT RegCreateBinaryValue(HKEY key, in wstring name, in void[] data)
 {
 	wstring szName = name ~ cast(wchar)0;
-	LONG lRetCode = RegSetValueExW(key, szName.ptr, 0, REG_BINARY, cast(ubyte*)data.ptr, data.length);
+	LONG lRetCode = RegSetValueExW(key, szName.ptr, 0, REG_BINARY, cast(ubyte*)data.ptr, cast(DWORD) data.length);
 	return HRESULT_FROM_WIN32(lRetCode);
 }
 

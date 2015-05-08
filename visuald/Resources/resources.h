@@ -50,6 +50,7 @@
 #define CmdShowLangPage  0x115
 #define CmdDelLstFiles   0x116
 #define CmdCompileAndDbg 0x117
+#define CmdCompileAndAsm 0x118
 
 #define CmdCollapseUnittest 0x120
 #define CmdCollapseDisabled 0x121

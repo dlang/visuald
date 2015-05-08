@@ -598,8 +598,11 @@ class ModifiedType : Type
 		
 		auto type = getType();
 		type.semantic(sc);
-		ti.next = type.typeinfo;
-		
+		static if (__traits(compiles, ti.base))
+			ti.base = type.typeinfo;
+		else
+			ti.next = type.typeinfo;
+
 		typeinfo = ti;
 	}
 	

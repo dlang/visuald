@@ -23,7 +23,7 @@ string normalizeDir(string dir)
 	return dir ~ "\\";
 }
 
-string normalizePath(string path)
+S normalizePath(S)(S path)
 {
 	return replace(path, "/", "\\");
 }

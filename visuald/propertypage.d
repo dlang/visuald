@@ -1562,7 +1562,7 @@ class DirPropertyPage : GlobalPropertyPage
 		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
 		mLinesPerMultiLine = 10;
 		string[] archs = ["Win32", "x64"];
-		if(overrideIni)
+		if(overrideIni.length)
 			archs ~= "Win32-COFF";
 		AddControl("", mTabArch = new TabControl(mCanvas, archs));
 
@@ -1577,6 +1577,7 @@ class DirPropertyPage : GlobalPropertyPage
 		AddControl("Executable paths", mExePath = new MultiLineText(page32));
 		mLinesPerMultiLine = 2;
 		AddControl("Library paths",    mLibPath = new MultiLineText(page32));
+		AddControl("Disassemble Command", mDisasmCommand = new Text(page32));
 
 		auto page64 = mTabArch.pages[1];
 		if(auto w = cast(Window)page64)
@@ -1588,6 +1589,7 @@ class DirPropertyPage : GlobalPropertyPage
 		AddControl("Executable paths", mExePath64 = new MultiLineText(page64));
 		mLinesPerMultiLine = 2;
 		AddControl("Library paths", mLibPath64 = new MultiLineText(page64));
+		AddControl("Disassemble Command", mDisasmCommand64 = new Text(page64));
 
 		if(overrideIni.length)
 		{
@@ -1605,6 +1607,7 @@ class DirPropertyPage : GlobalPropertyPage
 			AddControl("Executable paths", mExePath32coff = new MultiLineText(page32coff));
 			mLinesPerMultiLine = 2;
 			AddControl("Library paths", mLibPath32coff = new MultiLineText(page32coff));
+			AddControl("Disassemble Command", mDisasmCommand32coff = new Text(page32coff));
 
 			AddControl("", mOverrideIni32coff = new CheckBox(page32coff, overrideIni));
 			AddControl("Linker", mLinkerExecutable32coff = new Text(page32coff));
@@ -1643,8 +1646,10 @@ class DirPropertyPage : GlobalPropertyPage
 		mExePath.setText(opt.ExeSearchPath);
 		mImpPath.setText(opt.ImpSearchPath);
 		mLibPath.setText(opt.LibSearchPath);
+		mDisasmCommand.setText(opt.DisasmCommand);
 		mExePath64.setText(opt.ExeSearchPath64);
 		mLibPath64.setText(opt.LibSearchPath64);
+		mDisasmCommand64.setText(opt.DisasmCommand64);
 		if(mOverrideIni64)
 		{
 			mOverrideIni64.setChecked(opt.overrideIni64);
@@ -1658,6 +1663,7 @@ class DirPropertyPage : GlobalPropertyPage
 			mOverrideIni32coff.setChecked(opt.overrideIni32coff);
 			mLinkerExecutable32coff.setText(opt.overrideLinker32coff);
 			mLinkerOptions32coff.setText(opt.overrideOptions32coff);
+			mDisasmCommand32coff.setText(opt.DisasmCommand32coff);
 		}
 
 		enableControls();
@@ -1669,16 +1675,18 @@ class DirPropertyPage : GlobalPropertyPage
 		CompilerDirectories* refopt = getCompilerOptions(refopts);
 
 		int changes = 0;
-		changes += changeOption(mDmdPath.getText(),            opt.InstallDir,        refopt.InstallDir); 
+		changes += changeOption(mDmdPath.getText(),            opt.InstallDir,        refopt.InstallDir);
 		changes += changeOption(mExePath.getText(),            opt.ExeSearchPath,     refopt.ExeSearchPath); 
 		changes += changeOption(mImpPath.getText(),            opt.ImpSearchPath,     refopt.ImpSearchPath); 
 		changes += changeOption(mLibPath.getText(),            opt.LibSearchPath,     refopt.LibSearchPath); 
+		changes += changeOption(mDisasmCommand.getText(),      opt.DisasmCommand,     refopt.DisasmCommand);
 		changes += changeOption(mExePath64.getText(),          opt.ExeSearchPath64,   refopt.ExeSearchPath64); 
 		changes += changeOption(mLibPath64.getText(),          opt.LibSearchPath64,   refopt.LibSearchPath64);
+		changes += changeOption(mDisasmCommand64.getText(),    opt.DisasmCommand64,   refopt.DisasmCommand64);
 		if(mOverrideIni64)
 		{
 			changes += changeOption(mOverrideIni64.isChecked(),    opt.overrideIni64,     refopt.overrideIni64); 
-			changes += changeOption(mLinkerExecutable64.getText(), opt.overrideLinker64,  refopt.overrideLinker64); 
+			changes += changeOption(mLinkerExecutable64.getText(), opt.overrideLinker64,  refopt.overrideLinker64);
 			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64); 
 		}
 		if(mOverrideIni32coff)
@@ -1688,6 +1696,7 @@ class DirPropertyPage : GlobalPropertyPage
 			changes += changeOption(mOverrideIni32coff.isChecked(),    opt.overrideIni32coff,     refopt.overrideIni32coff); 
 			changes += changeOption(mLinkerExecutable32coff.getText(), opt.overrideLinker32coff,  refopt.overrideLinker32coff); 
 			changes += changeOption(mLinkerOptions32coff.getText(),    opt.overrideOptions32coff, refopt.overrideOptions32coff); 
+			changes += changeOption(mDisasmCommand32coff.getText(),    opt.DisasmCommand32coff,   refopt.DisasmCommand32coff);
 		}
 		return changes;
 	}
@@ -1697,18 +1706,21 @@ class DirPropertyPage : GlobalPropertyPage
 	MultiLineText mExePath;
 	MultiLineText mImpPath;
 	MultiLineText mLibPath;
+	Text mDisasmCommand;
 
 	MultiLineText mExePath64;
 	MultiLineText mLibPath64;
 	CheckBox mOverrideIni64;
 	Text mLinkerExecutable64;
 	Text mLinkerOptions64;
+	Text mDisasmCommand64;
 
 	MultiLineText mExePath32coff;
 	MultiLineText mLibPath32coff;
 	CheckBox mOverrideIni32coff;
 	Text mLinkerExecutable32coff;
 	Text mLinkerOptions32coff;
+	Text mDisasmCommand32coff;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

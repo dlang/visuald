@@ -395,6 +395,7 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   ${File} ..\..\..\cv2pdb\trunk\ autoexp.visualizer
   ${File} ..\..\..\cv2pdb\trunk\bin\Release\ cv2pdb.exe
   ${File} ..\..\..\cv2pdb\trunk\bin\Release\ dviewhelper.dll
+  ${File} ..\..\..\cv2pdb\trunk\bin\Release\ dumplines.exe
   ${File} ..\..\..\cv2pdb\trunk\ README
   ${File} ..\..\..\cv2pdb\trunk\ LICENSE
   ${File} ..\..\..\cv2pdb\trunk\ CHANGES

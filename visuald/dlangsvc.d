@@ -584,6 +584,14 @@ class LanguageService : DisposingComObject,
 			return false;
 		}
 
+		if (src.mDisasmFile.length)
+		{
+			int asmline = src.getLineInDisasm(line);
+			if (asmline < 0)
+				return false;
+			return jumpToDefinitionInCodeWindow("", src.mDisasmFile, asmline, 0, false);
+		}
+
 		int startIdx, endIdx;
 		if(!src.GetWordExtent(line, col, WORDEXT_CURRENT, startIdx, endIdx))
 			return false;
@@ -600,7 +608,7 @@ class LanguageService : DisposingComObject,
 		if(FindFileInSolution(defs[0].filename, srcfile, abspath) != S_OK)
 			return false;
 		
-		return jumpToDefinitionInCodeWindow("", abspath, defs[0].line, 0);
+		return jumpToDefinitionInCodeWindow("", abspath, defs[0].line, 0, false);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1038,7 +1046,7 @@ class CodeDefViewContext : DComObject, IVsCodeDefViewContext
 }
 /////////////////////////////////////////////////////////////////////////
 
-bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int col)
+bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int col, bool forceShow)
 {
 	IVsCodeDefView cdv = queryService!(SVsCodeDefView,IVsCodeDefView);
 	if (cdv is null)
@@ -1048,6 +1056,12 @@ bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int 
 
 	CodeDefViewContext context = newCom!CodeDefViewContext(symbol, filename, line, col);
 	cdv.SetContext(context);
+
+	if (forceShow)
+	{
+		cdv.ShowWindow();
+		cdv.ForceIdleProcessing();
+	}
 	return true;
 }
 
@@ -1166,6 +1180,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	int mParsingState;
 	int mModificationCountAST;
 	int mModificationCount;
+
+	string mDisasmFile;
+	string mLineInfoFile;
+	LineInfo[] mDisasmLineInfo;
+	SymLineInfo[string] mDisasmSymInfo;
 
 	this(IVsTextLines buffer)
 	{
@@ -1367,6 +1386,60 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	{
 		return S_OK;
 	}
+
+	///////////////////////////////////////////////////////////////////////////////
+	void setDisasmFiles(string asmfile, string linefile)
+	{
+		mDisasmFile = asmfile;
+		mLineInfoFile = linefile;
+
+		try
+		{
+			mDisasmSymInfo = readDisasmFile(asmfile);
+			mDisasmLineInfo = readLineInfoFile(linefile, GetFileName());
+			
+			// force update to Code Definition Window
+			auto langsvc = Package.GetLanguageService();
+			int line, idx;
+			if (langsvc.mLastActiveView && langsvc.mLastActiveView.mView)
+				langsvc.mLastActiveView.mView.GetCaretPos(&line, &idx);
+
+			int asmline = getLineInDisasm(line);
+			jumpToDefinitionInCodeWindow("", mDisasmFile, asmline, 0, true);
+		}
+		catch(Exception e)
+		{
+			writeToBuildOutputPane(e.msg);
+		}
+
+	}
+
+	int getLineInDisasm(int line)
+	{
+		line++; // 0-based line numbers in VS to 1-based line numbers in debug info
+		if (line >= mDisasmLineInfo.length)
+			line = mDisasmLineInfo.length - 1;
+		// prefer to display asm of line before current line if none available on it
+		while (line > 0 && mDisasmLineInfo[line].sym is null)
+			line--;
+		// fall back to display asm of first line in the file
+		while (line < mDisasmLineInfo.length && mDisasmLineInfo[line].sym is null)
+			line++;
+
+		if (line >= mDisasmLineInfo.length)
+			return -1;
+
+		SymLineInfo* symInfo = mDisasmLineInfo[line].sym in mDisasmSymInfo;
+		if (!symInfo)
+			return -1;
+
+		foreach (i, off; symInfo.offsets)
+			if (off >= mDisasmLineInfo[line].offset)
+				return symInfo.firstLine + i;
+
+		return -1;
+	}
+
 	///////////////////////////////////////////////////////////////////////////////
 	enum
 	{

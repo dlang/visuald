@@ -8,10 +8,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -48,6 +50,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -92,6 +96,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -105,10 +110,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>1</optimize>
   <cpu>0</cpu>
@@ -145,6 +152,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -189,6 +198,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -202,10 +212,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -242,6 +254,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -286,6 +300,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -299,10 +314,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -333,12 +350,14 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -383,6 +402,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -396,10 +416,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -436,6 +458,8 @@
   <stackStomp>0</stackStomp>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -480,6 +504,7 @@
   <exefile>$(OutDir)\$(ProjectName).a</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -493,10 +518,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -533,6 +560,8 @@
   <stackStomp>0</stackStomp>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -577,6 +606,7 @@
   <exefile>$(OutDir)\$(ProjectName).a</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -590,10 +620,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>1</optimize>
   <cpu>0</cpu>
@@ -630,6 +662,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -674,6 +708,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions>-gx</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -687,10 +722,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -727,6 +764,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -771,6 +810,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -784,10 +824,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -824,6 +866,8 @@
   <stackStomp>0</stackStomp>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -868,6 +912,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -881,10 +926,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -921,6 +968,8 @@
   <stackStomp>0</stackStomp>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -965,6 +1014,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -978,10 +1028,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>0</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -1018,6 +1070,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -1062,6 +1116,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions>-m32ms</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -1075,10 +1130,12 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
+  <vgc>0</vgc>
   <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
@@ -1115,6 +1172,8 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
@@ -1159,6 +1218,7 @@
   <exefile>$(OutDir)\$(ProjectName).lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -1212,99 +1272,9 @@
    <File path="port\vsversion_generated.d" />
    <File path="port\winapifamily.d" />
   </Folder>
-  <Folder name="win32">
-   <File path="win32\windef.d" />
-   <File path="win32\sdkddkver.d" />
-   <File path="win32\basetsd.d" />
-   <File path="win32\ntstatus.d" />
-   <File path="win32\winnt.d" />
-   <File path="win32\winbase.d" />
-   <File path="win32\winuser.d" />
-   <File path="win32\ktmtypes.d" />
-   <File path="win32\winerror.d" />
-   <File path="win32\winreg.d" />
-   <File path="win32\reason.d" />
-   <File path="win32\commctrl.d" />
-   <File path="win32\wingdi.d" />
-   <File path="win32\prsht.d" />
-   <File path="win32\iphlpapi.d" />
-   <File path="win32\iprtrmib.d" />
-   <File path="win32\ipexport.d" />
-   <File path="win32\iptypes.d" />
-   <File path="win32\tcpestats.d" />
-   <File path="win32\ipifcons.d" />
-   <File path="win32\ipmib.d" />
-   <File path="win32\tcpmib.d" />
-   <File path="win32\udpmib.d" />
-   <File path="win32\ifmib.d" />
-   <File path="win32\ifdef.d" />
-   <File path="win32\nldef.d" />
-   <File path="win32\winnls.d" />
-   <File path="win32\shellapi.d" />
-   <File path="win32\rpcdce.d" />
-   <File path="win32\unknwn.d" />
-   <File path="win32\oaidl.d" />
-   <File path="win32\wtypes.d" />
-   <File path="win32\oleidl.d" />
-   <File path="win32\ocidl.d" />
-   <File path="win32\objidl.d" />
-   <File path="win32\docobj.d" />
-   <File path="win32\oleauto.d" />
-   <File path="win32\objbase.d" />
-   <File path="win32\mshtmcid.d" />
-   <File path="win32\xmldom.d" />
-   <File path="win32\xmldso.d" />
-   <File path="win32\xmldomdid.d" />
-   <File path="win32\xmldsodid.d" />
-   <File path="win32\idispids.d" />
-   <File path="win32\activdbg.d" />
-   <File path="win32\activscp.d" />
-   <File path="win32\dbgprop.d" />
-   <File path="win32\wtypesbase.d" />
-   <File path="win32\minwinbase.d" />
-   <File path="win32\processenv.d" />
-   <File path="win32\minwindef.d" />
-   <File path="win32\fileapi.d" />
-   <File path="win32\debugapi.d" />
-   <File path="win32\handleapi.d" />
-   <File path="win32\errhandlingapi.d" />
-   <File path="win32\fibersapi.d" />
-   <File path="win32\namedpipeapi.d" />
-   <File path="win32\profileapi.d" />
-   <File path="win32\heapapi.d" />
-   <File path="win32\synchapi.d" />
-   <File path="win32\interlockedapi.d" />
-   <File path="win32\processthreadsapi.d" />
-   <File path="win32\sysinfoapi.d" />
-   <File path="win32\memoryapi.d" />
-   <File path="win32\threadpoollegacyapiset.d" />
-   <File path="win32\utilapiset.d" />
-   <File path="win32\ioapiset.d" />
-   <File path="win32\threadpoolapiset.d" />
-   <File path="win32\bemapiset.d" />
-   <File path="win32\wow64apiset.d" />
-   <File path="win32\jobapi.d" />
-   <File path="win32\timezoneapi.d" />
-   <File path="win32\datetimeapi.d" />
-   <File path="win32\stringapiset.d" />
-   <File path="win32\libloaderapi.d" />
-   <File path="win32\securitybaseapi.d" />
-   <File path="win32\namespaceapi.d" />
-   <File path="win32\systemtopologyapi.d" />
-   <File path="win32\processtopologyapi.d" />
-   <File path="win32\securityappcontainer.d" />
-   <File path="win32\realtimeapiset.d" />
-   <File path="win32\unknwnbase.d" />
-   <File path="win32\objidlbase.d" />
-   <File path="win32\combaseapi.d" />
-   <File path="win32\mprapidef.d" />
-   <File path="win32\lmerr.d" />
-   <File path="win32\lmcons.d" />
-  </Folder>
   <Folder name="vsi">
-   <File path="vsi\sdk_shared.d" />
-   <File path="vsi\vsshell.d" />
    <File path="vsi\completion.d" />
+   <File path="vsi\completionuuids.d" />
    <File path="vsi\compsvcspkg.d" />
    <File path="vsi\compsvcspkg100.d" />
    <File path="vsi\compsvcspkg110.d" />
@@ -1313,18 +1283,23 @@
    <File path="vsi\containedlanguage.d" />
    <File path="vsi\context.d" />
    <File path="vsi\context2.d" />
+   <File path="vsi\contextuuids.d" />
    <File path="vsi\customfind.d" />
    <File path="vsi\debugger80.d" />
    <File path="vsi\designer.d" />
    <File path="vsi\discoveryservice.d" />
    <File path="vsi\discoveryservice80.d" />
    <File path="vsi\discoveryservice90.d" />
+   <File path="vsi\dte80.d" />
+   <File path="vsi\dte80a.d" />
+   <File path="vsi\dte90.d" />
    <File path="vsi\ee.d" />
    <File path="vsi\ee100.d" />
    <File path="vsi\ee90.d" />
    <File path="vsi\enc.d" />
    <File path="vsi\encbuild.d" />
    <File path="vsi\fpstfmt.d" />
+   <File path="vsi\indentstyle.d" />
    <File path="vsi\ivsgetscciproviderinterface.d" />
    <File path="vsi\ivsprojectmru.d" />
    <File path="vsi\ivsqueryeditquerysave2.d" />
@@ -1356,6 +1331,7 @@
    <File path="vsi\ivstrackprojectretargeting.d" />
    <File path="vsi\ivstrackprojectretargetingevents.d" />
    <File path="vsi\ivswebservices.d" />
+   <File path="vsi\mnuhelpids.d" />
    <File path="vsi\msdbg.d" />
    <File path="vsi\msdbg100.d" />
    <File path="vsi\msdbg110.d" />
@@ -1366,8 +1342,14 @@
    <File path="vsi\oleipc.d" />
    <File path="vsi\portpriv.d" />
    <File path="vsi\proffserv.d" />
+   <File path="vsi\scc.d" />
+   <File path="vsi\scguids.d" />
+   <File path="vsi\sdk_shared.d" />
+   <File path="vsi\sdk_version.d" />
    <File path="vsi\sh.d" />
+   <File path="vsi\sharedids.d" />
    <File path="vsi\singlefileeditor.d" />
+   <File path="vsi\stdidcmd.d" />
    <File path="vsi\textfind.d" />
    <File path="vsi\textfind2.d" />
    <File path="vsi\textfind90.d" />
@@ -1378,12 +1360,17 @@
    <File path="vsi\textmgr2.d" />
    <File path="vsi\textmgr90.d" />
    <File path="vsi\textmgr91.d" />
+   <File path="vsi\textmgruuids.d" />
    <File path="vsi\uilocale.d" />
    <File path="vsi\undoredo.d" />
    <File path="vsi\vapiemp.d" />
    <File path="vsi\vbapkg.d" />
+   <File path="vsi\venusids.d" />
    <File path="vsi\vsbrowse.d" />
+   <File path="vsi\vsdbgcmd.d" />
+   <File path="vsi\vsdebugguids.d" />
    <File path="vsi\vsdisp.d" />
+   <File path="vsi\vseeguids.d" />
    <File path="vsi\vsempweb.d" />
    <File path="vsi\vshelp.d" />
    <File path="vsi\vshelp80.d" />
@@ -1396,48 +1383,121 @@
    <File path="vsi\vsmanaged.d" />
    <File path="vsi\vsplatformui.d" />
    <File path="vsi\vsplatformui110.d" />
+   <File path="vsi\vsplatformuiuuids.d" />
    <File path="vsi\vsqryed.d" />
+   <File path="vsi\vsregkeynames.d" />
    <File path="vsi\vsscceng.d" />
    <File path="vsi\vssccmgr.d" />
    <File path="vsi\vssccprj.d" />
+   <File path="vsi\vsshell.d" />
    <File path="vsi\vsshell100.d" />
    <File path="vsi\vsshell110.d" />
    <File path="vsi\vsshell120.d" />
    <File path="vsi\vsshell2.d" />
    <File path="vsi\vsshell80.d" />
    <File path="vsi\vsshell90.d" />
+   <File path="vsi\vsshelluuids.d" />
+   <File path="vsi\vsshlids.d" />
    <File path="vsi\vssolutn.d" />
    <File path="vsi\vssplash.d" />
    <File path="vsi\vstrkdoc.d" />
+   <File path="vsi\wbids.d" />
    <File path="vsi\wcfreferences.d" />
+   <File path="vsi\wcfreferencesids.d" />
    <File path="vsi\webapplicationctx.d" />
    <File path="vsi\webmigration.d" />
    <File path="vsi\webproperties.d" />
    <File path="vsi\webproperties100.d" />
    <File path="vsi\webproperties90.d" />
-   <File path="vsi\indentstyle.d" />
-   <File path="vsi\completionuuids.d" />
-   <File path="vsi\contextuuids.d" />
-   <File path="vsi\textmgruuids.d" />
-   <File path="vsi\vsshelluuids.d" />
-   <File path="vsi\vsdbgcmd.d" />
-   <File path="vsi\venusids.d" />
-   <File path="vsi\stdidcmd.d" />
-   <File path="vsi\vsshlids.d" />
-   <File path="vsi\mnuhelpids.d" />
-   <File path="vsi\wcfreferencesids.d" />
-   <File path="vsi\vsdebugguids.d" />
-   <File path="vsi\vsregkeynames.d" />
-   <File path="vsi\scguids.d" />
-   <File path="vsi\wbids.d" />
-   <File path="vsi\sharedids.d" />
-   <File path="vsi\vseeguids.d" />
-   <File path="vsi\sdk_version.d" />
-   <File path="vsi\scc.d" />
-   <File path="vsi\vsplatformuiuuids.d" />
-   <File path="vsi\dte80.d" />
-   <File path="vsi\dte80a.d" />
-   <File path="vsi\dte90.d" />
+  </Folder>
+  <Folder name="win32">
+   <File path="win32\activdbg.d" />
+   <File path="win32\activscp.d" />
+   <File path="win32\basetsd.d" />
+   <File path="win32\bemapiset.d" />
+   <File path="win32\combaseapi.d" />
+   <File path="win32\commctrl.d" />
+   <File path="win32\datetimeapi.d" />
+   <File path="win32\dbgprop.d" />
+   <File path="win32\debugapi.d" />
+   <File path="win32\docobj.d" />
+   <File path="win32\errhandlingapi.d" />
+   <File path="win32\fibersapi.d" />
+   <File path="win32\fileapi.d" />
+   <File path="win32\handleapi.d" />
+   <File path="win32\heapapi.d" />
+   <File path="win32\idispids.d" />
+   <File path="win32\ifdef.d" />
+   <File path="win32\ifmib.d" />
+   <File path="win32\interlockedapi.d" />
+   <File path="win32\ioapiset.d" />
+   <File path="win32\ipexport.d" />
+   <File path="win32\iphlpapi.d" />
+   <File path="win32\ipifcons.d" />
+   <File path="win32\ipmib.d" />
+   <File path="win32\iprtrmib.d" />
+   <File path="win32\iptypes.d" />
+   <File path="win32\jobapi.d" />
+   <File path="win32\ktmtypes.d" />
+   <File path="win32\libloaderapi.d" />
+   <File path="win32\lmcons.d" />
+   <File path="win32\lmerr.d" />
+   <File path="win32\memoryapi.d" />
+   <File path="win32\minwinbase.d" />
+   <File path="win32\minwindef.d" />
+   <File path="win32\mprapidef.d" />
+   <File path="win32\mshtmcid.d" />
+   <File path="win32\namedpipeapi.d" />
+   <File path="win32\namespaceapi.d" />
+   <File path="win32\nldef.d" />
+   <File path="win32\ntstatus.d" />
+   <File path="win32\oaidl.d" />
+   <File path="win32\objbase.d" />
+   <File path="win32\objidl.d" />
+   <File path="win32\objidlbase.d" />
+   <File path="win32\ocidl.d" />
+   <File path="win32\oleauto.d" />
+   <File path="win32\oleidl.d" />
+   <File path="win32\processenv.d" />
+   <File path="win32\processthreadsapi.d" />
+   <File path="win32\processtopologyapi.d" />
+   <File path="win32\profileapi.d" />
+   <File path="win32\prsht.d" />
+   <File path="win32\realtimeapiset.d" />
+   <File path="win32\reason.d" />
+   <File path="win32\rpcdce.d" />
+   <File path="win32\sdkddkver.d" />
+   <File path="win32\securityappcontainer.d" />
+   <File path="win32\securitybaseapi.d" />
+   <File path="win32\shellapi.d" />
+   <File path="win32\stringapiset.d" />
+   <File path="win32\synchapi.d" />
+   <File path="win32\sysinfoapi.d" />
+   <File path="win32\systemtopologyapi.d" />
+   <File path="win32\tcpestats.d" />
+   <File path="win32\tcpmib.d" />
+   <File path="win32\threadpoolapiset.d" />
+   <File path="win32\threadpoollegacyapiset.d" />
+   <File path="win32\timezoneapi.d" />
+   <File path="win32\udpmib.d" />
+   <File path="win32\unknwn.d" />
+   <File path="win32\unknwnbase.d" />
+   <File path="win32\utilapiset.d" />
+   <File path="win32\winbase.d" />
+   <File path="win32\windef.d" />
+   <File path="win32\winerror.d" />
+   <File path="win32\wingdi.d" />
+   <File path="win32\winnls.d" />
+   <File path="win32\winnt.d" />
+   <File path="win32\winreg.d" />
+   <File path="win32\winuser.d" />
+   <File path="win32\wow64apiset.d" />
+   <File path="win32\wtypes.d" />
+   <File path="win32\wtypesbase.d" />
+   <File path="win32\xmldom.d" />
+   <File path="win32\xmldomdid.d" />
+   <File path="win32\xmldso.d" />
+   <File path="win32\xmldsodid.d" />
   </Folder>
  </Folder>
 </DProject>

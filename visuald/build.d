@@ -408,7 +408,7 @@ else
 				mkdirRecurse(intermediatedir);
 			
 			string modules_ddoc;
-			if(mConfig.getModulesDDocCommandLine([], modules_ddoc))
+			if(mConfig.getModulesDDocCommandLine([], modules_ddoc).length)
 			{
 				modules_ddoc = unquoteArgument(modules_ddoc);
 				modules_ddoc = mConfig.GetProjectOptions().replaceEnvironment(modules_ddoc, mConfig);
