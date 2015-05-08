@@ -96,6 +96,7 @@
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -197,6 +198,7 @@
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -298,6 +300,7 @@
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions>-gx</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -399,6 +402,7 @@
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions>-debuglib=phobos,druntime</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -500,6 +504,7 @@
   <exefile>$(OutDir)\..\Debug\$(ProjectName).dll</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions>-debuglib=phobos_d,druntime_d -m32ms -L/DLL -L/FORCE:UNRESOLVED</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />

@@ -2050,7 +2050,7 @@ class ProfileItemIndex
 								if(txt.length == 0)
 								{
 									Fan fan = Fan(to!string(id), calls);
-									if(curItem.mName)
+									if(curItem.mName.length)
 										curItem.mFanOut ~= fan;
 									else
 										curItem.mFanIn ~= fan;

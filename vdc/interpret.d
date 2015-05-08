@@ -732,7 +732,7 @@ class CharValue : ValueT!char
 {
 	override string toStr()
 	{
-		return "'" ~ toUTF8Safe(pval[0..1]) ~ "'";
+		return cast(string)("'" ~ toUTF8Safe(pval[0..1]) ~ "'");
 	}
 }
 
@@ -1228,7 +1228,7 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 			if(len == 0)
 				return "";
 			if(auto cv = cast(CharValue)first)
-				return toUTF8Safe(cv.pval[0..len]);
+				return cast(string) toUTF8Safe(cv.pval[0..len]);
 			if(auto wv = cast(WCharValue)first)
 				return toUTF8Safe(wv.pval[0..len]);
 			if(auto dv = cast(DCharValue)first)

@@ -22,6 +22,7 @@ set SRC=%SRC% GlobalOptions.dd
 set SRC=%SRC% Features.dd
 set SRC=%SRC% VersionHistory.dd
 set SRC=%SRC% News36.dd
+set SRC=%SRC% CompileCommands.dd
 
 set DDOC=macros.ddoc html.ddoc visuald.ddoc dlang.org.ddoc
 

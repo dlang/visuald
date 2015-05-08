@@ -289,7 +289,7 @@ T[] firstLine(T)(T[] s)
 
 char kInvalidUTF8Replacement = '?';
 
-string toUTF8Safe(const(char)[] text)
+inout(char)[] toUTF8Safe(inout(char)[] text)
 {
 	char[] modtext;
 	for(size_t p = 0; p < text.length; p++)
@@ -312,8 +312,8 @@ string toUTF8Safe(const(char)[] text)
 		}
 	}
 	if(modtext.length)
-		return cast(string) modtext;
-	return cast(string) text;
+		return cast(inout(char)[]) modtext;
+	return text;
 }
 
 string toUTF8Safe(const(wchar)[] text)

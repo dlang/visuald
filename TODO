@@ -40,6 +40,7 @@ Project:
 - VS2013: property pages don't follow resize
 - custom command: writes build batch to source folder
 - VS2013: possible to copy a project item with DnD into the same project again
+- saving file while it is being compiled/linked does not force a recompilation
 
 Language service:
 -----------------

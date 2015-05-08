@@ -482,10 +482,10 @@ class ProjectOptions
 			cmd ~= " -fd-vtls";
 		if(Dversion >= 2 && vgc)
 			cmd ~= " -fd-vgc";
-		if(symdebug == 1)
+		if(symdebug > 0)
 			cmd ~= " -g";
-		if(symdebug == 2)
-			cmd ~= " -fdebug-c";
+		//if(symdebug == 2)
+		//    cmd ~= " -fdebug-c";
 		if(optimize)
 			cmd ~= " -O3";
 		if(useDeprecated)
@@ -2534,7 +2534,7 @@ class Config :	DisposingComObject,
 				files ~= expandedAbsoluteFilename(normalizeDir(mProjectOptions.docdir)) ~ "*.html";
 			if(mProjectOptions.docname.length)
 				files ~= expandedAbsoluteFilename(mProjectOptions.docname);
-			if(mProjectOptions.modules_ddoc)
+			if(mProjectOptions.modules_ddoc.length)
 				files ~= expandedAbsoluteFilename(mProjectOptions.modules_ddoc);
 		}
 		if(mProjectOptions.doHdrGeneration)
@@ -2663,6 +2663,17 @@ class Config :	DisposingComObject,
 				cmd ~= "if errorlevel 1 echo Building " ~ outfile ~ " failed!\n";
 			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
+		return cmd;
+	}
+
+	string GetDisasmCommand(string objfile, string outfile)
+	{
+		bool x64 = mProjectOptions.isX86_64;
+		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
+		GlobalOptions globOpt = Package.GetGlobalOptions();
+		string cmd = x64    ? mProjectOptions.compilerDirectories.DisasmCommand64 : 
+		             mscoff ? mProjectOptions.compilerDirectories.DisasmCommand32coff : mProjectOptions.compilerDirectories.DisasmCommand;
+		cmd = mProjectOptions.replaceEnvironment(cmd, this, objfile, outfile);
 		return cmd;
 	}
 

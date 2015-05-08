@@ -1090,7 +1090,7 @@ class MethodData : DisposingComObject, IVsMethodData
 				break;
 
 			case MTT_DESCRIPTION:
-				if(mMethods[method].help)
+				if(mMethods[method].help.length)
 					result = phobosDdocExpand(mMethods[method].help);
 				else if(mMethods[method].line > 0)
 					result = format("%s %s @ %s(%d)", mMethods[method].kind, mMethods[method].inScope, mMethods[method].filename, mMethods[method].line);

@@ -323,7 +323,7 @@ version(tip)
 				break;
 			
 			case ECMD_COMPILE:
-				return CompileDoc(false, false, false);
+				return CompileDoc(false, false, false, false);
 
 			case ECMD_GOTOBRACE:
 				return GotoMatchingPair(false);
@@ -356,10 +356,13 @@ version(tip)
 				return ConvertSelection();
 
 			case CmdCompileAndRun:
-				return CompileDoc(true, true, false);
+				return CompileDoc(true, true, false, false);
 
 			case CmdCompileAndDbg:
-				return CompileDoc(true, false, true);
+				return CompileDoc(true, false, true, false);
+
+			case CmdCompileAndAsm:
+				return CompileDoc(false, false, false, true);
 
 			case CmdCollapseUnittest:
 				return mCodeWinMgr.mSource.CollapseDisabled(true, false);
@@ -491,7 +494,7 @@ version(tip)
 
 	//////////////////////////////
 
-	HRESULT CompileDoc(bool rdmd, bool run, bool dbg)
+	HRESULT CompileDoc(bool rdmd, bool run, bool dbg, bool disasm)
 	{
 		IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
 		if(!pIVsUIShellOpenDocument)
@@ -522,7 +525,7 @@ version(tip)
 
 		BSTR bstrSelText;
 		string selText;
-		if(mView.GetSelectedText(&bstrSelText) == S_OK)
+		if(mView.GetSelectedText(&bstrSelText) == S_OK && !disasm)
 			selText = detachBSTR(bstrSelText);
 
 		if(!proj)
@@ -586,7 +589,14 @@ version(tip)
 
 		mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position
 
-		scope(exit) release(cfg);
+		auto symdebug = cfg.GetProjectOptions().symdebug;
+		scope(exit)
+		{
+			cfg.GetProjectOptions().symdebug = symdebug;
+			release(cfg);
+		}
+		if (disasm && symdebug == 0) // ensure debug info is enabled
+			cfg.GetProjectOptions().symdebug = 2;
 
 		string stool = cfg.GetStaticCompileTool(pFile, cfg.getCfgName());
 		if(stool == "DMD")
@@ -610,7 +620,7 @@ version(tip)
 		else if(stool == "RDMD" && dbg)
 			addopt = " --build-only " ~ Package.GetGlobalOptions().compileAndDbgOpts ~ addopt;
 
-		string cmd = cfg.GetCompileCommand(pFile, !dbg && !run, stool, addopt);
+		string cmd = cfg.GetCompileCommand(pFile, !dbg && !run && !disasm, stool, addopt);
 		if(cmd.length)
 		{
 			cmd ~= "if not errorlevel 1 echo Compilation successful.\n";
@@ -620,12 +630,25 @@ version(tip)
 			string cmdfile = outfile ~ ".syntax";
 			removeCachedFileTime(outfile);
 
+			if(disasm)
+			{
+				string asmfile = outfile ~ ".asm";
+				string linfile = outfile ~ ".lines";
+				cmd ~= "if errorlevel 1 exit %ERRORLEVEL% /B\n";
+				cmd ~= "echo Dumping disassembly\n";
+				cmd ~= cfg.GetDisasmCommand(outfile, asmfile) ~ "\n";
+				cmd ~= "if errorlevel 1 exit %ERRORLEVEL% /B\n";
+				cmd ~= "echo Dumping line numbers\n";
+				cmd ~= "\"" ~ Package.GetGlobalOptions().VisualDInstallDir ~ "cv2pdb\\dumplines.exe\" " ~ quoteFilename(outfile)
+					~ " > " ~ quoteFilename(linfile) ~ "\n";
+			}
 			if(run)
 			{
 				cmd ~= "if errorlevel 1 exit %ERRORLEVEL% /B\n";
 				cmd ~= quoteFilename(outfile) ~ "\n";
 				cmd ~= "echo Execution result code: %ERRORLEVEL%\n";
 			}
+			
 			auto pane = getBuildOutputPane();
 			scope(exit) release(pane);
 			clearBuildOutputPane();
@@ -636,9 +659,12 @@ version(tip)
 			if(run)
 				Package.GetGlobalOptions().addExecutionPath(workdir, null);
 
-			if(dbg && hr == S_OK)
+			if(hr == S_OK)
 			{
-				cfg._DebugLaunch(outfile, dirName(fname), null, Package.GetGlobalOptions().compileAndDbgEngine);
+				if(dbg)
+					cfg._DebugLaunch(outfile, dirName(fname), null, Package.GetGlobalOptions().compileAndDbgEngine);
+				if(disasm)
+					mCodeWinMgr.mSource.setDisasmFiles(outfile ~ ".asm", outfile ~ ".lines");
 			}
 		}
 		return S_OK;
@@ -719,6 +745,7 @@ version(tip)
 			case CmdConvSelection:
 			case CmdCompileAndRun:
 			case CmdCompileAndDbg:
+			case CmdCompileAndAsm:
 			case CmdCollapseUnittest:
 			case CmdCollapseDisabled:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
