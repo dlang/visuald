@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+<!--
+    Copyright (c) 1999-2015 by Digital Mars
+    All Rights Reserved Written by Walter Bright
+    http://digitalmars.com
+  -->
+<head>
+<meta charset="utf-8" />
+<meta name="keywords" content="D programming language" />
+<meta name="description" content="D Programming Language" />
+<title>Compile Commands
+ - D Programming Language</title>
+<link rel="stylesheet" href="http://www.dlang.org/css/codemirror.css" />
+<link rel="stylesheet" href="http://www.dlang.org/css/style.css" />
+<link rel="stylesheet" href="http://www.dlang.org/css/print.css" media="print" />
+<link rel="stylesheet" href="http://www.dlang.org/css/cssmenu.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+<link rel="shortcut icon" href="http://www.dlang.org/favicon.ico" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0" />
+</head>
+<body id='Compile Commands
+' class='doc'>
+<script type="text/javascript">document.body.className += ' have-javascript';</script>
+<div id="top">	<div id="header">		<a class="logo" href="."><img id="logo" width="125" height="95" alt="D Logo" src="http://www.dlang.org/images/dlogo.svg"></a>
+		<span id="d-language-mobilehelper"><a href="." id="d-language">D Programming Language</a></span>
+	</div>
+</div>
+<div id="navigation">    <div id="search-box">        <form method="get" action="http://google.com/search">
+            <input type="hidden" id="domains" name="domains" value="dlang.org" />
+            <input type="hidden" id="sourceid" name="sourceid" value="google-search" />
+            <span id="search-query"><input id="q" name="q" placeholder="Search" /></span><span id="search-dropdown">                <select id="sitesearch" name="sitesearch" size="1">
+                    <option value="dlang.org">Entire D Site</option>
+                    <option value="rainers.github.io/visuald">Visual D</option>
+                    <option value="digitalmars.com/d/archives">Newsgroup Archives</option>
+                </select>
+            </span><span id="search-submit"><button type="submit"><i class="fa fa-search"></i><span>go</span></button></span>
+        </form>
+    </div>
+    
+<div id="cssmenu"><ul>    <li><a href='StartPage.html'><span>Visual D 0.3.40</span></a></li>
+    <li><a href='https://github.com/D-Programming-Language/visuald/releases'><span>Downloads</span></a></li>
+    <li><a href='Installation.html'><span>Installation</span></a></li>
+    <li class='has-sub'><a href='#'><span>Documentation</span></a>
+      <ul><li><a href='
+        Features.html'>Features</a></li><li><a href='        GlobalOptions.html'>Global options</a></li><li><a href='        ProjectWizard.html'>Project Wizard</a></li><li><a href='        Editor.html'>Editor</a></li><li><a href='        Search.html'>Search Window</a></li><li><a href='        TokenReplace.html'>Token Replace</a></li><li><a href='        ProjectConfig.html'>Project Config</a></li><li><a href='        CppConversion.html'>C++ to D</a></li><li><a href='        Debugging.html'>Debugging</a></li><li><a href='        Profiling.html'>Profiling</a></li><li><a href='        Coverage.html'>Code Coverage</a></li><li><a href='        BrowseInfo.html'>Browse Info
+      </a></li></ul>
+    <li><a href='VersionHistory.html'><span>Version History</span></a></li>
+    <li><a href='KnownIssues.html'><span>Known Issues</span></a></li>
+    <li><a href='BuildFromSource.html'><span>Building from Source</span></a></li>
+
+    <li class='has-sub'><a href='#'><span>Resources</span></a>
+      <ul><li><a href='        http://www.dlang.org/intro.html'>Language Reference</a></li><li><a href='        http://www.dlang.org/phobos/index.html'>Library Reference</a></li><li><a href='        code.dlang.org'>D Libraries</a></li><li><a href='        http://www.dlang.org/bugstats.php'>Bug Tracker</a></li><li><a href='        http://www.dlang.org/faq.html'>FAQ</a></li><li><a href='        http://www.dlang.org/dstyle.html'>The D Style</a></li><li><a href='        http://arsdnet.net/this-week-in-d'>This Week in D
+      </a></li></ul>
+    <li class='has-sub'><a href='#'><span>Community</span></a>
+      <ul><li><a href='        http://forum.dlang.org'>Forums</a></li><li><a href='        irc://irc.freenode.net/d'>IRC</a></li><li><a href='        http://github.com/D-Programming-Language'>D on GitHub</a></li><li><a href='        http://wiki.dlang.org'>Wiki</a></li><li><a href='        http://wiki.dlang.org/Review_Queue'>Review Queue</a></li><li><a href='        http://twitter.com/search?q=%23dlang'>Twitter</a></li><li><a href='        http://digitalmars.com/d/dlinks.html'>More Links
+      </a></li></ul>
+</ul></div>
+</div>
+
+<div class="hyphenate" id="content">    
+<div id="tools">	<span class="tip">		<a href="https://github.com/D-Programming-Language/visuald/edit/master/doc/CompileCommands.dd" class="button">Improve this page</a>
+		<span >			Quickly fork, edit online, and submit a pull request for this page.
+			Requires a signed-in GitHub account. This works well for small changes.
+			If you'd like to make larger changes you may want to consider using
+			local clone.
+		</span>
+	</span>
+	<span class="tip">		<a href="http://wiki.dlang.org/DocComments/Compile Commands
+" class="button">Page wiki</a>
+		<span >			View or edit the community-maintained wiki page associated with this page.
+		</span>
+	</span>
+</div>
+    <h1>Compile Commands
+</h1>
+    
+    <!--Generated by Ddoc from CompileCommands.dd-->
+
+
+<p>There are a number of commands in the Visual D menu that allow you to work with
+a single D source file without creating a project.</p>
+
+<div align="center"><img src="images/compilemenu.png" /></div>
+
+<h2>Compile and Run</h2>
+
+<p>This command will compile the current text window that has the edit focus. Compile options
+are taken from the active project configuration if the file is part of a project in the current solution.
+In addition options given in the <a href="GlobalOptions.html">global settings</a> are added to the command
+line. Instead of building the full project, <a href="http://dlang.org/rdmd.html">rdmd</a> is used
+to just add the minimal dependent modules. In order to build a runnable exectuable, you might have to add
+a <span class="d_inlinecode donthyphenate notranslate">main</span> function to the source file or add <span class="d_inlinecode donthyphenate notranslate">-main</span> to the global options. 
+</p>
+
+<p>One use case for this feature is to run unittests of a single module. Compilation errors, program output 
+and exception trace will be visible in the output window and can be double clicked to jump to the shown 
+code locations.
+</p>
+
+<p>When used on a source file not found in any of the projects in the solution, default options
+from the ConsoleApp project template are used to build the executable with rdmd. This allows script
+like usage of D files from within the IDE, though there is currently no way to specify execution
+arguments.
+</p>
+
+<h2>Compile and Debug</h2>
+
+<p>This command is similar to "Compile and Run", but instead of running the compiled executable
+immediately, the debugger is started to allow further inspection. If you want to trace execution from
+the very beginning of the program, you should set a breakpoint at the start of <span class="d_inlinecode donthyphenate notranslate">main</span> before
+issuing this command.
+</p>
+
+<h2>Compile and Disassemble</h2>
+
+<p>While optimizing code, it is often useful to take a look at the assembly generated by the
+compiler. This is usually done by compiling a program, starting it in a debugger until it
+hits an appropriate breakpoint. The disassembly view will then show the desired machine 
+instructions.
+</p>
+
+<p>This can be a tedious and time consuming process, when all you want to look at is the
+disassembly of the currently written lines of code. The "Compile and Disassemble" command
+can take the pain out of this workflow, as it will just compile (not link) the current module
+with the command line options of the active project configuration and then show a
+disassembly dump in the Code Definition Window. It automatically synchronizes the instructions
+shown in the disassembly with the current caret location in the editor.
+</p>
+
+<div align="center"><img src="images/compiledisasm.png" /></div>
+
+<p>Dumping the assembly of an object file is done by an external command line tool that can 
+be configured for each tool chain in the <a href="GlobalOptions.html">global settings</a>. 
+For Win32, the generated object file format is rather dated OMF that is not very well 
+supported anymore. The commercial version of the Digital Mars C++ compiler contains
+the command line tool <a href="http://www.digitalmars.com/ctg/obj2asm.html">obj2asm</a>,
+but you can also use <a href="http://www.agner.org/optimize/#objconv">objconv</a> by Agner Fog.
+For any other target or compiler platform, the generated object file format is COFF, that
+can be disassembled with the Microsoft tool <span class="d_inlinecode donthyphenate notranslate">dumpbin</span> that comes with Visual Studio. In
+case you use Visual D to cross compile for other architectures with LDC or GDC, you might
+have to run the appropriate tools from these compiler suites instead.
+</p>
+
+<p>These are working settings for the "Disassemble Command" option, but you might want to
+tweak these for different output, e.g. switch between AT&T and Intel style assembly.
+Make sure that instruction offsets are displayed so synchronization with the
+editor works with the help of debug line number information.
+</p>
+
+<h3>DMD/Win32</h3>
+
+<pre>obj2asm -x "$(InputFile)" &gt;"$(TargetPath)"</pre>
+
+This assumes obj2asm can be found in through PATH. If this is not the case, please add
+the full path to it. The same replacement macros can be used as in the project 
+configurations.
+
+For objconv, this command is
+
+<pre>obj2conv -fasm "$(InputFile)" "$(TargetPath)"</pre>
+
+<h3>DMD/Win64</h3>
+
+<pre>"$(VCInstallDir)\bin\amd64\dumpbin" /disasm "$(InputPath)" &gt;"$(TargetPath)" </pre>
+
+<h3>DMD/Win32-COFF</h3>
+
+dumpbin executables can be used for both architectures x86 and AMD64, no matter
+what architecture might be running on, so you can use the same setting as Win64, 
+but in case you are restricted to a 32-bit OS, the respective executable can be 
+found in the bin folder of the VC installation:
+
+<pre>"$(VCInstallDir)\bin\dumpbin" /disasm "$(InputPath)" &gt;"$(TargetPath)" </pre>
+
+There is one gotcha: dumpbin needs a DLL for doing the disassembly that is installed
+to \Common7\IDE (in VS 2013), so make sure you have this directory
+listed in the "Executable Paths".
+
+<h3>LDC</h3>
+
+dumpbin works here, too, for the x64/AMD64 architecture, but in case you want to
+use LLVM tools for other architectures, you'll have to change the default setting:
+
+<pre>llvm-objdump -disassemble "$(InputPath)" &gt;"$(TargetPath)" </pre>
+
+You'll have to add the path the LLVM tools to the "Executable Paths" or to the
+llvm-objdump command.
+
+<h3>GDC</h3>
+
+Similar to LDC, the alternative command is
+
+<pre>objdump --disassemble "$(InputPath)" &gt;"$(TargetPath)" </pre>
+
+
+</div>
+<div id="copyright">Copyright &copy; 1999-2015 by Digital Mars &reg;, All Rights Reserved | Page generated by <a href="http://dlang.org/ddoc.html">Ddoc</a> on Fri May 08 22:57:05 2015
+</div>
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script type="text/javascript">window.jQuery || document.write('<script src="http://www.dlang.org/js/jquery-1.7.2.min.js">\x3C/script>')</script>
+    <script type="text/javascript" src="http://www.dlang.org/js/codemirror-compressed.js"></script>
+    <script type="text/javascript" src="http://www.dlang.org/js/run.js"></script>
+    <script type="text/javascript" src="http://www.dlang.org/js/cssmenu.js"></script>
+
+</body>
+</html>
