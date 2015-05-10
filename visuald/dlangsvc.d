@@ -1046,12 +1046,89 @@ class CodeDefViewContext : DComObject, IVsCodeDefViewContext
 }
 /////////////////////////////////////////////////////////////////////////
 
+HRESULT reloadTextBuffer(string fname)
+{
+	IVsRunningDocumentTable pRDT = queryService!(IVsRunningDocumentTable);
+	if(!pRDT)
+		return E_FAIL;
+	scope(exit) release(pRDT);
+
+	auto docname = _toUTF16z(fname);
+	IVsHierarchy srpIVsHierarchy;
+	VSITEMID     vsItemId          = VSITEMID_NIL;
+	IUnknown     srpIUnknown;
+	VSDOCCOOKIE  vsDocCookie       = VSDOCCOOKIE_NIL;
+	HRESULT hr = pRDT.FindAndLockDocument(/* [in]  VSRDTFLAGS dwRDTLockType   */ RDT_NoLock,
+										  /* [in]  LPCOLESTR pszMkDocument    */ docname,
+										  /* [out] IVsHierarchy **ppHier      */ &srpIVsHierarchy,
+										  /* [out] VSITEMID *pitemid          */ &vsItemId,
+										  /* [out] IUnknown **ppunkDocData    */ &srpIUnknown,
+										  /* [out] VSCOOKIE *pdwCookie        */ &vsDocCookie);
+
+	// FindAndLockDocument returns S_FALSE if the doc is not in the RDT
+	if (hr != S_OK)
+		return hr;
+
+	scope(exit) release(srpIUnknown);
+	scope(exit) release(srpIVsHierarchy);
+
+	IVsTextLines textBuffer = qi_cast!IVsTextLines(srpIUnknown);
+	if(!textBuffer)
+		if(auto bufferProvider = qi_cast!IVsTextBufferProvider(srpIUnknown))
+		{
+			bufferProvider.GetTextBuffer(&textBuffer);
+			release(bufferProvider);
+		}
+	if(!textBuffer)
+		return returnError(E_FAIL);
+	scope(exit) release(textBuffer);
+
+	if (auto docdata = qi_cast!IVsPersistDocData(srpIUnknown))
+		docdata.ReloadDocData(RDD_IgnoreNextFileChange|RDD_RemoveUndoStack);
+
+	return textBuffer.Reload(true);
+}
+
+IVsTextView findCodeDefinitionWindow()
+{
+	IVsCodeDefView cdv = queryService!(SVsCodeDefView,IVsCodeDefView);
+	if (!cdv)
+		return null;
+	scope(exit) release(cdv);
+
+	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
+	if(!textmgr)
+		return null;
+	scope(exit) release(textmgr);
+
+	IVsEnumTextViews enumTextViews;
+
+	// Passing null will return all available views, at least according to the documentation
+	// unfortunately, it returns error E_INVALIDARG, said to be not implemented
+	HRESULT hr = textmgr.EnumViews(null, &enumTextViews);
+	if (!enumTextViews)
+		return null;
+	scope(exit) release(enumTextViews);
+
+	IVsTextView tv;
+	DWORD fetched;
+	while(enumTextViews.Next(1, &tv, &fetched) == S_OK && fetched == 1)
+	{
+		BOOL result;
+		if (cdv.IsCodeDefView(tv, &result) == S_OK && result)
+			return tv;
+	}
+	return null;
+}
+
 bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int col, bool forceShow)
 {
 	IVsCodeDefView cdv = queryService!(SVsCodeDefView,IVsCodeDefView);
 	if (cdv is null)
 		return false;
-	if (cdv.IsVisible() != S_OK)
+	scope(exit) release(cdv);
+
+	if (!forceShow && cdv.IsVisible() != S_OK)
 		return false;
 
 	CodeDefViewContext context = newCom!CodeDefViewContext(symbol, filename, line, col);
@@ -1059,7 +1136,8 @@ bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int 
 
 	if (forceShow)
 	{
-		cdv.ShowWindow();
+		if (cdv.IsVisible() != S_OK)
+			cdv.ShowWindow();
 		cdv.ForceIdleProcessing();
 	}
 	return true;
@@ -1401,8 +1479,11 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 			// force update to Code Definition Window
 			auto langsvc = Package.GetLanguageService();
 			int line, idx;
-			if (langsvc.mLastActiveView && langsvc.mLastActiveView.mView)
+			if (langsvc.mLastActiveView && langsvc.mLastActiveView.mView &&
+				langsvc.mLastActiveView.mCodeWinMgr.mSource == this)
 				langsvc.mLastActiveView.mView.GetCaretPos(&line, &idx);
+
+			reloadTextBuffer(mDisasmFile);
 
 			int asmline = getLineInDisasm(line);
 			jumpToDefinitionInCodeWindow("", mDisasmFile, asmline, 0, true);
