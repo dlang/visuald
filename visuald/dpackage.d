@@ -1344,8 +1344,8 @@ class GlobalOptions
 				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
 
 				wstring defDisasm32omf = `"obj2asm" -x "$(InputPath)" >"$(TargetPath)"`;
-				wstring defDisasm32 = `"$(VCInstallDir)\bin\dumpbin" /disasm "$(InputPath)" >"$(TargetPath)"`;
-				wstring defDisasm64 = `"$(VCInstallDir)\bin\amd64\dumpbin" /disasm "$(InputPath)" >"$(TargetPath)"`;
+				wstring defDisasm32 = `"$(VCInstallDir)\bin\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
+				wstring defDisasm64 = `"$(VCInstallDir)\bin\amd64\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
 
 				opt.ExeSearchPath = getPathsOpt(prefix ~ "ExeSearchPath");
 				opt.LibSearchPath = getPathsOpt(prefix ~ "LibSearchPath");

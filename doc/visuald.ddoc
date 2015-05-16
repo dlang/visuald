@@ -29,6 +29,7 @@ $(DIVID cssmenu, $(UL
         ProjectConfig.html, Project Config,
         CppConversion.html, C++ to D,
         Debugging.html, Debugging,
+        CompileCommands.html, Compile Commands,
         Profiling.html, Profiling,
         Coverage.html, Code Coverage,
         BrowseInfo.html, Browse Info
@@ -41,7 +42,7 @@ $(DIVID cssmenu, $(UL
       $(SUBMENU
         $(ROOT_DIR)intro.html, Language Reference,
         $(ROOT_DIR)phobos/index.html, Library Reference,
-        code.dlang.org, D Libraries,
+        http://code.dlang.org, D Libraries,
         $(ROOT_DIR)bugstats.php, Bug Tracker,
         $(ROOT_DIR)faq.html, FAQ,
         $(ROOT_DIR)dstyle.html, The D Style,

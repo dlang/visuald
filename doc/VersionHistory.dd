@@ -1,6 +1,43 @@
 Ddoc
 
-2015-1-1 Version 0.3.40
+$(H2 2015-5-16 Version 0.3.41)
+ $(UL
+  $(LI build system
+   $(UL
+    $(LI new linker option "build and use local phobos library" to get a COFF32 version (dmd 2.067+)
+         or add missing debug info (dmd 2.065+))
+    $(LI workaround for link response file with spaces, but disabled short names on NTFS volume)
+  ))
+  $(LI language service
+   $(UL
+    $(LI dparser updated to cf26dbe426b10957f6364313cc7121e41083bebe with support for new 
+         language features in dmd 2.067 and fixing a number of exceptions)
+    $(LI some initial support for finding symbol references)
+    $(LI new command "Compile and Disassemble" to show the disassembly of the current file in
+         the code context window that is automatically synchronized with editor movements)
+  ))
+  $(LI mago debugger
+   $(UL
+    $(LI module list now shows x64 addresses correctly)
+    $(LI verboser output for DLL load/unload)
+    $(LI implement "set next statement")
+    $(LI callstack: parameter list also showed locals)
+    $(LI disassembly: show symbols, address labels)
+    $(LI fix dstring display)
+    $(LI can list associative array members (needs 
+         https://github.com/D-Programming-Language/dmd/pull/4473 for Win64, new AA
+         implementation in dmd 2.068 not supported yet, though))
+    $(LI show exception number for Win32 exceptions)
+    $(LI can now load PDB symbols from Microsoft Symbol Server or local cache folders)
+    $(LI now supports lexical scope blocks (helps C++ and D with
+         https://github.com/D-Programming-Language/dmd/pull/2867))
+   ))
+  $(LI cv2pdb: improvements for DWARF conversion)
+  $(LI renaming project configuration did not change respective config on all platforms)
+  $(LI profiler window: non-D symbols (e.g. C++ mangled functions) are no longer displayed empty)
+ )
+
+$(B 2015-1-1 Version 0.3.40)
  $(UL
   $(LI build system
    $(UL
@@ -48,7 +85,7 @@ Ddoc
   $(LI add installation for VS2015)
  )
 
-2014-10-10 Version 0.3.39
+$(H2 2014-10-10 Version 0.3.39)
  $(UL
   $(LI build system
    $(UL
@@ -93,7 +130,7 @@ Ddoc
    ))
  )
 
-2014-04-12 Version 0.3.38
+$(H2 2014-04-12 Version 0.3.38)
  $(UL
   $(LI build system
    $(UL
@@ -153,7 +190,7 @@ Ddoc
    ))
  )
 
-2013-11-02 Version 0.3.37
+$(H2 2013-11-02 Version 0.3.37)
  $(UL
   $(LI installer:
    $(UL
@@ -222,7 +259,7 @@ Ddoc
   $(LI changed license to Boost)
  )
 
-2013-05-10 $(DDLINK News36,Version 0.3.36)
+$(H2 2013-05-10 $(DDLINK News36,Version 0.3.36))
  $(UL
   $(LI added debug settings to new DMD/GDC project template )
   $(LI regressions caused by switching to installation as VS2010/VS2012 extension:
@@ -277,7 +314,7 @@ Ddoc
   $(LI added option "Colorize coverage from .LST file" to highlight lines from code coverage output)
  )
  
-2012-12-03 Version 0.3.35
+$(H2 2012-12-03 Version 0.3.35)
  $(UL
   $(LI new linker option to disable using global and standard library search paths)
   $(LI add preliminary support for upcoming dmd win64 compiler)
@@ -302,7 +339,7 @@ Ddoc
   $(LI fixed spurious crashes due to bug in precise garbage collection)
  )
  
-2012-10-12 Version 0.3.34
+$(H2 2012-10-12 Version 0.3.34)
  $(UL
   $(LI fix exceptions in NDepend when opening context menu on D project)
   $(LI delete file from project now uses VS environment dialog (avoiding dialog when moving project items))
@@ -335,7 +372,7 @@ Ddoc
   $(LI DLL project template now has a linker definition file)
  )
 
-2012-06-19 Version 0.3.33
+$(H2 2012-06-19 Version 0.3.33)
  $(UL
   $(LI debugger project settings now stored in solution options file, not in project file)
   $(LI regression: clean project failed, now deletes files given by wildcard recursively)
@@ -356,7 +393,7 @@ Ddoc
   $(LI improved import statement detection for expansion and goto definition)
  )
 
-2012-03-14 Version 0.3.32
+$(H2 2012-03-14 Version 0.3.32)
  $(UL
   $(LI new version of cv2pdb with better handling of unicode characters in path names and better
     support for local variables in DWARF debug info )
@@ -377,7 +414,7 @@ Ddoc
   $(LI fixed building static lib with GDC and a space in the library file name)
  )
 
-2012-03-14 Version 0.3.31
+$(H2 2012-03-14 Version 0.3.31)
  $(UL
   $(LI added option to "Intellisense" page to configure trigger of code completion)
   $(LI delay code definition window update until caret at the same position for a second to avoid pauses while
@@ -401,7 +438,7 @@ Ddoc
   $(LI fix always rebuilding if a dependent library project target has spaces in the path name)
  )
 
-2012-01-07 Version 0.3.30
+$(H2 2012-01-07 Version 0.3.30)
  $(UL
   $(LI fixed utf8 to OLE string conversion, that could get in the way when using non ascii file names)
   $(LI property pages now adjust their font and size to the IDE environment)
@@ -423,7 +460,7 @@ Ddoc
     if a project fails to build )
  )
 
-2011-12-03 Version 0.3.29
+$(H2 2011-12-03 Version 0.3.29)
  $(UL
   $(LI highlighting: new colors for user defined list of types (defaults to basic types in object.d))
   $(LI disabled versions: fixed wrong highlighting when editing before conditional)
@@ -435,7 +472,7 @@ Ddoc
   $(LI tweaked dialogs to better integrate with VS)
  )
 
-2011-10-25 Version 0.3.28
+$(H2 2011-10-25 Version 0.3.28)
  $(UL
   $(LI mago debugger: fixed crash when there is no sstStaticSym section in the debug info)
   $(LI mago debugger: fixed local variables not shown in last function of an object file)
@@ -453,7 +490,7 @@ Ddoc
   $(LI parsing and outlining now aborted when text changes, so editing is more responsive with large source files)
  )
 
-2011-09-24 Version 0.3.27
+$(H2 2011-09-24 Version 0.3.27)
  $(UL
   $(LI smart reindenting line when typing last char of sole "in", "out" and "body")
   $(LI tweaked smart indenting with respect to enumerators, arrays, labels and more)
@@ -465,7 +502,7 @@ Ddoc
   $(LI new option to show demangled symbols in the Error List (not the output window))
  )
 
-2011-08-25 Version 0.3.26
+$(H2 2011-08-25 Version 0.3.26)
  $(UL
   $(LI fixed regression in last version: single file compilation did not build any d files)
   $(LI single file compilation: avoid relinking every time)
@@ -482,7 +519,7 @@ Ddoc
   $(LI updated to build with dmd 2.055beta)
  )
 
-2011-06-19 Version 0.3.25
+$(H2 2011-06-19 Version 0.3.25)
  $(UL
   $(LI fixed version information of the DLL)
   $(LI error list: warnings are no longer shown as errors)
@@ -505,7 +542,7 @@ Ddoc
   $(LI fixed a few more issues with relative paths causing a source file to be opened twice in the editor)
  )
 
-2011-05-08 Version 0.3.24
+$(H2 2011-05-08 Version 0.3.24)
  $(UL
   $(LI fixed crash when installing/uninstalling other Visual Studio plugins)
   $(LI added menu entry "Open Website" to browse the visual D Website inside Visual Studio)
@@ -521,7 +558,7 @@ Ddoc
   $(LI fixed spurious crash when removing multiple lines )
  )
 
-2011-03-09 Version 0.3.23
+$(H2 2011-03-09 Version 0.3.23)
  $(UL
   $(LI fixed issue on x64 with threads without TLS that crept back in by migrating to DMD 2.052)
   $(LI separate compile and link: removed -X,-D,-H from the link step to avoid creating empty files)
@@ -529,7 +566,7 @@ Ddoc
   $(LI jumping to errors in files that exist in several projects now jump to the correct source)
  )
 
-2011-02-27 Version 0.3.22
+$(H2 2011-02-27 Version 0.3.22)
  $(UL
   $(LI Visual D now builds with DMD 2.052)
   $(LI fixed WindowsApp template to build with DMD 2.052)
@@ -544,7 +581,7 @@ Ddoc
   $(LI now supporting the Code Definition Window)
  )
 
-2011-01-29 Version 0.3.21
+$(H2 2011-01-29 Version 0.3.21)
  $(UL
   $(LI fix: identifiers extracted for "Goto Definition" stopped at digits)
   $(LI fix: clean removed ddoc files from the doc directory, but not html files)
@@ -561,7 +598,7 @@ Ddoc
     the debugger to stop when a D exception is thrown
  )
 
-2010-12-31 Version 0.3.20
+$(H2 2010-12-31 Version 0.3.20)
  $(UL
   $(LI basic outlining support (disable with check box on global text editor page
     if it is causing trouble, manually activate it with "Outlining -> Collapse to Definitions") )
@@ -573,7 +610,7 @@ Ddoc
   $(LI support for generating modules.ddoc for CanDyDOC)
  )
 
-2010-12-11 Version 0.3.19
+$(H2 2010-12-11 Version 0.3.19)
  $(UL
   $(LI fixed [] being a single token confusing brace matching)
   $(LI fixed some issues with detecting floating point numbers)
@@ -582,7 +619,7 @@ Ddoc
   $(LI now packaged with cv2pdb 0.19)
  )
 
-2010-11-07 Version 0.3.18
+$(H2 2010-11-07 Version 0.3.18)
  $(UL
   $(LI linker errors with file name on the same line did not make it into the error list)
   $(LI added color "Visual D Operator" to "Fonts and Colors" setup)
@@ -603,7 +640,7 @@ Ddoc
   $(LI added token identifier enumerator to lexer)
  )
 
-2010-09-29 Version 0.3.17
+$(H2 2010-09-29 Version 0.3.17)
  $(UL
   $(LI improved support for mercurial-scc, AnkhSVN and VisualHG)
   $(LI (un)comment/format selection did not work with selection created from bottom to top)
@@ -615,7 +652,7 @@ Ddoc
   $(LI command "Build phobos browse info" now also works for D1)
  )
 
-2010-09-24 Version 0.3.16
+$(H2 2010-09-24 Version 0.3.16)
  $(UL
   $(LI now Visual D itself also compiles against VSI SDK for Visual Studio 2010 and Windows SDK v7.1)
   $(LI empty dependency file now causes rebuild)
@@ -633,7 +670,7 @@ Ddoc
   $(LI fixed bad variable replacement when building project name shorter than 4 characters)
  )
 
-2010-08-11 Version 0.3.15
+$(H2 2010-08-11 Version 0.3.15)
  $(UL
   $(LI when reading import paths from sc.ini, the directory is determined by searching dmd.exe 
     through the executable paths setting and the PATH environment variable )
@@ -643,7 +680,7 @@ Ddoc
   $(LI fixed crash when running along-side the Qt-Addin for Visual Studio)
  )
 
-2010-07-23 Version 0.3.14
+$(H2 2010-07-23 Version 0.3.14)
  $(UL
   $(LI fixed parameter tooltips on VS2010)
   $(LI fixed debugger data tooltips on VS2010)
@@ -661,7 +698,7 @@ Ddoc
   $(LI generating JSON output is now the default setting for new projects)
  )
 
-2010-07-09 Version 0.3.13
+$(H2 2010-07-09 Version 0.3.13)
  $(UL
   $(LI renaming a file in the project did not ensure the project to be saved)
   $(LI dragging a directory into the project now creates a folder and adds all files and folders found in that directory but those that start with ".")
@@ -677,7 +714,7 @@ Ddoc
   $(LI options with multiple arguments are now delimited by both ';' and white spaces, use quotes if any of these need to be part of a file name)
  )
 
-2010-06-25 Version 0.3.12
+$(H2 2010-06-25 Version 0.3.12)
  $(UL
   $(LI stricter string handling to avoid crashes when launching debugger in VS2010)
   $(LI the windows application template's sub-system version now defaults to 4.0)
@@ -691,7 +728,7 @@ Ddoc
   $(LI updated to cv2pdb 0.14.)
  )
 
-2010-06-10 Version 0.3.11
+$(H2 2010-06-10 Version 0.3.11)
  $(UL
   $(LI error messages now forwarded to error list)
   $(LI Visual D settings now stored in the user area of the registry)
@@ -706,7 +743,7 @@ Ddoc
   $(LI Thanks to Alix Pexton, the web site has a professional looking new logo.)
  )
 
-2010-06-03 Version 0.3.10
+$(H2 2010-06-03 Version 0.3.10)
  $(UL
   $(LI updated to cv2pdb 0.13 which allows debugging under plain VS2010 and is
     more stable when evaluating arrays in the debugger )
@@ -717,7 +754,7 @@ Ddoc
   $(LI new logo now used in about box)
  )
 
-2010-05-28 Version 0.3.9
+$(H2 2010-05-28 Version 0.3.9)
  $(UL
   $(LI new file/symbol search window)
   $(LI word-completion can now be expanded to symbol lookup by pressing Ctrl-Space again)
@@ -734,7 +771,7 @@ Ddoc
     to build once)
  )
 
-2010-05-08 Version 0.3.8
+$(H2 2010-05-08 Version 0.3.8)
  $(UL
   $(LI added function parameter tooltips)
   $(LI fix: resource files would not be updated when used with tool "Auto")
@@ -745,12 +782,12 @@ Ddoc
   $(LI improved WindowsApp project template (added libs, sets application subsystem))
  )
 
-2010-04-27 Version 0.3.7
+$(H2 2010-04-27 Version 0.3.7)
  $(UL
   $(LI force CR/LF pairs in batch commands instead of LF only end-of-line.)
  )
 
-2010-04-26 Version 0.3.6
+$(H2 2010-04-26 Version 0.3.6)
  $(UL
   $(LI fixed COM and memory leaks)
   $(LI projects with a lot of files now build with response files)
@@ -762,7 +799,7 @@ Ddoc
     without spaces)
  )
 
-2010-04-22 Version 0.3.5
+$(H2 2010-04-22 Version 0.3.5)
  $(UL
   $(LI added cv2pdb to installer)
   $(LI support for operations on multiselection in solution explorer)
@@ -771,14 +808,14 @@ Ddoc
   $(LI fixed crashes on COM objects that were garbage-collected while still in use)
  )
 
-2010-04-20 Version 0.3.4
+$(H2 2010-04-20 Version 0.3.4)
  $(UL
   $(LI added support for command Edit.InvokeSnippetFromShortcut)
   $(LI installer now requests admin execution level, so it does not fail on Vista or Windows7)
   $(LI removed VS Express version from installer)
  )
 
-2010-04-18 Version 0.3.3
+$(H2 2010-04-18 Version 0.3.3)
  $(UL
   $(LI now shows full version in about box)
   $(LI added README, LICENSE and CHANGES to installer)
@@ -789,13 +826,13 @@ Ddoc
   $(LI cleaned up and added more project templates )
  )
 
-2010-04-14 Version 0.3.2
+$(H2 2010-04-14 Version 0.3.2)
  $(UL
   $(LI added switch "use other compiler" to project settings)
   $(LI disabled settings if respective enable switch is off)
  )
   
-2010-04-13 Version 0.3.1
+$(H2 2010-04-13 Version 0.3.1)
  $(UL
   $(LI initial release)
  )
