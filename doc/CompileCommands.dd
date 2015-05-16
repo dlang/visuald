@@ -50,7 +50,11 @@ disassembly dump in the Code Definition Window. It automatically synchronizes th
 shown in the disassembly with the current caret location in the editor.
 )
 
-$(IMG_CENTER images/compiledisasm.png)
+    <div align="center"><img src="images/compiledisasm.png" width="90%"/></div>
+
+$(P It's best to assign a keyboard shortcut to the "VisualD.CompileAndDisasm" command to 
+easily update the disassembly view after making changes to the source.
+)
 
 $(P Dumping the assembly of an object file is done by an external command line tool that can 
 be configured for each tool chain in the $(LINK2 GlobalOptions.html, global settings). 
@@ -84,19 +88,19 @@ $(PRE obj2conv -fasm "$(DOLLAR)(InputFile)" "$(DOLLAR)(TargetPath)")
 
 $(H3 DMD/Win64)
 
-$(PRE "$(DOLLAR)(VCInstallDir)\bin\amd64\dumpbin" /disasm "$(DOLLAR)(InputPath)" >"$(DOLLAR)(TargetPath)" )
+$(PRE "$(DOLLAR)(VCInstallDir)\bin\amd64\dumpbin" /disasm:nobytes "$(DOLLAR)(InputPath)" >"$(DOLLAR)(TargetPath)" )
 
 $(H3 DMD/Win32-COFF)
 
 dumpbin executables can be used for both architectures x86 and AMD64, no matter
-what architecture might be running on, so you can use the same setting as Win64, 
+what architecture they are executed on, so you can use the same setting as Win64, 
 but in case you are restricted to a 32-bit OS, the respective executable can be 
 found in the bin folder of the VC installation:
 
-$(PRE "$(DOLLAR)(VCInstallDir)\bin\dumpbin" /disasm "$(DOLLAR)(InputPath)" >"$(DOLLAR)(TargetPath)" )
+$(PRE "$(DOLLAR)(VCInstallDir)\bin\dumpbin" /disasm:nobytes "$(DOLLAR)(InputPath)" >"$(DOLLAR)(TargetPath)" )
 
 There is one gotcha: dumpbin needs a DLL for doing the disassembly that is installed
-to $(VSInstallDir)\Common7\IDE (in VS 2013), so make sure you have this directory
+to $(DOLLAR)(VSInstallDir)\Common7\IDE (in VS 2013), so make sure you have this directory
 listed in the "Executable Paths".
 
 $(H3 LDC)
@@ -104,7 +108,7 @@ $(H3 LDC)
 dumpbin works here, too, for the x64/AMD64 architecture, but in case you want to
 use LLVM tools for other architectures, you'll have to change the default setting:
 
-$(PRE llvm-objdump -disassemble "$(DOLLAR)(InputPath)" >"$(DOLLAR)(TargetPath)" )
+$(PRE llvm-objdump -disassemble -x86-asm-syntax=intel -no-show-raw-insn "$(DOLLAR)(InputPath)" >"$(DOLLAR)(TargetPath)" )
 
 You'll have to add the path the LLVM tools to the "Executable Paths" or to the
 llvm-objdump command.

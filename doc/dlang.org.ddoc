@@ -69,7 +69,7 @@ $(T title, $(TITLE) - D Programming Language)
 $(SCRIPT document.body.className += ' have-javascript';)
 $(DIVID top,
 	$(DIVID header,
-		<a class="logo" href="$(ROOT)"><img id="logo" width="125" height="95" alt="D Logo" src="$(ROOT_DIR)images/dlogo.svg"></a>
+		<a class="logo" href="$(ROOT_DIR)"><img id="logo" width="125" height="95" alt="D Logo" src="$(ROOT_DIR)images/dlogo.svg"></a>
 		<span id="d-language-mobilehelper"><a href="$(ROOT)" id="d-language">D Programming Language</a></span>
 	)
 )

@@ -53,6 +53,15 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2015-5-16 Version 0.3.41
+$(UL
+ $(LI new linker option "build and use local phobos library")
+ $(LI dparser updated to with support for new language features in dmd 2.067)
+ $(LI mago debugger improvements)
+ $(LI new command "$(LINK2 CompileCommands.html,Compile and Disassemble)" to show the disassembly of the current file in
+    the code context window)
+)
+
 2015-1-1 Version 0.3.40
 $(UL
  $(LI added basic support to compile C/C++ files)
@@ -60,20 +69,6 @@ $(UL
  $(LI link dependency monitor now uses tracker.exe from MSBuild or WinSDK)
  $(LI dparser: updated semantic engine to recent version)
  $(LI goto file/line for mixin errors and exception dumps)
-)
-
-2014-10-10 Version 0.3.39
-$(UL
- $(LI mago 1.0: now can debug 64-bit applications)
- $(LI updated dparser to latest version)
- $(LI new "Compile & Debug" command)
- $(LI updated to support dmd 2.066 command line options)
- $(LI support tab/indentation settings set by .editorconfig plugin)
-)
-
-2014-04-15 Version 0.3.38-1
-$(UL
- $(LI build mago with static C runtime to avoid dependencies on msvcrt120.dll)
 )
 
 $(LINK2 VersionHistory.html, more...)
