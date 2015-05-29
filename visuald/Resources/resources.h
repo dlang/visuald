@@ -51,6 +51,7 @@
 #define CmdDelLstFiles   0x116
 #define CmdCompileAndDbg 0x117
 #define CmdCompileAndAsm 0x118
+#define CmdDustMite      0x119
 
 #define CmdCollapseUnittest 0x120
 #define CmdCollapseDisabled 0x121

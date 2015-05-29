@@ -1853,10 +1853,13 @@ class GlobalOptions
 				files ~= findDRuntimeFiles(s, "std\\windows", false);
 				jsonfile = jsonPath ~ "phobos1.json";
 			}
-			if(std.file.exists(s ~ "object.di"))
+			if(std.file.exists(s ~ "object.di") || std.file.exists(s ~ "object.d"))
 			{
 				opts ~= " -I" ~ buildPath(s, "..\\src"); // needed since dmd 2.059
-				files ~= "object.di";
+				if (std.file.exists(s ~ "object.di"))
+					files ~= "object.di";
+				else
+					files ~= "object.d"; // dmd >=2.068 no longer has object.di
 				files ~= findDRuntimeFiles(s, "core", true);
 				files ~= findDRuntimeFiles(s, "std", false);  // D1?
 				jsonfile = jsonPath ~ "druntime.json";

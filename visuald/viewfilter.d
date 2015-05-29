@@ -364,6 +364,9 @@ version(tip)
 			case CmdCompileAndAsm:
 				return CompileDoc(false, false, false, true);
 
+			case CmdDustMite:
+				return DustMiteProject();
+
 			case CmdCollapseUnittest:
 				return mCodeWinMgr.mSource.CollapseDisabled(true, false);
 
@@ -533,7 +536,6 @@ version(tip)
 			// not in Visual D project, but in workspace project
 			ProjectFactory factory = newCom!ProjectFactory(Package.s_instance);
 			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
-			string srcfile = Package.GetGlobalOptions().VisualDInstallDir ~ "Templates/ProjectItems/ConsoleApp/ConsoleApp.visualdproj";
 
 			proj = newCom!Project(factory, "__compile__", filename, "Debug", "Win32").addref();
 			pFile = newCom!CFileNode(fname);
@@ -670,6 +672,64 @@ version(tip)
 		return S_OK;
 	}
 
+	HRESULT DustMiteProject()
+	{
+		auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+		scope(exit) release(solutionBuildManager);
+		
+		IVsHierarchy phier;
+		if(solutionBuildManager.get_StartupProject(&phier) != S_OK)
+			return E_FAIL;
+		Project proj = qi_cast!Project(phier);
+		scope(exit) release(phier);
+
+		Config cfg;
+		IVsProjectCfg activeCfg;
+		scope(exit) release(activeCfg);
+
+		if(solutionBuildManager && proj)
+			if(solutionBuildManager.FindActiveProjectCfg(null, null, proj, &activeCfg) == S_OK)
+				cfg = qi_cast!Config(activeCfg);
+
+		if(!cfg)
+			return E_FAIL;
+
+		string errmsg = "backend\\cgobj.c 2340";
+		string msg = format("Do you want to reduce project %s for error message \"%s\"?\n" ~
+							"Please make sure you have a backup of the project!", proj.GetCaption(), errmsg);
+		string caption = "DustMite";
+		int msgRet = UtilMessageBox(msg, MB_YESNOCANCEL | MB_ICONEXCLAMATION, caption);
+		if (msgRet != IDYES)
+			return S_OK;
+
+		string workdir = cfg.GetProjectDir();
+		string cmdline = cfg.getCommandLine();
+		string cmdfile = makeFilenameAbsolute(cfg.GetCommandLinePath(), workdir);
+
+		auto pane = getBuildOutputPane();
+		scope(exit) release(pane);
+		clearBuildOutputPane();
+		if(pane)
+			pane.Activate();
+
+		try
+		{
+			std.file.write(cmdfile, cmdline);
+		}
+		catch(FileException e)
+		{
+			string output = format("internal error: cannot write file " ~ cmdfile);
+			return S_FALSE;
+		}
+
+		string dustcmd = quoteFilename(cmdfile) ~ " | grep " ~ quoteFilename(errmsg);
+
+		string dustfile = cmdfile ~ ".dustmite";
+		string cmd = Package.GetGlobalOptions().findDmdBinDir() ~ "dustmite \"" ~ replace(dustcmd, "\"", "\\\"") ~ "\"";
+		HRESULT hr = RunCustomBuildBatchFile("dustmite", dustfile, cmd, pane, cfg.getBuilder());
+		return hr;
+	}
+
 	//////////////////////////////
 
 	void initCompletion(bool autoInsert)
@@ -746,6 +806,7 @@ version(tip)
 			case CmdCompileAndRun:
 			case CmdCompileAndDbg:
 			case CmdCompileAndAsm:
+			case CmdDustMite:
 			case CmdCollapseUnittest:
 			case CmdCollapseDisabled:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;

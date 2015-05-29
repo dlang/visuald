@@ -2910,9 +2910,11 @@ class Config :	DisposingComObject,
 			return "echo dmd.exe not found in DMDInstallDir=" ~ installDir ~ " or through PATH\nexit /B 1";
 
 		string druntimePath = "src\\druntime\\src\\";
-		if(!std.file.exists(installDir ~ druntimePath ~ "object_.d"))
+		if(!std.file.exists(installDir ~ druntimePath ~ "object_.d") &&
+		   !std.file.exists(installDir ~ druntimePath ~ "object.d")) // dmd >=2.068 no longer has object_.d
 			druntimePath = "druntime\\src\\";
-		if(!std.file.exists(installDir ~ druntimePath ~ "object_.d"))
+		if(!std.file.exists(installDir ~ druntimePath ~ "object_.d") &&
+		   !std.file.exists(installDir ~ druntimePath ~ "object.d"))
 			return "echo druntime source not found in DMDInstallDir=" ~ installDir ~ "\nexit /B 1";
 
 		string phobosPath = "src\\phobos\\";
@@ -2946,7 +2948,10 @@ class Config :	DisposingComObject,
 
 		// collect druntime D files
 		string[] files;
-		files ~= druntimePath ~ "object_.d";
+		if(std.file.exists(installDir ~ druntimePath ~ "object_.d"))
+			files ~= druntimePath ~ "object_.d";
+		else
+			files ~= druntimePath ~ "object.d"; // dmd >=2.068 no longer has object.di
 		files ~= findDRuntimeFiles(installDir, druntimePath ~ "rt",   true, false, true);
 		files ~= findDRuntimeFiles(installDir, druntimePath ~ "core", true, false, true);
 		files ~= findDRuntimeFiles(installDir, druntimePath ~ "gc",   true, false, true);
