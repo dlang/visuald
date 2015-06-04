@@ -285,7 +285,7 @@ class Package : DisposingComObject,
 
 	override void Dispose()
 	{
-		deleteBuildOutputPane();
+		deleteVisualDOutputPane();
 
 		Close();
 		mLangsvc = release(mLangsvc);
@@ -546,6 +546,7 @@ version(none)
 				case CmdSearchTokPrev:
 				case CmdReplaceTokens:
 				case CmdConvWizard:
+				case CmdDustMite:
 				case CmdBuildPhobos:
 				case CmdShowProfile:
 				case CmdShowLangPage:
@@ -605,6 +606,10 @@ version(none)
 			mOptions.buildPhobosBrowseInfo();
 			mLibInfos.updateDefinitions();
 			return S_OK;
+		}
+		if(nCmdID == CmdDustMite)
+		{
+			return DustMiteProject();
 		}
 		if(nCmdID == CmdShowProfile)
 		{
@@ -1789,7 +1794,7 @@ class GlobalOptions
 
 	bool buildPhobosBrowseInfo()
 	{
-		IVsOutputWindowPane pane = getBuildOutputPane();
+		IVsOutputWindowPane pane = getVisualDOutputPane();
 		if(!pane)
 			return false;
 		scope(exit) release(pane);

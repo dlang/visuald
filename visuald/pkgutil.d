@@ -32,7 +32,7 @@ void showStatusBarText(string txt)
 	showStatusBarText(to!wstring(txt));
 }
 
-void deleteBuildOutputPane()
+void deleteVisualDOutputPane()
 {
 	auto win = queryService!(IVsOutputWindow)();
 	if(!win)
@@ -42,7 +42,7 @@ void deleteBuildOutputPane()
 	win.DeletePane(&g_outputPaneCLSID);
 }
 
-void clearBuildOutputPane()
+void clearOutputPane()
 {
 	auto win = queryService!(IVsOutputWindow)();
 	if(!win)
@@ -55,7 +55,7 @@ void clearBuildOutputPane()
 	release(pane);
 }
 
-IVsOutputWindowPane getBuildOutputPane()
+IVsOutputWindowPane getVisualDOutputPane()
 {
 	auto win = queryService!(IVsOutputWindow)();
 	if(!win)
@@ -69,6 +69,19 @@ IVsOutputWindowPane getBuildOutputPane()
 		if(win.GetPane(&g_outputPaneCLSID, &pane) == S_OK && pane)
 			return pane;
 
+	if(win.GetPane(&GUID_BuildOutputWindowPane, &pane) != S_OK || !pane)
+		return null;
+	return pane;
+}
+
+IVsOutputWindowPane getBuildOutputPane()
+{
+	auto win = queryService!(IVsOutputWindow)();
+	if(!win)
+		return null;
+	scope(exit) release(win);
+
+	IVsOutputWindowPane pane;
 	if(win.GetPane(&GUID_BuildOutputWindowPane, &pane) != S_OK || !pane)
 		return null;
 	return pane;
@@ -107,7 +120,7 @@ class OutputPaneBuffer
 
 void writeToBuildOutputPane(string msg)
 {
-	if(IVsOutputWindowPane pane = getBuildOutputPane())
+	if(IVsOutputWindowPane pane = getVisualDOutputPane())
 	{
 		scope(exit) release(pane);
 		pane.Activate();
@@ -119,7 +132,7 @@ void writeToBuildOutputPane(string msg)
 
 bool OutputErrorString(string msg)
 {
-	if (IVsOutputWindowPane pane = getBuildOutputPane())
+	if (IVsOutputWindowPane pane = getVisualDOutputPane())
 	{
 		scope(exit) release(pane);
 		pane.OutputString(toUTF16z(msg));
