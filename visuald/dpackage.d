@@ -632,7 +632,7 @@ version(none)
 			if(dte2.DTE2 spvsDTE = GetDTE())
 			{
 				scope(exit) release(spvsDTE);
-				spvsDTE.ExecuteCommand("View.WebBrowser"w.ptr, "http://www.dsource.org/projects/visuald"w.ptr);
+				spvsDTE.ExecuteCommand("View.WebBrowser"w.ptr, "http://rainers.github.io/visuald/visuald/StartPage.html"w.ptr);
 			}
 			return S_OK;
 		}
