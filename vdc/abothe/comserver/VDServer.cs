@@ -256,7 +256,7 @@ namespace DParserCOMServer
 
             ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
             LooseResolution.NodeResolutionAttempt attempt;
-            var types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt) : null;
+            var types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
 
 			_tipText.Clear();
 
@@ -400,7 +400,7 @@ namespace DParserCOMServer
 
             ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
             LooseResolution.NodeResolutionAttempt attempt;
-            var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt) : null;
+            var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
 
 			_tipText.Clear();
 			if (rr != null)
@@ -454,7 +454,7 @@ namespace DParserCOMServer
 
             ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
             LooseResolution.NodeResolutionAttempt attempt;
-            var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt) : null;
+            var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
 
             StringBuilder refs = new StringBuilder();
 			if (rr != null)

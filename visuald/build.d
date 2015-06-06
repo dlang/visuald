@@ -194,7 +194,14 @@ else
 	}
 
 	bool isStopped() const { return m_fStopBuild != 0; }
-	
+
+	bool needsOutputParser() { return true; }
+
+	string GetBuildDir()
+	{
+		return mConfig.GetProjectDir();
+	}
+
 	//////////////////////////////////////////////////////////////////////
 	static struct FileDep
 	{
@@ -883,11 +890,11 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	HRESULT hr = S_OK;
 
 	// get the project root directory.
-	string strProjectDir = pBuilder.mConfig.GetProjectDir();
+	string strBuildDir = pBuilder.GetBuildDir();
 	string batchFileText = insertCr(cmdline);
 	string output;
 	
-	Package.GetGlobalOptions().addBuildPath(strProjectDir);
+	Package.GetGlobalOptions().addBuildPath(strBuildDir);
 
 	string cmdfile = buildfile ~ ".cmd";
 	
@@ -910,7 +917,7 @@ version(none)
 {
 	hr = srpIVsLaunchPad.ExecBatchScript(
 		/* [in] LPCOLESTR pszBatchFileContents         */ _toUTF16z(batchFileText),
-		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
+		/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strBuildDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
 		/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
 		/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
 		/* [in] ULONG nTaskItemCategory                */ 0, // if LPF_PipeStdoutToTaskList is specified
@@ -941,13 +948,14 @@ version(none)
 		hr = S_FALSE;
 	}
 	DWORD result;
-	if(IVsLaunchPad2 pad2 = qi_cast!IVsLaunchPad2(srpIVsLaunchPad))
+	IVsLaunchPad2 pad2 = qi_cast!IVsLaunchPad2(srpIVsLaunchPad);
+	if(pad2 && pBuilder.needsOutputParser())
 	{
 		CLaunchPadOutputParser pLaunchPadOutputParser = newCom!CLaunchPadOutputParser(pBuilder);
 		hr = pad2.ExecCommandEx(
 			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
 			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
-			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
+			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strBuildDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
 			/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow | LPF_PipeStdoutToTaskList,
 			/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
 			/* [in] ULONG nTaskItemCategory                */ CAT_BUILDCOMPILE, // if LPF_PipeStdoutToTaskList is specified
@@ -963,7 +971,7 @@ version(none)
 		hr = srpIVsLaunchPad.ExecCommand(
 			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
 			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilename(cmdfile)),
-			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strProjectDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
+			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strBuildDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
 			/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow | LPF_PipeStdoutToTaskList,
 			/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
 			/* [in] ULONG nTaskItemCategory                */ CAT_BUILDCOMPILE, // if LPF_PipeStdoutToTaskList is specified

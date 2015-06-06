@@ -10,6 +10,7 @@ module visuald.hierutil;
 
 import visuald.windows;
 import std.string;
+import std.file;
 import std.path;
 import std.utf;
 import std.stream;
@@ -32,6 +33,7 @@ import visuald.fileutil;
 import visuald.logutil;
 import visuald.stringutil;
 import visuald.dpackage;
+import visuald.dproject;
 import visuald.completion;
 import visuald.chiernode;
 import visuald.chiercontainer;
@@ -646,6 +648,43 @@ HRESULT OpenFileInSolutionWithScope(string fname, int line, int col, string scop
 		}
 	}
 	return hr;
+}
+
+////////////////////////////////////////////////////////////////////////
+string commonProjectFolder(Project proj)
+{
+	string workdir = normalizeDir(dirName(proj.GetFilename()));
+	string path = workdir;
+	searchNode(proj.GetRootNode(), delegate (CHierNode n) 
+	{
+		if(CFileNode file = cast(CFileNode) n)
+			path = commonParentDir(path, makeFilenameAbsolute(file.GetFilename(), workdir));
+		return false;
+	});
+	return path;
+}
+
+////////////////////////////////////////////////////////////////////////
+string copyProjectFolder(Project proj, string ncommonpath)
+{
+	string path = commonProjectFolder(proj);
+	if (path.length == 0)
+		return null;
+	string npath = normalizeDir(ncommonpath);
+	string workdir = normalizeDir(dirName(proj.GetFilename()));
+
+	searchNode(proj.GetRootNode(), delegate (CHierNode n) 
+	{
+		if(CFileNode file = cast(CFileNode) n)
+		{
+			string fname = makeFilenameAbsolute(file.GetFilename(), workdir);
+			string nname = npath ~ fname[path.length .. $];
+			mkdirRecurse(dirName(nname));
+			copy(fname, nname);
+		}
+		return false;
+	});
+	return npath;
 }
 
 ////////////////////////////////////////////////////////////////////////

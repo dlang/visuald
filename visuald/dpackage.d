@@ -285,7 +285,7 @@ class Package : DisposingComObject,
 
 	override void Dispose()
 	{
-		deleteBuildOutputPane();
+		deleteVisualDOutputPane();
 
 		Close();
 		mLangsvc = release(mLangsvc);
@@ -546,6 +546,7 @@ version(none)
 				case CmdSearchTokPrev:
 				case CmdReplaceTokens:
 				case CmdConvWizard:
+				case CmdDustMite:
 				case CmdBuildPhobos:
 				case CmdShowProfile:
 				case CmdShowLangPage:
@@ -606,6 +607,10 @@ version(none)
 			mLibInfos.updateDefinitions();
 			return S_OK;
 		}
+		if(nCmdID == CmdDustMite)
+		{
+			return DustMiteProject();
+		}
 		if(nCmdID == CmdShowProfile)
 		{
 			showProfilerWindow();
@@ -627,7 +632,7 @@ version(none)
 			if(dte2.DTE2 spvsDTE = GetDTE())
 			{
 				scope(exit) release(spvsDTE);
-				spvsDTE.ExecuteCommand("View.WebBrowser"w.ptr, "http://www.dsource.org/projects/visuald"w.ptr);
+				spvsDTE.ExecuteCommand("View.WebBrowser"w.ptr, "http://rainers.github.io/visuald/visuald/StartPage.html"w.ptr);
 			}
 			return S_OK;
 		}
@@ -1789,7 +1794,7 @@ class GlobalOptions
 
 	bool buildPhobosBrowseInfo()
 	{
-		IVsOutputWindowPane pane = getBuildOutputPane();
+		IVsOutputWindowPane pane = getVisualDOutputPane();
 		if(!pane)
 			return false;
 		scope(exit) release(pane);
@@ -1839,7 +1844,7 @@ class GlobalOptions
 			string jsonfile;
 			string opts = " -d -c -o-";
 			
-			if(std.file.exists(s ~ "std\\algorithm.d")) // D2
+			if(std.file.exists(s ~ "std\\algorithm.d") || std.file.exists(s ~ "std\\algorithm\\package.d")) // D2
 			{
 				files ~= findDRuntimeFiles(s, "std", true);
 				files ~= findDRuntimeFiles(s, "etc\\c", true);
@@ -1853,10 +1858,13 @@ class GlobalOptions
 				files ~= findDRuntimeFiles(s, "std\\windows", false);
 				jsonfile = jsonPath ~ "phobos1.json";
 			}
-			if(std.file.exists(s ~ "object.di"))
+			if(std.file.exists(s ~ "object.di") || std.file.exists(s ~ "object.d"))
 			{
 				opts ~= " -I" ~ buildPath(s, "..\\src"); // needed since dmd 2.059
-				files ~= "object.di";
+				if (std.file.exists(s ~ "object.di"))
+					files ~= "object.di";
+				else
+					files ~= "object.d"; // dmd >=2.068 no longer has object.di
 				files ~= findDRuntimeFiles(s, "core", true);
 				files ~= findDRuntimeFiles(s, "std", false);  // D1?
 				jsonfile = jsonPath ~ "druntime.json";

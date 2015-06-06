@@ -224,3 +224,31 @@ unittest
 	res = makeRelative(file, path);
 	assert(res == file);
 }
+
+string commonParentDir(string path1, string path2)
+{
+	if (path1.length == 0 || path2.length == 0)
+		return null;
+	string p1 = toLower(normalizeDir(path1));
+	string p2 = toLower(normalizeDir(path2));
+
+	while(p2.length)
+	{
+		if (p1.startsWith(p2))
+			return path1[0 .. p2.length]; // preserve case
+		string q2 = dirName(p2);
+		q2 = normalizeDir(q2);
+		if(q2 == p2)
+			return null;
+		p2 = q2;
+	}
+	return null;
+}
+
+unittest
+{
+	string path1 = "c:\\A\\bc\\def\\ghi.d";
+	string path2 = "c:\\a/bc\\x";
+	string res = commonParentDir(path1, path2);
+	assert(res == "c:\\A\\bc\\");
+}

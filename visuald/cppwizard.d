@@ -770,7 +770,7 @@ private:
 			}
 		}
 
-		clearBuildOutputPane();
+		clearOutputPane();
 		auto thrd = new Thread(&run);
 		thrd.start();
 		return true;

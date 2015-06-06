@@ -11,6 +11,7 @@ module visuald.dproject;
 import visuald.windows;
 import core.stdc.string : memcpy;
 import core.stdc.wchar_ : wcslen;
+import core.thread;
 import std.windows.charset;
 import std.string;
 import std.utf;
@@ -2500,6 +2501,7 @@ Error:
 	}
 
 	string GetFilename() { return mFilename; }
+	string GetName() { return mName; }
 	string GetCaption() { return mCaption; }
 	void SetCaption(string caption) { mCaption = caption; }
 
@@ -2521,3 +2523,185 @@ private:
 	xml.Document mDoc;
 }
 
+void checkDustMiteDirs(string dustmitepath)
+{
+	if (std.file.exists(dustmitepath) && !std.file.dirEntries(dustmitepath, SpanMode.shallow).empty())
+	{
+		string msg = "Folder " ~ dustmitepath ~ " already exists and is not empty. Remove to continue?";
+		int msgRet = UtilMessageBox(msg, MB_OKCANCEL | MB_ICONEXCLAMATION, "DustMite");
+		if (msgRet != IDOK)
+			throw new Exception("DustMite operation cancelled");
+
+		try
+		{
+			rmdirRecurse(dustmitepath);
+		}
+		catch(Exception e)
+		{
+			// ok to swallow exception if directory is left empty
+			if (!std.file.dirEntries(dustmitepath, SpanMode.shallow).empty())
+				throw e;
+		}
+	}
+
+	string reducedpath = dustmitepath ~ ".reduced";
+	if (std.file.exists(reducedpath))
+	{
+		string msg = "Folder " ~ reducedpath ~ " already exists. Remove to continue?";
+		int msgRet = UtilMessageBox(msg, MB_OKCANCEL | MB_ICONEXCLAMATION, "DustMite");
+		if (msgRet != IDOK)
+			throw new Exception("DustMite operation cancelled");
+
+		rmdirRecurse(reducedpath);
+	}
+}
+
+string getSelectedTextInBuildPane()
+{
+	if(auto opane = getBuildOutputPane())
+	{
+		scope(exit) release(opane);
+		if(auto owin = qi_cast!IVsTextView(opane))
+		{
+			BSTR selText;
+			if (owin.GetSelectedText (&selText) == S_OK)
+				return detachBSTR(selText);
+		}
+	}
+	return null;
+}
+
+string getCurrentErrorText()
+{
+	if (auto tasklist = queryService!(SVsErrorList, IVsTaskList2)())
+	{
+		scope(exit) release(tasklist);
+		IVsTaskItem item;
+		if (tasklist.GetCaretPos(&item) == S_OK && item)
+		{
+			scope(exit) release(item);
+			BSTR text;
+			if (item.get_Text (&text) == S_OK)
+				return detachBSTR(text);
+		}
+	}
+	return null;
+}
+
+HRESULT DustMiteProject()
+{
+	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+	scope(exit) release(solutionBuildManager);
+
+	IVsHierarchy phier;
+	if(solutionBuildManager.get_StartupProject(&phier) != S_OK)
+		return E_FAIL;
+	Project proj = qi_cast!Project(phier);
+	scope(exit) release(phier);
+
+	Config cfg;
+	IVsProjectCfg activeCfg;
+	scope(exit) release(activeCfg);
+
+	if(solutionBuildManager && proj)
+		if(solutionBuildManager.FindActiveProjectCfg(null, null, proj, &activeCfg) == S_OK)
+			cfg = qi_cast!Config(activeCfg);
+
+	if(!cfg)
+		return E_FAIL;
+
+	string errmsg = getSelectedTextInBuildPane();
+	if (errmsg.length == 0)
+		errmsg = getCurrentErrorText();
+	if (errmsg.length == 0)
+		errmsg = "Internal error";
+
+	string projname = proj.GetCaption();
+	if (projname.length == 0)
+		projname = proj.GetName();
+	if (projname.length == 0)
+		projname = baseName(proj.GetFilename());
+
+	string msg = format("Do you want to reduce project %s for error message \"%s\"?\n" ~
+						"Visual D will try to create a clean copy of your project, but\n" ~
+						"you might also consider making a backup of the project!", projname, errmsg);
+	string caption = "DustMite";
+	int msgRet = UtilMessageBox(msg, MB_YESNO | MB_ICONEXCLAMATION, caption);
+	if (msgRet != IDYES)
+		return S_FALSE;
+
+	string workdir = cfg.GetProjectDir();
+
+	auto pane = getVisualDOutputPane();
+	scope(exit) release(pane);
+	clearOutputPane();
+	if(!pane)
+		return S_FALSE;
+	pane.Activate();
+
+	string npath, nworkdir, cmdline, cmdfile, dustfile, cmd;
+	try
+	{
+		string commonpath = commonProjectFolder(proj);
+		string dustmitepath = buildPath(dirName(commonpath), baseName(commonpath) ~ ".dustmite"); // need to strip trailing '\'
+		checkDustMiteDirs(dustmitepath);
+
+		npath = copyProjectFolder(proj, dustmitepath);
+		if (npath.length == 0)
+			return pane.OutputString("cannot determine common root folder for all sources\n"w.ptr), S_FALSE;
+		pane.OutputString(_toUTF16z("created clean copy of the project in " ~ dustmitepath ~ "\n"));
+
+		nworkdir = npath; // TODO
+		string nintdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), nworkdir);
+		string noutdir = makeFilenameAbsolute(cfg.GetOutDir(), nworkdir);
+		mkdirRecurse(nworkdir);
+		mkdirRecurse(nintdir);
+		mkdirRecurse(noutdir);
+		std.file.write(normalizeDir(nworkdir) ~ "empty.txt", ""); // dustmite needs non-empty directories
+		std.file.write(normalizeDir(nintdir) ~ "empty.txt", "");
+		std.file.write(normalizeDir(noutdir) ~ "empty.txt", "");
+
+		if (nworkdir != npath)
+			cmdline ~= "cd " ~ quoteFilename(makeRelative(nworkdir, npath));
+		cmdline ~= cfg.getCommandLine();
+		cmdfile = npath ~ "build.dustmite.bat";
+		std.file.write(cmdfile, cmdline);
+		cmdfile = makeRelative(cmdfile, npath);
+		string dustcmd = quoteFilename(cmdfile) ~ " | find " ~ quoteFilename(errmsg);
+		dustcmd = dustcmd.replace("\"", "\\\"");
+
+		string intdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), workdir);
+		mkdirRecurse(intdir);
+		dustfile = intdir ~ "\\dustmite.cmd";
+		string opts = "--strip-comments --split *.bat:lines";
+		cmd = Package.GetGlobalOptions().findDmdBinDir() ~ "dustmite " ~ opts ~ " " ~ quoteFilename(npath[0..$-1]) ~ " \"" ~ dustcmd ~ "\"";
+		std.file.write(dustfile, cmd ~ "\npause\n");
+		std.process.spawnShell(quoteFilename(dustfile), null, std.process.Config.none, nworkdir);
+		pane.OutputString(_toUTF16z("Spawned dustmite, check new console window for output...\n"));
+	}
+	catch(Exception e)
+	{
+		pane.OutputString(_toUTF16z(e.msg ~ "\n"));
+		return S_FALSE;
+	}
+
+	return S_OK;
+}
+
+class DustMiteThread : CBuilderThread
+{
+	this(Config cfg, string buildDir)
+	{
+		super(cfg);
+		mBuildDir = buildDir;
+	}
+
+	override string GetBuildDir()
+	{
+		return mBuildDir;
+	}
+
+	override bool needsOutputParser() { return false; }
+
+	string mBuildDir;
+}

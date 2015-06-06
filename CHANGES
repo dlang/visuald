@@ -698,7 +698,7 @@ Version history
   * object browser/symbol search: now filters out __unittest and __invariant symbols
   * cv2pdb: updated to 0.33 with better DWARF location support
 
-unreleased Version 0.3.41
+2015-05-16 Version 0.3.41
 
   * mago:
     - module list now shows x64 addresses correctly
@@ -727,3 +727,12 @@ unreleased Version 0.3.41
   * new command "Compile and Disassemble" to show the disassembly of the current file in
     the code context window that is automatically synchronized with editor movements
 
+unreleased Version 0.3.42
+
+  * added new command "DustMite Build Failure" to reduce source of startup project
+    for build error with DustMite
+  * update "Build Phobos Browse Info" and "Build local version of phobos" for dmd 2.067+
+  * cv2pdb: 
+    - last version introduced crashes with DWARF conversions
+    - DWARF debug info now stripped from executable
+    - support for mspdb140.dll from VS2015

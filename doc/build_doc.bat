@@ -23,6 +23,7 @@ set SRC=%SRC% Features.dd
 set SRC=%SRC% VersionHistory.dd
 set SRC=%SRC% News36.dd
 set SRC=%SRC% CompileCommands.dd
+set SRC=%SRC% DustMite.dd
 
 set DDOC=macros.ddoc html.ddoc visuald.ddoc dlang.org.ddoc
 

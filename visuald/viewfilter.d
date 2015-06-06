@@ -533,7 +533,6 @@ version(tip)
 			// not in Visual D project, but in workspace project
 			ProjectFactory factory = newCom!ProjectFactory(Package.s_instance);
 			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
-			string srcfile = Package.GetGlobalOptions().VisualDInstallDir ~ "Templates/ProjectItems/ConsoleApp/ConsoleApp.visualdproj";
 
 			proj = newCom!Project(factory, "__compile__", filename, "Debug", "Win32").addref();
 			pFile = newCom!CFileNode(fname);
@@ -649,9 +648,9 @@ version(tip)
 				cmd ~= "echo Execution result code: %ERRORLEVEL%\n";
 			}
 			
-			auto pane = getBuildOutputPane();
+			auto pane = getVisualDOutputPane();
 			scope(exit) release(pane);
-			clearBuildOutputPane();
+			clearOutputPane();
 			if(pane)
 				pane.Activate();
 			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
