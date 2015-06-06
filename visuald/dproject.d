@@ -2672,9 +2672,12 @@ HRESULT DustMiteProject()
 
 		string intdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), workdir);
 		mkdirRecurse(intdir);
-		dustfile = intdir ~ "\\dustmite";
+		dustfile = intdir ~ "\\dustmite.cmd";
 		string opts = "--strip-comments --split *.bat:lines";
 		cmd = Package.GetGlobalOptions().findDmdBinDir() ~ "dustmite " ~ opts ~ " " ~ quoteFilename(npath[0..$-1]) ~ " \"" ~ dustcmd ~ "\"";
+		std.file.write(dustfile, cmd ~ "\npause\n");
+		std.process.spawnShell(quoteFilename(dustfile), null, std.process.Config.none, nworkdir);
+		pane.OutputString(_toUTF16z("Spawned dustmite, check new console window for output...\n"));
 	}
 	catch(Exception e)
 	{
@@ -2682,18 +2685,6 @@ HRESULT DustMiteProject()
 		return S_FALSE;
 	}
 
-	pane.addref();
-
-	auto builder = new DustMiteThread(cfg, nworkdir);
-	//auto thrd = new Thread(() { 
-		HRESULT hr = RunCustomBuildBatchFile("dustmite", dustfile, cmd, pane, builder);
-		if (FAILED(hr))
-			writeToBuildOutputPane("Starting dustmite failed.\n");
-		else
-			writeToBuildOutputPane("dustmite done.\n");
-		pane.release();
-	//});
-	//thrd.start();
 	return S_OK;
 }
 
