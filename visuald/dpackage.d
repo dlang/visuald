@@ -1844,7 +1844,7 @@ class GlobalOptions
 			string jsonfile;
 			string opts = " -d -c -o-";
 			
-			if(std.file.exists(s ~ "std\\algorithm.d")) // D2
+			if(std.file.exists(s ~ "std\\algorithm.d") || std.file.exists(s ~ "std\\algorithm\\package.d")) // D2
 			{
 				files ~= findDRuntimeFiles(s, "std", true);
 				files ~= findDRuntimeFiles(s, "etc\\c", true);
