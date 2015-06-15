@@ -406,7 +406,8 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	foreach(guid; guids_propertyPages)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
 
-	hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID));
+	hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalEnumOutCLSID));
+	hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalTargetInfoCLSID));
 
 	scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
 	keyToolMenu.Delete(packageGuid);
@@ -618,12 +619,16 @@ version(none){
 		RegDeleteRecursive(HKEY_CURRENT_USER, registrationRoot ~ "\\FontAndColors\\Cache"); // \\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}");
 
 		// global registry keys for marshalled objects
-		scope RegKey keyMarshal1 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocServer32"w);
-		keyMarshal1.Set(null, dllPath);
-		keyMarshal1.Set("ThreadingModel"w, "Apartment"w);
-
-		scope RegKey keyMarshal2 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalCLSID) ~ "\\InprocHandler32"w);
-		keyMarshal2.Set(null, dllPath);
+		void registerMarshalObject(ref in GUID iid)
+		{
+			scope RegKey keyMarshal1 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(iid) ~ "\\InprocServer32"w);
+			keyMarshal1.Set(null, dllPath);
+			keyMarshal1.Set("ThreadingModel"w, "Both"w);
+			scope RegKey keyMarshal2 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(iid) ~ "\\InprocHandler32"w);
+			keyMarshal2.Set(null, dllPath);
+		}
+		registerMarshalObject(g_unmarshalEnumOutCLSID);
+		registerMarshalObject(g_unmarshalTargetInfoCLSID);
 
 		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
 

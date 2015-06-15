@@ -497,4 +497,3 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		//return returnError(E_NOTIMPL);
 	}
 }
-
