@@ -27,7 +27,10 @@ import xml = visuald.xmlwrap;
 import visuald.windows;
 import sdk.port.vsi;
 import sdk.win32.objbase;
+import sdk.win32.oleauto;
 import sdk.vsi.vsshell;
+import sdk.vsi.vsshell80;
+import sdk.vsi.vsshell110; // for IVsProfilableProjectCfg, etc
 
 import visuald.comutil;
 import visuald.logutil;
@@ -44,7 +47,10 @@ import visuald.lexutil;
 import visuald.pkgutil;
 import visuald.vdextensions;
 
-// version = hasOutputGroup;
+version = hasOutputGroup;
+// implementation of IVsProfilableProjectCfg is incomplete (profiler doesn't stop)
+// but just providing proper output and debug information works for profiling as an executable
+// version = hasProfilableConfig;
 
 ///////////////////////////////////////////////////////////////
 
@@ -53,6 +59,9 @@ const string[] kPlatforms = [ "Win32", "x64" ];
 enum string kToolResourceCompiler = "Resource Compiler";
 enum string kToolCpp = "C/C++";
 const string kCmdLogFileExtension = "build";
+
+version(hasProfilableConfig)
+const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad4084715");
 
 ///////////////////////////////////////////////////////////////
 
@@ -1763,7 +1772,10 @@ interface ConfigModifiedListener : IUnknown
 class Config :	DisposingComObject, 
 		IVsProjectCfg2,
 		IVsDebuggableProjectCfg,
+		IVsDebuggableProjectCfg2,
 		IVsBuildableProjectCfg,
+		IVsQueryDebuggableProjectCfg,
+		IVsProfilableProjectCfg,
 		ISpecifyPropertyPages
 {
 	static const GUID iid = { 0x402744c1, 0xe382, 0x4877, [ 0x9e, 0x38, 0x26, 0x9c, 0xb7, 0xa3, 0xb8, 0x9d ] };
@@ -1816,8 +1828,15 @@ class Config :	DisposingComObject,
 			return S_OK;
 		if(queryInterface!(IVsDebuggableProjectCfg) (this, riid, pvObject))
 			return S_OK;
+		if(queryInterface!(IVsDebuggableProjectCfg2) (this, riid, pvObject))
+			return S_OK;
 		if(queryInterface!(IVsBuildableProjectCfg) (this, riid, pvObject))
 			return S_OK;
+		if(queryInterface!(IVsQueryDebuggableProjectCfg) (this, riid, pvObject))
+			return S_OK;
+		version(hasProfilableConfig)
+			if(queryInterface!(IVsProfilableProjectCfg) (this, riid, pvObject))
+				return S_OK;
 
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -1901,13 +1920,14 @@ class Config :	DisposingComObject,
 	override int get_CanonicalName( /* [out] */ BSTR *pbstrCanonicalName)
 	{
 		logCall("get_CanonicalName(pbstrCanonicalName=%s)", _toLog(pbstrCanonicalName));
-		return returnError(E_NOTIMPL);
+		*pbstrCanonicalName = allocBSTR(getName());
+		return S_OK;
 	}
 
 	override int get_Platform( /* [out] */ GUID *pguidPlatform)
 	{
 		// The documentation says this is obsolete, so don't do anything.
-		//		mixin(LogCallMix);
+		mixin(LogCallMix);
 		*pguidPlatform = GUID(); //GUID_VS_PLATFORM_WIN32_X86;
 		return returnError(E_NOTIMPL);
 	}
@@ -2044,6 +2064,20 @@ class Config :	DisposingComObject,
 		return _DebugLaunch(prg, workdir, args, mProjectOptions.debugEngine);
 	}
 
+	GUID getDebugEngineUID(int engine)
+	{
+		switch(engine)
+		{
+			case 1:
+				GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
+				return GUID_MaGoDebugger;
+			case 2:
+				return GUID_COMPlusNativeEng; // the mixed-mode debugger (works only on x86)
+			default:
+				return GUID_NativeOnlyEng; // works for x64
+		}
+	}
+
 	HRESULT _DebugLaunch(string prg, string workdir, string args, int engine)
 	{
 		HRESULT hr = E_NOTIMPL;
@@ -2088,19 +2122,7 @@ class Config :	DisposingComObject,
 
 			dbgi.dlo = DLO_CreateProcess; // DLO_Custom;    // specifies how this process should be launched
 			// clsidCustom is the clsid of the debug engine to use to launch the debugger
-			switch(engine)
-			{
-			case 1:
-				GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
-				dbgi.clsidCustom = GUID_MaGoDebugger;
-				break;
-			case 2:
-				dbgi.clsidCustom = GUID_COMPlusNativeEng; // the mixed-mode debugger (works only on x86)
-				break;
-			default:
-				dbgi.clsidCustom = GUID_NativeOnlyEng; // works for x64
-				break;
-			}
+			dbgi.clsidCustom = getDebugEngineUID(engine);
 			dbgi.bstrMdmRegisteredName = null; // used with DLO_AlreadyRunning. The name of the
 			                                   // app as it is registered with the MDM.
 			dbgi.bstrExe = allocBSTR(prg); // _toUTF16z(prg);
@@ -2128,6 +2150,138 @@ class Config :	DisposingComObject,
 		return S_OK; // returnError(E_NOTIMPL);
 	}
 
+	// IVsDebuggableProjectCfg2
+	HRESULT OnBeforeDebugLaunch(in VSDBGLAUNCHFLAGS grfLaunch)
+	{
+		mixin(LogCallMix);
+		return S_OK; // returnError(E_NOTIMPL);
+	}
+
+	// IVsQueryDebuggableProjectCfg
+	HRESULT QueryDebugTargets(in VSDBGLAUNCHFLAGS grfLaunch, in ULONG cTargets,
+							  VsDebugTargetInfo2 *dti, ULONG *pcActual)
+	{
+		if(cTargets > 0)
+		{
+			if(!dti)
+				return E_INVALIDARG;
+			string remote = mProjectOptions.replaceEnvironment(mProjectOptions.debugremote, this);
+			string prg = mProjectOptions.replaceEnvironment(mProjectOptions.debugtarget, this);
+			string args = mProjectOptions.replaceEnvironment(mProjectOptions.debugarguments, this);
+			string workdir = mProjectOptions.replaceEnvironment(mProjectOptions.debugworkingdir, this);
+			if(!isAbsolute(workdir))
+				workdir = GetProjectDir() ~ "\\" ~ workdir;
+			prg = makeFilenameAbsolute(prg, workdir);
+
+			dti.cbSize = VsDebugTargetInfo2.sizeof;
+			dti.dlo = DLO_CreateProcess;  // specifies how this process should be launched or attached
+			dti.LaunchFlags = grfLaunch; // launch flags that were passed to IVsDebuggableProjectCfg::Launch
+			dti.bstrRemoteMachine = remote.length ? allocBSTR(remote) : null;       // NULL for local machine, or remote machine name
+			dti.bstrExe = allocBSTR(prg);
+			dti.bstrArg = allocBSTR(args);
+			dti.bstrCurDir = allocBSTR(workdir);
+			dti.bstrEnv = null;
+			dti.guidLaunchDebugEngine = getDebugEngineUID(mProjectOptions.debugEngine);
+			dti.dwDebugEngineCount = 1;
+			dti.pDebugEngines = cast(GUID*)CoTaskMemAlloc(GUID.sizeof);
+			*(dti.pDebugEngines) = dti.guidLaunchDebugEngine;
+			/+
+			dti.guidPortSupplier;        // port supplier guid
+			dti.bstrPortName;            // name of port from above supplier (NULL is fine)
+			dti.bstrOptions;             // custom options, specific to each guidLaunchDebugEngine (NULL is recommended)
+			dti.hStdInput;              // for file redirection
+			dti.hStdOutput;             // for file redirection
+			dti.hStdError;              // for file redirection
+			dti.fSendToOutputWindow;     // if TRUE, stdout and stderr will be routed to the output window
+			dti.dwProcessId;            // process id (DLO_AlreadyRunning)
+			dti.pUnknown;           // interface pointer - usage depends on DEBUG_LAUNCH_OPERATION
+			dti.guidProcessLanguage;     // Language of the hosting process. Used to preload EE's
+			+/
+		}
+		if (pcActual)
+			*pcActual = 1;
+		return S_OK;
+	}
+
+	///////////////////////////////////////////////////////////////
+	// IVsProfilableProjectCfg
+	HRESULT SuppressSignedAssemblyWarnings(/+[retval, out]+/VARIANT_BOOL* suppress)
+	{
+		mixin(LogCallMix);
+		*suppress = FALSE;
+		return S_OK;
+	}
+	HRESULT LegacyWebSupportRequired(/+[retval, out]+/VARIANT_BOOL* required)
+	{
+		mixin(LogCallMix);
+		*required = FALSE;
+		return S_OK;
+	}
+
+	HRESULT GetSupportedProfilingTasks(/+[out]+/ SAFEARRAY *tasks)
+	{
+		mixin(LogCallMix);
+		BSTR task = allocBSTR("ClassicCPUSampling");
+		int index = 0;
+		SafeArrayPutElement(tasks, &index, &task);
+		return S_OK;
+	}
+	HRESULT BeforeLaunch(in BSTR profilingTask)
+	{
+		mixin(LogCallMix);
+		return S_OK;
+	}
+	HRESULT BeforeTargetsLaunched()
+	{
+		mixin(LogCallMix);
+		return S_OK;
+	}
+	HRESULT LaunchProfiler()
+	{
+		mixin(LogCallMix);
+		version(hasProfilableConfig)
+		{
+			IVsProfilerLauncher launcher;
+			GUID svcid = uuid_SVsProfilerLauncher;
+			GUID clsid = uuid_IVsProfilerLauncher;
+			if (IServiceProvider sp = visuald.dpackage.Package.s_instance.getServiceProvider())
+				sp.QueryService(&svcid, &clsid, cast(void**)&launcher);
+			if (!launcher)
+				return E_NOTIMPL;
+
+			auto infos = addref(newCom!EnumVsProfilerTargetInfos(this));
+			scope(exit) release(launcher);
+			scope(exit) release(infos);
+
+			HRESULT hr = launcher.LaunchProfiler(infos);
+			return hr;
+		}
+		else
+			return returnError(E_NOTIMPL);
+	}
+	HRESULT QueryProfilerTargetInfoEnum(/+[out]+/ IEnumVsProfilerTargetInfos *targetsEnum)
+	{
+		version(hasProfilableConfig)
+		{
+			mixin(LogCallMix);
+			*targetsEnum = addref(newCom!EnumVsProfilerTargetInfos(this));
+			return S_OK;
+		}
+		else
+			return returnError(E_NOTIMPL);
+	}
+	HRESULT AllBrowserTargetsFinished()
+	{
+		mixin(LogCallMix);
+		return S_OK;
+	}
+	HRESULT ProfilerAnalysisFinished()
+	{
+		mixin(LogCallMix);
+		return S_OK;
+	}
+
+	///////////////////////////////////////////////////////////////
 	// IVsBuildableProjectCfg
 	override int get_ProjectCfg( 
 		/* [out] */ IVsProjectCfg *ppIVsProjectCfg)
@@ -3615,9 +3769,8 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	{
 		mixin(LogCallMixNoRet);
 
-		*cast(GUID*)pCid = g_unmarshalCLSID;
+		*cast(GUID*)pCid = g_unmarshalEnumOutCLSID;
 		return S_OK;
-		//return returnError(E_NOTIMPL);
 	}
 
 	override HRESULT GetMarshalSizeMax
@@ -3781,6 +3934,13 @@ class VsOutput : DComObject, IVsOutput2
 	HRESULT get_Property(in LPCOLESTR szProperty, /+[out]+/ VARIANT *pvar)
 	{
 		mixin(LogCallMix);
+		string prop = to_string(szProperty);
+		if (icmp(prop, "OUTPUTLOC") == 0)
+		{
+			pvar.vt = VT_BSTR;
+			pvar.bstrVal = allocBSTR(mTarget);
+			return S_OK;
+		}
 		return returnError(E_NOTIMPL);
 	}
 }
@@ -3818,7 +3978,8 @@ class VsOutputGroup : DComObject, IVsOutputGroup
     HRESULT get_KeyOutput(/+[out]+/ BSTR *pbstrCanonicalName)
 	{
 		mixin(LogCallMix);
-		*pbstrCanonicalName = allocBSTR("");
+		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), mConfig.GetProjectDir());
+		*pbstrCanonicalName = allocBSTR(target);
 		return S_OK;
 	}
 
@@ -3865,6 +4026,274 @@ private:
 	Config mConfig;
 };
 
+///////////////////////////////////////////////////////////////////////
+version(hasProfilableConfig)
+{
+class TargetInfoFactory : DComObject, IClassFactory
+{
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface2!(IClassFactory) (this, IID_IClassFactory, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	override HRESULT CreateInstance(IUnknown UnkOuter, in IID* riid, void** pvObject)
+	{
+		logCall("%s.CreateInstance(riid=%s)", this, _toLog(riid));
+
+		assert(!UnkOuter);
+		ProfilerTargetInfo pti = newCom!ProfilerTargetInfo(null);
+		return pti.QueryInterface(riid, pvObject);
+	}
+	override HRESULT LockServer(in BOOL fLock)
+	{
+		return returnError(E_NOTIMPL);
+	}
+}
+
+class ProfilerTargetInfo : DComObject, IVsProfilerTargetInfo, IVsProfilerLaunchExeTargetInfo, IMarshal
+{
+	string mPlatform;
+	string mWorkdir;
+	string mProgram;
+	string mArgs;
+
+	this(Config cfg)
+	{
+		if(cfg)
+		{
+			mPlatform = cfg.mPlatform;
+			mWorkdir = cfg.mProjectOptions.replaceEnvironment(cfg.mProjectOptions.debugworkingdir, cfg);
+			if(!isAbsolute(mWorkdir))
+				mWorkdir = cfg.GetProjectDir() ~ "\\" ~ mWorkdir;
+			mProgram = cfg.mProjectOptions.replaceEnvironment(cfg.mProjectOptions.debugtarget, cfg);
+			if(!isAbsolute(mProgram))
+				mProgram = makeFilenameAbsolute(mProgram, mWorkdir);
+			mArgs = cfg.mProjectOptions.replaceEnvironment(cfg.mProjectOptions.debugarguments, cfg);
+		}
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsProfilerTargetInfo) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsProfilerLaunchTargetInfo) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsProfilerLaunchExeTargetInfo) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IMarshal) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+	// IVsProfilerTargetInfo
+	HRESULT ProcessArchitecture(VSPROFILERPROCESSARCHTYPE* arch)
+	{
+		mixin(LogCallMix2);
+		if(mPlatform == "x64")
+			*arch = ARCH_X64;
+		else
+			*arch = ARCH_X86;
+		return S_OK;
+	}
+	// IVsProfilerLaunchTargetInfo
+	HRESULT References(SAFEARRAY* rgbstr)
+	{
+		mixin(LogCallMix2);
+		return S_OK;
+	}
+	HRESULT EnvironmentSettings(SAFEARRAY* pbstr)
+	{
+		mixin(LogCallMix2);
+		return S_OK;
+	}
+	HRESULT LaunchProfilerFlags(VSPROFILERLAUNCHOPTS* opts)
+	{
+		mixin(LogCallMix2);
+		*opts = VSPLO_NOPROFILE; // to just launch the exe!?
+		return S_OK;
+	}
+	// IVsProfilerLaunchExeTargetInfo
+	HRESULT ExecutableArguments(BSTR* pbstr)
+	{
+		mixin(LogCallMix2);
+		*pbstr = allocBSTR(mArgs);
+		return S_OK;
+	}
+	HRESULT ExecutablePath (BSTR* pbstr)
+	{
+		mixin(LogCallMix2);
+		*pbstr = allocBSTR(mProgram);
+		return S_OK;
+	}
+	HRESULT WorkingDirectory (BSTR* pbstr)
+	{
+		mixin(LogCallMix2);
+		*pbstr = allocBSTR(mWorkdir[0..$-1]);
+		return S_OK;
+	}
+
+	// IMarshall
+	override HRESULT GetUnmarshalClass(
+		 /+[in]+/ in IID* riid,
+		 /+[in, unique]+/ in void *pv,
+		 /+[in]+/ in DWORD dwDestContext,
+		 /+[in, unique]+/ in void *pvDestContext,
+		 /+[in]+/ in DWORD mshlflags,
+		 /+[out]+/ CLSID *pCid)
+	{
+		mixin(LogCallMixNoRet);
+
+		*cast(GUID*)pCid = g_unmarshalTargetInfoCLSID;
+		return S_OK;
+		//return returnError(E_NOTIMPL);
+	}
+
+	override HRESULT GetMarshalSizeMax(
+		 /+[in]+/ in IID* riid,
+		 /+[in, unique]+/ in void *pv,
+		 /+[in]+/ in DWORD dwDestContext,
+		 /+[in, unique]+/ in void *pvDestContext,
+		 /+[in]+/ in DWORD mshlflags,
+		 /+[out]+/ DWORD *pSize)
+	{
+		mixin(LogCallMixNoRet);
+
+		DWORD size = iid.sizeof;
+		size += int.sizeof + mPlatform.length;
+		size += int.sizeof + mWorkdir.length;
+		size += int.sizeof + mProgram.length;
+		size += int.sizeof + mArgs.length;
+		*pSize = size;
+		return S_OK;
+	}
+
+	override HRESULT MarshalInterface(
+		 /+[in, unique]+/ IStream pStm,
+		 /+[in]+/ in IID* riid,
+		 /+[in, unique]+/ in void *pv,
+		 /+[in]+/ in DWORD dwDestContext,
+		 /+[in, unique]+/ in void *pvDestContext,
+		 /+[in]+/ in DWORD mshlflags)
+	{
+		mixin(LogCallMixNoRet);
+
+		HRESULT hr = pStm.Write(cast(void*)&iid, iid.sizeof, null);
+
+		void writeString(string s)
+		{
+			int length = s.length;
+			if(hr == S_OK)
+				hr = pStm.Write(&length, length.sizeof, null);
+			if(hr == S_OK && length > 0)
+				hr = pStm.Write(cast(void*)s.ptr, length, null);
+		}
+		writeString(mPlatform);
+		writeString(mWorkdir);
+		writeString(mProgram);
+		writeString(mArgs);
+		return hr;
+	}
+
+	override HRESULT UnmarshalInterface(
+		 /+[in, unique]+/ IStream pStm,
+		 /+[in]+/ in IID* riid,
+		 /+[out]+/ void **ppv)
+	{
+		mixin(LogCallMix);
+
+		GUID miid;
+		HRESULT hr = pStm.Read(&miid, iid.sizeof, null);
+		if (hr == S_OK)
+			assert(miid == iid);
+
+		void readString(ref string str)
+		{
+			int length;
+			if(hr == S_OK)
+				hr = pStm.Read(&length, length.sizeof, null);
+			if(hr == S_OK)
+			{
+				char[] s = new char[length];
+				hr = pStm.Read(s.ptr, length, null);
+				if(hr == S_OK)
+					str = assumeUnique(s);
+			}
+		}
+
+		ProfilerTargetInfo pti = newCom!ProfilerTargetInfo(null);
+		readString(pti.mPlatform);
+		readString(pti.mWorkdir);
+		readString(pti.mProgram);
+		readString(pti.mArgs);
+		if(hr != S_OK)
+			return returnError(hr);
+
+		return pti.QueryInterface(riid, ppv);
+	}
+
+	override HRESULT ReleaseMarshalData(/+[in, unique]+/ IStream pStm)
+	{
+		mixin(LogCallMix2);
+		return returnError(E_NOTIMPL);
+	}
+
+	override HRESULT DisconnectObject(/+[in]+/ in DWORD dwReserved)
+	{
+		logCall("%s.DisconnectObject(dwReserved=%s)", this, _toLog(dwReserved));
+		return returnError(E_NOTIMPL);
+	}
+
+	int mExternalReferences;
+}
+
+class EnumVsProfilerTargetInfos : DComObject, IEnumVsProfilerTargetInfos
+{
+	Config mConfig;
+	int mPos;
+
+	this(Config cfg)
+	{
+		mConfig = cfg;
+		mPos = 0;
+	}
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface2!(IEnumVsProfilerTargetInfos) (this, uuid_IEnumVsProfilerTargetInfos, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	HRESULT Next(in ULONG celt, IVsProfilerTargetInfo *rgelt, ULONG *pceltFetched)
+	{
+		ULONG fetched = 0;
+		if(mPos == 0 && celt > 0)
+		{
+			*rgelt = addref(newCom!ProfilerTargetInfo(mConfig));
+			fetched = 1;
+			mPos++;
+		}
+		if(pceltFetched)
+			*pceltFetched = fetched;
+		return fetched > 0 ? S_OK : S_FALSE;
+	}
+	HRESULT Skip(in   ULONG celt)
+	{
+		mPos += celt;
+		return S_OK;
+	}
+	HRESULT Reset()
+	{
+		mPos = 0;
+		return S_OK;
+	}
+	HRESULT Clone(IEnumVsProfilerTargetInfos *ppenum)
+	{
+		*ppenum = addref(newCom!EnumVsProfilerTargetInfos(mConfig));
+		return S_OK;
+	}
+}
+} // version(hasProfilableConfig)
 
 Config GetActiveConfig(IVsHierarchy pHierarchy)
 {
