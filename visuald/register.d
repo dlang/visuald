@@ -407,7 +407,8 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
 
 	hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalEnumOutCLSID));
-	hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalTargetInfoCLSID));
+	static if(is(typeof(g_unmarshalTargetInfoCLSID))) 
+		hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalTargetInfoCLSID));
 
 	scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
 	keyToolMenu.Delete(packageGuid);
@@ -628,7 +629,8 @@ version(none){
 			keyMarshal2.Set(null, dllPath);
 		}
 		registerMarshalObject(g_unmarshalEnumOutCLSID);
-		registerMarshalObject(g_unmarshalTargetInfoCLSID);
+		static if(is(typeof(g_unmarshalTargetInfoCLSID))) 
+			registerMarshalObject(g_unmarshalTargetInfoCLSID);
 
 		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
 

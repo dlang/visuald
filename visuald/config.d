@@ -48,6 +48,9 @@ import visuald.pkgutil;
 import visuald.vdextensions;
 
 version = hasOutputGroup;
+// implementation of IVsProfilableProjectCfg is incomplete (profiler doesn't stop)
+// but just providing proper output and debug information works for profiling as an executable
+// version = hasProfilableConfig;
 
 ///////////////////////////////////////////////////////////////
 
@@ -56,6 +59,9 @@ const string[] kPlatforms = [ "Win32", "x64" ];
 enum string kToolResourceCompiler = "Resource Compiler";
 enum string kToolCpp = "C/C++";
 const string kCmdLogFileExtension = "build";
+
+version(hasProfilableConfig)
+const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad4084715");
 
 ///////////////////////////////////////////////////////////////
 
@@ -1828,8 +1834,9 @@ class Config :	DisposingComObject,
 			return S_OK;
 		if(queryInterface!(IVsQueryDebuggableProjectCfg) (this, riid, pvObject))
 			return S_OK;
-		if(queryInterface!(IVsProfilableProjectCfg) (this, riid, pvObject))
-			return S_OK;
+		version(hasProfilableConfig)
+			if(queryInterface!(IVsProfilableProjectCfg) (this, riid, pvObject))
+				return S_OK;
 
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -2232,26 +2239,36 @@ class Config :	DisposingComObject,
 	HRESULT LaunchProfiler()
 	{
 		mixin(LogCallMix);
-		IVsProfilerLauncher launcher;
-		GUID svcid = uuid_SVsProfilerLauncher;
-		GUID clsid = uuid_IVsProfilerLauncher;
-		if (IServiceProvider sp = visuald.dpackage.Package.s_instance.getServiceProvider())
-			sp.QueryService(&svcid, &clsid, cast(void**)&launcher);
-		if (!launcher)
-			return E_NOTIMPL;
+		version(hasProfilableConfig)
+		{
+			IVsProfilerLauncher launcher;
+			GUID svcid = uuid_SVsProfilerLauncher;
+			GUID clsid = uuid_IVsProfilerLauncher;
+			if (IServiceProvider sp = visuald.dpackage.Package.s_instance.getServiceProvider())
+				sp.QueryService(&svcid, &clsid, cast(void**)&launcher);
+			if (!launcher)
+				return E_NOTIMPL;
 
-		auto infos = addref(newCom!EnumVsProfilerTargetInfos(this));
-		scope(exit) release(launcher);
-		scope(exit) release(infos);
+			auto infos = addref(newCom!EnumVsProfilerTargetInfos(this));
+			scope(exit) release(launcher);
+			scope(exit) release(infos);
 
-		HRESULT hr = launcher.LaunchProfiler(infos);
-		return hr;
+			HRESULT hr = launcher.LaunchProfiler(infos);
+			return hr;
+		}
+		else
+			return returnError(E_NOTIMPL);
 	}
 	HRESULT QueryProfilerTargetInfoEnum(/+[out]+/ IEnumVsProfilerTargetInfos *targetsEnum)
 	{
-		mixin(LogCallMix);
-		*targetsEnum = addref(newCom!EnumVsProfilerTargetInfos(this));
-		return S_OK;
+		version(hasProfilableConfig)
+		{
+			mixin(LogCallMix);
+			*targetsEnum = addref(newCom!EnumVsProfilerTargetInfos(this));
+			return S_OK;
+		}
+		else
+			return returnError(E_NOTIMPL);
 	}
 	HRESULT AllBrowserTargetsFinished()
 	{
@@ -4009,6 +4026,9 @@ private:
 	Config mConfig;
 };
 
+///////////////////////////////////////////////////////////////////////
+version(hasProfilableConfig)
+{
 class TargetInfoFactory : DComObject, IClassFactory
 {
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -4273,6 +4293,7 @@ class EnumVsProfilerTargetInfos : DComObject, IEnumVsProfilerTargetInfos
 		return S_OK;
 	}
 }
+} // version(hasProfilableConfig)
 
 Config GetActiveConfig(IVsHierarchy pHierarchy)
 {
