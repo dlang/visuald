@@ -292,6 +292,8 @@ class ProjectOptions
 		runCv2pdb = dbg;
 		symdebug = dbg ? 1 : 0;
 		release = dbg ? 0 : 1;
+		optimize = release;
+		useInline = release;
 	}
 	void setX64(bool x64)
 	{
