@@ -1473,6 +1473,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 
 		try
 		{
+			GlobalOptions globOpt = Package.GetGlobalOptions();
+			if(globOpt.demangleError)
+				asmfile ~= ".mangled";
 			mDisasmSymInfo = readDisasmFile(asmfile);
 			mDisasmLineInfo = readLineInfoFile(linefile, GetFileName());
 			
