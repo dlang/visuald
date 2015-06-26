@@ -108,7 +108,8 @@ const GUID    g_omLibraryManagerCLSID    = uuid("002a2de9-8bb6-484d-980b-7e4ad40
 const GUID    g_omLibraryCLSID           = uuid("002a2de9-8bb6-484d-980c-7e4ad4084715");
 const GUID    g_ProjectItemWizardCLSID   = uuid("002a2de9-8bb6-484d-980d-7e4ad4084715");
 
-const GUID    g_unmarshalCLSID           = uuid("002a2de9-8bb6-484d-980e-7e4ad4084715");
+const GUID    g_unmarshalEnumOutCLSID    = uuid("002a2de9-8bb6-484d-980e-7e4ad4084715");
+// const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad4084715"); // defined in config.d
 
 const GUID    g_VisualDHelperCLSID       = uuid("002a2de9-8bb6-484d-aa10-7e4ad4084715");
 
@@ -171,9 +172,14 @@ HRESULT DllGetClassObject(CLSID* rclsid, IID* riid, LPVOID* ppv)
 		auto factory = newCom!ClassFactory;
 		return factory.QueryInterface(riid, ppv);
 	}
-	if(*rclsid == g_unmarshalCLSID)
+	if(*rclsid == g_unmarshalEnumOutCLSID)
 	{
 		DEnumOutFactory eof = newCom!DEnumOutFactory;
+		return eof.QueryInterface(riid, ppv);
+	}
+	static if(is(typeof(g_unmarshalTargetInfoCLSID))) if(*rclsid == g_unmarshalTargetInfoCLSID)
+	{
+		TargetInfoFactory eof = newCom!TargetInfoFactory;
 		return eof.QueryInterface(riid, ppv);
 	}
 	if(*rclsid == g_ProjectItemWizardCLSID)
@@ -215,11 +221,17 @@ class ClassFactory : DComObject, IClassFactory
 			Package pkg = newCom!Package;
 			return pkg.QueryInterface(riid, pvObject);
 		}
-		if(*riid == g_unmarshalCLSID)
+		if(*riid == g_unmarshalEnumOutCLSID)
 		{
 			assert(!UnkOuter);
 			DEnumOutputs eo = newCom!DEnumOutputs(null, 0);
 			return eo.QueryInterface(riid, pvObject);
+		}
+		static if(is(typeof(g_unmarshalTargetInfoCLSID))) if(*riid == g_unmarshalTargetInfoCLSID)
+		{
+			assert(!UnkOuter);
+			auto pti = newCom!ProfilerTargetInfo(null);
+			return pti.QueryInterface(riid, pvObject);
 		}
 		return S_FALSE;
 	}

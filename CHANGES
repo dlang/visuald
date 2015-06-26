@@ -733,6 +733,15 @@ unreleased Version 0.3.42
     for build error with DustMite
   * update "Build Phobos Browse Info" and "Build local version of phobos" for dmd 2.067+
   * cv2pdb: 
-    - last version introduced crashes with DWARF conversions
-    - DWARF debug info now stripped from executable
+    - improved DWARF support:
+      - last version introduced crashes with DWARF conversions
+	  - now supports info in sections .debug_frame and .debug_loc for better display of locals
+      - DWARF debug info now stripped from executable
     - support for mspdb140.dll from VS2015
+	- now writes correct machine type to PDB for x64
+  * add integration into the Visual Studio Performance Wizard
+  * added project template for console application built with DMD/LDC and x86/x64
+  * bugzilla 14706: release configurations now enable optimizations and inlining by default
+  * mago is now the default debug engine for new projects
+  * demangle D/C++ symbols in disassembly with new tool dcxxfilt that supports both gcc
+    and MS C++ mangling.

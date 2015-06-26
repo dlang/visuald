@@ -15,6 +15,7 @@ import std.utf;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
+import sdk.vsi.vsshell110;
 import sdk.vsi.ivssccmanager2;
 
 import visuald.hierarchy;
@@ -252,6 +253,11 @@ public:
 			}
 			else
 				break;
+
+		case VSHPROPID_TargetPlatformIdentifier:
+			pvar.vt = VT_BSTR;
+			pvar.bstrVal = allocBSTR("Windows");
+			return S_OK;
 
 		default:
 			break;

@@ -1118,7 +1118,8 @@ class ExtProject : ExtProjectItem, dte.Project
 		/* [retval][out] */ dte.CodeModel *ppCodeModel)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		*ppCodeModel = null;
+		return S_OK; // returnError(E_NOTIMPL);
 	}
 
 	override int Delete()

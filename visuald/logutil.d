@@ -529,7 +529,7 @@ version(test) {
 
 	void logCall(...)
 	{
-		auto buffer = new char[17 + 1];
+		auto buffer = new char[32];
 		SysTime now = Clock.currTime();
 		uint tid = GetCurrentThreadId();
 		auto len = sprintf(buffer.ptr, "%02d:%02d:%02d - %04x - ",

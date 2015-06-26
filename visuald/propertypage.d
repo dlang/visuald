@@ -1808,7 +1808,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddHorizontalLine();
-		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors"));
+		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor linker dependencies"));
 		AddHorizontalLine();
 		//AddControl("Remove project item", mDeleteFiles = 
