@@ -5,7 +5,7 @@ Visual D
 This is the README file for Visual D, a 
 Visual Studio package providing both project management and language services
 
-Copyright (c) 2010-2013 by Rainer Schuetze, All Rights Reserved
+Copyright (c) 2010-2015 by Rainer Schuetze, All Rights Reserved
 
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
@@ -18,7 +18,7 @@ Major Features
 ---------------
 * Project management
   - all DMD and GDC command line options accessable
-  - support for x64 builds with GDC
+  - support for GDC and LDC
   - support for resource compiler
   - custom build commands
   - pre/post custom build steps
@@ -33,9 +33,8 @@ Major Features
 * Language Service
   - syntax highlighting with special version/debug and token string support
   - underlining of syntactical errors 
-  - simple word-completion
+  - semantic analysis for code completion, goto definition and tool tips
   - import statement completion
-  - goto definition (using JSON file from compilation)
   - parameter info tooltips 
   - smart indentation
   - comment/uncomment selection 
@@ -48,25 +47,30 @@ Major Features
   - search and replace dialog based on D tokenizer
   - browse information displayed in object browser and class view 
   - help on language and runtime library
-  - semantic analysis for code completion and tool tips
 
 * Other
   - symbol/file search window
   - profiler window 
   - C++ to D conversion wizard 
-    
+  - [dustmite](https://github.com/CyberShadow/DustMite) integration
+  - disassembly view synchronized with source code
+  
 * Supported Visual Studio versions
   - VS 2005
   - VS 2008
   - VS 2010
   - VS 2012
   - VS 2013
+  - VS 2015
   Unfortunately, Express versions of Visual Studio do not support this 
   kind of extensions. Use the Visual Studio Shell instead:
   - VS 2008 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=9771
   - VS 2010 Shell: no longer available
   - VS 2012 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=30670
                  + http://www.microsoft.com/en-us/download/details.aspx?id=30663
+  Starting with VS 2013, Microsoft also released Community Versions of
+  Visual Studio, which are free for most users and are similar to the
+  professional editions.
   
 * Includes tools to
   - convert some idl/h files of the Windows SDK to D
@@ -95,7 +99,7 @@ In a nutshell:
 
 - install the Visual Studio SDK
 - start Visual Studio and load solution visuald_vs9.sln (VS 2008) or
-  visuald_vs10.sln (VS 2010)
+  visuald_vs10.sln (VS 2010+)
 - build project "build"
 - build project "VisualD"
 
@@ -106,7 +110,7 @@ http://rainers.github.io/visuald/visuald/BuildFromSource.html
 Installation
 ------------
 
-The click-through-installer will guide you through the intallation process. 
+The click-through-installer will guide you through the installation process. 
 The installer lets you select the Visual Studio Version for which you want 
 Visual D to be installed. It will always install for all users, not only for 
 a single user.
