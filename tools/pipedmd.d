@@ -56,8 +56,9 @@ int main(string[] argv)
 	int skipargs = 0;
 	string depsfile;
 	bool doDemangle = true;
+	bool demangleAll = false; //not just linker messages
 	bool gdcMode = false; //gcc linker 
-	bool msMode = false; //microsft linker
+	bool msMode = false; //microsoft linker
 	bool verbose = false;
 
 	while (argv.length >= skipargs + 2)
@@ -65,7 +66,12 @@ int main(string[] argv)
 		if(argv[skipargs + 1] == "-nodemangle")
 		{
 			doDemangle = false;
-			skipargs = 1;
+			skipargs++;
+		}
+		else if(argv[skipargs + 1] == "-demangleall")
+		{
+			demangleAll = true;
+			skipargs++;
 		}
 		else if(argv[skipargs + 1] == "-gdcmode")
 		{
@@ -136,7 +142,7 @@ int main(string[] argv)
 	if(verbose)
 		printf("Command: %.*s\n", command.length, command.ptr);
 
-	int exitCode = runProcess(command, inject ? depsfile : null, doDemangle, gdcMode, msMode);
+	int exitCode = runProcess(command, inject ? depsfile : null, doDemangle, demangleAll, gdcMode, msMode);
 
 	if (exitCode == 0 && trackfile.length > 0)
 	{
@@ -157,7 +163,7 @@ int main(string[] argv)
 	return exitCode;
 }
 
-int runProcess(string command, string depsfile, bool doDemangle, bool gdcMode, bool msMode)
+int runProcess(string command, string depsfile, bool doDemangle, bool demangleAll, bool gdcMode, bool msMode)
 {
 	HANDLE hStdOutRead;
 	HANDLE hStdOutWrite;
@@ -230,12 +236,10 @@ int runProcess(string command, string depsfile, bool doDemangle, bool gdcMode, b
 	ResumeThread(piProcInfo.hThread);
 
 	char[] buffer = new char[2048];
-	WCHAR[] decodeBufferWide;
-	char[] decodeBuffer;
 	DWORD bytesRead = 0;
 	DWORD bytesAvaiable = 0;
 	DWORD exitCode = 0;
-	bool linkerFound = gdcMode || msMode;
+	bool linkerFound = gdcMode || msMode || demangleAll;
 
 	while(true)
 	{
@@ -255,59 +259,7 @@ int runProcess(string command, string depsfile, bool doDemangle, bool gdcMode, b
 			if(!bSuccess || bytesRead == 0)
 				break;
 
-			bytesRead--; //remove \n
-			while(bytesRead > 0 && buffer[bytesRead-1] == '\r') // remove \r
-				bytesRead--; 
-			DWORD skip = 0;
-			while(skip < bytesRead && buffer[skip] == '\r') // remove \r
-				skip++;
-
-			char[] output = buffer[skip..bytesRead];
-			if(msMode) //the microsoft linker outputs the error messages in the default ANSI codepage so we need to convert it to UTF-8
-			{
-				if(decodeBufferWide.length < output.length + 1)
-				{
-					decodeBufferWide.length = output.length + 1;
-					decodeBuffer.length = 2 * output.length + 1;
-				}
-				auto numDecoded = MultiByteToWideChar(CP_ACP, 0, output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
-				auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, decodeBuffer.ptr, decodeBuffer.length, null, null);
-				output = decodeBuffer[0..numEncoded];
-			}
-			size_t writepos = 0;
-
-			if(!linkerFound)
-			{
-				if (output.startsWith("OPTLINK (R)"))
-					linkerFound = true;
-				else if(output.countUntil("error LNK") >= 0 || output.countUntil("warning LNK") >= 0)
-					linkerFound = msMode = true;
-			}
-
-			if(doDemangle && linkerFound)
-			{
-				if(gdcMode)
-				{
-					if(output.countUntil("undefined reference to") >= 0 || output.countUntil("In function") >= 0)
-					{
-						processLine(output, writepos, false, cp);
-					}
-				}
-				else if(msMode)
-				{
-					if(output.countUntil("LNK") >= 0)
-					{
-						processLine(output, writepos, false, cp);
-					}
-				}
-				else
-				{
-					processLine(output, writepos, true, cp);
-				}
-			}
-			if(writepos < output.length)
-				fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
-			fputc('\n', stdout);
+			demangleLine(buffer[0 .. bytesRead], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
 		}
 		else
 		{
@@ -325,6 +277,66 @@ int runProcess(string command, string depsfile, bool doDemangle, bool gdcMode, b
 	CloseHandle(piProcInfo.hThread);
 
 	return exitCode;
+}
+
+void demangleLine(char[] output, bool doDemangle, bool demangleAll, bool msMode, bool gdcMode, int cp, ref bool linkerFound)
+{
+	if (output.length && output[$-1] == '\n')  //remove trailing \n
+		output = output[0 .. $-1];
+	while(output.length && output[$-1] == '\r')  //remove trailing \r
+		output = output[0 .. $-1];
+
+	while(output.length && output[0] == '\r') // remove preceding \r
+		output = output[1 .. $];
+
+	if(msMode) //the microsoft linker outputs the error messages in the default ANSI codepage so we need to convert it to UTF-8
+	{
+		static WCHAR[] decodeBufferWide;
+		static char[] decodeBuffer;
+
+		if(decodeBufferWide.length < output.length + 1)
+		{
+			decodeBufferWide.length = output.length + 1;
+			decodeBuffer.length = 2 * output.length + 1;
+		}
+		auto numDecoded = MultiByteToWideChar(CP_ACP, 0, output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
+		auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, decodeBuffer.ptr, decodeBuffer.length, null, null);
+		output = decodeBuffer[0..numEncoded];
+	}
+	size_t writepos = 0;
+
+	if(!linkerFound)
+	{
+		if (output.startsWith("OPTLINK (R)"))
+			linkerFound = true;
+		else if(output.countUntil("error LNK") >= 0 || output.countUntil("warning LNK") >= 0)
+			linkerFound = msMode = true;
+	}
+
+	if(doDemangle && linkerFound)
+	{
+		if(gdcMode)
+		{
+			if(demangleAll || output.countUntil("undefined reference to") >= 0 || output.countUntil("In function") >= 0)
+			{
+				processLine(output, writepos, false, cp);
+			}
+		}
+		else if(msMode)
+		{
+			if(demangleAll || output.countUntil("LNK") >= 0)
+			{
+				processLine(output, writepos, false, cp);
+			}
+		}
+		else
+		{
+			processLine(output, writepos, true, cp);
+		}
+	}
+	if(writepos < output.length)
+		fwrite(output.ptr + writepos, output.length - writepos, 1, stdout);
+	fputc('\n', stdout);
 }
 
 void processLine(char[] output, ref size_t writepos, bool optlink, int cp)
