@@ -260,7 +260,7 @@ class ProjectOptions
 	string debugworkingdir;
 	bool debugattach;
 	string debugremote;
-	ubyte debugEngine; // 0: mixed, 1: mago
+	ubyte debugEngine; // 0: mixed, 1: mago, 2: native
 	bool debugStdOutToOutputWindow;
 	bool pauseAfterRunning;
 
@@ -281,6 +281,7 @@ class ProjectOptions
 		doXGeneration = true;
 		useStdLibPath = true;
 		cRuntime = CRuntime.StaticRelease;
+		debugEngine = 1;
 
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
 		setDebug(dbg);
@@ -2829,7 +2830,14 @@ class Config :	DisposingComObject,
 		GlobalOptions globOpt = Package.GetGlobalOptions();
 		string cmd = x64    ? mProjectOptions.compilerDirectories.DisasmCommand64 : 
 		             mscoff ? mProjectOptions.compilerDirectories.DisasmCommand32coff : mProjectOptions.compilerDirectories.DisasmCommand;
-		cmd = mProjectOptions.replaceEnvironment(cmd, this, objfile, outfile);
+		if(globOpt.demangleError)
+		{
+			string mangledfile = outfile ~ ".mangled";
+			cmd = mProjectOptions.replaceEnvironment(cmd, this, objfile, mangledfile);
+			cmd ~= "\nif errorlevel 0 \"" ~ Package.GetGlobalOptions().VisualDInstallDir ~ "dcxxfilt.exe\" < " ~ quoteFilename(mangledfile) ~ " > " ~ quoteFilename(outfile);
+		}
+		else
+			cmd = mProjectOptions.replaceEnvironment(cmd, this, objfile, outfile);
 		return cmd;
 	}
 

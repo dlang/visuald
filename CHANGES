@@ -742,3 +742,6 @@ unreleased Version 0.3.42
   * add integration into the Visual Studio Performance Wizard
   * added project template for console application built with DMD/LDC and x86/x64
   * bugzilla 14706: release configurations now enable optimizations and inlining by default
+  * mago is now the default debug engine for new projects
+  * demangle D/C++ symbols in disassembly with new tool dcxxfilt that supports both gcc
+    and MS C++ mangling.

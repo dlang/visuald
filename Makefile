@@ -48,6 +48,7 @@ TLB2IDL_EXE = $(BINDIR)\tlb2idl.exe
 PIPEDMD_EXE = $(BINDIR)\pipedmd.exe
 LARGEADR_EXE= $(BINDIR)\largeadr.exe
 FILEMON_DLL = $(BINDIR)\filemonitor.dll
+DCXXFILT_EXE= $(BINDIR)\dcxxfilt.exe
 VSI2D_EXE   = $(BINDIR)\vsi2d.exe
 VSI_LIB     = $(BINDIR)\vsi.lib
 VISUALD     = $(BINDIR)\visuald.dll
@@ -157,6 +158,10 @@ cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "dviewhelper" /Build "Release|Win32" src\cv2pdb_vs12.sln
 	cd ..\..\cv2pdb\trunk && devenv /Project "dumplines"   /Build "Release|Win32" src\cv2pdb_vs12.sln
 
+dcxxfilt: $(DCXXFILT_EXE)
+$(DCXXFILT_EXE): tools\dcxxfilt.d
+	cd tools && set CONFIG=Release&& build_dcxxfilt
+	
 ##################################
 # create installer
 
@@ -164,7 +169,7 @@ install: all cpp2d_exe idl2d_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
-install_vs: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago install_only
+install_vs: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago dcxxfilt install_only
 
 install_only:
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
