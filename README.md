@@ -62,12 +62,14 @@ Major Features
   - VS 2012
   - VS 2013
   - VS 2015
+  
   Unfortunately, Express versions of Visual Studio do not support this 
   kind of extensions. Use the Visual Studio Shell instead:
   - VS 2008 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=9771
   - VS 2010 Shell: no longer available
   - VS 2012 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=30670
                  + http://www.microsoft.com/en-us/download/details.aspx?id=30663
+  
   Starting with VS 2013, Microsoft also released Community Versions of
   Visual Studio, which are free for most users and are similar to the
   professional editions.
