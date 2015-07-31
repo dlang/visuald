@@ -156,3 +156,26 @@ S createPasteString(S)(S s)
 	}
 	return t;		
 }
+
+// special version of std.string.indexOf that considers '.', '/' and '\\' the same
+//  character for case insensitive searches
+ptrdiff_t indexOfPath(Char1, Char2)(const(Char1)[] s, const(Char2)[] sub, 
+									std.string.CaseSensitive cs = std.string.CaseSensitive.yes)
+{
+	const(Char1)[] balance;
+	if (cs == std.string.CaseSensitive.yes)
+	{
+		balance = std.algorithm.find(s, sub);
+	}
+	else
+	{
+		static bool isSame(Char1, Char2)(Char1 c1, Char2 c2)
+		{
+			if (c1 == '.' || c1 == '/' || c1 == '\\')
+				return c2 == '.' || c2 == '/' || c2 == '\\';
+			return std.uni.toLower(c1) == std.uni.toLower(c2);
+		}
+		balance = std.algorithm.find!((a, b) => isSame(a, b))(s, sub);
+	}
+	return balance.empty ? -1 : balance.ptr - s.ptr;
+}

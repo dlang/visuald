@@ -39,6 +39,7 @@ import visuald.logutil;
 import visuald.hierutil;
 import visuald.fileutil;
 import visuald.pkgutil;
+import visuald.stringutil;
 
 import vdc.lexer;
 
@@ -245,7 +246,7 @@ struct SearchData
 			{
 				CaseSensitive cs = caseSensitive ? CaseSensitive.yes : CaseSensitive.no;
 				int pos = 0;
-				int p = pos + std.string.indexOf(name[pos..$], str, cs);
+				int p = pos + indexOfPath(name[pos..$], str, cs);
 				while(p >= pos)
 				{
 					if(!wholeWord)
@@ -256,7 +257,7 @@ struct SearchData
 						return true;
 					
 					pos = p + 1;
-					p = pos + std.string.indexOf(name[pos..$], str, cs);
+					p = pos + indexOfPath(name[pos..$], str, cs);
 				}
 				return false;
 			}

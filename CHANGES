@@ -745,3 +745,8 @@ unreleased Version 0.3.42
   * mago is now the default debug engine for new projects
   * demangle D/C++ symbols in disassembly with new tool dcxxfilt that supports both gcc
     and MS C++ mangling.
+  * search file: the same file is no longer listed multiple times if it is in several projects
+  * search file: '.', '/' and '\' are considered the same in case insensitive non-regex searches
+    to simplify finding a module in a package
+  * search file: case sensitivity button was restored inverted
+  * installer now shows the version of Visual D about to be installed
