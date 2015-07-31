@@ -5,6 +5,7 @@ BODYCLASS = doc
 SEARCHDEFAULT_PHOBOS =
 PROJECT = visuald
 WIKI = visuald
+SELF_PATH =
 LAYOUT_SUFFIX=
 $(SCRIPTLOAD js/run-main-website.js)
 

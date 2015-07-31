@@ -89,7 +89,7 @@ This code is distributed under the terms of the Boost Software License, Version 
 For more details, see the full text of the license in the file LICENSE_1.0.txt.
 
 The installer comes with a number of additional products:
-- cv2pdb: http://dsource.org/projects/cv2pdb by Rainer Schuetze
+- cv2pdb: https://github.com/rainers/cv2pdb by Rainer Schuetze
 - mago: http://dsource.org/projects/mago_debugger by Aldo Nunez
 - DParser: https://github.com/aBothe/D_Parser by Alexander Bothe
 

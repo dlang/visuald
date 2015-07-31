@@ -71,7 +71,7 @@ Ddoc
   )
   $(LI Completely written in D
    $(UL
-    $(LI source code available on dsource and github)
+    $(LI source code available on github)
    )
   )
  )

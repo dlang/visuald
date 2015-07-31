@@ -2,7 +2,7 @@ Ddoc
 
 $(H2 Visual Studio Debugger)
 
-$(P Thanks to $(LINK2 http://www.dsource.org/projects/cv2pdb, cv2pdb), debugging in Visual Studio integrates well.
+$(P Thanks to $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb), debugging in Visual Studio integrates well.
 Here is an example debugging session)
 
 	<div align="center"><img src="images/debug.png" width="90%"/></div>
