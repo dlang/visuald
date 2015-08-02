@@ -14,7 +14,7 @@ $(UL
   $(LI DMD 2.059 or newer)
   $(LI coffimplib ($(LINK2 ftp://ftp.digitalmars.com/coffimplib.zip, ftp)))
   $(LI for installer: $(LINK2 http://nsis.sourceforge.net/Download, NSIS))
-  $(LI for debugging: $(LINK2 http://www.dsource.org/projects/cv2pdb, cv2pdb))
+  $(LI for debugging: $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb))
 )
 
 $(H2 Building Visual D)
@@ -34,11 +34,11 @@ solution visuald_vs9.sln or visuald_vs10.sln, respectively.)
 
 $(H3 Known issues)
 $(UL
- $(LI building the parser library with stock DMD causes an "Out of memory" error. There are two 
+ $(LI building the parser library with stock DMD before 2.066 causes an "Out of memory" error. There are two 
    options how to fix this:
   $(UL
    $(LI enable the LARGE_ADDRESS_AWARE bit inside dmd.exe with this simple tool: 
-    $(LINK http://www.dsource.org/projects/visuald/browser/trunk/tools/largeadr.d) (if you are running a 
+    $(LINK https://github.com/D-Programming-Language/visuald/blob/master/tools/largeadr.d) (if you are running a 
 	32-bit OS, you will also need to boot with the /3GB switch))
    $(LI build DMD with the Microsoft compiler instead of the Digital Mars compiler 
     (This also has the benefit of an executable that compiles about twice as fast))

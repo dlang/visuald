@@ -155,6 +155,7 @@ Mago:
 - string/wstring shown as char/wchar[], but with correct string representation
 + AA indexing
 + AA preview/expand
+- new AA implementation
 - Array preview
 - delegate value/type
 - struct preview
@@ -199,14 +200,14 @@ Unsorted
 + mago keeps image locked when terminating debugger
 - -gc/-g depending on debug engine
 - dub support
-- dustmite support
++ dustmite support
 - dfix support
 - configuration of dependent project not read from configuration manager
 + jump to assertion error
 + import std.container: jump to package
 + renaming configuration does not change project config
 + win32coff support
-- file search: replace . with \ in path search?
++ file search: replace . with \ in path search?
 + run cv2pdb disabled for GDC/x64
 
 - hide Visual D menu if inactive

@@ -73,7 +73,7 @@ $(H3 Debugging)
 
 $(P For debugging applications, you should also install cv2pdb which is now included in the
 Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoexp.dat do
-not mix with previous manual installations of $(LINK2 http://svn.dsource.org/projects/cv2pdb, cv2pdb). 
+not mix with previous manual installations of $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb). 
 Visual D also installs the alternative debug engine mago that does not need cv2pdb.)
 
 $(P cv2pdb has been extended to also convert from DWARF debug information to PDB, so it 

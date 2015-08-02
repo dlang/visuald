@@ -55,6 +55,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "visuald", "visuald", "{832B
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nsis", "nsis", "{342DCC0D-9F76-4AFE-B2BF-4FEFEB438D17}"
 	ProjectSection(SolutionItems) = preProject
+		nsis\dmdinstall.ini = nsis\dmdinstall.ini
 		nsis\replaceinfile.nsh = nsis\replaceinfile.nsh
 		nsis\uninstall_helper.nsh = nsis\uninstall_helper.nsh
 		nsis\visuald.nsi = nsis\visuald.nsi

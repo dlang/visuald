@@ -865,7 +865,7 @@ private:
 		_wndToolbar.EnableCheckButton(IDR_GROUPBYKIND,       true, _iqp.colidGroup == COLUMNID.KIND);
 
 		_wndToolbar.EnableCheckButton(IDR_WHOLEWORD,         true, _iqp.wholeWord);
-		_wndToolbar.EnableCheckButton(IDR_CASESENSITIVE,     true, _iqp.caseSensitive);
+		_wndToolbar.EnableCheckButton(IDR_CASESENSITIVE,     true, !_iqp.caseSensitive); // button on is case INsensitive
 		_wndToolbar.EnableCheckButton(IDR_REGEXP,            true, _iqp.useRegExp);
 		_wndToolbar.EnableCheckButton(IDR_SEARCHFILE,        true, _iqp.searchFile);
 		_wndToolbar.EnableCheckButton(IDR_SEARCHSYMBOL,      true, !_iqp.searchFile);
@@ -2075,10 +2075,14 @@ class SolutionItemIndex //: IUnknown
 					if(piqp.colidGroup == COLUMNID.KIND)
 					{
 						string ext = extension(s);
-						arr.addByGroup(ext, new SolutionItem(s, f));
+						if (!arr.getItemByGroupAndPath(ext, s))
+							arr.addByGroup(ext, new SolutionItem(s, f));
 					}
 					else
-						arr.add(new SolutionItem(s, f));
+					{
+						if (!arr.getItemByPath(s))
+							arr.add(new SolutionItem(s, f));
+					}
 					return false;
 				});
 		}
@@ -2104,18 +2108,35 @@ class ItemArray //: IUnknown
 {
 	static const GUID iid = uuid("5A97C4DF-DE3A-4bb6-B621-2F9550BFE7C0");
 	
+	SolutionItem[string] mItemsByPath;
 	SolutionItem[] mItems;
 	SolutionItemGroup[] mGroups;
 	
 	this()
 	{
 	}
-	
+
+	const(SolutionItem) getItemByPath(string path) const
+	{
+		if (auto it = path in mItemsByPath)
+			return *it;
+		return null;
+	}
+
 	void add(SolutionItem item)
 	{
 		mItems ~= item;
+		mItemsByPath[item.GetFullPath()] = item;
 	}
 	
+	const(SolutionItem) getItemByGroupAndPath(string grp, string path)
+	{
+		for(int i = 0; i < mGroups.length; i++)
+			if(mGroups[i].GetName() == grp)
+				return mGroups[i].GetItems().getItemByPath(path);
+		return null;
+	}
+
 	void addByGroup(string grp, SolutionItem item)
 	{
 		for(int i = 0; i < mGroups.length; i++)

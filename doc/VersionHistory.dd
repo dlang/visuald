@@ -724,7 +724,7 @@ $(H2 2010-06-25 Version 0.3.12)
     of a new project item now defaults to this directory )
   $(LI renaming a file in the project renames it on disk as well)
   $(LI improved build process, it should now be possible to compile Visual D following
-    the instruction on http://www.dsource.org/projects/visuald/wiki/Build_from_source )
+    the instruction of $(LINK2 BuildFromSource.html, Building from Source) )
   $(LI updated to cv2pdb 0.14.)
  )
 

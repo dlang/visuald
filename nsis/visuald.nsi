@@ -57,6 +57,7 @@
 
   ;Name and file
   Name "${LONG_APPNAME}"
+  Caption "${LONG_APPNAME} ${VERSION} Setup"
   OutFile "..\..\downloads\${APPNAME}-v${VERSION}.exe"
 
   !define UNINSTALL_REGISTRY_ROOT HKLM
@@ -144,6 +145,7 @@
 ;--------------------------------
 ;Pages
 
+  !define MUI_TEXT_WELCOME_INFO_TITLE "Welcome to the ${LONG_APPNAME} ${VERSION} Setup Wizard"
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "license"
   !insertmacro MUI_PAGE_COMPONENTS
