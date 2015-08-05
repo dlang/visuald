@@ -4,7 +4,7 @@ $(TABLE_NOBORDER
 $(TD $(IMG images/vd_logo.png))
 $(TD
 $(P Visual D is a Visual Studio package providing both project management and language services. 
-It works with Visual Studio 2005 - 2015 including Visual Studio Community 2013 as well as the free Visual Studio Shells. 
+It works with Visual Studio 2005 - 2015 including Visual Studio Community 2013/2015 as well as the free Visual Studio Shells. 
 See the $(LINK2 Installation.html, Installation) instructions, especially if not using a commercial edition of Visual Studio.)
 
 $(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.)
@@ -53,6 +53,14 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2015-8-5 Version 0.3.42
+$(UL
+ $(LI new command "DustMite Build Failure" to reduce source for build error with $(LINK2 DustMite.html,DustMite))
+ $(LI integration into the Visual Studio Performance Wizard)
+ $(LI cv2pdb: improved DWARF support, intergration with Visual Studio 2015)
+ $(LI demangling D/C++ symbols in disassembly)
+)
+
 2015-5-16 Version 0.3.41
 $(UL
  $(LI new linker option "build and use local phobos library")
@@ -60,15 +68,6 @@ $(UL
  $(LI mago debugger improvements)
  $(LI new command "$(LINK2 CompileCommands.html,Compile and Disassemble)" to show the disassembly of the current file in
     the code context window)
-)
-
-2015-1-1 Version 0.3.40
-$(UL
- $(LI added basic support to compile C/C++ files)
- $(LI Win32/COFF support for dmd 2.067+)
- $(LI link dependency monitor now uses tracker.exe from MSBuild or WinSDK)
- $(LI dparser: updated semantic engine to recent version)
- $(LI goto file/line for mixin errors and exception dumps)
 )
 
 $(LINK2 VersionHistory.html, more...)

@@ -1,4 +1,4 @@
-VERSION = 0.3.41
+VERSION = 0.3.42
 ROOT_DIR = http://www.dlang.org/
 ROOT = .
 BODYCLASS = doc
@@ -33,6 +33,7 @@ $(DIVID cssmenu, $(UL
         CompileCommands.html, Compile Commands,
         Profiling.html, Profiling,
         Coverage.html, Code Coverage,
+        DustMite.html, DustMite,
         BrowseInfo.html, Browse Info
       )
     $(MENU VersionHistory.html, Version History)
