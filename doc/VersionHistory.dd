@@ -4,6 +4,43 @@ $(H2 2015-5-16 Version 0.3.41)
  $(UL
   $(LI build system
    $(UL
+    $(LI added new command "DustMite Build Failure" to reduce source of startup project
+         for build error with DustMite)
+    $(LI added integration into the Visual Studio Performance Wizard)
+    $(LI updated "Build Phobos Browse Info" and "Build local version of phobos" for dmd 2.067+)
+    $(LI added project template for console application built with DMD/LDC and x86/x64)
+    $(LI release configurations now enable optimizations and inlining by default)
+  ))
+  $(LI cv2pdb
+   $(UL
+    $(LI last version introduced crashes with DWARF conversions)
+    $(LI now supports info in DWARF sections .debug_frame and .debug_loc for better display of locals)
+    $(LI DWARF debug info now stripped from executable)
+    $(LI support for mspdb140.dll from VS2015)
+    $(LI now writes correct machine type to PDB for x64)
+  ))
+  $(LI mago
+   $(UL
+    $(LI mago is now the default debug engine for new projects)
+    $(LI added support for new AA implementation in dmd 2.068)
+    $(LI preview for structs now shows first members)
+  ))
+  $(LI demangle D/C++ symbols in disassembly with new tool dcxxfilt that supports both gcc
+       and MS C++ mangling.)
+  $(LI search file dialog
+   $(UL
+    $(LI the same file is no longer listed multiple times if it is in several projects)
+    $(LI '.', '/' and '\' are considered the same in case insensitive non-regex searches
+         to simplify finding a module in a package)
+    $(LI case sensitivity button was restored inverted)
+  ))
+  $(LI installer now shows the version of Visual D about to be installed)
+))
+
+$(H2 2015-5-16 Version 0.3.41)
+ $(UL
+  $(LI build system
+   $(UL
     $(LI new linker option "build and use local phobos library" to get a COFF32 version (dmd 2.067+)
          or add missing debug info (dmd 2.065+))
     $(LI workaround for link response file with spaces, but disabled short names on NTFS volume)
@@ -37,7 +74,7 @@ $(H2 2015-5-16 Version 0.3.41)
   $(LI profiler window: non-D symbols (e.g. C++ mangled functions) are no longer displayed empty)
  )
 
-$(B 2015-1-1 Version 0.3.40)
+$(H2 2015-1-1 Version 0.3.40)
  $(UL
   $(LI build system
    $(UL

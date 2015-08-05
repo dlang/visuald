@@ -727,7 +727,7 @@ Version history
   * new command "Compile and Disassemble" to show the disassembly of the current file in
     the code context window that is automatically synchronized with editor movements
 
-unreleased Version 0.3.42
+2015-08-05 Version 0.3.42
 
   * added new command "DustMite Build Failure" to reduce source of startup project
     for build error with DustMite
@@ -750,3 +750,5 @@ unreleased Version 0.3.42
     to simplify finding a module in a package
   * search file: case sensitivity button was restored inverted
   * installer now shows the version of Visual D about to be installed
+  * mago: added support for new AA implementation
+  * mago: preview for structs now shows first members

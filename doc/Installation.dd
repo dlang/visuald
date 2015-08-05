@@ -16,6 +16,10 @@ $(P In November 2014 Microsoft released $(B $(LINK2 http://www.visualstudio.com/
 Visual Studio Community 2013)), a version similar to Visual Studio Professional, but free for most users unless 
 working in larger companies. Visual D integrates just as well as with the commercial versions.)
 
+$(P Visual D also works with the professional and community version of Visual Studio 2015. Please be
+aware that the VC runtime libraries that ship with VS 2015 are not supported by dmd up to 2.068
+when compiling 64-bit applications.)
+
 $(H2 Visual Studio Shell)
 
 $(P A $(B free) alternative are the integrated $(B Visual Studio Shell) distributions, that can be downloaded
