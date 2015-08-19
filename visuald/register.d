@@ -117,9 +117,9 @@ class RegistryException : Exception
 
 class RegKey
 {
-	this(HKEY root, wstring keyname, bool write = true, bool chkDump = true)
+	this(HKEY root, wstring keyname, bool write = true, bool chkDump = true, bool x64hive = false)
 	{
-		Create(root, keyname, write, chkDump);
+		Create(root, keyname, write, chkDump, x64hive);
 	}
 
 	~this()
@@ -143,7 +143,7 @@ class RegKey
 		return  "\""w ~ escapeString(name) ~ "\""w;
 	}
 
-	void Create(HKEY root, wstring keyname, bool write = true, bool chkDump = true)
+	void Create(HKEY root, wstring keyname, bool write = true, bool chkDump = true, bool x64hive = false)
 	{
 		HRESULT hr;
 		if(write && chkDump && registryRoot.length && keyname.startsWith(registryRoot))
@@ -155,12 +155,13 @@ class RegKey
 		}
 		else if(write)
 		{
-			hr = hrRegCreateKeyEx(root, keyname, 0, null, REG_OPTION_NON_VOLATILE, KEY_WRITE, null, &key, null);
+			auto opt = REG_OPTION_NON_VOLATILE | (x64hive ? KEY_WOW64_64KEY : 0);
+			hr = hrRegCreateKeyEx(root, keyname, 0, null, opt, KEY_WRITE, null, &key, null);
 			if(FAILED(hr))
 				throw new RegistryException(hr);
 		}
 		else
-			hr = hrRegOpenKeyEx(root, keyname, 0, KEY_READ, &key);
+			hr = hrRegOpenKeyEx(root, keyname, (x64hive ? KEY_WOW64_64KEY : 0), KEY_READ, &key);
 	}
 
 	void Set(wstring name, wstring value, bool escape = true)
@@ -590,9 +591,9 @@ version(none){
 		keyToolOpts.Set("Page"w, GUID2wstring(g_ToolsProperty2Page));
 
 		if(keyToolOpts.GetString("ExeSearchPath"w).length == 0)
-			keyToolOpts.Set("ExeSearchPath"w, "$(DMDInstallDir)windows\\bin;$(VSINSTALLDIR)\\Common7\\IDE;$(WindowsSdkDir)\\bin"w, false);
+			keyToolOpts.Set("ExeSearchPath"w, "$(DMDInstallDir)windows\\bin;$(VCInstallDir)\\bin;$(VSINSTALLDIR)\\Common7\\IDE;$(WindowsSdkDir)\\bin"w, false);
 		if(keyToolOpts.GetString("IncSearchPath"w).length == 0)
-			keyToolOpts.Set("IncSearchPath"w, "$(WindowsSdkDir)\\include;$(DevEnvDir)..\\..\\VC\\include"w, false);
+			keyToolOpts.Set("IncSearchPath"w, "$(WindowsSdkDir)\\include;$(VCInstallDir)\\include"w, false);
 
 		// remove old page
 		RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsDirsOld);

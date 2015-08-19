@@ -752,3 +752,10 @@ Version history
   * installer now shows the version of Visual D about to be installed
   * mago: added support for new AA implementation
   * mago: preview for structs now shows first members
+
+unreleased Version 0.3.42-1
+
+  * dustmite: pattern passed to "find" must always use quotes
+  * VS2015: new install adds $(VCInstallDir)\bin to exectuable paths to allow cv2pdb to create PDB files
+  * VS2015: added detection for Universal CRT in Win10 SDK, new macro replacements $(UCRTSdkDir) and 
+    $(UCRTVersion) allow adding library search path to find libucrt.lib

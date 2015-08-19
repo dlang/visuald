@@ -1134,6 +1134,8 @@ class GlobalOptions
 
 	// evaluated once at startup
 	string WindowsSdkDir;
+	string UCRTSdkDir;
+	string UCRTVersion;
 	string DevEnvDir;
 	string VSInstallDir;
 	string VCInstallDir;
@@ -1247,6 +1249,65 @@ class GlobalOptions
 			WindowsSdkDir = normalizeDir(WindowsSdkDir);
 	}
 
+	void detectUCRT()
+	{
+		if(UCRTSdkDir.empty)
+		{
+			if(char* psdk = getenv("UniversalCRTSdkDir"))
+				UCRTSdkDir = normalizeDir(fromMBSz(cast(immutable)psdk));
+			else
+			{
+				scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"w, false);
+				UCRTSdkDir = normalizeDir(toUTF8(keySdk.GetString("KitsRoot10")));
+			}
+		}
+		if(UCRTVersion.empty)
+		{
+			if(char* pver = getenv("UCRTVersion"))
+				UCRTVersion = fromMBSz(cast(immutable)pver);
+			else if(!UCRTSdkDir.empty)
+			{
+				string rootsDir = normalizeDir(UCRTSdkDir) ~ "Lib\\";
+				try
+				{
+					foreach(f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
+						if(std.file.isDir(f) && f > UCRTVersion)
+							UCRTVersion = baseName(f);
+				}
+				catch(Exception)
+				{
+				}
+			}
+		}
+	}
+
+	void detectVCInstallDir()
+	{
+		if(char* pe = getenv("VSINSTALLDIR"))
+			VSInstallDir = fromMBSz(cast(immutable)pe);
+		else
+		{
+			scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
+			VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
+			// InstallDir is ../Common7/IDE/
+			VSInstallDir = normalizeDir(VSInstallDir);
+			VSInstallDir = dirName(dirName(VSInstallDir));
+		}
+		VSInstallDir = normalizeDir(VSInstallDir);
+	}
+
+	void detectVSInstallDir()
+	{
+		if(char* pe = getenv("VCINSTALLDIR"))
+			VCInstallDir = fromMBSz(cast(immutable)pe);
+		else
+		{
+			scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
+			VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
+		}
+		VCInstallDir = normalizeDir(VCInstallDir);
+	}
+
 	bool initFromRegistry()
 	{
 		if(!getRegistryRoot())
@@ -1268,27 +1329,9 @@ class GlobalOptions
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
 
 			detectWindowsSDKDir();
-
-			if(char* pe = getenv("VSINSTALLDIR"))
-				VSInstallDir = fromMBSz(cast(immutable)pe);
-			else
-			{
-				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
-				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
-				// InstallDir is ../Common7/IDE/
-				VSInstallDir = normalizeDir(VSInstallDir);
-				VSInstallDir = dirName(dirName(VSInstallDir));
-			}
-			VSInstallDir = normalizeDir(VSInstallDir);
-
-			if(char* pe = getenv("VCINSTALLDIR"))
-				VCInstallDir = fromMBSz(cast(immutable)pe);
-			else
-			{
-				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
-				VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
-			}
-			VCInstallDir = normalizeDir(VCInstallDir);
+			detectUCRT();
+			detectVSInstallDir();
+			detectVCInstallDir();
 
 			wstring getWStringOpt(wstring tag, wstring def = null)
 			{
@@ -1341,6 +1384,9 @@ class GlobalOptions
 			wstring getDefaultDMDLibPath64()
 			{
 				wstring libpath = r"$(VCInstallDir)\lib\amd64";
+				if(std.file.exists(VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+					libpath ~= to!wstring("\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x64");
+
 				if(WindowsSdkDir.length)
 				{
 					if(std.file.exists(WindowsSdkDir ~ r"lib\x64"))
@@ -1560,6 +1606,8 @@ class GlobalOptions
 		replacements["GDCINSTALLDIR"] = normalizeDir(GDC.InstallDir);
 		replacements["LDCINSTALLDIR"] = normalizeDir(LDC.InstallDir);
 		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
+		replacements["UCRTSDKDIR"] = UCRTSdkDir;
+		replacements["UCRTVERSION"] = UCRTVersion;
 		replacements["DEVENVDIR"] = DevEnvDir;
 		replacements["VCINSTALLDIR"] = VCInstallDir;
 		replacements["VSINSTALLDIR"] = VSInstallDir;

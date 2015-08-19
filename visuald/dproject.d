@@ -2667,7 +2667,7 @@ HRESULT DustMiteProject()
 		cmdfile = npath ~ "build.dustmite.bat";
 		std.file.write(cmdfile, cmdline);
 		cmdfile = makeRelative(cmdfile, npath);
-		string dustcmd = quoteFilename(cmdfile) ~ " | find " ~ quoteFilename(errmsg);
+		string dustcmd = quoteFilename(cmdfile) ~ " | find \"" ~ errmsg ~ "\"";
 		dustcmd = dustcmd.replace("\"", "\\\"");
 
 		string intdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), workdir);
