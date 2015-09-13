@@ -8,8 +8,8 @@
 
 module stdext.httpget;
 
-import std.string, std.conv, std.stream, std.stdio;
-import std.socket, std.socketstream;
+import std.string, std.conv, std.stdio;
+import std.socket;
 import std.algorithm : min;
 
 ulong httpget(string url, string dstfile, ulong partial_start = 0, ulong partial_length = ulong.max)
@@ -60,7 +60,7 @@ ulong httpget(string domain, ushort port, string url, string dstfile, ulong part
 
 	Socket sock = new TcpSocket(new InternetAddress(domain, port));
 	scope(exit) sock.close();
-	Stream ss   = new SocketStream(sock);
+	SocketStream ss   = new SocketStream(sock);
 
 	debug (HTMLGET)
 		writefln("Connected! Requesting URL \"%s\"...", url);
@@ -90,7 +90,7 @@ ulong httpget(string domain, ushort port, string url, string dstfile, ulong part
 			writeln(line);
 	}
 
-	auto file = new std.stream.File(dstfile, FileMode.OutNew);
+	auto file = new std.stdio.File(dstfile, "w");
 	scope(exit) file.close();
 
 	auto bufSize = min(partial_length + 1, 65536);
@@ -102,9 +102,138 @@ ulong httpget(string domain, ushort port, string url, string dstfile, ulong part
 	while ((read = ss.readBlock(buf.ptr, bufSize)) > 0)
 	{
 		int skip = (testLF && buf[0] == '\n' ? 1 : 0);
-		file.writeBlock(buf.ptr + skip, read - skip);
+		file.rawWrite(buf[skip..read]);
 		testLF = false;
 		sumRead += read - skip;
 	}
 	return sumRead;
+}
+
+// deprecated in phobos 2.069, so extract what's needed
+class SocketStream
+{
+	private	Socket sock;
+
+	this(Socket s)
+	{
+		sock = s;
+	}
+
+	/**
+	* Attempts to read the entire block, waiting if necessary.
+	*/
+	size_t readBlock(void* _buffer, size_t size)
+	{
+		if (size == 0)
+			return size;
+
+		ubyte* buffer = cast(ubyte*)_buffer;
+		auto len = sock.receive(buffer[0 .. size]);
+		//readEOF = cast(bool)(len == 0);
+		if (len == sock.ERROR)
+			len = 0;
+		return len;
+	}
+
+	// reads a line, terminated by either CR, LF, CR/LF, or EOF
+	char[] readLine()
+	{
+		return readLine(null);
+	}
+
+	// reads a line, terminated by either CR, LF, CR/LF, or EOF
+	// reusing the memory in buffer if result will fit and otherwise
+	// allocates a new string
+	char[] readLine(char[] result)
+	{
+		size_t strlen = 0;
+		char ch = getc();
+		while (true) {
+			switch (ch) {
+				case '\r':
+					prevCr = true;
+					goto case;
+				case '\n':
+				case char.init:
+					result.length = strlen;
+					return result;
+
+				default:
+					if (strlen < result.length) {
+						result[strlen] = ch;
+					} else {
+						result ~= ch;
+					}
+					strlen++;
+			}
+			ch = getc();
+		}
+		result.length = strlen;
+		return result;
+	}
+
+	// unget buffer
+	private wchar[] unget;
+	final bool ungetAvailable() { return unget.length > 1; }
+	private bool prevCr = false;
+
+	// reads and returns next character from the stream,
+	// handles characters pushed back by ungetc()
+	// returns char.init on eof.
+	char getc()
+	{
+		char c;
+		if (prevCr) {
+			prevCr = false;
+			c = getc();
+			if (c != '\n')
+				return c;
+		}
+		if (unget.length > 1) {
+			c = cast(char)unget[unget.length - 1];
+			unget.length = unget.length - 1;
+		} else {
+			readBlock(&c,1);
+		}
+		return c;
+	}
+
+
+	/**
+	* Attempts to write the entire block, waiting if necessary.
+	*/
+	size_t writeBlock(const void* _buffer, size_t size)
+	{
+		if (size == 0)
+			return size;
+
+		ubyte* buffer = cast(ubyte*)_buffer;
+		auto len = sock.send(buffer[0 .. size]);
+		//readEOF = cast(bool)(len == 0);
+		if (len == sock.ERROR)
+			len = 0;
+		return len;
+	}
+
+	// writes block of data of specified size,
+	// throws WriteException on error
+	void writeExact(const void* buffer, size_t size)
+	{
+		const(void)* p = buffer;
+		for(;;) {
+			if (!size) return;
+			size_t writesize = writeBlock(p, size);
+			if (writesize == 0) break;
+			p += writesize;
+			size -= writesize;
+		}
+		if (size != 0)
+			throw new Exception("unable to write to stream");
+	}
+
+	// writes a string, throws WriteException on error
+	void writeString(const(char)[] s)
+	{
+		writeExact(s.ptr, s.length);
+	}
 }
