@@ -12,9 +12,6 @@ import stdext.string;
 
 mixin(extractDefines(import("resources.h")));
 
-const kImageBmp = "BMP_DIMAGELIST";
-const kImageCompletion = "BMP_COMPLETION";
-
 const kImageDSource = 0;
 const kImageProject = 1;
 const kImageFolderClosed = 2;

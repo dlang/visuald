@@ -152,6 +152,31 @@ string shortFilename(string fname)
 	return to!string(sptr[0..len]);
 }
 
+string createNewPackageInFolder(string dir, string base)
+{
+	string ndir = normalizeDir(dir);
+	dir = ndir[0..$-1]; // remove trailing '/'
+	if (!exists(dir) || !isDir(dir))
+		return null;
+
+	string name = base;
+	int num = 0;
+	while(exists(ndir ~ name) || exists(ndir ~ name ~ ".d") || exists(ndir ~ name ~ ".di"))
+	{
+		num++;
+		name = base ~ to!string(num);
+	}
+	try
+	{
+		mkdir(ndir ~ name);
+	}
+	catch(FileException)
+	{
+		return null;
+	}
+	return name;
+}
+
 string[] findDRuntimeFiles(string path, string sub, bool deep, bool cfiles = false, bool internals = false)
 {
 	string[] files;

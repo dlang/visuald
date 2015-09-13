@@ -1270,7 +1270,7 @@ class GlobalOptions
 				string rootsDir = normalizeDir(UCRTSdkDir) ~ "Lib\\";
 				try
 				{
-					foreach(f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
+					foreach(string f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
 						if(std.file.isDir(f) && f > UCRTVersion)
 							UCRTVersion = baseName(f);
 				}

@@ -13,7 +13,6 @@ import std.string;
 import std.file;
 import std.path;
 import std.utf;
-import std.stream;
 import std.array;
 import std.conv;
 import core.stdc.wchar_ : wcslen;

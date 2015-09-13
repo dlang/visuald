@@ -710,6 +710,21 @@ class LanguageService : DisposingComObject,
 		return mSources;
 	}
 
+	IVsTextView GetView(string filename)
+	{
+		foreach(cmgr; mCodeWinMgrs)
+		{
+			string srcfile = cmgr.mSource.GetFileName();
+			if(CompareFilenames(srcfile, filename) == 0)
+			{
+				if (cmgr.mViewFilters.length)
+					return cmgr.mViewFilters[0].mView;
+				return null;
+			}
+		}
+		return null;
+	}
+
 	void setDebugger(IVsDebugger debugger)
 	{
 		if(mCookieDebuggerEvents && mDebugger)

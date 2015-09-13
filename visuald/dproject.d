@@ -48,6 +48,7 @@ import visuald.build;
 import visuald.config;
 import visuald.oledatasource;
 import visuald.pkgutil;
+import visuald.dimagelist;
 
 import visuald.dllmain : g_hInst;
 
@@ -1200,6 +1201,18 @@ class Project : CVsHierarchy,
 				break;
 			}
 		}
+		else if(*pguidCmdGroup == g_commandSetCLSID)
+		{
+			switch(Cmd.cmdID)
+			{
+				case CmdNewPackage:
+				case CmdNewFilter:
+					return GetProjectNode().QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+				default:
+					break;
+			}
+		}
+
 		// Node commands 
 		if (!fHandled)
 		{

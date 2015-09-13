@@ -6,6 +6,8 @@
 
 #define ICON_ABOUTBOX        1000
 #define BMP_SPLASHSCRN       1001
+#define BMP_DIMAGELIST       1002
+#define BMP_COMPLETION       1003
 
 #define IDI_ASCENDING               2000
 #define IDI_DESCENDING              2001
@@ -55,3 +57,6 @@
 
 #define CmdCollapseUnittest 0x120
 #define CmdCollapseDisabled 0x121
+
+#define CmdNewPackage    0x122
+#define CmdNewFilter     0x123

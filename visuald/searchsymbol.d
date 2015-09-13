@@ -469,7 +469,7 @@ private:
 		_wndFileList.SendMessage(LVM_DELETEALLITEMS);
 		_wndFileList.SendMessage(LVM_REMOVEALLGROUPS);
 
-		HIMAGELIST himl = LoadImageList(getInstance(), kImageBmp.ptr, 16, 16);
+		HIMAGELIST himl = LoadImageList(getInstance(), MAKEINTRESOURCEA(BMP_DIMAGELIST), 16, 16);
 		if(himl)
 			_wndFileList.SendMessage(LVM_SETIMAGELIST, LVSIL_SMALL, cast(LPARAM)himl);
 

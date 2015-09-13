@@ -515,11 +515,11 @@
    <File path="workaround.d" />
   </Folder>
   <Folder name="gc">
-   <File path="..\..\..\rainers\druntime\src\gc\gcdump.d" tool="None" />
-   <File path="..\..\..\rainers\druntime\src\gc\gcx.d" tool="None" />
-   <File path="..\..\..\rainers\druntime\src\rt\lifetime.d" tool="None" />
-   <File path="..\..\..\rainers\druntime\src\rt\sections_win32.d" tool="None" />
-   <File path="..\vdc\semantic.d" tool="None" />
+   <File tool="None" path="..\..\..\rainers\druntime\src\gc\gcdump.d" />
+   <File tool="None" path="..\..\..\rainers\druntime\src\gc\gcx.d" />
+   <File tool="None" path="..\..\..\rainers\druntime\src\rt\lifetime.d" />
+   <File tool="None" path="..\..\..\rainers\druntime\src\rt\sections_win32.d" />
+   <File tool="None" path="..\vdc\semantic.d" />
   </Folder>
   <Folder name="language">
    <File path="colorizer.d" />
@@ -552,23 +552,21 @@
    <File path="Resources\DSplashScreenIcon.bmp" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
-   <File path="Resources\pkgcmd.ctc" customcmd="if &quot;%VS9SDKBIN%&quot; == &quot;&quot; set VS9SDKBIN=c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
-set CTC=%VS9SDKBIN%\CTC.exe
-if not exist &quot;%CTC%&quot; goto no_CTC
-if not exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; goto no_CTC
-set PATH=%PATH%;%VS9SDKBIN%
-call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if errorlevel 1 goto reportError
-&quot;%CTC%&quot; $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I.
+   <File tool="Custom" path="Resources\pkgcmd.vsct" customcmd="set VSSDKInstall=%VSSDK140Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK120Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK110Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK100Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK90Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=c:\l\vs12SDK
+set VSCT=%VSSDKInstall%\VisualStudioIntegration\Tools\Bin\VSCT.exe
+if not exist &quot;%VSCT%&quot; goto no_VSCT
+&quot;%VSCT%&quot; $(InputPath) $(InputDir)\$(InputName).cto -I%VSSDKInstall%\VisualStudioIntegration\Common\Inc
 goto reportError
 
-:no_CTC
-echo Warning: CTC.exe not found in %VS9SDKBIN%.
-echo It is part of the VS2008 SDK and is needed to compile $(InputPath)
-if not exist $(InputDir)\$(InputName).cto exit 1
-echo $(InputDir)\$(InputName).cto exists, so it is assumed to be up to date.
-echo If the project rebuilt again and again with this message, touch $(InputDir)\$(InputName).cto to make it newer than $(InputDir)\$(InputName).ctc
-:reportError" tool="Custom" outfile="$(InputDir)\$(InputName).cto" />
+:no_VSCT
+echo Warning: VSCT.exe not found as %VSCT%
+echo It is part of the VS2010-VS2013 SDK and is needed to compile $(InputPath)
+:reportError" outfile="$(InputDir)\$(InputName).cto" />
    <File path="Resources\refresh.ico" />
    <File path="Resources\RegExp.ico" />
    <File path="Resources\removetrace.ico" />
@@ -576,9 +574,9 @@ echo If the project rebuilt again and again with this message, touch $(InputDir)
    <File path="Resources\SearchFile.ico" />
    <File path="Resources\SearchSymbol.ico" />
    <File path="Resources\settrace.ico" />
-   <File path="visuald.rc" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+   <File tool="Custom" path="visuald.rc" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version;resources\dimagelist.bmp" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 rem if errorlevel 1 goto reportError
-rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version;resources\dimagelist.bmp" linkoutput="true" outfile="$(OutDir)\visuald.res" />
+rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" outfile="$(OutDir)\visuald.res" linkoutput="true" />
    <File path="Resources\WholeWord.ico" />
   </Folder>
   <Folder name="Templates">
@@ -596,36 +594,36 @@ rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies
     <File path="Templates\CodeSnippets\SnippetsIndex.xml" />
    </Folder>
    <Folder name="Items">
-    <File path="Templates\Items\empty.d" tool="None" />
-    <File path="Templates\Items\hello.d" tool="None" />
+    <File tool="None" path="Templates\Items\empty.d" />
+    <File tool="None" path="Templates\Items\hello.d" />
     <File path="Templates\Items\items.vsdir" />
    </Folder>
    <Folder name="ProjectItems">
     <Folder name="ConsoleApp">
      <File path="Templates\ProjectItems\ConsoleApp\ConsoleApp.visualdproj" />
      <File path="Templates\ProjectItems\ConsoleApp\ConsoleApp.vstemplate" />
-     <File path="Templates\ProjectItems\ConsoleApp\main.d" tool="None" />
+     <File tool="None" path="Templates\ProjectItems\ConsoleApp\main.d" />
     </Folder>
     <Folder name="ConsoleDMDGDC">
      <File path="Templates\ProjectItems\ConsoleDMDGDC\ConsoleApp.visualdproj" />
      <File path="Templates\ProjectItems\ConsoleDMDGDC\ConsoleApp.vstemplate" />
-     <File path="Templates\ProjectItems\ConsoleDMDGDC\main.d" tool="None" />
+     <File tool="None" path="Templates\ProjectItems\ConsoleDMDGDC\main.d" />
     </Folder>
     <Folder name="DynamicLib">
-     <File path="Templates\ProjectItems\DynamicLib\dll.def" tool="None" />
-     <File path="Templates\ProjectItems\DynamicLib\dllmain.d" tool="None" />
+     <File tool="None" path="Templates\ProjectItems\DynamicLib\dll.def" />
+     <File tool="None" path="Templates\ProjectItems\DynamicLib\dllmain.d" />
      <File path="Templates\ProjectItems\DynamicLib\DynamicLib.visualdproj" />
      <File path="Templates\ProjectItems\DynamicLib\DynamicLib.vstemplate" />
     </Folder>
     <Folder name="StaticLib">
-     <File path="Templates\ProjectItems\StaticLib\lib.d" tool="None" />
+     <File tool="None" path="Templates\ProjectItems\StaticLib\lib.d" />
      <File path="Templates\ProjectItems\StaticLib\StaticLib.visualdproj" />
      <File path="Templates\ProjectItems\StaticLib\StaticLib.vstemplate" />
     </Folder>
     <Folder name="WindowsApp">
      <File path="Templates\ProjectItems\WindowsApp\WindowsApp.visualdproj" />
      <File path="Templates\ProjectItems\WindowsApp\WindowsApp.vstemplate" />
-     <File path="Templates\ProjectItems\WindowsApp\winmain.d" tool="None" />
+     <File tool="None" path="Templates\ProjectItems\WindowsApp\winmain.d" />
     </Folder>
    </Folder>
    <Folder name="Projects">

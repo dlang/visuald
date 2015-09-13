@@ -759,3 +759,12 @@ unreleased Version 0.3.42-1
   * VS2015: new install adds $(VCInstallDir)\bin to exectuable paths to allow cv2pdb to create PDB files
   * VS2015: added detection for Universal CRT in Win10 SDK, new macro replacements $(UCRTSdkDir) and 
     $(UCRTVersion) allow adding library search path to find libucrt.lib
+  * New item: the module name no longer has a preceding '.' when guessing a package name
+  * when renaming a module in the project, the editor is reopened at the previous caret position if it was
+    opened before
+  * replaced ancient pkgcmd.ctc with pkgcmd.vsct that's buildable with newer VS SDKs
+  * added icons to some commands
+  * renamed command "Add Folder" in project folder context menu to "Add Filter"
+  * added command "Add Package" to project folder context menu
+  * renaming a module in the project tree now reopens it at the previous caret location
+  * renaming a package in the project tree also renames the folder on disk if it is still empty

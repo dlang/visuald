@@ -576,7 +576,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 	this(ImageList imageList, Source source)
 	{
-		mImageList = LoadImageList(g_hInst, kImageCompletion.ptr, 16, 16);
+		mImageList = LoadImageList(g_hInst, MAKEINTRESOURCEA(BMP_COMPLETION), 16, 16);
 		mSource = source;
 	}
 

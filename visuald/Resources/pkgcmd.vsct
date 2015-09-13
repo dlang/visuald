@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <Extern href="stdidcmd.h"/>
+  <Extern href="vsshlids.h"/>
+  <Extern href="sharedids.h"/>
+  <Extern href="virtkeys.h"/>
+
+  <Extern href="Resources.h"/>
+  
+  <Commands package="g_packageCLSID">
+    <Menus>
+        <Menu guid="g_packageCLSID" id="IDM_VISUALD" priority="0xF000" type="Menu">
+            <Parent guid="guidSHLMainMenu" id="IDG_VS_MM_FILEEDITVIEW"/>
+            <Strings>
+                <ButtonText>Visual D</ButtonText>
+                <CommandName>Visual D</CommandName>
+            </Strings>
+        </Menu>
+    </Menus>
+    
+    <Bitmaps>
+      <Bitmap guid="guidImageList" usedList="bmpidPackage" resID="BMP_COMPLETION" />
+    </Bitmaps>
+    
+    <Groups>
+      <!--
+        <Group guid="g_commandSetCLSID" id="IDG_TESTBMP" priority="0x0000">
+            <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
+        </Group>
+      -->
+        <Group guid="g_commandSetCLSID" id="IDG_VD_SEARCH" priority="0x0000">
+            <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
+        </Group>
+        <Group guid="g_commandSetCLSID" id="IDG_VD_EDIT" priority="0x0001">
+            <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
+        </Group>
+        <Group guid="g_commandSetCLSID" id="IDG_VD_BUILD" priority="0x0002">
+            <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
+        </Group>
+        <Group guid="g_commandSetCLSID" id="IDG_VD_CONVERSION" priority="0x0003">
+            <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
+        </Group>
+        <Group guid="g_commandSetCLSID" id="IDG_VD_WEB" priority="0x0004">
+            <Parent guid="g_packageCLSID" id="IDM_VISUALD"/>
+        </Group>
+    </Groups>
+    
+    <Buttons>
+        <Button guid="g_commandSetCLSID" id="CmdSearchSymbol" priority="0xF000" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_SEARCH"/>
+            <Icon guid="guidVsShellIcons" id="78"/>
+            <Strings>
+                <ButtonText>Search Symbol</ButtonText>
+                <MenuText>Search S&amp;ymbol</MenuText>
+                <ToolTipText>Search Symbol in D Projects</ToolTipText>
+                <CanonicalName>SearchSymbol</CanonicalName>
+                <LocCanonicalName>SearchSymbol</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdSearchFile" priority="0xF100" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_SEARCH"/>
+            <Icon guid="guidVsShellIcons" id="78"/>
+            <Strings>
+                <ButtonText>Search File</ButtonText>
+                <MenuText>Search &amp;File</MenuText>
+                <ToolTipText>Search File in Solution</ToolTipText>
+                <CanonicalName>SearchFile</CanonicalName>
+                <LocCanonicalName>SearchFile</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdReplaceTokens" priority="0xF100" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_SEARCH"/>
+            <Icon guid="guidSHLMainMenu" id="38"/>
+            <Strings>
+                <ButtonText>Search/Replace Tokens</ButtonText>
+                <MenuText>Search/&amp;Replace Tokens...</MenuText>
+                <ToolTipText>Search/Replace Tokens</ToolTipText>
+                <CanonicalName>SearchReplaceTokens</CanonicalName>
+                <LocCanonicalName>SearchReplaceTokens</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdSearchTokNext" priority="0xF100" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_SEARCH"/>
+            <Icon guid="guidVsShellIcons" id="48"/>
+            <Strings>
+                <ButtonText>Search Next Tokens</ButtonText>
+                <MenuText>Search &amp;Next Tokens</MenuText>
+                <ToolTipText>Search Next Tokens</ToolTipText>
+                <CanonicalName>SearchTokensNext</CanonicalName>
+                <LocCanonicalName>SearchTokensNext</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdSearchTokPrev" priority="0xF100" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_SEARCH"/>
+            <Icon guid="guidVsShellIcons" id="49"/>
+            <Strings>
+                <ButtonText>Search Previous Tokens</ButtonText>
+                <MenuText>Search Pre&amp;vious Tokens</MenuText>
+                <ToolTipText>Search Previous Tokens</ToolTipText>
+                <CanonicalName>SearchTokensPrev</CanonicalName>
+                <LocCanonicalName>SearchTokensPrev</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdShowScope" priority="0xF100" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_EDIT"/>
+            <Strings>
+                <ButtonText>Show Scope</ButtonText>
+                <MenuText>Show &amp;Scope</MenuText>
+                <ToolTipText>Show Scope of Cursor</ToolTipText>
+                <CanonicalName>ShowScope</CanonicalName>
+                <LocCanonicalName>ShowScope</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdShowMethodTip" priority="0xF200" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_EDIT"/>
+            <Strings>
+                <ButtonText>Show Parameter Info</ButtonText>
+                <MenuText>Show &amp;Parameter Info</MenuText>
+                <ToolTipText>Show Parameter Info</ToolTipText>
+                <CanonicalName>ParameterInfo</CanonicalName>
+                <LocCanonicalName>ParameterInfo</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdToggleComment" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_EDIT"/>
+            <Strings>
+                <ButtonText>Toggle Comment Selection</ButtonText>
+                <MenuText>Toggle &amp;Comment Selection</MenuText>
+                <ToolTipText>Toggle Comment Selection</ToolTipText>
+                <CanonicalName>ToggleCommentSelection</CanonicalName>
+                <LocCanonicalName>ToggleCommentSelection</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdBuildPhobos" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Strings>
+                <ButtonText>Build Phobos Browse Info</ButtonText>
+                <MenuText>Build Phobos &amp;Browse Info</MenuText>
+                <ToolTipText>Build Phobos Browse Info</ToolTipText>
+                <CanonicalName>BuildPhobosBrowseInfo</CanonicalName>
+                <LocCanonicalName>BuildPhobosBrowseInfo</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdShowProfile" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Strings>
+                <ButtonText>Open Profiler Window</ButtonText>
+                <MenuText>&amp;Open Profiler Window</MenuText>
+                <ToolTipText>Open Profiler Window</ToolTipText>
+                <CanonicalName>OpenProfilerWindow</CanonicalName>
+                <LocCanonicalName>OpenProfilerWindow</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdCompileAndRun" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Strings>
+                <ButtonText>Compile and Run</ButtonText>
+                <MenuText>Compile and Run</MenuText>
+                <ToolTipText>Compile and Run</ToolTipText>
+                <CanonicalName>CompileAndRun</CanonicalName>
+                <LocCanonicalName>CompileAndRun</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdCompileAndDbg" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Strings>
+                <ButtonText>Compile and Debug</ButtonText>
+                <MenuText>Compile and Debug</MenuText>
+                <ToolTipText>Compile and Debug</ToolTipText>
+                <CanonicalName>CompileAndDebug</CanonicalName>
+                <LocCanonicalName>CompileAndDebug</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdCompileAndAsm" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Strings>
+                <ButtonText>Compile and Disassemble</ButtonText>
+                <MenuText>Compile and Disassemble</MenuText>
+                <ToolTipText>Compile and Disassemble</ToolTipText>
+                <CanonicalName>CompileAndDisasm</CanonicalName>
+                <LocCanonicalName>CompileAndDisasm</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdDustMite" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Strings>
+                <ButtonText>DustMite</ButtonText>
+                <MenuText>DustMite Build Failure</MenuText>
+                <ToolTipText>Reduce Failure with DustMite</ToolTipText>
+                <CommandName>DustMite</CommandName>
+                <CanonicalName>DustMite</CanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdDelLstFiles" priority="0xF301" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_BUILD"/>
+            <Strings>
+                <ButtonText>Delete Coverage Files</ButtonText>
+                <MenuText>Delete Coverage Files</MenuText>
+                <ToolTipText>Delete Coverage Files</ToolTipText>
+                <CanonicalName>DeleteCoverageFiles</CanonicalName>
+                <LocCanonicalName>DeleteCoverageFiles</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdConvWizard" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_CONVERSION"/>
+            <Strings>
+                <ButtonText>C++ Conversion Wizard</ButtonText>
+                <MenuText>C++ Conversion &amp;Wizard...</MenuText>
+                <ToolTipText>C++ Conversion Wizard</ToolTipText>
+                <CanonicalName>ConversionWizard</CanonicalName>
+                <LocCanonicalName>ConversionWizard</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdConvSelection" priority="0xF300" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_CONVERSION"/>
+            <Strings>
+                <ButtonText>C++ Convert Selection</ButtonText>
+                <MenuText>C++ Convert Selection</MenuText>
+                <ToolTipText>C++ Convert Selection</ToolTipText>
+                <CanonicalName>ConvertSelection</CanonicalName>
+                <LocCanonicalName>ConvertSelection</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdShowLangPage" priority="0xF100" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_WEB"/>
+            <Icon guid="guidVsShellIcons" id="143"/>
+            <Strings>
+                <ButtonText>Language Options</ButtonText>
+                <MenuText>Open Language &amp;Options...</MenuText>
+                <ToolTipText>Open Language Options</ToolTipText>
+                <CanonicalName>OpenLanguageOptions</CanonicalName>
+                <LocCanonicalName>OpenLanguageOptions</LocCanonicalName>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdShowWebsite" priority="0xF100" type="Button">
+            <Parent guid="g_commandSetCLSID" id="IDG_VD_WEB"/>
+            <Strings>
+                <ButtonText>Visual D Website</ButtonText>
+                <MenuText>Visual D &amp;Website</MenuText>
+                <ToolTipText>Open Visual D Website</ToolTipText>
+                <CanonicalName>OpenWebsite</CanonicalName>
+                <LocCanonicalName>OpenWebsite</LocCanonicalName>
+            </Strings>
+        </Button>
+ 
+        <Button guid="g_commandSetCLSID" id="CmdCollapseUnittest" priority="0xF100" type="Button">
+            <Parent guid="guidStdEditor" id="IDG_VS_EDITOR_OUTLINING_CMDS"/>
+            <CommandFlag>DynamicVisibility</CommandFlag>
+            <Strings>
+                <ButtonText>Collapse Unittests</ButtonText>
+                <MenuText>Collapse Unittests</MenuText>
+                <ToolTipText>Collapse Unittests</ToolTipText>
+                <CanonicalName>CollapseUnittests</CanonicalName>
+                <LocCanonicalName>CollapseUnittests</LocCanonicalName>
+            </Strings>
+        </Button>      
+        <Button guid="g_commandSetCLSID" id="CmdCollapseDisabled" priority="0xF100" type="Button">
+            <Parent guid="guidStdEditor" id="IDG_VS_EDITOR_OUTLINING_CMDS"/>
+            <CommandFlag>DynamicVisibility</CommandFlag>
+            <Strings>
+                <ButtonText>Collapse Disabled</ButtonText>
+                <MenuText>Collapse Disabled Code</MenuText>
+                <ToolTipText>Collapse Disabled Code</ToolTipText>
+                <CanonicalName>CollapseDisabledCode</CanonicalName>
+                <LocCanonicalName>CollapseDisabledCode</LocCanonicalName>
+            </Strings>
+        </Button>
+      
+        <Button guid="g_commandSetCLSID" id="CmdNewFilter" priority="0x0100" type="Button">
+            <Icon guid="guidVsShellIcons" id="63"/>
+            <CommandFlag>DynamicVisibility</CommandFlag>
+            <CommandFlag>DefaultInvisible</CommandFlag>
+            <Strings>
+                <ButtonText>New Filter</ButtonText>
+            </Strings>
+        </Button>
+        <Button guid="g_commandSetCLSID" id="CmdNewPackage" priority="0x0100" type="Button">
+            <Icon guid="guidImageList" id="bmpidPackage"/>
+            <CommandFlag>DynamicVisibility</CommandFlag>
+            <CommandFlag>DefaultInvisible</CommandFlag>
+            <Strings>
+                <ButtonText>New Package</ButtonText>
+            </Strings>
+        </Button>
+
+      <!--
+        <Button guid="g_commandSetCLSID" id="id01" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="151"/> <Strings><ButtonText>Bmp 151</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id02" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="152"/> <Strings><ButtonText>Bmp 152</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id03" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="153"/> <Strings><ButtonText>Bmp 153</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id04" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="154"/> <Strings><ButtonText>Bmp 154</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id05" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="155"/> <Strings><ButtonText>Bmp 155</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id06" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="156"/> <Strings><ButtonText>Bmp 156</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id07" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="157"/> <Strings><ButtonText>Bmp 157</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id08" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="158"/> <Strings><ButtonText>Bmp 158</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id09" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="159"/> <Strings><ButtonText>Bmp 159</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id10" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="160"/> <Strings><ButtonText>Bmp 160</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id11" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="161"/> <Strings><ButtonText>Bmp 161</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id12" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="162"/> <Strings><ButtonText>Bmp 162</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id13" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="163"/> <Strings><ButtonText>Bmp 163</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id14" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="164"/> <Strings><ButtonText>Bmp 164</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id15" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="165"/> <Strings><ButtonText>Bmp 165</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id16" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="166"/> <Strings><ButtonText>Bmp 166</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id17" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="167"/> <Strings><ButtonText>Bmp 167</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id18" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="168"/> <Strings><ButtonText>Bmp 168</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id19" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="169"/> <Strings><ButtonText>Bmp 169</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id20" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="170"/> <Strings><ButtonText>Bmp 170</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id21" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="171"/> <Strings><ButtonText>Bmp 171</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id22" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="172"/> <Strings><ButtonText>Bmp 172</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id23" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="173"/> <Strings><ButtonText>Bmp 173</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id24" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="174"/> <Strings><ButtonText>Bmp 174</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id25" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="175"/> <Strings><ButtonText>Bmp 175</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id26" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="176"/> <Strings><ButtonText>Bmp 176</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id27" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="177"/> <Strings><ButtonText>Bmp 177</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id28" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="178"/> <Strings><ButtonText>Bmp 178</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id29" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="179"/> <Strings><ButtonText>Bmp 179</ButtonText></Strings> </Button>
+        <Button guid="g_commandSetCLSID" id="id30" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="180"/> <Strings><ButtonText>Bmp 180</ButtonText></Strings> </Button>
+    -->
+    
+    </Buttons>
+
+  </Commands>
+
+  <CommandPlacements>
+
+    <!-- CmdNewPackage -->
+    <CommandPlacement guid="g_commandSetCLSID" id="CmdNewPackage" priority="0x0300">
+      <Parent guid="guidSHLMainMenu" id="IDG_VS_PROJ_FOLDER"/>
+    </CommandPlacement>
+    <CommandPlacement guid="g_commandSetCLSID" id="CmdNewPackage" priority="0x0200">
+      <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_PROJECT_ADD_ITEMS"/>
+    </CommandPlacement>
+  
+    <!-- CmdNewFilter -->
+    <CommandPlacement guid="g_commandSetCLSID" id="CmdNewFilter" priority="0x0300">
+      <Parent guid="guidSHLMainMenu" id="IDG_VS_PROJ_FOLDER"/>
+    </CommandPlacement>
+    <CommandPlacement guid="g_commandSetCLSID" id="CmdNewFilter" priority="0x0200">
+      <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_PROJECT_ADD_ITEMS"/>
+    </CommandPlacement>
+
+  </CommandPlacements>
+  
+  <!--
+  <VisibilityConstraints>
+  </VisibilityConstraints>
+  -->
+
+  <!--
+  <KeyBindings>
+  </KeyBindings>
+  -->
+
+  <Symbols>
+    <!-- This is the package guid. -->
+    <GuidSymbol name="g_packageCLSID" value="{002a2de9-8bb6-484d-987f-7e4ad4084715}">
+      <IDSymbol name="IDM_VISUALD"    value="0x0001" />
+    </GuidSymbol>
+
+    <!-- This is the guid used to group the menu commands together -->
+    <GuidSymbol name="g_commandSetCLSID" value="{002a2de9-8bb6-484d-9803-7e4ad4084715}">
+
+      <IDSymbol name="IDG_VD_SEARCH"     value="0x0100" />
+      <IDSymbol name="IDG_VD_EDIT"       value="0x0101" />
+      <IDSymbol name="IDG_VD_BUILD"      value="0x0102" />
+      <IDSymbol name="IDG_VD_WEB"        value="0x0103" />
+      <IDSymbol name="IDG_VD_CONVERSION" value="0x0104" />
+      <IDSymbol name="IDG_VD_OUTLINE"    value="0x0105" />
+
+      <!--
+      <IDSymbol name="IDG_TESTBMP"       value="0x0106" />
+    
+      <IDSymbol name="id01"       value="10001" />
+      <IDSymbol name="id02"       value="10002" />
+      <IDSymbol name="id03"       value="10003" />
+      <IDSymbol name="id04"       value="10004" />
+      <IDSymbol name="id05"       value="10005" />
+      <IDSymbol name="id06"       value="10006" />
+      <IDSymbol name="id07"       value="10007" />
+      <IDSymbol name="id08"       value="10008" />
+      <IDSymbol name="id09"       value="10009" />
+      <IDSymbol name="id10"       value="10010" />
+      <IDSymbol name="id11"       value="10011" />
+      <IDSymbol name="id12"       value="10012" />
+      <IDSymbol name="id13"       value="10013" />
+      <IDSymbol name="id14"       value="10014" />
+      <IDSymbol name="id15"       value="10015" />
+      <IDSymbol name="id16"       value="10016" />
+      <IDSymbol name="id17"       value="10017" />
+      <IDSymbol name="id18"       value="10018" />
+      <IDSymbol name="id19"       value="10019" />
+      <IDSymbol name="id20"       value="10020" />
+      <IDSymbol name="id21"       value="10021" />
+      <IDSymbol name="id22"       value="10022" />
+      <IDSymbol name="id23"       value="10023" />
+      <IDSymbol name="id24"       value="10024" />
+      <IDSymbol name="id25"       value="10025" />
+      <IDSymbol name="id26"       value="10026" />
+      <IDSymbol name="id27"       value="10027" />
+      <IDSymbol name="id28"       value="10028" />
+      <IDSymbol name="id29"       value="10029" />
+      <IDSymbol name="id30"       value="10030" />
+      -->
+    </GuidSymbol>
+
+    <GuidSymbol name="guidImageList" value="{89B18DDE-26B9-49B2-94F4-C88A40065067}">
+      <IDSymbol name="bmpidPackage" value="7" />
+    </GuidSymbol>
+  </Symbols>
+
+</CommandTable>

@@ -154,9 +154,18 @@ class CFileNode : CHierNode,
 		if(toLower(newname) == toLower(mFilename))
 			return S_OK;
 		
+		bool wasOpen;
+		int line = -1;
+		int col = 0;
+		GetDocInfo(&wasOpen, null, null, null);
+		if (wasOpen)
+			if (auto tv = Package.GetLanguageService().GetView(oldpath))
+				tv.GetCaretPos(&line, &col);
+
 		if(HRESULT hr = CloseDoc(SLNSAVEOPT_PromptSave))
 			return hr;
-		try
+
+		tryWithExceptionToBuildOutputPane(()
 		{
 			std.file.rename(oldpath, newpath);
 
@@ -165,12 +174,16 @@ class CFileNode : CHierNode,
 			SetName(baseName(mFilename));
 			
 			GetCVsHierarchy().GetProjectNode().SetProjectFileDirty(true);
-		}
-		catch(Exception e)
-		{
-			writeToBuildOutputPane(e.msg);
-			return returnError(E_FAIL);
-		}
+
+			if (wasOpen)
+				if(CVsHierarchy hier = GetCVsHierarchy())
+				{
+					hier.OpenDoc(this, false, false, true);
+					if (auto tv = Package.GetLanguageService().GetView(newpath))
+						if (line >= 0)
+							tv.SetCaretPos(line, col);
+				}
+		});
 		return S_OK;
 	}
 
@@ -593,7 +606,23 @@ class CFolderNode : CHierContainer
 	}
 	override int SetEditLabel(in BSTR pEditLabel)
 	{
-		SetName(to_string(pEditLabel));
+		string label = to_string(pEditLabel);
+
+		// only rename folder for package if no files in project folder
+		if(searchNode(this, (CHierNode n) { return cast(CFileNode) n !is null; }) is null)
+		{
+			string dir = GuessFolderPath();
+			if (std.file.exists(dir) && std.file.isDir(dir))
+			{
+				string newdir = normalizeDir(dirName(dir)) ~ label;
+				scope dg = (){
+					std.file.rename(dir, newdir);
+				};
+				if (!tryWithExceptionToBuildOutputPane(dg))
+					return S_FALSE;
+			}
+		}
+		SetName(label);
 		GetCVsHierarchy().OnPropertyChanged(this, VSHPROPID_Name, 0);
 		return S_OK;
 	}
@@ -603,6 +632,8 @@ class CFolderNode : CHierContainer
 		string pkgname = _GuessPackageName(true, null);
 		if(pkgname.endsWith("."))
 			pkgname = pkgname[0..$-1];
+		if(pkgname.startsWith("."))
+			pkgname = pkgname[1..$];
 		return pkgname;
 	}
 	
@@ -665,7 +696,17 @@ class CFolderNode : CHierContainer
 		return pkgname;
 	}
 
-	string _GuessFolderPath()
+	string GuessFolderPath()
+	{
+		string dir = _GuessFolderPath(true, null);
+		if(dir.length)
+			return dir;
+		
+		CProjectNode pProject = GetCVsHierarchy().GetProjectNode();
+		return dirName(pProject.GetFullPath());
+	}
+
+	string _GuessFolderPath(bool recurseUp, CFolderNode exclude)
 	{
 		// check files in folder
 		for(CHierNode pNode = GetHead(); pNode; pNode = pNode.GetNext())
@@ -674,11 +715,21 @@ class CFolderNode : CHierContainer
 
 		for(CHierNode pNode = GetHead(); pNode; pNode = pNode.GetNext())
 			if(auto folder = cast(CFolderNode) pNode)
+				if(folder !is exclude)
+				{
+					string s = folder._GuessFolderPath(false, null);
+					if(s.length)
+						return dirName(s);
+				}
+
+		if(recurseUp)
+			if(auto p = cast(CFolderNode) GetParent())
 			{
-				string s = folder._GuessFolderPath();
+				string s = p._GuessFolderPath(true, this);
 				if(s.length)
-					return dirName(s);
+					return normalizeDir(s) ~ GetName();
 			}
+
 		return null;
 	}
 
@@ -701,6 +752,7 @@ class CFolderNode : CHierContainer
 		case VSHPROPID_EditLabel:
 			if(var.vt != VT_BSTR)
 				return returnError(E_INVALIDARG);
+
 			return SetEditLabel(var.bstrVal); // can fail
 		default:
 			return super.SetProperty(propid, var);
@@ -726,8 +778,6 @@ class CFolderNode : CHierContainer
 			{
 			case cmdidAddNewItem:
 			case cmdidAddExistingItem:
-			case ECMD_ADDFILTER:
-			case cmdidNewFolder:
 				fSupported = true;
 				fEnabled = true;
 				break;
@@ -746,8 +796,22 @@ class CFolderNode : CHierContainer
 			{
 				case cmdidExploreFolderInWindows:
 					fSupported = true;
-					string s = _GuessFolderPath();
+					string s = GuessFolderPath();
 					fEnabled = s.length > 0 && std.file.isDir(s);
+					break;
+				default:
+					hr = OLECMDERR_E_NOTSUPPORTED;
+					break;
+			}
+		}
+		else if(*pguidCmdGroup == g_commandSetCLSID)
+		{
+			switch(Cmd.cmdID)
+			{
+				case CmdNewPackage:
+				case CmdNewFilter:
+					fSupported = true;
+					fEnabled = true;
 					break;
 				default:
 					hr = OLECMDERR_E_NOTSUPPORTED;
@@ -791,10 +855,6 @@ class CFolderNode : CHierContainer
 				hr = OnCmdAddItem(this, nCmdID == cmdidAddNewItem);
 				break;
 
-			case ECMD_ADDFILTER:
-			case cmdidNewFolder:
-				hr = OnCmdAddFolder();
-				break;
 			default:
 				break;
 			}
@@ -811,7 +871,20 @@ class CFolderNode : CHierContainer
 					break;
 			}
 		}
-
+		else if(*pguidCmdGroup == g_commandSetCLSID)
+		{
+			switch(nCmdID)
+			{
+				case CmdNewPackage:
+					hr = OnCmdAddFolder(false);
+					break;
+				case CmdNewFilter:
+					hr = OnCmdAddFolder(true);
+					break;
+				default:
+					break;
+			}
+		}
 		if (hr == OLECMDERR_E_NOTSUPPORTED)
 			hr = super.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
@@ -834,7 +907,7 @@ class CFolderNode : CHierContainer
 	override uint GetContextMenu() { return IDM_VS_CTXT_FOLDERNODE; }
 
 	//////////////////////////////////////////////////////////////////////
-	HRESULT OnCmdAddFolder()
+	HRESULT OnCmdAddFolder(bool filter)
 	{
 		HRESULT hr = S_OK;
 
@@ -843,7 +916,15 @@ class CFolderNode : CHierContainer
 
 		// Create a new folder in the Project's folder
 		CFolderNode pFolder = newCom!CFolderNode;
-		string strThisFolder = "Folder";
+		string strThisFolder = "Filter";
+
+		if(!filter)
+		{
+			string path = GuessFolderPath();
+			if (path.empty)
+				path = dirName(pProject.GetFullPath());
+			strThisFolder = createNewPackageInFolder(path, "pkg");
+		}
 		pFolder.SetName(strThisFolder);
 
 		Add(pFolder);
@@ -933,7 +1014,7 @@ class CFolderNode : CHierContainer
 
 	HRESULT OnExploreFolderInWindows()
 	{
-		string s = _GuessFolderPath();
+		string s = GuessFolderPath();
 		if(s.length && std.file.isDir(s))
 			std.process.browse(s);
 		return S_OK;
@@ -1120,6 +1201,14 @@ class CProjectNode : CFolderNode
 		}
 		
 		return super.GetProperty(propid, var);
+	}
+
+	override int SetEditLabel(in BSTR pEditLabel)
+	{
+		string label = to_string(pEditLabel);
+		SetName(label);
+		GetCVsHierarchy().OnPropertyChanged(this, VSHPROPID_Name, 0);
+		return S_OK;
 	}
 
 private:
@@ -1360,7 +1449,7 @@ version(none)
 			break;
 		case VSHPROPID_IconImgList:
 			var.vt = VT_I4;
-			auto himagelst = LoadImageList(g_hInst, kImageBmp.ptr, 16, 16);
+			auto himagelst = LoadImageList(g_hInst, MAKEINTRESOURCEA(BMP_DIMAGELIST), 16, 16);
 			var.lVal = cast(int) himagelst;
 			break;
 		case VSHPROPID_IconHandle:
