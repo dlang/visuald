@@ -220,3 +220,4 @@ Unsorted
 + run cv2pdb disabled for GDC/x64
 
 - hide Visual D menu if inactive
+- follow theme colors for tool windows

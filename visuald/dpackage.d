@@ -1377,7 +1377,7 @@ class GlobalOptions
 			pasteIndent         = getBoolOpt("pasteIndent", true);
 
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
-			useDParser          = getBoolOpt("useDParser2", keyDParser.key !is null);
+			useDParser          = true; // getBoolOpt("useDParser2", keyDParser.key !is null);
 			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
 

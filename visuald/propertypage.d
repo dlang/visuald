@@ -29,7 +29,7 @@ import stdext.array;
 import std.string;
 import std.conv;
 
-/*debug*/ version = DParser;
+// version = DParserOption;
 
 class PropertyWindow : Window
 {
@@ -39,7 +39,7 @@ class PropertyWindow : Window
 		super(parent, style, title);
 	}
 
-	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		import sdk.win32.commctrl;
 
@@ -101,7 +101,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		mDlgFont = deleteDialogFont(mDlgFont);
 	}
 
-	override int SetPageSite( 
+	override int SetPageSite(
 		/* [in] */ IPropertyPageSite pPageSite)
 	{
 		mixin(LogCallMix);
@@ -110,19 +110,19 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return S_OK;
 	}
 
-	override int Activate( 
+	override int Activate(
 		/* [in] */ in HWND hWndParent,
 		/* [in] */ in RECT *pRect,
 		/* [in] */ in BOOL bModal)
 	{
 		mixin(LogCallMix);
-		
+
 		if(mWindow)
 			return returnError(E_FAIL);
 		return _Activate(new Window(hWndParent), pRect, bModal);
 	}
-	
-	int _Activate( 
+
+	int _Activate(
 		/* [in] */ Window win,
 		/* [in] */ in RECT *pRect,
 		/* [in] */ in BOOL bModal)
@@ -154,7 +154,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 
 		// avoid closing canvas (but not dialog) if pressing esc in MultiLineEdit controls
 		//mCanvas.cancelCloseDelegate ~= delegate bool(Widget c) { return true; };
-		
+
 		class DelegateWrapper
 		{
 			void OnCommand(Widget w, int cmd)
@@ -229,7 +229,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		kPageHeight = kLineHeight * kNeededLines + 2 * kMargin;
 	}
 
-	override int GetPageInfo( 
+	override int GetPageInfo(
 		/* [out] */ PROPPAGEINFO *pPageInfo)
 	{
 		mixin(LogCallMix);
@@ -248,7 +248,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return S_OK;
 	}
 
-	override int SetObjects( 
+	override int SetObjects(
 		/* [in] */ in ULONG cObjects,
 		/* [size_is][in] */ IUnknown *ppUnk)
 	{
@@ -270,7 +270,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return S_OK;
 	}
 
-	override int Show( 
+	override int Show(
 		/* [in] */ in UINT nCmdShow)
 	{
 		logCall("%s.Show(nCmdShow=%s)", this, _toLog(nCmdShow));
@@ -280,21 +280,21 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		//return returnError(E_NOTIMPL);
 	}
 
-	override int Move( 
+	override int Move(
 		/* [in] */ in RECT *pRect)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
-	override int Help( 
+	override int Help(
 		/* [in] */ in wchar* pszHelpDir)
 	{
 		logCall("%s.Help(pszHelpDir=%s)", this, _toLog(pszHelpDir));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int TranslateAccelerator( 
+	override int TranslateAccelerator(
 		/* [in] */ in MSG *pMsg)
 	{
 		mixin(LogCallMix2);
@@ -304,7 +304,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	// IVsPropertyPage
-	override int CategoryTitle( 
+	override int CategoryTitle(
 		/* [in] */ in UINT iLevel,
 		/* [retval][out] */ BSTR *pbstrCategory)
 	{
@@ -326,7 +326,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	// IVsPropertyPage2
-	override int GetProperty( 
+	override int GetProperty(
 		/* [in] */ in VSPPPID propid,
 		/* [out] */ VARIANT *pvar)
 	{
@@ -343,7 +343,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return returnError(DISP_E_MEMBERNOTFOUND);
 	}
 
-	override int SetProperty( 
+	override int SetProperty(
 		/* [in] */ in VSPPPID propid,
 		/* [in] */ in VARIANT var)
 	{
@@ -377,8 +377,8 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 			Label lab = new Label(w ? w.parent : null, label);
 			int off = ((kLineHeight - kLineSpacing) - 16) / 2;
 			labelWidth = w ? kLabelWidth : kPageWidth - 2*kMargin;
-			lab.setRect(0, mLineY + off, labelWidth, kLineHeight - kLineSpacing); 
-		} 
+			lab.setRect(0, mLineY + off, labelWidth, kLineHeight - kLineSpacing);
+		}
 		else if (cb || tc)
 		{
 			x -= mUnindentCheckBox;
@@ -443,7 +443,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class ProjectPropertyPage : PropertyPage, ConfigModifiedListener 
+class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 {
 	abstract void SetControls(ProjectOptions options);
 	abstract int  DoApply(ProjectOptions options, ProjectOptions refoptions);
@@ -478,9 +478,9 @@ class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 	{
 		if(auto cfg = GetConfig())
 			cfg.RemoveModifiedListener(this);
-		
+
 		int rc = super.SetObjects(cObjects, ppUnk);
-		
+
 		if(auto cfg = GetConfig())
 			cfg.AddModifiedListener(this);
 
@@ -656,18 +656,18 @@ class CommonPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return ""; }
 	override string GetPageName() { return "General"; }
 
-	override void CreateControls() 
+	override void CreateControls()
 	{
 		AddControl("Build System",  mCbBuildSystem = new ComboBox(mCanvas, [ "Visual D", "dsss", "rebuild" ], false));
 		mCbBuildSystem.setSelection(0);
 		mCbBuildSystem.setEnabled(false);
 	}
-	override void SetControls(ProjectOptions options) 
+	override void SetControls(ProjectOptions options)
 	{
 	}
-	override int DoApply(ProjectOptions options, ProjectOptions refoptions) 
+	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
-		return 0; 
+		return 0;
 	}
 
 	ComboBox mCbBuildSystem;
@@ -679,25 +679,25 @@ class GeneralPropertyPage : ProjectPropertyPage
 	override string GetPageName() { return "General"; }
 
 	__gshared const float[] selectableVersions = [ 1, 2 ];
-	
+
 	override void CreateControls()
 	{
 		string[] versions;
 		foreach(ver; selectableVersions)
 			versions ~= "D" ~ to!(string)(ver);
 		//versions[$-1] ~= "+";
-		
+
 		AddControl("Compiler",      mCompiler = new ComboBox(mCanvas, [ "DMD", "GDC", "LDC" ], false));
 		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
-		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, 
+		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas,
 																 [ "Executable", "Library", "DLL" ], false));
-		AddControl("Subsystem",     mCbSubsystem = new ComboBox(mCanvas, 
+		AddControl("Subsystem",     mCbSubsystem = new ComboBox(mCanvas,
 																[ "Not set", "Console", "Windows", "Native", "Posix" ], false));
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
 		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
-		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas, 
-			[ "Combined compile and link", "Single file compilation", 
+		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas,
+			[ "Combined compile and link", "Single file compilation",
 			  "Separate compile and link", "Compile only (use Post-build command to link)" ], false));
 	}
 
@@ -707,7 +707,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		while(ver < selectableVersions.length - 1 && selectableVersions[ver+1] <= options.Dversion)
 			ver++;
 		mDVersion.setSelection(ver);
-		
+
 		mCompiler.setSelection(options.compiler);
 		mSingleFileComp.setSelection(options.compilationModel);
 		mCbOutputType.setSelection(options.lib);
@@ -900,8 +900,9 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
+		string[] dbgInfoOpt = [ "None", "Symbolic (suitable for Mago)", "Symbolic (suitable for VS debug engine)", "Symbolic (suitable for selected debug engine)" ];
 		AddControl("Debug Mode", mDebugMode = new ComboBox(mCanvas, [ "Off (release)", "On" ], false));
-		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, [ "None", "Symbolic (suitable for Mago)", "Symbolic (suitable for VS debug engine)" ], false));
+		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, dbgInfoOpt, false));
 		AddHorizontalLine();
 		AddControl("",           mRunCv2pdb = new CheckBox(mCanvas, "Run cv2pdb to Convert Debug Info"));
 		AddControl("Path to cv2pdb", mPathCv2pdb = new Text(mCanvas));
@@ -916,7 +917,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		super.UpdateDirty(bDirty);
 		EnableControls();
 	}
-	
+
 	void EnableControls()
 	{
 		mRunCv2pdb.setEnabled(mCanRunCv2PDB);
@@ -998,10 +999,10 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		mProfiling.setChecked(options.trace); 
-		mCodeCov.setChecked(options.cov); 
+		mProfiling.setChecked(options.trace);
+		mCodeCov.setChecked(options.cov);
 		mOptimizer.setChecked(options.optimize);
-		mNoboundscheck.setChecked(options.noboundscheck); 
+		mNoboundscheck.setChecked(options.noboundscheck);
 		mUnitTests.setChecked(options.useUnitTests);
 		mInline.setChecked(options.useInline);
 		mNoFloat.setChecked(options.nofloat);
@@ -1114,7 +1115,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		AddControl("Documentation file", mDocFile = new Text(mCanvas));
 		AddControl("Documentation dir", mDocDir = new Text(mCanvas));
 		AddControl("CanDyDOC module", mModulesDDoc = new Text(mCanvas));
-		
+
 		AddControl("", mGenHdr = new CheckBox(mCanvas, "Generate interface headers"));
 		AddControl("Header file",  mHdrFile = new Text(mCanvas));
 		AddControl("Header directory",  mHdrDir = new Text(mCanvas));
@@ -1128,13 +1129,13 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		super.UpdateDirty(bDirty);
 		EnableControls();
 	}
-	
+
 	void EnableControls()
 	{
 		mDocDir.setEnabled(mGenDoc.isChecked());
 		mDocFile.setEnabled(mGenDoc.isChecked());
 		mModulesDDoc.setEnabled(mGenDoc.isChecked());
-		
+
 		mHdrDir.setEnabled(mGenHdr.isChecked());
 		mHdrFile.setEnabled(mGenHdr.isChecked());
 
@@ -1152,7 +1153,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		mHdrFile.setText(options.hdrname);
 		mGenJSON.setChecked(options.doXGeneration);
 		mJSONFile.setText(options.xfilename);
-		
+
 		EnableControls();
 	}
 
@@ -1197,17 +1198,17 @@ class DmdOutputPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		mMultiObj.setChecked(options.multiobj); 
-		mPreservePaths.setChecked(options.preservePaths); 
-		mMsCoff32.setChecked(options.mscoff); 
+		mMultiObj.setChecked(options.multiobj);
+		mPreservePaths.setChecked(options.preservePaths);
+		mMsCoff32.setChecked(options.mscoff);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mMultiObj.isChecked(), options.multiobj, refoptions.multiobj); 
-		changes += changeOption(mPreservePaths.isChecked(), options.preservePaths, refoptions.preservePaths); 
-		changes += changeOption(mMsCoff32.isChecked(), options.mscoff, refoptions.mscoff); 
+		changes += changeOption(mMultiObj.isChecked(), options.multiobj, refoptions.multiobj);
+		changes += changeOption(mPreservePaths.isChecked(), options.preservePaths, refoptions.preservePaths);
+		changes += changeOption(mMsCoff32.isChecked(), options.mscoff, refoptions.mscoff);
 		return changes;
 	}
 
@@ -1241,7 +1242,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
 		AddControl("Definition File", mDefFile = new Text(mCanvas));
 		AddControl("Resource File",   mResFile = new Text(mCanvas));
-		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas, 
+		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas,
 			[ "Minimum", "Symbols By Address", "Standard", "Full", "With cross references" ], false));
 		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
 		AddControl("", mPrivatePhobos = new CheckBox(mCanvas, "Build and use local version of phobos with same compiler options"));
@@ -1254,20 +1255,20 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		if(ProjectOptions options = GetProjectOptions())
 			mCRuntime.setEnabled(options.isX86_64 || options.mscoff);
 	}
-	
+
 	override void SetControls(ProjectOptions options)
 	{
-		mExeFile.setText(options.exefile); 
-		mObjFiles.setText(options.objfiles); 
+		mExeFile.setText(options.exefile);
+		mObjFiles.setText(options.objfiles);
 		mLibFiles.setText(options.libfiles);
 		mLibPaths.setText(options.libpaths);
-		mDefFile.setText(options.deffile); 
-		mResFile.setText(options.resfile); 
-		mGenMap.setSelection(options.mapverbosity); 
+		mDefFile.setText(options.deffile);
+		mResFile.setText(options.resfile);
+		mGenMap.setSelection(options.mapverbosity);
 		mImplib.setChecked(options.createImplib);
 		mUseStdLibPath.setChecked(options.useStdLibPath);
 		mPrivatePhobos.setChecked(options.privatePhobos);
-		mCRuntime.setSelection(options.cRuntime); 
+		mCRuntime.setSelection(options.cRuntime);
 
 		EnableControls();
 	}
@@ -1275,17 +1276,17 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mExeFile.getText(), options.exefile, refoptions.exefile); 
-		changes += changeOption(mObjFiles.getText(), options.objfiles, refoptions.objfiles); 
-		changes += changeOption(mLibFiles.getText(), options.libfiles, refoptions.libfiles); 
-		changes += changeOption(mLibPaths.getText(), options.libpaths, refoptions.libpaths); 
-		changes += changeOption(mDefFile.getText(), options.deffile, refoptions.deffile); 
-		changes += changeOption(mResFile.getText(), options.resfile, refoptions.resfile); 
-		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity); 
-		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib); 
+		changes += changeOption(mExeFile.getText(), options.exefile, refoptions.exefile);
+		changes += changeOption(mObjFiles.getText(), options.objfiles, refoptions.objfiles);
+		changes += changeOption(mLibFiles.getText(), options.libfiles, refoptions.libfiles);
+		changes += changeOption(mLibPaths.getText(), options.libpaths, refoptions.libpaths);
+		changes += changeOption(mDefFile.getText(), options.deffile, refoptions.deffile);
+		changes += changeOption(mResFile.getText(), options.resfile, refoptions.resfile);
+		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity);
+		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib);
 		changes += changeOption(mUseStdLibPath.isChecked(), options.useStdLibPath, refoptions.useStdLibPath);
 		changes += changeOption(mPrivatePhobos.isChecked(), options.privatePhobos, refoptions.privatePhobos);
-		changes += changeOption(cast(uint) mCRuntime.getSelection(), options.cRuntime, refoptions.cRuntime); 
+		changes += changeOption(cast(uint) mCRuntime.getSelection(), options.cRuntime, refoptions.cRuntime);
 		return changes;
 	}
 
@@ -1313,20 +1314,20 @@ class DmdEventsPropertyPage : ProjectPropertyPage
 		AddControl("Post-Build Command", mPostCmd = new MultiLineText(mCanvas));
 
 		Label lab = new Label(mCanvas, "Use \"if errorlevel 1 goto reportError\" to cancel on error");
-		lab.setRect(0, kPageHeight - kLineHeight, kPageWidth, kLineHeight); 
+		lab.setRect(0, kPageHeight - kLineHeight, kPageWidth, kLineHeight);
 	}
 
 	override void SetControls(ProjectOptions options)
 	{
-		mPreCmd.setText(options.preBuildCommand); 
-		mPostCmd.setText(options.postBuildCommand); 
+		mPreCmd.setText(options.preBuildCommand);
+		mPostCmd.setText(options.postBuildCommand);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mPreCmd.getText(), options.preBuildCommand, refoptions.preBuildCommand); 
-		changes += changeOption(mPostCmd.getText(), options.postBuildCommand, refoptions.postBuildCommand); 
+		changes += changeOption(mPreCmd.getText(), options.preBuildCommand, refoptions.preBuildCommand);
+		changes += changeOption(mPostCmd.getText(), options.postBuildCommand, refoptions.postBuildCommand);
 		return changes;
 	}
 
@@ -1355,13 +1356,13 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 	override void SetControls(ProjectOptions options)
 	{
 		mCmdLine.setText(options.buildCommandLine(true, true, true));
-		mAddOpt.setText(options.additionalOptions); 
+		mAddOpt.setText(options.additionalOptions);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mAddOpt.getText(), options.additionalOptions, refoptions.additionalOptions); 
+		changes += changeOption(mAddOpt.getText(), options.additionalOptions, refoptions.additionalOptions);
 		return changes;
 	}
 
@@ -1504,12 +1505,12 @@ class FilePropertyPage : ConfigNodePropertyPage
 
 		mInitPerConfig = node.GetPerConfigOptions();
 		mPerConfig.setChecked(mInitPerConfig);
-		mCustomCmd.setText(node.GetCustomCmd(cfgname)); 
-		mAddOpt.setText(node.GetAdditionalOptions(cfgname)); 
-		mDependencies.setText(node.GetDependencies(cfgname)); 
-		mOutFile.setText(node.GetOutFile(cfgname)); 
-		mLinkOut.setChecked(node.GetLinkOutput(cfgname)); 
-		mUptodateWithSameTime.setChecked(node.GetUptodateWithSameTime(cfgname)); 
+		mCustomCmd.setText(node.GetCustomCmd(cfgname));
+		mAddOpt.setText(node.GetAdditionalOptions(cfgname));
+		mDependencies.setText(node.GetDependencies(cfgname));
+		mOutFile.setText(node.GetOutFile(cfgname));
+		mLinkOut.setChecked(node.GetLinkOutput(cfgname));
+		mUptodateWithSameTime.setChecked(node.GetUptodateWithSameTime(cfgname));
 
 		enableControls(tool);
 	}
@@ -1521,15 +1522,15 @@ class FilePropertyPage : ConfigNodePropertyPage
 		string tool = mTool.getText();
 		if(tool == "Auto")
 			tool = "";
-		changes += changeOptionDg!bool(mPerConfig.isChecked(), &node.SetPerConfigOptions, refnode.GetPerConfigOptions()); 
-		changes += changeOptionDg!string(tool,                    (s) => node.SetTool(cfgname, s),         refnode.GetTool(cfgname)); 
-		changes += changeOptionDg!string(mCustomCmd.getText(),    (s) => node.SetCustomCmd(cfgname, s),    refnode.GetCustomCmd(cfgname)); 
-		changes += changeOptionDg!string(mAddOpt.getText(),       (s) => node.SetAdditionalOptions(cfgname, s), refnode.GetAdditionalOptions(cfgname)); 
-		changes += changeOptionDg!string(mDependencies.getText(), (s) => node.SetDependencies(cfgname, s), refnode.GetDependencies(cfgname)); 
-		changes += changeOptionDg!string(mOutFile.getText(),      (s) => node.SetOutFile(cfgname, s),      refnode.GetOutFile(cfgname)); 
-		changes += changeOptionDg!bool(mLinkOut.isChecked(),      (b) => node.SetLinkOutput(cfgname, b),   refnode.GetLinkOutput(cfgname)); 
-		changes += changeOptionDg!bool(mUptodateWithSameTime.isChecked(), 
-									   (b) => node.SetUptodateWithSameTime(cfgname, b), refnode.GetUptodateWithSameTime(cfgname)); 
+		changes += changeOptionDg!bool(mPerConfig.isChecked(), &node.SetPerConfigOptions, refnode.GetPerConfigOptions());
+		changes += changeOptionDg!string(tool,                    (s) => node.SetTool(cfgname, s),         refnode.GetTool(cfgname));
+		changes += changeOptionDg!string(mCustomCmd.getText(),    (s) => node.SetCustomCmd(cfgname, s),    refnode.GetCustomCmd(cfgname));
+		changes += changeOptionDg!string(mAddOpt.getText(),       (s) => node.SetAdditionalOptions(cfgname, s), refnode.GetAdditionalOptions(cfgname));
+		changes += changeOptionDg!string(mDependencies.getText(), (s) => node.SetDependencies(cfgname, s), refnode.GetDependencies(cfgname));
+		changes += changeOptionDg!string(mOutFile.getText(),      (s) => node.SetOutFile(cfgname, s),      refnode.GetOutFile(cfgname));
+		changes += changeOptionDg!bool(mLinkOut.isChecked(),      (b) => node.SetLinkOutput(cfgname, b),   refnode.GetLinkOutput(cfgname));
+		changes += changeOptionDg!bool(mUptodateWithSameTime.isChecked(),
+									   (b) => node.SetUptodateWithSameTime(cfgname, b), refnode.GetUptodateWithSameTime(cfgname));
 		enableControls(tool);
 		return changes;
 	}
@@ -1676,26 +1677,26 @@ class DirPropertyPage : GlobalPropertyPage
 
 		int changes = 0;
 		changes += changeOption(mDmdPath.getText(),            opt.InstallDir,        refopt.InstallDir);
-		changes += changeOption(mExePath.getText(),            opt.ExeSearchPath,     refopt.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(),            opt.ImpSearchPath,     refopt.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(),            opt.LibSearchPath,     refopt.LibSearchPath); 
+		changes += changeOption(mExePath.getText(),            opt.ExeSearchPath,     refopt.ExeSearchPath);
+		changes += changeOption(mImpPath.getText(),            opt.ImpSearchPath,     refopt.ImpSearchPath);
+		changes += changeOption(mLibPath.getText(),            opt.LibSearchPath,     refopt.LibSearchPath);
 		changes += changeOption(mDisasmCommand.getText(),      opt.DisasmCommand,     refopt.DisasmCommand);
-		changes += changeOption(mExePath64.getText(),          opt.ExeSearchPath64,   refopt.ExeSearchPath64); 
+		changes += changeOption(mExePath64.getText(),          opt.ExeSearchPath64,   refopt.ExeSearchPath64);
 		changes += changeOption(mLibPath64.getText(),          opt.LibSearchPath64,   refopt.LibSearchPath64);
 		changes += changeOption(mDisasmCommand64.getText(),    opt.DisasmCommand64,   refopt.DisasmCommand64);
 		if(mOverrideIni64)
 		{
-			changes += changeOption(mOverrideIni64.isChecked(),    opt.overrideIni64,     refopt.overrideIni64); 
+			changes += changeOption(mOverrideIni64.isChecked(),    opt.overrideIni64,     refopt.overrideIni64);
 			changes += changeOption(mLinkerExecutable64.getText(), opt.overrideLinker64,  refopt.overrideLinker64);
-			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64); 
+			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64);
 		}
 		if(mOverrideIni32coff)
 		{
-			changes += changeOption(mExePath32coff.getText(),          opt.ExeSearchPath32coff,   refopt.ExeSearchPath32coff); 
+			changes += changeOption(mExePath32coff.getText(),          opt.ExeSearchPath32coff,   refopt.ExeSearchPath32coff);
 			changes += changeOption(mLibPath32coff.getText(),          opt.LibSearchPath32coff,   refopt.LibSearchPath32coff);
-			changes += changeOption(mOverrideIni32coff.isChecked(),    opt.overrideIni32coff,     refopt.overrideIni32coff); 
-			changes += changeOption(mLinkerExecutable32coff.getText(), opt.overrideLinker32coff,  refopt.overrideLinker32coff); 
-			changes += changeOption(mLinkerOptions32coff.getText(),    opt.overrideOptions32coff, refopt.overrideOptions32coff); 
+			changes += changeOption(mOverrideIni32coff.isChecked(),    opt.overrideIni32coff,     refopt.overrideIni32coff);
+			changes += changeOption(mLinkerExecutable32coff.getText(), opt.overrideLinker32coff,  refopt.overrideLinker32coff);
+			changes += changeOption(mLinkerOptions32coff.getText(),    opt.overrideOptions32coff, refopt.overrideOptions32coff);
 			changes += changeOption(mDisasmCommand32coff.getText(),    opt.DisasmCommand32coff,   refopt.DisasmCommand32coff);
 		}
 		return changes;
@@ -1811,7 +1812,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor linker dependencies"));
 		AddHorizontalLine();
-		//AddControl("Remove project item", mDeleteFiles = 
+		//AddControl("Remove project item", mDeleteFiles =
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 		mLinesPerMultiLine = 2;
 		AddControl("JSON paths",        mJSNPath = new MultiLineText(mCanvas));
@@ -1841,18 +1842,18 @@ class ToolsProperty2Page : GlobalPropertyPage
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
-		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
-		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
-		changes += changeOption(mShowUptodate.isChecked(), opts.showUptodateFailure, refopts.showUptodateFailure); 
-		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild); 
-		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
-		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps); 
-		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles); 
-		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
-		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
-		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts); 
-		changes += changeOption(mCompileAndDbgOpts.getText(), opts.compileAndDbgOpts, refopts.compileAndDbgOpts); 
-		changes += changeOption(mCompileAndDbgEngine.getSelection(), opts.compileAndDbgEngine, refopts.compileAndDbgEngine); 
+		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds);
+		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects);
+		changes += changeOption(mShowUptodate.isChecked(), opts.showUptodateFailure, refopts.showUptodateFailure);
+		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild);
+		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError);
+		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps);
+		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles);
+		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath);
+		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath);
+		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts);
+		changes += changeOption(mCompileAndDbgOpts.getText(), opts.compileAndDbgOpts, refopts.compileAndDbgOpts);
+		changes += changeOption(mCompileAndDbgEngine.getSelection(), opts.compileAndDbgEngine, refopts.compileAndDbgEngine);
 		return changes;
 	}
 
@@ -1911,13 +1912,13 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
-		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
-		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage); 
-		changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin); 
-		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
-		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
-		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
-		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec); 
+		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions);
+		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage);
+		changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin);
+		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining);
+		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource);
+		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent);
+		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec);
 		return changes;
 	}
 
@@ -1949,7 +1950,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "writing '.'", "writing an identifier" ], false));
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip"));
 		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
-		version(DParser) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
+		version(DParserOption) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
 	}
@@ -1962,8 +1963,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 
 	void EnableControls()
 	{
-		version(DParser) bool useDParser = mUseDParser.isChecked();
-		else             bool useDParser = false;
+		version(DParserOption) bool useDParser = mUseDParser.isChecked();
+		else                   bool useDParser = true;
 		mMixinAnalysis.setEnabled(useDParser);
 		mUFCSExpansions.setEnabled(useDParser);
 	}
@@ -1976,7 +1977,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mExpandTrigger.setSelection(opts.expandTrigger);
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 		mSemanticGotoDef.setChecked(opts.semanticGotoDef);
-		version(DParser) mUseDParser.setChecked(opts.useDParser);
+		version(DParserOption) mUseDParser.setChecked(opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
 
@@ -1986,15 +1987,15 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
-		changes += changeOption(mExpandSemantics.isChecked(), opts.expandFromSemantics, refopts.expandFromSemantics); 
-		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer); 
-		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON); 
-		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger); 
-		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip); 
-		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef); 
-		version(DParser) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser); 
-		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis); 
-		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions); 
+		changes += changeOption(mExpandSemantics.isChecked(), opts.expandFromSemantics, refopts.expandFromSemantics);
+		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer);
+		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON);
+		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger);
+		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip);
+		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef);
+		version(DParserOption) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser);
+		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
+		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
 		return changes;
 	}
 
@@ -2004,7 +2005,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	ComboBox mExpandTrigger;
 	CheckBox mShowTypeInTooltip;
 	CheckBox mSemanticGotoDef;
-	version(DParser) CheckBox mUseDParser;
+	version(DParserOption) CheckBox mUseDParser;
 	CheckBox mUFCSExpansions;
 	CheckBox mMixinAnalysis;
 }
@@ -2035,8 +2036,8 @@ const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad40
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");
 const GUID    g_IntellisensePropertyPage = uuid("002a2de9-8bb6-484d-9823-7e4ad4084715");
 
-const GUID*[] guids_propertyPages = 
-[ 
+const GUID*[] guids_propertyPages =
+[
 	&g_GeneralPropertyPage,
 	&g_DmdGeneralPropertyPage,
 	&g_DmdDebugPropertyPage,
