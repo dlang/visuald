@@ -2980,7 +2980,7 @@ class Config :	DisposingComObject,
 					if(!mProjectOptions.preservePaths)
 						fname = baseName(fname);
 					fname ~= "." ~ mProjectOptions.objectFileExtension();
-					if(mProjectOptions.compiler == Compiler.DMD && !isAbsolute(fname))
+					if(mProjectOptions.compiler.isIn(Compiler.DMD, Compiler.LDC) && !isAbsolute(fname))
 						f = mProjectOptions.objdir ~ "\\" ~ fname;
 					else
 						f = fname;

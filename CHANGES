@@ -753,7 +753,7 @@ Version history
   * mago: added support for new AA implementation
   * mago: preview for structs now shows first members
 
-unreleased Version 0.3.42-1
+unreleased Version 0.3.43
 
   * dustmite: pattern passed to "find" must always use quotes
   * VS2015: new install adds $(VCInstallDir)\bin to exectuable paths to allow cv2pdb to create PDB files
@@ -769,3 +769,6 @@ unreleased Version 0.3.42-1
   * renaming a module in the project tree now reopens it at the previous caret location
   * renaming a package in the project tree also renames the folder on disk if it is still empty
   * debug info: added option "suitable for selected debug engine"
+  * the original semantic analysis engine is no longer installed, always using dparser now
+  * LDC: recent versions build object files into intermediate folder, wrong names passed to linker
+    with "separate compile and link"
