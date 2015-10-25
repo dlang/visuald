@@ -774,3 +774,4 @@ unreleased Version 0.3.43
     with "separate compile and link"
   * moved defaults for resource includes and dmd executable paths from installation to extension init
   * fixed spurious "not implemented" error in error list
+  * fix dark theme detection in VS 2015

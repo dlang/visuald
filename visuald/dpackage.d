@@ -2059,7 +2059,13 @@ class GlobalOptions
 	{
 		scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ r"\General", false);
 		string theme = toUTF8(keyUserOpts.GetString("CurrentTheme")).toLower;
-		return theme == "1ded0138-47ce-435e-84ef-9ec1f439b749" || theme == "{1ded0138-47ce-435e-84ef-9ec1f439b749}";
+		if (theme == "1ded0138-47ce-435e-84ef-9ec1f439b749" || theme == "{1ded0138-47ce-435e-84ef-9ec1f439b749}")
+			return true;
+
+		// VS2015
+		scope RegKey keyUserOpts15 = new RegKey(hUserKey, regUserRoot ~ r"\ApplicationPrivateSettings\Microsoft\VisualStudio", false);
+		string theme15 = toUTF8(keyUserOpts15.GetString("ColorTheme")).toLower;
+		return theme15.endsWith("1ded0138-47ce-435e-84ef-9ec1f439b749");
 	}
 
 	bool removeColorCache()
