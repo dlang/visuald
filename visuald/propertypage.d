@@ -304,7 +304,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	// IVsPropertyPage
-	override int CategoryTitle(
+	override int get_CategoryTitle(
 		/* [in] */ in UINT iLevel,
 		/* [retval][out] */ BSTR *pbstrCategory)
 	{

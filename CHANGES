@@ -772,3 +772,5 @@ unreleased Version 0.3.43
   * the original semantic analysis engine is no longer installed, always using dparser now
   * LDC: recent versions build object files into intermediate folder, wrong names passed to linker
     with "separate compile and link"
+  * moved defaults for resource includes and dmd executable paths from installation to extension init
+  * fixed spurious "not implemented" error in error list

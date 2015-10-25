@@ -346,7 +346,7 @@ int GetDTE(dte.DTE *lppaReturn)
 	if(!_dte)
 		return returnError(E_NOINTERFACE);
 	scope(exit) _dte.Release();
-	return _dte.DTE(lppaReturn);
+	return _dte.get_DTE(lppaReturn);
 }
 
 
@@ -363,7 +363,7 @@ string getStringProperty(dte.Properties props, string propName, string def = nul
 	scope(exit) release(prop);
 
 	VARIANT var;
-	hr = prop.Value(&var);
+	hr = prop.get_Value(&var);
 	if(var.vt != VT_BSTR)
 		return def;
 	if(FAILED(hr))
@@ -384,7 +384,7 @@ int getIntProperty(dte.Properties props, string propName, int def = -1)
 	scope(exit) release(prop);
 
 	VARIANT var;
-	hr = prop.Value(&var);
+	hr = prop.get_Value(&var);
 	if(FAILED(hr))
 		return def;
 	if(var.vt == VT_I2 || var.vt == VT_UI2)
@@ -404,7 +404,7 @@ string getEnvironmentFont(out int fontSize, out int charSet)
 	dte.Properties props;
 	BSTR bprop = allocBSTR("FontsAndColors");
 	BSTR bpage = allocBSTR("Dialogs and Tool Windows");
-	HRESULT hr = _dte.Properties(bprop, bpage, &props);
+	HRESULT hr = _dte.get_Properties(bprop, bpage, &props);
 	detachBSTR(bprop);
 	detachBSTR(bpage);
 	if(FAILED(hr) || !props)

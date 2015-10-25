@@ -590,11 +590,6 @@ version(none){
 		keyToolOpts.Set("Package"w, packageGuid);
 		keyToolOpts.Set("Page"w, GUID2wstring(g_ToolsProperty2Page));
 
-		if(keyToolOpts.GetString("ExeSearchPath"w).length == 0)
-			keyToolOpts.Set("ExeSearchPath"w, "$(DMDInstallDir)windows\\bin;$(VCInstallDir)\\bin;$(VSINSTALLDIR)\\Common7\\IDE;$(WindowsSdkDir)\\bin"w, false);
-		if(keyToolOpts.GetString("IncSearchPath"w).length == 0)
-			keyToolOpts.Set("IncSearchPath"w, "$(WindowsSdkDir)\\include;$(VCInstallDir)\\include"w, false);
-
 		// remove old page
 		RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsDirsOld);
 

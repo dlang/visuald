@@ -507,33 +507,33 @@ version(none)
 	}
 
 	// IVsInstalledProduct
-	override int IdBmpSplash(uint* pIdBmp)
+	override int get_IdBmpSplash(uint* pIdBmp)
 	{
 		mixin(LogCallMix);
 		*pIdBmp = BMP_SPLASHSCRN;
 		return S_OK;
 	}
 
-	override int OfficialName(BSTR* pbstrName)
+	override int get_OfficialName(BSTR* pbstrName)
 	{
 		logCall("%s.ProductID(pbstrName=%s)", this, pbstrName);
 		*pbstrName = allocwBSTR(g_packageName);
 		return S_OK;
 	}
-	override int ProductID(BSTR* pbstrPID)
+	override int get_ProductID(BSTR* pbstrPID)
 	{
 		logCall("%s.ProductID(pbstrPID=%s)", this, pbstrPID);
 		*pbstrPID = allocBSTR(full_version);
 		return S_OK;
 	}
-	override int ProductDetails(BSTR* pbstrProductDetails)
+	override int get_ProductDetails(BSTR* pbstrProductDetails)
 	{
 		logCall("%s.ProductDetails(pbstrPID=%s)", this, pbstrProductDetails);
 		*pbstrProductDetails = allocBSTR ("Integration of the D Programming Language into Visual Studio");
 		return S_OK;
 	}
 
-	override int IdIcoLogoForAboutbox(uint* pIdIco)
+	override int get_IdIcoLogoForAboutbox(uint* pIdIco)
 	{
 		logCall("%s.IdIcoLogoForAboutbox(pIdIco=%s)", this, pIdIco);
 		*pIdIco = ICON_ABOUTBOX;
@@ -1221,6 +1221,7 @@ class GlobalOptions
 
 	void detectWindowsSDKDir()
 	{
+		// todo: detect Win10 SDK
 		if(WindowsSdkDir.empty)
 		{
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.1"w, false);
@@ -1432,12 +1433,14 @@ class GlobalOptions
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
 				}
 			}
+			DMD.ExeSearchPath = r"$(DMDInstallDir)windows\bin;$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
+
 			readCompilerOptions!"DMD"(DMD, getDefaultDMDLibPath64());
 			readCompilerOptions!"GDC"(GDC, null);
 			readCompilerOptions!"LDC"(LDC, null);
 
 			JSNSearchPath     = getPathsOpt("JSNSearchPath");
-			IncSearchPath     = getStringOpt("IncSearchPath");
+			IncSearchPath     = getStringOpt("IncSearchPath", r"$(WindowsSdkDir)\include;$(VCInstallDir)\include");
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
 			compileAndDbgOpts = getStringOpt("compileAndDbgOpts", "-g");

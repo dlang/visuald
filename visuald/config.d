@@ -2218,13 +2218,13 @@ class Config :	DisposingComObject,
 
 	///////////////////////////////////////////////////////////////
 	// IVsProfilableProjectCfg
-	HRESULT SuppressSignedAssemblyWarnings(/+[retval, out]+/VARIANT_BOOL* suppress)
+	override HRESULT get_SuppressSignedAssemblyWarnings(/+[retval, out]+/VARIANT_BOOL* suppress)
 	{
 		mixin(LogCallMix);
 		*suppress = FALSE;
 		return S_OK;
 	}
-	HRESULT LegacyWebSupportRequired(/+[retval, out]+/VARIANT_BOOL* required)
+	override HRESULT get_LegacyWebSupportRequired(/+[retval, out]+/VARIANT_BOOL* required)
 	{
 		mixin(LogCallMix);
 		*required = FALSE;
