@@ -306,6 +306,12 @@ class ProjectOptions
 	string objectFileExtension() { return compiler != Compiler.GDC ? "obj" : "o"; }
 	string otherCompilerPath() { return otherDMD ? program : null; }
 
+	bool useMSVCRT()
+	{
+		return (compiler == Compiler.DMD && (isX86_64 || mscoff)) || 
+		       (compiler == Compiler.LDC);
+	}
+
 	@property ref CompilerDirectories compilerDirectories() 
 	{
 		switch(compiler)
@@ -315,6 +321,18 @@ class ProjectOptions
 			case Compiler.GDC: return Package.GetGlobalOptions().GDC;
 			case Compiler.LDC: return Package.GetGlobalOptions().LDC;
 		}
+	}
+
+	bool isLDCforMinGW()
+	{
+		if (compiler != Compiler.LDC)
+			return false;
+
+		string installdir = Package.GetGlobalOptions().LDC.InstallDir;
+		if (installdir.empty)
+			return false;
+
+		return std.file.exists(normalizeDir(installdir) ~ "lib/libphobos2-ldc.a");
 	}
 
 	// common options with building phobos.lib
@@ -700,11 +718,11 @@ class ProjectOptions
 		if(compiler == Compiler.DMD)
 			return buildDMDCommandLine(compile, performLink, deps, syntaxOnly);
 
-		if(!compile && performLink && lib == OutputType.StaticLib)
-			return buildARCommandLine();
-
 		if(compiler == Compiler.LDC)
 			return buildLDCCommandLine(compile, performLink, deps, syntaxOnly);
+
+		if(!compile && performLink && lib == OutputType.StaticLib)
+			return buildARCommandLine();
 
 		return buildGDCCommandLine(compile, performLink, deps, syntaxOnly);
 	}
@@ -767,6 +785,7 @@ class ProjectOptions
 	string linkGDCCommandLine()
 	{
 		string cmd;
+		string linkeropt = " -Wl,";
 
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
@@ -778,7 +797,7 @@ class ProjectOptions
 			case 0: // no map
 				break;
 			default:
-				cmd ~= " -Wl,-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				cmd ~= linkeropt ~ "-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
 				break;
 		}
 
@@ -786,9 +805,9 @@ class ProjectOptions
 		if(useStdLibPath)
 			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		else
-			cmd ~= " -Wl,-nostdlib";
+			cmd ~= linkeropt ~ "-nostdlib";
 		foreach(lp; lpaths)
-			cmd ~= " -Wl,-L," ~ quoteFilename(lp);
+			cmd ~= linkeropt ~ "-L," ~ quoteFilename(lp);
 
 		if(lib != OutputType.StaticLib)
 		{
@@ -801,6 +820,50 @@ class ProjectOptions
 // added later in getCommandFileList
 //			if(libfiles.length)
 //				cmd ~= " " ~ libfiles;
+			if(resfile.length)
+				cmd ~= " " ~ resfile;
+		}
+		return cmd;
+	}
+
+	string linkLDCCommandLine()
+	{
+		string cmd;
+		string linkeropt = " -L=";
+
+		string dmdoutfile = getTargetPath();
+		if(usesCv2pdb())
+			dmdoutfile ~= "_cv";
+
+		cmd ~= " -of=" ~ quoteNormalizeFilename(dmdoutfile);
+		switch(mapverbosity)
+		{
+			case 0: // no map
+				break;
+			default:
+				cmd ~= linkeropt ~ "-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				break;
+		}
+
+		string[] lpaths = tokenizeArgs(libpaths);
+		if(useStdLibPath)
+			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
+		else
+			cmd ~= linkeropt ~ "-nostdlib";
+		foreach(lp; lpaths)
+			cmd ~= linkeropt ~ "-L," ~ quoteFilename(lp);
+
+		if(lib != OutputType.StaticLib)
+		{
+			//			if(createImplib)
+			//				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+			if(objfiles.length)
+				cmd ~= " " ~ objfiles;
+			if(deffile.length)
+				cmd ~= " " ~ deffile;
+			// added later in getCommandFileList
+			//			if(libfiles.length)
+			//				cmd ~= " " ~ libfiles;
 			if(resfile.length)
 				cmd ~= " " ~ resfile;
 		}
@@ -935,8 +998,10 @@ class ProjectOptions
 	{
 		if(compiler == Compiler.GDC)
 			return linkGDCCommandLine();
+		else if(isLDCforMinGW())
+			return linkLDCCommandLine();
 		else if(compiler == Compiler.LDC)
-			return linkDMDCommandLine(true);
+			return linkDMDCommandLine(true); // MS link
 		else
 			return linkDMDCommandLine(isX86_64);
 	}
@@ -970,7 +1035,7 @@ class ProjectOptions
 		{
 			default:
 			case Compiler.DMD: cc = (isX86_64 || mscoff ? 1 : 0); break;
-			case Compiler.LDC: cc = 2; break;
+			case Compiler.LDC: cc = (isLDCforMinGW() ? 2 : 1); break;
 			case Compiler.GDC: cc = 3; break;
 		}
 
@@ -2487,7 +2552,7 @@ class Config :	DisposingComObject,
 			default:
 			case Compiler.DMD: return mProjectOptions.mscoff || mProjectOptions.isX86_64 ? "cl" : "dmc";
 			case Compiler.GDC: return "gcc";
-			case Compiler.LDC: return "clang";
+			case Compiler.LDC: return mProjectOptions.isLDCforMinGW() ? "clang" : "cl";
 		}
 	}
 

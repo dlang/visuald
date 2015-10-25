@@ -1343,9 +1343,9 @@ class GlobalOptions
 			{
 				return toUTF8(getWStringOpt(tag, def));
 			}
-			string getPathsOpt(wstring tag, wstring def = null)
+			string getPathsOpt(wstring tag, string def = null)
 			{
-				return replaceSemiCrLf(toUTF8(getWStringOpt(tag, def)));
+				return replaceSemiCrLf(toUTF8(getWStringOpt(tag, to!wstring(def))));
 			}
 			int getIntOpt(wstring tag, int def = 0)
 			{
@@ -1382,42 +1382,56 @@ class GlobalOptions
 			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
 
-			wstring getDefaultDMDLibPath64()
+			string getDefaultLibPathCOFF64()
 			{
-				wstring libpath = r"$(VCInstallDir)\lib\amd64";
+				string libpath = r"$(VCInstallDir)\lib\amd64";
 				if(std.file.exists(VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
-					libpath ~= to!wstring("\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x64");
+					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x64";
 
 				if(WindowsSdkDir.length)
 				{
-					if(std.file.exists(WindowsSdkDir ~ r"lib\x64"))
-						libpath ~= to!wstring("\n$(WindowsSdkDir)lib\\x64");
-					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64")) // SDK 8.0
-						libpath ~= to!wstring("\n$(WindowsSdkDir)Lib\\win8\\um\\x64");
-					else if(std.file.exists(WindowsSdkDir ~ r"Lib\\winv6.3\\um\\x64")) // SDK 8.1
-						libpath ~= to!wstring("\n$(WindowsSdkDir)Lib\\winv6.3\\um\\x64");
+					if(std.file.exists(WindowsSdkDir ~ r"lib\x64\kernel32.lib"))
+						libpath ~= "\n$(WindowsSdkDir)lib\\x64";
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64\kernel32.lib")) // SDK 8.0
+						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x64";
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\winv6.3\um\x64\kernel32.lib")) // SDK 8.1
+						libpath ~= "\n$(WindowsSdkDir)Lib\\winv6.3\\um\\x64";
+				}
+				return libpath;
+			}
+
+			string getDefaultLibPathCOFF32()
+			{
+				string libpath = r"$(VCInstallDir)\lib";
+				if(std.file.exists(VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x86";
+
+				if(WindowsSdkDir.length)
+				{
+					if(std.file.exists(WindowsSdkDir ~ r"lib\kernel32.lib"))
+						libpath ~= "\n$(WindowsSdkDir)lib";
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x86\kernel32.lib")) // SDK 8.0
+						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x86";
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\winv6.3\um\x86\kernel32.lib")) // SDK 8.1
+						libpath ~= "\n$(WindowsSdkDir)Lib\\winv6.3\\um\\x86";
 				}
 				return libpath;
 			}
 
 			// overwrite by user config
-			void readCompilerOptions(string compiler)(ref CompilerDirectories opt, wstring defLibPath64, wstring defLibPath32coff = null)
+			void readCompilerOptions(string compiler)(ref CompilerDirectories opt)
 			{
 				enum bool dmd = compiler == "DMD";
 				enum string prefix = dmd ? "" : compiler ~ ".";
 				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
 
-				wstring defDisasm32omf = `"obj2asm" -x "$(InputPath)" >"$(TargetPath)"`;
-				wstring defDisasm32 = `"$(VCInstallDir)\bin\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
-				wstring defDisasm64 = `"$(VCInstallDir)\bin\amd64\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
-
-				opt.ExeSearchPath = getPathsOpt(prefix ~ "ExeSearchPath");
-				opt.LibSearchPath = getPathsOpt(prefix ~ "LibSearchPath");
-				opt.ImpSearchPath = getPathsOpt(prefix ~ "ImpSearchPath");
-				opt.DisasmCommand = getPathsOpt(prefix ~ "DisasmCommand", dmd ? defDisasm32omf : defDisasm32);
-				opt.ExeSearchPath64 = getPathsOpt(prefix ~ "ExeSearchPath64", to!wstring(opt.ExeSearchPath));
-				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", defLibPath64);
-				opt.DisasmCommand64 = getPathsOpt(prefix ~ "DisasmCommand64", defDisasm64);
+				opt.ExeSearchPath   = getPathsOpt(prefix ~ "ExeSearchPath", opt.ExeSearchPath);
+				opt.LibSearchPath   = getPathsOpt(prefix ~ "LibSearchPath", opt.LibSearchPath);
+				opt.ImpSearchPath   = getPathsOpt(prefix ~ "ImpSearchPath", opt.ImpSearchPath);
+				opt.DisasmCommand   = getPathsOpt(prefix ~ "DisasmCommand", opt.DisasmCommand);
+				opt.ExeSearchPath64 = getPathsOpt(prefix ~ "ExeSearchPath64", opt.ExeSearchPath64);
+				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", opt.LibSearchPath64);
+				opt.DisasmCommand64 = getPathsOpt(prefix ~ "DisasmCommand64", opt.DisasmCommand64);
 
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
@@ -1425,19 +1439,43 @@ class GlobalOptions
 
 				if (dmd)
 				{
-					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", to!wstring(opt.ExeSearchPath));
-					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", defLibPath32coff);
-					opt.DisasmCommand32coff   = getPathsOpt(prefix ~ "DisasmCommand32coff", defDisasm32);
+					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", opt.ExeSearchPath32coff);
+					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", opt.LibSearchPath32coff);
+					opt.DisasmCommand32coff   = getPathsOpt(prefix ~ "DisasmCommand32coff", opt.DisasmCommand32coff);
 					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", dmd);
 					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
 				}
 			}
-			DMD.ExeSearchPath = r"$(DMDInstallDir)windows\bin;$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
+			// put dmd bin folder at the end to avoid trouble with link.exe (dmd does not need search path)
+			// $(WindowsSdkDir)\bin needed for rc.exe
+			// $(VCInstallDir)\bin needed to compile C + link.exe + DLLs
+			// $(VSINSTALLDIR)\Common7\IDE needed for some VS versions for cv2pdb
+			DMD.ExeSearchPath = r"$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin;$(DMDInstallDir)windows\bin";
+			DMD.ExeSearchPath64     = DMD.ExeSearchPath;
+			DMD.ExeSearchPath32coff = DMD.ExeSearchPath;
+			GDC.ExeSearchPath       = r"$(GDCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
+			GDC.ExeSearchPath64     = GDC.ExeSearchPath;
+			LDC.ExeSearchPath       = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
+			LDC.ExeSearchPath64     = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin\amd64;$(WindowsSdkDir)\bin";
 
-			readCompilerOptions!"DMD"(DMD, getDefaultDMDLibPath64());
-			readCompilerOptions!"GDC"(GDC, null);
-			readCompilerOptions!"LDC"(LDC, null);
+			DMD.LibSearchPath64     = getDefaultLibPathCOFF64();
+			LDC.LibSearchPath64     = DMD.LibSearchPath64;
+			DMD.LibSearchPath32coff = getDefaultLibPathCOFF32();
+			LDC.LibSearchPath       = DMD.LibSearchPath32coff;
+
+			DMD.DisasmCommand       = `"obj2asm" -x "$(InputPath)" >"$(TargetPath)"`;
+			DMD.DisasmCommand64     = `"$(VCInstallDir)\bin\amd64\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
+			DMD.DisasmCommand32coff = `"$(VCInstallDir)\bin\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
+
+			GDC.DisasmCommand   = DMD.DisasmCommand32coff;
+			LDC.DisasmCommand   = DMD.DisasmCommand32coff;
+			GDC.DisasmCommand64 = DMD.DisasmCommand64;
+			LDC.DisasmCommand64 = DMD.DisasmCommand64;
+
+			readCompilerOptions!"DMD"(DMD);
+			readCompilerOptions!"GDC"(GDC);
+			readCompilerOptions!"LDC"(LDC);
 
 			JSNSearchPath     = getPathsOpt("JSNSearchPath");
 			IncSearchPath     = getStringOpt("IncSearchPath", r"$(WindowsSdkDir)\include;$(VCInstallDir)\include");

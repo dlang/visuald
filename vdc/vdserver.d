@@ -55,18 +55,18 @@ version(DebugServer)
 	import core.stdc.stdio : fprintf, fopen, fputc, fflush, FILE;
 	__gshared FILE* dbgfh;
 
-	void dbglog(string s) 
+	void dbglog(string s)
 	{
 		debug
 		{
-			version(vdlog) 
+			version(vdlog)
 				logCall("VDServer: ", s);
 			else
 				sdk.win32.winbase.OutputDebugStringA(toMBSz("VDServer: " ~ s ~ "\n"));
 		}
 		else
 		{
-			if(!dbgfh) 
+			if(!dbgfh)
 				dbgfh = fopen("c:/tmp/vdserver.log", "w");
 
 			SysTime now = Clock.currTime();
@@ -160,7 +160,7 @@ class VDServer : ComObject, IVDServer
 
 	extern(D) void schedule(void delegate() dg)
 	{
-		version(SingleThread) 
+		version(SingleThread)
 			send(mTid, *cast(delegate_fake*)&dg);
 		else
 			runTask(dg);
@@ -181,10 +181,11 @@ class VDServer : ComObject, IVDServer
 			string imports = to_string(imp);
 			string strImports = to_string(stringImp);
 
-			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64, 
+			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64,
 											  opts.coverage, opts.doDoc, opts.noBoundsCheck, opts.gdcCompiler,
 											  0, 0, // no need to compare version levels, done in setVersionIds
-											  opts.noDeprecated, opts.mixinAnalysis, opts.UFCSExpansions);
+											  opts.noDeprecated, opts.ldcCompiler, opts.msvcrt,
+											  opts.mixinAnalysis, opts.UFCSExpansions);
 
 			opts.unittestOn     = (flags & 1) != 0;
 			opts.debugOn        = (flags & 2) != 0;
@@ -196,6 +197,8 @@ class VDServer : ComObject, IVDServer
 			opts.noDeprecated   = (flags & 128) != 0;
 			opts.mixinAnalysis  = (flags & 0x1_00_00_00) != 0;
 			opts.UFCSExpansions = (flags & 0x2_00_00_00) != 0;
+			opts.ldcCompiler    = (flags & 0x4_00_00_00) != 0;
+			opts.msvcrt         = (flags & 0x8_00_00_00) != 0;
 
 			int versionlevel = (flags >> 8)  & 0xff;
 			int debuglevel   = (flags >> 16) & 0xff;
@@ -206,8 +209,8 @@ class VDServer : ComObject, IVDServer
 			int changed = (oldflags != (flags & 0xff0000ff));
 			changed += opts.setImportDirs(splitLines(imports));
 			changed += opts.setImportDirs(splitLines(imports));
-			changed += opts.setVersionIds(versionlevel, splitLines(verids)); 
-			changed += opts.setDebugIds(debuglevel, splitLines(dbgids)); 
+			changed += opts.setVersionIds(versionlevel, splitLines(verids));
+			changed += opts.setDebugIds(debuglevel, splitLines(dbgids));
 		}
 		return S_OK;
 	}
@@ -216,7 +219,7 @@ class VDServer : ComObject, IVDServer
 	{
 		synchronized(mSemanticProject)
 			mSemanticProject.disconnectAll();
-		
+
 		mSemanticProject = new vdc.semantic.Project;
 		mSemanticProject.saveErrors = true;
 		return S_OK;
@@ -226,7 +229,7 @@ class VDServer : ComObject, IVDServer
 	{
 		string fname = to_string(filename);
 		string text  = to_string(srcText);
-		
+
 		auto parser = new Parser;
 		parser.saveErrors = true;
 
@@ -523,7 +526,7 @@ class VDServer : ComObject, IVDServer
 		if(!pIsOp)
 			return E_POINTER;
 		string fname = to_string(filename);
-		
+
 		synchronized(mSemanticProject)
 			if(auto src = mSemanticProject.getModuleByFilename(fname))
 				if(src.parsed)
@@ -582,7 +585,7 @@ class VDServer : ComObject, IVDServer
 
 		for(LONG index = 0; index < locData.length; index++)
 			SafeArrayPutElement(sa, &index, &locData[index]);
-		
+
 		locs.vt = VT_ARRAY;
 		locs.parray = sa;
 		return S_OK;
@@ -594,7 +597,7 @@ class VDServer : ComObject, IVDServer
 		{
 			if(mNextReadyMessage > Clock.currTime())
 				return S_FALSE;
-			
+
 			mLastMessage = "Ready";
 			mNextReadyMessage = Clock.currTime().add!"years"(1);
 		}

@@ -775,3 +775,5 @@ unreleased Version 0.3.43
   * moved defaults for resource includes and dmd executable paths from installation to extension init
   * fixed spurious "not implemented" error in error list
   * fix dark theme detection in VS 2015
+  * better semantic/colorizer support for versions LDC,CRuntime_Microsoft,CRuntime_DigitalMars and MinGW
+  * tweaked default path and library settings for DMD and LDC

@@ -821,7 +821,8 @@ class LanguageService : DisposingComObject,
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck, 
 									  cfgopts.compiler == Compiler.GDC, 
 									  cfgopts.versionlevel, cfgopts.debuglevel,
-									  cfgopts.errDeprecated, globopts.mixinAnalysis, globopts.UFCSExpansions);
+									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,
+									  cfgopts.useMSVCRT (), globopts.mixinAnalysis, globopts.UFCSExpansions);
 			
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
 			stringImp = tokenizeArgs(strimp);
