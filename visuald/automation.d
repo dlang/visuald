@@ -637,12 +637,6 @@ class ExtProperties : DisposingDispatchObject, dte.Properties
 			*lplppReturn = addref(newCom!(ExtProperty!string)(this, prop, fullpath));
 			return S_OK;
 		}
-		if(false && prop == "OutputTypeEx")
-		{
-			int type = prjOutputTypeWinExe;
-			*lplppReturn = addref(newCom!(ExtProperty!int)(this, prop, type));
-			return S_OK;
-		}
 		return returnError(S_FALSE);
 	}
 
@@ -1179,7 +1173,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		if(!srpSolution)
 			return returnError(E_FAIL);
 
-		*ppParentProjectItem = null; // VS2015 complains if the return "not implemented" or null
+		*ppParentProjectItem = null;
 		int hr = E_UNEXPECTED;
 
 		IVsHierarchy pIVsHierarchy = mProject; // ->GetIVsHierarchy();
@@ -1216,7 +1210,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		}
 		release(srpSolution);
 
-		return hr; // returnError(E_NOTIMPL);
+		return hr;
 	}
 
 	override int get_CodeModel(
