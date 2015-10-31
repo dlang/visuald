@@ -735,7 +735,7 @@ version(none)
 			hr = E_FAIL;
 		return hr;
 	}
-	static HRESULT writeGUID(IStream pStream, ref GUID uid)
+	static HRESULT writeGUID(IStream pStream, ref const GUID uid)
 	{
 		ULONG written;
 		HRESULT hr = pStream.Write(&uid, uid.sizeof, &written);
@@ -771,21 +771,21 @@ version(none)
 		return S_OK;
 	}
 	///////////////////////////
-	static HRESULT readUint(IStream pStream, ref uint num)
+	static HRESULT readRaw(IStream pStream, void* p, uint size)
 	{
 		ULONG read;
-		HRESULT hr = pStream.Read(&num, num.sizeof, &read);
-		if(hr == S_OK && read != num.sizeof)
+		HRESULT hr = pStream.Read(p, size, &read);
+		if(hr == S_OK && read != size)
 			hr = E_FAIL;
 		return hr;
 	}
+	static HRESULT readUint(IStream pStream, ref uint num)
+	{
+		return readRaw(pStream, &num, num.sizeof);
+	}
 	static HRESULT readGUID(IStream pStream, ref GUID uid)
 	{
-		ULONG read;
-		HRESULT hr = pStream.Read(&uid, uid.sizeof, &read);
-		if(hr == S_OK && read != uid.sizeof)
-			hr = E_FAIL;
-		return hr;
+		return readRaw(pStream, &uid, uid.sizeof);
 	}
 	static HRESULT readString(IStream pStream, ref string s)
 	{
@@ -796,12 +796,21 @@ version(none)
 		if(len == -1)
 			return S_FALSE;
 		char[] buf = new char[len];
-		ULONG read;
-		HRESULT hr = pStream.Read(buf.ptr, len, &read);
-		if(hr == S_OK && read != len)
-			hr = E_FAIL;
+		HRESULT hr = readRaw(pStream, buf.ptr, len);
 		s = assumeUnique(buf);
 		return hr;
+	}
+	static HRESULT skip(IStream pStream, uint len)
+	{
+		char[256] buf;
+		for(; len >= buf.sizeof; len -= buf.sizeof)
+			if(auto hr = readRaw(pStream, buf.ptr, buf.sizeof))
+				return hr;
+
+		if(len > 0)
+			if(auto hr = readRaw(pStream, buf.ptr, len))
+				return hr;
+		return S_OK;
 	}
 
 	HRESULT WriteUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
@@ -858,9 +867,24 @@ version(none)
 					}
 				}
 			}
-			GUID uid; // empty GUID as end marker
+			GUID uid; // empty GUID as end marker of projects
 			if(auto hr = writeGUID(pOptionsStream, uid))
 				return hr;
+
+			version(writeSearchPaneState)
+			{
+				// now followed by more chunks with (iid,length) heaser
+				if(auto win = getSearchPane(false))
+				{
+					if(auto hr = writeGUID(pOptionsStream, SearchPane.iid))
+						return hr;
+					if(HRESULT hr = win.SaveViewState(pOptionsStream))
+						return hr;
+				}
+				// empty GUID as end marker 
+				if(auto hr = writeGUID(pOptionsStream, uid))
+					return hr;
+			}
 		}
 		return S_OK;
 	}
@@ -873,9 +897,9 @@ version(none)
 			return E_FAIL;
 		scope(exit) release(srpSolution);
 
+		GUID uid;
 		for(;;)
 		{
-			GUID uid;
 			if(auto hr = readGUID(pOptionsStream, uid))
 				return hr;
 			if(uid == GUID_NULL)
@@ -935,6 +959,28 @@ version(none)
 					}
 				}
 			}
+		}
+
+		version(writeSearchPaneState)
+		while(readGUID(pOptionsStream, uid) == S_OK)
+		{
+			if(uid == GUID_NULL)
+				break;
+			if (uid == SearchPane.iid)
+			{
+				if(auto win = getSearchPane(true))
+				{
+					if(HRESULT hr = win.LoadViewState(pOptionsStream))
+						return hr;
+					continue;
+				}
+			}
+			// skip chunk
+			uint len;
+			if(HRESULT hr = readUint(pOptionsStream, len))
+				return hr;
+			if(HRESULT hr = skip(pOptionsStream, len))
+			   return hr;
 		}
 		return S_OK;
 	}

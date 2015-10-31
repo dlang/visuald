@@ -782,3 +782,4 @@ unreleased Version 0.3.43
     - better work with resizeable windows
     - scale some controls vertically if there is space
     - added browse buttons to path settings
+  * search pane did not save its last state, only when switching between file and symbol search
