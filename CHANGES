@@ -777,3 +777,8 @@ unreleased Version 0.3.43
   * fix dark theme detection in VS 2015
   * better semantic/colorizer support for versions LDC,CRuntime_Microsoft,CRuntime_DigitalMars and MinGW
   * tweaked default path and library settings for DMD and LDC
+  * configuration dialogs:
+    - fixed small fonts in VS2015
+    - better work with resizeable windows
+    - scale some controls vertically if there is space
+    - added browse buttons to path settings

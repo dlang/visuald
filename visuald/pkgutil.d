@@ -158,6 +158,45 @@ bool tryWithExceptionToBuildOutputPane(T)(T dg, string errInfo = "")
 	return false;
 }
 
+string browseFile(HWND parentHwnd, string title, string filter, string initdir = null)
+{
+	if (auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false))
+	{
+		wchar[260] fileName;
+		fileName[0] = 0;
+		VSOPENFILENAMEW ofn;
+		ofn.lStructSize = ofn.sizeof;
+		ofn.hwndOwner = parentHwnd;
+		ofn.pwzDlgTitle = toUTF16z(title);
+		ofn.pwzFileName = fileName.ptr;
+		ofn.nMaxFileName = fileName.length;
+		ofn.pwzInitialDir = toUTF16z(initdir);
+		ofn.pwzFilter = toUTF16z(filter);
+		if (pIVsUIShell.GetOpenFileNameViaDlg(&ofn) == S_OK)
+			return to!string(fileName);
+	}
+	return null;
+}
+
+string browseDirectory(HWND parentHwnd, string title, string initdir = null)
+{
+	if (auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false))
+	{
+		wchar[260] dirName;
+		dirName[0] = 0;
+		VSBROWSEINFOW bi;
+		bi.lStructSize = bi.sizeof;
+		bi.hwndOwner = parentHwnd;
+		bi.pwzDlgTitle = toUTF16z(title);
+		bi.pwzDirName = dirName.ptr;
+		bi.nMaxDirName = dirName.length;
+		bi.pwzInitialDir = toUTF16z(initdir);
+		if (pIVsUIShell.GetDirectoryViaBrowseDlg(&bi) == S_OK)
+			return to!string(dirName);
+	}
+	return null;
+}
+
 ///////////////////////////////////////////////////////////////////////
 // version = DEBUG_GC;
 version(DEBUG_GC)
