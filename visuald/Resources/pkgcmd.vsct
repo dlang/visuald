@@ -279,7 +279,7 @@
             <CommandFlag>DynamicVisibility</CommandFlag>
             <CommandFlag>DefaultInvisible</CommandFlag>
             <Strings>
-                <ButtonText>New Package</ButtonText>
+                <ButtonText>New Folder</ButtonText>
             </Strings>
         </Button>
 
