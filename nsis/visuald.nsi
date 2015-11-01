@@ -12,6 +12,9 @@
 ; define DPARSER to include DParser COM server installation (expected at ../bin/Release/DParserCOMServer)
 !define DPARSER
 
+; define VDSERVER to include vdserver COM server installation
+; !define VDSERVER
+
 ; define VDEXTENSIONS to include C# extensions (expected at ../bin/Release/vdextensions)
 !define VDEXTENSIONS
 
@@ -185,7 +188,7 @@ Section "Visual Studio package" SecPackage
   ${SetOutPath} "$INSTDIR"
   
   ${File} ..\bin\${CONFIG}\ ${DLLNAME}
-  ${File} ..\bin\${CONFIG}\ vdserver.exe
+  ${File} ..\bin\${CONFIG}\ vdserver.tlb
   ${File} ..\bin\${CONFIG}\ pipedmd.exe
   ${File} ..\bin\${CONFIG}\ filemonitor.dll
   ${File} ..\bin\${CONFIG}\ dcxxfilt.exe
@@ -193,9 +196,20 @@ Section "Visual Studio package" SecPackage
   ${File} ..\ LICENSE_1_0.txt
   ${File} ..\ CHANGES
 
+!ifdef VDSERVER
+  ${File} ..\bin\${CONFIG}\ vdserver.exe
+!endif
+
   !ifdef VDEXTENSIONS
   ${File} ..\bin\${CONFIG}\vdextensions\ vdextensions.dll
   !endif
+
+!ifdef DPARSER
+  ${SetOutPath} "$INSTDIR\DParser"
+  ${File} ..\bin\Release\DParserCOMServer\ DParserCOMServer.exe
+  ${File} ..\bin\Release\DParserCOMServer\ D_Parser.dll
+!endif
+
 
   ${SetOutPath} "$INSTDIR\Templates"
   ${SetOutPath} "$INSTDIR\Templates\Items"
@@ -241,7 +255,14 @@ Section "Visual Studio package" SecPackage
   ${SetOutPath} "$INSTDIR\Templates\CodeSnippets\Snippets"
   ${File} ..\visuald\Templates\CodeSnippets\Snippets\ *.snippet
 
+  Call RegisterIVDServer
+!ifdef VDSERVER
   Call RegisterVDServer
+!endif
+
+!ifdef DPARSER
+  Call RegisterDParser
+!endif
 
   ;Store installation folder
   WriteRegStr HKCU "Software\${APPNAME}" "" $INSTDIR
@@ -493,19 +514,6 @@ ${MementoSection} "mago" SecMago
 ${MementoSectionEnd}
 !endif
 
-!ifdef DPARSER
-;--------------------------------
-${MementoSection} "DParser" SecDParser
-
-  ${SetOutPath} "$INSTDIR\DParser"
-  ${File} ..\bin\Release\DParserCOMServer\ DParserCOMServer.exe
-  ${File} ..\bin\Release\DParserCOMServer\ D_Parser.dll
-
-  Call RegisterDParser
-
-${MementoSectionEnd}
-!endif
-
 ${MementoSectionDone}
 
 Section -closelogfile
@@ -539,10 +547,6 @@ SectionEnd
   LangString DESC_SecMago ${LANG_ENGLISH} "Mago is a debug engine especially designed for the D-Language."
   LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. Distributed under the Apache License Version 2.0. See www.dsource.org/ projects/mago_debugger"
 !endif  
-!ifdef DPARSER
-  LangString DESC_SecDParser ${LANG_ENGLISH} "DParser is a Parser && Resolver && Completion library for D."
-  LangString DESC_SecDParser2 ${LANG_ENGLISH} "$\r$\nDParser is written by Alexander Bothe. Distributed under the Apache License Version 2.0. See https://github.com/ aBothe/D_Parser"
-!endif  
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -565,9 +569,6 @@ SectionEnd
 !endif
 !ifdef MAGO
     !insertmacro MUI_DESCRIPTION_TEXT ${SecMago} $(DESC_SecMago)$(DESC_SecMago2)
-!endif
-!ifdef DPARSER
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecDParser} $(DESC_SecDParser)$(DESC_SecDParser2)
 !endif
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -688,6 +689,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2015_REGISTRY_KEY}\InstalledProducts\Mago"
 !endif
   
+  Call un.RegisterIVDServer
   Call un.RegisterVDServer
   Call un.RegisterDParser
 
@@ -980,15 +982,27 @@ FunctionEnd
 !define VDSERVER_INTERFACE_NAME             IVDServer
 !define VDSERVER_INTERFACE_CLSID            {002a2de9-8bb6-484d-9901-7e4ad4084715}
 
+Function RegisterIVDServer
+
+  WriteRegStr ${VDSERVER_REG_ROOT} "TypeLib\${VDSERVER_TYPELIB_CLSID}\1.0\0\win32" "" $INSTDIR\vdserver.tlb
+  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}"         "" ${VDSERVER_INTERFACE_NAME}
+  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}\ProxyStubClsid32" "" {00020424-0000-0000-C000-000000000046}
+  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}\TypeLib" "" ${VDSERVER_TYPELIB_CLSID}
+
+FunctionEnd
+
+Function un.RegisterIVDServer
+
+  DeleteRegKey ${VDSERVER_REG_ROOT} "TypeLib\${VDSERVER_TYPELIB_CLSID}" 
+  DeleteRegKey ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}" 
+
+FunctionEnd
+
 Function RegisterVDServer
 
   WriteRegStr ${VDSERVER_REG_ROOT} "${VDSERVER_FACTORY_NAME}\CLSID"                "" ${VDSERVER_FACTORY_CLSID}
   WriteRegStr ${VDSERVER_REG_ROOT} "CLSID\${VDSERVER_FACTORY_CLSID}\LocalServer32" "" $INSTDIR\vdserver.exe
   WriteRegStr ${VDSERVER_REG_ROOT} "CLSID\${VDSERVER_FACTORY_CLSID}\TypeLib"       "" ${VDSERVER_TYPELIB_CLSID}
-  WriteRegStr ${VDSERVER_REG_ROOT} "TypeLib\${VDSERVER_TYPELIB_CLSID}\1.0\0\win32" "" $INSTDIR\vdserver.exe
-  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}"         "" ${VDSERVER_INTERFACE_NAME}
-  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}\ProxyStubClsid32" "" {00020424-0000-0000-C000-000000000046}
-  WriteRegStr ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}\TypeLib" "" ${VDSERVER_TYPELIB_CLSID}
 
 FunctionEnd
 
@@ -996,8 +1010,6 @@ Function un.RegisterVDServer
 
   DeleteRegKey ${VDSERVER_REG_ROOT} "${VDSERVER_FACTORY_NAME}" 
   DeleteRegKey ${VDSERVER_REG_ROOT} "CLSID\${VDSERVER_FACTORY_CLSID}"
-  DeleteRegKey ${VDSERVER_REG_ROOT} "TypeLib\${VDSERVER_TYPELIB_CLSID}" 
-  DeleteRegKey ${VDSERVER_REG_ROOT} "Interface\${VDSERVER_INTERFACE_CLSID}" 
 
 FunctionEnd
 

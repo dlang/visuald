@@ -35,12 +35,18 @@ Project:
   - ddoc files
 + additional options for resource compiler
 - pass import path from static lib project to dependent projects
+
 - single file compilation for file configuration
 - custom command: quotes in dependencies not supported
+- custom command: writes build batch to project folder
+- custom command: no output given => creates ".build.cmd"
+- single file commands: track dependencies
+- single file commands: multiple outputs
+
 - VS2013: property pages don't follow resize
-- custom command: writes build batch to source folder
 - VS2013: possible to copy a project item with DnD into the same project again
 - saving file while it is being compiled/linked does not force a recompilation
+
 
 Language service:
 -----------------
@@ -82,6 +88,7 @@ Semantics:
 - vdserver.exe should terminate if devenv.exe crashes
 - expansion fails too often
 - handle parser error at caret better for expansion/definition
+- ddmd: semantic engine fails when module names do not match the path?
 
 Search:
 ---------------
@@ -92,6 +99,7 @@ Search:
 - update result list after build
 - update too slow when typing filter
 - VS2012: focus not in edit line after opening dialog
+- ddmd: finding files in .. does not work?
 
 Object Browser:
 ---------------
@@ -135,7 +143,7 @@ Any/dmd:
 
 
 Mago:
-- show derived class
+- ddmd: show derived class
 - step after exception
 - exceptions on x64
 + set instruction pointer
@@ -163,6 +171,7 @@ Mago:
 - attach to process
 - hardware breakpoints
 + does not work with variable scope
+- ddmd: ignore keywords in (C++) expressions
 
 VS:
 - VS2012: autoexp.dat does not work? depends on debug engine => edit and continue
@@ -211,3 +220,4 @@ Unsorted
 + run cv2pdb disabled for GDC/x64
 
 - hide Visual D menu if inactive
+- follow theme colors for tool windows

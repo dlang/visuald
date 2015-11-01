@@ -64,14 +64,14 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 	string titleToInsert;
 	string pathToInsert;
 
-	this(Source src) 
+	this(Source src)
 	{
 		mSource = src;
 		vsExpansion = qi_cast!(IVsExpansion)(src.GetTextLines());
 		assert(vsExpansion);
 	}
 
-	override void Dispose() 
+	override void Dispose()
 	{
 		EndTemplateEditing(true);
 		mSource = null;
@@ -86,14 +86,14 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	bool HandleQueryStatus(ref GUID guidCmdGroup, uint nCmdId, out int hr) 
+	bool HandleQueryStatus(ref GUID guidCmdGroup, uint nCmdId, out int hr)
 	{
 		// in case there's something to conditinally support later on...
 		hr = 0;
 		return false;
 	}
 
-	bool GetExpansionSpan(TextSpan *span) 
+	bool GetExpansionSpan(TextSpan *span)
 	{
 		assert(expansionSession);
 
@@ -173,7 +173,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		return false;
 	}
 
-	bool DisplayExpansionBrowser(IVsTextView view, string prompt, string[] types, bool includeNullType, 
+	bool DisplayExpansionBrowser(IVsTextView view, string prompt, string[] types, bool includeNullType,
 								      string[] kinds, bool includeNullKind)
 	{
 		if (expansionActive)
@@ -219,7 +219,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 			freeBSTR(type);
 		foreach(kind; bstrKinds)
 			freeBSTR(kind);
-		
+
 		return SUCCEEDED(hr);
 	}
 
@@ -271,7 +271,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		if (expansionActive)
 			EndTemplateEditing(true);
 
-		int hr = vsExpansion.InsertNamedExpansion(title, path, pos, this, 
+		int hr = vsExpansion.InsertNamedExpansion(title, path, pos, this,
 		                                          g_languageCLSID, showDisambiguationUI ? 1 : 0, &expansionSession);
 
 		if (hr != S_OK || !expansionSession)
@@ -294,7 +294,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 	/// Returns S_OK if match found, S_FALSE if expansion UI is shown, and error otherwise
 	int InvokeExpansionByShortcut(IVsTextView view, wstring shortcut, ref TextSpan span, bool showDisambiguationUI, out string title, out string path)
 	{
-		if (expansionActive) 
+		if (expansionActive)
 			EndTemplateEditing(true);
 
 		mView = view;
@@ -314,14 +314,14 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		scope(exit) release(exmgr);
 
 		BSTR bstrPath, bstrTitle;
-		int hr = exmgr.GetExpansionByShortcut(this, g_languageCLSID, _toUTF16zw(shortcut), mView, 
+		int hr = exmgr.GetExpansionByShortcut(this, g_languageCLSID, _toUTF16zw(shortcut), mView,
 											  &span, showDisambiguationUI ? 1 : 0, &bstrPath, &bstrTitle);
 		if(FAILED(hr) || !bstrPath || !bstrTitle)
 			return S_FALSE; // when no shortcut found, do nothing
-		
+
 		if(!InsertNamedExpansion(view, bstrTitle, bstrPath, span, showDisambiguationUI))
 			hr = E_FAIL;
-		
+
 		path = detachBSTR(bstrPath);
 		title = detachBSTR(bstrTitle);
 
@@ -377,7 +377,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 				case ')':
 					if (!inParams)
 						i = n; // terminate loop
-					else 
+					else
 					{
 						if (inIdent)
 						{
@@ -447,9 +447,9 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 		auto bstrTitle = ScopedBSTR(titleToInsert);
 		auto bstrPath = ScopedBSTR(pathToInsert);
-		int hr = vsExpansion.InsertNamedExpansion(bstrTitle, bstrPath, tsInsert, 
+		int hr = vsExpansion.InsertNamedExpansion(bstrTitle, bstrPath, tsInsert,
 		                                          this, g_languageCLSID, 0, &expansionSession);
-		
+
 		if (hr != S_OK)
 			EndTemplateEditing(true);
 		pathToInsert = null;
@@ -477,7 +477,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 
 		auto bstrField = ScopedBSTR(field);
 		expansionSession.GetFieldSpan(bstrField, pts);
-		
+
 		return true;
 	}
 
@@ -514,7 +514,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		{
 			// We should not merge edits in this case because it might clobber the
 			// $varname$ spans which are markers for yellow boxes.
-			
+
 			// using (EditArray edits = new EditArray(mSource, mView, false, SR.GetString(SR.FormatSpan))) {
 			// mSource.ReformatSpan(edits, span);
 			// edits.ApplyEdits();
@@ -616,7 +616,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		//mixin(LogCallMix);
 
 		BSTR text;
-		if(int hr = xmlFunctionNode.text(&text))
+		if(int hr = xmlFunctionNode.get_text(&text))
 			return hr;
 		string innerText = detachBSTR(text);
 		*func = GetExpansionFunction(innerText, to_string(bstrFieldName));

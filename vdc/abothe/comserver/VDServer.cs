@@ -381,8 +381,8 @@ namespace DParserCOMServer
 
 		public void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-            filename = normalizePath(filename);
-            var ast = GetModule(filename);
+			filename = normalizePath(filename);
+			var ast = GetModule(filename);
 
 			if (ast == null)
 				throw new COMException("module not found", 1);
@@ -398,32 +398,40 @@ namespace DParserCOMServer
 			// codeOffset+1 because otherwise it does not work on the first character
 			_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
 
-            ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
-            LooseResolution.NodeResolutionAttempt attempt;
-            var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
+			ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
+			LooseResolution.NodeResolutionAttempt attempt;
+			var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
 
 			_tipText.Clear();
 			if (rr != null)
 			{
-				var n = DResolver.GetResultMember(rr, true);
+				DNode n = null;
+				foreach (var t in AmbiguousType.TryDissolve(rr))
+				{
+					n = DResolver.GetResultMember(t, true);
+					if (n != null)
+						break;
+				}
 
-				if (n == null)
-					return;
+				if (n != null)
+				{
+					if (_tipText.Length > 0)
+						_tipText.Append("\n");
+					bool decl = false;
+					var mthd = n as DMethod;
+					if (mthd != null)
+						decl = mthd.Body == null;
+					else if (n.ContainsAttribute(DTokens.Extern))
+						decl = true;
+					if (decl)
+						_tipText.Append("EXTERN:");
 
-				bool decl = false;
-				var mthd = n as DMethod;
-				if (mthd != null)
-					decl = mthd.Body == null;
-				else if (n.ContainsAttribute(DTokens.Extern))
-					decl = true;
-				if (decl)
-					_tipText.Append("EXTERN:");
-
-                _tipStart = n.Location;
-				_tipEnd = n.EndLocation;
-				INode node = n.NodeRoot;
-				if(node is DModule)
-					_tipText.Append((node as DModule).FileName);
+					_tipStart = n.Location;
+					_tipEnd = n.EndLocation;
+					INode node = n.NodeRoot;
+					if(node is DModule)
+						_tipText.Append((node as DModule).FileName);
+				}
 			}
 		}
 		public void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename)
@@ -519,10 +527,18 @@ namespace DParserCOMServer
 				versions += "D_Ddoc\n";
 			if ((_flags & 32) != 0)
 				versions += "D_NoBoundsChecks\n";
-			if ((_flags & 64) != 0)
-				versions += "GNU\n";
-			else
-				versions += "DigitalMars\n";
+            if ((_flags & 64) != 0)
+                versions += "GNU\n";
+            else if ((_flags & 0x4000000) != 0)
+                versions += "LDC\n";
+            else
+                versions += "DigitalMars\n";
+            if ((_flags & 0x8000000) != 0)
+                versions += "CRuntime_Microsoft\n";
+            else if ((_flags & 0x4000040) != 0) // GNU or LDC
+                versions += "CRuntime_MinGW\n";
+            else
+                versions += "CRuntime_DigitalMars\n";
 
             string[] uniqueDirs = uniqueDirectories(_imports);
             _editorData.ParseCache = new VDserverParseCacheView(uniqueDirs);

@@ -2,7 +2,7 @@
 // Written and provided by Benjamin Thaut
 // Complications improved by Rainer Schuetze
 //
-// file access monitoring added by Rainer Schuetze, needs filemonitor.dll in the same 
+// file access monitoring added by Rainer Schuetze, needs filemonitor.dll in the same
 //  directory as pipedmd.exe
 
 module pipedmd;
@@ -25,7 +25,7 @@ alias core.stdc.stdio.stdout stdout;
 
 static bool isIdentifierChar(char ch)
 {
-	// include C++,Pascal,Windows mangling and UTF8 encoding and compression 
+	// include C++,Pascal,Windows mangling and UTF8 encoding and compression
 	return ch >= 0x80 || (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
 }
 
@@ -49,7 +49,7 @@ int main(string[] argv)
 		printf("pipedmd V0.2, written 2012 by Benjamin Thaut, complications improved by Rainer Schuetze\n");
 		printf("decompresses and demangles names in OPTLINK and ld messages\n");
 		printf("\n");
-		printf("usage: %.*s [-nodemangle] [-gdcmode | -msmode] [-deps depfile] [executable] [arguments]\n", 
+		printf("usage: %.*s [-nodemangle] [-gdcmode | -msmode] [-deps depfile] [executable] [arguments]\n",
 			   argv[0].length, argv[0].ptr);
 		return -1;
 	}
@@ -57,7 +57,7 @@ int main(string[] argv)
 	string depsfile;
 	bool doDemangle = true;
 	bool demangleAll = false; //not just linker messages
-	bool gdcMode = false; //gcc linker 
+	bool gdcMode = false; //gcc linker
 	bool msMode = false; //microsoft linker
 	bool verbose = false;
 
@@ -121,7 +121,7 @@ int main(string[] argv)
 			string trackfilewr = stripExtension(baseName(exe)) ~ ".write.*.tlog";
 			foreach(f; std.file.dirEntries(trackdir, std.file.SpanMode.shallow))
 				if (globMatch(baseName(f), trackfile) || globMatch(baseName(f), trackfilewr))
-					std.file.remove(f);
+					std.file.remove(f.name);
 			command ~= " /c";
 		}
 		else if (isX64)
@@ -150,7 +150,7 @@ int main(string[] argv)
 		foreach(f; std.file.dirEntries(trackdir, std.file.SpanMode.shallow))
 			if (globMatch(baseName(f), trackfile))
 			{
-				ubyte[] fbuf = cast(ubyte[])std.file.read(f);
+				ubyte[] fbuf = cast(ubyte[])std.file.read(f.name);
 				// strip BOM from all but the first file
 				if (buf.length && fbuf.length > 1 && fbuf[0] == 0xFF && fbuf[1] == 0xFE)
 					fbuf = fbuf[2..$];
@@ -159,7 +159,7 @@ int main(string[] argv)
 
 		std.file.write(depsfile, buf);
 	}
-	
+
 	return exitCode;
 }
 
@@ -170,17 +170,17 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	HANDLE hStdInRead;
 	HANDLE hStdInWrite;
 
-	SECURITY_ATTRIBUTES saAttr; 
+	SECURITY_ATTRIBUTES saAttr;
 
-	// Set the bInheritHandle flag so pipe handles are inherited. 
+	// Set the bInheritHandle flag so pipe handles are inherited.
 
 	saAttr.nLength = SECURITY_ATTRIBUTES.sizeof;
-	saAttr.bInheritHandle = TRUE; 
-	saAttr.lpSecurityDescriptor = null; 
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = null;
 
-	// Create a pipe for the child process's STDOUT. 
+	// Create a pipe for the child process's STDOUT.
 
-	if ( ! CreatePipe(&hStdOutRead, &hStdOutWrite, &saAttr, 0) ) 
+	if ( ! CreatePipe(&hStdOutRead, &hStdOutWrite, &saAttr, 0) )
 		assert(0);
 
 	// Ensure the read handle to the pipe for STDOUT is not inherited.
@@ -194,19 +194,19 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	if ( ! SetHandleInformation(hStdInWrite, HANDLE_FLAG_INHERIT, 0) )
 		assert(0);
 
-	PROCESS_INFORMATION piProcInfo; 
+	PROCESS_INFORMATION piProcInfo;
 	STARTUPINFOA siStartInfo;
-	BOOL bSuccess = FALSE; 
+	BOOL bSuccess = FALSE;
 
-	// Set up members of the PROCESS_INFORMATION structure. 
+	// Set up members of the PROCESS_INFORMATION structure.
 
 	memset( &piProcInfo, 0, PROCESS_INFORMATION.sizeof );
 
-	// Set up members of the STARTUPINFO structure. 
+	// Set up members of the STARTUPINFO structure.
 	// This structure specifies the STDIN and STDOUT handles for redirection.
 
 	memset( &siStartInfo, 0, STARTUPINFOA.sizeof );
-	siStartInfo.cb = STARTUPINFOA.sizeof; 
+	siStartInfo.cb = STARTUPINFOA.sizeof;
 	siStartInfo.hStdError = hStdOutWrite;
 	siStartInfo.hStdOutput = hStdOutWrite;
 	siStartInfo.hStdInput = hStdInRead;
@@ -214,16 +214,16 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 
 	int cp = GetKBCodePage();
 	auto szCommand = toMBSz(command, cp);
-	bSuccess = CreateProcessA(null, 
-							  cast(char*)szCommand,     // command line 
-							  null,          // process security attributes 
-							  null,          // primary thread security attributes 
-							  TRUE,          // handles are inherited 
-							  CREATE_SUSPENDED,             // creation flags 
-							  null,          // use parent's environment 
-							  null,          // use parent's current directory 
-							  &siStartInfo,  // STARTUPINFO pointer 
-							  &piProcInfo);  // receives PROCESS_INFORMATION 
+	bSuccess = CreateProcessA(null,
+							  cast(char*)szCommand,     // command line
+							  null,          // process security attributes
+							  null,          // primary thread security attributes
+							  TRUE,          // handles are inherited
+							  CREATE_SUSPENDED,             // creation flags
+							  null,          // use parent's environment
+							  null,          // use parent's current directory
+							  &siStartInfo,  // STARTUPINFO pointer
+							  &piProcInfo);  // receives PROCESS_INFORMATION
 
 	if(!bSuccess)
 	{
@@ -604,7 +604,7 @@ void InjectDLL(HANDLE hProcess, string depsfile)
 	}
 	string modpath = to!string(wmodname);
 	string dll = buildPath(std.path.dirName(modpath), "filemonitor.dll");
-	
+
 	auto wdll = to!wstring(dll) ~ cast(wchar)0;
 	// detect offset of dumpFile
 	HMODULE fmod = LoadLibraryW(wdll.ptr);
@@ -738,7 +738,7 @@ extern(C)
 	enum IMAGE_FILE_MACHINE_IA64  = 0x0200;  // Intel 64
 	enum IMAGE_FILE_MACHINE_AMD64 = 0x8664;  // AMD64 (K8)
 
-	struct IMAGE_FILE_HEADER 
+	struct IMAGE_FILE_HEADER
 	{
 		WORD    Machine;
 		WORD    NumberOfSections;

@@ -79,7 +79,7 @@ void semanticErrorLoc(T...)(string filename, ref const(TextPos) pos, T args)
 	foreach(a; args)
 		if(typeid(a) == typeid(ErrorType) || typeid(a) == typeid(ErrorValue))
 			return;
-	
+
 	string msg = semanticErrorWriteLoc(filename, pos);
 	msg ~= text(args);
 	if(fnSemanticWriteError)
@@ -131,7 +131,7 @@ ErrorType semanticErrorType(T...)(T args)
 
 alias Node Symbol;
 
-class Context 
+class Context
 {
 	Scope scop;
 	Value[Node] vars;
@@ -148,12 +148,12 @@ class Context
 			return parent.getThis();
 		return null;
 	}
-	
+
 	void setThis(Value v)
 	{
 		setValue(null, v);
 	}
-	
+
 	Value getValue(Node n)
 	{
 		if(auto pn = n in vars)
@@ -180,7 +180,7 @@ class AggrContext : Context
 		instance = inst;
 		virtualCall = true;
 	}
-	
+
 	override Value getThis()
 	{
 		if(auto t = cast(Class)instance.getType())
@@ -222,16 +222,16 @@ Context errorContext;
 class Scope
 {
 	Scope parent;
-	
+
 	Annotation annotations;
 	Attribute attributes;
 	Module mod;
 	Node node;
 	Set!Symbol[string] symbols;
 	Import[] imports;
-	
+
 //	Context ctx; // compile time only
-	
+
 	static Scope current;
 
 	this()
@@ -243,7 +243,7 @@ class Scope
 		SearchParentScope = 1,
 		SearchPrivateImport = 2,
 	}
-	
+
 	Scope pushClone()
 	{
 		Scope sc = new Scope;
@@ -262,12 +262,12 @@ class Scope
 		sc.parent = this;
 		return current = sc;
 	}
-	
+
 	Scope pop()
 	{
 		return current = parent;
 	}
-	
+
 	Type getThisType()
 	{
 		if(!parent)
@@ -278,18 +278,18 @@ class Scope
 	void addSymbol(string ident, Symbol s)
 	{
 		logInfo("Scope(%s).addSymbol(%s, sym %s=%s)", cast(void*)this, ident, s, cast(void*)s);
-		
+
 		if(auto sym = ident in symbols)
 			addunique(*sym, s);
 		else
 			symbols[ident] = Set!Symbol([s : true]);
 	}
-	
+
 	void addImport(Import imp)
 	{
 		imports ~= imp;
 	}
-	
+
 	struct SearchData { string ident; Scope sc; }
 	static Stack!SearchData searchStack;
 
@@ -314,7 +314,7 @@ class Scope
 		}
 	}
 
-	static bool collectSymbols(string ident) 
+	static bool collectSymbols(string ident)
 	{
 		return ident.endsWith("*");
 	}
@@ -332,7 +332,7 @@ class Scope
 			searchCollect(ident, syms);
 		else if(auto pn = ident in symbols)
 			return *pn;
-		
+
 		searchStack.push(sd);
 		if(publicImports)
 			foreach(imp; imports)
@@ -355,7 +355,7 @@ class Scope
 				cntFunc++;
 		if(cntFunc != n.length)
 			return matches;
-		
+
 		Node[] args;
 		if(fnargs)
 			args = fnargs.members;
@@ -385,7 +385,7 @@ class Scope
 		}
 		return matches;
 	}
-	
+
 	Node resolveOverload(string ident, Node id, Scope.SearchSet n)
 	{
 		if(n.length == 0)
@@ -395,7 +395,7 @@ class Scope
 		}
 		foreach(s, b; n)
 			s.semanticSearches++;
-		
+
 		if(n.length > 1)
 		{
 			auto matches = matchFunctionArguments(id, n);
@@ -407,7 +407,7 @@ class Scope
 			id.semanticError("ambiguous identifier " ~ ident);
 			foreach(s, b; n)
 				s.semanticError("possible candidate");
-			
+
 			if(!collectSymbols(ident))
 				return null;
 		}
@@ -418,10 +418,10 @@ class Scope
 	{
 		auto n = search(ident, inParents, true, true);
 		logInfo("Scope(%s).search(%s) found %s %s", cast(void*)this, ident, n.keys(), n.length > 0 ? cast(void*)n.first() : null);
-		
+
 		return resolveOverload(ident, id, n);
 	}
-	
+
 	Node resolveWithTemplate(string ident, Scope sc, Node id, bool inParents = true)
 	{
 		auto n = search(ident, inParents, true, true);
@@ -464,7 +464,7 @@ class SourceModule
 	string txt;
 	Module parsed;
 	Module analyzed;
-	
+
 	Parser parser;
 	ParseError[] parseErrors;
 
@@ -484,7 +484,7 @@ class Project : Node
 	Module mObjectModule; // object.d
 	SourceModule[string] mSourcesByModName;
 	SourceModule[string] mSourcesByFileName;
-	
+
 	this()
 	{
 		TextSpan initspan;
@@ -495,7 +495,7 @@ class Project : Node
 		{
 		options.importDirs ~= r"c:\l\dmd-2.055\src\druntime\import\";
 		options.importDirs ~= r"c:\l\dmd-2.055\src\phobos\";
-		
+
 		options.importDirs ~= r"c:\tmp\d\runnable\";
 		options.importDirs ~= r"c:\tmp\d\runnable\imports\";
 
@@ -606,14 +606,14 @@ class Project : Node
 		auto mod = static_cast!(Module)(n);
 		return addSource(fname, mod, p.errors, importFrom);
 	}
-	
+
 	Module addAndParseFile(string fname, Node importFrom = null)
 	{
 		//debug writeln(fname, ":");
 		string txt = readUtf8(fname);
 		return addText(fname, txt, importFrom);
 	}
-	
+
 	bool addFile(string fname)
 	{
 		auto src = new SourceModule;
@@ -643,7 +643,7 @@ class Project : Node
 	{
 		if(auto mod = getModule(modname))
 			return mod;
-		
+
 		string dfile = replace(modname, ".", "/") ~ ".di";
 		string srcfile = searchImportFile(dfile, importFrom);
 		if(srcfile.length == 0)
@@ -662,12 +662,12 @@ class Project : Node
 		srcfile = normalizePath(srcfile);
 		return addAndParseFile(srcfile, importFrom);
 	}
-	
+
 	string searchImportFile(string dfile, Node importFrom)
 	{
 		if(std.file.exists(dfile))
 			return dfile;
-		
+
 		Options opt = options;
 		if(importFrom)
 			if(auto mod = importFrom.getModule())
@@ -678,7 +678,7 @@ class Project : Node
 				return dir ~ dfile;
 		return null;
 	}
-	
+
 	void initScope()
 	{
 		getObjectModule(null);
@@ -743,7 +743,7 @@ class Project : Node
 			writer(members[m]);
 			writer.nl;
 		}
-		
+
 		writer.writeDeclarations    = false;
 		writer.writeImplementations = true;
 		for(int m = 0; m < members.length; m++)
@@ -783,15 +783,15 @@ class Project : Node
 			writer("}");
 			writer.nl;
 		}
-		
+
 		std.file.write(fname, src);
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		throw new SemanticException("Project.toD not implemeted");
 	}
-	
+
 	int run()
 	{
 		Scope.SearchSet funcs;
@@ -817,7 +817,7 @@ class Project : Node
 					auto dav = new DynArrayValue(tda);
 					args.addValue(dav);
 				}
-		
+
 		try
 		{
 			Value v = funcs.first().interpret(nullContext).opCall(nullContext, args);
@@ -889,7 +889,7 @@ struct VersionDebug
 		identifiers[ident] = vi;
 		return false;
 	}
-	
+
 	void define(string ident, TextPos pos)
 	{
 		if(auto vi = ident in identifiers)
@@ -899,7 +899,7 @@ struct VersionDebug
 			if(pos < vi.defined)
 				vi.defined = pos;
 		}
-		
+
 		VersionInfo vi;
 		vi.firstUsage.line = int.max;
 		vi.defined = pos;
@@ -908,18 +908,20 @@ struct VersionDebug
 }
 
 class Options
-{	
+{
 	string[] importDirs;
 	string[] stringImportDirs;
-	
+
 	public /* debug & version handling */ {
 	bool unittestOn;
 	bool x64;
+	bool msvcrt;
 	bool debugOn;
 	bool coverage;
 	bool doDoc;
 	bool noBoundsCheck;
 	bool gdcCompiler;
+	bool ldcCompiler;
 	bool noDeprecated;
 	bool mixinAnalysis;
 	bool UFCSExpansions;
@@ -966,15 +968,15 @@ class Options
 		int pre = versionPredefined(ident);
 		if(pre == 0)
 			return versionIds.defined(ident, TextPos());
-		
+
 		return pre > 0;
 	}
-	
+
 	bool versionEnabled(int level)
 	{
 		return level <= versionIds.level;
 	}
-	
+
 	bool debugEnabled(string ident)
 	{
 		return debugIds.defined(ident, TextPos());
@@ -984,7 +986,7 @@ class Options
 	{
 		return level <= debugIds.level;
 	}
-	
+
 	int versionPredefined(string ident)
 	{
 		int* p = ident in sPredefinedVersions;
@@ -1005,12 +1007,16 @@ class Options
 				return doDoc ? 1 : -1;
 			case "D_NoBoundsChecks":
 				return noBoundsCheck ? 1 : -1;
-			case "CRuntime_DigitalMars":
 			case "Win32":
 			case "X86":
 			case "D_InlineAsm_X86":
 				return x64 ? -1 : 1;
+			case "CRuntime_DigitalMars":
+				return msvcrt ? -1 : 1;
 			case "CRuntime_Microsoft":
+				return msvcrt ? 1 : -1;
+			case "MinGW":
+				return gdcCompiler || (ldcCompiler && !msvcrt) ? 1 : -1;
 			case "Win64":
 			case "X86_64":
 			case "D_InlineAsm_X86_64":
@@ -1018,8 +1024,10 @@ class Options
 				return x64 ? 1 : -1;
 			case "GNU":
 				return gdcCompiler ? 1 : -1;
+			case "LDC":
+				return ldcCompiler ? 1 : -1;
 			case "DigitalMars":
-				return gdcCompiler ? -1 : 1;
+				return gdcCompiler || ldcCompiler ? -1 : 1;
 			default:
 				assert(false, "inconsistent predefined versions");
 		}

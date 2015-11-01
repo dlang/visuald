@@ -595,7 +595,7 @@ version(tip)
 			release(cfg);
 		}
 		if (disasm && symdebug == 0) // ensure debug info is enabled
-			cfg.GetProjectOptions().symdebug = 2;
+			cfg.GetProjectOptions().symdebug = 3;
 
 		string stool = cfg.GetStaticCompileTool(pFile, cfg.getCfgName());
 		if(stool == "DMD")

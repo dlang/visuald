@@ -9,10 +9,12 @@
 module visuald.winctrl;
 
 import visuald.windows;
+import visuald.logutil;
 import std.utf;
 import std.string;
 import std.array;
 import std.exception;
+import std.algorithm;
 import sdk.port.base;
 import sdk.win32.prsht;
 import sdk.win32.commctrl;
@@ -166,26 +168,26 @@ class Widget
 		assert(ok, "Failed to move window in setRect");
 	}
 
-	void setVisible(bool visible) 
+	void setVisible(bool visible)
 	{
 		ShowWindow(hwnd, visible ? SW_SHOW : SW_HIDE); // ignore bool result
 	}
 
-	void setEnabled(bool enable) 
+	void setEnabled(bool enable)
 	{
 		EnableWindow(hwnd, enable);
 	}
-	
-	void SetFocus() 
+
+	void SetFocus()
 	{
 		.SetFocus(hwnd);
 	}
-	
-	void SetRedraw(bool enable) 
+
+	void SetRedraw(bool enable)
 	{
 		SendMessage(WM_SETREDRAW, enable);
 	}
-	
+
 	int SendMessage(int msg, WPARAM wp = 0, LPARAM lp = 0)
 	{
 		return .SendMessage(hwnd, msg, wp, lp);
@@ -195,8 +197,8 @@ class Widget
 	{
 		.InvalidateRect(hwnd, r, erase);
 	}
-	
-	string GetWindowText() 
+
+	string GetWindowText()
 	{
 		WCHAR[256] txt;
 		int len = GetWindowTextW(hwnd, txt.ptr, txt.length);
@@ -207,26 +209,26 @@ class Widget
 		len = GetWindowTextW(hwnd, buffer.ptr, len+1);
 		return toUTF8(buffer[0..len]);
 	}
-	bool SetWindowText(string txt) 
+	bool SetWindowText(string txt)
 	{
 		return SetWindowTextW(hwnd, toUTF16z(txt)) != 0;
 	}
-	
+
 	bool GetWindowRect(RECT* r)
 	{
 		return .GetWindowRect(hwnd, r) != 0;
 	}
-	
+
 	bool GetClientRect(RECT* r)
 	{
 		return .GetClientRect(hwnd, r) != 0;
 	}
-	
+
 	bool ScreenToClient(POINT *lpPoint)
 	{
 		return .ScreenToClient(hwnd, lpPoint) != 0;
 	}
-	
+
 	bool ScreenToClient(RECT *rect)
 	{
 		POINT pnt = { rect.left, rect.top };
@@ -238,7 +240,7 @@ class Widget
 		rect.top = pnt.y;
 		return true;
 	}
-	
+
 	bool SetWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags)
 	{
 		return .SetWindowPos(hwnd, hWndInsertAfter, X, Y, cx, cy, uFlags) != 0;
@@ -249,47 +251,47 @@ class Widget
 		return .SetWindowPos(hwnd, hWndInsertAfter, r.left, r.top, r.right - r.left, r.bottom - r.top, uFlags) != 0;
 	}
 
-	bool SetWindowStyle(int style) 
+	bool SetWindowStyle(int style)
 	{
 		return SetWindowLongA(hwnd, GWL_STYLE, style) != 0;
 	}
 
-	bool AddWindowStyle(int flag, int clear = 0) 
+	bool AddWindowStyle(int flag, int clear = 0)
 	{
 		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
 		return SetWindowLongA(hwnd, GWL_STYLE, (style & ~clear) | flag) != 0;
 	}
 
-	bool DelWindowStyle(int flag) 
+	bool DelWindowStyle(int flag)
 	{
 		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
 		return SetWindowLongA(hwnd, GWL_STYLE, style & ~flag) != 0;
 	}
 
-	bool SetWindowExStyle(int style) 
+	bool SetWindowExStyle(int style)
 	{
 		return SetWindowLongA(hwnd, GWL_EXSTYLE, style) != 0;
 	}
 
-	bool AddWindowExStyle(int flag, int clear = 0) 
+	bool AddWindowExStyle(int flag, int clear = 0)
 	{
 		DWORD style = GetWindowLongA(hwnd, GWL_EXSTYLE);
 		return SetWindowLongA(hwnd, GWL_EXSTYLE, (style & ~clear) | flag) != 0;
 	}
 
-	bool DelWindowExStyle(int flag) 
+	bool DelWindowExStyle(int flag)
 	{
 		DWORD style = GetWindowLongA(hwnd, GWL_EXSTYLE);
 		return SetWindowLongA(hwnd, GWL_EXSTYLE, style & ~flag) != 0;
 	}
 
-	static Widget fromHWND(HWND hwnd) 
+	static Widget fromHWND(HWND hwnd)
 	{
 		return cast(Widget)cast(void*)GetWindowLongA(hwnd, GWL_USERDATA);
 	}
 
 	static HINSTANCE getInstance() { return hInst; }
-	
+
 }
 
 class Window : Widget
@@ -297,12 +299,12 @@ class Window : Widget
 	static bool hasRegistered = false;
 	static HBRUSH bgbrush;
 
-	static void registerClass() 
+	static void registerClass()
 	{
 		if(hasRegistered)
 			return;
 		hasRegistered = true;
-		
+
 		DWORD color = GetSysColor(COLOR_BTNFACE);
 		bgbrush = CreateSolidBrush(color);
 
@@ -321,7 +323,7 @@ class Window : Widget
 		ATOM atom = RegisterClassA(&wc);
 		assert(atom);
 	}
-	static void unregisterClass() 
+	static void unregisterClass()
 	{
 		if(!hasRegistered)
 			return;
@@ -379,7 +381,7 @@ class Window : Widget
 		return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 	}
 
-	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg) {
 		case WM_COMMAND:
@@ -452,12 +454,12 @@ class Dialog : Widget
 	static bool hasRegistered = false;
 	static HBRUSH bgbrush;
 
-	static void registerClass() 
+	static void registerClass()
 	{
 		if(hasRegistered)
 			return;
 		hasRegistered = true;
-		
+
 		DWORD color = GetSysColor(COLOR_BTNFACE);
 		bgbrush = CreateSolidBrush(color);
 
@@ -476,7 +478,7 @@ class Dialog : Widget
 		ATOM atom = RegisterClassA(&wc);
 		assert(atom);
 	}
-	static void unregisterClass() 
+	static void unregisterClass()
 	{
 		if(!hasRegistered)
 			return;
@@ -506,7 +508,7 @@ class Dialog : Widget
 		super(parent);
 	}
 
-	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		return DefDlgProcA(hWnd, uMsg, wParam, lParam);
 	}
@@ -564,7 +566,7 @@ class Text : Widget
 		SendMessageW(hwnd, WM_SETTEXT, 0, cast(LPARAM)winstr.ptr);
 	}
 
-	string getText() 
+	string getText()
 	{
 		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		scope buffer = new wchar[len+1];
@@ -574,7 +576,7 @@ class Text : Widget
 		return s;
 	}
 
-	wstring getWText() 
+	wstring getWText()
 	{
 		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		auto buffer = new wchar[len+1];
@@ -616,7 +618,7 @@ class MultiLineText : Text
 		return hWnd;
 	}
 
-	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if(uMsg == WM_CHAR)
 		{
@@ -637,7 +639,7 @@ class MultiLineText : Text
 
 class ComboBox : Widget
 {
-	this(Widget parent, string[] texts, bool editable = true, int id = 0) 
+	this(Widget parent, string[] texts, bool editable = true, int id = 0)
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		DWORD style = editable ? CBS_DROPDOWN | CBS_AUTOHSCROLL : CBS_DROPDOWNLIST;
@@ -650,30 +652,30 @@ class ComboBox : Widget
 		super(parent);
 	}
 
-	int findString(string s) 
+	int findString(string s)
 	{
 		return SendMessageW(hwnd, CB_FINDSTRING, 0, cast(LPARAM)toUTF16z(s));
 	}
-	int getSelection() 
+	int getSelection()
 	{
 		return SendMessageA(hwnd, CB_GETCURSEL, 0, 0);
 	}
-	void setSelection(int n) 
+	void setSelection(int n)
 	{
 		SendMessageA(hwnd, CB_SETCURSEL, n, 0);
 	}
-	void setSelection(string s) 
+	void setSelection(string s)
 	{
 		SendMessageA(hwnd, CB_SELECTSTRING, 0, cast(LPARAM)toUTF16z(s));
 	}
-	string getText() 
+	string getText()
 	{
 		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		scope buffer = new wchar[len+1];
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
 		return toUTF8(buffer[0..$-1]);
 	}
-	wstring getWText() 
+	wstring getWText()
 	{
 		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		scope buffer = new wchar[len+1];
@@ -685,13 +687,13 @@ class ComboBox : Widget
 class ButtonBase : Widget
 {
 	this(Widget parent) { super(parent); }
-	
-	bool isChecked() 
+
+	bool isChecked()
 	{
 		bool res = SendMessageA(hwnd, BM_GETCHECK, 0, 0) == BST_CHECKED;
 		return res;
 	}
-	void setChecked(bool x) 
+	void setChecked(bool x)
 	{
 		SendMessageA(hwnd, BM_SETCHECK, x ? BST_CHECKED : BST_UNCHECKED, 0);
 	}
@@ -699,7 +701,7 @@ class ButtonBase : Widget
 
 class CheckBox : ButtonBase
 {
-	this(Widget parent, string intext, int id = 0) 
+	this(Widget parent, string intext, int id = 0)
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "BUTTON", intext, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, id);
@@ -710,7 +712,7 @@ class CheckBox : ButtonBase
 
 class Button : ButtonBase
 {
-	this(Widget parent, string intext, int id = 0) 
+	this(Widget parent, string intext, int id = 0)
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "BUTTON", intext, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0, id);
@@ -721,7 +723,7 @@ class Button : ButtonBase
 
 class Frame : ButtonBase
 {
-	this(Widget parent, string intext = "", int id = 0) 
+	this(Widget parent, string intext = "", int id = 0)
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "BUTTON", intext, BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 0, id);
@@ -732,13 +734,13 @@ class Frame : ButtonBase
 
 class ToolBar : Widget
 {
-	this(Widget parent, uint style, uint exstyle, int id = 0) 
+	this(Widget parent, uint style, uint exstyle, int id = 0)
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, TOOLBARCLASSNAMEA, "", style | WS_CHILD | WS_VISIBLE, exstyle, id);
 		super(parent);
 	}
-	
+
 	bool EnableCheckButton(uint id, bool enable, bool check)
 	{
 		TBBUTTONINFO tbi;
@@ -746,14 +748,14 @@ class ToolBar : Widget
 		tbi.dwMask = TBIF_STATE;
 		tbi.fsState = (enable ? TBSTATE_ENABLED : 0)
 		            | (check  ? TBSTATE_CHECKED : 0);
-		
+
 		return .SendMessage(hwnd, TB_SETBUTTONINFO, id, cast(LPARAM)&tbi) != 0;
 	}
 }
 
 class ListView : Widget
 {
-	this(Widget parent, uint style, uint exstyle, int id = 0) 
+	this(Widget parent, uint style, uint exstyle, int id = 0)
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "SysListView32", "", style | WS_CHILD | WS_VISIBLE | WS_TABSTOP, exstyle, id);
@@ -768,7 +770,7 @@ class ListView : Widget
 
 class TabControl : Widget
 {
-	this(Widget parent, string[] tabs, uint style = 0, uint exstyle = 0, int id = 0) 
+	this(Widget parent, string[] tabs, uint style = 0, uint exstyle = 0, int id = 0)
 	{
 		HWND parenthwnd = parent ? parent.hwnd : null;
 		createWidget(parent, "SysTabControl32", "", style | WS_CHILD | WS_VISIBLE | WS_TABSTOP, exstyle, id);
@@ -828,6 +830,32 @@ class TabControl : Widget
 		setPageSize(left, top, w, h);
 	}
 
+	override bool GetWindowRect(RECT* rect)
+	{
+		if(!super.GetWindowRect(rect))
+			return false;
+		if(!pages.empty)
+		{
+			RECT pr;
+			if (!pages[0].GetWindowRect(&pr))
+				return false;
+			rect.bottom = pr.bottom;
+		}
+		return true;
+	}
+
+	// space for header and footer
+	int getFrameHeight()
+	{
+		RECT r;
+		r.left = 0;
+		r.right = 100;
+		r.top = 0;
+		r.bottom = 100;
+		SendMessage(TCM_ADJUSTRECT, false, cast(LPARAM)&r);
+		return r.top + (100 - r.bottom);
+	}
+
 	int getCurSel()
 	{
 		return SendMessage(TCM_GETCURSEL, 0, 0);
@@ -848,12 +876,12 @@ int PopupContextMenu(HWND hwnd, POINT pt, wstring[] entries, int check = -1, int
 	if(!hmnu)
 		return -1;
 	scope(exit) DestroyMenu(hmnu);
-	
+
 	MENUITEMINFO mii;
 	mii.cbSize = mii.sizeof;
 	mii.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STATE | MIIM_STRING;
 	mii.fType = MFT_STRING;
-	
+
 	wchar*[] entriesz;
 	for (int i = 0; i < entries.length; i++)
 	{
@@ -873,6 +901,76 @@ int PopupContextMenu(HWND hwnd, POINT pt, wstring[] entries, int check = -1, int
 
 	HRESULT hr = HResultFromLastError();
 	return -1;
+}
+
+struct Attachment
+{
+	// specify the fraction that the control receives from a size change
+	short hdiv;
+	short left;  // left edge will receive left/hdiv of change
+	short right;
+	short vdiv;
+	short top;
+	short bottom;
+}
+
+enum kAttachNone      = Attachment(1, 0, 0, 1, 0, 0);
+enum kAttachLeftRight = Attachment(1, 0, 1, 1, 0, 0);
+enum kAttachRight     = Attachment(1, 1, 1, 1, 0, 0);
+enum kAttachTopBottom = Attachment(1, 0, 0, 1, 0, 1);
+enum kAttachBottom    = Attachment(1, 0, 0, 1, 1, 1);
+enum kAttachAll       = Attachment(1, 0, 1, 1, 0, 1);
+
+struct AttachData
+{
+	Attachment att;
+	short initleft;   // initial rect of child window relative to parent
+	short initright;
+	short inittop;
+	short initbottom;
+	short initwidth;  // initial parent width
+	short initheight; // initial parent height
+
+	bool initFromWidget(Widget w)
+	{
+		RECT r, pr;
+		if (!w.GetWindowRect(&r))
+			return false;
+		if (!w.parent || !w.parent.GetWindowRect(&pr))
+			return false;
+
+		initwidth  = cast(short) (pr.right - pr.left);
+		initheight = cast(short) (pr.bottom - pr.top);
+		initleft   = cast(short) (r.left - pr.left);
+		initright  = cast(short) (r.right - pr.left);
+		inittop    = cast(short) (r.top - pr.top);
+		initbottom = cast(short) (r.bottom - pr.top);
+
+		//logCall("initFromWidget(", w, ":", cast(void*)w, ") = w:", initwidth, " h:", initheight, " l:", initleft, " r:", initright, " t:", inittop, " b:", initbottom);
+		return true;
+	}
+
+	bool resizeWidget(Widget w)
+	{
+		RECT pr;
+		if (!w.parent || !w.parent.GetWindowRect(&pr))
+			return false;
+
+		int dx      = pr.right  - pr.left - initwidth;
+		int dy      = pr.bottom - pr.top  - initheight;
+		int hdiv    = max(1, att.hdiv);
+		int vdiv    = max(1, att.vdiv);
+
+		int nleft   = initleft   + dx * att.left   / hdiv;
+		int nright  = initright  + dx * att.right  / hdiv;
+		int ntop    = inittop    + dy * att.top    / vdiv;
+		int nbottom = initbottom + dy * att.bottom / vdiv;
+
+		//logCall("resizeWidget(", w, ":", cast(void*)w, ") to [l:", nleft, " t:", ntop, " w:", nright - nleft, " h:", nbottom - ntop, "]");
+
+		w.setRect(nleft, ntop, nright - nleft, nbottom - ntop);
+		return true;
+	}
 }
 
 bool initWinControls(HINSTANCE inst)

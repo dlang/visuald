@@ -710,6 +710,21 @@ class LanguageService : DisposingComObject,
 		return mSources;
 	}
 
+	IVsTextView GetView(string filename)
+	{
+		foreach(cmgr; mCodeWinMgrs)
+		{
+			string srcfile = cmgr.mSource.GetFileName();
+			if(CompareFilenames(srcfile, filename) == 0)
+			{
+				if (cmgr.mViewFilters.length)
+					return cmgr.mViewFilters[0].mView;
+				return null;
+			}
+		}
+		return null;
+	}
+
 	void setDebugger(IVsDebugger debugger)
 	{
 		if(mCookieDebuggerEvents && mDebugger)
@@ -806,7 +821,8 @@ class LanguageService : DisposingComObject,
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck, 
 									  cfgopts.compiler == Compiler.GDC, 
 									  cfgopts.versionlevel, cfgopts.debuglevel,
-									  cfgopts.errDeprecated, globopts.mixinAnalysis, globopts.UFCSExpansions);
+									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,
+									  cfgopts.useMSVCRT (), globopts.mixinAnalysis, globopts.UFCSExpansions);
 			
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
 			stringImp = tokenizeArgs(strimp);

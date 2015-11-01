@@ -15,6 +15,7 @@ import stdext.path;
 
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
+import sdk.vsi.vslangproj : prjOutputTypeWinExe;
 import dte = sdk.vsi.dte80a;
 
 import visuald.comutil;
@@ -49,21 +50,21 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x0000000a), propget, hidden, helpstring("Returns value indicating whether object was changed since the last time it was saved."), helpcontext(0x0000eadb)]+/
-	override HRESULT IsDirty(/+[out, retval]+/ VARIANT_BOOL* lpfReturn)
+	override HRESULT get_IsDirty(/+[out, retval]+/ VARIANT_BOOL* lpfReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x0000000a), propput, hidden, helpstring("Returns value indicating whether object was changed since the last time it was saved."), helpcontext(0x0000eadb)]+/
-	override HRESULT IsDirty(in VARIANT_BOOL lpfReturn)
+	override HRESULT put_IsDirty(in VARIANT_BOOL lpfReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x0000000b), propget, helpstring("Returns the full pathnames of the files associated with a project item."), helpcontext(0x0000eac9)]+/
-	override HRESULT FileNames(in short index, 
+	override HRESULT get_FileNames(in short index,
 					  /+[out, retval]+/ BSTR* lpbstrReturn)
 	{
 		mixin(LogCallMix);
@@ -72,7 +73,7 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x0000000c), helpstring("Saves the project."), helpcontext(0x0000ea8f)]+/
-	override HRESULT SaveAs(in BSTR NewFileName, 
+	override HRESULT SaveAs(in BSTR NewFileName,
 				   /+[out, retval]+/ VARIANT_BOOL* lpfReturn)
 	{
 		mixin(LogCallMix);
@@ -80,14 +81,14 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x0000000d), propget, helpstring("Returns the number of files associated with the project item."), helpcontext(0x0000eac4)]+/
-	override HRESULT FileCount(/+[out, retval]+/ short* lpsReturn)
+	override HRESULT get_FileCount(/+[out, retval]+/ short* lpsReturn)
 	{
 		*lpsReturn = 1;
 		return S_OK;
 	}
 
 	/+[id(00000000), propget, helpstring("Sets/returns the name of the project."), helpcontext(0x0000eae9)]+/
-	override HRESULT Name(/+[out, retval]+/ BSTR* pbstrReturn)
+	override HRESULT get_Name(/+[out, retval]+/ BSTR* pbstrReturn)
 	{
 		mixin(LogCallMix);
 		*pbstrReturn = allocBSTR(mNode.GetDisplayCaption());
@@ -95,14 +96,14 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(00000000), propput, helpstring("Sets/returns the name of the project."), helpcontext(0x0000eae9)]+/
-	override HRESULT Name(in BSTR pbstrReturn)
+	override HRESULT put_Name(in BSTR pbstrReturn)
 	{
 		mixin(LogCallMix);
 		return S_FALSE;
 	}
 
 	/+[id(0x00000036), propget, helpstring("Returns the collection containing the object supporting this property."), helpcontext(0x0000eab1)]+/
-	override HRESULT Collection(/+[out, retval]+/ dte.ProjectItems * lppcReturn)
+	override HRESULT get_Collection(/+[out, retval]+/ dte.ProjectItems * lppcReturn)
 	{
 		mixin(LogCallMix);
 		*lppcReturn = addref(mParent);
@@ -110,35 +111,35 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x00000038), propget, helpstring("Returns the Properties collection."), helpcontext(0x0000eaf9)]+/
-	override HRESULT Properties(/+[out, retval]+/ dte.Properties * ppObject)
+	override HRESULT get_Properties(/+[out, retval]+/ dte.Properties * ppObject)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x000000c8), propget, helpstring("Returns the top-level extensibility object."), helpcontext(0x0000eac1)]+/
-	override HRESULT DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
+	override HRESULT get_DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
 	{
 		logCall("%s.get_DTE()", this);
 		return GetDTE(lppaReturn);
 	}
 
-	/+[id(0x000000c9), propget, helpstring("Returns a GUID String indicating the kind or type of the object."), helpcontext(0x0000eadd)]+/
-	override HRESULT Kind(/+[out, retval]+/ BSTR* lpbstrFileName)
+	/+[id(0x000000c9), get_propget, helpstring("Returns a GUID String indicating the kind or type of the object."), helpcontext(0x0000eadd)]+/
+	override HRESULT get_Kind(/+[out, retval]+/ BSTR* lpbstrFileName)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
-	/+[id(0x000000cb), propget, helpstring("Returns a ProjectItems collection for the object."), helpcontext(0x0000eaf6)]+/
-	override HRESULT ProjectItems(/+[out, retval]+/ dte.ProjectItems * lppcReturn)
+	/+[id(0x000000cb), get_propget, helpstring("Returns a ProjectItems collection for the object."), helpcontext(0x0000eaf6)]+/
+	override HRESULT get_ProjectItems(/+[out, retval]+/ dte.ProjectItems * lppcReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x000000cc), propget, helpstring("Returns value indicating whether the ProjectItem is open for a particular view."), helpcontext(0x0000eadc)]+/
-	override HRESULT IsOpen(/+[ optional , defaultvalue("{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}")]+/ in BSTR ViewKind, 
+	override HRESULT get_IsOpen(/+[ optional , defaultvalue("{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}")]+/ in BSTR ViewKind,
 				   /+[out, retval]+/ VARIANT_BOOL* lpfReturn)
 	{
 		mixin(LogCallMix);
@@ -146,7 +147,7 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x000000cd), helpstring("Opens the ProjectItem object in the specified view."), helpcontext(0x0000ea88)]+/
-	override HRESULT Open(/+[ optional , defaultvalue("{00000000-0000-0000-0000-000000000000}")]+/ in BSTR ViewKind, 
+	override HRESULT Open(/+[ optional , defaultvalue("{00000000-0000-0000-0000-000000000000}")]+/ in BSTR ViewKind,
 				 /+[out, retval]+/ dte.Window * lppfReturn)
 	{
 		mixin(LogCallMix);
@@ -168,7 +169,7 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x0000006c), propget, helpstring("Returns an interface or object that can be accessed at run time by name."), helpcontext(0x0000ea7f)]+/
-	override HRESULT Object(/+[out, retval]+/ IDispatch * ProjectItemModel)
+	override HRESULT get_Object(/+[out, retval]+/ IDispatch * ProjectItemModel)
 	{
 		mixin(LogCallMix);
 		*ProjectItemModel = addref(this);
@@ -176,7 +177,7 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x0000006d), propget, helpstring("Get an Extender for this object under the specified category."), helpcontext(0x0000eb84)]+/
-	override HRESULT Extender(in BSTR ExtenderName, 
+	override HRESULT get_Extender(in BSTR ExtenderName,
 					 /+[out, retval]+/ IDispatch * Extender)
 	{
 		mixin(LogCallMix);
@@ -184,42 +185,42 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x0000006e), propget, helpstring("Get a list of available Extenders on this object."), helpcontext(0x0000eb85)]+/
-	override HRESULT ExtenderNames(/+[out, retval]+/ VARIANT* ExtenderNames)
+	override HRESULT get_ExtenderNames(/+[out, retval]+/ VARIANT* ExtenderNames)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x0000006f), propget, helpstring("Get the Extension Category ID of this object."), helpcontext(0x0000eb86)]+/
-	override HRESULT ExtenderCATID(/+[out, retval]+/ BSTR* pRetval)
+	override HRESULT get_ExtenderCATID(/+[out, retval]+/ BSTR* pRetval)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000071), propget, helpstring("Returns value indicating whether object was changed since the last time it was saved."), helpcontext(0x0000eadb)]+/
-	override HRESULT Saved(/+[out, retval]+/ VARIANT_BOOL* lpfReturn)
+	override HRESULT get_Saved(/+[out, retval]+/ VARIANT_BOOL* lpfReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000071), propput, helpstring("Returns value indicating whether object was changed since the last time it was saved."), helpcontext(0x0000eadb)]+/
-	override HRESULT Saved(in VARIANT_BOOL lpfReturn)
+	override HRESULT put_Saved(in VARIANT_BOOL lpfReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000074), propget, helpstring("Returns the ConfigurationManager object for this item."), helpcontext(0x0000ece9)]+/
-	override HRESULT ConfigurationManager(/+[out, retval]+/ dte.ConfigurationManager * ppConfigurationManager)
+	override HRESULT get_ConfigurationManager(/+[out, retval]+/ dte.ConfigurationManager * ppConfigurationManager)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000075), propget, helpstring("Returns the CodeModel object for this item."), helpcontext(0x0000ecea)]+/
-	override HRESULT FileCodeModel(/+[out, retval]+/ dte.FileCodeModel * ppFileCodeModel)
+	override HRESULT get_FileCodeModel(/+[out, retval]+/ dte.FileCodeModel * ppFileCodeModel)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
@@ -233,24 +234,25 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	}
 
 	/+[id(0x00000077), propget, helpstring("Returns the Document object for this item."), helpcontext(0x0000ecfc)]+/
-	override HRESULT Document(/+[out, retval]+/ dte.Document * ppDocument)
+	override HRESULT get_Document(/+[out, retval]+/ dte.Document * ppDocument)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000078), propget, helpstring("If the project item is the root of a sub-project, then returns the Project object for the sub-project."), helpcontext(0x0000ecfd)]+/
-	override HRESULT SubProject(/+[out, retval]+/ dte.Project * ppProject)
+	override HRESULT get_SubProject(/+[out, retval]+/ dte.Project * ppProject)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000079), propget, helpstring("Returns the project that hosts this ProjectItem object."), helpcontext(0x0000ed1b)]+/
-	override HRESULT ContainingProject(/+[out, retval]+/ dte.Project * ppProject)
+	override HRESULT get_ContainingProject(/+[out, retval]+/ dte.Project * ppProject)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		*ppProject = addref(mExtProject);
+		return S_OK;
 	}
 
 	/+[id(0x0000007a), helpstring("Removes the item from the project and it's storage."), helpcontext(0x0000ecfe)]+/
@@ -264,9 +266,9 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
-		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		static class _ComTypeInfoHolder : ComTypeInfoHolder
 		{
-			override int GetIDsOfNames( 
+			override int GetIDsOfNames(
 									   /* [size_is][in] */ in LPOLESTR *rgszNames,
 									   /* [in] */ in UINT cNames,
 									   /* [size_is][out] */ MEMBERID *pMemId)
@@ -455,7 +457,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 	__gshared ComTypeInfoHolder mTypeHolder;
 
 	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }
-	
+
 	override void Dispose()
 	{
 	}
@@ -469,7 +471,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override int Item( 
+	override int Item(
 		/* [in] */ in VARIANT index,
 		/* [retval][out] */ dte.ProjectItem *lppcReturn)
 	{
@@ -477,7 +479,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return returnError(E_NOTIMPL);
 	}
 
-	override int Parent( 
+	override int get_Parent(
 		/* [retval][out] */ IDispatch* lppptReturn)
 	{
 		mixin(LogCallMix);
@@ -485,7 +487,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return S_OK;
 	}
 
-	override int Count( 
+	override int get_Count(
 		/* [retval][out] */ int *lplReturn)
 	{
 		logCall("%s.get_Count(lplReturn=%s)", this, lplReturn);
@@ -498,7 +500,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return S_OK;
 	}
 
-	override int _NewEnum( 
+	override int _NewEnum(
 		/* [retval][out] */ IUnknown *lppiuReturn)
 	{
 		mixin(LogCallMix);
@@ -511,21 +513,21 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return S_OK;
 	}
 
-	override int DTE( 
+	override int get_DTE(
 		/* [retval][out] */ dte.DTE	*lppaReturn)
 	{
 		logCall("%s.get_DTE()", this);
 		return GetDTE(lppaReturn);
 	}
 
-	override int Kind( 
+	override int get_Kind(
 		/* [retval][out] */ BSTR *lpbstrFileName)
 	{
 		logCall("%s.get_Kind(lpbstrFileName=%s)", this, lpbstrFileName);
 		return returnError(E_NOTIMPL);
 	}
 
-	override int AddFromFile( 
+	override int AddFromFile(
 		/* [in] */ in BSTR FileName,
 		/* [retval][out] */ dte.ProjectItem *lppcReturn)
 	{
@@ -533,7 +535,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return returnError(E_NOTIMPL);
 	}
 
-	override int AddFromTemplate( 
+	override int AddFromTemplate(
 		/* [in] */ in BSTR FileName,
 		/* [in] */ in BSTR Name,
 		/* [retval][out] */ dte.ProjectItem *lppcReturn)
@@ -542,7 +544,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return returnError(E_NOTIMPL);
 	}
 
-	override int AddFromDirectory( 
+	override int AddFromDirectory(
 		/* [in] */ in BSTR Directory,
 		/* [retval][out] */ dte.ProjectItem *lppcReturn)
 	{
@@ -550,7 +552,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return returnError(E_NOTIMPL);
 	}
 
-	override int ContainingProject( 
+	override int get_ContainingProject(
 		/* [retval][out] */ dte.Project* ppProject)
 	{
 		mixin(LogCallMix);
@@ -558,7 +560,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return S_OK;
 	}
 
-	override int AddFolder( 
+	override int AddFolder(
 		BSTR Name,
 		/* [defaultvalue] */ BSTR Kind,
 		/* [retval][out] */ dte.ProjectItem *pProjectItem)
@@ -567,7 +569,7 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return returnError(E_NOTIMPL);
 	}
 
-	override int AddFromFileCopy( 
+	override int AddFromFileCopy(
 		BSTR FilePath,
 		/* [retval][out] */ dte.ProjectItem *pProjectItem)
 	{
@@ -626,32 +628,32 @@ class ExtProperties : DisposingDispatchObject, dte.Properties
 		if(prop == "FullPath")
 		{
 			string fullpath = mProject.mProject.GetFilename();
-			*lplppReturn = addref(newCom!ExtProperty(this, prop, fullpath));
+			*lplppReturn = addref(newCom!(ExtProperty!string)(this, prop, fullpath));
 			return S_OK;
 		}
 		if(prop == "ProjectDirectory")
 		{
 			string fullpath = dirName(mProject.mProject.GetFilename());
-			*lplppReturn = addref(newCom!ExtProperty(this, prop, fullpath));
+			*lplppReturn = addref(newCom!(ExtProperty!string)(this, prop, fullpath));
 			return S_OK;
 		}
 		return returnError(S_FALSE);
 	}
 
 	/+[id(0x00000001), propget, restricted, hidden]+/
-	override HRESULT Application(/+[out, retval]+/ IDispatch * lppidReturn)
+	override HRESULT get_Application(/+[out, retval]+/ IDispatch * lppidReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 	/+[id(0x00000002), propget, helpstring("Returns the parent object."), helpcontext(0x0000eaf2)]+/
-	override HRESULT Parent(/+[out, retval]+/ IDispatch * lppidReturn)
+	override HRESULT get_Parent(/+[out, retval]+/ IDispatch * lppidReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 	/+[id(0x00000028), propget, helpstring("Returns value indicating the count of objects in the collection."), helpcontext(0x0000eabb)]+/
-	override HRESULT Count(/+[out, retval]+/ int* lplReturn)
+	override HRESULT get_Count(/+[out, retval]+/ int* lplReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
@@ -663,7 +665,7 @@ class ExtProperties : DisposingDispatchObject, dte.Properties
 		return returnError(E_NOTIMPL);
 	}
 	/+[id(0x00000064), propget, helpstring("Returns the top-level extensibility object."), helpcontext(0x0000eac1)]+/
-	override HRESULT DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
+	override HRESULT get_DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
 	{
 		logCall("%s.get_DTE()", this);
 		return GetDTE(lppaReturn);
@@ -673,9 +675,9 @@ class ExtProperties : DisposingDispatchObject, dte.Properties
 	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
-		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		static class _ComTypeInfoHolder : ComTypeInfoHolder
 		{
-			override int GetIDsOfNames( 
+			override int GetIDsOfNames(
 									   /* [size_is][in] */ in LPOLESTR *rgszNames,
 									   /* [in] */ in UINT cNames,
 									   /* [size_is][out] */ MEMBERID *pMemId)
@@ -703,9 +705,9 @@ private:
 	ExtProject mProject;
 }
 
-class ExtProperty : DisposingDispatchObject, dte.Property
+class ExtProperty(T) : DisposingDispatchObject, dte.Property
 {
-	this(ExtProperties props, string name, string value)
+	this(ExtProperties props, string name, T value)
 	{
 		mProperties = addref(props);
 		mName = name;
@@ -726,33 +728,43 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	HRESULT Value(/+[out, retval]+/ VARIANT* lppvReturn)
+	override HRESULT get_Value(/+[out, retval]+/ VARIANT* lppvReturn)
 	{
 		mixin(LogCallMix);
-		lppvReturn.vt = VT_BSTR;
-		lppvReturn.bstrVal = allocBSTR(mValue);
+		static if(is (T == string))
+		{
+			lppvReturn.vt = VT_BSTR;
+			lppvReturn.bstrVal = allocBSTR(mValue);
+		}
+		else static if (is(T == int))
+		{
+			lppvReturn.vt = VT_INT;
+			lppvReturn.intVal = mValue;
+		}
+		else
+			static assert(false, "unsupported type in ExtProperty.Value");
 		return S_OK;
 	}
 
 	/+[id(00000000), propput, helpstring("Sets/ returns the value of property returned by the Property object."), helpcontext(0x0000eb08)]+/
-	HRESULT Value(in VARIANT lppvReturn)
+	override HRESULT put_Value(in VARIANT lppvSet)
 	{
 		mixin(LogCallMix);
 		return returnError(S_FALSE);
 	}
 
 	/+[id(00000000), propputref, helpstring("Sets/ returns the value of property returned by the Property object."), helpcontext(0x0000eb08)]+/
-	HRESULT putref_Value(in VARIANT lppvReturn)
+	override HRESULT putref_Value(in VARIANT lppvReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(S_FALSE);
 	}
 
 	/+[id(0x00000003), propget, helpstring("Returns one element of a list."), helpcontext(0x0000ead6)]+/
-	HRESULT IndexedValue(in VARIANT Index1, 
-						 /+[ optional]+/ in VARIANT Index2, 
-						 /+[ optional]+/ in VARIANT Index3, 
-						 /+[ optional]+/ in VARIANT Index4, 
+	override HRESULT get_IndexedValue(in VARIANT Index1,
+						 /+[ optional]+/ in VARIANT Index2,
+						 /+[ optional]+/ in VARIANT Index3,
+						 /+[ optional]+/ in VARIANT Index4,
 						 /+[out, retval]+/ VARIANT* Val)
 	{
 		mixin(LogCallMix);
@@ -760,10 +772,10 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 	}
 
 	/+[id(0x00000003), propput, helpstring("Returns one element of a list."), helpcontext(0x0000ead6)]+/
-	HRESULT IndexedValue(in VARIANT Index1, 
-						 /+[ optional]+/ in VARIANT Index2, 
-						 /+[ optional]+/ in VARIANT Index3, 
-						 /+[ optional]+/ in VARIANT Index4, 
+	override HRESULT put_IndexedValue(in VARIANT Index1,
+						 /+[ optional]+/ in VARIANT Index2,
+						 /+[ optional]+/ in VARIANT Index3,
+						 /+[ optional]+/ in VARIANT Index4,
 						 in VARIANT Val)
 	{
 		mixin(LogCallMix);
@@ -771,21 +783,21 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 	}
 
 	/+[id(0x00000004), propget, helpstring("Returns a value representing the number of items in the list value."), helpcontext(0x0000eaea)]+/
-	HRESULT NumIndices(/+[out, retval]+/ short* lpiRetVal)
+	override HRESULT get_NumIndices(/+[out, retval]+/ short* lpiRetVal)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000001), propget, restricted, hidden]+/
-	HRESULT Application(/+[out, retval]+/ IDispatch * lppidReturn)
+	override HRESULT get_Application(/+[out, retval]+/ IDispatch * lppidReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000002), propget, restricted, hidden]+/
-	HRESULT Parent(/+[out, retval]+/ dte.Properties * lpppReturn)
+	override HRESULT get_Parent(/+[out, retval]+/ dte.Properties * lpppReturn)
 	{
 		mixin(LogCallMix);
 		*lpppReturn = addref(mProperties);
@@ -793,7 +805,7 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 	}
 
 	/+[id(0x00000028), propget, helpstring("Returns the name of the object."), helpcontext(0x0000edbb)]+/
-	HRESULT Name(/+[out, retval]+/ BSTR* lpbstrReturn)
+	override HRESULT get_Name(/+[out, retval]+/ BSTR* lpbstrReturn)
 	{
 		mixin(LogCallMix);
 		*lpbstrReturn = allocBSTR(mName);
@@ -801,7 +813,7 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 	}
 
 	/+[id(0x0000002a), propget, helpstring("Returns the collection containing the object supporting this property."), helpcontext(0x0000eab1)]+/
-	HRESULT Collection(/+[out, retval]+/ dte.Properties * lpppReturn)
+	override HRESULT get_Collection(/+[out, retval]+/ dte.Properties * lpppReturn)
 	{
 		mixin(LogCallMix);
 		*lpppReturn = addref(mProperties);
@@ -809,21 +821,21 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 	}
 
 	/+[id(0x0000002d), propget, helpstring("Sets/returns value of Property object when type of value is Object."), helpcontext(0x0000eaed)]+/
-	HRESULT Object(/+[out, retval]+/ IDispatch * lppunk)
+	override HRESULT get_Object(/+[out, retval]+/ IDispatch * lppunk)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x0000002d), propputref, helpstring("Sets/returns value of Property object when type of value is Object."), helpcontext(0x0000eaed)]+/
-	HRESULT Object(/+[in]+/ IUnknown lppunk)
+	override HRESULT putref_Object(/+[in]+/ IUnknown lppunk)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
 	/+[id(0x00000064), propget, helpstring("Returns the top-level extensibility object."), helpcontext(0x0000eac1)]+/
-	HRESULT DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
+	override HRESULT get_DTE(/+[out, retval]+/ dte.DTE * lppaReturn)
 	{
 		logCall("%s.get_DTE()", this);
 		return GetDTE(lppaReturn);
@@ -834,9 +846,9 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
-		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		static class _ComTypeInfoHolder : ComTypeInfoHolder
 		{
-			override int GetIDsOfNames( 
+			override int GetIDsOfNames(
 									   /* [size_is][in] */ in LPOLESTR *rgszNames,
 									   /* [in] */ in UINT cNames,
 									   /* [size_is][out] */ MEMBERID *pMemId)
@@ -862,7 +874,7 @@ class ExtProperty : DisposingDispatchObject, dte.Property
 
 private:
 	string mName;
-	string mValue;
+	T mValue;
 	ExtProperties mProperties;
 }
 
@@ -890,7 +902,7 @@ class ExtProject : ExtProjectItem, dte.Project
 	}
 
 	// DTE.Project
-	override int Name( 
+	override int get_Name(
 		/* [retval][out] */ BSTR *lpbstrName)
 	{
 		logCall("%s.get_Name(lpbstrName=%s)", this, _toLog(lpbstrName));
@@ -898,7 +910,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		return S_OK;
 	}
 
-	override int Name( 
+	override int put_Name(
 		/* [in] */ in BSTR bstrName)
 	{
 		logCall("%s.put_Name(bstrName=%s)", this, _toLog(bstrName));
@@ -906,7 +918,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		return S_OK;
 	}
 
-	override int FileName( 
+	override int get_FileName(
 		/* [retval][out] */ BSTR *lpbstrName)
 	{
 		logCall("%s.get_FileName(lpbstrName=%s)", this, _toLog(lpbstrName));
@@ -914,21 +926,21 @@ class ExtProject : ExtProjectItem, dte.Project
 		return S_OK;
 	}
 
-	override int IsDirty( 
+	override int get_IsDirty(
 		/* [retval][out] */ VARIANT_BOOL *lpfReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
-	override int IsDirty( 
+	override int put_IsDirty(
 		/* [in] */ in VARIANT_BOOL Dirty)
 	{
 		logCall("%s.put_IsDirty(Dirty=%s)", this, _toLog(Dirty));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int Collection( 
+	override int get_Collection(
 		/* [retval][out] */ dte.Projects *lppaReturn)
 	{
 		mixin(LogCallMix);
@@ -938,7 +950,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		scope(exit) release(_dte);
 
 		IUnknown solution; // dte.Solution not derived from IUnknown?!
-		if(_dte.Solution(cast(dte.Solution*)&solution) != S_OK || !solution)
+		if(_dte.get_Solution(cast(dte.Solution*)&solution) != S_OK || !solution)
 			return returnError(E_FAIL);
 		scope(exit) release(solution);
 
@@ -947,24 +959,24 @@ class ExtProject : ExtProjectItem, dte.Project
 			return returnError(E_FAIL);
 		scope(exit) release(_solution);
 
-		return _solution.Projects(lppaReturn);
+		return _solution.get_Projects(lppaReturn);
 	}
 
-	override int SaveAs( 
+	override int SaveAs(
 		/* [in] */ in BSTR NewFileName)
 	{
 		logCall("%s.SaveAs(NewFileName=%s)", this, _toLog(NewFileName));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int DTE( 
+	override int get_DTE(
 		/* [retval][out] */ dte.DTE	*lppaReturn)
 	{
 		logCall("%s.get_DTE()", this);
 		return GetDTE(lppaReturn);
 	}
 
-	override int Kind( 
+	override int get_Kind(
 		/* [retval][out] */ BSTR *lpbstrName)
 	{
 		logCall("%s.get_Kind(lpbstrName=%s)", this, _toLog(lpbstrName));
@@ -973,7 +985,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		return S_OK;
 	}
 
-	override int ProjectItems( 
+	override int get_ProjectItems(
 		/* [retval][out] */ dte.ProjectItems* lppcReturn)
 	{
 		mixin(LogCallMix);
@@ -981,7 +993,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		return S_OK;
 	}
 
-	override int Properties( 
+	override int get_Properties(
 		/* [retval][out] */ dte.Properties *ppObject)
 	{
 		mixin(LogCallMix);
@@ -989,7 +1001,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		return S_OK;
 	}
 
-	override int UniqueName( 
+	override int get_UniqueName(
 		/* [retval][out] */ BSTR *lpbstrName)
 	{
 		logCall("%s.get_UniqueName(lpbstrName=%s)", this, _toLog(lpbstrName));
@@ -1002,14 +1014,14 @@ class ExtProject : ExtProjectItem, dte.Project
 			return returnError(E_FAIL);
 
 		IVsHierarchy pIVsHierarchy = mProject; // ->GetIVsHierarchy();
-		
+
 		int hr = srpSolution.GetUniqueNameOfProject(pIVsHierarchy, lpbstrName);
 		srpSolution.Release();
 
 		return hr;
 	}
 
-	override int Object( 
+	override int get_Object(
 		/* [retval][out] */ IDispatch* ProjectModel)
 	{
 		logCall("%s.get_Object(out ProjectModel=%s)", this, _toLog(&ProjectModel));
@@ -1017,7 +1029,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		return S_OK;
 	}
 
-	override int Extender( 
+	override int get_Extender(
 		/* [in] */ in BSTR ExtenderName,
 		/* [retval][out] */ IDispatch *Extender)
 	{
@@ -1025,42 +1037,42 @@ class ExtProject : ExtProjectItem, dte.Project
 		return returnError(E_NOTIMPL);
 	}
 
-	override int ExtenderNames( 
+	override int get_ExtenderNames(
 		/* [retval][out] */ VARIANT *ExtenderNames)
 	{
 		logCall("%s.get_ExtenderNames(ExtenderNames=%s)", this, _toLog(ExtenderNames));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int ExtenderCATID( 
+	override int get_ExtenderCATID(
 		/* [retval][out] */ BSTR *pRetval)
 	{
 		logCall("%s.get_ExtenderCATID(pRetval=%s)", this, _toLog(pRetval));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int FullName( 
+	override int get_FullName(
 		/* [retval][out] */ BSTR *lpbstrName)
 	{
 		logCall("%s.get_FullName(lpbstrName=%s)", this, _toLog(lpbstrName));
-		return FileName(lpbstrName);
+		return get_FileName(lpbstrName);
 	}
 
-	override int Saved( 
+	override int get_Saved(
 		/* [retval][out] */ VARIANT_BOOL *lpfReturn)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
-	override int Saved( 
+	override int put_Saved(
 		/* [in] */ in VARIANT_BOOL SavedFlag)
 	{
 		logCall("put_Saved(SavedFlag=%s)", _toLog(SavedFlag));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int ConfigurationManager( 
+	override int get_ConfigurationManager(
 		/* [retval][out] */ dte.ConfigurationManager* ppConfigurationManager)
 	{
 		mixin(LogCallMix);
@@ -1069,7 +1081,7 @@ class ExtProject : ExtProjectItem, dte.Project
 		return S_OK;
 	}
 
-	override int Globals( 
+	override int get_Globals(
 		/* [retval][out] */ dte.Globals* ppGlobals)
 	{
 		mixin(LogCallMix);
@@ -1100,21 +1112,108 @@ class ExtProject : ExtProjectItem, dte.Project
 		return hr;
 	}
 
-	override int Save( 
+	override int Save(
 		/* [defaultvalue] */ BSTR FileName)
 	{
 		logCall("Save(FileName=%s)", _toLog(FileName));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int ParentProjectItem( 
+	///////////////////////////////////////////
+	extern(D)
+	static bool searchNestedHierarchy(IVsHierarchy pHierarchy, VSITEMID item,
+									  scope bool delegate (IVsHierarchy, VSITEMID, IVsHierarchy, VSITEMID) dg)
+	{
+		VARIANT var;
+		if((pHierarchy.GetProperty(item, VSHPROPID_Container, &var) == S_OK &&
+			((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))) ||
+		   (pHierarchy.GetProperty(item, VSHPROPID_Expandable, &var) == S_OK &&
+			((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))))
+		{
+			IVsHierarchy nestedHierarchy;
+			VSITEMID itemidNested;
+			if(pHierarchy.GetNestedHierarchy(item, &IVsHierarchy.iid, cast(void **)&nestedHierarchy, &itemidNested) == S_OK)
+			{
+				scope(exit) release(nestedHierarchy);
+				if(dg(pHierarchy, item, nestedHierarchy, itemidNested))
+					return true;
+				if(searchNestedHierarchy(nestedHierarchy, itemidNested, dg))
+					return true;
+			}
+			else if(pHierarchy.GetProperty(item, VSHPROPID_FirstChild, &var) == S_OK &&
+					(var.vt == VT_INT_PTR || var.vt == VT_I4 || var.vt == VT_INT))
+			{
+				VSITEMID chid = var.lVal;
+				while(chid != VSITEMID_NIL)
+				{
+					VARIANT name;
+					pHierarchy.GetProperty(item, VSHPROPID_Name, &name);
+					detachBSTR(name.bstrVal);
+
+					if(searchNestedHierarchy(pHierarchy, chid, dg))
+						return true;
+
+					if(pHierarchy.GetProperty(chid, VSHPROPID_NextSibling, &var) != S_OK ||
+					   (var.vt != VT_INT_PTR && var.vt != VT_I4 && var.vt != VT_INT))
+						break;
+					chid = var.lVal;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	override int get_ParentProjectItem(
 		/* [retval][out] */ dte.ProjectItem *ppParentProjectItem)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+
+		IVsSolution srpSolution = queryService!(IVsSolution);
+		if(!srpSolution)
+			return returnError(E_FAIL);
+
+		*ppParentProjectItem = null;
+		int hr = E_UNEXPECTED;
+
+		IVsHierarchy pIVsHierarchy = mProject; // ->GetIVsHierarchy();
+		auto hierSolution = qi_cast!(IVsHierarchy)(srpSolution);
+		if (hierSolution)
+		{
+			IVsHierarchy parentHier;
+			VSITEMID parentItem;
+			bool matchItem(IVsHierarchy hier, VSITEMID item, IVsHierarchy nestedHier, VSITEMID nestItem)
+			{
+				if (nestedHier == pIVsHierarchy)
+				{
+					parentHier = addref(hier);
+					parentItem = item;
+					return true;
+				}
+				return false;
+			}
+
+			if (searchNestedHierarchy(hierSolution, VSITEMID_ROOT, &matchItem))
+			{
+				VARIANT var;
+				hr = parentHier.GetProperty(VSITEMID_ROOT, VSHPROPID_ExtObject, &var);
+				if (hr == S_OK && var.vt == VT_DISPATCH && var.pdispVal)
+				{
+					*ppParentProjectItem = qi_cast!(dte.ProjectItem)(var.pdispVal);
+					release(var.pdispVal);
+				}
+				else if (hr == S_OK)
+					hr = E_UNEXPECTED;
+			}
+			release(parentHier);
+			release(hierSolution);
+		}
+		release(srpSolution);
+
+		return hr;
 	}
 
-	override int CodeModel( 
+	override int get_CodeModel(
 		/* [retval][out] */ dte.CodeModel *ppCodeModel)
 	{
 		mixin(LogCallMix);
@@ -1133,9 +1232,9 @@ class ExtProject : ExtProjectItem, dte.Project
 	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
-		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		static class _ComTypeInfoHolder : ComTypeInfoHolder
 		{
-			override int GetIDsOfNames( 
+			override int GetIDsOfNames(
 				/* [size_is][in] */ in LPOLESTR *rgszNames,
 				/* [in] */ in UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
@@ -1158,7 +1257,7 @@ class ExtProject : ExtProjectItem, dte.Project
 	}
 
 	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }
-	
+
 	Project mProject;
 	dte.Properties mProperties;
 }
@@ -1167,7 +1266,8 @@ void automation_shared_static_this_typeHolder()
 {
 	ExtProjectItem.shared_static_this_typeHolder();
 	ExtProperties.shared_static_this_typeHolder();
-	ExtProperty.shared_static_this_typeHolder();
+	ExtProperty!string.shared_static_this_typeHolder();
+	ExtProperty!int.shared_static_this_typeHolder();
 	ExtProject.shared_static_this_typeHolder();
 }
 
@@ -1175,6 +1275,7 @@ void automation_shared_static_dtor_typeHolder()
 {
 	ExtProjectItem.shared_static_dtor_typeHolder();
 	ExtProperties.shared_static_dtor_typeHolder();
-	ExtProperty.shared_static_dtor_typeHolder();
+	ExtProperty!string.shared_static_dtor_typeHolder();
+	ExtProperty!int.shared_static_dtor_typeHolder();
 	ExtProject.shared_static_dtor_typeHolder();
 }

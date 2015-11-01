@@ -45,26 +45,33 @@ import core.stdc.stdio : sprintf;
 private IVsWindowFrame sWindowFrame;
 private	SearchPane sSearchPane;
 
+SearchPane getSearchPane(bool create)
+{
+	if(!sSearchPane && create)
+		sSearchPane = newCom!SearchPane;
+	return sSearchPane;
+}
+
 bool showSearchWindow()
 {
+	if(!getSearchPane(true))
+		return false;
+
 	if(!sWindowFrame)
 	{
 		auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false);
 		if(!pIVsUIShell)
 			return false;
 
-		sSearchPane = newCom!SearchPane;
 		const(wchar)* caption = "Visual D Search"w.ptr;
 		HRESULT hr;
 		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sSearchPane, 
 										  &GUID_NULL, &g_searchWinCLSID, &GUID_NULL, 
 										  null, caption, null, &sWindowFrame);
 		if(!SUCCEEDED(hr))
-		{
-			sSearchPane = null;
 			return false;
-		}
 	}
+
 	if(FAILED(sWindowFrame.Show()))
 		return false;
 	BOOL fHandled;
@@ -210,13 +217,17 @@ class SearchWindowBack : Window
 
 class SearchPane : DisposingComObject, IVsWindowPane
 {
+	static const GUID iid = uuid("FFA501E1-0565-4621-ADEA-9A8F10C1805B");
+
 	IServiceProvider mSite;
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
+		if(queryInterface!(SearchPane) (this, riid, pvObject))
+			return S_OK;
 		if(queryInterface!(IVsWindowPane) (this, riid, pvObject))
 			return S_OK;
-		
+
 		// avoid debug output
 		if(*riid == IVsCodeWindow.iid || *riid == IServiceProvider.iid || *riid == IVsTextView.iid)
 			return E_NOINTERFACE;
@@ -264,6 +275,8 @@ class SearchPane : DisposingComObject, IVsWindowPane
 		mixin(LogCallMix2);
 		if(_wndParent)
 		{
+			_WriteViewStateToRegistry();
+
 			_wndParent.Dispose();
 			_wndParent = null;
 			_wndBack = null;
@@ -282,13 +295,82 @@ class SearchPane : DisposingComObject, IVsWindowPane
 	HRESULT LoadViewState(/+[in]+/ IStream pstream)
 	{
 		mixin(LogCallMix2);
-		return returnError(E_NOTIMPL);
+		if(!pstream)
+			return E_INVALIDARG;
+
+		HRESULT _doRead(void* p, size_t cnt)
+		{
+			uint read;
+			HRESULT hr = pstream.Read(cast(byte*)p, cnt, &read);
+			if(FAILED(hr))
+				return hr;
+			if(read != cnt)
+				return E_UNEXPECTED;
+			return hr;
+		}
+
+		HRESULT _doReadColumn(ref COLUMNINFO[] columns)
+		{
+			uint num;
+			if(HRESULT hr = _doRead(cast(byte*)&num, num.sizeof))
+				return hr;
+			if(num > 10)
+				return E_UNEXPECTED;
+			columns.length = num;
+			if(HRESULT hr = _doRead(columns.ptr, columns.length * COLUMNINFO.sizeof))
+				return hr;
+			return S_OK;
+		}
+
+		uint size;
+		if(HRESULT hr = _doRead(cast(byte*)&size, size.sizeof))
+			return hr;
+		if(HRESULT hr = _doReadColumn(_fileColumns))
+			return hr;
+		if(HRESULT hr = _doReadColumn(_symbolColumns))
+			return hr;
+		return S_OK;
 	}
+
 	HRESULT SaveViewState(/+[in]+/ IStream pstream)
 	{
 		mixin(LogCallMix2);
-		return returnError(E_NOTIMPL);
+		if(!pstream)
+			return E_INVALIDARG;
+
+		HRESULT _doWrite(const(void)* p, size_t cnt)
+		{
+			uint written;
+			HRESULT hr = pstream.Write(cast(const(byte)*)p, cnt, &written);
+			if(FAILED(hr))
+				return hr;
+			if(written != cnt)
+				return E_UNEXPECTED;
+			return hr;
+		}
+
+		HRESULT _doWriteColumn(COLUMNINFO[] columns)
+		{
+			uint num = columns.length;
+			if(HRESULT hr = _doWrite(cast(byte*)&num, num.sizeof))
+				return hr;
+			if(HRESULT hr = _doWrite(columns.ptr, columns.length * COLUMNINFO.sizeof))
+				return hr;
+			return S_OK;
+		}
+
+		// write size overall to allow skipping chunk
+		uint size = 2 * uint.sizeof + (_fileColumns.length + _symbolColumns.length) * COLUMNINFO.sizeof;
+		if(HRESULT hr = _doWrite(cast(byte*)&size, size.sizeof))
+			return hr;
+
+		if(HRESULT hr = _doWriteColumn(_fileColumns))
+			return hr;
+		if(HRESULT hr = _doWriteColumn(_symbolColumns))
+			return hr;
+		return S_OK;
 	}
+
 	HRESULT TranslateAccelerator(MSG* msg)
 	{
 		if(msg.message == WM_TIMER)
@@ -469,7 +551,7 @@ private:
 		_wndFileList.SendMessage(LVM_DELETEALLITEMS);
 		_wndFileList.SendMessage(LVM_REMOVEALLGROUPS);
 
-		HIMAGELIST himl = LoadImageList(getInstance(), kImageBmp.ptr, 16, 16);
+		HIMAGELIST himl = LoadImageList(getInstance(), MAKEINTRESOURCEA(BMP_DIMAGELIST), 16, 16);
 		if(himl)
 			_wndFileList.SendMessage(LVM_SETIMAGELIST, LVSIL_SMALL, cast(LPARAM)himl);
 
@@ -1593,7 +1675,7 @@ else
 		try
 		{
 			scope RegKey keyWinOpts = _GetCurrentRegKey(false);
-			if(keyWinOpts.GetDWORD("ColumnInfoVersion"w, 0) == 1)
+			if(keyWinOpts.GetDWORD("ColumnInfoVersion"w, 0) == kColumnInfoVersion)
 			{
 				void[] data = keyWinOpts.GetBinary("ColumnInfo"w);
 				if(data !is null)

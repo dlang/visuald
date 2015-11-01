@@ -28,11 +28,11 @@ import sdk.win32.oleauto;
 // to stop-the-world garbage collections on large amounts of memory (in case of
 // the current D runtime, 200MB are enough to make this annoying).
 //
-// Visual D creates a single thread for communicating with the server and expects 
+// Visual D creates a single thread for communicating with the server and expects
 // expensive calls to be asynchronous: methods GetTip, GetDefinition, GetSemanticExpansions
 // and UpdateModule return immediately, but start some background processing.
 // The client (aka Visual D) polls the result with GetTipResult, GetDefinitionResult,
-// GetSemanticExpansionsResult // and GetParseErrors, repectively, until they return successfully. 
+// GetSemanticExpansionsResult // and GetParseErrors, repectively, until they return successfully.
 // While doing so, GetLastMessage is called to get status line messages (e.g. "parsing module...")
 //
 // All methods reference modules by their file name.
@@ -47,7 +47,7 @@ interface IVDServer : IUnknown
 public:
 	// set compilation options for the given file
 	//
-	// filename:   file name 
+	// filename:   file name
 	// imp:        new-line delimited list of import folders
 	// stringImp:  new-line delimited list of string import folders
 	// versionids: new-line delimited list of version identifiers defined on the command line
@@ -58,18 +58,18 @@ public:
 	// is used in multiple projects, which one is chosen is undefined.
 	// If the file is not contained in a project, the options of the current
 	// startup-project are used.
-	// 
+	//
 	// This function is usually called after UpdateModule, assuming that parsing does
 	// not depend on compilation options, so any semantic analysis should be deferred
 	// until ConfigureSemanticProject is called.
 	HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags);
-	
+
 	// delete all semantic and parser information
 	HRESULT ClearSemanticProject();
-	
+
 	// parse file given the current text in the editor
 	//
-	// filename:   file name 
+	// filename:   file name
 	// srcText:    current text in editor
 	// verbose:    display parsing message?
 	//
@@ -80,17 +80,17 @@ public:
 	// not depend on compilation options, so any semantic analysis should be deferred
 	// until ConfigureSemanticProject is invoked.
 	HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in BOOL verbose);
-	
+
 	// request tool tip text for a given text location
 	//
-	// filename:   file name 
+	// filename:   file name
 	// startLine, startIndex, endLine, endIndex: selected range in the editor
 	//                                           if start==end, mouse hovers without selection
 	//
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetTipResult
 	HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex);
-	
+
 	// get the result of the previous GetTip
 	//
 	// startLine, startIndex, endLine, endIndex: return the range of the evaluated expression
@@ -99,10 +99,10 @@ public:
 	//
 	// return S_FALSE as long as the semantic analysis is still running
 	HRESULT GetTipResult(ref int startLine, ref int startIndex, ref int endLine, ref int endIndex, BSTR* answer);
-	
+
 	// request a list of expansions for a given text location
 	//
-	// filename:   file name 
+	// filename:   file name
 	// tok:        the prefix of the identifier to expand, allowing filtering results
 	// line, idx:  the location of the caret in the text editor
 	// expr:       the expression to evaluate at the insertion point in case of parser issues
@@ -110,46 +110,46 @@ public:
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetSemanticExpansionsResult
 	HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr);
-	
+
 	// get the result of the previous GetSemanticExpansions
 	//
 	// stringList: a new-line delimited list of expansions
 	//
 	// return S_FALSE as long as the semantic analysis is still running
 	HRESULT GetSemanticExpansionsResult(BSTR* stringList);
-	
+
 	// not used
 	HRESULT IsBinaryOperator(in BSTR filename, uint startLine, uint startIndex, uint endLine, uint endIndex, BOOL* pIsOp);
-	
+
 	// return the parse errors found in the file
 	//
-	// filename:   file name 
+	// filename:   file name
 	// errors: new-line delimited list of errors, each line has the format:
 	//        startLine,startIndex,endLine,endIndex:  error text
 	//
-	// the range given by startLine,startIndex,endLine,endIndex will be marked 
+	// the range given by startLine,startIndex,endLine,endIndex will be marked
 	// as erronous by underlining it in the editor
 	//
 	// return S_FALSE as long as the parsisng is still running
 	HRESULT GetParseErrors(in BSTR filename, BSTR* errors);
-	
+
 	// return the locations where "in" and "is" are used as binary operators
-	// 
-	// filename:   file name 
+	//
+	// filename:   file name
 	// locs:       an array of pairs of DWORDs line,index that gives the text location of the "i"
 	//
 	// this method is called once after GetParseErrors returned successfully
 	HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs);
-	
+
 	// return a message to be displayed in the status line of the IDE
 	//
-	// it is assumed that a message is returned only once. 
+	// it is assumed that a message is returned only once.
 	// return S_FALSE if there is no new message to display
 	HRESULT GetLastMessage(BSTR* message);
 
 	// request location of definition for a given text location
 	//
-	// filename:   file name 
+	// filename:   file name
 	// startLine, startIndex, endLine, endIndex: selected range in the editor
 	//                                           if start==end, mouse hovers without selection
 	//
@@ -167,7 +167,7 @@ public:
 
 	// request a list of references for a given text location
 	//
-	// filename:   file name 
+	// filename:   file name
 	// tok:        the identifier to reference
 	// line, idx:  the location of the caret in the text editor
 	// expr:       the expression to evaluate at the insertion point in case of parser issues
@@ -180,7 +180,7 @@ public:
 
 ///////////////////////////////////////////////////////////////////////
 uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
-					  int versionLevel, int debugLevel, bool noDeprecated, 
+					  int versionLevel, int debugLevel, bool noDeprecated, bool ldc, bool msvcrt,
 					  bool mixinAnalysis, bool ufcsExpansions)
 {
 	return (unittestOn ? 1 : 0)
@@ -194,6 +194,8 @@ uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool do
 		| ((versionLevel & 0xff) << 8)
 		| ((debugLevel   & 0xff) << 16)
 		|  (mixinAnalysis  ? 0x1_00_00_00 : 0)
-		|  (ufcsExpansions ? 0x2_00_00_00 : 0);
+		|  (ufcsExpansions ? 0x2_00_00_00 : 0)
+		|  (ldc        ? 0x4_00_00_00 : 0)
+		|  (msvcrt     ? 0x8_00_00_00 : 0);
 }
 

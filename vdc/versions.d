@@ -19,7 +19,7 @@ static @property int[string] sPredefinedVersions()
 		//  1: always defined
 		// -1: always undefined
 		//  0: to be determined by compiler option
-		predefinedVersions = 
+		predefinedVersions =
 		[
 			"DigitalMars" : 0,
 			"GNU" : 0,
@@ -47,7 +47,7 @@ static @property int[string] sPredefinedVersions()
 			"Hurd" : -1,
 			"Android" : -1,
 			"Cygwin" : -1,
-			"MinGW" : -1,
+			"MinGW" : 0,
 
 			"X86" : 0,
 			"X86_64" : 0,
@@ -91,7 +91,7 @@ static @property int[string] sPredefinedVersions()
 
 			"LittleEndian" : 1,
 			"BigEndian" : -1,
-			
+
 			"ELFv1" : -1,
 			"ELFv2" : -1,
 
@@ -109,7 +109,7 @@ static @property int[string] sPredefinedVersions()
 			"D_SoftFloat" : -1,
 			"D_PIC" : -1,
 			"D_SIMD" : 1,
-			
+
 			"D_Version2" : 1,
 			"D_NoBoundsChecks" : 0,
 

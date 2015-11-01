@@ -507,33 +507,33 @@ version(none)
 	}
 
 	// IVsInstalledProduct
-	override int IdBmpSplash(uint* pIdBmp)
+	override int get_IdBmpSplash(uint* pIdBmp)
 	{
 		mixin(LogCallMix);
 		*pIdBmp = BMP_SPLASHSCRN;
 		return S_OK;
 	}
 
-	override int OfficialName(BSTR* pbstrName)
+	override int get_OfficialName(BSTR* pbstrName)
 	{
 		logCall("%s.ProductID(pbstrName=%s)", this, pbstrName);
 		*pbstrName = allocwBSTR(g_packageName);
 		return S_OK;
 	}
-	override int ProductID(BSTR* pbstrPID)
+	override int get_ProductID(BSTR* pbstrPID)
 	{
 		logCall("%s.ProductID(pbstrPID=%s)", this, pbstrPID);
 		*pbstrPID = allocBSTR(full_version);
 		return S_OK;
 	}
-	override int ProductDetails(BSTR* pbstrProductDetails)
+	override int get_ProductDetails(BSTR* pbstrProductDetails)
 	{
 		logCall("%s.ProductDetails(pbstrPID=%s)", this, pbstrProductDetails);
 		*pbstrProductDetails = allocBSTR ("Integration of the D Programming Language into Visual Studio");
 		return S_OK;
 	}
 
-	override int IdIcoLogoForAboutbox(uint* pIdIco)
+	override int get_IdIcoLogoForAboutbox(uint* pIdIco)
 	{
 		logCall("%s.IdIcoLogoForAboutbox(pIdIco=%s)", this, pIdIco);
 		*pIdIco = ICON_ABOUTBOX;
@@ -735,7 +735,7 @@ version(none)
 			hr = E_FAIL;
 		return hr;
 	}
-	static HRESULT writeGUID(IStream pStream, ref GUID uid)
+	static HRESULT writeGUID(IStream pStream, ref const GUID uid)
 	{
 		ULONG written;
 		HRESULT hr = pStream.Write(&uid, uid.sizeof, &written);
@@ -771,21 +771,21 @@ version(none)
 		return S_OK;
 	}
 	///////////////////////////
-	static HRESULT readUint(IStream pStream, ref uint num)
+	static HRESULT readRaw(IStream pStream, void* p, uint size)
 	{
 		ULONG read;
-		HRESULT hr = pStream.Read(&num, num.sizeof, &read);
-		if(hr == S_OK && read != num.sizeof)
+		HRESULT hr = pStream.Read(p, size, &read);
+		if(hr == S_OK && read != size)
 			hr = E_FAIL;
 		return hr;
 	}
+	static HRESULT readUint(IStream pStream, ref uint num)
+	{
+		return readRaw(pStream, &num, num.sizeof);
+	}
 	static HRESULT readGUID(IStream pStream, ref GUID uid)
 	{
-		ULONG read;
-		HRESULT hr = pStream.Read(&uid, uid.sizeof, &read);
-		if(hr == S_OK && read != uid.sizeof)
-			hr = E_FAIL;
-		return hr;
+		return readRaw(pStream, &uid, uid.sizeof);
 	}
 	static HRESULT readString(IStream pStream, ref string s)
 	{
@@ -796,12 +796,21 @@ version(none)
 		if(len == -1)
 			return S_FALSE;
 		char[] buf = new char[len];
-		ULONG read;
-		HRESULT hr = pStream.Read(buf.ptr, len, &read);
-		if(hr == S_OK && read != len)
-			hr = E_FAIL;
+		HRESULT hr = readRaw(pStream, buf.ptr, len);
 		s = assumeUnique(buf);
 		return hr;
+	}
+	static HRESULT skip(IStream pStream, uint len)
+	{
+		char[256] buf;
+		for(; len >= buf.sizeof; len -= buf.sizeof)
+			if(auto hr = readRaw(pStream, buf.ptr, buf.sizeof))
+				return hr;
+
+		if(len > 0)
+			if(auto hr = readRaw(pStream, buf.ptr, len))
+				return hr;
+		return S_OK;
 	}
 
 	HRESULT WriteUserOptions(IStream pOptionsStream, in LPCOLESTR pszKey)
@@ -858,9 +867,24 @@ version(none)
 					}
 				}
 			}
-			GUID uid; // empty GUID as end marker
+			GUID uid; // empty GUID as end marker of projects
 			if(auto hr = writeGUID(pOptionsStream, uid))
 				return hr;
+
+			version(writeSearchPaneState)
+			{
+				// now followed by more chunks with (iid,length) heaser
+				if(auto win = getSearchPane(false))
+				{
+					if(auto hr = writeGUID(pOptionsStream, SearchPane.iid))
+						return hr;
+					if(HRESULT hr = win.SaveViewState(pOptionsStream))
+						return hr;
+				}
+				// empty GUID as end marker 
+				if(auto hr = writeGUID(pOptionsStream, uid))
+					return hr;
+			}
 		}
 		return S_OK;
 	}
@@ -873,9 +897,9 @@ version(none)
 			return E_FAIL;
 		scope(exit) release(srpSolution);
 
+		GUID uid;
 		for(;;)
 		{
-			GUID uid;
 			if(auto hr = readGUID(pOptionsStream, uid))
 				return hr;
 			if(uid == GUID_NULL)
@@ -935,6 +959,28 @@ version(none)
 					}
 				}
 			}
+		}
+
+		version(writeSearchPaneState)
+		while(readGUID(pOptionsStream, uid) == S_OK)
+		{
+			if(uid == GUID_NULL)
+				break;
+			if (uid == SearchPane.iid)
+			{
+				if(auto win = getSearchPane(true))
+				{
+					if(HRESULT hr = win.LoadViewState(pOptionsStream))
+						return hr;
+					continue;
+				}
+			}
+			// skip chunk
+			uint len;
+			if(HRESULT hr = readUint(pOptionsStream, len))
+				return hr;
+			if(HRESULT hr = skip(pOptionsStream, len))
+			   return hr;
 		}
 		return S_OK;
 	}
@@ -1134,6 +1180,8 @@ class GlobalOptions
 
 	// evaluated once at startup
 	string WindowsSdkDir;
+	string UCRTSdkDir;
+	string UCRTVersion;
 	string DevEnvDir;
 	string VSInstallDir;
 	string VCInstallDir;
@@ -1219,6 +1267,7 @@ class GlobalOptions
 
 	void detectWindowsSDKDir()
 	{
+		// todo: detect Win10 SDK
 		if(WindowsSdkDir.empty)
 		{
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.1"w, false);
@@ -1247,6 +1296,65 @@ class GlobalOptions
 			WindowsSdkDir = normalizeDir(WindowsSdkDir);
 	}
 
+	void detectUCRT()
+	{
+		if(UCRTSdkDir.empty)
+		{
+			if(char* psdk = getenv("UniversalCRTSdkDir"))
+				UCRTSdkDir = normalizeDir(fromMBSz(cast(immutable)psdk));
+			else
+			{
+				scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"w, false);
+				UCRTSdkDir = normalizeDir(toUTF8(keySdk.GetString("KitsRoot10")));
+			}
+		}
+		if(UCRTVersion.empty)
+		{
+			if(char* pver = getenv("UCRTVersion"))
+				UCRTVersion = fromMBSz(cast(immutable)pver);
+			else if(!UCRTSdkDir.empty)
+			{
+				string rootsDir = normalizeDir(UCRTSdkDir) ~ "Lib\\";
+				try
+				{
+					foreach(string f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
+						if(std.file.isDir(f) && f > UCRTVersion)
+							UCRTVersion = baseName(f);
+				}
+				catch(Exception)
+				{
+				}
+			}
+		}
+	}
+
+	void detectVCInstallDir()
+	{
+		if(char* pe = getenv("VSINSTALLDIR"))
+			VSInstallDir = fromMBSz(cast(immutable)pe);
+		else
+		{
+			scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
+			VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
+			// InstallDir is ../Common7/IDE/
+			VSInstallDir = normalizeDir(VSInstallDir);
+			VSInstallDir = dirName(dirName(VSInstallDir));
+		}
+		VSInstallDir = normalizeDir(VSInstallDir);
+	}
+
+	void detectVSInstallDir()
+	{
+		if(char* pe = getenv("VCINSTALLDIR"))
+			VCInstallDir = fromMBSz(cast(immutable)pe);
+		else
+		{
+			scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
+			VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
+		}
+		VCInstallDir = normalizeDir(VCInstallDir);
+	}
+
 	bool initFromRegistry()
 	{
 		if(!getRegistryRoot())
@@ -1268,27 +1376,9 @@ class GlobalOptions
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
 
 			detectWindowsSDKDir();
-
-			if(char* pe = getenv("VSINSTALLDIR"))
-				VSInstallDir = fromMBSz(cast(immutable)pe);
-			else
-			{
-				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot, false);
-				VSInstallDir = toUTF8(keyVS.GetString("InstallDir"));
-				// InstallDir is ../Common7/IDE/
-				VSInstallDir = normalizeDir(VSInstallDir);
-				VSInstallDir = dirName(dirName(VSInstallDir));
-			}
-			VSInstallDir = normalizeDir(VSInstallDir);
-
-			if(char* pe = getenv("VCINSTALLDIR"))
-				VCInstallDir = fromMBSz(cast(immutable)pe);
-			else
-			{
-				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
-				VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
-			}
-			VCInstallDir = normalizeDir(VCInstallDir);
+			detectUCRT();
+			detectVSInstallDir();
+			detectVCInstallDir();
 
 			wstring getWStringOpt(wstring tag, wstring def = null)
 			{
@@ -1299,9 +1389,9 @@ class GlobalOptions
 			{
 				return toUTF8(getWStringOpt(tag, def));
 			}
-			string getPathsOpt(wstring tag, wstring def = null)
+			string getPathsOpt(wstring tag, string def = null)
 			{
-				return replaceSemiCrLf(toUTF8(getWStringOpt(tag, def)));
+				return replaceSemiCrLf(toUTF8(getWStringOpt(tag, to!wstring(def))));
 			}
 			int getIntOpt(wstring tag, int def = 0)
 			{
@@ -1334,43 +1424,60 @@ class GlobalOptions
 			pasteIndent         = getBoolOpt("pasteIndent", true);
 
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
-			useDParser          = getBoolOpt("useDParser2", keyDParser.key !is null);
+			useDParser          = true; // getBoolOpt("useDParser2", keyDParser.key !is null);
 			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
 
-			wstring getDefaultDMDLibPath64()
+			string getDefaultLibPathCOFF64()
 			{
-				wstring libpath = r"$(VCInstallDir)\lib\amd64";
+				string libpath = r"$(VCInstallDir)\lib\amd64";
+				if(std.file.exists(VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x64";
+
 				if(WindowsSdkDir.length)
 				{
-					if(std.file.exists(WindowsSdkDir ~ r"lib\x64"))
-						libpath ~= to!wstring("\n$(WindowsSdkDir)lib\\x64");
-					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64")) // SDK 8.0
-						libpath ~= to!wstring("\n$(WindowsSdkDir)Lib\\win8\\um\\x64");
-					else if(std.file.exists(WindowsSdkDir ~ r"Lib\\winv6.3\\um\\x64")) // SDK 8.1
-						libpath ~= to!wstring("\n$(WindowsSdkDir)Lib\\winv6.3\\um\\x64");
+					if(std.file.exists(WindowsSdkDir ~ r"lib\x64\kernel32.lib"))
+						libpath ~= "\n$(WindowsSdkDir)lib\\x64";
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64\kernel32.lib")) // SDK 8.0
+						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x64";
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\winv6.3\um\x64\kernel32.lib")) // SDK 8.1
+						libpath ~= "\n$(WindowsSdkDir)Lib\\winv6.3\\um\\x64";
+				}
+				return libpath;
+			}
+
+			string getDefaultLibPathCOFF32()
+			{
+				string libpath = r"$(VCInstallDir)\lib";
+				if(std.file.exists(VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x86";
+
+				if(WindowsSdkDir.length)
+				{
+					if(std.file.exists(WindowsSdkDir ~ r"lib\kernel32.lib"))
+						libpath ~= "\n$(WindowsSdkDir)lib";
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x86\kernel32.lib")) // SDK 8.0
+						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x86";
+					else if(std.file.exists(WindowsSdkDir ~ r"Lib\winv6.3\um\x86\kernel32.lib")) // SDK 8.1
+						libpath ~= "\n$(WindowsSdkDir)Lib\\winv6.3\\um\\x86";
 				}
 				return libpath;
 			}
 
 			// overwrite by user config
-			void readCompilerOptions(string compiler)(ref CompilerDirectories opt, wstring defLibPath64, wstring defLibPath32coff = null)
+			void readCompilerOptions(string compiler)(ref CompilerDirectories opt)
 			{
 				enum bool dmd = compiler == "DMD";
 				enum string prefix = dmd ? "" : compiler ~ ".";
 				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
 
-				wstring defDisasm32omf = `"obj2asm" -x "$(InputPath)" >"$(TargetPath)"`;
-				wstring defDisasm32 = `"$(VCInstallDir)\bin\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
-				wstring defDisasm64 = `"$(VCInstallDir)\bin\amd64\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
-
-				opt.ExeSearchPath = getPathsOpt(prefix ~ "ExeSearchPath");
-				opt.LibSearchPath = getPathsOpt(prefix ~ "LibSearchPath");
-				opt.ImpSearchPath = getPathsOpt(prefix ~ "ImpSearchPath");
-				opt.DisasmCommand = getPathsOpt(prefix ~ "DisasmCommand", dmd ? defDisasm32omf : defDisasm32);
-				opt.ExeSearchPath64 = getPathsOpt(prefix ~ "ExeSearchPath64", to!wstring(opt.ExeSearchPath));
-				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", defLibPath64);
-				opt.DisasmCommand64 = getPathsOpt(prefix ~ "DisasmCommand64", defDisasm64);
+				opt.ExeSearchPath   = getPathsOpt(prefix ~ "ExeSearchPath", opt.ExeSearchPath);
+				opt.LibSearchPath   = getPathsOpt(prefix ~ "LibSearchPath", opt.LibSearchPath);
+				opt.ImpSearchPath   = getPathsOpt(prefix ~ "ImpSearchPath", opt.ImpSearchPath);
+				opt.DisasmCommand   = getPathsOpt(prefix ~ "DisasmCommand", opt.DisasmCommand);
+				opt.ExeSearchPath64 = getPathsOpt(prefix ~ "ExeSearchPath64", opt.ExeSearchPath64);
+				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", opt.LibSearchPath64);
+				opt.DisasmCommand64 = getPathsOpt(prefix ~ "DisasmCommand64", opt.DisasmCommand64);
 
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
@@ -1378,20 +1485,46 @@ class GlobalOptions
 
 				if (dmd)
 				{
-					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", to!wstring(opt.ExeSearchPath));
-					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", defLibPath32coff);
-					opt.DisasmCommand32coff   = getPathsOpt(prefix ~ "DisasmCommand32coff", defDisasm32);
+					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", opt.ExeSearchPath32coff);
+					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", opt.LibSearchPath32coff);
+					opt.DisasmCommand32coff   = getPathsOpt(prefix ~ "DisasmCommand32coff", opt.DisasmCommand32coff);
 					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", dmd);
 					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
 				}
 			}
-			readCompilerOptions!"DMD"(DMD, getDefaultDMDLibPath64());
-			readCompilerOptions!"GDC"(GDC, null);
-			readCompilerOptions!"LDC"(LDC, null);
+			// put dmd bin folder at the end to avoid trouble with link.exe (dmd does not need search path)
+			// $(WindowsSdkDir)\bin needed for rc.exe
+			// $(VCInstallDir)\bin needed to compile C + link.exe + DLLs
+			// $(VSINSTALLDIR)\Common7\IDE needed for some VS versions for cv2pdb
+			DMD.ExeSearchPath = r"$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin;$(DMDInstallDir)windows\bin";
+			DMD.ExeSearchPath64     = DMD.ExeSearchPath;
+			DMD.ExeSearchPath32coff = DMD.ExeSearchPath;
+			GDC.ExeSearchPath       = r"$(GDCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
+			GDC.ExeSearchPath64     = GDC.ExeSearchPath;
+			LDC.ExeSearchPath       = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
+			LDC.ExeSearchPath64     = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin\amd64;$(WindowsSdkDir)\bin";
+
+			DMD.LibSearchPath64     = getDefaultLibPathCOFF64();
+			LDC.LibSearchPath64     = DMD.LibSearchPath64;
+			DMD.LibSearchPath32coff = getDefaultLibPathCOFF32();
+			LDC.LibSearchPath       = DMD.LibSearchPath32coff;
+
+			DMD.DisasmCommand       = `"obj2asm" -x "$(InputPath)" >"$(TargetPath)"`;
+			DMD.DisasmCommand64     = `"$(VCInstallDir)\bin\amd64\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
+			DMD.DisasmCommand32coff = `"$(VCInstallDir)\bin\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
+
+			GDC.DisasmCommand   = DMD.DisasmCommand32coff;
+			LDC.DisasmCommand   = DMD.DisasmCommand32coff;
+			GDC.DisasmCommand64 = DMD.DisasmCommand64;
+			LDC.DisasmCommand64 = DMD.DisasmCommand64;
+
+			readCompilerOptions!"DMD"(DMD);
+			readCompilerOptions!"GDC"(GDC);
+			readCompilerOptions!"LDC"(LDC);
 
 			JSNSearchPath     = getPathsOpt("JSNSearchPath");
-			IncSearchPath     = getStringOpt("IncSearchPath");
+			IncSearchPath     = getStringOpt("IncSearchPath", r"$(WindowsSdkDir)\include;$(VCInstallDir)\include");
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
 			compileAndDbgOpts = getStringOpt("compileAndDbgOpts", "-g");
@@ -1560,6 +1693,8 @@ class GlobalOptions
 		replacements["GDCINSTALLDIR"] = normalizeDir(GDC.InstallDir);
 		replacements["LDCINSTALLDIR"] = normalizeDir(LDC.InstallDir);
 		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
+		replacements["UCRTSDKDIR"] = UCRTSdkDir;
+		replacements["UCRTVERSION"] = UCRTVersion;
 		replacements["DEVENVDIR"] = DevEnvDir;
 		replacements["VCINSTALLDIR"] = VCInstallDir;
 		replacements["VSINSTALLDIR"] = VSInstallDir;
@@ -2008,7 +2143,13 @@ class GlobalOptions
 	{
 		scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ r"\General", false);
 		string theme = toUTF8(keyUserOpts.GetString("CurrentTheme")).toLower;
-		return theme == "1ded0138-47ce-435e-84ef-9ec1f439b749" || theme == "{1ded0138-47ce-435e-84ef-9ec1f439b749}";
+		if (theme == "1ded0138-47ce-435e-84ef-9ec1f439b749" || theme == "{1ded0138-47ce-435e-84ef-9ec1f439b749}")
+			return true;
+
+		// VS2015
+		scope RegKey keyUserOpts15 = new RegKey(hUserKey, regUserRoot ~ r"\ApplicationPrivateSettings\Microsoft\VisualStudio", false);
+		string theme15 = toUTF8(keyUserOpts15.GetString("ColorTheme")).toLower;
+		return theme15.endsWith("1ded0138-47ce-435e-84ef-9ec1f439b749");
 	}
 
 	bool removeColorCache()

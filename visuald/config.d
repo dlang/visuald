@@ -142,7 +142,7 @@ class ProjectOptions
 	bool verbose;		// verbose compile
 	bool vtls;		// identify thread local variables
 	bool vgc;		// List all gc allocations including hidden ones (DMD 2.066+)
-	ubyte symdebug;		// insert debug symbolic information
+	ubyte symdebug;		// insert debug symbolic information (0: none, 1: mago, 2: VS, 3: as debugging)
 	bool optimize;		// run optimizer
 	ubyte cpu;		// target CPU
 	bool isX86_64;		// generate X86_64 bit code
@@ -291,7 +291,7 @@ class ProjectOptions
 	void setDebug(bool dbg)
 	{
 		runCv2pdb = dbg;
-		symdebug = dbg ? 1 : 0;
+		symdebug = dbg ? 3 : 0;
 		release = dbg ? 0 : 1;
 		optimize = release;
 		useInline = release;
@@ -306,6 +306,12 @@ class ProjectOptions
 	string objectFileExtension() { return compiler != Compiler.GDC ? "obj" : "o"; }
 	string otherCompilerPath() { return otherDMD ? program : null; }
 
+	bool useMSVCRT()
+	{
+		return (compiler == Compiler.DMD && (isX86_64 || mscoff)) || 
+		       (compiler == Compiler.LDC);
+	}
+
 	@property ref CompilerDirectories compilerDirectories() 
 	{
 		switch(compiler)
@@ -315,6 +321,18 @@ class ProjectOptions
 			case Compiler.GDC: return Package.GetGlobalOptions().GDC;
 			case Compiler.LDC: return Package.GetGlobalOptions().LDC;
 		}
+	}
+
+	bool isLDCforMinGW()
+	{
+		if (compiler != Compiler.LDC)
+			return false;
+
+		string installdir = Package.GetGlobalOptions().LDC.InstallDir;
+		if (installdir.empty)
+			return false;
+
+		return std.file.exists(normalizeDir(installdir) ~ "lib/libphobos2-ldc.a");
 	}
 
 	// common options with building phobos.lib
@@ -332,10 +350,15 @@ class ProjectOptions
 			cmd ~= " -vtls";
 		if(Dversion >= 2 && vgc)
 			cmd ~= " -vgc";
-		if(symdebug == 1)
+
+		int symdbg = symdebug;
+		if(symdebug == 3)
+			symdbg = debugEngine == 1 ? 1 : 2;
+		if(symdbg == 1)
 			cmd ~= " -g";
-		if(symdebug == 2)
+		if(symdbg == 2)
 			cmd ~= " -gc";
+
 		if(optimize)
 			cmd ~= " -O";
 		if(useDeprecated)
@@ -603,10 +626,15 @@ class ProjectOptions
 			cmd ~= " -m32";
 		if(verbose)
 			cmd ~= " -v";
-		if(symdebug == 1)
+
+		int symdbg = symdebug;
+		if(symdebug == 3)
+			symdbg = debugEngine == 1 ? 1 : 2;
+		if(symdbg == 1)
 			cmd ~= " -g";
-		if(symdebug == 2)
+		if(symdbg == 2)
 			cmd ~= " -gc";
+
 		if(optimize)
 			cmd ~= " -O";
 		if(useDeprecated)
@@ -690,11 +718,11 @@ class ProjectOptions
 		if(compiler == Compiler.DMD)
 			return buildDMDCommandLine(compile, performLink, deps, syntaxOnly);
 
-		if(!compile && performLink && lib == OutputType.StaticLib)
-			return buildARCommandLine();
-
 		if(compiler == Compiler.LDC)
 			return buildLDCCommandLine(compile, performLink, deps, syntaxOnly);
+
+		if(!compile && performLink && lib == OutputType.StaticLib)
+			return buildARCommandLine();
 
 		return buildGDCCommandLine(compile, performLink, deps, syntaxOnly);
 	}
@@ -757,6 +785,7 @@ class ProjectOptions
 	string linkGDCCommandLine()
 	{
 		string cmd;
+		string linkeropt = " -Wl,";
 
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
@@ -768,7 +797,7 @@ class ProjectOptions
 			case 0: // no map
 				break;
 			default:
-				cmd ~= " -Wl,-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				cmd ~= linkeropt ~ "-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
 				break;
 		}
 
@@ -776,9 +805,9 @@ class ProjectOptions
 		if(useStdLibPath)
 			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
 		else
-			cmd ~= " -Wl,-nostdlib";
+			cmd ~= linkeropt ~ "-nostdlib";
 		foreach(lp; lpaths)
-			cmd ~= " -Wl,-L," ~ quoteFilename(lp);
+			cmd ~= linkeropt ~ "-L," ~ quoteFilename(lp);
 
 		if(lib != OutputType.StaticLib)
 		{
@@ -791,6 +820,50 @@ class ProjectOptions
 // added later in getCommandFileList
 //			if(libfiles.length)
 //				cmd ~= " " ~ libfiles;
+			if(resfile.length)
+				cmd ~= " " ~ resfile;
+		}
+		return cmd;
+	}
+
+	string linkLDCCommandLine()
+	{
+		string cmd;
+		string linkeropt = " -L=";
+
+		string dmdoutfile = getTargetPath();
+		if(usesCv2pdb())
+			dmdoutfile ~= "_cv";
+
+		cmd ~= " -of=" ~ quoteNormalizeFilename(dmdoutfile);
+		switch(mapverbosity)
+		{
+			case 0: // no map
+				break;
+			default:
+				cmd ~= linkeropt ~ "-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				break;
+		}
+
+		string[] lpaths = tokenizeArgs(libpaths);
+		if(useStdLibPath)
+			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : compilerDirectories.LibSearchPath);
+		else
+			cmd ~= linkeropt ~ "-nostdlib";
+		foreach(lp; lpaths)
+			cmd ~= linkeropt ~ "-L," ~ quoteFilename(lp);
+
+		if(lib != OutputType.StaticLib)
+		{
+			//			if(createImplib)
+			//				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+			if(objfiles.length)
+				cmd ~= " " ~ objfiles;
+			if(deffile.length)
+				cmd ~= " " ~ deffile;
+			// added later in getCommandFileList
+			//			if(libfiles.length)
+			//				cmd ~= " " ~ libfiles;
 			if(resfile.length)
 				cmd ~= " " ~ resfile;
 		}
@@ -925,8 +998,10 @@ class ProjectOptions
 	{
 		if(compiler == Compiler.GDC)
 			return linkGDCCommandLine();
+		else if(isLDCforMinGW())
+			return linkLDCCommandLine();
 		else if(compiler == Compiler.LDC)
-			return linkDMDCommandLine(true);
+			return linkDMDCommandLine(true); // MS link
 		else
 			return linkDMDCommandLine(isX86_64);
 	}
@@ -960,7 +1035,7 @@ class ProjectOptions
 		{
 			default:
 			case Compiler.DMD: cc = (isX86_64 || mscoff ? 1 : 0); break;
-			case Compiler.LDC: cc = 2; break;
+			case Compiler.LDC: cc = (isLDCforMinGW() ? 2 : 1); break;
 			case Compiler.GDC: cc = 3; break;
 		}
 
@@ -2208,13 +2283,13 @@ class Config :	DisposingComObject,
 
 	///////////////////////////////////////////////////////////////
 	// IVsProfilableProjectCfg
-	HRESULT SuppressSignedAssemblyWarnings(/+[retval, out]+/VARIANT_BOOL* suppress)
+	override HRESULT get_SuppressSignedAssemblyWarnings(/+[retval, out]+/VARIANT_BOOL* suppress)
 	{
 		mixin(LogCallMix);
 		*suppress = FALSE;
 		return S_OK;
 	}
-	HRESULT LegacyWebSupportRequired(/+[retval, out]+/VARIANT_BOOL* required)
+	override HRESULT get_LegacyWebSupportRequired(/+[retval, out]+/VARIANT_BOOL* required)
 	{
 		mixin(LogCallMix);
 		*required = FALSE;
@@ -2477,7 +2552,7 @@ class Config :	DisposingComObject,
 			default:
 			case Compiler.DMD: return mProjectOptions.mscoff || mProjectOptions.isX86_64 ? "cl" : "dmc";
 			case Compiler.GDC: return "gcc";
-			case Compiler.LDC: return "clang";
+			case Compiler.LDC: return mProjectOptions.isLDCforMinGW() ? "clang" : "cl";
 		}
 	}
 
@@ -2870,7 +2945,7 @@ class Config :	DisposingComObject,
 			else if(mProjectOptions.compiler == Compiler.LDC)
 				cmd ~= "set LIB=" ~ lpath ~ "\n";
 		}
-		if(x64 || mscoff)
+		if(mProjectOptions.useMSVCRT())
 		{
 			if(globOpt.WindowsSdkDir.length)
 				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
@@ -2970,7 +3045,7 @@ class Config :	DisposingComObject,
 					if(!mProjectOptions.preservePaths)
 						fname = baseName(fname);
 					fname ~= "." ~ mProjectOptions.objectFileExtension();
-					if(mProjectOptions.compiler == Compiler.DMD && !isAbsolute(fname))
+					if(mProjectOptions.compiler.isIn(Compiler.DMD, Compiler.LDC) && !isAbsolute(fname))
 						f = mProjectOptions.objdir ~ "\\" ~ fname;
 					else
 						f = fname;

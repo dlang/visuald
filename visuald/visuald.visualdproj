@@ -184,7 +184,7 @@
   <run>0</run>
   <runargs />
   <runCv2pdb>1</runCv2pdb>
-  <pathCv2pdb>m:\s\d\cv2pdb\trunk\bin\debug\cv2pdb.exe</pathCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)\cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
@@ -552,22 +552,20 @@
    <File path="Resources\DSplashScreenIcon.bmp" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
-   <File path="Resources\pkgcmd.ctc" customcmd="if &quot;%VS9SDKBIN%&quot; == &quot;&quot; set VS9SDKBIN=c:\l\vs9SDK\VisualStudioIntegration\Tools\Bin
-set CTC=%VS9SDKBIN%\CTC.exe
-if not exist &quot;%CTC%&quot; goto no_CTC
-if not exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; goto no_CTC
-set PATH=%PATH%;%VS9SDKBIN%
-call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if errorlevel 1 goto reportError
-&quot;%CTC%&quot; $(InputPath) $(InputDir)\$(InputName).cto -Ccl -I.
+   <File path="Resources\pkgcmd.vsct" customcmd="set VSSDKInstall=%VSSDK140Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK120Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK110Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK100Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK90Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=c:\l\vs12SDK
+set VSCT=%VSSDKInstall%\VisualStudioIntegration\Tools\Bin\VSCT.exe
+if not exist &quot;%VSCT%&quot; goto no_VSCT
+&quot;%VSCT%&quot; $(InputPath) $(InputDir)\$(InputName).cto -I%VSSDKInstall%\VisualStudioIntegration\Common\Inc
 goto reportError
 
-:no_CTC
-echo Warning: CTC.exe not found in %VS9SDKBIN%.
-echo It is part of the VS2008 SDK and is needed to compile $(InputPath)
-if not exist $(InputDir)\$(InputName).cto exit 1
-echo $(InputDir)\$(InputName).cto exists, so it is assumed to be up to date.
-echo If the project rebuilt again and again with this message, touch $(InputDir)\$(InputName).cto to make it newer than $(InputDir)\$(InputName).ctc
+:no_VSCT
+echo Warning: VSCT.exe not found as %VSCT%
+echo It is part of the VS2010-VS2013 SDK and is needed to compile $(InputPath)
 :reportError" tool="Custom" outfile="$(InputDir)\$(InputName).cto" />
    <File path="Resources\refresh.ico" />
    <File path="Resources\RegExp.ico" />

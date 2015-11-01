@@ -10,7 +10,7 @@
 //
 // idl2d - convert IDL or header files to D
 //
-// 
+//
 //
 module c2d.idl2d;
 
@@ -84,10 +84,10 @@ class idl2d
 		string win_path   = r"c:\Program Files\Microsoft SDKs\Windows\v7.1\Include\";
 		string sdk_d_path = r"c:\s\d\visuald\trunk\sdk\";
 	}
-	
+
 	static const string dirVSI = "vsi";
 	static const string dirWin = "win32";
-	
+
 	string packageVSI = "sdk." ~ dirVSI ~ ".";
 	string packageWin = "sdk." ~ dirWin ~ ".";
 	string packageNF  = "sdk.port.";
@@ -103,36 +103,36 @@ class idl2d
 	string[] vsi_idl_files;
 	string[] vsi_h_files;
 	string[] dte_idl_files;
-	
+
 	version(vsi) bool vsi = true;
 	else         bool vsi = false;
-	
+
 	void initFiles()
 	{
-		win_idl_files = [ "windef.h", "sdkddkver.h", "basetsd.h", "ntstatus.h", 
-			"winnt.h", "winbase.h", "winuser.h", "ktmtypes.h", 
+		win_idl_files = [ "windef.h", "sdkddkver.h", "basetsd.h", "ntstatus.h",
+			"winnt.h", "winbase.h", "winuser.h", "ktmtypes.h",
 			"winerror.h", "winreg.h", "reason.h", "commctrl.h",
-			"wingdi.h", "prsht.h", 
+			"wingdi.h", "prsht.h",
 			"iphlpapi.h", "iprtrmib.h", "ipexport.h", "iptypes.h", "tcpestats.h",
 			/*"inaddr.h", "in6addr.h",*/
 			"ipifcons.h", "ipmib.h", "tcpmib.h", "udpmib.h",
 			"ifmib.h", "ifdef.h", "nldef.h", "winnls.h",
 			"shellapi.h", "rpcdce.h" /*, "rpcdcep.h"*/ ];
-		
-		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "wtypes.idl", "oleidl.idl", 
+
+		win_idl_files ~= [ "unknwn.idl", "oaidl.idl", "wtypes.idl", "oleidl.idl",
 			"ocidl.idl", "objidl.idl", "docobj.idl", "oleauto.h", "objbase.h",
 			"mshtmcid.h", "xmldom.idl", "xmldso.idl", "xmldomdid.h", "xmldsodid.h", "idispids.h",
 			"activdbg.id*", "activscp.id*", "dbgprop.id*", // only available in Windows SDK v7.x
 		];
 
 		// only available (and are required for successfull compilation) in Windows SDK v8
-		foreach(f; [ "wtypesbase.idl", 
+		foreach(f; [ "wtypesbase.idl",
 			//"winapifamily.h", "apisetcconv.h", "apiset.h", // commented because it is difficult to convert this file
-			"minwinbase.h", "processenv.h", 
+			"minwinbase.h", "processenv.h",
 			"minwindef.h", "fileapi.h", "debugapi.h", "handleapi.h", "errhandlingapi.h",
 			"fibersapi.h", "namedpipeapi.h", "profileapi.h", "heapapi.h", "synchapi.h",
-			"interlockedapi.h", "processthreadsapi.h", "sysinfoapi.h", "memoryapi.h", 
-			"threadpoollegacyapiset.h", "utilapiset.h", "ioapiset.h", 
+			"interlockedapi.h", "processthreadsapi.h", "sysinfoapi.h", "memoryapi.h",
+			"threadpoollegacyapiset.h", "utilapiset.h", "ioapiset.h",
 			"threadpoolprivateapiset.h", "threadpoolapiset.h",  "bemapiset.h", "wow64apiset.h",
 			"jobapi.h", "timezoneapi.h", "datetimeapi.h", "stringapiset.h",
 			"libloaderapi.h", "securitybaseapi.h", "namespaceapi.h", "systemtopologyapi.h", "processtopologyapi.h",
@@ -150,9 +150,9 @@ class idl2d
 				"vsdebugguids.h", "VSRegKeyNames.h", "SCGuids.h", "wbids.h", "sharedids.h",
 				"vseeguids.h", "version.h", "scc.h",
 				"vsplatformuiuuids.*", // only in VS2010 SDK
-			// no longer in SDK2010: "DSLToolsCmdID.h", 
+			// no longer in SDK2010: "DSLToolsCmdID.h",
 			 ];
-			
+
 			dte_idl_files = [ "*.idl" ];
 		}
 	}
@@ -207,7 +207,7 @@ class idl2d
 		assert(it[2].type == Token.String);
 		assert(it[3].text == ")");
 		string text = strip(it[2].text[1..$-1]);
-		
+
 		string txt = text;
 		bool convert = convert_next_cpp_quote;
 		convert_next_cpp_quote = true;
@@ -229,7 +229,7 @@ class idl2d
 			txt = replace(txt, "\\\"", "\"");
 			txt = convertPP(txt, tokIt.lineno, inEnum);
 		}
-		
+
 		if(convert)
 		{
 			string pretext = tokIt.pretext;
@@ -318,16 +318,16 @@ class idl2d
 			if(vsi)
 				goto default;
 			return !first;
-			
+
 		case Token.Comma:
 			return !first && !(tokIt + 1).atEnd() && tokIt[1].type != Token.EOF;
-			
+
 		case Token.Struct:
 			// struct at beginning of a cast?
 			if(!tokIt.atBegin() && tokIt[-1].type == Token.ParenL)
 				return true;
 			return false;
-			
+
 		default:
 			return false;
 		}
@@ -404,7 +404,7 @@ class idl2d
 		{
 		case "FALSE":
 			return -2; // not defined for expression, but for #define
-			
+
 		case "_WIN64":
 			return 4;  // special cased
 		case "0":
@@ -431,7 +431,7 @@ class idl2d
 		case "RGS_INVOKED":
 		case "__RE_E_DEFINED__":
 		case "OLE2ANSI":
-		
+
 		// for winbase
 		case "STRICT":
 		case "_M_CEE":
@@ -460,9 +460,9 @@ class idl2d
 		case "TRUE":
 			return 2; // predefined for expression, but not for #define
 		case "1":
-		case "__cplusplus": 
-		case "UNICODE": 
-		case "DEFINE_GUID": 
+		case "__cplusplus":
+		case "UNICODE":
+		case "DEFINE_GUID":
 		case "UNIX":
 		case "_X86_":
 		case "_M_IX86":
@@ -536,12 +536,12 @@ class idl2d
 		case "MF_END": // defined twice in winuser.h, but said to be obsolete
 		case "__int3264":
 			return 1;
-		
+
 		case "_NO_SCRIPT_GUIDS": // used in activdbg.h, disable to avoid duplicate GUID definitions
 		case "EnumStackFramesEx": // used in activdbg.h, but in wrong scope
 		case "SynchronousCallIntoThread": // used in activdbg.h, but in wrong scope
 			return 1;
-			
+
 		// winnt.h
 		case "_WINDEF_":
 		case "_WINBASE_":
@@ -556,7 +556,7 @@ class idl2d
 		// Windows SDK 8.0
 		case "_CONTRACT_GEN":
 			return -1;
-		default: 
+		default:
 			break;
 		}
 
@@ -930,7 +930,7 @@ version(none){
 		{
 			if(it != tokIt + 1 && it != tokIt + 2 && it != tokIt + 3)
 			{
-				if(endIt == tokIt + 3 && tokIt[2].type == Token.Identifier && 
+				if(endIt == tokIt + 3 && tokIt[2].type == Token.Identifier &&
 					!(tokIt[2].text in enums) && tokIt[2].text != "NULL")
 				{
 					if(tokIt[2].text in disabled_defines)
@@ -968,7 +968,7 @@ version(none){
 			}
 			else
 				tokIt.pretext ~= "// ";
-			
+
 			Token tok = createToken("", ";", Token.Comma, tokIt.lineno);
 			endIt.insertBefore(tok);
 			if(!inDisabledPPBranch())
@@ -994,7 +994,7 @@ version(none){
 			if(!advanceToClosingBracket(it))
 				return;
 		}
-version(all) 
+version(all)
 {
 		tokIt.insertBefore(createToken("", "/", Token.Div, tokIt.lineno));
 		tokIt.insertBefore(createToken("", "+", Token.Plus, tokIt.lineno));
@@ -1090,8 +1090,8 @@ version(all)
 	{
 		// tokIt after "{"
 		static bool numberOrIdent(Token tok)
-		{ 
-			return tok.type == Token.Identifier || tok.type == Token.Number; 
+		{
+			return tok.type == Token.Identifier || tok.type == Token.Number;
 		}
 		static string toByteArray(string txt)
 		{
@@ -1116,7 +1116,7 @@ version(all)
 			tokIt[0].text = "0x" ~ tokIt[0].text; tokIt[1].text = ",";
 			tokIt[2].text = "0x" ~ tokIt[2].text; tokIt[3].text = ",";
 			tokIt[4].text = "0x" ~ tokIt[4].text; tokIt[5].text = ",";
-			
+
 			tokIt[6].text = "[ " ~ toByteArray(tokIt[6].text); tokIt[7].text = ",";
 			tokIt[8].text = toByteArray(tokIt[8].text) ~ " ]";
 		}
@@ -1146,8 +1146,8 @@ version(all)
 						break;
 				if (i >= 8)
 				{
-					tokIt[6].pretext = " [" ~ tokIt[6].pretext; 
-					tokIt[21].pretext = " ]" ~ tokIt[21].pretext; 
+					tokIt[6].pretext = " [" ~ tokIt[6].pretext;
+					tokIt[21].pretext = " ]" ~ tokIt[21].pretext;
 				}
 			}
 		}
@@ -1157,7 +1157,7 @@ version(all)
 			// "af855397-c4dc-478b-abd4-c3dbb3759e72"
 			if(txt.length == 38 && txt[9] == '-' && txt[14] == '-' && txt[19] == '-' && txt[24] == '-')
 			{
-				tokIt.text = "0x" ~ txt[1..9] ~ ", 0x" ~ txt[10..14] ~ ", 0x" ~ txt[15..19] ~ ", [ " 
+				tokIt.text = "0x" ~ txt[1..9] ~ ", 0x" ~ txt[10..14] ~ ", 0x" ~ txt[15..19] ~ ", [ "
 					~ "0x" ~ txt[20..22] ~ ", 0x" ~ txt[22..24];
 				for(int i = 0; i < 6; i++)
 					tokIt.text ~= ", 0x" ~ txt[25 + 2*i .. 27 + 2*i];
@@ -1248,7 +1248,7 @@ version(all)
 		replaceTokenSequence(tokens, "WINOLEAPI_($_rettype)", "extern(Windows) $_rettype", true);
 		replaceTokenSequence(tokens, "WINOLEAPI", "extern(Windows) HRESULT", true);
 		replaceTokenSequence(tokens, "$_ident WINAPIV", "extern(C) $_ident", true);
-		
+
 		replaceTokenSequence(tokens, "RPCRTAPI", "export", true);
 		replaceTokenSequence(tokens, "RPC_STATUS", "int", true);
 		replaceTokenSequence(tokens, "RPC_ENTRY", "extern(Windows)", true);
@@ -1262,7 +1262,7 @@ version(all)
 		replaceTokenSequence(tokens, "UNREFERENCED_PARAMETER($arg);", "/*UNREFERENCED_PARAMETER($arg);*/", true);
 		if(currentModule == "rpcdce")
 		{
-			replaceTokenSequence(tokens, "RPC_INTERFACE_GROUP_IDLE_CALLBACK_FN($args);", 
+			replaceTokenSequence(tokens, "RPC_INTERFACE_GROUP_IDLE_CALLBACK_FN($args);",
 										 "function($args) RPC_INTERFACE_GROUP_IDLE_CALLBACK_FN;", true);
 		}
 		// windef.h and ktmtypes.h
@@ -1290,9 +1290,9 @@ version(all)
 			// imports inside extern(C) {}
 			replaceTokenSequence(tokens, "extern \"C\" { $_data }", "$_data", true);
 		}
-		
+
 		// select unicode version of the API when defining without postfix A/W
-		replaceTokenSequence(tokens, "#ifdef UNICODE\nreturn $_identW(\n#else\nreturn $_identA(\n#endif\n", 
+		replaceTokenSequence(tokens, "#ifdef UNICODE\nreturn $_identW(\n#else\nreturn $_identA(\n#endif\n",
 			"    return $_identW(", false);
 
 		replaceTokenSequence(tokens, "#ifdef __cplusplus\nextern \"C\" {\n#endif\n", "extern \"C\" {\n", false);
@@ -1310,16 +1310,16 @@ version(all)
 				parenCount++;
 				break;
 			case ")":
-				parenCount--; 
+				parenCount--;
 				break;
 			case "[":
-				brackCount++; 
+				brackCount++;
 				break;
-			case "]":       
+			case "]":
 				brackCount--;
 				break;
 			case "{":
-				braceCount++; 
+				braceCount++;
 				break;
 			case "}":
 				braceCount--;
@@ -1384,7 +1384,7 @@ version(all)
 				case "short":   t = "ushort"; break;
 				case "char":    t = "ubyte"; break;
 				default:
-					t = "uint"; 
+					t = "uint";
 					skipNext = false;
 					break;
 				}
@@ -1407,7 +1407,7 @@ version(all)
 				case "short":   t = "short"; break;
 				case "char":    t = "byte"; break;
 				default:
-					t = "int"; 
+					t = "int";
 					skipNext = false;
 					break;
 				}
@@ -1460,8 +1460,8 @@ version(all)
 					// in function argument
 					//if(tok.text == "const" || tok.text == "CONST")
 					//	tok.text = "/*const*/";
-					//else 
-					if (tok.text.startsWith("REF") && 
+					//else
+					if (tok.text.startsWith("REF") &&
 						tok.text != "REFSHOWFLAGS" && !tok.text.startsWith("REFERENCE"))
 					{
 						tokIt.insertBefore(createToken(tok.pretext, "ref", Token.Identifier, tokIt.lineno));
@@ -1488,7 +1488,7 @@ version(none) version(vsi)
 		replaceTokenSequence(tokens, "typedef char          OLECHAR;", "typedef char           idl_OLECHAR;", true);
 		replaceTokenSequence(tokens, "typedef LPSTR        LPOLESTR;", "typedef LPSTR         idl_LPOLESTR;", true);
 		replaceTokenSequence(tokens, "typedef LPCSTR      LPCOLESTR;", "typedef LPCSTR       idl_LPCOLESTR;", true);
-		
+
 		replaceTokenSequence(tokens, "WCHAR          OLECHAR;", "WCHAR           idl_OLECHAR;", true);
 		replaceTokenSequence(tokens, "OLECHAR      *LPOLESTR;", "OLECHAR       *idl_LPOLESTR;", true);
 		replaceTokenSequence(tokens, "const OLECHAR *LPCOLESTR;", "OLECHAR    *idl_LPCOLESTR;", true);
@@ -1496,7 +1496,7 @@ version(none) version(vsi)
 		replaceTokenSequence(tokens, "typedef LONG         SCODE;", "typedef LONG       vsi_SCODE;", true);
 }
 
-		//replaceTokenSequence(tokens, "interface IWinTypes { $data }", 
+		//replaceTokenSequence(tokens, "interface IWinTypes { $data }",
 		//	"/+interface IWinTypes {+/\n$data\n/+ } /+IWinTypes+/ +/", true);
 
 		// docobj.idl (v6.0a)
@@ -1509,7 +1509,7 @@ version(none) version(vsi)
 			// win SDK 8.1: double define
 			replaceTokenSequence(tokens, "typedef struct tagPAGESET {} PAGESET;", "", true);
 		}
-		
+
 		//vsshell.idl
 		if(currentModule == "vsshell")
 		{
@@ -1521,11 +1521,11 @@ version(none) version(vsi)
 		{
 			replaceTokenSequence(tokens, "MENUEDITOR_TRANSACTION_ALL,", "MENUEDITOR_TRANSACTION_ALL = 0,", true); // overflow from -1u
 		}
-		
+
 		// vslangproj90.idl
 		if(currentModule == "vslangproj90")
 			replaceTokenSequence(tokens, "CsharpProjectConfigurationProperties3", "CSharpProjectConfigurationProperties3", true);
-		
+
 		if(currentModule == "msdbg")
 			replaceTokenSequence(tokens, "const DWORD S_UNKNOWN = 0x3;", "denum DWORD S_UNKNOWN = 0x3;", true);
 		if(currentModule == "activdbg")
@@ -1554,7 +1554,7 @@ version(none) version(vsi)
 		if(currentModule == "ocidl")
 		{
 			// move alias out of interface declaration, it causes circular definitions with dmd 2.065+
-			replaceTokenSequence(tokens, "interface IOleUndoManager : IUnknown { alias IID_IOleUndoManager SID_SOleUndoManager; $data }", 
+			replaceTokenSequence(tokens, "interface IOleUndoManager : IUnknown { alias IID_IOleUndoManager SID_SOleUndoManager; $data }",
 								 "interface IOleUndoManager : IUnknown { $data }\n\nalias IID_IOleUndoManager SID_SOleUndoManager;", true);
 		}
 
@@ -1575,7 +1575,7 @@ version(none) version(vsi)
 version(remove_pp)
 {
 	string tsttxt = tokenListToString(tokens);
-	
+
 		while(replaceTokenSequence(tokens, "$_note else version(all) { $if } else { $else }", "$_note $if", true) > 0 ||
 		      replaceTokenSequence(tokens, "$_note else version(all) { $if } else version($ver) { $else_ver } else { $else }", "$_note $if", true) > 0 ||
 		      replaceTokenSequence(tokens, "$_note else version(all) { $if } $_not else", "$_note $if\n$_not", true) > 0 ||
@@ -1584,13 +1584,13 @@ version(remove_pp)
 		      replaceTokenSequence(tokens, "version(pp_if) { $if } else { $else }", "$else", true) > 0 ||
 		      replaceTokenSequence(tokens, "version(pp_if) { $if } $_not else", "$_not", true) > 0 ||
 		      replaceTokenSequence(tokens, "version(pp_ifndef) { $if } else { $else }", "$if", true) > 0 ||
-		      replaceTokenSequence(tokens, "version(pp_ifndef) { $if } $_not else", "$if\n$_not", true) > 0) 
+		      replaceTokenSequence(tokens, "version(pp_ifndef) { $if } $_not else", "$if\n$_not", true) > 0)
 		{
 			string rtsttxt = tokenListToString(tokens);
 		}
 
 	string ntsttxt = tokenListToString(tokens);
-	
+
 }
 
 		while(replaceTokenSequence(tokens, "static if($expr) { } else { }", "", true) > 0 ||
@@ -1599,61 +1599,61 @@ version(remove_pp)
 		      replaceTokenSequence(tokens, "version($expr) { } $_not else", "$_not", true) > 0) {}
 
 		// move declaration at the top of the interface below the interface while keeping the order
-		replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { $data }", 
+		replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { $data }",
 					     "interface $_ident1 : $_identbase { $data\n} __eo_interface", true);
-		while(replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { typedef $args; $data } $tail __eo_interface", 
+		while(replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { typedef $args; $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\ntypedef $args; __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { denum $args; $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { denum $args; $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\ndenum $args; __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { enum $args; $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { enum $args; $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nenum $args; __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { dconst $_ident = $expr; $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { dconst $_ident = $expr; $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\ndconst $_ident = $expr; __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { const $_identtype $_ident = $expr; $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { const $_identtype $_ident = $expr; $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nconst $_identtype $_ident = $expr; __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { const $_identtype *$_ident = $expr; $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { const $_identtype *$_ident = $expr; $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nconst $_identtype *$_ident = $expr; __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { struct $args; $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { struct $args; $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nstruct $args; __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { union $args; $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { union $args; $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nunion $args; __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { static if($expr) { $if } else { $else } $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { static if($expr) { $if } else { $else } $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nstatic if($expr) {\n$if\n} else {\n$else\n} __eo_interface", true) > 0
-		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { version($expr) {/+ typedef $if } else { $else } $data } $tail __eo_interface", 
+		   || replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { version($expr) {/+ typedef $if } else { $else } $data } $tail __eo_interface",
 						   "interface $_ident1 : $_identbase\n{ $data\n}\n$tail\nversion($expr) {/+\ntypedef $if\n} else {\n$else\n} __eo_interface", true) > 0
 			) {}
 		replaceTokenSequence(tokens, "__eo_interface", "", true);
 
-		replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { $data const DISPID $constids }", 
+		replaceTokenSequence(tokens, "interface $_ident1 : $_identbase { $data const DISPID $constids }",
 			"interface $_ident1 : $_identbase { $data\n}\n\nconst DISPID $constids\n", true);
 version(none)
 {
-		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $_ident2;", 
+		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $_ident2;",
 			"enum $_ident2\n{\n$enums\n}", true);
-		replaceTokenSequence(tokens, "typedef enum { $enums } $_ident2;", 
+		replaceTokenSequence(tokens, "typedef enum { $enums } $_ident2;",
 			"enum $_ident2\n{\n$enums\n}", true);
-		replaceTokenSequence(tokens, "typedef [$_ident3] enum $_ident1 { $enums } $_ident2;", 
+		replaceTokenSequence(tokens, "typedef [$_ident3] enum $_ident1 { $enums } $_ident2;",
 			"enum $_ident2\n{\n$enums\n}", true);
-		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef $_identbase $_ident2;", 
+		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef $_identbase $_ident2;",
 			"enum $_ident2 : $_identbase\n{\n$enums\n}", true);
 } else {
-		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $_ident1;", 
+		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $_ident1;",
 			"enum /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;", true);
-		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $ident2;", 
+		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $ident2;",
 			"enum /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;\ntypedef int $ident2;", true);
-		replaceTokenSequence(tokens, "typedef enum { $enums } $ident2;", 
+		replaceTokenSequence(tokens, "typedef enum { $enums } $ident2;",
 			"enum\n{\n$enums\n}\ntypedef int $ident2;", true);
-		replaceTokenSequence(tokens, "typedef [$info] enum $_ident1 { $enums } $_ident1;", 
+		replaceTokenSequence(tokens, "typedef [$info] enum $_ident1 { $enums } $_ident1;",
 			"enum [$info] /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;", true);
-		replaceTokenSequence(tokens, "typedef [$info] enum $_ident1 { $enums } $ident2;", 
+		replaceTokenSequence(tokens, "typedef [$info] enum $_ident1 { $enums } $ident2;",
 			"enum [$info] /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;\ntypedef int $ident2;", true);
-		replaceTokenSequence(tokens, "typedef [$info] enum { $enums } $ident2;", 
+		replaceTokenSequence(tokens, "typedef [$info] enum { $enums } $ident2;",
 			"enum [$info]\n{\n$enums\n}\ntypedef int $ident2;", true);
-		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef $_identbase $_ident2;", 
+		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef $_identbase $_ident2;",
 			"enum /+$_ident1+/ : $_identbase \n{\n$enums\n}\ntypedef $_identbase $_ident1;\ntypedef $_identbase $_ident2;", true);
-		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef [$info] $_identbase $_ident2;", 
+		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef [$info] $_identbase $_ident2;",
 			"enum /+$_ident1+/ : $_identbase \n{\n$enums\n}\ntypedef [$info] $_identbase $_ident2;", true);
-		replaceTokenSequence(tokens, "enum $_ident1 { $enums };", 
+		replaceTokenSequence(tokens, "enum $_ident1 { $enums };",
 			"enum /+$_ident1+/ : int \n{\n$enums\n}\ntypedef int $_ident1;", true);
 		replaceTokenSequence(tokens, "typedef enum $_ident1 $_ident1;", "/+ typedef enum $_ident1 $_ident1; +/", true);
 		replaceTokenSequence(tokens, "enum $_ident1 $_ident2", "$_ident1 $_ident2", true);
@@ -1663,21 +1663,21 @@ version(none)
 		replaceTokenSequence(tokens, "__struct_bcount($args)", "[__struct_bcount($args)]", true);
 		replaceTokenSequence(tokens, "struct $_ident : $_opt public $_ident2 {", "struct $_ident { $_ident2 base;", true);
 
-		replaceTokenSequence(tokens, "typedef struct { $data } $_ident2;", 
+		replaceTokenSequence(tokens, "typedef struct { $data } $_ident2;",
 			"struct $_ident2\n{\n$data\n}", true);
-		replaceTokenSequence(tokens, "typedef struct { $data } $_ident2, $expr;", 
+		replaceTokenSequence(tokens, "typedef struct { $data } $_ident2, $expr;",
 			"struct $_ident2\n{\n$data\n}\ntypedef $_ident2 $expr;", true);
-		replaceTokenSequence(tokens, "typedef struct $_ident1 { $data } $_ident2;", 
+		replaceTokenSequence(tokens, "typedef struct $_ident1 { $data } $_ident2;",
 			"struct $_ident1\n{\n$data\n}\ntypedef $_ident1 $_ident2;", true);
-		replaceTokenSequence(tokens, "typedef struct $_ident1 { $data } $expr;", 
+		replaceTokenSequence(tokens, "typedef struct $_ident1 { $data } $expr;",
 			"struct $_ident1\n{\n$data\n}\ntypedef $_ident1 $expr;", true);
-		replaceTokenSequence(tokens, "typedef [$props] struct $_ident1 { $data } $expr;", 
+		replaceTokenSequence(tokens, "typedef [$props] struct $_ident1 { $data } $expr;",
 			"[$props] struct $_ident1\n{\n$data\n}\ntypedef $_ident1 $expr;", true);
-		//replaceTokenSequence(tokens, "typedef struct $_ident1 { $data } *$_ident2;", 
+		//replaceTokenSequence(tokens, "typedef struct $_ident1 { $data } *$_ident2;",
 		//	"struct $_ident1\n{\n$data\n}\ntypedef $_ident1 *$_ident2;", true);
-		//replaceTokenSequence(tokens, "typedef [$props] struct $_ident1 { $data } *$_ident2;", 
+		//replaceTokenSequence(tokens, "typedef [$props] struct $_ident1 { $data } *$_ident2;",
 		//	"[$props] struct $_ident1\n{\n$data\n}\ntypedef $_ident1 *$_ident2;", true);
-		while(replaceTokenSequence(tokens, "struct { $data } $_ident2 $expr;", 
+		while(replaceTokenSequence(tokens, "struct { $data } $_ident2 $expr;",
 			"struct _ __ $_ident2 {\n$data\n} _ __ $_ident2 $_ident2 $expr;", true) > 0) {}
 
 		replaceTokenSequence(tokens, "[$_expr1 uuid($_identIID) $_expr2] interface $_identClass : $_identBase {",
@@ -1697,7 +1697,7 @@ version(none)
 
 		// replaceTokenSequence(tokens, "assert $expr;", "assert($expr);", true);
 
-		replaceTokenSequence(tokens, "typedef union $_ident1 { $data } $_ident2 $expr;", 
+		replaceTokenSequence(tokens, "typedef union $_ident1 { $data } $_ident2 $expr;",
 			"union $_ident1\n{\n$data\n}\ntypedef $_ident1 $_ident2 $expr;", true);
 		replaceTokenSequence(tokens, "typedef union $_ident1 switch($expr) $_ident2 { $data } $_ident3;",
 			"union $_ident3 /+switch($expr) $_ident2 +/ { $data };", true);
@@ -1709,55 +1709,46 @@ version(none)
 			"union $_ident1 /+switch($expr) $_ident2 +/ { $data }", true);
 		replaceTokenSequence(tokens, "case $_ident1:", "[case $_ident1:]", true);
 		replaceTokenSequence(tokens, "default:", "[default:]", true);
-		replaceTokenSequence(tokens, "union { $data } $_ident2 $expr;", 
+		replaceTokenSequence(tokens, "union { $data } $_ident2 $expr;",
 			"union _ __ $_ident2 {\n$data\n} _ __ $_ident2 $_ident2 $expr;", true);
 
 		replaceTokenSequence(tokens, "typedef struct $_ident1 $expr;", "typedef $_ident1 $expr;", true);
 		replaceTokenSequence(tokens, "typedef [$props] struct $_ident1 $expr;", "typedef [$props] $_ident1 $expr;", true);
 
-		while (replaceTokenSequence(tokens, "typedef __nullterminated CONST $_identtype $_expr1, $args;", 
+		while (replaceTokenSequence(tokens, "typedef __nullterminated CONST $_identtype $_expr1, $args;",
 			"typedef __nullterminated CONST $_identtype $_expr1; typedef __nullterminated CONST $_identtype $args;", true) > 0) {}
-		while (replaceTokenSequence(tokens, "typedef CONST $_identtype $_expr1, $args;", 
+		while (replaceTokenSequence(tokens, "typedef CONST $_identtype $_expr1, $args;",
 			"typedef CONST $_identtype $_expr1; typedef CONST $_identtype $args;", true) > 0) {}
-		while (replaceTokenSequence(tokens, "typedef __nullterminated $_identtype $_expr1, $args;", 
+		while (replaceTokenSequence(tokens, "typedef __nullterminated $_identtype $_expr1, $args;",
 			"typedef __nullterminated $_identtype $_expr1; typedef __nullterminated $_identtype $args;", true) > 0) {}
-		while (replaceTokenSequence(tokens, "typedef [$info] $_identtype $_expr1, $args;", 
+		while (replaceTokenSequence(tokens, "typedef [$info] $_identtype $_expr1, $args;",
 			"typedef [$info] $_identtype $_expr1; typedef [$info] $_identtype $args;", true) > 0) {}
-		while (replaceTokenSequence(tokens, "typedef /+$info+/ $_identtype $_expr1, $args;", 
+		while (replaceTokenSequence(tokens, "typedef /+$info+/ $_identtype $_expr1, $args;",
 			"typedef /+$info+/ $_identtype $_expr1; typedef /+$info+/ $_identtype $args;", true) > 0) {}
 
-		while (replaceTokenSequence(tokens, "typedef $_identtype $_expr1, $args;", 
+		while (replaceTokenSequence(tokens, "typedef $_identtype $_expr1, $args;",
 			"typedef $_identtype $_expr1; typedef $_identtype $args;", true) > 0) {}
-		while (replaceTokenSequence(tokens, "typedef void $_expr1, $args;", 
+		while (replaceTokenSequence(tokens, "typedef void $_expr1, $args;",
 			"typedef void $_expr1; typedef void $args;", true) > 0) {};
 
 		replaceTokenSequence(tokens, "typedef $_ident1 $_ident1;", "", true);
 		replaceTokenSequence(tokens, "typedef interface $_ident1 $_ident1;", "", true);
-		
+
 		// Remote/Local version are made final to avoid placing them into the vtbl
 		replaceTokenSequence(tokens, "[$pre call_as($arg) $post] $_not final", "[$pre call_as($arg) $post] final $_not", true);
 
 		// Some properties use the same name as the type of the return value
 		replaceTokenSequence(tokens, "$_identFun([$data] $_identFun $arg)", "$_identFun([$data] .$_identFun $arg)", true);
 
-		if(startsWith(currentModule, "dte"))
-		{
-			// more complications in dte*.idl
-			replaceTokenSequence(tokens, "$_identFun($_identFun $arg)", "$_identFun(.$_identFun $arg)", true);
-			replaceTokenSequence(tokens, "$_identFun($arg1, [$data] $_identFun $arg)",
-										 "$_identFun($arg1, [$data] .$_identFun $arg)", true);
-			replaceTokenSequence(tokens, "$_identFun($arg1, $arg2, [$data] $_identFun $arg)",
-										 "$_identFun($arg1, $arg2, [$data] .$_identFun $arg)", true);
-			replaceTokenSequence(tokens, "$_not . DTE*", "$_not . DTE*", true);
-			replaceTokenSequence(tokens, "$_not . TextRanges*", "$_not . TextRanges*", true);
-			replaceTokenSequence(tokens, "$_not . Breakpoints*", "$_not . Breakpoints*", true);
-			replaceTokenSequence(tokens, "$_not . UIHierarchyItems*", "$_not . UIHierarchyItems*", true);
-			replaceTokenSequence(tokens, "Collection([$data] ProjectItems $arg)", "Collection([$data] .ProjectItems $arg)", true);
-		}
-		if(currentModule == "dte80a")
-		{
-			replaceTokenSequence(tokens, "[id($_num), propputref $attr] HRESULT Value", "[id($_num), propputref $attr]\nHRESULT putref_Value", true);
-		}
+		// properties that have identically named getter and setter methods have reversed vtbl entries,
+		// so we prepend put_,get_ or putref_ to the property
+		if(startsWith(currentModule, "debugger80"))
+			replaceTokenSequence(tokens, "HRESULT _stdcall", "HRESULT", true); // confusing following rules
+
+		replaceTokenSequence(tokens, "[$attr1 propput $attr2] HRESULT $_identFun", "[$attr1 propput $attr2]\n\tHRESULT put_ __ $_identFun", true);
+		replaceTokenSequence(tokens, "[$attr1 propget $attr2] HRESULT $_identFun", "[$attr1 propget $attr2]\n\tHRESULT get_ __ $_identFun", true);
+		replaceTokenSequence(tokens, "[$attr1 propputref $attr2] HRESULT $_identFun", "[$attr1 propputref $attr2]\n\tHRESULT putref_ __ $_identFun", true);
+
 		// VS2012 SDK
 		if(currentModule == "webproperties")
 		{
@@ -1778,13 +1769,13 @@ version(none)
 		}
 
 		// interface without base class is used as namespace
-		replaceTokenSequence(tokens, "interface $_notIFace IUnknown { $_not static $data }", 
+		replaceTokenSequence(tokens, "interface $_notIFace IUnknown { $_not static $data }",
 			"/+interface $_notIFace {+/ $_not $data /+} interface $_notIFace+/", true);
 		replaceTokenSequence(tokens, "dispinterface $_ident1 { $data }", "interface $_ident1 { $data }", true);
 		replaceTokenSequence(tokens, "module $_ident1 { $data }", "/+module $_ident1 {+/ $data /+}+/", true);
 		replaceTokenSequence(tokens, "properties:", "/+properties:+/", true);
 		replaceTokenSequence(tokens, "methods:", "/+methods:+/", true);
-		
+
 		replaceTokenSequence(tokens, "(void)", "()", true);
 		replaceTokenSequence(tokens, "(VOID)", "()", true);
 		replaceTokenSequence(tokens, "[in] ref $_ident", "in $_ident*", true); // in passes by value otherwise
@@ -1799,7 +1790,7 @@ version(none)
 		replaceExpressionTokens(tokens);
 
 		replaceTokenSequence(tokens, "__success($args)", "/+__success($args)+/", true);
-			
+
 version(all) {
 		replaceTokenSequence(tokens, "typedef const", "typedef CONST", true);
 		replaceTokenSequence(tokens, "extern \"C\"", "extern(C)", true);
@@ -1825,7 +1816,7 @@ version(all) {
 		replaceTokenSequence(tokens, "__out_data_source($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__out_xcount_opt($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__out_has_type_adt_props($args)", "/+$*+/", true);
-		
+
 		replaceTokenSequence(tokens, "__inout_bcount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_ecount($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__inout_xcount($args)", "/+$*+/", true);
@@ -1859,7 +1850,7 @@ version(all) {
 		replaceTokenSequence(tokens, "__drv_freesMem($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__drv_preferredFunction($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__drv_allocatesMem($args)", "/+$*+/", true);
-	
+
 		// Win SDK 8.0
 		replaceTokenSequence(tokens, "_IRQL_requires_same_", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Function_class_($args)", "/+$*+/", true);
@@ -1957,7 +1948,7 @@ version(all) {
 		replaceTokenSequence(tokens, "$_identtype (extern(Windows)", "extern(Windows) $_identtype (", true);
 		replaceTokenSequence(tokens, "$_identtype* (extern(Windows)", "extern(Windows) $_identtype* (", true);
 		replaceTokenSequence(tokens, "$_identtype (/+$_ident+/ extern(Windows)", "extern(Windows) $_identtype (", true);
-	
+
 		replaceTokenSequence(tokens, "DECLARE_HANDLE($_ident);", "typedef HANDLE $_ident;", true);
 		replaceTokenSequence(tokens, "__inline $_identFun(", "inline int $_identFun(", true);
 
@@ -1981,7 +1972,7 @@ else
 		replaceTokenSequence(tokens, "const $_ident*", "/+const+/ $_ident*", true);
 }
 		replaceTokenSequence(tokens, "in const $_not(", "in $_not", false);
-		
+
 
 		if(currentModule == "vsshelluuids")
 		{
@@ -1994,7 +1985,7 @@ else
 		{
 			replaceTokenSequence(tokens, "denum icmdHelpManager = $data; denum icmdHelpManager", "denum icmdHelpManager", true);
 		}
-		
+
 		if(currentModule == "prsht")
 		{
 			replaceTokenSequence(tokens, "alias _PROPSHEETPAGEA $_ident;", "alias $_ident _PROPSHEETPAGEA;", true);
@@ -2029,7 +2020,7 @@ else
 			}
 			else if(tok.text == "[" && tokIt[1].text != "]")
 			{
-				if((tokIt.atBegin() || tokIt[-1].text != "{" || tokIt[-2].text != "=") && 
+				if((tokIt.atBegin() || tokIt[-1].text != "{" || tokIt[-2].text != "=") &&
 				   (tokIt[1].type != Token.Number || tokIt[2].text != "]") &&
 				   (tokIt[2].text != "]" || tokIt[3].text != ";"))
 				{
@@ -2046,7 +2037,7 @@ else
 			else if(tok.text == "]" && tokIt[-1].text != "[")
 			{
 				TokenIterator openit = tokIt;
-				if(retreatToOpeningBracket(openit) && 
+				if(retreatToOpeningBracket(openit) &&
 				   (openit.atBegin || (openit-1).atBegin || openit[-1].text != "{" || openit[-2].text != "="))
 					if((tokIt[-1].type != Token.Number || tokIt[-2].text != "[") &&
 					   (tokIt[-2].text != "[" || tokIt[1].text != ";"))
@@ -2062,7 +2053,7 @@ else
 						tokIt[1].text = tokIt[1].text[3..$];
 				}
 			}
-			else if((tok.text == "GUID" || tok.text == "IID" || tok.text == "CLSID") && 
+			else if((tok.text == "GUID" || tok.text == "IID" || tok.text == "CLSID") &&
 				tokIt[1].type == Token.Identifier && tokIt[2].text == "=" && tokIt[3].text == "{")
 			{
 				convertGUID(tokIt + 4);
@@ -2143,7 +2134,7 @@ else
 		case "__stdcall": return "/*__stdcall*/";
 		case "__cdecl":   return "/*__cdecl*/";
 		case "__gdi_entry": return "/*__gdi_entry*/";
-	
+
 		//case "const":     return "/*const*/";
 		case "inline":    return "/*inline*/";
 		case "__int64":   return "long";
@@ -2161,7 +2152,7 @@ else
 		case "__in_opt":
 		case "__in_z_opt":
 		case "__in_bound":
-			
+
 		case "__allocator":
 		case "__out":
 		case "__out_opt":
@@ -2177,7 +2168,7 @@ else
 		case "__deref_opt_out":
 		case "__deref_opt_out_opt":
 		case "__deref_opt_inout_opt":
-			
+
 		case "__callback":
 		case "__format_string":
 		case "__reserved":
@@ -2185,12 +2176,12 @@ else
 		case "__nullterminated":
 		case "__nullnullterminated":
 		case "__possibly_notnullterminated":
-		
+
 		case "__drv_interlocked":
 		case "__drv_sameIRQL":
 		case "__drv_inTry":
 		case "__drv_aliasesMem":
-			 
+
 		case "__post":
 		case "__notvalid":
 		case "__analysis_noreturn":
@@ -2262,7 +2253,7 @@ else
 		string base = baseName(file);
 		if(excludefiles.contains(base))
 			return;
-		
+
 		if(!srcfiles.contains(file))
 			srcfiles ~= file;
 	}
@@ -2286,7 +2277,7 @@ else
 	{
 		if (indexOf(file, '*') >= 0 || indexOf(file, '?') >= 0)
 			addSourceByPattern("+" ~ file);
-		else 
+		else
 		{
 			if(!exists(file))
 				file = dirName(file) ~ "\\shared\\" ~ baseName(file);
@@ -2384,7 +2375,7 @@ version(remove_pp) {} else
 		foreach (string name; dirEntries(portdir, SpanMode.shallow))
 			if (globMatch(baseName(name), "*.d"))
 				ins ~= "   <File path=\"port\\" ~ baseName(name) ~ "\" />\n";
-		
+
 		string folder = "port";
 
 		string[] files = split(sources);
@@ -2410,7 +2401,7 @@ version(remove_pp) {} else
 	void setCurrentFile(string file)
 	{
 		currentFile = file;
-		
+
 		currentFullModule = fixImport(file);
 		auto p = lastIndexOf(currentFullModule, '.');
 		if(p >= 0)
@@ -2443,7 +2434,7 @@ version(remove_pp) {} else
 			return -1;
 		}
 
-		getopt(argv, 
+		getopt(argv,
 			"vsi", &vsi_base_path,
 			"dte", &dte_path,
 			"win", &win_path,
@@ -2470,7 +2461,7 @@ version(remove_pp) {} else
 		}
 
 		initFiles();
-		
+
 		// GC.disable();
 
 		disabled_defines["__VARIANT_NAME_1"] = 1;
@@ -2480,7 +2471,7 @@ version(remove_pp) {} else
 		disabled_defines["uuid_constant"] = 1;
 
 		// declared twice
-		disabled_defines["VBProjectProperties2"] = 1; 
+		disabled_defines["VBProjectProperties2"] = 1;
 		disabled_defines["VBProjectConfigProperties2"] = 1; // declared twice
 		disabled_defines["IID_ProjectProperties2"] = 1;
 		disabled_defines["IID_ProjectConfigurationProperties2"] = 1;
@@ -2492,7 +2483,7 @@ version(remove_pp) {} else
 		disabled_defines["SELCONTAINER_DONTPROPAGATE"] = 1;
 		disabled_defines["ME_UNKNOWN_MENU_ITEM"] = 1;
 		disabled_defines["ME_FIRST_MENU_ITEM"] = 1;
-		
+
 		// win sdk
 		disabled_defines["pascal"] = 1;
 		disabled_defines["WINBASEAPI"] = 1;
@@ -2508,7 +2499,7 @@ version(remove_pp) {} else
 
 		// commctrl.h
 		disabled_defines["HDM_TRANSLATEACCELERATOR"] = 1;
-		
+
 		foreach(string file; argv[1..$])
 			addSources(file);
 
@@ -2569,7 +2560,7 @@ version(remove_pp) {} else
 		sources ~= "\n";
 		if(!sdk_d_path.empty)
 		{
-			version(vsi) 
+			version(vsi)
 				string srcfile = sdk_d_path ~ "\\vsi_sources";
 			else
 				string srcfile = sdk_d_path ~ "\\sources";
@@ -2651,7 +2642,7 @@ alias tagELEMDESC ELEMDESC; alias tagELEMDESC * LPELEMDESC;
 unittest
 {
 	string txt = q{
-	int x;
+int x;
 cpp_quote("#ifndef WIN16")
 typedef struct tagSIZE
 {
@@ -2669,18 +2660,18 @@ cpp_quote("#endif // WIN16")
 
 version(remove_pp)
 	string exptxt = q{
-	int x;
+int x;
 struct tagSIZE
 {
     LONG        cx;
     LONG        cy;
 }
-alias tagSIZE SIZE; alias tagSIZE *PSIZE; alias tagSIZE *LPSIZE; 
+alias tagSIZE SIZE; alias tagSIZE *PSIZE; alias tagSIZE *LPSIZE; }q{
  // WIN16
 };
 else // !remove_pp
 	string exptxt = q{
-	int x;
+int x;
 version(all) /* #ifndef WIN16 */ {
 struct tagSIZE
 {
@@ -2736,7 +2727,7 @@ unittest
 	hallo2
 ";
 	string exptxt = "
-int convert() { return  
+int convert() { return  " "
 	hello; }
 // #define noconvert(n,m) \\
 //	hallo1 |\\
@@ -2835,7 +2826,7 @@ alias _PROPSHEETPAGEA_V2 _PROPSHEETPAGEA;
 } else {
 
 alias _PROPSHEETPAGEA_V1 _PROPSHEETPAGEA;
-} 
+} " "
 
 ";
 	testConvert(txt, exptxt, "prsht");

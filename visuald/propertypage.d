@@ -23,13 +23,17 @@ import visuald.config;
 import visuald.winctrl;
 import visuald.hierarchy;
 import visuald.hierutil;
+import visuald.pkgutil;
 import visuald.chiernode;
 
 import stdext.array;
+import stdext.path;
+import std.array;
 import std.string;
 import std.conv;
+import std.algorithm;
 
-/*debug*/ version = DParser;
+// version = DParserOption;
 
 class PropertyWindow : Window
 {
@@ -39,16 +43,13 @@ class PropertyWindow : Window
 		super(parent, style, title);
 	}
 
-	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		import sdk.win32.commctrl;
 
 		switch (uMsg) {
 			case WM_SIZE:
-				RECT r;
-				GetWindowRect(&r);
-				int w = LOWORD(lParam);
-				mPropertyPage.updateSizes(r.left, w);
+				mPropertyPage.updateSizes();
 				break;
 
 			case TCN_SELCHANGING:
@@ -70,12 +71,12 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 {
 	/*const*/ int kPageWidth = 370;
 	/*const*/ int kPageHeight = 210;
-	/*const*/ int kMargin = 4;
+	/*const*/ int kMargin = 2;
 	/*const*/ int kLabelWidth = 120;
 	/*const*/ int kTextHeight = 20;
 	/*const*/ int kLineHeight = 23;
 	/*const*/ int kLineSpacing = 2;
-	/*const*/ int kNeededLines = 10;
+	/*const*/ int kNeededLines = 11;
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
@@ -90,18 +91,18 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 
 	override void Dispose()
 	{
+		mResizableWidgets = mResizableWidgets.init;
+
 		mSite = release(mSite);
 
 		foreach(obj; mObjects)
 			release(obj);
 		mObjects.length = 0;
 
-		mResizableWidgets = mResizableWidgets.init;
-
 		mDlgFont = deleteDialogFont(mDlgFont);
 	}
 
-	override int SetPageSite( 
+	override int SetPageSite(
 		/* [in] */ IPropertyPageSite pPageSite)
 	{
 		mixin(LogCallMix);
@@ -110,37 +111,20 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return S_OK;
 	}
 
-	override int Activate( 
+	override int Activate(
 		/* [in] */ in HWND hWndParent,
 		/* [in] */ in RECT *pRect,
 		/* [in] */ in BOOL bModal)
 	{
 		mixin(LogCallMix);
-		
+
 		if(mWindow)
 			return returnError(E_FAIL);
-		return _Activate(new Window(hWndParent), pRect, bModal);
+		return _Activate(new Window(hWndParent), pRect, bModal != 0);
 	}
-	
-	int _Activate( 
-		/* [in] */ Window win,
-		/* [in] */ in RECT *pRect,
-		/* [in] */ in BOOL bModal)
+
+	int _Activate(Window win, const(RECT) *pRect, bool bModal)
 	{
-		if(pRect)
-			logCall("_Activate(" ~ to!string(*pRect) ~ ")");
-		RECT pr;
-		win.GetWindowRect(&pr);
-		logCall("  parent.rect = " ~ to!string(pr) ~ "");
-
-		if(HWND phwnd = GetParent(win.hwnd))
-		{
-			GetWindowRect(phwnd, &pr);
-			logCall("  parent.parent.rect = " ~ to!string(pr) ~ "");
-		}
-		if(pRect)
-			kPageWidth = pRect.right - pRect.left;
-
 		updateEnvironmentFont();
 		if(!mDlgFont)
 			mDlgFont = newDialogFont();
@@ -149,29 +133,27 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		mCanvas = new Window(mWindow);
 		DWORD color = GetSysColor(COLOR_BTNFACE);
 		mCanvas.setBackground(color);
+
+		// create with desired size to get proper alignment, then resize to parent later
 		mCanvas.setRect(kMargin, kMargin, kPageWidth - 2 * kMargin, kPageHeight - 2 * kMargin);
-		mResizableWidgets ~= mCanvas;
 
 		// avoid closing canvas (but not dialog) if pressing esc in MultiLineEdit controls
 		//mCanvas.cancelCloseDelegate ~= delegate bool(Widget c) { return true; };
-		
-		class DelegateWrapper
-		{
-			void OnCommand(Widget w, int cmd)
-			{
-				UpdateDirty(true);
-			}
-		}
 
-		DelegateWrapper delegateWrapper = new DelegateWrapper;
-		mCanvas.commandDelegate = &delegateWrapper.OnCommand;
+		mCanvas.commandDelegate = &OnCommand;
 
 		CreateControls();
 		UpdateControls();
+		updateSizes();
 
 		mEnableUpdateDirty = true;
 
 		return S_OK;
+	}
+
+	extern(D) void OnCommand(Widget w, int cmd)
+	{
+		UpdateDirty(true);
 	}
 
 	override int Deactivate()
@@ -179,33 +161,79 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		mixin(LogCallMix);
 		if(mWindow)
 		{
-			mWindow.Dispose();
-			mWindow = null;
+			auto win = mWindow;
 			mCanvas = null;
+			mWindow = null;
+			win.Dispose();
 		}
 
 		return S_OK;
 		//return returnError(E_NOTIMPL);
 	}
 
-	void updateSizes(int windowLeft, int width)
+	void updateSizes()
 	{
-		foreach(w; mResizableWidgets)
+		if (!mWindow || !mCanvas)
+			return;
+
+		RECT r, pr;
+		mCanvas.GetWindowRect(&r);
+		mWindow.GetWindowRect(&pr);
+		int pageWidth = pr.right - pr.left - 2 * kMargin;
+		int pageHeight = pr.bottom - pr.top - 2 * kMargin;
+
+		if (r.right - r.left == pageWidth && r.bottom - r.top == pageHeight)
+			return;
+
+		mCanvas.setRect(kMargin, kMargin, pageWidth, pageHeight);
+		updateResizableWidgets(mCanvas);
+	}
+
+	void updateResizableWidgets(Widget w)
+	{
+		if (auto patt = w in mResizableWidgets)
+			patt.resizeWidget(w);
+
+		foreach(c; w.children)
+			updateResizableWidgets(c);
+
+	}
+
+	void addResizableWidget(Widget w, Attachment att)
+	{
+		AttachData attData = AttachData(att);
+		attData.initFromWidget(w);
+		mResizableWidgets[w] = attData;
+	}
+
+	void addTextPath(Text ctrl, string path, string sep)
+	{
+		string imp = ctrl.getText();
+		if(!imp.empty() && !imp.endsWith(sep))
+			imp ~= sep;
+		imp ~= quoteFilename(path);
+		ctrl.setText(imp);
+	}
+
+	void addBrowsePath(Text ctrl, bool dir, string reldir, string sep, string title, string filter = null)
+	{
+		string path;
+		if(dir)
+			path = browseDirectory(mCanvas.hwnd, title, reldir);
+		else
+			path = browseFile(mCanvas.hwnd, title, filter, reldir);
+		if (!path.empty)
 		{
-			RECT r;
-			if(w && w.hwnd)
-			{
-				w.GetWindowRect(&r);
-				r.right = windowLeft + width - kMargin;
-				w.SetWindowPos(null, &r, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-			}
+			if(reldir)
+				path = makeRelative(path, reldir);
+
+			addTextPath(ctrl, path, sep);
 		}
 	}
 
 	void calcMetric()
 	{
 		updateEnvironmentFont();
-		kMargin = 4;
 
 		if(!mDlgFont)
 			mDlgFont = newDialogFont();
@@ -229,7 +257,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		kPageHeight = kLineHeight * kNeededLines + 2 * kMargin;
 	}
 
-	override int GetPageInfo( 
+	override int GetPageInfo(
 		/* [out] */ PROPPAGEINFO *pPageInfo)
 	{
 		mixin(LogCallMix);
@@ -248,7 +276,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return S_OK;
 	}
 
-	override int SetObjects( 
+	override int SetObjects(
 		/* [in] */ in ULONG cObjects,
 		/* [size_is][in] */ IUnknown *ppUnk)
 	{
@@ -270,7 +298,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return S_OK;
 	}
 
-	override int Show( 
+	override int Show(
 		/* [in] */ in UINT nCmdShow)
 	{
 		logCall("%s.Show(nCmdShow=%s)", this, _toLog(nCmdShow));
@@ -280,21 +308,22 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		//return returnError(E_NOTIMPL);
 	}
 
-	override int Move( 
+	override int Move(
 		/* [in] */ in RECT *pRect)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		updateSizes();
+		return S_OK; //returnError(E_NOTIMPL);
 	}
 
-	override int Help( 
+	override int Help(
 		/* [in] */ in wchar* pszHelpDir)
 	{
 		logCall("%s.Help(pszHelpDir=%s)", this, _toLog(pszHelpDir));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int TranslateAccelerator( 
+	override int TranslateAccelerator(
 		/* [in] */ in MSG *pMsg)
 	{
 		mixin(LogCallMix2);
@@ -304,7 +333,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	// IVsPropertyPage
-	override int CategoryTitle( 
+	override int get_CategoryTitle(
 		/* [in] */ in UINT iLevel,
 		/* [retval][out] */ BSTR *pbstrCategory)
 	{
@@ -326,7 +355,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	}
 
 	// IVsPropertyPage2
-	override int GetProperty( 
+	override int GetProperty(
 		/* [in] */ in VSPPPID propid,
 		/* [out] */ VARIANT *pvar)
 	{
@@ -343,7 +372,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		return returnError(DISP_E_MEMBERNOTFOUND);
 	}
 
-	override int SetProperty( 
+	override int SetProperty(
 		/* [in] */ in VSPPPID propid,
 		/* [in] */ in VARIANT var)
 	{
@@ -358,7 +387,30 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 			mSite.OnStatusChange(PROPPAGESTATUS_DIRTY | PROPPAGESTATUS_VALIDATE);
 	}
 
+	static int getWidgetWidth(Widget w, int def)
+	{
+		RECT pr;
+		if(w && w.GetWindowRect(&pr))
+			return pr.right - pr.left;
+		return def;
+	}
+
 	void AddControl(string label, Widget w)
+	{
+		AddControl(label, w, null, 0);
+	}
+
+	void AddControl(string label, Widget w, Button btn)
+	{
+		AddControl(label, w, btn, 0);
+	}
+
+	void AddControl(string label, Widget w, short attachY)
+	{
+		AddControl(label, w, null, attachY);
+	}
+
+	void AddControl(string label, Widget w, Button btn, short resizeY)
 	{
 		int x = kLabelWidth;
 		auto cb = cast(CheckBox) w;
@@ -371,18 +423,31 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		if(mt || tc)
 			lines = mLinesPerMultiLine;
 
+		int pageWidth = getWidgetWidth(w ? w.parent : null, kPageWidth);
+		if (btn)
+			pageWidth -= kLineHeight;
 		int labelWidth = 0;
+		int margin = tc ? 0 : kMargin;
 		if(label.length)
 		{
 			Label lab = new Label(w ? w.parent : null, label);
 			int off = ((kLineHeight - kLineSpacing) - 16) / 2;
-			labelWidth = w ? kLabelWidth : kPageWidth - 2*kMargin;
-			lab.setRect(0, mLineY + off, labelWidth, kLineHeight - kLineSpacing); 
-		} 
+			labelWidth = w ? kLabelWidth : pageWidth - 2*margin;
+			lab.setRect(0, mLineY + off, labelWidth, kLineHeight - kLineSpacing);
+
+			if(mAttachY > 0)
+			{
+				Attachment att = kAttachNone;
+				att.vdiv = 1000;
+				att.top = att.bottom = mAttachY;
+				addResizableWidget(lab, att);
+			}
+		}
 		else if (cb || tc)
 		{
 			x -= mUnindentCheckBox;
 		}
+
 		int h = lines * kLineHeight - kLineSpacing;
 		if(cast(Text) w && lines == 1)
 		{
@@ -390,23 +455,43 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		}
 		else if(cb)
 			h -= 2;
+		else if(tc)
+			h += tc.getFrameHeight() - kLineHeight;
 		//else if(cast(ComboBox) w)
 		//    h -= 4;
 
-		int y = mLineY + (lines * kLineHeight - kLineSpacing - h) / 2;
+		int yspacing = (lines * kLineHeight - kLineSpacing - h) / 2;
+		int y = mLineY + max(0, yspacing);
 		if(w)
-			w.setRect(x, y, kPageWidth - 2*kMargin - labelWidth, h);
-		mLineY += lines * kLineHeight;
-		if(w)
-			mResizableWidgets ~= w;
+		{
+			w.setRect(x, y, pageWidth - 2*margin - labelWidth, h);
+			Attachment att = kAttachLeftRight;
+			att.vdiv = 1000;
+			att.top = mAttachY;
+			att.bottom = cast(short)(mAttachY + resizeY);
+			addResizableWidget(w, att);
+		}
+		if(btn)
+		{
+			btn.setRect(pageWidth - kMargin, y, kLineHeight, kLineHeight - kLineSpacing);
+			Attachment att = kAttachRight;
+			att.vdiv = 1000;
+			att.top = att.bottom = mAttachY;
+			addResizableWidget(btn, att);
+		}
+		mLineY += max(h, lines * kLineHeight);
+		mAttachY += resizeY;
 	}
 
 	void AddHorizontalLine()
 	{
 		auto w = new Label(mCanvas);
 		w.AddWindowStyle(SS_ETCHEDFRAME, SS_TYPEMASK);
-		w.setRect(0, mLineY + 2, kPageWidth - 2*kMargin, 2);
-		mResizableWidgets ~= w;
+		w.setRect(0, mLineY + 2, getWidgetWidth(mCanvas, kPageWidth) - 2*kMargin, 2);
+		Attachment att = kAttachLeftRight;
+		att.vdiv = 1000;
+		att.top = att.bottom = mAttachY;
+		addResizableWidget(w, att);
 		mLineY += 6;
 	}
 
@@ -430,7 +515,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	abstract string GetCategoryName();
 	abstract string GetPageName();
 
-	Widget[] mResizableWidgets;
+	AttachData[Widget] mResizableWidgets;
 	HFONT mDlgFont;
 	IUnknown[] mObjects;
 	IPropertyPageSite mSite;
@@ -438,12 +523,13 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 	Window mCanvas;
 	bool mEnableUpdateDirty;
 	int mLineY;
+	short mAttachY = 0; // fraction of 1000
 	int mLinesPerMultiLine = 4;
 	int mUnindentCheckBox = 120; //16;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-class ProjectPropertyPage : PropertyPage, ConfigModifiedListener 
+class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 {
 	abstract void SetControls(ProjectOptions options);
 	abstract int  DoApply(ProjectOptions options, ProjectOptions refoptions);
@@ -478,9 +564,9 @@ class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 	{
 		if(auto cfg = GetConfig())
 			cfg.RemoveModifiedListener(this);
-		
+
 		int rc = super.SetObjects(cObjects, ppUnk);
-		
+
 		if(auto cfg = GetConfig())
 			cfg.AddModifiedListener(this);
 
@@ -500,6 +586,13 @@ class ProjectPropertyPage : PropertyPage, ConfigModifiedListener
 	{
 		if(auto cfg = GetConfig())
 			return cfg.GetProjectOptions();
+		return null;
+	}
+
+	string GetProjectDir()
+	{
+		if(auto cfg = GetConfig())
+			return cfg.GetProjectDir();
 		return null;
 	}
 
@@ -656,18 +749,18 @@ class CommonPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return ""; }
 	override string GetPageName() { return "General"; }
 
-	override void CreateControls() 
+	override void CreateControls()
 	{
 		AddControl("Build System",  mCbBuildSystem = new ComboBox(mCanvas, [ "Visual D", "dsss", "rebuild" ], false));
 		mCbBuildSystem.setSelection(0);
 		mCbBuildSystem.setEnabled(false);
 	}
-	override void SetControls(ProjectOptions options) 
+	override void SetControls(ProjectOptions options)
 	{
 	}
-	override int DoApply(ProjectOptions options, ProjectOptions refoptions) 
+	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
-		return 0; 
+		return 0;
 	}
 
 	ComboBox mCbBuildSystem;
@@ -679,25 +772,25 @@ class GeneralPropertyPage : ProjectPropertyPage
 	override string GetPageName() { return "General"; }
 
 	__gshared const float[] selectableVersions = [ 1, 2 ];
-	
+
 	override void CreateControls()
 	{
 		string[] versions;
 		foreach(ver; selectableVersions)
 			versions ~= "D" ~ to!(string)(ver);
 		//versions[$-1] ~= "+";
-		
+
 		AddControl("Compiler",      mCompiler = new ComboBox(mCanvas, [ "DMD", "GDC", "LDC" ], false));
 		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
-		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas, 
+		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas,
 																 [ "Executable", "Library", "DLL" ], false));
-		AddControl("Subsystem",     mCbSubsystem = new ComboBox(mCanvas, 
+		AddControl("Subsystem",     mCbSubsystem = new ComboBox(mCanvas,
 																[ "Not set", "Console", "Windows", "Native", "Posix" ], false));
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
 		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
-		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas, 
-			[ "Combined compile and link", "Single file compilation", 
+		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas,
+			[ "Combined compile and link", "Single file compilation",
 			  "Separate compile and link", "Compile only (use Post-build command to link)" ], false));
 	}
 
@@ -707,7 +800,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 		while(ver < selectableVersions.length - 1 && selectableVersions[ver+1] <= options.Dversion)
 			ver++;
 		mDVersion.setSelection(ver);
-		
+
 		mCompiler.setSelection(options.compiler);
 		mSingleFileComp.setSelection(options.compilationModel);
 		mCbOutputType.setSelection(options.lib);
@@ -747,12 +840,35 @@ class DebuggingPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return ""; }
 	override string GetPageName() { return "Debugging"; }
 
+	enum ID_DBGCOMMAND = 1020;
+	enum ID_DBGDIR = 1021;
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_DBGCOMMAND:
+				if(auto file = browseFile(mCanvas.hwnd, "Select executable", "Executables\0*.exe\0All Files\0*.*\0"))
+					mCommand.setText(file);
+				break;
+			case ID_DBGDIR:
+				if(auto dir = browseDirectory(mCanvas.hwnd, "Select working directory"))
+					mWorkingDir.setText(dir);
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
+	}
+
 	override void CreateControls()
 	{
 		Label lbl;
-		AddControl("Command",           mCommand = new Text(mCanvas));
+		auto btn = new Button(mCanvas, "...", ID_DBGCOMMAND);
+		AddControl("Command",           mCommand = new Text(mCanvas), btn);
 		AddControl("Command Arguments", mArguments = new Text(mCanvas));
-		AddControl("Working Directory", mWorkingDir = new Text(mCanvas));
+		btn = new Button(mCanvas, "...", ID_DBGDIR);
+		AddControl("Working Directory", mWorkingDir = new Text(mCanvas), btn);
 		AddControl("",                  mAttach = new CheckBox(mCanvas, "Attach to running process"));
 		AddControl("Remote Machine",    mRemote = new Text(mCanvas));
 		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
@@ -821,11 +937,38 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "General"; }
 
+	enum ID_IMPORTPATH = 1030;
+	enum ID_STRINGIMPORTPATH = 1031;
+
+	void addImportDir(Text ctrl, string title)
+	{
+		addBrowsePath(ctrl, true, GetProjectDir(), ";", title);
+	}
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_IMPORTPATH:
+				addImportDir(mAddImports, "Add import path");
+				break;
+			case ID_STRINGIMPORTPATH:
+				addImportDir(mStringImports, "Add string import path");
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
+	}
+
+
 	override void CreateControls()
 	{
 		//AddControl("",                    mUseStandard = new CheckBox(mCanvas, "Use Standard Import Paths"));
-		AddControl("Additional Imports",  mAddImports = new Text(mCanvas));
-		AddControl("String Imports",      mStringImports = new Text(mCanvas));
+		auto btn = new Button(mCanvas, "+", ID_IMPORTPATH);
+		AddControl("Additional Import Paths", mAddImports = new Text(mCanvas), btn);
+		btn = new Button(mCanvas, "+", ID_STRINGIMPORTPATH);
+		AddControl("String Import Paths", mStringImports = new Text(mCanvas), btn);
 		AddControl("Version Identifiers", mVersionIdentifiers = new Text(mCanvas));
 		AddControl("Debug Identifiers",   mDebugIdentifiers = new Text(mCanvas));
 		AddHorizontalLine();
@@ -898,13 +1041,31 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Debug"; }
 
+	enum ID_BROWSECV2PDB = 1010;
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_BROWSECV2PDB:
+				if(auto file = browseFile(mCanvas.hwnd, "Select cv2pdb executable", "Executables\0*.exe\0All Files\0*.*\0"))
+					mPathCv2pdb.setText(file);
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
+	}
+
 	override void CreateControls()
 	{
+		string[] dbgInfoOpt = [ "None", "Symbolic (suitable for Mago)", "Symbolic (suitable for VS debug engine)", "Symbolic (suitable for selected debug engine)" ];
 		AddControl("Debug Mode", mDebugMode = new ComboBox(mCanvas, [ "Off (release)", "On" ], false));
-		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, [ "None", "Symbolic (suitable for Mago)", "Symbolic (suitable for VS debug engine)" ], false));
+		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, dbgInfoOpt, false));
 		AddHorizontalLine();
 		AddControl("",           mRunCv2pdb = new CheckBox(mCanvas, "Run cv2pdb to Convert Debug Info"));
-		AddControl("Path to cv2pdb", mPathCv2pdb = new Text(mCanvas));
+		auto btn = new Button(mCanvas, "...", ID_BROWSECV2PDB);
+		AddControl("Path to cv2pdb", mPathCv2pdb = new Text(mCanvas), btn);
 		AddControl("",           mCv2pdbPre2043  = new CheckBox(mCanvas, "Assume old associative array implementation (before dmd 2.043)"));
 		AddControl("",           mCv2pdbNoDemangle = new CheckBox(mCanvas, "Do not demangle symbols"));
 		AddControl("",           mCv2pdbEnumType = new CheckBox(mCanvas, "Use enumerator types"));
@@ -916,7 +1077,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		super.UpdateDirty(bDirty);
 		EnableControls();
 	}
-	
+
 	void EnableControls()
 	{
 		mRunCv2pdb.setEnabled(mCanRunCv2PDB);
@@ -998,10 +1159,10 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		mProfiling.setChecked(options.trace); 
-		mCodeCov.setChecked(options.cov); 
+		mProfiling.setChecked(options.trace);
+		mCodeCov.setChecked(options.cov);
 		mOptimizer.setChecked(options.optimize);
-		mNoboundscheck.setChecked(options.noboundscheck); 
+		mNoboundscheck.setChecked(options.noboundscheck);
 		mUnitTests.setChecked(options.useUnitTests);
 		mInline.setChecked(options.useInline);
 		mNoFloat.setChecked(options.nofloat);
@@ -1114,7 +1275,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		AddControl("Documentation file", mDocFile = new Text(mCanvas));
 		AddControl("Documentation dir", mDocDir = new Text(mCanvas));
 		AddControl("CanDyDOC module", mModulesDDoc = new Text(mCanvas));
-		
+
 		AddControl("", mGenHdr = new CheckBox(mCanvas, "Generate interface headers"));
 		AddControl("Header file",  mHdrFile = new Text(mCanvas));
 		AddControl("Header directory",  mHdrDir = new Text(mCanvas));
@@ -1128,13 +1289,13 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		super.UpdateDirty(bDirty);
 		EnableControls();
 	}
-	
+
 	void EnableControls()
 	{
 		mDocDir.setEnabled(mGenDoc.isChecked());
 		mDocFile.setEnabled(mGenDoc.isChecked());
 		mModulesDDoc.setEnabled(mGenDoc.isChecked());
-		
+
 		mHdrDir.setEnabled(mGenHdr.isChecked());
 		mHdrFile.setEnabled(mGenHdr.isChecked());
 
@@ -1152,7 +1313,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		mHdrFile.setText(options.hdrname);
 		mGenJSON.setChecked(options.doXGeneration);
 		mJSONFile.setText(options.xfilename);
-		
+
 		EnableControls();
 	}
 
@@ -1197,17 +1358,17 @@ class DmdOutputPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		mMultiObj.setChecked(options.multiobj); 
-		mPreservePaths.setChecked(options.preservePaths); 
-		mMsCoff32.setChecked(options.mscoff); 
+		mMultiObj.setChecked(options.multiobj);
+		mPreservePaths.setChecked(options.preservePaths);
+		mMsCoff32.setChecked(options.mscoff);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mMultiObj.isChecked(), options.multiobj, refoptions.multiobj); 
-		changes += changeOption(mPreservePaths.isChecked(), options.preservePaths, refoptions.preservePaths); 
-		changes += changeOption(mMsCoff32.isChecked(), options.mscoff, refoptions.mscoff); 
+		changes += changeOption(mMultiObj.isChecked(), options.multiobj, refoptions.multiobj);
+		changes += changeOption(mPreservePaths.isChecked(), options.preservePaths, refoptions.preservePaths);
+		changes += changeOption(mMsCoff32.isChecked(), options.mscoff, refoptions.mscoff);
 		return changes;
 	}
 
@@ -1232,16 +1393,55 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		EnableControls();
 	}
 
+	enum ID_OBJECTFILES = 1050;
+	enum ID_LIBRARYFILES = 1051;
+	enum ID_LIBRARYPATHS = 1052;
+	enum ID_DEFFILE = 1053;
+	enum ID_RESFILE = 1054;
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_OBJECTFILES:
+				addBrowsePath(mObjFiles, false, GetProjectDir(), " ", "Add object file", "Object files\0*.obj\0All Files\0*.*\0");
+				break;
+			case ID_LIBRARYFILES:
+				addBrowsePath(mLibFiles, false, GetProjectDir(), " ", "Add library file", "Library files\0*.lib\0All Files\0*.*\0");
+				break;
+			case ID_LIBRARYPATHS:
+				addBrowsePath(mLibPaths, true, GetProjectDir(), " ", "Add library path");
+				break;
+
+			case ID_DEFFILE:
+				if(auto file = browseFile(mCanvas.hwnd, "Select definition file", "Definition files\0*.def\0All Files\0*.*\0", GetProjectDir()))
+					mDefFile.setText(makeRelative(file, GetProjectDir()));
+				break;
+			case ID_RESFILE:
+				if(auto file = browseFile(mCanvas.hwnd, "Select resource file", "Resource files\0*.res\0All Files\0*.*\0", GetProjectDir()))
+					mResFile.setText(makeRelative(file, GetProjectDir()));
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
+	}
+
 	override void CreateControls()
 	{
 		AddControl("Output File", mExeFile = new Text(mCanvas));
-		AddControl("Object Files", mObjFiles = new Text(mCanvas));
-		AddControl("Library Files", mLibFiles = new Text(mCanvas));
-		AddControl("Library Search Path", mLibPaths = new Text(mCanvas));
+		auto btn = new Button(mCanvas, "+", ID_OBJECTFILES);
+		AddControl("Object Files", mObjFiles = new Text(mCanvas), btn);
+		btn = new Button(mCanvas, "+", ID_LIBRARYFILES);
+		AddControl("Library Files", mLibFiles = new Text(mCanvas), btn);
+		btn = new Button(mCanvas, "+", ID_LIBRARYPATHS);
+		AddControl("Library Search Path", mLibPaths = new Text(mCanvas), btn);
 		//AddControl("Library search paths only work if you have modified sc.ini to include DMD_LIB!", null);
-		AddControl("Definition File", mDefFile = new Text(mCanvas));
-		AddControl("Resource File",   mResFile = new Text(mCanvas));
-		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas, 
+		btn = new Button(mCanvas, "...", ID_DEFFILE);
+		AddControl("Definition File", mDefFile = new Text(mCanvas), btn);
+		btn = new Button(mCanvas, "...", ID_RESFILE);
+		AddControl("Resource File",   mResFile = new Text(mCanvas), btn);
+		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas,
 			[ "Minimum", "Symbols By Address", "Standard", "Full", "With cross references" ], false));
 		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
 		AddControl("", mPrivatePhobos = new CheckBox(mCanvas, "Build and use local version of phobos with same compiler options"));
@@ -1254,20 +1454,20 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		if(ProjectOptions options = GetProjectOptions())
 			mCRuntime.setEnabled(options.isX86_64 || options.mscoff);
 	}
-	
+
 	override void SetControls(ProjectOptions options)
 	{
-		mExeFile.setText(options.exefile); 
-		mObjFiles.setText(options.objfiles); 
+		mExeFile.setText(options.exefile);
+		mObjFiles.setText(options.objfiles);
 		mLibFiles.setText(options.libfiles);
 		mLibPaths.setText(options.libpaths);
-		mDefFile.setText(options.deffile); 
-		mResFile.setText(options.resfile); 
-		mGenMap.setSelection(options.mapverbosity); 
+		mDefFile.setText(options.deffile);
+		mResFile.setText(options.resfile);
+		mGenMap.setSelection(options.mapverbosity);
 		mImplib.setChecked(options.createImplib);
 		mUseStdLibPath.setChecked(options.useStdLibPath);
 		mPrivatePhobos.setChecked(options.privatePhobos);
-		mCRuntime.setSelection(options.cRuntime); 
+		mCRuntime.setSelection(options.cRuntime);
 
 		EnableControls();
 	}
@@ -1275,17 +1475,17 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mExeFile.getText(), options.exefile, refoptions.exefile); 
-		changes += changeOption(mObjFiles.getText(), options.objfiles, refoptions.objfiles); 
-		changes += changeOption(mLibFiles.getText(), options.libfiles, refoptions.libfiles); 
-		changes += changeOption(mLibPaths.getText(), options.libpaths, refoptions.libpaths); 
-		changes += changeOption(mDefFile.getText(), options.deffile, refoptions.deffile); 
-		changes += changeOption(mResFile.getText(), options.resfile, refoptions.resfile); 
-		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity); 
-		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib); 
+		changes += changeOption(mExeFile.getText(), options.exefile, refoptions.exefile);
+		changes += changeOption(mObjFiles.getText(), options.objfiles, refoptions.objfiles);
+		changes += changeOption(mLibFiles.getText(), options.libfiles, refoptions.libfiles);
+		changes += changeOption(mLibPaths.getText(), options.libpaths, refoptions.libpaths);
+		changes += changeOption(mDefFile.getText(), options.deffile, refoptions.deffile);
+		changes += changeOption(mResFile.getText(), options.resfile, refoptions.resfile);
+		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity);
+		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib);
 		changes += changeOption(mUseStdLibPath.isChecked(), options.useStdLibPath, refoptions.useStdLibPath);
 		changes += changeOption(mPrivatePhobos.isChecked(), options.privatePhobos, refoptions.privatePhobos);
-		changes += changeOption(cast(uint) mCRuntime.getSelection(), options.cRuntime, refoptions.cRuntime); 
+		changes += changeOption(cast(uint) mCRuntime.getSelection(), options.cRuntime, refoptions.cRuntime);
 		return changes;
 	}
 
@@ -1309,24 +1509,26 @@ class DmdEventsPropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
-		AddControl("Pre-Build Command", mPreCmd = new MultiLineText(mCanvas));
-		AddControl("Post-Build Command", mPostCmd = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 5;
+		AddControl("Pre-Build Command", mPreCmd = new MultiLineText(mCanvas), 500);
+		AddControl("Post-Build Command", mPostCmd = new MultiLineText(mCanvas), 500);
 
 		Label lab = new Label(mCanvas, "Use \"if errorlevel 1 goto reportError\" to cancel on error");
-		lab.setRect(0, kPageHeight - kLineHeight, kPageWidth, kLineHeight); 
+		lab.setRect(0, mLineY, getWidgetWidth(mCanvas, kPageWidth), kLineHeight);
+		addResizableWidget(lab, kAttachBottom);
 	}
 
 	override void SetControls(ProjectOptions options)
 	{
-		mPreCmd.setText(options.preBuildCommand); 
-		mPostCmd.setText(options.postBuildCommand); 
+		mPreCmd.setText(options.preBuildCommand);
+		mPostCmd.setText(options.postBuildCommand);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mPreCmd.getText(), options.preBuildCommand, refoptions.preBuildCommand); 
-		changes += changeOption(mPostCmd.getText(), options.postBuildCommand, refoptions.postBuildCommand); 
+		changes += changeOption(mPreCmd.getText(), options.preBuildCommand, refoptions.preBuildCommand);
+		changes += changeOption(mPostCmd.getText(), options.postBuildCommand, refoptions.postBuildCommand);
 		return changes;
 	}
 
@@ -1341,8 +1543,9 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
-		AddControl("Command line", mCmdLine = new MultiLineText(mCanvas, "", 0, true));
-		AddControl("Additional options", mAddOpt = new MultiLineText(mCanvas));
+		mLinesPerMultiLine = 5;
+		AddControl("Command line", mCmdLine = new MultiLineText(mCanvas, "", 0, true), 500);
+		AddControl("Additional options", mAddOpt = new MultiLineText(mCanvas), 500);
 	}
 
 	override void OnConfigModified()
@@ -1355,13 +1558,13 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 	override void SetControls(ProjectOptions options)
 	{
 		mCmdLine.setText(options.buildCommandLine(true, true, true));
-		mAddOpt.setText(options.additionalOptions); 
+		mAddOpt.setText(options.additionalOptions);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mAddOpt.getText(), options.additionalOptions, refoptions.additionalOptions); 
+		changes += changeOption(mAddOpt.getText(), options.additionalOptions, refoptions.additionalOptions);
 		return changes;
 	}
 
@@ -1459,7 +1662,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 		AddControl("", mPerConfig = new CheckBox(mCanvas, "per Configuration Options (apply and reopen dialog to update)"));
 		AddControl("Build Tool", mTool = new ComboBox(mCanvas, [ "Auto", "DMD", kToolCpp, kToolResourceCompiler, "Custom", "None" ], false));
 		AddControl("Additional Options", mAddOpt = new Text(mCanvas));
-		AddControl("Build Command", mCustomCmd = new MultiLineText(mCanvas));
+		AddControl("Build Command", mCustomCmd = new MultiLineText(mCanvas), 1000);
 		AddControl("Other Dependencies", mDependencies = new Text(mCanvas));
 		AddControl("Output File", mOutFile = new Text(mCanvas));
 		AddControl("", mLinkOut = new CheckBox(mCanvas, "Add output to link"));
@@ -1504,12 +1707,12 @@ class FilePropertyPage : ConfigNodePropertyPage
 
 		mInitPerConfig = node.GetPerConfigOptions();
 		mPerConfig.setChecked(mInitPerConfig);
-		mCustomCmd.setText(node.GetCustomCmd(cfgname)); 
-		mAddOpt.setText(node.GetAdditionalOptions(cfgname)); 
-		mDependencies.setText(node.GetDependencies(cfgname)); 
-		mOutFile.setText(node.GetOutFile(cfgname)); 
-		mLinkOut.setChecked(node.GetLinkOutput(cfgname)); 
-		mUptodateWithSameTime.setChecked(node.GetUptodateWithSameTime(cfgname)); 
+		mCustomCmd.setText(node.GetCustomCmd(cfgname));
+		mAddOpt.setText(node.GetAdditionalOptions(cfgname));
+		mDependencies.setText(node.GetDependencies(cfgname));
+		mOutFile.setText(node.GetOutFile(cfgname));
+		mLinkOut.setChecked(node.GetLinkOutput(cfgname));
+		mUptodateWithSameTime.setChecked(node.GetUptodateWithSameTime(cfgname));
 
 		enableControls(tool);
 	}
@@ -1521,15 +1724,15 @@ class FilePropertyPage : ConfigNodePropertyPage
 		string tool = mTool.getText();
 		if(tool == "Auto")
 			tool = "";
-		changes += changeOptionDg!bool(mPerConfig.isChecked(), &node.SetPerConfigOptions, refnode.GetPerConfigOptions()); 
-		changes += changeOptionDg!string(tool,                    (s) => node.SetTool(cfgname, s),         refnode.GetTool(cfgname)); 
-		changes += changeOptionDg!string(mCustomCmd.getText(),    (s) => node.SetCustomCmd(cfgname, s),    refnode.GetCustomCmd(cfgname)); 
-		changes += changeOptionDg!string(mAddOpt.getText(),       (s) => node.SetAdditionalOptions(cfgname, s), refnode.GetAdditionalOptions(cfgname)); 
-		changes += changeOptionDg!string(mDependencies.getText(), (s) => node.SetDependencies(cfgname, s), refnode.GetDependencies(cfgname)); 
-		changes += changeOptionDg!string(mOutFile.getText(),      (s) => node.SetOutFile(cfgname, s),      refnode.GetOutFile(cfgname)); 
-		changes += changeOptionDg!bool(mLinkOut.isChecked(),      (b) => node.SetLinkOutput(cfgname, b),   refnode.GetLinkOutput(cfgname)); 
-		changes += changeOptionDg!bool(mUptodateWithSameTime.isChecked(), 
-									   (b) => node.SetUptodateWithSameTime(cfgname, b), refnode.GetUptodateWithSameTime(cfgname)); 
+		changes += changeOptionDg!bool(mPerConfig.isChecked(), &node.SetPerConfigOptions, refnode.GetPerConfigOptions());
+		changes += changeOptionDg!string(tool,                    (s) => node.SetTool(cfgname, s),         refnode.GetTool(cfgname));
+		changes += changeOptionDg!string(mCustomCmd.getText(),    (s) => node.SetCustomCmd(cfgname, s),    refnode.GetCustomCmd(cfgname));
+		changes += changeOptionDg!string(mAddOpt.getText(),       (s) => node.SetAdditionalOptions(cfgname, s), refnode.GetAdditionalOptions(cfgname));
+		changes += changeOptionDg!string(mDependencies.getText(), (s) => node.SetDependencies(cfgname, s), refnode.GetDependencies(cfgname));
+		changes += changeOptionDg!string(mOutFile.getText(),      (s) => node.SetOutFile(cfgname, s),      refnode.GetOutFile(cfgname));
+		changes += changeOptionDg!bool(mLinkOut.isChecked(),      (b) => node.SetLinkOutput(cfgname, b),   refnode.GetLinkOutput(cfgname));
+		changes += changeOptionDg!bool(mUptodateWithSameTime.isChecked(),
+									   (b) => node.SetUptodateWithSameTime(cfgname, b), refnode.GetUptodateWithSameTime(cfgname));
 		enableControls(tool);
 		return changes;
 	}
@@ -1549,68 +1752,140 @@ class FilePropertyPage : ConfigNodePropertyPage
 ///////////////////////////////////////////////////////////////////////////////
 class DirPropertyPage : GlobalPropertyPage
 {
+	enum ID_BROWSEINSTALLDIR = 1000;
+	enum ID_IMPORTDIR = 1001;
+	enum ID_EXEPATH32 = 1002;
+	enum ID_EXEPATH64 = 1003;
+	enum ID_EXEPATH32COFF = 1004;
+	enum ID_LIBPATH32 = 1005;
+	enum ID_LIBPATH64 = 1006;
+	enum ID_LIBPATH32COFF = 1007;
+	enum ID_LINKER64 = 1008;
+	enum ID_LINKER32COFF = 1009;
+
 	this(GlobalOptions options)
 	{
 		super(options);
 		kNeededLines = 13;
 	}
 
+	void addBrowseDir(MultiLineText ctrl, string title)
+	{
+		addBrowsePath(ctrl, true, null, "\n", title);
+	}
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_BROWSEINSTALLDIR:
+				if(auto dir = browseDirectory(mCanvas.hwnd, "Select installation directory"))
+					mDmdPath.setText(dir);
+				break;
+			case ID_IMPORTDIR:
+				addBrowseDir(mImpPath, "Add import directory");
+				break;
+
+			case ID_EXEPATH32:
+				addBrowseDir(mExePath, "Add executable directory");
+				break;
+			case ID_EXEPATH64:
+				addBrowseDir(mExePath64, "Add executable directory");
+				break;
+			case ID_EXEPATH32COFF:
+				addBrowseDir(mExePath32coff, "Add executable directory");
+				break;
+
+			case ID_LIBPATH32:
+				addBrowseDir(mLibPath, "Add library directory");
+				break;
+			case ID_LIBPATH64:
+				addBrowseDir(mLibPath64, "Add library directory");
+				break;
+			case ID_LIBPATH32COFF:
+				addBrowseDir(mLibPath32coff, "Add library directory");
+				break;
+
+			case ID_LINKER64:
+				if(auto file = browseFile(mCanvas.hwnd, "Select linker executable", "Executables\0*.exe\0All Files\0*.*\0"))
+					mLinkerExecutable64.setText(file);
+				break;
+			case ID_LINKER32COFF:
+				if(auto file = browseFile(mCanvas.hwnd, "Select linker executable", "Executables\0*.exe\0All Files\0*.*\0"))
+					mLinkerExecutable32coff.setText(file);
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
+	}
+
 	void dirCreateControls(string name, string overrideIni)
 	{
-		AddControl(name ~ " install path", mDmdPath = new Text(mCanvas));
+		auto btn = new Button(mCanvas, "...", ID_BROWSEINSTALLDIR);
+		AddControl(name ~ " install path", mDmdPath = new Text(mCanvas), btn);
 		mLinesPerMultiLine = 2;
-		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas));
+		btn = new Button(mCanvas, "+", ID_IMPORTDIR);
+		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas), btn, 300);
+
 		mLinesPerMultiLine = 10;
 		string[] archs = ["Win32", "x64"];
 		if(overrideIni.length)
 			archs ~= "Win32-COFF";
-		AddControl("", mTabArch = new TabControl(mCanvas, archs));
+		AddControl("", mTabArch = new TabControl(mCanvas, archs), 700);
 
 		auto page32 = mTabArch.pages[0];
 		if(auto w = cast(Window)page32)
 			w.commandDelegate = mCanvas.commandDelegate;
-		mResizableWidgets ~= page32;
 
-		kPageWidth -= 6;
 		mLineY = 0;
+		mAttachY = 0;
 		mLinesPerMultiLine = 3;
-		AddControl("Executable paths", mExePath = new MultiLineText(page32));
+		btn = new Button(page32, "+", ID_EXEPATH32);
+		AddControl("Executable paths", mExePath = new MultiLineText(page32), btn, 500);
 		mLinesPerMultiLine = 2;
-		AddControl("Library paths",    mLibPath = new MultiLineText(page32));
+		btn = new Button(page32, "+", ID_LIBPATH32);
+		AddControl("Library paths",    mLibPath = new MultiLineText(page32), btn, 500);
 		AddControl("Disassemble Command", mDisasmCommand = new Text(page32));
 
 		auto page64 = mTabArch.pages[1];
 		if(auto w = cast(Window)page64)
 			w.commandDelegate = mCanvas.commandDelegate;
-		mResizableWidgets ~= page64;
 
 		mLineY = 0;
+		mAttachY = 0;
 		mLinesPerMultiLine = 3;
-		AddControl("Executable paths", mExePath64 = new MultiLineText(page64));
+		btn = new Button(page64, "+", ID_EXEPATH64);
+		AddControl("Executable paths", mExePath64 = new MultiLineText(page64), btn, 500);
 		mLinesPerMultiLine = 2;
-		AddControl("Library paths", mLibPath64 = new MultiLineText(page64));
+		btn = new Button(page64, "+", ID_LIBPATH64);
+		AddControl("Library paths", mLibPath64 = new MultiLineText(page64), btn, 500);
 		AddControl("Disassemble Command", mDisasmCommand64 = new Text(page64));
 
 		if(overrideIni.length)
 		{
 			AddControl("", mOverrideIni64 = new CheckBox(page64, overrideIni));
-			AddControl("Linker", mLinkerExecutable64 = new Text(page64));
+			btn = new Button(page64, "...", ID_LINKER64);
+			AddControl("Linker", mLinkerExecutable64 = new Text(page64), btn);
 			AddControl("Additional options", mLinkerOptions64 = new Text(page64));
 
 			auto page32coff = mTabArch.pages[2];
 			if(auto w = cast(Window)page32coff)
 				w.commandDelegate = mCanvas.commandDelegate;
-			mResizableWidgets ~= page32coff;
 
 			mLineY = 0;
+			mAttachY = 0;
 			mLinesPerMultiLine = 3;
-			AddControl("Executable paths", mExePath32coff = new MultiLineText(page32coff));
+			btn = new Button(page32coff, "+", ID_EXEPATH32COFF);
+			AddControl("Executable paths", mExePath32coff = new MultiLineText(page32coff), btn, 500);
 			mLinesPerMultiLine = 2;
-			AddControl("Library paths", mLibPath32coff = new MultiLineText(page32coff));
+			btn = new Button(page32coff, "+", ID_LIBPATH32COFF);
+			AddControl("Library paths", mLibPath32coff = new MultiLineText(page32coff), btn, 500);
 			AddControl("Disassemble Command", mDisasmCommand32coff = new Text(page32coff));
 
 			AddControl("", mOverrideIni32coff = new CheckBox(page32coff, overrideIni));
-			AddControl("Linker", mLinkerExecutable32coff = new Text(page32coff));
+			btn = new Button(page32coff, "...", ID_LINKER32COFF);
+			AddControl("Linker", mLinkerExecutable32coff = new Text(page32coff), btn);
 			AddControl("Additional options", mLinkerOptions32coff = new Text(page32coff));
 		}
 	}
@@ -1676,26 +1951,26 @@ class DirPropertyPage : GlobalPropertyPage
 
 		int changes = 0;
 		changes += changeOption(mDmdPath.getText(),            opt.InstallDir,        refopt.InstallDir);
-		changes += changeOption(mExePath.getText(),            opt.ExeSearchPath,     refopt.ExeSearchPath); 
-		changes += changeOption(mImpPath.getText(),            opt.ImpSearchPath,     refopt.ImpSearchPath); 
-		changes += changeOption(mLibPath.getText(),            opt.LibSearchPath,     refopt.LibSearchPath); 
+		changes += changeOption(mExePath.getText(),            opt.ExeSearchPath,     refopt.ExeSearchPath);
+		changes += changeOption(mImpPath.getText(),            opt.ImpSearchPath,     refopt.ImpSearchPath);
+		changes += changeOption(mLibPath.getText(),            opt.LibSearchPath,     refopt.LibSearchPath);
 		changes += changeOption(mDisasmCommand.getText(),      opt.DisasmCommand,     refopt.DisasmCommand);
-		changes += changeOption(mExePath64.getText(),          opt.ExeSearchPath64,   refopt.ExeSearchPath64); 
+		changes += changeOption(mExePath64.getText(),          opt.ExeSearchPath64,   refopt.ExeSearchPath64);
 		changes += changeOption(mLibPath64.getText(),          opt.LibSearchPath64,   refopt.LibSearchPath64);
 		changes += changeOption(mDisasmCommand64.getText(),    opt.DisasmCommand64,   refopt.DisasmCommand64);
 		if(mOverrideIni64)
 		{
-			changes += changeOption(mOverrideIni64.isChecked(),    opt.overrideIni64,     refopt.overrideIni64); 
+			changes += changeOption(mOverrideIni64.isChecked(),    opt.overrideIni64,     refopt.overrideIni64);
 			changes += changeOption(mLinkerExecutable64.getText(), opt.overrideLinker64,  refopt.overrideLinker64);
-			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64); 
+			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64);
 		}
 		if(mOverrideIni32coff)
 		{
-			changes += changeOption(mExePath32coff.getText(),          opt.ExeSearchPath32coff,   refopt.ExeSearchPath32coff); 
+			changes += changeOption(mExePath32coff.getText(),          opt.ExeSearchPath32coff,   refopt.ExeSearchPath32coff);
 			changes += changeOption(mLibPath32coff.getText(),          opt.LibSearchPath32coff,   refopt.LibSearchPath32coff);
-			changes += changeOption(mOverrideIni32coff.isChecked(),    opt.overrideIni32coff,     refopt.overrideIni32coff); 
-			changes += changeOption(mLinkerExecutable32coff.getText(), opt.overrideLinker32coff,  refopt.overrideLinker32coff); 
-			changes += changeOption(mLinkerOptions32coff.getText(),    opt.overrideOptions32coff, refopt.overrideOptions32coff); 
+			changes += changeOption(mOverrideIni32coff.isChecked(),    opt.overrideIni32coff,     refopt.overrideIni32coff);
+			changes += changeOption(mLinkerExecutable32coff.getText(), opt.overrideLinker32coff,  refopt.overrideLinker32coff);
+			changes += changeOption(mLinkerOptions32coff.getText(),    opt.overrideOptions32coff, refopt.overrideOptions32coff);
 			changes += changeOption(mDisasmCommand32coff.getText(),    opt.DisasmCommand32coff,   refopt.DisasmCommand32coff);
 		}
 		return changes;
@@ -1811,7 +2086,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor linker dependencies"));
 		AddHorizontalLine();
-		//AddControl("Remove project item", mDeleteFiles = 
+		//AddControl("Remove project item", mDeleteFiles =
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 		mLinesPerMultiLine = 2;
 		AddControl("JSON paths",        mJSNPath = new MultiLineText(mCanvas));
@@ -1841,18 +2116,18 @@ class ToolsProperty2Page : GlobalPropertyPage
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
-		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds); 
-		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects); 
-		changes += changeOption(mShowUptodate.isChecked(), opts.showUptodateFailure, refopts.showUptodateFailure); 
-		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild); 
-		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError); 
-		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps); 
-		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles); 
-		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath); 
-		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath); 
-		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts); 
-		changes += changeOption(mCompileAndDbgOpts.getText(), opts.compileAndDbgOpts, refopts.compileAndDbgOpts); 
-		changes += changeOption(mCompileAndDbgEngine.getSelection(), opts.compileAndDbgEngine, refopts.compileAndDbgEngine); 
+		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds);
+		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects);
+		changes += changeOption(mShowUptodate.isChecked(), opts.showUptodateFailure, refopts.showUptodateFailure);
+		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild);
+		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError);
+		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps);
+		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles);
+		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath);
+		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath);
+		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts);
+		changes += changeOption(mCompileAndDbgOpts.getText(), opts.compileAndDbgOpts, refopts.compileAndDbgOpts);
+		changes += changeOption(mCompileAndDbgEngine.getSelection(), opts.compileAndDbgEngine, refopts.compileAndDbgEngine);
 		return changes;
 	}
 
@@ -1885,7 +2160,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override void CreateControls()
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
-		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
+		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas), 1000);
 		AddHorizontalLine();
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
@@ -1911,13 +2186,13 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
-		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions); 
-		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage); 
-		changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin); 
-		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining); 
-		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource); 
-		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent); 
-		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec); 
+		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions);
+		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage);
+		changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin);
+		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining);
+		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource);
+		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent);
+		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec);
 		return changes;
 	}
 
@@ -1949,7 +2224,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "writing '.'", "writing an identifier" ], false));
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip"));
 		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
-		version(DParser) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
+		version(DParserOption) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
 	}
@@ -1962,8 +2237,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 
 	void EnableControls()
 	{
-		version(DParser) bool useDParser = mUseDParser.isChecked();
-		else             bool useDParser = false;
+		version(DParserOption) bool useDParser = mUseDParser.isChecked();
+		else                   bool useDParser = true;
 		mMixinAnalysis.setEnabled(useDParser);
 		mUFCSExpansions.setEnabled(useDParser);
 	}
@@ -1976,7 +2251,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mExpandTrigger.setSelection(opts.expandTrigger);
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 		mSemanticGotoDef.setChecked(opts.semanticGotoDef);
-		version(DParser) mUseDParser.setChecked(opts.useDParser);
+		version(DParserOption) mUseDParser.setChecked(opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
 
@@ -1986,15 +2261,15 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
-		changes += changeOption(mExpandSemantics.isChecked(), opts.expandFromSemantics, refopts.expandFromSemantics); 
-		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer); 
-		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON); 
-		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger); 
-		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip); 
-		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef); 
-		version(DParser) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser); 
-		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis); 
-		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions); 
+		changes += changeOption(mExpandSemantics.isChecked(), opts.expandFromSemantics, refopts.expandFromSemantics);
+		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer);
+		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON);
+		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger);
+		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip);
+		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef);
+		version(DParserOption) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser);
+		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
+		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
 		return changes;
 	}
 
@@ -2004,7 +2279,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	ComboBox mExpandTrigger;
 	CheckBox mShowTypeInTooltip;
 	CheckBox mSemanticGotoDef;
-	version(DParser) CheckBox mUseDParser;
+	version(DParserOption) CheckBox mUseDParser;
 	CheckBox mUFCSExpansions;
 	CheckBox mMixinAnalysis;
 }
@@ -2035,8 +2310,8 @@ const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad40
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");
 const GUID    g_IntellisensePropertyPage = uuid("002a2de9-8bb6-484d-9823-7e4ad4084715");
 
-const GUID*[] guids_propertyPages = 
-[ 
+const GUID*[] guids_propertyPages =
+[
 	&g_GeneralPropertyPage,
 	&g_DmdGeneralPropertyPage,
 	&g_DmdDebugPropertyPage,

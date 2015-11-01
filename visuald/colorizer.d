@@ -235,6 +235,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	bool mConfigRelease;
 	bool mConfigUnittest;
 	bool mConfigX64;
+	bool mConfigMSVCRT;
 	bool mConfigCoverage;
 	bool mConfigDoc;
 	bool mConfigNoBoundsCheck;
@@ -731,9 +732,12 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case "DigitalMars":
 				return mConfigCompiler == Compiler.DMD ? 1 : -1;
 			case "CRuntime_DigitalMars":
-				return mConfigCompiler == Compiler.DMD && !mConfigX64 ? 1 : -1;
+				return mConfigCompiler == Compiler.DMD && !mConfigMSVCRT ? 1 : -1;
 			case "CRuntime_Microsoft":
-				return mConfigCompiler == Compiler.DMD && mConfigX64 ? 1 : -1;
+				return (mConfigCompiler == Compiler.DMD || mConfigCompiler == Compiler.LDC) && mConfigMSVCRT ? 1 : -1;
+			case "MinGW":
+				return mConfigCompiler == Compiler.GDC || (mConfigCompiler == Compiler.LDC && !mConfigMSVCRT) ? 1 : -1;
+
 			default:
 				assert(false, "inconsistent predefined versions");
 		}
@@ -1404,15 +1408,17 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		
 		if(mConfig)
 		{
-			changes += modifyValue(mConfig.GetProjectOptions().versionids,    mConfigVersions[kIndexVersion]);
-			changes += modifyValue(mConfig.GetProjectOptions().debugids,      mConfigVersions[kIndexDebug]);
-			changes += modifyValue(mConfig.GetProjectOptions().release,       mConfigRelease);
-			changes += modifyValue(mConfig.GetProjectOptions().useUnitTests,  mConfigUnittest);
-			changes += modifyValue(mConfig.GetProjectOptions().isX86_64,      mConfigX64);
-			changes += modifyValue(mConfig.GetProjectOptions().cov,           mConfigCoverage);
-			changes += modifyValue(mConfig.GetProjectOptions().doDocComments, mConfigDoc);
-			changes += modifyValue(mConfig.GetProjectOptions().noboundscheck, mConfigNoBoundsCheck);
-			changes += modifyValue(mConfig.GetProjectOptions().compiler,      mConfigCompiler);
+			ProjectOptions opts = mConfig.GetProjectOptions();
+			changes += modifyValue(opts.versionids,    mConfigVersions[kIndexVersion]);
+			changes += modifyValue(opts.debugids,      mConfigVersions[kIndexDebug]);
+			changes += modifyValue(opts.release,       mConfigRelease);
+			changes += modifyValue(opts.useUnitTests,  mConfigUnittest);
+			changes += modifyValue(opts.isX86_64,      mConfigX64);
+			changes += modifyValue(opts.useMSVCRT(),   mConfigMSVCRT);
+			changes += modifyValue(opts.cov,           mConfigCoverage);
+			changes += modifyValue(opts.doDocComments, mConfigDoc);
+			changes += modifyValue(opts.noboundscheck, mConfigNoBoundsCheck);
+			changes += modifyValue(opts.compiler,      mConfigCompiler);
 		}
 		return changes != 0;
 	}
