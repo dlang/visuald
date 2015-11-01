@@ -535,7 +535,7 @@ namespace DParserCOMServer
                 versions += "DigitalMars\n";
             if ((_flags & 0x8000000) != 0)
                 versions += "CRuntime_Microsoft\n";
-            else if (flags & (0x4000040)) // GNU or LDC
+            else if ((_flags & 0x4000040) != 0) // GNU or LDC
                 versions += "CRuntime_MinGW\n";
             else
                 versions += "CRuntime_DigitalMars\n";
