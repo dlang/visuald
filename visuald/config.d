@@ -2945,7 +2945,7 @@ class Config :	DisposingComObject,
 			else if(mProjectOptions.compiler == Compiler.LDC)
 				cmd ~= "set LIB=" ~ lpath ~ "\n";
 		}
-		if(x64 || mscoff)
+		if(mProjectOptions.useMSVCRT())
 		{
 			if(globOpt.WindowsSdkDir.length)
 				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
