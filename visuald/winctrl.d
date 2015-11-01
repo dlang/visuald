@@ -310,7 +310,7 @@ class Window : Widget
 
 		WNDCLASSA wc;
 		wc.lpszClassName = "VisualDWindow";
-		wc.style = CS_OWNDC; // | CS_HREDRAW | CS_VREDRAW;
+		wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
 		wc.lpfnWndProc = &WinWindowProc;
 		wc.hInstance = hInst;
 		wc.hIcon = null; //DefaultWindowIcon.peer;
@@ -842,6 +842,18 @@ class TabControl : Widget
 			rect.bottom = pr.bottom;
 		}
 		return true;
+	}
+
+	// space for header and footer
+	int getFrameHeight()
+	{
+		RECT r;
+		r.left = 0;
+		r.right = 100;
+		r.top = 0;
+		r.bottom = 100;
+		SendMessage(TCM_ADJUSTRECT, false, cast(LPARAM)&r);
+		return r.top + (100 - r.bottom);
 	}
 
 	int getCurSel()

@@ -31,6 +31,7 @@ import stdext.path;
 import std.array;
 import std.string;
 import std.conv;
+import std.algorithm;
 
 // version = DParserOption;
 
@@ -446,6 +447,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		{
 			x -= mUnindentCheckBox;
 		}
+
 		int h = lines * kLineHeight - kLineSpacing;
 		if(cast(Text) w && lines == 1)
 		{
@@ -453,10 +455,13 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		}
 		else if(cb)
 			h -= 2;
+		else if(tc)
+			h += tc.getFrameHeight() - kLineHeight;
 		//else if(cast(ComboBox) w)
 		//    h -= 4;
 
-		int y = mLineY + (lines * kLineHeight - kLineSpacing - h) / 2;
+		int yspacing = (lines * kLineHeight - kLineSpacing - h) / 2;
+		int y = mLineY + max(0, yspacing);
 		if(w)
 		{
 			w.setRect(x, y, pageWidth - 2*margin - labelWidth, h);
@@ -468,13 +473,13 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		}
 		if(btn)
 		{
-			btn.setRect(pageWidth, y, kLineHeight, kLineHeight - kLineSpacing);
+			btn.setRect(pageWidth - kMargin, y, kLineHeight, kLineHeight - kLineSpacing);
 			Attachment att = kAttachRight;
 			att.vdiv = 1000;
 			att.top = att.bottom = mAttachY;
 			addResizableWidget(btn, att);
 		}
-		mLineY += lines * kLineHeight;
+		mLineY += max(h, lines * kLineHeight);
 		mAttachY += resizeY;
 	}
 
@@ -483,7 +488,10 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		auto w = new Label(mCanvas);
 		w.AddWindowStyle(SS_ETCHEDFRAME, SS_TYPEMASK);
 		w.setRect(0, mLineY + 2, getWidgetWidth(mCanvas, kPageWidth) - 2*kMargin, 2);
-		addResizableWidget(w, kAttachLeftRight);
+		Attachment att = kAttachLeftRight;
+		att.vdiv = 1000;
+		att.top = att.bottom = mAttachY;
+		addResizableWidget(w, att);
 		mLineY += 6;
 	}
 
@@ -1819,6 +1827,7 @@ class DirPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 2;
 		btn = new Button(mCanvas, "+", ID_IMPORTDIR);
 		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas), btn, 300);
+
 		mLinesPerMultiLine = 10;
 		string[] archs = ["Win32", "x64"];
 		if(overrideIni.length)
@@ -2151,7 +2160,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override void CreateControls()
 	{
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
-		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas));
+		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas), 1000);
 		AddHorizontalLine();
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
