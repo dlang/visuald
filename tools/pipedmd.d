@@ -98,6 +98,7 @@ int main(string[] argv)
 	string command;
 	string trackdir;
 	string trackfile;
+	string trackfilewr;
 
 	bool inject = false;
 	if (depsfile.length > 0)
@@ -118,7 +119,7 @@ int main(string[] argv)
 			if (trackdir != ".")
 				command ~= " /if " ~ quoteArg(trackdir);
 			trackfile = stripExtension(baseName(exe)) ~ ".read.*.tlog";
-			string trackfilewr = stripExtension(baseName(exe)) ~ ".write.*.tlog";
+			trackfilewr = stripExtension(baseName(exe)) ~ ".write.*.tlog";
 			foreach(f; std.file.dirEntries(trackdir, std.file.SpanMode.shallow))
 				if (globMatch(baseName(f), trackfile) || globMatch(baseName(f), trackfilewr))
 					std.file.remove(f.name);
@@ -146,16 +147,38 @@ int main(string[] argv)
 
 	if (exitCode == 0 && trackfile.length > 0)
 	{
-		ubyte[] buf;
+		// read read.*.tlog and remove all files found in write.*.log
+		string rdbuf;
+		string wrbuf;
 		foreach(f; std.file.dirEntries(trackdir, std.file.SpanMode.shallow))
-			if (globMatch(baseName(f), trackfile))
+		{
+			bool rd = globMatch(baseName(f), trackfile);
+			bool wr = globMatch(baseName(f), trackfilewr);
+			if (rd || wr)
 			{
 				ubyte[] fbuf = cast(ubyte[])std.file.read(f.name);
+				string cbuf;
 				// strip BOM from all but the first file
-				if (buf.length && fbuf.length > 1 && fbuf[0] == 0xFF && fbuf[1] == 0xFE)
-					fbuf = fbuf[2..$];
-				buf ~= fbuf;
+				if(fbuf.length > 1 && fbuf[0] == 0xFF && fbuf[1] == 0xFE)
+					cbuf = to!(string)(cast(wstring)(fbuf[2..$]));
+				else
+					cbuf = cast(string)fbuf;
+				if(rd)
+					rdbuf ~= cbuf;
+				else
+					wrbuf ~= cbuf;
 			}
+		}
+		string[] rdlines = splitLines(rdbuf, KeepTerminator.yes);
+		string[] wrlines = splitLines(wrbuf, KeepTerminator.yes);
+		bool[string] wrset;
+		foreach(w; wrlines)
+			wrset[w] = true;
+
+		string buf;
+		foreach(r; rdlines)
+			if(r !in wrset)
+				buf ~= r;
 
 		std.file.write(depsfile, buf);
 	}

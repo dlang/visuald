@@ -243,7 +243,7 @@ class Project : CVsHierarchy,
 	override void Dispose()
 	{
 		mConfigProvider = release(mConfigProvider);
-		mExtProject = release(mExtProject);
+		//mExtProject = release(mExtProject);
 		super.Dispose();
 	}
 
@@ -700,7 +700,7 @@ class Project : CVsHierarchy,
 				case VSHPROPID_ExtObject:
 					var.vt = VT_DISPATCH;
 					if(!mExtProject)
-						mExtProject = addref(newCom!ExtProject(this));
+						mExtProject = /*addref*/(newCom!ExtProject(this));
 					var.pdispVal = addref(mExtProject);
 					return S_OK;
 

@@ -230,6 +230,11 @@ Section "Visual Studio package" SecPackage
   ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDGDC\ ConsoleApp.vstemplate
   ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDGDC\ ConsoleApp.visualdproj
 
+  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleDMDLDC"
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ main.d
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ ConsoleApp.vstemplate
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ ConsoleApp.visualdproj
+
   ${SetOutPath} "$INSTDIR\Templates\ProjectItems\WindowsApp"
   ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ winmain.d
   ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ WindowsApp.vstemplate

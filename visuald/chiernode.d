@@ -83,7 +83,7 @@ class CHierNode : DisposingDispatchObject
 	
 	override void Dispose()
 	{
-		m_extNode = release(m_extNode);
+		//m_extNode = release(m_extNode);
 	}
 
 	static void setContainerIsSorted(bool sort)
@@ -247,7 +247,7 @@ public:
 			{
 				pvar.vt = VT_DISPATCH;
 				if(!m_extNode)
-					m_extNode = addref(newCom!ExtProjectItem(null, null, this));
+					m_extNode = /*addref*/(newCom!ExtProjectItem(null, null, this));
 				pvar.pdispVal = addref(m_extNode);
 				return S_OK;
 			}

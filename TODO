@@ -40,7 +40,7 @@ Project:
 - custom command: quotes in dependencies not supported
 - custom command: writes build batch to project folder
 - custom command: no output given => creates ".build.cmd"
-- single file commands: track dependencies
+- single file commands: track dependencies, also outputs
 - single file commands: multiple outputs
 
 - VS2013: property pages don't follow resize

@@ -765,7 +765,7 @@ unreleased Version 0.3.43
   * replaced ancient pkgcmd.ctc with pkgcmd.vsct that's buildable with newer VS SDKs
   * added icons to some commands
   * renamed command "Add Folder" in project folder context menu to "Add Filter"
-  * added command "Add Package" to project folder context menu
+  * added command "Add Folder" to project folder context menu that actually creates the folder on disk
   * renaming a module in the project tree now reopens it at the previous caret location
   * renaming a package in the project tree also renames the folder on disk if it is still empty
   * debug info: added option "suitable for selected debug engine"
@@ -773,7 +773,7 @@ unreleased Version 0.3.43
   * LDC: recent versions build object files into intermediate folder, wrong names passed to linker
     with "separate compile and link"
   * moved defaults for resource includes and dmd executable paths from installation to extension init
-  * fixed spurious "not implemented" error in error list
+  * fixed spurious "not implemented" error in error list of VS 2015
   * fix dark theme detection in VS 2015
   * better semantic/colorizer support for versions LDC,CRuntime_Microsoft,CRuntime_DigitalMars and MinGW
   * tweaked default path and library settings for DMD and LDC
@@ -783,3 +783,8 @@ unreleased Version 0.3.43
     - scale some controls vertically if there is space
     - added browse buttons to path settings
   * search pane did not save its last state, only when switching between file and symbol search
+  * fixed calling linker to build with VC runtime of VS2015: legacy_stdio_definitions.lib missing
+  * bugzilla 12021: C++ projects (and others probably, too) might not load correctly in a solution
+    that also contains a Visual D project
+  * VS2015 linker updates logs and telemetry data files, confusing tracked linker dependencies. 
+    Now ignoring files that are both read and written.

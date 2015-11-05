@@ -577,6 +577,24 @@ class ExtProjectItems : DisposingDispatchObject, dte.ProjectItems
 		return returnError(E_NOTIMPL);
 	}
 
+	override int Invoke(/* [in] */ in DISPID dispIdMember,
+						/* [in] */ in IID* riid,
+						/* [in] */ in LCID lcid,
+						/* [in] */ in WORD wFlags,
+						/* [out][in] */ DISPPARAMS *pDispParams,
+						/* [out] */ VARIANT *pVarResult,
+						/* [out] */ EXCEPINFO *pExcepInfo,
+						/* [out] */ UINT *puArgErr)
+	{
+		mixin(LogCallMix);
+		if (dispIdMember == -4)
+		{
+			pVarResult.vt = VT_UNKNOWN;
+			return _NewEnum(&pVarResult.punkVal);
+		}
+		return super.Invoke(dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+	}
+
 	ExtProject mExtProject;
 	ExtProjectItems mParent;
 	CHierNode mNode;
@@ -601,12 +619,11 @@ class ExtProperties : DisposingDispatchObject, dte.Properties
 {
 	this(ExtProject prj)
 	{
-		mProject = addref(prj);
+		mProject = prj;
 	}
 
 	override void Dispose()
 	{
-		mProject = release(mProject);
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -709,14 +726,13 @@ class ExtProperty(T) : DisposingDispatchObject, dte.Property
 {
 	this(ExtProperties props, string name, T value)
 	{
-		mProperties = addref(props);
+		mProperties = props;
 		mName = name;
 		mValue = value;
 	}
 
 	override void Dispose()
 	{
-		mProperties = release(mProperties);
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -884,12 +900,7 @@ class ExtProject : ExtProjectItem, dte.Project
 	{
 		super(this, null, prj.GetProjectNode());
 		mProject = prj;
-		mProperties = addref(newCom!ExtProperties(this));
-	}
-
-	override void Dispose()
-	{
-		mProperties = release(mProperties);
+		mProperties = newCom!ExtProperties(this);
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -1168,12 +1179,12 @@ class ExtProject : ExtProjectItem, dte.Project
 		/* [retval][out] */ dte.ProjectItem *ppParentProjectItem)
 	{
 		mixin(LogCallMix);
+		*ppParentProjectItem = null;
 
 		IVsSolution srpSolution = queryService!(IVsSolution);
 		if(!srpSolution)
 			return returnError(E_FAIL);
 
-		*ppParentProjectItem = null;
 		int hr = E_UNEXPECTED;
 
 		IVsHierarchy pIVsHierarchy = mProject; // ->GetIVsHierarchy();
