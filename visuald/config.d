@@ -918,6 +918,10 @@ class ProjectOptions
 		string[] libs = tokenizeArgs(libfiles);
 		libs ~= "user32.lib";
 		libs ~= "kernel32.lib";
+		if(useMSVCRT())
+			if(std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+				libs ~= "legacy_stdio_definitions.lib";
+
 		cmd ~= plusList(lnkfiles ~ libs, ".lib", plus);
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
