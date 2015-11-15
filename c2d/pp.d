@@ -38,7 +38,7 @@ class ConditionalCode
 		if (children)
 			for(DListIterator!(ConditionalCode) it = children.begin(); !it.atEnd(); ++it)
 				it.fixIterator(oldIt, newIt);
-		
+
 		if(start == oldIt)
 			start = newIt;
 		if(end == oldIt)
@@ -248,7 +248,7 @@ class ConditionalCode
 		string label = "L_F" ~ format("%d", starttok.lineno);
 		starttok.text = createStaticIf("!" ~ condition) ~ " goto " ~ label ~ ";" ~ comment ~ "\n";
 		starttok.type = Token.PPinsert;
-			
+
 		Token endtok = end[-1];
 		string endcondition, endcomment;
 		splitPPCondition(endtok, endcondition, endcomment);
@@ -342,7 +342,7 @@ class ConditionalCode
 		splitPPCondition(starttok, condition, comment);
 		starttok.text = "else " ~ createStaticIf(condition) ~ comment ~ "\n";
 		starttok.type = Token.PPinsert;
-		
+
 		string label = "L_F" ~ format("%d", starttok.lineno);
 		Token endtok = end[-1];
 		string endcondition, endcomment;
@@ -357,7 +357,7 @@ class ConditionalCode
 			TokenIterator endIt = end;
 			TokenIterator newStartIt = start + 1;
 			TokenIterator newEndIt = end + 1;
-        		
+
 			fixIterator(startIt, newStartIt);
 			fixIterator(endIt, newEndIt);
 			startIt.erase();
@@ -498,7 +498,7 @@ class ConditionalCode
 			return end[-2 + off].type;
 		return -1;
 	}
-		
+
 	void convertOneSubCondition(ref string conditions, bool outside, int type)
 	{
 		if(!outside && subConditionOperator(outside) < 0)
@@ -515,7 +515,7 @@ class ConditionalCode
 			bool front = isSubExpressionOperator(type);
 			if(!front)
 				type = end[off-2].type;
-		
+
 			if(front)
 			{
 				++it;
@@ -532,7 +532,7 @@ class ConditionalCode
 		else
 			iftok.text = "";
 		iftok.type = Token.PPinsert;
-		
+
 		string cond;
 		bool first = conditions.length == 0;
 		if(!first)
@@ -542,7 +542,7 @@ class ConditionalCode
 			cond ~= " && " ~ condition;
 		else if(condition.length > 0)
 			cond = condition;
-		
+
 		if(condition.length > 0 && conditions.length > 0)
 			conditions ~= " || " ~ condition;
 		else
@@ -554,7 +554,7 @@ class ConditionalCode
 			txt = subExpressionOperatorText(type) ~ " " ~ txt;
 		it.insertBefore(createToken(it.pretext, txt, Token.PPinsert, it.lineno));
 		it.pretext = "";
-		
+
 		eit.insertBefore(createToken("", ")", Token.ParenR, (*eit).lineno));
 	}
 
@@ -961,7 +961,7 @@ void rescanPP(TokenList srcTokenList)
 		}
 		else
 			tokIt.advance();
-	}		
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1103,14 +1103,14 @@ string convertDefineToEnum(string deftext, string function(string) fixNumber)
 					ret ~= " ";
 
 				text = text.replace("\\\n", "\n");
-				text = "template< " ~ types ~ " > " 
+				text = "template< " ~ types ~ " > "
 					~ rettype ~ " " ~ ident ~ "(" ~ args ~") { " ~ ret ~ text ~ "; }" ~ posttext;
 				return text;
 			}
 			else if(it.type == Token.Identifier && ((it + 1).atEnd() || it[1].type == Token.EOF))
 			{
 				// identifier to alias
-				string text = "typedef " ~ it[-1].text ~ it.pretext ~ it.text ~ ";" ~ posttext;
+				string text = "typedef" ~ it.pretext ~ it.text ~ it[-1].pretext ~ it[-1].text ~ ";" ~ posttext;
 				return text;
 			}
 			else if(isExpression(it, tokList.end()))
@@ -1127,7 +1127,7 @@ string convertDefineToEnum(string deftext, string function(string) fixNumber)
 
 ///////////////////////////////////////////////////////////////////////
 
-bool staticEval(bool COND)() 
+bool staticEval(bool COND)()
 {
 	static if(COND)
 		return true;
@@ -1135,7 +1135,7 @@ bool staticEval(bool COND)()
 		return false;
 }
 
-bool staticEval(bool COND, bool DEF)(lazy bool b) 
+bool staticEval(bool COND, bool DEF)(lazy bool b)
 {
 	static if(COND)
 		return b;
@@ -1169,11 +1169,11 @@ version(EVAL) {
 			x = 2;
 		else if(c)
 			x = 3;
-} 
+}
 version(x) { // !EVAL
 		if(a)
 			x = 1;
-		else 
+		else
 			goto L_C1;
 		goto L_C2;
 L_C1:
@@ -1191,11 +1191,11 @@ L_C3:		if(false) L_C2: {}
 version(0) {
 		if(a)
 			x = 1;
-		else static if(COND) 
+		else static if(COND)
 		if (b)
 			x = 2;
 		else goto L_C1; else goto L_C1;
-		if(true) {} else L_C1: 
+		if(true) {} else L_C1:
 		if(c)
 			x = 3;
 
@@ -1248,7 +1248,7 @@ version(EVAL) {
 		if(a)
 			x = 1;
 		else // trailing else must be moved before static if!
-static if (COND) { 
+static if (COND) {
 			x = 2;
 }
 } // !EVAL
@@ -1278,11 +1278,11 @@ unittest
 	{
 		int x = 0;
 
-static if (COND) { 
+static if (COND) {
 		bool cond = a1;
 } else {
 		bool cond = a2;
-}	
+}
 		if(cond)
 			x = 1;
 		else
@@ -1314,10 +1314,10 @@ unittest
 	{
 		int x = 0;
 
-static if (COND) { 
+static if (COND) {
 		if(!a)
 			goto L_notcond;
-}	
+}
 			x = 1;
 L_notcond:;
 		return x;
@@ -1345,7 +1345,7 @@ unittest
 	{
 		int x = 0;
 
-static if (COND) { 
+static if (COND) {
 		x = 1;
 		if(a)
 		{
@@ -1379,8 +1379,8 @@ unittest
 	{
 		int x = 0;
 
-		if(a 
-		    && staticEval!(COND, true)(b) 
+		if(a
+		    && staticEval!(COND, true)(b)
 		    && c)
 			x = 1;
 		return x;
@@ -1438,13 +1438,13 @@ unittest
 		else if(true)
 			static if(COND1)
 		/*else*/        if (b)
-					goto L_C3; 
-				else 
-					goto L_N3; 
+					goto L_C3;
+				else
+					goto L_N3;
 			else static if(COND2)
 		/*else*/        if (c)
-					goto L_C3; 
-				else 
+					goto L_C3;
+				else
 					goto L_N3;
 			else
 				goto L_C3;
@@ -1495,7 +1495,7 @@ string testPP(string txt)
 
 unittest
 {
-	string txt = 
+	string txt =
 		"  a = 1;\n"
 		"#if COND\n"
 		"  b = 2;\n"
@@ -1517,14 +1517,14 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"#if COND\n"
 		"  if(a)\n"
 		"#endif\n"
 		"    b = 1;\n"
 		;
 
-	string exp = 
+	string exp =
 		"__static_if(!COND) goto L_F1;\n"
 		"  if(a)\n"
 		"L_F1:\n"
@@ -1537,7 +1537,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"#if COND1 // comment\n"
 		"  if (a)\n"
 		"#elif COND2\n"
@@ -1546,7 +1546,7 @@ unittest
 		"    c = 1;\n"
 		;
 
-	string exp = 
+	string exp =
 		"bool cond_1;\n"
 		"__static_if(COND1) { // comment\n"
 		"  cond_1 = (a);\n"
@@ -1562,7 +1562,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"  if (x)\n"
 		"    c = 0;\n"
 		"#if COND1 // comment\n"
@@ -1573,7 +1573,7 @@ unittest
 		"    c = 1;\n"
 		;
 
-	string exp = 
+	string exp =
 		"  if (x)\n"
 		"    c = 0;\n"
 		"else if(true) __static_if(COND1) // comment\n"
@@ -1590,7 +1590,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"  if (a)\n"
 		"    c = 1;\n"
 		"#if COND\n"
@@ -1599,7 +1599,7 @@ unittest
 		"#endif\n"
 		;
 
-	string exp = 
+	string exp =
 		"  if (a)\n"
 		"    c = 1;\n"
 		"else __static_if(COND) {\n"
@@ -1614,7 +1614,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"#if COND1 // comment\n"
 		"  if (a)\n"
 		"#elif COND2\n"
@@ -1625,7 +1625,7 @@ unittest
 		"    c = 1;\n"
 		;
 
-	string exp = 
+	string exp =
 		"bool cond_1;\n"
 		"__static_if(COND1) { // comment\n"
 		"  cond_1 = (a);\n"
@@ -1644,7 +1644,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"  if (a1)\n"
 		"    c = 0;\n"
 		"#if COND // comment\n"
@@ -1655,7 +1655,7 @@ unittest
 		"    c = 2;\n"
 		;
 
-	string exp = 
+	string exp =
 		"  if (a1)\n"
 		"    c = 0;\n"
 		"else __static_if(COND) // comment\n"
@@ -1672,7 +1672,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"  if (a1\n"
 		"#if COND1\n"
 		"      && a2\n"
@@ -1692,7 +1692,7 @@ unittest
 		"    c = 2;\n"
 		;
 
-	string exp = 
+	string exp =
 		"  if (a1\n"
 		"      && __static_eval(COND1, true)(a2)\n"
 		"      && __static_eval(!(COND1) && COND2, true)(b2)\n"
@@ -1712,7 +1712,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"  if (a1 &&\n"
 		"#if COND1\n"
 		"      a2\n"
@@ -1732,7 +1732,7 @@ unittest
 		"    c = 2;\n"
 		;
 
-	string exp = 
+	string exp =
 		"  if (a1 &&\n"
 		"      __static_eval(COND1, true)(a2)\n"
 		"      && __static_eval(!(COND1) && COND2, true)(b2)\n"
@@ -1752,14 +1752,14 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"#ifndef HDR_H\n"
 		"#define HDR_H\n"
 		"    a = 0;\n"
 		"#endif\n"
 		;
 
-	string exp = 
+	string exp =
 		"    a = 0;\n"
 		;
 
@@ -1769,7 +1769,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"    a = 0;\n"
 		"#ifdef __DMC__\n"
 		"#pragma once\n"
@@ -1777,7 +1777,7 @@ unittest
 		"    b = 0;\n"
 		;
 
-	string exp = 
+	string exp =
 		"    a = 0;\n"
 		"\n"
 		"    b = 0;\n"

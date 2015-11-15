@@ -79,8 +79,8 @@ void patch_va_arg(TokenList srctokens)
 
 void patch_foreach(TokenList srctokens)
 {
-	replaceTokenSequence(srctokens, [ "foreach", "(", "$i", ",", "$n", ",", "$vec", ")" ], 
-	                                [ "for (", "$i", " = first_bit(", "$vec", "); ", "$i", " < ", "$n", "; ", 
+	replaceTokenSequence(srctokens, [ "foreach", "(", "$i", ",", "$n", ",", "$vec", ")" ],
+	                                [ "for (", "$i", " = first_bit(", "$vec", "); ", "$i", " < ", "$n", "; ",
 	                                           "$i", " = next_bit(", "$vec", ", ", "$i", "))" ], true);
 }
 
@@ -106,7 +106,7 @@ void patch_expression_h(TokenList srctokens)
 	                                "    Expression *syntaxCopy();\n"
 	                                "#endif\n"
 					"};", true);
- 
+
 	TokenList[string] defines = [ "X" : null, "ASSIGNEXP" : null ];
 	expandPPdefines(srctokens, defines, MixinMode.ExpandDefine);
 }
@@ -160,7 +160,7 @@ void patch_mars_h(TokenList srctokens)
 void patch_mars_c(TokenList srctokens)
 {
 	replaceTokenSequence(srctokens, [ "written", "=", "$std", "__static_if", "(", "TARGET_NET", ")", "{", "$net", "}" ],
-	                                [ "\n__static_if(TARGET_NET) {\n    written = ", "$std", "$net", 
+	                                [ "\n__static_if(TARGET_NET) {\n    written = ", "$std", "$net",
 					  "\n} else {\n    written = ", "$std", ";\n}" ], true);
 	patch_disable_conditional(srctokens, "WINDOWS_SEH");
 }
@@ -191,11 +191,11 @@ void patch_lexer_c(TokenList srctokens)
 
 	replaceTokenSequence(srctokens, "switch(flags) { case 0:", "switch (flags)\n    {\n\tcase (FLAGS) 0:", true);
 
-	replaceTokenSequence(srctokens, "TOK Lexer::wysiwygStringConstant($args){$body}", 
+	replaceTokenSequence(srctokens, "TOK Lexer::wysiwygStringConstant($args){$body}",
 	                                "TOK Lexer::wysiwygStringConstant($args)\n{$body\n    assert(false);\n}", true);
-	replaceTokenSequence(srctokens, "TOK Lexer::hexStringConstant($args){$body}", 
+	replaceTokenSequence(srctokens, "TOK Lexer::hexStringConstant($args){$body}",
 	                                "TOK Lexer::hexStringConstant($args)\n{$body\n    assert(false);\n}", true);
-	replaceTokenSequence(srctokens, "TOK Lexer::escapeStringConstant($args){$body}", 
+	replaceTokenSequence(srctokens, "TOK Lexer::escapeStringConstant($args){$body}",
 	                                "TOK Lexer::escapeStringConstant($args)\n{$body\n    assert(false);\n}", true);
 }
 
@@ -229,16 +229,16 @@ void patch_intrange_h(TokenList srctokens)
 void patch_module_c(TokenList srctokens)
 {
 	// we don't handle different protoypes for the same function
-	replaceTokenSequence(srctokens, [ "__static_if", "(", "IN_GCC", ")", "{", "void", "Module", "::", "parse", "$if", 
-	                                  "}", "else", "{", "$else", "}" ], 
+	replaceTokenSequence(srctokens, [ "__static_if", "(", "IN_GCC", ")", "{", "void", "Module", "::", "parse", "$if",
+	                                  "}", "else", "{", "$else", "}" ],
 					[ "void Module::parse", "$if" ], true);
 }
 
 void patch_module_h(TokenList srctokens)
 {
 	// we don't handle different protoypes for the same function
-	replaceTokenSequence(srctokens, [ "__static_if", "(", "IN_GCC", ")", "{", "void", "parse", "$if", 
-	                                  "}", "else", "{", "$else", "}" ], 
+	replaceTokenSequence(srctokens, [ "__static_if", "(", "IN_GCC", ")", "{", "void", "parse", "$if",
+	                                  "}", "else", "{", "$else", "}" ],
 					[ "void parse", "$if" ], true);
 }
 
@@ -257,7 +257,7 @@ void patch_toir_c(TokenList srctokens)
 {
 	// we don't handle different protoypes for the same function
 	replaceTokenSequence(srctokens, [ "static", "const", "char", "*", "namearray", "[", "]", "=", "{",
-	                                  "__version", "(", "DMDV1", ")", "{", "$v1", 
+	                                  "__version", "(", "DMDV1", ")", "{", "$v1",
 					  "}", "else", "$x", "__version", "(", "DMDV2", ")", "{", "$v2", "}", "}", ";" ],
 					[ "\n__version(DMDV1) {\n    static const char *namearray[] =\n",
 					  "    {\n", "$v1", "\n    };\n", "} else ",
@@ -267,7 +267,7 @@ void patch_toir_c(TokenList srctokens)
 
 void patch_interpret_c(TokenList srctokens)
 {
-	TokenList[string] mixins = [ "START" : null, "UNA_INTERPRET" : null, 
+	TokenList[string] mixins = [ "START" : null, "UNA_INTERPRET" : null,
 	                             "BIN_INTERPRET" : null, "BIN_INTERPRET2" : null,
 				     "BIN_ASSIGN_INTERPRET" : null ];
 	expandPPdefines(srctokens, mixins, MixinMode.ExpandDefine); // StatementMixin
@@ -311,9 +311,9 @@ void patch_iasm_c(TokenList srctokens)
 
 void patch_clone_c(TokenList srctokens)
 {
-	replaceTokenSequence(srctokens, [ "__static_if", "(", "STRUCTTHISREF", ")", "{", "$1", ",", "}", "else", "{", "$2", ",", "}" ], 
+	replaceTokenSequence(srctokens, [ "__static_if", "(", "STRUCTTHISREF", ")", "{", "$1", ",", "}", "else", "{", "$2", ",", "}" ],
 					[ "__static_evalif(STRUCTTHISREF)(", "$1", ", ", "$2", ")", "," ], true);
-	replaceTokenSequence(srctokens, [ "__static_if", "(", "STRUCTTHISREF", ")", "{", "$1", "}", "else", "{", "$2", "}" ], 
+	replaceTokenSequence(srctokens, [ "__static_if", "(", "STRUCTTHISREF", ")", "{", "$1", "}", "else", "{", "$2", "}" ],
 					[ "__static_evalif(STRUCTTHISREF)(", "$1", ", ", "$2", ")" ], true);
 }
 
@@ -331,7 +331,7 @@ void patch_class_c(TokenList srctokens)
 
 void patch_async_c(TokenList srctokens)
 {
-	replaceTokenSequence(srctokens, [ "__static_if", "(", "_WIN32", ")", "{", "$1", "}", "else", 
+	replaceTokenSequence(srctokens, [ "__static_if", "(", "_WIN32", ")", "{", "$1", "}", "else",
 									  "__static_if", "(", "linux",  ")", "{", "$2", "}", "else", "{", "$3", "}" ], [ "$3" ], true);
 	//patch_disable_conditional(srctokens, "_WIN32");
 }
@@ -487,8 +487,8 @@ void patch_gloop_c(TokenList srctokens)
 	replaceTokenSequence(srctokens, "&& tyuns(flty)))", "&& tyuns(flty))", true);
 	replaceTokenSequence(srctokens, "Xzero())) ))", "Xzero()))", true);
 	replaceTokenSequence(srctokens, "countrefs2(e1)))", "countrefs2(e1))", true);
-	
-	
+
+
 }
 
 void patch_el_c(TokenList srctokens)
@@ -761,7 +761,7 @@ int main(string[] argv)
 	bool dmd;
 	string cfg_path;
 
-	getopt(argv, 
+	getopt(argv,
 		   "dmd", &dmd,
 		   "config", &cfg_path);
 
@@ -791,6 +791,7 @@ int main(string[] argv)
 	{
 		filespecs = argv[1..$];
 		workdir = normalizeDir(getcwd());
+		options.inputDir = workdir;
 	}
 	else
 	{
@@ -857,7 +858,7 @@ void disableStacktrace()
 		else
 			info.o.ctor = null;
 	}
-	else 
+	else
 	{
 		// dmd 2.064alpha
 		enum
@@ -883,7 +884,7 @@ void disableStacktrace()
 }
 
 
-shared static this() 
+shared static this()
 {
 	disableStacktrace();
 }

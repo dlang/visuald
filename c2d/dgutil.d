@@ -20,11 +20,11 @@ import core.exception;
 class SyntaxException : Exception
 {
 	this(string msg)
-	{ 
+	{
 		super(msg);
 		count++;
 	}
-	
+
 	static int count;
 }
 
@@ -89,8 +89,8 @@ string reindent(string txt, int indent, int tabsize)
 		indentation += indent;
 		if(indentation < 0)
 			indentation = 0;
-		
-		string spaces = replicate("\t", tabsize == 0 ? 0 : indentation / tabsize) 
+
+		string spaces = replicate("\t", tabsize == 0 ? 0 : indentation / tabsize)
 			          ~ replicate(" ", tabsize == 0 ? indentation : indentation % tabsize);
 		ntxt ~= spaces;
 		pos = p;
