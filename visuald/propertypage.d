@@ -1060,7 +1060,9 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	override void CreateControls()
 	{
 		string[] dbgInfoOpt = [ "None", "Symbolic (suitable for Mago)", "Symbolic (suitable for VS debug engine)", "Symbolic (suitable for selected debug engine)" ];
-		AddControl("Debug Mode", mDebugMode = new ComboBox(mCanvas, [ "Off (release)", "On" ], false));
+		AddControl("Debug Mode", mDebugMode = new ComboBox(mCanvas, [ "Off (disable asserts, invariants and constraints)", 
+		                                                              "On (enable debug statements, asserts, invariants and constraints)",
+		                                                              "Default (enable asserts, invariants and constraints)" ], false));
 		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, dbgInfoOpt, false));
 		AddHorizontalLine();
 		AddControl("",           mRunCv2pdb = new CheckBox(mCanvas, "Run cv2pdb to Convert Debug Info"));
@@ -1092,7 +1094,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		mDebugMode.setSelection(options.release ? 0 : 1);
+		mDebugMode.setSelection(options.release);
 		mDebugInfo.setSelection(options.symdebug);
 		mRunCv2pdb.setChecked(options.runCv2pdb);
 		mPathCv2pdb.setText(options.pathCv2pdb);
@@ -1108,7 +1110,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
-		changes += changeOption(mDebugMode.getSelection() == 0, options.release, refoptions.release);
+		changes += changeOption(cast(ubyte) mDebugMode.getSelection(), options.release, refoptions.release);
 		changes += changeOption(cast(ubyte) mDebugInfo.getSelection(), options.symdebug, refoptions.symdebug);
 		changes += changeOption(mRunCv2pdb.isChecked(), options.runCv2pdb, refoptions.runCv2pdb);
 		changes += changeOption(mPathCv2pdb.getText(), options.pathCv2pdb, refoptions.pathCv2pdb);

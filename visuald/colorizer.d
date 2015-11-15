@@ -232,7 +232,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	int mDebugLevelLine = -2;  // -2 never defined, -1 if set on command line
 
 	string[2] mConfigVersions;
-	bool mConfigRelease;
+	ubyte mConfigRelease;
 	bool mConfigUnittest;
 	bool mConfigX64;
 	bool mConfigMSVCRT;
@@ -709,7 +709,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case "unittest":
 				return mConfigUnittest ? 1 : -1;
 			case "assert":
-				return mConfigUnittest || !mConfigRelease ? 1 : -1;
+				return mConfigUnittest || mConfigRelease != 1 ? 1 : -1;
 			case "D_Coverage":
 				return mConfigCoverage ? 1 : -1;
 			case "D_Ddoc":
@@ -750,9 +750,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		
 		if (debugOrVersion)
 		{
-			if(mConfigRelease)
-				return false;
-			if(ident.length == 0)
+			if(ident.length == 0 && mConfigRelease != 0)
 				return true;
 		}
 		else
