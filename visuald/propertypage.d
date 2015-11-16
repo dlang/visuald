@@ -206,6 +206,12 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		mResizableWidgets[w] = attData;
 	}
 
+	void refreshResizableWidget(Widget w)
+	{
+		if (auto att = w in mResizableWidgets)
+			att.initFromWidget(w);
+	}
+
 	void addTextPath(Text ctrl, string path, string sep)
 	{
 		string imp = ctrl.getText();
@@ -881,6 +887,7 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		int left, top, w, h;
 		if(lbl.getRect(left, top, w, h))
 			lbl.setRect(left, top + h / 2 - 1, w, 2);
+		refreshResizableWidget(lbl);
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -1060,8 +1067,8 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	override void CreateControls()
 	{
 		string[] dbgInfoOpt = [ "None", "Symbolic (suitable for Mago)", "Symbolic (suitable for VS debug engine)", "Symbolic (suitable for selected debug engine)" ];
-		AddControl("Debug Mode", mDebugMode = new ComboBox(mCanvas, [ "Off (disable asserts, invariants and constraints)", 
-		                                                              "On (enable debug statements, asserts, invariants and constraints)",
+		AddControl("Debug Mode", mDebugMode = new ComboBox(mCanvas, [ "On (enable debug statements, asserts, invariants and constraints)",
+		                                                              "Off (disable asserts, invariants and constraints)",
 		                                                              "Default (enable asserts, invariants and constraints)" ], false));
 		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, dbgInfoOpt, false));
 		AddHorizontalLine();

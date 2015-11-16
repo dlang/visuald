@@ -897,7 +897,7 @@ class ProjectOptions
 			return s;
 		}
 
-		inioptions ~= " " ~ additionalOptions;
+		inioptions ~= " " ~ additionalOptions.replace("\n", " ");
 		string[] opts = tokenizeArgs(inioptions, false);
 		opts = expandResponseFiles(opts, workdir);
 		string addopts;
@@ -1086,7 +1086,7 @@ class ProjectOptions
 		if(compiler != Compiler.DMD && lib == OutputType.StaticLib)
 			return ""; // no options to ar
 
-		return additionalOptions; // always filtered through compiler
+		return additionalOptions.replace("\n", " "); // always filtered through compiler
 	}
 
 	string getTargetPath()
@@ -2852,10 +2852,10 @@ class Config :	DisposingComObject,
 			string depfile = GetOutputFile(file, tool) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
 			cmd ~= mProjectOptions.buildCommandLine(true, false, false, syntaxOnly);
-			if(syntaxOnly && mProjectOptions.compiler == Compiler.DMD)
-				cmd ~= " -c -o-";
-			else if(syntaxOnly)
+			if(syntaxOnly && mProjectOptions.compiler == Compiler.GDC)
 				cmd ~= " -c -fsyntax-only";
+			else if(syntaxOnly)
+				cmd ~= " -c -o-";
 			else
 				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile)
 				              ~ mProjectOptions.getDependenciesFileOption(depfile);
@@ -3310,7 +3310,7 @@ class Config :	DisposingComObject,
 		}
 		string addopt;
 		if(mProjectOptions.additionalOptions.length && fcmd.length)
-			addopt = " " ~ mProjectOptions.additionalOptions;
+			addopt = " " ~ mProjectOptions.additionalOptions.replace("\n", " ");
 		string cmd = precmd ~ opt ~ fcmd ~ addopt ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 
