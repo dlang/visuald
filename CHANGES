@@ -788,3 +788,14 @@ unreleased Version 0.3.43
     that also contains a Visual D project
   * VS2015 linker updates logs and telemetry data files, confusing tracked linker dependencies. 
     Now ignoring files that are both read and written.
+  * debug option: allow none of -debug and -release to be specified (and fix LDC never to receive 
+    the -d-debug option)
+  * some improvements to the C++ to D conversion wizard:
+    - don't stop conversion after an unmatched } (this also caused other messages to not be displayed)
+    - added support for sizeof without parenthesis
+    - allow namespace scope in type names
+    - allow virtual destructors
+    - skip throw function specification
+    - fix order of identifiers if "#define A B" is converted to an alias
+  * additional options: now replacing newline with space when adding to the command line
+  * compiling file for syntax check with LDC passed wrong command line option

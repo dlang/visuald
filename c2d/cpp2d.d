@@ -275,7 +275,7 @@ struct C2DIni
 
 		opt.userValueTypes = opt.userValueTypes.init;
 		opt.userRefTypes = opt.userRefTypes.init;
-		
+
 		foreach(t; split(userValueTypes))
 			opt.userValueTypes[t] = true;
 
@@ -329,7 +329,7 @@ struct C2DOptions
 	string keywordsPrefix;
 	string packagePrefix;
 	string codePrefix;
-	
+
 	string importAllFile;
 	string inputDir;
 	string outputDir;
@@ -597,7 +597,7 @@ string mapTokenText(Token tok)
 		return fixString(tok.text);
 	if(tok.type == Token.Number)
 		return fixNumber(tok.text);
-	
+
 	if(bool *pb = tok.text in keywordsMap)
 		if(!*pb)
 			return options.keywordsPrefix ~ tok.text;
@@ -734,7 +734,7 @@ void checkSeparatingSpace(TokenIterator tokIt)
 			nextch = tokIt.pretext[0];
 		else if(tokIt.text.length)
 			nextch = tokIt.text[0];
-		
+
 		TokenIterator prevIt = tokIt - 1;
 		char prevch = 0;
 		if(prevIt.text.length)
@@ -852,7 +852,7 @@ void patchBasicDeclType(AST ast)
 	case TF_BIT.FLOAT | TF_BIT.COMPLEX | TF_BIT.SIZE32:basic = "cfloat"; break;
 	case TF_BIT.FLOAT | TF_BIT.COMPLEX | TF_BIT.LONG:  basic = "creal"; break;
 
-	default: throwException("unsupported basic type combination" ~ basic);
+	default: throwException(ast.start.lineno, "unsupported basic type combination" ~ basic);
 	}
 
 	if(isConst)
@@ -995,7 +995,7 @@ void patchSizeof(Expression expr)
 			Expression parenExpr = new Expression(AST.Type.PrimaryExp, Token.ParenL);
 			parenExpr.start = parenList.begin();
 			parenExpr.end = parenList.end();
-			
+
 			parenExpr.appendChild(nexpr, nexprList);
 			parenList.prepend(tokL);
 			parenExpr.start = parenList.begin();
@@ -1095,20 +1095,20 @@ void patchAssignArrayData(Expression expr)
 	if(e2._type == AST.Type.CastExp)
 		return;
 
-	// check if lhs is xxx.data[nnn] 
+	// check if lhs is xxx.data[nnn]
 	if(e1._type != AST.Type.PostExp || e1._toktype != Token.BracketL)
 		return;
 	Expression e3 = cast(Expression)e1.children[0];
 	if(!e3 || e3._type != AST.Type.PostExp || (e3._toktype != Token.Dot && e3._toktype != Token.Deref))
 		return;
-	
+
 	Expression e4 = cast(Expression)e3.children[1];
 	if(!e4 || e4._type != AST.Type.PrimaryExp || e4._toktype != Token.Identifier)
 		return;
 
 	if(e4.start.text != "data")
 		return;
-	
+
 	// insert cast(void*) to rhs
 	e2.start.pretext ~= "cast(void*)";
 }
@@ -1144,7 +1144,7 @@ void patchAssignCast(Expression expr)
 		{
 		case "sz":
 			if(e2.start.text != "sz")
-				casttext = "cast(__d_ubyte)"; 
+				casttext = "cast(__d_ubyte)";
 			break;
 		default:
 			return;
@@ -1256,7 +1256,7 @@ void patchCallArguments(Expression expr)
 		if(arg._type == AST.Type.PrimaryExp && arg._toktype == Token.Number && arg.start.text == "0")
 			arg.start.text = "Loc(0)";
 		break;
-	
+
 	case KindOfPatch.RemoveAddress:
 		if(arg._type == AST.Type.UnaryExp && arg._toktype == Token.Ampersand)
 			arg.start.text = "";
@@ -1271,7 +1271,7 @@ void patchCallArguments(Expression expr)
 		if(arg.start.text == "v")
 			arg.start.pretext ~= "cast(int)";
 		break;
-		
+
 	default:
 		break;
 	}
@@ -1453,7 +1453,7 @@ void nameUnnamedStruct(DeclType dtype)
 	// create name for unnamed types
 	TokenIterator tokIt = dtype.start;
 	DeclType.skipModifiers(tokIt);
-	
+
 	// now on struct/union/enum
 	nextToken(tokIt);
 	assume(tokIt.type == Token.BraceL);
@@ -1717,7 +1717,7 @@ void patchInitializer(Declaration decl)
 	Expression var  = cast(Expression) dvar.children[0];
 	Expression init = cast(Expression) dvar.children[1];
 	assume(var && init);
-	
+
 	int dim = getArrayDimension(var);
 	if(dim >= 1)
 	{
@@ -1823,7 +1823,7 @@ void patchStringDeclaration(Declaration decl)
 
 	assume(var.end[-2].type == Token.BracketL);
 	assume(var.end[-1].type == Token.BracketR);
-	
+
 	clearTokenText(var.end - 2);
 	clearTokenText(var.end - 1);
 }
@@ -1866,7 +1866,7 @@ void patchDeclType(DeclType dtype)
 		nextToken(nextIt);
 		if(startIt.type == Token.Enum && dtype._parent.children.count() > 1)
 			clearTokenText(startIt);
-		
+
 		// add ":int" to workaround forward references
 		version(dmd_2_43)
 		for( ; nextIt != dtype.end; ++nextIt)
@@ -1934,7 +1934,7 @@ void patchDeclType(DeclType dtype)
 					TokenList tl = decl.removeChild(dtype);
 					string pretext = dtype.start.pretext;
 					dtype.removeToken(dtype.start); // throw away "template"
-					
+
 					for(TokenIterator it = tl.begin(); it != tl.end(); it.advance())
 						if(it.text == "<")
 							it.text = "(";
@@ -2089,7 +2089,7 @@ void patchAST(AST ast)
 		for(ASTIterator it = ast.children.begin(); !it.atEnd(); )
 		{
 			// some simple support to allow changing the current child without making the iterator invalid
-			AST child = *it; 
+			AST child = *it;
 			++it;
 			patchAST(child);
 		}
@@ -2323,7 +2323,7 @@ class Cpp2DConverter
 		string fname;
 		if(currentSource)
 			fname = makeFilenameAbsolute(currentSource._filename, options.inputDir);
-		
+
 		if(msg.indexOf("SyntaxException") > 0)
 		{
 			ptrdiff_t pos = msg.indexOf("):");
@@ -2425,7 +2425,7 @@ class Cpp2DConverter
 		//	if(stmt.children && !stmt.children.empty())
 		//		insertIt = stmt.children.begin();
 		}
-		
+
 		int count = 0;
 		while(initIt.children && !initIt.children.empty())
 		{
@@ -2463,7 +2463,7 @@ class Cpp2DConverter
 			{
 				tokIt[1].pretext = ident.start.pretext ~ tokIt[1].pretext;
 				cloneIdent.start.eraseUntil(tokIt + 1);
-    				
+
 				ASTIterator idit = ident._parent.children.find(ident);
 				ident._parent.insertChildBefore(idit, cloneIdent, cloneList);
 				ident._parent.removeChild(ident);
@@ -2677,7 +2677,7 @@ class Cpp2DConverter
 
 		// cannot remove decl immediately, because iterators in iterateTopLevelDeclarations will become invalid
 		declsToRemove ~= decl;
-		
+
 		currentSource._ast.verify();
 	}
 
@@ -2728,7 +2728,7 @@ class Cpp2DConverter
 			string importAllFile = options.importAllFile;
 			string importAll = createImportAll(importAllFile, false);
 			writeDirAndFile(options.outputDir ~ importAllFile, importAll);
-			
+
 			string srcAll = createImportAll(importAllFile, true);
 			writeDirAndFile(options.outputDir ~ "sources", srcAll);
 		}
@@ -2836,17 +2836,18 @@ class Cpp2DConverter
 			src.writeTokenList(outfile, "", 1);
 		}
 
-		syntaxErrorMessages = "";
-		src.createAST();
-		if(syntaxErrorMessages.length)
 		{
-			string absfile = makeFilenameAbsolute(src._filename, options.inputDir);
-			syntaxErrorMessages = replace(syntaxErrorMessages, "$FILENAME$", absfile);
-			if(syntaxErrorMessages.endsWith("\n"))
-				syntaxErrorMessages = syntaxErrorMessages[0..$-1];
-			writemsg(syntaxErrorMessages);
+			syntaxErrorMessages = "";
+			scope(exit) if(syntaxErrorMessages.length)
+			{
+				string absfile = makeFilenameAbsolute(src._filename, options.inputDir);
+				syntaxErrorMessages = replace(syntaxErrorMessages, "$FILENAME$", absfile);
+				if(syntaxErrorMessages.endsWith("\n"))
+					syntaxErrorMessages = syntaxErrorMessages[0..$-1];
+				writemsg(syntaxErrorMessages);
+			}
+			src.createAST();
 		}
-
 		src._ast.verify();
 
 		iterateTopLevelDeclarations(src._ast, &registerFunctionDefinition);
@@ -3063,12 +3064,12 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"class C {\n"
 		"    FuncDeclaration *overloadResolve(int flags = 0);\n"
 		"};\n"
 		"FuncDeclaration *C::overloadResolve(int flags) {}\n";
-	string exp = 
+	string exp =
 		"struct C {\n"
 		"    FuncDeclaration *overloadResolve(int flags = 0) {}\n"
 		"};\n";
@@ -3126,7 +3127,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "class C {\n"
 	    "    type_t foo();\n"
 	    "};\n"
@@ -3135,7 +3136,7 @@ unittest
 	    "} else {\n"
 	    "type_t C::foo() { return 2; }\n"
 	    "}";
-	string exp = 
+	string exp =
 	    "struct C {\n"
 	    "static if(1) {\n"
 	    "    type_t foo() { return 1; }\n"
@@ -3154,7 +3155,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "class C {\n"
 	    "    type_t foo();\n"
 	    "};\n"
@@ -3164,7 +3165,7 @@ unittest
 	    "__static_if(2) {\n"
 	    "type_t C::foo() { return 2; }\n"
 	    "}";
-	string exp = 
+	string exp =
 	    "struct C {\n"
 	    "static if(1) {\n"
 	    "    type_t foo() { return 1; }\n"
@@ -3185,7 +3186,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "class C {\n"
 	    "    static int x;\n"
 	    "    static int *y;\n"
@@ -3194,7 +3195,7 @@ unittest
 	    "int C::x = 3;\n"
 	    "int *C::y;\n"
 	    "int C::z[NUM];\n";
-	string exp = 
+	string exp =
 	    "struct C {\n"
 	    "    static int x = 3;\n"
 	    "    static int *y;\n"
@@ -3207,13 +3208,13 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "struct A : B\n"
 	    "{\n"
 	    "    A() : B(1) { }\n"
 	    "    A(int x) : B(x) { }\n"
 	    "};\n";
-	string exp = 
+	string exp =
 	    "class A : B\n"
 	    "{\n"
 	    "    this() { super(1); }\n"
@@ -3227,7 +3228,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "int foo() {\n"
 	    "    if(memchr((char *)stringbuffer)) x;\n"
 	    "}";
@@ -3242,7 +3243,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "int a;\n"
 	    "\n"
 	    "    int x, *y = 0;\n";
@@ -3258,7 +3259,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "int a = sizeof(void*);\n"
 	    "int b = sizeof(wchar_t);\n";
 	string exp =
@@ -3271,7 +3272,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "int foo() {\n"
 	    "  __asm\n"
 	    "  {\n"
@@ -3296,7 +3297,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "class A : B { };\n"
 	    "int foo() {\n"
 	    "  A a(3);\n"
@@ -3313,7 +3314,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "class A : B {\n"
 	    "    A();\n"
 	    "    static A* bar();\n"
@@ -3341,7 +3342,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "class A : B {\n"
 	    "    A();\n"
 	    "};\n"
@@ -3369,7 +3370,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "int foo() {\n"
 	    "#if DMDV1 /* multi\n"
 	    "       * line comment */\n"
@@ -3396,7 +3397,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "int foo(int *&x) {\n"
 	    "    x = 1;\n"
 	    "}\n";
@@ -3411,7 +3412,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "#define X(op) struct op##Exp : Exp {};\n"
 	    "X(Add)";
 	string exp =
@@ -3593,7 +3594,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 		"int foo() {\n"
 		"    search(0, 1);\n"
 		"    search(loc, 1);\n"
@@ -3705,7 +3706,7 @@ unittest
 
 unittest
 {
-	string txt = 
+	string txt =
 	    "#if EXP\n"
 	    "int a;\n"
 	    "#else\n"
@@ -3742,13 +3743,13 @@ unittest
 unittest
 {
 	// force failure
-	string txt = 
+	string txt =
 		"#define A 1\n"
 		"#define B A\n"
 		"#define C() B*B\n"
 		"#define SQR(a) (a)*(a)\n"
 		;
-	string exp = 
+	string exp =
 		"enum A = 1;\n"
 		"alias B A;\n"
 		" auto C(  )() { return B*B; }\n"
@@ -3761,12 +3762,13 @@ unittest
 
 void cpp2d_test()
 {
-	string txt = 
+	string txt =
 	    "#define EXP 1 // EXP1\n"
 	    "#define WSL EXP // comment\n"
 	    ;
 	string exp =
-	    "enum WSL = 1; // comment\n"
+	    "enum EXP = 1; // EXP1\n"
+	    "alias EXP WSL; // comment\n"
 		;
 
 //	PP.expandConditionals["EXP"] = true;

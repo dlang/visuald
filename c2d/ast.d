@@ -278,7 +278,7 @@ class AST
 	{
 		if(!_parent)
 			return null;
-		
+
 		assume(_parent.children, "inconsistent AST");
 		ASTIterator it = _parent.children.begin();
 		if(it.atEnd() || *it is this)
@@ -296,12 +296,12 @@ class AST
 	{
 		if(!_parent)
 			return null;
-		
+
 		assume(_parent.children, "inconsistent AST");
-		
+
 		ASTIterator it = _parent.children.find(this);
 		assume(!it.atEnd(), "inconsistent AST");
-		
+
 		++it;
 		if(it.atEnd())
 			return null;
@@ -361,7 +361,7 @@ class AST
 
 		while(tokIt != start)
 			tokIt.advance();
-		
+
 		if(children)
 			for(ASTIterator it = children.begin(); !it.atEnd(); ++it)
 				it.verifyIteratorList(tokIt);
@@ -421,7 +421,7 @@ class AST
 		if(!tokIt.atEnd())
 			tokIt.pretext ~= " /* SYNTAX ERROR: " ~ e.msg ~ " */ ";
 
-		while(!tokIt.atEnd() && tokIt.type != Token.EOF && 
+		while(!tokIt.atEnd() && tokIt.type != Token.EOF &&
 			   tokIt.type != Token.BraceR && tokIt.type != Token.Semicolon)
 			nextToken(tokIt);
 		if(!tokIt.atEnd() && tokIt.type == Token.Semicolon)
@@ -516,7 +516,7 @@ class AST
 				addChild(decl);
 				break;
 			}
-			} 
+			}
 			catch(Exception e)
 			{
 				recoverFromSyntaxError(e, tokIt);
@@ -589,17 +589,17 @@ class AST
 		parseDeclarations(tokIt);
 		if(!tokIt.atEnd() && tokIt.type == Token.BraceR)
 		{
-			/+
+			string msg = "unexpected trailing }";
 			syntaxErrors++;
-			tokIt.pretext ~= "/* SYNTAX ERROR: unexpected } */";
+			syntaxErrorMessages ~= "$FILENAME$" ~ "(" ~ to!string(tokIt.lineno) ~ "): " ~ msg ~ "\n";
+			tokIt.pretext ~= " /* SYNTAX ERROR: " ~ msg ~ " */ ";
 			tokIt.advance();
 			goto retry;
-			+/
 		}
 		end = tokIt;
 		if(!tokIt.atEnd() && tokIt.type != Token.EOF)
 			throwException((*tokIt).lineno, "not parsed until the end of the file");
-	
+
 		addEnumerators();
 	}
 
@@ -615,7 +615,7 @@ class AST
 		throwException(start.lineno, "evaluate() not implemented!");
 		return 0;
 	}
-	
+
 	string getScope()
 	{
 		string txt;
@@ -884,8 +884,10 @@ class Expression : AST
 		case Token.Sizeof:
 			nextToken(tokIt);
 			if(tokIt.type != Token.ParenL)
-				throwException(tokIt.lineno, "( expected after sizeof");
-			if(isTypeInParenthesis(tokIt) > 0)
+			{
+				e = new Expression(Type.PrimaryExp, Token.Sizeof, parseUnaryExp(tokIt));
+			}
+			else if(isTypeInParenthesis(tokIt) > 0)
 			{
 				nextToken(tokIt);
 				Declaration decl = Declaration.parseDeclaration(tokIt, IdentPolicy.Prohibited);
@@ -1052,7 +1054,7 @@ class Expression : AST
 	{
 		TokenIterator close;
 		int res = isTypeInParenthesis(tokIt, close);
-		
+
 		if(res != 0)
 			return res > 0;
 
@@ -1086,7 +1088,7 @@ class Expression : AST
 		case Token.Tilde:
 		case Token.New:
 			nextToken(tokIt);
-			e = new Expression(Type.UnaryExp, start.type, parseUnaryExp(tokIt)); 
+			e = new Expression(Type.UnaryExp, start.type, parseUnaryExp(tokIt));
 			break;
 		case Token.Delete:
 			return parseDeleteExp(tokIt);
@@ -1116,7 +1118,7 @@ class Expression : AST
 
 	alias Expression fnParseExp(ref TokenIterator);
 
-	static Expression parseBinaryExp(tokens...) (fnParseExp* fn, ref TokenIterator tokIt) // binaryParseFn fn, 
+	static Expression parseBinaryExp(tokens...) (fnParseExp* fn, ref TokenIterator tokIt) // binaryParseFn fn,
 	{
 		TokenIterator start = tokIt;
 
@@ -1125,7 +1127,7 @@ class Expression : AST
 		foreach(int type; tokens)
 			if(tokIt.type == type)
 			{
-				nextToken(tokIt); 
+				nextToken(tokIt);
 				e = new Expression(Type.BinaryExp, type, e, fn(tokIt));
 				e.start = start;
 				e.end = tokIt;
@@ -1198,7 +1200,7 @@ class Expression : AST
 	}
 	static Expression parseAssignExp(ref TokenIterator tokIt)
 	{
-		return parseBinaryExp!(Token.Assign, Token.AddAsgn, Token.SubAsgn, Token.MulAsgn, 
+		return parseBinaryExp!(Token.Assign, Token.AddAsgn, Token.SubAsgn, Token.MulAsgn,
 		                       Token.DivAsgn, Token.ModAsgn, Token.AndAsgn, Token.XorAsgn, Token.OrAsgn,
 		                       Token.ShlAsgn, Token.ShrAsgn)
 		                      (&parseCondExp, tokIt);
@@ -1259,7 +1261,7 @@ class Expression : AST
 			break;
 
 		default:
-			if(idpolicy == IdentPolicy.Prohibited || 
+			if(idpolicy == IdentPolicy.Prohibited ||
 			   idpolicy == IdentPolicy.SingleOptional || idpolicy == IdentPolicy.MultipleOptional)
 				e = new Expression(Type.PrimaryExp, Token.Empty);
 			else
@@ -1320,7 +1322,7 @@ class Expression : AST
 		case Token.Asterisk:
 			nextToken(tokIt);
 			DeclType.skipModifiers(tokIt);
-			e = new Expression(Type.UnaryExp, start.type, parseUnaryDeclExp(tokIt, idpolicy)); 
+			e = new Expression(Type.UnaryExp, start.type, parseUnaryDeclExp(tokIt, idpolicy));
 			break;
 		default:
 			e = parsePrimaryDeclExp(tokIt, idpolicy);
@@ -1706,8 +1708,7 @@ class Statement : AST
 				nextToken(tokIt);
 				goto L_reparse;
 			}
-			if(tokIt[1].type == Token.Identifier || tokIt[1].type == Token.Asterisk || 
-			   DeclType.isTypeModifier(tokIt[1].text))
+			if(Declaration.guessTypeDecl(tokIt))
 			{
 				Declaration decl = Declaration.parseDeclaration(tokIt, IdentPolicy.MultipleMandantory, true);
 				stmt = new Statement(Token.Identifier, decl);
@@ -1848,10 +1849,10 @@ class Statement : AST
 		catch(Exception e)
 		{
 			recoverFromSyntaxError(e, tokIt);
-			
+
 			stmt = new Statement(Token.Semicolon); // empty statement
 		}
-		
+
 		stmt.start = start;
 		stmt.end = tokIt;
 		return stmt;
@@ -1914,6 +1915,7 @@ class DeclType : AST
 		Template,
 		CtorDtor,
 		Elipsis,
+		Namespace,
 	}
 
 	this(int dtype, string ident)
@@ -1993,10 +1995,18 @@ class DeclType : AST
 			}
 			txt ~= _ident ~ "<" ~ args ~ ">";
 			break;
-		case CtorDtor: 
+		case CtorDtor:
 			break;
 		case Elipsis:
-			txt = "..."; 
+			txt = "...";
+			break;
+		case Namespace:
+			for(ASTIterator it = children.begin(); !it.atEnd(); ++it)
+			{
+				if(txt.length)
+					txt ~= "::";
+				txt ~= it.toString(tsd);
+			}
 			break;
 		default:
 			assume(0);
@@ -2070,7 +2080,7 @@ class DeclType : AST
 			return false;
 		}
 	}
-	
+
 	static bool isPersistentTypeModifier(string ident)
 	{
 		switch(ident)
@@ -2095,7 +2105,7 @@ class DeclType : AST
 		case "CEXTERN":
 			return true;
 		default:
-			return isPersistentTypeModifier(ident) 
+			return isPersistentTypeModifier(ident)
 				|| isCallingType(ident)
 				|| isMutabilityModifier(ident);
 		}
@@ -2338,9 +2348,11 @@ class Declaration : AST
 	{
 		isDtor = false;
 		int off = 0;
+		if(tokIt.text == "virtual") // allow virtual dtor
+			off = 1;
 		if(className.length == 0)
 		{
-			if(tokIt.type != Token.Identifier || tokIt[1].type != Token.DoubleColon)
+			if(tokIt[off].type != Token.Identifier || tokIt[off+1].type != Token.DoubleColon)
 				return 0;
 			className = tokIt.text;
 			off += 2;
@@ -2352,7 +2364,7 @@ class Declaration : AST
 			isDtor = true;
 			return off + 2;
 		}
-		
+
 		return 0;
 	}
 
@@ -2374,7 +2386,7 @@ class Declaration : AST
 	static CtorInitializers parseCtorInitializers(ref TokenIterator tokIt)
 	{
 		TokenIterator start = tokIt;
-		
+
 		checkToken(tokIt, Token.Colon);
 		CtorInitializers inis = new CtorInitializers;
 		inis.addChild(parseCtorInitializer(tokIt));
@@ -2418,12 +2430,14 @@ class Declaration : AST
 
 		decl.addChild(vdecl);
 
+		skipThrow(tokIt);
+
 		if(!isDtor && tokIt.type == Token.Colon)
 		{
 			decl.addChild(parseCtorInitializers(tokIt));
 		}
 
-		if(tokIt.type == Token.__In || tokIt.type == Token.__Out || 
+		if(tokIt.type == Token.__In || tokIt.type == Token.__Out ||
 		   tokIt.type == Token.__Body || tokIt.type == Token.BraceL)
 		{
 			Statement stmt = parseFunctionBody(tokIt);
@@ -2456,7 +2470,7 @@ class Declaration : AST
 
 				string baseclass = tokIt.text;
 				checkToken(tokIt, Token.Identifier);
-				
+
 				addInheritence(baseclass, ident);
 				// multiple inheritance not supported
 			}
@@ -2474,6 +2488,33 @@ class Declaration : AST
 		decl.start = start;
 		decl.end = tokIt;
 		return decl;
+	}
+
+	static bool guessTypeDecl(TokenIterator tokIt)
+	{
+		if(tokIt.text == "typename")
+			tokIt.advance();
+		DeclType.skipModifiers(tokIt);
+
+		// declaration always starts with an identifier (including basic types)
+		if(tokIt.type != Token.Identifier)
+			return false;
+
+		tokIt.advance();
+
+		while(tokIt.type == Token.DoubleColon)
+		{
+			tokIt.advance();
+			if (tokIt.type != Token.Identifier)
+				return false;
+			tokIt.advance();
+		}
+
+		if(tokIt.type == Token.Identifier || tokIt.type == Token.Asterisk ||
+			DeclType.isTypeModifier(tokIt.text))
+			return true;
+
+		return false;
 	}
 
 	static DeclType parseTypeDeclaration(ref TokenIterator tokIt)
@@ -2517,6 +2558,18 @@ class Declaration : AST
 				}
 				else
 					decl = new DeclType(DeclType.Class, ident);
+
+				if(tokIt.type == Token.DoubleColon)
+				{
+					auto ldecl = decl;
+					ldecl.start = start;
+					ldecl.end = tokIt;
+					tokIt.advance();
+					auto rdecl = parseTypeDeclaration(tokIt);
+					decl = new DeclType(DeclType.Namespace, decl._ident ~ "." ~ rdecl._ident);
+					decl.addChild(ldecl);
+					decl.addChild(rdecl);
+				}
 			}
 			break;
 		}
@@ -2645,8 +2698,18 @@ class Declaration : AST
 		decl.end = tokIt;
 		return decl;
 	}
-		
-	static Declaration parseDeclaration(ref TokenIterator tokIt, 
+
+	static void skipThrow(ref TokenIterator tokIt)
+	{
+		if(tokIt.text == "throw")
+		{
+			nextToken(tokIt);
+			if(tokIt.type == Token.ParenL)
+				advanceToClosingBracket(tokIt);
+		}
+	}
+
+	static Declaration parseDeclaration(ref TokenIterator tokIt,
 	                                    IdentPolicy idpolicy = IdentPolicy.MultipleOptional, bool declstmt = false)
 	{
 		if(tokIt.type == Token.Template)
@@ -2666,14 +2729,16 @@ class Declaration : AST
 				if(decltype.isTypedef())
 					addTypedef(decltype, vdecl);
 
-				if(idpolicy == IdentPolicy.SingleOptional || idpolicy == IdentPolicy.SingleMandantory || 
+				if(idpolicy == IdentPolicy.SingleOptional || idpolicy == IdentPolicy.SingleMandantory ||
 				   idpolicy == IdentPolicy.Prohibited)
 					goto L_eodecl;
 
 				if(DeclType.isMutabilityModifier(tokIt.text))
 					nextToken(tokIt);
 
-				if(tokIt.type == Token.__In || tokIt.type == Token.__Out || 
+				skipThrow(tokIt);
+
+				if(tokIt.type == Token.__In || tokIt.type == Token.__Out ||
 				   tokIt.type == Token.__Body || tokIt.type == Token.BraceL)
 				{
 					Statement stmt = parseFunctionBody(tokIt);
@@ -2828,7 +2893,7 @@ bool isFunctionDeclExpression(AST ast)
 {
 	while(ast._type == AST.Type.UnaryExp)
 		ast = ast.children[0];
-	
+
 	if (ast._type != AST.Type.PostExp || expressionType(ast) != Token.ParenL)
 		return false;
 
@@ -3017,7 +3082,7 @@ bool copyDefaultArguments(Declaration from, Declaration to)
 		DeclVar toArg   = cast(DeclVar) toDecl.children[1];
 		if(!fromArg || !toArg)
 			break;
-		
+
 		if(fromArg.children && fromArg.children.count > 1 && toArg.children && toArg.children.count == 1)
 		{
 			Expression fromInit = cast(Expression) fromArg.children[1];
@@ -3043,7 +3108,7 @@ AST testAST(string txt)
 	bool oldRecover = tryRecover;
 	scope(exit) tryRecover = oldRecover;
 	tryRecover = false;
-	
+
 	TokenList tokenList = scanText(txt);
 	AST ast = new AST(AST.Type.Module);
 	TokenIterator tokIt = tokenList.begin();

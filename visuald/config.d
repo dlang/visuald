@@ -165,7 +165,7 @@ class ProjectOptions
 	bool useSwitchError;	// check for switches without a default
 	bool useUnitTests;	// generate unittest code
 	bool useInline;		// inline expand functions
-	bool release;		// build release version
+	ubyte release;		// build release version (0: -debug, 1: -release, 2: default)
 	bool preservePaths;	// !=0 means don't strip path from source file
 	bool warnings;		// enable warnings
 	bool infowarnings;	// enable informational warnings
@@ -180,7 +180,7 @@ class ProjectOptions
 	float Dversion;		// D version number
 
 	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
-	bool otherDMD;		// use explicit program path 
+	bool otherDMD;		// use explicit program path
 	bool ccTransOpt;	// translate D options to C where applicable
 	string cccmd;		// C/C++ compiler command prefix
 	string program;		// program name
@@ -225,9 +225,9 @@ class ProjectOptions
 	bool runCv2pdb;		// run cv2pdb on executable
 	bool cv2pdbPre2043;		// pass version before 2.043 for older aa implementation
 	bool cv2pdbNoDemangle;	// do not demangle symbols
-	bool cv2pdbEnumType;	// use enumerator type 
-	string pathCv2pdb;	// exe path for cv2pdb 
-	string cv2pdbOptions;	// more options for cv2pdb 
+	bool cv2pdbEnumType;	// use enumerator type
+	string pathCv2pdb;	// exe path for cv2pdb
+	string cv2pdbOptions;	// more options for cv2pdb
 
 	enum
 	{
@@ -237,7 +237,7 @@ class ProjectOptions
 		kSeparateCompileOnly,
 	}
 	uint compilationModel = kCombinedCompileAndLink;
-	
+
 	// Linker stuff
 	string objfiles;
 	string linkswitches;
@@ -265,7 +265,7 @@ class ProjectOptions
 	bool pauseAfterRunning;
 
 	string filesToClean;
-	
+
 	this(bool dbg, bool x64)
 	{
 		Dversion = 2.043;
@@ -293,13 +293,13 @@ class ProjectOptions
 		runCv2pdb = dbg;
 		symdebug = dbg ? 3 : 0;
 		release = dbg ? 0 : 1;
-		optimize = release;
-		useInline = release;
+		optimize = release == 1;
+		useInline = release == 1;
 	}
 	void setX64(bool x64)
 	{
 		isX86_64 = x64;
-		if(!release && cRuntime == CRuntime.StaticRelease)
+		if(release != 1 && cRuntime == CRuntime.StaticRelease)
 			cRuntime = CRuntime.StaticDebug;
 	}
 
@@ -308,11 +308,11 @@ class ProjectOptions
 
 	bool useMSVCRT()
 	{
-		return (compiler == Compiler.DMD && (isX86_64 || mscoff)) || 
+		return (compiler == Compiler.DMD && (isX86_64 || mscoff)) ||
 		       (compiler == Compiler.LDC);
 	}
 
-	@property ref CompilerDirectories compilerDirectories() 
+	@property ref CompilerDirectories compilerDirectories()
 	{
 		switch(compiler)
 		{
@@ -365,9 +365,9 @@ class ProjectOptions
 			cmd ~= " -d";
 		if(useInline)
 			cmd ~= " -inline";
-		if(release)
+		if(release == 1)
 			cmd ~= " -release";
-		else
+		else if(release == 0)
 			cmd ~= " -debug";
 		if(warnings)
 			cmd ~= " -w";
@@ -472,14 +472,14 @@ class ProjectOptions
 		foreach(id; ids)
 			if(strip(id).length)
 				cmd ~= " -debug=" ~ strip(id);
-	
+
 		if(deps && !syntaxOnly)
 			cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
 		if(performLink)
 			cmd ~= linkCommandLine();
 		return cmd;
 	}
-	
+
 	string buildGDCCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		string cmd;
@@ -531,9 +531,9 @@ class ProjectOptions
 			cmd ~= " -funittest";
 		if(!useInline)
 			cmd ~= " -fno-inline-functions";
-		if(release)
+		if(release == 1)
 			cmd ~= " -frelease";
-		else
+		else if (release == 0)
 			cmd ~= " -fdebug";
 //		if(preservePaths)
 //			cmd ~= " -op";
@@ -643,8 +643,10 @@ class ProjectOptions
 			cmd ~= " -de";
 		if(useUnitTests)
 			cmd ~= " -unittest";
-		if(release)
+		if(release == 1)
 			cmd ~= " -release";
+		else if (release == 0)
+			cmd ~= " -d-debug";
 		if(preservePaths)
 			cmd ~= " -op";
 		if(warnings)
@@ -736,7 +738,7 @@ class ProjectOptions
 	string linkDMDCommandLine(bool mslink)
 	{
 		string cmd;
-		
+
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
 			dmdoutfile ~= "_cv";
@@ -895,7 +897,7 @@ class ProjectOptions
 			return s;
 		}
 
-		inioptions ~= " " ~ additionalOptions;
+		inioptions ~= " " ~ additionalOptions.replace("\n", " ");
 		string[] opts = tokenizeArgs(inioptions, false);
 		opts = expandResponseFiles(opts, workdir);
 		string addopts;
@@ -925,14 +927,14 @@ class ProjectOptions
 		cmd ~= plusList(lnkfiles ~ libs, ".lib", plus);
 		string[] lpaths = tokenizeArgs(libpaths);
 		if(useStdLibPath)
-			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 : 
+			lpaths ~= tokenizeArgs(isX86_64 ? compilerDirectories.LibSearchPath64 :
 								   mscoff   ? compilerDirectories.LibSearchPath32coff : compilerDirectories.LibSearchPath);
 		foreach(lp; lpaths)
 			if(mslink)
 				cmd ~= " /LIBPATH:" ~ quoteFilename(normalizeDir(unquoteArgument(lp))[0..$-1]); // avoid trailing \ for quoted files
 			else
 				cmd ~= "+" ~ quoteFilename(normalizeDir(unquoteArgument(lp))); // optlink needs trailing \
-		
+
 		string def = deffile.length ? quoteNormalizeFilename(deffile) : plusList(lnkfiles, ".def", mslink ? " /DEF:" : plus);
 		string res = resfile.length ? quoteNormalizeFilename(resfile) : plusList(lnkfiles, ".res", plus);
 		if(mslink)
@@ -1058,7 +1060,7 @@ class ProjectOptions
 		if(symdebug)
 			cmd ~= dbg[cc];
 
-		if (release)
+		if (release == 1)
 			cmd ~= " -DNDEBUG";
 
 		static string[4] opt = [ " -O", " -Ox", " -O3", " -O3" ];
@@ -1084,7 +1086,7 @@ class ProjectOptions
 		if(compiler != Compiler.DMD && lib == OutputType.StaticLib)
 			return ""; // no options to ar
 
-		return additionalOptions; // always filtered through compiler
+		return additionalOptions.replace("\n", " "); // always filtered through compiler
 	}
 
 	string getTargetPath()
@@ -1111,11 +1113,11 @@ class ProjectOptions
 	{
 		if(compilationModel == ProjectOptions.kSeparateCompileOnly)
 			return false;
-		
+
 		bool separateLink = compilationModel == ProjectOptions.kSeparateCompileAndLink;
 		if (compiler == Compiler.GDC && lib == OutputType.StaticLib)
 			separateLink = true;
-		
+
 		if (compiler == Compiler.DMD && lib != OutputType.StaticLib)
 		{
 			if(Package.GetGlobalOptions().optlinkDeps)
@@ -1140,7 +1142,7 @@ class ProjectOptions
 			return false; // should generate correct debug info directly
 		return (/*compiler == Compiler.DMD && */symdebug && runCv2pdb && lib != OutputType.StaticLib && debugEngine != 1);
 	}
-	
+
 	string appendCv2pdb()
 	{
 		if(usesCv2pdb())
@@ -1168,13 +1170,13 @@ class ProjectOptions
 	{
 		if(indexOf(cmd, '$') < 0)
 			return cmd;
-		
+
 		string configname = config.mName;
 		string projectpath = config.GetProjectPath();
 		string safeprojectpath = projectpath.replace(" ", "_");
 
 		string[string] replacements;
-	
+
 		string solutionpath = GetSolutionFilename();
 		if(solutionpath.length)
 			addFileMacros(solutionpath, "SOLUTION", replacements);
@@ -1314,7 +1316,7 @@ class ProjectOptions
 		elem ~= new xml.Element("additionalOptions", toElem(additionalOptions));
 		elem ~= new xml.Element("preBuildCommand", toElem(preBuildCommand));
 		elem ~= new xml.Element("postBuildCommand", toElem(postBuildCommand));
-	
+
 		elem ~= new xml.Element("filesToClean", toElem(filesToClean));
 	}
 	void writeDebuggerXML(xml.Element elem)
@@ -1440,7 +1442,7 @@ class ProjectOptions
 		fromElem(elem, "useStdLibPath", useStdLibPath);
 		fromElem(elem, "cRuntime", cRuntime);
 		fromElem(elem, "privatePhobos", privatePhobos);
-	
+
 		fromElem(elem, "additionalOptions", additionalOptions);
 		fromElem(elem, "preBuildCommand", preBuildCommand);
 		fromElem(elem, "postBuildCommand", postBuildCommand);
@@ -1460,7 +1462,7 @@ class ProjectOptions
 
 class ConfigProvider : DisposingComObject,
 	// IVsExtensibleObject,
-	IVsCfgProvider2, 
+	IVsCfgProvider2,
 	IVsProjectCfgProvider
 {
 	this(Project prj)
@@ -1512,7 +1514,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	// IVsCfgProvider
-	override int GetCfgs( 
+	override int GetCfgs(
 		/* [in] */ in ULONG celt,
 		/* [size_is][out][in] */ IVsCfg *rgpcfg,
 		/* [optional][out] */ ULONG *pcActual,
@@ -1530,7 +1532,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	// IVsProjectCfgProvider
-	override int OpenProjectCfg( 
+	override int OpenProjectCfg(
 		/* [in] */ in wchar* szProjectCfgCanonicalName,
 		/* [out] */ IVsProjectCfg *ppIVsProjectCfg)
 	{
@@ -1538,7 +1540,7 @@ class ConfigProvider : DisposingComObject,
 		return returnError(E_NOTIMPL);
 	}
 
-	override int get_UsesIndependentConfigurations( 
+	override int get_UsesIndependentConfigurations(
 		/* [out] */ BOOL *pfUsesIndependentConfigurations)
 	{
 		logCall("%s.get_UsesIndependentConfigurations(pfUsesIndependentConfigurations=%s)", this, _toLog(pfUsesIndependentConfigurations));
@@ -1546,7 +1548,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 	// IVsCfgProvider2
-	override int GetCfgNames( 
+	override int GetCfgNames(
 		/* [in] */ in ULONG celt,
 		/* [size_is][out][in] */ BSTR *rgbstr,
 		/* [optional][out] */ ULONG *pcActual)
@@ -1571,7 +1573,7 @@ class ConfigProvider : DisposingComObject,
 	}
 
 
-	override int GetPlatformNames( 
+	override int GetPlatformNames(
 		/* [in] */ in ULONG celt,
 		/* [size_is][out][in] */ BSTR *rgbstr,
 		/* [optional][out] */ ULONG *pcActual)
@@ -1595,7 +1597,7 @@ class ConfigProvider : DisposingComObject,
 		return S_OK;
 	}
 
-	override int GetCfgOfName( 
+	override int GetCfgOfName(
 		/* [in] */ in wchar* pszCfgName,
 		/* [in] */ in wchar* pszPlatformName,
 		/* [out] */ IVsCfg *ppCfg)
@@ -1603,7 +1605,7 @@ class ConfigProvider : DisposingComObject,
 		mixin(LogCallMix);
 		string cfg = to_string(pszCfgName);
 		string plat = to_string(pszPlatformName);
-		
+
 		for(int i = 0; i < mConfigs.length; i++)
 			if((plat == "" || plat == mConfigs[i].mPlatform) &&
 			   (cfg == "" || mConfigs[i].mName == cfg))
@@ -1627,7 +1629,7 @@ class ConfigProvider : DisposingComObject,
 			dg(cb);
 	}
 
-	override int AddCfgsOfCfgName( 
+	override int AddCfgsOfCfgName(
 		/* [in] */ in wchar* pszCfgName,
 		/* [in] */ in wchar* pszCloneCfgName,
 		/* [in] */ in BOOL fPrivate)
@@ -1644,13 +1646,13 @@ class ConfigProvider : DisposingComObject,
 				return returnError(E_FAIL);
 			else if(c.mName == strCloneCfgName)
 				clonecfg = c;
-		
+
 		if(strCloneCfgName.length && !clonecfg)
 			return returnError(E_FAIL);
 
 		//if(!mProject.QueryEditProjectFile())
 		//	return returnError(E_ABORT);
-    
+
 		// copy configs for all platforms
 		int cnt = mConfigs.length;
 		for(int i = 0; i < cnt; i++)
@@ -1662,11 +1664,11 @@ class ConfigProvider : DisposingComObject,
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnCfgNameAdded(pszCfgName); });
 
-		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file 
+		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file
 		return S_OK;
 	}
 
-	override int DeleteCfgsOfCfgName( 
+	override int DeleteCfgsOfCfgName(
 		/* [in] */ in wchar* pszCfgName)
 	{
 		logCall("%s.DeleteCfgsOfCfgName(pszCfgName=%s)", this, _toLog(pszCfgName));
@@ -1683,11 +1685,11 @@ class ConfigProvider : DisposingComObject,
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnCfgNameDeleted(pszCfgName); });
 
-		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file 
+		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file
 		return S_OK;
 	}
 
-	override int RenameCfgsOfCfgName( 
+	override int RenameCfgsOfCfgName(
 		/* [in] */ in wchar* pszOldName,
 		/* [in] */ in wchar* pszNewName)
 	{
@@ -1715,11 +1717,11 @@ class ConfigProvider : DisposingComObject,
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnCfgNameRenamed(pszOldName, pszNewName); });
 
-		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file 
+		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file
 		return S_OK;
 	}
 
-	override int AddCfgsOfPlatformName( 
+	override int AddCfgsOfPlatformName(
 		/* [in] */ in wchar* pszPlatformName,
 		/* [in] */ in wchar* pszClonePlatformName)
 	{
@@ -1752,11 +1754,11 @@ class ConfigProvider : DisposingComObject,
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnPlatformNameAdded(pszPlatformName); });
 
-		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file 
+		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file
 		return S_OK;
 	}
 
-	override int DeleteCfgsOfPlatformName( 
+	override int DeleteCfgsOfPlatformName(
 		/* [in] */ in wchar* pszPlatformName)
 	{
 		logCall("%s.DeleteCfgsOfPlatformName(pszPlatformName=%s)", this, _toLog(pszPlatformName));
@@ -1773,11 +1775,11 @@ class ConfigProvider : DisposingComObject,
 
 		NotifyConfigEvent(delegate (IVsCfgProviderEvents cb) { cb.OnPlatformNameDeleted(pszPlatformName); });
 
-		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file 
+		mProject.GetProjectNode().SetProjectFileDirty(true); // dirty the project file
 		return S_OK;
 	}
 
-	override int GetSupportedPlatformNames( 
+	override int GetSupportedPlatformNames(
 		/* [in] */ in ULONG celt,
 		/* [size_is][out][in] */ BSTR *rgbstr,
 		/* [optional][out] */ ULONG *pcActual)
@@ -1790,7 +1792,7 @@ class ConfigProvider : DisposingComObject,
 		return S_OK;
 	}
 
-	override int GetCfgProviderProperty( 
+	override int GetCfgProviderProperty(
 		/* [in] */ in VSCFGPROPID propid,
 		/* [out] */ VARIANT *var)
 	{
@@ -1812,7 +1814,7 @@ class ConfigProvider : DisposingComObject,
 		return returnError(E_NOTIMPL);
 	}
 
-	override int AdviseCfgProviderEvents( 
+	override int AdviseCfgProviderEvents(
 		/* [in] */ IVsCfgProviderEvents pCPE,
 		/* [out] */ VSCOOKIE *pdwCookie)
 	{
@@ -1824,7 +1826,7 @@ class ConfigProvider : DisposingComObject,
 		return S_OK;
 	}
 
-	override int UnadviseCfgProviderEvents( 
+	override int UnadviseCfgProviderEvents(
 		/* [in] */ in VSCOOKIE dwCookie)
 	{
 		logCall("%s.UnadviseCfgProviderEvents(dwCookie=%s)", this, _toLog(dwCookie));
@@ -1851,7 +1853,7 @@ interface ConfigModifiedListener : IUnknown
 	void OnConfigModified();
 }
 
-class Config :	DisposingComObject, 
+class Config :	DisposingComObject,
 		IVsProjectCfg2,
 		IVsDebuggableProjectCfg,
 		IVsDebuggableProjectCfg2,
@@ -1953,7 +1955,7 @@ class Config :	DisposingComObject,
 		*pbstrDisplayName = allocBSTR(getCfgName());
 		return S_OK;
 	}
-    
+
 	override int get_IsDebugOnly(BOOL *pfIsDebugOnly)
 	{
 		logCall("%s.get_IsDebugOnly(pfIsDebugOnly=%s)", this, _toLog(pfIsDebugOnly));
@@ -1961,7 +1963,7 @@ class Config :	DisposingComObject,
 		*pfIsDebugOnly = (mName == "Debug");
 		return S_OK;
 	}
-    
+
 	override int get_IsReleaseOnly(BOOL *pfIsReleaseOnly)
 	{
 		logCall("%s.get_IsReleaseOnly(pfIsReleaseOnly=%s)", this, _toLog(pfIsReleaseOnly));
@@ -1969,7 +1971,7 @@ class Config :	DisposingComObject,
 		*pfIsReleaseOnly = (mName == "Release");
 		return S_OK;
 	}
-    
+
 	// IVsProjectCfg
 	override int EnumOutputs(IVsEnumOutputs *ppIVsEnumOutputs)
 	{
@@ -2045,7 +2047,7 @@ class Config :	DisposingComObject,
 	}
 
 	// IVsProjectCfg2
-	override int get_CfgType( 
+	override int get_CfgType(
 		/* [in] */ in IID* iidCfg,
 		/* [iid_is][out] */ void **ppCfg)
 	{
@@ -2053,7 +2055,7 @@ class Config :	DisposingComObject,
 		return QueryInterface(iidCfg, ppCfg);
 	}
 
-	override int get_OutputGroups( 
+	override int get_OutputGroups(
 		/* [in] */ in ULONG celt,
 		/* [size_is][out][in] */ IVsOutputGroup *rgpcfg,
 		/* [optional][out] */ ULONG *pcActual)
@@ -2073,7 +2075,7 @@ class Config :	DisposingComObject,
 		}
 	}
 
-	override int OpenOutputGroup( 
+	override int OpenOutputGroup(
 		/* [in] */ in wchar* szCanonicalName,
 		/* [out] */ IVsOutputGroup *ppIVsOutputGroup)
 	{
@@ -2091,21 +2093,21 @@ class Config :	DisposingComObject,
 		}
 	}
 
-	override int OutputsRequireAppRoot( 
+	override int OutputsRequireAppRoot(
 		/* [out] */ BOOL *pfRequiresAppRoot)
 	{
 		logCall("%s.OutputsRequireAppRoot(pfRequiresAppRoot=%s)", this, _toLog(pfRequiresAppRoot));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int get_VirtualRoot( 
+	override int get_VirtualRoot(
 		/* [out] */ BSTR *pbstrVRoot)
 	{
 		logCall("%s.get_VirtualRoot(pbstrVRoot=%s)", this, _toLog(pbstrVRoot));
 		return returnError(E_NOTIMPL);
 	}
 
-	override int get_IsPrivate( 
+	override int get_IsPrivate(
 		/* [out] */ BOOL *pfPrivate)
 	{
 		logCall("%s.get_IsPrivate(pfPrivate=%s)", this, _toLog(pfPrivate));
@@ -2113,7 +2115,7 @@ class Config :	DisposingComObject,
 	}
 
 	// IVsDebuggableProjectCfg
-	override int DebugLaunch( 
+	override int DebugLaunch(
 		/* [in] */ in VSDBGLAUNCHFLAGS grfLaunch)
 	{
 		logCall("%s.DebugLaunch(grfLaunch=%s)", this, _toLog(grfLaunch));
@@ -2163,16 +2165,16 @@ class Config :	DisposingComObject,
 	HRESULT _DebugLaunch(string prg, string workdir, string args, int engine)
 	{
 		HRESULT hr = E_NOTIMPL;
-		// When the debug target is the project build output, the project have to use 
+		// When the debug target is the project build output, the project have to use
 		// IVsSolutionDebuggingAssistant2 to determine if the target was deployed.
-		// The interface allows the project to find out where the outputs were deployed to 
+		// The interface allows the project to find out where the outputs were deployed to
 		// and direct the debugger to the deployed locations as appropriate.
 		// Projects start out their debugging sessions by calling MapOutputToDeployedURLs().
 
-		// Here we do not use IVsSolutionDebuggingAssistant2 because our debug target is 
+		// Here we do not use IVsSolutionDebuggingAssistant2 because our debug target is
 		// explicitly set in the project options and it is not built by the project.
-		// For demo of how to use IVsSolutionDebuggingAssistant2 refer to MycPrj sample in the 
-		// Environment SDK. 
+		// For demo of how to use IVsSolutionDebuggingAssistant2 refer to MycPrj sample in the
+		// Environment SDK.
 
 		if(IVsDebugger srpVsDebugger = queryService!(IVsDebugger))
 		{
@@ -2223,7 +2225,7 @@ class Config :	DisposingComObject,
 		return(hr);
 	}
 
-	override int QueryDebugLaunch( 
+	override int QueryDebugLaunch(
 		/* [in] */ in VSDBGLAUNCHFLAGS grfLaunch,
 		/* [out] */ BOOL *pfCanLaunch)
 	{
@@ -2365,14 +2367,14 @@ class Config :	DisposingComObject,
 
 	///////////////////////////////////////////////////////////////
 	// IVsBuildableProjectCfg
-	override int get_ProjectCfg( 
+	override int get_ProjectCfg(
 		/* [out] */ IVsProjectCfg *ppIVsProjectCfg)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
-	override int AdviseBuildStatusCallback( 
+	override int AdviseBuildStatusCallback(
 		/* [in] */ IVsBuildStatusCallback pIVsBuildStatusCallback,
 		/* [out] */ VSCOOKIE *pdwCookie)
 	{
@@ -2385,7 +2387,7 @@ class Config :	DisposingComObject,
 		return S_OK;
 	}
 
-	override int UnadviseBuildStatusCallback( 
+	override int UnadviseBuildStatusCallback(
 		/* [in] */ in VSCOOKIE dwCookie)
 	{
 //		mixin(LogCallMix);
@@ -2401,7 +2403,7 @@ class Config :	DisposingComObject,
 		return returnError(E_FAIL);
 	}
 
-	override int StartBuild( 
+	override int StartBuild(
 		/* [in] */ IVsOutputWindowPane pIVsOutputWindowPane,
 		/* [in] */ in DWORD dwOptions)
 	{
@@ -2412,27 +2414,27 @@ class Config :	DisposingComObject,
 		return mBuilder.Start(CBuilderThread.Operation.eBuild, pIVsOutputWindowPane);
 	}
 
-	override int StartClean( 
+	override int StartClean(
 		/* [in] */ IVsOutputWindowPane pIVsOutputWindowPane,
 		/* [in] */ in DWORD dwOptions)
 	{
 		mixin(LogCallMix);
-	
+
 		return mBuilder.Start(CBuilderThread.Operation.eClean, pIVsOutputWindowPane);
 	}
 
-	override int StartUpToDateCheck( 
+	override int StartUpToDateCheck(
 		/* [in] */ IVsOutputWindowPane pIVsOutputWindowPane,
 		/* [in] */ in DWORD dwOptions)
 	{
 		mixin(LogCallMix);
-	
+
 		HRESULT rc = mBuilder.Start(CBuilderThread.Operation.eCheckUpToDate, pIVsOutputWindowPane);
 		return rc == S_OK ? S_OK : E_FAIL; // E_FAIL used to indicate "not uptodate"
 		//return returnError(E_NOTIMPL); //S_OK;
 	}
 
-	override int QueryStatus( 
+	override int QueryStatus(
 		/* [out] */ BOOL *pfBuildDone)
 	{
 		logCall("%s.QueryStatus(pfBuildDone=%s)", this, _toLog(pfBuildDone));
@@ -2440,7 +2442,7 @@ class Config :	DisposingComObject,
 		return S_OK;
 	}
 
-	override int Stop( 
+	override int Stop(
 		/* [in] */ in BOOL fSync)
 	{
 		logCall("%s.Stop(fSync=%s)", this, _toLog(fSync));
@@ -2448,7 +2450,7 @@ class Config :	DisposingComObject,
 		return S_OK;
 	}
 
-	override int Wait( 
+	override int Wait(
 		/* [in] */ in DWORD dwMilliseconds,
 		/* [in] */ in BOOL fTickWhenMessageQNotEmpty)
 	{
@@ -2456,13 +2458,13 @@ class Config :	DisposingComObject,
 		return returnError(E_NOTIMPL);
 	}
 
-	override int QueryStartBuild( 
+	override int QueryStartBuild(
 		/* [in] */ in DWORD dwOptions,
 		/* [optional][out] */ BOOL *pfSupported,
 		/* [optional][out] */ BOOL *pfReady)
 	{
 		debug(FULL_DBG) mixin(LogCallMix);
-		
+
 		if(pfSupported)
 			*pfSupported = true;
 		if(pfReady)
@@ -2472,7 +2474,7 @@ class Config :	DisposingComObject,
 		return S_OK; // returnError(E_NOTIMPL);
 	}
 
-	override int QueryStartClean( 
+	override int QueryStartClean(
 		/* [in] */ in DWORD dwOptions,
 		/* [optional][out] */ BOOL *pfSupported,
 		/* [optional][out] */ BOOL *pfReady)
@@ -2487,7 +2489,7 @@ class Config :	DisposingComObject,
 		return S_OK; // returnError(E_NOTIMPL);
 	}
 
-	override int QueryStartUpToDateCheck( 
+	override int QueryStartUpToDateCheck(
 		/* [in] */ in DWORD dwOptions,
 		/* [optional][out] */ BOOL *pfSupported,
 		/* [optional][out] */ BOOL *pfReady)
@@ -2512,12 +2514,12 @@ class Config :	DisposingComObject,
 	{
 		mModifiedListener.remove(listener);
 	}
-		
+
 	//////////////////////////////////////////////////////////////////////////////
 	void SetDirty()
 	{
 		mProvider.mProject.GetProjectNode().SetProjectFileDirty(true);
-		
+
 		foreach(listener; mModifiedListener)
 			listener.OnConfigModified();
 	}
@@ -2604,7 +2606,7 @@ class Config :	DisposingComObject,
 
 			string workdir = GetProjectDir();
 			string deppath = makeFilenameAbsolute(depfile, workdir);
-		
+
 			string[] files;
 			bool depok = false;
 			if(std.file.exists(deppath))
@@ -2631,7 +2633,7 @@ class Config :	DisposingComObject,
 
 		string workdir = GetProjectDir();
 		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
-		
+
 		if(!compareCommandFile(cmdfile, fcmd))
 		{
 			if(preason)
@@ -2640,7 +2642,7 @@ class Config :	DisposingComObject,
 		}
 
 		string[] deps = GetDependencies(file);
-		
+
 		outfile = makeFilenameAbsolute(outfile, workdir);
 		string oldestFile, newestFile;
 		long targettm = getOldestFileTime( [ outfile ], oldestFile );
@@ -2663,7 +2665,7 @@ class Config :	DisposingComObject,
 				return true;
 		return tool == kToolResourceCompiler;
 	}
-	
+
 	static string GetStaticCompileTool(CFileNode file, string cfgname)
 	{
 		string tool = file.GetTool(cfgname);
@@ -2680,7 +2682,7 @@ class Config :	DisposingComObject,
 		}
 		return tool;
 	}
-	
+
 	string GetCompileTool(CFileNode file)
 	{
 		string tool = file.GetTool(getCfgName());
@@ -2729,18 +2731,18 @@ class Config :	DisposingComObject,
 		string absname = makeFilenameAbsolute(expname, workdir);
 		return absname;
 	}
-	
+
 	string GetBuildLogFile()
 	{
 		return expandedAbsoluteFilename("$(INTDIR)\\$(SAFEPROJECTNAME).buildlog.html");
 	}
-	
+
 	string[] GetBuildFiles()
 	{
 		string workdir = normalizeDir(GetProjectDir());
 		string outdir = normalizeDir(makeFilenameAbsolute(GetOutDir(), workdir));
 		string intermediatedir = normalizeDir(makeFilenameAbsolute(GetIntermediateDir(), workdir));
-		
+
 		string target = makeFilenameAbsolute(GetTargetPath(), workdir);
 		string cmdfile = makeFilenameAbsolute(GetCommandLinePath(), workdir);
 
@@ -2750,7 +2752,7 @@ class Config :	DisposingComObject,
 		files ~= cmdfile ~ ".rsp";
 		files ~= makeFilenameAbsolute(GetDependenciesPath(), workdir);
 		files ~= makeFilenameAbsolute(GetLinkDependenciesPath(), workdir);
-		
+
 		if(mProjectOptions.usesCv2pdb())
 		{
 			files ~= target ~ "_cv";
@@ -2794,8 +2796,8 @@ class Config :	DisposingComObject,
 			if(outdir != intermediatedir)
 				files ~= intermediatedir ~ uqs;
 		}
-		searchNode(mProvider.mProject.GetRootNode(), 
-			delegate (CHierNode n) { 
+		searchNode(mProvider.mProject.GetRootNode(),
+			delegate (CHierNode n) {
 				if(CFileNode file = cast(CFileNode) n)
 				{
 					string outname = GetOutputFile(file);
@@ -2807,7 +2809,7 @@ class Config :	DisposingComObject,
 				}
 				return false;
 			});
-		
+
 		return files;
 	}
 
@@ -2850,12 +2852,12 @@ class Config :	DisposingComObject,
 			string depfile = GetOutputFile(file, tool) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
 			cmd ~= mProjectOptions.buildCommandLine(true, false, false, syntaxOnly);
-			if(syntaxOnly && mProjectOptions.compiler == Compiler.DMD)
-				cmd ~= " -c -o-";
-			else if(syntaxOnly)
+			if(syntaxOnly && mProjectOptions.compiler == Compiler.GDC)
 				cmd ~= " -c -fsyntax-only";
+			else if(syntaxOnly)
+				cmd ~= " -c -o-";
 			else
-				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile) 
+				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile)
 				              ~ mProjectOptions.getDependenciesFileOption(depfile);
 			cmd ~= " " ~ file.GetFilename();
 			foreach(ddoc; getDDocFileList())
@@ -2907,7 +2909,7 @@ class Config :	DisposingComObject,
 		bool x64 = mProjectOptions.isX86_64;
 		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
 		GlobalOptions globOpt = Package.GetGlobalOptions();
-		string cmd = x64    ? mProjectOptions.compilerDirectories.DisasmCommand64 : 
+		string cmd = x64    ? mProjectOptions.compilerDirectories.DisasmCommand64 :
 		             mscoff ? mProjectOptions.compilerDirectories.DisasmCommand32coff : mProjectOptions.compilerDirectories.DisasmCommand;
 		if(globOpt.demangleError)
 		{
@@ -2926,12 +2928,12 @@ class Config :	DisposingComObject,
 		bool x64 = mProjectOptions.isX86_64;
 		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
 		GlobalOptions globOpt = Package.GetGlobalOptions();
-		string exeSearchPath = x64    ? mProjectOptions.compilerDirectories.ExeSearchPath64 : 
+		string exeSearchPath = x64    ? mProjectOptions.compilerDirectories.ExeSearchPath64 :
 		                       mscoff ? mProjectOptions.compilerDirectories.ExeSearchPath32coff : mProjectOptions.compilerDirectories.ExeSearchPath;
 		if(exeSearchPath.length)
 			cmd ~= "set PATH=" ~ replaceCrLfSemi(exeSearchPath) ~ ";%PATH%\n";
-		
-		string libSearchPath = x64    ? mProjectOptions.compilerDirectories.LibSearchPath64 : 
+
+		string libSearchPath = x64    ? mProjectOptions.compilerDirectories.LibSearchPath64 :
 		                       mscoff ? mProjectOptions.compilerDirectories.LibSearchPath32coff : mProjectOptions.compilerDirectories.LibSearchPath;
 		bool hasGlobalPath = mProjectOptions.useStdLibPath && libSearchPath.length;
 		if(hasGlobalPath || mProjectOptions.libpaths.length)
@@ -2964,7 +2966,7 @@ class Config :	DisposingComObject,
 		string ext = toLower(extension(fname));
 		if(ext != ".d" && ext != ".di")
 			return "";
-		
+
 		string modname = getModuleDeclarationName(fname);
 		if(modname.length > 0)
 			return modname;
@@ -3017,7 +3019,7 @@ class Config :	DisposingComObject,
 		}
 		else if (fcmd.length)
 			fcmd = " " ~ fcmd;
-		
+
 		if(mProjectOptions.compiler == Compiler.GDC && mProjectOptions.libfiles.length)
 			fcmd ~= " " ~ replace(mProjectOptions.libfiles, "\\", "/");
 
@@ -3060,19 +3062,19 @@ class Config :	DisposingComObject,
 			files.remove(r);
 		return files;
 	}
-	
+
 	string getLinkFileList(string[] dfiles, ref string precmd)
 	{
 		string[] files = getObjectFileList(dfiles);
 		string responsefile = GetCommandLinePath() ~ ".lnkarg";
 		return getCommandFileList(files, responsefile, precmd);
 	}
-	
+
 	string[] getSourceFileList()
 	{
 		string[] files;
-		searchNode(mProvider.mProject.GetRootNode(), 
-			delegate (CHierNode n) { 
+		searchNode(mProvider.mProject.GetRootNode(),
+			delegate (CHierNode n) {
 				if(CFileNode file = cast(CFileNode) n)
 					files ~= file.GetFilename();
 				return false;
@@ -3083,8 +3085,8 @@ class Config :	DisposingComObject,
 	string[] getDDocFileList()
 	{
 		string[] files;
-		searchNode(mProvider.mProject.GetRootNode(), 
-			delegate (CHierNode n) { 
+		searchNode(mProvider.mProject.GetRootNode(),
+			delegate (CHierNode n) {
 				if(CFileNode file = cast(CFileNode) n)
 				{
 					string fname = file.GetFilename();
@@ -3099,8 +3101,8 @@ class Config :	DisposingComObject,
 	string[] getInputFileList()
 	{
 		string[] files;
-		searchNode(mProvider.mProject.GetRootNode(), 
-			delegate (CHierNode n) { 
+		searchNode(mProvider.mProject.GetRootNode(),
+			delegate (CHierNode n) {
 				if(CFileNode file = cast(CFileNode) n)
 				{
 					string fname = GetOutputFile(file);
@@ -3121,7 +3123,7 @@ class Config :	DisposingComObject,
 		}
 		return files;
 	}
-	
+
 	string GetPhobosPath()
 	{
 		string libpath = normalizeDir(GetIntermediateDir());
@@ -3221,7 +3223,7 @@ class Config :	DisposingComObject,
 			return cmdline;
 		}
 
-		// because of inconsistent object.di and object_.d in dmd <2.067 we have to build 
+		// because of inconsistent object.di and object_.d in dmd <2.067 we have to build
 		//  druntime and phobos seperately
 
 		string druntimelib = libpath ~ "privatedruntime.lib";
@@ -3285,7 +3287,7 @@ class Config :	DisposingComObject,
 
 		string responsefile = GetCommandLinePath() ~ ".rsp";
 		string fcmd = getCommandFileList(files, responsefile, precmd);
-		
+
 		string[] srcfiles = getSourceFileList();
 		string modules_ddoc;
 		string mod_cmd = getModulesDDocCommandLine(srcfiles, modules_ddoc);
@@ -3308,10 +3310,10 @@ class Config :	DisposingComObject,
 		}
 		string addopt;
 		if(mProjectOptions.additionalOptions.length && fcmd.length)
-			addopt = " " ~ mProjectOptions.additionalOptions;
+			addopt = " " ~ mProjectOptions.additionalOptions.replace("\n", " ");
 		string cmd = precmd ~ opt ~ fcmd ~ addopt ~ "\n";
 		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
-		
+
 		if(separateLink && doLink)
 		{
 			string prelnk, lnkcmd;
@@ -3352,7 +3354,7 @@ class Config :	DisposingComObject,
 				}
 				else
 					lnkcmd ~= cmdfiles;
-				
+
 				if(!mProjectOptions.useStdLibPath)
 					prelnk = "set OPTLINKS=%OPTLINKS% /NOSCANLIB\n" ~ prelnk;
 				prelnk = "set LIB=" ~ libpaths ~ "\n" ~ prelnk;
@@ -3368,7 +3370,7 @@ class Config :	DisposingComObject,
 			cmd = cmd ~ "\n" ~ prelnk ~ lnkcmd ~ "\n";
 			cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 		}
-		
+
 		string cv2pdb = mProjectOptions.appendCv2pdb();
 		if(cv2pdb.length && doLink)
 		{
@@ -3382,11 +3384,11 @@ class Config :	DisposingComObject,
 		string pre = strip(mProjectOptions.preBuildCommand);
 		if(pre.length)
 			cmd = pre ~ "\nif errorlevel 1 goto reportError\n" ~ cmd;
-		
+
 		string post = strip(mProjectOptions.postBuildCommand);
 		if(post.length)
 			cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post ~ "\n\n";
-		
+
 		string target = quoteFilename(mProjectOptions.getTargetPath());
 		cmd ~= "if not exist " ~ target ~ " (echo " ~ target ~ " not created! && goto reportError)\n";
 		cmd ~= "\ngoto noError\n";
@@ -3421,7 +3423,7 @@ class Config :	DisposingComObject,
 		}
 		return false;
 	}
-	
+
 	string[] getLibsFromDependentProjects()
 	{
 		string[] libs;
@@ -3430,7 +3432,7 @@ class Config :	DisposingComObject,
 			return libs;
 
 		scope(exit) release(solutionBuildManager);
-		
+
 		ULONG cActual;
 		if(HRESULT hr = solutionBuildManager.GetProjectDependencies(mProvider.mProject, 0, null, &cActual))
 			return libs;
@@ -3438,7 +3440,7 @@ class Config :	DisposingComObject,
 
 		if(HRESULT hr = solutionBuildManager.GetProjectDependencies(mProvider.mProject, cActual, pHier.ptr, &cActual))
 			return libs;
-		
+
 		for(int i = 0; i < cActual; i++)
 		{
 			IVsProjectCfg prjcfg;
@@ -3608,8 +3610,8 @@ class Config :	DisposingComObject,
 			}
 			if(opt.compilationModel == ProjectOptions.kSingleFileCompilation)
 			{
-				searchNode(mProvider.mProject.GetRootNode(), 
-					delegate (CHierNode n) { 
+				searchNode(mProvider.mProject.GetRootNode(),
+					delegate (CHierNode n) {
 						if(CFileNode file = cast(CFileNode) n)
 						{
 							string tool = GetCompileTool(file);
@@ -3631,7 +3633,7 @@ class Config :	DisposingComObject,
 		}
 		return cnt;
 	}
-	
+
 	// tick the sink and check if build can continue or not.
 	BOOL FFireTick()
 	{
@@ -3779,7 +3781,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 				*pcElementsFetched = 0;
 			return returnError(S_FALSE);
 		}
-		
+
 		if(pcElementsFetched)
 			*pcElementsFetched = 1;
 		*rgpIVsOutput = addref(newCom!VsOutput(mTargets[mPos]));
@@ -4388,7 +4390,7 @@ Config GetActiveConfig(IVsHierarchy pHierarchy)
 {
 	if(!pHierarchy)
 		return null;
-	
+
 	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
 	scope(exit) release(solutionBuildManager);
 

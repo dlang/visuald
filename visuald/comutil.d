@@ -23,9 +23,9 @@ public import stdext.com;
 import sdk.win32.oleauto;
 import sdk.win32.objbase;
 
-debug debug = COM;
-// debug(COM) debug = COM_DTOR; // causes crashes because logCall needs GC, but finalizer called from within GC
-// debug(COM) debug = COM_ADDREL;
+//debug debug = COM;
+//debug(COM) debug = COM_DTOR; // causes crashes because logCall needs GC, but finalizer called from within GC
+//debug(COM) debug = COM_ADDREL;
 
 import core.runtime;
 //debug(COM_ADDREL) debug static import rsgc.gc;
@@ -103,8 +103,8 @@ debug
 		// logCall needs GC, but finalizer called from within GC
 		void* vthis = cast(void*) this;
 		debug(COM_DTOR) logCall("dtor %s this = %s", this, vthis);
-		debug(COM_ADDREL) 
-			synchronized(DComObject.classinfo) 
+		debug(COM_ADDREL)
+			synchronized(DComObject.classinfo)
 				if(auto p = (cast(size_t)vthis^WEAK_PTR_XOR) in sReferencedObjects)
 					*p = -1;
 		InterlockedDecrement(&sCountInstances);
@@ -118,7 +118,7 @@ debug
 		sprintf(sbuf.ptr, "%d COM objects created\n", sCountCreated); ods(sbuf.ptr);
 		sprintf(sbuf.ptr, "%d COM objects never destroyed (no final collection run yet!)\n", sCountInstances); ods(sbuf.ptr);
 		sprintf(sbuf.ptr, "%d COM objects not fully dereferenced\n", sCountReferenced); ods(sbuf.ptr);
-		debug(COM_ADDREL) 
+		debug(COM_ADDREL)
 			foreach(p, b; sReferencedObjects)
 			{
 				void* q = cast(void*)(p^WEAK_PTR_XOR);
@@ -175,14 +175,14 @@ version(none) // copy for debugging
 	{
 		LONG lRef = super.AddRef();
 		debug(COM_ADDREL) logCall("addref  %s this = %s ref = %d", this, cast(void*)this, lRef);
-		
+
 		if(lRef == 1)
 		{
 			debug InterlockedIncrement(&sCountReferenced);
 			//uint sz = this.classinfo.init.length;
 			debug void* vthis = cast(void*) this;
 			debug(COM) logCall("addroot %s this = %s", this, vthis);
-			debug(COM_ADDREL) 
+			debug(COM_ADDREL)
 				synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^WEAK_PTR_XOR] = 1;
 		}
 		return lRef;
@@ -193,13 +193,13 @@ version(none) // copy for debugging
 		ULONG lRef = super.Release();
 
 		debug(COM_ADDREL) logCall("release %s this = %s ref = %d", this, cast(void*)this, lRef);
-	
+
 		if (lRef == 0)
 		{
 			debug void* vthis = cast(void*) this;
 			debug(COM) logCall("delroot %s this = %s", this, vthis);
 			debug InterlockedDecrement(&sCountReferenced);
-			debug(COM_ADDREL) 
+			debug(COM_ADDREL)
 				synchronized(DComObject.classinfo) sReferencedObjects[cast(size_t)vthis^WEAK_PTR_XOR] = 0;
 		}
 		return lRef;
@@ -227,13 +227,13 @@ class DisposingComObject : DComObject
 }
 
 /+
-struct PARAMDATA 
+struct PARAMDATA
 {
 	OLECHAR* szName;
 	VARTYPE vtReturn;
 }
 
-struct METHODDATA 
+struct METHODDATA
 {
 	OLECHAR* zName;
 	PARAMDATA* ppData;
@@ -248,7 +248,7 @@ struct METHODDATA
 struct INTERFACEDATA
 {
 	METHODDATA* pmethdata;   // Pointer to an array of METHODDATAs.
-	uint cMembers;           // Count of 
+	uint cMembers;           // Count of
 }
 +/
 
@@ -262,7 +262,7 @@ class DisposingDispatchObject : DisposingComObject, IDispatch
 	}
 
 	// IDispatch
-	override int GetTypeInfoCount( 
+	override int GetTypeInfoCount(
 		/* [out] */ UINT *pctinfo)
 	{
 //		mixin(LogCallMix);
@@ -270,7 +270,7 @@ class DisposingDispatchObject : DisposingComObject, IDispatch
 		return S_OK;
 	}
 
-	override int GetTypeInfo( 
+	override int GetTypeInfo(
 		/* [in] */ in UINT iTInfo,
 		/* [in] */ in LCID lcid,
 		/* [out] */ ITypeInfo *ppTInfo)
@@ -283,7 +283,7 @@ class DisposingDispatchObject : DisposingComObject, IDispatch
 		return S_OK;
 	}
 
-	override int GetIDsOfNames( 
+	override int GetIDsOfNames(
 		/* [in] */ in IID* riid,
 		/* [size_is][in] */ in LPOLESTR *rgszNames,
 		/* [range][in] */ in UINT cNames,
@@ -294,7 +294,7 @@ class DisposingDispatchObject : DisposingComObject, IDispatch
 		return getTypeHolder().GetIDsOfNames(rgszNames, cNames, rgDispId);
 	}
 
-	override int Invoke( 
+	override int Invoke(
 		/* [in] */ in DISPID dispIdMember,
 		/* [in] */ in IID* riid,
 		/* [in] */ in LCID lcid,
@@ -334,21 +334,21 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return super.QueryInterface(riid, pvObject);
 	}
 
-	override int GetTypeAttr( 
+	override int GetTypeAttr(
 		/* [out] */ TYPEATTR **ppTypeAttr)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetTypeComp( 
+	override int GetTypeComp(
 		/* [out] */ ITypeComp* ppTComp)
 	{
 		mixin(LogCallMix);
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetFuncDesc( 
+	override int GetFuncDesc(
 		/* [in] */ in UINT index,
 		/* [out] */ FUNCDESC **ppFuncDesc)
 	{
@@ -356,7 +356,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetVarDesc( 
+	override int GetVarDesc(
 		/* [in] */ in UINT index,
 		/* [out] */ VARDESC **ppVarDesc)
 	{
@@ -364,7 +364,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetNames( 
+	override int GetNames(
 		/* [in] */ in MEMBERID memid,
 		/* [length_is][size_is][out] */ BSTR *rgBstrNames,
 		/* [in] */ in UINT cMaxNames,
@@ -374,7 +374,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetRefTypeOfImplType( 
+	override int GetRefTypeOfImplType(
 		/* [in] */ in UINT index,
 		/* [out] */ HREFTYPE *pRefType)
 	{
@@ -382,7 +382,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetImplTypeFlags( 
+	override int GetImplTypeFlags(
 		/* [in] */ in UINT index,
 		/* [out] */ INT *pImplTypeFlags)
 	{
@@ -390,7 +390,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetIDsOfNames( 
+	override int GetIDsOfNames(
 		/* [size_is][in] */ in LPOLESTR *rgszNames,
 		/* [in] */ in UINT cNames,
 		/* [size_is][out] */ MEMBERID *pMemId)
@@ -399,7 +399,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int Invoke( 
+	override int Invoke(
 		/* [in] */ in PVOID pvInstance,
 		/* [in] */ in MEMBERID memid,
 		/* [in] */ in WORD wFlags,
@@ -412,7 +412,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetDocumentation( 
+	override int GetDocumentation(
 		/* [in] */ in MEMBERID memid,
 		/* [out] */ BSTR *pBstrName,
 		/* [out] */ BSTR *pBstrDocString,
@@ -423,7 +423,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetDllEntry( 
+	override int GetDllEntry(
 		/* [in] */ in MEMBERID memid,
 		/* [in] */ in INVOKEKIND invKind,
 		/* [out] */ BSTR *pBstrDllName,
@@ -434,7 +434,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetRefTypeInfo( 
+	override int GetRefTypeInfo(
 		/* [in] */ in HREFTYPE hRefType,
 		/* [out] */ ITypeInfo* ppTInfo)
 	{
@@ -442,7 +442,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int AddressOfMember( 
+	override int AddressOfMember(
 		/* [in] */ in MEMBERID memid,
 		/* [in] */ in INVOKEKIND invKind,
 		/* [out] */ PVOID *ppv)
@@ -451,7 +451,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int CreateInstance( 
+	override int CreateInstance(
 		/* [in] */ IUnknown pUnkOuter,
 		/* [in] */ in IID* riid,
 		/* [iid_is][out] */ PVOID *ppvObj)
@@ -460,7 +460,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetMops( 
+	override int GetMops(
 		/* [in] */ in MEMBERID memid,
 		/* [out] */ BSTR *pBstrMops)
 	{
@@ -468,7 +468,7 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetContainingTypeLib( 
+	override int GetContainingTypeLib(
 		/* [out] */ ITypeLib *ppTLib,
 		/* [out] */ UINT *pIndex)
 	{
@@ -476,21 +476,21 @@ class ComTypeInfoHolder : DComObject, ITypeInfo
 		return returnError(E_NOTIMPL);
 	}
 
-	/* [local] */ void ReleaseTypeAttr( 
+	/* [local] */ void ReleaseTypeAttr(
 		/* [in] */ in TYPEATTR *pTypeAttr)
 	{
 		mixin(LogCallMix);
 		//return returnError(E_NOTIMPL);
 	}
 
-	/* [local] */ void ReleaseFuncDesc( 
+	/* [local] */ void ReleaseFuncDesc(
 		/* [in] */ in FUNCDESC *pFuncDesc)
 	{
 		mixin(LogCallMix);
 		//return returnError(E_NOTIMPL);
 	}
 
-	/* [local] */ void ReleaseVarDesc( 
+	/* [local] */ void ReleaseVarDesc(
 		/* [in] */ in VARDESC *pVarDesc)
 	{
 		mixin(LogCallMix);
