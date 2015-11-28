@@ -1122,13 +1122,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		case VersionParseState.AsmParsedEnabled:
 			if(text == "{")
 				parseState = VersionParseState.InAsmBlockEnabled;
-			else
+			else if (text != "nothrow" && text != "pure" && !text.startsWith("@"))
 				parseState = VersionParseState.IdleEnabled;
 			break;
 		case VersionParseState.AsmParsedDisabled:
 			if(text == "{")
 				parseState = VersionParseState.InAsmBlockDisabled;
-			else
+			else if (text != "nothrow" && text != "pure" && !text.startsWith("@"))
 				parseState = VersionParseState.IdleDisabled;
 			goto case VersionParseState.IdleDisabled;
 

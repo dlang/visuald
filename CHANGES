@@ -753,7 +753,7 @@ Version history
   * mago: added support for new AA implementation
   * mago: preview for structs now shows first members
 
-unreleased Version 0.3.43
+2015-11-28 Version 0.3.43
 
   * dustmite: pattern passed to "find" must always use quotes
   * VS2015: new install adds $(VCInstallDir)\bin to exectuable paths to allow cv2pdb to create PDB files
@@ -799,3 +799,5 @@ unreleased Version 0.3.43
     - fix order of identifiers if "#define A B" is converted to an alias
   * additional options: now replacing newline with space when adding to the command line
   * compiling file for syntax check with LDC passed wrong command line option
+  * pass VSINSTALLDIR in the environment to avoid autodetection by LDC
+  * bugzilla 15345: syntax highlighting wrng if asm followed by function attributes
