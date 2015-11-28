@@ -2957,6 +2957,8 @@ class Config :	DisposingComObject,
 				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
 			if(globOpt.VCInstallDir.length)
 				cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
+			if(globOpt.VSInstallDir.length)
+				cmd ~= "set VSINSTALLDIR=" ~ globOpt.VSInstallDir ~ "\n";
 		}
 		return cmd;
 	}

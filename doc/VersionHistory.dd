@@ -1,5 +1,75 @@
 Ddoc
 
+$(H2 2015-11-28 Version 0.3.43)
+ $(UL
+  $(LI installation
+   $(UL
+    $(LI new install adds $(DOLLAR)(VCInstallDir)\bin to exectuable paths to allow cv2pdb to create PDB files)
+    $(LI moved defaults for resource includes and dmd executable paths from installation to extension init)
+    $(LI tweaked default path and library settings for DMD and LDC)
+  ))
+  $(LI improved VS2015 support
+   $(UL
+    $(LI added detection for Universal CRT in Win10 SDK, new macro replacements $(DOLLAR)(UCRTSdkDir) and
+      $(DOLLAR)(UCRTVersion) allow adding library search path to find libucrt.lib)
+    $(LI fixed spurious "not implemented" error in error list of VS 2015)
+    $(LI fix dark theme detection in VS 2015)
+    $(LI fixed calling linker to build with VC runtime of VS2015: legacy_stdio_definitions.lib missing)
+    $(LI VS2015 linker updates logs and telemetry data files, confusing tracked linker dependencies.
+      Now ignoring files that are both read and written.)
+  ))
+  $(LI project management
+   $(UL
+    $(LI New item: the module name no longer has a preceding '.' when guessing a package name)
+    $(LI renamed command "Add Folder" in project folder context menu to "Add Filter")
+    $(LI added command "Add Folder" to project folder context menu that actually creates the folder on disk)
+    $(LI renaming a module in the project tree now reopens it at the previous caret location)
+    $(LI renaming a package in the project tree also renames the folder on disk if it is still empty)
+    $(LI bugzilla 12021: C++ projects (and others probably, too) might not load correctly in a solution)
+      that also contains a Visual D project
+  ))
+  $(LI build system
+   $(UL
+    $(LI debug info: added option "suitable for selected debug engine")
+    $(LI LDC: recent versions build object files into intermediate folder, wrong names passed to linker
+      with "separate compile and link")
+    $(LI debug option: allow none of -debug and -release to be specified (and fix LDC never to receive
+      the -d-debug option))
+    $(LI additional options: now replacing newline with space when adding to the command line)
+    $(LI compiling file for syntax check with LDC passed wrong command line option)
+    $(LI pass VSINSTALLDIR in the environment to avoid autodetection by LDC)
+  ))
+  $(LI language service
+   $(UL
+    $(LI the original semantic analysis engine is no longer installed, always using dparser now)
+    $(LI better semantic/colorizer support for versions LDC,CRuntime_Microsoft,CRuntime_DigitalMars and MinGW)
+    $(LI bugzilla 15345: syntax highlighting wrong if asm followed by function attributes)
+  ))
+  $(LI configuration dialogs:
+   $(UL
+    $(LI fixed small fonts in VS2015)
+    $(LI better work with resizeable windows)
+    $(LI scale some controls vertically if there is space)
+    $(LI added browse buttons to path settings)
+  ))
+  $(LI some improvements to the C++ to D conversion wizard:
+   $(UL
+    $(LI don't stop conversion after an unmatched } (this also caused other messages to not be displayed))
+    $(LI added support for sizeof without parenthesis)
+    $(LI allow namespace scope in type names)
+    $(LI allow virtual destructors)
+    $(LI skip throw function specification)
+    $(LI fix order of identifiers if "#define A B" is converted to an alias)
+  ))
+  $(LI miscellaneous
+   $(UL
+    $(LI dustmite: pattern passed to "find" must always use quotes)
+    $(LI added icons to some commands)
+    $(LI search pane did not save its last state, only when switching between file and symbol search)
+    $(LI replaced ancient pkgcmd.ctc with pkgcmd.vsct that's buildable with newer VS SDKs)
+  ))
+ )
+
 $(H2 2015-8-5 Version 0.3.42)
  $(UL
   $(LI build system
@@ -35,7 +105,7 @@ $(H2 2015-8-5 Version 0.3.42)
     $(LI case sensitivity button was restored inverted)
   ))
   $(LI installer now shows the version of Visual D about to be installed)
-))
+ )
 
 $(H2 2015-5-16 Version 0.3.41)
  $(UL
@@ -47,7 +117,7 @@ $(H2 2015-5-16 Version 0.3.41)
   ))
   $(LI language service
    $(UL
-    $(LI dparser updated to cf26dbe426b10957f6364313cc7121e41083bebe with support for new 
+    $(LI dparser updated to cf26dbe426b10957f6364313cc7121e41083bebe with support for new
          language features in dmd 2.067 and fixing a number of exceptions)
     $(LI some initial support for finding symbol references)
     $(LI new command "Compile and Disassemble" to show the disassembly of the current file in
@@ -61,7 +131,7 @@ $(H2 2015-5-16 Version 0.3.41)
     $(LI callstack: parameter list also showed locals)
     $(LI disassembly: show symbols, address labels)
     $(LI fix dstring display)
-    $(LI can list associative array members (needs 
+    $(LI can list associative array members (needs
          https://github.com/D-Programming-Language/dmd/pull/4473 for Win64, new AA
          implementation in dmd 2.068 not supported yet, though))
     $(LI show exception number for Win32 exceptions)
@@ -84,7 +154,7 @@ $(H2 2015-1-1 Version 0.3.40)
          $(LI common command line options can be specified on the compiler page of the project)
          $(LI special command line options can be added per file)
          $(LI $(CC) expands to the compiler executable of the current D compiler: dmc, cl, gcc or clang)
-         $(LI if "Translate D options" is checked, dmd options for -g, -release, -O are translated to 
+         $(LI if "Translate D options" is checked, dmd options for -g, -release, -O are translated to
               the respective C/C++ compiler option)
        ))
      $(LI Win32/COFF support: check box on Compiler->Output page, new tab in global options)
@@ -248,7 +318,7 @@ $(H2 2013-11-02 Version 0.3.37)
   $(LI syntax/coverage highlighting
    $(UL
     $(LI editor always started with coverage highlighting enabled)
-    $(LI Colorize coverage: 
+    $(LI Colorize coverage:
      $(UL
       $(LI disabled if lst file older than source file or deleted)
       $(LI tweaked line number translation)
@@ -325,9 +395,9 @@ $(H2 2013-05-10 $(DDLINK News36,Version 0.3.36))
     $(LI added keyword __argTypes)
    )
   )
-  $(LI syntax highlighting and semantic now fully support version identifiers according 
+  $(LI syntax highlighting and semantic now fully support version identifiers according
     to http://dlang.org/version.html )
-  $(LI improved parser/semantics: 
+  $(LI improved parser/semantics:
    $(UL
     $(LI fix "forgetting" type of function parameters after first evaluation)
     $(LI fix a number of crashes during semantics)
@@ -350,7 +420,7 @@ $(H2 2013-05-10 $(DDLINK News36,Version 0.3.36))
   $(LI added command "Open Language Options" for easier access to the settings page)
   $(LI added option "Colorize coverage from .LST file" to highlight lines from code coverage output)
  )
- 
+
 $(H2 2012-12-03 Version 0.3.35)
  $(UL
   $(LI new linker option to disable using global and standard library search paths)
@@ -375,7 +445,7 @@ $(H2 2012-12-03 Version 0.3.35)
   $(LI added console application project template with configurations for DMD and GDC for Win32 and x86)
   $(LI fixed spurious crashes due to bug in precise garbage collection)
  )
- 
+
 $(H2 2012-10-12 Version 0.3.34)
  $(UL
   $(LI fix exceptions in NDepend when opening context menu on D project)
@@ -388,7 +458,7 @@ $(H2 2012-10-12 Version 0.3.34)
   $(LI fix calling cv2pdb for D1)
   $(LI goto definition: if ".." is used to reference the source file path, it could be opened twice in the editor)
   $(LI new item: package and module name now filled with some guess)
-  $(LI optlink now called directly with file monitoring: this allows passing the library path directly (making the DMD_LIB 
+  $(LI optlink now called directly with file monitoring: this allows passing the library path directly (making the DMD_LIB
     patch in sc.ini redundant) and detecting library and source dependencies )
   $(LI parser could not recover from error in module statement, also improved recovery from error in enum declaration)
   $(LI parse errors in modules imported during semantic analysis could cause dramatic troubles)
@@ -414,12 +484,12 @@ $(H2 2012-06-19 Version 0.3.33)
   $(LI debugger project settings now stored in solution options file, not in project file)
   $(LI regression: clean project failed, now deletes files given by wildcard recursively)
   $(LI token replace: fixed freeze when trying to replace no tokens)
-  $(LI cv2pdb: new version 0.25 that allows specifying a different pdb file being embedded 
+  $(LI cv2pdb: new version 0.25 that allows specifying a different pdb file being embedded
     into the binary and supports VS11 )
   $(LI cv2pdb: exposed command line options in the project options)
   $(LI intellisense tool tip now shows enumerator value)
   $(LI moved parser and semantic analysis into another process)
-  $(LI GDC: user specified libraries are now appended after the source files to the command 
+  $(LI GDC: user specified libraries are now appended after the source files to the command
     line to avoid linker problems )
   $(LI improved performance when indenting multiple lines of code)
   $(LI remove project item: now asks whether file on disk should also be removed)
@@ -608,7 +678,7 @@ $(H2 2011-02-27 Version 0.3.22)
   $(LI Visual D now builds with DMD 2.052)
   $(LI fixed WindowsApp template to build with DMD 2.052)
   $(LI fixed some COM leaks)
-  $(LI paste ring menu no longer stops when repeating the first entry and 
+  $(LI paste ring menu no longer stops when repeating the first entry and
     avoids duplicate entries )
   $(LI new token search and replace dialog)
   $(LI new compilation mode: compile and link in separate steps allowing multiple object files)
@@ -627,7 +697,7 @@ $(H2 2011-01-29 Version 0.3.21)
   $(LI brace highlighting now done in idle handling, so it also works when moving
     the caret with the mouse )
   $(LI brace matching now also includes strings and nested comments)
-  $(LI goto matching brace now implemented (the VS implementation does not work 
+  $(LI goto matching brace now implemented (the VS implementation does not work
     well with D) )
   $(LI completion: items are no longer displayed multiple times)
   $(LI improved handling of unicode characters in environment and batch files)
@@ -671,7 +741,7 @@ $(H2 2010-11-07 Version 0.3.18)
   $(LI improved dependency file parsing speed)
   $(LI bugfix: imports with selective import symbols could miss from dependent import files)
   $(LI now packaged with cv2pdb 0.18)
-  $(LI now packaged with new mago version, including better exception handling and 
+  $(LI now packaged with new mago version, including better exception handling and
     disassembly support )
   $(LI fixed mago deinstallation, added mago to Visual Studio About window)
   $(LI added token identifier enumerator to lexer)
@@ -709,7 +779,7 @@ $(H2 2010-09-24 Version 0.3.16)
 
 $(H2 2010-08-11 Version 0.3.15)
  $(UL
-  $(LI when reading import paths from sc.ini, the directory is determined by searching dmd.exe 
+  $(LI when reading import paths from sc.ini, the directory is determined by searching dmd.exe
     through the executable paths setting and the PATH environment variable )
   $(LI fixed freeze when searching indentation level for smart indent (might also affect brace
     matching) )
@@ -755,7 +825,7 @@ $(H2 2010-06-25 Version 0.3.12)
  $(UL
   $(LI stricter string handling to avoid crashes when launching debugger in VS2010)
   $(LI the windows application template's sub-system version now defaults to 4.0)
-  $(LI added new project item template for package creating both folder in project and 
+  $(LI added new project item template for package creating both folder in project and
     directory on disk )
   $(LI if a directory exists with the name of the folder, the default location
     of a new project item now defaults to this directory )
@@ -771,7 +841,7 @@ $(H2 2010-06-10 Version 0.3.11)
   $(LI Visual D settings now stored in the user area of the registry)
   $(LI added library search path to project settings (you need to append ";%LIB%" to
     the LIB setting in DMD's sc.ini for this to work) )
-  $(LI command VisualD.ShowScope now displays the scope of the caret in the 
+  $(LI command VisualD.ShowScope now displays the scope of the caret in the
     status line )
   $(LI Visual D now creates its own menu, expecting to be filled with more commands
     in the future and to avoid cluttering other menus )
@@ -800,7 +870,7 @@ $(H2 2010-05-28 Version 0.3.9)
   $(LI fixed COM leak)
   $(LI fix: file opened through "goto definition"/"find in files" sometimes warns
     "already opened in editor")
-  $(LI fix: "goto error" sometimes would not jump to error with message 
+  $(LI fix: "goto error" sometimes would not jump to error with message
     "cannot find the file specified")
   $(LI fix: last version would not let you select any but the first entry of an
     expansion list)
@@ -868,7 +938,7 @@ $(H2 2010-04-14 Version 0.3.2)
   $(LI added switch "use other compiler" to project settings)
   $(LI disabled settings if respective enable switch is off)
  )
-  
+
 $(H2 2010-04-13 Version 0.3.1)
  $(UL
   $(LI initial release)

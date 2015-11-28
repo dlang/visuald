@@ -753,43 +753,46 @@ Version history
   * mago: added support for new AA implementation
   * mago: preview for structs now shows first members
 
-unreleased Version 0.3.43
+2015-11-28 Version 0.3.43
 
-  * dustmite: pattern passed to "find" must always use quotes
-  * VS2015: new install adds $(VCInstallDir)\bin to exectuable paths to allow cv2pdb to create PDB files
-  * VS2015: added detection for Universal CRT in Win10 SDK, new macro replacements $(UCRTSdkDir) and 
-    $(UCRTVersion) allow adding library search path to find libucrt.lib
-  * New item: the module name no longer has a preceding '.' when guessing a package name
-  * when renaming a module in the project, the editor is reopened at the previous caret position if it was
-    opened before
-  * replaced ancient pkgcmd.ctc with pkgcmd.vsct that's buildable with newer VS SDKs
-  * added icons to some commands
-  * renamed command "Add Folder" in project folder context menu to "Add Filter"
-  * added command "Add Folder" to project folder context menu that actually creates the folder on disk
-  * renaming a module in the project tree now reopens it at the previous caret location
-  * renaming a package in the project tree also renames the folder on disk if it is still empty
-  * debug info: added option "suitable for selected debug engine"
-  * the original semantic analysis engine is no longer installed, always using dparser now
-  * LDC: recent versions build object files into intermediate folder, wrong names passed to linker
-    with "separate compile and link"
-  * moved defaults for resource includes and dmd executable paths from installation to extension init
-  * fixed spurious "not implemented" error in error list of VS 2015
-  * fix dark theme detection in VS 2015
-  * better semantic/colorizer support for versions LDC,CRuntime_Microsoft,CRuntime_DigitalMars and MinGW
-  * tweaked default path and library settings for DMD and LDC
+  * installation
+    - new install adds $(VCInstallDir)\bin to exectuable paths to allow cv2pdb to create PDB files
+    - moved defaults for resource includes and dmd executable paths from installation to extension init
+    - tweaked default path and library settings for DMD and LDC
+  * improved VS2015 support
+    - added detection for Universal CRT in Win10 SDK, new macro replacements $(UCRTSdkDir) and 
+      $(UCRTVersion) allow adding library search path to find libucrt.lib
+    - fixed spurious "not implemented" error in error list of VS 2015
+    - fix dark theme detection in VS 2015
+    - fixed calling linker to build with VC runtime of VS2015: legacy_stdio_definitions.lib missing
+    - VS2015 linker updates logs and telemetry data files, confusing tracked linker dependencies. 
+      Now ignoring files that are both read and written.
+  * project management
+    - New item: the module name no longer has a preceding '.' when guessing a package name
+    - renamed command "Add Folder" in project folder context menu to "Add Filter"
+    - added command "Add Folder" to project folder context menu that actually creates the folder on disk
+    - renaming a module in the project tree now reopens it at the previous caret location
+    - renaming a package in the project tree also renames the folder on disk if it is still empty
+    - bugzilla 12021: C++ projects (and others probably, too) might not load correctly in a solution
+      that also contains a Visual D project
+  * build system
+    - debug info: added option "suitable for selected debug engine"
+    - LDC: recent versions build object files into intermediate folder, wrong names passed to linker
+      with "separate compile and link"
+    - debug option: allow none of -debug and -release to be specified (and fix LDC never to receive 
+      the -d-debug option)
+    - additional options: now replacing newline with space when adding to the command line
+    - compiling file for syntax check with LDC passed wrong command line option
+    - pass VSINSTALLDIR in the environment to avoid autodetection by LDC
+  * language service
+    - the original semantic analysis engine is no longer installed, always using dparser now
+    - better semantic/colorizer support for versions LDC,CRuntime_Microsoft,CRuntime_DigitalMars and MinGW
+    - bugzilla 15345: syntax highlighting wrong if asm followed by function attributes
   * configuration dialogs:
     - fixed small fonts in VS2015
     - better work with resizeable windows
     - scale some controls vertically if there is space
     - added browse buttons to path settings
-  * search pane did not save its last state, only when switching between file and symbol search
-  * fixed calling linker to build with VC runtime of VS2015: legacy_stdio_definitions.lib missing
-  * bugzilla 12021: C++ projects (and others probably, too) might not load correctly in a solution
-    that also contains a Visual D project
-  * VS2015 linker updates logs and telemetry data files, confusing tracked linker dependencies. 
-    Now ignoring files that are both read and written.
-  * debug option: allow none of -debug and -release to be specified (and fix LDC never to receive 
-    the -d-debug option)
   * some improvements to the C++ to D conversion wizard:
     - don't stop conversion after an unmatched } (this also caused other messages to not be displayed)
     - added support for sizeof without parenthesis
@@ -797,5 +800,8 @@ unreleased Version 0.3.43
     - allow virtual destructors
     - skip throw function specification
     - fix order of identifiers if "#define A B" is converted to an alias
-  * additional options: now replacing newline with space when adding to the command line
-  * compiling file for syntax check with LDC passed wrong command line option
+  * miscellaneous
+    - replaced ancient pkgcmd.ctc with pkgcmd.vsct that's buildable with newer VS SDKs
+    - added icons to some commands
+    - search pane did not save its last state, only when switching between file and symbol search
+    - dustmite: pattern passed to "find" must always use quotes
