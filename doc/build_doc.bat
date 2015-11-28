@@ -1,6 +1,6 @@
-set DMD=m:\s\d\rainers\windows\bin\dmd.exe
+set DMD=c:\s\d\rainers\windows\bin\dmd.exe
 rem set WEB=m:\s\d\rainers\web\visuald
-set WEB=m:\s\d\visuald\gh-pages\visuald
+set WEB=c:\s\d\visuald\gh-pages\visuald
 
 set SRC=ReportingBugs.dd
 set SRC=%SRC% StartPage.dd
