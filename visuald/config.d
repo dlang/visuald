@@ -268,7 +268,7 @@ class ProjectOptions
 
 	this(bool dbg, bool x64)
 	{
-		Dversion = 2.043;
+		Dversion = 2;
 		exefile = "$(OutDir)\\$(ProjectName).exe";
 		outdir = "$(ConfigurationName)";
 		objdir = "$(OutDir)";
