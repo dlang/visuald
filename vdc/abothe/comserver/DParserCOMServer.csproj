@@ -71,7 +71,4 @@
       <Name>DParser2</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
 </Project>
