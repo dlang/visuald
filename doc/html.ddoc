@@ -46,7 +46,7 @@ SPANID = $(SPAN id="$1", $+)
 SUBSCRIPT = $(T sub, $0)
 SUPERSCRIPT = $(T sup, $0)
 TABLE = $(T table, $0)
-TABLEC = $(T table, $1, $+)
+TABLEC = $(TC table, $1, $+)
 T=<$1>$+</$1>
 TC=<$1 class="$2">$(TAIL $+)</$1>
 TD = $(T td, $0)
@@ -101,7 +101,7 @@ _=Main entry point
 DDOC = $(T html,
 $(T head,
   <META http-equiv="content-type" content="text/html; charset=utf-8">
-  <link rel="stylesheet" type="text/css" href="css/html.css" />
+  <link rel="stylesheet" type="text/css" href="css/html.css">
   $(T title, $(TITLE))
 )
 $(T body, $(H1 $(TITLE))$(BODY)))
@@ -162,6 +162,9 @@ DDOC_ANCHOR  = $(ADEF $1)
 DDOC_PSYMBOL = $(U $0)
 DDOC_KEYWORD = $(B $0)
 DDOC_PARAM   = $(I $0)
+DDOC_OVERLOAD_SEPARATOR = $(BR)
+DDOC_CONSTRAINT=$(BR)$(SPAN class="constraint", if ($0))
+DDOC_TEMPLATE_PARAM_LIST=$(SPAN class="template_param_list" title="Template parameter list", $0)
 _=
 
 _=Generic blurb to describe C header bindings

@@ -25,7 +25,7 @@ set SRC=%SRC% News36.dd
 set SRC=%SRC% CompileCommands.dd
 set SRC=%SRC% DustMite.dd
 
-set DDOC=macros.ddoc html.ddoc visuald.ddoc dlang.org.ddoc
+set DDOC=macros.ddoc html.ddoc dlang.org.ddoc visuald.ddoc
 
 if not exist %WEB% md %WEB%
 if not exist %WEB%\images md %WEB%\images
