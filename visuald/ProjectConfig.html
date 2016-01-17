@@ -2,81 +2,93 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <!--
-    Copyright (c) 1999-2015 by Digital Mars
+    Copyright (c) 1999-2016 by Digital Mars
     All Rights Reserved Written by Walter Bright
     http://digitalmars.com
   -->
 <head>
-<meta charset="utf-8" />
-<meta name="keywords" content="D programming language" />
-<meta name="description" content="D Programming Language" />
+<meta charset="utf-8">
+<meta name="keywords" content="D programming language">
+<meta name="description" content="D Programming Language">
 <title>Project Configuration - D Programming Language</title>
 
-<link rel="stylesheet" href="http://www.dlang.org/css/codemirror.css" />
-<link rel="stylesheet" href="http://www.dlang.org/css/style.css" />
-<link rel="stylesheet" href="http://www.dlang.org/css/print.css" media="print" />
-<link rel="stylesheet" href="http://www.dlang.org/css/cssmenu.css">
-<link rel="shortcut icon" href="http://www.dlang.org/favicon.ico" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0" />
+<link rel="stylesheet" href="http://www.dlang.org/css/codemirror.css">
+<link rel="stylesheet" href="http://www.dlang.org/css/style.css">
+<link rel="stylesheet" href="http://www.dlang.org/css/print.css" media="print">
+<link rel="shortcut icon" href="http://www.dlang.org/favicon.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0">
 
 </head>
-<body id='Project Configuration' class='doc'>
+<body id='Project Configuration' class='visuald'>
 <script type="text/javascript">document.body.className += ' have-javascript'</script>
-<div id="top">	<div id="header">		<img src="http://www.dlang.org/images/hamburger.svg" id="mobile-hamburger">
-		<a class="logo" href="http://www.dlang.org/"><img id="logo" width="125" height="95" alt="D Logo" src="http://www.dlang.org/images/dlogo.svg"></a>
-		<span id="d-language-mobilehelper"><a href="." id="d-language">D Programming Language</a></span>
-	</div>
-</div>
-<div id="navigation">    
+<div id="top"><div class="helper"><div class="helper expand-container">    <div class="logo"><a href="http://www.dlang.org"><img id="logo" alt="D Logo" src="http://www.dlang.org/images/dlogo.svg"></a></div>
+    <a href="http://www.dlang.org/menu.html" title="Menu" class="hamburger expand-toggle"><span>Menu</span></a>
+    
+<div id="cssmenu"><ul>    <li><a href='http://www.dlang.org/getstarted.html'><span>Learn</span></a></li>
+    <li class='expand-container'><a class='expand-toggle' href='http://www.dlang.org/documentation.html'><span>Documentation</span></a>
+      
+<ul class='expand-content'><li><a href='    http://www.dlang.org/spec/intro.html'>Language Reference</a></li><li><a href='    http://www.dlang.org/phobos/index.html'>Library Reference</a></li><li><a href='    http://www.dlang.org/comparison.html'>Feature Overview</a></li><li><a href='    http://www.dlang.org/dmd-windows.html'>DMD Manual</a></li><li><a href='    http://www.dlang.org/articles.html'>Articles
+</a></li></ul></li>
+    <li><a href='http://www.dlang.org/download.html'><span>Downloads</span></a></li>
+    <li><a href='http://code.dlang.org'><span>Packages</span></a></li>
+    <li class='expand-container'><a class='expand-toggle' href='http://www.dlang.org/community.html'><span>Community</span></a>
+      
+<ul class='expand-content'><li><a href='    http://www.dlang.org/bugstats.php'>Bug Tracker</a></li><li><a href='    http://forum.dlang.org'>Forums</a></li><li><a href='    irc://irc.freenode.net/d'>IRC</a></li><li><a href='    http://github.com/D-Programming-Language'>D on GitHub</a></li><li><a href='    http://wiki.dlang.org'>Wiki</a></li><li><a href='    http://wiki.dlang.org/Review_Queue'>Review Queue</a></li><li><a href='    http://twitter.com/search?q=%23dlang'>Twitter</a></li><li><a href='    http://digitalmars.com/d/dlinks.html'>More Links
+</a></li></ul></li>
+    <li class='expand-container'><a class='expand-toggle' href='http://www.dlang.org/resources.html'><span>Resources</span></a>
+      
+<ul class='expand-content'><li><a href='    http://www.dlang.org/library/index.html'>NEW Library Reference Preview</a></li><li><a href='    http://www.dlang.org/tools.html'>D-Specific Tools</a></li><li><a href='    http://rainers.github.io/visuald/visuald/StartPage.html'>Visual D</a></li><li><a href='    http://wiki.dlang.org/Editors'>Editors</a></li><li><a href='    http://wiki.dlang.org/IDEs'>IDEs</a></li><li><a href='    http://wiki.dlang.org/Tutorials'>Tutorials</a></li><li><a href='    http://wiki.dlang.org/Books'>Books</a></li><li><a href='    http://www.dlang.org/dstyle.html'>The D Style</a></li><li><a href='    http://www.dlang.org/glossary.html'>Glossary</a></li><li><a href='    http://www.dlang.org/acknowledgements.html'>Acknowledgments</a></li><li><a href='    http://www.dlang.org/sitemap.html'>Sitemap
+</a></li></ul></li>
+</ul></div>
+    <div class="search-container expand-container">        <a href="http://www.dlang.org/search.html" class="expand-toggle" title="Search"><span>Search</span></a>
+        
     <div id="search-box">        <form method="get" action="http://google.com/search">
-            <input type="hidden" id="domains" name="domains" value="dlang.org" />
-            <input type="hidden" id="sourceid" name="sourceid" value="google-search" />
-            <span id="search-query"><input id="q" name="q" placeholder="Search" tabindex="1000" /></span><span id="search-dropdown">                <select id="sitesearch" name="sitesearch" size="1">
-                    <option value="dlang.org">Entire D Site</option>
-                    <option  value="dlang.org/phobos">Library Reference</option>
-                    <option  value="forum.dlang.org">Discussion Forums</option>
+            <input type="hidden" id="domains" name="domains" value="dlang.org">
+            <input type="hidden" id="sourceid" name="sourceid" value="google-search">
+            <span id="search-query"><input id="q" name="q" placeholder="Search"></span><span id="search-dropdown"><span class="helper">                <select id="sitesearch" name="sitesearch" size="1">
+                    <option value="dlang.org">Entire Site</option>
+                    <option  value="dlang.org/spec">Language</option>
+                    <option  value="dlang.org/phobos">Library</option>
+                    <option  value="forum.dlang.org">Forums</option>
+                    
                 </select>
-            </span><span id="search-submit"><button type="submit"><i class="fa fa-search"></i><span>go</span></button></span>
+            </span></span><span id="search-submit"><button type="submit"><i class="fa fa-search"></i><span>go</span></button></span>
         </form>
     </div>
-    
-<div id="cssmenu"><ul>    <li><a href='StartPage.html'><span>Visual D 0.3.43</span></a></li>
-    <li><a href='https://github.com/D-Programming-Language/visuald/releases'><span>Downloads</span></a></li>
-    <li><a href='Installation.html'><span>Installation</span></a></li>
-    <li class='has-sub'><a href='#'><span>Documentation</span></a>
-      <ul><li><a href='
-        Features.html'>Features</a></li><li><a href='        GlobalOptions.html'>Global options</a></li><li><a href='        ProjectWizard.html'>Project Wizard</a></li><li><a href='        Editor.html'>Editor</a></li><li><a href='        Search.html'>Search Window</a></li><li><a href='        TokenReplace.html'>Token Replace</a></li><li><a href='        ProjectConfig.html'>Project Config</a></li><li><a href='        CppConversion.html'>C++ to D</a></li><li><a href='        Debugging.html'>Debugging</a></li><li><a href='        CompileCommands.html'>Compile Commands</a></li><li><a href='        Profiling.html'>Profiling</a></li><li><a href='        Coverage.html'>Code Coverage</a></li><li><a href='        DustMite.html'>DustMite</a></li><li><a href='        BrowseInfo.html'>Browse Info
-      </a></li></ul>
-    <li><a href='VersionHistory.html'><span>Version History</span></a></li>
-    <li><a href='KnownIssues.html'><span>Known Issues</span></a></li>
-    <li><a href='BuildFromSource.html'><span>Building from Source</span></a></li>
+    </div>
+</div></div></div>
 
-    <li class='has-sub'><a href='#'><span>Resources</span></a>
-      <ul><li><a href='        http://www.dlang.org/intro.html'>Language Reference</a></li><li><a href='        http://www.dlang.org/phobos/index.html'>Library Reference</a></li><li><a href='        http://code.dlang.org'>D Libraries</a></li><li><a href='        http://www.dlang.org/bugstats.php'>Bug Tracker</a></li><li><a href='        http://www.dlang.org/faq.html'>FAQ</a></li><li><a href='        http://www.dlang.org/dstyle.html'>The D Style</a></li><li><a href='        http://arsdnet.net/this-week-in-d'>This Week in D
-      </a></li></ul>
-    <li class='has-sub'><a href='#'><span>Community</span></a>
-      <ul><li><a href='        http://forum.dlang.org'>Forums</a></li><li><a href='        irc://irc.freenode.net/d'>IRC</a></li><li><a href='        http://github.com/D-Programming-Language'>D on GitHub</a></li><li><a href='        http://wiki.dlang.org'>Wiki</a></li><li><a href='        http://wiki.dlang.org/Review_Queue'>Review Queue</a></li><li><a href='        http://twitter.com/search?q=%23dlang'>Twitter</a></li><li><a href='        http://digitalmars.com/d/dlinks.html'>More Links
-      </a></li></ul>
-</ul></div>
+<div class="container">    <div class="subnav-helper"></div> <div class="subnav">    
+    <div class="head">        <h2>Visual D 0.3.43</h2>
+        <p class="subnav-duplicate">            <a href="StartPage.html">Home</a></p>
+    </div>
+    <ul>        <li><a href='StartPage.html'><span>Home</span></a></li>
+        <li><a href='https://github.com/D-Programming-Language/visuald/releases'><span>Downloads</span></a></li>
+        <li><a href='Installation.html'><span>Installation</span></a></li>
+        <li class='expand-container'><a class='expand-toggle' href='#'><span>Documentation</span></a>
+        <ul class='expand-content'><li><a href='            Features.html'>Features</a></li><li><a href='            GlobalOptions.html'>Global options</a></li><li><a href='            ProjectWizard.html'>Project Wizard</a></li><li><a href='            Editor.html'>Editor</a></li><li><a href='            Search.html'>Search Window</a></li><li><a href='            TokenReplace.html'>Token Replace</a></li><li><a href='            ProjectConfig.html'>Project Config</a></li><li><a href='            CppConversion.html'>C++ to D</a></li><li><a href='            Debugging.html'>Debugging</a></li><li><a href='            CompileCommands.html'>Compile Commands</a></li><li><a href='            Profiling.html'>Profiling</a></li><li><a href='            Coverage.html'>Code Coverage</a></li><li><a href='            DustMite.html'>DustMite</a></li><li><a href='            BrowseInfo.html'>Browse Info
+        </a></li></ul></li>
+        <li><a href='VersionHistory.html'><span>Version History</span></a></li>
+        <li><a href='KnownIssues.html'><span>Known Issues</span></a></li>
+        <li><a href='BuildFromSource.html'><span>Building from Source</span></a></li>
+    </ul>
 </div>
-
-<div class="hyphenate" id="content">    
-<div id="tools">	<span class="tip">		<a href="https://issues.dlang.org/enter_bug.cgi?bug_file_loc=http%3A%2F%2Fdlang.org/&bug_severity=enhancement&component=visuald&op_sys=All&priority=P3&product=D&rep_platform=All&short_desc=%5BProject Configuration%5D&version=D2" class="button">Report a bug</a>
-		<span >			If you spot a problem with this page, click here to create a Bugzilla issue.
-		</span>
-	</span>
-	<span class="tip">		<a href="https://github.com/D-Programming-Language/visuald/edit/master/ProjectConfig.dd" class="button">Improve this page</a>
-		<span >			Quickly fork, edit online, and submit a pull request for this page.
+    <div class="hyphenate" id="content">        
+<div id="tools"><div >	<div class="tip smallprint">		<a href="https://issues.dlang.org/enter_bug.cgi?bug_file_loc=http%3A%2F%2Fdlang.org/&amp;bug_severity=enhancement&amp;component=visuald&amp;op_sys=All&amp;priority=P3&amp;product=D&amp;rep_platform=All&amp;short_desc=%5BProject Configuration%5D&amp;version=D2">Report a bug</a>
+		<div >			If you spot a problem with this page, click here to create a Bugzilla issue.
+		</div>
+	</div>
+	<div class="tip smallprint">		<a href="https://github.com/D-Programming-Language/visuald/edit/master/ProjectConfig.dd">Improve this page</a>
+		<div >			Quickly fork, edit online, and submit a pull request for this page.
 			Requires a signed-in GitHub account. This works well for small changes.
 			If you'd like to make larger changes you may want to consider using
-			local clone.
-		</span>
-	</span>
-</div>
-    <h1>Project Configuration</h1>
-    
-    <!--Generated by Ddoc from ProjectConfig.dd-->
-
+			a local clone.
+		</div>
+	</div>
+</div></div>
+        <h1>Project Configuration</h1>
+        
+        
 
 <p>The project configuration is similar to what you know from other languages:</p>
 
@@ -115,17 +127,20 @@ Here is how you can setup a project:
 <div align="center"><img src="images/doc_config.png" /></div>
 
 
+        <div class="smallprint" id="copyright">Copyright &copy; 1999-2016 by Digital Mars &reg;, All Rights Reserved | Page generated by
+<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Sun Jan 17 21:45:20 2016
 </div>
-<div id="copyright">Copyright &copy; 1999-2015 by Digital Mars &reg;, All Rights Reserved | Page generated by <a href="http://dlang.org/ddoc.html">Ddoc</a> on Sat Nov 28 09:53:21 2015
+    </div>
 </div>
 
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <script type="text/javascript">window.jQuery || document.write('<script src="http://www.dlang.org/js/jquery-1.7.2.min.js">\x3C/script>');</script>
+    <script type="text/javascript">window.jQuery || document.write('\x3Cscript src="http://www.dlang.org/js/jquery-1.7.2.min.js">\x3C/script>');</script>
     <script type="text/javascript" src="http://www.dlang.org/js/dlang.js"></script>
     
     <script type="text/javascript" src="http://www.dlang.org/js/codemirror-compressed.js"></script>
     <script type="text/javascript" src="http://www.dlang.org/js/run.js"></script>
 
+<script type="text/javascript" src="js/run-main-website.js"></script>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
 </body>
 </html>
