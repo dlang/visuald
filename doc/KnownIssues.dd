@@ -12,7 +12,7 @@ support loading third party extensions and add-ins.)
 $(P A free alternative are the integrated Visual Studio Shell distributions.
 The shells are identical with the Visual Studio IDE, but stripped of any language support. It
 still contains the native debugger that can be used to debug D applications. Please see the
-$(LINK2 installation.html, installation page) for download links.)
+$(LINK2 Installation.html, installation page) for download links.)
 
 $(P Unfortunately, the Visual Studio Shell is missing one file, that is needed for the conversion of 
 the debug information by cv2pdb. This is msobj80.dll for VS2008 and msobj100.dll for VS2010 and must 
