@@ -8,6 +8,7 @@ SELF_PATH =
 LAYOUT_SUFFIX=
 $(SCRIPTLOAD js/run-main-website.js)
 
+VDLINK=$(LINK2 $1.html, $2)
 IMG = <img src="$0" />
 IMG_CENTER = <div align="center"><img src="$0" /></div>
 TABLE_NOBORDER = <table style="border-width: 0px 0">$0</table>

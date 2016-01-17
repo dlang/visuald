@@ -1,6 +1,6 @@
 Ddoc
 
-$(P When starting Visual Studio for the first time after installation of Visual D, you might 
+$(P When starting Visual Studio for the first time after installation of Visual D, you might
 want to check the global settings that can be reached from the Menu Tools -> Options -> Projects:
 )
 
@@ -29,12 +29,12 @@ $(IMG_CENTER images/dmd_directories.png)
 $(BR)
 $(UL
  $(LI Install path: The path to the compiler installation folder you entered within the installer.
-  $(UL 
-   $(LI DMD: this is not the path to the executable dmd.exe, but the folder that contains the full installation so 
+  $(UL
+   $(LI DMD: this is not the path to the executable dmd.exe, but the folder that contains the full installation so
         that the compiler is found as $(LESS)DMD install path$(GREATER)\windows\bin\dmd.exe )
-   $(LI GDC: this is not the path to the executable gdc.exe, but the folder that contains the full installation so 
+   $(LI GDC: this is not the path to the executable gdc.exe, but the folder that contains the full installation so
         that the compiler is found as $(LESS)DMD install path$(GREATER)\bin\gdc.exe )
-   $(LI LDC: this is not the path to the executable ldc.exe, but the folder that contains the full installation so 
+   $(LI LDC: this is not the path to the executable ldc.exe, but the folder that contains the full installation so
     that the compiler is found as $(LESS)DMD install path$(GREATER)\bin\ldc2.exe )
   )
  )
@@ -71,8 +71,8 @@ $(UL
  $(LI any variable from the system environment enclosed in $(DOLLAR)() )
 )
 
-$(P Please note that you'll also find a new entry "D" in the Text Editor branch to setup 
-$(DDLINK Editor,syntax highlighting) and more. )
+$(P Please note that you'll also find a new entry "D" in the Text Editor branch to setup
+$(VDLINK Editor,syntax highlighting) and more. )
 
 Macros:
 	TITLE=Global Options

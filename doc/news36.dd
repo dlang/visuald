@@ -1,7 +1,7 @@
 Ddoc
 
-$(P The latest release 0.3.36 of Visual D included a considerable number of bug fixes and improvements 
-(you can find all of them listed in the $(DDLINK VersionHistory,history)), but I'd like to detail on a few 
+$(P The latest release 0.3.36 of Visual D included a considerable number of bug fixes and improvements
+(you can find all of them listed in the $(VDLINK VersionHistory,history)), but I'd like to detail on a few
 bigger highlights.
 )
 
@@ -13,26 +13,26 @@ the current D source file through rdmd which will pick up imported modules autom
 and add them to the compilation. If the file is part of a project in the solution
 the current compiler settings will be used, otherwise the defaults from the !ConsoleApp
 project template are taken. You can add other options in Visual D's global
-project settings. 
+project settings.
 )
 
 $(IMG_CENTER images/compile_and_run_opt.png)
 
 $(P The standard is "-unittest --main" so after successfully building the
-source file to an executable ("--main" adds an empty main function to the source to automatically create a valid executable), your unit tests will run and you will see 
+source file to an executable ("--main" adds an empty main function to the source to automatically create a valid executable), your unit tests will run and you will see
 the result in the output pane.
 )
 
 $(P [Actually, while writing this text a number of issues have been fixed and improvements
-have been made, so please try the latest release candidate for next version of Visual D 
-from the download folder (0.3.37rc1 as of now). Especially, it will remove some of the 
+have been made, so please try the latest release candidate for next version of Visual D
+from the download folder (0.3.37rc1 as of now). Especially, it will remove some of the
 command line options used to call rdmd that make it crash pretty often.]
 )
 
 <table><tr><td valign="top" width="45%">
 $(P If you add "-cov" to the command line aswell the executable will be instrumented to record
-the source code lines that have been executed and will mark the lines that have 
-code generated but are never executed. This information is written into files named as the 
+the source code lines that have been executed and will mark the lines that have
+code generated but are never executed. This information is written into files named as the
 source files but with extension ".lst". If you enable option "Colorize Coverage" in
 the Visual D colorizer settings (easily reachable through the new entry in the Visual D
 menu), these lines will be highlighted in the editor. The highlighting will not show
@@ -45,12 +45,12 @@ $(D	assert(fib(19) == 4181);)
 to the unittest, and run the unittest again, all lines will become green.
 )
 
-$(P If you start editing the source file Visual D will try to keep coverage information in sync. 
-If you want to get rid of the coverage coloring, just resave the source file. 
+$(P If you start editing the source file Visual D will try to keep coverage information in sync.
+If you want to get rid of the coverage coloring, just resave the source file.
 Visual D will assume the coverage is invalid then and stop displaying it.
 )
 
-$(P If you don't want syntax highlighting from coverage generated .LST files, you can disable 
+$(P If you don't want syntax highlighting from coverage generated .LST files, you can disable
 it by unchecking the respective option on the Tools->Options->Text Editor->D->Colorizer page.
 )
 </td><td width="55%">
@@ -67,9 +67,9 @@ $(H1 New code completion engine by Alexander Bothe)
 $(P While Visual D has been running a semantic analysis for about a year now to
 support code completion and type information in tool tips, I didn't have much time
 to complete it to support all aspects of the D programming language. It is especially
-lacking on topics like template instantiation, function overload resolution and 
+lacking on topics like template instantiation, function overload resolution and
 unified function call syntax (UFCS). Also, compile time function evaluation (CTFE) is
-pretty incomplete. 
+pretty incomplete.
 Due to its pretty large memory foot print the
 stop-the-world garbage collector has been interrupting the source code editing to
 inacceptable degrees, so the analyzer had been
@@ -87,16 +87,16 @@ $(P Alex has put much more effort into making the semantic
 analysis complete, and it obviously does it more efficiently. I wrapped the library
 as a local COM server implementing the same interfaces as Visual D's engine (having to do
 this in C# was a bit of a downer) and just using a different factory now allows switching
-between the two. Right now, Visual D's engine is the default, but you can select 
-Alex's engine by enabling the respective checkbox in the Intellisense 
-settings page (there is a new menu entry for faster access). It provides UFCS 
+between the two. Right now, Visual D's engine is the default, but you can select
+Alex's engine by enabling the respective checkbox in the Intellisense
+settings page (there is a new menu entry for faster access). It provides UFCS
 expansion and also displays DDoc help strings in tool tips.
 )
 
 $(P There is currently work being done on the D front end implemented by DMD
 to be converted from C++ to D, bringing it within reach of using it as a library for IDEs.
 This might produce
-another semantic engine in the future which easily keeps in lock step with the latest 
+another semantic engine in the future which easily keeps in lock step with the latest
 compiler updates.
 )
 
@@ -104,7 +104,7 @@ $(H2 LDC support)
 
 $(P LDC, the D compiler built on top of the LLVM compiler infrastructure is getting
 close to being useful on Windows aswell (at least on Win64 the longest standing
-blocker exception handling is starting to work). You can grab pre-compiled binaries 
+blocker exception handling is starting to work). You can grab pre-compiled binaries
 here: http://www.redstar.de/ldc/LDC.zip (after extracting to any directory just update
 the paths specified in LDC2\etc\ldc2.conf).
 In the Visual D project options, path settings for the three major compilers have been
@@ -117,8 +117,8 @@ General page of your project's property page.
 
 $(IMG_CENTER images/ldc_compiler.png)
 
-$(P Please be aware that both LDC for Windows aswell as the Visual D support for 
-it are pretty experimental, so expect some glitches. Known issue: there is no debug 
+$(P Please be aware that both LDC for Windows aswell as the Visual D support for
+it are pretty experimental, so expect some glitches. Known issue: there is no debug
 information in the built executable that can be used by the VS debugger.
 )
 
