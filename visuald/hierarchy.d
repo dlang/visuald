@@ -48,7 +48,7 @@ import visuald.dpackage;
 import visuald.dllmain;
 
 ///////////////////////////////////////////////////////////////////////////////
-class CFileNode : CHierNode, 
+class CFileNode : CHierNode,
 		  ISpecifyPropertyPages,
 		  IVsGetCfgProvider
 {
@@ -78,7 +78,7 @@ class CFileNode : CHierNode,
 		return PropertyPageFactory.GetCommonPages(pPages);
 	}
 
-	// IVsGetCfgProvider 
+	// IVsGetCfgProvider
 	override int GetCfgProvider(IVsCfgProvider* pCfgProvider)
 	{
 		if(Project prj = cast(Project) GetCVsHierarchy())
@@ -92,8 +92,8 @@ class CFileNode : CHierNode,
 	{
 		switch(propid)
 		{
-		case VSHPROPID_Name: 
-		case VSHPROPID_SaveName: 
+		case VSHPROPID_Name:
+		case VSHPROPID_SaveName:
 			var.vt = VT_BSTR;
 			var.bstrVal = allocBSTR(GetName());
 			return S_OK;
@@ -124,7 +124,7 @@ class CFileNode : CHierNode,
 		case VSHPROPID_EditLabel:
 			if(var.vt != VT_BSTR)
 				return returnError(E_INVALIDARG);
-			
+
 			string newname = to_string(var.bstrVal);
 			return Rename(newname);
 		default:
@@ -137,7 +137,7 @@ class CFileNode : CHierNode,
 		switch (propid)
 		{
 		case VSHPROPID_TypeGuid:
-			// we represent physical file on disk so 
+			// we represent physical file on disk so
 			// return the corresponding guid defined in vsshell.idl
 			pGuid = GUID_ItemType_PhysicalFile;
 			break;
@@ -153,7 +153,7 @@ class CFileNode : CHierNode,
 		string newpath = normalizeDir(dirName(oldpath)) ~ newname;
 		if(toLower(newname) == toLower(mFilename))
 			return S_OK;
-		
+
 		bool wasOpen;
 		int line = -1;
 		int col = 0;
@@ -172,7 +172,7 @@ class CFileNode : CHierNode,
 			string projDir = GetCVsHierarchy().GetProjectDir();
 			mFilename = makeRelative(newpath, projDir);
 			SetName(baseName(mFilename));
-			
+
 			GetCVsHierarchy().GetProjectNode().SetProjectFileDirty(true);
 
 			if (wasOpen)
@@ -290,7 +290,7 @@ class CFileNode : CHierNode,
 
 	override uint GetContextMenu() { return IDM_VS_CTXT_ITEMNODE; }
 
-	override int QueryStatus( 
+	override int QueryStatus(
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ ULONG cCmds,
 		/* [out][in][size_is] */ OLECMD* prgCmds,
@@ -321,7 +321,7 @@ class CFileNode : CHierNode,
 				break;
 			}
 		}
-		else 
+		else
 		{
 			hr = OLECMDERR_E_NOTSUPPORTED;
 		}
@@ -340,7 +340,7 @@ class CFileNode : CHierNode,
 		return hr;
 	}
 
-	override int Exec( 
+	override int Exec(
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
@@ -374,8 +374,8 @@ class CFileNode : CHierNode,
 	}
 
 	HRESULT GetRDTDocumentInfo(
-		/* [in]  */ string             pszDocumentName, 
-		/* [out] */ IVsHierarchy*      ppIVsHierarchy      /* = NULL */, 
+		/* [in]  */ string             pszDocumentName,
+		/* [out] */ IVsHierarchy*      ppIVsHierarchy      /* = NULL */,
 		/* [out] */ VSITEMID*          pitemid             /* = NULL */,
 		/* [out] */ IVsPersistDocData* ppIVsPersistDocData /* = NULL */,
 		/* [out] */ VSDOCCOOKIE*       pVsDocCookie        /* = NULL */)
@@ -507,13 +507,13 @@ class CFileNode : CHierNode,
 		scope(exit) pIVsSolution.Release();
 
 		return pIVsSolution.SaveSolutionElement(
-			/* [in] VSSLNSAVEOPTIONS grfSaveOpts*/ grfSaveOpts, 
-			/* [in] IVsHierarchy *pHier         */ null, 
+			/* [in] VSSLNSAVEOPTIONS grfSaveOpts*/ grfSaveOpts,
+			/* [in] IVsHierarchy *pHier         */ null,
 			/* [in] VSCOOKIE docCookie          */ vsDocCookie);
 	}
 
 
-	HRESULT CloseDoc(/* [in] */ VSSLNCLOSEOPTIONS grfCloseOpts) 
+	HRESULT CloseDoc(/* [in] */ VSSLNCLOSEOPTIONS grfCloseOpts)
 	{
 		HRESULT hr = S_OK;
 
@@ -536,8 +536,8 @@ class CFileNode : CHierNode,
 
 		// may return E_ABORT if prompt is cancelled
 		return pIVsSolution.CloseSolutionElement(
-			/* [in] VSSLNCLOSEOPTIONS grfCloseOpts */ grfCloseOpts, 
-			/* [in] IVsHierarchy *pHier            */ null, 
+			/* [in] VSSLNCLOSEOPTIONS grfCloseOpts */ grfCloseOpts,
+			/* [in] IVsHierarchy *pHier            */ null,
 			/* [in] VSCOOKIE docCookie             */ vsDocCookie);
 	}
 
@@ -549,7 +549,7 @@ class CFileNode : CHierNode,
 	}
 
 private:
-	Options* _getOptions(string cfg, bool create) 
+	Options* _getOptions(string cfg, bool create)
 	{
 		if(mPerConfigOptions && cfg.length)
 		{
@@ -567,7 +567,7 @@ private:
 	{
 		return _getOptions(cfg, false);
 	}
-	Options* createOptions(string cfg) 
+	Options* createOptions(string cfg)
 	{
 		return _getOptions(cfg, true);
 	}
@@ -636,7 +636,7 @@ class CFolderNode : CHierContainer
 			pkgname = pkgname[1..$];
 		return pkgname;
 	}
-	
+
 	// package always comes with trailing '.'
 	string _GuessPackageName(bool recurseUp, CFolderNode exclude)
 	{
@@ -701,7 +701,7 @@ class CFolderNode : CHierContainer
 		string dir = _GuessFolderPath(true, null);
 		if(dir.length)
 			return dir;
-		
+
 		CProjectNode pProject = GetCVsHierarchy().GetProjectNode();
 		return dirName(pProject.GetFullPath());
 	}
@@ -738,7 +738,7 @@ class CFolderNode : CHierContainer
 	{
 		switch(propid)
 		{
-		case VSHPROPID_EditLabel: 
+		case VSHPROPID_EditLabel:
 			return GetEditLabel(&var.bstrVal); // can fail
 		default:
 			return super.GetProperty(propid, var);
@@ -759,7 +759,7 @@ class CFolderNode : CHierContainer
 		}
 	}
 
-	override int QueryStatus( 
+	override int QueryStatus(
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ ULONG cCmds,
 		/* [out][in][size_is] */ OLECMD* prgCmds,
@@ -818,7 +818,7 @@ class CFolderNode : CHierContainer
 					break;
 			}
 		}
-		else 
+		else
 		{
 			hr = OLECMDERR_E_NOTSUPPORTED;
 		}
@@ -837,7 +837,7 @@ class CFolderNode : CHierContainer
 		return hr;
 	}
 
-	override int Exec( 
+	override int Exec(
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
@@ -932,7 +932,7 @@ class CFolderNode : CHierContainer
 		//Fire an event to extensibility
 		//CAutomationEvents::FireProjectItemsEvent(pFolder, CAutomationEvents::ProjectItemsEventsDispIDs::ItemAdded);
 
-		// Since our expandable status may have changed, 
+		// Since our expandable status may have changed,
 		// we need to refresh it in the UI
 		GetCVsHierarchy().OnPropertyChanged(this, VSHPROPID_Expandable, 0);
 
@@ -994,8 +994,8 @@ class CFolderNode : CHierContainer
 		BSTR bstrFilters = allocBSTR(strFilter);
 
 		HRESULT hr;
-		hr = srpAddItemDlg.AddProjectItemDlg(GetCVsHierarchy().GetVsItemID(this), 
-						     &g_projectFactoryCLSID, 
+		hr = srpAddItemDlg.AddProjectItemDlg(GetCVsHierarchy().GetVsItemID(this),
+						     &g_projectFactoryCLSID,
 						     cast(IVsProject)GetCVsHierarchy(), dwFlags,
 						     pszExpandDir, pszSelectItem,
 						     &bstrLocation.bstr,
@@ -1069,7 +1069,7 @@ class CProjectNode : CFolderNode
 		mTrackProjectDocuments2Helper = helper;
 	}
 
-	override int QueryStatus( 
+	override int QueryStatus(
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ ULONG cCmds,
 		/* [out][in][size_is] */ OLECMD* prgCmds,
@@ -1120,7 +1120,7 @@ class CProjectNode : CFolderNode
 				break;
 			}
 		}
-		else 
+		else
 		{
 			hr = OLECMDERR_E_NOTSUPPORTED;
 		}
@@ -1139,7 +1139,7 @@ class CProjectNode : CFolderNode
 		return hr;
 	}
 
-	override int Exec( 
+	override int Exec(
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ DWORD nCmdID,
 		/* [in] */ DWORD nCmdexecopt,
@@ -1199,7 +1199,7 @@ class CProjectNode : CFolderNode
 		default:
 			break;
 		}
-		
+
 		return super.GetProperty(propid, var);
 	}
 
@@ -1253,7 +1253,7 @@ abstract class CVsHierarchy :	DisposingDispatchObject,
 	}
 
 	// IVsUIHierarchy
-	override int QueryStatusCommand( 
+	override int QueryStatusCommand(
 		/* [in] */ in VSITEMID itemid,
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ in ULONG cCmds,
@@ -1275,8 +1275,8 @@ version(none)
 
 		return returnError(E_NOTIMPL);
 	}
-    
-	override int ExecCommand( 
+
+	override int ExecCommand(
 		/* [in] */ in VSITEMID itemid,
 		/* [unique][in] */ in GUID *pguidCmdGroup,
 		/* [in] */ in DWORD nCmdID,
@@ -1290,7 +1290,7 @@ version(none)
 		CHierNode[] rgNodes = VSITEMID2Nodes(itemid);
 		if (rgNodes.length == 0)
 			return OLECMDERR_E_NOTSUPPORTED;
-		
+
 		CHierNode node = rgNodes[0];
 
 		int hr = OLECMDERR_E_NOTSUPPORTED;
@@ -1333,7 +1333,7 @@ version(none)
 
 		return hr;
 	}
-    
+
 	// IVsHierarchy
 	override int SetSite(IServiceProvider psp)
 	{
@@ -1379,7 +1379,7 @@ version(none)
 			return kImageProject;
 		return kImageFolderClosed;
 	}
-	
+
 	override int GetProperty(in VSITEMID itemid, in VSHPROPID propid, VARIANT* var)
 	{
 		//mixin(LogCallMix);
@@ -1422,7 +1422,7 @@ version(none)
 			var.vt = VT_BOOL;
 			var.boolVal = pNode.IsContainer();
 			break;
-	
+
 		case VSHPROPID_FirstVisibleChild:
 			var.vt = VT_INT; // VT_INT_PTR;
 			var.lVal = GetFirstDisplayableNodeID(pNode);
@@ -1469,6 +1469,7 @@ version(none)
 			break;
 		case VSHPROPID_DefaultEnableDeployProjectCfg:
 		case VSHPROPID_DefaultEnableBuildProjectCfg:
+		// case VSHPROPID_ShowProjInSolutionPage: // to be displayed in "Add Reference"
 			var.vt = VT_BOOL;
 			var.boolVal = true;
 			break;
@@ -1478,7 +1479,7 @@ version(none)
 			var.vt = VT_DISPATCH;
 			var.pdispVal = addref(mExtProject);
 			break;
-			//return DISP_E_MEMBERNOTFOUND; 
+			//return DISP_E_MEMBERNOTFOUND;
 	+/
 
 		case VSHPROPID_BrowseObject:
@@ -1486,8 +1487,8 @@ version(none)
 			//var.punkVal = null;
 			//break;
 		case VSHPROPID_ProjectDir:
-		    // ReloadableProjectFile, IsNonLocalStorage, CanBuildFromMemory, 
-		    // DefaultEnableBuildProjectCfg, DefaultEnableDeployProjectCfg, 
+		    // ReloadableProjectFile, IsNonLocalStorage, CanBuildFromMemory,
+		    // DefaultEnableBuildProjectCfg, DefaultEnableDeployProjectCfg,
 		    // IsNonSearchable, HasEnumerationSideEffects, ExtObject
 		    // 1001
 		//case VSHPROPID2.EnableDataSourceWindow:
@@ -1499,7 +1500,7 @@ version(none)
 
 			//logCall("Getting unknown property %d for item %x!", propid, itemid);
 			return DISP_E_MEMBERNOTFOUND;
-			// return returnError(E_NOTIMPL); // DISP_E_MEMBERNOTFOUND; 
+			// return returnError(E_NOTIMPL); // DISP_E_MEMBERNOTFOUND;
 		}
 		return S_OK;
 	}
@@ -1554,7 +1555,7 @@ version(none)
 	override int GetCanonicalName(in VSITEMID itemid, BSTR *pbstrName)
 	{
 		logCall("GetCanonicalName(this=%s, itemid=%s, pbstrMkDocument=%s)", cast(void*)this, _toLog(itemid), _toLog(pbstrName));
-		scope(exit) 
+		scope(exit)
 			logCall(" GetCanonicalName return %s", _toLog(*pbstrName));
 
 		if(CHierNode pNode = VSITEMID2Node(itemid))
@@ -1630,7 +1631,7 @@ version(none)
 	}
 
 	// IVsPersistHierarchyItem
-	override int IsItemDirty( 
+	override int IsItemDirty(
 		/* [in] */ in VSITEMID itemid,
 		/* [in] */ IUnknown punkDocData,
 		/* [out] */ BOOL *pfDirty)
@@ -1642,7 +1643,7 @@ version(none)
 		return srpPersistDocData.IsDocDataDirty(pfDirty);
 	}
 
-	override int SaveItem( 
+	override int SaveItem(
 		/* [in] */ in VSSAVEFLAGS dwSave,
 		/* [in] */ in wchar* pszSilentSaveAsName,
 		/* [in] */ in VSITEMID itemid,
@@ -1652,7 +1653,7 @@ version(none)
 		// validate itemid.
 		if (itemid == VSITEMID_ROOT || itemid == VSITEMID_SELECTION || !VSITEMID2Node(itemid))
 			return E_INVALIDARG;
-    
+
 		if (!punkDocData)
 			return OLE_E_NOTRUNNING;    // we can only perform save if the document is open
 
@@ -1682,7 +1683,7 @@ version(none)
 		//      3. a directory-based project may need to transfer the open editor to the
 		//         MiscFiles project if the new file is saved outside of the project directory.
 		//         This is accomplished by calling IVsExternalFilesManager::TransferDocument
-		// This work can not be done by CVsHierarchy::SaveItem; this must be done in a 
+		// This work can not be done by CVsHierarchy::SaveItem; this must be done in a
 		// derived subclass implementation of OnHandleSaveItemRename.
 		//if ((!*pfCanceled) && bstrMkDocumentNew != NULL)
 		//	hr = OnHandleSaveItemRename(itemid, punkDocData, bstrMkDocumentNew);
@@ -1727,7 +1728,7 @@ version(none)
 		case VSITEMID_ROOT:
 			nodes ~= GetRootNode();
 			break;
-			
+
 		case VSITEMID_SELECTION:
 			GetSelectedNodes(nodes);
 			break;
@@ -1751,8 +1752,8 @@ version(none)
 		return GetVsItemID(pNode.GetNext());
 	}
 
-	// Following function returns the previous node in the hierwindow. It is obviously dependant on 
-	// the sorting way GetFirstDisplayableNode, GetNextDisplayable node are implemented. 
+	// Following function returns the previous node in the hierwindow. It is obviously dependant on
+	// the sorting way GetFirstDisplayableNode, GetNextDisplayable node are implemented.
 	CHierNode GetPrevDisplayableNode(CHierNode pNode)
 	{
 		assert(pNode.IsDisplayable());
@@ -1763,7 +1764,7 @@ public: // IVsHierarchyEvent propagation
 	HRESULT OnItemAdded(CHierNode pNodeParent, CHierNode pNodePrev, CHierNode pNodeAdded)
 	{
 		GetProjectNode().SetProjectFileDirty(true);
-		
+
 		assert(pNodeParent && pNodeAdded);
 		VSITEMID itemidParent = GetVsItemID(pNodeParent);
 		VSITEMID itemidSiblingPrev = GetVsItemID(pNodePrev);
@@ -1776,7 +1777,7 @@ public: // IVsHierarchyEvent propagation
 	HRESULT OnItemDeleted(CHierNode pNode)
 	{
 		GetProjectNode().SetProjectFileDirty(true);
-		
+
 		VSITEMID itemid = GetVsItemID(pNode);
 		// Note that in some cases (deletion of project node for example), an Advise
 		// may be removed while we are iterating over it. To get around this problem we
@@ -1793,9 +1794,9 @@ public: // IVsHierarchyEvent propagation
 	HRESULT OnPropertyChanged(CHierNode pNode, VSHPROPID propid, DWORD flags)
 	{
 		GetProjectNode().SetProjectFileDirty(true);
-		
+
 		VSITEMID itemid = GetVsItemID(pNode);
-		if (pNode.IsDisplayable()) 
+		if (pNode.IsDisplayable())
 			foreach (advise; mHierarchyEventSinks)
 				advise.OnPropertyChanged(itemid, propid, flags);
 		return S_OK;
@@ -1922,7 +1923,7 @@ public: // IVsHierarchyEvent propagation
 
 	uint GetContextMenu(CHierNode[] rgSelection)
 	{
-		bool IsItemNodeCtx(uint idmx) 
+		bool IsItemNodeCtx(uint idmx)
 		{
 			return (idmx == IDM_VS_CTXT_ITEMNODE || idmx == IDM_VS_CTXT_XPROJ_MULTIITEM);
 		}
@@ -1983,7 +1984,7 @@ public: // IVsHierarchyEvent propagation
 		/* [in]  */ bool             fUseOpenWith        /*= FALSE*/,
 		/* [in]  */ bool             fShow               /*= TRUE */,
 		/* [in]  */ in GUID*         rguidLogicalView    = &LOGVIEWID_Primary,
-		/* [in]  */ in GUID*         rguidEditorType     = &GUID_NULL, 
+		/* [in]  */ in GUID*         rguidEditorType     = &GUID_NULL,
 		/* [in]  */ in wchar*        pszPhysicalView     = null,
 		/* [in]  */ IUnknown         punkDocDataExisting = DOCDATAEXISTING_UNKNOWN,
 		/* [out] */ IVsWindowFrame*  ppWindowFrame       = null)
@@ -2002,16 +2003,16 @@ public: // IVsHierarchyEvent propagation
 		// do not force file to belong to only one project
 		VSITEMID itemid = GetVsItemID(pNode);
 		IVsUIHierarchy pHier = this;
-		
+
 		IVsUIHierarchy hierOpen;
 		VSITEMID itemidOpen;
 		IVsWindowFrame windowFrame;
 		BOOL fOpen;
 		scope(exit) release(windowFrame);
 		scope(exit) release(hierOpen);
-		
+
 		hr = pIVsUIShellOpenDocument.IsDocumentOpen(null, 0, wstrFullPath, rguidLogicalView,
-													IDO_ActivateIfOpen, 
+													IDO_ActivateIfOpen,
 													&hierOpen, &itemidOpen, &windowFrame, &fOpen);
 		if(SUCCEEDED(hr) && fOpen)
 			return hr;
@@ -2102,7 +2103,7 @@ public: // IVsHierarchyEvent propagation
 		/* [in]                        */ in GUID*              rguidLogicalView,
 		/* [in]                        */ bool                  moveIfInProject,
 		/* [out, retval]               */ VSADDRESULT*          pResult)
-	{ 
+	{
 		*pResult = ADDRESULT_Failure;
 
 		HRESULT hr     = S_OK;
@@ -2119,10 +2120,10 @@ public: // IVsHierarchyEvent propagation
 		switch(dwAddItemOperation)
 		{
 		case VSADDITEMOP_LINKTOFILE:
-			// because we are a reference-based project system our handling for 
-			// LINKTOFILE is the same as OPENFILE. 
-			// a storage-based project system which handles OPENFILE by copying 
-			// the file into the project directory would have distinct handling 
+			// because we are a reference-based project system our handling for
+			// LINKTOFILE is the same as OPENFILE.
+			// a storage-based project system which handles OPENFILE by copying
+			// the file into the project directory would have distinct handling
 			// for LINKTOFILE vs. OPENFILE.
 			// we fall through to VSADDITEMOP_OPENFILE....
 
@@ -2150,7 +2151,7 @@ public: // IVsHierarchyEvent propagation
 				}
 				if(!pNewNode)
 				{
-					// This means that we return an error code if even one 
+					// This means that we return an error code if even one
 					// of the Items failed to Add (in the add existing files case)
 					hr = E_FAIL;
 					continue;
@@ -2163,25 +2164,25 @@ public: // IVsHierarchyEvent propagation
 					continue;
 				if(!pFileNode)
 					continue;
-				
+
 				// open the item
 				assert(grfEditorFlags & VSSPECIFICEDITOR_DoOpen);
 				IVsWindowFrame srpWindowFrame;
 				bool useView = (grfEditorFlags & VSSPECIFICEDITOR_UseView) != 0;
 
 				// Standard open file
-				hrTemp = OpenDoc(pFileNode, fNewFile /*fNewFile*/, 
+				hrTemp = OpenDoc(pFileNode, fNewFile /*fNewFile*/,
 							   false    /*fUseOpenWith*/,
 							   true     /*fShow*/,
 							   rguidLogicalView,
 							   rguidEditorType,
 							   useView ? null : pszPhysicalView,
-							   null, 
+							   null,
 							   &srpWindowFrame);
-				
+
 				if (FAILED(hrTemp))
 				{
-					// These don't affect the return value of this function because 
+					// These don't affect the return value of this function because
 					// by this stage the file has been sucessfully added to the project.
 					// But the problem can be reported to the user.
 				}
@@ -2189,14 +2190,14 @@ public: // IVsHierarchyEvent propagation
 			break;
 		}
 
-		case VSADDITEMOP_RUNWIZARD: // Wizard was selected        
+		case VSADDITEMOP_RUNWIZARD: // Wizard was selected
 			return RunWizard(pNode,
 				/* [in]  LPCOLESTR     pszItemName       */ pszItemName,
 				/* [in]  ULONG         cFilesToOpen      */ cFilesToOpen,
 				/* [in]  LPCOLESTR     rgpszFilesToOpen[]*/ rgpszFilesToOpen,
 				/* [in]  HWND          hwndDlg           */ hwndDlg,
 				/* [out] VSADDRESULT * pResult           */ pResult);
-		
+
 		default:
 			*pResult = ADDRESULT_Failure;
 			hr = E_INVALIDARG;
@@ -2208,7 +2209,7 @@ public: // IVsHierarchyEvent propagation
 /+
 		if(GetExecutionCtx().IsCancelled() || hr == E_ABORT || hr == OLE_E_PROMPTSAVECANCELLED)
 		{
-			*pResult = ADDRESULT_Cancel;    
+			*pResult = ADDRESULT_Cancel;
 			hr = S_OK;
 		}
 +/
@@ -2217,7 +2218,7 @@ public: // IVsHierarchyEvent propagation
 	}
 
 	CHierNode AddNewNode(CHierContainer pNode, string strFullPathSource, string strNewFileName)
-	{ 
+	{
 		HRESULT hr = S_OK;
 
 		if(!CheckFileName(strNewFileName))
@@ -2230,7 +2231,7 @@ public: // IVsHierarchyEvent propagation
 			strNewFileName = GetProjectDir() ~ "\\" ~ strNewFileName;
 
 		bool dir = isExistingDir(strFullPathSource);
-		
+
 		// If target != source then we need to copy
 		if (CompareFilenames(strFullPathSource, strNewFileName) != 0)
 		{
@@ -2254,7 +2255,7 @@ public: // IVsHierarchyEvent propagation
 				assert(SUCCEEDED(hr));
 			}
 
-			try 
+			try
 			{
 				if(dir)
 					std.file.mkdir(strNewFileName);
@@ -2300,7 +2301,7 @@ public: // IVsHierarchyEvent propagation
 		return AddExistingFile(pNode, strNewFileName);
 	}
 
-	CHierNode AddExistingFile(CHierContainer pNode, string strFullPathSource, 
+	CHierNode AddExistingFile(CHierContainer pNode, string strFullPathSource,
 							  bool fSilent = false, bool fLoad = false, bool moveIfInProject = false)
 	{
 		// get the proper file name
@@ -2400,7 +2401,7 @@ public: // IVsHierarchyEvent propagation
 					if(!AddExistingFile(cont, fname, fSilent))
 						return null;
 		}
-		
+
 		return pNewNode;
 	}
 

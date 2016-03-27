@@ -25,8 +25,10 @@ if "%WINSDKLIB%" == "" if exist "%WindowsSdkDir%\lib\win8\um\x86\kernel32.lib" s
 if "%WINSDKLIB%" == "" if exist "%WindowsSdkDir%\lib\kernel32.lib" set WINSDKLIB=%WindowsSdkDir%\lib
 if "%WINSDKLIB%" == "" (echo could not detect the Windows SDK library folder && exit /B 1)
 
-set COFFIMPLIB=coffimplib
-coffimplib >nul 2>&1
+set COFFIMPLIB=c:\l\dmc\bin\coffimplib.exe
+%coffimplib% >nul 2>&1
+if errorlevel 9000 set COFFIMPLIB=coffimplib
+%coffimplib% >nul 2>&1
 if errorlevel 9000 (echo cannot execute %COFFIMPLIB%, please add to PATH && exit /B 1)
 
 for %%f in (%LIBS%) do (

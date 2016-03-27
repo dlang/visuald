@@ -121,7 +121,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 		{
 			string src  = to_string(pszFilename);
 			string name = to_string(pszName);
-			string dest = to_string(pszLocation) ~ name ~ "." ~ toUTF8(g_projectFileExtensions);
+			string dest = to_string(pszLocation) ~ name ~ "." ~ toUTF8(g_defaultProjectFileExtension);
 
 			if(!cloneProject(src, dest))
 				return returnError(E_FAIL);
@@ -704,6 +704,13 @@ class Project : CVsHierarchy,
 					var.pdispVal = addref(mExtProject);
 					return S_OK;
 
+/+
+				case -2156: // VSHPROPID_CanBuildQuickCheck
+					var.vt = VT_INT;
+					var.intVal = -2;
+					return S_OK;
++/
+
 				default:
 					break;
 			}
@@ -909,9 +916,11 @@ class Project : CVsHierarchy,
 	    /* [in] */ in DWORD nFormatIndex)
 	{
 		mixin(LogCallMix);
-		auto doc = createDoc();
-
+		
 		string filename = to_string(pszFilename);
+		bool msbuild = filename.toLower().endsWith(".dproj");
+		auto doc = msbuild ? createMSBuildDoc() : createDoc();
+
 		if(!saveXML(doc, filename))
 			return returnError(E_FAIL);
 
@@ -995,8 +1004,14 @@ class Project : CVsHierarchy,
 	    /* [retval][out] */ BuildSystemKindFlags *pBuildSystemKind)
 	{
 //		mixin(LogCallMix);
+		enum _BuildSystemKindFlags2
+		{
+			BSK_MSBUILD_VS9 = 1,
+			BSK_MSBUILD_VS10 = 2,
+		}
 
-		*pBuildSystemKind = 0;
+		bool msbuild = mFilename.toLower().endsWith(".dproj");
+		*pBuildSystemKind = msbuild ? _BuildSystemKindFlags2.BSK_MSBUILD_VS10 : _BuildSystemKindFlags2.BSK_MSBUILD_VS9;
 		return S_OK;
 	}
 
@@ -2333,6 +2348,68 @@ Error:
 		return null;
 	}
 
+	bool parseMSBuildXML(string fileName, xml.Document doc)
+	{
+		xml.Element root = xml.getRoot(mDoc);
+		xml.Element[] propGrpItems = xml.elementsById(root, "PropertyGroup");
+		foreach(grp; propGrpItems)
+		{
+			string cond = xml.getAttribute(grp, "Condition");
+			if (cond.empty())
+			{
+				// global
+				if(xml.Element el = xml.getElement(grp, "ProjectGuid"))
+					mProjectGUID = uuid(el.text());
+				else
+					return false;
+			}
+			else
+			{
+				cond = xml.decode(cond);
+				auto pos = indexOf(cond, "==");
+				if (pos > 0)
+				{
+					string lhs = strip(cond[0 .. pos]);
+					string rhs = strip(cond[pos + 2 .. $]);
+					if (lhs == "'$(Configuration)|$(Platform)'" && 
+						rhs.length > 2 && rhs[0] == '\'' && rhs[$-1] =='\'')
+					{
+						rhs = rhs[1 .. $-1];
+						pos = indexOf(rhs, "|");
+						if (pos > 0)
+						{
+							string cfgname = strip(rhs[0..pos]);
+							string platform = strip(rhs[pos+1 .. $]);
+							if(platform.length == 0 || platform == "AnyCPU")
+								platform = kPlatforms[0];
+							Config config = mConfigProvider.addConfig(cfgname, platform);
+							config.GetProjectOptions().parseXML(grp);
+						}
+					}
+				}
+			}
+		}
+
+		string projectName = getNameWithoutExt(fileName);
+		CProjectNode rootnode = newCom!CProjectNode(fileName, this);
+
+		xml.Element[] itemGrpItems = xml.elementsById(root, "ItemGroup");
+		foreach(item; itemGrpItems)
+		{
+			xml.Element[] compileItems = xml.elementsById(item, "Compile");
+			foreach(compile; compileItems)
+			{
+				string srcFileName = xml.getAttribute(compile, "Include");
+				CFileNode node = newCom!CFileNode(srcFileName);
+				rootnode.Add(node);
+			}
+		}
+
+		rootnode.SetName(projectName);
+		SetRootNode(rootnode);
+		return true;
+	}
+
 	bool parseXML()
 	{
 		string fileName;
@@ -2346,6 +2423,8 @@ Error:
 			xml.Element root = xml.getRoot(mDoc);
 			if(xml.Element el = xml.getElement(root, "ProjectGuid"))
 				mProjectGUID = uuid(el.text());
+			else if (parseMSBuildXML(fileName, mDoc))
+				return true;
 
 			string projectName = getNameWithoutExt(fileName);
 			CProjectNode rootnode = newCom!CProjectNode(fileName, this);
@@ -2365,7 +2444,7 @@ Error:
 				if(platform.length == 0)
 					platform = kPlatforms[0];
 				Config config = mConfigProvider.addConfig(name, platform);
-				config.GetProjectOptions().readXML(cfg);
+				config.GetProjectOptions().parseXML(cfg);
 			}
 
 			SetRootNode(rootnode);
@@ -2456,11 +2535,45 @@ Error:
 
 		xml.Element root = xml.getRoot(doc);
 		root ~= new xml.Element("ProjectGuid", GUID2string(mProjectGUID));
-		
+
 		mConfigProvider.addConfigsToXml(doc);
 
 		createDocHierarchy(root, GetProjectNode());
 		return doc;
+	}
+
+	static void addFileAttributes(CFileNode file, xml.Element xmlfile)
+	{
+		if(file.GetPerConfigOptions())
+			xml.setAttribute(xmlfile, "perConfig", "true");
+
+		static void setAttrIfNotEmpty(xml.Element xmlFile, string attr, string val)
+		{
+			if(val.length)
+				xml.setAttribute(xmlFile, attr, val);
+		}
+		static void writeFileConfig(xml.Element xmlFile, CFileNode file, string cfg)
+		{
+			setAttrIfNotEmpty(xmlFile, "tool", file.GetTool(cfg));
+			setAttrIfNotEmpty(xmlFile, "dependencies", file.GetDependencies(cfg));
+			setAttrIfNotEmpty(xmlFile, "outfile", file.GetOutFile(cfg));
+			setAttrIfNotEmpty(xmlFile, "customcmd", file.GetCustomCmd(cfg));
+			setAttrIfNotEmpty(xmlFile, "addopt", file.GetAdditionalOptions(cfg));
+			if(file.GetLinkOutput(cfg))
+				xml.setAttribute(xmlFile, "linkoutput", "true");
+			if(file.GetUptodateWithSameTime(cfg))
+				xml.setAttribute(xmlFile, "uptodateWithSameTime", "true");
+		}
+		writeFileConfig(xmlfile, file, null);
+
+		auto cfgs = file.GetConfigOptions().keys;
+		foreach(cfg; cfgs)
+		{
+			auto xmlcfg = new xml.Element("Config");
+			xml.setAttribute(xmlcfg, "name", cfg);
+			writeFileConfig(xmlcfg, file, cfg);
+			xmlfile ~= xmlcfg;
+		}
 	}
 
 	static void createDocHierarchy(xml.Element elem, CHierContainer container)
@@ -2475,42 +2588,73 @@ Error:
 			else if(CFileNode file = cast(CFileNode) node)
 			{
 				auto xmlfile = new xml.Element("File");
-				
 				xml.setAttribute(xmlfile, "path", file.GetFilename());
-				if(file.GetPerConfigOptions())
-					xml.setAttribute(xmlfile, "perConfig", "true");
-
-				static void setAttrIfNotEmpty(xml.Element xmlFile, string attr, string val)
-				{
-					if(val.length)
-						xml.setAttribute(xmlFile, attr, val);
-				}
-				static void writeFileConfig(xml.Element xmlFile, CFileNode file, string cfg)
-				{
-					setAttrIfNotEmpty(xmlFile, "tool", file.GetTool(cfg));
-					setAttrIfNotEmpty(xmlFile, "dependencies", file.GetDependencies(cfg));
-					setAttrIfNotEmpty(xmlFile, "outfile", file.GetOutFile(cfg));
-					setAttrIfNotEmpty(xmlFile, "customcmd", file.GetCustomCmd(cfg));
-					setAttrIfNotEmpty(xmlFile, "addopt", file.GetAdditionalOptions(cfg));
-					if(file.GetLinkOutput(cfg))
-						xml.setAttribute(xmlFile, "linkoutput", "true");
-					if(file.GetUptodateWithSameTime(cfg))
-						xml.setAttribute(xmlFile, "uptodateWithSameTime", "true");
-				}
-				writeFileConfig(xmlfile, file, null);
-
-				auto cfgs = file.GetConfigOptions().keys;
-				foreach(cfg; cfgs)
-				{
-					auto xmlcfg = new xml.Element("Config");
-					xml.setAttribute(xmlcfg, "name", cfg);
-					writeFileConfig(xmlcfg, file, cfg);
-					xmlfile ~= xmlcfg;
-				}
+				addFileAttributes(file, xmlfile);
 				xmlcontainer ~= xmlfile;
 			}
 		}
 		elem ~= xmlcontainer;
+	}
+
+	xml.Document createMSBuildDoc()
+	{
+		xml.Document doc = xml.newDocument("Project");
+		xml.Element root = xml.getRoot(doc);
+		xml.setAttribute(root, "DefaultTargets", "Build");
+		xml.setAttribute(root, "ToolsVersion", "4.0");
+		xml.setAttribute(root, "xmlns", "http://schemas.microsoft.com/developer/msbuild/2003");
+
+		xml.Element target = new xml.Element("Target");
+		xml.setAttribute(target, "Name", "GetTargetPath");
+		xml.setAttribute(target, "Returns", "$(exefile)");
+		root ~= target;
+
+		xml.Element globals = new xml.Element("PropertyGroup");
+		xml.setAttribute(globals, "Label", "Globals");
+		globals ~= new xml.Element("ProjectGuid", GUID2string(mProjectGUID));
+		root ~= globals;
+
+		mConfigProvider.addMSBuildConfigsToXml(doc);
+
+		auto files = new xml.Element("ItemGroup");
+		createMSBuildFileGroup(files, GetProjectNode());
+		root ~= files;
+
+		auto folders = new xml.Element("ItemGroup");
+		createMSBuildFolderGroup(folders, GetProjectNode());
+		root ~= folders;
+
+		return doc;
+	}
+
+	static void createMSBuildFileGroup(xml.Element grp, CHierContainer container)
+	{
+		for(CHierNode node = container.GetHeadEx(false); node; node = node.GetNext(false))
+		{
+			if(CHierContainer cont = cast(CHierContainer) node)
+				createMSBuildFileGroup(grp, cont);
+			else if(CFileNode file = cast(CFileNode) node)
+			{
+				auto xmlfile = new xml.Element("Compile");
+				xml.setAttribute(xmlfile, "Include", file.GetFilename());
+				addFileAttributes(file, xmlfile);
+				grp ~= xmlfile;
+			}
+		}
+	}
+
+	static void createMSBuildFolderGroup(xml.Element grp, CHierContainer container)
+	{
+		for(CHierNode node = container.GetHeadEx(false); node; node = node.GetNext(false))
+		{
+			if(CHierContainer cont = cast(CHierContainer) node)
+			{
+				auto xmlfile = new xml.Element("Folder");
+				xml.setAttribute(xmlfile, "Include", cont.GetName());
+				createMSBuildFolderGroup(grp, cont);
+				grp ~= xmlfile;
+			}
+		}
 	}
 
 	string GetFilename() { return mFilename; }

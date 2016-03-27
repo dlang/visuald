@@ -1331,7 +1331,7 @@ class ProjectOptions
 		elem ~= new xml.Element("pauseAfterRunning", toElem(pauseAfterRunning));
 	}
 
-	void readXML(xml.Element elem)
+	void parseXML(xml.Element elem)
 	{
 		fromElem(elem, "obj", obj);
 		fromElem(elem, "link", link);
@@ -1486,6 +1486,20 @@ class ConfigProvider : DisposingComObject,
 			auto config = new xml.Element("Config");
 			xml.setAttribute(config, "name", cfg.mName);
 			xml.setAttribute(config, "platform", cfg.mPlatform);
+
+			ProjectOptions opt = cfg.GetProjectOptions();
+			opt.writeXML(config);
+			doc ~= config;
+		}
+	}
+
+	void addMSBuildConfigsToXml(xml.Document doc)
+	{
+		foreach(Config cfg; mConfigs)
+		{
+			auto config = new xml.Element("PropertyGroup");
+			string cond = "'$(Configuration)|$(Platform)'=='" ~ cfg.mName ~ "|" ~ cfg.mPlatform ~ "'";
+			xml.setAttribute(config, "Condition", cond);
 
 			ProjectOptions opt = cfg.GetProjectOptions();
 			opt.writeXML(config);

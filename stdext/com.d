@@ -25,7 +25,7 @@ import sdk.win32.objbase;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-extern(C) void* gc_malloc(size_t sz, uint ba = 0, const TypeInfo ti=null); 
+extern(C) void* gc_malloc(size_t sz, uint ba = 0, const TypeInfo ti=null);
 
 C _newCom(C, T...)(T arguments)
 {
@@ -103,7 +103,7 @@ struct ComPtr(Interface)
 {
 	Interface ptr;
 
-	this(Interface i = null, bool doref = true)
+	this(Interface i, bool doref = true)
 	{
 		ptr = i;
 		if(ptr && doref)
@@ -128,7 +128,7 @@ struct ComPtr(Interface)
 		return p;
 	}
 
-	void opAssign(Interface i) 
+	void opAssign(Interface i)
 	{
 		if(ptr)
 			ptr.Release();
@@ -137,8 +137,8 @@ struct ComPtr(Interface)
 			ptr.AddRef();
 	}
 
-	void opAssign(IUnknown i) 
-	{ 
+	void opAssign(IUnknown i)
+	{
 		if(ptr)
 			ptr.Release();
 		ptr = qi_cast!(Interface)(i);

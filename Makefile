@@ -144,7 +144,7 @@ vdserver:
 	devenv /Project "vdserver"  /Build "Release|Win32" visuald_vs10.sln
 
 dparser:
-	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
+	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release;Platform=x86 /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
 
 vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
@@ -160,7 +160,7 @@ cv2pdb:
 
 dcxxfilt: $(DCXXFILT_EXE)
 $(DCXXFILT_EXE): tools\dcxxfilt.d
-	cd tools && set CONFIG=Release&& build_dcxxfilt
+	cd tools && set CONFIG=Release && build_dcxxfilt
 	
 ##################################
 # create installer

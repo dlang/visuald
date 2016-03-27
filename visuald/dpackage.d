@@ -87,7 +87,8 @@ const wstring g_packageName              = "Visual D"w;
 const  string g_packageVersion           = plk_version;
 const wstring g_packageCompany           = "Rainer Schuetze"w;
 const wstring[] g_languageFileExtensions = [ ".d"w, ".di"w, ".mixin"w ];
-const wstring g_projectFileExtensions    = "visualdproj"w;
+const wstring g_defaultProjectFileExtension = "visualdproj"w;
+const wstring[] g_projectFileExtensions  = [ "visualdproj"w, "dproj"w ];
 
 // CLSID registered in extensibility center (PLK)
 const GUID    g_packageCLSID             = uuid("002a2de9-8bb6-484d-987f-7e4ad4084715");
@@ -250,8 +251,8 @@ class ClassFactory : DComObject, IClassFactory
 
 ///////////////////////////////////////////////////////////////////////
 
-static const GUID SOleComponentManager_iid = { 0x000C060B,0x0000,0x0000,[ 0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46 ] }; 
-			
+static const GUID SOleComponentManager_iid = { 0x000C060B,0x0000,0x0000,[ 0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46 ] };
+
 ///////////////////////////////////////////////////////////////////////
 class Package : DisposingComObject,
 		IVsPackage,
@@ -314,7 +315,7 @@ class Package : DisposingComObject,
 		if(mHostSP)
 		{
 			CloseLibraryManager();
-			
+
 			if(mLangServiceCookie)
 			{
 				IProfferService sc;
@@ -345,13 +346,13 @@ class Package : DisposingComObject,
 				mProjFactoryCookie = 0;
 				mProjFactory = release(mProjFactory);
 			}
-			if (mComponentID != 0) 
+			if (mComponentID != 0)
 			{
 				IOleComponentManager componentManager;
 				if(mHostSP.QueryService(&SOleComponentManager_iid, &IOleComponentManager.iid, cast(void**)&componentManager) == S_OK)
 				{
 					scope(exit) release(componentManager);
-					componentManager.FRevokeComponent(mComponentID); 
+					componentManager.FRevokeComponent(mComponentID);
 					mComponentID = 0;
 				}
 			}
@@ -436,7 +437,7 @@ class Package : DisposingComObject,
 	override int SetSite(IServiceProvider psp)
 	{
 		mixin(LogCallMix);
-		
+
 		mHostSP = release(mHostSP);
 		mHostSP = addref(psp);
 
@@ -469,7 +470,7 @@ version(none)
 			}
 			projTypes.Release();
 		}
-		
+
 		mOptions.initFromRegistry();
 
 		//register with ComponentManager for Idle processing
@@ -477,7 +478,7 @@ version(none)
 		if(mHostSP.QueryService(&SOleComponentManager_iid, &IOleComponentManager.iid, cast(void**)&componentManager) == S_OK)
 		{
 			scope(exit) release(componentManager);
-			if (mComponentID == 0) 
+			if (mComponentID == 0)
 			{
 				OLECRINFO crinfo;
 				crinfo.cbSize = crinfo.sizeof;
@@ -489,7 +490,7 @@ version(none)
 			}
 		}
 		InitLibraryManager();
-		
+
 		return S_OK; // E_NOTIMPL;
 	}
 
@@ -497,7 +498,7 @@ version(none)
 	override int QueryService(in GUID* guidService, in IID* riid, void ** ppvObject)
 	{
 		mixin(LogCallMix);
-		
+
 		if(mLangsvc && *guidService == g_languageCLSID)
 			return mLangsvc.QueryInterface(riid, ppvObject);
 		if(mProjFactory && *guidService == g_projectFactoryCLSID)
@@ -546,7 +547,7 @@ version(none)
 	{
 		mixin(LogCallMix);
 
-		for (uint i = 0; i < cCmds; i++) 
+		for (uint i = 0; i < cCmds; i++)
 		{
 			if(g_commandSetCLSID == *pguidCmdGroup)
 			{
@@ -582,7 +583,7 @@ version(none)
 	{
 		if(g_commandSetCLSID != *pguidCmdGroup)
 			return OLECMDERR_E_NOTSUPPORTED;
-		
+
 		if(nCmdID == CmdSearchSymbol)
 		{
 			showSearchWindow(false);
@@ -667,8 +668,8 @@ version(none)
 		OutputPaneBuffer.flush();
 		return false;
 	}
-	
-	void Terminate() 
+
+	void Terminate()
 	{
 	}
 	BOOL FPreTranslateMessage(MSG* msg)
@@ -684,11 +685,11 @@ version(none)
 	void OnLoseActivation()
 	{
 	}
-	void OnActivationChange(/+[in]+/ IOleComponent pic, 
+	void OnActivationChange(/+[in]+/ IOleComponent pic,
 							in BOOL fSameComponent,
 							in const( OLECRINFO)*pcrinfo,
 							in BOOL fHostIsActivating,
-							in const( OLECHOSTINFO)*pchostinfo, 
+							in const( OLECHOSTINFO)*pchostinfo,
 							in DWORD dwReserved)
 	{
 	}
@@ -696,7 +697,7 @@ version(none)
 	{
 		return TRUE;
 	}
-	
+
 	BOOL FContinueMessageLoop(in OLELOOP uReason, in void *pvLoopData, in MSG *pMsgPeeked)
 	{
 		return 1;
@@ -836,7 +837,7 @@ version(none)
 						if(getCfgProvider.GetCfgProvider(&cfgProvider) == S_OK)
 						{
 							scope(exit) release(cfgProvider);
-							
+
 							GUID uid;
 							pHierarchy.GetGuidProperty(VSITEMID_ROOT, VSHPROPID_ProjectIDGuid, &uid);
 							if(auto hr = writeGUID(pOptionsStream, uid))
@@ -881,7 +882,7 @@ version(none)
 					if(HRESULT hr = win.SaveViewState(pOptionsStream))
 						return hr;
 				}
-				// empty GUID as end marker 
+				// empty GUID as end marker
 				if(auto hr = writeGUID(pOptionsStream, uid))
 					return hr;
 			}
@@ -924,7 +925,7 @@ version(none)
 			if(!cfgProvider2)
 				return E_FAIL;
 			scope(exit) release(cfgProvider2);
-			
+
 			for(;;)
 			{
 				string name, platform, xmltext;
@@ -949,7 +950,7 @@ version(none)
 						{
 							xmltext = `<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>` ~ xmltext;
 							xml.Document doc = xml.readDocument(xmltext);
-							cfg.GetProjectOptions().readXML(doc);
+							cfg.GetProjectOptions().parseXML(doc);
 						}
 						catch(Exception e)
 						{
@@ -1052,14 +1053,14 @@ version(none)
 	/////////////////////////////////////////////////////////////
 	HRESULT InitLibraryManager()
 	{
-		if (mOmLibraryCookie != 0) // already init-ed 
+		if (mOmLibraryCookie != 0) // already init-ed
 			return E_UNEXPECTED;
 
 		HRESULT hr = E_FAIL;
 		if(auto om = queryService!(IVsObjectManager, IVsObjectManager2))
 		{
 			scope(exit) release(om);
-			
+
 			mLibrary = newCom!Library;
 			hr = om.RegisterSimpleLibrary(mLibrary, &mOmLibraryCookie);
 			if(SUCCEEDED(hr))
@@ -1067,7 +1068,7 @@ version(none)
 		}
 		return hr;
 	}
-	
+
 	HRESULT CloseLibraryManager()
 	{
 		if (mOmLibraryCookie == 0) // already closed or not init-ed
@@ -1125,12 +1126,12 @@ private:
 	IServiceProvider mHostSP;
 	uint             mLangServiceCookie;
 	uint             mProjFactoryCookie;
-	
+
 	uint             mComponentID;
-	
+
 	LanguageService  mLangsvc;
 	ProjectFactory   mProjFactory;
-	
+
 	uint             mOmLibraryCookie;
 
 	GlobalOptions    mOptions;
@@ -1220,7 +1221,7 @@ class GlobalOptions
 	bool lastColorizeCoverage;
 	bool lastColorizeVersions;
 	bool lastUseDParser;
-	
+
 	this()
 	{
 	}
@@ -1229,7 +1230,7 @@ class GlobalOptions
 	{
 		if(hConfigKey)
 			return true;
-		
+
 		BSTR bstrRoot;
 		ILocalRegistry4 registry4 = queryService!(ILocalRegistry, ILocalRegistry4);
 		if(registry4)
@@ -1256,7 +1257,7 @@ class GlobalOptions
 			{
 				regConfigRoot = wdetachBSTR(bstrRoot);
 				hConfigKey = HKEY_LOCAL_MACHINE;
-				
+
 				regUserRoot = regConfigRoot;
 				hUserKey = HKEY_CURRENT_USER;
 				return true;
@@ -1541,12 +1542,12 @@ class GlobalOptions
 			lastColorizeCoverage = ColorizeCoverage;
 			lastColorizeVersions = ColorizeVersions;
 			lastUseDParser       = useDParser;
-		
+
 			updateDefaultColors();
 
 			if(VDServerIID.length > 0)
 				gServerClassFactory_iid = uuid(VDServerIID);
-			else 
+			else
 				updateVDServer();
 
 			CHierNode.setContainerIsSorted(sortProjects);
@@ -1594,7 +1595,7 @@ class GlobalOptions
 			keyToolOpts.Set("JSNSearchPath",     toUTF16(JSNSearchPath));
 			keyToolOpts.Set("IncSearchPath",     toUTF16(IncSearchPath));
 			keyToolOpts.Set("UserTypesSpec",     toUTF16(UserTypesSpec));
-			
+
 			keyToolOpts.Set("ExeSearchPath64",     toUTF16(DMD.ExeSearchPath64));
 			keyToolOpts.Set("LibSearchPath64",     toUTF16(DMD.LibSearchPath64));
 			keyToolOpts.Set("DisasmCommand64",     toUTF16(DMD.DisasmCommand64));
@@ -1652,7 +1653,7 @@ class GlobalOptions
 			writeToBuildOutputPane(e.msg);
 			return false;
 		}
-		
+
 		bool updateColorizer = false;
 		int[wstring] types = parseUserTypes(UserTypesSpec);
 		if(types != UserTypes)
@@ -1700,7 +1701,7 @@ class GlobalOptions
 		replacements["VSINSTALLDIR"] = VSInstallDir;
 		replacements["VISUALDINSTALLDIR"] = VisualDInstallDir;
 	}
-	
+
 	string replaceGlobalMacros(string s)
 	{
 		if(s.indexOf('$') < 0)
@@ -1737,17 +1738,17 @@ class GlobalOptions
 		string bindir = installdir ~ "windows\\bin\\";
 		if(std.file.exists(bindir ~ "dmd.exe"))
 			return bindir;
-		
+
 		string dmd = findInPath("dmd.exe");
 		return empty(dmd) ? null : dirName(dmd);
 	}
-	
+
 	string findScIni(string workdir, string dmdpath, bool optlink)
 	{
 		string inifile;
 		if(workdir.length)
 			inifile = buildPath(workdir, "sc.ini");
-		
+
 		if(inifile.empty || !std.file.exists(inifile))
 		{
 			inifile = null;
@@ -1779,10 +1780,10 @@ class GlobalOptions
 			string[string] env = [ "@P" : dirName(inifile) ];
 			addReplacements(env);
 			string[string][string] ini = parseIni(inifile);
-			
+
 			if(auto pEnv = "Environment" in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
-			
+
 			string envArch = x64 ? "Environment64" : mscoff ? "Environment32mscoff" : "Environment32";
 			if(auto pEnv = envArch in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
@@ -1849,7 +1850,7 @@ class GlobalOptions
 		}
 		return imports;
 	}
-	
+
 	string[] getImportPaths()
 	{
 		string[] imports = getIniImportPaths();
@@ -1857,7 +1858,7 @@ class GlobalOptions
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
 			imports ~= removeDotDotPath(normalizeDir(unquoteArgument(arg)));
-		
+
 		return imports;
 	}
 
@@ -1870,11 +1871,11 @@ class GlobalOptions
 			jsonpaths ~= normalizeDir(unquoteArgument(arg));
 		return jsonpaths;
 	}
-	
+
 	string[] getJSONFiles()
 	{
 		string[] jsonpaths = getJSONPaths();
-		
+
 		string[] jsonfiles;
 		foreach(path; jsonpaths)
 		{
@@ -1927,7 +1928,7 @@ class GlobalOptions
 		if(!pdm)
 			return null;
 		scope(exit) release(pdm);
-		
+
 		IVsProfileSettingsTree settingsTree;
 		HRESULT hr = pdm.GetSettingsForExport(&settingsTree);
 		if(SUCCEEDED(hr))
@@ -1956,12 +1957,12 @@ class GlobalOptions
 			saveToRegistry();
 			jsonPath = getJSONPaths()[0];
 		}
-		
+
 		pane.Clear();
 		pane.Activate();
 		string msg = "Building phobos JSON browse information files to " ~ jsonPath ~ "\n";
 		pane.OutputString(toUTF16z(msg));
-		
+
 		if(!std.file.exists(jsonPath))
 		{
 			try
@@ -1973,7 +1974,7 @@ class GlobalOptions
 				return OutputErrorString(msg = "cannot create directory " ~ jsonPath);
 			}
 		}
-		
+
 		string[] imports = getIniImportPaths();
 		foreach(s; imports)
 			pane.OutputString(toUTF16z("Using import " ~ s ~ "\n"));
@@ -1990,7 +1991,7 @@ class GlobalOptions
 			string cmdline = "@echo off\n";
 			string jsonfile;
 			string opts = " -d -c -o-";
-			
+
 			if(std.file.exists(s ~ "std\\algorithm.d") || std.file.exists(s ~ "std\\algorithm\\package.d")) // D2
 			{
 				files ~= findDRuntimeFiles(s, "std", true);
@@ -2030,7 +2031,7 @@ class GlobalOptions
 		}
 		return true;
 	}
-	
+
 	string findCoverageFile(string srcfile)
 	{
 		import stdext.path;
@@ -2100,7 +2101,7 @@ class GlobalOptions
 		foreach(dir; dirs)
 			if(std.file.exists(dir) && std.file.isDir(dir))
 			{
-				string[] lstfiles; 
+				string[] lstfiles;
 				foreach(f; std.file.dirEntries(dir, SpanMode.shallow))
 					if(icmp(extension(f.name), ".lst") == 0)
 						lstfiles ~= f;
@@ -2201,16 +2202,16 @@ class ItemWizard : DisposingDispatchObject, dte.IDTWizard
 	override void Dispose()
 	{
 	}
-	override ComTypeInfoHolder getTypeHolder () 
-	{ 
+	override ComTypeInfoHolder getTypeHolder ()
+	{
 		mixin(LogCallMix);
-		return null; 
+		return null;
 	}
 
-	override HRESULT Execute(/+[in]+/ IDispatch Application, 
-							 in int hwndOwner, 
-							 in SAFEARRAY* ContextParams, 
-							 in SAFEARRAY* CustomParams, 
+	override HRESULT Execute(/+[in]+/ IDispatch Application,
+							 in int hwndOwner,
+							 in SAFEARRAY* ContextParams,
+							 in SAFEARRAY* CustomParams,
 							 /+[in, out]+/ dte.wizardResult* retval)
 	{
 		mixin(LogCallMix);
