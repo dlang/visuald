@@ -83,7 +83,7 @@ $(UL
   $(LI Use semantic analysis for "Goto Definition":
     goto definition (default short-cut F12) can either request the location of the definition of
     a symbol from the semantic engine or takes information from compiler generated JSON files.
-    A successful build with JSON output enabled is necessary for the laytter. JSON files can also
+    A successful build with JSON output enabled is necessary for the latter. JSON files can also
     be precompiled and placed into the directories given in the $$(VDLINK GlobalOptions,global options).
     If there are multiple
     definitions for the identifier at the caret position, the $(VDLINK Search,Search Window) will show up.

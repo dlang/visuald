@@ -5,7 +5,7 @@ $(TD $(IMG images/vd_logo.png))
 $(TD
 $(P Visual D is a Visual Studio package providing both project management and language services.
 It works with Visual Studio 2005 - 2015 including Visual Studio Community 2013/2015 as well as the free Visual Studio Shells.
-See the $(LINK2 Installation.html, Installation) instructions, especially if not using a commercial edition of Visual Studio.)
+See the $(LINK2 Installation.html, Installation) instructions, especially if not using a commercial or community edition of Visual Studio.)
 
 $(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.)
 
