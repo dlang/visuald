@@ -21,6 +21,7 @@ import std.string;
 import std.ascii;
 import std.conv;
 import std.array;
+import std.algorithm;
 
 string ellipseString(string s, int maxlen)
 {
@@ -76,7 +77,7 @@ string _replaceMacros(string start, dchar end, string esc)(string s, string[stri
 				nid = *ps;
 			else
 				nid = getEnvVar(id);
-			
+
 			int *p = id in lastReplacePos;
 			if(!p || *p <= i)
 			{
@@ -154,12 +155,12 @@ S createPasteString(S)(S s)
 			t ~= ' ';
 		wasWhite = isw;
 	}
-	return t;		
+	return t;
 }
 
 // special version of std.string.indexOf that considers '.', '/' and '\\' the same
 //  character for case insensitive searches
-ptrdiff_t indexOfPath(Char1, Char2)(const(Char1)[] s, const(Char2)[] sub, 
+ptrdiff_t indexOfPath(Char1, Char2)(const(Char1)[] s, const(Char2)[] sub,
 									std.string.CaseSensitive cs = std.string.CaseSensitive.yes)
 {
 	const(Char1)[] balance;

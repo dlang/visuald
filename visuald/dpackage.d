@@ -19,6 +19,7 @@ import std.conv;
 import std.array;
 import std.exception;
 import std.algorithm;
+static import std.ascii;
 
 import stdext.path;
 import stdext.array;
@@ -51,6 +52,7 @@ import visuald.pkgutil;
 import visuald.colorizer;
 import visuald.dllmain;
 import visuald.vdserverclient;
+import xml = visuald.xmlwrap;
 
 import sdk.win32.winreg;
 import sdk.win32.oleauto;
@@ -60,8 +62,8 @@ import sdk.vsi.vssplash;
 import sdk.vsi.proffserv;
 import sdk.vsi.vsshell90;
 import sdk.vsi.objext;
-import dte = sdk.vsi.dte80a;
-import dte2 = sdk.vsi.dte80;
+static import dte = sdk.vsi.dte80a;
+static import dte2 = sdk.vsi.dte80;
 
 ///////////////////////////////////////////////////////////////////////
 

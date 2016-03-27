@@ -16,6 +16,7 @@ import std.stdio;
 import std.conv;
 import std.datetime;
 import std.array;
+import std.file;
 
 import stdcarg = core.stdc.stdarg;
 import stdcio = core.stdc.stdio;
@@ -30,9 +31,9 @@ public import visuald.vscommands;
 
 static import dte = sdk.port.dte;
 
-import sdk.win32.oleauto;	
-	
-import sdk.vsi.textmgr;	
+import sdk.win32.oleauto;
+
+import sdk.vsi.textmgr;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.vsshell90;
@@ -340,14 +341,14 @@ version(none)
 	//mixin(mixinGUID2string("VsSetGuidTeamSystemDataCmdIds"));
 	//mixin(mixinGUID2string("VsTextTransformationCmdIds"));
 
-	
+
 	mixin(mixinGUID2string("IVsLanguageDebugInfoRemap"));
 	mixin(mixinGUID2string("IVsLanguageDebugInfo2"));
 	mixin(mixinGUID2string("IVsDebuggableProjectCfg2"));
 	mixin(mixinGUID2string("IVsENCRebuildableProjectCfg"));
 	mixin(mixinGUID2string("IVsWebServiceProvider"));
 	mixin(mixinGUID2string("VisualD_LanguageService"));
-		
+
 	return toUTF8(GUID2wstring(guid));
 }
 
@@ -361,8 +362,8 @@ string tryformat(...)
 
 	try {
 		std.format.doFormat(&putc, _arguments, _argptr);
-	} 
-	catch(Exception e) 
+	}
+	catch(Exception e)
 	{
 		string msg = e.toString();
 		s ~= " EXCEPTION";
@@ -376,8 +377,8 @@ string _tryformat(T)(T* arg)
 		return "null";
 	return tryformat("", *arg);
 }
-	
-string varToString(in VARIANT arg) 
+
+string varToString(in VARIANT arg)
 {
 	if (arg.vt == VT_BSTR)
 		return to_string(arg.bstrVal);
@@ -414,7 +415,7 @@ string _toLogOut(GUID arg) { return GUID2utf8(arg); }
 
 version(all)
 {
-	
+
 string _toLogPtr(T)(const(T)* arg)
 {
 	     static if(is(T : void))     return tryformat("", arg);
@@ -422,14 +423,14 @@ string _toLogPtr(T)(const(T)* arg)
 	else static if(is(T : GUID))     return arg ? GUID2utf8(*arg) : "null";
 	else static if(is(T : LARGE_INTEGER))  return _tryformat(cast(long*)arg);
 	else static if(is(T : ULARGE_INTEGER)) return _tryformat(cast(ulong*)arg);
-	
+
 	else static if(is(T : IUnknown)) return arg ? _tryformat(cast(int*)*arg) : "null";
 	else static if(is(T == struct))  return tryformat("struct ", cast(int*)arg);
 	else return _tryformat(arg);
 }
 
 } else { // !all
-	
+
 string _toLogPtr(T : uint)(T* arg) { return arg ? tryformat("%d", *arg) : "null"; }
 string _toLogPtr(T : short)(T* arg) { return arg ? tryformat("%s", arg) : "null"; }
 string _toLogPtr(T : wchar*)(T* arg) { return arg ? to_string(*arg) : "null"; }
@@ -487,16 +488,16 @@ extern(C) void log_printf(string fmt, ...)
 {
 	stdcarg.va_list q;
 	stdcarg.va_start!(string)(q, fmt);
-	
+
 	char[256] buf;
 	int len = vsprintf(buf.ptr, fmt.ptr, q);
-	
+
 	if(!gcLogFh)
 		gcLogFh = stdcio.fopen(gLogGCFile.ptr, "w");
-	
+
 	if(gcLogFh)
 		stdcio.fwrite(buf.ptr, len, 1, gcLogFh);
-	
+
 	stdcarg.va_end(q);
 }
 
@@ -511,7 +512,7 @@ version(test) {
 	void logCall(...)
 	{
 		string s;
-		
+
 		void putc(dchar c)
 		{
 			s ~= c;
@@ -536,7 +537,7 @@ version(test) {
 		                   now.hour, now.minute, now.second, tid);
 		string s = to!string(buffer[0..len]);
 		s ~= replicate(" ", gLogIndent);
-		
+
 		void putc(dchar c)
 		{
 			s ~= c;
@@ -544,8 +545,8 @@ version(test) {
 
 		try {
 			std.format.doFormat(&putc, _arguments, _argptr);
-		} 
-		catch(Exception e) 
+		}
+		catch(Exception e)
 		{
 			string msg = e.toString();
 			s ~= " EXCEPTION";
@@ -553,7 +554,7 @@ version(test) {
 
 		log_string(s);
 	}
-	
+
 	void log_string(string s)
 	{
 		s ~= "\n";
@@ -567,7 +568,7 @@ version(test) {
 				{
 					gLogFirst = false;
 					s = "\n" ~ replicate("=", 80) ~ "\n" ~ s;
-					
+
 					try
 					{
 						string bar = "\n" ~ replicate("=", 80) ~ "\n";
@@ -877,7 +878,7 @@ const string LogCallMixNoRet = "";
 void test(int a0, Object o)
 {
     mixin(FuncNameMix);
-    pragma(msg, _FUNCTION_); // shows "test"    
+    pragma(msg, _FUNCTION_); // shows "test"
     pragma(msg,typeof(&mixin(_FUNCTION_)).stringof); // shows "void function(int a0, Object o)"
     pragma(msg,_getLogCall(_FUNCTION_, typeof(&mixin(_FUNCTION_)).stringof, false)); // shows "void function(int a0, Object o)"
 }
@@ -889,9 +890,9 @@ template tLogCall(alias s)
 	struct __STRUCT {};
 	static const string _FUNCTION_ = _getJustName(__STRUCT.mangleof);
 
-	//pragma(msg, s.mangleof); // shows "test"    
-	pragma(msg, __STRUCT.mangleof); // shows "test"    
-	pragma(msg, _FUNCTION_); // shows "test"    
+	//pragma(msg, s.mangleof); // shows "test"
+	pragma(msg, __STRUCT.mangleof); // shows "test"
+	pragma(msg, _FUNCTION_); // shows "test"
 	alias ParameterTypeTuple!(test2) types;
 
 	void* pthis = cast(void*)this;

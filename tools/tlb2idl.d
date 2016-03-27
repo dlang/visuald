@@ -1,8 +1,8 @@
-module tlbodl;
+module tlbidl;
 
-import std.c.windows.windows;
-import std.c.windows.com;
-import std.c.string;
+import core.sys.windows.windows;
+import core.sys.windows.com;
+import core.stdc.string;
 import std.stdio;
 import std.file;
 import std.path;
@@ -23,7 +23,7 @@ static IID IID_IInterfaceViewer =
 
 interface IInterfaceViewer : IUnknown
 {
-	HRESULT View (HWND hwndParent, ref IID riid, IUnknown punk);
+	HRESULT View (HWND hwndParent, const ref IID riid, IUnknown punk);
 }
 
 // CLSIDs of viewers implemented in IVIEWER.DLL
@@ -47,7 +47,7 @@ HWND FindWindowExA(HWND hwndParent, HWND hwndChildAfter, LPCSTR lpszClass, LPCST
 
 alias
 extern(Windows)
-HRESULT fnDllGetClassObject(CLSID* rclsid, IID* riid, LPVOID* ppv);
+HRESULT fnDllGetClassObject(const CLSID* rclsid, const IID* riid, LPVOID* ppv);
 
 string idltext;
 
@@ -78,7 +78,7 @@ HWND GetWindow(HWND hWnd, UINT uCmd) nothrow;
 const GW_OWNER = 4;
 
 extern(Windows)
-int GetClassNameA(HWND hWnd, LPTSTR lpClassName, int nMaxCount) nothrow;
+int GetClassNameA(HWND hWnd, LPSTR lpClassName, int nMaxCount) nothrow;
 
 extern(Windows)
 BOOL CloseWindow(HWND hWnd);
@@ -172,9 +172,9 @@ void main(string[] argv)
 	HRESULT rc = LoadTypeLib(path, &lib);
 	if(FAILED(rc))
 		throw new Exception("LoadTypeLib failed on " ~ olb);
-		
+
 	debug writefln("lib = %s", cast(void*)lib);
-	
+
 	wchar* ivdllpath = cast(wchar*)toUTF16z(ivdll);
 	HANDLE m = LoadLibraryW(ivdllpath);
 	if(!m)
@@ -197,15 +197,16 @@ void main(string[] argv)
 	debug writefln("fn = %s", cast(void*)fn);
 	IInterfaceViewer viewer;
 	IClassFactory factory;
-	rc = (*fn)(&CLSID_ITypeLibViewer, &IID_IClassFactory, cast(void**)&factory);
+	IID iid_IClassFactory = IID_IClassFactory; // must make a copy because "IID_IClassFactory is not an lvalue"!?
+	rc = (*fn)(&CLSID_ITypeLibViewer, &iid_IClassFactory, cast(void**)&factory);
 	if(FAILED(rc) || !factory)
 		throw new Exception("failed to create class factory");
-		
+
 	debug writefln("factory = %s", cast(void*)factory);
 	rc = factory.CreateInstance(null, &IID_IInterfaceViewer, cast(void**)&viewer);
 	if(FAILED(rc) || !viewer)
 		throw new Exception("failed to create interface viewer");
-		
+
 	debug writefln("viewer = %s", cast(void*)viewer);
 
 	HINSTANCE hInst = GetModuleHandleA(null);
@@ -216,7 +217,7 @@ void main(string[] argv)
 	wc.hInstance = hInst;
 	wc.hIcon = null; //DefaultWindowIcon.peer;
 	//wc.hIconSm = DefaultWindowSmallIcon.peer;
-	wc.hCursor = LoadCursorA(cast(HINSTANCE) null, IDC_ARROW);
+	wc.hCursor = LoadCursorW(cast(HINSTANCE) null, IDC_ARROW);
 	wc.hbrBackground = null;
 	wc.lpszMenuName = null;
 	wc.cbClsExtra = 0;
@@ -230,7 +231,8 @@ void main(string[] argv)
 
 	//writefln("hwnd = %s", cast(void*)hwnd);
 	myWindow = hwnd;
-	viewer.View(hwnd, IID_ITypeLib, lib);
+	IID iid_ITypeLib = IID_ITypeLib; // must make a copy because IID_ITypeLib is not an lvalue!?
+	viewer.View(hwnd, iid_ITypeLib, lib);
 
 	std.file.write(outidl, idltext);
 }

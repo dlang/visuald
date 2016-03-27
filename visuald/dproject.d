@@ -19,6 +19,7 @@ import std.file;
 import std.path;
 import std.conv;
 import std.array;
+static import std.process;
 
 import stdext.path;
 

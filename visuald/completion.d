@@ -43,6 +43,7 @@ import sdk.win32.commctrl;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.vsshell;
+import sdk.win32.wtypes;
 
 ///////////////////////////////////////////////////////////////
 
@@ -60,7 +61,7 @@ class Declarations
 	string[] mDescriptions;
 	int[] mGlyphs;
 	int mExpansionState = kStateInit;
-	
+
 	enum
 	{
 		kStateInit,
@@ -70,7 +71,7 @@ class Declarations
 		kStateSymbols,
 		kStateCaseInsensitive
 	}
-			
+
 	this()
 	{
 	}
@@ -81,7 +82,7 @@ class Declarations
 	}
 
 	dchar OnAutoComplete(IVsTextView textView, string committedWord, dchar commitChar, int commitIndex)
-	{ 
+	{
 		return 0;
 	}
 
@@ -182,7 +183,7 @@ class Declarations
 			string desc;
 			splitName(index, null, null, null, &desc);
 			desc = replace(desc, "\a", "\n");
-			
+
 			string res = phobosDdocExpand(desc);
 
 			return res;
@@ -266,7 +267,7 @@ class Declarations
 	bool ImportExpansions(string imp, string file)
 	{
 		string[] imports = GetImportPaths(file);
-		
+
 		string dir;
 		int dpos = lastIndexOf(imp, '.');
 		if(dpos >= 0)
@@ -374,7 +375,7 @@ class Declarations
 		}
 		return mNames.length > namesLength;
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////
 	bool SymbolExpansions(IVsTextView textView, Source src)
 	{
@@ -386,12 +387,12 @@ class Declarations
 			tok = "";
 		if(!tok.length)
 			return false;
-		
+
 		int namesLength = mNames.length;
 		addunique(mNames, Package.GetLibInfos().findCompletions(tok, true));
 		return mNames.length > namesLength;
 	}
-	
+
 	///////////////////////////////////////////////////////////////////////////
 
 	bool SemanticExpansions(IVsTextView textView, Source src)
@@ -482,7 +483,7 @@ class Declarations
 	{
 		mNames = mNames.init;
 		mExpansionState = kStateInit;
-		
+
 		if(!_MoreExpansions(textView, src))
 			return false;
 
@@ -602,7 +603,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 		int count = mDecls.GetCount();
 		if (count <= 0) return;
 
-		//initialise and refresh      
+		//initialise and refresh
 		UpdateCompletionFlags flags = UCS_NAMESCHANGED;
 		if (mCompleteWord)
 			flags |= UCS_COMPLETEWORD;
@@ -782,7 +783,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 		dchar ch = commitChar;
 		bool isCommitChar = true;
-		
+
 		string textSoFar = to_string(wtextSoFar);
 		if (commitChar != 0)
 		{
@@ -881,7 +882,7 @@ class MethodData : DisposingComObject, IVsMethodData
 {
 	IServiceProvider mProvider;
 	IVsMethodTipWindow mMethodTipWindow;
-	
+
 	Definition[] mMethods;
 	bool mTypePrefixed = true;
 	int mCurrentParameter;
@@ -893,7 +894,7 @@ class MethodData : DisposingComObject, IVsMethodData
 	this()
 	{
 		auto uuid = uuid_coclass_VsMethodTipWindow;
-		mMethodTipWindow = VsLocalCreateInstance!IVsMethodTipWindow (&uuid, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
+		mMethodTipWindow = VsLocalCreateInstance!IVsMethodTipWindow (&uuid, CLSCTX_INPROC_SERVER);
 		if (mMethodTipWindow)
 			mMethodTipWindow.SetMethodData(this);
 	}
@@ -927,8 +928,8 @@ class MethodData : DisposingComObject, IVsMethodData
 
 		// Apparently this Refresh() method is called as a result of event notification
 		// after the currentMethod is changed, so we do not want to Dismiss anything or
-		// reset the currentMethod here. 
-		//Dismiss();  
+		// reset the currentMethod here.
+		//Dismiss();
 		mTextView = textView;
 
 		mCurrentParameter = currentParameter;
@@ -1036,11 +1037,11 @@ class MethodData : DisposingComObject, IVsMethodData
 		int line, idx, vspace, endpos;
 		if(HRESULT rc = mTextView.GetCaretPos(&line, &idx))
 			return rc;
-		
+
 		line = max(line, mContext.iStartLine);
 		if(HRESULT rc = mTextView.GetNearestPosition(line, mContext.iStartIndex, pos, &vspace))
 			return rc;
-		
+
 		line = max(line, mContext.iEndLine);
 		if(HRESULT rc = mTextView.GetNearestPosition(line, mContext.iEndIndex, &endpos, &vspace))
 			return rc;

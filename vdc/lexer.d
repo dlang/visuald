@@ -8,10 +8,11 @@
 
 module vdc.lexer;
 
-import std.ascii;
-import std.uni : isAlpha;
 import std.utf;
 import std.conv;
+
+static import std.ascii;
+static import std.uni;
 
 // current limitations:
 // - nested comments must not nest more than 255 times
@@ -37,6 +38,12 @@ struct TokenInfo
 	int tokid;
 	int StartIndex;
 	int EndIndex;
+}
+
+bool isAnyCaseOf(char letter)(dchar ch)
+{
+	static assert('a' <= letter && letter <= 'z');
+	return ch == letter || ch == letter + 'A' - 'a';
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,7 +81,7 @@ struct Lexer
 	bool mTokenizeTokenString = true;
 	bool mSplitNestedComments = true;
 	bool mAllowDollarInIdentifiers = false;
-	
+
 	static int toState(State s, int nesting, int tokLevel, int otherState)
 	{
 		static assert(State.kStringToken <= 15);
@@ -108,7 +115,7 @@ struct Lexer
 		int pid;
 		return scanIdentifier(text, startpos, pos, pid);
 	}
-	
+
 	int scanIdentifier(S)(S text, size_t startpos, ref size_t pos, ref int pid)
 	{
 		while(pos < text.length)
@@ -136,12 +143,12 @@ struct Lexer
 		int id = parseOperator(text, startpos, len);
 		if(id == TOK_error)
 			return TokenCat.Text;
-		
+
 		pid = id;
 		pos = startpos + len;
 		return TokenCat.Operator;
 	}
-	
+
 	static dchar trydecode(S)(S text, ref size_t pos)
 	{
 		if(pos >= text.length)
@@ -160,7 +167,7 @@ struct Lexer
 			{
 				if(base < 16 && (ch < '0' || ch >= '0' + base))
 					break;
-				else if(base == 16 && !isHexDigit(ch))
+				else if(base == 16 && !std.ascii.isHexDigit(ch))
 					break;
 			}
 			pos = nextpos;
@@ -172,7 +179,7 @@ struct Lexer
 		int pid;
 		return scanNumber(text, ch, pos, pid);
 	}
-	
+
 	static int scanNumber(S)(S text, dchar ch, ref size_t pos, ref int pid)
 	{
 		// pos after first digit
@@ -185,10 +192,9 @@ struct Lexer
 		{
 			size_t prevpos = pos;
 			ch = trydecode(text, pos);
-			ch = toLower(ch);
-			if(ch == 'b')
+			if(ch.isAnyCaseOf!'b')
 				base = 2;
-			else if (ch == 'x')
+			else if (ch.isAnyCaseOf!'x')
 				base = 16;
 			else
 			{
@@ -204,7 +210,7 @@ struct Lexer
 		nextpos = pos;
 		ch = trydecode(text, nextpos);
 
-		if((base == 10 && toLower(ch) == 'e') || (base == 16 && toLower(ch) == 'p'))
+		if((base == 10 && ch.isAnyCaseOf!'e') || (base == 16 && ch.isAnyCaseOf!'p'))
 			goto L_exponent;
 		if(base >= 8 && ch == '.') // ".." is the slice token
 		{
@@ -225,7 +231,7 @@ L_float:
 
 			nextpos = pos;
 			ch = trydecode(text, nextpos);
-			if((base == 10 && toLower(ch) == 'e') || (base == 16 && toLower(ch) == 'p'))
+			if((base == 10 && ch.isAnyCaseOf!'e') || (base == 16 && ch.isAnyCaseOf!'p'))
 			{
 L_exponent:
 				// exponent
@@ -239,7 +245,7 @@ L_exponent:
 			// suffix
 			nextpos = pos;
 			ch = trydecode(text, nextpos);
-			if(ch == 'L' || toUpper(ch) == 'F')
+			if(ch == 'L' || ch.isAnyCaseOf!'f')
 			{
 L_floatLiteral:
 				pos = nextpos;
@@ -255,10 +261,10 @@ L_complexLiteral:
 			// check integer suffix
 			if(ch == 'i')
 				goto L_complexLiteral;
-			if(toUpper(ch) == 'F')
+			if(ch.isAnyCaseOf!'f')
 				goto L_floatLiteral;
 
-			if(toUpper(ch) == 'U')
+			if(ch.isAnyCaseOf!'u')
 			{
 				pos = nextpos;
 				ch = trydecode(text, nextpos);
@@ -271,7 +277,7 @@ L_complexLiteral:
 				ch = trydecode(text, nextpos);
 				if(ch == 'i')
 					goto L_complexLiteral;
-				if(toUpper(ch) == 'U')
+				if(ch.isAnyCaseOf!'u')
 					pos = nextpos;
 			}
 L_integer:
@@ -357,7 +363,7 @@ L_integer:
 			pos = nextpos;
 		return State.kWhite;
 	}
-	
+
 	static State scanStringWysiwyg(S)(S text, ref size_t pos)
 	{
 		while(pos < text.length)
@@ -450,7 +456,7 @@ L_integer:
 		}
 		return false;
 	}
-	
+
 	static bool isEndingComment(S)(S txt, ref size_t pos)
 	{
 		if(pos < txt.length && pos > 0 && txt[pos] == '/' && (txt[pos-1] == '*' || txt[pos-1] == '+'))
@@ -462,29 +468,29 @@ L_integer:
 			return true;
 		return false;
 	}
-	
+
 	bool isIdentifierChar(dchar ch)
 	{
 		if(mAllowDollarInIdentifiers && ch == '$')
 			return true;
-		return isAlpha(ch) || ch == '_' || ch == '@';
+		return std.uni.isAlpha(ch) || ch == '_' || ch == '@';
 	}
-	
+
 	bool isIdentifierCharOrDigit(dchar ch)
 	{
-		return isIdentifierChar(ch) || isDigit(ch);
+		return isIdentifierChar(ch) || std.ascii.isDigit(ch);
 	}
-	
+
 	bool isIdentifier(S)(S text)
 	{
 		if(text.length == 0)
 			return false;
-		
+
 		size_t pos;
 		dchar ch = decode(text, pos);
 		if(!isIdentifierChar(ch))
 			return false;
-		
+
 		while(pos < text.length)
 		{
 			ch = decode(text, pos);
@@ -503,12 +509,12 @@ L_integer:
 		while(pos < text.length)
 		{
 			dchar ch = decode(text, pos);
-			if(!isDigit(ch))
+			if(!std.ascii.isDigit(ch))
 				return false;
 		}
 		return true;
 	}
-	
+
 	static bool isBracketPair(dchar ch1, dchar ch2)
 	{
 		switch(ch1)
@@ -561,7 +567,7 @@ L_integer:
 
 	static bool isCommentOrSpace(S)(int type, S text)
 	{
-		return (type == TokenCat.Comment || (type == TokenCat.Text && isWhite(text[0])));
+		return (type == TokenCat.Comment || (type == TokenCat.Text && std.uni.isWhite(decodeFront(text))));
 	}
 
 	static State scanNestedDelimiterString(S)(S text, ref size_t pos, State s, ref int nesting)
@@ -618,7 +624,7 @@ L_integer:
 		dchar ch;
 
 		id = TOK_Space;
-		
+
 		switch(s)
 		{
 		case State.kWhite:
@@ -665,13 +671,13 @@ L_integer:
 			}
 			else if(isIdentifierChar(ch))
 				type = scanIdentifier(text, startpos, pos, id);
-			else if(isDigit(ch))
+			else if(std.ascii.isDigit(ch))
 				type = scanNumber(text, ch, pos, id);
 			else if (ch == '.')
 			{
 				size_t nextpos = pos;
 				ch = trydecode(text, nextpos);
-				if(isDigit(ch))
+				if(std.ascii.isDigit(ch))
 					type = scanNumber(text, '.', pos, id);
 				else
 					type = scanOperator(text, startpos, pos, id);
@@ -712,7 +718,7 @@ L_integer:
 
 			else if (ch == '`')
 				goto case State.kStringAltWysiwyg;
-			
+
 			else if (ch == '\'')
 			{
 				s = scanStringCStyle(text, pos, '\'');
@@ -734,11 +740,11 @@ L_integer:
 						tokLevel++;
 					else if (ch == '}')
 						tokLevel--;
-					if(!isWhite(ch))
+					if(!std.uni.isWhite(ch))
 						type = scanOperator(text, startpos, pos, id);
 					id = TOK_StringLiteral;
 				}
-				else if(!isWhite(ch))
+				else if(!std.uni.isWhite(ch))
 					type = scanOperator(text, startpos, pos, id);
 			}
 			break;
@@ -752,13 +758,13 @@ L_integer:
 			id = TOK_StringLiteral;
 			s = State.kWhite;
 			break;
-			
+
 		case State.kStringToken:
 			type = TokenCat.String;
 			id = TOK_StringLiteral;
 			s = scanTokenString(text, pos, tokLevel);
 			break;
-			
+
 		case State.kBlockComment:
 			s = scanBlockComment(text, pos);
 			type = TokenCat.Comment;
@@ -808,12 +814,12 @@ L_integer:
 			break;
 		}
 		state = toState(s, nesting, tokLevel, otherState);
-		
+
 		if(tokLevel > 0)
 			id = TOK_StringLiteral;
 		return type;
 	}
-	
+
 	int scan(S)(ref int state, in S text, ref size_t pos)
 	{
 		int id;
@@ -844,7 +850,7 @@ __gshared short[string] specials_map; // maps to TOK enumerator
 alias AssociativeArray!(string, short) _wa1; // fully instantiate type info
 alias AssociativeArray!(int, const(int)) _wa2; // fully instantiate type info
 
-shared static this() 
+shared static this()
 {
 	foreach(i, s; keywords)
 		keywords_map[s] = cast(short) (TOK_begin_Keywords + i);
@@ -899,7 +905,7 @@ bool findSpecial(string ident, ref int id)
 	return false;
 }
 
-const string[] keywords = 
+const string[] keywords =
 [
 	"this",
 	"super",
@@ -1018,27 +1024,27 @@ const string[] keywords =
 	"__parameters",
 	"__argTypes",
 	"__vector",
-	
+
 	"__FILE__",
 	"__LINE__",
 	"__FUNCTION__",
 	"__PRETTY_FUNCTION__",
 	"__MODULE__",
-	
+
 	"shared",
 	"immutable",
-	
+
 	"@disable",
 	"@property",
 	"@nogc",
-	"@safe",	
+	"@safe",
 	"@system",
 	"@trusted",
-	
+
 ];
 
 // not listed as keywords, but "special tokens"
-const string[] specials = 
+const string[] specials =
 [
 	"__DATE__",
 	"__EOF__",
@@ -1139,7 +1145,7 @@ const string[2][] operators =
 	[ "or",               "|" ],
 	[ "oror",             "||" ],
 	[ "tilde",            "~" ],
-	
+
 	[ "assign",           "=" ],
 	[ "xorass",           "^=" ],
 	[ "addass",           "+=" ],
@@ -1156,7 +1162,7 @@ const string[2][] operators =
 	[ "catass",           "~=" ],
 
 	// end of binary operators
-	
+
 	[ "not",              "!" ],
 	[ "dollar",           "$" ],
 	[ "slice",            ".." ],
@@ -1269,7 +1275,7 @@ string genOperatorParser(string getch)
 		string nextop;
 		if(o + 1 < opIndex.length)
 			nextop = operators[opIndex[o+1]][1];
-		
+
 		while(op.length > matchlen)
 		{
 			if(matchlen > 0)
@@ -1303,10 +1309,10 @@ string genOperatorParser(string getch)
 		else
 		{
 			string case_txt = "case '" ~ op[matchlen-1] ~ "':";
-			if(isAlphaNum(op[matchlen-1]))
-				case_txt ~= " ch = getch(); if(isAlphaNum(ch) || ch == '_') goto default;\n" ~ indent ~ "  ";
+			if(std.ascii.isAlphaNum(op[matchlen-1]))
+				case_txt ~= " ch = getch(); if(std.ascii.isAlphaNum(ch) || ch == '_') goto default;\n" ~ indent ~ "  ";
 			txt ~= indent ~ case_txt ~ " len = " ~ to!string(matchlen) ~ "; return TOK_" ~ operators[opIndex[o]][0] ~ "; // " ~ op ~ "\n";
-		
+
 			while(nextop.length < matchlen || (matchlen > 0 && !_stringEqual(op, nextop, matchlen-1)))
 			{
 				matchlen--;
@@ -1322,13 +1328,13 @@ string genOperatorParser(string getch)
 
 int parseOperator(S)(S txt, size_t pos, ref size_t len)
 {
-	dchar getch() 
+	dchar getch()
 	{
 		if(pos >= txt.length)
 			return 0;
 		return decode(txt, pos);
 	}
-	
+
 	mixin(genOperatorParser("getch()"));
 }
 

@@ -4,6 +4,7 @@ import sdk.port.base;
 import sdk.win32.oaidl;
 import sdk.win32.objbase;
 import sdk.win32.oleauto;
+import sdk.win32.wtypes;
 
 import sdk.vsi.textmgr;
 import sdk.vsi.vsshell;
@@ -23,7 +24,7 @@ interface IVisualDHelper : IUnknown
 IVisualDHelper createHelper()
 {
 	if (!vdhelper)
-		vdhelper = VsLocalCreateInstance!IVisualDHelper (&g_VisualDHelperCLSID, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
+		vdhelper = VsLocalCreateInstance!IVisualDHelper (&g_VisualDHelperCLSID, CLSCTX_INPROC_SERVER);
 	return vdhelper;
 }
 
