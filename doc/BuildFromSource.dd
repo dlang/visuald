@@ -1,7 +1,7 @@
 Ddoc
 
 $(P The latest sources of Visual D are available from the github repository at 
-$(LINK2 https://github.com/D-programming-Language/visuald, https://github.com/D-programming-Language/visuald).)
+$(LINK2 https://github.com/dlang/visuald, https://github.com/dlang/visuald).)
 
 $(H2 Prerequisites)
 
@@ -38,7 +38,7 @@ $(UL
    options how to fix this:
   $(UL
    $(LI enable the LARGE_ADDRESS_AWARE bit inside dmd.exe with this simple tool: 
-    $(LINK https://github.com/D-Programming-Language/visuald/blob/master/tools/largeadr.d) (if you are running a 
+    $(LINK https://github.com/dlang/visuald/blob/master/tools/largeadr.d) (if you are running a 
 	32-bit OS, you will also need to boot with the /3GB switch))
    $(LI build DMD with the Microsoft compiler instead of the Digital Mars compiler 
     (This also has the benefit of an executable that compiles about twice as fast))

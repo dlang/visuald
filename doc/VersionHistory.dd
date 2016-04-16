@@ -132,12 +132,12 @@ $(H2 2015-5-16 Version 0.3.41)
     $(LI disassembly: show symbols, address labels)
     $(LI fix dstring display)
     $(LI can list associative array members (needs
-         https://github.com/D-Programming-Language/dmd/pull/4473 for Win64, new AA
+         https://github.com/dlang/dmd/pull/4473 for Win64, new AA
          implementation in dmd 2.068 not supported yet, though))
     $(LI show exception number for Win32 exceptions)
     $(LI can now load PDB symbols from Microsoft Symbol Server or local cache folders)
     $(LI now supports lexical scope blocks (helps C++ and D with
-         https://github.com/D-Programming-Language/dmd/pull/2867))
+         https://github.com/dlang/dmd/pull/2867))
    ))
   $(LI cv2pdb: improvements for DWARF conversion)
   $(LI renaming project configuration did not change respective config on all platforms)

@@ -708,12 +708,12 @@ Version history
     - disassembly: show symbols, address labels
     - fix dstring display
     - can list associative array members (needs 
-      https://github.com/D-Programming-Language/dmd/pull/4473 for Win64)
+      https://github.com/dlang/dmd/pull/4473 for Win64)
     - show exception number for Win32 exceptions
     - can now load PDB symbols from Microsoft Symbol Server or local 
       cache folders
     - now support lexical scope blocks (helps C++ and D with
-      https://github.com/D-Programming-Language/dmd/pull/2867)
+      https://github.com/dlang/dmd/pull/2867)
   * cv2pdb:
     - improvements for DWARF conversion
   * dparser updated to cf26dbe426b10957f6364313cc7121e41083bebe with support for new 

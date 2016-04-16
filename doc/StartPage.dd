@@ -10,8 +10,8 @@ See the $(LINK2 Installation.html, Installation) instructions, especially if not
 $(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.)
 
 <div align="right">
-$(LINK2 https://github.com/D-Programming-Language/visuald/releases/download/v$(VERSION)/VisualD-v$(VERSION).exe, $(IMG images/download.png))
-$(P $(LINK2 https://github.com/D-Programming-Language/visuald/releases, Beta releases))
+$(LINK2 https://github.com/dlang/visuald/releases/download/v$(VERSION)/VisualD-v$(VERSION).exe, $(IMG images/download.png))
+$(P $(LINK2 https://github.com/dlang/visuald/releases, Beta releases))
 </div>
 ))
 
@@ -74,7 +74,7 @@ $(LINK2 VersionHistory.html, more...)
 $(H2 Download)
 
 $(P The latest installer and older versions can be downloaded
-$(LINK2 https://github.com/D-Programming-Language/visuald/releases, here).
+$(LINK2 https://github.com/dlang/visuald/releases, here).
 You can find even older versions and some additional files in
 the $(LINK2 http://www.dsource.org/projects/visuald/browser/downloads/, dsource download directory).)
 
