@@ -18,7 +18,7 @@ SUBNAV=$(SUBNAV_TEMPLATE
     $(SUBNAV_HEAD Visual D $(VERSION), StartPage.html, Home, subnav-duplicate)
     $(UL
         $(MENU StartPage.html, Home)
-        $(MENU https://github.com/D-Programming-Language/visuald/releases, Downloads)
+        $(MENU https://github.com/dlang/visuald/releases, Downloads)
         $(MENU Installation.html, Installation)
         $(MENU_W_SUBMENU Documentation)
         $(SUBMENU
