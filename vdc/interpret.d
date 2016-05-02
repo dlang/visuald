@@ -15,7 +15,7 @@
 //
 // member/field lookup in aggregates uses an instance specific Context
 //
-// when entering a scope, a new Context is created with the current 
+// when entering a scope, a new Context is created with the current
 //  Context as parent
 // when leaving a scope, the context is destroyed together with scoped values
 //  created within the lifetime of the context
@@ -66,7 +66,7 @@ class Value
 	bool literal = false;
 	debug string sval;
 	debug string ident;
-	
+
 	static T _create(T, V)(V val)
 	{
 		T v = new T;
@@ -74,7 +74,7 @@ class Value
 		debug v.sval = v.toStr();
 		return v;
 	}
-	
+
 	static Value create(bool    v) { return _create!BoolValue   (v); }
 	static Value create(byte    v) { return _create!ByteValue   (v); }
 	static Value create(ubyte   v) { return _create!UByteValue  (v); }
@@ -96,15 +96,15 @@ class Value
 	static Value create(cfloat  v) { return _create!CFloatValue (v); }
 	static Value create(cdouble v) { return _create!CDoubleValue(v); }
 	static Value create(creal   v) { return _create!CRealValue  (v); }
-	
+
 	static Value create(string  v) { return createStringValue (v); }
-	
+
 	Type getType()
 	{
 		semanticError("cannot get type of ", this);
 		return Singleton!(ErrorType).get();
 	}
-	
+
 	bool toBool()
 	{
 		semanticError("cannot convert ", this, " to bool");
@@ -116,7 +116,7 @@ class Value
 		long lng = toLong();
 		return cast(int) lng;
 	}
-	
+
 	long toLong()
 	{
 		semanticError("cannot convert ", this, " to integer");
@@ -159,12 +159,12 @@ class Value
 	{
 		debug sval = toStr();
 	}
-	
+
 	//override string toString()
 	//{
 	//    return text(getType(), ":", toStr());
 	//}
-	
+
 	version(all)
 	Value opBin(Context ctx, int tokid, Value v)
 	{
@@ -211,27 +211,27 @@ class Value
 	{
 		return getType()._interpretProperty(ctx, prop);
 	}
-	
+
 	Value doCast(Value v)
 	{
 		return semanticErrorValue("cannot cast a ", v, " to ", this);
 	}
-	
+
 	Value opIndex(Value v)
 	{
 		return semanticErrorValue("cannot index a ", this);
 	}
-	
+
 	Value opSlice(Value b, Value e)
 	{
 		return semanticErrorValue("cannot slice a ", this);
 	}
-	
+
 	Value opCall(Context sc, Value args)
 	{
 		return semanticErrorValue("cannot call a ", this);
 	}
-	
+
 	//mixin template operators()
 	version(none)
 		Value opassign(string op)(Value v)
@@ -263,7 +263,7 @@ class Value
 			}
 			return semanticErrorValue("cannot execute ", op, " on a ", v, " with a ", this);
 		}
-		
+
 	version(none)
 		Value opBinOp(string op)(Value v)
 		{
@@ -340,7 +340,7 @@ class Value
 			return semanticErrorValue("cannot calculate ", op, " on ", this, " and ", v);
 		}
 	}
-	
+
 	mixin template mixinBinaryOp(string op, Types...)
 	{
 		Value binOp(Value v)
@@ -350,7 +350,7 @@ class Value
 			{
 				if(ti is typeid(iv2))
 				{
-					static if (__traits(compiles, { 
+					static if (__traits(compiles, {
 						iv2.ValType y;
 						mixin("auto z = (*pval) " ~ op ~ " y;");
 					}))
@@ -380,7 +380,7 @@ class Value
 		{
 			if(!mutable)
 				return semanticErrorValue(this, " value is not mutable");
-				
+
 			TypeInfo ti = v.classinfo;
 			foreach(iv2; Types)
 			{
@@ -422,25 +422,25 @@ T createInitValue(T)(Context ctx, Value initValue)
 }
 
 alias TypeTuple!(bool, byte, ubyte, short, ushort,
-				 int, uint, long, ulong, 
-				 char, wchar, dchar, 
-				 float, double, real, 
-				 ifloat, idouble, ireal, 
+				 int, uint, long, ulong,
+				 char, wchar, dchar,
+				 float, double, real,
+				 ifloat, idouble, ireal,
 				 cfloat, cdouble, creal) BasicTypes;
 
 alias TypeTuple!(BoolValue, ByteValue, UByteValue, ShortValue, UShortValue,
 				 IntValue, UIntValue, LongValue, ULongValue,
-				 CharValue, WCharValue, DCharValue, 
+				 CharValue, WCharValue, DCharValue,
 				 FloatValue, DoubleValue, RealValue,
 				 IFloatValue, IDoubleValue, IRealValue,
 				 CFloatValue, CDoubleValue, CRealValue) BasicTypeValues;
 alias TypeTuple!(BasicTypeValues, SetLengthValue) RHS_BasicTypeValues;
 
-alias TypeTuple!(TOK_bool, TOK_byte, TOK_ubyte, TOK_short, TOK_ushort, 
-				 TOK_int, TOK_uint, TOK_long, TOK_ulong, 
+alias TypeTuple!(TOK_bool, TOK_byte, TOK_ubyte, TOK_short, TOK_ushort,
+				 TOK_int, TOK_uint, TOK_long, TOK_ulong,
 				 TOK_char, TOK_wchar, TOK_dchar,
-				 TOK_float, TOK_double, TOK_real, 
-				 TOK_ifloat, TOK_idouble, TOK_ireal, 
+				 TOK_float, TOK_double, TOK_real,
+				 TOK_ifloat, TOK_idouble, TOK_ireal,
 				 TOK_cfloat, TOK_cdouble, TOK_creal) BasicTypeTokens;
 
 int BasicType2Token(T)()     { return BasicTypeTokens[staticIndexOf!(T, BasicTypes)]; }
@@ -463,17 +463,17 @@ template Token2ValueType(int tok)
 class ValueT(T) : Value
 {
 	alias T ValType;
-	
+
 	ValType* pval;
-	
+
 	this()
 	{
 		pval = (new ValType[1]).ptr;
 		debug sval = toStr();
 	}
-	
+
 	static int getTypeIndex() { return staticIndexOf!(ValType, BasicTypes); }
-	
+
 	override Type getType()
 	{
 		static Type instance;
@@ -481,12 +481,12 @@ class ValueT(T) : Value
 			instance = createBasicType(BasicTypeTokens[getTypeIndex()]);
 		return instance;
 	}
-	
+
 	override string toStr()
 	{
 		return to!string(*pval);
 	}
-	
+
 	override Value getElement(size_t idx)
 	{
 		alias BasicTypeValues[getTypeIndex()] ValueType;
@@ -495,7 +495,7 @@ class ValueT(T) : Value
 		debug v.sval = v.toStr();
 		return v;
 	}
-	
+
 	override void setElements(size_t oldcnt, size_t newcnt)
 	{
 		ValType[] arr = pval[0 .. oldcnt];
@@ -503,10 +503,10 @@ class ValueT(T) : Value
 		pval = arr.ptr;
 		debug sval = toStr();
 	}
-	
+
 //	pragma(msg, ValType);
 //	pragma(msg, text(" compiles?", __traits(compiles, val ? true : false )));
-	
+
 	// pragma(msg, "toBool " ~ ValType.stringof ~ (__traits(compiles, *pval ? true : false) ? " compiles" : " fails"));
 	static if(__traits(compiles, *pval ? true : false))
 		override bool toBool()
@@ -520,7 +520,7 @@ class ValueT(T) : Value
 		{
 			return *pval;
 		}
-	
+
 	////////////////////////////////////////////////////////////
 	static string genMixinBinOpAll()
 	{
@@ -536,10 +536,10 @@ class ValueT(T) : Value
 		}
 		return s;
 	}
-	
+
 	mixin(genMixinBinOpAll());
 	mixin mixinBinaryOp!("is", RHS_BasicTypeValues) bin_is;
-	
+
 	static string genBinOpCases()
 	{
 		string s;
@@ -554,7 +554,7 @@ class ValueT(T) : Value
 		}
 		return s;
 	}
-	
+
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
@@ -563,7 +563,7 @@ class ValueT(T) : Value
 			case TOK_is: return bin_is.binOp(v);
 			default: break;
 		}
-		
+
 		return semanticErrorValue("cannot calculate '", tokenString(tokid), "' on a ", this, " and a ", v);
 	}
 
@@ -583,9 +583,9 @@ class ValueT(T) : Value
 			}
 		}
 	}
-	
-	enum int unOps[] = [ TOK_plusplus, TOK_minusminus, TOK_min, TOK_add, TOK_not, TOK_tilde ];
-	
+
+	enum int[] unOps = [ TOK_plusplus, TOK_minusminus, TOK_min, TOK_add, TOK_not, TOK_tilde ];
+
 	static string genMixinUnOpAll()
 	{
 		string s;
@@ -593,9 +593,9 @@ class ValueT(T) : Value
 			s ~= text("mixin mixinUnaryOp!(\"", tokenString(id), "\") un_", operatorName(id), ";\n");
 		return s;
 	}
-	
+
 	mixin(genMixinUnOpAll());
-	
+
 	static string genUnOpCases()
 	{
 		string s;
@@ -603,7 +603,7 @@ class ValueT(T) : Value
 			s ~= text("case ", id, ": return un_", operatorName(id), ".unOp();\n");
 		return s;
 	}
-	
+
 	override Value opUn(Context ctx, int tokid)
 	{
 		switch(tokid)
@@ -620,7 +620,7 @@ class ValueT(T) : Value
 	{
 		if(!mutable) // doCast changes this value
 			return semanticErrorValue(this, " value is not mutable");
-		
+
 		TypeInfo ti = v.classinfo;
 		foreach(iv2; RHS_BasicTypeValues)
 		{
@@ -672,7 +672,7 @@ class ErrorValue : Value
 	{
 		return "_error_";
 	}
-	
+
 	override Type getType()
 	{
 		return Singleton!ErrorType.get();
@@ -1063,12 +1063,12 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 
 		return super.toStr();
 	}
-	
+
 	override Type getType()
 	{
 		return type;
 	}
-	
+
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
@@ -1091,7 +1091,7 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 					return semanticErrorValue("cannot assign ", v, " to ", this);
 				debug sval = toStr();
 				return this;
-			
+
 			case TOK_tilde:
 				if(auto ev = cast(ErrorValue) v)
 					return v;
@@ -1113,7 +1113,7 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 				}
 				debug nv.sval = nv.toStr();
 				return nv;
-			
+
 			case TOK_catass:
 				size_t oldlen = len;
 				if(auto ev = cast(ErrorValue) v)
@@ -1136,7 +1136,7 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 				return super.opBin(ctx, tokid, v);
 		}
 	}
-	
+
 	bool isString()
 	{
 		auto t = type.getNextType().unqualified();
@@ -1146,7 +1146,7 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 				return true;
 		return false;
 	}
-	
+
 	override PointerValue toPointer(TypePointer to)
 	{
 		// TODO: implementation here just to satisfy string -> C const char* conversion
@@ -1220,7 +1220,7 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 		}
 		return super.toPointer(to);
 	}
-	
+
 	override string toMixin()
 	{
 		if(isString())
@@ -1252,7 +1252,7 @@ class DynArrayValue : ArrayValue!TypeDynamicArray
 class SetLengthValue : UIntValue
 {
 	DynArrayValue array;
-	
+
 	this(DynArrayValue a)
 	{
 		array = a;
@@ -1344,7 +1344,7 @@ alias TypeTuple!(CharValue, WCharValue, DCharValue, StringValue) StringTypeValue
 class StringValue : Value
 {
 	alias string ValType;
-	
+
 	ValType* pval;
 
 	this()
@@ -1352,25 +1352,25 @@ class StringValue : Value
 		pval = (new string[1]).ptr;
 		debug sval = toStr();
 	}
-	
+
 	this(string s)
 	{
 		pval = (new string[1]).ptr;
 		*pval = s;
 		debug sval = toStr();
 	}
-	
+
 	static StringValue _create(string s)
 	{
 		StringValue sv = new StringValue(s);
 		return sv;
 	}
-	
+
 	override Type getType()
 	{
 		return getTypeString!char();
 	}
-	
+
 	override string toStr()
 	{
 		return '"' ~ *pval ~ '"';
@@ -1406,13 +1406,13 @@ class StringValue : Value
 	mixin mixinBinaryOp1!(">=", StringValue) bin_ge;
 	mixin mixinBinaryOp1!("==", StringValue) bin_equal;
 	mixin mixinBinaryOp1!("!=", StringValue) bin_notequal;
-	
+
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
 		{
-			case TOK_assign:   
-				auto rv = ass_assign.assOp(v); 
+			case TOK_assign:
+				auto rv = ass_assign.assOp(v);
 				debug sval = toStr();
 				return rv;
 			case TOK_catass:
@@ -1457,22 +1457,22 @@ class PointerValue : Value
 		debug pv.sval = pv.toStr();
 		return pv;
 	}
-	
+
 	override Type getType()
 	{
 		return type;
 	}
-	
+
 	override bool toBool()
 	{
 		return pval !is null;
 	}
-	
+
 	override PointerValue toPointer(TypePointer to)
 	{
 		return this;
 	}
-	
+
 	override Value opDerefPointer()
 	{
 		if(!pval)
@@ -1527,7 +1527,7 @@ class PointerValue : Value
 class TypeValue : Value
 {
 	Type type;
-	
+
 	this(Type t)
 	{
 		type = t;
@@ -1543,7 +1543,7 @@ class TypeValue : Value
 	{
 		return writeD(type);
 	}
-	
+
 	override Value opCall(Context sc, Value vargs)
 	{
 		return type.createValue(sc, vargs);
@@ -1553,7 +1553,7 @@ class TypeValue : Value
 class AliasValue : Value
 {
 	IdentifierList id;
-	
+
 	this(IdentifierList _id)
 	{
 		id = _id;
@@ -1564,7 +1564,7 @@ class AliasValue : Value
 	{
 		return id.resolve();
 	}
-	
+
 	override Type getType()
 	{
 		return id.calcType();
@@ -1586,9 +1586,9 @@ public:
 		debug sval = toStr();
 	}
 
-	@property Value[] values() 
-	{ 
-		return _values; 
+	@property Value[] values()
+	{
+		return _values;
 	}
 	@property void values(Value[] v)
 	{
@@ -1604,7 +1604,7 @@ public:
 	{
 		_values.length = len;
 	}
-	
+
 	override string toStr()
 	{
 		return _toStr("(", ")");
@@ -1622,7 +1622,7 @@ public:
 		s ~= close;
 		return s;
 	}
-	
+
 	override Value opIndex(Value v)
 	{
 		int idx = v.toInt();
@@ -1641,7 +1641,7 @@ public:
 		nv._values = _values[idxb..idxe];
 		return nv;
 	}
-	
+
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		switch(tokid)
@@ -1659,7 +1659,7 @@ public:
 				return semanticErrorValue("cannot compare ", v, " to ", this);
 			case TOK_notequal:
 				return Value.create(!opBin(ctx, TOK_equal, v).toBool());
-			
+
 			case TOK_assign:
 				if(auto tv = cast(TupleValue) v)
 					values = tv.values;
@@ -1667,7 +1667,7 @@ public:
 					return semanticErrorValue("cannot assign ", v, " to ", this);
 				debug sval = toStr();
 				return this;
-			
+
 			case TOK_tilde:
 				auto nv = new TupleValue;
 				if(auto tv = cast(TupleValue) v)
@@ -1675,14 +1675,14 @@ public:
 				else
 					nv._values = _values ~ v;
 				return nv;
-			
+
 			case TOK_catass:
 				if(auto tv = cast(TupleValue) v)
 					_values ~= tv._values;
 				else
 					_values ~= v;
 				return this;
-				
+
 			default:
 				return super.opBin(ctx, tokid, v);
 		}
@@ -1770,7 +1770,7 @@ class FunctionValue : Value
 {
 	TypeFunction functype;
 	bool adr;
-	
+
 	override string toStr()
 	{
 		if(!functype.funcDecl)
@@ -1821,7 +1821,7 @@ class FunctionValue : Value
 class DelegateValue : FunctionValue
 {
 	Context context;
-	
+
 	override Value opCall(Context sc, Value vargs)
 	{
 		return doCall(functype.funcDecl, context, functype.getParameters(), vargs);
@@ -1854,7 +1854,7 @@ class AggrValue : TupleValue
 {
 	Context outer;
 	AggrContext context;
-	
+
 	abstract override Aggregate getType();
 
 	override string toStr()
@@ -1921,7 +1921,7 @@ class AggrValueT(T) : AggrValue
 		return type;
 	}
 }
-	
+
 class StructValue : AggrValueT!Struct
 {
 	this(Struct t)
@@ -1961,7 +1961,7 @@ class ReferenceValue : Value
 		scope(exit) insideToStr = false;
 		return instance.toStr();
 	}
-	
+
 	override Value opBin(Context ctx, int tokid, Value v)
 	{
 		ClassInstanceValue other;
@@ -1969,7 +1969,7 @@ class ReferenceValue : Value
 			other = cv.instance;
 		else if(!cast(NullValue) v)
 			return super.opBin(ctx, tokid, v);
-		
+
 		switch(tokid)
 		{
 			case TOK_assign:
@@ -2088,7 +2088,7 @@ class BreakValue : ProgramControlValue
 	}
 }
 
-class ContinueValue : ProgramControlValue 
+class ContinueValue : ProgramControlValue
 {
 	this(string s)
 	{
@@ -2096,7 +2096,7 @@ class ContinueValue : ProgramControlValue
 	}
 }
 
-class GotoValue : ProgramControlValue 
+class GotoValue : ProgramControlValue
 {
 	this(string s)
 	{
@@ -2104,7 +2104,7 @@ class GotoValue : ProgramControlValue
 	}
 }
 
-class GotoCaseValue : ProgramControlValue 
+class GotoCaseValue : ProgramControlValue
 {
 	this(string s)
 	{
