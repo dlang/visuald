@@ -20,6 +20,7 @@ import std.conv;
 import std.path;
 import std.process;
 import std.utf;
+static import std.file;
 
 alias core.stdc.stdio.stdout stdout;
 
