@@ -172,10 +172,10 @@ class Node
 	Annotation annotation;
 	TextSpan span; // file extracted from parent module
 	TextSpan fulspan;
-	
+
 	Node parent;
 	Node[] members;
-	
+
 	// semantic data
 	int semanticSearches;
 	Scope scop;
@@ -196,7 +196,7 @@ class Node
 		version(COUNT) InterlockedIncrement(&countNodes);
 		// default constructor needed for clone()
 	}
-	
+
 	this(ref const(TextSpan) _span)
 	{
 		version(COUNT) InterlockedIncrement(&countNodes);
@@ -232,7 +232,7 @@ class Node
 
 	final Node _cloneShallow()
 	{
-		Node	n = static_cast!Node(this.classinfo.create());
+		Node	n = static_cast!Node(typeid(this).create());
 
 		n.id = id;
 		n.attr = attr;
@@ -255,21 +255,21 @@ class Node
 	{
 		if(this.classinfo !is n.classinfo)
 			return false;
-		
+
 		if(n.id != id || n.attr != attr || n.annotation != annotation)
 			return false;
 		// ignore span
-		
+
 		if(members.length != n.members.length)
 			return false;
-			
+
 		for(int m = 0; m < members.length; m++)
 			if(!members[m].compare(n.members[m]))
 				return false;
-	
+
 		return true;
 	}
-	
+
 	////////////////////////////////////////////////////////////
 	Node visit(DG)(DG dg)
 	{
@@ -316,9 +316,9 @@ class Node
 	////////////////////////////////////////////////////////////
 	abstract void toD(CodeWriter writer)
 	{
-		writer(this.classinfo.name);
+		writer(typeid(this).name);
 		writer.nl();
-		
+
 		auto indent = CodeIndenter(writer);
 		foreach(c; members)
 			writer(c);
@@ -352,7 +352,7 @@ class Node
 		SemanticDone,
 	}
 	int semanticState;
-	
+
 	void expandNonScopeSimple(Scope sc, size_t i, size_t j)
 	{
 		Node[1] narray;
@@ -377,12 +377,12 @@ class Node
 			}
 		}
 	}
-	
+
 	void expandNonScopeBlocks(Scope sc)
 	{
 		if(semanticState >= SemanticState.ExpandingNonScopeMembers)
 			return;
-		
+
 		// simple expansions
 		semanticState = SemanticState.ExpandingNonScopeMembers;
 		expandNonScopeSimple(sc, 0, members.length);
@@ -404,32 +404,32 @@ class Node
 		}
 		semanticState = SemanticState.ExpandedNonScopeMembers;
 	}
-	
+
 	Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
 		return athis;
 	}
-	
+
 	Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
 	{
 		return athis;
 	}
-	
+
 	void addMemberSymbols(Scope sc)
 	{
 		if(semanticState >= SemanticState.AddingSymbols)
 			return;
-		
+
 		scop = sc;
 		expandNonScopeBlocks(scop);
 
 		semanticState = SemanticState.AddedSymbols;
 	}
-	
+
 	void addSymbols(Scope sc)
 	{
 	}
-	
+
 	bool createsScope() const { return false; }
 
 	Scope enterScope(ref Scope nscope, Scope sc)
@@ -447,21 +447,21 @@ class Node
 	{
 		return enterScope(scop, sc);
 	}
-	
+
 	final void semantic(Scope sc)
 	{
 		assert(sc);
-		
+
 		if(semanticState < SemanticState.SemanticDone)
 		{
 			logInfo("Scope(%s):semantic(%s=%s)", cast(void*)sc, this, cast(void*)this);
 			LogIndent indent = LogIndent(1);
-		
+
 			_semantic(sc);
 			semanticState = SemanticState.SemanticDone;
 		}
 	}
-	
+
 	void _semantic(Scope sc)
 	{
 //		throw new SemanticException(text(this, ".semantic not implemented"));
@@ -483,7 +483,7 @@ class Node
 		}
 		return null;
 	}
-	
+
 	Node resolve()
 	{
 		return null;
@@ -498,7 +498,7 @@ class Node
 	{
 		return semanticErrorValue(this, ".interpret not implemented");
 	}
-	
+
 	Value interpretCatch(Context sc)
 	{
 		try
@@ -510,7 +510,7 @@ class Node
 		}
 		return semanticErrorValue(this, ": interpretation stopped");
 	}
-	
+
 	ParameterList getParameterList()
 	{
 		return null;
@@ -519,7 +519,7 @@ class Node
 	{
 		return null;
 	}
-		
+
 	bool isTemplate()
 	{
 		return false;
@@ -528,7 +528,7 @@ class Node
 	{
 		return this;
 	}
-	
+
 	////////////////////////////////////////////////////////////
 	version(COUNT) {} else // invariant does not work with destructor
 	invariant()
@@ -537,8 +537,8 @@ class Node
 		foreach(m; members)
 			assert(m.parent is this);
 	}
-	
-	void addMember(Node m) 
+
+	void addMember(Node m)
 	{
 		assert(m.parent is null);
 		members ~= m;
@@ -546,32 +546,32 @@ class Node
 		extendSpan(m.fulspan);
 	}
 
-	Node removeMember(Node m) 
+	Node removeMember(Node m)
 	{
 		auto n = std.algorithm.countUntil(members, m);
 		assert(n >= 0);
 		return removeMember(n);
 	}
 
-	Node removeMember(size_t m) 
+	Node removeMember(size_t m)
 	{
 		Node n = members[m];
 		removeMember(m, 1);
 		return n;
 	}
 
-	void removeMember(size_t m, size_t cnt) 
+	void removeMember(size_t m, size_t cnt)
 	{
 		assert(m >= 0 && m + cnt <= members.length);
 		for (size_t i = 0; i < cnt; i++)
 			members[m + i].parent = null;
-			
+
 		for (size_t n = m + cnt; n < members.length; n++)
 			members[n - cnt] = members[n];
 		members.length = members.length - cnt;
 	}
-	
-	Node[] removeAll() 
+
+	Node[] removeAll()
 	{
 		for (size_t m = 0; m < members.length; m++)
 			members[m].parent = null;
@@ -580,14 +580,14 @@ class Node
 		return nm;
 	}
 
-	void replaceMember(Node m, Node[] nm) 
+	void replaceMember(Node m, Node[] nm)
 	{
 		auto n = std.algorithm.countUntil(members, m);
 		assert(n >= 0);
 		replaceMember(n, nm);
 	}
-	
-	void replaceMember(size_t m, Node[] nm) 
+
+	void replaceMember(size_t m, Node[] nm)
 	{
 		if(m < members.length)
 			members[m].parent = null;
@@ -598,9 +598,9 @@ class Node
 		foreach(n; nm)
 			n.parent = this;
 	}
-	
-	T getMember(T = Node)(size_t idx) 
-	{ 
+
+	T getMember(T = Node)(size_t idx)
+	{
 		if (idx < 0 || idx >= members.length)
 			return null;
 		return static_cast!T(members[idx]);
@@ -624,7 +624,7 @@ class Node
 			return null;
 		return mod.filename;
 	}
-	
+
 	void semanticError(T...)(T args)
 	{
 		semanticErrorLoc(getModuleFilename(), span.start, args);
@@ -676,7 +676,7 @@ class ParseRecoverNode : Node
 		writer("/+ syntax error: span = ", start, " - ", end, " +/");
 		writer.nl();
 	}
-	
+
 	override void _semantic(Scope sc)
 	{
 	}
@@ -685,7 +685,7 @@ class ParseRecoverNode : Node
 interface CallableNode
 {
 	Value interpretCall(Context sc);
-	
+
 	ParameterList getParameterList();
 	FunctionBody getFunctionBody();
 }
