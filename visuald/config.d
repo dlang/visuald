@@ -67,7 +67,7 @@ const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad40847
 
 T clone(T)(T object)
 {
-	auto size = object.classinfo.init.length;
+	auto size = typeid(object).init.length;
 	object = cast(T) ((cast(void*)object) [0..size].dup.ptr );
 //	object.__monitor = null;
 	return object;
@@ -751,10 +751,10 @@ class ProjectOptions
 		switch(mapverbosity)
 		{
 			case 0: cmd ~= mslink ? "" : " -L/NOMAP"; break; // actually still creates map file
-			case 1: cmd ~= mslink ? "-L/MAPINFO:EXPORTS" : " -L/MAP:ADDRESS"; break;
+			case 1: cmd ~= mslink ? " -L/MAPINFO:EXPORTS" : " -L/MAP:ADDRESS"; break;
 			case 2: break;
-			case 3: cmd ~= mslink ? "-L/MAPINFO:EXPORTS,LINES" : " -L/MAP:FULL"; break;
-			case 4: cmd ~= mslink ? "-L/MAPINFO:EXPORTS,LINES,FIXUPS" : " -L/MAP:FULL -L/XREF"; break;
+			case 3: cmd ~= mslink ? " -L/MAPINFO:EXPORTS,LINES" : " -L/MAP:FULL"; break;
+			case 4: cmd ~= mslink ? " -L/MAPINFO:EXPORTS,LINES,FIXUPS" : " -L/MAP:FULL -L/XREF"; break;
 			default: break;
 		}
 
