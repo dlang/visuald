@@ -45,8 +45,8 @@ version(enableLog) {
 	{
 		LogIndent indent = LogIndent(n);
 	}
-	
-	class logSync {}
+
+	static shared(Object) logSync = new Object;
 
 	void logInfo(...)
 	{
@@ -57,7 +57,7 @@ version(enableLog) {
 		                   now.hour, now.minute, now.second, tid);
 		string s = to!string(buffer[0..len]);
 		s ~= replicate(" ", gLogIndent);
-		
+
 		void putc(dchar c)
 		{
 			s ~= c;
@@ -65,8 +65,8 @@ version(enableLog) {
 
 		try {
 			std.format.doFormat(&putc, _arguments, _argptr);
-		} 
-		catch(Exception e) 
+		}
+		catch(Exception e)
 		{
 			string msg = e.toString();
 			s ~= " EXCEPTION";
@@ -74,14 +74,14 @@ version(enableLog) {
 
 		log_string(s);
 	}
-	
+
 	void log_string(string s)
 	{
 		s ~= "\n";
 		if(gLogFile.length == 0)
 			OutputDebugStringA(toStringz(s));
 		else
-			synchronized(logSync.classinfo)
+			synchronized(logSync)
 			{
 				if(gLogFirst)
 				{
