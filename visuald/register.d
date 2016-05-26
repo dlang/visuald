@@ -373,6 +373,39 @@ void fixVS2012Shellx64Debugger(HKEY keyRoot, wstring registrationRoot)
 	}
 }
 
+bool generateGeneralXML(string originalXML, string insertXML, string newXML)
+{
+	try
+	{
+		string oxml = cast(string) std.file.read(originalXML);
+		string ixml = cast(string) std.file.read(insertXML);
+
+		auto pos = oxml.indexOf(`<DynamicEnumProperty Name="PlatformToolset"`);
+		if (pos >= 0)
+		{
+			// insert before next tag after "PlatformToolset"
+			auto p = oxml[pos+1..$].indexOf('<');
+			if (p < 0)
+				return false;
+			pos += 1 + p;
+		}
+		else
+		{
+			// insert before end tag
+			pos = oxml.indexOf(`</Rule>`);
+			if (pos < 0)
+				return false;
+		}
+		string nxml = oxml[0..pos] ~ ixml ~ oxml[pos..$];
+		std.file.write(newXML, nxml);
+		return true;
+	}
+	catch(Exception e)
+	{
+	}
+	return false;
+}
+
 HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 {
 	HKEY keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;

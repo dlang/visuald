@@ -94,6 +94,7 @@ const wstring[] g_projectFileExtensions  = [ "visualdproj"w, "dproj"w ];
 
 // CLSID registered in extensibility center (PLK)
 const GUID    g_packageCLSID             = uuid("002a2de9-8bb6-484d-987f-7e4ad4084715");
+const GUID    g_vendorCLSID              = uuid("002a2de9-8bb6-484d-987e-7e4ad4084715");
 
 const GUID    g_languageCLSID            = uuid("002a2de9-8bb6-484d-9800-7e4ad4084715");
 const GUID    g_projectFactoryCLSID      = uuid("002a2de9-8bb6-484d-9802-7e4ad4084715");
@@ -654,6 +655,7 @@ version(none)
 		if(nCmdID == CmdDelLstFiles)
 		{
 			GetGlobalOptions().DeleteCoverageFiles();
+			return S_OK;
 		}
 		return OLECMDERR_E_NOTSUPPORTED;
 	}

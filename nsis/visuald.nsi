@@ -18,6 +18,9 @@
 ; define VDEXTENSIONS to include C# extensions (expected at ../bin/Release/vdextensions)
 !define VDEXTENSIONS
 
+; define MSBUILD to include msbuild extensions for vcxproj (expected at ../msbuild)
+!define MSBUILD
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -107,13 +110,18 @@
 
   !define MAGO_VERSION "${MAGO_VERSION_MAJOR}.${MAGO_VERSION_MINOR}.${MAGO_VERSION_BUILD}"
   !echo "MAGO_VERSION = ${MAGO_VERSION}"
+
+  !define LANGUAGE_CLSID              {002a2de9-8bb6-484d-9800-7e4ad4084715}
+  !define VENDOR_CLSID                {002a2de9-8bb6-484d-987e-7e4ad4084715}
+  !define MAGO_EE_KEY                 AD7Metrics\ExpressionEvaluator\${LANGUAGE_CLSID}\${VENDOR_CLSID}
 !endif
 
   ;Default installation folder
   InstallDir "$PROGRAMFILES\${APPNAME}"
 
   ;Get installation folder from registry if available
-  InstallDirRegKey HKCU "Software\${APPNAME}" ""
+  InstallDirRegKey HKLM "Software\${APPNAME}" ""
+  InstallDirRegKey HKCU "Software\${APPNAME}" "$INSTDIR"
 
   ;Request admin privileges for Windows Vista
   RequestExecutionLevel admin
@@ -269,8 +277,21 @@ Section "Visual Studio package" SecPackage
   Call RegisterDParser
 !endif
 
+!ifdef MSBUILD
+  ${SetOutPath} "$INSTDIR\msbuild"
+  ${File} ..\msbuild\ dcompile.targets
+  ${File} ..\msbuild\ dcompile.props
+  ${File} ..\msbuild\ dcompile_defaults.props
+  ${File} ..\msbuild\ dmd.xml
+  ${File} ..\msbuild\ ldc.xml
+  ${File} ..\msbuild\ general_d.snippet
+  ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
+  ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
+  WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
+!endif
+
   ;Store installation folder
-  WriteRegStr HKCU "Software\${APPNAME}" "" $INSTDIR
+  WriteRegStr HKLM "Software\${APPNAME}" "" $INSTDIR
 
   ;Create uninstaller
   WriteRegStr ${UNINSTALL_REGISTRY_ROOT} "${UNINSTALL_REGISTRY_KEY}" "DisplayName" "${VERYLONG_APPNAME}"
@@ -353,6 +374,12 @@ ${MementoSection} "Register with VS 2012" SecVS2012
     !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
   !endif
 
+  !ifdef MAGO
+    ${SetOutPath} "$1\..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
+  !endif
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -372,6 +399,12 @@ ${MementoSection} "Register with VS 2013" SecVS2013
   !ifdef VDEXTENSIONS
     GetFullPathName /SHORT $0 $INSTDIR
     !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !endif
+
+  !ifdef MAGO
+    ${SetOutPath} "$1\..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
 
 ${MementoSectionEnd}
@@ -395,7 +428,53 @@ ${MementoSection} "Register with VS 2015" SecVS2015
     !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
   !endif
 
+  !ifdef MAGO
+    ${SetOutPath} "$1\..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
+  !endif
+
 ${MementoSectionEnd}
+
+!macro RegisterPlatform Vxxx Platform
+    ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportBefore\Default"
+    ${File} ..\msbuild\ImportBefore\Default\ d.props
+    ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportBefore"
+    ${File} ..\msbuild\ImportBefore\ d.props
+    ${File} ..\msbuild\ImportBefore\ d.targets
+    ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportAfter"
+    ${File} ..\msbuild\ImportAfter\ general_d.targets
+!macroend
+!define RegisterPlatform "!insertmacro RegisterPlatform"
+
+;--------------------------------
+!ifdef MSBUILD
+${MementoSection} "Register MSBuild extensions for VS 2013/2015" SecMSBuild
+
+  ReadRegStr $1 HKLM "SOFTWARE\Microsoft\MSBuild\ToolsVersions\14.0" MSBuildToolsRoot
+  IfErrors NoMSBuild14
+    ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V140" "x64"
+    ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V140" "Win32"
+
+    !define V140_GENERAL_XML "$1\Microsoft.Cpp\v4.0\V140\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V140_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.14.0.xml'
+
+  NoMSBuild14:
+
+  ReadRegStr $1 HKLM "SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0" MSBuildToolsRoot
+  IfErrors NoMSBuild12
+    ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V120" "x64"
+    ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V120" "Win32"
+
+    !define V120_GENERAL_XML "$1\Microsoft.Cpp\v4.0\V120\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V120_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.12.0.xml'
+
+  NoMSBuild12:
+
+${MementoSectionEnd}
+!endif
 
 !ifdef EXPRESS
 ;--------------------------------
@@ -552,6 +631,9 @@ SectionEnd
   LangString DESC_SecMago ${LANG_ENGLISH} "Mago is a debug engine especially designed for the D-Language."
   LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. Distributed under the Apache License Version 2.0. See www.dsource.org/ projects/mago_debugger"
 !endif  
+!ifdef MSBUILD
+  LangString DESC_SecMSBuild ${LANG_ENGLISH} "MSBuild integration into VC++ projects."
+!endif  
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -574,6 +656,9 @@ SectionEnd
 !endif
 !ifdef MAGO
     !insertmacro MUI_DESCRIPTION_TEXT ${SecMago} $(DESC_SecMago)$(DESC_SecMago2)
+!endif
+!ifdef MSBUILD
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecMSBuild} $(DESC_SecMSBuild)
 !endif
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -664,36 +749,29 @@ Section "Uninstall"
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
   
 !ifdef VS_NET
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
-!endif
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2015_REGISTRY_KEY}\${MAGO_ENGINE_KEY}"
-
-!ifdef VS_NET
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
-!endif
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2015_REGISTRY_KEY}\${MAGO_EXCEPTION_KEY}"
-
-!ifdef VS_NET
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS_NET_REGISTRY_KEY}\InstalledProducts\Mago"
-!endif
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2005_REGISTRY_KEY}\InstalledProducts\Mago"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2008_REGISTRY_KEY}\InstalledProducts\Mago"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2010_REGISTRY_KEY}\InstalledProducts\Mago"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\InstalledProducts\Mago"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\InstalledProducts\Mago"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2015_REGISTRY_KEY}\InstalledProducts\Mago"
+  Push ${VS_NET_REGISTRY_KEY}
+  Call un.RegisterMago
 !endif
   
+  Push ${VS2005_REGISTRY_KEY}
+  Call un.RegisterMago
+  
+  Push ${VS2008_REGISTRY_KEY}
+  Call un.RegisterMago
+  
+  Push ${VS2010_REGISTRY_KEY}
+  Call un.RegisterMago
+
+  Push ${VS2012_REGISTRY_KEY}
+  Call un.RegisterMago
+
+  Push ${VS2013_REGISTRY_KEY}
+  Call un.RegisterMago
+
+  Push ${VS2015_REGISTRY_KEY}
+  Call un.RegisterMago
+!endif
+
   Call un.RegisterIVDServer
   Call un.RegisterVDServer
   Call un.RegisterDParser
@@ -908,6 +986,14 @@ enabled:
   WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "Exceptions" 1
   WriteRegDWORD ${VS_REGISTRY_ROOT} "$1\${MAGO_ENGINE_KEY}" "AlwaysLoadLocal" 1
 
+  ;------ MagoNatCC
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}" "Language" "D" 
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}" "Name" "D" 
+
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\Debugger\CodeView Compilers\68:*" "LanguageID" "${LANGUAGE_CLSID}"
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\Debugger\CodeView Compilers\68:*" "VendorID"   "${VENDOR_CLSID}"
+
+  ;------ Exceptions
   ${RegisterException} $1 "D Exceptions"
   ${RegisterException} $1 "D Exceptions\core.exception.AssertError"
   ${RegisterException} $1 "D Exceptions\core.exception.FinalizeError"
@@ -976,6 +1062,18 @@ NoInstall:
 
   Pop $2
   Pop $0
+  Pop $1
+FunctionEnd
+
+Function un.RegisterMago
+  Exch $1
+
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "$1\InstalledProducts\Mago"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "$1\${MAGO_ENGINE_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "$1\${MAGO_EXCEPTION_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "$1\Debugger\CodeView Compilers\68:*"
+
   Pop $1
 FunctionEnd
 
