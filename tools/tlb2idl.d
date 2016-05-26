@@ -1,7 +1,7 @@
 module tlbidl;
 
 import core.sys.windows.windows;
-import core.sys.windows.com;
+import std.c.windows.com; // deprecated, but kept to still build with 2.066
 import core.stdc.string;
 import std.stdio;
 import std.file;
@@ -217,7 +217,11 @@ void main(string[] argv)
 	wc.hInstance = hInst;
 	wc.hIcon = null; //DefaultWindowIcon.peer;
 	//wc.hIconSm = DefaultWindowSmallIcon.peer;
-	wc.hCursor = LoadCursorW(cast(HINSTANCE) null, IDC_ARROW);
+	static if(is(typeof(IDC_ARROW) : const(wchar)*))
+		wc.hCursor = LoadCursorW(cast(HINSTANCE) null, IDC_ARROW);
+	else
+		wc.hCursor = LoadCursorA(cast(HINSTANCE) null, IDC_ARROW);
+
 	wc.hbrBackground = null;
 	wc.lpszMenuName = null;
 	wc.cbClsExtra = 0;

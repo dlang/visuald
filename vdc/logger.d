@@ -46,7 +46,7 @@ version(enableLog) {
 		LogIndent indent = LogIndent(n);
 	}
 
-	static shared(Object) logSync = new Object;
+	static shared(Object) logSync = new shared(Object);
 
 	void logInfo(...)
 	{

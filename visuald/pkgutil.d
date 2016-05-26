@@ -91,7 +91,7 @@ IVsOutputWindowPane getBuildOutputPane()
 class OutputPaneBuffer
 {
 	static shared(string) buffer;
-	static shared(Object) syncOut = new Object;
+	static shared(Object) syncOut = new shared(Object);
 
 	static void push(string msg)
 	{
