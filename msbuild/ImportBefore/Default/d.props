@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+         <VisualDMSBuildDir Condition="'$(VisualDMSBuildDir)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\VisualD@msbuild)</VisualDMSBuildDir>
+         <VisualDMSBuildDir Condition="'$(VisualDMSBuildDir)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\VisualD@msbuild)</VisualDMSBuildDir>
+    </PropertyGroup>
+
+    <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile_defaults.props')" Project="$(VisualDMSBuildDir)\dcompile_defaults.props" />
+
+</Project>

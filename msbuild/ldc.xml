@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ProjectSchemaDefinitions xmlns="http://schemas.microsoft.com/build/2009/properties" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+  <Rule
+    Name="DCompile"
+    PageTemplate="tool"
+    DisplayName="LDC - D Compiler"
+    Order="11"
+    xmlns="http://schemas.microsoft.com/build/2009/properties"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <Rule.DataSource>
+      <DataSource Persistence="ProjectFile" ItemType="DCompile" />
+    </Rule.DataSource>
+    <Rule.Categories>
+      <Category Name="General" DisplayName="General" />
+      <Category Name="Code Generation" DisplayName="Code Generation" />
+      <Category Name="Messages" DisplayName="Messages" />
+      <Category Name="Object File" DisplayName="Object File" />
+      <Category Name="All Options" DisplayName="All Options" Subtype="Search" />
+      <Category Name="Command Line" DisplayName="Command Line" Subtype="CommandLine" />
+    </Rule.Categories>
+
+    <StringProperty Name="Inputs" Category="Command Line" IsRequired="true">
+      <StringProperty.DataSource>
+        <DataSource Persistence="ProjectFile" ItemType="DCompile" SourceType="Item" />
+      </StringProperty.DataSource>
+    </StringProperty>
+    
+    <EnumProperty Name="Warnings" Category="Messages" DisplayName="Enable warnings" Description="Enable display of warnings. (-w, -wi)">
+      <EnumValue Name="None" DisplayName="None" />
+      <EnumValue Name="Info" DisplayName="warnings as messages (compilation will continue)" Switch="-wi" />
+      <EnumValue Name="Error" DisplayName="warnings as errors (compilation will halt)" Switch="-w"/>
+    </EnumProperty>
+    <EnumProperty Name="Deprecations" Category="Messages" DisplayName="Enable deprecated features" 
+                  Description="Enable display of deprecated features. (-dw, -de, -d)">
+      <EnumValue Name="Info" DisplayName="show use of deprecated features as warnings" Switch="-dw" />
+      <EnumValue Name="Error" DisplayName="show use of deprecated features as errors (halt compilation)" Switch="-de" />
+      <EnumValue Name="Allow" DisplayName="silently allow deprecated features" Switch="-d"/>
+    </EnumProperty>
+    <BoolProperty Name="ShowCommandLine" Category="Messages" DisplayName="Show command line" IncludeInCommandLine="false"
+                  Description="Show compiler command line" />
+    <BoolProperty Name="Verbose" Category="Messages" DisplayName="Verbose" Switch="-v"
+                  Description="Print out what the compiler is currently doing." />
+    <BoolProperty Name="ShowTLS" Category="Messages" DisplayName="Show TLS Variables" Switch="-vtls"
+                  Description="list all variables going into thread local storage." />
+    <BoolProperty Name="ShowGC" Category="Messages" DisplayName="Show GC allocations" Switch="-vgc"
+                  Description="list all gc allocations including hidden ones." />
+    <BoolProperty Name="IgnorePragma" Category="Messages" DisplayName="Ignore unsupported pragmas"
+                  Description="Ignore unsupported pragmas. (-ignore)" Switch="-ignore" />
+
+    <BoolProperty Name="Profile" Category="Code Generation" DisplayName="Enable profiling" Switch="-profile"
+                  Description="profile runtime performance of generated code." />
+    <BoolProperty Name="ProfileGC" Category="Code Generation" DisplayName="Enable GC profiling"
+                  Description="profile runtime allocations." Switch="-profile=gc" />
+    <BoolProperty Name="Coverage" Category="Code Generation" DisplayName="Enable Code Coverage"
+                  Description="do code coverage analysis." Switch="-cov" />
+    <BoolProperty Name="Unittest" Category="Code Generation" DisplayName="Enable Unittests"
+                  Description="compile in unit tests." Switch="-unittest" />
+    <BoolProperty Name="Optimizer" Category="Code Generation" DisplayName="Optimizations"
+                  Description="run optimzer." Switch="-O" />
+    <BoolProperty Name="Inliner" Category="Code Generation" DisplayName="Inlining" 
+                  Description="do function inlining." Switch="-inline" />
+    <BoolProperty Name="StackFrame" Category="Code Generation" DisplayName="Stack Frames"
+                  Description="always emit stack frame." Switch="-gs" />
+    <BoolProperty Name="StackStomp" Category="Code Generation" DisplayName="Stack Stomp"
+                  Description="add stack stomp code." Switch="-gx" />
+    <BoolProperty Name="AllInst" Category="Code Generation" DisplayName="All Template Instantiations"
+                  Description="generate code for all template instantiations." Switch="-allinst" />
+    <BoolProperty Name="BetterC" Category="Code Generation" DisplayName="Better C" Switch="-betterC"
+                  Description="omit generating some runtime information and helper functions." />
+    
+    <EnumProperty Name="DebugCode" Category="Code Generation" DisplayName="Debug Code" Description="compile in debug code.">
+      <EnumValue Name="Default" DisplayName="asserts, invariants, contraints" />
+      <EnumValue Name="Debug" DisplayName="debug statements, asserts, invariants, contraints" Switch="-d-debug" />
+      <EnumValue Name="Release" DisplayName="none" Switch="-d-release" />
+    </EnumProperty>
+    <EnumProperty Name="DebugInfo" Category="Code Generation" DisplayName="Debug Info" Description="generate debug information.">
+      <EnumValue Name="None" DisplayName="None" />
+      <EnumValue Name="VS" DisplayName="For VS debug engines" Switch="-gc" />
+      <EnumValue Name="Mago" DisplayName="For D debug engines (mago)" Switch="-g" />
+    </EnumProperty>
+    <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
+      <EnumValue Name="Off" DisplayName="None" Switch="-boundscheck=off" />
+      <EnumValue Name="SafeOnly" DisplayName="For @safe code" Switch="-boundscheck=safeonly" />
+      <EnumValue Name="On" DisplayName="Always" Switch="-boundscheck=on" />
+    </EnumProperty>
+    
+    <BoolProperty Name="PerformSyntaxCheckOnly" Category="Object File" DisplayName="Perform Syntax Check Only"
+                  Description="Performs a syntax check only." Switch="-o-" />  
+    <StringProperty Name="ObjectFileName" Category="Object File" DisplayName="Object File Name" Subtype="file"
+                    Description="Specifies the name of the output object file." Switch="-of&quot;[value]&quot;" />
+
+    <StringListProperty Name="ImportPaths" Category="General" DisplayName="Import Paths" Description="where to look for imports."
+                        Subtype="folder" Switch="-I&quot;[value]&quot;" />
+    <StringListProperty Name="StringImportPaths" Category="General" DisplayName="String Import Paths" 
+                        Description="where to look for string imports." Subtype="folder" Switch="-J&quot;[value]&quot;" />
+    <StringListProperty Name="VersionIdentifiers" Category="General" DisplayName="Version Identifiers" 
+                        Description="compile in version code identified by ident/&gt;= level." Switch="-version=[value]" />
+    <StringListProperty Name="DebugIdentifiers" Category="General" DisplayName="Debug Identifiers"
+                        Description="compile in debug code identified by ident/&lt;= level." Switch="-version=[value]" />
+
+    <StringProperty Name="CommandLineTemplate" DisplayName="Command Line" Visible="False" IncludeInCommandLine="False" />
+    <StringProperty Subtype="AdditionalOptions" Name="AdditionalOptions" Category="Command Line"
+                    DisplayName="Additional Options" Description="Additional Options" />
+ 
+    <DynamicEnumProperty Name="DCompileBeforeTargets" Category="General" EnumProvider="Targets" IncludeInCommandLine="False"
+        DisplayName="Execute Before" Description="Specifies the targets for the build customization to run before.">
+      <DynamicEnumProperty.ProviderSettings>
+        <NameValuePair Name="Exclude" Value="^DCompileBeforeTargets|^Compute" />
+      </DynamicEnumProperty.ProviderSettings>
+      <DynamicEnumProperty.DataSource>
+        <DataSource Persistence="ProjectFile" ItemType="" HasConfigurationCondition="true" />
+      </DynamicEnumProperty.DataSource>
+    </DynamicEnumProperty>
+    <DynamicEnumProperty Name="DCompileAfterTargets" Category="General" EnumProvider="Targets" IncludeInCommandLine="False"
+        DisplayName="Execute After" Description="Specifies the targets for the build customization to run after.">
+      <DynamicEnumProperty.ProviderSettings>
+        <NameValuePair Name="Exclude" Value="^DCompileAfterTargets|^Compute" />
+      </DynamicEnumProperty.ProviderSettings>
+      <DynamicEnumProperty.DataSource>
+        <DataSource Persistence="ProjectFile" ItemType="" HasConfigurationCondition="true" />
+      </DynamicEnumProperty.DataSource>
+    </DynamicEnumProperty>
+    <StringProperty Name="ExecutionDescription" DisplayName="Execution Description" IncludeInCommandLine="False" Visible="False" />
+    <StringProperty Name="CommandLine" DisplayName="CommandLine" IncludeInCommandLine="False" Visible="False" />
+    <StringListProperty Name="AdditionalDependencies" DisplayName="Additional Dependencies" IncludeInCommandLine="False" Visible="False" />
+  </Rule>
+    
+  <ItemType Name="DCompile" DisplayName="LDC - LLVM based D Compiler" />
+  <FileExtension Name="*.d" ContentType="DCompile" />
+  <ContentType Name="DCompile" DisplayName="LDC - LLVM based D Compiler" ItemType="DCompile" />
+</ProjectSchemaDefinitions>
