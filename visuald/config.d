@@ -780,6 +780,8 @@ class ProjectOptions
 				case Subsystem.Native:  cmd ~= " -L/SUBSYSTEM:NATIVE"; break;
 				case Subsystem.Posix:   cmd ~= " -L/SUBSYSTEM:POSIX"; break;
 			}
+			if (mslink && lib == OutputType.DLL)
+				cmd ~= " -L/DLL";
 		}
 		return cmd;
 	}
