@@ -259,6 +259,14 @@ Section "Visual Studio package" SecPackage
   ${File} ..\visuald\Templates\ProjectItems\StaticLib\ StaticLib.vstemplate
   ${File} ..\visuald\Templates\ProjectItems\StaticLib\ StaticLib.visualdproj
 
+!ifdef MSBUILD
+  ${SetOutPath} "$INSTDIR\Templates\VCProjectItems\ConsoleApp"
+  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ main.d
+  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ VCConsoleApp.vstemplate
+  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ ConsoleApp.vcxproj
+  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ ConsoleApp.vcxproj.filters
+!endif
+
   ${SetOutPath} "$INSTDIR\Templates\Projects"
   ${File} ..\visuald\Templates\Projects\ DTemplates.vsdir
 
