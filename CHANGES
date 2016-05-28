@@ -817,3 +817,6 @@ unreleased Version 0.3.44
   * bugzilla 16063: missing option -L/DLL when linking a DLL with MS linker
   * added integration with msbuild and VC++ projects
   * added installation of mago expression evalutro to Concord debug engine
+  * added $(Platform) as a settings macro replacement in addition to $(PlatformName)
+  * changed default output directory to $(PlatformName)/$(ConfigurationName)
+  * added x64 configurations to project templates
