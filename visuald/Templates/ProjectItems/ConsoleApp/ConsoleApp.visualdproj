@@ -1,9 +1,14 @@
 <DProject>
   <ProjectGuid>$guid1$</ProjectGuid>
-  <Config name="Debug">
+  <Config name="Debug" platform="Win32">
     <!-- default to defaults -->
   </Config>
-  <Config name="Release">
+  <Config name="Release" platform="Win32">
+  </Config>
+  <Config name="Debug" platform="x64">
+    <!-- default to defaults -->
+  </Config>
+  <Config name="Release" platform="x64">
   </Config>
   <Folder name="$safeprojectname$">
     <File path="main.d"></File>

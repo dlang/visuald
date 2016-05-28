@@ -1,11 +1,20 @@
 <DProject>
   <ProjectGuid>$guid1$</ProjectGuid>
-  <Config name="Debug">
+  <Config name="Debug" platform="Win32">
     <!-- default to defaults -->
     <exefile>$(OutDir)\$(ProjectName).lib</exefile>
     <lib>1</lib>
   </Config>
-  <Config name="Release">
+  <Config name="Release"  platform="Win32">
+    <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+    <lib>1</lib>
+  </Config>
+  <Config name="Debug" platform="x64">
+    <!-- default to defaults -->
+    <exefile>$(OutDir)\$(ProjectName).lib</exefile>
+    <lib>1</lib>
+  </Config>
+  <Config name="Release"  platform="x64">
     <exefile>$(OutDir)\$(ProjectName).lib</exefile>
     <lib>1</lib>
   </Config>
