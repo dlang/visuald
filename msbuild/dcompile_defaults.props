@@ -15,7 +15,7 @@
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'LDCInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</LDCInstallDir>
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\LDC@InstallationFolder)</LDCInstallDir>
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\Wow6432Node\LDC@InstallationFolder)</LDCInstallDir>
-    <LDCBinDir     Condition="$(LDCInstallDir) == ''">$(LDCInstallDir)\bin\</LDCBinDir>
+    <LDCBinDir     Condition="$(LDCInstallDir) != ''">$(LDCInstallDir)\bin\</LDCBinDir>
     <LDCText Condition="Exists('$(LDCInstallDir)ldmd2.exe')">LDC - LLVM based compiler</LDCText>
     <LDCText Condition="'$(LDCText)' == ''">LDC - LLVM based compiler (not installed)</LDCText>
 
@@ -62,7 +62,8 @@
       <HeaderDir></HeaderDir>
       <HeaderFile></HeaderFile>
       <JSONFile></JSONFile>
-      <CommandLineTemplate Condition="'$(Platform)' == 'Win32'">-m32mscoff -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
+      <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'DMD|Win32'">-m32mscoff -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
+      <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'LDC|Win32'">-m32 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
       <CommandLineTemplate Condition="'$(Platform)' == 'X64'">-m64 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
       <CommandLineTemplate Condition="'$(Platform)' != 'Win32' and '$(Platform)' != 'X64'">echo DMD not supported on this platform
 exit 1</CommandLineTemplate>

@@ -121,7 +121,6 @@
               ShowCommandLine="%(DCompile.ShowCommandLine)"
               AdditionalOptions="%(DCompile.AdditionalOptions)"
               ToolExe="$(_ToolExe)"
-              ToolArchitecture = "Native32Bit"
               Sources="@(DCompile)" >
     </CompileD>
   </Target>
