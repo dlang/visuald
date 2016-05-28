@@ -270,7 +270,7 @@ class ProjectOptions
 	{
 		Dversion = 2;
 		exefile = "$(OutDir)\\$(ProjectName).exe";
-		outdir = "$(ConfigurationName)";
+		outdir = "$(PlatformName)\\$(ConfigurationName)";
 		objdir = "$(OutDir)";
 		debugtarget = "$(TARGETPATH)";
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
@@ -284,13 +284,13 @@ class ProjectOptions
 		debugEngine = 1;
 
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
-		setDebug(dbg);
 		setX64(x64);
+		setDebug(dbg);
 	}
 
 	void setDebug(bool dbg)
 	{
-		runCv2pdb = dbg;
+		runCv2pdb = dbg && !isX86_64;
 		symdebug = dbg ? 3 : 0;
 		release = dbg ? 0 : 1;
 		optimize = release == 1;
@@ -998,6 +998,9 @@ class ProjectOptions
 				case Subsystem.Posix:   cmd ~= " /SUBSYSTEM:POSIX"; break;
 			}
 		}
+		if (mslink && lib == OutputType.DLL)
+			cmd ~= " /DLL";
+
 		cmd ~= addopts;
 		return cmd;
 	}
@@ -1183,6 +1186,7 @@ class ProjectOptions
 		if(solutionpath.length)
 			addFileMacros(solutionpath, "SOLUTION", replacements);
 		replacements["PLATFORMNAME"] = config.mPlatform;
+		replacements["PLATFORM"] = config.mPlatform;
 		addFileMacros(projectpath, "PROJECT", replacements);
 		replacements["PROJECTNAME"] = config.GetProjectName();
 		addFileMacros(safeprojectpath, "SAFEPROJECT", replacements);
@@ -1890,7 +1894,7 @@ class Config :	DisposingComObject,
 			mProjectOptions.setX64(platform == "x64");
 		}
 		else
-			mProjectOptions = new ProjectOptions(name == "Debug", platform == "x64");
+			mProjectOptions = new ProjectOptions(name.startsWith("Debug"), platform == "x64");
 		mBuilder = new CBuilderThread(this);
 		version(hasOutputGroup)
 			mOutputGroup = newCom!VsOutputGroup(this);
