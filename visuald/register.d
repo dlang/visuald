@@ -175,7 +175,7 @@ class RegKey
 		}
 		if(!key)
 			throw new RegistryException(E_FAIL);
-			
+
 		HRESULT hr = RegCreateValue(key, name, value);
 		if(FAILED(hr))
 			throw new RegistryException(hr);
@@ -217,12 +217,12 @@ class RegKey
 	{
 		if(!key)
 			throw new RegistryException(E_FAIL);
-		
+
 		HRESULT hr = RegCreateBinaryValue(key, name, data);
 		if(FAILED(hr))
 			throw new RegistryException(hr);
 	}
-	
+
 	bool Delete(wstring name)
 	{
 		if(!key && registryRoot.length)
@@ -233,12 +233,12 @@ class RegKey
 		HRESULT hr = RegDeleteValue(key, szName);
 		return SUCCEEDED(hr);
 	}
-	
+
 	wstring GetString(wstring name, wstring def = "")
 	{
 		if(!key)
 			return def;
-		
+
 		wchar[260] buf;
 		DWORD cnt = 260 * wchar.sizeof;
 		wchar* szName = _toUTF16zw(name);
@@ -258,7 +258,7 @@ class RegKey
 	{
 		if(!key)
 			return def;
-		
+
 		DWORD dw, type, cnt = dw.sizeof;
 		wchar* szName = _toUTF16zw(name);
 		int hr = RegQueryValueExW(key, szName, null, &type, cast(ubyte*) &dw, &cnt);
@@ -266,25 +266,25 @@ class RegKey
 			return def;
 		return dw;
 	}
-	
+
 	void[] GetBinary(wstring name)
 	{
 		if(!key)
 			return null;
-		
+
 		wchar* szName = _toUTF16zw(name);
 		DWORD type, cnt = 0;
 		int hr = RegQueryValueExW(key, szName, null, &type, cast(ubyte*) &type, &cnt);
 		if(hr != ERROR_MORE_DATA || type != REG_BINARY)
 			return null;
-		
+
 		ubyte[] data = new ubyte[cnt];
 		hr = RegQueryValueExW(key, szName, null, &type, data.ptr, &cnt);
 		if(hr != S_OK)
 			return null;
 		return data;
 	}
-	
+
 	HKEY key;
 }
 
@@ -373,6 +373,39 @@ void fixVS2012Shellx64Debugger(HKEY keyRoot, wstring registrationRoot)
 	}
 }
 
+bool generateGeneralXML(string originalXML, string insertXML, string newXML)
+{
+	try
+	{
+		string oxml = cast(string) std.file.read(originalXML);
+		string ixml = cast(string) std.file.read(insertXML);
+
+		auto pos = oxml.indexOf(`<DynamicEnumProperty Name="PlatformToolset"`);
+		if (pos >= 0)
+		{
+			// insert before next tag after "PlatformToolset"
+			auto p = oxml[pos+1..$].indexOf('<');
+			if (p < 0)
+				return false;
+			pos += 1 + p;
+		}
+		else
+		{
+			// insert before end tag
+			pos = oxml.indexOf(`</Rule>`);
+			if (pos < 0)
+				return false;
+		}
+		string nxml = oxml[0..pos] ~ ixml ~ oxml[pos..$];
+		std.file.write(newXML, nxml);
+		return true;
+	}
+	catch(Exception e)
+	{
+	}
+	return false;
+}
+
 HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 {
 	HKEY keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
@@ -408,7 +441,7 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
 
 	hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalEnumOutCLSID));
-	static if(is(typeof(g_unmarshalTargetInfoCLSID))) 
+	static if(is(typeof(g_unmarshalTargetInfoCLSID)))
 		hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalTargetInfoCLSID));
 
 	scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
@@ -487,12 +520,12 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyLang.Set("LangResId"w, 0);
 		foreach (ref const(LanguageProperty) prop; g_languageProperties)
 			keyLang.Set(prop.name, prop.value);
-		
+
 		// colorizer settings
 		scope RegKey keyColorizer = new RegKey(keyRoot, langserv ~ "\\EditorToolsOptions\\Colorizer"w);
 		keyColorizer.Set("Package"w, packageGuid);
 		keyColorizer.Set("Page"w, GUID2wstring(g_ColorizerPropertyPage));
-		
+
 		// intellisense settings
 		scope RegKey keyIntellisense = new RegKey(keyRoot, langserv ~ "\\EditorToolsOptions\\Intellisense"w);
 		keyIntellisense.Set("Package"w, packageGuid);
@@ -501,7 +534,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		scope RegKey keyService = new RegKey(keyRoot, registrationRoot ~ "\\Services\\"w ~ languageGuid);
 		keyService.Set(null, packageGuid);
 		keyService.Set("Name"w, g_languageName);
-		
+
 		scope RegKey keyProduct = new RegKey(keyRoot, registrationRoot ~ "\\InstalledProducts\\"w ~ g_packageName);
 		keyProduct.Set("Package"w, packageGuid);
 		keyProduct.Set("UseInterface"w, 1);
@@ -535,10 +568,11 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		scope RegKey keyProject = new RegKey(keyRoot, projects);
 		keyProject.Set(null, "DProjectFactory"w);
 		keyProject.Set("DisplayName"w, g_languageName);
-		keyProject.Set("DisplayProjectFileExtensions"w, g_languageName ~ " Project Files (*."w ~ g_projectFileExtensions ~ ");*."w ~ g_projectFileExtensions);
+		wstring starFiles = "*."w ~ join(g_projectFileExtensions, ",*."w);
+		keyProject.Set("DisplayProjectFileExtensions"w, g_languageName ~ " Project Files ("w ~ starFiles ~ ");"w ~ starFiles);
 		keyProject.Set("Package"w, packageGuid);
-		keyProject.Set("DefaultProjectExtension"w, g_projectFileExtensions);
-		keyProject.Set("PossibleProjectExtensions"w, g_projectFileExtensions);
+		keyProject.Set("DefaultProjectExtension"w, g_defaultProjectFileExtension);
+		keyProject.Set("PossibleProjectExtensions"w, join(g_projectFileExtensions, ";"w));
 		keyProject.Set("ProjectTemplatesDir"w, templatePath ~ "\\Projects"w);
 		keyProject.Set("Language(VsTemplate)"w, g_languageName);
 		keyProject.Set("ItemTemplatesDir"w, templatePath ~ "\\Items"w);
@@ -567,7 +601,7 @@ version(none){
 		// expression evaluator
 		scope RegKey keyLangDebug = new RegKey(keyRoot, langserv ~ "\\Debugger Languages\\"w ~ debugLangGuid);
 		keyLangDebug.Set(null, g_languageName);
-		
+
 		scope RegKey keyLangException = new RegKey(keyRoot, registrationRoot ~ regPathMetricsExcpt ~ "\\"w ~ debugLangGuid ~ "\\D Exceptions");
 
 		wstring langEE = registrationRoot ~ regPathMetricsEE ~ "\\"w ~ debugLangGuid ~ "\\"w ~ vendorMicrosoftGuid;
@@ -575,7 +609,7 @@ version(none){
 		keyLangEE.Set("CLSID"w, exprEvalGuid);
 		keyLangEE.Set("Language"w, g_languageName);
 		keyLangEE.Set("Name"w, "D EE"w);
-			
+
 		scope RegKey keyEngine = new RegKey(keyRoot, langEE ~ "\\Engine");
 		keyEngine.Set("0"w, guidCOMPlusNativeEng);
 }
@@ -583,7 +617,7 @@ version(none){
 		// menu
 		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
 		keyToolMenu.Set(packageGuid, ",2001,20"); // CTMENU,version
-		
+
 		// Visual D settings
 		scope RegKey keyToolOpts = new RegKey(keyRoot, registrationRoot ~ regPathToolsOptions);
 		keyToolOpts.Set(null, "Visual D Settings");
@@ -625,7 +659,7 @@ version(none){
 			keyMarshal2.Set(null, dllPath);
 		}
 		registerMarshalObject(g_unmarshalEnumOutCLSID);
-		static if(is(typeof(g_unmarshalTargetInfoCLSID))) 
+		static if(is(typeof(g_unmarshalTargetInfoCLSID)))
 			registerMarshalObject(g_unmarshalTargetInfoCLSID);
 
 		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
@@ -651,7 +685,7 @@ wstring GetDLLName(HINSTANCE inst)
 
 	return to_wstring(dllPath.ptr);
 }
- 
+
 wstring GetTemplatePath(wstring dllpath)
 {
 	string path = toUTF8(dllpath);

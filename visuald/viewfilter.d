@@ -46,6 +46,7 @@ import sdk.vsi.vsshell90;
 import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
+import sdk.win32.wtypes;
 
 import stdext.array;
 import stdext.path;
@@ -66,13 +67,13 @@ import std.path;
 interface IVsCustomDataTip : IUnknown
 {
 	static const GUID iid = uuid("80DD0557-F6FE-48e3-9651-398C5E7D8D78");
-	
+
 	HRESULT DisplayDataTip();
 }
 
 // version = tip;
 
-class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget, 
+class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
                    IVsTextViewEvents, IVsExpansionEvents
 {
 	CodeWindowManager mCodeWinMgr;
@@ -82,10 +83,10 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 	int mLastHighlightBracesLine;
 	ViewCol mLastHighlightBracesCol;
-	
+
 version(tip)
 	TextTipData mTextTipData;
-	
+
 	this(CodeWindowManager mgr, IVsTextView view)
 	{
 		mCodeWinMgr = mgr;
@@ -137,11 +138,11 @@ version(tip)
 		if(!proc)
 			proc = &DefWindowProcA;
 		int res = proc(hWnd,uMsg,wParam,lParam);
-		
+
 		if(Package.GetGlobalOptions().showCoverageMargin)
 			if(uMsg == WM_PAINT && pvf)
 				pvf.mCodeWinMgr.mSource.mColorizer.drawCoverageOverlay(hWnd, wParam, lParam, pvf.mView);
-		
+
 		return res;
 	}
 
@@ -149,7 +150,7 @@ version(tip)
 	{
 		if(mHwnd)
 			return false;
-		
+
 		mPrevProc = cast(WNDPROC)GetWindowLongPtr(hwnd, GWL_WNDPROC);
 		mHwnd = hwnd;
 		sHooks[mHwnd] = this;
@@ -190,11 +191,11 @@ version(tip)
 	{
 		// mixin(LogCallMix);
 
-		for (uint i = 0; i < cCmds; i++) 
+		for (uint i = 0; i < cCmds; i++)
 		{
 			int rc = QueryCommandStatus(pguidCmdGroup, prgCmds[i].cmdID);
 
-			if(rc == E_FAIL) 
+			if(rc == E_FAIL)
 			{
 				if(mNextTarget)
 					return mNextTarget.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
@@ -211,10 +212,10 @@ version(tip)
 	          /* [unique][in] */ in VARIANT *pvaIn,
 	          /* [unique][out][in] */ VARIANT *pvaOut)
 	{
-		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K && nCmdID == 1627 /*OutputPaneCombo*/) 
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K && nCmdID == 1627 /*OutputPaneCombo*/)
 			return OLECMDERR_E_NOTSUPPORTED; // do not litter output
-		
-		debug 
+
+		debug
 		{
 			bool logit = true;
 			if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K)
@@ -243,10 +244,10 @@ version(tip)
 				}
 			}
 			if(logit)
-				logCall("%s.Exec(this=%s, pguidCmdGroup=%s, nCmdId=%d: %s)", 
+				logCall("%s.Exec(this=%s, pguidCmdGroup=%s, nCmdId=%d: %s)",
 				        this, cast(void*) this, _toLog(pguidCmdGroup), nCmdID, cmd2string(*pguidCmdGroup, nCmdID));
 		}
-		
+
 		Package.GetLanguageService().OnExec();
 
 		ushort lo = (nCmdexecopt & 0xffff);
@@ -259,9 +260,9 @@ version(tip)
 			if (ep.HandlePreExec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut))
 				return S_OK;
 
-		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97) 
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97)
 		{
-			switch (nCmdID) 
+			switch (nCmdID)
 			{
 			case cmdidPasteNextTBXCBItem:
 				if(PasteFromRing() == S_OK)
@@ -279,9 +280,9 @@ version(tip)
 				break;
 			}
 		}
-		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K) 
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K)
 		{
-			switch (nCmdID) 
+			switch (nCmdID)
 			{
 			case ECMD_RETURN:
 				gotEnterKey = true;
@@ -292,17 +293,17 @@ version(tip)
 
 			case ECMD_PARAMINFO:
 				return HandleMethodTip();
-				
+
 			case ECMD_FORMATSELECTION:
 				return ReindentLines();
-			
+
 			case ECMD_COMMENTBLOCK:
 			case ECMD_COMMENT_BLOCK:
 				return CommentLines(Source.ForceComment);
 			case ECMD_UNCOMMENTBLOCK:
 			case ECMD_UNCOMMENT_BLOCK:
 				return CommentLines(Source.ForceUncomment);
-				
+
 			case ECMD_COMPLETEWORD:
 			case ECMD_AUTOCOMPLETE:
 				if(mCodeWinMgr.mSource.IsCompletorActive())
@@ -321,7 +322,7 @@ version(tip)
 					//ep.DisplayExpansionBrowser(mView, "Insert Snippet", ["type1", "type2"], true, ["kind1", "kind2"], true);
 					ep.DisplayExpansionBrowser(mView, "Insert Snippet", [], false, [], false);
 				break;
-			
+
 			case ECMD_COMPILE:
 				return CompileDoc(false, false, false, false);
 
@@ -329,29 +330,29 @@ version(tip)
 				return GotoMatchingPair(false);
 			case ECMD_GOTOBRACE_EXT:
 				return GotoMatchingPair(true);
-			
+
 			case ECMD_OUTLN_STOP_HIDING_ALL:
 				return mCodeWinMgr.mSource.StopOutlining();
 			case ECMD_OUTLN_TOGGLE_ALL:
 				return mCodeWinMgr.mSource.ToggleOutlining();
-			
+
 			default:
 				break;
 			}
 		}
 		if(g_commandSetCLSID == *pguidCmdGroup)
 		{
-			switch (nCmdID) 
+			switch (nCmdID)
 			{
 			case CmdShowScope:
 				return showCurrentScope();
-			
+
 			case CmdShowMethodTip:
 				return HandleMethodTip();
-				
+
 			case CmdToggleComment:
 				return CommentLines(Source.AutoComment);
-				
+
 			case CmdConvSelection:
 				return ConvertSelection();
 
@@ -375,7 +376,7 @@ version(tip)
 			}
 		}
 /+
-		switch (lo) 
+		switch (lo)
 		{
                 case OLECMDEXECOPT.OLECMDEXECOPT_SHOWHELP:
 			if((nCmdexecopt >> 16) == VsMenus.VSCmdOptQueryParameterList) {
@@ -413,9 +414,9 @@ version(tip)
 			if (ep.HandlePostExec(pguidCmdGroup, nCmdID, nCmdexecopt, gotEnterKey, pvaIn, pvaOut))
 				return rc;
 
-		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97) 
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet97)
 		{
-			switch (nCmdID) 
+			switch (nCmdID)
 			{
 			case cmdidPasteNextTBXCBItem:
 			case cmdidPaste:
@@ -425,9 +426,9 @@ version(tip)
 				break;
 			}
 		}
-		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K) 
+		if(*pguidCmdGroup == CMDSETID_StandardCommandSet2K)
 		{
-			switch (nCmdID) 
+			switch (nCmdID)
 			{
 			case ECMD_RETURN:
 				if(!wasCompletorActive)
@@ -451,12 +452,12 @@ version(tip)
 				if(mCodeWinMgr.mSource.IsMethodTipActive())
 					HandleMethodTip();
 				break;
-				
+
 			case ECMD_TYPECHAR:
 				dchar ch = pvaIn.uiVal;
 				if(ch == '.' && Package.GetGlobalOptions().expandTrigger >= 1 && Package.GetGlobalOptions().expandFromSemantics)
 					initCompletion(false);
-				
+
 				else if(mCodeWinMgr.mSource.IsCompletorActive() || Package.GetGlobalOptions().expandTrigger >= 2)
 				{
 					if(dLex.isIdentifierChar(ch))
@@ -464,11 +465,11 @@ version(tip)
 					else
 						stopCompletions();
 				}
-				
-				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' || 
+
+				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' ||
 				   ch == 'n' || ch == 't' || ch == 'y') // last characters of "in", "out" and "body"
 					HandleSmartIndent(ch);
-				
+
 				if(mCodeWinMgr.mSource.IsMethodTipActive())
 				{
 					if(ch == ',' || ch == ')')
@@ -514,7 +515,7 @@ version(tip)
 		VSDOCINPROJECT docInProj;
 		if(pIVsUIShellOpenDocument.IsDocumentInAProject(wfname, &pUIH, &itemid, &pSP, &docInProj) != S_OK)
 			return S_OK;
-		
+
 		scope(exit) release(pSP);
 		scope(exit) release(pUIH);
 
@@ -647,7 +648,7 @@ version(tip)
 				cmd ~= quoteFilename(outfile) ~ "\n";
 				cmd ~= "echo Execution result code: %ERRORLEVEL%\n";
 			}
-			
+
 			auto pane = getVisualDOutputPane();
 			scope(exit) release(pane);
 			clearOutputPane();
@@ -693,9 +694,9 @@ version(tip)
 
 	int QueryCommandStatus(in GUID *guidCmdGroup, uint cmdID)
 	{
-		if(*guidCmdGroup == CMDSETID_StandardCommandSet97) 
+		if(*guidCmdGroup == CMDSETID_StandardCommandSet97)
 		{
-			switch (cmdID) 
+			switch (cmdID)
 			{
 			case cmdidPasteNextTBXCBItem:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
@@ -709,9 +710,9 @@ version(tip)
 				break;
 			}
 		}
-		if(*guidCmdGroup == CMDSETID_StandardCommandSet2K) 
+		if(*guidCmdGroup == CMDSETID_StandardCommandSet2K)
 		{
-			switch (cmdID) 
+			switch (cmdID)
 			{
 			case ECMD_PARAMINFO:
 			case ECMD_FORMATSELECTION:
@@ -736,7 +737,7 @@ version(tip)
 		}
 		if(g_commandSetCLSID == *guidCmdGroup)
 		{
-			switch (cmdID) 
+			switch (cmdID)
 			{
 			case CmdShowScope:
 			case CmdShowMethodTip:
@@ -774,7 +775,7 @@ version(tip)
 					{
 						// terminated on same line
 						otherLine = line;
-						otherIndex = pos - 2; //assume 2 character comment extro 
+						otherIndex = pos - 2; //assume 2 character comment extro
 						return S_OK;
 					}
 					if(Lexer.isCommentState(Lexer.scanState(iState)))
@@ -782,7 +783,7 @@ version(tip)
 						if(mCodeWinMgr.mSource.FindEndOfComment(startState, iState, line, pos))
 						{
 							otherLine = line;
-							otherIndex = pos - 2; //assume 2 character comment extro 
+							otherIndex = pos - 2; //assume 2 character comment extro
 							return S_OK;
 						}
 					}
@@ -838,7 +839,7 @@ version(tip)
 		}
 		return S_FALSE;
 	}
-	
+
 	int HighlightString(wstring txt, int line, ref ViewCol idx, out int otherLine, out int otherIndex)
 	{
 		int iState;
@@ -847,7 +848,7 @@ version(tip)
 		int tokidx = src.FindLineToken(line, idx, iState, pos);
 		if(tokidx < 0)
 			return S_FALSE;
-		
+
 		uint startPos = pos;
 		int startState = iState;
 		int type = dLex.scan(iState, txt, pos);
@@ -878,7 +879,7 @@ version(tip)
 		}
 		return S_FALSE;
 	}
-	
+
 	int HighlightMatchingPairs()
 	{
 		int line, otherLine;
@@ -890,7 +891,7 @@ version(tip)
 			return rc;
 		if(FindMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) != S_OK)
 			return S_OK;
-		
+
 		TextSpan[2] spans;
 		spans[0].iStartLine = line;
 		spans[0].iStartIndex = idx;
@@ -922,14 +923,14 @@ version(tip)
 		wstring txt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 		if(txt.length <= idx)
 			return S_FALSE;
-		
+
 		highlightLen = 1;
 		checkMismatch = true;
 		if(HighlightComment(txt, line, idx, otherLine, otherIndex) == S_OK)
 			highlightLen = 2;
 		else if(HighlightString(txt, line, idx, otherLine, otherIndex) == S_OK)
 			checkMismatch = false;
-		else if(!Lexer.isOpeningBracket(txt[idx]) && 
+		else if(!Lexer.isOpeningBracket(txt[idx]) &&
 		        !Lexer.isClosingBracket(txt[idx]))
 			return S_FALSE;
 		else if(!FindMatchingBrace(line, idx, otherLine, otherIndex))
@@ -939,7 +940,7 @@ version(tip)
 		}
 		return S_OK;
 	}
-	
+
 	bool FindMatchingBrace(int line, int idx, out int otherLine, out int otherIndex)
 	{
 		int iState;
@@ -968,30 +969,30 @@ version(tip)
 			return rc;
 		int caretLine = line;
 		int caretIndex = idx;
-		
+
 		while(line >= 0)
 		{
 			wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 			if(idx < 0)
 				idx = text.length;
-			
+
 			while(--idx >= 0)
 			{
-				if(Lexer.isOpeningBracket(text[idx]) || 
+				if(Lexer.isOpeningBracket(text[idx]) ||
 				   text[idx] == '\"' || text[idx] == '`' || text[idx] == '/')
 				{
 					if(FindMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) == S_OK)
-						if(otherLine > caretLine || 
+						if(otherLine > caretLine ||
 						   (otherLine == caretLine && otherIndex > caretIndex))
 							return S_OK;
 				}
 			}
 			line--;
 		}
-		
+
 		return S_FALSE;
 	}
-	
+
 	int GotoMatchingPair(bool select)
 	{
 		int line, otherLine;
@@ -1004,7 +1005,7 @@ version(tip)
 		if(FindMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) != S_OK)
 			if(FindClosingMatchingPairs(line, idx, otherLine, otherIndex, highlightLen, checkMismatch) != S_OK)
 				return S_OK;
-		
+
 		mView.SetCaretPos(otherLine, otherIndex);
 
 		TextSpan span;
@@ -1012,14 +1013,14 @@ version(tip)
 		span.iStartIndex = otherIndex;
 		span.iEndLine = otherLine;
 		span.iEndIndex = otherIndex + highlightLen;
-		
+
 		mView.EnsureSpanVisible(span);
 		if(select)
 			mView.SetSelection (line, idx, otherLine, otherIndex + highlightLen);
-			
+
 		return S_OK;
 	}
-	
+
 	//////////////////////////////
 	wstring GetWordAtCaret()
 	{
@@ -1031,7 +1032,7 @@ version(tip)
 			return "";
 		return mCodeWinMgr.mSource.GetText(line, startIdx, line, endIdx);
 	}
-	
+
 	ExpansionProvider GetExpansionProvider()
 	{
 		return mCodeWinMgr.mSource.GetExpansionProvider();
@@ -1045,10 +1046,10 @@ version(tip)
 		int startIdx, endIdx;
 		if(!mCodeWinMgr.mSource.GetWordExtent(line, idx, WORDEXT_CURRENT, startIdx, endIdx))
 			return S_FALSE;
-		
+
 		wstring shortcut = mCodeWinMgr.mSource.GetText(line, startIdx, line, endIdx);
 		TextSpan ts = TextSpan(startIdx, line, endIdx, line);
-		
+
 		string title, path;
 		ExpansionProvider ep = GetExpansionProvider();
 		return ep.InvokeExpansionByShortcut(mView, shortcut, ts, true, title, path);
@@ -1073,7 +1074,7 @@ version(tip)
 		while(src.FindOpeningBracketBackward(line, tok, otherLine, otherIndex))
 		{
 			tok = mCodeWinMgr.mSource.FindLineToken(line, otherIndex, iState, pos);
-			
+
 			wstring bracket = src.GetText(otherLine, otherIndex, otherLine, otherIndex + 1);
 			if(bracket == "{"w)
 			{
@@ -1094,10 +1095,10 @@ version(tip)
 			showStatusBarText("Scope: " ~ curScope);
 		else
 			showStatusBarText("Scope: at module scope"w);
-		
+
 		return S_OK;
 	}
-	
+
 	//////////////////////////////////////////////////////////////
 	int ConvertSelection()
 	{
@@ -1114,7 +1115,7 @@ version(tip)
 			return rc;
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
 			return S_FALSE;
-		
+
 		int line, idx, len;
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return rc;
@@ -1135,7 +1136,7 @@ version(tip)
 		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &langPrefs, cacheInfo);
 		if(n < 0 || n == orgn)
 			return S_OK;
-		
+
 		if(ch == '\n')
 			return mView.SetCaretPos(line, n);
 		else
@@ -1155,11 +1156,11 @@ version(tip)
 	{
 		if(iEndLine < iStartLine)
 			std.algorithm.swap(iStartLine, iEndLine);
-		
+
 		IVsCompoundAction compAct = qi_cast!IVsCompoundAction(mView);
 		if(compAct)
 			compAct.OpenCompoundAction("ReindentLines"w.ptr);
-		
+
 		int hr = mCodeWinMgr.mSource.ReindentLines(mView, iStartLine, iEndLine);
 
 		if(compAct)
@@ -1188,11 +1189,11 @@ version(tip)
 			return hr;
 		if(iEndIndex == 0 && iEndLine > iStartLine)
 			iEndLine--;
-		
+
 		IVsCompoundAction compAct = qi_cast!IVsCompoundAction(mView);
 		if(compAct)
 			compAct.OpenCompoundAction("CommentLines"w.ptr);
-		
+
 		hr = mCodeWinMgr.mSource.CommentLines(mView, iStartLine, iEndLine, commentMode);
 		if(compAct)
 		{
@@ -1201,7 +1202,7 @@ version(tip)
 		}
 		return hr;
 	}
-		
+
 	//////////////////////////////////////////////////////////////
 	int PasteFromRing()
 	{
@@ -1211,7 +1212,7 @@ version(tip)
 			wstring[] entries;
 			int[] entryIndex;
 			int cntEntries = 0;
-			
+
 			svc.BeginCycle();
 			IVsToolboxUser tbuser = qi_cast!IVsToolboxUser(mView);
 			scope(exit) release(tbuser);
@@ -1220,23 +1221,23 @@ version(tip)
 			{
 				IDataObject firstDataObject;
 				IDataObject pDataObject;
-				while(entries.length < 30 && 
+				while(entries.length < 30 &&
 					  svc.GetAndSelectNextDataObject(tbuser, &pDataObject) == S_OK)
 				{
 					scope(exit) release(pDataObject);
-			
+
 					if(pDataObject is firstDataObject)
 						break;
 					if(!firstDataObject)
 						firstDataObject = addref(pDataObject);
-						
+
 					FORMATETC fmt;
 					fmt.cfFormat = CF_UNICODETEXT;
 					fmt.ptd = null;
 					fmt.dwAspect = DVASPECT_CONTENT;
 					fmt.lindex = -1;
 					fmt.tymed = TYMED_HGLOBAL;
-    
+
 					STGMEDIUM medium;
 					if(pDataObject.GetData(&fmt, &medium) == S_OK)
 					{
@@ -1256,7 +1257,7 @@ version(tip)
 					cntEntries++;
 				}
 				release(firstDataObject);
-				
+
 				if(entries.length > 0)
 				{
 					TextSpan span;
@@ -1271,13 +1272,13 @@ version(tip)
 							int height;
 							mView.GetLineHeight (&height);
 							pt.y += height;
-							
+
 							HWND hwnd = cast(HWND) mView.GetWindowHandle();
 							ClientToScreen(hwnd, &pt);
 							for(int k = 0; k < 10 && k < entries.length; k++)
 								entries[k] = entries[k] ~ "\t(&" ~ cast(wchar)('0' + ((k + 1) % 10)) ~ ")";
 							int sel = PopupContextMenu(hwnd, pt, entries);
-							
+
 							if(sel >= 0 && sel < entryIndex.length)
 							{
 								int cnt = entryIndex[sel];
@@ -1315,11 +1316,11 @@ version(none)
 }
 else
 		wstring wrtxt = replaceTokenSequence(wtxt, 1, 0, "unittest { $any }", "", opt, null);
-		
+
 		TextSpan changedSpan;
 		return mCodeWinMgr.mSource.mBuffer.ReplaceLines(0, 0, endLine, endCol, wrtxt.ptr, wrtxt.length, &changedSpan);
 	}
-	
+
 	//////////////////////////////////////////////////////////////
 	int HandleGotoDef(bool decl)
 	{
@@ -1488,7 +1489,7 @@ else
 		bool extrn = fname.startsWith("EXTERN:");
 		if (extrn)
 			fname = fname[7..$];
-		
+
 		if (extrn && !mLastGotoDecl)
 		{
 			string word = split(mLastGotoDef, ".")[$-1];
@@ -1562,7 +1563,7 @@ else
 			mCodeWinMgr.mSource.DismissMethodTip();
 		return rc;
 	}
-		
+
 	int _HandleMethodTip(bool tryUpper = true)
 	{
 		TextSpan span;
@@ -1580,7 +1581,7 @@ else
 		Source src = mCodeWinMgr.mSource;
 		if(!src.FindOpeningBracketBackward(line, tok, otherLine, otherIndex, &cntComma))
 			return S_FALSE;
-		
+
 		wstring bracket = src.GetText(otherLine, otherIndex, otherLine, otherIndex + 1);
 		if(bracket != "("w)
 			return S_FALSE;
@@ -1830,11 +1831,11 @@ version(none) // quick info tooltips not good enough yet
 			return false;
 		if(mLastHighlightBracesLine == line && mLastHighlightBracesCol == idx)
 			return false;
-			
+
 		mLastHighlightBracesLine = line;
 		mLastHighlightBracesCol = idx;
 		HighlightMatchingPairs();
-		
+
 version(tip)
 {
 		string msg = mCodeWinMgr.mSource.getParseError(line, idx);
@@ -1856,16 +1857,16 @@ class TextTipData : DisposingComObject, IVsTextTipData
 	IVsTextView mTextView;
 	string mTipText;
 	bool mDisplayed;
-	
+
 	this()
 	{
 		mTipText = "Tipp";
 		auto uuid = uuid_coclass_VsTextTipWindow;
-		mTipWindow = VsLocalCreateInstance!IVsTextTipWindow (&uuid, sdk.win32.wtypes.CLSCTX_INPROC_SERVER);
+		mTipWindow = VsLocalCreateInstance!IVsTextTipWindow (&uuid, CLSCTX_INPROC_SERVER);
 		if (mTipWindow)
 			mTipWindow.SetTextTipData(this);
 	}
-	
+
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsTextTipData) (this, riid, pvObject))
@@ -1880,7 +1881,7 @@ class TextTipData : DisposingComObject, IVsTextTipData
 		mTipText = tip;
 		mDisplayed = false;
 	}
-	
+
 	void Close()
 	{
 		Dismiss();
@@ -1901,7 +1902,7 @@ class TextTipData : DisposingComObject, IVsTextTipData
 		mTipWindow = release(mTipWindow);
 	}
 
-	HRESULT GetTipText(/+[out, custom(uuid_IVsTextTipData, "optional")]+/ BSTR *pbstrText, 
+	HRESULT GetTipText(/+[out, custom(uuid_IVsTextTipData, "optional")]+/ BSTR *pbstrText,
 		/+[out]+/ BOOL *pfGetFontInfo)
 	{
 		if(pbstrText)
@@ -1918,7 +1919,7 @@ class TextTipData : DisposingComObject, IVsTextTipData
 		// 1 for bold
 		return E_NOTIMPL;
 	}
-	
+
 	HRESULT GetContextStream(/+[out]+/ int *piPos, /+[out]+/ int *piLength)
 	{
 		int line, idx, vspace, endpos;
@@ -1930,14 +1931,14 @@ class TextTipData : DisposingComObject, IVsTextTipData
 		*piLength = 1;
 		return S_OK;
 	}
-	
+
 	HRESULT OnDismiss()
 	{
 		mTextView = null;
 		mDisplayed = false;
 		return S_OK;
 	}
-	
+
 	HRESULT UpdateView()
 	{
 		if (mTextView && mTipWindow)

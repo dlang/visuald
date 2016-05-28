@@ -9,3 +9,6 @@
 vdc/abothe/comserver/obj
 vdextensions/obj
 *.userprefs
+/msbuild/dbuild/obj
+/msbuild/dbuild/bin
+/msbuild/dbuild/.vs

@@ -43,7 +43,7 @@ Project:
 - single file commands: track dependencies, also outputs
 - single file commands: multiple outputs
 
-- VS2013: property pages don't follow resize
++ VS2013: property pages don't follow resize
 - VS2013: possible to copy a project item with DnD into the same project again
 - saving file while it is being compiled/linked does not force a recompilation
 
@@ -207,7 +207,7 @@ Unsorted
 
 - compile and run : set VCInstallDir for -m64
 + mago keeps image locked when terminating debugger
-- -gc/-g depending on debug engine
++ -gc/-g depending on debug engine
 - dub support
 + dustmite support
 - dfix support
@@ -221,3 +221,6 @@ Unsorted
 
 - hide Visual D menu if inactive
 - follow theme colors for tool windows
+
+- version highlighting in files not in a project
+- does not rebuild lib if c-file recompiled

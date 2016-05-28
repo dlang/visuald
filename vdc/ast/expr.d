@@ -50,9 +50,9 @@ enum PREC
 	unary,
 	primary,
 }
-shared static PREC precedence[NumTokens];
+shared static PREC[NumTokens] precedence;
 
-shared static char recursion[NumTokens];
+shared static char[NumTokens] recursion;
 
 ////////////////////////////////////////////////////////////////
 void writeExpr(CodeWriter writer, Expression expr, bool paren)
@@ -87,7 +87,7 @@ class Expression : Node
 {
 	// semantic data
 	Type type;
-	
+
 	mixin ForwardCtor!();
 
 	abstract PREC getPrecedence();
@@ -118,15 +118,15 @@ class BinaryExpression : Expression
 		getLeftExpr().semantic(sc);
 		getRightExpr().semantic(sc);
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		Expression exprL = getLeftExpr();
 		Expression exprR = getRightExpr();
-		
+
 		bool parenL = (exprL.getPrecedence() < getPrecedence() + (recursion[id] == 'L' ? 0 : 1));
 		bool parenR = (exprR.getPrecedence() < getPrecedence() + (recursion[id] == 'R' ? 0 : 1));
-		
+
 		writeExpr(writer, exprL, parenL);
 		writeOperator(writer, id, Spaces.LeftRight);
 		writeExpr(writer, exprR, parenR);
@@ -142,7 +142,7 @@ class BinaryExpression : Expression
 		}
 		return type;
 	}
-	
+
 	override Value interpret(Context sc)
 	{
 		Value vL, vR;
@@ -185,16 +185,16 @@ else
 			case TOK_is:        return vL.opBinOp!"is"(vR);
 			case TOK_notcontains:return vL.opBinOp!"!in"(vR);
 			case TOK_notidentity:return vL.opBinOp!"!is"(vR);
-				
+
 			case TOK_shl:		return vL.opBinOp!"<<"(vR);
 			case TOK_shr:		return vL.opBinOp!">>"(vR);
 			case TOK_ushr:		return vL.opBinOp!">>>"(vR);
-			
+
 			case TOK_add:		return vL.opBinOp!"+"(vR);
 			case TOK_min:		return vL.opBinOp!"-"(vR);
 			case TOK_mul:		return vL.opBinOp!"*"(vR);
 			case TOK_pow:		return vL.opBinOp!"^^"(vR);
-			
+
 			case TOK_div:		return vL.opBinOp!"/"(vR);
 			case TOK_mod:		return vL.opBinOp!"%"(vR);
 	//[ "slice",            ".." ],
@@ -211,7 +211,7 @@ else
 			case TOK_minass:	return vL.opassign!"-="(vR);
 			case TOK_mulass:	return vL.opassign!"*="(vR);
 			case TOK_powass:	return vL.opassign!"^^="(vR);
-				
+
 			case TOK_shlass:	return vL.opassign!"<<="(vR);
 			case TOK_shrass:	return vL.opassign!">>="(vR);
 			case TOK_ushrass:	return vL.opassign!">>>="(vR);
@@ -219,7 +219,7 @@ else
 			case TOK_andass:	return vL.opassign!"&="(vR);
 			case TOK_orass:		return vL.opassign!"|="(vR);
 			case TOK_catass:	return vL.opassign!"~="(vR);
-				
+
 			case TOK_divass:	return vL.opassign!"/="(vR);
 			case TOK_modass:	return vL.opassign!"%="(vR);
 
@@ -272,11 +272,11 @@ class ConditionalExpression : Expression
 	{
 		super(tok);
 	}
-	
+
 	Expression getCondition() { return getMember!Expression(0); }
 	Expression getThenExpr() { return getMember!Expression(1); }
 	Expression getElseExpr() { return getMember!Expression(2); }
-	
+
 	override PREC getPrecedence() { return PREC.cond; }
 
 	override void _semantic(Scope sc)
@@ -285,13 +285,13 @@ class ConditionalExpression : Expression
 		getThenExpr().semantic(sc);
 		getElseExpr().semantic(sc);
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		Expression condExpr = getCondition();
 		Expression thenExpr = getThenExpr();
 		Expression elseExpr = getElseExpr();
-		
+
 		bool condParen = (condExpr.getPrecedence() <= getPrecedence());
 		bool thenParen = (thenExpr.getPrecedence() < PREC.expr);
 		bool elseParen = (elseExpr.getPrecedence() < getPrecedence());
@@ -302,7 +302,7 @@ class ConditionalExpression : Expression
 		writeOperator(writer, TOK_colon, Spaces.LeftRight);
 		writeExpr(writer, elseExpr, elseParen);
 	}
-	
+
 	override Type calcType()
 	{
 		if(!type)
@@ -416,7 +416,7 @@ class CmpExpression : BinaryExpression
 		}
 		return type;
 	}
-	
+
 	override void _semantic(Scope sc)
 	{
 		_checkIdentityLiterals();
@@ -452,14 +452,14 @@ class UnaryExpression : Expression
 	mixin ForwardCtor!();
 
 	override PREC getPrecedence() { return PREC.unary; }
-	
+
 	Expression getExpression() { return getMember!Expression(0); }
 
 	override void _semantic(Scope sc)
 	{
 		getExpression().semantic(sc);
 	}
-	
+
 	override Type calcType()
 	{
 		if(!type)
@@ -513,7 +513,7 @@ else
 				return semanticErrorValue("interpretation of unary operator ", tokenString(id), " not implemented");
 		}
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		Expression expr = getExpression();
@@ -528,11 +528,11 @@ else
 //    NewArguments Type [ AssignExpression ]
 //    NewArguments Type ( ArgumentList )
 //    NewArguments Type
-//    NewArguments ClassArguments BaseClassList_opt { DeclDefs } 
+//    NewArguments ClassArguments BaseClassList_opt { DeclDefs }
 class NewExpression : Expression
 {
 	bool hasNewArgs;
-	
+
 	this() {} // default constructor needed for clone()
 
 	this(Token tok)
@@ -554,13 +554,13 @@ class NewExpression : Expression
 		auto tn = static_cast!(typeof(this))(n);
 		return tn.hasNewArgs == hasNewArgs;
 	}
-	
+
 	override PREC getPrecedence() { return PREC.unary; }
-	
+
 	ArgumentList getNewArguments() { return hasNewArgs ? getMember!ArgumentList(0) : null; }
 	Type getType() { return getMember!Type(hasNewArgs ? 1 : 0); }
 	ArgumentList getCtorArguments() { return members.length > (hasNewArgs ? 2 : 1) ? getMember!ArgumentList(members.length - 1) : null; }
-	
+
 	override void _semantic(Scope sc)
 	{
 		if(auto args = getNewArguments())
@@ -569,12 +569,12 @@ class NewExpression : Expression
 		if(auto args = getCtorArguments())
 			args.semantic(sc);
 	}
-	
+
 	override Type calcType()
 	{
 		return getType().calcType();
 	}
-	
+
 	override Value interpret(Context sc)
 	{
 		Value initVal;
@@ -584,7 +584,7 @@ class NewExpression : Expression
 			initVal = new TupleValue; // empty args force new instance
 		return calcType().createValue(sc, initVal);
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		if(ArgumentList nargs = getNewArguments())
@@ -603,9 +603,9 @@ class AnonymousClassType : Type
 
 	ArgumentList getArguments() { return members.length > 1 ? getMember!ArgumentList(0) : null; }
 	AnonymousClass getClass() { return getMember!AnonymousClass(members.length - 1); }
-	
+
 	override bool propertyNeedsParens() const { return true; }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		if(ArgumentList args = getArguments())
@@ -619,7 +619,7 @@ class AnonymousClassType : Type
 	{
 		return getClass().calcType();
 	}
-	
+
 }
 
 //CastExpression:
@@ -634,10 +634,10 @@ class CastExpression : Expression
 	}
 
 	override PREC getPrecedence() { return PREC.unary; }
-	
+
 	Type getType() { return members.length > 1 ? getMember!Type(0) : null; }
 	Expression getExpression() { return getMember!Expression(members.length - 1); }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer("cast(");
@@ -645,7 +645,7 @@ class CastExpression : Expression
 		if(Type type = getType())
 			writer(getType());
 		writer(")");
-			
+
 		if(getExpression().getPrecedence() < getPrecedence())
 			writer("(", getExpression(), ")");
 		else
@@ -658,12 +658,12 @@ class CastExpression : Expression
 			type.semantic(sc);
 		getExpression().semantic(sc);
 	}
-	
+
 	override Type calcType()
 	{
 		if(type)
 			return type;
-		
+
 		if(auto t = getType())
 			type = getType().calcType();
 		else
@@ -696,7 +696,7 @@ class CastExpression : Expression
 		}
 		return type;
 	}
-	
+
 	override Value interpret(Context sc)
 	{
 		Value val = getExpression().interpret(sc);
@@ -738,7 +738,7 @@ class PostfixExpression : Expression
 	{
 		if(type)
 			return type;
-		
+
 		auto expr = getExpression();
 		auto etype = expr.calcType();
 		switch(id)
@@ -795,7 +795,7 @@ class PostfixExpression : Expression
 				return null;
 		}
 	}
-	
+
 	override Value interpret(Context sc)
 	{
 		Expression expr = getExpression();
@@ -833,7 +833,7 @@ class PostfixExpression : Expression
 				else
 					args = new TupleValue;
 				return val.opCall(sc, args);
-				
+
 			case TOK_plusplus:
 				Value v2 = val.getType().createValue(sc, val);
 				val.opBin(sc, TOK_addass, Value.create(cast(byte)1));
@@ -847,7 +847,7 @@ class PostfixExpression : Expression
 				return super.interpret(sc);
 		}
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		Expression expr = getExpression();
@@ -875,12 +875,12 @@ class PostfixExpression : Expression
 					writer(getMember!ArgumentList(1));
 				writer(")");
 				break;
-				
+
 			case TOK_dot:
 			case TOK_new:
 				writer(".", getMember(1));
 				break;
-				
+
 			default:
 				writeOperator(writer, id, Spaces.Right);
 				break;
@@ -895,7 +895,7 @@ class DotExpression : PostfixExpression
 	Identifier getIdentifier() { return id == TOK_new ? null : getMember!Identifier(1); }
 
 	Node resolved;
-	
+
 	override Node resolve()
 	{
 		if(resolved)
@@ -924,7 +924,7 @@ class DotExpression : PostfixExpression
 	{
 		if(type)
 			return type;
-		
+
 		if(auto n = resolve())
 			type = n.calcType();
 		else if(id == TOK_new)
@@ -971,7 +971,7 @@ class ArgumentList : Node
 			args.addValue(m.interpret(sc));
 		return args;
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		bool writeSep = false;
@@ -980,11 +980,11 @@ class ArgumentList : Node
 			if(writeSep)
 				writer(", ");
 			writeSep = true;
-			
+
 			bool paren = false;
 			if(auto expr = cast(Expression) m)
 				paren = (expr.getPrecedence() <= PREC.expr);
-			
+
 			if(paren)
 				writer("(", m, ")");
 			else
@@ -1040,7 +1040,7 @@ class PrimaryExpression : Expression
 				if(!v)
 					return semanticErrorValue("this needs context");
 				return v;
-				
+
 			case TOK_true:  return Value.create(true);
 			case TOK_false: return Value.create(false);
 			case TOK_null:  return new NullValue;
@@ -1050,7 +1050,7 @@ class PrimaryExpression : Expression
 			default:        return super.interpret(sc);
 		}
 	}
-	
+
 	override Type calcType()
 	{
 		if(type)
@@ -1075,7 +1075,7 @@ class PrimaryExpression : Expression
 				type = createBasicType(TOK_bool);
 				break;
 
-			case TOK_null:  
+			case TOK_null:
 				type = Singleton!NullType.get();
 				break;
 
@@ -1104,13 +1104,13 @@ class PrimaryExpression : Expression
 class ArrayLiteral : Expression
 {
 	bool isAssoc;
-	
+
 	mixin ForwardCtor!();
 
 	override PREC getPrecedence() { return PREC.primary; }
 
 	ArgumentList getArgumentList() { return getMember!ArgumentList(0); }
-		
+
 	override void toD(CodeWriter writer)
 	{
 		writer("[");
@@ -1121,7 +1121,7 @@ class ArrayLiteral : Expression
 	override void _semantic(Scope sc)
 	{
 		super._semantic(sc);
-		
+
 		auto argl = getArgumentList();
 		int cntPairs = 0;
 		int cntIndex = 0;
@@ -1141,7 +1141,7 @@ class ArrayLiteral : Expression
 		}
 		if(cntPairs == argl.members.length && cntIndex < argl.members.length)
 			isAssoc = true;
-		
+
 		if(!isAssoc)
 		{
 			type = new TypeDynamicArray;
@@ -1156,7 +1156,7 @@ class ArrayLiteral : Expression
 				type.addMember(new AutoType(TOK_auto, span));
 		}
 	}
-	
+
 	override Type calcType()
 	{
 		if(type)
@@ -1172,7 +1172,7 @@ class ArrayLiteral : Expression
 			val = args.interpret(sc);
 		else
 			val = new TupleValue;
-		
+
 		if(auto tda = cast(TypeDynamicArray) calcType())
 		{
 			auto telem = tda.getNextType();
@@ -1234,7 +1234,7 @@ class KeyValuePair : BinaryExpression
 	{
 		precedence[TOK_colon] = PREC.assign;
 	}
-	
+
 	this() {} // default constructor needed for clone()
 
 	this(Token tok)
@@ -1255,7 +1255,7 @@ class FunctionLiteral : Expression
 	Type getType() { return members.length > 2 ? getMember!Type(0) : null; }
 	override ParameterList getParameterList() { return getMember!ParameterList(members.length - 2); }
 	FunctionBody getFunctionBody() { return getMember!FunctionBody(members.length - 1); }
-	
+
 	override PREC getPrecedence() { return PREC.primary; }
 
 	override void toD(CodeWriter writer)
@@ -1275,14 +1275,14 @@ class FunctionLiteral : Expression
 	{
 		if(auto t = getType())
 			t.semantic(sc);
-		
+
 		sc = enterScope(sc);
 		getFunctionBody().semantic(sc);
 		sc = sc.pop();
 	}
-	
+
 	TypeFunction func;
-	
+
 	override Type calcType()
 	{
 		if(!func)
@@ -1364,7 +1364,7 @@ class Lambda : Expression
 
 class TypeFunctionLiteral : TypeFunction
 {
-	override Type getReturnType() 
+	override Type getReturnType()
 	{
 		if (returnType)
 			return returnType;
@@ -1380,7 +1380,7 @@ class TypeFunctionLiteral : TypeFunction
 
 class TypeDelegateLiteral : TypeDelegate
 {
-	override Type getReturnType() 
+	override Type getReturnType()
 	{
 		if (returnType)
 			return returnType;
@@ -1397,7 +1397,7 @@ class TypeDelegateLiteral : TypeDelegate
 class FuncLiteralDeclarator : Declarator
 {
 	FunctionBody funcbody;
-	
+
 	override Value interpretCall(Context sc)
 	{
 		return funcbody.interpret(sc);
@@ -1434,7 +1434,7 @@ class AssertExpression : Expression
 
 	Expression getExpression() { return getMember!Expression(0); }
 	Expression getMessage() { return getMember!Expression(1); }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer("assert(");
@@ -1472,9 +1472,9 @@ class MixinExpression : Expression
 	override PREC getPrecedence() { return PREC.primary; }
 
 	Expression getExpression() { return getMember!Expression(0); }
-	
+
 	Expression resolved;
-	
+
 	override void toD(CodeWriter writer)
 	{
 		if(resolved)
@@ -1487,7 +1487,7 @@ class MixinExpression : Expression
 	{
 		if(resolved)
 			return;
-		
+
 		Value v = getMember(0).interpretCatch(nullContext);
 		string s = v.toMixin();
 		Parser parser = new Parser;
@@ -1511,7 +1511,7 @@ class MixinExpression : Expression
 			return resolved.calcType();
 		return new ErrorType;
 	}
-	
+
 	override Value interpret(Context sc)
 	{
 		if(!resolved)
@@ -1531,7 +1531,7 @@ class ImportExpression : Expression
 	override PREC getPrecedence() { return PREC.primary; }
 
 	Expression getExpression() { return getMember!Expression(0); }
-	
+
 	override Type calcType()
 	{
 		if(!type)
@@ -1596,7 +1596,7 @@ class IsExpression : PrimaryExpression
 	{
 		super(TOK_is, tok.span);
 	}
-	
+
 	override IsExpression clone()
 	{
 		IsExpression n = static_cast!IsExpression(super.clone());
@@ -1613,10 +1613,10 @@ class IsExpression : PrimaryExpression
 		return tn.kind == kind
 			&& tn.ident == ident;
 	}
-	
+
 	Type getType() { return getMember!Type(0); }
 	TypeSpecialization getTypeSpecialization() { return members.length > 1 ? getMember!TypeSpecialization(1) : null; }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer("is(", getType());
@@ -1643,9 +1643,9 @@ class IsExpression : PrimaryExpression
 class TypeSpecialization : Node
 {
 	mixin ForwardCtor!();
-	
+
 	Type getType() { return getMember!Type(0); }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		if(id != 0)
@@ -1659,23 +1659,23 @@ class IdentifierExpression : PrimaryExpression
 {
 	bool global;
 
-	// semantic data	
+	// semantic data
 	Node resolved;
-	
+
 	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
 		super(TOK_Identifier, tok.span);
 	}
-	
+
 	override IdentifierExpression clone()
 	{
 		IdentifierExpression n = static_cast!IdentifierExpression(super.clone());
 		n.global = global;
 		return n;
 	}
-	
+
 	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
@@ -1684,7 +1684,7 @@ class IdentifierExpression : PrimaryExpression
 		auto tn = static_cast!(typeof(this))(n);
 		return tn.global == global;
 	}
-	
+
 	Identifier getIdentifier() { return getMember!Identifier(0); }
 
 	override void toD(CodeWriter writer)
@@ -1730,7 +1730,7 @@ class IdentifierExpression : PrimaryExpression
 
 		resolve();
 	}
-	
+
 	override Type calcType()
 	{
 		if(type)
@@ -1743,14 +1743,14 @@ class IdentifierExpression : PrimaryExpression
 			return semanticErrorType("cannot determine type");
 		return type;
 	}
-	
+
 	override ArgumentList getFunctionArguments()
 	{
 		if(parent)
 			return parent.getFunctionArguments();
 		return null;
 	}
-	
+
 	override Value interpret(Context sc)
 	{
 		if(!resolved)
@@ -1767,14 +1767,14 @@ class IdentifierExpression : PrimaryExpression
 class IntegerLiteralExpression : PrimaryExpression
 {
 	string txt;
-	
+
 	ulong value; // literals are never negative by themselves
 	bool unsigned;
 	bool lng;
-	
+
 	bool forceInt; // set in semantic pass
 	bool forceShort;
-	
+
 	this() {} // default constructor needed for clone()
 
 	this(Token tok)
@@ -1783,10 +1783,10 @@ class IntegerLiteralExpression : PrimaryExpression
 		txt = tok.txt;
 		initValue();
 	}
-	
+
 	void initValue()
 	{
-		string val = txt; 
+		string val = txt;
 		while(val.length > 1)
 		{
 			if(val[$-1] == 'L')
@@ -1819,7 +1819,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		val = removechars(val, "_");
 		value = parse!ulong(val, radix);
 	}
-	
+
 	override IntegerLiteralExpression clone()
 	{
 		IntegerLiteralExpression n = static_cast!IntegerLiteralExpression(super.clone());
@@ -1854,7 +1854,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		if(t.id == TOK_short || t.id == TOK_ushort)
 			forceShort = true;
 	}
-	
+
 	override Type calcType()
 	{
 		if(type)
@@ -1889,7 +1889,7 @@ class IntegerLiteralExpression : PrimaryExpression
 	{
 		calcType().semantic(sc);
 	}
-	
+
 	Value _interpret(Context sc)
 	{
 		if(lng || value >= 0x80000000)
@@ -1919,7 +1919,7 @@ class IntegerLiteralExpression : PrimaryExpression
 		v.literal = true;
 		return v;
 	}
-	
+
 	int getInt()
 	{
 		if(value > int.max)
@@ -1942,7 +1942,7 @@ class FloatLiteralExpression : PrimaryExpression
 	bool complex;
 	bool lng;
 	bool flt;
-	
+
 	this() {} // default constructor needed for clone()
 
 	this(Token tok)
@@ -1951,10 +1951,10 @@ class FloatLiteralExpression : PrimaryExpression
 		txt = tok.txt;
 		initValue();
 	}
-	
+
 	void initValue()
 	{
-		string val = txt; 
+		string val = txt;
 		while(val.length > 1)
 		{
 			if(val[$-1] == 'L')
@@ -1975,7 +1975,7 @@ class FloatLiteralExpression : PrimaryExpression
 		val = removechars(val, "_");
 		value = parse!real(val);
 	}
-	
+
 	override FloatLiteralExpression clone()
 	{
 		FloatLiteralExpression n = static_cast!FloatLiteralExpression(super.clone());
@@ -1998,7 +1998,7 @@ class FloatLiteralExpression : PrimaryExpression
 			&& tn.flt == flt
 			&& tn.lng == lng;
 	}
-	
+
 	override Type calcType()
 	{
 		if(type)
@@ -2026,7 +2026,7 @@ class FloatLiteralExpression : PrimaryExpression
 	{
 		calcType().semantic(sc);
 	}
-	
+
 	Value _interpret(Context sc)
 	{
 		if(complex)
@@ -2050,7 +2050,7 @@ class FloatLiteralExpression : PrimaryExpression
 		v.literal = true;
 		return v;
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer(txt);
@@ -2061,7 +2061,7 @@ class StringLiteralExpression : PrimaryExpression
 {
 	string txt;
 	string rawtxt;
-	
+
 	this() {} // default constructor needed for clone()
 
 	static string raw(string s)
@@ -2070,7 +2070,7 @@ class StringLiteralExpression : PrimaryExpression
 			return s;
 		if(s.length > 2 && s[0] == 'q' && s[1] == '{' && s[$-1] == '}')
 			return s[2..$-1];
-		
+
 		// TODO: missing hex/escape translation and delimiter string handling
 		size_t p = 0;
 		while(p < s.length && s[p] != '"' && s[p] != '`')
@@ -2090,12 +2090,12 @@ class StringLiteralExpression : PrimaryExpression
 		assert(raw(`q{abc}`) == "abc");
 		assert(raw(`"abc"c`) == "abc");
 	}
-	
+
 	this(Token tok)
 	{
 		super(tok);
 		txt = tok.txt;
-		
+
 		rawtxt = raw(txt);
 	}
 
@@ -2152,7 +2152,7 @@ class StringLiteralExpression : PrimaryExpression
 		v.literal = true;
 		return v;
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer(txt);
@@ -2162,7 +2162,7 @@ class StringLiteralExpression : PrimaryExpression
 class CharacterLiteralExpression : PrimaryExpression
 {
 	string txt;
-	
+
 	this() {} // default constructor needed for clone()
 
 	this(Token tok)
@@ -2170,14 +2170,14 @@ class CharacterLiteralExpression : PrimaryExpression
 		super(tok);
 		txt = tok.txt;
 	}
-	
+
 	override CharacterLiteralExpression clone()
 	{
 		CharacterLiteralExpression n = static_cast!CharacterLiteralExpression(super.clone());
 		n.txt = txt;
 		return n;
 	}
-	
+
 	override bool compare(const(Node) n) const
 	{
 		if(!super.compare(n))
@@ -2186,7 +2186,7 @@ class CharacterLiteralExpression : PrimaryExpression
 		auto tn = static_cast!(typeof(this))(n);
 		return tn.txt == txt;
 	}
-	
+
 	override Type calcType()
 	{
 		if(type)
@@ -2218,19 +2218,19 @@ class CharacterLiteralExpression : PrimaryExpression
 			return Value.create(cast(wchar)ch);
 		return Value.create(cast(char)ch);
 	}
-	
+
 	override Value interpret(Context sc)
 	{
 		Value v = _interpret(sc);
 		v.literal = true;
 		return v;
 	}
-	
+
 	override void _semantic(Scope sc)
 	{
 		calcType().semantic(sc);
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer(txt);
@@ -2242,17 +2242,17 @@ class CharacterLiteralExpression : PrimaryExpression
 class TypeProperty : PrimaryExpression
 {
 	Node resolved;
-	
+
 	this() {} // default constructor needed for clone()
 
 	this(Token tok)
 	{
 		super(0, tok.span);
 	}
-	
+
 	Type getType() { return getMember!Type(0); }
 	Identifier getProperty() { return getMember!Identifier(1); }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		Type type = getType();
@@ -2276,7 +2276,7 @@ class TypeProperty : PrimaryExpression
 	{
 		if(type)
 			return type;
-		
+
 		if(auto n = resolve())
 			type = n.calcType();
 		else
@@ -2302,10 +2302,10 @@ class StructConstructor : PrimaryExpression
 	{
 		super(0, tok.span);
 	}
-	
+
 	Type getType() { return getMember!Type(0); }
 	ArgumentList getArguments() { return getMember!ArgumentList(1); }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		Type type = getType();
@@ -2324,7 +2324,7 @@ class TraitsExpression : PrimaryExpression
 	{
 		super(TOK___traits, tok.span);
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer("__traits(", getMember(0));

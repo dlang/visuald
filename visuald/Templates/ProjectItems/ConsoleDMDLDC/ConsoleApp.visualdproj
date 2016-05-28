@@ -6,7 +6,6 @@
 	<runCv2pdb>1</runCv2pdb>
 	<symdebug>1</symdebug>
 	<release>0</release>
-    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
   </Config>
   <Config name="Release DMD" platform="Win32">
 	<isX86_64>0</isX86_64>
@@ -15,7 +14,6 @@
 	<release>1</release>
 	<optimize>1</optimize>
 	<useInline>1</useInline>
-    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
   </Config>
   <Config name="Debug DMD" platform="x64">
 	<isX86_64>1</isX86_64>
@@ -23,7 +21,6 @@
 	<runCv2pdb>1</runCv2pdb>
 	<symdebug>1</symdebug>
 	<release>0</release>
-    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
   </Config>
   <Config name="Release DMD" platform="x64">
 	<isX86_64>1</isX86_64>
@@ -32,7 +29,6 @@
 	<release>1</release>
 	<optimize>1</optimize>
 	<useInline>1</useInline>
-    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
   </Config>
   <Config name="Debug LDC" platform="Win32">
 	<isX86_64>0</isX86_64>
@@ -40,7 +36,6 @@
 	<runCv2pdb>1</runCv2pdb>
 	<symdebug>1</symdebug>
 	<release>0</release>
-    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
   </Config>
   <Config name="Release LDC" platform="Win32">
 	<isX86_64>0</isX86_64>
@@ -49,12 +44,10 @@
 	<release>1</release>
 	<optimize>1</optimize>
 	<useInline>1</useInline>
-    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
   </Config>
   <Config name="Debug LDC" platform="x64">
 	<isX86_64>1</isX86_64>
 	<compiler>2</compiler>
-    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
 	<runCv2pdb>1</runCv2pdb>
 	<symdebug>1</symdebug>
 	<release>0</release>
@@ -66,7 +59,6 @@
 	<release>1</release>
 	<optimize>1</optimize>
 	<useInline>1</useInline>
-    <outdir>$(ConfigurationName) $(PlatformName)</outdir> 
   </Config>
   <Folder name="$safeprojectname$">
     <File path="main.d"></File>

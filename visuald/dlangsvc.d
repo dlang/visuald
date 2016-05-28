@@ -3485,6 +3485,8 @@ else
 
 	void runTask(T)(T dg)
 	{
+		import core.thread;
+
 		if(!parseTaskPool)
 		{
 			int threads = defaultPoolThreads;
@@ -3492,7 +3494,7 @@ else
 				threads = 1;
 			parseTaskPool = new TaskPool(threads);
 			parseTaskPool.isDaemon = true;
-			parseTaskPool.priority(core.thread.Thread.PRIORITY_MIN);
+			parseTaskPool.priority(Thread.PRIORITY_MIN);
 		}
 		auto task = task(dg);
 		parseTaskPool.put(task);

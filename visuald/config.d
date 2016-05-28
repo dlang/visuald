@@ -67,7 +67,7 @@ const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad40847
 
 T clone(T)(T object)
 {
-	auto size = object.classinfo.init.length;
+	auto size = typeid(object).init.length;
 	object = cast(T) ((cast(void*)object) [0..size].dup.ptr );
 //	object.__monitor = null;
 	return object;
@@ -270,7 +270,7 @@ class ProjectOptions
 	{
 		Dversion = 2;
 		exefile = "$(OutDir)\\$(ProjectName).exe";
-		outdir = "$(ConfigurationName)";
+		outdir = "$(PlatformName)\\$(ConfigurationName)";
 		objdir = "$(OutDir)";
 		debugtarget = "$(TARGETPATH)";
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
@@ -284,13 +284,13 @@ class ProjectOptions
 		debugEngine = 1;
 
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
-		setDebug(dbg);
 		setX64(x64);
+		setDebug(dbg);
 	}
 
 	void setDebug(bool dbg)
 	{
-		runCv2pdb = dbg;
+		runCv2pdb = dbg && !isX86_64;
 		symdebug = dbg ? 3 : 0;
 		release = dbg ? 0 : 1;
 		optimize = release == 1;
@@ -751,10 +751,10 @@ class ProjectOptions
 		switch(mapverbosity)
 		{
 			case 0: cmd ~= mslink ? "" : " -L/NOMAP"; break; // actually still creates map file
-			case 1: cmd ~= mslink ? "-L/MAPINFO:EXPORTS" : " -L/MAP:ADDRESS"; break;
+			case 1: cmd ~= mslink ? " -L/MAPINFO:EXPORTS" : " -L/MAP:ADDRESS"; break;
 			case 2: break;
-			case 3: cmd ~= mslink ? "-L/MAPINFO:EXPORTS,LINES" : " -L/MAP:FULL"; break;
-			case 4: cmd ~= mslink ? "-L/MAPINFO:EXPORTS,LINES,FIXUPS" : " -L/MAP:FULL -L/XREF"; break;
+			case 3: cmd ~= mslink ? " -L/MAPINFO:EXPORTS,LINES" : " -L/MAP:FULL"; break;
+			case 4: cmd ~= mslink ? " -L/MAPINFO:EXPORTS,LINES,FIXUPS" : " -L/MAP:FULL -L/XREF"; break;
 			default: break;
 		}
 
@@ -780,6 +780,8 @@ class ProjectOptions
 				case Subsystem.Native:  cmd ~= " -L/SUBSYSTEM:NATIVE"; break;
 				case Subsystem.Posix:   cmd ~= " -L/SUBSYSTEM:POSIX"; break;
 			}
+			if (mslink && lib == OutputType.DLL)
+				cmd ~= " -L/DLL";
 		}
 		return cmd;
 	}
@@ -996,6 +998,9 @@ class ProjectOptions
 				case Subsystem.Posix:   cmd ~= " /SUBSYSTEM:POSIX"; break;
 			}
 		}
+		if (mslink && lib == OutputType.DLL)
+			cmd ~= " /DLL";
+
 		cmd ~= addopts;
 		return cmd;
 	}
@@ -1181,6 +1186,7 @@ class ProjectOptions
 		if(solutionpath.length)
 			addFileMacros(solutionpath, "SOLUTION", replacements);
 		replacements["PLATFORMNAME"] = config.mPlatform;
+		replacements["PLATFORM"] = config.mPlatform;
 		addFileMacros(projectpath, "PROJECT", replacements);
 		replacements["PROJECTNAME"] = config.GetProjectName();
 		addFileMacros(safeprojectpath, "SAFEPROJECT", replacements);
@@ -1331,7 +1337,7 @@ class ProjectOptions
 		elem ~= new xml.Element("pauseAfterRunning", toElem(pauseAfterRunning));
 	}
 
-	void readXML(xml.Element elem)
+	void parseXML(xml.Element elem)
 	{
 		fromElem(elem, "obj", obj);
 		fromElem(elem, "link", link);
@@ -1486,6 +1492,20 @@ class ConfigProvider : DisposingComObject,
 			auto config = new xml.Element("Config");
 			xml.setAttribute(config, "name", cfg.mName);
 			xml.setAttribute(config, "platform", cfg.mPlatform);
+
+			ProjectOptions opt = cfg.GetProjectOptions();
+			opt.writeXML(config);
+			doc ~= config;
+		}
+	}
+
+	void addMSBuildConfigsToXml(xml.Document doc)
+	{
+		foreach(Config cfg; mConfigs)
+		{
+			auto config = new xml.Element("PropertyGroup");
+			string cond = "'$(Configuration)|$(Platform)'=='" ~ cfg.mName ~ "|" ~ cfg.mPlatform ~ "'";
+			xml.setAttribute(config, "Condition", cond);
 
 			ProjectOptions opt = cfg.GetProjectOptions();
 			opt.writeXML(config);
@@ -1874,7 +1894,7 @@ class Config :	DisposingComObject,
 			mProjectOptions.setX64(platform == "x64");
 		}
 		else
-			mProjectOptions = new ProjectOptions(name == "Debug", platform == "x64");
+			mProjectOptions = new ProjectOptions(name.startsWith("Debug"), platform == "x64");
 		mBuilder = new CBuilderThread(this);
 		version(hasOutputGroup)
 			mOutputGroup = newCom!VsOutputGroup(this);

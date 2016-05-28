@@ -25,16 +25,16 @@ import sdk.win32.objbase;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-extern(C) void* gc_malloc(size_t sz, uint ba = 0, const TypeInfo ti=null); 
+extern(C) void* gc_malloc(size_t sz, uint ba = 0, const TypeInfo ti=null);
 
 C _newCom(C, T...)(T arguments)
 {
 	static assert(!__traits(isAbstractClass,C));
 
 	// avoid special casing in _d_newclass, where COM objects are not garbage collected
-	size_t size = C.classinfo.init.length;
-	void* p = gc_malloc(size, 1, C.classinfo); // BlkAttr.FINALIZE
-	memcpy(p, C.classinfo.init.ptr, size);
+	size_t size = typeid(C).init.length;
+	void* p = gc_malloc(size, 1, typeid(C)); // BlkAttr.FINALIZE
+	memcpy(p, typeid(C).init.ptr, size);
 	C c = cast(C) p;
 	static if(arguments.length || __traits(compiles,c.__ctor(arguments)))
 		c.__ctor(arguments);
@@ -103,7 +103,7 @@ struct ComPtr(Interface)
 {
 	Interface ptr;
 
-	this(Interface i = null, bool doref = true)
+	this(Interface i, bool doref = true)
 	{
 		ptr = i;
 		if(ptr && doref)
@@ -128,7 +128,7 @@ struct ComPtr(Interface)
 		return p;
 	}
 
-	void opAssign(Interface i) 
+	void opAssign(Interface i)
 	{
 		if(ptr)
 			ptr.Release();
@@ -137,8 +137,8 @@ struct ComPtr(Interface)
 			ptr.AddRef();
 	}
 
-	void opAssign(IUnknown i) 
-	{ 
+	void opAssign(IUnknown i)
+	{
 		if(ptr)
 			ptr.Release();
 		ptr = qi_cast!(Interface)(i);

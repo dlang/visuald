@@ -15,6 +15,7 @@ import std.utf;
 import std.conv;
 import std.algorithm;
 import std.datetime;
+static import std.file;
 
 import visuald.comutil;
 import visuald.logutil;
@@ -120,11 +121,11 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 	private string mDisplayName;
 	private COLORINDEX mBackground;
 	private COLORINDEX mForeground;
-	
+
 	private COLORREF mRgbForeground;
 	private COLORREF mRgbBackground;
-	
-	this(string displayName, COLORINDEX foreground, COLORINDEX background, 
+
+	this(string displayName, COLORINDEX foreground, COLORINDEX background,
 	     COLORREF rgbForeground = 0, COLORREF rgbBackground = 0)
 	{
 		mDisplayName = displayName;
@@ -133,7 +134,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 		mRgbForeground = rgbForeground;
 		mRgbBackground = rgbBackground;
 	}
-	
+
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorableItem) (this, riid, pvObject))
@@ -142,18 +143,18 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
-	
+
 	// IVsColorableItem
 	HRESULT GetDefaultColors(/+[out]+/ COLORINDEX *piForeground, /+[out]+/ COLORINDEX *piBackground)
 	{
 		if(!piForeground || !piBackground)
 			return E_INVALIDARG;
-		
+
 		*piForeground = mForeground;
 		*piBackground = mBackground;
 		return S_OK;
 	}
-	
+
 	HRESULT GetDefaultFontFlags(/+[out]+/ DWORD *pdwFontFlags) // see FONTFLAGS enum
 	{
 		if(!pdwFontFlags)
@@ -171,7 +172,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 		*pbstrName = allocBSTR(mDisplayName);
 		return S_OK;
 	}
-	
+
 	// IVsHiColorItem
 	HRESULT GetColorData(in VSCOLORDATA cdElement, /+[out]+/ COLORREF* pcrColor)
 	{
@@ -198,7 +199,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 		return mDisplayName;
 	}
 
-} 
+}
 
 class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 {
@@ -211,17 +212,17 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	//  T    - toggle bit to force change
 	int[] mLineState;
 	int mLastValidLine;
-	
+
 	Source mSource;
 	ParserBase!wstring mParser;
 	Config mConfig;
 	bool mColorizeVersions;
 	bool mColorizeCoverage;
 	bool mParseSource;
-	
+
 	enum int kIndexVersion = 0;
 	enum int kIndexDebug   = 1;
-	
+
 	// index 0 for version, index 1 for debug
 	int[wstring][2] mVersionIds; // positive: lineno defined
 	int[2] mVersionLevel = [ -1, -1 ];
@@ -271,7 +272,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		mSource = src;
 		mParser = new ParserBase!wstring;
-		
+
 		mColorizeVersions = Package.GetGlobalOptions().ColorizeVersions;
 		mColorizeCoverage = Package.GetGlobalOptions().ColorizeCoverage;
 		mParseSource = Package.GetGlobalOptions().parseSource;
@@ -292,7 +293,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			mConfig = null;
 		}
 	}
-	
+
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsColorizer) (this, riid, pvObject))
@@ -304,7 +305,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	override int GetStateMaintenanceFlag(BOOL* pfFlag)
 	{
 		// version(LOG) mixin(LogCallMix2);
-		
+
 		*pfFlag = false;
 		return S_OK;
 	}
@@ -312,7 +313,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	override int GetStartState(int* piStartState)
 	{
 		version(LOG) mixin(LogCallMix2);
-		
+
 		*piStartState = 0;
 		return S_OK;
 	}
@@ -326,10 +327,10 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 
 		version(LOG) logCall("%s.ColorizeLine(%d,%x): %s", this, iLine, state, text);
 		version(LOG) mixin(_LogIndentNoRet);
-		
+
 		uint pos = 0;
 		bool inTokenString = (Lexer.tokenStringLevel(state) > 0);
-		
+
 		int cov = -1;
 		int covtype = TokenColor.CoverageKeyword;
 		if(mColorizeCoverage && mCoverage.length)
@@ -389,7 +390,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				//	type = parseErrors(span, type, tok);
 			}
 			inTokenString = nowInTokenString;
-				
+
 			while(prevpos < pos)
 				pAttributes[prevpos++] = type | back;
 		}
@@ -401,9 +402,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	override int GetStateAtEndOfLine(in int iLine, in int iLength, in wchar* pText, in int iState)
 	{
 		version(LOG) mixin(LogCallMix2);
-		
+
 		assert(_false); // should not be called if GetStateMaintenanceFlag return false
-	
+
 		bool versionsChanged;
 		wstring text = to_cwstring(pText, iLength);
 		return GetStateAtEndOfLine(iLine, text, iState, versionsChanged);
@@ -438,12 +439,12 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		return type;
 	}
-	
+
 	int GetStateAtEndOfLine(in int iLine, wstring text, in int iState, ref bool versionsChanged)
 	{
 		version(LOG) logCall("%s.GetStateAtEndOfLine(%d,%s,%x)", this, iLine, text, iState);
 		version(LOG) mixin(_LogIndentNoRet);
-		
+
 		// SaveLineState(iLine, iState);
 		if(mColorizeVersions)
 		{
@@ -466,7 +467,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 */
 		lastParserLine = iLine + 1;
 		lastParserIndex = 0;
-		
+
 		version(LOG) logCall("%s.GetStateAtEndOfLine returns state %x", this, state);
 		return state;
 	}
@@ -474,7 +475,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	override int CloseColorizer()
 	{
 		version(LOG) mixin(LogCallMix);
-		
+
 		return S_OK;
 	}
 
@@ -570,24 +571,24 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	//////////////////////////////////////////////////////////////
 	int lastParserLine;
 	int lastParserIndex;
-	
+
 	void syncParser(int line)
 	{
 		if(line == lastParserLine && lastParserIndex == 0)
 			return;
-		
+
 		lastParserLine = line;
 		lastParserIndex = 0;
 		mParser.prune(lastParserLine, lastParserIndex);
 		if(line == lastParserLine && lastParserIndex == 0)
 			return;
-		
+
 		assert(lastParserLine >= 0 && lastParserLine < line);
 		assert(lastParserLine < mLineState.length);
-		
+
 		version(LOG) logCall("%s.syncParser(%d) restarts at [%d,%d]", this, line, lastParserLine, lastParserIndex);
 		version(LOG) mixin(_LogIndentNoRet);
-		
+
 		int state = mLineState[lastParserLine];
 		assert(state != -1);
 		wstring text = mSource.GetText(lastParserLine, 0, lastParserLine, -1);
@@ -597,7 +598,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		uint pos = 0;
 		while(pos < text.length && pos < lastParserIndex)
 			ScanAndParse(lastParserLine, text, false, state, pos, versionsChanged);
-		
+
 		// parse the rest of the lines
 		for( ; ; )
 		{
@@ -607,13 +608,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			lastParserLine++;
 			if(lastParserLine >= line)
 				break;
-			
+
 			text = mSource.GetText(lastParserLine, 0, lastParserLine, -1);
 			pos = 0;
 		}
 		lastParserIndex = 0;
 	}
-	
+
 	//////////////////////////////////////////////////////////////
 	bool _clearVersions(int debugOrVersion, int iLine)
 	{
@@ -621,10 +622,10 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		foreach(id, line; mVersionIds[debugOrVersion])
 			if(line == iLine)
 				toremove ~= id;
-		
+
 		foreach(id; toremove)
 			mVersionIds[debugOrVersion].remove(id);
-		
+
 		if(mVersionLevelLine[debugOrVersion] == iLine)
 		{
 			mVersionLevelLine[debugOrVersion] = -2;
@@ -633,13 +634,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		return toremove.length > 0;
 	}
-	
+
 	bool clearVersions(int iLine)
 	{
 		return _clearVersions(0, iLine)
 			 | _clearVersions(1, iLine);
 	}
-	
+
 	void defineVersion(int line, int num, int debugOrVersion, ref bool versionsChanged)
 	{
 		if(mVersionLevel[debugOrVersion] < 0 || line < mVersionLevelLine[debugOrVersion])
@@ -649,7 +650,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			versionsChanged = true;
 		}
 	}
-	
+
 	bool isVersionEnabled(int line, int num, int debugOrVersion)
 	{
 		if(num == 0)
@@ -664,7 +665,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				return true;
 		return false;
 	}
-	
+
 	bool defineVersion(int line, wstring ident, int debugOrVersion, ref bool versionsChanged)
 	{
 		if (debugOrVersion == 0)
@@ -673,7 +674,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			if(res != 0)
 				return false;
 		}
-		
+
 		int *pline = ident in mVersionIds[debugOrVersion];
 		if(!pline)
 			mVersionIds[debugOrVersion][ident] = line;
@@ -742,12 +743,12 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				assert(false, "inconsistent predefined versions");
 		}
 	}
-	
+
 	bool isVersionEnabled(int line, wstring ident, int debugOrVersion)
 	{
 		if(dLex.isInteger(ident))
 			return isVersionEnabled(line, to!int(ident), debugOrVersion);
-		
+
 		if (debugOrVersion)
 		{
 			if(ident.length == 0 && mConfigRelease != 0)
@@ -767,13 +768,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		foreach(ver; versions)
 			if(cmp(ver, ident) == 0)
 				return true;
-		
+
 		int *pline = ident in mVersionIds[debugOrVersion];
 		if(!pline || *pline < 0 || *pline > line)
 			return false;
 		return true;
 	}
-	
+
 	int disabledColorType(int type)
 	{
 		switch(type)
@@ -794,7 +795,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		return type;
 	}
-	
+
 	int stringColorType(int type)
 	{
 		switch(type)
@@ -814,7 +815,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		return type;
 	}
-	
+
 	__gshared int[wstring] asmIdentifiers;
 	static const wstring[] asmKeywords = [ "__LOCAL_SIZE", "dword", "even", "far", "naked", "near", "ptr", "qword", "seg", "word", ];
 	static const wstring[] asmRegisters = [
@@ -822,127 +823,127 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		"BL",   "BH",   "BX",   "EBX",
 		"CL",   "CH",   "CX",   "ECX",
 		"DL",   "DH",   "DX",   "EDX",
-		"BP",   "EBP",  "SP",   "ESP",  
-		"DI",   "EDI",  "SI",   "ESI",  
-		"ES",   "CS",   "SS",   "DS",   "GS",   "FS",   
-		"CR0",  "CR2",  "CR3",  "CR4",  
-		"DR0",  "DR1",  "DR2",  "DR3",  "DR4",  "DR5",  "DR6",  "DR7",  
-		"TR3",  "TR4",  "TR5",  "TR6",  "TR7",  
-		"MM0",  "MM1",  "MM2",  "MM3",  "MM4",  "MM5",  "MM6",  "MM7",  
-		"XMM0", "XMM1", "XMM2", "XMM3", "XMM4", "XMM5", "XMM6", "XMM7", 
+		"BP",   "EBP",  "SP",   "ESP",
+		"DI",   "EDI",  "SI",   "ESI",
+		"ES",   "CS",   "SS",   "DS",   "GS",   "FS",
+		"CR0",  "CR2",  "CR3",  "CR4",
+		"DR0",  "DR1",  "DR2",  "DR3",  "DR4",  "DR5",  "DR6",  "DR7",
+		"TR3",  "TR4",  "TR5",  "TR6",  "TR7",
+		"MM0",  "MM1",  "MM2",  "MM3",  "MM4",  "MM5",  "MM6",  "MM7",
+		"XMM0", "XMM1", "XMM2", "XMM3", "XMM4", "XMM5", "XMM6", "XMM7",
 	];
 	static const wstring[] asmMnemonics = [
-		"__emit",     "_emit",      "aaa",        "aad",        "aam",        "aas",        
-		"adc",        "add",        "addpd",      "addps",      "addsd",      "addss",      
-		"addsubpd",   "addsubps",   "and",        "andnpd",     "andnps",     "andpd",      
-		"andps",      "arpl",       "blendpd",    "blendps",    "blendvpd",   "blendvps",   
-		"bound",      "bsf",        "bsr",        "bswap",      "bt",         "btc",        
-		"btr",        "bts",        "call",       "cbw",        "cdq",        "cdqe",       
-		"clc",        "cld",        "clflush",    "cli",        "clts",       "cmc",        
-		"cmova",      "cmovae",     "cmovb",      "cmovbe",     "cmovc",      "cmove",      
-		"cmovg",      "cmovge",     "cmovl",      "cmovle",     "cmovna",     "cmovnae",    
-		"cmovnb",     "cmovnbe",    "cmovnc",     "cmovne",     "cmovng",     "cmovnge",    
-		"cmovnl",     "cmovnle",    "cmovno",     "cmovnp",     "cmovns",     "cmovnz",     
-		"cmovo",      "cmovp",      "cmovpe",     "cmovpo",     "cmovs",      "cmovz",      
-		"cmp",        "cmppd",      "cmpps",      "cmps",       "cmpsb",      "cmpsd",      
-		"cmpsq",      "cmpss",      "cmpsw",      "cmpxchg",    "cmpxchg16b", "cmpxchg8b",  
-		"comisd",     "comiss",     "cpuid",      "cqo",        "crc32",      "cvtdq2pd",   
-		"cvtdq2ps",   "cvtpd2dq",   "cvtpd2pi",   "cvtpd2ps",   "cvtpi2pd",   "cvtpi2ps",   
-		"cvtps2dq",   "cvtps2pd",   "cvtps2pi",   "cvtsd2si",   "cvtsd2ss",   "cvtsi2sd",   
-		"cvtsi2ss",   "cvtss2sd",   "cvtss2si",   "cvttpd2dq",  "cvttpd2pi",  "cvttps2dq",  
-		"cvttps2pi",  "cvttsd2si",  "cvttss2si",  "cwd",        "cwde",       "da",         
-		"daa",        "das",        "db",         "dd",         "de",         "dec",        
-		"df",         "di",         "div",        "divpd",      "divps",      "divsd",      
-		"divss",      "dl",         "dppd",       "dpps",       "dq",         "ds",         
-		"dt",         "dw",         "emms",       "enter",      "extractps",  "f2xm1",      
-		"fabs",       "fadd",       "faddp",      "fbld",       "fbstp",      "fchs",       
-		"fclex",      "fcmovb",     "fcmovbe",    "fcmove",     "fcmovnb",    "fcmovnbe",   
-		"fcmovne",    "fcmovnu",    "fcmovu",     "fcom",       "fcomi",      "fcomip",     
-		"fcomp",      "fcompp",     "fcos",       "fdecstp",    "fdisi",      "fdiv",       
-		"fdivp",      "fdivr",      "fdivrp",     "feni",       "ffree",      "fiadd",      
-		"ficom",      "ficomp",     "fidiv",      "fidivr",     "fild",       "fimul",      
-		"fincstp",    "finit",      "fist",       "fistp",      "fisttp",     "fisub",      
-		"fisubr",     "fld",        "fld1",       "fldcw",      "fldenv",     "fldl2e",     
-		"fldl2t",     "fldlg2",     "fldln2",     "fldpi",      "fldz",       "fmul",       
-		"fmulp",      "fnclex",     "fndisi",     "fneni",      "fninit",     "fnop",       
-		"fnsave",     "fnstcw",     "fnstenv",    "fnstsw",     "fpatan",     "fprem",      
-		"fprem1",     "fptan",      "frndint",    "frstor",     "fsave",      "fscale",     
-		"fsetpm",     "fsin",       "fsincos",    "fsqrt",      "fst",        "fstcw",      
-		"fstenv",     "fstp",       "fstsw",      "fsub",       "fsubp",      "fsubr",      
-		"fsubrp",     "ftst",       "fucom",      "fucomi",     "fucomip",    "fucomp",     
-		"fucompp",    "fwait",      "fxam",       "fxch",       "fxrstor",    "fxsave",     
-		"fxtract",    "fyl2x",      "fyl2xp1",    "haddpd",     "haddps",     "hlt",        
-		"hsubpd",     "hsubps",     "idiv",       "imul",       "in",         "inc",        
-		"ins",        "insb",       "insd",       "insertps",   "insw",       "int",        
-		"into",       "invd",       "invlpg",     "iret",       "iretd",      "ja",         
-		"jae",        "jb",         "jbe",        "jc",         "jcxz",       "je",         
-		"jecxz",      "jg",         "jge",        "jl",         "jle",        "jmp",        
-		"jna",        "jnae",       "jnb",        "jnbe",       "jnc",        "jne",        
-		"jng",        "jnge",       "jnl",        "jnle",       "jno",        "jnp",        
-		"jns",        "jnz",        "jo",         "jp",         "jpe",        "jpo",        
-		"js",         "jz",         "lahf",       "lar",        "lddqu",      "ldmxcsr",    
-		"lds",        "lea",        "leave",      "les",        "lfence",     "lfs",        
-		"lgdt",       "lgs",        "lidt",       "lldt",       "lmsw",       "lock",       
-		"lods",       "lodsb",      "lodsd",      "lodsq",      "lodsw",      "loop",       
-		"loope",      "loopne",     "loopnz",     "loopz",      "lsl",        "lss",        
-		"ltr",        "maskmovdqu", "maskmovq",   "maxpd",      "maxps",      "maxsd",      
-		"maxss",      "mfence",     "minpd",      "minps",      "minsd",      "minss",      
-		"monitor",    "mov",        "movapd",     "movaps",     "movd",       "movddup",    
-		"movdq2q",    "movdqa",     "movdqu",     "movhlps",    "movhpd",     "movhps",     
-		"movlhps",    "movlpd",     "movlps",     "movmskpd",   "movmskps",   "movntdq",    
-		"movntdqa",   "movnti",     "movntpd",    "movntps",    "movntq",     "movq",       
-		"movq2dq",    "movs",       "movsb",      "movsd",      "movshdup",   "movsldup",   
-		"movsq",      "movss",      "movsw",      "movsx",      "movupd",     "movups",     
-		"movzx",      "mpsadbw",    "mul",        "mulpd",      "mulps",      "mulsd",      
-		"mulss",      "mwait",      "neg",        "nop",        "not",        "or",         
-		"orpd",       "orps",       "out",        "outs",       "outsb",      "outsd",      
-		"outsw",      "pabsb",      "pabsd",      "pabsw",      "packssdw",   "packsswb",   
-		"packusdw",   "packuswb",   "paddb",      "paddd",      "paddq",      "paddsb",     
-		"paddsw",     "paddusb",    "paddusw",    "paddw",      "palignr",    "pand",       
-		"pandn",      /*"pause",*/  "pavgb",      "pavgusb",    "pavgw",      "pblendvb",   
-		"pblendw",    "pcmpeqb",    "pcmpeqd",    "pcmpeqq",    "pcmpeqw",    "pcmpestri",  
-		"pcmpestrm",  "pcmpgtb",    "pcmpgtd",    "pcmpgtq",    "pcmpgtw",    "pcmpistri",  
-		"pcmpistrm",  "pextrb",     "pextrd",     "pextrq",     "pextrw",     "pf2id",      
-		"pfacc",      "pfadd",      "pfcmpeq",    "pfcmpge",    "pfcmpgt",    "pfmax",      
-		"pfmin",      "pfmul",      "pfnacc",     "pfpnacc",    "pfrcp",      "pfrcpit1",   
-		"pfrcpit2",   "pfrsqit1",   "pfrsqrt",    "pfsub",      "pfsubr",     "phaddd",     
-		"phaddsw",    "phaddw",     "phminposuw", "phsubd",     "phsubsw",    "phsubw",     
-		"pi2fd",      "pinsrb",     "pinsrd",     "pinsrq",     "pinsrw",     "pmaddubsw",  
-		"pmaddwd",    "pmaxsb",     "pmaxsd",     "pmaxsw",     "pmaxub",     "pmaxud",     
-		"pmaxuw",     "pminsb",     "pminsd",     "pminsw",     "pminub",     "pminud",     
-		"pminuw",     "pmovmskb",   "pmovsxbd",   "pmovsxbq",   "pmovsxbw",   "pmovsxdq",   
-		"pmovsxwd",   "pmovsxwq",   "pmovzxbd",   "pmovzxbq",   "pmovzxbw",   "pmovzxdq",   
-		"pmovzxwd",   "pmovzxwq",   "pmuldq",     "pmulhrsw",   "pmulhrw",    "pmulhuw",    
-		"pmulhw",     "pmulld",     "pmullw",     "pmuludq",    "pop",        "popa",       
-		"popad",      "popcnt",     "popf",       "popfd",      "popfq",      "por",        
-		"prefetchnta","prefetcht0", "prefetcht1", "prefetcht2", "psadbw",     "pshufb",     
-		"pshufd",     "pshufhw",    "pshuflw",    "pshufw",     "psignb",     "psignd",     
-		"psignw",     "pslld",      "pslldq",     "psllq",      "psllw",      "psrad",      
-		"psraw",      "psrld",      "psrldq",     "psrlq",      "psrlw",      "psubb",      
-		"psubd",      "psubq",      "psubsb",     "psubsw",     "psubusb",    "psubusw",    
-		"psubw",      "pswapd",     "ptest",      "punpckhbw",  "punpckhdq",  "punpckhqdq", 
-		"punpckhwd",  "punpcklbw",  "punpckldq",  "punpcklqdq", "punpcklwd",  "push",       
-		"pusha",      "pushad",     "pushf",      "pushfd",     "pushfq",     "pxor",       
-		"rcl",        "rcpps",      "rcpss",      "rcr",        "rdmsr",      "rdpmc",      
-		"rdtsc",      "rep",        "repe",       "repne",      "repnz",      "repz",       
-		"ret",        "retf",       "rol",        "ror",        "roundpd",    "roundps",    
-		"roundsd",    "roundss",    "rsm",        "rsqrtps",    "rsqrtss",    "sahf",       
-		"sal",        "sar",        "sbb",        "scas",       "scasb",      "scasd",      
-		"scasq",      "scasw",      "seta",       "setae",      "setb",       "setbe",      
-		"setc",       "sete",       "setg",       "setge",      "setl",       "setle",      
-		"setna",      "setnae",     "setnb",      "setnbe",     "setnc",      "setne",      
-		"setng",      "setnge",     "setnl",      "setnle",     "setno",      "setnp",      
-		"setns",      "setnz",      "seto",       "setp",       "setpe",      "setpo",      
-		"sets",       "setz",       "sfence",     "sgdt",       "shl",        "shld",       
-		"shr",        "shrd",       "shufpd",     "shufps",     "sidt",       "sldt",       
-		"smsw",       "sqrtpd",     "sqrtps",     "sqrtsd",     "sqrtss",     "stc",        
-		"std",        "sti",        "stmxcsr",    "stos",       "stosb",      "stosd",      
-		"stosq",      "stosw",      "str",        "sub",        "subpd",      "subps",      
-		"subsd",      "subss",      "syscall",    "sysenter",   "sysexit",    "sysret",     
-		"test",       "ucomisd",    "ucomiss",    "ud2",        "unpckhpd",   "unpckhps",   
-		"unpcklpd",   "unpcklps",   "verr",       "verw",       "wait",       "wbinvd",     
-		"wrmsr",      "xadd",       "xchg",       "xlat",       "xlatb",      "xor",        
-		"xorpd",      "xorps",      
+		"__emit",     "_emit",      "aaa",        "aad",        "aam",        "aas",
+		"adc",        "add",        "addpd",      "addps",      "addsd",      "addss",
+		"addsubpd",   "addsubps",   "and",        "andnpd",     "andnps",     "andpd",
+		"andps",      "arpl",       "blendpd",    "blendps",    "blendvpd",   "blendvps",
+		"bound",      "bsf",        "bsr",        "bswap",      "bt",         "btc",
+		"btr",        "bts",        "call",       "cbw",        "cdq",        "cdqe",
+		"clc",        "cld",        "clflush",    "cli",        "clts",       "cmc",
+		"cmova",      "cmovae",     "cmovb",      "cmovbe",     "cmovc",      "cmove",
+		"cmovg",      "cmovge",     "cmovl",      "cmovle",     "cmovna",     "cmovnae",
+		"cmovnb",     "cmovnbe",    "cmovnc",     "cmovne",     "cmovng",     "cmovnge",
+		"cmovnl",     "cmovnle",    "cmovno",     "cmovnp",     "cmovns",     "cmovnz",
+		"cmovo",      "cmovp",      "cmovpe",     "cmovpo",     "cmovs",      "cmovz",
+		"cmp",        "cmppd",      "cmpps",      "cmps",       "cmpsb",      "cmpsd",
+		"cmpsq",      "cmpss",      "cmpsw",      "cmpxchg",    "cmpxchg16b", "cmpxchg8b",
+		"comisd",     "comiss",     "cpuid",      "cqo",        "crc32",      "cvtdq2pd",
+		"cvtdq2ps",   "cvtpd2dq",   "cvtpd2pi",   "cvtpd2ps",   "cvtpi2pd",   "cvtpi2ps",
+		"cvtps2dq",   "cvtps2pd",   "cvtps2pi",   "cvtsd2si",   "cvtsd2ss",   "cvtsi2sd",
+		"cvtsi2ss",   "cvtss2sd",   "cvtss2si",   "cvttpd2dq",  "cvttpd2pi",  "cvttps2dq",
+		"cvttps2pi",  "cvttsd2si",  "cvttss2si",  "cwd",        "cwde",       "da",
+		"daa",        "das",        "db",         "dd",         "de",         "dec",
+		"df",         "di",         "div",        "divpd",      "divps",      "divsd",
+		"divss",      "dl",         "dppd",       "dpps",       "dq",         "ds",
+		"dt",         "dw",         "emms",       "enter",      "extractps",  "f2xm1",
+		"fabs",       "fadd",       "faddp",      "fbld",       "fbstp",      "fchs",
+		"fclex",      "fcmovb",     "fcmovbe",    "fcmove",     "fcmovnb",    "fcmovnbe",
+		"fcmovne",    "fcmovnu",    "fcmovu",     "fcom",       "fcomi",      "fcomip",
+		"fcomp",      "fcompp",     "fcos",       "fdecstp",    "fdisi",      "fdiv",
+		"fdivp",      "fdivr",      "fdivrp",     "feni",       "ffree",      "fiadd",
+		"ficom",      "ficomp",     "fidiv",      "fidivr",     "fild",       "fimul",
+		"fincstp",    "finit",      "fist",       "fistp",      "fisttp",     "fisub",
+		"fisubr",     "fld",        "fld1",       "fldcw",      "fldenv",     "fldl2e",
+		"fldl2t",     "fldlg2",     "fldln2",     "fldpi",      "fldz",       "fmul",
+		"fmulp",      "fnclex",     "fndisi",     "fneni",      "fninit",     "fnop",
+		"fnsave",     "fnstcw",     "fnstenv",    "fnstsw",     "fpatan",     "fprem",
+		"fprem1",     "fptan",      "frndint",    "frstor",     "fsave",      "fscale",
+		"fsetpm",     "fsin",       "fsincos",    "fsqrt",      "fst",        "fstcw",
+		"fstenv",     "fstp",       "fstsw",      "fsub",       "fsubp",      "fsubr",
+		"fsubrp",     "ftst",       "fucom",      "fucomi",     "fucomip",    "fucomp",
+		"fucompp",    "fwait",      "fxam",       "fxch",       "fxrstor",    "fxsave",
+		"fxtract",    "fyl2x",      "fyl2xp1",    "haddpd",     "haddps",     "hlt",
+		"hsubpd",     "hsubps",     "idiv",       "imul",       "in",         "inc",
+		"ins",        "insb",       "insd",       "insertps",   "insw",       "int",
+		"into",       "invd",       "invlpg",     "iret",       "iretd",      "ja",
+		"jae",        "jb",         "jbe",        "jc",         "jcxz",       "je",
+		"jecxz",      "jg",         "jge",        "jl",         "jle",        "jmp",
+		"jna",        "jnae",       "jnb",        "jnbe",       "jnc",        "jne",
+		"jng",        "jnge",       "jnl",        "jnle",       "jno",        "jnp",
+		"jns",        "jnz",        "jo",         "jp",         "jpe",        "jpo",
+		"js",         "jz",         "lahf",       "lar",        "lddqu",      "ldmxcsr",
+		"lds",        "lea",        "leave",      "les",        "lfence",     "lfs",
+		"lgdt",       "lgs",        "lidt",       "lldt",       "lmsw",       "lock",
+		"lods",       "lodsb",      "lodsd",      "lodsq",      "lodsw",      "loop",
+		"loope",      "loopne",     "loopnz",     "loopz",      "lsl",        "lss",
+		"ltr",        "maskmovdqu", "maskmovq",   "maxpd",      "maxps",      "maxsd",
+		"maxss",      "mfence",     "minpd",      "minps",      "minsd",      "minss",
+		"monitor",    "mov",        "movapd",     "movaps",     "movd",       "movddup",
+		"movdq2q",    "movdqa",     "movdqu",     "movhlps",    "movhpd",     "movhps",
+		"movlhps",    "movlpd",     "movlps",     "movmskpd",   "movmskps",   "movntdq",
+		"movntdqa",   "movnti",     "movntpd",    "movntps",    "movntq",     "movq",
+		"movq2dq",    "movs",       "movsb",      "movsd",      "movshdup",   "movsldup",
+		"movsq",      "movss",      "movsw",      "movsx",      "movupd",     "movups",
+		"movzx",      "mpsadbw",    "mul",        "mulpd",      "mulps",      "mulsd",
+		"mulss",      "mwait",      "neg",        "nop",        "not",        "or",
+		"orpd",       "orps",       "out",        "outs",       "outsb",      "outsd",
+		"outsw",      "pabsb",      "pabsd",      "pabsw",      "packssdw",   "packsswb",
+		"packusdw",   "packuswb",   "paddb",      "paddd",      "paddq",      "paddsb",
+		"paddsw",     "paddusb",    "paddusw",    "paddw",      "palignr",    "pand",
+		"pandn",      /*"pause",*/  "pavgb",      "pavgusb",    "pavgw",      "pblendvb",
+		"pblendw",    "pcmpeqb",    "pcmpeqd",    "pcmpeqq",    "pcmpeqw",    "pcmpestri",
+		"pcmpestrm",  "pcmpgtb",    "pcmpgtd",    "pcmpgtq",    "pcmpgtw",    "pcmpistri",
+		"pcmpistrm",  "pextrb",     "pextrd",     "pextrq",     "pextrw",     "pf2id",
+		"pfacc",      "pfadd",      "pfcmpeq",    "pfcmpge",    "pfcmpgt",    "pfmax",
+		"pfmin",      "pfmul",      "pfnacc",     "pfpnacc",    "pfrcp",      "pfrcpit1",
+		"pfrcpit2",   "pfrsqit1",   "pfrsqrt",    "pfsub",      "pfsubr",     "phaddd",
+		"phaddsw",    "phaddw",     "phminposuw", "phsubd",     "phsubsw",    "phsubw",
+		"pi2fd",      "pinsrb",     "pinsrd",     "pinsrq",     "pinsrw",     "pmaddubsw",
+		"pmaddwd",    "pmaxsb",     "pmaxsd",     "pmaxsw",     "pmaxub",     "pmaxud",
+		"pmaxuw",     "pminsb",     "pminsd",     "pminsw",     "pminub",     "pminud",
+		"pminuw",     "pmovmskb",   "pmovsxbd",   "pmovsxbq",   "pmovsxbw",   "pmovsxdq",
+		"pmovsxwd",   "pmovsxwq",   "pmovzxbd",   "pmovzxbq",   "pmovzxbw",   "pmovzxdq",
+		"pmovzxwd",   "pmovzxwq",   "pmuldq",     "pmulhrsw",   "pmulhrw",    "pmulhuw",
+		"pmulhw",     "pmulld",     "pmullw",     "pmuludq",    "pop",        "popa",
+		"popad",      "popcnt",     "popf",       "popfd",      "popfq",      "por",
+		"prefetchnta","prefetcht0", "prefetcht1", "prefetcht2", "psadbw",     "pshufb",
+		"pshufd",     "pshufhw",    "pshuflw",    "pshufw",     "psignb",     "psignd",
+		"psignw",     "pslld",      "pslldq",     "psllq",      "psllw",      "psrad",
+		"psraw",      "psrld",      "psrldq",     "psrlq",      "psrlw",      "psubb",
+		"psubd",      "psubq",      "psubsb",     "psubsw",     "psubusb",    "psubusw",
+		"psubw",      "pswapd",     "ptest",      "punpckhbw",  "punpckhdq",  "punpckhqdq",
+		"punpckhwd",  "punpcklbw",  "punpckldq",  "punpcklqdq", "punpcklwd",  "push",
+		"pusha",      "pushad",     "pushf",      "pushfd",     "pushfq",     "pxor",
+		"rcl",        "rcpps",      "rcpss",      "rcr",        "rdmsr",      "rdpmc",
+		"rdtsc",      "rep",        "repe",       "repne",      "repnz",      "repz",
+		"ret",        "retf",       "rol",        "ror",        "roundpd",    "roundps",
+		"roundsd",    "roundss",    "rsm",        "rsqrtps",    "rsqrtss",    "sahf",
+		"sal",        "sar",        "sbb",        "scas",       "scasb",      "scasd",
+		"scasq",      "scasw",      "seta",       "setae",      "setb",       "setbe",
+		"setc",       "sete",       "setg",       "setge",      "setl",       "setle",
+		"setna",      "setnae",     "setnb",      "setnbe",     "setnc",      "setne",
+		"setng",      "setnge",     "setnl",      "setnle",     "setno",      "setnp",
+		"setns",      "setnz",      "seto",       "setp",       "setpe",      "setpo",
+		"sets",       "setz",       "sfence",     "sgdt",       "shl",        "shld",
+		"shr",        "shrd",       "shufpd",     "shufps",     "sidt",       "sldt",
+		"smsw",       "sqrtpd",     "sqrtps",     "sqrtsd",     "sqrtss",     "stc",
+		"std",        "sti",        "stmxcsr",    "stos",       "stosb",      "stosd",
+		"stosq",      "stosw",      "str",        "sub",        "subpd",      "subps",
+		"subsd",      "subss",      "syscall",    "sysenter",   "sysexit",    "sysret",
+		"test",       "ucomisd",    "ucomiss",    "ud2",        "unpckhpd",   "unpckhps",
+		"unpcklpd",   "unpcklps",   "verr",       "verw",       "wait",       "wbinvd",
+		"wrmsr",      "xadd",       "xchg",       "xlat",       "xlatb",      "xor",
+		"xorpd",      "xorps",
 	];
 	shared static this()
 	{
@@ -986,14 +987,14 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		//  0x00200: black on dark blue
 		//  0x40000: underlined
 		//  COLOR_MARKER_MASK    = 0x00003f00: select color encoding, 0 standard, other from color list
-		//  LINE_MARKER_MASK     = 0x000fc000: underline style: 0-none, 4~blue, 5~red, 6~magenta, 7-gray, 11~green, 
+		//  LINE_MARKER_MASK     = 0x000fc000: underline style: 0-none, 4~blue, 5~red, 6~magenta, 7-gray, 11~green,
 		//                                     16-black, 23=magenta, 24=red, 35-maroon, 56-yellow, 58-ltgray
 		//  PRIVATE_CLIENT_MASK1 = 0x00100000:
 		//  PRIVATE_CLIENT_MASK2 = 0x00600000: ident marker style: 0-none, 1-blue start mark, 2,3-red end mark
 		//  PRIVATE_CLIENT_MASK3 = 0x00800000: disable text coloring
 		//  PRIVATE_EDITOR_MASK  = 0xfc000000:
 		//  SEPARATOR_AFTER_ATTR = 0x02000000: if on char after line, draws line between text rows
-		
+
 		int lineMarker = 0; // iLine & 0x3f;
 		int privClient = (iLine >> 0) & 0xf;
 		int privEditor = (iLine >> 4) & 0x3f;
@@ -1022,7 +1023,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			}
 			parseState = VersionParseState.IdleDisabled;
 			goto case VersionParseState.IdleDisabled;
-			
+
 		case VersionParseState.IdleDisabled:
 			ntype = disabledColorType(ntype);
 			if(text == "asm")
@@ -1030,7 +1031,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			else if(versionPredefined(text) && isVersionCondition(span))
 				ntype = TokenColor.DisabledVersion;
 			break;
-			
+
 		case VersionParseState.IdleEnabled:
 			if(text == "version")
 			{
@@ -1045,7 +1046,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			else if(text == "asm")
 				parseState = VersionParseState.AsmParsedEnabled;
 			break;
-			
+
 		case VersionParseState.VersionParsed:
 			if(text == "=")
 				parseState = VersionParseState.AssignParsed;
@@ -1067,7 +1068,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			else
 				parseState = VersionParseState.IdleEnabled;
 			break;
-			
+
 		case VersionParseState.AssignParsed:
 			if(dLex.isIdentifier(text))
 			{
@@ -1080,7 +1081,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				defineVersion(iLine, to!int(text), debugOrVersion, versionsChanged);
 			parseState = VersionParseState.IdleEnabled;
 			break;
-			
+
 		case VersionParseState.ParenLParsed:
 			if(dLex.isIdentifier(text) || dLex.isInteger(text))
 			{
@@ -1095,21 +1096,21 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			else
 				parseState = VersionParseState.IdleEnabled;
 			break;
-			
+
 		case VersionParseState.IdentNumberParsedDisable:
 			if(text == ")")
 				parseState = VersionParseState.ParenRParsedDisable;
 			else
 				parseState = VersionParseState.IdleEnabled;
 			break;
-			
+
 		case VersionParseState.IdentNumberParsedEnable:
 			if(text == ")")
 				parseState = VersionParseState.ParenRParsedEnable;
 			else
 				parseState = VersionParseState.IdleEnabled;
 			break;
-			
+
 		case VersionParseState.ParenRParsedEnable:
 			parseState = VersionParseState.IdleEnabled;
 			goto case VersionParseState.IdleEnabled;
@@ -1145,7 +1146,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				ntype = asmColorType(text);
 			goto case VersionParseState.IdleDisabled;
 		}
-		
+
 		if(text == ";" || text == "}")
 		{
 			if(parseState == VersionParseState.IdleDisabled)
@@ -1164,7 +1165,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				ntype = disabledColorType(ntype);
 			}
 		}
-		
+
 		iState = (iState & 0x800fffff) | (parseState << 20) | (debugOrVersion << 24);
 	}
 		return ntype;
@@ -1175,7 +1176,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		if(!dLex.isCommentOrSpace(type, tok))
 			if(mSource.hasParseError(span))
 				type |= 5 << 14; // red ~
-		
+
 		return type;
 	}
 
@@ -1183,17 +1184,17 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		if(verloc.children.length == 0)
 			return "";
-		
+
 		ParserSpan span = verloc.children[0].span;
 		wstring text = mSource.GetText(span.iStartLine, span.iStartIndex, span.iEndLine, span.iEndIndex);
 		text = strip(text);
 		if(text.length == 0 || text[0] != '(' || text[$-1] != ')')
 			return ""; // parsing unfinished or debug statement without argument
-		
+
 		text = strip(text[1..$-1]);
 		return text;
 	}
-	
+
 	bool isAddressEnabled(int iLine, int iIndex)
 	{
 		mParser.fixExtend();
@@ -1234,7 +1235,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		return true;
 	}
-	
+
 	bool isVersionCondition(ref ParserSpan vspan)
 	{
 		mParser.fixExtend();
@@ -1290,17 +1291,17 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		UpdateLineStates(line, line);
 	}
-	
+
 	void UpdateLineStates(int line, int endline)
 	{
 		version(LOG) mixin(LogCallMix2);
-		
+
 		int ln = line;
 		if(ln >= mLineState.length)
 			ln = max(mLineState.length, 1) - 1;
 		while(ln > 0 && mLineState[ln] == -1)
 			ln--;
-		
+
 		if(ln == 0)
 			SaveLineState(0, 0);
 		int state = mLineState[ln];
@@ -1316,7 +1317,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		int prevState = ln < mLineState.length ? mLineState[ln] : -1;
 		SaveLineState(ln, state);
-		
+
 		if(versionsChanged || mColorizeVersions || state != prevState)
 		{
 			ln++;
@@ -1326,11 +1327,11 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 					break;
 				mLineState[ln++] = -1;
 			}
-			
+
 			mSource.ReColorizeLines(line, -1);
 		}
 	}
-	
+
 	int GetLineState(int iLine)
 	{
 		int state = -1;
@@ -1349,17 +1350,17 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	int OnLinesChanged(int iStartLine, int iOldEndLine, int iNewEndLine, bool fLast)
 	{
 		version(LOG) mixin(LogCallMix);
-		
+
 		int p;
 		int diffLines = iNewEndLine - iOldEndLine;
 		int lines = mSource.GetLineCount();   // new line count
 		SaveLineState(lines, -1); // ensure mLineState[] is large enough
-		
+
 		if(diffLines > 0)
 		{
 			for(p = lines; p > iNewEndLine; p--)
 				mLineState[p] = mLineState[p - diffLines];
-			
+
 			for(; p > iStartLine; p--)
 				mLineState[p] = -1;
 		}
@@ -1372,7 +1373,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			for(; p < lines; p++)
 				mLineState[p] = -1;
 		}
-		
+
 		if(iStartLine < mLineState.length && mLineState[iStartLine] != -1)
 			UpdateLineStates(iStartLine, iNewEndLine);
 		return S_OK;
@@ -1386,14 +1387,14 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		var = val;
 		return 1;
 	}
-	
+
 	bool UpdateConfig()
 	{
 		int changes = 0;
 		string file = mSource.GetFileName ();
 		Config cfg = getProjectConfig(file);
 		release(cfg); // we don't need a reference
-		
+
 		if(cfg != mConfig)
 		{
 			if(mConfig)
@@ -1403,7 +1404,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				mConfig.AddModifiedListener(this);
 			changes++;
 		}
-		
+
 		if(mConfig)
 		{
 			ProjectOptions opts = mConfig.GetProjectOptions();
@@ -1420,7 +1421,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		}
 		return changes != 0;
 	}
-	
+
 	Config GetConfig()
 	{
 		if(!mConfig)
@@ -1441,14 +1442,14 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		int changes = UpdateConfig();
 		changes += modifyValue(Package.GetGlobalOptions().ColorizeVersions, mColorizeVersions);
 		changes += modifyValue(Package.GetGlobalOptions().ColorizeCoverage, mColorizeCoverage);
-		
+
 		if(changes || force)
 		{
 			mLineState[] = -1;
 			mSource.ReColorizeLines(0, -1);
 		}
 	}
-	
+
 	//////////////////////////////////////////////////////////
 
 	static int[] ReadCoverageFile(string lstname, out float coveragePercent)

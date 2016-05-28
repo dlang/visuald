@@ -8,6 +8,7 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>3</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
@@ -95,6 +96,7 @@
   <exefile>$(OutDir)\$(ProjectName).sdk</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand>echo Success &gt;$(TargetPath)</postBuildCommand>
@@ -108,6 +110,7 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>3</singleFileCompilation>
   <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
@@ -195,6 +198,7 @@
   <exefile>$(OutDir)\$(ProjectName).sdk</exefile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand>echo Success &gt;$(TargetPath)
@@ -202,18 +206,18 @@ echo. &gt;$(TargetDir)\build.dep</postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="build">
-  <File tool="Custom" path="dte_idl.bat" dependencies="$(OutDir)\tlb2idl.exe" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+  <File path="dte_idl.bat" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
-call $(InputPath) &quot;$(OutDir)\tlb2idl.exe&quot; &quot;$(OutDir)\dte_idl.success&quot;" outfile="$(OutDir)\dte_idl.success" />
-  <File tool="Custom" path="..\tools\filemonitor.d" customcmd="dmd -g -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).dll -defaultlib=user32.lib -L/ENTRY:_DllMain@12 $(InputPath)" outfile="$(OutDir)\$(InputName).dll" />
-  <File tool="Custom" path="..\tools\largeadr.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath)" outfile="$(OutDir)\$(InputName).exe" />
-  <File tool="Custom" path="..\tools\pipedmd.d" dependencies="..\tools\nostacktrace.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
-  <File tool="Custom" path="sdk.bat" dependencies="$(OutDir)\dte_idl.success $(OutDir)\vsi2d.exe" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+call $(InputPath) &quot;$(OutDir)\tlb2idl.exe&quot; &quot;$(OutDir)\dte_idl.success&quot;" tool="Custom" dependencies="$(OutDir)\tlb2idl.exe" outfile="$(OutDir)\dte_idl.success" />
+  <File path="..\tools\filemonitor.d" customcmd="dmd -g -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).dll -defaultlib=user32.lib -L/ENTRY:_DllMain@12 $(InputPath)" tool="Custom" outfile="$(OutDir)\$(InputName).dll" />
+  <File path="..\tools\largeadr.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath)" tool="Custom" outfile="$(OutDir)\$(InputName).exe" />
+  <File path="..\tools\pipedmd.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
+  <File path="sdk.bat" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
-call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk.success&quot;" outfile="$(OutDir)\sdk.success" />
-  <File tool="Custom" path="sdk_libs.bat" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk.success&quot;" tool="Custom" dependencies="$(OutDir)\dte_idl.success $(OutDir)\vsi2d.exe" outfile="$(OutDir)\sdk.success" />
+  <File path="sdk_libs.bat" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
-call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk_libs.success&quot;" outfile="$(OutDir)\sdk_libs.success" />
-  <File tool="Custom" path="..\tools\tlb2idl.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) oleaut32.lib uuid.lib" outfile="$(OutDir)\$(InputName).exe" />
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk_libs.success&quot;" tool="Custom" outfile="$(OutDir)\sdk_libs.success" />
+  <File path="..\tools\tlb2idl.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) oleaut32.lib uuid.lib" tool="Custom" outfile="$(OutDir)\$(InputName).exe" />
  </Folder>
 </DProject>

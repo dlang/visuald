@@ -13,6 +13,7 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.dpackage;
 
+import std.algorithm;
 import std.conv;
 import std.utf;
 import sdk.vsi.vsshell;
@@ -90,17 +91,18 @@ IVsOutputWindowPane getBuildOutputPane()
 class OutputPaneBuffer
 {
 	static shared(string) buffer;
+	static shared(Object) syncOut = new shared(Object);
 
 	static void push(string msg)
 	{
-		synchronized(OutputPaneBuffer.classinfo)
+		synchronized(OutputPaneBuffer.syncOut)
 			buffer ~= msg;
 	}
 
 	static string pop()
 	{
 		string msg;
-		synchronized(OutputPaneBuffer.classinfo)
+		synchronized(OutputPaneBuffer.syncOut)
 		{
 			msg = buffer;
 			buffer = buffer.init;
@@ -274,7 +276,7 @@ HRESULT GetSelectionForward(IVsTextView view, int*startLine, int*startCol, int*e
 ///////////////////////////////////////////////////////////////////////
 // Hardware Breakpoint Functions
 
-enum 
+enum
 {
 	HWBRK_TYPE_CODE,
 	HWBRK_TYPE_READWRITE,
@@ -306,7 +308,7 @@ public:
 
 void SetBits(ref uint dw, int lowBit, int bits, int newValue)
 {
-	DWORD_PTR mask = (1 << bits) - 1; 
+	DWORD_PTR mask = (1 << bits) - 1;
 	dw = (dw & ~(mask << lowBit)) | (newValue << lowBit);
 }
 
@@ -318,7 +320,7 @@ extern(Windows) DWORD thSuspend(LPVOID lpParameter)
 
 	j = SuspendThread(h.hT);
     y = GetLastError();
-	
+
 	h.SUCC = th(h);
 
 	j = ResumeThread(h.hT);
@@ -443,7 +445,7 @@ bool th(HWBRK* h)
 	ct.ContextFlags = CONTEXT_DEBUG_REGISTERS;
 	j = GetThreadContext(h.hT,&ct);
     y = GetLastError();
-	
+
 	return true;
 }
 
@@ -476,7 +478,7 @@ else
 {
 	th(&h);
 }
-	
+
 	if (hThread == GetCurrentThread())
 	{
 		CloseHandle(h.hT);
@@ -531,10 +533,10 @@ void setHWBreakpopints()
 {
 	char[] data = new char[16];
 	HANDLE hnd;
-	void* addr1 = data.ptr - 0x71bffc0 + 0x71bf720; 
-	void* addr2 = data.ptr - 0x71bffc0 + 0x71bf8a0; 
-	void* addr3 = data.ptr - 0x71eff60 + 0x71e6420; 
-	void* addr4 = data.ptr - 0x71eff60 + 0x71e6440; 
+	void* addr1 = data.ptr - 0x71bffc0 + 0x71bf720;
+	void* addr2 = data.ptr - 0x71bffc0 + 0x71bf8a0;
+	void* addr3 = data.ptr - 0x71eff60 + 0x71e6420;
+	void* addr4 = data.ptr - 0x71eff60 + 0x71e6440;
 	hnd = SetHardwareBreakpoint(GetCurrentThread(), HWBRK_TYPE_WRITE, HWBRK_SIZE_4, addr1);
 	//hnd = SetHardwareBreakpoint(GetCurrentThread(), HWBRK_TYPE_READWRITE, HWBRK_SIZE_4, addr2);
 	//hnd = SetHardwareBreakpoint(GetCurrentThread(), HWBRK_TYPE_WRITE, HWBRK_SIZE_4, addr3);
@@ -544,4 +546,4 @@ void setHWBreakpopints()
 	addr3 = null;
 	addr4 = null;
 }
-	
+

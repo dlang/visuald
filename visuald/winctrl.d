@@ -12,6 +12,7 @@ import visuald.windows;
 import visuald.logutil;
 import std.utf;
 import std.string;
+import std.ascii;
 import std.array;
 import std.exception;
 import std.algorithm;

@@ -131,9 +131,14 @@ void RedirectCreateFileW()
 	pfnVirtualProtect(impTableEntry, (*impTableEntry).sizeof, oldProtect, &newProtect);
 }
 
+static if (__traits(compiles, core.sys.windows.winnt.LPCSTR))
+	alias _LPCSTR = const(char)*; // detect SDK headers new in dmd 2.070
+else
+	alias _LPCSTR = const(char*);
+
 extern(Windows) HANDLE
 MyCreateFileA(
-			/*__in*/     in char* lpFileName,
+			/*__in*/     _LPCSTR lpFileName,
 			/*__in*/     DWORD dwDesiredAccess,
 			/*__in*/     DWORD dwShareMode,
 			/*__in_opt*/ LPSECURITY_ATTRIBUTES lpSecurityAttributes,
@@ -144,7 +149,7 @@ MyCreateFileA(
 {
 	version(msgbox) MessageBoxA(null, lpFileName, dumpFile.ptr/*"CreateFile"*/, MB_OK);
 	//	printf("CreateFileA(%s)\n", lpFileName);
-	auto hnd = origCreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, 
+	auto hnd = origCreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
 							   dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	if(hnd != INVALID_HANDLE_VALUE && isLoggableOpen(dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes))
 	{
@@ -183,7 +188,7 @@ MyCreateFileW(
 {
 	version(msgbox) MessageBoxW(null, lpFileName, "CreateFileW", MB_OK);
 	//	printf("CreateFileA(%s)\n", lpFileName);
-	auto hnd = origCreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, 
+	auto hnd = origCreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
 							   dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	if(hnd != INVALID_HANDLE_VALUE && isLoggableOpen(dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes))
 	{
@@ -192,7 +197,7 @@ MyCreateFileW(
 			hndMutex = CreateMutexA(null, false, null);
 			if(hndMutex != INVALID_HANDLE_VALUE)
 				WaitForSingleObject(hndMutex, INFINITE);
-			
+
 			if(hndDumpFile == INVALID_HANDLE_VALUE)
 				hndDumpFile = origCreateFileA(dumpFile.ptr, GENERIC_WRITE, FILE_SHARE_READ, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null);
 

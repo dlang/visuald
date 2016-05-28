@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup
+    Condition="'$(DCompileBeforeTargets)' == '' and '$(DCompileAfterTargets)' == '' and '$(ConfigurationType)' != 'Makefile'">
+    <DCompileBeforeTargets>Midl</DCompileBeforeTargets>
+    <DCompileAfterTargets>CustomBuild</DCompileAfterTargets>
+
+    <DMDInstallDir Condition="$(DMDInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'DMDInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallDir>
+    <DMDInstallationFolder> $([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\Software\DMD', 'InstallationFolder', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallationFolder>
+    <DMDInstallDir Condition="$(DMDInstallDir) == '' and '$(DMDInstallationFolder)' != ''">$(DMDInstallationFolder)\dmd2\</DMDInstallDir>
+    <DMDBinDir     Condition="$(DMDInstallDir) != ''">$(DMDInstallDir)\windows\bin\</DMDBinDir>
+    <DMDText Condition="Exists('$(DMDInstallDir)dmd.exe')">DMD - Reference compiler</DMDText>
+    <DMDText Condition="'$(DMDText)' == ''">DMD - Reference compiler (not installed)</DMDText>
+
+    <LDCInstallDir Condition="$(LDCInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'LDCInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</LDCInstallDir>
+    <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\LDC@InstallationFolder)</LDCInstallDir>
+    <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\Wow6432Node\LDC@InstallationFolder)</LDCInstallDir>
+    <LDCBinDir     Condition="$(LDCInstallDir) != ''">$(LDCInstallDir)\bin\</LDCBinDir>
+    <LDCText Condition="Exists('$(LDCInstallDir)ldmd2.exe')">LDC - LLVM based compiler</LDCText>
+    <LDCText Condition="'$(LDCText)' == ''">LDC - LLVM based compiler (not installed)</LDCText>
+
+    <DCompiler Condition="'$(DCompiler)' == ''">DMD</DCompiler>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <DCompile>
+      <Warnings>Info</Warnings>
+      <Deprecations>Info</Deprecations>
+      <ShowCommandLine>false</ShowCommandLine>
+      <Verbose>false</Verbose>
+      <ShowTLS>false</ShowTLS>
+      <ShowGC>false</ShowGC>
+      <Profile>false</Profile>
+      <ProfileGC>false</ProfileGC>
+      <Coverage>false</Coverage>
+      <MinCoverage></MinCoverage>
+      <Unittest>false</Unittest>
+      <DebugCode>Debug</DebugCode>
+      <DebugInfo>VS</DebugInfo>
+      <Optimizer>false</Optimizer>
+      <Inliner>false</Inliner>
+      <StackFrame>false</StackFrame>
+      <StackStomp>false</StackStomp>
+      <AllInst>false</AllInst>
+      <BetterC>false</BetterC>
+      <BoundsCheck>On</BoundsCheck>
+      <IgnorePragma>false</IgnorePragma>
+      <PerformSyntaxCheckOnly>false</PerformSyntaxCheckOnly>
+      <PreserveSourcePath>false</PreserveSourcePath>
+      <Main>false</Main>
+      <ShowDependencies>false</ShowDependencies>
+      <VersionIdentifiers></VersionIdentifiers>
+      <DebugIdentifiers></DebugIdentifiers>
+      <ImportPaths></ImportPaths>
+      <StringImportPaths></StringImportPaths>
+      <AdditionalOptions></AdditionalOptions>
+      <CompilationModel>Project</CompilationModel>
+      <ObjectFileName></ObjectFileName>
+      <DocDir></DocDir>
+      <DocFile></DocFile>
+      <DepFile></DepFile>
+      <HeaderDir></HeaderDir>
+      <HeaderFile></HeaderFile>
+      <JSONFile></JSONFile>
+      <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'DMD|Win32'">-m32mscoff -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
+      <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'LDC|Win32'">-m32 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
+      <CommandLineTemplate Condition="'$(Platform)' == 'X64'">-m64 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
+      <CommandLineTemplate Condition="'$(Platform)' != 'Win32' and '$(Platform)' != 'X64'">echo DMD not supported on this platform
+exit 1</CommandLineTemplate>
+    </DCompile>
+  </ItemDefinitionGroup>
+</Project>

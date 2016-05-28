@@ -13,6 +13,7 @@ IMG = <img src="$0" />
 IMG_CENTER = <div align="center"><img src="$0" /></div>
 TABLE_NOBORDER = <table style="border-width: 0px 0">$0</table>
 _=
+MENU_W_SUBMENU_OPEN = <li class='expand-container open'><a class='expand-toggle' href='#'><span>$0</span></a>
 
 SUBNAV=$(SUBNAV_TEMPLATE
     $(SUBNAV_HEAD Visual D $(VERSION), StartPage.html, Home, subnav-duplicate)
@@ -20,10 +21,10 @@ SUBNAV=$(SUBNAV_TEMPLATE
         $(MENU StartPage.html, Home)
         $(MENU https://github.com/dlang/visuald/releases, Downloads)
         $(MENU Installation.html, Installation)
-        $(MENU_W_SUBMENU Documentation)
+        $(MENU_W_SUBMENU_OPEN Tour)
         $(SUBMENU
-            Features.html, Features,
-            GlobalOptions.html, Global options,
+            Features.html, Feature List,
+            GlobalOptions.html, Global Options,
             ProjectWizard.html, Project Wizard,
             Editor.html, Editor,
             Search.html, Search Window,
@@ -34,7 +35,7 @@ SUBNAV=$(SUBNAV_TEMPLATE
             CompileCommands.html, Compile Commands,
             Profiling.html, Profiling,
             Coverage.html, Code Coverage,
-            DustMite.html, DustMite,
+            DustMite.html, DustMite Integration,
             BrowseInfo.html, Browse Info
         )
         $(MENU VersionHistory.html, Version History)

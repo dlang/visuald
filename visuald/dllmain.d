@@ -25,6 +25,7 @@ import core.sys.windows.dll;
 import threadaux = core.sys.windows.threadaux;
 
 import std.conv;
+import std.array;
 
 __gshared HINSTANCE g_hInst;
 
@@ -51,10 +52,10 @@ else version(TESTMAIN)
 		Project prj = new Project;
 		string[] imps = [ r"m:\s\d\rainers\druntime\import\", r"m:\s\d\rainers\phobos\" ];
 		string fname = r"m:\s\d\rainers\phobos\std\datetime.d";
-		
+
 		prj.options.setImportDirs(imps);
 		prj.addAndParseFile(fname);
-		
+
 //		gcdump_pools = true;
 //		GC.collect();
 //		gcdump_pools = false;
@@ -120,11 +121,11 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 				logCall("DllMain(DLL_THREAD_DETACH, id=%x)", GetCurrentThreadId());
 			dll_thread_detach(true, true);
 			break;
-			
+
 		default:
 			assert(_false);
 			return false;
-	
+
 	}
 	return true;
 }
@@ -172,6 +173,16 @@ void WritePackageDef(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow
 }
 
 extern(Windows)
+void GenerateGeneralXML(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+{
+	import std.windows.charset;
+	string cmdline = fromMBSz(cast(immutable)lpszCmdLine);
+	string[] args = split(cmdline, ';');
+	if (args.length == 3)
+		generateGeneralXML(args[0], args[1], args[2]);
+}
+
+extern(Windows)
 bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt, float* covPercent)
 {
 	if (!Package.s_instance)
@@ -179,3 +190,4 @@ bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt, float*
 	string filename = to!string(fname);
 	return Package.GetLanguageService().GetCoverageData(filename, line, data, cnt, covPercent);
 }
+

@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <DCompiler Condition="'$(DCompiler)' == ''">DMD</DCompiler>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PropertyPageSchema Condition="'$(DCompiler)' != 'None'" Include="$(MSBuildThisFileDirectory)$(DCompiler).xml" />
+    <AvailableItemName Condition="'$(DCompiler)' != 'None'" Include="DCompile">
+        <Targets>_DMD</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+
+  <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(MSBuildThisFileDirectory)dbuild.$(MsBuildToolsVersion).dll" />
+
+  <PropertyGroup>
+    <ComputeLinkInputsTargets>$(ComputeLinkInputsTargets);ComputeDCompileOutput;</ComputeLinkInputsTargets>
+    <ComputeLibInputsTargets>$(ComputeLibInputsTargets);ComputeDCompileOutput;</ComputeLibInputsTargets>
+  </PropertyGroup>
+
+  <Target Name="_replacePackageName">
+    <!-- <Message Text="PRE:  %(DCompile.Identity)  RelativeDir:%(DCompile.RelativeDir) ObjFile:%(DCompile.ObjectFileName)" Importance="high" />
+    -->
+
+    <!-- extract package name from relative dir, avoid parent folder and drive names in package name -->
+    <ItemGroup>
+      <DCompile>
+        <PackageName>$([System.String]::Copy('%(RelativeDir)').Replace('..','__').Replace(':','_').Replace('\','.'))</PackageName>
+      </DCompile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'Project'">
+        <ObjectFileName>$(IntDir)dcompile_$(ProjectName).obj</ObjectFileName>
+      </DCompile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'Package'">
+        <ObjectFileName>$(IntDir)%(PackageName).obj</ObjectFileName>
+      </DCompile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'File'">
+        <ObjectFileName>$(IntDir)%(PackageName).%(FileName).obj</ObjectFileName>
+      </DCompile>
+    </ItemGroup>
+
+    <!-- for custom object file names, use [PackageName] as a placeholder for the package name -->
+    <ItemGroup>
+      <DCompile>
+        <ObjectFileName>$([System.String]::Copy('%(ObjectFileName)').Replace('[PackageName]','%(PackageName)'))</ObjectFileName>
+      </DCompile>
+    </ItemGroup>
+
+    <!-- <Message Text="POST:  %(DCompile.Identity)  CompilationModel:%(DCompile.CompilationModel) ObjFile:%(DCompile.ObjectFileName)" Importance="high" />
+    -->
+    
+  </Target>
+
+  <Target Name="_DMD"
+    BeforeTargets="$(DCompileBeforeTargets)"
+    AfterTargets="$(DCompileAfterTargets)"
+    Condition="'@(DCompile)' != '' and '$(DCompiler)' != 'None'"
+    Outputs="%(DCompile.ObjectFileName)"
+    DependsOnTargets="_replacePackageName;_SelectedFiles">
+    
+    <ItemGroup Condition="'@(SelectedFiles)' != ''">
+      <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Parameter Include="Warnings=%(DCompile.Warnings)" />
+      <Parameter Include="Deprecations=%(DCompile.Deprecations)" />
+      <Parameter Include="Verbose=%(DCompile.Verbose)" />
+      <Parameter Include="ShowTLS=%(DCompile.ShowTLS)" />
+      <Parameter Include="ShowGC=%(DCompile.ShowGC)" />
+      <Parameter Include="Profile=%(DCompile.Profile)" />
+      <Parameter Include="ProfileGC=%(DCompile.ProfileGC)" />
+      <Parameter Include="Coverage=%(DCompile.Coverage)" />
+      <Parameter Condition="'%(DCompile.MinCoverage)' != ''" Include="MinCoverage=%(DCompile.MinCoverage)" />
+      <Parameter Include="Unittest=%(DCompile.Unittest)" />
+      <Parameter Include="DebugCode=%(DCompile.DebugCode)" />
+      <Parameter Include="DebugInfo=%(DCompile.DebugInfo)" />
+      <Parameter Include="Optimizer=%(DCompile.Optimizer)" />
+      <Parameter Include="Inliner=%(DCompile.Inliner)" />
+      <Parameter Include="StackFrame=%(DCompile.StackFrame)" />
+      <Parameter Include="StackStomp=%(DCompile.StackStomp)" />
+      <Parameter Include="AllInst=%(DCompile.AllInst)" />
+      <Parameter Include="BetterC=%(DCompile.BetterC)" />
+      <Parameter Include="BoundsCheck=%(DCompile.BoundsCheck)" />
+      <Parameter Include="IgnorePragma=%(DCompile.IgnorePragma)" />
+      <Parameter Include="ObjectFileName=%(DCompile.ObjectFileName)" />
+      <Parameter Include="PerformSyntaxCheckOnly=%(DCompile.PerformSyntaxCheckOnly)" />
+      <Parameter Include="PreserveSourcePath=%(DCompile.PreserveSourcePath)" />
+      <Parameter Include="ShowDependencies=%(DCompile.ShowDependencies)" />
+      <Parameter Include="Main=%(DCompile.Main)" />
+      <Parameter Include="VersionIdentifiers=%(DCompile.VersionIdentifiers)" />
+      <Parameter Include="DebugIdentifiers=%(DCompile.DebugIdentifiers)" />
+      <Parameter Include="ImportPaths=%(DCompile.ImportPaths)" />
+      <Parameter Include="StringImportPaths=%(DCompile.StringImportPaths)" />
+      <Parameter Condition="'%(DCompile.DocDir)' != ''" Include="DocDir=%(DCompile.DocDir)" />
+      <Parameter Condition="'%(DCompile.DocFile)' != ''" Include="DocFile=%(DCompile.DocFile)" />
+      <Parameter Condition="'%(DCompile.DepFile)' != ''" Include="DepFile=%(DCompile.DepFile)" />
+      <Parameter Condition="'%(DCompile.HeaderDir)' != ''" Include="HeaderDir=%(DCompile.HeaderDir)" />
+      <Parameter Condition="'%(DCompile.HeaderFile)' != ''" Include="HeaderFile=%(DCompile.HeaderFile)" />
+      <Parameter Condition="'%(DCompile.JSONFile)' != ''" Include="JSONFile=%(DCompile.JSONFile)" />
+    </ItemGroup>
+
+   <PropertyGroup>
+      <_ToolExe Condition="'$(DCompiler)' == 'LDC'">$(LDCBinDir)ldmd2.exe</_ToolExe>
+      <_ToolExe Condition="'$(DCompiler)' != 'LDC'">$(DMDBinDir)dmd.exe</_ToolExe>
+    </PropertyGroup>
+
+    <CompileD Condition="'@(DCompile)' != '' and '%(DCompile.ExcludedFromBuild)' != 'true'"
+              CommandLineTemplate="-c %(DCompile.CommandLineTemplate)"
+              Xaml="$(MSBuildThisFileDirectory)$(DCompiler).xml"
+              Parameters="@(Parameter,'|')"
+              TrackerLogDirectory="$(TLogLocation)"
+              ShowCommandLine="%(DCompile.ShowCommandLine)"
+              AdditionalOptions="%(DCompile.AdditionalOptions)"
+              ToolExe="$(_ToolExe)"
+              Sources="@(DCompile)" >
+    </CompileD>
+  </Target>
+  
+  <Target Name="ComputeDCompileOutput"
+    Condition="'@(DCompile)' != ''">
+    <ItemGroup>
+      <!---->
+      <Link Include="@(DCompile->Metadata('ObjectFileName')->Distinct()->ClearMetadata())" Condition="'%(DCompile.ExcludedFromBuild)' != 'true'" />
+      <Lib Include="@(DCompile->Metadata('ObjectFileName')->Distinct()->ClearMetadata())" Condition="'%(DCompile.ExcludedFromBuild)' != 'true'"/>
+
+      <!-- <Obj Include="@(DCompile->Metadata('ObjectFileName')->Distinct()->ClearMetadata())" Condition="'%(DCompile.ExcludedFromBuild)' != 'true'"/>-->
+      
+  <!--
+      <Link Condition="'$(DCompiler)' == 'DMD'">
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(DMDInstallDir)\dmd2\windows\lib32mscoff;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(DMDInstallDir)\dmd2\windows\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
+      </Link>
+      <Link Condition="'$(DCompiler)' == 'LDC'">
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(LDCInstallDir)\lib32;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
+      </Link>
+      -->
+    </ItemGroup>
+  </Target>
+
+</Project>

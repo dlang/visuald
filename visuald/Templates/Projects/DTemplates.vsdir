@@ -4,3 +4,5 @@
 ..\ProjectItems\WindowsApp\WindowsApp.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Windows Application|30|A project for creating a Windows application|0|#1000|0|WindowsApp
 ..\ProjectItems\DynamicLib\DynamicLib.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Dynamic Library (DLL)|30|A project for creating a dynamic library|0|#1000|0|DynamicLib
 ..\ProjectItems\StaticLib\StaticLib.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Static Library|30|A project for creating a static library|0|#1000|0|StaticLib
+..\VCProjectItems\ConsoleApp\VCConsoleApp.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|VC++/D Console Application|30|A VC++ based project for creating a command-line application|0|#1000|0|ConsoleApp
+.

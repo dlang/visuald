@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemDefinitionGroup>
+    <Link Condition="'$(DCompiler)' == 'DMD'">
+      <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(DMDInstallDir)\windows\lib32mscoff;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'  ">$(DMDInstallDir)\windows\lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Link Condition="'$(DCompiler)' == 'LDC'">
+      <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(LDCInstallDir)\lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;phobos2-ldc.lib;druntime-ldc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+</Project>

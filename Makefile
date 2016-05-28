@@ -144,14 +144,23 @@ vdserver:
 	devenv /Project "vdserver"  /Build "Release|Win32" visuald_vs10.sln
 
 dparser:
-	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
+	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release;Platform=x86 /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
 
 vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
 
+dbuild12:
+	cd msbuild\dbuild && devenv /Build "Release|AnyCPU" /Project "dbuild" dbuild.sln
+#	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
+
+dbuild14:
+	cd msbuild\dbuild && devenv /Build "Release-v14|AnyCPU" /Project "dbuild" dbuild.sln
+#	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
+
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
 	cd ..\..\mago && devenv /Build "Release|x64" /Project "MagoRemote" magodbg_2010.sln
+	cd ..\..\mago && devenv /Build "Release StaticDE|Win32" /Project "MagoNatCC" magodbg_2010.sln
 
 cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln
@@ -160,7 +169,7 @@ cv2pdb:
 
 dcxxfilt: $(DCXXFILT_EXE)
 $(DCXXFILT_EXE): tools\dcxxfilt.d
-	cd tools && set CONFIG=Release&& build_dcxxfilt
+	cd tools && set CONFIG=Release && build_dcxxfilt
 	
 ##################################
 # create installer
@@ -169,7 +178,8 @@ install: all cpp2d_exe idl2d_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
-install_vs: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago dcxxfilt install_only
+install_vs: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago dcxxfilt \
+	dbuild12 dbuild14 install_only
 
 install_only:
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi

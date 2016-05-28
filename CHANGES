@@ -805,3 +805,18 @@ Version history
     - added icons to some commands
     - search pane did not save its last state, only when switching between file and symbol search
     - dustmite: pattern passed to "find" must always use quotes
+
+unreleased Version 0.3.44
+
+  * mago: bring back support to run on Windows XP
+  * cv2pdb: fix crashes with very long symbols
+  * can now read and write Mono-D project files (but likely to be incomplete because this was 
+    a failed attempt to integrate with msbuild and the VC projects)
+  * now builds with dmd 2.071
+  * when linking with MS linker, options for the map file broke the command line
+  * bugzilla 16063: missing option -L/DLL when linking a DLL with MS linker
+  * added integration with msbuild and VC++ projects
+  * added installation of mago expression evalutro to Concord debug engine
+  * added $(Platform) as a settings macro replacement in addition to $(PlatformName)
+  * changed default output directory to $(PlatformName)/$(ConfigurationName)
+  * added x64 configurations to project templates

@@ -16,7 +16,8 @@ import stdext.path;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.vslangproj : prjOutputTypeWinExe;
-import dte = sdk.vsi.dte80a;
+static import dte = sdk.vsi.dte80a;
+static import dte2 = sdk.vsi.dte80;
 
 import visuald.comutil;
 import visuald.logutil;

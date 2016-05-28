@@ -69,7 +69,8 @@ string[] writeDocument(Document doc)
 }
 
 alias std.xml.encode encode;
-	
+alias std.xml.decode decode;
+
 }
 else
 {
@@ -78,7 +79,7 @@ private static import xmlp.xmldom;
 private static import xmlp.input;
 private static import xmlp.delegater;
 private static import xmlp.format;
-private static import xmlp.except; 
+private static import xmlp.except;
 private static import inrange.recode;
 
 alias xmlp.xmldom.Element Element;
