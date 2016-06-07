@@ -117,7 +117,9 @@ The installer lets you select the Visual Studio Version for which you want
 Visual D to be installed. It will always install for all users, not only for 
 a single user.
 
-To compile your application, you must have DMD installed.
+To compile your application, you must have DMD or LDC installed.
+For LDC, after installation you must setup VisualD to find LDC: see
+Tools->Options->Projects and Solutions->Visual D Settings->LDC Directories.
 
 For debugging applications, you should also install cv2pdb which is now 
 included in the Visual D installer. Please make sure, changes to 
