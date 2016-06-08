@@ -56,7 +56,6 @@ Major Features
   - disassembly view synchronized with source code
   
 * Supported Visual Studio versions
-  - VS 2005
   - VS 2008
   - VS 2010
   - VS 2012
@@ -95,6 +94,35 @@ The installer comes with a number of additional products:
 - mago: http://dsource.org/projects/mago_debugger by Aldo Nunez
 - DParser: https://github.com/aBothe/D_Parser by Alexander Bothe
 
+Installation
+------------
+
+The click-through-installer will guide you through the installation process. 
+The installer lets you select the Visual Studio Version for which you want 
+Visual D to be installed. It will always install for all users, not only for 
+a single user.
+
+To compile your application, you must have DMD, LDC or GDC installed.
+For LDC and GDC, after installation you must setup Visual D to find them: see
+Tools->Options->Projects and Solutions->Visual D Settings->LDC Directories
+and GDC Directories, respectively.
+
+For debugging applications, you should also install cv2pdb which is now 
+included in the Visual D installer. Please make sure, changes to 
+Common7\Packages\Debugger\autoexp.dat do not mix with previous manual 
+installations of cv2pdb. 
+
+If you are using the Visual Studio Shell 2008 or 2010, it misses one file,
+that is needed for the conversion of the debug information by cv2pdb. This 
+is msobj80.dll for VS2008 and msobj100.dll for VS2010 and must be extracted 
+from a standard installation, the Visual C Express edition or the Windows SDK.
+You might also find it installed by other Microsoft products. 
+
+Changes
+-------
+For documentation on the changes between this version and
+previous versions, please see the file CHANGES.
+
 Building Visual D
 -----------------
 In a nutshell:
@@ -107,35 +135,6 @@ In a nutshell:
 
 For more information, visit
 http://rainers.github.io/visuald/visuald/BuildFromSource.html
-
-
-Installation
-------------
-
-The click-through-installer will guide you through the installation process. 
-The installer lets you select the Visual Studio Version for which you want 
-Visual D to be installed. It will always install for all users, not only for 
-a single user.
-
-To compile your application, you must have DMD or LDC installed.
-For LDC, after installation you must setup VisualD to find LDC: see
-Tools->Options->Projects and Solutions->Visual D Settings->LDC Directories.
-
-For debugging applications, you should also install cv2pdb which is now 
-included in the Visual D installer. Please make sure, changes to 
-Common7\Packages\Debugger\autoexp.dat do not mix with previous manual 
-installations of cv2pdb. 
-
-Unfortunately, if you are using the Visual Studio Shell, it misses one file,
-that is needed for the conversion of the debug information by cv2pdb. This 
-is msobj80.dll for VS2008 and msobj100.dll for VS2010 and must be extracted 
-from a standard installation, the Visual C Express edition or the Windows SDK.
-You might also find it installed by other Microsoft products. 
-
-Changes
--------
-For documentation on the changes between this version and
-previous versions, please see the file CHANGES.
 
 More Information
 ----------------
