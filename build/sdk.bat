@@ -21,6 +21,7 @@ if not exist %DTE_IDL_PATH%\nul md %DTE_IDL_PATH%
 
 set WINSDKINC=%WindowsSdkDir%\include
 set VSISDKINC=
+if "%VSISDKINC%" == "" if not "%VSSDK140Install%" == "" set VSISDKINC=%VSSDK140Install%
 if "%VSISDKINC%" == "" if not "%VSSDK120Install%" == "" set VSISDKINC=%VSSDK120Install%
 if "%VSISDKINC%" == "" if not "%VSSDK110Install%" == "" set VSISDKINC=%VSSDK110Install%
 if "%VSISDKINC%" == "" if not "%VSSDK100Install%" == "" set VSISDKINC=%VSSDK100Install%
