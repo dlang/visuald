@@ -56,7 +56,7 @@ static if (sdk.vsi.sdk_version.rmj > 9)
 	alias cmdidShellNavigate31First cmdidShellNavigate31;
 	alias cmdidShellNavigate32First cmdidShellNavigate32;
 	alias cmdidShellNavigateLast    cmdidShellNavigate33;
-	
+
 	enum ECMD_PROMOTELOCAL = 1554; // no longer in SDK 10.0
 	enum cmdidProgramToDebugShow = 0x00000102;
 }
@@ -1121,7 +1121,7 @@ const enumName[] VSStd2KCmdID_names =
 	{ ECMD_VALIDATION_TARGET_GET_LIST, "ECMD_VALIDATION_TARGET_GET_LIST" },
 	{ ECMD_CSS_TARGET, "ECMD_CSS_TARGET" },
 	{ ECMD_CSS_TARGET_GET_LIST, "ECMD_CSS_TARGET_GET_LIST" },
-	
+
 	{ icmdDesign, "Design" },
 	{ icmdDesignOn, "DesignOn" },
 	{ icmdSEDesign, "SEDesign" },
@@ -1495,7 +1495,7 @@ const enumName[] VSStd97CmdID_names =
 	{ cmdidFindCmd, "FindCmd" },
 	{ cmdidStart, "Start" },
 	{ cmdidRestart, "Restart" },
-	{ cmdidAddinManager, "AddinManager" },
+//	{ cmdidAddinManager, "AddinManager" },
 	{ cmdidMultiLevelUndoList, "MultiLevelUndoList" },
 	{ cmdidMultiLevelRedoList, "MultiLevelRedoList" },
 	{ cmdidToolboxAddTab, "ToolboxAddTab" },
@@ -2172,7 +2172,7 @@ const enumName[] VSStd97CmdID_names =
 	{ cmdidVBELast, "VBELast" },
 	{ cmdidSterlingFirst, "SterlingFirst" },
 	{ cmdidSterlingLast, "SterlingLast" },
-	
+
 	{ uieventidFirst, "uieventidFirst" },
 	{ uieventidSelectRegion, "uieventidSelectRegion" },
 	{ uieventidDrop, "uieventidDrop" },
@@ -2228,17 +2228,17 @@ const enumName[] VSDebugCommandCmdIds_names =
 	{ cmdidThreadFlag, "cmdidThreadFlag" },
 	{ cmdidThreadUnflag, "cmdidThreadUnflag" },
 	{ cmdidJustMyCode, "cmdidJustMyCode" },
-	{ cmdidNewFileBreakpoint, "cmdidNewFileBreakpoint" },
+//	{ cmdidNewFileBreakpoint, "cmdidNewFileBreakpoint" },
 	{ cmdidNewFunctionBreakpoint, "cmdidNewFunctionBreakpoint" },
 	{ cmdidNewAddressBreakpoint, "cmdidNewAddressBreakpoint" },
 	{ cmdidNewDataBreakpoint, "cmdidNewDataBreakpoint" },
 	{ cmdidThreadUnflagAll, "cmdidThreadUnflagAll" },
 	{ cmdidInsertTracepoint, "cmdidInsertTracepoint" },
-	{ cmdidBreakpointLocation, "cmdidBreakpointLocation" },
-	{ cmdidBreakpointCondition, "cmdidBreakpointCondition" },
-	{ cmdidBreakpointHitCount, "cmdidBreakpointHitCount" },
+//	{ cmdidBreakpointLocation, "cmdidBreakpointLocation" },
+//	{ cmdidBreakpointCondition, "cmdidBreakpointCondition" },
+//	{ cmdidBreakpointHitCount, "cmdidBreakpointHitCount" },
 	{ cmdidBreakpointConstraints, "cmdidBreakpointConstraints" },
-	{ cmdidBreakpointAction, "cmdidBreakpointAction" },
+//	{ cmdidBreakpointAction, "cmdidBreakpointAction" },
 	{ cmdidCreateObjectID, "cmdidCreateObjectID" },
 	// not in VS11 SDK: { cmdidRunMacrosForBreakpointsJustHit, "cmdidRunMacrosForBreakpointsJustHit" },
 	{ cmdidCopyExpression, "cmdidCopyExpression" },
@@ -2458,7 +2458,7 @@ const enumName[] VSDebugCommandCmdIds_names =
 	{ cmdidSetCurrentProcess, "cmdidSetCurrentProcess" },
 ];
 
-		
+
 string enum_string(in enumName[] names, uint cmd)
 {
 	foreach(ref const(enumName) en; names)
