@@ -17,4 +17,7 @@ const GUID GUID_COMPlusNativeEng = { 0x92EF0900, 0x2251, 0x11D2, [ 0xB7, 0x2E, 0
 const GUID GUID_COMPlusOnlyEnd = uuid("{449EC4CC-30D2-4032-9256-EE18EB41B62B}");
 const GUID GUID_NativeOnlyEng = uuid("{3B476D35-A401-11D2-AAD4-00C04F990171}");
 
-	
+interface IVsDebuggerDeployConnection  : IUnknown
+{
+	// only forward referenced in VS2015 SDK
+};
