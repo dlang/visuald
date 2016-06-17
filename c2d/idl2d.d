@@ -139,6 +139,8 @@ class idl2d
 			"securityappcontainer.h", "realtimeapiset.h", "unknwnbase.idl", "objidlbase.idl", "combaseapi.h",
 			// Win SDK 8.1
 			"mprapidef.h", "lmerr.h", "lmcons.h",
+			// Win SDK 10.0
+			"coml2api.h", "jobapi2.h", "propidlbase.idl",
 		])
 			win_idl_files ~= f ~ "*"; // make it optional
 
@@ -1290,7 +1292,18 @@ version(all)
 			// imports inside extern(C) {}
 			replaceTokenSequence(tokens, "extern \"C\" { $_data }", "$_data", true);
 		}
-
+		if(currentModule == "propidlbase")
+		{
+			replaceTokenSequence(tokens, "_VARIANT_BOOL bool;", "/*_VARIANT_BOOL bool;*/", true);
+			replaceTokenSequence(tokens, "TYPEDEF_CA($_identType,$_identName);", 
+								         "struct $_identName { ULONG cElems; $_identType*  pElems; };", true);
+		}
+		if(currentModule == "imageparameters140")
+		{
+			// type name and field name identical
+			replaceTokenSequence(tokens, "ImageMoniker ImageMoniker;", "ImageMoniker mImageMoniker;", true);
+		}
+		
 		// select unicode version of the API when defining without postfix A/W
 		replaceTokenSequence(tokens, "#ifdef UNICODE\nreturn $_identW(\n#else\nreturn $_identA(\n#endif\n",
 			"    return $_identW(", false);
@@ -1905,6 +1918,11 @@ version(all) {
 		replaceTokenSequence(tokens, "_Post_readable_byte_size_($args)", "/+$*+/", true);
 		replaceTokenSequence(tokens, "_Ret_reallocated_bytes_($args)", "/+$*+/", true);
 
+		// Win SDK 10.0
+		replaceTokenSequence(tokens, "_Translates_Win32_to_HRESULT_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_Always_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "__control_entrypoint($args)", "/+$*+/", true);
+
 		replaceTokenSequence(tokens, "__assume_bound($args);", "/+$*+/", true);
 		replaceTokenSequence(tokens, "__asm{$args}$_opt;", "assert(false, \"asm not translated\"); asm{naked; nop; /+$args+/}", true);
 		replaceTokenSequence(tokens, "__asm $_not{$stmt}", "assert(false, \"asm not translated\"); asm{naked; nop; /+$_not $stmt+/} }", true);
@@ -2216,6 +2234,13 @@ else
 		case "_Field_z_":
 		case "_Pre_notnull_":
 		case "_Frees_ptr_":
+
+		// Windows SDK 10.0
+		case "NOT_BUILD_WINDOWS_DEPRECATE":
+		case "DECLSPEC_ALLOCATOR":
+
+		// VS14 SDK comment after #endif
+		case "PROXYSTUB_BUILD":
 			return "/*" ~ text ~ "*/";
 
 		case "__checkReturn": return "/*__checkReturn*/";
