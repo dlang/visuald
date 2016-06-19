@@ -19,8 +19,7 @@ if not exist ..\sdk\vsi\nul     md ..\sdk\vsi
 if not exist ..\sdk\win32\nul   md ..\sdk\win32
 if not exist %DTE_IDL_PATH%\nul md %DTE_IDL_PATH%
 
-set WindowsSdkDir=c:\l\win10sdk
-set WindowsSDKVersion=10.0.10240.0\
+if "%WindowsSDKVersion%" == "" set WindowsSDKVersion=%UCRTVersion%
 set WINSDKINC=
 if not "%WindowsSDKVersion%" == "" if exist "%WindowsSdkDir%\include\%WindowsSDKVersion%\um\windows.h" set WINSDKINC=%WindowsSdkDir%\include\%WindowsSDKVersion%
 if "%WINSDKINC%" == "" set WINSDKINC=%WindowsSdkDir%\include
