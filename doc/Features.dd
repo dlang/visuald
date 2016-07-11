@@ -51,6 +51,7 @@ Ddoc
     $(LI VS 2010)
     $(LI VS 2012)
     $(LI VS 2013)
+    $(LI VS 2015)
    )
    Unfortunately, Express versions of Visual Studio do not support this kind of extensions. 
    But you can use the (integrated) Visual Studio Shell (download 
