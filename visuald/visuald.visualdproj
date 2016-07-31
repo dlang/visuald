@@ -643,6 +643,8 @@
    <File path="Resources\completionset.bmp" />
    <File path="Resources\DAboutBox.ico" />
    <File path="Resources\descend.ico" />
+   <File path="Resources\dfile.ico" />
+   <File path="Resources\difile.ico" />
    <File path="Resources\DImageList.bmp" />
    <File path="Resources\DSplashScreenIcon.bmp" />
    <File path="Resources\faninout.ico" />
@@ -655,7 +657,7 @@ if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK90Install%
 if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=c:\l\vs12SDK
 set VSCT=%VSSDKInstall%\VisualStudioIntegration\Tools\Bin\VSCT.exe
 if not exist &quot;%VSCT%&quot; goto no_VSCT
-&quot;%VSCT%&quot; $(InputPath) $(InputDir)\$(InputName).cto -I%VSSDKInstall%\VisualStudioIntegration\Common\Inc
+&quot;%VSCT%&quot; $(InputPath) $(InputDir)\$(InputName).cto -I&quot;%VSSDKInstall%\VisualStudioIntegration\Common\Inc&quot;
 goto reportError
 
 :no_VSCT
