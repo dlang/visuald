@@ -1225,12 +1225,12 @@
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="vdserver">
-  <File path="vdserver.idl" customcmd="call $(VSINSTALLDIR)\Common7\Tools\vsvars32.bat
+  <File tool="Custom" path="vdserver.idl" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
-midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /out &quot;$(OutDir)&quot; /error stub_data $(InputPath)" tool="Custom" outfile="$(OutDir)/vdserver.tlb" />
-  <File path="vdserver.rc" customcmd="call $(VSINSTALLDIR)\Common7\Tools\vsvars32.bat
+midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /out &quot;$(OutDir)&quot; /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" />
+  <File tool="Custom" path="vdserver.rc" dependencies="$(OutDir)\vdserver.tlb ..\version" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
-rc /fo&quot;$(OutDir)\vdserver.res&quot; &quot;/I$(OutDir)&quot; $(InputPath)" tool="Custom" dependencies="$(OutDir)\vdserver.tlb ..\version" linkoutput="true" outfile="$(OutDir)\vdserver.res" />
+rc /fo&quot;$(OutDir)\vdserver.res&quot; &quot;/I$(OutDir)&quot; $(InputPath)" outfile="$(OutDir)\vdserver.res" linkoutput="true" />
   <File path="vdserver.reg" />
   <File path="vdserverfactory.d" />
   <File path="vdserver_d.reg" />
