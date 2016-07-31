@@ -16,19 +16,17 @@ skip_tags: true
 environment:
   matrix:
     - APPVEYOR_JOB_CONFIG: Release14
-      APPVEYOR_JOB_ARCH:   x86
+      os:                  Visual Studio 2015
       D_COMPILER:          dmd
       VS:                  14
-      os:                  Visual Studio 2015
     - APPVEYOR_JOB_CONFIG: Release12
-      APPVEYOR_JOB_ARCH:   x86
+      os:                  Visual Studio 2013
       D_COMPILER:          dmd
       VS:                  12
-      os:                  Visual Studio 2013
 
 #matrix:
 #  allow_failures:
-#    - APPVEYOR_JOB_CONFIG: Release
+#    - APPVEYOR_JOB_CONFIG: Release14
 
 # scripts that are called at very beginning, before repo cloning
 init:
@@ -53,16 +51,12 @@ install:
                 Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
                 c:\projects\dmd2\windows\bin\dmd.exe --version
             } Else {
-                If ($Env:APPVEYOR_JOB_ARCH -eq 'x64') {
+                # LDC unsupported so far
+                If ($Env:D_COMPILER -eq 'ldc') {
                     Start-FileDownload 'http://github.com/ldc-developers/ldc/releases/download/v1.0.0/ldc2-1.0.0-win64-msvc.zip' -FileName 'ldc2.zip'
                     7z x ldc2.zip > $null
                     Set-Item -path env:DMD -value c:\projects\ldc2-1.0.0-win64-msvc\bin\ldmd2.exe
                     c:\projects\ldc2-1.0.0-win64-msvc\bin\ldc2 --version
-                } Else {
-                    Start-FileDownload 'http://github.com/ldc-developers/ldc/releases/download/v1.0.0/ldc2-1.0.0-win32-msvc.zip' -FileName 'ldc2.zip'
-                    7z x ldc2.zip > $null
-                    Set-Item -path env:DMD -value c:\projects\ldc2-1.0.0-win32-msvc\bin\ldmd2.exe
-                    c:\projects\ldc2-1.0.0-win32-msvc\bin\ldc2 --version
                 }
             }
         }
@@ -78,11 +72,11 @@ install:
   # configure DMD path
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\12.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
+  # disable link dependencies monitoring, fails on AppVeyor server
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v optlinkDeps /t REG_DWORD /d 0 /reg:32 /f
   # Set environment variables
   - set PATH=c:\projects\dm\bin;%PATH%
-  - if "%APPVEYOR_JOB_ARCH%"=="x64" ( call "c:\Program Files (x86)\Microsoft Visual Studio %VS%.0\VC\vcvarsall.bat" amd64 )
-  - if "%APPVEYOR_JOB_ARCH%"=="x86" ( call "c:\Program Files (x86)\Microsoft Visual Studio %VS%.0\VC\vcvarsall.bat" x86 )
+  - call "c:\Program Files (x86)\Microsoft Visual Studio %VS%.0\VC\vcvarsall.bat" x86
   # Print environment info
   - set
   - msbuild /version
@@ -131,16 +125,18 @@ build_script:
 after_build:
   # publish as artifact
   - cd c:\projects
+  - 7z a logs_and_symbols.7z -r visuald\bin\*.pdb visuald\bin\*.html
+  - for %%I in (downloads\*.exe) do (set BUILD_EXE=%%I && set ARTIFACT=%%~dpnI-%APPVEYOR_BUILD_NUMBER%.exe)
+  - copy %BUILD_EXE% %ARTIFACT%
   - ps: |
-        If ($Env:APPVEYOR_JOB_CONFIG -eq 'Release12') {
-            echo 'Preparing artifact...'
-            $artifactFilename = "downloads/VisualD-v0.3.44-beta2.exe"
-            Push-AppveyorArtifact $artifactFilename
-        }
+        echo 'Creating artifacts...'
+        Push-AppveyorArtifact $Env:ARTIFACT
+        Push-AppveyorArtifact logs_and_symbols.7z
 
 on_failure:
   - cd c:\projects
-  - type visuald\bin\Release\vsi2d.buildlog.html
+  - 7z a logs_and_symbols.7z -r visuald\bin\*.pdb visuald\bin\*.html
+  - appveyor PushArtefact logs_and_symbols.7z
 
 #---------------------------------#
 #       test configuration        #
@@ -148,20 +144,3 @@ on_failure:
 
 test_script:
   - cd c:\projects
-
-#---------------------------------#
-#     deployment configuration    #
-#---------------------------------#
-
-# deploy:
-#   - provider: GitHub
-#     release: 'Visual D master'
-#     description: "Latest successful Windows CI builds of branch 'master'"
-#     draft: true
-#     prerelease: true
-#     auth_token:
-#       secure: ???
-#     artifact: downloads/VisualD-v0.3.44-beta2-$(APPVEYOR_BUILD_NUMBER).exe
-#     on:
-#       branch: master
-#       APPVEYOR_JOB_CONFIG: Release12
