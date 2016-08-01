@@ -222,7 +222,7 @@ class ProjectOptions
 	bool run;		// run resulting executable
 	string runargs;		// arguments for executable
 
-	bool runCv2pdb;		// run cv2pdb on executable
+	ubyte runCv2pdb;		// run cv2pdb on executable (0: no, 1: suitable for debug engine, 2: yes)
 	bool cv2pdbPre2043;		// pass version before 2.043 for older aa implementation
 	bool cv2pdbNoDemangle;	// do not demangle symbols
 	bool cv2pdbEnumType;	// use enumerator type
@@ -290,7 +290,7 @@ class ProjectOptions
 
 	void setDebug(bool dbg)
 	{
-		runCv2pdb = dbg && !isX86_64;
+		runCv2pdb = dbg && !isX86_64 ? 1 : 0;
 		symdebug = dbg ? 3 : 0;
 		release = dbg ? 0 : 1;
 		optimize = release == 1;
@@ -1145,7 +1145,11 @@ class ProjectOptions
 	{
 		if(compiler == Compiler.DMD && (isX86_64 || mscoff))
 			return false; // should generate correct debug info directly
-		return (/*compiler == Compiler.DMD && */symdebug && runCv2pdb && lib != OutputType.StaticLib && debugEngine != 1);
+		if (!symdebug || lib == OutputType.StaticLib)
+			return false;
+		if (runCv2pdb == 2)
+			return true;
+		return (runCv2pdb == 1 && debugEngine != 1); // not for mago
 	}
 
 	string appendCv2pdb()
