@@ -820,3 +820,7 @@ unreleased Version 0.3.44
   * added $(Platform) as a settings macro replacement in addition to $(PlatformName)
   * changed default output directory to $(PlatformName)/$(ConfigurationName)
   * added x64 configurations to project templates
+  * added AppVeyor integration builds
+  * cv2pdb can now be enabled independent of debug engine
+  * dustmite: error messages written to stderr not grepped
+  * added project template to build with DMD, LDC and GDC for x86 and x64
