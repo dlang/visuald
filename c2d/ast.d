@@ -1626,7 +1626,7 @@ class Expression : AST
 			case Token.Or:             return v1 | v2;
 			case Token.AmpAmpersand:   return v1 && v2;
 			case Token.OrOr:           return v1 || v2;
-			case Token.Comma:          return v1, v2;
+			case Token.Comma:          return /*v1,*/ v2;
 			case Token.Tilde:
 			case Token.Unordered:
 			case Token.UnordGreater:

@@ -745,10 +745,10 @@ extern(C)
 		WORD   e_cs;                        // Initial (relative) CS value
 		WORD   e_lfarlc;                    // File address of relocation table
 		WORD   e_ovno;                      // Overlay number
-		WORD   e_res[4];                    // Reserved words
+		WORD[4] e_res;                      // Reserved words
 		WORD   e_oemid;                     // OEM identifier (for e_oeminfo)
 		WORD   e_oeminfo;                   // OEM information; e_oemid specific
-		WORD   e_res2[10];                  // Reserved words
+		WORD[10] e_res2;                    // Reserved words
 		LONG   e_lfanew;                    // File address of new exe header
 	}
 

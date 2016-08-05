@@ -67,7 +67,7 @@ const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad40847
 
 T clone(T)(T object)
 {
-	auto size = typeid(object).init.length;
+	auto size = typeid(object).initializer.length;
 	object = cast(T) ((cast(void*)object) [0..size].dup.ptr );
 //	object.__monitor = null;
 	return object;

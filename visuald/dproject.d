@@ -2806,7 +2806,10 @@ HRESULT DustMiteProject()
 
 		npath = copyProjectFolder(proj, dustmitepath);
 		if (npath.length == 0)
-			return pane.OutputString("cannot determine common root folder for all sources\n"w.ptr), S_FALSE;
+		{
+			pane.OutputString("cannot determine common root folder for all sources\n"w.ptr);
+			return S_FALSE;
+		}
 		pane.OutputString(_toUTF16z("created clean copy of the project in " ~ dustmitepath ~ "\n"));
 
 		nworkdir = npath; // TODO
