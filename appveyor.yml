@@ -15,18 +15,14 @@ skip_tags: true
 
 environment:
   matrix:
-    - APPVEYOR_JOB_CONFIG: Release14
-      os:                  Visual Studio 2015
-      D_COMPILER:          dmd
-      VS:                  14
-    - APPVEYOR_JOB_CONFIG: Release12
-      os:                  Visual Studio 2013
-      D_COMPILER:          dmd
-      VS:                  12
+    - os: Visual Studio 2015
+      VS: 14
+    - os: Visual Studio 2013
+      VS: 12
 
 #matrix:
 #  allow_failures:
-#    - APPVEYOR_JOB_CONFIG: Release14
+#    - VS: 14
 
 # scripts that are called at very beginning, before repo cloning
 init:
@@ -35,6 +31,7 @@ init:
 # scripts that run after cloning repository
 install:
   # show environment
+  - set D_COMPILER=dmd
   - set
   - cd c:\projects
   # Download & extract D compiler
