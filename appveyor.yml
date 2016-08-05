@@ -126,17 +126,22 @@ after_build:
   # publish as artifact
   - cd c:\projects
   - 7z a logs_and_symbols.7z -r visuald\bin\*.pdb visuald\bin\*.html
-  - for %%I in (downloads\*.exe) do (set BUILD_EXE=%%I && set ARTIFACT=%%~dpnI-%APPVEYOR_BUILD_NUMBER%.exe)
+  - for %%I in (downloads\*.exe) do (set BUILD_EXE=%%I && set ARTIFACT=%%~dpnI-%APPVEYOR_BUILD_NUMBER%-vs%VS%.exe)
   - copy %BUILD_EXE% %ARTIFACT%
   - ps: |
-        echo 'Creating artifacts...'
-        Push-AppveyorArtifact $Env:ARTIFACT
-        Push-AppveyorArtifact logs_and_symbols.7z
+        If ($Env:VS -eq '12') {
+            echo 'Creating artifacts...'
+            Push-AppveyorArtifact $Env:ARTIFACT
+            Push-AppveyorArtifact ..\cv2pdb\trunk\bin\Release\cv2pdb.exe
+            Push-AppveyorArtifact logs_and_symbols.7z
+        }
 
 on_failure:
   - cd c:\projects
-  - 7z a logs_and_symbols.7z -r visuald\bin\*.pdb visuald\bin\*.html
-  - appveyor PushArtefact logs_and_symbols.7z
+  - 7z a logs.7z -r visuald\bin\*.html
+  - ps: |
+        echo 'Publishing log files...'
+        Push-AppveyorArtifact logs.7z
 
 #---------------------------------#
 #       test configuration        #
