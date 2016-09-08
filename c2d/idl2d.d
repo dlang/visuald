@@ -143,6 +143,8 @@ class idl2d
 			"coml2api.h", "jobapi2.h", "propidlbase.idl",
 			// Win SDK 10.0.10586.0
 			"enclaveapi.h",
+			// Win SDK 10.0.14393.0
+			"dpa_dsa.h",
 		])
 			win_idl_files ~= f ~ "*"; // make it optional
 
@@ -2242,6 +2244,9 @@ else
 		case "NOT_BUILD_WINDOWS_DEPRECATE":
 		case "DECLSPEC_ALLOCATOR":
 
+		// Windows SDK 10.0.14393.0
+		case "_Outptr_result_z_":
+
 		// VS14 SDK comment after #endif
 		case "PROXYSTUB_BUILD":
 			return "/*" ~ text ~ "*/";
@@ -2376,6 +2381,8 @@ else
 			hdr ~= "import " ~ packageWin ~ "iprtrmib;\n";
 		else if(currentModule == "vssolutn")
 			hdr ~= "import " ~ packageWin ~ "winnls;\n";
+		else if(currentModule == "dpa_dsa")
+			hdr ~= "import " ~ packageWin ~ "objidlbase;\n";
 
 		hdr ~= "\n";
 
