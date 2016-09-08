@@ -261,37 +261,52 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 
 	char[] buffer = new char[2048];
 	DWORD bytesRead = 0;
-	DWORD bytesAvaiable = 0;
+	DWORD bytesAvailable = 0;
 	DWORD exitCode = 0;
 	bool linkerFound = gdcMode || msMode || demangleAll;
 
+	bool readAndDemangle(size_t lineLength)
+	{
+		bSuccess = ReadFile(hStdOutRead, buffer.ptr, lineLength, &bytesRead, null);
+		if(!bSuccess || bytesRead == 0)
+			return false;
+
+		demangleLine(buffer[0 .. bytesRead], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
+		return true;
+	}
+
+	L_loop:
 	while(true)
 	{
-		bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr, buffer.length, &bytesRead, &bytesAvaiable, null);
-		if(bSuccess && bytesAvaiable > 0)
+		bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr, buffer.length, &bytesRead, &bytesAvailable, null);
+		if(bSuccess && bytesRead > 0)
 		{
 			size_t lineLength = 0;
-			for(; lineLength < buffer.length && lineLength < bytesAvaiable && buffer[lineLength] != '\n'; lineLength++){}
-			if(lineLength >= bytesAvaiable)
+			for(; lineLength < buffer.length && lineLength < bytesRead; lineLength++)
 			{
-				// if no line end found, retry with larger buffer
-				if(lineLength >= buffer.length)
-					buffer.length = buffer.length * 2;
+				if (buffer[lineLength] == '\n')
+				{
+					readAndDemangle(lineLength + 1);
+					continue L_loop;
+				}
+			}
+			// if no line end found, retry with larger buffer
+			if(bytesRead >= buffer.length)
+			{
+				buffer.length = buffer.length * 2;
 				continue;
 			}
-			bSuccess = ReadFile(hStdOutRead, buffer.ptr, lineLength+1, &bytesRead, null);
-			if(!bSuccess || bytesRead == 0)
-				break;
+		}
 
-			demangleLine(buffer[0 .. bytesRead], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
-		}
-		else
+		bSuccess = GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
+		if(!bSuccess || exitCode != 259) //259 == STILL_ACTIVE
 		{
-			bSuccess = GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
-			if(!bSuccess || exitCode != 259) //259 == STILL_ACTIVE
-				break;
-			Sleep(5);
+			// process trailing text if not terminated by a newline
+			if (bytesRead > 0)
+				readAndDemangle(bytesRead);
+			break;
 		}
+		Sleep(5);
 	}
 
 	//close the handles to the process
