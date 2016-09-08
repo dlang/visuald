@@ -260,38 +260,35 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	ResumeThread(piProcInfo.hThread);
 
 	char[] buffer = new char[2048];
-	DWORD bytesRead = 0;
+	size_t bytesFilled = 0;
 	DWORD bytesAvailable = 0;
+	DWORD bytesRead = 0;
 	DWORD exitCode = 0;
 	bool linkerFound = gdcMode || msMode || demangleAll;
-
-	bool readAndDemangle(size_t lineLength)
-	{
-		bSuccess = ReadFile(hStdOutRead, buffer.ptr, lineLength, &bytesRead, null);
-		if(!bSuccess || bytesRead == 0)
-			return false;
-
-		demangleLine(buffer[0 .. bytesRead], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
-		return true;
-	}
 
 	L_loop:
 	while(true)
 	{
-		bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr, buffer.length, &bytesRead, &bytesAvailable, null);
+		bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr + bytesFilled, buffer.length - bytesFilled, &bytesRead, &bytesAvailable, null);
+		if (bSuccess && bytesRead > 0)
+			bSuccess = ReadFile(hStdOutRead, buffer.ptr + bytesFilled, buffer.length - bytesFilled, &bytesRead, null);
 		if(bSuccess && bytesRead > 0)
 		{
-			size_t lineLength = 0;
-			for(; lineLength < buffer.length && lineLength < bytesRead; lineLength++)
+			size_t lineLength = bytesFilled; // no need to search before previous end
+			bytesFilled += bytesRead;
+			for(; lineLength < buffer.length && lineLength < bytesFilled; lineLength++)
 			{
 				if (buffer[lineLength] == '\n')
 				{
-					readAndDemangle(lineLength + 1);
-					continue L_loop;
+					size_t len = lineLength + 1;
+					demangleLine(buffer[0 .. len], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
+					memmove(buffer.ptr, buffer.ptr + len, bytesFilled - len);
+					bytesFilled -= len;
+					lineLength = 0;
 				}
 			}
 			// if no line end found, retry with larger buffer
-			if(bytesRead >= buffer.length)
+			if(bytesFilled >= buffer.length)
 			{
 				buffer.length = buffer.length * 2;
 				continue;
@@ -302,8 +299,8 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 		if(!bSuccess || exitCode != 259) //259 == STILL_ACTIVE
 		{
 			// process trailing text if not terminated by a newline
-			if (bytesRead > 0)
-				readAndDemangle(bytesRead);
+			if (bytesFilled > 0)
+				demangleLine(buffer[0 .. bytesFilled], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
 			break;
 		}
 		Sleep(5);
