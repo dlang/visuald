@@ -130,6 +130,7 @@ after_build:
             echo 'Creating artifacts...'
             Push-AppveyorArtifact $Env:ARTIFACT
             Push-AppveyorArtifact ..\cv2pdb\trunk\bin\Release\cv2pdb.exe
+            Push-AppveyorArtifact visuald\bin\Release\pipedmd.exe
             Push-AppveyorArtifact logs_and_symbols.7z
         }
 
