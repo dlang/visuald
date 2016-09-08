@@ -874,14 +874,13 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir, bool mslink)
+	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir, bool mslink, string plus)
 	{
 		string cmd;
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
 			dmdoutfile ~= "_cv";
 		string mapfile = "\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
-		string plus = mslink ? " " : "+";
 
 		static string plusList(string[] lnkfiles, string ext, string sep)
 		{
@@ -3357,7 +3356,8 @@ class Config :	DisposingComObject,
 						~ lnkcmd;
 
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff);
+				string plus = x64 || mscoff ? " " : "+";
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";
@@ -3373,8 +3373,11 @@ class Config :	DisposingComObject,
 						else
 							lnkresponsefile = shortresponsefile;
 					}
+					plus ~= " >> " ~ lnkresponsefile ~ "\necho ";
+					cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
+
 					prelnk ~= "echo. > " ~ lnkresponsefile ~ "\n";
-					prelnk ~= "echo " ~ cmdfiles.replace("+", "+ >> " ~ lnkresponsefile ~ "\necho ");
+					prelnk ~= "echo " ~ cmdfiles;
 					prelnk ~= " >> " ~ lnkresponsefile ~ "\n\n";
 					lnkcmd ~= "@" ~ lnkresponsefile;
 				}
