@@ -6,6 +6,7 @@
     <DCompileAfterTargets>CustomBuild</DCompileAfterTargets>
 
     <DMDInstallDir Condition="$(DMDInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'DMDInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallDir>
+    <DMDInstallDir Condition="$(DMDInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)_Config\ToolsOptionsPages\Projects\Visual D Settings', 'DMDInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallDir>
     <DMDInstallationFolder> $([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\Software\DMD', 'InstallationFolder', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallationFolder>
     <DMDInstallDir Condition="$(DMDInstallDir) == '' and '$(DMDInstallationFolder)' != ''">$(DMDInstallationFolder)\dmd2\</DMDInstallDir>
     <DMDBinDir     Condition="$(DMDInstallDir) != ''">$(DMDInstallDir)\windows\bin\</DMDBinDir>
@@ -13,6 +14,7 @@
     <DMDText Condition="'$(DMDText)' == ''">DMD - Reference compiler (not installed)</DMDText>
 
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'LDCInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</LDCInstallDir>
+    <LDCInstallDir Condition="$(LDCInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)_Config\ToolsOptionsPages\Projects\Visual D Settings', 'LDCInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</LDCInstallDir>
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\LDC@InstallationFolder)</LDCInstallDir>
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\Wow6432Node\LDC@InstallationFolder)</LDCInstallDir>
     <LDCBinDir     Condition="$(LDCInstallDir) != ''">$(LDCInstallDir)\bin\</LDCBinDir>
