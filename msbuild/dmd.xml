@@ -34,7 +34,7 @@
     <StringListProperty Name="VersionIdentifiers" Category="General" DisplayName="Version Identifiers"
                         Description="compile in version code identified by ident/&gt;= level." Switch="-version=[value]" />
     <StringListProperty Name="DebugIdentifiers" Category="General" DisplayName="Debug Identifiers"
-                        Description="compile in debug code identified by ident/&lt;= level." Switch="-version=[value]" />
+                        Description="compile in debug code identified by ident/&lt;= level." Switch="-debug=[value]" />
 
     <EnumProperty Name="CompilationModel" Category="General" DisplayName="Compilation Model" IncludeInCommandLine="false"
                   Description="Compilation model if object file name is empty: project, package or single.">
@@ -45,7 +45,7 @@
     <StringProperty Name="ObjectFileName" Category="General" DisplayName="Object File Name" Subtype="file"
                     Description="Specifies the name of the output object file. Leave empty to auto generate a name according to the compilation model. Use [PackageName] to add the folder name with special characters replaced."
                     Switch="-of&quot;[value]&quot;" />
-    <BoolProperty Name="PreserveSourcePath" Category="Object File" DisplayName="Preserve source path"
+    <BoolProperty Name="PreserveSourcePath" Category="General" DisplayName="Preserve source path"
                   Description="preserve source path for output files." Switch="-op" 
                   Visible="False"/>
 
