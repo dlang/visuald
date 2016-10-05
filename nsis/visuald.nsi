@@ -298,7 +298,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\ dmd.xml
   ${File} ..\msbuild\ ldc.xml
   ${File} ..\msbuild\ general_d.snippet
-  ${File} ..\msbuild\ d.ico
+  ${File} ..\msbuild\ d2.ico
   ${File} ..\msbuild\ di.ico
   ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
@@ -464,7 +464,7 @@ ${MementoSectionEnd}
 
 !macro RegisterIcons VSVer
     WriteRegStr HKCR "VisualStudio.d.${VSVer}" "" "D Source"
-    WriteRegStr HKCR "VisualStudio.d.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\d.ico"
+    WriteRegStr HKCR "VisualStudio.d.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\d2.ico"
     WriteRegStr ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\${VSVer}\ShellFileAssociations\.d" "" "VisualStudio.d.${VSVer}"
 
     WriteRegStr HKCR "VisualStudio.di.${VSVer}" "" "D Interface"

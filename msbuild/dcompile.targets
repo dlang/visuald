@@ -25,7 +25,7 @@
     <!-- extract package name from relative dir, avoid parent folder and drive names in package name -->
     <ItemGroup>
       <DCompile>
-        <PackageName>$([System.String]::Copy('%(RelativeDir)').Replace('..','__').Replace(':','_').Replace('\','.'))</PackageName>
+        <PackageName>$([System.String]::Copy('%(RelativeDir)|').Replace('\|','').Replace('|','').Replace('..','__').Replace(':','_').Replace('\','.'))</PackageName>
       </DCompile>
     </ItemGroup>
 
