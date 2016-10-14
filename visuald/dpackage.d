@@ -1502,13 +1502,15 @@ class GlobalOptions
 			// $(WindowsSdkDir)\bin needed for rc.exe
 			// $(VCInstallDir)\bin needed to compile C + link.exe + DLLs
 			// $(VSINSTALLDIR)\Common7\IDE needed for some VS versions for cv2pdb
-			DMD.ExeSearchPath = r"$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin;$(DMDInstallDir)windows\bin";
-			DMD.ExeSearchPath64     = DMD.ExeSearchPath;
+            string windowsSdkX86Bin = r"$(WindowsSdkDir)bin\x86";
+            string windowsSdkX64Bin = r"$(WindowsSdkDir)bin\x64";
+			DMD.ExeSearchPath = r"$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;" ~ windowsSdkX86Bin ~ r";$(DMDInstallDir)windows\bin";
+			DMD.ExeSearchPath64     = r"$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;" ~ windowsSdkX64Bin ~ r";$(DMDInstallDir)windows\bin";
 			DMD.ExeSearchPath32coff = DMD.ExeSearchPath;
-			GDC.ExeSearchPath       = r"$(GDCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
+			GDC.ExeSearchPath       = r"$(GDCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;" ~ windowsSdkX86Bin;
 			GDC.ExeSearchPath64     = GDC.ExeSearchPath;
-			LDC.ExeSearchPath       = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
-			LDC.ExeSearchPath64     = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin\amd64;$(WindowsSdkDir)\bin";
+			LDC.ExeSearchPath       = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;" ~ windowsSdkX86Bin;
+			LDC.ExeSearchPath64     = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin\amd64;" ~ windowsSdkX64Bin;
 
 			DMD.LibSearchPath64     = getDefaultLibPathCOFF64();
 			LDC.LibSearchPath64     = DMD.LibSearchPath64;

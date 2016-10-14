@@ -2695,7 +2695,7 @@ class Config :	DisposingComObject,
 			string ext = toLower(extension(fname));
 			if(isIn(ext, ".d", ".ddoc", ".def", ".lib", ".obj", ".o", ".res"))
 				tool = "DMD";
-			else if(ext == "rc")
+			else if(ext == ".rc")
 				tool = kToolResourceCompiler;
 			else if(isIn(ext, ".c", ".cpp", ".cxx", ".cc"))
 				tool = kToolCpp;
@@ -2714,7 +2714,7 @@ class Config :	DisposingComObject,
 				tool = "DMDsingle";
 			else if(isIn(ext, ".d", ".ddoc", ".def", ".lib", ".obj", ".o", ".res"))
 				tool = "DMD";
-			else if(ext == "rc")
+			else if(ext == ".rc")
 				tool = kToolResourceCompiler;
 			else if(isIn(ext, ".c", ".cpp", ".cxx", ".cc"))
 				tool = kToolCpp;
