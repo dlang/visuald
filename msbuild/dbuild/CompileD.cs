@@ -143,10 +143,13 @@ namespace dbuild
             foreach (string p in paras)
             {
                 int pos = p.IndexOf('=');
-                string name = p.Substring(0, pos);
-                string value = p.Substring(pos + 1);
-                strOptions[name] = value;
-                switchOrderList.Add(name);
+                if (pos >= 0)
+                {
+                    string name = p.Substring(0, pos);
+                    string value = p.Substring(pos + 1);
+                    strOptions[name] = value;
+                    switchOrderList.Add(name);
+                }
             }
 
             foreach (XamlTypes.BaseProperty property in rule.Properties)
