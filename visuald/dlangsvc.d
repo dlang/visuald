@@ -64,6 +64,7 @@ import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.textmgr90;
+import sdk.vsi.textmgr120;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 import sdk.vsi.singlefileeditor;
@@ -79,22 +80,22 @@ version = threadedOutlining;
 __gshared Lexer dLex;
 ///////////////////////////////////////////////////////////////////////////////
 
-class LanguageService : DisposingComObject, 
-                        IVsLanguageInfo, 
-                        IVsLanguageDebugInfo, 
+class LanguageService : DisposingComObject,
+                        IVsLanguageInfo,
+                        IVsLanguageDebugInfo,
                         IVsLanguageDebugInfo2,
                         IVsLanguageDebugInfoRemap,
-                        IVsProvideColorableItems, 
-                        IVsLanguageContextProvider, 
-                        IServiceProvider, 
-//                        ISynchronizeInvoke, 
-                        IVsDebuggerEvents, 
+                        IVsProvideColorableItems,
+                        IVsLanguageContextProvider,
+                        IServiceProvider,
+//                        ISynchronizeInvoke,
+                        IVsDebuggerEvents,
                         IVsFormatFilterProvider,
                         IVsOutliningCapableLanguage,
                         IVsUpdateSolutionEvents
 {
 	static const GUID iid = g_languageCLSID;
-		
+
 	this(Package pkg)
 	{
 		//mPackage = pkg;
@@ -136,7 +137,7 @@ class LanguageService : DisposingComObject,
 //			return S_OK;
 		if(queryInterface!(IVsOutliningCapableLanguage) (this, riid, pvObject))
 			return S_OK;
-		
+
 		return super.QueryInterface(riid, pvObject);
 	}
 
@@ -158,11 +159,11 @@ class LanguageService : DisposingComObject,
 		closeSearchWindow();
 
 		setDebugger(null);
-		
+
 		foreach(Source src; mSources)
 			src.Release();
 		mSources = mSources.init;
-		
+
 		foreach(CodeWindowManager mgr; mCodeWinMgrs)
 			mgr.Release();
 		mCodeWinMgrs = mCodeWinMgrs.init;
@@ -180,7 +181,7 @@ class LanguageService : DisposingComObject,
 				mUpdateSolutionEventsCookie = VSCOOKIE_NIL;
 			}
 		}
-		
+
 		cdwLastSource = null;
 		mLastActiveView = null;
 	}
@@ -300,16 +301,16 @@ class LanguageService : DisposingComObject,
 	HRESULT QueryCommonLanguageBlock(
 	            /+[in]+/  IVsTextBuffer pBuffer, //code buffer containing a break point
 	            in  int iLine,                   //line for a break point
-	            in  int iCol,                    //column for a break point           
+	            in  int iCol,                    //column for a break point
 	            in  DWORD dwFlag,                //common language block being queried. see LANGUAGECOMMONBLOCK
 	            /+[out]+/ BOOL *pfInBlock)       //true if iLine and iCol is inside common language block;otherwise, false;
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
 	}
-	
+
 	HRESULT ValidateInstructionpointLocation(
-	            /+[in]+/  IVsTextBuffer pBuffer, //code buffer containing an instruction point(IP)   
+	            /+[in]+/  IVsTextBuffer pBuffer, //code buffer containing an instruction point(IP)
 	            in  int iLine,             //line for the existing IP
 	            in  int iCol,              //column for the existing IP
 	            /+[out]+/ TextSpan *pCodeSpan)   //new IP code span
@@ -330,7 +331,7 @@ class LanguageService : DisposingComObject,
 	}
 
 	// IVsLanguageDebugInfoRemap //////////////////////////////////////
-	HRESULT RemapBreakpoint(/+[in]+/ IUnknown pUserBreakpointRequest, 
+	HRESULT RemapBreakpoint(/+[in]+/ IUnknown pUserBreakpointRequest,
 	                        /+[out]+/IUnknown* ppMappedBreakpointRequest)
 	{
 		mixin(LogCallMix);
@@ -342,7 +343,7 @@ class LanguageService : DisposingComObject,
 			BP_LOCATION_TYPE type;
 			HRESULT hr = bp.GetLocationType(&type);
 			logCall("type = %x", type);
-			
+
 			BP_REQUEST_INFO info;
 			bp.GetRequestInfo(BPREQI_ALLFIELDS, &info);
 			if((type & BPLT_LOCATION_TYPE_MASK) == BPLT_FILE_LINE)
@@ -357,19 +358,19 @@ class LanguageService : DisposingComObject,
 			}
 			BP_REQUEST_INFO2 info2;
 			bp.GetRequestInfo2(BPREQI_ALLFIELDS, &info2);
-		
+
 		}
 		+/
-		
+
 		return S_FALSE;
 	}
 
 	// IVsProvideColorableItems //////////////////////////////////////
 	__gshared ColorableItem[] colorableItems;
-	
+
 	// delete <VisualStudio-User-Root>\FontAndColors\Cache\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}\Version
 	// if the list of colorableItems changes
-	
+
 	static void shared_static_this()
 	{
 		colorableItems = [
@@ -380,14 +381,14 @@ class LanguageService : DisposingComObject,
 			newCom!ColorableItem("String",     CI_MAROON,      CI_USERTEXT_BK),
 			newCom!ColorableItem("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
 			newCom!ColorableItem("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
-			
+
 			// Visual D specific (must match Lexer.TokenCat)
 			newCom!ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
 			newCom!ColorableItem("Visual D Register",            -1,          CI_USERTEXT_BK, RGB(128, 0, 128)),
 			newCom!ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
 			newCom!ColorableItem("Visual D Type",                -1,          CI_USERTEXT_BK, RGB(0, 0, 160)),
 			newCom!ColorableItem("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0)),
-				
+
 			newCom!ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
 			newCom!ColorableItem("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
 			newCom!ColorableItem("Visual D Disabled Identifier", CI_DARKGRAY, CI_USERTEXT_BK),
@@ -456,7 +457,7 @@ class LanguageService : DisposingComObject,
 	{
 		if(iIndex < 1 || iIndex > colorableItems.length)
 			return E_INVALIDARG;
-		
+
 		*ppItem = addref(colorableItems[iIndex-1]);
 		return S_OK;
 	}
@@ -515,12 +516,12 @@ class LanguageService : DisposingComObject,
 			*pfCancelUpdate = false;
 		return S_OK;
 	}
-	
+
 	HRESULT UpdateSolution_Done(in BOOL   fSucceeded, in BOOL fModified, in BOOL fCancelCommand)
 	{
 		return S_OK;
 	}
-	
+
 	HRESULT UpdateSolution_StartUpdate( /+[in, out]+/   BOOL *pfCancelUpdate )
 	{
 		if(pfCancelUpdate)
@@ -532,10 +533,10 @@ class LanguageService : DisposingComObject,
 	{
 		return S_OK;
 	}
-	
+
 	HRESULT OnActiveProjectCfgChange(/+[in]+/   IVsHierarchy pIVsHierarchy)
 	{
-		UpdateColorizer(false);		
+		UpdateColorizer(false);
 		return S_OK;
 	}
 
@@ -602,12 +603,12 @@ class LanguageService : DisposingComObject,
 		Definition[] defs = Package.GetLibInfos().findDefinition(word);
 		if(defs.length == 0)
 			return false;
-		
+
 		string srcfile = src.GetFileName();
 		string abspath;
 		if(FindFileInSolution(defs[0].filename, srcfile, abspath) != S_OK)
 			return false;
-		
+
 		return jumpToDefinitionInCodeWindow("", abspath, defs[0].line, 0, false);
 	}
 
@@ -665,7 +666,7 @@ class LanguageService : DisposingComObject,
 		foreach(CodeWindowManager mgr; mCodeWinMgrs)
 			if(mgr.OnIdle())
 				return true;
-		
+
 		if(mLastActiveView && mLastActiveView.mView)
 		{
 			int line, idx;
@@ -675,7 +676,7 @@ class LanguageService : DisposingComObject,
 		}
 		return false;
 	}
-	
+
 	Source GetSource(IVsTextLines buffer, bool create = true)
 	{
 		Source src;
@@ -817,13 +818,13 @@ class LanguageService : DisposingComObject,
 			scope(exit) release(cfg);
 			auto cfgopts = cfg.GetProjectOptions();
 			auto globopts = Package.GetGlobalOptions();
-			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64, 
-									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck, 
-									  cfgopts.compiler == Compiler.GDC, 
+			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64,
+									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck,
+									  cfgopts.compiler == Compiler.GDC,
 									  cfgopts.versionlevel, cfgopts.debuglevel,
 									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,
 									  cfgopts.useMSVCRT (), globopts.mixinAnalysis, globopts.UFCSExpansions);
-			
+
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
 			stringImp = tokenizeArgs(strimp);
 			foreach(ref i; stringImp)
@@ -831,7 +832,7 @@ class LanguageService : DisposingComObject,
 			makeFilenamesAbsolute(stringImp, cfg.GetProjectDir());
 
 			versionids = tokenizeArgs(cfgopts.versionids);
-			debugids = tokenizeArgs(cfgopts.debugids); 
+			debugids = tokenizeArgs(cfgopts.debugids);
 		}
 		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp), assumeUnique(versionids), assumeUnique(debugids), flags);
 	}
@@ -848,7 +849,7 @@ private:
 	Source[]             mSources;
 	CodeWindowManager[]  mCodeWinMgrs;
 	DBGMODE              mDbgMode;
-	
+
 	VDServerClient       mVDServerClient;
 	IVsDebugger          mDebugger;
 	VSCOOKIE             mCookieDebuggerEvents = VSCOOKIE_NIL;
@@ -861,12 +862,12 @@ private:
 class UpdateSolutionEvents : DComObject, IVsUpdateSolutionEvents
 {
 	LanguageService mLangSvc;
-	
+
 	this(LanguageService svc)
 	{
 		mLangSvc = svc;
 	}
-	
+
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsUpdateSolutionEvents) (this, riid, pvObject))
@@ -879,12 +880,12 @@ class UpdateSolutionEvents : DComObject, IVsUpdateSolutionEvents
 	{
 		return mLangSvc.UpdateSolution_Begin(pfCancelUpdate);
 	}
-	
+
 	HRESULT UpdateSolution_Done(in BOOL   fSucceeded, in BOOL fModified, in BOOL fCancelCommand)
 	{
 		return mLangSvc.UpdateSolution_Done(fSucceeded, fModified, fCancelCommand);
 	}
-	
+
 	HRESULT UpdateSolution_StartUpdate( /+[in, out]+/   BOOL *pfCancelUpdate )
 	{
 		return mLangSvc.UpdateSolution_StartUpdate(pfCancelUpdate);
@@ -894,7 +895,7 @@ class UpdateSolutionEvents : DComObject, IVsUpdateSolutionEvents
 	{
 		return mLangSvc.UpdateSolution_Cancel();
 	}
-	
+
 	HRESULT OnActiveProjectCfgChange(/+[in]+/   IVsHierarchy pIVsHierarchy)
 	{
 		return mLangSvc.OnActiveProjectCfgChange(pIVsHierarchy);
@@ -994,7 +995,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 				return true;
 		return false;
 	}
-	
+
 	void CloseFilters()
 	{
 		foreach(ViewFilter vf; mViewFilters)
@@ -1012,7 +1013,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 }
 
 /////////////////////////////////////////////////////////////////////////
-class CodeDefViewContext : DComObject, IVsCodeDefViewContext 
+class CodeDefViewContext : DComObject, IVsCodeDefViewContext
 {
 	private string symbol;
 	private string filename;
@@ -1100,7 +1101,10 @@ HRESULT reloadTextBuffer(string fname)
 	scope(exit) release(textBuffer);
 
 	if (auto docdata = qi_cast!IVsPersistDocData(srpIUnknown))
+	{
 		docdata.ReloadDocData(RDD_IgnoreNextFileChange|RDD_RemoveUndoStack);
+		release(docdata);
+	}
 
 	return textBuffer.Reload(true);
 }
@@ -1161,16 +1165,27 @@ bool jumpToDefinitionInCodeWindow(string symbol, string filename, int line, int 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int GetUserPreferences(LANGPREFERENCES *langPrefs, IVsTextView view)
+int GetUserPreferences(LANGPREFERENCES3 *langPrefs, IVsTextView view)
 {
 	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
 	if(!textmgr)
 		return E_FAIL;
 	scope(exit) release(textmgr);
-	
+
 	langPrefs.guidLang = g_languageCLSID;
-	if(int rc = textmgr.GetUserPreferences(null, null, langPrefs, null))
-		return rc;
+	IVsTextManager4 textmgr4;
+	IID txtmgr4_iid = uuid_IVsTextManager4; // taking address of enum not allowed
+	if(textmgr.QueryInterface(&txtmgr4_iid, cast(void**)&textmgr4) == S_OK && textmgr4)
+	{
+		scope(exit) release(textmgr4);
+		if(int rc = textmgr4.GetUserPreferences4(null, langPrefs, null))
+			return rc;
+	}
+	else
+	{
+		if(int rc = textmgr.GetUserPreferences(null, null, cast(LANGPREFERENCES*)langPrefs, null))
+			return rc;
+	}
 
 	if (view)
 	{
@@ -1191,7 +1206,7 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	Source mSource;
 	uint mCookieUserDataEvents;
 	uint mCookieTextLinesEvents;
-	
+
 	this(Source src, IVsTextLines buffer)
 	{
 		mSource = src;
@@ -1202,7 +1217,7 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 			mCookieTextLinesEvents = Advise!(IVsTextLinesEvents)(buffer, this);
 		}
 	}
-	
+
 	override void Dispose()
 	{
 		IVsTextLines buffer = mSource.mBuffer;
@@ -1235,7 +1250,7 @@ class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 	{
 		return mSource.OnChangeLineText(pTextLineChange, fLast);
 	}
-    
+
 	override int OnChangeLineAttributes(in int iFirstLine, in int iLastLine)
 	{
 		return mSource.OnChangeLineAttributes(iFirstLine, iLastLine);
@@ -1260,7 +1275,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	bool mStopOutlining;
 	bool mVerifiedEncoding;
 	IVsHiddenTextSession mHiddenTextSession;
-	
+
 	static struct LineChange { int oldLine, newLine; }
 	LineChange[] mLineChanges;
 	size_t mLastSaveLineChangePos;
@@ -1343,7 +1358,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 			}
 		}
 	}
-	
+
 	// IVsUserDataEvents //////////////////////////////////////
 	override int OnUserDataChange(in GUID* riidKey, in VARIANT vtNewValue)
 	{
@@ -1378,13 +1393,13 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 			CheckOutlining(pTextLineChange);
 		return mColorizer.OnLinesChanged(pTextLineChange.iStartLine, pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine, fLast != 0);
 	}
-    
+
 	void ClearLineChanges()
 	{
 		mLineChanges = mLineChanges.init;
 		mLastSaveLineChangePos = 0;
 	}
-	
+
 	override int OnChangeLineAttributes(in int iFirstLine, in int iLastLine)
 	{
 		return S_OK;
@@ -1426,7 +1441,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		return S_OK;
 	}
 
-	override HRESULT GetTipText(/+[in]+/ IVsTextMarker pMarker, 
+	override HRESULT GetTipText(/+[in]+/ IVsTextMarker pMarker,
 		/+[out, optional]+/ BSTR *pbstrText)
 	{
 		if(auto marker = qi_cast!IVsTextLineMarker(pMarker))
@@ -1459,8 +1474,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 
 
         // Commands -- see MarkerCommandValues for meaning of iItem param
-	override HRESULT GetMarkerCommandInfo(/+[in]+/ IVsTextMarker pMarker, in int iItem, 
-		/+[out, custom(uuid_IVsTextMarkerClient, "optional")]+/ BSTR * pbstrText, 
+	override HRESULT GetMarkerCommandInfo(/+[in]+/ IVsTextMarker pMarker, in int iItem,
+		/+[out, custom(uuid_IVsTextMarkerClient, "optional")]+/ BSTR * pbstrText,
 		/+[out]+/ DWORD* pcmdf)
 	{
 		return E_NOTIMPL;
@@ -1494,7 +1509,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 				asmfile ~= ".mangled";
 			mDisasmSymInfo = readDisasmFile(asmfile);
 			mDisasmLineInfo = readLineInfoFile(linefile, GetFileName());
-			
+
 			// force update to Code Definition Window
 			auto langsvc = Package.GetLanguageService();
 			int line, idx;
@@ -1549,7 +1564,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		kOutlineStateDirtyIdle2,
 	}
 	int mOutlineState = kOutlineStateDirty;
-	
+
 	bool OnIdle()
 	{
 		if(mColorizer.UpdateCoverage(false))
@@ -1558,7 +1573,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		if(startParsing())
 			return true;
 
-version(threadedOutlining) 
+version(threadedOutlining)
 {
 		return false;
 } else {
@@ -1582,7 +1597,7 @@ version(threadedOutlining)
 		}
 }
 	}
-	
+
 	void CheckOutlining(in TextLineChange *pTextLineChange)
 	{
 version(threadedOutlining) {} else
@@ -1593,7 +1608,7 @@ version(threadedOutlining) {} else
 	{
 		if(mHiddenTextSession)
 			return mHiddenTextSession;
-		
+
 		if(auto htm = queryService!(VsTextManager, IVsHiddenTextManager))
 		{
 			scope(exit) release(htm);
@@ -1602,9 +1617,9 @@ version(threadedOutlining) {} else
 		}
 		return mHiddenTextSession;
 	}
-	
+
 	enum int kHiddenRegionCookie = 37;
-	
+
 	bool AnyOutlineExpanded(IVsHiddenTextSession session)
 	{
 		IVsEnumHiddenRegions penum;
@@ -1621,7 +1636,7 @@ version(threadedOutlining) {} else
 			region.GetState(&state);
 			region.GetSpan(&span);
 			release(region);
-			
+
 			if(span.iStartLine <= hiddenLine)
 				continue;
 			if(state == hrsExpanded)
@@ -1631,19 +1646,19 @@ version(threadedOutlining) {} else
 		release(penum);
 		return expanded;
 	}
-	
+
 	void UpdateOutlining()
 	{
 		if(auto session = GetHiddenTextSession())
 			UpdateOutlining(session, hrsExpanded);
 	}
-	
+
 	HRESULT StopOutlining()
 	{
 		if(mOutlining)
 		{
 			mStopOutlining = true;
-			version(threadedOutlining) 
+			version(threadedOutlining)
 				mModificationCount++; // trigger reparsing
 			else
 				CheckOutlining(null);
@@ -1660,7 +1675,7 @@ version(threadedOutlining) {} else
 		}
 		return S_OK;
 	}
-	
+
 	void UpdateOutlining(IVsHiddenTextSession session, int state)
 	{
 		NewHiddenRegion[] rgns = CreateOutlineRegions(state);
@@ -1689,7 +1704,7 @@ version(threadedOutlining) {} else
 		wstring source = GetText(); // should not be read from another thread
 		return CreateOutlineRegions(source, expansionState);
 	}
-	
+
 	NewHiddenRegion[] CreateOutlineRegions(wstring source, int expansionState)
 	{
 		NewHiddenRegion[] rgns;
@@ -1709,7 +1724,7 @@ version(threadedOutlining) {} else
 			//wstring txt = GetText(ln, 0, ln, -1);
 			if(txt.length > 0 && txt[$-1] == '\r')
 				txt = txt[0..$-1];
-			
+
 			uint pos = 0;
 			bool isSpaceOrComment = true;
 			bool isComment = false;
@@ -1793,7 +1808,7 @@ version(threadedOutlining) {} else
 		}
 		return rgns;
 	}
-	
+
 	version(none) unittest
 	{
 		const(void)* p = typeid(NewHiddenRegion).rtInfo;
@@ -1802,7 +1817,7 @@ version(threadedOutlining) {} else
 
 	bool DiffRegions(IVsHiddenTextSession session, ref NewHiddenRegion[] rgns)
 	{
-		// Compare the existing regions with the new regions and 
+		// Compare the existing regions with the new regions and
 		// remove any that do not match the new regions.
 		IVsEnumHiddenRegions penum;
 		TextSpan span = TextSpan(0, 0, 0, GetLineCount());
@@ -1915,7 +1930,7 @@ version(threadedOutlining) {} else
 				}
 			}
 		}
-			
+
 		foreach(rgn; rgns)
 			release(rgn);
 		release(penum);
@@ -1944,7 +1959,7 @@ version(threadedOutlining) {} else
 		HRESULT hr = mBuffer.GetLineText(0, 0, endLine, endCol, &text);
 		return wdetachBSTR(text);
 	}
-	
+
 	bool GetWordExtent(int line, int idx, WORDEXTFLAGS flags, out int startIdx, out int endIdx)
 	{
 		startIdx = endIdx = idx;
@@ -1988,8 +2003,8 @@ else
 		// are doing intellisense in which case we want to match the entire value
 		// of quoted strings.
 		TokenCat type = info.type;
-		if ((flags != WORDEXT_FINDTOKEN || type != TokenCat.String) && 
-		    (type == TokenCat.Comment || type == TokenCat.Text || 
+		if ((flags != WORDEXT_FINDTOKEN || type != TokenCat.String) &&
+		    (type == TokenCat.Comment || type == TokenCat.Text ||
 			 type == TokenCat.String || type == TokenCat.Literal || type == TokenCat.Operator))
 			return false;
 
@@ -2090,12 +2105,12 @@ else
 		mBuffer.GetLineCount(&lineCount);
 		return lineCount;
 	}
-	
+
 	int GetLastLineIndex(ref int endLine, ref int endCol)
 	{
 		return mBuffer.GetLastLineIndex(&endLine, &endCol);
 	}
-	
+
 	TokenInfo[] GetLineInfo(int line, wstring *ptext = null)
 	{
 		wstring text = GetText(line, 0, line, -1);
@@ -2141,7 +2156,7 @@ else
 		return -1;
 	}
 
-	wstring _getToken(ref TokenInfo[] infoArray, ref int line, ref int col, 
+	wstring _getToken(ref TokenInfo[] infoArray, ref int line, ref int col,
 	                  ref TokenInfo info, int idx, bool skipComments)
 	{
 		wstring text;
@@ -2165,7 +2180,7 @@ else
 			mBuffer.GetLineCount(&lineCount);
 			if(line >= lineCount)
 				return "";
-			
+
 			infoArray = GetLineInfo(line);
 			idx = 0;
 		}
@@ -2173,15 +2188,15 @@ else
 		col = infoArray[idx].StartIndex;
 		return text[infoArray[idx].StartIndex .. infoArray[idx].EndIndex];
 	}
-	
-	wstring GetToken(ref TokenInfo[] infoArray, ref int line, ref int col, 
+
+	wstring GetToken(ref TokenInfo[] infoArray, ref int line, ref int col,
 	                 ref TokenInfo info, bool skipComments = true)
 	{
 		int idx = GetTokenInfoAt(infoArray, col, info);
 		return _getToken(infoArray, line, col, info, idx, skipComments);
 	}
-	
-	wstring GetNextToken(ref TokenInfo[] infoArray, ref int line, ref int col, 
+
+	wstring GetNextToken(ref TokenInfo[] infoArray, ref int line, ref int col,
 						 ref TokenInfo info, bool skipComments = true)
 	{
 		int idx = GetTokenInfoAt(infoArray, col, info);
@@ -2189,7 +2204,7 @@ else
 			idx++;
 		return _getToken(infoArray, line, col, info, idx, skipComments);
 	}
-	
+
 	string GetFileName()
 	{
 		if(!mBuffer)
@@ -2237,7 +2252,7 @@ else
 					if(testNextFn && lineInfo[inf].type == TokenCat.Identifier)
 						fn = txt[lineInfo[inf].StartIndex .. lineInfo[inf].EndIndex];
 					testNextFn = false;
-					
+
 					if(Lexer.isClosingBracket(ch))
 						level++;
 					else if(Lexer.isOpeningBracket(ch) && level > 0)
@@ -2252,10 +2267,10 @@ else
 			}
 			cl = -1;
 		}
-		
+
 		return false;
 	}
-	
+
 	wstring getScopeIdentifer(int line, int col, wstring fn)
 	{
 		TokenInfo info;
@@ -2275,7 +2290,7 @@ else
 				if(next == ":" || next == "{")
 					return tok; // unnamed class/struct/enum
 				return next;
-			
+
 			case "mixin":
 			case "static":
 			case "final":
@@ -2296,7 +2311,7 @@ else
 			case "public":
 			case "export":
 				break;
-				
+
 			case "align":
 			case "extern":
 				next = GetNextToken(infoArray, line, col, info);
@@ -2320,7 +2335,7 @@ else
 					next = GetNextToken(infoArray, line, col, info);
 				}
 				return tok;
-				
+
 			case "scope":
 				next = GetNextToken(infoArray, line, col, info);
 				if(next == "("w)
@@ -2331,7 +2346,7 @@ else
 					return tok;
 				}
 				break;
-				
+
 			case "debug":
 			case "version":
 				next = GetNextToken(infoArray, line, col, info);
@@ -2342,7 +2357,7 @@ else
 					tok ~= GetNextToken(infoArray, line, col, info);
 				}
 				return tok;
-				
+
 			case "this":
 			case "if":
 			case "else":
@@ -2358,16 +2373,16 @@ else
 			case "foreach":
 			case "foreach_reverse":
 				return tok;
-				
+
 			default:
 				return fn.length ? fn ~ "()"w : tok;
 			}
 			tok = GetNextToken(infoArray, line, col, info);
 		}
 	}
-	
+
 	//////////////////////////////////////////////////////////////
-	int ReplaceLineIndent(int line, LANGPREFERENCES* langPrefs, ref CacheLineIndentInfo cacheInfo)
+	int ReplaceLineIndent(int line, LANGPREFERENCES3* langPrefs, ref CacheLineIndentInfo cacheInfo)
 	{
 		wstring linetxt = GetText(line, 0, line, -1);
 		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
@@ -2381,8 +2396,8 @@ else
 
 		return doReplaceLineIndent(line, p, n, langPrefs);
 	}
-	
-	int doReplaceLineIndent(int line, int idx, int n, LANGPREFERENCES* langPrefs)
+
+	int doReplaceLineIndent(int line, int idx, int n, LANGPREFERENCES3* langPrefs)
 	{
 		int tabsz = (langPrefs.fInsertTabs && langPrefs.uTabSize > 0 ? langPrefs.uTabSize : n + 1);
 		string spc = replicate("\t", n / tabsz) ~ replicate(" ", n % tabsz);
@@ -2397,30 +2412,30 @@ else
 		int line;
 		int tok;
 		SRC src;
-		
+
 		wstring lineText;
 		TokenInfo[] lineInfo;
-		
+
 		this(SRC _src, int _line, int _tok)
 		{
 			src = _src;
 			set(_line, _tok);
 		}
-		
+
 		void set(int _line, int _tok)
 		{
 			line = _line;
 			tok = _tok;
 			lineInfo = src.GetLineInfo(line, &lineText);
 		}
-		
+
 		bool advance()
 		{
 			while(tok + 1 >= lineInfo.length)
 			{
 				if(line + 1 >= src.GetLineCount())
 					return false;
-				
+
 				line++;
 				lineInfo = src.GetLineInfo(line, &lineText);
 				tok = -1;
@@ -2439,7 +2454,7 @@ else
 			return (lineInfo[tok].type == TokenCat.Comment ||
 			        (lineInfo[tok].type == TokenCat.Text && isWhite(lineText[lineInfo[tok].StartIndex])));
 		}
-		
+
 		bool advanceOverSpaces()
 		{
 			while(advance())
@@ -2476,7 +2491,7 @@ else
 		{
 			if(tok < lineInfo.length && !onCommentOrSpace())
 				return true;
-			
+
 			if(!skipLines)
 			{
 				while(tok + 1 < lineInfo.length)
@@ -2489,14 +2504,14 @@ else
 			}
 			return advanceOverComments();
 		}
-		
+
 		bool retreat()
 		{
 			while(tok <= 0)
 			{
 				if(line <= 0)
 					return false;
-				
+
 				line--;
 				lineInfo = src.GetLineInfo(line, &lineText);
 				tok = lineInfo.length;
@@ -2530,7 +2545,7 @@ else
 			}
 			return retreatOverComments();
 		}
-		
+
 		wstring getText()
 		{
 			if(tok < lineInfo.length)
@@ -2581,7 +2596,7 @@ else
 			return it.getText();
 		}
 	}
-	
+
 	alias _LineTokenIterator!Source LineTokenIterator;
 
 	static struct CacheLineIndentInfo
@@ -2606,13 +2621,13 @@ else
 	//   - while *tokIt is not the stop marker or '{' or ';'
 	//     - move back one matching braces
 	// - if the token before the given line is not ';' or '}', indent by one level more
-	
+
 	// special handling for:
 	// - comma at the end of next line
 	// - case/default
 	// - label:
 
-	int CalcLineIndent(int line, dchar ch, LANGPREFERENCES* langPrefs, ref CacheLineIndentInfo cacheInfo)
+	int CalcLineIndent(int line, dchar ch, LANGPREFERENCES3* langPrefs, ref CacheLineIndentInfo cacheInfo)
 	{
 		LineTokenIterator lntokIt = LineTokenIterator(this, line, 0);
 		wstring startTok;
@@ -2627,7 +2642,7 @@ else
 
 		if(!lntokIt.retreatOverComments())
 			return 0;
-		
+
 		bool isOpenBraceOrCase(ref LineTokenIterator it)
 		{
 			wstring txt = it.getText();
@@ -2687,7 +2702,7 @@ else
 
 			return saveCacheInfo(false);
 		}
-		
+
 		int findPreviousCaseIndent()
 		{
 			do
@@ -2785,7 +2800,7 @@ else
 				}
 				if(isOpenBraceOrCase(lntokIt))
 					return saveCacheInfo(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize);
-				
+
 				if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
 				{
 					// indent once from line with first comma
@@ -2803,7 +2818,7 @@ else
 			return findMatchingIf();
 		if(startTok == "case" || startTok == "default")
 			return findPreviousCaseIndent();
-		
+
 		LineTokenIterator it = lntokIt;
 		bool hasOpenBrace = findOpenBrace(it);
 		if(hasOpenBrace && txt == "(")
@@ -2819,11 +2834,11 @@ else
 				return countVisualSpaces(it.lineText, langPrefs.uTabSize);
 			return 0;
 		}
-		
+
 		wstring prevTok = lntokIt.getText();
 		if(prevTok == ",")
 			return findCommaIndent();
-		
+
 		int indent = 0, labelIndent = 0;
 		bool newStmt = (prevTok == ";" || prevTok == "}" || prevTok == "{" || prevTok == ":");
 		if(newStmt)// || prevTok == ":")
@@ -2852,7 +2867,7 @@ else
 				return visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1);
 			if(isOpenBraceOrCase(lntokIt))
 				return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize + indent + labelIndent;
-			
+
 			if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
 			{
 				// use indentation of next statement
@@ -2882,12 +2897,12 @@ else
 
 	int ReindentLines(IVsTextView view, int startline, int endline)
 	{
-		LANGPREFERENCES langPrefs;
+		LANGPREFERENCES3 langPrefs;
 		if(int rc = GetUserPreferences(&langPrefs, view))
 			return rc;
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
 			return S_FALSE;
-		
+
 		CacheLineIndentInfo cacheInfo;
 		for(int line = startline; line <= endline; line++)
 		{
@@ -2911,7 +2926,7 @@ else
 			lntokIt.retreatOverComments();
 		if(lntokIt.getText() != ".")
 			return null;
-		
+
 		caretLine = lntokIt.line;
 		caretIndex = lntokIt.getIndex();
 		lntokIt.retreatOverComments();
@@ -2954,10 +2969,10 @@ else
 
 	int CommentLines(IVsTextView view, int startline, int endline, int commentMode)
 	{
-		LANGPREFERENCES langPrefs;
+		LANGPREFERENCES3 langPrefs;
 		if(int rc = GetUserPreferences(&langPrefs, view))
 			return rc;
-		
+
 		wstring[] lines;
 		wstring txt;
 		int n, m, p, indent = -1;
@@ -2971,7 +2986,7 @@ else
 				indent = (indent < 0 || indent > n ? n : indent);
 			lines ~= txt;
 		}
-		
+
 		for(line = startline; line <= endline; line++)
 		{
 			txt = lines[line - startline];
@@ -2992,12 +3007,12 @@ else
 				assert(n == indent && txt[p] == '/' && txt[p+1] == '/');
 				txt = txt[0..p] ~ "  " ~ txt[p+2..$];
 				m = countVisualSpaces(txt, langPrefs.uTabSize, &p) - 2;
-				
+
 				if(p >= txt.length)
 					txt = "";
 				else
 					txt = createVisualSpaces!wstring(m, langPrefs.fInsertTabs ? langPrefs.uTabSize : 0);
-				
+
 				TextSpan changedSpan;
 				if (int hr = mBuffer.ReplaceLines(line, 0, line, p, txt.ptr, txt.length, &changedSpan))
 					return hr;
@@ -3008,7 +3023,7 @@ else
 			// insert comment
 			int tabsz = (langPrefs.fInsertTabs ? langPrefs.uTabSize : 0);
 			wstring pfx = createVisualSpaces!wstring(indent, tabsz) ~ "//"w;
-					
+
 			for(line = startline; line <= endline; line++)
 			{
 				txt = lines[line - startline];
@@ -3047,19 +3062,19 @@ else
 			dLex.scan(state, text, p);
 			if(p > idx)
 				return tok;
-			
+
 			tok++;
 		}
 		return -1;
 	}
 
-	// continuing from FindLineToken		
-	bool FindEndOfTokens(ref int iState, ref int line, ref uint pos, 
+	// continuing from FindLineToken
+	bool FindEndOfTokens(ref int iState, ref int line, ref uint pos,
 						 bool function(int state, int data) testFn, int data)
 	{
 		int lineCount;
 		mBuffer.GetLineCount(&lineCount);
-		
+
 		uint plinepos = pos;
 		while(line < lineCount)
 		{
@@ -3088,7 +3103,7 @@ else
 		}
 		return false;
 	}
-	
+
 	static bool testEndComment(int state, int level)
 	{
 		int slevel = Lexer.nestingLevel(state);
@@ -3099,7 +3114,7 @@ else
 			return slevel <= level;
 		return sstate != Lexer.State.kBlockComment;
 	}
-	
+
 	bool FindEndOfComment(int startState, ref int iState, ref int line, ref uint pos)
 	{
 		int level = Lexer.nestingLevel(startState);
@@ -3107,12 +3122,12 @@ else
 			return true;
 		return FindEndOfTokens(iState, line, pos, &testEndComment, level);
 	}
-	
+
 	static bool testEndString(int state, int level)
 	{
 		if(Lexer.tokenStringLevel(state) > level)
 			return false;
-		
+
 		auto sstate = Lexer.scanState(state);
 		return !Lexer.isStringState(sstate);
 	}
@@ -3123,7 +3138,7 @@ else
 			return true;
 		return FindEndOfTokens(iState, line, pos, &testEndString, level);
 	}
-	
+
 	bool FindStartOfTokens(ref int iState, ref int line, ref uint pos,
 	                       bool function(int state, int data) testFn, int data)
 	{
@@ -3138,7 +3153,7 @@ else
 
 			uint len = (plinepos > text.length ? text.length : plinepos);
 			plinepos = 0;
-			
+
 			if(testFn(lineState, data))
 				foundpos = 0;
 			while(plinepos < len)
@@ -3153,7 +3168,7 @@ else
 				pos = foundpos;
 				return true;
 			}
-			
+
 			plinepos = uint.max;
 			line--;
 		}
@@ -3167,7 +3182,7 @@ else
 		int slevel = Lexer.nestingLevel(state);
 		return slevel < level;
 	}
-	
+
 	bool FindStartOfComment(ref int iState, ref int line, ref uint pos)
 	{
 		// comment ends after the token that starts at (line,pos) with state iState
@@ -3180,7 +3195,7 @@ else
 		int level = Lexer.nestingLevel(iState);
 		return FindStartOfTokens(iState, line, pos, &testStartComment, level);
 	}
-	
+
 	bool FindStartOfString(ref int iState, ref int line, ref uint pos)
 	{
 		int level = Lexer.tokenStringLevel(iState);
@@ -3188,7 +3203,7 @@ else
 			return true;
 		return FindStartOfTokens(iState, line, pos, &testEndString, level);
 	}
-	
+
 	bool FindClosingBracketForward(int line, int idx, out int otherLine, out int otherIndex)
 	{
 		int iState;
@@ -3205,7 +3220,7 @@ else
 
 		return FindClosingBracketForward(line, iState, pos, otherLine, otherIndex);
 	}
-	
+
 	bool FindClosingBracketForward(int line, int iState, uint pos, out int otherLine, out int otherIndex)
 	{
 		int lineCount;
@@ -3249,17 +3264,17 @@ else
 			int[] tokpos;
 			int[] toktype;
 			uint pos = 0;
-			
+
 			int iState = mColorizer.GetLineState(line);
 			if(iState == -1)
 				break;
-			
+
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
 				toktype ~= dLex.scan(iState, text, pos);
 			}
-			int p = (tok >= 0 ? tok : tokpos.length) - 1; 
+			int p = (tok >= 0 ? tok : tokpos.length) - 1;
 			for( ; p >= 0; p--)
 			{
 				pos = tokpos[p];
@@ -3284,7 +3299,7 @@ else
 		return false;
 	}
 
-	bool ScanBackward(int line, int tok, 
+	bool ScanBackward(int line, int tok,
 					  bool delegate(wstring text, uint pos, uint ppos, int type) dg)
 	{
 		while(line >= 0)
@@ -3297,7 +3312,7 @@ else
 			int iState = mColorizer.GetLineState(line);
 			if(iState == -1)
 				break;
-			
+
 			while(pos < text.length)
 			{
 				tokpos ~= pos;
@@ -3317,7 +3332,7 @@ else
 		}
 		return false;
 	}
-	
+
 	// tok is sitting on the opening parenthesis, return method name and its position
 	wstring FindMethodIdentifierBackward(int line, int tok, int* pline, int* pindex)
 	{
@@ -3369,6 +3384,59 @@ else
 		if (it.getTokenType() == TokenCat.Identifier)
 			return it.getText();
 		return null;
+	}
+
+	//////////////////////////////////////////////////////////////
+	wstring lastBraceCompletionText;
+	int lastBraceCompletionLine;
+
+	int CompleteOpenBrace(int line, int col, dchar ch)
+	{
+		// a closing brace is added if
+		// - the remaining line is empty
+		// - or the rest of the line was inserted by previous automatic additions
+		if (lastBraceCompletionLine != line)
+			lastBraceCompletionText = null;
+
+		wstring text = GetText(line, 0, line, -1);
+		if (text.length < col)
+			return S_FALSE;
+
+		wstring tail = strip(text[col..$]);
+		if (!tail.empty && tail != lastBraceCompletionText)
+			return S_FALSE;
+
+		wchar closech = Lexer.closingBracket(ch);
+		TextSpan changedSpan;
+		if (int rc = mBuffer.ReplaceLines(line, col, line, col, &closech, 1, &changedSpan))
+			return rc;
+
+		lastBraceCompletionText = closech ~ lastBraceCompletionText;
+		lastBraceCompletionLine = line;
+
+		return S_OK;
+	}
+
+	int DeleteClosingBrace(int line, int col, dchar ch)
+	{
+		// assume the closing brace being already inserted. Remove the subsequent
+		// identical brace if it has been inserted by open brace completion
+		if (lastBraceCompletionLine != line || lastBraceCompletionText.empty)
+			return S_FALSE;
+
+		wstring text = GetText(line, 0, line, -1);
+		if (text.length < col)
+			return S_FALSE;
+
+		if (text[col] != ch || lastBraceCompletionText[0] != ch)
+			return S_FALSE;
+
+		TextSpan changedSpan;
+		if (int rc = mBuffer.ReplaceLines(line, col, line, col + 1, null, 0, &changedSpan))
+			return rc;
+
+		lastBraceCompletionText = lastBraceCompletionText[1..$];
+		return S_OK;
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -3445,7 +3513,7 @@ else
 		lntokIt.retreatOverComments();
 	L_eol:
 		wstring tok = lntokIt.getText();
-		while((tok == "static" || tok == "public" || tok == "private") 
+		while((tok == "static" || tok == "public" || tok == "private")
 			  && lntokIt.advanceOverComments())
 			tok = lntokIt.getText();
 
@@ -3478,7 +3546,7 @@ else
 	}
 
 	//////////////////////////////////////////////////////////////
-	
+
 	// create our own task pool to be able to destroy it (it keeps a the
 	//  arguments to the last task, so they are never collected)
 	__gshared TaskPool parseTaskPool;
@@ -3499,15 +3567,15 @@ else
 		auto task = task(dg);
 		parseTaskPool.put(task);
 	}
-	
+
 	bool startParsing()
 	{
 		if(!Package.GetGlobalOptions().parseSource && !mOutlining)
 			return false;
-		
+
 		if(mParsingState > 1)
 			return finishParsing();
-		
+
 		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
 			return false;
 
@@ -3516,7 +3584,7 @@ else
 		mParsingState = 1;
 		mModificationCountAST = mModificationCount;
 		runTask(&doParse);
-		
+
 		if(Package.GetGlobalOptions().parseSource)
 		{
 			auto langsvc = Package.GetLanguageService();
@@ -3594,7 +3662,7 @@ else
 		{
 			auto span = mParseErrors[i].span;
 			IVsTextLineMarker marker;
-			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex, 
+			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex,
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
 		}
 	}
@@ -3622,7 +3690,7 @@ else
 		ReColorizeLines(0, -1);
 		return true;
 	}
-	
+
 	void doParse()
 	{
 		if(mOutlining)
@@ -3631,7 +3699,7 @@ else
 		}
 		mParsingState = 2;
 	}
-	
+
 	bool hasParseError(ParserSpan span)
 	{
 		for(int i = 0; i < mParseErrors.length; i++)
@@ -3639,7 +3707,7 @@ else
 				return true;
 		return false;
 	}
-	
+
 	string getParseError(int line, int index)
 	{
 		for(int i = 0; i < mParseErrors.length; i++)
@@ -3647,7 +3715,7 @@ else
 				return mParseErrors[i].msg;
 		return null;
 	}
-	
+
 	//////////////////////////////////////////////////////////////
 
 	ExpansionProvider GetExpansionProvider()

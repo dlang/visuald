@@ -4415,6 +4415,7 @@ class EnumVsProfilerTargetInfos : DComObject, IEnumVsProfilerTargetInfos
 }
 } // version(hasProfilableConfig)
 
+// returns reference counted config
 Config GetActiveConfig(IVsHierarchy pHierarchy)
 {
 	if(!pHierarchy)

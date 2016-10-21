@@ -255,13 +255,13 @@ bool isBracketPair(dchar ch1, dchar ch2)
 {
 	switch(ch1)
 	{
-	case '{': return ch2 == '}';
-	case '}': return ch2 == '{';
-	case '(': return ch2 == ')';
-	case ')': return ch2 == ')';
-	case '[': return ch2 == ']';
-	case ']': return ch2 == '[';
-	default:  return false;
+		case '{': return ch2 == '}';
+		case '}': return ch2 == '{';
+		case '(': return ch2 == ')';
+		case ')': return ch2 == ')';
+		case '[': return ch2 == ']';
+		case ']': return ch2 == '[';
+		default:  return false;
 	}
 }
 

@@ -539,6 +539,28 @@ L_integer:
 	    return ch == ']' || ch == ')' || ch == '}';
 	}
 
+	static char closingBracket(dchar ch)
+	{
+		switch(ch)
+		{
+			case '{': return '}';
+			case '(': return ')';
+			case '[': return ']';
+			default:  return char.init;
+		}
+	}
+
+	static char openingBracket(dchar ch)
+	{
+		switch(ch)
+		{
+			case '}': return '{';
+			case ')': return '(';
+			case ']': return '[';
+			default:  return char.init;
+		}
+	}
+
 	static dchar openingBracket(State s)
 	{
 		switch(s)

@@ -2721,6 +2721,7 @@ string getSelectedTextInBuildPane()
 		scope(exit) release(opane);
 		if(auto owin = qi_cast!IVsTextView(opane))
 		{
+			scope(exit) release(owin);
 			BSTR selText;
 			if (owin.GetSelectedText (&selText) == S_OK)
 				return detachBSTR(selText);
@@ -2754,8 +2755,9 @@ HRESULT DustMiteProject()
 	IVsHierarchy phier;
 	if(solutionBuildManager.get_StartupProject(&phier) != S_OK)
 		return E_FAIL;
-	Project proj = qi_cast!Project(phier);
 	scope(exit) release(phier);
+	Project proj = qi_cast!Project(phier);
+	scope(exit) release(proj);
 
 	Config cfg;
 	IVsProjectCfg activeCfg;
@@ -2767,6 +2769,7 @@ HRESULT DustMiteProject()
 
 	if(!cfg)
 		return E_FAIL;
+	scope(exit) release(cfg);
 
 	string errmsg = getSelectedTextInBuildPane();
 	if (errmsg.length == 0)

@@ -824,3 +824,5 @@ unreleased Version 0.3.44
   * cv2pdb can now be enabled independent of debug engine
   * dustmite: error messages written to stderr not grepped
   * added project template to build with DMD, LDC and GDC for x86 and x64
+  * VS SDK 2013 now needed to build Visual D
+  * added automatic brace completion

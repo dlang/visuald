@@ -121,19 +121,21 @@ const GUID    g_VisualDHelperCLSID       = uuid("002a2de9-8bb6-484d-aa10-7e4ad40
 
 const LanguageProperty[] g_languageProperties =
 [
-  // see http://msdn.microsoft.com/en-us/library/bb166421.aspx
-  { "RequestStockColors"w,           0 },
-  { "ShowCompletion"w,               1 },
-  { "ShowSmartIndent"w,              1 },
-  { "ShowHotURLs"w,                  1 },
-  { "Default to Non Hot URLs"w,      1 },
-  { "DefaultToInsertSpaces"w,        0 },
-  { "ShowDropdownBarOption "w,       1 },
-  { "Single Code Window Only"w,      1 },
-  { "EnableAdvancedMembersOption"w,  1 },
-  { "Support CF_HTML"w,              0 },
-  { "EnableLineNumbersOption"w,      1 },
-  { "HideAdvancedMembersByDefault"w, 0 },
+	// see http://msdn.microsoft.com/en-us/library/bb166421.aspx
+	{ "RequestStockColors"w,           0 },
+	{ "ShowCompletion"w,               1 },
+	{ "ShowSmartIndent"w,              1 },
+	{ "ShowHotURLs"w,                  1 },
+	{ "Default to Non Hot URLs"w,      1 },
+	{ "DefaultToInsertSpaces"w,        0 },
+	{ "ShowDropdownBarOption "w,       1 },
+	{ "Single Code Window Only"w,      1 },
+	{ "EnableAdvancedMembersOption"w,  1 },
+	{ "Support CF_HTML"w,              0 },
+	{ "EnableLineNumbersOption"w,      1 },
+	{ "HideAdvancedMembersByDefault"w, 0 },
+	{ "ShowBraceCompletion"w,          0 },
+
 ];
 
 ///////////////////////////////////////////////////////////////////////

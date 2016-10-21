@@ -39,6 +39,7 @@ import vdc.lexer;
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
+import sdk.vsi.textmgr120;
 import sdk.vsi.stdidcmd;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
@@ -466,6 +467,9 @@ version(tip)
 						stopCompletions();
 				}
 
+				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' || ch == '(' || ch == ')')
+					HandleBraceCompletion(ch);
+
 				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' ||
 				   ch == 'n' || ch == 't' || ch == 'y') // last characters of "in", "out" and "body"
 					HandleSmartIndent(ch);
@@ -477,7 +481,7 @@ version(tip)
 				}
 				else if(ch == '(')
 				{
-					LANGPREFERENCES langPrefs;
+					LANGPREFERENCES3 langPrefs;
 					if(GetUserPreferences(&langPrefs, null) == S_OK && langPrefs.fAutoListParams)
 						_HandleMethodTip(false);
 				}
@@ -1110,7 +1114,7 @@ version(tip)
 	//////////////////////////////////////////////////////////////
 	int HandleSmartIndent(dchar ch)
 	{
-		LANGPREFERENCES langPrefs;
+		LANGPREFERENCES3 langPrefs;
 		if(int rc = GetUserPreferences(&langPrefs, mView))
 			return rc;
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
@@ -1177,6 +1181,35 @@ version(tip)
 			with(mCodeWinMgr.mSource.mLastTextLineChange)
 				if(iStartLine != iNewEndLine)
 					return ReindentLines(iStartLine, iNewEndLine);
+		return S_OK;
+	}
+
+	//////////////////////////////////////////////////////////////
+	int HandleBraceCompletion(dchar ch)
+	{
+		LANGPREFERENCES3 langPrefs;
+		if(int rc = GetUserPreferences(&langPrefs, mView))
+			return rc;
+		if(!langPrefs.fBraceCompletion)
+			return S_FALSE;
+
+		int line, idx;
+		if(int rc = mView.GetCaretPos(&line, &idx))
+			return rc;
+
+		if (ch == '(' || ch == '[' || ch == '{')
+		{
+			if(int rc = mCodeWinMgr.mSource.CompleteOpenBrace(line, idx, ch))
+				return rc;
+			// restore caret position, it has been moved by the insertion
+			if(int rc = mView.SetCaretPos(line, idx))
+				return rc;
+		}
+		else
+		{
+			if(int rc = mCodeWinMgr.mSource.DeleteClosingBrace(line, idx, ch))
+				return rc;
+		}
 		return S_OK;
 	}
 
