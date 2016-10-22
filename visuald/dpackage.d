@@ -134,7 +134,7 @@ const LanguageProperty[] g_languageProperties =
 	{ "Support CF_HTML"w,              0 },
 	{ "EnableLineNumbersOption"w,      1 },
 	{ "HideAdvancedMembersByDefault"w, 0 },
-	{ "ShowBraceCompletion"w,          0 },
+	{ "ShowBraceCompletion"w,          1 },
 
 ];
 
