@@ -3425,7 +3425,7 @@ else
 			return S_FALSE;
 
 		wstring text = GetText(line, 0, line, -1);
-		if (text.length < col)
+		if (text.length <= col)
 			return S_FALSE;
 
 		if (text[col] != ch || lastBraceCompletionText[0] != ch)
@@ -3436,6 +3436,61 @@ else
 			return rc;
 
 		lastBraceCompletionText = lastBraceCompletionText[1..$];
+		return S_OK;
+	}
+
+	int CompleteQuote(int line, int col, dchar ch)
+	{
+		if (lastBraceCompletionLine != line)
+			lastBraceCompletionText = null;
+
+		// a closing quote is added if the cursor is inside a string
+		int state = mColorizer.GetLineState(line);
+		if(state == -1)
+			return S_FALSE;
+
+		// get the lexer state at the current edit position
+		wstring text = GetText(line, 0, line, -1);
+		if(text.length < col)
+			return S_FALSE;
+
+		wstring tail = strip(text[col..$]);
+		text = text[0..col];
+
+		uint pos = 0;
+		int id = -1;
+		while(pos < text.length)
+			dLex.scan(state, text, pos, id);
+
+		Lexer.State s = Lexer.scanState(state);
+		int nesting = Lexer.nestingLevel(state);
+		int tokLevel = Lexer.tokenStringLevel(state);
+		int otherState = Lexer.getOtherState(state);
+
+		switch(s)
+		{
+			case Lexer.State.kStringToken:
+			case Lexer.State.kStringCStyle:
+			case Lexer.State.kStringWysiwyg:
+			case Lexer.State.kStringAltWysiwyg:
+			case Lexer.State.kStringDelimited:
+				break;
+			default:
+				return DeleteClosingBrace(line, col, ch);
+		}
+
+		// only auto append on end of line
+		if (!tail.empty && tail != lastBraceCompletionText)
+			return S_FALSE;
+
+		wstring close;
+		close ~= ch;
+		TextSpan changedSpan;
+		if (int rc = mBuffer.ReplaceLines(line, col, line, col, close.ptr, close.length, &changedSpan))
+			return rc;
+
+		lastBraceCompletionText = close ~ lastBraceCompletionText;
+		lastBraceCompletionLine = line;
 		return S_OK;
 	}
 

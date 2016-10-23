@@ -434,6 +434,7 @@ version(tip)
 			case ECMD_RETURN:
 				if(!wasCompletorActive)
 					HandleSmartIndent('\n');
+				HandleBraceCompletion('\n');
 				break;
 
 			case ECMD_LEFT:
@@ -467,7 +468,8 @@ version(tip)
 						stopCompletions();
 				}
 
-				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' || ch == '(' || ch == ')')
+				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' || ch == '(' || ch == ')' ||
+				   ch == '"' || ch == '`' || ch == '\'')
 					HandleBraceCompletion(ch);
 
 				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' ||
@@ -1197,7 +1199,20 @@ version(tip)
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return rc;
 
-		if (ch == '(' || ch == '[' || ch == '{')
+		if(ch == '\n')
+		{
+			if (mCodeWinMgr.mSource.lastBraceCompletionLine == line - 1)
+				mCodeWinMgr.mSource.lastBraceCompletionLine = line;
+		}
+		else if(ch == '"' || ch == '`' || ch == '\'')
+		{
+			if(int rc = mCodeWinMgr.mSource.CompleteQuote(line, idx, ch))
+				return rc;
+			// restore caret position, it has been moved by the insertion
+			if(int rc = mView.SetCaretPos(line, idx))
+				return rc;
+		}
+		else if(ch == '(' || ch == '[' || ch == '{')
 		{
 			if(int rc = mCodeWinMgr.mSource.CompleteOpenBrace(line, idx, ch))
 				return rc;
