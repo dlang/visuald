@@ -3387,23 +3387,23 @@ else
 	}
 
 	//////////////////////////////////////////////////////////////
-	wstring lastBraceCompletionText;
-	int lastBraceCompletionLine;
+	wstring mLastBraceCompletionText;
+	int mLastBraceCompletionLine;
 
 	int CompleteOpenBrace(int line, int col, dchar ch)
 	{
 		// a closing brace is added if
 		// - the remaining line is empty
 		// - or the rest of the line was inserted by previous automatic additions
-		if (lastBraceCompletionLine != line)
-			lastBraceCompletionText = null;
+		if (mLastBraceCompletionLine != line)
+			mLastBraceCompletionText = null;
 
 		wstring text = GetText(line, 0, line, -1);
 		if (text.length < col)
 			return S_FALSE;
 
 		wstring tail = strip(text[col..$]);
-		if (!tail.empty && tail != lastBraceCompletionText)
+		if (!tail.empty && tail != mLastBraceCompletionText)
 			return S_FALSE;
 
 		wchar closech = Lexer.closingBracket(ch);
@@ -3411,38 +3411,69 @@ else
 		if (int rc = mBuffer.ReplaceLines(line, col, line, col, &closech, 1, &changedSpan))
 			return rc;
 
-		lastBraceCompletionText = closech ~ lastBraceCompletionText;
-		lastBraceCompletionLine = line;
+		mLastBraceCompletionText = closech ~ mLastBraceCompletionText;
+		mLastBraceCompletionLine = line;
 
 		return S_OK;
 	}
 
-	int DeleteClosingBrace(int line, int col, dchar ch)
+	int DeleteClosingBrace(ref int line, ref int col, dchar ch)
 	{
 		// assume the closing brace being already inserted. Remove the subsequent
 		// identical brace if it has been inserted by open brace completion
-		if (lastBraceCompletionLine != line || lastBraceCompletionText.empty)
-			return S_FALSE;
-
-		wstring text = GetText(line, 0, line, -1);
-		if (text.length <= col)
-			return S_FALSE;
-
-		if (text[col] != ch || lastBraceCompletionText[0] != ch)
+		if (mLastBraceCompletionLine != line || mLastBraceCompletionText.empty)
 			return S_FALSE;
 
 		TextSpan changedSpan;
+		wstring text = GetText(line, 0, line, -1);
+		if (text.length <= col || text[col] != ch || mLastBraceCompletionText[0] != ch)
+		{
+			if (mLastBraceCompletionText[0] == '\n' && 
+				mLastBraceCompletionText.length > 1 && mLastBraceCompletionText[1] == ch)
+			{
+				wstring ntext = GetText(line + 1, 0, line + 1, -1);
+				wstring nt = stripLeft(ntext);
+				if (nt.length > 0 && nt[0] == ch)
+				{
+					wstring t = strip(text);
+					if (t.length > 0 && t[$-1] == ch)
+					{
+						int ncol = ntext.length - nt.length;
+						if (t.length == 1)
+						{
+							// remove empty auto inserted line
+							if (int rc = mBuffer.ReplaceLines(line, col, line + 1, ncol + 1, null, 0, &changedSpan))
+								return rc;
+						}
+						else
+						{
+							// remove just inserted brace and move forward behind existing
+							if (int rc = mBuffer.ReplaceLines(line, col - 1, line, col, null, 0, &changedSpan))
+								return rc;
+							col = ncol + 1;
+							line = line + 1;
+							mLastBraceCompletionLine = line;
+						}
+						mLastBraceCompletionText = mLastBraceCompletionText[2..$];
+						return S_OK;
+					}
+				}
+			}
+
+			return S_FALSE;
+		}
+
 		if (int rc = mBuffer.ReplaceLines(line, col, line, col + 1, null, 0, &changedSpan))
 			return rc;
 
-		lastBraceCompletionText = lastBraceCompletionText[1..$];
+		mLastBraceCompletionText = mLastBraceCompletionText[1..$];
 		return S_OK;
 	}
 
 	int CompleteQuote(int line, int col, dchar ch)
 	{
-		if (lastBraceCompletionLine != line)
-			lastBraceCompletionText = null;
+		if (mLastBraceCompletionLine != line)
+			mLastBraceCompletionText = null;
 
 		// a closing quote is added if the cursor is inside a string
 		int state = mColorizer.GetLineState(line);
@@ -3480,7 +3511,7 @@ else
 		}
 
 		// only auto append on end of line
-		if (!tail.empty && tail != lastBraceCompletionText)
+		if (!tail.empty && tail != mLastBraceCompletionText)
 			return S_FALSE;
 
 		wstring close;
@@ -3489,9 +3520,45 @@ else
 		if (int rc = mBuffer.ReplaceLines(line, col, line, col, close.ptr, close.length, &changedSpan))
 			return rc;
 
-		lastBraceCompletionText = close ~ lastBraceCompletionText;
-		lastBraceCompletionLine = line;
+		mLastBraceCompletionText = close ~ mLastBraceCompletionText;
+		mLastBraceCompletionLine = line;
 		return S_OK;
+	}
+
+	int CompleteLineBreak(int line, int col, ref LANGPREFERENCES3 langPrefs)
+	{
+		if (mLastBraceCompletionLine != line - 1)
+			return S_FALSE;
+
+		mLastBraceCompletionLine = line;
+
+		if (mLastBraceCompletionText.length && mLastBraceCompletionText[0] == '}')
+		{
+			wstring newline = "\n"w;
+			TextSpan changedSpan;
+			if (int rc = mBuffer.ReplaceLines(line, col, line, col, newline.ptr, newline.length, &changedSpan))
+				return rc;
+			CacheLineIndentInfo cacheInfo;
+			if (int rc = ReplaceLineIndent(line + 1, &langPrefs, cacheInfo))
+				return rc;
+
+			mLastBraceCompletionText = newline ~ mLastBraceCompletionText;
+		}
+		return S_OK;
+	}
+
+	int AutoCompleteBrace(ref int line, ref int col, dchar ch, ref LANGPREFERENCES3 langPrefs)
+	{
+		if(ch == '\n')
+			return CompleteLineBreak(line, col, langPrefs);
+
+		if(ch == '"' || ch == '`' || ch == '\'')
+			return CompleteQuote(line, col, ch);
+		
+		if(ch == '(' || ch == '[' || ch == '{')
+			return CompleteOpenBrace(line, col, ch);
+
+		return DeleteClosingBrace(line, col, ch);
 	}
 
 	//////////////////////////////////////////////////////////////

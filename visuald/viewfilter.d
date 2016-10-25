@@ -433,8 +433,10 @@ version(tip)
 			{
 			case ECMD_RETURN:
 				if(!wasCompletorActive)
+				{
+					HandleBraceCompletion('\n');
 					HandleSmartIndent('\n');
-				HandleBraceCompletion('\n');
+				}
 				break;
 
 			case ECMD_LEFT:
@@ -1189,6 +1191,7 @@ version(tip)
 	//////////////////////////////////////////////////////////////
 	int HandleBraceCompletion(dchar ch)
 	{
+		// character ch already inserted, caret placed right after it
 		LANGPREFERENCES3 langPrefs;
 		if(int rc = GetUserPreferences(&langPrefs, mView))
 			return rc;
@@ -1199,32 +1202,13 @@ version(tip)
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return rc;
 
-		if(ch == '\n')
-		{
-			if (mCodeWinMgr.mSource.lastBraceCompletionLine == line - 1)
-				mCodeWinMgr.mSource.lastBraceCompletionLine = line;
-		}
-		else if(ch == '"' || ch == '`' || ch == '\'')
-		{
-			if(int rc = mCodeWinMgr.mSource.CompleteQuote(line, idx, ch))
-				return rc;
-			// restore caret position, it has been moved by the insertion
-			if(int rc = mView.SetCaretPos(line, idx))
-				return rc;
-		}
-		else if(ch == '(' || ch == '[' || ch == '{')
-		{
-			if(int rc = mCodeWinMgr.mSource.CompleteOpenBrace(line, idx, ch))
-				return rc;
-			// restore caret position, it has been moved by the insertion
-			if(int rc = mView.SetCaretPos(line, idx))
-				return rc;
-		}
-		else
-		{
-			if(int rc = mCodeWinMgr.mSource.DeleteClosingBrace(line, idx, ch))
-				return rc;
-		}
+		if(int rc = mCodeWinMgr.mSource.AutoCompleteBrace(line, idx, ch, langPrefs))
+			return rc;
+
+		// restore caret position, it has been moved by the insertion
+		if(int rc = mView.SetCaretPos(line, idx))
+			return rc;
+
 		return S_OK;
 	}
 
