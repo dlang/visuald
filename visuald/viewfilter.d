@@ -514,51 +514,23 @@ version(tip)
 		wchar* wfname = _toUTF16z(fname);
 		string addopt;
 
-		Config cfg;
+		Config cfg = getProjectConfig(fname);
+		scope(exit) release(cfg); // must not dispose because we need the builder
+
 		CFileNode pFile;
-
-		IVsUIHierarchy pUIH;
-		uint itemid;
-		IServiceProvider pSP;
-		VSDOCINPROJECT docInProj;
-		if(pIVsUIShellOpenDocument.IsDocumentInAProject(wfname, &pUIH, &itemid, &pSP, &docInProj) != S_OK)
-			return S_OK;
-
-		scope(exit) release(pSP);
-		scope(exit) release(pUIH);
-
-		if(!pUIH)
-			return returnError(E_FAIL);
-		Project proj = qi_cast!Project(pUIH);
-		scope(exit) release(proj);
-
 		BSTR bstrSelText;
 		string selText;
 		if(mView.GetSelectedText(&bstrSelText) == S_OK && !disasm)
 			selText = detachBSTR(bstrSelText);
 
-		if(!proj)
+		if(!cfg)
 		{
 			// not in Visual D project, but in workspace project
-			ProjectFactory factory = newCom!ProjectFactory(Package.s_instance);
 			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
 
-			proj = newCom!Project(factory, "__compile__", filename, "Debug", "Win32").addref();
-			pFile = newCom!CFileNode(fname);
-			proj.GetProjectNode().Add(pFile);
-
-			IVsCfgProvider pCfgProvider;
-			IVsCfg icfg;
-			scope(exit) release(pCfgProvider);
-			scope(exit) release(icfg);
-			if(proj.GetCfgProvider(&pCfgProvider) == S_OK)
-				if(pCfgProvider.GetCfgs(1, &icfg, null, null) == S_OK)
-					cfg = qi_cast!Config(icfg);
-			if(cfg)
-			{
-				cfg.GetProjectOptions().outdir = normalizeDir(tempDir()) ~ "__vdcompile";
-				cfg.GetProjectOptions().release = false;
-			}
+			cfg = newCom!VCConfig(filename, "__compile__").addref();
+			cfg.GetProjectOptions().outdir = normalizeDir(tempDir()) ~ "__vdcompile";
+			cfg.GetProjectOptions().release = false;
 
 			string modname = getModuleDeclarationName(fname);
 			if(modname.length)
@@ -571,42 +543,19 @@ version(tip)
 					addopt ~= " -I" ~ normalizeDir(dirName(fname)) ~ ipath[1..$];
 			}
 		}
-		else
-		{
-			CHierNode pNode = proj.VSITEMID2Node(itemid);
-			if(!pNode)
-				return returnError(E_INVALIDARG);
-			pFile = cast(CFileNode) pNode;
-			if(!pFile)
-				return S_OK;
 
-			auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
-			scope(exit) release(solutionBuildManager);
-			IVsProjectCfg activeCfg;
-			scope(exit) release(activeCfg);
-
-			if(solutionBuildManager)
-				if(solutionBuildManager.FindActiveProjectCfg(null, null, proj, &activeCfg) == S_OK)
-					cfg = qi_cast!Config(activeCfg);
-		}
-		if(!cfg || !pFile)
-			return S_OK;
-
-		if(pFile.SaveDoc(SLNSAVEOPT_SaveIfDirty) != S_OK)
+		if(saveTextBuffer(fname) != S_OK)
 			return returnError(E_FAIL);
 
 		mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position
 
 		auto symdebug = cfg.GetProjectOptions().symdebug;
-		scope(exit)
-		{
-			cfg.GetProjectOptions().symdebug = symdebug;
-			release(cfg);
-		}
+		scope(exit) cfg.GetProjectOptions().symdebug = symdebug;
+
 		if (disasm && symdebug == 0) // ensure debug info is enabled
 			cfg.GetProjectOptions().symdebug = 3;
 
-		string stool = cfg.GetStaticCompileTool(pFile, cfg.getCfgName());
+		string stool = pFile ? cfg.GetStaticCompileTool(pFile, cfg.getCfgName()) : "DMDsingle";
 		if(stool == "DMD")
 			stool = "DMDsingle";
 		if(stool == "DMDsingle" && rdmd)

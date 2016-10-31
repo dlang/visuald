@@ -1443,6 +1443,7 @@
    <File path="port\in6addr.d" />
    <File path="port\inaddr.d" />
    <File path="port\kernelspecs.d" />
+   <File path="port\limits.d" />
    <File path="port\mprapi.d" />
    <File path="port\msxml.d" />
    <File path="port\netioapi.d" />

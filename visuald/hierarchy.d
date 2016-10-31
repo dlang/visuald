@@ -403,8 +403,11 @@ class CFileNode : CHierNode,
 		if (FAILED(hr))
 			return hr;
 
-		scope(exit) release(srpIUnknown);
-		scope(exit) release(srpIVsHierarchy);
+		scope(exit)
+		{
+			release(srpIUnknown);
+			release(srpIVsHierarchy);
+		}
 
 		// now return the requested info
 		if (ppIVsHierarchy && srpIVsHierarchy)

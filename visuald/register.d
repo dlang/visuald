@@ -415,12 +415,14 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	wstring languageGuid = GUID2wstring(g_languageCLSID);
 	wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
 	wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
+	wstring vchelperGuid = GUID2wstring(g_VisualCHelperCLSID);
 
 	HRESULT hr = S_OK;
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ languageGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ wizardGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
+	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vchelperGuid);
 
 	foreach (wstring fileExt; g_languageFileExtensions)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathFileExts ~ "\\"w ~ fileExt);
@@ -459,6 +461,13 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	wstring templatePath = GetTemplatePath(dllPath);
 	wstring vdextPath = dirName(dllPath) ~ "\\vdextensions.dll"w;
 
+	float ver = guessVSVersion(registrationRoot);
+	wstring dbuildPath;
+	if (ver == 12)
+		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.12.0.dll"w;
+	else if (ver == 14)
+		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.14.0.dll"w;
+
 	try
 	{
 		wstring packageGuid = GUID2wstring(g_packageCLSID);
@@ -467,6 +476,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		wstring exprEvalGuid = GUID2wstring(g_expressionEvaluator);
 		wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
 		wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
+		wstring vchelperGuid = GUID2wstring(g_VisualCHelperCLSID);
 
 		// package
 		scope RegKey keyPackage = new RegKey(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
@@ -494,12 +504,26 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyWizardCLSID.Set("ThreadingModel"w, "Appartment"w);
 
 		// VDExtensions
-		scope RegKey keyHelperCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
-		keyHelperCLSID.Set("InprocServer32"w, "mscoree.dll");
-		keyHelperCLSID.Set("ThreadingModel"w, "Both"w);
-		keyHelperCLSID.Set(null, "vdextensions.VisualDHelper"w);
-		keyHelperCLSID.Set("Class"w, "vdextensions.VisualDHelper"w);
-		keyHelperCLSID.Set("CodeBase"w, vdextPath);
+		if (vdextPath)
+		{
+			scope RegKey keyHelperCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
+			keyHelperCLSID.Set("InprocServer32"w, "mscoree.dll");
+			keyHelperCLSID.Set("ThreadingModel"w, "Both"w);
+			keyHelperCLSID.Set(null, "vdextensions.VisualDHelper"w);
+			keyHelperCLSID.Set("Class"w, "vdextensions.VisualDHelper"w);
+			keyHelperCLSID.Set("CodeBase"w, vdextPath);
+		}
+
+		// dbuild extension
+		if (dbuildPath)
+		{
+			scope RegKey keyHelperCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vchelperGuid);
+			keyHelperCLSID.Set("InprocServer32"w, "mscoree.dll");
+			keyHelperCLSID.Set("ThreadingModel"w, "Both"w);
+			keyHelperCLSID.Set(null, "vdextensions.VisualCHelper"w);
+			keyHelperCLSID.Set("Class"w, "vdextensions.VisualCHelper"w);
+			keyHelperCLSID.Set("CodeBase"w, dbuildPath);
+		}
 
 		// file extensions
 		wstring fileExtensions;

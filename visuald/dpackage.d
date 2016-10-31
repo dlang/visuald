@@ -116,6 +116,7 @@ const GUID    g_unmarshalEnumOutCLSID    = uuid("002a2de9-8bb6-484d-980e-7e4ad40
 // const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad4084715"); // defined in config.d
 
 const GUID    g_VisualDHelperCLSID       = uuid("002a2de9-8bb6-484d-aa10-7e4ad4084715");
+const GUID    g_VisualCHelperCLSID       = uuid("002a2de9-8bb6-484d-aa11-7e4ad4084715");
 
 // more guids in propertypage.d starting with 9810
 

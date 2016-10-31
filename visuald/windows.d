@@ -10,6 +10,9 @@ module visuald.windows;
 
 import sdk.win32.commctrl;
 
+pragma(lib,"ole32.lib");
+pragma(lib,"comctl32.lib");
+
 HRESULT HResultFromLastError()
 {
 	return HRESULT_FROM_WIN32(GetLastError());

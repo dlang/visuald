@@ -126,7 +126,7 @@
     <StringProperty Name="DocFile" Category="Documentation" DisplayName="Documentation File" Subtype="file"
                     Description="write documentation to this file." Switch="-Df&quot;[value]&quot;" />
     <StringProperty Name="DepFile" Category="Documentation" DisplayName="Dependencies File" Subtype="file"
-                    Description="write module dependencies to filename (only imports)." Switch="-Df&quot;[value]&quot;" />
+                    Description="write module dependencies to filename (only imports)." Switch="-deps=&quot;[value]&quot;" />
     <StringProperty Name="HeaderDir" Category="Documentation" DisplayName="Header Directory" Subtype="folder"
                     Description="write 'header' file(s) to this directory." Switch="-Hd&quot;[value]&quot;" />
     <StringProperty Name="HeaderFile" Category="Documentation" DisplayName="Header File" Subtype="file"
@@ -135,6 +135,7 @@
                     Description="write browse information to this JSON file." Switch="-Xf&quot;[value]&quot;" />
 
     <!-- =============== invisible =============== -->
+    <StringProperty Name="CompilerExe" DisplayName="Command Line" Visible="False" IncludeInCommandLine="False" />
     <StringProperty Name="CommandLineTemplate" DisplayName="Command Line" Visible="False" IncludeInCommandLine="False" />
     <StringProperty Subtype="AdditionalOptions" Name="AdditionalOptions" Category="Command Line"
                     DisplayName="Additional Options" Description="Additional Options" />

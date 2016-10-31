@@ -208,9 +208,9 @@ Section "Visual Studio package" SecPackage
   ${File} ..\bin\${CONFIG}\ vdserver.exe
 !endif
 
-  !ifdef VDEXTENSIONS
+!ifdef VDEXTENSIONS
   ${File} ..\bin\${CONFIG}\vdextensions\ vdextensions.dll
-  !endif
+!endif
 
 !ifdef DPARSER
   ${SetOutPath} "$INSTDIR\DParser"
@@ -363,10 +363,9 @@ ${MementoSection} "Register with VS 2010" SecVS2010
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   
-  !ifdef VDEXTENSIONS
-    GetFullPathName /SHORT $0 $INSTDIR
-    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !endif
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "10" NoBackup
 
 ${MementoSectionEnd}
 
@@ -384,10 +383,9 @@ ${MementoSection} "Register with VS 2012" SecVS2012
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   
-  !ifdef VDEXTENSIONS
-    GetFullPathName /SHORT $0 $INSTDIR
-    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !endif
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "11" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"
@@ -411,10 +409,9 @@ ${MementoSection} "Register with VS 2013" SecVS2013
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
 
-  !ifdef VDEXTENSIONS
-    GetFullPathName /SHORT $0 $INSTDIR
-    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !endif
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "12" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"
@@ -438,10 +435,9 @@ ${MementoSection} "Register with VS 2015" SecVS2015
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
 
-  !ifdef VDEXTENSIONS
-    GetFullPathName /SHORT $0 $INSTDIR
-    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !endif
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "14" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"

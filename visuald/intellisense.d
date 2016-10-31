@@ -911,7 +911,8 @@ class BrowseInfo
 		createModules(info);
 		if(Config cfg = getProjectConfig(mFilename))
 		{
-			cfg.GetProject().ClearLineChanges();
+			if (auto proj = cfg.GetProject())
+				proj.ClearLineChanges();
 			release(cfg);
 		}
 		return true;

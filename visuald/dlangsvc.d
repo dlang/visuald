@@ -1109,6 +1109,36 @@ HRESULT reloadTextBuffer(string fname)
 	return textBuffer.Reload(true);
 }
 
+HRESULT saveTextBuffer(string fname)
+{
+	IVsRunningDocumentTable pRDT = queryService!(IVsRunningDocumentTable);
+	if(!pRDT)
+		return E_FAIL;
+	scope(exit) release(pRDT);
+
+	auto docname = _toUTF16z(fname);
+	IVsHierarchy srpIVsHierarchy;
+	VSITEMID     vsItemId          = VSITEMID_NIL;
+	IUnknown     srpIUnknown;
+	VSDOCCOOKIE  vsDocCookie       = VSDOCCOOKIE_NIL;
+	HRESULT hr = pRDT.FindAndLockDocument(/* [in]  VSRDTFLAGS dwRDTLockType   */ RDT_NoLock,
+										  /* [in]  LPCOLESTR pszMkDocument    */ docname,
+										  /* [out] IVsHierarchy **ppHier      */ &srpIVsHierarchy,
+										  /* [out] VSITEMID *pitemid          */ &vsItemId,
+										  /* [out] IUnknown **ppunkDocData    */ &srpIUnknown,
+										  /* [out] VSCOOKIE *pdwCookie        */ &vsDocCookie);
+
+	// FindAndLockDocument returns S_FALSE if the doc is not in the RDT
+	if (hr != S_OK)
+		return hr;
+
+	scope(exit) release(srpIUnknown);
+	scope(exit) release(srpIVsHierarchy);
+
+	hr = pRDT.SaveDocuments(RDTSAVEOPT_SaveIfDirty, srpIVsHierarchy, vsItemId, vsDocCookie);
+	return hr;
+}
+
 IVsTextView findCodeDefinitionWindow()
 {
 	IVsCodeDefView cdv = queryService!(SVsCodeDefView,IVsCodeDefView);

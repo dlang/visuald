@@ -57,6 +57,7 @@
       <StringImportPaths></StringImportPaths>
       <AdditionalOptions></AdditionalOptions>
       <CompilationModel>Project</CompilationModel>
+      <!-- do not provide empty strings as default, they will show up on the generated command line
       <ObjectFileName></ObjectFileName>
       <DocDir></DocDir>
       <DocFile></DocFile>
@@ -64,6 +65,10 @@
       <HeaderDir></HeaderDir>
       <HeaderFile></HeaderFile>
       <JSONFile></JSONFile>
+      -->
+      <CompilerExe Condition="'$(DCompiler)' == 'DMD'">$(DMDBinDir)dmd.exe</CompilerExe>
+      <CompilerExe Condition="'$(DCompiler)' == 'LDC'">$(LDCBinDir)ldmd2.exe</CompilerExe>
+
       <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'DMD|Win32'">-m32mscoff -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
       <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'LDC|Win32'">-m32 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
       <CommandLineTemplate Condition="'$(Platform)' == 'X64'">-m64 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
