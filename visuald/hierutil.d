@@ -780,9 +780,10 @@ class VCConfig : Config
 		super(null, "vcxconvert", "platform", opts);
 
 		VARIANT var;
-		if(pHierarchy.GetProperty(VSITEMID_ROOT, VSHPROPID_SaveName, &var) == S_OK && var.vt == VT_BSTR)
+		BSTR name;
+		if(pHierarchy.GetCanonicalName(VSITEMID_ROOT, &name) == S_OK)
 		{
-			mProjectFile = detachBSTR(var.bstrVal);
+			mProjectFile = detachBSTR(name);
 		}
 		if(pHierarchy.GetProperty(VSITEMID_ROOT, VSHPROPID_EditLabel, &var) == S_OK && var.vt == VT_BSTR)
 		{
@@ -790,7 +791,7 @@ class VCConfig : Config
 		}
 	}
 
-	override string GetOutputFile(CFileNode file, string tool = null) 
+	override string GetOutputFile(CFileNode file, string tool = null)
 	{
 		if (file)
 			return super.GetOutputFile(file, tool);
