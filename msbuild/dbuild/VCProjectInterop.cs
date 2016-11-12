@@ -108,8 +108,8 @@ namespace vdextensions
 
                     var style = Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.CommandLineOptionStyle.cmdLineForBuild;
                     cmdline = ""; // vcftool.GetCommandLineOptions(envitem, true, style);
-                    string compilerexe = vcfprop.GetEvaluatedPropertyValue("CompilerExe");
-                    cmdline = compilerexe + " " + cmdline;
+                    //string compilerexe = vcfprop.GetEvaluatedPropertyValue("CompilerExe");
+                    //cmdline = compilerexe + " " + cmdline;
                     impPath = vcfprop.GetEvaluatedPropertyValue("ImportPaths");
                     stringImpPath = vcfprop.GetEvaluatedPropertyValue("StringImportPaths");
                     versionids = vcfprop.GetEvaluatedPropertyValue("VersionIdentifiers");
