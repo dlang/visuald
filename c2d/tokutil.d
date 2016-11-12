@@ -1201,18 +1201,18 @@ string testDefine(string txt, TokenList[string] defines)
 unittest
 {
 	string txt = 
-		"#define X(a) a\n"
-		"before X(1) after\n"
-		"#undef X\n"
-		"X(2)\n"
-		"#define X(a)\n"
-		"X(3)\n"
+		  "#define X(a) a\n"
+		~ "before X(1) after\n"
+		~ "#undef X\n"
+		~ "X(2)\n"
+		~ "#define X(a)\n"
+		~ "X(3)\n"
 		;
 
 	string exp = 
-		"before 1 after\n"
-		"X(2)\n"
-		"\n"
+		  "before 1 after\n"
+		~ "X(2)\n"
+		~ "\n"
 		;
 
 	TokenList[string] defines = [ "X" : null ];
@@ -1223,16 +1223,16 @@ unittest
 unittest
 {
 	string txt = 
-		"#define X(a) #a\n"
-		"X(1)\n"
-		"#undef X\n"
-		"#define X(a) x(#a)\n"
-		"X(1+2+3)\n"
+		  "#define X(a) #a\n"
+		~ "X(1)\n"
+		~ "#undef X\n"
+		~ "#define X(a) x(#a)\n"
+		~ "X(1+2+3)\n"
 		;
 
 	string exp = 
-		"\"1\"\n"
-		"x(\"1+2+3\")\n"
+		  "\"1\"\n"
+		~ "x(\"1+2+3\")\n"
 		;
 
 	TokenList[string] defines = [ "X" : null ];
@@ -1243,8 +1243,8 @@ unittest
 unittest
 {
 	string txt = 
-		"#define X(a) a##1\n"
-		"X(2)\n"
+		  "#define X(a) a##1\n"
+		~ "X(2)\n"
 		;
 
 	string exp = 
@@ -1270,13 +1270,13 @@ string testMixin(string txt, TokenList[string] mixins)
 unittest
 {
 	string txt = 
-		"#define X(a) x = a;\n"
-		"X(b);\n"
+		  "#define X(a) x = a;\n"
+		~ "X(b);\n"
 		;
 
 	string exp = 
-		"static __string X(__string a) { return \"x = \" ~ a ~ \";\"; }\n"
-		"mixin(X(b));\n"
+		  "static __string X(__string a) { return \"x = \" ~ a ~ \";\"; }\n"
+		~ "mixin(X(b));\n"
 		;
 
 	TokenList[string] mixins = [ "X" : null ];
@@ -1298,22 +1298,22 @@ string testReplace(string txt, TokenList[string] defines)
 unittest
 {
 	string txt = 
-		"  if (list_freelist) {\n"
-		"    list--;\n"
-		"__static_if(MEM_DEBUG) {\n"
-		"    mem_setnewfileline(list,file,line);\n"
-		"}\n"
-		"  } else {\n"
-		"    list++;\n"
-		"  }\n"
+		  "  if (list_freelist) {\n"
+		~ "    list--;\n"
+		~ "__static_if(MEM_DEBUG) {\n"
+		~ "    mem_setnewfileline(list,file,line);\n"
+		~ "}\n"
+		~ "  } else {\n"
+		~ "    list++;\n"
+		~ "  }\n"
 		;
 
 	string exp = 
-		"  if (list_freelist) {\n"
-		"    list--;\n"
-		"  } else {\n"
-		"    list++;\n"
-		"  }\n"
+		  "  if (list_freelist) {\n"
+		~ "    list--;\n"
+		~ "  } else {\n"
+		~ "    list++;\n"
+		~ "  }\n"
 		;
 
 	TokenList list = scanText(txt);
@@ -1328,24 +1328,24 @@ unittest
 unittest
 {
 	string txt = 
-		"#define X(p) \\\n"
-		"    int p##1(); \\\n"
-		"    int p##2(); \\\n"
-		"    int p##3();\n"
-		"X(a)\n"
-		"X(b)\n"
-		"X(c)\n";
+		  "#define X(p) \\\n"
+		~ "    int p##1(); \\\n"
+		~ "    int p##2(); \\\n"
+		~ "    int p##3();\n"
+		~ "X(a)\n"
+		~ "X(b)\n"
+		~ "X(c)\n";
 
 	string exp = 
-		"int a1(); \n"
-		"    int a2(); \n"
-		"    int a3();\n"
-		"int b1(); \n"
-		"    int b2(); \n"
-		"    int b3();\n"
-		"int c1(); \n"
-		"    int c2(); \n"
-		"    int c3();\n";
+		  "int a1(); \n"
+		~ "    int a2(); \n"
+		~ "    int a3();\n"
+		~ "int b1(); \n"
+		~ "    int b2(); \n"
+		~ "    int b3();\n"
+		~ "int c1(); \n"
+		~ "    int c2(); \n"
+		~ "    int c3();\n";
 
 	TokenList list = scanText(txt);
 

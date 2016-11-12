@@ -1377,7 +1377,7 @@ class GlobalOptions
 		bool rc = true;
 		try
 		{
-			wstring defUserTypesSpec = "Object string wstring dstring ClassInfo\n"
+			wstring defUserTypesSpec = "Object string wstring dstring ClassInfo\n" ~
 			                           "hash_t ptrdiff_t size_t sizediff_t";
 			// get defaults from global config
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
@@ -2254,7 +2254,7 @@ class ItemWizard : DisposingDispatchObject, dte.IDTWizard
 				silent = var.boolVal != 0;
 		}
 
-		UtilMessageBox("Sorry, it does not make sense to add a package without specifying a folder.\n"
+		UtilMessageBox("Sorry, it does not make sense to add a package without specifying a folder.\n" ~
 					   "Please use the \"Add new item\" command from the project context menu.",
 					   MB_OK, "Visual D - Add package");
 		if(retval)

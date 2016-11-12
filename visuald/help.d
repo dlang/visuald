@@ -131,7 +131,7 @@ string createDisambiguationPage(string word, string[] files)
 {
 	string installdir = normalizeDir(Package.GetGlobalOptions().DMD.InstallDir) ~ "html/d/";
 	string fallback = `<html lang="en-US"><head></head><body class="hyphenate"><div id="content"></div>`
-		`<div id="footernav"></div></body></html>`;
+		~ `<div id="footernav"></div></body></html>`;
 	string html = fallback;
 
 	string idxfile = installdir ~ "index.html";

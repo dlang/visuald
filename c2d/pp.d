@@ -1496,19 +1496,19 @@ string testPP(string txt)
 unittest
 {
 	string txt =
-		"  a = 1;\n"
-		"#if COND\n"
-		"  b = 2;\n"
-		"#endif\n"
-		"  c = 3;\n"
+		  "  a = 1;\n"
+		~ "#if COND\n"
+		~ "  b = 2;\n"
+		~ "#endif\n"
+		~ "  c = 3;\n"
 		;
 
 	string exp =
-		"  a = 1;\n"
-		"__static_if(COND) {\n"
-		"  b = 2;\n"
-		"}\n"
-		"  c = 3;\n"
+		  "  a = 1;\n"
+		~ "__static_if(COND) {\n"
+		~ "  b = 2;\n"
+		~ "}\n"
+		~ "  c = 3;\n"
 		;
 
 	string res = testPP(txt);
@@ -1518,17 +1518,17 @@ unittest
 unittest
 {
 	string txt =
-		"#if COND\n"
-		"  if(a)\n"
-		"#endif\n"
-		"    b = 1;\n"
+		  "#if COND\n"
+		~ "  if(a)\n"
+		~ "#endif\n"
+		~ "    b = 1;\n"
 		;
 
 	string exp =
-		"__static_if(!COND) goto L_F1;\n"
-		"  if(a)\n"
-		"L_F1:\n"
-		"    b = 1;\n"
+		  "__static_if(!COND) goto L_F1;\n"
+		~ "  if(a)\n"
+		~ "L_F1:\n"
+		~ "    b = 1;\n"
 		;
 
 	string res = testPP(txt);
@@ -1538,22 +1538,22 @@ unittest
 unittest
 {
 	string txt =
-		"#if COND1 // comment\n"
-		"  if (a)\n"
-		"#elif COND2\n"
-		"  if (b)\n"
-		"#endif\n"
-		"    c = 1;\n"
+		  "#if COND1 // comment\n"
+		~ "  if (a)\n"
+		~ "#elif COND2\n"
+		~ "  if (b)\n"
+		~ "#endif\n"
+		~ "    c = 1;\n"
 		;
 
 	string exp =
-		"bool cond_1;\n"
-		"__static_if(COND1) { // comment\n"
-		"  cond_1 = (a);\n"
-		"} else __static_if(COND2) {\n"
-		"  cond_1 = (b);\n"
-		"}\n"
-		"    if (cond_1) c = 1;\n"
+		  "bool cond_1;\n"
+		~ "__static_if(COND1) { // comment\n"
+		~ "  cond_1 = (a);\n"
+		~ "} else __static_if(COND2) {\n"
+		~ "  cond_1 = (b);\n"
+		~ "}\n"
+		~ "    if (cond_1) c = 1;\n"
 		;
 
 	string res = testPP(txt);
@@ -1563,25 +1563,25 @@ unittest
 unittest
 {
 	string txt =
-		"  if (x)\n"
-		"    c = 0;\n"
-		"#if COND1 // comment\n"
-		"  else if (a)\n"
-		"#elif COND2\n"
-		"  else if (b)\n"
-		"#endif\n"
-		"    c = 1;\n"
+		  "  if (x)\n"
+		~ "    c = 0;\n"
+		~ "#if COND1 // comment\n"
+		~ "  else if (a)\n"
+		~ "#elif COND2\n"
+		~ "  else if (b)\n"
+		~ "#endif\n"
+		~ "    c = 1;\n"
 		;
 
 	string exp =
-		"  if (x)\n"
-		"    c = 0;\n"
-		"else if(true) __static_if(COND1) // comment\n"
-		"  /*else*/ if (a)\n"
-		"goto L_T3; else goto L_F3; else __static_if(COND2)\n"
-		"  /*else*/ if (b)\n"
-		"goto L_T3; else goto L_F3; else goto L_T3; else L_F3: if(0) L_T3:\n"
-		"    c = 1;\n"
+		  "  if (x)\n"
+		~ "    c = 0;\n"
+		~ "else if(true) __static_if(COND1) // comment\n"
+		~ "  /*else*/ if (a)\n"
+		~ "goto L_T3; else goto L_F3; else __static_if(COND2)\n"
+		~ "  /*else*/ if (b)\n"
+		~ "goto L_T3; else goto L_F3; else goto L_T3; else L_F3: if(0) L_T3:\n"
+		~ "    c = 1;\n"
 		;
 
 	string res = testPP(txt);
@@ -1591,21 +1591,21 @@ unittest
 unittest
 {
 	string txt =
-		"  if (a)\n"
-		"    c = 1;\n"
-		"#if COND\n"
-		"  else if (b)\n"
-		"    c = 2;\n"
-		"#endif\n"
+		  "  if (a)\n"
+		~ "    c = 1;\n"
+		~ "#if COND\n"
+		~ "  else if (b)\n"
+		~ "    c = 2;\n"
+		~ "#endif\n"
 		;
 
 	string exp =
-		"  if (a)\n"
-		"    c = 1;\n"
-		"else __static_if(COND) {\n"
-		"  /*else*/ if (b)\n"
-		"    c = 2;\n"
-		"}\n"
+		  "  if (a)\n"
+		~ "    c = 1;\n"
+		~ "else __static_if(COND) {\n"
+		~ "  /*else*/ if (b)\n"
+		~ "    c = 2;\n"
+		~ "}\n"
 		;
 
 	string res = testPP(txt);
@@ -1615,27 +1615,27 @@ unittest
 unittest
 {
 	string txt =
-		"#if COND1 // comment\n"
-		"  if (a)\n"
-		"#elif COND2\n"
-		"  if (b)\n"
-		"    c = 0;\n"
-		"  else\n"
-		"#endif\n"
-		"    c = 1;\n"
+		  "#if COND1 // comment\n"
+		~ "  if (a)\n"
+		~ "#elif COND2\n"
+		~ "  if (b)\n"
+		~ "    c = 0;\n"
+		~ "  else\n"
+		~ "#endif\n"
+		~ "    c = 1;\n"
 		;
 
 	string exp =
-		"bool cond_1;\n"
-		"__static_if(COND1) { // comment\n"
-		"  cond_1 = (a);\n"
-		"} else __static_if(COND2) {\n"
-		"  if (b)\n"
-		"    c = 0;\n"
-		"  else\n"
-		"cond_1 = true;\n"  // todo: fix indentation
-		"}\n"
-		"    if (cond_1) c = 1;\n"
+		  "bool cond_1;\n"
+		~ "__static_if(COND1) { // comment\n"
+		~ "  cond_1 = (a);\n"
+		~ "} else __static_if(COND2) {\n"
+		~ "  if (b)\n"
+		~ "    c = 0;\n"
+		~ "  else\n"
+		~ "cond_1 = true;\n"  // todo: fix indentation
+		~ "}\n"
+		~ "    if (cond_1) c = 1;\n"
 		;
 
 	string res = testPP(txt);
@@ -1645,25 +1645,25 @@ unittest
 unittest
 {
 	string txt =
-		"  if (a1)\n"
-		"    c = 0;\n"
-		"#if COND // comment\n"
-		"  else if (a2)\n"
-		"    c = 1;\n"
-		"#endif\n"
-		"  else if (a3)\n"
-		"    c = 2;\n"
+		  "  if (a1)\n"
+		~ "    c = 0;\n"
+		~ "#if COND // comment\n"
+		~ "  else if (a2)\n"
+		~ "    c = 1;\n"
+		~ "#endif\n"
+		~ "  else if (a3)\n"
+		~ "    c = 2;\n"
 		;
 
 	string exp =
-		"  if (a1)\n"
-		"    c = 0;\n"
-		"else __static_if(COND) // comment\n"
-		"  /*else*/ if (a2)\n"
-		"    c = 1;\n"
-		"else goto L_F3; else goto L_F3; if (true) {} else L_F3:\n"
-		"  /*else*/ if (a3)\n"
-		"    c = 2;\n"
+		  "  if (a1)\n"
+		~ "    c = 0;\n"
+		~ "else __static_if(COND) // comment\n"
+		~ "  /*else*/ if (a2)\n"
+		~ "    c = 1;\n"
+		~ "else goto L_F3; else goto L_F3; if (true) {} else L_F3:\n"
+		~ "  /*else*/ if (a3)\n"
+		~ "    c = 2;\n"
 		;
 
 	string res = testPP(txt);
@@ -1673,37 +1673,37 @@ unittest
 unittest
 {
 	string txt =
-		"  if (a1\n"
-		"#if COND1\n"
-		"      && a2\n"
-		"#elif COND2\n"
-		"      && b2\n"
-		"#endif\n"
-		"      && a3)\n"
-		"    c = 2;\n"
-		"\n"
-		"  if (a1 ||\n"
-		"#if COND1\n"
-		"      a2 ||\n"
-		"#elif COND2\n"
-		"      b2 ||\n"
-		"#endif\n"
-		"      a3)\n"
-		"    c = 2;\n"
+		  "  if (a1\n"
+		~ "#if COND1\n"
+		~ "      && a2\n"
+		~ "#elif COND2\n"
+		~ "      && b2\n"
+		~ "#endif\n"
+		~ "      && a3)\n"
+		~ "    c = 2;\n"
+		~ "\n"
+		~ "  if (a1 ||\n"
+		~ "#if COND1\n"
+		~ "      a2 ||\n"
+		~ "#elif COND2\n"
+		~ "      b2 ||\n"
+		~ "#endif\n"
+		~ "      a3)\n"
+		~ "    c = 2;\n"
 		;
 
 	string exp =
-		"  if (a1\n"
-		"      && __static_eval(COND1, true)(a2)\n"
-		"      && __static_eval(!(COND1) && COND2, true)(b2)\n"
-		"      && a3)\n"
-		"    c = 2;\n"
-		"\n"
-		"  if (a1 ||\n"
-		"      __static_eval(COND1, false)(a2) ||\n"
-		"      __static_eval(!(COND1) && COND2, false)(b2) ||\n"
-		"      a3)\n"
-		"    c = 2;\n"
+		  "  if (a1\n"
+		~ "      && __static_eval(COND1, true)(a2)\n"
+		~ "      && __static_eval(!(COND1) && COND2, true)(b2)\n"
+		~ "      && a3)\n"
+		~ "    c = 2;\n"
+		~ "\n"
+		~ "  if (a1 ||\n"
+		~ "      __static_eval(COND1, false)(a2) ||\n"
+		~ "      __static_eval(!(COND1) && COND2, false)(b2) ||\n"
+		~ "      a3)\n"
+		~ "    c = 2;\n"
 		;
 
 	string res = testPP(txt);
@@ -1713,37 +1713,37 @@ unittest
 unittest
 {
 	string txt =
-		"  if (a1 &&\n"
-		"#if COND1\n"
-		"      a2\n"
-		"#elif COND2\n"
-		"      b2\n"
-		"#endif\n"
-		"      )\n"
-		"    c = 2;\n"
-		"\n"
-		"  if (a1 ||\n"
-		"#if COND1\n"
-		"      a2\n"
-		"#elif COND2\n"
-		"      b2\n"
-		"#endif\n"
-		"      || a3)\n"
-		"    c = 2;\n"
+		  "  if (a1 &&\n"
+		~ "#if COND1\n"
+		~ "      a2\n"
+		~ "#elif COND2\n"
+		~ "      b2\n"
+		~ "#endif\n"
+		~ "      )\n"
+		~ "    c = 2;\n"
+		~ "\n"
+		~ "  if (a1 ||\n"
+		~ "#if COND1\n"
+		~ "      a2\n"
+		~ "#elif COND2\n"
+		~ "      b2\n"
+		~ "#endif\n"
+		~ "      || a3)\n"
+		~ "    c = 2;\n"
 		;
 
 	string exp =
-		"  if (a1 &&\n"
-		"      __static_eval(COND1, true)(a2)\n"
-		"      && __static_eval(!(COND1) && COND2, true)(b2)\n"
-		"      )\n"
-		"    c = 2;\n"
-		"\n"
-		"  if (a1 ||\n"
-		"      __static_eval(COND1, false)(a2)\n"
-		"      || __static_eval(!(COND1) && COND2, false)(b2)\n"
-		"      || a3)\n"
-		"    c = 2;\n"
+		  "  if (a1 &&\n"
+		~ "      __static_eval(COND1, true)(a2)\n"
+		~ "      && __static_eval(!(COND1) && COND2, true)(b2)\n"
+		~ "      )\n"
+		~ "    c = 2;\n"
+		~ "\n"
+		~ "  if (a1 ||\n"
+		~ "      __static_eval(COND1, false)(a2)\n"
+		~ "      || __static_eval(!(COND1) && COND2, false)(b2)\n"
+		~ "      || a3)\n"
+		~ "    c = 2;\n"
 		;
 
 	string res = testPP(txt);
@@ -1753,34 +1753,34 @@ unittest
 unittest
 {
 	string txt =
-		"#ifndef HDR_H\n"
-		"#define HDR_H\n"
-		"    a = 0;\n"
-		"#endif\n"
-		;
-
-	string exp =
-		"    a = 0;\n"
-		;
-
-	string res = testPP(txt);
-	assert(res == exp);
-}
-
-unittest
-{
-	string txt =
-		"    a = 0;\n"
-		"#ifdef __DMC__\n"
-		"#pragma once\n"
-		"#endif\n"
-		"    b = 0;\n"
+		  "#ifndef HDR_H\n"
+		~ "#define HDR_H\n"
+		~ "    a = 0;\n"
+		~ "#endif\n"
 		;
 
 	string exp =
 		"    a = 0;\n"
-		"\n"
-		"    b = 0;\n"
+		;
+
+	string res = testPP(txt);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt =
+		  "    a = 0;\n"
+		~ "#ifdef __DMC__\n"
+		~ "#pragma once\n"
+		~ "#endif\n"
+		~ "    b = 0;\n"
+		;
+
+	string exp =
+		  "    a = 0;\n"
+		~ "\n"
+		~ "    b = 0;\n"
 		;
 
 	string res = testPP(txt);

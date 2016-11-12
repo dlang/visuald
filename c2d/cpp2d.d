@@ -3065,14 +3065,14 @@ unittest
 unittest
 {
 	string txt =
-		"class C {\n"
-		"    FuncDeclaration *overloadResolve(int flags = 0);\n"
-		"};\n"
-		"FuncDeclaration *C::overloadResolve(int flags) {}\n";
+		  "class C {\n"
+		~ "    FuncDeclaration *overloadResolve(int flags = 0);\n"
+		~ "};\n"
+		~ "FuncDeclaration *C::overloadResolve(int flags) {}\n";
 	string exp =
-		"struct C {\n"
-		"    FuncDeclaration *overloadResolve(int flags = 0) {}\n"
-		"};\n";
+		  "struct C {\n"
+		~ "    FuncDeclaration *overloadResolve(int flags = 0) {}\n"
+		~ "};\n";
 	string res = testDmdGen(txt, 1, 0);
 
 	assert(res == exp);
@@ -3128,25 +3128,25 @@ unittest
 unittest
 {
 	string txt =
-	    "class C {\n"
-	    "    type_t foo();\n"
-	    "};\n"
-	    "__static_if(1) {\n"
-	    "type_t C::foo() { return 1; }\n"
-	    "} else {\n"
-	    "type_t C::foo() { return 2; }\n"
-	    "}";
+	      "class C {\n"
+	    ~ "    type_t foo();\n"
+	    ~ "};\n"
+	    ~ "__static_if(1) {\n"
+	    ~ "type_t C::foo() { return 1; }\n"
+	    ~ "} else {\n"
+	    ~ "type_t C::foo() { return 2; }\n"
+	    ~ "}";
 	string exp =
-	    "struct C {\n"
-	    "static if(1) {\n"
-	    "    type_t foo() { return 1; }\n"
-	    "} else {\n"
-	    "    type_t foo() { return 2; }\n"
-	    "}\n"
-	    "};"
-//	    "\nstatic if(1) {\n"
-//	    "} else {\n"
-//	    "}"
+	      "struct C {\n"
+	    ~ "static if(1) {\n"
+	    ~ "    type_t foo() { return 1; }\n"
+	    ~ "} else {\n"
+	    ~ "    type_t foo() { return 2; }\n"
+	    ~ "}\n"
+	    ~ "};"
+//	    ~ "\nstatic if(1) {\n"
+//	    ~ "} else {\n"
+//	    ~ "}"
 	    ;
 
 	string res = testDmdGen(txt);
@@ -3156,24 +3156,24 @@ unittest
 unittest
 {
 	string txt =
-	    "class C {\n"
-	    "    type_t foo();\n"
-	    "};\n"
-	    "__static_if(1) {\n"
-	    "type_t C::foo() { return 1; }\n"
-	    "}\n"
-	    "__static_if(2) {\n"
-	    "type_t C::foo() { return 2; }\n"
-	    "}";
+	      "class C {\n"
+	    ~ "    type_t foo();\n"
+	    ~ "};\n"
+	    ~ "__static_if(1) {\n"
+	    ~ "type_t C::foo() { return 1; }\n"
+	    ~ "}\n"
+	    ~ "__static_if(2) {\n"
+	    ~ "type_t C::foo() { return 2; }\n"
+	    ~ "}";
 	string exp =
-	    "struct C {\n"
-	    "static if(1) {\n"
-	    "    type_t foo() { return 1; }\n"
-	    "}\n"
-	    "static if(2) {\n"
-	    "    type_t foo() { return 2; }\n"
-	    "}\n"
-	    "};"
+	      "struct C {\n"
+	    ~ "static if(1) {\n"
+	    ~ "    type_t foo() { return 1; }\n"
+	    ~ "}\n"
+	    ~ "static if(2) {\n"
+	    ~ "    type_t foo() { return 2; }\n"
+	    ~ "}\n"
+	    ~ "};"
 //	    "\nstatic if(1) {\n"
 //	    "}\n"
 //	    "static if(2) {\n"
@@ -3187,20 +3187,20 @@ unittest
 unittest
 {
 	string txt =
-	    "class C {\n"
-	    "    static int x;\n"
-	    "    static int *y;\n"
-	    "    static int z[NUM];\n"
-	    "};\n"
-	    "int C::x = 3;\n"
-	    "int *C::y;\n"
-	    "int C::z[NUM];\n";
+	      "class C {\n"
+	    ~ "    static int x;\n"
+	    ~ "    static int *y;\n"
+	    ~ "    static int z[NUM];\n"
+	    ~ "};\n"
+	    ~ "int C::x = 3;\n"
+	    ~ "int *C::y;\n"
+	    ~ "int C::z[NUM];\n";
 	string exp =
-	    "struct C {\n"
-	    "    static int x = 3;\n"
-	    "    static int *y;\n"
-	    "    static int z[NUM];\n"
-	    "};\n";
+	      "struct C {\n"
+	    ~ "    static int x = 3;\n"
+	    ~ "    static int *y;\n"
+	    ~ "    static int z[NUM];\n"
+	    ~ "};\n";
 
 	string res = testDmdGen(txt, 3);
 	assert(res == exp);
@@ -3209,17 +3209,17 @@ unittest
 unittest
 {
 	string txt =
-	    "struct A : B\n"
-	    "{\n"
-	    "    A() : B(1) { }\n"
-	    "    A(int x) : B(x) { }\n"
-	    "};\n";
+	      "struct A : B\n"
+	    ~ "{\n"
+	    ~ "    A() : B(1) { }\n"
+	    ~ "    A(int x) : B(x) { }\n"
+	    ~ "};\n";
 	string exp =
-	    "class A : B\n"
-	    "{\n"
-	    "    this() { super(1); }\n"
-	    "    this(int x) { super(x); }\n"
-	    "};\n";
+	      "class A : B\n"
+	    ~ "{\n"
+	    ~ "    this() { super(1); }\n"
+	    ~ "    this(int x) { super(x); }\n"
+	    ~ "};\n";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3229,13 +3229,13 @@ unittest
 unittest
 {
 	string txt =
-	    "int foo() {\n"
-	    "    if(memchr((char *)stringbuffer)) x;\n"
-	    "}";
+	      "int foo() {\n"
+	    ~ "    if(memchr((char *)stringbuffer)) x;\n"
+	    ~ "}";
 	string exp =
-	    "int foo() {\n"
-	    "    if(memchr(cast(char *)stringbuffer)) x;\n"
-	    "}";
+	      "int foo() {\n"
+	    ~ "    if(memchr(cast(char *)stringbuffer)) x;\n"
+	    ~ "}";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3244,14 +3244,14 @@ unittest
 unittest
 {
 	string txt =
-	    "int a;\n"
-	    "\n"
-	    "    int x, *y = 0;\n";
+	      "int a;\n"
+	    ~ "\n"
+	    ~ "    int x, *y = 0;\n";
 	string exp =
-	    "int a;\n"
-	    "\n"
-	    "    int x;\n"
-	    "    int *y = 0;\n";
+	      "int a;\n"
+	    ~ "\n"
+	    ~ "    int x;\n"
+	    ~ "    int *y = 0;\n";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3260,11 +3260,11 @@ unittest
 unittest
 {
 	string txt =
-	    "int a = sizeof(void*);\n"
-	    "int b = sizeof(wchar_t);\n";
+	      "int a = sizeof(void*);\n"
+	    ~ "int b = sizeof(wchar_t);\n";
 	string exp =
-	    "int a = (void *).sizeof;\n"
-	    "int b = wchar_t.sizeof;\n";
+	      "int a = (void *).sizeof;\n"
+	    ~ "int b = wchar_t.sizeof;\n";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3273,23 +3273,23 @@ unittest
 unittest
 {
 	string txt =
-	    "int foo() {\n"
-	    "  __asm\n"
-	    "  {\n"
-	    "     mov eax,ebx  ; hi\n"
-	    "; there\n"
-	    "     mov ebx,eax  ; hi\n"
-	    "  }\n"
-	    "}";
+	      "int foo() {\n"
+	    ~ "  __asm\n"
+	    ~ "  {\n"
+	    ~ "     mov eax,ebx  ; hi\n"
+	    ~ "; there\n"
+	    ~ "     mov ebx,eax  ; hi\n"
+	    ~ "  }\n"
+	    ~ "}";
 	string exp =
-	    "int foo() {\n"
-	    "  asm\n"
-	    "  {\n"
-	    "     mov eax,ebx;  //; hi\n"
-	    "//; there\n"
-	    "     mov ebx,eax;  //; hi\n"
-	    "  }\n"
-	    "}";
+	      "int foo() {\n"
+	    ~ "  asm\n"
+	    ~ "  {\n"
+	    ~ "     mov eax,ebx;  //; hi\n"
+	    ~ "//; there\n"
+	    ~ "     mov ebx,eax;  //; hi\n"
+	    ~ "  }\n"
+	    ~ "}";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3298,15 +3298,15 @@ unittest
 unittest
 {
 	string txt =
-	    "class A : B { };\n"
-	    "int foo() {\n"
-	    "  A a(3);\n"
-	    "}";
+	      "class A : B { };\n"
+	    ~ "int foo() {\n"
+	    ~ "  A a(3);\n"
+	    ~ "}";
 	string exp =
-	    "class A : B { };\n"
-	    "int foo() {\n"
-	    "  A a = new A(3);\n"
-	    "}";
+	      "class A : B { };\n"
+	    ~ "int foo() {\n"
+	    ~ "  A a = new A(3);\n"
+	    ~ "}";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3315,26 +3315,26 @@ unittest
 unittest
 {
 	string txt =
-	    "class A : B {\n"
-	    "    A();\n"
-	    "    static A* bar();\n"
-	    "    #define ABC 1\n"
-	    "    virtual int foo();\n"
-	    "    virtual void baz() = 0;\n"
-	    "};\n"
-	    "A::A() { }\n"
-	    "int abc = ABC;\n"
-	    "int A::foo() { return 0; }\n"
-	    "A *A::bar() { halt; }\n";
+	      "class A : B {\n"
+	    ~ "    A();\n"
+	    ~ "    static A* bar();\n"
+	    ~ "    #define ABC 1\n"
+	    ~ "    virtual int foo();\n"
+	    ~ "    virtual void baz() = 0;\n"
+	    ~ "};\n"
+	    ~ "A::A() { }\n"
+	    ~ "int abc = ABC;\n"
+	    ~ "int A::foo() { return 0; }\n"
+	    ~ "A *A::bar() { halt; }\n";
 	string exp =
-	    "class A : B {\n"
-	    "    this() { }\n"
-	    "    static A bar() { halt; }\n"
-	    "    enum ABC = 1;\n"
-	    "    int foo() { return 0; }\n"
-	    "    abstract void baz();\n"
-	    "};\n"
-	    "int abc = A.ABC;\n";
+	      "class A : B {\n"
+	    ~ "    this() { }\n"
+	    ~ "    static A bar() { halt; }\n"
+	    ~ "    enum ABC = 1;\n"
+	    ~ "    int foo() { return 0; }\n"
+	    ~ "    abstract void baz();\n"
+	    ~ "};\n"
+	    ~ "int abc = A.ABC;\n";
 
 	string res = testDmdGen(txt, 3);
 	assert(res == exp);
@@ -3343,26 +3343,26 @@ unittest
 unittest
 {
 	string txt =
-	    "class A : B {\n"
-	    "    A();\n"
-	    "};\n"
-	    "A::A() : B(1) {\n"
-	    "#if 1\n"
-	    "    x = 0;\n"
-	    "#endif\n"
-	    "    y = 1;\n"
-	    "}\n";
+	      "class A : B {\n"
+	    ~ "    A();\n"
+	    ~ "};\n"
+	    ~ "A::A() : B(1) {\n"
+	    ~ "#if 1\n"
+	    ~ "    x = 0;\n"
+	    ~ "#endif\n"
+	    ~ "    y = 1;\n"
+	    ~ "}\n";
 	string exp =
-	    "class A : B {\n"
-	    "    this() { super(1);\n"
-	    "    static if(1) {\n"
-	    //"    // #if 1\n"
-	    "        x = 0;\n"
-	    //"    // #endif\n"
-	    "    }\n"
-	    "        y = 1;\n"
-	    "    }\n"
-	    "};\n";
+	      "class A : B {\n"
+	    ~ "    this() { super(1);\n"
+	    ~ "    static if(1) {\n"
+	//  ~ "    // #if 1\n"
+	    ~ "        x = 0;\n"
+	//  ~ "    // #endif\n"
+	    ~ "    }\n"
+	    ~ "        y = 1;\n"
+	    ~ "    }\n"
+	    ~ "};\n";
 
 	string res = testDmdGen(txt, 1);
 	assert(res == exp);
@@ -3371,25 +3371,25 @@ unittest
 unittest
 {
 	string txt =
-	    "int foo() {\n"
-	    "#if DMDV1 /* multi\n"
-	    "       * line comment */\n"
-	    "    if(1)\n"
-	    "        x = 0;\n"
-	    "    else\n"
-	    "#endif\n"
-	    "        x = 1;\n"
-	    "}\n";
+	      "int foo() {\n"
+	    ~ "#if DMDV1 /* multi\n"
+	    ~ "       * line comment */\n"
+	    ~ "    if(1)\n"
+	    ~ "        x = 0;\n"
+	    ~ "    else\n"
+	    ~ "#endif\n"
+	    ~ "        x = 1;\n"
+	    ~ "}\n";
 	string exp =
-	    "int foo() {\n"
-	    "static if(!DMDV1) goto L_F2; /* multi\n"
-	    "       * line comment */\n"
-	    "    if(1)\n"
-	    "        x = 0;\n"
-	    "    else\n"
-	    "L_F2:\n"
-	    "        x = 1;\n"
-	    "}\n";
+	      "int foo() {\n"
+	    ~ "static if(!DMDV1) goto L_F2; /* multi\n"
+	    ~ "       * line comment */\n"
+	    ~ "    if(1)\n"
+	    ~ "        x = 0;\n"
+	    ~ "    else\n"
+	    ~ "L_F2:\n"
+	    ~ "        x = 1;\n"
+	    ~ "}\n";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3398,13 +3398,13 @@ unittest
 unittest
 {
 	string txt =
-	    "int foo(int *&x) {\n"
-	    "    x = 1;\n"
-	    "}\n";
+	      "int foo(int *&x) {\n"
+	    ~ "    x = 1;\n"
+	    ~ "}\n";
 	string exp =
-	    "int foo(ref int * x) {\n"
-	    "    x = 1;\n"
-	    "}\n";
+	      "int foo(ref int * x) {\n"
+	    ~ "    x = 1;\n"
+	    ~ "}\n";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3413,8 +3413,8 @@ unittest
 unittest
 {
 	string txt =
-	    "#define X(op) struct op##Exp : Exp {};\n"
-	    "X(Add)";
+	      "#define X(op) struct op##Exp : Exp {};\n"
+	    ~ "X(Add)";
 	string exp =
 	    "class AddExp : Exp {};";
 
@@ -3427,23 +3427,23 @@ unittest
 unittest
 {
 	string txt = "\n"
-	    "struct S2 { int y; } s2;\n"
-	    "struct P {\n"
-	    "    struct { int x; } s;\n"
-	    "    union { int u; };\n"
-	    "};\n"
-	    "typedef struct { int z; } T, *PS;";
+	    ~ "struct S2 { int y; } s2;\n"
+	    ~ "struct P {\n"
+	    ~ "    struct { int x; } s;\n"
+	    ~ "    union { int u; };\n"
+	    ~ "};\n"
+	    ~ "typedef struct { int z; } T, *PS;";
 	string exp = "\n"
-	    "struct S2 { int y; }\n"
-	    "S2 s2;\n"
-	    "struct P {\n"
-	    "    struct unnamed_4 { int x; }\n"
-	    "    unnamed_4 s;\n"
-	    "    union { int u; };\n"
-	    "};\n"
-	    "struct unnamed_7 { int z; }\n"
-	    "alias unnamed_7 T;\n"
-	    "alias unnamed_7 *PS;";
+	    ~ "struct S2 { int y; }\n"
+	    ~ "S2 s2;\n"
+	    ~ "struct P {\n"
+	    ~ "    struct unnamed_4 { int x; }\n"
+	    ~ "    unnamed_4 s;\n"
+	    ~ "    union { int u; };\n"
+	    ~ "};\n"
+	    ~ "struct unnamed_7 { int z; }\n"
+	    ~ "alias unnamed_7 T;\n"
+	    ~ "alias unnamed_7 *PS;";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3452,10 +3452,10 @@ unittest
 unittest
 {
 	string txt = "\n"
-	    "typedef enum { e1, e2, e3 } ENUM;\n";
+	    ~ "typedef enum { e1, e2, e3 } ENUM;\n";
 	string exp = "\n"
-	    "enum unnamed_2 { e1, e2, e3 }\n"
-	    "alias unnamed_2 ENUM;\n";
+	    ~ "enum unnamed_2 { e1, e2, e3 }\n"
+	    ~ "alias unnamed_2 ENUM;\n";
 
 	string res = testDmdGen(txt, 0);
 	assert(res == exp);
@@ -3491,17 +3491,17 @@ unittest
 unittest
 {
 	string txt = "#if 1\n"
-	    "int x(), y();\n"
-	    "#else\n"
-	    "int a(), b();\n"
-	    "#endif\n";
+	    ~ "int x(), y();\n"
+	    ~ "#else\n"
+	    ~ "int a(), b();\n"
+	    ~ "#endif\n";
 	string exp = "static if(1) {\n"
-	    "int x();\n"
-	    "int y();\n"
-		"} else {\n"
-	    "int a();\n"
-	    "int b();\n"
-		"}\n";
+	    ~ "int x();\n"
+	    ~ "int y();\n"
+		~ "} else {\n"
+	    ~ "int a();\n"
+	    ~ "int b();\n"
+		~ "}\n";
 
 	string res = testDmdGen(txt, 0, 2); // x(), y() count as one non-implemented function
 	assert(res == exp);
@@ -3510,9 +3510,9 @@ unittest
 unittest
 {
 	string txt = "int foo(void);\n"
-		 "int bar(void) { return x; }\n";
+		 ~ "int bar(void) { return x; }\n";
 	string exp = "int foo();\n"
-		 "int bar() { return x; }\n";
+		 ~ "int bar() { return x; }\n";
 
 	string res = testDmdGen(txt, 0, 1);
 	assert(res == exp);
@@ -3530,13 +3530,13 @@ unittest
 unittest
 {
 	string txt = "data arr[] = {\n"
-		" 0, 1,\n"
-		" 2, 3,\n"
-		"};\n";
+		~ " 0, 1,\n"
+		~ " 2, 3,\n"
+		~ "};\n";
 	string exp = "data arr[] = [\n"
-		" { 0, 1, },\n"
-		" { 2, 3, },\n"
-		"];\n";
+		~ " { 0, 1, },\n"
+		~ " { 2, 3, },\n"
+		~ "];\n";
 	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
@@ -3544,13 +3544,13 @@ unittest
 unittest
 {
 	string txt = "int arr[][2] = {\n"
-		" 0, 1,\n"
-		" 2, 3,\n"
-		"};\n";
+		~ " 0, 1,\n"
+		~ " 2, 3,\n"
+		~ "};\n";
 	string exp = "int arr[][2] = [\n"
-		" [ 0, 1, ],\n"
-		" [ 2, 3, ],\n"
-		"];\n";
+		~ " [ 0, 1, ],\n"
+		~ " [ 2, 3, ],\n"
+		~ "];\n";
 	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
 }
@@ -3567,11 +3567,11 @@ unittest
 unittest
 {
 	string txt = "class Type : Obj {\n"
-		"    Type* tbit() { return 0; }\n"
-		"};";
+		~ "    Type* tbit() { return 0; }\n"
+		~ "};";
 	string exp = "class Type : Obj {\n"
-		"    Type tbit() { return 0; }\n"
-		"};";
+		~ "    Type tbit() { return 0; }\n"
+		~ "};";
 
 	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
@@ -3580,13 +3580,13 @@ unittest
 unittest
 {
 	string txt = "enum ENUM { kEnum };\n"
-		"int foo() {\n"
-		"    Ident id = (op == kEnum) ? 0 : 1;\n"
-		"}";
+		~ "int foo() {\n"
+		~ "    Ident id = (op == kEnum) ? 0 : 1;\n"
+		~ "}";
 	string exp = "enum ENUM { kEnum };\n"
-		"int foo() {\n"
-		"    Ident id = (op == ENUM.kEnum) ? 0 : 1;\n"
-		"}";
+		~ "int foo() {\n"
+		~ "    Ident id = (op == ENUM.kEnum) ? 0 : 1;\n"
+		~ "}";
 
 	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
@@ -3595,19 +3595,19 @@ unittest
 unittest
 {
 	string txt =
-		"int foo() {\n"
-		"    search(0, 1);\n"
-		"    search(loc, 1);\n"
-		"    ad.search(0, 1);\n"
-		"    Expression e = new IdentifierExp(0, id);\n"
-		"}";
+		  "int foo() {\n"
+		~ "    search(0, 1);\n"
+		~ "    search(loc, 1);\n"
+		~ "    ad.search(0, 1);\n"
+		~ "    Expression e = new IdentifierExp(0, id);\n"
+		~ "}";
 	string exp =
-		"int foo() {\n"
-		"    search(Loc(0), 1);\n"
-		"    search(loc, 1);\n"
-		"    ad.search(Loc(0), 1);\n"
-		"    Expression e = new IdentifierExp(Loc(0), id);\n"
-		"}";
+		  "int foo() {\n"
+		~ "    search(Loc(0), 1);\n"
+		~ "    search(loc, 1);\n"
+		~ "    ad.search(Loc(0), 1);\n"
+		~ "    Expression e = new IdentifierExp(Loc(0), id);\n"
+		~ "}";
 
 	string res = testDmdGen(txt, 0, 0);
 	assert(res == exp);
@@ -3707,17 +3707,17 @@ unittest
 unittest
 {
 	string txt =
-	    "#if EXP\n"
-	    "int a;\n"
-	    "#else\n"
-	    "int b;\n"
-	    "#endif\n"
+	      "#if EXP\n"
+	    ~ "int a;\n"
+	    ~ "#else\n"
+	    ~ "int b;\n"
+	    ~ "#endif\n"
 	    ;
 	string exp =
-	    "// #if EXP\n"
-	    "int a;\n"
-		" \n"
-	    "// #endif\n"
+	      "// #if EXP\n"
+	    ~ "int a;\n"
+		~ " \n"
+	    ~ "// #endif\n"
 		;
 
 	PP.expandConditionals["EXP"] = true;
@@ -3725,11 +3725,10 @@ unittest
 	string res = testDmdGen(txt, 0, 0, null);
 	assert(res == exp);
 
-	exp =
-	    "// not #if EXP\n"
-	    " \n"
-		"int b;\n"
-	    "// #endif\n"
+	exp = "// not #if EXP\n"
+	    ~ " \n"
+		~ "int b;\n"
+	    ~ "// #endif\n"
 		;
 
 	PP.expandConditionals["EXP"] = false;
@@ -3744,16 +3743,16 @@ unittest
 {
 	// force failure
 	string txt =
-		"#define A 1\n"
-		"#define B A\n"
-		"#define C() B*B\n"
-		"#define SQR(a) (a)*(a)\n"
+		  "#define A 1\n"
+		~ "#define B A\n"
+		~ "#define C() B*B\n"
+		~ "#define SQR(a) (a)*(a)\n"
 		;
 	string exp =
-		"enum A = 1;\n"
-		"alias B A;\n"
-		" auto C(  )() { return B*B; }\n"
-		" auto SQR(  ARG1 )(ARG1 a) { return a*a; }\n"
+		  "enum A = 1;\n"
+		~ "alias B A;\n"
+		~ " auto C(  )() { return B*B; }\n"
+		~ " auto SQR(  ARG1 )(ARG1 a) { return a*a; }\n"
 		;
 
 	string res = testDmdGen(txt, 0, 0);
@@ -3763,12 +3762,12 @@ unittest
 void cpp2d_test()
 {
 	string txt =
-	    "#define EXP 1 // EXP1\n"
-	    "#define WSL EXP // comment\n"
+	      "#define EXP 1 // EXP1\n"
+	    ~ "#define WSL EXP // comment\n"
 	    ;
 	string exp =
-	    "enum EXP = 1; // EXP1\n"
-	    "alias EXP WSL; // comment\n"
+	      "enum EXP = 1; // EXP1\n"
+	    ~ "alias EXP WSL; // comment\n"
 		;
 
 //	PP.expandConditionals["EXP"] = true;

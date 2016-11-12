@@ -25,7 +25,7 @@ import core.stdc.stdlib;
 // for msobj80.dll
 // http://download.microsoft.com/download/2/E/9/2E911956-F90F-4BFB-8231-E292A7B6F287/GRMSDK_EN_DVD.iso
 // FL_msobj71_dll_1_60033_x86_ln.3643236F_FC70_11D3_A536_0090278A1BB8
-// in vc_stdx86.cab 
+// in vc_stdx86.cab
 
 // for msobj100.dll
 //
@@ -61,8 +61,8 @@ HRESULT VerifyMSObjectParser(wstring winstallDir)
 			if(exists(absmsobj))
 				return S_OK;
 
-			int res = UtilMessageBox("The file " ~ msobj ~ "\n"
-									 "is missing in your Visual Studio installation.\n"
+			int res = UtilMessageBox("The file " ~ msobj ~ "\n" ~
+									 "is missing in your Visual Studio installation.\n" ~
 									 "Would you like to download it from the Windows 7 SDK?",
 									 MB_YESNO, "Visual Studio Shell detected");
 			if(res == IDYES)
