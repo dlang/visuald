@@ -82,6 +82,8 @@
   !define VS2012_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\11.0
   !define VS2013_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\12.0
   !define VS2015_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\14.0
+  !define VS2017_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\15.0
+  !define VS2017_INSTALL_KEY      SOFTWARE\Microsoft\VisualStudio\SxS\VS7
 !ifdef EXPRESS
   !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
   !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
@@ -447,6 +449,32 @@ ${MementoSection} "Register with VS 2015" SecVS2015
 
 ${MementoSectionEnd}
 
+;--------------------------------
+${MementoSection} "Register with VS 2017" SecVS2017
+
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2017_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ${RegisterWin32Exception} ${VS2017_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1Common7\IDE${EXTENSION_DIR}\visuald.pkgdef'
+
+  ${SetOutPath} "$1Common7\IDE${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "15" NoBackup
+
+  !ifdef MAGO
+    ${SetOutPath} "$1Common7\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
+  !endif
+
+${MementoSectionEnd}
+
 !macro RegisterPlatform Vxxx Platform
     ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportBefore\Default"
     ${File} ..\msbuild\ImportBefore\Default\ d.props
@@ -569,6 +597,10 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   Push ${VS2015_REGISTRY_KEY}
   Call PatchAutoExp
   
+  Push ${SecVS2017}
+  Push ${VS2017_REGISTRY_KEY}
+  Call PatchAutoExp
+  
 ${MementoSectionEnd}
 !endif
 
@@ -617,6 +649,10 @@ ${MementoSection} "mago" SecMago
   Push ${VS2015_REGISTRY_KEY}
   Call RegisterMago
   
+  Push ${SecVS2017}
+  Push ${VS2017_REGISTRY_KEY}
+  Call RegisterMago
+  
   WriteRegStr HKLM "SOFTWARE\Wow6432Node\MagoDebugger" "Remote_x64" "$INSTDIR\Mago\MagoRemote.exe"
 
 ${MementoSectionEnd}
@@ -643,6 +679,7 @@ SectionEnd
   LangString DESC_SecVS2012 ${LANG_ENGLISH} "Register for usage in Visual Studio 2012."
   LangString DESC_SecVS2013 ${LANG_ENGLISH} "Register for usage in Visual Studio 2013."
   LangString DESC_SecVS2015 ${LANG_ENGLISH} "Register for usage in Visual Studio 2015."
+  LangString DESC_SecVS2017 ${LANG_ENGLISH} "Register for usage in Visual Studio 2017."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -671,6 +708,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2012} $(DESC_SecVS2012)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2013} $(DESC_SecVS2013)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2015} $(DESC_SecVS2015)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017} $(DESC_SecVS2017)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
@@ -701,11 +739,19 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2012_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2013_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2015_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2017_REGISTRY_KEY}'
 !ifdef EXPRESS
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}" InstallDir
+  IfErrors NoVS2017pkgdef
+    RMDir /r '$1${EXTENSION_DIR}'
+    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2017pkgdef:
+  
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2015pkgdef
     RMDir /r '$1${EXTENSION_DIR}'
@@ -757,6 +803,9 @@ Section "Uninstall"
 
   Push ${VS2015_REGISTRY_KEY}
   Call un.PatchAutoExp
+
+  Push ${VS2017_REGISTRY_KEY}
+  Call un.PatchAutoExp
 !endif
 
 !ifdef VS_NET
@@ -768,6 +817,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2015_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2017_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
 
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
@@ -793,6 +843,9 @@ Section "Uninstall"
   Call un.RegisterMago
 
   Push ${VS2015_REGISTRY_KEY}
+  Call un.RegisterMago
+
+  Push ${VS2017_REGISTRY_KEY}
   Call un.RegisterMago
 !endif
 
@@ -887,6 +940,13 @@ Function .onInit
   IfErrors 0 Installed_VS2015
     SectionSetFlags ${SecVS2015} ${SF_RO}
   Installed_VS2015:
+
+  ; detect VS2017
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
+  IfErrors 0 Installed_VS2017
+    SectionSetFlags ${SecVS2017} ${SF_RO}
+  Installed_VS2017:
 
 !ifdef EXPRESS
   ; detect VCExpress 2008

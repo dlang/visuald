@@ -310,6 +310,8 @@ static const wstring regPathMetricsEE      = "\\AD7Metrics\\ExpressionEvaluator"
 static const wstring vendorMicrosoftGuid   = "{994B45C4-E6E9-11D2-903F-00C04FA302A1}"w;
 static const wstring guidCOMPlusNativeEng  = "{92EF0900-2251-11D2-B72E-0000F87572EF}"w;
 
+static const GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
+
 ///////////////////////////////////////////////////////////////////////
 //  Registration
 ///////////////////////////////////////////////////////////////////////
@@ -688,12 +690,52 @@ version(none){
 
 		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
 
+		registerMago(pszRegRoot, useRanu);
+
 		updateConfigurationChanged(keyRoot, registrationRoot);
 	}
 	catch(RegistryException e)
 	{
 		return e.result;
 	}
+	return S_OK;
+}
+
+HRESULT registerMago(in wchar* pszRegRoot, in bool useRanu)
+{
+	HKEY    keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
+	wstring registrationRoot = GetRegistrationRoot(pszRegRoot, useRanu);
+
+	// package
+	scope RegKey keyProduct = new RegKey(keyRoot, registrationRoot ~ "\\InstalledProducts\\Mago"w);
+	keyProduct.Set(null, "Mago Native Debug Engine"w);
+	keyProduct.Set("PID"w, "1.0.0");
+	keyProduct.Set("ProductDetails"w, "A debug engine dedicated to debugging applications written in the D programming language."
+				   ~ " See the project website at http://www.dsource.org/projects/mago_debugger for more information."
+				   ~ " Copyright (c) 2010-2014 Aldo J. Nunez"w);
+
+	wstring magoGuid = GUID2wstring(GUID_MaGoDebugger);
+	scope RegKey keyAD7 = new RegKey(keyRoot, registrationRoot ~ "\\AD7Metrics\\Engine\\Mago"w ~ magoGuid);
+	keyAD7.Set("CLSID"w, magoGuid);
+	keyAD7.Set("Name"w, "Mago Native");
+	keyAD7.Set("ENC"w, 0);
+	keyAD7.Set("Disassembly"w, 1);
+	keyAD7.Set("Exceptions"w, 1);
+	keyAD7.Set("AlwaysLoadLocal"w, 1);
+
+	// TODO: register exceptions
+
+	wstring languageGuid = GUID2wstring(g_languageCLSID);
+	wstring vendorGuid = GUID2wstring(g_vendorCLSID);
+
+	scope RegKey keyEE = new RegKey(keyRoot, registrationRoot ~ "\\AD7Metrics\\ExpressionEvaluator\\"w ~ languageGuid ~ "\\"w ~ vendorGuid);
+	keyEE.Set("Language"w, "D"w);
+	keyEE.Set("Name"w, "D"w);
+
+	scope RegKey keyCV = new RegKey(keyRoot, registrationRoot ~ "\\Debugger\\CodeView Compilers\\68:*"w);
+	keyEE.Set("LanguageID"w, languageGuid);
+	keyEE.Set("VendorID"w, vendorGuid);
+
 	return S_OK;
 }
 

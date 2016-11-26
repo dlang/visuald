@@ -46,6 +46,7 @@ import visuald.fileutil;
 import visuald.lexutil;
 import visuald.pkgutil;
 import visuald.vdextensions;
+import visuald.register;
 
 version = hasOutputGroup;
 // implementation of IVsProfilableProjectCfg is incomplete (profiler doesn't stop)
@@ -922,7 +923,7 @@ class ProjectOptions
 		libs ~= "user32.lib";
 		libs ~= "kernel32.lib";
 		if(useMSVCRT())
-			if(std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+			if(std.file.exists(Package.GetGlobalOptions().getVCDir("lib\\legacy_stdio_definitions.lib", isX86_64, true)))
 				libs ~= "legacy_stdio_definitions.lib";
 
 		cmd ~= plusList(lnkfiles ~ libs, ".lib", plus);
@@ -1051,7 +1052,12 @@ class ProjectOptions
 
 		string cmd = cccmd;
 		if(cc == 1 && setenv)
-			cmd = `call "%VCINSTALLDIR%\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
+		{
+			if (std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ "vcvarsall.bat"))
+				cmd = `call "%VCINSTALLDIR%\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
+			else if (std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ r"Auxiliary\Build\vcvarsall.bat"))
+				cmd = `call "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
+		}
 
 		static string[4] outObj = [ " -o", " -Fo", " -o", " -o " ];
 		if (file.length)
@@ -2176,7 +2182,6 @@ class Config :	DisposingComObject,
 		switch(engine)
 		{
 			case 1:
-				GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
 				return GUID_MaGoDebugger;
 			case 2:
 				return GUID_COMPlusNativeEng; // the mixed-mode debugger (works only on x86)
@@ -2980,6 +2985,8 @@ class Config :	DisposingComObject,
 				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
 			if(globOpt.VCInstallDir.length)
 				cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
+			if(globOpt.VCToolsInstallDir.length)
+				cmd ~= "set VCTOOLSINSTALLDIR=" ~ globOpt.VCToolsInstallDir ~ "\n";
 			if(globOpt.VSInstallDir.length)
 				cmd ~= "set VSINSTALLDIR=" ~ globOpt.VSInstallDir ~ "\n";
 		}
