@@ -11,7 +11,11 @@
     </AvailableItemName>
   </ItemGroup>
 
-  <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(MSBuildThisFileDirectory)dbuild.$(MsBuildToolsVersion).dll" />
+  <PropertyGroup>
+    <DbuildCompileDDLLPath Condition="'$(DbuildCompileDDLLPath)' == ''">$(MSBuildThisFileDirectory)dbuild.$(MsBuildToolsVersion).dll</DbuildCompileDDLLPath>
+  </PropertyGroup>
+
+  <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(DbuildCompileDDLLPath)" />
 
   <PropertyGroup>
     <ComputeLinkInputsTargets>$(ComputeLinkInputsTargets);ComputeDCompileOutput;</ComputeLinkInputsTargets>
@@ -43,7 +47,8 @@
 
     <ItemGroup>
       <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'File'">
-        <ObjectFileName>$(IntDir)%(PackageName).%(FileName).obj</ObjectFileName>
+        <ObjectFileName Condition="'%(PackageName)' == ''">$(IntDir)%(FileName).obj</ObjectFileName>
+        <ObjectFileName Condition="'%(PackageName)' != ''">$(IntDir)%(PackageName).%(FileName).obj</ObjectFileName>
       </DCompile>
     </ItemGroup>
 
@@ -126,6 +131,7 @@
               TrackerLogDirectory="$(TLogLocation)"
               ShowCommandLine="%(DCompile.ShowCommandLine)"
               AdditionalOptions="%(DCompile.AdditionalOptions)"
+              Compiler="$(DCompiler)"
               ToolExe="$(_ToolExe)"
               Sources="@(DCompile)" >
     </CompileD>
