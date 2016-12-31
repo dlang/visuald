@@ -141,7 +141,7 @@ namespace dbuild
           return !this.trackedOutputFilesToRemove.ContainsKey(fullOutputPath);
         }
 
-#if TOOLS_V14
+#if TOOLS_V14 || TOOLS_V15
         public 
 #else
         protected
