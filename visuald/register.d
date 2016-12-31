@@ -715,7 +715,7 @@ HRESULT registerMago(in wchar* pszRegRoot, in bool useRanu)
 				   ~ " Copyright (c) 2010-2014 Aldo J. Nunez"w);
 
 	wstring magoGuid = GUID2wstring(GUID_MaGoDebugger);
-	scope RegKey keyAD7 = new RegKey(keyRoot, registrationRoot ~ "\\AD7Metrics\\Engine\\Mago"w ~ magoGuid);
+	scope RegKey keyAD7 = new RegKey(keyRoot, registrationRoot ~ "\\AD7Metrics\\Engine\\"w ~ magoGuid);
 	keyAD7.Set("CLSID"w, magoGuid);
 	keyAD7.Set("Name"w, "Mago Native");
 	keyAD7.Set("ENC"w, 0);
