@@ -7,7 +7,7 @@
 
     <DMDInstallDir Condition="$(DMDInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'DMDInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallDir>
     <DMDInstallDir Condition="$(DMDInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)_Config\ToolsOptionsPages\Projects\Visual D Settings', 'DMDInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallDir>
-    <DMDInstallationFolder> $([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\Software\DMD', 'InstallationFolder', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallationFolder>
+    <DMDInstallationFolder>$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\Software\DMD', 'InstallationFolder', '', RegistryView.Registry32, RegistryView.Registry64))</DMDInstallationFolder>
     <DMDInstallDir Condition="$(DMDInstallDir) == '' and '$(DMDInstallationFolder)' != ''">$(DMDInstallationFolder)\dmd2\</DMDInstallDir>
     <DMDBinDir     Condition="$(DMDInstallDir) != ''">$(DMDInstallDir)\windows\bin\</DMDBinDir>
     <DMDText Condition="Exists('$(DMDInstallDir)dmd.exe')">DMD - Reference compiler</DMDText>
@@ -57,6 +57,7 @@
       <StringImportPaths></StringImportPaths>
       <AdditionalOptions></AdditionalOptions>
       <CompilationModel>Project</CompilationModel>
+      <CRuntimeLibrary>MultiThreaded</CRuntimeLibrary>
       <!-- do not provide empty strings as default, they will show up on the generated command line
       <ObjectFileName></ObjectFileName>
       <DocDir></DocDir>

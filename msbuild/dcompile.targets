@@ -101,6 +101,7 @@
       <Parameter Include="PreserveSourcePath=%(DCompile.PreserveSourcePath)" />
       <Parameter Include="ShowDependencies=%(DCompile.ShowDependencies)" />
       <Parameter Include="Main=%(DCompile.Main)" />
+      <Parameter Include="CRuntimeLibrary=%(DCompile.CRuntimeLibrary)" />
       <Parameter Include="VersionIdentifiers=$([System.String]::Copy('%(DCompile.VersionIdentifiers)').Replace(';','?'))" />
       <Parameter Include="DebugIdentifiers=$([System.String]::Copy('%(DCompile.DebugIdentifiers)').Replace(';','?'))" />
       <Parameter Include="ImportPaths=$([System.String]::Copy('%(DCompile.ImportPaths)').Replace(';','?'))" />
