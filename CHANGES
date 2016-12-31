@@ -816,7 +816,7 @@ unreleased Version 0.3.44
   * when linking with MS linker, options for the map file broke the command line
   * bugzilla 16063: missing option -L/DLL when linking a DLL with MS linker
   * added integration with msbuild and VC++ projects
-  * added installation of mago expression evalutro to Concord debug engine
+  * added installation of mago expression evaluator to Concord debug engine
   * added $(Platform) as a settings macro replacement in addition to $(PlatformName)
   * changed default output directory to $(PlatformName)/$(ConfigurationName)
   * added x64 configurations to project templates
@@ -827,3 +827,5 @@ unreleased Version 0.3.44
   * VS SDK 2013 now needed to build Visual D
   * added automatic brace completion
   * added support for VS 2017 RC
+  * dparser: semantic analysis no longer times out after 500ms, but cancels previous requests
+  * completion box no longer pops up if caret has been moved elsewhere

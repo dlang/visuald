@@ -473,7 +473,7 @@ void updateEnvironmentFont()
 }
 
 ////////////////////////////////////////////////////////////////////////
-IVsTextLines GetCurrentTextBuffer(IVsTextView* pview)
+IVsTextView GetActiveView()
 {
 	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
 	if(!textmgr)
@@ -482,6 +482,15 @@ IVsTextLines GetCurrentTextBuffer(IVsTextView* pview)
 
 	IVsTextView view;
 	if(textmgr.GetActiveView(false, null, &view) != S_OK)
+		return null;
+	return view;
+}
+
+////////////////////////////////////////////////////////////////////////
+IVsTextLines GetCurrentTextBuffer(IVsTextView* pview)
+{
+	IVsTextView view = GetActiveView();
+	if (!view)
 		return null;
 	scope(exit) release(view);
 	if(pview)

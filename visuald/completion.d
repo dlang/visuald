@@ -406,15 +406,15 @@ class Declarations
 			if(tok.length && !dLex.isIdentifierCharOrDigit(tok.front))
 				tok = "";
 
-			int line, idx;
-			int hr = textView.GetCaretPos(&line, &idx);
+			int caretLine, caretIdx;
+			int hr = textView.GetCaretPos(&caretLine, &caretIdx);
 
 			src.ensureCurrentTextParsed(); // pass new text before expansion request
 
 			auto langsvc = Package.GetLanguageService();
 			mPendingSource = src;
 			mPendingView = textView;
-			mPendingRequest = langsvc.GetSemanticExpansions(src, tok, line, idx, &OnExpansions);
+			mPendingRequest = langsvc.GetSemanticExpansions(src, tok, caretLine, caretIdx, &OnExpansions);
 			return true;
 		}
 		catch(Error e)
@@ -429,45 +429,53 @@ class Declarations
 		if(request != mPendingRequest)
 			return;
 
-		if(symbols.length > 0 && mPendingSource)
+		if(symbols.length > 0 && mPendingSource && mPendingView)
 		{
-			// split after second ':' to combine same name and type
-			static string splitName(string name, ref string desc)
-			{
-				auto pos = name.indexOf(':');
-				if(pos < 0)
-					return name;
-				pos = name.indexOf(':', pos + 1);
-				if(pos < 0)
-					return name;
-				desc = name[pos..$];
-				return name[0..pos];
-			}
+			auto activeView = GetActiveView();
+			scope(exit) release(activeView);
 
-			// go through assoc array for faster uniqueness check
-			string[string] names;
-			foreach(n; mNames)
+			int caretLine, caretIdx;
+			int hr = mPendingView.GetCaretPos(&caretLine, &caretIdx);
+			if (activeView == mPendingView && line == caretLine && idx == caretIdx)
 			{
-				string desc;
-				string name = splitName(n, desc);
-				names[name] = desc;
-			}
-			foreach(s; symbols)
-			{
-				string desc;
-				string name = splitName(s, desc);
-				if(auto p = name in names)
-					*p ~= "\a\a" ~ desc[1..$]; // strip ":"
-				else
+				// split after second ':' to combine same name and type
+				static string splitName(string name, ref string desc)
+				{
+					auto pos = name.indexOf(':');
+					if(pos < 0)
+						return name;
+					pos = name.indexOf(':', pos + 1);
+					if(pos < 0)
+						return name;
+					desc = name[pos..$];
+					return name[0..pos];
+				}
+
+				// go through assoc array for faster uniqueness check
+				string[string] names;
+				foreach(n; mNames)
+				{
+					string desc;
+					string name = splitName(n, desc);
 					names[name] = desc;
-			}
-			mNames.length = names.length;
-			size_t i = 0;
-			foreach(n, desc; names)
-				mNames[i++] = n ~ desc;
+				}
+				foreach(s; symbols)
+				{
+					string desc;
+					string name = splitName(s, desc);
+					if(auto p = name in names)
+						*p ~= "\a\a" ~ desc[1..$]; // strip ":"
+					else
+						names[name] = desc;
+				}
+				mNames.length = names.length;
+				size_t i = 0;
+				foreach(n, desc; names)
+					mNames[i++] = n ~ desc;
 
-			sort!("icmp(a, b) < 0", SwapStrategy.stable)(mNames);
-			mPendingSource.GetCompletionSet().Init(mPendingView, this, false);
+				sort!("icmp(a, b) < 0", SwapStrategy.stable)(mNames);
+				mPendingSource.GetCompletionSet().Init(mPendingView, this, false);
+			}
 		}
 		mPendingRequest = 0;
 		mPendingView = null;
