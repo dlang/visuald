@@ -239,18 +239,18 @@ SymLineInfo[string] readDisasmFile(string asmfile)
 
 	__gshared static Regex!char resym, resym2, resym3, resym4, reoff, reoff2;
 
-	if(resym.ir is null) // dumpbin/llvm-objdump
+	if(resym.empty) // dumpbin/llvm-objdump
 		resym = regex(r"^([A-Za-z_][^ \t:]*):$");   // <non numeric symbol>:
-	if(resym2.ir is null) // obj2asm
+	if(resym2.empty) // obj2asm
 		resym2 = regex(r"^[ \t]*assume[ \t]+[Cc][Ss]:([A-Za-z_][^ \t]*)[ \t]*$");   // assume CS:<non numeric symbol>
-	if(resym3.ir is null) // objconv
+	if(resym3.empty) // objconv
 		resym3 = regex(r"^([A-Za-z_][^ \t]*)[ \t]+PROC[ \t]+NEAR[ \t]*$");   // <non numeric symbol> PROC NEAR
-	if(resym4.ir is null) // gcc-objdump
+	if(resym4.empty) // gcc-objdump
 		resym4 = regex(r"^[0-9A-Fa-f]+[ \t]*\<([A-Za-z_][^>]*)\>:[ \t]*$");  // 000000 <non numeric symbol>
 
-	if(reoff.ir is null)
+	if(reoff.empty())
 		reoff = regex(r"^([0-9A-Fa-f]+):.*$"); // <hex number>:
-	if(reoff2.ir is null)
+	if(reoff2.empty())
 		reoff2 = regex(r"[^;]*;[ \t:]*([0-9A-Fa-f]+) _.*$"); // ; <hex number> _
 
 	int ln = 0;
@@ -371,7 +371,7 @@ struct LineInfo
 LineInfo[] readLineInfoFile(string linefile, string srcfile)
 {
 	__gshared static Regex!char reoffline;
-	if(reoffline.ir is null)
+	if(reoffline.empty)
 		reoffline = regex(r"^Off 0x([0-9A-Fa-f]+): *Line ([0-9]+)$");   // Off 0x%x: Line %d
 
 	srcfile = toLower(normalizePath(srcfile));

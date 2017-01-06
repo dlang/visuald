@@ -48,7 +48,7 @@ version(enableLog) {
 
 	static shared(Object) logSync = new shared(Object);
 
-	void logInfo(...)
+	void logInfo(T...)(string fmt, T args)
 	{
 		auto buffer = new char[17 + 1];
 		SysTime now = Clock.currTime();
@@ -58,13 +58,8 @@ version(enableLog) {
 		string s = to!string(buffer[0..len]);
 		s ~= replicate(" ", gLogIndent);
 
-		void putc(dchar c)
-		{
-			s ~= c;
-		}
-
 		try {
-			std.format.doFormat(&putc, _arguments, _argptr);
+			s ~= std.format.format(fmt, args);
 		}
 		catch(Exception e)
 		{
