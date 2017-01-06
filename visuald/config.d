@@ -2887,7 +2887,7 @@ class Config :	DisposingComObject,
 			else
 				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile)
 				              ~ mProjectOptions.getDependenciesFileOption(depfile);
-			cmd ~= " " ~ file.GetFilename();
+			cmd ~= " " ~ quoteFilename(file.GetFilename());
 			foreach(ddoc; getDDocFileList())
 				cmd ~= " " ~ ddoc;
 		}
@@ -2911,7 +2911,7 @@ class Config :	DisposingComObject,
 			cmd ~= opts.buildCommandLine(true, !syntaxOnly, false, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";
-			cmd ~= addopt ~ " " ~ file.GetFilename();
+			cmd ~= addopt ~ " " ~ quoteFilename(file.GetFilename());
 			addopt = ""; // must be before filename for rdmd
 			if (!syntaxOnly)
 			{
