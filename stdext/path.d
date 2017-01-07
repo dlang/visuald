@@ -57,7 +57,7 @@ void makeFilenamesAbsolute(string[] files, string workdir)
 string removeDotDotPath(string file)
 {
 	// assumes \\ used as path separator
-	for( ; ; )
+	for( ; file.length >= 2; )
 	{
 		// remove duplicate back slashes
 		auto pos = indexOf(file[1..$], "\\\\");

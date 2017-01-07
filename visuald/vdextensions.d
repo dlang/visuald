@@ -62,7 +62,7 @@ int vdhelper_GetTextOptions(IVsTextView view, int* flags, int* tabsize, int* ind
 	}
 }
 
-int vdhelper_GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, ref ProjectOptions opt)
+int vdhelper_GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, ProjectOptions opt)
 {
 	try
 	{

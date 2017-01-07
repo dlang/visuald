@@ -533,15 +533,15 @@ version(tip)
 		else
 		{
 			// not in Visual D project, but in workspace project
-			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
-
-			cfg = newCom!VCConfig(filename, "__compile__").addref();
-			cfg.GetProjectOptions().outdir = normalizeDir(tempDir()) ~ "__vdcompile";
-			cfg.GetProjectOptions().release = false;
-
 			string platform, config = GetActiveSolutionConfig(&platform);
 			if (config.empty)
 				platform = "Win32", config = "Debug";
+
+			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
+			cfg = newCom!VCConfig(filename, "__compile__", platform, config).addref();
+			cfg.GetProjectOptions().outdir = normalizeDir(tempDir()) ~ "__vdcompile";
+			cfg.GetProjectOptions().release = false;
+
 			Project prj = newCom!Project(Package.GetProjectFactory(), "__compile__", filename, platform, config);
 			pFile = newCom!CFileNode(fname);
 			prj.GetRootNode().AddTail(pFile);
@@ -625,7 +625,10 @@ version(tip)
 			clearOutputPane();
 			if(pane)
 				pane.Activate();
-			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
+			
+			auto builder = new CBuilderThread(cfg);
+			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, builder);
+			builder.Dispose();
 
 			if(run)
 				Package.GetGlobalOptions().addExecutionPath(workdir, null);

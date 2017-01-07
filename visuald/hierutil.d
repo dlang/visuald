@@ -771,37 +771,28 @@ Config getProjectConfig(string file, bool genCmdLine = false)
 ///////////////////////////////////////////////////////////////
 class VCConfig : Config
 {
-	string mProjectFile;
-	string mProjectName;
 	string mCmdLine;
 
-	this(string projectfile, string projectname)
+	this(string projectfile, string projectname, string platform, string config)
 	{
-		ProjectOptions opts = new ProjectOptions(true, true);
-		Project prj = newCom!Project(Package.GetProjectFactory(), projectname, projectfile, "platform", "Debug");
-		super(prj.GetConfigProvider(), "vcxconvert", "platform", opts);
-
-		mProjectFile = projectfile;
-		mProjectName = projectname;
+		Project prj = newCom!Project(Package.GetProjectFactory(), projectname, projectfile, platform, config);
+		super(prj.GetConfigProvider(), config, platform);
 	}
 
-	this(IVsHierarchy pHierarchy, ProjectOptions opts)
+	this(IVsHierarchy pHierarchy)
 	{
+		string projectFile;
+		string projectName;
 		VARIANT var;
 		BSTR name;
 		if(pHierarchy.GetCanonicalName(VSITEMID_ROOT, &name) == S_OK)
-		{
-			mProjectFile = detachBSTR(name);
-		}
-		if(pHierarchy.GetProperty(VSITEMID_ROOT, VSHPROPID_EditLabel, &var) == S_OK && var.vt == VT_BSTR)
-		{
-			mProjectName = detachBSTR(var.bstrVal);
-		}
+			projectFile = detachBSTR(name);
 
-		string platform = opts.isX86_64 ? "x64" : "Win32";
-		string config = opts.release ? "Release" : "Debug";
-		Project prj = newCom!Project(Package.GetProjectFactory(), mProjectName, mProjectFile, null, null);
-		super(prj.GetConfigProvider(), config, platform, opts);
+		if(pHierarchy.GetProperty(VSITEMID_ROOT, VSHPROPID_EditLabel, &var) == S_OK && var.vt == VT_BSTR)
+			projectName = detachBSTR(var.bstrVal);
+
+		Project prj = newCom!Project(Package.GetProjectFactory(), projectName, projectFile, null, null);
+		super(prj.GetConfigProvider(), "Debug", "Win32");
 	}
 
 	override string GetOutputFile(CFileNode file, string tool = null)
@@ -817,12 +808,28 @@ class VCConfig : Config
 		return addopt && mCmdLine ? mCmdLine ~ " " ~ addopt : mCmdLine ~ addopt;
 	}
 
-	override string GetProjectPath() { return mProjectFile; }
-	override string GetProjectDir() { return dirName(mProjectFile); }
-	override string GetProjectName() { return mProjectName; }
-
 	override string GetCppCompiler() { return "cl"; }
 }
+
+// cache a configuration for each file
+struct VCFile
+{
+	IVsHierarchy pHierarchy;
+	VSITEMID itemid;
+	bool opEquals(ref const VCFile other) const
+	{
+		return pHierarchy is other.pHierarchy && itemid == other.itemid;
+	}
+	hash_t toHash() @trusted nothrow const
+	{
+		// hash the pointer, not the interface (crashes anyway)
+		import core.internal.traits : externDFunc;
+		alias hashOf = externDFunc!("rt.util.hash.hashOf",
+									size_t function(const(void)*, size_t, size_t) @trusted pure nothrow);
+		return hashOf(&this, VCFile.sizeof, 0);
+	}
+}
+__gshared VCConfig[VCFile] vcFileConfigs;
 
 Config getVisualCppConfig(string file, bool genCmdLine = false)
 {
@@ -848,17 +855,28 @@ Config getVisualCppConfig(string file, bool genCmdLine = false)
 				VSITEMID itemid;
 				if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
 				{
-					ProjectOptions opts = new ProjectOptions(true, true);
+					VCConfig cfg;
+					if (auto pcfg = VCFile(pHierarchy, itemid) in vcFileConfigs)
+						cfg = *pcfg;
+					else
+					{
+						cfg = newCom!VCConfig(pHierarchy);
+						cfg.GetProject().GetRootNode().AddTail(newCom!CFileNode(file));
+						vcFileConfigs[VCFile(pHierarchy, itemid)] = cfg;
+					}
+
+					ProjectOptions opts = cfg.GetProjectOptions();
+					ProjectOptions cmpopts = clone(opts);
 					if (vdhelper_GetDCompileOptions(pHierarchy, itemid, opts) == S_OK)
 					{
-						VCConfig cfg = newCom!VCConfig(pHierarchy, opts);
-						cfg.GetProject().GetRootNode().AddTail(newCom!CFileNode(file));
 						if (genCmdLine)
 						{
 							string cmd;
 							if (vdhelper_GetDCommandLine(pHierarchy, itemid, cmd) == S_OK)
 								cfg.mCmdLine = cmd;
 						}
+						if (opts != cmpopts)
+							cfg.SetDirty();
 						return addref(cfg);
 					}
 				}

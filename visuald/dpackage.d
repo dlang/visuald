@@ -673,6 +673,14 @@ version(none)
 		}
 		mLangsvc.OnIdle();
 		OutputPaneBuffer.flush();
+
+		if (IVsTextLines buffer = GetCurrentTextBuffer(null))
+		{
+			scope(exit) release(buffer);
+			if (Source src = mLangsvc.GetSource(buffer))
+				if (auto cfg = getProjectConfig(src.GetFileName())) // this triggers an update of the colorizer if VC config changed
+					release(cfg);
+		}
 		return false;
 	}
 

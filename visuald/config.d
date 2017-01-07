@@ -304,6 +304,18 @@ class ProjectOptions
 			cRuntime = CRuntime.StaticDebug;
 	}
 
+	override bool opEquals(Object obj) const
+	{
+		auto other = cast(ProjectOptions) obj;
+		if (!other)
+			return false;
+
+		foreach (i, f; this.tupleof)
+			if (this.tupleof[i] != other.tupleof[i])
+				return false;
+		return true;
+	}
+
 	string objectFileExtension() { return compiler != Compiler.GDC ? "obj" : "o"; }
 	string otherCompilerPath() { return otherDMD ? program : null; }
 
@@ -1989,7 +2001,7 @@ class Config :	DisposingComObject,
 	{
 		logCall("%s.get_IsDebugOnly(pfIsDebugOnly=%s)", this, _toLog(pfIsDebugOnly));
 
-		*pfIsDebugOnly = (mName == "Debug");
+		*pfIsDebugOnly = mProjectOptions.release != 1;
 		return S_OK;
 	}
 
@@ -1997,7 +2009,7 @@ class Config :	DisposingComObject,
 	{
 		logCall("%s.get_IsReleaseOnly(pfIsReleaseOnly=%s)", this, _toLog(pfIsReleaseOnly));
 
-		*pfIsReleaseOnly = (mName == "Release");
+		*pfIsReleaseOnly = mProjectOptions.release == 1;
 		return S_OK;
 	}
 
