@@ -514,7 +514,7 @@ version(tip)
 		wchar* wfname = _toUTF16z(fname);
 		string addopt;
 
-		Config cfg = getProjectConfig(fname);
+		Config cfg = getProjectConfig(fname, true);
 		scope(exit) release(cfg); // must not dispose because we need the builder
 
 		CFileNode pFile;
@@ -523,7 +523,14 @@ version(tip)
 		if(mView.GetSelectedText(&bstrSelText) == S_OK && !disasm)
 			selText = detachBSTR(bstrSelText);
 
-		if(!cfg)
+		if(cfg)
+		{
+			string docName = toLower(fname);
+			CHierNode node = searchNode(cfg.GetProject().GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == docName; });
+			pFile = cast(CFileNode) node;
+			assert(pFile);
+		}
+		else
 		{
 			// not in Visual D project, but in workspace project
 			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
@@ -531,6 +538,13 @@ version(tip)
 			cfg = newCom!VCConfig(filename, "__compile__").addref();
 			cfg.GetProjectOptions().outdir = normalizeDir(tempDir()) ~ "__vdcompile";
 			cfg.GetProjectOptions().release = false;
+
+			string platform, config = GetActiveSolutionConfig(&platform);
+			if (config.empty)
+				platform = "Win32", config = "Debug";
+			Project prj = newCom!Project(Package.GetProjectFactory(), "__compile__", filename, platform, config);
+			pFile = newCom!CFileNode(fname);
+			prj.GetRootNode().AddTail(pFile);
 
 			string modname = getModuleDeclarationName(fname);
 			if(modname.length)
@@ -544,7 +558,7 @@ version(tip)
 			}
 		}
 
-		if(saveTextBuffer(fname) != S_OK)
+		if(!pFile || saveTextBuffer(fname) != S_OK)
 			return returnError(E_FAIL);
 
 		mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position

@@ -804,15 +804,16 @@ class LanguageService : DisposingComObject,
 	void ConfigureSemanticProject(Source src)
 	{
 		string file = src.GetFileName();
-		string[] imp = GetImportPaths(file);
+		Config cfg = getProjectConfig(file);
+		if(!cfg)
+			cfg = getCurrentStartupConfig();
+
+		string[] imp = GetImportPaths(cfg) ~ Package.GetGlobalOptions().getImportPaths();
 		string[] stringImp;
 		string[] versionids;
 		string[] debugids;
 		uint flags = 0;
 
-		Config cfg = getProjectConfig(file);
-		if(!cfg)
-			cfg = getCurrentStartupConfig();
 		if(cfg)
 		{
 			scope(exit) release(cfg);

@@ -156,15 +156,10 @@ namespace dbuild
             get { return Sources; } //  return new ITaskItem[1] { new TaskItem(this.Source) };
         }
 
-        /// <summary>
-        /// The list of switches in the order they should appear, if set.
-        /// </summary>
-        private Dictionary<String, Object> parameterValues = new Dictionary<string, object>();
-
-        private bool parseParameters(XamlTypes.Rule rule)
+        private Dictionary<string, string> parseParamValues(string parameters)
         {
             Dictionary<string, string> strOptions = new Dictionary<string, string>();
-            string[] paras = Parameters.Split('|');
+            string[] paras = parameters.Split('|');
             foreach (string p in paras)
             {
                 int pos = p.IndexOf('=');
@@ -176,6 +171,16 @@ namespace dbuild
                     switchOrderList.Add(name);
                 }
             }
+            return strOptions;
+        }
+        /// <summary>
+        /// The list of switches in the order they should appear, if set.
+        /// </summary>
+        private Dictionary<String, Object> parseParameters(XamlTypes.Rule rule)
+        {
+            Dictionary<String, Object> parameterValues = new Dictionary<string, object>();
+
+            Dictionary<string, string> strOptions = parseParamValues(Parameters);
 
             foreach (XamlTypes.BaseProperty property in rule.Properties)
             {
@@ -206,15 +211,12 @@ namespace dbuild
                         parameterValues[property.Name] = val;
                 }
             }
-            return true;
+            return parameterValues;
         }
 
-        public override bool Execute()
+        public string GenCmdLine(string xaml)
         {
-            if (!String.IsNullOrEmpty(TrackerLogDirectory))
-                TrackFileAccess = true;
-
-            object rootObject = XamlServices.Load(new StreamReader(Xaml));
+            object rootObject = XamlServices.Load(new StreamReader(xaml));
             XamlTypes.ProjectSchemaDefinitions schemas = rootObject as XamlTypes.ProjectSchemaDefinitions;
             if (schemas != null)
             {
@@ -223,16 +225,27 @@ namespace dbuild
                     XamlTypes.Rule rule = node as XamlTypes.Rule;
                     if (rule != null)
                     {
-                        parseParameters(rule);
+                        var parameterValues = parseParameters(rule);
                         CommandLineGenerator generator = new CommandLineGenerator(rule, parameterValues);
                         generator.CommandLineTemplate = this.CommandLineTemplate;
                         generator.AdditionalOptions = AdditionalOptions;
 
-                        CommandLine = generator.GenerateCommandLine();
-                        return base.Execute();
+                        return generator.GenerateCommandLine();
                     }
                 }
             }
+            return null;
+        }
+
+        public override bool Execute()
+        {
+            if (!String.IsNullOrEmpty(TrackerLogDirectory))
+                TrackFileAccess = true;
+
+            CommandLine = GenCmdLine(Xaml);
+            if (CommandLine != null)
+                return base.Execute();
+
             return false;
         }
 

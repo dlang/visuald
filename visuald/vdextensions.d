@@ -36,8 +36,9 @@ interface IVisualCHelper : IUnknown
 {
 	static const GUID iid = uuid("002a2de9-8bb6-484d-9911-7e4ad4084715");
 
-	int GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, BSTR* cmdline, BSTR* impPath, BSTR* stringImpPath, 
+	int GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, BSTR* impPath, BSTR* stringImpPath,
 	                       BSTR* versionids, BSTR* debugids, ref uint flags);
+	int GetDCommandLine(IVsHierarchy proj, uint itemid, BSTR* cmdline);
 }
 
 IVisualCHelper createCHelper()
@@ -61,25 +62,23 @@ int vdhelper_GetTextOptions(IVsTextView view, int* flags, int* tabsize, int* ind
 	}
 }
 
-int vdhelper_GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, ref ProjectOptions opt, out string cmd)
+int vdhelper_GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, ref ProjectOptions opt)
 {
 	try
 	{
 		if (!createCHelper())
 			return S_FALSE;
 
-		BSTR cmdline;
 		BSTR versionids;
 		BSTR debugids;
 		BSTR impPath;
 		BSTR stringImpPath;
 		uint flags; // see ConfigureFlags!()
 
-		int rc = vchelper.GetDCompileOptions(proj, itemid, &cmdline, &impPath, &stringImpPath, &versionids, &debugids, flags);
+		int rc = vchelper.GetDCompileOptions(proj, itemid, &impPath, &stringImpPath, &versionids, &debugids, flags);
 		if (rc != S_OK)
 			return rc;
 
-		cmd = detachBSTR(cmdline);
 		opt.versionids = detachBSTR(versionids);
 		opt.debugids = detachBSTR(debugids);
 		opt.imppath = detachBSTR(impPath);
@@ -95,7 +94,29 @@ int vdhelper_GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, ref ProjectO
 		opt.compiler       = (flags & 0x4_00_00_00) != 0 ? Compiler.LDC : (flags & 64) != 0 ? Compiler.GDC : Compiler.DMD;
 		opt.versionlevel   = (flags >> 8)  & 0xff;
 		opt.debuglevel     = (flags >> 16) & 0xff;
+		opt.mscoff         = true;
 
+		return S_OK;
+	}
+	catch(Throwable)
+	{
+		return E_FAIL;
+	}
+}
+
+int vdhelper_GetDCommandLine(IVsHierarchy proj, VSITEMID itemid, out string cmd)
+{
+	try
+	{
+		if (!createCHelper())
+			return S_FALSE;
+
+		BSTR cmdline;
+		int rc = vchelper.GetDCommandLine(proj, itemid, &cmdline);
+		if (rc != S_OK)
+			return rc;
+
+		cmd = detachBSTR(cmdline);
 		return S_OK;
 	}
 	catch(Throwable)

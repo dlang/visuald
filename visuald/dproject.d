@@ -235,7 +235,9 @@ class Project : CVsHierarchy,
 		mFilename = filename;
 		mConfigProvider = addref(newCom!ConfigProvider(this));
 
-		mConfigProvider.addConfig(platform, config);
+		if (platform && config)
+			mConfigProvider.addConfig(platform, config);
+
 		CProjectNode rootnode = newCom!CProjectNode(filename, this);
 		rootnode.SetName(name);
 		SetRootNode(rootnode);
@@ -2658,6 +2660,7 @@ Error:
 		}
 	}
 
+	ConfigProvider GetConfigProvider() { return mConfigProvider; }
 	string GetFilename() { return mFilename; }
 	string GetName() { return mName; }
 	string GetCaption() { return mCaption; }

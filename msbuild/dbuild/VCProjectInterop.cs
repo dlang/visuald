@@ -24,8 +24,9 @@ namespace vdextensions
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     public interface IVisualCHelper
     {
-        void GetDCompileOptions(IVsHierarchy proj, uint itemid, out string cmd, out string impPath, out string stringImpPath,
+        void GetDCompileOptions(IVsHierarchy proj, uint itemid, out string impPath, out string stringImpPath,
                                 out string versionids, out string debugids, out uint flags);
+        void GetDCommandLine(IVsHierarchy proj, uint itemid, out string cmdline);
     }
 
     [ComVisible(true), Guid(IID.VisualCHelper)]
@@ -52,9 +53,12 @@ namespace vdextensions
 
         public const uint _VSITEMID_ROOT = 4294967294;
 
-        public void GetDCompileOptions(IVsHierarchy proj, uint itemid,
-                                       out string cmdline, out string impPath, out string stringImpPath,
-                                       out string versionids, out string debugids, out uint flags)
+        // throws COMException if not found
+        static void GetVCToolProps(IVsHierarchy proj, uint itemid,
+                                   out Microsoft.VisualStudio.VCProjectEngine.VCFileConfiguration fcfg,
+                                   out Microsoft.VisualStudio.VCProjectEngine.VCConfiguration cfg,
+                                   out System.Reflection.IReflect vcrefl,
+                                   out Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage vcprop)
         {
             object ext;
             if (proj.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_ExtObject, out ext) != 0)
@@ -74,23 +78,19 @@ namespace vdextensions
 
             var cfgmgr = envproj.ConfigurationManager;
             var activecfg = cfgmgr.ActiveConfiguration;
-            var name = activecfg.ConfigurationName + "|" + activecfg.PlatformName;
+            var activename = activecfg.ConfigurationName + "|" + activecfg.PlatformName;
 
+            fcfg = null;
+            cfg = null;
             var vcfile = envitem.Object as Microsoft.VisualStudio.VCProjectEngine.VCFile;
             if (vcfile != null)
             {
-                //var vcpfile = envitem.Object as Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.VCProjectFileShim;
-                //var envproj = envitem.ContainingProject as EnvDTE.Project;
-                //if (envproj == null)
-                //    throw new COMException();
-
-                Microsoft.VisualStudio.VCProjectEngine.VCFileConfiguration fcfg = null;
                 var vcfconfigs = vcfile.FileConfigurations as IVCCollection;
                 for (int c = 1; c <= vcfconfigs.Count; c++)
                 {
                     var vcfcfg = vcfconfigs.Item(c);
                     fcfg = vcfcfg as Microsoft.VisualStudio.VCProjectEngine.VCFileConfiguration;
-                    if (fcfg.Name == name)
+                    if (fcfg.Name == activename)
                         break;
                     else
                         fcfg = null;
@@ -99,49 +99,25 @@ namespace vdextensions
                     throw new COMException();
 
                 var vcftool = fcfg.Tool as Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.VCToolBase;
-                var vcfprop = vcftool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
-                if (vcftool != null && vcfprop != null && vcftool.ItemType == "DCompile")
+                vcprop = vcftool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
+                if (vcftool != null && vcprop != null && vcftool.ItemType == "DCompile")
                 {
-                    bool fldc = fcfg.Evaluate("$(DCompiler)") == "LDC";
-                    string foutdir = fcfg.Evaluate("$(OutDir)");
-                    string fintdir = fcfg.Evaluate("$(IntDir)");
-
-                    var style = Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.CommandLineOptionStyle.cmdLineForBuild;
-                    cmdline = ""; // vcftool.GetCommandLineOptions(envitem, true, style);
-                    //string compilerexe = vcfprop.GetEvaluatedPropertyValue("CompilerExe");
-                    //cmdline = compilerexe + " " + cmdline;
-                    impPath = vcfprop.GetEvaluatedPropertyValue("ImportPaths");
-                    stringImpPath = vcfprop.GetEvaluatedPropertyValue("StringImportPaths");
-                    versionids = vcfprop.GetEvaluatedPropertyValue("VersionIdentifiers");
-                    debugids = vcfprop.GetEvaluatedPropertyValue("DebugIdentifiers");
-
-                    bool unittestOn = vcfprop.GetEvaluatedPropertyValue("Unittest") == "true";
-                    bool debugOn = vcfprop.GetEvaluatedPropertyValue("DebugCode") == "Debug";
-                    bool x64 = activecfg.PlatformName == "x64";
-                    bool cov = vcfprop.GetEvaluatedPropertyValue("Coverage") == "true";
-                    bool doc = vcfprop.GetEvaluatedPropertyValue("DocDir") != "" || vcfprop.GetEvaluatedPropertyValue("DocFile") != "";
-                    bool nobounds = vcfprop.GetEvaluatedPropertyValue("BoundsCheck") == "On";
-                    bool noDeprecated = vcfprop.GetEvaluatedPropertyValue("Deprecations") == "Error";
-                    bool gdc = false;
-                    int versionLevel = 0;
-                    int debugLevel = 0;
-                    flags = (uint)ConfigureFlags(unittestOn, debugOn, x64, cov, doc, nobounds, gdc,
-                                                 versionLevel, debugLevel, noDeprecated, fldc);
-                    return;
+                    vcrefl = vcftool as System.Reflection.IReflect;
+                    if (vcrefl != null)
+                        return;
                 }
             }
 
             var vcproj = envproj.Object as Microsoft.VisualStudio.VCProjectEngine.VCProject; // Project.VisualC.VCProjectEngine.VCProjectShim;
             if (vcproj == null)
                 throw new COMException();
-           
-            Microsoft.VisualStudio.VCProjectEngine.VCConfiguration cfg = null;
+
             var vcconfigs = vcproj.Configurations as IVCCollection;
             for (int c = 1; c <= vcconfigs.Count; c++)
             {
                 var vccfg = vcconfigs.Item(c);
                 cfg = vccfg as Microsoft.VisualStudio.VCProjectEngine.VCConfiguration;
-                if (cfg.Name == name)
+                if (cfg.Name == activename)
                     break;
                 else
                     cfg = null;
@@ -149,71 +125,101 @@ namespace vdextensions
             if (cfg == null)
                 throw new COMException();
 
-            bool ldc = false;
-            string outdir;
-            string intdir;
             var tools = cfg.FileTools as IVCCollection;
             for (int f = 1; f <= tools.Count; f++)
             {
                 var obj = tools.Item(f);
                 var vctool = obj as Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.VCToolBase;
-                if (vctool != null && vctool.ItemType == "ConfigurationGeneral")
-                {
-                    var vcprop = vctool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
-                    if (vcprop != null)
-                    {
-                        try
-                        {
-                            ldc = vcprop.GetEvaluatedPropertyValue("DCompiler") == "LDC";
-                            outdir = vcprop.GetEvaluatedPropertyValue("OutDir");
-                            intdir = vcprop.GetEvaluatedPropertyValue("IntDir");
-                        }
-                        catch
-                        {
-                        }
-                    }
-                }
                 if (vctool != null && vctool.ItemType == "DCompile")
                 {
-                    var vcprop = vctool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
+                    vcprop = vctool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
                     if (vcprop != null)
                     {
-                        var style = Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.CommandLineOptionStyle.cmdLineForBuild;
-                        cmdline = ""; // vctool.GetCommandLineOptions(envitem.Object, true, style);
-                        string outfile;
-                        var rc = vctool.GetPrimaryOutputFromTool(envitem, false, out outfile);
-                        string compilerexe = vcprop.GetEvaluatedPropertyValue("CompilerExe");
-                        cmdline = compilerexe + " " + cmdline;
-                        impPath = vcprop.GetEvaluatedPropertyValue("ImportPaths");
-                        stringImpPath = vcprop.GetEvaluatedPropertyValue("StringImportPaths");
-                        versionids = vcprop.GetEvaluatedPropertyValue("VersionIdentifiers");
-                        debugids = vcprop.GetEvaluatedPropertyValue("DebugIdentifiers");
-
-                        bool unittestOn = vcprop.GetEvaluatedPropertyValue("Unittest") == "true";
-                        bool debugOn = vcprop.GetEvaluatedPropertyValue("DebugCode") == "Debug";
-                        bool x64 = activecfg.PlatformName == "x64";
-                        bool cov = vcprop.GetEvaluatedPropertyValue("Coverage") == "true";
-                        bool doc = vcprop.GetEvaluatedPropertyValue("DocDir") != "" || vcprop.GetEvaluatedPropertyValue("DocFile") != "";
-                        bool nobounds = vcprop.GetEvaluatedPropertyValue("BoundsCheck") == "On";
-                        bool noDeprecated = vcprop.GetEvaluatedPropertyValue("Deprecations") == "Error";
-                        bool gdc = false;
-                        int versionLevel = 0;
-                        int debugLevel = 0;
-                        flags = (uint)ConfigureFlags(unittestOn, debugOn, x64, cov, doc, nobounds, gdc,
-                                                     versionLevel, debugLevel, noDeprecated, ldc);
-
-                        return;
+                        vcrefl = vctool as System.Reflection.IReflect;
+                        if (vcrefl != null)
+                            return;
                     }
                 }
-                //var cltool = obj as VCCLCompilerTool;
-                //var vcrule = obj as Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.VCCustomBuildRuleShim;
-                //var vcbtool = obj as VCCustomBuildTool;
-                //                    var tool = obj as IVCToolImpl;
-                //                    var custom = obj as IVCCustomBuildRuleProperties;
-                // n = obj.ToolsName;
             }
             throw new COMException();
         }
 
+        public delegate string EvalFun(string value);
+
+        public void GetDCommandLine(IVsHierarchy proj, uint itemid, out string cmdline)
+        {
+            Microsoft.VisualStudio.VCProjectEngine.VCFileConfiguration fcfg;
+            Microsoft.VisualStudio.VCProjectEngine.VCConfiguration cfg;
+            System.Reflection.IReflect vcrefl;
+            Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage vcprop;
+            GetVCToolProps(proj, itemid, out fcfg, out cfg, out vcrefl, out vcprop);
+
+            EvalFun eval = (string s) => { return fcfg != null ? fcfg.Evaluate(s) : cfg.Evaluate(s); };
+
+            string compiler = eval("$(DCompiler)");
+            bool ldc = compiler == "LDC";
+
+            string assemblyFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            string xmlFileName = System.IO.Path.Combine(assemblyFolder, compiler + ".xml");
+
+            var cd = new dbuild.CompileD();
+            cd.Xaml = xmlFileName;
+            cd.Compiler = compiler;
+            cd.ToolExe = fcfg.Evaluate(ldc ? "$(LDCBinDir)ldmd2.exe" : "$(DMDBinDir)dmd.exe");
+            cd.CommandLineTemplate = vcprop.GetEvaluatedPropertyValue("CommandLineTemplate");
+            cd.AdditionalOptions = vcprop.GetEvaluatedPropertyValue("AdditionalOptions");
+            cd.Sources = new Microsoft.Build.Framework.ITaskItem[1] { new Microsoft.Build.Utilities.TaskItem("dummy.d") };
+            cd.Parameters = GetParametersFromFakeProperties(vcprop, vcrefl.GetProperties(0));
+            cmdline = cd.ToolExe + " " + cd.GenCmdLine(xmlFileName);
+        }
+
+        public void GetDCompileOptions(IVsHierarchy proj, uint itemid,
+                                out string impPath, out string stringImpPath,
+                                out string versionids, out string debugids, out uint flags)
+        {
+            Microsoft.VisualStudio.VCProjectEngine.VCFileConfiguration fcfg;
+            Microsoft.VisualStudio.VCProjectEngine.VCConfiguration cfg;
+            System.Reflection.IReflect vcrefl;
+            Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage vcprop;
+            GetVCToolProps(proj, itemid, out fcfg, out cfg, out vcrefl, out vcprop);
+
+            EvalFun eval = (string s) => { return fcfg != null ? fcfg.Evaluate(s) : cfg.Evaluate(s); };
+
+            string platform = eval("$(PlatformName)");
+            string compiler = eval("$(DCompiler)");
+            bool ldc = compiler == "LDC";
+
+            impPath = vcprop.GetEvaluatedPropertyValue("ImportPaths");
+            stringImpPath = vcprop.GetEvaluatedPropertyValue("StringImportPaths");
+            versionids = vcprop.GetEvaluatedPropertyValue("VersionIdentifiers");
+            debugids = vcprop.GetEvaluatedPropertyValue("DebugIdentifiers");
+
+            bool unittestOn = vcprop.GetEvaluatedPropertyValue("Unittest") == "true";
+            bool debugOn = vcprop.GetEvaluatedPropertyValue("DebugCode") == "Debug";
+            bool x64 = platform == "x64";
+            bool cov = vcprop.GetEvaluatedPropertyValue("Coverage") == "true";
+            bool doc = vcprop.GetEvaluatedPropertyValue("DocDir") != "" || vcprop.GetEvaluatedPropertyValue("DocFile") != "";
+            bool nobounds = vcprop.GetEvaluatedPropertyValue("BoundsCheck") == "On";
+            bool noDeprecated = vcprop.GetEvaluatedPropertyValue("Deprecations") == "Error";
+            bool gdc = false;
+            int versionLevel = 0;
+            int debugLevel = 0;
+            flags = (uint)ConfigureFlags(unittestOn, debugOn, x64, cov, doc, nobounds, gdc,
+                                         versionLevel, debugLevel, noDeprecated, ldc);
+        }
+
+
+        public static string GetParametersFromFakeProperties(Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage vcfprop,
+                                                             System.Reflection.PropertyInfo[] props)
+        {
+            string parameters = "";
+            foreach(var p in props)
+            {
+                var val = vcfprop.GetEvaluatedPropertyValue(p.Name);
+                if (!string.IsNullOrEmpty(val))
+                    parameters = parameters + "|" + p.Name + "=" + val;
+            }
+            return parameters;
+        }
     }
 }

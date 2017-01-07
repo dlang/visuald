@@ -710,7 +710,7 @@ string GetFolderPath(CFolderNode folder)
 
 ///////////////////////////////////////////////////////////////
 // returns addref'd Config
-Config getProjectConfig(string file)
+Config getProjectConfig(string file, bool genCmdLine = false)
 {
 	if(file.length == 0)
 		return null;
@@ -765,7 +765,7 @@ Config getProjectConfig(string file)
 			}
 		}
 	}
-	return getVisualCppConfig(file);
+	return getVisualCppConfig(file, genCmdLine);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -778,7 +778,8 @@ class VCConfig : Config
 	this(string projectfile, string projectname)
 	{
 		ProjectOptions opts = new ProjectOptions(true, true);
-		super(null, "vcxconvert", "platform", opts);
+		Project prj = newCom!Project(Package.GetProjectFactory(), projectname, projectfile, "platform", "Debug");
+		super(prj.GetConfigProvider(), "vcxconvert", "platform", opts);
 
 		mProjectFile = projectfile;
 		mProjectName = projectname;
@@ -786,8 +787,6 @@ class VCConfig : Config
 
 	this(IVsHierarchy pHierarchy, ProjectOptions opts)
 	{
-		super(null, "vcxconvert", "platform", opts);
-
 		VARIANT var;
 		BSTR name;
 		if(pHierarchy.GetCanonicalName(VSITEMID_ROOT, &name) == S_OK)
@@ -798,6 +797,11 @@ class VCConfig : Config
 		{
 			mProjectName = detachBSTR(var.bstrVal);
 		}
+
+		string platform = opts.isX86_64 ? "x64" : "Win32";
+		string config = opts.release ? "Release" : "Debug";
+		Project prj = newCom!Project(Package.GetProjectFactory(), mProjectName, mProjectFile, null, null);
+		super(prj.GetConfigProvider(), config, platform, opts);
 	}
 
 	override string GetOutputFile(CFileNode file, string tool = null)
@@ -816,12 +820,11 @@ class VCConfig : Config
 	override string GetProjectPath() { return mProjectFile; }
 	override string GetProjectDir() { return dirName(mProjectFile); }
 	override string GetProjectName() { return mProjectName; }
-	override Project GetProject() { return null; }
 
 	override string GetCppCompiler() { return "cl"; }
 }
 
-Config getVisualCppConfig(string file)
+Config getVisualCppConfig(string file, bool genCmdLine = false)
 {
 	auto srpSolution = queryService!(IVsSolution);
 	scope(exit) release(srpSolution);
@@ -846,11 +849,16 @@ Config getVisualCppConfig(string file)
 				if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
 				{
 					ProjectOptions opts = new ProjectOptions(true, true);
-					string cmd;
-					if (vdhelper_GetDCompileOptions(pHierarchy, itemid, opts, cmd) == S_OK)
+					if (vdhelper_GetDCompileOptions(pHierarchy, itemid, opts) == S_OK)
 					{
 						VCConfig cfg = newCom!VCConfig(pHierarchy, opts);
-						cfg.mCmdLine = cmd;
+						cfg.GetProject().GetRootNode().AddTail(newCom!CFileNode(file));
+						if (genCmdLine)
+						{
+							string cmd;
+							if (vdhelper_GetDCommandLine(pHierarchy, itemid, cmd) == S_OK)
+								cfg.mCmdLine = cmd;
+						}
 						return addref(cfg);
 					}
 				}
@@ -883,7 +891,80 @@ Config getCurrentStartupConfig()
 	return null;
 }
 
+// returns reference counted config
+Config GetActiveConfig(IVsHierarchy pHierarchy)
+{
+	if(!pHierarchy)
+		return null;
+
+	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+	scope(exit) release(solutionBuildManager);
+
+	IVsProjectCfg activeCfg;
+	if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) == S_OK)
+	{
+		scope(exit) release(activeCfg);
+		if(Config cfg = qi_cast!Config(activeCfg))
+			return cfg;
+	}
+	return null;
+}
+
+// return current config and platform of the startup
+string GetActiveSolutionConfig(string* platform = null)
+{
+	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+	scope(exit) release(solutionBuildManager);
+
+	IVsHierarchy pHierarchy;
+    if (solutionBuildManager.get_StartupProject(&pHierarchy) != S_OK)
+		return null;
+	scope(exit) release(pHierarchy);
+
+	IVsProjectCfg activeCfg;
+	if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) != S_OK)
+		return null;
+	scope(exit) release(activeCfg);
+
+	BSTR bstrName;
+	if (activeCfg.get_DisplayName(&bstrName) != S_OK)
+		return null;
+
+	string config = detachBSTR(bstrName);
+	auto parts = split(config, '|');
+	if (parts.length == 2)
+	{
+		if (platform)
+			*platform = parts[1];
+		config = parts[0];
+	}
+	return config;
+}
+
 ////////////////////////////////////////////////////////////////////////
+
+string[] GetImportPaths(Config cfg)
+{
+	string[] imports;
+	if (!cfg)
+		return null;
+
+	ProjectOptions opt = cfg.GetProjectOptions();
+	string projectpath = cfg.GetProjectDir();
+
+	string imp = opt.imppath;
+	imp = opt.replaceEnvironment(imp, cfg);
+	imports = tokenizeArgs(imp);
+
+	string addopts = opt.replaceEnvironment(opt.additionalOptions, cfg);
+	addunique(imports, GlobalOptions.getOptionImportPaths(addopts, projectpath));
+
+	foreach(ref i; imports)
+		i = makeDirnameCanonical(unquoteArgument(i), projectpath);
+
+	addunique(imports, projectpath);
+	return imports;
+}
 
 string[] GetImportPaths(string file)
 {
@@ -891,20 +972,7 @@ string[] GetImportPaths(string file)
 	if(Config cfg = getProjectConfig(file))
 	{
 		scope(exit) release(cfg);
-		ProjectOptions opt = cfg.GetProjectOptions();
-		string projectpath = cfg.GetProjectDir();
-
-		string imp = opt.imppath;
-		imp = opt.replaceEnvironment(imp, cfg);
-		imports = tokenizeArgs(imp);
-
-		string addopts = opt.replaceEnvironment(opt.additionalOptions, cfg);
-		addunique(imports, GlobalOptions.getOptionImportPaths(addopts, projectpath));
-
-		foreach(ref i; imports)
-			i = makeDirnameCanonical(unquoteArgument(i), projectpath);
-
-		addunique(imports, projectpath);
+		imports = GetImportPaths(cfg);
 	}
 	imports ~= Package.GetGlobalOptions().getImportPaths();
 	return imports;

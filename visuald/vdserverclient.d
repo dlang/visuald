@@ -55,7 +55,7 @@ private void dbglog(string s)
 	debug
 	{
 		version(all)
-			logCall("VDClient: ", s);
+			logCall("VDClient: %s", s);
 		else
 			OutputDebugStringA(toMBSz("VDClient: " ~ s ~ "\n"));
 	}

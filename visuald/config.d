@@ -4422,21 +4422,3 @@ class EnumVsProfilerTargetInfos : DComObject, IEnumVsProfilerTargetInfos
 }
 } // version(hasProfilableConfig)
 
-// returns reference counted config
-Config GetActiveConfig(IVsHierarchy pHierarchy)
-{
-	if(!pHierarchy)
-		return null;
-
-	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
-	scope(exit) release(solutionBuildManager);
-
-	IVsProjectCfg activeCfg;
-	if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) == S_OK)
-	{
-		scope(exit) release(activeCfg);
-		if(Config cfg = qi_cast!Config(activeCfg))
-			return cfg;
-	}
-	return null;
-}

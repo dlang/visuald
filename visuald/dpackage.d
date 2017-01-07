@@ -1105,6 +1105,12 @@ version(none)
 		return s_instance.mLangsvc;
 	}
 
+	static ProjectFactory GetProjectFactory()
+	{
+		assert(s_instance);
+		return s_instance.mProjFactory;
+	}
+
 	static GlobalOptions GetGlobalOptions()
 	{
 		assert(s_instance);
