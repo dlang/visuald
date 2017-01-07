@@ -218,6 +218,6 @@ call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk.success&qu
   <File path="sdk_libs.bat" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk_libs.success&quot;" tool="Custom" outfile="$(OutDir)\sdk_libs.success" />
-  <File path="..\tools\tlb2idl.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) oleaut32.lib uuid.lib" tool="Custom" outfile="$(OutDir)\$(InputName).exe" />
+  <File path="..\tools\tlb2idl.d" customcmd="dmd -d -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) oleaut32.lib uuid.lib" tool="Custom" outfile="$(OutDir)\$(InputName).exe" />
  </Folder>
 </DProject>
