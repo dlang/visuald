@@ -823,10 +823,7 @@ struct VCFile
 	hash_t toHash() @trusted nothrow const
 	{
 		// hash the pointer, not the interface (crashes anyway)
-		import core.internal.traits : externDFunc;
-		alias hashOf = externDFunc!("rt.util.hash.hashOf",
-									size_t function(const(void)*, size_t, size_t) @trusted pure nothrow);
-		return hashOf(&this, VCFile.sizeof, 0);
+		return cast(hash_t) cast(void*)pHierarchy ^ itemid;
 	}
 }
 __gshared VCConfig[VCFile] vcFileConfigs;

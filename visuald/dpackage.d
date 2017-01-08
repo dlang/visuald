@@ -574,6 +574,7 @@ version(none)
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
 				default:
+					prgCmds[i].cmdf = OLECMDF_SUPPORTED;
 					break;
 				}
 			}

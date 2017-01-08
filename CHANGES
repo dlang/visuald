@@ -826,6 +826,7 @@ unreleased Version 0.3.44
   * added project template to build with DMD, LDC and GDC for x86 and x64
   * VS SDK 2013 now needed to build Visual D
   * added automatic brace completion
-  * added support for VS 2017 RC
+  * added preliminary support for VS 2017 RC
   * dparser: semantic analysis no longer times out after 500ms, but cancels previous requests
   * completion box no longer pops up if caret has been moved elsewhere
+  * menu entries now disabled if they require the focus on a D file, but it is elsewhere
