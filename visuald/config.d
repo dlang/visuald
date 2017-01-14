@@ -632,7 +632,7 @@ class ProjectOptions
 			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
 
 		if(lib == OutputType.StaticLib && performLink)
-			cmd ~= " -lib";
+			cmd ~= " -lib -oq -od=\"$(IntDir)\"";
 		if(isX86_64)
 			cmd ~= " -m64";
 		else

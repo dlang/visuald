@@ -830,3 +830,4 @@ unreleased Version 0.3.44
   * dparser: semantic analysis no longer times out after 500ms, but cancels previous requests
   * completion box no longer pops up if caret has been moved elsewhere
   * menu entries now disabled if they require the focus on a D file, but it is elsewhere
+  * building a library with LDC now always adds "-oq -od=$(IntDir)" to the command line
