@@ -353,6 +353,10 @@ void updateConfigurationChanged(HKEY keyRoot, wstring registrationRoot)
 	{
 		scope RegKey keyRegRoot = new RegKey(keyRoot, registrationRoot, true, false);
 
+		// avoid: Function type does not match previously declared function with the same mangled name
+		// which is an ambiguity between sdk.win32 and core.sys.windows
+		version(LDC)
+			import core.sys.windows.winbase : FILETIME, GetSystemTimeAsFileTime;
 		FILETIME fileTime;
 		GetSystemTimeAsFileTime(&fileTime);
 		ULARGE_INTEGER ul;
