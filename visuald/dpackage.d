@@ -488,7 +488,7 @@ version(none)
 			{
 				OLECRINFO crinfo;
 				crinfo.cbSize = crinfo.sizeof;
-				crinfo.grfcrf = olecrfNeedIdleTime | olecrfNeedPeriodicIdleTime | olecrfNeedAllActiveNotifs | olecrfNeedSpecActiveNotifs;
+				crinfo.grfcrf = /*olecrfNeedIdleTime |*/ olecrfNeedPeriodicIdleTime | olecrfNeedAllActiveNotifs | olecrfNeedSpecActiveNotifs;
 				crinfo.grfcadvf = olecadvfModal | olecadvfRedrawOff | olecadvfWarningsOff;
 				crinfo.uIdleTimeInterval = 1000;
 				if(!componentManager.FRegisterComponent(this, &crinfo, &mComponentID))
