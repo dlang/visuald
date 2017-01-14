@@ -53,6 +53,7 @@ import std.string;
 import std.ascii;
 import std.utf;
 import std.conv;
+import std.path;
 import std.algorithm;
 import std.array;
 import std.datetime;
@@ -494,13 +495,22 @@ class LanguageService : DisposingComObject,
 	override HRESULT CurFileExtensionFormat(in BSTR bstrFileName, uint* pdwExtnIndex)
 	{
 		mixin(LogCallMix2);
-		return E_NOTIMPL;
+		string filename = to_string(bstrFileName);
+		string ext = toLower(extension(filename));
+		if (ext == ".d")
+			*pdwExtnIndex = 0;
+		else if (ext == ".di")
+			*pdwExtnIndex = 1;
+		else
+			return E_FAIL;
+		return S_OK;
 	}
 
 	override HRESULT GetFormatFilterList(BSTR* pbstrFilterList)
 	{
 		mixin(LogCallMix);
-		return E_NOTIMPL;
+		*pbstrFilterList = allocBSTR("D Source Files (*.d)\n*.d\nD Interface Files (*.di)\n*.di\n");
+		return S_OK;
 	}
 
 	override HRESULT QueryInvalidEncoding(in uint Format, BSTR* pbstrMessage)
@@ -3459,7 +3469,7 @@ else
 		wstring text = GetText(line, 0, line, -1);
 		if (text.length <= col || text[col] != ch || mLastBraceCompletionText[0] != ch)
 		{
-			if (mLastBraceCompletionText[0] == '\n' && 
+			if (mLastBraceCompletionText[0] == '\n' &&
 				mLastBraceCompletionText.length > 1 && mLastBraceCompletionText[1] == ch)
 			{
 				wstring ntext = GetText(line + 1, 0, line + 1, -1);
@@ -3585,7 +3595,7 @@ else
 
 		if(ch == '"' || ch == '`' || ch == '\'')
 			return CompleteQuote(line, col, ch);
-		
+
 		if(ch == '(' || ch == '[' || ch == '{')
 			return CompleteOpenBrace(line, col, ch);
 
