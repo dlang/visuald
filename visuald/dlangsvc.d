@@ -669,13 +669,37 @@ class LanguageService : DisposingComObject,
 		if(mVDServerClient)
 			mVDServerClient.onIdle();
 
+		enum idleActiveViewOnly = true;
+
+		if(IVsTextLines buffer = GetCurrentTextBuffer(null))
+		{
+			scope(exit) release(buffer);
+			if(Source src = GetSource(buffer))
+			{
+				static if(idleActiveViewOnly)
+				{
+					if(src.OnIdle())
+						return true;
+					foreach(CodeWindowManager mgr; mCodeWinMgrs)
+						if (mgr.mSource is src)
+							mgr.OnIdle();
+				}
+				if(auto cfg = getProjectConfig(src.GetFileName())) // this triggers an update of the colorizer if VC config changed
+					release(cfg);
+			}
+		}
+
 		CheckGC(false);
-		for(int i = 0; i < mSources.length; i++)
-			if(mSources[i].OnIdle())
-				return true;
-		foreach(CodeWindowManager mgr; mCodeWinMgrs)
-			if(mgr.OnIdle())
-				return true;
+
+		static if(!idleActiveViewOnly)
+		{
+			for(int i = 0; i < mSources.length; i++)
+				if(mSources[i].OnIdle())
+					return true;
+			foreach(CodeWindowManager mgr; mCodeWinMgrs)
+				if(mgr.OnIdle())
+					return true;
+		}
 
 		if(mLastActiveView && mLastActiveView.mView)
 		{

@@ -85,6 +85,8 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 	int mLastHighlightBracesLine;
 	ViewCol mLastHighlightBracesCol;
 
+	static const GUID iid = { 0xd143496a, 0xc795, 0x428d, [ 0x8c, 0xfe, 0x96, 0x88, 0xcf, 0x19, 0x5e, 0x3f ] };
+
 version(tip)
 	TextTipData mTextTipData;
 
@@ -173,6 +175,8 @@ version(tip)
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
+		if(queryInterface!(ViewFilter) (this, riid, pvObject))
+			return S_OK;
 		if(queryInterface!(IVsTextViewFilter) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IVsTextViewEvents) (this, riid, pvObject))

@@ -488,9 +488,9 @@ version(none)
 			{
 				OLECRINFO crinfo;
 				crinfo.cbSize = crinfo.sizeof;
-				crinfo.grfcrf = /*olecrfNeedIdleTime |*/ olecrfNeedPeriodicIdleTime | olecrfNeedAllActiveNotifs | olecrfNeedSpecActiveNotifs;
+				crinfo.grfcrf = olecrfNeedPeriodicIdleTime | olecrfNeedAllActiveNotifs | olecrfNeedSpecActiveNotifs;
 				crinfo.grfcadvf = olecadvfModal | olecadvfRedrawOff | olecadvfWarningsOff;
-				crinfo.uIdleTimeInterval = 1000;
+				crinfo.uIdleTimeInterval = 500;
 				if(!componentManager.FRegisterComponent(this, &crinfo, &mComponentID))
 					OutputDebugLog("FRegisterComponent failed");
 			}
@@ -672,16 +672,11 @@ version(none)
 			mWantsUpdateLibInfos = false;
 			Package.GetLibInfos().updateDefinitions();
 		}
-		mLangsvc.OnIdle();
 		OutputPaneBuffer.flush();
 
-		if (IVsTextLines buffer = GetCurrentTextBuffer(null))
-		{
-			scope(exit) release(buffer);
-			if (Source src = mLangsvc.GetSource(buffer))
-				if (auto cfg = getProjectConfig(src.GetFileName())) // this triggers an update of the colorizer if VC config changed
-					release(cfg);
-		}
+		if (mLangsvc.OnIdle())
+			return true;
+
 		return false;
 	}
 
