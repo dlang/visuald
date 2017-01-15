@@ -13,9 +13,9 @@ struct in_addr
                 struct S_union_b { UCHAR s_b1,s_b2,s_b3,s_b4; } S_union_b S_un_b;
                 struct S_union_w { USHORT s_w1,s_w2; } S_union_w S_un_w;
                 ULONG S_addr;
-        } 
+        }
 	S_union S_un;
-	
+
 	alias S_un.S_addr s_addr; /* can be used for most tcp & ip code */
 	alias S_un.S_un_b.s_b2 s_host;   // host on imp
 	alias S_un.S_un_b.s_b1 s_net;    // network

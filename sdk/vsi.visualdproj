@@ -1794,7 +1794,6 @@
    <File path="vsi\enc.d" />
    <File path="vsi\encbuild.d" />
    <File path="vsi\fpstfmt.d" />
-   <File path="vsi\imageparameters140.d" />
    <File path="vsi\ivsgetscciproviderinterface.d" />
    <File path="vsi\ivsprojectmru.d" />
    <File path="vsi\ivsqueryeditquerysave2.d" />
@@ -1829,9 +1828,6 @@
    <File path="vsi\msdbg.d" />
    <File path="vsi\msdbg100.d" />
    <File path="vsi\msdbg110.d" />
-   <File path="vsi\msdbg120.d" />
-   <File path="vsi\msdbg120a.d" />
-   <File path="vsi\msdbg140.d" />
    <File path="vsi\msdbg90.d" />
    <File path="vsi\objext.d" />
    <File path="vsi\ocdesign.d" />
@@ -1848,7 +1844,6 @@
    <File path="vsi\textmgr100.d" />
    <File path="vsi\textmgr110.d" />
    <File path="vsi\textmgr120.d" />
-   <File path="vsi\textmgr121.d" />
    <File path="vsi\textmgr2.d" />
    <File path="vsi\textmgr90.d" />
    <File path="vsi\textmgr91.d" />
@@ -1864,7 +1859,6 @@
    <File path="vsi\vslangproj.d" />
    <File path="vsi\vslangproj100.d" />
    <File path="vsi\vslangproj110.d" />
-   <File path="vsi\vslangproj140.d" />
    <File path="vsi\vslangproj2.d" />
    <File path="vsi\vslangproj80.d" />
    <File path="vsi\vslangproj90.d" />
@@ -1878,9 +1872,6 @@
    <File path="vsi\vsshell100.d" />
    <File path="vsi\vsshell110.d" />
    <File path="vsi\vsshell120.d" />
-   <File path="vsi\vsshell121.d" />
-   <File path="vsi\vsshell140.d" />
-   <File path="vsi\vsshell141.d" />
    <File path="vsi\vsshell2.d" />
    <File path="vsi\vsshell80.d" />
    <File path="vsi\vsshell90.d" />

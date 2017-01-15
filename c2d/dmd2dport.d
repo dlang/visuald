@@ -1,6 +1,6 @@
 module dmd2dport;
 
-public 
+public
 {
 	import std.c.stdio;
 	import std.c.stdlib;
@@ -14,7 +14,7 @@ public
 	import std.math;
 	import std.string;
 	import std.md5;
-	
+
 	import core.stdc.errno;
 	import core.bitop;
 	import core.stdc.fenv;
