@@ -1084,6 +1084,9 @@ enabled:
   ;------ MagoNatCC
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}" "Language" "D" 
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}" "Name" "D" 
+  ; enable conditional breakpoints
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}\Engine" "0" "{449EC4CC-30D2-4032-9256-EE18EB41B62B}" 
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}\Engine" "1" "{92EF0900-2251-11D2-B72E-0000F87572EF}" 
 
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\Debugger\CodeView Compilers\68:*" "LanguageID" "${LANGUAGE_CLSID}"
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\Debugger\CodeView Compilers\68:*" "VendorID"   "${VENDOR_CLSID}"

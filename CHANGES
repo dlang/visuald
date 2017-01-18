@@ -833,3 +833,5 @@ unreleased Version 0.3.44
   * menu entries now disabled if they require the focus on a D file, but it is elsewhere
   * building a library with LDC now always adds "-oq -od=$(IntDir)" to the command line
   * reduced idle processing by only updating the active view
+  * mago: display const modifier on type, recover string types
+  * mago concord plugin: enable conditional breakpoints
