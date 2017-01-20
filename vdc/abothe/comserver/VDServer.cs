@@ -131,6 +131,10 @@ namespace DParserCOMServer
 		private string _debugIds;
 		private uint   _flags;
 
+		private static uint _activityCounter;
+
+        public static uint Activity { get { return _activityCounter; } }
+
         EditorData _editorData = new EditorData();
 
         // remember modules, the global cache might not yet be ready or might have forgotten a module
@@ -200,6 +204,7 @@ namespace DParserCOMServer
 			{
                 string[] uniqueDirs = uniqueDirectories(imp);
 				GlobalParseCache.BeginAddOrUpdatePaths(uniqueDirs);
+                _activityCounter++;
 			}
 			_imports = imp;
 			_stringImports = stringImp;
@@ -240,6 +245,7 @@ namespace DParserCOMServer
 			_sources[filename] = srcText;
 			//MessageBox.Show("UpdateModule(" + filename + ")");
 			//throw new NotImplementedException();
+			_activityCounter++;
 		}
 
 		static int getCodeOffset(string s, CodeLocation loc)
@@ -311,6 +317,7 @@ namespace DParserCOMServer
 #endif
                     _editorData.CancelToken = cancelTokenSource.Token;
                     runningAction();
+                    _activityCounter++;
                 }
             }
         }
