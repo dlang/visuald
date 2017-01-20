@@ -674,7 +674,7 @@ class LanguageService : DisposingComObject,
 		if(IVsTextLines buffer = GetCurrentTextBuffer(null))
 		{
 			scope(exit) release(buffer);
-			if(Source src = GetSource(buffer))
+			if(Source src = GetSource(buffer, false))
 			{
 				static if(idleActiveViewOnly)
 				{
