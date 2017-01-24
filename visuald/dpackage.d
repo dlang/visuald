@@ -73,11 +73,12 @@ struct LanguageProperty
 	DWORD value;
 }
 
-const string plk_version  = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
+const string pkg_version  = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
                             extractDefine(import("version"), "VERSION_MINOR");
+const string plk_version  = "0.3"; // for VS2008 or earlier
 const string bld_version  = extractDefine(import("version"), "VERSION_BUILD");
 const string beta_version = extractDefine(import("version"), "VERSION_BETA");
-const string full_version = plk_version  ~ "." ~
+const string full_version = pkg_version  ~ "." ~
                             extractDefine(import("version"), "VERSION_REVISION") ~
                             (bld_version != "0" ? beta_version ~ bld_version : "");
 
@@ -86,7 +87,7 @@ const string full_version = plk_version  ~ "." ~
  *---------------------------------------------------------*/
 const wstring g_languageName             = "D"w;
 const wstring g_packageName              = "Visual D"w;
-const  string g_packageVersion           = plk_version;
+const  string g_packageVersion           = pkg_version;
 const wstring g_packageCompany           = "Rainer Schuetze"w;
 const wstring[] g_languageFileExtensions = [ ".d"w, ".di"w, ".mixin"w ];
 const wstring g_defaultProjectFileExtension = "visualdproj"w;

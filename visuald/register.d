@@ -491,7 +491,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyPackage.Set("About"w, g_packageName);
 		keyPackage.Set("CompanyName"w, g_packageCompany);
 		keyPackage.Set("ProductName"w, g_packageName);
-		keyPackage.Set("ProductVersion"w, toUTF16(g_packageVersion));
+		keyPackage.Set("ProductVersion"w, toUTF16(ver < 10 ? plk_version : g_packageVersion));
 		keyPackage.Set("MinEdition"w, "Standard");
 		keyPackage.Set("ID"w, 1);
 
