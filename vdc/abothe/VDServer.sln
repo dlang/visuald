@@ -46,7 +46,8 @@ Global
 		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Debug-Linux|x86.ActiveCfg = Debug|Any CPU
 		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Release|x86.ActiveCfg = Release|Any CPU
+		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Release|x86.ActiveCfg = Release|x86
+		{7B4FB722-905A-4851-8399-1E0F3361CCD8}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

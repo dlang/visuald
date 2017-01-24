@@ -141,6 +141,10 @@ class idl2d
 			"mprapidef.h", "lmerr.h", "lmcons.h",
 			// Win SDK 10.0
 			"coml2api.h", "jobapi2.h", "propidlbase.idl",
+			// Win SDK 10.0.10586.0
+			"enclaveapi.h",
+			// Win SDK 10.0.14393.0
+			"dpa_dsa.h",
 		])
 			win_idl_files ~= f ~ "*"; // make it optional
 
@@ -1042,7 +1046,8 @@ version(all)
 
 	string translatePackageName(string fname)
 	{
-		return fname.replace("\\shared\\", "\\").replace("\\um\\", "\\");
+		// "shared", "um" added in SDK 8.0, "um\minwin" in 10.0.10586.0
+		return fname.replace("\\shared\\", "\\").replace("\\um\\", "\\").replace("\\minwin\\", "\\");
 	}
 
 	string translateFilename(string fname)
@@ -1295,7 +1300,7 @@ version(all)
 		if(currentModule == "propidlbase")
 		{
 			replaceTokenSequence(tokens, "_VARIANT_BOOL bool;", "/*_VARIANT_BOOL bool;*/", true);
-			replaceTokenSequence(tokens, "TYPEDEF_CA($_identType,$_identName);", 
+			replaceTokenSequence(tokens, "TYPEDEF_CA($_identType,$_identName);",
 								         "struct $_identName { ULONG cElems; $_identType*  pElems; };", true);
 		}
 		if(currentModule == "imageparameters140")
@@ -1303,7 +1308,7 @@ version(all)
 			// type name and field name identical
 			replaceTokenSequence(tokens, "ImageMoniker ImageMoniker;", "ImageMoniker mImageMoniker;", true);
 		}
-		
+
 		// select unicode version of the API when defining without postfix A/W
 		replaceTokenSequence(tokens, "#ifdef UNICODE\nreturn $_identW(\n#else\nreturn $_identA(\n#endif\n",
 			"    return $_identW(", false);
@@ -2239,6 +2244,9 @@ else
 		case "NOT_BUILD_WINDOWS_DEPRECATE":
 		case "DECLSPEC_ALLOCATOR":
 
+		// Windows SDK 10.0.14393.0
+		case "_Outptr_result_z_":
+
 		// VS14 SDK comment after #endif
 		case "PROXYSTUB_BUILD":
 			return "/*" ~ text ~ "*/";
@@ -2295,7 +2303,11 @@ else
 		string pattern = baseName(file);
 		foreach (string name; dirEntries(path, mode))
 			if (globMatch(baseName(name), pattern))
+			{
 				addSource(name);
+				if (pattern[0] != '*')
+					break; // don't add optional files twice
+			}
 	}
 
 	void addSources(string file)
@@ -2369,6 +2381,8 @@ else
 			hdr ~= "import " ~ packageWin ~ "iprtrmib;\n";
 		else if(currentModule == "vssolutn")
 			hdr ~= "import " ~ packageWin ~ "winnls;\n";
+		else if(currentModule == "dpa_dsa")
+			hdr ~= "import " ~ packageWin ~ "objidlbase;\n";
 
 		hdr ~= "\n";
 
@@ -2467,6 +2481,9 @@ version(remove_pp) {} else
 			"prefix", &keywordPrefix,
 			"verbose", &verbose);
 
+		dte_path = replace(dte_path, "/", "\\");
+		win_path = replace(win_path, "/", "\\");
+		sdk_d_path = replace(sdk_d_path, "/", "\\");
 		if(!dte_path.empty && !_endsWith(dte_path, "\\"))
 			dte_path ~= "\\";
 		if(!win_path.empty && !_endsWith(win_path, "\\"))
@@ -2560,8 +2577,6 @@ version(remove_pp) {} else
 		string sources = "SRC = \\\n";
 		foreach(Source src; srcs)
 		{
-			writeln(src.filename);
-
 			string d_file;
 			d_file = replace(src.filename, win_path, win_d_path);
 			d_file = replace(d_file, vsi_path, vsi_d_path);
@@ -2574,6 +2589,8 @@ version(remove_pp) {} else
 				d_file = d_file[0 .. $-1] ~ "d";
 			d_file = translateFilename(d_file);
 			setCurrentFile(d_file);
+
+			writeln(src.filename, " -> ", d_file);
 
 			string text = convertText(src.tokens);
 			text = removeDuplicateEmptyLines(text);

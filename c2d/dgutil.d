@@ -179,16 +179,18 @@ unittest
 
 unittest
 {
-	string txt = "\nvoid foo()\n"
-	             "{\n"
-		     "    if(1)\n"
-		     "\tx = 0;\n"
-		     "}";
-	string exp = "\n    void foo()\n"
-	             "    {\n"
-		     "\tif(1)\n"
-		     "\t    x = 0;\n"
-		     "    }";
+	string txt =
+		"\nvoid foo()\n"
+		~ "{\n"
+		~ "    if(1)\n"
+		~ "\tx = 0;\n"
+		~ "}";
+	string exp =
+		"\n    void foo()\n"
+		~ "    {\n"
+		~ "\tif(1)\n"
+		~ "\t    x = 0;\n"
+		~ "    }";
 
 	string res = reindent(txt, 4, 8);
 	assume(res == exp);

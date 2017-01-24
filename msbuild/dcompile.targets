@@ -11,7 +11,11 @@
     </AvailableItemName>
   </ItemGroup>
 
-  <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(MSBuildThisFileDirectory)dbuild.$(MsBuildToolsVersion).dll" />
+  <PropertyGroup>
+    <DbuildCompileDDLLPath Condition="'$(DbuildCompileDDLLPath)' == ''">$(MSBuildThisFileDirectory)dbuild.$(MsBuildToolsVersion).dll</DbuildCompileDDLLPath>
+  </PropertyGroup>
+
+  <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(DbuildCompileDDLLPath)" />
 
   <PropertyGroup>
     <ComputeLinkInputsTargets>$(ComputeLinkInputsTargets);ComputeDCompileOutput;</ComputeLinkInputsTargets>
@@ -25,7 +29,7 @@
     <!-- extract package name from relative dir, avoid parent folder and drive names in package name -->
     <ItemGroup>
       <DCompile>
-        <PackageName>$([System.String]::Copy('%(RelativeDir)').Replace('..','__').Replace(':','_').Replace('\','.'))</PackageName>
+        <PackageName>$([System.String]::Copy('%(RelativeDir)|').Replace('\|','').Replace('|','').Replace('..','__').Replace(':','_').Replace('\','.'))</PackageName>
       </DCompile>
     </ItemGroup>
 
@@ -37,13 +41,14 @@
 
     <ItemGroup>
       <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'Package'">
-        <ObjectFileName>$(IntDir)%(PackageName).obj</ObjectFileName>
+        <ObjectFileName>$(IntDir)dpackage_%(PackageName).obj</ObjectFileName>
       </DCompile>
     </ItemGroup>
 
     <ItemGroup>
       <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'File'">
-        <ObjectFileName>$(IntDir)%(PackageName).%(FileName).obj</ObjectFileName>
+        <ObjectFileName Condition="'%(PackageName)' == ''">$(IntDir)%(FileName).obj</ObjectFileName>
+        <ObjectFileName Condition="'%(PackageName)' != ''">$(IntDir)%(PackageName).%(FileName).obj</ObjectFileName>
       </DCompile>
     </ItemGroup>
 
@@ -96,10 +101,11 @@
       <Parameter Include="PreserveSourcePath=%(DCompile.PreserveSourcePath)" />
       <Parameter Include="ShowDependencies=%(DCompile.ShowDependencies)" />
       <Parameter Include="Main=%(DCompile.Main)" />
-      <Parameter Include="VersionIdentifiers=%(DCompile.VersionIdentifiers)" />
-      <Parameter Include="DebugIdentifiers=%(DCompile.DebugIdentifiers)" />
-      <Parameter Include="ImportPaths=%(DCompile.ImportPaths)" />
-      <Parameter Include="StringImportPaths=%(DCompile.StringImportPaths)" />
+      <Parameter Include="CRuntimeLibrary=%(DCompile.CRuntimeLibrary)" />
+      <Parameter Include="VersionIdentifiers=$([System.String]::Copy('%(DCompile.VersionIdentifiers)').Replace(';','?'))" />
+      <Parameter Include="DebugIdentifiers=$([System.String]::Copy('%(DCompile.DebugIdentifiers)').Replace(';','?'))" />
+      <Parameter Include="ImportPaths=$([System.String]::Copy('%(DCompile.ImportPaths)').Replace(';','?'))" />
+      <Parameter Include="StringImportPaths=$([System.String]::Copy('%(DCompile.StringImportPaths)').Replace(';','?'))" />
       <Parameter Condition="'%(DCompile.DocDir)' != ''" Include="DocDir=%(DCompile.DocDir)" />
       <Parameter Condition="'%(DCompile.DocFile)' != ''" Include="DocFile=%(DCompile.DocFile)" />
       <Parameter Condition="'%(DCompile.DepFile)' != ''" Include="DepFile=%(DCompile.DepFile)" />
@@ -111,15 +117,22 @@
    <PropertyGroup>
       <_ToolExe Condition="'$(DCompiler)' == 'LDC'">$(LDCBinDir)ldmd2.exe</_ToolExe>
       <_ToolExe Condition="'$(DCompiler)' != 'LDC'">$(DMDBinDir)dmd.exe</_ToolExe>
+      <!-- ';' is replaced with '?' above, so these are not replaced when generating the
+           list of parameters with seperator '|'. '?' is then replaced back to ';' -->
+      <_Parameters>@(Parameter,'|')</_Parameters>
+      <Parameters>$([System.String]::Copy('$(_Parameters)').Replace('?',';'))</Parameters>
     </PropertyGroup>
+
+    <!-- <Message Text="Compile D Parameters: $(Parameters)" Importance="high" /> -->
 
     <CompileD Condition="'@(DCompile)' != '' and '%(DCompile.ExcludedFromBuild)' != 'true'"
               CommandLineTemplate="-c %(DCompile.CommandLineTemplate)"
               Xaml="$(MSBuildThisFileDirectory)$(DCompiler).xml"
-              Parameters="@(Parameter,'|')"
+              Parameters="$(Parameters)"
               TrackerLogDirectory="$(TLogLocation)"
               ShowCommandLine="%(DCompile.ShowCommandLine)"
               AdditionalOptions="%(DCompile.AdditionalOptions)"
+              Compiler="$(DCompiler)"
               ToolExe="$(_ToolExe)"
               Sources="@(DCompile)" >
     </CompileD>

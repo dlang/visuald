@@ -73,11 +73,12 @@ struct LanguageProperty
 	DWORD value;
 }
 
-const string plk_version  = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
+const string pkg_version  = extractDefine(import("version"), "VERSION_MAJOR") ~ "." ~
                             extractDefine(import("version"), "VERSION_MINOR");
+const string plk_version  = "0.3"; // for VS2008 or earlier
 const string bld_version  = extractDefine(import("version"), "VERSION_BUILD");
 const string beta_version = extractDefine(import("version"), "VERSION_BETA");
-const string full_version = plk_version  ~ "." ~
+const string full_version = pkg_version  ~ "." ~
                             extractDefine(import("version"), "VERSION_REVISION") ~
                             (bld_version != "0" ? beta_version ~ bld_version : "");
 
@@ -86,7 +87,7 @@ const string full_version = plk_version  ~ "." ~
  *---------------------------------------------------------*/
 const wstring g_languageName             = "D"w;
 const wstring g_packageName              = "Visual D"w;
-const  string g_packageVersion           = plk_version;
+const  string g_packageVersion           = pkg_version;
 const wstring g_packageCompany           = "Rainer Schuetze"w;
 const wstring[] g_languageFileExtensions = [ ".d"w, ".di"w, ".mixin"w ];
 const wstring g_defaultProjectFileExtension = "visualdproj"w;
@@ -116,24 +117,27 @@ const GUID    g_unmarshalEnumOutCLSID    = uuid("002a2de9-8bb6-484d-980e-7e4ad40
 // const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad4084715"); // defined in config.d
 
 const GUID    g_VisualDHelperCLSID       = uuid("002a2de9-8bb6-484d-aa10-7e4ad4084715");
+const GUID    g_VisualCHelperCLSID       = uuid("002a2de9-8bb6-484d-aa11-7e4ad4084715");
 
 // more guids in propertypage.d starting with 9810
 
 const LanguageProperty[] g_languageProperties =
 [
-  // see http://msdn.microsoft.com/en-us/library/bb166421.aspx
-  { "RequestStockColors"w,           0 },
-  { "ShowCompletion"w,               1 },
-  { "ShowSmartIndent"w,              1 },
-  { "ShowHotURLs"w,                  1 },
-  { "Default to Non Hot URLs"w,      1 },
-  { "DefaultToInsertSpaces"w,        0 },
-  { "ShowDropdownBarOption "w,       1 },
-  { "Single Code Window Only"w,      1 },
-  { "EnableAdvancedMembersOption"w,  1 },
-  { "Support CF_HTML"w,              0 },
-  { "EnableLineNumbersOption"w,      1 },
-  { "HideAdvancedMembersByDefault"w, 0 },
+	// see http://msdn.microsoft.com/en-us/library/bb166421.aspx
+	{ "RequestStockColors"w,           0 },
+	{ "ShowCompletion"w,               1 },
+	{ "ShowSmartIndent"w,              1 },
+	{ "ShowHotURLs"w,                  1 },
+	{ "Default to Non Hot URLs"w,      1 },
+	{ "DefaultToInsertSpaces"w,        0 },
+	{ "ShowDropdownBarOption "w,       1 },
+	{ "Single Code Window Only"w,      1 },
+	{ "EnableAdvancedMembersOption"w,  1 },
+	{ "Support CF_HTML"w,              0 },
+	{ "EnableLineNumbersOption"w,      1 },
+	{ "HideAdvancedMembersByDefault"w, 0 },
+	{ "ShowBraceCompletion"w,          1 },
+
 ];
 
 ///////////////////////////////////////////////////////////////////////
@@ -485,9 +489,9 @@ version(none)
 			{
 				OLECRINFO crinfo;
 				crinfo.cbSize = crinfo.sizeof;
-				crinfo.grfcrf = olecrfNeedIdleTime | olecrfNeedPeriodicIdleTime | olecrfNeedAllActiveNotifs | olecrfNeedSpecActiveNotifs;
+				crinfo.grfcrf = olecrfNeedPeriodicIdleTime | olecrfNeedAllActiveNotifs | olecrfNeedSpecActiveNotifs;
 				crinfo.grfcadvf = olecadvfModal | olecadvfRedrawOff | olecadvfWarningsOff;
-				crinfo.uIdleTimeInterval = 1000;
+				crinfo.uIdleTimeInterval = 500;
 				if(!componentManager.FRegisterComponent(this, &crinfo, &mComponentID))
 					OutputDebugLog("FRegisterComponent failed");
 			}
@@ -571,6 +575,7 @@ version(none)
 					prgCmds[i].cmdf = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 					break;
 				default:
+					prgCmds[i].cmdf = OLECMDF_SUPPORTED;
 					break;
 				}
 			}
@@ -668,8 +673,11 @@ version(none)
 			mWantsUpdateLibInfos = false;
 			Package.GetLibInfos().updateDefinitions();
 		}
-		mLangsvc.OnIdle();
 		OutputPaneBuffer.flush();
+
+		if (mLangsvc.OnIdle())
+			return true;
+
 		return false;
 	}
 
@@ -1102,6 +1110,12 @@ version(none)
 		return s_instance.mLangsvc;
 	}
 
+	static ProjectFactory GetProjectFactory()
+	{
+		assert(s_instance);
+		return s_instance.mProjFactory;
+	}
+
 	static GlobalOptions GetGlobalOptions()
 	{
 		assert(s_instance);
@@ -1190,6 +1204,7 @@ class GlobalOptions
 	string DevEnvDir;
 	string VSInstallDir;
 	string VCInstallDir;
+	string VCToolsInstallDir; // used by VS 2017
 	string VisualDInstallDir;
 
 	bool timeBuilds;
@@ -1333,7 +1348,7 @@ class GlobalOptions
 		}
 	}
 
-	void detectVCInstallDir()
+	void detectVSInstallDir()
 	{
 		if(char* pe = getenv("VSINSTALLDIR"))
 			VSInstallDir = fromMBSz(cast(immutable)pe);
@@ -1348,16 +1363,54 @@ class GlobalOptions
 		VSInstallDir = normalizeDir(VSInstallDir);
 	}
 
-	void detectVSInstallDir()
+	void detectVCInstallDir()
 	{
-		if(char* pe = getenv("VCINSTALLDIR"))
-			VCInstallDir = fromMBSz(cast(immutable)pe);
+		string defverFile = VSInstallDir ~ r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt";
+		if (std.file.exists(defverFile))
+		{
+			// VS 2017
+			try
+			{
+				string ver = strip(readUtf8(defverFile));
+				VCInstallDir = VSInstallDir ~ r"VC\";
+				if (!ver.empty)
+					VCToolsInstallDir = VCInstallDir ~ r"Tools\MSVC\" ~ ver ~ r"\";
+			}
+			catch(Exception)
+			{
+			}
+		}
+		if (VCInstallDir.empty)
+		{
+			if(char* pe = getenv("VCINSTALLDIR"))
+				VCInstallDir = fromMBSz(cast(immutable)pe);
+			else
+			{
+				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
+				VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
+			}
+			VCInstallDir = normalizeDir(VCInstallDir);
+		}
+	}
+
+	string getVCDir(string sub, bool x64, bool expand = false)
+	{
+		string dir;
+		if (!VCToolsInstallDir.empty)
+		{
+			dir = (expand ? VCToolsInstallDir : "$(VCTOOLSINSTALLDIR)");
+			if (sub.startsWith("bin"))
+				sub = (x64 ? "bin\\HostX86\\x64" : "bin\\HostX86\\x86") ~ sub[3 .. $];
+			if (sub.startsWith("lib"))
+				sub = (x64 ? "lib\\x64" : "lib\\x86") ~ sub[3 .. $];
+		}
 		else
 		{
-			scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
-			VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
+			dir = (expand ? VCInstallDir : "$(VCINSTALLDIR)");
+			if (sub.startsWith("lib") && x64)
+				sub = "lib\\amd64" ~ sub[3 .. $];
 		}
-		VCInstallDir = normalizeDir(VCInstallDir);
+		return dir ~ sub;
 	}
 
 	bool initFromRegistry()
@@ -1374,7 +1427,7 @@ class GlobalOptions
 		bool rc = true;
 		try
 		{
-			wstring defUserTypesSpec = "Object string wstring dstring ClassInfo\n"
+			wstring defUserTypesSpec = "Object string wstring dstring ClassInfo\n" ~
 			                           "hash_t ptrdiff_t size_t sizediff_t";
 			// get defaults from global config
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
@@ -1384,6 +1437,14 @@ class GlobalOptions
 			detectUCRT();
 			detectVSInstallDir();
 			detectVCInstallDir();
+
+			//UtilMessageBox("getVCDir = " ~ getVCDir("lib\\legacy_stdio_definitions.lib", true, true)
+			//UtilMessageBox("VSInstallDir = "~VSInstallDir ~"\n" ~
+			//               "VCInstallDir = "~VCInstallDir ~"\n" ~
+			//               "VCToolsInstallDir = "~VCToolsInstallDir ~ "\n" ~
+			//               "regConfig = " ~ to!string(regConfigRoot) ~ "\n" ~
+			//               "regUser = " ~ to!string(regUserRoot)
+			//               , MB_OK, "Visual D - init");
 
 			wstring getWStringOpt(wstring tag, wstring def = null)
 			{
@@ -1435,8 +1496,9 @@ class GlobalOptions
 
 			string getDefaultLibPathCOFF64()
 			{
-				string libpath = r"$(VCInstallDir)\lib\amd64";
-				if(std.file.exists(VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+				string libpath = getVCDir ("lib", true);
+				string dir = replaceGlobalMacros(libpath);
+				if(std.file.exists(dir ~ "\\legacy_stdio_definitions.lib"))
 					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x64";
 
 				if(WindowsSdkDir.length)
@@ -1453,8 +1515,9 @@ class GlobalOptions
 
 			string getDefaultLibPathCOFF32()
 			{
-				string libpath = r"$(VCInstallDir)\lib";
-				if(std.file.exists(VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+				string libpath = getVCDir ("lib", false);
+				string dir = replaceGlobalMacros(libpath);
+				if(std.file.exists(dir ~ "\\legacy_stdio_definitions.lib"))
 					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x86";
 
 				if(WindowsSdkDir.length)
@@ -1484,8 +1547,9 @@ class GlobalOptions
 				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", opt.LibSearchPath64);
 				opt.DisasmCommand64 = getPathsOpt(prefix ~ "DisasmCommand64", opt.DisasmCommand64);
 
+				wstring linkPath = to!wstring(getVCDir("bin\\link.exe", false));
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
-				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
+				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? linkPath : "");
 				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
 
 				if (dmd)
@@ -1493,8 +1557,8 @@ class GlobalOptions
 					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", opt.ExeSearchPath32coff);
 					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", opt.LibSearchPath32coff);
 					opt.DisasmCommand32coff   = getPathsOpt(prefix ~ "DisasmCommand32coff", opt.DisasmCommand32coff);
-					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", dmd);
-					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", dmd ? r"$(VCINSTALLDIR)\bin\link.exe" : "");
+					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", true);
+					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", linkPath);
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
 				}
 			}
@@ -1502,13 +1566,13 @@ class GlobalOptions
 			// $(WindowsSdkDir)\bin needed for rc.exe
 			// $(VCInstallDir)\bin needed to compile C + link.exe + DLLs
 			// $(VSINSTALLDIR)\Common7\IDE needed for some VS versions for cv2pdb
-			DMD.ExeSearchPath = r"$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin;$(DMDInstallDir)windows\bin";
+			DMD.ExeSearchPath       = getVCDir("bin", false) ~ r";$(VSINSTALLDIR)Common7\IDE;$(WindowsSdkDir)bin;$(DMDInstallDir)windows\bin";
 			DMD.ExeSearchPath64     = DMD.ExeSearchPath;
 			DMD.ExeSearchPath32coff = DMD.ExeSearchPath;
-			GDC.ExeSearchPath       = r"$(GDCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
+			GDC.ExeSearchPath       = r"$(GDCInstallDir)bin;$(VSINSTALLDIR)Common7\IDE;$(WindowsSdkDir)bin";
 			GDC.ExeSearchPath64     = GDC.ExeSearchPath;
-			LDC.ExeSearchPath       = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin;$(VSINSTALLDIR)\Common7\IDE;$(WindowsSdkDir)\bin";
-			LDC.ExeSearchPath64     = r"$(LDCInstallDir)\bin;$(VCInstallDir)\bin\amd64;$(WindowsSdkDir)\bin";
+			LDC.ExeSearchPath       = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", false) ~ r";$(VSINSTALLDIR)Common7\IDE;$(WindowsSdkDir)bin";
+			LDC.ExeSearchPath64     = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", true)  ~ r";$(WindowsSdkDir)bin";
 
 			DMD.LibSearchPath64     = getDefaultLibPathCOFF64();
 			LDC.LibSearchPath64     = DMD.LibSearchPath64;
@@ -1516,8 +1580,8 @@ class GlobalOptions
 			LDC.LibSearchPath       = DMD.LibSearchPath32coff;
 
 			DMD.DisasmCommand       = `"obj2asm" -x "$(InputPath)" >"$(TargetPath)"`;
-			DMD.DisasmCommand64     = `"$(VCInstallDir)\bin\amd64\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
-			DMD.DisasmCommand32coff = `"$(VCInstallDir)\bin\dumpbin" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
+			DMD.DisasmCommand64     = `"` ~ getVCDir("bin\\dumpbin", true)  ~ `" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
+			DMD.DisasmCommand32coff = `"` ~ getVCDir("bin\\dumpbin", false) ~ `" /disasm:nobytes "$(InputPath)" >"$(TargetPath)"`;
 
 			GDC.DisasmCommand   = DMD.DisasmCommand32coff;
 			LDC.DisasmCommand   = DMD.DisasmCommand32coff;
@@ -1529,7 +1593,7 @@ class GlobalOptions
 			readCompilerOptions!"LDC"(LDC);
 
 			JSNSearchPath     = getPathsOpt("JSNSearchPath");
-			IncSearchPath     = getStringOpt("IncSearchPath", r"$(WindowsSdkDir)\include;$(VCInstallDir)\include");
+			IncSearchPath     = getStringOpt("IncSearchPath", r"$(WindowsSdkDir)include;"w ~ to!wstring(getVCDir("include", false)));
 			VDServerIID       = getStringOpt("VDServerIID");
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
 			compileAndDbgOpts = getStringOpt("compileAndDbgOpts", "-g");
@@ -1702,6 +1766,7 @@ class GlobalOptions
 		replacements["UCRTVERSION"] = UCRTVersion;
 		replacements["DEVENVDIR"] = DevEnvDir;
 		replacements["VCINSTALLDIR"] = VCInstallDir;
+		replacements["VCTOOLSINSTALLDIR"] = VCToolsInstallDir;
 		replacements["VSINSTALLDIR"] = VSInstallDir;
 		replacements["VISUALDINSTALLDIR"] = VisualDInstallDir;
 	}
@@ -2251,7 +2316,7 @@ class ItemWizard : DisposingDispatchObject, dte.IDTWizard
 				silent = var.boolVal != 0;
 		}
 
-		UtilMessageBox("Sorry, it does not make sense to add a package without specifying a folder.\n"
+		UtilMessageBox("Sorry, it does not make sense to add a package without specifying a folder.\n" ~
 					   "Please use the \"Add new item\" command from the project context menu.",
 					   MB_OK, "Visual D - Add package");
 		if(retval)

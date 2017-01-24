@@ -62,7 +62,7 @@ char* d_demangle (char[] mangled)
 void print_demangled (char[] mangled)
 {
     char *result;
-	char[] initial = mangled;
+    char[] initial = mangled;
 
     /* . and $ are sometimes found at the start of function names
     in assembler sources in order to distinguish them from other
@@ -99,15 +99,15 @@ int main (char[][] argv)
     int c;
     const char *valid_symbols = "_$.?@";
 
-	if (argv.length > 1)
-	{
-		foreach(a; argv[1..$])
-		{
-			print_demangled(a);
-			putchar ('\n');
-		}
-		return 0;
-	}
+    if (argv.length > 1)
+    {
+        foreach(a; argv[1..$])
+        {
+            print_demangled(a);
+            putchar ('\n');
+        }
+        return 0;
+    }
     for (;;)
     {
         static char mbuffer[32767];

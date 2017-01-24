@@ -1063,7 +1063,7 @@ bool isInitializedRE(T)(ref T re)
 	static if(__traits(compiles,re.ir))
 		return re.ir !is null; // stdext.fred
 	else
-		return re.captures() > 0; // std.regex
+		return !re.empty; // std.regex
 }
 	
 bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,

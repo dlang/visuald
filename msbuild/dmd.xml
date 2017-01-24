@@ -34,7 +34,7 @@
     <StringListProperty Name="VersionIdentifiers" Category="General" DisplayName="Version Identifiers"
                         Description="compile in version code identified by ident/&gt;= level." Switch="-version=[value]" />
     <StringListProperty Name="DebugIdentifiers" Category="General" DisplayName="Debug Identifiers"
-                        Description="compile in debug code identified by ident/&lt;= level." Switch="-version=[value]" />
+                        Description="compile in debug code identified by ident/&lt;= level." Switch="-debug=[value]" />
 
     <EnumProperty Name="CompilationModel" Category="General" DisplayName="Compilation Model" IncludeInCommandLine="false"
                   Description="Compilation model if object file name is empty: project, package or single.">
@@ -45,9 +45,22 @@
     <StringProperty Name="ObjectFileName" Category="General" DisplayName="Object File Name" Subtype="file"
                     Description="Specifies the name of the output object file. Leave empty to auto generate a name according to the compilation model. Use [PackageName] to add the folder name with special characters replaced."
                     Switch="-of&quot;[value]&quot;" />
-    <BoolProperty Name="PreserveSourcePath" Category="Object File" DisplayName="Preserve source path"
+    <BoolProperty Name="PreserveSourcePath" Category="General" DisplayName="Preserve source path"
                   Description="preserve source path for output files." Switch="-op" 
                   Visible="False"/>
+    <EnumProperty Name="CRuntimeLibrary" Category="General" DisplayName="C Runtime Library" IncludeInCommandLine="true"
+                  Description="Link against the static/dynamic debug/release C runtime library.">
+      <EnumValue Name="None" DisplayName="None" Switch="-mscrtlib="
+                 Description="Don't force a specific C run-time library. This needs another project to set the library or the library must be explicitly passed to the linker." />
+      <EnumValue Name="MultiThreaded" DisplayName="Multi-threaded" Switch=""
+                 Description="Causes your application to use the multithread, static version of the run-time library." />
+      <EnumValue Name="MultiThreadedDebug" DisplayName="Multi-threaded Debug" Switch="-mscrtlib=libcmtd"
+                 Description="This option also causes the compiler to place the library name LIBCMTD.lib into the .obj file so that the linker will use LIBCMTD.lib to resolve external symbols." />
+      <EnumValue Name="MultiThreadedDll" DisplayName="Multi-threaded DLL" Switch="-mscrtlib=msvcrt"
+                 Description="Causes your application to use the multithread- and DLL-specific version of the run-time library. Causes the compiler to place the library name MSVCRT.lib into the .obj file." />
+      <EnumValue Name="MultiThreadedDebugDll" DisplayName="Multi-threaded Debug DLL" Switch="-mscrtlib=msvcrtd"
+                 Description="Causes your application to use the debug multithread- and DLL-specific version of the run-time library. It also causes the compiler to place the library name MSVCRTD.lib into the .obj file." />
+    </EnumProperty>
 
     <!-- =============== Messages =============== -->
     <EnumProperty Name="Warnings" Category="Messages" DisplayName="Enable warnings" Description="Enable display of warnings. (-w, -wi)">
@@ -126,7 +139,7 @@
     <StringProperty Name="DocFile" Category="Documentation" DisplayName="Documentation File" Subtype="file"
                     Description="write documentation to this file." Switch="-Df&quot;[value]&quot;" />
     <StringProperty Name="DepFile" Category="Documentation" DisplayName="Dependencies File" Subtype="file"
-                    Description="write module dependencies to filename (only imports)." Switch="-Df&quot;[value]&quot;" />
+                    Description="write module dependencies to filename (only imports)." Switch="-deps=&quot;[value]&quot;" />
     <StringProperty Name="HeaderDir" Category="Documentation" DisplayName="Header Directory" Subtype="folder"
                     Description="write 'header' file(s) to this directory." Switch="-Hd&quot;[value]&quot;" />
     <StringProperty Name="HeaderFile" Category="Documentation" DisplayName="Header File" Subtype="file"
@@ -135,6 +148,7 @@
                     Description="write browse information to this JSON file." Switch="-Xf&quot;[value]&quot;" />
 
     <!-- =============== invisible =============== -->
+    <StringProperty Name="CompilerExe" DisplayName="Command Line" Visible="False" IncludeInCommandLine="False" />
     <StringProperty Name="CommandLineTemplate" DisplayName="Command Line" Visible="False" IncludeInCommandLine="False" />
     <StringProperty Subtype="AdditionalOptions" Name="AdditionalOptions" Category="Command Line"
                     DisplayName="Additional Options" Description="Additional Options" />

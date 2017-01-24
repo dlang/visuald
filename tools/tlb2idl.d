@@ -142,7 +142,7 @@ int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) nothrow
 			{
 				idltext = toUTF8(buffer[0..$-1]);
 			}
-			catch
+			catch(Throwable)
 			{
 			}
 			if(idltext.length > 0)

@@ -224,3 +224,5 @@ Unsorted
 
 - version highlighting in files not in a project
 - does not rebuild lib if c-file recompiled
+
+- cannot remove deleted project from solution

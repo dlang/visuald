@@ -3,7 +3,7 @@ rem unpack and configure binutils 2.25+
 rem don't use spaces in path names!
 
 setlocal
-if "%DMDINSTALLDIR%" == "" set DMDINSTALLDIR=m:\s\d\rainers
+if "%DMDINSTALLDIR%" == "" set DMDINSTALLDIR=c:\s\d\rainers
 if "%DMD%" == "" set DMD=%DMDINSTALLDIR%\windows\bin\dmd
 if "%BINUTILS%" == "" set BINUTILS=c:\s\cpp\cxxfilt
 
@@ -22,5 +22,6 @@ set SRC=%SRC% %LIBIBERTY%\safe-ctype.c
 set SRC=%SRC% %LIBIBERTY%\alloca.c
 
 set COPT=-I %BINUTILS% -I %BINUTILS%\include -I %BINUTILS%\binutils -DHAVE_CONFIG_H
-set LIB=%LIB%;%DMDINSTALLDIR%\lib32
+set LIB=%LIB%;%DMDINSTALLDIR%\windows\lib32mscoff
+if exist "%VCINSTALLDIR%\lib\legacy_stdio_definitions.lib" set SRC=%SRC% legacy_stdio_definitions.lib
 cl /Ox /Fe%OUTDIR%\dcxxfilt.exe /Fo%OUTDIR%\ %COPT% %SRC% %OUTDIR%\dcxxfilt.obj dbghelp.lib

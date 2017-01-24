@@ -39,6 +39,7 @@ import vdc.lexer;
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
+import sdk.vsi.textmgr120;
 import sdk.vsi.stdidcmd;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
@@ -83,6 +84,8 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 
 	int mLastHighlightBracesLine;
 	ViewCol mLastHighlightBracesCol;
+
+	static const GUID iid = { 0xd143496a, 0xc795, 0x428d, [ 0x8c, 0xfe, 0x96, 0x88, 0xcf, 0x19, 0x5e, 0x3f ] };
 
 version(tip)
 	TextTipData mTextTipData;
@@ -172,6 +175,8 @@ version(tip)
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
+		if(queryInterface!(ViewFilter) (this, riid, pvObject))
+			return S_OK;
 		if(queryInterface!(IVsTextViewFilter) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IVsTextViewEvents) (this, riid, pvObject))
@@ -432,7 +437,10 @@ version(tip)
 			{
 			case ECMD_RETURN:
 				if(!wasCompletorActive)
+				{
+					HandleBraceCompletion('\n');
 					HandleSmartIndent('\n');
+				}
 				break;
 
 			case ECMD_LEFT:
@@ -466,6 +474,10 @@ version(tip)
 						stopCompletions();
 				}
 
+				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' || ch == '(' || ch == ')' ||
+				   ch == '"' || ch == '`' || ch == '\'')
+					HandleBraceCompletion(ch);
+
 				if(ch == '{' || ch == '}' || ch == '[' || ch == ']' ||
 				   ch == 'n' || ch == 't' || ch == 'y') // last characters of "in", "out" and "body"
 					HandleSmartIndent(ch);
@@ -477,7 +489,7 @@ version(tip)
 				}
 				else if(ch == '(')
 				{
-					LANGPREFERENCES langPrefs;
+					LANGPREFERENCES3 langPrefs;
 					if(GetUserPreferences(&langPrefs, null) == S_OK && langPrefs.fAutoListParams)
 						_HandleMethodTip(false);
 				}
@@ -506,51 +518,37 @@ version(tip)
 		wchar* wfname = _toUTF16z(fname);
 		string addopt;
 
-		Config cfg;
+		Config cfg = getProjectConfig(fname, true);
+		scope(exit) release(cfg); // must not dispose because we need the builder
+
 		CFileNode pFile;
-
-		IVsUIHierarchy pUIH;
-		uint itemid;
-		IServiceProvider pSP;
-		VSDOCINPROJECT docInProj;
-		if(pIVsUIShellOpenDocument.IsDocumentInAProject(wfname, &pUIH, &itemid, &pSP, &docInProj) != S_OK)
-			return S_OK;
-
-		scope(exit) release(pSP);
-		scope(exit) release(pUIH);
-
-		if(!pUIH)
-			return returnError(E_FAIL);
-		Project proj = qi_cast!Project(pUIH);
-		scope(exit) release(proj);
-
 		BSTR bstrSelText;
 		string selText;
 		if(mView.GetSelectedText(&bstrSelText) == S_OK && !disasm)
 			selText = detachBSTR(bstrSelText);
 
-		if(!proj)
+		if(cfg)
+		{
+			string docName = toLower(fname);
+			CHierNode node = searchNode(cfg.GetProject().GetRootNode(), delegate (CHierNode n) { return n.GetCanonicalName() == docName; });
+			pFile = cast(CFileNode) node;
+			assert(pFile);
+		}
+		else
 		{
 			// not in Visual D project, but in workspace project
-			ProjectFactory factory = newCom!ProjectFactory(Package.s_instance);
+			string platform, config = GetActiveSolutionConfig(&platform);
+			if (config.empty)
+				platform = "Win32", config = "Debug";
+
 			string filename = normalizeDir(tempDir()) ~ "__compile__.vdproj";
+			cfg = newCom!VCConfig(filename, "__compile__", platform, config).addref();
+			cfg.GetProjectOptions().outdir = normalizeDir(tempDir()) ~ "__vdcompile";
+			cfg.GetProjectOptions().release = false;
 
-			proj = newCom!Project(factory, "__compile__", filename, "Debug", "Win32").addref();
+			Project prj = newCom!Project(Package.GetProjectFactory(), "__compile__", filename, platform, config);
 			pFile = newCom!CFileNode(fname);
-			proj.GetProjectNode().Add(pFile);
-
-			IVsCfgProvider pCfgProvider;
-			IVsCfg icfg;
-			scope(exit) release(pCfgProvider);
-			scope(exit) release(icfg);
-			if(proj.GetCfgProvider(&pCfgProvider) == S_OK)
-				if(pCfgProvider.GetCfgs(1, &icfg, null, null) == S_OK)
-					cfg = qi_cast!Config(icfg);
-			if(cfg)
-			{
-				cfg.GetProjectOptions().outdir = normalizeDir(tempDir()) ~ "__vdcompile";
-				cfg.GetProjectOptions().release = false;
-			}
+			prj.GetRootNode().AddTail(pFile);
 
 			string modname = getModuleDeclarationName(fname);
 			if(modname.length)
@@ -563,42 +561,19 @@ version(tip)
 					addopt ~= " -I" ~ normalizeDir(dirName(fname)) ~ ipath[1..$];
 			}
 		}
-		else
-		{
-			CHierNode pNode = proj.VSITEMID2Node(itemid);
-			if(!pNode)
-				return returnError(E_INVALIDARG);
-			pFile = cast(CFileNode) pNode;
-			if(!pFile)
-				return S_OK;
 
-			auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
-			scope(exit) release(solutionBuildManager);
-			IVsProjectCfg activeCfg;
-			scope(exit) release(activeCfg);
-
-			if(solutionBuildManager)
-				if(solutionBuildManager.FindActiveProjectCfg(null, null, proj, &activeCfg) == S_OK)
-					cfg = qi_cast!Config(activeCfg);
-		}
-		if(!cfg || !pFile)
-			return S_OK;
-
-		if(pFile.SaveDoc(SLNSAVEOPT_SaveIfDirty) != S_OK)
+		if(!pFile || saveTextBuffer(fname) != S_OK)
 			return returnError(E_FAIL);
 
 		mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position
 
 		auto symdebug = cfg.GetProjectOptions().symdebug;
-		scope(exit)
-		{
-			cfg.GetProjectOptions().symdebug = symdebug;
-			release(cfg);
-		}
+		scope(exit) cfg.GetProjectOptions().symdebug = symdebug;
+
 		if (disasm && symdebug == 0) // ensure debug info is enabled
 			cfg.GetProjectOptions().symdebug = 3;
 
-		string stool = cfg.GetStaticCompileTool(pFile, cfg.getCfgName());
+		string stool = pFile ? cfg.GetStaticCompileTool(pFile, cfg.getCfgName()) : "DMDsingle";
 		if(stool == "DMD")
 			stool = "DMDsingle";
 		if(stool == "DMDsingle" && rdmd)
@@ -654,7 +629,10 @@ version(tip)
 			clearOutputPane();
 			if(pane)
 				pane.Activate();
-			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, cfg.getBuilder());
+			
+			auto builder = new CBuilderThread(cfg);
+			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, builder);
+			builder.Dispose();
 
 			if(run)
 				Package.GetGlobalOptions().addExecutionPath(workdir, null);
@@ -1110,7 +1088,7 @@ version(tip)
 	//////////////////////////////////////////////////////////////
 	int HandleSmartIndent(dchar ch)
 	{
-		LANGPREFERENCES langPrefs;
+		LANGPREFERENCES3 langPrefs;
 		if(int rc = GetUserPreferences(&langPrefs, mView))
 			return rc;
 		if(langPrefs.IndentStyle != vsIndentStyleSmart)
@@ -1177,6 +1155,30 @@ version(tip)
 			with(mCodeWinMgr.mSource.mLastTextLineChange)
 				if(iStartLine != iNewEndLine)
 					return ReindentLines(iStartLine, iNewEndLine);
+		return S_OK;
+	}
+
+	//////////////////////////////////////////////////////////////
+	int HandleBraceCompletion(dchar ch)
+	{
+		// character ch already inserted, caret placed right after it
+		LANGPREFERENCES3 langPrefs;
+		if(int rc = GetUserPreferences(&langPrefs, mView))
+			return rc;
+		if(!langPrefs.fBraceCompletion)
+			return S_FALSE;
+
+		int line, idx;
+		if(int rc = mView.GetCaretPos(&line, &idx))
+			return rc;
+
+		if(int rc = mCodeWinMgr.mSource.AutoCompleteBrace(line, idx, ch, langPrefs))
+			return rc;
+
+		// restore caret position, it has been moved by the insertion
+		if(int rc = mView.SetCaretPos(line, idx))
+			return rc;
+
 		return S_OK;
 	}
 

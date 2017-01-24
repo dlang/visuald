@@ -46,6 +46,7 @@ import visuald.fileutil;
 import visuald.lexutil;
 import visuald.pkgutil;
 import visuald.vdextensions;
+import visuald.register;
 
 version = hasOutputGroup;
 // implementation of IVsProfilableProjectCfg is incomplete (profiler doesn't stop)
@@ -67,7 +68,7 @@ const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad40847
 
 T clone(T)(T object)
 {
-	auto size = typeid(object).init.length;
+	auto size = typeid(object).initializer.length;
 	object = cast(T) ((cast(void*)object) [0..size].dup.ptr );
 //	object.__monitor = null;
 	return object;
@@ -222,7 +223,7 @@ class ProjectOptions
 	bool run;		// run resulting executable
 	string runargs;		// arguments for executable
 
-	bool runCv2pdb;		// run cv2pdb on executable
+	ubyte runCv2pdb;		// run cv2pdb on executable (0: no, 1: suitable for debug engine, 2: yes)
 	bool cv2pdbPre2043;		// pass version before 2.043 for older aa implementation
 	bool cv2pdbNoDemangle;	// do not demangle symbols
 	bool cv2pdbEnumType;	// use enumerator type
@@ -290,7 +291,7 @@ class ProjectOptions
 
 	void setDebug(bool dbg)
 	{
-		runCv2pdb = dbg && !isX86_64;
+		runCv2pdb = dbg && !isX86_64 ? 1 : 0;
 		symdebug = dbg ? 3 : 0;
 		release = dbg ? 0 : 1;
 		optimize = release == 1;
@@ -301,6 +302,18 @@ class ProjectOptions
 		isX86_64 = x64;
 		if(release != 1 && cRuntime == CRuntime.StaticRelease)
 			cRuntime = CRuntime.StaticDebug;
+	}
+
+	override bool opEquals(Object obj) const
+	{
+		auto other = cast(ProjectOptions) obj;
+		if (!other)
+			return false;
+
+		foreach (i, f; this.tupleof)
+			if (this.tupleof[i] != other.tupleof[i])
+				return false;
+		return true;
 	}
 
 	string objectFileExtension() { return compiler != Compiler.GDC ? "obj" : "o"; }
@@ -619,7 +632,7 @@ class ProjectOptions
 			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
 
 		if(lib == OutputType.StaticLib && performLink)
-			cmd ~= " -lib";
+			cmd ~= " -lib -oq -od=\"$(IntDir)\"";
 		if(isX86_64)
 			cmd ~= " -m64";
 		else
@@ -874,14 +887,13 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir, bool mslink)
+	string optlinkCommandLine(string[] lnkfiles, string inioptions, string workdir, bool mslink, string plus)
 	{
 		string cmd;
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
 			dmdoutfile ~= "_cv";
 		string mapfile = "\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
-		string plus = mslink ? " " : "+";
 
 		static string plusList(string[] lnkfiles, string ext, string sep)
 		{
@@ -923,7 +935,7 @@ class ProjectOptions
 		libs ~= "user32.lib";
 		libs ~= "kernel32.lib";
 		if(useMSVCRT())
-			if(std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ "lib\\legacy_stdio_definitions.lib"))
+			if(std.file.exists(Package.GetGlobalOptions().getVCDir("lib\\legacy_stdio_definitions.lib", isX86_64, true)))
 				libs ~= "legacy_stdio_definitions.lib";
 
 		cmd ~= plusList(lnkfiles ~ libs, ".lib", plus);
@@ -1052,7 +1064,12 @@ class ProjectOptions
 
 		string cmd = cccmd;
 		if(cc == 1 && setenv)
-			cmd = `call "%VCINSTALLDIR%\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
+		{
+			if (std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ "vcvarsall.bat"))
+				cmd = `call "%VCINSTALLDIR%\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
+			else if (std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ r"Auxiliary\Build\vcvarsall.bat"))
+				cmd = `call "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
+		}
 
 		static string[4] outObj = [ " -o", " -Fo", " -o", " -o " ];
 		if (file.length)
@@ -1145,7 +1162,11 @@ class ProjectOptions
 	{
 		if(compiler == Compiler.DMD && (isX86_64 || mscoff))
 			return false; // should generate correct debug info directly
-		return (/*compiler == Compiler.DMD && */symdebug && runCv2pdb && lib != OutputType.StaticLib && debugEngine != 1);
+		if (!symdebug || lib == OutputType.StaticLib)
+			return false;
+		if (runCv2pdb == 2)
+			return true;
+		return (runCv2pdb == 1 && debugEngine != 1); // not for mago
 	}
 
 	string appendCv2pdb()
@@ -1980,7 +2001,7 @@ class Config :	DisposingComObject,
 	{
 		logCall("%s.get_IsDebugOnly(pfIsDebugOnly=%s)", this, _toLog(pfIsDebugOnly));
 
-		*pfIsDebugOnly = (mName == "Debug");
+		*pfIsDebugOnly = mProjectOptions.release != 1;
 		return S_OK;
 	}
 
@@ -1988,7 +2009,7 @@ class Config :	DisposingComObject,
 	{
 		logCall("%s.get_IsReleaseOnly(pfIsReleaseOnly=%s)", this, _toLog(pfIsReleaseOnly));
 
-		*pfIsReleaseOnly = (mName == "Release");
+		*pfIsReleaseOnly = mProjectOptions.release == 1;
 		return S_OK;
 	}
 
@@ -2173,7 +2194,6 @@ class Config :	DisposingComObject,
 		switch(engine)
 		{
 			case 1:
-				GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
 				return GUID_MaGoDebugger;
 			case 2:
 				return GUID_COMPlusNativeEng; // the mixed-mode debugger (works only on x86)
@@ -2879,7 +2899,7 @@ class Config :	DisposingComObject,
 			else
 				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile)
 				              ~ mProjectOptions.getDependenciesFileOption(depfile);
-			cmd ~= " " ~ file.GetFilename();
+			cmd ~= " " ~ quoteFilename(file.GetFilename());
 			foreach(ddoc; getDDocFileList())
 				cmd ~= " " ~ ddoc;
 		}
@@ -2903,7 +2923,7 @@ class Config :	DisposingComObject,
 			cmd ~= opts.buildCommandLine(true, !syntaxOnly, false, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";
-			cmd ~= addopt ~ " " ~ file.GetFilename();
+			cmd ~= addopt ~ " " ~ quoteFilename(file.GetFilename());
 			addopt = ""; // must be before filename for rdmd
 			if (!syntaxOnly)
 			{
@@ -2977,6 +2997,8 @@ class Config :	DisposingComObject,
 				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
 			if(globOpt.VCInstallDir.length)
 				cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
+			if(globOpt.VCToolsInstallDir.length)
+				cmd ~= "set VCTOOLSINSTALLDIR=" ~ globOpt.VCToolsInstallDir ~ "\n";
 			if(globOpt.VSInstallDir.length)
 				cmd ~= "set VSINSTALLDIR=" ~ globOpt.VSInstallDir ~ "\n";
 		}
@@ -3353,7 +3375,8 @@ class Config :	DisposingComObject,
 						~ lnkcmd;
 
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff);
+				string plus = x64 || mscoff ? " " : "+";
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";
@@ -3369,8 +3392,11 @@ class Config :	DisposingComObject,
 						else
 							lnkresponsefile = shortresponsefile;
 					}
+					plus ~= " >> " ~ lnkresponsefile ~ "\necho ";
+					cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
+
 					prelnk ~= "echo. > " ~ lnkresponsefile ~ "\n";
-					prelnk ~= "echo " ~ cmdfiles.replace("+", "+ >> " ~ lnkresponsefile ~ "\necho ");
+					prelnk ~= "echo " ~ cmdfiles;
 					prelnk ~= " >> " ~ lnkresponsefile ~ "\n\n";
 					lnkcmd ~= "@" ~ lnkresponsefile;
 				}
@@ -4408,20 +4434,3 @@ class EnumVsProfilerTargetInfos : DComObject, IEnumVsProfilerTargetInfos
 }
 } // version(hasProfilableConfig)
 
-Config GetActiveConfig(IVsHierarchy pHierarchy)
-{
-	if(!pHierarchy)
-		return null;
-
-	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
-	scope(exit) release(solutionBuildManager);
-
-	IVsProjectCfg activeCfg;
-	if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) == S_OK)
-	{
-		scope(exit) release(activeCfg);
-		if(Config cfg = qi_cast!Config(activeCfg))
-			return cfg;
-	}
-	return null;
-}

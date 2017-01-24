@@ -310,6 +310,8 @@ static const wstring regPathMetricsEE      = "\\AD7Metrics\\ExpressionEvaluator"
 static const wstring vendorMicrosoftGuid   = "{994B45C4-E6E9-11D2-903F-00C04FA302A1}"w;
 static const wstring guidCOMPlusNativeEng  = "{92EF0900-2251-11D2-B72E-0000F87572EF}"w;
 
+static const GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
+
 ///////////////////////////////////////////////////////////////////////
 //  Registration
 ///////////////////////////////////////////////////////////////////////
@@ -351,6 +353,10 @@ void updateConfigurationChanged(HKEY keyRoot, wstring registrationRoot)
 	{
 		scope RegKey keyRegRoot = new RegKey(keyRoot, registrationRoot, true, false);
 
+		// avoid: Function type does not match previously declared function with the same mangled name
+		// which is an ambiguity between sdk.win32 and core.sys.windows
+		version(LDC)
+			import core.sys.windows.winbase : FILETIME, GetSystemTimeAsFileTime;
 		FILETIME fileTime;
 		GetSystemTimeAsFileTime(&fileTime);
 		ULARGE_INTEGER ul;
@@ -415,12 +421,14 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	wstring languageGuid = GUID2wstring(g_languageCLSID);
 	wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
 	wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
+	wstring vchelperGuid = GUID2wstring(g_VisualCHelperCLSID);
 
 	HRESULT hr = S_OK;
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ languageGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ wizardGuid);
 	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
+	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vchelperGuid);
 
 	foreach (wstring fileExt; g_languageFileExtensions)
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathFileExts ~ "\\"w ~ fileExt);
@@ -459,6 +467,13 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	wstring templatePath = GetTemplatePath(dllPath);
 	wstring vdextPath = dirName(dllPath) ~ "\\vdextensions.dll"w;
 
+	float ver = guessVSVersion(registrationRoot);
+	wstring dbuildPath;
+	if (ver == 12)
+		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.12.0.dll"w;
+	else if (ver == 14)
+		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.14.0.dll"w;
+
 	try
 	{
 		wstring packageGuid = GUID2wstring(g_packageCLSID);
@@ -467,6 +482,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		wstring exprEvalGuid = GUID2wstring(g_expressionEvaluator);
 		wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
 		wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
+		wstring vchelperGuid = GUID2wstring(g_VisualCHelperCLSID);
 
 		// package
 		scope RegKey keyPackage = new RegKey(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
@@ -475,7 +491,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyPackage.Set("About"w, g_packageName);
 		keyPackage.Set("CompanyName"w, g_packageCompany);
 		keyPackage.Set("ProductName"w, g_packageName);
-		keyPackage.Set("ProductVersion"w, toUTF16(g_packageVersion));
+		keyPackage.Set("ProductVersion"w, toUTF16(ver < 10 ? plk_version : g_packageVersion));
 		keyPackage.Set("MinEdition"w, "Standard");
 		keyPackage.Set("ID"w, 1);
 
@@ -494,12 +510,26 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyWizardCLSID.Set("ThreadingModel"w, "Appartment"w);
 
 		// VDExtensions
-		scope RegKey keyHelperCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
-		keyHelperCLSID.Set("InprocServer32"w, "mscoree.dll");
-		keyHelperCLSID.Set("ThreadingModel"w, "Both"w);
-		keyHelperCLSID.Set(null, "vdextensions.VisualDHelper"w);
-		keyHelperCLSID.Set("Class"w, "vdextensions.VisualDHelper"w);
-		keyHelperCLSID.Set("CodeBase"w, vdextPath);
+		if (vdextPath)
+		{
+			scope RegKey keyHelperCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
+			keyHelperCLSID.Set("InprocServer32"w, "mscoree.dll");
+			keyHelperCLSID.Set("ThreadingModel"w, "Both"w);
+			keyHelperCLSID.Set(null, "vdextensions.VisualDHelper"w);
+			keyHelperCLSID.Set("Class"w, "vdextensions.VisualDHelper"w);
+			keyHelperCLSID.Set("CodeBase"w, vdextPath);
+		}
+
+		// dbuild extension
+		if (dbuildPath)
+		{
+			scope RegKey keyHelperCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vchelperGuid);
+			keyHelperCLSID.Set("InprocServer32"w, "mscoree.dll");
+			keyHelperCLSID.Set("ThreadingModel"w, "Both"w);
+			keyHelperCLSID.Set(null, "vdextensions.VisualCHelper"w);
+			keyHelperCLSID.Set("Class"w, "vdextensions.VisualCHelper"w);
+			keyHelperCLSID.Set("CodeBase"w, dbuildPath);
+		}
 
 		// file extensions
 		wstring fileExtensions;
@@ -664,12 +694,52 @@ version(none){
 
 		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
 
+		registerMago(pszRegRoot, useRanu);
+
 		updateConfigurationChanged(keyRoot, registrationRoot);
 	}
 	catch(RegistryException e)
 	{
 		return e.result;
 	}
+	return S_OK;
+}
+
+HRESULT registerMago(in wchar* pszRegRoot, in bool useRanu)
+{
+	HKEY    keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
+	wstring registrationRoot = GetRegistrationRoot(pszRegRoot, useRanu);
+
+	// package
+	scope RegKey keyProduct = new RegKey(keyRoot, registrationRoot ~ "\\InstalledProducts\\Mago"w);
+	keyProduct.Set(null, "Mago Native Debug Engine"w);
+	keyProduct.Set("PID"w, "1.0.0");
+	keyProduct.Set("ProductDetails"w, "A debug engine dedicated to debugging applications written in the D programming language."
+				   ~ " See the project website at http://www.dsource.org/projects/mago_debugger for more information."
+				   ~ " Copyright (c) 2010-2014 Aldo J. Nunez"w);
+
+	wstring magoGuid = GUID2wstring(GUID_MaGoDebugger);
+	scope RegKey keyAD7 = new RegKey(keyRoot, registrationRoot ~ "\\AD7Metrics\\Engine\\"w ~ magoGuid);
+	keyAD7.Set("CLSID"w, magoGuid);
+	keyAD7.Set("Name"w, "Mago Native");
+	keyAD7.Set("ENC"w, 0);
+	keyAD7.Set("Disassembly"w, 1);
+	keyAD7.Set("Exceptions"w, 1);
+	keyAD7.Set("AlwaysLoadLocal"w, 1);
+
+	// TODO: register exceptions
+
+	wstring languageGuid = GUID2wstring(g_languageCLSID);
+	wstring vendorGuid = GUID2wstring(g_vendorCLSID);
+
+	scope RegKey keyEE = new RegKey(keyRoot, registrationRoot ~ "\\AD7Metrics\\ExpressionEvaluator\\"w ~ languageGuid ~ "\\"w ~ vendorGuid);
+	keyEE.Set("Language"w, "D"w);
+	keyEE.Set("Name"w, "D"w);
+
+	scope RegKey keyCV = new RegKey(keyRoot, registrationRoot ~ "\\Debugger\\CodeView Compilers\\68:*"w);
+	keyEE.Set("LanguageID"w, languageGuid);
+	keyEE.Set("VendorID"w, vendorGuid);
+
 	return S_OK;
 }
 

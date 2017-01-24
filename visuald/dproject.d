@@ -84,7 +84,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 
 		return S_OK;
 	}
-	override int CreateProject(in wchar* pszFilename, in wchar* pszLocation, in wchar* pszName, in VSCREATEPROJFLAGS grfCreateFlags, 
+	override int CreateProject(in wchar* pszFilename, in wchar* pszLocation, in wchar* pszName, in VSCREATEPROJFLAGS grfCreateFlags,
 				   in IID* iidProject, void** ppvProject, BOOL* pfCanceled)
 	{
 		mixin(LogCallMix);
@@ -96,7 +96,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 			int hr = CoCreateInstance(&VCProjectEngineObject.iid, null, CLSCTX_INPROC_SERVER, &VCProjectEngine.iid, cast(void*)&spEngine);
 			if( hr != S_OK || !spEngine )
 			{
-				CoUninitialize(); 
+				CoUninitialize();
 				return returnError(E_FAIL);
 			}
 
@@ -104,7 +104,7 @@ class ProjectFactory : DComObject, IVsProjectFactory
 			IDispatch *spDispProj = spEngine.CreateProject(pszFilename);
 			if(!spDispProj)
 			{
-				CoUninitialize(); 
+				CoUninitialize();
 				return returnError(E_FAIL);
 			}
 		} // version
@@ -225,7 +225,7 @@ class Project : CVsHierarchy,
 		mCaption = mName = name;
 		mFilename = filename;
 		mConfigProvider = addref(newCom!ConfigProvider(this));
-		
+
 		parseXML();
 	}
 	this(ProjectFactory factory, string name, string filename, string platform, string config)
@@ -234,8 +234,10 @@ class Project : CVsHierarchy,
 		mCaption = mName = name;
 		mFilename = filename;
 		mConfigProvider = addref(newCom!ConfigProvider(this));
-	
-		mConfigProvider.addConfig(platform, config);
+
+		if (platform && config)
+			mConfigProvider.addConfig(platform, config);
+
 		CProjectNode rootnode = newCom!CProjectNode(filename, this);
 		rootnode.SetName(name);
 		SetRootNode(rootnode);
@@ -296,7 +298,7 @@ class Project : CVsHierarchy,
 			return S_OK;
 		if(queryInterface!(IVsSccProject2) (this, riid, pvObject))
 			return S_OK;
-		
+
 		//if(queryInterface!(IRpcOptions) (this, riid, pvObject))
 		//	return S_OK;
 		//if(queryInterface!(IPerPropertyBrowsing) (this, riid, pvObject))
@@ -308,9 +310,9 @@ class Project : CVsHierarchy,
 	__gshared ComTypeInfoHolder mTypeHolder;
 	static void shared_static_this_typeHolder()
 	{
-		static class _ComTypeInfoHolder : ComTypeInfoHolder 
+		static class _ComTypeInfoHolder : ComTypeInfoHolder
 		{
-			override int GetIDsOfNames( 
+			override int GetIDsOfNames(
 				/* [size_is][in] */ in LPOLESTR *rgszNames,
 				/* [in] */ in UINT cNames,
 				/* [size_is][out] */ MEMBERID *pMemId)
@@ -339,7 +341,7 @@ class Project : CVsHierarchy,
 
 	override ComTypeInfoHolder getTypeHolder () { return mTypeHolder; }
 
-	override int Invoke( 
+	override int Invoke(
 		/* [in] */ in DISPID dispIdMember,
 		/* [in] */ in IID* riid,
 		/* [in] */ in LCID lcid,
@@ -393,12 +395,12 @@ class Project : CVsHierarchy,
 		mixin(LogCallMix);
 
 		if(CFileNode pNode = cast(CFileNode) VSITEMID2Node(itemid))
-			return OpenDoc(pNode, false /*fNewFile*/, 
+			return OpenDoc(pNode, false /*fNewFile*/,
 					      false /*fUseOpenWith*/,
 					      false  /*fShow*/,
 					      rguidLogicalView,
 					      &GUID_NULL, null,
-					      punkDocDataExisting, 
+					      punkDocDataExisting,
 					      ppWindowFrame);
 
 		return returnError(E_UNEXPECTED);
@@ -408,12 +410,12 @@ class Project : CVsHierarchy,
 	{
 		logCall("GetItemContext(itemid=%s, ppSP=%s)", _toLog(itemid), _toLog(ppSP));
 
-		// NOTE: this method allows a project to provide project context services 
+		// NOTE: this method allows a project to provide project context services
 		// to an item (document) editor. If the project does not need to provide special
 		// services to its items then it should return null. Under no circumstances
 		// should you return the IServiceProvider pointer that was passed to our
 		// package from the Environment via IVsPackage::SetSite. The global services
-		// will automatically be made available to editors. 
+		// will automatically be made available to editors.
 		*ppSP = null;
 		return S_OK;
 	}
@@ -453,9 +455,9 @@ class Project : CVsHierarchy,
 		return returnError(E_INVALIDARG);
 	}
 
-	override int AddItem(in VSITEMID itemidLoc, in VSADDITEMOPERATION dwAddItemOperation, 
+	override int AddItem(in VSITEMID itemidLoc, in VSADDITEMOPERATION dwAddItemOperation,
 	                     in LPCOLESTR pszItemName,
-	                     in ULONG cFilesToOpen, in LPCOLESTR * rgpszFilesToOpen, 
+	                     in ULONG cFilesToOpen, in LPCOLESTR * rgpszFilesToOpen,
 	                     in HWND hwndDlgOwner, VSADDRESULT* pResult)
 	{
 		mixin(LogCallMix);
@@ -475,7 +477,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsProject2
-	override int RemoveItem( 
+	override int RemoveItem(
 	    /* [in] */ in DWORD dwReserved,
 	    /* [in] */ in VSITEMID itemid,
 	    /* [retval][out] */ BOOL *pfResult)
@@ -490,8 +492,8 @@ class Project : CVsHierarchy,
 
 		return hr;
 	}
-        
-	override int ReopenItem( 
+
+	override int ReopenItem(
 	    /* [in] */ in VSITEMID itemid,
 	    /* [in] */ in GUID* rguidEditorType,
 	    /* [in] */ in wchar* pszPhysicalView,
@@ -502,19 +504,19 @@ class Project : CVsHierarchy,
 		mixin(LogCallMix);
 
 		if(CFileNode pNode = cast(CFileNode) VSITEMID2Node(itemid))
-			return OpenDoc(pNode, false /*fNewFile*/, 
+			return OpenDoc(pNode, false /*fNewFile*/,
 					      false /*fUseOpenWith*/,
 					      false  /*fShow*/,
 					      rguidLogicalView,
 					      rguidEditorType, pszPhysicalView,
-					      punkDocDataExisting, 
+					      punkDocDataExisting,
 					      ppWindowFrame);
 
 		return returnError(E_UNEXPECTED);
 	}
-        
+
 	// IVsProject3
-	override int AddItemWithSpecific( 
+	override int AddItemWithSpecific(
 	    /* [in] */ in VSITEMID itemidLoc,
 	    /* [in] */ in VSADDITEMOPERATION dwAddItemOperation,
 	    /* [in] */ in wchar* pszItemName,
@@ -527,8 +529,8 @@ class Project : CVsHierarchy,
 	    /* [in] */ in GUID* rguidLogicalView,
 	    /* [retval][out] */ VSADDRESULT* pResult)
 	{
-		//  AddItemWithSpecific is used to add item(s) to the project and 
-		//  additionally ask the project to open the item using the specified 
+		//  AddItemWithSpecific is used to add item(s) to the project and
+		//  additionally ask the project to open the item using the specified
 		//  editor information.  An extension of IVsProject::AddItem().
 
 		mixin(LogCallMix);
@@ -551,8 +553,8 @@ class Project : CVsHierarchy,
 
 		return returnError(E_UNEXPECTED);
 	}
-        
-	override int OpenItemWithSpecific( 
+
+	override int OpenItemWithSpecific(
 	    /* [in] */ in VSITEMID itemid,
 	    /* [in] */ in VSSPECIFICEDITORFLAGS grfEditorFlags,
 	    /* [in] */ in GUID* rguidEditorType,
@@ -565,8 +567,8 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int TransferItem( 
+
+	override int TransferItem(
 	    /* [in] */ in wchar* pszMkDocumentOld,
 	    /* [in] */ in wchar* pszMkDocumentNew,
 	    /* [in] */ IVsWindowFrame punkWindowFrame)
@@ -576,7 +578,7 @@ class Project : CVsHierarchy,
 		return returnError(E_NOTIMPL);
 	}
 
-	override int QueryDeleteItem( 
+	override int QueryDeleteItem(
 		/* [in] */ in VSDELETEITEMOPERATION dwDelItemOp,
 		/* [in] */ in VSITEMID itemid,
 		/* [retval][out] */ BOOL *pfCanDelete)
@@ -595,7 +597,7 @@ class Project : CVsHierarchy,
 		return S_OK;
 	}
 
-	override int DeleteItem( 
+	override int DeleteItem(
 		/* [in] */ in VSDELETEITEMOPERATION dwDelItemOp,
 		/* [in] */ in VSITEMID itemid)
 	{
@@ -616,7 +618,7 @@ class Project : CVsHierarchy,
 		{
 			string sfiles = (nodes.length == 1 ? "file" : to!string(nodes.length) ~ " files");
 			int answer = UtilMessageBox("Do you want to delete the " ~ sfiles ~ " on disk?\n\n" ~
-										"You can permanently answer this dialog in the global Visual D settings.", MB_YESNOCANCEL | MB_ICONEXCLAMATION, 
+										"You can permanently answer this dialog in the global Visual D settings.", MB_YESNOCANCEL | MB_ICONEXCLAMATION,
 										"Remove file from project");
 			if(answer == IDCANCEL)
 				return S_FALSE;
@@ -655,7 +657,7 @@ class Project : CVsHierarchy,
 			return rc;
 		return S_OK;
 	}
-        
+
 	override int GetGuidProperty(in VSITEMID itemid, in VSHPROPID propid, GUID* pguid)
 	{
 		mixin(LogCallMix);
@@ -676,7 +678,7 @@ class Project : CVsHierarchy,
 		}
 		return super.GetGuidProperty(itemid, propid, pguid);
 	}
-        
+
 	/*override*/ int SetGuidProperty(in VSITEMID itemid, in VSHPROPID propid, in GUID* rguid)
 	{
 		mixin(LogCallMix2);
@@ -731,7 +733,7 @@ class Project : CVsHierarchy,
 			var.vt = VT_BSTR;
 			var.bstrVal = allocBSTR("typename");
 			break;
-		case VSHPROPID_SaveName: 
+		case VSHPROPID_SaveName:
 			var.vt = VT_BSTR;
 			var.bstrVal = allocBSTR(mFilename);
 			break;
@@ -752,7 +754,7 @@ class Project : CVsHierarchy,
 			var.vt = VT_UNKNOWN;
 			return GetCfgProvider(cast(IVsCfgProvider*)&var.punkVal);
 			//return QueryInterface(&IVsGetCfgProvider.iid, cast(void **)&var.punkVal);
-			
+
 		case VSHPROPID_ProjectDir:
 		    // IsNonSearchable, HasEnumerationSideEffects
 		    // 1001
@@ -762,11 +764,11 @@ class Project : CVsHierarchy,
 		default:
 			logCall("Getting unknown property %d for item %x!", propid, itemid);
 			return DISP_E_MEMBERNOTFOUND;
-			// return returnError(E_NOTIMPL); // DISP_E_MEMBERNOTFOUND; 
+			// return returnError(E_NOTIMPL); // DISP_E_MEMBERNOTFOUND;
 		}
 		return S_OK;
 	}
-        
+
 	override int SetProperty(in VSITEMID itemid, in VSHPROPID propid, in VARIANT var)
 	{
 		mixin(LogCallMix);
@@ -793,11 +795,11 @@ class Project : CVsHierarchy,
 		// use this as an callback of the project load being complete
 		if(mLastHierarchyEventSinkCookie == 0)
 			Package.scheduleUpdateLibrary();
-		
+
 		return super.AdviseHierarchyEvents(pEventSink, pdwCookie);
 	}
 
-	// IVsGetCfgProvider 
+	// IVsGetCfgProvider
 	override int GetCfgProvider(IVsCfgProvider* pCfgProvider)
 	{
 		//mixin(LogCallMix);
@@ -815,14 +817,14 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsAggregatableProject
-	override int SetInnerProject( 
+	override int SetInnerProject(
 	    /* [in] */ IUnknown punkInner)
 	{
 		logCall("%S.SetInnerProject(punkInner=%s)", this, _toLog(punkInner));
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int InitializeForOuter( 
+
+	override int InitializeForOuter(
 	    /* [in] */ in wchar* pszFilename,
 	    /* [in] */ in wchar* pszLocation,
 	    /* [in] */ in wchar* pszName,
@@ -835,15 +837,15 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
+
 	override int OnAggregationComplete()
 	{
 		mixin(LogCallMix);
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int GetAggregateProjectTypeGuids( 
+
+	override int GetAggregateProjectTypeGuids(
 	    /* [out] */ BSTR *pbstrProjTypeGuids)
 	{
 		logCall("GetAggregateProjectTypeGuids(pbstrProjTypeGuids=%s)", _toLog(pbstrProjTypeGuids));
@@ -852,17 +854,17 @@ class Project : CVsHierarchy,
 
 		return S_OK;
 	}
-        
-	override int SetAggregateProjectTypeGuids( 
+
+	override int SetAggregateProjectTypeGuids(
 	    /* [in] */ in wchar* lpstrProjTypeGuids)
 	{
 		logCall("SetAggregateProjectTypeGuids(lpstrProjTypeGuids=%s)", _toLog(lpstrProjTypeGuids));
 
 		return returnError(E_NOTIMPL);
 	}
-        
+
 	// IVsProjectFlavorCfgProvider
-	override int CreateProjectFlavorCfg( 
+	override int CreateProjectFlavorCfg(
 	    /* [in] */ IVsCfg pBaseProjectCfg,
 	    /* [out] */ IVsProjectFlavorCfg *ppFlavorCfg)
 	{
@@ -881,7 +883,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IPersistFileFormat
-	override int IsDirty( 
+	override int IsDirty(
 	    /* [out] */ BOOL *pfIsDirty)
 	{
 		logCall("IsDirty(pfIsDirty=%s)", _toLog(pfIsDirty));
@@ -891,8 +893,8 @@ class Project : CVsHierarchy,
 			return E_FAIL;
 		return S_OK;
 	}
-        
-	override int InitNew( 
+
+	override int InitNew(
 	    /* [in] */ in DWORD nFormatIndex)
 	{
 		logCall("InitNew(nFormatIndex=%s)", _toLog(nFormatIndex));
@@ -900,8 +902,8 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int Load( 
+
+	override int Load(
 	    /* [in] */ in wchar* pszFilename,
 	    /* [in] */ in DWORD grfMode,
 	    /* [in] */ in BOOL fReadOnly)
@@ -910,14 +912,14 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int Save( 
+
+	override int Save(
 	    /* [in] */ in wchar* pszFilename,
 	    /* [in] */ in BOOL fRemember,
 	    /* [in] */ in DWORD nFormatIndex)
 	{
 		mixin(LogCallMix);
-		
+
 		string filename = to_string(pszFilename);
 		bool msbuild = filename.toLower().endsWith(".dproj");
 		auto doc = msbuild ? createMSBuildDoc() : createDoc();
@@ -927,8 +929,8 @@ class Project : CVsHierarchy,
 
 		return S_OK;
 	}
-        
-	override int SaveCompleted( 
+
+	override int SaveCompleted(
 	    /* [in] */ in wchar* pszFilename)
 	{
 		logCall("SaveCompleted(pszFilename=%s)", _toLog(pszFilename));
@@ -939,8 +941,8 @@ class Project : CVsHierarchy,
 
 		return S_OK; //returnError(E_NOTIMPL);
 	}
-        
-	override int GetCurFile( 
+
+	override int GetCurFile(
 	    /* [out] */ LPOLESTR *ppszFilename,
 	    /* [out] */ DWORD *pnFormatIndex)
 	{
@@ -951,8 +953,8 @@ class Project : CVsHierarchy,
 
 		return S_OK;
 	}
-        
-	override int GetFormatList( 
+
+	override int GetFormatList(
 	    /* [out] */ LPOLESTR *ppszFormatList)
 	{
 		logCall("GetFormatList(pbstrProjTypeGuids=%s)", _toLog(ppszFormatList));
@@ -961,7 +963,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsProjectBuildSystem
-	override int SetHostObject( 
+	override int SetHostObject(
 	    /* [in] */ in wchar* pszTargetName,
 	    /* [in] */ in wchar* pszTaskName,
 	    /* [in] */ IUnknown punkHostObject)
@@ -970,29 +972,29 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
+
 	override int StartBatchEdit()
 	{
 		mixin(LogCallMix);
 
 		return returnError(E_NOTIMPL);
 	}
-        
+
 	override int EndBatchEdit()
 	{
 		mixin(LogCallMix);
 
 		return returnError(E_NOTIMPL);
 	}
-        
+
 	override int CancelBatchEdit()
 	{
 		mixin(LogCallMix);
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int BuildTarget( 
+
+	override int BuildTarget(
 	    /* [in] */ in wchar* pszTargetName,
 	    /* [retval][out] */ VARIANT_BOOL *pbSuccess)
 	{
@@ -1000,8 +1002,8 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int GetBuildSystemKind( 
+
+	override int GetBuildSystemKind(
 	    /* [retval][out] */ BuildSystemKindFlags *pBuildSystemKind)
 	{
 //		mixin(LogCallMix);
@@ -1017,7 +1019,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsBuildPropertyStorage
-	override int GetPropertyValue( 
+	override int GetPropertyValue(
 	    /* [in] */ in wchar* pszPropName,
 	    /* [in] */ in wchar* pszConfigName,
 	    /* [in] */ in PersistStorageType storage,
@@ -1037,8 +1039,8 @@ class Project : CVsHierarchy,
 		*pbstrPropValue = allocBSTR(value);
 		return S_OK;
 	}
-        
-	override int SetPropertyValue( 
+
+	override int SetPropertyValue(
 	    /* [in] */ in wchar* pszPropName,
 	    /* [in] */ in wchar* pszConfigName,
 	    /* [in] */ in PersistStorageType storage,
@@ -1048,8 +1050,8 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int RemoveProperty( 
+
+	override int RemoveProperty(
 	    /* [in] */ in wchar* pszPropName,
 	    /* [in] */ in wchar* pszConfigName,
 	    /* [in] */ in PersistStorageType storage)
@@ -1058,8 +1060,8 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int GetItemAttribute( 
+
+	override int GetItemAttribute(
 	    /* [in] */ in VSITEMID item,
 	    /* [in] */ in wchar* pszAttributeName,
 	    /* [out] */ BSTR *pbstrAttributeValue)
@@ -1068,8 +1070,8 @@ class Project : CVsHierarchy,
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int SetItemAttribute( 
+
+	override int SetItemAttribute(
 	    /* [in] */ in VSITEMID item,
 	    /* [in] */ in wchar* pszAttributeName,
 	    /* [in] */ in wchar* pszAttributeValue)
@@ -1080,7 +1082,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsComponentUser
-	override int AddComponent( 
+	override int AddComponent(
 	    /* [in] */ in VSADDCOMPOPERATION dwAddCompOperation,
 	    /* [in] */ in ULONG cComponents,
 	    /* [size_is][in] */ in PVSCOMPONENTSELECTORDATA *rgpcsdComponents,
@@ -1093,15 +1095,15 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsDependencyProvider
-	override int EnumDependencies( 
+	override int EnumDependencies(
 	    /* [out] */ IVsEnumDependencies *ppIVsEnumDependencies)
 	{
 		mixin(LogCallMix);
 
 		return returnError(E_NOTIMPL);
 	}
-        
-	override int OpenDependency( 
+
+	override int OpenDependency(
 	    /* [in] */ in wchar* szDependencyCanonicalName,
 	    /* [out] */ IVsDependency *ppIVsDependency)
 	{
@@ -1111,7 +1113,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsProjectSpecialFiles
-	override int GetFile( 
+	override int GetFile(
 	    /* [in] */ in PSFFILEID fileID,
 	    /* [in] */ in PSFFLAGS grfFlags,
 	    /* [out] */ VSITEMID *pitemid,
@@ -1122,13 +1124,13 @@ class Project : CVsHierarchy,
 		return returnError(E_NOTIMPL);
 	}
 
-	// IVsParentProject 
+	// IVsParentProject
 	override int OpenChildren()
 	{
 		mixin(LogCallMix);
 
 		// config not yet known here
-		
+
 		return returnError(E_NOTIMPL);
 	}
 
@@ -1142,7 +1144,7 @@ class Project : CVsHierarchy,
 	// CVsHierarchy
 	override HRESULT QueryStatusSelection(in GUID *pguidCmdGroup,
 				     in ULONG cCmds, OLECMD *prgCmds, OLECMDTEXT *pCmdText,
-				     ref CHierNode[] rgSelection, 
+				     ref CHierNode[] rgSelection,
 				     bool bIsHierCmd)// TRUE if cmd originated via CVSUiHierarchy::ExecCommand
 	{
 		assert(pguidCmdGroup);
@@ -1180,7 +1182,7 @@ class Project : CVsHierarchy,
 
 			switch(Cmd.cmdID)
 			{
-				// Forward the following commands to the project node whenever our project is 
+				// Forward the following commands to the project node whenever our project is
 				// the active project.
 			case cmdidAddNewItem:
 			case cmdidAddExistingItem:
@@ -1229,7 +1231,7 @@ class Project : CVsHierarchy,
 			}
 		}
 
-		// Node commands 
+		// Node commands
 		if (!fHandled)
 		{
 			fHandled = true;
@@ -1284,7 +1286,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsGlobalsCallback
-	override int WriteVariablesToData( 
+	override int WriteVariablesToData(
 		/* [in] */ in wchar* pVariableName,
 		/* [in] */ in VARIANT *varData)
 	{
@@ -1324,7 +1326,7 @@ class Project : CVsHierarchy,
 
 
 	// IPerPropertyBrowsing
-	override int GetDisplayString( 
+	override int GetDisplayString(
 		/* [in] */ in DISPID dispID,
 		/* [out] */ BSTR *pBstr)
 	{
@@ -1332,7 +1334,7 @@ class Project : CVsHierarchy,
 		return returnError(E_NOTIMPL);
 	}
 
-	override int MapPropertyToPage( 
+	override int MapPropertyToPage(
 		/* [in] */ in DISPID dispID,
 		/* [out] */ CLSID *pClsid)
 	{
@@ -1343,7 +1345,7 @@ class Project : CVsHierarchy,
 		//return returnError(E_NOTIMPL);
 	}
 
-	override int GetPredefinedStrings( 
+	override int GetPredefinedStrings(
 		/* [in] */ in DISPID dispID,
 		/* [out] */ CALPOLESTR *pCaStringsOut,
 		/* [out] */ CADWORD *pCaCookiesOut)
@@ -1352,7 +1354,7 @@ class Project : CVsHierarchy,
 		return returnError(E_NOTIMPL);
 	}
 
-	override int GetPredefinedValue( 
+	override int GetPredefinedValue(
 		/* [in] */ in DISPID dispID,
 		/* [in] */ in DWORD dwCookie,
 		/* [out] */ VARIANT *pVarOut)
@@ -1379,18 +1381,18 @@ class Project : CVsHierarchy,
     override HRESULT Query(/+[in]+/ IUnknown  pPrx, in DWORD dwProperty, /+[out]+/ ULONG_PTR * pdwValue)
 	{
 		mixin(LogCallMix);
-		
+
 		if(dwProperty == COMBND_RPCTIMEOUT)
 			*pdwValue = RPC_C_BINDING_MAX_TIMEOUT;
 		else if(dwProperty == COMBND_SERVER_LOCALITY)
 			*pdwValue = SERVER_LOCALITY_PROCESS_LOCAL;
 		else
 			return E_NOTIMPL;
-		
+
 		return S_OK;
 	}
 +/
-	
+
 	// IVsSccProject2
 	override HRESULT SccGlyphChanged(in int cAffectedNodes,
 	    /+[size_is(cAffectedNodes)]+/in VSITEMID *rgitemidAffectedNodes,
@@ -1398,11 +1400,11 @@ class Project : CVsHierarchy,
 	    /+[size_is(cAffectedNodes)]+/in DWORD *rgdwNewSccStatus)
 	{
 		mixin(LogCallMix);
-		
+
 		if(cAffectedNodes == 0)
 		{
 			searchNode(GetRootNode(), delegate (CHierNode n)
-			{ 
+			{
 				foreach (advise; mHierarchyEventSinks)
 					advise.OnPropertyChanged(GetVsItemID(n), VSHPROPID_StateIconIndex, 0);
 				return false;
@@ -1416,7 +1418,7 @@ class Project : CVsHierarchy,
 		}
 		return S_OK;
 	}
-	
+
 	override HRESULT SetSccLocation(in LPCOLESTR pszSccProjectName, // opaque to project
 	                                in LPCOLESTR pszSccAuxPath,     // opaque to project
 	                                in LPCOLESTR pszSccLocalPath,   // opaque to project
@@ -1425,7 +1427,7 @@ class Project : CVsHierarchy,
 		mixin(LogCallMix);
 		return E_NOTIMPL;
 	}
-	
+
 	override HRESULT GetSccFiles(in VSITEMID itemid,                  // Node in project hierarchy
 	                             /+[out]+/ CALPOLESTR *pCaStringsOut, // Files associated with node
 	                             /+[out]+/ CADWORD *pCaFlagsOut)      // Flags per file
@@ -1449,7 +1451,7 @@ class Project : CVsHierarchy,
 
 		return S_FALSE;
 	}
-	
+
 	override HRESULT GetSccSpecialFiles(in VSITEMID itemid,           // node in project hierarchy
 	                                    in LPCOLESTR pszSccFile,      // one of the files associated with the node
 	                                    /+[out]+/ CALPOLESTR *pCaStringsOut, // special files associated with above file
@@ -1458,16 +1460,16 @@ class Project : CVsHierarchy,
 		mixin(LogCallMix);
 		return E_NOTIMPL;
 	}
-	
+
 	///////////////////////////////////////////////////////////////////////
 	// IVsHierarchyDropDataSource
-	override int GetDropInfo( 
+	override int GetDropInfo(
 		/* [out] */ DWORD *pdwOKEffects,
 		/* [out] */ IDataObject *ppDataObject,
 		/* [out] */ IDropSource *ppDropSource)
 	{
 		mixin(LogCallMix);
-		
+
 		*pdwOKEffects = DROPEFFECT_NONE;
 		*ppDataObject = null;
 		*ppDropSource = null;
@@ -1475,26 +1477,26 @@ class Project : CVsHierarchy,
 		HRESULT hr = PackageSelectionDataObject(ppDataObject, FALSE);
 		if(FAILED(hr))
 			return returnError(hr);
-			
+
 		*pdwOKEffects = DROPEFFECT_MOVE | DROPEFFECT_COPY;
 		mDDT = DropDataType.DDT_VSREF;
 		mfDragSource = TRUE;
 		return S_OK;
 	}
 
-	override int OnDropNotify( 
+	override int OnDropNotify(
 		/* [in] */ in BOOL fDropped,
 		/* [in] */ in DWORD dwEffects)
 	{
 		mixin(LogCallMix);
-		
+
 		mfDragSource = FALSE;
 		mDDT = DropDataType.DDT_NONE;
 		return CleanupSelectionDataObject(fDropped, FALSE, dwEffects == DROPEFFECT_MOVE);
 	}
 
 	// IVsHierarchyDropDataSource2
-	override int OnBeforeDropNotify( 
+	override int OnBeforeDropNotify(
 		/* [in] */ IDataObject pDataObject,
 		/* [in] */ in DWORD dwEffect,
 		/* [retval][out] */ BOOL *pfCancelDrop)
@@ -1532,7 +1534,7 @@ class Project : CVsHierarchy,
 		}
 
 		// if there are no dirty docs we are ok to proceed
-		if (!fDirty) 
+		if (!fDirty)
 			return S_OK;
 
 		// prompt to save if there are dirty docs
@@ -1563,7 +1565,7 @@ class Project : CVsHierarchy,
 	}
 
 	// IVsHierarchyDropDataTarget
-	override int DragEnter( 
+	override int DragEnter(
 		/* [in] */ IDataObject pDataObject,
 		/* [in] */ in DWORD grfKeyState,
 		/* [in] */ in VSITEMID itemid,
@@ -1581,7 +1583,7 @@ class Project : CVsHierarchy,
 		return QueryDropEffect(mDDT, grfKeyState, pdwEffect);
 	}
 
-	override int DragOver( 
+	override int DragOver(
 		/* [in] */ in DWORD grfKeyState,
 		/* [in] */ in VSITEMID itemid,
 		/* [out][in] */ DWORD *pdwEffect)
@@ -1598,7 +1600,7 @@ class Project : CVsHierarchy,
 		return S_OK;
 	}
 
-	override int Drop( 
+	override int Drop(
 		/* [in] */ IDataObject pDataObject,
 		/* [in] */ in DWORD grfKeyState,
 		/* [in] */ in VSITEMID itemid,
@@ -1613,7 +1615,7 @@ class Project : CVsHierarchy,
 		*pdwEffect = DROPEFFECT_NONE;
 
 		HRESULT hr = S_OK;
-//		if (mfDragSource) 
+//		if (mfDragSource)
 //			return S_OK;
 
 		CHierNode dropNode = VSITEMID2Node(itemid);
@@ -1625,7 +1627,7 @@ class Project : CVsHierarchy,
 
 		DropDataType ddt;
 		hr = ProcessSelectionDataObject(dropContainer,
-			/* [in]  IDataObject* pDataObject*/ pDataObject, 
+			/* [in]  IDataObject* pDataObject*/ pDataObject,
 			/* [in]  DWORD        grfKeyState*/ grfKeyState,
 			/* [out] DropDataType*           */ &ddt);
 
@@ -1786,14 +1788,14 @@ class Project : CVsHierarchy,
 	{
 		if(srpIVsHierarchy !is this)
 			return false;
-		
+
 		CHierNode dropSource = VSITEMID2Node(itemidLoc);
 		for(CHierNode c = dropTarget; c; c = c.GetParent())
 			if(dropSource == c)
 				return true;
 		return false;
 	}
-	
+
 	HRESULT copyVirtualFolder(CHierContainer dropContainer, IVsHierarchy srpIVsHierarchy, VSITEMID itemidLoc)
 	{
 		if(isChildItem(dropContainer, srpIVsHierarchy, itemidLoc))
@@ -1812,10 +1814,10 @@ class Project : CVsHierarchy,
 		string name = detachBSTR(cbstrMoniker);
 
 		CFolderNode pFolder = newCom!CFolderNode;
-		
+
 		string strThisFolder = baseName(name);
 		pFolder.SetName(strThisFolder);
-		
+
 		VARIANT var;
 		if(srpIVsHierarchy.GetProperty(itemidLoc, VSHPROPID_FirstChild, &var) == S_OK &&
 		   (var.vt == VT_INT_PTR || var.vt == VT_I4 || var.vt == VT_INT))
@@ -1825,7 +1827,7 @@ class Project : CVsHierarchy,
 			{
 				if(HRESULT hr = processVSItem(pFolder, srpIVsHierarchy, chid))
 					return hr;
-				
+
 				if(srpIVsHierarchy.GetProperty(chid, VSHPROPID_NextSibling, &var) != S_OK ||
 				   (var.vt != VT_INT_PTR && var.vt != VT_I4 && var.vt != VT_INT))
 					break;
@@ -1836,7 +1838,7 @@ class Project : CVsHierarchy,
 		dropContainer.Add(pFolder);
 		return S_OK;
 	}
-	
+
 	HRESULT processVSItem(CHierContainer dropContainer, IVsHierarchy srpIVsHierarchy, VSITEMID itemidLoc)
 	{
 		// If this is a virtual item, we skip it
@@ -1848,7 +1850,7 @@ class Project : CVsHierarchy,
 
 		if(SUCCEEDED(hr) && typeGuid != GUID_ItemType_PhysicalFile)
 			return S_FALSE;
-		
+
 		if(hr == E_ABORT || hr == OLE_E_PROMPTSAVECANCELLED)
 			return OLE_E_PROMPTSAVECANCELLED;
 
@@ -1858,7 +1860,7 @@ class Project : CVsHierarchy,
 		hr = srpIVsHierarchy.QueryInterface(&IVsProject.iid, cast(void **)&srpIVsProject);
 		if(FAILED(hr) || !srpIVsProject)
 			return hr;
-				
+
 		BSTR cbstrMoniker;
 		hr = srpIVsProject.GetMkDocument(itemidLoc, &cbstrMoniker);
 		if (FAILED(hr))
@@ -1883,10 +1885,10 @@ class Project : CVsHierarchy,
 			return OLE_E_PROMPTSAVECANCELLED;
 		return hr;
 	}
-	
+
 	HRESULT ProcessSelectionDataObject(
 		/* [in]  */ CHierContainer dropContainer,
-		/* [in]  */ IDataObject   pDataObject, 
+		/* [in]  */ IDataObject   pDataObject,
 		/* [in]  */ DWORD         grfKeyState,
 		/* [out] */ DropDataType* pddt)
 	{
@@ -1993,7 +1995,7 @@ AttemptVSStgFormat:
 		   pDataObject.GetData(&fmtetc, &stgmedium) != S_OK ||
 		   stgmedium.tymed != TYMED_HGLOBAL || !stgmedium.hGlobal)
 			goto Error;
-		
+
 		hDropInfo = stgmedium.hGlobal;
 		ddt = DropDataType.DDT_VSSTG;
 
@@ -2001,8 +2003,8 @@ AddFiles:
 		if(IVsSolution srpIVsSolution = queryService!(IVsSolution))
 		{
 			scope(exit) release(srpIVsSolution);
-			
-			// Note that we do NOT use ::DragQueryFile as this function will 
+
+			// Note that we do NOT use ::DragQueryFile as this function will
 			// NOT work with unicode strings on win9x - even
 			// with the unicode wrappers - and the projitem ref format is in unicode
 			string[] rgSrcFiles;
@@ -2057,7 +2059,7 @@ Error:
 	}
 
 	HRESULT PackageSelectionDataObject(
-		/* [out] */ IDataObject *  ppDataObject, 
+		/* [out] */ IDataObject *  ppDataObject,
 		/* [in]  */ BOOL           fCutHighlightItems)
 	{
 		HRESULT hr = S_OK;
@@ -2083,16 +2085,16 @@ Error:
 		IVsHierarchy srpIVsHierarchy_selection;
 		IVsMultiItemSelect srpIVsMultiItemSelect;
 		hr = srpIVsMonitorSelection.GetCurrentSelection(
-			/* [out] IVsHierarchy**        */ &srpIVsHierarchy_selection, 
-			/* [out] VSITEMID*             */ &vsitemid, 
-			/* [out] IVsMultiItemSelect**  */ &srpIVsMultiItemSelect, 
+			/* [out] IVsHierarchy**        */ &srpIVsHierarchy_selection,
+			/* [out] VSITEMID*             */ &vsitemid,
+			/* [out] IVsMultiItemSelect**  */ &srpIVsMultiItemSelect,
 			/* [out] ISelectionContainer** */ null);
 		if(FAILED(hr)) return hr;
 		scope(exit) release(srpIVsHierarchy_selection);
 		scope(exit) release(srpIVsMultiItemSelect);
 
 		LONG lLenGlobal  = 0; // length of the file names including null chars
-    
+
 		IVsHierarchy srpIVsHierarchy_this = this; // GetIVsHierarchy();
 
 		if(srpIVsHierarchy_selection !is srpIVsHierarchy_this ||
@@ -2109,7 +2111,7 @@ Error:
 
 			if (itemsDragged > uint.max / VSITEMSELECTION.sizeof)
 				return E_OUTOFMEMORY;
-			
+
 			mItemSelDragged.length = itemsDragged;
 
 			hr = srpIVsMultiItemSelect.GetSelectedItems(GSI_fOmitHierPtrs, itemsDragged, mItemSelDragged.ptr);
@@ -2172,7 +2174,7 @@ Error:
 
 		// final null terminator as per CF_VSSTGPROJECTITEMS format spec
 		pFiles[nCurPos] = 0;
-		
+
 		int res = GlobalUnlock(hGlobal);
 		OleDataSource pDataObject = newCom!OleDataSource;  // has ref count of 0
 
@@ -2188,7 +2190,7 @@ Error:
 		stgmedium.hGlobal        = hGlobal;
 		stgmedium.pUnkForRelease = null;
 
-		pDataObject.CacheData(fmtetc.cfFormat, &stgmedium, &fmtetc); 
+		pDataObject.CacheData(fmtetc.cfFormat, &stgmedium, &fmtetc);
 		*ppDataObject = addref(pDataObject);
 
 Error:
@@ -2212,7 +2214,7 @@ Error:
 
 	HRESULT CleanupSelectionDataObject(
 		/* [in] */ BOOL fDropped,
-		/* [in] */ BOOL fCut, 
+		/* [in] */ BOOL fCut,
 		/* [in] */ BOOL fMoved)
 	{
 		// we save if something fails but we are trying to do as much as possible
@@ -2229,7 +2231,7 @@ Error:
 		if (!srpIVsUIHierarchyWindow)
 			hrRet = E_UNEXPECTED;
 +/
-		
+
 		for (ULONG i = 0; i < mItemSelDragged.length; i++)
 		{
 			if((fMoved && fDropped) || fCut)
@@ -2292,7 +2294,7 @@ Error:
 	void ClearLineChanges()
 	{
 		auto langsvc = Package.GetLanguageService();
-		
+
 		searchNode(GetRootNode(), delegate (CHierNode n) {
 			string file = n.GetCanonicalName();
 			if(auto src = langsvc.GetSource(file))
@@ -2330,7 +2332,7 @@ Error:
 				text = text[decidx..$];
 			if(!startsWith(text, "<?xml"))
 				text = `<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>` ~ text;
-			
+
 			xml.Document doc = xml.readDocument(text);
 			return doc;
 		}
@@ -2339,13 +2341,13 @@ Error:
 			string msg = rc.toString();
 			writeToBuildOutputPane(msg);
 			logCall(msg);
-		} 
+		}
 		catch(xml.XmlException rc)
 		{
 			string msg = rc.toString();
 			writeToBuildOutputPane(msg);
 			logCall(msg);
-		}	
+		}
 		return null;
 	}
 
@@ -2372,7 +2374,7 @@ Error:
 				{
 					string lhs = strip(cond[0 .. pos]);
 					string rhs = strip(cond[pos + 2 .. $]);
-					if (lhs == "'$(Configuration)|$(Platform)'" && 
+					if (lhs == "'$(Configuration)|$(Platform)'" &&
 						rhs.length > 2 && rhs[0] == '\'' && rhs[$-1] =='\'')
 					{
 						rhs = rhs[1 .. $-1];
@@ -2462,7 +2464,7 @@ Error:
 		CProjectNode rootnode = newCom!CProjectNode("", this);
 		rootnode.SetName("Failed to load " ~ projectName);
 		SetRootNode(rootnode);
-		
+
 		return false;
 	}
 
@@ -2658,6 +2660,7 @@ Error:
 		}
 	}
 
+	ConfigProvider GetConfigProvider() { return mConfigProvider; }
 	string GetFilename() { return mFilename; }
 	string GetName() { return mName; }
 	string GetCaption() { return mCaption; }
@@ -2677,7 +2680,7 @@ private:
 	DropDataType mDDT;
 
 	VSITEMSELECTION[] mItemSelDragged;
-	
+
 	xml.Document mDoc;
 }
 
@@ -2721,6 +2724,7 @@ string getSelectedTextInBuildPane()
 		scope(exit) release(opane);
 		if(auto owin = qi_cast!IVsTextView(opane))
 		{
+			scope(exit) release(owin);
 			BSTR selText;
 			if (owin.GetSelectedText (&selText) == S_OK)
 				return detachBSTR(selText);
@@ -2754,8 +2758,9 @@ HRESULT DustMiteProject()
 	IVsHierarchy phier;
 	if(solutionBuildManager.get_StartupProject(&phier) != S_OK)
 		return E_FAIL;
-	Project proj = qi_cast!Project(phier);
 	scope(exit) release(phier);
+	Project proj = qi_cast!Project(phier);
+	scope(exit) release(proj);
 
 	Config cfg;
 	IVsProjectCfg activeCfg;
@@ -2767,6 +2772,7 @@ HRESULT DustMiteProject()
 
 	if(!cfg)
 		return E_FAIL;
+	scope(exit) release(cfg);
 
 	string errmsg = getSelectedTextInBuildPane();
 	if (errmsg.length == 0)
@@ -2806,7 +2812,10 @@ HRESULT DustMiteProject()
 
 		npath = copyProjectFolder(proj, dustmitepath);
 		if (npath.length == 0)
-			return pane.OutputString("cannot determine common root folder for all sources\n"w.ptr), S_FALSE;
+		{
+			pane.OutputString("cannot determine common root folder for all sources\n"w.ptr);
+			return S_FALSE;
+		}
 		pane.OutputString(_toUTF16z("created clean copy of the project in " ~ dustmitepath ~ "\n"));
 
 		nworkdir = npath; // TODO
@@ -2825,7 +2834,7 @@ HRESULT DustMiteProject()
 		cmdfile = npath ~ "build.dustmite.bat";
 		std.file.write(cmdfile, cmdline);
 		cmdfile = makeRelative(cmdfile, npath);
-		string dustcmd = quoteFilename(cmdfile) ~ " | find \"" ~ errmsg ~ "\"";
+		string dustcmd = quoteFilename(cmdfile) ~ " 2>&1 | find \"" ~ errmsg ~ "\"";
 		dustcmd = dustcmd.replace("\"", "\\\"");
 
 		string intdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), workdir);

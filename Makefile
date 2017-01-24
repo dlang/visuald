@@ -144,7 +144,7 @@ vdserver:
 	devenv /Project "vdserver"  /Build "Release|Win32" visuald_vs10.sln
 
 dparser:
-	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release;Platform=x86 /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
+	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
 
 vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
@@ -156,6 +156,9 @@ dbuild12:
 dbuild14:
 	cd msbuild\dbuild && devenv /Build "Release-v14|AnyCPU" /Project "dbuild" dbuild.sln
 #	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
+
+dbuild15:
+	cd msbuild\dbuild && devenv /Build "Release-v15|AnyCPU" /Project "dbuild" dbuild.sln
 
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
@@ -169,12 +172,14 @@ cv2pdb:
 
 dcxxfilt: $(DCXXFILT_EXE)
 $(DCXXFILT_EXE): tools\dcxxfilt.d
-	cd tools && set CONFIG=Release && build_dcxxfilt
+# no space after Release, it will be part of environment variable
+	cd tools && set CONFIG=Release&& build_dcxxfilt
 	
 ##################################
 # create installer
 
 install: all cpp2d_exe idl2d_exe
+	if not exist ..\downloads\nul md ..\downloads
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
@@ -182,6 +187,7 @@ install_vs: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago dc
 	dbuild12 dbuild14 install_only
 
 install_only:
+	if not exist ..\downloads\nul md ..\downloads
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 
 ##################################

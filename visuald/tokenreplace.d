@@ -14,7 +14,7 @@
 //   $_identNAME      - any identifier (no keywords)
 //   $_dotidentNAME   - any identifier.identifier pair
 //   $_exprNAME       - any sequence of brace matched tokens terminated by closing bracket or ";"
-//   $_notNAME        - any token not matching the following token 
+//   $_notNAME        - any token not matching the following token
 //   $_optNAME        - the following token or nothing
 //   $NAME            - any sequence of tokens greedily stopped by the following token
 //   token$NAME       - any token starting with "token"
@@ -60,12 +60,12 @@ class Token
 	enum BraceR = TOK_rcurly;
 	enum BracketL = TOK_lbracket;
 	enum BracketR = TOK_rbracket;
-	
+
 	static bool isPPToken(int) { return false; }
 
 	bool isOpeningBracket() { return type == ParenL || type == BraceL || type == BracketL; }
 	bool isClosingBracket() { return type == ParenR || type == BraceR || type == BracketR; }
-	
+
 	int type;
 	bool replaced;
 	int lineno, column; // token pos and end can be calculated from pretext/text
@@ -373,7 +373,7 @@ static void scanAny(TL)(ref TL tokenList, _string text, int lineno = 1, int colu
 	int state = 0;
 	int prelineno = lineno;
 	int precolumn = column;
-	
+
 	void appendToken(Token tok)
 	{
 		static if(is(TL == Token[]))
@@ -383,7 +383,7 @@ static void scanAny(TL)(ref TL tokenList, _string text, int lineno = 1, int colu
 		else
 			tokenList.append(tok);
 	}
-	
+
 	for(uint pos = 0; pos < text.length; )
 	{
 		int tokid;
@@ -391,7 +391,7 @@ static void scanAny(TL)(ref TL tokenList, _string text, int lineno = 1, int colu
 		trLex.scan(state, text, pos, tokid);
 
 		_string txt = text[prevpos .. pos];
-		advanceTextPos(txt, lineno, column); 
+		advanceTextPos(txt, lineno, column);
 
 		if(tokid != TOK_Space && tokid != TOK_Comment)
 		{
@@ -445,7 +445,7 @@ int findSubmatch(ref SubMatch[] submatch, _string ident)
 }
 
 ///////////////////////////////////////////////////////////////////////
-bool findTokenSequence(TokenIterator it, _string[] search, 
+bool findTokenSequence(TokenIterator it, _string[] search,
 					   bool checkBracketsSearch, bool checkBracketsMatch, bool caseSensitive,
                        _string stopText, ref TokenRange match, ref SubMatch[] submatch)
 {
@@ -471,7 +471,7 @@ bool findTokenSequence(TokenIterator it, _string[] search,
 			return s1 == s2;
 		return icmp(s1, s2) == 0;
 	}
-	
+
 	bool compareTokens(TokenIterator start, TokenIterator end, ref TokenIterator it)
 	{
 		for(TokenIterator sit = start; !sit.atEnd() && sit != end; ++sit)
@@ -503,7 +503,7 @@ bool findTokenSequence(TokenIterator it, _string[] search,
 
 	int prevsubmatchLength = submatch.length;
 
-	while(!it.atEnd() && (stopText.length == 0 || !strEqual(it.text, stopText) 
+	while(!it.atEnd() && (stopText.length == 0 || !strEqual(it.text, stopText)
 	                                           || strEqual(search[p], stopText)))
 	{
 		bool dollar = indexOf(search[p], '$') >= 0;
@@ -548,7 +548,7 @@ bool findTokenSequence(TokenIterator it, _string[] search,
 							break;
 
 						TokenIterator start = mit;
-						while(!(mit + 1).atEnd() && !(mit + 2).atEnd() && 
+						while(!(mit + 1).atEnd() && !(mit + 2).atEnd() &&
 						      mit[1].type == Token.Dot && mit[2].type == Token.Identifier)
 						{
 							mit.advance();
@@ -599,7 +599,7 @@ bool findTokenSequence(TokenIterator it, _string[] search,
 					else
 					{
 						TokenRange tailmatch;
-						if (!findTokenSequence(mit, search[i+1 .. $], 
+						if (!findTokenSequence(mit, search[i+1 .. $],
 						                       checkBracketsMatch, checkBracketsMatch, caseSensitive,
 						                       stopText, tailmatch, submatch))
 							break;
@@ -655,7 +655,7 @@ bool findTokenSequence(TokenIterator it, _string[] search,
 			advanceToClosingBracket(it);
 		else if(checkBracketsSearch && it.isClosingBracket())
 			break;
-		else 
+		else
 			it.advance();
 	}
 	return false;
@@ -709,7 +709,7 @@ TokenList createReplacementTokenList(RTYPE) (RTYPE[] replace, TokenRange match, 
 }
 
 
-int _replaceTokenSequence(RTYPE)(TokenList srctoken, _string[] search, RTYPE[] replace, 
+int _replaceTokenSequence(RTYPE)(TokenList srctoken, _string[] search, RTYPE[] replace,
 								 ref const ReplaceOptions opt, ReplaceRange[]* ranges)
 {
 	if(search.length == 0) // do not replace an empty token list (everything?)
@@ -755,13 +755,13 @@ int _replaceTokenSequence(RTYPE)(TokenList srctoken, _string[] search, RTYPE[] r
 
 			TokenList tokenList = createReplacementTokenList(replace, match, submatch);
 			markReplaceTokenList(tokenList);
-			
+
 			if(ranges)
 			{
 				rng.startlineno = match.start.lineno;
 				rng.startcolumn = match.start.column;
 				rng.replacementText = tokenListToString(tokenList);
-				
+
 				*ranges ~= rng;
 			}
 
@@ -790,7 +790,7 @@ int _replaceTokenSequence(RTYPE)(TokenList srctoken, _string[] search, RTYPE[] r
 	return cntReplacements;
 }
 
-int replaceTokenSequence(TokenList srctoken, _string[] search, _string[] replace, 
+int replaceTokenSequence(TokenList srctoken, _string[] search, _string[] replace,
 						 ref const ReplaceOptions opt, ReplaceRange[]* ranges)
 {
 	return _replaceTokenSequence(srctoken, search, replace, opt, ranges);
@@ -807,11 +807,11 @@ int replaceTokenSequence(TokenList srctoken, _string search, _string replace,
 	return _replaceTokenSequence(srctoken, searchTokens, replaceTokens, opt, ranges);
 }
 
-_string replaceTokenSequence(_string srctext, int srclineno, int srccolumn, _string search, _string replace, 
+_string replaceTokenSequence(_string srctext, int srclineno, int srccolumn, _string search, _string replace,
 							 ref const ReplaceOptions opt, ReplaceRange[]* ranges)
 {
 	TokenList tokens = scanText(srctext, srclineno, srccolumn);
-	
+
 	int cnt = replaceTokenSequence(tokens, search, replace, opt, ranges);
 	if(cnt == 0)
 		return srctext;
@@ -821,37 +821,37 @@ _string replaceTokenSequence(_string srctext, int srclineno, int srccolumn, _str
 
 unittest
 {
-	_string txt = 
-		"unittest {\n"
-		"  if (list_freelist) {\n"
-		"    list--;\n"
-		"  }\n"
-		"}\n"
+	_string txt =
+		  "unittest {\n"
+		~ "  if (list_freelist) {\n"
+		~ "    list--;\n"
+		~ "  }\n"
+		~ "}\n"
 		;
-	
+
 	ReplaceOptions opt;
 	ReplaceRange[] rng1;
 	_string res1 = replaceTokenSequence(txt, 1, 0, "if($1) { $2 }", "$2", opt, &rng1);
 
-	_string exp1 = 
-		"unittest {\n"
-		"  \n"
-		"    list--;\n"
-		"}\n"
+	_string exp1 =
+		  "unittest {\n"
+		~ "  \n"
+		~ "    list--;\n"
+		~ "}\n"
 		;
 	assert(res1 == exp1);
 	assert(rng1.length == 1);
 	assert(rng1[0].startlineno == 2 && rng1[0].startcolumn == 2);
 	assert(rng1[0].endlineno   == 4 && rng1[0].endcolumn   == 3);
-	
+
 	opt.includePretext = true;
 	ReplaceRange[] rng2;
 	_string res2 = replaceTokenSequence(txt, 1, 0, "if($1) { $2 }", "$2", opt, &rng2);
 
-	_string exp2 = 
-		"unittest {\n"
-		"    list--;\n"
-		"}\n"
+	_string exp2 =
+		  "unittest {\n"
+		~ "    list--;\n"
+		~ "}\n"
 		;
 	assert(res2 == exp2);
 	assert(rng2.length == 1);

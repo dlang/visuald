@@ -249,9 +249,12 @@ string msg_toString(uint msg)
 
 void logMessage(string prefix, HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 {
-	string msg = msg_toString(uMsg);
-	if(msg.length == 0)
-		msg = tryformat("%x", uMsg);
-	
-	logCall("%s(hwnd=%x, msg=%s, wp=%x, lp=%x)", prefix, hWnd, msg, wParam, lParam);
+	debug
+	{
+		string msg = msg_toString(uMsg);
+		if(msg.length == 0)
+			msg = tryformat("%x", uMsg);
+
+		logCall("%s(hwnd=%x, msg=%s, wp=%x, lp=%x)", prefix, hWnd, msg, wParam, lParam);
+	}
 }

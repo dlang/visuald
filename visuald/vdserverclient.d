@@ -27,6 +27,7 @@ import stdext.container;
 import stdext.string;
 
 import std.concurrency;
+import std.datetime;
 import std.string;
 import std.conv;
 import std.path;
@@ -49,18 +50,18 @@ import std.datetime;
 import core.stdc.stdio : fprintf, fopen, fflush, fputc, FILE;
 __gshared FILE* dbgfh;
 
-private void dbglog(string s) 
+private void dbglog(string s)
 {
 	debug
 	{
-		version(all) 
-			logCall("VDClient: ", s);
+		version(all)
+			logCall("VDClient: %s", s);
 		else
 			OutputDebugStringA(toMBSz("VDClient: " ~ s ~ "\n"));
 	}
 	else
 	{
-		if(!dbgfh) 
+		if(!dbgfh)
 			dbgfh = fopen("c:/tmp/vdclient.log", "w");
 		SysTime now = Clock.currTime();
 		uint tid = sdk.win32.winbase.GetCurrentThreadId();
@@ -94,7 +95,7 @@ bool startVDServer()
 
 	CoInitialize(null);
 
-	version(InProc) 
+	version(InProc)
 		gVDServer = addref(newCom!VDServer);
 	else
 	{
@@ -230,7 +231,7 @@ class FileCommand : Command
 
 class ConfigureProjectCommand : FileCommand
 {
-	this(string filename, immutable(string[]) imp, immutable(string[]) stringImp, 
+	this(string filename, immutable(string[]) imp, immutable(string[]) stringImp,
 		 immutable(string[]) versionids, immutable(string[]) debugids, uint flags)
 	{
 		super("ConfigureProject", filename);
@@ -264,7 +265,7 @@ class ConfigureProjectCommand : FileCommand
 		freeBSTR(bstringImp);
 		freeBSTR(bversionids);
 		freeBSTR(bdebugids);
-		
+
 		return hr;
 	}
 
@@ -284,7 +285,7 @@ class GetTipCommand : FileCommand
 	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetTipCallBack cb)
 	{
 		super("GetTip", filename);
-		version(DebugCmd) mCommand ~= " {" ~ to!string(span.iStartLine) ~ "," ~ to!string(span.iStartIndex) 
+		version(DebugCmd) mCommand ~= " {" ~ to!string(span.iStartLine) ~ "," ~ to!string(span.iStartIndex)
 			~ " - " ~ to!string(span.iEndLine) ~ "," ~ to!string(span.iEndIndex) ~ "}";
 		mSpan = span;
 		mCallback = cb;
@@ -319,6 +320,11 @@ class GetTipCommand : FileCommand
 		mType = detachBSTR(btype);
 		mSpan = sdk.vsi.sdk_shared.TextSpan(iStartIndex, iStartLine - 1, iEndIndex, iEndLine - 1);
 
+		if (mType == "__pending__")
+			return E_PENDING;
+		if (mType == "__cancelled__")
+			return ERROR_CANCELLED;
+
 		send(gUITid);
 		return S_OK;
 	}
@@ -344,7 +350,7 @@ class GetDefinitionCommand : FileCommand
 	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetDefinitionCallBack cb)
 	{
 		super("GetDefinition", filename);
-		version(DebugCmd) mCommand ~= " {" ~ to!string(span.iStartLine) ~ "," ~ to!string(span.iStartIndex) 
+		version(DebugCmd) mCommand ~= " {" ~ to!string(span.iStartLine) ~ "," ~ to!string(span.iStartIndex)
 			~ " - " ~ to!string(span.iEndLine) ~ "," ~ to!string(span.iEndIndex) ~ "}";
 		mSpan = span;
 		mCallback = cb;
@@ -378,6 +384,11 @@ class GetDefinitionCommand : FileCommand
 
 		mDefFile = detachBSTR(fname);
 		mSpan = sdk.vsi.sdk_shared.TextSpan(iStartIndex, iStartLine - 1, iEndIndex, iEndLine - 1);
+
+		if (mDefFile == "__pending__")
+			return E_PENDING;
+		if (mDefFile == "__cancelled__")
+			return ERROR_CANCELLED;
 
 		send(gUITid);
 		return S_OK;
@@ -445,7 +456,7 @@ class UpdateModuleCommand : FileCommand
 			LONG lbound, ubound;
 			SafeArrayGetLBound(sa, 1, &lbound);
 			SafeArrayGetUBound(sa, 1, &ubound);
-			
+
 			size_t cnt = (ubound - lbound + 1) / 2;
 			mBinaryIsIn.length = cnt;
 			for(size_t i = 0; i < cnt; i++)
@@ -520,6 +531,12 @@ class GetExpansionsCommand : FileCommand
 			return rc;
 
 		string slist = detachBSTR(stringList);
+		if (slist == "__pending__")
+			return E_PENDING;
+		if (slist == "__cancelled__")
+			return ERROR_CANCELLED;
+
+
 		mExpansions = /*cast(shared(string[]))*/ splitLines(slist);
 		send(gUITid);
 		return S_OK;
@@ -578,6 +595,11 @@ class GetReferencesCommand : FileCommand
 			return rc;
 
 		string slist = detachBSTR(stringList);
+		if (slist == "__pending__")
+			return E_PENDING;
+		if (slist == "__cancelled__")
+			return ERROR_CANCELLED;
+
 		mReferences = /*cast(shared(string[]))*/ splitLines(slist);
 		send(gUITid);
 		return S_OK;
@@ -627,7 +649,7 @@ class VDServerClient
 	this()
 	{
 	}
-	
+
 	~this()
 	{
 		shutDown();
@@ -653,7 +675,7 @@ class VDServerClient
 	}
 
 	//////////////////////////////////////
-	uint ConfigureSemanticProject(string filename, immutable(string[]) imp, immutable(string[]) stringImp, 
+	uint ConfigureSemanticProject(string filename, immutable(string[]) imp, immutable(string[]) stringImp,
 								  immutable(string[]) versionids, immutable(string[]) debugids, uint flags)
 	{
 		auto cmd = new _shared!(ConfigureProjectCommand)(filename, imp, stringImp, versionids, debugids, flags);
@@ -747,6 +769,9 @@ class VDServerClient
 
 		try
 		{
+			SysTime lastAnswerTime = Clock.currTime();
+			bool pendingMessageSent = false;
+
 			Queue!(_shared!(Command)) toAnswer;
 			while(gVDServer)
 			{
@@ -774,11 +799,14 @@ class VDServerClient
 				{
 					auto cmd = toAnswer[i];
 					HRESULT hr = cmd.answer();
-					if(hr == S_OK)
+					if(hr == S_OK || hr == ERROR_CANCELLED)
 					{
 						toAnswer.remove(i);
 						changed = true;
+						lastAnswerTime = Clock.currTime();
 					}
+					else if (hr == E_PENDING)
+						break;
 					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 						restartServer = true;
 					else
@@ -793,7 +821,21 @@ class VDServerClient
 					{
 						string m = detachBSTR(msg);
 						if(m != "__no_message__")
+						{
 							(new _shared!(GetMessageCommand)(m)).send(gUITid);
+							pendingMessageSent = false;
+						}
+						else if (toAnswer.length > 0 && lastAnswerTime + 2.seconds < Clock.currTime())
+						{
+							(new _shared!(GetMessageCommand)("Pending semantic analysis request...")).send(gUITid);
+							lastAnswerTime = Clock.currTime();
+							pendingMessageSent = true;
+						}
+						else if (toAnswer.length == 0 && pendingMessageSent)
+						{
+							(new _shared!(GetMessageCommand)("")).send(gUITid);
+							pendingMessageSent = false;
+						}
 					}
 					else if((hr & 0xffff) == RPC_S_SERVER_UNAVAILABLE)
 						restartServer = true;
@@ -831,7 +873,7 @@ class VDServerClient
 				(size_t icmd)
 				{
 					auto cmd = cast(Command) cast(void*) icmd;
-					version(DebugCmd) 
+					version(DebugCmd)
 						if(cmd.mCommand != "GetMessage")
 							dbglog(to!string(cmd.mRequest) ~ " " ~ "idleLoop: " ~ cmd.mCommand);
 					cmd.forward();

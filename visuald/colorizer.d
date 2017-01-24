@@ -751,7 +751,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 
 		if (debugOrVersion)
 		{
-			if(ident.length == 0 && mConfigRelease != 0)
+			if(ident.length == 0 && mConfigRelease == 0)
 				return true;
 		}
 		else

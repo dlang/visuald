@@ -39,6 +39,7 @@ import visuald.chiercontainer;
 import visuald.hierarchy;
 import visuald.config;
 import visuald.winctrl;
+import visuald.vdextensions;
 
 const uint _MAX_PATH = 260;
 
@@ -68,7 +69,7 @@ bool CheckFileName(string fileName)
 {
 	if (fileName.length == 0 || fileName.length >= _MAX_PATH)
 		return false;
-	
+
 	string base = baseName(fileName);
 	if(base.length == 0)
 		return false;
@@ -78,11 +79,11 @@ bool CheckFileName(string fileName)
 	if(base.length == 0)
 		return true; // file starts with '.'
 
-	static string[] reservedNames = 
+	static string[] reservedNames =
 	[
-		"CON", "PRN", "AUX", "CLOCK$", "NUL", 
+		"CON", "PRN", "AUX", "CLOCK$", "NUL",
 		"COM1","COM2", "COM3","COM4","COM5", "COM6", "COM7","COM8", "COM9",
-		"LPT1","LPT2", "LPT3","LPT4","LPT5", "LPT6", "LPT7","LPT8", "LPT9" 
+		"LPT1","LPT2", "LPT3","LPT4","LPT5", "LPT6", "LPT7","LPT8", "LPT9"
 	];
 
 	base = toUpper(base);
@@ -96,7 +97,7 @@ bool CheckFileName(string fileName)
 // Class: CVsModalState
 //      Manage Modal State
 //---------------------------------------------------------------------------
-class CVsModalState 
+class CVsModalState
 {
 public:
 	this(bool bDisableDlgOwnerHwnd = false)
@@ -169,10 +170,10 @@ struct DROPFILES
 }
 
 //-----------------------------------------------------------------------------
-// Returns a cstring array populated with the files from a PROJREF drop. Note that 
-// we can't use the systems DragQueryFile() functions because they will NOT work 
-// on win9x with unicode strings. Returns the count of files. The format looks like 
-// the following: DROPFILES structure with pFiles member containing the offset to 
+// Returns a cstring array populated with the files from a PROJREF drop. Note that
+// we can't use the systems DragQueryFile() functions because they will NOT work
+// on win9x with unicode strings. Returns the count of files. The format looks like
+// the following: DROPFILES structure with pFiles member containing the offset to
 // the list of files:
 //   ----------------------------------------------------------------------------
 //  |{DROPFILES structure}|ProjRefItem1|0|ProjRefItem2|0|.......|ProjRefItemN|0|0|
@@ -192,7 +193,7 @@ int UtilGetFilesFromPROJITEMDrop(HGLOBAL h, ref string[] rgFiles)
 	{
 		// The first member of the structure contains the offset to the files
 		wchar* wzBuffer = cast(wchar*)(cast(byte*)pszDropFiles + pszDropFiles.pFiles);
-		
+
 		// We go until *wzBuffer is null since we don't allow empty strings.
 		while(*wzBuffer)
 		{
@@ -311,7 +312,7 @@ CHierNode searchNode(CHierNode root, bool delegate(CHierNode) pred, bool fDispla
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// VsLocalCreateInstance	
+// VsLocalCreateInstance
 ///////////////////////////////////////////////////////////////////////////////
 I VsLocalCreateInstance(I)(const GUID* clsid, DWORD dwFlags)
 {
@@ -320,14 +321,14 @@ I VsLocalCreateInstance(I)(const GUID* clsid, DWORD dwFlags)
 		scope(exit) release(srpLocalReg);
 		IUnknown punkOuter = null;
 		I inst;
-		if(FAILED(srpLocalReg.CreateInstance(*clsid, punkOuter, &I.iid, dwFlags, 
+		if(FAILED(srpLocalReg.CreateInstance(*clsid, punkOuter, &I.iid, dwFlags,
 		                                     cast(void**) &inst)))
 			return null;
 		return inst;
 	}
 	return null;
 }
-	
+
 ///////////////////////////////////////////////////////////////////////////////
 dte2.DTE2 GetDTE()
 {
@@ -335,7 +336,7 @@ dte2.DTE2 GetDTE()
 	if(!_dte)
 		return null;
 	scope(exit) release(_dte);
-		
+
 	dte2.DTE2 spvsDTE = qi_cast!(dte2.DTE2)(_dte);
 	return spvsDTE;
 }
@@ -472,7 +473,7 @@ void updateEnvironmentFont()
 }
 
 ////////////////////////////////////////////////////////////////////////
-IVsTextLines GetCurrentTextBuffer(IVsTextView* pview)
+IVsTextView GetActiveView()
 {
 	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);
 	if(!textmgr)
@@ -482,10 +483,19 @@ IVsTextLines GetCurrentTextBuffer(IVsTextView* pview)
 	IVsTextView view;
 	if(textmgr.GetActiveView(false, null, &view) != S_OK)
 		return null;
+	return view;
+}
+
+////////////////////////////////////////////////////////////////////////
+IVsTextLines GetCurrentTextBuffer(IVsTextView* pview)
+{
+	IVsTextView view = GetActiveView();
+	if (!view)
+		return null;
 	scope(exit) release(view);
 	if(pview)
 		*pview = addref(view);
-	
+
 	IVsTextLines buffer;
 	view.GetBuffer(&buffer);
 	return buffer;
@@ -498,7 +508,7 @@ string GetSolutionFilename()
 	if(srpSolution)
 	{
 		scope(exit) srpSolution.Release();
-		
+
 		BSTR pbstrSolutionFile;
 		if(srpSolution.GetSolutionInfo(null, &pbstrSolutionFile, null) == S_OK)
 			return detachBSTR(pbstrSolutionFile);
@@ -509,11 +519,11 @@ string GetSolutionFilename()
 
 ////////////////////////////////////////////////////////////////////////
 
-HRESULT FindFileInSolution(IVsUIShellOpenDocument pIVsUIShellOpenDocument, string filename, string srcfile, 
+HRESULT FindFileInSolution(IVsUIShellOpenDocument pIVsUIShellOpenDocument, string filename, string srcfile,
 						   out BSTR bstrAbsPath)
 {
 	auto wstrPath = _toUTF16z(filename);
-	
+
 	HRESULT hr;
 	hr = pIVsUIShellOpenDocument.SearchProjectsForRelativePath(RPS_UseAllSearchStrategies, wstrPath, &bstrAbsPath);
 	if(hr != S_OK || !bstrAbsPath || !isAbsolute(to_string(bstrAbsPath)))
@@ -542,7 +552,7 @@ HRESULT FindFileInSolution(string filename, string srcfile, out string absPath)
 	if(!pIVsUIShellOpenDocument)
 		return returnError(E_FAIL);
 	scope(exit) release(pIVsUIShellOpenDocument);
-	
+
 	BSTR bstrAbsPath;
 	HRESULT hr = FindFileInSolution(pIVsUIShellOpenDocument, filename, srcfile, bstrAbsPath);
 	if(hr != S_OK)
@@ -558,13 +568,13 @@ HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfil
 	if(!pIVsUIShellOpenDocument)
 		return returnError(E_FAIL);
 	scope(exit) release(pIVsUIShellOpenDocument);
-	
+
 	BSTR bstrAbsPath;
 	HRESULT hr = FindFileInSolution(pIVsUIShellOpenDocument, filename, srcfile, bstrAbsPath);
 	if(hr != S_OK)
 		return returnError(hr);
 	scope(exit) detachBSTR(bstrAbsPath);
-	
+
 	IVsWindowFrame srpIVsWindowFrame;
 
 	hr = pIVsUIShellOpenDocument.OpenDocumentViaProject(bstrAbsPath, &LOGVIEWID_Primary, null, null, null,
@@ -584,9 +594,9 @@ HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfil
 	if(FAILED(hr) || !srpIVsWindowFrame)
 		return returnError(hr);
 	scope(exit) release(srpIVsWindowFrame);
-	
+
 	srpIVsWindowFrame.Show();
-	
+
 	VARIANT var;
 	hr = srpIVsWindowFrame.GetProperty(VSFPROPID_DocData, &var);
 	if(FAILED(hr) || var.vt != VT_UNKNOWN || !var.punkVal)
@@ -609,7 +619,7 @@ HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfil
 	if(adjustLineToChanges)
 		if(auto src = Package.GetLanguageService().GetSource(textBuffer))
 			line = src.adjustLineNumberSinceLastBuild(line, false);
-	
+
 	return NavigateTo(textBuffer, line, col, line, col);
 }
 
@@ -626,16 +636,16 @@ HRESULT NavigateTo(IVsTextBuffer textBuffer, int line1, int col1, int line2, int
 HRESULT OpenFileInSolutionWithScope(string fname, int line, int col, string scop, bool adjustLineToChanges = false)
 {
 	HRESULT hr = OpenFileInSolution(fname, line, col, "", adjustLineToChanges);
-	
+
 	if(hr != S_OK && !isAbsolute(fname) && scop.length)
 	{
-		// guess import path from filename (e.g. "src\core\mem.d") and 
+		// guess import path from filename (e.g. "src\core\mem.d") and
 		//  scope (e.g. "core.mem.gc.Proxy") to try opening
 		// the file ("core\mem.d")
 		string inScope = toLower(scop);
 		string path = normalizeDir(dirName(toLower(fname)));
 		inScope = replace(inScope, ".", "\\");
-		
+
 		int i;
 		for(i = 1; i < path.length; i++)
 			if(startsWith(inScope, path[i .. $]))
@@ -654,7 +664,7 @@ string commonProjectFolder(Project proj)
 {
 	string workdir = normalizeDir(dirName(proj.GetFilename()));
 	string path = workdir;
-	searchNode(proj.GetRootNode(), delegate (CHierNode n) 
+	searchNode(proj.GetRootNode(), delegate (CHierNode n)
 	{
 		if(CFileNode file = cast(CFileNode) n)
 			path = commonParentDir(path, makeFilenameAbsolute(file.GetFilename(), workdir));
@@ -672,7 +682,7 @@ string copyProjectFolder(Project proj, string ncommonpath)
 	string npath = normalizeDir(ncommonpath);
 	string workdir = normalizeDir(dirName(proj.GetFilename()));
 
-	searchNode(proj.GetRootNode(), delegate (CHierNode n) 
+	searchNode(proj.GetRootNode(), delegate (CHierNode n)
 	{
 		if(CFileNode file = cast(CFileNode) n)
 		{
@@ -700,11 +710,11 @@ string GetFolderPath(CFolderNode folder)
 
 ///////////////////////////////////////////////////////////////
 // returns addref'd Config
-Config getProjectConfig(string file)
+Config getProjectConfig(string file, bool genCmdLine = false)
 {
 	if(file.length == 0)
 		return null;
-	
+
 	auto srpSolution = queryService!(IVsSolution);
 	scope(exit) release(srpSolution);
 	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
@@ -755,6 +765,121 @@ Config getProjectConfig(string file)
 			}
 		}
 	}
+	return getVisualCppConfig(file, genCmdLine);
+}
+
+///////////////////////////////////////////////////////////////
+class VCConfig : Config
+{
+	string mCmdLine;
+
+	this(string projectfile, string projectname, string platform, string config)
+	{
+		Project prj = newCom!Project(Package.GetProjectFactory(), projectname, projectfile, platform, config);
+		super(prj.GetConfigProvider(), config, platform);
+	}
+
+	this(IVsHierarchy pHierarchy)
+	{
+		string projectFile;
+		string projectName;
+		VARIANT var;
+		BSTR name;
+		if(pHierarchy.GetCanonicalName(VSITEMID_ROOT, &name) == S_OK)
+			projectFile = detachBSTR(name);
+
+		if(pHierarchy.GetProperty(VSITEMID_ROOT, VSHPROPID_EditLabel, &var) == S_OK && var.vt == VT_BSTR)
+			projectName = detachBSTR(var.bstrVal);
+
+		Project prj = newCom!Project(Package.GetProjectFactory(), projectName, projectFile, null, null);
+		super(prj.GetConfigProvider(), "Debug", "Win32");
+	}
+
+	override string GetOutputFile(CFileNode file, string tool = null)
+	{
+		if (file)
+			return super.GetOutputFile(file, tool);
+		return null;
+	}
+	override string GetCompileCommand(CFileNode file, bool syntaxOnly = false, string tool = null, string addopt = null)
+	{
+		if (file)
+			return super.GetCompileCommand(file, syntaxOnly, tool, addopt);
+		return addopt && mCmdLine ? mCmdLine ~ " " ~ addopt : mCmdLine ~ addopt;
+	}
+
+	override string GetCppCompiler() { return "cl"; }
+}
+
+// cache a configuration for each file
+struct VCFile
+{
+	IVsHierarchy pHierarchy;
+	VSITEMID itemid;
+	bool opEquals(ref const VCFile other) const
+	{
+		return pHierarchy is other.pHierarchy && itemid == other.itemid;
+	}
+	hash_t toHash() @trusted nothrow const
+	{
+		// hash the pointer, not the interface (crashes anyway)
+		return cast(hash_t) cast(void*)pHierarchy ^ itemid;
+	}
+}
+__gshared VCConfig[VCFile] vcFileConfigs;
+
+Config getVisualCppConfig(string file, bool genCmdLine = false)
+{
+	auto srpSolution = queryService!(IVsSolution);
+	scope(exit) release(srpSolution);
+	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+	scope(exit) release(solutionBuildManager);
+
+	if(srpSolution && solutionBuildManager)
+	{
+		auto wfile = _toUTF16z(file);
+		IEnumHierarchies pEnum;
+		const GUID vcxprojCLSID = uuid("8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942");
+
+		if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &vcxprojCLSID, &pEnum) == S_OK)
+		{
+			scope(exit) release(pEnum);
+			IVsHierarchy pHierarchy;
+			while(pEnum.Next(1, &pHierarchy, null) == S_OK)
+			{
+				scope(exit) release(pHierarchy);
+
+				VSITEMID itemid;
+				if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
+				{
+					VCConfig cfg;
+					if (auto pcfg = VCFile(pHierarchy, itemid) in vcFileConfigs)
+						cfg = *pcfg;
+					else
+					{
+						cfg = newCom!VCConfig(pHierarchy);
+						cfg.GetProject().GetRootNode().AddTail(newCom!CFileNode(file));
+						vcFileConfigs[VCFile(pHierarchy, itemid)] = cfg;
+					}
+
+					ProjectOptions opts = cfg.GetProjectOptions();
+					ProjectOptions cmpopts = clone(opts);
+					if (vdhelper_GetDCompileOptions(pHierarchy, itemid, opts) == S_OK)
+					{
+						if (genCmdLine)
+						{
+							string cmd;
+							if (vdhelper_GetDCommandLine(pHierarchy, itemid, cmd) == S_OK)
+								cfg.mCmdLine = cmd;
+						}
+						if (opts != cmpopts)
+							cfg.SetDirty();
+						return addref(cfg);
+					}
+				}
+			}
+		}
+	}
 	return null;
 }
 
@@ -762,7 +887,7 @@ Config getCurrentStartupConfig()
 {
 	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
 	scope(exit) release(solutionBuildManager);
-	
+
 	if(solutionBuildManager)
 	{
 		IVsHierarchy pHierarchy;
@@ -781,7 +906,80 @@ Config getCurrentStartupConfig()
 	return null;
 }
 
+// returns reference counted config
+Config GetActiveConfig(IVsHierarchy pHierarchy)
+{
+	if(!pHierarchy)
+		return null;
+
+	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+	scope(exit) release(solutionBuildManager);
+
+	IVsProjectCfg activeCfg;
+	if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) == S_OK)
+	{
+		scope(exit) release(activeCfg);
+		if(Config cfg = qi_cast!Config(activeCfg))
+			return cfg;
+	}
+	return null;
+}
+
+// return current config and platform of the startup
+string GetActiveSolutionConfig(string* platform = null)
+{
+	auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
+	scope(exit) release(solutionBuildManager);
+
+	IVsHierarchy pHierarchy;
+    if (solutionBuildManager.get_StartupProject(&pHierarchy) != S_OK)
+		return null;
+	scope(exit) release(pHierarchy);
+
+	IVsProjectCfg activeCfg;
+	if(solutionBuildManager.FindActiveProjectCfg(null, null, pHierarchy, &activeCfg) != S_OK)
+		return null;
+	scope(exit) release(activeCfg);
+
+	BSTR bstrName;
+	if (activeCfg.get_DisplayName(&bstrName) != S_OK)
+		return null;
+
+	string config = detachBSTR(bstrName);
+	auto parts = split(config, '|');
+	if (parts.length == 2)
+	{
+		if (platform)
+			*platform = parts[1];
+		config = parts[0];
+	}
+	return config;
+}
+
 ////////////////////////////////////////////////////////////////////////
+
+string[] GetImportPaths(Config cfg)
+{
+	string[] imports;
+	if (!cfg)
+		return null;
+
+	ProjectOptions opt = cfg.GetProjectOptions();
+	string projectpath = cfg.GetProjectDir();
+
+	string imp = opt.imppath;
+	imp = opt.replaceEnvironment(imp, cfg);
+	imports = tokenizeArgs(imp);
+
+	string addopts = opt.replaceEnvironment(opt.additionalOptions, cfg);
+	addunique(imports, GlobalOptions.getOptionImportPaths(addopts, projectpath));
+
+	foreach(ref i; imports)
+		i = makeDirnameCanonical(unquoteArgument(i), projectpath);
+
+	addunique(imports, projectpath);
+	return imports;
+}
 
 string[] GetImportPaths(string file)
 {
@@ -789,20 +987,7 @@ string[] GetImportPaths(string file)
 	if(Config cfg = getProjectConfig(file))
 	{
 		scope(exit) release(cfg);
-		ProjectOptions opt = cfg.GetProjectOptions();
-		string projectpath = cfg.GetProjectDir();
-
-		string imp = opt.imppath;
-		imp = opt.replaceEnvironment(imp, cfg);
-		imports = tokenizeArgs(imp);
-
-		string addopts = opt.replaceEnvironment(opt.additionalOptions, cfg);
-		addunique(imports, GlobalOptions.getOptionImportPaths(addopts, projectpath));
-
-		foreach(ref i; imports)
-			i = makeDirnameCanonical(unquoteArgument(i), projectpath);
-
-		addunique(imports, projectpath);
+		imports = GetImportPaths(cfg);
 	}
 	imports ~= Package.GetGlobalOptions().getImportPaths();
 	return imports;

@@ -352,16 +352,11 @@ version(none)
 	return toUTF8(GUID2wstring(guid));
 }
 
-string tryformat(...)
+string tryformat(T...)(string fmt, T args)
 {
 	string s;
-	void putc(dchar c)
-	{
-		s ~= c;
-	}
-
 	try {
-		std.format.doFormat(&putc, _arguments, _argptr);
+		s = std.format.format(fmt, args);
 	}
 	catch(Exception e)
 	{
@@ -509,16 +504,9 @@ extern(C) void log_flush()
 
 version(test) {
 
-	void logCall(...)
+	void logCall(T...)(string fmt, T args)
 	{
-		string s;
-
-		void putc(dchar c)
-		{
-			s ~= c;
-		}
-
-		std.format.doFormat(&putc, _arguments, _argptr);
+		string s = std.format.format(fmt, args);
 		s ~= "\n";
 
 		std.stdio.fputs(toStringz(s), stdout.getFP);
@@ -528,7 +516,7 @@ version(test) {
 
 	class logSync {}
 
-	void logCall(...)
+	void logCall(T...)(string fmt, T args)
 	{
 		auto buffer = new char[32];
 		SysTime now = Clock.currTime();
@@ -538,13 +526,8 @@ version(test) {
 		string s = to!string(buffer[0..len]);
 		s ~= replicate(" ", gLogIndent);
 
-		void putc(dchar c)
-		{
-			s ~= c;
-		}
-
 		try {
-			std.format.doFormat(&putc, _arguments, _argptr);
+			s ~= std.format.format(fmt, args);
 		}
 		catch(Exception e)
 		{

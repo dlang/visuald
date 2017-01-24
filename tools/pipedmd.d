@@ -260,38 +260,50 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	ResumeThread(piProcInfo.hThread);
 
 	char[] buffer = new char[2048];
+	size_t bytesFilled = 0;
+	DWORD bytesAvailable = 0;
 	DWORD bytesRead = 0;
-	DWORD bytesAvaiable = 0;
 	DWORD exitCode = 0;
 	bool linkerFound = gdcMode || msMode || demangleAll;
 
+	L_loop:
 	while(true)
 	{
-		bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr, buffer.length, &bytesRead, &bytesAvaiable, null);
-		if(bSuccess && bytesAvaiable > 0)
+		bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr + bytesFilled, buffer.length - bytesFilled, &bytesRead, &bytesAvailable, null);
+		if (bSuccess && bytesRead > 0)
+			bSuccess = ReadFile(hStdOutRead, buffer.ptr + bytesFilled, buffer.length - bytesFilled, &bytesRead, null);
+		if(bSuccess && bytesRead > 0)
 		{
-			size_t lineLength = 0;
-			for(; lineLength < buffer.length && lineLength < bytesAvaiable && buffer[lineLength] != '\n'; lineLength++){}
-			if(lineLength >= bytesAvaiable)
+			size_t lineLength = bytesFilled; // no need to search before previous end
+			bytesFilled += bytesRead;
+			for(; lineLength < buffer.length && lineLength < bytesFilled; lineLength++)
 			{
-				// if no line end found, retry with larger buffer
-				if(lineLength >= buffer.length)
-					buffer.length = buffer.length * 2;
+				if (buffer[lineLength] == '\n')
+				{
+					size_t len = lineLength + 1;
+					demangleLine(buffer[0 .. len], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
+					memmove(buffer.ptr, buffer.ptr + len, bytesFilled - len);
+					bytesFilled -= len;
+					lineLength = 0;
+				}
+			}
+			// if no line end found, retry with larger buffer
+			if(bytesFilled >= buffer.length)
+			{
+				buffer.length = buffer.length * 2;
 				continue;
 			}
-			bSuccess = ReadFile(hStdOutRead, buffer.ptr, lineLength+1, &bytesRead, null);
-			if(!bSuccess || bytesRead == 0)
-				break;
+		}
 
-			demangleLine(buffer[0 .. bytesRead], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
-		}
-		else
+		bSuccess = GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
+		if(!bSuccess || exitCode != 259) //259 == STILL_ACTIVE
 		{
-			bSuccess = GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
-			if(!bSuccess || exitCode != 259) //259 == STILL_ACTIVE
-				break;
-			Sleep(5);
+			// process trailing text if not terminated by a newline
+			if (bytesFilled > 0)
+				demangleLine(buffer[0 .. bytesFilled], doDemangle, demangleAll, msMode, gdcMode, cp, linkerFound);
+			break;
 		}
+		Sleep(5);
 	}
 
 	//close the handles to the process
@@ -745,10 +757,10 @@ extern(C)
 		WORD   e_cs;                        // Initial (relative) CS value
 		WORD   e_lfarlc;                    // File address of relocation table
 		WORD   e_ovno;                      // Overlay number
-		WORD   e_res[4];                    // Reserved words
+		WORD[4] e_res;                      // Reserved words
 		WORD   e_oemid;                     // OEM identifier (for e_oeminfo)
 		WORD   e_oeminfo;                   // OEM information; e_oemid specific
-		WORD   e_res2[10];                  // Reserved words
+		WORD[10] e_res2;                    // Reserved words
 		LONG   e_lfanew;                    // File address of new exe header
 	}
 

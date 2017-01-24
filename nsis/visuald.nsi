@@ -82,6 +82,8 @@
   !define VS2012_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\11.0
   !define VS2013_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\12.0
   !define VS2015_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\14.0
+  !define VS2017_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\15.0
+  !define VS2017_INSTALL_KEY      SOFTWARE\Microsoft\VisualStudio\SxS\VS7
 !ifdef EXPRESS
   !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
   !define VCEXP2010_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\10.0
@@ -208,9 +210,9 @@ Section "Visual Studio package" SecPackage
   ${File} ..\bin\${CONFIG}\ vdserver.exe
 !endif
 
-  !ifdef VDEXTENSIONS
+!ifdef VDEXTENSIONS
   ${File} ..\bin\${CONFIG}\vdextensions\ vdextensions.dll
-  !endif
+!endif
 
 !ifdef DPARSER
   ${SetOutPath} "$INSTDIR\DParser"
@@ -242,6 +244,11 @@ Section "Visual Studio package" SecPackage
   ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ main.d
   ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ ConsoleApp.vstemplate
   ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ ConsoleApp.visualdproj
+
+  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleDLG"
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ main.d
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ ConsoleApp.vstemplate
+  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ ConsoleApp.visualdproj
 
   ${SetOutPath} "$INSTDIR\Templates\ProjectItems\WindowsApp"
   ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ winmain.d
@@ -293,6 +300,8 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\ dmd.xml
   ${File} ..\msbuild\ ldc.xml
   ${File} ..\msbuild\ general_d.snippet
+  ${File} ..\msbuild\ d2.ico
+  ${File} ..\msbuild\ di.ico
   ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
@@ -356,10 +365,9 @@ ${MementoSection} "Register with VS 2010" SecVS2010
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   
-  !ifdef VDEXTENSIONS
-    GetFullPathName /SHORT $0 $INSTDIR
-    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !endif
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "10" NoBackup
 
 ${MementoSectionEnd}
 
@@ -377,10 +385,9 @@ ${MementoSection} "Register with VS 2012" SecVS2012
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   
-  !ifdef VDEXTENSIONS
-    GetFullPathName /SHORT $0 $INSTDIR
-    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !endif
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "11" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"
@@ -404,10 +411,9 @@ ${MementoSection} "Register with VS 2013" SecVS2013
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
 
-  !ifdef VDEXTENSIONS
-    GetFullPathName /SHORT $0 $INSTDIR
-    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !endif
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "12" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"
@@ -431,13 +437,38 @@ ${MementoSection} "Register with VS 2015" SecVS2015
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
 
-  !ifdef VDEXTENSIONS
-    GetFullPathName /SHORT $0 $INSTDIR
-    !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !endif
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "14" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
+  !endif
+
+${MementoSectionEnd}
+
+;--------------------------------
+${MementoSection} "Register with VS 2017" SecVS2017
+
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2017_REGISTRY_KEY}'
+  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ${RegisterWin32Exception} ${VS2017_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1Common7\IDE${EXTENSION_DIR}\visuald.pkgdef'
+
+  ${SetOutPath} "$1Common7\IDE${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "15" NoBackup
+
+  !ifdef MAGO
+    ${SetOutPath} "$1Common7\Packages\Debugger"
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
@@ -455,6 +486,17 @@ ${MementoSectionEnd}
 !macroend
 !define RegisterPlatform "!insertmacro RegisterPlatform"
 
+!macro RegisterIcons VSVer
+    WriteRegStr HKCR "VisualStudio.d.${VSVer}" "" "D Source"
+    WriteRegStr HKCR "VisualStudio.d.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\d2.ico"
+    WriteRegStr ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\${VSVer}\ShellFileAssociations\.d" "" "VisualStudio.d.${VSVer}"
+
+    WriteRegStr HKCR "VisualStudio.di.${VSVer}" "" "D Interface"
+    WriteRegStr HKCR "VisualStudio.di.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\di.ico"
+    WriteRegStr ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\${VSVer}\ShellFileAssociations\.di" "" "VisualStudio.di.${VSVer}"
+!macroend
+!define RegisterIcons "!insertmacro RegisterIcons"
+
 ;--------------------------------
 !ifdef MSBUILD
 ${MementoSection} "Register MSBuild extensions for VS 2013/2015" SecMSBuild
@@ -463,6 +505,7 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/2015" SecMSBuild
   IfErrors NoMSBuild14
     ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V140" "x64"
     ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V140" "Win32"
+    ${RegisterIcons} "14.0"
 
     !define V140_GENERAL_XML "$1\Microsoft.Cpp\v4.0\V140\1033\general.xml"
 
@@ -474,6 +517,7 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/2015" SecMSBuild
   IfErrors NoMSBuild12
     ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V120" "x64"
     ${RegisterPlatform} "$1\Microsoft.Cpp\v4.0\V120" "Win32"
+    ${RegisterIcons} "12.0"
 
     !define V120_GENERAL_XML "$1\Microsoft.Cpp\v4.0\V120\1033\general.xml"
 
@@ -553,6 +597,10 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   Push ${VS2015_REGISTRY_KEY}
   Call PatchAutoExp
   
+  Push ${SecVS2017}
+  Push ${VS2017_REGISTRY_KEY}
+  Call PatchAutoExp
+  
 ${MementoSectionEnd}
 !endif
 
@@ -601,6 +649,10 @@ ${MementoSection} "mago" SecMago
   Push ${VS2015_REGISTRY_KEY}
   Call RegisterMago
   
+  Push ${SecVS2017}
+  Push ${VS2017_REGISTRY_KEY}
+  Call RegisterMago
+  
   WriteRegStr HKLM "SOFTWARE\Wow6432Node\MagoDebugger" "Remote_x64" "$INSTDIR\Mago\MagoRemote.exe"
 
 ${MementoSectionEnd}
@@ -627,6 +679,7 @@ SectionEnd
   LangString DESC_SecVS2012 ${LANG_ENGLISH} "Register for usage in Visual Studio 2012."
   LangString DESC_SecVS2013 ${LANG_ENGLISH} "Register for usage in Visual Studio 2013."
   LangString DESC_SecVS2015 ${LANG_ENGLISH} "Register for usage in Visual Studio 2015."
+  LangString DESC_SecVS2017 ${LANG_ENGLISH} "Register for usage in Visual Studio 2017."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -655,6 +708,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2012} $(DESC_SecVS2012)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2013} $(DESC_SecVS2013)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2015} $(DESC_SecVS2015)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017} $(DESC_SecVS2017)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
@@ -685,11 +739,19 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2012_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2013_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2015_REGISTRY_KEY}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VS2017_REGISTRY_KEY}'
 !ifdef EXPRESS
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}" InstallDir
+  IfErrors NoVS2017pkgdef
+    RMDir /r '$1${EXTENSION_DIR}'
+    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2017pkgdef:
+  
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2015pkgdef
     RMDir /r '$1${EXTENSION_DIR}'
@@ -741,6 +803,9 @@ Section "Uninstall"
 
   Push ${VS2015_REGISTRY_KEY}
   Call un.PatchAutoExp
+
+  Push ${VS2017_REGISTRY_KEY}
+  Call un.PatchAutoExp
 !endif
 
 !ifdef VS_NET
@@ -752,6 +817,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2012_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2015_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2017_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
 
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
@@ -778,6 +844,9 @@ Section "Uninstall"
 
   Push ${VS2015_REGISTRY_KEY}
   Call un.RegisterMago
+
+  Push ${VS2017_REGISTRY_KEY}
+  Call un.RegisterMago
 !endif
 
   Call un.RegisterIVDServer
@@ -792,6 +861,11 @@ Section "Uninstall"
   ; generated by SecMSBuild
   Delete "$INSTDIR\msbuild\general_d.12.0.xml"
   Delete "$INSTDIR\msbuild\general_d.14.0.xml"
+
+  DeleteRegKey HKCR "VisualStudio.d.12.0"
+  DeleteRegKey ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\12.0\ShellFileAssociations\.d"
+  DeleteRegKey HKCR "VisualStudio.d.14.0"
+  DeleteRegKey ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\14.0\ShellFileAssociations\.d"
 !endif
 
   Delete "$INSTDIR\Uninstall.exe"
@@ -866,6 +940,13 @@ Function .onInit
   IfErrors 0 Installed_VS2015
     SectionSetFlags ${SecVS2015} ${SF_RO}
   Installed_VS2015:
+
+  ; detect VS2017
+  ClearErrors
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
+  IfErrors 0 Installed_VS2017
+    SectionSetFlags ${SecVS2017} ${SF_RO}
+  Installed_VS2017:
 
 !ifdef EXPRESS
   ; detect VCExpress 2008
@@ -1003,6 +1084,9 @@ enabled:
   ;------ MagoNatCC
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}" "Language" "D" 
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}" "Name" "D" 
+  ; enable conditional breakpoints
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}\Engine" "0" "{449EC4CC-30D2-4032-9256-EE18EB41B62B}" 
+  WriteRegStr ${VS_REGISTRY_ROOT}   "$1\${MAGO_EE_KEY}\Engine" "1" "{92EF0900-2251-11D2-B72E-0000F87572EF}" 
 
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\Debugger\CodeView Compilers\68:*" "LanguageID" "${LANGUAGE_CLSID}"
   WriteRegStr ${VS_REGISTRY_ROOT}   "$1\Debugger\CodeView Compilers\68:*" "VendorID"   "${VENDOR_CLSID}"

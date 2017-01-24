@@ -28,7 +28,7 @@ template PadBits(T...)
 		alias TypeTuple!(T, uint, "", 16 - bits) PadBits;
 	else static if(bits < 32)
 		alias TypeTuple!(T, uint, "", 32 - bits) PadBits;
-	else 
+	else
 		alias TypeTuple!(T, uint, "", 64 - bits) PadBits;
 }
 
@@ -84,7 +84,7 @@ private template createAccessors(
         static if (is(T == bool))
         {
             static assert(len == 1);
-            enum result = 
+            enum result =
             // getter
                 "bool " ~ name ~ "() { return "
                 ~"("~store~" & "~myToString!(maskAllElse)~") != 0;}\n"
@@ -97,11 +97,11 @@ private template createAccessors(
         {
             // getter
             enum result = T.stringof~" "~name~"() { auto result = "
-                "("~store~" & "
+                ~"("~store~" & "
                 ~ myToString!(maskAllElse) ~ ") >>"
                 ~ myToString!(offset) ~ ";"
                 ~ (T.min < 0
-                   ? "if (result >= " ~ myToString!(signBitCheck) 
+                   ? "if (result >= " ~ myToString!(signBitCheck)
                    ~ ") result |= " ~ myToString!(extendSign) ~ ";"
                    : "")
                 ~ " return cast("~T.stringof~") result;}\n"
@@ -110,9 +110,9 @@ private template createAccessors(
                 ~"assert(v >= "~name~"_min); "
                 ~"assert(v <= "~name~"_max); "
                 ~store~" = cast(typeof("~store~"))"
-                " (("~store~" & ~"~myToString!(maskAllElse)~")"
-                " | ((cast(typeof("~store~")) v << "~myToString!(offset)~")"
-                " & "~myToString!(maskAllElse)~"));}\n"
+                ~" (("~store~" & ~"~myToString!(maskAllElse)~")"
+                ~" | ((cast(typeof("~store~")) v << "~myToString!(offset)~")"
+                ~" & "~myToString!(maskAllElse)~"));}\n"
             // constants
                 ~"enum "~T.stringof~" "~name~"_min = cast("~T.stringof~")"
                 ~myToString!(minVal)~"; "

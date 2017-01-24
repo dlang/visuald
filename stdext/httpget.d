@@ -69,7 +69,7 @@ ulong httpget(string domain, ushort port, string url, string dstfile, ulong part
 		domain = domain ~ ":" ~ to!string(port);
 
 	string request = "GET " ~ url ~ " HTTP/1.0\r\n"
-		"Host: " ~ domain ~ "\r\n";
+		~ "Host: " ~ domain ~ "\r\n";
 	if(partial_length < ulong.max)
 	{
 		string range = to!string(partial_start) ~ "-" ~ to!string(partial_start + partial_length - 1);

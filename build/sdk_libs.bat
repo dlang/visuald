@@ -28,8 +28,8 @@ if "%WINSDKLIB%" == "" if exist "%WindowsSdkDir%\lib\kernel32.lib" set WINSDKLIB
 if "%WINSDKLIB%" == "" (echo Error: could not detect the Windows SDK library folder && exit /B 1)
 
 set COFFIMPLIB=c:\l\dmc\bin\coffimplib.exe
-%coffimplib% >nul 2>&1
-if errorlevel 9000 set COFFIMPLIB=coffimplib
+if not exist %COFFIMPLIB% set COFFIMPLIB=%DMDInstallDir%\windows\bin\coffimplib.exe
+if not exist %COFFIMPLIB% set COFFIMPLIB=coffimplib
 %coffimplib% >nul 2>&1
 if errorlevel 9000 (echo Error: cannot execute %COFFIMPLIB%, please add to PATH && exit /B 1)
 

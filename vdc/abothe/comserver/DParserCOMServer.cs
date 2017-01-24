@@ -106,6 +106,8 @@ namespace DParserCOMServer
         // The timer to trigger GC every 5 seconds
         private Timer _gcTimer;
 
+        private static uint _lastActivity;
+
         /// <summary>
         /// The method is call every 5 seconds to GC the managed heap after 
         /// the COM server is started.
@@ -113,7 +115,12 @@ namespace DParserCOMServer
         /// <param name="stateInfo"></param>
         private static void GarbageCollect(object stateInfo)
         {
-            GC.Collect();   // GC
+            uint activity = VDServer.Activity;
+            if (activity != _lastActivity)
+            {
+                _lastActivity = activity;
+                GC.Collect();   // GC
+            }
         }
 
         private uint _cookie;

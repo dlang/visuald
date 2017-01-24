@@ -816,7 +816,22 @@ unreleased Version 0.3.44
   * when linking with MS linker, options for the map file broke the command line
   * bugzilla 16063: missing option -L/DLL when linking a DLL with MS linker
   * added integration with msbuild and VC++ projects
-  * added installation of mago expression evalutro to Concord debug engine
+  * added installation of mago expression evaluator to Concord debug engine
   * added $(Platform) as a settings macro replacement in addition to $(PlatformName)
   * changed default output directory to $(PlatformName)/$(ConfigurationName)
   * added x64 configurations to project templates
+  * added AppVeyor integration builds
+  * cv2pdb can now be enabled independent of debug engine
+  * dustmite: error messages written to stderr not grepped
+  * added project template to build with DMD, LDC and GDC for x86 and x64
+  * VS SDK 2013 now needed to build Visual D
+  * added automatic brace completion
+  * added preliminary support for VS 2017 RC
+  * dparser: semantic analysis no longer times out after 500ms, but cancels previous requests
+  * dparser: improved performance by adding name lookup cache
+  * completion box no longer pops up if caret has been moved elsewhere
+  * menu entries now disabled if they require the focus on a D file, but it is elsewhere
+  * building a library with LDC now always adds "-oq -od=$(IntDir)" to the command line
+  * reduced idle processing by only updating the active view
+  * mago: display const modifier on type, recover string types
+  * mago concord plugin: enable conditional breakpoints

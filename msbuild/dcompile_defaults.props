@@ -6,13 +6,15 @@
     <DCompileAfterTargets>CustomBuild</DCompileAfterTargets>
 
     <DMDInstallDir Condition="$(DMDInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'DMDInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallDir>
-    <DMDInstallationFolder> $([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\Software\DMD', 'InstallationFolder', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallationFolder>
+    <DMDInstallDir Condition="$(DMDInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)_Config\ToolsOptionsPages\Projects\Visual D Settings', 'DMDInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</DMDInstallDir>
+    <DMDInstallationFolder>$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\Software\DMD', 'InstallationFolder', '', RegistryView.Registry32, RegistryView.Registry64))</DMDInstallationFolder>
     <DMDInstallDir Condition="$(DMDInstallDir) == '' and '$(DMDInstallationFolder)' != ''">$(DMDInstallationFolder)\dmd2\</DMDInstallDir>
     <DMDBinDir     Condition="$(DMDInstallDir) != ''">$(DMDInstallDir)\windows\bin\</DMDBinDir>
     <DMDText Condition="Exists('$(DMDInstallDir)dmd.exe')">DMD - Reference compiler</DMDText>
     <DMDText Condition="'$(DMDText)' == ''">DMD - Reference compiler (not installed)</DMDText>
 
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'LDCInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</LDCInstallDir>
+    <LDCInstallDir Condition="$(LDCInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)_Config\ToolsOptionsPages\Projects\Visual D Settings', 'LDCInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</LDCInstallDir>
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\LDC@InstallationFolder)</LDCInstallDir>
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\Wow6432Node\LDC@InstallationFolder)</LDCInstallDir>
     <LDCBinDir     Condition="$(LDCInstallDir) != ''">$(LDCInstallDir)\bin\</LDCBinDir>
@@ -55,6 +57,8 @@
       <StringImportPaths></StringImportPaths>
       <AdditionalOptions></AdditionalOptions>
       <CompilationModel>Project</CompilationModel>
+      <CRuntimeLibrary>MultiThreaded</CRuntimeLibrary>
+      <!-- do not provide empty strings as default, they will show up on the generated command line
       <ObjectFileName></ObjectFileName>
       <DocDir></DocDir>
       <DocFile></DocFile>
@@ -62,6 +66,10 @@
       <HeaderDir></HeaderDir>
       <HeaderFile></HeaderFile>
       <JSONFile></JSONFile>
+      -->
+      <CompilerExe Condition="'$(DCompiler)' == 'DMD'">$(DMDBinDir)dmd.exe</CompilerExe>
+      <CompilerExe Condition="'$(DCompiler)' == 'LDC'">$(LDCBinDir)ldmd2.exe</CompilerExe>
+
       <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'DMD|Win32'">-m32mscoff -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
       <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'LDC|Win32'">-m32 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
       <CommandLineTemplate Condition="'$(Platform)' == 'X64'">-m64 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
