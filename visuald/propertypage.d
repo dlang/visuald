@@ -2237,6 +2237,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		version(DParserOption) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
+		AddControl("", mSortExpByType = new CheckBox(mCanvas, "Sort expansions by type"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -2251,6 +2252,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		else                   bool useDParser = true;
 		mMixinAnalysis.setEnabled(useDParser);
 		mUFCSExpansions.setEnabled(useDParser);
+		mSortExpByType.setEnabled(useDParser);
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -2264,6 +2266,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		version(DParserOption) mUseDParser.setChecked(opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
+		mSortExpByType.setChecked(opts.sortExpByType);
 
 		//mExpandSemantics.setEnabled(false);
 	}
@@ -2280,6 +2283,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		version(DParserOption) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser);
 		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
 		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
+		changes += changeOption(mSortExpByType.isChecked(), opts.sortExpByType, refopts.sortExpByType);
 		return changes;
 	}
 
@@ -2291,6 +2295,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	CheckBox mSemanticGotoDef;
 	version(DParserOption) CheckBox mUseDParser;
 	CheckBox mUFCSExpansions;
+	CheckBox mSortExpByType;
 	CheckBox mMixinAnalysis;
 }
 

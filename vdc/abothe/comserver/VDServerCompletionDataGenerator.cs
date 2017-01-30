@@ -55,14 +55,17 @@ namespace DParserCOMServer
 
 			public string Visit(DVariable dVariable)
 			{
-				return "VAR";
+				return dVariable.IsStaticProperty ? "SPRP" : "VAR";
 			}
 
 			public string Visit(DMethod n)
 			{
 				if (n.ContainsPropertyAttribute(BuiltInAtAttribute.BuiltInAttributes.Property))
 					return "PROP";
-				return "MTHD";
+				if (n.Parent is DClassLike)
+					return "MTHD";
+				else
+					return "FUNC";
 			}
 
 			public string Visit(DClassLike dClassLike)
@@ -243,7 +246,10 @@ namespace DParserCOMServer
 
 		public void AddIconItem(string iconName, string text, string description)
 		{
-			addExpansion(iconName + "|" + text, "ICN", description);
+            if (iconName == "md-keyword")
+			    addExpansion(text, "ASKW", description);
+            else
+                addExpansion(text, "ASOP", description);
 		}
 
 		void addExpansion(string name, string type, string desc)

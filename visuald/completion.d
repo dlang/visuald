@@ -53,13 +53,131 @@ class ImageList {};
 
 struct Declaration
 {
+	string name;
+	string type;
+	string description;
+	string text;
+
+	static Declaration split(string s)
+	{
+		Declaration decl;
+		auto pos1 = indexOf(s, ':');
+		if(pos1 >= 0)
+		{
+			decl.name = s[0 .. pos1];
+			auto pos2 = indexOf(s[pos1 + 1 .. $], ':');
+			if(pos2 >= 0)
+			{
+				decl.type = s[pos1 + 1 .. pos1 + 1 + pos2];
+				decl.description = s[pos1 + 1 + pos2 + 1 .. $];
+			}
+			else
+				decl.type = s[pos1 + 1 .. $];
+		}
+		else
+			decl.name = s;
+
+		auto pos3 = indexOf(decl.name, "|");
+		if(pos3 >= 0)
+		{
+			decl.text = decl.name[pos3 + 1 .. $];
+			decl.name = decl.name[0 .. pos3];
+		}
+		else
+			decl.text = decl.name;
+
+		return decl;
+	}
+
+	int compareByType(const ref Declaration other) const
+	{
+		int s1 = Type2Sorting(type);
+		int s2 = Type2Sorting(other.type);
+		if (s1 != s2)
+			return s1 - s2;
+		if (int res = icmp(name, other.name))
+			return res;
+		return 0;
+	}
+
+	int compareByName(const ref Declaration other) const
+	{
+		if (int res = icmp(name, other.name))
+			return res;
+		if (int res = icmp(type, other.type))
+			return res;
+		return 0;
+	}
+
+	static int Type2Glyph(string type)
+	{
+		switch(type)
+		{
+			case "KW":   return CSIMG_KEYWORD;
+			case "SPRP": return CSIMG_KEYWORD;
+			case "ASKW": return CSIMG_KEYWORD;
+			case "ASOP": return CSIMG_KEYWORD;
+			case "PROP": return CSIMG_PROPERTY;
+			case "TEXT": return 3;
+			case "MOD":  return CSIMG_DMODULE;
+			case "DIR":  return CSIMG_DFOLDER;
+			case "PKG":  return CSIMG_PACKAGE;
+			case "FUNC": return CSIMG_MEMBER;
+			case "MTHD": return CSIMG_MEMBER;
+			case "STRU": return CSIMG_STRUCT;
+			case "UNIO": return CSIMG_UNION;
+			case "CLSS": return CSIMG_CLASS;
+			case "IFAC": return CSIMG_INTERFACE;
+			case "TMPL": return CSIMG_TEMPLATE;
+			case "ENUM": return CSIMG_ENUM;
+			case "EVAL": return CSIMG_ENUMMEMBER;
+			case "NMIX": return CSIMG_UNKNOWN2;
+			case "VAR":  return CSIMG_FIELD;
+			case "OVR":  return CSIMG_UNKNOWN3;
+
+			default:     return 0;
+		}
+	}
+
+	static int Type2Sorting(string type)
+	{
+		switch(type)
+		{
+			case "PROP": return 1;
+			case "VAR":  return 1;
+			case "EVAL": return 1;
+
+			case "MTHD": return 2;
+
+			case "STRU": return 3;
+			case "UNIO": return 3;
+			case "CLSS": return 3;
+			case "IFAC": return 3;
+			case "ENUM": return 3;
+
+			case "KW":   return 4;
+			case "SPRP": return 4; // static meta property
+			case "ASKW": return 4;
+			case "ASOP": return 4;
+
+			case "MOD":  return 5;
+			case "DIR":  return 5;
+			case "PKG":  return 5;
+			case "NMIX": return 5; // named teplate mixin mixin
+
+			case "FUNC": return 6;
+			case "TMPL": return 6;
+			case "OVR":  return 6;
+
+			case "TEXT": return 3;
+			default:     return 7;
+		}
+	}
 }
 
 class Declarations
 {
-	string[] mNames;
-	string[] mDescriptions;
-	int[] mGlyphs;
+	Declaration[] mDecls;
 	int mExpansionState = kStateInit;
 
 	enum
@@ -78,7 +196,7 @@ class Declarations
 
 	int GetCount()
 	{
-		return mNames.length;
+		return mDecls.length;
 	}
 
 	dchar OnAutoComplete(IVsTextView textView, string committedWord, dchar commitChar, int commitIndex)
@@ -86,120 +204,39 @@ class Declarations
 		return 0;
 	}
 
-	bool splitName(int index, string* pname, string* ptext, string* ptype, string* pdesc)
-	{
-		if(index < 0 || index >= mNames.length)
-			return false;
-		string s = mNames[index];
-		auto pos1 = indexOf(s, ':');
-		string name, text, type, desc;
-		if(pos1 >= 0)
-		{
-			name = s[0 .. pos1];
-			auto pos2 = indexOf(s[pos1 + 1 .. $], ':');
-			if(pos2 >= 0)
-			{
-				type = s[pos1 + 1 .. pos1 + 1 + pos2];
-				desc = s[pos1 + 1 + pos2 + 1 .. $];
-			}
-			else
-				type = s[pos1 + 1 .. $];
-		}
-		else
-			name = s;
-
-		auto pos3 = indexOf(name, "|");
-		if(pos3 >= 0)
-		{
-			text = name[pos3 + 1 .. $];
-			name = name[0 .. pos3];
-		}
-		else
-			text = name;
-
-		if(pname)
-			*pname = name;
-		if(ptext)
-			*ptext = text;
-		if(ptype)
-			*ptype = type;
-		if(pdesc)
-			*pdesc = desc;
-		return true;
-	}
-
 	int GetGlyph(int index)
 	{
-		version(none)
-		{
-			if(index < 0 || index >= mGlyphs.length)
-				return 0;
-			return mGlyphs[index];
-		}
-		else
-		{
-			string type;
-			if(!splitName(index, null, null, &type, null))
-				return CSIMG_DMODULE;
-
-			switch(type)
-			{
-				case "KW":   return CSIMG_KEYWORD;
-				case "PROP": return CSIMG_PROPERTY;
-				case "TEXT": return 3;
-				case "MOD":  return CSIMG_DMODULE;
-				case "DIR":  return CSIMG_DFOLDER;
-				case "PKG":  return CSIMG_PACKAGE;
-				case "MTHD": return CSIMG_MEMBER;
-				case "STRU": return CSIMG_STRUCT;
-				case "UNIO": return CSIMG_UNION;
-				case "CLSS": return CSIMG_CLASS;
-				case "IFAC": return CSIMG_INTERFACE;
-				case "TMPL": return CSIMG_TEMPLATE;
-				case "ENUM": return CSIMG_ENUM;
-				case "EVAL": return CSIMG_ENUMMEMBER;
-				case "NMIX": return CSIMG_UNKNOWN2;
-				case "VAR":  return CSIMG_FIELD;
-				case "OVR":  return CSIMG_UNKNOWN3;
-				case "ICN":  return CSIMG_UNKNOWN3;
-				default:     return 0;
-			}
-		}
+		if(index < 0 || index >= mDecls.length)
+			return 0;
+		return Declaration.Type2Glyph(mDecls[index].type);
 	}
+
 	string GetDisplayText(int index)
 	{
 		return GetName(index);
 	}
 	string GetDescription(int index)
 	{
-		version(none)
-		{
-			if(index < 0 || index >= mDescriptions.length)
-				return "";
-			return mDescriptions[index];
-		}
-		else
-		{
-			string desc;
-			splitName(index, null, null, null, &desc);
-			desc = replace(desc, "\a", "\n");
+		if(index < 0 || index >= mDecls.length)
+			return "";
+		string desc = mDecls[index].description;
+		desc = replace(desc, "\a", "\n");
 
-			string res = phobosDdocExpand(desc);
-
-			return res;
-		}
+		string res = phobosDdocExpand(desc);
+		return res;
 	}
 	string GetName(int index)
 	{
-		string name;
-		splitName(index, &name, null, null, null);
-		return name;
+		if(index < 0 || index >= mDecls.length)
+			return "";
+		return mDecls[index].name;
 	}
 
 	string GetText(IVsTextView view, int index)
 	{
-		string text;
-		splitName(index, null, &text, null, null);
+		if(index < 0 || index >= mDecls.length)
+			return "";
+		string text = mDecls[index].text;
 		if(text.indexOf('\a') >= 0)
 		{
 			string nl = "\r\n";
@@ -276,7 +313,7 @@ class Declarations
 			imp = imp[dpos + 1 .. $];
 		}
 
-		int namesLength = mNames.length;
+		int namesLength = mDecls.length;
 		foreach(string impdir; imports)
 		{
 			impdir = impdir ~ dir;
@@ -297,12 +334,14 @@ class Declarations
 				}
 				if(canImport && base.startsWith(imp))
 				{
-					string txt = base ~ (issubdir ? ":DIR" : ":MOD");
-					addunique(mNames, txt);
+					Declaration decl;
+					decl.name = decl.text = base;
+					decl.type = (issubdir ? ":DIR" : ":MOD");
+					addunique(mDecls, decl);
 				}
 			}
 		}
-		return mNames.length > namesLength;
+		return mDecls.length > namesLength;
 	}
 
 	bool ImportExpansions(IVsTextView textView, Source src)
@@ -355,7 +394,7 @@ class Declarations
 		if(iState == -1)
 			return false;
 
-		int namesLength = mNames.length;
+		int namesLength = mDecls.length;
 		for(int ln = start; ln < end; ln++)
 		{
 			wstring text = src.GetText(ln, 0, ln, -1);
@@ -369,11 +408,15 @@ class Declarations
 					{
 						string txt = toUTF8(text[ppos .. pos]);
 						if(txt.startsWith(tok))
-							addunique(mNames, txt);
+						{
+							Declaration decl;
+							decl.name = decl.text = txt;
+							addunique(mDecls, decl);
+						}
 					}
 			}
 		}
-		return mNames.length > namesLength;
+		return mDecls.length > namesLength;
 	}
 
 	////////////////////////////////////////////////////////////////////////
@@ -388,9 +431,15 @@ class Declarations
 		if(!tok.length)
 			return false;
 
-		int namesLength = mNames.length;
-		addunique(mNames, Package.GetLibInfos().findCompletions(tok, true));
-		return mNames.length > namesLength;
+		int namesLength = mDecls.length;
+		string[] completions = Package.GetLibInfos().findCompletions(tok, true);
+		foreach (c; completions)
+		{
+			Declaration decl;
+			decl.name = decl.text = c;
+			addunique(mDecls, decl);
+		}
+		return mDecls.length > namesLength;
 	}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -452,28 +501,32 @@ class Declarations
 				}
 
 				// go through assoc array for faster uniqueness check
-				string[string] names;
-				foreach(n; mNames)
+				Declaration[string] decls;
+				foreach(d; mDecls)
 				{
 					string desc;
-					string name = splitName(n, desc);
-					names[name] = desc;
+					string name = d.name ~ ":" ~ d.type;
+					decls[name] = d;
 				}
 				foreach(s; symbols)
 				{
 					string desc;
 					string name = splitName(s, desc);
-					if(auto p = name in names)
-						*p ~= "\a\a" ~ desc[1..$]; // strip ":"
+					if(auto p = name in decls)
+						p.description ~= "\a\a" ~ desc[1..$]; // strip ":"
 					else
-						names[name] = desc;
+						decls[name] = Declaration.split(s);
 				}
-				mNames.length = names.length;
+				mDecls.length = decls.length;
 				size_t i = 0;
-				foreach(n, desc; names)
-					mNames[i++] = n ~ desc;
+				foreach(d; decls)
+					mDecls[i++] = d;
 
-				sort!("icmp(a, b) < 0", SwapStrategy.stable)(mNames);
+				if (Package.GetGlobalOptions().sortExpByType)
+					sort!("a.compareByType(b) < 0", SwapStrategy.stable)(mDecls);
+				else
+					sort!("a.compareByName(b) < 0", SwapStrategy.stable)(mDecls);
+
 				mPendingSource.GetCompletionSet().Init(mPendingView, this, false);
 			}
 		}
@@ -489,7 +542,7 @@ class Declarations
 	////////////////////////////////////////////////////////////////////////
 	bool StartExpansions(IVsTextView textView, Source src, bool autoInsert)
 	{
-		mNames = mNames.init;
+		mDecls = mDecls.init;
 		mExpansionState = kStateInit;
 
 		if(!_MoreExpansions(textView, src))
