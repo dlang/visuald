@@ -494,8 +494,12 @@ version(tip)
 						_HandleMethodTip(false);
 				}
 				break;
+			case ECMD_HANDLEIMEMESSAGE:
+			case ECMD_PAGEUP:
+			case ECMD_PAGEDN:
+				break;
 			default:
-				if(nCmdID < ECMD_FINAL && nCmdID != ECMD_HANDLEIMEMESSAGE)
+				if(nCmdID < ECMD_FINAL)
 					stopCompletions();
 				break;
 			}
@@ -629,7 +633,7 @@ version(tip)
 			clearOutputPane();
 			if(pane)
 				pane.Activate();
-			
+
 			auto builder = new CBuilderThread(cfg);
 			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, builder);
 			builder.Dispose();
