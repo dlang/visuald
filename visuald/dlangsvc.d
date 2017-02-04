@@ -1351,8 +1351,9 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	vdc.util.TextPos[] mBinaryIsIn;
 	NewHiddenRegion[] mOutlineRegions;
 
-	int mParsingState;
-	int mModificationCountAST;
+	int mOutliningState;
+	int mModificationCountOutlining;
+	int mModificationCountSemantic;
 	int mModificationCount;
 
 	string mDisasmFile;
@@ -1367,7 +1368,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		mSourceEvents = newCom!SourceEvents(this, mBuffer);
 
 		mOutlining = Package.GetGlobalOptions().autoOutlining;
-		mModificationCountAST = -1;
+		mModificationCountOutlining = -1;
+		mModificationCountSemantic = -1;
 	}
 	~this()
 	{
@@ -1635,7 +1637,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		if(mColorizer.UpdateCoverage(false))
 			return true;
 
-		if(startParsing())
+		if(startParsing(true, true))
 			return true;
 
 version(threadedOutlining)
@@ -1783,7 +1785,7 @@ version(threadedOutlining) {} else
 		int prevBracketLine = -1;
 		foreach(txt; splitter(source, '\n'))
 		{
-			if(mModificationCountAST != mModificationCount)
+			if(mModificationCountOutlining != mModificationCount)
 				break;
 
 			//wstring txt = GetText(ln, 0, ln, -1);
@@ -3755,37 +3757,39 @@ else
 		parseTaskPool.put(task);
 	}
 
-	bool startParsing()
+	// outlining and semantic combined to grab the whole text only once
+	bool startParsing(bool outline, bool semantic)
 	{
-		if(!Package.GetGlobalOptions().parseSource && !mOutlining)
+		if(mOutliningState > 1)
+			finishParsing();
+
+		outline  = outline  && mModificationCountOutlining != mModificationCount && mOutlining && mOutliningState == 0;
+		semantic = semantic && mModificationCountSemantic  != mModificationCount && Package.GetGlobalOptions().parseSource;
+
+		if(!outline && !semantic)
 			return false;
 
-		if(mParsingState > 1)
-			return finishParsing();
-
-		if(mParsingState != 0 || mModificationCountAST == mModificationCount)
-			return false;
-
-		bool verbose = (mModificationCountAST == -1);
-		mParseText = GetText(); // should not be read from another thread
-		mParsingState = 1;
-		mModificationCountAST = mModificationCount;
-		runTask(&doParse);
-
-		if(Package.GetGlobalOptions().parseSource)
+		wstring srctext = GetText(); // should not be read from another thread
+		if (semantic)
 		{
+			bool verbose = (mModificationCountSemantic == -1);
+			mModificationCountSemantic = mModificationCount;
 			auto langsvc = Package.GetLanguageService();
-			langsvc.vdServerClient.UpdateModule(GetFileName(), mParseText, verbose, &OnUpdateModule);
+			langsvc.vdServerClient.UpdateModule(GetFileName(), srctext, verbose, &OnUpdateModule);
 		}
-
+		if (outline)
+		{
+			mParseText = srctext;
+			mOutliningState = 1;
+			mModificationCountOutlining = mModificationCount;
+			runTask(&doParse);
+		}
 		return true;
 	}
 
 	bool ensureCurrentTextParsed()
 	{
-		if(mModificationCountAST != mModificationCount)
-			return startParsing();
-		return false;
+		return startParsing(false, true);
 	}
 
 	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn)
@@ -3863,7 +3867,7 @@ else
 				mOutlineRegions = mOutlineRegions.init;
 				mOutlining = false;
 			}
-			if(mModificationCountAST == mModificationCount)
+			if(mModificationCountOutlining == mModificationCount)
 			{
 				if(auto session = GetHiddenTextSession())
 					if(DiffRegions(session, mOutlineRegions))
@@ -3873,7 +3877,7 @@ else
 		}
 
 		mParseText = null;
-		mParsingState = 0;
+		mOutliningState = 0;
 		ReColorizeLines(0, -1);
 		return true;
 	}
@@ -3884,7 +3888,7 @@ else
 		{
 			mOutlineRegions = CreateOutlineRegions(mParseText, hrsExpanded);
 		}
-		mParsingState = 2;
+		mOutliningState = 2;
 	}
 
 	bool hasParseError(ParserSpan span)
