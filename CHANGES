@@ -806,32 +806,46 @@ Version history
     - search pane did not save its last state, only when switching between file and symbol search
     - dustmite: pattern passed to "find" must always use quotes
 
-unreleased Version 0.3.44
+unreleased Version 0.44
 
-  * mago: bring back support to run on Windows XP
-  * cv2pdb: fix crashes with very long symbols
-  * can now read and write Mono-D project files (but likely to be incomplete because this was 
-    a failed attempt to integrate with msbuild and the VC projects)
-  * now builds with dmd 2.071
-  * when linking with MS linker, options for the map file broke the command line
-  * bugzilla 16063: missing option -L/DLL when linking a DLL with MS linker
-  * added integration with msbuild and VC++ projects
-  * added installation of mago expression evaluator to Concord debug engine
-  * added $(Platform) as a settings macro replacement in addition to $(PlatformName)
-  * changed default output directory to $(PlatformName)/$(ConfigurationName)
-  * added x64 configurations to project templates
-  * added AppVeyor integration builds
-  * cv2pdb can now be enabled independent of debug engine
-  * dustmite: error messages written to stderr not grepped
-  * added project template to build with DMD, LDC and GDC for x86 and x64
-  * VS SDK 2013 now needed to build Visual D
-  * added automatic brace completion
-  * added preliminary support for VS 2017 RC
-  * dparser: semantic analysis no longer times out after 500ms, but cancels previous requests
-  * dparser: improved performance by adding name lookup cache
-  * completion box no longer pops up if caret has been moved elsewhere
-  * menu entries now disabled if they require the focus on a D file, but it is elsewhere
-  * building a library with LDC now always adds "-oq -od=$(IntDir)" to the command line
-  * reduced idle processing by only updating the active view
-  * mago: display const modifier on type, recover string types
-  * mago concord plugin: enable conditional breakpoints
+  * installation
+    - added preliminary support for VS 2017 RC
+  * project management
+    - added integration with msbuild and VC++ projects
+    - can now read and write Mono-D project files (but likely to be incomplete because this was 
+      a failed attempt to integrate with msbuild and the VC projects)
+    - when linking with MS linker, options for the map file broke the command line
+    - bugzilla 16063: missing option -L/DLL when linking a DLL with MS linker
+    - added $(Platform) as a settings macro replacement in addition to $(PlatformName)
+    - changed default output directory to $(PlatformName)/$(ConfigurationName)
+    - added x64 configurations to project templates
+    - added project template to build with DMD, LDC and GDC for x86 and x64
+    - building a library with LDC now always adds "-oq -od=$(IntDir)" to the command line
+  * mago: 
+    - bring back support to run on Windows XP
+    - display const modifier on type, recover string types
+    - add and install concord debug engine plugin for VS 2012-2015
+  * cv2pdb:
+    - fix crashes with very long symbols
+    - can now be enabled independent of debug engine
+  * build
+    - now builds with dmd 2.073
+    - added AppVeyor integration builds
+    - VS SDK 2013 now needed to build Visual D
+  * miscellaneous
+    - dustmite: error messages written to stderr not grepped
+    - menu entries now disabled if they require the focus on a D file, but it is elsewhere
+    - reduced idle processing by only updating the active view
+  * editor
+    - added automatic brace completion
+  * language service
+    - dparser: semantic analysis no longer times out after 500ms, but cancels previous requests
+    - dparser: improved performance by adding name lookup cache
+    - Improvements to completion lists:
+      - completion box no longer pops up if caret has been moved elsewhere
+      - new option to disable exact start match (searches case insensitive sub string)
+      - free functions show different icon than member functions
+      - aliases show other icon than variables
+      - new sorting modes "by type" using classification by the semantic engine,
+        "by declaration", effectively using scopes as discovered by the semantic engine
+      - without any match, still keep the completion box open to update when deleting the last character

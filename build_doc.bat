@@ -24,6 +24,7 @@ set SRC=%SRC% doc/VersionHistory.dd
 set SRC=%SRC% doc/News36.dd
 set SRC=%SRC% doc/CompileCommands.dd
 set SRC=%SRC% doc/DustMite.dd
+set SRC=%SRC% doc/vcxproject.dd
 
 set DDOC=doc/macros.ddoc doc/html.ddoc ..\..\rainers\d-programming-language.org\dlang.org.ddoc doc/visuald.ddoc
 

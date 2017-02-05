@@ -1,0 +1,23 @@
+Ddoc
+
+$(P With Visual D 0.44 integration with Visual C/C++ projects has been added. This means that
+you can just add your D files into any C/C++ project and it will be compiled and linked
+with everything else in the project.)
+
+$(P The project properties will be extended by a "D Compiler" section:)
+
+	<div align="center"><img src="images/vcxproject.png" width="90%"/></div>
+
+$(P The General Page allows to select between DMD and LDC as the D compiler to be used by the current configuration.)
+
+$(IMG_CENTER images/vcxproject_general.png)
+
+$(P A couple of things to note:)
+$(UL
+  $(LI Only COFF files are generated, there is no support for OMF files that DMD geberates for Win32 by default.)
+  $(LI Selecting the C runtime library is supported starting with DMD 2.073)
+  $(LI The D project templates include a console application template based on a VC project, but just containing a D file.)
+)
+
+Macros:
+	TITLE=Visual C/C++ Project Integration
