@@ -3935,7 +3935,7 @@ else
 
 	bool IsCompletorActive()
 	{
-		if (mCompletionSet && mCompletionSet.mDisplayed)
+		if (mCompletionSet && mCompletionSet.isActive())
 			return true;
 		return false;
 	}

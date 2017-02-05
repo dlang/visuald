@@ -1226,7 +1226,8 @@ class GlobalOptions
 	bool useDParser;
 	bool mixinAnalysis;
 	bool UFCSExpansions;
-	bool sortExpByType;
+	byte sortExpMode;  // 0: alphabetically, 1: by type, 2: by declaration and scope
+	bool exactExpMatch;
 	string VDServerIID;
 	string compileAndRunOpts;
 	string compileAndDbgOpts;
@@ -1494,7 +1495,8 @@ class GlobalOptions
 			useDParser          = true; // getBoolOpt("useDParser2", keyDParser.key !is null);
 			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
-			sortExpByType       = getBoolOpt("sortExpByType", true);
+			sortExpMode         = getBoolOpt("sortExpMode", 0);
+			exactExpMatch       = getBoolOpt("exactExpMatch", true);
 
 			string getDefaultLibPathCOFF64()
 			{
@@ -1708,7 +1710,8 @@ class GlobalOptions
 			keyToolOpts.Set("useDParser2",         useDParser);
 			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
 			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
-			keyToolOpts.Set("sortExpByType",       sortExpByType);
+			keyToolOpts.Set("sortExpMode",         sortExpMode);
+			keyToolOpts.Set("exactExpMatch",       exactExpMatch);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
 			keyToolOpts.Set("compileAndDbgOpts",   toUTF16(compileAndDbgOpts));

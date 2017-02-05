@@ -2237,7 +2237,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		version(DParserOption) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
-		AddControl("", mSortExpByType = new CheckBox(mCanvas, "Sort expansions by type"));
+		AddControl("Sort expansions", mSortExpMode = new ComboBox(mCanvas, [ "alphabetically", "by type", "by declaration and scope" ], false));
+		AddControl("", mExactExpMatch = new CheckBox(mCanvas, "Expansions match exact start instead of case insensitive sub string"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -2252,7 +2253,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		else                   bool useDParser = true;
 		mMixinAnalysis.setEnabled(useDParser);
 		mUFCSExpansions.setEnabled(useDParser);
-		mSortExpByType.setEnabled(useDParser);
+		mSortExpMode.setEnabled(useDParser);
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -2266,7 +2267,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		version(DParserOption) mUseDParser.setChecked(opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
-		mSortExpByType.setChecked(opts.sortExpByType);
+		mSortExpMode.setSelection(opts.sortExpMode);
+		mExactExpMatch.setChecked(opts.exactExpMatch);
 
 		//mExpandSemantics.setEnabled(false);
 	}
@@ -2283,7 +2285,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		version(DParserOption) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser);
 		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
 		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
-		changes += changeOption(mSortExpByType.isChecked(), opts.sortExpByType, refopts.sortExpByType);
+		changes += changeOption(cast(ubyte) mSortExpMode.getSelection(), opts.sortExpMode, refopts.sortExpMode);
+		changes += changeOption(mExactExpMatch.isChecked(), opts.exactExpMatch, refopts.exactExpMatch);
 		return changes;
 	}
 
@@ -2295,7 +2298,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	CheckBox mSemanticGotoDef;
 	version(DParserOption) CheckBox mUseDParser;
 	CheckBox mUFCSExpansions;
-	CheckBox mSortExpByType;
+	ComboBox mSortExpMode;
+	CheckBox mExactExpMatch;
 	CheckBox mMixinAnalysis;
 }
 

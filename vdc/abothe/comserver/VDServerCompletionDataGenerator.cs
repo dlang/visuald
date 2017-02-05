@@ -12,7 +12,16 @@ namespace DParserCOMServer
 	{
 		public VDServerCompletionDataGenerator(string pre)
 		{
-			prefix = pre;
+			if (pre.EndsWith("*"))
+			{
+				prefix = pre.Substring(0, pre.Length - 1);
+				exact = false;
+			}
+			else 
+			{
+				prefix = pre;
+				exact = true;
+			}
 		}
 
 		public void NotifyTimeout()
@@ -55,7 +64,11 @@ namespace DParserCOMServer
 
 			public string Visit(DVariable dVariable)
 			{
-				return dVariable.IsStaticProperty ? "SPRP" : "VAR";
+                if (dVariable.IsAlias)
+                    return "ALIA";
+                if (dVariable.IsStaticProperty)
+                    return "SPRP";
+				return "VAR";
 			}
 
 			public string Visit(DMethod n)
@@ -117,7 +130,7 @@ namespace DParserCOMServer
 
 			public string Visit(ModuleAliasNode moduleAliasNode)
 			{
-				return "VAR";
+				return "MOD";
 			}
 
 			public string Visit(ImportSymbolNode importSymbolNode)
@@ -127,7 +140,7 @@ namespace DParserCOMServer
 
 			public string Visit(ImportSymbolAlias importSymbolAlias)
 			{
-				return "VAR";
+                return "ALIA";
 			}
 
 			#region Not needed
@@ -189,7 +202,7 @@ namespace DParserCOMServer
 			if (Node.NameHash == 0)
 				return;
 			var name = Node.Name;
-			if (!name.StartsWith(prefix))
+            if (!nameMatches(name))
 				return;
 
 			var sb = new StringBuilder(NodeToolTipContentGen.Instance.GenTooltipSignature(Node as DNode));
@@ -254,14 +267,25 @@ namespace DParserCOMServer
 
 		void addExpansion(string name, string type, string desc)
 		{
-			if (name != null && name.StartsWith(prefix))
+            if (nameMatches(name))
 			{
 				expansions.Append(name.Replace("\r", string.Empty).Replace('\n', '\a')).Append(':').Append(type).Append(':');
 				expansions.Append(desc.Replace("\r", string.Empty).Replace('\n', '\a')).Append('\n');
 			}
 		}
 
+        bool nameMatches(string name)
+        {
+            if (name == null)
+                return false;
+            if (exact)
+                return name.StartsWith(prefix);
+            else
+                return name.IndexOf(prefix, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
 		public readonly StringBuilder expansions = new StringBuilder();
-		public string prefix;
+		string prefix;
+        bool exact;
 	}
 }

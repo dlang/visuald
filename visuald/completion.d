@@ -122,7 +122,7 @@ struct Declaration
 			case "MOD":  return CSIMG_DMODULE;
 			case "DIR":  return CSIMG_DFOLDER;
 			case "PKG":  return CSIMG_PACKAGE;
-			case "FUNC": return CSIMG_MEMBER;
+			case "FUNC": return CSIMG_FUNCTION;
 			case "MTHD": return CSIMG_MEMBER;
 			case "STRU": return CSIMG_STRUCT;
 			case "UNIO": return CSIMG_UNION;
@@ -133,6 +133,7 @@ struct Declaration
 			case "EVAL": return CSIMG_ENUMMEMBER;
 			case "NMIX": return CSIMG_UNKNOWN2;
 			case "VAR":  return CSIMG_FIELD;
+			case "ALIA": return CSIMG_ALIAS;
 			case "OVR":  return CSIMG_UNKNOWN3;
 
 			default:     return 0;
@@ -159,6 +160,7 @@ struct Declaration
 			case "SPRP": return 4; // static meta property
 			case "ASKW": return 4;
 			case "ASOP": return 4;
+			case "ALIA": return 4;
 
 			case "MOD":  return 5;
 			case "DIR":  return 5;
@@ -454,6 +456,8 @@ class Declarations
 			string tok = GetTokenBeforeCaret(textView, src);
 			if(tok.length && !dLex.isIdentifierCharOrDigit(tok.front))
 				tok = "";
+			if (tok.length && !Package.GetGlobalOptions().exactExpMatch)
+				tok ~= "*";
 
 			int caretLine, caretIdx;
 			int hr = textView.GetCaretPos(&caretLine, &caretIdx);
@@ -478,6 +482,9 @@ class Declarations
 		if(request != mPendingRequest)
 			return;
 
+		if(symbols.length == 0)
+			symbols ~= "::no matching symbols";
+
 		if(symbols.length > 0 && mPendingSource && mPendingView)
 		{
 			auto activeView = GetActiveView();
@@ -501,30 +508,35 @@ class Declarations
 				}
 
 				// go through assoc array for faster uniqueness check
-				Declaration[string] decls;
-				foreach(d; mDecls)
+				int[string] decls;
+
+				// add existing declarations
+				foreach(i, d; mDecls)
 				{
 					string desc;
 					string name = d.name ~ ":" ~ d.type;
-					decls[name] = d;
+					decls[name] = i;
 				}
+				size_t num = mDecls.length;
+				mDecls.length = num + symbols.length;
 				foreach(s; symbols)
 				{
 					string desc;
 					string name = splitName(s, desc);
 					if(auto p = name in decls)
-						p.description ~= "\a\a" ~ desc[1..$]; // strip ":"
+						mDecls[*p].description ~= "\a\a" ~ desc[1..$]; // strip ":"
 					else
-						decls[name] = Declaration.split(s);
+					{
+						decls[name] = num;
+						mDecls[num++] = Declaration.split(s);
+					}
 				}
-				mDecls.length = decls.length;
-				size_t i = 0;
-				foreach(d; decls)
-					mDecls[i++] = d;
+				mDecls.length = num;
 
-				if (Package.GetGlobalOptions().sortExpByType)
+				// mode 2 keeps order of semantic engine
+				if (Package.GetGlobalOptions().sortExpMode == 1)
 					sort!("a.compareByType(b) < 0", SwapStrategy.stable)(mDecls);
-				else
+				else if (Package.GetGlobalOptions().sortExpMode == 0)
 					sort!("a.compareByName(b) < 0", SwapStrategy.stable)(mDecls);
 
 				mPendingSource.GetCompletionSet().Init(mPendingView, this, false);
@@ -675,6 +687,11 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 		assert(hr == S_OK);
 
 		mDisplayed = (!mWasUnique || !completeWord);
+	}
+
+	bool isActive()
+	{
+		return mDisplayed || (mDecls && mDecls.mPendingSource);
 	}
 
 	override void Dispose()
