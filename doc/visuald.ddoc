@@ -1,4 +1,4 @@
-VERSION = 0.3.43
+VERSION = 0.44
 ROOT_DIR = http://www.dlang.org/
 ROOT = http://www.dlang.org
 BODYCLASS = visuald
@@ -30,6 +30,7 @@ SUBNAV=$(SUBNAV_TEMPLATE
             Search.html, Search Window,
             TokenReplace.html, Token Replace,
             ProjectConfig.html, Project Config,
+            vcxproject.html, VC Project Integration,
             CppConversion.html, C++ to D,
             Debugging.html, Debugging,
             CompileCommands.html, Compile Commands,

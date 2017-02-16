@@ -17,10 +17,22 @@
 
   <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(DbuildCompileDDLLPath)" />
 
-  <PropertyGroup>
-    <ComputeLinkInputsTargets>$(ComputeLinkInputsTargets);ComputeDCompileOutput;</ComputeLinkInputsTargets>
-    <ComputeLibInputsTargets>$(ComputeLibInputsTargets);ComputeDCompileOutput;</ComputeLibInputsTargets>
-  </PropertyGroup>
+  <!-- remove disabled files from DCompile -->
+  <Target Name="_collectDFiles"
+    DependsOnTargets="_SelectedFiles">
+    
+    <ItemGroup Condition="'$(DCompiler)' == 'None'">
+      <DCompile Remove="@(DCompile)" />
+    </ItemGroup>
+    
+    <ItemGroup Condition="'@(SelectedFiles)' != ''">
+      <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <DCompile Remove="@(DCompile)" Condition="'%(DCompile.ExcludedFromBuild)' == 'true'" />
+    </ItemGroup>
+  </Target>
 
   <Target Name="_replacePackageName">
     <!-- <Message Text="PRE:  %(DCompile.Identity)  RelativeDir:%(DCompile.RelativeDir) ObjFile:%(DCompile.ObjectFileName)" Importance="high" />
@@ -69,7 +81,7 @@
     AfterTargets="$(DCompileAfterTargets)"
     Condition="'@(DCompile)' != '' and '$(DCompiler)' != 'None'"
     Outputs="%(DCompile.ObjectFileName)"
-    DependsOnTargets="_replacePackageName;_SelectedFiles">
+    DependsOnTargets="_collectDFiles;_replacePackageName;_SelectedFiles">
     
     <ItemGroup Condition="'@(SelectedFiles)' != ''">
       <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
@@ -125,7 +137,7 @@
 
     <!-- <Message Text="Compile D Parameters: $(Parameters)" Importance="high" /> -->
 
-    <CompileD Condition="'@(DCompile)' != '' and '%(DCompile.ExcludedFromBuild)' != 'true'"
+    <CompileD Condition="'@(DCompile)' != ''"
               CommandLineTemplate="-c %(DCompile.CommandLineTemplate)"
               Xaml="$(MSBuildThisFileDirectory)$(DCompiler).xml"
               Parameters="$(Parameters)"
@@ -137,29 +149,51 @@
               Sources="@(DCompile)" >
     </CompileD>
   </Target>
-  
-  <Target Name="ComputeDCompileOutput"
-    Condition="'@(DCompile)' != ''">
-    <ItemGroup>
-      <!---->
-      <Link Include="@(DCompile->Metadata('ObjectFileName')->Distinct()->ClearMetadata())" Condition="'%(DCompile.ExcludedFromBuild)' != 'true'" />
-      <Lib Include="@(DCompile->Metadata('ObjectFileName')->Distinct()->ClearMetadata())" Condition="'%(DCompile.ExcludedFromBuild)' != 'true'"/>
 
-      <!-- <Obj Include="@(DCompile->Metadata('ObjectFileName')->Distinct()->ClearMetadata())" Condition="'%(DCompile.ExcludedFromBuild)' != 'true'"/>-->
-      
-  <!--
-      <Link Condition="'$(DCompiler)' == 'DMD'">
-        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(DMDInstallDir)\dmd2\windows\lib32mscoff;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(DMDInstallDir)\dmd2\windows\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+  <PropertyGroup>
+    <ComputeLinkInputsTargets>$(ComputeLinkInputsTargets);ComputeDCompileOutput;</ComputeLinkInputsTargets>
+    <ComputeLibInputsTargets>$(ComputeLibInputsTargets);ComputeDCompileOutput;</ComputeLibInputsTargets>
+  </PropertyGroup>
+
+  <Target Name="ComputeDCompileOutput"
+    Condition="'@(DCompile)' != ''"
+    DependsOnTargets="_collectDFiles">
+
+    <ItemGroup>
+      <Link Include="@(DCompile->Metadata('ObjectFileName')->Distinct()->ClearMetadata())" />
+      <Lib Include="@(DCompile->Metadata('ObjectFileName')->Distinct()->ClearMetadata())" />
+    </ItemGroup>
+
+  </Target>
+
+  <PropertyGroup>
+    <PatchLinkInputTargets>$(PatchLinkInputTargets);DCompilePatchLinkInput;</PatchLinkInputTargets>
+  </PropertyGroup>
+
+  <Target Name="DCompilePatchLinkInput" Condition="'@(DCompile)' != ''">
+
+    <ItemGroup Condition="'$(DCompiler)' == 'DMD'">
+      <Link>
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(DMDInstallDir)\windows\lib32mscoff;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(DMDInstallDir)\windows\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
-      <Link Condition="'$(DCompiler)' == 'LDC'">
+    </ItemGroup>
+    <ItemGroup Condition="'$(DCompiler)' == 'LDC'">
+      <Link>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(LDCInstallDir)\lib32;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
-      -->
     </ItemGroup>
+    
+  </Target>
+
+  <!-- changing attributes on link options must be applied to all object files (including C++), so we insert
+       $(PatchLinkInputTargets) as a dependency into the link chain to guarantee no object files are added later -->
+  <Target Name="_Link"
+          DependsOnTargets="$(BeforeLinkTargets);$(ComputeLinkInputsTargets);ComputeManifestInputsTargets;ManifestResourceCompile;PrepareResourceNames;MakeDirsForLink;DoLinkOutputFilesMatch;PreLinkEvent;$(PatchLinkInputTargets);Link;ComputeLinkImportLibraryOutputsForClean;$(AfterLinkTargets)"
+          Condition="'$(LinkCompiled)' == 'true'">
   </Target>
 
 </Project>

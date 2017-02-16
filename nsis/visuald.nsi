@@ -480,8 +480,10 @@ ${MementoSectionEnd}
     ${File} ..\msbuild\ImportBefore\Default\ d.props
     ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportBefore"
     ${File} ..\msbuild\ImportBefore\ d.props
-    ${File} ..\msbuild\ImportBefore\ d.targets
+    ;;; remove file from beta installation
+    Delete "${Vxxx}\Platforms\${Platform}\ImportBefore\d.targets"
     ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportAfter"
+    ${File} ..\msbuild\ImportAfter\ d.targets
     ${File} ..\msbuild\ImportAfter\ general_d.targets
 !macroend
 !define RegisterPlatform "!insertmacro RegisterPlatform"
