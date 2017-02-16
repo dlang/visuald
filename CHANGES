@@ -810,6 +810,7 @@ unreleased Version 0.44
 
   * installation
     - added preliminary support for VS 2017 RC
+	- new version scheme removing the gratuitious .3 from the Visual D version
   * project management
     - added integration with msbuild and VC++ projects
     - can now read and write Mono-D project files (but likely to be incomplete because this was 
@@ -848,4 +849,5 @@ unreleased Version 0.44
       - aliases show other icon than variables
       - new sorting modes "by type" using classification by the semantic engine,
         "by declaration", effectively using scopes as discovered by the semantic engine
-      - without any match, still keep the completion box open to update when deleting the last character
+      - without any match, still keep the completion box open with recent items
+	  - less flashing when updating the results

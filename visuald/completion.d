@@ -482,9 +482,7 @@ class Declarations
 		if(request != mPendingRequest)
 			return;
 
-		if(symbols.length == 0)
-			symbols ~= "::no matching symbols";
-
+		// without a match, keep existing items
 		if(symbols.length > 0 && mPendingSource && mPendingView)
 		{
 			auto activeView = GetActiveView();
@@ -576,7 +574,8 @@ class Declarations
 				}
 			}
 		}
-		src.GetCompletionSet().Init(textView, this, false);
+		if (mExpansionState != kStateSemantic)
+			src.GetCompletionSet().Init(textView, this, false);
 		return true;
 	}
 
@@ -621,7 +620,8 @@ class Declarations
 	bool MoreExpansions(IVsTextView textView, Source src)
 	{
 		_MoreExpansions(textView, src);
-		src.GetCompletionSet().Init(textView, this, false);
+		if (mExpansionState != kStateSemantic)
+			src.GetCompletionSet().Init(textView, this, false);
 		return true;
 	}
 
@@ -667,7 +667,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 	void Init(IVsTextView textView, Declarations declarations, bool completeWord)
 	{
-		Close();
+		//Close();
 		mTextView = textView;
 		mDecls = declarations;
 		mCompleteWord = completeWord;
