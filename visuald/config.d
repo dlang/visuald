@@ -1169,6 +1169,15 @@ class ProjectOptions
 		return (runCv2pdb == 1 && debugEngine != 1); // not for mago
 	}
 
+	bool usesMSLink()
+	{
+		if(compiler == Compiler.DMD && (isX86_64 || mscoff))
+			return true;
+		if(compiler == Compiler.LDC)
+			return true;
+		return false;
+	}
+
 	string appendCv2pdb()
 	{
 		if(usesCv2pdb())
@@ -2715,7 +2724,7 @@ class Config :	DisposingComObject,
 			string ext = toLower(extension(fname));
 			if(isIn(ext, ".d", ".ddoc", ".def", ".lib", ".obj", ".o", ".res"))
 				tool = "DMD";
-			else if(ext == "rc")
+			else if(ext == ".rc")
 				tool = kToolResourceCompiler;
 			else if(isIn(ext, ".c", ".cpp", ".cxx", ".cc"))
 				tool = kToolCpp;
@@ -2734,7 +2743,7 @@ class Config :	DisposingComObject,
 				tool = "DMDsingle";
 			else if(isIn(ext, ".d", ".ddoc", ".def", ".lib", ".obj", ".o", ".res"))
 				tool = "DMD";
-			else if(ext == "rc")
+			else if(ext == ".rc")
 				tool = kToolResourceCompiler;
 			else if(isIn(ext, ".c", ".cpp", ".cxx", ".cc"))
 				tool = kToolCpp;
@@ -3371,6 +3380,7 @@ class Config :	DisposingComObject,
 				if(globOpts.demangleError || globOpts.optlinkDeps)
 					lnkcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
 						~ (globOpts.demangleError ? null : "-nodemangle ")
+						~ (mProjectOptions.usesMSLink() ? "-msmode " : null)
 						~ (globOpts.optlinkDeps ? "-deps " ~ quoteFilename(GetLinkDependenciesPath()) ~ " " : null)
 						~ lnkcmd;
 
