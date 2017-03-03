@@ -17,10 +17,12 @@ import std.path;
 import std.algorithm;
 import std.array;
 import std.conv;
+import std.uni;
 
 import stdext.array;
 import stdext.file;
 import stdext.ddocmacros;
+import stdext.string;
 
 import visuald.comutil;
 import visuald.logutil;
@@ -118,7 +120,8 @@ struct Declaration
 			case "ASKW": return CSIMG_KEYWORD;
 			case "ASOP": return CSIMG_KEYWORD;
 			case "PROP": return CSIMG_PROPERTY;
-			case "TEXT": return 3;
+			case "SNPT": return CSIMG_SNIPPET;
+			case "TEXT": return CSIMG_TEXT;
 			case "MOD":  return CSIMG_DMODULE;
 			case "DIR":  return CSIMG_DFOLDER;
 			case "PKG":  return CSIMG_PACKAGE;
@@ -172,6 +175,7 @@ struct Declaration
 			case "OVR":  return 6;
 
 			case "TEXT": return 3;
+			case "SNPT": return 3;
 			default:     return 7;
 		}
 	}
@@ -269,7 +273,7 @@ class Declarations
 						{
 							string txt = detachBSTR(btext);
 							size_t p = 0;
-							while(p < txt.length && isWhite(txt[p]))
+							while(p < txt.length && std.ascii.isWhite(txt[p]))
 								p++;
 							nl ~= txt[0 .. p];
 						}
@@ -338,7 +342,7 @@ class Declarations
 				{
 					Declaration decl;
 					decl.name = decl.text = base;
-					decl.type = (issubdir ? ":DIR" : ":MOD");
+					decl.type = (issubdir ? "DIR" : "MOD");
 					addunique(mDecls, decl);
 				}
 			}
@@ -361,7 +365,7 @@ class Declarations
 	}
 
 	///////////////////////////////////////////////////////////////
-	string GetTokenBeforeCaret(IVsTextView textView, Source src)
+	string GetWordBeforeCaret(IVsTextView textView, Source src)
 	{
 		int line, idx;
 		int hr = textView.GetCaretPos(&line, &idx);
@@ -388,7 +392,7 @@ class Declarations
 		int start = max(0, line - kCompletionSearchLines);
 		int end = min(lineCount, line + kCompletionSearchLines);
 
-		string tok = GetTokenBeforeCaret(textView, src);
+		string tok = GetWordBeforeCaret(textView, src);
 		if(tok.length && !dLex.isIdentifierCharOrDigit(tok.front))
 			tok = "";
 
@@ -427,7 +431,7 @@ class Declarations
 		if(!Package.GetGlobalOptions().expandFromJSON)
 			return false;
 
-		string tok = GetTokenBeforeCaret(textView, src);
+		string tok = GetWordBeforeCaret(textView, src);
 		if(tok.length && !dLex.isIdentifierCharOrDigit(tok.front))
 			tok = "";
 		if(!tok.length)
@@ -444,6 +448,58 @@ class Declarations
 		return mDecls.length > namesLength;
 	}
 
+	////////////////////////////////////////////////////////////////////////
+	bool SnippetExpansions(IVsTextView textView, Source src)
+	{
+		int line, idx;
+		int hr = textView.GetCaretPos(&line, &idx);
+		assert(hr == S_OK);
+		wstring txt = src.GetText(line, 0, line, -1);
+		if(idx > txt.length)
+			idx = txt.length;
+		int endIdx = idx;
+		dchar ch;
+		for(size_t p = idx; p > 0 && dLex.isIdentifierCharOrDigit(ch = decodeBwd(txt, p)); idx = p) {}
+		int startIdx = idx;
+		for(size_t p = idx; p > 0 && std.uni.isWhite(ch = decodeBwd(txt, p)); idx = p) {}
+		if (ch == '.')
+			return false;
+		wstring tok = txt[startIdx .. endIdx];
+
+		IVsTextManager2 textmgr = queryService!(VsTextManager, IVsTextManager2);
+		if(!textmgr)
+			return false;
+		scope(exit) release(textmgr);
+
+		IVsExpansionManager exmgr;
+		textmgr.GetExpansionManager(&exmgr);
+		if (!exmgr)
+			return false;
+		scope(exit) release(exmgr);
+
+		int namesLength = mDecls.length;
+		IVsExpansionEnumeration enumExp;
+		hr = exmgr.EnumerateExpansions(g_languageCLSID, FALSE, null, 0, false, false, &enumExp);
+		if(hr == S_OK && enumExp)
+		{
+			DWORD fetched;
+			VsExpansion exp;
+			VsExpansion* pexp = &exp;
+			while(enumExp.Next(1, &pexp, &fetched) == S_OK && fetched == 1)
+			{
+				Declaration decl;
+				decl.name = detachBSTR(exp.title);
+				decl.description = detachBSTR(exp.description);
+				decl.text = detachBSTR(exp.shortcut);
+				decl.type = "SNPT";
+				freeBSTR(exp.path);
+				if(decl.text.startsWith(tok))
+					addunique(mDecls, decl);
+			}
+		}
+		return mDecls.length > namesLength;
+	}
+
 	///////////////////////////////////////////////////////////////////////////
 
 	bool SemanticExpansions(IVsTextView textView, Source src)
@@ -453,7 +509,7 @@ class Declarations
 
 		try
 		{
-			string tok = GetTokenBeforeCaret(textView, src);
+			string tok = GetWordBeforeCaret(textView, src);
 			if(tok.length && !dLex.isIdentifierCharOrDigit(tok.front))
 				tok = "";
 			if (tok.length && !Package.GetGlobalOptions().exactExpMatch)
@@ -483,7 +539,8 @@ class Declarations
 			return;
 
 		// without a match, keep existing items
-		if(symbols.length > 0 && mPendingSource && mPendingView)
+		bool hasMatch = GetCount() > 0 || symbols.length > 0;
+		if(hasMatch && mPendingSource && mPendingView)
 		{
 			auto activeView = GetActiveView();
 			scope(exit) release(activeView);
@@ -537,7 +594,7 @@ class Declarations
 				else if (Package.GetGlobalOptions().sortExpMode == 0)
 					sort!("a.compareByName(b) < 0", SwapStrategy.stable)(mDecls);
 
-				mPendingSource.GetCompletionSet().Init(mPendingView, this, false);
+				InitCompletionSet(mPendingView, mPendingSource);
 			}
 		}
 		mPendingRequest = 0;
@@ -548,17 +605,27 @@ class Declarations
 	uint mPendingRequest;
 	IVsTextView mPendingView;
 	Source mPendingSource;
+	bool mAutoInsert;
 
 	////////////////////////////////////////////////////////////////////////
 	bool StartExpansions(IVsTextView textView, Source src, bool autoInsert)
 	{
 		mDecls = mDecls.init;
 		mExpansionState = kStateInit;
+		mAutoInsert = autoInsert;
 
 		if(!_MoreExpansions(textView, src))
 			return false;
 
-		if(autoInsert)
+		if(mPendingView)
+			return false;
+
+		return InitCompletionSet(textView, src);
+	}
+
+	bool InitCompletionSet(IVsTextView textView, Source src)
+	{
+		if(mAutoInsert)
 		{
 			while(GetCount() == 1 && _MoreExpansions(textView, src)) {}
 			if(GetCount() == 1)
@@ -570,12 +637,14 @@ class Declarations
 					wstring txt = to!wstring(GetText(textView, 0));
 					TextSpan changedSpan;
 					src.mBuffer.ReplaceLines(line, startIdx, line, endIdx, txt.ptr, txt.length, &changedSpan);
+					if (GetGlyph(0) == CSIMG_SNIPPET)
+						if (auto view = Package.GetLanguageService().GetViewFilter(src, textView))
+							view.HandleSnippet();
 					return true;
 				}
 			}
 		}
-		if (mExpansionState != kStateSemantic)
-			src.GetCompletionSet().Init(textView, this, false);
+		src.GetCompletionSet().Init(textView, this, false);
 		return true;
 	}
 
@@ -591,6 +660,7 @@ class Declarations
 			}
 			goto case;
 		case kStateImport:
+			SnippetExpansions(textView, src);
 			if(SemanticExpansions(textView, src))
 			{
 				mExpansionState = kStateSemantic;
@@ -619,8 +689,9 @@ class Declarations
 
 	bool MoreExpansions(IVsTextView textView, Source src)
 	{
+		mAutoInsert = false;
 		_MoreExpansions(textView, src);
-		if (mExpansionState != kStateSemantic)
+		if (!mPendingView)
 			src.GetCompletionSet().Init(textView, this, false);
 		return true;
 	}
@@ -638,6 +709,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 	HIMAGELIST mImageList;
 	bool mDisplayed;
 	bool mCompleteWord;
+	bool mComittedShortcut;
 	string mCommittedWord;
 	dchar mCommitChar;
 	int mCommitIndex;
@@ -717,6 +789,8 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 			}
 		}
 		mDisplayed = false;
+		mComittedShortcut = false;
+
 		mTextView = null;
 		mDecls = null;
 	}
@@ -862,6 +936,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 		dchar ch = commitChar;
 		bool isCommitChar = true;
 
+		int selIndex = (selected == 0) ? -1 : index;
 		string textSoFar = to_string(wtextSoFar);
 		if (commitChar != 0)
 		{
@@ -877,12 +952,13 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 						goto nocommit; // cannot be a commit char if it is an expected char in a matching name
 				}
 			}
-			isCommitChar = mDecls.IsCommitChar(textSoFar, (selected == 0) ? -1 : index, ch);
+			isCommitChar = mDecls.IsCommitChar(textSoFar, selIndex, ch);
 		}
 
 		if (isCommitChar)
 		{
-			mCommittedWord = mDecls.OnCommit(mTextView, textSoFar, ch, selected == 0 ? -1 : index, mInitialExtent);
+			mCommittedWord = mDecls.OnCommit(mTextView, textSoFar, ch, selIndex, mInitialExtent);
+			mComittedShortcut = (mDecls.GetGlyph(selIndex) == CSIMG_SNIPPET);
 			*completeWord = allocBSTR(mCommittedWord);
 			mCommitChar = ch;
 			mCommitIndex = index;
@@ -900,6 +976,11 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 		mixin(LogCallMix);
 
 		mDisplayed = false;
+		if (mComittedShortcut)
+			if (auto view = Package.GetLanguageService().GetViewFilter(mSource, mTextView))
+				view.HandleSnippet();
+
+		mComittedShortcut = false;
 		return S_OK;
 	}
 

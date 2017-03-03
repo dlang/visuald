@@ -65,7 +65,8 @@ const IDM_COLUMNLISTBASE = 0x100;
 // Miscellaneous IDs
 const ID_SUBCLASS_HDR  = 0x100;
 
-// entries in the image list "completionset.bmp" through the envireonment
+// bmp must be written with 24 bit and WITHOUT color transformation map
+// entries in the image list "completionset.bmp" through the environment
 enum CSIMG_PROT_PUBLIC    = 0;
 enum CSIMG_PROT_LETTER    = 1;
 enum CSIMG_PROT_BRIGHT    = 2;
@@ -109,4 +110,6 @@ enum CSIMG_STOP           = 186; // series of single bitmaps follow
 
 enum CSIMG_DMODULE        = 194;
 enum CSIMG_DFOLDER        = 201;
+enum CSIMG_SNIPPET        = 204;
 enum CSIMG_KEYWORD        = 206;
+enum CSIMG_TEXT           = 207;

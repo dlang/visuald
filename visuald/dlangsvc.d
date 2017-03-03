@@ -760,6 +760,14 @@ class LanguageService : DisposingComObject,
 		return null;
 	}
 
+	ViewFilter GetViewFilter(Source src, IVsTextView view)
+	{
+		foreach(cmgr; mCodeWinMgrs)
+			if (cmgr.mSource is src)
+				return cmgr.GetViewFilter(view);
+		return null;
+	}
+
 	void setDebugger(IVsDebugger debugger)
 	{
 		if(mCookieDebuggerEvents && mDebugger)
