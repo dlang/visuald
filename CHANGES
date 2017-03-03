@@ -850,4 +850,5 @@ unreleased Version 0.44
       - new sorting modes "by type" using classification by the semantic engine,
         "by declaration", effectively using scopes as discovered by the semantic engine
       - without any match, still keep the completion box open with recent items
-	  - less flashing when updating the results
+      - less flashing when updating the results
+      - code snippets now added to possible expansions

@@ -56,11 +56,11 @@ $(P The visual studio debuggers obviously had 64-bit support, and mago followed 
 $(H2 VS 2012-2013 New debug engine)
 
 $(P Starting with Visual Studio 2012, Microsoft introduced a new debugger that replaced
-the native debug engine. Unfortunately, it lost some of the capabilities of the
-preceding debug engine. This includes displaying variables in the Watch Window and
+the native debug engine. Unfortunately, it had some incompatibilites with the
+preceding debug engine. This includes displaying D variables in the Watch Window and
 interpretation of the visualizer macros in autoexp.dat. The new engine has
-extended visualizer capabilities, but these are targeted to C/C++ and don't work with
-D syntax.)
+extended visualizer capabilities, but these are targeted to C/C++ and don't work well
+with D syntax.)
 
 $(P You can switch back to the old debug engine by going to Tools->Options and then under the debugger
 settings, turn on native edit and continue. This is a global setting and will also affect your
@@ -69,6 +69,7 @@ C++ projects, though.)
 $(P Mago is uneffected by this change.
 The VS 2013 debugger engine fixed some of the problems with displaying local variables.)
 
+<a id="concord"></a>
 $(H2 VS 2015 Concord extensions)
 
 $(P With the next version of the debug engine supporting "native edit and continue", the fallback to
@@ -76,18 +77,19 @@ the old debug engine no longer works in VS 2015. Instead Microsoft
 released information about the extensibility of this debug engine (introduced with VS2012) called
 $(LINK2 https://github.com/Microsoft/ConcordExtensibilitySamples/wiki/Overview, Concord),
 late in 2015. It consists of more modular components than older engines. This allows taking
-advantage of most features of the debug engine, but just replace language specific
+advantage of most features of the debug engine by just replacing language specific
 parts, i.e. the expression evaluator. In addition, debugging mixed languages is no problem
 anymore.)
 
-$(P Taking the expression evaluator out of Mago allowed to implement this for D pretty easily:)
+$(P Using Mago's expression evaluator allowed to implement this for D pretty easily:)
 
 	<div align="center"><img src="images/concord_mark.png" width="90%"/></div>
 
 $(P The debugger engine needs to detect the source language of the code location. This information
 is added to the debug information starting with dmd 2.072 when compiled for COFF object
 files (-m64 or -m32mscoff) with -g, but not with
--gc, i.e. you should select debug info for Mago even when using the VS debug engine.)
+-gc, i.e. you should select debug info for Mago even when using the VS debug engine.) Unfortunately,
+LDC does not yet emit this source language information.
 
 <a id="recommendation"></a>
 $(H3 Recommendation for VS 2015)
@@ -101,8 +103,8 @@ $(UL
   $(LI choose the Visual Studio debugger on the project configuration page Debugging)
 )
 
-$(P If you are using the new Visual C/C++ project integration, all you have to do is select debug information
-"for D debug engines" on the project configuration page "D Compiler->Code generation".)
+$(P If you are using the new $(VDLINK vcxproject, Visual C/C++ project integration), all you have to do is
+select debug information "for D debug engines" on the project configuration page "D Compiler->Code generation".)
 
 $(H2 Exceptions)
 
@@ -112,12 +114,14 @@ is thrown by the debuggee. With earlier versions, you'll have to add an entry wi
 
 $(H3 Exceptions with Mago)
 
-$(P Mago displays exceptions thrown by the debuggee in the output window. You can also stop execution
+$(P The Mago debug engine displays exceptions thrown by the debuggee in the output window. You can also stop execution
 by enabling the respective box in the Debug->Exception dialog. Due to a bug, you currently cannot
 simply enable the "D Exceptions" entry, but must select the specific exceptions while keeping the
 "D Exceptions" entry unchecked. So, the dialog should look something like this:)
 
 $(IMG_CENTER images/d_exceptions.png)
+
+Please note that these specific exception settings only apply to the Mago debug engine, not the Concord extension.
 
 Macros:
 	TITLE=Debugging

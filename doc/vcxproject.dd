@@ -14,7 +14,7 @@ $(IMG_CENTER images/vcxproject_general.png)
 
 $(P A couple of things to note:)
 $(UL
-  $(LI Only COFF files are generated, there is no support for OMF files that DMD geberates for Win32 by default.)
+  $(LI Only COFF files are generated, there is no support for OMF files that DMD generates for Win32 by default.)
   $(LI Selecting the C runtime library is supported starting with DMD 2.073)
   $(LI The D project templates include a console application template based on a VC project, but just containing a D file.)
 )
