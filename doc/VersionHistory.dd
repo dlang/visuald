@@ -1,5 +1,66 @@
 Ddoc
 
+$(H2 2017-02-08 Version 0.44)
+ $(UL
+  $(LI installation
+   $(UL
+    $(LI added preliminary support for VS 2017 RC)
+	$(LI new version scheme removing the gratuitious .3 from the Visual D version)
+   ))
+  $(LI project management
+   $(UL
+    $(LI added integration with msbuild and VC++ projects)
+    $(LI can now read and write Mono-D project files (but likely to be incomplete because this was
+      a failed attempt to integrate with msbuild and the VC projects))
+    $(LI when linking with MS linker, options for the map file broke the command line)
+    $(LI bugzilla 16063: missing option -L/DLL when linking a DLL with MS linker)
+    $(LI added $(DOLLAR)(Platform) as a settings macro replacement in addition to $(DOLLAR)(PlatformName))
+    $(LI changed default output directory to $(DOLLAR)(PlatformName)/$(DOLLAR)(ConfigurationName))
+    $(LI added x64 configurations to project templates)
+    $(LI added project template to build with DMD, LDC and GDC for x86 and x64)
+    $(LI building a library with LDC now always adds "-oq -od=$(DOLLAR)(IntDir)" to the command line)
+   ))
+  $(LI mago:
+   $(UL
+    $(LI bring back support to run on Windows XP)
+    $(LI display const modifier on type, recover string types)
+    $(LI add and install Concord debug engine plugin for VS 2012-2015)
+   ))
+  $(LI cv2pdb:
+   $(UL
+    $(LI fix crashes with very long symbols)
+    $(LI can now be enabled independent of debug engine)
+   ))
+  $(LI language service
+   $(UL
+    $(LI added automatic brace completion)
+    $(LI dparser: semantic analysis no longer times out after 500ms, but cancels previous requests)
+    $(LI dparser: improved performance by adding name lookup cache)
+    $(LI Improvements to completion lists:
+	 $(UL
+      $(LI completion box no longer pops up if caret has been moved elsewhere)
+      $(LI new option to disable exact start match (searches case insensitive sub string))
+      $(LI free functions show different icon than member functions)
+      $(LI aliases show other icon than variables)
+      $(LI new sorting modes "by type" using classification by the semantic engine,
+        "by declaration", effectively using scopes as discovered by the semantic engine)
+      $(LI without any match, still keep the completion box open to update when deleting the last character)
+     ))
+   ))
+  $(LI build
+   $(UL
+    $(LI now builds with dmd 2.073)
+    $(LI added AppVeyor integration builds)
+    $(LI VS SDK 2013 now needed to build Visual D)
+   ))
+  $(LI miscellaneous
+   $(UL
+    $(LI dustmite: error messages written to stderr not grepped)
+    $(LI menu entries now disabled if they require the focus on a D file, but it is elsewhere)
+    $(LI reduced idle processing by only updating the active view)
+   ))
+ )
+
 $(H2 2015-11-28 Version 0.3.43)
  $(UL
   $(LI installation

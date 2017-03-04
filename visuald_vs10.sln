@@ -93,6 +93,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{36148913-8F4
 		doc\Search.dd = doc\Search.dd
 		doc\StartPage.dd = doc\StartPage.dd
 		doc\TokenReplace.dd = doc\TokenReplace.dd
+		doc\vcxproject.dd = doc\vcxproject.dd
 		doc\VersionHistory.dd = doc\VersionHistory.dd
 		doc\visuald.ddoc = doc\visuald.ddoc
 	EndProjectSection

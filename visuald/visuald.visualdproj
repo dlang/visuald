@@ -775,7 +775,7 @@ echo It is part of the VS2010-VS2013 SDK and is needed to compile $(InputPath)
    <File path="Resources\settrace.ico" />
    <File path="visuald.rc" customcmd="call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 rem if errorlevel 1 goto reportError
-rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version;resources\dimagelist.bmp" linkoutput="true" outfile="$(OutDir)\visuald.res" />
+rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version;resources\dimagelist.bmp;resources\completionset.bmp" linkoutput="true" outfile="$(OutDir)\visuald.res" />
    <File path="Resources\WholeWord.ico" />
   </Folder>
   <Folder name="Templates">
