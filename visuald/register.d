@@ -688,9 +688,16 @@ version(none){
 			scope RegKey keyMarshal2 = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(iid) ~ "\\InprocHandler32"w);
 			keyMarshal2.Set(null, dllPath);
 		}
-		registerMarshalObject(g_unmarshalEnumOutCLSID);
-		static if(is(typeof(g_unmarshalTargetInfoCLSID)))
-			registerMarshalObject(g_unmarshalTargetInfoCLSID);
+		try
+		{
+			registerMarshalObject(g_unmarshalEnumOutCLSID);
+			static if(is(typeof(g_unmarshalTargetInfoCLSID)))
+				registerMarshalObject(g_unmarshalTargetInfoCLSID);
+		}
+		catch(Exception)
+		{
+			// silently ignore errors if not running as admin
+		}
 
 		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
 

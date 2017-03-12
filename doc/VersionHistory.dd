@@ -1,6 +1,6 @@
 Ddoc
 
-$(H2 2017-02-08 Version 0.44)
+$(H2 2017-03-12 Version 0.44)
  $(UL
   $(LI installation
    $(UL
@@ -29,7 +29,7 @@ $(H2 2017-02-08 Version 0.44)
   $(LI cv2pdb:
    $(UL
     $(LI fix crashes with very long symbols)
-    $(LI can now be enabled independent of debug engine)
+    $(LI can now be enabled independently of debug engine)
    ))
   $(LI language service
    $(UL
@@ -45,6 +45,8 @@ $(H2 2017-02-08 Version 0.44)
       $(LI new sorting modes "by type" using classification by the semantic engine,
         "by declaration", effectively using scopes as discovered by the semantic engine)
       $(LI without any match, still keep the completion box open to update when deleting the last character)
+      $(LI less flashing when updating the results)
+      $(LI code snippets now added to possible expansions)
      ))
    ))
   $(LI build
