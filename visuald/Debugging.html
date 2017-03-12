@@ -2,9 +2,9 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <!--
-    Copyright (c) 1999-2016 by Digital Mars
-    All Rights Reserved Written by Walter Bright
-    http://digitalmars.com
+    Copyright (c) 1999-2017 by the D Language Foundation
+    All Rights Reserved.
+    https://dlang.org/foundation.html
   -->
 <head>
 <meta charset="utf-8">
@@ -37,14 +37,16 @@
     <li><a href='https://code.dlang.org'><span>Packages</span></a></li>
     <li class='expand-container'><a class='expand-toggle' href='http://www.dlang.org/community.html'><span>Community</span></a>
       
-<ul class='expand-content'>    <li><a href='http://www.dlang.org/bugstats.php'>Bug Tracker</a></li>
-    <li><a href='https://github.com/dlang'>GitHub</a></li>
+<ul class='expand-content'>    <li><a href='https://dlang.org/blog'>Blog</a></li>
+    <li><a href='http://www.dlang.org/orgs-using-d.html'>Orgs using D</a></li>
+    <li><a href='https://twitter.com/search?q=%23dlang'>Twitter</a></li>
     <li class="menu-divider"><a href='https://forum.dlang.org'>Forums</a></li>
     <li><a href='irc://irc.freenode.net/d'>IRC</a></li>
     <li><a href='https://wiki.dlang.org'>Wiki</a></li>
-    <li class="menu-divider"><a href='https://dlang.org/blog'>Blog</a></li>
-    <li><a href='https://twitter.com/search?q=%23dlang'>Twitter</a></li>
-    <li><a href='http://www.dlang.org/orgs-using-d.html'>Orgs using D</a></li>
+    <li class="menu-divider"><a href='https://github.com/dlang'>GitHub</a></li>
+    <li><a href='http://www.dlang.org/bugstats.php'>Issues</a></li>
+    <li class="menu-divider"><a href='http://www.dlang.org/foundation.html'>Foundation</a></li>
+    <li><a href='http://www.dlang.org/donate.html'>Donate</a></li>
  </ul></li>
     <li class='expand-container'><a class='expand-toggle' href='http://www.dlang.org/resources.html'><span>Resources</span></a>
       
@@ -79,14 +81,14 @@
 </div></div></div>
 
 <div class="container">    <div class="subnav-helper"></div> <div class="subnav">    
-    <div class="head">        <h2>Visual D 0.3.43</h2>
+    <div class="head">        <h2>Visual D 0.44.0</h2>
         <p class="subnav-duplicate">            <a href="StartPage.html">Home</a></p>
     </div>
     <ul>        <li><a href='StartPage.html'><span>Home</span></a></li>
         <li><a href='https://github.com/dlang/visuald/releases'><span>Downloads</span></a></li>
         <li><a href='Installation.html'><span>Installation</span></a></li>
         <li class='expand-container open'><a class='expand-toggle' href='#'><span>Tour</span></a>
-        <ul class='expand-content'><li><a href='            Features.html'>Feature List</a></li><li><a href='            GlobalOptions.html'>Global Options</a></li><li><a href='            ProjectWizard.html'>Project Wizard</a></li><li><a href='            Editor.html'>Editor</a></li><li><a href='            Search.html'>Search Window</a></li><li><a href='            TokenReplace.html'>Token Replace</a></li><li><a href='            ProjectConfig.html'>Project Config</a></li><li><a href='            CppConversion.html'>C++ to D</a></li><li><a href='            Debugging.html'>Debugging</a></li><li><a href='            CompileCommands.html'>Compile Commands</a></li><li><a href='            Profiling.html'>Profiling</a></li><li><a href='            Coverage.html'>Code Coverage</a></li><li><a href='            DustMite.html'>DustMite Integration</a></li><li><a href='            BrowseInfo.html'>Browse Info
+        <ul class='expand-content'><li><a href='            Features.html'>Feature List</a></li><li><a href='            GlobalOptions.html'>Global Options</a></li><li><a href='            ProjectWizard.html'>Project Wizard</a></li><li><a href='            Editor.html'>Editor</a></li><li><a href='            Search.html'>Search Window</a></li><li><a href='            TokenReplace.html'>Token Replace</a></li><li><a href='            ProjectConfig.html'>Project Config</a></li><li><a href='            vcxproject.html'>VC Project Integration</a></li><li><a href='            CppConversion.html'>C++ to D</a></li><li><a href='            Debugging.html'>Debugging</a></li><li><a href='            CompileCommands.html'>Compile Commands</a></li><li><a href='            Profiling.html'>Profiling</a></li><li><a href='            Coverage.html'>Code Coverage</a></li><li><a href='            DustMite.html'>DustMite Integration</a></li><li><a href='            BrowseInfo.html'>Browse Info
         </a></li></ul></li>
         <li><a href='VersionHistory.html'><span>Version History</span></a></li>
         <li><a href='KnownIssues.html'><span>Known Issues</span></a></li>
@@ -98,7 +100,7 @@
 		<div >			If you spot a problem with this page, click here to create a Bugzilla issue.
 		</div>
 	</div>
-	<div class="tip smallprint">		<a href="https://github.com/dlang/visuald/edit/master/Debugging.dd">Improve this page</a>
+	<div class="tip smallprint">		<a href="https://github.com/dlang/visuald/edit/master/doc\Debugging.dd">Improve this page</a>
 		<div >			Quickly fork, edit online, and submit a pull request for this page.
 			Requires a signed-in GitHub account. This works well for small changes.
 			If you'd like to make larger changes you may want to consider using
@@ -110,56 +112,132 @@
         
         
 
-<h2>Visual Studio Debugger</h2>
+<p>Here's a little bit of history required to understand the available options for debugging
+D programs with Visual Studio.</p>
 
-<p>Thanks to <a href="https://github.com/rainers/cv2pdb">cv2pdb</a>, debugging in Visual Studio integrates well.
-Here is an example debugging session</p>
+<p>If you are only interested in the latest state with VS 2015, you can skip all this and go
+directly to the <a href="#recommendation">recommendation</a>.</p>
+
+<h2>VS 2008-2010 cv2pdb</h2>
+
+<p>Development of Visual D started around 2009, with VS 2008 being the latest Visual Studio version.
+DMD only supported Windows 32-bit programs, with debug information written in an ancient version
+of CodeView. This was not well understood by the Visual Studio debugger, basic
+operations like setting breakpoints and investigating struct members didn't work.
+That's why cv2pdb was created to convert the old CodeView debug information embedded into the executable
+to a newer version of CodeView written into a PDB file.</p>
+
+<p>VS 2008 and VS 2010 have two engines for debugging native code, one mainly targeted at C/C++
+and one for mixed native and managed code. Both understood visualizer descriptions
+in a file named autoexp.dat, that cv2pdb took advantage of to display some D constructs
+in watch windows: slices, strings and associatives arrays. That made debugging
+D programs quite possible, though debug info from the compiler was very basic. Some
+quirks had to be accepted, e.g. type names must not contain '.' to avoid confusing the
+debugger, so it is replaced with '@'. Expressions need to be specified in C/C++ syntax.</p>
+
+<p>Here is an example debugging session that used cv2pdb</p>
 
 	<div align="center"><img src="images/debug.png" width="90%"/></div>
 
-<p>Using cv2pdb has a few quirks, like displaying '@' instead of '.'. This is happening because the C++ debugger 
-that comes with Visual Studio is used and it is confused if there is a '.' in a symbol name.</p>
+<h2>mago</h2>
 
-<h3>Exceptions</h3>
-
-<p>As of version 0.3.21, the installer adds an entry "D Exception" to the list of Win32 exceptions that 
-can be found in the Debug-&gt;Exceptions dialog. This allows the debugger to stop execution when an exception 
-is thrown by the debuggee. With earlier versions, you'll have to add an entry with code 0xE0440001 yourself.</p>
-
-
-<h2>Mago Debugger</h2>
-
-<p>As of version 0.3.16 Visual D comes with the option to install the 
-<a href="http://www.dsource.org/projects/mago_debugger">Mago debugger</a>. This debug engine is dedicated to the 
-D programming language and avoids the work-arounds needed when using the native debug engine. It also
-features D specific expressions like dynamic array slicing.</p>
-
-<p>To enable debugging with the Mago debugger select it on the project configuration page "Debugging". 
-This will also disable cv2pdb conversion as Mago directly operates on the debug info emitted by DMD.</p>
+<p>In 2010, Aldo Nunez surprised the D community with a new debug engine dedicated to the
+D language, that plugs in to Visual Studio as an extension. This engine can read the old
+CodeView debug information emitted by DMD. Having full support for D types and expressions,
+the above quirks are avoided.
+In addition, there is no need to supply slow visualizer macros as mago can display
+slices, strings and more nicely. You can select the mago debug engine in the project
+debugging settings of a Visual D project.</p>
 
 <div align="center"><img src="images/prop_debug.png" /></div>
 
-<p>Please note that Mago is under development and might lack a few features that you find in the native debugger.</p>
+<p>One downside of the mago debug engine is that it does not support all the features
+of the native Visual Studio debugger, e.g. conditional breakpoints, hardware assisted
+breakpoints or attaching to a process.</p>
+
+<h2>64-bit</h2>
+
+<p>DMD added 64-bit Windows support in 2012, writing COFF object files supporting the
+newer version of the CodeView debug information from the start. So there is no need to
+use a conversion tool for its output. In 2014, DMD got the option to also emit COFF
+files for 32-bit code using the same debug format.</p>
+
+<p>The visual studio debuggers obviously had 64-bit support, and mago followed suite in
+2014 including support for the PDB debug info format.</p>
+
+<h2>VS 2012-2013 New debug engine</h2>
+
+<p>Starting with Visual Studio 2012, Microsoft introduced a new debugger that replaced
+the native debug engine. Unfortunately, it had some incompatibilites with the
+preceding debug engine. This includes displaying D variables in the Watch Window and
+interpretation of the visualizer macros in autoexp.dat. The new engine has
+extended visualizer capabilities, but these are targeted to C/C++ and don't work well
+with D syntax.</p>
+
+<p>You can switch back to the old debug engine by going to Tools-&gt;Options and then under the debugger
+settings, turn on native edit and continue. This is a global setting and will also affect your
+C++ projects, though.</p>
+
+<p>Mago is uneffected by this change.
+The VS 2013 debugger engine fixed some of the problems with displaying local variables.</p>
+
+<a id="concord"></a>
+<h2>VS 2015 Concord extensions</h2>
+
+<p>With the next version of the debug engine supporting "native edit and continue", the fallback to
+the old debug engine no longer works in VS 2015. Instead Microsoft
+released information about the extensibility of this debug engine (introduced with VS2012) called
+<a href="https://github.com/Microsoft/ConcordExtensibilitySamples/wiki/Overview">Concord</a>,
+late in 2015. It consists of more modular components than older engines. This allows taking
+advantage of most features of the debug engine by just replacing language specific
+parts, i.e. the expression evaluator. In addition, debugging mixed languages is no problem
+anymore.</p>
+
+<p>Using Mago's expression evaluator allowed to implement this for D pretty easily:</p>
+
+	<div align="center"><img src="images/concord_mark.png" width="90%"/></div>
+
+<p>The debugger engine needs to detect the source language of the code location. This information
+is added to the debug information starting with dmd 2.072 when compiled for COFF object
+files (-m64 or -m32mscoff) with -g, but not with
+-gc, i.e. you should select debug info for Mago even when using the VS debug engine.</p> Unfortunately,
+LDC does not yet emit this source language information.
+
+<a id="recommendation"></a>
+<h3>Recommendation for VS 2015</h3>
+
+<ul>
+  <li>use DMD 2.072 or later</li>
+  <li>for Visual D projects, compile to COFF even for Win32 by enabling "Use MS-COFF object file format" on the
+       project configuration page Compiler-&gt;Output</li>
+  <li>select symbolic debug information "suitable for Mago" on the
+       project configuration page Compiler-&gt;Debug</li>
+  <li>choose the Visual Studio debugger on the project configuration page Debugging</li>
+</ul>
+
+<p>If you are using the new <a href="vcxproject.html">Visual C/C++ project integration</a>, all you have to do is
+select debug information "for D debug engines" on the project configuration page "D Compiler-&gt;Code generation".</p>
+
+<h2>Exceptions</h2>
+
+<p>As of version 0.3.21, the installer adds an entry "D Exception" to the list of Win32 exceptions that
+can be found in the Debug-&gt;Exceptions dialog. This allows the debugger to stop execution when an exception
+is thrown by the debuggee. With earlier versions, you'll have to add an entry with code 0xE0440001 yourself.</p>
 
 <h3>Exceptions with Mago</h3>
 
-<p>Mago displays exceptions thrown by the debuggee in the output window. You can also stop execution 
-by enabling the respective box in the Debug-&gt;Exception dialog. Due to a bug, you currently cannot 
-simply enable the "D Exceptions" entry, but must select the specific exceptions while keeping the 
+<p>The Mago debug engine displays exceptions thrown by the debuggee in the output window. You can also stop execution
+by enabling the respective box in the Debug-&gt;Exception dialog. Due to a bug, you currently cannot
+simply enable the "D Exceptions" entry, but must select the specific exceptions while keeping the
 "D Exceptions" entry unchecked. So, the dialog should look something like this:</p>
 
 <div align="center"><img src="images/d_exceptions.png" /></div>
 
-<h2>Visual Studio 2012</h2>
-
-Visual Studio 2012 introduced a new debug engine that loses some of the capabilities of the
-preceding debug engine. This includes displaying variables in the Watch Window. You
-can switch back to the old debug engine by going to Tools-&gt;Options and then under the debugger 
-settings, turn on native edit and continue. This will also reenable the visualizer macros in autoexp.dat.
+Please note that these specific exception settings only apply to the Mago debug engine, not the Concord extension.
 
 
-        <div class="smallprint" id="copyright">Copyright &copy; 1999-2016 by the <a href="http://www.dlang.org/foundation.html">D Language Foundation</a> | Page generated by
-<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Tue Jul 12 08:17:31 2016
+        <div class="smallprint" id="copyright">Copyright &copy; 1999-2017 by the <a href="http://www.dlang.org/foundation.html">D Language Foundation</a> | Page generated by
+<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Sun Mar 12 12:34:59 2017
 </div>
     </div>
 </div>
@@ -170,6 +248,7 @@ settings, turn on native edit and continue. This will also reenable the visualiz
     
     <script type="text/javascript" src="http://www.dlang.org/js/codemirror-compressed.js"></script>
     <script type="text/javascript" src="http://www.dlang.org/js/run.js"></script>
+
 
 <script type="text/javascript" src="js/run-main-website.js"></script>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">

@@ -2,9 +2,9 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <!--
-    Copyright (c) 1999-2016 by Digital Mars
-    All Rights Reserved Written by Walter Bright
-    http://digitalmars.com
+    Copyright (c) 1999-2017 by the D Language Foundation
+    All Rights Reserved.
+    https://dlang.org/foundation.html
   -->
 <head>
 <meta charset="utf-8">
@@ -37,14 +37,16 @@
     <li><a href='https://code.dlang.org'><span>Packages</span></a></li>
     <li class='expand-container'><a class='expand-toggle' href='http://www.dlang.org/community.html'><span>Community</span></a>
       
-<ul class='expand-content'>    <li><a href='http://www.dlang.org/bugstats.php'>Bug Tracker</a></li>
-    <li><a href='https://github.com/dlang'>GitHub</a></li>
+<ul class='expand-content'>    <li><a href='https://dlang.org/blog'>Blog</a></li>
+    <li><a href='http://www.dlang.org/orgs-using-d.html'>Orgs using D</a></li>
+    <li><a href='https://twitter.com/search?q=%23dlang'>Twitter</a></li>
     <li class="menu-divider"><a href='https://forum.dlang.org'>Forums</a></li>
     <li><a href='irc://irc.freenode.net/d'>IRC</a></li>
     <li><a href='https://wiki.dlang.org'>Wiki</a></li>
-    <li class="menu-divider"><a href='https://dlang.org/blog'>Blog</a></li>
-    <li><a href='https://twitter.com/search?q=%23dlang'>Twitter</a></li>
-    <li><a href='http://www.dlang.org/orgs-using-d.html'>Orgs using D</a></li>
+    <li class="menu-divider"><a href='https://github.com/dlang'>GitHub</a></li>
+    <li><a href='http://www.dlang.org/bugstats.php'>Issues</a></li>
+    <li class="menu-divider"><a href='http://www.dlang.org/foundation.html'>Foundation</a></li>
+    <li><a href='http://www.dlang.org/donate.html'>Donate</a></li>
  </ul></li>
     <li class='expand-container'><a class='expand-toggle' href='http://www.dlang.org/resources.html'><span>Resources</span></a>
       
@@ -79,14 +81,14 @@
 </div></div></div>
 
 <div class="container">    <div class="subnav-helper"></div> <div class="subnav">    
-    <div class="head">        <h2>Visual D 0.3.43</h2>
+    <div class="head">        <h2>Visual D 0.44.0</h2>
         <p class="subnav-duplicate">            <a href="StartPage.html">Home</a></p>
     </div>
     <ul>        <li><a href='StartPage.html'><span>Home</span></a></li>
         <li><a href='https://github.com/dlang/visuald/releases'><span>Downloads</span></a></li>
         <li><a href='Installation.html'><span>Installation</span></a></li>
         <li class='expand-container open'><a class='expand-toggle' href='#'><span>Tour</span></a>
-        <ul class='expand-content'><li><a href='            Features.html'>Feature List</a></li><li><a href='            GlobalOptions.html'>Global Options</a></li><li><a href='            ProjectWizard.html'>Project Wizard</a></li><li><a href='            Editor.html'>Editor</a></li><li><a href='            Search.html'>Search Window</a></li><li><a href='            TokenReplace.html'>Token Replace</a></li><li><a href='            ProjectConfig.html'>Project Config</a></li><li><a href='            CppConversion.html'>C++ to D</a></li><li><a href='            Debugging.html'>Debugging</a></li><li><a href='            CompileCommands.html'>Compile Commands</a></li><li><a href='            Profiling.html'>Profiling</a></li><li><a href='            Coverage.html'>Code Coverage</a></li><li><a href='            DustMite.html'>DustMite Integration</a></li><li><a href='            BrowseInfo.html'>Browse Info
+        <ul class='expand-content'><li><a href='            Features.html'>Feature List</a></li><li><a href='            GlobalOptions.html'>Global Options</a></li><li><a href='            ProjectWizard.html'>Project Wizard</a></li><li><a href='            Editor.html'>Editor</a></li><li><a href='            Search.html'>Search Window</a></li><li><a href='            TokenReplace.html'>Token Replace</a></li><li><a href='            ProjectConfig.html'>Project Config</a></li><li><a href='            vcxproject.html'>VC Project Integration</a></li><li><a href='            CppConversion.html'>C++ to D</a></li><li><a href='            Debugging.html'>Debugging</a></li><li><a href='            CompileCommands.html'>Compile Commands</a></li><li><a href='            Profiling.html'>Profiling</a></li><li><a href='            Coverage.html'>Code Coverage</a></li><li><a href='            DustMite.html'>DustMite Integration</a></li><li><a href='            BrowseInfo.html'>Browse Info
         </a></li></ul></li>
         <li><a href='VersionHistory.html'><span>Version History</span></a></li>
         <li><a href='KnownIssues.html'><span>Known Issues</span></a></li>
@@ -98,7 +100,7 @@
 		<div >			If you spot a problem with this page, click here to create a Bugzilla issue.
 		</div>
 	</div>
-	<div class="tip smallprint">		<a href="https://github.com/dlang/visuald/edit/master/BuildFromSource.dd">Improve this page</a>
+	<div class="tip smallprint">		<a href="https://github.com/dlang/visuald/edit/master/doc\BuildFromSource.dd">Improve this page</a>
 		<div >			Quickly fork, edit online, and submit a pull request for this page.
 			Requires a signed-in GitHub account. This works well for small changes.
 			If you'd like to make larger changes you may want to consider using
@@ -110,18 +112,20 @@
         
         
 
-<p>The latest sources of Visual D are available from the github repository at 
+<p>The latest sources of Visual D are available from the github repository at
 <a href="https://github.com/dlang/visuald">https://github.com/dlang/visuald</a>.</p>
 
 <h2>Prerequisites</h2>
 
 <p>You need the following tools to build Visual D:</p>
 <ul>
-  <li>Visual Studio 2008/2010/2012 (other version might also work, but I haven't tried a lot)</li>
-  <li><a href="http://www.microsoft.com/downloads/details.aspx?displaylang=en&FamilyID=59ec6ec3-4273-48a3-ba25-dc925a45584d">Visual Studio Integration SDK for VS2008</a>
-  or <a href="http://www.microsoft.com/downloads/en/details.aspx?FamilyID=47305cf4-2bea-43c0-91cd-1b853602dcc5">Visual Studio Integration SDK for VS2010</a></li>
-  <li>Windows SDK 6.0A (included in VS2008) or SDK 7.0A (included in VS2010) or SDK v7.1 (included in the Windows 7 SDK), other versions might also work.</li>
-  <li>DMD 2.059 or newer</li>
+  <li>Visual Studio 2013/2015 (other versions might also work)</li>
+  <li><a href="https://www.microsoft.com/en-us/download/details.aspx?id=40758">
+  Visual Studio Integration SDK for VS2013</a> or enable it during <a href="
+  https://msdn.microsoft.com/en-us/library/mt683786.aspx">VS 2015 installation</a>.</li>
+  <li>Windows SDK 6.0A (included in VS2008) or later (tested with most versions
+  up to 10.0.14393.0)</li>
+  <li>DMD 2.066 or newer</li>
   <li>coffimplib (<a href="ftp://ftp.digitalmars.com/coffimplib.zip">ftp</a>)</li>
   <li>for installer: <a href="http://nsis.sourceforge.net/Download">NSIS</a></li>
   <li>for debugging: <a href="https://github.com/rainers/cv2pdb">cv2pdb</a></li>
@@ -129,36 +133,35 @@
 
 <h2>Building Visual D</h2>
 
-<p>The Visual D source code is usually updated to work with the latest release version 
-of DMD (2.059 as of now), so you should use this release of the compiler when using 
+There is an <a href="https://ci.appveyor.com/project/rainers/visuald">AppVeyor project</a>
+that verifies recent changes to the development
+branch of Visual D. This can also be used as a reference for the build process.
+
+<p>The Visual D source code is usually updated to work with the latest release version
+of DMD (2.073 as of now), so you should use this release of the compiler when using
 the latest svn/git checkout.</p>
 
-<p>The standard build procedure for the release version is to execute 
-"nmake" in the trunk directory. <b>Please check the variable settings at the 
+<p>The standard build procedure for the release version is to execute
+"nmake install_vs" in the trunk directory. <b>Please check the variable settings at the
 top of the Makefile and adjust them to the installation directories on your system.</b></p>
 
-<p>If you want to start developing or debugging, you should execute
-"<b>nmake sdk</b>" at least once to build the necessary D translations from
-the Windows and Visual Studio SDK. Afterwards you can use Visual D itself with the 
-solution visuald_vs9.sln or visuald_vs10.sln, respectively.</p>
+<p>If you want to start developing or debugging, you should load visuald_vs10.sln
+in Visual Studio with Visual D installed. Build the "build" project at least once
+to build the necessary prerequisites and tools, e.g. D translations from
+the Windows and Visual Studio SDK.</p>
 
 <h3>Known issues</h3>
 <ul>
- <li>building the parser library with stock DMD before 2.066 causes an "Out of memory" error. There are two 
-   options how to fix this:
+ <li>building the parser library with stock DMD before 2.066 and after 2.068 might cause
+   an "Out of memory" error. There are two options how to fix this:
   <ul>
-   <li>enable the LARGE_ADDRESS_AWARE bit inside dmd.exe with this simple tool: 
-    <a href="https://github.com/dlang/visuald/blob/master/tools/largeadr.d">https://github.com/dlang/visuald/blob/master/tools/largeadr.d</a> (if you are running a 
+   <li>enable the LARGE_ADDRESS_AWARE bit inside dmd.exe with this simple tool:
+    <a href="https://github.com/dlang/visuald/blob/master/tools/largeadr.d">https://github.com/dlang/visuald/blob/master/tools/largeadr.d</a> (if you are running a
 	32-bit OS, you will also need to boot with the /3GB switch)</li>
-   <li>build DMD with the Microsoft compiler instead of the Digital Mars compiler 
+   <li>build DMD with the Microsoft compiler instead of the Digital Mars compiler
     (This also has the benefit of an executable that compiles about twice as fast)</li>
   </ul>
  </li>
- <li>building '''pkgcmd.cto''' from pkgcmd.ctc needs CTC.exe from the VS2008 VSI SDK. 
-    This program is no longer available in the 2010 VSI SDK. Therefore, a precompiled version of 
-	pkgcmd.cto is committed. If the build rule fails please make sure pkgcmd.cto  is newer than 
-	pkgcmd.ctc to skip this build step.</li>
-
  <li>A druntime patch is necessary for correct name demangling in the profiler window:
   <ul>
    <li><a href="http://d.puremagic.com/issues/show_bug.cgi?id=4852">Issue 4852</a>: Support to suppress function signature in the profiler window</li>
@@ -169,7 +172,7 @@ solution visuald_vs9.sln or visuald_vs10.sln, respectively.</p>
 
 <h2>Deployment</h2>
 
-<p>You should debug the plugin within Visual Studio 2008/2010 using a different
+<p>You should debug Visual D within Visual Studio 2013/2015 using a different
 branch in the registry, so it does not interfere with your working
 environment.</p>
 
@@ -187,11 +190,11 @@ environment.</p>
    </li>
   </ul>
  </li>
- <li>VS2010/VS2012: The mechanism has dramatically changed with VS2010, as the non-standard registry settings are rebuilt 
-   on every start of Visual Studio. 
+ <li>VS2010-VS2015: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
+   on every start of Visual Studio.
   <ul>
-   <li>Put the files from trunk\nsis\extensions into the folder 
-     $(APPDATA)\Local\Microsoft\VisualStudio\10.0D\Extensions\VisualD (replace 10.0D with 11.0D for VS2012)</li>
+   <li>Put the files from trunk\nsis\extensions into the folder
+     $(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD (replace 12.0D with 14.0D for VS2015)</li>
    <li>in visuald.pkgdef, replace the path "M:\\s\\d\\visuald\\trunk\\bin\\debug\\visuald.dll" with your debug build output path.</li>
    <li>Start the IDE with the new settings branch via</li>
     <pre>devenv /RootSuffix D</pre>
@@ -203,8 +206,8 @@ environment.</p>
 <p>Good luck!</p>
 
 
-        <div class="smallprint" id="copyright">Copyright &copy; 1999-2016 by the <a href="http://www.dlang.org/foundation.html">D Language Foundation</a> | Page generated by
-<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Tue Jul 12 08:17:31 2016
+        <div class="smallprint" id="copyright">Copyright &copy; 1999-2017 by the <a href="http://www.dlang.org/foundation.html">D Language Foundation</a> | Page generated by
+<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Sun Mar 12 12:34:59 2017
 </div>
     </div>
 </div>
@@ -215,6 +218,7 @@ environment.</p>
     
     <script type="text/javascript" src="http://www.dlang.org/js/codemirror-compressed.js"></script>
     <script type="text/javascript" src="http://www.dlang.org/js/run.js"></script>
+
 
 <script type="text/javascript" src="js/run-main-website.js"></script>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">

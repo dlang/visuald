@@ -10,7 +10,7 @@
 <meta charset="utf-8">
 <meta name="keywords" content="D programming language">
 <meta name="description" content="D Programming Language">
-<title>Major Features - D Programming Language</title>
+<title>Visual C/C++ Project Integration - D Programming Language</title>
 
 <link rel="stylesheet" href="http://www.dlang.org/css/codemirror.css">
 <link rel="stylesheet" href="http://www.dlang.org/css/style.css">
@@ -19,7 +19,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0">
 
 </head>
-<body id='Major Features' class='visuald'>
+<body id='Visual C/C++ Project Integration' class='visuald'>
 <script type="text/javascript">document.body.className += ' have-javascript'</script>
 <div id="top"><div class="helper"><div class="helper expand-container">    <div class="logo"><a href="http://www.dlang.org"><img id="logo" alt="D Logo" src="http://www.dlang.org/images/dlogo.svg"></a></div>
     <a href="http://www.dlang.org/menu.html" title="Menu" class="hamburger expand-toggle"><span>Menu</span></a>
@@ -96,11 +96,11 @@
     </ul>
 </div>
     <div class="hyphenate" id="content">        
-<div id="tools"><div >	<div class="tip smallprint">		<a href="https://issues.dlang.org/enter_bug.cgi?bug_file_loc=http%3A%2F%2Fdlang.org/&amp;bug_severity=enhancement&amp;component=visuald&amp;op_sys=All&amp;priority=P3&amp;product=D&amp;rep_platform=All&amp;short_desc=%5BMajor Features%5D&amp;version=D2">Report a bug</a>
+<div id="tools"><div >	<div class="tip smallprint">		<a href="https://issues.dlang.org/enter_bug.cgi?bug_file_loc=http%3A%2F%2Fdlang.org/&amp;bug_severity=enhancement&amp;component=visuald&amp;op_sys=All&amp;priority=P3&amp;product=D&amp;rep_platform=All&amp;short_desc=%5BVisual C/C++ Project Integration%5D&amp;version=D2">Report a bug</a>
 		<div >			If you spot a problem with this page, click here to create a Bugzilla issue.
 		</div>
 	</div>
-	<div class="tip smallprint">		<a href="https://github.com/dlang/visuald/edit/master/doc\Features.dd">Improve this page</a>
+	<div class="tip smallprint">		<a href="https://github.com/dlang/visuald/edit/master/doc\vcxproject.dd">Improve this page</a>
 		<div >			Quickly fork, edit online, and submit a pull request for this page.
 			Requires a signed-in GitHub account. This works well for small changes.
 			If you'd like to make larger changes you may want to consider using
@@ -108,95 +108,28 @@
 		</div>
 	</div>
 </div></div>
-        <h1>Major Features</h1>
+        <h1>Visual C/C++ Project Integration</h1>
         
         
 
- <ul>
-  <li>Project management
-   <ul>
-    <li>all DMD command line options accessible</li>
-    <li>support for GDC and LDC</li>
-    <li>support for resource compiler</li>
-    <li>custom build commands</li>
-    <li>pre/post custom build steps</li>
-    <li>automatic dependency generation</li>
-    <li>automatic link between dependent projects</li>
-    <li>new project templates</li>
-    <li>msbuild integration with VC projects</li>
-   </ul>
-  </li>
+<p>With Visual D 0.44 integration with Visual C/C++ projects has been added. This means that
+you can just add your D files into any C/C++ project and it will be compiled and linked
+with everything else in the project.</p>
 
-  <li>Project management
-   <ul>
-    <li>integrates cv2pdb and mago for seamless debugger integration</li>
-    <li>or plugs into the VS debug engine as a language extension</li>
-   </ul>
-  </li>
-  <li>Language Service
-   <ul>
-    <li>syntax highlighting with special version/debug and token string support</li>
-    <li>underlining of syntactical errors</li>
-    <li>word-completion through semantic analysis, buffer, or JSON compile info</li>
-    <li>import statement completion</li>
-    <li>goto definition (using semantic analysis or JSON file from compilation)</li>
-    <li>parameter info tooltips</li>
-    <li>smart indentation</li>
-    <li>automatic brace completion</li>
-    <li>comment/uncomment selection</li>
-    <li>highlight/jump-to matching braces</li>
-    <li>code snippets</li>
-    <li>symbol/file search window</li>
-    <li>display of scope at caret position</li>
-    <li>code outlining</li>
-    <li>paste visually from clipboard ring</li>
-    <li>code definition window</li>
-    <li>search and replace dialog based on D tokenizer</li>
-    <li>browse information displayed in object browser and class view</li>
-    <li>code highlighting according to the code coverage output</li>
-   </ul>
-  </li>
+<p>The project properties will be extended by a "D Compiler" section:</p>
 
-  <li>Other
-   <ul>
-    <li>C++ to D conversion wizard</li>
-    <li>Profiler window</li>
-    <li>Code Coverage display</li>
-    <li>Dustmite integration</li>
-   </ul>
-  </li>
-  <li>Supported Visual Studio versions
-   <ul>
-    <li>VS 2008</li>
-    <li>VS 2010</li>
-    <li>VS 2012</li>
-    <li>VS 2013</li>
-    <li>VS 2015</li>
-   </ul>
-   Unfortunately, Express versions of Visual Studio do not support this kind of extensions.
-   But you can use the (integrated) Visual Studio Shell (download
-   <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=40646580-97FA-4698-B65F-620D4B4B1ED7&displaylang=en">VS Shell 2008</a> or
-   <a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=8e5aa7b6-8436-43f0-b778-00c3bca733d3&displaylang=en">VS Shell 2010</a> or
-   <a href="https://www.microsoft.com/en-us/download/details.aspx?id=30670">VS Shell 2012</a>), which is the Visual Studio IDE stripped of any
-   language support.
-  </li>
-  <li>sources include tools to
-   <ul>
-    <li>convert some idl/h files of the Windows SDK to D</li>
-    <li>convert all idl/h files from the Visual Studio Integration SDK to D</li>
-    <li>convert C++ code to D (which was targeted at machine-translating)
-    the DMD front end to D, but this was abandoned</li>
-    <li>convert Java code to D (which was targeted at machine-translating)
-    parts of the Eclipse plugin Descent to D, but this was abandoned</li>
-   </ul>
-  </li>
-  <li>Completely written in D
-   <ul>
-    <li>source code available on github</li>
-   </ul>
-  </li>
- </ul>
+	<div align="center"><img src="images/vcxproject.png" width="90%"/></div>
 
+<p>The General Page allows to select between DMD and LDC as the D compiler to be used by the current configuration.</p>
+
+<div align="center"><img src="images/vcxproject_general.png" /></div>
+
+<p>A couple of things to note:</p>
+<ul>
+  <li>Only COFF files are generated, there is no support for OMF files that DMD generates for Win32 by default.</li>
+  <li>Selecting the C runtime library is supported starting with DMD 2.073</li>
+  <li>The D project templates include a console application template based on a VC project, but just containing a D file.</li>
+</ul>
 
 
         <div class="smallprint" id="copyright">Copyright &copy; 1999-2017 by the <a href="http://www.dlang.org/foundation.html">D Language Foundation</a> | Page generated by
