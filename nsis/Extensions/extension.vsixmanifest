@@ -6,7 +6,7 @@
   <Identifier Id="Visual.D">
     <Name>Visual D</Name>
     <Author>Rainer Schuetze</Author>
-    <Version>0.3</Version>
+    <Version>0.44</Version>
     <Description>Extension to provide support for the D programming language.</Description>
     <Locale>1033</Locale>
     <MoreInfoUrl>http://rainers.github.io/visuald/visuald/StartPage.html</MoreInfoUrl>
@@ -26,6 +26,27 @@
       <VisualStudio Version="11.0">
         <Edition>Ultimate</Edition>
         <Edition>Premium</Edition>
+        <Edition>Pro</Edition>
+        <Edition>IntegratedShell</Edition>
+        <Edition>VSTS</Edition>
+        <Edition>VSTD</Edition>
+      </VisualStudio>
+      <VisualStudio Version="12.0">
+        <Edition>Community</Edition>
+        <Edition>Pro</Edition>
+        <Edition>IntegratedShell</Edition>
+        <Edition>VSTS</Edition>
+        <Edition>VSTD</Edition>
+      </VisualStudio>
+      <VisualStudio Version="14.0">
+        <Edition>Community</Edition>
+        <Edition>Pro</Edition>
+        <Edition>IntegratedShell</Edition>
+        <Edition>VSTS</Edition>
+        <Edition>VSTD</Edition>
+      </VisualStudio>
+      <VisualStudio Version="15.0">
+        <Edition>Community</Edition>
         <Edition>Pro</Edition>
         <Edition>IntegratedShell</Edition>
         <Edition>VSTS</Edition>

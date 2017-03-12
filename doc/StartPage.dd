@@ -54,7 +54,7 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
-2017-02-06 Version 0.44
+2017-03-12 Version 0.44
 $(UL
   $(LI $(VDLINK vcxproject, integration) with msbuild and Visual C/C++ projects)
   $(LI enhanced $(LINK2 Debugging.html#concord, integration) with the Visual Studio debugger by only adding mago's expression evaluator)

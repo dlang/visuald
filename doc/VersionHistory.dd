@@ -29,7 +29,7 @@ $(H2 2017-03-12 Version 0.44)
   $(LI cv2pdb:
    $(UL
     $(LI fix crashes with very long symbols)
-    $(LI can now be enabled independent of debug engine)
+    $(LI can now be enabled independently of debug engine)
    ))
   $(LI language service
    $(UL
