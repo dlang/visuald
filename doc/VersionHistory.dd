@@ -1,5 +1,10 @@
 Ddoc
 
+$(H2 2017-03-12 Version 0.44.1)
+ $(UL
+  $(LI bugzilla 17252: Fixed bad character inserted into the executable search path default)
+ )
+
 $(H2 2017-03-12 Version 0.44)
  $(UL
   $(LI installation

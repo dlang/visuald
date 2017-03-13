@@ -1573,7 +1573,7 @@ class GlobalOptions
 			string sdkBinDir = "$(WindowsSdkDir)bin";
 			if (std.file.exists(WindowsSdkDir ~ "bin\\x86\\rc.exe")) // path changed with Windows 8 SDK
 				sdkBinDir ~= "\\x86";
-			DMD.ExeSearchPath       = getVCDir("bin", false) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir ~ ";$(DMDInstallDir)windows\bin";
+			DMD.ExeSearchPath       = getVCDir("bin", false) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir ~ ";$(DMDInstallDir)windows\\bin";
 			DMD.ExeSearchPath64     = DMD.ExeSearchPath;
 			DMD.ExeSearchPath32coff = DMD.ExeSearchPath;
 			GDC.ExeSearchPath       = r"$(GDCInstallDir)bin;$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
