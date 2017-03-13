@@ -806,7 +806,7 @@ Version history
     - search pane did not save its last state, only when switching between file and symbol search
     - dustmite: pattern passed to "find" must always use quotes
 
-unreleased Version 0.44
+2017-03-12 Version 0.44
 
   * installation
     - added preliminary support for VS 2017 RC
@@ -852,3 +852,7 @@ unreleased Version 0.44
       - without any match, still keep the completion box open with recent items
       - less flashing when updating the results
       - code snippets now added to possible expansions
+
+2017-03-13 Version 0.44.1
+
+  * bugzilla 17252: Fixed bad character inserted into the executable search path default
