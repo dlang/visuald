@@ -11,7 +11,7 @@ Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
 
 For installer download, more documentation and build instructions, please visit http://rainers.github.io/visuald/visuald/StartPage.html.
-Use forum http://forum.dlang.org/group/digitalmars.D.ide for questions and the D bug tracker https://d.puremagic.com/issues/ to report issues.
+Use forum http://forum.dlang.org/group/digitalmars.D.ide for questions and the D bug tracker https://issues.dlang.org/ to report issues.
 
 
 Major Features
@@ -143,7 +143,7 @@ screen shots and feedback, please visit the project home for Visual D at
 [http://rainers.github.io/visuald/visuald/StartPage.html](http://rainers.github.io/visuald/visuald/StartPage.html).
 
 There's a forum dedicated to IDE discussions (http://forum.dlang.org/group/digitalmars.D.ide), where you can leave your comments and suggestions.
-Bug reports can be filed to the [D bugzilla database](http://d.puremagic.com/issues/enter_bug.cgi?product=D) 
+Bug reports can be filed to the [D bugzilla database](https://issues.dlang.org/enter_bug.cgi?product=D) 
 for Component VisualD.
 
 Have fun,
