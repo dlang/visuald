@@ -97,7 +97,7 @@ public:
 	{
 		logCall("%s.Start(op=%s, pIVsOutputWindowPane=%s)", this, op, cast(void**) pIVsOutputWindowPane);
 		//mixin(LogCallMix2);
-		
+
 		m_op = op;
 
 		m_pIVsOutputWindowPane = release(m_pIVsOutputWindowPane);
@@ -134,7 +134,7 @@ else
 	void Stop(BOOL fSync)
 	{
 		mixin(LogCallMix2);
-		
+
 		m_fStopBuild = TRUE;
 	}
 
@@ -147,7 +147,7 @@ else
 	void ThreadMain()
 	{
 		mixin(LogCallMix2);
-		
+
 		BOOL fContinue = TRUE;
 		BOOL fSuccessfulBuild = FALSE; // set up for Fire_BuildEnd() later on.
 
@@ -209,7 +209,7 @@ else
 		string outfile;
 		string[] dependencies;
 	}
-	
+
 	// sorts inplace
 	static void sortDependencies(FileDep[] filedeps)
 	{
@@ -236,14 +236,14 @@ else
 			}
 		}
 	}
-	
+
 	CFileNode[] BuildDependencyList()
 	{
 		string workdir = mConfig.GetProjectDir();
 		Config config = mConfig; // closure does not work with both local variables and this pointer?
 		FileDep[] filedeps;
-		CHierNode node = searchNode(mConfig.GetProjectNode(), 
-			delegate (CHierNode n) { 
+		CHierNode node = searchNode(mConfig.GetProjectNode(),
+			delegate (CHierNode n) {
 				if(CFileNode file = cast(CFileNode) n)
 				{
 					string tool = config.GetCompileTool(file);
@@ -261,7 +261,7 @@ else
 				}
 				return false;
 			});
-		
+
 		sortDependencies(filedeps);
 		CFileNode[] files;
 		foreach(fdep; filedeps)
@@ -269,7 +269,7 @@ else
 
 		return files;
 	}
-	
+
 	unittest
 	{
 		FileDep[] deps = [
@@ -281,7 +281,7 @@ else
 		assert(deps[0].outfile == "file2");
 		assert(deps[1].outfile == "file3");
 		assert(deps[2].outfile == "file1");
-		
+
 		deps[0].dependencies ~= "file1";
 		try
 		{
@@ -293,7 +293,7 @@ else
 			assert(std.string.indexOf(e.msg, "circular") >= 0);
 		}
 	}
-	
+
 	//////////////////////////////////////////////////////////////////////
 	bool buildCustomFile(CFileNode file, ref bool built)
 	{
@@ -344,7 +344,7 @@ else
 	bool doCustomBuilds(out bool hasCustomBuilds, out int numCustomBuilds)
 	{
 		mixin(LogCallMix2);
-		
+
 		bool built;
 		if(mConfig.GetProjectOptions().privatePhobos)
 		{
@@ -366,10 +366,10 @@ else
 			if(built)
 				numCustomBuilds++;
 		}
-		
+
 		// now build files not in the dependency graph (d files in single compilation modes)
-		CHierNode node = searchNode(mConfig.GetProjectNode(), 
-			delegate (CHierNode n) { 
+		CHierNode node = searchNode(mConfig.GetProjectNode(),
+			delegate (CHierNode n) {
 				if(CFileNode file = cast(CFileNode) n)
 				{
 					if(files.contains(file))
@@ -392,10 +392,10 @@ else
 	bool DoBuild()
 	{
 		mixin(LogCallMix2);
-		
+
 		beginLog();
 		HRESULT hr = S_FALSE;
-		
+
 		try
 		{
 			string target = mConfig.GetTargetPath();
@@ -413,7 +413,7 @@ else
 			string intermediatedir = makeFilenameAbsolute(mConfig.GetIntermediateDir(), workdir);
 			if(!exists(intermediatedir))
 				mkdirRecurse(intermediatedir);
-			
+
 			string modules_ddoc;
 			if(mConfig.getModulesDDocCommandLine([], modules_ddoc).length)
 			{
@@ -424,7 +424,7 @@ else
 				if(!exists(modpath))
 					mkdirRecurse(modpath);
 			}
-			
+
 			bool hasCustomBuilds;
 			int numCustomBuilds;
 			if(!doCustomBuilds(hasCustomBuilds, numCustomBuilds))
@@ -461,8 +461,8 @@ else
 			if (!mConfig.isPhobosUptodate(null))
 				return false;
 
-		CHierNode node = searchNode(mConfig.GetProjectNode(), 
-			delegate (CHierNode n) 
+		CHierNode node = searchNode(mConfig.GetProjectNode(),
+			delegate (CHierNode n)
 			{
 				if(isStopped())
 					return true;
@@ -473,7 +473,7 @@ else
 				}
 				return false;
 			});
-		
+
 		return node is null;
 	}
 
@@ -520,10 +520,10 @@ else
 	bool DoCheckIsUpToDate()
 	{
 		mixin(LogCallMix2);
-		
+
 		clearCachedFileTimes();
 		scope(exit) clearCachedFileTimes();
-		
+
 		mLastUptodateFailure = null;
 		if(!customFilesUpToDate())
 			return false;
@@ -565,7 +565,7 @@ else
 	bool DoClean()
 	{
 		mixin(LogCallMix2);
-		
+
 		string[] files = mConfig.GetBuildFiles();
 		foreach(string file; files)
 		{
@@ -590,7 +590,7 @@ else
 		}
 		return true;
 	}
-	
+
 	void OutputText(string msg)
 	{
 		wchar* wmsg = _toUTF16z(msg);
@@ -608,7 +608,7 @@ else
 	void InternalTick(ref BOOL rfContine);
 +/
 
-	void Fire_Tick(ref BOOL rfContinue) 
+	void Fire_Tick(ref BOOL rfContinue)
 	{
 		rfContinue = mConfig.FFireTick() && !m_fStopBuild;
 	}
@@ -616,14 +616,14 @@ else
 	void Fire_BuildBegin(ref BOOL rfContinue)
 	{
 		mixin(LogCallMix2);
-		
+
 		mConfig.FFireBuildBegin(rfContinue);
 	}
 
 	void Fire_BuildEnd(BOOL fSuccess)
 	{
 		mixin(LogCallMix2);
-		
+
 		mConfig.FFireBuildEnd(fSuccess);
 	}
 
@@ -657,7 +657,7 @@ else
 	void beginLog()
 	{
 		mStartBuildTime = time(null);
-		
+
 		mBuildLog = `<html><head><META HTTP-EQUIV="Content-Type" content="text/html">
 </head><body><pre>
 <table width=100% bgcolor=#CFCFE5><tr><td>
@@ -670,29 +670,29 @@ else
 	{
 		if(!mCreateLog)
 			return;
-		
+
 		mBuildLog ~= "<table width=100% bgcolor=#DFDFE5><tr><td><font face=arial size=+2>\n";
 		mBuildLog ~= xml.encode("Building " ~ target);
 		mBuildLog ~= "\n</font></table>\n";
-		
+
 		mBuildLog ~= "<table width=100% bgcolor=#EFEFE5><tr><td><font face=arial size=+1>\n";
 		mBuildLog ~= "Command Line";
 		mBuildLog ~= "\n</font></table>\n";
-		
+
 		mBuildLog ~= xml.encode(cmd);
 
 		mBuildLog ~= "<table width=100% bgcolor=#EFEFE5><tr><td><font face=arial size=+1>\n";
 		mBuildLog ~= "Output";
 		mBuildLog ~= "\n</font></table>\n";
-		
+
 		mBuildLog ~= xml.encode(output) ~ "\n";
 	}
-	
+
 	void endLog(bool success)
 	{
 		if(!mCreateLog)
 			return;
-		
+
 		mBuildLog ~= "</body></html>";
 
 		string workdir = mConfig.GetProjectDir();
@@ -702,7 +702,7 @@ else
 		{
 			std.file.write(logfile, mBuildLog);
 			if(!success)
-				OutputText("Details saved as \"file://" ~ logfile ~ "\"");
+				OutputText("Details saved as \"file://" ~ replace(logfile, " ", "%20") ~ "\"");
 		}
 		catch(FileException e)
 		{
@@ -724,7 +724,7 @@ else
 				OutputText("Build time: " ~ to!string(duration) ~ " s");
 		}
 	}
-	
+
 /+
 	virtual HRESULT PrepareInStartingThread(CMyProjBuildableCfg *pCMyProjBuildableCfg);
 	virtual HRESULT InnerThreadMain(CMyProjBuildableCfg *pBuildableCfg);
@@ -749,7 +749,7 @@ else
 	HANDLE m_hEventStartSync;
 
 	time_t mStartBuildTime;
-	
+
 	version(threadedBuild)
 		Thread mThread; // keep a reference to the thread to avoid it from being collected
 	bool mSuccess = false;
@@ -824,14 +824,14 @@ string demangleText(string ln)
 	return txt;
 }
 
-class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser 
+class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 {
 	this(CBuilderThread builder)
 	{
 		mCompiler = builder.mConfig.GetProjectOptions().compiler;
 		mProjectDir = builder.mConfig.GetProjectDir();
 	}
- 
+
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
 		if(queryInterface!(IVsLaunchPadOutputParser) (this, riid, pvObject))
@@ -848,14 +848,14 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		/+[out, optional]+/ BSTR *pbstrHelpKeyword)
 	{
 		mixin(LogCallMix2);
-		
+
 		string line = to_string(pszOutputString);
 		uint nPriority, nLineNum;
 		string filename, taskItemText;
-		
+
 		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText, mCompiler))
 			return S_FALSE;
-		
+
 		//if(Package.GetGlobalOptions().demangleError)
 		//	taskItemText = demangleText(taskItemText);
 
@@ -879,12 +879,12 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 // Runs the build commands, writing cmdfile if successful
 HRESULT RunCustomBuildBatchFile(string              target,
                                 string              buildfile,
-                                string              cmdline, 
-                                IVsOutputWindowPane pIVsOutputWindowPane, 
+                                string              cmdline,
+                                IVsOutputWindowPane pIVsOutputWindowPane,
                                 CBuilderThread      pBuilder)
 {
 	logCall("RunCustomBuildBatchFile(target=\"%s\", buildfile=\"%s\")", target, buildfile);
-	
+
 	if (cmdline.length == 0)
 		return S_OK;
 	HRESULT hr = S_OK;
@@ -893,11 +893,11 @@ HRESULT RunCustomBuildBatchFile(string              target,
 	string strBuildDir = pBuilder.GetBuildDir();
 	string batchFileText = insertCr(cmdline);
 	string output;
-	
+
 	Package.GetGlobalOptions().addBuildPath(strBuildDir);
 
 	string cmdfile = buildfile ~ ".cmd";
-	
+
 	assert(pBuilder.m_srpIVsLaunchPadFactory);
 	ComPtr!(IVsLaunchPad) srpIVsLaunchPad;
 	hr = pBuilder.m_srpIVsLaunchPadFactory.CreateLaunchPad(&srpIVsLaunchPad.ptr);
@@ -980,7 +980,7 @@ version(none)
 			/* [in] IVsLaunchPadEvents *pVsLaunchPadEvents */ pLaunchPadEvents,
 			/* [out] DWORD *pdwProcessExitCode             */ &result,
 			/* [out] BSTR *pbstrOutput                     */ &bstrOutput); // all output generated (may be NULL)
-		
+
 	if(FAILED(hr))
 	{
 		output = format("internal error: IVsLaunchPad.ptr.ExecCommand failed with rc=%x", hr);
@@ -1015,7 +1015,7 @@ HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
                           IVsOutputWindowPane outPane, string output)
 {
 	logCall("outputToErrorList(output=\"%s\")", output);
-	
+
 	HRESULT hr;
 
 	auto prj = _toUTF16z(pBuilder.mConfig.GetProjectPath());
@@ -1024,7 +1024,7 @@ HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
 	{
 		uint nPriority, nLineNum;
 		string strFilename, strTaskItemText;
-		
+
 		if(parseOutputStringForTaskItem(line, nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD))
 		{
 			IVsOutputWindowPane2 pane2 = qi_cast!IVsOutputWindowPane2(outPane);
@@ -1065,13 +1065,13 @@ bool isInitializedRE(T)(ref T re)
 	else
 		return !re.empty; // std.regex
 }
-	
+
 bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
                                   out string filename, out uint nLineNum,
                                   out string itemText, int compiler)
 {
 	outputLine = strip(outputLine);
-	
+
 	// DMD compile error
 	__gshared static Regex!char re1dmd, re1gdc, remixin, re2, re3, re4, re5, re6;
 
@@ -1204,7 +1204,7 @@ unittest
 	assert(nLineNum == 37);
 	assert(strTaskItemText == "huhu");
 
-	rc = parseOutputStringForTaskItem("main.d(10): Error: undefined identifier A, did you mean B?", 
+	rc = parseOutputStringForTaskItem("main.d(10): Error: undefined identifier A, did you mean B?",
 									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
 	assert(rc);
 	assert(strFilename == "main.d");
@@ -1263,7 +1263,7 @@ bool getFilenamesFromDepFile(string depfile, ref string[] files)
 {
 	// converted int[string] to byte[string] due to bug #2500
 	byte[string] aafiles;
-	
+
 	int cntValid = 0;
 	try
 	{
