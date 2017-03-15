@@ -749,7 +749,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 		if (count <= 0) return;
 
 		//initialise and refresh
-		UpdateCompletionFlags flags = UCS_NAMESCHANGED;
+		UpdateCompletionFlags flags = UCS_NAMESCHANGED | UCS_EXTENTCHANGED;
 		if (mCompleteWord)
 			flags |= UCS_COMPLETEWORD;
 
