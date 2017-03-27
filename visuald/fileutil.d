@@ -192,7 +192,7 @@ string[] findDRuntimeFiles(string path, string sub, bool deep, bool cfiles = fal
 			if (internals)
 				exclude = exclude[1..$];
 			if (!any!(e => file.endsWith(e))(exclude))
-				files ~= findDRuntimeFiles(path, file, deep, cfiles);
+				files ~= findDRuntimeFiles(path, file, deep, cfiles, internals);
 			continue;
 		}
 		string bname = baseName(file);
@@ -200,6 +200,9 @@ string[] findDRuntimeFiles(string path, string sub, bool deep, bool cfiles = fal
 			continue;
 		if(globMatch(bname, "minigzip.c") || globMatch(bname, "example.c"))
 			continue;
+		if(globMatch(bname, "bss_section.c") || globMatch(bname, "dylib_fixes.c") || globMatch(bname, "osx_tls.c"))
+			continue;
+
 		if(cfiles)
 		{
 			if(globMatch(bname, "*.c"))

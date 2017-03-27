@@ -3229,6 +3229,8 @@ class Config :	DisposingComObject,
 
 		// collect C files
 		string[] cfiles;
+		if (mscoff || x64) // msvc*.c
+			cfiles ~= findDRuntimeFiles(installDir, druntimePath ~ "rt", true, true, true);
 		cfiles ~= findDRuntimeFiles(installDir, druntimePath ~ "core", true, true, true);
 		cfiles ~= findDRuntimeFiles(installDir, phobosPath ~ "etc\\c", true, true, true);
 		if (cfiles.length)
