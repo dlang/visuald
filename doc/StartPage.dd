@@ -54,6 +54,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2017-04-02 Version 0.44.1,0.44.2
+ $(UL
+  $(LI fixed building private phobos with recent dmd)
+  $(LI fixed freeze during semantic analysis)
+  $(LI Fixed bad character inserted into the executable search path default)
+ )
+
 2017-03-12 Version 0.44
 $(UL
   $(LI $(VDLINK vcxproject, integration) with msbuild and Visual C/C++ projects)

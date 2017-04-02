@@ -1,5 +1,13 @@
 Ddoc
 
+$(H2 2017-04-02 Version 0.44.2)
+ $(UL
+  $(LI fixed building private phobos with recent dmd)
+  $(LI fixed freeze during semantic analysis)
+  $(LI bugzilla 17254: close and reopen completion box if results added)
+  $(LI fix link to build log: replace spaces with %20)
+ )
+
 $(H2 2017-03-12 Version 0.44.1)
  $(UL
   $(LI bugzilla 17252: Fixed bad character inserted into the executable search path default)

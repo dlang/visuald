@@ -856,3 +856,10 @@ Version history
 2017-03-13 Version 0.44.1
 
   * bugzilla 17252: Fixed bad character inserted into the executable search path default
+
+2017-02-04 Version 0.44.2
+
+  * fixed building private phobos with recent dmd
+  * fixed freeze during semantic analysis
+  * bugzilla 17254: close and reopen completion box if results added
+  * fix link to build log: replace spaces with %20
