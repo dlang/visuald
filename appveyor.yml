@@ -117,6 +117,8 @@ build_script:
   - set DMDINSTALLDIR=c:\projects\dmd2
   # build installer
   - cd visuald
+  # debug dbuild15
+  - dir "c:\Program Files (x86)\Microsoft Visual Studio\2017\"
   - nmake install_vs
 
 after_build:
