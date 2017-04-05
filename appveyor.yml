@@ -17,10 +17,10 @@ environment:
   matrix:
     - os: Visual Studio 2015
       VS: 14
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     - os: Visual Studio 2013
       VS: 12
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
 #matrix:
 #  allow_failures:
@@ -123,7 +123,7 @@ build_script:
   - cd visuald
   # debug dbuild15
   - if     "%VS%"=="15" nmake dbuild15
-  - if not "%VS%"=="15" nmake install_vs
+  - if not "%VS%"=="15" nmake install_vs_fake_dbuild15
 
 after_build:
   # publish as artifact
