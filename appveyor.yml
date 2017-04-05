@@ -17,8 +17,10 @@ environment:
   matrix:
     - os: Visual Studio 2015
       VS: 14
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     - os: Visual Studio 2013
       VS: 12
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 #matrix:
 #  allow_failures:
@@ -73,7 +75,8 @@ install:
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v optlinkDeps /t REG_DWORD /d 0 /reg:32 /f
   # Set environment variables
   - set PATH=c:\projects\dm\bin;%PATH%
-  - call "c:\Program Files (x86)\Microsoft Visual Studio %VS%.0\VC\vcvarsall.bat" x86
+  - if not "%VS%" == "15" call "c:\Program Files (x86)\Microsoft Visual Studio %VS%.0\VC\vcvarsall.bat" x86
+  - if     "%VS%" == "15" call "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
   # Print environment info
   - set
   - msbuild /version
@@ -113,13 +116,14 @@ build_script:
         7z x binutils-2.25.tar > $null
   - 'if "%VS%"=="12" echo #define snprintf _snprintf >binutils-2.25\config.h'
   - 'if "%VS%"=="14" echo // empty                   >binutils-2.25\config.h'
+  - 'if "%VS%"=="15" echo // empty                   >binutils-2.25\config.h'
   - set BINUTILS=c:\projects\binutils-2.25
   - set DMDINSTALLDIR=c:\projects\dmd2
   # build installer
   - cd visuald
   # debug dbuild15
-  - dir "c:\Program Files (x86)\Microsoft Visual Studio\2017\"
-  - nmake install_vs
+  - if     "%VS%"=="15" nmake dbuild15
+  - if not "%VS%"=="15" nmake install_vs
 
 after_build:
   # publish as artifact
