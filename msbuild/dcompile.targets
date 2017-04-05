@@ -172,11 +172,14 @@
 
   <Target Name="DCompilePatchLinkInput" Condition="'@(DCompile)' != ''">
 
+    <!--<Message Text="DCompilePatchLinkInput: PlatformToolsetVersion = $(PlatformToolsetVersion)" Importance="high" /> -->
+      
     <ItemGroup Condition="'$(DCompiler)' == 'DMD'">
       <Link>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(DMDInstallDir)\windows\lib32mscoff;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(DMDInstallDir)\windows\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
+        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '141'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
     </ItemGroup>
     <ItemGroup Condition="'$(DCompiler)' == 'LDC'">
@@ -184,6 +187,7 @@
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(LDCInstallDir)\lib32;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
+        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '141'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
     </ItemGroup>
     

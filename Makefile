@@ -184,7 +184,7 @@ install: all cpp2d_exe idl2d_exe
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
 install_vs: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago dcxxfilt \
-	dbuild12 dbuild14 install_only
+	dbuild12 dbuild14 dbuild15 install_only
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads
