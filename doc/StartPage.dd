@@ -56,6 +56,7 @@ $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 
 2017-04-02 Version 0.44.1,0.44.2
  $(UL
+  $(LI added VC project integration for VS2017)
   $(LI fixed building private phobos with recent dmd)
   $(LI fixed freeze during semantic analysis)
   $(LI Fixed bad character inserted into the executable search path default)

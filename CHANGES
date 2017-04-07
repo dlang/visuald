@@ -863,3 +863,4 @@ Version history
   * fixed freeze during semantic analysis
   * bugzilla 17254: close and reopen completion box if results added
   * fix link to build log: replace spaces with %20
+  * added VC project integration for VS2017
