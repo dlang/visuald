@@ -160,6 +160,10 @@ dbuild14:
 dbuild15:
 	cd msbuild\dbuild && devenv /Build "Release-v15|AnyCPU" /Project "dbuild" dbuild.sln
 
+fake_dbuild15:
+	if not exist msbuild\dbuild\obj\release-v15\nul md msbuild\dbuild\obj\release-v15
+	if not exist msbuild\dbuild\obj\release-v15\dbuild.15.0.dll echo dummy >msbuild\dbuild\obj\release-v15\dbuild.15.0.dll
+
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
 	cd ..\..\mago && devenv /Build "Release|x64" /Project "MagoRemote" magodbg_2010.sln
@@ -183,8 +187,12 @@ install: all cpp2d_exe idl2d_exe
 	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
 	"$(ZIP)" -j ..\downloads\visuald_pdb.zip bin\release\visuald.pdb bin\release\vdserver.pdb
 
-install_vs: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago dcxxfilt \
-	dbuild12 dbuild14 install_only
+install_vs: install_modules dbuild15 install_only
+
+install_vs_fake_dbuild15: install_modules fake_dbuild15 install_only
+
+install_modules: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago dcxxfilt \
+	dbuild12 dbuild14
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads

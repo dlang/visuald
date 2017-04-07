@@ -719,6 +719,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 	TextSpan mInitialExtent;
 	bool mIsCommitted;
 	bool mWasUnique;
+	int mLastDeclCount;
 
 	this(ImageList imageList, Source source)
 	{
@@ -739,14 +740,17 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 	void Init(IVsTextView textView, Declarations declarations, bool completeWord)
 	{
-		//Close();
+		if (mLastDeclCount < declarations.GetCount())
+			Close(); // without closing first, the box does not update its width
+
 		mTextView = textView;
 		mDecls = declarations;
 		mCompleteWord = completeWord;
 
 		//check if we have members
-		int count = mDecls.GetCount();
-		if (count <= 0) return;
+		mLastDeclCount = mDecls.GetCount();
+		if (mLastDeclCount <= 0)
+			return;
 
 		//initialise and refresh
 		UpdateCompletionFlags flags = UCS_NAMESCHANGED;
@@ -793,6 +797,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 		mTextView = null;
 		mDecls = null;
+		mLastDeclCount = 0;
 	}
 
 

@@ -304,6 +304,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\ di.ico
   ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
+  ${File} ..\msbuild\dbuild\obj\release-v15\ dbuild.15.0.dll
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
 
@@ -501,7 +502,19 @@ ${MementoSectionEnd}
 
 ;--------------------------------
 !ifdef MSBUILD
-${MementoSection} "Register MSBuild extensions for VS 2013/2015" SecMSBuild
+${MementoSection} "Register MSBuild extensions for VS 2013/15/17" SecMSBuild
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
+  IfErrors NoVS2017
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "Win32"
+    ${RegisterIcons} "15.0"
+
+    !define V150_GENERAL_XML "$1\Common7\IDE\VC\VCTargets\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V150_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.15.0.xml'
+
+  NoVS2017:
 
   ReadRegStr $1 HKLM "SOFTWARE\Microsoft\MSBuild\ToolsVersions\14.0" MSBuildToolsRoot
   IfErrors NoMSBuild14

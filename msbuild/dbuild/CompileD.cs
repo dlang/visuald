@@ -369,7 +369,7 @@ namespace dbuild
             if (upToDateSources != null)
             {
                 string cmdLine = GenerateCommandLineCommands(VCToolTask.CommandLineFormat.ForTracking
-#if TOOLS_V14
+#if TOOLS_V14 || TOOLS_V15
                     , EscapeFormat.Default
 #endif
                     );
@@ -389,12 +389,12 @@ namespace dbuild
         string CommandLine;
 
         protected override string GenerateCommandLineCommands(VCToolTask.CommandLineFormat format
-#if TOOLS_V14
+#if TOOLS_V14 || TOOLS_V15
                                                               , VCToolTask.EscapeFormat escapeFormat
 #endif
         ) {
             string str = base.GenerateResponseFileCommands(format
-#if TOOLS_V14
+#if TOOLS_V14 || TOOLS_V15
                 , escapeFormat
 #endif
                 );
