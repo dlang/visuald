@@ -210,7 +210,7 @@
   <lib>1</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
+  <singleFileCompilation>3</singleFileCompilation>
   <oneobj>0</oneobj>
   <mscoff>0</mscoff>
   <trace>0</trace>
@@ -301,9 +301,9 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions />
+  <additionalOptions>-of$(IntDir)\$(ProjectName).obj</additionalOptions>
   <preBuildCommand />
-  <postBuildCommand />
+  <postBuildCommand>dmd -lib $(IntDir)\$(ProjectName).obj -of$(OutDir)\$(ProjectName).lib</postBuildCommand>
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Config name="Debug GDC" platform="Win32">

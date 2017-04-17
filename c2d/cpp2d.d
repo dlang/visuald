@@ -2678,7 +2678,7 @@ class Cpp2DConverter
 		// cannot remove decl immediately, because iterators in iterateTopLevelDeclarations will become invalid
 		declsToRemove ~= decl;
 
-		currentSource._ast.verify();
+		decl._parent.verify();
 	}
 
 	void moveAllMethods()
@@ -2996,7 +2996,7 @@ string testDmdGen(string txt, int countRemove = 1, int countNoImpl = 0, TokenLis
 
 	TokenList tokenList = scanText(txt);
 
-	if(defines is null)
+	if(defines !is null)
 	{
 		expandPPdefines(tokenList, defines, MixinMode.ExpandDefine);
 		rescanPP(tokenList);
@@ -3750,7 +3750,7 @@ unittest
 		;
 	string exp =
 		  "enum A = 1;\n"
-		~ "alias B A;\n"
+		~ "alias A B;\n"
 		~ " auto C(  )() { return B*B; }\n"
 		~ " auto SQR(  ARG1 )(ARG1 a) { return a*a; }\n"
 		;
@@ -3771,10 +3771,14 @@ void cpp2d_test()
 		;
 
 //	PP.expandConditionals["EXP"] = true;
-	TokenList[string] defines = [ "EXP" : scanText("1") ];
 
-	string res = testDmdGen(txt, 0, 0, defines);
+	string res = testDmdGen(txt, 0, 0, null);
 	assert(res == exp);
+
+	TokenList[string] defines = [ "EXP" : scanText("1") ];
+	string exp2 = "enum WSL = 1; // comment\n";
+	string res2 = testDmdGen(txt, 0, 0, defines);
+	assert(res2 == exp2);
 
 	PP.expandConditionals = PP.expandConditionals.init;
 }
