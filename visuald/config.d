@@ -403,8 +403,9 @@ class ProjectOptions
 			cmd = quoteNormalizeFilename(program);
 		else
 			cmd = "dmd";
-		if(performLink && Package.GetGlobalOptions().demangleError)
-			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
+		string memstats = Package.GetGlobalOptions().showMemUsage ? "-memStats " : null;
+		if(memstats || (performLink && Package.GetGlobalOptions().demangleError))
+			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ memstats ~ cmd;
 
 		cmd ~= dmdCommonCompileOptions();
 
@@ -501,8 +502,9 @@ class ProjectOptions
 		else
 			cmd = "gdc";
 
-		if(performLink && Package.GetGlobalOptions().demangleError)
-			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" -gdcmode " ~ cmd;
+		string memstats = Package.GetGlobalOptions().showMemUsage ? "-memStats " : null;
+		if(memstats ||(performLink && Package.GetGlobalOptions().demangleError))
+			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" -gdcmode " ~ memstats ~ cmd;
 
 //		if(lib && performLink)
 //			cmd ~= " -lib";
@@ -628,8 +630,10 @@ class ProjectOptions
 			cmd = quoteNormalizeFilename(program);
 		else
 			cmd = "ldc2";
-		if(performLink && Package.GetGlobalOptions().demangleError)
-			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ cmd;
+
+		string memstats = Package.GetGlobalOptions().showMemUsage ? "-memStats " : null;
+		if(memstats || (performLink && Package.GetGlobalOptions().demangleError))
+			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ memstats ~ cmd;
 
 		if(lib == OutputType.StaticLib && performLink)
 			cmd ~= " -lib -oq -od=\"$(IntDir)\"";
@@ -2929,6 +2933,12 @@ class Config :	DisposingComObject,
 			opts.exefile = "$(OutDir)\\" ~ baseName(stripExtension(outfile)) ~ ".exe";
 
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
+			// add environment in case sc.ini was not patched to a specific VS version
+			cmd ~= "set VCINSTALLDIR=$(VCINSTALLDIR)\n";
+			cmd ~= "set VSINSTALLDIR=$(VSINSTALLDIR)\n";
+			cmd ~= "set WindowsSdkDir=$(WindowsSdkDir)\n";
+			cmd ~= "set UniversalCRTSdkDir=$(UCRTSDKDIR)\n";
+			cmd ~= "set UCRTVersion=$(UCRTVERSION)\n";
 			cmd ~= opts.buildCommandLine(true, !syntaxOnly, false, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";

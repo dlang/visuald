@@ -2091,6 +2091,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
 		AddControl("", mShowUptodate  = new CheckBox(mCanvas, "Show why a target is rebuilt"));
 		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
+		AddControl("", mShowMemUsage  = new CheckBox(mCanvas, "Show compiler memory usage"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddHorizontalLine();
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"));
@@ -2115,6 +2116,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		mStopSlnBuild.setChecked(opts.stopSolutionBuild);
 		mDemangleError.setChecked(opts.demangleError);
 		mOptlinkDeps.setChecked(opts.optlinkDeps);
+		mShowMemUsage.setChecked(opts.showMemUsage);
 		//mDeleteFiles.setSelection(opts.deleteFiles + 1);
 		mIncPath.setText(opts.IncSearchPath);
 		mJSNPath.setText(opts.JSNSearchPath);
@@ -2132,6 +2134,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild);
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError);
 		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps);
+		changes += changeOption(mShowMemUsage.isChecked(), opts.showMemUsage, refopts.showMemUsage);
 		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles);
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath);
 		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath);
@@ -2147,6 +2150,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	CheckBox mStopSlnBuild;
 	CheckBox mDemangleError;
 	CheckBox mOptlinkDeps;
+	CheckBox mShowMemUsage;
 	//ComboBox mDeleteFiles;
 	Text mIncPath;
 	Text mCompileAndRunOpts;

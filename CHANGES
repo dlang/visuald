@@ -864,3 +864,8 @@ Version history
   * bugzilla 17254: close and reopen completion box if results added
   * fix link to build log: replace spaces with %20
   * added VC project integration for VS2017
+
+unreleased Version 0.45.0
+
+  * added option to monitor memory usage of the compiler
+  * fixed Compile and Run/Debug if building through MS-COFF and not having VS selected in sc.ini

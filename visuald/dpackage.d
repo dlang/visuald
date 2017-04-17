@@ -1213,6 +1213,7 @@ class GlobalOptions
 	bool showUptodateFailure;
 	bool demangleError = true;
 	bool optlinkDeps = true;
+	bool showMemUsage = false;
 	bool autoOutlining;
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
 	bool parseSource;
@@ -1480,6 +1481,7 @@ class GlobalOptions
 			showUptodateFailure = getBoolOpt("showUptodateFailure", false);
 			demangleError       = getBoolOpt("demangleError", true);
 			optlinkDeps         = getBoolOpt("optlinkDeps", true);
+			showMemUsage        = getBoolOpt("showMemUsage", false);
 			autoOutlining       = getBoolOpt("autoOutlining", true);
 			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
 			parseSource         = getBoolOpt("parseSource", true);
@@ -1701,6 +1703,7 @@ class GlobalOptions
 			keyToolOpts.Set("showUptodateFailure", showUptodateFailure);
 			keyToolOpts.Set("demangleError",       demangleError);
 			keyToolOpts.Set("optlinkDeps",         optlinkDeps);
+			keyToolOpts.Set("showMemUsage",        showMemUsage);
 			keyToolOpts.Set("autoOutlining",       autoOutlining);
 			keyToolOpts.Set("deleteFiles",         deleteFiles);
 			keyToolOpts.Set("parseSource",         parseSource);

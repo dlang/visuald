@@ -61,6 +61,7 @@ int main(string[] argv)
 	bool gdcMode = false; //gcc linker
 	bool msMode = false; //microsoft linker
 	bool verbose = false;
+	bool memStats = false;
 
 	while (argv.length >= skipargs + 2)
 	{
@@ -87,6 +88,11 @@ int main(string[] argv)
 		else if(argv[skipargs + 1] == "-verbose")
 		{
 			verbose = true;
+			skipargs++;
+		}
+		else if(argv[skipargs + 1] == "-memStats")
+		{
+			memStats = true;
 			skipargs++;
 		}
 		else if(argv[skipargs + 1] == "-deps")
@@ -144,7 +150,7 @@ int main(string[] argv)
 	if(verbose)
 		printf("Command: %.*s\n", command.length, command.ptr);
 
-	int exitCode = runProcess(command, inject ? depsfile : null, doDemangle, demangleAll, gdcMode, msMode);
+	int exitCode = runProcess(command, inject ? depsfile : null, doDemangle, demangleAll, gdcMode, msMode, memStats);
 
 	if (exitCode == 0 && trackfile.length > 0)
 	{
@@ -187,7 +193,7 @@ int main(string[] argv)
 	return exitCode;
 }
 
-int runProcess(string command, string depsfile, bool doDemangle, bool demangleAll, bool gdcMode, bool msMode)
+int runProcess(string command, string depsfile, bool doDemangle, bool demangleAll, bool gdcMode, bool msMode, bool memStats)
 {
 	HANDLE hStdOutRead;
 	HANDLE hStdOutWrite;
@@ -305,6 +311,17 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 		}
 		Sleep(5);
 	}
+
+	if (memStats)
+		if (auto fun = getProcessMemoryInfoFunc())
+		{
+			string procName = getProcessName(piProcInfo.hProcess);
+			PROCESS_MEMORY_COUNTERS memCounters;
+			bSuccess = fun(piProcInfo.hProcess, &memCounters, memCounters.sizeof);
+			if (bSuccess)
+				printf("%s used %lld MB of private memory\n", procName.ptr,
+					   cast(long)memCounters.PeakPagefileUsage >> 20);
+		}
 
 	//close the handles to the process
 	CloseHandle(hStdInWrite);
@@ -691,6 +708,32 @@ typeof(CreateRemoteThread)* getCreateRemoteThreadFunc ()
 	return cast(typeof(CreateRemoteThread)*)proc;
 }
 
+typeof(GetProcessMemoryInfo)* getProcessMemoryInfoFunc ()
+{
+	HMODULE mod = GetModuleHandleA("psapi");
+	if (!mod)
+		mod = LoadLibraryA("psapi.dll");
+	auto proc = GetProcAddress(mod, "GetProcessMemoryInfo");
+	return cast(typeof(GetProcessMemoryInfo)*)proc;
+}
+
+string getProcessName(HANDLE process)
+{
+	HMODULE mod = GetModuleHandleA("psapi");
+	if (!mod)
+		mod = LoadLibraryA("psapi.dll");
+	auto proc = GetProcAddress(mod, "GetProcessImageFileNameW");
+	if (!proc)
+		return "child process";
+	wchar[260] imageName;
+	auto fn = cast(typeof(GetProcessImageFileNameW)*)proc;
+	DWORD len = fn(process, imageName.ptr, imageName.length);
+	if (len == 0)
+		return "child process";
+	auto pos = lastIndexOf(imageName[0..len], '\\');
+	return to!string(imageName[pos+1..len]);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 extern(C)
 {
@@ -784,6 +827,20 @@ extern(C)
 		WORD    SizeOfOptionalHeader;
 		WORD    Characteristics;
 	}
+
+	struct PROCESS_MEMORY_COUNTERS
+	{
+		DWORD  cb;
+		DWORD  PageFaultCount;
+		SIZE_T PeakWorkingSetSize;
+		SIZE_T WorkingSetSize;
+		SIZE_T QuotaPeakPagedPoolUsage;
+		SIZE_T QuotaPagedPoolUsage;
+		SIZE_T QuotaPeakNonPagedPoolUsage;
+		SIZE_T QuotaNonPagedPoolUsage;
+		SIZE_T PagefileUsage;
+		SIZE_T PeakPagefileUsage;
+	}
 }
 
 extern(System)
@@ -819,6 +876,14 @@ extern(System)
 					   LPDWORD lpBytesLeftThisMessage);
 
 	UINT GetKBCodePage();
+
+	DWORD GetProcessImageFileNameW(HANDLE hProcess,
+								  LPWSTR lpImageFileName,
+								  DWORD  nSize);
+
+	BOOL GetProcessMemoryInfo(HANDLE  Process,
+							  PROCESS_MEMORY_COUNTERS* ppsmemCounters,
+							  DWORD cb);
 }
 
 enum uint HANDLE_FLAG_INHERIT = 0x00000001;
