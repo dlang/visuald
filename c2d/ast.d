@@ -1755,10 +1755,11 @@ class Statement : AST
 			break;
 
 		case Token.Default:
-			// treat as label, just skip and reparse
+			// treat as empty statement, though it should be a label
 			nextToken(tokIt);
 			checkToken(tokIt, Token.Colon);
-			goto L_reparse;
+			stmt = new Statement(type);
+			break;
 
 		case Token.Case:
 			// treat as statement, though it should be a label
