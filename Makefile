@@ -162,6 +162,7 @@ dbuild15:
 
 fake_dbuild15:
 	if not exist msbuild\dbuild\obj\release-v15\nul md msbuild\dbuild\obj\release-v15
+	if exist "$(PROGRAMFILES)\VisualD\msbuild\dbuild.15.0.dll" copy "$(PROGRAMFILES)\VisualD\msbuild\dbuild.15.0.dll" msbuild\dbuild\obj\release-v15
 	if not exist msbuild\dbuild\obj\release-v15\dbuild.15.0.dll echo dummy >msbuild\dbuild\obj\release-v15\dbuild.15.0.dll
 
 mago:
