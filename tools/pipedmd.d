@@ -265,7 +265,7 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 		InjectDLL(piProcInfo.hProcess, depsfile);
 	ResumeThread(piProcInfo.hThread);
 
-	char[] buffer = new char[2048];
+	ubyte[] buffer = new ubyte[2048];
 	size_t bytesFilled = 0;
 	DWORD bytesAvailable = 0;
 	DWORD bytesRead = 0;
@@ -332,7 +332,7 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	return exitCode;
 }
 
-void demangleLine(char[] output, bool doDemangle, bool demangleAll, bool msMode, bool gdcMode, int cp, ref bool linkerFound)
+void demangleLine(ubyte[] output, bool doDemangle, bool demangleAll, bool msMode, bool gdcMode, int cp, ref bool linkerFound)
 {
 	if (output.length && output[$-1] == '\n')  //remove trailing \n
 		output = output[0 .. $-1];
@@ -345,15 +345,15 @@ void demangleLine(char[] output, bool doDemangle, bool demangleAll, bool msMode,
 	if(msMode) //the microsoft linker outputs the error messages in the default ANSI codepage so we need to convert it to UTF-8
 	{
 		static WCHAR[] decodeBufferWide;
-		static char[] decodeBuffer;
+		static ubyte[] decodeBuffer;
 
 		if(decodeBufferWide.length < output.length + 1)
 		{
 			decodeBufferWide.length = output.length + 1;
 			decodeBuffer.length = 2 * output.length + 1;
 		}
-		auto numDecoded = MultiByteToWideChar(CP_ACP, 0, output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
-		auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, decodeBuffer.ptr, decodeBuffer.length, null, null);
+		auto numDecoded = MultiByteToWideChar(CP_ACP, 0, cast(char*)output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
+		auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, cast(char*)decodeBuffer.ptr, decodeBuffer.length, null, null);
 		output = decodeBuffer[0..numEncoded];
 	}
 	size_t writepos = 0;
@@ -392,7 +392,7 @@ void demangleLine(char[] output, bool doDemangle, bool demangleAll, bool msMode,
 	fputc('\n', stdout);
 }
 
-void processLine(char[] output, ref size_t writepos, bool optlink, int cp)
+void processLine(ubyte[] output, ref size_t writepos, bool optlink, int cp)
 {
 	for(int p = 0; p < output.length; p++)
 	{
@@ -402,7 +402,7 @@ void processLine(char[] output, ref size_t writepos, bool optlink, int cp)
 			while(p < output.length && isIdentifierChar(output[p]))
 				p++;
 
-			auto symbolName = output[q..p];
+			auto symbolName = cast(const(char)[]) output[q..p];
 			const(char)[] realSymbolName = symbolName;
 			if(optlink)
 			{
