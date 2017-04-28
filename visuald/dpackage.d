@@ -51,6 +51,7 @@ import visuald.library;
 import visuald.pkgutil;
 import visuald.colorizer;
 import visuald.dllmain;
+import visuald.taskprovider;
 import visuald.vdserverclient;
 import xml = visuald.xmlwrap;
 
@@ -363,6 +364,17 @@ class Package : DisposingComObject,
 					mComponentID = 0;
 				}
 			}
+			if (mTaskProviderCookie != 0)
+			{
+				if (auto taskList = queryService!(IVsTaskList))
+				{
+					scope(exit) release(taskList);
+					taskList.UnregisterTaskProvider(mTaskProviderCookie);
+					mTaskProvider = null;
+					mTaskProviderCookie = 0;
+				}
+			}
+
 			mHostSP = release(mHostSP);
 		}
 		return S_OK;
@@ -497,6 +509,16 @@ version(none)
 			}
 		}
 		InitLibraryManager();
+
+		if (auto taskList = queryService!(IVsTaskList))
+		{
+			scope(exit) release(taskList);
+			mTaskProvider = newCom!TaskProvider;
+			if (taskList.RegisterTaskProvider (mTaskProvider, &mTaskProviderCookie) != S_OK)
+				mTaskProvider = null;
+			else
+				taskList.RefreshTasks(mTaskProviderCookie);
+		}
 
 		return S_OK; // E_NOTIMPL;
 	}
@@ -1116,6 +1138,12 @@ version(none)
 		return s_instance.mProjFactory;
 	}
 
+	static TaskProvider GetTaskProvider()
+	{
+		assert(s_instance);
+		return s_instance.mTaskProvider;
+	}
+
 	static GlobalOptions GetGlobalOptions()
 	{
 		assert(s_instance);
@@ -1140,6 +1168,15 @@ version(none)
 		s_instance.mWantsUpdateLibInfos = true;
 	}
 
+	static void RefreshTaskList()
+	{
+		if (auto taskList = queryService!(IVsTaskList))
+		{
+			taskList.RefreshTasks(s_instance.mTaskProviderCookie);
+			release(taskList);
+		}
+	}
+
 private:
 	IServiceProvider mHostSP;
 	uint             mLangServiceCookie;
@@ -1149,6 +1186,9 @@ private:
 
 	LanguageService  mLangsvc;
 	ProjectFactory   mProjFactory;
+
+	TaskProvider     mTaskProvider;
+	uint             mTaskProviderCookie;
 
 	uint             mOmLibraryCookie;
 

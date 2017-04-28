@@ -3800,7 +3800,8 @@ else
 		return startParsing(false, true);
 	}
 
-	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn)
+	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn,
+								  string tasks)
 	{
 		updateParseErrors(parseErrors);
 		mBinaryIsIn = binaryIsIn;
@@ -3810,6 +3811,7 @@ else
 			foreach(pos; mBinaryIsIn)
 				colorState.ReColorizeLines(pos.line - 1, pos.line - 1);
 		}
+		Package.GetTaskProvider().updateTaskItems(filename, tasks);
 	}
 
 	void updateParseErrors(string err)

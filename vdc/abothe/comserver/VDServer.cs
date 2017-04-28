@@ -44,14 +44,16 @@ namespace DParserCOMServer
 		void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr);
 		void GetSemanticExpansionsResult(out string stringList);
 		void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp);
-		void GetParseErrors(string filename, out string errors);
+        void GetParseErrors(string filename, out string errors);
 		void GetBinaryIsInLocations(string filename, out uint[] locs); // array of pairs of DWORD
 		void GetLastMessage(out string message);
 		void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex);
 		void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename);
 		void GetReferences(string filename, string tok, uint line, uint idx, string expr);
         void GetReferencesResult(out string stringList);
-	}
+        void ConfigureCommentTasks(string tasks);
+        void GetCommentTasks(string filename, out string tasks);
+    }
 
 	class NodeToolTipContentGen : NodeTooltipRepresentationGen
 	{
@@ -131,6 +133,8 @@ namespace DParserCOMServer
 		private string _debugIds;
 		private uint   _flags;
 
+        private string[] _taskTokens;
+
 		private static uint _activityCounter;
 
         public static uint Activity { get { return _activityCounter; } }
@@ -143,7 +147,7 @@ namespace DParserCOMServer
 		public DModule GetModule(string fileName)
 		{
 			DModule mod;
-			mod = GlobalParseCache.GetModule (fileName);
+			mod = GlobalParseCache.GetModule(fileName);
             if (mod == null)
                 _modules.TryGetValue(fileName, out mod);
             return mod;
@@ -226,7 +230,7 @@ namespace DParserCOMServer
 			DModule ast;
 			try
 			{
-				ast = DParser.ParseString(srcText, false);
+				ast = DParser.ParseString(srcText, false, true, _taskTokens);
 			}
 			catch(Exception ex)
 			{
@@ -463,29 +467,49 @@ namespace DParserCOMServer
 			var asterrors = ast.ParseErrors;
 			
 			string errs = "";
-			int cnt = asterrors.Count();
-			for (int i = 0; i < cnt; i++)
-			{
-				var err = asterrors[i];
+            foreach (var err in asterrors)
 				errs += String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Line, err.Location.Column - 1, err.Location.Line, err.Location.Column, err.Message);
-			}
 			errors = errs;
 			//MessageBox.Show("GetParseErrors()");
 			//throw new COMException("No Message", 1);
 		}
 
-        public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
-        {
-            filename = normalizePath(filename);
-            var ast = GetModule(filename);
+		public void ConfigureCommentTasks(string tasks)
+		{
+			_taskTokens = tasks.Split('\n');
+			GlobalParseCache.TaskTokens = _taskTokens;
+		}
 
-            if (ast == null)
-                throw new COMException("module not found", 1);
+		public void GetCommentTasks(string filename, out string tasks)
+		{
+			filename = normalizePath(filename);
+			var ast = GetModule(filename);
 
-            //MessageBox.Show("IsBinaryOperator()");
-            throw new NotImplementedException();
-        }
-        public void GetBinaryIsInLocations(string filename, out uint[] locs) // array of pairs of DWORD
+			if (ast == null)
+				throw new COMException("module not found", 1);
+
+			string tsks = "";
+			if (ast.Tasks != null)
+			foreach (var task in ast.Tasks)
+				tsks += String.Format("{0},{1}:{2}\n", task.Location.Line, task.Location.Column - 1, task.Message);
+
+			tasks = tsks;
+			//MessageBox.Show("GetCommentTasks()");
+			//throw new COMException("No Message", 1);
+		}
+
+		public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
+		{
+			filename = normalizePath(filename);
+			var ast = GetModule(filename);
+
+			if (ast == null)
+				throw new COMException("module not found", 1);
+
+			//MessageBox.Show("IsBinaryOperator()");
+			throw new NotImplementedException();
+		}
+		public void GetBinaryIsInLocations(string filename, out uint[] locs) // array of pairs of DWORD
 		{
 			//MessageBox.Show("GetBinaryIsInLocations()");
 			locs = null;

@@ -176,6 +176,22 @@ public:
 	// and that the status can be polled by GetReferencesResult
 	HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr);
 	HRESULT GetReferencesResult(BSTR* stringList);
+
+	// set the comment tasks tokens used to populate the task list
+	//
+	// tasks:     \n separated list of identifiers (letter, digit, '_' or '@')
+	HRESULT ConfigureCommentTasks(in BSTR tasks);
+
+	// return the comment tasks found in the file
+	//
+	// filename:   file name
+	// errors: new-line delimited list of tasks, each line has the format:
+	//        startLine,startIndex,:  task text
+	//
+	// the tasks will be inserted into the task list window
+	//
+	// return S_FALSE as long as the parsing is still running
+	HRESULT GetCommentTasks(in BSTR filename, BSTR* tasks);
 }
 
 ///////////////////////////////////////////////////////////////////////

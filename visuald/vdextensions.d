@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
+
 module visuald.vdextensions;
 
 import sdk.port.base;

@@ -59,6 +59,7 @@ version(enableLog) {
 		s ~= replicate(" ", gLogIndent);
 
 		try {
+			import std.format;
 			s ~= std.format.format(fmt, args);
 		}
 		catch(Exception e)
