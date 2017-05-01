@@ -1456,6 +1456,19 @@ class GlobalOptions
 		return dir ~ sub;
 	}
 
+	void detectDMDInstallDir()
+	{
+		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false);
+		DMD.InstallDir = toUTF8(keyVD.GetString("DMDInstallDir"));
+		if(DMD.InstallDir.empty)
+		{
+			scope RegKey keyDMD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\DMD", false);
+			string dir = toUTF8(keyDMD.GetString("InstallationFolder"));
+			if(!dir.empty)
+				DMD.InstallDir = dir ~ "\\dmd2";
+		}
+	}
+
 	bool initFromRegistry()
 	{
 		if(!getRegistryRoot())
@@ -1480,6 +1493,7 @@ class GlobalOptions
 			detectUCRT();
 			detectVSInstallDir();
 			detectVCInstallDir();
+			detectDMDInstallDir();
 
 			//UtilMessageBox("getVCDir = " ~ getVCDir("lib\\legacy_stdio_definitions.lib", true, true)
 			//UtilMessageBox("VSInstallDir = "~VSInstallDir ~"\n" ~
@@ -1583,7 +1597,8 @@ class GlobalOptions
 			{
 				enum bool dmd = compiler == "DMD";
 				enum string prefix = dmd ? "" : compiler ~ ".";
-				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
+				if (auto dir = getStringOpt(compiler ~ "InstallDir"))
+					opt.InstallDir = dir;
 
 				opt.ExeSearchPath   = getPathsOpt(prefix ~ "ExeSearchPath", opt.ExeSearchPath);
 				opt.LibSearchPath   = getPathsOpt(prefix ~ "LibSearchPath", opt.LibSearchPath);

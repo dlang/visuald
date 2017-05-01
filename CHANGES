@@ -869,3 +869,7 @@ unreleased Version 0.45.0
 
   * added option to monitor memory usage of the compiler
   * fixed Compile and Run/Debug if building through MS-COFF and not having VS selected in sc.ini
+  * mago: fixed memory leaks that could also prohibit compilation due to PDB filee still open
+  * DParser: added support for function attributes @nogc and scope, align(expression)
+  * added task list support for files loaded into the editor
+  * read default DMD installation path from Visual D registry key, not VS registry hive
