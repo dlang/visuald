@@ -395,7 +395,7 @@ class Package : DisposingComObject,
 	{
 		mixin(LogCallMix2);
 
-		GlobalPropertyPage tpp;
+		ResizablePropertyPage tpp;
 		if(*rguidPage == g_DmdDirPropertyPage)
 			tpp = newCom!DmdDirPropertyPage(mOptions);
 		else if(*rguidPage == g_GdcDirPropertyPage)
@@ -408,6 +408,8 @@ class Package : DisposingComObject,
 			tpp = newCom!ColorizerPropertyPage(mOptions);
 		else if(*rguidPage == g_IntellisensePropertyPage)
 			tpp = newCom!IntellisensePropertyPage(mOptions);
+		else if(*rguidPage == g_MagoPropertyPage)
+			tpp = newCom!MagoPropertyPage();
 		else
 			return E_NOTIMPL;
 

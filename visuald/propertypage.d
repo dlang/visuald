@@ -11,6 +11,7 @@ module visuald.propertypage;
 import visuald.windows;
 
 import sdk.win32.objbase;
+import sdk.win32.winreg;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 
@@ -25,6 +26,7 @@ import visuald.hierarchy;
 import visuald.hierutil;
 import visuald.pkgutil;
 import visuald.chiernode;
+import visuald.register;
 
 import stdext.array;
 import stdext.path;
@@ -489,6 +491,19 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		mAttachY += resizeY;
 	}
 
+	void AddLabel(string lab)
+	{
+		auto w = new Label(mCanvas, lab);
+		int pageWidth = getWidgetWidth(mCanvas, kPageWidth);
+		int off = ((kLineHeight - kLineSpacing) - 16) / 2;
+		w.setRect(0, mLineY + off, pageWidth - 2*kMargin, kLineHeight - kLineSpacing);
+		Attachment att = kAttachLeftRight;
+		att.vdiv = 1000;
+		att.top = att.bottom = mAttachY;
+		addResizableWidget(w, att);
+		mLineY += kLineHeight;
+	}
+
 	void AddHorizontalLine()
 	{
 		auto w = new Label(mCanvas);
@@ -693,7 +708,17 @@ class NodePropertyPage : PropertyPage
 	}
 }
 
-class GlobalPropertyPage : PropertyPage
+class ResizablePropertyPage : PropertyPage
+{
+	void SetWindowSize(int x, int y, int w, int h)
+	{
+		mixin(LogCallMix);
+		if(mCanvas)
+			mCanvas.setRect(x, y, w, h);
+	}
+}
+
+class GlobalPropertyPage : ResizablePropertyPage
 {
 	abstract void SetControls(GlobalOptions options);
 	abstract int  DoApply(GlobalOptions options, GlobalOptions refoptions);
@@ -712,13 +737,6 @@ class GlobalPropertyPage : PropertyPage
 	GlobalOptions GetGlobalOptions()
 	{
 		return mOptions;
-	}
-
-	void SetWindowSize(int x, int y, int w, int h)
-	{
-		mixin(LogCallMix);
-		if(mCanvas)
-			mCanvas.setRect(x, y, w, h);
 	}
 
 	/*override*/ int IsPageDirty()
@@ -2308,6 +2326,96 @@ class IntellisensePropertyPage : GlobalPropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+struct MagoOptions
+{
+	bool hideInternalNames;
+	bool showStaticsInAggr;
+
+	void saveToRegistry()
+	{
+		scope RegKey keyMago = new RegKey(HKEY_CURRENT_USER, "SOFTWARE\\MagoDebugger", true);
+		keyMago.Set("hideInternalNames", hideInternalNames);
+		keyMago.Set("showStaticsInAggr", showStaticsInAggr);
+	}
+
+	void loadFromRegistry()
+	{
+		scope RegKey keyMago = new RegKey(HKEY_CURRENT_USER, "SOFTWARE\\MagoDebugger", false);
+		hideInternalNames = (keyMago.GetDWORD("hideInternalNames", 0) != 0);
+		showStaticsInAggr = (keyMago.GetDWORD("showStaticsInAggr", 0) != 0);
+	}
+}
+
+class MagoPropertyPage : ResizablePropertyPage
+{
+	override string GetCategoryName() { return "Debugging"; }
+	override string GetPageName() { return "Mago"; }
+
+	MagoOptions mOptions;
+
+	override void CreateControls()
+	{
+		AddLabel("Changes to these settings only apply to new debugging sessions");
+		AddControl("", mHideInternalNames = new CheckBox(mCanvas, "Hide compiler generated symbols"));
+		AddControl("", mShowStaticsInAggr = new CheckBox(mCanvas, "Show static fields in structs and classes"));
+	}
+
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+
+	override void UpdateControls()
+	{
+		SetControls();
+		EnableControls();
+	}
+
+	/*override*/ int IsPageDirty()
+	{
+		mixin(LogCallMix);
+		if(mWindow)
+		{
+			MagoOptions opt;
+			return DoApply(opt, mOptions) > 0 ? S_OK : S_FALSE;
+		}
+		return S_FALSE;
+	}
+
+	/*override*/ int Apply()
+	{
+		mixin(LogCallMix);
+
+		DoApply(mOptions, mOptions);
+		mOptions.saveToRegistry();
+		return S_OK;
+	}
+
+	void EnableControls()
+	{
+	}
+
+	void SetControls()
+	{
+		mOptions.loadFromRegistry();
+		mHideInternalNames.setChecked(mOptions.hideInternalNames);
+		mShowStaticsInAggr.setChecked(mOptions.showStaticsInAggr);
+	}
+
+	int DoApply(ref MagoOptions opts, ref MagoOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mHideInternalNames.isChecked(), opts.hideInternalNames, refopts.hideInternalNames);
+		changes += changeOption(mShowStaticsInAggr.isChecked(), opts.showStaticsInAggr, refopts.showStaticsInAggr);
+		return changes;
+	}
+
+	CheckBox mHideInternalNames;
+	CheckBox mShowStaticsInAggr;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // more guids in dpackage.d starting up to 980f
 const GUID    g_GeneralPropertyPage      = uuid("002a2de9-8bb6-484d-9810-7e4ad4084715");
 const GUID    g_DmdGeneralPropertyPage   = uuid("002a2de9-8bb6-484d-9811-7e4ad4084715");
@@ -2332,6 +2440,7 @@ const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad40
 // registered under Languages\\Language Services\\D\\EditorToolsOptions\\Colorizer, created explicitely by package
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");
 const GUID    g_IntellisensePropertyPage = uuid("002a2de9-8bb6-484d-9823-7e4ad4084715");
+const GUID    g_MagoPropertyPage         = uuid("002a2de9-8bb6-484d-9826-7e4ad4084715");
 
 const GUID*[] guids_propertyPages =
 [
