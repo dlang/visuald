@@ -989,7 +989,7 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
-		//AddControl("",                    mUseStandard = new CheckBox(mCanvas, "Use Standard Import Paths"));
+		AddControl("",                    mDepImports = new CheckBox(mCanvas, "Add import paths of project dependencies"));
 		auto btn = new Button(mCanvas, "+", ID_IMPORTPATH);
 		AddControl("Additional Import Paths", mAddImports = new Text(mCanvas), btn);
 		btn = new Button(mCanvas, "+", ID_STRINGIMPORTPATH);
@@ -1018,8 +1018,7 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		//mUseStandard.setChecked(true);
-		//mUseStandard.setEnabled(false);
+		mDepImports.setChecked(options.addDepImp);
 
 		mAddImports.setText(options.imppath);
 		mStringImports.setText(options.fileImppath);
@@ -1037,6 +1036,7 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
 		int changes = 0;
+		changes += changeOption(mDepImports.isChecked(), options.addDepImp, refoptions.addDepImp);
 		changes += changeOption(mAddImports.getText(), options.imppath, refoptions.imppath);
 		changes += changeOption(mStringImports.getText(), options.fileImppath, refoptions.fileImppath);
 		changes += changeOption(mVersionIdentifiers.getText(), options.versionids, refoptions.versionids);
@@ -1049,7 +1049,7 @@ class DmdGeneralPropertyPage : ProjectPropertyPage
 		return changes;
 	}
 
-	//CheckBox mUseStandard;
+	CheckBox mDepImports;
 	Text mAddImports;
 	Text mStringImports;
 	Text mVersionIdentifiers;
@@ -1580,12 +1580,12 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 	{
 		if(ProjectOptions options = GetProjectOptions())
 			if(mCmdLine && mCmdLine.hwnd)
-				mCmdLine.setText(options.buildCommandLine(true, true, true));
+				mCmdLine.setText(options.buildCommandLine(GetConfig(), true, true, true));
 	}
 
 	override void SetControls(ProjectOptions options)
 	{
-		mCmdLine.setText(options.buildCommandLine(true, true, true));
+		mCmdLine.setText(options.buildCommandLine(GetConfig(), true, true, true));
 		mAddOpt.setText(options.additionalOptions);
 	}
 

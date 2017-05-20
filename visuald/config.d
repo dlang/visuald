@@ -183,6 +183,7 @@ class ProjectOptions
 	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
 	bool otherDMD;		// use explicit program path
 	bool ccTransOpt;	// translate D options to C where applicable
+	bool addDepImp;		// add import paths of dependent projects
 	string cccmd;		// C/C++ compiler command prefix
 	string program;		// program name
 	string imppath;		// array of char*'s of where to look for import modules
@@ -396,7 +397,7 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string buildDMDCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	string buildDMDCommandLine(Config cfg, bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -463,6 +464,9 @@ class ProjectOptions
 		}
 
 		string[] imports = tokenizeArgs(imppath);
+		if (addDepImp && cfg)
+			foreach(dep; cfg.getImportsFromDependentProjects())
+				imports.addunique(dep);
 		foreach(imp; imports)
 			if(strip(imp).length)
 				cmd ~= " -I" ~ quoteNormalizeFilename(strip(imp));
@@ -494,7 +498,7 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string buildGDCCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	string buildGDCCommandLine(Config cfg, bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -592,6 +596,9 @@ class ProjectOptions
 		}
 
 		string[] imports = tokenizeArgs(imppath);
+		if (addDepImp && cfg)
+			foreach(dep; cfg.getImportsFromDependentProjects())
+				imports.addunique(dep);
 		foreach(imp; imports)
 			if(strip(imp).length)
 				cmd ~= " -I" ~ quoteNormalizeFilename(strip(imp));
@@ -623,7 +630,7 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string buildLDCCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	string buildLDCCommandLine(Config cfg, bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -701,6 +708,9 @@ class ProjectOptions
 		}
 
 		string[] imports = tokenizeArgs(imppath);
+		if (addDepImp && cfg)
+			foreach(dep; cfg.getImportsFromDependentProjects())
+				imports.addunique(dep);
 		foreach(imp; imports)
 			if(strip(imp).length)
 				cmd ~= " -I=" ~ quoteNormalizeFilename(strip(imp));
@@ -732,18 +742,18 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string buildCommandLine(bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	string buildCommandLine(Config cfg, bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
 	{
 		if(compiler == Compiler.DMD)
-			return buildDMDCommandLine(compile, performLink, deps, syntaxOnly);
+			return buildDMDCommandLine(cfg, compile, performLink, deps, syntaxOnly);
 
 		if(compiler == Compiler.LDC)
-			return buildLDCCommandLine(compile, performLink, deps, syntaxOnly);
+			return buildLDCCommandLine(cfg, compile, performLink, deps, syntaxOnly);
 
 		if(!compile && performLink && lib == OutputType.StaticLib)
 			return buildARCommandLine();
 
-		return buildGDCCommandLine(compile, performLink, deps, syntaxOnly);
+		return buildGDCCommandLine(cfg, compile, performLink, deps, syntaxOnly);
 	}
 
 	string buildARCommandLine()
@@ -1295,6 +1305,7 @@ class ProjectOptions
 		elem ~= new xml.Element("otherDMD", toElem(otherDMD));
 		elem ~= new xml.Element("cccmd", toElem(cccmd));
 		elem ~= new xml.Element("ccTransOpt", toElem(ccTransOpt));
+		elem ~= new xml.Element("addDepImp", toElem(addDepImp));
 		elem ~= new xml.Element("program", toElem(program));
 		elem ~= new xml.Element("imppath", toElem(imppath));
 		elem ~= new xml.Element("fileImppath", toElem(fileImppath));
@@ -1425,6 +1436,7 @@ class ProjectOptions
 		fromElem(elem, "otherDMD", otherDMD);
 		fromElem(elem, "cccmd", cccmd);
 		fromElem(elem, "ccTransOpt", ccTransOpt);
+		fromElem(elem, "addDepImp", addDepImp);
 		fromElem(elem, "program", program);
 		fromElem(elem, "imppath", imppath);
 		fromElem(elem, "fileImppath", fileImppath);
@@ -2904,7 +2916,7 @@ class Config :	DisposingComObject,
 		{
 			string depfile = GetOutputFile(file, tool) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
-			cmd ~= mProjectOptions.buildCommandLine(true, false, false, syntaxOnly);
+			cmd ~= mProjectOptions.buildCommandLine(this, true, false, false, syntaxOnly);
 			if(syntaxOnly && mProjectOptions.compiler == Compiler.GDC)
 				cmd ~= " -c -fsyntax-only";
 			else if(syntaxOnly)
@@ -2939,7 +2951,7 @@ class Config :	DisposingComObject,
 			cmd ~= "set WindowsSdkDir=$(WindowsSdkDir)\n";
 			cmd ~= "set UniversalCRTSdkDir=$(UCRTSDKDIR)\n";
 			cmd ~= "set UCRTVersion=$(UCRTVERSION)\n";
-			cmd ~= opts.buildCommandLine(true, !syntaxOnly, false, syntaxOnly);
+			cmd ~= opts.buildCommandLine(this, true, !syntaxOnly, false, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";
 			cmd ~= addopt ~ " " ~ quoteFilename(file.GetFilename());
@@ -3341,7 +3353,7 @@ class Config :	DisposingComObject,
 	{
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.doSeparateLink();
-		string opt = mProjectOptions.buildCommandLine(true, !separateLink && doLink, true);
+		string opt = mProjectOptions.buildCommandLine(this, true, !separateLink && doLink, true);
 		string workdir = normalizeDir(GetProjectDir());
 		bool x64 = mProjectOptions.isX86_64;
 		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
@@ -3431,7 +3443,7 @@ class Config :	DisposingComObject,
 			}
 			else
 			{
-				lnkcmd = mProjectOptions.buildCommandLine(false, true, false);
+				lnkcmd = mProjectOptions.buildCommandLine(this, false, true, false);
 				lnkcmd ~= getLinkFileList(files, prelnk);
 				string addlnkopt = mProjectOptions.getAdditionalLinkOptions();
 				if(addlnkopt.length)
@@ -3494,22 +3506,22 @@ class Config :	DisposingComObject,
 		return false;
 	}
 
-	string[] getLibsFromDependentProjects()
+	extern(D)
+	void processDependentProjects(scope void delegate(IVsProjectCfg) process)
 	{
-		string[] libs;
 		auto solutionBuildManager = queryService!(IVsSolutionBuildManager)();
 		if(!solutionBuildManager)
-			return libs;
+			return;
 
 		scope(exit) release(solutionBuildManager);
 
 		ULONG cActual;
 		if(HRESULT hr = solutionBuildManager.GetProjectDependencies(mProvider.mProject, 0, null, &cActual))
-			return libs;
+			return;
 		IVsHierarchy[] pHier = new IVsHierarchy [cActual];
 
 		if(HRESULT hr = solutionBuildManager.GetProjectDependencies(mProvider.mProject, cActual, pHier.ptr, &cActual))
-			return libs;
+			return;
 
 		for(int i = 0; i < cActual; i++)
 		{
@@ -3545,74 +3557,101 @@ class Config :	DisposingComObject,
 			{
 				scope(exit) release(prjcfg);
 
-				debug logOutputGroups(prjcfg);
-
-				version(none)
-				if(auto prjcfg2 = qi_cast!IVsProjectCfg2(prjcfg))
-				{
-					scope(exit) release(prjcfg2);
-					IVsOutputGroup outputGroup;
-					if(prjcfg2.OpenOutputGroup(VS_OUTPUTGROUP_CNAME_Built, &outputGroup) == S_OK)
-					{
-						scope(exit) release(outputGroup);
-						ULONG cnt;
-						if(outputGroup.get_Outputs(0, null, &cnt) == S_OK)
-						{
-							auto outs = new IVsOutput2[cnt];
-							if(outputGroup.get_Outputs(cnt, outs.ptr, null) == S_OK)
-							{
-								foreach(o; outs)
-								{
-									ScopedBSTR target;
-									if(o.get_CanonicalName(&target.bstr) == S_OK)
-									{
-										string targ = target.detach();
-										libs ~= targ;
-									}
-									release(o);
-								}
-							}
-						}
-					}
-				}
-				IVsEnumOutputs eo;
-				if(prjcfg.EnumOutputs(&eo) == S_OK)
-				{
-					scope(exit) release(eo);
-					ULONG fetched;
-					string lastTarg;
-					IVsOutput pIVsOutput;
-					while(eo.Next(1, &pIVsOutput, &fetched) == S_OK && fetched == 1)
-					{
-						ScopedBSTR target;
-						if(pIVsOutput.get_CanonicalName(&target.bstr) == S_OK)
-						//if(pIVsOutput.get_DeploySourceURL(&target.bstr) == S_OK)
-						//if(pIVsOutput.get_DisplayName(&target.bstr) == S_OK)
-						{
-							string targ = target.detach();
-							if (lastTarg.length && targ.indexOf('$') >= 0)
-							{
-								// VC projects report the import library without expanding macros
-								//  (even if building static libraries), so assume it lies along side the DLL
-								if (targ.extension().toLower() == ".lib" && lastTarg.extension().toLower() != ".lib")
-									targ = lastTarg.stripExtension() ~ ".lib";
-								else
-									targ = null;
-							}
-							if (targ.length)
-							{
-								libs ~= targ;
-								lastTarg = targ;
-							}
-						}
-						release(pIVsOutput);
-					}
-				}
-
+				process(prjcfg);
 			}
 			release(pHier[i]);
 		}
+	}
+
+	string[] getLibsFromDependentProjects()
+	{
+		string[] libs;
+		processDependentProjects((IVsProjectCfg prjcfg)
+		{
+			debug logOutputGroups(prjcfg);
+
+			version(none)
+			if(auto prjcfg2 = qi_cast!IVsProjectCfg2(prjcfg))
+			{
+				scope(exit) release(prjcfg2);
+				IVsOutputGroup outputGroup;
+				if(prjcfg2.OpenOutputGroup(VS_OUTPUTGROUP_CNAME_Built, &outputGroup) == S_OK)
+				{
+					scope(exit) release(outputGroup);
+					ULONG cnt;
+					if(outputGroup.get_Outputs(0, null, &cnt) == S_OK)
+					{
+						auto outs = new IVsOutput2[cnt];
+						if(outputGroup.get_Outputs(cnt, outs.ptr, null) == S_OK)
+						{
+							foreach(o; outs)
+							{
+								ScopedBSTR target;
+								if(o.get_CanonicalName(&target.bstr) == S_OK)
+								{
+									string targ = target.detach();
+									libs ~= targ;
+								}
+								release(o);
+							}
+						}
+					}
+				}
+			}
+			IVsEnumOutputs eo;
+			if(prjcfg.EnumOutputs(&eo) == S_OK)
+			{
+				scope(exit) release(eo);
+				ULONG fetched;
+				string lastTarg;
+				IVsOutput pIVsOutput;
+				while(eo.Next(1, &pIVsOutput, &fetched) == S_OK && fetched == 1)
+				{
+					ScopedBSTR target;
+					if(pIVsOutput.get_CanonicalName(&target.bstr) == S_OK)
+					//if(pIVsOutput.get_DeploySourceURL(&target.bstr) == S_OK)
+					//if(pIVsOutput.get_DisplayName(&target.bstr) == S_OK)
+					{
+						string targ = target.detach();
+						if (lastTarg.length && targ.indexOf('$') >= 0)
+						{
+							// VC projects report the import library without expanding macros
+							//  (even if building static libraries), so assume it lies along side the DLL
+							if (targ.extension().toLower() == ".lib" && lastTarg.extension().toLower() != ".lib")
+								targ = lastTarg.stripExtension() ~ ".lib";
+							else
+								targ = null;
+						}
+						if (targ.length)
+						{
+							libs ~= targ;
+							lastTarg = targ;
+						}
+					}
+					release(pIVsOutput);
+				}
+			}
+		});
 		return libs;
+	}
+
+	string[] getImportsFromDependentProjects()
+	{
+		string[] imports;
+		string workdir = GetProjectDir().normalizeDir();
+		processDependentProjects((IVsProjectCfg prjcfg)
+		{
+			if (auto cfg = qi_cast!Config(prjcfg))
+			{
+				string projdir = cfg.GetProjectDir();
+				imports.addunique(projdir.makeRelative(workdir));
+				string[] imps = tokenizeArgs(cfg.GetProjectOptions().imppath);
+				foreach(imp; imps)
+					imports.addunique(makeFilenameAbsolute(imp, projdir).makeRelative(workdir));
+				release(cfg);
+			}
+		});
+		return imports;
 	}
 
 	void logOutputGroups(IVsProjectCfg prjcfg)
