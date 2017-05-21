@@ -875,3 +875,5 @@ unreleased Version 0.45.0
   * added task list support for files loaded into the editor
   * read default DMD installation path from Visual D or DMD registry key, if not available in 
     VS registry hive
+  * new project option "Add import paths of project dependencies"
+  * use generic file system tracking instead of compiler switch -deps=

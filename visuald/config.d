@@ -15,6 +15,8 @@ import std.path;
 import std.utf;
 import std.array;
 import std.exception;
+import std.windows.charset;
+import core.stdc.string;
 
 import stdext.path;
 import stdext.array;
@@ -49,6 +51,8 @@ import visuald.vdextensions;
 import visuald.register;
 
 version = hasOutputGroup;
+enum usePipedmdForDeps = true;
+
 // implementation of IVsProfilableProjectCfg is incomplete (profiler doesn't stop)
 // but just providing proper output and debug information works for profiling as an executable
 // version = hasProfilableConfig;
@@ -397,7 +401,7 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string buildDMDCommandLine(Config cfg, bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	string buildDMDCommandLine(Config cfg, bool compile, bool performLink, string deps, bool syntaxOnly)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -405,6 +409,8 @@ class ProjectOptions
 		else
 			cmd = "dmd";
 		string memstats = Package.GetGlobalOptions().showMemUsage ? "-memStats " : null;
+		if (deps && usePipedmdForDeps)
+			memstats ~= "-deps " ~ quoteNormalizeFilename(deps) ~ " ";
 		if(memstats || (performLink && Package.GetGlobalOptions().demangleError))
 			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ memstats ~ cmd;
 
@@ -491,14 +497,14 @@ class ProjectOptions
 			if(strip(id).length)
 				cmd ~= " -debug=" ~ strip(id);
 
-		if(deps && !syntaxOnly)
-			cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
+		if(deps && !syntaxOnly && !usePipedmdForDeps)
+			cmd ~= " -deps=" ~ quoteNormalizeFilename(deps);
 		if(performLink)
 			cmd ~= linkCommandLine();
 		return cmd;
 	}
 
-	string buildGDCCommandLine(Config cfg, bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	string buildGDCCommandLine(Config cfg, bool compile, bool performLink, string deps, bool syntaxOnly)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -507,6 +513,8 @@ class ProjectOptions
 			cmd = "gdc";
 
 		string memstats = Package.GetGlobalOptions().showMemUsage ? "-memStats " : null;
+		if (deps && usePipedmdForDeps)
+			memstats ~= "-deps " ~ quoteNormalizeFilename(deps) ~ " ";
 		if(memstats ||(performLink && Package.GetGlobalOptions().demangleError))
 			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" -gdcmode " ~ memstats ~ cmd;
 
@@ -623,14 +631,14 @@ class ProjectOptions
 			if(strip(id).length)
 				cmd ~= " -fdebug=" ~ strip(id);
 
-		if(deps && !syntaxOnly)
-			cmd ~= " -fdeps=" ~ quoteNormalizeFilename(getDependenciesPath());
+		if(deps && !syntaxOnly && !usePipedmdForDeps)
+			cmd ~= " -fdeps=" ~ quoteNormalizeFilename(deps);
 		if(performLink)
 			cmd ~= linkCommandLine();
 		return cmd;
 	}
 
-	string buildLDCCommandLine(Config cfg, bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	string buildLDCCommandLine(Config cfg, bool compile, bool performLink, string deps, bool syntaxOnly)
 	{
 		string cmd;
 		if(otherDMD && program.length)
@@ -639,6 +647,8 @@ class ProjectOptions
 			cmd = "ldc2";
 
 		string memstats = Package.GetGlobalOptions().showMemUsage ? "-memStats " : null;
+		if (deps && usePipedmdForDeps)
+			memstats ~= "-deps " ~ quoteNormalizeFilename(deps) ~ " ";
 		if(memstats || (performLink && Package.GetGlobalOptions().demangleError))
 			cmd = "\"$(VisualDInstallDir)pipedmd.exe\" " ~ memstats ~ cmd;
 
@@ -735,14 +745,14 @@ class ProjectOptions
 			if(strip(id).length)
 				cmd ~= " -d-debug=" ~ strip(id);
 
-		if(deps && !syntaxOnly)
-			cmd ~= " -deps=" ~ quoteNormalizeFilename(getDependenciesPath());
+		if(deps && !syntaxOnly && !usePipedmdForDeps)
+			cmd ~= " -deps=" ~ quoteNormalizeFilename(deps);
 		if(performLink)
 			cmd ~= linkCommandLine();
 		return cmd;
 	}
 
-	string buildCommandLine(Config cfg, bool compile = true, bool performLink = true, bool deps = true, bool syntaxOnly = false)
+	string buildCommandLine(Config cfg, bool compile, bool performLink, string deps, bool syntaxOnly = false)
 	{
 		if(compiler == Compiler.DMD)
 			return buildDMDCommandLine(cfg, compile, performLink, deps, syntaxOnly);
@@ -2914,16 +2924,15 @@ class Config :	DisposingComObject,
 		}
 		if(tool == "DMDsingle")
 		{
-			string depfile = GetOutputFile(file, tool) ~ ".dep";
+			string depfile = syntaxOnly ? null : GetOutputFile(file, tool) ~ ".dep";
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
-			cmd ~= mProjectOptions.buildCommandLine(this, true, false, false, syntaxOnly);
+			cmd ~= mProjectOptions.buildCommandLine(this, true, false, depfile, syntaxOnly);
 			if(syntaxOnly && mProjectOptions.compiler == Compiler.GDC)
 				cmd ~= " -c -fsyntax-only";
 			else if(syntaxOnly)
 				cmd ~= " -c -o-";
 			else
-				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile)
-				              ~ mProjectOptions.getDependenciesFileOption(depfile);
+				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile);
 			cmd ~= " " ~ quoteFilename(file.GetFilename());
 			foreach(ddoc; getDDocFileList())
 				cmd ~= " " ~ ddoc;
@@ -2951,7 +2960,7 @@ class Config :	DisposingComObject,
 			cmd ~= "set WindowsSdkDir=$(WindowsSdkDir)\n";
 			cmd ~= "set UniversalCRTSdkDir=$(UCRTSDKDIR)\n";
 			cmd ~= "set UCRTVersion=$(UCRTVERSION)\n";
-			cmd ~= opts.buildCommandLine(this, true, !syntaxOnly, false, syntaxOnly);
+			cmd ~= opts.buildCommandLine(this, true, !syntaxOnly, null, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";
 			cmd ~= addopt ~ " " ~ quoteFilename(file.GetFilename());
@@ -3353,7 +3362,7 @@ class Config :	DisposingComObject,
 	{
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.doSeparateLink();
-		string opt = mProjectOptions.buildCommandLine(this, true, !separateLink && doLink, true);
+		string opt = mProjectOptions.buildCommandLine(this, true, !separateLink && doLink, GetDependenciesPath(), false);
 		string workdir = normalizeDir(GetProjectDir());
 		bool x64 = mProjectOptions.isX86_64;
 		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
@@ -3443,7 +3452,7 @@ class Config :	DisposingComObject,
 			}
 			else
 			{
-				lnkcmd = mProjectOptions.buildCommandLine(this, false, true, false);
+				lnkcmd = mProjectOptions.buildCommandLine(this, false, true, null);
 				lnkcmd ~= getLinkFileList(files, prelnk);
 				string addlnkopt = mProjectOptions.getAdditionalLinkOptions();
 				if(addlnkopt.length)
@@ -3492,11 +3501,19 @@ class Config :	DisposingComObject,
 		string deps;
 		foreach(f; files)
 		{
-			deps ~= prefix ~ replace(f, "\\", "\\\\") ~ postfix;
+			static if (usePipedmdForDeps)
+				deps ~= f ~ "\n";
+			else
+				deps ~= prefix ~ replace(f, "\\", "\\\\") ~ postfix;
 		}
-		bool fromMap = mProjectOptions.mapverbosity >= 3;
 		try
 		{
+			static if (usePipedmdForDeps)
+			{
+				int cp = GetKBCodePage();
+				const(char)* depz = toMBSz(deps, cp);
+				deps = cast(string)depz[0..strlen(depz)];
+			}
 			std.file.write(depfile, deps);
 			return true;
 		}

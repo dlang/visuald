@@ -494,25 +494,7 @@ else
 			if(!std.file.exists(lnkdeppath))
 				return showUptodateFailure("link dependency file " ~ lnkdeppath ~ " does not exist");
 
-			string lnkdeps;
-			auto lnkdepData = cast(ubyte[])std.file.read(lnkdeppath);
-			if(lnkdepData.length > 1 && lnkdepData[0] == 0xFF && lnkdepData[1] == 0xFE)
-			{
-				wstring lnkdepw = cast(wstring)lnkdepData[2..$];
-				lnkdeps = to!string(lnkdepw);
-			}
-			else
-			{
-				auto lnkdepz = cast(string)lnkdepData ~ "\0";
-				int cp = GetKBCodePage();
-				lnkdeps = fromMBSz(lnkdepz.ptr, cp);
-			}
-			string[] lnkfiles = splitLines(lnkdeps);
-			foreach(lnkfile; lnkfiles)
-			{
-				if(!lnkfile.startsWith("#Command:"))
-					files ~= makeFilenameAbsolute(lnkfile, workdir);
-			}
+			getFilesFromTrackerFile(lnkdeppath, files);
 		}
 		return true;
 	}
@@ -1261,6 +1243,9 @@ string re_match_dep = r"^[A-Za-z0-9_\.]+ *\((.*)\) : p[a-z]* : [A-Za-z0-9_\.]+ \
 
 bool getFilenamesFromDepFile(string depfile, ref string[] files)
 {
+static if (usePipedmdForDeps)
+	return getFilesFromTrackerFile(depfile, files);
+else {
 	// converted int[string] to byte[string] due to bug #2500
 	byte[string] aafiles;
 
@@ -1346,6 +1331,7 @@ else
 	files ~= keys;
 	sort(files); // for faster file access?
 	return cntValid > 0;
+} // static if
 }
 
 version(slow)
@@ -1368,6 +1354,38 @@ unittest
 	assert(match[0] == line);
 	assert(match[1] == r"c:\\dmd\\phobos\\std\\file.d");
 	assert(match[2] == r"c:\\dmd\\phobos\\std\\utf.d");
+}
+
+bool getFilesFromTrackerFile(string lnkdeppath, ref string[] files)
+{
+	try
+	{
+		string lnkdeps;
+		auto lnkdepData = cast(ubyte[])std.file.read(lnkdeppath);
+		if(lnkdepData.length > 1 && lnkdepData[0] == 0xFF && lnkdepData[1] == 0xFE)
+		{
+			wstring lnkdepw = cast(wstring)lnkdepData[2..$];
+			lnkdeps = to!string(lnkdepw);
+		}
+		else
+		{
+			auto lnkdepz = cast(string)lnkdepData ~ "\0";
+			int cp = GetKBCodePage();
+			lnkdeps = fromMBSz(lnkdepz.ptr, cp);
+		}
+
+		string[] lnkfiles = splitLines(lnkdeps);
+		foreach(lnkfile; lnkfiles)
+		{
+			if(!lnkfile.startsWith("#Command:"))
+				files ~= lnkfile; // makeFilenameAbsolute(lnkfile, workdir);
+		}
+		return true;
+	}
+	catch(Exception)
+	{
+		return false;
+	}
 }
 
 bool launchBuildPhobos(string workdir, string cmdfile, string cmdline, IVsOutputWindowPane pane)

@@ -1580,12 +1580,12 @@ class DmdCmdLinePropertyPage : ProjectPropertyPage
 	{
 		if(ProjectOptions options = GetProjectOptions())
 			if(mCmdLine && mCmdLine.hwnd)
-				mCmdLine.setText(options.buildCommandLine(GetConfig(), true, true, true));
+				mCmdLine.setText(options.buildCommandLine(GetConfig(), true, true, options.getDependenciesPath()));
 	}
 
 	override void SetControls(ProjectOptions options)
 	{
-		mCmdLine.setText(options.buildCommandLine(GetConfig(), true, true, true));
+		mCmdLine.setText(options.buildCommandLine(GetConfig(), true, true, options.getDependenciesPath()));
 		mAddOpt.setText(options.additionalOptions);
 	}
 
