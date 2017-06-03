@@ -118,10 +118,12 @@ int main(string[] argv)
 			else
 				printf ("%.*s is a %d-bit application\n", fullexe.length, fullexe.ptr, isX64 ? 64 : 32);
 
-		string tracker = findTracker(isX64);
+		string trackerArgs;
+		string tracker = findTracker(isX64, trackerArgs);
 		if (tracker.length > 0)
 		{
 			command = quoteArg(tracker);
+			command ~= trackerArgs;
 			trackdir = dirName(depsfile);
 			if (trackdir != ".")
 				command ~= " /if " ~ quoteArg(trackdir);
@@ -527,18 +529,22 @@ enum SECURE_ACCESS = ~(WRITE_DAC | WRITE_OWNER | GENERIC_ALL | ACCESS_SYSTEM_SEC
 enum KEY_WOW64_32KEY = 0x200;
 enum KEY_WOW64_64KEY = 0x100;
 
-string findTracker(bool x64)
+string findTracker(bool x64, ref string trackerArgs)
 {
 	string exe = findExeInPath("tracker.exe");
 	if (!exe.empty && isExe64bit(exe) != x64)
 		exe = null;
 
 	if (exe.empty)
-		exe = findTrackerInMSBuild (r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0"w.ptr, x64);
+		exe = findTrackerInVS2017();
 	if (exe.empty)
-		exe = findTrackerInMSBuild (r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\11.0"w.ptr, x64);
+		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\14.0"w.ptr, x64, &trackerArgs);
 	if (exe.empty)
-		exe = findTrackerInMSBuild (r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\10.0"w.ptr, x64);
+		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0"w.ptr, x64, null);
+	if (exe.empty)
+		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\11.0"w.ptr, x64, null);
+	if (exe.empty)
+		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\10.0"w.ptr, x64, null);
 	if (exe.empty)
 		exe = findTrackerInSDK(x64);
 	return exe;
@@ -557,10 +563,26 @@ string trackerPath(string binpath, bool x64)
 	return exe;
 }
 
-string findTrackerInMSBuild (const(wchar)* keyname, bool x64)
+string findTrackerInMSBuild (const(wchar)* keyname, bool x64, string* trackerArgs)
 {
 	string path = readRegistry(keyname, "MSBuildToolsPath"w.ptr, x64);
-	return trackerPath(path, x64);
+	string exe = trackerPath(path, x64);
+	if (exe && trackerArgs)
+		*trackerArgs = x64 ? " /d FileTracker64.dll" : " /d FileTracker32.dll";
+	return exe;
+}
+
+string findTrackerInVS2017()
+{
+	wstring key = r"SOFTWARE\Microsoft\VisualStudio\SxS\VS7";
+	string dir = readRegistry(key.ptr, "15.0"w.ptr, false); // always in Wow6432
+	if (dir.empty)
+		return null;
+	string exe = dir ~ r"MSBuild\15.0\Bin\Tracker.exe";
+	if (!std.file.exists(exe))
+		return null;
+	// can handle both x86 and x64
+	return exe;
 }
 
 string findTrackerInSDK (bool x64)
