@@ -2830,7 +2830,7 @@ HRESULT DustMiteProject()
 
 		if (nworkdir != npath)
 			cmdline ~= "cd " ~ quoteFilename(makeRelative(nworkdir, npath));
-		cmdline ~= cfg.getCommandLine();
+		cmdline ~= cfg.getCommandLine(true, true);
 		cmdfile = npath ~ "build.dustmite.bat";
 		std.file.write(cmdfile, cmdline);
 		cmdfile = makeRelative(cmdfile, npath);

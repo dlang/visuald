@@ -64,6 +64,7 @@ const string[] kPlatforms = [ "Win32", "x64" ];
 enum string kToolResourceCompiler = "Resource Compiler";
 enum string kToolCpp = "C/C++";
 const string kCmdLogFileExtension = "build";
+const string kLinkLogFileExtension = "link";
 
 version(hasProfilableConfig)
 const GUID g_unmarshalTargetInfoCLSID = uuid("002a2de9-8bb6-484d-980f-7e4ad4084715");
@@ -790,8 +791,8 @@ class ProjectOptions
 			case 0: cmd ~= mslink ? "" : " -L/NOMAP"; break; // actually still creates map file
 			case 1: cmd ~= mslink ? " -L/MAPINFO:EXPORTS" : " -L/MAP:ADDRESS"; break;
 			case 2: break;
-			case 3: cmd ~= mslink ? " -L/MAPINFO:EXPORTS,LINES" : " -L/MAP:FULL"; break;
-			case 4: cmd ~= mslink ? " -L/MAPINFO:EXPORTS,LINES,FIXUPS" : " -L/MAP:FULL -L/XREF"; break;
+			case 3: cmd ~= mslink ? " -L/MAPINFO:EXPORTS" : " -L/MAP:FULL"; break; // mapinfo LINES removed in VS 2005
+			case 4: cmd ~= mslink ? " -L/MAPINFO:EXPORTS" : " -L/MAP:FULL -L/XREF"; break; // mapinfo FIXUPS removed in VS.NET
 			default: break;
 		}
 
@@ -1149,9 +1150,9 @@ class ProjectOptions
 		return normalizeDir(objdir) ~ "$(ProjectName).dep";
 	}
 
-	string getCommandLinePath()
+	string getCommandLinePath(bool link)
 	{
-		return normalizeDir(objdir) ~ "$(ProjectName)." ~ kCmdLogFileExtension;
+		return normalizeDir(objdir) ~ "$(ProjectName)." ~ (link ? kLinkLogFileExtension : kCmdLogFileExtension);
 	}
 
 	// "linking" includes building library (through ar with GDC, internal with DMD)
@@ -2642,9 +2643,9 @@ class Config :	DisposingComObject,
 		return mProjectOptions.callLinkerDirectly() && Package.GetGlobalOptions().optlinkDeps;
 	}
 
-	string GetCommandLinePath()
+	string GetCommandLinePath(bool linkStep)
 	{
-		string exe = mProjectOptions.getCommandLinePath();
+		string exe = mProjectOptions.getCommandLinePath(linkStep);
 		return mProjectOptions.replaceEnvironment(exe, this);
 	}
 
@@ -2819,12 +2820,15 @@ class Config :	DisposingComObject,
 		string intermediatedir = normalizeDir(makeFilenameAbsolute(GetIntermediateDir(), workdir));
 
 		string target = makeFilenameAbsolute(GetTargetPath(), workdir);
-		string cmdfile = makeFilenameAbsolute(GetCommandLinePath(), workdir);
+		string cmdfile = makeFilenameAbsolute(GetCommandLinePath(false), workdir);
+		string lnkfile = makeFilenameAbsolute(GetCommandLinePath(true), workdir);
 
 		string[] files;
 		files ~= target;
 		files ~= cmdfile;
 		files ~= cmdfile ~ ".rsp";
+		files ~= lnkfile;
+		files ~= lnkfile ~ ".rsp";
 		files ~= makeFilenameAbsolute(GetDependenciesPath(), workdir);
 		files ~= makeFilenameAbsolute(GetLinkDependenciesPath(), workdir);
 
@@ -3150,7 +3154,7 @@ class Config :	DisposingComObject,
 	string getLinkFileList(string[] dfiles, ref string precmd)
 	{
 		string[] files = getObjectFileList(dfiles);
-		string responsefile = GetCommandLinePath() ~ ".lnkarg";
+		string responsefile = GetCommandLinePath(true) ~ ".rsp";
 		return getCommandFileList(files, responsefile, precmd);
 	}
 
@@ -3357,50 +3361,56 @@ class Config :	DisposingComObject,
 		return true;
 	}
 
-
-	string getCommandLine()
+	string getCommandLine(bool compile, bool link)
 	{
+		assert(compile || link);
+
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.doSeparateLink();
-		string opt = mProjectOptions.buildCommandLine(this, true, !separateLink && doLink, GetDependenciesPath(), false);
-		string workdir = normalizeDir(GetProjectDir());
-		bool x64 = mProjectOptions.isX86_64;
-		bool mscoff = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
+		bool x64          = mProjectOptions.isX86_64;
+		bool mscoff       = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
+		string workdir    = normalizeDir(GetProjectDir());
 
+		auto globOpts = Package.GetGlobalOptions();
 		string precmd = getEnvironmentChanges();
 		string[] files = getInputFileList();
 		//quoteFilenames(files);
 
-		string responsefile = GetCommandLinePath() ~ ".rsp";
-		string fcmd = getCommandFileList(files, responsefile, precmd);
-
-		string[] srcfiles = getSourceFileList();
-		string modules_ddoc;
-		string mod_cmd = getModulesDDocCommandLine(srcfiles, modules_ddoc);
-		if(mod_cmd.length > 0)
+		if (compile)
 		{
-			precmd ~= mod_cmd ~ "\nif errorlevel 1 goto reportError\n";
-			fcmd ~= " " ~ modules_ddoc;
-		}
+			string responsefile = GetCommandLinePath(false) ~ ".rsp";
+			string fcmd = getCommandFileList(files, responsefile, precmd); // might append to precmd
 
-		auto globOpts = Package.GetGlobalOptions();
-		if(separateLink || !doLink)
-		{
-			bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
-			if(fcmd.length == 0)
-				opt = ""; // don't try to build zero files
-			else if(singleObj)
-				opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(OutDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension());
-			else
-				opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
-		}
-		string addopt;
-		if(mProjectOptions.additionalOptions.length && fcmd.length)
-			addopt = " " ~ mProjectOptions.additionalOptions.replace("\n", " ");
-		string cmd = precmd ~ opt ~ fcmd ~ addopt ~ "\n";
-		cmd = cmd ~ "if errorlevel 1 goto reportError\n";
+			string[] srcfiles = getSourceFileList();
+			string modules_ddoc;
+			string mod_cmd = getModulesDDocCommandLine(srcfiles, modules_ddoc);
+			if(mod_cmd.length > 0)
+			{
+				precmd ~= mod_cmd ~ "\nif errorlevel 1 goto reportError\n";
+				fcmd ~= " " ~ modules_ddoc;
+			}
 
-		if(separateLink && doLink)
+			string opt = mProjectOptions.buildCommandLine(this, true, !separateLink && doLink, GetDependenciesPath(), false);
+
+			if(separateLink || !doLink)
+			{
+				bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+				if(fcmd.length == 0)
+					opt = ""; // don't try to build zero files
+				else if(singleObj)
+					opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(OutDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension());
+				else
+					opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
+			}
+			string addopt;
+			if(mProjectOptions.additionalOptions.length && fcmd.length)
+				addopt = " " ~ mProjectOptions.additionalOptions.replace("\n", " ");
+			precmd ~= opt ~ fcmd ~ addopt ~ "\n";
+		}
+		string cmd = precmd;
+		cmd ~= "if errorlevel 1 goto reportError\n";
+
+		if(link && separateLink && doLink)
 		{
 			string prelnk, lnkcmd;
 			if(mProjectOptions.callLinkerDirectly())
@@ -3422,7 +3432,7 @@ class Config :	DisposingComObject,
 				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
 				if(cmdfiles.length > 100)
 				{
-					string lnkresponsefile = GetCommandLinePath() ~ ".lnkarg";
+					string lnkresponsefile = GetCommandLinePath(true) ~ ".rsp";
 					lnkresponsefile = makeFilenameAbsolute(lnkresponsefile, workdir);
 					if(lnkresponsefile != quoteFilename(lnkresponsefile))
 					{
@@ -3452,7 +3462,7 @@ class Config :	DisposingComObject,
 			}
 			else
 			{
-				lnkcmd = mProjectOptions.buildCommandLine(this, false, true, null);
+				lnkcmd = mProjectOptions.buildCommandLine(this, false, true, GetLinkDependenciesPath());
 				lnkcmd ~= getLinkFileList(files, prelnk);
 				string addlnkopt = mProjectOptions.getAdditionalLinkOptions();
 				if(addlnkopt.length)
@@ -3462,26 +3472,29 @@ class Config :	DisposingComObject,
 			cmd = cmd ~ "if errorlevel 1 goto reportError\n";
 		}
 
-		string cv2pdb = mProjectOptions.appendCv2pdb();
-		if(cv2pdb.length && doLink)
+		if (link)
 		{
-			string cvtarget = quoteFilename(mProjectOptions.getTargetPath() ~ "_cv");
-			cmd ~= "if not exist " ~ cvtarget ~ " (echo " ~ cvtarget ~ " not created! && goto reportError)\n";
-			cmd ~= "echo Converting debug information...\n";
-			cmd ~= cv2pdb;
-			cmd ~= "\nif errorlevel 1 goto reportError\n";
+			string cv2pdb = mProjectOptions.appendCv2pdb();
+			if(cv2pdb.length && doLink)
+			{
+				string cvtarget = quoteFilename(mProjectOptions.getTargetPath() ~ "_cv");
+				cmd ~= "if not exist " ~ cvtarget ~ " (echo " ~ cvtarget ~ " not created! && goto reportError)\n";
+				cmd ~= "echo Converting debug information...\n";
+				cmd ~= cv2pdb;
+				cmd ~= "\nif errorlevel 1 goto reportError\n";
+			}
+
+			string pre = strip(mProjectOptions.preBuildCommand);
+			if(pre.length)
+				cmd = pre ~ "\nif errorlevel 1 goto reportError\n" ~ cmd;
+
+			string post = strip(mProjectOptions.postBuildCommand);
+			if(post.length)
+				cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post ~ "\n\n";
+
+			string target = quoteFilename(mProjectOptions.getTargetPath());
+			cmd ~= "if not exist " ~ target ~ " (echo " ~ target ~ " not created! && goto reportError)\n";
 		}
-
-		string pre = strip(mProjectOptions.preBuildCommand);
-		if(pre.length)
-			cmd = pre ~ "\nif errorlevel 1 goto reportError\n" ~ cmd;
-
-		string post = strip(mProjectOptions.postBuildCommand);
-		if(post.length)
-			cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post ~ "\n\n";
-
-		string target = quoteFilename(mProjectOptions.getTargetPath());
-		cmd ~= "if not exist " ~ target ~ " (echo " ~ target ~ " not created! && goto reportError)\n";
 		cmd ~= "\ngoto noError\n";
 		cmd ~= "\n:reportError\n";
 		cmd ~= "echo Building " ~ GetTargetPath() ~ " failed!\n";
