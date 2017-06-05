@@ -867,7 +867,6 @@ Version history
 
 unreleased Version 0.45.0
 
-  * added option to monitor memory usage of the compiler
   * fixed Compile and Run/Debug if building through MS-COFF and not having VS selected in sc.ini
   * mago: fixed memory leaks that could also prohibit compilation due to PDB file still open
   * mago: add debugger options page to allow hiding internal locals
@@ -883,3 +882,4 @@ unreleased Version 0.45.0
   * separated compile and link into two batches so compile skipped if only link inputs changed
   * fix crash when editing dub.json when part of a project
   * UCRT version detection: ignore directories that do not start with a digit (e.g. from DDK)
+  * dependency monitoring: added option to specify files/folders to exclude from dependency check

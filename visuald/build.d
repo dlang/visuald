@@ -1417,10 +1417,20 @@ bool getFilesFromTrackerFile(string lnkdeppath, ref string[] files)
 			lnkdeps = fromMBSz(lnkdepz.ptr, cp);
 		}
 
+		string[] exclpaths = Package.GetGlobalOptions().getDepsExcludePaths();
+		bool isExcluded(string file)
+		{
+			foreach(ex; exclpaths)
+				if (file.length >= ex.length && icmp(file[0..ex.length], ex) == 0)
+					if (ex[$-1] == '\\' || file.length == ex.length || file[ex.length] == '\\')
+						return true;
+			return false;
+		}
+
 		string[] lnkfiles = splitLines(lnkdeps);
 		foreach(lnkfile; lnkfiles)
 		{
-			if(!lnkfile.startsWith("#Command:"))
+			if(!lnkfile.startsWith("#Command:") && !isExcluded(lnkfile))
 				files ~= lnkfile; // makeFilenameAbsolute(lnkfile, workdir);
 		}
 		return true;

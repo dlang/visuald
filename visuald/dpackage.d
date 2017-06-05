@@ -1251,6 +1251,7 @@ class GlobalOptions
 	string VCToolsInstallDir; // used by VS 2017
 	string VisualDInstallDir;
 
+	string excludeFileDeps; // files/paths to exclude from dependency monitoring
 	bool timeBuilds;
 	bool sortProjects = true;
 	bool stopSolutionBuild;
@@ -1543,6 +1544,7 @@ class GlobalOptions
 			showUptodateFailure = getBoolOpt("showUptodateFailure", false);
 			demangleError       = getBoolOpt("demangleError", true);
 			optlinkDeps         = getBoolOpt("optlinkDeps", true);
+			excludeFileDeps     = getPathsOpt("excludeFileDeps");
 			static if(enableShowMemUsage)
 				showMemUsage    = getBoolOpt("showMemUsage", false);
 			autoOutlining       = getBoolOpt("autoOutlining", true);
@@ -1761,6 +1763,7 @@ class GlobalOptions
 			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
 			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);
 			keyToolOpts.Set("showCoverageMargin",  showCoverageMargin);
+			keyToolOpts.Set("excludeFileDeps",     toUTF16(excludeFileDeps));
 			keyToolOpts.Set("timeBuilds",          timeBuilds);
 			keyToolOpts.Set("sortProjects",        sortProjects);
 			keyToolOpts.Set("stopSolutionBuild",   stopSolutionBuild);
@@ -2030,6 +2033,17 @@ class GlobalOptions
 						addunique(jsonfiles, name);
 		}
 		return jsonfiles;
+	}
+
+	string[] getDepsExcludePaths()
+	{
+		string[] exclpaths;
+		string paths = replaceGlobalMacros(excludeFileDeps);
+		string[] args = tokenizeArgs(paths);
+		foreach(arg; args)
+			if (!arg.empty)
+				exclpaths ~= normalizePath(unquoteArgument(arg));
+		return exclpaths;
 	}
 
 	void logSettingsTree(IVsProfileSettingsTree settingsTree)

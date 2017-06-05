@@ -2115,6 +2115,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddHorizontalLine();
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor linker dependencies"));
+		mLinesPerMultiLine = 2;
+		AddControl("Exclude Files/Folders", mExcludeFileDeps = new MultiLineText(mCanvas));
 		AddHorizontalLine();
 		//AddControl("Remove project item", mDeleteFiles =
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
@@ -2135,6 +2137,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		mStopSlnBuild.setChecked(opts.stopSolutionBuild);
 		mDemangleError.setChecked(opts.demangleError);
 		mOptlinkDeps.setChecked(opts.optlinkDeps);
+		mExcludeFileDeps.setText(opts.excludeFileDeps);
 		static if(enableShowMemUsage)
 			mShowMemUsage.setChecked(opts.showMemUsage);
 		//mDeleteFiles.setSelection(opts.deleteFiles + 1);
@@ -2154,6 +2157,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild);
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError);
 		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps);
+		changes += changeOption(mExcludeFileDeps.getText(), opts.excludeFileDeps, refopts.excludeFileDeps);
 		static if(enableShowMemUsage)
 			changes += changeOption(mShowMemUsage.isChecked(), opts.showMemUsage, refopts.showMemUsage);
 		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles);
@@ -2171,6 +2175,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	CheckBox mStopSlnBuild;
 	CheckBox mDemangleError;
 	CheckBox mOptlinkDeps;
+	MultiLineText mExcludeFileDeps;
 	static if(enableShowMemUsage)
 		CheckBox mShowMemUsage;
 	//ComboBox mDeleteFiles;

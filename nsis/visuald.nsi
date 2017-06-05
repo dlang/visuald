@@ -200,7 +200,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\bin\${CONFIG}\ ${DLLNAME}
   ${File} ..\bin\${CONFIG}\ vdserver.tlb
   ${File} ..\bin\${CONFIG}\ pipedmd.exe
-  ${File} ..\bin\${CONFIG}\ filemonitor.dll
+  ;; ${File} ..\bin\${CONFIG}\ filemonitor.dll
   ${File} ..\bin\${CONFIG}\ dcxxfilt.exe
   ${File} ..\ README.md
   ${File} ..\ LICENSE_1_0.txt

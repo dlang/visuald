@@ -3,7 +3,7 @@
 // Complications improved by Rainer Schuetze
 //
 // file access monitoring added by Rainer Schuetze, needs filemonitor.dll in the same
-//  directory as pipedmd.exe
+//  directory as pipedmd.exe, or tracker.exe from the MSBuild tool chain
 
 module pipedmd;
 
@@ -21,6 +21,8 @@ import std.path;
 import std.process;
 import std.utf;
 static import std.file;
+
+enum canInjectDLL = false; // disable to rely on tracker.exe exclusively (keeps AV programs more happy)
 
 alias core.stdc.stdio.stdout stdout;
 
@@ -134,7 +136,7 @@ int main(string[] argv)
 					std.file.remove(f.name);
 			command ~= " /c";
 		}
-		else if (isX64)
+		else if (isX64 || !canInjectDLL)
 		{
 			printf("cannot monitor 64-bit executable %.*s, no suitable tracker.exe found\n", exe.length, exe.ptr);
 			return -1;
@@ -263,8 +265,9 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 		return 1;
 	}
 
-	if(depsfile)
-		InjectDLL(piProcInfo.hProcess, depsfile);
+	static if(canInjectDLL)
+		if(depsfile)
+			InjectDLL(piProcInfo.hProcess, depsfile);
 	ResumeThread(piProcInfo.hThread);
 
 	ubyte[] buffer = new ubyte[2048];
@@ -658,6 +661,8 @@ string readRegistry(const(wchar)* keyname, const(wchar)* valname, bool x64)
 ///////////////////////////////////////////////////////////////////////////////
 // inject DLL into linker process to monitor file reads
 
+static if(canInjectDLL)
+{
 alias extern(Windows) DWORD function(LPVOID lpThreadParameter) LPTHREAD_START_ROUTINE;
 extern(Windows) BOOL
 WriteProcessMemory(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T * lpNumberOfBytesWritten);
@@ -729,6 +734,8 @@ typeof(CreateRemoteThread)* getCreateRemoteThreadFunc ()
 	auto proc = GetProcAddress(mod, "CreateRemoteThread");
 	return cast(typeof(CreateRemoteThread)*)proc;
 }
+
+} // static if(canInjectDLL)
 
 typeof(GetProcessMemoryInfo)* getProcessMemoryInfoFunc ()
 {
