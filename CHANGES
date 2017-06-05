@@ -875,6 +875,8 @@ unreleased Version 0.45.0
   * added task list support for files loaded into the editor
   * read default DMD installation path from Visual D or DMD registry key, if not available in 
     VS registry hive
+  * cpp2d: add missing default to switch(), ensure space between identifiers, fix module 
+    name for translated C-files
   * new project option "Add import paths of project dependencies"
   * use generic file system tracking instead of compiler switch -deps=
   * fixed tracker.exe not found in VS2015 and VS2017
@@ -886,3 +888,5 @@ unreleased Version 0.45.0
   * mago: can now show registers in expressions
   * mago: show static members and base class with different icons
   * DParser: cache semantic results until next edit
+  * DParser: break endless loop due to unresolved selective import
+  * bugzilla Issue 17384: fix default executable search path for LDC/x64 under VS2017
