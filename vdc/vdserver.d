@@ -558,7 +558,17 @@ class VDServer : ComObject, IVDServer
 		return S_FALSE;
 	}
 
-	HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs)
+	override HRESULT ConfigureCommentTasks(in BSTR tasks)
+	{
+		return E_NOTIMPL;
+	}
+
+	override HRESULT GetCommentTasks(in BSTR filename, BSTR* tasks)
+	{
+		return E_NOTIMPL;
+	}
+
+	override HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs)
 	{
 		// array of pairs of DWORD
 		int[] locData;
@@ -606,12 +616,12 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
+	override HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
 	{
 		return E_NOTIMPL;
 	}
 
-	HRESULT GetReferencesResult(BSTR* stringList)
+	override HRESULT GetReferencesResult(BSTR* stringList)
 	{
 		return E_NOTIMPL;
 	}

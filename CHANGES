@@ -864,3 +864,25 @@ Version history
   * bugzilla 17254: close and reopen completion box if results added
   * fix link to build log: replace spaces with %20
   * added VC project integration for VS2017
+
+unreleased Version 0.45.0
+
+  * fixed Compile and Run/Debug if building through MS-COFF and not having VS selected in sc.ini
+  * mago: fixed memory leaks that could also prohibit compilation due to PDB file still open
+  * mago: add debugger options page to allow hiding internal locals and static members
+  * cv2pdb: added support for AA display in mago
+  * DParser: added support for function attributes @nogc and scope, align(expression)
+  * added task list support for files loaded into the editor
+  * read default DMD installation path from Visual D or DMD registry key, if not available in 
+    VS registry hive
+  * new project option "Add import paths of project dependencies"
+  * use generic file system tracking instead of compiler switch -deps=
+  * fixed tracker.exe not found in VS2015 and VS2017
+  * /MAPINFO: remove ancient options no longer supported by the MS linker
+  * separated compile and link into two batches so compile skipped if only link inputs changed
+  * fix crash when editing dub.json when part of a project
+  * UCRT version detection: ignore directories that do not start with a digit (e.g. from DDK)
+  * dependency monitoring: added option to specify files/folders to exclude from dependency check
+  * mago: can now show registers in expressions
+  * mago: show static members and base class with different icons
+  * DParser: cache semantic results until next edit

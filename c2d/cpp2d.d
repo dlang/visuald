@@ -564,6 +564,7 @@ static this()
 
 string createModuleName(string filename)
 {
+	string ext = extension(filename);
 	filename = stripExtension(filename);
 	filename = replace(filename, "\\", "/");
 	string[] names = split(filename, "/");
@@ -586,6 +587,8 @@ string createModuleName(string filename)
 			modname ~= '.';
 		modname ~= safename;
 	}
+	if (ext != ".h" && ext != "")
+		modname ~= "_" ~ ext[1 .. $];
 	return modname;
 }
 
@@ -606,13 +609,21 @@ string mapTokenText(Token tok)
 	return tok.text;
 }
 
-string createMappedTokenListText(TokenList tokList)
+string createMappedTokenListText(TokenList tokList, bool map)
 {
-	string text;
+	string text, prevtext;
 	for(TokenIterator tokIt = tokList.begin(); !tokIt.atEnd(); ++tokIt)
 	{
 		Token tok = *tokIt;
-		string mapped = mapTokenText(tok);
+		string mapped = map ? mapTokenText(tok) : tok.text;
+		if (mapped.length && prevtext.length)
+		{
+			char prevch = prevtext[$-1];
+			char ch = mapped[0];
+			if((isAlphaNum(ch) || ch == '_') && (isAlphaNum(prevch) || prevch == '_'))
+				mapped = " " ~ mapped;
+		}
+		prevtext = mapped;
 		text ~= tok.pretext ~ mapped;
 	}
 	return text;
@@ -1606,6 +1617,40 @@ void patchClassVarInit(Statement stmt)
 	}
 }
 
+void patchSwitchStatement(Statement swstmt)
+{
+	ASTIterator swit = swstmt.children.begin() + 1; // skip expression
+	if (swit.atEnd())
+		return;
+	auto stmt = *swit; // compound statement
+	bool hasDefault = false;
+	if (stmt.children)
+		for(ASTIterator it = stmt.children.begin(); !it.atEnd(); ++it)
+			if (auto s = cast(Statement)(*it))
+				if (s._toktype == Token.Default)
+				{
+					hasDefault = true;
+					break;
+				}
+
+	if (!hasDefault)
+	{
+		auto insertPos = stmt.end - 1; // before "}"
+		TokenList tokList = new TokenList;
+		tokList.append(createToken(insertPos.pretext, "default", Token.Default, stmt.end.lineno));
+		tokList.append(createToken("", ":", Token.Colon, stmt.end.lineno));
+		tokList.append(createToken(" ", "break", Token.Break, stmt.end.lineno));
+		tokList.append(createToken("", ";", Token.Semicolon, stmt.end.lineno));
+		auto defstmt = new Statement(Token.Default);
+		defstmt.start = tokList.begin();
+		defstmt.end = tokList.end();
+
+		stmt.insertChildBefore(stmt.children.end(), defstmt, tokList, &insertPos);
+
+		stmt.verify();
+	}
+}
+
 void splitNonSimpleVarList(Declaration decl)
 {
 	if(decl.children && decl.children.count() > 2)
@@ -1951,7 +1996,7 @@ void patchDeclType(DeclType dtype)
 						// simply add arguments to identifier
 						if(dvar2.start.type == Token.Identifier)
 						{
-							string argtext = createMappedTokenListText(tl);
+							string argtext = createMappedTokenListText(tl, true);
 							dvar2.start.text ~= argtext;
 						}
 						// bad insert position:
@@ -2051,6 +2096,8 @@ void patchAST(AST ast)
 				patchAsm(stmt);
 			if(stmt._toktype == Token.Return)
 				patchReturnExpressionType(stmt);
+			if(stmt._toktype == Token.Switch)
+				patchSwitchStatement(stmt);
 
 			patchClassVarInit(stmt);
 		}
@@ -2247,13 +2294,7 @@ class Source
 
 	string createTokenListText(int pass)
 	{
-		string text;
-		for(TokenIterator tokIt = _tokenList.begin(); !tokIt.atEnd(); ++tokIt)
-		{
-			Token tok = *tokIt;
-			string mapped = pass > 0 ? tok.text : mapTokenText(tok);
-			text ~= tok.pretext ~ mapped;
-		}
+		string text = createMappedTokenListText(_tokenList, pass <= 0);
 		return text;
 	}
 
@@ -2678,7 +2719,7 @@ class Cpp2DConverter
 		// cannot remove decl immediately, because iterators in iterateTopLevelDeclarations will become invalid
 		declsToRemove ~= decl;
 
-		currentSource._ast.verify();
+		decl._parent.verify();
 	}
 
 	void moveAllMethods()
@@ -2795,8 +2836,6 @@ class Cpp2DConverter
 		string fname = replace(modname, ".", "/");
 		if(pass == 0)
 		{
-			if (ext != ".h" && ext != "")
-				fname ~= "_" ~ ext[1 .. $];
 			fname ~= ".d";
 		}
 		else
@@ -2996,7 +3035,7 @@ string testDmdGen(string txt, int countRemove = 1, int countNoImpl = 0, TokenLis
 
 	TokenList tokenList = scanText(txt);
 
-	if(defines is null)
+	if(defines !is null)
 	{
 		expandPPdefines(tokenList, defines, MixinMode.ExpandDefine);
 		rescanPP(tokenList);
@@ -3741,7 +3780,6 @@ unittest
 
 unittest
 {
-	// force failure
 	string txt =
 		  "#define A 1\n"
 		~ "#define B A\n"
@@ -3750,7 +3788,7 @@ unittest
 		;
 	string exp =
 		  "enum A = 1;\n"
-		~ "alias B A;\n"
+		~ "alias A B;\n"
 		~ " auto C(  )() { return B*B; }\n"
 		~ " auto SQR(  ARG1 )(ARG1 a) { return a*a; }\n"
 		;
@@ -3771,12 +3809,76 @@ void cpp2d_test()
 		;
 
 //	PP.expandConditionals["EXP"] = true;
-	TokenList[string] defines = [ "EXP" : scanText("1") ];
 
-	string res = testDmdGen(txt, 0, 0, defines);
+	string res = testDmdGen(txt, 0, 0, null);
 	assert(res == exp);
 
+	TokenList[string] defines = [ "EXP" : scanText("1") ];
+	string exp2 = "enum WSL = 1; // comment\n";
+	string res2 = testDmdGen(txt, 0, 0, defines);
+	assert(res2 == exp2);
+
 	PP.expandConditionals = PP.expandConditionals.init;
+}
+
+unittest
+{
+	string txt =
+		"void foo(int x) {\n"
+		~ "  switch(x) {\n"
+		~ "  case 0: return;\n"
+		~ "  }\n"
+		~ "}\n"
+		;
+	string exp =
+		"void foo(int x) {\n"
+		~ "  switch(x) {\n"
+		~ "  case 0: return;\n"
+		~ "  default: break;\n"
+		~ "  }\n"
+		~ "}\n"
+		;
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string txt =
+		"void foo(int x) {\n"
+		~ "  switch(x) {\n"
+		~ "  default: break;\n"
+		~ "  case 1: return;\n"
+		~ "  }\n"
+		~ "}\n"
+		;
+	string exp =
+		"void foo(int x) {\n"
+		~ "  switch(x) {\n"
+		~ "  default: break;\n"
+		~ "  case 1: return;\n"
+		~ "  }\n"
+		~ "}\n"
+		;
+
+	string res = testDmdGen(txt, 0, 0);
+	assert(res == exp);
+}
+
+unittest
+{
+	string rtxt = "case '0' => goto case; case '0'";
+	PatchRule rule;
+	bool rc = C2DIni.parsePatchRule(rule, rtxt);
+
+	string txt = "switch(x) { case '0': break; }";
+	auto tokenList = scanText(txt);
+	replaceTokenSequence(tokenList, rule.searchTokens, rule.replaceTokens, true);
+	string ntxt = tokenListToString(tokenList, true);
+
+	string exp = "switch(x) { goto case;case'0': break; }";
+	assert(exp == ntxt);
 }
 
 version(MAIN)

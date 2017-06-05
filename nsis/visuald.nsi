@@ -200,7 +200,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\bin\${CONFIG}\ ${DLLNAME}
   ${File} ..\bin\${CONFIG}\ vdserver.tlb
   ${File} ..\bin\${CONFIG}\ pipedmd.exe
-  ${File} ..\bin\${CONFIG}\ filemonitor.dll
+  ;; ${File} ..\bin\${CONFIG}\ filemonitor.dll
   ${File} ..\bin\${CONFIG}\ dcxxfilt.exe
   ${File} ..\ README.md
   ${File} ..\ LICENSE_1_0.txt
@@ -328,7 +328,7 @@ SectionEnd
 ${MementoSection} "Register with VS.NET" SecVS_NET
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS_NET_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS_NET_REGISTRY_KEY} "Win32 Exceptions\D Exception"
   
 ${MementoSectionEnd}
@@ -338,7 +338,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2005" SecVS2005
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2005_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2005_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2005_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS2005_REGISTRY_KEY} "Win32 Exceptions\D Exception"
   
 ${MementoSectionEnd}
@@ -347,7 +347,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2008" SecVS2008
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2008_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir 
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir 
   ${RegisterWin32Exception} ${VS2008_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
 ${MementoSectionEnd}
@@ -356,7 +356,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2010" SecVS2010
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2010_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS2010_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
@@ -376,7 +376,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2012" SecVS2012
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2012_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS2012_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
@@ -402,7 +402,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2013" SecVS2013
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2013_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS2013_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
@@ -428,7 +428,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2015" SecVS2015
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2015_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS2015_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}" InstallDir
@@ -454,7 +454,7 @@ ${MementoSectionEnd}
 ${MementoSection} "Register with VS 2017" SecVS2017
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2017_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ${RegisterWin32Exception} ${VS2017_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
@@ -548,7 +548,7 @@ ${MementoSectionEnd}
 ${MementoUnselectedSection} "Register with VC-Express 2008" SecVCExpress2008
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXP2008_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   
 ${MementoSectionEnd}
 
@@ -556,7 +556,7 @@ ${MementoSectionEnd}
 ${MementoUnselectedSection} "Register with VC-Express 2010" SecVCExpress2010
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXP2010_REGISTRY_KEY}'
-  WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   
 ${MementoSectionEnd}
 !endif

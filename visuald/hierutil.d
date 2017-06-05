@@ -709,6 +709,30 @@ string GetFolderPath(CFolderNode folder)
 }
 
 ///////////////////////////////////////////////////////////////
+// returns addref'd project
+IVsHierarchy getProjectForSourceFile(string file)
+{
+	auto srpSolution = queryService!(IVsSolution);
+	scope(exit) release(srpSolution);
+
+	IEnumHierarchies pEnum;
+	if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION, null, &pEnum) == S_OK)
+	{
+		scope(exit) release(pEnum);
+		auto wfile = _toUTF16z(file);
+		VSITEMID itemid;
+		IVsHierarchy pHierarchy;
+		while(pEnum.Next(1, &pHierarchy, null) == S_OK)
+		{
+			if (pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
+				return pHierarchy;
+			release(pHierarchy);
+		}
+	}
+	return null;
+}
+
+///////////////////////////////////////////////////////////////
 // returns addref'd Config
 Config getProjectConfig(string file, bool genCmdLine = false)
 {

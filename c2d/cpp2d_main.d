@@ -90,22 +90,22 @@ void patch_expression_h(TokenList srctokens)
 	// members in source, but not in header
 	replaceTokenSequence(srctokens, "struct VarExp : SymbolExp { $decl };",
 	                                "struct VarExp : SymbolExp { $decl\n"
-	                                "#if DMDV1\n"
-	                                "    elem *toElem(IRState *irs);\n"
-	                                "#endif\n"
-	                                "};", true);
+	                              ~ "#if DMDV1\n"
+	                              ~ "    elem *toElem(IRState *irs);\n"
+	                              ~ "#endif\n"
+	                              ~ "};", true);
 	replaceTokenSequence(srctokens, "struct SymOffExp : SymbolExp { $decl };",
 	                                "struct SymOffExp : SymbolExp { $decl\n"
-	                                "#if 0\n"
-	                                "    elem *toElem(IRState *irs);\n"
-	                                "#endif\n"
-					"};", true);
+	                              ~ "#if 0\n"
+	                              ~ "    elem *toElem(IRState *irs);\n"
+	                              ~ "#endif\n"
+	                              ~ "};", true);
 	replaceTokenSequence(srctokens, "struct StringExp : Expression { $decl };",
 	                                "struct StringExp : Expression { $decl\n"
-	                                "#if 0\n"
-	                                "    Expression *syntaxCopy();\n"
-	                                "#endif\n"
-					"};", true);
+	                              ~ "#if 0\n"
+	                              ~ "    Expression *syntaxCopy();\n"
+	                              ~ "#endif\n"
+	                              ~ "};", true);
 
 	TokenList[string] defines = [ "X" : null, "ASSIGNEXP" : null ];
 	expandPPdefines(srctokens, defines, MixinMode.ExpandDefine);
@@ -133,10 +133,10 @@ void patch_mtype_h(TokenList srctokens)
 {
 	replaceTokenSequence(srctokens, "struct TypeTuple : Type { $decl };",
 	                                "struct TypeTuple : Type { $decl\n"
-	                                "#if 0\n"
-	                                "    Type *makeConst();\n"
-	                                "#endif\n"
-	                                "};", true);
+	                              ~ "#if 0\n"
+	                              ~ "    Type *makeConst();\n"
+	                              ~ "#endif\n"
+	                              ~ "};", true);
 	replaceTokenSequence(srctokens, "(Loc loc = 0)",
 	                                "(Loc loc = Loc(0))\n", true);
 	replaceTokenSequence(srctokens, "typedef union tree_node TYPE;", "", true);
@@ -301,12 +301,12 @@ void patch_iasm_c(TokenList srctokens)
 	                                [ "asm_make_modrm_byte(", "$args" ], true);
 	replaceTokenSequence(srctokens, "unsigned rm  : 3; unsigned reg : 3; unsigned mod : 2;",
 	                                "mixin(__bitfields(uint, \"rm\", 3,\n"
-					"                  uint, \"reg\", 3,\n"
-					"                  uint, \"mod\", 2));", true);
+	                              ~ "                  uint, \"reg\", 3,\n"
+	                              ~ "                  uint, \"mod\", 2));", true);
 	replaceTokenSequence(srctokens, "unsigned base : 3; unsigned index : 3; unsigned ss : 2;",
 	                                "mixin(__bitfields(uint, \"base\", 3,\n"
-					"                  uint, \"index\", 3,\n"
-					"                  uint, \"ss\", 2));", true);
+	                              ~ "                  uint, \"index\", 3,\n"
+	                              ~ "                  uint, \"ss\", 2));", true);
 }
 
 void patch_clone_c(TokenList srctokens)
@@ -351,10 +351,10 @@ void patch_e2ir_c(TokenList srctokens)
 {
 	replaceTokenSequence(srctokens, "Type *tn; __static_if(!0) goto $label; if($ifexpr) $label2: $stmt tb2->nextOf();",
 	                                "Type *tn;\n"
-					"    $stmt tb2->nextOf();\n"
-					"__static_if(0)\n"
-					"    if($ifexpr)\n"
-					"        goto $label; else goto L_never; else $label:", true);
+	                              ~ "    $stmt tb2->nextOf();\n"
+	                              ~ "__static_if(0)\n"
+	                              ~ "    if($ifexpr)\n"
+	                              ~ "        goto $label; else goto L_never; else $label:", true);
 	replaceTokenSequence(srctokens, "else __static_if(0) {", "__static_if(0) { L_never:", true);
 }
 
@@ -457,12 +457,12 @@ void patch_vec_c(TokenList srctokens)
 	patch_declspec(srctokens);
 	replaceTokenSequence(srctokens, "_asm { __static_if($COND1) { $asm1 } else __static_if($COND2) { $asm2 } else { $asm3 } }",
 	                                "__static_if($COND1) {\n"
-	                                "    _asm { $asm1 }\n"
-	                                "} else __static_if($COND2) {\n"
-	                                "    _asm { $asm2 }\n"
-	                                "} else {\n"
-	                                "    _asm { $asm3 }\n"
-	                                "}\n", true);
+	                              ~ "    _asm { $asm1 }\n"
+	                              ~ "} else __static_if($COND2) {\n"
+	                              ~ "    _asm { $asm2 }\n"
+	                              ~ "} else {\n"
+	                              ~ "    _asm { $asm3 }\n"
+	                              ~ "}\n", true);
 }
 
 // backend
@@ -476,7 +476,7 @@ void patch_gother_c(TokenList srctokens)
 	patch_foreach(srctokens);
 	replaceTokenSequence(srctokens, "assnod = (elem **) __static_if(TX86) { $1 } else { $2 }",
 	                                "\n__static_if(TX86) {\n\t\t\tassnod = (elem **) $1\n"
-	                                "} else {\n\t\t\tassnod = (elem **) $2\n}\n", true);
+	                              ~ "} else {\n\t\t\tassnod = (elem **) $2\n}\n", true);
 }
 
 void patch_gloop_c(TokenList srctokens)
@@ -499,7 +499,7 @@ void patch_el_c(TokenList srctokens)
 
 ///////////////////////////////////////////////////////////////
 
-translateInfo srcfiles[] =
+translateInfo[] srcfiles =
 [
 	{ "dmd/lexer.h", &patch_lexer_h },
 	{ "dmd/lexer.c", &patch_lexer_c },

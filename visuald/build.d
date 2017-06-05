@@ -414,11 +414,12 @@ else
 			if(!exists(intermediatedir))
 				mkdirRecurse(intermediatedir);
 
+			auto opts = mConfig.GetProjectOptions();
 			string modules_ddoc;
 			if(mConfig.getModulesDDocCommandLine([], modules_ddoc).length)
 			{
 				modules_ddoc = unquoteArgument(modules_ddoc);
-				modules_ddoc = mConfig.GetProjectOptions().replaceEnvironment(modules_ddoc, mConfig);
+				modules_ddoc = opts.replaceEnvironment(modules_ddoc, mConfig);
 				string modpath = dirName(modules_ddoc);
 				modpath = makeFilenameAbsolute(modpath, workdir);
 				if(!exists(modpath))
@@ -431,17 +432,30 @@ else
 				return false;
 
 			if(hasCustomBuilds)
-				if(targetIsUpToDate()) // only recheck target if custom builds exist
+				if(targetIsUpToDate(false, false)) // only recheck target if custom builds exist
 					return true; // no need to rebuild target if custom builds did not change target dependencies
 
 			if(!mLastUptodateFailure.empty)
 				showUptodateFailure(mLastUptodateFailure);
 
-			string cmdline = mConfig.getCommandLine();
-			string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
-			hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
-			if(hr == S_OK && mConfig.GetProjectOptions().compilationModel == ProjectOptions.kSingleFileCompilation)
-				mConfig.writeLinkDependencyFile();
+			bool combined = (opts.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+			if (combined || !targetIsUpToDate(true, false))
+			{
+				string cmdline = mConfig.getCommandLine(true, combined);
+				string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(false), workdir);
+				hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
+			}
+			else
+				hr = S_OK;
+			if (hr == S_OK && !combined)
+			{
+				string cmdline = mConfig.getCommandLine(false, true);
+				string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(true), workdir);
+				hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
+
+				if(hr == S_OK && opts.compilationModel == ProjectOptions.kSingleFileCompilation)
+					mConfig.writeLinkDependencyFile();
+			}
 			return (hr == S_OK);
 		}
 		catch(Exception e)
@@ -477,7 +491,7 @@ else
 		return node is null;
 	}
 
-	bool getTargetDependencies(ref string[] files)
+	bool getTargetDependencies(ref string[] files, bool compileOnly)
 	{
 		string workdir = mConfig.GetProjectDir();
 
@@ -488,31 +502,13 @@ else
 		if(!getFilenamesFromDepFile(deppath, files))
 			return showUptodateFailure("dependency file " ~ deppath ~ " cannot be read");
 
-		if(mConfig.hasLinkDependencies())
+		if(!compileOnly && mConfig.hasLinkDependencies())
 		{
 			string lnkdeppath = makeFilenameAbsolute(mConfig.GetLinkDependenciesPath(), workdir);
 			if(!std.file.exists(lnkdeppath))
 				return showUptodateFailure("link dependency file " ~ lnkdeppath ~ " does not exist");
 
-			string lnkdeps;
-			auto lnkdepData = cast(ubyte[])std.file.read(lnkdeppath);
-			if(lnkdepData.length > 1 && lnkdepData[0] == 0xFF && lnkdepData[1] == 0xFE)
-			{
-				wstring lnkdepw = cast(wstring)lnkdepData[2..$];
-				lnkdeps = to!string(lnkdepw);
-			}
-			else
-			{
-				auto lnkdepz = cast(string)lnkdepData ~ "\0";
-				int cp = GetKBCodePage();
-				lnkdeps = fromMBSz(lnkdepz.ptr, cp);
-			}
-			string[] lnkfiles = splitLines(lnkdeps);
-			foreach(lnkfile; lnkfiles)
-			{
-				if(!lnkfile.startsWith("#Command:"))
-					files ~= makeFilenameAbsolute(lnkfile, workdir);
-			}
+			getFilesFromTrackerFile(lnkdeppath, files);
 		}
 		return true;
 	}
@@ -528,37 +524,66 @@ else
 		if(!customFilesUpToDate())
 			return false;
 
-		return targetIsUpToDate();
+		return targetIsUpToDate(false, true);
 	}
 
-	bool targetIsUpToDate()
+	bool targetIsUpToDate(bool compileOnly, bool showFailure)
 	{
+		auto projopts = mConfig.GetProjectOptions();
 		string workdir = mConfig.GetProjectDir();
-		string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(), workdir);
+		bool combined = (projopts.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+		string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(false), workdir);
 
-		string cmdline = mConfig.getCommandLine();
+		string cmdline = mConfig.getCommandLine(true, combined);
 		if(!compareCommandFile(cmdfile, cmdline))
-			return showUptodateFailure("command line changed");
+			return showFailure && showUptodateFailure("command line changed");
 
-		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
+		string[] targets;
+		if(!combined && compileOnly)
+		{
+			string[] files = mConfig.getInputFileList();
+			string[] lnkfiles = mConfig.getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
+
+			string[] objfiles;
+			string ext = "." ~ projopts.objectFileExtension();
+			foreach (file; lnkfiles)
+				if (extension(file) == ext)
+					targets ~= projopts.replaceEnvironment(file, mConfig);
+			makeFilenamesAbsolute(targets, workdir);
+		}
+		else
+		{
+			string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
+			targets = [ target ];
+		}
+		if (!combined && !compileOnly)
+		{
+			cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(true), workdir);
+			cmdline = mConfig.getCommandLine(false, true);
+			if(!compareCommandFile(cmdfile, cmdline))
+				return showFailure && showUptodateFailure("linker command line changed");
+		}
+
 		string oldestFile;
-		long targettm = getOldestFileTime( [ target ], oldestFile );
-
+		long targettm = getOldestFileTime(targets, oldestFile );
 		if(targettm == long.min)
-			return showUptodateFailure("target does not exist");
+			return showFailure && showUptodateFailure(oldestFile ~ " does not exist");
 
 		string[] files;
-		if(!getTargetDependencies(files))
+		if(!getTargetDependencies(files, compileOnly))
 			return false;
 
-		string[] libs = mConfig.getLibsFromDependentProjects();
-		files ~= libs;
+		if (!compileOnly)
+		{
+			string[] libs = mConfig.getLibsFromDependentProjects();
+			files ~= libs;
+		}
 		makeFilenamesAbsolute(files, workdir);
 		string newestFile;
 		long sourcetm = getNewestFileTime(files, newestFile);
 
 		if(targettm <= sourcetm)
-			return showUptodateFailure("older than " ~ newestFile);
+			return showFailure && showUptodateFailure(oldestFile ~ " older than " ~ newestFile);
 		return true;
 	}
 
@@ -1261,6 +1286,9 @@ string re_match_dep = r"^[A-Za-z0-9_\.]+ *\((.*)\) : p[a-z]* : [A-Za-z0-9_\.]+ \
 
 bool getFilenamesFromDepFile(string depfile, ref string[] files)
 {
+static if (usePipedmdForDeps)
+	return getFilesFromTrackerFile(depfile, files);
+else {
 	// converted int[string] to byte[string] due to bug #2500
 	byte[string] aafiles;
 
@@ -1346,6 +1374,7 @@ else
 	files ~= keys;
 	sort(files); // for faster file access?
 	return cntValid > 0;
+} // static if
 }
 
 version(slow)
@@ -1368,6 +1397,48 @@ unittest
 	assert(match[0] == line);
 	assert(match[1] == r"c:\\dmd\\phobos\\std\\file.d");
 	assert(match[2] == r"c:\\dmd\\phobos\\std\\utf.d");
+}
+
+bool getFilesFromTrackerFile(string lnkdeppath, ref string[] files)
+{
+	try
+	{
+		string lnkdeps;
+		auto lnkdepData = cast(ubyte[])std.file.read(lnkdeppath);
+		if(lnkdepData.length > 1 && lnkdepData[0] == 0xFF && lnkdepData[1] == 0xFE)
+		{
+			wstring lnkdepw = cast(wstring)lnkdepData[2..$];
+			lnkdeps = to!string(lnkdepw);
+		}
+		else
+		{
+			auto lnkdepz = cast(string)lnkdepData ~ "\0";
+			int cp = GetKBCodePage();
+			lnkdeps = fromMBSz(lnkdepz.ptr, cp);
+		}
+
+		string[] exclpaths = Package.GetGlobalOptions().getDepsExcludePaths();
+		bool isExcluded(string file)
+		{
+			foreach(ex; exclpaths)
+				if (file.length >= ex.length && icmp(file[0..ex.length], ex) == 0)
+					if (ex[$-1] == '\\' || file.length == ex.length || file[ex.length] == '\\')
+						return true;
+			return false;
+		}
+
+		string[] lnkfiles = splitLines(lnkdeps);
+		foreach(lnkfile; lnkfiles)
+		{
+			if(!lnkfile.startsWith("#Command:") && !isExcluded(lnkfile))
+				files ~= lnkfile; // makeFilenameAbsolute(lnkfile, workdir);
+		}
+		return true;
+	}
+	catch(Exception)
+	{
+		return false;
+	}
 }
 
 bool launchBuildPhobos(string workdir, string cmdfile, string cmdline, IVsOutputWindowPane pane)

@@ -303,6 +303,7 @@ static const wstring regPathToolsDirsOld   = "\\ToolsOptionsPages\\Projects\\Vis
 static const wstring regPathToolsDirsDmd   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\DMD Directories"w;
 static const wstring regPathToolsDirsGdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\GDC Directories"w;
 static const wstring regPathToolsDirsLdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\LDC Directories"w;
+static const wstring regPathMagoOptions    = "\\ToolsOptionsPages\\Debugger\\Mago"w;
 static const wstring regMiscFiles          = regPathProjects ~ "\\{A2FE74E1-B743-11d0-AE1A-00A0C90FFFC3}"w;
 static const wstring regPathMetricsExcpt   = "\\AD7Metrics\\Exception"w;
 static const wstring regPathMetricsEE      = "\\AD7Metrics\\ExpressionEvaluator"w;
@@ -746,6 +747,12 @@ HRESULT registerMago(in wchar* pszRegRoot, in bool useRanu)
 	scope RegKey keyCV = new RegKey(keyRoot, registrationRoot ~ "\\Debugger\\CodeView Compilers\\68:*"w);
 	keyEE.Set("LanguageID"w, languageGuid);
 	keyEE.Set("VendorID"w, vendorGuid);
+
+	// mago property page
+	wstring packageGuid = GUID2wstring(g_packageCLSID);
+	scope RegKey keyPropPage = new RegKey(keyRoot, registrationRoot ~ regPathMagoOptions);
+	keyPropPage.Set("Package"w, packageGuid);
+	keyPropPage.Set("Page"w, GUID2wstring(g_MagoPropertyPage));
 
 	return S_OK;
 }

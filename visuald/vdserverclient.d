@@ -215,6 +215,28 @@ class ClearProjectCommand : Command
 	}
 }
 
+class ConfigureCommentTasksCommand : Command
+{
+	string[] mTokens;
+
+	this(string[] tokens)
+	{
+		super("ConfigureCommentTasks");
+		mTokens = tokens;
+	}
+
+	override HRESULT exec() const
+	{
+		if(!gVDServer)
+			return S_FALSE;
+		string tokens = std.string.join(mTokens, "\n");
+		auto btokens = allocBSTR(tokens);
+		HRESULT res = gVDServer.ConfigureCommentTasks(btokens);
+		freeBSTR(btokens);
+		return res;
+	}
+}
+
 class FileCommand : Command
 {
 	this(string cmd, string filename)
@@ -408,7 +430,7 @@ class GetDefinitionCommand : FileCommand
 
 //////////////////////////////////////
 
-alias void delegate(uint request, string filename, string parseErrors, TextPos[] binaryIsIn) UpdateModuleCallBack;
+alias void delegate(uint request, string filename, string parseErrors, TextPos[] binaryIsIn, string tasks) UpdateModuleCallBack;
 
 class UpdateModuleCommand : FileCommand
 {
@@ -472,6 +494,10 @@ class UpdateModuleCommand : FileCommand
 			SafeArrayDestroy(sa);
 		}
 
+		BSTR tasks;
+		if(gVDServer.GetCommentTasks(fname, &tasks) == S_OK)
+			mTasks = detachBSTR(tasks);
+
 		send(gUITid);
 		return S_OK;
 	}
@@ -481,13 +507,14 @@ class UpdateModuleCommand : FileCommand
 		version(DebugCmd)
 			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mErrors);
 		if(mCallback)
-			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn);
+			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks);
 		return true;
 	}
 
 	UpdateModuleCallBack mCallback;
 	wstring mText;
 	string mErrors;
+	string mTasks;
 	bool mVerbose;
 	TextPos[] mBinaryIsIn;
 }
@@ -720,6 +747,13 @@ class VDServerClient
 	uint ClearSemanticProject()
 	{
 		auto cmd = new _shared!(ClearProjectCommand);
+		cmd.send(mTid);
+		return cmd.mRequest;
+	}
+
+	uint ConfigureCommentTasks(string[] tokens)
+	{
+		auto cmd = new _shared!(ConfigureCommentTasksCommand)(tokens);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}

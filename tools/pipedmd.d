@@ -3,7 +3,7 @@
 // Complications improved by Rainer Schuetze
 //
 // file access monitoring added by Rainer Schuetze, needs filemonitor.dll in the same
-//  directory as pipedmd.exe
+//  directory as pipedmd.exe, or tracker.exe from the MSBuild tool chain
 
 module pipedmd;
 
@@ -21,6 +21,8 @@ import std.path;
 import std.process;
 import std.utf;
 static import std.file;
+
+enum canInjectDLL = false; // disable to rely on tracker.exe exclusively (keeps AV programs more happy)
 
 alias core.stdc.stdio.stdout stdout;
 
@@ -61,6 +63,7 @@ int main(string[] argv)
 	bool gdcMode = false; //gcc linker
 	bool msMode = false; //microsoft linker
 	bool verbose = false;
+	bool memStats = false;
 
 	while (argv.length >= skipargs + 2)
 	{
@@ -89,6 +92,11 @@ int main(string[] argv)
 			verbose = true;
 			skipargs++;
 		}
+		else if(argv[skipargs + 1] == "-memStats")
+		{
+			memStats = true;
+			skipargs++;
+		}
 		else if(argv[skipargs + 1] == "-deps")
 			depsfile = argv[skipargs += 2];
 		else
@@ -112,10 +120,12 @@ int main(string[] argv)
 			else
 				printf ("%.*s is a %d-bit application\n", fullexe.length, fullexe.ptr, isX64 ? 64 : 32);
 
-		string tracker = findTracker(isX64);
+		string trackerArgs;
+		string tracker = findTracker(isX64, trackerArgs);
 		if (tracker.length > 0)
 		{
 			command = quoteArg(tracker);
+			command ~= trackerArgs;
 			trackdir = dirName(depsfile);
 			if (trackdir != ".")
 				command ~= " /if " ~ quoteArg(trackdir);
@@ -126,7 +136,7 @@ int main(string[] argv)
 					std.file.remove(f.name);
 			command ~= " /c";
 		}
-		else if (isX64)
+		else if (isX64 || !canInjectDLL)
 		{
 			printf("cannot monitor 64-bit executable %.*s, no suitable tracker.exe found\n", exe.length, exe.ptr);
 			return -1;
@@ -144,7 +154,7 @@ int main(string[] argv)
 	if(verbose)
 		printf("Command: %.*s\n", command.length, command.ptr);
 
-	int exitCode = runProcess(command, inject ? depsfile : null, doDemangle, demangleAll, gdcMode, msMode);
+	int exitCode = runProcess(command, inject ? depsfile : null, doDemangle, demangleAll, gdcMode, msMode, memStats);
 
 	if (exitCode == 0 && trackfile.length > 0)
 	{
@@ -187,7 +197,7 @@ int main(string[] argv)
 	return exitCode;
 }
 
-int runProcess(string command, string depsfile, bool doDemangle, bool demangleAll, bool gdcMode, bool msMode)
+int runProcess(string command, string depsfile, bool doDemangle, bool demangleAll, bool gdcMode, bool msMode, bool memStats)
 {
 	HANDLE hStdOutRead;
 	HANDLE hStdOutWrite;
@@ -255,11 +265,12 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 		return 1;
 	}
 
-	if(depsfile)
-		InjectDLL(piProcInfo.hProcess, depsfile);
+	static if(canInjectDLL)
+		if(depsfile)
+			InjectDLL(piProcInfo.hProcess, depsfile);
 	ResumeThread(piProcInfo.hThread);
 
-	char[] buffer = new char[2048];
+	ubyte[] buffer = new ubyte[2048];
 	size_t bytesFilled = 0;
 	DWORD bytesAvailable = 0;
 	DWORD bytesRead = 0;
@@ -306,6 +317,17 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 		Sleep(5);
 	}
 
+	if (memStats)
+		if (auto fun = getProcessMemoryInfoFunc())
+		{
+			string procName = getProcessName(piProcInfo.hProcess);
+			PROCESS_MEMORY_COUNTERS memCounters;
+			bSuccess = fun(piProcInfo.hProcess, &memCounters, memCounters.sizeof);
+			if (bSuccess)
+				printf("%s used %lld MB of private memory\n", procName.ptr,
+					   cast(long)memCounters.PeakPagefileUsage >> 20);
+		}
+
 	//close the handles to the process
 	CloseHandle(hStdInWrite);
 	CloseHandle(hStdOutRead);
@@ -315,7 +337,7 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	return exitCode;
 }
 
-void demangleLine(char[] output, bool doDemangle, bool demangleAll, bool msMode, bool gdcMode, int cp, ref bool linkerFound)
+void demangleLine(ubyte[] output, bool doDemangle, bool demangleAll, bool msMode, bool gdcMode, int cp, ref bool linkerFound)
 {
 	if (output.length && output[$-1] == '\n')  //remove trailing \n
 		output = output[0 .. $-1];
@@ -328,15 +350,15 @@ void demangleLine(char[] output, bool doDemangle, bool demangleAll, bool msMode,
 	if(msMode) //the microsoft linker outputs the error messages in the default ANSI codepage so we need to convert it to UTF-8
 	{
 		static WCHAR[] decodeBufferWide;
-		static char[] decodeBuffer;
+		static ubyte[] decodeBuffer;
 
 		if(decodeBufferWide.length < output.length + 1)
 		{
 			decodeBufferWide.length = output.length + 1;
 			decodeBuffer.length = 2 * output.length + 1;
 		}
-		auto numDecoded = MultiByteToWideChar(CP_ACP, 0, output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
-		auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, decodeBuffer.ptr, decodeBuffer.length, null, null);
+		auto numDecoded = MultiByteToWideChar(CP_ACP, 0, cast(char*)output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
+		auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, cast(char*)decodeBuffer.ptr, decodeBuffer.length, null, null);
 		output = decodeBuffer[0..numEncoded];
 	}
 	size_t writepos = 0;
@@ -375,7 +397,7 @@ void demangleLine(char[] output, bool doDemangle, bool demangleAll, bool msMode,
 	fputc('\n', stdout);
 }
 
-void processLine(char[] output, ref size_t writepos, bool optlink, int cp)
+void processLine(ubyte[] output, ref size_t writepos, bool optlink, int cp)
 {
 	for(int p = 0; p < output.length; p++)
 	{
@@ -385,7 +407,7 @@ void processLine(char[] output, ref size_t writepos, bool optlink, int cp)
 			while(p < output.length && isIdentifierChar(output[p]))
 				p++;
 
-			auto symbolName = output[q..p];
+			auto symbolName = cast(const(char)[]) output[q..p];
 			const(char)[] realSymbolName = symbolName;
 			if(optlink)
 			{
@@ -510,18 +532,22 @@ enum SECURE_ACCESS = ~(WRITE_DAC | WRITE_OWNER | GENERIC_ALL | ACCESS_SYSTEM_SEC
 enum KEY_WOW64_32KEY = 0x200;
 enum KEY_WOW64_64KEY = 0x100;
 
-string findTracker(bool x64)
+string findTracker(bool x64, ref string trackerArgs)
 {
 	string exe = findExeInPath("tracker.exe");
 	if (!exe.empty && isExe64bit(exe) != x64)
 		exe = null;
 
 	if (exe.empty)
-		exe = findTrackerInMSBuild (r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0"w.ptr, x64);
+		exe = findTrackerInVS2017();
 	if (exe.empty)
-		exe = findTrackerInMSBuild (r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\11.0"w.ptr, x64);
+		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\14.0"w.ptr, x64, &trackerArgs);
 	if (exe.empty)
-		exe = findTrackerInMSBuild (r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\10.0"w.ptr, x64);
+		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\12.0"w.ptr, x64, null);
+	if (exe.empty)
+		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\11.0"w.ptr, x64, null);
+	if (exe.empty)
+		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\10.0"w.ptr, x64, null);
 	if (exe.empty)
 		exe = findTrackerInSDK(x64);
 	return exe;
@@ -540,10 +566,26 @@ string trackerPath(string binpath, bool x64)
 	return exe;
 }
 
-string findTrackerInMSBuild (const(wchar)* keyname, bool x64)
+string findTrackerInMSBuild (const(wchar)* keyname, bool x64, string* trackerArgs)
 {
 	string path = readRegistry(keyname, "MSBuildToolsPath"w.ptr, x64);
-	return trackerPath(path, x64);
+	string exe = trackerPath(path, x64);
+	if (exe && trackerArgs)
+		*trackerArgs = x64 ? " /d FileTracker64.dll" : " /d FileTracker32.dll";
+	return exe;
+}
+
+string findTrackerInVS2017()
+{
+	wstring key = r"SOFTWARE\Microsoft\VisualStudio\SxS\VS7";
+	string dir = readRegistry(key.ptr, "15.0"w.ptr, false); // always in Wow6432
+	if (dir.empty)
+		return null;
+	string exe = dir ~ r"MSBuild\15.0\Bin\Tracker.exe";
+	if (!std.file.exists(exe))
+		return null;
+	// can handle both x86 and x64
+	return exe;
 }
 
 string findTrackerInSDK (bool x64)
@@ -619,6 +661,8 @@ string readRegistry(const(wchar)* keyname, const(wchar)* valname, bool x64)
 ///////////////////////////////////////////////////////////////////////////////
 // inject DLL into linker process to monitor file reads
 
+static if(canInjectDLL)
+{
 alias extern(Windows) DWORD function(LPVOID lpThreadParameter) LPTHREAD_START_ROUTINE;
 extern(Windows) BOOL
 WriteProcessMemory(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T * lpNumberOfBytesWritten);
@@ -689,6 +733,34 @@ typeof(CreateRemoteThread)* getCreateRemoteThreadFunc ()
 	HMODULE mod = GetModuleHandleA("Kernel32");
 	auto proc = GetProcAddress(mod, "CreateRemoteThread");
 	return cast(typeof(CreateRemoteThread)*)proc;
+}
+
+} // static if(canInjectDLL)
+
+typeof(GetProcessMemoryInfo)* getProcessMemoryInfoFunc ()
+{
+	HMODULE mod = GetModuleHandleA("psapi");
+	if (!mod)
+		mod = LoadLibraryA("psapi.dll");
+	auto proc = GetProcAddress(mod, "GetProcessMemoryInfo");
+	return cast(typeof(GetProcessMemoryInfo)*)proc;
+}
+
+string getProcessName(HANDLE process)
+{
+	HMODULE mod = GetModuleHandleA("psapi");
+	if (!mod)
+		mod = LoadLibraryA("psapi.dll");
+	auto proc = GetProcAddress(mod, "GetProcessImageFileNameW");
+	if (!proc)
+		return "child process";
+	wchar[260] imageName;
+	auto fn = cast(typeof(GetProcessImageFileNameW)*)proc;
+	DWORD len = fn(process, imageName.ptr, imageName.length);
+	if (len == 0)
+		return "child process";
+	auto pos = lastIndexOf(imageName[0..len], '\\');
+	return to!string(imageName[pos+1..len]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -784,6 +856,20 @@ extern(C)
 		WORD    SizeOfOptionalHeader;
 		WORD    Characteristics;
 	}
+
+	struct PROCESS_MEMORY_COUNTERS
+	{
+		DWORD  cb;
+		DWORD  PageFaultCount;
+		SIZE_T PeakWorkingSetSize;
+		SIZE_T WorkingSetSize;
+		SIZE_T QuotaPeakPagedPoolUsage;
+		SIZE_T QuotaPagedPoolUsage;
+		SIZE_T QuotaPeakNonPagedPoolUsage;
+		SIZE_T QuotaNonPagedPoolUsage;
+		SIZE_T PagefileUsage;
+		SIZE_T PeakPagefileUsage;
+	}
 }
 
 extern(System)
@@ -819,6 +905,14 @@ extern(System)
 					   LPDWORD lpBytesLeftThisMessage);
 
 	UINT GetKBCodePage();
+
+	DWORD GetProcessImageFileNameW(HANDLE hProcess,
+								  LPWSTR lpImageFileName,
+								  DWORD  nSize);
+
+	BOOL GetProcessMemoryInfo(HANDLE  Process,
+							  PROCESS_MEMORY_COUNTERS* ppsmemCounters,
+							  DWORD cb);
 }
 
 enum uint HANDLE_FLAG_INHERIT = 0x00000001;

@@ -44,14 +44,16 @@ namespace DParserCOMServer
 		void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr);
 		void GetSemanticExpansionsResult(out string stringList);
 		void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp);
-		void GetParseErrors(string filename, out string errors);
+        void GetParseErrors(string filename, out string errors);
 		void GetBinaryIsInLocations(string filename, out uint[] locs); // array of pairs of DWORD
 		void GetLastMessage(out string message);
 		void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex);
 		void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename);
 		void GetReferences(string filename, string tok, uint line, uint idx, string expr);
         void GetReferencesResult(out string stringList);
-	}
+        void ConfigureCommentTasks(string tasks);
+        void GetCommentTasks(string filename, out string tasks);
+    }
 
 	class NodeToolTipContentGen : NodeTooltipRepresentationGen
 	{
@@ -73,10 +75,12 @@ namespace DParserCOMServer
         #region Properties
         readonly List<RootPackage> packs;
         #endregion
-
-        #region Constructors
-        public VDserverParseCacheView(IEnumerable<string> packageRoots)
+		public string[] PackageRootDirs { get; private set; }
+        
+		#region Constructors
+        public VDserverParseCacheView(string[] packageRoots)
         {
+			this.PackageRootDirs = packageRoots;
             this.packs = new List<RootPackage>();
             Add(packageRoots);
         }
@@ -131,6 +135,8 @@ namespace DParserCOMServer
 		private string _debugIds;
 		private uint   _flags;
 
+        private string[] _taskTokens;
+
 		private static uint _activityCounter;
 
         public static uint Activity { get { return _activityCounter; } }
@@ -143,7 +149,7 @@ namespace DParserCOMServer
 		public DModule GetModule(string fileName)
 		{
 			DModule mod;
-			mod = GlobalParseCache.GetModule (fileName);
+			mod = GlobalParseCache.GetModule(fileName);
             if (mod == null)
                 _modules.TryGetValue(fileName, out mod);
             return mod;
@@ -176,7 +182,7 @@ namespace DParserCOMServer
 
         private string[] uniqueDirectories(string imp)
         {
-            var impDirs = imp.Split('\n');
+            var impDirs = imp.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
             string[] normDirs = new string[impDirs.Length];
             for (int i = 0; i < impDirs.Length; i++)
                 normDirs[i] = normalizeDir(impDirs[i]);
@@ -226,7 +232,7 @@ namespace DParserCOMServer
 			DModule ast;
 			try
 			{
-				ast = DParser.ParseString(srcText, false);
+				ast = DParser.ParseString(srcText, false, true, _taskTokens);
 			}
 			catch(Exception ex)
 			{
@@ -241,6 +247,8 @@ namespace DParserCOMServer
 
 			_modules [filename] = ast;
 			GlobalParseCache.AddOrUpdateModule(ast);
+
+            _editorData.ParseCache = null;
 
 			_sources[filename] = srcText;
 			//MessageBox.Show("UpdateModule(" + filename + ")");
@@ -263,6 +271,8 @@ namespace DParserCOMServer
         Action runningAction;
         Action nextAction;
         CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
+
+        readonly char[] nlSeparator = new char[] { '\n' };
 
         void LaunchCompletionThread()
         {
@@ -463,29 +473,49 @@ namespace DParserCOMServer
 			var asterrors = ast.ParseErrors;
 			
 			string errs = "";
-			int cnt = asterrors.Count();
-			for (int i = 0; i < cnt; i++)
-			{
-				var err = asterrors[i];
+            foreach (var err in asterrors)
 				errs += String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Line, err.Location.Column - 1, err.Location.Line, err.Location.Column, err.Message);
-			}
 			errors = errs;
 			//MessageBox.Show("GetParseErrors()");
 			//throw new COMException("No Message", 1);
 		}
 
-        public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
-        {
-            filename = normalizePath(filename);
-            var ast = GetModule(filename);
+		public void ConfigureCommentTasks(string tasks)
+		{
+            _taskTokens = tasks.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
+			GlobalParseCache.TaskTokens = _taskTokens;
+		}
 
-            if (ast == null)
-                throw new COMException("module not found", 1);
+		public void GetCommentTasks(string filename, out string tasks)
+		{
+			filename = normalizePath(filename);
+			var ast = GetModule(filename);
 
-            //MessageBox.Show("IsBinaryOperator()");
-            throw new NotImplementedException();
-        }
-        public void GetBinaryIsInLocations(string filename, out uint[] locs) // array of pairs of DWORD
+			if (ast == null)
+				throw new COMException("module not found", 1);
+
+			string tsks = "";
+			if (ast.Tasks != null)
+			foreach (var task in ast.Tasks)
+				tsks += String.Format("{0},{1}:{2}\n", task.Location.Line, task.Location.Column - 1, task.Message);
+
+			tasks = tsks;
+			//MessageBox.Show("GetCommentTasks()");
+			//throw new COMException("No Message", 1);
+		}
+
+		public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
+		{
+			filename = normalizePath(filename);
+			var ast = GetModule(filename);
+
+			if (ast == null)
+				throw new COMException("module not found", 1);
+
+			//MessageBox.Show("IsBinaryOperator()");
+			throw new NotImplementedException();
+		}
+		public void GetBinaryIsInLocations(string filename, out uint[] locs) // array of pairs of DWORD
 		{
 			//MessageBox.Show("GetBinaryIsInLocations()");
 			locs = null;
@@ -609,7 +639,7 @@ namespace DParserCOMServer
                         }
                         else
                         {
-                            foreach (var basePath in _imports.Split('\n'))
+                            foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
                                 foreach (var mod in GlobalParseCache.EnumModulesRecursively(basePath))
                                     GetReferencesInModule(mod, refs, n, ctxt);
                         }
@@ -674,12 +704,27 @@ namespace DParserCOMServer
                 versions += "CRuntime_DigitalMars\n";
 
             string[] uniqueDirs = uniqueDirectories(_imports);
-            _editorData.ParseCache = new VDserverParseCacheView(uniqueDirs);
-			_editorData.IsDebug = (_flags & 2) != 0;
-			_editorData.DebugLevel = (_flags >> 16) & 0xff;
-			_editorData.VersionNumber = (_flags >> 8) & 0xff;
-			_editorData.GlobalVersionIds = versions.Split('\n');
-			_editorData.GlobalDebugIds = _debugIds.Split('\n');
+			bool isDebug = (_flags & 2) != 0;
+			uint debugLevel = (_flags >> 16) & 0xff;
+			uint versionNumber = (_flags >> 8) & 0xff;
+            string[] versionIds = versions.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
+            string[] debugIds = _debugIds.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
+
+			if (_editorData.ParseCache == null || 
+				!(_editorData.ParseCache as VDserverParseCacheView).PackageRootDirs.SequenceEqual(uniqueDirs) ||
+				isDebug != _editorData.IsDebug || debugLevel != _editorData.DebugLevel ||
+				versionNumber != _editorData.VersionNumber || 
+				!versionIds.SequenceEqual(_editorData.GlobalVersionIds) || 
+				!debugIds.SequenceEqual(_editorData.GlobalDebugIds))
+			{
+				_editorData.ParseCache = new VDserverParseCacheView(uniqueDirs);
+				_editorData.IsDebug = isDebug;
+				_editorData.DebugLevel = debugLevel;
+				_editorData.VersionNumber = versionNumber;
+				_editorData.GlobalVersionIds = versionIds;
+				_editorData.GlobalDebugIds = debugIds;
+				_editorData.NewResolutionContexts();
+			}
             CompletionOptions.Instance.ShowUFCSItems = (_flags & 0x2000000) != 0;
             CompletionOptions.Instance.DisableMixinAnalysis = (_flags & 0x1000000) == 0;
 			CompletionOptions.Instance.HideDeprecatedNodes = (_flags & 128) != 0;

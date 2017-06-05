@@ -51,6 +51,7 @@ import visuald.library;
 import visuald.pkgutil;
 import visuald.colorizer;
 import visuald.dllmain;
+import visuald.taskprovider;
 import visuald.vdserverclient;
 import xml = visuald.xmlwrap;
 
@@ -363,6 +364,17 @@ class Package : DisposingComObject,
 					mComponentID = 0;
 				}
 			}
+			if (mTaskProviderCookie != 0)
+			{
+				if (auto taskList = queryService!(IVsTaskList))
+				{
+					scope(exit) release(taskList);
+					taskList.UnregisterTaskProvider(mTaskProviderCookie);
+					mTaskProvider = null;
+					mTaskProviderCookie = 0;
+				}
+			}
+
 			mHostSP = release(mHostSP);
 		}
 		return S_OK;
@@ -383,7 +395,7 @@ class Package : DisposingComObject,
 	{
 		mixin(LogCallMix2);
 
-		GlobalPropertyPage tpp;
+		ResizablePropertyPage tpp;
 		if(*rguidPage == g_DmdDirPropertyPage)
 			tpp = newCom!DmdDirPropertyPage(mOptions);
 		else if(*rguidPage == g_GdcDirPropertyPage)
@@ -396,6 +408,8 @@ class Package : DisposingComObject,
 			tpp = newCom!ColorizerPropertyPage(mOptions);
 		else if(*rguidPage == g_IntellisensePropertyPage)
 			tpp = newCom!IntellisensePropertyPage(mOptions);
+		else if(*rguidPage == g_MagoPropertyPage)
+			tpp = newCom!MagoPropertyPage();
 		else
 			return E_NOTIMPL;
 
@@ -497,6 +511,16 @@ version(none)
 			}
 		}
 		InitLibraryManager();
+
+		if (auto taskList = queryService!(IVsTaskList))
+		{
+			scope(exit) release(taskList);
+			mTaskProvider = newCom!TaskProvider;
+			if (taskList.RegisterTaskProvider (mTaskProvider, &mTaskProviderCookie) != S_OK)
+				mTaskProvider = null;
+			else
+				taskList.RefreshTasks(mTaskProviderCookie);
+		}
 
 		return S_OK; // E_NOTIMPL;
 	}
@@ -1116,6 +1140,12 @@ version(none)
 		return s_instance.mProjFactory;
 	}
 
+	static TaskProvider GetTaskProvider()
+	{
+		assert(s_instance);
+		return s_instance.mTaskProvider;
+	}
+
 	static GlobalOptions GetGlobalOptions()
 	{
 		assert(s_instance);
@@ -1140,6 +1170,15 @@ version(none)
 		s_instance.mWantsUpdateLibInfos = true;
 	}
 
+	static void RefreshTaskList()
+	{
+		if (auto taskList = queryService!(IVsTaskList))
+		{
+			taskList.RefreshTasks(s_instance.mTaskProviderCookie);
+			release(taskList);
+		}
+	}
+
 private:
 	IServiceProvider mHostSP;
 	uint             mLangServiceCookie;
@@ -1149,6 +1188,9 @@ private:
 
 	LanguageService  mLangsvc;
 	ProjectFactory   mProjFactory;
+
+	TaskProvider     mTaskProvider;
+	uint             mTaskProviderCookie;
 
 	uint             mOmLibraryCookie;
 
@@ -1181,6 +1223,8 @@ struct CompilerDirectories
 	string DisasmCommand32coff;
 }
 
+enum enableShowMemUsage = false;
+
 class GlobalOptions
 {
 	HKEY hConfigKey;
@@ -1207,12 +1251,14 @@ class GlobalOptions
 	string VCToolsInstallDir; // used by VS 2017
 	string VisualDInstallDir;
 
+	string excludeFileDeps; // files/paths to exclude from dependency monitoring
 	bool timeBuilds;
 	bool sortProjects = true;
 	bool stopSolutionBuild;
 	bool showUptodateFailure;
 	bool demangleError = true;
 	bool optlinkDeps = true;
+	bool showMemUsage = false;
 	bool autoOutlining;
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
 	bool parseSource;
@@ -1341,7 +1387,11 @@ class GlobalOptions
 				{
 					foreach(string f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
 						if(std.file.isDir(f) && f > UCRTVersion)
-							UCRTVersion = baseName(f);
+						{
+							string bname = baseName(f);
+							if(!bname.empty && isDigit(bname[0]))
+								UCRTVersion = bname;
+						}
 				}
 				catch(Exception)
 				{
@@ -1415,6 +1465,19 @@ class GlobalOptions
 		return dir ~ sub;
 	}
 
+	void detectDMDInstallDir()
+	{
+		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false);
+		DMD.InstallDir = toUTF8(keyVD.GetString("DMDInstallDir"));
+		if(DMD.InstallDir.empty)
+		{
+			scope RegKey keyDMD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\DMD", false);
+			string dir = toUTF8(keyDMD.GetString("InstallationFolder"));
+			if(!dir.empty)
+				DMD.InstallDir = dir ~ "\\dmd2";
+		}
+	}
+
 	bool initFromRegistry()
 	{
 		if(!getRegistryRoot())
@@ -1439,6 +1502,7 @@ class GlobalOptions
 			detectUCRT();
 			detectVSInstallDir();
 			detectVCInstallDir();
+			detectDMDInstallDir();
 
 			//UtilMessageBox("getVCDir = " ~ getVCDir("lib\\legacy_stdio_definitions.lib", true, true)
 			//UtilMessageBox("VSInstallDir = "~VSInstallDir ~"\n" ~
@@ -1480,6 +1544,9 @@ class GlobalOptions
 			showUptodateFailure = getBoolOpt("showUptodateFailure", false);
 			demangleError       = getBoolOpt("demangleError", true);
 			optlinkDeps         = getBoolOpt("optlinkDeps", true);
+			excludeFileDeps     = getPathsOpt("excludeFileDeps");
+			static if(enableShowMemUsage)
+				showMemUsage    = getBoolOpt("showMemUsage", false);
 			autoOutlining       = getBoolOpt("autoOutlining", true);
 			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
 			parseSource         = getBoolOpt("parseSource", true);
@@ -1541,7 +1608,8 @@ class GlobalOptions
 			{
 				enum bool dmd = compiler == "DMD";
 				enum string prefix = dmd ? "" : compiler ~ ".";
-				opt.InstallDir    = getStringOpt(compiler ~ "InstallDir");
+				if (auto dir = getStringOpt(compiler ~ "InstallDir"))
+					opt.InstallDir = dir;
 
 				opt.ExeSearchPath   = getPathsOpt(prefix ~ "ExeSearchPath", opt.ExeSearchPath);
 				opt.LibSearchPath   = getPathsOpt(prefix ~ "LibSearchPath", opt.LibSearchPath);
@@ -1695,12 +1763,14 @@ class GlobalOptions
 			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
 			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);
 			keyToolOpts.Set("showCoverageMargin",  showCoverageMargin);
+			keyToolOpts.Set("excludeFileDeps",     toUTF16(excludeFileDeps));
 			keyToolOpts.Set("timeBuilds",          timeBuilds);
 			keyToolOpts.Set("sortProjects",        sortProjects);
 			keyToolOpts.Set("stopSolutionBuild",   stopSolutionBuild);
 			keyToolOpts.Set("showUptodateFailure", showUptodateFailure);
 			keyToolOpts.Set("demangleError",       demangleError);
 			keyToolOpts.Set("optlinkDeps",         optlinkDeps);
+			keyToolOpts.Set("showMemUsage",        showMemUsage);
 			keyToolOpts.Set("autoOutlining",       autoOutlining);
 			keyToolOpts.Set("deleteFiles",         deleteFiles);
 			keyToolOpts.Set("parseSource",         parseSource);
@@ -1963,6 +2033,17 @@ class GlobalOptions
 						addunique(jsonfiles, name);
 		}
 		return jsonfiles;
+	}
+
+	string[] getDepsExcludePaths()
+	{
+		string[] exclpaths;
+		string paths = replaceGlobalMacros(excludeFileDeps);
+		string[] args = tokenizeArgs(paths);
+		foreach(arg; args)
+			if (!arg.empty)
+				exclpaths ~= normalizePath(unquoteArgument(arg));
+		return exclpaths;
 	}
 
 	void logSettingsTree(IVsProfileSettingsTree settingsTree)

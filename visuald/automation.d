@@ -54,14 +54,16 @@ class ExtProjectItem : DisposingDispatchObject, dte.ProjectItem
 	override HRESULT get_IsDirty(/+[out, retval]+/ VARIANT_BOOL* lpfReturn)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		*lpfReturn = mDirty;
+		return S_OK;
 	}
 
 	/+[id(0x0000000a), propput, hidden, helpstring("Returns value indicating whether object was changed since the last time it was saved."), helpcontext(0x0000eadb)]+/
-	override HRESULT put_IsDirty(in VARIANT_BOOL lpfReturn)
+	override HRESULT put_IsDirty(in VARIANT_BOOL dirty)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		mDirty = dirty != 0;
+		return S_OK;
 	}
 
 	/+[id(0x0000000b), propget, helpstring("Returns the full pathnames of the files associated with a project item."), helpcontext(0x0000eac9)]+/
@@ -297,6 +299,7 @@ private:
 	ExtProject mExtProject;
 	ExtProjectItems mParent;
 	CHierNode mNode;
+	bool mDirty;
 };
 
 class EmptyEnumerator : DComObject, IEnumVARIANT
@@ -942,14 +945,14 @@ class ExtProject : ExtProjectItem, dte.Project
 		/* [retval][out] */ VARIANT_BOOL *lpfReturn)
 	{
 		mixin(LogCallMix);
-		return returnError(E_NOTIMPL);
+		return super.get_IsDirty(lpfReturn);
 	}
 
 	override int put_IsDirty(
 		/* [in] */ in VARIANT_BOOL Dirty)
 	{
 		logCall("%s.put_IsDirty(Dirty=%s)", this, _toLog(Dirty));
-		return returnError(E_NOTIMPL);
+		return super.put_IsDirty(Dirty);
 	}
 
 	override int get_Collection(
