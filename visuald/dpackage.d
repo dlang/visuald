@@ -1223,6 +1223,8 @@ struct CompilerDirectories
 	string DisasmCommand32coff;
 }
 
+enum enableShowMemUsage = false;
+
 class GlobalOptions
 {
 	HKEY hConfigKey;
@@ -1384,7 +1386,11 @@ class GlobalOptions
 				{
 					foreach(string f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
 						if(std.file.isDir(f) && f > UCRTVersion)
-							UCRTVersion = baseName(f);
+						{
+							string bname = baseName(f);
+							if(!bname.empty && isDigit(bname[0]))
+								UCRTVersion = bname;
+						}
 				}
 				catch(Exception)
 				{
@@ -1537,7 +1543,8 @@ class GlobalOptions
 			showUptodateFailure = getBoolOpt("showUptodateFailure", false);
 			demangleError       = getBoolOpt("demangleError", true);
 			optlinkDeps         = getBoolOpt("optlinkDeps", true);
-			showMemUsage        = getBoolOpt("showMemUsage", false);
+			static if(enableShowMemUsage)
+				showMemUsage    = getBoolOpt("showMemUsage", false);
 			autoOutlining       = getBoolOpt("autoOutlining", true);
 			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
 			parseSource         = getBoolOpt("parseSource", true);

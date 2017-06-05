@@ -882,3 +882,4 @@ unreleased Version 0.45.0
   * /MAPINFO: remove ancient options no longer supported by the MS linker
   * separated compile and link into two batches so compile skipped if only link inputs changed
   * fix crash when editing dub.json when part of a project
+  * UCRT version detection: ignore directories that do not start with a digit (e.g. from DDK)
