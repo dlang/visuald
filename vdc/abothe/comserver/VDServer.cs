@@ -248,7 +248,7 @@ namespace DParserCOMServer
 			_modules [filename] = ast;
 			GlobalParseCache.AddOrUpdateModule(ast);
 
-			_editorData.NewResolutionContexts();
+            _editorData.ParseCache = null;
 
 			_sources[filename] = srcText;
 			//MessageBox.Show("UpdateModule(" + filename + ")");
