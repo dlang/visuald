@@ -75,10 +75,12 @@ namespace DParserCOMServer
         #region Properties
         readonly List<RootPackage> packs;
         #endregion
-
-        #region Constructors
-        public VDserverParseCacheView(IEnumerable<string> packageRoots)
+		public string[] PackageRootDirs { get; private set; }
+        
+		#region Constructors
+        public VDserverParseCacheView(string[] packageRoots)
         {
+			this.PackageRootDirs = packageRoots;
             this.packs = new List<RootPackage>();
             Add(packageRoots);
         }
@@ -180,7 +182,7 @@ namespace DParserCOMServer
 
         private string[] uniqueDirectories(string imp)
         {
-            var impDirs = imp.Split('\n');
+            var impDirs = imp.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
             string[] normDirs = new string[impDirs.Length];
             for (int i = 0; i < impDirs.Length; i++)
                 normDirs[i] = normalizeDir(impDirs[i]);
@@ -246,6 +248,8 @@ namespace DParserCOMServer
 			_modules [filename] = ast;
 			GlobalParseCache.AddOrUpdateModule(ast);
 
+			_editorData.NewResolutionContexts();
+
 			_sources[filename] = srcText;
 			//MessageBox.Show("UpdateModule(" + filename + ")");
 			//throw new NotImplementedException();
@@ -267,6 +271,8 @@ namespace DParserCOMServer
         Action runningAction;
         Action nextAction;
         CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
+
+        readonly char[] nlSeparator = new char[] { '\n' };
 
         void LaunchCompletionThread()
         {
@@ -476,7 +482,7 @@ namespace DParserCOMServer
 
 		public void ConfigureCommentTasks(string tasks)
 		{
-			_taskTokens = tasks.Split('\n');
+            _taskTokens = tasks.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
 			GlobalParseCache.TaskTokens = _taskTokens;
 		}
 
@@ -633,7 +639,7 @@ namespace DParserCOMServer
                         }
                         else
                         {
-                            foreach (var basePath in _imports.Split('\n'))
+                            foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
                                 foreach (var mod in GlobalParseCache.EnumModulesRecursively(basePath))
                                     GetReferencesInModule(mod, refs, n, ctxt);
                         }
@@ -698,12 +704,27 @@ namespace DParserCOMServer
                 versions += "CRuntime_DigitalMars\n";
 
             string[] uniqueDirs = uniqueDirectories(_imports);
-            _editorData.ParseCache = new VDserverParseCacheView(uniqueDirs);
-			_editorData.IsDebug = (_flags & 2) != 0;
-			_editorData.DebugLevel = (_flags >> 16) & 0xff;
-			_editorData.VersionNumber = (_flags >> 8) & 0xff;
-			_editorData.GlobalVersionIds = versions.Split('\n');
-			_editorData.GlobalDebugIds = _debugIds.Split('\n');
+			bool isDebug = (_flags & 2) != 0;
+			uint debugLevel = (_flags >> 16) & 0xff;
+			uint versionNumber = (_flags >> 8) & 0xff;
+            string[] versionIds = versions.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
+            string[] debugIds = _debugIds.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
+
+			if (_editorData.ParseCache == null || 
+				!(_editorData.ParseCache as VDserverParseCacheView).PackageRootDirs.SequenceEqual(uniqueDirs) ||
+				isDebug != _editorData.IsDebug || debugLevel != _editorData.DebugLevel ||
+				versionNumber != _editorData.VersionNumber || 
+				!versionIds.SequenceEqual(_editorData.GlobalVersionIds) || 
+				!debugIds.SequenceEqual(_editorData.GlobalDebugIds))
+			{
+				_editorData.ParseCache = new VDserverParseCacheView(uniqueDirs);
+				_editorData.IsDebug = isDebug;
+				_editorData.DebugLevel = debugLevel;
+				_editorData.VersionNumber = versionNumber;
+				_editorData.GlobalVersionIds = versionIds;
+				_editorData.GlobalDebugIds = debugIds;
+				_editorData.NewResolutionContexts();
+			}
             CompletionOptions.Instance.ShowUFCSItems = (_flags & 0x2000000) != 0;
             CompletionOptions.Instance.DisableMixinAnalysis = (_flags & 0x1000000) == 0;
 			CompletionOptions.Instance.HideDeprecatedNodes = (_flags & 128) != 0;
