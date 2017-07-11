@@ -163,10 +163,10 @@ Mago:
 - string/wstring shown as char/wchar[], but with correct string representation
 + AA indexing
 + AA preview/expand
-- new AA implementation
++ new AA implementation
 - Array preview
 - delegate value/type
-- struct preview
++ struct preview
 + verboser output when loading/unloading DLLs
 - attach to process
 - hardware breakpoints
@@ -226,3 +226,10 @@ Unsorted
 - does not rebuild lib if c-file recompiled
 
 - cannot remove deleted project from solution
+
+- dparser: doesn't support qualified name in catch(fqn)
+
+0.45.0
+======
+- exception on vdextensions: The Visual Studio component cache is out of date 
+

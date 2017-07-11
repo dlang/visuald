@@ -44,6 +44,7 @@ import sdk.port.vsi;
 import sdk.win32.commctrl;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
+import sdk.vsi.textmgr121;
 import sdk.vsi.vsshell;
 import sdk.win32.wtypes;
 
@@ -704,7 +705,7 @@ class Declarations
 	}
 }
 
-class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
+class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, IVsCompletionSetEx
 {
 	HIMAGELIST mImageList;
 	bool mDisplayed;
@@ -733,6 +734,14 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 			return S_OK;
 		if(queryInterface!(IVsCompletionSet) (this, riid, pvObject))
 			return S_OK;
+
+		version(none) if(*riid == uuid_IVsCompletionSet3)
+		{
+			*pvObject = cast(void*)cast(IVsCompletionSet3)this;
+			AddRef();
+			return S_OK;
+		}
+
 		if(*riid == uuid_IVsCoTaskMemFreeMyStrings) // avoid log message, implement?
 			return E_NOTIMPL;
 		return super.QueryInterface(riid, pvObject);
@@ -1022,6 +1031,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 
 	override int GetFilterLevel(int* iFilterLevel)
 	{
+		// if implementaed, adds tabs "Common" and "All"
 		mixin(LogCallMix2);
 
 		*iFilterLevel = 0;
@@ -1037,6 +1047,23 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSetEx
 			if (ViewFilter filter = mgr.GetFilter(mTextView))
 				filter.OnAutoComplete();
 +/
+		return S_OK;
+	}
+
+	// IVsCompletionSet3 adds icons on the right side of the completion list
+	override HRESULT GetContextIcon(in int iIndex, int *piGlyph)
+	{
+		mixin(LogCallMix);
+
+		*piGlyph = CSIMG_MEMBER;
+		return S_OK;
+	}
+
+	override HRESULT GetContextImageList (HANDLE *phImageList)
+	{
+		mixin(LogCallMix);
+
+		*phImageList = cast(HANDLE)mImageList;
 		return S_OK;
 	}
 }

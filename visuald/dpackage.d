@@ -1647,7 +1647,7 @@ class GlobalOptions
 			GDC.ExeSearchPath       = r"$(GDCInstallDir)bin;$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
 			GDC.ExeSearchPath64     = GDC.ExeSearchPath;
 			LDC.ExeSearchPath       = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", false) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
-			LDC.ExeSearchPath64     = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", true)  ~ r";" ~ sdkBinDir;
+			LDC.ExeSearchPath64     = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", true)  ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
 
 			DMD.LibSearchPath64     = getDefaultLibPathCOFF64();
 			LDC.LibSearchPath64     = DMD.LibSearchPath64;
