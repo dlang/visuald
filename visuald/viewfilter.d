@@ -1351,7 +1351,8 @@ else
 					hr = OpenFileInSolution(imp, -1, 0, file, false);
 				}
 			}
-			return hr;
+			if (hr == S_OK)
+				return hr;
 		}
 
 		if(Package.GetGlobalOptions().semanticGotoDef)
