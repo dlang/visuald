@@ -882,6 +882,7 @@ unreleased Version 0.45.0
     - /MAPINFO: remove ancient options no longer supported by the MS linker
     - separated compile and link into two batches so compile skipped if only link inputs changed
     - dependency monitoring: added option to specify files/folders to exclude from dependency check
+    - mark html output log as UTF-8 encoded
   * editor
     - fix crash when editing dub.json when part of a project
     - added task list support for files loaded into the editor
@@ -896,3 +897,4 @@ unreleased Version 0.45.0
     - break endless loop due to unresolved selective import
     - fix for no expansions for symbols from public import in imported module
     - try dparser as fallback if goto definition on import fails
+    - fix exception in isExpression

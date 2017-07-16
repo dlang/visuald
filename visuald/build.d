@@ -683,7 +683,7 @@ else
 	{
 		mStartBuildTime = time(null);
 
-		mBuildLog = `<html><head><META HTTP-EQUIV="Content-Type" content="text/html">
+		mBuildLog = `<html><head><meta http-equiv="Content-Type" content="text/html" charset="utf-8">
 </head><body><pre>
 <table width=100% bgcolor=#CFCFE5><tr><td>
 	<font face=arial size=+3>Build Log</font>
@@ -1412,9 +1412,8 @@ bool getFilesFromTrackerFile(string lnkdeppath, ref string[] files)
 		}
 		else
 		{
-			auto lnkdepz = cast(string)lnkdepData ~ "\0";
-			int cp = GetKBCodePage();
-			lnkdeps = fromMBSz(lnkdepz.ptr, cp);
+			// tracker file already converted to UTF8 by pipedmd
+			lnkdeps = cast(string)lnkdepData;
 		}
 
 		string[] exclpaths = Package.GetGlobalOptions().getDepsExcludePaths();
