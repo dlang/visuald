@@ -54,6 +54,14 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2017-08-03 Version 0.45.0
+ $(UL
+  $(LI improved integration for VS2017)
+  $(LI added task list support)
+  $(LI dparser updated to recent language additions)
+  $(LI dparser now caches semantic results while browsing source code)
+ )
+
 2017-04-02 Version 0.44.1,0.44.2
  $(UL
   $(LI added VC project integration for VS2017)
@@ -67,21 +75,6 @@ $(UL
   $(LI $(VDLINK vcxproject, integration) with msbuild and Visual C/C++ projects)
   $(LI enhanced $(LINK2 Debugging.html#concord, integration) with the Visual Studio debugger by only adding mago's expression evaluator)
   $(LI improvements to completion lists)
-)
-
-2015-11-28 Version 0.3.43
-$(UL
- $(LI improved VS 2015 support)
- $(LI better support for $(LINK2 https://github.com/ldc-developers/ldc, LDC))
- $(LI pimped the configuration dialogs)
-)
-
-2015-8-5 Version 0.3.42
-$(UL
- $(LI new command "DustMite Build Failure" to reduce source for build error with $(LINK2 DustMite.html,DustMite))
- $(LI integration into the Visual Studio Performance Wizard)
- $(LI cv2pdb: improved DWARF support, intergration with Visual Studio 2015)
- $(LI demangling D/C++ symbols in disassembly)
 )
 
 $(LINK2 VersionHistory.html, more...)
