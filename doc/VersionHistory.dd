@@ -1,5 +1,56 @@
 Ddoc
 
+$(H2 2017-08-01 Version 0.45.0)
+ $(UL
+  $(LI installation
+   $(UL
+    $(LI read default DMD installation path from Visual D or DMD registry key, if not available in VS registry hive)
+    $(LI UCRT version detection: ignore directories that do not start with a digit (e.g. from DDK))
+    $(LI bugzilla Issue 17384: fix default executable search path for LDC/x64 under VS2017)
+  ))
+  $(LI editor
+   $(UL
+    $(LI fix crash when editing dub.json when part of a project)
+    $(LI added task list support for files loaded into the editor)
+  ))
+  $(LI DParser semantic engine:
+   $(UL
+    $(LI added support for function attributes @nogc and scope, align(expression))
+    $(LI cache semantic results until next edit)
+    $(LI break endless loop due to unresolved selective import)
+    $(LI fix for no expansions for symbols from public import in imported module)
+    $(LI try dparser as fallback if goto definition on import fails)
+    $(LI fix exception in isExpression)
+  ))
+  $(LI build system
+   $(UL
+    $(LI use generic file system tracking instead of compiler switch -deps=)
+    $(LI fixed tracker.exe not found in VS2015 and VS2017)
+    $(LI new project option "Add import paths of project dependencies")
+    $(LI fixed Compile and Run/Debug if building through MS-COFF and not having VS selected in sc.ini)
+    $(LI /MAPINFO: remove ancient options no longer supported by the MS linker)
+    $(LI separated compile and link into two batches so compile skipped if only link inputs changed)
+    $(LI dependency monitoring: added option to specify files/folders to exclude from dependency check)
+    $(LI mark html output log as UTF-8 encoded)
+  ))
+  $(LI mago debugger:
+   $(UL
+    $(LI fixed memory leaks that could also prohibit compilation due to PDB file still open)
+    $(LI add debugger options page to allow hiding internal locals and static members)
+    $(LI can now show registers in expressions)
+    $(LI show static members and base class with different icons)
+    $(LI fixed x64 debugger failing to start)
+    $(LI cv2pdb: added support for AA display in mago)
+    $(LI fixed loading PDB file when only VS2017 is installed)
+  ))
+  $(LI cpp2d
+   $(UL
+    $(LI add missing default to switch())
+    $(LI ensure space between identifiers)
+    $(LI fix module name for translated C-files)
+  ))
+ )
+
 $(H2 2017-04-02 Version 0.44.2)
  $(UL
   $(LI fixed building private phobos with recent dmd)

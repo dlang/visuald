@@ -865,7 +865,7 @@ Version history
   * fix link to build log: replace spaces with %20
   * added VC project integration for VS2017
 
-unreleased Version 0.45.0
+2017-08-01 Version 0.45.0
 
   * mago debugger:
     - fixed memory leaks that could also prohibit compilation due to PDB file still open
@@ -874,6 +874,7 @@ unreleased Version 0.45.0
     - show static members and base class with different icons
     - fixed x64 debugger failing to start
     - cv2pdb: added support for AA display in mago
+    - fixed loading PDB file when only VS2017 is installed
   * build system
     - use generic file system tracking instead of compiler switch -deps=
     - fixed tracker.exe not found in VS2015 and VS2017
@@ -891,7 +892,7 @@ unreleased Version 0.45.0
     - UCRT version detection: ignore directories that do not start with a digit (e.g. from DDK)
     - bugzilla Issue 17384: fix default executable search path for LDC/x64 under VS2017
   * cpp2d: add missing default to switch(), ensure space between identifiers, fix module name for translated C-files
-  * DParser seantic engine:
+  * DParser semantic engine:
     - added support for function attributes @nogc and scope, align(expression)
     - cache semantic results until next edit
     - break endless loop due to unresolved selective import
