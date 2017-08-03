@@ -119,17 +119,17 @@ for all users, not only for a single user.</p>
 
 <p>To compile your application, you must have <a href="http://www.digitalmars.com/d/download.html">DMD</a>,
 <a href="https://github.com/D-Programming-GDC/GDC">GDC</a> or <a href="https://github.com/ldc-developers/ldc">LDC</a>
-installed. Not all functionality 
+installed. Not all functionality
 has been thoroughly tested with GDC and LDC, so having DMD available for cross-checking is recommended.</p>
 
-<p>Visual D does <b>not</b> work with any of the <b>Express</b> versions of Visual Studio. Other than the 
+<p>Visual D does <b>not</b> work with any of the <b>Express</b> versions of Visual Studio. Other than the
 commercial editions, the Express versions do not support loading third party extensions and add-ins.</p>
 
 <p>In November 2014 Microsoft released <b><a href="http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx">
-Visual Studio Community 2013</a></b>, a version similar to Visual Studio Professional, but free for most users unless 
+Visual Studio Community 2013</a></b>, a version similar to Visual Studio Professional, but free for most users unless
 working in larger companies. Visual D integrates just as well as with the commercial versions.</p>
 
-<p>Visual D also works with the professional and community version of Visual Studio 2015. Please be
+<p>Visual D also works with the professional and community version of Visual Studio 2015 and 2017. Please be
 aware that the VC runtime libraries that ship with VS 2015 are not supported by dmd up to 2.068
 when compiling 64-bit applications.</p>
 
@@ -145,20 +145,20 @@ though a newer version is recommended. Some functionality is not supported in VS
 
 <p>VS Shell 2010 can be used, but there don't seem to be any installers available from Microsoft anymore.</p>
 
-<p>Unfortunately, the Visual Studio Shells 2008 and 2010 are missing one file that is needed for 
-the conversion of the debug information by cv2pdb. This is <b>msobj80.dll</b> for VS2008 and <b>msobj100.dll</b> for VS2010 
-and must be extracted from a standard installation, the Visual C Express edition or the Windows SDK. 
+<p>Unfortunately, the Visual Studio Shells 2008 and 2010 are missing one file that is needed for
+the conversion of the debug information by cv2pdb. This is <b>msobj80.dll</b> for VS2008 and <b>msobj100.dll</b> for VS2010
+and must be extracted from a standard installation, the Visual C Express edition or the Windows SDK.
 You might also find it installed by other Microsoft products.
 Put this file alongside mspdbcore.dll, normally in &lt;VS-installation-path&gt;\Common7\IDE.</p>
 
-<p>The <b>Visual Studio Shell 2012</b> is installed with two packages, the 
-<a href="http://www.microsoft.com/en-us/download/details.aspx?id=30671">isolated shell</a> followed by the 
+<p>The <b>Visual Studio Shell 2012</b> is installed with two packages, the
+<a href="http://www.microsoft.com/en-us/download/details.aspx?id=30671">isolated shell</a> followed by the
 <a href="http://www.microsoft.com/en-us/download/details.aspx?id=30663">integrated package</a>. Fortunately it
-has all the files needed for debugging, and the Visual D installer patches the installation to 
+has all the files needed for debugging, and the Visual D installer patches the installation to
 make the x64 debugger work.</p>
 
-<p>The <b>Visual Studio Shell 2013</b> is installed similar to VS Shell 2012, the 
-<a href="http://www.microsoft.com/en-us/download/details.aspx?id=40764">isolated shell</a> and the 
+<p>The <b>Visual Studio Shell 2013</b> is installed similar to VS Shell 2012, the
+<a href="http://www.microsoft.com/en-us/download/details.aspx?id=40764">isolated shell</a> and the
 <a href="http://www.microsoft.com/en-us/download/details.aspx?id=40777">integrated package</a>.</p>
 
 <h2>Using GDC</h2>
@@ -169,16 +169,16 @@ make the x64 debugger work.</p>
   <li>GDC binaries: <a href="http://gdcproject.org/downloads">http://gdcproject.org/downloads</a></li>
 </ul>
 
-<p>Add the MinGW64/bin path to your PATH environment variable or the executable path list in the "GDC Directories" 
+<p>Add the MinGW64/bin path to your PATH environment variable or the executable path list in the "GDC Directories"
 option page. Then switch the "Compiler" option in the project configuration to "GDC".</p>
 
-<p>To create a 64-bit executable, you will have to add a new platform to the project and solution 
+<p>To create a 64-bit executable, you will have to add a new platform to the project and solution
 in the configuration manager.</p>
 
 <p>Known issues:</p>
 <ul>
   <li>when building a library you should change the output file name extension to ".a".</li>
-  <li>when building a library object files will be generated into the project directory, not the 
+  <li>when building a library object files will be generated into the project directory, not the
     intermediate directory, because there seems to be no GDC option to change the output folder for multiple files.</li>
 </ul>
 
@@ -190,17 +190,17 @@ in the configuration manager.</p>
 
 <p>For debugging applications, you should also install cv2pdb which is now included in the
 Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoexp.dat do
-not mix with previous manual installations of <a href="https://github.com/rainers/cv2pdb">cv2pdb</a>. 
+not mix with previous manual installations of <a href="https://github.com/rainers/cv2pdb">cv2pdb</a>.
 Visual D also installs the alternative debug engine mago that does not need cv2pdb.</p>
 
-<p>cv2pdb has been extended to also convert from DWARF debug information to PDB, so it 
+<p>cv2pdb has been extended to also convert from DWARF debug information to PDB, so it
 is possible to debug applications built with GDC in Visual Studio. Be sure to select
-the "Visual Studio" debugger in the debugger project settings. Mago cannot be used 
+the "Visual Studio" debugger in the debugger project settings. Mago cannot be used
 as the debug engine, it currently only supports the DMD CodeView debug format.</p>
 
 
         <div class="smallprint" id="copyright">Copyright &copy; 1999-2017 by the <a href="http://www.dlang.org/foundation.html">D Language Foundation</a> | Page generated by
-<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Thu Aug 03 08:30:50 2017
+<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Thu Aug 03 09:00:24 2017
 </div>
     </div>
 </div>
