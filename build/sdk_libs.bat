@@ -4,13 +4,13 @@ rem  - vsi2d.exe with path as the first argument
 rem  - output file as second arg to remember build success
 rem  - WindowsSdkDir to be set
 
-if "%1" == "" (echo Error: please specify the path to vsi2d.exe as the first argument && exit /B 1)
-set VSI2D=%1
+set VSI2D=%~1
+if "%VSI2D%" == "" (echo Error: please specify the path to vsi2d.exe as the first argument && exit /B 1)
 if not exist "%VSI2D%" (echo %1 does not exist && exit /B 1)
 
-if "%2" == "" (echo Error: please specify the output path to remember succesful builds as second argument && exit /B 1)
-set OUT=%2
-if exist %OUT% del %OUT%
+set OUT=%~2
+if "%OUT%" == "" (echo Error: please specify the output path to remember succesful builds as second argument && exit /B 1)
+if exist "%OUT%" del "%OUT%"
 
 if not exist ..\sdk\lib\nul     md ..\sdk\lib
 
@@ -38,5 +38,5 @@ for %%f in (%LIBS%) do (
 	if errorlevel 1 exit /B 1
 )
 
-echo Success > %OUT%
+echo Success > "%OUT%"
 exit /B 0

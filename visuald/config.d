@@ -2671,7 +2671,7 @@ class Config :	DisposingComObject,
 			deps ~= file.GetFilename();
 			string workdir = GetProjectDir();
 			foreach(ref string s; deps)
-				s = makeFilenameAbsolute(s, workdir);
+				s = makeFilenameAbsolute(unquoteArgument(s), workdir);
 			return deps;
 		}
 		if(tool == "DMDsingle")

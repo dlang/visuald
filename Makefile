@@ -37,6 +37,7 @@ NSIS   = $(PROGRAMFILES)\NSIS
 CV2PDB = $(PROGRAMFILES)\VisualD\cv2pdb\cv2pdb.exe
 ZIP    = c:\u\unix\zip.exe
 MSBUILD = c:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe 
+CONFIG  = Release COFF32
 
 ##############################################################
 # no more changes should be necessary starting from here
@@ -135,13 +136,13 @@ idl2d_exe: $(VSI2D_EXE)
 	copy $(VSI2D_EXE) ..\downloads\idl2d.exe
 
 prerequisites:
-	devenv /Project "build"     /Build "Release|Win32" visuald_vs10.sln
+	devenv /Project "build"     /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
 visuald_vs:
-	devenv /Project "visuald"   /Build "Release|Win32" visuald_vs10.sln
+	devenv /Project "visuald"   /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
 vdserver:
-	devenv /Project "vdserver"  /Build "Release|Win32" visuald_vs10.sln
+	devenv /Project "vdserver"  /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
 dparser:
 	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
@@ -197,7 +198,7 @@ install_modules: prerequisites visuald_vs vdserver cv2pdb dparser vdextension ma
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads
-	cd nsis && "$(NSIS)\makensis" /V1 visuald.nsi
+	cd nsis && "$(NSIS)\makensis" /V1 "/DCONFIG=$(CONFIG)" visuald.nsi
 
 ##################################
 # clean build results
