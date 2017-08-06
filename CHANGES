@@ -899,3 +899,9 @@ Version history
     - fix for no expansions for symbols from public import in imported module
     - try dparser as fallback if goto definition on import fails
     - fix exception in isExpression
+
+2017-08-06 Version 0.45.1
+
+    - now building against the VC runtime (-m32mscoff) instead of the DigitalMars runtime to avoid 
+      anti-virus programs blocking the installation or execution
+    - fix dependencies for custom build rules if file names contain spaces
