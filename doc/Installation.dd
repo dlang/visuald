@@ -6,17 +6,17 @@ for all users, not only for a single user.)
 
 $(P To compile your application, you must have $(LINK2 http://www.digitalmars.com/d/download.html, DMD),
 $(LINK2 https://github.com/D-Programming-GDC/GDC, GDC) or $(LINK2 https://github.com/ldc-developers/ldc, LDC)
-installed. Not all functionality 
+installed. Not all functionality
 has been thoroughly tested with GDC and LDC, so having DMD available for cross-checking is recommended.)
 
-$(P Visual D does $(B not) work with any of the $(B Express) versions of Visual Studio. Other than the 
+$(P Visual D does $(B not) work with any of the $(B Express) versions of Visual Studio. Other than the
 commercial editions, the Express versions do not support loading third party extensions and add-ins.)
 
 $(P In November 2014 Microsoft released $(B $(LINK2 http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx,
-Visual Studio Community 2013)), a version similar to Visual Studio Professional, but free for most users unless 
+Visual Studio Community 2013)), a version similar to Visual Studio Professional, but free for most users unless
 working in larger companies. Visual D integrates just as well as with the commercial versions.)
 
-$(P Visual D also works with the professional and community version of Visual Studio 2015. Please be
+$(P Visual D also works with the professional and community version of Visual Studio 2015 and 2017. Please be
 aware that the VC runtime libraries that ship with VS 2015 are not supported by dmd up to 2.068
 when compiling 64-bit applications.)
 
@@ -32,20 +32,20 @@ though a newer version is recommended. Some functionality is not supported in VS
 
 $(P VS Shell 2010 can be used, but there don't seem to be any installers available from Microsoft anymore.)
 
-$(P Unfortunately, the Visual Studio Shells 2008 and 2010 are missing one file that is needed for 
-the conversion of the debug information by cv2pdb. This is $(B msobj80.dll) for VS2008 and $(B msobj100.dll) for VS2010 
-and must be extracted from a standard installation, the Visual C Express edition or the Windows SDK. 
+$(P Unfortunately, the Visual Studio Shells 2008 and 2010 are missing one file that is needed for
+the conversion of the debug information by cv2pdb. This is $(B msobj80.dll) for VS2008 and $(B msobj100.dll) for VS2010
+and must be extracted from a standard installation, the Visual C Express edition or the Windows SDK.
 You might also find it installed by other Microsoft products.
 Put this file alongside mspdbcore.dll, normally in $(LESS)VS-installation-path$(GREATER)\Common7\IDE.)
 
-$(P The $(B Visual Studio Shell 2012) is installed with two packages, the 
-$(LINK2 http://www.microsoft.com/en-us/download/details.aspx?id=30671, isolated shell) followed by the 
+$(P The $(B Visual Studio Shell 2012) is installed with two packages, the
+$(LINK2 http://www.microsoft.com/en-us/download/details.aspx?id=30671, isolated shell) followed by the
 $(LINK2 http://www.microsoft.com/en-us/download/details.aspx?id=30663, integrated package). Fortunately it
-has all the files needed for debugging, and the Visual D installer patches the installation to 
+has all the files needed for debugging, and the Visual D installer patches the installation to
 make the x64 debugger work.)
 
-$(P The $(B Visual Studio Shell 2013) is installed similar to VS Shell 2012, the 
-$(LINK2 http://www.microsoft.com/en-us/download/details.aspx?id=40764, isolated shell) and the 
+$(P The $(B Visual Studio Shell 2013) is installed similar to VS Shell 2012, the
+$(LINK2 http://www.microsoft.com/en-us/download/details.aspx?id=40764, isolated shell) and the
 $(LINK2 http://www.microsoft.com/en-us/download/details.aspx?id=40777, integrated package).)
 
 $(H2 Using GDC)
@@ -56,16 +56,16 @@ $(UL
   $(LI GDC binaries: $(LINK http://gdcproject.org/downloads))
 )
 
-$(P Add the MinGW64/bin path to your PATH environment variable or the executable path list in the "GDC Directories" 
+$(P Add the MinGW64/bin path to your PATH environment variable or the executable path list in the "GDC Directories"
 option page. Then switch the "Compiler" option in the project configuration to "GDC".)
 
-$(P To create a 64-bit executable, you will have to add a new platform to the project and solution 
+$(P To create a 64-bit executable, you will have to add a new platform to the project and solution
 in the configuration manager.)
 
 $(P Known issues:)
 $(UL
   $(LI when building a library you should change the output file name extension to ".a".)
-  $(LI when building a library object files will be generated into the project directory, not the 
+  $(LI when building a library object files will be generated into the project directory, not the
     intermediate directory, because there seems to be no GDC option to change the output folder for multiple files.)
 )
 
@@ -77,12 +77,12 @@ $(H3 Debugging)
 
 $(P For debugging applications, you should also install cv2pdb which is now included in the
 Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoexp.dat do
-not mix with previous manual installations of $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb). 
+not mix with previous manual installations of $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb).
 Visual D also installs the alternative debug engine mago that does not need cv2pdb.)
 
-$(P cv2pdb has been extended to also convert from DWARF debug information to PDB, so it 
+$(P cv2pdb has been extended to also convert from DWARF debug information to PDB, so it
 is possible to debug applications built with GDC in Visual Studio. Be sure to select
-the "Visual Studio" debugger in the debugger project settings. Mago cannot be used 
+the "Visual Studio" debugger in the debugger project settings. Mago cannot be used
 as the debug engine, it currently only supports the DMD CodeView debug format.)
 
 Macros:
