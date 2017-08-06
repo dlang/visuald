@@ -14,7 +14,7 @@
   <verbose>0</verbose>
   <vtls>0</vtls>
   <vgc>0</vgc>
-  <symdebug>2</symdebug>
+  <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -52,14 +52,15 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
+  <addDepImp>0</addDepImp>
+  <program>c:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\obj</objdir>
   <objname />
   <libname />
-  <doDocComments>1</doDocComments>
+  <doDocComments>0</doDocComments>
   <docdir>$(IntDir)\doc</docdir>
   <docname />
   <modules_ddoc />
@@ -86,7 +87,7 @@
   <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
-  <cv2pdbOptions />
+  <cv2pdbOptions>-s.</cv2pdbOptions>
   <objfiles />
   <linkswitches />
   <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
@@ -154,6 +155,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -256,6 +258,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..;m:\s\d\rainers\druntime\src</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -358,6 +361,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -460,6 +464,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -467,7 +472,7 @@
   <objdir>$(OutDir)\obj</objdir>
   <objname />
   <libname />
-  <doDocComments>1</doDocComments>
+  <doDocComments>0</doDocComments>
   <docdir>$(IntDir)\doc</docdir>
   <docname />
   <modules_ddoc />
@@ -475,7 +480,7 @@
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
   <hdrname />
-  <doXGeneration>1</doXGeneration>
+  <doXGeneration>0</doXGeneration>
   <xfilename>$(IntDir)\$(ProjectName).json</xfilename>
   <debuglevel>0</debuglevel>
   <debugids />
@@ -562,6 +567,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
@@ -647,7 +653,7 @@
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
-  <release>0</release>
+  <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>1</infowarnings>
@@ -664,6 +670,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>

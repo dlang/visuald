@@ -4,7 +4,7 @@ rem don't use spaces in path names!
 
 setlocal
 if "%DMDINSTALLDIR%" == "" set DMDINSTALLDIR=c:\s\d\rainers
-if "%DMD%" == "" set DMD=%DMDINSTALLDIR%\windows\bin\dmd
+set DMD=%DMDINSTALLDIR%\windows\bin\dmd
 if "%BINUTILS%" == "" set BINUTILS=c:\s\cpp\cxxfilt
 
 if "%CONFIG%" == "" set CONFIG=Debug

@@ -52,6 +52,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -154,6 +155,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -256,6 +258,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -358,6 +361,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -460,6 +464,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -562,6 +567,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -664,6 +670,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -766,6 +773,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -868,6 +876,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -970,6 +979,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -1072,6 +1082,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -1087,7 +1098,7 @@
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir>$(OutDir)\di</hdrdir>
   <hdrname />
-  <doXGeneration>1</doXGeneration>
+  <doXGeneration>0</doXGeneration>
   <xfilename>$(IntDir)\$(ProjectName).json</xfilename>
   <debuglevel>0</debuglevel>
   <debugids />
@@ -1174,6 +1185,7 @@
   <otherDMD>1</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -1276,6 +1288,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -1378,6 +1391,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -1434,7 +1448,7 @@
   <lib>1</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>2</singleFileCompilation>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <mscoff>1</mscoff>
   <trace>0</trace>
@@ -1463,7 +1477,7 @@
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
-  <release>0</release>
+  <release>1</release>
   <preservePaths>1</preservePaths>
   <warnings>1</warnings>
   <infowarnings>1</infowarnings>
@@ -1480,6 +1494,7 @@
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
@@ -1582,6 +1597,7 @@
   <otherDMD>1</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>

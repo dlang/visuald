@@ -4,13 +4,13 @@ rem  - vsi2d.exe with path as the first argument
 rem  - output file as second arg to remember build success
 rem  - WindowsSdkDir to be set
 
-if "%1" == "" (echo Error: please specify the path to vsi2d.exe as the first argument && exit /B 1)
-set VSI2D=%1
+set VSI2D=%~1
+if "%VSI2D%" == "" (echo Error: please specify the path to vsi2d.exe as the first argument && exit /B 1)
 if not exist "%VSI2D%" (echo %1 does not exist && exit /B 1)
 
-if "%2" == "" (echo Error: please specify the output path to remember succesful builds as second argument && exit /B 1)
-set OUT=%2
-if exist %OUT% del %OUT%
+set OUT=%~2
+if "%OUT%" == "" (echo Error: please specify the output path to remember succesful builds as second argument && exit /B 1)
+if exist "%OUT%" del "%OUT%"
 
 if "%WindowsSdkDir%" == "" (echo Error: environment variable WindowsSdkDir not set && exit /B 1)
 
@@ -38,12 +38,12 @@ if "%VSISDKINC%" == "" (echo Error: could not detect the Visual Studio SDK && ex
 if not exist "%VSISDKINC%\VisualStudioIntegration\Common\Inc\textmgr.h" (echo unexpected Visual Studio SDK installation at "%VSISDKINC%" && exit /B 1)
 
 echo Translating Windows SDK and Visual Studio SDK to D, this can take several minutes. Please be patient.
-echo %VSI2D% --vsi="%VSISDKINC:\=/%" --win="%WINSDKINC:\=/%" --dte="%DTE_IDL_PATH%" --sdk=..\sdk
-%VSI2D% --vsi="%VSISDKINC:\=/%" --win="%WINSDKINC:\=/%" --dte="%DTE_IDL_PATH%" --sdk=..\sdk
+echo "%VSI2D%" --vsi="%VSISDKINC:\=/%" --win="%WINSDKINC:\=/%" --dte="%DTE_IDL_PATH%" --sdk=..\sdk
+"%VSI2D%" --vsi="%VSISDKINC:\=/%" --win="%WINSDKINC:\=/%" --dte="%DTE_IDL_PATH%" --sdk=..\sdk
 if errorlevel 1 exit /B 1
 
 echo Translation successful! 
 echo Visual Studio now prompts to reload the vsi project, but cannot do so because the build is still running.
 echo Please reload the solution manually.
-echo Success > %OUT%
+echo Success > "%OUT%"
 exit /B 0

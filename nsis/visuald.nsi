@@ -59,7 +59,9 @@
   !define VERYLONG_APPNAME "Visual D - Visual Studio Integration of the D Programming Language"
 
   !define DLLNAME "visuald.dll"
+!ifndef CONFIG
   !define CONFIG  "Release"
+!endif
 
   ;Name and file
   Name "${LONG_APPNAME}"
@@ -197,21 +199,21 @@ Section "Visual Studio package" SecPackage
   SectionIn RO
   ${SetOutPath} "$INSTDIR"
   
-  ${File} ..\bin\${CONFIG}\ ${DLLNAME}
-  ${File} ..\bin\${CONFIG}\ vdserver.tlb
-  ${File} ..\bin\${CONFIG}\ pipedmd.exe
-  ;; ${File} ..\bin\${CONFIG}\ filemonitor.dll
-  ${File} ..\bin\${CONFIG}\ dcxxfilt.exe
+  ${File} "..\bin\${CONFIG}\" ${DLLNAME}
+  ${File} "..\bin\${CONFIG}\" vdserver.tlb
+  ${File} "..\bin\${CONFIG}\" pipedmd.exe
+  ;; ${File} "..\bin\${CONFIG}\" filemonitor.dll
+  ${File} "..\bin\Release\" dcxxfilt.exe
   ${File} ..\ README.md
   ${File} ..\ LICENSE_1_0.txt
   ${File} ..\ CHANGES
 
 !ifdef VDSERVER
-  ${File} ..\bin\${CONFIG}\ vdserver.exe
+  ${File} "..\bin\${CONFIG}\" vdserver.exe
 !endif
 
 !ifdef VDEXTENSIONS
-  ${File} ..\bin\${CONFIG}\vdextensions\ vdextensions.dll
+  ${File} ..\bin\Release\vdextensions\ vdextensions.dll
 !endif
 
 !ifdef DPARSER
