@@ -537,6 +537,8 @@ string findTracker(bool x64, ref string trackerArgs)
 	string exe = findExeInPath("tracker.exe");
 	if (!exe.empty && isExe64bit(exe) != x64)
 		exe = null;
+	if (exe.indexOf("14.0") >= 0)
+		trackerArgs = x64 ? " /d FileTracker64.dll" : " /d FileTracker32.dll";
 
 	if (exe.empty)
 		exe = findTrackerInVS2017();
