@@ -27,6 +27,7 @@ if "%WINSDKINC%" == "" set WINSDKINC=%WindowsSdkDir%\include
 if not exist "%WINSDKINC%\windows.h" if not exist "%WINSDKINC%\um\windows.h" (echo Error: could not detect the Windows SDK && exit /B 1)
 
 set VSISDKINC=
+if "%VSISDKINC%" == "" if not "%VSSDK150Install%" == "" set VSISDKINC=%VSSDK150Install%
 if "%VSISDKINC%" == "" if not "%VSSDK140Install%" == "" set VSISDKINC=%VSSDK140Install%
 if "%VSISDKINC%" == "" if not "%VSSDK120Install%" == "" set VSISDKINC=%VSSDK120Install%
 if "%VSISDKINC%" == "" if not "%VSSDK110Install%" == "" set VSISDKINC=%VSSDK110Install%
