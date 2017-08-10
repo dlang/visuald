@@ -1054,7 +1054,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -1067,8 +1067,8 @@
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>1</preservePaths>
-  <warnings>1</warnings>
-  <infowarnings>1</infowarnings>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
   <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
@@ -1466,7 +1466,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -1479,8 +1479,8 @@
   <useInline>1</useInline>
   <release>1</release>
   <preservePaths>1</preservePaths>
-  <warnings>1</warnings>
-  <infowarnings>1</infowarnings>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
   <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
@@ -1569,7 +1569,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -1583,13 +1583,13 @@
   <release>0</release>
   <preservePaths>1</preservePaths>
   <warnings>1</warnings>
-  <infowarnings>0</infowarnings>
+  <infowarnings>1</infowarnings>
   <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>

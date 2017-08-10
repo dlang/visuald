@@ -10,7 +10,7 @@ if not exist "%TLB2IDL%" (echo %1 does not exist && exit /B 1)
 
 set OUT=%~2
 if "%OUT%" == "" (echo please specify the output path to remember succesful builds as second argument && exit /B 1)
-if exist %OUT% del %OUT%
+if exist "%OUT%" del "%OUT%"
 
 set DTE_IDL_PATH=..\sdk\vsi\idl
 if not exist ..\sdk\vsi\nul     md ..\sdk\vsi

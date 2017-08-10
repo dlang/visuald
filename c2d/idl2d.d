@@ -562,6 +562,13 @@ class idl2d
 		// Windows SDK 8.0
 		case "_CONTRACT_GEN":
 			return -1;
+
+		// Windows SDK 10.0.15063.0
+		case "RPC_UNICODE_SUPPORTED":
+			return 1;
+		case "_M_HYBRID_X86_ARM64":
+			return -1;
+
 		default:
 			break;
 		}
@@ -2246,6 +2253,9 @@ else
 
 		// Windows SDK 10.0.14393.0
 		case "_Outptr_result_z_":
+
+		// Windows SDK 10.0.15063.0
+		case "_Post_ptr_invalid_":
 
 		// VS14 SDK comment after #endif
 		case "PROXYSTUB_BUILD":
