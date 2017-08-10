@@ -908,3 +908,4 @@ Version history
   * mago: fix displaying long strings as empty
   * pipedmd: fix tracker invocation if the VS2015 version is found through PATH
   * update vsi2d to Windows SDK 10.0.15063.0
+  * Visual D now buildable with VS2017
