@@ -759,7 +759,12 @@
    <File path="Resources\DSplashScreenIcon.bmp" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
-   <File path="Resources\pkgcmd.vsct" customcmd="set VSSDKInstall=%VSSDK140Install%
+   <File path="Resources\pkgcmd.vsct" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if errorlevel 1 goto reportError
+
+set VSSDKInstall=%VSSDK150Install%
+if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK140Install%
 if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK120Install%
 if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK110Install%
 if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK100Install%
