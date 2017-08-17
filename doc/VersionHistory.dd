@@ -1,5 +1,36 @@
 Ddoc
 
+$(H2 2017-08-17 Version 0.45.1)
+ $(UL
+  $(LI installation
+   $(UL
+    $(LI now building against the VC runtime (-m32mscoff) instead of the DigitalMars runtime to avoid
+      anti-virus programs blocking the installation or execution)
+  ))
+  $(LI DParser semantic engine:
+   $(UL
+    $(LI "add import path of project dependencies": implicit import directories not passed to semantic analyzer)
+    $(LI tooltip for selective imports now show the aliased definition, not the alias)
+    $(LI improved tooltips: show fully qualified name, show initializer for constants,
+      better display for enum and aliases)
+    $(LI fixed completion or tooltips sometimes not working before modifying source code)
+  ))
+  $(LI build system
+   $(UL
+    $(LI fix dependencies for custom build rules if file names contain spaces)
+    $(LI fix tracker invocation if the VS2015 version is found through PATH)
+  ))
+  $(LI mago debugger:
+   $(UL
+    $(LI fix displaying long strings as empty)
+  ))
+  $(LI build
+   $(UL
+    $(LI update vsi2d to Windows SDK 10.0.15063.0)
+    $(LI Visual D now buildable with VS2017)
+  ))
+ )
+
 $(H2 2017-08-01 Version 0.45.0)
  $(UL
   $(LI installation

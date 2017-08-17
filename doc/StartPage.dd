@@ -54,6 +54,14 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2017-08-17 Version 0.45.1
+ $(UL
+  $(LI now building against the VC runtime to avoid
+      anti-virus programs blocking the installation or execution)
+  $(LI improved tooltips)
+  $(LI mago: fix displaying long strings as empty)
+ )
+
 2017-08-03 Version 0.45.0
  $(UL
   $(LI improved integration for VS2017)
