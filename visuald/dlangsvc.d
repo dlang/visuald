@@ -835,8 +835,10 @@ class LanguageService : DisposingComObject,
 		wstring expr;
 		return vdServerClient.GetReferences(src.GetFileName(), tok, line, idx, expr, cb);
 	}
-	void UpdateSemanticModule(Source src)
+	void UpdateSemanticModule(Source src, wstring srctext, bool verbose, UpdateModuleCallBack cb)
 	{
+		ConfigureSemanticProject(src);
+		vdServerClient.UpdateModule(src.GetFileName(), srctext, verbose, cb);
 	}
 	void ClearSemanticProject()
 	{
@@ -873,6 +875,10 @@ class LanguageService : DisposingComObject,
 			foreach(ref i; stringImp)
 				i = normalizeDir(unquoteArgument(i));
 			makeFilenamesAbsolute(stringImp, cfg.GetProjectDir());
+
+			if (cfgopts.addDepImp)
+				foreach(dep; cfg.getImportsFromDependentProjects())
+					imp.addunique(dep);
 
 			versionids = tokenizeArgs(cfgopts.versionids);
 			debugids = tokenizeArgs(cfgopts.debugids);
@@ -3783,7 +3789,7 @@ else
 			bool verbose = (mModificationCountSemantic == -1);
 			mModificationCountSemantic = mModificationCount;
 			auto langsvc = Package.GetLanguageService();
-			langsvc.vdServerClient.UpdateModule(GetFileName(), srctext, verbose, &OnUpdateModule);
+			langsvc.UpdateSemanticModule(this, srctext, verbose, &OnUpdateModule);
 		}
 		if (outline)
 		{

@@ -93,6 +93,9 @@ namespace DParserCOMServer
 
         public override IEnumerable<RootPackage> EnumRootPackagesSurroundingModule(DModule module)
         {
+            // if packs not added during construction because not yet parsed by GlobalParseCache, try adding now
+            if (packs.Count() != PackageRootDirs.Count())
+                Add(PackageRootDirs);
             return packs;
         }
 
@@ -148,8 +151,9 @@ namespace DParserCOMServer
 
 		public DModule GetModule(string fileName)
 		{
-			DModule mod;
-			mod = GlobalParseCache.GetModule(fileName);
+            if (!_sources.ContainsKey(fileName))
+                return null;
+            DModule mod = GlobalParseCache.GetModule(fileName);
             if (mod == null)
                 _modules.TryGetValue(fileName, out mod);
             return mod;

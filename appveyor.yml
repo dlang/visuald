@@ -66,8 +66,8 @@ install:
         copy c:\projects\dm\bin\coffimplib.exe c:\projects\dmd2\windows\bin
   # Download & install Visual D
   - ps: |
-        Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.45.1-rc1/VisualD-v0.45.1-rc1.exe' -FileName 'VisualD-v0.45.1-rc1.exe'
-  - .\VisualD-v0.45.1-rc1.exe /S
+        Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.45.1-rc2/VisualD-v0.45.1-rc2.exe' -FileName 'VisualD-v0.45.1-rc2.exe'
+  - .\VisualD-v0.45.1-rc2.exe /S
   # configure DMD path
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\12.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f

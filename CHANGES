@@ -909,3 +909,9 @@ Version history
   * pipedmd: fix tracker invocation if the VS2015 version is found through PATH
   * update vsi2d to Windows SDK 10.0.15063.0
   * Visual D now buildable with VS2017
+  * dparser:
+    - "add import path of project dependencies": implicit import directories not passed to semantic analyzer
+    - tooltip for selective imports now show the aliased definition, not the alias
+    - improved tooltips: show full qualified name, show initializer for constants,
+      better display for enum and aliases
+    - fixed completion or tooltips sometimes not working before modifying source code
