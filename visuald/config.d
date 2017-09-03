@@ -820,6 +820,9 @@ class ProjectOptions
 			}
 			if (mslink && lib == OutputType.DLL)
 				cmd ~= " -L/DLL";
+
+			if (mslink && Package.GetGlobalOptions().isVS2017)
+				cmd ~= " /noopttls"; // update 15.3.1 moves TLS into _DATA segment
 		}
 		return cmd;
 	}
@@ -1009,6 +1012,9 @@ class ProjectOptions
 
 		if(mslink)
 		{
+			if (Package.GetGlobalOptions().isVS2017)
+				cmd ~= " /noopttls"; // update 15.3.1 moves TLS into _DATA segment
+
 			switch(cRuntime)
 			{
 				case CRuntime.None:           cmd ~= " /NODEFAULTLIB:libcmt"; break;
@@ -1093,7 +1099,7 @@ class ProjectOptions
 			if (std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ "vcvarsall.bat"))
 				cmd = `call "%VCINSTALLDIR%\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
 			else if (std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ r"Auxiliary\Build\vcvarsall.bat"))
-				cmd = `call "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
+				cmd = "pushd .\n" ~ `call "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ "popd\n" ~ cmd;
 		}
 
 		static string[4] outObj = [ " -o", " -Fo", " -o", " -o " ];

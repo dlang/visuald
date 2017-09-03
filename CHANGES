@@ -915,3 +915,11 @@ Version history
     - improved tooltips: show full qualified name, show initializer for constants,
       better display for enum and aliases
     - fixed completion or tooltips sometimes not working before modifying source code
+
+2017-09-03 Version 0.45.2
+
+  * cv2pdb
+    - now also search VS2017 registry entries to find mspdb140.dll
+    - fix working with the VS2017 update 15.3.1
+  * add workaround for broken TLS when linking with link.exe from VS2017 update 15.3.1
+

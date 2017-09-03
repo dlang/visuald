@@ -1289,6 +1289,8 @@ class GlobalOptions
 	bool lastColorizeVersions;
 	bool lastUseDParser;
 
+	bool isVS2017; // VS 2017
+
 	this()
 	{
 	}
@@ -1426,7 +1428,10 @@ class GlobalOptions
 				string ver = strip(readUtf8(defverFile));
 				VCInstallDir = VSInstallDir ~ r"VC\";
 				if (!ver.empty)
+				{
 					VCToolsInstallDir = VCInstallDir ~ r"Tools\MSVC\" ~ ver ~ r"\";
+					isVS2017 = true;
+				}
 			}
 			catch(Exception)
 			{

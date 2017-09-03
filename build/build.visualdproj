@@ -313,34 +313,34 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
  </Config>
  <Folder name="build">
   <File path="dte_idl.bat" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\tlb2idl.exe&quot; &quot;$(OutDir)\dte_idl.success&quot;" tool="Custom" dependencies="&quot;$(OutDir)\tlb2idl.exe&quot;" outfile="$(OutDir)\dte_idl.success" />
   <File path="..\tools\filemonitor.d" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 dmd -g -map &quot;$(OutDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).dll&quot; -defaultlib=user32.lib -L/ENTRY:_DllMain@12 $(InputPath)" tool="Custom" outfile="$(OutDir)\$(InputName).dll" />
   <File path="..\tools\largeadr.d" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 dmd -map &quot;$(OutDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath)" tool="Custom" outfile="$(OutDir)\$(InputName).exe" />
   <File path="..\tools\pipedmd.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" tool="Custom" dependencies="..\tools\nostacktrace.d" perConfig="true" outfile="$(OutDir)\$(InputName).exe">
    <Config name="Release COFF32|Win32" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 dmd -m32mscoff -map &quot;$(OutDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
    <Config name="Debug|Win32" customcmd="dmd -g -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
   </File>
   <File path="sdk.bat" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk.success&quot;" tool="Custom" dependencies="&quot;$(OutDir)\dte_idl.success&quot; &quot;$(OutDir)\vsi2d.exe&quot;" outfile="$(OutDir)\sdk.success" />
   <File path="sdk_libs.bat" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(OutDir)\sdk_libs.success&quot;" tool="Custom" outfile="$(OutDir)\sdk_libs.success" />
   <File path="..\tools\tlb2idl.d" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 dmd -d -map &quot;$(OutDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) oleaut32.lib uuid.lib" tool="Custom" outfile="$(OutDir)\$(InputName).exe" />
  </Folder>
