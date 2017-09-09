@@ -822,7 +822,7 @@ class ProjectOptions
 				cmd ~= " -L/DLL";
 
 			if (mslink && Package.GetGlobalOptions().isVS2017)
-				cmd ~= " /noopttls"; // update 15.3.1 moves TLS into _DATA segment
+				cmd ~= " -L/noopttls"; // update 15.3.1 moves TLS into _DATA segment
 		}
 		return cmd;
 	}

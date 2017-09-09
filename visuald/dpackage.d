@@ -1289,7 +1289,8 @@ class GlobalOptions
 	bool lastColorizeVersions;
 	bool lastUseDParser;
 
-	bool isVS2017; // VS 2017
+	int vsVersion;
+	bool isVS2017() { return vsVersion == 15; }
 
 	this()
 	{
@@ -1430,7 +1431,6 @@ class GlobalOptions
 				if (!ver.empty)
 				{
 					VCToolsInstallDir = VCInstallDir ~ r"Tools\MSVC\" ~ ver ~ r"\";
-					isVS2017 = true;
 				}
 			}
 			catch(Exception)
@@ -1487,6 +1487,8 @@ class GlobalOptions
 	{
 		if(!getRegistryRoot())
 			return false;
+
+		vsVersion = cast(int) guessVSVersion(regConfigRoot);
 
 		wstring dllPath = GetDLLName(g_hInst);
 		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
@@ -1870,7 +1872,7 @@ class GlobalOptions
 		string searchpaths = replaceGlobalMacros(DMD.ExeSearchPath);
 		string[] paths = tokenizeArgs(searchpaths, true, false);
 		if(char* p = getenv("PATH"))
-			paths ~= tokenizeArgs(to!string(p), true, false);
+			paths ~= tokenizeArgs(fromMBSz(cast(immutable)p), true, false);
 
 		foreach(path; paths)
 		{
@@ -1932,7 +1934,7 @@ class GlobalOptions
 		{
 			string[string] env = [ "@P" : dirName(inifile) ];
 			addReplacements(env);
-			string[string][string] ini = parseIni(inifile);
+			string[string][string] ini = parseIni(inifile, false);
 
 			if(auto pEnv = "Environment" in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
@@ -1993,7 +1995,7 @@ class GlobalOptions
 		string inifile = bindir ~ "sc.ini";
 		if(std.file.exists(inifile))
 		{
-			string[string][string] ini = parseIni(inifile);
+			string[string][string] ini = parseIni(inifile, false);
 			if(auto pEnv = "Environment" in ini)
 				if(string* pFlags = "DFLAGS" in *pEnv)
 				{
