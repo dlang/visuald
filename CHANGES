@@ -916,10 +916,14 @@ Version history
       better display for enum and aliases
     - fixed completion or tooltips sometimes not working before modifying source code
 
-2017-09-03 Version 0.45.2
+unreleased Version 0.46.0
 
   * cv2pdb
     - now also search VS2017 registry entries to find mspdb140.dll
     - fix working with the VS2017 update 15.3.1
   * add workaround for broken TLS when linking with link.exe from VS2017 update 15.3.1
-
+  * improve handling of non-ASCII installation paths:
+    - use unicode aware version of NSIS, register through wide string API of rundll32
+    - parse sc.ini with current code page
+    - pipedmd: pass wide string command line to sub process
+    - convert MS linker response file to UTF16
