@@ -57,7 +57,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -160,7 +160,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -263,7 +263,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -366,7 +366,7 @@
   <imppath />
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -469,7 +469,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -572,7 +572,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -675,7 +675,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -778,7 +778,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -881,7 +881,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -984,7 +984,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1087,7 +1087,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1190,7 +1190,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1293,7 +1293,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1396,7 +1396,7 @@
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>

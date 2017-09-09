@@ -57,7 +57,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -160,7 +160,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -263,7 +263,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -366,7 +366,7 @@
   <imppath />
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -469,7 +469,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -572,7 +572,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)\x64</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -675,7 +675,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -778,7 +778,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)\x64</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -881,7 +881,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -984,7 +984,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1087,7 +1087,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1190,7 +1190,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)\x64</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1293,7 +1293,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1396,7 +1396,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vdserver</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1446,7 +1446,7 @@
   <File path="vdserver.idl" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /out &quot;$(OutDir)&quot; /error stub_data $(InputPath)" tool="Custom" outfile="$(OutDir)/vdserver.tlb" />
+midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /tlb &quot;..\vdserver.tlb&quot; /out &quot;$(IntDir)&quot; /error stub_data $(InputPath)" tool="Custom" outfile="$(OutDir)/vdserver.tlb" />
   <File path="vdserver.rc" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError

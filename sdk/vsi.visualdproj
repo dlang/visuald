@@ -57,7 +57,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -160,7 +160,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -263,7 +263,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -366,7 +366,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -469,7 +469,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -572,7 +572,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -675,7 +675,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -778,7 +778,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -881,7 +881,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -984,7 +984,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1087,7 +1087,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1190,7 +1190,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1293,7 +1293,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1396,7 +1396,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)\$(PLATFORMNAME)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1499,7 +1499,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1602,7 +1602,7 @@
   <imppath>..</imppath>
   <fileImppath />
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\vsi</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1766,6 +1766,7 @@
    <File path="win32\utilapiset.d" />
    <File path="win32\ioapiset.d" />
    <File path="win32\threadpoolapiset.d" />
+   <File path="win32\bemapiset.d" />
    <File path="win32\wow64apiset.d" />
    <File path="win32\jobapi.d" />
    <File path="win32\timezoneapi.d" />
@@ -1784,11 +1785,6 @@
    <File path="win32\mprapidef.d" />
    <File path="win32\lmerr.d" />
    <File path="win32\lmcons.d" />
-   <File path="win32\coml2api.d" />
-   <File path="win32\jobapi2.d" />
-   <File path="win32\propidlbase.d" />
-   <File path="win32\enclaveapi.d" />
-   <File path="win32\dpa_dsa.d" />
   </Folder>
   <Folder name="vsi">
    <File path="vsi\sdk_shared.d" />
