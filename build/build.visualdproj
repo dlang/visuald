@@ -312,6 +312,13 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="build">
+  <File path="..\tools\mb2utf16.d" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" tool="Custom" dependencies="..\tools\nostacktrace.d" perConfig="true" outfile="$(OutDir)\$(InputName).exe">
+   <Config name="Release COFF32|Win32" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+if errorlevel 1 goto reportError
+dmd -m32mscoff -map &quot;$(OutDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
+   <Config name="Debug|Win32" customcmd="dmd -g -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
+  </File>
   <File path="dte_idl.bat" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError

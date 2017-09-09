@@ -370,3 +370,11 @@ dchar decodeBwd(Char)(const(Char) txt, ref size_t pos)
 	assert(pos + len == p);
 	return ch;
 }
+
+bool isASCIIString(string s)
+{
+	foreach (dchar c; s)
+		if (!isASCII(c))
+			return false;
+	return true;
+}

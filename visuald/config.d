@@ -3374,7 +3374,7 @@ class Config :	DisposingComObject,
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.doSeparateLink();
 		bool x64          = mProjectOptions.isX86_64;
-		bool mscoff       = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
+		bool mscoff       = mProjectOptions.compiler == Compiler.DMD && (x64 || mProjectOptions.mscoff);
 		string workdir    = normalizeDir(GetProjectDir());
 
 		auto globOpts = Package.GetGlobalOptions();
@@ -3434,8 +3434,8 @@ class Config :	DisposingComObject,
 						~ lnkcmd;
 
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
-				string plus = x64 || mscoff ? " " : "+";
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
+				string plus = mscoff ? " " : "+";
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, mscoff, plus);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath(true) ~ ".rsp";
@@ -3452,11 +3452,14 @@ class Config :	DisposingComObject,
 							lnkresponsefile = shortresponsefile;
 					}
 					plus ~= " >> " ~ lnkresponsefile ~ "\necho ";
-					cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
+					cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, mscoff, plus);
 
 					prelnk ~= "echo. > " ~ lnkresponsefile ~ "\n";
 					prelnk ~= "echo " ~ cmdfiles;
-					prelnk ~= " >> " ~ lnkresponsefile ~ "\n\n";
+					prelnk ~= " >> " ~ lnkresponsefile ~ "\n";
+					if (mscoff) // linker supports UTF16 response file
+						prelnk ~= "\"$(VisualDInstallDir)mb2utf16.exe\" " ~ lnkresponsefile ~ "\n";
+					prelnk ~= "\n";
 					lnkcmd ~= "@" ~ lnkresponsefile;
 				}
 				else
