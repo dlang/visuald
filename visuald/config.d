@@ -1060,7 +1060,7 @@ class ProjectOptions
 			return linkDMDCommandLine(isX86_64);
 	}
 
-	string getOutputDirOption()
+	string getObjectDirOption()
 	{
 		switch(compiler)
 		{
@@ -3135,7 +3135,7 @@ class Config :	DisposingComObject,
 						remove ~= f;
 					else
 					{
-						targetObj = "$(OutDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension();
+						targetObj = "$(IntDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension();
 						f = targetObj;
 					}
 				}
@@ -3404,10 +3404,13 @@ class Config :	DisposingComObject,
 				if(fcmd.length == 0)
 					opt = ""; // don't try to build zero files
 				else if(singleObj)
-					opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(OutDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension());
+					opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(IntDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension());
 				else
-					opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
+					opt ~= " -c" ~ mProjectOptions.getObjectDirOption();
 			}
+			else
+				opt ~= mProjectOptions.getObjectDirOption(); // dmd writes object file to $(OutDir) otherwise
+
 			string addopt;
 			if(mProjectOptions.additionalOptions.length && fcmd.length)
 				addopt = " " ~ mProjectOptions.additionalOptions.replace("\n", " ");
