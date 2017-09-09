@@ -927,3 +927,5 @@ unreleased Version 0.46.0
     - parse sc.ini with current code page
     - pipedmd: pass wide string command line to sub process
     - convert MS linker response file to UTF16
+  * build single object file to intermediate directory rather than output folder
+  * custom build batch files now written to intermediate directory

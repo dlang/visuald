@@ -2704,6 +2704,14 @@ class Config :	DisposingComObject,
 		return null;
 	}
 
+	string getCustomCommandFile(string outfile)
+	{
+		string workdir = GetProjectDir();
+		string cmdfile = std.path.buildPath(GetIntermediateDir(), baseName(outfile) ~ "." ~ kCmdLogFileExtension);
+		cmdfile = makeFilenameAbsolute(cmdfile, workdir);
+		return cmdfile;
+	}
+
 	bool isUptodate(CFileNode file, string* preason)
 	{
 		string fcmd = GetCompileCommand(file);
@@ -2714,7 +2722,7 @@ class Config :	DisposingComObject,
 		outfile = mProjectOptions.replaceEnvironment(outfile, this, file.GetFilename(), outfile);
 
 		string workdir = GetProjectDir();
-		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+		string cmdfile = getCustomCommandFile(outfile);
 
 		if(!compareCommandFile(cmdfile, fcmd))
 		{
@@ -2889,7 +2897,7 @@ class Config :	DisposingComObject,
 					if (outname.length && outname != file.GetFilename())
 					{
 						files ~= makeFilenameAbsolute(outname, workdir);
-						files ~= makeFilenameAbsolute(outname ~ "." ~ kCmdLogFileExtension, workdir);
+						string cmdfile = getCustomCommandFile(outname);
 					}
 				}
 				return false;
@@ -3408,7 +3416,7 @@ class Config :	DisposingComObject,
 				else
 					opt ~= " -c" ~ mProjectOptions.getObjectDirOption();
 			}
-			else
+			else if (mProjectOptions.lib != OutputType.StaticLib) // dmd concatenates object dir and output file
 				opt ~= mProjectOptions.getObjectDirOption(); // dmd writes object file to $(OutDir) otherwise
 
 			string addopt;
