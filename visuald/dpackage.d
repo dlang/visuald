@@ -1574,7 +1574,7 @@ class GlobalOptions
 
 			string getDefaultLibPathCOFF64()
 			{
-				string libpath = getVCDir ("lib", true);
+				string libpath = getVCDir("lib", true);
 				string dir = replaceGlobalMacros(libpath);
 				if(std.file.exists(dir ~ "\\legacy_stdio_definitions.lib"))
 					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x64";
@@ -1593,7 +1593,7 @@ class GlobalOptions
 
 			string getDefaultLibPathCOFF32()
 			{
-				string libpath = getVCDir ("lib", false);
+				string libpath = getVCDir("lib", false);
 				string dir = replaceGlobalMacros(libpath);
 				if(std.file.exists(dir ~ "\\legacy_stdio_definitions.lib"))
 					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x86";
@@ -1653,8 +1653,10 @@ class GlobalOptions
 			DMD.ExeSearchPath32coff = DMD.ExeSearchPath;
 			GDC.ExeSearchPath       = r"$(GDCInstallDir)bin;$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
 			GDC.ExeSearchPath64     = GDC.ExeSearchPath;
-			LDC.ExeSearchPath       = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", false) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
-			LDC.ExeSearchPath64     = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", true)  ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
+			// LDC can call the linker itself, tracking only works if ldc2.exe and link.exe have the same architecture
+			bool ldcX64 = true;
+			LDC.ExeSearchPath       = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", ldcX64) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
+			LDC.ExeSearchPath64     = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", ldcX64) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
 
 			DMD.LibSearchPath64     = getDefaultLibPathCOFF64();
 			LDC.LibSearchPath64     = DMD.LibSearchPath64;

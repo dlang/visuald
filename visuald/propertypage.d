@@ -1541,7 +1541,7 @@ class DmdEventsPropertyPage : ProjectPropertyPage
 		AddControl("Pre-Build Command", mPreCmd = new MultiLineText(mCanvas), 500);
 		AddControl("Post-Build Command", mPostCmd = new MultiLineText(mCanvas), 500);
 
-		Label lab = new Label(mCanvas, "Use \"if errorlevel 1 goto reportError\" to cancel on error");
+		Label lab = new Label(mCanvas, "Use \"if %errorlevel% neq 0 goto reportError\" to cancel on error");
 		lab.setRect(0, mLineY, getWidgetWidth(mCanvas, kPageWidth), kLineHeight);
 		addResizableWidget(lab, kAttachBottom);
 	}

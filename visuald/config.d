@@ -290,7 +290,7 @@ class ProjectOptions
 		cRuntime = CRuntime.StaticRelease;
 		debugEngine = 1;
 
-		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
+		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep;*.tlog";
 		setX64(x64);
 		setDebug(dbg);
 	}
@@ -779,7 +779,7 @@ class ProjectOptions
 
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
+			dmdoutfile = getCvTargetPath();
 
 		cmd ~= getOutputFileOption(dmdoutfile);
 		if(mslink && compiler != Compiler.DMD)
@@ -834,7 +834,7 @@ class ProjectOptions
 
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
+			dmdoutfile = getCvTargetPath();
 
 		cmd ~= " -o " ~ quoteNormalizeFilename(dmdoutfile);
 		switch(mapverbosity)
@@ -878,7 +878,7 @@ class ProjectOptions
 
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
+			dmdoutfile = getCvTargetPath();
 
 		cmd ~= " -of=" ~ quoteNormalizeFilename(dmdoutfile);
 		switch(mapverbosity)
@@ -920,7 +920,7 @@ class ProjectOptions
 		string cmd;
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
+			dmdoutfile = getCvTargetPath();
 		string mapfile = "\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
 
 		static string plusList(string[] lnkfiles, string ext, string sep)
@@ -1151,6 +1151,13 @@ class ProjectOptions
 		return "$(OutDir)\\$(ProjectName).exe";
 	}
 
+	string getCvTargetPath()
+	{
+		if(exefile.length)
+			return "$(IntDir)\\" ~ baseName(exefile) ~ "_cv";
+		return "$(IntDir)\\$(ProjectName).exe_cv";
+	}
+
 	string getDependenciesPath()
 	{
 		return normalizeDir(objdir) ~ "$(ProjectName).dep";
@@ -1226,7 +1233,7 @@ class ProjectOptions
 			if(cv2pdbOptions.length)
 				cmd ~= " " ~ cv2pdbOptions;
 
-			cmd ~= " " ~ quoteFilename(target ~ "_cv") ~ " " ~ quoteFilename(target);
+			cmd ~= " " ~ quoteFilename(getCvTargetPath()) ~ " " ~ quoteFilename(target);
 			return cmd;
 		}
 		return "";
@@ -2845,12 +2852,11 @@ class Config :	DisposingComObject,
 		files ~= lnkfile ~ ".rsp";
 		files ~= makeFilenameAbsolute(GetDependenciesPath(), workdir);
 		files ~= makeFilenameAbsolute(GetLinkDependenciesPath(), workdir);
+		files ~= setExtension(target, "pdb");
 
 		if(mProjectOptions.usesCv2pdb())
-		{
-			files ~= target ~ "_cv";
-			files ~= setExtension(target, "pdb");
-		}
+			files ~= expandedAbsoluteFilename(mProjectOptions.getCvTargetPath());
+
 		string mapfile = expandedAbsoluteFilename("$(INTDIR)\\$(SAFEPROJECTNAME).map");
 		files ~= mapfile;
 		string buildlog = GetBuildLogFile();
@@ -2987,16 +2993,16 @@ class Config :	DisposingComObject,
 			{
 				string cv2pdb = opts.appendCv2pdb();
 				if (cv2pdb.length)
-					cmd ~= "\nif errorlevel 1 goto reportError\n" ~ opts.appendCv2pdb();
+					cmd ~= "\nif %errorlevel% neq 0 goto reportError\n" ~ opts.appendCv2pdb();
 			}
 		}
 		if(cmd.length)
 		{
 			cmd = getEnvironmentChanges() ~ cmd ~ addopt ~ "\n:reportError\n";
 			if(syntaxOnly)
-				cmd ~= "if errorlevel 1 echo Compiling " ~ file.GetFilename() ~ " failed!\n";
+				cmd ~= "if %errorlevel% neq 0 echo Compiling " ~ file.GetFilename() ~ " failed!\n";
 			else
-				cmd ~= "if errorlevel 1 echo Building " ~ outfile ~ " failed!\n";
+				cmd ~= "if %errorlevel% neq 0 echo Building " ~ outfile ~ " failed!\n";
 			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
 		return cmd;
@@ -3290,7 +3296,7 @@ class Config :	DisposingComObject,
 				string outfile = libpath ~ "phobos-" ~ baseName(file) ~ ".obj";
 				string cccmd = mProjectOptions.getCppCommandLine(outfile, i == 0);
 				cmdline ~= cccmd ~ " -DNO_snprintf " ~ file ~ "\n";
-				cmdline ~= "if errorlevel 1 exit /B %ERRORLEVEL%\n\n";
+				cmdline ~= "if %errorlevel% neq 0 exit /B %ERRORLEVEL%\n\n";
 				file = outfile;
 			}
 		}
@@ -3332,7 +3338,7 @@ class Config :	DisposingComObject,
 
 		string druntimelib = libpath ~ "privatedruntime.lib";
 		cmdline ~= buildFiles(dmd ~ opts, druntimelib, files);
-		cmdline ~= "if errorlevel 1 exit /B %ERRORLEVEL%\n\n";
+		cmdline ~= "if %errorlevel% neq 0 exit /B %ERRORLEVEL%\n\n";
 
 		// collect phobos D files
 		files = null;
@@ -3400,7 +3406,7 @@ class Config :	DisposingComObject,
 			string mod_cmd = getModulesDDocCommandLine(srcfiles, modules_ddoc);
 			if(mod_cmd.length > 0)
 			{
-				precmd ~= mod_cmd ~ "\nif errorlevel 1 goto reportError\n";
+				precmd ~= mod_cmd ~ "\nif %errorlevel% neq 0 goto reportError\n";
 				fcmd ~= " " ~ modules_ddoc;
 			}
 
@@ -3425,7 +3431,7 @@ class Config :	DisposingComObject,
 			precmd ~= opt ~ fcmd ~ addopt ~ "\n";
 		}
 		string cmd = precmd;
-		cmd ~= "if errorlevel 1 goto reportError\n";
+		cmd ~= "if %errorlevel% neq 0 goto reportError\n";
 
 		if(link && separateLink && doLink)
 		{
@@ -3489,7 +3495,7 @@ class Config :	DisposingComObject,
 					lnkcmd ~= " " ~ addlnkopt;
 			}
 			cmd = cmd ~ "\n" ~ prelnk ~ lnkcmd ~ "\n";
-			cmd = cmd ~ "if errorlevel 1 goto reportError\n";
+			cmd = cmd ~ "if %errorlevel% neq 0 goto reportError\n";
 		}
 
 		if (link)
@@ -3497,20 +3503,20 @@ class Config :	DisposingComObject,
 			string cv2pdb = mProjectOptions.appendCv2pdb();
 			if(cv2pdb.length && doLink)
 			{
-				string cvtarget = quoteFilename(mProjectOptions.getTargetPath() ~ "_cv");
+				string cvtarget = quoteFilename(mProjectOptions.getCvTargetPath());
 				cmd ~= "if not exist " ~ cvtarget ~ " (echo " ~ cvtarget ~ " not created! && goto reportError)\n";
 				cmd ~= "echo Converting debug information...\n";
 				cmd ~= cv2pdb;
-				cmd ~= "\nif errorlevel 1 goto reportError\n";
+				cmd ~= "\nif %errorlevel% neq 0 goto reportError\n";
 			}
 
 			string pre = strip(mProjectOptions.preBuildCommand);
 			if(pre.length)
-				cmd = pre ~ "\nif errorlevel 1 goto reportError\n" ~ cmd;
+				cmd = pre ~ "\nif %errorlevel% neq 0 goto reportError\n" ~ cmd;
 
 			string post = strip(mProjectOptions.postBuildCommand);
 			if(post.length)
-				cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post ~ "\n\n";
+				cmd = cmd ~ "\nif %errorlevel% neq 0 goto reportError\n" ~ post ~ "\n\n";
 
 			string target = quoteFilename(mProjectOptions.getTargetPath());
 			cmd ~= "if not exist " ~ target ~ " (echo " ~ target ~ " not created! && goto reportError)\n";

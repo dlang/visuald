@@ -602,7 +602,7 @@ version(tip)
 		string cmd = cfg.GetCompileCommand(pFile, !dbg && !run && !disasm, stool, addopt);
 		if(cmd.length)
 		{
-			cmd ~= "if not errorlevel 1 echo Compilation successful.\n";
+			cmd ~= "if %errorlevel% == 0 echo Compilation successful.\n";
 			string workdir = cfg.GetProjectDir();
 			string outfile = cfg.GetOutputFile(pFile, stool);
 			outfile = makeFilenameAbsolute(outfile, workdir);
@@ -613,17 +613,17 @@ version(tip)
 			{
 				string asmfile = outfile ~ ".asm";
 				string linfile = outfile ~ ".lines";
-				cmd ~= "if errorlevel 1 exit %ERRORLEVEL% /B\n";
+				cmd ~= "if %errorlevel% neq 0 exit %ERRORLEVEL% /B\n";
 				cmd ~= "echo Dumping disassembly\n";
 				cmd ~= cfg.GetDisasmCommand(outfile, asmfile) ~ "\n";
-				cmd ~= "if errorlevel 1 exit %ERRORLEVEL% /B\n";
+				cmd ~= "if %errorlevel% neq 0 exit %ERRORLEVEL% /B\n";
 				cmd ~= "echo Dumping line numbers\n";
 				cmd ~= "\"" ~ Package.GetGlobalOptions().VisualDInstallDir ~ "cv2pdb\\dumplines.exe\" " ~ quoteFilename(outfile)
 					~ " > " ~ quoteFilename(linfile) ~ "\n";
 			}
 			if(run)
 			{
-				cmd ~= "if errorlevel 1 exit %ERRORLEVEL% /B\n";
+				cmd ~= "if %errorlevel% neq 0 exit %ERRORLEVEL% /B\n";
 				cmd ~= quoteFilename(outfile) ~ "\n";
 				cmd ~= "echo Execution result code: %ERRORLEVEL%\n";
 			}
