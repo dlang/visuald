@@ -1655,6 +1655,7 @@
   <File path="ddocmacros.d" />
   <File path="file.d" />
   <File path="httpget.d" />
+  <File path="libconfig.d" />
   <File path="path.d" />
   <File path="registry.d" />
   <File path="string.d" />

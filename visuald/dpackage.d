@@ -2006,10 +2006,58 @@ class GlobalOptions
 		return imports;
 	}
 
-	string[] getImportPaths()
+	string[] getLDCImportPaths()
 	{
-		string[] imports = getIniImportPaths();
-		string searchpaths = replaceGlobalMacros(DMD.ImpSearchPath);
+		string[] imports;
+		string conffile = buildPath(LDC.InstallDir, "etc/ldc2.conf");
+		if(std.file.exists(conffile))
+		{
+			string bindir = buildPath(LDC.InstallDir, "bin");
+			try
+			{
+				import stdext.libconfig;
+				Setting[] settings = parseConfigFile(conffile);
+				foreach(set; settings)
+				{
+					if(set.name == "default" && set.type == Setting.Type.group)
+					{
+						auto group = cast(GroupSetting)set;
+						foreach(sw; group.children)
+						{
+							if (sw.name == "switches" && sw.type == Setting.Type.array)
+							{
+								auto arr = cast(ArraySetting)sw;
+								foreach(a; arr.vals())
+								{
+									string opts = replace(a, "%%ldcbinarypath%%", bindir);
+									imports ~= getOptionImportPaths(opts, bindir);
+								}
+							}
+						}
+					}
+				}
+			}
+			catch(Exception)
+			{
+			}
+		}
+		return imports;
+	}
+
+	string[] getImportPaths(int compiler)
+	{
+		string[] imports;
+		string searchpaths;
+		if (compiler == Compiler.LDC)
+		{
+			imports = getLDCImportPaths();
+			searchpaths = replaceGlobalMacros(LDC.ImpSearchPath);
+		}
+		else
+		{
+			imports = getIniImportPaths();
+			searchpaths = replaceGlobalMacros(DMD.ImpSearchPath);
+		}
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
 			imports ~= removeDotDotPath(normalizeDir(unquoteArgument(arg)));

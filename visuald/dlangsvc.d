@@ -852,7 +852,7 @@ class LanguageService : DisposingComObject,
 		if(!cfg)
 			cfg = getCurrentStartupConfig();
 
-		string[] imp = GetImportPaths(cfg) ~ Package.GetGlobalOptions().getImportPaths();
+		string[] imp;
 		string[] stringImp;
 		string[] versionids;
 		string[] debugids;
@@ -863,6 +863,7 @@ class LanguageService : DisposingComObject,
 			scope(exit) release(cfg);
 			auto cfgopts = cfg.GetProjectOptions();
 			auto globopts = Package.GetGlobalOptions();
+			imp = GetImportPaths(cfg) ~ Package.GetGlobalOptions().getImportPaths(cfgopts.compiler);
 			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64,
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck,
 									  cfgopts.compiler == Compiler.GDC,
@@ -882,6 +883,10 @@ class LanguageService : DisposingComObject,
 
 			versionids = tokenizeArgs(cfgopts.versionids);
 			debugids = tokenizeArgs(cfgopts.debugids);
+		}
+		else
+		{
+			imp = Package.GetGlobalOptions().getImportPaths(Compiler.DMD);
 		}
 		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp), assumeUnique(versionids), assumeUnique(debugids), flags);
 	}

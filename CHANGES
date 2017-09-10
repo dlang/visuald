@@ -929,3 +929,5 @@ unreleased Version 0.46.0
     - convert MS linker response file to UTF16
   * build single object file to intermediate directory rather than output folder
   * custom build batch files now written to intermediate directory
+  * dparser:
+    - when building with LDC, use import path from its config file instead of DMDs' sc.ini
