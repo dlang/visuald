@@ -939,3 +939,4 @@ unreleased Version 0.46.0
   * fixed spurious freeze in precise GC (mostly during startup)
   * add import library to project outputs if "create import library" enabled
   * added linker options to configure map file, import library and PDB file
+  * parse "static foreach" (but no semantic analysis)
