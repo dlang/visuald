@@ -152,6 +152,11 @@ int visiblePosition(S)(S txt, int tabSize, int idx)
 	return p;
 }
 
+int nextTabPosition(int n, int tabSize)
+{
+	return n + tabSize - n % tabSize;
+}
+
 S createVisualSpaces(S)(int n, int tabSize, int tabOff = 0)
 {
 	S s;

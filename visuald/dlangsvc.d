@@ -2943,7 +2943,7 @@ else
 		else if(startTok != "{" && startTok != "[" && hasOpenBrace)
 			indent = langPrefs.uTabSize;
 		if(prevTok == "{" || prevTok == "[")
-			return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize + labelIndent;
+			return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + labelIndent, langPrefs.uTabSize);
 
 		bool skipLabel = false;
 		do
@@ -2952,7 +2952,7 @@ else
 			if(txt == "(")
 				return visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1);
 			if(isOpenBraceOrCase(lntokIt))
-				return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize + indent + labelIndent;
+				return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + indent + labelIndent, langPrefs.uTabSize);
 
 			if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
 			{
@@ -2973,7 +2973,7 @@ else
 			{
 				findMatchingIf();
 				if(isOpenBraceOrCase(lntokIt))
-					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize + labelIndent;
+					return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + labelIndent, + langPrefs.uTabSize);
 			}
 		}
 		while(lntokIt.retreatOverBraces());
