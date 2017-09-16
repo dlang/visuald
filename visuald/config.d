@@ -220,6 +220,7 @@ class ProjectOptions
 	bool dump_source;
 	uint mapverbosity;
 	bool createImplib;
+	bool debuglib;      // use debug library
 
 	string defaultlibname;	// default library for non-debug builds
 	string debuglibname;	// default library for debug builds
@@ -806,6 +807,9 @@ class ProjectOptions
 
 		if(lib != OutputType.StaticLib)
 		{
+			if(compiler == Compiler.LDC && debuglib)
+				cmd ~= " -link-debuglib";
+
 			if (symdebug && mslink)
 				cmd ~= " -L/PDB:" ~ quoteFilename(pdbfile);
 
@@ -1381,6 +1385,7 @@ class ProjectOptions
 		elem ~= new xml.Element("dump_source", toElem(dump_source));
 		elem ~= new xml.Element("mapverbosity", toElem(mapverbosity));
 		elem ~= new xml.Element("createImplib", toElem(createImplib));
+		elem ~= new xml.Element("debuglib", toElem(debuglib));
 
 		elem ~= new xml.Element("defaultlibname", toElem(defaultlibname));
 		elem ~= new xml.Element("debuglibname", toElem(debuglibname));
@@ -1515,6 +1520,7 @@ class ProjectOptions
 		fromElem(elem, "dump_source", dump_source);
 		fromElem(elem, "mapverbosity", mapverbosity);
 		fromElem(elem, "createImplib", createImplib);
+		fromElem(elem, "debuglib", debuglib);
 
 		fromElem(elem, "defaultlibname", defaultlibname);
 		fromElem(elem, "debuglibname", debuglibname);

@@ -932,6 +932,7 @@ unreleased Version 0.46.0
   * custom build batch files now written to intermediate directory
   * dparser:
     - when building with LDC, use import path from its config file instead of DMDs' sc.ini
+    - parse "static foreach" (but no semantic analysis)
   * use "if %errorlevel% neq 0" instead of "if errorlevel 1" in batches to capture crashes, too
   * fix default executable search path for LDC assuming a 64-bit compiler executable (avoids 
     linker error -1073741701)
@@ -939,4 +940,5 @@ unreleased Version 0.46.0
   * fixed spurious freeze in precise GC (mostly during startup)
   * add import library to project outputs if "create import library" enabled
   * added linker options to configure map file, import library and PDB file
-  * parse "static foreach" (but no semantic analysis)
+  * indentation of lambdas as parameter arguments now aligns statements on tab stops
+  * LDC: add option to link against debug runtime library

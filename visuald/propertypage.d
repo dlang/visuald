@@ -1469,7 +1469,8 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		AddControl("Definition File", mDefFile = new Text(mCanvas), btn);
 		btn = new Button(mCanvas, "...", ID_RESFILE);
 		AddControl("Resource File",   mResFile = new Text(mCanvas), btn);
-		AddControl("", mPrivatePhobos = new CheckBox(mCanvas, "Build and use local version of phobos with same compiler options"));
+		AddControl("", mPrivatePhobos = new CheckBox(mCanvas, "Build and use local version of phobos with same compiler options (DMD only)"));
+		AddControl("", mDebugLib      = new CheckBox(mCanvas, "Use debug version of the D runtime library (LDC only)"));
 		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use global and standard library search paths"));
 		AddControl("C Runtime", mCRuntime = new ComboBox(mCanvas, [ "None", "Static Release (LIBCMT)", "Static Debug (LIBCMTD)", "Dynamic Release (MSCVRT)", "Dynamic Debug (MSCVRTD)" ], false));
 	}
@@ -1477,7 +1478,11 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	void EnableControls()
 	{
 		if(ProjectOptions options = GetProjectOptions())
+		{
+			mPrivatePhobos.setEnabled(options.compiler == Compiler.DMD);
+			mDebugLib.setEnabled(options.compiler == Compiler.LDC);
 			mCRuntime.setEnabled(options.isX86_64 || options.mscoff);
+		}
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1490,6 +1495,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		mResFile.setText(options.resfile);
 		mUseStdLibPath.setChecked(options.useStdLibPath);
 		mPrivatePhobos.setChecked(options.privatePhobos);
+		mDebugLib.setChecked(options.debuglib);
 		mCRuntime.setSelection(options.cRuntime);
 
 		EnableControls();
@@ -1506,6 +1512,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		changes += changeOption(mResFile.getText(), options.resfile, refoptions.resfile);
 		changes += changeOption(mUseStdLibPath.isChecked(), options.useStdLibPath, refoptions.useStdLibPath);
 		changes += changeOption(mPrivatePhobos.isChecked(), options.privatePhobos, refoptions.privatePhobos);
+		changes += changeOption(mDebugLib.isChecked(), options.debuglib, refoptions.debuglib);
 		changes += changeOption(cast(uint) mCRuntime.getSelection(), options.cRuntime, refoptions.cRuntime);
 		return changes;
 	}
@@ -1518,6 +1525,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	Text mResFile;
 	CheckBox mUseStdLibPath;
 	CheckBox mPrivatePhobos;
+	CheckBox mDebugLib;
 	ComboBox mCRuntime;
 }
 
