@@ -1223,13 +1223,17 @@ class ProjectOptions
 
 	bool usesCv2pdb()
 	{
+		if (runCv2pdb == 2)
+			return true;
+		if (runCv2pdb == 0)
+			return false;
 		if(compiler == Compiler.DMD && (isX86_64 || mscoff))
+			return false; // should generate correct debug info directly
+		if(compiler == Compiler.LDC && !isLDCforMinGW())
 			return false; // should generate correct debug info directly
 		if (!symdebug || lib == OutputType.StaticLib)
 			return false;
-		if (runCv2pdb == 2)
-			return true;
-		return (runCv2pdb == 1 && debugEngine != 1); // not for mago
+		return (debugEngine != 1); // not for mago
 	}
 
 	bool usesMSLink()
