@@ -95,6 +95,9 @@
   <deffile />
   <resfile />
   <exefile>$(IntDir)\$(ProjectName).sdk</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -198,6 +201,9 @@
   <deffile />
   <resfile />
   <exefile>$(IntDir)\$(ProjectName).sdk</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -302,6 +308,9 @@ echo. &gt;$(TargetDir)\build.dep</postBuildCommand>
   <deffile />
   <resfile />
   <exefile>$(IntDir)\$(ProjectName).sdk</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -315,7 +324,7 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <File path="dte_idl.bat" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-call $(InputPath) &quot;$(OutDir)\tlb2idl.exe&quot; &quot;$(IntDir)\dte_idl.success&quot;" tool="Custom" dependencies="&quot;$(OutDir)\tlb2idl.exe&quot;" outfile="$(OutDir)\dte_idl.success" />
+call $(InputPath) &quot;$(OutDir)\tlb2idl.exe&quot; &quot;$(IntDir)\dte_idl.success&quot;" tool="Custom" dependencies="&quot;$(OutDir)\tlb2idl.exe&quot;" outfile="$(IntDir)\dte_idl.success" />
   <File path="..\tools\filemonitor.d" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
@@ -341,7 +350,7 @@ dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(
   <File path="sdk.bat" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk.success&quot;" tool="Custom" dependencies="&quot;$(IntDir)\dte_idl.success&quot; &quot;$(OutDir)\vsi2d.exe&quot;" outfile="$(OutDir)\sdk.success" />
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk.success&quot;" tool="Custom" dependencies="&quot;$(IntDir)\dte_idl.success&quot; &quot;$(OutDir)\vsi2d.exe&quot;" outfile="$(IntDir)\sdk.success" />
   <File path="sdk_libs.bat" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError

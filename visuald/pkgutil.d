@@ -160,13 +160,13 @@ bool tryWithExceptionToBuildOutputPane(T)(T dg, string errInfo = "")
 	return false;
 }
 
-string browseFile(HWND parentHwnd, string title, string filter, string initdir = null)
+string _browseFile(T)(HWND parentHwnd, string title, string filter, string initdir)
 {
 	if (auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false))
 	{
 		wchar[260] fileName;
 		fileName[0] = 0;
-		VSOPENFILENAMEW ofn;
+		T ofn;
 		ofn.lStructSize = ofn.sizeof;
 		ofn.hwndOwner = parentHwnd;
 		ofn.pwzDlgTitle = toUTF16z(title);
@@ -174,10 +174,24 @@ string browseFile(HWND parentHwnd, string title, string filter, string initdir =
 		ofn.nMaxFileName = fileName.length;
 		ofn.pwzInitialDir = toUTF16z(initdir);
 		ofn.pwzFilter = toUTF16z(filter);
-		if (pIVsUIShell.GetOpenFileNameViaDlg(&ofn) == S_OK)
+		static if(is(T == VSOPENFILENAMEW))
+			auto rc = pIVsUIShell.GetOpenFileNameViaDlg(&ofn);
+		else
+			auto rc = pIVsUIShell.GetSaveFileNameViaDlg(&ofn);
+
+		if (rc == S_OK)
 			return to!string(fileName);
 	}
 	return null;
+}
+string browseFile(HWND parentHwnd, string title, string filter, string initdir = null)
+{
+	return _browseFile!(VSOPENFILENAMEW)(parentHwnd, title, filter, initdir);
+}
+
+string browseSaveFile(HWND parentHwnd, string title, string filter, string initdir = null)
+{
+	return _browseFile!(VSSAVEFILENAMEW)(parentHwnd, title, filter, initdir);
 }
 
 string browseDirectory(HWND parentHwnd, string title, string initdir = null)

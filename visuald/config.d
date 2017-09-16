@@ -257,6 +257,10 @@ class ProjectOptions
 	uint   cRuntime;
 	bool   privatePhobos;
 
+	string mapfile;
+	string pdbfile;
+	string impfile;
+
 	string additionalOptions;
 	string preBuildCommand;
 	string postBuildCommand;
@@ -283,6 +287,9 @@ class ProjectOptions
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
 		xfilename = "$(IntDir)\\$(TargetName).json";
+		mapfile = "$(IntDir)\\$(SafeProjectName).map";
+		pdbfile = "$(IntDir)\\$(SafeProjectName).pdb";
+		impfile = "$(IntDir)\\$(SafeProjectName).lib";
 		cccmd = "$(CC) -c";
 		ccTransOpt = true;
 		doXGeneration = true;
@@ -782,10 +789,11 @@ class ProjectOptions
 			dmdoutfile = getCvTargetPath();
 
 		cmd ~= getOutputFileOption(dmdoutfile);
-		if(mslink && compiler != Compiler.DMD)
-			cmd ~= " -L/MAP:\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
-		else
-			cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+		if (!mslink)
+			cmd ~= " -map " ~ quoteFilename(mapfile); // optlink always creates map file
+		else if (mapverbosity > 0)
+			cmd ~= " -L/MAP:" ~ quoteFilename(mapfile);
+
 		switch(mapverbosity)
 		{
 			case 0: cmd ~= mslink ? "" : " -L/NOMAP"; break; // actually still creates map file
@@ -798,8 +806,11 @@ class ProjectOptions
 
 		if(lib != OutputType.StaticLib)
 		{
+			if (symdebug && mslink)
+				cmd ~= " -L/PDB:" ~ quoteFilename(pdbfile);
+
 			if(createImplib)
-				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+				cmd ~= " -L/IMPLIB:" ~ quoteFilename(impfile);
 			if(objfiles.length)
 				cmd ~= " " ~ objfiles;
 			if(deffile.length)
@@ -842,7 +853,7 @@ class ProjectOptions
 			case 0: // no map
 				break;
 			default:
-				cmd ~= linkeropt ~ "-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				cmd ~= linkeropt ~ "-Map=" ~ quoteFilename(mapfile);
 				break;
 		}
 
@@ -856,8 +867,8 @@ class ProjectOptions
 
 		if(lib != OutputType.StaticLib)
 		{
-//			if(createImplib)
-//				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+			if(createImplib)
+				cmd ~= " -L/IMPLIB:" ~ quoteFilename(impfile);
 			if(objfiles.length)
 				cmd ~= " " ~ objfiles;
 			if(deffile.length)
@@ -871,6 +882,7 @@ class ProjectOptions
 		return cmd;
 	}
 
+	// mingw
 	string linkLDCCommandLine()
 	{
 		string cmd;
@@ -886,7 +898,7 @@ class ProjectOptions
 			case 0: // no map
 				break;
 			default:
-				cmd ~= linkeropt ~ "-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				cmd ~= linkeropt ~ "-Map=" ~ quoteFilename(mapfile);
 				break;
 		}
 
@@ -900,8 +912,8 @@ class ProjectOptions
 
 		if(lib != OutputType.StaticLib)
 		{
-			//			if(createImplib)
-			//				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+			if(createImplib)
+				cmd ~= " -L" ~ quoteFilename(impfile);
 			if(objfiles.length)
 				cmd ~= " " ~ objfiles;
 			if(deffile.length)
@@ -921,7 +933,6 @@ class ProjectOptions
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
 			dmdoutfile = getCvTargetPath();
-		string mapfile = "\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
 
 		static string plusList(string[] lnkfiles, string ext, string sep)
 		{
@@ -955,8 +966,14 @@ class ProjectOptions
 		cmd ~= plusList(lnkfiles, objectFileExtension(), plus);
 		cmd ~= mslink ? " /OUT:" : ",";
 		cmd ~= quoteNormalizeFilename(dmdoutfile);
-		cmd ~= mslink ? " /MAP:" : ",";
-		cmd ~= mapfile;
+		if (mapverbosity > 0)
+		{
+			cmd ~= mslink ? " /MAP:" : ",";
+			cmd ~= quoteFilename(mapfile);
+		}
+		else if (!mslink)
+			cmd ~= "," ~ quoteFilename(mapfile);
+
 		cmd ~= mslink ? " " : ",";
 
 		string[] libs = tokenizeArgs(libfiles);
@@ -993,8 +1010,7 @@ class ProjectOptions
 			if(res.length)
 				cmd ~= "," ~ res;
 		}
-		// options
-		// "/m" to geneate map?
+
 		if(!mslink)
 			switch(mapverbosity)
 			{
@@ -1007,7 +1023,12 @@ class ProjectOptions
 			}
 
 		if(symdebug)
-			cmd ~= mslink ? " /DEBUG" : "/CO";
+		{
+			if (mslink)
+				cmd ~= " /DEBUG /PDB:" ~ quoteFilename(pdbfile);
+			else
+				cmd ~= "/CO";
+		}
 		cmd ~= mslink ? " /INCREMENTAL:NO /NOLOGO" : "/NOI/DELEXE";
 
 		if(mslink)
@@ -1029,7 +1050,7 @@ class ProjectOptions
 		if(lib != OutputType.StaticLib)
 		{
 			if(createImplib)
-				cmd ~= " /IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+				cmd ~= " /IMPLIB:" ~ quoteFilename(impfile);
 
 			switch(subsystem)
 			{
@@ -1233,7 +1254,7 @@ class ProjectOptions
 			if(cv2pdbOptions.length)
 				cmd ~= " " ~ cv2pdbOptions;
 
-			cmd ~= " " ~ quoteFilename(getCvTargetPath()) ~ " " ~ quoteFilename(target);
+			cmd ~= " " ~ quoteFilename(getCvTargetPath()) ~ " " ~ quoteFilename(target) ~ " " ~ quoteFilename(pdbfile);
 			return cmd;
 		}
 		return "";
@@ -1384,6 +1405,9 @@ class ProjectOptions
 		elem ~= new xml.Element("deffile", toElem(deffile));
 		elem ~= new xml.Element("resfile", toElem(resfile));
 		elem ~= new xml.Element("exefile", toElem(exefile));
+		elem ~= new xml.Element("pdbfile", toElem(pdbfile));
+		elem ~= new xml.Element("impfile", toElem(impfile));
+		elem ~= new xml.Element("mapfile", toElem(mapfile));
 		elem ~= new xml.Element("useStdLibPath", toElem(useStdLibPath));
 		elem ~= new xml.Element("cRuntime", toElem(cRuntime));
 		elem ~= new xml.Element("privatePhobos", toElem(privatePhobos));
@@ -1515,6 +1539,9 @@ class ProjectOptions
 		fromElem(elem, "deffile", deffile);
 		fromElem(elem, "resfile", resfile);
 		fromElem(elem, "exefile", exefile);
+		fromElem(elem, "pdbfile", pdbfile);
+		fromElem(elem, "impfile", impfile);
+		fromElem(elem, "mapfile", mapfile);
 		fromElem(elem, "useStdLibPath", useStdLibPath);
 		fromElem(elem, "cRuntime", cRuntime);
 		fromElem(elem, "privatePhobos", privatePhobos);
@@ -2852,15 +2879,18 @@ class Config :	DisposingComObject,
 		files ~= lnkfile ~ ".rsp";
 		files ~= makeFilenameAbsolute(GetDependenciesPath(), workdir);
 		files ~= makeFilenameAbsolute(GetLinkDependenciesPath(), workdir);
-		files ~= setExtension(target, "pdb");
 
 		if(mProjectOptions.usesCv2pdb())
 			files ~= expandedAbsoluteFilename(mProjectOptions.getCvTargetPath());
 
-		string mapfile = expandedAbsoluteFilename("$(INTDIR)\\$(SAFEPROJECTNAME).map");
-		files ~= mapfile;
-		string buildlog = GetBuildLogFile();
-		files ~= buildlog;
+		files ~= expandedAbsoluteFilename(mProjectOptions.pdbfile);
+		files ~= expandedAbsoluteFilename(mProjectOptions.mapfile);
+
+		string impfile = expandedAbsoluteFilename(mProjectOptions.impfile);
+		files ~= impfile;
+		files ~= stripExtension(impfile) ~ ".exp"; // export file
+
+		files ~= GetBuildLogFile();
 
 		if(mProjectOptions.createImplib)
 			files ~= setExtension(target, "lib");
@@ -3905,7 +3935,14 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	this(Config cfg, int pos)
 	{
 		if(cfg)
+		{
+			auto opt = cfg.mProjectOptions;
 			mTargets ~= makeFilenameAbsolute(cfg.GetTargetPath(), cfg.GetProjectDir());
+			if (opt.lib != OutputType.StaticLib && opt.createImplib)
+			{
+				mTargets ~= cfg.expandedAbsoluteFilename(opt.impfile);
+			}
+		}
 		mPos = pos;
 	}
 

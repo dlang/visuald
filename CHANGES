@@ -936,3 +936,6 @@ unreleased Version 0.46.0
   * fix default executable search path for LDC assuming a 64-bit compiler executable (avoids 
     linker error -1073741701)
   * added *.tlog to default files to clean
+  * fixed spurious freeze in precise GC (mostly during startup)
+  * add import library to project outputs if "create import library" enabled
+  * added linker options to configure map file, import library and PDB file

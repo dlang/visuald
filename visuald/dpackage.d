@@ -1466,6 +1466,8 @@ class GlobalOptions
 			dir = (expand ? VCInstallDir : "$(VCINSTALLDIR)");
 			if (sub.startsWith("lib") && x64)
 				sub = "lib\\amd64" ~ sub[3 .. $];
+			else if (sub == "bin" && x64)
+				sub = "bin\\amd64";
 		}
 		return dir ~ sub;
 	}

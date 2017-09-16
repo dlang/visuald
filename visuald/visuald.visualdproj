@@ -75,7 +75,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -95,6 +95,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -178,7 +181,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>1</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -198,6 +201,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -281,7 +287,7 @@
   <versionlevel>0</versionlevel>
   <versionids>TESTMAIN$(TEST_OPTIONS)</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -301,6 +307,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -404,6 +413,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -507,6 +519,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -590,7 +605,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -610,6 +625,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -693,7 +711,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -713,6 +731,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
