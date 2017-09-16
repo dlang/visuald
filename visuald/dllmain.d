@@ -159,24 +159,22 @@ void RunDLLUnregisterUser(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCm
 }
 
 extern(Windows)
-void VerifyMSObj(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+void VerifyMSObjW(HWND hwnd, HINSTANCE hinst, LPWSTR lpszCmdLine, int nCmdShow)
 {
 	wstring ws = to_wstring(lpszCmdLine);
 	VerifyMSObjectParser(ws);
 }
 
 extern(Windows)
-void WritePackageDef(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+void WritePackageDefW(HWND hwnd, HINSTANCE hinst, LPWSTR lpszCmdLine, int nCmdShow)
 {
-	wstring ws = to_wstring(lpszCmdLine) ~ cast(wchar)0;
-	WriteExtensionPackageDefinition(ws.ptr);
+	WriteExtensionPackageDefinition(lpszCmdLine);
 }
 
 extern(Windows)
-void GenerateGeneralXML(HWND hwnd, HINSTANCE hinst, LPSTR lpszCmdLine, int nCmdShow)
+void GenerateGeneralXMLW(HWND hwnd, HINSTANCE hinst, LPWSTR lpszCmdLine, int nCmdShow)
 {
-	import std.windows.charset;
-	string cmdline = fromMBSz(cast(immutable)lpszCmdLine);
+	string cmdline = to_string(lpszCmdLine);
 	string[] args = split(cmdline, ';');
 	if (args.length == 3)
 		generateGeneralXML(args[0], args[1], args[2]);

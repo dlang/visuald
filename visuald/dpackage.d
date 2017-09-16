@@ -1289,6 +1289,9 @@ class GlobalOptions
 	bool lastColorizeVersions;
 	bool lastUseDParser;
 
+	int vsVersion;
+	bool isVS2017() { return vsVersion == 15; }
+
 	this()
 	{
 	}
@@ -1426,7 +1429,9 @@ class GlobalOptions
 				string ver = strip(readUtf8(defverFile));
 				VCInstallDir = VSInstallDir ~ r"VC\";
 				if (!ver.empty)
+				{
 					VCToolsInstallDir = VCInstallDir ~ r"Tools\MSVC\" ~ ver ~ r"\";
+				}
 			}
 			catch(Exception)
 			{
@@ -1461,6 +1466,8 @@ class GlobalOptions
 			dir = (expand ? VCInstallDir : "$(VCINSTALLDIR)");
 			if (sub.startsWith("lib") && x64)
 				sub = "lib\\amd64" ~ sub[3 .. $];
+			else if (sub == "bin" && x64)
+				sub = "bin\\amd64";
 		}
 		return dir ~ sub;
 	}
@@ -1482,6 +1489,8 @@ class GlobalOptions
 	{
 		if(!getRegistryRoot())
 			return false;
+
+		vsVersion = cast(int) guessVSVersion(regConfigRoot);
 
 		wstring dllPath = GetDLLName(g_hInst);
 		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
@@ -1567,7 +1576,7 @@ class GlobalOptions
 
 			string getDefaultLibPathCOFF64()
 			{
-				string libpath = getVCDir ("lib", true);
+				string libpath = getVCDir("lib", true);
 				string dir = replaceGlobalMacros(libpath);
 				if(std.file.exists(dir ~ "\\legacy_stdio_definitions.lib"))
 					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x64";
@@ -1586,7 +1595,7 @@ class GlobalOptions
 
 			string getDefaultLibPathCOFF32()
 			{
-				string libpath = getVCDir ("lib", false);
+				string libpath = getVCDir("lib", false);
 				string dir = replaceGlobalMacros(libpath);
 				if(std.file.exists(dir ~ "\\legacy_stdio_definitions.lib"))
 					libpath ~= "\n$(UCRTSdkDir)Lib\\$(UCRTVersion)\\ucrt\\x86";
@@ -1646,8 +1655,10 @@ class GlobalOptions
 			DMD.ExeSearchPath32coff = DMD.ExeSearchPath;
 			GDC.ExeSearchPath       = r"$(GDCInstallDir)bin;$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
 			GDC.ExeSearchPath64     = GDC.ExeSearchPath;
-			LDC.ExeSearchPath       = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", false) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
-			LDC.ExeSearchPath64     = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", true)  ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
+			// LDC can call the linker itself, tracking only works if ldc2.exe and link.exe have the same architecture
+			bool ldcX64 = true;
+			LDC.ExeSearchPath       = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", ldcX64) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
+			LDC.ExeSearchPath64     = r"$(LDCInstallDir)bin;" ~ getVCDir("bin", ldcX64) ~ r";$(VSINSTALLDIR)Common7\IDE;" ~ sdkBinDir;
 
 			DMD.LibSearchPath64     = getDefaultLibPathCOFF64();
 			LDC.LibSearchPath64     = DMD.LibSearchPath64;
@@ -1865,7 +1876,7 @@ class GlobalOptions
 		string searchpaths = replaceGlobalMacros(DMD.ExeSearchPath);
 		string[] paths = tokenizeArgs(searchpaths, true, false);
 		if(char* p = getenv("PATH"))
-			paths ~= tokenizeArgs(to!string(p), true, false);
+			paths ~= tokenizeArgs(fromMBSz(cast(immutable)p), true, false);
 
 		foreach(path; paths)
 		{
@@ -1927,7 +1938,7 @@ class GlobalOptions
 		{
 			string[string] env = [ "@P" : dirName(inifile) ];
 			addReplacements(env);
-			string[string][string] ini = parseIni(inifile);
+			string[string][string] ini = parseIni(inifile, false);
 
 			if(auto pEnv = "Environment" in ini)
 				env = expandIniSectionEnvironment((*pEnv)[""], env);
@@ -1988,7 +1999,7 @@ class GlobalOptions
 		string inifile = bindir ~ "sc.ini";
 		if(std.file.exists(inifile))
 		{
-			string[string][string] ini = parseIni(inifile);
+			string[string][string] ini = parseIni(inifile, false);
 			if(auto pEnv = "Environment" in ini)
 				if(string* pFlags = "DFLAGS" in *pEnv)
 				{
@@ -1999,10 +2010,58 @@ class GlobalOptions
 		return imports;
 	}
 
-	string[] getImportPaths()
+	string[] getLDCImportPaths()
 	{
-		string[] imports = getIniImportPaths();
-		string searchpaths = replaceGlobalMacros(DMD.ImpSearchPath);
+		string[] imports;
+		string conffile = buildPath(LDC.InstallDir, "etc/ldc2.conf");
+		if(std.file.exists(conffile))
+		{
+			string bindir = buildPath(LDC.InstallDir, "bin");
+			try
+			{
+				import stdext.libconfig;
+				Setting[] settings = parseConfigFile(conffile);
+				foreach(set; settings)
+				{
+					if(set.name == "default" && set.type == Setting.Type.group)
+					{
+						auto group = cast(GroupSetting)set;
+						foreach(sw; group.children)
+						{
+							if (sw.name == "switches" && sw.type == Setting.Type.array)
+							{
+								auto arr = cast(ArraySetting)sw;
+								foreach(a; arr.vals())
+								{
+									string opts = replace(a, "%%ldcbinarypath%%", bindir);
+									imports ~= getOptionImportPaths(opts, bindir);
+								}
+							}
+						}
+					}
+				}
+			}
+			catch(Exception)
+			{
+			}
+		}
+		return imports;
+	}
+
+	string[] getImportPaths(int compiler)
+	{
+		string[] imports;
+		string searchpaths;
+		if (compiler == Compiler.LDC)
+		{
+			imports = getLDCImportPaths();
+			searchpaths = replaceGlobalMacros(LDC.ImpSearchPath);
+		}
+		else
+		{
+			imports = getIniImportPaths();
+			searchpaths = replaceGlobalMacros(DMD.ImpSearchPath);
+		}
 		string[] args = tokenizeArgs(searchpaths);
 		foreach(arg; args)
 			imports ~= removeDotDotPath(normalizeDir(unquoteArgument(arg)));

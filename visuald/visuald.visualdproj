@@ -57,7 +57,7 @@
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\obj</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -75,7 +75,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -95,6 +95,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -160,7 +163,7 @@
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -178,7 +181,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>1</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -198,6 +201,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -263,7 +269,7 @@
   <imppath>..;m:\s\d\rainers\druntime\src</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\obj</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>1</doDocComments>
@@ -281,7 +287,7 @@
   <versionlevel>0</versionlevel>
   <versionids>TESTMAIN$(TEST_OPTIONS)</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -301,6 +307,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -366,7 +375,7 @@
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\obj</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>1</doDocComments>
@@ -404,6 +413,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -469,7 +481,7 @@
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\obj</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -507,6 +519,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -572,7 +587,7 @@
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\obj</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>1</doDocComments>
@@ -590,7 +605,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -610,6 +625,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -675,7 +693,7 @@
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\obj</objdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>1</doDocComments>
@@ -693,7 +711,7 @@
   <versionlevel>0</versionlevel>
   <versionids />
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <defaultlibname />
   <debuglibname />
@@ -713,6 +731,9 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).dll</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
@@ -760,7 +781,7 @@
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
    <File path="Resources\pkgcmd.vsct" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 
 set VSSDKInstall=%VSSDK150Install%
@@ -773,6 +794,8 @@ if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=c:\l\vs12SDK
 set VSCT=%VSSDKInstall%\VisualStudioIntegration\Tools\Bin\VSCT.exe
 if not exist &quot;%VSCT%&quot; goto no_VSCT
 &quot;%VSCT%&quot; $(InputPath) $(InputDir)\$(InputName).cto -I&quot;%VSSDKInstall%\VisualStudioIntegration\Common\Inc&quot;
+rem workaround for VS2017 15.3.1: VSCT.exe broken, use existing cto file
+rem if exist $(InputDir)\$(InputName).cto exit /B 0
 goto reportError
 
 :no_VSCT
@@ -787,7 +810,7 @@ echo It is part of the VS2010-VS2013 SDK and is needed to compile $(InputPath)
    <File path="Resources\SearchSymbol.ico" />
    <File path="Resources\settrace.ico" />
    <File path="visuald.rc" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; 
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version;resources\dimagelist.bmp;resources\completionset.bmp" linkoutput="true" outfile="$(OutDir)\visuald.res" />
    <File path="Resources\WholeWord.ico" />

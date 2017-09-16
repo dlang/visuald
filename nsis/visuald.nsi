@@ -202,6 +202,7 @@ Section "Visual Studio package" SecPackage
   ${File} "..\bin\${CONFIG}\" ${DLLNAME}
   ${File} "..\bin\${CONFIG}\" vdserver.tlb
   ${File} "..\bin\${CONFIG}\" pipedmd.exe
+  ${File} "..\bin\${CONFIG}\" mb2utf16.exe
   ;; ${File} "..\bin\${CONFIG}\" filemonitor.dll
   ${File} "..\bin\Release\" dcxxfilt.exe
   ${File} ..\ README.md

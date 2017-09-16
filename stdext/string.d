@@ -152,6 +152,11 @@ int visiblePosition(S)(S txt, int tabSize, int idx)
 	return p;
 }
 
+int nextTabPosition(int n, int tabSize)
+{
+	return n + tabSize - n % tabSize;
+}
+
 S createVisualSpaces(S)(int n, int tabSize, int tabOff = 0)
 {
 	S s;
@@ -369,4 +374,12 @@ dchar decodeBwd(Char)(const(Char) txt, ref size_t pos)
 	dchar ch = decode(txt, p);
 	assert(pos + len == p);
 	return ch;
+}
+
+bool isASCIIString(string s)
+{
+	foreach (dchar c; s)
+		if (!isASCII(c))
+			return false;
+	return true;
 }

@@ -852,7 +852,7 @@ class LanguageService : DisposingComObject,
 		if(!cfg)
 			cfg = getCurrentStartupConfig();
 
-		string[] imp = GetImportPaths(cfg) ~ Package.GetGlobalOptions().getImportPaths();
+		string[] imp;
 		string[] stringImp;
 		string[] versionids;
 		string[] debugids;
@@ -863,6 +863,7 @@ class LanguageService : DisposingComObject,
 			scope(exit) release(cfg);
 			auto cfgopts = cfg.GetProjectOptions();
 			auto globopts = Package.GetGlobalOptions();
+			imp = GetImportPaths(cfg) ~ Package.GetGlobalOptions().getImportPaths(cfgopts.compiler);
 			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64,
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck,
 									  cfgopts.compiler == Compiler.GDC,
@@ -882,6 +883,10 @@ class LanguageService : DisposingComObject,
 
 			versionids = tokenizeArgs(cfgopts.versionids);
 			debugids = tokenizeArgs(cfgopts.debugids);
+		}
+		else
+		{
+			imp = Package.GetGlobalOptions().getImportPaths(Compiler.DMD);
 		}
 		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp), assumeUnique(versionids), assumeUnique(debugids), flags);
 	}
@@ -2938,7 +2943,7 @@ else
 		else if(startTok != "{" && startTok != "[" && hasOpenBrace)
 			indent = langPrefs.uTabSize;
 		if(prevTok == "{" || prevTok == "[")
-			return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize + labelIndent;
+			return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + labelIndent, langPrefs.uTabSize);
 
 		bool skipLabel = false;
 		do
@@ -2947,7 +2952,7 @@ else
 			if(txt == "(")
 				return visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1);
 			if(isOpenBraceOrCase(lntokIt))
-				return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize + indent + labelIndent;
+				return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + indent + labelIndent, langPrefs.uTabSize);
 
 			if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
 			{
@@ -2968,7 +2973,7 @@ else
 			{
 				findMatchingIf();
 				if(isOpenBraceOrCase(lntokIt))
-					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize + labelIndent;
+					return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + labelIndent, + langPrefs.uTabSize);
 			}
 		}
 		while(lntokIt.retreatOverBraces());

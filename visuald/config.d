@@ -220,6 +220,7 @@ class ProjectOptions
 	bool dump_source;
 	uint mapverbosity;
 	bool createImplib;
+	bool debuglib;      // use debug library
 
 	string defaultlibname;	// default library for non-debug builds
 	string debuglibname;	// default library for debug builds
@@ -257,6 +258,10 @@ class ProjectOptions
 	uint   cRuntime;
 	bool   privatePhobos;
 
+	string mapfile;
+	string pdbfile;
+	string impfile;
+
 	string additionalOptions;
 	string preBuildCommand;
 	string postBuildCommand;
@@ -283,6 +288,9 @@ class ProjectOptions
 		pathCv2pdb = "$(VisualDInstallDir)cv2pdb\\cv2pdb.exe";
 		program = "$(DMDInstallDir)windows\\bin\\dmd.exe";
 		xfilename = "$(IntDir)\\$(TargetName).json";
+		mapfile = "$(IntDir)\\$(SafeProjectName).map";
+		pdbfile = "$(IntDir)\\$(SafeProjectName).pdb";
+		impfile = "$(IntDir)\\$(SafeProjectName).lib";
 		cccmd = "$(CC) -c";
 		ccTransOpt = true;
 		doXGeneration = true;
@@ -290,7 +298,7 @@ class ProjectOptions
 		cRuntime = CRuntime.StaticRelease;
 		debugEngine = 1;
 
-		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep";
+		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep;*.tlog";
 		setX64(x64);
 		setDebug(dbg);
 	}
@@ -779,13 +787,14 @@ class ProjectOptions
 
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
+			dmdoutfile = getCvTargetPath();
 
 		cmd ~= getOutputFileOption(dmdoutfile);
-		if(mslink && compiler != Compiler.DMD)
-			cmd ~= " -L/MAP:\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
-		else
-			cmd ~= " -map \"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+		if (!mslink)
+			cmd ~= " -map " ~ quoteFilename(mapfile); // optlink always creates map file
+		else if (mapverbosity > 0)
+			cmd ~= " -L/MAP:" ~ quoteFilename(mapfile);
+
 		switch(mapverbosity)
 		{
 			case 0: cmd ~= mslink ? "" : " -L/NOMAP"; break; // actually still creates map file
@@ -798,8 +807,14 @@ class ProjectOptions
 
 		if(lib != OutputType.StaticLib)
 		{
+			if(compiler == Compiler.LDC && debuglib)
+				cmd ~= " -link-debuglib";
+
+			if (symdebug && mslink)
+				cmd ~= " -L/PDB:" ~ quoteFilename(pdbfile);
+
 			if(createImplib)
-				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+				cmd ~= " -L/IMPLIB:" ~ quoteFilename(impfile);
 			if(objfiles.length)
 				cmd ~= " " ~ objfiles;
 			if(deffile.length)
@@ -820,6 +835,9 @@ class ProjectOptions
 			}
 			if (mslink && lib == OutputType.DLL)
 				cmd ~= " -L/DLL";
+
+			if (mslink && Package.GetGlobalOptions().isVS2017)
+				cmd ~= " -L/noopttls"; // update 15.3.1 moves TLS into _DATA segment
 		}
 		return cmd;
 	}
@@ -831,7 +849,7 @@ class ProjectOptions
 
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
+			dmdoutfile = getCvTargetPath();
 
 		cmd ~= " -o " ~ quoteNormalizeFilename(dmdoutfile);
 		switch(mapverbosity)
@@ -839,7 +857,7 @@ class ProjectOptions
 			case 0: // no map
 				break;
 			default:
-				cmd ~= linkeropt ~ "-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				cmd ~= linkeropt ~ "-Map=" ~ quoteFilename(mapfile);
 				break;
 		}
 
@@ -853,8 +871,8 @@ class ProjectOptions
 
 		if(lib != OutputType.StaticLib)
 		{
-//			if(createImplib)
-//				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+			if(createImplib)
+				cmd ~= " -L/IMPLIB:" ~ quoteFilename(impfile);
 			if(objfiles.length)
 				cmd ~= " " ~ objfiles;
 			if(deffile.length)
@@ -868,6 +886,7 @@ class ProjectOptions
 		return cmd;
 	}
 
+	// mingw
 	string linkLDCCommandLine()
 	{
 		string cmd;
@@ -875,7 +894,7 @@ class ProjectOptions
 
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
+			dmdoutfile = getCvTargetPath();
 
 		cmd ~= " -of=" ~ quoteNormalizeFilename(dmdoutfile);
 		switch(mapverbosity)
@@ -883,7 +902,7 @@ class ProjectOptions
 			case 0: // no map
 				break;
 			default:
-				cmd ~= linkeropt ~ "-Map=\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+				cmd ~= linkeropt ~ "-Map=" ~ quoteFilename(mapfile);
 				break;
 		}
 
@@ -897,8 +916,8 @@ class ProjectOptions
 
 		if(lib != OutputType.StaticLib)
 		{
-			//			if(createImplib)
-			//				cmd ~= " -L/IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+			if(createImplib)
+				cmd ~= " -L" ~ quoteFilename(impfile);
 			if(objfiles.length)
 				cmd ~= " " ~ objfiles;
 			if(deffile.length)
@@ -917,8 +936,7 @@ class ProjectOptions
 		string cmd;
 		string dmdoutfile = getTargetPath();
 		if(usesCv2pdb())
-			dmdoutfile ~= "_cv";
-		string mapfile = "\"$(INTDIR)\\$(SAFEPROJECTNAME).map\"";
+			dmdoutfile = getCvTargetPath();
 
 		static string plusList(string[] lnkfiles, string ext, string sep)
 		{
@@ -952,8 +970,14 @@ class ProjectOptions
 		cmd ~= plusList(lnkfiles, objectFileExtension(), plus);
 		cmd ~= mslink ? " /OUT:" : ",";
 		cmd ~= quoteNormalizeFilename(dmdoutfile);
-		cmd ~= mslink ? " /MAP:" : ",";
-		cmd ~= mapfile;
+		if (mapverbosity > 0)
+		{
+			cmd ~= mslink ? " /MAP:" : ",";
+			cmd ~= quoteFilename(mapfile);
+		}
+		else if (!mslink)
+			cmd ~= "," ~ quoteFilename(mapfile);
+
 		cmd ~= mslink ? " " : ",";
 
 		string[] libs = tokenizeArgs(libfiles);
@@ -990,8 +1014,7 @@ class ProjectOptions
 			if(res.length)
 				cmd ~= "," ~ res;
 		}
-		// options
-		// "/m" to geneate map?
+
 		if(!mslink)
 			switch(mapverbosity)
 			{
@@ -1004,11 +1027,19 @@ class ProjectOptions
 			}
 
 		if(symdebug)
-			cmd ~= mslink ? " /DEBUG" : "/CO";
+		{
+			if (mslink)
+				cmd ~= " /DEBUG /PDB:" ~ quoteFilename(pdbfile);
+			else
+				cmd ~= "/CO";
+		}
 		cmd ~= mslink ? " /INCREMENTAL:NO /NOLOGO" : "/NOI/DELEXE";
 
 		if(mslink)
 		{
+			if (Package.GetGlobalOptions().isVS2017)
+				cmd ~= " /noopttls"; // update 15.3.1 moves TLS into _DATA segment
+
 			switch(cRuntime)
 			{
 				case CRuntime.None:           cmd ~= " /NODEFAULTLIB:libcmt"; break;
@@ -1023,7 +1054,7 @@ class ProjectOptions
 		if(lib != OutputType.StaticLib)
 		{
 			if(createImplib)
-				cmd ~= " /IMPLIB:$(OUTDIR)\\$(PROJECTNAME).lib";
+				cmd ~= " /IMPLIB:" ~ quoteFilename(impfile);
 
 			switch(subsystem)
 			{
@@ -1054,7 +1085,7 @@ class ProjectOptions
 			return linkDMDCommandLine(isX86_64);
 	}
 
-	string getOutputDirOption()
+	string getObjectDirOption()
 	{
 		switch(compiler)
 		{
@@ -1093,7 +1124,7 @@ class ProjectOptions
 			if (std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ "vcvarsall.bat"))
 				cmd = `call "%VCINSTALLDIR%\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
 			else if (std.file.exists(Package.GetGlobalOptions().VCInstallDir ~ r"Auxiliary\Build\vcvarsall.bat"))
-				cmd = `call "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ cmd;
+				cmd = "pushd .\n" ~ `call "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" ` ~ (isX86_64 ? "x86_amd64" : "x86") ~ "\n" ~ "popd\n" ~ cmd;
 		}
 
 		static string[4] outObj = [ " -o", " -Fo", " -o", " -o " ];
@@ -1145,6 +1176,13 @@ class ProjectOptions
 		return "$(OutDir)\\$(ProjectName).exe";
 	}
 
+	string getCvTargetPath()
+	{
+		if(exefile.length)
+			return "$(IntDir)\\" ~ baseName(exefile) ~ "_cv";
+		return "$(IntDir)\\$(ProjectName).exe_cv";
+	}
+
 	string getDependenciesPath()
 	{
 		return normalizeDir(objdir) ~ "$(ProjectName).dep";
@@ -1185,13 +1223,17 @@ class ProjectOptions
 
 	bool usesCv2pdb()
 	{
+		if (runCv2pdb == 2)
+			return true;
+		if (runCv2pdb == 0)
+			return false;
 		if(compiler == Compiler.DMD && (isX86_64 || mscoff))
+			return false; // should generate correct debug info directly
+		if(compiler == Compiler.LDC && !isLDCforMinGW())
 			return false; // should generate correct debug info directly
 		if (!symdebug || lib == OutputType.StaticLib)
 			return false;
-		if (runCv2pdb == 2)
-			return true;
-		return (runCv2pdb == 1 && debugEngine != 1); // not for mago
+		return (debugEngine != 1); // not for mago
 	}
 
 	bool usesMSLink()
@@ -1220,7 +1262,7 @@ class ProjectOptions
 			if(cv2pdbOptions.length)
 				cmd ~= " " ~ cv2pdbOptions;
 
-			cmd ~= " " ~ quoteFilename(target ~ "_cv") ~ " " ~ quoteFilename(target);
+			cmd ~= " " ~ quoteFilename(getCvTargetPath()) ~ " " ~ quoteFilename(target) ~ " " ~ quoteFilename(pdbfile);
 			return cmd;
 		}
 		return "";
@@ -1347,6 +1389,7 @@ class ProjectOptions
 		elem ~= new xml.Element("dump_source", toElem(dump_source));
 		elem ~= new xml.Element("mapverbosity", toElem(mapverbosity));
 		elem ~= new xml.Element("createImplib", toElem(createImplib));
+		elem ~= new xml.Element("debuglib", toElem(debuglib));
 
 		elem ~= new xml.Element("defaultlibname", toElem(defaultlibname));
 		elem ~= new xml.Element("debuglibname", toElem(debuglibname));
@@ -1371,6 +1414,9 @@ class ProjectOptions
 		elem ~= new xml.Element("deffile", toElem(deffile));
 		elem ~= new xml.Element("resfile", toElem(resfile));
 		elem ~= new xml.Element("exefile", toElem(exefile));
+		elem ~= new xml.Element("pdbfile", toElem(pdbfile));
+		elem ~= new xml.Element("impfile", toElem(impfile));
+		elem ~= new xml.Element("mapfile", toElem(mapfile));
 		elem ~= new xml.Element("useStdLibPath", toElem(useStdLibPath));
 		elem ~= new xml.Element("cRuntime", toElem(cRuntime));
 		elem ~= new xml.Element("privatePhobos", toElem(privatePhobos));
@@ -1478,6 +1524,7 @@ class ProjectOptions
 		fromElem(elem, "dump_source", dump_source);
 		fromElem(elem, "mapverbosity", mapverbosity);
 		fromElem(elem, "createImplib", createImplib);
+		fromElem(elem, "debuglib", debuglib);
 
 		fromElem(elem, "defaultlibname", defaultlibname);
 		fromElem(elem, "debuglibname", debuglibname);
@@ -1502,6 +1549,9 @@ class ProjectOptions
 		fromElem(elem, "deffile", deffile);
 		fromElem(elem, "resfile", resfile);
 		fromElem(elem, "exefile", exefile);
+		fromElem(elem, "pdbfile", pdbfile);
+		fromElem(elem, "impfile", impfile);
+		fromElem(elem, "mapfile", mapfile);
 		fromElem(elem, "useStdLibPath", useStdLibPath);
 		fromElem(elem, "cRuntime", cRuntime);
 		fromElem(elem, "privatePhobos", privatePhobos);
@@ -2698,6 +2748,14 @@ class Config :	DisposingComObject,
 		return null;
 	}
 
+	string getCustomCommandFile(string outfile)
+	{
+		string workdir = GetProjectDir();
+		string cmdfile = std.path.buildPath(GetIntermediateDir(), baseName(outfile) ~ "." ~ kCmdLogFileExtension);
+		cmdfile = makeFilenameAbsolute(cmdfile, workdir);
+		return cmdfile;
+	}
+
 	bool isUptodate(CFileNode file, string* preason)
 	{
 		string fcmd = GetCompileCommand(file);
@@ -2708,7 +2766,7 @@ class Config :	DisposingComObject,
 		outfile = mProjectOptions.replaceEnvironment(outfile, this, file.GetFilename(), outfile);
 
 		string workdir = GetProjectDir();
-		string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+		string cmdfile = getCustomCommandFile(outfile);
 
 		if(!compareCommandFile(cmdfile, fcmd))
 		{
@@ -2833,14 +2891,16 @@ class Config :	DisposingComObject,
 		files ~= makeFilenameAbsolute(GetLinkDependenciesPath(), workdir);
 
 		if(mProjectOptions.usesCv2pdb())
-		{
-			files ~= target ~ "_cv";
-			files ~= setExtension(target, "pdb");
-		}
-		string mapfile = expandedAbsoluteFilename("$(INTDIR)\\$(SAFEPROJECTNAME).map");
-		files ~= mapfile;
-		string buildlog = GetBuildLogFile();
-		files ~= buildlog;
+			files ~= expandedAbsoluteFilename(mProjectOptions.getCvTargetPath());
+
+		files ~= expandedAbsoluteFilename(mProjectOptions.pdbfile);
+		files ~= expandedAbsoluteFilename(mProjectOptions.mapfile);
+
+		string impfile = expandedAbsoluteFilename(mProjectOptions.impfile);
+		files ~= impfile;
+		files ~= stripExtension(impfile) ~ ".exp"; // export file
+
+		files ~= GetBuildLogFile();
 
 		if(mProjectOptions.createImplib)
 			files ~= setExtension(target, "lib");
@@ -2883,7 +2943,7 @@ class Config :	DisposingComObject,
 					if (outname.length && outname != file.GetFilename())
 					{
 						files ~= makeFilenameAbsolute(outname, workdir);
-						files ~= makeFilenameAbsolute(outname ~ "." ~ kCmdLogFileExtension, workdir);
+						string cmdfile = getCustomCommandFile(outname);
 					}
 				}
 				return false;
@@ -2973,16 +3033,16 @@ class Config :	DisposingComObject,
 			{
 				string cv2pdb = opts.appendCv2pdb();
 				if (cv2pdb.length)
-					cmd ~= "\nif errorlevel 1 goto reportError\n" ~ opts.appendCv2pdb();
+					cmd ~= "\nif %errorlevel% neq 0 goto reportError\n" ~ opts.appendCv2pdb();
 			}
 		}
 		if(cmd.length)
 		{
 			cmd = getEnvironmentChanges() ~ cmd ~ addopt ~ "\n:reportError\n";
 			if(syntaxOnly)
-				cmd ~= "if errorlevel 1 echo Compiling " ~ file.GetFilename() ~ " failed!\n";
+				cmd ~= "if %errorlevel% neq 0 echo Compiling " ~ file.GetFilename() ~ " failed!\n";
 			else
-				cmd ~= "if errorlevel 1 echo Building " ~ outfile ~ " failed!\n";
+				cmd ~= "if %errorlevel% neq 0 echo Building " ~ outfile ~ " failed!\n";
 			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
 		return cmd;
@@ -3129,7 +3189,7 @@ class Config :	DisposingComObject,
 						remove ~= f;
 					else
 					{
-						targetObj = "$(OutDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension();
+						targetObj = "$(IntDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension();
 						f = targetObj;
 					}
 				}
@@ -3276,7 +3336,7 @@ class Config :	DisposingComObject,
 				string outfile = libpath ~ "phobos-" ~ baseName(file) ~ ".obj";
 				string cccmd = mProjectOptions.getCppCommandLine(outfile, i == 0);
 				cmdline ~= cccmd ~ " -DNO_snprintf " ~ file ~ "\n";
-				cmdline ~= "if errorlevel 1 exit /B %ERRORLEVEL%\n\n";
+				cmdline ~= "if %errorlevel% neq 0 exit /B %ERRORLEVEL%\n\n";
 				file = outfile;
 			}
 		}
@@ -3318,7 +3378,7 @@ class Config :	DisposingComObject,
 
 		string druntimelib = libpath ~ "privatedruntime.lib";
 		cmdline ~= buildFiles(dmd ~ opts, druntimelib, files);
-		cmdline ~= "if errorlevel 1 exit /B %ERRORLEVEL%\n\n";
+		cmdline ~= "if %errorlevel% neq 0 exit /B %ERRORLEVEL%\n\n";
 
 		// collect phobos D files
 		files = null;
@@ -3368,7 +3428,7 @@ class Config :	DisposingComObject,
 		bool doLink       = mProjectOptions.compilationModel != ProjectOptions.kSeparateCompileOnly;
 		bool separateLink = mProjectOptions.doSeparateLink();
 		bool x64          = mProjectOptions.isX86_64;
-		bool mscoff       = mProjectOptions.compiler == Compiler.DMD && mProjectOptions.mscoff;
+		bool mscoff       = mProjectOptions.compiler == Compiler.DMD && (x64 || mProjectOptions.mscoff);
 		string workdir    = normalizeDir(GetProjectDir());
 
 		auto globOpts = Package.GetGlobalOptions();
@@ -3386,7 +3446,7 @@ class Config :	DisposingComObject,
 			string mod_cmd = getModulesDDocCommandLine(srcfiles, modules_ddoc);
 			if(mod_cmd.length > 0)
 			{
-				precmd ~= mod_cmd ~ "\nif errorlevel 1 goto reportError\n";
+				precmd ~= mod_cmd ~ "\nif %errorlevel% neq 0 goto reportError\n";
 				fcmd ~= " " ~ modules_ddoc;
 			}
 
@@ -3398,17 +3458,20 @@ class Config :	DisposingComObject,
 				if(fcmd.length == 0)
 					opt = ""; // don't try to build zero files
 				else if(singleObj)
-					opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(OutDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension());
+					opt ~= " -c" ~ mProjectOptions.getOutputFileOption("$(IntDir)\\$(ProjectName)." ~ mProjectOptions.objectFileExtension());
 				else
-					opt ~= " -c" ~ mProjectOptions.getOutputDirOption();
+					opt ~= " -c" ~ mProjectOptions.getObjectDirOption();
 			}
+			else if (mProjectOptions.lib != OutputType.StaticLib) // dmd concatenates object dir and output file
+				opt ~= mProjectOptions.getObjectDirOption(); // dmd writes object file to $(OutDir) otherwise
+
 			string addopt;
 			if(mProjectOptions.additionalOptions.length && fcmd.length)
 				addopt = " " ~ mProjectOptions.additionalOptions.replace("\n", " ");
 			precmd ~= opt ~ fcmd ~ addopt ~ "\n";
 		}
 		string cmd = precmd;
-		cmd ~= "if errorlevel 1 goto reportError\n";
+		cmd ~= "if %errorlevel% neq 0 goto reportError\n";
 
 		if(link && separateLink && doLink)
 		{
@@ -3428,8 +3491,8 @@ class Config :	DisposingComObject,
 						~ lnkcmd;
 
 				string[] lnkfiles = getObjectFileList(files); // convert D files to object files, but leaves anything else untouched
-				string plus = x64 || mscoff ? " " : "+";
-				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
+				string plus = mscoff ? " " : "+";
+				string cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, mscoff, plus);
 				if(cmdfiles.length > 100)
 				{
 					string lnkresponsefile = GetCommandLinePath(true) ~ ".rsp";
@@ -3446,11 +3509,14 @@ class Config :	DisposingComObject,
 							lnkresponsefile = shortresponsefile;
 					}
 					plus ~= " >> " ~ lnkresponsefile ~ "\necho ";
-					cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, x64 || mscoff, plus);
+					cmdfiles = mProjectOptions.optlinkCommandLine(lnkfiles, options, workdir, mscoff, plus);
 
 					prelnk ~= "echo. > " ~ lnkresponsefile ~ "\n";
 					prelnk ~= "echo " ~ cmdfiles;
-					prelnk ~= " >> " ~ lnkresponsefile ~ "\n\n";
+					prelnk ~= " >> " ~ lnkresponsefile ~ "\n";
+					if (mscoff) // linker supports UTF16 response file
+						prelnk ~= "\"$(VisualDInstallDir)mb2utf16.exe\" " ~ lnkresponsefile ~ "\n";
+					prelnk ~= "\n";
 					lnkcmd ~= "@" ~ lnkresponsefile;
 				}
 				else
@@ -3469,7 +3535,7 @@ class Config :	DisposingComObject,
 					lnkcmd ~= " " ~ addlnkopt;
 			}
 			cmd = cmd ~ "\n" ~ prelnk ~ lnkcmd ~ "\n";
-			cmd = cmd ~ "if errorlevel 1 goto reportError\n";
+			cmd = cmd ~ "if %errorlevel% neq 0 goto reportError\n";
 		}
 
 		if (link)
@@ -3477,20 +3543,20 @@ class Config :	DisposingComObject,
 			string cv2pdb = mProjectOptions.appendCv2pdb();
 			if(cv2pdb.length && doLink)
 			{
-				string cvtarget = quoteFilename(mProjectOptions.getTargetPath() ~ "_cv");
+				string cvtarget = quoteFilename(mProjectOptions.getCvTargetPath());
 				cmd ~= "if not exist " ~ cvtarget ~ " (echo " ~ cvtarget ~ " not created! && goto reportError)\n";
 				cmd ~= "echo Converting debug information...\n";
 				cmd ~= cv2pdb;
-				cmd ~= "\nif errorlevel 1 goto reportError\n";
+				cmd ~= "\nif %errorlevel% neq 0 goto reportError\n";
 			}
 
 			string pre = strip(mProjectOptions.preBuildCommand);
 			if(pre.length)
-				cmd = pre ~ "\nif errorlevel 1 goto reportError\n" ~ cmd;
+				cmd = pre ~ "\nif %errorlevel% neq 0 goto reportError\n" ~ cmd;
 
 			string post = strip(mProjectOptions.postBuildCommand);
 			if(post.length)
-				cmd = cmd ~ "\nif errorlevel 1 goto reportError\n" ~ post ~ "\n\n";
+				cmd = cmd ~ "\nif %errorlevel% neq 0 goto reportError\n" ~ post ~ "\n\n";
 
 			string target = quoteFilename(mProjectOptions.getTargetPath());
 			cmd ~= "if not exist " ~ target ~ " (echo " ~ target ~ " not created! && goto reportError)\n";
@@ -3879,7 +3945,14 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 	this(Config cfg, int pos)
 	{
 		if(cfg)
+		{
+			auto opt = cfg.mProjectOptions;
 			mTargets ~= makeFilenameAbsolute(cfg.GetTargetPath(), cfg.GetProjectDir());
+			if (opt.lib != OutputType.StaticLib && opt.createImplib)
+			{
+				mTargets ~= cfg.expandedAbsoluteFilename(opt.impfile);
+			}
+		}
 		mPos = pos;
 	}
 

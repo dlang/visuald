@@ -9,6 +9,7 @@ module pipedmd;
 
 import std.stdio;
 import core.sys.windows.windows;
+import core.sys.windows.psapi;
 import std.windows.charset;
 import core.stdc.string;
 import std.string;
@@ -229,7 +230,7 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 		assert(0);
 
 	PROCESS_INFORMATION piProcInfo;
-	STARTUPINFOA siStartInfo;
+	STARTUPINFOW siStartInfo;
 	BOOL bSuccess = FALSE;
 
 	// Set up members of the PROCESS_INFORMATION structure.
@@ -239,17 +240,17 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	// Set up members of the STARTUPINFO structure.
 	// This structure specifies the STDIN and STDOUT handles for redirection.
 
-	memset( &siStartInfo, 0, STARTUPINFOA.sizeof );
-	siStartInfo.cb = STARTUPINFOA.sizeof;
+	memset( &siStartInfo, 0, STARTUPINFOW.sizeof );
+	siStartInfo.cb = STARTUPINFOW.sizeof;
 	siStartInfo.hStdError = hStdOutWrite;
 	siStartInfo.hStdOutput = hStdOutWrite;
 	siStartInfo.hStdInput = hStdInRead;
 	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
 	int cp = GetKBCodePage();
-	auto szCommand = toMBSz(command, cp);
-	bSuccess = CreateProcessA(null,
-							  cast(char*)szCommand,     // command line
+	auto szCommand = toUTF16z(command);
+	bSuccess = CreateProcessW(null,
+							  cast(wchar*)szCommand,     // command line
 							  null,          // process security attributes
 							  null,          // primary thread security attributes
 							  TRUE,          // handles are inherited
@@ -764,170 +765,3 @@ string getProcessName(HANDLE process)
 	auto pos = lastIndexOf(imageName[0..len], '\\');
 	return to!string(imageName[pos+1..len]);
 }
-
-///////////////////////////////////////////////////////////////////////////////
-extern(C)
-{
-	struct PROCESS_INFORMATION
-	{
-		HANDLE hProcess;
-		HANDLE hThread;
-		DWORD dwProcessId;
-		DWORD dwThreadId;
-	}
-
-	alias PROCESS_INFORMATION* LPPROCESS_INFORMATION;
-
-	struct STARTUPINFOA
-	{
-		DWORD   cb;
-		LPSTR   lpReserved;
-		LPSTR   lpDesktop;
-		LPSTR   lpTitle;
-		DWORD   dwX;
-		DWORD   dwY;
-		DWORD   dwXSize;
-		DWORD   dwYSize;
-		DWORD   dwXCountChars;
-		DWORD   dwYCountChars;
-		DWORD   dwFillAttribute;
-		DWORD   dwFlags;
-		WORD    wShowWindow;
-		WORD    cbReserved2;
-		LPBYTE  lpReserved2;
-		HANDLE  hStdInput;
-		HANDLE  hStdOutput;
-		HANDLE  hStdError;
-	}
-
-	alias STARTUPINFOA* LPSTARTUPINFOA;
-
-	enum
-	{
-		CP_ACP                   = 0,
-		CP_OEMCP                 = 1,
-		CP_MACCP                 = 2,
-		CP_THREAD_ACP            = 3,
-		CP_SYMBOL                = 42,
-		CP_UTF7                  = 65000,
-		CP_UTF8                  = 65001
-	}
-
-	enum IMAGE_DOS_SIGNATURE = 0x5A4D;      // MZ
-
-	struct IMAGE_DOS_HEADER       // DOS .EXE header
-	{
-		WORD   e_magic;                     // Magic number
-		WORD   e_cblp;                      // Bytes on last page of file
-		WORD   e_cp;                        // Pages in file
-		WORD   e_crlc;                      // Relocations
-		WORD   e_cparhdr;                   // Size of header in paragraphs
-		WORD   e_minalloc;                  // Minimum extra paragraphs needed
-		WORD   e_maxalloc;                  // Maximum extra paragraphs needed
-		WORD   e_ss;                        // Initial (relative) SS value
-		WORD   e_sp;                        // Initial SP value
-		WORD   e_csum;                      // Checksum
-		WORD   e_ip;                        // Initial IP value
-		WORD   e_cs;                        // Initial (relative) CS value
-		WORD   e_lfarlc;                    // File address of relocation table
-		WORD   e_ovno;                      // Overlay number
-		WORD[4] e_res;                      // Reserved words
-		WORD   e_oemid;                     // OEM identifier (for e_oeminfo)
-		WORD   e_oeminfo;                   // OEM information; e_oemid specific
-		WORD[10] e_res2;                    // Reserved words
-		LONG   e_lfanew;                    // File address of new exe header
-	}
-
-	struct IMAGE_NT_HEADERS
-	{
-		DWORD Signature;
-		IMAGE_FILE_HEADER FileHeader;
-		// IMAGE_OPTIONAL_HEADER32 OptionalHeader;
-	}
-
-	enum IMAGE_FILE_MACHINE_IA64  = 0x0200;  // Intel 64
-	enum IMAGE_FILE_MACHINE_AMD64 = 0x8664;  // AMD64 (K8)
-
-	struct IMAGE_FILE_HEADER
-	{
-		WORD    Machine;
-		WORD    NumberOfSections;
-		DWORD   TimeDateStamp;
-		DWORD   PointerToSymbolTable;
-		DWORD   NumberOfSymbols;
-		WORD    SizeOfOptionalHeader;
-		WORD    Characteristics;
-	}
-
-	struct PROCESS_MEMORY_COUNTERS
-	{
-		DWORD  cb;
-		DWORD  PageFaultCount;
-		SIZE_T PeakWorkingSetSize;
-		SIZE_T WorkingSetSize;
-		SIZE_T QuotaPeakPagedPoolUsage;
-		SIZE_T QuotaPagedPoolUsage;
-		SIZE_T QuotaPeakNonPagedPoolUsage;
-		SIZE_T QuotaNonPagedPoolUsage;
-		SIZE_T PagefileUsage;
-		SIZE_T PeakPagefileUsage;
-	}
-}
-
-extern(System)
-{
-	BOOL CreatePipe(HANDLE* hReadPipe,
-					HANDLE* hWritePipe,
-					SECURITY_ATTRIBUTES* lpPipeAttributes,
-					DWORD nSize);
-
-	BOOL SetHandleInformation(HANDLE hObject,
-							  DWORD dwMask,
-							  DWORD dwFlags);
-
-	BOOL CreateProcessA(LPCSTR lpApplicationName,
-						LPSTR lpCommandLine,
-						LPSECURITY_ATTRIBUTES lpProcessAttributes,
-						LPSECURITY_ATTRIBUTES lpThreadAttributes,
-						BOOL bInheritHandles,
-						DWORD dwCreationFlags,
-						LPVOID lpEnvironment,
-						LPCSTR lpCurrentDirectory,
-						LPSTARTUPINFOA lpStartupInfo,
-						LPPROCESS_INFORMATION lpProcessInformation);
-
-	BOOL GetExitCodeProcess(HANDLE hProcess,
-							LPDWORD lpExitCode);
-
-	BOOL PeekNamedPipe(HANDLE hNamedPipe,
-					   LPVOID lpBuffer,
-					   DWORD nBufferSize,
-					   LPDWORD lpBytesRead,
-					   LPDWORD lpTotalBytesAvail,
-					   LPDWORD lpBytesLeftThisMessage);
-
-	UINT GetKBCodePage();
-
-	DWORD GetProcessImageFileNameW(HANDLE hProcess,
-								  LPWSTR lpImageFileName,
-								  DWORD  nSize);
-
-	BOOL GetProcessMemoryInfo(HANDLE  Process,
-							  PROCESS_MEMORY_COUNTERS* ppsmemCounters,
-							  DWORD cb);
-}
-
-enum uint HANDLE_FLAG_INHERIT = 0x00000001;
-enum uint HANDLE_FLAG_PROTECT_FROM_CLOSE = 0x00000002;
-
-enum uint STARTF_USESHOWWINDOW  =  0x00000001;
-enum uint STARTF_USESIZE        =  0x00000002;
-enum uint STARTF_USEPOSITION    =  0x00000004;
-enum uint STARTF_USECOUNTCHARS  =  0x00000008;
-enum uint STARTF_USEFILLATTRIBUTE = 0x00000010;
-enum uint STARTF_RUNFULLSCREEN   = 0x00000020;  // ignored for non-x86 platforms
-enum uint STARTF_FORCEONFEEDBACK = 0x00000040;
-enum uint STARTF_FORCEOFFFEEDBACK = 0x00000080;
-enum uint STARTF_USESTDHANDLES   = 0x00000100;
-
-enum uint CREATE_SUSPENDED = 0x00000004;

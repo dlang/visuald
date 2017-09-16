@@ -91,7 +91,7 @@ string[string][string] parseIniText(string txt)
 			}
 			currentSection = ln[1..pos];
 		}
-		else 
+		else
 		{
 			content ~= ln ~ "\n";
 			if ((pos = indexOf(ln, '=')) >= 1)
@@ -126,11 +126,19 @@ string[2][] parseIniSectionAssignments(string txt)
 	return values;
 }
 
-string[string][string] parseIni(string fname)
+string[string][string] parseIni(string fname, bool utf8)
 {
 	try
 	{
-		string txt = to!string(std.file.read(fname));
+		import std.windows.charset;
+
+		void[] content = std.file.read(fname);
+		string txt;
+		if (utf8)
+			txt = to!string(content);
+		else
+			txt = fromMBSz((cast(string)content ~ '0').ptr);
+
 		return parseIniText(txt);
 	}
 	catch(Exception e)

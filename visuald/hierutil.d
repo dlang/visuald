@@ -1012,8 +1012,12 @@ string[] GetImportPaths(string file)
 	{
 		scope(exit) release(cfg);
 		imports = GetImportPaths(cfg);
+		imports ~= Package.GetGlobalOptions().getImportPaths(cfg.GetProjectOptions().compiler);
 	}
-	imports ~= Package.GetGlobalOptions().getImportPaths();
+	else
+	{
+		imports ~= Package.GetGlobalOptions().getImportPaths(Compiler.DMD);
+	}
 	return imports;
 }
 

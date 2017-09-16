@@ -19,7 +19,7 @@ EXPORTS
 	RunDLLUnregister           = RunDLLUnregister           PRIVATE
 	RunDLLRegisterUser         = RunDLLRegisterUser         PRIVATE
 	RunDLLUnregisterUser       = RunDLLUnregisterUser       PRIVATE
-	VerifyMSObj                = VerifyMSObj                PRIVATE
-	WritePackageDef            = WritePackageDef            PRIVATE
+	VerifyMSObjW               = VerifyMSObjW               PRIVATE
+	WritePackageDefW           = WritePackageDefW           PRIVATE
 	GetCoverageData            = GetCoverageData            PRIVATE
-	GenerateGeneralXML         = GenerateGeneralXML         PRIVATE
+	GenerateGeneralXMLW        = GenerateGeneralXMLW        PRIVATE

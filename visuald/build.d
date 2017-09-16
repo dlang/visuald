@@ -305,7 +305,7 @@ else
 			{
 				string workdir = mConfig.GetProjectDir();
 				string outfile = mConfig.GetOutputFile(file);
-				string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+				string cmdfile = mConfig.getCustomCommandFile(outfile);
 				showUptodateFailure(reason, outfile);
 				removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
 				HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
@@ -328,7 +328,7 @@ else
 			{
 				string workdir = mConfig.GetProjectDir();
 				string outfile = mConfig.GetPhobosPath();
-				string cmdfile = makeFilenameAbsolute(outfile ~ "." ~ kCmdLogFileExtension, workdir);
+				string cmdfile = mConfig.getCustomCommandFile(outfile);
 				showUptodateFailure(reason, outfile);
 				removeCachedFileTime(makeFilenameAbsolute(outfile, workdir));
 				HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmdline, m_pIVsOutputWindowPane, this);

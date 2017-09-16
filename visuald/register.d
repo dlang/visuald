@@ -77,6 +77,7 @@ HRESULT WriteExtensionPackageDefinition(in wchar* args)
 	auto idx = indexOf(wargs, ' ');
 	if(idx < 1)
 		return E_FAIL;
+
 	registryDump = "Windows Registry Editor Version 5.00\n"w;
 	registryRoot = (wargs[0 .. idx] ~ "\0"w)[0 .. idx];
 	string fname = to!string(wargs[idx + 1 .. $]);
@@ -85,6 +86,7 @@ HRESULT WriteExtensionPackageDefinition(in wchar* args)
 		HRESULT rc = VSDllRegisterServerInternal(registryRoot.ptr, false);
 		if(rc != S_OK)
 			return rc;
+
 		string dir = dirName(fname);
 		if(!exists(dir))
 			mkdirRecurse(dir);
@@ -92,7 +94,7 @@ HRESULT WriteExtensionPackageDefinition(in wchar* args)
 		std.file.write(fname, (cast(wchar) 0xfeff) ~ registryDump); // add BOM
 		return S_OK;
 	}
-	catch(Exception e)
+	catch(Throwable e)
 	{
 		MessageBox(null, toUTF16z(e.msg), args, MB_OK);
 	}
@@ -680,6 +682,10 @@ version(none){
 		// remove Text Editor FontsAndColors Cache to add new Colors provided by Visual D
 		RegDeleteRecursive(HKEY_CURRENT_USER, registrationRoot ~ "\\FontAndColors\\Cache"); // \\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}");
 
+		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
+
+		registerMago(pszRegRoot, useRanu);
+
 		// global registry keys for marshalled objects
 		void registerMarshalObject(ref in GUID iid)
 		{
@@ -694,17 +700,13 @@ version(none){
 			registerMarshalObject(g_unmarshalEnumOutCLSID);
 			static if(is(typeof(g_unmarshalTargetInfoCLSID)))
 				registerMarshalObject(g_unmarshalTargetInfoCLSID);
+
+			updateConfigurationChanged(keyRoot, registrationRoot);
 		}
 		catch(Exception)
 		{
 			// silently ignore errors if not running as admin
 		}
-
-		fixVS2012Shellx64Debugger(keyRoot, registrationRoot);
-
-		registerMago(pszRegRoot, useRanu);
-
-		updateConfigurationChanged(keyRoot, registrationRoot);
 	}
 	catch(RegistryException e)
 	{

@@ -915,3 +915,32 @@ Version history
     - improved tooltips: show full qualified name, show initializer for constants,
       better display for enum and aliases
     - fixed completion or tooltips sometimes not working before modifying source code
+
+unreleased Version 0.46.0
+
+  * cv2pdb
+    - now also search VS2017 registry entries to find mspdb140.dll
+    - fix working with the VS2017 update 15.3.1
+  * improve handling of non-ASCII installation paths:
+    - use unicode aware version of NSIS, register through wide string API of rundll32
+    - parse sc.ini with current code page
+    - pipedmd: pass wide string command line to sub process
+    - convert MS linker response file to UTF16
+  * build system
+    - add workaround for broken TLS when linking with link.exe from VS2017 update 15.3.1
+    - build single object file to intermediate directory rather than output folder
+    - intermediate executable for cv2pdb now written to intermediate directory
+    - custom build batch files now written to intermediate directory
+    - use "if %errorlevel% neq 0" instead of "if errorlevel 1" in batches to capture crashes, too
+    - fix default executable search path for LDC assuming a 64-bit compiler executable (avoids 
+      linker error -1073741701)
+    - added *.tlog to default files to clean
+    - add import library to project outputs if "create import library" enabled
+    - added linker options to configure map file, import library and PDB file
+    - LDC: add option to link against debug runtime library
+    - LDC: no longer trIES to run cv2pdb
+  * dparser:
+    - when building with LDC, use import path from its config file instead of DMDs' sc.ini
+    - parse "static foreach" (but no semantic analysis)
+  * fixed spurious freeze in precise GC (mostly during startup)
+  * indentation of lambdas as parameter arguments now aligns statements on tab stops

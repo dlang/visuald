@@ -1469,10 +1469,8 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		AddControl("Definition File", mDefFile = new Text(mCanvas), btn);
 		btn = new Button(mCanvas, "...", ID_RESFILE);
 		AddControl("Resource File",   mResFile = new Text(mCanvas), btn);
-		AddControl("Generate Map File", mGenMap = new ComboBox(mCanvas,
-			[ "Minimum", "Symbols By Address", "Standard", "Full", "With cross references" ], false));
-		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
-		AddControl("", mPrivatePhobos = new CheckBox(mCanvas, "Build and use local version of phobos with same compiler options"));
+		AddControl("", mPrivatePhobos = new CheckBox(mCanvas, "Build and use local version of phobos with same compiler options (DMD only)"));
+		AddControl("", mDebugLib      = new CheckBox(mCanvas, "Use debug version of the D runtime library (LDC only)"));
 		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use global and standard library search paths"));
 		AddControl("C Runtime", mCRuntime = new ComboBox(mCanvas, [ "None", "Static Release (LIBCMT)", "Static Debug (LIBCMTD)", "Dynamic Release (MSCVRT)", "Dynamic Debug (MSCVRTD)" ], false));
 	}
@@ -1480,7 +1478,11 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	void EnableControls()
 	{
 		if(ProjectOptions options = GetProjectOptions())
+		{
+			mPrivatePhobos.setEnabled(options.compiler == Compiler.DMD);
+			mDebugLib.setEnabled(options.compiler == Compiler.LDC);
 			mCRuntime.setEnabled(options.isX86_64 || options.mscoff);
+		}
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1491,10 +1493,9 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		mLibPaths.setText(options.libpaths);
 		mDefFile.setText(options.deffile);
 		mResFile.setText(options.resfile);
-		mGenMap.setSelection(options.mapverbosity);
-		mImplib.setChecked(options.createImplib);
 		mUseStdLibPath.setChecked(options.useStdLibPath);
 		mPrivatePhobos.setChecked(options.privatePhobos);
+		mDebugLib.setChecked(options.debuglib);
 		mCRuntime.setSelection(options.cRuntime);
 
 		EnableControls();
@@ -1509,10 +1510,9 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		changes += changeOption(mLibPaths.getText(), options.libpaths, refoptions.libpaths);
 		changes += changeOption(mDefFile.getText(), options.deffile, refoptions.deffile);
 		changes += changeOption(mResFile.getText(), options.resfile, refoptions.resfile);
-		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity);
-		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib);
 		changes += changeOption(mUseStdLibPath.isChecked(), options.useStdLibPath, refoptions.useStdLibPath);
 		changes += changeOption(mPrivatePhobos.isChecked(), options.privatePhobos, refoptions.privatePhobos);
+		changes += changeOption(mDebugLib.isChecked(), options.debuglib, refoptions.debuglib);
 		changes += changeOption(cast(uint) mCRuntime.getSelection(), options.cRuntime, refoptions.cRuntime);
 		return changes;
 	}
@@ -1523,11 +1523,108 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 	Text mLibPaths;
 	Text mDefFile;
 	Text mResFile;
-	ComboBox mGenMap;
-	CheckBox mImplib;
 	CheckBox mUseStdLibPath;
 	CheckBox mPrivatePhobos;
+	CheckBox mDebugLib;
 	ComboBox mCRuntime;
+}
+
+class LinkerOutputPropertyPage : ProjectPropertyPage
+{
+	override string GetCategoryName() { return "Linker"; }
+	override string GetPageName() { return "Output Files"; }
+
+	this()
+	{
+	}
+
+	override void UpdateDirty(bool bDirty)
+	{
+		super.UpdateDirty(bDirty);
+		EnableControls();
+	}
+
+	enum ID_PDBFILE = 1055;
+	enum ID_IMPFILE = 1056;
+	enum ID_EXPFILE = 1057;
+	enum ID_MAPFILE = 1058;
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_PDBFILE:
+				if(auto file = browseSaveFile(mCanvas.hwnd, "Select PDB file", "PDB files\0*.pdb\0All Files\0*.*\0", GetProjectDir()))
+					mPDBFile.setText(makeRelative(file, GetProjectDir()));
+				break;
+			case ID_IMPFILE:
+				if(auto file = browseSaveFile(mCanvas.hwnd, "Select import library file", "Import library files\0*.lib\0All Files\0*.*\0", GetProjectDir()))
+					mImpFile.setText(makeRelative(file, GetProjectDir()));
+				break;
+			case ID_MAPFILE:
+				if(auto file = browseSaveFile(mCanvas.hwnd, "Select map file", "Map files\0*.map\0All Files\0*.*\0", GetProjectDir()))
+					mMapFile.setText(makeRelative(file, GetProjectDir()));
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
+	}
+
+	override void CreateControls()
+	{
+		AddControl("Generate Map File",
+				   mGenMap = new ComboBox(mCanvas, [ "None", "Symbols By Address", "Standard",
+				                                     "Full", "With cross references" ], false));
+		auto btn = new Button(mCanvas, "+", ID_MAPFILE);
+		AddControl("Map File", mMapFile = new Text(mCanvas), btn);
+		btn = new Button(mCanvas, "+", ID_IMPFILE);
+		AddControl("", mImplib = new CheckBox(mCanvas, "Create import library"));
+		AddControl("Import Library", mImpFile = new Text(mCanvas), btn);
+		btn = new Button(mCanvas, "+", ID_PDBFILE);
+		AddControl("PDB File", mPDBFile = new Text(mCanvas), btn);
+	}
+
+	void EnableControls()
+	{
+		if(ProjectOptions options = GetProjectOptions())
+		{
+			bool staticLib = options.lib == OutputType.StaticLib;
+			mPDBFile.setEnabled(!staticLib);
+			mImpFile.setEnabled(!staticLib);
+			mMapFile.setEnabled(!staticLib);
+			mGenMap.setEnabled(!staticLib);
+			mImplib.setEnabled(!staticLib);
+		}
+	}
+
+	override void SetControls(ProjectOptions options)
+	{
+		mPDBFile.setText(options.pdbfile);
+		mImpFile.setText(options.impfile);
+		mMapFile.setText(options.mapfile);
+		mGenMap.setSelection(options.mapverbosity);
+		mImplib.setChecked(options.createImplib);
+
+		EnableControls();
+	}
+
+	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
+	{
+		int changes = 0;
+		changes += changeOption(mPDBFile.getText(), options.pdbfile, refoptions.pdbfile);
+		changes += changeOption(mImpFile.getText(), options.impfile, refoptions.impfile);
+		changes += changeOption(mMapFile.getText(), options.mapfile, refoptions.mapfile);
+		changes += changeOption(cast(uint) mGenMap.getSelection(), options.mapverbosity, refoptions.mapverbosity);
+		changes += changeOption(mImplib.isChecked(), options.createImplib, refoptions.createImplib);
+		return changes;
+	}
+
+	Text mPDBFile;
+	Text mImpFile;
+	Text mMapFile;
+	ComboBox mGenMap;
+	CheckBox mImplib;
 }
 
 class DmdEventsPropertyPage : ProjectPropertyPage
@@ -1541,7 +1638,7 @@ class DmdEventsPropertyPage : ProjectPropertyPage
 		AddControl("Pre-Build Command", mPreCmd = new MultiLineText(mCanvas), 500);
 		AddControl("Post-Build Command", mPostCmd = new MultiLineText(mCanvas), 500);
 
-		Label lab = new Label(mCanvas, "Use \"if errorlevel 1 goto reportError\" to cancel on error");
+		Label lab = new Label(mCanvas, "Use \"if %errorlevel% neq 0 goto reportError\" to cancel on error");
 		lab.setRect(0, mLineY, getWidgetWidth(mCanvas, kPageWidth), kLineHeight);
 		addResizableWidget(lab, kAttachBottom);
 	}
@@ -2439,6 +2536,7 @@ const GUID    g_DebuggingPropertyPage    = uuid("002a2de9-8bb6-484d-9819-7e4ad40
 const GUID    g_FilePropertyPage         = uuid("002a2de9-8bb6-484d-981a-7e4ad4084715");
 const GUID    g_DmdDocPropertyPage       = uuid("002a2de9-8bb6-484d-981b-7e4ad4084715");
 const GUID    g_DmdCmdLinePropertyPage   = uuid("002a2de9-8bb6-484d-981c-7e4ad4084715");
+const GUID    g_LinkerOutputPropertyPage = uuid("002a2de9-8bb6-484d-981d-7e4ad4084715");
 
 // does not need to be registered, created explicitely by package
 const GUID    g_DmdDirPropertyPage       = uuid("002a2de9-8bb6-484d-9820-7e4ad4084715");
@@ -2466,6 +2564,7 @@ const GUID*[] guids_propertyPages =
 	&g_FilePropertyPage,
 	&g_DmdDocPropertyPage,
 	&g_DmdCmdLinePropertyPage,
+	&g_LinkerOutputPropertyPage,
 ];
 
 class PropertyPageFactory : DComObject, IClassFactory
@@ -2513,6 +2612,8 @@ class PropertyPageFactory : DComObject, IClassFactory
 			ppp = newCom!DmdOutputPropertyPage();
 		else if(mClsid == g_DmdLinkerPropertyPage)
 			ppp = newCom!DmdLinkerPropertyPage();
+		else if(mClsid == g_LinkerOutputPropertyPage)
+			ppp = newCom!LinkerOutputPropertyPage();
 		else if(mClsid == g_DmdEventsPropertyPage)
 			ppp = newCom!DmdEventsPropertyPage();
 		else if(mClsid == g_DmdCmdLinePropertyPage)
@@ -2535,7 +2636,7 @@ class PropertyPageFactory : DComObject, IClassFactory
 	static int GetProjectPages(CAUUID *pPages, bool addFile)
 	{
 version(all) {
-		pPages.cElems = (addFile ? 12 : 11);
+		pPages.cElems = (addFile ? 13 : 12);
 		pPages.pElems = cast(GUID*)CoTaskMemAlloc(pPages.cElems*GUID.sizeof);
 		if (!pPages.pElems)
 			return E_OUTOFMEMORY;
@@ -2552,6 +2653,7 @@ version(all) {
 		pPages.pElems[idx++] = g_DmdDocPropertyPage;
 		pPages.pElems[idx++] = g_DmdOutputPropertyPage;
 		pPages.pElems[idx++] = g_DmdLinkerPropertyPage;
+		pPages.pElems[idx++] = g_LinkerOutputPropertyPage;
 		pPages.pElems[idx++] = g_DmdCmdLinePropertyPage;
 		pPages.pElems[idx++] = g_DmdEventsPropertyPage;
 		return S_OK;
