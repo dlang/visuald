@@ -944,3 +944,4 @@ unreleased Version 0.46.0
     - parse "static foreach" (but no semantic analysis)
   * fixed spurious freeze in precise GC (mostly during startup)
   * indentation of lambdas as parameter arguments now aligns statements on tab stops
+  * required OS version for executables restored to 5.01 to support Windows XP
