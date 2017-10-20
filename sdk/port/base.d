@@ -147,7 +147,7 @@ alias LPRECT LPCRECTL;
 enum STACK_ALIGN = 4;
 
 int ALIGN_UP_BY(uint sz, uint algn) { return (sz + algn - 1) & ~(algn-1); }
-	
+
 int V_INT_PTR(void* p) { return cast(int) p; }
 uint V_UINT_PTR(void* p) { return cast(uint) p; }
 
@@ -157,7 +157,7 @@ struct _EVENTSFORLOGFILE;
 
 // for winuser.d (7.1)
 alias HANDLE HPOWERNOTIFY;
-	
+
 // for prsht.d
 struct _PSP;
 struct _PROPSHEETPAGEA;
@@ -171,10 +171,10 @@ struct _DPA;
 interface IImageList {}
 // 7.1
 enum CCM_TRANSLATEACCELERATOR = (WM_USER+97);
-	
+
 version(sdk) {}
 else {
-	
+
 struct _RECTL
 {
     LONG    left;
@@ -288,14 +288,14 @@ enum prjBuildActionCustom = 3;
 
 version(none)
 {
-enum { 
+enum {
 	CLR_NONE                = 0xFFFFFFFF,
 	CLR_DEFAULT             = 0xFF000000,
 }
 
 enum { IMAGE_BITMAP = 0, IMAGE_ICON = 1, IMAGE_CURSOR = 2, IMAGE_ENHMETAFILE = 3 };
 
-enum { 
+enum {
 	LR_DEFAULTCOLOR     = 0x00000000,
 	LR_MONOCHROME       = 0x00000001,
 	LR_COLOR            = 0x00000002,
@@ -335,11 +335,11 @@ uint strtohex(string s)
 	return hex;
 }
 
-GUID uuid(string g) 
+GUID uuid(string g)
 {
 //	return GUID(0, 0, 0, [ 0, 0, 0, 0, 0, 0, 0, 0 ]);
-	
-	if(g.length == 38) 
+
+	if(g.length == 38)
 	{
 		assert(g[0] == '{' && g[$-1] == '}', "Incorrect format for GUID.");
 		g = g[1 .. $-1];
@@ -406,11 +406,11 @@ version(Win64)
 
 	LONG InterlockedIncrement (/*__inout*/ LONG /*volatile*/ *Addend)
 	{
-		return atomicOp!"+"(*cast(shared(LONG)*)Addend, 1);
+		return atomicOp!"+="(*cast(shared(LONG)*)Addend, 1);
 	}
 	LONG InterlockedDecrement (/*__inout*/ LONG /*volatile*/ *Addend)
 	{
-		return atomicOp!"+"(*cast(shared(LONG)*)Addend, -1);
+		return atomicOp!"+="(*cast(shared(LONG)*)Addend, -1);
 	}
 	LONG InterlockedExchange (/*__inout*/ LONG /*volatile*/ *Target, /*__in*/ LONG Value)
 	{
@@ -446,7 +446,7 @@ extern(Windows) LONG InterlockedExchangeAdd (/*__inout*/ LONG /*volatile*/ *Targ
 extern(Windows) LONG InterlockedCompareExchange (/*__inout*/ LONG /*volatile*/ *Destination, /*__in*/ LONG ExChange, /*__in*/ LONG Comperand);
 }
 
-extern(Windows) 
+extern(Windows)
 LONGLONG /*__cdecl*/ InterlockedCompareExchange64 (
 								  /*__inout*/ LONGLONG /*volatile*/ *Destination,
 								  /*__in*/    LONGLONG ExChange,
