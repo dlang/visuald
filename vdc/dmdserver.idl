@@ -4,20 +4,19 @@
 // Copyright (c) 2012 by Rainer Schuetze, All Rights Reserved
 //
 // Distributed under the Boost Software License, Version 1.0.
-// See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 // bring in core IDL files
 import "oaidl.idl";
 import "ivdserver.idl";
 
-	HRESULT GetReferences([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx, [in] BSTR expr, [in] BOOL moduleOnly);
 // library statement
-[uuid(002a2de9-8bb6-484d-9903-7e4ad4084715), version(1.0),
- helpstring("Visual D Semantic Server")]
+[uuid(002a2de9-8bb6-484d-9907-7e4ad4084715), version(1.0),
+ helpstring("DMD Semantic Server")]
 library VDServerLib
 {
    importlib("stdole32.tlb");
-   [uuid(002a2de9-8bb6-484d-9902-7e4ad4084715)]
+   [uuid(002a2de9-8bb6-484d-9906-7e4ad4084715)]
    coclass VDServerClassFactory
    {
       [default] interface IVDServer;

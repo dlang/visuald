@@ -1,14 +1,14 @@
 <DProject>
- <ProjectGuid>{2F75431E-B8DB-4231-AAC1-EA68D06A22E6}</ProjectGuid>
+ <ProjectGuid>{34289BD7-AB7E-4264-B146-8139DDE9F0BF}</ProjectGuid>
  <Config name="Debug" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>2</singleFileCompilation>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
+  <mscoff>1</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
@@ -24,7 +24,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -50,18 +50,18 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -c -cpp -Isrc;src\backend;src\tk;src\root -DMARS -e -wx -DTARGET_WINDOS=1 -DDM_TARGET_CPU_X86=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
+  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <imppath>dmd\src</imppath>
+  <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
-  <docdir>..\doc</docdir>
+  <docdir />
   <docname />
   <modules_ddoc />
   <ddocfiles />
@@ -73,9 +73,9 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS NoBackend</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
   <debuglib>0</debuglib>
   <defaultlibname />
@@ -91,18 +91,18 @@
   <cv2pdbOptions />
   <objfiles />
   <linkswitches />
-  <libfiles>ole32.lib oleaut32.lib</libfiles>
-  <libpaths>..\sdk\lib</libpaths>
+  <libfiles />
+  <libpaths />
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName)_d.exe</exefile>
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
   <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
+  <additionalOptions>-L/STACK:8388608</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
@@ -115,14 +115,14 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
+  <mscoff>1</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>0</symdebug>
-  <optimize>0</optimize>
+  <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -131,7 +131,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -141,7 +141,7 @@
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
+  <useInline>1</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -157,228 +157,14 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
-  <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
-  <objname />
-  <libname />
-  <doDocComments>0</doDocComments>
-  <docdir />
-  <docname />
-  <modules_ddoc />
-  <ddocfiles />
-  <doHdrGeneration>0</doHdrGeneration>
-  <hdrdir />
-  <hdrname />
-  <doXGeneration>1</doXGeneration>
-  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
-  <debuglevel>0</debuglevel>
-  <debugids />
-  <versionlevel>0</versionlevel>
-  <versionids />
-  <dump_source>0</dump_source>
-  <mapverbosity>0</mapverbosity>
-  <createImplib>0</createImplib>
-  <debuglib>0</debuglib>
-  <defaultlibname />
-  <debuglibname />
-  <moduleDepsFile />
-  <run>0</run>
-  <runargs />
-  <runCv2pdb>0</runCv2pdb>
-  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
-  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
-  <cv2pdbEnumType>0</cv2pdbEnumType>
-  <cv2pdbOptions />
-  <objfiles />
-  <linkswitches />
-  <libfiles>ole32.lib oleaut32.lib</libfiles>
-  <libpaths>..\sdk\lib</libpaths>
-  <deffile />
-  <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
-  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
-  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
-  <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
-  <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
-  <preBuildCommand />
-  <postBuildCommand />
-  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
- </Config>
- <Config name="Debug" platform="x64">
-  <obj>0</obj>
-  <link>0</link>
-  <lib>0</lib>
-  <subsystem>0</subsystem>
-  <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
-  <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
-  <trace>0</trace>
-  <quiet>0</quiet>
-  <verbose>0</verbose>
-  <vtls>0</vtls>
-  <vgc>0</vgc>
-  <symdebug>1</symdebug>
-  <optimize>0</optimize>
-  <cpu>0</cpu>
-  <isX86_64>1</isX86_64>
-  <isLinux>0</isLinux>
-  <isOSX>0</isOSX>
-  <isWindows>0</isWindows>
-  <isFreeBSD>0</isFreeBSD>
-  <isSolaris>0</isSolaris>
-  <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
-  <errDeprecated>0</errDeprecated>
-  <useAssert>0</useAssert>
-  <useInvariants>0</useInvariants>
-  <useIn>0</useIn>
-  <useOut>0</useOut>
-  <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
-  <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
-  <release>0</release>
-  <preservePaths>0</preservePaths>
-  <warnings>0</warnings>
-  <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
-  <genStackFrame>0</genStackFrame>
-  <pic>0</pic>
-  <cov>0</cov>
-  <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
-  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <allinst>0</allinst>
-  <stackStomp>0</stackStomp>
-  <compiler>0</compiler>
-  <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
-  <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
-  <objname />
-  <libname />
-  <doDocComments>0</doDocComments>
-  <docdir />
-  <docname />
-  <modules_ddoc />
-  <ddocfiles />
-  <doHdrGeneration>0</doHdrGeneration>
-  <hdrdir />
-  <hdrname />
-  <doXGeneration>1</doXGeneration>
-  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
-  <debuglevel>0</debuglevel>
-  <debugids />
-  <versionlevel>0</versionlevel>
-  <versionids />
-  <dump_source>0</dump_source>
-  <mapverbosity>0</mapverbosity>
-  <createImplib>0</createImplib>
-  <debuglib>0</debuglib>
-  <defaultlibname />
-  <debuglibname />
-  <moduleDepsFile />
-  <run>0</run>
-  <runargs />
-  <runCv2pdb>1</runCv2pdb>
-  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
-  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
-  <cv2pdbEnumType>0</cv2pdbEnumType>
-  <cv2pdbOptions />
-  <objfiles />
-  <linkswitches />
-  <libfiles>ole32.lib oleaut32.lib</libfiles>
-  <libpaths />
-  <deffile />
-  <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
-  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
-  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
-  <useStdLibPath>1</useStdLibPath>
-  <cRuntime>2</cRuntime>
-  <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
-  <preBuildCommand />
-  <postBuildCommand />
-  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
- </Config>
- <Config name="Release" platform="x64">
-  <obj>0</obj>
-  <link>0</link>
-  <lib>0</lib>
-  <subsystem>0</subsystem>
-  <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
-  <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
-  <trace>0</trace>
-  <quiet>0</quiet>
-  <verbose>0</verbose>
-  <vtls>0</vtls>
-  <vgc>0</vgc>
-  <symdebug>0</symdebug>
-  <optimize>0</optimize>
-  <cpu>0</cpu>
-  <isX86_64>1</isX86_64>
-  <isLinux>0</isLinux>
-  <isOSX>0</isOSX>
-  <isWindows>0</isWindows>
-  <isFreeBSD>0</isFreeBSD>
-  <isSolaris>0</isSolaris>
-  <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
-  <errDeprecated>0</errDeprecated>
-  <useAssert>0</useAssert>
-  <useInvariants>0</useInvariants>
-  <useIn>0</useIn>
-  <useOut>0</useOut>
-  <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
-  <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
-  <release>1</release>
-  <preservePaths>0</preservePaths>
-  <warnings>0</warnings>
-  <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
-  <genStackFrame>0</genStackFrame>
-  <pic>0</pic>
-  <cov>0</cov>
-  <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
-  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <allinst>0</allinst>
-  <stackStomp>0</stackStomp>
-  <compiler>0</compiler>
-  <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -c -cpp -Isrc;src\backend;src\tk;src\root -DMARS -e -wx -DTARGET_WINDOS=1 -DDM_TARGET_CPU_X86=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
   <imppath />
-  <fileImppath />
-  <outdir>$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <fileImppath>$(OutDir) ..\..\res</fileImppath>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -394,7 +180,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -423,119 +209,12 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions />
+  <additionalOptions>-L/STACK:8388608</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Debug GDC" platform="Win32">
-  <obj>0</obj>
-  <link>0</link>
-  <lib>0</lib>
-  <subsystem>0</subsystem>
-  <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
-  <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
-  <trace>0</trace>
-  <quiet>0</quiet>
-  <verbose>0</verbose>
-  <vtls>0</vtls>
-  <vgc>0</vgc>
-  <symdebug>0</symdebug>
-  <optimize>0</optimize>
-  <cpu>0</cpu>
-  <isX86_64>0</isX86_64>
-  <isLinux>0</isLinux>
-  <isOSX>0</isOSX>
-  <isWindows>0</isWindows>
-  <isFreeBSD>0</isFreeBSD>
-  <isSolaris>0</isSolaris>
-  <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
-  <errDeprecated>0</errDeprecated>
-  <useAssert>0</useAssert>
-  <useInvariants>0</useInvariants>
-  <useIn>0</useIn>
-  <useOut>0</useOut>
-  <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
-  <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
-  <release>1</release>
-  <preservePaths>0</preservePaths>
-  <warnings>0</warnings>
-  <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
-  <genStackFrame>0</genStackFrame>
-  <pic>0</pic>
-  <cov>0</cov>
-  <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
-  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <allinst>0</allinst>
-  <stackStomp>0</stackStomp>
-  <compiler>1</compiler>
-  <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
-  <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
-  <objname />
-  <libname />
-  <doDocComments>0</doDocComments>
-  <docdir />
-  <docname />
-  <modules_ddoc />
-  <ddocfiles />
-  <doHdrGeneration>0</doHdrGeneration>
-  <hdrdir />
-  <hdrname />
-  <doXGeneration>1</doXGeneration>
-  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
-  <debuglevel>0</debuglevel>
-  <debugids />
-  <versionlevel>0</versionlevel>
-  <versionids />
-  <dump_source>0</dump_source>
-  <mapverbosity>0</mapverbosity>
-  <createImplib>0</createImplib>
-  <debuglib>0</debuglib>
-  <defaultlibname />
-  <debuglibname />
-  <moduleDepsFile />
-  <run>0</run>
-  <runargs />
-  <runCv2pdb>0</runCv2pdb>
-  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
-  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
-  <cv2pdbEnumType>0</cv2pdbEnumType>
-  <cv2pdbOptions />
-  <objfiles />
-  <linkswitches />
-  <libfiles>ole32.lib oleaut32.lib</libfiles>
-  <libpaths />
-  <deffile />
-  <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
-  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
-  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
-  <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
-  <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
-  <preBuildCommand />
-  <postBuildCommand />
-  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
- </Config>
- <Config name="Debug GDC" platform="x64">
+ <Config name="Debug" platform="x64">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -559,7 +238,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -579,20 +258,20 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
-  <compiler>1</compiler>
+  <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -nologo -c -TP -Isrc -Isrc\backend -Isrc\tk -Isrc\root -Isrc\vcbuild -DTARGET_WINDOS=1 -FIvcbuild\warnings.h</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)\x64</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <imppath />
+  <fileImppath>$(OutDir) ..\..\res</fileImppath>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -608,7 +287,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -626,7 +305,7 @@
   <cv2pdbOptions />
   <objfiles />
   <linkswitches />
-  <libfiles>ole32.lib oleaut32.lib</libfiles>
+  <libfiles />
   <libpaths />
   <deffile />
   <resfile />
@@ -635,14 +314,14 @@
   <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
+  <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
+  <additionalOptions>-L/STACK:8388608</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="Win32">
+ <Config name="Release" platform="x64">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -650,23 +329,23 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
+  <mscoff>1</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
   <vgc>0</vgc>
-  <symdebug>0</symdebug>
-  <optimize>0</optimize>
+  <symdebug>2</symdebug>
+  <optimize>1</optimize>
   <cpu>0</cpu>
-  <isX86_64>0</isX86_64>
+  <isX86_64>1</isX86_64>
   <isLinux>0</isLinux>
   <isOSX>0</isOSX>
   <isWindows>0</isWindows>
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -676,7 +355,7 @@
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
+  <useInline>1</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -690,16 +369,16 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
-  <compiler>2</compiler>
+  <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -nologo -c -TP -Isrc -Isrc\backend -Isrc\tk -Isrc\root -Isrc\vcbuild -DTARGET_WINDOS=1 -FIvcbuild\warnings.h</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
+  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <imppath />
+  <fileImppath>$(OutDir) ..\..\res</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -715,7 +394,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -733,7 +412,7 @@
   <cv2pdbOptions />
   <objfiles />
   <linkswitches />
-  <libfiles>ole32.lib oleaut32.lib</libfiles>
+  <libfiles />
   <libpaths />
   <deffile />
   <resfile />
@@ -744,114 +423,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
-  <preBuildCommand />
-  <postBuildCommand />
-  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
- </Config>
- <Config name="Debug LDC" platform="x64">
-  <obj>0</obj>
-  <link>0</link>
-  <lib>0</lib>
-  <subsystem>0</subsystem>
-  <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
-  <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
-  <trace>0</trace>
-  <quiet>0</quiet>
-  <verbose>0</verbose>
-  <vtls>0</vtls>
-  <vgc>0</vgc>
-  <symdebug>1</symdebug>
-  <optimize>0</optimize>
-  <cpu>0</cpu>
-  <isX86_64>1</isX86_64>
-  <isLinux>0</isLinux>
-  <isOSX>0</isOSX>
-  <isWindows>0</isWindows>
-  <isFreeBSD>0</isFreeBSD>
-  <isSolaris>0</isSolaris>
-  <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
-  <errDeprecated>0</errDeprecated>
-  <useAssert>0</useAssert>
-  <useInvariants>0</useInvariants>
-  <useIn>0</useIn>
-  <useOut>0</useOut>
-  <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
-  <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
-  <release>0</release>
-  <preservePaths>0</preservePaths>
-  <warnings>0</warnings>
-  <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
-  <genStackFrame>0</genStackFrame>
-  <pic>0</pic>
-  <cov>0</cov>
-  <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
-  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <allinst>0</allinst>
-  <stackStomp>0</stackStomp>
-  <compiler>2</compiler>
-  <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
-  <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)\x64</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
-  <objname />
-  <libname />
-  <doDocComments>0</doDocComments>
-  <docdir />
-  <docname />
-  <modules_ddoc />
-  <ddocfiles />
-  <doHdrGeneration>0</doHdrGeneration>
-  <hdrdir />
-  <hdrname />
-  <doXGeneration>1</doXGeneration>
-  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
-  <debuglevel>0</debuglevel>
-  <debugids />
-  <versionlevel>0</versionlevel>
-  <versionids />
-  <dump_source>0</dump_source>
-  <mapverbosity>0</mapverbosity>
-  <createImplib>0</createImplib>
-  <debuglib>0</debuglib>
-  <defaultlibname />
-  <debuglibname />
-  <moduleDepsFile />
-  <run>0</run>
-  <runargs />
-  <runCv2pdb>1</runCv2pdb>
-  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
-  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
-  <cv2pdbEnumType>0</cv2pdbEnumType>
-  <cv2pdbOptions />
-  <objfiles />
-  <linkswitches />
-  <libfiles>ole32.lib oleaut32.lib</libfiles>
-  <libpaths />
-  <deffile />
-  <resfile />
-  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
-  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
-  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
-  <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
-  <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
+  <additionalOptions>-L/STACK:8388608</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
@@ -880,7 +452,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -906,32 +478,32 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\ddmd -Idmd\src\ddmd\backend -Idmd\src\ddmd\tk -Idmd\src\ddmd\root -Idmd\src\ddmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
+  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <imppath>dmd\src ..</imppath>
+  <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
-  <docdir>..\doc</docdir>
+  <docdir />
   <docname />
   <modules_ddoc />
   <ddocfiles />
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
   <hdrname />
-  <doXGeneration>0</doXGeneration>
+  <doXGeneration>1</doXGeneration>
   <xfilename>$(IntDir)\$(TargetName).json</xfilename>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS NoBackend GC</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
+  <mapverbosity>2</mapverbosity>
   <createImplib>0</createImplib>
   <debuglib>0</debuglib>
   <defaultlibname />
@@ -939,7 +511,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>0</runCv2pdb>
+  <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
@@ -951,14 +523,14 @@
   <libpaths />
   <deffile />
   <resfile />
-  <exefile>$(OutDir)\$(ProjectName)_d.exe</exefile>
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
   <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
+  <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS,5.01</additionalOptions>
+  <additionalOptions>-L/STACK:8388608</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
@@ -971,7 +543,7 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
-  <mscoff>1</mscoff>
+  <mscoff>0</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
@@ -987,7 +559,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -1007,20 +579,20 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
+  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -c -nologo -Idmd\src\ddmd -Idmd\src\ddmd\backend -Idmd\src\ddmd\tk -Idmd\src\ddmd\root -Idmd\src\ddmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program />
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <imppath>dmd\src .. $(DMDInstallDir)\src\druntime\src</imppath>
+  <fileImppath>dmd dmd\res</fileImppath>
+  <outdir>..\bin\$(ConfigurationName)\$(PlatfromName)\$(ProjectName)</outdir>
+  <objdir>$(OutDir)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1036,7 +608,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS NoBackend GC</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -1063,14 +635,14 @@
   <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
-  <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
+  <cRuntime>2</cRuntime>
+  <privatePhobos>1</privatePhobos>
+  <additionalOptions>-L/STACK:8388608 -gf</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Release LDC" platform="Win32">
+ <Config name="Debug LDC" platform="Win32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -1078,14 +650,14 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
+  <mscoff>1</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
   <vgc>0</vgc>
-  <symdebug>0</symdebug>
-  <optimize>1</optimize>
+  <symdebug>1</symdebug>
+  <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -1094,18 +666,18 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>1</noboundscheck>
+  <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>1</useInline>
-  <release>1</release>
+  <useInline>0</useInline>
+  <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
@@ -1118,16 +690,16 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
-  <compiler>2</compiler>
+  <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\ddmd -Idmd\src\ddmd\backend -Idmd\src\ddmd\tk -Idmd\src\ddmd\root -Idmd\src\ddmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
+  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <imppath>dmd\src ..</imppath>
+  <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1143,9 +715,9 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS NoBackend GC</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>0</mapverbosity>
+  <mapverbosity>2</mapverbosity>
   <createImplib>0</createImplib>
   <debuglib>0</debuglib>
   <defaultlibname />
@@ -1153,7 +725,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>0</runCv2pdb>
+  <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
@@ -1170,14 +742,14 @@
   <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
+  <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
+  <additionalOptions>-L/STACK:8388608</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Release LDC" platform="x64">
+ <Config name="Debug LDC" platform="x64">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -1201,7 +773,7 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -1227,14 +799,14 @@
   <stackStomp>0</stackStomp>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\ddmd -Idmd\src\ddmd\backend -Idmd\src\ddmd\tk -Idmd\src\ddmd\root -Idmd\src\ddmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)\x64</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <imppath>dmd\src ..</imppath>
+  <fileImppath>dmd dmd\res</fileImppath>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1245,12 +817,12 @@
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
   <hdrname />
-  <doXGeneration>1</doXGeneration>
+  <doXGeneration>0</doXGeneration>
   <xfilename>$(IntDir)\$(TargetName).json</xfilename>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS NoBackend GC</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -1279,7 +851,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
+  <additionalOptions>-L/STACK:8388608</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
@@ -1299,7 +871,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
-  <optimize>1</optimize>
+  <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -1308,7 +880,114 @@
   <isFreeBSD>0</isFreeBSD>
   <isSolaris>0</isSolaris>
   <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
+  <useDeprecated>1</useDeprecated>
+  <errDeprecated>0</errDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>0</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>0</useUnitTests>
+  <useInline>0</useInline>
+  <release>0</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
+  <checkProperty>0</checkProperty>
+  <genStackFrame>0</genStackFrame>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <allinst>0</allinst>
+  <stackStomp>0</stackStomp>
+  <compiler>0</compiler>
+  <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c -nologo -c -TP -Idmd\src\ddmd -Idmd\src\ddmd\backend -Idmd\src\ddmd\tk -Idmd\src\ddmd\root -Idmd\src\ddmd\vcbuild -DTARGET_WINDOS=1</cccmd>
+  <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
+  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <imppath>dmd\src ..</imppath>
+  <fileImppath>dmd dmd\res</fileImppath>
+  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <modules_ddoc />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids>MARS NoBackend GC</versionids>
+  <dump_source>0</dump_source>
+  <mapverbosity>2</mapverbosity>
+  <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>1</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
+  <objfiles />
+  <linkswitches />
+  <libfiles>ole32.lib oleaut32.lib</libfiles>
+  <libpaths />
+  <deffile />
+  <resfile />
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
+  <useStdLibPath>1</useStdLibPath>
+  <cRuntime>2</cRuntime>
+  <privatePhobos>0</privatePhobos>
+  <additionalOptions>-L/STACK:8388608</additionalOptions>
+  <preBuildCommand />
+  <postBuildCommand />
+  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
+ </Config>
+ <Config name="Release COFF32" platform="x64">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>0</lib>
+  <subsystem>0</subsystem>
+  <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
+  <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <vgc>0</vgc>
+  <symdebug>1</symdebug>
+  <optimize>1</optimize>
+  <cpu>0</cpu>
+  <isX86_64>1</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>1</useDeprecated>
   <errDeprecated>0</errDeprecated>
   <useAssert>0</useAssert>
   <useInvariants>0</useInvariants>
@@ -1334,121 +1013,14 @@
   <stackStomp>0</stackStomp>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
+  <cccmd>$(CC) -c -nologo -Idmd\src\ddmd -Idmd\src\ddmd\backend -Idmd\src\ddmd\tk -Idmd\src\ddmd\root -Idmd\src\ddmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
-  <objname />
-  <libname />
-  <doDocComments>0</doDocComments>
-  <docdir>..\doc</docdir>
-  <docname />
-  <modules_ddoc />
-  <ddocfiles />
-  <doHdrGeneration>0</doHdrGeneration>
-  <hdrdir />
-  <hdrname />
-  <doXGeneration>1</doXGeneration>
-  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
-  <debuglevel>0</debuglevel>
-  <debugids />
-  <versionlevel>0</versionlevel>
-  <versionids />
-  <dump_source>0</dump_source>
-  <mapverbosity>3</mapverbosity>
-  <createImplib>0</createImplib>
-  <debuglib>0</debuglib>
-  <defaultlibname />
-  <debuglibname />
-  <moduleDepsFile />
-  <run>0</run>
-  <runargs />
-  <runCv2pdb>0</runCv2pdb>
-  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
-  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
-  <cv2pdbEnumType>0</cv2pdbEnumType>
-  <cv2pdbOptions />
-  <objfiles />
-  <linkswitches />
-  <libfiles>ole32.lib oleaut32.lib</libfiles>
-  <libpaths />
-  <deffile />
-  <resfile />
-  <exefile>$(OutDir)\$(ProjectName)_d.exe</exefile>
-  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
-  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
-  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
-  <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
-  <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS,5.01</additionalOptions>
-  <preBuildCommand />
-  <postBuildCommand />
-  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
- </Config>
- <Config name="Release COFF32" platform="x64">
-  <obj>0</obj>
-  <link>0</link>
-  <lib>0</lib>
-  <subsystem>0</subsystem>
-  <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
-  <oneobj>0</oneobj>
-  <mscoff>1</mscoff>
-  <trace>0</trace>
-  <quiet>0</quiet>
-  <verbose>0</verbose>
-  <vtls>0</vtls>
-  <vgc>0</vgc>
-  <symdebug>1</symdebug>
-  <optimize>1</optimize>
-  <cpu>0</cpu>
-  <isX86_64>1</isX86_64>
-  <isLinux>0</isLinux>
-  <isOSX>0</isOSX>
-  <isWindows>0</isWindows>
-  <isFreeBSD>0</isFreeBSD>
-  <isSolaris>0</isSolaris>
-  <scheduler>0</scheduler>
-  <useDeprecated>0</useDeprecated>
-  <errDeprecated>0</errDeprecated>
-  <useAssert>0</useAssert>
-  <useInvariants>0</useInvariants>
-  <useIn>0</useIn>
-  <useOut>0</useOut>
-  <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
-  <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
-  <useInline>1</useInline>
-  <release>0</release>
-  <preservePaths>0</preservePaths>
-  <warnings>0</warnings>
-  <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
-  <genStackFrame>0</genStackFrame>
-  <pic>0</pic>
-  <cov>0</cov>
-  <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
-  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
-  <allinst>0</allinst>
-  <stackStomp>0</stackStomp>
-  <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
-  <cccmd>$(CC) -c</cccmd>
-  <ccTransOpt>1</ccTransOpt>
-  <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..</imppath>
-  <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <imppath>dmd\src .. $(DMDInstallDir)\src\druntime\src</imppath>
+  <fileImppath>dmd dmd\res</fileImppath>
+  <outdir>..\bin\$(ConfigurationName)\$(PlatfromName)\$(ProjectName)</outdir>
+  <objdir>$(OutDir)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1464,7 +1036,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids />
+  <versionids>MARS NoBackend GC</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -1491,25 +1063,161 @@
   <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
-  <cRuntime>1</cRuntime>
-  <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS</additionalOptions>
+  <cRuntime>2</cRuntime>
+  <privatePhobos>1</privatePhobos>
+  <additionalOptions>-L/STACK:8388608 -gf</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Folder name="vdserver">
-  <File path="vdserver.d" />
-  <File path="vdserver.idl" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+ <Folder name="dmdserver">
+  <Folder name="ddmd">
+   <Folder name="root">
+    <File path="dmd\src\ddmd\root\aav.d" />
+    <File path="dmd\src\ddmd\root\array.d" />
+    <File path="dmd\src\ddmd\root\ctfloat.d" />
+    <File path="dmd\src\ddmd\root\file.d" />
+    <File path="dmd\src\ddmd\root\filename.d" />
+    <File path="dmd\src\ddmd\root\hash.d" />
+    <File path="dmd\src\vcbuild\ldfpu.asm" perConfig="true">
+     <Config name="Release COFF32|x64" customcmd="if exist &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; call &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; x86_amd64
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvarsall.bat&quot; x86_amd64 &amp;&amp; popd )
+if errorlevel 1 goto reportError
+ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(InputName).obj&quot; &quot;$(InputPath)&quot;" tool="Custom" linkoutput="true" outfile="$(IntDir)\$(InputName).obj" />
+     <Config name="Debug LDC|x64" customcmd="if exist &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; call &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; x86_amd64
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvarsall.bat&quot; x86_amd64 &amp;&amp; popd )
+if errorlevel 1 goto reportError
+ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(InputName).obj&quot; &quot;$(InputPath)&quot;" tool="Custom" linkoutput="true" outfile="$(IntDir)\$(InputName).obj" />
+     <Config name="Debug|Win32" tool="None" />
+     <Config name="Debug COFF32|x64" customcmd="if exist &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; call &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; x86_amd64
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvarsall.bat&quot; x86_amd64 &amp;&amp; popd )
+if errorlevel 1 goto reportError
+ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(InputName).obj&quot; &quot;$(InputPath)&quot;" tool="Custom" linkoutput="true" outfile="$(IntDir)\$(InputName).obj" />
+    </File>
+    <File path="dmd\src\ddmd\tk\list.c" tool="C/C++" addopt="-TP" />
+    <File path="dmd\src\ddmd\root\longdouble.c" tool="C/C++" addopt="-TP" />
+    <File path="dmd\src\ddmd\root\man.d" />
+    <File path="dmd\src\ddmd\tk\mem.c" tool="None" />
+    <File path="dmd\src\ddmd\root\newdelete.c" tool="C/C++" addopt="-TP" />
+    <File path="dmd\src\ddmd\root\outbuffer.d" />
+    <File path="dmd\src\ddmd\root\port.d" />
+    <File path="dmd\src\ddmd\root\response.d" />
+    <File path="dmd\src\ddmd\root\rmem.d" tool="None" />
+    <File path="dmd\src\ddmd\root\rootobject.d" />
+    <File path="dmd\src\ddmd\root\speller.d" />
+    <File path="dmd\src\ddmd\root\stringtable.d" />
+    <File path="dmd\src\ddmd\backend\strtold.c" tool="C/C++" addopt="-TP" />
+   </Folder>
+   <Folder name="tk">
+    <File path="dmd\src\ddmd\tk\dlist.d" />
+   </Folder>
+   <File path="dmd\src\ddmd\access.d" />
+   <File path="dmd\src\ddmd\aggregate.d" />
+   <File path="dmd\src\ddmd\aliasthis.d" />
+   <File path="dmd\src\ddmd\apply.d" />
+   <File path="dmd\src\ddmd\argtypes.d" />
+   <File path="dmd\src\ddmd\arrayop.d" />
+   <File path="dmd\src\ddmd\arraytypes.d" />
+   <File path="dmd\src\ddmd\astcodegen.d" />
+   <File path="dmd\src\ddmd\attrib.d" />
+   <File path="dmd\src\ddmd\blockexit.d" />
+   <File path="dmd\src\ddmd\boostlicense.txt" />
+   <File path="dmd\src\ddmd\builtin.d" />
+   <File path="dmd\src\ddmd\canthrow.d" />
+   <File path="dmd\src\ddmd\clone.d" />
+   <File path="dmd\src\ddmd\complex.d" />
+   <File path="dmd\src\ddmd\cond.d" />
+   <File path="dmd\src\ddmd\console.d" />
+   <File path="dmd\src\ddmd\constfold.d" />
+   <File path="dmd\src\ddmd\cppmangle.d" />
+   <File path="dmd\src\ddmd\ctfeexpr.d" />
+   <File path="dmd\src\ddmd\dcast.d" />
+   <File path="dmd\src\ddmd\dclass.d" />
+   <File path="dmd\src\ddmd\declaration.d" />
+   <File path="dmd\src\ddmd\delegatize.d" />
+   <File path="dmd\src\ddmd\denum.d" />
+   <File path="dmd\src\ddmd\dimport.d" />
+   <File path="dmd\src\ddmd\dinifile.d" />
+   <File path="dmd\src\ddmd\dinterpret.d" />
+   <File path="dmd\src\ddmd\dmacro.d" />
+   <File path="dmd\src\ddmd\dmangle.d" />
+   <File path="dmd\src\ddmd\dmodule.d" />
+   <File path="dmd\src\ddmd\doc.d" />
+   <File path="dmd\src\ddmd\dscope.d" />
+   <File path="dmd\src\ddmd\dstruct.d" />
+   <File path="dmd\src\ddmd\dsymbol.d" />
+   <File path="dmd\src\ddmd\dsymbolsem.d" />
+   <File path="dmd\src\ddmd\dtemplate.d" />
+   <File path="dmd\src\ddmd\dversion.d" />
+   <File path="dmd\src\ddmd\entity.d" />
+   <File path="dmd\src\ddmd\escape.d" />
+   <File path="dmd\src\ddmd\expression.d" />
+   <File path="dmd\src\ddmd\expressionsem.d" />
+   <File path="dmd\src\ddmd\func.d" />
+   <File path="dmd\src\ddmd\globals.d" />
+   <File path="dmd\src\ddmd\gluelayer.d" />
+   <File path="dmd\src\ddmd\hdrgen.d" />
+   <File path="dmd\src\ddmd\id.d" />
+   <File path="dmd\src\ddmd\identifier.d" />
+   <File path="dmd\src\ddmd\impcnvtab.d" />
+   <File path="dmd\src\ddmd\imphint.d" />
+   <File path="dmd\src\ddmd\init.d" />
+   <File path="dmd\src\ddmd\initsem.d" />
+   <File path="dmd\src\ddmd\inline.d" />
+   <File path="dmd\src\ddmd\inlinecost.d" />
+   <File path="dmd\src\ddmd\intrange.d" />
+   <File path="dmd\src\ddmd\json.d" />
+   <File path="dmd\src\ddmd\lexer.d" />
+   <File path="dmd\src\ddmd\lib.d" tool="None" />
+   <File path="dmd\src\ddmd\libmscoff.d" tool="None" />
+   <File path="dmd\src\ddmd\libomf.d" tool="None" />
+   <File path="dmd\src\ddmd\mtype.d" />
+   <File path="dmd\src\ddmd\nogc.d" />
+   <File path="dmd\src\ddmd\nspace.d" />
+   <File path="dmd\src\ddmd\objc.d" />
+   <File path="dmd\src\ddmd\opover.d" />
+   <File path="dmd\src\ddmd\optimize.d" />
+   <File path="dmd\src\ddmd\osmodel.mak" />
+   <File path="dmd\src\ddmd\parse.d" />
+   <File path="dmd\src\ddmd\posix.mak" />
+   <File path="dmd\src\ddmd\printast.d" />
+   <File path="dmd\src\ddmd\safe.d" />
+   <File path="dmd\src\ddmd\sapply.d" />
+   <File path="dmd\src\ddmd\scanmscoff.d" tool="None" />
+   <File path="dmd\src\ddmd\scanomf.d" tool="None" />
+   <File path="dmd\src\ddmd\semantic.d" />
+   <File path="dmd\src\ddmd\sideeffect.d" />
+   <File path="dmd\src\ddmd\statement.d" />
+   <File path="dmd\src\ddmd\statementsem.d" />
+   <File path="dmd\src\ddmd\statement_rewrite_walker.d" />
+   <File path="dmd\src\ddmd\staticassert.d" />
+   <File path="dmd\src\ddmd\staticcond.d" />
+   <File path="dmd\src\ddmd\target.d" />
+   <File path="dmd\src\ddmd\templateparamsem.d" />
+   <File path="dmd\src\ddmd\tokens.d" />
+   <File path="dmd\src\ddmd\traits.d" />
+   <File path="dmd\src\ddmd\typesem.d" />
+   <File path="dmd\src\ddmd\typinf.d" />
+   <File path="dmd\src\ddmd\utf.d" />
+   <File path="dmd\src\ddmd\utils.d" />
+   <File path="dmd\src\ddmd\visitor.d" />
+  </Folder>
+  <File path="ddmderrors.d" />
+  <File path="ddmdlib.d" />
+  <File path="ddmdmars.d" />
+  <File path="ddmdrmem.d" />
+  <File path="dmdserver.d" />
+  <File path="dmdserver.idl" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /tlb &quot;..\vdserver.tlb&quot; /out &quot;$(IntDir)&quot; /error stub_data $(InputPath)" tool="Custom" outfile="$(OutDir)/vdserver.tlb" />
-  <File path="vdserver.rc" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /tlb &quot;.\$(InputName).tlb&quot; /out &quot;$(IntDir)&quot; /error stub_data $(InputPath)" tool="Custom" outfile="$(OutDir)/dmdserver.tlb" />
+  <File path="dmdserver.rc" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-rc /fo&quot;$(OutDir)\vdserver.res&quot; &quot;/I$(OutDir)&quot; $(InputPath)" tool="Custom" dependencies="&quot;$(OutDir)\vdserver.tlb&quot; ..\version" linkoutput="true" outfile="$(OutDir)\vdserver.res" />
-  <File path="vdserver.reg" />
+rc /fo&quot;$(OutDir)\$(InputName).res&quot; /I&quot;$(OutDir)&quot; $(InputPath)" tool="Custom" dependencies="&quot;$(OutDir)\dmdserver.tlb&quot; ..\version" linkoutput="true" outfile="$(OutDir)\dmdserver.res" />
+  <File path="ivdserver.d" />
+  <File path="semanticopt.d" />
+  <File path="..\tools\tracegc.d" />
   <File path="vdserverfactory.d" />
-  <File path="vdserver_d.reg" />
  </Folder>
 </DProject>

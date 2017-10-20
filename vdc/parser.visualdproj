@@ -1406,7 +1406,7 @@
   <transition_markdown>0</transition_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
@@ -1985,8 +1985,8 @@
   <File path="logger.d" />
   <File path="parsertest.d" />
   <File path="semantic.d" />
+  <File path="semanticopt.d" />
   <File path="util.d" />
-  <File path="vdserver.d" />
   <File path="versions.d" />
  </Folder>
 </DProject>

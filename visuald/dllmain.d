@@ -113,6 +113,7 @@ BOOL DllMain(stdwin.HINSTANCE hInstance, ULONG ulReason, LPVOID pvReserved)
 			debug DComObject.showCOMleaks();
 			dll_process_detach(hInstance, true);
 
+			version(detectLeaks)
 			debug if(DComObject.sCountReferenced != 0 || DComObject.sCountInstances != 0)
 				asm { int 3; } // use continue, not terminate in the debugger
 			break;

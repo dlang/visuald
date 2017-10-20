@@ -2122,7 +2122,7 @@ class GlobalOptions
 		if(useDParser)
 			gServerClassFactory_iid = DParserClassFactory_iid;
 		else
-			gServerClassFactory_iid = VDServerClassFactory_iid;
+			gServerClassFactory_iid = DMDServerClassFactory_iid;
 	}
 
 	bool saveToRegistry()
