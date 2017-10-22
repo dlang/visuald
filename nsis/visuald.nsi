@@ -224,67 +224,8 @@ Section "Visual Studio package" SecPackage
 !endif
 
 
-  ${SetOutPath} "$INSTDIR\Templates"
-  ${SetOutPath} "$INSTDIR\Templates\Items"
-  ${File} ..\visuald\Templates\Items\ empty.d
-  ${File} ..\visuald\Templates\Items\ hello.d
-  ${File} ..\visuald\Templates\Items\ items.vsdir
-  ${SetOutPath} "$INSTDIR\Templates\Wizards"
-  ${File} ..\visuald\Templates\Wizards\ package.vsz
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems"
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleApp"
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ main.d
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ ConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ ConsoleApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleDMDGDC"
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDGDC\ main.d
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDGDC\ ConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDGDC\ ConsoleApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleDMDLDC"
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ main.d
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ ConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ ConsoleApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleDLG"
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ main.d
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ ConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ ConsoleApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\WindowsApp"
-  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ winmain.d
-  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ WindowsApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ WindowsApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\DynamicLib"
-  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ dllmain.d
-  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ dll.def
-  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ DynamicLib.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ DynamicLib.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\StaticLib"
-  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ lib.d
-  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ StaticLib.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ StaticLib.visualdproj
-
-!ifdef MSBUILD
-  ${SetOutPath} "$INSTDIR\Templates\VCProjectItems\ConsoleApp"
-  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ main.d
-  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ VCConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ ConsoleApp.vcxproj
-  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ ConsoleApp.vcxproj.filters
-!endif
-
-  ${SetOutPath} "$INSTDIR\Templates\Projects"
-  ${File} ..\visuald\Templates\Projects\ DTemplates.vsdir
-
-  ${SetOutPath} "$INSTDIR\Templates\CodeSnippets"
-  ${File} ..\visuald\Templates\CodeSnippets\ SnippetsIndex.xml
-  
-  ${SetOutPath} "$INSTDIR\Templates\CodeSnippets\Snippets"
-  ${File} ..\visuald\Templates\CodeSnippets\Snippets\ *.snippet
+  ${SetOutPath} "$INSTDIR"
+  File /r ..\visuald\Templates
 
   Call RegisterIVDServer
 !ifdef VDSERVER

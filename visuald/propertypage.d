@@ -815,7 +815,8 @@ class GeneralPropertyPage : ProjectPropertyPage
 		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
 		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas,
 			[ "Combined compile and link", "Single file compilation",
-			  "Separate compile and link", "Compile only (use Post-build command to link)" ], false));
+			  "Separate compile and link", "Compile only (use Post-build command to link)",
+			  "Compile through DUB"], false));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -2190,6 +2191,58 @@ class LdcDirPropertyPage : DirPropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+class DubPropertyPage : GlobalPropertyPage
+{
+	this(GlobalOptions options)
+	{
+		super(options);
+	}
+
+	enum ID_DUBPATH = 1011;
+
+	override string GetCategoryName() { return "D Options"; }
+	override string GetPageName() { return "DUB Options"; }
+
+	override void CreateControls()
+	{
+		auto btn = new Button(mCanvas, "...", ID_DUBPATH);
+		AddControl("DUB executable", mDubExecutable = new Text(mCanvas), btn);
+		AddControl("DUB options", mDubOptions = new Text(mCanvas));
+	}
+
+	override void SetControls(GlobalOptions opts)
+	{
+		mDubExecutable.setText(opts.dubPath);
+		mDubOptions.setText(opts.dubOptions);
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mDubExecutable.getText(), opts.dubPath, refopts.dubPath);
+		changes += changeOption(mDubOptions.getText(), opts.dubOptions, refopts.dubOptions);
+		return changes;
+	}
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_DUBPATH:
+				if(auto file = browseFile(mCanvas.hwnd, "Select DUB executable", "Executables\0*.exe\0All Files\0*.*\0"))
+					mDubExecutable.setText(file);
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
+	}
+
+	Text mDubExecutable;
+	Text mDubOptions;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 class ToolsProperty2Page : GlobalPropertyPage
 {
 	override string GetCategoryName() { return "Projects"; }
@@ -2542,6 +2595,7 @@ const GUID    g_LinkerOutputPropertyPage = uuid("002a2de9-8bb6-484d-981d-7e4ad40
 const GUID    g_DmdDirPropertyPage       = uuid("002a2de9-8bb6-484d-9820-7e4ad4084715");
 const GUID    g_GdcDirPropertyPage       = uuid("002a2de9-8bb6-484d-9824-7e4ad4084715");
 const GUID    g_LdcDirPropertyPage       = uuid("002a2de9-8bb6-484d-9825-7e4ad4084715");
+const GUID    g_DubPropertyPage          = uuid("002a2de9-8bb6-484d-9827-7e4ad4084715");
 const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad4084715");
 
 // registered under Languages\\Language Services\\D\\EditorToolsOptions\\Colorizer, created explicitely by package
@@ -2656,6 +2710,7 @@ version(all) {
 		pPages.pElems[idx++] = g_LinkerOutputPropertyPage;
 		pPages.pElems[idx++] = g_DmdCmdLinePropertyPage;
 		pPages.pElems[idx++] = g_DmdEventsPropertyPage;
+		assert(idx == pPages.cElems);
 		return S_OK;
 } else {
 		return returnError(E_NOTIMPL);

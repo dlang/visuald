@@ -785,6 +785,7 @@
    <File path="Resources\difile.ico" />
    <File path="Resources\DImageList.bmp" />
    <File path="Resources\DSplashScreenIcon.bmp" />
+   <File path="Resources\dub.ico" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
    <File path="Resources\pkgcmd.vsct" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;

@@ -243,8 +243,12 @@ class ProjectOptions
 		kSingleFileCompilation,
 		kSeparateCompileAndLink,
 		kSeparateCompileOnly,
+		kCompileThroughDub,
 	}
 	uint compilationModel = kCombinedCompileAndLink;
+
+	bool isCombinedBuild() { return compilationModel == kCombinedCompileAndLink || compilationModel == kCompileThroughDub; }
+
 
 	// Linker stuff
 	string objfiles;
@@ -1197,6 +1201,8 @@ class ProjectOptions
 	bool doSeparateLink()
 	{
 		if(compilationModel == ProjectOptions.kSeparateCompileOnly)
+			return false;
+		if(compilationModel == ProjectOptions.kCompileThroughDub)
 			return false;
 
 		bool separateLink = compilationModel == ProjectOptions.kSeparateCompileAndLink;
@@ -3178,7 +3184,7 @@ class Config :	DisposingComObject,
 	{
 		string[] files = dfiles.dup;
 		string[] remove;
-		bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+		bool singleObj = mProjectOptions.isCombinedBuild();
 		string targetObj;
 		foreach(ref f; files)
 			if(f.endsWith(".d") || f.endsWith(".D"))
@@ -3421,7 +3427,79 @@ class Config :	DisposingComObject,
 		return true;
 	}
 
-	string getCommandLine(bool compile, bool link)
+	string getDubCommandLine(string command, bool rebuild)
+	{
+		bool x64       = mProjectOptions.isX86_64;
+		bool mscoff    = mProjectOptions.compiler == Compiler.DMD && (x64 || mProjectOptions.mscoff);
+		string workdir = normalizeDir(GetProjectDir());
+		auto globOpts  = Package.GetGlobalOptions();
+
+		string dubcmd;
+		if (command == "build")
+		{
+			dubcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
+				~ (globOpts.demangleError ? null : "-nodemangle ")
+				~ (mProjectOptions.usesMSLink() ? "-msmode " : null)
+				~ (usePipedmdForDeps ? "-deps " ~ quoteFilename(GetDependenciesPath()) ~ " " : null)
+				~ globOpts.dubPath ~ " build";
+		}
+		else
+		{
+			dubcmd = globOpts.dubPath ~ " " ~ command;
+		}
+		if (globOpts.dubOptions.length)
+			dubcmd ~= " " ~ globOpts.dubOptions;
+
+		auto node = searchNode(mProvider.mProject.GetRootNode(),
+							   delegate (CHierNode n)
+							   {
+								if(auto file = cast(CFileNode) n)
+								{
+									string fname = file.GetFilename();
+									string bname = fname.baseName.toLower;
+									if (bname == "dub.json" || bname == "dub.sdl")
+										return true;
+								}
+								return false;
+							   });
+		if(auto file = cast(CFileNode) node)
+		{
+			string root = makeFilenameAbsolute(file.GetFilename(), workdir).dirName;
+			if (root != workdir)
+				dubcmd ~= " --root=" ~ quoteFilename(root);
+		}
+
+		if (command == "build")
+		{
+			switch (mProjectOptions.compiler)
+			{
+				default:
+				case Compiler.DMD:
+					dubcmd ~= " --compiler=dmd";
+					break;
+				case Compiler.LDC:
+					dubcmd ~= " --compiler=ldc";
+					break;
+				case Compiler.GDC:
+					dubcmd ~= " --compiler=gdc";
+					break;
+			}
+			if (x64)
+				dubcmd ~= " --arch=x86_64";
+			else if (mscoff)
+				dubcmd ~= " --arch=x86_mscoff";
+			else
+				dubcmd ~= " --arch=x86";
+
+			dubcmd ~= " --build=" ~ toLower(mName);
+			if (rebuild)
+				dubcmd ~= " --force";
+		}
+
+		return dubcmd;
+	}
+
+	string getCommandLine(bool compile, bool link, bool rebuild)
 	{
 		assert(compile || link);
 
@@ -3436,7 +3514,12 @@ class Config :	DisposingComObject,
 		string[] files = getInputFileList();
 		//quoteFilenames(files);
 
-		if (compile)
+		if (mProjectOptions.compilationModel == ProjectOptions.kCompileThroughDub)
+		{
+			precmd ~= getDubCommandLine("build", rebuild) ~ "\n";
+			link = false;
+		}
+		else if (compile)
 		{
 			string responsefile = GetCommandLinePath(false) ~ ".rsp";
 			string fcmd = getCommandFileList(files, responsefile, precmd); // might append to precmd
@@ -3454,7 +3537,7 @@ class Config :	DisposingComObject,
 
 			if(separateLink || !doLink)
 			{
-				bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+				bool singleObj = mProjectOptions.isCombinedBuild();
 				if(fcmd.length == 0)
 					opt = ""; // don't try to build zero files
 				else if(singleObj)

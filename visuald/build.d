@@ -167,7 +167,7 @@ else
 			break;
 
 		case Operation.eBuild:
-			fSuccessfulBuild = DoBuild();
+			fSuccessfulBuild = DoBuild(false);
 			if(!fSuccessfulBuild)
 				StopSolutionBuild();
 			break;
@@ -175,7 +175,7 @@ else
 		case Operation.eRebuild:
 			fSuccessfulBuild = DoClean();
 			if(fSuccessfulBuild)
-				fSuccessfulBuild = DoBuild();
+				fSuccessfulBuild = DoBuild(true);
 			if(!fSuccessfulBuild)
 				StopSolutionBuild();
 			break;
@@ -389,7 +389,7 @@ else
 		return node is null;
 	}
 
-	bool DoBuild()
+	bool DoBuild(bool rebuild)
 	{
 		mixin(LogCallMix2);
 
@@ -432,16 +432,16 @@ else
 				return false;
 
 			if(hasCustomBuilds)
-				if(targetIsUpToDate(false, false)) // only recheck target if custom builds exist
+				if(targetIsUpToDate(false, false, rebuild)) // only recheck target if custom builds exist
 					return true; // no need to rebuild target if custom builds did not change target dependencies
 
 			if(!mLastUptodateFailure.empty)
 				showUptodateFailure(mLastUptodateFailure);
 
-			bool combined = (opts.compilationModel == ProjectOptions.kCombinedCompileAndLink);
-			if (combined || !targetIsUpToDate(true, false))
+			bool combined = opts.isCombinedBuild();
+			if (combined || !targetIsUpToDate(true, false, rebuild))
 			{
-				string cmdline = mConfig.getCommandLine(true, combined);
+				string cmdline = mConfig.getCommandLine(true, combined, rebuild);
 				string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(false), workdir);
 				hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
 			}
@@ -449,7 +449,7 @@ else
 				hr = S_OK;
 			if (hr == S_OK && !combined)
 			{
-				string cmdline = mConfig.getCommandLine(false, true);
+				string cmdline = mConfig.getCommandLine(false, true, rebuild);
 				string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(true), workdir);
 				hr = RunCustomBuildBatchFile(target, cmdfile, cmdline, m_pIVsOutputWindowPane, this);
 
@@ -524,20 +524,21 @@ else
 		if(!customFilesUpToDate())
 			return false;
 
-		return targetIsUpToDate(false, true);
+		return targetIsUpToDate(false, true, false);
 	}
 
-	bool targetIsUpToDate(bool compileOnly, bool showFailure)
+	bool targetIsUpToDate(bool compileOnly, bool showFailure, bool rebuild)
 	{
 		auto projopts = mConfig.GetProjectOptions();
 		string workdir = mConfig.GetProjectDir();
-		bool combined = (projopts.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+		bool combined = projopts.isCombinedBuild();
 		string cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(false), workdir);
 
-		string cmdline = mConfig.getCommandLine(true, combined);
+		string cmdline = mConfig.getCommandLine(true, combined, rebuild);
 		if(!compareCommandFile(cmdfile, cmdline))
 			return showFailure && showUptodateFailure("command line changed");
 
+		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
 		string[] targets;
 		if(!combined && compileOnly)
 		{
@@ -553,13 +554,12 @@ else
 		}
 		else
 		{
-			string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
 			targets = [ target ];
 		}
 		if (!combined && !compileOnly)
 		{
 			cmdfile = makeFilenameAbsolute(mConfig.GetCommandLinePath(true), workdir);
-			cmdline = mConfig.getCommandLine(false, true);
+			cmdline = mConfig.getCommandLine(false, true, rebuild);
 			if(!compareCommandFile(cmdfile, cmdline))
 				return showFailure && showUptodateFailure("linker command line changed");
 		}
@@ -582,7 +582,9 @@ else
 		string newestFile;
 		long sourcetm = getNewestFileTime(files, newestFile);
 
-		if(targettm <= sourcetm)
+		bool allowSameTime = (projopts.compilationModel == ProjectOptions.kCompileThroughDub) && icmp(oldestFile, target) == 0;
+		if(allowSameTime && targettm < sourcetm ||
+		   !allowSameTime && targettm <= sourcetm)
 			return showFailure && showUptodateFailure(oldestFile ~ " older than " ~ newestFile);
 		return true;
 	}
@@ -1440,7 +1442,7 @@ bool getFilesFromTrackerFile(string lnkdeppath, ref string[] files)
 	}
 }
 
-bool launchBuildPhobos(string workdir, string cmdfile, string cmdline, IVsOutputWindowPane pane)
+bool launchBatchProcess(string workdir, string cmdfile, string cmdline, IVsOutputWindowPane pane)
 {
 	/////////////
 	auto srpIVsLaunchPadFactory = queryService!(IVsLaunchPadFactory);
@@ -1480,3 +1482,21 @@ bool launchBuildPhobos(string workdir, string cmdfile, string cmdline, IVsOutput
 	return hr == S_OK && result == 0;
 }
 
+bool launchDubUpgrade(Config cfg)
+{
+	IVsOutputWindowPane pane = getVisualDOutputPane();
+	if(!pane)
+		return false;
+	scope(exit) release(pane);
+
+	string workdir = normalizeDir(cfg.GetProjectDir());
+	string precmd = cfg.getEnvironmentChanges();
+	string cmd = precmd ~ cfg.getDubCommandLine("upgrade", false) ~ "\n";
+	cmd = cmd ~ "\nif %errorlevel% neq 0 echo Upgrading failed!\n";
+	cmd = cmd ~ "\nif %errorlevel% == 0 echo Upgrading done.\n";
+
+	string cmdfile = makeFilenameAbsolute(stripExtension(cfg.GetCommandLinePath(false)) ~ ".upgrade.cmd", workdir);
+
+	pane.Activate();
+	return launchBatchProcess(workdir, cmdfile, cmd, pane);
+}

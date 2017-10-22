@@ -5,5 +5,6 @@
 ..\ProjectItems\WindowsApp\WindowsApp.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Windows Application|30|A project for creating a Windows application|0|#1000|0|WindowsApp
 ..\ProjectItems\DynamicLib\DynamicLib.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Dynamic Library (DLL)|30|A project for creating a dynamic library|0|#1000|0|DynamicLib
 ..\ProjectItems\StaticLib\StaticLib.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Static Library|30|A project for creating a static library|0|#1000|0|StaticLib
-..\VCProjectItems\ConsoleApp\VCConsoleApp.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|VC++/D Console Application|30|A VC++ based project for creating a command-line application|0|#1000|0|ConsoleApp
-.
+..\VCProjectItems\ConsoleApp\VCConsoleApp.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|VC++/D Console Application|40|A VC++ based project for creating a command-line application|0|#1000|0|ConsoleApp
+..\ProjectItems\DUB\vibe\dub_vibe_d.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|vibe.d server using DUB|50|A simple vibe.d server application|0|#1004|0|ServerApp
+..\ProjectItems\DUB\minimal\minimal.vstemplate|{002A2DE9-8BB6-484D-987F-7E4AD4084715}|Console application using DUB|50|A minimal D application using DUB for building|0|#1004|0|ConsoleApp

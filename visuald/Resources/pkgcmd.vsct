@@ -283,6 +283,15 @@
             </Strings>
         </Button>
 
+      <Button guid="g_commandSetCLSID" id="CmdDubUpgrade" priority="0x0100" type="Button">
+        <Icon guid="guidImageList" id="bmpidPackage"/>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <Strings>
+          <ButtonText>DUB Upgrade</ButtonText>
+        </Strings>
+      </Button>
+
       <!--
         <Button guid="g_commandSetCLSID" id="id01" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="151"/> <Strings><ButtonText>Bmp 151</ButtonText></Strings> </Button>
         <Button guid="g_commandSetCLSID" id="id02" priority="0" type="Button"> <Parent guid="g_commandSetCLSID" id="IDG_TESTBMP"/> <Icon guid="guidVsShellIcons" id="152"/> <Strings><ButtonText>Bmp 152</ButtonText></Strings> </Button>
@@ -338,6 +347,11 @@
       <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_PROJECT_ADD_ITEMS"/>
     </CommandPlacement>
 
+    <!-- CmdNewFilter -->
+    <CommandPlacement guid="g_commandSetCLSID" id="CmdDubUpgrade" priority="0x0300">
+      <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_PROJECT_BUILDDEPENDENCIES"/>
+    </CommandPlacement>
+    
   </CommandPlacements>
   
   <!--

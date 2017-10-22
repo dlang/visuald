@@ -305,6 +305,7 @@ static const wstring regPathToolsDirsOld   = "\\ToolsOptionsPages\\Projects\\Vis
 static const wstring regPathToolsDirsDmd   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\DMD Directories"w;
 static const wstring regPathToolsDirsGdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\GDC Directories"w;
 static const wstring regPathToolsDirsLdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\LDC Directories"w;
+static const wstring regPathToolsDub       = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\DUB Options"w;
 static const wstring regPathMagoOptions    = "\\ToolsOptionsPages\\Debugger\\Mago"w;
 static const wstring regMiscFiles          = regPathProjects ~ "\\{A2FE74E1-B743-11d0-AE1A-00A0C90FFFC3}"w;
 static const wstring regPathMetricsExcpt   = "\\AD7Metrics\\Exception"w;
@@ -664,16 +665,25 @@ version(none){
 		keyToolOptsDmd.Set(null, "DMD Directories");
 		keyToolOptsDmd.Set("Package"w, packageGuid);
 		keyToolOptsDmd.Set("Page"w, GUID2wstring(g_DmdDirPropertyPage));
+		keyToolOptsDmd.Set("Sort"w, 1);
 
 		scope RegKey keyToolOptsGdc = new RegKey(keyRoot, registrationRoot ~ regPathToolsDirsGdc);
 		keyToolOptsGdc.Set(null, "GDC Directories");
 		keyToolOptsGdc.Set("Package"w, packageGuid);
 		keyToolOptsGdc.Set("Page"w, GUID2wstring(g_GdcDirPropertyPage));
+		keyToolOptsGdc.Set("Sort"w, 10);
 
 		scope RegKey keyToolOptsLdc = new RegKey(keyRoot, registrationRoot ~ regPathToolsDirsLdc);
 		keyToolOptsLdc.Set(null, "LDC Directories");
 		keyToolOptsLdc.Set("Package"w, packageGuid);
 		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_LdcDirPropertyPage));
+		keyToolOptsLdc.Set("Sort"w, 20);
+
+		scope RegKey keyToolOptsDub = new RegKey(keyRoot, registrationRoot ~ regPathToolsDub);
+		keyToolOptsDub.Set(null, "DUB Options");
+		keyToolOptsDub.Set("Package"w, packageGuid);
+		keyToolOptsDub.Set("Page"w, GUID2wstring(g_DubPropertyPage));
+		keyToolOptsDub.Set("Sort"w, 30);
 
 		// remove "SkipLoading" entry from user settings
 		scope RegKey userKeyPackage = new RegKey(HKEY_CURRENT_USER, registrationRoot ~ "\\Packages\\"w ~ packageGuid);

@@ -127,11 +127,12 @@ int main(string[] argv)
 		{
 			command = quoteArg(tracker);
 			command ~= trackerArgs;
+			command ~= " /m"; // include temporary files removed, they might appear as input to sub processes
 			trackdir = dirName(depsfile);
 			if (trackdir != ".")
 				command ~= " /if " ~ quoteArg(trackdir);
-			trackfile = stripExtension(baseName(exe)) ~ ".read.*.tlog";
-			trackfilewr = stripExtension(baseName(exe)) ~ ".write.*.tlog";
+			trackfile = "*.read.*.tlog";
+			trackfilewr = "*.write.*.tlog";
 			foreach(f; std.file.dirEntries(trackdir, std.file.SpanMode.shallow))
 				if (globMatch(baseName(f), trackfile) || globMatch(baseName(f), trackfilewr))
 					std.file.remove(f.name);
@@ -185,12 +186,16 @@ int main(string[] argv)
 		string[] wrlines = splitLines(wrbuf, KeepTerminator.yes);
 		bool[string] wrset;
 		foreach(w; wrlines)
-			wrset[w] = true;
+			if (!w.startsWith("#Command:"))
+				wrset[w] = true;
 
-		string buf;
+		bool[string] rdset;
 		foreach(r; rdlines)
-			if(r !in wrset)
-				buf ~= r;
+			if (!r.startsWith("#Command:"))
+				if(r !in wrset)
+					rdset[r] = true;
+
+		string buf = rdset.keys.sort.join;
 
 		std.file.write(depsfile, buf);
 	}

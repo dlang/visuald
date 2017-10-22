@@ -402,6 +402,8 @@ class Package : DisposingComObject,
 			tpp = newCom!GdcDirPropertyPage(mOptions);
 		else if(*rguidPage == g_LdcDirPropertyPage)
 			tpp = newCom!LdcDirPropertyPage(mOptions);
+		else if(*rguidPage == g_DubPropertyPage)
+			tpp = newCom!DubPropertyPage(mOptions);
 		else if(*rguidPage == g_ToolsProperty2Page)
 			tpp = newCom!ToolsProperty2Page(mOptions);
 		else if(*rguidPage == g_ColorizerPropertyPage)
@@ -1282,6 +1284,9 @@ class GlobalOptions
 	string[] coverageBuildDirs;
 	string[] coverageExecutionDirs;
 
+	string dubPath;
+	string dubOptions;
+
 	bool showCoverageMargin;
 	bool ColorizeCoverage = true;
 	bool ColorizeVersions = true;
@@ -1685,6 +1690,9 @@ class GlobalOptions
 			compileAndDbgOpts = getStringOpt("compileAndDbgOpts", "-g");
 			compileAndDbgEngine = getIntOpt("compileAndDbgEngine", 0);
 
+			dubPath           = getStringOpt("dubPath", "dub");
+			dubOptions        = getStringOpt("dubOptions", "");
+
 			string execDirs   = getStringOpt("coverageExecutionDirs", "");
 			coverageExecutionDirs = split(execDirs, ";");
 			string buildDirs  = getStringOpt("coverageBuildDirs", "");
@@ -1803,6 +1811,9 @@ class GlobalOptions
 
 			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
 			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));
+
+			keyToolOpts.Set("dubPath",             toUTF16(dubPath));
+			keyToolOpts.Set("dubOptions",          toUTF16(dubOptions));
 
 			CHierNode.setContainerIsSorted(sortProjects);
 		}
@@ -2241,7 +2252,7 @@ class GlobalOptions
 				string sfiles = std.string.join(files, " ");
 				cmdline ~= quoteFilename(dmdpath) ~ opts ~ " -Xf" ~ quoteFilename(jsonfile) ~ " " ~ sfiles ~ "\n\n";
 				pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " from import " ~ s ~ "\n"));
-				if(!launchBuildPhobos(s, cmdfile, cmdline, pane))
+				if(!launchBatchProcess(s, cmdfile, cmdline, pane))
 					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " failed!\n"));
 				else
 					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " successful!\n"));
