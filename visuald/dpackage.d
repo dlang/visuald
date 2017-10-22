@@ -1245,6 +1245,7 @@ class GlobalOptions
 
 	// evaluated once at startup
 	string WindowsSdkDir;
+	string WindowsSdkVersion;
 	string UCRTSdkDir;
 	string UCRTVersion;
 	string DevEnvDir;
@@ -1343,7 +1344,13 @@ class GlobalOptions
 
 	void detectWindowsSDKDir()
 	{
-		// todo: detect Win10 SDK
+		if(WindowsSdkDir.empty)
+		{
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"w, false);
+			WindowsSdkDir = toUTF8(keySdk.GetString("KitsRoot10"));
+			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
+				WindowsSdkDir = "";
+		}
 		if(WindowsSdkDir.empty)
 		{
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.1"w, false);
@@ -1370,6 +1377,30 @@ class GlobalOptions
 				WindowsSdkDir = fromMBSz(cast(immutable)psdk);
 		if(!WindowsSdkDir.empty)
 			WindowsSdkDir = normalizeDir(WindowsSdkDir);
+
+		if(WindowsSdkVersion.empty)
+		{
+			if(char* pver = getenv("WindowsSdkVersion"))
+				WindowsSdkVersion = fromMBSz(cast(immutable)pver);
+			else if(!WindowsSdkDir.empty)
+			{
+				string rootsDir = normalizeDir(WindowsSdkDir) ~ "Include\\";
+				try
+				{
+					foreach(string f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
+						if(std.file.isDir(f) && f > WindowsSdkVersion)
+						{
+							string bname = baseName(f);
+							if(!bname.empty && isDigit(bname[0]))
+								if (std.file.exists(f ~ "\\um\\windows.h")) // not UCRT only?
+									WindowsSdkVersion = bname;
+						}
+				}
+				catch(Exception)
+				{
+				}
+			}
+		}
 	}
 
 	void detectUCRT()
@@ -1588,7 +1619,9 @@ class GlobalOptions
 
 				if(WindowsSdkDir.length)
 				{
-					if(std.file.exists(WindowsSdkDir ~ r"lib\x64\kernel32.lib"))
+					if(std.file.exists(WindowsSdkDir ~ r"lib\" ~ WindowsSdkVersion ~ r"\um\x64\kernel32.lib")) // SDK 10.0
+						libpath ~= "\n$(WindowsSdkDir)lib\\$(WindowsSdkVersion)\\um\\x64";
+					else if(std.file.exists(WindowsSdkDir ~ r"lib\x64\kernel32.lib"))
 						libpath ~= "\n$(WindowsSdkDir)lib\\x64";
 					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64\kernel32.lib")) // SDK 8.0
 						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x64";
@@ -1607,7 +1640,9 @@ class GlobalOptions
 
 				if(WindowsSdkDir.length)
 				{
-					if(std.file.exists(WindowsSdkDir ~ r"lib\kernel32.lib"))
+					if(std.file.exists(WindowsSdkDir ~ r"lib\" ~ WindowsSdkVersion ~ r"\um\x86\kernel32.lib")) // SDK 10.0
+						libpath ~= "\n$(WindowsSdkDir)lib\\$(WindowsSdkVersion)\\um\\x86";
+					else if(std.file.exists(WindowsSdkDir ~ r"lib\kernel32.lib"))
 						libpath ~= "\n$(WindowsSdkDir)lib";
 					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x86\kernel32.lib")) // SDK 8.0
 						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x86";
@@ -1863,6 +1898,7 @@ class GlobalOptions
 		replacements["GDCINSTALLDIR"] = normalizeDir(GDC.InstallDir);
 		replacements["LDCINSTALLDIR"] = normalizeDir(LDC.InstallDir);
 		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
+		replacements["WINDOWSSDKVERSION"] = WindowsSdkVersion;
 		replacements["UCRTSDKDIR"] = UCRTSdkDir;
 		replacements["UCRTVERSION"] = UCRTVersion;
 		replacements["DEVENVDIR"] = DevEnvDir;
