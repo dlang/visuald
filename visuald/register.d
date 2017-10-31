@@ -766,6 +766,83 @@ HRESULT registerMago(in wchar* pszRegRoot, in bool useRanu)
 	keyPropPage.Set("Package"w, packageGuid);
 	keyPropPage.Set("Page"w, GUID2wstring(g_MagoPropertyPage));
 
+	void registerException(wstring keyName, uint code = 0)
+	{
+		scope RegKey keyExcp = new RegKey(keyRoot, keyName);
+		keyPropPage.Set("Code"w, code);
+		keyPropPage.Set("State"w, 3);
+	}
+	wstring[] Dexceptions =
+	[
+		"core.exception.AssertError",
+		"core.exception.FinalizeError",
+		"core.exception.HiddenFuncError",
+		"core.exception.OutOfMemoryError",
+		"core.exception.RangeError",
+		"core.exception.SwitchError",
+		"core.exception.UnicodeException",
+		"core.sync.exception.SyncException",
+		"core.thread.FiberException",
+		"core.thread.ThreadException",
+		"object.Error",
+		"object.Exception",
+		"std.base64.Base64CharException",
+		"std.base64.Base64Exception",
+		"std.boxer.UnboxException",
+		"std.concurrency.LinkTerminated",
+		"std.concurrency.MailboxFull",
+		"std.concurrency.MessageMismatch",
+		"std.concurrency.OwnerTerminated",
+		"std.conv.ConvError",
+		"std.conv.ConvOverflowError",
+		"std.dateparse.DateParseError",
+		"std.demangle.MangleException",
+		"std.encoding.EncodingException",
+		"std.encoding.UnrecognizedEncodingException",
+		"std.exception.ErrnoException",
+		"std.file.FileException",
+		"std.format.FormatError",
+		"std.json.JSONException",
+		"std.loader.ExeModuleException",
+		"std.math.NotImplemented",
+		"std.regexp.RegExpException",
+		"std.socket.AddressException",
+		"std.socket.HostException",
+		"std.socket.SocketAcceptException",
+		"std.socket.SocketException",
+		"std.stdio.StdioException",
+		"std.stream.OpenException",
+		"std.stream.ReadException",
+		"std.stream.SeekException",
+		"std.stream.StreamException",
+		"std.stream.StreamFileException",
+		"std.stream.WriteException",
+		"std.typecons.NotImplementedError",
+		"std.uri.URIerror",
+		"std.utf.UtfError",
+		"std.utf.UtfException",
+		"std.variant.VariantException",
+		"std.windows.registry.RegistryException",
+		"std.windows.registry.Win32Exception",
+		"std.xml.CDataException",
+		"std.xml.CheckException",
+		"std.xml.CommentException",
+		"std.xml.DecodeException",
+		"std.xml.InvalidTypeException",
+		"std.xml.PIException",
+		"std.xml.TagException",
+		"std.xml.TextException",
+		"std.xml.XIException",
+		"std.xml.XMLException",
+		"std.zip.ZipException",
+		"std.zlib.ZlibException",
+	];
+	registerException(registrationRoot ~ r"\AD7Metrics\Exception\{3B476D35-A401-11D2-AAD4-00C04F990171}\Win32Exception\D Exception", 0xE0440001);
+	registerException(registrationRoot ~ r"\AD7Metrics\Exception\" ~ magoGuid ~ r"\D Exceptions");
+	wstring dexroot = registrationRoot ~ r"\AD7Metrics\Exception\"w ~ magoGuid ~ "\\D Exceptions\\";
+	foreach (ex; Dexceptions)
+		registerException(dexroot ~ ex);
+
 	return S_OK;
 }
 

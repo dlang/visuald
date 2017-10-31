@@ -941,7 +941,9 @@ unreleased Version 0.46.0
     - LDC: add option to link against debug runtime library
     - LDC: no longer tries to run cv2pdb
     - some experimental dub support
-    - fix detection of indows SDK 10, also define $(WindowsSdkVersion)
+  * installation
+    - fix detection of Windows 10 SDK, also define $(WindowsSdkVersion)
+    - VS2017: fixed registration of exception settings
   * dparser:
     - when building with LDC, use import path from its config file instead of DMDs' sc.ini
     - parse "static foreach" (but no semantic analysis)
