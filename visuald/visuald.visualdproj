@@ -744,7 +744,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/OPT:ICF -L/OPT:REF -L/SUBSYSTEM:WINDOWS,4.00</additionalOptions>
+  <additionalOptions>-L/OPT:ICF -L/OPT:REF -L/SUBSYSTEM:WINDOWS,5.01</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
