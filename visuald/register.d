@@ -679,11 +679,14 @@ version(none){
 		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_LdcDirPropertyPage));
 		keyToolOptsLdc.Set("Sort"w, 20);
 
+static if(hasDubSupport)
+{
 		scope RegKey keyToolOptsDub = new RegKey(keyRoot, registrationRoot ~ regPathToolsDub);
 		keyToolOptsDub.Set(null, "DUB Options");
 		keyToolOptsDub.Set("Package"w, packageGuid);
 		keyToolOptsDub.Set("Page"w, GUID2wstring(g_DubPropertyPage));
 		keyToolOptsDub.Set("Sort"w, 30);
+}
 
 		// remove "SkipLoading" entry from user settings
 		scope RegKey userKeyPackage = new RegKey(HKEY_CURRENT_USER, registrationRoot ~ "\\Packages\\"w ~ packageGuid);

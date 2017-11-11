@@ -813,6 +813,7 @@ class CFolderNode : CHierContainer
 			switch(Cmd.cmdID)
 			{
 				case CmdDubUpgrade:
+				case CmdDubRefresh:
 					bool useDub = false;
 					if(Config cfg = GetActiveConfig(GetCVsHierarchy()))
 						useDub = cfg.GetProjectOptions().compilationModel == ProjectOptions.kCompileThroughDub;
@@ -892,6 +893,10 @@ class CFolderNode : CHierContainer
 					break;
 				case CmdNewFilter:
 					hr = OnCmdAddFolder(true);
+					break;
+				case CmdDubRefresh:
+					if(auto prj = cast(Project)GetCVsHierarchy())
+						refreshDubProject(prj);
 					break;
 				case CmdDubUpgrade:
 					if(Config cfg = GetActiveConfig(GetCVsHierarchy()))

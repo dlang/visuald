@@ -36,6 +36,7 @@ import std.conv;
 import std.algorithm;
 
 // version = DParserOption;
+enum hasDubSupport = false;
 
 class PropertyWindow : Window
 {
@@ -813,10 +814,13 @@ class GeneralPropertyPage : ProjectPropertyPage
 		AddControl("Output Path",   mOutputPath = new Text(mCanvas));
 		AddControl("Intermediate Path", mIntermediatePath = new Text(mCanvas));
 		AddControl("Files to clean", mFilesToClean = new Text(mCanvas));
-		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas,
-			[ "Combined compile and link", "Single file compilation",
-			  "Separate compile and link", "Compile only (use Post-build command to link)",
-			  "Compile through DUB"], false));
+		auto items = [
+			"Combined compile and link", "Single file compilation",
+			"Separate compile and link", "Compile only (use Post-build command to link)",
+		];
+		static if (hasDubSupport)
+			ites ~= "Compile through DUB";
+		AddControl("Compilation",   mSingleFileComp = new ComboBox(mCanvas, items, false));
 	}
 
 	override void SetControls(ProjectOptions options)

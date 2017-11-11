@@ -1228,6 +1228,7 @@ class Project : CVsHierarchy,
 				case CmdNewPackage:
 				case CmdNewFilter:
 				case CmdDubUpgrade:
+				case CmdDubRefresh:
 					return GetProjectNode().QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
 				default:
 					break;

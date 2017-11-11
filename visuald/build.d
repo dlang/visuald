@@ -1500,3 +1500,8 @@ bool launchDubUpgrade(Config cfg)
 	pane.Activate();
 	return launchBatchProcess(workdir, cmdfile, cmd, pane);
 }
+
+bool refreshDubProject(Project prj)
+{
+	return false;
+}

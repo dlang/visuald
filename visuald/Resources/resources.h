@@ -63,3 +63,4 @@
 #define CmdNewFilter     0x123
 
 #define CmdDubUpgrade    0x124
+#define CmdDubRefresh    0x125

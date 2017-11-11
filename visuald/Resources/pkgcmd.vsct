@@ -347,11 +347,16 @@
       <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_PROJECT_ADD_ITEMS"/>
     </CommandPlacement>
 
-    <!-- CmdNewFilter -->
+    <!-- CmdDubUpgrade -->
     <CommandPlacement guid="g_commandSetCLSID" id="CmdDubUpgrade" priority="0x0300">
       <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_PROJECT_BUILDDEPENDENCIES"/>
     </CommandPlacement>
-    
+
+    <!-- CmdDubRefresh -->
+    <CommandPlacement guid="g_commandSetCLSID" id="CmdDubRefresh" priority="0x0300">
+      <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_PROJECT_BUILDDEPENDENCIES"/>
+    </CommandPlacement>
+
   </CommandPlacements>
   
   <!--
