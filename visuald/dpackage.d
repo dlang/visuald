@@ -1621,7 +1621,7 @@ class GlobalOptions
 				{
 					if(std.file.exists(WindowsSdkDir ~ r"lib\" ~ WindowsSdkVersion ~ r"\um\x64\kernel32.lib")) // SDK 10.0
 						libpath ~= "\n$(WindowsSdkDir)lib\\$(WindowsSdkVersion)\\um\\x64";
-					else if(std.file.exists(WindowsSdkDir ~ r"lib\x64\kernel32.lib"))
+					else if(std.file.exists(WindowsSdkDir ~ r"lib\x64\kernel32.lib")) // SDK 7.1 or earlier
 						libpath ~= "\n$(WindowsSdkDir)lib\\x64";
 					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64\kernel32.lib")) // SDK 8.0
 						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x64";
@@ -1642,7 +1642,7 @@ class GlobalOptions
 				{
 					if(std.file.exists(WindowsSdkDir ~ r"lib\" ~ WindowsSdkVersion ~ r"\um\x86\kernel32.lib")) // SDK 10.0
 						libpath ~= "\n$(WindowsSdkDir)lib\\$(WindowsSdkVersion)\\um\\x86";
-					else if(std.file.exists(WindowsSdkDir ~ r"lib\kernel32.lib"))
+					else if(std.file.exists(WindowsSdkDir ~ r"lib\kernel32.lib")) // SDK 7.1 or earlier
 						libpath ~= "\n$(WindowsSdkDir)lib";
 					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x86\kernel32.lib")) // SDK 8.0
 						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x86";
@@ -1652,10 +1652,34 @@ class GlobalOptions
 				return libpath;
 			}
 
+			string fixSdk10LibPath(string libsetting, bool x64)
+			{
+				// when switching from older SDK to Win 10, fix paths
+				if (WindowsSdkVersion < "10")
+					return libsetting;
+
+				bool modified = false;
+				string[] libs = tokenizeArgs(libsetting, true, false);
+				foreach (ref lib; libs)
+				{
+					if (lib.indexOf("$(WindowsSdkDir)") >= 0)
+					{
+						string libpath = replaceGlobalMacros(lib);
+						if (!std.file.exists(libpath ~ "kernel32.lib"))
+						{
+							lib = r"$(WindowsSdkDir)lib\$(WindowsSdkVersion)\um\" ~ (x64 ? "x64" : "x86");
+							modified = true;
+						}
+					}
+				}
+				return join(libs, "\n");
+			}
+
 			// overwrite by user config
 			void readCompilerOptions(string compiler)(ref CompilerDirectories opt)
 			{
 				enum bool dmd = compiler == "DMD";
+				enum bool ldc = compiler == "LDC";
 				enum string prefix = dmd ? "" : compiler ~ ".";
 				if (auto dir = getStringOpt(compiler ~ "InstallDir"))
 					opt.InstallDir = dir;
@@ -1667,6 +1691,11 @@ class GlobalOptions
 				opt.ExeSearchPath64 = getPathsOpt(prefix ~ "ExeSearchPath64", opt.ExeSearchPath64);
 				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", opt.LibSearchPath64);
 				opt.DisasmCommand64 = getPathsOpt(prefix ~ "DisasmCommand64", opt.DisasmCommand64);
+
+				if (ldc)
+					opt.LibSearchPath = fixSdk10LibPath(opt.LibSearchPath, false);
+				if (dmd || ldc)
+					opt.LibSearchPath64 = fixSdk10LibPath(opt.LibSearchPath64, true);
 
 				wstring linkPath = to!wstring(getVCDir("bin\\link.exe", false));
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
@@ -1681,6 +1710,8 @@ class GlobalOptions
 					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", true);
 					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", linkPath);
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
+
+					opt.LibSearchPath32coff = fixSdk10LibPath(opt.LibSearchPath32coff, false);
 				}
 			}
 			// put dmd bin folder at the end to avoid trouble with link.exe (dmd does not need search path)
@@ -1899,7 +1930,8 @@ class GlobalOptions
 		replacements["LDCINSTALLDIR"] = normalizeDir(LDC.InstallDir);
 		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
 		replacements["WINDOWSSDKVERSION"] = WindowsSdkVersion;
-		replacements["UCRTSDKDIR"] = UCRTSdkDir;
+		replacements["UCRTSDKDIR"] = UCRTSdkDir;         // legacy
+		replacements["UNIVERSALCRTSDKDIR"] = UCRTSdkDir; // variable name used by MS
 		replacements["UCRTVERSION"] = UCRTVersion;
 		replacements["DEVENVDIR"] = DevEnvDir;
 		replacements["VCINSTALLDIR"] = VCInstallDir;
