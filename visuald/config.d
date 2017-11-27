@@ -3025,11 +3025,7 @@ class Config :	DisposingComObject,
 
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
 			// add environment in case sc.ini was not patched to a specific VS version
-			cmd ~= "set VCINSTALLDIR=$(VCINSTALLDIR)\n";
-			cmd ~= "set VSINSTALLDIR=$(VSINSTALLDIR)\n";
-			cmd ~= "set WindowsSdkDir=$(WindowsSdkDir)\n";
-			cmd ~= "set UniversalCRTSdkDir=$(UCRTSDKDIR)\n";
-			cmd ~= "set UCRTVersion=$(UCRTVERSION)\n";
+			cmd ~= getMSVCEnvironmentCommands();
 			cmd ~= opts.buildCommandLine(this, true, !syntaxOnly, null, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";
@@ -3102,16 +3098,29 @@ class Config :	DisposingComObject,
 				cmd ~= "set LIB=" ~ lpath ~ "\n";
 		}
 		if(mProjectOptions.useMSVCRT())
-		{
-			if(globOpt.WindowsSdkDir.length)
-				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
-			if(globOpt.VCInstallDir.length)
-				cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
-			if(globOpt.VCToolsInstallDir.length)
-				cmd ~= "set VCTOOLSINSTALLDIR=" ~ globOpt.VCToolsInstallDir ~ "\n";
-			if(globOpt.VSInstallDir.length)
-				cmd ~= "set VSINSTALLDIR=" ~ globOpt.VSInstallDir ~ "\n";
-		}
+			cmd ~= getMSVCEnvironmentCommands;
+
+		return cmd;
+	}
+
+	string getMSVCEnvironmentCommands()
+	{
+		GlobalOptions globOpt = Package.GetGlobalOptions();
+		string cmd;
+		if(globOpt.VCInstallDir.length)
+			cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
+		if(globOpt.VCToolsInstallDir.length)
+			cmd ~= "set VCTOOLSINSTALLDIR=" ~ globOpt.VCToolsInstallDir ~ "\n";
+		if(globOpt.VSInstallDir.length)
+			cmd ~= "set VSINSTALLDIR=" ~ globOpt.VSInstallDir ~ "\n";
+		if(globOpt.WindowsSdkDir.length)
+			cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
+		if(globOpt.WindowsSdkVersion.length)
+			cmd ~= "set WindowsSdkVersion=" ~ globOpt.WindowsSdkVersion ~ "\n";
+		if(globOpt.UCRTSdkDir.length)
+			cmd ~= "set UniversalCRTSdkDir=" ~ globOpt.UCRTSdkDir ~ "\n";
+		if(globOpt.UCRTVersion.length)
+			cmd ~= "set UCRTVersion=" ~ globOpt.UCRTVersion ~ "\n";
 		return cmd;
 	}
 
