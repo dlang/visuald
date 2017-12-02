@@ -667,10 +667,19 @@ class ProjectOptions
 
 		if(lib == OutputType.StaticLib && performLink)
 			cmd ~= " -lib -oq -od=\"$(IntDir)\"";
-		if(isX86_64)
-			cmd ~= " -m64";
-		else
-			cmd ~= " -m32";
+
+		string[] addargs = additionalOptions.tokenizeArgs(false, true);
+		bool hastriple = false;
+		foreach(arg; addargs)
+			hastriple = hastriple || arg.startsWith("-march=") || arg.startsWith("-mtriple=");
+		if (!hastriple)
+		{
+			if(isX86_64)
+				cmd ~= " -m64";
+			else
+				cmd ~= " -m32";
+		}
+
 		if(verbose)
 			cmd ~= " -v";
 

@@ -940,7 +940,7 @@ unreleased Version 0.46.0
     - added linker options to configure map file, import library and PDB file
     - LDC: add option to link against debug runtime library
     - LDC: no longer tries to run cv2pdb
-    - some experimental dub support
+    - LDC: when -mtriple= or -march= is specified as additional option, don't emi -m32 or -m64
   * installation
     - fix detection of Windows 10 SDK, also define $(WindowsSdkVersion)
     - VS2017: fixed registration of exception settings
