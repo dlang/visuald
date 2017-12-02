@@ -916,7 +916,7 @@ Version history
       better display for enum and aliases
     - fixed completion or tooltips sometimes not working before modifying source code
 
-unreleased Version 0.46.0
+2017-12-02 Version 0.46.0
 
   * cv2pdb
     - now also search VS2017 registry entries to find mspdb140.dll
@@ -940,7 +940,7 @@ unreleased Version 0.46.0
     - added linker options to configure map file, import library and PDB file
     - LDC: add option to link against debug runtime library
     - LDC: no longer tries to run cv2pdb
-    - LDC: when -mtriple= or -march= is specified as additional option, don't emi -m32 or -m64
+    - LDC: if -mtriple= or -march= is specified as additional option, don't emit -m32 or -m64
   * installation
     - fix detection of Windows 10 SDK, also define $(WindowsSdkVersion)
     - VS2017: fixed registration of exception settings
