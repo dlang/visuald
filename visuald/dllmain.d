@@ -29,6 +29,9 @@ import std.array;
 
 __gshared HINSTANCE g_hInst;
 
+// enable precise scanning of the DATA/TLS sections (dmd 2.075+)
+extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise" ];
+
 ///////////////////////////////////////////////////////////////////////
 //version = MAIN;
 

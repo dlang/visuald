@@ -3845,6 +3845,26 @@ else
 						error.span.iEndLine    = parse!int(num[2]);
 						error.span.iEndIndex   = parse!int(num[3]);
 						error.msg = e[idx+1..$];
+						if (error.span.iStartLine == error.span.iEndLine && error.span.iEndIndex <= error.span.iStartIndex + 1)
+						{
+							// figure the length of the span from the lexer by using the full token
+							int line = error.span.iStartLine - 1;
+							int iState = mColorizer.GetLineState(line);
+							wstring text = GetText(line, 0, line, -1);
+							uint pos = 0;
+							wstring ident;
+							while(pos < text.length)
+							{
+								uint ppos = pos;
+								int type = dLex.scan(iState, text, pos);
+								if (pos > error.span.iStartIndex)
+								{
+									error.span.iStartIndex = ppos;
+									error.span.iEndIndex = pos;
+									break;
+								}
+							}
+						}
 						mParseErrors ~= error;
 					}
 					catch(ConvException)

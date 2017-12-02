@@ -40,6 +40,7 @@ import visuald.propertypage;
 import visuald.fileutil;
 import visuald.stringutil;
 import visuald.dimagelist;
+import visuald.build;
 import visuald.config;
 import visuald.pkgutil;
 
@@ -811,6 +812,15 @@ class CFolderNode : CHierContainer
 		{
 			switch(Cmd.cmdID)
 			{
+				case CmdDubUpgrade:
+				case CmdDubRefresh:
+					bool useDub = false;
+					if(Config cfg = GetActiveConfig(GetCVsHierarchy()))
+						useDub = cfg.GetProjectOptions().compilationModel == ProjectOptions.kCompileThroughDub;
+					fSupported = true;
+					fEnabled = useDub;
+					fInvisible = !useDub;
+					break;
 				case CmdNewPackage:
 				case CmdNewFilter:
 					fSupported = true;
@@ -883,6 +893,14 @@ class CFolderNode : CHierContainer
 					break;
 				case CmdNewFilter:
 					hr = OnCmdAddFolder(true);
+					break;
+				case CmdDubRefresh:
+					if(auto prj = cast(Project)GetCVsHierarchy())
+						refreshDubProject(prj);
+					break;
+				case CmdDubUpgrade:
+					if(Config cfg = GetActiveConfig(GetCVsHierarchy()))
+						launchDubUpgrade(cfg);
 					break;
 				default:
 					break;

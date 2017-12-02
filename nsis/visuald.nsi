@@ -21,6 +21,9 @@
 ; define MSBUILD to include msbuild extensions for vcxproj (expected at ../msbuild)
 !define MSBUILD
 
+; define DUB to include dub project templates
+; !define DUB
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -224,67 +227,12 @@ Section "Visual Studio package" SecPackage
 !endif
 
 
-  ${SetOutPath} "$INSTDIR\Templates"
-  ${SetOutPath} "$INSTDIR\Templates\Items"
-  ${File} ..\visuald\Templates\Items\ empty.d
-  ${File} ..\visuald\Templates\Items\ hello.d
-  ${File} ..\visuald\Templates\Items\ items.vsdir
-  ${SetOutPath} "$INSTDIR\Templates\Wizards"
-  ${File} ..\visuald\Templates\Wizards\ package.vsz
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems"
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleApp"
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ main.d
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ ConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleApp\ ConsoleApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleDMDGDC"
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDGDC\ main.d
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDGDC\ ConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDGDC\ ConsoleApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleDMDLDC"
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ main.d
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ ConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDMDLDC\ ConsoleApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\ConsoleDLG"
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ main.d
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ ConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\ConsoleDLG\ ConsoleApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\WindowsApp"
-  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ winmain.d
-  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ WindowsApp.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\WindowsApp\ WindowsApp.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\DynamicLib"
-  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ dllmain.d
-  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ dll.def
-  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ DynamicLib.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\DynamicLib\ DynamicLib.visualdproj
-
-  ${SetOutPath} "$INSTDIR\Templates\ProjectItems\StaticLib"
-  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ lib.d
-  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ StaticLib.vstemplate
-  ${File} ..\visuald\Templates\ProjectItems\StaticLib\ StaticLib.visualdproj
-
-!ifdef MSBUILD
-  ${SetOutPath} "$INSTDIR\Templates\VCProjectItems\ConsoleApp"
-  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ main.d
-  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ VCConsoleApp.vstemplate
-  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ ConsoleApp.vcxproj
-  ${File} ..\visuald\Templates\VCProjectItems\ConsoleApp\ ConsoleApp.vcxproj.filters
+  ${SetOutPath} "$INSTDIR"
+!ifdef DUB
+  File /r ..\visuald\Templates
+!else
+  File /r /x DUB /x DUBTemplates.vsdir ..\visuald\Templates
 !endif
-
-  ${SetOutPath} "$INSTDIR\Templates\Projects"
-  ${File} ..\visuald\Templates\Projects\ DTemplates.vsdir
-
-  ${SetOutPath} "$INSTDIR\Templates\CodeSnippets"
-  ${File} ..\visuald\Templates\CodeSnippets\ SnippetsIndex.xml
-  
-  ${SetOutPath} "$INSTDIR\Templates\CodeSnippets\Snippets"
-  ${File} ..\visuald\Templates\CodeSnippets\Snippets\ *.snippet
 
   Call RegisterIVDServer
 !ifdef VDSERVER
@@ -364,14 +312,17 @@ ${MementoSection} "Register with VS 2010" SecVS2010
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2010_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
   
   GetFullPathName /SHORT $0 $INSTDIR
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "10" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
 ${MementoSectionEnd}
 
@@ -384,14 +335,17 @@ ${MementoSection} "Register with VS 2012" SecVS2012
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2012_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
   
   GetFullPathName /SHORT $0 $INSTDIR
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "11" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"
@@ -410,14 +364,17 @@ ${MementoSection} "Register with VS 2013" SecVS2013
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2013_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
-
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
+  
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
 
   GetFullPathName /SHORT $0 $INSTDIR
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "12" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"
@@ -436,14 +393,17 @@ ${MementoSection} "Register with VS 2015" SecVS2015
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}" InstallDir
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2015_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
 
   GetFullPathName /SHORT $0 $INSTDIR
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "14" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1\..\Packages\Debugger"
@@ -458,18 +418,21 @@ ${MementoSection} "Register with VS 2017" SecVS2017
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2017_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
-  ${RegisterWin32Exception} ${VS2017_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+  ;${RegisterWin32Exception} ${VS2017_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1Common7\IDE${EXTENSION_DIR}\visuald.pkgdef'
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1Common7\IDE${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
 
   GetFullPathName /SHORT $0 $INSTDIR
   !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
   !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "15" NoBackup
+  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1Common7\Packages\Debugger"
@@ -516,6 +479,7 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17" SecMSBuild
     !define V150_GENERAL_XML "$1\Common7\IDE\VC\VCTargets\1033\general.xml"
 
     ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V150_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.15.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.15.0.xml"
 
   NoVS2017:
 
@@ -528,6 +492,7 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17" SecMSBuild
     !define V140_GENERAL_XML "$1\Microsoft.Cpp\v4.0\V140\1033\general.xml"
 
     ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V140_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.14.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.14.0.xml"
 
   NoMSBuild14:
 
@@ -540,6 +505,7 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17" SecMSBuild
     !define V120_GENERAL_XML "$1\Microsoft.Cpp\v4.0\V120\1033\general.xml"
 
     ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V120_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.12.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.12.0.xml"
 
   NoMSBuild12:
 
@@ -667,9 +633,9 @@ ${MementoSection} "mago" SecMago
   Push ${VS2015_REGISTRY_KEY}
   Call RegisterMago
   
-  Push ${SecVS2017}
-  Push ${VS2017_REGISTRY_KEY}
-  Call RegisterMago
+;  Push ${SecVS2017}
+;  Push ${VS2017_REGISTRY_KEY}
+;  Call RegisterMago
   
   WriteRegStr HKLM "SOFTWARE\Wow6432Node\MagoDebugger" "Remote_x64" "$INSTDIR\Mago\MagoRemote.exe"
 
@@ -873,13 +839,9 @@ Section "Uninstall"
 
   Call un.installedFiles
   ;ADD YOUR OWN FILES HERE...
-  ;Delete "$INSTDIR\${DLLNAME}"
+  RMDir /r "$INSTDIR\Templates"
 
 !ifdef MSBUILD
-  ; generated by SecMSBuild
-  Delete "$INSTDIR\msbuild\general_d.12.0.xml"
-  Delete "$INSTDIR\msbuild\general_d.14.0.xml"
-
   DeleteRegKey HKCR "VisualStudio.d.12.0"
   DeleteRegKey ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\12.0\ShellFileAssociations\.d"
   DeleteRegKey HKCR "VisualStudio.d.14.0"

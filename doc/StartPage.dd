@@ -54,6 +54,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2017-12-02 Version 0.46.0
+$(UL
+  $(LI improved integration for VS2017 including update 15.3.1 or later)
+  $(LI improved LDC support)
+  $(LI support for new symbol mangling and parsing 'static foreach')
+)
+
 2017-08-17 Version 0.45.1
  $(UL
   $(LI now building against the VC runtime to avoid
@@ -69,21 +76,6 @@ $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
   $(LI dparser updated to recent language additions)
   $(LI dparser now caches semantic results while browsing source code)
  )
-
-2017-04-02 Version 0.44.1,0.44.2
- $(UL
-  $(LI added VC project integration for VS2017)
-  $(LI fixed building private phobos with recent dmd)
-  $(LI fixed freeze during semantic analysis)
-  $(LI Fixed bad character inserted into the executable search path default)
- )
-
-2017-03-12 Version 0.44
-$(UL
-  $(LI $(VDLINK vcxproject, integration) with msbuild and Visual C/C++ projects)
-  $(LI enhanced $(LINK2 Debugging.html#concord, integration) with the Visual Studio debugger by only adding mago's expression evaluator)
-  $(LI improvements to completion lists)
-)
 
 $(LINK2 VersionHistory.html, more...)
 

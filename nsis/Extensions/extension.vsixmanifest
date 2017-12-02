@@ -6,7 +6,7 @@
   <Identifier Id="Visual.D">
     <Name>Visual D</Name>
     <Author>Rainer Schuetze</Author>
-    <Version>0.44</Version>
+    <Version>VDVERSION</Version>
     <Description>Extension to provide support for the D programming language.</Description>
     <Locale>1033</Locale>
     <MoreInfoUrl>http://rainers.github.io/visuald/visuald/StartPage.html</MoreInfoUrl>

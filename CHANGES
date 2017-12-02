@@ -916,11 +916,12 @@ Version history
       better display for enum and aliases
     - fixed completion or tooltips sometimes not working before modifying source code
 
-unreleased Version 0.46.0
+2017-12-02 Version 0.46.0
 
   * cv2pdb
     - now also search VS2017 registry entries to find mspdb140.dll
     - fix working with the VS2017 update 15.3.1
+    - allow converting larger binaries by marking it "large address aware"
   * improve handling of non-ASCII installation paths:
     - use unicode aware version of NSIS, register through wide string API of rundll32
     - parse sc.ini with current code page
@@ -938,9 +939,17 @@ unreleased Version 0.46.0
     - add import library to project outputs if "create import library" enabled
     - added linker options to configure map file, import library and PDB file
     - LDC: add option to link against debug runtime library
-    - LDC: no longer trIES to run cv2pdb
+    - LDC: no longer tries to run cv2pdb
+    - LDC: if -mtriple= or -march= is specified as additional option, don't emit -m32 or -m64
+	- built with 2.077 to support new symbol mangling
+  * installation
+    - fix detection of Windows 10 SDK, also define $(WindowsSdkVersion)
+    - VS2017: fixed registration of exception settings
   * dparser:
     - when building with LDC, use import path from its config file instead of DMDs' sc.ini
     - parse "static foreach" (but no semantic analysis)
+    - for syntax errors underline the full token, not only the first character
   * fixed spurious freeze in precise GC (mostly during startup)
   * indentation of lambdas as parameter arguments now aligns statements on tab stops
+  * required OS version for executables restored to 5.01 to support Windows XP
+  * mago: fix string display for LDC builds

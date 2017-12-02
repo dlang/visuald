@@ -121,8 +121,8 @@ build_script:
   - set DMDINSTALLDIR=c:\projects\dmd2
   # build installer
   - cd visuald
-  # debug dbuild15
-  - if     "%VS%"=="15" nmake dbuild15
+  # can build dbuild15 only with VS2017
+  - if     "%VS%"=="15" nmake install_vs
   - if not "%VS%"=="15" nmake install_vs_fake_dbuild15
 
 after_build:

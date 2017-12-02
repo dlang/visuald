@@ -152,6 +152,8 @@ class ProjectFactory : DComObject, IVsProjectFactory
 		foreach(file; fileItems)
 		{
 			string fileName = xml.getAttribute(file, "path");
+			string destfolder = dirName(destdir ~ fileName);
+			mkdirRecurse(destfolder);
 			std.file.copy(srcdir ~ fileName, destdir ~ fileName);
 		}
 		return true;
@@ -1225,6 +1227,8 @@ class Project : CVsHierarchy,
 			{
 				case CmdNewPackage:
 				case CmdNewFilter:
+				case CmdDubUpgrade:
+				case CmdDubRefresh:
 					return GetProjectNode().QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
 				default:
 					break;
@@ -2830,7 +2834,7 @@ HRESULT DustMiteProject()
 
 		if (nworkdir != npath)
 			cmdline ~= "cd " ~ quoteFilename(makeRelative(nworkdir, npath));
-		cmdline ~= cfg.getCommandLine(true, true);
+		cmdline ~= cfg.getCommandLine(true, true, false);
 		cmdfile = npath ~ "build.dustmite.bat";
 		std.file.write(cmdfile, cmdline);
 		cmdfile = makeRelative(cmdfile, npath);

@@ -77,6 +77,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -183,6 +184,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -289,6 +291,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -395,6 +398,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -501,6 +505,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -525,7 +530,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions />
+  <additionalOptions>-L/SUBSYSTEM:WINDOWS,5.01</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
@@ -607,6 +612,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -713,6 +719,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -737,7 +744,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/OPT:ICF -L/OPT:REF</additionalOptions>
+  <additionalOptions>-L/OPT:ICF -L/OPT:REF -L/SUBSYSTEM:WINDOWS,5.01</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
@@ -778,6 +785,7 @@
    <File path="Resources\difile.ico" />
    <File path="Resources\DImageList.bmp" />
    <File path="Resources\DSplashScreenIcon.bmp" />
+   <File path="Resources\dub.ico" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
    <File path="Resources\pkgcmd.vsct" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;

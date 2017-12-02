@@ -402,6 +402,8 @@ class Package : DisposingComObject,
 			tpp = newCom!GdcDirPropertyPage(mOptions);
 		else if(*rguidPage == g_LdcDirPropertyPage)
 			tpp = newCom!LdcDirPropertyPage(mOptions);
+		else if(*rguidPage == g_DubPropertyPage)
+			tpp = newCom!DubPropertyPage(mOptions);
 		else if(*rguidPage == g_ToolsProperty2Page)
 			tpp = newCom!ToolsProperty2Page(mOptions);
 		else if(*rguidPage == g_ColorizerPropertyPage)
@@ -1243,6 +1245,7 @@ class GlobalOptions
 
 	// evaluated once at startup
 	string WindowsSdkDir;
+	string WindowsSdkVersion;
 	string UCRTSdkDir;
 	string UCRTVersion;
 	string DevEnvDir;
@@ -1281,6 +1284,9 @@ class GlobalOptions
 
 	string[] coverageBuildDirs;
 	string[] coverageExecutionDirs;
+
+	string dubPath;
+	string dubOptions;
 
 	bool showCoverageMargin;
 	bool ColorizeCoverage = true;
@@ -1338,7 +1344,13 @@ class GlobalOptions
 
 	void detectWindowsSDKDir()
 	{
-		// todo: detect Win10 SDK
+		if(WindowsSdkDir.empty)
+		{
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"w, false);
+			WindowsSdkDir = toUTF8(keySdk.GetString("KitsRoot10"));
+			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
+				WindowsSdkDir = "";
+		}
 		if(WindowsSdkDir.empty)
 		{
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.1"w, false);
@@ -1365,6 +1377,30 @@ class GlobalOptions
 				WindowsSdkDir = fromMBSz(cast(immutable)psdk);
 		if(!WindowsSdkDir.empty)
 			WindowsSdkDir = normalizeDir(WindowsSdkDir);
+
+		if(WindowsSdkVersion.empty)
+		{
+			if(char* pver = getenv("WindowsSdkVersion"))
+				WindowsSdkVersion = fromMBSz(cast(immutable)pver);
+			else if(!WindowsSdkDir.empty)
+			{
+				string rootsDir = normalizeDir(WindowsSdkDir) ~ "Include\\";
+				try
+				{
+					foreach(string f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
+						if(std.file.isDir(f) && f > WindowsSdkVersion)
+						{
+							string bname = baseName(f);
+							if(!bname.empty && isDigit(bname[0]))
+								if (std.file.exists(f ~ "\\um\\windows.h")) // not UCRT only?
+									WindowsSdkVersion = bname;
+						}
+				}
+				catch(Exception)
+				{
+				}
+			}
+		}
 	}
 
 	void detectUCRT()
@@ -1583,7 +1619,9 @@ class GlobalOptions
 
 				if(WindowsSdkDir.length)
 				{
-					if(std.file.exists(WindowsSdkDir ~ r"lib\x64\kernel32.lib"))
+					if(std.file.exists(WindowsSdkDir ~ r"lib\" ~ WindowsSdkVersion ~ r"\um\x64\kernel32.lib")) // SDK 10.0
+						libpath ~= "\n$(WindowsSdkDir)lib\\$(WindowsSdkVersion)\\um\\x64";
+					else if(std.file.exists(WindowsSdkDir ~ r"lib\x64\kernel32.lib")) // SDK 7.1 or earlier
 						libpath ~= "\n$(WindowsSdkDir)lib\\x64";
 					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x64\kernel32.lib")) // SDK 8.0
 						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x64";
@@ -1602,7 +1640,9 @@ class GlobalOptions
 
 				if(WindowsSdkDir.length)
 				{
-					if(std.file.exists(WindowsSdkDir ~ r"lib\kernel32.lib"))
+					if(std.file.exists(WindowsSdkDir ~ r"lib\" ~ WindowsSdkVersion ~ r"\um\x86\kernel32.lib")) // SDK 10.0
+						libpath ~= "\n$(WindowsSdkDir)lib\\$(WindowsSdkVersion)\\um\\x86";
+					else if(std.file.exists(WindowsSdkDir ~ r"lib\kernel32.lib")) // SDK 7.1 or earlier
 						libpath ~= "\n$(WindowsSdkDir)lib";
 					else if(std.file.exists(WindowsSdkDir ~ r"Lib\win8\um\x86\kernel32.lib")) // SDK 8.0
 						libpath ~= "\n$(WindowsSdkDir)Lib\\win8\\um\\x86";
@@ -1612,10 +1652,34 @@ class GlobalOptions
 				return libpath;
 			}
 
+			string fixSdk10LibPath(string libsetting, bool x64)
+			{
+				// when switching from older SDK to Win 10, fix paths
+				if (WindowsSdkVersion < "10")
+					return libsetting;
+
+				bool modified = false;
+				string[] libs = tokenizeArgs(libsetting, true, false);
+				foreach (ref lib; libs)
+				{
+					if (lib.indexOf("$(WindowsSdkDir)") >= 0)
+					{
+						string libpath = replaceGlobalMacros(lib);
+						if (!std.file.exists(libpath ~ "kernel32.lib"))
+						{
+							lib = r"$(WindowsSdkDir)lib\$(WindowsSdkVersion)\um\" ~ (x64 ? "x64" : "x86");
+							modified = true;
+						}
+					}
+				}
+				return join(libs, "\n");
+			}
+
 			// overwrite by user config
 			void readCompilerOptions(string compiler)(ref CompilerDirectories opt)
 			{
 				enum bool dmd = compiler == "DMD";
+				enum bool ldc = compiler == "LDC";
 				enum string prefix = dmd ? "" : compiler ~ ".";
 				if (auto dir = getStringOpt(compiler ~ "InstallDir"))
 					opt.InstallDir = dir;
@@ -1627,6 +1691,11 @@ class GlobalOptions
 				opt.ExeSearchPath64 = getPathsOpt(prefix ~ "ExeSearchPath64", opt.ExeSearchPath64);
 				opt.LibSearchPath64 = getPathsOpt(prefix ~ "LibSearchPath64", opt.LibSearchPath64);
 				opt.DisasmCommand64 = getPathsOpt(prefix ~ "DisasmCommand64", opt.DisasmCommand64);
+
+				if (ldc)
+					opt.LibSearchPath = fixSdk10LibPath(opt.LibSearchPath, false);
+				if (dmd || ldc)
+					opt.LibSearchPath64 = fixSdk10LibPath(opt.LibSearchPath64, true);
 
 				wstring linkPath = to!wstring(getVCDir("bin\\link.exe", false));
 				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
@@ -1641,6 +1710,8 @@ class GlobalOptions
 					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", true);
 					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", linkPath);
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
+
+					opt.LibSearchPath32coff = fixSdk10LibPath(opt.LibSearchPath32coff, false);
 				}
 			}
 			// put dmd bin folder at the end to avoid trouble with link.exe (dmd does not need search path)
@@ -1684,6 +1755,9 @@ class GlobalOptions
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
 			compileAndDbgOpts = getStringOpt("compileAndDbgOpts", "-g");
 			compileAndDbgEngine = getIntOpt("compileAndDbgEngine", 0);
+
+			dubPath           = getStringOpt("dubPath", "dub");
+			dubOptions        = getStringOpt("dubOptions", "");
 
 			string execDirs   = getStringOpt("coverageExecutionDirs", "");
 			coverageExecutionDirs = split(execDirs, ";");
@@ -1804,6 +1878,9 @@ class GlobalOptions
 			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
 			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));
 
+			keyToolOpts.Set("dubPath",             toUTF16(dubPath));
+			keyToolOpts.Set("dubOptions",          toUTF16(dubOptions));
+
 			CHierNode.setContainerIsSorted(sortProjects);
 		}
 		catch(Exception e)
@@ -1852,7 +1929,9 @@ class GlobalOptions
 		replacements["GDCINSTALLDIR"] = normalizeDir(GDC.InstallDir);
 		replacements["LDCINSTALLDIR"] = normalizeDir(LDC.InstallDir);
 		replacements["WINDOWSSDKDIR"] = WindowsSdkDir;
-		replacements["UCRTSDKDIR"] = UCRTSdkDir;
+		replacements["WINDOWSSDKVERSION"] = WindowsSdkVersion;
+		replacements["UCRTSDKDIR"] = UCRTSdkDir;         // legacy
+		replacements["UNIVERSALCRTSDKDIR"] = UCRTSdkDir; // variable name used by MS
 		replacements["UCRTVERSION"] = UCRTVersion;
 		replacements["DEVENVDIR"] = DevEnvDir;
 		replacements["VCINSTALLDIR"] = VCInstallDir;
@@ -2241,7 +2320,7 @@ class GlobalOptions
 				string sfiles = std.string.join(files, " ");
 				cmdline ~= quoteFilename(dmdpath) ~ opts ~ " -Xf" ~ quoteFilename(jsonfile) ~ " " ~ sfiles ~ "\n\n";
 				pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " from import " ~ s ~ "\n"));
-				if(!launchBuildPhobos(s, cmdfile, cmdline, pane))
+				if(!launchBatchProcess(s, cmdfile, cmdline, pane))
 					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " failed!\n"));
 				else
 					pane.OutputString(toUTF16z("Building " ~ jsonfile ~ " successful!\n"));

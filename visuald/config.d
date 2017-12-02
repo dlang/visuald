@@ -243,8 +243,12 @@ class ProjectOptions
 		kSingleFileCompilation,
 		kSeparateCompileAndLink,
 		kSeparateCompileOnly,
+		kCompileThroughDub,
 	}
 	uint compilationModel = kCombinedCompileAndLink;
+
+	bool isCombinedBuild() { return compilationModel == kCombinedCompileAndLink || compilationModel == kCompileThroughDub; }
+
 
 	// Linker stuff
 	string objfiles;
@@ -663,10 +667,19 @@ class ProjectOptions
 
 		if(lib == OutputType.StaticLib && performLink)
 			cmd ~= " -lib -oq -od=\"$(IntDir)\"";
-		if(isX86_64)
-			cmd ~= " -m64";
-		else
-			cmd ~= " -m32";
+
+		string[] addargs = additionalOptions.tokenizeArgs(false, true);
+		bool hastriple = false;
+		foreach(arg; addargs)
+			hastriple = hastriple || arg.startsWith("-march=") || arg.startsWith("-mtriple=");
+		if (!hastriple)
+		{
+			if(isX86_64)
+				cmd ~= " -m64";
+			else
+				cmd ~= " -m32";
+		}
+
 		if(verbose)
 			cmd ~= " -v";
 
@@ -1197,6 +1210,8 @@ class ProjectOptions
 	bool doSeparateLink()
 	{
 		if(compilationModel == ProjectOptions.kSeparateCompileOnly)
+			return false;
+		if(compilationModel == ProjectOptions.kCompileThroughDub)
 			return false;
 
 		bool separateLink = compilationModel == ProjectOptions.kSeparateCompileAndLink;
@@ -3019,11 +3034,7 @@ class Config :	DisposingComObject,
 
 			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
 			// add environment in case sc.ini was not patched to a specific VS version
-			cmd ~= "set VCINSTALLDIR=$(VCINSTALLDIR)\n";
-			cmd ~= "set VSINSTALLDIR=$(VSINSTALLDIR)\n";
-			cmd ~= "set WindowsSdkDir=$(WindowsSdkDir)\n";
-			cmd ~= "set UniversalCRTSdkDir=$(UCRTSDKDIR)\n";
-			cmd ~= "set UCRTVersion=$(UCRTVERSION)\n";
+			cmd ~= getMSVCEnvironmentCommands();
 			cmd ~= opts.buildCommandLine(this, true, !syntaxOnly, null, syntaxOnly);
 			if(syntaxOnly)
 				cmd ~= " --build-only";
@@ -3096,16 +3107,29 @@ class Config :	DisposingComObject,
 				cmd ~= "set LIB=" ~ lpath ~ "\n";
 		}
 		if(mProjectOptions.useMSVCRT())
-		{
-			if(globOpt.WindowsSdkDir.length)
-				cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
-			if(globOpt.VCInstallDir.length)
-				cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
-			if(globOpt.VCToolsInstallDir.length)
-				cmd ~= "set VCTOOLSINSTALLDIR=" ~ globOpt.VCToolsInstallDir ~ "\n";
-			if(globOpt.VSInstallDir.length)
-				cmd ~= "set VSINSTALLDIR=" ~ globOpt.VSInstallDir ~ "\n";
-		}
+			cmd ~= getMSVCEnvironmentCommands;
+
+		return cmd;
+	}
+
+	string getMSVCEnvironmentCommands()
+	{
+		GlobalOptions globOpt = Package.GetGlobalOptions();
+		string cmd;
+		if(globOpt.VCInstallDir.length)
+			cmd ~= "set VCINSTALLDIR=" ~ globOpt.VCInstallDir ~ "\n";
+		if(globOpt.VCToolsInstallDir.length)
+			cmd ~= "set VCTOOLSINSTALLDIR=" ~ globOpt.VCToolsInstallDir ~ "\n";
+		if(globOpt.VSInstallDir.length)
+			cmd ~= "set VSINSTALLDIR=" ~ globOpt.VSInstallDir ~ "\n";
+		if(globOpt.WindowsSdkDir.length)
+			cmd ~= "set WindowsSdkDir=" ~ globOpt.WindowsSdkDir ~ "\n";
+		if(globOpt.WindowsSdkVersion.length)
+			cmd ~= "set WindowsSdkVersion=" ~ globOpt.WindowsSdkVersion ~ "\n";
+		if(globOpt.UCRTSdkDir.length)
+			cmd ~= "set UniversalCRTSdkDir=" ~ globOpt.UCRTSdkDir ~ "\n";
+		if(globOpt.UCRTVersion.length)
+			cmd ~= "set UCRTVersion=" ~ globOpt.UCRTVersion ~ "\n";
 		return cmd;
 	}
 
@@ -3178,7 +3202,7 @@ class Config :	DisposingComObject,
 	{
 		string[] files = dfiles.dup;
 		string[] remove;
-		bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+		bool singleObj = mProjectOptions.isCombinedBuild();
 		string targetObj;
 		foreach(ref f; files)
 			if(f.endsWith(".d") || f.endsWith(".D"))
@@ -3421,7 +3445,79 @@ class Config :	DisposingComObject,
 		return true;
 	}
 
-	string getCommandLine(bool compile, bool link)
+	string getDubCommandLine(string command, bool rebuild)
+	{
+		bool x64       = mProjectOptions.isX86_64;
+		bool mscoff    = mProjectOptions.compiler == Compiler.DMD && (x64 || mProjectOptions.mscoff);
+		string workdir = normalizeDir(GetProjectDir());
+		auto globOpts  = Package.GetGlobalOptions();
+
+		string dubcmd;
+		if (command == "build")
+		{
+			dubcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
+				~ (globOpts.demangleError ? null : "-nodemangle ")
+				~ (mProjectOptions.usesMSLink() ? "-msmode " : null)
+				~ (usePipedmdForDeps ? "-deps " ~ quoteFilename(GetDependenciesPath()) ~ " " : null)
+				~ globOpts.dubPath ~ " build";
+		}
+		else
+		{
+			dubcmd = globOpts.dubPath ~ " " ~ command;
+		}
+		if (globOpts.dubOptions.length)
+			dubcmd ~= " " ~ globOpts.dubOptions;
+
+		auto node = searchNode(mProvider.mProject.GetRootNode(),
+							   delegate (CHierNode n)
+							   {
+								if(auto file = cast(CFileNode) n)
+								{
+									string fname = file.GetFilename();
+									string bname = fname.baseName.toLower;
+									if (bname == "dub.json" || bname == "dub.sdl")
+										return true;
+								}
+								return false;
+							   });
+		if(auto file = cast(CFileNode) node)
+		{
+			string root = makeFilenameAbsolute(file.GetFilename(), workdir).dirName;
+			if (root != workdir)
+				dubcmd ~= " --root=" ~ quoteFilename(root);
+		}
+
+		if (command == "build")
+		{
+			switch (mProjectOptions.compiler)
+			{
+				default:
+				case Compiler.DMD:
+					dubcmd ~= " --compiler=dmd";
+					break;
+				case Compiler.LDC:
+					dubcmd ~= " --compiler=ldc";
+					break;
+				case Compiler.GDC:
+					dubcmd ~= " --compiler=gdc";
+					break;
+			}
+			if (x64)
+				dubcmd ~= " --arch=x86_64";
+			else if (mscoff)
+				dubcmd ~= " --arch=x86_mscoff";
+			else
+				dubcmd ~= " --arch=x86";
+
+			dubcmd ~= " --build=" ~ toLower(mName);
+			if (rebuild)
+				dubcmd ~= " --force";
+		}
+
+		return dubcmd;
+	}
+
+	string getCommandLine(bool compile, bool link, bool rebuild)
 	{
 		assert(compile || link);
 
@@ -3436,7 +3532,12 @@ class Config :	DisposingComObject,
 		string[] files = getInputFileList();
 		//quoteFilenames(files);
 
-		if (compile)
+		if (mProjectOptions.compilationModel == ProjectOptions.kCompileThroughDub)
+		{
+			precmd ~= getDubCommandLine("build", rebuild) ~ "\n";
+			link = false;
+		}
+		else if (compile)
 		{
 			string responsefile = GetCommandLinePath(false) ~ ".rsp";
 			string fcmd = getCommandFileList(files, responsefile, precmd); // might append to precmd
@@ -3454,7 +3555,7 @@ class Config :	DisposingComObject,
 
 			if(separateLink || !doLink)
 			{
-				bool singleObj = (mProjectOptions.compilationModel == ProjectOptions.kCombinedCompileAndLink);
+				bool singleObj = mProjectOptions.isCombinedBuild();
 				if(fcmd.length == 0)
 					opt = ""; // don't try to build zero files
 				else if(singleObj)

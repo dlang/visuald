@@ -77,6 +77,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -183,6 +184,7 @@
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -290,6 +292,7 @@ echo. &gt;$(TargetDir)\build.dep</postBuildCommand>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
   <defaultlibname />
   <debuglibname />
   <moduleDepsFile />
@@ -337,15 +340,16 @@ dmd -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).
    <Config name="Release COFF32|Win32" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
+dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
    <Config name="Debug|Win32" customcmd="dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; &quot;-od$(IntDir)&quot; $(InputPath) ..\tools\nostacktrace.d" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
   </File>
   <File path="..\tools\pipedmd.d" customcmd="dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" tool="Custom" dependencies="..\tools\nostacktrace.d" perConfig="true" outfile="$(OutDir)\$(InputName).exe">
    <Config name="Release COFF32|Win32" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
-   <Config name="Debug|Win32" customcmd="dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; &quot;-od$(IntDir)&quot; $(InputPath) ..\tools\nostacktrace.d" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
+dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
+   <Config name="Debug|Win32" customcmd="dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; &quot;-od$(IntDir)&quot; $(InputPath) ..\tools\nostacktrace.d
+&quot;$(VisualDInstallDir)\cv2pdb\cv2pdb.exe&quot; &quot;$(OutDir)\$(InputName).exe&quot;" tool="Custom" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" />
   </File>
   <File path="sdk.bat" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )

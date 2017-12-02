@@ -8,6 +8,7 @@
 #define BMP_SPLASHSCRN       1001
 #define BMP_DIMAGELIST       1002
 #define BMP_COMPLETION       1003
+#define ICON_DUB             1004
 
 #define IDI_ASCENDING               2000
 #define IDI_DESCENDING              2001
@@ -60,3 +61,6 @@
 
 #define CmdNewPackage    0x122
 #define CmdNewFilter     0x123
+
+#define CmdDubUpgrade    0x124
+#define CmdDubRefresh    0x125
