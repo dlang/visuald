@@ -1,5 +1,55 @@
 Ddoc
 
+$(H2 2017-12-02 Version 0.46.0)
+ $(UL
+  $(LI installation
+   $(UL
+    $(LI fix detection of Windows 10 SDK, also define $(DOLLAR)(WindowsSdkVersion))
+    $(LI VS2017: fixed registration of exception settings)
+  ))
+  $(LI build system
+   $(UL
+    $(LI add workaround for broken TLS when linking with link.exe from VS2017 update 15.3.1)
+    $(LI build single object file to intermediate directory rather than output folder)
+    $(LI intermediate executable for cv2pdb now written to intermediate directory)
+    $(LI custom build batch files now written to intermediate directory)
+    $(LI use "if %errorlevel% neq 0" instead of "if errorlevel 1" in batches to capture crashes, too)
+    $(LI fix default executable search path for LDC assuming a 64-bit compiler executable (avoids
+      linker error -1073741701))
+    $(LI added *.tlog to default files to clean)
+    $(LI add import library to project outputs if "create import library" enabled)
+    $(LI added linker options to configure map file, import library and PDB file)
+    $(LI LDC: add option to link against debug runtime library)
+    $(LI LDC: no longer tries to run cv2pdb)
+    $(LI LDC: if -mtriple= or -march= is specified as additional option, don't emit -m32 or -m64)
+    $(LI built with 2.077 to support new symbol mangling)
+  ))
+  $(LI dparser:
+   $(UL
+    $(LI when building with LDC, use import path from its config file instead of DMDs' sc.ini)
+    $(LI parse "static foreach" (but no semantic analysis))
+    $(LI for syntax errors underline the full token, not only the first character)
+  ))
+  $(LI mago: fix string display for LDC builds)
+  $(LI cv2pdb
+   $(UL
+    $(LI now also search VS2017 registry entries to find mspdb140.dll)
+    $(LI fix working with the VS2017 update 15.3.1)
+    $(LI allow converting larger binaries by marking it "large address aware")
+    $(LI DWARF: fix crash with AUX data in symbol table)
+  ))
+  $(LI improve handling of non-ASCII installation paths:
+   $(UL
+    $(LI use unicode aware version of NSIS, register through wide string API of rundll32)
+    $(LI parse sc.ini with current code page)
+    $(LI pipedmd: pass wide string command line to sub process)
+    $(LI convert MS linker response file to UTF16)
+  ))
+  $(LI fixed spurious freeze in precise GC (mostly during startup))
+  $(LI indentation of lambdas as parameter arguments now aligns statements on tab stops)
+  $(LI required OS version for executables restored to 5.01 to support Windows XP)
+ )
+
 $(H2 2017-08-17 Version 0.45.1)
  $(UL
   $(LI installation

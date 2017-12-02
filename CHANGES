@@ -941,6 +941,7 @@ Version history
     - LDC: add option to link against debug runtime library
     - LDC: no longer tries to run cv2pdb
     - LDC: if -mtriple= or -march= is specified as additional option, don't emit -m32 or -m64
+	- built with 2.077 to support new symbol mangling
   * installation
     - fix detection of Windows 10 SDK, also define $(WindowsSdkVersion)
     - VS2017: fixed registration of exception settings
