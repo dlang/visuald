@@ -1,66 +1,80 @@
 Ddoc
 
 $(P The latest sources of Visual D are available from the github repository at
-$(LINK2 https://github.com/dlang/visuald, https://github.com/dlang/visuald).)
+$(LINK https://github.com/dlang/visuald).)
 
 $(H2 Prerequisites)
 
 $(P You need the following tools to build Visual D:)
 $(UL
-  $(LI Visual Studio 2013/2015 (other versions might also work))
+  $(LI Visual Studio 2013/2015 (other versions might also work, VS 2017 was ok
+    until update 15.3.1))
+  $(LI a recent version of Visual D)
   $(LI $(LINK2 https://www.microsoft.com/en-us/download/details.aspx?id=40758,
-  Visual Studio Integration SDK for VS2013) or enable it during $(LINK2
-  https://msdn.microsoft.com/en-us/library/mt683786.aspx, VS 2015 installation).)
+    Visual Studio Integration SDK for VS2013) or enable it during $(LINK2
+    https://msdn.microsoft.com/en-us/library/mt683786.aspx, VS 2015) or VS 2017 installation.)
   $(LI Windows SDK 6.0A (included in VS2008) or later (tested with most versions
-  up to 10.0.14393.0))
-  $(LI DMD 2.066 or newer)
-  $(LI coffimplib ($(LINK2 ftp://ftp.digitalmars.com/coffimplib.zip, ftp)))
-  $(LI for installer: $(LINK2 http://nsis.sourceforge.net/Download, NSIS))
-  $(LI for debugging: $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb))
+    up to 10.0.15063.0))
+  $(LI DMD 2.071 or newer)
+  $(LI coffimplib from ($(LINK http://ftp.digitalmars.com/coffimplib.zip)))
+  $(LI for installer: $(LINK2 http://nsis.sourceforge.net/Download, NSIS). External projects
+    included in installer:)
+    $(UL
+      $(LI $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb) checked
+        out to ../../cv2pdb/trunk for historic reasons)
+      $(LI $(LINK2 https://github.com/rainers/mago, mago) checked
+        out to ../../mago)
+      $(LI $(LINK2 http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz, binutils 2.25)
+        extracted to ../../binutils-2.25)
+    )
+)
+
+$(P Visual D consists of a number of components that need to be built separately:)
+$(UL
+  $(LI $(LINK2 https://github.com/dlang/visuald, visuald): the core package loaded as a language service by Visual Studio: visuald_vs10.sln)
+  $(LI $(LINK2 https://github.com/rainers/D_Parser/tree/visuald, dparser): the semantic engine
+    integrated as a sub module: vdc/abothe/VDServer.sln)
+  $(LI vdextensions: some extensions to visuald only accessible via C#: vdextensions/vdextensions.csproj)
+  $(LI dbuild: MSBuild integration: msbuild/dbuild/dbuild.csproj)
+  $(LI $(LINK2 https://github.com/rainers/mago, mago): the debug engine: ../../mago/MagoDbg_2010.sln)
+  $(LI $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb): conversion of CodeView 4 debug information
+    into PDB file: ../../trunk/cv2pdb/src/cv2pdb_vs12.sln)
+  $(LI pipedmd, dcxxfilt: additional command line tools in the "tools" folder)
 )
 
 $(H2 Building Visual D)
 
-There is an $(LINK2 https://ci.appveyor.com/project/rainers/visuald, AppVeyor project)
+$(P Short version:
+$(UL
+ $(LI Load visuald_vs10.sln into Visual Studio 2013+.)
+ $(LI Select configuration Debug/Win32)
+ $(LI Build project "build".)
+ $(LI Build project "VisualD".)
+)
+)
+
+$(P Longer version:)
+
+$(P There is an $(LINK2 https://ci.appveyor.com/project/rainers/visuald, AppVeyor project)
 that verifies recent changes to the development
-branch of Visual D. This can also be used as a reference for the build process.
+branch of Visual D. This can also be used as a reference for the build process.)
 
 $(P The Visual D source code is usually updated to work with the latest release version
-of DMD (2.073 as of now), so you should use this release of the compiler when using
+of DMD (2.077 as of now), so you should use this release of the compiler when using
 the latest svn/git checkout.)
-
-$(P The standard build procedure for the release version is to execute
-"nmake install_vs" in the trunk directory. $(B Please check the variable settings at the
-top of the Makefile and adjust them to the installation directories on your system.))
 
 $(P If you want to start developing or debugging, you should load visuald_vs10.sln
 in Visual Studio with Visual D installed. Build the "build" project at least once
 to build the necessary prerequisites and tools, e.g. D translations from
 the Windows and Visual Studio SDK.)
 
-$(H3 Known issues)
-$(UL
- $(LI building the parser library with stock DMD before 2.066 and after 2.068 might cause
-   an "Out of memory" error. There are two options how to fix this:
-  $(UL
-   $(LI enable the LARGE_ADDRESS_AWARE bit inside dmd.exe with this simple tool:
-    $(LINK https://github.com/dlang/visuald/blob/master/tools/largeadr.d) (if you are running a
-	32-bit OS, you will also need to boot with the /3GB switch))
-   $(LI build DMD with the Microsoft compiler instead of the Digital Mars compiler
-    (This also has the benefit of an executable that compiles about twice as fast))
-  )
- )
- $(LI A druntime patch is necessary for correct name demangling in the profiler window:
-  $(UL
-   $(LI $(LINK2 http://d.puremagic.com/issues/show_bug.cgi?id=4852, Issue 4852): Support to suppress function signature in the profiler window)
-  )
-  Compiling Visual D without this patch is still possible, the compiler will detect it and use compatibility code emitting messages to that respect.
- )
-)
+$(P The standard build procedure for the release version is to execute
+"nmake install_vs" in the trunk directory. $(B Please check the variable settings at the
+top of the Makefile and adjust them to the installation directories on your system.))
 
 $(H2 Deployment)
 
-$(P You should debug Visual D within Visual Studio 2013/2015 using a different
+$(P You should debug Visual D within Visual Studio using a different
 branch in the registry, so it does not interfere with your working
 environment.)
 
@@ -78,12 +92,13 @@ $(UL
    )
   )
  )
- $(LI VS2010-VS2015: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
+ $(LI VS2010-VS2017: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
    on every start of Visual Studio.
   $(UL
-   $(LI Put the files from trunk\nsis\extensions into the folder
-     $(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD (replace 12.0D with 14.0D for VS2015))
-   $(LI in visuald.pkgdef, replace the path "M:\\s\\d\\visuald\\trunk\\bin\\debug\\visuald.dll" with your debug build output path.)
+   $(LI Copy the files from `$(DOLLAR)(VSINSTALLDIR)\Common\IDE\Extensions\Rainer Schuetze\visuald\VisualD` into the folder
+     `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD` (replace 12.0D with 14.0D for VS2015, 15.0_`<id>`D
+	 for VS2017 with `<id>` some identifier generated during VS installation))
+   $(LI in visuald.pkgdef, replace the path "C:\\Program Files (x86)\\Visual D\\visuald.dll" with your debug build output path.)
    $(LI Start the IDE with the new settings branch via)
     $(PRE devenv /RootSuffix D)
    $(LI Visual D will now be shown in the Extension Manager where it has to be enabled.)
