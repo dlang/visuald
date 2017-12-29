@@ -209,7 +209,7 @@ Section "Visual Studio package" SecPackage
   ;; ${File} "..\bin\${CONFIG}\" filemonitor.dll
   ${File} "..\bin\Release\" dcxxfilt.exe
   ${File} ..\ README.md
-  ${File} ..\ LICENSE_1_0.txt
+  ${File} ..\ LICENSE.txt
   ${File} ..\ CHANGES
 
 !ifdef VDSERVER
