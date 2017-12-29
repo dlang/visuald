@@ -140,7 +140,7 @@ int main(string[] argv)
 		}
 		else if (isX64 || !canInjectDLL)
 		{
-			printf("cannot monitor 64-bit executable %.*s, no suitable tracker.exe found\n", exe.length, exe.ptr);
+			printf("cannot monitor %d-bit executable %.*s, no suitable tracker.exe found\n", isX64 ? 64 : 32, exe.length, exe.ptr);
 			return -1;
 		}
 		else
