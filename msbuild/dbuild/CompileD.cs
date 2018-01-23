@@ -21,6 +21,8 @@ namespace dbuild
         : base(new ResourceManager("dbuild.Strings", Assembly.GetExecutingAssembly()))
         {
             MinimalRebuildFromTracking = true;
+
+            this.switchOrderList.Add("Sources");
         }
 
         private ArrayList switchOrderList = new ArrayList();
@@ -43,8 +45,25 @@ namespace dbuild
         [Required]
         public virtual ITaskItem[] Sources
         {
-            get;
-            set;
+            get
+            {
+                if (base.IsPropertySet("Sources"))
+                {
+                    return base.ActiveToolSwitches["Sources"].TaskItemArray;
+                }
+                return null;
+            }
+            set
+            {
+                base.ActiveToolSwitches.Remove("Sources");
+                ToolSwitch toolSwitch = new ToolSwitch(ToolSwitchType.ITaskItemArray);
+                toolSwitch.Separator = " ";
+                toolSwitch.Required = true;
+                toolSwitch.ArgumentRelationList = new ArrayList();
+                toolSwitch.TaskItemArray = value;
+                base.ActiveToolSwitches.Add("Sources", toolSwitch);
+                base.AddActiveSwitchToolValue(toolSwitch);
+            }
         }
 
         public string CommandLineTemplate
@@ -258,7 +277,7 @@ namespace dbuild
             foreach (var item in Sources)
                 src += " " + item.ToString();
             if (ShowCommandLine)
-                Log.LogMessage(MessageImportance.High, pathToTool + " " + responseFileCommands + " " + commandLineCommands);
+                Log.LogMessage(MessageImportance.High, pathToTool + " " + commandLineCommands + " " + responseFileCommands);
             else
                 Log.LogMessage(MessageImportance.High, "Compiling" + src);
 /*
@@ -368,7 +387,9 @@ namespace dbuild
             IDictionary<string, string> commandLines = this.MapSourcesToCommandLines();
             if (upToDateSources != null)
             {
-                string cmdLine = GenerateCommandLineCommands(VCToolTask.CommandLineFormat.ForTracking
+                string text = this.SourcesPropertyName ?? "Sources";
+                string cmdLine = base.GenerateCommandLineExceptSwitches(new string[1] { text },
+                    CommandLineFormat.ForTracking
 #if TOOLS_V14 || TOOLS_V15
                     , EscapeFormat.Default
 #endif
@@ -377,7 +398,7 @@ namespace dbuild
                 {
                     string metadata = upToDateSource.GetMetadata("FullPath");
                     if (inputFilter == null || inputFilter(metadata))
-                        commandLines[FileTracker.FormatRootingMarker(upToDateSource)] = cmdLine;
+                        commandLines[FileTracker.FormatRootingMarker(upToDateSource)] = cmdLine + " " + metadata.ToUpperInvariant();
                     else
                         commandLines.Remove(FileTracker.FormatRootingMarker(upToDateSource));
                 }
@@ -388,33 +409,20 @@ namespace dbuild
         /////////////////////////////////////////////
         string CommandLine;
 
-        protected override string GenerateCommandLineCommands(VCToolTask.CommandLineFormat format
-#if TOOLS_V14 || TOOLS_V15
-                                                              , VCToolTask.EscapeFormat escapeFormat
-#endif
-        ) {
-            string str = base.GenerateResponseFileCommands(format
-#if TOOLS_V14 || TOOLS_V15
-                , escapeFormat
-#endif
-                );
-            if (!this.TrackFileAccess)
-                str = str.Replace("\\\"", "\"").Replace("\\\\\"", "\\\"");
-            str += " " + CommandLine;
-
-            string src = "";
-            foreach (var item in Sources)
-                src += " " + item.ToString();
-            if (!String.IsNullOrEmpty(src))
-            {
-                if (format == VCToolTask.CommandLineFormat.ForTracking)
-                    str += " " + src.ToUpper();
-                else
-                    str += " " + src;
-            }
-            return str;
+#if TOOLS_V12
+        protected override string GenerateCommandLineCommands(VCToolTask.CommandLineFormat format)
+        {
+            return CommandLine;
         }
+#endif
 
+#if TOOLS_V14 || TOOLS_V15
+        protected override string GenerateCommandLineCommandsExceptSwitches(string[] switchesToRemove,
+            VCToolTask.CommandLineFormat format , VCToolTask.EscapeFormat escapeFormat)
+        {
+            return CommandLine;
+        }
+#endif
         private System.DateTime _nextToolTypeCheck = new System.DateTime(1900, 1, 1);
         private Microsoft.Build.Utilities.ExecutableType? _ToolType = new Microsoft.Build.Utilities.ExecutableType?();
 
@@ -464,6 +472,25 @@ namespace dbuild
             }
             // if architecture returns 0, there has been an error.
             return architecture;
+        }
+
+
+        // ResponseString contains active 'tool switches' (including Sources to compile).
+        // Capture its content (which is about to be saved to response file) to bypass
+        // response file usage and be able to convert responseString back to command line parameters.
+        string _responseString;
+
+        // Capture.
+        protected override string ResponseFileEscape(string responseString)
+        {
+            _responseString = responseString;
+            return responseString;
+        }
+
+        // This restores responseFileCommands and sends them to D compiler (a list of files to compile)
+        protected override string GetResponseFileSwitch(string responseFilePath)
+        {
+            return _responseString;
         }
 
     }
