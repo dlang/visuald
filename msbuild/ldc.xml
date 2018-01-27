@@ -28,13 +28,13 @@
 
     <!-- =============== General =============== -->
     <StringListProperty Name="ImportPaths" Category="General" DisplayName="Import Paths" Description="where to look for imports."
-                        Subtype="folder" Switch="-I&quot;[value]&quot;" />
+                        Subtype="folder" Switch="-I" />
     <StringListProperty Name="StringImportPaths" Category="General" DisplayName="String Import Paths"
-                        Description="where to look for string imports." Subtype="folder" Switch="-J&quot;[value]&quot;" />
+                        Description="where to look for string imports." Subtype="folder" Switch="-J" />
     <StringListProperty Name="VersionIdentifiers" Category="General" DisplayName="Version Identifiers"
-                        Description="compile in version code identified by ident/&gt;= level." Switch="-version=[value]" />
+                        Description="compile in version code identified by ident/&gt;= level." Switch="-version=" />
     <StringListProperty Name="DebugIdentifiers" Category="General" DisplayName="Debug Identifiers"
-                        Description="compile in debug code identified by ident/&lt;= level." Switch="-debug=[value]" />
+                        Description="compile in debug code identified by ident/&lt;= level." Switch="-debug=" />
 
     <EnumProperty Name="CompilationModel" Category="General" DisplayName="Compilation Model" IncludeInCommandLine="false"
                   Description="Compilation model if object file name is empty: project, package or single.">
@@ -44,7 +44,7 @@
     </EnumProperty>
     <StringProperty Name="ObjectFileName" Category="General" DisplayName="Object File Name" Subtype="file"
                     Description="Specifies the name of the output object file. Leave empty to auto generate a name according to the compilation model. Use [PackageName] to add the folder name with special characters replaced."
-                    Switch="-of&quot;[value]&quot;" />
+                    Switch="-of" />
     <BoolProperty Name="PreserveSourcePath" Category="General" DisplayName="Preserve source path"
                   Description="preserve source path for output files." Switch="-op" 
                   Visible="False"/>
@@ -122,20 +122,25 @@
 
     <!-- =============== Documentation =============== -->
     <StringProperty Name="DocDir" Category="Documentation" DisplayName="Documentation Directory" Subtype="folder"
-                    Description="write documentation file(s) to this directory." Switch="-Dd&quot;[value]&quot;" />
+                    Description="write documentation file(s) to this directory." Switch="-Dd" />
     <StringProperty Name="DocFile" Category="Documentation" DisplayName="Documentation File" Subtype="file"
-                    Description="write documentation to this file." Switch="-Df&quot;[value]&quot;" />
+                    Description="write documentation to this file." Switch="-Df" />
     <StringProperty Name="DepFile" Category="Documentation" DisplayName="Dependencies File" Subtype="file"
-                    Description="write module dependencies to filename (only imports)." Switch="-deps=&quot;[value]&quot;" />
+                    Description="write module dependencies to filename (only imports)." Switch="-deps=" />
     <StringProperty Name="HeaderDir" Category="Documentation" DisplayName="Header Directory" Subtype="folder"
-                    Description="write 'header' file(s) to this directory." Switch="-Hd&quot;[value]&quot;" />
+                    Description="write 'header' file(s) to this directory." Switch="-Hd" />
     <StringProperty Name="HeaderFile" Category="Documentation" DisplayName="Header File" Subtype="file"
-                    Description="write 'header' to this file." Switch="-Hf&quot;[value]&quot;" />
+                    Description="write 'header' to this file." Switch="-Hf" />
     <StringProperty Name="JSONFile" Category="Documentation" DisplayName="JSON Browse File" Subtype="file"
-                    Description="write browse information to this JSON file." Switch="-Xf&quot;[value]&quot;" />
+                    Description="write browse information to this JSON file." Switch="-Xf" />
 
     <!-- =============== invisible =============== -->
-    <StringProperty Name="CommandLineTemplate" DisplayName="Command Line" Visible="False" IncludeInCommandLine="False" />
+    <BoolProperty   Name="DoNotLink" DisplayName="Do Not Link" Visible="False" IncludeInCommandLine="True" Switch="-c" />
+    <EnumProperty   Name="CodeGeneration" DisplayName="Code Generation" Visible="False" IncludeInCommandLine="True" >
+      <EnumValue Name="32BitsMS-COFF" DisplayName="Generate 32 bit code and write MS-COFF object files" Switch="-m32mscoff" />
+      <EnumValue Name="32Bits" DisplayName="Generate 32 bit code" Switch="-m32" />
+      <EnumValue Name="64Bits" DisplayName="Generate 64 bit code" Switch="-m64" />
+    </EnumProperty>
     <StringProperty Subtype="AdditionalOptions" Name="AdditionalOptions" Category="Command Line"
                     DisplayName="Additional Options" Description="Additional Options" />
 

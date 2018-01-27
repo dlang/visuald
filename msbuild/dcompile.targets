@@ -87,66 +87,64 @@
       <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
     </ItemGroup>
     
-    <ItemGroup>
-      <Parameter Include="Warnings=%(DCompile.Warnings)" />
-      <Parameter Include="Deprecations=%(DCompile.Deprecations)" />
-      <Parameter Include="Verbose=%(DCompile.Verbose)" />
-      <Parameter Include="ShowTLS=%(DCompile.ShowTLS)" />
-      <Parameter Include="ShowGC=%(DCompile.ShowGC)" />
-      <Parameter Include="Profile=%(DCompile.Profile)" />
-      <Parameter Include="ProfileGC=%(DCompile.ProfileGC)" />
-      <Parameter Include="Coverage=%(DCompile.Coverage)" />
-      <Parameter Condition="'%(DCompile.MinCoverage)' != ''" Include="MinCoverage=%(DCompile.MinCoverage)" />
-      <Parameter Include="Unittest=%(DCompile.Unittest)" />
-      <Parameter Include="DebugCode=%(DCompile.DebugCode)" />
-      <Parameter Include="DebugInfo=%(DCompile.DebugInfo)" />
-      <Parameter Include="Optimizer=%(DCompile.Optimizer)" />
-      <Parameter Include="Inliner=%(DCompile.Inliner)" />
-      <Parameter Include="StackFrame=%(DCompile.StackFrame)" />
-      <Parameter Include="StackStomp=%(DCompile.StackStomp)" />
-      <Parameter Include="AllInst=%(DCompile.AllInst)" />
-      <Parameter Include="BetterC=%(DCompile.BetterC)" />
-      <Parameter Include="BoundsCheck=%(DCompile.BoundsCheck)" />
-      <Parameter Include="IgnorePragma=%(DCompile.IgnorePragma)" />
-      <Parameter Include="ObjectFileName=%(DCompile.ObjectFileName)" />
-      <Parameter Include="PerformSyntaxCheckOnly=%(DCompile.PerformSyntaxCheckOnly)" />
-      <Parameter Include="PreserveSourcePath=%(DCompile.PreserveSourcePath)" />
-      <Parameter Include="ShowDependencies=%(DCompile.ShowDependencies)" />
-      <Parameter Include="Main=%(DCompile.Main)" />
-      <Parameter Include="CRuntimeLibrary=%(DCompile.CRuntimeLibrary)" />
-      <Parameter Include="VersionIdentifiers=$([System.String]::Copy('%(DCompile.VersionIdentifiers)').Replace(';','?'))" />
-      <Parameter Include="DebugIdentifiers=$([System.String]::Copy('%(DCompile.DebugIdentifiers)').Replace(';','?'))" />
-      <Parameter Include="ImportPaths=$([System.String]::Copy('%(DCompile.ImportPaths)').Replace(';','?'))" />
-      <Parameter Include="StringImportPaths=$([System.String]::Copy('%(DCompile.StringImportPaths)').Replace(';','?'))" />
-      <Parameter Condition="'%(DCompile.DocDir)' != ''" Include="DocDir=%(DCompile.DocDir)" />
-      <Parameter Condition="'%(DCompile.DocFile)' != ''" Include="DocFile=%(DCompile.DocFile)" />
-      <Parameter Condition="'%(DCompile.DepFile)' != ''" Include="DepFile=%(DCompile.DepFile)" />
-      <Parameter Condition="'%(DCompile.HeaderDir)' != ''" Include="HeaderDir=%(DCompile.HeaderDir)" />
-      <Parameter Condition="'%(DCompile.HeaderFile)' != ''" Include="HeaderFile=%(DCompile.HeaderFile)" />
-      <Parameter Condition="'%(DCompile.JSONFile)' != ''" Include="JSONFile=%(DCompile.JSONFile)" />
-    </ItemGroup>
-
    <PropertyGroup>
       <_ToolExe Condition="'$(DCompiler)' == 'LDC'">$(LDCBinDir)ldmd2.exe</_ToolExe>
       <_ToolExe Condition="'$(DCompiler)' != 'LDC'">$(DMDBinDir)dmd.exe</_ToolExe>
-      <!-- ';' is replaced with '?' above, so these are not replaced when generating the
-           list of parameters with seperator '|'. '?' is then replaced back to ';' -->
-      <_Parameters>@(Parameter,'|')</_Parameters>
-      <Parameters>$([System.String]::Copy('$(_Parameters)').Replace('?',';'))</Parameters>
     </PropertyGroup>
 
     <!-- <Message Text="Compile D Parameters: $(Parameters)" Importance="high" /> -->
 
     <CompileD Condition="'@(DCompile)' != ''"
-              CommandLineTemplate="-c %(DCompile.CommandLineTemplate)"
-              Xaml="$(MSBuildThisFileDirectory)$(DCompiler).xml"
-              Parameters="$(Parameters)"
               TrackerLogDirectory="$(TLogLocation)"
               ShowCommandLine="%(DCompile.ShowCommandLine)"
               AdditionalOptions="%(DCompile.AdditionalOptions)"
               Compiler="$(DCompiler)"
               ToolExe="$(_ToolExe)"
-              Sources="@(DCompile)" >
+              Sources="@(DCompile)"
+              
+              DoNotLink="%(DCompile.DoNotLink)"
+              CodeGeneration="%(DCompile.CodeGeneration)"
+              
+              ImportPaths="%(DCompile.ImportPaths)"
+              StringImportPaths="%(DCompile.StringImportPaths)"
+              VersionIdentifiers="%(DCompile.VersionIdentifiers)"
+              DebugIdentifiers="%(DCompile.DebugIdentifiers)"
+              ObjectFileName="%(DCompile.ObjectFileName)"
+              PreserveSourcePath="%(DCompile.PreserveSourcePath)"
+              CRuntimeLibrary="%(DCompile.CRuntimeLibrary)"
+              
+              Profile="%(DCompile.Profile)"
+              ProfileGC="%(DCompile.ProfileGC)"
+              Coverage="%(DCompile.Coverage)"
+              MinCoverage="%(DCompile.MinCoverage)"
+              Unittest="%(DCompile.Unittest)"
+              Optimizer="%(DCompile.Optimizer)"
+              Inliner="%(DCompile.Inliner)"
+              StackFrame="%(DCompile.StackFrame)"
+              StackStomp="%(DCompile.StackStomp)"
+              AllInst="%(DCompile.AllInst)"
+              BetterC="%(DCompile.BetterC)"
+              Main="%(DCompile.Main)"
+              DebugCode="%(DCompile.DebugCode)"
+              DebugInfo="%(DCompile.DebugInfo)"
+              BoundsCheck="%(DCompile.BoundsCheck)"
+              PerformSyntaxCheckOnly="%(DCompile.PerformSyntaxCheckOnly)"
+              
+              Warnings="%(DCompile.Warnings)"
+              Deprecations="%(DCompile.Deprecations)"
+              Verbose="%(DCompile.Verbose)"
+              ShowTLS="%(DCompile.ShowTLS)"
+              ShowGC="%(DCompile.ShowGC)"
+              IgnorePragma="%(DCompile.IgnorePragma)"
+              ShowDependencies="%(DCompile.ShowDependencies)"
+
+              DocDir="%(DCompile.DocDir)"
+              DocFile="%(DCompile.DocFile)"
+              DepFile="%(DCompile.DepFile)"
+              HeaderDir="%(DCompile.HeaderDir)"
+              HeaderFile="%(DCompile.HeaderFile)"
+              JSONFile="%(DCompile.JSONFile)"
+    >
     </CompileD>
   </Target>
 

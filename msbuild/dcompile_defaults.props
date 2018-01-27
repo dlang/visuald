@@ -67,14 +67,16 @@
       <HeaderFile></HeaderFile>
       <JSONFile></JSONFile>
       -->
+      <DoNotLink>true</DoNotLink>
+     
       <CompilerExe Condition="'$(DCompiler)' == 'DMD'">$(DMDBinDir)dmd.exe</CompilerExe>
       <CompilerExe Condition="'$(DCompiler)' == 'LDC'">$(LDCBinDir)ldmd2.exe</CompilerExe>
 
-      <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'DMD|Win32'">-m32mscoff -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
-      <CommandLineTemplate Condition="'$(DCompiler)|$(Platform)' == 'LDC|Win32'">-m32 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
-      <CommandLineTemplate Condition="'$(Platform)' == 'X64'">-m64 -c [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
-      <CommandLineTemplate Condition="'$(Platform)' != 'Win32' and '$(Platform)' != 'X64'">echo DMD not supported on this platform
-exit 1</CommandLineTemplate>
+      <CodeGeneration Condition="'$(DCompiler)|$(Platform)' == 'DMD|Win32'">32BitsMS-COFF</CodeGeneration>
+      <CodeGeneration Condition="'$(DCompiler)|$(Platform)' == 'LDC|Win32'">32Bits</CodeGeneration>
+      <CodeGeneration Condition="'$(Platform)' == 'X64'">64Bits</CodeGeneration>
+      <CodeGeneration Condition="'$(Platform)' != 'Win32' and '$(Platform)' != 'X64'">echo DMD not supported on this platform
+exit 1</CodeGeneration>
     </DCompile>
   </ItemDefinitionGroup>
 </Project>
