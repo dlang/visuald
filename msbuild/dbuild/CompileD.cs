@@ -6,6 +6,7 @@ using Microsoft.Build.CPPTasks;
 using System.Collections;
 using System.Resources;
 using System.Reflection;
+using System.Text;
 
 namespace dbuild
 {
@@ -1029,24 +1030,14 @@ namespace dbuild
             return architecture;
         }
 
-
-        // ResponseString contains active 'tool switches' (including Sources to compile).
-        // Capture its content (which is about to be saved to response file) to bypass
-        // response file usage and be able to convert responseString back to command line parameters.
-        string _responseString;
-
-        // Capture.
-        protected override string ResponseFileEscape(string responseString)
+        protected override Encoding ResponseFileEncoding
         {
-            _responseString = responseString;
-            return responseString;
+            get
+            {
+                return new UTF8Encoding(false);
+            }
         }
 
-        // This restores responseFileCommands and sends them to D compiler (a list of files to compile)
-        protected override string GetResponseFileSwitch(string responseFilePath)
-        {
-            return _responseString;
-        }
 
     }
 
