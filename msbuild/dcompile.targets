@@ -92,8 +92,6 @@
       <_ToolExe Condition="'$(DCompiler)' != 'LDC'">$(DMDBinDir)dmd.exe</_ToolExe>
     </PropertyGroup>
 
-    <!-- <Message Text="Compile D Parameters: $(Parameters)" Importance="high" /> -->
-
     <CompileD Condition="'@(DCompile)' != ''"
               TrackerLogDirectory="$(TLogLocation)"
               ShowCommandLine="%(DCompile.ShowCommandLine)"
