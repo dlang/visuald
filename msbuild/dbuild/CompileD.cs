@@ -142,7 +142,7 @@ namespace dbuild
             get { return GetStringArray("ImportPaths"); }
             set
             {
-                SetStringArray("ImportPaths", ToolSwitchType.StringPathArray, "Import Paths",
+                SetStringArray("ImportPaths", GetToolSwitchTypeForStringPathArray(), "Import Paths",
                                "Where to look for imports. (-I[path]).", "-I", value);
             }
         }
@@ -152,7 +152,7 @@ namespace dbuild
             get { return GetStringArray("StringImportPaths"); }
             set
             {
-                SetStringArray("StringImportPaths", ToolSwitchType.StringPathArray, "String Import Paths",
+                SetStringArray("StringImportPaths", GetToolSwitchTypeForStringPathArray(), "String Import Paths",
                                "Where to look for string imports. (-J[path]).", "-J", value);
             }
         }
@@ -779,7 +779,14 @@ namespace dbuild
             base.AddActiveSwitchToolValue(toolSwitch);
         }
 
-
+        private ToolSwitchType GetToolSwitchTypeForStringPathArray()
+        {
+#if TOOLS_V12
+            return ToolSwitchType.StringArray;
+#else
+            return ToolSwitchType.StringPathArray;
+#endif
+        }
 
         private bool InputDependencyFilter(string fullInputPath)
         {
