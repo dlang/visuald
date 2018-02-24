@@ -10,6 +10,11 @@ using System.Runtime.InteropServices; // DllImport
 
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.VCProjectEngine;
+using System.Collections.Generic;
+using System;
+using System.Xaml;
+using XamlTypes = Microsoft.Build.Framework.XamlTypes;
+using System.IO;
 //using Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.VCCustomBuildRuleShim;
 
 namespace vdextensions
@@ -55,10 +60,10 @@ namespace vdextensions
 
         // throws COMException if not found
         static void GetVCToolProps(IVsHierarchy proj, uint itemid,
-                                   out Microsoft.VisualStudio.VCProjectEngine.VCFileConfiguration fcfg,
-                                   out Microsoft.VisualStudio.VCProjectEngine.VCConfiguration cfg,
+                                   out VCFileConfiguration fcfg,
+                                   out VCConfiguration cfg,
                                    out System.Reflection.IReflect vcrefl,
-                                   out Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage vcprop)
+                                   out IVCRulePropertyStorage vcprop)
         {
             object ext;
             if (proj.GetProperty(itemid, (int)__VSHPROPID.VSHPROPID_ExtObject, out ext) != 0)
@@ -163,14 +168,13 @@ namespace vdextensions
             string xmlFileName = System.IO.Path.Combine(assemblyFolder, compiler + ".xml");
 
             var cd = new dbuild.CompileD();
-            cd.Xaml = xmlFileName;
             cd.Compiler = compiler;
             cd.ToolExe = fcfg.Evaluate(ldc ? "$(LDCBinDir)ldmd2.exe" : "$(DMDBinDir)dmd.exe");
-            cd.CommandLineTemplate = vcprop.GetEvaluatedPropertyValue("CommandLineTemplate");
             cd.AdditionalOptions = vcprop.GetEvaluatedPropertyValue("AdditionalOptions");
             cd.Sources = new Microsoft.Build.Framework.ITaskItem[1] { new Microsoft.Build.Utilities.TaskItem("dummy.d") };
-            cd.Parameters = GetParametersFromFakeProperties(vcprop, vcrefl.GetProperties(0));
-            cmdline = cd.ToolExe + " " + cd.GenCmdLine(xmlFileName);
+            var strOptions = getParametersFromFakeProperties(vcprop, vcrefl.GetProperties(0));
+            var parameters = parseParameters(xmlFileName, strOptions);
+            cmdline = cd.ToolExe + " " + cd.GenCmdLine(parameters);
         }
 
         public void GetDCompileOptions(IVsHierarchy proj, uint itemid,
@@ -209,17 +213,73 @@ namespace vdextensions
         }
 
 
-        public static string GetParametersFromFakeProperties(Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage vcfprop,
-                                                             System.Reflection.PropertyInfo[] props)
+        private static Dictionary<string, string> getParametersFromFakeProperties(IVCRulePropertyStorage vcfprop,
+                                                                                  System.Reflection.PropertyInfo[] props)
         {
-            string parameters = "";
+            var parameters = new Dictionary<string, string>();
             foreach(var p in props)
             {
                 var val = vcfprop.GetEvaluatedPropertyValue(p.Name);
                 if (!string.IsNullOrEmpty(val))
-                    parameters = parameters + "|" + p.Name + "=" + val;
+                    parameters[p.Name] = val;
             }
             return parameters;
         }
+
+        private static Dictionary<string, object> parseParameters(XamlTypes.Rule rule,
+                                                                  Dictionary<string, string> strOptions)
+        {
+            Dictionary<string, object> parameterValues = new Dictionary<string, object>();
+
+            foreach (XamlTypes.BaseProperty property in rule.Properties)
+            {
+                string val;
+                if (strOptions.TryGetValue(property.Name, out val))
+                {
+                    XamlTypes.BoolProperty boolProperty = property as XamlTypes.BoolProperty;
+                    XamlTypes.DynamicEnumProperty dynamicEnumProperty = property as XamlTypes.DynamicEnumProperty;
+                    XamlTypes.EnumProperty enumProperty = property as XamlTypes.EnumProperty;
+                    XamlTypes.IntProperty intProperty = property as XamlTypes.IntProperty;
+                    XamlTypes.StringProperty stringProperty = property as XamlTypes.StringProperty;
+                    XamlTypes.StringListProperty stringListProperty = property as XamlTypes.StringListProperty;
+
+                    if (stringListProperty != null)
+                    {
+                        string[] values = val.Split(';');
+                        parameterValues[property.Name] = values;
+                    }
+                    else if (boolProperty != null)
+                    {
+                        parameterValues[property.Name] = string.Compare(val, "true", StringComparison.OrdinalIgnoreCase) == 0;
+                    }
+                    else if (intProperty != null)
+                    {
+                        parameterValues[property.Name] = Int32.Parse(val);
+                    }
+                    else
+                        parameterValues[property.Name] = val;
+                }
+            }
+            return parameterValues;
+        }
+
+        private static Dictionary<string, object> parseParameters(string xaml, Dictionary<string, string> strOptions)
+        {
+            object rootObject = XamlServices.Load(new StreamReader(xaml));
+            XamlTypes.ProjectSchemaDefinitions schemas = rootObject as XamlTypes.ProjectSchemaDefinitions;
+            if (schemas != null)
+            {
+                foreach (XamlTypes.IProjectSchemaNode node in schemas.Nodes)
+                {
+                    XamlTypes.Rule rule = node as XamlTypes.Rule;
+                    if (rule != null)
+                    {
+                        return parseParameters(rule, strOptions);
+                    }
+                }
+            }
+            return null;
+        }
+
     }
 }
