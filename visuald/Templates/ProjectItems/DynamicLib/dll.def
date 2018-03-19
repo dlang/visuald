@@ -6,8 +6,6 @@ EXETYPE      NT
 ; CODE         PRELOAD DISCARDABLE
 ; DATA         PRELOAD MULTIPLE
 
-; there's been a bug http://d.puremagic.com/issues/show_bug.cgi?id=3956 causing 
-; inconsistent naming for symbols with "export" specifier
-; The workaround is to list the names in the EXPORT section translating the name to itself:
+; exporting can by done explicitly here, or with the "export" specifier
 ; EXPORTS
 ;    Symbol Symbol
