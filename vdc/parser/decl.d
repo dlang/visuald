@@ -862,13 +862,13 @@ class BasicType2
 	{
 		switch(p.tok.id)
 		{
+			default:
+				return Forward;
 			mixin(case_TOKs_MemberFunctionAttribute); // no member attributes?
 				auto type = p.topNode!(ast.Type);
 				p.combineAttributes(type.attr, tokenToAttribute(p.tok.id));
 				p.pushState(&shiftAttributes);
 				return Accept;
-			default:
-				return Forward;
 		}
 	}
 }
@@ -1007,6 +1007,9 @@ class DeclaratorSuffixes
 	{
 		switch(p.tok.id)
 		{
+			default:
+				p.popAppendTopNode!(ast.Declarator, ast.ParameterList)();
+				return Forward;
 			mixin(case_TOKs_MemberFunctionAttribute);
 				auto param = p.topNode!(ast.ParameterList);
 				p.combineAttributes(param.attr, tokenToAttribute(p.tok.id));
@@ -1016,9 +1019,6 @@ class DeclaratorSuffixes
 				p.popAppendTopNode!(ast.Declarator, ast.ParameterList)();
 				p.pushState(&shiftConstraint);
 				return Constraint.enter(p);
-			default:
-				p.popAppendTopNode!(ast.Declarator, ast.ParameterList)();
-				return Forward;
 		}
 	}
 

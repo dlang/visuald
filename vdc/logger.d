@@ -9,6 +9,7 @@
 module vdc.logger;
 
 import std.stdio;
+import std.file;
 import std.datetime;
 import std.conv;
 import std.string;

@@ -27,6 +27,7 @@ import stdext.array;
 import stdext.path;
 
 import std.exception;
+import std.file;
 import std.stdio;
 import std.string;
 import std.array;

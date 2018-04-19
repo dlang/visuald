@@ -37,7 +37,7 @@ class ParseException : Exception
 		super(msg);
 		span = _span;
 	}
-	
+
 	this()
 	{
 		super("syntax error");
@@ -116,7 +116,7 @@ struct Snapshot
 	int stateStackDepth;
 	int nodeStackDepth;
 	int tokenStackDepth;
-	
+
 	int tokenPos;
 	State rollbackState;
 }
@@ -135,12 +135,12 @@ class Parser
 
 	Stack!Snapshot rollbackStack;  // for backtracking parsing
 	Stack!Snapshot recoverStack;   // to continue after errors
-	
+
 	Stack!Token tokenHistory;
 	int tokenHistoryStart;
-	
+
 	Stack!Token redoTokens;
-	
+
 	string filename;
 	int lineno;
 	int tokenPos;
@@ -175,7 +175,7 @@ class Parser
 	{
 		lexerTok = new Token;
 	}
-	
+
 	// node stack //////////////////
 	@property T topNode(T = Node)()
 	{
@@ -187,7 +187,7 @@ class Parser
 	{
 		nodeStack.push(n);
 	}
-	
+
 	T popNode(T = Node)()
 	{
 		Node n = nodeStack.pop();
@@ -211,7 +211,7 @@ class Parser
 		if(!__ctfe) assert(cast(T) topNode());
 		topNode().addMember(node);
 	}
-	
+
 	// extend the full psan of the node on top of the node stack
 	void extendTopNode(Token tok)
 	{
@@ -224,14 +224,14 @@ class Parser
 	{
 		stateStack.push(fn);
 	}
-	
+
 	State popState()
 	{
 		State s = stateStack.pop();
 		stateStack.stack[stateStack.depth] = null;
 		return s;
 	}
-	
+
 	// token stack //////////////////
 	Token topToken()
 	{
@@ -242,7 +242,7 @@ class Parser
 	{
 		tokenStack.push(token);
 	}
-	
+
 	Token popToken()
 	{
 		return tokenStack.pop();
@@ -258,12 +258,12 @@ class Parser
 			where = "line " ~ text(lineno) ~ " '" ~ tok.txt ~ "': ";
 		return where ~ msg;
 	}
-	
+
 	Action parseError(string msg)
 	{
 		if(tokenPos < lastErrorTokenPos || recovering)
 			return Reject;
-		
+
 		lastErrorTokenPos = tokenPos;
 		lastError = createError(msg);
 		lastErrorSpan = tok.span;
@@ -275,10 +275,10 @@ class Parser
 			tokenStack.copyTo(errTokenStack);
 			errStateStack.push(lastState);
 		}
-		
+
 		return Reject;
 	}
-	
+
 	void writeError(ref const(TextSpan) errorSpan, string msg)
 	{
 		if(saveErrors)
@@ -287,17 +287,17 @@ class Parser
 			writeln(msg);
 		countErrors++;
 	}
-	
+
 	void writeError(string msg)
 	{
 		writeError(tok.span, msg);
 	}
-	
+
 	Action notImplementedError(string what = "")
 	{
 		return parseError("not implemented: " ~ what);
 	}
-	
+
 	// backtrace parsing
 	void pushRollback(State rollbackState)
 	{
@@ -307,7 +307,7 @@ class Parser
 		ss.tokenStackDepth = tokenStack.depth;
 		ss.tokenPos = tokenHistory.depth;
 		ss.rollbackState = rollbackState;
-		
+
 		rollbackStack.push(ss);
 	}
 
@@ -317,7 +317,7 @@ class Parser
 		if(rollbackStack.depth == 0)
 			tokenHistory.depth = 0;
 	}
-	
+
 	void rollback()
 	{
 		Snapshot ss = rollbackStack.pop();
@@ -330,7 +330,7 @@ class Parser
 		stateStack.depth = ss.stateStackDepth;
 		nodeStack.depth = ss.nodeStackDepth;
 		tokenStack.depth = ss.tokenStackDepth;
-		
+
 		while(ss.tokenPos < tokenHistory.depth)
 		{
 			Token token = tokenHistory.pop();
@@ -381,7 +381,7 @@ class Parser
 		ss.nodeStackDepth = nodeStack.depth;
 		ss.tokenStackDepth = tokenStack.depth;
 		ss.rollbackState = recoverState;
-		
+
 		recoverStack.push(ss);
 	}
 
@@ -389,7 +389,7 @@ class Parser
 	{
 		recoverStack.pop();
 	}
-	
+
 	void recover()
 	{
 		Snapshot ss = recoverStack.top();
@@ -397,14 +397,14 @@ class Parser
 		assert(stateStack.depth >= ss.stateStackDepth);
 		assert(nodeStack.depth >= ss.nodeStackDepth);
 		assert(tokenStack.depth >= ss.tokenStackDepth);
-		
+
 		version(recoverError)
 			recoverNode(ss);
 
 		stateStack.depth = ss.stateStackDepth;
 		nodeStack.depth = ss.nodeStackDepth;
 		tokenStack.depth = ss.tokenStackDepth;
-		
+
 		pushState(ss.rollbackState);
 	}
 
@@ -447,12 +447,12 @@ class Parser
 		{
 			case TOK_EOF:
 				return Forward;
-			
+
 			case TOK_rcurly:
 			case TOK_rparen:
 			case TOK_rbracket:
 				return p.tok.id == id ? Accept : Forward;
-				
+
 			case TOK_lparen:
 				p.pushState(&recoverBlock!id);
 				p.pushState(&recoverBlock!TOK_rparen);
@@ -477,13 +477,13 @@ class Parser
 		if((newAttr & mask) && (attr & mask) && (newAttr & mask) != (attr & mask))
 		{
 			string txt;
-			writeError(createError("conflicting attributes " ~ 
+			writeError(createError("conflicting attributes " ~
 								   attrToString(attr & mask) ~ " and " ~
 								   attrToString(newAttr & mask)));
 			newAttr &= ~mask;
 		}
 	}
-	
+
 	void combineAttributes(ref Attribute attr, Attribute newAttr)
 	{
 		if(newAttr & attr)
@@ -496,22 +496,22 @@ class Parser
 		verifyAttributes(attr, newAttr, Attr_AlignMask);
 		verifyAttributes(attr, newAttr, Attr_CallMask);
 		verifyAttributes(attr, newAttr, Attr_ShareMask);
-		
+
 		attr = attr | newAttr;
 	}
-	
+
 	void verifyAnnotations(Annotation annot, ref Annotation newAnnot, Annotation mask)
 	{
 		if((newAnnot & mask) && (annot & mask) && (newAnnot & mask) != (annot & mask))
 		{
 			string txt;
-			writeError(createError("conflicting attributes " ~ 
+			writeError(createError("conflicting attributes " ~
 								   annotationToString(annot & mask) ~ " and " ~
 								   annotationToString(newAnnot & mask)));
 			newAnnot &= ~mask;
 		}
 	}
-	
+
 	void combineAnnotations(ref Annotation annot, Annotation newAnnot)
 	{
 		if(newAnnot & annot)
@@ -523,10 +523,10 @@ class Parser
 		}
 		verifyAttributes(annot, newAnnot, Annotation_ProtectionMask);
 		verifyAttributes(annot, newAnnot, Annotation_SafeMask);
-		
+
 		annot = annot | newAnnot;
 	}
-	
+
 	///////////////////////////////////////////////////////////
 	// skip over nested parenthesis blocks
 	static Action lookaheadParen(Parser p)
@@ -552,13 +552,13 @@ class Parser
 		p.lookaheadToken = p.tok;
 		return Reject;
 	}
-	
+
 	static Action rollbackPeekAfterParen(Parser p)
 	{
 		assert(p.tok.id == TOK_lparen);
 		return Forward;
 	}
-	
+
 	// look ahead after closing paren and return token after ')' on token stack
 	Action peekAfterParen(Parser p, State fn)
 	{
@@ -568,24 +568,24 @@ class Parser
 		p.pushState(&finishLookaheadParen);
 		return lookaheadParen(p);
 	}
-	
+
 	// parsing //////////////////
 	static Action forward(Parser p)
 	{
 		return Forward;
 	}
-	
+
 	static Action popForward(Parser p)
 	{
 		p.popAppendTopNode!()();
 		return Forward;
 	}
-	
+
 	static Action accept(Parser p)
 	{
 		return Accept;
 	}
-	
+
 	Action shiftOne(Token _tok)
 	{
 		tok = _tok;
@@ -593,18 +593,18 @@ class Parser
 		do
 		{
 			assert(stateStack.depth > 0);
-			
+
 			State fn = popState();
 			lastState = fn;
 
 			while(recoverStack.depth > 0 && stateStack.depth <= recoverStack.top().stateStackDepth)
 				popRecoverState();
-			
+
 			version(TraceParser)
-			{ 
+			{
 				traceState ~= fn;
 				traceToken ~= tok.txt;
-				if(traceState.length > 200) 
+				if(traceState.length > 200)
 				{
 					traceState = traceState[$-100 .. $];
 					traceToken = traceToken[$-100 .. $];
@@ -623,7 +623,7 @@ class Parser
 	{
 		Action act;
 		redoTokens.push(_tok);
-		
+
 		while(redoTokens.depth > 0)
 		{
 			Token t = redoTokens.pop();
@@ -632,7 +632,7 @@ class Parser
 			act = shiftOne(t);
 			if(rollbackStack.depth > 0)
 				tokenHistory.push(tok);
-			
+
 			if(act == Reject)
 			{
 				if(rollbackStack.depth > 0)
@@ -649,7 +649,7 @@ class Parser
 				throw new ParseException(lastErrorSpan, lastError);
 			}
 		}
-		
+
 		return act == Accept;
 	}
 
@@ -666,28 +666,28 @@ class Parser
 			return false;
 		return true;
 	}
-	
+
 	void parseLine(S)(ref int state, S line, int lno)
 	{
 		version(log) writeln(line);
-		
+
 		if(partialString.length)
 			partialString ~= "\n";
-		
+
 		lineno = lno;
 		for(uint pos = 0; pos < line.length && !abort; )
 		{
 			int tokid;
 			uint prevpos = pos;
 			TokenCat type = cast(TokenCat) Lexer.scan(state, line, pos, tokid);
-			
+
 			if(tokid != TOK_Space && tokid != TOK_Comment)
 			{
 				string txt = line[prevpos .. pos];
 				lexerTok.span.start.line = lexerTok.span.end.line = lineno;
 				lexerTok.span.start.index = prevpos;
 				lexerTok.span.end.index = pos;
-				
+
 				if(tokid == TOK_StringLiteral)
 				{
 					if(Lexer.scanState(state) != Lexer.State.kWhite ||
@@ -709,7 +709,7 @@ class Parser
 						}
 					}
 				}
-				
+
 				lexerTok.txt = txt;
 				lexerTok.id = tokid;
 				shift(lexerTok);
@@ -768,9 +768,9 @@ class Parser
 	{
 		reinit();
 		pushState(&Module.enter);
-		
+
 		parseText(text);
-		
+
 		if(abort || !shiftEOF())
 			return null;
 		return popNode();
@@ -784,18 +784,21 @@ class Parser
 		lexerTok.span.end.index = mixinSpan.end.index + 1;
 		if(!shift(lexerTok))
 			return null;
-		
+
 		parseText(text);
-		
+
 		lexerTok.txt = "}";
 		lexerTok.id = TOK_rcurly;
 		if(abort || !shift(lexerTok))
 			return null;
 		if (nodeStack.depth > 1)
-			return parseError("parsing unfinished before end of mixin"), null;
+		{
+			parseError("parsing unfinished before end of mixin");
+			return null;
+		}
 		return popNode().members;
 	}
-	
+
 	Node[] parseDeclarations(S)(S text, TextSpan mixinSpan)
 	{
 		reinit();
@@ -823,15 +826,18 @@ class Parser
 		lexerTok.span.end.index = mixinSpan.end.index + 1;
 		if(!shift(lexerTok))
 			return null;
-		
+
 		parseText(text);
-		
+
 		lexerTok.txt = ")";
 		lexerTok.id = TOK_rparen;
 		if(abort || !shift(lexerTok))
 			return null;
 		if (nodeStack.depth > 1)
-			return parseError("parsing unfinished before end of mixin"), null;
+		{
+			parseError("parsing unfinished before end of mixin");
+			return null;
+		}
 		return popNode();
 	}
 
@@ -871,7 +877,7 @@ string readUtf8(string fname)
 	static const ubyte[2] bomUTF16BE = [ 0xFE, 0xFF ];             // UTF-16, big-endian
 	static const ubyte[2] bomUTF16LE = [ 0xFF, 0xFE ];             // UTF-16, little-endian
 	static const ubyte[3] bomUTF8    = [ 0xEF, 0xBB, 0xBF ];       // UTF-8
-	
+
 	ubyte[] data = cast(ubyte[]) std.file.read(fname);
 	if(data.length >= 4 && data[0..4] == bomUTF32BE[])
 		foreach(ref d; cast(uint[]) data)
@@ -879,14 +885,14 @@ string readUtf8(string fname)
 	if(data.length >= 2 && data[0..2] == bomUTF16BE[])
 		foreach(ref d; cast(ushort[]) data)
 			d = bswap(d) >> 16;
-		
+
 	if(data.length >= 4 && data[0..4] == bomUTF32LE[])
 		return toUTF8(cast(dchar[]) data[4..$]);
 	if(data.length >= 2 && data[0..2] == bomUTF16LE[])
 		return toUTF8(cast(wchar[]) data[2..$]);
 	if(data.length >= 3 && data[0..3] == bomUTF8[])
 		return toUTF8(cast(string) data[3..$]);
-	   
+
 	return cast(string)data;
 }
 
@@ -910,7 +916,7 @@ mixin template ListNode(ASTNodeType, SubType, TokenId sep, bool trailingSeparato
 	{
 		static if(!is(ASTNodeType == NoASTNode))
 			p.pushNode(new ASTNodeType(p.tok));
-		
+
 		static if(allowEmpty)
 			switch(p.tok.id)
 			{
@@ -920,11 +926,11 @@ mixin template ListNode(ASTNodeType, SubType, TokenId sep, bool trailingSeparato
 					return Forward;
 				default:
 			}
-		
+
 		p.pushState(&shift);
 		return SubType.enter(p);
 	}
-	
+
 	static Action shift(Parser p)
 	{
 		p.popAppendTopNode!ASTNodeType();
@@ -942,7 +948,7 @@ mixin template ListNode(ASTNodeType, SubType, TokenId sep, bool trailingSeparato
 		}
 		return Accept;
 	}
-	
+
 	static if(trailingSeparator)
 	static Action shiftSeparator(Parser p)
 	{
@@ -969,13 +975,13 @@ mixin template ListNode(ASTNodeType, SubType, TokenId sep, bool trailingSeparato
 mixin template BinaryNode(ASTNodeType, string recursion, SubType, ops...)
 {
 	static assert(recursion == "L" || recursion == "R" || recursion == "N");
-	
+
 	static Action enter(Parser p)
 	{
 		p.pushState(&shift);
 		return SubType.enter(p);
 	}
-	
+
 	static Action shift(Parser p)
 	{
 		if(!isInOps!(ops)(p.tok.id))
@@ -983,7 +989,7 @@ mixin template BinaryNode(ASTNodeType, string recursion, SubType, ops...)
 
 		p.appendReplaceTopNode(new ASTNodeType(p.tok));
 		p.pushState(&shiftNext);
-		
+
 		static if(recursion == "L" || recursion == "N")
 			p.pushState(&SubType.enter);
 		else
@@ -994,7 +1000,7 @@ mixin template BinaryNode(ASTNodeType, string recursion, SubType, ops...)
 	static Action shiftNext(Parser p)
 	{
 		p.popAppendTopNode!ASTNodeType();
-		
+
 		static if(recursion == "L")
 			return shift(p);
 		else
@@ -1014,7 +1020,7 @@ mixin template TernaryNode(ASTNodeType, SubType1, TokenId op1, SubType2, TokenId
 		p.pushState(&shift);
 		return SubType1.enter(p);
 	}
-	
+
 	static Action shift(Parser p)
 	{
 		if(p.tok.id != op1)
@@ -1030,7 +1036,7 @@ mixin template TernaryNode(ASTNodeType, SubType1, TokenId op1, SubType2, TokenId
 	{
 		if(p.tok.id != op2)
 			return p.parseError("second operator '" ~ tokenString(op2) ~ "'in ternary expression expected");
-		
+
 		p.popAppendTopNode!ASTNodeType();
 
 		p.pushState(&shiftLast);
@@ -1082,7 +1088,7 @@ mixin template SequenceNode(ASTNodeType, T...)
 	{
 		static if(!is(ASTNodeType == NoASTNode))
 			p.pushNode(new ASTNodeType(p.tok));
-		
+
 		return shift0.next(p);
 	}
 
@@ -1100,7 +1106,7 @@ mixin template SequenceNode(ASTNodeType, T...)
 				}
 				return next(p);
 			}
-		
+
 			static Action next(Parser p)
 			{
 				static if (is(typeof(& T[n]) U : U*) && is(U == function))
@@ -1112,15 +1118,15 @@ mixin template SequenceNode(ASTNodeType, T...)
 					static if(__traits(compiles,T[n].startsWithOp(p.tok.id)))
 						if(!T[n].startsWithOp(p.tok.id))
 							return nextFn(p);
-					
+
 					static if(n < T.length-1)
 						p.pushState(&shiftFn);
-					
+
 					static if(is(T[n] == class))
 					{
 						static if(n == T.length-1)
 							p.pushState(&reduce);
-						
+
 						return T[n].enter(p);
 					}
 					else
@@ -1149,7 +1155,7 @@ mixin template SequenceNode(ASTNodeType, T...)
 	mixin ShiftState!(2, shift3.shift, shift3.next) shift2;
 	mixin ShiftState!(1, shift2.shift, shift2.next) shift1;
 	mixin ShiftState!(0, shift1.shift, shift1.next) shift0;
-	
+
 	static Action reduce(Parser p)
 	{
 		static if(!is(ASTNodeType == NoASTNode))
@@ -1254,25 +1260,25 @@ mixin template stateShiftToken(TokenId id1, alias newstate1,
 						return Forward;
 					else
 						return newstate1(p);
-				
+
 				else static if(id2 == -1)
 					static if(&newstate2 is &Parser.forward)
 						return Forward;
 					else
 						return newstate2(p);
-				
+
 				else static if(id3 == -1)
 					static if(&newstate3 is &Parser.forward)
 						return Forward;
 					else
 						return newstate3(p);
-				
+
 				else static if(id4 == -1)
 					static if(&newstate4 is &Parser.forward)
 						return Forward;
 					else
 						return newstate4(p);
-				
+
 				else
 				{
 					string msg = tokenString(id1);
