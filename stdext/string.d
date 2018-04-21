@@ -260,9 +260,26 @@ bool _startsWith(string s, string w)
 
 //alias startsWith _startsWith;
 
+// munch deprecated in phobos
+char[] _munch(ref char[] s, const(char)[] pattern) @safe pure @nogc
+{
+	size_t j = s.length;
+	foreach (i, dchar c; s)
+	{
+		if (pattern.indexOf(c) < 0)
+		{
+			j = i;
+			break;
+		}
+	}
+	char[] head = s[0 .. j];
+	s = s[j .. $];
+	return head;
+}
+
 bool parseLong(ref char[] txt, out long res)
 {
-	munch(txt, " \t\n\r");
+	_munch(txt, " \t\n\r");
 	int n = 0;
 	while(n < txt.length && isDigit(txt[n]))
 		n++;
@@ -275,7 +292,7 @@ bool parseLong(ref char[] txt, out long res)
 
 char[] parseNonSpace(ref char[] txt)
 {
-	munch(txt, " \t\n\r");
+	_munch(txt, " \t\n\r");
 	int n = 0;
 	while(n < txt.length && !isWhite(txt[n]))
 		n++;
