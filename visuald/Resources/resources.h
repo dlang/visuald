@@ -9,6 +9,7 @@
 #define BMP_DIMAGELIST       1002
 #define BMP_COMPLETION       1003
 #define ICON_DUB             1004
+#define ICON_DCONSOLE        1005
 
 #define IDI_ASCENDING               2000
 #define IDI_DESCENDING              2001

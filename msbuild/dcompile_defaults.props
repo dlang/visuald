@@ -38,7 +38,7 @@
       <MinCoverage></MinCoverage>
       <Unittest>false</Unittest>
       <DebugCode>Debug</DebugCode>
-      <DebugInfo>VS</DebugInfo>
+      <DebugInfo>Mago</DebugInfo>
       <Optimizer>false</Optimizer>
       <Inliner>false</Inliner>
       <StackFrame>false</StackFrame>
