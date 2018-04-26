@@ -76,6 +76,7 @@ IDR_FULLDECO                ICON    "resources/fulldeco.ico"
 
 ICON_DUB                    ICON    "resources/dub.ico"
 ICON_DCONSOLE               ICON    "resources/dconsole.ico"
+ICON_DWINPROJ               ICON    "resources/dwinproj.ico"
 
 BMP_DIMAGELIST  BITMAP "resources/dimagelist.bmp"
 BMP_SPLASHSCRN  BITMAP "resources/dsplashscreenicon.bmp"

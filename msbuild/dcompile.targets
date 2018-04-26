@@ -168,22 +168,29 @@
 
   <Target Name="DCompilePatchLinkInput" Condition="'@(DCompile)' != ''">
 
-    <!--<Message Text="DCompilePatchLinkInput: PlatformToolsetVersion = $(PlatformToolsetVersion)" Importance="high" /> -->
-      
-    <ItemGroup Condition="'$(DCompiler)' == 'DMD'">
+    <PropertyGroup>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'Win32'">phobos32mscoff.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'x64'">phobos64.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC' and '$(Platform)' == 'Win32'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '141'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+      <IsBetterC>@(DCompile->Metadata('BetterC')->Distinct()->ClearMetadata())</IsBetterC>
+    </PropertyGroup>
+
+    <!-- <Message Text="DRuntimeLibs: $(DRuntimeLibs), isBetterC: $(IsBetterC)" Importance="high" /> -->
+
+    <ItemGroup Condition="'$(DCompiler)' == 'DMD' and '$(IsBetterC)' != 'true'">
       <Link>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(DMDInstallDir)\windows\lib32mscoff;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(DMDInstallDir)\windows\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
-        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '141'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
+        <AdditionalDependencies>$(DRuntimeLibs);%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
     </ItemGroup>
-    <ItemGroup Condition="'$(DCompiler)' == 'LDC'">
+    <ItemGroup Condition="'$(DCompiler)' == 'LDC' and '$(IsBetterC)' != 'true'">
       <Link>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(LDCInstallDir)\lib32;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
-        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '141'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        <AdditionalDependencies>$(DRuntimeLibs);%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
     </ItemGroup>
     
