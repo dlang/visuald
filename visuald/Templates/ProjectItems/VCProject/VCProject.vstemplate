@@ -1,0 +1,24 @@
+<VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
+  <TemplateData>
+    <Name>VC++ based Windows Application</Name>
+    <Description>A project for creating a Windows application</Description>
+    <Icon>__TemplateIcon.ico</Icon>
+    <ProjectType>D</ProjectType>
+    <SortOrder>50</SortOrder>
+    <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
+    <CreateInPlace>true</CreateInPlace>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>WindowsApplication</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <Project File="WindowsApp.vcxproj" ReplaceParameters="true">
+      <ProjectItem ReplaceParameters="true" OpenInEditor="true" TargetFileName="$safeprojectname$.d">main.d</ProjectItem>
+<!--      <ProjectItem ReplaceParameters="true" OpenInEditor="false" TargetFileName="$projectname$.vcxproj.filters">WindowsApp.vcxproj.filters</ProjectItem> -->
+    </Project>
+  </TemplateContent>
+  <WizardExtension>
+    <Assembly>VisualDWizard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=c74ad3042b283f5c</Assembly>
+    <FullClassName>VisualDWizard.VCProjectWizard</FullClassName>
+  </WizardExtension>
+</VSTemplate>

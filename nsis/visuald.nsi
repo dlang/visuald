@@ -228,6 +228,8 @@ Section "Visual Studio package" SecPackage
 
 
   ${SetOutPath} "$INSTDIR"
+  ; restart templates from scratch to not keep old files
+  RmDir /r "$INSTDIR\Templates"
 !ifdef DUB
   File /r ..\visuald\Templates
 !else
@@ -324,6 +326,9 @@ ${MementoSection} "Register with VS 2010" SecVS2010
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "10" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -352,6 +357,9 @@ ${MementoSection} "Register with VS 2012" SecVS2012
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
+
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
 ${MementoSectionEnd}
 
@@ -382,6 +390,9 @@ ${MementoSection} "Register with VS 2013" SecVS2013
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
 
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -411,6 +422,9 @@ ${MementoSection} "Register with VS 2015" SecVS2015
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
 
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -439,6 +453,9 @@ ${MementoSection} "Register with VS 2017" SecVS2017
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
+
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
 ${MementoSectionEnd}
 

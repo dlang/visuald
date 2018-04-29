@@ -1,0 +1,114 @@
+<DProject>
+  <ProjectGuid>$guid1$</ProjectGuid>
+$if$ ($platformx86$ == 1)
+  <Config name="Debug$configsuffix1$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>0</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+	<mscoff>$x86mscoff$</mscoff>
+  </Config>
+  <Config name="Release$configsuffix1$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>0</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+	<mscoff>$x86mscoff$</mscoff>
+  </Config>
+$endif$
+$if$ ($platformx64$ == 1)
+  <Config name="Debug$configsuffix1$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>0</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+  </Config>
+  <Config name="Release$configsuffix1$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>0</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+  </Config>
+$endif$
+$if$ ($numCompiler$ >= 2)
+$if$ ($platformx86$ == 1)
+  <Config name="Debug$configsuffix2$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>2</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+  </Config>
+  <Config name="Release$configsuffix2$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>2</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+  </Config>
+$endif$
+$if$ ($platformx64$ == 1)
+  <Config name="Debug$configsuffix2$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>2</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+  </Config>
+  <Config name="Release$configsuffix2$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>2</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+  </Config>
+$endif$
+$if$ ($numCompiler$ >= 3)
+$if$ ($platformx86$ == 1)
+  <Config name="Debug$configsuffix3$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>1</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+  </Config>
+  <Config name="Release$configsuffix3$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>1</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+  </Config>
+$endif$
+$if$ ($platformx64$ == 1)
+  <Config name="Debug$configsuffix3$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>1</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+  </Config>
+  <Config name="Release$configsuffix3$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>1</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+  </Config>
+$endif$
+$endif$
+$endif$
+  <Folder name="$safeprojectname$">
+    <File path="$safeprojectname$.d"></File>
+  </Folder>
+</DProject>

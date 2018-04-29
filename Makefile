@@ -53,6 +53,9 @@ dparser:
 vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
 
+visualdwizard:
+	cd vdwizard && $(MSBUILD) VisualDWizard.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
+
 dbuild12:
 	cd msbuild\dbuild && devenv /Build "Release|AnyCPU" /Project "dbuild" dbuild.sln
 #	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
@@ -91,7 +94,7 @@ install_vs: install_modules dbuild15 install_only
 
 install_vs_fake_dbuild15: install_modules fake_dbuild15 install_only
 
-install_modules: prerequisites visuald_vs vdserver cv2pdb dparser vdextension mago dcxxfilt \
+install_modules: prerequisites visuald_vs vdserver cv2pdb dparser vdextension visualdwizard mago dcxxfilt \
 	dbuild12 dbuild14
 
 install_only:

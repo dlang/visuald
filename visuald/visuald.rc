@@ -53,6 +53,11 @@ BEGIN
     IDS_PRODUCTDETAILS "Integration of the D Programming Language into Visual Studio"
 
     IDS_VDSETTINGS     "Visual D Settings"
+
+    IDS_VDPROJECTDESC  "A Visual D project for creating a Win32 application, console application, DLL or static library.\n\n\
+This is based on a project type designed for the D programming language."
+    IDS_VCPROJECTDESC  "A Visual C++ project for creating a Win32 application, console application, DLL or static library.\n\n\
+This is based on Visual C++'s vcxproj project type for seamless integration with C++ and msbuild."
 END
 
 ICON_ABOUTBOX ICON "resources\DAboutLogo.ico"

@@ -60,4 +60,7 @@
     <VsPackage>visuald.pkgdef</VsPackage>
     <MefComponent>VDINSTALLPATH\vdextensions.dll</MefComponent>
   </Content>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.Assembly" Path="VDINSTALLPATH\VisualDWizard.dll" AssemblyName="|VisualDWizard;AssemblyName|" />
+  </Assets>
 </Vsix>

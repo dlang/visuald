@@ -3,6 +3,8 @@
 #define IDS_PRODUCTDETAILS   100
 #define IDS_PRODUCT          101
 #define IDS_VDSETTINGS       102
+#define IDS_VDPROJECTDESC    103
+#define IDS_VCPROJECTDESC    104
 
 #define ICON_ABOUTBOX        1000
 #define BMP_SPLASHSCRN       1001

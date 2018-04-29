@@ -11,6 +11,7 @@
     <AssemblyName>vdextensions</AssemblyName>
     <GAC_HintPath Condition=" '$(GAC_HintPath)' == '' and Exists('assembly')">assembly</GAC_HintPath>
     <GAC_HintPath Condition=" '$(GAC_HintPath)' == '' ">c:\Windows\Microsoft.NET\assembly\GAC_MSIL</GAC_HintPath>
+    <IntermediateOutputPath>..\bin\$(Configuration)\$(MSBuildProjectName)\obj\</IntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
