@@ -415,6 +415,7 @@ class DMDServer : ComObject, IVDServer
 				catch(Throwable t)
 				{
 					version(DebugServer) dbglog("GetTip: exception " ~ t.msg);
+					txt = "exception: " ~ t.msg;
 				}
 			}
 			mLastTip = txt;
@@ -666,6 +667,30 @@ class DMDServer : ComObject, IVDServer
 	{
 		clearDmdStatics();
 
+		// Initialization
+		Token._init();
+		Type._init();
+		Id.initialize();
+		Module._init();
+		Target._init();
+		Expression._init();
+		Objc._init();
+		builtin_init();
+		Module.rootModule = null;
+		global.gag = false;
+		global.gaggedErrors = 0;
+		global.errors = 0;
+		global.warnings = 0;
+
+		version(traceGC)
+		{
+			wipeStack();
+			GC.collect();
+			dumpGC();
+		}
+		else
+			GC.collect();
+
 		synchronized(gOptSync)
 		{
 			global.params.color = false;
@@ -695,6 +720,13 @@ class DMDServer : ComObject, IVDServer
 			foreach(id, v; mOptions.versionIds.identifiers)
 				global.params.versionids.push(toStringz(id));
 
+			global.versionids = new Identifiers();
+
+			// Add in command line versions
+			if (global.params.versionids)
+				foreach (charz; *global.params.versionids)
+					VersionCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
+
 			VersionCondition.addPredefinedGlobalIdent("DigitalMars");
 			VersionCondition.addPredefinedGlobalIdent("Windows");
 			VersionCondition.addPredefinedGlobalIdent("LittleEndian");
@@ -713,7 +745,7 @@ class DMDServer : ComObject, IVDServer
 				VersionCondition.addPredefinedGlobalIdent("X86");
 				VersionCondition.addPredefinedGlobalIdent("Win32");
 			}
-			if (global.params.mscoff)
+			if (global.params.mscoff || global.params.is64bit)
 				VersionCondition.addPredefinedGlobalIdent("CRuntime_Microsoft");
 			else
 				VersionCondition.addPredefinedGlobalIdent("CRuntime_DigitalMars");
@@ -742,6 +774,11 @@ class DMDServer : ComObject, IVDServer
 			foreach(id, v; mOptions.debugIds.identifiers)
 				global.params.debugids.push(toStringz(id));
 
+			global.debugids = new Identifiers();
+			if (global.params.debugids)
+				foreach (charz; *global.params.debugids)
+					DebugCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
+
 			global.path = new Strings();
 			foreach(i; mOptions.importDirs)
 				global.path.push(toStringz(i));
@@ -750,30 +787,6 @@ class DMDServer : ComObject, IVDServer
 			foreach(i; mOptions.stringImportDirs)
 				global.filePath.push(toStringz(i));
 		}
-
-		// Initialization
-		Token._init();
-		Type._init();
-		Id.initialize();
-		Module._init();
-		Target._init();
-		Expression._init();
-		Objc._init();
-		builtin_init();
-		Module.rootModule = null;
-		global.gag = false;
-		global.gaggedErrors = 0;
-		global.errors = 0;
-		global.warnings = 0;
-
-		version(traceGC)
-		{
-			wipeStack();
-			GC.collect();
-			dumpGC();
-		}
-		else
-			GC.collect();
 
 		// redo module name with the new Identifier.stringtable
 		foreach (m; modules)
@@ -964,24 +977,47 @@ int _stricmp(const(wchar)*str1, wstring s2)
 }
 
 ////////////////////////////////////////////////////////////////
-enum string[2][] dmdStatics =
-[
-	["D4ddmd5clone12buildXtoHashRC4ddmd7dstruct17StructDeclarationPS4ddmd6dscope5ScopeZ8tftohashC4ddmd5mtype12TypeFunction", "TypeFunction"],
-	["D4ddmd7dstruct15search_toStringRC4ddmd7dstruct17StructDeclarationZ10tftostringC4ddmd5mtype12TypeFunction", "TypeFunction"],
-	["D4ddmd10expression11loadStdMathRZ10impStdMathC4ddmd7dimport6Import", "Import"],
-	["D4ddmd4func15FuncDeclaration8genCfuncRPS4ddmd4root5array33__T5ArrayTC4ddmd5mtype9ParameterZ5ArrayC4ddmd5mtype4TypeC4ddmd10identifier10IdentifiermZ2stC4ddmd7dsymbol12DsymbolTable", "DsymbolTable"],
-	["D4ddmd5mtype10TypeAArray6dotExpMRPS4ddmd6dscope5ScopeC4ddmd10expression10ExpressionC4ddmd10identifier10IdentifieriZ8fd_aaLenC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
-	["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ3feqC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
-	["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ4fcmpC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
-	["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ5fhashC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
+version(all) // new mangling with dmd version >= 2.077
+{
+	enum string[2][] dmdStatics =
+	[
+		["_D3dmd5clone12buildXtoHashRCQBa7dstruct17StructDeclarationPSQCg6dscope5ScopeZ8tftohashCQDh5mtype12TypeFunction", "TypeFunction"],
+		["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
+		["_D3dmd13expressionsem11loadStdMathFZ10impStdMathCQBv7dimport6Import", "Import"],
+		["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
+		["_D3dmd7typesem13DotExpVisitor5visitMRCQBk5mtype10TypeAArrayZ8fd_aaLenCQCq4func15FuncDeclaration", "FuncDeclaration"],
+		["_D3dmd7typesem19TypeSemanticVisitor5visitMRCQBq5mtype10TypeAArrayZ3feqCQCr4func15FuncDeclaration", "FuncDeclaration"],
+		["_D3dmd7typesem19TypeSemanticVisitor5visitMRCQBq5mtype10TypeAArrayZ4fcmpCQCs4func15FuncDeclaration", "FuncDeclaration"],
+		["_D3dmd7typesem19TypeSemanticVisitor5visitMRCQBq5mtype10TypeAArrayZ5fhashCQCt4func15FuncDeclaration", "FuncDeclaration"],
+		["_D3dmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
+		["_D3dmd10dsymbolsem22DsymbolSemanticVisitor5visitMRCQBx9dtemplate13TemplateMixinZ4nesti", "int"],
+		["_D3dmd9dtemplate16TemplateInstance16tryExpandMembersMRPSQCc6dscope5ScopeZ4nesti", "int"],
+		["_D3dmd9dtemplate16TemplateInstance12trySemantic3MRPSQBy6dscope5ScopeZ4nesti", "int"],
+		["_D3dmd13expressionsem25ExpressionSemanticVisitor5visitMRCQCd10expression7CallExpZ4nesti", "int"],
+		["_D3dmd7typesem13DotExpVisitor8noMemberMRCQBn5mtype4TypePSQCd6dscope5ScopeCQCu10expression10ExpressionCQDw10identifier10IdentifieriZ4nesti", "int"],
+	];
+}
+else
+{
+	enum string[2][] dmdStatics =
+	[
+		["D4ddmd5clone12buildXtoHashRC4ddmd7dstruct17StructDeclarationPS4ddmd6dscope5ScopeZ8tftohashC4ddmd5mtype12TypeFunction", "TypeFunction"],
+		["D4ddmd7dstruct15search_toStringRC4ddmd7dstruct17StructDeclarationZ10tftostringC4ddmd5mtype12TypeFunction", "TypeFunction"],
+		["D4ddmd10expression11loadStdMathRZ10impStdMathC4ddmd7dimport6Import", "Import"],
+		["D4ddmd4func15FuncDeclaration8genCfuncRPS4ddmd4root5array33__T5ArrayTC4ddmd5mtype9ParameterZ5ArrayC4ddmd5mtype4TypeC4ddmd10identifier10IdentifiermZ2stC4ddmd7dsymbol12DsymbolTable", "DsymbolTable"],
+		["D4ddmd5mtype10TypeAArray6dotExpMRPS4ddmd6dscope5ScopeC4ddmd10expression10ExpressionC4ddmd10identifier10IdentifieriZ8fd_aaLenC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
+		["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ3feqC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
+		["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ4fcmpC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
+		["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ5fhashC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
 
-	["D4ddmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
-	["D4ddmd10dsymbolsem22DsymbolSemanticVisitor5visitMRC4ddmd9dtemplate13TemplateMixinZ4nesti", "int"],
-	["D4ddmd9dtemplate16TemplateInstance16tryExpandMembersMRPS4ddmd6dscope5ScopeZ4nesti", "int"],
-	["D4ddmd9dtemplate16TemplateInstance12trySemantic3MRPS4ddmd6dscope5ScopeZ4nesti", "int"],
-	["D4ddmd13expressionsem25ExpressionSemanticVisitor5visitMRC4ddmd10expression7CallExpZ4nesti", "int"],
-	["D4ddmd5mtype4Type8noMemberMRPS4ddmd6dscope5ScopeC4ddmd10expression10ExpressionC4ddmd10identifier10IdentifieriZ4nesti", "int"],
-];
+		["D4ddmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
+		["D4ddmd10dsymbolsem22DsymbolSemanticVisitor5visitMRC4ddmd9dtemplate13TemplateMixinZ4nesti", "int"],
+		["D4ddmd9dtemplate16TemplateInstance16tryExpandMembersMRPS4ddmd6dscope5ScopeZ4nesti", "int"],
+		["D4ddmd9dtemplate16TemplateInstance12trySemantic3MRPS4ddmd6dscope5ScopeZ4nesti", "int"],
+		["D4ddmd13expressionsem25ExpressionSemanticVisitor5visitMRC4ddmd10expression7CallExpZ4nesti", "int"],
+		["D4ddmd5mtype4Type8noMemberMRPS4ddmd6dscope5ScopeC4ddmd10expression10ExpressionC4ddmd10identifier10IdentifieriZ4nesti", "int"],
+	];
+}
 
 string cmangled(string s)
 {
@@ -1010,6 +1046,11 @@ mixin(genDeclDmdStatics);
 
 void clearDmdStatics()
 {
+	/*
+	import core.demangle;
+	static foreach(s; dmdStatics)
+		pragma(msg, demangle(s[0]));
+	*/
 	mixin(genInitDmdStatics);
 
 	Module.rootModule = null;
@@ -1350,6 +1391,12 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		if (!found && matchIdentifier(sym.loc, sym.ident))
 			foundNode(sym);
+	}
+
+	override void visit(Parameter sym)
+	{
+		//if (!found && matchIdentifier(sym.loc, sym.ident))
+		//	foundNode(sym);
 	}
 
 	override void visit(ScopeDsymbol scopesym)
