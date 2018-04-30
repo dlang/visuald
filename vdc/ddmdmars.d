@@ -1,7 +1,7 @@
 
-module ddmd.mars;
-import ddmd.dscope;
-import ddmd.root.rmem;
+module dmd.mars;
+import dmd.dscope;
+import dmd.root.rmem;
 
 extern (C++) void genCmain(Scope* sc)
 {

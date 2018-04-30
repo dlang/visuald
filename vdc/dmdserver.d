@@ -14,39 +14,41 @@ version(noServer):
 import vdc.ivdserver;
 import vdc.semanticopt;
 
-import ddmd.apply;
-import ddmd.arraytypes;
-import ddmd.builtin;
-import ddmd.cond;
-import ddmd.console;
-import ddmd.dclass;
-import ddmd.declaration;
-import ddmd.dimport;
-import ddmd.dinterpret;
-import ddmd.dmodule;
-import ddmd.dscope;
-import ddmd.dstruct;
-import ddmd.dsymbol;
-import ddmd.dtemplate;
-import ddmd.expression;
-import ddmd.func;
-import ddmd.globals;
-import ddmd.hdrgen;
-import ddmd.id;
-import ddmd.identifier;
-import ddmd.init;
-import ddmd.mtype;
-import ddmd.objc;
-import ddmd.semantic;
-import ddmd.sapply;
-import ddmd.statement;
-import ddmd.target;
-import ddmd.tokens;
-import ddmd.visitor;
+import dmd.apply;
+import dmd.arraytypes;
+import dmd.builtin;
+import dmd.cond;
+import dmd.console;
+import dmd.dclass;
+import dmd.declaration;
+import dmd.dimport;
+import dmd.dinterpret;
+import dmd.dmodule;
+import dmd.dscope;
+import dmd.dstruct;
+import dmd.dsymbol;
+import dmd.dsymbolsem;
+import dmd.dtemplate;
+import dmd.expression;
+import dmd.func;
+import dmd.globals;
+import dmd.hdrgen;
+import dmd.id;
+import dmd.identifier;
+import dmd.init;
+import dmd.mtype;
+import dmd.objc;
+import dmd.sapply;
+import dmd.semantic2;
+import dmd.semantic3;
+import dmd.statement;
+import dmd.target;
+import dmd.tokens;
+import dmd.visitor;
 
-import ddmd.root.outbuffer;
-import ddmd.root.rmem;
-import ddmd.root.rootobject;
+import dmd.root.outbuffer;
+import dmd.root.rmem;
+import dmd.root.rootobject;
 
 //import vdc.util;
 struct TextPos
@@ -154,7 +156,7 @@ class DMDServer : ComObject, IVDServer
 		{
 			global._init();
 			global.params.isWindows = true;
-			global.errorLimit = 0;
+			global.params.errorLimit = 0;
 		}
 	}
 
@@ -668,21 +670,21 @@ class DMDServer : ComObject, IVDServer
 		{
 			global.params.color = false;
 			global.params.link = true;
-			global.params.useAssert = mOptions.debugOn;
+			global.params.useAssert = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 			global.params.useInvariants = mOptions.debugOn;
 			global.params.useIn = mOptions.debugOn;
 			global.params.useOut = mOptions.debugOn;
-			global.params.useArrayBounds = mOptions.noBoundsCheck ? BOUNDSCHECKon : BOUNDSCHECKoff; // set correct value later
+			global.params.useArrayBounds = mOptions.noBoundsCheck ? CHECKENABLE.on : CHECKENABLE.off; // set correct value later
 			global.params.doDocComments = mOptions.doDoc;
-			global.params.useSwitchError = true;
+			global.params.useSwitchError = CHECKENABLE.on;
 			global.params.useInline = false;
 			global.params.obj = false;
 			global.params.useDeprecated = mOptions.noDeprecated ? 0 : 2;
-			global.params.linkswitches = new Strings();
-			global.params.libfiles = new Strings();
-			global.params.dllfiles = new Strings();
-			global.params.objfiles = new Strings();
-			global.params.ddocfiles = new Strings();
+			global.params.linkswitches = Strings();
+			global.params.libfiles = Strings();
+			global.params.dllfiles = Strings();
+			global.params.objfiles = Strings();
+			global.params.ddocfiles = Strings();
 			// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
 			global.params.is64bit = mOptions.x64;
 			global.params.mscoff = mOptions.msvcrt;
@@ -727,7 +729,7 @@ class DMDServer : ComObject, IVDServer
 				VersionCondition.addPredefinedGlobalIdent("unittest");
 			if (global.params.useAssert)
 				VersionCondition.addPredefinedGlobalIdent("assert");
-			if (global.params.useArrayBounds == BOUNDSCHECKoff)
+			if (global.params.useArrayBounds == CHECKENABLE.off)
 				VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
 			if (global.params.betterC)
 				VersionCondition.addPredefinedGlobalIdent("D_betterC");
@@ -805,7 +807,7 @@ class DMDServer : ComObject, IVDServer
 		for (size_t i = 0; i < modules.length; i++)
 		{
 			Module m = modules[i];
-			m.semantic(null);
+			m.dsymbolSemantic(null);
 		}
 
 		Module.dprogress = 1;
@@ -1477,8 +1479,8 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 			{
 				switch(e.op)
 				{
-					case TOKvar:
-					case TOKsymoff:
+					case TOK.variable:
+					case TOK.symbolOffset:
 						tip = tipForDeclaration((cast(SymbolExp)e).var);
 						break;
 					default:
@@ -1556,8 +1558,8 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 			{
 				switch(e.op)
 				{
-					case TOKvar:
-					case TOKsymoff:
+					case TOK.variable:
+					case TOK.symbolOffset:
 						loc = (cast(SymbolExp)e).var.loc;
 						break;
 					default:

@@ -1,4 +1,4 @@
-module ddmd.root.rmem;
+module dmd.root.rmem;
 
 import core.memory : GC;
 import core.stdc.string : strlen;

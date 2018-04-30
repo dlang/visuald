@@ -1,4 +1,4 @@
-module ddmd.lib;
+module dmd.lib;
 
 class Library
 {
