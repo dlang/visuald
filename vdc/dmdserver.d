@@ -1387,6 +1387,15 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return false;
 	}
 
+	bool matchLoc(ref Loc loc)
+	{
+		if (loc.filename is filename)
+			if (loc.linnum == startLine && loc.linnum == endLine)
+				if (loc.charnum <= startIndex /*&& loc.charnum + ident.toString().length >= endIndex*/)
+					return true;
+		return false;
+	}
+
 	override void visit(Dsymbol sym)
 	{
 		if (!found && matchIdentifier(sym.loc, sym.ident))
@@ -1463,6 +1472,21 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		if (!found && expr.var)
 			if (matchIdentifier(expr.loc, expr.var.ident))
 				foundNode(expr);
+	}
+	override void visit(NewExp ne)
+	{
+		if (!found && matchLoc(ne.loc))
+			if (ne.member)
+				foundNode(ne.member);
+			else
+				foundNode(ne.type);
+	}
+
+	override void visit(DotIdExp de)
+	{
+		if (!found && de.ident)
+			if (matchIdentifier(de.identloc, de.ident))
+				foundNode(de);
 	}
 }
 
