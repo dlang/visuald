@@ -967,7 +967,7 @@ unreleased Version 0.46.1
 	- msbuild: Issue 18641: phobos/druntime libraries automatically added to link if any D file 
 	  is compiled in the project or a dependent static library (without -betterC)
     - msbuild: Issue 18640: settings now default to mago debug engine (avoiding deprecation warning)
-	- new project wizard for customizing generated projects, with only two tyoes to select from
+	- new project wizard for customizing generated projects, with only two types to select from
     - new icons for project templates based on vcxproj
 
   * miscellaneous

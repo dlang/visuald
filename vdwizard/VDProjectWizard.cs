@@ -12,7 +12,7 @@ namespace VisualDWizard
     {
         private DTE _dte;
 
-        protected WizardDialog inputForm;
+        protected WizardDialog dlg;
         protected bool isVDProject;
 
         public void BeforeOpeningFile(ProjectItem projectItem) { }
@@ -28,86 +28,97 @@ namespace VisualDWizard
 
             // Display a form to the user. The form collects   
             // input for the custom message.  
-            inputForm = new WizardDialog();
+            dlg = new WizardDialog();
             beforeOpenDialog();
-            var res = inputForm.ShowDialog();
+            var res = dlg.ShowDialog();
             if (res == DialogResult.Cancel)
                 throw new WizardBackoutException();
             if (res != DialogResult.OK)
                 throw new WizardCancelledException();
 
-            if (inputForm.prjTypeConsole.Checked)
+            // for vcxproj
+            if (dlg.prjTypeWindows.Checked)
+            {
+                replacementsDictionary.Add("$subsystem$", "Windows"); // for vcxproj
+                replacementsDictionary.Add("$subsys$", "2"); // for visualdproj
+            }
+            else
+            {
                 replacementsDictionary.Add("$subsystem$", "Console");
-            else if (inputForm.prjTypeWindows.Checked)
-                replacementsDictionary.Add("$subsystem$", "Windows");
-            else if (inputForm.prjTypeDLL.Checked)
-                replacementsDictionary.Add("$subsystem$", "DynamicLibrary");
-            else if (inputForm.prjTypeLib.Checked)
-                replacementsDictionary.Add("$subsystem$", "StaticLibrary");
+                replacementsDictionary.Add("$subsys$", "1");
+            }
 
-            replacementsDictionary.Add("$platformx86$", inputForm.platformX86.Checked ? "1" : "0");
-            replacementsDictionary.Add("$platformx64$", inputForm.platformX64.Checked ? "1" : "0");
-            replacementsDictionary.Add("$x86mscoff$", inputForm.platformx86OMF.Checked ? "0" : "1");
+            if (dlg.prjTypeDLL.Checked)
+            {
+                replacementsDictionary.Add("$apptype$", "DynamicLibrary"); // for main.d
+                replacementsDictionary.Add("$configtype$", "DynamicLibrary"); // for vcxproj
+                replacementsDictionary.Add("$outputtype$", "2"); // for visualdproj
+                replacementsDictionary.Add("$outputext$", "dll");
+            }
+            else if (dlg.prjTypeLib.Checked)
+            {
+                replacementsDictionary.Add("$apptype$", "StaticLibrary");
+                replacementsDictionary.Add("$configtype$", "StaticLibrary");
+                replacementsDictionary.Add("$outputtype$", "1");
+                replacementsDictionary.Add("$outputext$", "lib");
+            }
+            else
+            {
+                replacementsDictionary.Add("$apptype$", dlg.prjTypeWindows.Checked ? "WindowsApp" : "ConsoleApp");
+                replacementsDictionary.Add("$configtype$", "Application");
+                replacementsDictionary.Add("$outputtype$", "0");
+                replacementsDictionary.Add("$outputext$", "exe");
+            }
 
-            AddConfigReplacements(replacementsDictionary);
+
+            replacementsDictionary.Add("$x86mscoff$", dlg.platformx86OMF.Checked ? "0" : "1");
+
+            int numCompiler = 0;
+            if (dlg.compilerDMD.Checked)
+                numCompiler++;
+            if (dlg.compilerLDC.Checked)
+                numCompiler++;
+            if (dlg.compilerGDC.Checked)
+                numCompiler++;
+
+            if (numCompiler <= 1)
+            {
+                int compiler = dlg.compilerLDC.Checked ? 2 : dlg.compilerGDC.Checked ? 1 : 0;
+                AddConfigReplacements(replacementsDictionary, 1, compiler, "");
+            }
+            else
+            {
+                numCompiler = 0;
+                if (dlg.compilerDMD.Checked)
+                    AddConfigReplacements(replacementsDictionary, ++numCompiler, 0, " DMD");
+                if (dlg.compilerLDC.Checked)
+                    AddConfigReplacements(replacementsDictionary, ++numCompiler, 0, " LDC");
+                if (dlg.compilerGDC.Checked)
+                    AddConfigReplacements(replacementsDictionary, ++numCompiler, 0, " GDC");
+            }
+
+            while (numCompiler++ <= 3)
+            {
+                string idxs = numCompiler.ToString();
+                replacementsDictionary.Add("$platformx86_" + idxs + "$", "0");
+                replacementsDictionary.Add("$platformx64_" + idxs + "$", "0");
+            }
         }
 
         public bool ShouldAddProjectItem(string filePath) { return true; }
 
-        public void AddConfigReplacements(Dictionary<string, string> replacementsDictionary)
+        static string[] compilerName = { "DMD", "GDC", "LDC" };
+
+        public void AddConfigReplacements(Dictionary<string, string> replacementsDictionary, int idx, int compiler, string suffix)
         {
-            int numCompiler = 0;
-            int selectCompiler = 0;
-            if (inputForm.compilerDMD.Checked)
-            {
-                numCompiler++;
-                selectCompiler += 1;
-                replacementsDictionary.Add("$dcompiler" + numCompiler.ToString() + "$", "DMD");
-            }
-            if (inputForm.compilerLDC.Checked)
-            {
-                numCompiler++;
-                selectCompiler += 2;
-                replacementsDictionary.Add("$dcompiler" + numCompiler.ToString() + "$", "LDC");
-            }
-            if (inputForm.compilerGDC.Checked)
-            {
-                numCompiler++;
-                selectCompiler += 4;
-                replacementsDictionary.Add("$dcompiler" + numCompiler.ToString() + "$", "GDC");
-            }
+            string idxs = idx.ToString();
+            replacementsDictionary.Add("$dcompiler_" + idxs + "$", compiler.ToString());
+            replacementsDictionary.Add("$dcompilername_" + idxs + "$", compilerName[compiler]);
 
-            replacementsDictionary.Add("$numCompiler$", numCompiler.ToString());
-            if (numCompiler <= 1)
-            {
-                // only one selected
-                replacementsDictionary.Add("$configsuffix1$", "");
-                replacementsDictionary.Add("$configsuffix2$", "");
-                replacementsDictionary.Add("$configsuffix3$", "");
-            }
-            else
-            {
-                int testCompiler = 0;
-                if ((selectCompiler & (1 << testCompiler++)) != 0)
-                    replacementsDictionary.Add("$configsuffix1$", " DMD");
-                else if ((selectCompiler & (1 << testCompiler++)) != 0)
-                    replacementsDictionary.Add("$configsuffix1$", " LDC");
-                else if ((selectCompiler & (1 << testCompiler++)) != 0)
-                    replacementsDictionary.Add("$configsuffix1$", " GDC");
+            replacementsDictionary.Add("$configsuffix_" + idxs + "$", suffix);
 
-                if ((selectCompiler & (1 << testCompiler++)) != 0)
-                    replacementsDictionary.Add("$configsuffix2$", testCompiler == 2 ? " LDC" : " GDC");
-                else if ((selectCompiler & (1 << testCompiler++)) != 0)
-                    replacementsDictionary.Add("$configsuffix2$", " GDC");
-                else
-                    replacementsDictionary.Add("$configsuffix2$", "");
-
-                if ((selectCompiler & (1 << testCompiler++)) != 0)
-                    replacementsDictionary.Add("$configsuffix3$", " GDC");
-                else
-                    replacementsDictionary.Add("$configsuffix3$", "");
-            }
-
+            replacementsDictionary.Add("$platformx86_" + idxs + "$", dlg.platformX86.Checked ? "1" : "0");
+            replacementsDictionary.Add("$platformx64_" + idxs + "$", dlg.platformX64.Checked ? "1" : "0");
         }
     }
 
@@ -115,7 +126,7 @@ namespace VisualDWizard
     {
         public override void beforeOpenDialog()
         {
-            inputForm.pictureBox1.Image = new Bitmap(VisualDWizard.Properties.Resources.vd_logo);
+            dlg.pictureBox1.Image = new Bitmap(VisualDWizard.Properties.Resources.vd_logo);
         }
     }
 
@@ -123,9 +134,9 @@ namespace VisualDWizard
     {
         public override void beforeOpenDialog()
         {
-            inputForm.compilerGDC.Enabled = false;
-            inputForm.compilerGDC.Visible = false;
-            inputForm.platformx86OMF.Visible = false;
+            dlg.compilerGDC.Enabled = false;
+            dlg.compilerGDC.Visible = false;
+            dlg.platformx86OMF.Visible = false;
         }
     }
 }
