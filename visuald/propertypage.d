@@ -2493,12 +2493,14 @@ struct MagoOptions
 {
 	bool hideInternalNames;
 	bool showStaticsInAggr;
+	bool showVTable;
 
 	void saveToRegistry()
 	{
 		scope RegKey keyMago = new RegKey(HKEY_CURRENT_USER, "SOFTWARE\\MagoDebugger", true);
 		keyMago.Set("hideInternalNames", hideInternalNames);
 		keyMago.Set("showStaticsInAggr", showStaticsInAggr);
+		keyMago.Set("showVTable", showVTable);
 	}
 
 	void loadFromRegistry()
@@ -2506,6 +2508,7 @@ struct MagoOptions
 		scope RegKey keyMago = new RegKey(HKEY_CURRENT_USER, "SOFTWARE\\MagoDebugger", false);
 		hideInternalNames = (keyMago.GetDWORD("hideInternalNames", 0) != 0);
 		showStaticsInAggr = (keyMago.GetDWORD("showStaticsInAggr", 0) != 0);
+		showVTable        = (keyMago.GetDWORD("showVTable", 0) != 0);
 	}
 }
 
@@ -2521,6 +2524,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddLabel("Changes to these settings only apply to new debugging sessions");
 		AddControl("", mHideInternalNames = new CheckBox(mCanvas, "Hide compiler generated symbols"));
 		AddControl("", mShowStaticsInAggr = new CheckBox(mCanvas, "Show static fields in structs and classes"));
+		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -2564,6 +2568,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		mOptions.loadFromRegistry();
 		mHideInternalNames.setChecked(mOptions.hideInternalNames);
 		mShowStaticsInAggr.setChecked(mOptions.showStaticsInAggr);
+		mShowVTable.setChecked(mOptions.showVTable);
 	}
 
 	int DoApply(ref MagoOptions opts, ref MagoOptions refopts)
@@ -2571,11 +2576,13 @@ class MagoPropertyPage : ResizablePropertyPage
 		int changes = 0;
 		changes += changeOption(mHideInternalNames.isChecked(), opts.hideInternalNames, refopts.hideInternalNames);
 		changes += changeOption(mShowStaticsInAggr.isChecked(), opts.showStaticsInAggr, refopts.showStaticsInAggr);
+		changes += changeOption(mShowVTable.isChecked(), opts.showVTable, refopts.showVTable);
 		return changes;
 	}
 
 	CheckBox mHideInternalNames;
 	CheckBox mShowStaticsInAggr;
+	CheckBox mShowVTable;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
