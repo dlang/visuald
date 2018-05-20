@@ -471,7 +471,9 @@ class UpdateModuleCommand : FileCommand
 		mErrors = detachBSTR(errors);
 
 		VARIANT locs;
-		if(gVDServer.GetBinaryIsInLocations(fname, &locs) == S_OK && locs.vt == VT_ARRAY)
+
+		if(gVDServer.GetBinaryIsInLocations(fname, &locs) == S_OK &&
+		   (locs.vt == (VT_ARRAY | VT_INT) || locs.vt == (VT_ARRAY | VT_I4)))
 		{
 			SAFEARRAY* sa = locs.parray;
 			assert(SafeArrayGetDim(sa) == 1);
