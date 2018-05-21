@@ -42,6 +42,7 @@ namespace dbuild
             this.switchOrderList.Add("Main");
             this.switchOrderList.Add("DebugCode");
             this.switchOrderList.Add("DebugInfo");
+            this.switchOrderList.Add("DebugFull");
             this.switchOrderList.Add("BoundsCheck");
             this.switchOrderList.Add("PerformSyntaxCheckOnly");
 
@@ -409,6 +410,17 @@ namespace dbuild
                 SetEnumProperty("DebugInfo", "Debug Info",
                                 "Generate debug information. (-gc, -g)",
                                 switchMap, value);
+            }
+        }
+
+        public bool DebugFull
+        {
+            get { return GetBoolProperty("DebugFull"); }
+            set
+            {
+                SetBoolProperty("DebugFull", "Full Debug Info",
+                                "Emit debug info for all referenced types (-gf)",
+                                "-gf", value);
             }
         }
 

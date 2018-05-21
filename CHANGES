@@ -969,6 +969,7 @@ unreleased Version 0.46.1
         is compiled in the project or a dependent static library (without -betterC)
       - Issue 18640: settings now default to mago debug engine (avoiding deprecation warning)
       - to use LDC with in VS2017, set "InstallationFolder" in registry HKEY_LOCAL_MACHINE\Software\LDC
+	  - now demangles linker errors (if not disabled on global options page)
     - new project wizard for customizing generated projects, with only two types to select from
     - new icons for project templates based on vcxproj
 

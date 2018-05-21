@@ -149,6 +149,7 @@ class ProjectOptions
 	bool vtls;		// identify thread local variables
 	bool vgc;		// List all gc allocations including hidden ones (DMD 2.066+)
 	ubyte symdebug;		// insert debug symbolic information (0: none, 1: mago, 2: VS, 3: as debugging)
+	bool symdebugref;	// insert debug information for all referenced types, too 
 	bool optimize;		// run optimizer
 	ubyte cpu;		// target CPU
 	bool isX86_64;		// generate X86_64 bit code
@@ -301,6 +302,7 @@ class ProjectOptions
 		useStdLibPath = true;
 		cRuntime = CRuntime.StaticRelease;
 		debugEngine = 1;
+		symdebugref = true;
 
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep;*.tlog";
 		setX64(x64);
@@ -389,6 +391,8 @@ class ProjectOptions
 			cmd ~= " -g";
 		if(symdbg == 2)
 			cmd ~= " -gc";
+		if (symdbg && symdebugref)
+			cmd ~= " -gf";
 
 		if(optimize)
 			cmd ~= " -O";
@@ -1335,6 +1339,7 @@ class ProjectOptions
 		elem ~= new xml.Element("vtls", toElem(vtls));
 		elem ~= new xml.Element("vgc", toElem(vgc));
 		elem ~= new xml.Element("symdebug", toElem(symdebug));
+		elem ~= new xml.Element("symdebugref", toElem(symdebugref));
 		elem ~= new xml.Element("optimize", toElem(optimize));
 		elem ~= new xml.Element("cpu", toElem(cpu));
 		elem ~= new xml.Element("isX86_64", toElem(isX86_64));
@@ -1470,6 +1475,7 @@ class ProjectOptions
 		fromElem(elem, "vtls", vtls);
 		fromElem(elem, "vgc", vgc);
 		fromElem(elem, "symdebug", symdebug);
+		fromElem(elem, "symdebugref", symdebugref);
 		fromElem(elem, "optimize", optimize);
 		fromElem(elem, "cpu", cpu);
 		fromElem(elem, "isX86_64", isX86_64);

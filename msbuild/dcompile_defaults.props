@@ -43,6 +43,7 @@
       <Unittest>false</Unittest>
       <DebugCode>Debug</DebugCode>
       <DebugInfo>Mago</DebugInfo>
+      <DebugFull>true</DebugFull>
       <Optimizer>false</Optimizer>
       <Inliner>false</Inliner>
       <StackFrame>false</StackFrame>

@@ -92,6 +92,12 @@
       <_ToolExe Condition="'$(DCompiler)' != 'LDC'">$(DMDBinDir)dmd.exe</_ToolExe>
     </PropertyGroup>
 
+    <PropertyGroup>
+      <_DebugFull Condition="'$(DCompiler)' == 'LDC'">false</_DebugFull>
+      <_DebugFull Condition="'$(_DebugFull)' == '' and '@(DCompile->Metadata('DebugInfo'))' == 'None'">false</_DebugFull>
+      <_DebugFull Condition="'$(_DebugFull)' == ''">@(DCompile->Metadata('DebugFull'))</_DebugFull>
+    </PropertyGroup>
+    
     <CompileD Condition="'@(DCompile)' != ''"
               TrackerLogDirectory="$(TLogLocation)"
               ShowCommandLine="%(DCompile.ShowCommandLine)"
@@ -125,6 +131,7 @@
               Main="%(DCompile.Main)"
               DebugCode="%(DCompile.DebugCode)"
               DebugInfo="%(DCompile.DebugInfo)"
+              DebugFull="$(_DebugFull)"
               BoundsCheck="%(DCompile.BoundsCheck)"
               PerformSyntaxCheckOnly="%(DCompile.PerformSyntaxCheckOnly)"
               

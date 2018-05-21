@@ -1094,6 +1094,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		                                                              "Off (disable asserts, invariants and constraints)",
 		                                                              "Default (enable asserts, invariants and constraints)" ], false));
 		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, dbgInfoOpt, false));
+		AddControl("Full debug info", mFullDebug = new CheckBox(mCanvas, "Generate full debug information (dmd 2.075)"));
 		AddHorizontalLine();
 		string[] cv2pdbOpt = [ "Never", "If recommended for selected debug engine", "Always" ];
 		AddControl("Run cv2pdb", mRunCv2pdb = new ComboBox(mCanvas, cv2pdbOpt, false));
@@ -1127,6 +1128,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	{
 		mDebugMode.setSelection(options.release);
 		mDebugInfo.setSelection(options.symdebug);
+		mFullDebug.setChecked(options.symdebugref);
 		mRunCv2pdb.setSelection(options.runCv2pdb);
 		mPathCv2pdb.setText(options.pathCv2pdb);
 		mCv2pdbOptions.setText(options.cv2pdbOptions);
@@ -1143,6 +1145,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		int changes = 0;
 		changes += changeOption(cast(ubyte) mDebugMode.getSelection(), options.release, refoptions.release);
 		changes += changeOption(cast(ubyte) mDebugInfo.getSelection(), options.symdebug, refoptions.symdebug);
+		changes += changeOption(cast(ubyte) mFullDebug.isChecked(), options.symdebugref, refoptions.symdebugref);
 		changes += changeOption(cast(ubyte) mRunCv2pdb.getSelection(), options.runCv2pdb, refoptions.runCv2pdb);
 		changes += changeOption(mPathCv2pdb.getText(), options.pathCv2pdb, refoptions.pathCv2pdb);
 		changes += changeOption(mCv2pdbOptions.getText(), options.cv2pdbOptions, refoptions.cv2pdbOptions);
@@ -1155,6 +1158,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	bool mCanRunCv2PDB;
 	ComboBox mDebugMode;
 	ComboBox mDebugInfo;
+	CheckBox mFullDebug;
 	ComboBox mRunCv2pdb;
 	Text mPathCv2pdb;
 	CheckBox mCv2pdbPre2043;
