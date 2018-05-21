@@ -162,8 +162,10 @@
 
   </Target>
 
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(DCompiler)' != 'None'">
     <PatchLinkInputTargets>$(PatchLinkInputTargets);DCompilePatchLinkInput;</PatchLinkInputTargets>
+    <LinkToolPath Condition="'$(DDemangleLink)' == '1'">$(VisualDMSBuildDir)</LinkToolPath>
+    <LinkToolExe Condition="'$(DDemangleLink)' == '1'">pipelink.exe</LinkToolExe>
   </PropertyGroup>
 
   <!-- to be called from dependent project, returns "true" if a D file is compiled without -bettterC -->
@@ -178,7 +180,7 @@
   </Target>
 
   <Target Name="NeedsDLibraries" DependsOnTargets="_collectDFiles" Condition="'$(ConfigurationType)' != 'StaticLibrary'">
-  
+
     <MSBuild
         Projects="@(_MSBuildProjectReferenceExistent)"
         Targets="LibNeedsDLibraries"
@@ -207,7 +209,7 @@
     <PropertyGroup>
       <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'Win32'">phobos32mscoff.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'x64'">phobos64.lib</DRuntimeLibs>
-      <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC' and '$(Platform)' == 'Win32'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '141'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
     </PropertyGroup>

@@ -70,10 +70,12 @@ string eatArg(string cmd)
 
 version(pipeLink)
 {
+	extern(C) int putenv(const char*);
 	int main(string[] argv)
 	{
 		string cmd = to!string(GetCommandLineW());
 		cmd = "link.exe" ~ eatArg(cmd);
+		putenv("VS_UNICODE_OUTPUT="); // disable unicode output for link.exe
 		int exitCode = runProcess(cmd, null, true, true, false, true, false);
 		return exitCode;
 	}

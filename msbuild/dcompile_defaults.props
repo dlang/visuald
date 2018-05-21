@@ -22,6 +22,10 @@
     <LDCText Condition="'$(LDCText)' == ''">LDC - LLVM based compiler (not installed)</LDCText>
 
     <DCompiler Condition="'$(DCompiler)' == ''">DMD</DCompiler>
+
+    <DDemangleLink Condition="$(DDemangleLink) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'demangleError', '', RegistryView.Registry64, RegistryView.Registry32))</DDemangleLink>
+    <DDemangleLink Condition="$(DDemangleLink) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)_Config\ToolsOptionsPages\Projects\Visual D Settings', 'demangleError', '', RegistryView.Registry64, RegistryView.Registry32))</DDemangleLink>
+    <DDemangleLink Condition="$(DDemangleLink) == ''">1</DDemangleLink>
   </PropertyGroup>
 
   <ItemDefinitionGroup>

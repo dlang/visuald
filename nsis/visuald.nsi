@@ -255,6 +255,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\ general_d.snippet
   ${File} ..\msbuild\ d2.ico
   ${File} ..\msbuild\ di.ico
+  ${File} "..\bin\${CONFIG}\" pipelink.exe
   ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v15\ dbuild.15.0.dll

@@ -530,7 +530,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS,5.01</additionalOptions>
+  <additionalOptions>-L/SUBSYSTEM:WINDOWS,5.01 -gf</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
