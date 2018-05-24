@@ -74,7 +74,7 @@ version(pipeLink)
 	int main(string[] argv)
 	{
 		string cmd = to!string(GetCommandLineW());
-		printf("pipelink called with: %.*s\n", cast(int)cmd.length, cmd.ptr);
+		//printf("pipelink called with: %.*s\n", cast(int)cmd.length, cmd.ptr);
 		cmd = "link.exe" ~ eatArg(cmd);
 		putenv("VS_UNICODE_OUTPUT="); // disable unicode output for link.exe
 		int exitCode = runProcess(cmd, null, true, true, false, true, false);
