@@ -172,8 +172,6 @@
 
   <PropertyGroup Condition="'$(DCompiler)' != 'None'">
     <PatchLinkInputTargets>$(PatchLinkInputTargets);DCompilePatchLinkInput;</PatchLinkInputTargets>
-    <LinkToolPath Condition="'$(DDemangleLink)' == '1'">$(VisualDMSBuildDir)</LinkToolPath>
-    <LinkToolExe Condition="'$(DDemangleLink)' == '1'">pipelink.exe</LinkToolExe>
   </PropertyGroup>
 
   <!-- to be called from dependent project, returns "true" if a D file is compiled without -bettterC -->
@@ -206,13 +204,24 @@
       <_NeedsDLibraries Condition="'%(LibsNeedDLibraries.Identity)' == 'true'">true</_NeedsDLibraries>
     </PropertyGroup>
 
+    <PropertyGroup>
+      <_NeedsPipeLink Condition="'$(IsBetterC)' == 'true'">true</_NeedsPipeLink>
+      <_NeedsPipeLink Condition="'$(_NeedsDLibraries)' == 'true'">true</_NeedsPipeLink>
+    </PropertyGroup>
+
     <Message Text="IsBetterC=$(IsBetterC)" Importance="low" />
     <Message Text="LibsNeedDLibraries=@(LibsNeedDLibraries)" Importance="low" />
     <Message Text="_NeedsDLibraries=$(_NeedsDLibraries)" Importance="low" />
+    <Message Text="_NeedsPipeLink=$(_NeedsPipeLink)" Importance="low" />
     
   </Target>
 
   <Target Name="DCompilePatchLinkInput" DependsOnTargets="_collectDFiles;NeedsDLibraries">
+
+    <PropertyGroup Condition="'$(DDemangleLink)' == '1' and '$(_NeedsPipeLink)' == 'true'">
+      <LinkToolPath>$(VisualDMSBuildDir)</LinkToolPath>
+      <LinkToolExe>pipelink.exe</LinkToolExe>
+    </PropertyGroup>
 
     <PropertyGroup>
       <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'Win32'">phobos32mscoff.lib</DRuntimeLibs>
