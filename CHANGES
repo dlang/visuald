@@ -963,7 +963,7 @@ unreleased Version 0.47.0
     - can now convert DBG files alongside exe/dll
   * build system
     - msbuild: 
-      - improved dependency handling for single file compilation (thanks to Igor Cesi)
+      - improved dependency handling for single/package file compilation (thanks to Igor Cesi)
       - LDC now assumed to be multilib installation, i.e. 64-bit lib folder is "lib64", not "lib"
       - Issue 18641: phobos/druntime libraries automatically added to link if any D file 
         is compiled in the project or a dependent static library (without -betterC)

@@ -96,7 +96,7 @@
       <_DebugFull Condition="'$(DCompiler)' == 'LDC'">false</_DebugFull>
       <_DebugFull Condition="'$(_DebugFull)' == '' and '@(DCompile->Metadata('DebugInfo')->Distinct())' == 'None'">false</_DebugFull>
       <_DebugFull Condition="'$(_DebugFull)' == ''">@(DCompile->Metadata('DebugFull')->Distinct())</_DebugFull>
-      <_DebugFull Condition="'$(_DebugFull)' != 'true' or '$(_DebugFull)' != 'false'">false</_DebugFull>
+      <_DebugFull Condition="'$(_DebugFull)' != 'true' and '$(_DebugFull)' != 'false'">false</_DebugFull>
     </PropertyGroup>
     
     <CompileD Condition="'@(DCompile)' != ''"
