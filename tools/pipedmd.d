@@ -23,9 +23,13 @@ import std.process;
 import std.utf;
 static import std.file;
 
+// version = pipeLink; // define to forward arguments to link.exe and demangle its output
+version = MSLinkFormat;
+
 enum canInjectDLL = false; // disable to rely on tracker.exe exclusively (keeps AV programs more happy)
 
 alias core.stdc.stdio.stdout stdout;
+alias core.stdc.stdio.stderr stderr;
 
 static bool isIdentifierChar(char ch)
 {
@@ -46,6 +50,39 @@ string quoteArg(string arg)
 		return arg;
 }
 
+string eatArg(string cmd)
+{
+	while (cmd.length && cmd[0] != ' ')
+	{
+		if (cmd[0] == '"')
+		{
+			cmd = cmd[1..$];
+			while (cmd.length && cmd[0] != '"')
+				cmd = cmd[1..$];
+			if (cmd.length)
+				cmd = cmd[1..$];
+		}
+		else
+			cmd = cmd[1..$];
+	}
+	return cmd;
+}
+
+version(pipeLink)
+{
+	extern(C) int putenv(const char*);
+	int main(string[] argv)
+	{
+		string cmd = to!string(GetCommandLineW());
+		//printf("pipelink called with: %.*s\n", cast(int)cmd.length, cmd.ptr);
+		cmd = "link.exe" ~ eatArg(cmd);
+		putenv("VS_UNICODE_OUTPUT="); // disable unicode output for link.exe
+		int exitCode = runProcess(cmd, null, true, true, false, true, false);
+		return exitCode;
+	}
+
+}
+else
 int main(string[] argv)
 {
 	if(argv.length < 2)
@@ -277,7 +314,7 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	ResumeThread(piProcInfo.hThread);
 
 	ubyte[] buffer = new ubyte[2048];
-	size_t bytesFilled = 0;
+	DWORD bytesFilled = 0;
 	DWORD bytesAvailable = 0;
 	DWORD bytesRead = 0;
 	DWORD exitCode = 0;
@@ -286,12 +323,13 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 	L_loop:
 	while(true)
 	{
-		bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr + bytesFilled, buffer.length - bytesFilled, &bytesRead, &bytesAvailable, null);
+		DWORD dwlen = cast(DWORD)buffer.length;
+		bSuccess = PeekNamedPipe(hStdOutRead, buffer.ptr + bytesFilled, dwlen - bytesFilled, &bytesRead, &bytesAvailable, null);
 		if (bSuccess && bytesRead > 0)
-			bSuccess = ReadFile(hStdOutRead, buffer.ptr + bytesFilled, buffer.length - bytesFilled, &bytesRead, null);
+			bSuccess = ReadFile(hStdOutRead, buffer.ptr + bytesFilled, dwlen - bytesFilled, &bytesRead, null);
 		if(bSuccess && bytesRead > 0)
 		{
-			size_t lineLength = bytesFilled; // no need to search before previous end
+			DWORD lineLength = bytesFilled; // no need to search before previous end
 			bytesFilled += bytesRead;
 			for(; lineLength < buffer.length && lineLength < bytesFilled; lineLength++)
 			{
@@ -363,8 +401,8 @@ void demangleLine(ubyte[] output, bool doDemangle, bool demangleAll, bool msMode
 			decodeBufferWide.length = output.length + 1;
 			decodeBuffer.length = 2 * output.length + 1;
 		}
-		auto numDecoded = MultiByteToWideChar(CP_ACP, 0, cast(char*)output.ptr, output.length, decodeBufferWide.ptr, decodeBufferWide.length);
-		auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, cast(char*)decodeBuffer.ptr, decodeBuffer.length, null, null);
+		auto numDecoded = MultiByteToWideChar(CP_ACP, 0, cast(char*)output.ptr, cast(DWORD)output.length, decodeBufferWide.ptr, cast(DWORD)decodeBufferWide.length);
+		auto numEncoded = WideCharToMultiByte(CP_UTF8, 0, decodeBufferWide.ptr, numDecoded, cast(char*)decodeBuffer.ptr, cast(DWORD)decodeBuffer.length, null, null);
 		output = decodeBuffer[0..numEncoded];
 	}
 	size_t writepos = 0;
@@ -438,6 +476,7 @@ void processLine(ubyte[] output, ref size_t writepos, bool optlink, int cp)
 			}
 			if(realSymbolName.length)
 			{
+				version(MSLinkFormat) {} else
 				if(realSymbolName != symbolName)
 				{
 					// not sure if output is UTF8 encoded, so avoid any translation
@@ -459,15 +498,32 @@ void processLine(ubyte[] output, ref size_t writepos, bool optlink, int cp)
 					}
 					if(realSymbolName != symbolName)
 					{
-						// skip a trailing quote
-						if(p + 1 < output.length && (output[p+1] == '\'' || output[p+1] == '\"'))
-							p++;
-						if(p > writepos)
-							fwrite(output.ptr + writepos, p - writepos, 1, stdout);
-						writepos = p;
-						fwrite(" (".ptr, 2, 1, stdout);
-						fwrite(symbolName.ptr, symbolName.length, 1, stdout);
-						fwrite(")".ptr, 1, 1, stdout);
+						version(MSLinkFormat)
+						{
+							if(q > writepos)
+								fwrite(output.ptr + writepos, q - writepos, 1, stdout);
+							writepos = q;
+							fwrite("\"".ptr, 1, 1, stdout);
+							fwrite(symbolName.ptr, symbolName.length, 1, stdout);
+							fwrite("\" (".ptr, 3, 1, stdout);
+							if(p > writepos)
+								fwrite(output.ptr + writepos, p - writepos, 1, stdout);
+							writepos = p;
+							fwrite(")".ptr, 1, 1, stdout);
+						}
+						else
+						{
+							// skip a trailing quote
+							if(p + 1 < output.length && (output[p+1] == '\'' || output[p+1] == '\"'))
+								p++;
+
+							if(p > writepos)
+								fwrite(output.ptr + writepos, p - writepos, 1, stdout);
+							writepos = p;
+							fwrite(" (".ptr, 2, 1, stdout);
+							fwrite(symbolName.ptr, symbolName.length, 1, stdout);
+							fwrite(")".ptr, 1, 1, stdout);
+						}
 					}
 				}
 			}

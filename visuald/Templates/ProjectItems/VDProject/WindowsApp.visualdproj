@@ -1,0 +1,146 @@
+<DProject>
+  <ProjectGuid>$guid1$</ProjectGuid>
+$if$ ($platformx86_1$ == 1)
+  <Config name="Debug$configsuffix_1$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>$dcompiler_1$</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+	<mscoff>$x86mscoff$</mscoff>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+  <Config name="Release$configsuffix_1$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>$dcompiler_1$</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+	<mscoff>$x86mscoff$</mscoff>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+$endif$
+$if$ ($platformx64_1$ == 1)
+  <Config name="Debug$configsuffix_1$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>$dcompiler_1$</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+  <Config name="Release$configsuffix_1$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>$dcompiler_1$</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+$endif$
+$if$ ($platformx86_2$ == 1)
+  <Config name="Debug$configsuffix_2$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>$dcompiler_2$</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+  <Config name="Release$configsuffix_2$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>$dcompiler_2$</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+$endif$
+$if$ ($platformx64_2$ == 1)
+  <Config name="Debug$configsuffix_2$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>$dcompiler_2$</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+  <Config name="Release$configsuffix_2$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>$dcompiler_2$</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+$endif$
+$if$ ($platformx86_3$ == 1)
+  <Config name="Debug$configsuffix_3$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>$dcompiler_3$</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+  <Config name="Release$configsuffix_3$" platform="Win32">
+	<isX86_64>0</isX86_64>
+	<compiler>$dcompiler_3$</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+$endif$
+$if$ ($platformx64_3$ == 1)
+  <Config name="Debug$configsuffix_3$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>$dcompiler_3$</compiler>
+	<runCv2pdb>1</runCv2pdb>
+	<symdebug>1</symdebug>
+	<release>0</release>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+  <Config name="Release$configsuffix_3$" platform="x64">
+	<isX86_64>1</isX86_64>
+	<compiler>$dcompiler_3$</compiler>
+	<runCv2pdb>0</runCv2pdb>
+	<release>1</release>
+	<optimize>1</optimize>
+	<useInline>1</useInline>
+	<lib>$outputtype$</lib>
+	<subsystem>$subsys$</subsystem>
+	<exefile>$(OutDir)\$(ProjectName).$outputext$</exefile>
+  </Config>
+$endif$
+  <Folder name="$safeprojectname$">
+    <File path="$safeprojectname$.d"></File>
+  </Folder>
+</DProject>

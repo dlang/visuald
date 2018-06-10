@@ -361,6 +361,8 @@ class Constructor
 	{
 		switch(p.tok.id)
 		{
+			default:
+				return stateFunctionBody.shift(p);
 			mixin(case_TOKs_MemberFunctionAttribute);
 				auto ctor = p.topNode!(ast.Constructor);
 				auto list = static_cast!(ast.ParameterList)(ctor.members[$-1]);
@@ -373,8 +375,6 @@ class Constructor
 				return Accept;
 			case TOK_if:
 				return stateConstraint.shift(p);
-			default:
-				return stateFunctionBody.shift(p);
 		}
 	}
 		

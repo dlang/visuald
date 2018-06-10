@@ -339,6 +339,42 @@ class idl2d
 		}
 	}
 
+	bool hasBalancedBrackets(TokenIterator start, TokenIterator end)
+	{
+		int[] brackets;
+		while (start != end)
+		{
+			int type = start.type;
+			switch(type)
+			{
+				case Token.ParenL:
+				case Token.BracketL:
+				case Token.BraceL:
+					brackets ~= type;
+					break;
+				case Token.ParenR:
+					if (brackets.empty || brackets[$-1] != Token.ParenL)
+						return false;
+					brackets = brackets[0..$-1];
+					break;
+				case Token.BracketR:
+					if (brackets.empty || brackets[$-1] != Token.BracketL)
+						return false;
+					brackets = brackets[0..$-1];
+					break;
+				case Token.BraceR:
+					if (brackets.empty || brackets[$-1] != Token.BraceL)
+						return false;
+					brackets = brackets[0..$-1];
+					break;
+				default:
+					break;
+			}
+			start++;
+		}
+		return brackets.empty;
+	}
+
 	bool isExpression(TokenIterator start, TokenIterator end)
 	{
 		if(start == end || start.type == Token.EOF)
@@ -348,7 +384,7 @@ class idl2d
 		for(TokenIterator it = start + 1; it != end && !it.atEnd() && it.type != Token.EOF; ++it)
 			if(!isExpressionToken(it, false))
 				return false;
-		return true;
+		return hasBalancedBrackets(start, end);
 	}
 
 	bool isPrimaryExpr(TokenIterator it)
@@ -568,6 +604,10 @@ class idl2d
 			return 1;
 		case "_M_HYBRID_X86_ARM64":
 			return -1;
+
+			// Windows SDK 10.0.17134.0
+		case "IMAGE_POLICY_METADATA_NAME":
+			return 1;
 
 		default:
 			break;
@@ -876,7 +916,7 @@ version(none){
 			convert = false;
 			if(tokIt[3].text == ")")
 			{
-				convertMacro = true;
+				convertMacro = hasBalancedBrackets(tokIt + 4, endIt);
 				argtype = "";
 				if(isExpression(tokIt + 4, endIt))
 					rettype = getExpressionType(ident, tokIt + 4, endIt);
@@ -1236,6 +1276,9 @@ version(all)
 			replaceTokenSequence(tokens, "template $args _ENUM_FLAG_INTEGER_FOR_SIZE;", "/*$0*/", true);
 			replaceTokenSequence(tokens, "template <> struct _ENUM_FLAG_INTEGER_FOR_SIZE <$arg> { $def };", "/*$0*/", true);
 			replaceTokenSequence(tokens, "template <$arg> struct _ENUM_FLAG_SIZED_INTEGER { $def };", "/*$0*/", true);
+
+			// win 10.0.17134.0: typedef enum MEM_EXTENDED_PARAMETER_TYPE {} MEM_EXTENDED_PARAMETER_TYPE, ...
+			replaceTokenSequence(tokens, "MEM_EXTENDED_PARAMETER_TYPE, *PMEM_EXTENDED_PARAMETER_TYPE", "*PMEM_EXTENDED_PARAMETER_TYPE", true);
 		}
 
 		if(currentModule == "commctrl")
@@ -1662,7 +1705,10 @@ version(none)
 		replaceTokenSequence(tokens, "enum $_ident1 { $enums }; typedef $_identbase $_ident2;",
 			"enum $_ident2 : $_identbase\n{\n$enums\n}", true);
 } else {
-		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $_ident1;",
+	replaceTokenSequence(tokens, "typedef enum $_ident1 : uint { $enums } $_ident1;",
+			"enum $_ident1 : uint\n{\n$enums\n}\n", true);
+
+	replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $_ident1;",
 			"enum /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;", true);
 		replaceTokenSequence(tokens, "typedef enum $_ident1 { $enums } $ident2;",
 			"enum /+$_ident1+/\n{\n$enums\n}\ntypedef int $_ident1;\ntypedef int $ident2;", true);
@@ -1941,9 +1987,14 @@ version(all) {
 		replaceTokenSequence(tokens, "sizeof($_ident)", "$_ident.sizeof", true);
 		replaceTokenSequence(tokens, "sizeof($args)", "($args).sizeof", true);
 
+		// Win SDK 10.0,17136,0
+		replaceTokenSequence(tokens, "_Out_writes_z_($args)", "/+$*+/", true);
+		replaceTokenSequence(tokens, "_IRQL_requires_max_($args)", "/+$*+/", true);
+
 		// bitfields:
 		replaceTokenSequence(tokens, "$_identtype $_identname : $_num;",   "__bf $_identtype, __quote $_identname __quote, $_num __eobf", true);
 		replaceTokenSequence(tokens, "$_identtype $_identname : $_ident;", "__bf $_identtype, __quote $_identname __quote, $_ident __eobf", true);
+		replaceTokenSequence(tokens, "$_identtype $_identname : $_num - $_identconst;", "__bf $_identtype, __quote $_identname __quote, $_num - $_identconst __eobf", true);
 		replaceTokenSequence(tokens, "$_identtype : $_num;", "__bf $_identtype, __quote __quote, $_num __eobf", true);
 		replaceTokenSequence(tokens, "__eobf __bf", ",\n\t", true);
 		replaceTokenSequence(tokens, "__bf", "mixin(bitfields!(", true);

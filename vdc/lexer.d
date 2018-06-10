@@ -1150,8 +1150,8 @@ const string[2][] operators =
 	[ "ul",               "!>=" ],
 	[ "uge",              "!<" ],
 	[ "ug",               "!<=" ],
-	[ "notcontains",      "!in" ],
-	[ "notidentity",      "!is" ],
+//	[ "notcontains",      "!in" ],
+//	[ "notidentity",      "!is" ],
 
 	[ "shl",              "<<" ],
 	[ "shr",              ">>" ],

@@ -124,6 +124,8 @@
       <EnumValue Name="VS" DisplayName="For VS debug engines" Switch="-gc" />
       <EnumValue Name="Mago" DisplayName="For D debug engines (mago)" Switch="-g" />
     </EnumProperty>
+    <BoolProperty Name="DebugFull" Category="Code Generation" DisplayName="Full Debug Info" Switch="-gf"
+                  Description="when generating debug info emit it for all referenced types." />
     <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
       <EnumValue Name="Off" DisplayName="None" Switch="-boundscheck=off" />
       <EnumValue Name="SafeOnly" DisplayName="For @safe code" Switch="-boundscheck=safeonly" />

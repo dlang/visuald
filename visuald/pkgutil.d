@@ -535,7 +535,7 @@ bool RemoveHardwareBreakpoint(HANDLE hBrk)
 		CloseHandle(h.hT);
 	}
 
-	delete h;
+	//delete h;
 	return true;
 }
 

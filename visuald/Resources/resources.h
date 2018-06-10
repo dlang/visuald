@@ -3,12 +3,16 @@
 #define IDS_PRODUCTDETAILS   100
 #define IDS_PRODUCT          101
 #define IDS_VDSETTINGS       102
+#define IDS_VDPROJECTDESC    103
+#define IDS_VCPROJECTDESC    104
 
 #define ICON_ABOUTBOX        1000
 #define BMP_SPLASHSCRN       1001
 #define BMP_DIMAGELIST       1002
 #define BMP_COMPLETION       1003
 #define ICON_DUB             1004
+#define ICON_DCONSOLE        1005
+#define ICON_DWINPROJ        1006
 
 #define IDI_ASCENDING               2000
 #define IDI_DESCENDING              2001

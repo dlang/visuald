@@ -5,7 +5,7 @@ Visual D
 This is the README file for Visual D, a 
 Visual Studio package providing both project management and language services
 
-Copyright (c) 2010-2015 by Rainer Schuetze, All Rights Reserved
+Copyright (c) 2010-2018 by Rainer Schuetze, All Rights Reserved
 
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
@@ -61,6 +61,7 @@ Major Features
   - VS 2012
   - VS 2013
   - VS 2015
+  - VS 2017
   
   Unfortunately, Express versions of Visual Studio do not support this 
   kind of extensions. Use the Visual Studio Shell instead:

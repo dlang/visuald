@@ -531,7 +531,7 @@ class VDServer : ComObject, IVDServer
 			if(auto src = mSemanticProject.getModuleByFilename(fname))
 				if(src.parsed)
 				{
-					*pIsOp = vdc.ast.node.isBinaryOperator(src.parsed, startLine, startIndex, endLine, endIndex);
+					*pIsOp = ast.isBinaryOperator(src.parsed, startLine, startIndex, endLine, endIndex);
 					return S_OK;
 				}
 		return S_FALSE;

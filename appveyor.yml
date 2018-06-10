@@ -22,6 +22,12 @@ environment:
       VS: 12
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
+# cache relative to C:\projects\visuald
+cache:
+  - C:\projects\cache\dmd2080_0.7z
+  - C:\projects\cache\cd851.zip
+  - C:\projects\cache\VisualD-v0.45.1-rc2.exe
+
 #matrix:
 #  allow_failures:
 #    - VS: 14
@@ -36,38 +42,41 @@ install:
   - set D_COMPILER=dmd
   - set
   - cd c:\projects
+  - if not exist cache\nul mkdir cache
   # Download & extract D compiler
   - ps: |
         If ($Env:D_COMPILER -eq 'dmd') {
-            Start-FileDownload 'http://downloads.dlang.org/releases/2.x/2.071.1/dmd.2.071.1.windows.7z' -FileName 'dmd2.7z'
+            If (-not (Test-Path 'cache\dmd2080_0.7z')) {
+                Start-FileDownload 'http://downloads.dlang.org/releases/2.x/2.080.0/dmd.2.080.0.windows.7z' -FileName 'cache\dmd2080_0.7z'
+            }
+            7z x cache\dmd2080_0.7z > $null
+            Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
+            c:\projects\dmd2\windows\bin\dmd.exe --version
+        } ElseIf ($Env:D_COMPILER -eq 'dmd-nightly') {
+            Start-FileDownload 'http://nightlies.dlang.org/dmd-nightly/dmd.master.windows.7z' -FileName 'dmd2.7z'
             7z x dmd2.7z > $null
             Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
             c:\projects\dmd2\windows\bin\dmd.exe --version
-        } Else {
-            If ($Env:D_COMPILER -eq 'dmd-nightly') {
-                Start-FileDownload 'http://nightlies.dlang.org/dmd-nightly/dmd.master.windows.7z' -FileName 'dmd2.7z'
-                7z x dmd2.7z > $null
-                Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
-                c:\projects\dmd2\windows\bin\dmd.exe --version
-            } Else {
-                # LDC unsupported so far
-                If ($Env:D_COMPILER -eq 'ldc') {
-                    Start-FileDownload 'http://github.com/ldc-developers/ldc/releases/download/v1.0.0/ldc2-1.0.0-win64-msvc.zip' -FileName 'ldc2.zip'
-                    7z x ldc2.zip > $null
-                    Set-Item -path env:DMD -value c:\projects\ldc2-1.0.0-win64-msvc\bin\ldmd2.exe
-                    c:\projects\ldc2-1.0.0-win64-msvc\bin\ldc2 --version
-                }
-            }
+        } ElseIf ($Env:D_COMPILER -eq 'ldc') {
+            # LDC unsupported so far
+            Start-FileDownload 'http://github.com/ldc-developers/ldc/releases/download/v1.0.0/ldc2-1.0.0-win64-msvc.zip' -FileName 'ldc2.zip'
+            7z x ldc2.zip > $null
+            Set-Item -path env:DMD -value c:\projects\ldc2-1.0.0-win64-msvc\bin\ldmd2.exe
+            c:\projects\ldc2-1.0.0-win64-msvc\bin\ldc2 --version
         }
   # Download & extract coffimplib.exe (no longer available publically as a single download)
   - ps: |
-        Start-FileDownload 'http://ftp.digitalmars.com/Digital_Mars_C++/Patch/cd851.zip' -FileName 'cd851.zip'
-        7z x cd851.zip > $null
+        If (-not (Test-Path 'cache\cd851.7z')) {
+            Start-FileDownload 'http://ftp.digitalmars.com/Digital_Mars_C++/Patch/cd851.zip' -FileName 'cache\cd851.zip'
+        }
+        7z x cache\cd851.zip > $null
         copy c:\projects\dm\bin\coffimplib.exe c:\projects\dmd2\windows\bin
   # Download & install Visual D
   - ps: |
-        Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.45.1-rc2/VisualD-v0.45.1-rc2.exe' -FileName 'VisualD-v0.45.1-rc2.exe'
-  - .\VisualD-v0.45.1-rc2.exe /S
+        If (-not (Test-Path 'cache\VisualD-v0.45.1-rc2.exe')) {
+            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.45.1-rc2/VisualD-v0.45.1-rc2.exe' -FileName 'cache\VisualD-v0.45.1-rc2.exe'
+        }
+  - cache\VisualD-v0.45.1-rc2.exe /S
   # configure DMD path
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\12.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f

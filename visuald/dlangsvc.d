@@ -3820,7 +3820,7 @@ else
 		{
 			scope(exit) release(colorState);
 			foreach(pos; mBinaryIsIn)
-				colorState.ReColorizeLines(pos.line - 1, pos.line - 1);
+				colorState.ReColorizeLines(pos.line - 1, pos.line);
 		}
 		Package.GetTaskProvider().updateTaskItems(filename, tasks);
 	}

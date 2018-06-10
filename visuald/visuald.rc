@@ -53,6 +53,11 @@ BEGIN
     IDS_PRODUCTDETAILS "Integration of the D Programming Language into Visual Studio"
 
     IDS_VDSETTINGS     "Visual D Settings"
+
+    IDS_VDPROJECTDESC  "A Visual D project for creating a Win32 application, console application, DLL or static library.\n\n\
+This is based on a project type designed for the D programming language."
+    IDS_VCPROJECTDESC  "A Visual C++ project for creating a Win32 application, console application, DLL or static library.\n\n\
+This is based on Visual C++'s vcxproj project type for seamless integration with C++ and msbuild."
 END
 
 ICON_ABOUTBOX ICON "resources\DAboutLogo.ico"
@@ -75,6 +80,8 @@ IDR_REFRESH                 ICON    "resources/refresh.ico"
 IDR_FULLDECO                ICON    "resources/fulldeco.ico"
 
 ICON_DUB                    ICON    "resources/dub.ico"
+ICON_DCONSOLE               ICON    "resources/dconsole.ico"
+ICON_DWINPROJ               ICON    "resources/dwinproj.ico"
 
 BMP_DIMAGELIST  BITMAP "resources/dimagelist.bmp"
 BMP_SPLASHSCRN  BITMAP "resources/dsplashscreenicon.bmp"

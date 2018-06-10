@@ -385,7 +385,7 @@ class CmpExpression : BinaryExpression
 
 	void _checkIdentityLiterals()
 	{
-		if(id == TOK_is || id == TOK_notidentity)
+		if(id == TOK_is /*|| id == TOK_notidentity*/)
 		{
 			if(auto litL = cast(IntegerLiteralExpression) getLeftExpr())
 				litL.forceLargerType(getRightExpr().calcType());

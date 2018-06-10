@@ -358,7 +358,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				if(tok == "in" || tok == "is")
 				{
 					if(langsvc.isBinaryOperator(mSource, iLine + 1, prevpos, iLine + 1, pos))
-						type = TokenColor.Operator;
+						type = userColorType(tok, TokenColor.Operator);
 					else
 						type = TokenColor.Keyword;
 				}

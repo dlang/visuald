@@ -92,6 +92,13 @@
       <_ToolExe Condition="'$(DCompiler)' != 'LDC'">$(DMDBinDir)dmd.exe</_ToolExe>
     </PropertyGroup>
 
+    <PropertyGroup>
+      <_DebugFull Condition="'$(DCompiler)' == 'LDC'">false</_DebugFull>
+      <_DebugFull Condition="'$(_DebugFull)' == '' and '@(DCompile->Metadata('DebugInfo')->Distinct())' == 'None'">false</_DebugFull>
+      <_DebugFull Condition="'$(_DebugFull)' == ''">@(DCompile->Metadata('DebugFull')->Distinct())</_DebugFull>
+      <_DebugFull Condition="'$(_DebugFull)' != 'true' or '$(_DebugFull)' != 'false'">false</_DebugFull>
+    </PropertyGroup>
+    
     <CompileD Condition="'@(DCompile)' != ''"
               TrackerLogDirectory="$(TLogLocation)"
               ShowCommandLine="%(DCompile.ShowCommandLine)"
@@ -125,6 +132,7 @@
               Main="%(DCompile.Main)"
               DebugCode="%(DCompile.DebugCode)"
               DebugInfo="%(DCompile.DebugInfo)"
+              DebugFull="$(_DebugFull)"
               BoundsCheck="%(DCompile.BoundsCheck)"
               PerformSyntaxCheckOnly="%(DCompile.PerformSyntaxCheckOnly)"
               
@@ -162,28 +170,79 @@
 
   </Target>
 
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(DCompiler)' != 'None'">
     <PatchLinkInputTargets>$(PatchLinkInputTargets);DCompilePatchLinkInput;</PatchLinkInputTargets>
   </PropertyGroup>
 
-  <Target Name="DCompilePatchLinkInput" Condition="'@(DCompile)' != ''">
+  <!-- to be called from dependent project, returns "true" if a D file is compiled without -bettterC -->
+  <Target Name="LibNeedsDLibraries" DependsOnTargets="_collectDFiles" Returns="$(_NeedsDLibraries)">
+    <Message Text="LibNeedsDLibraries called on $(ConfigurationType)" Importance="low" />
+    <PropertyGroup Condition="'@(DCompile)' != '' and '$(ConfigurationType)' == 'StaticLibrary'">
+      <IsBetterC>@(DCompile->Metadata('BetterC')->Distinct()->ClearMetadata())</IsBetterC>
+      <_NeedsDLibraries Condition="'$(IsBetterC)' == 'true'">betterC</_NeedsDLibraries>
+      <_NeedsDLibraries Condition="'$(IsBetterC)' != 'true'">true</_NeedsDLibraries>
+    </PropertyGroup>
+    <Message Text="LibNeedsDLibraries returns $(_NeedsDLibraries)" Importance="low" />
+  </Target>
 
-    <!--<Message Text="DCompilePatchLinkInput: PlatformToolsetVersion = $(PlatformToolsetVersion)" Importance="high" /> -->
-      
-    <ItemGroup Condition="'$(DCompiler)' == 'DMD'">
+  <Target Name="NeedsDLibraries" DependsOnTargets="_collectDFiles" Condition="'$(ConfigurationType)' != 'StaticLibrary'">
+
+    <MSBuild
+        Projects="@(_MSBuildProjectReferenceExistent)"
+        Targets="LibNeedsDLibraries"
+        BuildInParallel="$(BuildInParallel)"
+        Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
+        Condition="'%(_MSBuildProjectReferenceExistent.Extension)' == '.vcxproj' and '@(ProjectReferenceWithConfiguration)' != '' and '@(_MSBuildProjectReferenceExistent)' != ''"
+        ContinueOnError="!$(BuildingProject)"
+        RemoveProperties="%(_MSBuildProjectReferenceExistent.GlobalPropertiesToRemove)">
+        <Output TaskParameter="TargetOutputs" ItemName="LibsNeedDLibraries"/>
+    </MSBuild>
+
+    <PropertyGroup Condition="'@(DCompile)' != ''">
+      <IsBetterC>@(DCompile->Metadata('BetterC')->Distinct()->ClearMetadata())</IsBetterC>
+      <_NeedsDLibraries Condition="'$(IsBetterC)' != 'true'">true</_NeedsDLibraries>
+      <_NeedsDLibraries Condition="'%(LibsNeedDLibraries.Identity)' == 'true'">true</_NeedsDLibraries>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <_NeedsPipeLink Condition="'$(IsBetterC)' == 'true'">true</_NeedsPipeLink>
+      <_NeedsPipeLink Condition="'$(_NeedsDLibraries)' == 'true'">true</_NeedsPipeLink>
+    </PropertyGroup>
+
+    <Message Text="IsBetterC=$(IsBetterC)" Importance="low" />
+    <Message Text="LibsNeedDLibraries=@(LibsNeedDLibraries)" Importance="low" />
+    <Message Text="_NeedsDLibraries=$(_NeedsDLibraries)" Importance="low" />
+    <Message Text="_NeedsPipeLink=$(_NeedsPipeLink)" Importance="low" />
+    
+  </Target>
+
+  <Target Name="DCompilePatchLinkInput" DependsOnTargets="_collectDFiles;NeedsDLibraries">
+
+    <PropertyGroup Condition="'$(DDemangleLink)' == '1' and '$(_NeedsPipeLink)' == 'true'">
+      <LinkToolPath>$(VisualDMSBuildDir)</LinkToolPath>
+      <LinkToolExe>pipelink.exe</LinkToolExe>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'Win32'">phobos32mscoff.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'DMD' and '$(Platform)' == 'x64'">phobos64.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '141'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(DCompiler)' == 'DMD' and '$(_NeedsDLibraries)' == 'true'">
       <Link>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(DMDInstallDir)\windows\lib32mscoff;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(DMDInstallDir)\windows\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
-        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '141'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
+        <AdditionalDependencies>$(DRuntimeLibs);%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
     </ItemGroup>
-    <ItemGroup Condition="'$(DCompiler)' == 'LDC'">
+    <ItemGroup Condition="'$(DCompiler)' == 'LDC' and '$(_NeedsDLibraries)' == 'true'">
       <Link>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(LDCInstallDir)\lib32;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '140'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
-        <AdditionalDependencies Condition="'$(PlatformToolsetVersion)' == '141'">legacy_stdio_definitions.lib;%(Link.AdditionalDependencies)</AdditionalDependencies>
+        <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+        <AdditionalDependencies>$(DRuntimeLibs);%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
     </ItemGroup>
     
@@ -195,5 +254,4 @@
           DependsOnTargets="$(BeforeLinkTargets);$(ComputeLinkInputsTargets);ComputeManifestInputsTargets;ManifestResourceCompile;PrepareResourceNames;MakeDirsForLink;DoLinkOutputFilesMatch;PreLinkEvent;$(PatchLinkInputTargets);Link;ComputeLinkImportLibraryOutputsForClean;$(AfterLinkTargets)"
           Condition="'$(LinkCompiled)' == 'true'">
   </Target>
-
 </Project>

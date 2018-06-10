@@ -228,6 +228,8 @@ Section "Visual Studio package" SecPackage
 
 
   ${SetOutPath} "$INSTDIR"
+  ; restart templates from scratch to not keep old files
+  RmDir /r "$INSTDIR\Templates"
 !ifdef DUB
   File /r ..\visuald\Templates
 !else
@@ -253,6 +255,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\ general_d.snippet
   ${File} ..\msbuild\ d2.ico
   ${File} ..\msbuild\ di.ico
+  ${File} "..\bin\${CONFIG}\" pipelink.exe
   ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v15\ dbuild.15.0.dll
@@ -324,6 +327,9 @@ ${MementoSection} "Register with VS 2010" SecVS2010
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "10" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -352,6 +358,9 @@ ${MementoSection} "Register with VS 2012" SecVS2012
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
+
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
 ${MementoSectionEnd}
 
@@ -382,6 +391,9 @@ ${MementoSection} "Register with VS 2013" SecVS2013
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
 
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -411,6 +423,9 @@ ${MementoSection} "Register with VS 2015" SecVS2015
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
 
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -439,6 +454,9 @@ ${MementoSection} "Register with VS 2017" SecVS2017
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
+
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
 ${MementoSectionEnd}
 

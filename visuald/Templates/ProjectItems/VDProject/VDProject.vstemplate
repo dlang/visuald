@@ -1,0 +1,22 @@
+<VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
+  <TemplateData>
+    <Name>Visual D based Win32 Application</Name>
+    <Description>A project for creating a Windows application</Description>
+    <Icon>__TemplateIcon.ico</Icon>
+    <ProjectType>D</ProjectType>
+    <SortOrder>50</SortOrder>
+    <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>WindowsApp</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <Project File="WindowsApp.visualdproj" ReplaceParameters="true">
+      <ProjectItem ReplaceParameters="true" OpenInEditor="true" TargetFileName="$safeprojectname$.d">main.d</ProjectItem>
+    </Project>
+  </TemplateContent>
+  <WizardExtension>
+    <Assembly>VisualDWizard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=c74ad3042b283f5c</Assembly>
+    <FullClassName>VisualDWizard.VDProjectWizard</FullClassName>
+  </WizardExtension>
+</VSTemplate>

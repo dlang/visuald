@@ -530,7 +530,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS,5.01</additionalOptions>
+  <additionalOptions>-L/SUBSYSTEM:WINDOWS,5.01 -gf</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
@@ -780,12 +780,14 @@
    <File path="Resources\CaseSensitive.ico" />
    <File path="Resources\completionset.bmp" />
    <File path="Resources\DAboutBox.ico" />
+   <File path="Resources\dconsole.ico" />
    <File path="Resources\descend.ico" />
    <File path="Resources\dfile.ico" />
    <File path="Resources\difile.ico" />
    <File path="Resources\DImageList.bmp" />
    <File path="Resources\DSplashScreenIcon.bmp" />
    <File path="Resources\dub.ico" />
+   <File path="Resources\dwinproj.ico" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
    <File path="Resources\pkgcmd.vsct" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
@@ -864,6 +866,20 @@ rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies
      <File path="Templates\ProjectItems\StaticLib\StaticLib.visualdproj" />
      <File path="Templates\ProjectItems\StaticLib\StaticLib.vstemplate" />
     </Folder>
+    <Folder name="VCProjectItems">
+     <Folder name="ConsoleApp">
+      <File path="Templates\VCProjectItems\ConsoleApp\ConsoleApp.vcxproj" />
+      <File path="Templates\VCProjectItems\ConsoleApp\ConsoleApp.vcxproj.filters" />
+      <File path="Templates\VCProjectItems\ConsoleApp\main.d" tool="None" />
+      <File path="Templates\VCProjectItems\ConsoleApp\VCConsoleApp.vstemplate" />
+     </Folder>
+     <Folder name="WindowsApp">
+      <File path="Templates\VCProjectItems\WindowsApp\main.d" tool="None" />
+      <File path="Templates\VCProjectItems\WindowsApp\VCWindowsApp.vstemplate" />
+      <File path="Templates\VCProjectItems\WindowsApp\WindowsApp.vcxproj" />
+      <File path="Templates\VCProjectItems\WindowsApp\WindowsApp.vcxproj.filters" />
+     </Folder>
+    </Folder>
     <Folder name="WindowsApp">
      <File path="Templates\ProjectItems\WindowsApp\WindowsApp.visualdproj" />
      <File path="Templates\ProjectItems\WindowsApp\WindowsApp.vstemplate" />
@@ -871,7 +887,20 @@ rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies
     </Folder>
    </Folder>
    <Folder name="Projects">
+    <Folder name="DUB">
+     <File path="Templates\Projects\DUB\DUBTemplates.vsdir" />
+     <File path="Templates\Projects\DUB\DUBTemplates.VSTDIR" />
+    </Folder>
+    <Folder name="VC">
+     <File path="Templates\Projects\VC\VCTemplates.vsdir" />
+     <File path="Templates\Projects\VC\VCTemplates.VSTDIR" />
+    </Folder>
+    <Folder name="Visual D">
+     <File path="Templates\Projects\Visual D\VDTemplates.vsdir" />
+     <File path="Templates\Projects\Visual D\VDTemplates.VSTDIR" />
+    </Folder>
     <File path="Templates\Projects\DTemplates.vsdir" />
+    <File path="Templates\Projects\DubTemplates.vsdir" />
    </Folder>
    <Folder name="Wizards">
     <File path="Templates\Wizards\package.vsz" />

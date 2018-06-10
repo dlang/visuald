@@ -23,6 +23,7 @@ using D_Parser.Resolver;
 using D_Parser.Resolver.TypeResolution;
 using D_Parser.Completion.ToolTips;
 using D_Parser.Refactoring;
+using D_Parser.Dom.Expressions;
 
 namespace DParserCOMServer
 {
@@ -45,7 +46,7 @@ namespace DParserCOMServer
 		void GetSemanticExpansionsResult(out string stringList);
 		void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp);
         void GetParseErrors(string filename, out string errors);
-		void GetBinaryIsInLocations(string filename, out uint[] locs); // array of pairs of DWORD
+		void GetBinaryIsInLocations(string filename, out object locs); // array of pairs of DWORD
 		void GetLastMessage(out string message);
 		void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex);
 		void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename);
@@ -519,14 +520,40 @@ namespace DParserCOMServer
 			//MessageBox.Show("IsBinaryOperator()");
 			throw new NotImplementedException();
 		}
-		public void GetBinaryIsInLocations(string filename, out uint[] locs) // array of pairs of DWORD
+
+		class BinaryIsInVisitor : DefaultDepthFirstVisitor
 		{
-			//MessageBox.Show("GetBinaryIsInLocations()");
-			locs = null;
-			//throw new COMException("No Message", 1);
+			public List<int> locs = new List<int>();
+
+			public override void Visit(IdentityExpression x)
+			{
+				locs.Add(x.opLine);
+				locs.Add(x.opColumn - 1);
+				base.Visit(x);
+			}
+			public override void Visit(InExpression x)
+			{
+				locs.Add(x.opLine);
+				locs.Add(x.opColumn - 1);
+				base.Visit(x);
+			}
 		}
-		
-        public void GetLastMessage(out string message)
+
+		public void GetBinaryIsInLocations(string filename, out object locs) // array of pairs of DWORD
+		{
+			filename = normalizePath(filename);
+			var ast = GetModule(filename);
+
+			if (ast == null)
+				throw new COMException("module not found", 1);
+
+			BinaryIsInVisitor visitor = new BinaryIsInVisitor();
+			ast.Accept(visitor);
+
+			locs = visitor.locs.ToArray();
+		}
+
+		public void GetLastMessage(out string message)
 		{
 			//MessageBox.Show("GetLastMessage()");
 			message = "__no_message__"; // avoid throwing exception

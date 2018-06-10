@@ -1898,8 +1898,8 @@ class AggrValue : TupleValue
 				return super.opBin(ctx, tokid, v);
 			case TOK_is:
 				return Value.create(v is this);
-			case TOK_notidentity:
-				return Value.create(v !is this);
+//			case TOK_notidentity:
+//				return Value.create(v !is this);
 			default:
 				return super.opBin(ctx, tokid, v);
 		}
@@ -1984,8 +1984,8 @@ class ReferenceValue : Value
 				return instance.opBin(ctx, TOK_equal, other);
 			case TOK_is:
 				return Value.create(instance is other);
-			case TOK_notidentity:
-				return Value.create(instance !is other);
+//			case TOK_notidentity:
+//				return Value.create(instance !is other);
 			default:
 				return super.opBin(ctx, tokid, v);
 		}
