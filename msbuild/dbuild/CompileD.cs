@@ -69,9 +69,6 @@ namespace dbuild
         private ArrayList switchOrderList = new ArrayList();
         private string _compiler = "dmd";
 
-        private Dictionary<string, ITaskItem> trackedInputFilesToRemove;
-        private Dictionary<string, ITaskItem> trackedOutputFilesToRemove;
-
         public string Compiler
         {
             get { return _compiler; }
@@ -672,6 +669,14 @@ namespace dbuild
             }
         }
 
+        protected override bool MaintainCompositeRootingMarkers
+        {
+            get
+            {
+                return true;
+            }
+        }
+
         private bool GetBoolProperty(string name)
         {
             if (base.IsPropertySet(name))
@@ -800,23 +805,6 @@ namespace dbuild
 #endif
         }
 
-        private bool InputDependencyFilter(string fullInputPath)
-        {
-          if (fullInputPath.EndsWith(".PDB", StringComparison.OrdinalIgnoreCase) ||
-              fullInputPath.EndsWith(".IDB", StringComparison.OrdinalIgnoreCase))
-            return false;
-          return !this.trackedInputFilesToRemove.ContainsKey(fullInputPath);
-        }
-
-        private bool OutputDependencyFilter(string fullOutputPath)
-        {
-          if (fullOutputPath.EndsWith(".TLH", StringComparison.OrdinalIgnoreCase) ||
-              fullOutputPath.EndsWith(".TLI", StringComparison.OrdinalIgnoreCase) ||
-              fullOutputPath.EndsWith(".DLL", StringComparison.OrdinalIgnoreCase))
-            return false;
-          return !this.trackedOutputFilesToRemove.ContainsKey(fullOutputPath);
-        }
-
 #if TOOLS_V14 || TOOLS_V15
         public 
 #else
@@ -872,130 +860,8 @@ namespace dbuild
                 Log.LogMessage(MessageImportance.High, pathToTool + " " + commandLineCommands + " " + responseFileCommands);
             else
                 Log.LogMessage(MessageImportance.High, "Compiling" + src);
-/*
-            return base.ExecuteTool(pathToTool, responseFileCommands, commandLineCommands);
- */
-            int num = 0;
-            try
-            {
-                num = this.TrackerExecuteTool(pathToTool, responseFileCommands, commandLineCommands);
-                return num;
-            }
-            finally
-            {
-                if (this.MinimalRebuildFromTracking || this.TrackFileAccess)
-                {
-                    CanonicalTrackedOutputFiles trackedOutputFiles = new CanonicalTrackedOutputFiles(this.TLogWriteFiles);
-                    CanonicalTrackedInputFiles trackedInputFiles = new CanonicalTrackedInputFiles(this.TLogReadFiles, this.Sources, this.ExcludedInputPaths, trackedOutputFiles, true, this.MaintainCompositeRootingMarkers);
-                    DependencyFilter includeInTLog = new DependencyFilter(this.OutputDependencyFilter);
-                    DependencyFilter dependencyFilter = new DependencyFilter(this.InputDependencyFilter);
-                    this.trackedInputFilesToRemove = new Dictionary<string, ITaskItem>((IEqualityComparer<string>) StringComparer.OrdinalIgnoreCase);
-                    if (this.TrackedInputFilesToIgnore != null)
-                    {
-                        foreach (ITaskItem taskItem in this.TrackedInputFilesToIgnore)
-                        this.trackedInputFilesToRemove.Add(taskItem.GetMetadata("FullPath"), taskItem);
-                    }
-                    this.trackedOutputFilesToRemove = new Dictionary<string, ITaskItem>((IEqualityComparer<string>) StringComparer.OrdinalIgnoreCase);
-                    if (this.TrackedOutputFilesToIgnore != null)
-                    {
-                        foreach (ITaskItem taskItem in this.TrackedOutputFilesToIgnore)
-                            this.trackedOutputFilesToRemove.Add(taskItem.GetMetadata("FullPath"), taskItem);
-                    }
-                    trackedOutputFiles.RemoveDependenciesFromEntryIfMissing(this.SourcesCompiled);
-                    trackedInputFiles.RemoveDependenciesFromEntryIfMissing(this.SourcesCompiled);
-                    if (num != 0)
-                    {
-                        ITaskItem[] source1;
-                        ITaskItem[] upToDateSources;
-                        if (this.SourcesCompiled.Length > 1)
-                        {
-                            KeyValuePair<string, bool>[] keyValuePairArray = new KeyValuePair<string, bool>[]{ 
-                                new KeyValuePair<string, bool>("ObjectFile", true),
-                                /*
-                                new KeyValuePair<string, bool>("BrowseInformationFile", this.BrowseInformation), 
-                                new KeyValuePair<string, bool>("XMLDocumentationFileName", this.GenerateXMLDocumentationFiles)
-                                 */
-                            };
-                            foreach (ITaskItem source2 in this.Sources)
-                            {
-                                string sourceKey = FileTracker.FormatRootingMarker(source2);
-                                foreach (KeyValuePair<string, bool> keyValuePair in keyValuePairArray)
-                                {
-                                    string metadata = source2.GetMetadata(keyValuePair.Key);
-                                    if (keyValuePair.Value && !string.IsNullOrEmpty(metadata))
-                                        trackedOutputFiles.AddComputedOutputForSourceRoot(sourceKey, metadata);
-                                }
-                            }
-                            source1 = trackedInputFiles.ComputeSourcesNeedingCompilation();
-                            List<ITaskItem> taskItemList = new List<ITaskItem>();
-                            int index = 0;
-                            foreach (ITaskItem taskItem in this.SourcesCompiled)
-                            {
-                                if (index >= source1.Length)
-                                    taskItemList.Add(taskItem);
-                                else if (!source1[index].Equals((object) taskItem))
-                                    taskItemList.Add(taskItem);
-                                else
-                                    ++index;
-                            }
-                            upToDateSources = taskItemList.ToArray();
-                            foreach (ITaskItem source2 in this.Sources)
-                            {
-                                string sourceRoot = FileTracker.FormatRootingMarker(source2);
-                                foreach (KeyValuePair<string, bool> keyValuePair in keyValuePairArray)
-                                {
-                                    string metadata = source2.GetMetadata(keyValuePair.Key);
-                                    if (keyValuePair.Value && !string.IsNullOrEmpty(metadata))
-                                        trackedOutputFiles.RemoveOutputForSourceRoot(sourceRoot, metadata);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            source1 = this.SourcesCompiled;
-                            upToDateSources = new ITaskItem[0];
-                        }
-                        //trackedOutputFiles.RemoveEntriesForSource(source1, this.preprocessOutput);
-                        trackedOutputFiles.SaveTlog(includeInTLog);
-                        trackedInputFiles.RemoveEntriesForSource(source1);
-                        trackedInputFiles.SaveTlog(dependencyFilter);
-                        this.ConstructCommandTLog(upToDateSources, dependencyFilter);
-                    }
-                    else
-                    {
-                        this.RemoveTaskSpecificInputs(trackedInputFiles);
-                        trackedOutputFiles.SaveTlog(includeInTLog);
-                        trackedInputFiles.SaveTlog(dependencyFilter);
-                        this.ConstructCommandTLog(this.SourcesCompiled, dependencyFilter);
-                    }
-                    TrackedVCToolTask.DeleteEmptyFile(this.TLogWriteFiles);
-                    TrackedVCToolTask.DeleteEmptyFile(this.TLogReadFiles);
-                }
-            }
-        }
 
-        private void ConstructCommandTLog(ITaskItem[] upToDateSources, DependencyFilter inputFilter)
-        {
-            IDictionary<string, string> commandLines = this.MapSourcesToCommandLines();
-            if (upToDateSources != null)
-            {
-                string text = this.SourcesPropertyName ?? "Sources";
-                string cmdLine = base.GenerateCommandLineExceptSwitches(new string[1] { text },
-                    CommandLineFormat.ForTracking
-#if TOOLS_V14 || TOOLS_V15
-                    , EscapeFormat.Default
-#endif
-                    );
-                foreach (ITaskItem upToDateSource in upToDateSources)
-                {
-                    string metadata = upToDateSource.GetMetadata("FullPath");
-                    if (inputFilter == null || inputFilter(metadata))
-                        commandLines[FileTracker.FormatRootingMarker(upToDateSource)] = cmdLine + " " + metadata.ToUpperInvariant();
-                    else
-                        commandLines.Remove(FileTracker.FormatRootingMarker(upToDateSource));
-                }
-            }
-            this.WriteSourcesToCommandLinesTable(commandLines);
+            return base.ExecuteTool(pathToTool, responseFileCommands, commandLineCommands);
         }
 
         private System.DateTime _nextToolTypeCheck = new System.DateTime(1900, 1, 1);
