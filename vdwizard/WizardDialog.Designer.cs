@@ -47,10 +47,12 @@
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.platformx86OMF = new System.Windows.Forms.CheckBox();
             this.platformX64 = new System.Windows.Forms.CheckBox();
             this.platformX86 = new System.Windows.Forms.CheckBox();
             this.button3 = new System.Windows.Forms.Button();
-            this.platformx86OMF = new System.Windows.Forms.CheckBox();
+            this.Warning1 = new System.Windows.Forms.Label();
+            this.Warning2 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -213,7 +215,7 @@
             // addUnittest
             // 
             this.addUnittest.AutoSize = true;
-            this.addUnittest.Location = new System.Drawing.Point(301, 280);
+            this.addUnittest.Location = new System.Drawing.Point(36, 341);
             this.addUnittest.Name = "addUnittest";
             this.addUnittest.Size = new System.Drawing.Size(145, 17);
             this.addUnittest.TabIndex = 11;
@@ -252,6 +254,16 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Platforms";
             // 
+            // platformx86OMF
+            // 
+            this.platformx86OMF.AutoSize = true;
+            this.platformx86OMF.Location = new System.Drawing.Point(148, 25);
+            this.platformx86OMF.Name = "platformx86OMF";
+            this.platformx86OMF.Size = new System.Drawing.Size(104, 17);
+            this.platformx86OMF.TabIndex = 7;
+            this.platformx86OMF.Text = "use OMF for x86";
+            this.platformx86OMF.UseVisualStyleBackColor = true;
+            // 
             // platformX64
             // 
             this.platformX64.AutoSize = true;
@@ -284,21 +296,33 @@
             this.button3.Text = "Back...";
             this.button3.UseVisualStyleBackColor = true;
             // 
-            // platformx86OMF
+            // Warning1
             // 
-            this.platformx86OMF.AutoSize = true;
-            this.platformx86OMF.Location = new System.Drawing.Point(148, 25);
-            this.platformx86OMF.Name = "platformx86OMF";
-            this.platformx86OMF.Size = new System.Drawing.Size(104, 17);
-            this.platformx86OMF.TabIndex = 7;
-            this.platformx86OMF.Text = "use OMF for x86";
-            this.platformx86OMF.UseVisualStyleBackColor = true;
+            this.Warning1.AutoSize = true;
+            this.Warning1.ForeColor = System.Drawing.Color.Red;
+            this.Warning1.Location = new System.Drawing.Point(278, 292);
+            this.Warning1.Name = "Warning1";
+            this.Warning1.Size = new System.Drawing.Size(241, 13);
+            this.Warning1.TabIndex = 15;
+            this.Warning1.Text = "Warning: without platform x86 you need to unload";
+            // 
+            // Warning2
+            // 
+            this.Warning2.AutoSize = true;
+            this.Warning2.ForeColor = System.Drawing.Color.Red;
+            this.Warning2.Location = new System.Drawing.Point(286, 311);
+            this.Warning2.Name = "Warning2";
+            this.Warning2.Size = new System.Drawing.Size(225, 13);
+            this.Warning2.TabIndex = 16;
+            this.Warning2.Text = "and reload the project once to see source files";
             // 
             // WizardDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(530, 383);
+            this.Controls.Add(this.Warning2);
+            this.Controls.Add(this.Warning1);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.button2);
@@ -349,5 +373,7 @@
         public System.Windows.Forms.CheckBox platformX86;
         public System.Windows.Forms.PictureBox pictureBox1;
         public System.Windows.Forms.CheckBox platformx86OMF;
+        private System.Windows.Forms.Label Warning1;
+        private System.Windows.Forms.Label Warning2;
     }
 }

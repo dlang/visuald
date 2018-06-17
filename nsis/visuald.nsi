@@ -455,7 +455,7 @@ ${MementoSection} "Register with VS 2017" SecVS2017
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
 
-  ${SetOutPath} "$1\PublicAssemblies"
+  ${SetOutPath} "$1Common7\IDE\PublicAssemblies"
   ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
 ${MementoSectionEnd}

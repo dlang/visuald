@@ -115,6 +115,10 @@ namespace VisualDWizard
             replacementsDictionary.Add("$dcompiler_" + idxs + "$", compiler.ToString());
             replacementsDictionary.Add("$dcompilername_" + idxs + "$", compilerName[compiler]);
 
+            // VS expects "Debug" configuration in .vcxproj, otherwise it doesn't show 
+            //  project files before reload
+            if (!dlg.platformx86OMF.Visible && idx == 1)
+                suffix = "";
             replacementsDictionary.Add("$configsuffix_" + idxs + "$", suffix);
 
             replacementsDictionary.Add("$platformx86_" + idxs + "$", dlg.platformX86.Checked ? "1" : "0");

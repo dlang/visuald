@@ -20,6 +20,8 @@ namespace VisualDWizard
             compilerDMD.CheckState = CheckState.Checked;
             prjTypeConsole.Select();
             addUnittest.Visible = false;
+            Warning1.Visible = false;
+            Warning2.Visible = false;
 
             ToolTip toolTip = new ToolTip();
             toolTip.SetToolTip(platformx86OMF, "Digital Mars OMF object files, only available with DMD");
@@ -33,6 +35,8 @@ namespace VisualDWizard
             if (!platformX64.Checked && !platformX86.Checked)
                 platformX64.Checked = true;
             platformx86OMF.Enabled = platformX86.Checked && compilerGDC.Enabled;
+            Warning1.Visible = !platformX86.Checked;
+            Warning2.Visible = !platformX86.Checked;
         }
 
         private void compiler_CheckedChanged(object sender, EventArgs e)
