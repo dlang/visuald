@@ -35,8 +35,8 @@ namespace VisualDWizard
             if (!platformX64.Checked && !platformX86.Checked)
                 platformX64.Checked = true;
             platformx86OMF.Enabled = platformX86.Checked && compilerGDC.Enabled;
-            Warning1.Visible = !platformX86.Checked;
-            Warning2.Visible = !platformX86.Checked;
+            Warning1.Visible = !platformX86.Checked && !compilerGDC.Enabled;
+            Warning2.Visible = !platformX86.Checked && !compilerGDC.Enabled;
         }
 
         private void compiler_CheckedChanged(object sender, EventArgs e)
