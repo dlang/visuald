@@ -1,11 +1,26 @@
 Ddoc
 
-To create a new Project, navigate to the menu File -> New -> Project and select the "D" entry in 
-the "Other Languages" branch. There are 4 predefined templates to select from.
+To create a new Project, navigate to the menu File -> New -> Project and select the "D" entry in
+the "Other Languages" branch. There are two template types to select from.
 
 $(BR)
 $(BR)
 $(IMG_CENTER images/newproject.png)
+$(BR)
+
+The first entry selects a project based on Visual C++ for $(LINK2 vcxproject.html, seamless integration with C++).
+
+With the second entry a project using $(LINK2 projectconfig.html, Visual D's project type)
+dedicated to the D programming language is chosen.
+
+Both types use a wizard dialog to configure the generated projects:
+
+$(BR)
+$(BR)
+$(IMG_CENTER images/projectwizard.png)
+$(BR)
+
+Options GDC and OMF are not available for the Visual C++ project types.
 
 Macros:
 	TITLE=Project Wizard

@@ -54,6 +54,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2017-06-24 Version 0.47.0
+$(UL
+  $(LI improved vcxproj integration: better dependencies, automatic libraries, name demangling)
+  $(LI new $(LINK2 ProjectWizard.html, project wizard))
+  $(LI mago debugger: show vtable, dynamic type of interfaces, symbolic names of pointer address)
+)
+
 2017-12-02 Version 0.46.0
 $(UL
   $(LI improved integration for VS2017 including update 15.3.1 or later)
@@ -67,14 +74,6 @@ $(UL
       anti-virus programs blocking the installation or execution)
   $(LI improved tooltips)
   $(LI mago: fix displaying long strings as empty)
- )
-
-2017-08-03 Version 0.45.0
- $(UL
-  $(LI improved integration for VS2017)
-  $(LI added task list support)
-  $(LI dparser updated to recent language additions)
-  $(LI dparser now caches semantic results while browsing source code)
  )
 
 $(LINK2 VersionHistory.html, more...)

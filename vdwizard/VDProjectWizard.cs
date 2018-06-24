@@ -131,6 +131,8 @@ namespace VisualDWizard
         public override void beforeOpenDialog()
         {
             dlg.pictureBox1.Image = new Bitmap(VisualDWizard.Properties.Resources.vd_logo);
+            dlg.label2.Text = "This project will use Visual D\'s custom project type designed";
+            dlg.label3.Text = "for the D programming language.";
         }
     }
 
