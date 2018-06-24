@@ -2,9 +2,9 @@
 <!DOCTYPE html>
 <html lang="en-US">
 <!--
-    Copyright (c) 1999-2017 by the D Language Foundation
+    Copyright (c) 1999-2018 by the D Language Foundation
     All Rights Reserved.
-    https://dlang.org/foundation.html
+    https://dlang.org/foundation_overview.html
   -->
 <head>
 <meta charset="utf-8">
@@ -40,22 +40,27 @@
 <ul class='expand-content'>    <li><a href='https://dlang.org/blog'>Blog</a></li>
     <li><a href='http://www.dlang.org/orgs-using-d.html'>Orgs using D</a></li>
     <li><a href='https://twitter.com/search?q=%23dlang'>Twitter</a></li>
+    <li><a href='http://www.dlang.org/calendar.html'>Calendar</a></li>
     <li class="menu-divider"><a href='https://forum.dlang.org'>Forums</a></li>
     <li><a href='irc://irc.freenode.net/d'>IRC</a></li>
     <li><a href='https://wiki.dlang.org'>Wiki</a></li>
     <li class="menu-divider"><a href='https://github.com/dlang'>GitHub</a></li>
     <li><a href='http://www.dlang.org/bugstats.html'>Issues</a></li>
     <li><a href='https://wiki.dlang.org/Get_involved'>Get involved</a></li>
-    <li class="menu-divider"><a href='http://www.dlang.org/foundation.html'>Foundation</a></li>
-    <li><a href='http://www.dlang.org/donate.html'>Donate</a></li>
+    <li class="menu-divider"><a href='http://www.dlang.org/foundation/contributors.html'>Contributors</a></li>
+    <li><a href='http://www.dlang.org/foundation/index.html'>Foundation</a></li>
+    <li><a href='http://www.dlang.org/foundation/donate.html'>Donate</a></li>
+    <li><a href='http://www.dlang.org/foundation/sponsors.html'>Sponsors</a></li>
  </ul></li>
     <li class='expand-container'><a class='expand-toggle' href='http://www.dlang.org/resources.html'><span>Resources</span></a>
       
-<ul class='expand-content'>    <li><a href='https://wiki.dlang.org/Books'>Books</a></li>
+<ul class='expand-content'>    <li><a href='https://tour.dlang.org'>Tour</a></li>
+    <li><a href='https://wiki.dlang.org/Books'>Books</a></li>
     <li><a href='https://wiki.dlang.org/Tutorials'>Tutorials</a></li>
     <li class="menu-divider"><a href='https://wiki.dlang.org/Development_tools'>Tools</a></li>
     <li><a href='https://wiki.dlang.org/Editors'>Editors</a></li>
     <li><a href='https://wiki.dlang.org/IDEs'>IDEs</a></li>
+    <li><a href='https://run.dlang.io'>run.dlang.io</a></li>
     <li><a href='http://rainers.github.io/visuald/visuald/StartPage.html'>Visual D</a></li>
     <li class="menu-divider"><a href='http://www.dlang.org/acknowledgements.html'>Acknowledgments</a></li>
     <li><a href='http://www.dlang.org/dstyle.html'>D Style</a></li>
@@ -82,7 +87,7 @@
 </div></div></div>
 
 <div class="container">    <div class="subnav-helper"></div> <div class="subnav">    
-    <div class="head">        <h2>Visual D 0.46.0</h2>
+    <div class="head">        <h2>Visual D 0.47.0</h2>
         <p class="subnav-duplicate">            <a href="StartPage.html">Home</a></p>
     </div>
     <ul>        <li><a href='StartPage.html'><span>Home</span></a></li>
@@ -97,7 +102,7 @@
     </ul>
 </div>
     <div class="hyphenate" id="content">        
-<div id="tools"><div >	<div class="tip smallprint">		<a href="https://issues.dlang.org/enter_bug.cgi?bug_file_loc=http%3A%2F%2Fdlang.org/&amp;bug_severity=enhancement&amp;component=visuald&amp;op_sys=All&amp;priority=P3&amp;product=D&amp;rep_platform=All&amp;short_desc=%5BVersion History%5D&amp;version=D2">Report a bug</a>
+<div id="tools"><div >	<div class="tip smallprint">		<a href="https://issues.dlang.org/enter_bug.cgi?bug_file_loc=http%3A%2F%2Fdlang.org/&amp;component=visuald&amp;op_sys=All&amp;priority=P3&amp;product=D&amp;rep_platform=All&amp;short_desc=%5BVersion History%5D&amp;version=D2&amp;bug_severity=enhancement">Report a bug</a>
 		<div >			If you spot a problem with this page, click here to create a Bugzilla issue.
 		</div>
 	</div>
@@ -112,6 +117,48 @@
         <h1>Version History</h1>
         
         
+
+<h2>2018-06-24 Version 0.47.0</h2>
+ <ul>
+  <li>build system
+   <ul>
+    <li>msbuild:
+     <ul>
+      <li>improved dependency handling for single/package file compilation (thanks to Igor Cesi)</li>
+      <li>LDC now assumed to be multilib installation, i.e. 64-bit lib folder is "lib64", not "lib"</li>
+      <li>Issue 18641: phobos/druntime libraries automatically added to link if any D file
+        is compiled in the project or a dependent static library (without -betterC)</li>
+      <li>Issue 18640: settings now default to mago debug engine (avoiding deprecation warning)</li>
+      <li>to use LDC within VS2017, set "InstallationFolder" in registry HKEY_LOCAL_MACHINE\Software\LDC</li>
+      <li>now demangles linker errors (if not disabled on global options page)</li>
+    </ul></li>
+    <li>new project wizard for customizing generated projects, with only two types to select from</li>
+    <li>new icons for project templates based on vcxproj</li>
+    <li>support option -gf (emit debug information for referenced types)</li>
+  </ul></li>
+  <li>mago:
+   <ul>
+    <li>hex values now lower case for consistency with C++ debugger</li>
+    <li>no longer shows void pointers as expandable</li>
+    <li>show vtable of classes and interfaces as __vfptr (also allowed in watches, enable/disable
+      on Tools-&gt;Options-&gt;Debugging-Mago page, not with LDC)</li>
+    <li>shows symbol names for pointers if found in image</li>
+    <li>pointers: also show value for pointee, remove additional indirection for complex types</li>
+    <li>support to call functions and delegates without arguments from watch window
+      (dmd win64 only, no slice or delegate return values)</li>
+    <li>can now show the dynamic type of an interface</li>
+  </ul></li>
+  <li>cv2pdb:
+   <ul>
+    <li>DWARF: several bug fixes and minor enhancements</li>
+    <li>can now convert DBG files alongside exe/dll</li>
+  </ul></li>
+  <li>miscellaneous
+   <ul>
+    <li>dparser: support 'do' instead of 'body'</li>
+    <li>Issue 18622: removed outdated information regarding link definition when generated by Visual D DLL project.</li>
+  </ul></li>
+ </ul>
 
 <h2>2017-12-02 Version 0.46.0</h2>
  <ul>
@@ -1266,8 +1313,8 @@
  </ul>
 
 
-        <div class="smallprint" id="copyright">Copyright &copy; 1999-2017 by the <a href="http://www.dlang.org/foundation.html">D Language Foundation</a> | Page generated by
-<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Sat Dec 02 16:57:24 2017
+        <div class="smallprint" id="copyright">Copyright &copy; 1999-2018 by the <a href="http://www.dlang.org/foundation_overview.html">D Language Foundation</a> | Page generated by
+<a href="http://www.dlang.org/spec/ddoc.html">Ddoc</a> on Sun Jun 24 13:25:33 2018
 </div>
     </div>
 </div>
