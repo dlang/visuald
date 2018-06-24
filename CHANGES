@@ -954,7 +954,7 @@ Version history
   * required OS version for executables restored to 5.01 to support Windows XP
   * mago: fix string display for LDC builds
 
-unreleased Version 0.47.0
+2018-06-24 Version 0.47.0
 
   * dparser
     - support 'do' instead of 'body'
