@@ -54,7 +54,7 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
-2017-06-24 Version 0.47.0
+2018-06-24 Version 0.47.0
 $(UL
   $(LI improved vcxproj integration: better dependencies, automatic libraries, name demangling)
   $(LI new $(LINK2 ProjectWizard.html, project wizard))
