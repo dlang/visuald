@@ -27,7 +27,9 @@ import std.conv;
 import std.array;
 
 //////////////////////////////////////////////////////////////////////
-static string[][string] tags;
+private __gshared string lastLoadPath;
+private __gshared string[][string] tags;
+
 alias AssociativeArray!(string, string[]) _wa1; // fully instantiate type info
 
 static bool[string] searchAnchors(string file)
@@ -41,14 +43,22 @@ fulltext:
 		dchar ch = decode(s, pos);
 		if(ch == '<')
 		{
+			size_t apos;
+			if(s[pos..$].startsWith(`span class="def-anchor" id="`))
+			{
+				apos = pos + 28;
+				goto Lapos;
+			}
 			if(s[pos..$].startsWith("a name=\""))
 			{
-				auto p = s[pos+8..$].indexOf('\"');
+				apos = pos + 8;
+			Lapos:
+				auto p = s[apos..$].indexOf('\"');
 				if(p < 0)
 					break fulltext;
-				string name = s[pos+8 .. pos+8 + p];
+				string name = s[apos .. apos + p];
 				names[name] = true;
-				pos += 8 + p + 1;
+				pos = apos + p + 1;
 			}
 			while(ch != '>' && pos < s.length)
 			{
@@ -75,14 +85,17 @@ fulltext:
 
 void loadTags()
 {
-	string installdir = normalizeDir(Package.GetGlobalOptions().DMD.InstallDir) ~ "html/d/";
-	if(!std.file.exists(installdir ~ "index.html"))
+	string loadpath = normalizeDir(Package.GetGlobalOptions().DMD.InstallDir) ~ "html/d/";
+	if (lastLoadPath == loadpath)
+		return;
+	lastLoadPath = loadpath;
+	if(!std.file.exists(loadpath ~ "index.html"))
 	{
-		writeToBuildOutputPane("no documentation found at " ~ installdir);
+		writeToBuildOutputPane("no documentation found at " ~ loadpath);
 		return;
 	}
 	tags = tags.init;
-	foreach(string file; dirEntries(installdir, SpanMode.depth))
+	foreach(string file; dirEntries(loadpath, SpanMode.depth))
 	{
 		try
 		{
@@ -169,12 +182,7 @@ string createDisambiguationPage(string word, string[] files)
 
 bool openHelp(string word)
 {
-	static bool triedLoad;
-	if(!triedLoad) // (tags.length == 0) no longer works ;-((
-	{
-		triedLoad = true;
-		loadTags();
-	}
+	loadTags();
 
 	string url;
 	auto files = word in tags;
