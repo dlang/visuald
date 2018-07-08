@@ -376,7 +376,7 @@ ${MementoSection} "Register with VS 2013" SecVS2013
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
   
   ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
@@ -408,7 +408,7 @@ ${MementoSection} "Register with VS 2015" SecVS2015
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
@@ -440,7 +440,7 @@ ${MementoSection} "Register with VS 2017" SecVS2017
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1Common7\IDE${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
