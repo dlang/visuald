@@ -1896,6 +1896,7 @@ class DirPropertyPage : GlobalPropertyPage
 	enum ID_LIBPATH32COFF = 1007;
 	enum ID_LINKER64 = 1008;
 	enum ID_LINKER32COFF = 1009;
+	enum ID_INSTALLDIR = 1010;
 
 	this(GlobalOptions options)
 	{
@@ -1912,6 +1913,10 @@ class DirPropertyPage : GlobalPropertyPage
 	{
 		switch(cmd)
 		{
+			case ID_INSTALLDIR:
+				updateVersionLabel();
+				break;
+
 			case ID_BROWSEINSTALLDIR:
 				if(auto dir = browseDirectory(mCanvas.hwnd, "Select installation directory"))
 					mDmdPath.setText(dir);
@@ -1957,7 +1962,13 @@ class DirPropertyPage : GlobalPropertyPage
 	void dirCreateControls(string name, string overrideIni)
 	{
 		auto btn = new Button(mCanvas, "...", ID_BROWSEINSTALLDIR);
-		AddControl(name ~ " install path", mDmdPath = new Text(mCanvas), btn);
+		AddControl(name ~ " install path", mDmdPath = new Text(mCanvas, "", ID_INSTALLDIR), btn);
+		mVersionLabel = new Label(mCanvas, "no version detected");
+		mVersionLabel.AddWindowStyle(SS_CENTER, SS_TYPEMASK);
+		mVersionLabel.setRect(0, mLineY, getWidgetWidth(mCanvas, kPageWidth), kLineHeight);
+		addResizableWidget(mVersionLabel, kAttachLeftRight);
+		mLineY += kLineHeight;
+
 		mLinesPerMultiLine = 2;
 		btn = new Button(mCanvas, "+", ID_IMPORTDIR);
 		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas), btn, 300);
@@ -2047,6 +2058,20 @@ class DirPropertyPage : GlobalPropertyPage
 
 	abstract CompilerDirectories* getCompilerOptions(GlobalOptions opts);
 
+	void updateVersionLabel()
+	{
+		auto opts = GetGlobalOptions();
+		CompilerDirectories* opt = getCompilerOptions(opts);
+		string instdir = mDmdPath.getText();
+
+		if (instdir.empty)
+			mVersionLabel.setText("no installation root folder specified");
+		else if (opt.detectCompilerVersion(instdir))
+			mVersionLabel.setText(opt.detectedVersion);
+		else
+			mVersionLabel.setText("no compiler detected at given location");
+	}
+
 	override void SetControls(GlobalOptions opts)
 	{
 		CompilerDirectories* opt = getCompilerOptions(opts);
@@ -2075,6 +2100,7 @@ class DirPropertyPage : GlobalPropertyPage
 			mDisasmCommand32coff.setText(opt.DisasmCommand32coff);
 		}
 
+		updateVersionLabel();
 		enableControls();
 	}
 
@@ -2112,6 +2138,7 @@ class DirPropertyPage : GlobalPropertyPage
 
 	TabControl mTabArch;
 	Text mDmdPath;
+	Label mVersionLabel;
 	MultiLineText mExePath;
 	MultiLineText mImpPath;
 	MultiLineText mLibPath;

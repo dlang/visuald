@@ -19,6 +19,8 @@ import std.conv;
 import std.array;
 import std.exception;
 import std.algorithm;
+import std.datetime;
+import std.process : execute, ExecConfig = Config;
 static import std.ascii;
 
 import stdext.path;
@@ -1204,6 +1206,7 @@ private:
 
 struct CompilerDirectories
 {
+	Compiler compiler;
 	string InstallDir;
 	string ExeSearchPath;
 	string ImpSearchPath;
@@ -1223,6 +1226,61 @@ struct CompilerDirectories
 	string overrideLinker32coff;
 	string overrideOptions32coff;
 	string DisasmCommand32coff;
+
+	string detectedVersion;
+	long   detectedDate;
+
+	bool detectCompilerVersion()
+	{
+		return detectCompilerVersion(InstallDir);
+	}
+
+	bool detectCompilerVersion(string instdir)
+	{
+		string exe;
+		if (compiler == Compiler.DMD)
+		{
+			exe = "windows\\bin\\dmd.exe";
+		}
+		else if (compiler == Compiler.LDC)
+		{
+			exe = "bin\\ldc2.exe";
+		}
+		else if (compiler == Compiler.GDC)
+		{
+			exe = "bin\\gdc.exe";
+		}
+		exe = normalizeDir(instdir) ~ exe;
+
+		try
+		{
+			if(std.file.exists(exe))
+			{
+				SysTime acctime, modtime;
+				std.file.getTimes(exe, acctime, modtime);
+				if (detectedDate == modtime.stdTime)
+					return true; // uptodate
+
+				auto res = execute([exe, "--version"], null, ExecConfig.suppressConsole);
+				if (res.status == 0)
+				{
+					auto lines = res.output.splitLines;
+					if (lines.length > 0)
+					{
+						detectedVersion = lines[0];
+						detectedDate = modtime.stdTime;
+						return true;
+					}
+				}
+			}
+		}
+		catch(Exception)
+		{
+		}
+		detectedVersion = null;
+		detectedDate = 0;
+		return false;
+	}
 }
 
 enum enableShowMemUsage = false;
@@ -1300,6 +1358,9 @@ class GlobalOptions
 
 	this()
 	{
+		DMD.compiler = Compiler.DMD;
+		GDC.compiler = Compiler.GDC;
+		LDC.compiler = Compiler.LDC;
 	}
 
 	bool getRegistryRoot()

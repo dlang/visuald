@@ -525,6 +525,14 @@ class Label : Widget
 
 		super(parent);
 	}
+
+	void setText(string str)
+	{
+		auto lines = std.string.splitLines(str);
+		string newline = std.ascii.newline; // join no longer likes immutable seperator
+		auto winstr = std.string.join(lines, newline);
+		SendMessageW(hwnd, WM_SETTEXT, 0, cast(LPARAM)toUTF16z(winstr));
+	}
 }
 
 class Text : Widget
