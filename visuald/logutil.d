@@ -88,6 +88,7 @@ string mixinGUID2string(string T)
 string GUID2utf8(ref const(GUID) guid)
 {
 	mixin(mixinGUID2string("IUnknown"));
+	mixin(mixinGUID2string("IDispatch"));
 	mixin(mixinGUID2string("IClassFactory"));
 	mixin(mixinGUID2string("IMarshal"));
 	mixin(mixinGUID2string("INoMarshal"));
