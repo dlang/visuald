@@ -30,7 +30,8 @@ namespace DParserCOMServer
 	public class IID
 	{
 		public const string IVDServer = "002a2de9-8bb6-484d-9901-7e4ad4084715";
-		public const string VDServer = "002a2de9-8bb6-484d-AA05-7e4ad4084715";
+		public const string VDServer = "002a2de9-8bb6-484d-AA05-7e4ad4084715"; // release
+        //public const string VDServer = "002a2de9-8bb6-484d-AB05-7e4ad4084715"; // debug
 	}
 
 	[ComVisible(true), Guid(IID.IVDServer)]
@@ -161,7 +162,23 @@ namespace DParserCOMServer
 		}
 		public Dictionary<string, string> _sources = new Dictionary<string, string>();
 
-		public VDServer()
+        public string GetSource(string fileName)
+        {
+            if (!_sources.ContainsKey(fileName))
+            {
+                try
+                {
+                    _sources[fileName] = File.ReadAllText(fileName);
+                }
+                catch (Exception)
+                {
+                    return "";
+                }
+            }
+            return _sources[fileName];
+        }
+
+        public VDServer()
 		{
 			// MessageBox.Show("VDServer()");
 		}
@@ -270,7 +287,16 @@ namespace DParserCOMServer
 			return off + loc.Column - 1;
 		}
 
-		Thread completionThread;
+        static string GetSourceLine(string s, int line)
+        {
+            int off = 0;
+            for (int ln = 1; ln < line; ln++)
+                off = s.IndexOf('\n', off) + 1;
+            int end = s.IndexOf('\n', off);
+            return s.Substring(off, end - off);
+        }
+
+        Thread completionThread;
         AutoResetEvent completionEvent = new AutoResetEvent(true);
         Mutex completionMutex = new Mutex();
         Action runningAction;
@@ -670,9 +696,15 @@ namespace DParserCOMServer
                         }
                         else
                         {
+
+                            var mods = new Dictionary<DModule, bool>();
+
                             foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
-                                foreach (var mod in GlobalParseCache.EnumModulesRecursively(basePath))
-                                    GetReferencesInModule(mod, refs, n, ctxt);
+                                foreach (var mod in GlobalParseCache.EnumModulesRecursively(normalizeDir(basePath)))
+                                    mods[mod] = true;
+
+                            foreach (var mod in mods)
+                                GetReferencesInModule(mod.Key, refs, n, ctxt);
                         }
                     }
                     //var res = TypeReferenceFinder.Scan(_editorData, System.Threading.CancellationToken.None, null);
@@ -680,9 +712,10 @@ namespace DParserCOMServer
                 if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.References)
                     _result = refs.ToString();
             };
+            runAsync (dg);
         }
 
-        private static void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
+        private void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
         {
             var res = ReferencesFinder.SearchModuleForASTNodeReferences(ast, n, ctxt);
 
@@ -691,13 +724,17 @@ namespace DParserCOMServer
             {
                 var rfilename = ast.FileName;
                 var rloc = r.Location;
-                var ln = String.Format("{0},{1},{2},{3}:{4}\n", rloc.Line, rloc.Column - 1, rloc.Line, rloc.Column, rfilename);
+                var len = r.ToString().Length;
+                var src = GetSource(rfilename);
+                var linetxt = GetSourceLine(src, rloc.Line);
+                var ln = String.Format("{0},{1},{2},{3}:{4}|{5}\n", rloc.Line, rloc.Column - 1, rloc.Line, rloc.Column + len - 1, rfilename, linetxt);
+
                 refs.Append(ln);
             }
         }
         public void GetReferencesResult(out string stringList)
         {
-            stringList = _request == Request.Definition ? _result : "__cancelled__";
+            stringList = _request == Request.References ? _result : "__cancelled__";
             //MessageBox.Show("GetSemanticExpansionsResult()");
             //throw new NotImplementedException();
         }

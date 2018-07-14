@@ -1777,11 +1777,22 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 
 class FindReferencesList : DComObject, IVsSimpleObjectList2
 {
-	string[] mReferences;
+	static struct RefData
+	{
+		int line;
+		int col;
+		int len;
+		int highlightStart;
+		string file;
+		string displayText;
+	}
+	RefData[] mReferences;
 
 	this(string[] refs)
 	{
-		mReferences = refs;
+		mReferences = new RefData[refs.length];
+		foreach (i, r; refs)
+			parseRef(i, r);
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -1796,12 +1807,9 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		return uIndex < mReferences.length;
 	}
 
-	string getSourceLoc(uint Index, int* line = null, int *col = null)
+	string parseRef(int i, string r)
 	{
-		if (!IsValidIndex(Index))
-			return null;
-
-		string r = mReferences[Index];
+		auto refdata = &mReferences[i];
 
 		auto idx = indexOf(r, ':');
 		if(idx > 0)
@@ -1811,11 +1819,27 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 			{
 				try
 				{
-					if(line)
-						*line = parse!int(num[0]) - 1;
-					if(col)
-						*col = parse!int(num[1]);
-					return r[idx+1..$];
+					refdata.line = parse!int(num[0]) - 1;
+					refdata.col = parse!int(num[1]);
+					int ln = parse!int(num[2]) - 1;
+					int end = parse!int(num[3]);
+					if(ln == refdata.line)
+						refdata.len = end - refdata.col;
+					else
+						refdata.len = -1;
+
+					auto sidx = indexOf(r, '|');
+
+					refdata.file = r[idx + 1 .. sidx];
+
+					string src = sidx < r.length ? r[sidx + 1..$] : "";
+					size_t srclen = src.length;
+					src = stripLeft(src);
+					size_t stripped = srclen - src.length;
+
+					string prefix = refdata.file ~ "(" ~ to!string(refdata.line + 1) ~ "," ~ to!string(refdata.col + 1) ~ "): ";
+					refdata.highlightStart = cast(int)(prefix.length + refdata.col - stripped);
+					refdata.displayText = prefix ~ src;
 				}
 				catch(ConvException)
 				{
@@ -1854,9 +1878,13 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		if (!IsValidIndex(Index))
 			return E_UNEXPECTED;
 
-		pData.Mask = TDM_IMAGE | TDM_SELECTEDIMAGE;
+		pData.Mask = TDM_STATE | TDM_IMAGE | TDM_SELECTEDIMAGE | TDM_FORCESELECT;
+		pData.StateMask = TDS_FORCESELECT | TDS_GRAYTEXT;
+		pData.State = TDS_FORCESELECT;
 		pData.Image = CSIMG_BLITZ;
 		pData.SelectedImage = pData.Image;
+		pData.ForceSelectStart = cast(ushort) mReferences[Index].highlightStart;
+		pData.ForceSelectLength = cast(ushort) mReferences[Index].len;
 
 		return S_OK;
 	}
@@ -1864,15 +1892,15 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 								 /+[out]+/ BSTR *pbstrText)
 	{
 		mixin(LogCallMix2);
+		if (!IsValidIndex(Index))
+			return E_UNEXPECTED;
+
 		switch(tto)
 		{
 			case TTO_DEFAULT:
 			case TTO_SORTTEXT:
 			case TTO_SEARCHTEXT:
-				int line, col;
-				string file = getSourceLoc(Index, &line, &col);
-				file ~= "(" ~ to!string(line) ~ "," ~ to!string(col) ~ ")";
-				*pbstrText = allocBSTR(file);
+				*pbstrText = allocBSTR(mReferences[Index].displayText);
 				return S_OK;
 			default:
 				break;
@@ -1883,11 +1911,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 									/+[out]+/ BSTR *pbstrText)
 	{
 		mixin(LogCallMix2);
-		if (!IsValidIndex(Index))
-			return E_UNEXPECTED;
-
-		*pbstrText = allocBSTR(mReferences[Index]);
-		return S_OK;
+		return GetTextWithOwnership(Index, TTO_DEFAULT, pbstrText);
 	}
     HRESULT GetCategoryField2(in ULONG Index, in LIB_CATEGORY2 Category,
 							  /+[out,retval]+/ DWORD *pfCatField)
@@ -1958,14 +1982,14 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
     HRESULT GoToSource(in ULONG Index, in VSOBJGOTOSRCTYPE SrcType)
 	{
 		mixin(LogCallMix2);
+		if (!IsValidIndex(Index))
+			return E_UNEXPECTED;
 
-		int line, col;
-		string file = getSourceLoc(Index, &line, &col);
-		string modname;
-
-		if(!file.length)
+		auto r = &mReferences[Index];
+		if(!r.file.length)
 			return E_FAIL;
-		return OpenFileInSolution(file, line, col, modname, true);
+		string modname;
+		return OpenFileInSolution(r.file, r.line, r.col, modname, true);
 	}
     HRESULT GetContextMenu(in ULONG Index,
 						   /+[out]+/ CLSID *pclsidActive,
