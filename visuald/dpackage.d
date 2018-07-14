@@ -157,6 +157,7 @@ void global_init()
 
 void global_exit()
 {
+	VCConfig_shared_static_dtor();
 	LanguageService.shared_static_dtor();
 	CHierNode.shared_static_dtor_typeHolder();
 	automation_shared_static_dtor_typeHolder();
@@ -1445,7 +1446,7 @@ class GlobalOptions
 				WindowsSdkVersion = fromMBSz(cast(immutable)pver);
 			else if(!WindowsSdkDir.empty)
 			{
-				string rootsDir = normalizeDir(WindowsSdkDir) ~ "Include\\";
+				string rootsDir = normalizeDir(WindowsSdkDir) ~ "Lib\\";
 				try
 				{
 					foreach(string f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
@@ -1453,7 +1454,7 @@ class GlobalOptions
 						{
 							string bname = baseName(f);
 							if(!bname.empty && isDigit(bname[0]))
-								if (std.file.exists(f ~ "\\um\\windows.h")) // not UCRT only?
+								if (std.file.exists(f ~ "\\um\\x64\\kernel32.lib"))
 									WindowsSdkVersion = bname;
 						}
 				}
@@ -1489,7 +1490,7 @@ class GlobalOptions
 						if(std.file.isDir(f) && f > UCRTVersion)
 						{
 							string bname = baseName(f);
-							if(!bname.empty && isDigit(bname[0]))
+							if(!bname.empty && isDigit(bname[0]) && std.file.exists(f ~ "/ucrt/x64/libucrt.lib"))
 								UCRTVersion = bname;
 						}
 				}

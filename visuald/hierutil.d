@@ -852,6 +852,13 @@ struct VCFile
 }
 __gshared VCConfig[VCFile] vcFileConfigs;
 
+// projects for VCConfigs are created without being reference counted, so their Dispose() function is never called
+void VCConfig_shared_static_dtor()
+{
+	foreach(vccfg; vcFileConfigs)
+		vccfg.GetProject().Dispose();
+}
+
 Config getVisualCppConfig(string file, bool genCmdLine = false)
 {
 	auto srpSolution = queryService!(IVsSolution);
