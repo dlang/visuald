@@ -92,16 +92,25 @@ $(UL
    )
   )
  )
- $(LI VS2010-VS2017: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
+ $(LI VS2010-VS2015: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
    on every start of Visual Studio.
   $(UL
-   $(LI Copy the files from `$(DOLLAR)(VSINSTALLDIR)\Common\IDE\Extensions\Rainer Schuetze\visuald\VisualD` into the folder
+   $(LI Copy the files from `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\Extensions\Rainer Schuetze\visuald\VisualD` into the folder
      `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD` (replace 12.0D with 14.0D for VS2015, 15.0_`<id>`D
-	 for VS2017 with `<id>` some identifier generated during VS installation))
+     for VS2017 with `<id>` some identifier generated during VS installation))
    $(LI in visuald.pkgdef, replace the path "C:\\Program Files (x86)\\Visual D\\visuald.dll" with your debug build output path.)
+   $(LI Modify a line in `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\devenv.pkgdef:
+     $(PRE -"PkgDefSearchPath" = "$ApplicationExtensionsFolder$;$RootFolder$\Common7\IDE\CommonExtensions;$RootFolder$\Common7\IDE\devenv.admin.pkgdef;")
+     $(PRE +"PkgDefSearchPath" = "$ApplicationExtensionsFolder$;$RootFolder$\Common7\IDE\CommonExtensions;$AppDataLocalFolder$\Extensions;$RootFolder$\Common7\IDE\devenv.admin.pkgdef;")
+    )
+   $(LI in the registry, delete hives
+    $(UL
+     $(LI `HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\14.0D`)
+     $(LI `HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\14.0D_Config`)
+   ))
    $(LI Start the IDE with the new settings branch via)
     $(PRE devenv /RootSuffix D)
-   $(LI Visual D will now be shown in the Extension Manager where it has to be enabled.)
+   $(LI Visual D will now be shown in the Extension Manager where it might have to be enabled.)
   )
  )
 )
