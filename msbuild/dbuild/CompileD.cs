@@ -798,22 +798,16 @@ namespace dbuild
 
         private ToolSwitchType GetToolSwitchTypeForStringPathArray()
         {
-#if TOOLS_V12
+            // dynamically decide whether ToolSwitchType.StringPathArray exists
+            // (not declared in Microsoft.Build.CPPTasks.Common, Version=12.0.0.0, but still seems to work)
+            var type = typeof(ToolSwitchType);
+            var enums = type.GetEnumNames();
+            if (enums.Length >= 10)
+                return (ToolSwitchType)9; // ToolSwitchType.StringPathArray;
             return ToolSwitchType.StringArray;
-#else
-            return ToolSwitchType.StringPathArray;
-#endif
         }
 
-#if TOOLS_V14 || TOOLS_V15
-        public 
-#else
-        protected
-#endif
-        override string SourcesPropertyName
-        {
-            get { return "Sources"; }
-        }
+        // use the default implementation of SourcesPropertyName, it returns "Sources"
 
         protected override ITaskItem[] TrackedInputFiles
         {
