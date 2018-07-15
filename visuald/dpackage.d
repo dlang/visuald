@@ -1262,6 +1262,7 @@ struct CompilerDirectories
 				if (detectedDate == modtime.stdTime)
 					return true; // uptodate
 
+				// execute fails when linked with libcmt of VS2013, needs patch in std.process
 				auto res = execute([exe, "--version"], null, ExecConfig.suppressConsole);
 				if (res.status == 0)
 				{

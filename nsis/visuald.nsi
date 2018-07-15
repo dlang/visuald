@@ -436,18 +436,19 @@ ${MementoSection} "Register with VS 2017" SecVS2017
   ;${RegisterWin32Exception} ${VS2017_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1Common7\IDE${EXTENSION_DIR}\visuald.pkgdef'
+  StrCpy $1 "$1Common7\IDE"
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
-  ${SetOutPath} "$1Common7\IDE${EXTENSION_DIR}"
+  ${SetOutPath} "$1${EXTENSION_DIR}"
   ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
   GetFullPathName /SHORT $0 $INSTDIR
-  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "15" NoBackup
-  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "15" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
     ${SetOutPath} "$1Common7\Packages\Debugger"
@@ -455,7 +456,7 @@ ${MementoSection} "Register with VS 2017" SecVS2017
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
 
-  ${SetOutPath} "$1Common7\IDE\PublicAssemblies"
+  ${SetOutPath} "$1\PublicAssemblies"
   ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
 ${MementoSectionEnd}
@@ -747,8 +748,9 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
-  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}" InstallDir
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   IfErrors NoVS2017pkgdef
+    StrCpy $1 "$1Common7\IDE"
     RMDir /r '$1${EXTENSION_DIR}'
     RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
