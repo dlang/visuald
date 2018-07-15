@@ -19,7 +19,6 @@ namespace VisualDWizard
             platformX64.CheckState = CheckState.Checked;
             compilerDMD.CheckState = CheckState.Checked;
             prjTypeConsole.Select();
-            addUnittest.Visible = false;
             Warning1.Visible = false;
             Warning2.Visible = false;
 
@@ -43,6 +42,11 @@ namespace VisualDWizard
         {
             if (!compilerDMD.Checked && !compilerLDC.Checked && !compilerGDC.Checked)
                 compilerDMD.Checked = true;
+        }
+
+        private void prjTypeConsole_CheckedChanged(object sender, EventArgs e)
+        {
+            mainInCpp.Enabled = prjTypeConsole.Checked;
         }
     }
 }

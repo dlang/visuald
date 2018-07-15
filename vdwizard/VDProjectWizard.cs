@@ -14,9 +14,10 @@ namespace VisualDWizard
 
         protected WizardDialog dlg;
         protected bool isVDProject;
+        protected string _solutionDir;
+        protected string _templateDir;
 
         public void BeforeOpeningFile(ProjectItem projectItem) { }
-        public void ProjectFinishedGenerating(Project project) { }
         public void ProjectItemFinishedGenerating(ProjectItem projectItem) { }
         public void RunFinished() { }
 
@@ -25,6 +26,13 @@ namespace VisualDWizard
         public void RunStarted(object automationObject, Dictionary<string, string> replacementsDictionary, WizardRunKind runKind, object[] customParams)
         {
             _dte = (DTE)automationObject;
+
+            /* The solution directory will be this directories parent
+               when the Type attribute of the VSTemplate element is ProjectGroup */
+            _solutionDir = System.IO.Path.GetDirectoryName(replacementsDictionary["$destinationdirectory$"]);
+
+            // customParams[0] is a default custom param that contains the physical location of the template that is currently being applied
+            _templateDir = System.IO.Path.GetDirectoryName(customParams[0] as string);
 
             // Display a form to the user. The form collects   
             // input for the custom message.  
@@ -36,6 +44,7 @@ namespace VisualDWizard
             if (res != DialogResult.OK)
                 throw new WizardCancelledException();
 
+            bool mainInCpp = dlg.mainInCpp.Checked && dlg.prjTypeConsole.Checked;
             // for vcxproj
             if (dlg.prjTypeWindows.Checked)
             {
@@ -64,12 +73,18 @@ namespace VisualDWizard
             }
             else
             {
-                replacementsDictionary.Add("$apptype$", dlg.prjTypeWindows.Checked ? "WindowsApp" : "ConsoleApp");
+                string app = dlg.prjTypeWindows.Checked ? "WindowsApp" : 
+                             mainInCpp ? "ConsoleAppMainInCpp" : "ConsoleApp";
+                replacementsDictionary.Add("$apptype$", app);
                 replacementsDictionary.Add("$configtype$", "Application");
                 replacementsDictionary.Add("$outputtype$", "0");
                 replacementsDictionary.Add("$outputext$", "exe");
             }
 
+            replacementsDictionary.Add("$mainInCpp$", mainInCpp ? "1" : "0");
+            replacementsDictionary.Add("$addStdafxH$", dlg.precompiledHeaders.Checked || mainInCpp ? "1" : "0");
+            replacementsDictionary.Add("$addStdafxCpp$", dlg.precompiledHeaders.Checked ? "1" : "0");
+            replacementsDictionary.Add("$PrecompiledHeader$", dlg.precompiledHeaders.Checked ? "Use" : "NotUsing");
 
             replacementsDictionary.Add("$x86mscoff$", dlg.platformx86OMF.Checked ? "0" : "1");
 
@@ -124,6 +139,27 @@ namespace VisualDWizard
             replacementsDictionary.Add("$platformx86_" + idxs + "$", dlg.platformX86.Checked ? "1" : "0");
             replacementsDictionary.Add("$platformx64_" + idxs + "$", dlg.platformX64.Checked ? "1" : "0");
         }
+
+        public void CopyToProject(Project project, string fname)
+        {
+            string projectDir = System.IO.Path.GetDirectoryName(project.FileName);
+            string srcFile = System.IO.Path.Combine(_templateDir, fname);
+            string destFile = System.IO.Path.Combine(projectDir, fname);
+            System.IO.File.Copy(srcFile, destFile);
+            //return project.ProjectItems.AddFromFile(fname);
+        }
+
+        public void ProjectFinishedGenerating(Project project)
+        {
+            bool mainInCpp = dlg.mainInCpp.Checked && dlg.prjTypeConsole.Checked;
+            if (mainInCpp)
+                CopyToProject(project, "main.cpp");
+            if (mainInCpp || dlg.precompiledHeaders.Checked)
+                CopyToProject(project, "stdafx.h");
+            if (dlg.precompiledHeaders.Checked)
+                CopyToProject(project, "stdafx.cpp");
+        }
+
     }
 
     public class VDProjectWizard : ProjectWizard
@@ -133,6 +169,7 @@ namespace VisualDWizard
             dlg.pictureBox1.Image = new Bitmap(VisualDWizard.Properties.Resources.vd_logo);
             dlg.label2.Text = "This project will use Visual D\'s custom project type designed";
             dlg.label3.Text = "for the D programming language.";
+            dlg.cppOptionsGroup.Visible = false;
         }
     }
 

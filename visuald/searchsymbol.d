@@ -65,8 +65,8 @@ bool showSearchWindow()
 
 		const(wchar)* caption = "Visual D Search"w.ptr;
 		HRESULT hr;
-		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sSearchPane, 
-										  &GUID_NULL, &g_searchWinCLSID, &GUID_NULL, 
+		hr = pIVsUIShell.CreateToolWindow(CTW_fInitNew, 0, sSearchPane,
+										  &GUID_NULL, &g_searchWinCLSID, &GUID_NULL,
 										  null, caption, null, &sWindowFrame);
 		if(!SUCCEEDED(hr))
 			return false;
@@ -83,11 +83,11 @@ bool showSearchWindow(bool searchFile, string word = "")
 {
 	if(!showSearchWindow())
 		return false;
-	
+
 	bool refresh = (sSearchPane._iqp.searchFile != searchFile);
 	if(refresh)
 		sSearchPane._ReinitViewState(searchFile, false);
-	
+
 	if(!searchFile && word.length)
 	{
 		sSearchPane._iqp.wholeWord = true;
@@ -95,13 +95,13 @@ bool showSearchWindow(bool searchFile, string word = "")
 		sSearchPane._iqp.useRegExp = false;
 		refresh = true;
 	}
-	
+
 	if(sSearchPane._wndFileWheel && word.length)
 	{
 		sSearchPane._wndFileWheel.SetWindowText(word);
 		refresh = true;
 	}
-	
+
 	if(refresh)
 		sSearchPane._RefreshFileList();
 
@@ -201,17 +201,17 @@ class SearchWindowBack : Window
 		mPane = pane;
 		super(parent);
 	}
-	
-	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+
+	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		BOOL fHandled;
 		LRESULT rc = mPane._WindowProc(hWnd, uMsg, wParam, lParam, fHandled);
 		if(fHandled)
 			return rc;
-		
+
 		return super.WindowProc(hWnd, uMsg, wParam, lParam);
 	}
-	
+
 	SearchPane mPane;
 }
 
@@ -231,15 +231,15 @@ class SearchPane : DisposingComObject, IVsWindowPane
 		// avoid debug output
 		if(*riid == IVsCodeWindow.iid || *riid == IServiceProvider.iid || *riid == IVsTextView.iid)
 			return E_NOINTERFACE;
-		
+
 		return super.QueryInterface(riid, pvObject);
 	}
-	
+
 	override void Dispose()
 	{
 		mSite = release(mSite);
 	}
-	
+
 	HRESULT SetSite(/+[in]+/ IServiceProvider pSP)
 	{
 		mixin(LogCallMix2);
@@ -247,7 +247,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 		mSite = addref(pSP);
 		return S_OK;
 	}
-	
+
 	HRESULT CreatePaneWindow(in HWND hwndParent, in int x, in int y, in int cx, in int cy,
 	                         /+[out]+/ HWND *hwnd)
 	{
@@ -375,12 +375,12 @@ class SearchPane : DisposingComObject, IVsWindowPane
 	{
 		if(msg.message == WM_TIMER)
 			_CheckSize();
-		
+
 		if(msg.message == WM_TIMER || msg.message == WM_SYSTIMER)
 			return E_NOTIMPL; // do not flood debug output
-		
+
 		logMessage("TranslateAccelerator", msg.hwnd, msg.message, msg.wParam, msg.lParam);
-		
+
 		BOOL fHandled;
 		HRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
 
@@ -418,15 +418,15 @@ private:
 
 	static HINSTANCE getInstance() { return Widget.getInstance(); }
 
-	int _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
+	int _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		if(uMsg != WM_NOTIFY)
 			logMessage("_WindowProc", hWnd, uMsg, wParam, lParam);
-		
+
 		return _HandleMessage(hWnd, uMsg, wParam, lParam, fHandled);
 	}
-	
-	int _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
+
+	int _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		switch(uMsg)
 		{
@@ -450,10 +450,10 @@ private:
 		case WM_COMMAND:
 			ushort id = LOWORD(wParam);
 			ushort code = HIWORD(wParam);
-			
+
 			if(id == IDC_FILEWHEEL && code == EN_CHANGE)
 				return _OnFileWheelChanged(id, code, hWnd, fHandled);
-			
+
 			if(code == BN_CLICKED)
 			{
 				switch(id)
@@ -529,7 +529,7 @@ private:
 			return;
 		if(iSel == iCnt - 1 && fDown)
 			return;
-		
+
 		LVITEM lvi;
 		lvi.iItem = iSel; // fDown ? iSel+1 : iSel-1;
 		lvi.mask = LVIF_STATE;
@@ -542,7 +542,7 @@ private:
 		lvi.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 		lvi.state = LVIS_SELECTED | LVIS_FOCUSED;
 		_wndFileList.SendItemMessage(LVM_SETITEM, lvi);
-		
+
 		_wndFileList.SendMessage(LVM_ENSUREVISIBLE, lvi.iItem, FALSE);
 	}
 
@@ -566,7 +566,7 @@ private:
 				fEnableGroups = FALSE;
 			}
 		}
-    
+
 		if (SUCCEEDED(hr))
 		{
 			hr = _wndFileList.SendMessage(LVM_ENABLEGROUPVIEW, fEnableGroups) == -1 ? E_FAIL : S_OK;
@@ -641,7 +641,7 @@ private:
 	HRESULT _RefreshFileList()
 	{
 		mixin(LogCallMix);
-		
+
 		_wndFileList.SetRedraw(FALSE);
 
 		HRESULT hr = S_OK;
@@ -802,7 +802,7 @@ private:
 		bool hasNameColumn = _wndFileList.SendMessage(LVM_GETCOLUMNWIDTH, 0) > 0;
 		// cannot delete col 0, so keep name
 		while(_wndFileList.SendMessage(LVM_DELETECOLUMN, 1)) {}
-		
+
 		HRESULT hr = S_OK;
 		COLUMNID colPath = _iqp.searchFile ? COLUMNID.PATH : COLUMNID.TYPE;
 		int cColumnsInserted = 0;
@@ -827,10 +827,10 @@ private:
 		}
 		return hr;
 	}
-	
+
 	HRESULT _InitializeFileList()
 	{
-		_wndFileList.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 
+		_wndFileList.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE,
 		                         LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP,
 		                         LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP);
 
@@ -841,7 +841,7 @@ private:
 			_wndFileListHdr.SendMessage(HDM_SETIMAGELIST, HDMIL_PRIVATE, cast(LPARAM)himl);
 
 			_InitializeFileListColumns();
-			
+
 			if (SUCCEEDED(hr))
 			{
 				hr = _AddSortIcon(_ListViewIndexFromColumnID(_iqp.colidSort), _iqp.fSortAscending);
@@ -869,7 +869,7 @@ private:
 			// icons  have image index IDR_XXX - IDR_FIRST
 			for (int i = IDR_FIRST; i <= IDR_LAST && SUCCEEDED(hr); i++)
 			{
-				HICON hicn = cast(HICON)LoadImage(getInstance(), MAKEINTRESOURCE(i), 
+				HICON hicn = cast(HICON)LoadImage(getInstance(), MAKEINTRESOURCE(i),
 												  IMAGE_ICON, c_cxToolbarIcon, c_cyToolbarIcon, LR_DEFAULTCOLOR | LR_SHARED);
 				hr = hicn ? S_OK : HResultFromLastError();
 				if (SUCCEEDED(hr))
@@ -907,7 +907,7 @@ private:
 				_wndToolbar.SendMessage(TB_SETIMAGELIST, 0, cast(LPARAM)_himlToolbar);
 
 				TBBUTTON btn2 = { 10, 11, TBSTATE_ENABLED, 1, [0,0], 0, 0 };
-				
+
 				TBBUTTON initButton(int id, ubyte style)
 				{
 					return TBBUTTON(id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, [0,0], 0, 0);
@@ -951,10 +951,10 @@ private:
 		_wndToolbar.EnableCheckButton(IDR_REGEXP,            true, _iqp.useRegExp);
 		_wndToolbar.EnableCheckButton(IDR_SEARCHFILE,        true, _iqp.searchFile);
 		_wndToolbar.EnableCheckButton(IDR_SEARCHSYMBOL,      true, !_iqp.searchFile);
-		
+
 		return hr;
 	}
-	
+
 	extern(Windows) LRESULT _HdrWndProc(HWND hwnd, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 	{
 		LRESULT lRet = 0;
@@ -992,7 +992,7 @@ private:
 			return pfsec._HdrWndProc(hWnd, uiMsg, wParam, lParam);
 		return DefSubclassProc(hWnd, uiMsg, wParam, lParam);
 	}
-	
+
 
 	LRESULT _OnInitDialog(UINT uiMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
@@ -1036,18 +1036,18 @@ private:
 //		_CheckSize();
 		return 0;
 	}
-	
+
 	void _CheckSize()
 	{
 		RECT r, br;
 		_wndParent.GetClientRect(&r);
 		_wndBack.GetClientRect(&br);
-		if(br.right - br.left != r.right - r.left - 2*kPaneMargin || 
+		if(br.right - br.left != r.right - r.left - 2*kPaneMargin ||
 		   br.bottom - br.top != r.bottom - r.top - 2*kPaneMargin)
-			_wndBack.setRect(kPaneMargin, kPaneMargin, 
+			_wndBack.setRect(kPaneMargin, kPaneMargin,
 							 r.right - r.left - 2*kPaneMargin, r.bottom - r.top - 2*kPaneMargin);
 	}
-	
+
 	LRESULT _OnSize(UINT uiMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		int cx = LOWORD(lParam);
@@ -1059,7 +1059,7 @@ private:
 		// - Toolbar autosizes along the bottom
 
 		_wndToolbar.setRect(kBackMargin, kBackMargin, cx - 2 * kBackMargin, kToolBarHeight);
-		
+
 		RECT rcFileWheel;
 		if (_wndFileWheel.GetWindowRect(&rcFileWheel))
 		{
@@ -1121,7 +1121,7 @@ private:
 		}
 		return 0;
 	}
-			
+
 	HRESULT _ToggleColumnVisibility(COLUMNID colid)
 	{
 		HRESULT hr = E_FAIL;
@@ -1184,7 +1184,7 @@ private:
 			mii.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STATE | MIIM_STRING;
 			mii.fType = MFT_STRING;
 			COLUMNID colPath = _iqp.searchFile ? COLUMNID.PATH : COLUMNID.TYPE;
-			
+
 			// Don't include the first column (COLUMNID.NAME) in the list
 			for (size_t i = COLUMNID.NAME + 1; i < _rgColumns.length && SUCCEEDED(hr); i++)
 			{
@@ -1284,13 +1284,13 @@ private:
 		return 0;
 	}
 
-	static struct CmdToColID 
+	static struct CmdToColID
 	{
 		uint uiCmd;
 		COLUMNID colid;
 	}
-	
-	static const CmdToColID[] s_rgCmdToColIDMap = 
+
+	static const CmdToColID[] s_rgCmdToColIDMap =
 	[
 		// { IDR_UNGROUPED, COLUMNID.NONE },
 		{ IDR_GROUPBYKIND, COLUMNID.KIND }
@@ -1312,7 +1312,7 @@ private:
 		return uiRet;
 	}
 +/
-	
+
 	COLUMNID _GroupCommandIDtoColumnID(UINT uiCmd)
 	{
 		COLUMNID colidRet = COLUMNID.NONE;
@@ -1459,24 +1459,24 @@ private:
 		if (_wndToolbar.SendMessage(TB_GETBUTTONINFO, wID, cast(LPARAM)&tbbi) != -1)
 		{
 			bool checked = !!(tbbi.fsState & TBSTATE_CHECKED);
-			
+
 			switch(wID)
 			{
 			case IDR_COMBINECOLUMNS:
 				_SetCompressedNameAndPath(checked);
 				break;
-		
+
 			case IDR_ALTERNATEROWCOLOR:
 				_fAlternateRowColor = checked;
 				_WriteViewOptionToRegistry("AlternateRowColor"w, _fAlternateRowColor);
 				_wndFileList.InvalidateRect(null, FALSE);
 				break;
-			
+
 			case IDR_CLOSEONRETURN:
 				_closeOnReturn = checked;
 				_WriteViewOptionToRegistry("CloseOnReturn"w, _closeOnReturn);
 				break;
-			
+
 			case IDR_GROUPBYKIND:
 				_SetGroupColumn(checked ? COLUMNID.KIND : COLUMNID.NONE);
 				break;
@@ -1503,7 +1503,7 @@ private:
 			case IDR_SEARCHSYMBOL:
 				_ReinitViewState(!checked, true);
 				break;
-			
+
 			default:
 				return 1;
 			}
@@ -1536,7 +1536,7 @@ version(all)
 else
 {
 		char[] buffer = new char[128];
-		
+
 //		auto dst = daylightSavingTA(time);
 //		auto offset = localTZA + dst;
 		auto t = time; // + offset;
@@ -1544,13 +1544,13 @@ else
 		auto len = sprintf(buffer.ptr, "%04d/%02d/%02d %02d:%02d:%02d",
 		                   yearFromTime(t), dateFromTime(t), monthFromTime(t) + 1,
 		                   hourFromTime(t), minFromTime(t), secFromTime(t));
-		
+
 		assert(len < buffer.length);
 		buffer = buffer[0 .. len];
 		return assumeUnique(buffer);
 }
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////
 	LRESULT _OnFileListGetDispInfo(int idCtrl, in NMHDR *pnmh, ref BOOL fHandled)
 	{
@@ -1646,13 +1646,13 @@ else
 		_iqp.searchFile = searchFile;
 
 		_rgColumns = _iqp.searchFile ? &_fileColumns : &_symbolColumns;
-		
+
 		_InitializeViewState();
 		_InitializeSwitches();
 		_AddSortIcon(_ListViewIndexFromColumnID(_iqp.colidSort), _iqp.fSortAscending);
-		
+
 		_InitializeFileListColumns();
-		
+
 		_RefreshFileList();
 	}
 
@@ -1667,11 +1667,11 @@ else
 			regPath ~= "\\SearchSymbolWindow"w;
 		return new RegKey(opt.hUserKey, regPath, write);
 	}
-	
+
 	HRESULT _InitializeViewState()
 	{
 		HRESULT hr = S_OK;
-	
+
 		try
 		{
 			scope RegKey keyWinOpts = _GetCurrentRegKey(false);
@@ -1696,7 +1696,7 @@ else
 		{
 			// ok to fail, defaults still work
 		}
-    
+
 		return hr;
 	}
 
@@ -1758,7 +1758,7 @@ else
 		{
 			hr = E_FAIL;
 		}
-		
+
 		return hr;
 	}
 
@@ -1848,16 +1848,16 @@ version(none)
 else
 {
 			hr = _OpenSolutionItem(fname, psiWeak.GetLine(), "");
-			
+
 			if(hr != S_OK && !_iqp.searchFile && !isAbsolute(fname))
 			{
-				// guess import path from filename (e.g. "src\core\mem.d") and 
+				// guess import path from filename (e.g. "src\core\mem.d") and
 				//  scope (e.g. "core.mem.gc.Proxy") to try opening
 				// the file ("core\mem.d")
 				string inScope = toLower(psiWeak.GetScope());
 				string path = normalizeDir(dirName(toLower(psiWeak.GetPath())));
 				inScope = replace(inScope, ".", "\\");
-				
+
 				int i;
 				for(i = 1; i < path.length; i++)
 					if(startsWith(inScope, path[i .. $]))
@@ -1918,6 +1918,7 @@ else
 		case CDDS_PREPAINT:
 			_SetAlternateRowColor();
 			lRet = CDRF_NOTIFYITEMDRAW;
+			fHandled = TRUE;
 			break;
 
 		case CDDS_ITEMPREPAINT:
@@ -1947,20 +1948,20 @@ else
 					lRet = CDRF_NEWFONT;
 				}
 			}
+			fHandled = TRUE;
 			break;
 		}
 
 		default:
 			break;
 		}
-		fHandled = TRUE;
 		return lRet;
 	}
 
 	LRESULT _OnFileListHdrItemChanged(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMHEADER *pnmhdr = cast(NMHEADER *)pnmh;
-		if (pnmhdr.pitem.mask & HDI_WIDTH) 
+		if (pnmhdr.pitem.mask & HDI_WIDTH)
 		{
 			COLUMNID colid = _ColumnIDFromListViewIndex(pnmhdr.iItem);
 			if (colid == COLUMNID.NAME && _fCombineColumns)
@@ -2063,14 +2064,14 @@ class SolutionItem //: IUnknown
 		if(def.kind == "module")
 			def.line = -1;
 	}
-	
+
 	int GetIconIndex() const { return 0; }
-	
+
 	string GetName() const
 	{
 		return def.name;
 	}
-	string GetFullPath() const 
+	string GetFullPath() const
 	{
 		return def.filename;
 	}
@@ -2078,7 +2079,7 @@ class SolutionItem //: IUnknown
 	{
 		if(def.kind != "file")
 			return def.filename;
-		
+
 		if(def.inScope.length)
 			return def.inScope;
 		int idx = lastIndexOf(def.filename, '\\');
@@ -2094,7 +2095,7 @@ class SolutionItem //: IUnknown
 	const(SysTime) GetModified() const { return _modifiedDate; }
 
 	//HRESULT GetItem(in IID* riid, void **ppv);
-	
+
 	Definition def;
 	SysTime _modifiedDate;
 }
@@ -2108,15 +2109,15 @@ class SolutionItemGroup //: IUnknown
 		mName = name;
 		mArray = new ItemArray;
 	}
-	
+
 	void add(SolutionItem item)
 	{
 		mArray.add(item);
 	}
-	
+
 	string GetName() const { return mName; }
 	const(ItemArray) GetItems() const { return mArray; }
-	
+
 	ItemArray mArray;
 	string mName;
 }
@@ -2129,7 +2130,7 @@ class SolutionItemIndex //: IUnknown
 	{
 		string[] args = tokenizeArgs(pszSearch);
 		auto arr = new ItemArray;
-		
+
 		SearchData sd;
 		sd.wholeWord = piqp.wholeWord;
 		sd.caseSensitive = piqp.caseSensitive;
@@ -2141,19 +2142,19 @@ class SolutionItemIndex //: IUnknown
 		{
 			string solutionpath = GetSolutionFilename();
 			string solutiondir = normalizeDir(dirName(solutionpath));
-			
+
 			searchSolutionItem(delegate bool(string s)
 				{
 					string f = s;
 					if(s.startsWith(solutiondir)) // case-insensitive?
 						f = s[solutiondir.length .. $];
 					//makeRelative(s, solutiondir);
-					
+
 					if(!sd.matchNames(f, "", "", ""))
 						return false;
 					if(f == s)
 						f = "";
-					
+
 					if(piqp.colidGroup == COLUMNID.KIND)
 					{
 						string ext = extension(s);
@@ -2189,11 +2190,11 @@ class SolutionItemIndex //: IUnknown
 class ItemArray //: IUnknown
 {
 	static const GUID iid = uuid("5A97C4DF-DE3A-4bb6-B621-2F9550BFE7C0");
-	
+
 	SolutionItem[string] mItemsByPath;
 	SolutionItem[] mItems;
 	SolutionItemGroup[] mGroups;
-	
+
 	this()
 	{
 	}
@@ -2210,7 +2211,7 @@ class ItemArray //: IUnknown
 		mItems ~= item;
 		mItemsByPath[item.GetFullPath()] = item;
 	}
-	
+
 	const(SolutionItem) getItemByGroupAndPath(string grp, string path)
 	{
 		for(int i = 0; i < mGroups.length; i++)
@@ -2229,24 +2230,24 @@ class ItemArray //: IUnknown
 		group.add(item);
 		mGroups ~= group;
 	}
-	
+
 	int GetCount() const { return max(mItems.length, mGroups.length); }
-	
+
 	SolutionItemGroup GetGroup(uint idx) const
 	{
 		if(idx >= mGroups.length)
 			return null;
 		return cast(SolutionItemGroup)mGroups[idx];
 	}
-	
-	SolutionItem GetItem(uint idx) const 
+
+	SolutionItem GetItem(uint idx) const
 	{
 		if(idx >= mItems.length)
 			return null;
-		return cast(SolutionItem)mItems[idx]; 
+		return cast(SolutionItem)mItems[idx];
 	}
 	//HRESULT GetItem(I)(uint idx, I*ptr) const { return E_FAIL; }
-	
+
 	void sort(COLUMNID id, bool ascending)
 	{
 		switch(id)
@@ -2271,36 +2272,36 @@ class ItemArray //: IUnknown
 			else
 				std.algorithm.sort!("a.GetType() > b.GetType()")(mItems);
 			break;
-			
+
 		case COLUMNID.PATH:
 			if(ascending)
 				std.algorithm.sort!("a.GetPath() < b.GetPath()")(mItems);
 			else
 				std.algorithm.sort!("a.GetPath() > b.GetPath()")(mItems);
 			break;
-			
+
 		case COLUMNID.SCOPE:
 			if(ascending)
 				std.algorithm.sort!("a.GetScope() < b.GetScope()")(mItems);
 			else
 				std.algorithm.sort!("a.GetScope() > b.GetScope()")(mItems);
 			break;
-			
+
 		case COLUMNID.MODIFIEDDATE:
 			if(ascending)
 				std.algorithm.sort!("a.GetModified() < b.GetModified()")(mItems);
 			else
 				std.algorithm.sort!("a.GetModified() > b.GetModified()")(mItems);
 			break;
-			
+
 		default:
 			break;
 		}
-		
+
 		foreach(grp; mGroups)
 			grp.mArray.sort(id, ascending);
 	}
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -2308,7 +2309,7 @@ bool searchHierarchy(IVsHierarchy pHierarchy, VSITEMID item, bool delegate (stri
 {
 	VARIANT var;
 	if((pHierarchy.GetProperty(item, VSHPROPID_Container, &var) == S_OK &&
-		((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))) || 
+		((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))) ||
 	   (pHierarchy.GetProperty(item, VSHPROPID_Expandable, &var) == S_OK &&
 		((var.vt == VT_BOOL && var.boolVal) || (var.vt == VT_I4 && var.lVal))))
 	{
@@ -2320,7 +2321,7 @@ bool searchHierarchy(IVsHierarchy pHierarchy, VSITEMID item, bool delegate (stri
 			{
 				if(searchHierarchy(pHierarchy, chid, dg))
 					return true;
-				
+
 				if(pHierarchy.GetProperty(chid, VSHPROPID_NextSibling, &var) != S_OK ||
 				   (var.vt != VT_INT_PTR && var.vt != VT_I4 && var.vt != VT_INT))
 					break;
@@ -2390,7 +2391,7 @@ class CSolutionItemTypeCache
 	{
 		_himl = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 16, 8);
 	}
-	
+
 	~this()
 	{
 		if (_himl)
@@ -2417,7 +2418,7 @@ class CSolutionItemTypeCache
 		}
 		return pszCanonicalType in _mapTypes;
 	}
-	
+
 	HIMAGELIST GetIconImageList() { return _himl; }
 
 private:

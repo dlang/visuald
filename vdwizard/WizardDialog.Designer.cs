@@ -43,7 +43,6 @@
             this.compilerGDC = new System.Windows.Forms.CheckBox();
             this.compilerLDC = new System.Windows.Forms.CheckBox();
             this.compilerDMD = new System.Windows.Forms.CheckBox();
-            this.addUnittest = new System.Windows.Forms.CheckBox();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -53,11 +52,15 @@
             this.button3 = new System.Windows.Forms.Button();
             this.Warning1 = new System.Windows.Forms.Label();
             this.Warning2 = new System.Windows.Forms.Label();
+            this.cppOptionsGroup = new System.Windows.Forms.GroupBox();
+            this.precompiledHeaders = new System.Windows.Forms.CheckBox();
+            this.mainInCpp = new System.Windows.Forms.CheckBox();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            this.cppOptionsGroup.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -120,6 +123,7 @@
             this.prjTypeConsole.TabStop = true;
             this.prjTypeConsole.Text = "Console Application";
             this.prjTypeConsole.UseVisualStyleBackColor = true;
+            this.prjTypeConsole.CheckedChanged += new System.EventHandler(this.prjTypeConsole_CheckedChanged);
             // 
             // prjTypeWindows
             // 
@@ -174,7 +178,7 @@
             this.groupBox2.Controls.Add(this.compilerDMD);
             this.groupBox2.Location = new System.Drawing.Point(277, 134);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(241, 138);
+            this.groupBox2.Size = new System.Drawing.Size(241, 114);
             this.groupBox2.TabIndex = 6;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Compiler Configurations";
@@ -211,16 +215,6 @@
             this.compilerDMD.Text = "DMD (reference D compiler)";
             this.compilerDMD.UseVisualStyleBackColor = true;
             this.compilerDMD.CheckedChanged += new System.EventHandler(this.compiler_CheckedChanged);
-            // 
-            // addUnittest
-            // 
-            this.addUnittest.AutoSize = true;
-            this.addUnittest.Location = new System.Drawing.Point(36, 341);
-            this.addUnittest.Name = "addUnittest";
-            this.addUnittest.Size = new System.Drawing.Size(145, 17);
-            this.addUnittest.TabIndex = 11;
-            this.addUnittest.Text = "add unittest configuration";
-            this.addUnittest.UseVisualStyleBackColor = true;
             // 
             // button1
             // 
@@ -300,7 +294,7 @@
             // 
             this.Warning1.AutoSize = true;
             this.Warning1.ForeColor = System.Drawing.Color.Red;
-            this.Warning1.Location = new System.Drawing.Point(278, 292);
+            this.Warning1.Location = new System.Drawing.Point(25, 338);
             this.Warning1.Name = "Warning1";
             this.Warning1.Size = new System.Drawing.Size(241, 13);
             this.Warning1.TabIndex = 15;
@@ -310,27 +304,59 @@
             // 
             this.Warning2.AutoSize = true;
             this.Warning2.ForeColor = System.Drawing.Color.Red;
-            this.Warning2.Location = new System.Drawing.Point(286, 311);
+            this.Warning2.Location = new System.Drawing.Point(33, 358);
             this.Warning2.Name = "Warning2";
             this.Warning2.Size = new System.Drawing.Size(225, 13);
             this.Warning2.TabIndex = 16;
             this.Warning2.Text = "and reload the project once to see source files";
+            // 
+            // cppOptionsGroup
+            // 
+            this.cppOptionsGroup.Controls.Add(this.precompiledHeaders);
+            this.cppOptionsGroup.Controls.Add(this.mainInCpp);
+            this.cppOptionsGroup.Location = new System.Drawing.Point(277, 256);
+            this.cppOptionsGroup.Name = "cppOptionsGroup";
+            this.cppOptionsGroup.Size = new System.Drawing.Size(241, 79);
+            this.cppOptionsGroup.TabIndex = 17;
+            this.cppOptionsGroup.TabStop = false;
+            this.cppOptionsGroup.Text = "C++ Options";
+            // 
+            // precompiledHeaders
+            // 
+            this.precompiledHeaders.AutoSize = true;
+            this.precompiledHeaders.Location = new System.Drawing.Point(24, 51);
+            this.precompiledHeaders.Name = "precompiledHeaders";
+            this.precompiledHeaders.Size = new System.Drawing.Size(144, 17);
+            this.precompiledHeaders.TabIndex = 9;
+            this.precompiledHeaders.Text = "use precompiled headers";
+            this.precompiledHeaders.UseVisualStyleBackColor = true;
+            // 
+            // mainInCpp
+            // 
+            this.mainInCpp.AutoSize = true;
+            this.mainInCpp.Location = new System.Drawing.Point(24, 28);
+            this.mainInCpp.Name = "mainInCpp";
+            this.mainInCpp.Size = new System.Drawing.Size(81, 17);
+            this.mainInCpp.TabIndex = 8;
+            this.mainInCpp.Text = "main in C++";
+            this.mainInCpp.UseVisualStyleBackColor = true;
             // 
             // WizardDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(530, 383);
+            this.Controls.Add(this.cppOptionsGroup);
             this.Controls.Add(this.Warning2);
             this.Controls.Add(this.Warning1);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
-            this.Controls.Add(this.addUnittest);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.panel1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Name = "WizardDialog";
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
@@ -344,6 +370,8 @@
             this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            this.cppOptionsGroup.ResumeLayout(false);
+            this.cppOptionsGroup.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -363,7 +391,6 @@
         public System.Windows.Forms.RadioButton prjTypeWindows;
         public System.Windows.Forms.RadioButton prjTypeDLL;
         public System.Windows.Forms.RadioButton prjTypeLib;
-        public System.Windows.Forms.CheckBox addUnittest;
         public System.Windows.Forms.CheckBox compilerGDC;
         public System.Windows.Forms.CheckBox compilerLDC;
         public System.Windows.Forms.CheckBox compilerDMD;
@@ -375,5 +402,8 @@
         private System.Windows.Forms.Label Warning2;
         public System.Windows.Forms.Label label2;
         public System.Windows.Forms.Label label3;
+        public System.Windows.Forms.CheckBox precompiledHeaders;
+        public System.Windows.Forms.CheckBox mainInCpp;
+        public System.Windows.Forms.GroupBox cppOptionsGroup;
     }
 }
