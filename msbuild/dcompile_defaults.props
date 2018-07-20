@@ -10,7 +10,7 @@
     <DMDInstallationFolder>$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\Software\DMD', 'InstallationFolder', '', RegistryView.Registry32, RegistryView.Registry64))</DMDInstallationFolder>
     <DMDInstallDir Condition="$(DMDInstallDir) == '' and '$(DMDInstallationFolder)' != ''">$(DMDInstallationFolder)\dmd2\</DMDInstallDir>
     <DMDBinDir     Condition="$(DMDInstallDir) != ''">$(DMDInstallDir)\windows\bin\</DMDBinDir>
-    <DMDText Condition="Exists('$(DMDInstallDir)dmd.exe')">DMD - Reference compiler</DMDText>
+    <DMDText Condition="Exists('$(DMDBinDir)\dmd.exe')">DMD - Reference compiler</DMDText>
     <DMDText Condition="'$(DMDText)' == ''">DMD - Reference compiler (not installed)</DMDText>
 
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)\ToolsOptionsPages\Projects\Visual D Settings', 'LDCInstallDir', '', RegistryView.Registry64, RegistryView.Registry32))</LDCInstallDir>
