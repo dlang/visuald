@@ -18,7 +18,7 @@
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\LDC@InstallationFolder)</LDCInstallDir>
     <LDCInstallDir Condition="$(LDCInstallDir) == ''">$(registry:HKEY_LOCAL_MACHINE\Software\Wow6432Node\LDC@InstallationFolder)</LDCInstallDir>
     <LDCBinDir     Condition="$(LDCInstallDir) != ''">$(LDCInstallDir)\bin\</LDCBinDir>
-    <LDCText Condition="Exists('$(LDCInstallDir)ldmd2.exe')">LDC - LLVM based compiler</LDCText>
+    <LDCText Condition="Exists('$(LDCBinDir)\ldmd2.exe')">LDC - LLVM based compiler</LDCText>
     <LDCText Condition="'$(LDCText)' == ''">LDC - LLVM based compiler (not installed)</LDCText>
 
     <DCompiler Condition="'$(DCompiler)' == ''">DMD</DCompiler>
