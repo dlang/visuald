@@ -96,7 +96,7 @@ $if$ ($platformx86_2$ == 1)
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <DCompiler>$dcompilernme_2$</DCompiler>
+    <DCompiler>$dcompilername_2$</DCompiler>
   </PropertyGroup>
 $endif$
 $if$ ($platformx64_2$ == 1)
