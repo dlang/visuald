@@ -480,12 +480,16 @@ ${MementoSectionEnd}
     WriteRegStr HKLM "SOFTWARE\Classes\VisualStudio.d.${VSVer}" "" "D Source"
     WriteRegStr HKLM "SOFTWARE\Classes\VisualStudio.d.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\d2.ico"
     WriteRegStr ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\${VSVer}\ShellFileAssociations\.d" "" "VisualStudio.d.${VSVer}"
+    WriteRegStr HKCR ".d" "" "VisualStudio.d.${VSVer}"
+    WriteRegStr HKCR ".d\OpenWithProgIds" "VisualStudio.d.${VSVer}" ""
 
     WriteRegStr HKCR "VisualStudio.di.${VSVer}" "" "D Interface"
     WriteRegStr HKCR "VisualStudio.di.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\di.ico"
     WriteRegStr HKLM "SOFTWARE\Classes\VisualStudio.di.${VSVer}" "" "D Interface"
     WriteRegStr HKLM "SOFTWARE\Classes\VisualStudio.di.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\di.ico"
     WriteRegStr ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\${VSVer}\ShellFileAssociations\.di" "" "VisualStudio.di.${VSVer}"
+    WriteRegStr HKCR ".di" "" "VisualStudio.di.${VSVer}"
+    WriteRegStr HKCR ".di\OpenWithProgIds" "VisualStudio.di.${VSVer}" ""
 !macroend
 !define RegisterIcons "!insertmacro RegisterIcons"
 
