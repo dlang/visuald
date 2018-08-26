@@ -996,3 +996,4 @@ unreleased Version 0.48.0
   * fix default library path if UCRT has different  version than SDK
   * fix help via F1 fo dmd 2.072+
   * show detected compiler version below installation path
+  * fix installation of the D icon for the solution explorer
