@@ -26,7 +26,7 @@ environment:
 cache:
   - C:\projects\cache\dmd2080_0.7z
   - C:\projects\cache\cd851.zip
-  - C:\projects\cache\VisualD-v0.45.1-rc2.exe
+  - C:\projects\cache\VisualD-v0.47.0.exe
 
 #matrix:
 #  allow_failures:
@@ -73,10 +73,10 @@ install:
         copy c:\projects\dm\bin\coffimplib.exe c:\projects\dmd2\windows\bin
   # Download & install Visual D
   - ps: |
-        If (-not (Test-Path 'cache\VisualD-v0.45.1-rc2.exe')) {
-            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.45.1-rc2/VisualD-v0.45.1-rc2.exe' -FileName 'cache\VisualD-v0.45.1-rc2.exe'
+        If (-not (Test-Path 'cache\VisualD-v0.47.0.exe')) {
+            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.47.0/VisualD-v0.47.0.exe' -FileName 'cache\VisualD-v0.47.0.exe'
         }
-  - cache\VisualD-v0.45.1-rc2.exe /S
+  - cache\VisualD-v0.47.0.exe /S
   # configure DMD path
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\12.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
