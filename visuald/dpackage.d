@@ -1586,20 +1586,20 @@ class GlobalOptions
 
 	bool initFromRegistry()
 	{
-		if(!getRegistryRoot())
-			return false;
-
-		vsVersion = cast(int) guessVSVersion(regConfigRoot);
-
-		wstring dllPath = GetDLLName(g_hInst);
-		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
-
-		wstring idePath = GetDLLName(null);
-		DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
-
 		bool rc = true;
 		try
 		{
+			if(!getRegistryRoot())
+				return false;
+
+			vsVersion = cast(int) guessVSVersion(regConfigRoot);
+
+			wstring dllPath = GetDLLName(g_hInst);
+			VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
+
+			wstring idePath = GetDLLName(null);
+			DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
+
 			wstring defUserTypesSpec = "Object string wstring dstring ClassInfo\n" ~
 			                           "hash_t ptrdiff_t size_t sizediff_t";
 			// get defaults from global config
