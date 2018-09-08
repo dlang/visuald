@@ -502,6 +502,25 @@ IVsTextLines GetCurrentTextBuffer(IVsTextView* pview)
 }
 
 ////////////////////////////////////////////////////////////////////////
+string GetLineBreakText(IVsTextLines pBuffer, int line)
+{
+	string nl = "\r\n";
+	LINEDATA lineData;
+	if(pBuffer.GetLineData(line, &lineData, null) == S_OK)
+	{
+		switch(lineData.iEolType)
+		{
+			default:
+			case eolCRLF: nl = "\r\n"; break;
+			case eolCR: nl = "\r"; break;
+			case eolLF: nl = "\n"; break;
+		}
+		pBuffer.ReleaseLineData(&lineData);
+	}
+	return nl;
+}
+
+////////////////////////////////////////////////////////////////////////
 string GetSolutionFilename()
 {
 	IVsSolution srpSolution = queryService!(IVsSolution);

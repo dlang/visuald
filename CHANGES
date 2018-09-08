@@ -993,7 +993,8 @@ unreleased Version 0.48.0
   * restore project templates for VS2008, new project wizard doesn't work there'
   * new mixed D/C++ VC project: optionally adding main in C++, setup precompiled headers
   * avoid error message regarding altered assemblies with same version
-  * fix default library path if UCRT has different  version than SDK
+  * fix default library path if UCRT has different version than SDK
   * fix help via F1 fo dmd 2.072+
   * show detected compiler version below installation path
   * fix installation of the D icon for the solution explorer
+  * when pasting code to D source file newlines are adapted to surrounding code
