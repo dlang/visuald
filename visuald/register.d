@@ -477,6 +477,8 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.12.0.dll"w;
 	else if (ver == 14)
 		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.14.0.dll"w;
+	else if (ver == 15)
+		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.15.0.dll"w;
 
 	try
 	{
