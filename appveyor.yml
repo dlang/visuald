@@ -15,9 +15,6 @@ skip_tags: true
 
 environment:
   matrix:
-    - os: Visual Studio 2017
-      VS: 15
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     - os: Visual Studio 2015
       VS: 14
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -25,11 +22,16 @@ environment:
       VS: 12
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
+#    - os: Visual Studio 2017
+#      VS: 15
+#      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
 # cache relative to C:\projects\visuald
 cache:
   - C:\projects\cache\dmd2080_0.7z
   - C:\projects\cache\cd851.zip
   - C:\projects\cache\VisualD-v0.47.0.exe
+  - C:\projects\cache\binutils-2.25.tar.gz
 
 #matrix:
 #  allow_failures:
@@ -122,8 +124,10 @@ build_script:
   # Download & extract binutils
   - cd projects
   - ps: |
-        Start-FileDownload 'http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz' -FileName 'binutils-2.25.tar.gz'
-        7z x binutils-2.25.tar.gz > $null
+        If (-not (Test-Path 'cache\binutils-2.25.tar.gz')) {
+            Start-FileDownload 'http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz' -FileName 'cache\binutils-2.25.tar.gz'
+        }
+        7z x cache\binutils-2.25.tar.gz > $null
         7z x binutils-2.25.tar > $null
   - 'if "%VS%"=="12" echo #define snprintf _snprintf >binutils-2.25\config.h'
   - 'if "%VS%"=="14" echo // empty                   >binutils-2.25\config.h'

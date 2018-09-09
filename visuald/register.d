@@ -343,10 +343,14 @@ wstring GetRegistrationRoot(in wchar* pszRegRoot, bool useRanu)
 float guessVSVersion(wstring registrationRoot)
 {
 	auto idx = lastIndexOf(registrationRoot, '\\');
-	if(idx < 0)
+	if(idx < 0 || idx >= registrationRoot.length)
 		return 0;
 	wstring txt = registrationRoot[idx + 1 .. $];
-	return parse!float(txt);
+	// parse integer part only, the remainder is unused anyway
+	int ver = 0;
+	for (++idx; idx < registrationRoot.length && std.ascii.isDigit(registrationRoot[idx]); ++idx)
+		ver = ver * 10 + registrationRoot[idx] - '0';
+	return ver;
 }
 
 void updateConfigurationChanged(HKEY keyRoot, wstring registrationRoot)
