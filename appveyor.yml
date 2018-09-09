@@ -15,15 +15,15 @@ skip_tags: true
 
 environment:
   matrix:
+    - os: Visual Studio 2017
+      VS: 15
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     - os: Visual Studio 2015
       VS: 14
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     - os: Visual Studio 2013
       VS: 12
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    - os: Visual Studio 2017
-      VS: 15
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
 # cache relative to C:\projects\visuald
 cache:
@@ -81,8 +81,7 @@ install:
         }
   - cache\VisualD-v0.47.0.exe /S
   # configure DMD path
-  - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\12.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
-  - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
+  - reg add "HKLM\SOFTWARE\DMD" /v InstallationFolder /t REG_SZ /d c:\projects /reg:32 /f
   # disable link dependencies monitoring, fails on AppVeyor server
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v optlinkDeps /t REG_DWORD /d 0 /reg:32 /f
   # Set environment variables
