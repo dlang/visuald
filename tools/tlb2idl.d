@@ -1,7 +1,7 @@
 module tlbidl;
 
 import core.sys.windows.windows;
-import std.c.windows.com; // deprecated, but kept to still build with 2.066
+import core.sys.windows.com; // deprecated, but kept to still build with 2.066
 import core.stdc.string;
 import std.stdio;
 import std.file;
