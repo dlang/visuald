@@ -1944,6 +1944,15 @@ class GlobalOptions
 			keyToolOpts.Set("dubPath",             toUTF16(dubPath));
 			keyToolOpts.Set("dubOptions",          toUTF16(dubOptions));
 
+			// also save to HKCR for msbuild in VS2017
+			if (isVS2017())
+			{
+				scope RegKey keyBuildOpts = new RegKey(HKEY_CURRENT_USER, r"SOFTWARE\Visual D\dbuild\15.0"w);
+				keyBuildOpts.Set("DMDInstallDir",     toUTF16(DMD.InstallDir));
+				keyBuildOpts.Set("GDCInstallDir",     toUTF16(GDC.InstallDir));
+				keyBuildOpts.Set("LDCInstallDir",     toUTF16(LDC.InstallDir));
+			}
+
 			CHierNode.setContainerIsSorted(sortProjects);
 		}
 		catch(Exception e)
