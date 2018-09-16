@@ -1000,4 +1000,6 @@ unreleased Version 0.48.0
   * when pasting code to D source file newlines are adapted to surrounding code
   * dparser: no semantic info for a package if any file in the package has fatal parser error
   * VS2017: D compiler installation paths are now saved to "HKCR\Softwre\Visual D" to be picked up by msbuild
-  * msbuild with LDC: runtime library selection now also available
+  * mago: added option to show base class fields as direct fields
+  * semantic analysis did not work if "parse source for syntax errors" was disabled
+

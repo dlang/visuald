@@ -2525,6 +2525,7 @@ struct MagoOptions
 	bool hideInternalNames;
 	bool showStaticsInAggr;
 	bool showVTable;
+	bool flatClassFields;
 
 	void saveToRegistry()
 	{
@@ -2532,14 +2533,17 @@ struct MagoOptions
 		keyMago.Set("hideInternalNames", hideInternalNames);
 		keyMago.Set("showStaticsInAggr", showStaticsInAggr);
 		keyMago.Set("showVTable", showVTable);
+		keyMago.Set("flatClassFields", flatClassFields);
 	}
 
 	void loadFromRegistry()
 	{
+		// defaults must match magos readMagoOptions()
 		scope RegKey keyMago = new RegKey(HKEY_CURRENT_USER, "SOFTWARE\\MagoDebugger", false);
 		hideInternalNames = (keyMago.GetDWORD("hideInternalNames", 0) != 0);
 		showStaticsInAggr = (keyMago.GetDWORD("showStaticsInAggr", 0) != 0);
-		showVTable        = (keyMago.GetDWORD("showVTable", 0) != 0);
+		showVTable        = (keyMago.GetDWORD("showVTable", 1) != 0);
+		flatClassFields   = (keyMago.GetDWORD("flatClassFields", 0) != 0);
 	}
 }
 
@@ -2556,6 +2560,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mHideInternalNames = new CheckBox(mCanvas, "Hide compiler generated symbols"));
 		AddControl("", mShowStaticsInAggr = new CheckBox(mCanvas, "Show static fields in structs and classes"));
 		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
+		AddControl("", mFlatClassFields   = new CheckBox(mCanvas, "Show base class fields as direct fields"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -2600,6 +2605,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		mHideInternalNames.setChecked(mOptions.hideInternalNames);
 		mShowStaticsInAggr.setChecked(mOptions.showStaticsInAggr);
 		mShowVTable.setChecked(mOptions.showVTable);
+		mFlatClassFields.setChecked(mOptions.flatClassFields);
 	}
 
 	int DoApply(ref MagoOptions opts, ref MagoOptions refopts)
@@ -2608,12 +2614,14 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mHideInternalNames.isChecked(), opts.hideInternalNames, refopts.hideInternalNames);
 		changes += changeOption(mShowStaticsInAggr.isChecked(), opts.showStaticsInAggr, refopts.showStaticsInAggr);
 		changes += changeOption(mShowVTable.isChecked(), opts.showVTable, refopts.showVTable);
+		changes += changeOption(mFlatClassFields.isChecked(), opts.flatClassFields, refopts.flatClassFields);
 		return changes;
 	}
 
 	CheckBox mHideInternalNames;
 	CheckBox mShowStaticsInAggr;
 	CheckBox mShowVTable;
+	CheckBox mFlatClassFields;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

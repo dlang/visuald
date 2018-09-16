@@ -3813,7 +3813,7 @@ else
 			finishParsing();
 
 		outline  = outline  && mModificationCountOutlining != mModificationCount && mOutlining && mOutliningState == 0;
-		semantic = semantic && mModificationCountSemantic  != mModificationCount && Package.GetGlobalOptions().parseSource;
+		semantic = semantic && mModificationCountSemantic  != mModificationCount && Package.GetGlobalOptions().usesUpdateSemanticModule();
 
 		if(!outline && !semantic)
 			return false;

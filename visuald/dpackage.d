@@ -1357,6 +1357,8 @@ class GlobalOptions
 
 	int vsVersion;
 	bool isVS2017() { return vsVersion == 15; }
+	bool usesUpdateSemanticModule() { return parseSource || expandFromSemantics || showTypeInTooltip || semanticGotoDef; }
+
 
 	this()
 	{
