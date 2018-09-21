@@ -1002,4 +1002,5 @@ unreleased Version 0.48.0
   * VS2017: D compiler installation paths are now saved to "HKCR\Softwre\Visual D" to be picked up by msbuild
   * mago: added option to show base class fields as direct fields
   * semantic analysis did not work if "parse source for syntax errors" was disabled
-
+  * mago: can now show return values of functions stepped over (not slices or delegates or small non-POD-structs)
+  * mago: fix crash when showing children in data tooltip

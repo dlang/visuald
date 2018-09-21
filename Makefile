@@ -25,7 +25,7 @@
 # paths on your system or pass on the command line to nmake
 
 NSIS    = $(PROGRAMFILES)\NSIS
-MSBUILD = c:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe 
+MSBUILD = msbuild
 CONFIG  = Release COFF32
 
 ##############################################################
@@ -82,6 +82,11 @@ cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "dviewhelper" /Build "Release|Win32" src\cv2pdb_vs12.sln
 	cd ..\..\cv2pdb\trunk && devenv /Project "dumplines"   /Build "Release|Win32" src\cv2pdb_vs12.sln
 
+cv2pdb_vs15:
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32 src\cv2pdb.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32 src\dviewhelper\dviewhelper.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32 src\dumplines.vcxproj
+
 dcxxfilt: $(DCXXFILT_EXE)
 $(DCXXFILT_EXE): tools\dcxxfilt.d
 # no space after Release, it will be part of environment variable
@@ -90,11 +95,11 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_vs: install_modules dbuild15 install_only
+install_vs: install_modules cv2pdb dbuild15 install_only
 
-install_vs_fake_dbuild15: install_modules fake_dbuild15 install_only
+install_vs_fake_dbuild15: install_modules cv2pdb_vs15 fake_dbuild15 install_only
 
-install_modules: prerequisites visuald_vs vdserver cv2pdb dparser vdextension visualdwizard mago dcxxfilt \
+install_modules: prerequisites visuald_vs vdserver dparser vdextension visualdwizard mago dcxxfilt \
 	dbuild12 dbuild14
 
 install_only:
