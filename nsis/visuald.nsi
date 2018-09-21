@@ -437,7 +437,7 @@ ${MementoSection} "Install in VS 2017" SecVS2017
   ;${RegisterWin32Exception} ${VS2017_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
-  StrCpy $1 "$1Common7\IDE"
+  StrCpy $1 "$1Common7\IDE\"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
@@ -452,7 +452,7 @@ ${MementoSection} "Install in VS 2017" SecVS2017
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
-    ${SetOutPath} "$1Common7\Packages\Debugger"
+    ${SetOutPath} "$1..\Packages\Debugger"
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
