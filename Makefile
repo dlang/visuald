@@ -112,7 +112,7 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 
 install_vs: install_modules cv2pdb mago dbuild12 dbuild14 dbuild15 install_only
 
-install_vs_no_vs2017:   install_modules cv2pdb mago fake_dbuild15 install_only
+install_vs_no_vs2017:   install_modules cv2pdb mago dbuild12 dbuild14 fake_dbuild15 install_only
 
 install_vs_only_vs2017: install_modules cv2pdb_vs15 mago_vs15 fake_dbuild12 fake_dbuild14 dbuild15 install_only
 
