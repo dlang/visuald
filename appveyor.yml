@@ -136,8 +136,8 @@ build_script:
   # build installer
   - cd visuald
   # can build dbuild15 only with VS2017
-  - if     "%VS%"=="15" nmake install_vs
-  - if not "%VS%"=="15" nmake install_vs_fake_dbuild15
+  - if     "%VS%"=="15" nmake install_vs_only_vs2017
+  - if not "%VS%"=="15" nmake install_vs_no_vs2017
   # build mago-mi.exe for others to download as artifact
   - cd c:\mago
   - devenv /Build "Release StaticDE|Win32" /Project "mago-mi" magodbg_2010.sln

@@ -60,9 +60,19 @@ dbuild12:
 	cd msbuild\dbuild && devenv /Build "Release|AnyCPU" /Project "dbuild" dbuild.sln
 #	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
 
+fake_dbuild12:
+	if not exist msbuild\dbuild\obj\release\nul md msbuild\dbuild\obj\release
+	if exist "$(PROGRAMFILES)\VisualD\msbuild\dbuild.12.0.dll" copy "$(PROGRAMFILES)\VisualD\msbuild\dbuild.12.0.dll" msbuild\dbuild\obj\release
+	if not exist msbuild\dbuild\obj\release\dbuild.12.0.dll echo dummy >msbuild\dbuild\obj\release\dbuild.12.0.dll
+
 dbuild14:
 	cd msbuild\dbuild && devenv /Build "Release-v14|AnyCPU" /Project "dbuild" dbuild.sln
 #	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
+
+fake_dbuild14:
+	if not exist msbuild\dbuild\obj\release-v14\nul md msbuild\dbuild\obj\release-v14
+	if exist "$(PROGRAMFILES)\VisualD\msbuild\dbuild.14.0.dll" copy "$(PROGRAMFILES)\VisualD\msbuild\dbuild.14.0.dll" msbuild\dbuild\obj\release-v14
+	if not exist msbuild\dbuild\obj\release-v14\dbuild.14.0.dll echo dummy >msbuild\dbuild\obj\release-v14\dbuild.14.0.dll
 
 dbuild15:
 	cd msbuild\dbuild && devenv /Build "Release-v15|AnyCPU" /Project "dbuild" dbuild.sln
@@ -77,15 +87,20 @@ mago:
 	cd ..\..\mago && devenv /Build "Release|x64" /Project "MagoRemote" magodbg_2010.sln
 	cd ..\..\mago && devenv /Build "Release StaticDE|Win32" /Project "MagoNatCC" magodbg_2010.sln
 
+mago_vs15:
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v140 DebugEngine\MagoNatDE\MagoNatDE.vcxproj
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v140   DebugEngine\MagoRemote\MagoRemote.vcxproj
+	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v140" /target:Expression\MagoNatCC MagoDbg_2010.sln
+
 cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln
 	cd ..\..\cv2pdb\trunk && devenv /Project "dviewhelper" /Build "Release|Win32" src\cv2pdb_vs12.sln
 	cd ..\..\cv2pdb\trunk && devenv /Project "dumplines"   /Build "Release|Win32" src\cv2pdb_vs12.sln
 
 cv2pdb_vs15:
-	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32 src\cv2pdb.vcxproj
-	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32 src\dviewhelper\dviewhelper.vcxproj
-	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32 src\dumplines.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v141 src\cv2pdb.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v141 src\dviewhelper\dviewhelper.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v141 src\dumplines.vcxproj
 
 dcxxfilt: $(DCXXFILT_EXE)
 $(DCXXFILT_EXE): tools\dcxxfilt.d
@@ -95,12 +110,13 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_vs: install_modules cv2pdb dbuild15 install_only
+install_vs: install_modules cv2pdb mago dbuild12 dbuild14 dbuild15 install_only
 
-install_vs_fake_dbuild15: install_modules cv2pdb_vs15 fake_dbuild15 install_only
+install_vs_no_vs2017:   install_modules cv2pdb mago fake_dbuild15 install_only
 
-install_modules: prerequisites visuald_vs vdserver dparser vdextension visualdwizard mago dcxxfilt \
-	dbuild12 dbuild14
+install_vs_only_vs2017: install_modules cv2pdb_vs15 mago_vs15 fake_dbuild12 fake_dbuild14 dbuild15 install_only
+
+install_modules: prerequisites visuald_vs vdserver dparser vdextension visualdwizard dcxxfilt
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads
