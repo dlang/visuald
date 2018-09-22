@@ -88,8 +88,8 @@ mago:
 	cd ..\..\mago && devenv /Build "Release StaticDE|Win32" /Project "MagoNatCC" magodbg_2010.sln
 
 mago_vs15:
-	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v140 DebugEngine\MagoNatDE\MagoNatDE.vcxproj
-	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v140   DebugEngine\MagoRemote\MagoRemote.vcxproj
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v140            /target:DebugEngine\MagoNatDE MagoDbg_2010.sln
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v140              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
 	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v140" /target:Expression\MagoNatCC MagoDbg_2010.sln
 
 cv2pdb:
