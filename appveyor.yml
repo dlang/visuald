@@ -114,8 +114,6 @@ build_script:
   # Clone mago/cv2pdb (need to be two levels up)
   - cd ..
   - git clone https://github.com/rainers/mago.git mago
-  - set VS_SDK_PATH=%VSSDK120Install%
-  - copy mago\PropSheets\Template_MagoDbg_properties.props mago\PropSheets\MagoDbg_properties.props
   - md cv2pdb
   - cd cv2pdb
   - git clone https://github.com/rainers/cv2pdb.git trunk
