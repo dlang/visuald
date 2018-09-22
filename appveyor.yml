@@ -136,9 +136,6 @@ build_script:
   # can build dbuild15 only with VS2017
   - if     "%VS%"=="15" nmake install_vs_only_vs2017
   - if not "%VS%"=="15" nmake install_vs_no_vs2017
-  # build mago-mi.exe for others to download as artifact
-  - cd c:\mago
-  - devenv /Build "Release StaticDE|Win32" /Project "mago-mi" magodbg_2010.sln
 
 after_build:
   # publish as artifact
@@ -147,13 +144,10 @@ after_build:
   - for %%I in (downloads\*.exe) do (set BUILD_EXE=%%I && set ARTIFACT=%%~dpnI-%APPVEYOR_BUILD_NUMBER%-vs%VS%.exe)
   - copy %BUILD_EXE% %ARTIFACT%
   - ps: |
-        If ($Env:VS -eq '12') {
-            echo 'Creating artifacts...'
-            Push-AppveyorArtifact $Env:ARTIFACT
-            Push-AppveyorArtifact ..\cv2pdb\trunk\bin\Release\cv2pdb.exe
-            Push-AppveyorArtifact logs_and_symbols.7z
-            Push-AppveyorArtifact ..\mago\bin\Win32\Release\mago-mi.exe
-        }
+        echo 'Creating artifacts...'
+        Push-AppveyorArtifact $Env:ARTIFACT
+        Push-AppveyorArtifact ..\cv2pdb\trunk\bin\Release\cv2pdb.exe
+        Push-AppveyorArtifact logs_and_symbols.7z
 
 on_failure:
   - cd c:\projects
