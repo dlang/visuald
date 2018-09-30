@@ -26,6 +26,7 @@
 
 NSIS    = $(PROGRAMFILES)\NSIS
 MSBUILD = msbuild
+MSBUILD15 = "$(PROGRAMFILES)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild" 
 CONFIG  = Release COFF32
 
 ##############################################################
@@ -48,7 +49,14 @@ vdserver:
 	devenv /Project "vdserver"  /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
 dparser:
-	cd vdc\abothe && $(MSBUILD) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
+	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
+
+fake_dparser:
+	if not exist bin\Release\DParserCOMServer\nul md bin\Release\DParserCOMServer
+	if exist "$(PROGRAMFILES)\VisualD\dparser\dparser\DParserCOMServer.exe" copy "$(PROGRAMFILES)\VisualD\dparser\dparser\DParserCOMServer.exe" bin\Release\DParserCOMServer
+	if exist "$(PROGRAMFILES)\VisualD\dparser\dparser\D_Parser.dll" copy "$(PROGRAMFILES)\VisualD\dparser\dparser\D_Parser.dll" bin\Release\DParserCOMServer
+	if not exist bin\Release\DParserCOMServer\DParserCOMServer.exe echo dummy >bin\Release\DParserCOMServer\DParserCOMServer.exe
+	if not exist bin\Release\DParserCOMServer\D_Parser.dll echo dummy >bin\Release\DParserCOMServer\D_Parser.dll
 
 vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
@@ -110,13 +118,13 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_vs: install_modules cv2pdb mago dbuild12 dbuild14 dbuild15 install_only
+install_vs: install_modules dparser cv2pdb mago dbuild12 dbuild14 dbuild15 install_only
 
-install_vs_no_vs2017:   install_modules cv2pdb mago dbuild12 dbuild14 fake_dbuild15 install_only
+install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago dbuild12 dbuild14 fake_dbuild15 install_only
 
-install_vs_only_vs2017: install_modules cv2pdb_vs15 mago_vs15 fake_dbuild12 fake_dbuild14 dbuild15 install_only
+install_vs_only_vs2017: install_modules dparser cv2pdb_vs15 mago_vs15 fake_dbuild12 fake_dbuild14 dbuild15 install_only
 
-install_modules: prerequisites visuald_vs vdserver dparser vdextension visualdwizard dcxxfilt
+install_modules: prerequisites visuald_vs vdserver vdextension visualdwizard dcxxfilt
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads

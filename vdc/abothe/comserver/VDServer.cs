@@ -21,6 +21,7 @@ using D_Parser.Dom;
 using D_Parser.Completion;
 using D_Parser.Resolver;
 using D_Parser.Resolver.TypeResolution;
+using D_Parser.Resolver.ExpressionSemantics;
 using D_Parser.Completion.ToolTips;
 using D_Parser.Refactoring;
 using D_Parser.Dom.Expressions;
@@ -417,13 +418,36 @@ namespace DParserCOMServer
 
                     foreach (var t in AmbiguousType.TryDissolve(types))
                     {
-                        tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t)).Append("\a");
+                        tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t));
                         if (t is DSymbol)
                             dn = (t as DSymbol).Definition;
+
+                        tipText.Append("\a");
                     }
 
                     while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
                         tipText.Length--;
+
+#if false
+                    var ctxt = _editorData.GetLooseResolutionContext(LooseResolution.NodeResolutionAttempt.Normal);
+                    ctxt.Push(_editorData);
+                    try
+                    {
+                        ISymbolValue v = null;
+                        var var = dn as DVariable;
+                        if (var != null && var.Initializer != null && var.IsConst)
+                            v = Evaluation.EvaluateValue(var.Initializer, ctxt);
+                        if (v == null && sr is IExpression)
+                            v = Evaluation.EvaluateValue(sr as IExpression, ctxt);
+                        if (v != null)
+                            tipText.Append("\avalue = ").Append(v.ToString());
+                    }
+                    catch(Exception e)
+                    {
+                        tipText.Append("\aException during evaluation = ").Append(e.Message);
+                    }
+                    ctxt.Pop();
+#endif
 
                     if (dn != null)
                         VDServerCompletionDataGenerator.GenerateNodeTooltipBody(dn, tipText);
@@ -619,7 +643,7 @@ namespace DParserCOMServer
 					DNode n = null;
 					foreach (var t in AmbiguousType.TryDissolve(rr))
 					{
-						n =	DResolver.GetResultMember(t, true);
+						n =	ExpressionTypeEvaluation.GetResultMember(t);
 						if (n != null)
 							break;
 					}
@@ -632,7 +656,7 @@ namespace DParserCOMServer
 						var mthd = n as DMethod;
 						if (mthd != null)
 							decl = mthd.Body ==	null;
-						else if (n.ContainsAttribute(DTokens.Extern))
+						else if (n.ContainsAnyAttribute(DTokens.Extern))
 							decl = true;
 						if (decl)
 							tipText.Append("EXTERN:");
@@ -685,12 +709,12 @@ namespace DParserCOMServer
                 StringBuilder refs = new StringBuilder();
                 if (rr != null)
                 {
-                    var n = DResolver.GetResultMember(rr, true);
+                    var n = ExpressionTypeEvaluation.GetResultMember(rr);
 
                     if (n != null)
                     {
                         var ctxt = ResolutionContext.Create(_editorData, true);
-                        if (n.ContainsAttribute(DTokens.Private) || ((n is DVariable) && (n as DVariable).IsLocal))
+                        if (n.ContainsAnyAttribute(DTokens.Private) || ((n is DVariable) && (n as DVariable).IsLocal))
                         {
                             GetReferencesInModule(ast, refs, n, ctxt);
                         }
