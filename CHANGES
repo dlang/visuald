@@ -998,9 +998,11 @@ unreleased Version 0.48.0
   * show detected compiler version below installation path
   * fix installation of the D icon for the solution explorer
   * when pasting code to D source file newlines are adapted to surrounding code
-  * dparser: no semantic info for a package if any file in the package has fatal parser error
   * VS2017: D compiler installation paths are now saved to "HKCR\Softwre\Visual D" to be picked up by msbuild
   * mago: added option to show base class fields as direct fields
   * semantic analysis did not work if "parse source for syntax errors" was disabled
   * mago: can now show return values of functions stepped over (not slices or delegates or small non-POD-structs)
   * mago: fix crash when showing children in data tooltip
+  * fixed "Compile and Run" on selection
+  * dparser: no semantic info for a package if any file in the package has fatal parser error
+  * dparser: now has semantic support for static foreach
