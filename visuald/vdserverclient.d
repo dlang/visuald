@@ -308,12 +308,13 @@ alias void delegate(uint request, string fname, string type, sdk.vsi.sdk_shared.
 
 class GetTipCommand : FileCommand
 {
-	this(string filename, sdk.vsi.sdk_shared.TextSpan span, GetTipCallBack cb)
+	this(string filename, sdk.vsi.sdk_shared.TextSpan span, int flags, GetTipCallBack cb)
 	{
 		super("GetTip", filename);
 		version(DebugCmd) mCommand ~= " {" ~ to!string(span.iStartLine) ~ "," ~ to!string(span.iStartIndex)
 			~ " - " ~ to!string(span.iEndLine) ~ "," ~ to!string(span.iEndIndex) ~ "}";
 		mSpan = span;
+		mFlags = flags;
 		mCallback = cb;
 	}
 
@@ -327,7 +328,7 @@ class GetTipCommand : FileCommand
 		int iStartIndex = mSpan.iStartIndex;
 		int iEndLine = mSpan.iEndLine + 1;
 		int iEndIndex = mSpan.iEndIndex;
-		HRESULT rc = gVDServer.GetTip(fname, iStartLine, iStartIndex, iEndLine, iEndIndex);
+		HRESULT rc = gVDServer.GetTip(fname, iStartLine, iStartIndex, iEndLine, iEndIndex, mFlags);
 		freeBSTR(fname);
 		return rc;
 	}
@@ -364,6 +365,7 @@ class GetTipCommand : FileCommand
 
 	GetTipCallBack mCallback;
 	sdk.vsi.sdk_shared.TextSpan mSpan;
+	int mFlags;
 	string mType;
 }
 
@@ -716,9 +718,9 @@ class VDServerClient
 		return cmd.mRequest;
 	}
 
-	uint GetTip(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, GetTipCallBack cb)
+	uint GetTip(string filename, sdk.vsi.sdk_shared.TextSpan* pSpan, int flags, GetTipCallBack cb)
 	{
-		auto cmd = new _shared!(GetTipCommand)(filename, *pSpan, cb);
+		auto cmd = new _shared!(GetTipCommand)(filename, *pSpan, flags, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}

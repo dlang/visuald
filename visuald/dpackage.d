@@ -1216,14 +1216,14 @@ struct CompilerDirectories
 
 	string ExeSearchPath64;
 	string LibSearchPath64;
-	bool   overrideIni64;
+	bool   overrideIni64 = true;
 	string overrideLinker64;
 	string overrideOptions64;
 	string DisasmCommand64;
 
 	string ExeSearchPath32coff;
 	string LibSearchPath32coff;
-	bool   overrideIni32coff;
+	bool   overrideIni32coff = true;
 	string overrideLinker32coff;
 	string overrideOptions32coff;
 	string DisasmCommand32coff;
@@ -1324,14 +1324,15 @@ class GlobalOptions
 	bool showMemUsage = false;
 	bool autoOutlining;
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
-	bool parseSource;
+	bool parseSource = true;
 	bool pasteIndent;
 	bool expandFromSemantics;
 	bool expandFromBuffer;
 	bool expandFromJSON;
 	byte expandTrigger;
 	bool showTypeInTooltip;
-	bool semanticGotoDef;
+	bool showValueInTooltip;
+	bool semanticGotoDef = true;
 	bool useDParser;
 	bool mixinAnalysis;
 	bool UFCSExpansions;
@@ -1659,13 +1660,14 @@ class GlobalOptions
 				showMemUsage    = getBoolOpt("showMemUsage", false);
 			autoOutlining       = getBoolOpt("autoOutlining", true);
 			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
-			parseSource         = getBoolOpt("parseSource", true);
+			//parseSource         = getBoolOpt("parseSource", true);
 			expandFromSemantics = getBoolOpt("expandFromSemantics", true);
-			expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
+			//expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
 			expandFromJSON      = getBoolOpt("expandFromJSON", true);
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
 			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
-			semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
+			showValueInTooltip  = getBoolOpt("showValueInTooltip", false);
+			//semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
 			pasteIndent         = getBoolOpt("pasteIndent", true);
 
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
@@ -1763,7 +1765,7 @@ class GlobalOptions
 					opt.LibSearchPath64 = fixSdk10LibPath(opt.LibSearchPath64, true);
 
 				wstring linkPath = to!wstring(getVCDir("bin\\link.exe", false));
-				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
+				opt.overrideIni64     = dmd; // getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? linkPath : "");
 				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
 
@@ -1772,7 +1774,7 @@ class GlobalOptions
 					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", opt.ExeSearchPath32coff);
 					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", opt.LibSearchPath32coff);
 					opt.DisasmCommand32coff   = getPathsOpt(prefix ~ "DisasmCommand32coff", opt.DisasmCommand32coff);
-					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", true);
+					opt.overrideIni32coff     = true; // getBoolOpt(prefix ~ "overrideIni32coff", true);
 					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", linkPath);
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
 
@@ -1892,14 +1894,14 @@ class GlobalOptions
 			keyToolOpts.Set("ExeSearchPath64",     toUTF16(DMD.ExeSearchPath64));
 			keyToolOpts.Set("LibSearchPath64",     toUTF16(DMD.LibSearchPath64));
 			keyToolOpts.Set("DisasmCommand64",     toUTF16(DMD.DisasmCommand64));
-			keyToolOpts.Set("overrideIni64",       DMD.overrideIni64);
+			//keyToolOpts.Set("overrideIni64",       DMD.overrideIni64);
 			keyToolOpts.Set("overrideLinker64",    toUTF16(DMD.overrideLinker64));
 			keyToolOpts.Set("overrideOptions64",   toUTF16(DMD.overrideOptions64));
 
 			keyToolOpts.Set("ExeSearchPath32coff",     toUTF16(DMD.ExeSearchPath32coff));
 			keyToolOpts.Set("LibSearchPath32coff",     toUTF16(DMD.LibSearchPath32coff));
 			keyToolOpts.Set("DisasmCommand32coff",     toUTF16(DMD.DisasmCommand32coff));
-			keyToolOpts.Set("overrideIni32coff",       DMD.overrideIni32coff);
+			//keyToolOpts.Set("overrideIni32coff",       DMD.overrideIni32coff);
 			keyToolOpts.Set("overrideLinker32coff",    toUTF16(DMD.overrideLinker32coff));
 			keyToolOpts.Set("overrideOptions32coff",   toUTF16(DMD.overrideOptions32coff));
 
@@ -1923,13 +1925,14 @@ class GlobalOptions
 			keyToolOpts.Set("showMemUsage",        showMemUsage);
 			keyToolOpts.Set("autoOutlining",       autoOutlining);
 			keyToolOpts.Set("deleteFiles",         deleteFiles);
-			keyToolOpts.Set("parseSource",         parseSource);
+			//keyToolOpts.Set("parseSource",         parseSource);
 			keyToolOpts.Set("expandFromSemantics", expandFromSemantics);
-			keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
+			//keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
 			keyToolOpts.Set("expandTrigger",       expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip2",  showTypeInTooltip);
-			keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
+			keyToolOpts.Set("showValueInTooltip",  showValueInTooltip);
+			//keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
 			keyToolOpts.Set("useDParser2",         useDParser);
 			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
 			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
@@ -1953,6 +1956,7 @@ class GlobalOptions
 				keyBuildOpts.Set("DMDInstallDir",     toUTF16(DMD.InstallDir));
 				keyBuildOpts.Set("GDCInstallDir",     toUTF16(GDC.InstallDir));
 				keyBuildOpts.Set("LDCInstallDir",     toUTF16(LDC.InstallDir));
+				keyBuildOpts.Set("demangleError",     demangleError);
 			}
 
 			CHierNode.setContainerIsSorted(sortProjects);

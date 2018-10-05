@@ -42,7 +42,7 @@ namespace DParserCOMServer
 		void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags);
 		void ClearSemanticProject();
 		void UpdateModule(string filename, string srcText, bool verbose);
-		void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex);
+		void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags);
 		void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer);
 		void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr);
 		void GetSemanticExpansionsResult(out string stringList);
@@ -375,7 +375,7 @@ namespace DParserCOMServer
             }
         }
 
-        public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex)
+        public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 		{
             filename = normalizePath(filename);
             var ast = GetModule(filename);
@@ -428,26 +428,28 @@ namespace DParserCOMServer
                     while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
                         tipText.Length--;
 
-#if false
-                    var ctxt = _editorData.GetLooseResolutionContext(LooseResolution.NodeResolutionAttempt.Normal);
-                    ctxt.Push(_editorData);
-                    try
+                    bool eval = (flags & 1) != 0;
+                    if (eval)
                     {
-                        ISymbolValue v = null;
-                        var var = dn as DVariable;
-                        if (var != null && var.Initializer != null && var.IsConst)
-                            v = Evaluation.EvaluateValue(var.Initializer, ctxt);
-                        if (v == null && sr is IExpression)
-                            v = Evaluation.EvaluateValue(sr as IExpression, ctxt);
-                        if (v != null)
-                            tipText.Append("\avalue = ").Append(v.ToString());
+                        var ctxt = _editorData.GetLooseResolutionContext(LooseResolution.NodeResolutionAttempt.Normal);
+                        ctxt.Push(_editorData);
+                        try
+                        {
+                            ISymbolValue v = null;
+                            var var = dn as DVariable;
+                            if (var != null && var.Initializer != null && var.IsConst)
+                                v = Evaluation.EvaluateValue(var.Initializer, ctxt);
+                            if (v == null && sr is IExpression)
+                                v = Evaluation.EvaluateValue(sr as IExpression, ctxt);
+                            if (v != null)
+                                tipText.Append("\avalue = ").Append(v.ToString());
+                        }
+                        catch (Exception e)
+                        {
+                            tipText.Append("\aException during evaluation = ").Append(e.Message);
+                        }
+                        ctxt.Pop();
                     }
-                    catch(Exception e)
-                    {
-                        tipText.Append("\aException during evaluation = ").Append(e.Message);
-                    }
-                    ctxt.Pop();
-#endif
 
                     if (dn != null)
                         VDServerCompletionDataGenerator.GenerateNodeTooltipBody(dn, tipText);

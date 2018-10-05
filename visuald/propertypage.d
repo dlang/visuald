@@ -505,9 +505,9 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		mLineY += kLineHeight;
 	}
 
-	void AddHorizontalLine()
+	void AddHorizontalLine(Widget parent = null)
 	{
-		auto w = new Label(mCanvas);
+		auto w = new Label(parent ? parent : mCanvas);
 		w.AddWindowStyle(SS_ETCHEDFRAME, SS_TYPEMASK);
 		w.setRect(0, mLineY + 2, getWidgetWidth(mCanvas, kPageWidth) - 2*kMargin, 2);
 		Attachment att = kAttachLeftRight;
@@ -515,6 +515,29 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		att.top = att.bottom = mAttachY;
 		addResizableWidget(w, att);
 		mLineY += 6;
+	}
+
+	void AddTitleLine(string title, Widget parent = null)
+	{
+		int prevLineY = mLineY;
+		mLineY += kLineHeight / 2 - kLineSpacing;
+		AddHorizontalLine(parent);
+		mLineY = prevLineY;
+
+		auto w = new Label(parent ? parent : mCanvas, title);
+		w.AddWindowStyle(SS_CENTER, SS_TYPEMASK);
+		int textWidth = w.getTextWidth(title) + 8;
+		int off = ((kLineHeight - kLineSpacing) - 16) / 2;
+		w.setRect(8, mLineY + off, textWidth, kLineHeight - kLineSpacing);
+		mLineY += kLineHeight;
+
+		if(mAttachY > 0)
+		{
+			Attachment att = kAttachNone;
+			att.vdiv = 1000;
+			att.top = att.bottom = mAttachY;
+			addResizableWidget(w, att);
+		}
 	}
 
 	int changeOption(V)(V val, ref V optval, ref V refval)
@@ -902,15 +925,8 @@ class DebuggingPropertyPage : ProjectPropertyPage
 		AddControl("Remote Machine",    mRemote = new Text(mCanvas));
 		AddControl("Debugger",          mDebugEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
 		AddControl("",                  mStdOutToOutputWindow = new CheckBox(mCanvas, "Redirect stdout to output window"));
-		AddControl("Run without debugging", lbl = new Label(mCanvas, ""));
+		AddTitleLine("Run without debugging");
 		AddControl("",                  mPauseAfterRunning = new CheckBox(mCanvas, "Pause when program finishes"));
-
-		lbl.AddWindowExStyle(WS_EX_STATICEDGE);
-		lbl.AddWindowStyle(SS_ETCHEDFRAME, SS_TYPEMASK);
-		int left, top, w, h;
-		if(lbl.getRect(left, top, w, h))
-			lbl.setRect(left, top + h / 2 - 1, w, 2);
-		refreshResizableWidget(lbl);
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -1901,7 +1917,7 @@ class DirPropertyPage : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 13;
+		kNeededLines = 14;
 	}
 
 	void addBrowseDir(MultiLineText ctrl, string title)
@@ -1969,6 +1985,7 @@ class DirPropertyPage : GlobalPropertyPage
 		addResizableWidget(mVersionLabel, kAttachLeftRight);
 		mLineY += kLineHeight;
 
+		AddTitleLine(".visualdproj common options");
 		mLinesPerMultiLine = 2;
 		btn = new Button(mCanvas, "+", ID_IMPORTDIR);
 		AddControl("Import paths",     mImpPath = new MultiLineText(mCanvas), btn, 300);
@@ -1991,6 +2008,7 @@ class DirPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 2;
 		btn = new Button(page32, "+", ID_LIBPATH32);
 		AddControl("Library paths",    mLibPath = new MultiLineText(page32), btn, 500);
+		AddTitleLine("Compile and Disassemble", page32);
 		AddControl("Disassemble Command", mDisasmCommand = new Text(page32));
 
 		auto page64 = mTabArch.pages[1];
@@ -2005,14 +2023,16 @@ class DirPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 2;
 		btn = new Button(page64, "+", ID_LIBPATH64);
 		AddControl("Library paths", mLibPath64 = new MultiLineText(page64), btn, 500);
-		AddControl("Disassemble Command", mDisasmCommand64 = new Text(page64));
 
 		if(overrideIni.length)
 		{
-			AddControl("", mOverrideIni64 = new CheckBox(page64, overrideIni));
+			//AddControl("", mOverrideIni64 = new CheckBox(page64, overrideIni));
 			btn = new Button(page64, "...", ID_LINKER64);
 			AddControl("Linker", mLinkerExecutable64 = new Text(page64), btn);
-			AddControl("Additional options", mLinkerOptions64 = new Text(page64));
+			//AddControl("Additional options", mLinkerOptions64 = new Text(page64));
+
+			AddTitleLine("Compile and Disassemble", page64);
+			AddControl("Disassemble Command", mDisasmCommand64 = new Text(page64));
 
 			auto page32coff = mTabArch.pages[2];
 			if(auto w = cast(Window)page32coff)
@@ -2026,12 +2046,19 @@ class DirPropertyPage : GlobalPropertyPage
 			mLinesPerMultiLine = 2;
 			btn = new Button(page32coff, "+", ID_LIBPATH32COFF);
 			AddControl("Library paths", mLibPath32coff = new MultiLineText(page32coff), btn, 500);
-			AddControl("Disassemble Command", mDisasmCommand32coff = new Text(page32coff));
 
-			AddControl("", mOverrideIni32coff = new CheckBox(page32coff, overrideIni));
+			//AddControl("", mOverrideIni32coff = new CheckBox(page32coff, overrideIni));
 			btn = new Button(page32coff, "...", ID_LINKER32COFF);
 			AddControl("Linker", mLinkerExecutable32coff = new Text(page32coff), btn);
-			AddControl("Additional options", mLinkerOptions32coff = new Text(page32coff));
+			//AddControl("Additional options", mLinkerOptions32coff = new Text(page32coff));
+
+			AddTitleLine("Compile and Disassemble", page32coff);
+			AddControl("Disassemble Command", mDisasmCommand32coff = new Text(page32coff));
+		}
+		else
+		{
+			AddTitleLine("Compile and Disassemble", page64);
+			AddControl("Disassemble Command", mDisasmCommand64 = new Text(page64));
 		}
 	}
 
@@ -2044,16 +2071,15 @@ class DirPropertyPage : GlobalPropertyPage
 
 	void enableControls()
 	{
-		if(mOverrideIni64)
-		{
+		if(mOverrideIni64 && mLinkerExecutable64)
 			mLinkerExecutable64.setEnabled(mOverrideIni64.isChecked());
+		if(mOverrideIni64 && mLinkerOptions64)
 			mLinkerOptions64.setEnabled(mOverrideIni64.isChecked());
-		}
-		if(mOverrideIni32coff)
-		{
+
+		if(mOverrideIni32coff && mLinkerExecutable32coff)
 			mLinkerExecutable32coff.setEnabled(mOverrideIni32coff.isChecked());
+		if(mOverrideIni32coff && mLinkerOptions32coff)
 			mLinkerOptions32coff.setEnabled(mOverrideIni32coff.isChecked());
-		}
 	}
 
 	abstract CompilerDirectories* getCompilerOptions(GlobalOptions opts);
@@ -2085,20 +2111,24 @@ class DirPropertyPage : GlobalPropertyPage
 		mLibPath64.setText(opt.LibSearchPath64);
 		mDisasmCommand64.setText(opt.DisasmCommand64);
 		if(mOverrideIni64)
-		{
 			mOverrideIni64.setChecked(opt.overrideIni64);
+		if (mLinkerExecutable64)
 			mLinkerExecutable64.setText(opt.overrideLinker64);
+		if (mLinkerOptions64)
 			mLinkerOptions64.setText(opt.overrideOptions64);
-		}
-		if(mOverrideIni32coff)
-		{
+
+		if(mExePath32coff)
 			mExePath32coff.setText(opt.ExeSearchPath32coff);
+		if(mLibPath32coff)
 			mLibPath32coff.setText(opt.LibSearchPath32coff);
+		if(mOverrideIni32coff)
 			mOverrideIni32coff.setChecked(opt.overrideIni32coff);
+		if(mLinkerExecutable32coff)
 			mLinkerExecutable32coff.setText(opt.overrideLinker32coff);
+		if(mLinkerOptions32coff)
 			mLinkerOptions32coff.setText(opt.overrideOptions32coff);
+		if(mDisasmCommand32coff)
 			mDisasmCommand32coff.setText(opt.DisasmCommand32coff);
-		}
 
 		updateVersionLabel();
 		enableControls();
@@ -2118,21 +2148,27 @@ class DirPropertyPage : GlobalPropertyPage
 		changes += changeOption(mExePath64.getText(),          opt.ExeSearchPath64,   refopt.ExeSearchPath64);
 		changes += changeOption(mLibPath64.getText(),          opt.LibSearchPath64,   refopt.LibSearchPath64);
 		changes += changeOption(mDisasmCommand64.getText(),    opt.DisasmCommand64,   refopt.DisasmCommand64);
+
 		if(mOverrideIni64)
-		{
 			changes += changeOption(mOverrideIni64.isChecked(),    opt.overrideIni64,     refopt.overrideIni64);
+		if(mLinkerExecutable64)
 			changes += changeOption(mLinkerExecutable64.getText(), opt.overrideLinker64,  refopt.overrideLinker64);
+		if(mLinkerOptions64)
 			changes += changeOption(mLinkerOptions64.getText(),    opt.overrideOptions64, refopt.overrideOptions64);
-		}
+
 		if(mOverrideIni32coff)
-		{
-			changes += changeOption(mExePath32coff.getText(),          opt.ExeSearchPath32coff,   refopt.ExeSearchPath32coff);
-			changes += changeOption(mLibPath32coff.getText(),          opt.LibSearchPath32coff,   refopt.LibSearchPath32coff);
 			changes += changeOption(mOverrideIni32coff.isChecked(),    opt.overrideIni32coff,     refopt.overrideIni32coff);
+		if(mExePath32coff)
+			changes += changeOption(mExePath32coff.getText(),          opt.ExeSearchPath32coff,   refopt.ExeSearchPath32coff);
+		if(mLibPath32coff)
+			changes += changeOption(mLibPath32coff.getText(),          opt.LibSearchPath32coff,   refopt.LibSearchPath32coff);
+		if(mLinkerExecutable32coff)
 			changes += changeOption(mLinkerExecutable32coff.getText(), opt.overrideLinker32coff,  refopt.overrideLinker32coff);
+		if(mLinkerOptions32coff)
 			changes += changeOption(mLinkerOptions32coff.getText(),    opt.overrideOptions32coff, refopt.overrideOptions32coff);
+		if(mDisasmCommand32coff)
 			changes += changeOption(mDisasmCommand32coff.getText(),    opt.DisasmCommand32coff,   refopt.DisasmCommand32coff);
-		}
+
 		return changes;
 	}
 
@@ -2286,29 +2322,29 @@ class ToolsProperty2Page : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 13;
+		kNeededLines = 17;
 	}
 
 	override void CreateControls()
 	{
+		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"));
+		AddTitleLine(".visualdproj build options");
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
 		AddControl("", mShowUptodate  = new CheckBox(mCanvas, "Show why a target is rebuilt"));
 		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
 		static if(enableShowMemUsage)
 			AddControl("", mShowMemUsage  = new CheckBox(mCanvas, "Show compiler memory usage"));
 		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
-		AddHorizontalLine();
-		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"));
+		AddControl("Resource includes", mIncPath = new Text(mCanvas));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor linker dependencies"));
 		mLinesPerMultiLine = 2;
-		AddControl("Exclude Files/Folders", mExcludeFileDeps = new MultiLineText(mCanvas));
-		AddHorizontalLine();
+		AddControl("Exclude Files/Folders", mExcludeFileDeps = new MultiLineText(mCanvas), 500);
+		AddTitleLine("Prebuilt browse information");
 		//AddControl("Remove project item", mDeleteFiles =
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 		mLinesPerMultiLine = 2;
-		AddControl("JSON paths",        mJSNPath = new MultiLineText(mCanvas));
-		AddControl("Resource includes", mIncPath = new Text(mCanvas));
-		AddHorizontalLine();
+		AddControl("JSON paths",        mJSNPath = new MultiLineText(mCanvas), 500);
+		AddTitleLine("Compile and Run/Debug");
 		AddControl("Compile+Run options", mCompileAndRunOpts = new Text(mCanvas));
 		AddControl("Compile+Debug options", mCompileAndDbgOpts = new Text(mCanvas));
 		AddControl("   Debugger",       mCompileAndDbgEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
@@ -2375,7 +2411,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 class ColorizerPropertyPage : GlobalPropertyPage
 {
 	override string GetCategoryName() { return "Language"; }
-	override string GetPageName() { return "Colorizer"; }
+	override string GetPageName() { return "Editor"; }
 
 	this(GlobalOptions options)
 	{
@@ -2385,14 +2421,16 @@ class ColorizerPropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
+		mLinesPerMultiLine = 3;
+		AddTitleLine("Colorizer");
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas), 1000);
-		AddHorizontalLine();
+		AddTitleLine("Coverage");
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
-		AddHorizontalLine();
+		AddTitleLine("Miscellaneous");
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
-		AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
+		//AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
 		AddControl("", mPasteIndent = new CheckBox(mCanvas, "Reindent new lines after paste"));
 	}
 
@@ -2402,7 +2440,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mColorizeCoverage.setChecked(opts.ColorizeCoverage);
 		mShowCoverageMargin.setChecked(opts.showCoverageMargin);
 		mAutoOutlining.setChecked(opts.autoOutlining);
-		mParseSource.setChecked(opts.parseSource);
+		//mParseSource.setChecked(opts.parseSource);
 		mPasteIndent.setChecked(opts.pasteIndent);
 		mUserTypes.setText(opts.UserTypesSpec);
 
@@ -2416,7 +2454,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage);
 		changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin);
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining);
-		changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource);
+		//changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource);
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent);
 		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec);
 		return changes;
@@ -2426,7 +2464,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	CheckBox mColorizeCoverage;
 	CheckBox mShowCoverageMargin;
 	CheckBox mAutoOutlining;
-	CheckBox mParseSource;
+	//CheckBox mParseSource;
 	CheckBox mPasteIndent;
 	MultiLineText mUserTypes;
 }
@@ -2444,17 +2482,21 @@ class IntellisensePropertyPage : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		AddControl("", mExpandSemantics = new CheckBox(mCanvas, "Expansions from semantic analysis"));
-		AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
-		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
-		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "writing '.'", "writing an identifier" ], false));
-		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tool tip"));
-		AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
-		version(DParserOption) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
+		AddTitleLine("Semantic analysis");
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
-		AddControl("Sort expansions", mSortExpMode = new ComboBox(mCanvas, [ "alphabetically", "by type", "by declaration and scope" ], false));
+		//AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
+		AddTitleLine("Expansions");
+		AddControl("", mExpandSemantics = new CheckBox(mCanvas, "Expansions from semantic analysis"));
+		//AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
+		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
+		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "+ writing '.'", "+ writing an identifier" ], false));
+		version(DParserOption) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
 		AddControl("", mExactExpMatch = new CheckBox(mCanvas, "Expansions match exact start instead of case insensitive sub string"));
+		AddControl("Sort expansions", mSortExpMode = new ComboBox(mCanvas, [ "alphabetically", "by type", "by declaration and scope" ], false));
+		AddTitleLine("Tooltips");
+		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tooltip"));
+		AddControl("", mShowValueInTooltip = new CheckBox(mCanvas, "Show value of constant expressions in tooltip (experimental)"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -2470,16 +2512,18 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mMixinAnalysis.setEnabled(useDParser);
 		mUFCSExpansions.setEnabled(useDParser);
 		mSortExpMode.setEnabled(useDParser);
+		mShowValueInTooltip.setEnabled(mShowTypeInTooltip.isChecked());
 	}
 
 	override void SetControls(GlobalOptions opts)
 	{
 		mExpandSemantics.setChecked(opts.expandFromSemantics);
-		mExpandFromBuffer.setChecked(opts.expandFromBuffer);
+		//mExpandFromBuffer.setChecked(opts.expandFromBuffer);
 		mExpandFromJSON.setChecked(opts.expandFromJSON);
 		mExpandTrigger.setSelection(opts.expandTrigger);
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
-		mSemanticGotoDef.setChecked(opts.semanticGotoDef);
+		mShowValueInTooltip.setChecked(opts.showValueInTooltip);
+		//mSemanticGotoDef.setChecked(opts.semanticGotoDef);
 		version(DParserOption) mUseDParser.setChecked(opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
@@ -2493,11 +2537,12 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	{
 		int changes = 0;
 		changes += changeOption(mExpandSemantics.isChecked(), opts.expandFromSemantics, refopts.expandFromSemantics);
-		changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer);
+		//changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer);
 		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON);
 		changes += changeOption(cast(byte) mExpandTrigger.getSelection(), opts.expandTrigger, refopts.expandTrigger);
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip);
-		changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef);
+		changes += changeOption(mShowValueInTooltip.isChecked(), opts.showValueInTooltip, refopts.showValueInTooltip);
+		//changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef);
 		version(DParserOption) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser);
 		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
 		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
@@ -2507,11 +2552,12 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	}
 
 	CheckBox mExpandSemantics;
-	CheckBox mExpandFromBuffer;
+	//CheckBox mExpandFromBuffer;
 	CheckBox mExpandFromJSON;
 	ComboBox mExpandTrigger;
 	CheckBox mShowTypeInTooltip;
-	CheckBox mSemanticGotoDef;
+	CheckBox mShowValueInTooltip;
+	//CheckBox mSemanticGotoDef;
 	version(DParserOption) CheckBox mUseDParser;
 	CheckBox mUFCSExpansions;
 	ComboBox mSortExpMode;
@@ -2648,7 +2694,7 @@ const GUID    g_LdcDirPropertyPage       = uuid("002a2de9-8bb6-484d-9825-7e4ad40
 const GUID    g_DubPropertyPage          = uuid("002a2de9-8bb6-484d-9827-7e4ad4084715");
 const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad4084715");
 
-// registered under Languages\\Language Services\\D\\EditorToolsOptions\\Colorizer, created explicitely by package
+// registered under Languages\\Language Services\\D\\EditorToolsOptions\\Editor, created explicitely by package
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");
 const GUID    g_IntellisensePropertyPage = uuid("002a2de9-8bb6-484d-9823-7e4ad4084715");
 const GUID    g_MagoPropertyPage         = uuid("002a2de9-8bb6-484d-9826-7e4ad4084715");

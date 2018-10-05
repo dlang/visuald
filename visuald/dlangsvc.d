@@ -816,7 +816,8 @@ class LanguageService : DisposingComObject,
 	uint GetTip(Source src, TextSpan* pSpan, GetTipCallBack cb)
 	{
 		ConfigureSemanticProject(src);
-		return vdServerClient.GetTip(src.GetFileName(), pSpan, cb);
+		int flags = Package.GetGlobalOptions().showValueInTooltip ? 1 : 0;
+		return vdServerClient.GetTip(src.GetFileName(), pSpan, flags, cb);
 	}
 	uint GetDefinition(Source src, TextSpan* pSpan, GetDefinitionCallBack cb)
 	{

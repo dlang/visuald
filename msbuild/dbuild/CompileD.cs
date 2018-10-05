@@ -889,11 +889,11 @@ namespace dbuild
                 {
                     using (System.IO.BinaryReader bReader = new System.IO.BinaryReader(fStream))
                     {
-                        if (bReader.ReadUInt16() == 23117) //check the MZ signature
+                        if (bReader.ReadUInt16() == 0x5A4D) //check the MZ signature
                         {
                             fStream.Seek(0x3A, System.IO.SeekOrigin.Current); //seek to e_lfanew.
                             fStream.Seek(bReader.ReadUInt32(), System.IO.SeekOrigin.Begin); //seek to the start of the NT header.
-                            if (bReader.ReadUInt32() == 17744) //check the PE\0\0 signature.
+                            if (bReader.ReadUInt32() == 0x4550) //check the PE\0\0 signature.
                             {
                                 fStream.Seek(20, System.IO.SeekOrigin.Current); //seek past the file header,
                                 architecture = bReader.ReadUInt16(); //read the magic number of the optional header.

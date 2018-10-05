@@ -49,7 +49,7 @@ vdserver:
 	devenv /Project "vdserver"  /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
 dparser:
-	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.0 /p:DefineConstants=NET40 /t:Rebuild
+	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5 /p:DefineConstants=NET40 /t:Rebuild
 
 fake_dparser:
 	if not exist bin\Release\DParserCOMServer\nul md bin\Release\DParserCOMServer
