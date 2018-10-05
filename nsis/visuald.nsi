@@ -96,7 +96,8 @@
   !define VDSETTINGS_KEY          "\ToolsOptionsPages\Projects\Visual D Settings"
   
   !define EXTENSION_DIR_ROOT      "\Extensions\${AUTHOR}"
-  !define EXTENSION_DIR           "\Extensions\${AUTHOR}\${APPNAME}\${VERSION_MAJOR}.${VERSION_MINOR}"
+  !define EXTENSION_DIR_APP       "${EXTENSION_DIR_ROOT}\${APPNAME}"
+  !define EXTENSION_DIR           "${EXTENSION_DIR_APP}\${VERSION_MAJOR}.${VERSION_MINOR}"
   
   !define WIN32_EXCEPTION_KEY     AD7Metrics\Exception\{3B476D35-A401-11D2-AAD4-00C04F990171}
   
@@ -279,7 +280,7 @@ SectionEnd
 
 !ifdef VS_NET
 ;--------------------------------
-${MementoSection} "Register with VS.NET" SecVS_NET
+${MementoSection} "Install in VS.NET" SecVS_NET
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS_NET_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
@@ -289,7 +290,7 @@ ${MementoSectionEnd}
 !endif
 
 ;--------------------------------
-${MementoSection} "Register with VS 2005" SecVS2005
+${MementoSection} "Install in VS 2005" SecVS2005
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2005_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2005_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
@@ -298,7 +299,7 @@ ${MementoSection} "Register with VS 2005" SecVS2005
 ${MementoSectionEnd}
 
 ;--------------------------------
-${MementoSection} "Register with VS 2008" SecVS2008
+${MementoSection} "Install in VS 2008" SecVS2008
 
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2008_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir 
@@ -307,7 +308,7 @@ ${MementoSection} "Register with VS 2008" SecVS2008
 ${MementoSectionEnd}
 
 ;--------------------------------
-${MementoSection} "Register with VS 2010" SecVS2010
+${MementoSection} "Install in VS 2010" SecVS2010
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2010_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
@@ -333,7 +334,7 @@ ${MementoSection} "Register with VS 2010" SecVS2010
 ${MementoSectionEnd}
 
 ;--------------------------------
-${MementoSection} "Register with VS 2012" SecVS2012
+${MementoSection} "Install in VS 2012" SecVS2012
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2012_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
@@ -365,7 +366,7 @@ ${MementoSection} "Register with VS 2012" SecVS2012
 ${MementoSectionEnd}
 
 ;--------------------------------
-${MementoSection} "Register with VS 2013" SecVS2013
+${MementoSection} "Install in VS 2013" SecVS2013
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2013_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
@@ -376,7 +377,7 @@ ${MementoSection} "Register with VS 2013" SecVS2013
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
   
   ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
@@ -397,7 +398,7 @@ ${MementoSection} "Register with VS 2013" SecVS2013
 ${MementoSectionEnd}
 
 ;--------------------------------
-${MementoSection} "Register with VS 2015" SecVS2015
+${MementoSection} "Install in VS 2015" SecVS2015
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2015_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
@@ -408,7 +409,7 @@ ${MementoSection} "Register with VS 2015" SecVS2015
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
@@ -429,36 +430,58 @@ ${MementoSection} "Register with VS 2015" SecVS2015
 ${MementoSectionEnd}
 
 ;--------------------------------
-${MementoSection} "Register with VS 2017" SecVS2017
+${MementoSection} "Install in VS 2017" SecVS2017
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2017_REGISTRY_KEY}'
   ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
   ;${RegisterWin32Exception} ${VS2017_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1Common7\IDE${EXTENSION_DIR}\visuald.pkgdef'
+  StrCpy $1 "$1Common7\IDE\"
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
-  ${SetOutPath} "$1Common7\IDE${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions\ extension.vsixmanifest
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
   GetFullPathName /SHORT $0 $INSTDIR
-  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
-  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "15" NoBackup
-  !insertmacro ReplaceInFile "$1Common7\IDE${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "15" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
 
   !ifdef MAGO
-    ${SetOutPath} "$1Common7\Packages\Debugger"
+    ${SetOutPath} "$1..\Packages\Debugger"
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
     ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
   !endif
 
-  ${SetOutPath} "$1Common7\IDE\PublicAssemblies"
+  ${SetOutPath} "$1\PublicAssemblies"
   ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
+  Call VS2017ConfigurationChanged
+
 ${MementoSectionEnd}
+
+
+!ifdef EXPRESS
+;--------------------------------
+${MementoUnselectedSection} "Install in VC-Express 2008" SecVCExpress2008
+
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXP2008_REGISTRY_KEY}'
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  
+${MementoSectionEnd}
+
+;--------------------------------
+${MementoUnselectedSection} "Install in VC-Express 2010" SecVCExpress2010
+
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXP2010_REGISTRY_KEY}'
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  
+${MementoSectionEnd}
+!endif
 
 !macro RegisterPlatform Vxxx Platform
     ${SetOutPath} "${Vxxx}\Platforms\${Platform}\ImportBefore\Default"
@@ -476,13 +499,23 @@ ${MementoSectionEnd}
 !macro RegisterIcons VSVer
     WriteRegStr HKCR "VisualStudio.d.${VSVer}" "" "D Source"
     WriteRegStr HKCR "VisualStudio.d.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\d2.ico"
+    WriteRegStr HKLM "SOFTWARE\Classes\VisualStudio.d.${VSVer}" "" "D Source"
+    WriteRegStr HKLM "SOFTWARE\Classes\VisualStudio.d.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\d2.ico"
     WriteRegStr ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\${VSVer}\ShellFileAssociations\.d" "" "VisualStudio.d.${VSVer}"
+    WriteRegStr HKCR ".d" "" "VisualStudio.d.${VSVer}"
+    WriteRegStr HKCR ".d\OpenWithProgIds" "VisualStudio.d.${VSVer}" ""
 
     WriteRegStr HKCR "VisualStudio.di.${VSVer}" "" "D Interface"
     WriteRegStr HKCR "VisualStudio.di.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\di.ico"
+    WriteRegStr HKLM "SOFTWARE\Classes\VisualStudio.di.${VSVer}" "" "D Interface"
+    WriteRegStr HKLM "SOFTWARE\Classes\VisualStudio.di.${VSVer}\DefaultIcon" "" "$INSTDIR\msbuild\di.ico"
     WriteRegStr ${VS_REGISTRY_ROOT} "SOFTWARE\Microsoft\VisualStudio\${VSVer}\ShellFileAssociations\.di" "" "VisualStudio.di.${VSVer}"
+    WriteRegStr HKCR ".di" "" "VisualStudio.di.${VSVer}"
+    WriteRegStr HKCR ".di\OpenWithProgIds" "VisualStudio.di.${VSVer}" ""
 !macroend
 !define RegisterIcons "!insertmacro RegisterIcons"
+
+SectionGroup Components
 
 ;--------------------------------
 !ifdef MSBUILD
@@ -527,24 +560,6 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17" SecMSBuild
 
   NoMSBuild12:
 
-${MementoSectionEnd}
-!endif
-
-!ifdef EXPRESS
-;--------------------------------
-${MementoUnselectedSection} "Register with VC-Express 2008" SecVCExpress2008
-
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXP2008_REGISTRY_KEY}'
-  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2008_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
-  
-${MementoSectionEnd}
-
-;--------------------------------
-${MementoUnselectedSection} "Register with VC-Express 2010" SecVCExpress2010
-
-  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VCEXP2010_REGISTRY_KEY}'
-  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VCEXP2010_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
-  
 ${MementoSectionEnd}
 !endif
 
@@ -660,6 +675,8 @@ ${MementoSection} "mago" SecMago
 ${MementoSectionEnd}
 !endif
 
+SectionGroupEnd ; Components
+
 ${MementoSectionDone}
 
 Section -closelogfile
@@ -747,38 +764,38 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
-  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_REGISTRY_KEY}" InstallDir
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   IfErrors NoVS2017pkgdef
-    RMDir /r '$1${EXTENSION_DIR}'
-    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    StrCpy $1 "$1Common7\IDE"
+    IfFileExists '$1${EXTENSION_DIR_APP}' +1 NoVS2017ExtensionDir
+      Push $1
+      Call un.VS2017ConfigurationChanged
+    NoVS2017ExtensionDir:
+    RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2017pkgdef:
   
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2015pkgdef
-    RMDir /r '$1${EXTENSION_DIR}'
-    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2015pkgdef:
   
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2013pkgdef
-    RMDir /r '$1${EXTENSION_DIR}'
-    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2013pkgdef:
   
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2012pkgdef
-    RMDir /r '$1${EXTENSION_DIR}'
-    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2012pkgdef:
   
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2010pkgdef
-    RMDir /r '$1${EXTENSION_DIR}'
-    RMDir '$1${EXTENSION_DIR_ROOT}\${APPNAME}'
+    RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2010pkgdef:
 
@@ -894,6 +911,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS_NET_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS_NET
     SectionSetFlags ${SecVS_NET} ${SF_RO}
+    SectionSetText ${SecVS_NET} ""
   Installed_VS_NET:
 !endif
   
@@ -902,6 +920,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2005_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS2005
     SectionSetFlags ${SecVS2005} ${SF_RO}
+    SectionSetText ${SecVS2005} ""
   Installed_VS2005:
   
   ; detect VS2008
@@ -909,6 +928,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2008_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS2008
     SectionSetFlags ${SecVS2008} ${SF_RO}
+    SectionSetText ${SecVS2008} ""
   Installed_VS2008:
 
   ; detect VS2010
@@ -916,6 +936,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS2010
     SectionSetFlags ${SecVS2010} ${SF_RO}
+    SectionSetText ${SecVS2010} ""
   Installed_VS2010:
 
   ; detect VS2012
@@ -923,6 +944,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VS2012
     SectionSetFlags ${SecVS2012} ${SF_RO}
+    SectionSetText ${SecVS2012} ""
   Installed_VS2012:
 
   ; detect VS2013
@@ -952,6 +974,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VCEXP2008_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VCExpress2008
     SectionSetFlags ${SecVcExpress2008} ${SF_RO}
+    SectionSetText ${SecVcExpress2008} ""
   Installed_VCExpress2008:
 
   ; detect VCExpress 2010
@@ -959,6 +982,7 @@ Function .onInit
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VCEXP2010_REGISTRY_KEY}" InstallDir
   IfErrors 0 Installed_VCExpress2010
     SectionSetFlags ${SecVcExpress2010} ${SF_RO}
+    SectionSetText ${SecVcExpress2010} ""
   Installed_VCExpress2010:
 !endif
 
@@ -1238,4 +1262,27 @@ Function un.RegisterDParser
   DeleteRegKey ${DPARSER_REG_ROOT} "${DPARSER_FACTORY_NAME}" 
   DeleteRegKey ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}"
 
+FunctionEnd
+
+Function VS2017ConfigurationChanged
+
+  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
+  IfErrors NoVS2017
+    StrCpy $1 "$1Common7\IDE\Extensions\extensions.configurationchanged"
+    FileOpen $2 $1 "w"              ; create file
+    IfErrors NoVS2017
+    FileClose $R1                   ; empty file good enough
+  NoVS2017:
+
+FunctionEnd
+
+Function un.VS2017ConfigurationChanged
+  Exch $1 ; argument "${VS2017_INSTALL_KEY}Common7\IDE" 
+
+  StrCpy $1 "$1\Extensions\extensions.configurationchanged"
+  FileOpen $2 $1 "w"              ; create file
+  IfErrors NoVS2017
+    FileClose $R1                   ; empty file good enough
+  NoVS2017:
+  Pop $1
 FunctionEnd

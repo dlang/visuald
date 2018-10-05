@@ -34,7 +34,7 @@ namespace DParserCOMServer
 		/// </summary>
 		public void Add(byte Token)
 		{
-			addExpansion(DTokens.Keywords[Token], "KW", "");
+			addExpansion(DTokens.GetTokenString(Token), "KW", "");
 		}
 
 		/// <summary>
@@ -62,7 +62,7 @@ namespace DParserCOMServer
 				return "EVAL";
 			}
 
-			public string Visit(DVariable dVariable)
+			public string VisitDVariable(DVariable dVariable)
 			{
                 if (dVariable.IsAlias)
                     return "ALIA";
@@ -70,8 +70,12 @@ namespace DParserCOMServer
                     return "SPRP";
 				return "VAR";
 			}
+            public string Visit(DVariable dVariable)
+            {
+                return VisitDVariable(dVariable);
+            }
 
-			public string Visit(DMethod n)
+            public string Visit(DMethod n)
 			{
 				if (n.ContainsPropertyAttribute(BuiltInAtAttribute.BuiltInAttributes.Property))
 					return "PROP";

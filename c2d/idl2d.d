@@ -156,6 +156,7 @@ class idl2d
 				"vsdebugguids.h", "VSRegKeyNames.h", "SCGuids.h", "wbids.h", "sharedids.h",
 				"vseeguids.h", "version.h", "scc.h",
 				"vsplatformuiuuids.*", // only in VS2010 SDK
+				"vscookie.*", // only in later VS2017 SDK
 			// no longer in SDK2010: "DSLToolsCmdID.h",
 			 ];
 
@@ -1332,7 +1333,7 @@ version(all)
 		// IP_DEST_PORT_UNREACHABLE defined twice
 		if(currentModule == "ipexport")
 		{
-			replaceTokenSequence(tokens, "#define IP_DEST_PORT_UNREACHABLE    (IP_STATUS_BASE + 5)\n"
+			replaceTokenSequence(tokens, "#define IP_DEST_PORT_UNREACHABLE    (IP_STATUS_BASE + 5)\n" ~
 				"#define IP_HOP_LIMIT_EXCEEDED       (IP_STATUS_BASE + 13)\n",
 				"#define IP_HOP_LIMIT_EXCEEDED       (IP_STATUS_BASE + 13)\n", false);
 		}

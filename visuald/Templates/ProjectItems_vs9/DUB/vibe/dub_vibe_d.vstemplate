@@ -1,0 +1,19 @@
+<VSTemplate Version="2.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
+  <TemplateData>
+    <Name>Vibe.d server</Name>
+    <Description>A simple vibe.d server application</Description>
+    <Icon>__TemplateIcon.ico</Icon>
+    <ProjectType>D</ProjectType>
+    <SortOrder>50</SortOrder>
+    <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>ConsoleApplication</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <Project File="ServerApp.visualdproj" TargetFileName="$safeprojectname$.visualdproj" ReplaceParameters="true">
+      <ProjectItem ReplaceParameters="true" TargetFileName="source\app.d" OpenInEditor="true">app.d</ProjectItem>
+      <ProjectItem ReplaceParameters="true" OpenInEditor="true">dub.json</ProjectItem>
+    </Project>
+  </TemplateContent>
+</VSTemplate>

@@ -18,7 +18,7 @@
     </Project>
   </TemplateContent>
   <WizardExtension>
-    <Assembly>VisualDWizard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=c74ad3042b283f5c</Assembly>
+    <Assembly>VisualDWizard, Version=1.0, Culture=neutral, PublicKeyToken=c74ad3042b283f5c</Assembly>
     <FullClassName>VisualDWizard.VCProjectWizard</FullClassName>
   </WizardExtension>
 </VSTemplate>

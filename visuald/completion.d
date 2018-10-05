@@ -256,18 +256,7 @@ class Declarations
 					IVsTextLines pBuffer;
 					if(view.GetBuffer(&pBuffer) == S_OK)
 					{
-						LINEDATA lineData;
-						if(pBuffer.GetLineData(line, &lineData, null) == S_OK)
-						{
-							switch(lineData.iEolType)
-							{
-								default:
-								case eolCRLF: nl = "\r\n"; break;
-								case eolCR: nl = "\r"; break;
-								case eolLF: nl = "\n"; break;
-							}
-							pBuffer.ReleaseLineData(&lineData);
-						}
+						nl = GetLineBreakText(pBuffer, line);
 
 						BSTR btext;
 						if(pBuffer.GetLineText(line, 0, line, idx, &btext) == S_OK)

@@ -276,7 +276,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
+	override HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 	{
 		string fname = to_string(filename);
 		ast.Module mod;

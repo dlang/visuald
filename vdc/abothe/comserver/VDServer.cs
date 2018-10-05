@@ -21,6 +21,7 @@ using D_Parser.Dom;
 using D_Parser.Completion;
 using D_Parser.Resolver;
 using D_Parser.Resolver.TypeResolution;
+using D_Parser.Resolver.ExpressionSemantics;
 using D_Parser.Completion.ToolTips;
 using D_Parser.Refactoring;
 using D_Parser.Dom.Expressions;
@@ -30,7 +31,8 @@ namespace DParserCOMServer
 	public class IID
 	{
 		public const string IVDServer = "002a2de9-8bb6-484d-9901-7e4ad4084715";
-		public const string VDServer = "002a2de9-8bb6-484d-AA05-7e4ad4084715";
+		public const string VDServer = "002a2de9-8bb6-484d-AA05-7e4ad4084715"; // release
+        //public const string VDServer = "002a2de9-8bb6-484d-AB05-7e4ad4084715"; // debug
 	}
 
 	[ComVisible(true), Guid(IID.IVDServer)]
@@ -40,7 +42,7 @@ namespace DParserCOMServer
 		void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags);
 		void ClearSemanticProject();
 		void UpdateModule(string filename, string srcText, bool verbose);
-		void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex);
+		void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags);
 		void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer);
 		void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr);
 		void GetSemanticExpansionsResult(out string stringList);
@@ -161,7 +163,23 @@ namespace DParserCOMServer
 		}
 		public Dictionary<string, string> _sources = new Dictionary<string, string>();
 
-		public VDServer()
+        public string GetSource(string fileName)
+        {
+            if (!_sources.ContainsKey(fileName))
+            {
+                try
+                {
+                    _sources[fileName] = File.ReadAllText(fileName);
+                }
+                catch (Exception)
+                {
+                    return "";
+                }
+            }
+            return _sources[fileName];
+        }
+
+        public VDServer()
 		{
 			// MessageBox.Show("VDServer()");
 		}
@@ -270,7 +288,16 @@ namespace DParserCOMServer
 			return off + loc.Column - 1;
 		}
 
-		Thread completionThread;
+        static string GetSourceLine(string s, int line)
+        {
+            int off = 0;
+            for (int ln = 1; ln < line; ln++)
+                off = s.IndexOf('\n', off) + 1;
+            int end = s.IndexOf('\n', off);
+            return s.Substring(off, end - off);
+        }
+
+        Thread completionThread;
         AutoResetEvent completionEvent = new AutoResetEvent(true);
         Mutex completionMutex = new Mutex();
         Action runningAction;
@@ -348,7 +375,7 @@ namespace DParserCOMServer
             }
         }
 
-        public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex)
+        public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 		{
             filename = normalizePath(filename);
             var ast = GetModule(filename);
@@ -391,13 +418,38 @@ namespace DParserCOMServer
 
                     foreach (var t in AmbiguousType.TryDissolve(types))
                     {
-                        tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t)).Append("\a");
+                        tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t));
                         if (t is DSymbol)
                             dn = (t as DSymbol).Definition;
+
+                        tipText.Append("\a");
                     }
 
                     while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
                         tipText.Length--;
+
+                    bool eval = (flags & 1) != 0;
+                    if (eval)
+                    {
+                        var ctxt = _editorData.GetLooseResolutionContext(LooseResolution.NodeResolutionAttempt.Normal);
+                        ctxt.Push(_editorData);
+                        try
+                        {
+                            ISymbolValue v = null;
+                            var var = dn as DVariable;
+                            if (var != null && var.Initializer != null && var.IsConst)
+                                v = Evaluation.EvaluateValue(var.Initializer, ctxt);
+                            if (v == null && sr is IExpression)
+                                v = Evaluation.EvaluateValue(sr as IExpression, ctxt);
+                            if (v != null)
+                                tipText.Append("\avalue = ").Append(v.ToString());
+                        }
+                        catch (Exception e)
+                        {
+                            tipText.Append("\aException during evaluation = ").Append(e.Message);
+                        }
+                        ctxt.Pop();
+                    }
 
                     if (dn != null)
                         VDServerCompletionDataGenerator.GenerateNodeTooltipBody(dn, tipText);
@@ -593,7 +645,7 @@ namespace DParserCOMServer
 					DNode n = null;
 					foreach (var t in AmbiguousType.TryDissolve(rr))
 					{
-						n =	DResolver.GetResultMember(t, true);
+						n =	ExpressionTypeEvaluation.GetResultMember(t);
 						if (n != null)
 							break;
 					}
@@ -606,7 +658,7 @@ namespace DParserCOMServer
 						var mthd = n as DMethod;
 						if (mthd != null)
 							decl = mthd.Body ==	null;
-						else if (n.ContainsAttribute(DTokens.Extern))
+						else if (n.ContainsAnyAttribute(DTokens.Extern))
 							decl = true;
 						if (decl)
 							tipText.Append("EXTERN:");
@@ -659,20 +711,26 @@ namespace DParserCOMServer
                 StringBuilder refs = new StringBuilder();
                 if (rr != null)
                 {
-                    var n = DResolver.GetResultMember(rr, true);
+                    var n = ExpressionTypeEvaluation.GetResultMember(rr);
 
                     if (n != null)
                     {
                         var ctxt = ResolutionContext.Create(_editorData, true);
-                        if (n.ContainsAttribute(DTokens.Private) || ((n is DVariable) && (n as DVariable).IsLocal))
+                        if (n.ContainsAnyAttribute(DTokens.Private) || ((n is DVariable) && (n as DVariable).IsLocal))
                         {
                             GetReferencesInModule(ast, refs, n, ctxt);
                         }
                         else
                         {
+
+                            var mods = new Dictionary<DModule, bool>();
+
                             foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
-                                foreach (var mod in GlobalParseCache.EnumModulesRecursively(basePath))
-                                    GetReferencesInModule(mod, refs, n, ctxt);
+                                foreach (var mod in GlobalParseCache.EnumModulesRecursively(normalizeDir(basePath)))
+                                    mods[mod] = true;
+
+                            foreach (var mod in mods)
+                                GetReferencesInModule(mod.Key, refs, n, ctxt);
                         }
                     }
                     //var res = TypeReferenceFinder.Scan(_editorData, System.Threading.CancellationToken.None, null);
@@ -680,9 +738,10 @@ namespace DParserCOMServer
                 if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.References)
                     _result = refs.ToString();
             };
+            runAsync (dg);
         }
 
-        private static void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
+        private void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
         {
             var res = ReferencesFinder.SearchModuleForASTNodeReferences(ast, n, ctxt);
 
@@ -691,13 +750,17 @@ namespace DParserCOMServer
             {
                 var rfilename = ast.FileName;
                 var rloc = r.Location;
-                var ln = String.Format("{0},{1},{2},{3}:{4}\n", rloc.Line, rloc.Column - 1, rloc.Line, rloc.Column, rfilename);
+                var len = r.ToString().Length;
+                var src = GetSource(rfilename);
+                var linetxt = GetSourceLine(src, rloc.Line);
+                var ln = String.Format("{0},{1},{2},{3}:{4}|{5}\n", rloc.Line, rloc.Column - 1, rloc.Line, rloc.Column + len - 1, rfilename, linetxt);
+
                 refs.Append(ln);
             }
         }
         public void GetReferencesResult(out string stringList)
         {
-            stringList = _request == Request.Definition ? _result : "__cancelled__";
+            stringList = _request == Request.References ? _result : "__cancelled__";
             //MessageBox.Show("GetSemanticExpansionsResult()");
             //throw new NotImplementedException();
         }

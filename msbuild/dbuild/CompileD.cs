@@ -798,22 +798,16 @@ namespace dbuild
 
         private ToolSwitchType GetToolSwitchTypeForStringPathArray()
         {
-#if TOOLS_V12
+            // dynamically decide whether ToolSwitchType.StringPathArray exists
+            // (not declared in Microsoft.Build.CPPTasks.Common, Version=12.0.0.0, but still seems to work)
+            var type = typeof(ToolSwitchType);
+            var enums = type.GetEnumNames();
+            if (enums.Length >= 10)
+                return (ToolSwitchType)9; // ToolSwitchType.StringPathArray;
             return ToolSwitchType.StringArray;
-#else
-            return ToolSwitchType.StringPathArray;
-#endif
         }
 
-#if TOOLS_V14 || TOOLS_V15
-        public 
-#else
-        protected
-#endif
-        override string SourcesPropertyName
-        {
-            get { return "Sources"; }
-        }
+        // use the default implementation of SourcesPropertyName, it returns "Sources"
 
         protected override ITaskItem[] TrackedInputFiles
         {
@@ -895,11 +889,11 @@ namespace dbuild
                 {
                     using (System.IO.BinaryReader bReader = new System.IO.BinaryReader(fStream))
                     {
-                        if (bReader.ReadUInt16() == 23117) //check the MZ signature
+                        if (bReader.ReadUInt16() == 0x5A4D) //check the MZ signature
                         {
                             fStream.Seek(0x3A, System.IO.SeekOrigin.Current); //seek to e_lfanew.
                             fStream.Seek(bReader.ReadUInt32(), System.IO.SeekOrigin.Begin); //seek to the start of the NT header.
-                            if (bReader.ReadUInt32() == 17744) //check the PE\0\0 signature.
+                            if (bReader.ReadUInt32() == 0x4550) //check the PE\0\0 signature.
                             {
                                 fStream.Seek(20, System.IO.SeekOrigin.Current); //seek past the file header,
                                 architecture = bReader.ReadUInt16(); //read the magic number of the optional header.

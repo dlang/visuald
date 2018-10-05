@@ -566,10 +566,14 @@ version(tip)
 			}
 		}
 
-		if(!pFile || saveTextBuffer(fname) != S_OK)
-			return returnError(E_FAIL);
+		bool eval = rdmd && selText.length;
+		if(!eval)
+		{
+			if(!pFile || saveTextBuffer(fname) != S_OK)
+				return returnError(E_FAIL);
 
-		mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position
+			mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position
+		}
 
 		auto symdebug = cfg.GetProjectOptions().symdebug;
 		scope(exit) cfg.GetProjectOptions().symdebug = symdebug;
@@ -590,16 +594,19 @@ version(tip)
 				{
 					string line = strip(detab(ln));
 					if(line.length)
-						addopt ~= " \"--eval=" ~ replace(line, "\"", "\\\\\\\"") ~ "\"";
+						addopt ~= ` "--eval=` ~ replace(line, `"`, `\"`) ~ `"`;
 				}
+				stool = "RDMDeval";
 			}
 		}
-		if(stool == "RDMD" && run)
+		if(eval)
+			addopt = " " ~ Package.GetGlobalOptions().compileAndRunOpts ~ addopt;
+		else if(stool == "RDMD" && run)
 			addopt = " --build-only " ~ Package.GetGlobalOptions().compileAndRunOpts ~ addopt;
 		else if(stool == "RDMD" && dbg)
 			addopt = " --build-only " ~ Package.GetGlobalOptions().compileAndDbgOpts ~ addopt;
 
-		string cmd = cfg.GetCompileCommand(pFile, !dbg && !run && !disasm, stool, addopt);
+		string cmd = cfg.GetCompileCommand(pFile, !dbg && !run && !disasm && !eval, stool, addopt);
 		if(cmd.length)
 		{
 			cmd ~= "if %errorlevel% == 0 echo Compilation successful.\n";
@@ -621,7 +628,7 @@ version(tip)
 				cmd ~= "\"" ~ Package.GetGlobalOptions().VisualDInstallDir ~ "cv2pdb\\dumplines.exe\" " ~ quoteFilename(outfile)
 					~ " > " ~ quoteFilename(linfile) ~ "\n";
 			}
-			if(run)
+			if(run && !eval)
 			{
 				cmd ~= "if %errorlevel% neq 0 exit %ERRORLEVEL% /B\n";
 				cmd ~= quoteFilename(outfile) ~ "\n";
@@ -638,12 +645,12 @@ version(tip)
 			HRESULT hr = RunCustomBuildBatchFile(outfile, cmdfile, cmd, pane, builder);
 			builder.Dispose();
 
-			if(run)
+			if(run && !eval)
 				Package.GetGlobalOptions().addExecutionPath(workdir, null);
 
 			if(hr == S_OK)
 			{
-				if(dbg)
+				if(dbg && !eval)
 					cfg._DebugLaunch(outfile, dirName(fname), null, Package.GetGlobalOptions().compileAndDbgEngine);
 				if(disasm)
 					mCodeWinMgr.mSource.setDisasmFiles(outfile ~ ".asm", outfile ~ ".lines");

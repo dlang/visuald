@@ -32,7 +32,7 @@ import sdk.win32.oleauto;
 // expensive calls to be asynchronous: methods GetTip, GetDefinition, GetSemanticExpansions
 // and UpdateModule return immediately, but start some background processing.
 // The client (aka Visual D) polls the result with GetTipResult, GetDefinitionResult,
-// GetSemanticExpansionsResult // and GetParseErrors, repectively, until they return successfully.
+// GetSemanticExpansionsResult and GetParseErrors, repectively, until they return successfully.
 // While doing so, GetLastMessage is called to get status line messages (e.g. "parsing module...")
 //
 // All methods reference modules by their file name.
@@ -86,10 +86,11 @@ public:
 	// filename:   file name
 	// startLine, startIndex, endLine, endIndex: selected range in the editor
 	//                                           if start==end, mouse hovers without selection
+	// flags:      1 - try to evaluate constants/expressions
 	//
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetTipResult
-	HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex);
+	HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex, int flags);
 
 	// get the result of the previous GetTip
 	//

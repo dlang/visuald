@@ -343,10 +343,14 @@ wstring GetRegistrationRoot(in wchar* pszRegRoot, bool useRanu)
 float guessVSVersion(wstring registrationRoot)
 {
 	auto idx = lastIndexOf(registrationRoot, '\\');
-	if(idx < 0)
+	if(idx < 0 || idx >= registrationRoot.length)
 		return 0;
 	wstring txt = registrationRoot[idx + 1 .. $];
-	return parse!float(txt);
+	// parse integer part only, the remainder is unused anyway
+	int ver = 0;
+	for (++idx; idx < registrationRoot.length && std.ascii.isDigit(registrationRoot[idx]); ++idx)
+		ver = ver * 10 + registrationRoot[idx] - '0';
+	return ver;
 }
 
 void updateConfigurationChanged(HKEY keyRoot, wstring registrationRoot)
@@ -477,6 +481,8 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.12.0.dll"w;
 	else if (ver == 14)
 		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.14.0.dll"w;
+	else if (ver == 15)
+		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.15.0.dll"w;
 
 	try
 	{
@@ -556,7 +562,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 			keyLang.Set(prop.name, prop.value);
 
 		// colorizer settings
-		scope RegKey keyColorizer = new RegKey(keyRoot, langserv ~ "\\EditorToolsOptions\\Colorizer"w);
+		scope RegKey keyColorizer = new RegKey(keyRoot, langserv ~ "\\EditorToolsOptions\\Editor"w);
 		keyColorizer.Set("Package"w, packageGuid);
 		keyColorizer.Set("Page"w, GUID2wstring(g_ColorizerPropertyPage));
 
@@ -590,14 +596,16 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		scope RegKey keyCodeExp2 = new RegKey(keyRoot, codeExp ~ "\\Paths"w);
 		keyCodeExp2.Set(g_languageName, snippets);
 
+		// project
+		wstring tmplprojectdir = ver < 10 ? "\\Projects_vs9"w : "\\Projects"w;
+
 		scope RegKey keyPrjTempl = new RegKey(keyRoot, registrationRoot ~ regPathPrjTemplates ~ "\\"w ~ packageGuid ~ "\\/1");
 		keyPrjTempl.Set(null, g_languageName);
 		keyPrjTempl.Set("DeveloperActivity"w, g_languageName);
 		keyPrjTempl.Set("SortPriority"w, 20);
-		keyPrjTempl.Set("TemplatesDir"w, templatePath ~ "\\Projects"w);
+		keyPrjTempl.Set("TemplatesDir"w, templatePath ~ tmplprojectdir);
 		keyPrjTempl.Set("Folder"w, "{152CDB9D-B85A-4513-A171-245CE5C61FCC}"w); // other languages
 
-		// project
 		wstring projects = registrationRoot ~ "\\Projects\\"w ~ GUID2wstring(g_projectFactoryCLSID);
 		scope RegKey keyProject = new RegKey(keyRoot, projects);
 		keyProject.Set(null, "DProjectFactory"w);
@@ -607,7 +615,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyProject.Set("Package"w, packageGuid);
 		keyProject.Set("DefaultProjectExtension"w, g_defaultProjectFileExtension);
 		keyProject.Set("PossibleProjectExtensions"w, join(g_projectFileExtensions, ";"w));
-		keyProject.Set("ProjectTemplatesDir"w, templatePath ~ "\\Projects"w);
+		keyProject.Set("ProjectTemplatesDir"w, templatePath ~ tmplprojectdir);
 		keyProject.Set("Language(VsTemplate)"w, g_languageName);
 		keyProject.Set("ItemTemplatesDir"w, templatePath ~ "\\Items"w);
 

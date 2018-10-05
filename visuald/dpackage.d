@@ -19,6 +19,8 @@ import std.conv;
 import std.array;
 import std.exception;
 import std.algorithm;
+import std.datetime;
+import std.process : execute, ExecConfig = Config;
 static import std.ascii;
 
 import stdext.path;
@@ -155,6 +157,7 @@ void global_init()
 
 void global_exit()
 {
+	VCConfig_shared_static_dtor();
 	LanguageService.shared_static_dtor();
 	CHierNode.shared_static_dtor_typeHolder();
 	automation_shared_static_dtor_typeHolder();
@@ -1204,6 +1207,7 @@ private:
 
 struct CompilerDirectories
 {
+	Compiler compiler;
 	string InstallDir;
 	string ExeSearchPath;
 	string ImpSearchPath;
@@ -1212,17 +1216,73 @@ struct CompilerDirectories
 
 	string ExeSearchPath64;
 	string LibSearchPath64;
-	bool   overrideIni64;
+	bool   overrideIni64 = true;
 	string overrideLinker64;
 	string overrideOptions64;
 	string DisasmCommand64;
 
 	string ExeSearchPath32coff;
 	string LibSearchPath32coff;
-	bool   overrideIni32coff;
+	bool   overrideIni32coff = true;
 	string overrideLinker32coff;
 	string overrideOptions32coff;
 	string DisasmCommand32coff;
+
+	string detectedVersion;
+	long   detectedDate;
+
+	bool detectCompilerVersion()
+	{
+		return detectCompilerVersion(InstallDir);
+	}
+
+	bool detectCompilerVersion(string instdir)
+	{
+		string exe;
+		if (compiler == Compiler.DMD)
+		{
+			exe = "windows\\bin\\dmd.exe";
+		}
+		else if (compiler == Compiler.LDC)
+		{
+			exe = "bin\\ldc2.exe";
+		}
+		else if (compiler == Compiler.GDC)
+		{
+			exe = "bin\\gdc.exe";
+		}
+		exe = normalizeDir(instdir) ~ exe;
+
+		try
+		{
+			if(std.file.exists(exe))
+			{
+				SysTime acctime, modtime;
+				std.file.getTimes(exe, acctime, modtime);
+				if (detectedDate == modtime.stdTime)
+					return true; // uptodate
+
+				// execute fails when linked with libcmt of VS2013, needs patch in std.process
+				auto res = execute([exe, "--version"], null, ExecConfig.suppressConsole);
+				if (res.status == 0)
+				{
+					auto lines = res.output.splitLines;
+					if (lines.length > 0)
+					{
+						detectedVersion = lines[0];
+						detectedDate = modtime.stdTime;
+						return true;
+					}
+				}
+			}
+		}
+		catch(Exception)
+		{
+		}
+		detectedVersion = null;
+		detectedDate = 0;
+		return false;
+	}
 }
 
 enum enableShowMemUsage = false;
@@ -1264,14 +1324,15 @@ class GlobalOptions
 	bool showMemUsage = false;
 	bool autoOutlining;
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
-	bool parseSource;
+	bool parseSource = true;
 	bool pasteIndent;
 	bool expandFromSemantics;
 	bool expandFromBuffer;
 	bool expandFromJSON;
 	byte expandTrigger;
 	bool showTypeInTooltip;
-	bool semanticGotoDef;
+	bool showValueInTooltip;
+	bool semanticGotoDef = true;
 	bool useDParser;
 	bool mixinAnalysis;
 	bool UFCSExpansions;
@@ -1297,9 +1358,14 @@ class GlobalOptions
 
 	int vsVersion;
 	bool isVS2017() { return vsVersion == 15; }
+	bool usesUpdateSemanticModule() { return parseSource || expandFromSemantics || showTypeInTooltip || semanticGotoDef; }
+
 
 	this()
 	{
+		DMD.compiler = Compiler.DMD;
+		GDC.compiler = Compiler.GDC;
+		LDC.compiler = Compiler.LDC;
 	}
 
 	bool getRegistryRoot()
@@ -1384,7 +1450,7 @@ class GlobalOptions
 				WindowsSdkVersion = fromMBSz(cast(immutable)pver);
 			else if(!WindowsSdkDir.empty)
 			{
-				string rootsDir = normalizeDir(WindowsSdkDir) ~ "Include\\";
+				string rootsDir = normalizeDir(WindowsSdkDir) ~ "Lib\\";
 				try
 				{
 					foreach(string f; dirEntries(rootsDir, "*", SpanMode.shallow, false))
@@ -1392,7 +1458,7 @@ class GlobalOptions
 						{
 							string bname = baseName(f);
 							if(!bname.empty && isDigit(bname[0]))
-								if (std.file.exists(f ~ "\\um\\windows.h")) // not UCRT only?
+								if (std.file.exists(f ~ "\\um\\x64\\kernel32.lib"))
 									WindowsSdkVersion = bname;
 						}
 				}
@@ -1428,7 +1494,7 @@ class GlobalOptions
 						if(std.file.isDir(f) && f > UCRTVersion)
 						{
 							string bname = baseName(f);
-							if(!bname.empty && isDigit(bname[0]))
+							if(!bname.empty && isDigit(bname[0]) && std.file.exists(f ~ "/ucrt/x64/libucrt.lib"))
 								UCRTVersion = bname;
 						}
 				}
@@ -1523,20 +1589,20 @@ class GlobalOptions
 
 	bool initFromRegistry()
 	{
-		if(!getRegistryRoot())
-			return false;
-
-		vsVersion = cast(int) guessVSVersion(regConfigRoot);
-
-		wstring dllPath = GetDLLName(g_hInst);
-		VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
-
-		wstring idePath = GetDLLName(null);
-		DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
-
 		bool rc = true;
 		try
 		{
+			if(!getRegistryRoot())
+				return false;
+
+			vsVersion = cast(int) guessVSVersion(regConfigRoot);
+
+			wstring dllPath = GetDLLName(g_hInst);
+			VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
+
+			wstring idePath = GetDLLName(null);
+			DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
+
 			wstring defUserTypesSpec = "Object string wstring dstring ClassInfo\n" ~
 			                           "hash_t ptrdiff_t size_t sizediff_t";
 			// get defaults from global config
@@ -1594,13 +1660,14 @@ class GlobalOptions
 				showMemUsage    = getBoolOpt("showMemUsage", false);
 			autoOutlining       = getBoolOpt("autoOutlining", true);
 			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
-			parseSource         = getBoolOpt("parseSource", true);
+			//parseSource         = getBoolOpt("parseSource", true);
 			expandFromSemantics = getBoolOpt("expandFromSemantics", true);
-			expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
+			//expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
 			expandFromJSON      = getBoolOpt("expandFromJSON", true);
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
 			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
-			semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
+			showValueInTooltip  = getBoolOpt("showValueInTooltip", false);
+			//semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
 			pasteIndent         = getBoolOpt("pasteIndent", true);
 
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
@@ -1698,7 +1765,7 @@ class GlobalOptions
 					opt.LibSearchPath64 = fixSdk10LibPath(opt.LibSearchPath64, true);
 
 				wstring linkPath = to!wstring(getVCDir("bin\\link.exe", false));
-				opt.overrideIni64     = getBoolOpt(prefix ~ "overrideIni64", dmd);
+				opt.overrideIni64     = dmd; // getBoolOpt(prefix ~ "overrideIni64", dmd);
 				opt.overrideLinker64  = getStringOpt(prefix ~ "overrideLinker64", dmd ? linkPath : "");
 				opt.overrideOptions64 = getStringOpt(prefix ~ "overrideOptions64");
 
@@ -1707,7 +1774,7 @@ class GlobalOptions
 					opt.ExeSearchPath32coff   = getPathsOpt(prefix ~ "ExeSearchPath32coff", opt.ExeSearchPath32coff);
 					opt.LibSearchPath32coff   = getPathsOpt(prefix ~ "LibSearchPath32coff", opt.LibSearchPath32coff);
 					opt.DisasmCommand32coff   = getPathsOpt(prefix ~ "DisasmCommand32coff", opt.DisasmCommand32coff);
-					opt.overrideIni32coff     = getBoolOpt(prefix ~ "overrideIni32coff", true);
+					opt.overrideIni32coff     = true; // getBoolOpt(prefix ~ "overrideIni32coff", true);
 					opt.overrideLinker32coff  = getStringOpt(prefix ~ "overrideLinker32coff", linkPath);
 					opt.overrideOptions32coff = getStringOpt(prefix ~ "overrideOptions32coff");
 
@@ -1827,14 +1894,14 @@ class GlobalOptions
 			keyToolOpts.Set("ExeSearchPath64",     toUTF16(DMD.ExeSearchPath64));
 			keyToolOpts.Set("LibSearchPath64",     toUTF16(DMD.LibSearchPath64));
 			keyToolOpts.Set("DisasmCommand64",     toUTF16(DMD.DisasmCommand64));
-			keyToolOpts.Set("overrideIni64",       DMD.overrideIni64);
+			//keyToolOpts.Set("overrideIni64",       DMD.overrideIni64);
 			keyToolOpts.Set("overrideLinker64",    toUTF16(DMD.overrideLinker64));
 			keyToolOpts.Set("overrideOptions64",   toUTF16(DMD.overrideOptions64));
 
 			keyToolOpts.Set("ExeSearchPath32coff",     toUTF16(DMD.ExeSearchPath32coff));
 			keyToolOpts.Set("LibSearchPath32coff",     toUTF16(DMD.LibSearchPath32coff));
 			keyToolOpts.Set("DisasmCommand32coff",     toUTF16(DMD.DisasmCommand32coff));
-			keyToolOpts.Set("overrideIni32coff",       DMD.overrideIni32coff);
+			//keyToolOpts.Set("overrideIni32coff",       DMD.overrideIni32coff);
 			keyToolOpts.Set("overrideLinker32coff",    toUTF16(DMD.overrideLinker32coff));
 			keyToolOpts.Set("overrideOptions32coff",   toUTF16(DMD.overrideOptions32coff));
 
@@ -1858,13 +1925,14 @@ class GlobalOptions
 			keyToolOpts.Set("showMemUsage",        showMemUsage);
 			keyToolOpts.Set("autoOutlining",       autoOutlining);
 			keyToolOpts.Set("deleteFiles",         deleteFiles);
-			keyToolOpts.Set("parseSource",         parseSource);
+			//keyToolOpts.Set("parseSource",         parseSource);
 			keyToolOpts.Set("expandFromSemantics", expandFromSemantics);
-			keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
+			//keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
 			keyToolOpts.Set("expandTrigger",       expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip2",  showTypeInTooltip);
-			keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
+			keyToolOpts.Set("showValueInTooltip",  showValueInTooltip);
+			//keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
 			keyToolOpts.Set("useDParser2",         useDParser);
 			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
 			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
@@ -1880,6 +1948,16 @@ class GlobalOptions
 
 			keyToolOpts.Set("dubPath",             toUTF16(dubPath));
 			keyToolOpts.Set("dubOptions",          toUTF16(dubOptions));
+
+			// also save to HKCR for msbuild in VS2017
+			if (isVS2017())
+			{
+				scope RegKey keyBuildOpts = new RegKey(HKEY_CURRENT_USER, r"SOFTWARE\Visual D\dbuild\15.0"w);
+				keyBuildOpts.Set("DMDInstallDir",     toUTF16(DMD.InstallDir));
+				keyBuildOpts.Set("GDCInstallDir",     toUTF16(GDC.InstallDir));
+				keyBuildOpts.Set("LDCInstallDir",     toUTF16(LDC.InstallDir));
+				keyBuildOpts.Set("demangleError",     demangleError);
+			}
 
 			CHierNode.setContainerIsSorted(sortProjects);
 		}

@@ -15,6 +15,9 @@ skip_tags: true
 
 environment:
   matrix:
+    - os: Visual Studio 2017
+      VS: 15
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     - os: Visual Studio 2015
       VS: 14
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -26,7 +29,8 @@ environment:
 cache:
   - C:\projects\cache\dmd2080_0.7z
   - C:\projects\cache\cd851.zip
-  - C:\projects\cache\VisualD-v0.45.1-rc2.exe
+  - C:\projects\cache\VisualD-v0.47.0.exe
+  - C:\projects\cache\binutils-2.25.tar.gz
 
 #matrix:
 #  allow_failures:
@@ -73,13 +77,12 @@ install:
         copy c:\projects\dm\bin\coffimplib.exe c:\projects\dmd2\windows\bin
   # Download & install Visual D
   - ps: |
-        If (-not (Test-Path 'cache\VisualD-v0.45.1-rc2.exe')) {
-            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.45.1-rc2/VisualD-v0.45.1-rc2.exe' -FileName 'cache\VisualD-v0.45.1-rc2.exe'
+        If (-not (Test-Path 'cache\VisualD-v0.47.0.exe')) {
+            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.47.0/VisualD-v0.47.0.exe' -FileName 'cache\VisualD-v0.47.0.exe'
         }
-  - cache\VisualD-v0.45.1-rc2.exe /S
+  - cache\VisualD-v0.47.0.exe /S
   # configure DMD path
-  - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\12.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
-  - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v DMDInstallDir /t REG_SZ /d c:\projects\dmd2 /reg:32 /f
+  - reg add "HKLM\SOFTWARE\DMD" /v InstallationFolder /t REG_SZ /d c:\projects /reg:32 /f
   # disable link dependencies monitoring, fails on AppVeyor server
   - reg add "HKLM\SOFTWARE\Microsoft\VisualStudio\14.0\ToolsOptionsPages\Projects\Visual D Settings" /v optlinkDeps /t REG_DWORD /d 0 /reg:32 /f
   # Set environment variables
@@ -111,8 +114,6 @@ build_script:
   # Clone mago/cv2pdb (need to be two levels up)
   - cd ..
   - git clone https://github.com/rainers/mago.git mago
-  - set VS_SDK_PATH=%VSSDK120Install%
-  - copy mago\PropSheets\Template_MagoDbg_properties.props mago\PropSheets\MagoDbg_properties.props
   - md cv2pdb
   - cd cv2pdb
   - git clone https://github.com/rainers/cv2pdb.git trunk
@@ -120,8 +121,10 @@ build_script:
   # Download & extract binutils
   - cd projects
   - ps: |
-        Start-FileDownload 'http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz' -FileName 'binutils-2.25.tar.gz'
-        7z x binutils-2.25.tar.gz > $null
+        If (-not (Test-Path 'cache\binutils-2.25.tar.gz')) {
+            Start-FileDownload 'http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz' -FileName 'cache\binutils-2.25.tar.gz'
+        }
+        7z x cache\binutils-2.25.tar.gz > $null
         7z x binutils-2.25.tar > $null
   - 'if "%VS%"=="12" echo #define snprintf _snprintf >binutils-2.25\config.h'
   - 'if "%VS%"=="14" echo // empty                   >binutils-2.25\config.h'
@@ -131,11 +134,8 @@ build_script:
   # build installer
   - cd visuald
   # can build dbuild15 only with VS2017
-  - if     "%VS%"=="15" nmake install_vs
-  - if not "%VS%"=="15" nmake install_vs_fake_dbuild15
-  # build mago-mi.exe for others to download as artifact
-  - cd c:\mago
-  - devenv /Build "Release StaticDE|Win32" /Project "mago-mi" magodbg_2010.sln
+  - if     "%VS%"=="15" nmake install_vs_only_vs2017
+  - if not "%VS%"=="15" nmake install_vs_no_vs2017
 
 after_build:
   # publish as artifact
@@ -144,13 +144,10 @@ after_build:
   - for %%I in (downloads\*.exe) do (set BUILD_EXE=%%I && set ARTIFACT=%%~dpnI-%APPVEYOR_BUILD_NUMBER%-vs%VS%.exe)
   - copy %BUILD_EXE% %ARTIFACT%
   - ps: |
-        If ($Env:VS -eq '12') {
-            echo 'Creating artifacts...'
-            Push-AppveyorArtifact $Env:ARTIFACT
-            Push-AppveyorArtifact ..\cv2pdb\trunk\bin\Release\cv2pdb.exe
-            Push-AppveyorArtifact logs_and_symbols.7z
-            Push-AppveyorArtifact ..\mago\bin\Win32\Release\mago-mi.exe
-        }
+        echo 'Creating artifacts...'
+        Push-AppveyorArtifact $Env:ARTIFACT
+        Push-AppveyorArtifact ..\cv2pdb\trunk\bin\Release\cv2pdb.exe
+        Push-AppveyorArtifact logs_and_symbols.7z
 
 on_failure:
   - cd c:\projects

@@ -20,8 +20,8 @@ $(UL
  )
 )
 
-$(P The colorizer can be configured in the "Colorizer" setup page of the language settings in
-Tools->Options->Text Editor->D->Colorizer: )
+$(P The colorizer can be configured in the "Editor" setup page of the language settings in
+Tools->Options->Text Editor->D->Editor: )
 
  $(IMG_CENTER images/editor-options.png)
 

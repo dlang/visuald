@@ -1,0 +1,5 @@
+name "$safeprojectname$"
+description "A minimal D application."
+authors "$username$"
+copyright "Copyright © $year$, $username$"
+license "proprietary"

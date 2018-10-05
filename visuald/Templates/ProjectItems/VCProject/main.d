@@ -24,6 +24,14 @@ int main()
     writeln("Hello D World!\n");
     return 0;
 }
+$endif$$if$ ($apptype$ == ConsoleAppMainInCpp)
+import std.stdio;
+
+extern(C++) int helloFromD()
+{
+    writeln("Hello D World!\n");
+    return 0;
+}
 $endif$$if$ ($apptype$ == DynamicLibrary)
 import core.sys.windows.windows;
 import core.sys.windows.dll;

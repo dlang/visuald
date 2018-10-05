@@ -816,7 +816,8 @@ class LanguageService : DisposingComObject,
 	uint GetTip(Source src, TextSpan* pSpan, GetTipCallBack cb)
 	{
 		ConfigureSemanticProject(src);
-		return vdServerClient.GetTip(src.GetFileName(), pSpan, cb);
+		int flags = Package.GetGlobalOptions().showValueInTooltip ? 1 : 0;
+		return vdServerClient.GetTip(src.GetFileName(), pSpan, flags, cb);
 	}
 	uint GetDefinition(Source src, TextSpan* pSpan, GetDefinitionCallBack cb)
 	{
@@ -1475,6 +1476,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 				mLineChanges ~= chg;
 			}
 		}
+		VerifyLineBreaks(pTextLineChange.iStartLine, pTextLineChange.iNewEndLine);
 		if(mOutlining)
 			CheckOutlining(pTextLineChange);
 		return mColorizer.OnLinesChanged(pTextLineChange.iStartLine, pTextLineChange.iOldEndLine, pTextLineChange.iNewEndLine, fLast != 0);
@@ -2999,6 +3001,35 @@ else
 		return S_OK;
 	}
 
+	int VerifyLineBreaks(int iStartLine, int iNewEndLine)
+	{
+		if(iStartLine >= iNewEndLine) // only insertions
+			return S_FALSE;
+
+		int rc = S_FALSE; // S_OK if modification
+		int refline = (iStartLine > 0 ? iStartLine - 1 : iNewEndLine + 1);
+		if (refline < GetLineCount())
+		{
+			string refnl = GetLineBreakText(mBuffer, refline);
+			wstring wrefnl = to!wstring(refnl);
+			for (int ln = iStartLine; ln <= iNewEndLine; ln++)
+			{
+				string nl = GetLineBreakText(mBuffer, ln);
+				if (nl != refnl)
+				{
+					wstring text = GetText(ln, 0, ln + 1, 0);
+					if (text.endsWith(nl))
+					{
+						text = text[0..$-nl.length] ~ wrefnl;
+						TextSpan changedSpan;
+						rc = mBuffer.ReplaceLines(ln, 0, ln + 1, 0, text.ptr, text.length, &changedSpan);
+					}
+				}
+			}
+		}
+		return rc;
+	}
+
 	////////////////////////////////////////////////////////////////////////
 	wstring FindExpressionBefore(int caretLine, int caretIndex)
 	{
@@ -3783,7 +3814,7 @@ else
 			finishParsing();
 
 		outline  = outline  && mModificationCountOutlining != mModificationCount && mOutlining && mOutliningState == 0;
-		semantic = semantic && mModificationCountSemantic  != mModificationCount && Package.GetGlobalOptions().parseSource;
+		semantic = semantic && mModificationCountSemantic  != mModificationCount && Package.GetGlobalOptions().usesUpdateSemanticModule();
 
 		if(!outline && !semantic)
 			return false;

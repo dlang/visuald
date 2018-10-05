@@ -149,7 +149,7 @@ class ProjectOptions
 	bool vtls;		// identify thread local variables
 	bool vgc;		// List all gc allocations including hidden ones (DMD 2.066+)
 	ubyte symdebug;		// insert debug symbolic information (0: none, 1: mago, 2: VS, 3: as debugging)
-	bool symdebugref;	// insert debug information for all referenced types, too 
+	bool symdebugref;	// insert debug information for all referenced types, too
 	bool optimize;		// run optimizer
 	ubyte cpu;		// target CPU
 	bool isX86_64;		// generate X86_64 bit code
@@ -3022,7 +3022,7 @@ class Config :	DisposingComObject,
 			foreach(ddoc; getDDocFileList())
 				cmd ~= " " ~ ddoc;
 		}
-		if(tool == "RDMD")
+		if(tool == "RDMD" || tool == "RDMDeval")
 		{
 			// temporarily switch to "rdmd"
 			ProjectOptions opts = clone(mProjectOptions);
@@ -3038,15 +3038,21 @@ class Config :	DisposingComObject,
 			//opts.runCv2pdb = false;
 			opts.exefile = "$(OutDir)\\" ~ baseName(stripExtension(outfile)) ~ ".exe";
 
-			cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
+			bool eval = tool == "RDMDeval";
+			if (eval)
+				cmd = "echo Compiling selection...\n";
+			else
+				cmd = "echo Compiling " ~ file.GetFilename() ~ "...\n";
 			// add environment in case sc.ini was not patched to a specific VS version
 			cmd ~= getMSVCEnvironmentCommands();
-			cmd ~= opts.buildCommandLine(this, true, !syntaxOnly, null, syntaxOnly);
-			if(syntaxOnly)
+			cmd ~= opts.buildCommandLine(this, true, !eval && !syntaxOnly, null, syntaxOnly);
+			if(syntaxOnly && !eval)
 				cmd ~= " --build-only";
-			cmd ~= addopt ~ " " ~ quoteFilename(file.GetFilename());
+			cmd ~= addopt;
+			if (!eval)
+				cmd ~= " " ~ quoteFilename(file.GetFilename());
 			addopt = ""; // must be before filename for rdmd
-			if (!syntaxOnly)
+			if (!syntaxOnly && !eval)
 			{
 				string cv2pdb = opts.appendCv2pdb();
 				if (cv2pdb.length)
