@@ -768,7 +768,9 @@ namespace DParserCOMServer
         ///////////////////////////////////
 		void _setupEditorData()
 		{
-			string versions = _versionIds;
+			string versions	= _versionIds;
+			if (!String.IsNullOrEmpty(versions)	&& !versions.EndsWith("\n"))
+				versions += "\n";
 			versions += "Windows\n" + "LittleEndian\n" + "D_HardFloat\n" + "all\n" + "D_Version2\n";
 			if ((_flags & 1) != 0)
 				versions += "unittest\n";
