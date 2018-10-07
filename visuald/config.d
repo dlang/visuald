@@ -12,6 +12,7 @@ import std.string;
 import std.conv;
 import std.file;
 import std.path;
+import std.process : execute, ExecConfig = Config;
 import std.utf;
 import std.array;
 import std.exception;
@@ -1592,7 +1593,7 @@ class ProjectOptions
 
 		fromElem(elem, "filesToClean", filesToClean);
 	}
-};
+}
 
 class ConfigProvider : DisposingComObject,
 	// IVsExtensibleObject,
@@ -3306,6 +3307,50 @@ class Config :	DisposingComObject,
 				files ~= lib;
 		}
 		return files;
+	}
+
+	string getCompilerVersionIDs()
+	{
+		ProjectOptions opts = GetProjectOptions();
+
+		string cmd = opts.buildCommandLine(this, true, false, null, true);
+		cmd ~= " -v -o- dummy.obj";
+		if (opts.additionalOptions.length)
+			cmd ~= " " ~ opts.additionalOptions;
+
+		__gshared string[string] cachedVersions;
+		synchronized
+		{
+			if (cmd.startsWith("dmd "))
+				cmd = quoteFilename(Package.GetGlobalOptions().DMD.getCompilerPath()) ~ cmd[3..$];
+			else if (cmd.startsWith("ldc2 "))
+				cmd = quoteFilename(Package.GetGlobalOptions().LDC.getCompilerPath()) ~ cmd[4..$];
+			else if (cmd.startsWith("gdc "))
+				cmd = quoteFilename(Package.GetGlobalOptions().GDC.getCompilerPath()) ~ cmd[3..$];
+
+			string key = cmd;
+			if (auto p = key in cachedVersions)
+				return *p;
+
+			string versions = opts.versionids;
+			try
+			{
+				auto cmds = tokenizeArgs(cmd);
+				auto res = execute(cmds, null, ExecConfig.suppressConsole);
+				if (res.status == 0)
+				{
+					auto lines = res.output.splitLines;
+					foreach(line; lines)
+						if (line.startsWith("predefs"))
+							versions = line[7..$];
+				}
+			}
+			catch(Exception)
+			{
+			}
+			cachedVersions[key] = versions;
+			return versions;
+		}
 	}
 
 	string GetPhobosPath()

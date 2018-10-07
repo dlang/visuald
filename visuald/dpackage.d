@@ -1235,8 +1235,11 @@ struct CompilerDirectories
 	{
 		return detectCompilerVersion(InstallDir);
 	}
-
-	bool detectCompilerVersion(string instdir)
+	string getCompilerPath()
+	{
+		return getCompilerPath(InstallDir);
+	}
+	string getCompilerPath(string instdir)
 	{
 		string exe;
 		if (compiler == Compiler.DMD)
@@ -1252,7 +1255,12 @@ struct CompilerDirectories
 			exe = "bin\\gdc.exe";
 		}
 		exe = normalizeDir(instdir) ~ exe;
+		return exe;
+	}
 
+	bool detectCompilerVersion(string instdir)
+	{
+		string exe = getCompilerPath(instdir);
 		try
 		{
 			if(std.file.exists(exe))
@@ -1355,6 +1363,7 @@ class GlobalOptions
 	bool lastColorizeCoverage;
 	bool lastColorizeVersions;
 	bool lastUseDParser;
+	string lastInstallDirs;
 
 	int vsVersion;
 	bool isVS2017() { return vsVersion == 15; }
@@ -1834,6 +1843,7 @@ class GlobalOptions
 			UserTypesSpec     = getStringOpt("UserTypesSpec", defUserTypesSpec);
 			UserTypes = parseUserTypes(UserTypesSpec);
 
+			lastInstallDirs      = DMD.InstallDir ~ ";" ~ GDC.InstallDir ~ ";" ~ LDC.InstallDir;
 			lastColorizeCoverage = ColorizeCoverage;
 			lastColorizeVersions = ColorizeVersions;
 			lastUseDParser       = useDParser;
@@ -1982,6 +1992,12 @@ class GlobalOptions
 		if(lastColorizeCoverage != ColorizeCoverage)
 		{
 			lastColorizeCoverage = ColorizeCoverage;
+			updateColorizer = true;
+		}
+		string installDirs = DMD.InstallDir ~ ";" ~ GDC.InstallDir ~ ";" ~ LDC.InstallDir;
+		if(lastInstallDirs != installDirs)
+		{
+			lastInstallDirs = installDirs;
 			updateColorizer = true;
 		}
 		if(updateColorizer)

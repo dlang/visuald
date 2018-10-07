@@ -881,8 +881,8 @@ class LanguageService : DisposingComObject,
 			if (cfgopts.addDepImp)
 				foreach(dep; cfg.getImportsFromDependentProjects())
 					imp.addunique(dep);
-
-			versionids = tokenizeArgs(cfgopts.versionids);
+			string versions = cfg.getCompilerVersionIDs();
+			versionids = tokenizeArgs(versions);
 			debugids = tokenizeArgs(cfgopts.debugids);
 		}
 		else
