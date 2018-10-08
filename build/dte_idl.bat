@@ -20,8 +20,9 @@ set MSENV=%COMMONPROGRAMFILES%\Microsoft Shared\MSEnv
 if not exist "%MSENV%\dte80.olb" (echo "%MSENV%\dte80.olb" does not exist && exit /B 1)
 
 set IVIEWER=
-if "%IVIEWER%" == "" if exist "%WindowsSdkDir%\bin\x86\iviewers.dll" set IVIEWER=%WindowsSdkDir%\bin\x86\iviewers.dll
-if "%IVIEWER%" == "" if exist "%WindowsSdkDir%\bin\iviewers.dll"     set IVIEWER=%WindowsSdkDir%\bin\iviewers.dll
+if "%IVIEWER%" == "" if exist "%WindowsSdkVerBinPath%\x86\iviewers.dll" set IVIEWER=%WindowsSdkVerBinPath%\x86\iviewers.dll
+if "%IVIEWER%" == "" if exist "%WindowsSdkDir%\bin\x86\iviewers.dll"    set IVIEWER=%WindowsSdkDir%\bin\x86\iviewers.dll
+if "%IVIEWER%" == "" if exist "%WindowsSdkDir%\bin\iviewers.dll"        set IVIEWER=%WindowsSdkDir%\bin\iviewers.dll
 if "%IVIEWER%" == "" (echo "iviewer.dll" not found && exit /B 1)
 
 echo "%TLB2IDL%" "%MSENV%\dte80.olb" "%DTE_IDL_PATH%\dte80.idl" "%IVIEWER%"
