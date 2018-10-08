@@ -2770,7 +2770,7 @@ struct tagSIZE
     LONG        cx;
     LONG        cy;
 }
-alias tagSIZE SIZE; alias tagSIZE *PSIZE; alias tagSIZE *LPSIZE; }q{
+alias tagSIZE SIZE; alias tagSIZE *PSIZE; alias tagSIZE *LPSIZE; } ~ q{
  // WIN16
 };
 else // !remove_pp
@@ -2831,7 +2831,7 @@ unittest
 	hallo2
 ";
 	string exptxt = "
-int convert() { return  " "
+int convert() { return  " ~ "
 	hello; }
 // #define noconvert(n,m) \\
 //	hallo1 |\\
@@ -2930,7 +2930,7 @@ alias _PROPSHEETPAGEA_V2 _PROPSHEETPAGEA;
 } else {
 
 alias _PROPSHEETPAGEA_V1 _PROPSHEETPAGEA;
-} " "
+} " ~ "
 
 ";
 	testConvert(txt, exptxt, "prsht");
