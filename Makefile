@@ -118,7 +118,9 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_vs: install_modules dparser cv2pdb mago dbuild12 dbuild14 dbuild15 install_only
+install_release_modules: install_modules dparser cv2pdb mago dbuild12 dbuild14 dbuild15
+
+install_vs: install_release_modules install_only
 
 install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago dbuild12 dbuild14 fake_dbuild15 install_only
 
