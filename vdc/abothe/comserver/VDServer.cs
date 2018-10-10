@@ -256,8 +256,8 @@ namespace DParserCOMServer
 			try
 			{
 				ast = DParser.ParseString(srcText, false, true, _taskTokens);
-			}
-			catch(Exception ex)
+            }
+            catch (Exception ex)
 			{
 				ast = new DModule{ ParseErrors = new System.Collections.ObjectModel.ReadOnlyCollection<ParserError>(
 						new List<ParserError>{
@@ -441,7 +441,7 @@ namespace DParserCOMServer
                                 v = Evaluation.EvaluateValue(var.Initializer, ctxt);
                             if (v == null && sr is IExpression)
                                 v = Evaluation.EvaluateValue(sr as IExpression, ctxt);
-                            if (v != null)
+                            if (v != null && !(v is ErrorValue))
                                 tipText.Append("\avalue = ").Append(v.ToString());
                         }
                         catch (Exception e)
