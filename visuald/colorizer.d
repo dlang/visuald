@@ -1408,7 +1408,10 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		if(mConfig)
 		{
 			ProjectOptions opts = mConfig.GetProjectOptions();
-			changes += modifyValue(opts.versionids,    mConfigVersions[kIndexVersion]);
+
+			string versionids = mConfig.getCompilerVersionIDs();
+
+			changes += modifyValue(versionids,         mConfigVersions[kIndexVersion]);
 			changes += modifyValue(opts.debugids,      mConfigVersions[kIndexDebug]);
 			changes += modifyValue(opts.release,       mConfigRelease);
 			changes += modifyValue(opts.useUnitTests,  mConfigUnittest);

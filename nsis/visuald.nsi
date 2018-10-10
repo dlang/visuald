@@ -315,6 +315,7 @@ ${MementoSection} "Install in VS 2010" SecVS2010
   ${RegisterWin32Exception} ${VS2010_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2010_REGISTRY_KEY}" InstallDir
+  RMDir /r '$1${EXTENSION_DIR_APP}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2010_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
@@ -341,6 +342,7 @@ ${MementoSection} "Install in VS 2012" SecVS2012
   ${RegisterWin32Exception} ${VS2012_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2012_REGISTRY_KEY}" InstallDir
+  RMDir /r '$1${EXTENSION_DIR_APP}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2012_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
@@ -373,6 +375,7 @@ ${MementoSection} "Install in VS 2013" SecVS2013
   ${RegisterWin32Exception} ${VS2013_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
+  RMDir /r '$1${EXTENSION_DIR_APP}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2013_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
   
@@ -405,6 +408,7 @@ ${MementoSection} "Install in VS 2015" SecVS2015
   ${RegisterWin32Exception} ${VS2015_REGISTRY_KEY} "Win32 Exceptions\D Exception"
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}" InstallDir
+  RMDir /r '$1${EXTENSION_DIR_APP}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2015_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
@@ -438,6 +442,7 @@ ${MementoSection} "Install in VS 2017" SecVS2017
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   StrCpy $1 "$1Common7\IDE\"
+  RMDir /r '$1${EXTENSION_DIR_APP}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2017_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 

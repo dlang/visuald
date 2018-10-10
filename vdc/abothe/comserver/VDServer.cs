@@ -256,8 +256,8 @@ namespace DParserCOMServer
 			try
 			{
 				ast = DParser.ParseString(srcText, false, true, _taskTokens);
-			}
-			catch(Exception ex)
+            }
+            catch (Exception ex)
 			{
 				ast = new DModule{ ParseErrors = new System.Collections.ObjectModel.ReadOnlyCollection<ParserError>(
 						new List<ParserError>{
@@ -441,7 +441,7 @@ namespace DParserCOMServer
                                 v = Evaluation.EvaluateValue(var.Initializer, ctxt);
                             if (v == null && sr is IExpression)
                                 v = Evaluation.EvaluateValue(sr as IExpression, ctxt);
-                            if (v != null)
+                            if (v != null && !(v is ErrorValue))
                                 tipText.Append("\avalue = ").Append(v.ToString());
                         }
                         catch (Exception e)
@@ -768,7 +768,9 @@ namespace DParserCOMServer
         ///////////////////////////////////
 		void _setupEditorData()
 		{
-			string versions = _versionIds;
+			string versions	= _versionIds;
+			if (!String.IsNullOrEmpty(versions)	&& !versions.EndsWith("\n"))
+				versions += "\n";
 			versions += "Windows\n" + "LittleEndian\n" + "D_HardFloat\n" + "all\n" + "D_Version2\n";
 			if ((_flags & 1) != 0)
 				versions += "unittest\n";
