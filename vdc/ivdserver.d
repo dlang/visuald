@@ -71,7 +71,8 @@ public:
 	//
 	// filename:   file name
 	// srcText:    current text in editor
-	// verbose:    display parsing message?
+	// flags:      bit 0 - verbose:    display parsing message?
+	//             bit 1 - idTypes:    evaluate identifier types
 	//
 	// it is assumed that the actual parsing is forwarded to some other thread
 	// and that the status can be polled by GetParseErrors
@@ -79,7 +80,7 @@ public:
 	// ConfigureSemanticProject is usually called after UpdateModule, assuming that parsing does
 	// not depend on compilation options, so any semantic analysis should be deferred
 	// until ConfigureSemanticProject is invoked.
-	HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in BOOL verbose);
+	HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags);
 
 	// request tool tip text for a given text location
 	//
@@ -131,8 +132,20 @@ public:
 	// the range given by startLine,startIndex,endLine,endIndex will be marked
 	// as erronous by underlining it in the editor
 	//
-	// return S_FALSE as long as the parsisng is still running
+	// return S_FALSE as long as the parsing is still running
 	HRESULT GetParseErrors(in BSTR filename, BSTR* errors);
+
+	// return the identifier type information for the file
+	//
+	// filename:   file name
+	// errors: new-line delimited list of info, each line has the format:
+	//        identifier:deftype(;type,startLine,startIndex)*
+	//
+	// the identifier will be marked as "type" starting with text position
+	// startLine,startIndex and "deftype" for the beginning of the file
+	//
+	// this method is called once after GetParseErrors returned successfully
+	HRESULT GetIdentifierTypes(in BSTR filename, BSTR* types);
 
 	// return the locations where "in" and "is" are used as binary operators
 	//

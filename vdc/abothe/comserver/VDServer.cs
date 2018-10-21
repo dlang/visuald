@@ -41,13 +41,14 @@ namespace DParserCOMServer
 	{
 		void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags);
 		void ClearSemanticProject();
-		void UpdateModule(string filename, string srcText, bool verbose);
+		void UpdateModule(string filename, string srcText, int flags);
 		void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags);
 		void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer);
 		void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr);
 		void GetSemanticExpansionsResult(out string stringList);
 		void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp);
         void GetParseErrors(string filename, out string errors);
+        void GetIdentifierTypes(string filename, out string types);
 		void GetBinaryIsInLocations(string filename, out object locs); // array of pairs of DWORD
 		void GetLastMessage(out string message);
 		void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex);
@@ -151,6 +152,7 @@ namespace DParserCOMServer
 
         // remember modules, the global cache might not yet be ready or might have forgotten a module
 		public Dictionary<string, DModule> _modules = new Dictionary<string, DModule>();
+		public Dictionary<string, string> _identiferTypes = new Dictionary<string, string>();
 
 		public DModule GetModule(string fileName)
 		{
@@ -249,7 +251,7 @@ namespace DParserCOMServer
 			//MessageBox.Show("ClearSemanticProject()");
 			//throw new NotImplementedException();
 		}
-		public void UpdateModule(string filename, string srcText, bool verbose)
+		public void UpdateModule(string filename, string srcText, int flags)
 		{
             filename = normalizePath(filename);
 			DModule ast;
@@ -272,21 +274,97 @@ namespace DParserCOMServer
 			GlobalParseCache.AddOrUpdateModule(ast);
 
             _editorData.ParseCache = null;
-
-			_sources[filename] = srcText;
+            if ((flags & 2) != 0) try
+            {
+                _setupEditorData();
+                var invalidCodeRegions = new List<ISyntaxRegion>();
+                Dictionary<int, Dictionary<ISyntaxRegion, byte>> textLocationsToHighlight;
+                _editorData.SyntaxTree = ast;
+                textLocationsToHighlight = TypeReferenceFinder.Scan(_editorData, cancelTokenSource.Token, invalidCodeRegions);
+                _identiferTypes[filename] = TextLocationsToIdentifierSpans(textLocationsToHighlight);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message); // Log the error
+            }
+            _sources[filename] = srcText;
 			//MessageBox.Show("UpdateModule(" + filename + ")");
 			//throw new NotImplementedException();
 			_activityCounter++;
 		}
 
-		static int getCodeOffset(string s, CodeLocation loc)
-		{
-			// column/line 1-based
-			int off = 0;
-			for (int ln = 1; ln < loc.Line; ln++)
-				off = s.IndexOf('\n', off) + 1;
-			return off + loc.Column - 1;
-		}
+        static string GetIdentifier(ISyntaxRegion sr)
+        {
+            if (sr is INode)
+                return (sr as INode).Name;
+            if (sr is TemplateInstanceExpression)
+                return (sr as TemplateInstanceExpression).TemplateId; // Identifier.ToString(false);
+            if (sr is NewExpression)
+                return (sr as NewExpression).Type.ToString(false);
+            if (sr is TemplateParameter)
+                return (sr as TemplateParameter).Name;
+            if (sr is IdentifierDeclaration)
+                return (sr as IdentifierDeclaration).Id;
+            return "";
+        }
+
+        struct TextSpan
+        {
+            public CodeLocation start;
+            public byte kind;
+        };
+
+        static string TextLocationsToIdentifierSpans(Dictionary<int, Dictionary<ISyntaxRegion, byte>> textLocations)
+        {
+            if (textLocations == null)
+                return null;
+
+            var identifierSpans = new Dictionary<string, List<TextSpan>>();
+            foreach (var kv in textLocations)
+            {
+                var line = kv.Key;
+                foreach (var kvv in kv.Value)
+                {
+                    var sr = kvv.Key;
+                    var ident = GetIdentifier(sr);
+                    if (string.IsNullOrEmpty(ident))
+                        continue;
+
+                    List<TextSpan> spans;
+                    if (!identifierSpans.TryGetValue(ident, out spans))
+                        spans = identifierSpans[ident] = new List<TextSpan>();
+
+                    else if (spans.Last().kind == kvv.Value)
+                        continue;
+
+                    var span = new TextSpan();
+                    span.start = sr.Location;
+                    span.kind = kvv.Value;
+                    spans.Add(span);
+                }
+            }
+            StringBuilder s = new StringBuilder();
+            foreach (var idv in identifierSpans)
+            {
+                s.Append(idv.Key).Append(':').Append(idv.Value.First().kind.ToString());
+                foreach (var span in idv.Value.GetRange(1, idv.Value.Count - 1))
+                {
+                    string loc = String.Format(";{0},{1},{2}", span.kind, span.start.Line, span.start.Column - 1);
+                    s.Append(loc);
+                }
+                s.Append('\n');
+            }
+            return s.ToString();
+        }
+
+        static int getCodeOffset(string s, CodeLocation loc)
+        {
+            // column/line 1-based
+            int off = 0;
+            for (int ln = 1; ln < loc.Line; ln++)
+                off = s.IndexOf('\n', off) + 1;
+            return off + loc.Column - 1;
+        }
 
         static string GetSourceLine(string s, int line)
         {
@@ -442,7 +520,12 @@ namespace DParserCOMServer
                             if (v == null && sr is IExpression)
                                 v = Evaluation.EvaluateValue(sr as IExpression, ctxt);
                             if (v != null && !(v is ErrorValue))
-                                tipText.Append("\avalue = ").Append(v.ToString());
+                            {
+                                string valueStr = " = " + v.ToString();
+                                if (tipText.Length > valueStr.Length &&
+                                    tipText.ToString(tipText.Length - valueStr.Length, valueStr.Length) != valueStr)
+                                    tipText.Append(valueStr);
+                            }
                         }
                         catch (Exception e)
                         {
@@ -529,15 +612,22 @@ namespace DParserCOMServer
 
 			var asterrors = ast.ParseErrors;
 			
-			string errs = "";
+			StringBuilder errs = new StringBuilder();
             foreach (var err in asterrors)
-				errs += String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Line, err.Location.Column - 1, err.Location.Line, err.Location.Column, err.Message);
-			errors = errs;
+				errs.Append(String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Line, err.Location.Column - 1, err.Location.Line, err.Location.Column, err.Message));
+			errors = errs.ToString();
 			//MessageBox.Show("GetParseErrors()");
 			//throw new COMException("No Message", 1);
 		}
 
-		public void ConfigureCommentTasks(string tasks)
+        public void GetIdentifierTypes(string filename, out string types)
+        {
+            filename = normalizePath(filename);
+            if (!_identiferTypes.TryGetValue(filename, out types))
+                throw new COMException("module not found", 1);
+        }
+
+        public void ConfigureCommentTasks(string tasks)
 		{
             _taskTokens = tasks.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
 			GlobalParseCache.TaskTokens = _taskTokens;

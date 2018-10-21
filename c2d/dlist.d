@@ -229,6 +229,9 @@ struct DListIterator(T)
 		return _list;
 	}
 
+version(none) // opDot deperecated
+	alias opStar this;
+else
 	ref T opDot()
 	{
 		return _pos.data;
