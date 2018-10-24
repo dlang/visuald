@@ -70,9 +70,12 @@
     <Compile Include="COM\NativeMethod.cs" />
     <Compile Include="COM\Program.cs" />
     <Compile Include="IVDServer.cs" />
+    <Compile Include="NodeToolTipContentGen.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Request.cs" />
     <Compile Include="VDServer.cs" />
     <Compile Include="VDServerCompletionDataGenerator.cs" />
+    <Compile Include="VDserverParseCacheView.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

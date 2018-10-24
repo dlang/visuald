@@ -18,80 +18,11 @@ using D_Parser.Completion;
 using D_Parser.Resolver;
 using D_Parser.Resolver.TypeResolution;
 using D_Parser.Resolver.ExpressionSemantics;
-using D_Parser.Completion.ToolTips;
 using D_Parser.Refactoring;
 using D_Parser.Dom.Expressions;
 
 namespace DParserCOMServer
 {
-	class NodeToolTipContentGen : NodeTooltipRepresentationGen
-	{
-		public static readonly NodeToolTipContentGen Instance = new NodeToolTipContentGen();
-
-		private NodeToolTipContentGen() {
-			SignatureFlags = TooltipSignatureFlags.NoEnsquaredDefaultParams | TooltipSignatureFlags.NoLineBreakedMethodParameters;
-		}
-
-		protected override void AppendFormat (string content, StringBuilder sb, FormatFlags flags, double r = 0, double g = 0, double b = 0)
-		{
-			sb.Append (content);
-			//base.AppendFormat (content, sb, flags, r, g, b);
-		}
-	}
-
-	public class VDserverParseCacheView : ParseCacheView
-	{
-		#region Properties
-		readonly List<RootPackage> packs;
-		#endregion
-		public string[] PackageRootDirs { get; private set; }
-
-		#region Constructors
-		public VDserverParseCacheView(string[] packageRoots)
-		{
-			this.PackageRootDirs = packageRoots;
-			this.packs = new List<RootPackage>();
-			Add(packageRoots);
-		}
-
-		public VDserverParseCacheView(IEnumerable<RootPackage> packages)
-		{
-			this.packs = new List<RootPackage>(packages);
-		}
-		#endregion
-
-		public override IEnumerable<RootPackage> EnumRootPackagesSurroundingModule(DModule module)
-		{
-			// if packs not added during construction because not yet parsed by GlobalParseCache, try adding now
-			if (packs.Count() != PackageRootDirs.Count())
-				Add(PackageRootDirs);
-			return packs;
-		}
-
-		public void Add(RootPackage pack)
-		{
-			if (pack != null && !packs.Contains(pack))
-				packs.Add(pack);
-		}
-
-		public void Add(IEnumerable<string> roots)
-		{
-			RootPackage rp;
-			foreach (var r in roots)
-				if ((rp = GlobalParseCache.GetRootPackage(r)) != null && !packs.Contains(rp))
-					packs.Add(rp);
-		}
-	}
-
-	public class Request
-	{
-		public const byte None = 0;
-		public const byte Tip = 1;
-		public const byte Expansions = 2;
-		public const byte Definition = 3;
-		public const byte References = 4;
-	}
-
 	[ComVisible(true), Guid(IID.VDServer)]
 	[ClassInterface(ClassInterfaceType.None)]
 	public class VDServer : IVDServer
@@ -443,8 +374,7 @@ namespace DParserCOMServer
 				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
 
 				var sr = DResolver.GetScopedCodeObject(_editorData);
-				LooseResolution.NodeResolutionAttempt attempt;
-				AbstractType types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
+				AbstractType types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
 
 				if (_editorData.CancelToken.IsCancellationRequested)
 					return;
