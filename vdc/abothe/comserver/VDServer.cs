@@ -234,7 +234,7 @@ namespace DParserCOMServer
 			if (_imports != imp) 
 			{
                 string[] uniqueDirs = uniqueDirectories(imp);
-				GlobalParseCache.BeginAddOrUpdatePaths(uniqueDirs);
+				GlobalParseCache.BeginAddOrUpdatePaths(uniqueDirs, taskTokens:_taskTokens);
                 _activityCounter++;
 			}
 			_imports = imp;
@@ -630,7 +630,6 @@ namespace DParserCOMServer
         public void ConfigureCommentTasks(string tasks)
 		{
             _taskTokens = tasks.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
-			GlobalParseCache.TaskTokens = _taskTokens;
 		}
 
 		public void GetCommentTasks(string filename, out string tasks)
