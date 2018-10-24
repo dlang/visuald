@@ -7,13 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 using System.Runtime.InteropServices;
-using System.ComponentModel;
 using System.IO;
 using System.Threading;
-using Microsoft.Win32;
-using System.Reflection;
 
 using D_Parser.Parser;
 using D_Parser.Misc;
@@ -278,9 +274,8 @@ namespace DParserCOMServer
             {
                 _setupEditorData();
                 var invalidCodeRegions = new List<ISyntaxRegion>();
-                Dictionary<int, Dictionary<ISyntaxRegion, byte>> textLocationsToHighlight;
-                _editorData.SyntaxTree = ast;
-                textLocationsToHighlight = TypeReferenceFinder.Scan(_editorData, cancelTokenSource.Token, invalidCodeRegions);
+	            _editorData.SyntaxTree = ast;
+                var textLocationsToHighlight = TypeReferenceFinder.Scan(_editorData, cancelTokenSource.Token, invalidCodeRegions);
                 _identiferTypes[filename] = TextLocationsToIdentifierSpans(textLocationsToHighlight);
             }
             catch (Exception ex)
@@ -293,20 +288,24 @@ namespace DParserCOMServer
 			_activityCounter++;
 		}
 
-        static string GetIdentifier(ISyntaxRegion sr)
-        {
-            if (sr is INode)
-                return (sr as INode).Name;
-            if (sr is TemplateInstanceExpression)
-                return (sr as TemplateInstanceExpression).TemplateId; // Identifier.ToString(false);
-            if (sr is NewExpression)
-                return (sr as NewExpression).Type.ToString(false);
-            if (sr is TemplateParameter)
-                return (sr as TemplateParameter).Name;
-            if (sr is IdentifierDeclaration)
-                return (sr as IdentifierDeclaration).Id;
-            return "";
-        }
+		static string GetIdentifier(ISyntaxRegion sr)
+		{
+			switch (sr)
+			{
+				case INode n:
+					return n.Name;
+				case TemplateInstanceExpression templateInstanceExpression:
+					return templateInstanceExpression.TemplateId; // Identifier.ToString(false);
+				case NewExpression newExpression:
+					return newExpression.Type.ToString(false);
+				case TemplateParameter templateParameter:
+					return templateParameter.Name;
+				case IdentifierDeclaration identifierDeclaration:
+					return identifierDeclaration.Id;
+				default:
+					return "";
+			}
+		}
 
         struct TextSpan
         {
@@ -330,8 +329,7 @@ namespace DParserCOMServer
                     if (string.IsNullOrEmpty(ident))
                         continue;
 
-                    List<TextSpan> spans;
-                    if (!identifierSpans.TryGetValue(ident, out spans))
+	                if (!identifierSpans.TryGetValue(ident, out var spans))
                         spans = identifierSpans[ident] = new List<TextSpan>();
 
                     else if (spans.Last().kind == kvv.Value)
@@ -343,14 +341,13 @@ namespace DParserCOMServer
                     spans.Add(span);
                 }
             }
-            StringBuilder s = new StringBuilder();
+            var s = new StringBuilder();
             foreach (var idv in identifierSpans)
             {
                 s.Append(idv.Key).Append(':').Append(idv.Value.First().kind.ToString());
                 foreach (var span in idv.Value.GetRange(1, idv.Value.Count - 1))
                 {
-                    string loc = String.Format(";{0},{1},{2}", span.kind, span.start.Line, span.start.Column - 1);
-                    s.Append(loc);
+                    s.Append($";{span.kind},{span.start.Line},{span.start.Column - 1}");
                 }
                 s.Append('\n');
             }
@@ -382,7 +379,7 @@ namespace DParserCOMServer
         Action nextAction;
         CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
 
-        readonly char[] nlSeparator = new char[] { '\n' };
+        readonly char[] nlSeparator = { '\n' };
 
         void LaunchCompletionThread()
         {
@@ -467,83 +464,75 @@ namespace DParserCOMServer
             _request = Request.Tip;
             _result = "__pending__";
 
-            Action dg = () =>
-            {
-                _setupEditorData();
-                _editorData.CaretLocation = _tipStart;
-                _editorData.SyntaxTree = ast as DModule;
-                _editorData.ModuleCode = _sources[filename];
-                // codeOffset+1 because otherwise it does not work on the first character
-                _editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
+			void CreateTipResult()
+			{
+				_setupEditorData();
+				_editorData.CaretLocation = _tipStart;
+				_editorData.SyntaxTree = ast as DModule;
+				_editorData.ModuleCode = _sources[filename];
+				// codeOffset+1 because otherwise it does not work on the first character
+				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
 
-                ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
-                LooseResolution.NodeResolutionAttempt attempt;
-                AbstractType types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
+				var sr = DResolver.GetScopedCodeObject(_editorData);
+				LooseResolution.NodeResolutionAttempt attempt;
+				AbstractType types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
 
-                if (_editorData.CancelToken.IsCancellationRequested)
-                    return;
+				if (_editorData.CancelToken.IsCancellationRequested) return;
 
-                StringBuilder tipText = new StringBuilder();
-                if (types != null)
-                {
-                    if (sr != null)
-                    {
-                        _tipStart = sr.Location;
-                        _tipEnd = sr.EndLocation;
-                    }
+				var tipText = new StringBuilder();
+				if (types != null)
+				{
+					if (sr != null)
+					{
+						_tipStart = sr.Location;
+						_tipEnd = sr.EndLocation;
+					}
 
-                    DNode dn = null;
+					DNode dn = null;
 
-                    foreach (var t in AmbiguousType.TryDissolve(types))
-                    {
-                        tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t));
-                        if (t is DSymbol)
-                            dn = (t as DSymbol).Definition;
+					foreach (var t in AmbiguousType.TryDissolve(types))
+					{
+						tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t));
+						if (t is DSymbol symbol) dn = symbol.Definition;
 
-                        tipText.Append("\a");
-                    }
+						tipText.Append("\a");
+					}
 
-                    while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
-                        tipText.Length--;
+					while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a') tipText.Length--;
 
-                    bool eval = (flags & 1) != 0;
-                    if (eval)
-                    {
-                        var ctxt = _editorData.GetLooseResolutionContext(LooseResolution.NodeResolutionAttempt.Normal);
-                        ctxt.Push(_editorData);
-                        try
-                        {
-                            ISymbolValue v = null;
-                            var var = dn as DVariable;
-                            if (var != null && var.Initializer != null && var.IsConst)
-                                v = Evaluation.EvaluateValue(var.Initializer, ctxt);
-                            if (v == null && sr is IExpression)
-                                v = Evaluation.EvaluateValue(sr as IExpression, ctxt);
-                            if (v != null && !(v is ErrorValue))
-                            {
-                                string valueStr = " = " + v.ToString();
-                                if (tipText.Length > valueStr.Length &&
-                                    tipText.ToString(tipText.Length - valueStr.Length, valueStr.Length) != valueStr)
-                                    tipText.Append(valueStr);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            tipText.Append("\aException during evaluation = ").Append(e.Message);
-                        }
-                        ctxt.Pop();
-                    }
+					bool eval = (flags & 1) != 0;
+					if (eval)
+					{
+						var ctxt = _editorData.GetLooseResolutionContext(LooseResolution.NodeResolutionAttempt.Normal);
+						ctxt.Push(_editorData);
+						try
+						{
+							ISymbolValue v = null;
+							if (dn is DVariable var && var.Initializer != null && var.IsConst) v = Evaluation.EvaluateValue(var.Initializer, ctxt);
+							if (v == null && sr is IExpression expression) v = Evaluation.EvaluateValue(expression, ctxt);
+							if (v != null && !(v is ErrorValue))
+							{
+								var valueStr = " = " + v.ToString();
+								if (tipText.Length > valueStr.Length && tipText.ToString(tipText.Length - valueStr.Length, valueStr.Length) != valueStr) tipText.Append(valueStr);
+							}
+						}
+						catch (Exception e)
+						{
+							tipText.Append("\aException during evaluation = ").Append(e.Message);
+						}
 
-                    if (dn != null)
-                        VDServerCompletionDataGenerator.GenerateNodeTooltipBody(dn, tipText);
+						ctxt.Pop();
+					}
 
-                    while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
-                        tipText.Length--;
-                }
-                if (_request == Request.Tip)
-                    _result = tipText.ToString();
-            };
-            runAsync (dg);
+					if (dn != null) VDServerCompletionDataGenerator.GenerateNodeTooltipBody(dn, tipText);
+
+					while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a') tipText.Length--;
+				}
+
+				if (_request == Request.Tip) _result = tipText.ToString();
+			}
+
+			runAsync (CreateTipResult);
 
         }
         public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
@@ -568,32 +557,31 @@ namespace DParserCOMServer
 			_request = Request.Expansions;
 			_result = "__pending__";
 
-			Action dg = () =>
+			void BuildSemanticExpansions()
 			{
 				_setupEditorData();
-				CodeLocation loc = new CodeLocation((int)idx + 1, (int)	line);
+				CodeLocation loc = new CodeLocation((int) idx + 1, (int) line);
 				_editorData.SyntaxTree = ast as DModule;
 				_editorData.ModuleCode = _sources[filename];
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode,	loc);
+				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
 				// step	back to	beginning of identifier
-				while(_editorData.CaretOffset > 0 && Lexer.IsIdentifierPart(_editorData.ModuleCode[_editorData.CaretOffset-1]))
+				while (_editorData.CaretOffset > 0 && Lexer.IsIdentifierPart(_editorData.ModuleCode[_editorData.CaretOffset - 1]))
 				{
 					_editorData.CaretOffset--;
-					if(idx > 0)
-						idx--;
+					if (idx > 0) idx--;
 				}
-				_editorData.CaretLocation = new CodeLocation((int)idx + 1, (int) line);
+
+				_editorData.CaretLocation = new CodeLocation((int) idx + 1, (int) line);
 
 				char triggerChar = string.IsNullOrEmpty(tok) ? '\0' : tok[0];
 
-				VDServerCompletionDataGenerator	cdgen = new VDServerCompletionDataGenerator(tok);
+				var cdgen = new VDServerCompletionDataGenerator(tok);
 				CodeCompletion.GenerateCompletionData(_editorData, cdgen, triggerChar);
-                if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.Expansions)
-				{
+				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.Expansions)
 					_result = cdgen.expansions.ToString();
-				}
-			};
-			runAsync (dg);
+			}
+
+			runAsync (BuildSemanticExpansions);
 		}
 		public void GetSemanticExpansionsResult(out string stringList)
 		{
@@ -612,9 +600,10 @@ namespace DParserCOMServer
 
 			var asterrors = ast.ParseErrors;
 			
-			StringBuilder errs = new StringBuilder();
+			var errs = new StringBuilder();
             foreach (var err in asterrors)
-				errs.Append(String.Format("{0},{1},{2},{3}:{4}\n", err.Location.Line, err.Location.Column - 1, err.Location.Line, err.Location.Column, err.Message));
+				errs.Append(
+					$"{err.Location.Line},{err.Location.Column - 1},{err.Location.Line},{err.Location.Column}:{err.Message}\n");
 			errors = errs.ToString();
 			//MessageBox.Show("GetParseErrors()");
 			//throw new COMException("No Message", 1);
@@ -640,12 +629,12 @@ namespace DParserCOMServer
 			if (ast == null)
 				throw new COMException("module not found", 1);
 
-			string tsks = "";
+			var tsks = new StringBuilder();
 			if (ast.Tasks != null)
 			foreach (var task in ast.Tasks)
-				tsks += String.Format("{0},{1}:{2}\n", task.Location.Line, task.Location.Column - 1, task.Message);
+				tsks.Append($"{task.Location.Line},{task.Location.Column - 1}:{task.Message}\n");
 
-			tasks = tsks;
+			tasks = tsks.ToString();
 			//MessageBox.Show("GetCommentTasks()");
 			//throw new COMException("No Message", 1);
 		}
@@ -688,7 +677,7 @@ namespace DParserCOMServer
 			if (ast == null)
 				throw new COMException("module not found", 1);
 
-			BinaryIsInVisitor visitor = new BinaryIsInVisitor();
+			var visitor = new BinaryIsInVisitor();
 			ast.Accept(visitor);
 
 			locs = visitor.locs.ToArray();
@@ -715,54 +704,49 @@ namespace DParserCOMServer
 			_request = Request.Definition;
 			_result = "__pending__";
 
-			Action dg = () =>
+			void BuildDefinitionSignatureString()
 			{
-                _setupEditorData();
-                _editorData.CaretLocation = _tipEnd;
-                _editorData.SyntaxTree = ast as DModule;
-                _editorData.ModuleCode = _sources[filename];
-                // codeOffset+1 because otherwise it does not work on the first character
-                _editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
+				_setupEditorData();
+				_editorData.CaretLocation = _tipEnd;
+				_editorData.SyntaxTree = ast as DModule;
+				_editorData.ModuleCode = _sources[filename];
+				// codeOffset+1 because otherwise it does not work on the first character
+				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
 
-                ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
-				LooseResolution.NodeResolutionAttempt attempt;
-				var	rr = sr	!= null	? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
+				ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
+				var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
 
-				StringBuilder tipText = new StringBuilder();
+				var tipText = new StringBuilder();
 				if (rr != null)
 				{
 					DNode n = null;
 					foreach (var t in AmbiguousType.TryDissolve(rr))
 					{
-						n =	ExpressionTypeEvaluation.GetResultMember(t);
-						if (n != null)
-							break;
+						n = ExpressionTypeEvaluation.GetResultMember(t);
+						if (n != null) break;
 					}
 
 					if (n != null)
 					{
-						if (tipText.Length > 0)
-							tipText.Append("\n");
+						if (tipText.Length > 0) tipText.Append("\n");
 						bool decl = false;
-						var mthd = n as DMethod;
-						if (mthd != null)
-							decl = mthd.Body ==	null;
-						else if (n.ContainsAnyAttribute(DTokens.Extern))
-							decl = true;
-						if (decl)
-							tipText.Append("EXTERN:");
+						if (n is DMethod method)
+							decl = method.Body == null;
+						else if (n.ContainsAnyAttribute(DTokens.Extern)) decl = true;
+						if (decl) tipText.Append("EXTERN:");
 
 						_tipStart = n.Location;
 						_tipEnd = n.EndLocation;
-						INode node = n.NodeRoot;
-						if (node is DModule)
-							tipText.Append((node as DModule).FileName);
+						if (n.NodeRoot is DModule module)
+							tipText.Append(module.FileName);
 					}
 				}
+
 				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.Definition)
 					_result = tipText.ToString();
-			};
-			runAsync (dg);
+			}
+
+			runAsync (BuildDefinitionSignatureString);
 		}
 		public void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename)
 		{
@@ -773,62 +757,62 @@ namespace DParserCOMServer
             filename = _request == Request.Definition ? _result : "__cancelled__";
 		}
 
-        public void GetReferences(string filename, string tok, uint line, uint idx, string expr)
-        {
-            filename = normalizePath(filename);
-            var ast = GetModule(filename);
+		public void GetReferences(string filename, string tok, uint line, uint idx, string expr)
+		{
+			filename = normalizePath(filename);
+			var ast = GetModule(filename);
 
-            if (ast == null)
-                throw new COMException("module not found", 1);
+			if (ast == null)
+				throw new COMException("module not found", 1);
 
-            _request = Request.References;
-            _result = "__pending__";
+			_request = Request.References;
+			_result = "__pending__";
 
-            Action dg = () =>
-            {
-                _setupEditorData();
-                CodeLocation loc = new CodeLocation((int)idx + 1, (int)line);
-                _editorData.CaretLocation = loc;
-                _editorData.SyntaxTree = ast as DModule;
-                _editorData.ModuleCode = _sources[filename];
-                _editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
+			void BuildReferencesString()
+			{
+				_setupEditorData();
+				CodeLocation loc = new CodeLocation((int) idx + 1, (int) line);
+				_editorData.CaretLocation = loc;
+				_editorData.SyntaxTree = ast as DModule;
+				_editorData.ModuleCode = _sources[filename];
+				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
 
-                ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
-                LooseResolution.NodeResolutionAttempt attempt;
-                var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out attempt, true) : null;
+				ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
+				var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
 
-                StringBuilder refs = new StringBuilder();
-                if (rr != null)
-                {
-                    var n = ExpressionTypeEvaluation.GetResultMember(rr);
+				var refs = new StringBuilder();
+				if (rr != null)
+				{
+					var n = ExpressionTypeEvaluation.GetResultMember(rr);
 
-                    if (n != null)
-                    {
-                        var ctxt = ResolutionContext.Create(_editorData, true);
-                        if (n.ContainsAnyAttribute(DTokens.Private) || ((n is DVariable) && (n as DVariable).IsLocal))
-                        {
-                            GetReferencesInModule(ast, refs, n, ctxt);
-                        }
-                        else
-                        {
+					if (n != null)
+					{
+						var ctxt = ResolutionContext.Create(_editorData, true);
+						if (n.ContainsAnyAttribute(DTokens.Private) || (n is DVariable variable && variable.IsLocal))
+						{
+							GetReferencesInModule(ast, refs, n, ctxt);
+						}
+						else
+						{
+							var mods = new Dictionary<DModule, bool>();
 
-                            var mods = new Dictionary<DModule, bool>();
+							foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
+							foreach (var mod in GlobalParseCache.EnumModulesRecursively(normalizeDir(basePath)))
+								mods[mod] = true;
 
-                            foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
-                                foreach (var mod in GlobalParseCache.EnumModulesRecursively(normalizeDir(basePath)))
-                                    mods[mod] = true;
+							foreach (var mod in mods) GetReferencesInModule(mod.Key, refs, n, ctxt);
+						}
+					}
 
-                            foreach (var mod in mods)
-                                GetReferencesInModule(mod.Key, refs, n, ctxt);
-                        }
-                    }
-                    //var res = TypeReferenceFinder.Scan(_editorData, System.Threading.CancellationToken.None, null);
-                }
-                if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.References)
-                    _result = refs.ToString();
-            };
-            runAsync (dg);
-        }
+//var res = TypeReferenceFinder.Scan(_editorData, System.Threading.CancellationToken.None, null);
+				}
+
+				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.References)
+					_result = refs.ToString();
+			}
+
+			runAsync(BuildReferencesString);
+		}
 
         private void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
         {
@@ -842,7 +826,7 @@ namespace DParserCOMServer
                 var len = r.ToString().Length;
                 var src = GetSource(rfilename);
                 var linetxt = GetSourceLine(src, rloc.Line);
-                var ln = String.Format("{0},{1},{2},{3}:{4}|{5}\n", rloc.Line, rloc.Column - 1, rloc.Line, rloc.Column + len - 1, rfilename, linetxt);
+                var ln = $"{rloc.Line},{rloc.Column - 1},{rloc.Line},{rloc.Column + len - 1}:{rfilename}|{linetxt}\n";
 
                 refs.Append(ln);
             }
