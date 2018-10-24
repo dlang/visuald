@@ -216,21 +216,19 @@ namespace DParserCOMServer
 			addExpansion(name, Node.Accept(NodeTypeNameVisitor.Instance), sb.ToString());
 		}
 
-		public static void GenerateNodeTooltipBody(DNode Node, StringBuilder sb)
+		public static void GenerateNodeTooltipBody(DNode node, StringBuilder sb)
 		{
-			Dictionary<string, string> cats;
-			string summary;
-			NodeToolTipContentGen.Instance.GenToolTipBody(Node, out summary, out cats);
+			NodeToolTipContentGen.Instance.GenToolTipBody(node, out var summary, out var categories);
 
-			if (!string.IsNullOrEmpty(summary) || (cats != null && cats.Count > 0))
+			if (!string.IsNullOrEmpty(summary) || (categories != null && categories.Count > 0))
 				sb.Append("\n");
 
 			if (!string.IsNullOrEmpty(summary))
 				sb.Append(summary);
 
-			if (cats != null)
+			if (categories != null)
 			{
-				foreach (var kv in cats)
+				foreach (var kv in categories)
 				{
 					sb.Append("\n<b>").Append(kv.Key).Append("</b>\n");
 					sb.Append(kv.Value);
