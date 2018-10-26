@@ -75,6 +75,7 @@
     <Compile Include="Request.cs" />
     <Compile Include="VDServer.cs" />
     <Compile Include="VDServerCompletionDataGenerator.cs" />
+    <Compile Include="VDServerEditorFlags.cs" />
     <Compile Include="VDserverParseCacheView.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

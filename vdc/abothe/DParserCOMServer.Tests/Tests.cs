@@ -37,10 +37,10 @@ namespace DParserCOMServer.Tests
 				}
 			}
 
-			public IVDServer Initialize()
+			public IVDServer Initialize(uint flags = 0)
 			{
 				var instance = new VDServer();
-				instance.ConfigureSemanticProject(null, subFolder, "", "", "", 0);
+				instance.ConfigureSemanticProject(null, subFolder, "", "", "", flags);
 				Console.WriteLine("Waiting for " + subFolder + " to be parsed...");
 				Assert.That(_parseFinishedSemaphore.Wait(10000));
 				Console.WriteLine("Finished parsing " + subFolder);
@@ -55,6 +55,14 @@ namespace DParserCOMServer.Tests
 			}
 		}
 
+		static uint CompileFlags(VDServerEditorFlags flags, byte debugLevel = 0, byte versionNumber = 0)
+		{
+			var compiledFlags = (uint)flags;
+			compiledFlags |= (uint) versionNumber << 8;
+			compiledFlags |= (uint) debugLevel << 16;
+			return compiledFlags;
+		}
+
 		[Test]
 		public void GetTip()
 		{
@@ -67,15 +75,62 @@ void main() {}";
 				instance.GetTip(vd.moduleFile, 2, 7, 2, 7, 0);
 
 				string answer;
-				int remainingAttempts = 100;
+				int remainingAttempts = 200;
 				do
 				{
-					Thread.Sleep(100);
+					Thread.Sleep(200 - remainingAttempts);
 					instance.GetTipResult(out var startLine, out var startIndex,
 						out var endLine, out var endIndex, out answer);
 				} while (answer == "__pending__" && remainingAttempts-- > 0);
 
 				Assert.That(answer, Is.EqualTo("void test.main()"));
+			}
+		}
+
+		[Test]
+		public void GetSemanticExpensions()
+		{
+			var code = @"module test;
+void foo() {
+	A!`asdf` a;
+a.
+}
+
+class A(string mixinCode) {
+	mixin(`int ` ~ mixinCode ~ `;`);
+	int bar();
+	string c = mixinCode;
+}";
+
+			using (var vd = new VDServerDisposable(code))
+			{
+				var instance = vd.Initialize(CompileFlags(VDServerEditorFlags.EnableMixinAnalysis));
+				instance.GetSemanticExpansions(vd.moduleFile, String.Empty, 4, 2, null);
+
+				string answer;
+				int remainingAttempts = 200;
+				do
+				{
+					Thread.Sleep(200 - remainingAttempts);
+					instance.GetSemanticExpansionsResult(out answer);
+				} while (answer == "__pending__" && remainingAttempts-- > 0);
+
+				Assert.NotNull(answer);
+				var receivedExpansions = answer.Split(new []{'\n'}, StringSplitOptions.RemoveEmptyEntries);
+				var expectedExpansions = new[]
+				{
+					"asdf:VAR:int test.A.asdf",
+					"bar:MTHD:int test.A.bar()",
+					"c:VAR:string test.A.c",
+					"init:SPRP:static A!mixinCode init\aA type's or variable's static initializer expression",
+					"sizeof:SPRP:static uint sizeof\aSize of a type or variable in bytes",
+					"alignof:SPRP:uint alignof\aVariable alignment",
+					"mangleof:SPRP:static string mangleof\a"
+					+ "String representing the ‘mangled’ representation of the type",
+					"stringof:SPRP:static string stringof\aString representing the source representation of the type",
+					"classinfo:SPRP:object.TypeInfo_Class classinfo\aInformation about the dynamic type of the class"
+				};
+				CollectionAssert.AreEquivalent(expectedExpansions, receivedExpansions);
 			}
 		}
 	}
