@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using D_Parser.Dom;
 using D_Parser.Misc;
 using NUnit.Framework;
 
@@ -42,7 +41,10 @@ namespace DParserCOMServer.Tests
 			{
 				Console.WriteLine("Parse task finished: " + ea.Directory);
 				if (!ea.Directory.StartsWith(_subFolder))
+				{
+					Assert.Warn("Received ParseTaskFinished-Event for wrong directory (" + ea.Directory + ")");
 					return;
+				}
 
 				var moduleFiles = GlobalParseCache.EnumModulesRecursively(_subFolder).ConvertAll(module => module.FileName);
 				CollectionAssert.AreEquivalent(moduleFiles, ModuleFileNames);
@@ -54,8 +56,15 @@ namespace DParserCOMServer.Tests
 				IVDServer instance = new VDServer();
 				instance.ConfigureSemanticProject(null, _subFolder, "", "", "", flags);
 				Console.WriteLine("Waiting for " + _subFolder + " to be parsed...");
-				Assert.That(_parseFinishedSemaphore.WaitOne(10000));
-				Console.WriteLine("Finished parsing " + _subFolder);
+				if (!_parseFinishedSemaphore.WaitOne(5000))
+				{
+					Console.WriteLine("Didn't finish parsing " + _subFolder + " soon enough. Try to continue testing...");
+				}
+				else
+				{
+					Console.WriteLine("Finished parsing " + _subFolder);
+				}
+
 				for (int moduleIndex = 0; moduleIndex < ModuleFileNames.Length; moduleIndex++)
 				{
 					var file = ModuleFileNames[moduleIndex];
@@ -87,7 +96,7 @@ namespace DParserCOMServer.Tests
 		public void GetTip()
 		{
 			var code = @"module test;
-void main() {}";
+void maintip() {}";
 
 			using (var vd = new VDServerDisposable(code))
 			{
@@ -103,7 +112,7 @@ void main() {}";
 						out var endLine, out var endIndex, out answer);
 				} while (answer == "__pending__" && remainingAttempts-- > 0);
 
-				Assert.That(answer, Is.EqualTo("void test.main()"));
+				Assert.That(answer, Is.EqualTo("void test.maintip()"));
 			}
 		}
 
