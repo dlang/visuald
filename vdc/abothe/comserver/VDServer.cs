@@ -96,8 +96,8 @@ namespace DParserCOMServer
 		private static string normalizeDir(string dir)
 		{
 			dir = normalizePath(dir);
-			if (!dir.EndsWith("\\"))
-				dir += '\\';
+			if (dir[dir.Length - 1] == Path.DirectorySeparatorChar)
+				dir += Path.DirectorySeparatorChar;
 			return dir;
 		}
 
@@ -605,7 +605,7 @@ namespace DParserCOMServer
 
 			if (ast == null)
 				throw new COMException("module not found", 1);
-			
+
 			_tipStart = new CodeLocation(startIndex + 1, startLine);
 			_tipEnd = new CodeLocation(endIndex + 1, endLine);
 
@@ -709,7 +709,7 @@ namespace DParserCOMServer
 							var mods = new Dictionary<DModule, bool>();
 
 							foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
-								foreach (var mod in GlobalParseCache.EnumModulesRecursively(normalizeDir(basePath)))
+								foreach (var mod in GlobalParseCache.EnumModulesRecursively(normalizePath(basePath)))
 									mods[mod] = true;
 
 							foreach (var mod in mods)
