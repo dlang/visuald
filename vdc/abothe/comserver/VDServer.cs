@@ -10,7 +10,8 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Threading;
-
+using System.Threading.Tasks;
+using DParserCOMServer.CodeSemantics;
 using D_Parser.Parser;
 using D_Parser.Misc;
 using D_Parser.Dom;
@@ -27,6 +28,7 @@ namespace DParserCOMServer
 	[ClassInterface(ClassInterfaceType.None)]
 	public class VDServer : IVDServer
 	{
+		private readonly EditorDataProvider _editorDataProvider = new EditorDataProvider();
 		private CodeLocation   _tipStart, _tipEnd;
 
 		private string _result;
@@ -127,6 +129,8 @@ namespace DParserCOMServer
 
 		public void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags)
 		{
+			_editorDataProvider.ConfigureEnvironment(imp, versionids, debugids, flags);
+
 			if (_imports != imp) 
 			{
 				string[] uniqueDirs = uniqueDirectories(imp);
@@ -350,9 +354,17 @@ namespace DParserCOMServer
 			}
 		}
 
+		private CancellationTokenSource _tipCancellation, _tipHardCancel;
+		private Task<Tuple<CodeLocation, CodeLocation, string>> _tipTask;
+
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 		{
-			filename = normalizePath(filename);
+			if (_tipCancellation != null && !_tipCancellation.IsCancellationRequested)
+				_tipCancellation.Cancel();
+			if(_tipHardCancel != null && _tipHardCancel.IsCancellationRequested)
+				_tipHardCancel.CancelAfter(400);
+
+			filename = EditorDataProvider.normalizePath(filename);
 			var ast = GetModule(filename);
 
 			if (ast == null)
@@ -361,98 +373,48 @@ namespace DParserCOMServer
 			_tipStart = new CodeLocation(startIndex + 1, startLine);
 			_tipEnd = new CodeLocation(startIndex + 2, startLine);
 
-			_request = Request.Tip;
-			_result = "__pending__";
+			var editorData = _editorDataProvider.MakeEditorData();
+			_tipCancellation = new CancellationTokenSource();
+			editorData.CancelToken = _tipCancellation.Token;
+			editorData.CaretLocation = _tipStart;
+			editorData.SyntaxTree = ast;
+			editorData.ModuleCode = _sources[filename];
+			// codeOffset+1 because otherwise it does not work on the first character
+			editorData.CaretOffset = getCodeOffset(editorData.ModuleCode, _tipStart) + 1;
 
-			void CreateTipResult()
-			{
-				_setupEditorData();
-				_editorData.CaretLocation = _tipStart;
-				_editorData.SyntaxTree = ast as DModule;
-				_editorData.ModuleCode = _sources[filename];
-				// codeOffset+1 because otherwise it does not work on the first character
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
-
-				var sr = DResolver.GetScopedCodeObject(_editorData);
-				AbstractType types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
-
-				if (_editorData.CancelToken.IsCancellationRequested)
-					return;
-
-				var tipText = new StringBuilder();
-				if (types != null)
-				{
-					if (sr != null)
-					{
-						_tipStart = sr.Location;
-						_tipEnd = sr.EndLocation;
-					}
-
-					DNode dn = null;
-
-					foreach (var t in AmbiguousType.TryDissolve(types))
-					{
-						tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t));
-						if (t is DSymbol symbol)
-							dn = symbol.Definition;
-
-						tipText.Append("\a");
-					}
-
-					while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
-						tipText.Length--;
-
-					bool eval = (flags & 1) != 0;
-					if (eval)
-					{
-						var ctxt = _editorData.GetLooseResolutionContext(LooseResolution.NodeResolutionAttempt.Normal);
-						ctxt.Push(_editorData);
-						try
-						{
-							ISymbolValue v = null;
-							if (dn is DVariable var && var.Initializer != null && var.IsConst)
-								v = Evaluation.EvaluateValue(var.Initializer, ctxt);
-							if (v == null && sr is IExpression expression)
-								v = Evaluation.EvaluateValue(expression, ctxt);
-							if (v != null && !(v is ErrorValue))
-							{
-								var valueStr = " = " + v.ToString();
-								if (tipText.Length > valueStr.Length &&
-									tipText.ToString(tipText.Length - valueStr.Length, valueStr.Length) != valueStr)
-									tipText.Append(valueStr);
-							}
-						}
-						catch (Exception e)
-						{
-							tipText.Append("\aException during evaluation = ").Append(e.Message);
-						}
-
-						ctxt.Pop();
-					}
-
-					if (dn != null)
-						VDServerCompletionDataGenerator.GenerateNodeTooltipBody(dn, tipText);
-
-					while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
-						tipText.Length--;
-				}
-
-				if (_request == Request.Tip)
-					_result = tipText.ToString();
-			}
-
-			runAsync (CreateTipResult);
-
+			var eval = (flags & 1) != 0;
+			_tipHardCancel = new CancellationTokenSource();
+			_tipTask = TooltipGenerator.Generate(editorData, eval, _tipHardCancel.Token);
 		}
+
 		public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
 		{
-			startLine = _tipStart.Line;
-			startIndex = _tipStart.Column - 1;
-			endLine = _tipEnd.Line;
-			endIndex = _tipEnd.Column - 1;
-			answer = _request == Request.Tip ? _result : "__cancelled__";
-			//MessageBox.Show("GetTipResult()");
-			//throw new NotImplementedException();
+			var tipTask = _tipTask;
+			if (tipTask == null || tipTask.IsCanceled)
+			{
+				startLine = 0;
+				startIndex = 0;
+				endLine = 0;
+				endIndex = 0;
+				answer = "__cancelled__";
+			}
+			else if (tipTask.IsCompleted)
+			{
+				var result = tipTask.Result;
+				startLine = Math.Max(0, result.Item1.Line);
+				startIndex = Math.Max(0, result.Item1.Column - 1);
+				endLine = Math.Max(0, result.Item2.Line);
+				endIndex = Math.Max(0, result.Item2.Column - 1);
+				answer = result.Item3;
+			}
+			else
+			{
+				startLine = _tipStart.Line;
+				startIndex = _tipStart.Column - 1;
+				endLine = _tipEnd.Line;
+				endIndex = _tipEnd.Column - 1;
+				answer = "__pending__";
+			}
 		}
 		
 		public void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr)
