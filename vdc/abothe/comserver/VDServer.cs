@@ -32,6 +32,7 @@ namespace DParserCOMServer
 		private readonly TooltipGenerator _tipGenerationTask;
 		private readonly SemanticExpansionsGenerator _semanticExpansionsTask;
 		private readonly SymbolDefinitionGenerator _symbolDefinitionTask;
+		private readonly ReferencesListGenerator _referencesTask;
 		private CodeLocation   _tipStart, _tipEnd;
 
 		private string _result;
@@ -66,27 +67,12 @@ namespace DParserCOMServer
 		}
 		public Dictionary<string, string> _sources = new Dictionary<string, string>();
 
-		public string GetSource(string fileName)
-		{
-			if (!_sources.ContainsKey(fileName))
-			{
-				try
-				{
-					_sources[fileName] = File.ReadAllText(fileName);
-				}
-				catch (Exception)
-				{
-					return "";
-				}
-			}
-			return _sources[fileName];
-		}
-
 		public VDServer()
 		{
 			_tipGenerationTask = new TooltipGenerator(this, _editorDataProvider);
 			_semanticExpansionsTask = new SemanticExpansionsGenerator(this, _editorDataProvider);
 			_symbolDefinitionTask = new SymbolDefinitionGenerator(this, _editorDataProvider);
+			_referencesTask = new ReferencesListGenerator(this, _editorDataProvider);
 		}
 
 		~VDServer()
@@ -270,15 +256,6 @@ namespace DParserCOMServer
 			for (int ln = 1; ln < loc.Line; ln++)
 				off = s.IndexOf('\n', off) + 1;
 			return off + loc.Column - 1;
-		}
-
-		static string GetSourceLine(string s, int line)
-		{
-			int off = 0;
-			for (int ln = 1; ln < line; ln++)
-				off = s.IndexOf('\n', off) + 1;
-			int end = s.IndexOf('\n', off);
-			return s.Substring(off, end - off);
 		}
 
 		Thread completionThread;
@@ -556,84 +533,24 @@ namespace DParserCOMServer
 
 		public void GetReferences(string filename, string tok, uint line, uint idx, string expr)
 		{
-			filename = normalizePath(filename);
-			var ast = GetModule(filename);
-
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
-			_request = Request.References;
-			_result = "__pending__";
-
-			void BuildReferencesString()
-			{
-				_setupEditorData();
-				CodeLocation loc = new CodeLocation((int) idx + 1, (int) line);
-				_editorData.CaretLocation = loc;
-				_editorData.SyntaxTree = ast as DModule;
-				_editorData.ModuleCode = _sources[filename];
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
-
-				ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
-				var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
-
-				var refs = new StringBuilder();
-				if (rr != null)
-				{
-					var n = ExpressionTypeEvaluation.GetResultMember(rr);
-
-					if (n != null)
-					{
-						var ctxt = ResolutionContext.Create(_editorData, true);
-						if (n.ContainsAnyAttribute(DTokens.Private) || (n is DVariable variable && variable.IsLocal))
-						{
-							GetReferencesInModule(ast, refs, n, ctxt);
-						}
-						else
-						{
-							var mods = new Dictionary<DModule, bool>();
-
-							foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
-								foreach (var mod in GlobalParseCache.EnumModulesRecursively(normalizePath(basePath)))
-									mods[mod] = true;
-
-							foreach (var mod in mods)
-								GetReferencesInModule(mod.Key, refs, n, ctxt);
-						}
-					}
-
-//var res = TypeReferenceFinder.Scan(_editorData, System.Threading.CancellationToken.None, null);
-				}
-
-				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.References)
-					_result = refs.ToString();
-			}
-
-			runAsync(BuildReferencesString);
+			_referencesTask.Run(filename, new CodeLocation((int)idx + 1, (int)line), null);
 		}
 
-		private void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
-		{
-			var res = ReferencesFinder.SearchModuleForASTNodeReferences(ast, n, ctxt);
-
-			int cnt = res.Count();
-			foreach (var r in res)
-			{
-				var rfilename = ast.FileName;
-				var rloc = r.Location;
-				var len = r.ToString().Length;
-				var src = GetSource(rfilename);
-				var linetxt = GetSourceLine(src, rloc.Line);
-				var ln = $"{rloc.Line},{rloc.Column - 1},{rloc.Line},{rloc.Column + len - 1}:{rfilename}|{linetxt}\n";
-
-				refs.Append(ln);
-			}
-		}
 		public void GetReferencesResult(out string stringList)
 		{
-			stringList = _request == Request.References ? _result : "__cancelled__";
-			//MessageBox.Show("GetSemanticExpansionsResult()");
-			//throw new NotImplementedException();
+			switch (_referencesTask.TaskStatus)
+			{
+				case TaskStatus.RanToCompletion:
+					stringList = _referencesTask.Result;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					stringList = "__cancelled__";
+					break;
+				default:
+					stringList = "__pending__";
+					break;
+			}
 		}
 
 		///////////////////////////////////
