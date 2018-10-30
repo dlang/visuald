@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using D_Parser.Completion;
 using D_Parser.Dom;
+using D_Parser.Misc;
 
 namespace DParserCOMServer.CodeSemantics
 {
@@ -27,6 +28,8 @@ namespace DParserCOMServer.CodeSemantics
 				_hardCancel.CancelAfter(400);
 
 			_cancellation = new CancellationTokenSource();
+			if (CompletionOptions.Instance.CompletionTimeout > 0)
+				_cancellation.CancelAfter(CompletionOptions.Instance.CompletionTimeout);
 			_hardCancel = new CancellationTokenSource();
 
 			_task = Task.Run(() =>
