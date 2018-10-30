@@ -57,13 +57,13 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeSemantics\AbstractVDServerTask.cs" />
     <Compile Include="CodeSemantics\EditorDataProvider.cs" />
     <Compile Include="CodeSemantics\TooltipGenerator.cs" />
     <Compile Include="COM\COMHelper.cs" />
@@ -81,7 +81,7 @@
     <Compile Include="VDserverParseCacheView.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

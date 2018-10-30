@@ -1,7 +1,5 @@
 using System;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using D_Parser.Completion;
 using D_Parser.Dom;
 using D_Parser.Dom.Expressions;
@@ -11,17 +9,18 @@ using D_Parser.Resolver.TypeResolution;
 
 namespace DParserCOMServer.CodeSemantics
 {
-	public static class TooltipGenerator
+	public class TooltipGenerator
+		: AbstractVDServerTask<Tuple<CodeLocation, CodeLocation, string>, bool>
 	{
-		public static Task<Tuple<CodeLocation, CodeLocation, string>> Generate(
-			IEditorData editorData, bool evaluateUnderneathExpression, CancellationToken cancellationToken)
-		{
-			return Task.Run(() => GenerateSync(editorData, evaluateUnderneathExpression), cancellationToken);
-		}
+		public TooltipGenerator(VDServer vdServer, EditorDataProvider editorDataProvider)
+			: base(vdServer, editorDataProvider) { }
 
-		private static Tuple<CodeLocation, CodeLocation, string> GenerateSync(
-			IEditorData editorData, bool evaluateUnderneathExpression)
+		protected override Tuple<CodeLocation, CodeLocation, string> Process(
+			EditorData editorData, bool evaluateUnderneathExpression)
 		{
+			// codeOffset+1 because otherwise it does not work on the first character
+			editorData.CaretOffset++;
+
 			var sr = DResolver.GetScopedCodeObject(editorData);
 			var types = LooseResolution.ResolveTypeLoosely(editorData, sr, out _, true);
 

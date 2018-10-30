@@ -29,6 +29,8 @@ namespace DParserCOMServer
 	public class VDServer : IVDServer
 	{
 		private readonly EditorDataProvider _editorDataProvider = new EditorDataProvider();
+		private readonly TooltipGenerator _tipGenerationTask;
+		private readonly SemanticExpansionsGenerator _semanticExpansionsTask;
 		private CodeLocation   _tipStart, _tipEnd;
 
 		private string _result;
@@ -81,7 +83,8 @@ namespace DParserCOMServer
 
 		public VDServer()
 		{
-			// MessageBox.Show("VDServer()");
+			_tipGenerationTask = new TooltipGenerator(this, _editorDataProvider);
+			_semanticExpansionsTask = new SemanticExpansionsGenerator(this, _editorDataProvider);
 		}
 
 		~VDServer()
@@ -354,111 +357,64 @@ namespace DParserCOMServer
 			}
 		}
 
-		private CancellationTokenSource _tipCancellation, _tipHardCancel;
-		private Task<Tuple<CodeLocation, CodeLocation, string>> _tipTask;
-
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 		{
-			if (_tipCancellation != null && !_tipCancellation.IsCancellationRequested)
-				_tipCancellation.Cancel();
-			if(_tipHardCancel != null && _tipHardCancel.IsCancellationRequested)
-				_tipHardCancel.CancelAfter(400);
-
-			filename = EditorDataProvider.normalizePath(filename);
-			var ast = GetModule(filename);
-
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
 			_tipStart = new CodeLocation(startIndex + 1, startLine);
 			_tipEnd = new CodeLocation(startIndex + 2, startLine);
 
-			var editorData = _editorDataProvider.MakeEditorData();
-			_tipCancellation = new CancellationTokenSource();
-			editorData.CancelToken = _tipCancellation.Token;
-			editorData.CaretLocation = _tipStart;
-			editorData.SyntaxTree = ast;
-			editorData.ModuleCode = _sources[filename];
-			// codeOffset+1 because otherwise it does not work on the first character
-			editorData.CaretOffset = getCodeOffset(editorData.ModuleCode, _tipStart) + 1;
-
-			var eval = (flags & 1) != 0;
-			_tipHardCancel = new CancellationTokenSource();
-			_tipTask = TooltipGenerator.Generate(editorData, eval, _tipHardCancel.Token);
+			_tipGenerationTask.Run(filename, _tipStart, (flags & 1) != 0);
 		}
 
 		public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
 		{
-			var tipTask = _tipTask;
-			if (tipTask == null || tipTask.IsCanceled)
+			switch (_tipGenerationTask.TaskStatus)
 			{
-				startLine = 0;
-				startIndex = 0;
-				endLine = 0;
-				endIndex = 0;
-				answer = "__cancelled__";
-			}
-			else if (tipTask.IsCompleted)
-			{
-				var result = tipTask.Result;
-				startLine = Math.Max(0, result.Item1.Line);
-				startIndex = Math.Max(0, result.Item1.Column - 1);
-				endLine = Math.Max(0, result.Item2.Line);
-				endIndex = Math.Max(0, result.Item2.Column - 1);
-				answer = result.Item3;
-			}
-			else
-			{
-				startLine = _tipStart.Line;
-				startIndex = _tipStart.Column - 1;
-				endLine = _tipEnd.Line;
-				endIndex = _tipEnd.Column - 1;
-				answer = "__pending__";
+				case TaskStatus.RanToCompletion:
+					var result = _tipGenerationTask.Result;
+					startLine = Math.Max(0, result.Item1.Line);
+					startIndex = Math.Max(0, result.Item1.Column - 1);
+					endLine = Math.Max(0, result.Item2.Line);
+					endIndex = Math.Max(0, result.Item2.Column - 1);
+					answer = result.Item3;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					startLine = 0;
+					startIndex = 0;
+					endLine = 0;
+					endIndex = 0;
+					answer = "__cancelled__";
+					break;
+				default:
+					startLine = _tipStart.Line;
+					startIndex = _tipStart.Column - 1;
+					endLine = _tipEnd.Line;
+					endIndex = _tipEnd.Column - 1;
+					answer = "__pending__";
+					break;
 			}
 		}
 		
 		public void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr)
 		{
-			filename = normalizePath(filename);
-			var ast = GetModule(filename);
-
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
-			_request = Request.Expansions;
-			_result = "__pending__";
-
-			void BuildSemanticExpansions()
-			{
-				_setupEditorData();
-				CodeLocation loc = new CodeLocation((int) idx + 1, (int) line);
-				_editorData.SyntaxTree = ast as DModule;
-				_editorData.ModuleCode = _sources[filename];
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
-				// step	back to	beginning of identifier
-				while (_editorData.CaretOffset > 0 && Lexer.IsIdentifierPart(_editorData.ModuleCode[_editorData.CaretOffset - 1]))
-				{
-					_editorData.CaretOffset--;
-					if (idx > 0) idx--;
-				}
-
-				_editorData.CaretLocation = new CodeLocation((int) idx + 1, (int) line);
-
-				char triggerChar = string.IsNullOrEmpty(tok) ? '\0' : tok[0];
-
-				var cdgen = new VDServerCompletionDataGenerator(tok);
-				CodeCompletion.GenerateCompletionData(_editorData, cdgen, triggerChar);
-				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.Expansions)
-					_result = cdgen.expansions.ToString();
-			}
-
-			runAsync (BuildSemanticExpansions);
+			_semanticExpansionsTask.Run(filename, new CodeLocation((int)idx + 1, (int)line), tok);
 		}
+
 		public void GetSemanticExpansionsResult(out string stringList)
 		{
-			stringList = _request == Request.Expansions ? _result : "__cancelled__";
-			//MessageBox.Show("GetSemanticExpansionsResult()");
-			//throw new NotImplementedException();
+			switch (_semanticExpansionsTask.TaskStatus)
+			{
+				case TaskStatus.RanToCompletion:
+					stringList = _semanticExpansionsTask.Result;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					stringList = "__cancelled__";
+					break;
+				default:
+					stringList = "__pending__";
+					break;
+			}
 		}
 
 		public void GetParseErrors(string filename, out string errors)
