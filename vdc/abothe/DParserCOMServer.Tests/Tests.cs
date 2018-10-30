@@ -243,5 +243,37 @@ foo();
 				CollectionAssert.AreEquivalent(expectedReferences, references);
 			}
 		}
+
+		[Test]
+		public void GetIdentifierTypes()
+		{
+			using (var vd = new VDServerDisposable(@"module A;"))
+			{
+				var instance = vd.Initialize();
+				instance.UpdateModule(vd.FirstModuleFile, @"module A;
+void foo();
+void bar(){
+	struct NestedStruct{}
+}
+class MyClass{}
+struct SomeStruct{}
+MyClass a;", 2);
+
+				instance.GetIdentifierTypes(vd.FirstModuleFile, out var answer);
+
+				Assert.NotNull(answer);
+				var identifierTypes = answer.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+				var expectedReferences = new[]
+				{
+					"foo:88",
+					"bar:88",
+					"NestedStruct:125",
+					"MyClass:65",
+					"SomeStruct:125",
+					"a:145"
+				};
+				CollectionAssert.AreEquivalent(expectedReferences, identifierTypes);
+			}
+		}
 	}
 }
