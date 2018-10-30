@@ -57,7 +57,7 @@ namespace DParserCOMServer.CodeSemantics
 						v = Evaluation.EvaluateValue(expression, ctxt);
 					if (v != null && !(v is ErrorValue))
 					{
-						var valueStr = " = " + v.ToString();
+						var valueStr = " = " + v;
 						if (tipText.Length > valueStr.Length &&
 						    tipText.ToString(tipText.Length - valueStr.Length, valueStr.Length) != valueStr)
 							tipText.Append(valueStr);

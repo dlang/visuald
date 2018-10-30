@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Linq;
 using D_Parser.Completion;
 using D_Parser.Dom;
 using D_Parser.Parser;
@@ -56,7 +55,6 @@ namespace DParserCOMServer.CodeSemantics
 		{
 			var res = ReferencesFinder.SearchModuleForASTNodeReferences(ast, n, ctxt);
 
-			int cnt = res.Count();
 			foreach (var r in res)
 			{
 				var rfilename = ast.FileName;
