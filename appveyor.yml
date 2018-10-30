@@ -133,7 +133,8 @@ build_script:
   - set DMDINSTALLDIR=c:\projects\dmd2
   # build installer
   - cd visuald
-  # can build dbuild15 only with VS2017
+  # can build dbuild15 and dparser only with VS2017
+  - if     "%VS%"=="15" nuget restore vdc\abothe\VDServer.sln
   - if     "%VS%"=="15" nmake install_vs_only_vs2017
   - if not "%VS%"=="15" nmake install_vs_no_vs2017
 
