@@ -76,9 +76,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Request.cs" />
     <Compile Include="VDServer.cs" />
-    <Compile Include="VDServerCompletionDataGenerator.cs" />
     <Compile Include="VDServerEditorFlags.cs" />
     <Compile Include="VDserverParseCacheView.cs" />
+    <Compile Include="CodeSemantics\SemanticExpansionsGenerator.cs" />
+    <Compile Include="CodeSemantics\VDServerCompletionDataGenerator.cs" />
+    <Compile Include="CodeSemantics\SymbolDefinitionGenerator.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

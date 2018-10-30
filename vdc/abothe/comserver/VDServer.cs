@@ -31,6 +31,7 @@ namespace DParserCOMServer
 		private readonly EditorDataProvider _editorDataProvider = new EditorDataProvider();
 		private readonly TooltipGenerator _tipGenerationTask;
 		private readonly SemanticExpansionsGenerator _semanticExpansionsTask;
+		private readonly SymbolDefinitionGenerator _symbolDefinitionTask;
 		private CodeLocation   _tipStart, _tipEnd;
 
 		private string _result;
@@ -85,6 +86,7 @@ namespace DParserCOMServer
 		{
 			_tipGenerationTask = new TooltipGenerator(this, _editorDataProvider);
 			_semanticExpansionsTask = new SemanticExpansionsGenerator(this, _editorDataProvider);
+			_symbolDefinitionTask = new SymbolDefinitionGenerator(this, _editorDataProvider);
 		}
 
 		~VDServer()
@@ -518,73 +520,38 @@ namespace DParserCOMServer
 
 		public void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			filename = normalizePath(filename);
-			var ast = GetModule(filename);
-
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
 			_tipStart = new CodeLocation(startIndex + 1, startLine);
 			_tipEnd = new CodeLocation(endIndex + 1, endLine);
-
-			_request = Request.Definition;
-			_result = "__pending__";
-
-			void BuildDefinitionSignatureString()
-			{
-				_setupEditorData();
-				_editorData.CaretLocation = _tipEnd;
-				_editorData.SyntaxTree = ast as DModule;
-				_editorData.ModuleCode = _sources[filename];
-				// codeOffset+1 because otherwise it does not work on the first character
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
-
-				ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
-				var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
-
-				var tipText = new StringBuilder();
-				if (rr != null)
-				{
-					DNode n = null;
-					foreach (var t in AmbiguousType.TryDissolve(rr))
-					{
-						n = ExpressionTypeEvaluation.GetResultMember(t);
-						if (n != null)
-							break;
-					}
-
-					if (n != null)
-					{
-						if (tipText.Length > 0)
-							tipText.Append("\n");
-						bool decl = false;
-						if (n is DMethod method)
-							decl = method.Body == null;
-						else if (n.ContainsAnyAttribute(DTokens.Extern))
-							decl = true;
-						if (decl)
-							tipText.Append("EXTERN:");
-
-						_tipStart = n.Location;
-						_tipEnd = n.EndLocation;
-						if (n.NodeRoot is DModule module)
-							tipText.Append(module.FileName);
-					}
-				}
-
-				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.Definition)
-					_result = tipText.ToString();
-			}
-
-			runAsync (BuildDefinitionSignatureString);
+			_symbolDefinitionTask.Run(filename, _tipStart, _tipEnd);
 		}
 		public void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename)
 		{
-			startLine = _tipStart.Line;
-			startIndex = _tipStart.Column - 1;
-			endLine = _tipEnd.Line;
-			endIndex = _tipEnd.Column - 1;
-			filename = _request == Request.Definition ? _result : "__cancelled__";
+			switch (_symbolDefinitionTask.TaskStatus)
+			{
+				case TaskStatus.RanToCompletion:
+					var result = _symbolDefinitionTask.Result;
+					startLine = Math.Max(0, result.Item1.Line);
+					startIndex = Math.Max(0, result.Item1.Column - 1);
+					endLine = Math.Max(0, result.Item2.Line);
+					endIndex = Math.Max(0, result.Item2.Column - 1);
+					filename = result.Item3;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					startLine = 0;
+					startIndex = 0;
+					endLine = 0;
+					endIndex = 0;
+					filename = "__cancelled__";
+					break;
+				default:
+					startLine = _tipStart.Line;
+					startIndex = _tipStart.Column - 1;
+					endLine = _tipEnd.Line;
+					endIndex = _tipEnd.Column - 1;
+					filename = "__pending__";
+					break;
+			}
 		}
 
 		public void GetReferences(string filename, string tok, uint line, uint idx, string expr)
