@@ -15,10 +15,6 @@ using DParserCOMServer.CodeSemantics;
 using D_Parser.Parser;
 using D_Parser.Misc;
 using D_Parser.Dom;
-using D_Parser.Completion;
-using D_Parser.Resolver;
-using D_Parser.Resolver.TypeResolution;
-using D_Parser.Resolver.ExpressionSemantics;
 using D_Parser.Refactoring;
 using D_Parser.Dom.Expressions;
 
@@ -35,14 +31,7 @@ namespace DParserCOMServer
 		private readonly ReferencesListGenerator _referencesTask;
 		private CodeLocation   _tipStart, _tipEnd;
 
-		private string _result;
-		private byte _request = Request.None;
-
 		private string _imports;
-		private string _stringImports;
-		private string _versionIds;
-		private string _debugIds;
-		private uint   _flags;
 
 		private string[] _taskTokens;
 
@@ -50,11 +39,9 @@ namespace DParserCOMServer
 
 		public static uint Activity { get { return _activityCounter; } }
 
-		EditorData _editorData = new EditorData();
-
 		// remember modules, the global cache might not yet be ready or might have forgotten a module
-		public Dictionary<string, DModule> _modules = new Dictionary<string, DModule>();
-		public Dictionary<string, string> _identiferTypes = new Dictionary<string, string>();
+		readonly Dictionary<string, DModule> _modules = new Dictionary<string, DModule>();
+		readonly Dictionary<string, string> _identiferTypes = new Dictionary<string, string>();
 
 		public DModule GetModule(string fileName)
 		{
@@ -75,11 +62,6 @@ namespace DParserCOMServer
 			_referencesTask = new ReferencesListGenerator(this, _editorDataProvider);
 		}
 
-		~VDServer()
-		{
-			StopCompletionThread();
-		}
-
 		private static string normalizePath(string path)
 		{
 			path = Path.GetFullPath(path);
@@ -93,6 +75,8 @@ namespace DParserCOMServer
 				dir += Path.DirectorySeparatorChar;
 			return dir;
 		}
+
+		readonly char[] nlSeparator = { '\n' };
 
 		private string[] uniqueDirectories(string imp)
 		{
@@ -129,13 +113,6 @@ namespace DParserCOMServer
 				_activityCounter++;
 			}
 			_imports = imp;
-			_stringImports = stringImp;
-			_versionIds = versionids;
-			_debugIds = debugids;
-			_flags = flags;
-			_setupEditorData();
-			//MessageBox.Show("ConfigureSemanticProject()");
-			//throw new NotImplementedException();
 		}
 		public void ClearSemanticProject()
 		{
@@ -162,25 +139,36 @@ namespace DParserCOMServer
 			ast.FileName = filename;
 
 			_modules [filename] = ast;
+			_sources[filename] = srcText;
 			GlobalParseCache.AddOrUpdateModule(ast);
 
-			_editorData.ParseCache = null;
-			if ((flags & 2) != 0) try
+			if ((flags & 2) != 0)
+				UpdateIdentifierTypes(filename, ast);
+
+			//MessageBox.Show("UpdateModule(" + filename + ")");
+			//throw new NotImplementedException();
+			_activityCounter++;
+		}
+
+		private void UpdateIdentifierTypes(string filename, DModule ast)
+		{
+			try
 			{
-				_setupEditorData();
+				var editorData = _editorDataProvider.MakeEditorData();
+				var cancelTokenSource = new CancellationTokenSource();
+				cancelTokenSource.CancelAfter(300);
+				editorData.CancelToken = cancelTokenSource.Token;
+				editorData.SyntaxTree = ast;
+
 				var invalidCodeRegions = new List<ISyntaxRegion>();
-	            _editorData.SyntaxTree = ast;
-				var textLocationsToHighlight = TypeReferenceFinder.Scan(_editorData, cancelTokenSource.Token, invalidCodeRegions);
+				var textLocationsToHighlight =
+					TypeReferenceFinder.Scan(editorData, cancelTokenSource.Token, invalidCodeRegions);
 				_identiferTypes[filename] = TextLocationsToIdentifierSpans(textLocationsToHighlight);
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex.Message); // Log the error
 			}
-			_sources[filename] = srcText;
-			//MessageBox.Show("UpdateModule(" + filename + ")");
-			//throw new NotImplementedException();
-			_activityCounter++;
 		}
 
 		static string GetIdentifier(ISyntaxRegion sr)
@@ -230,9 +218,7 @@ namespace DParserCOMServer
 					else if (spans.Last().kind == kvv.Value)
 						continue;
 
-					var span = new TextSpan();
-					span.start = sr.Location;
-					span.kind = kvv.Value;
+					var span = new TextSpan {start = sr.Location, kind = kvv.Value};
 					spans.Add(span);
 				}
 			}
@@ -247,93 +233,6 @@ namespace DParserCOMServer
 				s.Append('\n');
 			}
 			return s.ToString();
-		}
-
-		static int getCodeOffset(string s, CodeLocation loc)
-		{
-			// column/line 1-based
-			int off = 0;
-			for (int ln = 1; ln < loc.Line; ln++)
-				off = s.IndexOf('\n', off) + 1;
-			return off + loc.Column - 1;
-		}
-
-		Thread completionThread;
-		AutoResetEvent completionEvent = new AutoResetEvent(true);
-		Mutex completionMutex = new Mutex();
-		Action runningAction;
-		Action nextAction;
-		CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-
-		readonly char[] nlSeparator = { '\n' };
-
-		void LaunchCompletionThread()
-		{
-			if (completionMutex.WaitOne(0))
-			{
-				if (completionThread == null || !completionThread.IsAlive)
-				{
-					completionThread = new Thread(runAsyncCompletionLoop)
-					{
-						IsBackground = true,
-						Name = "completion thread",
-						Priority = ThreadPriority.BelowNormal
-					};
-					completionThread.Start();
-				}
-				completionMutex.ReleaseMutex();
-			}
-		}
-		void StopCompletionThread()
-		{
-			if (completionMutex.WaitOne(0))
-			{
-				if (completionThread != null && completionThread.IsAlive)
-					completionEvent.Set();
-				completionThread = null;
-				completionMutex.ReleaseMutex();
-			}
-		}
-
-		void runAsyncCompletionLoop()
-		{
-			while (completionThread != null)
-			{
-				if (nextAction == null)
-				{
-					completionEvent.WaitOne(100);
-					continue;
-				}
-				if (completionMutex.WaitOne(100))
-				{
-					runningAction = nextAction;
-					nextAction = null;
-					completionMutex.ReleaseMutex();
-				}
-				if (runningAction != null)
-				{
-					cancelTokenSource = new CancellationTokenSource();
-#if NET40
-#else
-					if (CompletionOptions.Instance.CompletionTimeout > 0)
-						cancelTokenSource.CancelAfter(CompletionOptions.Instance.CompletionTimeout);
-#endif
-					_editorData.CancelToken = cancelTokenSource.Token;
-					runningAction();
-					_activityCounter++;
-				}
-			}
-		}
-
-		void runAsync(Action a)
-		{
-			LaunchCompletionThread();
-			if (completionMutex.WaitOne(0))
-			{
-				cancelTokenSource.Cancel();
-				nextAction = a;
-				completionMutex.ReleaseMutex();
-			}
 		}
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
@@ -551,68 +450,6 @@ namespace DParserCOMServer
 					stringList = "__pending__";
 					break;
 			}
-		}
-
-		///////////////////////////////////
-		void _setupEditorData()
-		{
-			string versions	= _versionIds;
-			if (!String.IsNullOrEmpty(versions)	&& !versions.EndsWith("\n"))
-				versions += "\n";
-			versions += "Windows\n" + "LittleEndian\n" + "D_HardFloat\n" + "all\n" + "D_Version2\n";
-			if ((_flags & 1) != 0)
-				versions += "unittest\n";
-			if ((_flags & 2) != 0)
-				versions += "assert\n";
-			if ((_flags & 4) != 0)
-				versions += "Win64\n" + "X86_64\n" + "D_InlineAsm_X86_64\n" + "D_LP64\n";
-			else
-				versions += "Win32\n" + "X86\n" + "D_InlineAsm_X86\n";
-			if ((_flags & 8) != 0)
-				versions += "D_Coverage\n";
-			if ((_flags & 16) != 0)
-				versions += "D_Ddoc\n";
-			if ((_flags & 32) != 0)
-				versions += "D_NoBoundsChecks\n";
-			if ((_flags & 64) != 0)
-				versions += "GNU\n";
-			else if ((_flags & 0x4000000) != 0)
-				versions += "LDC\n";
-			else
-				versions += "DigitalMars\n";
-			if ((_flags & 0x8000000) != 0)
-				versions += "CRuntime_Microsoft\n";
-			else if ((_flags & 0x4000040) != 0) // GNU or LDC
-				versions += "CRuntime_MinGW\n";
-			else
-				versions += "CRuntime_DigitalMars\n";
-
-			string[] uniqueDirs = uniqueDirectories(_imports);
-			bool isDebug = (_flags & 2) != 0;
-			uint debugLevel = (_flags >> 16) & 0xff;
-			uint versionNumber = (_flags >> 8) & 0xff;
-			string[] versionIds = versions.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
-			string[] debugIds = _debugIds.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
-
-			if (_editorData.ParseCache == null || 
-				!(_editorData.ParseCache as VDserverParseCacheView).PackageRootDirs.SequenceEqual(uniqueDirs) ||
-				isDebug != _editorData.IsDebug || debugLevel != _editorData.DebugLevel ||
-				versionNumber != _editorData.VersionNumber || 
-				!versionIds.SequenceEqual(_editorData.GlobalVersionIds) || 
-				!debugIds.SequenceEqual(_editorData.GlobalDebugIds))
-			{
-				_editorData.ParseCache = new VDserverParseCacheView(uniqueDirs);
-				_editorData.IsDebug = isDebug;
-				_editorData.DebugLevel = debugLevel;
-				_editorData.VersionNumber = versionNumber;
-				_editorData.GlobalVersionIds = versionIds;
-				_editorData.GlobalDebugIds = debugIds;
-				_editorData.NewResolutionContexts();
-			}
-			CompletionOptions.Instance.ShowUFCSItems = (_flags & 0x2000000) != 0;
-			CompletionOptions.Instance.DisableMixinAnalysis = (_flags & 0x1000000) == 0;
-			CompletionOptions.Instance.HideDeprecatedNodes = (_flags & 128) != 0;
-			CompletionOptions.Instance.CompletionTimeout = -1; // 2000;
 		}
 
 #if false
