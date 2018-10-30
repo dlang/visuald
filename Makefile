@@ -51,6 +51,9 @@ vdserver:
 dparser:
 	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5 /p:DefineConstants=NET40 /t:Rebuild
 
+dparser_test:
+	dotnet test vdc\abothe\DParserCOMServer.Tests\DParserCOMServer.Tests.csproj
+
 fake_dparser:
 	if not exist bin\Release\DParserCOMServer\nul md bin\Release\DParserCOMServer
 	if exist "$(PROGRAMFILES)\VisualD\dparser\dparser\DParserCOMServer.exe" copy "$(PROGRAMFILES)\VisualD\dparser\dparser\DParserCOMServer.exe" bin\Release\DParserCOMServer
@@ -118,7 +121,7 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules dparser cv2pdb mago dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules dparser dparser_test cv2pdb mago dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 

@@ -24,6 +24,7 @@ namespace DParserCOMServer.Tests
 				ModuleFileNames = new string[moduleCodes.Length];
 				var tempDirectory = Path.GetTempPath();
 				_subFolder = Path.Combine(tempDirectory, "vdserver_test" + Interlocked.Increment(ref _folderSuffix));
+				_subFolder = _subFolder.ToLower();
 				Directory.CreateDirectory(_subFolder);
 
 				for(var fileIterator = 0; fileIterator < moduleCodes.Length; fileIterator++)
