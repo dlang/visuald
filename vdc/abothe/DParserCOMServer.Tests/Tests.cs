@@ -209,5 +209,39 @@ a.
 "));
 			}
 		}
+
+		[Test]
+		public void GetReferences()
+		{
+			var code = @"module A;
+int foo();
+enum enumFoo = foo();
+void main(){
+foo();
+}";
+			using (var vd = new VDServerDisposable(code))
+			{
+				var instance = vd.Initialize();
+				instance.GetReferences(vd.FirstModuleFile, null, 5, 0, null);
+
+				string answer;
+				int remainingAttempts = 200;
+				do
+				{
+					Thread.Sleep(200 - remainingAttempts);
+					instance.GetReferencesResult(out answer);
+				} while (answer == "__pending__" && remainingAttempts-- > 0);
+
+				Assert.NotNull(answer);
+				var references = answer.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+				var expectedReferences = new[]
+				{
+					"2,4,2,7:" + vd.FirstModuleFile + "|int foo();",
+					"3,15,3,18:" + vd.FirstModuleFile + "|enum enumFoo = foo();",
+					"5,0,5,3:" + vd.FirstModuleFile + "|foo();"
+				};
+				CollectionAssert.AreEquivalent(expectedReferences, references);
+			}
+		}
 	}
 }
