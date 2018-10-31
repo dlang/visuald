@@ -52,7 +52,7 @@ dparser:
 	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5 /p:DefineConstants=NET40 /t:Rebuild
 
 dparser_test:
-	dotnet test vdc\abothe\DParserCOMServer.Tests\DParserCOMServer.Tests.csproj
+	dotnet test vdc\abothe\VDServer.sln -c Release
 
 fake_dparser:
 	if not exist bin\Release\DParserCOMServer\nul md bin\Release\DParserCOMServer
