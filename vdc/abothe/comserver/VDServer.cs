@@ -29,7 +29,6 @@ namespace DParserCOMServer
 		private readonly SemanticExpansionsGenerator _semanticExpansionsTask;
 		private readonly SymbolDefinitionGenerator _symbolDefinitionTask;
 		private readonly ReferencesListGenerator _referencesTask;
-		private CodeLocation   _tipStart, _tipEnd;
 
 		private string _imports;
 
@@ -204,7 +203,6 @@ namespace DParserCOMServer
 			var identifierSpans = new Dictionary<string, List<TextSpan>>();
 			foreach (var kv in textLocations)
 			{
-				var line = kv.Key;
 				foreach (var kvv in kv.Value)
 				{
 					var sr = kvv.Key;
@@ -237,10 +235,7 @@ namespace DParserCOMServer
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 		{
-			_tipStart = new CodeLocation(startIndex + 1, startLine);
-			_tipEnd = new CodeLocation(startIndex + 2, startLine);
-
-			_tipGenerationTask.Run(filename, _tipStart, (flags & 1) != 0);
+			_tipGenerationTask.Run(filename, new CodeLocation(startIndex + 1, startLine), (flags & 1) != 0);
 		}
 
 		public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
@@ -264,10 +259,10 @@ namespace DParserCOMServer
 					answer = "__cancelled__";
 					break;
 				default:
-					startLine = _tipStart.Line;
-					startIndex = _tipStart.Column - 1;
-					endLine = _tipEnd.Line;
-					endIndex = _tipEnd.Column - 1;
+					startLine = 0;
+					startIndex = 0;
+					endLine = 0;
+					endIndex = 0;
 					answer = "__pending__";
 					break;
 			}
@@ -396,9 +391,9 @@ namespace DParserCOMServer
 
 		public void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			_tipStart = new CodeLocation(startIndex + 1, startLine);
-			_tipEnd = new CodeLocation(endIndex + 1, endLine);
-			_symbolDefinitionTask.Run(filename, _tipStart, _tipEnd);
+			var start = new CodeLocation(startIndex + 1, startLine);
+			var end = new CodeLocation(endIndex + 1, endLine);
+			_symbolDefinitionTask.Run(filename, start, end);
 		}
 		public void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename)
 		{
@@ -421,10 +416,10 @@ namespace DParserCOMServer
 					filename = "__cancelled__";
 					break;
 				default:
-					startLine = _tipStart.Line;
-					startIndex = _tipStart.Column - 1;
-					endLine = _tipEnd.Line;
-					endIndex = _tipEnd.Column - 1;
+					startLine = 0;
+					startIndex = 0;
+					endLine = 0;
+					endIndex = 0;
 					filename = "__pending__";
 					break;
 			}
