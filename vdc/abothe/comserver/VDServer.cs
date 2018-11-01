@@ -70,7 +70,7 @@ namespace DParserCOMServer
 		private static string normalizeDir(string dir)
 		{
 			dir = normalizePath(dir);
-			if (dir.Length != 0 && dir[dir.Length - 1] == Path.DirectorySeparatorChar)
+			if (dir.Length != 0 && dir[dir.Length - 1] != Path.DirectorySeparatorChar)
 				dir += Path.DirectorySeparatorChar;
 			return dir;
 		}
