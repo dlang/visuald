@@ -9,6 +9,11 @@ namespace DParserCOMServer.Tests
 	[TestFixture]
 	public class Tests
 	{
+		static Tests()
+		{
+			CompletionOptions.Instance.CompletionTimeout = -1;
+		}
+
 		class VDServerDisposable : IDisposable
 		{
 			private static volatile int _folderSuffix = 0;
@@ -208,6 +213,72 @@ a.
 				Assert.That(errors, Is.EqualTo(@"4,0,4,1:<Identifier> expected, } found!
 4,0,4,1:; expected, } found!
 "));
+			}
+		}
+
+		[Test]
+		public void GetReferences()
+		{
+			var code = @"module A;
+int foo();
+enum enumFoo = foo();
+void main(){
+foo();
+}";
+			using (var vd = new VDServerDisposable(code))
+			{
+				var instance = vd.Initialize();
+				instance.GetReferences(vd.FirstModuleFile, null, 5, 0, null);
+
+				string answer;
+				int remainingAttempts = 200;
+				do
+				{
+					Thread.Sleep(200 - remainingAttempts);
+					instance.GetReferencesResult(out answer);
+				} while (answer == "__pending__" && remainingAttempts-- > 0);
+
+				Assert.NotNull(answer);
+				var references = answer.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+				var expectedReferences = new[]
+				{
+					"2,4,2,7:" + vd.FirstModuleFile + "|int foo();",
+					"3,15,3,18:" + vd.FirstModuleFile + "|enum enumFoo = foo();",
+					"5,0,5,3:" + vd.FirstModuleFile + "|foo();"
+				};
+				CollectionAssert.AreEquivalent(expectedReferences, references);
+			}
+		}
+
+		[Test]
+		public void GetIdentifierTypes()
+		{
+			using (var vd = new VDServerDisposable(@"module A;"))
+			{
+				var instance = vd.Initialize();
+				instance.UpdateModule(vd.FirstModuleFile, @"module A;
+void foo();
+void bar(){
+	struct NestedStruct{}
+}
+class MyClass{}
+struct SomeStruct{}
+MyClass a;", 2);
+
+				instance.GetIdentifierTypes(vd.FirstModuleFile, out var answer);
+
+				Assert.NotNull(answer);
+				var identifierTypes = answer.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+				var expectedReferences = new[]
+				{
+					"foo:88",
+					"bar:88",
+					"NestedStruct:125",
+					"MyClass:65",
+					"SomeStruct:125",
+					"a:145"
+				};
+				CollectionAssert.AreEquivalent(expectedReferences, identifierTypes);
 			}
 		}
 	}

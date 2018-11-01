@@ -10,14 +10,11 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Threading;
-
+using System.Threading.Tasks;
+using DParserCOMServer.CodeSemantics;
 using D_Parser.Parser;
 using D_Parser.Misc;
 using D_Parser.Dom;
-using D_Parser.Completion;
-using D_Parser.Resolver;
-using D_Parser.Resolver.TypeResolution;
-using D_Parser.Resolver.ExpressionSemantics;
 using D_Parser.Refactoring;
 using D_Parser.Dom.Expressions;
 
@@ -27,16 +24,13 @@ namespace DParserCOMServer
 	[ClassInterface(ClassInterfaceType.None)]
 	public class VDServer : IVDServer
 	{
-		private CodeLocation   _tipStart, _tipEnd;
-
-		private string _result;
-		private byte _request = Request.None;
+		private readonly EditorDataProvider _editorDataProvider = new EditorDataProvider();
+		private readonly TooltipGenerator _tipGenerationTask;
+		private readonly SemanticExpansionsGenerator _semanticExpansionsTask;
+		private readonly SymbolDefinitionGenerator _symbolDefinitionTask;
+		private readonly ReferencesListGenerator _referencesTask;
 
 		private string _imports;
-		private string _stringImports;
-		private string _versionIds;
-		private string _debugIds;
-		private uint   _flags;
 
 		private string[] _taskTokens;
 
@@ -44,11 +38,9 @@ namespace DParserCOMServer
 
 		public static uint Activity { get { return _activityCounter; } }
 
-		EditorData _editorData = new EditorData();
-
 		// remember modules, the global cache might not yet be ready or might have forgotten a module
-		public Dictionary<string, DModule> _modules = new Dictionary<string, DModule>();
-		public Dictionary<string, string> _identiferTypes = new Dictionary<string, string>();
+		readonly Dictionary<string, DModule> _modules = new Dictionary<string, DModule>();
+		readonly Dictionary<string, string> _identiferTypes = new Dictionary<string, string>();
 
 		public DModule GetModule(string fileName)
 		{
@@ -61,30 +53,12 @@ namespace DParserCOMServer
 		}
 		public Dictionary<string, string> _sources = new Dictionary<string, string>();
 
-		public string GetSource(string fileName)
-		{
-			if (!_sources.ContainsKey(fileName))
-			{
-				try
-				{
-					_sources[fileName] = File.ReadAllText(fileName);
-				}
-				catch (Exception)
-				{
-					return "";
-				}
-			}
-			return _sources[fileName];
-		}
-
 		public VDServer()
 		{
-			// MessageBox.Show("VDServer()");
-		}
-
-		~VDServer()
-		{
-			StopCompletionThread();
+			_tipGenerationTask = new TooltipGenerator(this, _editorDataProvider);
+			_semanticExpansionsTask = new SemanticExpansionsGenerator(this, _editorDataProvider);
+			_symbolDefinitionTask = new SymbolDefinitionGenerator(this, _editorDataProvider);
+			_referencesTask = new ReferencesListGenerator(this, _editorDataProvider);
 		}
 
 		private static string normalizePath(string path)
@@ -100,6 +74,8 @@ namespace DParserCOMServer
 				dir += Path.DirectorySeparatorChar;
 			return dir;
 		}
+
+		readonly char[] nlSeparator = { '\n' };
 
 		private string[] uniqueDirectories(string imp)
 		{
@@ -127,6 +103,8 @@ namespace DParserCOMServer
 
 		public void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags)
 		{
+			_editorDataProvider.ConfigureEnvironment(imp, versionids, debugids, flags);
+
 			if (_imports != imp) 
 			{
 				string[] uniqueDirs = uniqueDirectories(imp);
@@ -134,13 +112,6 @@ namespace DParserCOMServer
 				_activityCounter++;
 			}
 			_imports = imp;
-			_stringImports = stringImp;
-			_versionIds = versionids;
-			_debugIds = debugids;
-			_flags = flags;
-			_setupEditorData();
-			//MessageBox.Show("ConfigureSemanticProject()");
-			//throw new NotImplementedException();
 		}
 		public void ClearSemanticProject()
 		{
@@ -167,25 +138,36 @@ namespace DParserCOMServer
 			ast.FileName = filename;
 
 			_modules [filename] = ast;
+			_sources[filename] = srcText;
 			GlobalParseCache.AddOrUpdateModule(ast);
 
-			_editorData.ParseCache = null;
-			if ((flags & 2) != 0) try
+			if ((flags & 2) != 0)
+				UpdateIdentifierTypes(filename, ast);
+
+			//MessageBox.Show("UpdateModule(" + filename + ")");
+			//throw new NotImplementedException();
+			_activityCounter++;
+		}
+
+		private void UpdateIdentifierTypes(string filename, DModule ast)
+		{
+			try
 			{
-				_setupEditorData();
+				var editorData = _editorDataProvider.MakeEditorData();
+				var cancelTokenSource = new CancellationTokenSource();
+				cancelTokenSource.CancelAfter(300);
+				editorData.CancelToken = cancelTokenSource.Token;
+				editorData.SyntaxTree = ast;
+
 				var invalidCodeRegions = new List<ISyntaxRegion>();
-	            _editorData.SyntaxTree = ast;
-				var textLocationsToHighlight = TypeReferenceFinder.Scan(_editorData, cancelTokenSource.Token, invalidCodeRegions);
+				var textLocationsToHighlight =
+					TypeReferenceFinder.Scan(editorData, cancelTokenSource.Token, invalidCodeRegions);
 				_identiferTypes[filename] = TextLocationsToIdentifierSpans(textLocationsToHighlight);
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex.Message); // Log the error
 			}
-			_sources[filename] = srcText;
-			//MessageBox.Show("UpdateModule(" + filename + ")");
-			//throw new NotImplementedException();
-			_activityCounter++;
 		}
 
 		static string GetIdentifier(ISyntaxRegion sr)
@@ -221,7 +203,6 @@ namespace DParserCOMServer
 			var identifierSpans = new Dictionary<string, List<TextSpan>>();
 			foreach (var kv in textLocations)
 			{
-				var line = kv.Key;
 				foreach (var kvv in kv.Value)
 				{
 					var sr = kvv.Key;
@@ -235,9 +216,7 @@ namespace DParserCOMServer
 					else if (spans.Last().kind == kvv.Value)
 						continue;
 
-					var span = new TextSpan();
-					span.start = sr.Location;
-					span.kind = kvv.Value;
+					var span = new TextSpan {start = sr.Location, kind = kvv.Value};
 					spans.Add(span);
 				}
 			}
@@ -254,249 +233,61 @@ namespace DParserCOMServer
 			return s.ToString();
 		}
 
-		static int getCodeOffset(string s, CodeLocation loc)
-		{
-			// column/line 1-based
-			int off = 0;
-			for (int ln = 1; ln < loc.Line; ln++)
-				off = s.IndexOf('\n', off) + 1;
-			return off + loc.Column - 1;
-		}
-
-		static string GetSourceLine(string s, int line)
-		{
-			int off = 0;
-			for (int ln = 1; ln < line; ln++)
-				off = s.IndexOf('\n', off) + 1;
-			int end = s.IndexOf('\n', off);
-			return s.Substring(off, end - off);
-		}
-
-		Thread completionThread;
-		AutoResetEvent completionEvent = new AutoResetEvent(true);
-		Mutex completionMutex = new Mutex();
-		Action runningAction;
-		Action nextAction;
-		CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-
-		readonly char[] nlSeparator = { '\n' };
-
-		void LaunchCompletionThread()
-		{
-			if (completionMutex.WaitOne(0))
-			{
-				if (completionThread == null || !completionThread.IsAlive)
-				{
-					completionThread = new Thread(runAsyncCompletionLoop)
-					{
-						IsBackground = true,
-						Name = "completion thread",
-						Priority = ThreadPriority.BelowNormal
-					};
-					completionThread.Start();
-				}
-				completionMutex.ReleaseMutex();
-			}
-		}
-		void StopCompletionThread()
-		{
-			if (completionMutex.WaitOne(0))
-			{
-				if (completionThread != null && completionThread.IsAlive)
-					completionEvent.Set();
-				completionThread = null;
-				completionMutex.ReleaseMutex();
-			}
-		}
-
-		void runAsyncCompletionLoop()
-		{
-			while (completionThread != null)
-			{
-				if (nextAction == null)
-				{
-					completionEvent.WaitOne(100);
-					continue;
-				}
-				if (completionMutex.WaitOne(100))
-				{
-					runningAction = nextAction;
-					nextAction = null;
-					completionMutex.ReleaseMutex();
-				}
-				if (runningAction != null)
-				{
-					cancelTokenSource = new CancellationTokenSource();
-#if NET40
-#else
-					if (CompletionOptions.Instance.CompletionTimeout > 0)
-						cancelTokenSource.CancelAfter(CompletionOptions.Instance.CompletionTimeout);
-#endif
-					_editorData.CancelToken = cancelTokenSource.Token;
-					runningAction();
-					_activityCounter++;
-				}
-			}
-		}
-
-		void runAsync(Action a)
-		{
-			LaunchCompletionThread();
-			if (completionMutex.WaitOne(0))
-			{
-				cancelTokenSource.Cancel();
-				nextAction = a;
-				completionMutex.ReleaseMutex();
-			}
-		}
-
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 		{
-			filename = normalizePath(filename);
-			var ast = GetModule(filename);
-
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
-			_tipStart = new CodeLocation(startIndex + 1, startLine);
-			_tipEnd = new CodeLocation(startIndex + 2, startLine);
-
-			_request = Request.Tip;
-			_result = "__pending__";
-
-			void CreateTipResult()
-			{
-				_setupEditorData();
-				_editorData.CaretLocation = _tipStart;
-				_editorData.SyntaxTree = ast as DModule;
-				_editorData.ModuleCode = _sources[filename];
-				// codeOffset+1 because otherwise it does not work on the first character
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 1;
-
-				var sr = DResolver.GetScopedCodeObject(_editorData);
-				AbstractType types = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
-
-				if (_editorData.CancelToken.IsCancellationRequested)
-					return;
-
-				var tipText = new StringBuilder();
-				if (types != null)
-				{
-					if (sr != null)
-					{
-						_tipStart = sr.Location;
-						_tipEnd = sr.EndLocation;
-					}
-
-					DNode dn = null;
-
-					foreach (var t in AmbiguousType.TryDissolve(types))
-					{
-						tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t));
-						if (t is DSymbol symbol)
-							dn = symbol.Definition;
-
-						tipText.Append("\a");
-					}
-
-					while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
-						tipText.Length--;
-
-					bool eval = (flags & 1) != 0;
-					if (eval)
-					{
-						var ctxt = _editorData.GetLooseResolutionContext(LooseResolution.NodeResolutionAttempt.Normal);
-						ctxt.Push(_editorData);
-						try
-						{
-							ISymbolValue v = null;
-							if (dn is DVariable var && var.Initializer != null && var.IsConst)
-								v = Evaluation.EvaluateValue(var.Initializer, ctxt);
-							if (v == null && sr is IExpression expression)
-								v = Evaluation.EvaluateValue(expression, ctxt);
-							if (v != null && !(v is ErrorValue))
-							{
-								var valueStr = " = " + v.ToString();
-								if (tipText.Length > valueStr.Length &&
-									tipText.ToString(tipText.Length - valueStr.Length, valueStr.Length) != valueStr)
-									tipText.Append(valueStr);
-							}
-						}
-						catch (Exception e)
-						{
-							tipText.Append("\aException during evaluation = ").Append(e.Message);
-						}
-
-						ctxt.Pop();
-					}
-
-					if (dn != null)
-						VDServerCompletionDataGenerator.GenerateNodeTooltipBody(dn, tipText);
-
-					while (tipText.Length > 0 && tipText[tipText.Length - 1] == '\a')
-						tipText.Length--;
-				}
-
-				if (_request == Request.Tip)
-					_result = tipText.ToString();
-			}
-
-			runAsync (CreateTipResult);
-
+			_tipGenerationTask.Run(filename, new CodeLocation(startIndex + 1, startLine), (flags & 1) != 0);
 		}
+
 		public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)
 		{
-			startLine = _tipStart.Line;
-			startIndex = _tipStart.Column - 1;
-			endLine = _tipEnd.Line;
-			endIndex = _tipEnd.Column - 1;
-			answer = _request == Request.Tip ? _result : "__cancelled__";
-			//MessageBox.Show("GetTipResult()");
-			//throw new NotImplementedException();
+			switch (_tipGenerationTask.TaskStatus)
+			{
+				case TaskStatus.RanToCompletion:
+					var result = _tipGenerationTask.Result;
+					startLine = Math.Max(0, result.Item1.Line);
+					startIndex = Math.Max(0, result.Item1.Column - 1);
+					endLine = Math.Max(0, result.Item2.Line);
+					endIndex = Math.Max(0, result.Item2.Column - 1);
+					answer = result.Item3;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					startLine = 0;
+					startIndex = 0;
+					endLine = 0;
+					endIndex = 0;
+					answer = "__cancelled__";
+					break;
+				default:
+					startLine = 0;
+					startIndex = 0;
+					endLine = 0;
+					endIndex = 0;
+					answer = "__pending__";
+					break;
+			}
 		}
 		
 		public void GetSemanticExpansions(string filename, string tok, uint line, uint idx, string expr)
 		{
-			filename = normalizePath(filename);
-			var ast = GetModule(filename);
-
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
-			_request = Request.Expansions;
-			_result = "__pending__";
-
-			void BuildSemanticExpansions()
-			{
-				_setupEditorData();
-				CodeLocation loc = new CodeLocation((int) idx + 1, (int) line);
-				_editorData.SyntaxTree = ast as DModule;
-				_editorData.ModuleCode = _sources[filename];
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
-				// step	back to	beginning of identifier
-				while (_editorData.CaretOffset > 0 && Lexer.IsIdentifierPart(_editorData.ModuleCode[_editorData.CaretOffset - 1]))
-				{
-					_editorData.CaretOffset--;
-					if (idx > 0) idx--;
-				}
-
-				_editorData.CaretLocation = new CodeLocation((int) idx + 1, (int) line);
-
-				char triggerChar = string.IsNullOrEmpty(tok) ? '\0' : tok[0];
-
-				var cdgen = new VDServerCompletionDataGenerator(tok);
-				CodeCompletion.GenerateCompletionData(_editorData, cdgen, triggerChar);
-				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.Expansions)
-					_result = cdgen.expansions.ToString();
-			}
-
-			runAsync (BuildSemanticExpansions);
+			_semanticExpansionsTask.Run(filename, new CodeLocation((int)idx + 1, (int)line), tok);
 		}
+
 		public void GetSemanticExpansionsResult(out string stringList)
 		{
-			stringList = _request == Request.Expansions ? _result : "__cancelled__";
-			//MessageBox.Show("GetSemanticExpansionsResult()");
-			//throw new NotImplementedException();
+			switch (_semanticExpansionsTask.TaskStatus)
+			{
+				case TaskStatus.RanToCompletion:
+					stringList = _semanticExpansionsTask.Result;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					stringList = "__cancelled__";
+					break;
+				default:
+					stringList = "__pending__";
+					break;
+			}
 		}
 
 		public void GetParseErrors(string filename, out string errors)
@@ -600,217 +391,60 @@ namespace DParserCOMServer
 
 		public void GetDefinition(string filename, int startLine, int startIndex, int endLine, int endIndex)
 		{
-			filename = normalizePath(filename);
-			var ast = GetModule(filename);
-
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
-			_tipStart = new CodeLocation(startIndex + 1, startLine);
-			_tipEnd = new CodeLocation(endIndex + 1, endLine);
-
-			_request = Request.Definition;
-			_result = "__pending__";
-
-			void BuildDefinitionSignatureString()
-			{
-				_setupEditorData();
-				_editorData.CaretLocation = _tipEnd;
-				_editorData.SyntaxTree = ast as DModule;
-				_editorData.ModuleCode = _sources[filename];
-				// codeOffset+1 because otherwise it does not work on the first character
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, _tipStart) + 2;
-
-				ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
-				var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
-
-				var tipText = new StringBuilder();
-				if (rr != null)
-				{
-					DNode n = null;
-					foreach (var t in AmbiguousType.TryDissolve(rr))
-					{
-						n = ExpressionTypeEvaluation.GetResultMember(t);
-						if (n != null)
-							break;
-					}
-
-					if (n != null)
-					{
-						if (tipText.Length > 0)
-							tipText.Append("\n");
-						bool decl = false;
-						if (n is DMethod method)
-							decl = method.Body == null;
-						else if (n.ContainsAnyAttribute(DTokens.Extern))
-							decl = true;
-						if (decl)
-							tipText.Append("EXTERN:");
-
-						_tipStart = n.Location;
-						_tipEnd = n.EndLocation;
-						if (n.NodeRoot is DModule module)
-							tipText.Append(module.FileName);
-					}
-				}
-
-				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.Definition)
-					_result = tipText.ToString();
-			}
-
-			runAsync (BuildDefinitionSignatureString);
+			var start = new CodeLocation(startIndex + 1, startLine);
+			var end = new CodeLocation(endIndex + 1, endLine);
+			_symbolDefinitionTask.Run(filename, start, end);
 		}
 		public void GetDefinitionResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename)
 		{
-			startLine = _tipStart.Line;
-			startIndex = _tipStart.Column - 1;
-			endLine = _tipEnd.Line;
-			endIndex = _tipEnd.Column - 1;
-			filename = _request == Request.Definition ? _result : "__cancelled__";
+			switch (_symbolDefinitionTask.TaskStatus)
+			{
+				case TaskStatus.RanToCompletion:
+					var result = _symbolDefinitionTask.Result;
+					startLine = Math.Max(0, result.Item1.Line);
+					startIndex = Math.Max(0, result.Item1.Column - 1);
+					endLine = Math.Max(0, result.Item2.Line);
+					endIndex = Math.Max(0, result.Item2.Column - 1);
+					filename = result.Item3;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					startLine = 0;
+					startIndex = 0;
+					endLine = 0;
+					endIndex = 0;
+					filename = "__cancelled__";
+					break;
+				default:
+					startLine = 0;
+					startIndex = 0;
+					endLine = 0;
+					endIndex = 0;
+					filename = "__pending__";
+					break;
+			}
 		}
 
 		public void GetReferences(string filename, string tok, uint line, uint idx, string expr)
 		{
-			filename = normalizePath(filename);
-			var ast = GetModule(filename);
-
-			if (ast == null)
-				throw new COMException("module not found", 1);
-
-			_request = Request.References;
-			_result = "__pending__";
-
-			void BuildReferencesString()
-			{
-				_setupEditorData();
-				CodeLocation loc = new CodeLocation((int) idx + 1, (int) line);
-				_editorData.CaretLocation = loc;
-				_editorData.SyntaxTree = ast as DModule;
-				_editorData.ModuleCode = _sources[filename];
-				_editorData.CaretOffset = getCodeOffset(_editorData.ModuleCode, loc);
-
-				ISyntaxRegion sr = DResolver.GetScopedCodeObject(_editorData);
-				var rr = sr != null ? LooseResolution.ResolveTypeLoosely(_editorData, sr, out _, true) : null;
-
-				var refs = new StringBuilder();
-				if (rr != null)
-				{
-					var n = ExpressionTypeEvaluation.GetResultMember(rr);
-
-					if (n != null)
-					{
-						var ctxt = ResolutionContext.Create(_editorData, true);
-						if (n.ContainsAnyAttribute(DTokens.Private) || (n is DVariable variable && variable.IsLocal))
-						{
-							GetReferencesInModule(ast, refs, n, ctxt);
-						}
-						else
-						{
-							var mods = new Dictionary<DModule, bool>();
-
-							foreach (var basePath in _imports.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries))
-								foreach (var mod in GlobalParseCache.EnumModulesRecursively(normalizePath(basePath)))
-									mods[mod] = true;
-
-							foreach (var mod in mods)
-								GetReferencesInModule(mod.Key, refs, n, ctxt);
-						}
-					}
-
-//var res = TypeReferenceFinder.Scan(_editorData, System.Threading.CancellationToken.None, null);
-				}
-
-				if (!_editorData.CancelToken.IsCancellationRequested && _request == Request.References)
-					_result = refs.ToString();
-			}
-
-			runAsync(BuildReferencesString);
+			_referencesTask.Run(filename, new CodeLocation((int)idx + 1, (int)line), null);
 		}
 
-		private void GetReferencesInModule(DModule ast, StringBuilder refs, DNode n, ResolutionContext ctxt)
-		{
-			var res = ReferencesFinder.SearchModuleForASTNodeReferences(ast, n, ctxt);
-
-			int cnt = res.Count();
-			foreach (var r in res)
-			{
-				var rfilename = ast.FileName;
-				var rloc = r.Location;
-				var len = r.ToString().Length;
-				var src = GetSource(rfilename);
-				var linetxt = GetSourceLine(src, rloc.Line);
-				var ln = $"{rloc.Line},{rloc.Column - 1},{rloc.Line},{rloc.Column + len - 1}:{rfilename}|{linetxt}\n";
-
-				refs.Append(ln);
-			}
-		}
 		public void GetReferencesResult(out string stringList)
 		{
-			stringList = _request == Request.References ? _result : "__cancelled__";
-			//MessageBox.Show("GetSemanticExpansionsResult()");
-			//throw new NotImplementedException();
-		}
-
-		///////////////////////////////////
-		void _setupEditorData()
-		{
-			string versions	= _versionIds;
-			if (!String.IsNullOrEmpty(versions)	&& !versions.EndsWith("\n"))
-				versions += "\n";
-			versions += "Windows\n" + "LittleEndian\n" + "D_HardFloat\n" + "all\n" + "D_Version2\n";
-			if ((_flags & 1) != 0)
-				versions += "unittest\n";
-			if ((_flags & 2) != 0)
-				versions += "assert\n";
-			if ((_flags & 4) != 0)
-				versions += "Win64\n" + "X86_64\n" + "D_InlineAsm_X86_64\n" + "D_LP64\n";
-			else
-				versions += "Win32\n" + "X86\n" + "D_InlineAsm_X86\n";
-			if ((_flags & 8) != 0)
-				versions += "D_Coverage\n";
-			if ((_flags & 16) != 0)
-				versions += "D_Ddoc\n";
-			if ((_flags & 32) != 0)
-				versions += "D_NoBoundsChecks\n";
-			if ((_flags & 64) != 0)
-				versions += "GNU\n";
-			else if ((_flags & 0x4000000) != 0)
-				versions += "LDC\n";
-			else
-				versions += "DigitalMars\n";
-			if ((_flags & 0x8000000) != 0)
-				versions += "CRuntime_Microsoft\n";
-			else if ((_flags & 0x4000040) != 0) // GNU or LDC
-				versions += "CRuntime_MinGW\n";
-			else
-				versions += "CRuntime_DigitalMars\n";
-
-			string[] uniqueDirs = uniqueDirectories(_imports);
-			bool isDebug = (_flags & 2) != 0;
-			uint debugLevel = (_flags >> 16) & 0xff;
-			uint versionNumber = (_flags >> 8) & 0xff;
-			string[] versionIds = versions.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
-			string[] debugIds = _debugIds.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
-
-			if (_editorData.ParseCache == null || 
-				!(_editorData.ParseCache as VDserverParseCacheView).PackageRootDirs.SequenceEqual(uniqueDirs) ||
-				isDebug != _editorData.IsDebug || debugLevel != _editorData.DebugLevel ||
-				versionNumber != _editorData.VersionNumber || 
-				!versionIds.SequenceEqual(_editorData.GlobalVersionIds) || 
-				!debugIds.SequenceEqual(_editorData.GlobalDebugIds))
+			switch (_referencesTask.TaskStatus)
 			{
-				_editorData.ParseCache = new VDserverParseCacheView(uniqueDirs);
-				_editorData.IsDebug = isDebug;
-				_editorData.DebugLevel = debugLevel;
-				_editorData.VersionNumber = versionNumber;
-				_editorData.GlobalVersionIds = versionIds;
-				_editorData.GlobalDebugIds = debugIds;
-				_editorData.NewResolutionContexts();
+				case TaskStatus.RanToCompletion:
+					stringList = _referencesTask.Result;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					stringList = "__cancelled__";
+					break;
+				default:
+					stringList = "__pending__";
+					break;
 			}
-			CompletionOptions.Instance.ShowUFCSItems = (_flags & 0x2000000) != 0;
-			CompletionOptions.Instance.DisableMixinAnalysis = (_flags & 0x1000000) == 0;
-			CompletionOptions.Instance.HideDeprecatedNodes = (_flags & 128) != 0;
-			CompletionOptions.Instance.CompletionTimeout = -1; // 2000;
 		}
 
 #if false
