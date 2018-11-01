@@ -22,6 +22,9 @@ namespace DParserCOMServer.CodeSemantics
 			editorData.CaretOffset++;
 
 			var sr = DResolver.GetScopedCodeObject(editorData);
+			if (sr == null)
+				return Tuple.Create(CodeLocation.Empty, CodeLocation.Empty, String.Empty);
+
 			var types = LooseResolution.ResolveTypeLoosely(editorData, sr, out _, true);
 
 			if (editorData.CancelToken.IsCancellationRequested)
