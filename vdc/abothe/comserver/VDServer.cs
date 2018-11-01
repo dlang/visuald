@@ -184,6 +184,8 @@ namespace DParserCOMServer
 					return templateParameter.Name;
 				case IdentifierDeclaration identifierDeclaration:
 					return identifierDeclaration.Id;
+				case IdentifierExpression identifierExp:
+					return identifierExp.StringValue;
 				default:
 					return "";
 			}
@@ -195,22 +197,61 @@ namespace DParserCOMServer
 			public byte kind;
 		};
 
+		class TypeReferenceLocationComparer : Comparer<KeyValuePair<ISyntaxRegion, byte>>
+		{
+			public override int Compare(KeyValuePair<ISyntaxRegion, byte> x, KeyValuePair<ISyntaxRegion, byte> y)
+			{
+				if (x.Key.Location == y.Key.Location)
+					return 0;
+				return x.Key.Location < y.Key.Location ? -1 : 1;
+			}
+		}
+		private static TypeReferenceLocationComparer locComparer = new TypeReferenceLocationComparer();
+
+		class TypeReferenceLineComparer : Comparer<KeyValuePair<int, Dictionary<ISyntaxRegion, byte>>>
+		{
+			public override int Compare(KeyValuePair<int, Dictionary<ISyntaxRegion, byte>> x, KeyValuePair<int, Dictionary<ISyntaxRegion, byte>> y)
+			{
+				if (x.Key == y.Key)
+					return 0;
+				return x.Key < y.Key ? -1 : 1;
+			}
+		}
+		private static TypeReferenceLineComparer lineComparer = new TypeReferenceLineComparer();
+
+
 		static string TextLocationsToIdentifierSpans(Dictionary<int, Dictionary<ISyntaxRegion, byte>> textLocations)
 		{
 			if (textLocations == null)
 				return null;
 
+			var textLocArray = textLocations.ToArray();
+			Array.Sort(textLocArray, lineComparer);
 			var identifierSpans = new Dictionary<string, List<TextSpan>>();
-			foreach (var kv in textLocations)
+			KeyValuePair<ISyntaxRegion, byte>[] smallArray = new KeyValuePair<ISyntaxRegion, byte>[1];
+
+			foreach (var kv in textLocArray)
 			{
-				foreach (var kvv in kv.Value)
+				var line = kv.Key;
+				KeyValuePair<ISyntaxRegion, byte>[] columns;
+				if (kv.Value.Count() == 1)
+				{
+					smallArray[0] = kv.Value.First();
+					columns = smallArray;
+				}
+				else
+				{
+					columns = kv.Value.ToArray();
+					Array.Sort(columns, locComparer);
+				}
+				foreach (var kvv in columns)
 				{
 					var sr = kvv.Key;
 					var ident = GetIdentifier(sr);
 					if (string.IsNullOrEmpty(ident))
 						continue;
 
-	                if (!identifierSpans.TryGetValue(ident, out var spans))
+					if (!identifierSpans.TryGetValue(ident, out var spans))
 						spans = identifierSpans[ident] = new List<TextSpan>();
 
 					else if (spans.Last().kind == kvv.Value)
