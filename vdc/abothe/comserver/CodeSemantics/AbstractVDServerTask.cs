@@ -24,8 +24,8 @@ namespace DParserCOMServer.CodeSemantics
 		{
 			if (_cancellation != null && !_cancellation.IsCancellationRequested)
 				_cancellation.Cancel();
-			if(_hardCancel != null && _hardCancel.IsCancellationRequested)
-				_hardCancel.CancelAfter(400);
+			if(_hardCancel != null && !_hardCancel.IsCancellationRequested)
+				_hardCancel.CancelAfter(100);
 
 			_cancellation = new CancellationTokenSource();
 			if (CompletionOptions.Instance.CompletionTimeout > 0)

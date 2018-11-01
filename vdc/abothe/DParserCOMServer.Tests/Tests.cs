@@ -9,6 +9,11 @@ namespace DParserCOMServer.Tests
 	[TestFixture]
 	public class Tests
 	{
+		static Tests()
+		{
+			CompletionOptions.Instance.CompletionTimeout = -1;
+		}
+
 		class VDServerDisposable : IDisposable
 		{
 			private static volatile int _folderSuffix = 0;
