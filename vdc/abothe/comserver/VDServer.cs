@@ -61,45 +61,7 @@ namespace DParserCOMServer
 			_referencesTask = new ReferencesListGenerator(this, _editorDataProvider);
 		}
 
-		private static string normalizePath(string path)
-		{
-			path = Path.GetFullPath(path);
-			return path.ToLower();
-		}
-
-		private static string normalizeDir(string dir)
-		{
-			dir = normalizePath(dir);
-			if (dir.Length != 0 && dir[dir.Length - 1] != Path.DirectorySeparatorChar)
-				dir += Path.DirectorySeparatorChar;
-			return dir;
-		}
-
 		readonly char[] nlSeparator = { '\n' };
-
-		private string[] uniqueDirectories(string imp)
-		{
-			var impDirs = imp.Split(nlSeparator, StringSplitOptions.RemoveEmptyEntries);
-			string[] normDirs = new string[impDirs.Length];
-			for (int i = 0; i < impDirs.Length; i++)
-				normDirs[i] = normalizeDir(impDirs[i]);
-
-			string[] uniqueDirs = new string[impDirs.Length];
-			int unique = 0;
-			for (int i = 0; i < normDirs.Length; i++)
-			{
-				int j;
-				for (j = 0; j < normDirs.Length; j++)
-					if (i != j && normDirs[i].StartsWith(normDirs[j]))
-						if (normDirs[i] != normDirs[j] || j < i)
-							break;
-				if (j >= normDirs.Length)
-					uniqueDirs[unique++] = normDirs[i];
-			}
-
-			Array.Resize(ref uniqueDirs, unique);
-			return uniqueDirs;
-		}
 
 		public void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags)
 		{
@@ -107,7 +69,7 @@ namespace DParserCOMServer
 
 			if (_imports != imp) 
 			{
-				string[] uniqueDirs = uniqueDirectories(imp);
+				string[] uniqueDirs = EditorDataProvider.uniqueDirectories(imp);
 				GlobalParseCache.BeginAddOrUpdatePaths(uniqueDirs, taskTokens:_taskTokens);
 				_activityCounter++;
 			}
@@ -120,7 +82,7 @@ namespace DParserCOMServer
 		}
 		public void UpdateModule(string filename, string srcText, int flags)
 		{
-			filename = normalizePath(filename);
+			filename = EditorDataProvider.normalizePath(filename);
 			DModule ast;
 			try
 			{
@@ -333,7 +295,7 @@ namespace DParserCOMServer
 
 		public void GetParseErrors(string filename, out string errors)
 		{
-			filename = normalizePath(filename);
+			filename = EditorDataProvider.normalizePath(filename);
 			var ast = GetModule(filename);
 
 			if (ast == null)
@@ -351,7 +313,7 @@ namespace DParserCOMServer
 
 		public void GetIdentifierTypes(string filename, out string types)
 		{
-			filename = normalizePath(filename);
+			filename = EditorDataProvider.normalizePath(filename);
 			if (!_identiferTypes.TryGetValue(filename, out types))
 				throw new COMException("module not found", 1);
 		}
@@ -363,7 +325,7 @@ namespace DParserCOMServer
 
 		public void GetCommentTasks(string filename, out string tasks)
 		{
-			filename = normalizePath(filename);
+			filename = EditorDataProvider.normalizePath(filename);
 			var ast = GetModule(filename);
 
 			if (ast == null)
@@ -381,7 +343,7 @@ namespace DParserCOMServer
 
 		public void IsBinaryOperator(string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp)
 		{
-			filename = normalizePath(filename);
+			filename = EditorDataProvider.normalizePath(filename);
 			var ast = GetModule(filename);
 
 			if (ast == null)
@@ -411,7 +373,7 @@ namespace DParserCOMServer
 
 		public void GetBinaryIsInLocations(string filename, out object locs) // array of pairs of DWORD
 		{
-			filename = normalizePath(filename);
+			filename = EditorDataProvider.normalizePath(filename);
 			var ast = GetModule(filename);
 
 			if (ast == null)
