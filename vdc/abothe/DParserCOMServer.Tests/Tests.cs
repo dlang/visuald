@@ -272,12 +272,12 @@ MyClass a;", 2);
 				var identifierTypes = answer.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 				var expectedReferences = new[]
 				{
-					"foo:88",
-					"bar:88",
-					"NestedStruct:125",
-					"MyClass:65",
-					"SomeStruct:125",
-					"a:145"
+					"foo:19",
+					"bar:19",
+					"NestedStruct:6",
+					"MyClass:5",
+					"SomeStruct:6",
+					"a:16"
 				};
 				CollectionAssert.AreEquivalent(expectedReferences, identifierTypes);
 			}

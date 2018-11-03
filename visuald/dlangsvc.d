@@ -4014,53 +4014,59 @@ else
 	// from D_Parser
 	enum TypeReferenceKind : uint
 	{
-		Interface = 98,
-		Enum = 78,
-		EnumValue = 77,
-		Template = 129,
-		Class = 65,
-		Struct = 125,
-		Union = 141,
-		TemplateTypeParameter = 24,
+		Unknown,
 
-		Constant = 66,
-		LocalVariable = 53,
-		ParmeterVariable = 95,
-		TLSVariable = 124,
-		SharedVariable = 122,
-		GSharedVariable = 150,
-		MemberVariable = 82,
-		Variable = 145,
+		Interface,
+		Enum,
+		EnumValue,
+		Template,
+		Class,
+		Struct,
+		Union,
+		TemplateTypeParameter,
 
-		Alias = 154,
-		Module = 106,
-		Method = 88,
+		Constant,
+		LocalVariable,
+		ParameterVariable,
+		TLSVariable,
+		SharedVariable,
+		GSharedVariable,
+		MemberVariable,
+		Variable,
+
+		Alias,
+		Module,
+		Function,
+		Method,
+		BasicType,
 	}
 
 	int convertTypeRefToColor(uint kind)
 	{
 		switch (kind)
 		{
-			case TypeReferenceKind.Interface:        return TokenColor.Interface;
-			case TypeReferenceKind.Enum:             return TokenColor.Enum;
-			case TypeReferenceKind.EnumValue:        return TokenColor.EnumValue;
-			case TypeReferenceKind.Template:         return TokenColor.Template;
-			case TypeReferenceKind.Class:            return TokenColor.Class;
-			case TypeReferenceKind.Struct:           return TokenColor.Struct;
-			case TypeReferenceKind.Union:            return TokenColor.Union;
+			case TypeReferenceKind.Unknown:           return TokenColor.Identifier;
+			case TypeReferenceKind.Interface:         return TokenColor.Interface;
+			case TypeReferenceKind.Enum:              return TokenColor.Enum;
+			case TypeReferenceKind.EnumValue:         return TokenColor.EnumValue;
+			case TypeReferenceKind.Template:          return TokenColor.Template;
+			case TypeReferenceKind.Class:             return TokenColor.Class;
+			case TypeReferenceKind.Struct:            return TokenColor.Struct;
+			case TypeReferenceKind.Union:             return TokenColor.Union;
 			case TypeReferenceKind.TemplateTypeParameter: return TokenColor.TemplateTypeParameter;
-			case TypeReferenceKind.Constant:         return TokenColor.Constant;
-			case TypeReferenceKind.LocalVariable:    return TokenColor.LocalVariable;
-			case TypeReferenceKind.ParmeterVariable: return TokenColor.ParmeterVariable;
-			case TypeReferenceKind.TLSVariable:      return TokenColor.TLSVariable;
-			case TypeReferenceKind.SharedVariable:   return TokenColor.SharedVariable;
-			case TypeReferenceKind.GSharedVariable:  return TokenColor.GSharedVariable;
-			case TypeReferenceKind.MemberVariable:   return TokenColor.MemberVariable;
-			case TypeReferenceKind.Variable:         return TokenColor.Variable;
-			case TypeReferenceKind.Alias:            return TokenColor.Alias;
-			case TypeReferenceKind.Module:           return TokenColor.Module;
-			case TypeReferenceKind.Method:           return TokenColor.Method;
-			default: return TokenColor.Identifier;
+			case TypeReferenceKind.Constant:          return TokenColor.Constant;
+			case TypeReferenceKind.LocalVariable:     return TokenColor.LocalVariable;
+			case TypeReferenceKind.ParameterVariable: return TokenColor.ParameterVariable;
+			case TypeReferenceKind.TLSVariable:       return TokenColor.TLSVariable;
+			case TypeReferenceKind.SharedVariable:    return TokenColor.SharedVariable;
+			case TypeReferenceKind.GSharedVariable:   return TokenColor.GSharedVariable;
+			case TypeReferenceKind.MemberVariable:    return TokenColor.MemberVariable;
+			case TypeReferenceKind.Variable:          return TokenColor.Variable;
+			case TypeReferenceKind.Alias:             return TokenColor.Alias;
+			case TypeReferenceKind.Module:            return TokenColor.Module;
+			case TypeReferenceKind.Method:            return TokenColor.Method;
+			case TypeReferenceKind.BasicType:         return TokenColor.UserType;
+			default:                                  return TokenColor.Identifier;
 		}
 	}
 

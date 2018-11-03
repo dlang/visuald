@@ -156,12 +156,13 @@ namespace DParserCOMServer
 		struct TextSpan
 		{
 			public CodeLocation start;
-			public byte kind;
+			public TypeReferenceKind kind;
 		};
 
-		class TypeReferenceLocationComparer : Comparer<KeyValuePair<ISyntaxRegion, byte>>
+		class TypeReferenceLocationComparer : Comparer<KeyValuePair<ISyntaxRegion, TypeReferenceKind>>
 		{
-			public override int Compare(KeyValuePair<ISyntaxRegion, byte> x, KeyValuePair<ISyntaxRegion, byte> y)
+			public override int Compare(KeyValuePair<ISyntaxRegion, TypeReferenceKind> x,
+			                            KeyValuePair<ISyntaxRegion, TypeReferenceKind> y)
 			{
 				if (x.Key.Location == y.Key.Location)
 					return 0;
@@ -170,9 +171,10 @@ namespace DParserCOMServer
 		}
 		private static TypeReferenceLocationComparer locComparer = new TypeReferenceLocationComparer();
 
-		class TypeReferenceLineComparer : Comparer<KeyValuePair<int, Dictionary<ISyntaxRegion, byte>>>
+		class TypeReferenceLineComparer : Comparer<KeyValuePair<int, Dictionary<ISyntaxRegion, TypeReferenceKind>>>
 		{
-			public override int Compare(KeyValuePair<int, Dictionary<ISyntaxRegion, byte>> x, KeyValuePair<int, Dictionary<ISyntaxRegion, byte>> y)
+			public override int Compare(KeyValuePair<int, Dictionary<ISyntaxRegion, TypeReferenceKind>> x, 
+			                            KeyValuePair<int, Dictionary<ISyntaxRegion, TypeReferenceKind>> y)
 			{
 				if (x.Key == y.Key)
 					return 0;
@@ -182,7 +184,7 @@ namespace DParserCOMServer
 		private static TypeReferenceLineComparer lineComparer = new TypeReferenceLineComparer();
 
 
-		static string TextLocationsToIdentifierSpans(Dictionary<int, Dictionary<ISyntaxRegion, byte>> textLocations)
+		static string TextLocationsToIdentifierSpans(Dictionary<int, Dictionary<ISyntaxRegion, TypeReferenceKind>> textLocations)
 		{
 			if (textLocations == null)
 				return null;
@@ -190,12 +192,12 @@ namespace DParserCOMServer
 			var textLocArray = textLocations.ToArray();
 			Array.Sort(textLocArray, lineComparer);
 			var identifierSpans = new Dictionary<string, List<TextSpan>>();
-			KeyValuePair<ISyntaxRegion, byte>[] smallArray = new KeyValuePair<ISyntaxRegion, byte>[1];
+			KeyValuePair<ISyntaxRegion, TypeReferenceKind>[] smallArray = new KeyValuePair<ISyntaxRegion, TypeReferenceKind>[1];
 
 			foreach (var kv in textLocArray)
 			{
 				var line = kv.Key;
-				KeyValuePair<ISyntaxRegion, byte>[] columns;
+				KeyValuePair<ISyntaxRegion, TypeReferenceKind>[] columns;
 				if (kv.Value.Count() == 1)
 				{
 					smallArray[0] = kv.Value.First();
@@ -226,10 +228,10 @@ namespace DParserCOMServer
 			var s = new StringBuilder();
 			foreach (var idv in identifierSpans)
 			{
-				s.Append(idv.Key).Append(':').Append(idv.Value.First().kind.ToString());
+				s.Append(idv.Key).Append(':').Append(((byte)idv.Value.First().kind).ToString());
 				foreach (var span in idv.Value.GetRange(1, idv.Value.Count - 1))
 				{
-					s.Append($";{span.kind},{span.start.Line},{span.start.Column - 1}");
+					s.Append($";{(byte)span.kind},{span.start.Line},{span.start.Column - 1}");
 				}
 				s.Append('\n');
 			}

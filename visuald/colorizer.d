@@ -67,7 +67,7 @@ enum TokenColor
 
 	Constant,
 	LocalVariable,
-	ParmeterVariable,
+	ParameterVariable,
 	TLSVariable,
 	SharedVariable,
 	GSharedVariable,
@@ -825,17 +825,17 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Struct:      return TokenColor.DisabledIdentifier;
 			case TokenColor.TemplateTypeParameter: return TokenColor.DisabledIdentifier;
 
-			case TokenColor.Constant:         return TokenColor.DisabledIdentifier;
-			case TokenColor.LocalVariable:    return TokenColor.DisabledIdentifier;
-			case TokenColor.ParmeterVariable: return TokenColor.DisabledIdentifier;
-			case TokenColor.TLSVariable:      return TokenColor.DisabledIdentifier;
-			case TokenColor.SharedVariable:   return TokenColor.DisabledIdentifier;
-			case TokenColor.GSharedVariable:  return TokenColor.DisabledIdentifier;
-			case TokenColor.MemberVariable:   return TokenColor.DisabledIdentifier;
-			case TokenColor.Variable:         return TokenColor.DisabledIdentifier;
-			case TokenColor.Alias:            return TokenColor.DisabledIdentifier;
-			case TokenColor.Module:           return TokenColor.DisabledIdentifier;
-			case TokenColor.Method:           return TokenColor.DisabledIdentifier;
+			case TokenColor.Constant:          return TokenColor.DisabledIdentifier;
+			case TokenColor.LocalVariable:     return TokenColor.DisabledIdentifier;
+			case TokenColor.ParameterVariable: return TokenColor.DisabledIdentifier;
+			case TokenColor.TLSVariable:       return TokenColor.DisabledIdentifier;
+			case TokenColor.SharedVariable:    return TokenColor.DisabledIdentifier;
+			case TokenColor.GSharedVariable:   return TokenColor.DisabledIdentifier;
+			case TokenColor.MemberVariable:    return TokenColor.DisabledIdentifier;
+			case TokenColor.Variable:          return TokenColor.DisabledIdentifier;
+			case TokenColor.Alias:             return TokenColor.DisabledIdentifier;
+			case TokenColor.Module:            return TokenColor.DisabledIdentifier;
+			case TokenColor.Method:            return TokenColor.DisabledIdentifier;
 			default: break;
 		}
 		return type;
@@ -864,17 +864,17 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Class:       return TokenColor.StringIdentifier;
 			case TokenColor.Struct:      return TokenColor.StringIdentifier;
 			case TokenColor.TemplateTypeParameter: return TokenColor.StringIdentifier;
-			case TokenColor.Constant:         return TokenColor.StringIdentifier;
-			case TokenColor.LocalVariable:    return TokenColor.StringIdentifier;
-			case TokenColor.ParmeterVariable: return TokenColor.StringIdentifier;
-			case TokenColor.TLSVariable:      return TokenColor.StringIdentifier;
-			case TokenColor.SharedVariable:   return TokenColor.StringIdentifier;
-			case TokenColor.GSharedVariable:  return TokenColor.StringIdentifier;
-			case TokenColor.MemberVariable:   return TokenColor.StringIdentifier;
-			case TokenColor.Variable:         return TokenColor.StringIdentifier;
-			case TokenColor.Alias:            return TokenColor.StringIdentifier;
-			case TokenColor.Module:           return TokenColor.StringIdentifier;
-			case TokenColor.Method:           return TokenColor.StringIdentifier;
+			case TokenColor.Constant:          return TokenColor.StringIdentifier;
+			case TokenColor.LocalVariable:     return TokenColor.StringIdentifier;
+			case TokenColor.ParameterVariable: return TokenColor.StringIdentifier;
+			case TokenColor.TLSVariable:       return TokenColor.StringIdentifier;
+			case TokenColor.SharedVariable:    return TokenColor.StringIdentifier;
+			case TokenColor.GSharedVariable:   return TokenColor.StringIdentifier;
+			case TokenColor.MemberVariable:    return TokenColor.StringIdentifier;
+			case TokenColor.Variable:          return TokenColor.StringIdentifier;
+			case TokenColor.Alias:             return TokenColor.StringIdentifier;
+			case TokenColor.Module:            return TokenColor.StringIdentifier;
+			case TokenColor.Method:            return TokenColor.StringIdentifier;
 			default: break;
 		}
 		return type;
