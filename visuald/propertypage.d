@@ -2576,6 +2576,7 @@ struct MagoOptions
 	bool showStaticsInAggr;
 	bool showVTable;
 	bool flatClassFields;
+	bool expandableStrings;
 
 	void saveToRegistry()
 	{
@@ -2584,6 +2585,7 @@ struct MagoOptions
 		keyMago.Set("showStaticsInAggr", showStaticsInAggr);
 		keyMago.Set("showVTable", showVTable);
 		keyMago.Set("flatClassFields", flatClassFields);
+		keyMago.Set("expandableStrings", expandableStrings);
 	}
 
 	void loadFromRegistry()
@@ -2594,6 +2596,7 @@ struct MagoOptions
 		showStaticsInAggr = (keyMago.GetDWORD("showStaticsInAggr", 0) != 0);
 		showVTable        = (keyMago.GetDWORD("showVTable", 1) != 0);
 		flatClassFields   = (keyMago.GetDWORD("flatClassFields", 0) != 0);
+		expandableStrings = (keyMago.GetDWORD("expandableStrings", 0) != 0);
 	}
 }
 
@@ -2611,6 +2614,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mShowStaticsInAggr = new CheckBox(mCanvas, "Show static fields in structs and classes"));
 		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
 		AddControl("", mFlatClassFields   = new CheckBox(mCanvas, "Show base class fields as direct fields"));
+		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -2656,6 +2660,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		mShowStaticsInAggr.setChecked(mOptions.showStaticsInAggr);
 		mShowVTable.setChecked(mOptions.showVTable);
 		mFlatClassFields.setChecked(mOptions.flatClassFields);
+		mExpandableStrings.setChecked(mOptions.expandableStrings);
 	}
 
 	int DoApply(ref MagoOptions opts, ref MagoOptions refopts)
@@ -2665,6 +2670,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mShowStaticsInAggr.isChecked(), opts.showStaticsInAggr, refopts.showStaticsInAggr);
 		changes += changeOption(mShowVTable.isChecked(), opts.showVTable, refopts.showVTable);
 		changes += changeOption(mFlatClassFields.isChecked(), opts.flatClassFields, refopts.flatClassFields);
+		changes += changeOption(mExpandableStrings.isChecked(), opts.expandableStrings, refopts.expandableStrings);
 		return changes;
 	}
 
@@ -2672,6 +2678,7 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mShowStaticsInAggr;
 	CheckBox mShowVTable;
 	CheckBox mFlatClassFields;
+	CheckBox mExpandableStrings;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
