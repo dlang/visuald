@@ -229,10 +229,23 @@ struct DListIterator(T)
 		return _list;
 	}
 
+version(all) // opDot deperecated
+{
+	alias opStar this;
+
+	// https://issues.dlang.org/show_bug.cgi?id=16657 need to define opEquals with alias this
+	bool opEquals(const typeof(this) other) const
+	{
+		return _pos == other._pos; // no need to compare lists, nodes belong to only one list
+	}
+}
+else
+{
 	ref T opDot()
 	{
 		return _pos.data;
 	}
+}
 
 	ref T opStar()
 	{

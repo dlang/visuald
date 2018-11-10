@@ -225,7 +225,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in BOOL verbose)
+	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags)
 	{
 		string fname = to_string(filename);
 		string text  = to_string(srcText);
@@ -245,7 +245,7 @@ class VDServer : ComObject, IVDServer
 		{
 			version(DebugServer) dbglog("    doParse: " ~ firstLine(text));
 
-			if (verbose)
+			if (flags & 1)
 				semanticWriteError(MessageType.Message, fname ~ ": parsing...");
 
 			ast.Node n;
@@ -259,7 +259,7 @@ class VDServer : ComObject, IVDServer
 				logInfo(t.msg);
 			}
 
-			if(verbose)
+			if(flags & 1)
 				writeReadyMessage();
 
 			synchronized(mSemanticProject)
@@ -556,6 +556,11 @@ class VDServer : ComObject, IVDServer
 					return S_OK;
 				}
 		return S_FALSE;
+	}
+
+	override HRESULT GetIdentifierTypes(in BSTR filename, BSTR* errors)
+	{
+		return E_NOTIMPL;
 	}
 
 	override HRESULT ConfigureCommentTasks(in BSTR tasks)

@@ -1,0 +1,7 @@
+.idea
+.vs
+*.user
+packages
+comserver/obj
+DParserCOMServer.Tests/obj
+DParserCOMServer.Tests/bin

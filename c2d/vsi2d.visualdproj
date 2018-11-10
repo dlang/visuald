@@ -1,6 +1,6 @@
 <DProject>
  <ProjectGuid>{8760F45A-69D9-4B68-BE63-0E055B51D447}</ProjectGuid>
- <Config name="Debug" platform="Win32">
+ <Config platform="Win32" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -15,6 +15,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -107,7 +108,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release" platform="Win32">
+ <Config platform="Win32" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -122,6 +123,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>0</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -214,7 +216,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug" platform="x64">
+ <Config platform="x64" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -229,6 +231,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -321,7 +324,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release" platform="x64">
+ <Config platform="x64" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -336,6 +339,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>0</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -428,7 +432,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug GDC" platform="Win32">
+ <Config platform="Win32" name="Debug GDC">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -443,6 +447,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>0</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -535,7 +540,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug GDC" platform="x64">
+ <Config platform="x64" name="Debug GDC">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -550,6 +555,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>0</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -642,7 +648,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="Win32">
+ <Config platform="Win32" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -657,6 +663,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -749,7 +756,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="x64">
+ <Config platform="x64" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -764,6 +771,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -856,7 +864,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="Win32">
+ <Config platform="Win32" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -871,6 +879,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -963,7 +972,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="x64">
+ <Config platform="x64" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -978,6 +987,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -1070,7 +1080,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release LDC" platform="Win32">
+ <Config platform="Win32" name="Release LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -1085,6 +1095,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -1177,7 +1188,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release LDC" platform="x64">
+ <Config platform="x64" name="Release LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -1192,6 +1203,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -1284,7 +1296,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="Win32">
+ <Config platform="Win32" name="Release COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -1299,6 +1311,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -1318,7 +1331,7 @@
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>1</useInline>
+  <useInline>0</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -1391,7 +1404,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="x64">
+ <Config platform="x64" name="Release COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -1406,6 +1419,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>

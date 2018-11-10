@@ -56,6 +56,28 @@ enum TokenColor
 	AsmRegister,
 	AsmMnemonic,
 	UserType,
+	Interface,
+	Enum,
+	EnumValue,
+	Template,
+	Class,
+	Struct,
+	Union,
+	TemplateTypeParameter,
+
+	Constant,
+	LocalVariable,
+	ParameterVariable,
+	TLSVariable,
+	SharedVariable,
+	GSharedVariable,
+	MemberVariable,
+	Variable,
+
+	Alias,
+	Module,
+	Method,
+
 	Version,
 
 	DisabledKeyword,
@@ -362,6 +384,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 					else
 						type = TokenColor.Keyword;
 				}
+
+			if (type == TokenColor.Identifier)
+				type = mSource.getIdentifierColor(tok, iLine + 1, prevpos);
 
 			if(cov >= 0)
 			{
@@ -791,6 +816,26 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.AsmMnemonic: return TokenColor.DisabledAsmMnemonic;
 			case TokenColor.UserType:    return TokenColor.DisabledUserType;
 			case TokenColor.Version:     return TokenColor.DisabledVersion;
+
+			case TokenColor.Interface:   return TokenColor.DisabledIdentifier;
+			case TokenColor.Enum:        return TokenColor.DisabledIdentifier;
+			case TokenColor.EnumValue:   return TokenColor.DisabledIdentifier;
+			case TokenColor.Template:    return TokenColor.DisabledIdentifier;
+			case TokenColor.Class:       return TokenColor.DisabledIdentifier;
+			case TokenColor.Struct:      return TokenColor.DisabledIdentifier;
+			case TokenColor.TemplateTypeParameter: return TokenColor.DisabledIdentifier;
+
+			case TokenColor.Constant:          return TokenColor.DisabledIdentifier;
+			case TokenColor.LocalVariable:     return TokenColor.DisabledIdentifier;
+			case TokenColor.ParameterVariable: return TokenColor.DisabledIdentifier;
+			case TokenColor.TLSVariable:       return TokenColor.DisabledIdentifier;
+			case TokenColor.SharedVariable:    return TokenColor.DisabledIdentifier;
+			case TokenColor.GSharedVariable:   return TokenColor.DisabledIdentifier;
+			case TokenColor.MemberVariable:    return TokenColor.DisabledIdentifier;
+			case TokenColor.Variable:          return TokenColor.DisabledIdentifier;
+			case TokenColor.Alias:             return TokenColor.DisabledIdentifier;
+			case TokenColor.Module:            return TokenColor.DisabledIdentifier;
+			case TokenColor.Method:            return TokenColor.DisabledIdentifier;
 			default: break;
 		}
 		return type;
@@ -811,6 +856,25 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.AsmMnemonic: return TokenColor.StringAsmMnemonic;
 			case TokenColor.UserType:    return TokenColor.StringUserType;
 			case TokenColor.Version:     return TokenColor.StringVersion;
+
+			case TokenColor.Interface:   return TokenColor.StringIdentifier;
+			case TokenColor.Enum:        return TokenColor.StringIdentifier;
+			case TokenColor.EnumValue:   return TokenColor.StringIdentifier;
+			case TokenColor.Template:    return TokenColor.StringIdentifier;
+			case TokenColor.Class:       return TokenColor.StringIdentifier;
+			case TokenColor.Struct:      return TokenColor.StringIdentifier;
+			case TokenColor.TemplateTypeParameter: return TokenColor.StringIdentifier;
+			case TokenColor.Constant:          return TokenColor.StringIdentifier;
+			case TokenColor.LocalVariable:     return TokenColor.StringIdentifier;
+			case TokenColor.ParameterVariable: return TokenColor.StringIdentifier;
+			case TokenColor.TLSVariable:       return TokenColor.StringIdentifier;
+			case TokenColor.SharedVariable:    return TokenColor.StringIdentifier;
+			case TokenColor.GSharedVariable:   return TokenColor.StringIdentifier;
+			case TokenColor.MemberVariable:    return TokenColor.StringIdentifier;
+			case TokenColor.Variable:          return TokenColor.StringIdentifier;
+			case TokenColor.Alias:             return TokenColor.StringIdentifier;
+			case TokenColor.Module:            return TokenColor.StringIdentifier;
+			case TokenColor.Method:            return TokenColor.StringIdentifier;
 			default: break;
 		}
 		return type;

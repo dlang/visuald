@@ -58,6 +58,7 @@ import std.algorithm;
 import std.array;
 import std.datetime;
 import std.exception;
+import std.range;
 
 import std.parallelism;
 
@@ -383,11 +384,32 @@ class LanguageService : DisposingComObject,
 			newCom!ColorableItem("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
 			newCom!ColorableItem("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
 
-			// Visual D specific (must match Lexer.TokenCat)
+			// Visual D specific (must match Lexer.TokenColor)
 			newCom!ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D Register",            -1,          CI_USERTEXT_BK, RGB(128, 0, 128)),
+			newCom!ColorableItem("Visual D Register",             -1,          CI_USERTEXT_BK, RGB(128, 0, 128)),
 			newCom!ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D Type",                -1,          CI_USERTEXT_BK, RGB(0, 0, 160)),
+			newCom!ColorableItem("Visual D User Defined Type",    -1,          CI_USERTEXT_BK, RGB(0, 0, 160)),
+			newCom!ColorableItem("Visual D Identifier Interface", -1,          CI_USERTEXT_BK, RGB(32, 192, 160)),
+			newCom!ColorableItem("Visual D Identifier Enum",      -1,          CI_USERTEXT_BK, RGB(0, 128, 128)),
+			newCom!ColorableItem("Visual D Identifier Enum Value",-1,          CI_USERTEXT_BK, RGB(0, 128, 160)),
+			newCom!ColorableItem("Visual D Identifier Template",  -1,          CI_USERTEXT_BK, RGB(0,  96, 128)),
+			newCom!ColorableItem("Visual D Identifier Class",     -1,          CI_USERTEXT_BK, RGB(32, 192, 192)),
+			newCom!ColorableItem("Visual D Identifier Struct",    -1,          CI_USERTEXT_BK, RGB(0, 192, 128)),
+			newCom!ColorableItem("Visual D Identifier Union",     -1,          CI_USERTEXT_BK, RGB(0, 160, 128)),
+			newCom!ColorableItem("Visual D Identifier Template Type Parameter", -1,      CI_USERTEXT_BK, RGB(64, 0, 160)),
+			newCom!ColorableItem("Visual D Identifier Alias",     -1,          CI_USERTEXT_BK, RGB(0, 128, 128)),
+			newCom!ColorableItem("Visual D Identifier Module",    -1,          CI_USERTEXT_BK, RGB(64, 64, 160)),
+			newCom!ColorableItem("Visual D Identifier Method",    -1,          CI_USERTEXT_BK, RGB(96, 64, 160)),
+
+			newCom!ColorableItem("Visual D Identifier Constant",       -1, CI_USERTEXT_BK, RGB(128,   0, 128)),
+			newCom!ColorableItem("Visual D Identifier Local Variable", -1, CI_USERTEXT_BK, RGB(128,  16, 128)),
+			newCom!ColorableItem("Visual D Identifier Parameter",      -1, CI_USERTEXT_BK, RGB(128,  32, 128)),
+			newCom!ColorableItem("Visual D Identifier Thread Global",  -1, CI_USERTEXT_BK, RGB(128,  48, 128)),
+			newCom!ColorableItem("Visual D Identifier Shared Global",  -1, CI_USERTEXT_BK, RGB(128,  64, 128)),
+			newCom!ColorableItem("Visual D Identifier __gshared",      -1, CI_USERTEXT_BK, RGB(128,  80, 128)),
+			newCom!ColorableItem("Visual D Identifier Field",          -1, CI_USERTEXT_BK, RGB(128,  96, 128)),
+			newCom!ColorableItem("Visual D Identifier Variable",       -1, CI_USERTEXT_BK, RGB(128, 128, 128)),
+
 			newCom!ColorableItem("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0)),
 
 			newCom!ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
@@ -839,7 +861,8 @@ class LanguageService : DisposingComObject,
 	void UpdateSemanticModule(Source src, wstring srctext, bool verbose, UpdateModuleCallBack cb)
 	{
 		ConfigureSemanticProject(src);
-		vdServerClient.UpdateModule(src.GetFileName(), srctext, verbose, cb);
+		bool idtypes = Package.GetGlobalOptions().semanticHighlighting;
+		vdServerClient.UpdateModule(src.GetFileName(), srctext, verbose, idtypes, cb);
 	}
 	void ClearSemanticProject()
 	{
@@ -1348,6 +1371,13 @@ struct ParseError
 	string msg;
 }
 
+struct IdentifierType
+{
+	uint line;
+	uint col;
+	uint type;
+}
+
 class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTextMarkerClient
 {
 	Colorizer mColorizer;
@@ -1368,6 +1398,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 
 	wstring mParseText;
 	ParseError[] mParseErrors;
+	IdentifierType[][wstring] mIdentifierTypes;
 	vdc.util.TextPos[] mBinaryIsIn;
 	NewHiddenRegion[] mOutlineRegions;
 
@@ -3843,15 +3874,19 @@ else
 	}
 
 	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn,
-								  string tasks)
+								  string tasks, string identifierTypes)
 	{
 		updateParseErrors(parseErrors);
+		bool typesChanged = updateIdentifierTypes(identifierTypes);
 		mBinaryIsIn = binaryIsIn;
 		if(IVsTextColorState colorState = qi_cast!IVsTextColorState(mBuffer))
 		{
 			scope(exit) release(colorState);
-			foreach(pos; mBinaryIsIn)
-				colorState.ReColorizeLines(pos.line - 1, pos.line);
+			if (typesChanged)
+				colorState.ReColorizeLines(-1, -1);
+			else
+				foreach(pos; mBinaryIsIn)
+					colorState.ReColorizeLines(pos.line - 1, pos.line);
 		}
 		Package.GetTaskProvider().updateTaskItems(filename, tasks);
 	}
@@ -3928,6 +3963,130 @@ else
 			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex,
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
 		}
+	}
+
+	bool updateIdentifierTypes(string identifierTypes)
+	{
+		bool changed = mIdentifierTypes.length > 0; // could be more precise
+		string[] idtypes = splitLines(identifierTypes);
+		mIdentifierTypes = mIdentifierTypes.init;
+		foreach(idt; idtypes)
+		{
+			auto idx = indexOf(idt, ':');
+			if(idx > 0)
+			{
+				string ident = idt[0..idx];
+				IdentifierType[] idspans;
+				string[] spans = split(idt[idx+1..$], ";");
+				foreach(sp; spans)
+				{
+					string[] num = split(sp, ",");
+					try
+					{
+						IdentifierType it;
+						if(num.length >= 3)
+						{
+							it.type = parse!int(num[0]);
+							it.line = parse!int(num[1]);
+							it.col  = parse!int(num[2]);
+							idspans ~= it;
+						}
+						else if(num.length == 1)
+						{
+							it.type = parse!int(num[0]);
+							it.line = 0;
+							it.col  = 0;
+							idspans ~= it;
+						}
+					}
+					catch(ConvException)
+					{
+					}
+				}
+				if (idspans.length)
+					mIdentifierTypes[to!wstring(ident)] = idspans;
+			}
+		}
+		changed = changed || mIdentifierTypes.length > 0;
+		return changed;
+	}
+
+	// from D_Parser
+	enum TypeReferenceKind : uint
+	{
+		Unknown,
+
+		Interface,
+		Enum,
+		EnumValue,
+		Template,
+		Class,
+		Struct,
+		Union,
+		TemplateTypeParameter,
+
+		Constant,
+		LocalVariable,
+		ParameterVariable,
+		TLSVariable,
+		SharedVariable,
+		GSharedVariable,
+		MemberVariable,
+		Variable,
+
+		Alias,
+		Module,
+		Function,
+		Method,
+		BasicType,
+	}
+
+	int convertTypeRefToColor(uint kind)
+	{
+		switch (kind)
+		{
+			case TypeReferenceKind.Unknown:           return TokenColor.Identifier;
+			case TypeReferenceKind.Interface:         return TokenColor.Interface;
+			case TypeReferenceKind.Enum:              return TokenColor.Enum;
+			case TypeReferenceKind.EnumValue:         return TokenColor.EnumValue;
+			case TypeReferenceKind.Template:          return TokenColor.Template;
+			case TypeReferenceKind.Class:             return TokenColor.Class;
+			case TypeReferenceKind.Struct:            return TokenColor.Struct;
+			case TypeReferenceKind.Union:             return TokenColor.Union;
+			case TypeReferenceKind.TemplateTypeParameter: return TokenColor.TemplateTypeParameter;
+			case TypeReferenceKind.Constant:          return TokenColor.Constant;
+			case TypeReferenceKind.LocalVariable:     return TokenColor.LocalVariable;
+			case TypeReferenceKind.ParameterVariable: return TokenColor.ParameterVariable;
+			case TypeReferenceKind.TLSVariable:       return TokenColor.TLSVariable;
+			case TypeReferenceKind.SharedVariable:    return TokenColor.SharedVariable;
+			case TypeReferenceKind.GSharedVariable:   return TokenColor.GSharedVariable;
+			case TypeReferenceKind.MemberVariable:    return TokenColor.MemberVariable;
+			case TypeReferenceKind.Variable:          return TokenColor.Variable;
+			case TypeReferenceKind.Alias:             return TokenColor.Alias;
+			case TypeReferenceKind.Module:            return TokenColor.Module;
+			case TypeReferenceKind.Method:            return TokenColor.Method;
+			case TypeReferenceKind.BasicType:         return TokenColor.UserType;
+			default:                                  return TokenColor.Identifier;
+		}
+	}
+
+	int getIdentifierColor(wstring id, int line, int col)
+	{
+		auto pit = id in mIdentifierTypes;
+		if (!pit)
+			return TokenColor.Identifier;
+
+		IdentifierType it = IdentifierType(line, col, 0);
+		auto a = assumeSorted!"a.line < b.line || (a.line == b.line && a.col < b.col)"(*pit);
+		auto sections = a.trisect(it);
+		uint type;
+		if (!sections[1].empty)
+			type = sections[1].front.type;
+		else if (!sections[0].empty)
+			type = sections[0].back.type;
+		else
+			type = sections[2].front.type;
+		return convertTypeRefToColor(type);
 	}
 
 	bool finishParsing()

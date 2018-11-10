@@ -436,17 +436,19 @@ class GetDefinitionCommand : FileCommand
 
 //////////////////////////////////////
 
-alias void delegate(uint request, string filename, string parseErrors, TextPos[] binaryIsIn, string tasks) UpdateModuleCallBack;
+alias void delegate(uint request, string filename, string parseErrors,
+                    TextPos[] binaryIsIn, string tasks, string identifierTypes) UpdateModuleCallBack;
 
 class UpdateModuleCommand : FileCommand
 {
-	this(string filename, wstring text, bool verbose, UpdateModuleCallBack cb)
+	this(string filename, wstring text, bool verbose, bool idtypes, UpdateModuleCallBack cb)
 	{
 		super("UpdateModule", filename);
 		version(DebugCmd) mCommand ~= " " ~ to!string(firstLine(text));
 		mText = text;
 		mCallback = cb;
 		mVerbose = verbose;
+		mIdTypes = idtypes;
 	}
 
 	override HRESULT exec() const
@@ -457,7 +459,8 @@ class UpdateModuleCommand : FileCommand
 		BSTR bfname = allocBSTR(mFilename);
 
 		BSTR btxt = allocwBSTR(mText);
-		HRESULT hr = gVDServer.UpdateModule(bfname, btxt, mVerbose);
+		DWORD flags = (mVerbose ? 1 : 0) | (mIdTypes ? 2 : 0);
+		HRESULT hr = gVDServer.UpdateModule(bfname, btxt, flags);
 		freeBSTR(btxt);
 		freeBSTR(bfname);
 		return hr;
@@ -506,6 +509,10 @@ class UpdateModuleCommand : FileCommand
 		if(gVDServer.GetCommentTasks(fname, &tasks) == S_OK)
 			mTasks = detachBSTR(tasks);
 
+		BSTR idTypes;
+		if(mIdTypes && gVDServer.GetIdentifierTypes(fname, &idTypes) == S_OK)
+			mIdentifierTypes = detachBSTR(idTypes);
+
 		send(gUITid);
 		return S_OK;
 	}
@@ -515,7 +522,7 @@ class UpdateModuleCommand : FileCommand
 		version(DebugCmd)
 			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mErrors);
 		if(mCallback)
-			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks);
+			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks, mIdentifierTypes);
 		return true;
 	}
 
@@ -523,7 +530,9 @@ class UpdateModuleCommand : FileCommand
 	wstring mText;
 	string mErrors;
 	string mTasks;
+	string mIdentifierTypes;
 	bool mVerbose;
+	bool mIdTypes;
 	TextPos[] mBinaryIsIn;
 }
 
@@ -746,9 +755,9 @@ class VDServerClient
 		return cmd.mRequest;
 	}
 
-	uint UpdateModule(string filename, wstring text, bool verbose, UpdateModuleCallBack cb)
+	uint UpdateModule(string filename, wstring text, bool verbose, bool idtypes, UpdateModuleCallBack cb)
 	{
-		auto cmd = new _shared!(UpdateModuleCommand)(filename, text, verbose, cb);
+		auto cmd = new _shared!(UpdateModuleCommand)(filename, text, verbose, idtypes, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}
