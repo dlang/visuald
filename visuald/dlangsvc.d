@@ -1835,6 +1835,7 @@ version(threadedOutlining) {} else
 		int prevLineLenth = 0;
 		int ln = 0;
 		int prevBracketLine = -1;
+		int prevtok = 0;
 		foreach(txt; splitter(source, '\n'))
 		{
 			if(mModificationCountOutlining != mModificationCount)
@@ -1849,8 +1850,62 @@ version(threadedOutlining) {} else
 			bool isComment = false;
 			while(pos < txt.length)
 			{
+				bool isCaseRegion(ref NewHiddenRegion rgn)
+				{
+					// -2: case before colon
+					// -3: case after colon
+					return rgn.tsHiddenText.iEndLine == -2 || rgn.tsHiddenText.iEndLine == -3;
+				}
+				void closeCaseRegion(int idx, int ln, int prevpos)
+				{
+					lastOpenRegion = rgns[idx].tsHiddenText.iEndIndex;
+					if(isSpaceOrComment && !isComment) // move back into previous line
+					{
+						prevpos = prevLineLenth;
+						ln--;
+					}
+					if(rgns[idx].tsHiddenText.iStartLine >= ln || rgns[idx].tsHiddenText.iEndLine == -2)
+					{
+						for(int i = idx; i < rgns.length - 1; i++)
+							rgns[i] = rgns[i + 1];
+						rgns.length = rgns.length - 1;
+					}
+					else
+					{
+						rgns[idx].tsHiddenText.iEndIndex = prevpos;
+						rgns[idx].tsHiddenText.iEndLine = ln;
+					}
+				}
+
 				uint prevpos = pos;
-				int col = dLex.scan(state, txt, pos);
+				int tok;
+				int col = dLex.scan(state, txt, pos, tok);
+				if(prevtok != TOK_goto && (tok == TOK_case || tok == TOK_default))
+				{
+					bool hasOpenCase = lastOpenRegion >= 0 && isCaseRegion(rgns[lastOpenRegion]);
+					if (hasOpenCase && rgns[lastOpenRegion].tsHiddenText.iStartLine >= ln - 1)
+					{
+						// single line case statements don't need to be foldable
+						// move start of region forward
+						rgns[lastOpenRegion].tsHiddenText.iStartLine = ln;
+					}
+					else
+					{
+						if(hasOpenCase)
+							closeCaseRegion(lastOpenRegion, ln, prevpos);
+
+						NewHiddenRegion rgn;
+						rgn.iType = hrtCollapsible;
+						rgn.dwBehavior = hrbClientControlled;
+						rgn.dwState = expansionState;
+						rgn.tsHiddenText = TextSpan(pos - 1, ln, lastOpenRegion, -2); // use endLine as marker for 'case'
+						rgn.pszBanner = "..."w.ptr;
+						rgn.dwClient = kHiddenRegionCookie;
+						lastOpenRegion = rgns.length;
+						rgns ~= rgn;
+					}
+
+				}
 				if(col == TokenCat.Operator)
 				{
 					if(txt[pos-1] == '{' || txt[pos-1] == '[')
@@ -1871,24 +1926,49 @@ version(threadedOutlining) {} else
 					}
 					else if((txt[pos-1] == '}' || txt[pos-1] == ']') && lastOpenRegion >= 0)
 					{
-						int idx = lastOpenRegion;
-						lastOpenRegion = rgns[idx].tsHiddenText.iEndIndex;
-						if(rgns[idx].tsHiddenText.iStartLine == ln)
+						if(isCaseRegion(rgns[lastOpenRegion]))
+							closeCaseRegion(lastOpenRegion, ln, prevpos);
+
+						if(lastOpenRegion >= 0)
 						{
-							for(int i = idx; i < rgns.length - 1; i++)
-								rgns[i] = rgns[i + 1];
-							rgns.length = rgns.length - 1;
+							int idx = lastOpenRegion;
+							lastOpenRegion = rgns[idx].tsHiddenText.iEndIndex;
+							if(rgns[idx].tsHiddenText.iStartLine == ln)
+							{
+								for(int i = idx; i < rgns.length - 1; i++)
+									rgns[i] = rgns[i + 1];
+								rgns.length = rgns.length - 1;
+							}
+							else
+							{
+								rgns[idx].tsHiddenText.iEndIndex = pos;
+								rgns[idx].tsHiddenText.iEndLine = ln;
+							}
+							prevBracketLine = ln;
 						}
-						else
+					}
+					else if (tok == TOK_colon && lastOpenRegion >= 0)
+					{
+						if(rgns[lastOpenRegion].tsHiddenText.iEndLine == -2)
 						{
-							rgns[idx].tsHiddenText.iEndIndex = pos;
-							rgns[idx].tsHiddenText.iEndLine = ln;
+							rgns[lastOpenRegion].tsHiddenText.iStartLine = ln;
+							rgns[lastOpenRegion].tsHiddenText.iStartIndex = pos;
+							rgns[lastOpenRegion].tsHiddenText.iEndLine = -3;
 						}
-						prevBracketLine = ln;
+					}
+					else if (tok == TOK_slice && prevtok == TOK_colon && lastOpenRegion >= 0)
+					{
+						// case range statement "case n: .. case", wait for next colon
+						if(rgns[lastOpenRegion].tsHiddenText.iEndLine == -3)
+							rgns[lastOpenRegion].tsHiddenText.iEndLine = -2;
 					}
 				}
 				isComment = isComment || (col == TokenCat.Comment);
-				isSpaceOrComment = isSpaceOrComment && Lexer.isCommentOrSpace(col, txt[prevpos .. pos]);
+				if (!Lexer.isCommentOrSpace(col, txt[prevpos .. pos]))
+				{
+					prevtok = tok;
+					isSpaceOrComment = false;
+				}
 			}
 			if(lastCommentStartLine >= 0)
 			{

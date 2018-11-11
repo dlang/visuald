@@ -1035,9 +1035,12 @@ unreleased Version 0.48.0
     - detect AA if type ends with "]", but not with "[]"
     - fix crash in VS if a value is marked expandable, but doesn't yield any children
     - fix .ptr property of static array if it is a struct/class member
+    - add option to disable strings to be expandable
+    - support showing closure and capture variables as locals for dmd 2.084
   * cv2pdb
     - can now detect VS2017 via Setup-COM-API
     - some DWARF fixes
   * when pasting code to D source file newlines are adapted to surrounding code
+  * added outlining for case statements
   * fixed "Compile and Run" on selection
   * fix help via F1 for dmd 2.072+
