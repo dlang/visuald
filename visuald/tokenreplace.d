@@ -749,7 +749,7 @@ int _replaceTokenSequence(RTYPE)(TokenList srctoken, _string[] search, RTYPE[] r
 			if(!opt.includePretext)
 			{
 				pretext = match.start.pretext;
-				match.start.pretext = "";
+				match.start.pretext = ""w;
 				advanceTextPos(pretext, match.start.lineno, match.start.column);
 			}
 
