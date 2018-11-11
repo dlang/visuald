@@ -172,9 +172,10 @@ ptrdiff_t indexOfPath(Char1, Char2)(const(Char1)[] s, const(Char2)[] sub,
 	{
 		static bool isSame(Char1, Char2)(Char1 c1, Char2 c2)
 		{
+			import std.uni : toLower;
 			if (c1 == '.' || c1 == '/' || c1 == '\\')
 				return c2 == '.' || c2 == '/' || c2 == '\\';
-			return std.uni.toLower(c1) == std.uni.toLower(c2);
+			return toLower(c1) == toLower(c2);
 		}
 		balance = std.algorithm.find!((a, b) => isSame(a, b))(s, sub);
 	}
