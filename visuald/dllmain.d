@@ -46,12 +46,13 @@ version(MAIN)
 }
 else version(TESTMAIN)
 {
-	import vdc.semantic;
+//	import vdc.semantic;
 	__gshared extern(C) extern long gcdump_userData;
 	__gshared extern(C) extern bool gcdump_pools;
 
 	int main()
 	{
+/+
 		Project prj = new Project;
 		string[] imps = [ r"m:\s\d\rainers\druntime\import\", r"m:\s\d\rainers\phobos\" ];
 		string fname = r"m:\s\d\rainers\phobos\std\datetime.d";
@@ -70,6 +71,7 @@ else version(TESTMAIN)
 //			gcdump_userData = i;
 			prj.addAndParseFile(fname);
 		}
++/
 		return 0;
 	}
 }

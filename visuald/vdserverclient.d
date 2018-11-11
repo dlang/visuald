@@ -37,7 +37,7 @@ import core.thread;
 alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully instantiate type info for string[Tid]
 alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
-version(TESTMAIN) version = InProc;
+// version(TESTMAIN) version = InProc;
 debug version = DebugCmd;
 // debug version = InProc;
 
