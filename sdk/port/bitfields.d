@@ -34,6 +34,7 @@ template PadBits(T...)
 
 template bitfields(T...)
 {
+	static import std.bitmanip;
     enum bitfields = std.bitmanip.bitfields!(PadBits!T);
 }
 

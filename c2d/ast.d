@@ -3181,6 +3181,12 @@ unittest
 
 unittest
 {
+	string txt = "template<> struct S {};"; // cannot deal with specializations, though
+	AST ast = testAST(txt);
+}
+
+unittest
+{
 	string txt = "typedef void (__noexpr __stdcall *fn)();";
 	AST ast = testAST(txt);
 }

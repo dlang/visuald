@@ -1308,6 +1308,35 @@ int GetUserPreferences(LANGPREFERENCES3 *langPrefs, IVsTextView view)
 	return S_OK;
 }
 
+static struct FormatOptions
+{
+	uint tabSize;
+	uint indentSize;
+	uint indentStyle;
+	bool insertTabs;
+	bool indentCase;
+}
+
+void GetFormatOptions(FormatOptions *fmtOpt, const LANGPREFERENCES3 *langPrefs)
+{
+	fmtOpt.tabSize = langPrefs.uTabSize;
+	fmtOpt.indentSize = langPrefs.uIndentSize;
+	fmtOpt.insertTabs = langPrefs.fInsertTabs != 0;
+	fmtOpt.indentStyle = langPrefs.IndentStyle;
+
+	fmtOpt.indentCase = Package.GetGlobalOptions().fmtIndentCase;
+}
+
+int GetFormatOptions(FormatOptions *fmtOpt, IVsTextView view)
+{
+	LANGPREFERENCES3 langPrefs;
+	if(int rc = GetUserPreferences(&langPrefs, view))
+		return rc;
+
+	GetFormatOptions(fmtOpt, &langPrefs);
+	return S_OK;
+}
+
 // An object to break cyclic dependencies on Source
 class SourceEvents : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents
 {
@@ -2581,24 +2610,24 @@ else
 	}
 
 	//////////////////////////////////////////////////////////////
-	int ReplaceLineIndent(int line, LANGPREFERENCES3* langPrefs, ref CacheLineIndentInfo cacheInfo)
+	int ReplaceLineIndent(int line, FormatOptions* fmtOpt, ref CacheLineIndentInfo cacheInfo)
 	{
 		wstring linetxt = GetText(line, 0, line, -1);
-		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
+		int p, orgn = countVisualSpaces(linetxt, fmtOpt.tabSize, &p);
 		int n = 0;
 		if(p < linetxt.length)
-			n = CalcLineIndent(line, 0, langPrefs, cacheInfo);
+			n = CalcLineIndent(line, 0, fmtOpt, cacheInfo);
 		if(n < 0)
 			n = 0;
 		if(n == orgn)
 			return S_OK;
 
-		return doReplaceLineIndent(line, p, n, langPrefs);
+		return doReplaceLineIndent(line, p, n, fmtOpt);
 	}
 
-	int doReplaceLineIndent(int line, int idx, int n, LANGPREFERENCES3* langPrefs)
+	int doReplaceLineIndent(int line, int idx, int n, FormatOptions* fmtOpt)
 	{
-		int tabsz = (langPrefs.fInsertTabs && langPrefs.uTabSize > 0 ? langPrefs.uTabSize : n + 1);
+		int tabsz = (fmtOpt.insertTabs && fmtOpt.tabSize > 0 ? fmtOpt.tabSize : n + 1);
 		string spc = replicate("\t", n / tabsz) ~ replicate(" ", n % tabsz);
 		wstring wspc = toUTF16(spc);
 
@@ -2826,16 +2855,18 @@ else
 	// - case/default
 	// - label:
 
-	int CalcLineIndent(int line, dchar ch, LANGPREFERENCES3* langPrefs, ref CacheLineIndentInfo cacheInfo)
+	int CalcLineIndent(int line, dchar ch, FormatOptions* fmtOpt, ref CacheLineIndentInfo cacheInfo)
 	{
 		LineTokenIterator lntokIt = LineTokenIterator(this, line, 0);
 		wstring startTok;
+		wstring startTok2;
 		if(ch != 0)
 			startTok ~= ch;
 		else
 		{
 			lntokIt.ensureNoComment(false);
 			startTok = lntokIt.getText();
+			startTok2 = lntokIt.getNextToken(1);
 		}
 		wstring txt;
 
@@ -2861,14 +2892,14 @@ else
 			while(cntIf > 0 && lntokIt.retreatOverBraces())
 			{
 				if(isOpenBraceOrCase(lntokIt)) // emergency exit on pending opening brace
-					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
+					return countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + fmtOpt.tabSize;
 				txt = lntokIt.getText();
 				if(txt == "if")
 					--cntIf;
 				else if(txt == "else")
 					++cntIf;
 			}
-			return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
+			return countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize);
 		}
 		bool findOpenBrace(ref LineTokenIterator it)
 		{
@@ -2908,13 +2939,13 @@ else
 			{
 				txt = lntokIt.getText();
 				if(txt == "{" || txt == "[") // emergency exit on pending opening brace
-					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
-				if(txt == "case" || txt == "default") // emergency exit on pending opening brace
+					return countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + (fmtOpt.indentCase ? fmtOpt.tabSize : 0);
+				if(txt == "case" || txt == "default")
 					if(lntokIt.getPrevToken() != "goto")
 						break;
 			}
 			while(lntokIt.retreatOverBraces());
-			return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
+			return countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize);
 		}
 
 		// called when previous line ends with a comma
@@ -2958,7 +2989,7 @@ else
 			}
 
 			wstring txt;
-			int commaIndent = countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
+			int commaIndent = countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize);
 			do
 			{
 				if(cacheInfo.findCommaInfoValid && lntokIt.line < cacheInfo.findCommaIndentLine)
@@ -2967,11 +2998,11 @@ else
 				txt = lntokIt.getText();
 				if(txt == "(")
 					// TODO: should scan for first non-white after '('
-					return saveCacheInfo(visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1));
+					return saveCacheInfo(visiblePosition(lntokIt.lineText, fmtOpt.tabSize, lntokIt.getIndex() + 1));
 				if(txt == "[")
 					return saveCacheInfo(commaIndent);
 				if(txt == ",")
-					commaIndent = countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
+					commaIndent = countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize);
 				if(txt == "{")
 				{
 					// figure out if this is a struct initializer, enum declaration or a statement group
@@ -2995,17 +3026,17 @@ else
 						}
 						while(lntokIt.retreatOverBraces());
 					}
-					return saveCacheInfo(commaIndent + langPrefs.uTabSize);
+					return saveCacheInfo(commaIndent + fmtOpt.tabSize);
 				}
 				if(isOpenBraceOrCase(lntokIt))
-					return saveCacheInfo(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize);
+					return saveCacheInfo(countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + fmtOpt.tabSize);
 
 				if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
 				{
 					// indent once from line with first comma
-					return saveCacheInfo(commaIndent + langPrefs.uTabSize);
+					return saveCacheInfo(commaIndent + fmtOpt.tabSize);
 //					lntokIt.advanceOverComments();
-//					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + langPrefs.uTabSize;
+//					return countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + fmtOpt.tabSize;
 				}
 			}
 			while(lntokIt.retreatOverBraces());
@@ -3024,13 +3055,13 @@ else
 		{
 			LineTokenIterator nit = it;
 			if(nit.advanceOverSpaces() && nit.line < line)
-				return visiblePosition(nit.lineText, langPrefs.uTabSize, nit.getIndex());
+				return visiblePosition(nit.lineText, fmtOpt.tabSize, nit.getIndex());
 		}
 
 		if(startTok == "}" || startTok == "]")
 		{
 			if(hasOpenBrace)
-				return countVisualSpaces(it.lineText, langPrefs.uTabSize);
+				return countVisualSpaces(it.lineText, fmtOpt.tabSize);
 			return 0;
 		}
 
@@ -3041,9 +3072,9 @@ else
 		int indent = 0, labelIndent = 0;
 		bool newStmt = (prevTok == ";" || prevTok == "}" || prevTok == "{" || prevTok == ":");
 		if(newStmt)// || prevTok == ":")
-			if(dLex.isIdentifier(startTok) && lntokIt.getNextToken(2) == ":") // is it a jump label?
+			if(dLex.isIdentifier(startTok) && startTok2 == ":") // is it a jump label?
 			{
-				labelIndent = -langPrefs.uTabSize;
+				labelIndent = -fmtOpt.tabSize;
 				newStmt = true;
 			}
 		if(newStmt)
@@ -3054,18 +3085,18 @@ else
 		else if(prevTok == ")" && (startTok == "in" || startTok == "out" || startTok == "body"))
 			indent = 0; // special case to not indent in/out/body contracts
 		else if(startTok != "{" && startTok != "[" && hasOpenBrace)
-			indent = langPrefs.uTabSize;
+			indent = fmtOpt.tabSize;
 		if(prevTok == "{" || prevTok == "[")
-			return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + labelIndent, langPrefs.uTabSize);
+			return nextTabPosition(countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + labelIndent, fmtOpt.tabSize);
 
 		bool skipLabel = false;
 		do
 		{
 			txt = lntokIt.getText();
 			if(txt == "(")
-				return visiblePosition(lntokIt.lineText, langPrefs.uTabSize, lntokIt.getIndex() + 1);
+				return visiblePosition(lntokIt.lineText, fmtOpt.tabSize, lntokIt.getIndex() + 1);
 			if(isOpenBraceOrCase(lntokIt))
-				return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + indent + labelIndent, langPrefs.uTabSize);
+				return nextTabPosition(countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + indent + labelIndent, fmtOpt.tabSize);
 
 			if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
 			{
@@ -3074,19 +3105,19 @@ else
 				// skip labels
 				wstring label = lntokIt.getText();
 				if(!dLex.isIdentifier(label) || lntokIt.getNextToken() != ":")
-					return countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + indent + labelIndent;
+					return countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + indent + labelIndent;
 				lntokIt.retreatOverComments();
 				newStmt = true;
 			}
 			if(!newStmt && isKeyword(toUTF8(txt))) // dLex.isIdentifier(txt))
 			{
-				return indent + countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize);
+				return indent + countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize);
 			}
 			if(newStmt && txt == "else")
 			{
 				findMatchingIf();
 				if(isOpenBraceOrCase(lntokIt))
-					return nextTabPosition(countVisualSpaces(lntokIt.lineText, langPrefs.uTabSize) + labelIndent, + langPrefs.uTabSize);
+					return nextTabPosition(countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + labelIndent, + fmtOpt.tabSize);
 			}
 		}
 		while(lntokIt.retreatOverBraces());
@@ -3096,16 +3127,16 @@ else
 
 	int ReindentLines(IVsTextView view, int startline, int endline)
 	{
-		LANGPREFERENCES3 langPrefs;
-		if(int rc = GetUserPreferences(&langPrefs, view))
+		FormatOptions fmtOpt;
+		if(int rc = GetFormatOptions(&fmtOpt, view))
 			return rc;
-		if(langPrefs.IndentStyle != vsIndentStyleSmart)
+		if(fmtOpt.indentStyle != vsIndentStyleSmart)
 			return S_FALSE;
 
 		CacheLineIndentInfo cacheInfo;
 		for(int line = startline; line <= endline; line++)
 		{
-			int rc = ReplaceLineIndent(line, &langPrefs, cacheInfo);
+			int rc = ReplaceLineIndent(line, &fmtOpt, cacheInfo);
 			if(FAILED(rc))
 				return rc;
 		}
@@ -3753,7 +3784,7 @@ else
 		return S_OK;
 	}
 
-	int CompleteLineBreak(int line, int col, ref LANGPREFERENCES3 langPrefs)
+	int CompleteLineBreak(int line, int col, ref FormatOptions fmtOpt)
 	{
 		if (mLastBraceCompletionLine != line - 1)
 			return S_FALSE;
@@ -3767,7 +3798,7 @@ else
 			if (int rc = mBuffer.ReplaceLines(line, col, line, col, newline.ptr, newline.length, &changedSpan))
 				return rc;
 			CacheLineIndentInfo cacheInfo;
-			if (int rc = ReplaceLineIndent(line + 1, &langPrefs, cacheInfo))
+			if (int rc = ReplaceLineIndent(line + 1, &fmtOpt, cacheInfo))
 				return rc;
 
 			mLastBraceCompletionText = newline ~ mLastBraceCompletionText;
@@ -3775,10 +3806,10 @@ else
 		return S_OK;
 	}
 
-	int AutoCompleteBrace(ref int line, ref int col, dchar ch, ref LANGPREFERENCES3 langPrefs)
+	int AutoCompleteBrace(ref int line, ref int col, dchar ch, ref FormatOptions fmtOpt)
 	{
 		if(ch == '\n')
-			return CompleteLineBreak(line, col, langPrefs);
+			return CompleteLineBreak(line, col, fmtOpt);
 
 		if(ch == '"' || ch == '`' || ch == '\'')
 			return CompleteQuote(line, col, ch);
@@ -4372,3 +4403,169 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 }
 
 ///////////////////////////////////////////////////////////////////////
+
+version(unittest)
+{
+	mixin template ImplementInterface(I)
+	{
+		static foreach(i, m; __traits(allMembers, I))
+		{
+			static if (is(typeof(mixin(m)))) // filter IUnknown?
+			{
+				mixin("enum type" ~ i.stringof ~ " = typeof(" ~ m ~ ").stringof;");
+				//pragma(msg, m, " ", mixin("type" ~ i.stringof));
+				static if (mixin("type" ~ i.stringof).length > 21)
+					static if (mixin("type" ~ i.stringof)[0..21] == "extern (Windows) int(")
+						mixin("override HRESULT " ~ m ~ mixin("type" ~ i.stringof)[20..$] ~ " { return E_NOTIMPL; }");
+			}
+		}
+	}
+	class TextLines : DComObject, IVsTextLines
+	{
+		mixin ImplementInterface!IVsTextLines;
+
+		HRESULT GetLineText(
+            in int       iStartLine,  // starting line
+            in CharIndex iStartIndex, // starting character index within the line (must be <= length of line)
+            in int       iEndLine,    // ending line
+            in CharIndex iEndIndex,   // ending character index within the line (must be <= length of line)
+            /+[out]+/ BSTR *    pbstrBuf)
+		{
+			if (iStartLine >= text.length)
+				return E_FAIL;
+			if (iStartIndex > text[iStartLine].length)
+				return E_FAIL;
+			int endLine = iEndLine < 0 ? text.length - 1 : iEndLine;
+			if (endLine >= text.length)
+				return E_FAIL;
+			int endIndex = iEndIndex < 0 ? text[endLine].length : iEndIndex;
+			if (endIndex > text[endLine].length)
+				return E_FAIL;
+
+			if (iStartLine == endLine)
+			{
+				if (endIndex < iStartIndex)
+					return E_FAIL;
+				*pbstrBuf = allocwBSTR(text[iStartLine][iStartIndex..endIndex]);
+			}
+			else
+			{
+				auto s = text[iStartLine][iStartIndex .. $];
+				for(int ln = iStartLine + 1; ln < endLine; ln++)
+					s ~= "\n"w ~ text[ln];
+				s ~= "\n"w ~ text[endLine][0..endIndex];
+				*pbstrBuf = allocwBSTR(s);
+			}
+			return S_OK;
+		}
+
+        HRESULT GetLastLineIndex (/+[out]+/ int *piLine, 
+		                          /+[out]+/ int *piIndex)
+		{
+			*piLine = text.length - 1;
+			*piIndex = text.length > 0 ? text[$-1].length : -1;
+			return S_OK;
+		};
+		HRESULT GetLengthOfLine (in int iLine, 
+		                         int *piLength)
+		{
+			if (iLine >= text.length)
+				return E_FAIL;
+			*piLength = text[iLine].length;
+			return S_OK;
+		}
+
+		override HRESULT ReplaceLines (
+            in int       iStartLine,  // starting line
+            in CharIndex iStartIndex, // starting character index within the line (must be <= length of line)
+            in int       iEndLine,    // ending line
+            in CharIndex iEndIndex,   // ending character index within the line (must be <= length of line)
+            in LPCWSTR   pszText,     // text to insert, if any
+            in int       iNewLen,     // # of chars to insert, if any
+            TextSpan *pChangedSpan)  // range of characters changed
+		{
+			assert(iStartLine == iEndLine);
+			if (iStartLine >= text.length)
+				return E_FAIL;
+			if (iEndIndex < iStartIndex)
+				return E_FAIL;
+			if (iEndIndex > text[iStartLine].length)
+				return E_FAIL;
+			text[iStartLine] = text[iStartLine][0..iStartIndex] ~ pszText[0..iNewLen] ~ text[iStartLine][iEndIndex..$];
+			return S_OK;
+		}
+
+		const(wchar)[][] text;
+	}
+
+	void testIndent(const(wchar)[] txt, const(wchar)[] exp, bool indentCase)
+	{
+		Package pkg = newCom!Package();
+		TextLines textLines = newCom!TextLines();
+		textLines.text = splitLines(txt);
+		Source src = newCom!Source(textLines);
+		int lines = textLines.text.length;
+
+		FormatOptions fmtOpt;
+		fmtOpt.tabSize = 4;
+		fmtOpt.indentSize = 4;
+		fmtOpt.insertTabs = true;
+		fmtOpt.indentCase = indentCase;
+
+		Source.CacheLineIndentInfo cacheInfo;
+		for(int line = 0; line < lines; line++)
+		{
+			int rc = src.ReplaceLineIndent(line, &fmtOpt, cacheInfo);
+			assert(!FAILED(rc));
+		}
+		const(wchar)[] ntxt = join(textLines.text, "\n"w);
+		exp = stripRight(translate(exp, null, "\r"w)); // remove \r and trailing \n
+		assert(ntxt == exp);
+
+		src.Dispose();
+		pkg.Dispose();
+	}
+}
+
+unittest
+{
+	const(wchar)[] txt = q{
+void foo()
+ {
+  switch(n)
+  {
+  case 1:
+   return;
+  case 2:
+  break;
+  }
+ }
+};
+	const(wchar)[] exp = q{
+void foo()
+{
+	switch(n)
+	{
+		case 1:
+			return;
+		case 2:
+			break;
+	}
+}
+};
+	testIndent(txt, exp, true);
+
+	const(wchar)[] exp2 = q{
+void foo()
+{
+	switch(n)
+	{
+	case 1:
+		return;
+	case 2:
+		break;
+	}
+}
+};
+	testIndent(txt, exp2, false);
+}

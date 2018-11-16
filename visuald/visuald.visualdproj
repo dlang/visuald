@@ -222,7 +222,7 @@
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
+  <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
   <mscoff>0</mscoff>
   <trace>0</trace>
@@ -232,7 +232,7 @@
   <vgc>0</vgc>
   <symdebug>1</symdebug>
   <symdebugref>1</symdebugref>
-  <optimize>1</optimize>
+  <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -248,10 +248,10 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>1</noboundscheck>
+  <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
-  <useInline>1</useInline>
+  <useUnitTests>1</useUnitTests>
+  <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -273,8 +273,8 @@
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <outdir>..\bin\$(ConfigurationName)\$(ProjectName)</outdir>
+  <objdir>$(OutDir)</objdir>
   <objname />
   <libname />
   <doDocComments>1</doDocComments>
@@ -300,7 +300,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>0</runCv2pdb>
+  <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)\cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
@@ -318,7 +318,7 @@
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
-  <privatePhobos>0</privatePhobos>
+  <privatePhobos>1</privatePhobos>
   <additionalOptions>-gx</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -760,12 +760,6 @@
   <Folder name="a_workaround">
    <File path="workaround.d" />
   </Folder>
-  <Folder name="lexer">
-   <File path="..\vdc\ivdserver.d" />
-   <File path="..\vdc\lexer.d" />
-   <File path="..\vdc\util.d" />
-   <File path="..\vdc\versions.d" />
-  </Folder>
   <Folder name="language">
    <File path="colorizer.d" />
    <File path="completion.d" />
@@ -777,6 +771,12 @@
    <File path="vdextensions.d" />
    <File path="vdserverclient.d" />
    <File path="viewfilter.d" />
+  </Folder>
+  <Folder name="lexer">
+   <File path="..\vdc\ivdserver.d" />
+   <File path="..\vdc\lexer.d" />
+   <File path="..\vdc\util.d" />
+   <File path="..\vdc\versions.d" />
   </Folder>
   <Folder name="project">
    <File path="automation.d" />

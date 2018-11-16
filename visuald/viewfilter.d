@@ -1099,10 +1099,10 @@ version(tip)
 	//////////////////////////////////////////////////////////////
 	int HandleSmartIndent(dchar ch)
 	{
-		LANGPREFERENCES3 langPrefs;
-		if(int rc = GetUserPreferences(&langPrefs, mView))
+		FormatOptions fmtOpt;
+		if(int rc = GetFormatOptions(&fmtOpt, mView))
 			return rc;
-		if(langPrefs.IndentStyle != vsIndentStyleSmart)
+		if(fmtOpt.indentStyle != vsIndentStyleSmart)
 			return S_FALSE;
 
 		int line, idx, len;
@@ -1114,7 +1114,7 @@ version(tip)
 			return ReindentLines();
 
 		wstring linetxt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
-		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
+		int p, orgn = countVisualSpaces(linetxt, fmtOpt.tabSize, &p);
 		wstring trimmed;
 		if(std.ascii.isAlpha(ch) && ((trimmed = strip(linetxt)) == "in" || trimmed == "out" || trimmed == "body"))
 			return ReindentLines();
@@ -1122,14 +1122,14 @@ version(tip)
 			return S_FALSE; // do nothing if not at beginning of line
 
 		Source.CacheLineIndentInfo cacheInfo;
-		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &langPrefs, cacheInfo);
+		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &fmtOpt, cacheInfo);
 		if(n < 0 || n == orgn)
 			return S_OK;
 
 		if(ch == '\n')
 			return mView.SetCaretPos(line, n);
 		else
-			return mCodeWinMgr.mSource.doReplaceLineIndent(line, p, n, &langPrefs);
+			return mCodeWinMgr.mSource.doReplaceLineIndent(line, p, n, &fmtOpt);
 	}
 
 	int ReindentLines()
@@ -1183,7 +1183,9 @@ version(tip)
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return rc;
 
-		if(int rc = mCodeWinMgr.mSource.AutoCompleteBrace(line, idx, ch, langPrefs))
+		FormatOptions fmtOpt;
+		GetFormatOptions(&fmtOpt, &langPrefs);
+		if(int rc = mCodeWinMgr.mSource.AutoCompleteBrace(line, idx, ch, fmtOpt))
 			return rc;
 
 		// restore caret position, it has been moved by the insertion
