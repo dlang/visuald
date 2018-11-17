@@ -45,6 +45,10 @@ prerequisites:
 visuald_vs:
 	devenv /Project "visuald"   /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
+visuald_test:
+	devenv /Project "visuald"   /Build "TestDebug|Win32" visuald_vs10.sln
+	bin\TestDebug\VisualD\VisualD.exe
+
 vdserver:
 	devenv /Project "vdserver"  /Build "$(CONFIG)|Win32" visuald_vs10.sln
 

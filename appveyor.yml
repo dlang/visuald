@@ -108,6 +108,8 @@ build_script:
   - nmake prerequisites || nmake prerequisites
   # build Visual D
   - nmake visuald_vs
+  # build and run Visual D unittests
+  - nmake visuald_test
   # Fetch submodules
   - git submodule update --init --recursive
   - cd ..
