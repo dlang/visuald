@@ -318,7 +318,7 @@
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
-  <privatePhobos>1</privatePhobos>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions>-gx</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
