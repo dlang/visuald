@@ -2995,6 +2995,7 @@ else
 				if(cacheInfo.findCommaInfoValid && lntokIt.line < cacheInfo.findCommaIndentLine)
 					return saveCacheInfo(cacheInfo.findCommaIndent);
 
+				wstring prevtxt = txt;
 				txt = lntokIt.getText();
 				if(txt == "(")
 					// TODO: should scan for first non-white after '('
@@ -3015,6 +3016,11 @@ else
 						do
 						{
 							txt = lntokIt.getText();
+							if(txt == "enum")
+							{
+								commaIndent = countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize);
+								break;
+							}
 							if(txt == "{" || txt == "}" || txt == ";")
 							{
 								if(prev == "enum")
@@ -3031,9 +3037,38 @@ else
 				if(isOpenBraceOrCase(lntokIt))
 					return saveCacheInfo(countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + fmtOpt.tabSize);
 
-				if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
+				if(txt == ";") // triggers the end of a statement, but not do {} while()
+					return saveCacheInfo(commaIndent + fmtOpt.tabSize);
+
+				if(txt == "}" && prevtxt != ",")
 				{
+					// end of statement or struct initializer?
+					// assumes it on '}', 
+/+					bool isPrecededByStatement(ref LineTokenIterator it)
+					{
+						if (!it.retreatOverComments())
+							return false;
+
+						txt = it.getText();
+						if (txt == "{")
+							return true; // empty statement {}
+
+						do
+						{
+							if (txt == ";" || txt == "if" || txt == "switch" || txt == "while" || txt == "for" || 
+								txt == "foreach" || txt == "with" || txt == "synchronized" || txt == "try" || txt == "asm")
+								return true;
+							if (!it.retreatOverBraces())
+								break;
+							txt = it.getText();
+						}
+						while(txt != "{");
+						return false;
+					}
 					// indent once from line with first comma
+					if (!isPrecededByStatement(lntokIt))
+						return saveCacheInfo(commaIndent + fmtOpt.tabSize);
++/
 					return saveCacheInfo(commaIndent + fmtOpt.tabSize);
 //					lntokIt.advanceOverComments();
 //					return countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + fmtOpt.tabSize;
@@ -3041,7 +3076,7 @@ else
 			}
 			while(lntokIt.retreatOverBraces());
 
-			return saveCacheInfo(0);
+			return saveCacheInfo(fmtOpt.tabSize);
 		}
 
 		if(startTok == "else")
@@ -3051,8 +3086,9 @@ else
 
 		LineTokenIterator it = lntokIt;
 		bool hasOpenBrace = findOpenBrace(it);
-		if(hasOpenBrace && txt == "(")
+		if(hasOpenBrace && (txt == "(" || txt == "["))
 		{
+			// align to text following the open brace
 			LineTokenIterator nit = it;
 			if(nit.advanceOverSpaces() && nit.line < line)
 				return visiblePosition(nit.lineText, fmtOpt.tabSize, nit.getIndex());
@@ -3092,13 +3128,14 @@ else
 		bool skipLabel = false;
 		do
 		{
+			wstring nexttxt = txt;
 			txt = lntokIt.getText();
 			if(txt == "(")
 				return visiblePosition(lntokIt.lineText, fmtOpt.tabSize, lntokIt.getIndex() + 1);
 			if(isOpenBraceOrCase(lntokIt))
 				return nextTabPosition(countVisualSpaces(lntokIt.lineText, fmtOpt.tabSize) + indent + labelIndent, fmtOpt.tabSize);
 
-			if(txt == "}" || txt == ";") // triggers the end of a statement, but not do {} while()
+			if((txt == "}" && nexttxt != ",") || txt == ";") // triggers the end of a statement, but not do {} while()
 			{
 				// use indentation of next statement
 				lntokIt.advanceOverComments();
@@ -4459,7 +4496,12 @@ version(unittest)
 			return S_OK;
 		}
 
-        HRESULT GetLastLineIndex (/+[out]+/ int *piLine, 
+		HRESULT GetLineCount (/+[out]+/ int *piLines)
+		{
+			*piLines = text.length;
+			return S_OK;
+		};
+		HRESULT GetLastLineIndex (/+[out]+/ int *piLine, 
 		                          /+[out]+/ int *piIndex)
 		{
 			*piLine = text.length - 1;
@@ -4527,6 +4569,7 @@ version(unittest)
 	}
 }
 
+//////////////////////////////////
 unittest
 {
 	const(wchar)[] txt = q{
@@ -4568,4 +4611,86 @@ void foo()
 }
 };
 	testIndent(txt, exp2, false);
+}
+
+//////////////////////////////////
+unittest
+{
+	const(wchar)[] txt = q{
+private enum Enum : int
+{
+ E1,
+ E2,
+ E3 = E1 +
+ E2,
+ E4
+}
+};
+	const(wchar)[] exp = q{
+private enum Enum : int
+{
+	E1,
+	E2,
+	E3 = E1 +
+		E2,
+	E4
+}
+};
+	testIndent(txt, exp, true);
+}
+
+//////////////////////////////////
+unittest
+{
+	const(wchar)[] txt = q{
+auto var1,
+var2 = () { return 1; },
+var3;
+const LanguageProperty[] g_languageProperties =
+[
+ { "RequestStockColors"w, 0 },
+ { "ShowCompletion"w, 1 },
+];
+const int[][] arr =
+[
+ [ 1, 2, 3, 4 ],
+ [ 1, 2, 3, 4,
+ 5, 6, 7, 8 ],
+ [ 1, 2, 3, 4 ],
+];
+void fun( int a,
+int b)
+{
+int x = a,
+y = b;
+return fun( a,
+b );
+}
+};
+	const(wchar)[] exp = q{
+auto var1,
+	var2 = () { return 1; },
+	var3;
+const LanguageProperty[] g_languageProperties =
+[
+	{ "RequestStockColors"w, 0 },
+	{ "ShowCompletion"w, 1 },
+];
+const int[][] arr =
+[
+	[ 1, 2, 3, 4 ],
+	[ 1, 2, 3, 4,
+	  5, 6, 7, 8 ],
+	[ 1, 2, 3, 4 ],
+];
+void fun( int a,
+		  int b)
+{
+	int x = a,
+		y = b;
+	return fun( a,
+				b );
+}
+};
+	testIndent(txt, exp, true);
 }
