@@ -281,6 +281,13 @@ version(tip)
 				return HandleFindReferences();
 			case cmdidF1Help:
 				return HandleHelp();
+			case cmdidPopBrowseContext:
+			case cmdidForwardBrowseContext:
+				int line, idx;
+				if(mView.GetCaretPos(&line, &idx) != S_OK)
+					return S_FALSE;
+				bool forward = nCmdID == cmdidForwardBrowseContext;
+				return PopBrowseContext(BrowseContext(mCodeWinMgr.mSource.GetFileName(), line, idx), forward);
 			default:
 				break;
 			}
@@ -700,6 +707,8 @@ version(tip)
 			case cmdidFindReferences:
 			//case VsCommands.GotoDecl:
 			//case VsCommands.GotoRef:
+			case cmdidPopBrowseContext:
+			case cmdidForwardBrowseContext:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
@@ -1367,7 +1376,10 @@ else
 				}
 			}
 			if (hr == S_OK)
+			{
+				SaveBrowseContext(BrowseContext(file, line, idx));
 				return hr;
+			}
 		}
 
 		if(Package.GetGlobalOptions().semanticGotoDef)
@@ -1377,6 +1389,7 @@ else
 			span.iStartIndex = span.iEndIndex = idx;
 			if (!mCodeWinMgr.mSource.GetTipSpan(&span))
 				return S_FALSE;
+			mLastGotoCtx = BrowseContext(file, line, idx);
 			mLastGotoDecl = decl;
 			mLastGotoDef = to!string(mCodeWinMgr.mSource.GetText(span.iStartLine, span.iStartIndex, span.iEndLine, span.iEndIndex));
 			Package.GetLanguageService().GetDefinition(mCodeWinMgr.mSource, &span, &GotoDefinitionCallBack);
@@ -1388,7 +1401,10 @@ else
 			if(word.length <= 0)
 				return S_FALSE;
 
-			return GotoDefinitionJSON(file, word);
+			HRESULT hr = GotoDefinitionJSON(file, word);
+			if(hr == S_OK)
+				SaveBrowseContext(BrowseContext(file, line, idx));
+			return hr;
 		}
 	}
 
@@ -1516,18 +1532,25 @@ else
 		{
 			string word = split(mLastGotoDef, ".")[$-1];
 			if(GotoDefinitionCPP(word) == S_OK)
+			{
+				SaveBrowseContext(mLastGotoCtx);
 				return;
+			}
 		}
 		if (fname.length)
 		{
 			HRESULT hr = OpenFileInSolution(fname, span.iStartLine, span.iStartIndex, null, false);
-			if(hr != S_OK)
+			if(hr == S_OK)
+				SaveBrowseContext(mLastGotoCtx);
+			else
 				showStatusBarText(format("Cannot open %s(%d) for goto definition", fname, span.iStartLine));
 		}
 		else
 		{
 			string word = split(mLastGotoDef, ".")[$-1];
-			GotoDefinitionJSON(mCodeWinMgr.mSource.GetFileName(), word);
+			if (GotoDefinitionJSON(mCodeWinMgr.mSource.GetFileName(), word) == S_OK)
+				SaveBrowseContext(mLastGotoCtx);
+			
 			//showStatusBarText("No definition found for '" ~ mLastGotoDef ~ "'");
 		}
 	}
@@ -1827,6 +1850,7 @@ version(none) // quick info tooltips not good enough yet
 	string mTipText;
 	uint mTipRequest;
 	string mLastGotoDef;
+	BrowseContext mLastGotoCtx;
 	bool mLastGotoDecl;
 
 	extern(D) void OnGetTipText(uint request, string filename, string text, TextSpan span)
