@@ -460,7 +460,7 @@ class ProjectOptions
 			cmd ~= " -allinst";
 
 		if(privatePhobos)
-			cmd ~= " -defaultlib=" ~ quoteFilename(normalizeDir(outdir) ~ "privatephobos.lib");
+			cmd ~= " -defaultlib=" ~ quoteFilename(normalizeDir(objdir) ~ "privatephobos.lib");
 
 		if(doDocComments && compile && !syntaxOnly)
 		{
