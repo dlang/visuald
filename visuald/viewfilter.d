@@ -441,6 +441,12 @@ version(tip)
 					HandleBraceCompletion('\n');
 					HandleSmartIndent('\n');
 				}
+				else
+				{
+					with(mCodeWinMgr.mSource.mLastTextLineChange)
+						if(iStartLine != iNewEndLine)
+							return ReindentLines(iStartLine, iNewEndLine);
+				}
 				break;
 
 			case ECMD_LEFT:
