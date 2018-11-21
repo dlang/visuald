@@ -123,7 +123,7 @@ namespace DParserCOMServer
 
 				var invalidCodeRegions = new List<ISyntaxRegion>();
 				var textLocationsToHighlight =
-					TypeReferenceFinder.Scan(editorData, cancelTokenSource.Token, invalidCodeRegions);
+					TypeReferenceFinder.Scan(editorData, cancelTokenSource.Token, true, invalidCodeRegions);
 				_identiferTypes[filename] = TextLocationsToIdentifierSpans(textLocationsToHighlight);
 			}
 			catch (Exception ex)
