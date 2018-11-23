@@ -26,7 +26,7 @@
 
 NSIS    = $(PROGRAMFILES)\NSIS
 MSBUILD = msbuild
-MSBUILD15 = "$(PROGRAMFILES)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild" 
+MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild" 
 CONFIG  = Release COFF32
 
 ##############################################################
@@ -56,7 +56,7 @@ dparser:
 	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5 /p:DefineConstants=NET40 /t:Rebuild
 
 dparser_test:
-	dotnet test vdc\abothe\VDServer.sln -c Release
+	set PLATFORM="Any CPU" && dotnet test vdc\abothe\VDServer.sln -c Release
 
 fake_dparser:
 	if not exist bin\Release\DParserCOMServer\nul md bin\Release\DParserCOMServer
