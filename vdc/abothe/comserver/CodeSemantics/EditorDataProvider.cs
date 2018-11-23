@@ -40,11 +40,7 @@ namespace DParserCOMServer.CodeSemantics
 		{
 			_cacheView = new VDserverParseCacheView(uniqueDirectories(importLines));
 
-			var versionIds = string.IsNullOrWhiteSpace(versionIdLines) ? new HashSet<string>()
-				: new HashSet<string>(versionIdLines.Split(newlineSeparator, StringSplitOptions.RemoveEmptyEntries));
-			setupVersionIds(versionIds, flags);
-			_versionIds = new string[versionIds.Count];
-			versionIds.CopyTo(_versionIds);
+			_versionIds = versionIdLines.Split(newlineSeparator, StringSplitOptions.RemoveEmptyEntries);
 			_debugIds = string.IsNullOrWhiteSpace(debugIdLines) ? new string[0]
 				: debugIdLines.Split(newlineSeparator, StringSplitOptions.RemoveEmptyEntries);
 
@@ -96,48 +92,5 @@ namespace DParserCOMServer.CodeSemantics
 			return uniqueDirs;
 		}
 
-		static void setupVersionIds(HashSet<String> versions, uint flags)
-		{
-			versions.Add("Windows");
-			versions.Add("LittleEndian");
-			versions.Add("D_HardFloat");
-			versions.Add("all");
-			versions.Add("D_Version2");
-			if ((flags & 1) != 0)
-				versions.Add("unittest");
-			if ((flags & 2) != 0)
-				versions.Add("assert");
-			if ((flags & 4) != 0)
-			{
-				versions.Add("Win64");
-				versions.Add("X86_64");
-				versions.Add("D_InlineAsm_X86_64");
-				versions.Add("D_LP64");
-			}
-			else
-			{
-				versions.Add("Win32");
-				versions.Add("X86");
-				versions.Add("D_InlineAsm_X86");
-			}
-			if ((flags & 8) != 0)
-				versions.Add("D_Coverage");
-			if ((flags & 16) != 0)
-				versions.Add("D_Ddoc");
-			if ((flags & 32) != 0)
-				versions.Add("D_NoBoundsChecks");
-			if ((flags & 64) != 0)
-				versions.Add("GNU");
-			else if ((flags & 0x4000000) != 0)
-				versions.Add("LDC");
-			else
-				versions.Add("DigitalMars");
-			if ((flags & 0x8000000) != 0)
-				versions.Add("CRuntime_Microsoft");
-			else if ((flags & 0x4000040) != 0) // GNU or LDC
-				versions.Add("CRuntime_MinGW");
-			else
-				versions.Add("CRuntime_DigitalMars");
-		}
 	}
 }
