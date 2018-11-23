@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using D_Parser.Completion;
 using D_Parser.Misc;
 
@@ -14,6 +15,7 @@ namespace DParserCOMServer.CodeSemantics
 		private bool _isDebug;
 		private uint _debugLevel;
 		private uint _versionNumber;
+		private uint _modificationCount;
 
 		private static readonly char[] newlineSeparator = { '\n' };
 
@@ -32,21 +34,41 @@ namespace DParserCOMServer.CodeSemantics
 			return editorData;
 		}
 
+		public uint ModificationCount()
+		{
+			return _modificationCount;
+		}
+
 		public void ConfigureEnvironment(
 			string importLines,
 			string versionIdLines,
 			string debugIdLines,
 			uint flags)
 		{
-			_cacheView = new VDserverParseCacheView(uniqueDirectories(importLines));
+			var uniqueImports = uniqueDirectories(importLines);
 
-			_versionIds = versionIdLines.Split(newlineSeparator, StringSplitOptions.RemoveEmptyEntries);
-			_debugIds = string.IsNullOrWhiteSpace(debugIdLines) ? new string[0]
+			var versionIds = string.IsNullOrWhiteSpace(versionIdLines) ? new string[0]
+				: versionIdLines.Split(newlineSeparator, StringSplitOptions.RemoveEmptyEntries);
+			var debugIds = string.IsNullOrWhiteSpace(debugIdLines) ? new string[0]
 				: debugIdLines.Split(newlineSeparator, StringSplitOptions.RemoveEmptyEntries);
 
-			_isDebug = (flags & 2) != 0;
-			_debugLevel = (flags >> 16) & 0xff;
-			_versionNumber = (flags >> 8) & 0xff;
+			var isDebug = (flags & 2) != 0;
+			var debugLevel = (flags >> 16) & 0xff;
+			var versionNumber = (flags >> 8) & 0xff;
+
+			if (_cacheView == null ||
+				!(_cacheView as VDserverParseCacheView).PackageRootDirs.SequenceEqual(uniqueImports) ||
+				isDebug != _isDebug || debugLevel != _debugLevel || versionNumber != _versionNumber ||
+				!versionIds.SequenceEqual(_versionIds) || !debugIds.SequenceEqual(debugIds))
+			{
+				_cacheView = new VDserverParseCacheView(uniqueImports);
+				_isDebug = isDebug;
+				_debugLevel = debugLevel;
+				_versionNumber = versionNumber;
+				_versionIds = versionIds;
+				_debugIds = debugIds;
+				_modificationCount++;
+			}
 
 			CompletionOptions.Instance.ShowUFCSItems = (flags & 0x2000000) != 0;
 			CompletionOptions.Instance.DisableMixinAnalysis = (flags & 0x1000000) == 0;

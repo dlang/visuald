@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using D_Parser.Completion;
@@ -13,6 +14,9 @@ namespace DParserCOMServer.CodeSemantics
 		private Task<TaskReturnType> _task;
 		private readonly EditorDataProvider _editorDataProvider;
 		private readonly VDServer _vdServer;
+
+		private EditorData _editorData;
+		private uint _editorDataModificationCount;
 
 		protected AbstractVDServerTask(VDServer vdServer,EditorDataProvider editorDataProvider)
 		{
@@ -32,14 +36,38 @@ namespace DParserCOMServer.CodeSemantics
 				_cancellation.CancelAfter(CompletionOptions.Instance.CompletionTimeout);
 			_hardCancel = new CancellationTokenSource();
 
+			var editorData = MakeInitialEditorData(handledModuleFile, caretLocation);
 			_task = Task.Run(() =>
-				Process(MakeInitialEditorData(handledModuleFile, caretLocation), runParameters),
+				Process(editorData, runParameters),
 				_hardCancel.Token);
 		}
 
 		private EditorData MakeInitialEditorData(string handledModuleFile, CodeLocation caretLocation)
 		{
-			var editorData = _editorDataProvider.MakeEditorData();
+			// if possible, keep the EditorData, especially resolution contexts
+			EditorData editorData;
+			uint modificationCount = _editorDataProvider.ModificationCount();
+			if (_editorData == null || _editorDataModificationCount != modificationCount)
+			{
+				editorData = _editorDataProvider.MakeEditorData();
+			}
+			else
+			{
+				// wait for pending task to finish/cancel, so we do not access
+				//  the context from different threads
+				try
+				{
+					if (_task != null)
+						_ = _task.Result;
+				}
+				catch (TaskCanceledException)
+				{
+				}
+				catch (AggregateException)
+				{
+				}
+				editorData = _editorData;
+			}
 			editorData.CancelToken = _cancellation.Token;
 			handledModuleFile = EditorDataProvider.normalizePath(handledModuleFile);
 			var ast = _vdServer.GetModule(handledModuleFile);
@@ -47,6 +75,9 @@ namespace DParserCOMServer.CodeSemantics
 			editorData.ModuleCode = _vdServer._sources[handledModuleFile];
 			editorData.CaretLocation = caretLocation;
 			editorData.CaretOffset = GetCodeOffset(editorData.ModuleCode, caretLocation);
+
+			_editorData = editorData;
+			_editorDataModificationCount = modificationCount;
 			return editorData;
 		}
 
