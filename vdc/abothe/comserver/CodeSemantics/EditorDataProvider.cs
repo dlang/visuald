@@ -39,6 +39,11 @@ namespace DParserCOMServer.CodeSemantics
 			return _modificationCount;
 		}
 
+		public void OnSourceChanged()
+		{
+			_modificationCount++;
+		}
+
 		public void ConfigureEnvironment(
 			string importLines,
 			string versionIdLines,

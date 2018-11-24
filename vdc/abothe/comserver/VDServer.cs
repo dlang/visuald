@@ -102,6 +102,7 @@ namespace DParserCOMServer
 			_modules [filename] = ast;
 			_sources[filename] = srcText;
 			GlobalParseCache.AddOrUpdateModule(ast);
+			_editorDataProvider.OnSourceChanged();
 
 			if ((flags & 2) != 0)
 				UpdateIdentifierTypes(filename, ast);
