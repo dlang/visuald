@@ -25,7 +25,7 @@ namespace DParserCOMServer.CodeSemantics
 			{
 				var invalidCodeRegions = new List<ISyntaxRegion>();
 				var textLocationsToHighlight =
-					TypeReferenceFinder.Scan(editorData, editorData.CancelToken, true, invalidCodeRegions);
+					TypeReferenceFinder.Scan(editorData, editorData.CancelToken, resolveTypes, invalidCodeRegions);
 				return TextLocationsToIdentifierSpans(textLocationsToHighlight);
 			}
 			catch (Exception ex)

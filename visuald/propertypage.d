@@ -2416,7 +2416,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 14;
+		kNeededLines = 15;
 	}
 
 	override void CreateControls()
@@ -2424,7 +2424,8 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 3;
 		AddTitleLine("Colorizer");
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
-		AddControl("", mSemanticHighlighting = new CheckBox(mCanvas, "Colorize types from semantic analysis (experimental)"));
+		AddControl("", mSemanticHighlighting = new CheckBox(mCanvas, "Colorize identifiers from semantic analysis (experimental)"));
+		AddControl("", mResolveFields = new CheckBox(mCanvas, "   resolving fields and aliases (can be slow)"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas), 1000);
 		AddTitleLine("Coverage");
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
@@ -2441,6 +2442,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
 		mSemanticHighlighting.setChecked(opts.semanticHighlighting);
+		mResolveFields.setChecked(opts.semanticResolveFields);
 		mColorizeCoverage.setChecked(opts.ColorizeCoverage);
 		mShowCoverageMargin.setChecked(opts.showCoverageMargin);
 		mAutoOutlining.setChecked(opts.autoOutlining);
@@ -2457,6 +2459,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions);
 		changes += changeOption(mSemanticHighlighting.isChecked(), opts.semanticHighlighting, refopts.semanticHighlighting);
+		changes += changeOption(mResolveFields.isChecked(), opts.semanticResolveFields, refopts.semanticResolveFields);
 		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage);
 		changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin);
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining);
@@ -2469,6 +2472,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 
 	CheckBox mColorizeVersions;
 	CheckBox mSemanticHighlighting;
+	CheckBox mResolveFields;
 	CheckBox mColorizeCoverage;
 	CheckBox mShowCoverageMargin;
 	CheckBox mAutoOutlining;

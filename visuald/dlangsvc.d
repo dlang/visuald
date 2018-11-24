@@ -4038,7 +4038,8 @@ else
 		Package.GetTaskProvider().updateTaskItems(filename, tasks);
 
 		if (Package.GetGlobalOptions().semanticHighlighting)
-			Package.GetLanguageService().GetIdentifierTypes(this, 0, -1, true, &OnUpdateIdentifierTypes);
+			Package.GetLanguageService().GetIdentifierTypes(this, 0, -1, Package.GetGlobalOptions().semanticResolveFields,
+															&OnUpdateIdentifierTypes);
 	}
 
 	void updateParseErrors(string err)

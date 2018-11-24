@@ -1342,6 +1342,7 @@ class GlobalOptions
 	bool showTypeInTooltip;
 	bool showValueInTooltip;
 	bool semanticHighlighting;
+	bool semanticResolveFields;
 	bool semanticGotoDef = true;
 	bool useDParser;
 	bool mixinAnalysis;
@@ -1678,7 +1679,8 @@ class GlobalOptions
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
 			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
 			showValueInTooltip  = getBoolOpt("showValueInTooltip", false);
-			semanticHighlighting= getBoolOpt("semanticHighlighting", false);
+			semanticHighlighting  = getBoolOpt("semanticHighlighting", false);
+			semanticResolveFields = getBoolOpt("semanticResolveFields", false);
 			//semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
 			pasteIndent         = getBoolOpt("pasteIndent", true);
 			fmtIndentCase       = getBoolOpt("fmtIndentCase", true);
@@ -1947,6 +1949,7 @@ class GlobalOptions
 			keyToolOpts.Set("showTypeInTooltip2",  showTypeInTooltip);
 			keyToolOpts.Set("showValueInTooltip",  showValueInTooltip);
 			keyToolOpts.Set("semanticHighlighting",  semanticHighlighting);
+			keyToolOpts.Set("semanticResolveFields", semanticResolveFields);
 			//keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
 			keyToolOpts.Set("useDParser2",         useDParser);
 			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
