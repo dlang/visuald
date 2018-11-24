@@ -1014,6 +1014,8 @@ unreleased Version 0.48.0
       longer set in sc.ini since dmd 2.079
     - removed option "additional linker options", it was invisible anyway
     - rearrange settings to better show their scope
+  * build system
+    - fixed linking link privatephobos.lib if intermediate dir different from output dir
   * dparser
     - semantic analysis did not work if "parse source for syntax errors" was disabled
     - no semantic info for a package if any file in the package has fatal parser error
@@ -1040,7 +1042,12 @@ unreleased Version 0.48.0
   * cv2pdb
     - can now detect VS2017 via Setup-COM-API
     - some DWARF fixes
-  * when pasting code to D source file newlines are adapted to surrounding code
-  * added outlining for case statements
+  * editor
+    - when pasting code to D source file newlines are adapted to surrounding code
+    - added outlining for case statements
+    - implemented commands View.PopBrowsContext and View.ForwardBrowseContext
+    - reindent if multiple lines added by completion
+    - tweaked formatting for enumerators, struct and array initializers
+    - added option to not indent case statements
   * fixed "Compile and Run" on selection
   * fix help via F1 for dmd 2.072+
