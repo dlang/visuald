@@ -558,7 +558,12 @@ class VDServer : ComObject, IVDServer
 		return S_FALSE;
 	}
 
-	override HRESULT GetIdentifierTypes(in BSTR filename, BSTR* errors)
+	override HRESULT GetIdentifierTypes(in BSTR filename, int startLine, int endLine, int flags)
+	{
+		return E_NOTIMPL;
+	}
+
+	override HRESULT GetIdentifierTypesResult(BSTR* errors)
 	{
 		return E_NOTIMPL;
 	}

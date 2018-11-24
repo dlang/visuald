@@ -2416,7 +2416,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 11;
+		kNeededLines = 15;
 	}
 
 	override void CreateControls()
@@ -2424,11 +2424,14 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 3;
 		AddTitleLine("Colorizer");
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
-		AddControl("", mSemanticHighlighting = new CheckBox(mCanvas, "Colorize types from semantic analysis (experimental)"));
+		AddControl("", mSemanticHighlighting = new CheckBox(mCanvas, "Colorize identifiers from semantic analysis (experimental)"));
+		AddControl("", mResolveFields = new CheckBox(mCanvas, "   resolving fields and aliases (can be slow)"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas), 1000);
 		AddTitleLine("Coverage");
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
+		AddTitleLine("Format");
+		AddControl("", mIndentCase = new CheckBox(mCanvas, "Indent case/default statement"));
 		AddTitleLine("Miscellaneous");
 		AddControl("", mAutoOutlining = new CheckBox(mCanvas, "Add outlining regions when opening D files"));
 		//AddControl("", mParseSource = new CheckBox(mCanvas, "Parse source for syntax errors"));
@@ -2439,10 +2442,12 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
 		mSemanticHighlighting.setChecked(opts.semanticHighlighting);
+		mResolveFields.setChecked(opts.semanticResolveFields);
 		mColorizeCoverage.setChecked(opts.ColorizeCoverage);
 		mShowCoverageMargin.setChecked(opts.showCoverageMargin);
 		mAutoOutlining.setChecked(opts.autoOutlining);
 		//mParseSource.setChecked(opts.parseSource);
+		mIndentCase.setChecked(opts.fmtIndentCase);
 		mPasteIndent.setChecked(opts.pasteIndent);
 		mUserTypes.setText(opts.UserTypesSpec);
 
@@ -2454,10 +2459,12 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions);
 		changes += changeOption(mSemanticHighlighting.isChecked(), opts.semanticHighlighting, refopts.semanticHighlighting);
+		changes += changeOption(mResolveFields.isChecked(), opts.semanticResolveFields, refopts.semanticResolveFields);
 		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage);
 		changes += changeOption(mShowCoverageMargin.isChecked(), opts.showCoverageMargin, refopts.showCoverageMargin);
 		changes += changeOption(mAutoOutlining.isChecked(), opts.autoOutlining, refopts.autoOutlining);
 		//changes += changeOption(mParseSource.isChecked(), opts.parseSource, refopts.parseSource);
+		changes += changeOption(mIndentCase.isChecked(), opts.fmtIndentCase, refopts.fmtIndentCase);
 		changes += changeOption(mPasteIndent.isChecked(), opts.pasteIndent, refopts.pasteIndent);
 		changes += changeOption(mUserTypes.getText(), opts.UserTypesSpec, refopts.UserTypesSpec);
 		return changes;
@@ -2465,10 +2472,12 @@ class ColorizerPropertyPage : GlobalPropertyPage
 
 	CheckBox mColorizeVersions;
 	CheckBox mSemanticHighlighting;
+	CheckBox mResolveFields;
 	CheckBox mColorizeCoverage;
 	CheckBox mShowCoverageMargin;
 	CheckBox mAutoOutlining;
 	//CheckBox mParseSource;
+	CheckBox mIndentCase;
 	CheckBox mPasteIndent;
 	MultiLineText mUserTypes;
 }

@@ -27,7 +27,7 @@ environment:
 
 # cache relative to C:\projects\visuald
 cache:
-  - C:\projects\cache\dmd2080_0.7z
+  - C:\projects\cache\dmd2083_0.7z
   - C:\projects\cache\cd851.zip
   - C:\projects\cache\VisualD-v0.47.0.exe
   - C:\projects\cache\binutils-2.25.tar.gz
@@ -50,10 +50,10 @@ install:
   # Download & extract D compiler
   - ps: |
         If ($Env:D_COMPILER -eq 'dmd') {
-            If (-not (Test-Path 'cache\dmd2080_0.7z')) {
-                Start-FileDownload 'http://downloads.dlang.org/releases/2.x/2.080.0/dmd.2.080.0.windows.7z' -FileName 'cache\dmd2080_0.7z'
+            If (-not (Test-Path 'cache\dmd2083_0.7z')) {
+                Start-FileDownload 'http://downloads.dlang.org/releases/2.x/2.083.0/dmd.2.083.0.windows.7z' -FileName 'cache\dmd2083_0.7z'
             }
-            7z x cache\dmd2080_0.7z > $null
+            7z x cache\dmd2083_0.7z > $null
             Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
             c:\projects\dmd2\windows\bin\dmd.exe --version
         } ElseIf ($Env:D_COMPILER -eq 'dmd-nightly') {
@@ -108,6 +108,8 @@ build_script:
   - nmake prerequisites || nmake prerequisites
   # build Visual D
   - nmake visuald_vs
+  # build and run Visual D unittests
+  - nmake visuald_test
   # Fetch submodules
   - git submodule update --init --recursive
   - cd ..

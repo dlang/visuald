@@ -266,7 +266,14 @@ class MyClass{}
 struct SomeStruct{}
 MyClass a;", 2);
 
-				instance.GetIdentifierTypes(vd.FirstModuleFile, out var answer);
+				instance.GetIdentifierTypes(vd.FirstModuleFile, 0, -1, 1);
+				string answer;
+				int remainingAttempts = 200;
+				do
+				{
+					Thread.Sleep(200 - remainingAttempts);
+					instance.GetIdentifierTypesResult(out answer);
+				} while (answer == "__pending__" && remainingAttempts-- > 0);
 
 				Assert.NotNull(answer);
 				var identifierTypes = answer.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);

@@ -35,7 +35,7 @@ enum DMGL_ANSI    = (1 << 1); /* Include const, volatile, etc */
 enum DMGL_VERBOSE = (1 << 3); /* Include implementation details.  */
 
 uint flags =  DMGL_PARAMS | DMGL_ANSI | DMGL_VERBOSE;
-char msvc_buffer[32768];
+char[32768] msvc_buffer;
 
 char* msvc_demangle (char *mangled_name)
 {
@@ -110,7 +110,7 @@ int main (char[][] argv)
     }
     for (;;)
     {
-        static char mbuffer[32767];
+        static char[32767] mbuffer;
         uint i = 0;
 
         c = getchar ();

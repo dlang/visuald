@@ -642,6 +642,33 @@ HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfil
 	return NavigateTo(textBuffer, line, col, line, col);
 }
 
+struct BrowseContext
+{
+	string fname;
+	int line;
+	int column;
+}
+private __gshared BrowseContext[] gBrowseContextStack;
+private __gshared int gBrowsePos;
+
+void SaveBrowseContext(BrowseContext ctx)
+{
+	gBrowseContextStack = gBrowseContextStack[0..gBrowsePos] ~ ctx ~ BrowseContext();
+	gBrowsePos++;
+}
+
+HRESULT PopBrowseContext(BrowseContext ctx, bool forward)
+{
+	int npos = gBrowsePos + (forward ? 1 : -1);
+	if (npos < 0 || npos >= gBrowseContextStack.length)
+		return S_FALSE;
+
+	gBrowseContextStack[gBrowsePos] = ctx;
+	BrowseContext nctx = gBrowseContextStack[npos];
+	gBrowsePos = npos;
+	return OpenFileInSolutionWithScope(nctx.fname, nctx.line, nctx.column, null, false);
+}
+
 HRESULT NavigateTo(IVsTextBuffer textBuffer, int line1, int col1, int line2, int col2)
 {
 	IVsTextManager textmgr = queryService!(VsTextManager, IVsTextManager);

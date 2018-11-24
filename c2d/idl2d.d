@@ -606,8 +606,18 @@ class idl2d
 		case "_M_HYBRID_X86_ARM64":
 			return -1;
 
-			// Windows SDK 10.0.17134.0
+		// Windows SDK 10.0.17134.0
 		case "IMAGE_POLICY_METADATA_NAME":
+			return 1;
+
+		// SDK 10.0.17763.0
+		case "EN_SEARCHWEB":
+		case "RtlGetNonVolatileToken":
+		case "RtlFreeNonVolatileToken":
+		case "RtlFlushNonVolatileMemory":
+		case "RtlDrainNonVolatileFlush":
+		case "RtlWriteNonVolatileMemory":
+		case "RtlFlushNonVolatileMemoryRanges":
 			return 1;
 
 		default:
@@ -1280,6 +1290,8 @@ version(all)
 
 			// win 10.0.17134.0: typedef enum MEM_EXTENDED_PARAMETER_TYPE {} MEM_EXTENDED_PARAMETER_TYPE, ...
 			replaceTokenSequence(tokens, "MEM_EXTENDED_PARAMETER_TYPE, *PMEM_EXTENDED_PARAMETER_TYPE", "*PMEM_EXTENDED_PARAMETER_TYPE", true);
+			// win 10.0.17763.0: typedef enum MEM_SECTION_EXTENDED_PARAMETER_TYPE {} MEM_SECTION_EXTENDED_PARAMETER_TYPE, ...
+			replaceTokenSequence(tokens, "MEM_SECTION_EXTENDED_PARAMETER_TYPE, *PMEM_SECTION_EXTENDED_PARAMETER_TYPE", "*PMEM_SECTION_EXTENDED_PARAMETER_TYPE", true);
 		}
 
 		if(currentModule == "commctrl")

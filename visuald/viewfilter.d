@@ -281,6 +281,13 @@ version(tip)
 				return HandleFindReferences();
 			case cmdidF1Help:
 				return HandleHelp();
+			case cmdidPopBrowseContext:
+			case cmdidForwardBrowseContext:
+				int line, idx;
+				if(mView.GetCaretPos(&line, &idx) != S_OK)
+					return S_FALSE;
+				bool forward = nCmdID == cmdidForwardBrowseContext;
+				return PopBrowseContext(BrowseContext(mCodeWinMgr.mSource.GetFileName(), line, idx), forward);
 			default:
 				break;
 			}
@@ -440,6 +447,12 @@ version(tip)
 				{
 					HandleBraceCompletion('\n');
 					HandleSmartIndent('\n');
+				}
+				else
+				{
+					with(mCodeWinMgr.mSource.mLastTextLineChange)
+						if(iStartLine != iNewEndLine)
+							return ReindentLines(iStartLine, iNewEndLine);
 				}
 				break;
 
@@ -694,6 +707,8 @@ version(tip)
 			case cmdidFindReferences:
 			//case VsCommands.GotoDecl:
 			//case VsCommands.GotoRef:
+			case cmdidPopBrowseContext:
+			case cmdidForwardBrowseContext:
 				return OLECMDF_SUPPORTED | OLECMDF_ENABLED;
 			default:
 				break;
@@ -1099,10 +1114,10 @@ version(tip)
 	//////////////////////////////////////////////////////////////
 	int HandleSmartIndent(dchar ch)
 	{
-		LANGPREFERENCES3 langPrefs;
-		if(int rc = GetUserPreferences(&langPrefs, mView))
+		FormatOptions fmtOpt;
+		if(int rc = GetFormatOptions(&fmtOpt, mView))
 			return rc;
-		if(langPrefs.IndentStyle != vsIndentStyleSmart)
+		if(fmtOpt.indentStyle != vsIndentStyleSmart)
 			return S_FALSE;
 
 		int line, idx, len;
@@ -1114,7 +1129,7 @@ version(tip)
 			return ReindentLines();
 
 		wstring linetxt = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
-		int p, orgn = countVisualSpaces(linetxt, langPrefs.uTabSize, &p);
+		int p, orgn = countVisualSpaces(linetxt, fmtOpt.tabSize, &p);
 		wstring trimmed;
 		if(std.ascii.isAlpha(ch) && ((trimmed = strip(linetxt)) == "in" || trimmed == "out" || trimmed == "body"))
 			return ReindentLines();
@@ -1122,14 +1137,14 @@ version(tip)
 			return S_FALSE; // do nothing if not at beginning of line
 
 		Source.CacheLineIndentInfo cacheInfo;
-		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &langPrefs, cacheInfo);
+		int n = mCodeWinMgr.mSource.CalcLineIndent(line, ch, &fmtOpt, cacheInfo);
 		if(n < 0 || n == orgn)
 			return S_OK;
 
 		if(ch == '\n')
 			return mView.SetCaretPos(line, n);
 		else
-			return mCodeWinMgr.mSource.doReplaceLineIndent(line, p, n, &langPrefs);
+			return mCodeWinMgr.mSource.doReplaceLineIndent(line, p, n, &fmtOpt);
 	}
 
 	int ReindentLines()
@@ -1183,7 +1198,9 @@ version(tip)
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return rc;
 
-		if(int rc = mCodeWinMgr.mSource.AutoCompleteBrace(line, idx, ch, langPrefs))
+		FormatOptions fmtOpt;
+		GetFormatOptions(&fmtOpt, &langPrefs);
+		if(int rc = mCodeWinMgr.mSource.AutoCompleteBrace(line, idx, ch, fmtOpt))
 			return rc;
 
 		// restore caret position, it has been moved by the insertion
@@ -1359,7 +1376,10 @@ else
 				}
 			}
 			if (hr == S_OK)
+			{
+				SaveBrowseContext(BrowseContext(file, line, idx));
 				return hr;
+			}
 		}
 
 		if(Package.GetGlobalOptions().semanticGotoDef)
@@ -1369,6 +1389,7 @@ else
 			span.iStartIndex = span.iEndIndex = idx;
 			if (!mCodeWinMgr.mSource.GetTipSpan(&span))
 				return S_FALSE;
+			mLastGotoCtx = BrowseContext(file, line, idx);
 			mLastGotoDecl = decl;
 			mLastGotoDef = to!string(mCodeWinMgr.mSource.GetText(span.iStartLine, span.iStartIndex, span.iEndLine, span.iEndIndex));
 			Package.GetLanguageService().GetDefinition(mCodeWinMgr.mSource, &span, &GotoDefinitionCallBack);
@@ -1380,7 +1401,10 @@ else
 			if(word.length <= 0)
 				return S_FALSE;
 
-			return GotoDefinitionJSON(file, word);
+			HRESULT hr = GotoDefinitionJSON(file, word);
+			if(hr == S_OK)
+				SaveBrowseContext(BrowseContext(file, line, idx));
+			return hr;
 		}
 	}
 
@@ -1508,18 +1532,25 @@ else
 		{
 			string word = split(mLastGotoDef, ".")[$-1];
 			if(GotoDefinitionCPP(word) == S_OK)
+			{
+				SaveBrowseContext(mLastGotoCtx);
 				return;
+			}
 		}
 		if (fname.length)
 		{
 			HRESULT hr = OpenFileInSolution(fname, span.iStartLine, span.iStartIndex, null, false);
-			if(hr != S_OK)
+			if(hr == S_OK)
+				SaveBrowseContext(mLastGotoCtx);
+			else
 				showStatusBarText(format("Cannot open %s(%d) for goto definition", fname, span.iStartLine));
 		}
 		else
 		{
 			string word = split(mLastGotoDef, ".")[$-1];
-			GotoDefinitionJSON(mCodeWinMgr.mSource.GetFileName(), word);
+			if (GotoDefinitionJSON(mCodeWinMgr.mSource.GetFileName(), word) == S_OK)
+				SaveBrowseContext(mLastGotoCtx);
+			
 			//showStatusBarText("No definition found for '" ~ mLastGotoDef ~ "'");
 		}
 	}
@@ -1819,6 +1850,7 @@ version(none) // quick info tooltips not good enough yet
 	string mTipText;
 	uint mTipRequest;
 	string mLastGotoDef;
+	BrowseContext mLastGotoCtx;
 	bool mLastGotoDecl;
 
 	extern(D) void OnGetTipText(uint request, string filename, string text, TextSpan span)

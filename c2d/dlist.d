@@ -229,7 +229,7 @@ struct DListIterator(T)
 		return _list;
 	}
 
-version(all) // opDot deperecated
+version(none) // opDot deprecated
 {
 	alias opStar this;
 
@@ -237,6 +237,27 @@ version(all) // opDot deperecated
 	bool opEquals(const typeof(this) other) const
 	{
 		return _pos == other._pos; // no need to compare lists, nodes belong to only one list
+	}
+}
+else version(all) // alias this too broken with operator overloads
+{
+	ref auto opDispatch(string op, ARGS...)(auto ref ARGS args) if (ARGS.length == 0)
+	{
+		enum sym = "_pos.data." ~ op;
+		return mixin(sym);
+	}
+	auto opDispatch(string op, ARGS...)(auto ref ARGS args) if (ARGS.length == 1) // could be field = value
+	{
+		enum sym = "_pos.data." ~ op;
+		static if (__traits(compiles, mixin(sym) = args[0]))
+			return mixin(sym) = args[0];
+		else
+			return mixin(sym)(args);
+	}
+	auto opDispatch(string op, ARGS...)(auto ref ARGS args) if (ARGS.length > 1)
+	{
+		enum sym = "_pos.data." ~ op;
+		return mixin(sym)(args);
 	}
 }
 else

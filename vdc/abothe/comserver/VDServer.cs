@@ -5,17 +5,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using DParserCOMServer.CodeSemantics;
 using D_Parser.Parser;
 using D_Parser.Misc;
 using D_Parser.Dom;
-using D_Parser.Refactoring;
 using D_Parser.Dom.Expressions;
 
 namespace DParserCOMServer
@@ -29,6 +26,7 @@ namespace DParserCOMServer
 		private readonly SemanticExpansionsGenerator _semanticExpansionsTask;
 		private readonly SymbolDefinitionGenerator _symbolDefinitionTask;
 		private readonly ReferencesListGenerator _referencesTask;
+		private readonly IdentifierTypesGenerator _identifierTypesTask;
 
 		private string _imports;
 
@@ -59,6 +57,7 @@ namespace DParserCOMServer
 			_semanticExpansionsTask = new SemanticExpansionsGenerator(this, _editorDataProvider);
 			_symbolDefinitionTask = new SymbolDefinitionGenerator(this, _editorDataProvider);
 			_referencesTask = new ReferencesListGenerator(this, _editorDataProvider);
+			_identifierTypesTask = new IdentifierTypesGenerator(this, _editorDataProvider);
 		}
 
 		readonly char[] nlSeparator = { '\n' };
@@ -102,140 +101,33 @@ namespace DParserCOMServer
 			_modules [filename] = ast;
 			_sources[filename] = srcText;
 			GlobalParseCache.AddOrUpdateModule(ast);
-
-			if ((flags & 2) != 0)
-				UpdateIdentifierTypes(filename, ast);
+			_editorDataProvider.OnSourceChanged();
 
 			//MessageBox.Show("UpdateModule(" + filename + ")");
 			//throw new NotImplementedException();
 			_activityCounter++;
 		}
 
-		private void UpdateIdentifierTypes(string filename, DModule ast)
+		public void GetIdentifierTypes(string filename, int startLine, int endLine, int flags)
 		{
-			try
-			{
-				var editorData = _editorDataProvider.MakeEditorData();
-				var cancelTokenSource = new CancellationTokenSource();
-				cancelTokenSource.CancelAfter(300);
-				editorData.CancelToken = cancelTokenSource.Token;
-				editorData.SyntaxTree = ast;
+			_identifierTypesTask.Run(filename, new CodeLocation(startLine + 1, 0), new Tuple<int,bool> (endLine, (flags & 1) != 0));
 
-				var invalidCodeRegions = new List<ISyntaxRegion>();
-				var textLocationsToHighlight =
-					TypeReferenceFinder.Scan(editorData, cancelTokenSource.Token, invalidCodeRegions);
-				_identiferTypes[filename] = TextLocationsToIdentifierSpans(textLocationsToHighlight);
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine(ex.Message); // Log the error
-			}
 		}
-
-		static string GetIdentifier(ISyntaxRegion sr)
+		public void GetIdentifierTypesResult(out string answer)
 		{
-			switch (sr)
+			switch (_identifierTypesTask.TaskStatus)
 			{
-				case INode n:
-					return n.Name;
-				case TemplateInstanceExpression templateInstanceExpression:
-					return templateInstanceExpression.TemplateId; // Identifier.ToString(false);
-				case NewExpression newExpression:
-					return newExpression.Type.ToString(false);
-				case TemplateParameter templateParameter:
-					return templateParameter.Name;
-				case IdentifierDeclaration identifierDeclaration:
-					return identifierDeclaration.Id;
-				case IdentifierExpression identifierExp:
-					return identifierExp.StringValue;
+				case TaskStatus.RanToCompletion:
+					answer = _identifierTypesTask.Result;
+					break;
+				case TaskStatus.Faulted:
+				case TaskStatus.Canceled:
+					answer = "__cancelled__";
+					break;
 				default:
-					return "";
+					answer = "__pending__";
+					break;
 			}
-		}
-
-		struct TextSpan
-		{
-			public CodeLocation start;
-			public TypeReferenceKind kind;
-		};
-
-		class TypeReferenceLocationComparer : Comparer<KeyValuePair<ISyntaxRegion, TypeReferenceKind>>
-		{
-			public override int Compare(KeyValuePair<ISyntaxRegion, TypeReferenceKind> x,
-			                            KeyValuePair<ISyntaxRegion, TypeReferenceKind> y)
-			{
-				if (x.Key.Location == y.Key.Location)
-					return 0;
-				return x.Key.Location < y.Key.Location ? -1 : 1;
-			}
-		}
-		private static TypeReferenceLocationComparer locComparer = new TypeReferenceLocationComparer();
-
-		class TypeReferenceLineComparer : Comparer<KeyValuePair<int, Dictionary<ISyntaxRegion, TypeReferenceKind>>>
-		{
-			public override int Compare(KeyValuePair<int, Dictionary<ISyntaxRegion, TypeReferenceKind>> x, 
-			                            KeyValuePair<int, Dictionary<ISyntaxRegion, TypeReferenceKind>> y)
-			{
-				if (x.Key == y.Key)
-					return 0;
-				return x.Key < y.Key ? -1 : 1;
-			}
-		}
-		private static TypeReferenceLineComparer lineComparer = new TypeReferenceLineComparer();
-
-
-		static string TextLocationsToIdentifierSpans(Dictionary<int, Dictionary<ISyntaxRegion, TypeReferenceKind>> textLocations)
-		{
-			if (textLocations == null)
-				return null;
-
-			var textLocArray = textLocations.ToArray();
-			Array.Sort(textLocArray, lineComparer);
-			var identifierSpans = new Dictionary<string, List<TextSpan>>();
-			KeyValuePair<ISyntaxRegion, TypeReferenceKind>[] smallArray = new KeyValuePair<ISyntaxRegion, TypeReferenceKind>[1];
-
-			foreach (var kv in textLocArray)
-			{
-				var line = kv.Key;
-				KeyValuePair<ISyntaxRegion, TypeReferenceKind>[] columns;
-				if (kv.Value.Count() == 1)
-				{
-					smallArray[0] = kv.Value.First();
-					columns = smallArray;
-				}
-				else
-				{
-					columns = kv.Value.ToArray();
-					Array.Sort(columns, locComparer);
-				}
-				foreach (var kvv in columns)
-				{
-					var sr = kvv.Key;
-					var ident = GetIdentifier(sr);
-					if (string.IsNullOrEmpty(ident))
-						continue;
-
-					if (!identifierSpans.TryGetValue(ident, out var spans))
-						spans = identifierSpans[ident] = new List<TextSpan>();
-
-					else if (spans.Last().kind == kvv.Value)
-						continue;
-
-					var span = new TextSpan {start = sr.Location, kind = kvv.Value};
-					spans.Add(span);
-				}
-			}
-			var s = new StringBuilder();
-			foreach (var idv in identifierSpans)
-			{
-				s.Append(idv.Key).Append(':').Append(((byte)idv.Value.First().kind).ToString());
-				foreach (var span in idv.Value.GetRange(1, idv.Value.Count - 1))
-				{
-					s.Append($";{(byte)span.kind},{span.start.Line},{span.start.Column - 1}");
-				}
-				s.Append('\n');
-			}
-			return s.ToString();
 		}
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
@@ -311,13 +203,6 @@ namespace DParserCOMServer
 			errors = errs.ToString();
 			//MessageBox.Show("GetParseErrors()");
 			//throw new COMException("No Message", 1);
-		}
-
-		public void GetIdentifierTypes(string filename, out string types)
-		{
-			filename = EditorDataProvider.normalizePath(filename);
-			if (!_identiferTypes.TryGetValue(filename, out types))
-				throw new COMException("module not found", 1);
 		}
 
 		public void ConfigureCommentTasks(string tasks)

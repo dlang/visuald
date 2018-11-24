@@ -216,7 +216,7 @@ string GUID2string(in GUID clsid)
 	return toUTF8(GUID2wstring(clsid));
 }
 
-BSTR allocwBSTR(wstring s)
+BSTR allocwBSTR(const(wchar)[] s)
 {
 	return SysAllocStringLen(s.ptr, cast(UINT) s.length);
 }

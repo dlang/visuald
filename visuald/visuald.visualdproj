@@ -222,7 +222,7 @@
   <lib>0</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>0</singleFileCompilation>
+  <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
   <mscoff>0</mscoff>
   <trace>0</trace>
@@ -230,9 +230,9 @@
   <verbose>0</verbose>
   <vtls>0</vtls>
   <vgc>0</vgc>
-  <symdebug>0</symdebug>
+  <symdebug>1</symdebug>
   <symdebugref>1</symdebugref>
-  <optimize>1</optimize>
+  <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
   <isLinux>0</isLinux>
@@ -248,11 +248,11 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>1</noboundscheck>
+  <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
-  <useInline>1</useInline>
-  <release>1</release>
+  <useUnitTests>1</useUnitTests>
+  <useInline>0</useInline>
+  <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>1</infowarnings>
@@ -271,10 +271,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
-  <imppath>..;m:\s\d\rainers\druntime\src</imppath>
+  <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <outdir>..\bin\$(ConfigurationName)\$(ProjectName)</outdir>
+  <objdir>$(OutDir)</objdir>
   <objname />
   <libname />
   <doDocComments>1</doDocComments>
@@ -290,7 +290,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>TESTMAIN$(TEST_OPTIONS)</versionids>
+  <versionids>TESTMAIN</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -300,7 +300,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>0</runCv2pdb>
+  <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)\cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
@@ -308,7 +308,7 @@
   <cv2pdbOptions />
   <objfiles />
   <linkswitches />
-  <libfiles>user32.lib kernel32.lib uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
+  <libfiles>user32.lib kernel32.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
   <libpaths>..\sdk\lib</libpaths>
   <deffile />
   <resfile />
@@ -772,6 +772,12 @@
    <File path="vdserverclient.d" />
    <File path="viewfilter.d" />
   </Folder>
+  <Folder name="lexer">
+   <File path="..\vdc\ivdserver.d" />
+   <File path="..\vdc\lexer.d" />
+   <File path="..\vdc\util.d" />
+   <File path="..\vdc\versions.d" />
+  </Folder>
   <Folder name="project">
    <File path="automation.d" />
    <File path="build.d" />
@@ -936,7 +942,9 @@ rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies
   <File path="tokenreplace.d" />
   <File path="tokenreplacedialog.d" />
   <File path="trackprojectdocument.d" />
-  <File path="visuald.def" />
+  <File path="visuald.def" perConfig="true">
+   <Config name="TestDebug|Win32" tool="None" />
+  </File>
   <File path="vscommands.d" />
   <File path="winctrl.d" />
   <File path="windows.d" />

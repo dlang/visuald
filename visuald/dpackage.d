@@ -1334,6 +1334,7 @@ class GlobalOptions
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
 	bool parseSource = true;
 	bool pasteIndent;
+	bool fmtIndentCase = true;
 	bool expandFromSemantics;
 	bool expandFromBuffer;
 	bool expandFromJSON;
@@ -1341,6 +1342,7 @@ class GlobalOptions
 	bool showTypeInTooltip;
 	bool showValueInTooltip;
 	bool semanticHighlighting;
+	bool semanticResolveFields;
 	bool semanticGotoDef = true;
 	bool useDParser;
 	bool mixinAnalysis;
@@ -1677,9 +1679,11 @@ class GlobalOptions
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
 			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
 			showValueInTooltip  = getBoolOpt("showValueInTooltip", false);
-			semanticHighlighting= getBoolOpt("semanticHighlighting", false);
+			semanticHighlighting  = getBoolOpt("semanticHighlighting", false);
+			semanticResolveFields = getBoolOpt("semanticResolveFields", false);
 			//semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
 			pasteIndent         = getBoolOpt("pasteIndent", true);
+			fmtIndentCase       = getBoolOpt("fmtIndentCase", true);
 
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
 			useDParser          = true; // getBoolOpt("useDParser2", keyDParser.key !is null);
@@ -1945,6 +1949,7 @@ class GlobalOptions
 			keyToolOpts.Set("showTypeInTooltip2",  showTypeInTooltip);
 			keyToolOpts.Set("showValueInTooltip",  showValueInTooltip);
 			keyToolOpts.Set("semanticHighlighting",  semanticHighlighting);
+			keyToolOpts.Set("semanticResolveFields", semanticResolveFields);
 			//keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
 			keyToolOpts.Set("useDParser2",         useDParser);
 			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
@@ -1952,6 +1957,7 @@ class GlobalOptions
 			keyToolOpts.Set("sortExpMode",         sortExpMode);
 			keyToolOpts.Set("exactExpMatch",       exactExpMatch);
 			keyToolOpts.Set("pasteIndent",         pasteIndent);
+			keyToolOpts.Set("fmtIndentCase",       fmtIndentCase);
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
 			keyToolOpts.Set("compileAndDbgOpts",   toUTF16(compileAndDbgOpts));
 			keyToolOpts.Set("compileAndDbgEngine", compileAndDbgEngine);
