@@ -21,16 +21,17 @@ interface IVDServer : IUnknown
 {
 	HRESULT ConfigureSemanticProject([in] BSTR filename, [in] BSTR imp, [in] BSTR stringImp, [in] BSTR versionids, [in] BSTR debugids, [in] DWORD flags);
 	HRESULT ClearSemanticProject();
-	HRESULT UpdateModule([in] BSTR filename, [in] BSTR srcText, [in] DWORD verbose);
+	HRESULT UpdateModule([in] BSTR filename, [in] BSTR srcText, [in] DWORD flags);
 	HRESULT GetTip([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [in] DWORD flags);
 	HRESULT GetTipResult([out] DWORD *startLine, [out] DWORD *startIndex, [out] DWORD *endLine, [out] DWORD *endIndex, [out,retval] BSTR* answer);
 	HRESULT GetSemanticExpansions([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx, [in] BSTR expr);
 	HRESULT GetSemanticExpansionsResult([out,retval] BSTR* stringList);
 	HRESULT IsBinaryOperator([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BOOL* pIsOp);
 	HRESULT GetParseErrors([in] BSTR filename, [out, retval] BSTR* errors);
-	HRESULT GetIdentifierTypes([in] BSTR filename, [out,retval] BSTR* errors);
 	HRESULT GetBinaryIsInLocations([in] BSTR filename, [out,retval] VARIANT* locs); // array of pairs of DWORD
 	HRESULT GetLastMessage([out,retval] BSTR* message);
+	HRESULT GetIdentifierTypes([in] BSTR filename, [in] DWORD startLine, [in] DWORD endLine, [in] DWORD flags);
+	HRESULT GetIdentifierTypesResult([out, retval] BSTR* types);
 	HRESULT GetDefinition([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex);
 	HRESULT GetDefinitionResult([out] DWORD *startLine, [out] DWORD *startIndex, [out] DWORD *endLine, [out] DWORD *endIndex, [out,retval] BSTR* filename);
 	HRESULT GetReferences([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx, [in] BSTR expr);

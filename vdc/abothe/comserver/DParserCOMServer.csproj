@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="CodeSemantics\AbstractVDServerTask.cs" />
     <Compile Include="CodeSemantics\EditorDataProvider.cs" />
+    <Compile Include="CodeSemantics\IdentifierTypesGenerator.cs" />
     <Compile Include="CodeSemantics\TooltipGenerator.cs" />
     <Compile Include="COM\COMHelper.cs" />
     <Compile Include="COM\VDServerClassFactory.cs" />

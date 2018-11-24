@@ -437,18 +437,17 @@ class GetDefinitionCommand : FileCommand
 //////////////////////////////////////
 
 alias void delegate(uint request, string filename, string parseErrors,
-                    TextPos[] binaryIsIn, string tasks, string identifierTypes) UpdateModuleCallBack;
+                    TextPos[] binaryIsIn, string tasks) UpdateModuleCallBack;
 
 class UpdateModuleCommand : FileCommand
 {
-	this(string filename, wstring text, bool verbose, bool idtypes, UpdateModuleCallBack cb)
+	this(string filename, wstring text, bool verbose, UpdateModuleCallBack cb)
 	{
 		super("UpdateModule", filename);
 		version(DebugCmd) mCommand ~= " " ~ to!string(firstLine(text));
 		mText = text;
 		mCallback = cb;
 		mVerbose = verbose;
-		mIdTypes = idtypes;
 	}
 
 	override HRESULT exec() const
@@ -459,7 +458,7 @@ class UpdateModuleCommand : FileCommand
 		BSTR bfname = allocBSTR(mFilename);
 
 		BSTR btxt = allocwBSTR(mText);
-		DWORD flags = (mVerbose ? 1 : 0) | (mIdTypes ? 2 : 0);
+		DWORD flags = (mVerbose ? 1 : 0);
 		HRESULT hr = gVDServer.UpdateModule(bfname, btxt, flags);
 		freeBSTR(btxt);
 		freeBSTR(bfname);
@@ -509,10 +508,6 @@ class UpdateModuleCommand : FileCommand
 		if(gVDServer.GetCommentTasks(fname, &tasks) == S_OK)
 			mTasks = detachBSTR(tasks);
 
-		BSTR idTypes;
-		if(mIdTypes && gVDServer.GetIdentifierTypes(fname, &idTypes) == S_OK)
-			mIdentifierTypes = detachBSTR(idTypes);
-
 		send(gUITid);
 		return S_OK;
 	}
@@ -522,7 +517,7 @@ class UpdateModuleCommand : FileCommand
 		version(DebugCmd)
 			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mErrors);
 		if(mCallback)
-			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks, mIdentifierTypes);
+			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks);
 		return true;
 	}
 
@@ -532,8 +527,72 @@ class UpdateModuleCommand : FileCommand
 	string mTasks;
 	string mIdentifierTypes;
 	bool mVerbose;
-	bool mIdTypes;
 	TextPos[] mBinaryIsIn;
+}
+
+//////////////////////////////////////
+
+alias void delegate(uint request, string filename, string identifierTypes) GetIdentifierTypesCallBack;
+
+class GetIdentifierTypesCommand : FileCommand
+{
+	this(string filename, int startLine, int endLine, bool resolve, GetIdentifierTypesCallBack cb)
+	{
+		super("GetIdentifierTypes", filename);
+		version(DebugCmd) mCommand ~= " " ~ to!string(startLine) ~ "-" ~ to!string(endLine);
+		mStartLine = startLine;
+		mEndLine = endLine;
+		mResolve = resolve;
+		mCallback = cb;
+	}
+
+	override HRESULT exec() const
+	{
+		if(!gVDServer)
+			return S_FALSE;
+
+		BSTR bfname = allocBSTR(mFilename);
+		DWORD flags = (mResolve ? 1 : 0);
+		HRESULT hr = gVDServer.GetIdentifierTypes(bfname, mStartLine, mEndLine, flags);
+		freeBSTR(bfname);
+		return hr;
+	}
+
+	override HRESULT answer()
+	{
+		if(!gVDServer)
+			return S_FALSE;
+
+		BSTR types;
+		if(auto hr = gVDServer.GetIdentifierTypesResult(&types))
+			return hr;
+
+		string stypes = detachBSTR(types);
+		if (stypes == "__pending__")
+			return E_PENDING;
+		if (stypes == "__cancelled__")
+			return ERROR_CANCELLED;
+
+		mIdentifierTypes = stypes;
+
+		send(gUITid);
+		return S_OK;
+	}
+
+	override bool forward()
+	{
+		version(DebugCmd)
+			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mIdentifierTypes);
+		if(mCallback)
+			mCallback(mRequest, mFilename, mIdentifierTypes);
+		return true;
+	}
+
+	GetIdentifierTypesCallBack mCallback;
+	int mStartLine;
+	int mEndLine;
+	bool mResolve;
+	string mIdentifierTypes;
 }
 
 //////////////////////////////////////
@@ -579,7 +638,6 @@ class GetExpansionsCommand : FileCommand
 			return E_PENDING;
 		if (slist == "__cancelled__")
 			return ERROR_CANCELLED;
-
 
 		mExpansions = /*cast(shared(string[]))*/ splitLines(slist);
 		send(gUITid);
@@ -755,9 +813,16 @@ class VDServerClient
 		return cmd.mRequest;
 	}
 
-	uint UpdateModule(string filename, wstring text, bool verbose, bool idtypes, UpdateModuleCallBack cb)
+	int GetIdentifierTypes(string filename, int startLine, int endLine, bool resolve, GetIdentifierTypesCallBack cb)
 	{
-		auto cmd = new _shared!(UpdateModuleCommand)(filename, text, verbose, idtypes, cb);
+		auto cmd = new _shared!(GetIdentifierTypesCommand)(filename, startLine, endLine, resolve, cb);
+		cmd.send(mTid);
+		return cmd.mRequest;
+	}
+
+	uint UpdateModule(string filename, wstring text, bool verbose, UpdateModuleCallBack cb)
+	{
+		auto cmd = new _shared!(UpdateModuleCommand)(filename, text, verbose, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}

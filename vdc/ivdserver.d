@@ -135,18 +135,6 @@ public:
 	// return S_FALSE as long as the parsing is still running
 	HRESULT GetParseErrors(in BSTR filename, BSTR* errors);
 
-	// return the identifier type information for the file
-	//
-	// filename:   file name
-	// errors: new-line delimited list of info, each line has the format:
-	//        identifier:deftype(;type,startLine,startIndex)*
-	//
-	// the identifier will be marked as "type" starting with text position
-	// startLine,startIndex and "deftype" for the beginning of the file
-	//
-	// this method is called once after GetParseErrors returned successfully
-	HRESULT GetIdentifierTypes(in BSTR filename, BSTR* types);
-
 	// return the locations where "in" and "is" are used as binary operators
 	//
 	// filename:   file name
@@ -160,6 +148,26 @@ public:
 	// it is assumed that a message is returned only once.
 	// return S_FALSE if there is no new message to display
 	HRESULT GetLastMessage(BSTR* message);
+
+	// request the identifier type information for the file
+	//
+	// filename:   file name
+	// startLine:  
+	// endLine:    results may be restricted to identifiers within this range
+	// flags:      bit 0 - resolveTypes:   resolve field/alias identifier types
+	//
+	// this method is called once after GetParseErrors returned successfully
+	HRESULT GetIdentifierTypes(in BSTR filename, int startLine, int endLine, int flags);
+
+	// return the identifier type information for the last request
+	//
+	// types: new-line delimited list of info, each line has the format:
+	//        identifier:deftype(;type,startLine,startIndex)*
+	//
+	// the identifier will be marked as "type" starting with text position
+	// startLine,startIndex and "deftype" for the beginning of the file
+	//
+	HRESULT GetIdentifierTypesResult(BSTR* types);
 
 	// request location of definition for a given text location
 	//

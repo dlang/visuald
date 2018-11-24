@@ -858,11 +858,15 @@ class LanguageService : DisposingComObject,
 		wstring expr;
 		return vdServerClient.GetReferences(src.GetFileName(), tok, line, idx, expr, cb);
 	}
+	void GetIdentifierTypes(Source src, int startLine, int endLine, bool resolve, GetIdentifierTypesCallBack cb)
+	{
+		// always called after parse, no need to reconfigure project
+		vdServerClient.GetIdentifierTypes(src.GetFileName(), startLine, endLine, resolve, cb);
+	}
 	void UpdateSemanticModule(Source src, wstring srctext, bool verbose, UpdateModuleCallBack cb)
 	{
 		ConfigureSemanticProject(src);
-		bool idtypes = Package.GetGlobalOptions().semanticHighlighting;
-		vdServerClient.UpdateModule(src.GetFileName(), srctext, verbose, idtypes, cb);
+		vdServerClient.UpdateModule(src.GetFileName(), srctext, verbose, cb);
 	}
 	void ClearSemanticProject()
 	{
@@ -4021,22 +4025,20 @@ else
 		return startParsing(false, true);
 	}
 
-	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn,
-								  string tasks, string identifierTypes)
+	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn, string tasks)
 	{
 		updateParseErrors(parseErrors);
-		bool typesChanged = updateIdentifierTypes(identifierTypes);
 		mBinaryIsIn = binaryIsIn;
 		if(IVsTextColorState colorState = qi_cast!IVsTextColorState(mBuffer))
 		{
 			scope(exit) release(colorState);
-			if (typesChanged)
-				colorState.ReColorizeLines(-1, -1);
-			else
-				foreach(pos; mBinaryIsIn)
-					colorState.ReColorizeLines(pos.line - 1, pos.line);
+			foreach(pos; mBinaryIsIn)
+				colorState.ReColorizeLines(pos.line - 1, pos.line);
 		}
 		Package.GetTaskProvider().updateTaskItems(filename, tasks);
+
+		if (Package.GetGlobalOptions().semanticHighlighting)
+			Package.GetLanguageService().GetIdentifierTypes(this, 0, -1, true, &OnUpdateIdentifierTypes);
 	}
 
 	void updateParseErrors(string err)
@@ -4110,6 +4112,19 @@ else
 			IVsTextLineMarker marker;
 			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex,
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
+		}
+	}
+
+	extern(D) void OnUpdateIdentifierTypes(uint request, string filename, string identifierTypes)
+	{
+		bool typesChanged = updateIdentifierTypes(identifierTypes);
+		if (typesChanged)
+		{
+			if(IVsTextColorState colorState = qi_cast!IVsTextColorState(mBuffer))
+			{
+				scope(exit) release(colorState);
+				colorState.ReColorizeLines(-1, -1);
+			}
 		}
 	}
 
