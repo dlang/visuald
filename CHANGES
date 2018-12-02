@@ -1015,7 +1015,7 @@ unreleased Version 0.48.0
     - removed option "additional linker options", it was invisible anyway
     - rearrange settings to better show their scope
   * build system
-    - fixed linking link privatephobos.lib if intermediate dir different from output dir
+    - fixed linking privatephobos.lib if intermediate dir different from output dir
   * dparser
     - semantic analysis did not work if "parse source for syntax errors" was disabled
     - no semantic info for a package if any file in the package has fatal parser error
@@ -1027,6 +1027,8 @@ unreleased Version 0.48.0
     - experimental: option to enable semantic identifier highlighting
     - 'virtual' no longer considered a keyword
     - updated list of traits for completion
+    - fix crash with dub generated project
+    - add 'typeof' to completion where 'typeid' is valid, too
   * mago
     - added option to show base class fields as direct fields
     - allow suffix 'h' for hex numbers for better interoperablility with VS disassembly

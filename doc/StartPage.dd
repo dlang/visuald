@@ -54,6 +54,14 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2018-12-02 Version 0.48.0
+$(UL
+  $(LI installer and binaries now digitally signed by the "D Language Foundation")
+  $(LI dparser now has semantic support for static foreach (thanks to Alexander Bothe))
+  $(LI experimental: option to enable semantic identifier highlighting)
+  $(LI mago debugger: show return value, showing closure and capture variables as locals for dmd 2.084)
+)
+
 2018-06-24 Version 0.47.0
 $(UL
   $(LI improved vcxproj integration: better dependencies, automatic libraries, name demangling)
@@ -67,14 +75,6 @@ $(UL
   $(LI improved LDC support)
   $(LI support for new symbol mangling and parsing 'static foreach')
 )
-
-2017-08-17 Version 0.45.1
- $(UL
-  $(LI now building against the VC runtime to avoid
-      anti-virus programs blocking the installation or execution)
-  $(LI improved tooltips)
-  $(LI mago: fix displaying long strings as empty)
- )
 
 $(LINK2 VersionHistory.html, more...)
 

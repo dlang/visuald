@@ -1,4 +1,4 @@
-VERSION = 0.47.0
+VERSION = 0.48.0
 ROOT_DIR = http://www.dlang.org/
 ROOT = http://www.dlang.org
 BODYCLASS = visuald

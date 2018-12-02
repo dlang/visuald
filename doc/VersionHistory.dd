@@ -1,5 +1,92 @@
 Ddoc
 
+$(H2 2018-12-02 Version 0.48.0)
+ $(UL
+  $(LI installation
+   $(UL
+    $(LI installer and binaries now digitally signed by the "D Language Foundation")
+    $(LI fixed uninstallation for VS2017)
+    $(LI installation for VS2013+ now uses PackageManifest format instead of Vsix)
+    $(LI VS2017: loading the Visual D package could crash with some VS installation "ids"")
+    $(LI avoid initial error message regarding altered assemblies with same version)
+    $(LI fix installation of the D icon for the solution explorer in VS2017)
+    $(LI installer hides options for VS2005-VS2012 if not installed)
+    $(LI remove old extension folders before installation)
+  ))
+  $(LI new project wizard
+   $(UL
+    $(LI restore project templates for VS2008, new project wizard doesn't work there')
+    $(LI mixed D/C++ VC project: optionally adding main in C++, setup precompiled headers)
+    $(LI new VCProject: now uses $(LatestTargetPlatformVersion) as WindowsTargetPlatformVersion to
+      avoid defaulting to Windows SDK 8.1)
+  ))
+  $(LI settings
+   $(UL
+    $(LI fix default library path if UCRT has different version than SDK)
+    $(LI VS2017: D compiler installation paths and "demangle link errors" are now saved
+	  to "HKCR\Softwre\Visual D" to be picked up by msbuild)
+    $(LI show detected compiler version below installation path)
+    $(LI removed option "parse source for syntax errors", now always on)
+    $(LI removed option "expansions from text buffer", now always off)
+    $(LI removed option "use semantic analysis for goto definition", now always on)
+    $(LI removed option "override linker settings from sc.ini", always on as linker no 
+      longer set in sc.ini since dmd 2.079)
+    $(LI removed option "additional linker options", it was invisible anyway)
+    $(LI rearrange settings to better show their scope)
+  ))
+  $(LI build system
+   $(UL
+    $(LI fixed linking privatephobos.lib if intermediate dir different from output dir)
+  ))
+  $(LI dparser
+   $(UL
+    $(LI semantic analysis did not work if "parse source for syntax errors" was disabled)
+    $(LI no semantic info for a package if any file in the package has fatal parser error)
+    $(LI now has semantic support for static foreach (thanks to Alexander Bothe))
+    $(LI fixed "Find references")
+    $(LI added experimental option to show value of constants in tooltip)
+    $(LI the last user specified version was prepended to "Windows")
+    $(LI predefined versions now evaluated by compiler invocation)
+    $(LI experimental: option to enable semantic identifier highlighting)
+    $(LI 'virtual' no longer considered a keyword)
+    $(LI updated list of traits for completion)
+    $(LI fix crash with dub generated project)
+    $(LI add 'typeof' to completion where 'typeid' is valid, too)
+  ))
+  $(LI mago
+   $(UL
+    $(LI added option to show base class fields as direct fields)
+    $(LI allow suffix 'h' for hex numbers for better interoperablility with VS disassembly)
+    $(LI concord: can now show return values of functions stepped over (not slices or delegates 
+      on x64 or small non-POD-structs))
+    $(LI concord: fix crash when showing children in data tooltip (mostly occured in VS2017))
+    $(LI concord: allow dragging addresses to the disassembly window)
+    $(LI engine: Fix the way the debugger steps over instructions with REP prefix.)
+    $(LI engine: the disassemble view now supports SSE4 and AVX)
+    $(LI detect AA if type ends with "]", but not with "[]")
+    $(LI fix crash in VS if a value is marked expandable, but doesn't yield any children)
+    $(LI fix .ptr property of static array if it is a struct/class member)
+    $(LI add option to disable strings to be expandable)
+    $(LI support showing closure and capture variables as locals for dmd 2.084)
+  ))
+  $(LI cv2pdb
+   $(UL
+    $(LI can now detect VS2017 via Setup-COM-API)
+    $(LI some DWARF fixes)
+  ))
+  $(LI editor
+   $(UL
+    $(LI when pasting code to D source file newlines are adapted to surrounding code)
+    $(LI added outlining for case statements)
+    $(LI implemented commands View.PopBrowseContext and View.ForwardBrowseContext)
+    $(LI reindent if multiple lines added by completion)
+    $(LI tweaked formatting for enumerators, struct and array initializers)
+    $(LI added option to not indent case statements)
+  ))
+  $(LI fixed "Compile and Run" on selection)
+  $(LI fix help via F1 for dmd 2.072+)
+ )
+
 $(H2 2018-06-24 Version 0.47.0)
  $(UL
   $(LI build system
