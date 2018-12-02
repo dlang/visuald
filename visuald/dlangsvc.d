@@ -384,7 +384,7 @@ class LanguageService : DisposingComObject,
 			newCom!ColorableItem("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
 			newCom!ColorableItem("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
 
-			// Visual D specific (must match Lexer.TokenColor)
+			// Visual D specific (must match visuald.colorizer.TokenColor)
 			newCom!ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
 			newCom!ColorableItem("Visual D Register",             -1,          CI_USERTEXT_BK, RGB(128, 0, 128)),
 			newCom!ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
@@ -396,19 +396,22 @@ class LanguageService : DisposingComObject,
 			newCom!ColorableItem("Visual D Identifier Class",     -1,          CI_USERTEXT_BK, RGB(32, 192, 192)),
 			newCom!ColorableItem("Visual D Identifier Struct",    -1,          CI_USERTEXT_BK, RGB(0, 192, 128)),
 			newCom!ColorableItem("Visual D Identifier Union",     -1,          CI_USERTEXT_BK, RGB(0, 160, 128)),
-			newCom!ColorableItem("Visual D Identifier Template Type Parameter", -1,      CI_USERTEXT_BK, RGB(64, 0, 160)),
-			newCom!ColorableItem("Visual D Identifier Alias",     -1,          CI_USERTEXT_BK, RGB(0, 128, 128)),
-			newCom!ColorableItem("Visual D Identifier Module",    -1,          CI_USERTEXT_BK, RGB(64, 64, 160)),
-			newCom!ColorableItem("Visual D Identifier Method",    -1,          CI_USERTEXT_BK, RGB(96, 64, 160)),
+			newCom!ColorableItem("Visual D Identifier Template Type Parameter", -1, CI_USERTEXT_BK, RGB(64, 0, 160)),
 
 			newCom!ColorableItem("Visual D Identifier Constant",       -1, CI_USERTEXT_BK, RGB(128,   0, 128)),
 			newCom!ColorableItem("Visual D Identifier Local Variable", -1, CI_USERTEXT_BK, RGB(128,  16, 128)),
 			newCom!ColorableItem("Visual D Identifier Parameter",      -1, CI_USERTEXT_BK, RGB(128,  32, 128)),
-			newCom!ColorableItem("Visual D Identifier Thread Global",  -1, CI_USERTEXT_BK, RGB(128,  48, 128)),
+			newCom!ColorableItem("Visual D Identifier Thread Local",   -1, CI_USERTEXT_BK, RGB(128,  48, 128)),
 			newCom!ColorableItem("Visual D Identifier Shared Global",  -1, CI_USERTEXT_BK, RGB(128,  64, 128)),
 			newCom!ColorableItem("Visual D Identifier __gshared",      -1, CI_USERTEXT_BK, RGB(128,  80, 128)),
 			newCom!ColorableItem("Visual D Identifier Field",          -1, CI_USERTEXT_BK, RGB(128,  96, 128)),
 			newCom!ColorableItem("Visual D Identifier Variable",       -1, CI_USERTEXT_BK, RGB(128, 128, 128)),
+
+			newCom!ColorableItem("Visual D Identifier Alias",          -1, CI_USERTEXT_BK, RGB(0, 128, 128)),
+			newCom!ColorableItem("Visual D Identifier Module",         -1, CI_USERTEXT_BK, RGB(64, 64, 160)),
+			newCom!ColorableItem("Visual D Identifier Function",       -1, CI_USERTEXT_BK, RGB(128, 96, 160)),
+			newCom!ColorableItem("Visual D Identifier Method",         -1, CI_USERTEXT_BK, RGB(128, 96, 160)),
+			newCom!ColorableItem("Visual D Identifier Basic Type",     -1, CI_USERTEXT_BK, RGB(0, 192, 128)),
 
 			newCom!ColorableItem("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0)),
 
@@ -452,18 +455,20 @@ class LanguageService : DisposingComObject,
 		bool dark = Package.GetGlobalOptions().isDarkTheme();
 		foreach(ci; colorableItems)
 		{
-			if(ci.GetDisplayName() == "Visual D Type")
+			if(ci.GetDisplayName() == "Visual D User Defined Type")
 				ci.SetDefaultForegroundColor(dark ? RGB(128, 128, 160) : RGB(0, 0, 160));
 			if(ci.GetDisplayName() == "Visual D Register")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 128) : RGB(128, 0, 128));
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 128)  : RGB(128, 0, 128));
 			if(ci.GetDisplayName() == "Visual D Token String Identifier")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64) : RGB(128,32,32));
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64)   : RGB(128, 32, 32));
 			if(ci.GetDisplayName() == "Visual D Token String Number")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64) : RGB(128,32,32));
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64)   : RGB(128, 32, 32));
 			if(ci.GetDisplayName() == "Visual D Token String Operator")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64) : RGB(128,32,32));
+				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64)   : RGB(128, 32, 32));
 			if(ci.GetDisplayName() == "Visual D Token String Type")
 				ci.SetDefaultForegroundColor(dark ? RGB(160, 128, 160) : RGB(112, 0, 80));
+			if(ci.GetDisplayName() == "Visual D Identifier Template Type Parameter")
+				ci.SetDefaultForegroundColor(dark ? RGB(96, 64, 192) : RGB(64, 0, 160));
 		}
 
 		version(none)
@@ -4228,8 +4233,9 @@ else
 			case TypeReferenceKind.Variable:          return TokenColor.Variable;
 			case TypeReferenceKind.Alias:             return TokenColor.Alias;
 			case TypeReferenceKind.Module:            return TokenColor.Module;
+			case TypeReferenceKind.Function:          return TokenColor.Function;
 			case TypeReferenceKind.Method:            return TokenColor.Method;
-			case TypeReferenceKind.BasicType:         return TokenColor.UserType;
+			case TypeReferenceKind.BasicType:         return TokenColor.BasicType;
 			default:                                  return TokenColor.Identifier;
 		}
 	}

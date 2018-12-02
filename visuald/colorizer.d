@@ -76,7 +76,9 @@ enum TokenColor
 
 	Alias,
 	Module,
+	Function,
 	Method,
+	BasicType,
 
 	Version,
 
@@ -835,7 +837,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Variable:          return TokenColor.DisabledIdentifier;
 			case TokenColor.Alias:             return TokenColor.DisabledIdentifier;
 			case TokenColor.Module:            return TokenColor.DisabledIdentifier;
+			case TokenColor.Function:          return TokenColor.DisabledIdentifier;
 			case TokenColor.Method:            return TokenColor.DisabledIdentifier;
+			case TokenColor.BasicType:         return TokenColor.DisabledIdentifier;
 			default: break;
 		}
 		return type;
@@ -874,7 +878,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Variable:          return TokenColor.StringIdentifier;
 			case TokenColor.Alias:             return TokenColor.StringIdentifier;
 			case TokenColor.Module:            return TokenColor.StringIdentifier;
+			case TokenColor.Function:          return TokenColor.StringIdentifier;
 			case TokenColor.Method:            return TokenColor.StringIdentifier;
+			case TokenColor.BasicType:         return TokenColor.StringIdentifier;
 			default: break;
 		}
 		return type;
