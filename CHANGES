@@ -1025,6 +1025,8 @@ unreleased Version 0.48.0
     - the last user specified version was prepended to "Windows"
     - predefined versions now evaluated by compiler invocation
     - experimental: option to enable semantic identifier highlighting
+    - 'virtual' no longer considered a keyword
+    - updated list of traits for completion
   * mago
     - added option to show base class fields as direct fields
     - allow suffix 'h' for hex numbers for better interoperablility with VS disassembly
@@ -1045,7 +1047,7 @@ unreleased Version 0.48.0
   * editor
     - when pasting code to D source file newlines are adapted to surrounding code
     - added outlining for case statements
-    - implemented commands View.PopBrowsContext and View.ForwardBrowseContext
+    - implemented commands View.PopBrowseContext and View.ForwardBrowseContext
     - reindent if multiple lines added by completion
     - tweaked formatting for enumerators, struct and array initializers
     - added option to not indent case statements
