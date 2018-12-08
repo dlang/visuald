@@ -1,6 +1,6 @@
 <DProject>
  <ProjectGuid>{34289BD7-AB7E-4264-B146-8139DDE9F0BF}</ProjectGuid>
- <Config name="Debug" platform="Win32">
+ <Config platform="Win32" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -15,6 +15,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -107,7 +108,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Release" platform="Win32">
+ <Config platform="Win32" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -122,6 +123,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>0</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -214,7 +216,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Debug" platform="x64">
+ <Config platform="x64" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -229,6 +231,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -321,7 +324,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Release" platform="x64">
+ <Config platform="x64" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -336,6 +339,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>2</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -428,7 +432,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="Win32">
+ <Config platform="Win32" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -443,6 +447,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -535,7 +540,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="x64">
+ <Config platform="x64" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -550,6 +555,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -591,7 +597,7 @@
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
   <imppath>dmd\src .. $(DMDInstallDir)\src\druntime\src</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)\$(PlatfromName)\$(ProjectName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)\$(PlatformName)\$(ProjectName)</outdir>
   <objdir>$(OutDir)</objdir>
   <objname />
   <libname />
@@ -610,7 +616,7 @@
   <versionlevel>0</versionlevel>
   <versionids>MARS NoBackend GC</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>0</mapverbosity>
+  <mapverbosity>1</mapverbosity>
   <createImplib>0</createImplib>
   <debuglib>0</debuglib>
   <defaultlibname />
@@ -642,7 +648,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="Win32">
+ <Config platform="Win32" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -657,6 +663,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -749,7 +756,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="x64">
+ <Config platform="x64" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -764,6 +771,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -856,7 +864,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="Win32">
+ <Config platform="Win32" name="Release COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -871,6 +879,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>0</isX86_64>
@@ -963,7 +972,7 @@
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="x64">
+ <Config platform="x64" name="Release COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -978,6 +987,7 @@
   <vtls>0</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
+  <symdebugref>1</symdebugref>
   <optimize>1</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -1079,27 +1089,11 @@
     <File path="dmd\src\dmd\root\file.d" />
     <File path="dmd\src\dmd\root\filename.d" />
     <File path="dmd\src\dmd\root\hash.d" />
-    <File path="dmd\src\vcbuild\ldfpu.asm" perConfig="true">
-     <Config name="Release COFF32|x64" customcmd="if exist &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; call &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; x86_amd64
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvarsall.bat&quot; x86_amd64 &amp;&amp; popd )
-if errorlevel 1 goto reportError
-ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(InputName).obj&quot; &quot;$(InputPath)&quot;" tool="Custom" linkoutput="true" outfile="$(IntDir)\$(InputName).obj" />
-     <Config name="Debug LDC|x64" customcmd="if exist &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; call &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; x86_amd64
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvarsall.bat&quot; x86_amd64 &amp;&amp; popd )
-if errorlevel 1 goto reportError
-ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(InputName).obj&quot; &quot;$(InputPath)&quot;" tool="Custom" linkoutput="true" outfile="$(IntDir)\$(InputName).obj" />
-     <Config name="Debug|Win32" tool="None" />
-     <Config name="Debug COFF32|x64" customcmd="if exist &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; call &quot;$(VCINSTALLDIR)\vcvarsall.bat&quot; x86_amd64
-if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvarsall.bat&quot; x86_amd64 &amp;&amp; popd )
-if errorlevel 1 goto reportError
-ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(InputName).obj&quot; &quot;$(InputPath)&quot;" tool="Custom" linkoutput="true" outfile="$(IntDir)\$(InputName).obj" />
-    </File>
-    <File path="dmd\src\dmd\tk\list.c" tool="C/C++" addopt="-TP" />
-    <File path="dmd\src\dmd\root\longdouble.c" tool="C/C++" addopt="-TP" />
     <File path="dmd\src\dmd\root\longdouble.d" />
+    <File path="dmd\src\dmd\root\longdouble.h" />
     <File path="dmd\src\dmd\root\man.d" />
     <File path="dmd\src\dmd\tk\mem.c" tool="None" />
-    <File path="dmd\src\dmd\root\newdelete.c" tool="C/C++" addopt="-TP" />
+    <File addopt="-TP" path="dmd\src\dmd\root\newdelete.c" tool="C/C++" />
     <File path="dmd\src\dmd\root\outbuffer.d" />
     <File path="dmd\src\dmd\root\port.d" />
     <File path="dmd\src\dmd\root\response.d" />
@@ -1107,10 +1101,7 @@ ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(Input
     <File path="dmd\src\dmd\root\rootobject.d" />
     <File path="dmd\src\dmd\root\speller.d" />
     <File path="dmd\src\dmd\root\stringtable.d" />
-    <File path="dmd\src\dmd\backend\strtold.c" tool="C/C++" addopt="-TP" />
-   </Folder>
-   <Folder name="tk">
-    <File path="dmd\src\dmd\tk\dlist.d" />
+    <File addopt="-TP" path="dmd\src\dmd\backend\strtold.c" tool="C/C++" />
    </Folder>
    <File path="dmd\src\dmd\access.d" />
    <File path="dmd\src\dmd\aggregate.d" />
@@ -1119,12 +1110,15 @@ ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(Input
    <File path="dmd\src\dmd\argtypes.d" />
    <File path="dmd\src\dmd\arrayop.d" />
    <File path="dmd\src\dmd\arraytypes.d" />
+   <File path="dmd\src\dmd\astbase.d" />
    <File path="dmd\src\dmd\astcodegen.d" />
+   <File path="dmd\src\dmd\asttypename.d" />
    <File path="dmd\src\dmd\attrib.d" />
    <File path="dmd\src\dmd\blockexit.d" />
    <File path="dmd\src\dmd\boostlicense.txt" />
    <File path="dmd\src\dmd\builtin.d" />
    <File path="dmd\src\dmd\canthrow.d" />
+   <File path="dmd\src\dmd\cli.d" tool="None" />
    <File path="dmd\src\dmd\clone.d" />
    <File path="dmd\src\dmd\compiler.d" />
    <File path="dmd\src\dmd\complex.d" />
@@ -1146,6 +1140,7 @@ ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(Input
    <File path="dmd\src\dmd\dmacro.d" />
    <File path="dmd\src\dmd\dmangle.d" />
    <File path="dmd\src\dmd\dmodule.d" />
+   <File path="dmd\src\dmd\dmsc.d" tool="None" />
    <File path="dmd\src\dmd\doc.d" />
    <File path="dmd\src\dmd\dscope.d" />
    <File path="dmd\src\dmd\dstruct.d" />
@@ -1153,15 +1148,22 @@ ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(Input
    <File path="dmd\src\dmd\dsymbolsem.d" />
    <File path="dmd\src\dmd\dtemplate.d" />
    <File path="dmd\src\dmd\dversion.d" />
+   <File path="dmd\src\dmd\e2ir.d" tool="None" />
+   <File path="dmd\src\dmd\eh.d" tool="None" />
    <File path="dmd\src\dmd\entity.d" />
    <File path="dmd\src\dmd\errors.d" tool="None" />
    <File path="dmd\src\dmd\escape.d" />
    <File path="dmd\src\dmd\expression.d" />
    <File path="dmd\src\dmd\expressionsem.d" />
+   <File path="dmd\src\dmd\frontend.d" tool="None" />
    <File path="dmd\src\dmd\func.d" />
    <File path="dmd\src\dmd\globals.d" />
+   <File path="dmd\src\dmd\glue.d" tool="None" />
    <File path="dmd\src\dmd\gluelayer.d" />
    <File path="dmd\src\dmd\hdrgen.d" />
+   <File path="dmd\src\dmd\iasm.d" tool="None" />
+   <File path="dmd\src\dmd\iasmdmd.d" tool="None" />
+   <File path="dmd\src\dmd\iasmgcc.d" tool="None" />
    <File path="dmd\src\dmd\id.d" />
    <File path="dmd\src\dmd\identifier.d" />
    <File path="dmd\src\dmd\impcnvtab.d" />
@@ -1171,17 +1173,22 @@ ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(Input
    <File path="dmd\src\dmd\inline.d" />
    <File path="dmd\src\dmd\inlinecost.d" />
    <File path="dmd\src\dmd\intrange.d" />
+   <File path="dmd\src\dmd\irstate.d" tool="None" />
    <File path="dmd\src\dmd\json.d" />
    <File path="dmd\src\dmd\lambdacomp.d" />
    <File path="dmd\src\dmd\lexer.d" />
    <File path="dmd\src\dmd\lib.d" tool="None" />
+   <File path="dmd\src\dmd\libelf.d" tool="None" />
+   <File path="dmd\src\dmd\libmach.d" tool="None" />
    <File path="dmd\src\dmd\libmscoff.d" tool="None" />
    <File path="dmd\src\dmd\libomf.d" tool="None" />
+   <File path="dmd\src\dmd\link.d" tool="None" />
    <File path="dmd\src\dmd\mars.d" tool="None" />
    <File path="dmd\src\dmd\mtype.d" />
    <File path="dmd\src\dmd\nogc.d" />
    <File path="dmd\src\dmd\nspace.d" />
    <File path="dmd\src\dmd\objc.d" />
+   <File path="dmd\src\dmd\objc_glue.d" tool="None" />
    <File path="dmd\src\dmd\opover.d" />
    <File path="dmd\src\dmd\optimize.d" />
    <File path="dmd\src\dmd\osmodel.mak" />
@@ -1190,21 +1197,31 @@ ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(Input
    <File path="dmd\src\dmd\permissivevisitor.d" />
    <File path="dmd\src\dmd\posix.mak" />
    <File path="dmd\src\dmd\printast.d" />
+   <File path="dmd\src\dmd\s2ir.d" tool="None" />
    <File path="dmd\src\dmd\safe.d" />
    <File path="dmd\src\dmd\sapply.d" />
+   <File path="dmd\src\dmd\scanelf.d" tool="None" />
+   <File path="dmd\src\dmd\scanmach.d" tool="None" />
    <File path="dmd\src\dmd\scanmscoff.d" tool="None" />
    <File path="dmd\src\dmd\scanomf.d" tool="None" />
    <File path="dmd\src\dmd\semantic2.d" />
    <File path="dmd\src\dmd\semantic3.d" />
    <File path="dmd\src\dmd\sideeffect.d" />
    <File path="dmd\src\dmd\statement.d" />
-   <File path="dmd\src\dmd\statementsem.d" />
    <File path="dmd\src\dmd\statement_rewrite_walker.d" />
+   <File path="dmd\src\dmd\statementsem.d" />
    <File path="dmd\src\dmd\staticassert.d" />
    <File path="dmd\src\dmd\staticcond.d" />
+   <File path="dmd\src\dmd\strictvisitor.d" />
    <File path="dmd\src\dmd\target.d" />
    <File path="dmd\src\dmd\templateparamsem.d" />
+   <File path="dmd\src\dmd\tocsym.d" tool="None" />
+   <File path="dmd\src\dmd\toctype.d" tool="None" />
+   <File path="dmd\src\dmd\tocvdebug.d" tool="None" />
+   <File path="dmd\src\dmd\todt.d" tool="None" />
+   <File path="dmd\src\dmd\toir.d" tool="None" />
    <File path="dmd\src\dmd\tokens.d" />
+   <File path="dmd\src\dmd\toobj.d" tool="None" />
    <File path="dmd\src\dmd\traits.d" />
    <File path="dmd\src\dmd\transitivevisitor.d" />
    <File path="dmd\src\dmd\typesem.d" />
@@ -1218,18 +1235,18 @@ ml64 -c -Zi &quot;-Fl$(IntDir)\$(InputName).lst&quot; &quot;-Fo$(IntDir)\$(Input
   <File path="ddmdmars.d" />
   <File path="ddmdrmem.d" />
   <File path="dmdserver.d" />
-  <File path="dmdserver.idl" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+  <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 set midl=midl
 if exist &quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\midl.exe&quot; set midl=&quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\midl.exe&quot;
-%midl% /D _DEBUG /nologo /char signed /env win32 /Oicf  /tlb &quot;.\$(InputName).tlb&quot; /out &quot;$(IntDir)&quot; /error stub_data $(InputPath)" tool="Custom" outfile="$(IntDir)/dmdserver.tlb" />
-  <File path="dmdserver.rc" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+%midl% /D _DEBUG /nologo /char signed /env win32 /Oicf  /tlb &quot;.\$(InputName).tlb&quot; /out &quot;$(IntDir)&quot; /error stub_data $(InputPath)" outfile="$(IntDir)/dmdserver.tlb" path="dmdserver.idl" tool="Custom" />
+  <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 set rc=rc
 if exist &quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\rc.exe&quot; set rc=&quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\rc.exe&quot;
-%rc% /fo&quot;$(OutDir)\$(InputName).res&quot; /I&quot;$(IntDir)&quot; $(InputPath)" tool="Custom" dependencies="&quot;$(IntDir)\dmdserver.tlb&quot; ..\version" linkoutput="true" outfile="$(OutDir)\dmdserver.res" />
+%rc% /fo&quot;$(OutDir)\$(InputName).res&quot; /I&quot;$(IntDir)&quot; $(InputPath)" dependencies="&quot;$(IntDir)\dmdserver.tlb&quot; ..\version" outfile="$(OutDir)\dmdserver.res" path="dmdserver.rc" linkoutput="true" tool="Custom" />
   <File path="ivdserver.d" />
   <File path="semanticopt.d" />
   <File path="..\tools\tracegc.d" />

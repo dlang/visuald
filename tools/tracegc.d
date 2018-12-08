@@ -143,7 +143,7 @@ struct StackAddrInfo
 	uint line;
 }
 
-__gshared StackAddrInfo addrInfo[1 << 16];
+__gshared StackAddrInfo[1 << 16] addrInfo;
 __gshared size_t addrInfoPos;
 
 StackAddrInfo* findOrAddAddr(size_t pc) nothrow
@@ -608,7 +608,7 @@ extern(C) void dumpGC()
 
 void dumpAddr(AddrTracePair[] traceMap, void* addr, size_t size)
 {
-	char buf[256];
+	char[256] buf;
 
 	const(char)* filename;
 	int line;
@@ -664,7 +664,7 @@ void addAddrInfoStat(StackAddrInfo* ai, size_t size)
 
 void dumpAddrInfoStat()
 {
-	char buf[256];
+	char[256] buf;
 
 	OutputDebugStringA("Dump combined by stack location:\n");
 
@@ -864,7 +864,7 @@ void dumpGC(GC _gc)
 
 	cgc.gcLock.lock();
 
-	char buf[256];
+	char[256] buf;
 	sprintf(buf.ptr, "Dump of GC %p: %d pools\n", _gc, gcx.npools);
 	OutputDebugStringA(buf.ptr);
 	sprintf(buf.ptr, "Trace buffer memory: %lld bytes\n", cast(long)tracer.traceBuffer.memUsage());
@@ -1049,7 +1049,7 @@ void findRoot(void* sobj)
 	const(void*) minAddr = cgc.gcx.pooltable.minAddr;
 	const(void*) maxAddr = cgc.gcx.pooltable.maxAddr;
 
-	char buf[256];
+	char[256] buf;
 nextLoc:
 	for ( ; ; )
 	{

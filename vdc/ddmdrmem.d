@@ -43,4 +43,43 @@ extern (C++) struct Mem
 
 extern (C++) const __gshared Mem mem;
 
+/**
+Makes a null-terminated copy of the given string on newly allocated memory.
+The null-terminator won't be part of the returned string slice. It will be
+at position `n` where `n` is the length of the input string.
 
+Params:
+    s = string to copy
+
+Returns: A null-terminated copy of the input array.
+*/
+extern (D) char[] xarraydup(const(char)[] s) nothrow
+{
+    if (!s)
+        return null;
+
+    auto p = cast(char*)mem.xmalloc(s.length + 1);
+    char[] a = p[0 .. s.length];
+    a[] = s[0 .. s.length];
+    p[s.length] = 0;    // preserve 0 terminator semantics
+    return a;
+}
+
+/**
+Makes a copy of the given array on newly allocated memory.
+
+Params:
+    s = array to copy
+
+Returns: A copy of the input array.
+*/
+extern (D) T[] arraydup(T)(const scope T[] s) nothrow
+{
+    if (!s)
+        return null;
+
+    const dim = s.length;
+    auto p = (cast(T*)mem.xmalloc(T.sizeof * dim))[0 .. dim];
+    p[] = s;
+    return p;
+}

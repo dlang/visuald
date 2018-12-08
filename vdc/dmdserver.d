@@ -285,7 +285,7 @@ class DMDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in BOOL verbose)
+	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags)
 	{
 		string fname = to_string(filename);
 		size_t len = wcslen(srcText);
@@ -354,7 +354,7 @@ class DMDServer : ComObject, IVDServer
 					*pErr = errors;
 			}
 
-			if(verbose)
+			if(flags & 1)
 				writeReadyMessage();
 		}
 		version(DebugServer) dbglog("  scheduleParse: " ~ firstLine(text));
@@ -386,7 +386,7 @@ class DMDServer : ComObject, IVDServer
 		return S_FALSE;
 	}
 
-	override HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
+	override HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 	{
 		string fname = to_string(filename);
 
@@ -634,6 +634,16 @@ class DMDServer : ComObject, IVDServer
 		return E_NOTIMPL;
 	}
 
+	HRESULT GetIdentifierTypes(in BSTR filename, int startLine, int endLine, int flags)
+	{
+		return E_NOTIMPL;
+	}
+
+	HRESULT GetIdentifierTypesResult(BSTR* types)
+	{
+		return E_NOTIMPL;
+	}
+
 	///////////////////////////////////////////////////////////////
 	// create our own task pool to be able to destroy it (it keeps a the
 	//  arguments to the last task, so they are never collected)
@@ -696,15 +706,15 @@ class DMDServer : ComObject, IVDServer
 			global.params.color = false;
 			global.params.link = true;
 			global.params.useAssert = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
-			global.params.useInvariants = mOptions.debugOn;
-			global.params.useIn = mOptions.debugOn;
-			global.params.useOut = mOptions.debugOn;
+			global.params.useInvariants = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
+			global.params.useIn = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
+			global.params.useOut = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 			global.params.useArrayBounds = mOptions.noBoundsCheck ? CHECKENABLE.on : CHECKENABLE.off; // set correct value later
 			global.params.doDocComments = mOptions.doDoc;
 			global.params.useSwitchError = CHECKENABLE.on;
 			global.params.useInline = false;
 			global.params.obj = false;
-			global.params.useDeprecated = mOptions.noDeprecated ? 0 : 2;
+			global.params.useDeprecated = mOptions.noDeprecated ? Diagnostic.error : Diagnostic.off;
 			global.params.linkswitches = Strings();
 			global.params.libfiles = Strings();
 			global.params.dllfiles = Strings();
@@ -791,8 +801,8 @@ class DMDServer : ComObject, IVDServer
 		// redo module name with the new Identifier.stringtable
 		foreach (m; modules)
 		{
-			auto fname = to!string(m.srcfile.name.str);
-			string name = stripExtension(baseName(fname));
+			auto fname = m.srcfile.name.toString();
+			auto name = stripExtension(baseName(fname));
 			m.ident = Identifier.idPool(name);
 		}
 
@@ -875,7 +885,7 @@ private:
 	{
 		size_t pos = mModules.length;
 		foreach (i, m; mModules)
-			if (_stricmp(m.srcfile.name.str, fname) == 0)
+			if (_stricmp(m.srcfile.name.toChars(), fname) == 0)
 			{
 				if (createNew)
 				{
@@ -938,7 +948,7 @@ void verrorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 		if (_stricmp(loc.filename, gErrorFile) != 0)
 			return;
 
-		__gshared char buf[4096];
+		__gshared char[4096] buf;
 		int len = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:", loc.linnum, loc.charnum - 1, loc.linnum, loc.charnum);
 		if (p1 && len < buf.length)
 			len += snprintf(buf.ptr + len, buf.length - len, "%s ", p1);
@@ -981,20 +991,21 @@ version(all) // new mangling with dmd version >= 2.077
 {
 	enum string[2][] dmdStatics =
 	[
-		["_D3dmd5clone12buildXtoHashRCQBa7dstruct17StructDeclarationPSQCg6dscope5ScopeZ8tftohashCQDh5mtype12TypeFunction", "TypeFunction"],
-		["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
-		["_D3dmd13expressionsem11loadStdMathFZ10impStdMathCQBv7dimport6Import", "Import"],
-		["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
-		["_D3dmd7typesem13DotExpVisitor5visitMRCQBk5mtype10TypeAArrayZ8fd_aaLenCQCq4func15FuncDeclaration", "FuncDeclaration"],
-		["_D3dmd7typesem19TypeSemanticVisitor5visitMRCQBq5mtype10TypeAArrayZ3feqCQCr4func15FuncDeclaration", "FuncDeclaration"],
-		["_D3dmd7typesem19TypeSemanticVisitor5visitMRCQBq5mtype10TypeAArrayZ4fcmpCQCs4func15FuncDeclaration", "FuncDeclaration"],
-		["_D3dmd7typesem19TypeSemanticVisitor5visitMRCQBq5mtype10TypeAArrayZ5fhashCQCt4func15FuncDeclaration", "FuncDeclaration"],
-		["_D3dmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
-		["_D3dmd10dsymbolsem22DsymbolSemanticVisitor5visitMRCQBx9dtemplate13TemplateMixinZ4nesti", "int"],
-		["_D3dmd9dtemplate16TemplateInstance16tryExpandMembersMRPSQCc6dscope5ScopeZ4nesti", "int"],
-		["_D3dmd9dtemplate16TemplateInstance12trySemantic3MRPSQBy6dscope5ScopeZ4nesti", "int"],
-		["_D3dmd13expressionsem25ExpressionSemanticVisitor5visitMRCQCd10expression7CallExpZ4nesti", "int"],
-		["_D3dmd7typesem13DotExpVisitor8noMemberMRCQBn5mtype4TypePSQCd6dscope5ScopeCQCu10expression10ExpressionCQDw10identifier10IdentifieriZ4nesti", "int"],
+	["_D3dmd5clone12buildXtoHashFCQBa7dstruct17StructDeclarationPSQCg6dscope5ScopeZ8tftohashCQDh5mtype12TypeFunction", "TypeFunction"],
+	["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
+	["_D3dmd13expressionsem11loadStdMathFZ10impStdMathCQBv7dimport6Import", "Import"],
+	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
+	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ11visitAArrayMFCQEwQEc10TypeAArrayZ8fd_aaLenCQFz4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ3feqCQEn4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ4fcmpCQEo4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ5fhashCQEp4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd6dmacro5Macro6expandMFPSQBc4root9outbuffer9OutBufferkPkAxaZ4nesti", "int"], // x86
+	["_D3dmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
+	["_D3dmd10dsymbolsem22DsymbolSemanticVisitor5visitMRCQBx9dtemplate13TemplateMixinZ4nesti", "int"],
+	["_D3dmd9dtemplate16TemplateInstance16tryExpandMembersMFPSQCc6dscope5ScopeZ4nesti", "int"],
+	["_D3dmd9dtemplate16TemplateInstance12trySemantic3MFPSQBy6dscope5ScopeZ4nesti", "int"],
+	["_D3dmd13expressionsem25ExpressionSemanticVisitor5visitMRCQCd10expression7CallExpZ4nesti", "int"],
+	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ8noMemberMFQDxQDmQCxQByiZ4nesti", "int"],
 	];
 }
 else
@@ -1021,10 +1032,10 @@ else
 
 string cmangled(string s)
 {
-	version(Win64)
-		return "_" ~ s;
-	else
-		return s;
+	version (Win64)
+		if (s ==   "_D3dmd6dmacro5Macro6expandMFPSQBc4root9outbuffer9OutBufferkPkAxaZ4nesti")
+			return "_D3dmd6dmacro5Macro6expandMFPSQBc4root9outbuffer9OutBuffermPmAxaZ4nesti";
+	return s;
 }
 string genDeclDmdStatics()
 {
@@ -1095,7 +1106,9 @@ void clearDmdStatics()
 	// static __gshared FuncDeclaration* fdapply = [null, null];
 	// static __gshared TypeDelegate* fldeTy = [null, null];
 
-	ctfeStack = ctfeStack.init;
+	// dmd.dinterpret
+	// ctfeStack = ctfeStack.init;
+
 	Scope.freelist = null;
 	//Token.freelist = null;
 
@@ -1194,7 +1207,10 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(CompileStatement stmt)
 	{
-		visitExpression(stmt.exp);
+		if (stmt.exps)
+			foreach(e; *stmt.exps)
+				if (!stop)
+					e.accept(this);
 		if (!stop)
 			visit(cast(Statement)stmt);
 	}
@@ -1590,13 +1606,13 @@ RootObject _findAST(Dsymbol sym, const(char*) filename, int startLine, int start
 
 RootObject findAST(Module mod, int startLine, int startIndex, int endLine, int endIndex)
 {
-	auto filename = mod.srcfile.name.str;
+	auto filename = mod.srcfile.name.toChars();
 	return _findAST(mod, filename, startLine, startIndex, endLine, endIndex);
 }
 
 string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex)
 {
-	auto filename = mod.srcfile.name.str;
+	auto filename = mod.srcfile.name.toChars();
 	scope FindTipVisitor ftv = new FindTipVisitor(filename, startLine, startIndex, endLine, endIndex);
 	mod.accept(ftv);
 
@@ -1650,7 +1666,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 
 string findDefinition(Module mod, ref int line, ref int index)
 {
-	auto filename = mod.srcfile.name.str;
+	auto filename = mod.srcfile.name.toChars();
 	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 
