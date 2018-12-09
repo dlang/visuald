@@ -8,7 +8,7 @@
 
 // bring in core IDL files
 import "oaidl.idl";
-import "ivdserver.idl";
+import "../ivdserver.idl";
 
 // library statement
 [uuid(002a2de9-8bb6-484d-9907-7e4ad4084715), version(1.0),

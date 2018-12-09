@@ -55,10 +55,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src</imppath>
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -163,10 +163,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath />
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>$(OutDir) ..\..\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -271,10 +271,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>1</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath />
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -379,10 +379,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath />
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>$(OutDir) ..\..\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -487,10 +487,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..</imppath>
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -595,10 +595,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src .. $(DMDInstallDir)\src\druntime\src</imppath>
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)\$(PlatformName)\$(ProjectName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -703,10 +703,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..</imppath>
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -811,10 +811,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..</imppath>
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -919,10 +919,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..</imppath>
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
-  <objdir>$(OutDir)\$(PlatfromName)\$(ProjectName)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1027,10 +1027,10 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src .. $(DMDInstallDir)\src\druntime\src</imppath>
+  <imppath>dmd\src ..\..</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)\$(PlatfromName)\$(ProjectName)</outdir>
-  <objdir>$(OutDir)</objdir>
+  <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
   <doDocComments>0</doDocComments>
@@ -1246,10 +1246,10 @@ if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp
 if errorlevel 1 goto reportError
 set rc=rc
 if exist &quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\rc.exe&quot; set rc=&quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\rc.exe&quot;
-%rc% /fo&quot;$(OutDir)\$(InputName).res&quot; /I&quot;$(IntDir)&quot; $(InputPath)" dependencies="&quot;$(IntDir)\dmdserver.tlb&quot; ..\version" outfile="$(OutDir)\dmdserver.res" path="dmdserver.rc" linkoutput="true" tool="Custom" />
-  <File path="ivdserver.d" />
-  <File path="semanticopt.d" />
-  <File path="..\tools\tracegc.d" />
-  <File path="vdserverfactory.d" />
+%rc% /fo&quot;$(OutDir)\$(InputName).res&quot; /I&quot;$(IntDir)&quot; $(InputPath)" dependencies="&quot;$(IntDir)\dmdserver.tlb&quot; ..\..\version" outfile="$(OutDir)\dmdserver.res" path="dmdserver.rc" linkoutput="true" tool="Custom" />
+  <File path="..\ivdserver.d" />
+  <File path="..\semanticopt.d" />
+  <File path="..\..\tools\tracegc.d" />
+  <File path="..\vdserverfactory.d" />
  </Folder>
 </DProject>

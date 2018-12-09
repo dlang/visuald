@@ -18,7 +18,7 @@
 #define __str(x) #x
 #define _str(x) __str(x)
 
-#include "../version"
+#include "../../version"
 
 #if VERSION_BUILD > 0
 #define VERSION_POSTFIX         _str(VERSION_BETA) _str(VERSION_BUILD)
