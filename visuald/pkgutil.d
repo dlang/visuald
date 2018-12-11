@@ -180,7 +180,7 @@ string _browseFile(T)(HWND parentHwnd, string title, string filter, string initd
 			auto rc = pIVsUIShell.GetSaveFileNameViaDlg(&ofn);
 
 		if (rc == S_OK)
-			return to!string(fileName);
+			return to_string(fileName.ptr);
 	}
 	return null;
 }
@@ -208,7 +208,7 @@ string browseDirectory(HWND parentHwnd, string title, string initdir = null)
 		bi.nMaxDirName = dirName.length;
 		bi.pwzInitialDir = toUTF16z(initdir);
 		if (pIVsUIShell.GetDirectoryViaBrowseDlg(&bi) == S_OK)
-			return to!string(dirName);
+			return to_string(dirName.ptr);
 	}
 	return null;
 }
