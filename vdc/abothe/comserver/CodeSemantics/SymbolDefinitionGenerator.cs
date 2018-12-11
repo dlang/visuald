@@ -27,6 +27,9 @@ namespace DParserCOMServer.CodeSemantics
 			var definitionSourceFilename = new StringBuilder();
 			if (rr != null)
 			{
+				var at = rr as AliasedType;
+				if (at != null && at.Definition.Location == sr.Location)
+					rr = at.Base;
 				DNode n = null;
 				foreach (var t in AmbiguousType.TryDissolve(rr))
 				{
