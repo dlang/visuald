@@ -2262,6 +2262,53 @@ class LdcDirPropertyPage : DirPropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+class CmdLinePropertyPage : GlobalPropertyPage
+{
+	this(GlobalOptions options)
+	{
+		super(options);
+	}
+
+	enum ID_DUBPATH = 1011;
+
+	override string GetCategoryName() { return "D Options"; }
+	override string GetPageName() { return "Compile/Run/Debug/Dustmite"; }
+
+	override void CreateControls()
+	{
+		AddTitleLine("Compile and Run/Debug");
+		AddControl("Compile+Run options", mCompileAndRunOpts = new Text(mCanvas));
+		AddControl("Compile+Debug options", mCompileAndDbgOpts = new Text(mCanvas));
+		AddControl("   Debugger",       mCompileAndDbgEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
+		AddTitleLine("Dustmite");
+		AddControl("Command line options", mDustmiteOpts = new Text(mCanvas));
+	}
+
+	override void SetControls(GlobalOptions opts)
+	{
+		mCompileAndRunOpts.setText(opts.compileAndRunOpts);
+		mCompileAndDbgOpts.setText(opts.compileAndDbgOpts);
+		mCompileAndDbgEngine.setSelection(opts.compileAndDbgEngine);
+		mDustmiteOpts.setText(opts.dustmiteOpts);
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts);
+		changes += changeOption(mCompileAndDbgOpts.getText(), opts.compileAndDbgOpts, refopts.compileAndDbgOpts);
+		changes += changeOption(mCompileAndDbgEngine.getSelection(), opts.compileAndDbgEngine, refopts.compileAndDbgEngine);
+		changes += changeOption(mDustmiteOpts.getText(), opts.dustmiteOpts, refopts.dustmiteOpts);
+		return changes;
+	}
+
+	Text mCompileAndRunOpts;
+	Text mCompileAndDbgOpts;
+	ComboBox mCompileAndDbgEngine;
+	Text mDustmiteOpts;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 class DubPropertyPage : GlobalPropertyPage
 {
 	this(GlobalOptions options)
@@ -2322,7 +2369,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 17;
+		kNeededLines = 13;
 	}
 
 	override void CreateControls()
@@ -2344,10 +2391,6 @@ class ToolsProperty2Page : GlobalPropertyPage
 		//		   new ComboBox(mCanvas, [ "Do not delete file on disk", "Ask", "Delete file on disk" ]));
 		mLinesPerMultiLine = 2;
 		AddControl("JSON paths",        mJSNPath = new MultiLineText(mCanvas), 500);
-		AddTitleLine("Compile and Run/Debug");
-		AddControl("Compile+Run options", mCompileAndRunOpts = new Text(mCanvas));
-		AddControl("Compile+Debug options", mCompileAndDbgOpts = new Text(mCanvas));
-		AddControl("   Debugger",       mCompileAndDbgEngine = new ComboBox(mCanvas, [ "Visual Studio", "Mago", "Visual Studio (x86 Mixed Mode)" ], false));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -2364,9 +2407,6 @@ class ToolsProperty2Page : GlobalPropertyPage
 		//mDeleteFiles.setSelection(opts.deleteFiles + 1);
 		mIncPath.setText(opts.IncSearchPath);
 		mJSNPath.setText(opts.JSNSearchPath);
-		mCompileAndRunOpts.setText(opts.compileAndRunOpts);
-		mCompileAndDbgOpts.setText(opts.compileAndDbgOpts);
-		mCompileAndDbgEngine.setSelection(opts.compileAndDbgEngine);
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -2384,9 +2424,6 @@ class ToolsProperty2Page : GlobalPropertyPage
 		//changes += changeOption(cast(byte) (mDeleteFiles.getSelection() - 1), opts.deleteFiles, refopts.deleteFiles);
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath);
 		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath);
-		changes += changeOption(mCompileAndRunOpts.getText(), opts.compileAndRunOpts, refopts.compileAndRunOpts);
-		changes += changeOption(mCompileAndDbgOpts.getText(), opts.compileAndDbgOpts, refopts.compileAndDbgOpts);
-		changes += changeOption(mCompileAndDbgEngine.getSelection(), opts.compileAndDbgEngine, refopts.compileAndDbgEngine);
 		return changes;
 	}
 
@@ -2401,9 +2438,6 @@ class ToolsProperty2Page : GlobalPropertyPage
 		CheckBox mShowMemUsage;
 	//ComboBox mDeleteFiles;
 	Text mIncPath;
-	Text mCompileAndRunOpts;
-	Text mCompileAndDbgOpts;
-	ComboBox mCompileAndDbgEngine;
 	MultiLineText mJSNPath;
 }
 
@@ -2711,6 +2745,7 @@ const GUID    g_LinkerOutputPropertyPage = uuid("002a2de9-8bb6-484d-981d-7e4ad40
 const GUID    g_DmdDirPropertyPage       = uuid("002a2de9-8bb6-484d-9820-7e4ad4084715");
 const GUID    g_GdcDirPropertyPage       = uuid("002a2de9-8bb6-484d-9824-7e4ad4084715");
 const GUID    g_LdcDirPropertyPage       = uuid("002a2de9-8bb6-484d-9825-7e4ad4084715");
+const GUID    g_CmdLinePropertyPage      = uuid("002a2de9-8bb6-484d-9828-7e4ad4084715");
 const GUID    g_DubPropertyPage          = uuid("002a2de9-8bb6-484d-9827-7e4ad4084715");
 const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad4084715");
 

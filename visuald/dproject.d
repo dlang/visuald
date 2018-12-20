@@ -2798,7 +2798,7 @@ HRESULT DustMiteProject()
 	if (msgRet != IDYES)
 		return S_FALSE;
 
-	string workdir = cfg.GetProjectDir();
+	string workdir = normalizeDir(cfg.GetProjectDir());
 
 	auto pane = getVisualDOutputPane();
 	scope(exit) release(pane);
@@ -2822,7 +2822,7 @@ HRESULT DustMiteProject()
 		}
 		pane.OutputString(_toUTF16z("created clean copy of the project in " ~ dustmitepath ~ "\n"));
 
-		auto reldir = makeRelative(proj.GetProjectDir(), commonpath);
+		auto reldir = makeRelative(workdir, commonpath);
 		npath = makeDirnameCanonical(npath, null);
 		nworkdir = makeDirnameCanonical(reldir, npath);
 		string nintdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), nworkdir);
@@ -2846,7 +2846,7 @@ HRESULT DustMiteProject()
 		string intdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), workdir);
 		mkdirRecurse(intdir);
 		dustfile = intdir ~ "\\dustmite.cmd";
-		string opts = "--strip-comments --split *.bat:lines";
+		string opts = Package.GetGlobalOptions().dustmiteOpts;
 		cmd = Package.GetGlobalOptions().findDmdBinDir() ~ "dustmite " ~ opts ~ " " ~ quoteFilename(npath[0..$-1]) ~ " \"" ~ dustcmd ~ "\"";
 		std.file.write(dustfile, cmd ~ "\npause\n");
 		std.process.spawnShell(quoteFilename(dustfile), null, std.process.Config.none, nworkdir);
