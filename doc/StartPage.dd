@@ -54,6 +54,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2018-12-22 Version 0.48.1
+$(UL
+  $(LI goto definition on alias: jump to base definition if caret on alias)
+  $(LI cv2pdb: fix missing line numbers for new versions of mspdb*.dll)
+  $(LI mago: variables captured from stack of outer function not displayed in locals)
+)
+
 2018-12-02 Version 0.48.0
 $(UL
   $(LI installer and binaries now digitally signed by the "D Language Foundation")
