@@ -54,6 +54,7 @@ vdserver:
 
 dparser:
 	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5 /p:DefineConstants=NET40 /t:Rebuild
+	editbin /STACK:0x800000 bin\Release\DParserCOMServer\DParserCOMServer.exe
 
 dparser_test:
 	set PLATFORM="Any CPU" && dotnet test vdc\abothe\VDServer.sln -c Release

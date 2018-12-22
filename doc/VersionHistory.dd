@@ -1,5 +1,34 @@
 Ddoc
 
+$(H2 2018-12-22 Version 0.48.1)
+ $(UL
+  $(LI dparser:
+   $(UL
+    $(LI fix Issue 19411: increase stack size for DParserCOMServer)
+    $(LI goto definition on alias: jump to base definition if caret on alias)
+  ))
+  $(LI build system
+   $(UL
+    $(LI fix Issue 19445: Linking to lib under "c:\Program Files (x86)" does not work in Visual D)
+  ))
+  $(LI dustmite
+   $(UL
+    $(LI fix copying project for dustmite with relative paths)
+    $(LI move command line options to new setup page, add dustmite command line options)
+  ))
+  $(LI cv2pdb
+   $(UL
+    $(LI fix crash if mspdb*.dll cannot be loaded from path)
+    $(LI emit "elemtype[keytype]" instead of "dAssocArray")
+    $(LI fix missing line numbers for new versions of mspdb*.dll (e.g. 14.16.27012/VS 15.9))
+  ))
+  $(LI mago
+   $(UL
+     $(LI variables captured from stack of outer function not displayed in locals)
+  ))
+ )
+
+
 $(H2 2018-12-02 Version 0.48.0)
  $(UL
   $(LI installation

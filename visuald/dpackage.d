@@ -407,6 +407,8 @@ class Package : DisposingComObject,
 			tpp = newCom!LdcDirPropertyPage(mOptions);
 		else if(*rguidPage == g_DubPropertyPage)
 			tpp = newCom!DubPropertyPage(mOptions);
+		else if(*rguidPage == g_CmdLinePropertyPage)
+			tpp = newCom!CmdLinePropertyPage(mOptions);
 		else if(*rguidPage == g_ToolsProperty2Page)
 			tpp = newCom!ToolsProperty2Page(mOptions);
 		else if(*rguidPage == g_ColorizerPropertyPage)
@@ -1353,6 +1355,7 @@ class GlobalOptions
 	string compileAndRunOpts;
 	string compileAndDbgOpts;
 	int compileAndDbgEngine;
+	string dustmiteOpts;
 
 	string[] coverageBuildDirs;
 	string[] coverageExecutionDirs;
@@ -1837,6 +1840,7 @@ class GlobalOptions
 			compileAndRunOpts = getStringOpt("compileAndRunOpts", "-unittest");
 			compileAndDbgOpts = getStringOpt("compileAndDbgOpts", "-g");
 			compileAndDbgEngine = getIntOpt("compileAndDbgEngine", 0);
+			dustmiteOpts      = getStringOpt("dustmiteOpts", "--strip-comments --split *.bat:lines");
 
 			dubPath           = getStringOpt("dubPath", "dub");
 			dubOptions        = getStringOpt("dubOptions", "");
@@ -1961,6 +1965,7 @@ class GlobalOptions
 			keyToolOpts.Set("compileAndRunOpts",   toUTF16(compileAndRunOpts));
 			keyToolOpts.Set("compileAndDbgOpts",   toUTF16(compileAndDbgOpts));
 			keyToolOpts.Set("compileAndDbgEngine", compileAndDbgEngine);
+			keyToolOpts.Set("dustmiteOpts",        toUTF16(dustmiteOpts));
 
 			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
 			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));

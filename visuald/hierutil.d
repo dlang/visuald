@@ -713,7 +713,7 @@ string commonProjectFolder(Project proj)
 	searchNode(proj.GetRootNode(), delegate (CHierNode n)
 	{
 		if(CFileNode file = cast(CFileNode) n)
-			path = commonParentDir(path, makeFilenameAbsolute(file.GetFilename(), workdir));
+			path = commonParentDir(path, makeFilenameCanonical(file.GetFilename(), workdir));
 		return false;
 	});
 	return path;

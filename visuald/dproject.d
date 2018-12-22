@@ -2798,7 +2798,7 @@ HRESULT DustMiteProject()
 	if (msgRet != IDYES)
 		return S_FALSE;
 
-	string workdir = cfg.GetProjectDir();
+	string workdir = normalizeDir(cfg.GetProjectDir());
 
 	auto pane = getVisualDOutputPane();
 	scope(exit) release(pane);
@@ -2822,7 +2822,9 @@ HRESULT DustMiteProject()
 		}
 		pane.OutputString(_toUTF16z("created clean copy of the project in " ~ dustmitepath ~ "\n"));
 
-		nworkdir = npath; // TODO
+		auto reldir = makeRelative(workdir, commonpath);
+		npath = makeDirnameCanonical(npath, null);
+		nworkdir = makeDirnameCanonical(reldir, npath);
 		string nintdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), nworkdir);
 		string noutdir = makeFilenameAbsolute(cfg.GetOutDir(), nworkdir);
 		mkdirRecurse(nworkdir);
@@ -2833,7 +2835,7 @@ HRESULT DustMiteProject()
 		std.file.write(normalizeDir(noutdir) ~ "empty.txt", "");
 
 		if (nworkdir != npath)
-			cmdline ~= "cd " ~ quoteFilename(makeRelative(nworkdir, npath));
+			cmdline ~= "cd " ~ quoteFilename(makeRelative(nworkdir, npath)) ~ "\n";
 		cmdline ~= cfg.getCommandLine(true, true, false);
 		cmdfile = npath ~ "build.dustmite.bat";
 		std.file.write(cmdfile, cmdline);
@@ -2844,7 +2846,7 @@ HRESULT DustMiteProject()
 		string intdir = makeFilenameAbsolute(cfg.GetIntermediateDir(), workdir);
 		mkdirRecurse(intdir);
 		dustfile = intdir ~ "\\dustmite.cmd";
-		string opts = "--strip-comments --split *.bat:lines";
+		string opts = Package.GetGlobalOptions().dustmiteOpts;
 		cmd = Package.GetGlobalOptions().findDmdBinDir() ~ "dustmite " ~ opts ~ " " ~ quoteFilename(npath[0..$-1]) ~ " \"" ~ dustcmd ~ "\"";
 		std.file.write(dustfile, cmd ~ "\npause\n");
 		std.process.spawnShell(quoteFilename(dustfile), null, std.process.Config.none, nworkdir);
@@ -2875,4 +2877,42 @@ class DustMiteThread : CBuilderThread
 	override bool needsOutputParser() { return false; }
 
 	string mBuildDir;
+}
+
+unittest
+{
+	CHierNode.shared_static_this();
+	Package pkg = newCom!Package.addref();
+	scope(exit) pkg.release();
+	string tmpdir = normalizeDir(tempDir());
+	string projdir = tmpdir ~ "test/dustmite/project/";
+	string projfile = projdir ~ "project.vdproj";
+	string platform = "Win32", config = "Debug";
+	auto cfg = newCom!VCConfig(projfile, "test", platform, config);
+
+	Project prj = newCom!Project(Package.GetProjectFactory(), "test", projfile, platform, config);
+
+	mkdirRecurse(projdir);
+	string dfile1 = projdir ~ "dfile1.d";
+	std.file.write(dfile1, "// dfile1\n");
+	auto pFile1 = newCom!CFileNode("dfile1.d");
+	prj.GetRootNode().AddTail(pFile1);
+
+	mkdirRecurse(tmpdir ~ "test/dustmite/other");
+	string dfile2 = tmpdir ~ "test/dustmite/other/dfile2.d";
+	std.file.write(dfile2, "// dfile2\n");
+	auto pFile2 = newCom!CFileNode("../other/dfile2.d");
+	prj.GetRootNode().AddTail(pFile2);
+
+	string commonpath = commonProjectFolder(prj);
+	string dustmitepath = buildPath(dirName(commonpath), baseName(commonpath) ~ ".dustmite");
+	assert(dustmitepath == tmpdir ~ r"test\dustmite.dustmite");
+	if (std.file.exists(dustmitepath))
+		rmdirRecurse(dustmitepath);
+
+	string npath = copyProjectFolder(prj, dustmitepath);
+	assert(npath == normalizeDir(dustmitepath));
+
+	assert(std.file.exists(dustmitepath ~ r"\project\dfile1.d"));
+	assert(std.file.exists(dustmitepath ~ r"\other\dfile2.d"));
 }

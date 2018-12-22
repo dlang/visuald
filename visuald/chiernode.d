@@ -60,7 +60,8 @@ class CHierNode : DisposingDispatchObject
 {
 	static void shared_static_this()
 	{
-		gVsItemMap_sync = new Object;
+		if (!gVsItemMap_sync)
+			gVsItemMap_sync = new Object;
 	}
 	
 	this()

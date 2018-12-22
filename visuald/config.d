@@ -963,6 +963,7 @@ class ProjectOptions
 			string s;
 			foreach(i, file; lnkfiles)
 			{
+				file = unquoteArgument(file);
 				if(toLower(extension(file)) != ext)
 					continue;
 				if(s.length > 0)
