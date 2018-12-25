@@ -48,6 +48,12 @@
     <BoolProperty Name="PreserveSourcePath" Category="General" DisplayName="Preserve source path"
                   Description="preserve source path for output files." Switch="-op" 
                   Visible="False"/>
+    <BoolProperty Name="CompileD_UseMultiToolTask" 
+                  Description="Use all available processors to compile the project. Ignored on VS2013 (not supported). Ignored if 'Compilation Model' is 'One object file per project'." Category="General" >
+      <BoolProperty.DataSource>
+        <DataSource Persistence="ProjectFile" ItemType="" Label="" HasConfigurationCondition="true" />
+      </BoolProperty.DataSource>
+    </BoolProperty>
 
     <!-- =============== Messages =============== -->
     <EnumProperty Name="Warnings" Category="Messages" DisplayName="Enable warnings" Description="Enable display of warnings. (-w, -wi)">

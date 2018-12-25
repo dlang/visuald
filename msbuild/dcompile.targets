@@ -16,6 +16,7 @@
   </PropertyGroup>
 
   <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(DbuildCompileDDLLPath)" />
+  <UsingTask TaskName="dbuild.MultiToolTaskVisualD" AssemblyFile="$(DbuildCompileDDLLPath)" />
 
   <!-- remove disabled files from DCompile -->
   <Target Name="_collectDFiles"
@@ -49,11 +50,17 @@
       <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'Project'">
         <ObjectFileName>$(IntDir)dcompile_$(ProjectName).obj</ObjectFileName>
       </DCompile>
+      <DCompile Condition="'%(DCompile.CompilationModel)' == 'Project' and '$(VisualStudioVersion)' != '12.0'">
+        <UseMultiToolTask>false</UseMultiToolTask> <!-- Never use MultiToolTask when compiling by project -->
+      </DCompile>
     </ItemGroup>
 
     <ItemGroup>
       <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'Package'">
         <ObjectFileName>$(IntDir)dpackage_%(PackageName).obj</ObjectFileName>
+      </DCompile>
+      <DCompile Condition="'%(DCompile.CompilationModel)' == 'Package' and '$(VisualStudioVersion)' != '12.0'">
+        <UseMultiToolTask>$(CompileD_UseMultiToolTask)</UseMultiToolTask>
       </DCompile>
     </ItemGroup>
 
@@ -61,6 +68,9 @@
       <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'File'">
         <ObjectFileName Condition="'%(PackageName)' == ''">$(IntDir)%(FileName).obj</ObjectFileName>
         <ObjectFileName Condition="'%(PackageName)' != ''">$(IntDir)%(PackageName).%(FileName).obj</ObjectFileName>
+      </DCompile>
+      <DCompile Condition="'%(DCompile.CompilationModel)' == 'File'">
+        <UseMultiToolTask>$(CompileD_UseMultiToolTask)</UseMultiToolTask>
       </DCompile>
     </ItemGroup>
 
@@ -80,14 +90,13 @@
     BeforeTargets="$(DCompileBeforeTargets)"
     AfterTargets="$(DCompileAfterTargets)"
     Condition="'@(DCompile)' != '' and '$(DCompiler)' != 'None'"
-    Outputs="%(DCompile.ObjectFileName)"
     DependsOnTargets="_collectDFiles;_replacePackageName;_SelectedFiles">
     
     <ItemGroup Condition="'@(SelectedFiles)' != ''">
       <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
     </ItemGroup>
     
-   <PropertyGroup>
+    <PropertyGroup>
       <_ToolExe Condition="'$(DCompiler)' == 'LDC'">$(LDCBinDir)ldmd2.exe</_ToolExe>
       <_ToolExe Condition="'$(DCompiler)' != 'LDC'">$(DMDBinDir)dmd.exe</_ToolExe>
     </PropertyGroup>
@@ -99,7 +108,32 @@
       <_DebugFull Condition="'$(_DebugFull)' != 'true' and '$(_DebugFull)' != 'false'">false</_DebugFull>
     </PropertyGroup>
     
-    <CompileD Condition="'@(DCompile)' != ''"
+    <PropertyGroup>
+      <ClMultiToolTaskMinimalRebuild>true</ClMultiToolTaskMinimalRebuild>
+      <ClMultiToolTaskMinimalRebuild Condition="'$(_BuildActionType)' != 'Build' or '$(ForceRebuild)' == 'true'">false</ClMultiToolTaskMinimalRebuild>
+      <ProcessorNumber Condition="'$(ProcessorNumber)' == ''">$(CL_MPCount)</ProcessorNumber>
+      <MultiToolTaskVerbose>True</MultiToolTaskVerbose>
+    </PropertyGroup>
+
+    <MultiToolTaskVisualD Condition="'@(DCompile)' != '' and '%(DCompile.UseMultiToolTask)' == 'true'"
+               TaskName="dbuild.CompileD"
+               TaskAssemblyName="$(DbuildCompileDDLLPath)"
+               Sources="@(DCompile)"
+
+               SchedulerVerbose="$(MultiToolTaskVerbose)"
+               SemaphoreProcCount="$(ProcessorNumber)"
+               TrackFileAccess="$(TrackFileAccess)"
+               TrackerLogDirectory="$(TLogLocation)"
+               MinimalRebuildFromTracking="$(ClMultiToolTaskMinimalRebuild)"
+               TLogReadFiles="@(CLTLogReadFiles)"
+               TLogWriteFiles="@(CLTLogWriteFiles)"
+               ToolExe="$(_ToolExe)"
+               CompilationModel="%(DCompile.CompilationModel)"
+    >
+    </MultiToolTaskVisualD>
+
+
+    <CompileD Condition="'@(DCompile)' != '' and '%(DCompile.UseMultiToolTask)' != 'true'"
               TrackerLogDirectory="$(TLogLocation)"
               ShowCommandLine="%(DCompile.ShowCommandLine)"
               AdditionalOptions="%(DCompile.AdditionalOptions)"
