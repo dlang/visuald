@@ -604,7 +604,7 @@ namespace dbuild
                 }
                 if (!cts.IsCancellationRequested)
                 {
-                    FinishBuild(0);
+                    _FinishBuild(0);
                 }
             }
             else
@@ -689,6 +689,38 @@ namespace dbuild
                 }
             }
             return propertiesSet;
+        }
+
+        public override void Cancel()
+        {
+            cts.Cancel();
+            _FinishBuild(0);
+        }
+
+        static string _FormatRootingMarker(string sources)
+        {
+            string[] splitSources = sources.Split('|');
+            List<string> stringList = new List<string>(splitSources.Length);
+            foreach (string source in splitSources)
+                stringList.Add(Path.GetFullPath(source).ToUpperInvariant());
+            stringList.Sort((IComparer<string>)StringComparer.OrdinalIgnoreCase);
+            return string.Join("|", (IEnumerable<string>)stringList);
+        }
+
+        // to replace super.FinishBuild
+        protected int _FinishBuild(int exitCode)
+        {
+            if (PostBuildTrackingCleanup)
+                exitCode = PostExecuteTool(exitCode);
+            if (sourcesToCommandLines != null)
+            {
+                foreach (var allTask in taskScheduler.GetAllTasks())
+                    // original causes PathTooLongException for long list of files used as ITaskItem.itemSpec
+                    //sourcesToCommandLines.Remove(FileTracker.FormatRootingMarker((ITaskItem)new TaskItem(allTask.Key)));
+                    sourcesToCommandLines.Remove(_FormatRootingMarker(allTask.Key));
+                WriteSourcesToCommandLinesTable(sourcesToCommandLines);
+            }
+            return exitCode;
         }
 
         protected override int PostExecuteTool(int exitCode)
