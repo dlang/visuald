@@ -79,23 +79,13 @@ branch in the registry, so it does not interfere with your working
 environment.)
 
 $(UL
- $(LI VS2008: To create a configuration named "D"
-  $(UL
-   $(LI As administrator, execute from the command line:
-    $(PRE $(LESS)path-to-visual-studio-sdk$(GREATER)\VisualStudioIntegration\Tools\Bin\VSRegEx.exe getorig 9.0 D)
-   )
-   $(LI and register the compiled debug plugin with
-    $(PRE trunk\nsis\register.bat)
-   )
-   $(LI The IDE can then be started with the new settings branch via
-    $(PRE devenv /RootSuffix D)
-   )
-  )
- )
- $(LI VS2010-VS2015: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
+ $(LI VS2010-VS2017: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
    on every start of Visual Studio.
   $(UL
-   $(LI Copy the files from `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\Extensions\Rainer Schuetze\visuald\VisualD` into the folder
+   $(LI Copy the files from `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\Extensions\Rainer Schuetze\VisualD` into the folder
+     `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0\Extensions\VisualD` (replace 12.0 with 14.0 for VS2015, 15.0_`<id>`
+     for VS2017 with `<id>` some identifier generated during VS installation))
+   $(LI Move the files from `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\Extensions\Rainer Schuetze\VisualD` into the folder
      `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD` (replace 12.0D with 14.0D for VS2015, 15.0_`<id>`D
      for VS2017 with `<id>` some identifier generated during VS installation))
    $(LI in visuald.pkgdef, replace the path "C:\\Program Files (x86)\\Visual D\\visuald.dll" with your debug build output path.)
@@ -111,6 +101,19 @@ $(UL
    $(LI Start the IDE with the new settings branch via)
     $(PRE devenv /RootSuffix D)
    $(LI Visual D will now be shown in the Extension Manager where it might have to be enabled.)
+  )
+ )
+ $(LI VS2008: To create a configuration named "D"
+  $(UL
+   $(LI As administrator, execute from the command line:
+    $(PRE $(LESS)path-to-visual-studio-sdk$(GREATER)\VisualStudioIntegration\Tools\Bin\VSRegEx.exe getorig 9.0 D)
+   )
+   $(LI and register the compiled debug plugin with
+    $(PRE trunk\nsis\register.bat)
+   )
+   $(LI The IDE can then be started with the new settings branch via
+    $(PRE devenv /RootSuffix D)
+   )
   )
  )
 )
