@@ -10,6 +10,7 @@ module visuald.viewfilter;
 
 import visuald.windows;
 import visuald.comutil;
+import visuald.colorizer;
 import visuald.logutil;
 import visuald.hierutil;
 import visuald.fileutil;
@@ -1720,10 +1721,40 @@ else
 	{
 		mixin(LogCallMix);
 
+		auto src = mCodeWinMgr.mSource;
 		HRESULT resFwd = TIP_S_ONLYIFNOMARKER; // enable and prefer TextMarker tooltips
 		TextSpan span = *pSpan;
-		if(!mCodeWinMgr.mSource.GetTipSpan(pSpan))
+		if(!src.GetTipSpan(pSpan))
 			return resFwd;
+
+		// retrieve last identifier in span
+		int startIdx, endIdx;
+		if(src.GetWordExtent(pSpan.iEndLine, pSpan.iEndIndex - 1, WORDEXT_CURRENT, startIdx, endIdx))
+		{
+			wstring id = src.GetText(pSpan.iEndLine, startIdx, pSpan.iEndLine, endIdx);
+			if(id.length > 0)
+			{
+				int col = src.getIdentifierColor(id, pSpan.iEndLine, startIdx);
+				switch(col)
+				{
+					case TokenColor.Interface:
+					case TokenColor.Enum:
+					case TokenColor.EnumValue:
+					case TokenColor.Template:
+					case TokenColor.Class:
+					case TokenColor.Struct:
+					case TokenColor.Union:
+					case TokenColor.TemplateTypeParameter:
+					case TokenColor.Constant:
+					case TokenColor.Alias:
+					case TokenColor.Module:
+					case TokenColor.BasicType:
+						goto L_ctinfo;
+					default:
+						break;
+				}
+			}
+		}
 
 		// when implementing IVsTextViewFilter, VS2010 will no longer ask the debugger
 		//  for tooltips, so we have to do it ourselves
@@ -1731,7 +1762,7 @@ else
 		{
 			scope(exit) release(srpVsDebugger);
 
-			HRESULT hr = srpVsDebugger.GetDataTipValue(mCodeWinMgr.mSource.mBuffer, pSpan, null, pbstrText);
+			HRESULT hr = srpVsDebugger.GetDataTipValue(src.mBuffer, pSpan, null, pbstrText);
 			if(hr == 0x45001) // always returned when debugger active, so no other tooltips then
 			{
 				if(IVsCustomDataTip tip = qi_cast!IVsCustomDataTip(srpVsDebugger))
@@ -1744,10 +1775,10 @@ else
 					return hr;
 			} // return hr; // this triggers HandoffNoDefaultTipToDebugger
 		}
-
+L_ctinfo:
 version(none) // quick info tooltips not good enough yet
 {
-		string word = toUTF8(mCodeWinMgr.mSource.GetText(pSpan.iStartLine, pSpan.iStartIndex, pSpan.iEndLine, pSpan.iEndIndex));
+		string word = toUTF8(src.GetText(pSpan.iStartLine, pSpan.iStartIndex, pSpan.iEndLine, pSpan.iEndIndex));
 		if(word.length <= 0)
 			return resFwd;
 
@@ -1777,7 +1808,7 @@ version(none) // quick info tooltips not good enough yet
 				if(mPendingSpan != span)
 				{
 					mPendingSpan = span;
-					mPendingRequest = Package.GetLanguageService().GetTip(mCodeWinMgr.mSource, &span, &OnGetTipText);
+					mPendingRequest = Package.GetLanguageService().GetTip(src, &span, &OnGetTipText);
 				}
 				return E_PENDING;
 			}
