@@ -885,7 +885,8 @@ class VDServerClient
 
 	static void clientLoop()
 	{
-		startVDServer();
+		if (!startVDServer())
+			restartServer = true;
 
 		try
 		{
@@ -893,7 +894,7 @@ class VDServerClient
 			bool pendingMessageSent = false;
 
 			Queue!(_shared!(Command)) toAnswer;
-			while(gVDServer)
+			while(gVDServer || restartServer)
 			{
 				bool changed = false;
 				receiveTimeout(dur!"msecs"(50),
@@ -973,7 +974,8 @@ class VDServerClient
 					restartServer = false;
 					version(DebugCmd) dbglog("*** clientLoop: restarting server ***");
 					stopVDServer();
-					startVDServer();
+					if (!startVDServer())
+						restartServer = true;
 				}
 			}
 		}

@@ -37,7 +37,7 @@ import std.path;
 import std.process : environment;
 import std.string;
 
-// version = DParserOption;
+debug version = DParserOption;
 enum hasDubSupport = false;
 
 class PropertyWindow : Window

@@ -156,9 +156,7 @@ static if(version_minor < 64)
 }
 else
 {
-	extern (C) int rt_init();
-	extern (C) int rt_term();
-	extern (C) bool runModuleUnitTests();
+	import core.runtime;
 	enum EXIT_SUCCESS = 0;
 	enum EXIT_FAILURE = -1;
 
@@ -171,7 +169,7 @@ else
 			if (rt_init())
 			{
 				version(unittest)
-					result = runModuleUnitTests() ? 0 : EXIT_FAILURE;
+					result = runModuleUnitTests().passed ? EXIT_SUCCESS : EXIT_FAILURE;
 				else
 					result = vdserver_main();
 			}
