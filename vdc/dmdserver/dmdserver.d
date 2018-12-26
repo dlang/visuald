@@ -82,10 +82,12 @@ import std.array;
 
 import std.concurrency;
 import std.datetime;
+import core.exception;
 import core.memory;
 import core.thread;
 import core.time;
 import core.stdc.stdio;
+import core.stdc.stdlib;
 import core.stdc.string;
 
 //version = traceGC;
@@ -208,6 +210,10 @@ class DMDServer : ComObject, IVDServer
 								var = var;
 							   }
 							   );
+			}
+			catch(OutOfMemoryError e)
+			{
+				exit(7); // terminate
 			}
 			catch(Throwable e)
 			{
@@ -341,12 +347,16 @@ class DMDServer : ComObject, IVDServer
 				{
 					initErrorFile(fname);
 					parseModules([mod]);
-					errors = gErrorMessages;
+				}
+				catch(OutOfMemoryError e)
+				{
+					throw e; // terminate
 				}
 				catch(Throwable t)
 				{
 					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.msg);
 				}
+				errors = gErrorMessages;
 			}
 			synchronized(gErrorSync)
 			{
@@ -412,6 +422,10 @@ class DMDServer : ComObject, IVDServer
 				{
 					txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1);
 				}
+				catch(OutOfMemoryError e)
+				{
+					throw e; // terminate
+				}
 				catch(Throwable t)
 				{
 					version(DebugServer) dbglog("GetTip: exception " ~ t.msg);
@@ -472,6 +486,10 @@ class DMDServer : ComObject, IVDServer
 				{
 					deffilename = findDefinition(m, mDefSpan.start.line, mDefSpan.start.index);
 				}
+				catch(OutOfMemoryError e)
+				{
+					throw e; // terminate
+				}
 				catch(Throwable t)
 				{
 					version(DebugServer) dbglog("GetDefinition: exception " ~ t.msg);
@@ -522,6 +540,10 @@ class DMDServer : ComObject, IVDServer
 			try
 			{
 				mLastSymbols = null; //_GetSemanticExpansions(src, stok, line, idx, sexpr);
+			}
+			catch(OutOfMemoryError e)
+			{
+				throw e; // terminate
 			}
 			catch(Throwable t)
 			{
@@ -944,7 +966,6 @@ void verrorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 
 	synchronized(gErrorSync)
 	{
-		version(x)
 		if (_stricmp(loc.filename, gErrorFile) != 0)
 			return;
 
@@ -1540,7 +1561,10 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 				if (auto func = decl.isFuncDeclaration())
 				{
 					OutBuffer buf;
-					functionToBufferWithIdent(decl.type.toTypeFunction(), &buf, decl.toPrettyChars());
+					if (decl.type)
+						functionToBufferWithIdent(decl.type.toTypeFunction(), &buf, decl.toPrettyChars());
+					else
+						buf.writestring(decl.toPrettyChars());
 					auto res = buf.peekSlice();
 					buf.extractString(); // take ownership
 					return cast(string)res;
@@ -1684,15 +1708,16 @@ extern(C) void dumpGC();
 unittest
 {
 	//_CrtDumpMemoryLeaks();
-	dumpGC();
+	version(traceGC)
+		dumpGC();
 
 	DMDServer srv = newCom!DMDServer;
 	addref(srv);
 	scope(exit) release(srv);
 
 	auto filename = allocBSTR("source.d");
-	auto imp = allocBSTR(r"c:\l\D\dmd2.076\dmd2\src\druntime\import" ~ "\n" ~
-						 r"c:\l\D\dmd2.076\dmd2\src\phobos");
+	auto imp = allocBSTR(r"c:\s\d\rainers\druntime\import" ~ "\n" ~
+						 r"c:\s\d\rainers\phobos");
 	auto empty = allocBSTR("");
 	uint flags = ConfigureFlags!()(false, //bool unittestOn
 								   false, //bool debugOn,
@@ -1729,7 +1754,7 @@ unittest
 
 	void checkTip(int line, int col, string expected_tip)
 	{
-		HRESULT hr = srv.GetTip(filename, line, col, line, col + 1);
+		HRESULT hr = srv.GetTip(filename, line, col, line, col + 1, 0);
 		assert(hr == S_OK);
 		BSTR bstrTip;
 		int startLine, startIndex, endLine, endIndex;
@@ -1781,14 +1806,20 @@ unittest
 	};
 	checkErrors(source, "4,10,4,11:undefined identifier `abcd`\n");
 +/
-	wipeStack();
+	version(traceGC)
+		wipeStack();
 	GC.collect();
 
 	//_CrtDumpMemoryLeaks();
-	dumpGC();
+	version(traceGC)
+		dumpGC();
 
 	for (int i = 0; i < 2; i++)
 	{
+		srv.mModules = null;
+		srv.mErrors = null;
+		clearDmdStatics ();
+
 		source = q{
 			import std.stdio;
 			int main(string[] args)
@@ -1800,24 +1831,22 @@ unittest
 		};
 		checkErrors(source, "");
 
-		srv.mModules = null;
-		srv.mErrors = null;
-		clearDmdStatics ();
-
-		wipeStack();
+		version(traceGC)
+			wipeStack();
 		GC.collect();
 
 		//_CrtDumpMemoryLeaks();
-		dumpGC();
+		version(traceGC)
+			dumpGC();
 	}
-
 
 	checkTip(5, 9, "(local variable) int xyz");
 	checkTip(6, 9, "void std.stdio.writeln!(int, int, int).writeln(int _param_0, int _param_1, int _param_2) @safe");
 	checkTip(7, 12, "(local variable) int xyz");
 
-	wipeStack();
+	version(traceGC)
+		wipeStack();
 	GC.collect();
 
-	checkDefinition(7, 12, "source.d", 5, 8); // xyz
+	checkDefinition(7, 12, "source.d", 5, 9); // xyz
 }
