@@ -257,22 +257,14 @@
     <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>assemblies\v16\envdte.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.Project.VisualC.VCProjectEngine, Version=current.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath Condition="'$(VS2019Ver)' == 'Preview'">c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\CommonExtensions\Microsoft\VC\Project\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
-      <HintPath Condition="'$(VS2019Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\VC\Project\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
+    <Reference Include="Microsoft.VisualStudio.VCProject">
+      <HintPath>assemblies\v16\Microsoft.VisualStudio.VCProject.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.VCProject, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <SpecificVersion>False</SpecificVersion>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
-      <HintPath Condition="'$(VS2019Ver)' == 'Preview'">c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProject.dll</HintPath>
-      <HintPath Condition="'$(VS2019Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProject.dll</HintPath>
+    <Reference Include="Microsoft.VisualStudio.VCProjectEngine">
+      <HintPath>assemblies\v16\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.VCProjectEngine, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <SpecificVersion>False</SpecificVersion>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
-      <HintPath Condition="'$(VS2019Ver)' == 'Preview'">c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
-      <HintPath Condition="'$(VS2019Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
+    <Reference Include="Microsoft.VisualStudio.Project.VisualC.VCProjectEngine">
+      <HintPath>assemblies\v16\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

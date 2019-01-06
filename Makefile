@@ -29,8 +29,10 @@ PROGRAMFILESX86 = c:\Program Files (x86)
 
 NSIS    = $(PROGRAMFILESX86)\NSIS
 MSBUILD = msbuild
-#MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild" 
-MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Current\Bin\msbuild" 
+MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild"
+!IF !EXIST($(MSBUILD15))
+MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Current\Bin\msbuild"
+!ENDIF
 CONFIG  = Release COFF32
 
 ##############################################################
