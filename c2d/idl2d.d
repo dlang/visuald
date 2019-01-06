@@ -1646,6 +1646,7 @@ version(none) version(vsi)
 		// remove forward declarations
 		replaceTokenSequence(tokens, "enum $_ident;", "/+ enum $_ident; +/", true);
 		replaceTokenSequence(tokens, "struct $_ident;", "/+ struct $_ident; +/", true);
+		replaceTokenSequence(tokens, "struct __declspec($expr) $_ident;", "/+ struct __declspec($expr) $_ident; +/", true);
 		replaceTokenSequence(tokens, "class $_ident;", "/+ class $_ident; +/", true);
 		replaceTokenSequence(tokens, "interface $_ident;", "/+ interface $_ident; +/", true);
 		replaceTokenSequence(tokens, "dispinterface $_ident;", "/+ dispinterface $_ident; +/", true);
@@ -2640,7 +2641,20 @@ version(remove_pp) {} else
 			Source src = new Source;
 			src.filename = file;
 			src.text = fromMBSz (cast(immutable(char)*)(cast(char[]) read(file) ~ "\0").ptr);
-			src.tokens = scanText(src.text, 1, true);
+			try
+			{
+				// bad qquoting in VS2019 SDK
+				if (file.endsWith("vsshell100.idl"))
+					src.text = src.text.replace(`(\"VSProjectLoadPriority is deprecated\")`, `("VSProjectLoadPriority is deprecated")`);
+				if (file.endsWith("vsshell150.idl"))
+					src.text = src.text.replace(`(\"VSSOLUTIONDEFERREDLOADOPTION is deprecated\")`, `("VSSOLUTIONDEFERREDLOADOPTION is deprecated")`);
+				src.tokens = scanText(src.text, 1, true);
+			}
+			catch(Exception e)
+			{
+				e.msg = file ~ e.msg;
+				throw e;
+			}
 			collectClasses(src.tokens);
 			srcs ~= src;
 		}
@@ -2975,4 +2989,12 @@ unittest
 	string exptxt = "int[3] x;";
 
 	testConvert(txt, exptxt);
+}
+
+unittest
+{
+	string txt = "struct __declspec(deprecated(\"deprecated\")) S;\n";
+	string exp = "/+ struct /+__declspec(deprecated(\"deprecated\"))+/ S; +/\n";
+
+	testConvert(txt, exp);
 }

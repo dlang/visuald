@@ -1372,7 +1372,7 @@ class GlobalOptions
 	string lastInstallDirs;
 
 	int vsVersion;
-	bool isVS2017() { return vsVersion == 15; }
+	bool isVS2017OrLater() { return vsVersion >= 15; }
 	bool usesUpdateSemanticModule() { return parseSource || expandFromSemantics || showTypeInTooltip || semanticGotoDef; }
 
 
@@ -1974,9 +1974,11 @@ class GlobalOptions
 			keyToolOpts.Set("dubOptions",          toUTF16(dubOptions));
 
 			// also save to HKCR for msbuild in VS2017
-			if (isVS2017())
+			if (isVS2017OrLater())
 			{
-				scope RegKey keyBuildOpts = new RegKey(HKEY_CURRENT_USER, r"SOFTWARE\Visual D\dbuild\15.0"w);
+				auto ver = to!wstring(vsVersion);
+				wstring key = r"SOFTWARE\Visual D\dbuild\"w ~ ver ~ ".0"w;
+				scope RegKey keyBuildOpts = new RegKey(HKEY_CURRENT_USER, key);
 				keyBuildOpts.Set("DMDInstallDir",     toUTF16(DMD.InstallDir));
 				keyBuildOpts.Set("GDCInstallDir",     toUTF16(GDC.InstallDir));
 				keyBuildOpts.Set("LDCInstallDir",     toUTF16(LDC.InstallDir));

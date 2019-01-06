@@ -24,9 +24,13 @@
 # update the following variables to match the installation 
 # paths on your system or pass on the command line to nmake
 
-NSIS    = $(PROGRAMFILES)\NSIS
+# nmake doesn't like $(ProgramFiles(x86)), so run this with x86 nmake
+PROGRAMFILESX86 = c:\Program Files (x86)
+
+NSIS    = $(PROGRAMFILESX86)\NSIS
 MSBUILD = msbuild
-MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild" 
+#MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild" 
+MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Current\Bin\msbuild" 
 CONFIG  = Release COFF32
 
 ##############################################################
@@ -61,8 +65,8 @@ dparser_test:
 
 fake_dparser:
 	if not exist bin\Release\DParserCOMServer\nul md bin\Release\DParserCOMServer
-	if exist "$(PROGRAMFILES)\VisualD\dparser\dparser\DParserCOMServer.exe" copy "$(PROGRAMFILES)\VisualD\dparser\dparser\DParserCOMServer.exe" bin\Release\DParserCOMServer
-	if exist "$(PROGRAMFILES)\VisualD\dparser\dparser\D_Parser.dll" copy "$(PROGRAMFILES)\VisualD\dparser\dparser\D_Parser.dll" bin\Release\DParserCOMServer
+	if exist "$(PROGRAMFILESX86)\VisualD\dparser\dparser\DParserCOMServer.exe" copy "$(PROGRAMFILESX86)\VisualD\dparser\dparser\DParserCOMServer.exe" bin\Release\DParserCOMServer
+	if exist "$(PROGRAMFILESX86)\VisualD\dparser\dparser\D_Parser.dll" copy "$(PROGRAMFILESX86)\VisualD\dparser\dparser\D_Parser.dll" bin\Release\DParserCOMServer
 	if not exist bin\Release\DParserCOMServer\DParserCOMServer.exe echo dummy >bin\Release\DParserCOMServer\DParserCOMServer.exe
 	if not exist bin\Release\DParserCOMServer\D_Parser.dll echo dummy >bin\Release\DParserCOMServer\D_Parser.dll
 
@@ -78,7 +82,7 @@ dbuild12:
 
 fake_dbuild12:
 	if not exist msbuild\dbuild\obj\release\nul md msbuild\dbuild\obj\release
-	if exist "$(PROGRAMFILES)\VisualD\msbuild\dbuild.12.0.dll" copy "$(PROGRAMFILES)\VisualD\msbuild\dbuild.12.0.dll" msbuild\dbuild\obj\release
+	if exist "$(PROGRAMFILESX86)\VisualD\msbuild\dbuild.12.0.dll" copy "$(PROGRAMFILESX86)\VisualD\msbuild\dbuild.12.0.dll" msbuild\dbuild\obj\release
 	if not exist msbuild\dbuild\obj\release\dbuild.12.0.dll echo dummy >msbuild\dbuild\obj\release\dbuild.12.0.dll
 
 dbuild14:
@@ -87,7 +91,7 @@ dbuild14:
 
 fake_dbuild14:
 	if not exist msbuild\dbuild\obj\release-v14\nul md msbuild\dbuild\obj\release-v14
-	if exist "$(PROGRAMFILES)\VisualD\msbuild\dbuild.14.0.dll" copy "$(PROGRAMFILES)\VisualD\msbuild\dbuild.14.0.dll" msbuild\dbuild\obj\release-v14
+	if exist "$(PROGRAMFILESX86)\VisualD\msbuild\dbuild.14.0.dll" copy "$(PROGRAMFILESX86)\VisualD\msbuild\dbuild.14.0.dll" msbuild\dbuild\obj\release-v14
 	if not exist msbuild\dbuild\obj\release-v14\dbuild.14.0.dll echo dummy >msbuild\dbuild\obj\release-v14\dbuild.14.0.dll
 
 dbuild15:
@@ -95,8 +99,12 @@ dbuild15:
 
 fake_dbuild15:
 	if not exist msbuild\dbuild\obj\release-v15\nul md msbuild\dbuild\obj\release-v15
-	if exist "$(PROGRAMFILES)\VisualD\msbuild\dbuild.15.0.dll" copy "$(PROGRAMFILES)\VisualD\msbuild\dbuild.15.0.dll" msbuild\dbuild\obj\release-v15
+	if exist "$(PROGRAMFILESX86)\VisualD\msbuild\dbuild.15.0.dll" copy "$(PROGRAMFILESX86)\VisualD\msbuild\dbuild.15.0.dll" msbuild\dbuild\obj\release-v15
 	if not exist msbuild\dbuild\obj\release-v15\dbuild.15.0.dll echo dummy >msbuild\dbuild\obj\release-v15\dbuild.15.0.dll
+
+dbuild16:
+	cd msbuild\dbuild && devenv /Build "Release-v16|AnyCPU" /Project "dbuild" dbuild.sln
+
 
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln
@@ -104,9 +112,9 @@ mago:
 	cd ..\..\mago && devenv /Build "Release StaticDE|Win32" /Project "MagoNatCC" magodbg_2010.sln
 
 mago_vs15:
-	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v140            /target:DebugEngine\MagoNatDE MagoDbg_2010.sln
-	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v140              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
-	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v140" /target:Expression\MagoNatCC MagoDbg_2010.sln
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v141            /target:DebugEngine\MagoNatDE MagoDbg_2010.sln
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v141              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
+	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v141" /target:Expression\MagoNatCC MagoDbg_2010.sln
 
 cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln
@@ -126,7 +134,7 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules dparser dparser_test cv2pdb mago dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 

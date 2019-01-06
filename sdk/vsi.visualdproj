@@ -1933,6 +1933,12 @@
    <File path="vsi\msdbg120.d" />
    <File path="vsi\msdbg120a.d" />
    <File path="vsi\msdbg140.d" />
+   <File path="vsi\msdbg150.d" />
+   <File path="vsi\msdbg155.d" />
+   <File path="vsi\msdbg156.d" />
+   <File path="vsi\msdbg157.d" />
+   <File path="vsi\msdbg158.d" />
+   <File path="vsi\msdbg160.d" />
    <File path="vsi\msdbg90.d" />
    <File path="vsi\objext.d" />
    <File path="vsi\ocdesign.d" />
@@ -1966,6 +1972,9 @@
    <File path="vsi\vslangproj100.d" />
    <File path="vsi\vslangproj110.d" />
    <File path="vsi\vslangproj140.d" />
+   <File path="vsi\vslangproj150.d" />
+   <File path="vsi\vslangproj157.d" />
+   <File path="vsi\vslangproj158.d" />
    <File path="vsi\vslangproj2.d" />
    <File path="vsi\vslangproj80.d" />
    <File path="vsi\vslangproj90.d" />
@@ -1982,6 +1991,14 @@
    <File path="vsi\vsshell121.d" />
    <File path="vsi\vsshell140.d" />
    <File path="vsi\vsshell141.d" />
+   <File path="vsi\vsshell142.d" />
+   <File path="vsi\vsshell150.d" />
+   <File path="vsi\vsshell151.d" />
+   <File path="vsi\vsshell153.d" />
+   <File path="vsi\vsshell155.d" />
+   <File path="vsi\vsshell156.d" />
+   <File path="vsi\vsshell157.d" />
+   <File path="vsi\vsshell158.d" />
    <File path="vsi\vsshell2.d" />
    <File path="vsi\vsshell80.d" />
    <File path="vsi\vsshell90.d" />
@@ -2014,6 +2031,7 @@
    <File path="vsi\sdk_version.d" />
    <File path="vsi\scc.d" />
    <File path="vsi\vsplatformuiuuids.d" />
+   <File path="vsi\vscookie.d" />
    <File path="vsi\dte80.d" />
    <File path="vsi\dte80a.d" />
    <File path="vsi\dte90.d" />

@@ -45,6 +45,26 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-v16|AnyCPU'">
+    <OutputPath>bin\Release-v16\</OutputPath>
+    <DefineConstants>TRACE;TOOLS_V15</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-v16|AnyCPU'">
+    <OutputPath>bin\Debug-v16\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;TOOLS_V15</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>false</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <PropertyGroup>
     <AssemblyName>dbuild.12.0</AssemblyName>
   </PropertyGroup>
@@ -60,7 +80,9 @@
     <AssemblyName Condition=" '$(Configuration)' == 'Release' or '$(Configuration)' == 'Debug' ">dbuild.12.0</AssemblyName>
     <AssemblyName Condition=" '$(Configuration)' == 'Release-v14' or '$(Configuration)' == 'Debug-v14' ">dbuild.14.0</AssemblyName>
     <AssemblyName Condition=" '$(Configuration)' == 'Release-v15' or '$(Configuration)' == 'Debug-v15' ">dbuild.15.0</AssemblyName>
+    <AssemblyName Condition=" '$(Configuration)' == 'Release-v16' or '$(Configuration)' == 'Debug-v16' ">dbuild.16.0</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition=" '$(Configuration)' == 'Release-v16' or '$(Configuration)' == 'Debug-v16' ">v4.7.2</TargetFrameworkVersion>
     <GeneratePkgDefFile>false</GeneratePkgDefFile>
     <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
@@ -117,38 +139,28 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.Build">
-      <HintPath>c:\Windows\Microsoft.NET\assembly\GAC_MSIL\Microsoft.Build\v4.0_12.0.0.0__b03f5f7f11d50a3a\Microsoft.Build.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>assemblies\v12\Microsoft.Build.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.CPPTasks.Common, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>c:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.Build.CPPTasks.Common.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.Build.CPPTasks.Common">
+      <HintPath>assemblies\v12\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Build.Framework">
-      <HintPath>c:\Program Files (x86)\MSBuild\12.0\Bin\Microsoft.Build.Framework.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>assemblies\v12\Microsoft.Build.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Tasks.v12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>c:\Program Files (x86)\MSBuild\12.0\Bin\Microsoft.Build.Tasks.v12.0.dll</HintPath>
+    <Reference Include="Microsoft.Build.Tasks.v12.0">
+      <HintPath>assemblies\v12\Microsoft.Build.Tasks.v12.0.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Utilities.v12.0, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>c:\Program Files (x86)\MSBuild\12.0\Bin\Microsoft.Build.Utilities.v12.0.dll</HintPath>
+    <Reference Include="Microsoft.Build.Utilities.v12.0">
+      <HintPath>assemblies\v12\Microsoft.Build.Utilities.v12.0.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.VCProject, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <EmbedInteropTypes>False</EmbedInteropTypes>
+    <Reference Include="Microsoft.VisualStudio.VCProject">
+      <HintPath>assemblies\v12\Microsoft.VisualStudio.VCProject.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.VCProjectEngine, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <SpecificVersion>False</SpecificVersion>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
-      <HintPath>c:\Windows\assembly\GAC\Microsoft.VisualStudio.VCProjectEngine\12.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
+    <Reference Include="Microsoft.VisualStudio.VCProjectEngine">
+      <HintPath>assemblies\v12\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.Project.VisualC.VCProjectEngine, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>c:\Windows\Microsoft.NET\assembly\GAC_MSIL\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine\v4.0_12.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.VisualStudio.Project.VisualC.VCProjectEngine">
+      <HintPath>assemblies\v12\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Release-v14' or '$(Configuration)' == 'Debug-v14' ">
@@ -156,25 +168,19 @@
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="Microsoft.Build">
-      <HintPath>c:\Windows\Microsoft.NET\assembly\GAC_MSIL\Microsoft.Build\v4.0_14.0.0.0__b03f5f7f11d50a3a\Microsoft.Build.dll</HintPath>
+      <HintPath>assemblies\v14\Microsoft.Build.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.CPPTasks.Common, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>c:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+    <Reference Include="Microsoft.Build.CPPTasks.Common">
+      <HintPath>assemblies\v14\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Framework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>c:\Program Files (x86)\MSBuild\14.0\Bin\Microsoft.Build.Framework.dll</HintPath>
+    <Reference Include="Microsoft.Build.Framework">
+      <HintPath>assemblies\v14\Microsoft.Build.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Tasks.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>c:\Program Files (x86)\MSBuild\14.0\Bin\Microsoft.Build.Tasks.Core.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.Build.Tasks.Core">
+      <HintPath>assemblies\v14\Microsoft.Build.Tasks.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Utilities.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>c:\Program Files (x86)\MSBuild\14.0\Bin\Microsoft.Build.Utilities.Core.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="Microsoft.Build.Utilities.Core">
+      <HintPath>assemblies\v14\Microsoft.Build.Utilities.Core.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.VCProject, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
@@ -193,36 +199,26 @@
   <PropertyGroup>
      <VS2017Ver Condition="Exists('c:\Program Files (x86)\Microsoft Visual Studio\2017\Community')">Community</VS2017Ver>
      <VS2017Ver Condition="Exists('c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional')">Professional</VS2017Ver>
+     <VS2019Ver Condition="Exists('c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview')">Preview</VS2019Ver>
   </PropertyGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Release-v15' or '$(Configuration)' == 'Debug-v15' ">
     <Reference Include="Microsoft.Build">
-      <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\Bin\Microsoft.Build.dll</HintPath>
-      <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Build.dll</HintPath>
+      <HintPath>assemblies\v15\Microsoft.Build.dll</HintPath>
     </Reference>
-    <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <SpecificVersion>False</SpecificVersion>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
-      <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\PrivateAssemblies\envdte.dll</HintPath>
-      <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PrivateAssemblies\envdte.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Build.CPPTasks.Common, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\VCTargets\Microsoft.Build.CPPTasks.Common.dll</HintPath>
-      <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+    <Reference Include="Microsoft.Build.CPPTasks.Common">
+      <HintPath>assemblies\v15\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Build.Framework">
-      <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\Bin\Microsoft.Build.Framework.dll</HintPath>
-      <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Build.Framework.dll</HintPath>
+      <HintPath>assemblies\v15\Microsoft.Build.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\Bin\Microsoft.Build.Tasks.Core.dll</HintPath>
-      <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Build.Tasks.Core.dll</HintPath>
+    <Reference Include="Microsoft.Build.Tasks.Core">
+      <HintPath>assemblies\v15\Microsoft.Build.Tasks.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build.Utilities.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\Bin\Microsoft.Build.Utilities.Core.dll</HintPath>
-      <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Build.Utilities.Core.dll</HintPath>
+    <Reference Include="Microsoft.Build.Utilities.Core">
+      <HintPath>assemblies\v15\Microsoft.Build.Utilities.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>assemblies\v15\envdte.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.Project.VisualC.VCProjectEngine, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -240,6 +236,43 @@
       <EmbedInteropTypes>False</EmbedInteropTypes>
       <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
       <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition=" '$(Configuration)' == 'Release-v16' or '$(Configuration)' == 'Debug-v16' ">
+    <Reference Include="Microsoft.Build">
+      <HintPath>assemblies\v16\Microsoft.Build.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.CPPTasks.Common">
+      <HintPath>assemblies\v16\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Framework">
+      <HintPath>assemblies\v16\Microsoft.Build.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Tasks.Core">
+      <HintPath>assemblies\v16\Microsoft.Build.Tasks.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Utilities.Core">
+      <HintPath>assemblies\v16\Microsoft.Build.Utilities.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>assemblies\v16\envdte.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Project.VisualC.VCProjectEngine, Version=current.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath Condition="'$(VS2019Ver)' == 'Preview'">c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\CommonExtensions\Microsoft\VC\Project\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
+      <HintPath Condition="'$(VS2019Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\VC\Project\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.VCProject, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+      <HintPath Condition="'$(VS2019Ver)' == 'Preview'">c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProject.dll</HintPath>
+      <HintPath Condition="'$(VS2019Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProject.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.VCProjectEngine, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+      <HintPath Condition="'$(VS2019Ver)' == 'Preview'">c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
+      <HintPath Condition="'$(VS2019Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
