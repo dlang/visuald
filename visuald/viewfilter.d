@@ -38,6 +38,7 @@ import visuald.lexutil;
 import vdc.lexer;
 
 import sdk.port.vsi;
+import sdk.vsi.dte80a : Documents;
 import sdk.vsi.textmgr;
 import sdk.vsi.textmgr2;
 import sdk.vsi.textmgr120;
@@ -583,10 +584,20 @@ version(tip)
 		bool eval = rdmd && selText.length;
 		if(!eval)
 		{
-			if(!pFile || saveTextBuffer(fname) != S_OK)
-				return returnError(E_FAIL);
+			//if(!pFile || saveTextBuffer(fname) != S_OK)
+			//	return returnError(E_FAIL);
+			//mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position
 
-			mCodeWinMgr.mSource.OnBufferSave(null); // save current modification position
+			if (auto dte = GetDTE())
+			{
+				scope(exit) release(dte);
+				Documents docs;
+				if (dte.get_Documents(&docs) == S_OK)
+				{
+					docs.SaveAll();
+					docs.Release();
+				}
+			}
 		}
 
 		auto symdebug = cfg.GetProjectOptions().symdebug;
