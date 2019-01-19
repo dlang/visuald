@@ -110,7 +110,7 @@ version(DebugServer)
 	import core.stdc.stdio : fprintf, fopen, fputc, fflush, FILE;
 	__gshared FILE* dbgfh;
 
-	void dbglog(string s)
+	void dbglog(const(char)[] s)
 	{
 		debug
 		{
@@ -356,7 +356,7 @@ class DMDServer : ComObject, IVDServer
 				{
 					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.msg);
 				}
-				errors = gErrorMessages;
+				errors = cast(string) gErrorMessages;
 			}
 			synchronized(gErrorSync)
 			{
@@ -746,6 +746,7 @@ class DMDServer : ComObject, IVDServer
 			global.params.is64bit = mOptions.x64;
 			global.params.mscoff = mOptions.msvcrt;
 			global.params.cpu = CPU.baseline;
+			global.params.isLP64 = global.params.is64bit;
 
 			global.params.versionlevel = mOptions.versionIds.level;
 			global.params.versionids = new Strings();
@@ -759,6 +760,7 @@ class DMDServer : ComObject, IVDServer
 				foreach (charz; *global.params.versionids)
 					VersionCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
 
+/*
 			VersionCondition.addPredefinedGlobalIdent("DigitalMars");
 			VersionCondition.addPredefinedGlobalIdent("Windows");
 			VersionCondition.addPredefinedGlobalIdent("LittleEndian");
@@ -797,7 +799,7 @@ class DMDServer : ComObject, IVDServer
 				VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
 			if (global.params.betterC)
 				VersionCondition.addPredefinedGlobalIdent("D_betterC");
-
+*/
 			// always enable for tooltips
 			global.params.doDocComments = true;
 
@@ -955,7 +957,9 @@ private:
 
 shared(Object) gErrorSync = new Object;
 __gshared string gErrorFile;
-__gshared string gErrorMessages;
+__gshared char[] gErrorMessages;
+__gshared char[] gOtherErrorMessages;
+__gshared bool gErrorWasSupplemental;
 
 extern(C++)
 void verrorPrint(const ref Loc loc, Color headerColor, const(char)* header,
@@ -964,25 +968,63 @@ void verrorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 	if (!loc.filename)
 		return;
 
+	import dmd.errors;
+
 	synchronized(gErrorSync)
 	{
-		if (_stricmp(loc.filename, gErrorFile) != 0)
-			return;
+		bool other = _stricmp(loc.filename, gErrorFile) != 0;
+		bool supplemental = (cast(Classification)headerColor == Classification.supplemental);
 
 		__gshared char[4096] buf;
-		int len = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:", loc.linnum, loc.charnum - 1, loc.linnum, loc.charnum);
+		int len = 0;
+		if (other)
+		{
+			len = snprintf(buf.ptr, buf.length, "%s(%d):", loc.filename, loc.linnum);
+		}
+		else
+		{
+			int llen = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:", loc.linnum, loc.charnum - 1, loc.linnum, loc.charnum);
+			gErrorMessages ~= buf[0..llen];
+			if (supplemental)
+				gErrorMessages ~= gOtherErrorMessages;
+			gOtherErrorMessages = null;
+		}
 		if (p1 && len < buf.length)
 			len += snprintf(buf.ptr + len, buf.length - len, "%s ", p1);
 		if (p2 && len < buf.length)
 			len += snprintf(buf.ptr + len, buf.length - len, "%s ", p2);
 		if (len < buf.length)
 			len += vsnprintf(buf.ptr + len, buf.length - len, format, ap);
+		char nl = other ? '\a' : '\n';
 		if (len < buf.length)
-			buf[len++] = '\n';
+			buf[len++] = nl;
 		else
-			buf[$-1] = '\n';
+			buf[$-1] = nl;
 
-		gErrorMessages ~= buf[0..len];
+		dbglog(buf[0..len]);
+
+		if (other)
+		{
+			if (gErrorWasSupplemental)
+			{
+				if (gErrorMessages.length && gErrorMessages[$-1] == '\n')
+					gErrorMessages[$-1] = '\a';
+				gErrorMessages ~= buf[0..len];
+				gErrorMessages ~= '\n';
+			}
+			else if (supplemental)
+				gOtherErrorMessages ~= buf[0..len];
+			else
+			{
+				gErrorWasSupplemental = false;
+				gOtherErrorMessages = buf[0..len].dup;
+			}
+		}
+		else
+		{
+			gErrorMessages ~= buf[0..len];
+			gErrorWasSupplemental = supplemental;
+		}
 	}
 }
 
@@ -992,6 +1034,8 @@ void initErrorFile(string fname)
 	{
 		gErrorFile = fname;
 		gErrorMessages = null;
+		gOtherErrorMessages = null;
+		gErrorWasSupplemental = false;
 	}
 }
 
@@ -1016,7 +1060,6 @@ version(all) // new mangling with dmd version >= 2.077
 	["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
 	["_D3dmd13expressionsem11loadStdMathFZ10impStdMathCQBv7dimport6Import", "Import"],
 	["_D3dmd4func15FuncDeclaration8genCfuncRPSQBm4root5array__T5ArrayTCQCl5mtype9ParameterZQBcCQDjQy4TypeCQDu10identifier10IdentifiermZ2stCQFb7dsymbol12DsymbolTable", "DsymbolTable"],
-	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ11visitAArrayMFCQEwQEc10TypeAArrayZ8fd_aaLenCQFz4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ3feqCQEn4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ4fcmpCQEo4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ5fhashCQEp4func15FuncDeclaration", "FuncDeclaration"],
@@ -1026,7 +1069,8 @@ version(all) // new mangling with dmd version >= 2.077
 	["_D3dmd9dtemplate16TemplateInstance16tryExpandMembersMFPSQCc6dscope5ScopeZ4nesti", "int"],
 	["_D3dmd9dtemplate16TemplateInstance12trySemantic3MFPSQBy6dscope5ScopeZ4nesti", "int"],
 	["_D3dmd13expressionsem25ExpressionSemanticVisitor5visitMRCQCd10expression7CallExpZ4nesti", "int"],
-	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ8noMemberMFQDxQDmQCxQByiZ4nesti", "int"],
+	//["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ11visitAArrayMFCQEwQEc10TypeAArrayZ8fd_aaLenCQFz4func15FuncDeclaration", "FuncDeclaration"],
+	//["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ8noMemberMFQDxQDmQCxQByiZ4nesti", "int"],
 	];
 }
 else
@@ -1130,6 +1174,10 @@ void clearDmdStatics()
 	// dmd.dinterpret
 	// ctfeStack = ctfeStack.init;
 
+	// dmd.dtemplate
+	emptyArrayElement = null;
+	TemplateValueParameter.edummies = null;
+
 	Scope.freelist = null;
 	//Token.freelist = null;
 
@@ -1174,6 +1222,14 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		sym.accept(this);
 	}
 
+	// override void visit(Expression) {}
+	// override void visit(Parameter) {}
+	// override void visit(Statement) {}
+	// override void visit(Type) {}
+	// override void visit(TemplateParameter) {}
+	// override void visit(Condition) {}
+	// override void visit(Initializer) {}
+
 	override void visit(ScopeDsymbol scopesym)
 	{
 		// optimize to only visit members in approriate source range
@@ -1196,6 +1252,28 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	override void visit(ExpInitializer einit)
 	{
 		visitExpression(einit.exp);
+	}
+
+	override void visit(VoidInitializer vinit)
+	{
+	}
+
+	override void visit(StructInitializer sinit)
+	{
+		foreach (i, const id; sinit.field)
+			if (auto iz = sinit.value[i])
+				iz.accept(this);
+	}
+
+	override void visit(ArrayInitializer ainit)
+	{
+		foreach (i, ex; ainit.index)
+		{
+			if (ex)
+				ex.accept(this);
+			if (auto iz = ainit.value[i])
+				iz.accept(this);
+		}
 	}
 
 	override void visit(FuncDeclaration decl)
@@ -1525,6 +1603,27 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			if (matchIdentifier(de.identloc, de.ident))
 				foundNode(de);
 	}
+
+	override void visit(DotTemplateExp dte)
+	{
+		if (!found && dte.td && dte.td.ident)
+			if (matchIdentifier(dte.identloc, dte.td.ident))
+				foundNode(dte);
+	}
+
+	override void visit(TemplateExp te)
+	{
+		if (!found && te.td && te.td.ident)
+			if (matchIdentifier(te.identloc, te.td.ident))
+				foundNode(te);
+	}
+
+	override void visit(DotVarExp dve)
+	{
+		if (!found && dve.var && dve.var.ident)
+			if (matchIdentifier(dve.varloc, dve.var.ident))
+				foundNode(dve);
+	}
 }
 
 extern(C++) class FindTipVisitor : FindASTVisitor
@@ -1593,6 +1692,9 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 					case TOK.variable:
 					case TOK.symbolOffset:
 						tip = tipForDeclaration((cast(SymbolExp)e).var);
+						break;
+					case TOK.dotVariable:
+						tip = tipForDeclaration((cast(DotVarExp)e).var);
 						break;
 					default:
 						if (e.type)

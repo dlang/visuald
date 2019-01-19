@@ -292,7 +292,7 @@
   <versionlevel>0</versionlevel>
   <versionids>MARS NoBackend</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>0</mapverbosity>
+  <mapverbosity>1</mapverbosity>
   <createImplib>0</createImplib>
   <debuglib>0</debuglib>
   <defaultlibname />
@@ -508,7 +508,7 @@
   <versionlevel>0</versionlevel>
   <versionids>MARS NoBackend GC</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>2</mapverbosity>
+  <mapverbosity>1</mapverbosity>
   <createImplib>0</createImplib>
   <debuglib>0</debuglib>
   <defaultlibname />

@@ -30,6 +30,7 @@ enum Classification
     gagged = Color.brightBlue,        /// for gagged errors
     warning = Color.brightYellow,     /// for warnings
     deprecation = Color.brightCyan,   /// for deprecations
+    supplemental = Color.brightMagenta, /// for supplemental info (e.g. instantiation trace)
 }
 
 /**************************************
@@ -139,7 +140,7 @@ extern (C++) void verrorSupplemental(const ref Loc loc, const(char)* format, va_
         color = Classification.gagged;
     }
     else
-        color = Classification.error;
+        color = Classification.supplemental;
     verrorPrint(loc, color, "       ", format, ap);
 }
 
