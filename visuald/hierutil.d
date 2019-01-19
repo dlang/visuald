@@ -905,6 +905,8 @@ void VCConfig_shared_static_dtor()
 		vccfg.GetProject().Dispose();
 }
 
+const GUID vcxprojCLSID = uuid("8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942");
+
 Config getVisualCppConfig(string file, bool genCmdLine = false)
 {
 	auto srpSolution = queryService!(IVsSolution);
@@ -916,7 +918,6 @@ Config getVisualCppConfig(string file, bool genCmdLine = false)
 	{
 		auto wfile = _toUTF16z(file);
 		IEnumHierarchies pEnum;
-		const GUID vcxprojCLSID = uuid("8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942");
 
 		if(srpSolution.GetProjectEnum(EPF_LOADEDINSOLUTION|EPF_MATCHTYPE, &vcxprojCLSID, &pEnum) == S_OK)
 		{
@@ -928,36 +929,40 @@ Config getVisualCppConfig(string file, bool genCmdLine = false)
 
 				VSITEMID itemid;
 				if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
-				{
-					VCConfig cfg;
-					if (auto pcfg = VCFile(pHierarchy, itemid) in vcFileConfigs)
-						cfg = *pcfg;
-					else
-					{
-						cfg = newCom!VCConfig(pHierarchy);
-						cfg.GetProject().GetRootNode().AddTail(newCom!CFileNode(file));
-						vcFileConfigs[VCFile(pHierarchy, itemid)] = cfg;
-					}
-
-					ProjectOptions opts = cfg.GetProjectOptions();
-					ProjectOptions cmpopts = clone(opts);
-					if (vdhelper_GetDCompileOptions(pHierarchy, itemid, opts) == S_OK)
-					{
-						if (genCmdLine)
-						{
-							string cmd;
-							if (vdhelper_GetDCommandLine(pHierarchy, itemid, cmd) == S_OK)
-								cfg.mCmdLine = cmd;
-						}
-						if (opts != cmpopts)
-							cfg.SetDirty();
-						return addref(cfg);
-					}
-				}
+					return createVisualCppConfig(pHierarchy, itemid, file, genCmdLine);
 			}
 		}
 	}
 	return null;
+}
+
+Config createVisualCppConfig(IVsHierarchy pHierarchy, VSITEMID itemid, string file = null, bool genCmdLine = false)
+{
+	VCConfig cfg;
+	if (auto pcfg = VCFile(pHierarchy, itemid) in vcFileConfigs)
+		cfg = *pcfg;
+	else
+	{
+		cfg = newCom!VCConfig(pHierarchy);
+		if(file)
+			cfg.GetProject().GetRootNode().AddTail(newCom!CFileNode(file));
+		vcFileConfigs[VCFile(pHierarchy, itemid)] = cfg;
+	}
+
+	ProjectOptions opts = cfg.GetProjectOptions();
+	ProjectOptions cmpopts = clone(opts);
+	if (vdhelper_GetDCompileOptions(pHierarchy, itemid, opts) == S_OK)
+	{
+		if (genCmdLine)
+		{
+			string cmd;
+			if (vdhelper_GetDCommandLine(pHierarchy, itemid, cmd) == S_OK)
+				cfg.mCmdLine = cmd;
+		}
+		if (opts != cmpopts)
+			cfg.SetDirty();
+	}
+	return addref(cfg);
 }
 
 Config getCurrentStartupConfig()
@@ -977,6 +982,10 @@ Config getCurrentStartupConfig()
 				scope(exit) release(activeCfg);
 				if(Config cfg = qi_cast!Config(activeCfg))
 					return cfg;
+
+				GUID guid;
+				if(pHierarchy.GetGuidProperty(VSITEMID_ROOT, VSHPROPID_TypeGuid, &guid) == S_OK && guid == vcxprojCLSID)
+					return createVisualCppConfig(pHierarchy, VSITEMID_ROOT);
 			}
 		}
 	}

@@ -4066,7 +4066,7 @@ else
 						error.span.iStartIndex = parse!int(num[1]);
 						error.span.iEndLine    = parse!int(num[2]);
 						error.span.iEndIndex   = parse!int(num[3]);
-						error.msg = e[idx+1..$];
+						error.msg = e[idx+1..$].replace("\a", "\n");
 						if (error.span.iStartLine == error.span.iEndLine && error.span.iEndIndex <= error.span.iStartIndex + 1)
 						{
 							// figure the length of the span from the lexer by using the full token
