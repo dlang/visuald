@@ -187,6 +187,21 @@ class ProjectOptions
 	bool stackStomp;	// add stack stomp code
 	float Dversion;		// D version number
 
+	bool betterC;
+	bool dip25;
+	bool dip1000;
+	bool dip1008;
+	bool transition_field;         // list all non-mutable fields which occupy an object instance
+	bool transition_import;        // revert to single phase name lookup
+	bool transition_dtorfields;    // destruct fields of partially constructed objects
+	bool transition_checkimports;  // give deprecation messages about 10378 anomalies
+	bool transition_complex;       // give deprecation messages about all usages of complex or imaginary types
+	bool transition_intpromote;    // fix integral promotions for unary + - ~ operators
+	bool transition_tls;           // list all variables going into thread local storage
+	bool transition_fixAliasThis;  // when a symbol is resolved, check alias this scope before going to upper scopes
+	bool transition_markdown;      // enable Markdown replacements in Ddoc
+	bool transition_vmarkdown;     // list instances of Markdown replacements in Ddoc
+
 	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
 	bool otherDMD;		// use explicit program path
 	bool ccTransOpt;	// translate D options to C where applicable
@@ -1376,6 +1391,21 @@ class ProjectOptions
 		elem ~= new xml.Element("allinst", toElem(allinst));
 		elem ~= new xml.Element("stackStomp", toElem(stackStomp));
 
+		elem ~= new xml.Element("betterC", toElem(betterC));
+		elem ~= new xml.Element("dip25", toElem(dip25));
+		elem ~= new xml.Element("dip1000", toElem(dip1000));
+		elem ~= new xml.Element("dip1008", toElem(dip1008));
+		elem ~= new xml.Element("transition_field", toElem(transition_field));
+		elem ~= new xml.Element("transition_import", toElem(transition_import));
+		elem ~= new xml.Element("transition_dtorfields", toElem(transition_dtorfields));
+		elem ~= new xml.Element("transition_checkimports", toElem(transition_checkimports));
+		elem ~= new xml.Element("transition_complex", toElem(transition_complex));
+		elem ~= new xml.Element("transition_intpromote", toElem(transition_intpromote));
+		elem ~= new xml.Element("transition_tls", toElem(transition_tls));
+		elem ~= new xml.Element("transition_fixAliasThis", toElem(transition_fixAliasThis));
+		elem ~= new xml.Element("transition_markdown", toElem(transition_markdown));
+		elem ~= new xml.Element("transition_vmarkdown", toElem(transition_vmarkdown));
+
 		elem ~= new xml.Element("compiler", toElem(compiler));
 		elem ~= new xml.Element("otherDMD", toElem(otherDMD));
 		elem ~= new xml.Element("cccmd", toElem(cccmd));
@@ -1511,6 +1541,21 @@ class ProjectOptions
 		fromElem(elem, "ignoreUnsupportedPragmas", ignoreUnsupportedPragmas);
 		fromElem(elem, "allinst", allinst);
 		fromElem(elem, "stackStomp", stackStomp);
+
+		fromElem(elem, "betterC", betterC);
+		fromElem(elem, "dip25", dip25);
+		fromElem(elem, "dip1000", dip1000);
+		fromElem(elem, "dip1008", dip1008);
+		fromElem(elem, "transition_field", transition_field);
+		fromElem(elem, "transition_import", transition_import);
+		fromElem(elem, "transition_dtorfields", transition_dtorfields);
+		fromElem(elem, "transition_checkimports", transition_checkimports);
+		fromElem(elem, "transition_complex", transition_complex);
+		fromElem(elem, "transition_intpromote", transition_intpromote);
+		fromElem(elem, "transition_tls", transition_tls);
+		fromElem(elem, "transition_fixAliasThis", transition_fixAliasThis);
+		fromElem(elem, "transition_markdown", transition_markdown);
+		fromElem(elem, "transition_vmarkdown", transition_vmarkdown);
 
 		fromElem(elem, "compiler", compiler);
 		fromElem(elem, "otherDMD", otherDMD);

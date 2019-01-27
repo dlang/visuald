@@ -1110,7 +1110,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		                                                              "Off (disable asserts, invariants and constraints)",
 		                                                              "Default (enable asserts, invariants and constraints)" ], false));
 		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, dbgInfoOpt, false));
-		AddControl("Full debug info", mFullDebug = new CheckBox(mCanvas, "Generate full debug information (dmd 2.075)"));
+		AddControl("Full debug info", mFullDebug = new CheckBox(mCanvas, "Generate full debug information (dmd 2.075+)"));
 		AddHorizontalLine();
 		string[] cv2pdbOpt = [ "Never", "If recommended for selected debug engine", "Always" ];
 		AddControl("Run cv2pdb", mRunCv2pdb = new ComboBox(mCanvas, cv2pdbOpt, false));
@@ -1204,7 +1204,6 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		AddControl("", mNoboundscheck = new CheckBox(mCanvas, "No Array Bounds Checking"));
 		AddControl("", mInline        = new CheckBox(mCanvas, "Expand Inline Functions"));
 		AddHorizontalLine();
-		AddControl("", mNoFloat       = new CheckBox(mCanvas, "No Floating Point Support"));
 		AddControl("", mGenStackFrame = new CheckBox(mCanvas, "Always generate stack frame (DMD 2.056+)"));
 		AddControl("", mStackStomp    = new CheckBox(mCanvas, "Add stack stomp code (DMD 2.062+)"));
 		AddControl("", mAllInst       = new CheckBox(mCanvas, "Generate code for all template instantiations (DMD 2.064+)"));
@@ -1218,7 +1217,6 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		mNoboundscheck.setChecked(options.noboundscheck);
 		mUnitTests.setChecked(options.useUnitTests);
 		mInline.setChecked(options.useInline);
-		mNoFloat.setChecked(options.nofloat);
 		mGenStackFrame.setChecked(options.genStackFrame);
 		mStackStomp.setChecked(options.stackStomp);
 		mAllInst.setChecked(options.allinst);
@@ -1235,7 +1233,6 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		changes += changeOption(mNoboundscheck.isChecked(), options.noboundscheck, refoptions.noboundscheck);
 		changes += changeOption(mUnitTests.isChecked(), options.useUnitTests, refoptions.useUnitTests);
 		changes += changeOption(mInline.isChecked(), options.useInline, refoptions.useInline);
-		changes += changeOption(mNoFloat.isChecked(), options.nofloat, refoptions.nofloat);
 		changes += changeOption(mGenStackFrame.isChecked(), options.genStackFrame, refoptions.genStackFrame);
 		changes += changeOption(mStackStomp.isChecked(), options.stackStomp, refoptions.stackStomp);
 		changes += changeOption(mAllInst.isChecked(), options.allinst, refoptions.allinst);
@@ -1248,10 +1245,73 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 	CheckBox mNoboundscheck;
 	CheckBox mUnitTests;
 	CheckBox mInline;
-	CheckBox mNoFloat;
 	CheckBox mGenStackFrame;
 	CheckBox mStackStomp;
 	CheckBox mAllInst;
+}
+
+class DmdLanguagePropertyPage : ProjectPropertyPage
+{
+	this()
+	{
+		kNeededLines = 12;
+	}
+
+	override string GetCategoryName() { return "Compiler"; }
+	override string GetPageName() { return "Language"; }
+
+	override void CreateControls()
+	{
+		mUnindentCheckBox = kLabelWidth;
+		AddControl("", mBetterC                 = new CheckBox(mCanvas, "omit generating some runtime information and helper functions"));
+		AddHorizontalLine();
+		AddControl("", mDip25                   = new CheckBox(mCanvas, "implement DIP25: sealed pointers"));
+		AddControl("", mDip1000                 = new CheckBox(mCanvas, "implement DIP1000: scoped pointers"));
+		AddControl("", mDip1008                 = new CheckBox(mCanvas, "implement DIP1008: reference counted exceptions"));
+		AddHorizontalLine();
+		AddControl("", mTransition_import       = new CheckBox(mCanvas, "revert to single phase name lookup"));
+		AddControl("", mTransition_dtorfields   = new CheckBox(mCanvas, "destruct fields of partially constructed objects"));
+		AddControl("", mTransition_intpromote   = new CheckBox(mCanvas, "fix integral promotions for unary + - ~ operators"));
+		AddControl("", mTransition_fixAliasThis = new CheckBox(mCanvas, "when a symbol is resolved, check alias this scope before going to upper scopes"));
+
+		bool transition_markdown;      // enable Markdown replacements in Ddoc
+		bool transition_vmarkdown;     // list instances of Markdown replacements in Ddoc
+	}
+
+	override void SetControls(ProjectOptions options)
+	{
+		mBetterC.setChecked(options.betterC);
+		mDip25.setChecked(options.dip25);
+		mDip1000.setChecked(options.dip1000);
+		mDip1008.setChecked(options.dip1008);
+		mTransition_import.setChecked(options.transition_import);
+		mTransition_dtorfields.setChecked(options.transition_dtorfields);
+		mTransition_intpromote.setChecked(options.transition_intpromote);
+		mTransition_fixAliasThis.setChecked(options.transition_fixAliasThis);
+	}
+
+	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
+	{
+		int changes = 0;
+		changes += changeOption(mBetterC.isChecked(), options.betterC, refoptions.betterC);
+		changes += changeOption(mDip25.isChecked(), options.dip25, refoptions.dip25);
+		changes += changeOption(mDip1000.isChecked(), options.dip1000, refoptions.dip1000);
+		changes += changeOption(mDip1008.isChecked(), options.dip1008, refoptions.dip1008);
+		changes += changeOption(mTransition_import.isChecked(), options.transition_import, refoptions.transition_import);
+		changes += changeOption(mTransition_dtorfields.isChecked(), options.transition_dtorfields, refoptions.transition_dtorfields);
+		changes += changeOption(mTransition_intpromote.isChecked(), options.transition_intpromote, refoptions.transition_intpromote);
+		changes += changeOption(mTransition_fixAliasThis.isChecked(), options.transition_fixAliasThis, refoptions.transition_fixAliasThis);
+		return changes;
+	}
+
+	CheckBox mBetterC;
+	CheckBox mDip25;
+	CheckBox mDip1000;
+	CheckBox mDip1008;
+	CheckBox mTransition_import;
+	CheckBox mTransition_dtorfields;
+	CheckBox mTransition_intpromote;
+	CheckBox mTransition_fixAliasThis;
 }
 
 class DmdMessagesPropertyPage : ProjectPropertyPage
@@ -1267,12 +1327,14 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		AddHorizontalLine();
 		AddControl("", mUseDeprecated = new CheckBox(mCanvas, "Silently Allow Deprecated Features"));
 		AddControl("", mErrDeprecated = new CheckBox(mCanvas, "Use of Deprecated Features causes Error (DMD 2.061+)"));
+		AddControl("", mTransImport   = new CheckBox(mCanvas, "Give deprecation messages about import anomalies"));
+		AddControl("", mTransComplex  = new CheckBox(mCanvas, "Give deprecation messages about all usages of complex or imaginary types"));
 		AddHorizontalLine();
 		AddControl("", mVerbose       = new CheckBox(mCanvas, "Verbose Compile"));
 		AddControl("", mVtls          = new CheckBox(mCanvas, "Show TLS Variables"));
 		AddControl("", mVgc           = new CheckBox(mCanvas, "List all gc allocations including hidden ones (DMD 2.066+)"));
 		AddControl("", mIgnorePragmas = new CheckBox(mCanvas, "Ignore Unsupported Pragmas"));
-		AddControl("", mCheckProperty = new CheckBox(mCanvas, "Enforce Property Syntax (DMD 2.055+)"));
+		AddControl("", mTransField    = new CheckBox(mCanvas, "List all non-mutable fields which occupy an object instance"));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1285,7 +1347,9 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		mUseDeprecated.setChecked(options.useDeprecated);
 		mErrDeprecated.setChecked(options.errDeprecated);
 		mIgnorePragmas.setChecked(options.ignoreUnsupportedPragmas);
-		mCheckProperty.setChecked(options.checkProperty);
+		mTransField.setChecked(options.transition_field);
+		mTransImport.setChecked(options.transition_checkimports);
+		mTransComplex.setChecked(options.transition_complex);
 
 		mVtls.setEnabled(options.Dversion > 1);
 		mVgc.setEnabled(options.Dversion > 1);
@@ -1302,7 +1366,9 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		changes += changeOption(mUseDeprecated.isChecked(), options.useDeprecated, refoptions.useDeprecated);
 		changes += changeOption(mErrDeprecated.isChecked(), options.errDeprecated, refoptions.errDeprecated);
 		changes += changeOption(mIgnorePragmas.isChecked(), options.ignoreUnsupportedPragmas, refoptions.ignoreUnsupportedPragmas);
-		changes += changeOption(mCheckProperty.isChecked(), options.checkProperty, refoptions.checkProperty);
+		changes += changeOption(mTransField.isChecked(), options.transition_field, refoptions.transition_field);
+		changes += changeOption(mTransImport.isChecked(), options.transition_checkimports, refoptions.transition_checkimports);
+		changes += changeOption(mTransComplex.isChecked(), options.transition_complex, refoptions.transition_complex);
 		return changes;
 	}
 
@@ -1314,7 +1380,9 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	CheckBox mUseDeprecated;
 	CheckBox mErrDeprecated;
 	CheckBox mIgnorePragmas;
-	CheckBox mCheckProperty;
+	CheckBox mTransField;
+	CheckBox mTransImport;
+	CheckBox mTransComplex;
 }
 
 class DmdDocPropertyPage : ProjectPropertyPage
@@ -1328,6 +1396,8 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		AddControl("Documentation file", mDocFile = new Text(mCanvas));
 		AddControl("Documentation dir", mDocDir = new Text(mCanvas));
 		AddControl("CanDyDOC module", mModulesDDoc = new Text(mCanvas));
+		AddControl("", mTransMarkdown = new CheckBox(mCanvas, "Enable Markdown replacements in Ddoc"));
+		AddControl("", mTransListMarkdown = new CheckBox(mCanvas, "List instances of Markdown replacements in Ddoc"));
 
 		AddControl("", mGenHdr = new CheckBox(mCanvas, "Generate interface headers"));
 		AddControl("Header file",  mHdrFile = new Text(mCanvas));
@@ -1348,6 +1418,8 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		mDocDir.setEnabled(mGenDoc.isChecked());
 		mDocFile.setEnabled(mGenDoc.isChecked());
 		mModulesDDoc.setEnabled(mGenDoc.isChecked());
+		mTransMarkdown.setEnabled(mGenDoc.isChecked());
+		mTransListMarkdown.setEnabled(mGenDoc.isChecked());
 
 		mHdrDir.setEnabled(mGenHdr.isChecked());
 		mHdrFile.setEnabled(mGenHdr.isChecked());
@@ -1361,9 +1433,13 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		mDocDir.setText(options.docdir);
 		mDocFile.setText(options.docname);
 		mModulesDDoc.setText(options.modules_ddoc);
+		mTransMarkdown.setChecked(options.transition_markdown);
+		mTransListMarkdown.setChecked(options.transition_vmarkdown);
+
 		mGenHdr.setChecked(options.doHdrGeneration);
 		mHdrDir.setText(options.hdrdir);
 		mHdrFile.setText(options.hdrname);
+
 		mGenJSON.setChecked(options.doXGeneration);
 		mJSONFile.setText(options.xfilename);
 
@@ -1377,9 +1453,13 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		changes += changeOption(mDocDir.getText(), options.docdir, refoptions.docdir);
 		changes += changeOption(mDocFile.getText(), options.docname, refoptions.docname);
 		changes += changeOption(mModulesDDoc.getText(), options.modules_ddoc, refoptions.modules_ddoc);
+		changes += changeOption(mTransMarkdown.isChecked(), options.transition_markdown, refoptions.transition_markdown);
+		changes += changeOption(mTransListMarkdown.isChecked(), options.transition_vmarkdown, refoptions.transition_vmarkdown);
+
 		changes += changeOption(mGenHdr.isChecked(), options.doHdrGeneration, refoptions.doHdrGeneration);
 		changes += changeOption(mHdrDir.getText(), options.hdrdir, refoptions.hdrdir);
 		changes += changeOption(mHdrFile.getText(), options.hdrname, refoptions.hdrname);
+
 		changes += changeOption(mGenJSON.isChecked(), options.doXGeneration, refoptions.doXGeneration);
 		changes += changeOption(mJSONFile.getText(), options.xfilename, refoptions.xfilename);
 		return changes;
@@ -1394,6 +1474,8 @@ class DmdDocPropertyPage : ProjectPropertyPage
 	Text mHdrFile;
 	CheckBox mGenJSON;
 	Text mJSONFile;
+	CheckBox mTransMarkdown;
+	CheckBox mTransListMarkdown;
 }
 
 class DmdOutputPropertyPage : ProjectPropertyPage
@@ -2740,6 +2822,7 @@ const GUID    g_FilePropertyPage         = uuid("002a2de9-8bb6-484d-981a-7e4ad40
 const GUID    g_DmdDocPropertyPage       = uuid("002a2de9-8bb6-484d-981b-7e4ad4084715");
 const GUID    g_DmdCmdLinePropertyPage   = uuid("002a2de9-8bb6-484d-981c-7e4ad4084715");
 const GUID    g_LinkerOutputPropertyPage = uuid("002a2de9-8bb6-484d-981d-7e4ad4084715");
+const GUID    g_DmdLanguagePropertyPage  = uuid("002a2de9-8bb6-484d-981e-7e4ad4084715");
 
 // does not need to be registered, created explicitely by package
 const GUID    g_DmdDirPropertyPage       = uuid("002a2de9-8bb6-484d-9820-7e4ad4084715");
@@ -2770,6 +2853,7 @@ const GUID*[] guids_propertyPages =
 	&g_DmdDocPropertyPage,
 	&g_DmdCmdLinePropertyPage,
 	&g_LinkerOutputPropertyPage,
+	&g_DmdLanguagePropertyPage,
 ];
 
 class PropertyPageFactory : DComObject, IClassFactory
@@ -2819,6 +2903,8 @@ class PropertyPageFactory : DComObject, IClassFactory
 			ppp = newCom!DmdLinkerPropertyPage();
 		else if(mClsid == g_LinkerOutputPropertyPage)
 			ppp = newCom!LinkerOutputPropertyPage();
+		else if(mClsid == g_DmdLanguagePropertyPage)
+			ppp = newCom!DmdLanguagePropertyPage();
 		else if(mClsid == g_DmdEventsPropertyPage)
 			ppp = newCom!DmdEventsPropertyPage();
 		else if(mClsid == g_DmdCmdLinePropertyPage)
@@ -2841,7 +2927,7 @@ class PropertyPageFactory : DComObject, IClassFactory
 	static int GetProjectPages(CAUUID *pPages, bool addFile)
 	{
 version(all) {
-		pPages.cElems = (addFile ? 13 : 12);
+		pPages.cElems = (addFile ? 14 : 13);
 		pPages.pElems = cast(GUID*)CoTaskMemAlloc(pPages.cElems*GUID.sizeof);
 		if (!pPages.pElems)
 			return E_OUTOFMEMORY;
@@ -2854,6 +2940,7 @@ version(all) {
 		pPages.pElems[idx++] = g_DmdGeneralPropertyPage;
 		pPages.pElems[idx++] = g_DmdDebugPropertyPage;
 		pPages.pElems[idx++] = g_DmdCodeGenPropertyPage;
+		pPages.pElems[idx++] = g_DmdLanguagePropertyPage;
 		pPages.pElems[idx++] = g_DmdMessagesPropertyPage;
 		pPages.pElems[idx++] = g_DmdDocPropertyPage;
 		pPages.pElems[idx++] = g_DmdOutputPropertyPage;
