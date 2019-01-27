@@ -261,6 +261,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v15\ dbuild.15.0.dll
+;  ${File} ..\msbuild\dbuild\obj\release-v16\ dbuild.16.0.dll
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
 
@@ -632,7 +633,7 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   ${File} ..\..\..\cv2pdb\trunk\bin\Release\ cv2pdb.exe
   ${File} ..\..\..\cv2pdb\trunk\bin\Release\ dviewhelper.dll
   ${File} ..\..\..\cv2pdb\trunk\bin\Release\ dumplines.exe
-  ${File} ..\..\..\cv2pdb\trunk\ README
+  ${File} ..\..\..\cv2pdb\trunk\ README.MD
   ${File} ..\..\..\cv2pdb\trunk\ LICENSE
   ${File} ..\..\..\cv2pdb\trunk\ CHANGES
   ${File} ..\..\..\cv2pdb\trunk\ VERSION
