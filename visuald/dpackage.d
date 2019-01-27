@@ -1537,7 +1537,9 @@ class GlobalOptions
 
 	void detectVCInstallDir()
 	{
-		string defverFile = VSInstallDir ~ r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt";
+		string defverFile = VSInstallDir ~ r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.v142.default.txt"; // VS2019
+		if (!std.file.exists(defverFile))
+			defverFile = VSInstallDir ~ r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt";
 		if (std.file.exists(defverFile))
 		{
 			// VS 2017
