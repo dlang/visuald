@@ -265,6 +265,7 @@
       <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '141'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '142'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(DCompiler)' == 'DMD' and '$(_NeedsDLibraries)' == 'true'">

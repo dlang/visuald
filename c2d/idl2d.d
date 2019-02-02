@@ -1381,6 +1381,11 @@ version(all)
 		replaceTokenSequence(tokens, "#ifdef defined __cplusplus\nextern \"C\" {\n#endif\n", "extern \"C\" {\n", false);
 		replaceTokenSequence(tokens, "#ifdef __cplusplus\n}\n#endif\n", "}\n", false);
 
+		if(currentModule == "vsshell160")
+		{
+			replaceTokenSequence(tokens, "#ifndef INTEROPLIB\n[in] $ifcode\n#else\n$elsecode\n#endif", "[in] $ifcode", false);
+		}
+
 		for(TokenIterator tokIt = tokens.begin(); tokIt != tokens.end; )
 		{
 			Token tok = *tokIt;

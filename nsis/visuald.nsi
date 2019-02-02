@@ -570,11 +570,11 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17/19" SecMSBuild
 
   Call DetectVS2019_InstallationFolder
   StrCmp $1 "" NoVS2019
-    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
-    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "Win32"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v160" "x64"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v160" "Win32"
     ${RegisterIcons} "16.0"
 
-    !define V160_GENERAL_XML "$1\Common7\IDE\VC\VCTargets\1033\general.xml"
+    !define V160_GENERAL_XML "$1\MsBuild\Microsoft\VC\v160\1033\general.xml"
 
     ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V160_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.16.0.xml'
     ${AddItem} "$INSTDIR\msbuild\general_d.16.0.xml"

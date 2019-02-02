@@ -898,7 +898,7 @@ class LanguageService : DisposingComObject,
 			auto globopts = Package.GetGlobalOptions();
 			imp = GetImportPaths(cfg) ~ Package.GetGlobalOptions().getImportPaths(cfgopts.compiler);
 			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64,
-									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck,
+									  cfgopts.cov, cfgopts.doDocComments, cfgopts.boundscheck == 3,
 									  cfgopts.compiler == Compiler.GDC,
 									  cfgopts.versionlevel, cfgopts.debuglevel,
 									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,

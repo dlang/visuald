@@ -118,6 +118,11 @@ mago_vs15:
 	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v141              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
 	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v141" /target:Expression\MagoNatCC MagoDbg_2010.sln
 
+mago_vs16:
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v142            /target:DebugEngine\MagoNatDE MagoDbg_2010.sln
+	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v142              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
+	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v142" /target:Expression\MagoNatCC MagoDbg_2010.sln
+
 cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln
 	cd ..\..\cv2pdb\trunk && devenv /Project "dviewhelper" /Build "Release|Win32" src\cv2pdb_vs12.sln
@@ -128,6 +133,11 @@ cv2pdb_vs15:
 	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v141 src\dviewhelper\dviewhelper.vcxproj
 	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v141 src\dumplines.vcxproj
 
+cv2pdb_vs16:
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v142 src\cv2pdb.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v142 src\dviewhelper\dviewhelper.vcxproj
+	cd ..\..\cv2pdb\trunk && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v142 src\dumplines.vcxproj
+
 dcxxfilt: $(DCXXFILT_EXE)
 $(DCXXFILT_EXE): tools\dcxxfilt.d
 # no space after Release, it will be part of environment variable
@@ -136,7 +146,7 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules dparser dparser_test cv2pdb_vs16 mago_vs16 dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 

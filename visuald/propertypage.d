@@ -823,13 +823,7 @@ class GeneralPropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
-		string[] versions;
-		foreach(ver; selectableVersions)
-			versions ~= "D" ~ to!(string)(ver);
-		//versions[$-1] ~= "+";
-
 		AddControl("Compiler",      mCompiler = new ComboBox(mCanvas, [ "DMD", "GDC", "LDC" ], false));
-		AddControl("D-Version",     mDVersion = new ComboBox(mCanvas, versions, false));
 		AddControl("Output Type",   mCbOutputType = new ComboBox(mCanvas,
 																 [ "Executable", "Library", "DLL" ], false));
 		AddControl("Subsystem",     mCbSubsystem = new ComboBox(mCanvas,
@@ -848,11 +842,6 @@ class GeneralPropertyPage : ProjectPropertyPage
 
 	override void SetControls(ProjectOptions options)
 	{
-		int ver = 0;
-		while(ver < selectableVersions.length - 1 && selectableVersions[ver+1] <= options.Dversion)
-			ver++;
-		mDVersion.setSelection(ver);
-
 		mCompiler.setSelection(options.compiler);
 		mSingleFileComp.setSelection(options.compilationModel);
 		mCbOutputType.setSelection(options.lib);
@@ -864,13 +853,11 @@ class GeneralPropertyPage : ProjectPropertyPage
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
 	{
-		float ver = selectableVersions[mDVersion.getSelection()];
 		int changes = 0;
 		changes += changeOption(cast(uint) mSingleFileComp.getSelection(), options.compilationModel, refoptions.compilationModel);
 		changes += changeOption(cast(ubyte) mCbOutputType.getSelection(), options.lib, refoptions.lib);
 		changes += changeOption(cast(ubyte) mCbSubsystem.getSelection(), options.subsystem, refoptions.subsystem);
 		changes += changeOption(cast(ubyte) mCompiler.getSelection(), options.compiler, refoptions.compiler);
-		changes += changeOption(ver, options.Dversion, refoptions.Dversion);
 		changes += changeOption(mOutputPath.getText(), options.outdir, refoptions.outdir);
 		changes += changeOption(mIntermediatePath.getText(), options.objdir, refoptions.objdir);
 		changes += changeOption(mFilesToClean.getText(), options.filesToClean, refoptions.filesToClean);
@@ -881,7 +868,6 @@ class GeneralPropertyPage : ProjectPropertyPage
 	ComboBox mSingleFileComp;
 	ComboBox mCbOutputType;
 	ComboBox mCbSubsystem;
-	ComboBox mDVersion;
 	Text mOutputPath;
 	Text mIntermediatePath;
 	Text mFilesToClean;
@@ -1110,13 +1096,15 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		                                                              "Off (disable asserts, invariants and constraints)",
 		                                                              "Default (enable asserts, invariants and constraints)" ], false));
 		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, dbgInfoOpt, false));
-		AddControl("Full debug info", mFullDebug = new CheckBox(mCanvas, "Generate full debug information (dmd 2.075+)"));
+		AddControl("Full debug info", mFullDebug = new CheckBox(mCanvas, "Generate full debug information (DMD 2.075+)"));
+		AddHorizontalLine();
+		AddControl("", mEnableMixin = new CheckBox(mCanvas, "Enable mixin debugging (DMD 2.084.1+)"));
+		AddControl("Mixin file", mMixinPath = new Text(mCanvas));
 		AddHorizontalLine();
 		string[] cv2pdbOpt = [ "Never", "If recommended for selected debug engine", "Always" ];
 		AddControl("Run cv2pdb", mRunCv2pdb = new ComboBox(mCanvas, cv2pdbOpt, false));
 		auto btn = new Button(mCanvas, "...", ID_BROWSECV2PDB);
 		AddControl("Path to cv2pdb", mPathCv2pdb = new Text(mCanvas), btn);
-		AddControl("",           mCv2pdbPre2043  = new CheckBox(mCanvas, "Assume old associative array implementation (before dmd 2.043)"));
 		AddControl("",           mCv2pdbNoDemangle = new CheckBox(mCanvas, "Do not demangle symbols"));
 		AddControl("",           mCv2pdbEnumType = new CheckBox(mCanvas, "Use enumerator types"));
 		AddControl("More options", mCv2pdbOptions  = new Text(mCanvas));
@@ -1136,8 +1124,9 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		mPathCv2pdb.setEnabled(runcv2pdb);
 		mCv2pdbOptions.setEnabled(runcv2pdb);
 		mCv2pdbEnumType.setEnabled(runcv2pdb);
-		mCv2pdbPre2043.setEnabled(runcv2pdb);
 		mCv2pdbNoDemangle.setEnabled(runcv2pdb);
+
+		mMixinPath.setEnabled(mEnableMixin.isChecked());
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1148,9 +1137,10 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		mRunCv2pdb.setSelection(options.runCv2pdb);
 		mPathCv2pdb.setText(options.pathCv2pdb);
 		mCv2pdbOptions.setText(options.cv2pdbOptions);
-		mCv2pdbPre2043.setChecked(options.cv2pdbPre2043);
 		mCv2pdbNoDemangle.setChecked(options.cv2pdbNoDemangle);
 		mCv2pdbEnumType.setChecked(options.cv2pdbEnumType);
+		mEnableMixin.setChecked(options.enableMixin);
+		mMixinPath.setText(options.mixinPath);
 
 		mCanRunCv2PDB = options.compiler != Compiler.DMD || (!options.isX86_64 && !options.mscoff);
 		EnableControls();
@@ -1165,9 +1155,10 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 		changes += changeOption(cast(ubyte) mRunCv2pdb.getSelection(), options.runCv2pdb, refoptions.runCv2pdb);
 		changes += changeOption(mPathCv2pdb.getText(), options.pathCv2pdb, refoptions.pathCv2pdb);
 		changes += changeOption(mCv2pdbOptions.getText(), options.cv2pdbOptions, refoptions.cv2pdbOptions);
-		changes += changeOption(mCv2pdbPre2043.isChecked(), options.cv2pdbPre2043, refoptions.cv2pdbPre2043);
 		changes += changeOption(mCv2pdbNoDemangle.isChecked(), options.cv2pdbNoDemangle, refoptions.cv2pdbNoDemangle);
 		changes += changeOption(mCv2pdbEnumType.isChecked(), options.cv2pdbEnumType, refoptions.cv2pdbEnumType);
+		changes += changeOption(mEnableMixin.isChecked(), options.enableMixin, refoptions.enableMixin);
+		changes += changeOption(mMixinPath.getText(), options.mixinPath, refoptions.mixinPath);
 		return changes;
 	}
 
@@ -1177,10 +1168,11 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	CheckBox mFullDebug;
 	ComboBox mRunCv2pdb;
 	Text mPathCv2pdb;
-	CheckBox mCv2pdbPre2043;
 	CheckBox mCv2pdbNoDemangle;
 	CheckBox mCv2pdbEnumType;
 	Text mCv2pdbOptions;
+	CheckBox mEnableMixin;
+	Text mMixinPath;
 }
 
 class DmdCodeGenPropertyPage : ProjectPropertyPage
@@ -1201,12 +1193,13 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		AddControl("", mUnitTests     = new CheckBox(mCanvas, "Generate Unittest Code"));
 		AddHorizontalLine();
 		AddControl("", mOptimizer     = new CheckBox(mCanvas, "Run Optimizer"));
-		AddControl("", mNoboundscheck = new CheckBox(mCanvas, "No Array Bounds Checking"));
 		AddControl("", mInline        = new CheckBox(mCanvas, "Expand Inline Functions"));
+		string[] boundsCheckOpt = [ "Default from debug/release", "Always", "In @safe code", "Never" ];
+		AddControl("Array Bounds Check", mBoundsCheck = new ComboBox(mCanvas, boundsCheckOpt, false));
 		AddHorizontalLine();
-		AddControl("", mGenStackFrame = new CheckBox(mCanvas, "Always generate stack frame (DMD 2.056+)"));
-		AddControl("", mStackStomp    = new CheckBox(mCanvas, "Add stack stomp code (DMD 2.062+)"));
-		AddControl("", mAllInst       = new CheckBox(mCanvas, "Generate code for all template instantiations (DMD 2.064+)"));
+		AddControl("", mGenStackFrame = new CheckBox(mCanvas, "Always generate stack frame"));
+		AddControl("", mStackStomp    = new CheckBox(mCanvas, "Add stack stomp code"));
+		AddControl("", mAllInst       = new CheckBox(mCanvas, "Generate code for all template instantiations"));
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1214,14 +1207,12 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		mProfiling.setChecked(options.trace);
 		mCodeCov.setChecked(options.cov);
 		mOptimizer.setChecked(options.optimize);
-		mNoboundscheck.setChecked(options.noboundscheck);
+		mBoundsCheck.setSelection(options.boundscheck);
 		mUnitTests.setChecked(options.useUnitTests);
 		mInline.setChecked(options.useInline);
 		mGenStackFrame.setChecked(options.genStackFrame);
 		mStackStomp.setChecked(options.stackStomp);
 		mAllInst.setChecked(options.allinst);
-
-		mNoboundscheck.setEnabled(options.Dversion > 1);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1230,7 +1221,7 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 		changes += changeOption(mCodeCov.isChecked(), options.cov, refoptions.cov);
 		changes += changeOption(mProfiling.isChecked(), options.trace, refoptions.trace);
 		changes += changeOption(mOptimizer.isChecked(), options.optimize, refoptions.optimize);
-		changes += changeOption(mNoboundscheck.isChecked(), options.noboundscheck, refoptions.noboundscheck);
+		changes += changeOption(cast(ubyte) mBoundsCheck.getSelection(), options.boundscheck, refoptions.boundscheck);
 		changes += changeOption(mUnitTests.isChecked(), options.useUnitTests, refoptions.useUnitTests);
 		changes += changeOption(mInline.isChecked(), options.useInline, refoptions.useInline);
 		changes += changeOption(mGenStackFrame.isChecked(), options.genStackFrame, refoptions.genStackFrame);
@@ -1242,7 +1233,7 @@ class DmdCodeGenPropertyPage : ProjectPropertyPage
 	CheckBox mCodeCov;
 	CheckBox mProfiling;
 	CheckBox mOptimizer;
-	CheckBox mNoboundscheck;
+	ComboBox mBoundsCheck;
 	CheckBox mUnitTests;
 	CheckBox mInline;
 	CheckBox mGenStackFrame;
@@ -1265,14 +1256,14 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		mUnindentCheckBox = kLabelWidth;
 		AddControl("", mBetterC                 = new CheckBox(mCanvas, "omit generating some runtime information and helper functions"));
 		AddHorizontalLine();
-		AddControl("", mDip25                   = new CheckBox(mCanvas, "implement DIP25: sealed pointers"));
-		AddControl("", mDip1000                 = new CheckBox(mCanvas, "implement DIP1000: scoped pointers"));
-		AddControl("", mDip1008                 = new CheckBox(mCanvas, "implement DIP1008: reference counted exceptions"));
+		AddControl("", mDip25                   = new CheckBox(mCanvas, "implement DIP25: sealed pointers (DMD 2.067+)"));
+		AddControl("", mDip1000                 = new CheckBox(mCanvas, "implement DIP1000: scoped pointers (DMD 2.073+)"));
+		AddControl("", mDip1008                 = new CheckBox(mCanvas, "implement DIP1008: reference counted exceptions (DMD 2.078+)"));
 		AddHorizontalLine();
-		AddControl("", mTransition_import       = new CheckBox(mCanvas, "revert to single phase name lookup"));
-		AddControl("", mTransition_dtorfields   = new CheckBox(mCanvas, "destruct fields of partially constructed objects"));
-		AddControl("", mTransition_intpromote   = new CheckBox(mCanvas, "fix integral promotions for unary + - ~ operators"));
-		AddControl("", mTransition_fixAliasThis = new CheckBox(mCanvas, "when a symbol is resolved, check alias this scope before going to upper scopes"));
+		AddControl("", mTransition_import       = new CheckBox(mCanvas, "revert to single phase name lookup (DMD 2.071+)"));
+		AddControl("", mTransition_dtorfields   = new CheckBox(mCanvas, "destruct fields of partially constructed objects (DMD 2.083+)"));
+		AddControl("", mTransition_intpromote   = new CheckBox(mCanvas, "fix integral promotions for unary + - ~ operators (DMD 2.078+)"));
+		AddControl("", mTransition_fixAliasThis = new CheckBox(mCanvas, "when a symbol is resolved, check alias this scope before upper scopes (DMD 2.084+)"));
 
 		bool transition_markdown;      // enable Markdown replacements in Ddoc
 		bool transition_vmarkdown;     // list instances of Markdown replacements in Ddoc
@@ -1316,6 +1307,11 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 
 class DmdMessagesPropertyPage : ProjectPropertyPage
 {
+	this()
+	{
+		kNeededLines = 13;
+	}
+
 	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Messages"; }
 
@@ -1323,16 +1319,16 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 	{
 		mUnindentCheckBox = kLabelWidth;
 		AddControl("", mWarnings      = new CheckBox(mCanvas, "Enable Warnings"));
-		AddControl("", mInfoWarnings  = new CheckBox(mCanvas, "Enable Informational Warnings (DMD 2.041+)"));
+		AddControl("", mInfoWarnings  = new CheckBox(mCanvas, "Enable Informational Warnings"));
 		AddHorizontalLine();
 		AddControl("", mUseDeprecated = new CheckBox(mCanvas, "Silently Allow Deprecated Features"));
-		AddControl("", mErrDeprecated = new CheckBox(mCanvas, "Use of Deprecated Features causes Error (DMD 2.061+)"));
+		AddControl("", mErrDeprecated = new CheckBox(mCanvas, "Use of Deprecated Features causes Error"));
 		AddControl("", mTransImport   = new CheckBox(mCanvas, "Give deprecation messages about import anomalies"));
 		AddControl("", mTransComplex  = new CheckBox(mCanvas, "Give deprecation messages about all usages of complex or imaginary types"));
 		AddHorizontalLine();
 		AddControl("", mVerbose       = new CheckBox(mCanvas, "Verbose Compile"));
 		AddControl("", mVtls          = new CheckBox(mCanvas, "Show TLS Variables"));
-		AddControl("", mVgc           = new CheckBox(mCanvas, "List all gc allocations including hidden ones (DMD 2.066+)"));
+		AddControl("", mVgc           = new CheckBox(mCanvas, "List all gc allocations including hidden ones"));
 		AddControl("", mIgnorePragmas = new CheckBox(mCanvas, "Ignore Unsupported Pragmas"));
 		AddControl("", mTransField    = new CheckBox(mCanvas, "List all non-mutable fields which occupy an object instance"));
 	}
@@ -1350,9 +1346,6 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 		mTransField.setChecked(options.transition_field);
 		mTransImport.setChecked(options.transition_checkimports);
 		mTransComplex.setChecked(options.transition_complex);
-
-		mVtls.setEnabled(options.Dversion > 1);
-		mVgc.setEnabled(options.Dversion > 1);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1387,6 +1380,11 @@ class DmdMessagesPropertyPage : ProjectPropertyPage
 
 class DmdDocPropertyPage : ProjectPropertyPage
 {
+	this()
+	{
+		kNeededLines = 13;
+	}
+
 	override string GetCategoryName() { return "Compiler"; }
 	override string GetPageName() { return "Documentation"; }
 
