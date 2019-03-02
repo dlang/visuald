@@ -2095,9 +2095,19 @@ else
 		{
 			replaceTokenSequence(tokens, "extern(C++) { $data }", "/+ $* +/", true);
 		}
-		if(currentModule)
+		if(currentModule == "winnls")
 		{
 			replaceTokenSequence(tokens, "alias MUI_CALLBACK_FLAG_UPGRADED_INSTALLATION $_ident;", "// $*", true);
+		}
+		if(currentModule == "basetsd")
+		{
+			// Deprecation: integral promotion not done for `~cast(ubyte)...`
+			replaceTokenSequence(tokens, "~MAXHALF_PTR", "~cast(int)MAXHALF_PTR", true);
+			replaceTokenSequence(tokens, "~(cast(UINT8)0)", "~0", true);
+			replaceTokenSequence(tokens, "~(cast(UINT16)0)", "~0", true);
+			replaceTokenSequence(tokens, "~MAXINT8", "~cast(int)MAXINT8", true);
+			replaceTokenSequence(tokens, "~MAXINT16", "~cast(int)MAXINT16", true);
+
 		}
 		//replaceTokenSequence(tokens, "[$args]", "\n\t\t/+[$args]+/", true);
 
