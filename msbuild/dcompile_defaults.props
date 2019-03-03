@@ -54,6 +54,18 @@
       <StackStomp>false</StackStomp>
       <AllInst>false</AllInst>
       <BetterC>false</BetterC>
+      <DIP25>false</DIP25>
+      <DIP1000>false</DIP1000>
+      <DIP1008>false</DIP1008>
+      <TransitionImport>false</TransitionImport>
+      <TransitionDtorFields>false</TransitionDtorFields>
+      <TransitionIntPromote>false</TransitionIntPromote>
+      <TransitionFixAliasThis>false</TransitionFixAliasThis>
+      <TransitionMarkdown>false</TransitionMarkdown>
+      <TransitionVMarkdown>false</TransitionVMarkdown>
+      <TransitionField>false</TransitionField>
+      <TransitionImport>false</TransitionImport>
+      <TransitionComplex>false</TransitionComplex>
       <BoundsCheck>On</BoundsCheck>
       <IgnorePragma>false</IgnorePragma>
       <PerformSyntaxCheckOnly>false</PerformSyntaxCheckOnly>

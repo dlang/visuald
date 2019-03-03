@@ -14,6 +14,7 @@
     <Rule.Categories>
       <Category Name="General" DisplayName="General" />
       <Category Name="Code Generation" DisplayName="Code Generation" />
+      <Category Name="Language" DisplayName="Language" />
       <Category Name="Messages" DisplayName="Messages" />
       <Category Name="Documentation" DisplayName="Documentation" />
       <Category Name="All Options" DisplayName="All Options" Subtype="Search" />
@@ -89,6 +90,12 @@
                   Description="list all variables going into thread local storage. (-vtls)" />
     <BoolProperty Name="ShowGC" Category="Messages" DisplayName="Show GC allocations" Switch="-vgc"
                   Description="list all gc allocations including hidden ones. (-vgc)" />
+    <BoolProperty Name="TransitionField" Category="Messages" DisplayName="List non-mutable fields" Switch="-transition=field"
+                  Description="List all non-mutable fields which occupy an object instance" />
+    <BoolProperty Name="TransitionCheckImports" Category="Messages" DisplayName="Show import anomalies" Switch="-transition=checkimports"
+                  Description="Give deprecation messages about import anomalies" />
+    <BoolProperty Name="TransitionComplex" Category="Messages" DisplayName="Show usage of complex types" Switch="-transition=complex"
+                  Description="Give deprecation messages about all usages of complex or imaginary types" />
     <BoolProperty Name="IgnorePragma" Category="Messages" DisplayName="Ignore unsupported pragmas"
                   Description="ignore unsupported pragmas. (-ignore)" Switch="-ignore" />
     <BoolProperty Name="ShowDependencies" Category="Messages" DisplayName="Print module dependencies"
@@ -116,8 +123,6 @@
                   Description="add stack stomp code." Switch="-gx" />
     <BoolProperty Name="AllInst" Category="Code Generation" DisplayName="All Template Instantiations"
                   Description="generate code for all template instantiations." Switch="-allinst" />
-    <BoolProperty Name="BetterC" Category="Code Generation" DisplayName="Better C" Switch="-betterC"
-                  Description="omit generating some runtime information and helper functions." />
     <BoolProperty Name="Main" Category="Code Generation" DisplayName="Add Main" Switch="-main"
                   Description="add default main() (e.g. for unittesting)." />
     
@@ -142,11 +147,34 @@
     <BoolProperty Name="PerformSyntaxCheckOnly" Category="Code Generation" DisplayName="Perform Syntax Check Only"
             Description="Performs a syntax check only." Switch="-o-" />
 
+    <!-- =============== Language =============== -->
+    <BoolProperty Name="BetterC" Category="Language" DisplayName="Better C" Switch="-betterC"
+                  Description="omit generating some runtime information and helper functions." />
+    <BoolProperty Name="DIP25" Category="Language" DisplayName="DIP25" Switch="-dip25"
+                  Description="implement DIP25: sealed pointers." />
+    <BoolProperty Name="DIP1000" Category="Language" DisplayName="DIP1000" Switch="-dip1000"
+                  Description="implement DIP1000: scoped pointers." />
+    <BoolProperty Name="DIP1008" Category="Language" DisplayName="DIP1008" Switch="-dip1008"
+                  Description="implement DIP1008: reference counted exceptions." />
+
+    <BoolProperty Name="TransitionImport" Category="Language" DisplayName="Transition import" Switch="-transition=import"
+                  Description="revert to single phase name lookup." />
+    <BoolProperty Name="TransitionDtorFields" Category="Language" DisplayName="Transition dtorfields" Switch="-transition=dtorfields"
+                  Description="destruct fields of partially constructed objects." />
+    <BoolProperty Name="TransitionIntPromote" Category="Language" DisplayName="Transition intpromote" Switch="-transition=intpromote"
+                  Description="fix integral promotions for unary + - ~ operators." />
+    <BoolProperty Name="TransitionFixAliasThis" Category="Language" DisplayName="Transition fixAliasThis" Switch="-transition=fixAliasThis"
+                  Description="when a symbol is resolved, check alias this scope before upper scopes." />
+
     <!-- =============== Documentation =============== -->
     <StringProperty Name="DocDir" Category="Documentation" DisplayName="Documentation Directory" Subtype="folder"
                     Description="write documentation file(s) to this directory." Switch="-Dd" />
     <StringProperty Name="DocFile" Category="Documentation" DisplayName="Documentation File" Subtype="file"
                     Description="write documentation to this file." Switch="-Df" />
+    <BoolProperty   Name="TransitionMarkdown" Category="Documentation" DisplayName="Enable Markdown" Switch="-transition=markdown"
+                    Description="Enable Markdown replacements in Ddoc" />
+    <BoolProperty   Name="TransitionVMarkdown" Category="Documentation" DisplayName="List Markdown Usage" Switch="-transition=vmarkdown"
+                    Description="List instances of Markdown replacements in Ddoc" />
     <StringProperty Name="DepFile" Category="Documentation" DisplayName="Dependencies File" Subtype="file"
                     Description="write module dependencies to filename (only imports)." Switch="-deps=" />
     <StringProperty Name="HeaderDir" Category="Documentation" DisplayName="Header Directory" Subtype="folder"

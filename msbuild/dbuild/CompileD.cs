@@ -45,6 +45,19 @@ namespace dbuild
             this.switchOrderList.Add("BoundsCheck");
             this.switchOrderList.Add("PerformSyntaxCheckOnly");
 
+            this.switchOrderList.Add("DIP25");
+            this.switchOrderList.Add("DIP1000");
+            this.switchOrderList.Add("DIP1008");
+            this.switchOrderList.Add("TransitionImport");
+            this.switchOrderList.Add("TransitionDtorFields");
+            this.switchOrderList.Add("TransitionIntPromote");
+            this.switchOrderList.Add("TransitionFixAliasThis");
+            this.switchOrderList.Add("TransitionMarkdown");
+            this.switchOrderList.Add("TransitionVMarkdown");
+            this.switchOrderList.Add("TransitionField");
+            this.switchOrderList.Add("TransitionCheckImports");
+            this.switchOrderList.Add("TransitionComplex");
+
             this.switchOrderList.Add("Warnings");
             this.switchOrderList.Add("Deprecations");
             this.switchOrderList.Add("Verbose");
@@ -446,6 +459,139 @@ namespace dbuild
                 SetBoolProperty("PerformSyntaxCheckOnly", "Perform Syntax Check Only",
                                 "Performs a syntax check only (-o-)",
                                 "-o-", value);
+            }
+        }
+
+        // Language
+        public bool DIP25
+        {
+            get { return GetBoolProperty("DIP25"); }
+            set
+            {
+                SetBoolProperty("DIP25", "DIP25",
+                                "implement DIP25: sealed pointers (-dip25)",
+                                "-dip25", value);
+            }
+        }
+
+        public bool DIP1000
+        {
+            get { return GetBoolProperty("DIP1000"); }
+            set
+            {
+                SetBoolProperty("DIP1000", "DIP1000",
+                                "implement DIP1000: scoped pointers (-dip1000)",
+                                "-dip1000", value);
+            }
+        }
+
+        public bool DIP1008
+        {
+            get { return GetBoolProperty("DIP1008"); }
+            set
+            {
+                SetBoolProperty("DIP1008", "DIP1008",
+                                "implement DIP1008: reference counted exceptions (-dip1008)",
+                                "-dip1008", value);
+            }
+        }
+
+        public bool TransitionImport
+        {
+            get { return GetBoolProperty("TransitionImport"); }
+            set
+            {
+                SetBoolProperty("TransitionImport", "Transition import",
+                                "destruct fields of partially constructed objects (-transition=import)",
+                                "-transition=import", value);
+            }
+        }
+
+        public bool TransitionDtorFields
+        {
+            get { return GetBoolProperty("TransitionDtorFields"); }
+            set
+            {
+                SetBoolProperty("TransitionDtorFields", "Transition dtorfields",
+                                "Omit generating some runtime information and helper functions (-transition=dtorfields)",
+                                "-transition=dtorfields", value);
+            }
+        }
+
+        public bool TransitionIntPromote
+        {
+            get { return GetBoolProperty("TransitionIntPromote"); }
+            set
+            {
+                SetBoolProperty("TransitionIntPromote", "Transition intpromote",
+                                "fix integral promotions for unary + - ~ operators (-transition=intpromote)",
+                                "-transition=intpromote", value);
+            }
+        }
+
+        public bool TransitionFixAliasThis
+        {
+            get { return GetBoolProperty("TransitionFixAliasThis"); }
+            set
+            {
+                SetBoolProperty("TransitionFixAliasThis", "Transition fixAliasThis",
+                                "when a symbol is resolved, check alias this scope before upper scopes (-transition=fixAliasThis)",
+                                "-transition=fixAliasThis", value);
+            }
+        }
+
+        public bool TransitionMarkdown
+        {
+            get { return GetBoolProperty("TransitionMarkdown"); }
+            set
+            {
+                SetBoolProperty("TransitionMarkdown", "Enable Markdown",
+                                "Enable Markdown replacements in Ddoc (-transition=markdown)",
+                                "-transition=markdown", value);
+            }
+        }
+
+        public bool TransitionVMarkdown
+        {
+            get { return GetBoolProperty("TransitionVMarkdown"); }
+            set
+            {
+                SetBoolProperty("TransitionVMarkdown", "List Markdown Usage",
+                                "List instances of Markdown replacements in Ddoc (-transition=vmarkdown)",
+                                "-transition=vmarkdown", value);
+            }
+        }
+
+        public bool TransitionField
+        {
+            get { return GetBoolProperty("TransitionField"); }
+            set
+            {
+                SetBoolProperty("TransitionField", "List non-mutable fields",
+                                "List all non-mutable fields which occupy an object instance (-transition=field)",
+                                "-transition=field", value);
+            }
+        }
+
+        public bool TransitionCheckImports
+        {
+            get { return GetBoolProperty("TransitionCheckImports"); }
+            set
+            {
+                SetBoolProperty("TransitionCheckImports", "Show import anomalies",
+                                "Give deprecation messages about import anomalies (-transition=checkimports)",
+                                "-transition=checkimports", value);
+            }
+        }
+
+        public bool TransitionComplex
+        {
+            get { return GetBoolProperty("TransitionComplex"); }
+            set
+            {
+                SetBoolProperty("TransitionComplex", "Show usage of complex types",
+                                "Give deprecation messages about all usages of complex or imaginary types (-transition=complex)",
+                                "-transition=complex", value);
             }
         }
 
