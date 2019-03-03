@@ -215,6 +215,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 
 	final HRESULT SetDefaultForegroundColor(COLORREF color)
 	{
+		mForeground = -1;
 		mRgbForeground = color;
 		return S_OK;
 	}
@@ -856,6 +857,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Identifier:  return TokenColor.StringIdentifier;
 			case TokenColor.String:      return TokenColor.StringString;
 			case TokenColor.Literal:     return TokenColor.StringLiteral;
+			case TokenColor.Operator:    return TokenColor.StringOperator;
 			case TokenColor.AsmRegister: return TokenColor.StringAsmRegister;
 			case TokenColor.AsmMnemonic: return TokenColor.StringAsmMnemonic;
 			case TokenColor.UserType:    return TokenColor.StringUserType;
