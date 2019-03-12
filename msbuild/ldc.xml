@@ -49,6 +49,19 @@
     <BoolProperty Name="PreserveSourcePath" Category="General" DisplayName="Preserve source path"
                   Description="preserve source path for output files." Switch="-op" 
                   Visible="False"/>
+    <EnumProperty Name="CRuntimeLibrary" Category="General" DisplayName="C Runtime Library" IncludeInCommandLine="true"
+                  Description="Link against the static/dynamic debug/release C runtime library.">
+      <EnumValue Name="None" DisplayName="None" Switch="-mscrtlib="
+                 Description="Don't force a specific C run-time library. This needs another project to set the library or the library must be explicitly passed to the linker." />
+      <EnumValue Name="MultiThreaded" DisplayName="Multi-threaded" Switch=""
+                 Description="Causes your application to use the multithread, static version of the run-time library." />
+      <EnumValue Name="MultiThreadedDebug" DisplayName="Multi-threaded Debug" Switch="-mscrtlib=libcmtd"
+                 Description="This option also causes the compiler to place the library name LIBCMTD.lib into the .obj file so that the linker will use LIBCMTD.lib to resolve external symbols." />
+      <EnumValue Name="MultiThreadedDll" DisplayName="Multi-threaded DLL" Switch="-mscrtlib=msvcrt"
+                 Description="Causes your application to use the multithread- and DLL-specific version of the run-time library. Causes the compiler to place the library name MSVCRT.lib into the .obj file." />
+      <EnumValue Name="MultiThreadedDebugDll" DisplayName="Multi-threaded Debug DLL" Switch="-mscrtlib=msvcrtd"
+                 Description="Causes your application to use the debug multithread- and DLL-specific version of the run-time library. It also causes the compiler to place the library name MSVCRTD.lib into the .obj file." />
+    </EnumProperty>
     <BoolProperty Name="CompileD_UseMultiToolTask" 
                   Description="Use all available processors to compile the project. Ignored on VS2013 (not supported). Ignored if 'Compilation Model' is 'One object file per project'." Category="General" >
       <BoolProperty.DataSource>

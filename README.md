@@ -1,6 +1,5 @@
-<img src="/doc/images/vd_logo.png?format=raw" width="72">
-Visual D
-============================================================
+<img src="/doc/images/vd_logo.png?format=raw" width="72"> Visual D
+==================================================================
 
 This is the README file for Visual D, a 
 Visual Studio package providing both project management and language services

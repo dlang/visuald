@@ -125,7 +125,18 @@
                   Description="generate code for all template instantiations." Switch="-allinst" />
     <BoolProperty Name="Main" Category="Code Generation" DisplayName="Add Main" Switch="-main"
                   Description="add default main() (e.g. for unittesting)." />
-    
+    <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
+      <EnumValue Name="Default" DisplayName="asserts, invariants, contraints" />
+      <EnumValue Name="Debug" DisplayName="debug statements, asserts, invariants, contraints" Switch="-debug" />
+      <EnumValue Name="Release" DisplayName="none" Switch="-release" />
+    </EnumProperty>
+    <EnumProperty Name="CPUArchitecture" Category="Code Generation" DisplayName="CPU Architecture" Description="generate instructions for architecture.">
+      <EnumValue Name="baseline" DisplayName="default architecture as determined by target" Switch="-mcpu=baseline" />
+      <EnumValue Name="avx" DisplayName="AVX 1 instructions" Switch="-mcpu=avx1" />
+      <EnumValue Name="avx2" DisplayName="AVX 2 instructions" Switch="-mcpu=avx2" />
+      <EnumValue Name="native" DisplayName="CPU architecture that this compiler is running on" Switch="-mcpu=native" />
+    </EnumProperty>
+
     <EnumProperty Name="DebugCode" Category="Code Generation" DisplayName="Debug Code" Description="compile in debug code.">
       <EnumValue Name="Default" DisplayName="asserts, invariants, contraints" />
       <EnumValue Name="Debug" DisplayName="debug statements, asserts, invariants, contraints" Switch="-debug" />
@@ -138,11 +149,8 @@
     </EnumProperty>
     <BoolProperty Name="DebugFull" Category="Code Generation" DisplayName="Full Debug Info" Switch="-gf"
                   Description="when generating debug info emit it for all referenced types." />
-    <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
-      <EnumValue Name="Off" DisplayName="None" Switch="-boundscheck=off" />
-      <EnumValue Name="SafeOnly" DisplayName="For @safe code" Switch="-boundscheck=safeonly" />
-      <EnumValue Name="On" DisplayName="Always" Switch="-boundscheck=on" />
-    </EnumProperty>
+    <BoolProperty Name="DebugMixin" Category="Code Generation" DisplayName="Mixin Debug File" Switch="-mixin="
+                  Description="expand and save mixins to specified file. (dmd 2.084.1)" />
 
     <BoolProperty Name="PerformSyntaxCheckOnly" Category="Code Generation" DisplayName="Perform Syntax Check Only"
             Description="Performs a syntax check only." Switch="-o-" />
@@ -151,30 +159,33 @@
     <BoolProperty Name="BetterC" Category="Language" DisplayName="Better C" Switch="-betterC"
                   Description="omit generating some runtime information and helper functions." />
     <BoolProperty Name="DIP25" Category="Language" DisplayName="DIP25" Switch="-dip25"
-                  Description="implement DIP25: sealed pointers." />
+                  Description="implement DIP25: sealed pointers. (dmd 2.067+)" />
     <BoolProperty Name="DIP1000" Category="Language" DisplayName="DIP1000" Switch="-dip1000"
-                  Description="implement DIP1000: scoped pointers." />
+                  Description="implement DIP1000: scoped pointers. (dmd 2.073+)" />
     <BoolProperty Name="DIP1008" Category="Language" DisplayName="DIP1008" Switch="-dip1008"
-                  Description="implement DIP1008: reference counted exceptions." />
+                  Description="implement DIP1008: reference counted exceptions. (dmd 2.078+)" />
 
-    <BoolProperty Name="TransitionImport" Category="Language" DisplayName="Transition import" Switch="-transition=import"
-                  Description="revert to single phase name lookup." />
-    <BoolProperty Name="TransitionDtorFields" Category="Language" DisplayName="Transition dtorfields" Switch="-transition=dtorfields"
-                  Description="destruct fields of partially constructed objects." />
-    <BoolProperty Name="TransitionIntPromote" Category="Language" DisplayName="Transition intpromote" Switch="-transition=intpromote"
-                  Description="fix integral promotions for unary + - ~ operators." />
-    <BoolProperty Name="TransitionFixAliasThis" Category="Language" DisplayName="Transition fixAliasThis" Switch="-transition=fixAliasThis"
-                  Description="when a symbol is resolved, check alias this scope before upper scopes." />
+    <BoolProperty Name="PreviewFieldwise" Category="Language" DisplayName="Preview fieldwise" Switch="-preview=fieldwise"
+                  Description="use fieldwise comparisons for struct equality. (dmd 2.085+)" />
+    <BoolProperty Name="PreviewDtorFields" Category="Language" DisplayName="Preview dtorfields" Switch="-preview=dtorfields"
+                  Description="destruct fields of partially constructed objects. (dmd 2.085+)" />
+    <BoolProperty Name="PreviewIntPromote" Category="Language" DisplayName="Preview intpromote" Switch="-preview=intpromote"
+                  Description="fix integral promotions for unary + - ~ operators. (dmd 2.085+)" />
+    <BoolProperty Name="PreviewFixAliasThis" Category="Language" DisplayName="Preview fixAliasThis" Switch="-preview=fixAliasThis"
+                  Description="when a symbol is resolved, check alias this scope before upper scopes. (dmd 2.085+)" />
+
+    <BoolProperty Name="RevertImport" Category="Language" DisplayName="Revert import" Switch="-revert=import"
+              Description="revert to single phase name lookup. (dmd 2.085+)" />
 
     <!-- =============== Documentation =============== -->
     <StringProperty Name="DocDir" Category="Documentation" DisplayName="Documentation Directory" Subtype="folder"
                     Description="write documentation file(s) to this directory." Switch="-Dd" />
     <StringProperty Name="DocFile" Category="Documentation" DisplayName="Documentation File" Subtype="file"
                     Description="write documentation to this file." Switch="-Df" />
-    <BoolProperty   Name="TransitionMarkdown" Category="Documentation" DisplayName="Enable Markdown" Switch="-transition=markdown"
-                    Description="Enable Markdown replacements in Ddoc" />
+    <BoolProperty   Name="PreviewMarkdown" Category="Documentation" DisplayName="Enable Markdown" Switch="-preview=markdown"
+                    Description="Enable Markdown replacements in Ddoc. (dmd 2.085+)" />
     <BoolProperty   Name="TransitionVMarkdown" Category="Documentation" DisplayName="List Markdown Usage" Switch="-transition=vmarkdown"
-                    Description="List instances of Markdown replacements in Ddoc" />
+                    Description="List instances of Markdown replacements in Ddoc. (dmd 2.085+)" />
     <StringProperty Name="DepFile" Category="Documentation" DisplayName="Dependencies File" Subtype="file"
                     Description="write module dependencies to filename (only imports)." Switch="-deps=" />
     <StringProperty Name="HeaderDir" Category="Documentation" DisplayName="Header Directory" Subtype="folder"

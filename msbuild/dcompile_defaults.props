@@ -57,14 +57,16 @@
       <DIP25>false</DIP25>
       <DIP1000>false</DIP1000>
       <DIP1008>false</DIP1008>
-      <TransitionImport>false</TransitionImport>
-      <TransitionDtorFields>false</TransitionDtorFields>
-      <TransitionIntPromote>false</TransitionIntPromote>
-      <TransitionFixAliasThis>false</TransitionFixAliasThis>
-      <TransitionMarkdown>false</TransitionMarkdown>
+      <CPUArchitecture>baseline</CPUArchitecture>
+      <RevertImport>false</RevertImport>
+      <PreviewFieldwise>false</PreviewFieldwise>
+      <PreviewDtorFields>false</PreviewDtorFields>
+      <PreviewIntPromote>false</PreviewIntPromote>
+      <PreviewFixAliasThis>false</PreviewFixAliasThis>
+      <PreviewMarkdown>false</PreviewMarkdown>
       <TransitionVMarkdown>false</TransitionVMarkdown>
       <TransitionField>false</TransitionField>
-      <TransitionImport>false</TransitionImport>
+      <TransitionCheckImports>false</TransitionCheckImports>
       <TransitionComplex>false</TransitionComplex>
       <BoundsCheck>On</BoundsCheck>
       <IgnorePragma>false</IgnorePragma>
@@ -87,6 +89,7 @@
       <HeaderDir></HeaderDir>
       <HeaderFile></HeaderFile>
       <JSONFile></JSONFile>
+      <DebugMixin></DebugMixin>
       -->
       <DoNotLink>true</DoNotLink>
      

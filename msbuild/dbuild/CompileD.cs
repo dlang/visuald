@@ -37,22 +37,24 @@ namespace dbuild
             this.switchOrderList.Add("StackFrame");
             this.switchOrderList.Add("StackStomp");
             this.switchOrderList.Add("AllInst");
-            this.switchOrderList.Add("BetterC");
             this.switchOrderList.Add("Main");
             this.switchOrderList.Add("DebugCode");
             this.switchOrderList.Add("DebugInfo");
             this.switchOrderList.Add("DebugFull");
+            this.switchOrderList.Add("DebugMixin");
             this.switchOrderList.Add("BoundsCheck");
+            this.switchOrderList.Add("CPUArchitecture");
             this.switchOrderList.Add("PerformSyntaxCheckOnly");
 
+            this.switchOrderList.Add("BetterC");
             this.switchOrderList.Add("DIP25");
             this.switchOrderList.Add("DIP1000");
             this.switchOrderList.Add("DIP1008");
-            this.switchOrderList.Add("TransitionImport");
-            this.switchOrderList.Add("TransitionDtorFields");
-            this.switchOrderList.Add("TransitionIntPromote");
-            this.switchOrderList.Add("TransitionFixAliasThis");
-            this.switchOrderList.Add("TransitionMarkdown");
+            this.switchOrderList.Add("RevertImport");
+            this.switchOrderList.Add("PreviewDtorFields");
+            this.switchOrderList.Add("PreviewIntPromote");
+            this.switchOrderList.Add("PreviewFixAliasThis");
+            this.switchOrderList.Add("PreviewMarkdown");
             this.switchOrderList.Add("TransitionVMarkdown");
             this.switchOrderList.Add("TransitionField");
             this.switchOrderList.Add("TransitionCheckImports");
@@ -433,7 +435,37 @@ namespace dbuild
             }
         }
 
-        public string BoundsCheck
+		public string DebugMixin
+		{
+			get { return GetStringProperty("DebugMixin"); }
+			set
+			{
+				SetFileProperty("DebugMixin", "Debug Mixin File",
+								"Expand and save mixins to specified file. (-mixin=[file])",
+								"-mixin=", value);
+			}
+		}
+
+		public string CPUArchitecture
+		{
+			get { return GetStringProperty("CPUArchitecture"); }
+			set
+			{
+				string[][] switchMap = new string[4][]
+				{
+					new string[2] { "baseline", "" },
+					new string[2] { "avx", "-mcpu=avx" },
+					new string[2] { "avx2", "-mcpu=avx2" },
+					new string[2] { "native", "-mcpu=native" }
+				};
+
+				SetEnumProperty("CPUArchitecture", "CPU Architecture",
+								"generate instructions for architecture. (-mcpu=)",
+								switchMap, value);
+			}
+		}
+
+		public string BoundsCheck
         {
             get { return GetStringProperty("BoundsCheck"); }
             set
@@ -496,58 +528,58 @@ namespace dbuild
             }
         }
 
-        public bool TransitionImport
+        public bool RevertImport
         {
-            get { return GetBoolProperty("TransitionImport"); }
+            get { return GetBoolProperty("RevertImport"); }
             set
             {
-                SetBoolProperty("TransitionImport", "Transition import",
-                                "destruct fields of partially constructed objects (-transition=import)",
-                                "-transition=import", value);
+                SetBoolProperty("RevertImport", "Revert import",
+								"revert to single phase name lookup (-revert=import)",
+                                "-revert=import", value);
             }
         }
 
-        public bool TransitionDtorFields
-        {
-            get { return GetBoolProperty("TransitionDtorFields"); }
+        public bool PreviewDtorFields
+		{
+            get { return GetBoolProperty("PreviewDtorFields"); }
             set
             {
-                SetBoolProperty("TransitionDtorFields", "Transition dtorfields",
-                                "Omit generating some runtime information and helper functions (-transition=dtorfields)",
-                                "-transition=dtorfields", value);
+                SetBoolProperty("PreviewDtorFields", "Preview dtorfields",
+								"destruct fields of partially constructed objects (-preview=dtorfields)",
+                                "-preview=dtorfields", value);
             }
         }
 
-        public bool TransitionIntPromote
+        public bool PreviewIntPromote
         {
-            get { return GetBoolProperty("TransitionIntPromote"); }
+            get { return GetBoolProperty("PreviewIntPromote"); }
             set
             {
-                SetBoolProperty("TransitionIntPromote", "Transition intpromote",
-                                "fix integral promotions for unary + - ~ operators (-transition=intpromote)",
-                                "-transition=intpromote", value);
+                SetBoolProperty("PreviewIntPromote", "Preview intpromote",
+								"fix integral promotions for unary + - ~ operators (-preview=intpromote)",
+								"-preview=intpromote", value);
             }
         }
 
-        public bool TransitionFixAliasThis
-        {
-            get { return GetBoolProperty("TransitionFixAliasThis"); }
+        public bool PreviewFixAliasThis
+		{
+            get { return GetBoolProperty("PreviewFixAliasThis"); }
             set
             {
-                SetBoolProperty("TransitionFixAliasThis", "Transition fixAliasThis",
-                                "when a symbol is resolved, check alias this scope before upper scopes (-transition=fixAliasThis)",
-                                "-transition=fixAliasThis", value);
+                SetBoolProperty("PreviewFixAliasThis", "Preview fixAliasThis",
+								"when a symbol is resolved, check alias this scope before upper scopes (-preview=fixAliasThis)",
+								"-preview=fixAliasThis", value);
             }
         }
 
-        public bool TransitionMarkdown
-        {
-            get { return GetBoolProperty("TransitionMarkdown"); }
+        public bool PreviewMarkdown
+		{
+            get { return GetBoolProperty("PreviewMarkdown"); }
             set
             {
-                SetBoolProperty("TransitionMarkdown", "Enable Markdown",
-                                "Enable Markdown replacements in Ddoc (-transition=markdown)",
-                                "-transition=markdown", value);
+                SetBoolProperty("PreviewMarkdown", "Enable Markdown",
+								"Enable Markdown replacements in Ddoc (-preview=markdown)",
+								"-preview=markdown", value);
             }
         }
 

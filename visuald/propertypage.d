@@ -1264,9 +1264,6 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		AddControl("", mTransition_dtorfields   = new CheckBox(mCanvas, "destruct fields of partially constructed objects (DMD 2.083+)"));
 		AddControl("", mTransition_intpromote   = new CheckBox(mCanvas, "fix integral promotions for unary + - ~ operators (DMD 2.078+)"));
 		AddControl("", mTransition_fixAliasThis = new CheckBox(mCanvas, "when a symbol is resolved, check alias this scope before upper scopes (DMD 2.084+)"));
-
-		bool transition_markdown;      // enable Markdown replacements in Ddoc
-		bool transition_vmarkdown;     // list instances of Markdown replacements in Ddoc
 	}
 
 	override void SetControls(ProjectOptions options)
@@ -1275,10 +1272,10 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		mDip25.setChecked(options.dip25);
 		mDip1000.setChecked(options.dip1000);
 		mDip1008.setChecked(options.dip1008);
-		mTransition_import.setChecked(options.transition_import);
-		mTransition_dtorfields.setChecked(options.transition_dtorfields);
-		mTransition_intpromote.setChecked(options.transition_intpromote);
-		mTransition_fixAliasThis.setChecked(options.transition_fixAliasThis);
+		mTransition_import.setChecked(options.revert_import);
+		mTransition_dtorfields.setChecked(options.preview_dtorfields);
+		mTransition_intpromote.setChecked(options.preview_intpromote);
+		mTransition_fixAliasThis.setChecked(options.preview_fixAliasThis);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1288,10 +1285,10 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		changes += changeOption(mDip25.isChecked(), options.dip25, refoptions.dip25);
 		changes += changeOption(mDip1000.isChecked(), options.dip1000, refoptions.dip1000);
 		changes += changeOption(mDip1008.isChecked(), options.dip1008, refoptions.dip1008);
-		changes += changeOption(mTransition_import.isChecked(), options.transition_import, refoptions.transition_import);
-		changes += changeOption(mTransition_dtorfields.isChecked(), options.transition_dtorfields, refoptions.transition_dtorfields);
-		changes += changeOption(mTransition_intpromote.isChecked(), options.transition_intpromote, refoptions.transition_intpromote);
-		changes += changeOption(mTransition_fixAliasThis.isChecked(), options.transition_fixAliasThis, refoptions.transition_fixAliasThis);
+		changes += changeOption(mTransition_import.isChecked(), options.revert_import, refoptions.revert_import);
+		changes += changeOption(mTransition_dtorfields.isChecked(), options.preview_dtorfields, refoptions.preview_dtorfields);
+		changes += changeOption(mTransition_intpromote.isChecked(), options.preview_intpromote, refoptions.preview_intpromote);
+		changes += changeOption(mTransition_fixAliasThis.isChecked(), options.preview_fixAliasThis, refoptions.preview_fixAliasThis);
 		return changes;
 	}
 
@@ -1431,7 +1428,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		mDocDir.setText(options.docdir);
 		mDocFile.setText(options.docname);
 		mModulesDDoc.setText(options.modules_ddoc);
-		mTransMarkdown.setChecked(options.transition_markdown);
+		mTransMarkdown.setChecked(options.preview_markdown);
 		mTransListMarkdown.setChecked(options.transition_vmarkdown);
 
 		mGenHdr.setChecked(options.doHdrGeneration);
@@ -1451,7 +1448,7 @@ class DmdDocPropertyPage : ProjectPropertyPage
 		changes += changeOption(mDocDir.getText(), options.docdir, refoptions.docdir);
 		changes += changeOption(mDocFile.getText(), options.docname, refoptions.docname);
 		changes += changeOption(mModulesDDoc.getText(), options.modules_ddoc, refoptions.modules_ddoc);
-		changes += changeOption(mTransMarkdown.isChecked(), options.transition_markdown, refoptions.transition_markdown);
+		changes += changeOption(mTransMarkdown.isChecked(), options.preview_markdown, refoptions.preview_markdown);
 		changes += changeOption(mTransListMarkdown.isChecked(), options.transition_vmarkdown, refoptions.transition_vmarkdown);
 
 		changes += changeOption(mGenHdr.isChecked(), options.doHdrGeneration, refoptions.doHdrGeneration);

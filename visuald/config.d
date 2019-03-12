@@ -191,13 +191,13 @@ class ProjectOptions
 	bool dip1000;
 	bool dip1008;
 	bool transition_field;         // list all non-mutable fields which occupy an object instance
-	bool transition_import;        // revert to single phase name lookup
-	bool transition_dtorfields;    // destruct fields of partially constructed objects
+	bool revert_import;            // revert to single phase name lookup
+	bool preview_dtorfields;       // destruct fields of partially constructed objects
 	bool transition_checkimports;  // give deprecation messages about 10378 anomalies
 	bool transition_complex;       // give deprecation messages about all usages of complex or imaginary types
-	bool transition_intpromote;    // fix integral promotions for unary + - ~ operators
-	bool transition_fixAliasThis;  // when a symbol is resolved, check alias this scope before going to upper scopes
-	bool transition_markdown;      // enable Markdown replacements in Ddoc
+	bool preview_intpromote;       // fix integral promotions for unary + - ~ operators
+	bool preview_fixAliasThis;     // when a symbol is resolved, check alias this scope before going to upper scopes
+	bool preview_markdown;         // enable Markdown replacements in Ddoc
 	bool transition_vmarkdown;     // list instances of Markdown replacements in Ddoc
 
 	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
@@ -450,20 +450,20 @@ class ProjectOptions
 			cmd ~= " -dip1008";
 		if (transition_field)
 			cmd ~= " -transition=field";
-		if (transition_import)
-			cmd ~= " -transition=import";
-		if (transition_dtorfields)
-			cmd ~= " -transition=dtorfields";
+		if (revert_import)
+			cmd ~= " -revert=import";
+		if (preview_dtorfields)
+			cmd ~= " -preview=dtorfields";
 		if (transition_checkimports)
 			cmd ~= " -transition=checkimports";
 		if (transition_complex)
 			cmd ~= " -transition=complex";
-		if (transition_intpromote)
-			cmd ~= " -transition=intpromote";
-		if (transition_fixAliasThis)
-			cmd ~= " -transition=fixAliasThis";
-		if (transition_markdown)
-			cmd ~= " -transition=markdown";
+		if (preview_intpromote)
+			cmd ~= " -preview=intpromote";
+		if (preview_fixAliasThis)
+			cmd ~= " -preview=fixAliasThis";
+		if (preview_markdown)
+			cmd ~= " -preview=markdown";
 		if (transition_vmarkdown)
 			cmd ~= " -transition=vmarkdown";
 
@@ -786,6 +786,9 @@ class ProjectOptions
 		}
 
 		cmd ~= commonLanguageOptions();
+
+		if(enableMixin)
+			cmd ~= " -mixin=" ~ quoteNormalizeFilename(mixinPath);
 
 		if(doDocComments && compile && !syntaxOnly)
 		{
@@ -1444,13 +1447,13 @@ class ProjectOptions
 		elem ~= new xml.Element("dip1000", toElem(dip1000));
 		elem ~= new xml.Element("dip1008", toElem(dip1008));
 		elem ~= new xml.Element("transition_field", toElem(transition_field));
-		elem ~= new xml.Element("transition_import", toElem(transition_import));
-		elem ~= new xml.Element("transition_dtorfields", toElem(transition_dtorfields));
+		elem ~= new xml.Element("revert_import", toElem(revert_import));
+		elem ~= new xml.Element("preview_dtorfields", toElem(preview_dtorfields));
 		elem ~= new xml.Element("transition_checkimports", toElem(transition_checkimports));
 		elem ~= new xml.Element("transition_complex", toElem(transition_complex));
-		elem ~= new xml.Element("transition_intpromote", toElem(transition_intpromote));
-		elem ~= new xml.Element("transition_fixAliasThis", toElem(transition_fixAliasThis));
-		elem ~= new xml.Element("transition_markdown", toElem(transition_markdown));
+		elem ~= new xml.Element("preview_intpromote", toElem(preview_intpromote));
+		elem ~= new xml.Element("preview_fixAliasThis", toElem(preview_fixAliasThis));
+		elem ~= new xml.Element("preview_markdown", toElem(preview_markdown));
 		elem ~= new xml.Element("transition_vmarkdown", toElem(transition_vmarkdown));
 
 		elem ~= new xml.Element("compiler", toElem(compiler));
@@ -1599,13 +1602,13 @@ class ProjectOptions
 		fromElem(elem, "dip1000", dip1000);
 		fromElem(elem, "dip1008", dip1008);
 		fromElem(elem, "transition_field", transition_field);
-		fromElem(elem, "transition_import", transition_import);
-		fromElem(elem, "transition_dtorfields", transition_dtorfields);
+		fromElem(elem, "revert_import", revert_import);
+		fromElem(elem, "preview_dtorfields", preview_dtorfields);
 		fromElem(elem, "transition_checkimports", transition_checkimports);
 		fromElem(elem, "transition_complex", transition_complex);
-		fromElem(elem, "transition_intpromote", transition_intpromote);
-		fromElem(elem, "transition_fixAliasThis", transition_fixAliasThis);
-		fromElem(elem, "transition_markdown", transition_markdown);
+		fromElem(elem, "preview_intpromote", preview_intpromote);
+		fromElem(elem, "preview_fixAliasThis", preview_fixAliasThis);
+		fromElem(elem, "preview_markdown", preview_markdown);
 		fromElem(elem, "transition_vmarkdown", transition_vmarkdown);
 
 		fromElem(elem, "compiler", compiler);
