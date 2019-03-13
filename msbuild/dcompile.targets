@@ -289,7 +289,7 @@
       <CRuntimeLibs Condition="'$(_CRuntimeLib)' == 'MultiThreadedDll'"     >msvcrt.lib</CRuntimeLibs>
       <CRuntimeLibs Condition="'$(_CRuntimeLib)' == 'MultiThreadedDebugDll'">msvcrtd.lib</CRuntimeLibs>
     </PropertyGroup>
-    <Message Text="_CRuntimeLib: '$(_CRuntimeLib)' -> $(CRuntimeLibs)" Importance="high" />
+    <Message Text="_CRuntimeLib: '$(_CRuntimeLib)' -> $(CRuntimeLibs)" Importance="low" />
 
     <ItemGroup Condition="'$(DCompiler)' == 'DMD' and '$(_NeedsDLibraries)' == 'true'">
       <Link>

@@ -473,6 +473,14 @@ ${MementoSection} "Install in VS 2017" SecVS2017
 ${MementoSectionEnd}
 
 ;--------------------------------
+${MementoSection} "Install in VS 2017 Build Tools" SecVS2017BT
+
+  Call DetectVS2017BuildTools_InstallationFolder
+  WriteRegStr HKLM "Software\${APPNAME}" "VS2017BTInstallDir" $1
+
+${MementoSectionEnd}
+
+;--------------------------------
 ${MementoSection} "Install in VS 2019" SecVS2019
 
   ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2019_REGISTRY_KEY}'
@@ -580,6 +588,19 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17/19" SecMSBuild
     ${AddItem} "$INSTDIR\msbuild\general_d.16.0.xml"
 
   NoVS2019:
+
+  Call DetectVS2017BuildTools_InstallationFolder
+  StrCmp $1 "" NoVS2017BT
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "Win32"
+    ${RegisterIcons} "15.0"
+
+    !define V150BT_GENERAL_XML "$1\Common7\IDE\VC\VCTargets\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V150BT_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.15bt.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.15bt.0.xml"
+
+  NoVS2017BT:
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   IfErrors NoVS2017
@@ -834,7 +855,9 @@ Section "Uninstall"
     RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2019pkgdef:
-  
+
+  ; VS2017 Build Tools only adds msbuild files, automatically removed
+
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   IfErrors NoVS2017pkgdef
     StrCpy $1 "$1Common7\IDE"
@@ -1045,6 +1068,13 @@ Function .onInit
   IfErrors 0 Installed_VS2017
     SectionSetFlags ${SecVS2017} ${SF_RO}
   Installed_VS2017:
+
+  ; detect VS2017 Build Tools
+  ClearErrors
+  Call DetectVS2017BuildTools_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2017BT
+    SectionSetFlags ${SecVS2017BT} ${SF_RO}
+  Installed_VS2017BT:
 
   ; detect VS2019
   ClearErrors
@@ -1370,6 +1400,30 @@ Function un.VSConfigurationChanged
     FileClose $R1                   ; empty file good enough
   NoVS2017:
   Pop $1
+FunctionEnd
+
+Function DetectVS2017BuildTools_InstallationFolder
+
+  StrCpy $0 0
+  loop:
+    EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
+    StrCmp $1 "" done
+	ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+	IfErrors NoDisplayName
+		StrCmp $2 "Visual Studio Build Tools 2017" 0 NotVS2017BT
+			ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+			IfErrors NoInstallLocation
+				; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+				StrCpy $1 "$2\\"
+				return
+			NoInstallLocation:
+		NotVS2017BT:
+	NoDisplayName:
+    IntOp $0 $0 + 1
+	Goto loop
+  done:
+  StrCpy $0 ""
+
 FunctionEnd
 
 Function DetectVS2019_InstallationFolder
