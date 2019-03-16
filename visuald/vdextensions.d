@@ -97,7 +97,7 @@ int vdhelper_GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, ProjectOptio
 		opt.isX86_64       = (flags & 4) != 0;
 		opt.cov            = (flags & 8) != 0;
 		opt.doDocComments  = (flags & 16) != 0;
-		opt.noboundscheck  = (flags & 32) != 0;
+		opt.boundscheck    = (flags & 32) != 0 ? 3 : 0;
 		opt.errDeprecated  = (flags & 128) != 0;
 		opt.compiler       = (flags & 0x4_00_00_00) != 0 ? Compiler.LDC : (flags & 64) != 0 ? Compiler.GDC : Compiler.DMD;
 		opt.versionlevel   = (flags >> 8)  & 0xff;

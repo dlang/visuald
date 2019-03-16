@@ -372,103 +372,108 @@ class LanguageService : DisposingComObject,
 
 	// delete <VisualStudio-User-Root>\FontAndColors\Cache\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}\Version
 	// if the list of colorableItems changes
+	static struct DefaultColorData
+	{
+		string name;
+		COLORINDEX foreground;
+		COLORINDEX background;
+		COLORREF rgbForeground;
+		COLORREF darkForeground;
+		COLORREF rgbBackground;
+	}
+	static immutable DefaultColorData[] defaultColors =
+	[
+		// The first 6 items in this list MUST be these default items.
+		DefaultColorData("Keyword",    CI_BLUE,        CI_USERTEXT_BK),
+		DefaultColorData("Comment",    CI_DARKGREEN,   CI_USERTEXT_BK),
+		DefaultColorData("Identifier", CI_USERTEXT_FG, CI_USERTEXT_BK),
+		DefaultColorData("String",     CI_MAROON,      CI_USERTEXT_BK),
+		DefaultColorData("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
+		DefaultColorData("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
 
+		// Visual D specific (must match visuald.colorizer.TokenColor)                 Light theme       Dark theme
+		DefaultColorData("Visual D Operator",          CI_USERTEXT_FG, CI_USERTEXT_BK),
+		DefaultColorData("Visual D Register",             -1,          CI_USERTEXT_BK, RGB(128, 0, 128), RGB(160, 64, 160)),
+		DefaultColorData("Visual D Mnemonic",          CI_AQUAMARINE,  CI_USERTEXT_BK),
+		DefaultColorData("Visual D User Defined Type",    -1,          CI_USERTEXT_BK, RGB(0, 0, 160),   RGB(128, 128, 160)),
+		DefaultColorData("Visual D Identifier Interface", -1,          CI_USERTEXT_BK, RGB(32, 192, 160)),
+		DefaultColorData("Visual D Identifier Enum",      -1,          CI_USERTEXT_BK, RGB(0, 128, 128)),
+		DefaultColorData("Visual D Identifier Enum Value",-1,          CI_USERTEXT_BK, RGB(0, 128, 160)),
+		DefaultColorData("Visual D Identifier Template",  -1,          CI_USERTEXT_BK, RGB(0,  96, 128), RGB(32, 128, 160)),
+		DefaultColorData("Visual D Identifier Class",     -1,          CI_USERTEXT_BK, RGB(32, 192, 192)),
+		DefaultColorData("Visual D Identifier Struct",    -1,          CI_USERTEXT_BK, RGB(0, 192, 128)),
+		DefaultColorData("Visual D Identifier Union",     -1,          CI_USERTEXT_BK, RGB(0, 160, 128)),
+		DefaultColorData("Visual D Identifier Template Type Parameter", -1, CI_USERTEXT_BK, RGB(64, 0, 160), RGB(96, 128, 192)),
+
+		DefaultColorData("Visual D Identifier Constant",       -1, CI_USERTEXT_BK, RGB(128,   0, 128),   RGB(160, 64, 160)),
+		DefaultColorData("Visual D Identifier Local Variable", -1, CI_USERTEXT_BK, RGB(128,  16, 128),   RGB(160, 80, 160)),
+		DefaultColorData("Visual D Identifier Parameter",      -1, CI_USERTEXT_BK, RGB(128,  32, 128),   RGB(160, 96, 160)),
+		DefaultColorData("Visual D Identifier Thread Local",   -1, CI_USERTEXT_BK, RGB(128,  48, 128),   RGB(160, 112, 160)),
+		DefaultColorData("Visual D Identifier Shared Global",  -1, CI_USERTEXT_BK, RGB(128,  64, 128),   RGB(160, 128, 160)),
+		DefaultColorData("Visual D Identifier __gshared",      -1, CI_USERTEXT_BK, RGB(128,  80, 128)),
+		DefaultColorData("Visual D Identifier Field",          -1, CI_USERTEXT_BK, RGB(128,  96, 128)),
+		DefaultColorData("Visual D Identifier Variable",       -1, CI_USERTEXT_BK, RGB(128, 128, 128)),
+
+		DefaultColorData("Visual D Identifier Alias",          -1, CI_USERTEXT_BK, RGB(0, 128, 128)),
+		DefaultColorData("Visual D Identifier Module",         -1, CI_USERTEXT_BK, RGB(64, 64, 160)),
+		DefaultColorData("Visual D Identifier Function",       -1, CI_USERTEXT_BK, RGB(128, 96, 160),   RGB(128, 128, 160)),
+		DefaultColorData("Visual D Identifier Method",         -1, CI_USERTEXT_BK, RGB(128, 96, 160),   RGB(128, 128, 160)),
+		DefaultColorData("Visual D Identifier Basic Type",     -1, CI_USERTEXT_BK, RGB(0, 192, 128)),
+
+		DefaultColorData("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0),    RGB(160, 64, 64)),
+
+		DefaultColorData("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+		DefaultColorData("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
+		DefaultColorData("Visual D Disabled Identifier", CI_DARKGRAY, CI_USERTEXT_BK),
+		DefaultColorData("Visual D Disabled String",     -1,          CI_USERTEXT_BK, RGB(192, 160, 160)),
+		DefaultColorData("Visual D Disabled Number",     CI_DARKGRAY, CI_USERTEXT_BK),
+		DefaultColorData("Visual D Disabled Text",       CI_DARKGRAY, CI_USERTEXT_BK),
+		DefaultColorData("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK),
+		DefaultColorData("Visual D Disabled Register",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+		DefaultColorData("Visual D Disabled Mnemonic",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
+		DefaultColorData("Visual D Disabled Type",       -1,          CI_USERTEXT_BK, RGB(64, 112, 208)),
+		DefaultColorData("Visual D Disabled Version",    -1,          CI_USERTEXT_BK, RGB(160, 128, 128)),
+
+		DefaultColorData("Visual D Token String Keyword",    -1,      CI_USERTEXT_BK, RGB(160,32,128),    RGB(160, 128, 128)),
+		DefaultColorData("Visual D Token String Comment",    -1,      CI_USERTEXT_BK, RGB(128,160,80)),
+		DefaultColorData("Visual D Token String Identifier", -1,      CI_USERTEXT_BK, RGB(128,32,32),     RGB(160, 128, 64)),
+		DefaultColorData("Visual D Token String String",     -1,      CI_USERTEXT_BK, RGB(192,64,64),     RGB(192, 128, 64)),
+		DefaultColorData("Visual D Token String Number",     -1,      CI_USERTEXT_BK, RGB(128,32,32),     RGB(160, 128, 64)),
+		DefaultColorData("Visual D Token String Text",       -1,      CI_USERTEXT_BK, RGB(128,32,32),     RGB(160, 128, 64)),
+		DefaultColorData("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,96,32),     RGB(160, 160, 64)),
+		DefaultColorData("Visual D Token String Register",   -1,      CI_USERTEXT_BK, RGB(192,0,128),     RGB(160, 64, 128)),
+		DefaultColorData("Visual D Token String Mnemonic",   -1,      CI_USERTEXT_BK, RGB(192,0,128),     RGB(160, 64, 128)),
+		DefaultColorData("Visual D Token String Type",       -1,      CI_USERTEXT_BK, RGB(112,0,80),      RGB(160, 128, 160)),
+		DefaultColorData("Visual D Token String Version",    -1,      CI_USERTEXT_BK, RGB(224, 0, 0),     RGB(160, 64, 64)),
+
+		DefaultColorData("Visual D Text Coverage",      CI_USERTEXT_FG, -1, 0, 0, RGB(192, 255, 192)),
+		DefaultColorData("Visual D Text Non-Coverage",  CI_USERTEXT_FG, -1, 0, 0, RGB(255, 192, 192)),
+		DefaultColorData("Visual D Margin No Coverage", CI_USERTEXT_FG, -1, 0, 0, RGB(192, 192, 192)),
+	];
 	static void shared_static_this()
 	{
-		colorableItems = [
-			// The first 6 items in this list MUST be these default items.
-			newCom!ColorableItem("Keyword",    CI_BLUE,        CI_USERTEXT_BK),
-			newCom!ColorableItem("Comment",    CI_DARKGREEN,   CI_USERTEXT_BK),
-			newCom!ColorableItem("Identifier", CI_USERTEXT_FG, CI_USERTEXT_BK),
-			newCom!ColorableItem("String",     CI_MAROON,      CI_USERTEXT_BK),
-			newCom!ColorableItem("Number",     CI_USERTEXT_FG, CI_USERTEXT_BK),
-			newCom!ColorableItem("Text",       CI_USERTEXT_FG, CI_USERTEXT_BK),
-
-			// Visual D specific (must match visuald.colorizer.TokenColor)
-			newCom!ColorableItem("Visual D Operator",         CI_USERTEXT_FG, CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D Register",             -1,          CI_USERTEXT_BK, RGB(128, 0, 128)),
-			newCom!ColorableItem("Visual D Mnemonic",         CI_AQUAMARINE,  CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D User Defined Type",    -1,          CI_USERTEXT_BK, RGB(0, 0, 160)),
-			newCom!ColorableItem("Visual D Identifier Interface", -1,          CI_USERTEXT_BK, RGB(32, 192, 160)),
-			newCom!ColorableItem("Visual D Identifier Enum",      -1,          CI_USERTEXT_BK, RGB(0, 128, 128)),
-			newCom!ColorableItem("Visual D Identifier Enum Value",-1,          CI_USERTEXT_BK, RGB(0, 128, 160)),
-			newCom!ColorableItem("Visual D Identifier Template",  -1,          CI_USERTEXT_BK, RGB(0,  96, 128)),
-			newCom!ColorableItem("Visual D Identifier Class",     -1,          CI_USERTEXT_BK, RGB(32, 192, 192)),
-			newCom!ColorableItem("Visual D Identifier Struct",    -1,          CI_USERTEXT_BK, RGB(0, 192, 128)),
-			newCom!ColorableItem("Visual D Identifier Union",     -1,          CI_USERTEXT_BK, RGB(0, 160, 128)),
-			newCom!ColorableItem("Visual D Identifier Template Type Parameter", -1, CI_USERTEXT_BK, RGB(64, 0, 160)),
-
-			newCom!ColorableItem("Visual D Identifier Constant",       -1, CI_USERTEXT_BK, RGB(128,   0, 128)),
-			newCom!ColorableItem("Visual D Identifier Local Variable", -1, CI_USERTEXT_BK, RGB(128,  16, 128)),
-			newCom!ColorableItem("Visual D Identifier Parameter",      -1, CI_USERTEXT_BK, RGB(128,  32, 128)),
-			newCom!ColorableItem("Visual D Identifier Thread Local",   -1, CI_USERTEXT_BK, RGB(128,  48, 128)),
-			newCom!ColorableItem("Visual D Identifier Shared Global",  -1, CI_USERTEXT_BK, RGB(128,  64, 128)),
-			newCom!ColorableItem("Visual D Identifier __gshared",      -1, CI_USERTEXT_BK, RGB(128,  80, 128)),
-			newCom!ColorableItem("Visual D Identifier Field",          -1, CI_USERTEXT_BK, RGB(128,  96, 128)),
-			newCom!ColorableItem("Visual D Identifier Variable",       -1, CI_USERTEXT_BK, RGB(128, 128, 128)),
-
-			newCom!ColorableItem("Visual D Identifier Alias",          -1, CI_USERTEXT_BK, RGB(0, 128, 128)),
-			newCom!ColorableItem("Visual D Identifier Module",         -1, CI_USERTEXT_BK, RGB(64, 64, 160)),
-			newCom!ColorableItem("Visual D Identifier Function",       -1, CI_USERTEXT_BK, RGB(128, 96, 160)),
-			newCom!ColorableItem("Visual D Identifier Method",         -1, CI_USERTEXT_BK, RGB(128, 96, 160)),
-			newCom!ColorableItem("Visual D Identifier Basic Type",     -1, CI_USERTEXT_BK, RGB(0, 192, 128)),
-
-			newCom!ColorableItem("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0)),
-
-			newCom!ColorableItem("Visual D Disabled Keyword",    -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
-			newCom!ColorableItem("Visual D Disabled Comment",    -1,          CI_USERTEXT_BK, RGB(96, 128, 96)),
-			newCom!ColorableItem("Visual D Disabled Identifier", CI_DARKGRAY, CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D Disabled String",     -1,          CI_USERTEXT_BK, RGB(192, 160, 160)),
-			newCom!ColorableItem("Visual D Disabled Number",     CI_DARKGRAY, CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D Disabled Text",       CI_DARKGRAY, CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D Disabled Operator",   CI_DARKGRAY, CI_USERTEXT_BK),
-			newCom!ColorableItem("Visual D Disabled Register",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
-			newCom!ColorableItem("Visual D Disabled Mnemonic",   -1,          CI_USERTEXT_BK, RGB(128, 160, 224)),
-			newCom!ColorableItem("Visual D Disabled Type",       -1,          CI_USERTEXT_BK, RGB(64, 112, 208)),
-			newCom!ColorableItem("Visual D Disabled Version",    -1,          CI_USERTEXT_BK, RGB(160, 128, 128)),
-
-			newCom!ColorableItem("Visual D Token String Keyword",    -1,      CI_USERTEXT_BK, RGB(160,0,128)),
-			newCom!ColorableItem("Visual D Token String Comment",    -1,      CI_USERTEXT_BK, RGB(128,160,80)),
-			newCom!ColorableItem("Visual D Token String Identifier", -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			newCom!ColorableItem("Visual D Token String String",     -1,      CI_USERTEXT_BK, RGB(255,64,64)),
-			newCom!ColorableItem("Visual D Token String Number",     -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			newCom!ColorableItem("Visual D Token String Text",       -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			newCom!ColorableItem("Visual D Token String Operator",   -1,      CI_USERTEXT_BK, RGB(128,32,32)),
-			newCom!ColorableItem("Visual D Token String Register",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
-			newCom!ColorableItem("Visual D Token String Mnemonic",   -1,      CI_USERTEXT_BK, RGB(192,0,128)),
-			newCom!ColorableItem("Visual D Token String Type",       -1,      CI_USERTEXT_BK, RGB(112,0,80)),
-			newCom!ColorableItem("Visual D Token String Version",    -1,      CI_USERTEXT_BK, RGB(224, 0, 0)),
-
-			newCom!ColorableItem("Visual D Text Coverage",     CI_USERTEXT_FG, -1, 0,  RGB(192, 255, 192)),
-			newCom!ColorableItem("Visual D Text Non-Coverage", CI_USERTEXT_FG, -1, 0,  RGB(255, 192, 192)),
-			newCom!ColorableItem("Visual D Margin No Coverage", CI_USERTEXT_FG, -1, 0, RGB(192, 192, 192)),
-		];
+		colorableItems = new ColorableItem[defaultColors.length];
+		foreach(i, def; defaultColors)
+			colorableItems[i] = newCom!ColorableItem(def.name, def.foreground, def.background, def.rgbForeground, def.rgbBackground);
 	};
 	static void shared_static_dtor()
 	{
-		destroy(colorableItems); // to keep GC leak detection happy
+		foreach(ref def; colorableItems)
+		{
+			release(def);
+			destroy(def); // to keep COM leak detection happy
+		}
 		Source.parseTaskPool = null;
 	}
 
 	static void updateThemeColors()
 	{
 		bool dark = Package.GetGlobalOptions().isDarkTheme();
-		foreach(ci; colorableItems)
+		foreach(i, ci; colorableItems)
 		{
-			if(ci.GetDisplayName() == "Visual D User Defined Type")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 128, 160) : RGB(0, 0, 160));
-			if(ci.GetDisplayName() == "Visual D Register")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 128)  : RGB(128, 0, 128));
-			if(ci.GetDisplayName() == "Visual D Token String Identifier")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64)   : RGB(128, 32, 32));
-			if(ci.GetDisplayName() == "Visual D Token String Number")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64)   : RGB(128, 32, 32));
-			if(ci.GetDisplayName() == "Visual D Token String Operator")
-				ci.SetDefaultForegroundColor(dark ? RGB(128, 64, 64)   : RGB(128, 32, 32));
-			if(ci.GetDisplayName() == "Visual D Token String Type")
-				ci.SetDefaultForegroundColor(dark ? RGB(160, 128, 160) : RGB(112, 0, 80));
-			if(ci.GetDisplayName() == "Visual D Identifier Template Type Parameter")
-				ci.SetDefaultForegroundColor(dark ? RGB(96, 64, 192) : RGB(64, 0, 160));
+			if (defaultColors[i].darkForeground == 0)
+				continue;
+			ci.SetDefaultForegroundColor(dark ? defaultColors[i].darkForeground : defaultColors[i].rgbForeground);
 		}
 
 		version(none)
@@ -898,7 +903,7 @@ class LanguageService : DisposingComObject,
 			auto globopts = Package.GetGlobalOptions();
 			imp = GetImportPaths(cfg) ~ Package.GetGlobalOptions().getImportPaths(cfgopts.compiler);
 			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64,
-									  cfgopts.cov, cfgopts.doDocComments, cfgopts.noboundscheck,
+									  cfgopts.cov, cfgopts.doDocComments, cfgopts.boundscheck == 3,
 									  cfgopts.compiler == Compiler.GDC,
 									  cfgopts.versionlevel, cfgopts.debuglevel,
 									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,
@@ -3052,7 +3057,7 @@ else
 				if(txt == "}" && prevtxt != ",")
 				{
 					// end of statement or struct initializer?
-					// assumes it on '}', 
+					// assumes it on '}',
 /+					bool isPrecededByStatement(ref LineTokenIterator it)
 					{
 						if (!it.retreatOverComments())
@@ -3064,7 +3069,7 @@ else
 
 						do
 						{
-							if (txt == ";" || txt == "if" || txt == "switch" || txt == "while" || txt == "for" || 
+							if (txt == ";" || txt == "if" || txt == "switch" || txt == "while" || txt == "for" ||
 								txt == "foreach" || txt == "with" || txt == "synchronized" || txt == "try" || txt == "asm")
 								return true;
 							if (!it.retreatOverBraces())
@@ -4066,7 +4071,7 @@ else
 						error.span.iStartIndex = parse!int(num[1]);
 						error.span.iEndLine    = parse!int(num[2]);
 						error.span.iEndIndex   = parse!int(num[3]);
-						error.msg = e[idx+1..$];
+						error.msg = e[idx+1..$].replace("\a", "\n");
 						if (error.span.iStartLine == error.span.iEndLine && error.span.iEndIndex <= error.span.iStartIndex + 1)
 						{
 							// figure the length of the span from the lexer by using the full token
@@ -4523,14 +4528,14 @@ version(unittest)
 			*piLines = text.length;
 			return S_OK;
 		};
-		HRESULT GetLastLineIndex (/+[out]+/ int *piLine, 
+		HRESULT GetLastLineIndex (/+[out]+/ int *piLine,
 		                          /+[out]+/ int *piIndex)
 		{
 			*piLine = text.length - 1;
 			*piIndex = text.length > 0 ? text[$-1].length : -1;
 			return S_OK;
 		};
-		HRESULT GetLengthOfLine (in int iLine, 
+		HRESULT GetLengthOfLine (in int iLine,
 		                         int *piLength)
 		{
 			if (iLine >= text.length)

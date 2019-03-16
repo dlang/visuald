@@ -37,13 +37,28 @@ namespace dbuild
             this.switchOrderList.Add("StackFrame");
             this.switchOrderList.Add("StackStomp");
             this.switchOrderList.Add("AllInst");
-            this.switchOrderList.Add("BetterC");
             this.switchOrderList.Add("Main");
             this.switchOrderList.Add("DebugCode");
             this.switchOrderList.Add("DebugInfo");
             this.switchOrderList.Add("DebugFull");
+            this.switchOrderList.Add("DebugMixin");
             this.switchOrderList.Add("BoundsCheck");
+            this.switchOrderList.Add("CPUArchitecture");
             this.switchOrderList.Add("PerformSyntaxCheckOnly");
+
+            this.switchOrderList.Add("BetterC");
+            this.switchOrderList.Add("DIP25");
+            this.switchOrderList.Add("DIP1000");
+            this.switchOrderList.Add("DIP1008");
+            this.switchOrderList.Add("RevertImport");
+            this.switchOrderList.Add("PreviewDtorFields");
+            this.switchOrderList.Add("PreviewIntPromote");
+            this.switchOrderList.Add("PreviewFixAliasThis");
+            this.switchOrderList.Add("PreviewMarkdown");
+            this.switchOrderList.Add("TransitionVMarkdown");
+            this.switchOrderList.Add("TransitionField");
+            this.switchOrderList.Add("TransitionCheckImports");
+            this.switchOrderList.Add("TransitionComplex");
 
             this.switchOrderList.Add("Warnings");
             this.switchOrderList.Add("Deprecations");
@@ -420,7 +435,37 @@ namespace dbuild
             }
         }
 
-        public string BoundsCheck
+		public string DebugMixin
+		{
+			get { return GetStringProperty("DebugMixin"); }
+			set
+			{
+				SetFileProperty("DebugMixin", "Debug Mixin File",
+								"Expand and save mixins to specified file. (-mixin=[file])",
+								"-mixin=", value);
+			}
+		}
+
+		public string CPUArchitecture
+		{
+			get { return GetStringProperty("CPUArchitecture"); }
+			set
+			{
+				string[][] switchMap = new string[4][]
+				{
+					new string[2] { "baseline", "" },
+					new string[2] { "avx", "-mcpu=avx" },
+					new string[2] { "avx2", "-mcpu=avx2" },
+					new string[2] { "native", "-mcpu=native" }
+				};
+
+				SetEnumProperty("CPUArchitecture", "CPU Architecture",
+								"generate instructions for architecture. (-mcpu=)",
+								switchMap, value);
+			}
+		}
+
+		public string BoundsCheck
         {
             get { return GetStringProperty("BoundsCheck"); }
             set
@@ -446,6 +491,139 @@ namespace dbuild
                 SetBoolProperty("PerformSyntaxCheckOnly", "Perform Syntax Check Only",
                                 "Performs a syntax check only (-o-)",
                                 "-o-", value);
+            }
+        }
+
+        // Language
+        public bool DIP25
+        {
+            get { return GetBoolProperty("DIP25"); }
+            set
+            {
+                SetBoolProperty("DIP25", "DIP25",
+                                "implement DIP25: sealed pointers (-dip25)",
+                                "-dip25", value);
+            }
+        }
+
+        public bool DIP1000
+        {
+            get { return GetBoolProperty("DIP1000"); }
+            set
+            {
+                SetBoolProperty("DIP1000", "DIP1000",
+                                "implement DIP1000: scoped pointers (-dip1000)",
+                                "-dip1000", value);
+            }
+        }
+
+        public bool DIP1008
+        {
+            get { return GetBoolProperty("DIP1008"); }
+            set
+            {
+                SetBoolProperty("DIP1008", "DIP1008",
+                                "implement DIP1008: reference counted exceptions (-dip1008)",
+                                "-dip1008", value);
+            }
+        }
+
+        public bool RevertImport
+        {
+            get { return GetBoolProperty("RevertImport"); }
+            set
+            {
+                SetBoolProperty("RevertImport", "Revert import",
+								"revert to single phase name lookup (-revert=import)",
+                                "-revert=import", value);
+            }
+        }
+
+        public bool PreviewDtorFields
+		{
+            get { return GetBoolProperty("PreviewDtorFields"); }
+            set
+            {
+                SetBoolProperty("PreviewDtorFields", "Preview dtorfields",
+								"destruct fields of partially constructed objects (-preview=dtorfields)",
+                                "-preview=dtorfields", value);
+            }
+        }
+
+        public bool PreviewIntPromote
+        {
+            get { return GetBoolProperty("PreviewIntPromote"); }
+            set
+            {
+                SetBoolProperty("PreviewIntPromote", "Preview intpromote",
+								"fix integral promotions for unary + - ~ operators (-preview=intpromote)",
+								"-preview=intpromote", value);
+            }
+        }
+
+        public bool PreviewFixAliasThis
+		{
+            get { return GetBoolProperty("PreviewFixAliasThis"); }
+            set
+            {
+                SetBoolProperty("PreviewFixAliasThis", "Preview fixAliasThis",
+								"when a symbol is resolved, check alias this scope before upper scopes (-preview=fixAliasThis)",
+								"-preview=fixAliasThis", value);
+            }
+        }
+
+        public bool PreviewMarkdown
+		{
+            get { return GetBoolProperty("PreviewMarkdown"); }
+            set
+            {
+                SetBoolProperty("PreviewMarkdown", "Enable Markdown",
+								"Enable Markdown replacements in Ddoc (-preview=markdown)",
+								"-preview=markdown", value);
+            }
+        }
+
+        public bool TransitionVMarkdown
+        {
+            get { return GetBoolProperty("TransitionVMarkdown"); }
+            set
+            {
+                SetBoolProperty("TransitionVMarkdown", "List Markdown Usage",
+                                "List instances of Markdown replacements in Ddoc (-transition=vmarkdown)",
+                                "-transition=vmarkdown", value);
+            }
+        }
+
+        public bool TransitionField
+        {
+            get { return GetBoolProperty("TransitionField"); }
+            set
+            {
+                SetBoolProperty("TransitionField", "List non-mutable fields",
+                                "List all non-mutable fields which occupy an object instance (-transition=field)",
+                                "-transition=field", value);
+            }
+        }
+
+        public bool TransitionCheckImports
+        {
+            get { return GetBoolProperty("TransitionCheckImports"); }
+            set
+            {
+                SetBoolProperty("TransitionCheckImports", "Show import anomalies",
+                                "Give deprecation messages about import anomalies (-transition=checkimports)",
+                                "-transition=checkimports", value);
+            }
+        }
+
+        public bool TransitionComplex
+        {
+            get { return GetBoolProperty("TransitionComplex"); }
+            set
+            {
+                SetBoolProperty("TransitionComplex", "Show usage of complex types",
+                                "Give deprecation messages about all usages of complex or imaginary types (-transition=complex)",
+                                "-transition=complex", value);
             }
         }
 

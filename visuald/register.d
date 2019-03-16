@@ -692,7 +692,7 @@ version(none){
 		keyToolOptsLdc.Set(null, "Compile/Run/Debug/Dustmite");
 		keyToolOptsLdc.Set("Package"w, packageGuid);
 		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_CmdLinePropertyPage));
-		keyToolOptsLdc.Set("Sort"w, 20);
+		keyToolOptsLdc.Set("Sort"w, 40);
 
 static if(hasDubSupport)
 {

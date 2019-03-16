@@ -2259,7 +2259,15 @@ class Source
 
 	void scan()
 	{
-		_tokenList = scanText(_text);
+		try
+		{
+			_tokenList = scanText(_text);
+		}
+		catch(Exception e)
+		{
+			e.msg = _filename ~ e.msg;
+			throw e;
+		}
 	}
 
 	void rescanPP()

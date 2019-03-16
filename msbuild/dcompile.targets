@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <DbuildCompileDDLLPath Condition="'$(DbuildCompileDDLLPath)' == ''">$(MSBuildThisFileDirectory)dbuild.$(MsBuildToolsVersion).dll</DbuildCompileDDLLPath>
+    <DbuildCompileDDLLPath Condition="'$(DbuildCompileDDLLPath)' == ''">$(MSBuildThisFileDirectory)dbuild.$(DBuildVersion).dll</DbuildCompileDDLLPath>
   </PropertyGroup>
 
   <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(DbuildCompileDDLLPath)" />
@@ -162,14 +162,29 @@
               StackFrame="%(DCompile.StackFrame)"
               StackStomp="%(DCompile.StackStomp)"
               AllInst="%(DCompile.AllInst)"
-              BetterC="%(DCompile.BetterC)"
               Main="%(DCompile.Main)"
+              CPUArchitecture="%(DCompile.CPUArchitecture)"
               DebugCode="%(DCompile.DebugCode)"
               DebugInfo="%(DCompile.DebugInfo)"
               DebugFull="$(_DebugFull)"
+              DebugMixin="%(DCompile.DebugMixin)"
               BoundsCheck="%(DCompile.BoundsCheck)"
               PerformSyntaxCheckOnly="%(DCompile.PerformSyntaxCheckOnly)"
               
+              BetterC="%(DCompile.BetterC)"
+              DIP25="%(DCompile.DIP25)"
+              DIP1000="%(DCompile.DIP1000)"
+              DIP1008="%(DCompile.DIP1008)"
+              RevertImport="%(DCompile.RevertImport)"
+              PreviewDtorFields="%(DCompile.PreviewDtorFields)"
+              PreviewIntPromote="%(DCompile.PreviewIntPromote)"
+              PreviewFixAliasThis="%(DCompile.PreviewFixAliasThis)"
+              PreviewMarkdown="%(DCompile.PreviewMarkdown)"
+              TransitionVMarkdown="%(DCompile.TransitionVMarkdown)"
+              TransitionField="%(DCompile.TransitionField)"
+              TransitionCheckImports="%(DCompile.TransitionCheckImports)"
+              TransitionComplex="%(DCompile.TransitionComplex)"
+
               Warnings="%(DCompile.Warnings)"
               Deprecations="%(DCompile.Deprecations)"
               Verbose="%(DCompile.Verbose)"
@@ -263,7 +278,16 @@
       <DRuntimeLibs Condition="'$(DCompiler)' == 'LDC'">phobos2-ldc.lib;druntime-ldc.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '141'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '142'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+
+      <!-- LDC does not embed reference to C runtime into object files -->
+      <_CRuntimeLib>@(DCompile->Metadata('CRuntimeLibrary')->Distinct()->ClearMetadata())</_CRuntimeLib>
+      <CRuntimeLibs Condition="'$(_CRuntimeLib)' == 'MultiThreaded'"        >libcmt.lib</CRuntimeLibs>
+      <CRuntimeLibs Condition="'$(_CRuntimeLib)' == 'MultiThreadedDebug'"   >libcmtd.lib</CRuntimeLibs>
+      <CRuntimeLibs Condition="'$(_CRuntimeLib)' == 'MultiThreadedDll'"     >msvcrt.lib</CRuntimeLibs>
+      <CRuntimeLibs Condition="'$(_CRuntimeLib)' == 'MultiThreadedDebugDll'">msvcrtd.lib</CRuntimeLibs>
     </PropertyGroup>
+    <Message Text="_CRuntimeLib: '$(_CRuntimeLib)' -> $(CRuntimeLibs)" Importance="low" />
 
     <ItemGroup Condition="'$(DCompiler)' == 'DMD' and '$(_NeedsDLibraries)' == 'true'">
       <Link>
@@ -276,7 +300,7 @@
       <Link>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'Win32'">$(LDCInstallDir)\lib32;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
         <AdditionalLibraryDirectories Condition="'$(Platform)' == 'x64'">$(LDCInstallDir)\lib64;%(Link.AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        <AdditionalDependencies>$(DRuntimeLibs);%(Link.AdditionalDependencies)</AdditionalDependencies>
+        <AdditionalDependencies>$(DRuntimeLibs);$(CRuntimeLibs);%(Link.AdditionalDependencies)</AdditionalDependencies>
       </Link>
     </ItemGroup>
     

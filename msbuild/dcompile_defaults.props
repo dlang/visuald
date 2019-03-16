@@ -30,8 +30,7 @@
     <DDemangleLink Condition="$(DDemangleLink) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Microsoft\VisualStudio\$(VisualStudioVersion)_Config\ToolsOptionsPages\Projects\Visual D Settings', 'demangleError', '', RegistryView.Registry64, RegistryView.Registry32))</DDemangleLink>
     <DDemangleLink Condition="$(DDemangleLink) == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Visual D\dbuild\$(VisualStudioVersion)', 'demangleError', '', RegistryView.Registry64, RegistryView.Registry32))</DDemangleLink>
     <DDemangleLink Condition="$(DDemangleLink) == ''">1</DDemangleLink>
-  
-</PropertyGroup>
+  </PropertyGroup>
 
   <ItemDefinitionGroup>
     <DCompile>
@@ -55,6 +54,20 @@
       <StackStomp>false</StackStomp>
       <AllInst>false</AllInst>
       <BetterC>false</BetterC>
+      <DIP25>false</DIP25>
+      <DIP1000>false</DIP1000>
+      <DIP1008>false</DIP1008>
+      <CPUArchitecture>baseline</CPUArchitecture>
+      <RevertImport>false</RevertImport>
+      <PreviewFieldwise>false</PreviewFieldwise>
+      <PreviewDtorFields>false</PreviewDtorFields>
+      <PreviewIntPromote>false</PreviewIntPromote>
+      <PreviewFixAliasThis>false</PreviewFixAliasThis>
+      <PreviewMarkdown>false</PreviewMarkdown>
+      <TransitionVMarkdown>false</TransitionVMarkdown>
+      <TransitionField>false</TransitionField>
+      <TransitionCheckImports>false</TransitionCheckImports>
+      <TransitionComplex>false</TransitionComplex>
       <BoundsCheck>On</BoundsCheck>
       <IgnorePragma>false</IgnorePragma>
       <PerformSyntaxCheckOnly>false</PerformSyntaxCheckOnly>
@@ -76,6 +89,7 @@
       <HeaderDir></HeaderDir>
       <HeaderFile></HeaderFile>
       <JSONFile></JSONFile>
+      <DebugMixin></DebugMixin>
       -->
       <DoNotLink>true</DoNotLink>
      

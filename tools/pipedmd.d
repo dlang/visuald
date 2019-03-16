@@ -9,6 +9,7 @@ module pipedmd;
 
 import std.stdio;
 import core.sys.windows.windows;
+import core.sys.windows.wtypes;
 import core.sys.windows.psapi;
 import std.windows.charset;
 import core.stdc.string;
@@ -614,6 +615,8 @@ string findTracker(bool x64, ref string trackerArgs)
 		exe = findTrackerInMSBuild(r"SOFTWARE\Microsoft\MSBuild\ToolsVersions\10.0"w.ptr, x64, null);
 	if (exe.empty)
 		exe = findTrackerInSDK(x64);
+	if (exe.empty)
+		exe = findTrackerViaCOM(x64);
 	return exe;
 }
 
@@ -630,7 +633,7 @@ string trackerPath(string binpath, bool x64)
 	return exe;
 }
 
-string findTrackerInMSBuild (const(wchar)* keyname, bool x64, string* trackerArgs)
+string findTrackerInMSBuild(const(wchar)* keyname, bool x64, string* trackerArgs)
 {
 	string path = readRegistry(keyname, "MSBuildToolsPath"w.ptr, x64);
 	string exe = trackerPath(path, x64);
@@ -652,7 +655,7 @@ string findTrackerInVS2017()
 	return exe;
 }
 
-string findTrackerInSDK (bool x64)
+string findTrackerInSDK(bool x64)
 {
 	wstring suffix = x64 ? "-x64" : "-x86";
 	wstring sdk = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows";
@@ -720,6 +723,90 @@ string readRegistry(const(wchar)* keyname, const(wchar)* valname, bool x64)
 		RegCloseKey(key);
 	}
 	return path;
+}
+
+///////////////////////////////////////////////////////////////////////
+interface ISetupInstance : IUnknown
+{
+	// static const GUID iid = uuid("B41463C3-8866-43B5-BC33-2B0676F7F42E");
+	static const GUID iid = { 0xB41463C3, 0x8866, 0x43B5, [ 0xBC, 0x33, 0x2B, 0x06, 0x76, 0xF7, 0xF4, 0x2E ] };
+
+    int GetInstanceId(BSTR* pbstrInstanceId);
+    int GetInstallDate(LPFILETIME pInstallDate);
+    int GetInstallationName(BSTR* pbstrInstallationName);
+    int GetInstallationPath(BSTR* pbstrInstallationPath);
+    int GetInstallationVersion(BSTR* pbstrInstallationVersion);
+    int GetDisplayName(LCID lcid, BSTR* pbstrDisplayName);
+    int GetDescription(LCID lcid, BSTR* pbstrDescription);
+    int ResolvePath(LPCOLESTR pwszRelativePath, BSTR* pbstrAbsolutePath);
+}
+
+interface IEnumSetupInstances : IUnknown
+{
+	// static const GUID iid = uuid("6380BCFF-41D3-4B2E-8B2E-BF8A6810C848");
+
+    int Next(ULONG celt, ISetupInstance* rgelt, ULONG* pceltFetched);
+    int Skip(ULONG celt);
+    int Reset();
+    int Clone(IEnumSetupInstances* ppenum);
+}
+
+interface ISetupConfiguration : IUnknown
+{
+	// static const GUID iid = uuid("42843719-DB4C-46C2-8E7C-64F1816EFD5B");
+	static const GUID iid = { 0x42843719, 0xDB4C, 0x46C2, [ 0x8E, 0x7C, 0x64, 0xF1, 0x81, 0x6E, 0xFD, 0x5B ] };
+
+    int EnumInstances(IEnumSetupInstances* ppEnumInstances) ;
+	int GetInstanceForCurrentProcess(ISetupInstance* ppInstance);
+	int GetInstanceForPath(LPCWSTR wzPath, ISetupInstance* ppInstance);
+};
+
+const GUID iid_SetupConfiguration = { 0x177F0C4A, 0x1CD3, 0x4DE7, [ 0xA3, 0x2C, 0x71, 0xDB, 0xBB, 0x9F, 0xA3, 0x6D ] };
+
+string findTrackerViaCOM(bool x64)
+{
+	CoInitialize(null);
+	scope(exit) CoUninitialize();
+
+	ISetupConfiguration setup;
+	IEnumSetupInstances instances;
+	ISetupInstance instance;
+	DWORD fetched;
+
+    HRESULT hr = CoCreateInstance(&iid_SetupConfiguration, null, CLSCTX_ALL, &ISetupConfiguration.iid, cast(void**) &setup);
+	if (hr != S_OK || !setup)
+		return null;
+	scope(exit) setup.Release();
+
+	if (setup.EnumInstances(&instances) != S_OK)
+		return null;
+	scope(exit) instances.Release();
+
+	while (instances.Next(1, &instance, &fetched) == S_OK && fetched)
+	{
+		BSTR installDir;
+		if (instance.GetInstallationPath(&installDir) != S_OK)
+			continue;
+
+		char[260] path;
+		int len = WideCharToMultiByte(CP_UTF8, 0, installDir, -1, path.ptr, 260, null, null);
+		SysFreeString(installDir);
+
+		if (len > 0)
+		{
+			// printf("found VS: %s %d\n", path.ptr, path[len-1]);
+			string dir = path[0..len-1].idup;
+			string exe = dir ~ r"\MSBuild\15.0\Bin\Tracker.exe";
+			if (std.file.exists(exe))
+				return exe; // VS2017
+
+			exe = dir ~ r"\MSBuild\Current\Bin\Tracker.exe";
+			if (std.file.exists(exe))
+				return exe; // VS2019
+		}
+	}
+
+	return null;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

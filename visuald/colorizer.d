@@ -215,6 +215,7 @@ class ColorableItem : DComObject, IVsColorableItem, IVsHiColorItem
 
 	final HRESULT SetDefaultForegroundColor(COLORREF color)
 	{
+		mForeground = -1;
 		mRgbForeground = color;
 		return S_OK;
 	}
@@ -263,7 +264,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	bool mConfigMSVCRT;
 	bool mConfigCoverage;
 	bool mConfigDoc;
-	bool mConfigNoBoundsCheck;
+	ubyte mConfigBoundsCheck;
 	ubyte mConfigCompiler;
 
 	int[] mCoverage;
@@ -743,7 +744,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case "D_Ddoc":
 				return mConfigDoc ? 1 : -1;
 			case "D_NoBoundsChecks":
-				return mConfigNoBoundsCheck ? 1 : -1;
+				return mConfigBoundsCheck == 3 ? 1 : -1;
 			case "Win32":
 			case "X86":
 			case "D_InlineAsm_X86":
@@ -856,6 +857,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			case TokenColor.Identifier:  return TokenColor.StringIdentifier;
 			case TokenColor.String:      return TokenColor.StringString;
 			case TokenColor.Literal:     return TokenColor.StringLiteral;
+			case TokenColor.Operator:    return TokenColor.StringOperator;
 			case TokenColor.AsmRegister: return TokenColor.StringAsmRegister;
 			case TokenColor.AsmMnemonic: return TokenColor.StringAsmMnemonic;
 			case TokenColor.UserType:    return TokenColor.StringUserType;
@@ -1489,7 +1491,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			changes += modifyValue(opts.useMSVCRT(),   mConfigMSVCRT);
 			changes += modifyValue(opts.cov,           mConfigCoverage);
 			changes += modifyValue(opts.doDocComments, mConfigDoc);
-			changes += modifyValue(opts.noboundscheck, mConfigNoBoundsCheck);
+			changes += modifyValue(opts.boundscheck,   mConfigBoundsCheck);
 			changes += modifyValue(opts.compiler,      mConfigCompiler);
 		}
 		return changes != 0;

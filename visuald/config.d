@@ -169,7 +169,7 @@ class ProjectOptions
 	ubyte useArrayBounds;	// 0: no array bounds checks
 	// 1: array bounds checks for safe functions only
 	// 2: array bounds checks for all functions
-	bool noboundscheck;	// no array bounds checking at all
+	ubyte boundscheck;	// bounds checking (0: default, 1: on, 2: @safe only, 3: off)
 	bool useSwitchError;	// check for switches without a default
 	bool useUnitTests;	// generate unittest code
 	bool useInline;		// inline expand functions
@@ -185,7 +185,20 @@ class ProjectOptions
 	bool ignoreUnsupportedPragmas;	// rather than error on them
 	bool allinst;		// generate code for all template instantiations
 	bool stackStomp;	// add stack stomp code
-	float Dversion;		// D version number
+
+	bool betterC;
+	bool dip25;
+	bool dip1000;
+	bool dip1008;
+	bool transition_field;         // list all non-mutable fields which occupy an object instance
+	bool revert_import;            // revert to single phase name lookup
+	bool preview_dtorfields;       // destruct fields of partially constructed objects
+	bool transition_checkimports;  // give deprecation messages about 10378 anomalies
+	bool transition_complex;       // give deprecation messages about all usages of complex or imaginary types
+	bool preview_intpromote;       // fix integral promotions for unary + - ~ operators
+	bool preview_fixAliasThis;     // when a symbol is resolved, check alias this scope before going to upper scopes
+	bool preview_markdown;         // enable Markdown replacements in Ddoc
+	bool transition_vmarkdown;     // list instances of Markdown replacements in Ddoc
 
 	ubyte compiler;		// 0: DMD, 1: GDC, 2:LDC
 	bool otherDMD;		// use explicit program path
@@ -233,11 +246,13 @@ class ProjectOptions
 	string runargs;		// arguments for executable
 
 	ubyte runCv2pdb;		// run cv2pdb on executable (0: no, 1: suitable for debug engine, 2: yes)
-	bool cv2pdbPre2043;		// pass version before 2.043 for older aa implementation
 	bool cv2pdbNoDemangle;	// do not demangle symbols
 	bool cv2pdbEnumType;	// use enumerator type
 	string pathCv2pdb;	// exe path for cv2pdb
 	string cv2pdbOptions;	// more options for cv2pdb
+
+	bool enableMixin;
+	string mixinPath;
 
 	enum
 	{
@@ -286,7 +301,6 @@ class ProjectOptions
 
 	this(bool dbg, bool x64)
 	{
-		Dversion = 2;
 		exefile = "$(OutDir)\\$(ProjectName).exe";
 		outdir = "$(PlatformName)\\$(ConfigurationName)";
 		objdir = "$(OutDir)";
@@ -297,6 +311,7 @@ class ProjectOptions
 		mapfile = "$(IntDir)\\$(SafeProjectName).map";
 		pdbfile = "$(IntDir)\\$(SafeProjectName).pdb";
 		impfile = "$(IntDir)\\$(SafeProjectName).lib";
+		mixinPath = "$(IntDir)\\$(SafeProjectName).mixin";
 		cccmd = "$(CC) -c";
 		ccTransOpt = true;
 		doXGeneration = true;
@@ -304,6 +319,7 @@ class ProjectOptions
 		cRuntime = CRuntime.StaticRelease;
 		debugEngine = 1;
 		symdebugref = true;
+		enableMixin = false;
 
 		filesToClean = "*.obj;*.cmd;*.build;*.json;*.dep;*.tlog";
 		setX64(x64);
@@ -380,9 +396,9 @@ class ProjectOptions
 			cmd ~= " -m32mscoff";
 		if(verbose)
 			cmd ~= " -v";
-		if(Dversion >= 2 && vtls)
+		if(vtls)
 			cmd ~= " -vtls";
-		if(Dversion >= 2 && vgc)
+		if(vgc)
 			cmd ~= " -vgc";
 
 		int symdbg = symdebug;
@@ -416,6 +432,41 @@ class ProjectOptions
 		if(stackStomp)
 			cmd ~= " -gx";
 
+		cmd ~= commonLanguageOptions();
+		return cmd;
+	}
+
+	string commonLanguageOptions()
+	{
+		string cmd;
+
+		if (betterC)
+			cmd ~= " -betterC";
+		if (dip25)
+			cmd ~= " -dip25";
+		if (dip1000)
+			cmd ~= " -dip1000";
+		if (dip1008)
+			cmd ~= " -dip1008";
+		if (transition_field)
+			cmd ~= " -transition=field";
+		if (revert_import)
+			cmd ~= " -revert=import";
+		if (preview_dtorfields)
+			cmd ~= " -preview=dtorfields";
+		if (transition_checkimports)
+			cmd ~= " -transition=checkimports";
+		if (transition_complex)
+			cmd ~= " -transition=complex";
+		if (preview_intpromote)
+			cmd ~= " -preview=intpromote";
+		if (preview_fixAliasThis)
+			cmd ~= " -preview=fixAliasThis";
+		if (preview_markdown)
+			cmd ~= " -preview=markdown";
+		if (transition_vmarkdown)
+			cmd ~= " -transition=vmarkdown";
+
 		return cmd;
 	}
 
@@ -444,8 +495,13 @@ class ProjectOptions
 			cmd ~= " -quiet";
 		else if(errDeprecated)
 			cmd ~= " -de";
-		if(Dversion >= 2 && noboundscheck)
-			cmd ~= " -noboundscheck";
+		switch (boundscheck)
+		{
+			default: break;
+			case 1: cmd ~= " -boundscheck=on"; break;
+			case 2: cmd ~= " -boundscheck=safeonly"; break;
+			case 3: cmd ~= " -boundscheck=off"; break;
+		}
 		if(useUnitTests)
 			cmd ~= " -unittest";
 		if(preservePaths)
@@ -461,6 +517,9 @@ class ProjectOptions
 
 		if(privatePhobos)
 			cmd ~= " -defaultlib=" ~ quoteFilename(normalizeDir(objdir) ~ "privatephobos.lib");
+
+		if(enableMixin)
+			cmd ~= " -mixin=" ~ quoteNormalizeFilename(mixinPath);
 
 		if(doDocComments && compile && !syntaxOnly)
 		{
@@ -556,11 +615,9 @@ class ProjectOptions
 //			cmd ~= " -quiet";
 		if(verbose)
 			cmd ~= " -fd-verbose";
-		if(Dversion < 2)
-			cmd ~= " -fd-version=1";
-		if(Dversion >= 2 && vtls)
+		if(vtls)
 			cmd ~= " -fd-vtls";
-		if(Dversion >= 2 && vgc)
+		if(vgc)
 			cmd ~= " -fd-vgc";
 		if(symdebug > 0)
 			cmd ~= " -g";
@@ -570,7 +627,7 @@ class ProjectOptions
 			cmd ~= " -O3";
 		if(useDeprecated)
 			cmd ~= " -fdeprecated";
-		if(Dversion >= 2 && noboundscheck)
+		if(boundscheck == 3)
 			cmd ~= " -fno-bounds-check";
 		if(useUnitTests)
 			cmd ~= " -funittest";
@@ -718,6 +775,20 @@ class ProjectOptions
 			cmd ~= " -property";
 		if(ignoreUnsupportedPragmas)
 			cmd ~= " -ignore";
+		if(allinst)
+			cmd ~= " -allinst";
+		switch (boundscheck)
+		{
+			default: break;
+			case 1: cmd ~= " -boundscheck=on"; break;
+			case 2: cmd ~= " -boundscheck=safeonly"; break;
+			case 3: cmd ~= " -boundscheck=off"; break;
+		}
+
+		cmd ~= commonLanguageOptions();
+
+		if(enableMixin)
+			cmd ~= " -mixin=" ~ quoteNormalizeFilename(mixinPath);
 
 		if(doDocComments && compile && !syntaxOnly)
 		{
@@ -854,7 +925,7 @@ class ProjectOptions
 			if (mslink && lib == OutputType.DLL)
 				cmd ~= " -L/DLL";
 
-			if (mslink && Package.GetGlobalOptions().isVS2017)
+			if (mslink && Package.GetGlobalOptions().isVS2017OrLater)
 				cmd ~= " -L/noopttls"; // update 15.3.1 moves TLS into _DATA segment
 		}
 		return cmd;
@@ -1056,7 +1127,7 @@ class ProjectOptions
 
 		if(mslink)
 		{
-			if (Package.GetGlobalOptions().isVS2017)
+			if (Package.GetGlobalOptions().isVS2017OrLater)
 				cmd ~= " /noopttls"; // update 15.3.1 moves TLS into _DATA segment
 
 			switch(cRuntime)
@@ -1272,10 +1343,6 @@ class ProjectOptions
 		{
 			string target = getTargetPath();
 			string cmd = quoteFilename(pathCv2pdb);
-			if(Dversion < 2)
-				cmd ~= " -D" ~ to!(string)(Dversion) ~ " ";
-			else if(cv2pdbPre2043)
-				cmd ~= " -D2.001";
 			if(cv2pdbEnumType)
 				cmd ~= " -e";
 			if(cv2pdbNoDemangle)
@@ -1358,7 +1425,7 @@ class ProjectOptions
 		elem ~= new xml.Element("useIn", toElem(useIn));
 		elem ~= new xml.Element("useOut", toElem(useOut));
 		elem ~= new xml.Element("useArrayBounds", toElem(useArrayBounds));
-		elem ~= new xml.Element("noboundscheck", toElem(noboundscheck));
+		elem ~= new xml.Element("boundscheck", toElem(boundscheck));
 		elem ~= new xml.Element("useSwitchError", toElem(useSwitchError));
 		elem ~= new xml.Element("useUnitTests", toElem(useUnitTests));
 		elem ~= new xml.Element("useInline", toElem(useInline));
@@ -1371,10 +1438,23 @@ class ProjectOptions
 		elem ~= new xml.Element("pic", toElem(pic));
 		elem ~= new xml.Element("cov", toElem(cov));
 		elem ~= new xml.Element("nofloat", toElem(nofloat));
-		elem ~= new xml.Element("Dversion", toElem(Dversion));
 		elem ~= new xml.Element("ignoreUnsupportedPragmas", toElem(ignoreUnsupportedPragmas));
 		elem ~= new xml.Element("allinst", toElem(allinst));
 		elem ~= new xml.Element("stackStomp", toElem(stackStomp));
+
+		elem ~= new xml.Element("betterC", toElem(betterC));
+		elem ~= new xml.Element("dip25", toElem(dip25));
+		elem ~= new xml.Element("dip1000", toElem(dip1000));
+		elem ~= new xml.Element("dip1008", toElem(dip1008));
+		elem ~= new xml.Element("transition_field", toElem(transition_field));
+		elem ~= new xml.Element("revert_import", toElem(revert_import));
+		elem ~= new xml.Element("preview_dtorfields", toElem(preview_dtorfields));
+		elem ~= new xml.Element("transition_checkimports", toElem(transition_checkimports));
+		elem ~= new xml.Element("transition_complex", toElem(transition_complex));
+		elem ~= new xml.Element("preview_intpromote", toElem(preview_intpromote));
+		elem ~= new xml.Element("preview_fixAliasThis", toElem(preview_fixAliasThis));
+		elem ~= new xml.Element("preview_markdown", toElem(preview_markdown));
+		elem ~= new xml.Element("transition_vmarkdown", toElem(transition_vmarkdown));
 
 		elem ~= new xml.Element("compiler", toElem(compiler));
 		elem ~= new xml.Element("otherDMD", toElem(otherDMD));
@@ -1423,10 +1503,12 @@ class ProjectOptions
 
 		elem ~= new xml.Element("runCv2pdb", toElem(runCv2pdb));
 		elem ~= new xml.Element("pathCv2pdb", toElem(pathCv2pdb));
-		elem ~= new xml.Element("cv2pdbPre2043", toElem(cv2pdbPre2043));
 		elem ~= new xml.Element("cv2pdbNoDemangle", toElem(cv2pdbNoDemangle));
 		elem ~= new xml.Element("cv2pdbEnumType", toElem(cv2pdbEnumType));
 		elem ~= new xml.Element("cv2pdbOptions", toElem(cv2pdbOptions));
+
+		elem ~= new xml.Element("enableMixin", toElem(enableMixin));
+		elem ~= new xml.Element("mixinPath", toElem(mixinPath));
 
 		// Linker stuff
 		elem ~= new xml.Element("objfiles", toElem(objfiles));
@@ -1494,7 +1576,11 @@ class ProjectOptions
 		fromElem(elem, "useIn", useIn);
 		fromElem(elem, "useOut", useOut);
 		fromElem(elem, "useArrayBounds", useArrayBounds);
+		bool noboundscheck;
 		fromElem(elem, "noboundscheck", noboundscheck);
+		fromElem(elem, "boundscheck", boundscheck);
+		if (boundscheck == 0 && noboundscheck)
+			boundscheck = 3;
 		fromElem(elem, "useSwitchError", useSwitchError);
 		fromElem(elem, "useUnitTests", useUnitTests);
 		fromElem(elem, "useInline", useInline);
@@ -1507,10 +1593,23 @@ class ProjectOptions
 		fromElem(elem, "pic", pic);
 		fromElem(elem, "cov", cov);
 		fromElem(elem, "nofloat", nofloat);
-		fromElem(elem, "Dversion", Dversion);
 		fromElem(elem, "ignoreUnsupportedPragmas", ignoreUnsupportedPragmas);
 		fromElem(elem, "allinst", allinst);
 		fromElem(elem, "stackStomp", stackStomp);
+
+		fromElem(elem, "betterC", betterC);
+		fromElem(elem, "dip25", dip25);
+		fromElem(elem, "dip1000", dip1000);
+		fromElem(elem, "dip1008", dip1008);
+		fromElem(elem, "transition_field", transition_field);
+		fromElem(elem, "revert_import", revert_import);
+		fromElem(elem, "preview_dtorfields", preview_dtorfields);
+		fromElem(elem, "transition_checkimports", transition_checkimports);
+		fromElem(elem, "transition_complex", transition_complex);
+		fromElem(elem, "preview_intpromote", preview_intpromote);
+		fromElem(elem, "preview_fixAliasThis", preview_fixAliasThis);
+		fromElem(elem, "preview_markdown", preview_markdown);
+		fromElem(elem, "transition_vmarkdown", transition_vmarkdown);
 
 		fromElem(elem, "compiler", compiler);
 		fromElem(elem, "otherDMD", otherDMD);
@@ -1559,10 +1658,12 @@ class ProjectOptions
 
 		fromElem(elem, "runCv2pdb", runCv2pdb);
 		fromElem(elem, "pathCv2pdb", pathCv2pdb);
-		fromElem(elem, "cv2pdbPre2043", cv2pdbPre2043);
 		fromElem(elem, "cv2pdbNoDemangle", cv2pdbNoDemangle);
 		fromElem(elem, "cv2pdbEnumType", cv2pdbEnumType);
 		fromElem(elem, "cv2pdbOptions", cv2pdbOptions);
+
+		fromElem(elem, "enableMixin", enableMixin);
+		fromElem(elem, "mixinPath", mixinPath);
 
 		// Linker stuff
 		fromElem(elem, "objfiles", objfiles);

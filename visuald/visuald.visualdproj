@@ -1,6 +1,6 @@
 <DProject>
  <ProjectGuid>{7610F45A-69D9-4B68-BE63-0E055B51D447}</ProjectGuid>
- <Config name="Debug" platform="Win32">
+ <Config platform="Win32" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -108,7 +108,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release" platform="Win32">
+ <Config platform="Win32" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>2</lib>
@@ -216,7 +216,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="TestDebug" platform="Win32">
+ <Config platform="Win32" name="TestDebug">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -324,7 +324,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="Win32">
+ <Config platform="Win32" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>2</lib>
@@ -432,7 +432,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="Win32">
+ <Config platform="Win32" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>2</lib>
@@ -540,7 +540,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release LDC" platform="Win32">
+ <Config platform="Win32" name="Release LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>2</lib>
@@ -648,7 +648,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="Win32">
+ <Config platform="Win32" name="Release COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>2</lib>
@@ -803,7 +803,7 @@
    <File path="Resources\dwinproj.ico" />
    <File path="Resources\faninout.ico" />
    <File path="Resources\GroupByType.ico" />
-   <File path="Resources\pkgcmd.vsct" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 
@@ -816,15 +816,15 @@ if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=%VSSDK90Install%
 if &quot;%VSSDKInstall%&quot; == &quot;&quot; set VSSDKInstall=c:\l\vs12SDK
 set VSCT=%VSSDKInstall%\VisualStudioIntegration\Tools\Bin\VSCT.exe
 if not exist &quot;%VSCT%&quot; goto no_VSCT
-&quot;%VSCT%&quot; $(InputPath) $(InputDir)\$(InputName).cto -I&quot;%VSSDKInstall%\VisualStudioIntegration\Common\Inc&quot;
+&quot;%VSCT%&quot; $(InputPath) &quot;$(IntDir)\$(InputName).cto&quot; -I&quot;%VSSDKInstall%\VisualStudioIntegration\Common\Inc&quot;
 rem workaround for VS2017 15.3.1: VSCT.exe broken, use existing cto file
-rem if exist $(InputDir)\$(InputName).cto exit /B 0
+rem if exist &quot;$(IntDir)\$(InputName).cto&quot; exit /B 0
 goto reportError
 
 :no_VSCT
 echo Warning: VSCT.exe not found as %VSCT%
-echo It is part of the VS2010-VS2013 SDK and is needed to compile $(InputPath)
-:reportError" tool="Custom" outfile="$(InputDir)\$(InputName).cto" />
+echo It is part of the VS2010-VS2017 SDK and is needed to compile $(InputPath)
+:reportError" outfile="$(IntDir)\$(InputName).cto" path="Resources\pkgcmd.vsct" tool="Custom" />
    <File path="Resources\refresh.ico" />
    <File path="Resources\RegExp.ico" />
    <File path="Resources\removetrace.ico" />
@@ -832,10 +832,10 @@ echo It is part of the VS2010-VS2013 SDK and is needed to compile $(InputPath)
    <File path="Resources\SearchFile.ico" />
    <File path="Resources\SearchSymbol.ico" />
    <File path="Resources\settrace.ico" />
-   <File path="visuald.rc" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies="resources\pkgcmd.cto;resources\daboutlogo.ico;..\version;resources\dimagelist.bmp;resources\completionset.bmp" linkoutput="true" outfile="$(OutDir)\visuald.res" />
+rc /fo&quot;$(OutDir)\visuald.res&quot; /I &quot;$(IntDir)&quot; $(InputPath)" dependencies="&quot;$(IntDir)\pkgcmd.cto&quot;;resources\daboutlogo.ico;..\version;resources\dimagelist.bmp;resources\completionset.bmp" outfile="$(OutDir)\visuald.res" path="visuald.rc" linkoutput="true" tool="Custom" />
    <File path="Resources\WholeWord.ico" />
   </Folder>
   <Folder name="Templates">
@@ -942,8 +942,8 @@ rc /fo&quot;$(OutDir)\visuald.res&quot; $(InputPath)" tool="Custom" dependencies
   <File path="tokenreplace.d" />
   <File path="tokenreplacedialog.d" />
   <File path="trackprojectdocument.d" />
-  <File path="visuald.def" perConfig="true">
-   <Config name="TestDebug|Win32" tool="None" />
+  <File perConfig="true" path="visuald.def">
+   <Config tool="None" name="TestDebug|Win32" />
   </File>
   <File path="vscommands.d" />
   <File path="winctrl.d" />

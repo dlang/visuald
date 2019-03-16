@@ -24,6 +24,9 @@
 ; define DUB to include dub project templates
 ; !define DUB
 
+; define VS2019 to include VS2019 support
+; !define VS2019
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -88,6 +91,7 @@
   !define VS2013_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\12.0
   !define VS2015_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\14.0
   !define VS2017_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\15.0
+  !define VS2019_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\16.0
   !define VS2017_INSTALL_KEY      SOFTWARE\Microsoft\VisualStudio\SxS\VS7
 !ifdef EXPRESS
   !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
@@ -260,6 +264,9 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v15\ dbuild.15.0.dll
+!ifdef VS2019
+  ${File} ..\msbuild\dbuild\obj\release-v16\ dbuild.16.0.dll
+!endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
 
@@ -465,10 +472,59 @@ ${MementoSection} "Install in VS 2017" SecVS2017
   ${SetOutPath} "$1\PublicAssemblies"
   ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
-  Call VS2017ConfigurationChanged
+  push $1
+  Call VSConfigurationChanged
 
 ${MementoSectionEnd}
 
+;--------------------------------
+${MementoSection} "Install in VS 2017 Build Tools" SecVS2017BT
+
+  Call DetectVS2017BuildTools_InstallationFolder
+  WriteRegStr HKLM "Software\${APPNAME}" "VS2017BTInstallDir" $1
+
+${MementoSectionEnd}
+
+!ifdef VS2019
+;--------------------------------
+${MementoSection} "Install in VS 2019" SecVS2019
+
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2019_REGISTRY_KEY}'
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2019_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;${RegisterWin32Exception} ${VS2019_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  Call DetectVS2019_InstallationFolder
+  WriteRegStr HKLM "Software\${APPNAME}" "VS2019InstallDir" $1
+
+  StrCpy $1 "$1Common7\IDE\"
+  RMDir /r '$1${EXTENSION_DIR_APP}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2019_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
+
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
+
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "16" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
+
+  !ifdef MAGO
+    ${SetOutPath} "$1..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoNatCC.vsdconfig
+  !endif
+
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
+  push $1
+  Call VSConfigurationChanged
+
+${MementoSectionEnd}
+!endif
 
 !ifdef EXPRESS
 ;--------------------------------
@@ -524,7 +580,35 @@ SectionGroup Components
 
 ;--------------------------------
 !ifdef MSBUILD
-${MementoSection} "Register MSBuild extensions for VS 2013/15/17" SecMSBuild
+${MementoSection} "Register MSBuild extensions for VS 2013/15/17/19" SecMSBuild
+
+!ifdef VS2019
+  Call DetectVS2019_InstallationFolder
+  StrCmp $1 "" NoVS2019
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v160" "x64"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v160" "Win32"
+    ${RegisterIcons} "16.0"
+
+    !define V160_GENERAL_XML "$1\MsBuild\Microsoft\VC\v160\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V160_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.16.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.16.0.xml"
+
+  NoVS2019:
+!endif
+
+  Call DetectVS2017BuildTools_InstallationFolder
+  StrCmp $1 "" NoVS2017BT
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "Win32"
+    ${RegisterIcons} "15.0"
+
+    !define V150BT_GENERAL_XML "$1\Common7\IDE\VC\VCTargets\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V150BT_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.15bt.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.15bt.0.xml"
+
+  NoVS2017BT:
 
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   IfErrors NoVS2017
@@ -578,7 +662,7 @@ ${MementoSection} "cv2pdb" SecCv2pdb
   ${File} ..\..\..\cv2pdb\trunk\bin\Release\ cv2pdb.exe
   ${File} ..\..\..\cv2pdb\trunk\bin\Release\ dviewhelper.dll
   ${File} ..\..\..\cv2pdb\trunk\bin\Release\ dumplines.exe
-  ${File} ..\..\..\cv2pdb\trunk\ README
+  ${File} ..\..\..\cv2pdb\trunk\ README.MD
   ${File} ..\..\..\cv2pdb\trunk\ LICENSE
   ${File} ..\..\..\cv2pdb\trunk\ CHANGES
   ${File} ..\..\..\cv2pdb\trunk\ VERSION
@@ -769,12 +853,27 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
+!ifdef VS2019
+  ReadRegStr $1 HKLM "Software\${APPNAME}" "VS2019InstallDir"
+  StrCmp $1 "" NoVS2019pkgdef
+    StrCpy $1 "$1Common7\IDE"
+    IfFileExists '$1${EXTENSION_DIR_APP}' +1 NoVS2019ExtensionDir
+      Push $1
+      Call un.VSConfigurationChanged
+    NoVS2019ExtensionDir:
+    RMDir /r '$1${EXTENSION_DIR_APP}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2019pkgdef:
+!endif
+
+  ; VS2017 Build Tools only adds msbuild files, automatically removed
+
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   IfErrors NoVS2017pkgdef
     StrCpy $1 "$1Common7\IDE"
     IfFileExists '$1${EXTENSION_DIR_APP}' +1 NoVS2017ExtensionDir
       Push $1
-      Call un.VS2017ConfigurationChanged
+      Call un.VSConfigurationChanged
     NoVS2017ExtensionDir:
     RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
@@ -830,6 +929,9 @@ Section "Uninstall"
 
   Push ${VS2017_REGISTRY_KEY}
   Call un.PatchAutoExp
+
+  ; autoexp.dat long gone, ignore for VS2019
+
 !endif
 
 !ifdef VS_NET
@@ -842,6 +944,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2015_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2017_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  ; DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2019_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
 
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
@@ -869,8 +972,9 @@ Section "Uninstall"
   Push ${VS2015_REGISTRY_KEY}
   Call un.RegisterMago
 
-  Push ${VS2017_REGISTRY_KEY}
-  Call un.RegisterMago
+;  Push ${VS2017_REGISTRY_KEY}
+;  Call un.RegisterMago
+
 !endif
 
   Call un.RegisterIVDServer
@@ -972,6 +1076,22 @@ Function .onInit
   IfErrors 0 Installed_VS2017
     SectionSetFlags ${SecVS2017} ${SF_RO}
   Installed_VS2017:
+
+  ; detect VS2017 Build Tools
+  ClearErrors
+  Call DetectVS2017BuildTools_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2017BT
+    SectionSetFlags ${SecVS2017BT} ${SF_RO}
+  Installed_VS2017BT:
+
+!ifdef VS2019
+  ; detect VS2019
+  ClearErrors
+  Call DetectVS2019_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2019
+    SectionSetFlags ${SecVS2019} ${SF_RO}
+  Installed_VS2019:
+!endif
 
 !ifdef EXPRESS
   ; detect VCExpress 2008
@@ -1269,11 +1389,11 @@ Function un.RegisterDParser
 
 FunctionEnd
 
-Function VS2017ConfigurationChanged
+Function VSConfigurationChanged
+  Exch $1 ; argument "${VS2017_INSTALL_KEY}Common7\IDE" 
 
-  ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2017_INSTALL_KEY}" "15.0"
   IfErrors NoVS2017
-    StrCpy $1 "$1Common7\IDE\Extensions\extensions.configurationchanged"
+    StrCpy $1 "$1\Extensions\extensions.configurationchanged"
     FileOpen $2 $1 "w"              ; create file
     IfErrors NoVS2017
     FileClose $R1                   ; empty file good enough
@@ -1281,7 +1401,7 @@ Function VS2017ConfigurationChanged
 
 FunctionEnd
 
-Function un.VS2017ConfigurationChanged
+Function un.VSConfigurationChanged
   Exch $1 ; argument "${VS2017_INSTALL_KEY}Common7\IDE" 
 
   StrCpy $1 "$1\Extensions\extensions.configurationchanged"
@@ -1291,3 +1411,64 @@ Function un.VS2017ConfigurationChanged
   NoVS2017:
   Pop $1
 FunctionEnd
+
+Function DetectVS2017BuildTools_InstallationFolder
+
+  StrCpy $0 0
+  loop:
+    EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
+    StrCmp $1 "" done
+	ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+	IfErrors NoDisplayName
+		StrCmp $2 "Visual Studio Build Tools 2017" 0 NotVS2017BT
+			ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+			IfErrors NoInstallLocation
+				; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+				StrCpy $1 "$2\\"
+				return
+			NoInstallLocation:
+		NotVS2017BT:
+	NoDisplayName:
+    IntOp $0 $0 + 1
+	Goto loop
+  done:
+  StrCpy $0 ""
+
+FunctionEnd
+
+!ifdef VS2019
+Function DetectVS2019_InstallationFolder
+
+  StrCpy $0 0
+  loop:
+    EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
+	; MessageBox MB_YESNO|MB_ICONQUESTION "Enum: $1$\n$\nMore?" IDYES 0 IDNO done
+    StrCmp $1 "" done
+	ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+	IfErrors NoDisplayName
+		; MessageBox MB_YESNO|MB_ICONQUESTION "Displayname: $2$\n$\nMore?" IDYES 0 IDNO done
+		StrCpy $3 $2 14
+		; MessageBox MB_YESNO|MB_ICONQUESTION "Visual Studio in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+		StrCmp $3 "Visual Studio " 0 NotVS2019
+		StrCpy $3 $2 12 -12
+		; MessageBox MB_YESNO|MB_ICONQUESTION "2019 Preview in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+		StrCmp $3 "2019 Preview" IsVS2019
+		StrCpy $3 $2 4 -4
+		; MessageBox MB_YESNO|MB_ICONQUESTION "2019 in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+		StrCmp $3 "2019" IsVS2019 NotVS2019
+		IsVS2019:
+			ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+			IfErrors NoInstallLocation
+				; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+				StrCpy $1 "$2\\"
+				return
+			NoInstallLocation:
+		NotVS2019:
+	NoDisplayName:
+    IntOp $0 $0 + 1
+	Goto loop
+  done:
+  StrCpy $0 ""
+
+FunctionEnd
+!endif

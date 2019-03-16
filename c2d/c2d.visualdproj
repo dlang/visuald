@@ -1,6 +1,6 @@
 <DProject>
  <ProjectGuid>{E2073B79-635A-48FA-A5A3-6E760D3A5DD8}</ProjectGuid>
- <Config name="Debug" platform="Win32">
+ <Config platform="Win32" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -108,7 +108,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release" platform="Win32">
+ <Config platform="Win32" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -216,7 +216,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="TestDebug" platform="Win32">
+ <Config platform="Win32" name="TestDebug">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -324,7 +324,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug GDC" platform="Win32">
+ <Config platform="Win32" name="Debug GDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -432,7 +432,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug" platform="x64">
+ <Config platform="x64" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -540,7 +540,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release" platform="x64">
+ <Config platform="x64" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -648,7 +648,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="TestDebug" platform="x64">
+ <Config platform="x64" name="TestDebug">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -705,7 +705,7 @@
   <program>m:\s\d\rainers\windows\bin\dmd.exe</program>
   <imppath>..</imppath>
   <fileImppath>..</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)64</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
@@ -756,7 +756,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug GDC" platform="x64">
+ <Config platform="x64" name="Debug GDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -864,7 +864,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="Win32">
+ <Config platform="Win32" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -972,7 +972,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="x64">
+ <Config platform="x64" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1080,7 +1080,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="Win32">
+ <Config platform="Win32" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1188,7 +1188,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="x64">
+ <Config platform="x64" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1296,7 +1296,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release LDC" platform="Win32">
+ <Config platform="Win32" name="Release LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1404,7 +1404,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release LDC" platform="x64">
+ <Config platform="x64" name="Release LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1512,7 +1512,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="Win32">
+ <Config platform="Win32" name="Release COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1620,7 +1620,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="x64">
+ <Config platform="x64" name="Release COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
