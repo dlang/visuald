@@ -4,6 +4,10 @@
     <PropertyGroup>
          <VisualDMSBuildDir Condition="'$(VisualDMSBuildDir)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\VisualD@msbuild)</VisualDMSBuildDir>
          <VisualDMSBuildDir Condition="'$(VisualDMSBuildDir)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\VisualD@msbuild)</VisualDMSBuildDir>
+
+         <!-- map "Current" to 16.0, VS2019 is the first to behave this way -->
+         <DBuildVersion>$(MsBuildToolsVersion)</DBuildVersion>
+         <DBuildVersion Condition="'$(DBuildVersion)' == 'Current'">16.0</DBuildVersion>
     </PropertyGroup>
 
     <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile_defaults.props')" Project="$(VisualDMSBuildDir)\dcompile_defaults.props" />

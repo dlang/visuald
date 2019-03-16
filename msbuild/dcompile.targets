@@ -12,8 +12,6 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <DBuildVersion>$(MsBuildToolsVersion)</DBuildVersion>
-    <DBuildVersion Condition="'$(DBuildVersion)' == 'Current'">16.0</DBuildVersion>
     <DbuildCompileDDLLPath Condition="'$(DbuildCompileDDLLPath)' == ''">$(MSBuildThisFileDirectory)dbuild.$(DBuildVersion).dll</DbuildCompileDDLLPath>
   </PropertyGroup>
 
