@@ -24,6 +24,9 @@
 ; define DUB to include dub project templates
 ; !define DUB
 
+; define VS2019 to include VS2019 support
+; !define VS2019
+
 ;--------------------------------
 ;Include Modern UI
 
@@ -261,7 +264,9 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\dbuild\obj\release\ dbuild.12.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v14\ dbuild.14.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v15\ dbuild.15.0.dll
-;  ${File} ..\msbuild\dbuild\obj\release-v16\ dbuild.16.0.dll
+!ifdef VS2019
+  ${File} ..\msbuild\dbuild\obj\release-v16\ dbuild.16.0.dll
+!endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
 
@@ -480,6 +485,7 @@ ${MementoSection} "Install in VS 2017 Build Tools" SecVS2017BT
 
 ${MementoSectionEnd}
 
+!ifdef VS2019
 ;--------------------------------
 ${MementoSection} "Install in VS 2019" SecVS2019
 
@@ -518,7 +524,7 @@ ${MementoSection} "Install in VS 2019" SecVS2019
   Call VSConfigurationChanged
 
 ${MementoSectionEnd}
-
+!endif
 
 !ifdef EXPRESS
 ;--------------------------------
@@ -576,6 +582,7 @@ SectionGroup Components
 !ifdef MSBUILD
 ${MementoSection} "Register MSBuild extensions for VS 2013/15/17/19" SecMSBuild
 
+!ifdef VS2019
   Call DetectVS2019_InstallationFolder
   StrCmp $1 "" NoVS2019
     ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v160" "x64"
@@ -588,6 +595,7 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17/19" SecMSBuild
     ${AddItem} "$INSTDIR\msbuild\general_d.16.0.xml"
 
   NoVS2019:
+!endif
 
   Call DetectVS2017BuildTools_InstallationFolder
   StrCmp $1 "" NoVS2017BT
@@ -845,6 +853,7 @@ Section "Uninstall"
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
 !endif
 
+!ifdef VS2019
   ReadRegStr $1 HKLM "Software\${APPNAME}" "VS2019InstallDir"
   StrCmp $1 "" NoVS2019pkgdef
     StrCpy $1 "$1Common7\IDE"
@@ -855,6 +864,7 @@ Section "Uninstall"
     RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2019pkgdef:
+!endif
 
   ; VS2017 Build Tools only adds msbuild files, automatically removed
 
@@ -934,7 +944,7 @@ Section "Uninstall"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2013_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2015_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
   DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2017_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
-  DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2019_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
+  ; DeleteRegKey ${VS_REGISTRY_ROOT}   "${VS2019_REGISTRY_KEY}\${WIN32_EXCEPTION_KEY}\Win32 Exceptions\D Exception"
 
 !ifdef MAGO
   ExecWait 'regsvr32 /u /s "$INSTDIR\Mago\MagoNatDE.dll"'
@@ -962,11 +972,9 @@ Section "Uninstall"
   Push ${VS2015_REGISTRY_KEY}
   Call un.RegisterMago
 
-  Push ${VS2017_REGISTRY_KEY}
-  Call un.RegisterMago
+;  Push ${VS2017_REGISTRY_KEY}
+;  Call un.RegisterMago
 
-  Push ${VS2019_REGISTRY_KEY}
-  Call un.RegisterMago
 !endif
 
   Call un.RegisterIVDServer
@@ -1076,12 +1084,14 @@ Function .onInit
     SectionSetFlags ${SecVS2017BT} ${SF_RO}
   Installed_VS2017BT:
 
+!ifdef VS2019
   ; detect VS2019
   ClearErrors
   Call DetectVS2019_InstallationFolder
   StrCmp $1 "" 0 Installed_VS2019
     SectionSetFlags ${SecVS2019} ${SF_RO}
   Installed_VS2019:
+!endif
 
 !ifdef EXPRESS
   ; detect VCExpress 2008
@@ -1426,6 +1436,7 @@ Function DetectVS2017BuildTools_InstallationFolder
 
 FunctionEnd
 
+!ifdef VS2019
 Function DetectVS2019_InstallationFolder
 
   StrCpy $0 0
@@ -1460,3 +1471,4 @@ Function DetectVS2019_InstallationFolder
   StrCpy $0 ""
 
 FunctionEnd
+!endif

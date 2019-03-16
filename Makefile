@@ -158,4 +158,4 @@ install_modules: prerequisites visuald_vs vdserver vdextension visualdwizard dcx
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads
-	cd nsis && "$(NSIS)\makensis" /V1 "/DCONFIG=$(CONFIG)" visuald.nsi
+	cd nsis && "$(NSIS)\makensis" /V1 "/DCONFIG=$(CONFIG)" $(NSIS_ARGS) visuald.nsi

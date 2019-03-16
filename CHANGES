@@ -1077,12 +1077,14 @@ unreleased 0.49.0
   * build system
     - now parallel compilation supported by VC projects (thanks to Igor Cesi)
     - bugzilla 19558: now saves all files with single file compile (and run/debug/disassemble)
-    - visualdproj: add support for recently added command line options -mixin
-    - visualdproj: new "Language" configuration page for -betterC, -dipNN and -transition= options
+    - add support for recently added command line options -mixin
+    - new "Language" configuration page for -betterC, -dipNN and -transition=/-preview=/-revert= options
     - visualdproj: remove support for D1 and ancient/removed options -nofloat and -property
     - visualdproj: replaced -noboundscheck option with -boundscheck=...
     - bugzilla 19558: save all files with compile and run/debug/disassemble
     - fix reading options from vcxproj with compile and run/debug/disassemble
+	- bugzilla 19726: VC project using LDC now adds C runtime to linker dependencies
+	- bugzilla 19690: installer fails to register MSBuild extensions for Visual Studio Build Tools
   * dparser
     - catch up with recent language changes: 
       - contract expressions
