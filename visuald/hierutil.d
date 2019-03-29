@@ -928,7 +928,7 @@ Config getVisualCppConfig(string file, bool genCmdLine = false)
 				scope(exit) release(pHierarchy);
 
 				VSITEMID itemid;
-				if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK)
+				if(pHierarchy.ParseCanonicalName(wfile, &itemid) == S_OK && itemid != VSITEMID_NIL)
 					return createVisualCppConfig(pHierarchy, itemid, file, genCmdLine);
 			}
 		}
