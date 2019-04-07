@@ -524,6 +524,15 @@ ${MementoSection} "Install in VS 2019" SecVS2019
   Call VSConfigurationChanged
 
 ${MementoSectionEnd}
+
+;--------------------------------
+${MementoSection} "Install in VS 2019 Build Tools" SecVS2019BT
+
+  Call DetectVS2019BuildTools_InstallationFolder
+  WriteRegStr HKLM "Software\${APPNAME}" "VS2019BTInstallDir" $1
+
+${MementoSectionEnd}
+
 !endif
 
 !ifdef EXPRESS
@@ -595,6 +604,20 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17/19" SecMSBuild
     ${AddItem} "$INSTDIR\msbuild\general_d.16.0.xml"
 
   NoVS2019:
+
+  Call DetectVS2019BuildTools_InstallationFolder
+  StrCmp $1 "" NoVS2019BT
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "Win32"
+    ${RegisterIcons} "16.0"
+
+    !define V160BT_GENERAL_XML "$1\Common7\IDE\VC\VCTargets\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V160BT_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.16bt.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.16bt.0.xml"
+
+  NoVS2019BT:
+
 !endif
 
   Call DetectVS2017BuildTools_InstallationFolder
@@ -1082,6 +1105,7 @@ Function .onInit
   Call DetectVS2017BuildTools_InstallationFolder
   StrCmp $1 "" 0 Installed_VS2017BT
     SectionSetFlags ${SecVS2017BT} ${SF_RO}
+    SectionSetText ${SecVS2017BT} ""
   Installed_VS2017BT:
 
 !ifdef VS2019
@@ -1091,6 +1115,15 @@ Function .onInit
   StrCmp $1 "" 0 Installed_VS2019
     SectionSetFlags ${SecVS2019} ${SF_RO}
   Installed_VS2019:
+
+  ; detect VS2019 Build Tools
+  ClearErrors
+  Call DetectVS2019BuildTools_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2019BT
+    SectionSetFlags ${SecVS2019BT} ${SF_RO}
+    SectionSetText ${SecVS2019BT} ""
+  Installed_VS2019BT:
+
 !endif
 
 !ifdef EXPRESS
@@ -1471,4 +1504,29 @@ Function DetectVS2019_InstallationFolder
   StrCpy $0 ""
 
 FunctionEnd
+
+Function DetectVS2019BuildTools_InstallationFolder
+
+  StrCpy $0 0
+  loop:
+    EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
+    StrCmp $1 "" done
+	ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+	IfErrors NoDisplayName
+		StrCmp $2 "Visual Studio Build Tools 2019" 0 NotVS2019BT
+			ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+			IfErrors NoInstallLocation
+				; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+				StrCpy $1 "$2\\"
+				return
+			NoInstallLocation:
+		NotVS2019BT:
+	NoDisplayName:
+    IntOp $0 $0 + 1
+	Goto loop
+  done:
+  StrCpy $0 ""
+
+FunctionEnd
+
 !endif

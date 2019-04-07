@@ -1,5 +1,8 @@
 Ddoc
 
+$(P Visual D works with all Visual Studio versions from 2008 to 2019. Please make sure to
+have the $(B C++ development tools) aswell as a $(B Windows SDK) included in the Visual Studio installation.)
+
 $(P The click-through-installer will guide you through the installation process. The installer lets you select the
 Visual Studio Version for which you want Visual D to be installed. It will always install
 for all users, not only for a single user.)
@@ -9,20 +12,44 @@ $(LINK2 https://github.com/D-Programming-GDC/GDC, GDC) or $(LINK2 https://github
 installed. Not all functionality
 has been thoroughly tested with GDC and LDC, so having DMD available for cross-checking is recommended.)
 
+$(H2 Using LDC)
+
+$(P LDC is a D compiler using the LLVM backend. It can produce more efficient code than DMD.
+The latest releases can be found at $(LINK https://github.com/ldc-developers/ldc/releases/).
+You should install the "multilib" version.)
+
+$(P Enter the LDC installation path at the global Tools->Options->Projects and Solutions->Visual D Settings->LDC Directories
+option page. Then switch the "Compiler" option in the project configuration to "LDC".)
+
+$(H2 Using GDC)
+
+$(P GDC is a D compiler using the GNU compiler suite backend. It can produce more efficient code than DMD.)
+You can find a rather dated build at $(LINK http://gdcproject.org/downloads). Please also install the respective
+MinGW environment.
+
+$(P Enter the GDC installation path at the global Tools->Options->Projects and Solutions->Visual D Settings->GDC Directories
+option page. Then switch the "Compiler" option in the project configuration to "GDC".)
+
+$(P Known issues:)
+$(UL
+  $(LI when building a library you should change the output file name extension to ".a".)
+  $(LI when building a library object files will be generated into the project directory, not the
+    intermediate directory, because there seems to be no GDC option to change the output folder for multiple files.)
+  $(LI as there are no recent GDC releases for Windows, support for it has fallen short. Please don't expect
+    completeness.)
+  $(LI GDC is not supported by the VC project integration.)
+)
+
+$(H2 Visual Studio 2008 - 2012)
+
+Visual D supports these versions, but is no longer being tested on these.
+
 $(P Visual D does $(B not) work with any of the $(B Express) versions of Visual Studio. Other than the
 commercial editions, the Express versions do not support loading third party extensions and add-ins.)
 
-$(P In November 2014 Microsoft released $(B $(LINK2 http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx,
-Visual Studio Community 2013)), a version similar to Visual Studio Professional, but free for most users unless
-working in larger companies. Visual D integrates just as well as with the commercial versions.)
+$(H3 Visual Studio Shell)
 
-$(P Visual D also works with the professional and community version of Visual Studio 2015 and 2017. Please be
-aware that the VC runtime libraries that ship with VS 2015 are not supported by dmd up to 2.068
-when compiling 64-bit applications.)
-
-$(H2 Visual Studio Shell)
-
-$(P A $(B free) alternative are the integrated $(B Visual Studio Shell) distributions, that can be downloaded
+$(P A $(B free) alternative to the commercial releases are the integrated $(B Visual Studio Shell) distributions, that can be downloaded
 from Microsoft (see below for links). The shells are identical with the Visual Studio IDE, but stripped of any language support. It
 still contains the native debugger that can be used to debug D applications.)
 
@@ -47,43 +74,6 @@ make the x64 debugger work.)
 $(P The $(B Visual Studio Shell 2013) is installed similar to VS Shell 2012, the
 $(LINK2 http://www.microsoft.com/en-us/download/details.aspx?id=40764, isolated shell) and the
 $(LINK2 http://www.microsoft.com/en-us/download/details.aspx?id=40777, integrated package).)
-
-$(H2 Using GDC)
-
-$(P To use GDC as the compiler to build D files, you will first have to install the MinGW environment and the GDC compiler:)
-$(UL
-  $(LI MinGW64 installer: $(LINK http://tdm-gcc.tdragon.net/))
-  $(LI GDC binaries: $(LINK http://gdcproject.org/downloads))
-)
-
-$(P Add the MinGW64/bin path to your PATH environment variable or the executable path list in the "GDC Directories"
-option page. Then switch the "Compiler" option in the project configuration to "GDC".)
-
-$(P To create a 64-bit executable, you will have to add a new platform to the project and solution
-in the configuration manager.)
-
-$(P Known issues:)
-$(UL
-  $(LI when building a library you should change the output file name extension to ".a".)
-  $(LI when building a library object files will be generated into the project directory, not the
-    intermediate directory, because there seems to be no GDC option to change the output folder for multiple files.)
-)
-
-$(H2 Using LDC)
-
-$(P The latest releases can be found at $(LINK https://github.com/ldc-developers/ldc/releases/))
-
-$(H3 Debugging)
-
-$(P For debugging applications, you should also install cv2pdb which is now included in the
-Visual D installer. Please make sure, changes to Common7\Packages\Debugger\autoexp.dat do
-not mix with previous manual installations of $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb).
-Visual D also installs the alternative debug engine mago that does not need cv2pdb.)
-
-$(P cv2pdb has been extended to also convert from DWARF debug information to PDB, so it
-is possible to debug applications built with GDC in Visual Studio. Be sure to select
-the "Visual Studio" debugger in the debugger project settings. Mago cannot be used
-as the debug engine, it currently only supports the DMD CodeView debug format.)
 
 Macros:
 	TITLE=Installation

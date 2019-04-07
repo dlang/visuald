@@ -1,5 +1,47 @@
 Ddoc
 
+$(H2 2019-04-07 Version 0.49.0)
+ $(UL
+  $(LI installation
+   $(UL
+    $(LI prepare for VS2019: detect installation, build against VS 2019 SDK, Win SDK 10.0.17763.0)
+    $(LI bugzilla 19690: installer fails to register MSBuild extensions for Visual Studio Build Tools)
+  ))
+  $(LI build system
+   $(UL
+    $(LI now parallel compilation supported by VC projects (thanks to Igor Cesi))
+    $(LI add support for recently added command line options -mixin)
+    $(LI new "Language" configuration page for -betterC, -dipNN and -transition=/-preview=/-revert= options)
+    $(LI visualdproj: remove support for D1 and ancient/removed options -nofloat and -property)
+    $(LI visualdproj: replaced -noboundscheck option with -boundscheck=...)
+    $(LI bugzilla 19558: save all files with compile and run/debug/disassemble)
+    $(LI fix reading options from vcxproj with compile and run/debug/disassemble)
+    $(LI bugzilla 19726: VC project using LDC now adds C runtime to linker dependencies)
+  ))
+  $(LI dparser
+   $(UL
+    $(LI catch up with recent language changes:
+     $(UL
+      $(LI contract expressions)
+      $(LI traits can appear everywhere a type can be declared)
+      $(LI allow @UDA for enumerator values)
+     ))
+    $(LI parse __vector and __parameters in IsExpression, evaluate __vector)
+    $(LI fix parsing character literals with surrogate pairs)
+    $(LI fix tooltips showing storage classes as type constructors)
+    $(LI fixed crash with "static foreach")
+  ))
+  $(LI debugger
+   $(UL
+    $(LI bugzilla 18889: do not forward tooltip to debugger if hovering compile time identifier (type/enum))
+  ))
+  $(LI editor
+   $(UL
+    $(LI tweaked default colors to better work with dark mode (restart VS and Visual D twice after switch
+      between light and dark modes))
+  ))
+ )
+
 $(H2 2018-12-22 Version 0.48.1)
  $(UL
   $(LI dparser:

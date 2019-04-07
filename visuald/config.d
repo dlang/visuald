@@ -317,7 +317,7 @@ class ProjectOptions
 		doXGeneration = true;
 		useStdLibPath = true;
 		cRuntime = CRuntime.StaticRelease;
-		debugEngine = 1;
+		debugEngine = 2;
 		symdebugref = true;
 		enableMixin = false;
 
