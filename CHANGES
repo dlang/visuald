@@ -1074,7 +1074,7 @@ Version history
 unreleased 0.49.0
   * installation
     - prepare for VS2019: detect installation, build against VS 2019 SDK, Win SDK 10.0.17763.0
-	- bugzilla 19690: installer fails to register MSBuild extensions for Visual Studio Build Tools
+    - bugzilla 19690: installer fails to register MSBuild extensions for Visual Studio Build Tools
   * build system
     - now parallel compilation supported by VC projects (thanks to Igor Cesi)
     - add support for recently added command line options -mixin
@@ -1083,7 +1083,7 @@ unreleased 0.49.0
     - visualdproj: replaced -noboundscheck option with -boundscheck=...
     - bugzilla 19558: save all files with compile and run/debug/disassemble
     - fix reading options from vcxproj with compile and run/debug/disassemble
-	- bugzilla 19726: VC project using LDC now adds C runtime to linker dependencies
+    - bugzilla 19726: VC project using LDC now adds C runtime to linker dependencies
   * dparser
     - catch up with recent language changes: 
       - contract expressions
@@ -1092,6 +1092,7 @@ unreleased 0.49.0
     - parse __vector and __parameters in IsExpression, evaluate __vector
     - fix parsing character literals with surrogate pairs
     - fix tooltips showing storage classes as type constructors
+    - fixed crash with "static foreach"
   * debugger
     - bugzilla 18889: do not forward tooltip to debugger if hovering compile time identifier (type/enum)
   * editor

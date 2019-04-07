@@ -616,7 +616,7 @@ ${MementoSection} "Register MSBuild extensions for VS 2013/15/17/19" SecMSBuild
     ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V160BT_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.16bt.0.xml'
     ${AddItem} "$INSTDIR\msbuild\general_d.16bt.0.xml"
 
-  NoVS2017BT:
+  NoVS2019BT:
 
 !endif
 

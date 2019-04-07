@@ -313,7 +313,8 @@ SEARCH_BOX=
             <input type="hidden" id="sourceid" name="sourceid" value="google-search">
             $(SPANID search-query, <input id="q" name="q" placeholder="Search">)$(SPANID search-dropdown, $(SPANC helper,
                 <select id="sitesearch" name="sitesearch" size="1">
-                    <option value="dlang.org">Entire Site</option>
+                    <option value="http://rainers.github.io/visuald/visuald">Visual D</option>
+                    <option value="dlang.org">dlang.org</option>
                     <option $(SEARCHDEFAULT_SPEC) value="dlang.org/spec">Language</option>
                     <option $(SEARCHDEFAULT_PHOBOS) value="dlang.org/phobos">Library</option>
                     <option $(SEARCHDEFAULT_FORUM) value="forum.dlang.org">Forums</option>

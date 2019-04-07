@@ -4,7 +4,7 @@ $(TABLE_NOBORDER
 $(TD $(IMG images/vd_logo.png))
 $(TD
 $(P Visual D is a Visual Studio package providing both project management and language services.
-It works with Visual Studio 2008 - 2017 including Visual Studio Community as well as the free Visual Studio Shells.
+It works with Visual Studio 2008 - 2019 including Visual Studio Community as well as the free Visual Studio Shells.
 See the $(LINK2 Installation.html, Installation) instructions, especially if not using a commercial or community edition of Visual Studio.)
 
 $(P Visual D aims at providing seamless integration of the D programming language into Visual Studio.)
@@ -54,6 +54,14 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2019-04-07 Version 0.49.0
+$(UL
+  $(LI support for Visual Studio 2019)
+  $(LI parallel compilation supported by VC projects (thanks to Igor Cesi))
+  $(LI catch up with recent language changes)
+  $(LI new "Language" configuration page for -transition=/-preview=/-revert= options)
+)
+
 2018-12-22 Version 0.48.1
 $(UL
   $(LI goto definition on alias: jump to base definition if caret on alias)
@@ -67,20 +75,6 @@ $(UL
   $(LI dparser now has semantic support for static foreach (thanks to Alexander Bothe))
   $(LI experimental: option to enable semantic identifier highlighting)
   $(LI mago debugger: show return value, showing closure and capture variables as locals for dmd 2.084)
-)
-
-2018-06-24 Version 0.47.0
-$(UL
-  $(LI improved vcxproj integration: better dependencies, automatic libraries, name demangling)
-  $(LI new $(LINK2 ProjectWizard.html, project wizard))
-  $(LI mago debugger: show vtable, dynamic type of interfaces, symbolic names of pointer address)
-)
-
-2017-12-02 Version 0.46.0
-$(UL
-  $(LI improved integration for VS2017 including update 15.3.1 or later)
-  $(LI improved LDC support)
-  $(LI support for new symbol mangling and parsing 'static foreach')
 )
 
 $(LINK2 VersionHistory.html, more...)
