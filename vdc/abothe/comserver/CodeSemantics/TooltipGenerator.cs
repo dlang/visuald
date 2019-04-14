@@ -37,8 +37,16 @@ namespace DParserCOMServer.CodeSemantics
 
 			foreach (var t in AmbiguousType.TryDissolve(types))
 			{
-				tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(t));
-				if (t is DSymbol symbol)
+				var dt = t;
+				if (dt is AliasedType at)
+				{
+					// jump to original definition if it is not renamed or the caret is on the import
+					var isRenamed = (at.Definition as ImportSymbolAlias)?.ImportBinding?.Alias != null;
+					if (!isRenamed || at.Definition.Location == sr.Location)
+						dt = at.Base;
+				}
+				tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(dt));
+				if (dt is DSymbol symbol)
 					dn = symbol.Definition;
 
 				tipText.Append("\a");
