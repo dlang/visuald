@@ -407,7 +407,7 @@ class ProjectOptions
 		if(symdbg == 1)
 			cmd ~= " -g";
 		if(symdbg == 2)
-			cmd ~= " -gc";
+			cmd ~= " -g"; // -gc no longer supported
 		if (symdbg && symdebugref)
 			cmd ~= " -gf";
 

@@ -266,6 +266,7 @@ Section "Visual Studio package" SecPackage
   ${File} ..\msbuild\dbuild\obj\release-v15\ dbuild.15.0.dll
 !ifdef VS2019
   ${File} ..\msbuild\dbuild\obj\release-v16\ dbuild.16.0.dll
+  ${File} ..\msbuild\dbuild\obj\release-v16_1\ dbuild.16.1.dll
 !endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
