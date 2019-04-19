@@ -115,7 +115,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ImportBefore", "ImportBefore", "{6C5387E8-CF11-443A-88BD-CA6DCA80E755}"
 	ProjectSection(SolutionItems) = preProject
 		msbuild\ImportBefore\d.props = msbuild\ImportBefore\d.props
-		msbuild\ImportBefore\d.targets = msbuild\ImportBefore\d.targets
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Default", "Default", "{AB498803-493D-4FB4-9FB1-9CEF0E628CE9}"
