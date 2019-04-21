@@ -54,6 +54,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2019-04-21 Version 0.49.1
+$(UL
+  $(LI fixed reading settings from VC projects in VS2017)
+  $(LI added support for VS2019 Update 16.1)
+  $(LI dparser improvements and bug fixes)
+)
+
 2019-04-07 Version 0.49.0
 $(UL
   $(LI support for Visual Studio 2019)

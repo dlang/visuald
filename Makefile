@@ -107,6 +107,9 @@ fake_dbuild15:
 dbuild16:
 	cd msbuild\dbuild && devenv /Build "Release-v16|AnyCPU" /Project "dbuild" dbuild.sln
 
+dbuild16_1:
+	cd msbuild\dbuild && devenv /Build "Release-v16_1|AnyCPU" /Project "dbuild" dbuild.sln
+
 
 mago:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoNatDE" magodbg_2010.sln

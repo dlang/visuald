@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <ItemGroup Condition="'$(UseDefaultPropertyPageSchemas)' != 'false'">
-    <PropertyPageSchema Condition="'$(ConfigurationType)' != 'Utility'" Include="$(VisualDMSBuildDir)\general_d.$(DBuildVersion).xml">
+    <PropertyPageSchema Condition="'$(ConfigurationType)' != 'Utility' and Exists('$(VisualDMSBuildDir)\general_d.$(MSBuildVersion_Major).0.xml')" Include="$(VisualDMSBuildDir)\general_d.$(MSBuildVersion_Major).0.xml">
       <Context>Project</Context>
     </PropertyPageSchema>
   </ItemGroup>

@@ -2219,7 +2219,7 @@ class GlobalOptions
 						auto group = cast(GroupSetting)set;
 						foreach(sw; group.children)
 						{
-							if (sw.name == "switches" && sw.type == Setting.Type.array)
+							if ((sw.name == "switches" || sw.name == "post-switches") && sw.type == Setting.Type.array)
 							{
 								auto arr = cast(ArraySetting)sw;
 								foreach(a; arr.vals())

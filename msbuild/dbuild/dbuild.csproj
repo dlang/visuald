@@ -14,6 +14,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>14.0</TargetVer>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-v14|AnyCPU'">
     <OutputPath>bin\Debug-v14\</OutputPath>
@@ -24,6 +25,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>14.0</TargetVer>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-v15|AnyCPU'">
     <OutputPath>bin\Release-v15\</OutputPath>
@@ -34,6 +36,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>15.0</TargetVer>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-v15|AnyCPU'">
     <OutputPath>bin\Debug-v15\</OutputPath>
@@ -44,6 +47,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>15.0</TargetVer>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-v16|AnyCPU'">
     <OutputPath>bin\Release-v16\</OutputPath>
@@ -54,6 +58,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>16.0</TargetVer>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-v16|AnyCPU'">
     <OutputPath>bin\Debug-v16\</OutputPath>
@@ -64,31 +69,29 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>16.0</TargetVer>
   </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyName>dbuild.12.0</AssemblyName>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release-v16_1|AnyCPU'">
+    <OutputPath>bin\Release-v16_1\</OutputPath>
+    <DefineConstants>TRACE;TOOLS_V15</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>16.1</TargetVer>
   </PropertyGroup>
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{45508B90-440B-46DD-82CC-178196D9794E}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>dbuild</RootNamespace>
-    <AssemblyName Condition=" '$(Configuration)' == 'Release' or '$(Configuration)' == 'Debug' ">dbuild.12.0</AssemblyName>
-    <AssemblyName Condition=" '$(Configuration)' == 'Release-v14' or '$(Configuration)' == 'Debug-v14' ">dbuild.14.0</AssemblyName>
-    <AssemblyName Condition=" '$(Configuration)' == 'Release-v15' or '$(Configuration)' == 'Debug-v15' ">dbuild.15.0</AssemblyName>
-    <AssemblyName Condition=" '$(Configuration)' == 'Release-v16' or '$(Configuration)' == 'Debug-v16' ">dbuild.16.0</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition=" '$(Configuration)' == 'Release-v16' or '$(Configuration)' == 'Debug-v16' ">v4.7.2</TargetFrameworkVersion>
-    <GeneratePkgDefFile>false</GeneratePkgDefFile>
-    <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
-    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
-    <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
-    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
-    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-v16_1|AnyCPU'">
+    <OutputPath>bin\Debug-v16_1\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;TOOLS_V15</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>false</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <TargetVer>16.1</TargetVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -102,7 +105,7 @@
     <DeployExtension>False</DeployExtension>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <VS2017Path>c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\</VS2017Path>
+    <TargetVer>12.0</TargetVer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -114,6 +117,29 @@
     <CreateVsixContainer>False</CreateVsixContainer>
     <DeployExtension>False</DeployExtension>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TargetVer>12.0</TargetVer>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetVer Condition="'$(TargetVer)' == ''">12.0</TargetVer>
+    <AssemblyName>dbuild.$(TargetVer)</AssemblyName>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{45508B90-440B-46DD-82CC-178196D9794E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>dbuild</RootNamespace>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition=" '$(TargetVer)' == '16.0' or '$(TargetVer)' == '16.1' ">v4.7.2</TargetFrameworkVersion>
+    <GeneratePkgDefFile>false</GeneratePkgDefFile>
+    <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
+    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CompileD.cs" />
@@ -135,7 +161,7 @@
   </ItemGroup>
   
   <!-- VS2013 -->
-  <ItemGroup Condition=" ('$(Configuration)' == 'Release' or '$(Configuration)' == 'Debug') and Exists('assemblies\v12\Microsoft.Build.dll') ">
+  <ItemGroup Condition="'$(TargetVer)' == '12.0' and Exists('assemblies\v12\Microsoft.Build.dll')">
     <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
       <Private>False</Private>
@@ -165,7 +191,7 @@
       <HintPath>assemblies\v12\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition=" ('$(Configuration)' == 'Release' or '$(Configuration)' == 'Debug') and !Exists('assemblies\v12\Microsoft.Build.dll') ">
+  <ItemGroup Condition="'$(TargetVer)' == '12.0' and !Exists('assemblies\v12\Microsoft.Build.dll')">
     <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
       <Private>False</Private>
@@ -207,7 +233,7 @@
   </ItemGroup>
 
   <!-- VS2015 -->
-  <ItemGroup Condition=" ('$(Configuration)' == 'Release-v14' or '$(Configuration)' == 'Debug-v14') and Exists('assemblies\v14\Microsoft.Build.dll') ">
+  <ItemGroup Condition="'$(TargetVer)' == '14.0' and Exists('assemblies\v14\Microsoft.Build.dll')">
     <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
@@ -240,7 +266,7 @@
       <HintPath>c:\Windows\Microsoft.NET\assembly\GAC_MSIL\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine\v4.0_14.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup Condition=" ('$(Configuration)' == 'Release-v14' or '$(Configuration)' == 'Debug-v14') and !Exists('assemblies\v14\Microsoft.Build.dll') ">
+  <ItemGroup Condition="'$(TargetVer)' == '14.0' and !Exists('assemblies\v14\Microsoft.Build.dll')">
     <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
@@ -282,11 +308,12 @@
   
   <!-- VS2017 -->
   <PropertyGroup>
+     <VS2017Ver Condition="Exists('assemblies\v15')">Local</VS2017Ver>
      <VS2017Ver Condition="Exists('c:\Program Files (x86)\Microsoft Visual Studio\2017\Community')">Community</VS2017Ver>
      <VS2017Ver Condition="Exists('c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional')">Professional</VS2017Ver>
      <VS2019Ver Condition="Exists('c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview')">Preview</VS2019Ver>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(Configuration)' == 'Release-v15' or '$(Configuration)' == 'Debug-v15' ">
+  <ItemGroup Condition="'$(TargetVer)' == '15.0'">
     <Reference Include="Microsoft.Build">
       <HintPath>assemblies\v15\Microsoft.Build.dll</HintPath>
     </Reference>
@@ -307,30 +334,30 @@
     </Reference>
     <Reference Include="Microsoft.VisualStudio.Project.VisualC.VCProjectEngine, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
+      <HintPath Condition="'$(VS2017Ver)' == 'Local'">assemblies\v15\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
       <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\VC\Project\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
       <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\VC\Project\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.VCProject, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+      <HintPath Condition="'$(VS2017Ver)' == 'Local'">assemblies\v15\Microsoft.VisualStudio.VCProject.dll</HintPath>
       <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProject.dll</HintPath>
       <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProject.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.VCProjectEngine, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+      <HintPath Condition="'$(VS2017Ver)' == 'Local'">assemblies\v15\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
       <HintPath Condition="'$(VS2017Ver)' == 'Professional'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
       <HintPath Condition="'$(VS2017Ver)' == 'Community'"   >c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <!-- VS2019 -->
-  <ItemGroup Condition=" '$(Configuration)' == 'Release-v16' or '$(Configuration)' == 'Debug-v16' ">
+  <ItemGroup Condition="'$(TargetVer)' == '16.0' or '$(TargetVer)' == '16.1'">
     <Reference Include="Microsoft.Build">
       <HintPath>assemblies\v16\Microsoft.Build.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Build.CPPTasks.Common">
-      <HintPath>assemblies\v16\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Build.Framework">
       <HintPath>assemblies\v16\Microsoft.Build.Framework.dll</HintPath>
@@ -354,6 +381,18 @@
       <HintPath>assemblies\v16\Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetVer)' == '16.0'">
+    <Reference Include="Microsoft.Build.CPPTasks.Common">
+      <HintPath>assemblies\v16\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetVer)' == '16.1'">
+    <Reference Include="Microsoft.Build.CPPTasks.Common">
+      <HintPath>assemblies\v16_1\Microsoft.Build.CPPTasks.Common.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="Strings.resx">
       <SubType>Designer</SubType>

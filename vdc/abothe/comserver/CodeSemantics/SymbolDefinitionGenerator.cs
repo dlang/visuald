@@ -27,9 +27,13 @@ namespace DParserCOMServer.CodeSemantics
 			var definitionSourceFilename = new StringBuilder();
 			if (rr != null)
 			{
-				var at = rr as AliasedType;
-				if (at != null && at.Definition.Location == sr.Location)
-					rr = at.Base;
+				if (rr is AliasedType at)
+				{
+					// jump to original definition if it is not renamed or the caret is on the import
+					var isRenamed = (at.Definition as ImportSymbolAlias)?.ImportBinding?.Alias != null;
+					if (!isRenamed || at.Definition.Location == sr.Location)
+						rr = at.Base;
+				}
 				DNode n = null;
 				foreach (var t in AmbiguousType.TryDissolve(rr))
 				{
