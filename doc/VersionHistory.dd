@@ -1,5 +1,21 @@
 Ddoc
 
+$(H2 2019-04-21 Version 0.49.1)
+ $(UL
+  $(LI fixed reading settings from VC projects in VS2017)
+  $(LI fixed determining versions from dmd versions no longer supporting -gc)
+  $(LI fixed reading import path from newer LDC versions)
+  $(LI added support for VS2019 Update 16.1)
+  $(LI dparser:
+   $(UL
+    $(LI jump to original definition if it is not renamed or the caret is on the import)
+    $(LI fixed import lookup if module name is also a package)
+    $(LI fixed stack overflows with static foreach)
+    $(LI fixed infinite loop for cyclic base classes)
+    $(LI fixed more crashes during semantic highlighting)
+  ))
+ )
+
 $(H2 2019-04-07 Version 0.49.0)
  $(UL
   $(LI installation
