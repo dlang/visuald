@@ -34,7 +34,6 @@ import visuald.dpackage;
 import visuald.dproject;
 import visuald.dlangsvc;
 import visuald.dimagelist;
-import visuald.dllmain;
 import visuald.config;
 import visuald.intellisense;
 

@@ -19,7 +19,6 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.dpackage;
 import visuald.dproject;
-import visuald.dllmain;
 import visuald.config;
 import visuald.winctrl;
 import visuald.hierarchy;

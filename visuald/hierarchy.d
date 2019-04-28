@@ -46,7 +46,6 @@ import visuald.pkgutil;
 
 import visuald.dproject;
 import visuald.dpackage;
-import visuald.dllmain;
 
 ///////////////////////////////////////////////////////////////////////////////
 class CFileNode : CHierNode,

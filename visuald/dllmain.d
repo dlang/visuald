@@ -27,8 +27,6 @@ import threadaux = core.sys.windows.threadaux;
 import std.conv;
 import std.array;
 
-__gshared HINSTANCE g_hInst;
-
 // enable precise scanning of the DATA/TLS sections (dmd 2.075+) and GC (dmd 2.085+)
 pragma(msg, "DMD VERSION = ", __VERSION__);
 static if (__VERSION__ >= 2085)

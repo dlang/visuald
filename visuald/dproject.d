@@ -51,8 +51,6 @@ import visuald.oledatasource;
 import visuald.pkgutil;
 import visuald.dimagelist;
 
-import visuald.dllmain : g_hInst;
-
 ///////////////////////////////////////////////////////////////
 
 class ProjectFactory : DComObject, IVsProjectFactory
