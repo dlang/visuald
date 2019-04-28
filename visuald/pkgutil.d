@@ -541,7 +541,6 @@ bool RemoveHardwareBreakpoint(HANDLE hBrk)
 
 //import pkgutil;
 import sdk.port.base;
-import visuald.dllmain;
 
 void setHWBreakpopints()
 {

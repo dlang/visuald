@@ -1110,3 +1110,9 @@ Version history
     - fixed stack overflows with static foreach
     - fixed infinite loop for cyclic base classes
     - fixed more crashes during semantic highlighting
+
+2019-04-28 Version 0.49.2
+  * VS2013/VS2015: VC projects broken in 0.49.1 due to unsupported msbuild variable
+  * visualdproj: fixed additional options not passed to single file compilation
+  * VS2015: workaround VS not correctly updating extension caches after uninstallation
+  * bugzilla 19826: visualdproj projects created for LDC still use DMD

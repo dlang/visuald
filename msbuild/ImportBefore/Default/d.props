@@ -4,14 +4,20 @@
     <PropertyGroup>
         <VisualDMSBuildDir Condition="'$(VisualDMSBuildDir)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\VisualD@msbuild)</VisualDMSBuildDir>
         <VisualDMSBuildDir Condition="'$(VisualDMSBuildDir)' == ''">$(registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\VisualD@msbuild)</VisualDMSBuildDir>
+    </PropertyGroup>
 
+    <PropertyGroup Condition="'$(MSBuildVersion)' != ''">
         <!-- map "Current" to 16.0, VS2019 is the first to behave this way -->
         <MSBuildVersion_Major>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[0])</MSBuildVersion_Major>
         <MSBuildVersion_Minor>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[1])</MSBuildVersion_Minor>
         <MSBuildVersion_Build>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[2])</MSBuildVersion_Build>
-        <DBuildVersion Condition="$(MSBuildVersion_Major) != 16">$(MSBuildVersion_Major).0</DBuildVersion>
+        <DBuildVersion Condition="$(MSBuildVersion_Major) != 16">$(MSBuildVersion_Major).$(MSBuildVersion_Minor)</DBuildVersion>
         <DBuildVersion Condition="$(MSBuildVersion_Major) == 16 and $(MSBuildVersion_Minor) == 0">16.0</DBuildVersion>
         <DBuildVersion Condition="$(MSBuildVersion_Major) == 16 and $(MSBuildVersion_Minor) != 0">16.1</DBuildVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(DBuildVersion)' == ''">
+        <DBuildVersion Condition="$(MSBuildVersion_Major) != 16">$(MsBuildToolsVersion)</DBuildVersion>
     </PropertyGroup>
 
     <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile_defaults.props')" Project="$(VisualDMSBuildDir)\dcompile_defaults.props" />

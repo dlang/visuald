@@ -3121,6 +3121,8 @@ class Config :	DisposingComObject,
 				cmd ~= " -c -o-";
 			else
 				cmd ~= " -c " ~ mProjectOptions.getOutputFileOption(outfile);
+			if(mProjectOptions.additionalOptions.length)
+				cmd ~= " " ~ mProjectOptions.additionalOptions.replace("\n", " ");
 			cmd ~= " " ~ quoteFilename(file.GetFilename());
 			foreach(ddoc; getDDocFileList())
 				cmd ~= " " ~ ddoc;

@@ -52,7 +52,6 @@ import visuald.profiler;
 import visuald.library;
 import visuald.pkgutil;
 import visuald.colorizer;
-import visuald.dllmain;
 import visuald.taskprovider;
 import visuald.vdserverclient;
 import xml = visuald.xmlwrap;
@@ -166,6 +165,8 @@ void global_exit()
 }
 
 ///////////////////////////////////////////////////////////////////////
+__gshared HINSTANCE g_hInst;
+
 __gshared int g_dllRefCount;
 
 extern(Windows)

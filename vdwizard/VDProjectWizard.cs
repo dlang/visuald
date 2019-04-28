@@ -107,9 +107,9 @@ namespace VisualDWizard
                 if (dlg.compilerDMD.Checked)
                     AddConfigReplacements(replacementsDictionary, ++numCompiler, 0, " DMD");
                 if (dlg.compilerLDC.Checked)
-                    AddConfigReplacements(replacementsDictionary, ++numCompiler, 0, " LDC");
+                    AddConfigReplacements(replacementsDictionary, ++numCompiler, 2, " LDC");
                 if (dlg.compilerGDC.Checked)
-                    AddConfigReplacements(replacementsDictionary, ++numCompiler, 0, " GDC");
+                    AddConfigReplacements(replacementsDictionary, ++numCompiler, 1, " GDC");
             }
 
             while (numCompiler++ <= 3)
