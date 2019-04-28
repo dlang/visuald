@@ -1,5 +1,13 @@
 Ddoc
 
+$(H2 2019-04-28 Version 0.49.2)
+ $(UL
+  $(LI VS2013/VS2015: VC projects broken in 0.49.1 due to unsupported msbuild variable)
+  $(LI visualdproj: fixed additional options not passed to single file compilation)
+  $(LI VS2015: workaround VS not correctly updating extension caches after uninstallation)
+  $(LI bugzilla 19826: visualdproj projects created for LDC still use DMD)
+ )
+
 $(H2 2019-04-21 Version 0.49.1)
  $(UL
   $(LI fixed reading settings from VC projects in VS2017)
