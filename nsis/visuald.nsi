@@ -406,6 +406,9 @@ ${MementoSection} "Install in VS 2013" SecVS2013
   ${SetOutPath} "$1\PublicAssemblies"
   ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
 
+  push $1
+  Call VSConfigurationChanged
+
 ${MementoSectionEnd}
 
 ;--------------------------------
@@ -438,6 +441,14 @@ ${MementoSection} "Install in VS 2015" SecVS2015
 
   ${SetOutPath} "$1\PublicAssemblies"
   ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
+  push $1
+  Call VSConfigurationChanged
+
+  ; Workaround for extension cache not properly updated
+  SetShellVarContext current
+  Delete $LocalAppData\Microsoft\VisualStudio\14.0\Extensions\*.cache
+  SetShellVarContext all
 
 ${MementoSectionEnd}
 
@@ -905,12 +916,25 @@ Section "Uninstall"
   
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2015_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2015pkgdef
+    IfFileExists '$1${EXTENSION_DIR_APP}' +1 NoVS2015ExtensionDir
+      Push $1
+      Call un.VSConfigurationChanged
+
+      ; Workaround for extension cache not properly updated
+      SetShellVarContext current
+      Delete $LocalAppData\Microsoft\VisualStudio\14.0\Extensions\*.cache
+      SetShellVarContext all
+    NoVS2015ExtensionDir:
     RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2015pkgdef:
   
   ReadRegStr $1 ${VS_REGISTRY_ROOT} "${VS2013_REGISTRY_KEY}" InstallDir
   IfErrors NoVS2013pkgdef
+    IfFileExists '$1${EXTENSION_DIR_APP}' +1 NoVS2013ExtensionDir
+      Push $1
+      Call un.VSConfigurationChanged
+    NoVS2013ExtensionDir:
     RMDir /r '$1${EXTENSION_DIR_APP}'
     RMDir '$1${EXTENSION_DIR_ROOT}'
   NoVS2013pkgdef:
@@ -1432,7 +1456,7 @@ Function VSConfigurationChanged
     IfErrors NoVS2017
     FileClose $R1                   ; empty file good enough
   NoVS2017:
-
+  Pop $1
 FunctionEnd
 
 Function un.VSConfigurationChanged
