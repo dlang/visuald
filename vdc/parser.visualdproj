@@ -1,6 +1,6 @@
 <DProject>
  <ProjectGuid>{FE3A959D-6CFA-43BF-8637-62125B571770}</ProjectGuid>
- <Config name="Debug" platform="Win32">
+ <Config platform="Win32" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -49,6 +49,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -108,7 +122,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release" platform="Win32">
+ <Config platform="Win32" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -157,6 +171,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -216,7 +244,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="TestDebug" platform="Win32">
+ <Config platform="Win32" name="TestDebug">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -265,6 +293,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -324,7 +366,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug" platform="x64">
+ <Config platform="x64" name="Debug">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -373,6 +415,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -432,7 +488,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release" platform="x64">
+ <Config platform="x64" name="Release">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -481,6 +537,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -540,7 +610,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="TestDebug" platform="x64">
+ <Config platform="x64" name="TestDebug">
   <obj>0</obj>
   <link>0</link>
   <lib>0</lib>
@@ -589,6 +659,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -648,7 +732,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug GDC" platform="Win32">
+ <Config platform="Win32" name="Debug GDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -697,6 +781,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -756,7 +854,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug GDC" platform="x64">
+ <Config platform="x64" name="Debug GDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -805,6 +903,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -864,7 +976,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="Win32">
+ <Config platform="Win32" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -913,6 +1025,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -972,7 +1098,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug LDC" platform="x64">
+ <Config platform="x64" name="Debug LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1021,6 +1147,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -1080,7 +1220,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="Win32">
+ <Config platform="Win32" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1129,6 +1269,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -1188,7 +1342,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Debug COFF32" platform="x64">
+ <Config platform="x64" name="Debug COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1237,6 +1391,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -1296,7 +1464,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release LDC" platform="Win32">
+ <Config platform="Win32" name="Release LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1345,6 +1513,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -1404,7 +1586,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release LDC" platform="x64">
+ <Config platform="x64" name="Release LDC">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1453,6 +1635,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -1512,7 +1708,8 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="Win32">
+ <Config platform="Win32" name="Release COFF32">
+  <enableMixin>0</enableMixin>
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1547,7 +1744,7 @@
   <noboundscheck>0</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>1</useInline>
+  <useInline>0</useInline>
   <release>1</release>
   <preservePaths>1</preservePaths>
   <warnings>0</warnings>
@@ -1561,6 +1758,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
@@ -1620,7 +1831,7 @@
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
  </Config>
- <Config name="Release COFF32" platform="x64">
+ <Config platform="x64" name="Release COFF32">
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1669,6 +1880,20 @@
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <transition_field>0</transition_field>
+  <transition_import>0</transition_import>
+  <transition_dtorfields>0</transition_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <transition_intpromote>0</transition_intpromote>
+  <transition_tls>0</transition_tls>
+  <transition_fixAliasThis>0</transition_fixAliasThis>
+  <transition_markdown>0</transition_markdown>
+  <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
   <cccmd>$(CC) -c</cccmd>
