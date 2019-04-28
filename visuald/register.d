@@ -23,7 +23,6 @@ import stdext.string;
 import stdext.registry;
 
 import visuald.dpackage;
-import visuald.dllmain;
 import visuald.propertypage;
 import visuald.config;
 import visuald.comutil;
@@ -381,7 +380,7 @@ void fixVS2012Shellx64Debugger(HKEY keyRoot, wstring registrationRoot)
 {
 	float ver = guessVSVersion(registrationRoot);
 	//MessageBoxA(null, text("version: ", ver, "\nregkey: ", to!string(registrationRoot)).ptr, to!string(registrationRoot).ptr, MB_OK);
-	if(ver >= 11)
+	if(ver >= 11 && ver < 14)
 	{
 		scope RegKey keyDebugger = new RegKey(keyRoot, registrationRoot ~ "\\Debugger"w);
 		keyDebugger.Set("msvsmon-pseudo_remote"w, r"$ShellFolder$\Common7\Packages\Debugger\X64\msvsmon.exe"w, false);
@@ -426,43 +425,47 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	HKEY keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
 	wstring registrationRoot = GetRegistrationRoot(pszRegRoot, useRanu);
 
-	wstring packageGuid = GUID2wstring(g_packageCLSID);
-	wstring languageGuid = GUID2wstring(g_languageCLSID);
-	wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
-	wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
-	wstring vchelperGuid = GUID2wstring(g_VisualCHelperCLSID);
-
 	HRESULT hr = S_OK;
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ languageGuid);
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ wizardGuid);
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vchelperGuid);
+	float ver = guessVSVersion(registrationRoot);
+	if (ver < 14)
+	{
+		wstring packageGuid = GUID2wstring(g_packageCLSID);
+		wstring languageGuid = GUID2wstring(g_languageCLSID);
+		wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
+		wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
+		wstring vchelperGuid = GUID2wstring(g_VisualCHelperCLSID);
 
-	foreach (wstring fileExt; g_languageFileExtensions)
-		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathFileExts ~ "\\"w ~ fileExt);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\Packages\\"w ~ packageGuid);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ languageGuid);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ wizardGuid);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelperGuid);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vchelperGuid);
 
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\Services\\"w ~ languageGuid);
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\InstalledProducts\\"w ~ g_packageName);
+		foreach (wstring fileExt; g_languageFileExtensions)
+			hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathFileExts ~ "\\"w ~ fileExt);
 
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathLServices ~ "\\"w ~ g_languageName);
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathCodeExpansions ~ "\\"w ~ g_languageName);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\Services\\"w ~ languageGuid);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\InstalledProducts\\"w ~ g_packageName);
 
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathPrjTemplates ~ "\\"w ~ packageGuid);
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathProjects ~ "\\"w ~ GUID2wstring(g_projectFactoryCLSID));
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regMiscFiles ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathLServices ~ "\\"w ~ g_languageName);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathCodeExpansions ~ "\\"w ~ g_languageName);
 
-	hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsOptions);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathPrjTemplates ~ "\\"w ~ packageGuid);
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathProjects ~ "\\"w ~ GUID2wstring(g_projectFactoryCLSID));
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regMiscFiles ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid);
 
-	foreach(guid; guids_propertyPages)
-		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
+		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsOptions);
 
-	hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalEnumOutCLSID));
-	static if(is(typeof(g_unmarshalTargetInfoCLSID)))
-		hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalTargetInfoCLSID));
+		foreach(guid; guids_propertyPages)
+			hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ GUID2wstring(*guid));
 
-	scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
-	keyToolMenu.Delete(packageGuid);
+		hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalEnumOutCLSID));
+		static if(is(typeof(g_unmarshalTargetInfoCLSID)))
+			hr |= RegDeleteRecursive(HKEY_CLASSES_ROOT, "CLSID\\"w ~ GUID2wstring(g_unmarshalTargetInfoCLSID));
+
+		scope RegKey keyToolMenu = new RegKey(keyRoot, registrationRoot ~ "\\Menus"w);
+		keyToolMenu.Delete(packageGuid);
+	}
 
 	updateConfigurationChanged(keyRoot, registrationRoot);
 	return hr;
