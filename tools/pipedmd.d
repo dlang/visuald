@@ -147,6 +147,7 @@ int main(string[] argv)
 	string trackdir;
 	string trackfile;
 	string trackfilewr;
+	string trackfiledel;
 
 	bool inject = false;
 	if (depsfile.length > 0)
@@ -171,8 +172,9 @@ int main(string[] argv)
 				command ~= " /if " ~ quoteArg(trackdir);
 			trackfile = "*.read.*.tlog";
 			trackfilewr = "*.write.*.tlog";
+			trackfiledel = "*.delete.*.tlog";
 			foreach(f; std.file.dirEntries(trackdir, std.file.SpanMode.shallow))
-				if (globMatch(baseName(f), trackfile) || globMatch(baseName(f), trackfilewr))
+				if (globMatch(baseName(f), trackfile) || globMatch(baseName(f), trackfilewr) || globMatch(baseName(f), trackfiledel))
 					std.file.remove(f.name);
 			command ~= " /c";
 		}
@@ -198,14 +200,15 @@ int main(string[] argv)
 
 	if (exitCode == 0 && trackfile.length > 0)
 	{
-		// read read.*.tlog and remove all files found in write.*.log
+		// read read.*.tlog and remove all files found in write.*.log or delete.*.log
 		string rdbuf;
 		string wrbuf;
 		foreach(f; std.file.dirEntries(trackdir, std.file.SpanMode.shallow))
 		{
 			bool rd = globMatch(baseName(f), trackfile);
 			bool wr = globMatch(baseName(f), trackfilewr);
-			if (rd || wr)
+			bool del = globMatch(baseName(f), trackfiledel);
+			if (rd || wr || del)
 			{
 				ubyte[] fbuf = cast(ubyte[])std.file.read(f.name);
 				string cbuf;
