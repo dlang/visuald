@@ -53,6 +53,7 @@ import visuald.library;
 import visuald.pkgutil;
 import visuald.colorizer;
 import visuald.taskprovider;
+import visuald.updates;
 import visuald.vdserverclient;
 import xml = visuald.xmlwrap;
 
@@ -410,6 +411,8 @@ class Package : DisposingComObject,
 			tpp = newCom!DubPropertyPage(mOptions);
 		else if(*rguidPage == g_CmdLinePropertyPage)
 			tpp = newCom!CmdLinePropertyPage(mOptions);
+		else if(*rguidPage == g_UpdatePropertyPage)
+			tpp = newCom!UpdatePropertyPage(mOptions);
 		else if(*rguidPage == g_ToolsProperty2Page)
 			tpp = newCom!ToolsProperty2Page(mOptions);
 		else if(*rguidPage == g_ColorizerPropertyPage)
@@ -1352,6 +1355,10 @@ class GlobalOptions
 	bool UFCSExpansions;
 	byte sortExpMode;  // 0: alphabetically, 1: by type, 2: by declaration and scope
 	bool exactExpMatch;
+	ubyte checkUpdatesVisualD; // CheckFrequency: 0: never, 1: daily, 2: weekly, 3: daily prereleases
+	ubyte checkUpdatesDMD;
+	ubyte checkUpdatesLDC;
+	string baseInstallDir;
 	string VDServerIID;
 	string compileAndRunOpts;
 	string compileAndDbgOpts;
@@ -1697,6 +1704,9 @@ class GlobalOptions
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
 			sortExpMode         = getBoolOpt("sortExpMode", 0);
 			exactExpMatch       = getBoolOpt("exactExpMatch", true);
+			checkUpdatesVisualD = cast(ubyte) getIntOpt("checkUpdatesVisualD", CheckFrequency.Weekly);
+			checkUpdatesDMD     = cast(ubyte) getIntOpt("checkUpdatesDMD", CheckFrequency.Weekly);
+			checkUpdatesLDC     = cast(ubyte) getIntOpt("checkUpdatesLDC", CheckFrequency.Weekly);
 
 			string getDefaultLibPathCOFF64()
 			{
@@ -1969,6 +1979,10 @@ class GlobalOptions
 			keyToolOpts.Set("compileAndDbgOpts",   toUTF16(compileAndDbgOpts));
 			keyToolOpts.Set("compileAndDbgEngine", compileAndDbgEngine);
 			keyToolOpts.Set("dustmiteOpts",        toUTF16(dustmiteOpts));
+
+			keyToolOpts.Set("checkUpdatesVisualD", checkUpdatesVisualD);
+			keyToolOpts.Set("checkUpdatesDMD",     checkUpdatesDMD);
+			keyToolOpts.Set("checkUpdatesLDC",     checkUpdatesLDC);
 
 			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
 			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));

@@ -29,10 +29,13 @@ import visuald.register;
 
 import stdext.array;
 import stdext.path;
-import std.array;
-import std.string;
-import std.conv;
 import std.algorithm;
+import std.array;
+import std.conv;
+import std.file;
+import std.path;
+import std.process : environment;
+import std.string;
 
 // version = DParserOption;
 enum hasDubSupport = false;
@@ -424,6 +427,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		auto cb = cast(CheckBox) w;
 		auto tc = cast(TabControl) w;
 		auto mt = cast(MultiLineText) w;
+		auto lb = cast(Label) w;
 		//if(cb)
 		//	cb.cmd = 1; // enable actionDelegate
 
@@ -432,8 +436,12 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 			lines = mLinesPerMultiLine;
 
 		int pageWidth = getWidgetWidth(w ? w.parent : null, kPageWidth);
+		int btnWidth;
 		if (btn)
-			pageWidth -= kLineHeight;
+		{
+			btnWidth = max(btn.getWidth(), kLineHeight);
+			pageWidth -= btnWidth;
+		}
 		int labelWidth = 0;
 		int margin = tc ? 0 : kMargin;
 		if(label.length)
@@ -451,7 +459,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 				addResizableWidget(lab, att);
 			}
 		}
-		else if (cb || tc)
+		else if (cb || tc || lb)
 		{
 			x -= mUnindentCheckBox;
 		}
@@ -481,7 +489,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		}
 		if(btn)
 		{
-			btn.setRect(pageWidth - kMargin, y, kLineHeight, kLineHeight - kLineSpacing);
+			btn.setRect(pageWidth - kMargin, y - 1, btnWidth, kLineHeight - kLineSpacing + 1);
 			Attachment att = kAttachRight;
 			att.vdiv = 1000;
 			att.top = att.bottom = mAttachY;
@@ -491,7 +499,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		mAttachY += resizeY;
 	}
 
-	void AddLabel(string lab)
+	Label AddLabel(string lab)
 	{
 		auto w = new Label(mCanvas, lab);
 		int pageWidth = getWidgetWidth(mCanvas, kPageWidth);
@@ -502,6 +510,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		att.top = att.bottom = mAttachY;
 		addResizableWidget(w, att);
 		mLineY += kLineHeight;
+		return w;
 	}
 
 	void AddHorizontalLine(Widget parent = null)
@@ -1989,6 +1998,7 @@ class DirPropertyPage : GlobalPropertyPage
 	enum ID_LINKER64 = 1008;
 	enum ID_LINKER32COFF = 1009;
 	enum ID_INSTALLDIR = 1010;
+	enum ID_REFRESH_INSTALLDIR = 1011;
 
 	this(GlobalOptions options)
 	{
@@ -2005,6 +2015,11 @@ class DirPropertyPage : GlobalPropertyPage
 	{
 		switch(cmd)
 		{
+			case ID_REFRESH_INSTALLDIR:
+				auto opts = GetGlobalOptions();
+				CompilerDirectories* opt = getCompilerOptions(opts);
+				mDmdPath.setText(opt.InstallDir);
+				goto case;
 			case ID_INSTALLDIR:
 				updateVersionLabel();
 				break;
@@ -2160,18 +2175,23 @@ class DirPropertyPage : GlobalPropertyPage
 
 	abstract CompilerDirectories* getCompilerOptions(GlobalOptions opts);
 
+	static string getVersionLabel(ref CompilerDirectories opt, string instdir)
+	{
+		if (instdir.empty)
+			return "no installation root folder specified";
+		else if (opt.detectCompilerVersion(instdir))
+			return opt.detectedVersion;
+		else
+			return "no compiler detected at given location";
+	}
+
 	void updateVersionLabel()
 	{
 		auto opts = GetGlobalOptions();
 		CompilerDirectories* opt = getCompilerOptions(opts);
 		string instdir = mDmdPath.getText();
 
-		if (instdir.empty)
-			mVersionLabel.setText("no installation root folder specified");
-		else if (opt.detectCompilerVersion(instdir))
-			mVersionLabel.setText(opt.detectedVersion);
-		else
-			mVersionLabel.setText("no compiler detected at given location");
+		mVersionLabel.setText(getVersionLabel(*opt, instdir));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -2277,9 +2297,12 @@ class DmdDirPropertyPage : DirPropertyPage
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "DMD Directories"; }
 
+	__gshared DmdDirPropertyPage instance;
+
 	this(GlobalOptions options)
 	{
 		super(options);
+		instance = this;
 	}
 
 	override void CreateControls()
@@ -2321,9 +2344,12 @@ class LdcDirPropertyPage : DirPropertyPage
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "LDC Directories"; }
 
+	__gshared LdcDirPropertyPage instance;
+
 	this(GlobalOptions options)
 	{
 		super(options);
+		instance = this;
 	}
 
 	override void CreateControls()
@@ -2344,8 +2370,6 @@ class CmdLinePropertyPage : GlobalPropertyPage
 	{
 		super(options);
 	}
-
-	enum ID_DUBPATH = 1011;
 
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "Compile/Run/Debug/Dustmite"; }
@@ -2385,6 +2409,264 @@ class CmdLinePropertyPage : GlobalPropertyPage
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+class UpdatePropertyPage : GlobalPropertyPage
+{
+	this(GlobalOptions options)
+	{
+		super(options);
+	}
+
+	enum ID_UPDATE_VISUALD = 1101;
+	enum ID_UPDATE_DMD = 1102;
+	enum ID_UPDATE_LDC = 1103;
+	enum ID_CHECK_VISUALD = 1104;
+	enum ID_CHECK_DMD = 1105;
+	enum ID_CHECK_LDC = 1106;
+	enum ID_CHANGELOG_VISUALD = 1107;
+	enum ID_CHANGELOG_DMD = 1108;
+	enum ID_CHANGELOG_LDC = 1109;
+	enum ID_MESSAGE_LABEL = 1110;
+	enum ID_CANCEL_UPDATE = 1111;
+	enum ID_BROWSE_BASEDIR = 1112;
+
+	override string GetCategoryName() { return "D Options"; }
+	override string GetPageName() { return "Updates"; }
+
+	Button newButton(string text, int id)
+	{
+		auto btn = new Button(mCanvas, text, id);
+		int left, top, w, h;
+		btn.getRect(left, top, w, h);
+		btn.setRect(left, top, 90, h);
+		return btn;
+	}
+
+	override void CreateControls()
+	{
+		auto btn = new Button(mCanvas, "...", ID_BROWSE_BASEDIR);
+		AddControl("Base directory", mBaseDir = new Text(mCanvas), btn);
+
+		string[] updateChecks = [ "Never", "Daily", "Weekly", "Daily pre-releases" ];
+		AddTitleLine("Visual D");
+		mVisualDUpdate = newButton("Update now...", ID_UPDATE_VISUALD);
+		AddControl("Current Version", mVisualDCurrent = new Text(mCanvas), mVisualDUpdate);
+		mVisualDChangelog = newButton("Changelog...", ID_CHANGELOG_VISUALD);
+		AddControl("Latest Version", mVisualDLatest = new Text(mCanvas), mVisualDChangelog);
+		mVisualDCheckNow = newButton("Check now...", ID_CHECK_VISUALD);
+		AddControl("Check for Updates", mVisualDCheck = new ComboBox(mCanvas, updateChecks, false), mVisualDCheckNow);
+
+		AddTitleLine("DMD");
+		mDMDUpdate = newButton("Update now...", ID_UPDATE_DMD);
+		AddControl("Current Version", mDMDCurrent = new Text(mCanvas), mDMDUpdate);
+		mDMDChangelog = newButton("Changelog...", ID_CHANGELOG_DMD);
+		AddControl("Latest Version", mDMDLatest = new Text(mCanvas), mDMDChangelog);
+		mDMDCheckNow = newButton("Check now...", ID_CHECK_DMD);
+		AddControl("Check for Updates", mDMDCheck = new ComboBox(mCanvas, updateChecks, false), mDMDCheckNow);
+
+		AddTitleLine("LDC");
+		mLDCUpdate = newButton("Update now...", ID_UPDATE_LDC);
+		AddControl("Current Version", mLDCCurrent = new Text(mCanvas), mLDCUpdate);
+		mLDCChangelog = newButton("Changelog...", ID_CHANGELOG_LDC);
+		AddControl("Latest Version", mLDCLatest = new Text(mCanvas), mLDCChangelog);
+		mLDCCheckNow = newButton("Check now...", ID_CHECK_LDC);
+		AddControl("Check for Updates", mLDCCheck = new ComboBox(mCanvas, updateChecks, false), mLDCCheckNow);
+
+		mLineY += kLineHeight;
+		mUpdateCancel = newButton("Cancel", ID_CANCEL_UPDATE);
+		AddControl("", mMessageLabel = new Label(mCanvas), mUpdateCancel);
+	}
+
+	import visuald.updates;
+	import core.thread;
+
+	static string checkMessage(UpdateInfo* info)
+	{
+		if (!info)
+			return "unavailable";
+		import std.datetime;
+		SysTime now = Clock.currTime;
+		if (info.lastCheck.year == now.year && info.lastCheck.dayOfYear == now.dayOfYear)
+			return info.name  ~ " - checked today";
+		string s = info.lastCheck.toString();
+		return info.name ~ " - checked " ~ s[0..11];
+	}
+
+	void updateVisualDInfo(UpdateInfo* info)
+	{
+		string curr_version = "Visual D " ~ full_version;
+		mVisualDCurrent.setText(curr_version);
+		mVisualDLatest.setText(info ? info.name : "unavailable");
+		mVisualDUpdate.setEnabled(info && info.name != curr_version);
+	}
+
+	void updateLDCInfo(UpdateInfo* info)
+	{
+		if(GlobalOptions options = GetGlobalOptions())
+		{
+			string curr_version = DirPropertyPage.getVersionLabel(options.LDC, options.LDC.InstallDir);
+			mLDCCurrent.setText(curr_version);
+			mLDCLatest.setText(checkMessage(info));
+			mLDCUpdate.setEnabled(info && extractVersion(info.name) != extractVersion(curr_version));
+		}
+	}
+
+	void updateDMDInfo(UpdateInfo* info)
+	{
+		if(GlobalOptions options = GetGlobalOptions())
+		{
+			string curr_version = DirPropertyPage.getVersionLabel(options.DMD, options.DMD.InstallDir);
+			mDMDCurrent.setText(curr_version);
+			mDMDLatest.setText(checkMessage(info));
+			mDMDUpdate.setEnabled(info && extractVersion(info.name) != extractVersion(curr_version));
+		}
+	}
+
+	override void SetControls(GlobalOptions opts)
+	{
+		mVisualDCurrent.setEnabled(false);
+		mVisualDLatest.setEnabled(false);
+		mDMDCurrent.setEnabled(false);
+		mDMDLatest.setEnabled(false);
+		mLDCCurrent.setEnabled(false);
+		mLDCLatest.setEnabled(false);
+
+		mBaseDir.setText(opts.baseInstallDir);
+		mVisualDCheck.setSelection(opts.checkUpdatesVisualD);
+		mDMDCheck.setSelection(opts.checkUpdatesDMD);
+		mLDCCheck.setSelection(opts.checkUpdatesLDC);
+
+		auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.VisualD, -1.days, opts.checkUpdatesVisualD);
+		updateVisualDInfo(info);
+
+		info = checkForUpdate(mBaseDir.getText(), CheckProduct.DMD, -1.days, opts.checkUpdatesVisualD);
+		updateDMDInfo(info);
+
+		info = checkForUpdate(mBaseDir.getText(), CheckProduct.LDC, -1.days, opts.checkUpdatesVisualD);
+		updateLDCInfo(info);
+
+		mUpdateCancel.setVisible(false);
+	}
+
+	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
+	{
+		int changes = 0;
+		changes += changeOption(mBaseDir.getText(), opts.baseInstallDir, refopts.baseInstallDir);
+		changes += changeOption(cast(ubyte)mVisualDCheck.getSelection(), opts.checkUpdatesVisualD, refopts.checkUpdatesVisualD);
+		changes += changeOption(cast(ubyte)mDMDCheck.getSelection(), opts.checkUpdatesDMD, refopts.checkUpdatesDMD);
+		changes += changeOption(cast(ubyte)mLDCCheck.getSelection(), opts.checkUpdatesLDC, refopts.checkUpdatesLDC);
+		return changes;
+	}
+
+	extern(D) void updateMessage(string msg)
+	{
+		mMessage = _toUTF16z(msg);
+		if (mCanvas && mCanvas.hwnd && mMessageLabel && mMessageLabel.hwnd)
+			PostMessage(mCanvas.hwnd, WM_COMMAND, ID_MESSAGE_LABEL, cast(LPARAM)mMessageLabel.hwnd);
+		else
+			showStatusBarText(msg);
+
+		if (msg.startsWith("Switched to"))
+		{
+			if (auto pp = DmdDirPropertyPage.instance)
+				if (pp.mCanvas && pp.mCanvas.hwnd)
+					PostMessage(pp.mCanvas.hwnd, WM_COMMAND, DirPropertyPage.ID_REFRESH_INSTALLDIR, 0);
+
+			if (auto pp = LdcDirPropertyPage.instance)
+				if (pp.mCanvas && pp.mCanvas.hwnd)
+					PostMessage(pp.mCanvas.hwnd, WM_COMMAND, DirPropertyPage.ID_REFRESH_INSTALLDIR, 0);
+
+			mUpdateCancel.setVisible(false);
+		}
+	}
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_BROWSE_BASEDIR:
+				if(auto dir = browseDirectory(mCanvas.hwnd, "Select base installation directory"))
+					mBaseDir.setText(dir);
+				break;
+
+			case ID_MESSAGE_LABEL:
+				SendMessage(mMessageLabel.hwnd, WM_SETTEXT, 0, cast(LPARAM)mMessage);
+				break;
+
+			case ID_UPDATE_VISUALD:
+				mUpdateCancel.setVisible(true);
+				doUpdate(mBaseDir.getText(), CheckProduct.VisualD, mVisualDCheck.getSelection(), &updateMessage);
+				break;
+			case ID_UPDATE_DMD:
+				mUpdateCancel.setVisible(true);
+				doUpdate(mBaseDir.getText(), CheckProduct.DMD, mDMDCheck.getSelection(), &updateMessage);
+				break;
+			case ID_UPDATE_LDC:
+				mUpdateCancel.setVisible(true);
+				doUpdate(mBaseDir.getText(), CheckProduct.LDC, mLDCCheck.getSelection(), &updateMessage);
+				break;
+
+			case ID_CHANGELOG_DMD:
+				string url = "https://dlang.org/changelog/";
+				if (auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.DMD, -1.days, mDMDCheck.getSelection()))
+				{
+					VersionInfo vinfo = extractVersion(info.name);
+					url ~= vinfo.major ~ "." ~ vinfo.minor ~ "." ~ vinfo.rev ~ ".html";
+				}
+				ShellExecute(null, null, _toUTF16z(url), null, null, SW_SHOW);
+				break;
+			case ID_CHANGELOG_VISUALD:
+			case ID_CHANGELOG_LDC:
+				wstring url = cmd == ID_CHANGELOG_VISUALD ? "https://github.com/dlang/visuald/releases"
+				                                          : "https://github.com/ldc-developers/ldc/releases";
+				ShellExecute(null, null, url.ptr, null, null, SW_SHOW);
+				break;
+			case ID_CHECK_VISUALD:
+				auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.VisualD, 0.days, mVisualDCheck.getSelection());
+				updateVisualDInfo(info);
+				break;
+			case ID_CHECK_LDC:
+				auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.LDC, 0.days, mLDCCheck.getSelection());
+				updateLDCInfo(info);
+				break;
+			case ID_CHECK_DMD:
+				auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.DMD, 0.days, mDMDCheck.getSelection());
+				updateDMDInfo(info);
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
+	}
+
+	Text mBaseDir;
+
+	Text mVisualDCurrent;
+	Text mVisualDLatest;
+	Button mVisualDUpdate;
+	Button mVisualDCheckNow;
+	Button mVisualDChangelog;
+	ComboBox mVisualDCheck;
+
+	Text mDMDCurrent;
+	Text mDMDLatest;
+	Button mDMDUpdate;
+	Button mDMDCheckNow;
+	Button mDMDChangelog;
+	ComboBox mDMDCheck;
+
+	Text mLDCCurrent;
+	Text mLDCLatest;
+	Button mLDCUpdate;
+	Button mLDCCheckNow;
+	Button mLDCChangelog;
+	ComboBox mLDCCheck;
+
+	Label mMessageLabel;
+	Button mUpdateCancel;
+	const(wchar)* mMessage; // keep a reference so it is not collected while posted
+}
+
+///////////////////////////////////////////////////////////////////////////////
 class DubPropertyPage : GlobalPropertyPage
 {
 	this(GlobalOptions options)
@@ -2392,7 +2674,7 @@ class DubPropertyPage : GlobalPropertyPage
 		super(options);
 	}
 
-	enum ID_DUBPATH = 1011;
+	enum ID_DUBPATH = 1040;
 
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "DUB Options"; }
@@ -2825,6 +3107,7 @@ const GUID    g_LdcDirPropertyPage       = uuid("002a2de9-8bb6-484d-9825-7e4ad40
 const GUID    g_CmdLinePropertyPage      = uuid("002a2de9-8bb6-484d-9828-7e4ad4084715");
 const GUID    g_DubPropertyPage          = uuid("002a2de9-8bb6-484d-9827-7e4ad4084715");
 const GUID    g_ToolsProperty2Page       = uuid("002a2de9-8bb6-484d-9822-7e4ad4084715");
+const GUID    g_UpdatePropertyPage       = uuid("002a2de9-8bb6-484d-9829-7e4ad4084715");
 
 // registered under Languages\\Language Services\\D\\EditorToolsOptions\\Editor, created explicitely by package
 const GUID    g_ColorizerPropertyPage    = uuid("002a2de9-8bb6-484d-9821-7e4ad4084715");

@@ -305,6 +305,7 @@ static const wstring regPathToolsDirsDmd   = "\\ToolsOptionsPages\\Projects\\Vis
 static const wstring regPathToolsDirsGdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\GDC Directories"w;
 static const wstring regPathToolsDirsLdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\LDC Directories"w;
 static const wstring regPathToolsDirsCmd   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\Compile/Run/Debug/Dustmite"w;
+static const wstring regPathToolsUpdate    = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\Updates"w;
 static const wstring regPathToolsDub       = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\DUB Options"w;
 static const wstring regPathMagoOptions    = "\\ToolsOptionsPages\\Debugger\\Mago"w;
 static const wstring regMiscFiles          = regPathProjects ~ "\\{A2FE74E1-B743-11d0-AE1A-00A0C90FFFC3}"w;
@@ -698,6 +699,12 @@ version(none){
 		keyToolOptsLdc.Set("Package"w, packageGuid);
 		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_CmdLinePropertyPage));
 		keyToolOptsLdc.Set("Sort"w, 40);
+
+		scope RegKey keyToolOptsUpdate = new RegKey(keyRoot, registrationRoot ~ regPathToolsUpdate);
+		keyToolOptsLdc.Set(null, "Updates");
+		keyToolOptsLdc.Set("Package"w, packageGuid);
+		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_UpdatePropertyPage));
+		keyToolOptsLdc.Set("Sort"w, 50);
 
 static if(hasDubSupport)
 {
