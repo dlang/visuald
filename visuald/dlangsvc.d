@@ -415,9 +415,9 @@ class LanguageService : DisposingComObject,
 		DefaultColorData("Visual D Identifier Variable",       -1, CI_USERTEXT_BK, RGB(128, 128, 128)),
 
 		DefaultColorData("Visual D Identifier Alias",          -1, CI_USERTEXT_BK, RGB(0, 128, 128)),
-		DefaultColorData("Visual D Identifier Module",         -1, CI_USERTEXT_BK, RGB(64, 64, 160)),
-		DefaultColorData("Visual D Identifier Function",       -1, CI_USERTEXT_BK, RGB(128, 96, 160),   RGB(128, 128, 160)),
-		DefaultColorData("Visual D Identifier Method",         -1, CI_USERTEXT_BK, RGB(128, 96, 160),   RGB(128, 128, 160)),
+		DefaultColorData("Visual D Identifier Module",         -1, CI_USERTEXT_BK, RGB(64, 64, 160),     RGB(128, 192, 208)),
+		DefaultColorData("Visual D Identifier Function",       -1, CI_USERTEXT_BK, RGB(128, 96, 160),    RGB(128, 128, 160)),
+		DefaultColorData("Visual D Identifier Method",         -1, CI_USERTEXT_BK, RGB(128, 96, 160),    RGB(128, 128, 160)),
 		DefaultColorData("Visual D Identifier Basic Type",     -1, CI_USERTEXT_BK, RGB(0, 192, 128)),
 
 		DefaultColorData("Visual D Predefined Version",  -1,          CI_USERTEXT_BK, RGB(160, 0, 0),    RGB(160, 64, 64)),
