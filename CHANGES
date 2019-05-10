@@ -1116,3 +1116,6 @@ Version history
   * visualdproj: fixed additional options not passed to single file compilation
   * VS2015: workaround VS not correctly updating extension caches after uninstallation
   * bugzilla 19826: visualdproj projects created for LDC still use DMD
+
+unreleased Version 0.50.0
+  * VS 16.1 Preview 2: ignore tracked files in *.delete.*.tlog as dependencies, too
