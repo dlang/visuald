@@ -213,7 +213,7 @@ $(DIVID cssmenu, $(UL
     $(MENU_W_SUBMENU_LINK $(ROOT_DIR)documentation.html, Documentation)
       $(NAVIGATION_DOCUMENTATION)
     $(MENU $(ROOT_DIR)download.html, Downloads)
-    $(MENU http://code.dlang.org, Packages)
+    $(MENU https://code.dlang.org, Packages)
     $(MENU_W_SUBMENU_LINK $(ROOT_DIR)community.html, Community)
       $(NAVIGATION_COMMUNITY)
     $(MENU_W_SUBMENU_LINK $(ROOT_DIR)resources.html, Resources)
@@ -222,13 +222,13 @@ $(DIVID cssmenu, $(UL
 NAVIGATION_COMMUNITY=
 $(SUBMENU
     $(ROOT_DIR)bugstats.php, Bug Tracker,
-    http://forum.dlang.org, Forums,
+    https://forum.dlang.org, Forums,
     irc://irc.freenode.net/d, IRC,
-    http://github.com/dlang, D on GitHub,
-    http://wiki.dlang.org, Wiki,
-    http://wiki.dlang.org/Review_Queue, Review Queue,
-    http://twitter.com/search?q=%23dlang, Twitter,
-    http://digitalmars.com/d/dlinks.html, More Links
+    https://github.com/dlang, D on GitHub,
+    https://wiki.dlang.org, Wiki,
+    https://wiki.dlang.org/Review_Queue, Review Queue,
+    https://twitter.com/search?q=%23dlang, Twitter,
+    https://digitalmars.com/d/dlinks.html, More Links
 )
 NAVIGATION_DOCUMENTATION=
 $(SUBMENU
@@ -243,10 +243,10 @@ $(SUBMENU
     $(ROOT_DIR)library/index.html, NEW Library Reference Preview,
     $(ROOT_DIR)tools.html, D-Specific Tools,
     $(VISUALD), Visual D,
-    http://wiki.dlang.org/Editors, Editors,
-    http://wiki.dlang.org/IDEs, IDEs,
-    http://wiki.dlang.org/Tutorials, Tutorials,
-    http://wiki.dlang.org/Books, Books,
+    https://wiki.dlang.org/Editors, Editors,
+    https://wiki.dlang.org/IDEs, IDEs,
+    https://wiki.dlang.org/Tutorials, Tutorials,
+    https://wiki.dlang.org/Books, Books,
     $(ROOT_DIR)dstyle.html, The D Style,
     $(ROOT_DIR)glossary.html, Glossary,
     $(ROOT_DIR)acknowledgements.html, Acknowledgments,
@@ -308,12 +308,12 @@ SEARCHDEFAULT_FORUM=
 SEARCHDEFAULT_SPEC=
 SEARCH_BOX=
     $(DIVID search-box,
-        <form method="get" action="http://google.com/search">
+        <form method="get" action="https://google.com/search">
             <input type="hidden" id="domains" name="domains" value="dlang.org">
             <input type="hidden" id="sourceid" name="sourceid" value="google-search">
             $(SPANID search-query, <input id="q" name="q" placeholder="Search">)$(SPANID search-dropdown, $(SPANC helper,
                 <select id="sitesearch" name="sitesearch" size="1">
-                    <option value="http://rainers.github.io/visuald/visuald">Visual D</option>
+                    <option value="https://rainers.github.io/visuald/visuald">Visual D</option>
                     <option value="dlang.org">dlang.org</option>
                     <option $(SEARCHDEFAULT_SPEC) value="dlang.org/spec">Language</option>
                     <option $(SEARCHDEFAULT_PHOBOS) value="dlang.org/phobos">Library</option>
@@ -413,7 +413,7 @@ UNDERSCORE_PREFIXED_SKIP2=$(UNDERSCORE_PREFIXED_SKIP $+)
 _=
 
 VERTROW=$(TR $(TDX $1, $+))
-VISUALD = http://rainers.github.io/visuald/visuald/StartPage.html
+VISUALD = https://rainers.github.io/visuald/visuald/StartPage.html
 _=
 
 WHITE=$(SPANC white, $0)
