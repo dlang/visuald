@@ -1707,6 +1707,7 @@ class GlobalOptions
 			checkUpdatesVisualD = cast(ubyte) getIntOpt("checkUpdatesVisualD", CheckFrequency.Weekly);
 			checkUpdatesDMD     = cast(ubyte) getIntOpt("checkUpdatesDMD", CheckFrequency.Weekly);
 			checkUpdatesLDC     = cast(ubyte) getIntOpt("checkUpdatesLDC", CheckFrequency.Weekly);
+			baseInstallDir      = getStringOpt("baseInstallDir", "c:\\D");
 
 			string getDefaultLibPathCOFF64()
 			{
@@ -1983,6 +1984,7 @@ class GlobalOptions
 			keyToolOpts.Set("checkUpdatesVisualD", checkUpdatesVisualD);
 			keyToolOpts.Set("checkUpdatesDMD",     checkUpdatesDMD);
 			keyToolOpts.Set("checkUpdatesLDC",     checkUpdatesLDC);
+			keyToolOpts.Set("baseInstallDir",      toUTF16(baseInstallDir));
 
 			keyToolOpts.Set("coverageExecutionDirs", toUTF16(join(coverageExecutionDirs, ";")));
 			keyToolOpts.Set("coverageBuildDirs",   toUTF16(join(coverageBuildDirs, ";")));
