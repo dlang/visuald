@@ -26,10 +26,20 @@ set SRC=%SRC% doc/CompileCommands.dd
 set SRC=%SRC% doc/DustMite.dd
 set SRC=%SRC% doc/vcxproject.dd
 
-set DDOC=doc/macros.ddoc doc/html.ddoc ..\..\rainers\d-programming-language.org\dlang.org.ddoc doc/visuald.ddoc
+set DDOC=doc/macros.ddoc doc/html.ddoc doc/dlang.org.ddoc doc/visuald.ddoc
+rem ..\..\rainers\d-programming-language.org\dlang.org.ddoc
 
 if not exist %WEB% md %WEB%
 if not exist %WEB%\images md %WEB%\images
 cp -u doc/images/* %WEB%\images
+
+if not exist %WEB%\css md %WEB%\css
+cp -u doc/css/* %WEB%\css
+
+if not exist %WEB%\js md %WEB%\js
+cp -u doc/js/* %WEB%\js
+
+cp -u doc/favicon.ico %WEB%
+
 %DMD% -Dd%WEB% -o- -w %DDOC% %SRC%
 

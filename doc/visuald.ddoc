@@ -6,7 +6,6 @@ PROJECT = visuald
 WIKI = visuald
 SELF_PATH =
 LAYOUT_SUFFIX=
-$(SCRIPTLOAD js/run-main-website.js)
 
 VDLINK=$(LINK2 $1.html, $2)
 IMG = <img src="$0" />
