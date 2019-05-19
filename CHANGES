@@ -1119,3 +1119,12 @@ Version history
 
 unreleased Version 0.50.0
   * VS 16.1 Preview 2: ignore tracked files in *.delete.*.tlog as dependencies, too
+  * mago:
+    - fixed width of hex display of negative values
+    - dynamic type not shown for types that have no members (including interfaces)
+    - dynamic type now displayed with the declared type (in braces)
+    - determine dynamic type of C++ classes
+    - demangle D symbol names
+    - regression: use of registers in expression was lost at some point
+  * check for updates for Visual D, DMD and LDC
+  * download and install DMD and LDC

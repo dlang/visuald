@@ -1582,7 +1582,7 @@ class DmdLinkerPropertyPage : ProjectPropertyPage
 		AddControl("", mPrivatePhobos = new CheckBox(mCanvas, "Build and use local version of phobos with same compiler options (DMD only)"));
 		AddControl("", mDebugLib      = new CheckBox(mCanvas, "Use debug version of the D runtime library (LDC only)"));
 		AddControl("", mUseStdLibPath = new CheckBox(mCanvas, "Use global and standard library search paths"));
-		AddControl("C Runtime", mCRuntime = new ComboBox(mCanvas, [ "None", "Static Release (LIBCMT)", "Static Debug (LIBCMTD)", "Dynamic Release (MSCVRT)", "Dynamic Debug (MSCVRTD)" ], false));
+		AddControl("C Runtime", mCRuntime = new ComboBox(mCanvas, [ "None", "Static Release (LIBCMT)", "Static Debug (LIBCMTD)", "Dynamic Release (MSVCRT)", "Dynamic Debug (MSVCRTD)" ], false));
 	}
 
 	void EnableControls()
@@ -2175,23 +2175,13 @@ class DirPropertyPage : GlobalPropertyPage
 
 	abstract CompilerDirectories* getCompilerOptions(GlobalOptions opts);
 
-	static string getVersionLabel(ref CompilerDirectories opt, string instdir)
-	{
-		if (instdir.empty)
-			return "no installation root folder specified";
-		else if (opt.detectCompilerVersion(instdir))
-			return opt.detectedVersion;
-		else
-			return "no compiler detected at given location";
-	}
-
 	void updateVersionLabel()
 	{
 		auto opts = GetGlobalOptions();
 		CompilerDirectories* opt = getCompilerOptions(opts);
 		string instdir = mDmdPath.getText();
 
-		mVersionLabel.setText(getVersionLabel(*opt, instdir));
+		mVersionLabel.setText(opt.getCompilerVersionLabel(instdir));
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -2495,7 +2485,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 	{
 		string curr_version = "Visual D " ~ full_version;
 		mVisualDCurrent.setText(curr_version);
-		mVisualDLatest.setText(info ? info.name : "unavailable");
+		mVisualDLatest.setText(checkMessage(info));
 		mVisualDUpdate.setEnabled(info && info.name != curr_version);
 	}
 
@@ -2503,7 +2493,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 	{
 		if(GlobalOptions options = GetGlobalOptions())
 		{
-			string curr_version = DirPropertyPage.getVersionLabel(options.LDC, options.LDC.InstallDir);
+			string curr_version = options.LDC.getCompilerVersionLabel(options.LDC.InstallDir);
 			mLDCCurrent.setText(curr_version);
 			mLDCLatest.setText(checkMessage(info));
 			mLDCUpdate.setEnabled(info && extractVersion(info.name) != extractVersion(curr_version));
@@ -2514,7 +2504,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 	{
 		if(GlobalOptions options = GetGlobalOptions())
 		{
-			string curr_version = DirPropertyPage.getVersionLabel(options.DMD, options.DMD.InstallDir);
+			string curr_version = options.DMD.getCompilerVersionLabel(options.DMD.InstallDir);
 			mDMDCurrent.setText(curr_version);
 			mDMDLatest.setText(checkMessage(info));
 			mDMDUpdate.setEnabled(info && extractVersion(info.name) != extractVersion(curr_version));
@@ -2535,13 +2525,13 @@ class UpdatePropertyPage : GlobalPropertyPage
 		mDMDCheck.setSelection(opts.checkUpdatesDMD);
 		mLDCCheck.setSelection(opts.checkUpdatesLDC);
 
-		auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.VisualD, -1.days, opts.checkUpdatesVisualD);
+		auto info = checkForUpdate(CheckProduct.VisualD, -1.days, opts.checkUpdatesVisualD);
 		updateVisualDInfo(info);
 
-		info = checkForUpdate(mBaseDir.getText(), CheckProduct.DMD, -1.days, opts.checkUpdatesVisualD);
+		info = checkForUpdate(CheckProduct.DMD, -1.days, opts.checkUpdatesVisualD);
 		updateDMDInfo(info);
 
-		info = checkForUpdate(mBaseDir.getText(), CheckProduct.LDC, -1.days, opts.checkUpdatesVisualD);
+		info = checkForUpdate(CheckProduct.LDC, -1.days, opts.checkUpdatesLDC);
 		updateLDCInfo(info);
 
 		mUpdateCancel.setVisible(false);
@@ -2607,7 +2597,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 
 			case ID_CHANGELOG_DMD:
 				string url = "https://dlang.org/changelog/";
-				if (auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.DMD, -1.days, mDMDCheck.getSelection()))
+				if (auto info = checkForUpdate(CheckProduct.DMD, -1.days, mDMDCheck.getSelection()))
 				{
 					VersionInfo vinfo = extractVersion(info.name);
 					url ~= vinfo.major ~ "." ~ vinfo.minor ~ "." ~ vinfo.rev ~ ".html";
@@ -2621,17 +2611,22 @@ class UpdatePropertyPage : GlobalPropertyPage
 				ShellExecute(null, null, url.ptr, null, null, SW_SHOW);
 				break;
 			case ID_CHECK_VISUALD:
-				auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.VisualD, 0.days, mVisualDCheck.getSelection());
+				auto info = checkForUpdate(CheckProduct.VisualD, 0.days, mVisualDCheck.getSelection());
 				updateVisualDInfo(info);
 				break;
 			case ID_CHECK_LDC:
-				auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.LDC, 0.days, mLDCCheck.getSelection());
+				auto info = checkForUpdate(CheckProduct.LDC, 0.days, mLDCCheck.getSelection());
 				updateLDCInfo(info);
 				break;
 			case ID_CHECK_DMD:
-				auto info = checkForUpdate(mBaseDir.getText(), CheckProduct.DMD, 0.days, mDMDCheck.getSelection());
+				auto info = checkForUpdate(CheckProduct.DMD, 0.days, mDMDCheck.getSelection());
 				updateDMDInfo(info);
 				break;
+
+			case ID_CANCEL_UPDATE:
+				cancelAllUpdates();
+				break;
+
 			default:
 				break;
 		}

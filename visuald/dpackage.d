@@ -121,6 +121,7 @@ const GUID    g_unmarshalEnumOutCLSID    = uuid("002a2de9-8bb6-484d-980e-7e4ad40
 
 const GUID    g_VisualDHelperCLSID       = uuid("002a2de9-8bb6-484d-aa10-7e4ad4084715");
 const GUID    g_VisualCHelperCLSID       = uuid("002a2de9-8bb6-484d-aa11-7e4ad4084715");
+const GUID    g_VisualDHelper15CLSID     = uuid("002a2de9-8bb6-484d-aa15-7e4ad4084715");
 
 // more guids in propertypage.d starting with 9810
 
@@ -674,13 +675,7 @@ version(none)
 		}
 		if(nCmdID == CmdShowLangPage)
 		{
-			auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false);
-			GUID targetGUID = uuid("734A5DE2-DEBA-11d0-A6D0-00C04FB67F6A");
-			VARIANT var;
-			var.vt = VT_BSTR;
-			var.bstrVal = allocBSTR("002A2DE9-8BB6-484D-9823-7E4AD4084715");
-			pIVsUIShell.PostExecCommand(&CMDSETID_StandardCommandSet97, cmdidToolsOptions, OLECMDEXECOPT_DODEFAULT, &var);
-			freeBSTR(var.bstrVal);
+			openSettingsPage("002A2DE9-8BB6-484D-9823-7E4AD4084715");
 			return S_OK;
 		}
 		if(nCmdID == CmdShowWebsite)
@@ -700,6 +695,64 @@ version(none)
 		return OLECMDERR_E_NOTSUPPORTED;
 	}
 
+	extern(D) void checkUpdates()
+	{
+		auto opts = GetGlobalOptions();
+
+		string getInstalledVersion(CheckProduct prod)
+		{
+			switch(prod)
+			{
+				case CheckProduct.VisualD:
+					return full_version;
+				case CheckProduct.DMD:
+					return opts.DMD.getCompilerVersionLabel(opts.DMD.InstallDir);
+				case CheckProduct.LDC:
+					return opts.LDC.getCompilerVersionLabel(opts.LDC.InstallDir);
+				default:
+					return null;
+			}
+		}
+
+		string checkProduct(CheckProduct prod, ubyte freq)
+		{
+			CheckFrequency frequency = cast(CheckFrequency)freq;
+			if (frequency != CheckFrequency.Never)
+				if (auto info = checkForUpdate(prod, toDuration(frequency), frequency))
+					if (info.updated)
+					{
+						string ver = getInstalledVersion(prod);
+						if (extractVersion(ver) == extractVersion(info.name))
+							return null;
+						return info.name;
+					}
+			return null;
+		}
+
+		string[3] msgs;
+		msgs[0] = checkProduct(CheckProduct.VisualD, opts.checkUpdatesVisualD);
+		msgs[1] = checkProduct(CheckProduct.DMD, opts.checkUpdatesDMD);
+		msgs[2] = checkProduct(CheckProduct.LDC, opts.checkUpdatesLDC);
+
+		string message;
+		int cnt = 0;
+		foreach(m; msgs)
+			if (m)
+			{
+				if (!message.empty)
+					message ~= ", ";
+				message ~= m;
+				cnt++;
+			}
+
+		if (cnt == 1)
+			mUpdateCheckMessage = "New update available: " ~ message;
+		else if (cnt > 1)
+			mUpdateCheckMessage = "New updates available: " ~ message;
+		else
+			mUpdateCheckMessage = null;
+	}
+
 	// IOleComponent Methods
 	BOOL FDoIdle(in OLEIDLEF grfidlef)
 	{
@@ -709,6 +762,22 @@ version(none)
 			Package.GetLibInfos().updateDefinitions();
 		}
 		OutputPaneBuffer.flush();
+
+		if (!mHasMadeUpdateCheck &&
+		    (GetGlobalOptions().checkUpdatesVisualD != CheckFrequency.Never || 
+		     GetGlobalOptions().checkUpdatesDMD != CheckFrequency.Never || 
+		     GetGlobalOptions().checkUpdatesLDC != CheckFrequency.Never))
+		{
+			import core.thread;
+			mHasMadeUpdateCheck = true;
+			new Thread(&checkUpdates).start();
+		}
+		else if (mUpdateCheckMessage)
+		{
+			showInfoBar(mUpdateCheckMessage, "Goto Update Page",
+						(int) { openSettingsPage("002A2DE9-8BB6-484D-9829-7E4AD4084715"); return true; });
+			mUpdateCheckMessage = null;
+		}
 
 		if (mLangsvc.OnIdle())
 			return true;
@@ -1207,8 +1276,11 @@ private:
 
 	GlobalOptions    mOptions;
 	LibraryInfos     mLibInfos;
-	bool             mWantsUpdateLibInfos;
 	Library          mLibrary;
+	bool             mWantsUpdateLibInfos;
+
+	bool             mHasMadeUpdateCheck;
+	string           mUpdateCheckMessage;
 }
 
 struct CompilerDirectories
@@ -1236,6 +1308,16 @@ struct CompilerDirectories
 
 	string detectedVersion;
 	long   detectedDate;
+
+	string getCompilerVersionLabel(string instdir)
+	{
+		if (instdir.empty)
+			return "no installation root folder specified";
+		else if (detectCompilerVersion(instdir))
+			return detectedVersion;
+		else
+			return "no compiler detected at given location";
+	}
 
 	bool detectCompilerVersion()
 	{

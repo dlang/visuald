@@ -29,6 +29,18 @@ enum CheckFrequency
 	DailyPrereleases
 }
 
+Duration toDuration(CheckFrequency freq)
+{
+	switch(freq)
+	{
+		default:
+		case CheckFrequency.Never: return Duration.max;
+		case CheckFrequency.Daily: return 1.days;
+		case CheckFrequency.Weekly: return 7.days;
+		case CheckFrequency.DailyPrereleases: return 1.days;
+	}
+}
+
 enum CheckProduct
 {
 	VisualD,
@@ -42,12 +54,13 @@ struct UpdateInfo
 	string published;
 	string download_url;
 	SysTime lastCheck;
+	bool updated;
 }
 
-UpdateInfo* checkForUpdate(string baseDir, CheckProduct prod, Duration renew, int frequency)
+UpdateInfo* checkForUpdate(CheckProduct prod, Duration renew, int frequency)
 {
 	bool prereleases = frequency == CheckFrequency.DailyPrereleases;
-	string updateDir = std.path.buildPath(baseDir, "Downloads");
+	string updateDir = std.path.buildPath(environment["APPDATA"], "VisualD", "Updates");
 	if (!std.file.exists(updateDir))
 		mkdirRecurse(updateDir);
 
@@ -73,6 +86,7 @@ UpdateInfo* checkForUpdate(string baseDir, CheckProduct prod, Duration renew, in
 			return null;
 	}
 
+	bool updated = false;
 	bool cachedOnly = renew < 0.days;
 	SysTime modTime;
 	char[] data;
@@ -91,6 +105,7 @@ UpdateInfo* checkForUpdate(string baseDir, CheckProduct prod, Duration renew, in
 		data = winHttpGet(domain, url, prod != CheckProduct.DMD);
 		if (data)
 			std.file.write(tgt, data);
+		updated = true;
 	}
 	if (!data)
 		return null;
@@ -100,9 +115,10 @@ UpdateInfo* checkForUpdate(string baseDir, CheckProduct prod, Duration renew, in
 	if (prod == CheckProduct.DMD)
 	{
 		auto info = new UpdateInfo;
-		info.name = txt;
+		info.name = "DMD " ~ txt;
 		info.download_url = "http://" ~ domain ~ url[0..$-6] ~ "2.x/" ~ txt ~ "/dmd." ~ txt ~ ".windows.7z";
 		info.lastCheck = modTime;
+		info.updated = updated;
 		return info;
 	}
 	JSONValue j = parseJSON(txt);
@@ -122,6 +138,7 @@ UpdateInfo* checkForUpdate(string baseDir, CheckProduct prod, Duration renew, in
 				info.download_url = asset["browser_download_url"].str();
 				debug(UPDATE) writeln(info.published, " ", info.name, " ", info.download_url);
 				info.lastCheck = modTime;
+				info.updated = updated;
 				return info;
 			}
 		}
@@ -133,12 +150,20 @@ UpdateInfo* checkForUpdate(string baseDir, CheckProduct prod, Duration renew, in
 import core.sys.windows.winhttp;
 import core.stdc.stdio;
 
+private shared(uint) updateCancelCounter;
+
+void cancelAllUpdates()
+{
+	updateCancelCounter = updateCancelCounter + 1;
+}
+
 char[] winHttpGet(string server, string request, bool https)
 {
 	DownloadRequest req;
 	req.server = toUTF16z(server);
 	req.request = toUTF16z(request);
 	req.port = https ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT;
+	req.cancelCounter = updateCancelCounter;
 
 	winHttpGet(&req);
 	return req.data;
@@ -247,9 +272,10 @@ struct DownloadRequest
 	const(wchar)* server;
 	const(wchar)* request;
 	ushort port = INTERNET_DEFAULT_HTTPS_PORT;
-	bool cancel;
 	bool done;
 	bool error;
+	bool cancel() { return updateCancelCounter != cancelCounter; }
+	uint cancelCounter;
 	string errorMessage;
 
 	// to be filled by download
@@ -307,6 +333,7 @@ DownloadRequest* startDownload(string url)
 	req.server = toUTF16z(domain);
 	req.request = toUTF16z(url);
 	req.port = port;
+	req.cancelCounter = updateCancelCounter;
 
 	req.thread = new Thread(() {
 		try
@@ -396,12 +423,12 @@ string approxBytes(long bytes)
 
 void doUpdate(string baseDir, CheckProduct prod, int frequency, void delegate(string) dgProgress)
 {
-	if (auto info = checkForUpdate(baseDir, prod, -1.days, frequency))
+	if (auto info = checkForUpdate(prod, -1.days, frequency))
 	{
 		runAsync(() {
 			string name = baseName(info.download_url);
-			string updateDir = buildPath(baseDir, "Downloads");
-			string tgtfile = buildPath(updateDir, name);
+			string downloadDir = buildPath(baseDir, "Downloads");
+			string tgtfile = buildPath(downloadDir, name);
 			if (!std.file.exists(tgtfile))
 			{
 				dgProgress("Downloading " ~ name);
@@ -421,12 +448,13 @@ void doUpdate(string baseDir, CheckProduct prod, int frequency, void delegate(st
 					Thread.sleep(500.msecs);
 				}
 				req.thread.join();
-				dgProgress(name ~ (req.error ? ": Error: " ~ req.errorMessage : ": downloaded"));
-				if (!req.done || req.error)
+				dgProgress(name ~ (req.cancel ? ": download cancelled" :
+				                   req.error ? ": Error: " ~ req.errorMessage : ": downloaded"));
+				if (!req.done || req.error || req.cancel)
 					return;
 
-				if (!std.file.exists(updateDir))
-					mkdirRecurse(updateDir);
+				if (!std.file.exists(downloadDir))
+					mkdirRecurse(downloadDir);
 				std.file.write(tgtfile, req.data);
 			}
 			switch(prod)
@@ -438,7 +466,7 @@ void doUpdate(string baseDir, CheckProduct prod, int frequency, void delegate(st
 
 				case CheckProduct.DMD:
 					string prgdir = buildPath(baseDir, "DMD");
-					string dmd2x = buildPath(prgdir, "dmd" ~ info.name);
+					string dmd2x = buildPath(prgdir, info.name.replace(" ", "").toLower());
 					if (!std.file.exists(dmd2x))
 					{
 						dgProgress("Installing to " ~ prgdir);
