@@ -2486,7 +2486,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 		string curr_version = "Visual D " ~ full_version;
 		mVisualDCurrent.setText(curr_version);
 		mVisualDLatest.setText(checkMessage(info));
-		mVisualDUpdate.setEnabled(info && info.name != curr_version);
+		mVisualDUpdate.setEnabled(info && extractVersion(info.name) > extractVersion(curr_version));
 	}
 
 	void updateLDCInfo(UpdateInfo* info)
@@ -2496,7 +2496,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 			string curr_version = options.LDC.getCompilerVersionLabel(options.LDC.InstallDir);
 			mLDCCurrent.setText(curr_version);
 			mLDCLatest.setText(checkMessage(info));
-			mLDCUpdate.setEnabled(info && extractVersion(info.name) != extractVersion(curr_version));
+			mLDCUpdate.setEnabled(info && extractVersion(info.name) > extractVersion(curr_version));
 		}
 	}
 
@@ -2507,7 +2507,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 			string curr_version = options.DMD.getCompilerVersionLabel(options.DMD.InstallDir);
 			mDMDCurrent.setText(curr_version);
 			mDMDLatest.setText(checkMessage(info));
-			mDMDUpdate.setEnabled(info && extractVersion(info.name) != extractVersion(curr_version));
+			mDMDUpdate.setEnabled(info && extractVersion(info.name) > extractVersion(curr_version));
 		}
 	}
 
@@ -2565,7 +2565,11 @@ class UpdatePropertyPage : GlobalPropertyPage
 				if (pp.mCanvas && pp.mCanvas.hwnd)
 					PostMessage(pp.mCanvas.hwnd, WM_COMMAND, DirPropertyPage.ID_REFRESH_INSTALLDIR, 0);
 
-			mUpdateCancel.setVisible(false);
+			if (mUpdateCancel && mUpdateCancel.hwnd)
+				mUpdateCancel.setVisible(false);
+
+			if (Package.s_instance)
+				Package.s_instance.deferSaveOptions();
 		}
 	}
 
@@ -2803,7 +2807,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
-		kNeededLines = 15;
+		kNeededLines = 16;
 	}
 
 	override void CreateControls()
@@ -2814,6 +2818,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		AddControl("", mSemanticHighlighting = new CheckBox(mCanvas, "Colorize identifiers from semantic analysis (experimental)"));
 		AddControl("", mResolveFields = new CheckBox(mCanvas, "   resolving fields and aliases (can be slow)"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas), 1000);
+		AddControl("", mColorizeReferences = new CheckBox(mCanvas, "Highlight references to the symbol at the caret"));
 		AddTitleLine("Coverage");
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
@@ -2828,6 +2833,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	override void SetControls(GlobalOptions opts)
 	{
 		mColorizeVersions.setChecked(opts.ColorizeVersions);
+		mColorizeReferences.setChecked(opts.ColorizeReferences);
 		mSemanticHighlighting.setChecked(opts.semanticHighlighting);
 		mResolveFields.setChecked(opts.semanticResolveFields);
 		mColorizeCoverage.setChecked(opts.ColorizeCoverage);
@@ -2845,6 +2851,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	{
 		int changes = 0;
 		changes += changeOption(mColorizeVersions.isChecked(), opts.ColorizeVersions, refopts.ColorizeVersions);
+		changes += changeOption(mColorizeReferences.isChecked(), opts.ColorizeReferences, refopts.ColorizeReferences);
 		changes += changeOption(mSemanticHighlighting.isChecked(), opts.semanticHighlighting, refopts.semanticHighlighting);
 		changes += changeOption(mResolveFields.isChecked(), opts.semanticResolveFields, refopts.semanticResolveFields);
 		changes += changeOption(mColorizeCoverage.isChecked(), opts.ColorizeCoverage, refopts.ColorizeCoverage);
@@ -2858,6 +2865,7 @@ class ColorizerPropertyPage : GlobalPropertyPage
 	}
 
 	CheckBox mColorizeVersions;
+	CheckBox mColorizeReferences;
 	CheckBox mSemanticHighlighting;
 	CheckBox mResolveFields;
 	CheckBox mColorizeCoverage;

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28902.138
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2BD51E62-6604-48AE-9E01-C940C0CA1C68}"
 	ProjectSection(SolutionItems) = preProject
@@ -55,6 +55,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "visuald", "visuald", "{832B
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nsis", "nsis", "{342DCC0D-9F76-4AFE-B2BF-4FEFEB438D17}"
 	ProjectSection(SolutionItems) = preProject
+		nsis\basedir.ini = nsis\basedir.ini
 		nsis\dmdinstall.ini = nsis\dmdinstall.ini
 		nsis\replaceinfile.nsh = nsis\replaceinfile.nsh
 		nsis\uninstall_helper.nsh = nsis\uninstall_helper.nsh
@@ -131,19 +132,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extensions", "Extensions", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{AC054091-8D8F-4393-B3C5-AB67980B80EE}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects_vs9", "Projects_vs9", "{068889f6-165e-494b-95d6-9c4695ee9d45}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects_vs9", "Projects_vs9", "{068889F6-165E-494B-95D6-9C4695EE9D45}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\Projects_vs9\VDTemplates.vsdir = visuald\Templates\Projects_vs9\VDTemplates.vsdir
 		visuald\Templates\Projects_vs9\VDTemplates.VSTDIR = visuald\Templates\Projects_vs9\VDTemplates.VSTDIR
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DUB", "DUB", "{600531c5-7627-446a-8d27-89e3035edcb8}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DUB", "DUB", "{600531C5-7627-446A-8D27-89E3035EDCB8}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\Projects\DUB\DUBTemplates.vsdir = visuald\Templates\Projects\DUB\DUBTemplates.vsdir
 		visuald\Templates\Projects\DUB\DUBTemplates.VSTDIR = visuald\Templates\Projects\DUB\DUBTemplates.VSTDIR
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vibe", "vibe", "{9c02ac6a-14bd-4ccd-ba76-359e5c453992}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vibe", "vibe", "{9C02AC6A-14BD-4CCD-BA76-359E5C453992}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems\DUB\vibe\app.d = visuald\Templates\ProjectItems\DUB\vibe\app.d
 		visuald\Templates\ProjectItems\DUB\vibe\dub.json = visuald\Templates\ProjectItems\DUB\vibe\dub.json
@@ -151,7 +152,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vibe", "vibe", "{9c02ac6a-1
 		visuald\Templates\ProjectItems\DUB\vibe\ServerApp.visualdproj = visuald\Templates\ProjectItems\DUB\vibe\ServerApp.visualdproj
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vibe", "vibe", "{4dd1b584-c5f5-4f56-80c1-f787b781bc47}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vibe", "vibe", "{4DD1B584-C5F5-4F56-80C1-F787B781BC47}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\DUB\vibe\app.d = visuald\Templates\ProjectItems_vs9\DUB\vibe\app.d
 		visuald\Templates\ProjectItems_vs9\DUB\vibe\dub.json = visuald\Templates\ProjectItems_vs9\DUB\vibe\dub.json
@@ -159,7 +160,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vibe", "vibe", "{4dd1b584-c
 		visuald\Templates\ProjectItems_vs9\DUB\vibe\ServerApp.visualdproj = visuald\Templates\ProjectItems_vs9\DUB\vibe\ServerApp.visualdproj
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "minimal", "minimal", "{e6961bd5-09b1-4148-a99d-8239cd28af3d}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "minimal", "minimal", "{E6961BD5-09B1-4148-A99D-8239CD28AF3D}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems\DUB\minimal\app.d = visuald\Templates\ProjectItems\DUB\minimal\app.d
 		visuald\Templates\ProjectItems\DUB\minimal\ConsoleApp.visualdproj = visuald\Templates\ProjectItems\DUB\minimal\ConsoleApp.visualdproj
@@ -167,28 +168,28 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "minimal", "minimal", "{e696
 		visuald\Templates\ProjectItems\DUB\minimal\minimal.vstemplate = visuald\Templates\ProjectItems\DUB\minimal\minimal.vstemplate
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleApp", "ConsoleApp", "{931771d1-7ca4-42c7-8bb0-5742b914ff27}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleApp", "ConsoleApp", "{931771D1-7CA4-42C7-8BB0-5742B914FF27}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\ConsoleApp\ConsoleApp.visualdproj = visuald\Templates\ProjectItems_vs9\ConsoleApp\ConsoleApp.visualdproj
 		visuald\Templates\ProjectItems_vs9\ConsoleApp\ConsoleApp.vstemplate = visuald\Templates\ProjectItems_vs9\ConsoleApp\ConsoleApp.vstemplate
 		visuald\Templates\ProjectItems_vs9\ConsoleApp\main.d = visuald\Templates\ProjectItems_vs9\ConsoleApp\main.d
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleDMDGDC", "ConsoleDMDGDC", "{44dd3ffb-474a-4291-a854-b880166de1e8}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleDMDGDC", "ConsoleDMDGDC", "{44DD3FFB-474A-4291-A854-B880166DE1E8}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\ConsoleDMDGDC\ConsoleApp.visualdproj = visuald\Templates\ProjectItems_vs9\ConsoleDMDGDC\ConsoleApp.visualdproj
 		visuald\Templates\ProjectItems_vs9\ConsoleDMDGDC\ConsoleApp.vstemplate = visuald\Templates\ProjectItems_vs9\ConsoleDMDGDC\ConsoleApp.vstemplate
 		visuald\Templates\ProjectItems_vs9\ConsoleDMDGDC\main.d = visuald\Templates\ProjectItems_vs9\ConsoleDMDGDC\main.d
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleDLG", "ConsoleDLG", "{3624e57e-5e42-499f-a5f4-a709a1f39679}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleDLG", "ConsoleDLG", "{3624E57E-5E42-499F-A5F4-A709A1F39679}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\ConsoleDLG\ConsoleApp.visualdproj = visuald\Templates\ProjectItems_vs9\ConsoleDLG\ConsoleApp.visualdproj
 		visuald\Templates\ProjectItems_vs9\ConsoleDLG\ConsoleApp.vstemplate = visuald\Templates\ProjectItems_vs9\ConsoleDLG\ConsoleApp.vstemplate
 		visuald\Templates\ProjectItems_vs9\ConsoleDLG\main.d = visuald\Templates\ProjectItems_vs9\ConsoleDLG\main.d
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VCProject", "VCProject", "{b21f226c-eed0-4fe1-acd7-4c8ade029690}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VCProject", "VCProject", "{B21F226C-EED0-4FE1-ACD7-4C8ADE029690}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems\VCProject\main.cpp = visuald\Templates\ProjectItems\VCProject\main.cpp
 		visuald\Templates\ProjectItems\VCProject\main.d = visuald\Templates\ProjectItems\VCProject\main.d
@@ -199,16 +200,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VCProject", "VCProject", "{
 		visuald\Templates\ProjectItems\VCProject\WindowsApp.vcxproj.filters = visuald\Templates\ProjectItems\VCProject\WindowsApp.vcxproj.filters
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Wizards", "Wizards", "{244b9b41-b45f-4617-847c-06af16b81587}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Wizards", "Wizards", "{244B9B41-B45F-4617-847C-06AF16B81587}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\Wizards\package.vsz = visuald\Templates\Wizards\package.vsz
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DUB", "DUB", "{9d445645-f988-4712-b7da-ee20993217cf}")
-	ProjectSection(SolutionItems) = preProject
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DUB", "DUB", "{9D445645-F988-4712-B7DA-EE20993217CF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DynamicLib", "DynamicLib", "{b12b215a-1e8c-49a7-8506-638d5f77b8cd}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DynamicLib", "DynamicLib", "{B12B215A-1E8C-49A7-8506-638D5F77B8CD}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\DynamicLib\dll.def = visuald\Templates\ProjectItems_vs9\DynamicLib\dll.def
 		visuald\Templates\ProjectItems_vs9\DynamicLib\dllmain.d = visuald\Templates\ProjectItems_vs9\DynamicLib\dllmain.d
@@ -216,37 +215,35 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DynamicLib", "DynamicLib", 
 		visuald\Templates\ProjectItems_vs9\DynamicLib\DynamicLib.vstemplate = visuald\Templates\ProjectItems_vs9\DynamicLib\DynamicLib.vstemplate
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StaticLib", "StaticLib", "{79b19844-890f-4723-acfd-398e20ec888a}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StaticLib", "StaticLib", "{79B19844-890F-4723-ACFD-398E20EC888A}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\StaticLib\lib.d = visuald\Templates\ProjectItems_vs9\StaticLib\lib.d
 		visuald\Templates\ProjectItems_vs9\StaticLib\StaticLib.visualdproj = visuald\Templates\ProjectItems_vs9\StaticLib\StaticLib.visualdproj
 		visuald\Templates\ProjectItems_vs9\StaticLib\StaticLib.vstemplate = visuald\Templates\ProjectItems_vs9\StaticLib\StaticLib.vstemplate
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CodeSnippets", "CodeSnippets", "{1f473a70-b5e1-4d56-a9f3-e87d69886621}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CodeSnippets", "CodeSnippets", "{1F473A70-B5E1-4D56-A9F3-E87D69886621}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\CodeSnippets\SnippetsIndex.xml = visuald\Templates\CodeSnippets\SnippetsIndex.xml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VDProject", "VDProject", "{64e623a0-2378-4dda-979e-9e0c2e20eb41}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VDProject", "VDProject", "{64E623A0-2378-4DDA-979E-9E0C2E20EB41}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems\VDProject\main.d = visuald\Templates\ProjectItems\VDProject\main.d
 		visuald\Templates\ProjectItems\VDProject\VDProject.vstemplate = visuald\Templates\ProjectItems\VDProject\VDProject.vstemplate
 		visuald\Templates\ProjectItems\VDProject\WindowsApp.visualdproj = visuald\Templates\ProjectItems\VDProject\WindowsApp.visualdproj
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WindowsApp", "WindowsApp", "{141cc6e2-473a-4bf8-a0d5-68df367ecbc3}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WindowsApp", "WindowsApp", "{141CC6E2-473A-4BF8-A0D5-68DF367ECBC3}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\WindowsApp\WindowsApp.visualdproj = visuald\Templates\ProjectItems_vs9\WindowsApp\WindowsApp.visualdproj
 		visuald\Templates\ProjectItems_vs9\WindowsApp\WindowsApp.vstemplate = visuald\Templates\ProjectItems_vs9\WindowsApp\WindowsApp.vstemplate
 		visuald\Templates\ProjectItems_vs9\WindowsApp\winmain.d = visuald\Templates\ProjectItems_vs9\WindowsApp\winmain.d
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DUB", "DUB", "{17f86ff0-1b24-43b7-957f-b0066a98fd13}")
-	ProjectSection(SolutionItems) = preProject
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DUB", "DUB", "{17F86FF0-1B24-43B7-957F-B0066A98FD13}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "minimal", "minimal", "{179dd4f8-c93e-4617-b5cf-a25dbea13f85}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "minimal", "minimal", "{179DD4F8-C93E-4617-B5CF-A25DBEA13F85}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\DUB\minimal\app.d = visuald\Templates\ProjectItems_vs9\DUB\minimal\app.d
 		visuald\Templates\ProjectItems_vs9\DUB\minimal\ConsoleApp.visualdproj = visuald\Templates\ProjectItems_vs9\DUB\minimal\ConsoleApp.visualdproj
@@ -254,29 +251,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "minimal", "minimal", "{179d
 		visuald\Templates\ProjectItems_vs9\DUB\minimal\minimal.vstemplate = visuald\Templates\ProjectItems_vs9\DUB\minimal\minimal.vstemplate
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Items", "Items", "{ec52c2ea-80d0-4688-ba51-81578c88c17c}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Items", "Items", "{EC52C2EA-80D0-4688-BA51-81578C88C17C}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\Items\empty.d = visuald\Templates\Items\empty.d
 		visuald\Templates\Items\hello.d = visuald\Templates\Items\hello.d
 		visuald\Templates\Items\items.vsdir = visuald\Templates\Items\items.vsdir
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectItems_vs9", "ProjectItems_vs9", "{48291a62-1094-4bec-9b13-8fd8e8358022}")
-	ProjectSection(SolutionItems) = preProject
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectItems_vs9", "ProjectItems_vs9", "{48291A62-1094-4BEC-9B13-8FD8E8358022}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleDMDLDC", "ConsoleDMDLDC", "{e09c1baf-1b29-48c3-9796-c55517d240cf}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleDMDLDC", "ConsoleDMDLDC", "{E09C1BAF-1B29-48C3-9796-C55517D240CF}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\ProjectItems_vs9\ConsoleDMDLDC\ConsoleApp.visualdproj = visuald\Templates\ProjectItems_vs9\ConsoleDMDLDC\ConsoleApp.visualdproj
 		visuald\Templates\ProjectItems_vs9\ConsoleDMDLDC\ConsoleApp.vstemplate = visuald\Templates\ProjectItems_vs9\ConsoleDMDLDC\ConsoleApp.vstemplate
 		visuald\Templates\ProjectItems_vs9\ConsoleDMDLDC\main.d = visuald\Templates\ProjectItems_vs9\ConsoleDMDLDC\main.d
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectItems", "ProjectItems", "{c7f6cf4c-db41-492c-9ad2-aa1001a389b0}")
-	ProjectSection(SolutionItems) = preProject
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProjectItems", "ProjectItems", "{C7F6CF4C-DB41-492C-9AD2-AA1001A389B0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Snippets", "Snippets", "{6de93aa1-4ebb-40df-8c3d-6b060f2f045a}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Snippets", "Snippets", "{6DE93AA1-4EBB-40DF-8C3D-6B060F2F045A}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\CodeSnippets\Snippets\blockcomment.snippet = visuald\Templates\CodeSnippets\Snippets\blockcomment.snippet
 		visuald\Templates\CodeSnippets\Snippets\class.snippet = visuald\Templates\CodeSnippets\Snippets\class.snippet
@@ -288,7 +281,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Snippets", "Snippets", "{6d
 		visuald\Templates\CodeSnippets\Snippets\while.snippet = visuald\Templates\CodeSnippets\Snippets\while.snippet
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{6fdf165b-4643-4059-8b50-70b6e4a2d99c}")
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{6FDF165B-4643-4059-8B50-70B6E4A2D99C}"
 	ProjectSection(SolutionItems) = preProject
 		visuald\Templates\Projects\DTemplates.vsdir = visuald\Templates\Projects\DTemplates.vsdir
 		visuald\Templates\Projects\DubTemplates.vsdir = visuald\Templates\Projects\DubTemplates.vsdir
@@ -624,30 +617,30 @@ Global
 		{AB498803-493D-4FB4-9FB1-9CEF0E628CE9} = {6C5387E8-CF11-443A-88BD-CA6DCA80E755}
 		{7F391DE3-9620-4A98-B05D-4181924A9D15} = {342DCC0D-9F76-4AFE-B2BF-4FEFEB438D17}
 		{AC054091-8D8F-4393-B3C5-AB67980B80EE} = {832B817E-DCF9-46DC-8440-6418B93E62B6}
-		{068889f6-165e-494b-95d6-9c4695ee9d45} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
-		{6fdf165b-4643-4059-8b50-70b6e4a2d99c} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
-		{9c02ac6a-14bd-4ccd-ba76-359e5c453992} = {17f86ff0-1b24-43b7-957f-b0066a98fd13}
-		{4dd1b584-c5f5-4f56-80c1-f787b781bc47} = {9d445645-f988-4712-b7da-ee20993217cf}
-		{e6961bd5-09b1-4148-a99d-8239cd28af3d} = {17f86ff0-1b24-43b7-957f-b0066a98fd13}
-		{931771d1-7ca4-42c7-8bb0-5742b914ff27} = {48291a62-1094-4bec-9b13-8fd8e8358022}
-		{44dd3ffb-474a-4291-a854-b880166de1e8} = {48291a62-1094-4bec-9b13-8fd8e8358022}
-		{3624e57e-5e42-499f-a5f4-a709a1f39679} = {48291a62-1094-4bec-9b13-8fd8e8358022}
-		{b21f226c-eed0-4fe1-acd7-4c8ade029690} = {c7f6cf4c-db41-492c-9ad2-aa1001a389b0}
-		{244b9b41-b45f-4617-847c-06af16b81587} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
-		{9d445645-f988-4712-b7da-ee20993217cf} = {48291a62-1094-4bec-9b13-8fd8e8358022}
-		{b12b215a-1e8c-49a7-8506-638d5f77b8cd} = {48291a62-1094-4bec-9b13-8fd8e8358022}
-		{79b19844-890f-4723-acfd-398e20ec888a} = {48291a62-1094-4bec-9b13-8fd8e8358022}
-		{1f473a70-b5e1-4d56-a9f3-e87d69886621} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
-		{64e623a0-2378-4dda-979e-9e0c2e20eb41} = {c7f6cf4c-db41-492c-9ad2-aa1001a389b0}
-		{141cc6e2-473a-4bf8-a0d5-68df367ecbc3} = {48291a62-1094-4bec-9b13-8fd8e8358022}
-		{17f86ff0-1b24-43b7-957f-b0066a98fd13} = {c7f6cf4c-db41-492c-9ad2-aa1001a389b0}
-		{179dd4f8-c93e-4617-b5cf-a25dbea13f85} = {9d445645-f988-4712-b7da-ee20993217cf}
-		{ec52c2ea-80d0-4688-ba51-81578c88c17c} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
-		{48291a62-1094-4bec-9b13-8fd8e8358022} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
-		{e09c1baf-1b29-48c3-9796-c55517d240cf} = {48291a62-1094-4bec-9b13-8fd8e8358022}
-		{c7f6cf4c-db41-492c-9ad2-aa1001a389b0} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
-		{6de93aa1-4ebb-40df-8c3d-6b060f2f045a} = {1f473a70-b5e1-4d56-a9f3-e87d69886621}
-		{600531c5-7627-446a-8d27-89e3035edcb8} = {6fdf165b-4643-4059-8b50-70b6e4a2d99c}
+		{068889F6-165E-494B-95D6-9C4695EE9D45} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
+		{600531C5-7627-446A-8D27-89E3035EDCB8} = {6FDF165B-4643-4059-8B50-70B6E4A2D99C}
+		{9C02AC6A-14BD-4CCD-BA76-359E5C453992} = {17F86FF0-1B24-43B7-957F-B0066A98FD13}
+		{4DD1B584-C5F5-4F56-80C1-F787B781BC47} = {9D445645-F988-4712-B7DA-EE20993217CF}
+		{E6961BD5-09B1-4148-A99D-8239CD28AF3D} = {17F86FF0-1B24-43B7-957F-B0066A98FD13}
+		{931771D1-7CA4-42C7-8BB0-5742B914FF27} = {48291A62-1094-4BEC-9B13-8FD8E8358022}
+		{44DD3FFB-474A-4291-A854-B880166DE1E8} = {48291A62-1094-4BEC-9B13-8FD8E8358022}
+		{3624E57E-5E42-499F-A5F4-A709A1F39679} = {48291A62-1094-4BEC-9B13-8FD8E8358022}
+		{B21F226C-EED0-4FE1-ACD7-4C8ADE029690} = {C7F6CF4C-DB41-492C-9AD2-AA1001A389B0}
+		{244B9B41-B45F-4617-847C-06AF16B81587} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
+		{9D445645-F988-4712-B7DA-EE20993217CF} = {48291A62-1094-4BEC-9B13-8FD8E8358022}
+		{B12B215A-1E8C-49A7-8506-638D5F77B8CD} = {48291A62-1094-4BEC-9B13-8FD8E8358022}
+		{79B19844-890F-4723-ACFD-398E20EC888A} = {48291A62-1094-4BEC-9B13-8FD8E8358022}
+		{1F473A70-B5E1-4D56-A9F3-E87D69886621} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
+		{64E623A0-2378-4DDA-979E-9E0C2E20EB41} = {C7F6CF4C-DB41-492C-9AD2-AA1001A389B0}
+		{141CC6E2-473A-4BF8-A0D5-68DF367ECBC3} = {48291A62-1094-4BEC-9B13-8FD8E8358022}
+		{17F86FF0-1B24-43B7-957F-B0066A98FD13} = {C7F6CF4C-DB41-492C-9AD2-AA1001A389B0}
+		{179DD4F8-C93E-4617-B5CF-A25DBEA13F85} = {9D445645-F988-4712-B7DA-EE20993217CF}
+		{EC52C2EA-80D0-4688-BA51-81578C88C17C} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
+		{48291A62-1094-4BEC-9B13-8FD8E8358022} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
+		{E09C1BAF-1B29-48C3-9796-C55517D240CF} = {48291A62-1094-4BEC-9B13-8FD8E8358022}
+		{C7F6CF4C-DB41-492C-9AD2-AA1001A389B0} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
+		{6DE93AA1-4EBB-40DF-8C3D-6B060F2F045A} = {1F473A70-B5E1-4D56-A9F3-E87D69886621}
+		{6FDF165B-4643-4059-8B50-70B6E4A2D99C} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BAF35E81-511D-4170-B7D0-594E5DE3886A}

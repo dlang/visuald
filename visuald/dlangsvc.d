@@ -862,11 +862,11 @@ class LanguageService : DisposingComObject,
 		wstring expr = src.FindExpressionBefore(line, idx);
 		return vdServerClient.GetSemanticExpansions(src.GetFileName(), tok, line, idx, expr, cb);
 	}
-	uint GetReferences(Source src, string tok, int line, int idx, GetReferencesCallBack cb)
+	uint GetReferences(Source src, string tok, int line, int idx, bool moduleOnly, GetReferencesCallBack cb)
 	{
 		ConfigureSemanticProject(src);
 		wstring expr;
-		return vdServerClient.GetReferences(src.GetFileName(), tok, line, idx, expr, cb);
+		return vdServerClient.GetReferences(src.GetFileName(), tok, line, idx, expr, moduleOnly, cb);
 	}
 	void GetIdentifierTypes(Source src, int startLine, int endLine, bool resolve, GetIdentifierTypesCallBack cb)
 	{
@@ -1474,6 +1474,10 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		mExpansionProvider = release(mExpansionProvider);
 		DismissCompletor();
 		DismissMethodTip();
+
+		clearParseErrors();
+		clearReferenceMarker();
+
 		mCompletionSet = release(mCompletionSet);
 		if(mMethodData)
 		{
@@ -4052,58 +4056,67 @@ else
 															&OnUpdateIdentifierTypes);
 	}
 
+	bool parseErrorEntry(string e, ref ParseError error)
+	{
+		auto idx = indexOf(e, ':');
+		if(idx > 0)
+		{
+			string[] num = split(e[0..idx], ",");
+			if(num.length == 4)
+			{
+				try
+				{
+					error.span.iStartLine  = parse!int(num[0]);
+					error.span.iStartIndex = parse!int(num[1]);
+					error.span.iEndLine    = parse!int(num[2]);
+					error.span.iEndIndex   = parse!int(num[3]);
+					error.msg = e[idx+1..$].replace("\a", "\n");
+					return true;
+				}
+				catch(ConvException)
+				{
+				}
+			}
+		}
+		return false;
+	}
+
 	void updateParseErrors(string err)
 	{
 		string[] errs = splitLines(err);
 		mParseErrors = mParseErrors.init;
 		foreach(e; errs)
 		{
-			auto idx = indexOf(e, ':');
-			if(idx > 0)
+			ParseError error;
+			if (parseErrorEntry(e, error))
 			{
-				string[] num = split(e[0..idx], ",");
-				if(num.length == 4)
+				if (error.span.iStartLine == error.span.iEndLine && error.span.iEndIndex <= error.span.iStartIndex + 1)
 				{
-					try
+					// figure the length of the span from the lexer by using the full token
+					int line = error.span.iStartLine - 1;
+					int iState = mColorizer.GetLineState(line);
+					wstring text = GetText(line, 0, line, -1);
+					uint pos = 0;
+					wstring ident;
+					while(pos < text.length)
 					{
-						ParseError error;
-						error.span.iStartLine  = parse!int(num[0]);
-						error.span.iStartIndex = parse!int(num[1]);
-						error.span.iEndLine    = parse!int(num[2]);
-						error.span.iEndIndex   = parse!int(num[3]);
-						error.msg = e[idx+1..$].replace("\a", "\n");
-						if (error.span.iStartLine == error.span.iEndLine && error.span.iEndIndex <= error.span.iStartIndex + 1)
+						uint ppos = pos;
+						int type = dLex.scan(iState, text, pos);
+						if (pos > error.span.iStartIndex)
 						{
-							// figure the length of the span from the lexer by using the full token
-							int line = error.span.iStartLine - 1;
-							int iState = mColorizer.GetLineState(line);
-							wstring text = GetText(line, 0, line, -1);
-							uint pos = 0;
-							wstring ident;
-							while(pos < text.length)
-							{
-								uint ppos = pos;
-								int type = dLex.scan(iState, text, pos);
-								if (pos > error.span.iStartIndex)
-								{
-									error.span.iStartIndex = ppos;
-									error.span.iEndIndex = pos;
-									break;
-								}
-							}
+							error.span.iStartIndex = ppos;
+							error.span.iEndIndex = pos;
+							break;
 						}
-						mParseErrors ~= error;
-					}
-					catch(ConvException)
-					{
 					}
 				}
+				mParseErrors ~= error;
 			}
 		}
-		finishParseErrros();
+		finishParseErrors();
 	}
 
-	void finishParseErrros()
+	void clearParseErrors()
 	{
 		IVsEnumLineMarkers pEnum;
 		if(mBuffer.EnumMarkers(0, 0, 0, 0, MARKER_CODESENSE_ERROR, EM_ENTIREBUFFER, &pEnum) == S_OK)
@@ -4116,13 +4129,66 @@ else
 				marker.Release();
 			}
 		}
+	}
 
+	void finishParseErrors()
+	{
+		clearParseErrors();
 		for(int i = 0; i < mParseErrors.length; i++)
 		{
 			auto span = mParseErrors[i].span;
 			IVsTextLineMarker marker;
 			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex,
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
+		}
+	}
+
+	enum kReferenceMarkerType = MARKER_REFACTORING_FIELD;
+
+	void clearReferenceMarker()
+	{
+		auto stream = qi_cast!IVsTextStream(mBuffer);
+		if (stream)
+		{
+			IVsEnumStreamMarkers pEnum;
+			if(stream.EnumMarkers(0, 0, kReferenceMarkerType, EM_ENTIREBUFFER, &pEnum) == S_OK)
+			{
+				scope(exit) release(pEnum);
+				IVsTextStreamMarker marker;
+				while(pEnum.Next(&marker) == S_OK)
+				{
+					marker.Invalidate();
+					marker.Release();
+				}
+			}
+		}
+	}
+
+	void updateReferenceMarker(string[] exps)
+	{
+		clearReferenceMarker();
+
+		if (exps.length > 0)
+		{
+			auto stream = qi_cast!IVsTextStream(mBuffer);
+			if (stream)
+			{
+				foreach(e; exps)
+				{
+					ParseError error;
+					if (parseErrorEntry(e, error))
+					{
+						int spos, epos;
+						if (stream.GetPositionOfLineIndex(error.span.iStartLine - 1, error.span.iStartIndex, &spos) == S_OK &&
+							stream.GetPositionOfLineIndex(error.span.iEndLine   - 1, error.span.iEndIndex,   &epos) == S_OK)
+						{
+							IVsTextStreamMarker marker;
+							stream.CreateStreamMarker(kReferenceMarkerType, spos, epos - spos, this, &marker);
+						}
+					}
+				}
+				release(stream);
+			}
 		}
 	}
 

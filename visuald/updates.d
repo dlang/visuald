@@ -13,6 +13,7 @@ import visuald.dpackage;
 
 import std.conv;
 import std.datetime;
+import std.exception;
 import std.file;
 import std.json;
 import std.path;
@@ -130,12 +131,15 @@ UpdateInfo* checkForUpdate(CheckProduct prod, Duration renew, int frequency)
 		string needle = prod == CheckProduct.LDC ? "windows-multilib" : ".exe";
 		foreach (asset; assets)
 		{
-			if (asset["browser_download_url"].str().indexOf(needle) >= 0)
+			string bdurl = asset["browser_download_url"].str();
+			bool isDownload = prod == CheckProduct.LDC ? bdurl.indexOf("windows-multilib") >= 0
+				: bdurl.endsWith(".exe") && bdurl.indexOf("dmd") < 0; // not the full package
+			if (isDownload)
 			{
 				auto info = new UpdateInfo;
 				info.name = r["name"].str();
 				info.published = r["published_at"].str()[0..10]; // remove time
-				info.download_url = asset["browser_download_url"].str();
+				info.download_url = bdurl;
 				debug(UPDATE) writeln(info.published, " ", info.name, " ", info.download_url);
 				info.lastCheck = modTime;
 				info.updated = updated;
@@ -373,6 +377,31 @@ struct VersionInfo
 	string rev;
 	string suffix;
 	string sfxnum;
+
+	int opCmp(const VersionInfo rhs) const
+	{
+		int toNum(string s)
+		{
+			if (!s.empty)
+				try return to!int(s);
+				catch(Exception) {}
+
+			return 0;
+		}
+
+		if (major != rhs.major)
+			return toNum(major) < toNum(rhs.major) ? -1 : 1;
+		if (minor != rhs.minor)
+			return toNum(minor) < toNum(rhs.minor) ? -1 : 1;
+		if (rev != rhs.rev)
+			return toNum(rev) < toNum(rhs.rev) ? -1 : 1;
+		if (suffix != rhs.suffix)
+			return  suffix.empty ? 1 : // no suffix is better than "beta" or "rc"
+				rhs.suffix.empty ? -1 : suffix < rhs.suffix ? -1 : 1;
+		if (rev != rhs.rev)
+			return toNum(rev) < toNum(rhs.rev) ? -1 : 1;
+		return 0;
+	}
 }
 
 VersionInfo extractVersion(string verstr)
@@ -457,6 +486,40 @@ void doUpdate(string baseDir, CheckProduct prod, int frequency, void delegate(st
 					mkdirRecurse(downloadDir);
 				std.file.write(tgtfile, req.data);
 			}
+
+			void unzipCompiler(string zipfile, string zipfolder, string tgtdir)
+			{
+				if (!std.file.exists(tgtdir))
+				{
+					dgProgress("Installing to " ~ tgtdir);
+					string tmpdir = buildPath(baseDir, "__tmp");
+					if (!std.file.exists(tmpdir))
+						mkdirRecurse(tmpdir);
+					string zip = buildPath(Package.GetGlobalOptions().VisualDInstallDir, "7z", "7za.exe");
+					string opts = `x "-o` ~ tmpdir ~ `" -y "` ~ zipfile ~ `"`;
+
+					SHELLEXECUTEINFOW exinfo;
+					exinfo.cbSize = exinfo.sizeof;
+					exinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+					exinfo.lpFile = toUTF16z(zip);
+					exinfo.lpParameters = toUTF16z(opts);
+					exinfo.nShow = SW_SHOW;
+					if (!ShellExecuteEx(&exinfo))
+						throw new Exception("Failed to execute " ~ zip);
+
+					HRESULT hr = WaitForSingleObject(exinfo.hProcess, 60000);
+					if (hr != WAIT_OBJECT_0)
+						throw new Exception("Failed to extract " ~ zipfile);
+
+					string srcdir = buildPath(tmpdir, zipfolder);
+					if (!std.file.exists(srcdir))
+						throw new Exception("Unexpected zip file layout: " ~ zipfile);
+					std.file.rename(srcdir, tgtdir);
+					collectException(std.file.rmdir(tmpdir)); // only if empty
+				}
+				dgProgress("Switched to " ~ tgtdir);
+			}
+
 			switch(prod)
 			{
 				case CheckProduct.VisualD:
@@ -465,61 +528,17 @@ void doUpdate(string baseDir, CheckProduct prod, int frequency, void delegate(st
 					break;
 
 				case CheckProduct.DMD:
-					string prgdir = buildPath(baseDir, "DMD");
-					string dmd2x = buildPath(prgdir, info.name.replace(" ", "").toLower());
-					if (!std.file.exists(dmd2x))
-					{
-						dgProgress("Installing to " ~ prgdir);
-						if (!std.file.exists(prgdir))
-							mkdirRecurse(prgdir);
-						string zip = buildPath(Package.GetGlobalOptions().VisualDInstallDir, "7z", "7za.exe");
-						string opts = `x "-o` ~ prgdir ~ `" -y "` ~ tgtfile ~ `"`;
-
-						SHELLEXECUTEINFOW exinfo;
-						exinfo.cbSize = exinfo.sizeof;
-						exinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-						exinfo.lpFile = toUTF16z(zip);
-						exinfo.lpParameters = toUTF16z(opts);
-						exinfo.nShow = SW_SHOW;
-						if (!ShellExecuteEx(&exinfo))
-							throw new Exception("Failed to execute " ~ zip);
-
-						HRESULT hr = WaitForSingleObject(exinfo.hProcess, 60000);
-						if (hr != WAIT_OBJECT_0)
-							throw new Exception("Failed to extract " ~ tgtfile);
-						string dmd2 = buildPath(prgdir, "dmd2");
-						std.file.rename(dmd2, dmd2x);
-					}
+					string dmdname = info.name.replace(" ", "").toLower();
+					string dmd2x = buildPath(baseDir, dmdname);
+					unzipCompiler(tgtfile, "dmd2", dmd2x);
 					Package.GetGlobalOptions().DMD.InstallDir = dmd2x;
-					dgProgress("Switched to " ~ dmd2x);
 					break;
 
 				case CheckProduct.LDC:
-					string prgdir = buildPath(baseDir, "LDC");
-					string ldc2x = buildPath(prgdir, stripExtension(name));
-					if (!std.file.exists(ldc2x))
-					{
-						dgProgress("Installing to " ~ prgdir);
-						if (!std.file.exists(prgdir))
-							mkdirRecurse(prgdir);
-						string zip = buildPath(Package.GetGlobalOptions().VisualDInstallDir, "7z", "7za.exe");
-						string opts = `x "-o` ~ prgdir ~ `" -y "` ~ tgtfile ~ `"`;
-
-						SHELLEXECUTEINFOW exinfo;
-						exinfo.cbSize = exinfo.sizeof;
-						exinfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-						exinfo.lpFile = toUTF16z(zip);
-						exinfo.lpParameters = toUTF16z(opts);
-						exinfo.nShow = SW_SHOW;
-						if (!ShellExecuteEx(&exinfo))
-							throw new Exception("Failed to execute " ~ zip);
-
-						HRESULT hr = WaitForSingleObject(exinfo.hProcess, 60000);
-						if (hr != WAIT_OBJECT_0)
-							throw new Exception("Failed to extract " ~ tgtfile);
-					}
+					string ldcname = stripExtension(name);
+					string ldc2x = buildPath(baseDir, stripExtension(name));
+					unzipCompiler(tgtfile, ldcname, ldc2x);
 					Package.GetGlobalOptions().LDC.InstallDir = ldc2x;
-					dgProgress("Switched to " ~ ldc2x);
 					break;
 				default:
 					break;

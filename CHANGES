@@ -1119,6 +1119,11 @@ Version history
 
 unreleased Version 0.50.0
   * VS 16.1 Preview 2: ignore tracked files in *.delete.*.tlog as dependencies, too
+  * now another installer available that includes DMD and LDC
+  * check for updates for Visual D, DMD and LDC, assisted download and install 
+  * highlight references to the same symbol as the one at the caret
+  * dparser:
+    - add semantic coloring for module and package names
   * mago:
     - fixed width of hex display of negative values
     - dynamic type not shown for types that have no members (including interfaces)
@@ -1126,5 +1131,4 @@ unreleased Version 0.50.0
     - determine dynamic type of C++ classes
     - demangle D symbol names
     - regression: use of registers in expression was lost at some point
-  * check for updates for Visual D, DMD and LDC
-  * download and install DMD and LDC
+    - show class and message for exceptions that the debugger breaks on

@@ -194,9 +194,11 @@ public:
 	// line, idx:  the location of the caret in the text editor
 	// expr:       the expression to evaluate at the insertion point in case of parser issues
 	//             with the current text
+	// moduleOnly: only search current module
+	//
 	// it is assumed that the reference finding is forwarded to some other thread
 	// and that the status can be polled by GetReferencesResult
-	HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr);
+	HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr, in BOOL moduleOnly);
 	HRESULT GetReferencesResult(BSTR* stringList);
 
 	// set the comment tasks tokens used to populate the task list

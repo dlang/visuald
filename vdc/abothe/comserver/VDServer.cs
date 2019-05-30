@@ -315,9 +315,9 @@ namespace DParserCOMServer
 			}
 		}
 
-		public void GetReferences(string filename, string tok, uint line, uint idx, string expr)
+		public void GetReferences(string filename, string tok, uint line, uint idx, string expr, bool moduleOnly)
 		{
-			_referencesTask.Run(filename, new CodeLocation((int)idx + 1, (int)line), null);
+			_referencesTask.Run(filename, new CodeLocation((int)idx + 1, (int)line), moduleOnly);
 		}
 
 		public void GetReferencesResult(out string stringList)

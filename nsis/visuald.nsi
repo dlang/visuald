@@ -24,8 +24,24 @@
 ; define DUB to include dub project templates
 ; !define DUB
 
+; define DMD source path to include dmd installation
+; !define DMD 
+!define DMD_VERSION "2.086.0"
+!define DMD_SRC c:\l\d\dmd${DMD_VERSION}\dmd2
+
+; define LDC to include ldc installation
+; !define LDC
+!define LDC_VERSION "1.15.0"
+!define LDC_SRC c:\l\d\ldc-${LDC_VERSION}
+
 ; define VS2019 to include VS2019 support
 ; !define VS2019
+
+!ifdef DMD
+  !define DMD_PAGE_INI "basedir.ini"
+!else
+  !define DMD_PAGE_INI "dmdinstall.ini"
+!endif
 
 ;--------------------------------
 ;Include Modern UI
@@ -72,7 +88,19 @@
   ;Name and file
   Name "${LONG_APPNAME}"
   Caption "${LONG_APPNAME} ${VERSION} Setup"
-  OutFile "..\..\downloads\${APPNAME}-v${VERSION}.exe"
+!ifdef DMD
+  !ifdef LDC
+    !define OUT_SUFFIX "-dmd${DMD_VERSION}-ldc2-${LDC_VERSION}"
+  !else
+    !define OUT_SUFFIX "-dmd${DMD_VERSION}"
+  !endif
+!else
+  !define OUT_SUFFIX ""
+!endif
+  OutFile "..\..\downloads\${APPNAME}-v${VERSION}${OUT_SUFFIX}.exe"
+
+  SetCompressor /solid lzma
+  SetCompressorDictSize 140
 
   !define UNINSTALL_REGISTRY_ROOT HKLM
   !define UNINSTALL_REGISTRY_KEY  Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}
@@ -138,7 +166,8 @@
   ;Request admin privileges for Windows Vista
   RequestExecutionLevel admin
 
-  ReserveFile "dmdinstall.ini"
+  ReserveFile ${DMD_PAGE_INI}
+  ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 
 ;--------------------------------
 ; register win32 macro
@@ -159,6 +188,7 @@
 ;installation time variables
   Var DMDInstallDir
   Var DInstallDir
+  Var CompilerInstallDir
 
 ;--------------------------------
 ;Interface Settings
@@ -271,6 +301,10 @@ Section "Visual Studio package" SecPackage
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
 
+  ${SetOutPath} "$INSTDIR\7z"
+  ${File} ..\tools\7z\ 7za.exe
+  ${File} ..\tools\7z\ License.txt
+
   ;Store installation folder
   WriteRegStr HKLM "Software\${APPNAME}" "" $INSTDIR
 
@@ -285,6 +319,45 @@ Section "Visual Studio package" SecPackage
   WriteUninstaller "$INSTDIR\Uninstall.exe"
  
 SectionEnd
+
+!ifdef DMD
+;--------------------------------
+${MementoSection} "Install DMD" SecDMD
+
+  ; not using ${File} to keep compiler even if Visual D uninstalled
+
+  !define DmdBaseDir "$CompilerInstallDir\dmd${DMD_VERSION}"
+  ${SetOutPath} "${DmdBaseDir}"
+  File /r ${DMD_SRC}\html
+  File /r ${DMD_SRC}\samples
+  File /r ${DMD_SRC}\src
+  File /r ${DMD_SRC}\windows
+  File ${DMD_SRC}\license.txt
+  File ${DMD_SRC}\readme.txt
+
+  WriteRegStr HKLM "Software\${APPNAME}" "DMDInstallDir" ${DmdBaseDir}
+
+${MementoSectionEnd}
+!endif
+
+!ifdef LDC
+;--------------------------------
+${MementoSection} "Install LDC" SecLDC
+
+  ; not using ${File} to keep compiler even if Visual D uninstalled
+
+  !define LdcBaseDir "$CompilerInstallDir\ldc2-${LDC_VERSION}-windows-multilib"
+  ${SetOutPath} "${LdcBaseDir}"
+  File /r ${LDC_SRC}\bin
+  File /r ${LDC_SRC}\etc
+  File /r ${LDC_SRC}\import
+  File /r ${LDC_SRC}\lib32
+  File /r ${LDC_SRC}\lib64
+  File ${LDC_SRC}\*.*
+  WriteRegStr HKLM "Software\${APPNAME}" "LDCInstallDir" ${LdcBaseDir}
+
+${MementoSectionEnd}
+!endif
 
 !ifdef VS_NET
 ;--------------------------------
@@ -601,7 +674,7 @@ SectionGroup Components
 
 ;--------------------------------
 !ifdef MSBUILD
-${MementoSection} "Register MSBuild extensions for VS 2013/15/17/19" SecMSBuild
+${MementoSection} "MSBuild integration" SecMSBuild
 
 !ifdef VS2019
   Call DetectVS2019_InstallationFolder
@@ -813,6 +886,12 @@ SectionEnd
 
   ;Language strings
   LangString DESC_SecPackage ${LANG_ENGLISH} "The package containing the language service."
+!ifdef DMD
+  LangString DESC_DMD       ${LANG_ENGLISH} "Install the reference compiler DMD ${DMD_VERSION}"
+!endif
+!ifdef LDC
+  LangString DESC_LDC       ${LANG_ENGLISH} "Install the LLVM-based compiler LDC ${LDC_VERSION}"
+!endif
 !ifdef VS_NET
   LangString DESC_SecVS_NET ${LANG_ENGLISH} "Register for usage in Visual Studio .NET"
 !endif
@@ -836,12 +915,18 @@ SectionEnd
   LangString DESC_SecMago2 ${LANG_ENGLISH} "$\r$\nMago is written by Aldo Nunez. Distributed under the Apache License Version 2.0. See www.dsource.org/ projects/mago_debugger"
 !endif  
 !ifdef MSBUILD
-  LangString DESC_SecMSBuild ${LANG_ENGLISH} "MSBuild integration into VC++ projects."
+  LangString DESC_SecMSBuild ${LANG_ENGLISH} "MSBuild integration into VC++ projects in VS 2013/15/17/19"
 !endif  
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecPackage} $(DESC_SecPackage)
+!ifdef DMD
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecDMD} $(DESC_DMD)
+!endif
+!ifdef LDC
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecLDC} $(DESC_LDC)
+!endif
 !ifdef VS_NET
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS_NET} $(DESC_SecVS_NET)
 !endif
@@ -1169,13 +1254,32 @@ Function .onInit
   Installed_VCExpress2010:
 !endif
 
-  !insertmacro INSTALLOPTIONS_EXTRACT "dmdinstall.ini"
+  !insertmacro INSTALLOPTIONS_EXTRACT ${DMD_PAGE_INI}
   
 FunctionEnd
 
 ;--------------------------------
 Function DMDInstallPage
 
+!ifdef DMD
+  !insertmacro MUI_HEADER_TEXT "Compiler Base Folder" "Specify the directory where D compilers are managed"
+
+  ReadRegStr $CompilerInstallDir HKLM "Software\${APPNAME}" "BaseInstallDir" 
+  IfErrors CompilerInstallDirEmpty
+  StrCmp "$CompilerInstallDir" "" CompilerInstallDirEmpty HasCompilerInstallDir
+  CompilerInstallDirEmpty:
+    ReadRegStr $DInstallDir HKLM "SOFTWARE\DMD" "InstallationFolder" 
+    IfErrors 0 HasDInstallationFolder
+    ReadRegStr $DInstallDir HKLM "SOFTWARE\D" "Install_Dir" 
+    IfErrors 0 HasDInstallationFolder
+    StrCpy $DInstallDir "c:\D"
+  HasDInstallationFolder:
+    StrCpy $CompilerInstallDir $DInstallDir
+  HasCompilerInstallDir:
+  
+  WriteINIStr "$PLUGINSDIR\${DMD_PAGE_INI}" "Field 1" "State" $CompilerInstallDir
+
+!else
   !insertmacro MUI_HEADER_TEXT "DMD Installation Folder" "Specify the directory where DMD is installed"
 
   ReadRegStr $DMDInstallDir HKLM "Software\${APPNAME}" "DMDInstallDir" 
@@ -1190,14 +1294,23 @@ Function DMDInstallPage
     StrCpy $DmdInstallDir $DInstallDir\dmd2
   HasDMDInstallDir:
   
-  WriteINIStr "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State" $DMDInstallDir
-  !insertmacro INSTALLOPTIONS_DISPLAY "dmdinstall.ini"
+  WriteINIStr "$PLUGINSDIR\${DMD_PAGE_INI}" "Field 1" "State" $DMDInstallDir
+!endif
+
+  !insertmacro INSTALLOPTIONS_DISPLAY ${DMD_PAGE_INI}
   
 FunctionEnd
 
 Function ValidateDMDInstallPage
-  ReadINIStr $DMDInstallDir "$PLUGINSDIR\dmdinstall.ini" "Field 1" "State"
+
+!ifdef DMD
+  ReadINIStr $CompilerInstallDir "$PLUGINSDIR\${DMD_PAGE_INI}" "Field 1" "State"
+  WriteRegStr HKLM "Software\${APPNAME}" "BaseInstallDir" $CompilerInstallDir
+!else
+  ReadINIStr $DMDInstallDir "$PLUGINSDIR\${DMD_PAGE_INI}" "Field 1" "State"
   WriteRegStr HKLM "Software\${APPNAME}" "DMDInstallDir" $DMDInstallDir
+!endif
+
 FunctionEnd
 
 !define AutoExpPath ..\Packages\Debugger\autoexp.dat
@@ -1476,21 +1589,21 @@ Function DetectVS2017BuildTools_InstallationFolder
   loop:
     EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
     StrCmp $1 "" done
-	ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
-	IfErrors NoDisplayName
-		StrCmp $2 "Visual Studio Build Tools 2017" 0 NotVS2017BT
-			ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
-			IfErrors NoInstallLocation
-				; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
-				StrCpy $1 "$2\\"
-				return
-			NoInstallLocation:
-		NotVS2017BT:
-	NoDisplayName:
+    ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+    IfErrors NoDisplayName
+        StrCmp $2 "Visual Studio Build Tools 2017" 0 NotVS2017BT
+            ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+            IfErrors NoInstallLocation
+                ; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+                StrCpy $1 "$2\\"
+                return
+            NoInstallLocation:
+        NotVS2017BT:
+    NoDisplayName:
     IntOp $0 $0 + 1
-	Goto loop
+    Goto loop
   done:
-  StrCpy $0 ""
+  StrCpy $1 ""
 
 FunctionEnd
 
@@ -1500,33 +1613,33 @@ Function DetectVS2019_InstallationFolder
   StrCpy $0 0
   loop:
     EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
-	; MessageBox MB_YESNO|MB_ICONQUESTION "Enum: $1$\n$\nMore?" IDYES 0 IDNO done
+    ; MessageBox MB_YESNO|MB_ICONQUESTION "Enum: $1$\n$\nMore?" IDYES 0 IDNO done
     StrCmp $1 "" done
-	ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
-	IfErrors NoDisplayName
-		; MessageBox MB_YESNO|MB_ICONQUESTION "Displayname: $2$\n$\nMore?" IDYES 0 IDNO done
-		StrCpy $3 $2 14
-		; MessageBox MB_YESNO|MB_ICONQUESTION "Visual Studio in: '$3'$\n$\nMore?" IDYES 0 IDNO done
-		StrCmp $3 "Visual Studio " 0 NotVS2019
-		StrCpy $3 $2 12 -12
-		; MessageBox MB_YESNO|MB_ICONQUESTION "2019 Preview in: '$3'$\n$\nMore?" IDYES 0 IDNO done
-		StrCmp $3 "2019 Preview" IsVS2019
-		StrCpy $3 $2 4 -4
-		; MessageBox MB_YESNO|MB_ICONQUESTION "2019 in: '$3'$\n$\nMore?" IDYES 0 IDNO done
-		StrCmp $3 "2019" IsVS2019 NotVS2019
-		IsVS2019:
-			ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
-			IfErrors NoInstallLocation
-				; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
-				StrCpy $1 "$2\\"
-				return
-			NoInstallLocation:
-		NotVS2019:
-	NoDisplayName:
+    ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+    IfErrors NoDisplayName
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "Displayname: $2$\n$\nMore?" IDYES 0 IDNO done
+        StrCpy $3 $2 14
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "Visual Studio in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+        StrCmp $3 "Visual Studio " 0 NotVS2019
+        StrCpy $3 $2 12 -12
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "2019 Preview in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+        StrCmp $3 "2019 Preview" IsVS2019
+        StrCpy $3 $2 4 -4
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "2019 in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+        StrCmp $3 "2019" IsVS2019 NotVS2019
+        IsVS2019:
+            ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+            IfErrors NoInstallLocation
+                ; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+                StrCpy $1 "$2\\"
+                return
+            NoInstallLocation:
+        NotVS2019:
+    NoDisplayName:
     IntOp $0 $0 + 1
-	Goto loop
+    Goto loop
   done:
-  StrCpy $0 ""
+  StrCpy $1 ""
 
 FunctionEnd
 
@@ -1536,21 +1649,21 @@ Function DetectVS2019BuildTools_InstallationFolder
   loop:
     EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
     StrCmp $1 "" done
-	ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
-	IfErrors NoDisplayName
-		StrCmp $2 "Visual Studio Build Tools 2019" 0 NotVS2019BT
-			ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
-			IfErrors NoInstallLocation
-				; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
-				StrCpy $1 "$2\\"
-				return
-			NoInstallLocation:
-		NotVS2019BT:
-	NoDisplayName:
+    ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+    IfErrors NoDisplayName
+        StrCmp $2 "Visual Studio Build Tools 2019" 0 NotVS2019BT
+            ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+            IfErrors NoInstallLocation
+                ; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+                StrCpy $1 "$2\\"
+                return
+            NoInstallLocation:
+        NotVS2019BT:
+    NoDisplayName:
     IntOp $0 $0 + 1
-	Goto loop
+    Goto loop
   done:
-  StrCpy $0 ""
+  StrCpy $1 ""
 
 FunctionEnd
 

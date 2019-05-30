@@ -753,16 +753,8 @@ version(none)
 			mUpdateCheckMessage = null;
 	}
 
-	// IOleComponent Methods
-	BOOL FDoIdle(in OLEIDLEF grfidlef)
+	void idleCheckUpdates()
 	{
-		if(mWantsUpdateLibInfos)
-		{
-			mWantsUpdateLibInfos = false;
-			Package.GetLibInfos().updateDefinitions();
-		}
-		OutputPaneBuffer.flush();
-
 		if (!mHasMadeUpdateCheck &&
 		    (GetGlobalOptions().checkUpdatesVisualD != CheckFrequency.Never || 
 		     GetGlobalOptions().checkUpdatesDMD != CheckFrequency.Never || 
@@ -778,6 +770,30 @@ version(none)
 						(int) { openSettingsPage("002A2DE9-8BB6-484D-9829-7E4AD4084715"); return true; });
 			mUpdateCheckMessage = null;
 		}
+
+		if (mSaveOptionsInIdle)
+		{
+			mSaveOptionsInIdle = false;
+			mOptions.saveToRegistry();
+		}
+	}
+
+	void deferSaveOptions()
+	{
+		mSaveOptionsInIdle = true;
+	}
+
+	// IOleComponent Methods
+	BOOL FDoIdle(in OLEIDLEF grfidlef)
+	{
+		if(mWantsUpdateLibInfos)
+		{
+			mWantsUpdateLibInfos = false;
+			Package.GetLibInfos().updateDefinitions();
+		}
+		OutputPaneBuffer.flush();
+
+		idleCheckUpdates();
 
 		if (mLangsvc.OnIdle())
 			return true;
@@ -1280,6 +1296,7 @@ private:
 	bool             mWantsUpdateLibInfos;
 
 	bool             mHasMadeUpdateCheck;
+	bool             mSaveOptionsInIdle;
 	string           mUpdateCheckMessage;
 }
 
@@ -1456,6 +1473,7 @@ class GlobalOptions
 	bool showCoverageMargin;
 	bool ColorizeCoverage = true;
 	bool ColorizeVersions = true;
+	bool ColorizeReferences = true;
 	bool lastColorizeCoverage;
 	bool lastColorizeVersions;
 	bool lastUseDParser;
@@ -1694,6 +1712,25 @@ class GlobalOptions
 		}
 	}
 
+	void detectLDCInstallDir()
+	{
+		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false);
+		LDC.InstallDir = toUTF8(keyVD.GetString("LDCInstallDir"));
+	}
+
+	void detectBaseInstallDir()
+	{
+		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false);
+		baseInstallDir = toUTF8(keyVD.GetString("BaseInstallDir"));
+		if(baseInstallDir.empty)
+		{
+			scope RegKey keyDMD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\DMD", false);
+			baseInstallDir = toUTF8(keyDMD.GetString("InstallationFolder"));
+		}
+		if(baseInstallDir.empty)
+			baseInstallDir = "c:\\D";
+	}
+
 	bool initFromRegistry()
 	{
 		bool rc = true;
@@ -1721,6 +1758,8 @@ class GlobalOptions
 			detectVSInstallDir();
 			detectVCInstallDir();
 			detectDMDInstallDir();
+			detectLDCInstallDir();
+			detectBaseInstallDir();
 
 			//UtilMessageBox("getVCDir = " ~ getVCDir("lib\\legacy_stdio_definitions.lib", true, true)
 			//UtilMessageBox("VSInstallDir = "~VSInstallDir ~"\n" ~
@@ -1754,6 +1793,7 @@ class GlobalOptions
 			}
 
 			ColorizeVersions    = getBoolOpt("ColorizeVersions", true);
+			ColorizeReferences  = getBoolOpt("ColorizeReferences", true);
 			ColorizeCoverage    = getBoolOpt("ColorizeCoverage", true);
 			showCoverageMargin  = getBoolOpt("showCoverageMargin", false);
 			timeBuilds          = getBoolOpt("timeBuilds", false);
@@ -1789,7 +1829,7 @@ class GlobalOptions
 			checkUpdatesVisualD = cast(ubyte) getIntOpt("checkUpdatesVisualD", CheckFrequency.Weekly);
 			checkUpdatesDMD     = cast(ubyte) getIntOpt("checkUpdatesDMD", CheckFrequency.Weekly);
 			checkUpdatesLDC     = cast(ubyte) getIntOpt("checkUpdatesLDC", CheckFrequency.Weekly);
-			baseInstallDir      = getStringOpt("baseInstallDir", "c:\\D");
+			baseInstallDir      = getStringOpt("baseInstallDir", toUTF16(baseInstallDir));
 
 			string getDefaultLibPathCOFF64()
 			{
@@ -2029,6 +2069,7 @@ class GlobalOptions
 			keyToolOpts.Set("LDC.DisasmCommand64", toUTF16(LDC.DisasmCommand64));
 
 			keyToolOpts.Set("ColorizeVersions",    ColorizeVersions);
+			keyToolOpts.Set("ColorizeReferences",  ColorizeReferences);
 			keyToolOpts.Set("ColorizeCoverage",    ColorizeCoverage);
 			keyToolOpts.Set("showCoverageMargin",  showCoverageMargin);
 			keyToolOpts.Set("excludeFileDeps",     toUTF16(excludeFileDeps));
