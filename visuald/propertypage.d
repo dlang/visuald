@@ -2815,10 +2815,10 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		mLinesPerMultiLine = 3;
 		AddTitleLine("Colorizer");
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
-		AddControl("", mSemanticHighlighting = new CheckBox(mCanvas, "Colorize identifiers from semantic analysis (experimental)"));
-		AddControl("", mResolveFields = new CheckBox(mCanvas, "   resolving fields and aliases (can be slow)"));
+		AddControl("", mSemanticHighlighting = new CheckBox(mCanvas, "Colorize identifiers from semantic analysis"));
+		AddControl("", mResolveFields = new CheckBox(mCanvas, "   resolving fields and aliases (experimental, can be slow)"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas), 1000);
-		AddControl("", mColorizeReferences = new CheckBox(mCanvas, "Highlight references to the symbol at the caret"));
+		AddControl("", mColorizeReferences = new CheckBox(mCanvas, "Highlight references to the symbol at the caret (experimental)"));
 		AddTitleLine("Coverage");
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));

@@ -100,7 +100,9 @@
   OutFile "..\..\downloads\${APPNAME}-v${VERSION}${OUT_SUFFIX}.exe"
 
   SetCompressor /solid lzma
+!ifdef DMD
   SetCompressorDictSize 140
+!endif
 
   !define UNINSTALL_REGISTRY_ROOT HKLM
   !define UNINSTALL_REGISTRY_KEY  Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}
@@ -167,7 +169,9 @@
   RequestExecutionLevel admin
 
   ReserveFile ${DMD_PAGE_INI}
+!ifdef DMD ; not available on appveyor
   ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
+!endif
 
 ;--------------------------------
 ; register win32 macro
@@ -1266,7 +1270,7 @@ Function DMDInstallPage
 
   ReadRegStr $CompilerInstallDir HKLM "Software\${APPNAME}" "BaseInstallDir" 
   IfErrors CompilerInstallDirEmpty
-  StrCmp "$CompilerInstallDir" "" CompilerInstallDirEmpty HasCompilerInstallDir
+  StrCmp "$CompilerInstallDir" "" CompilerInstallDirEmpty SkipInstallOptionsPage
   CompilerInstallDirEmpty:
     ReadRegStr $DInstallDir HKLM "SOFTWARE\DMD" "InstallationFolder" 
     IfErrors 0 HasDInstallationFolder
@@ -1284,7 +1288,7 @@ Function DMDInstallPage
 
   ReadRegStr $DMDInstallDir HKLM "Software\${APPNAME}" "DMDInstallDir" 
   IfErrors DMDInstallDirEmpty
-  StrCmp "$DMDInstallDir" "" DMDInstallDirEmpty HasDMDInstallDir
+  StrCmp "$DMDInstallDir" "" DMDInstallDirEmpty SkipInstallOptionsPage
   DMDInstallDirEmpty:
     ReadRegStr $DInstallDir HKLM "SOFTWARE\DMD" "InstallationFolder" 
     IfErrors 0 HasDInstallationFolder
@@ -1298,7 +1302,8 @@ Function DMDInstallPage
 !endif
 
   !insertmacro INSTALLOPTIONS_DISPLAY ${DMD_PAGE_INI}
-  
+  SkipInstallOptionsPage:
+
 FunctionEnd
 
 Function ValidateDMDInstallPage

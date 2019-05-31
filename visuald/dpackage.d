@@ -722,7 +722,7 @@ version(none)
 					if (info.updated)
 					{
 						string ver = getInstalledVersion(prod);
-						if (extractVersion(ver) == extractVersion(info.name))
+						if (extractVersion(ver) >= extractVersion(info.name))
 							return null;
 						return info.name;
 					}
@@ -1473,7 +1473,7 @@ class GlobalOptions
 	bool showCoverageMargin;
 	bool ColorizeCoverage = true;
 	bool ColorizeVersions = true;
-	bool ColorizeReferences = true;
+	bool ColorizeReferences;
 	bool lastColorizeCoverage;
 	bool lastColorizeVersions;
 	bool lastUseDParser;
@@ -1793,7 +1793,7 @@ class GlobalOptions
 			}
 
 			ColorizeVersions    = getBoolOpt("ColorizeVersions", true);
-			ColorizeReferences  = getBoolOpt("ColorizeReferences", true);
+			ColorizeReferences  = getBoolOpt("ColorizeReferences", false);
 			ColorizeCoverage    = getBoolOpt("ColorizeCoverage", true);
 			showCoverageMargin  = getBoolOpt("showCoverageMargin", false);
 			timeBuilds          = getBoolOpt("timeBuilds", false);
@@ -1814,7 +1814,7 @@ class GlobalOptions
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
 			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
 			showValueInTooltip  = getBoolOpt("showValueInTooltip", false);
-			semanticHighlighting  = getBoolOpt("semanticHighlighting", false);
+			semanticHighlighting  = getBoolOpt("semanticHighlighting", true);
 			semanticResolveFields = getBoolOpt("semanticResolveFields", false);
 			//semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
 			pasteIndent         = getBoolOpt("pasteIndent", true);
