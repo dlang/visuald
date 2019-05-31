@@ -101,7 +101,7 @@
 
   SetCompressor /solid lzma
 !ifdef DMD
-  SetCompressorDictSize 140
+  SetCompressorDictSize 128
 !endif
 
   !define UNINSTALL_REGISTRY_ROOT HKLM
@@ -169,7 +169,7 @@
   RequestExecutionLevel admin
 
   ReserveFile ${DMD_PAGE_INI}
-!ifdef DMD ; not available on appveyor
+!ifdef DMD ; doesn't work in NSIS3 on appveyor
   ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 !endif
 
@@ -485,6 +485,11 @@ ${MementoSection} "Install in VS 2013" SecVS2013
 
   push $1
   Call VSConfigurationChanged
+
+  ; Workaround for extension cache not properly updated
+  SetShellVarContext current
+  Delete $LocalAppData\Microsoft\VisualStudio\12.0\Extensions\*.cache
+  SetShellVarContext all
 
 ${MementoSectionEnd}
 
