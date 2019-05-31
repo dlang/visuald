@@ -626,7 +626,7 @@ class VDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
+	override HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr, in BOOL moduleOnly)
 	{
 		return E_NOTIMPL;
 	}

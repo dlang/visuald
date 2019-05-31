@@ -87,6 +87,9 @@ class ViewFilter : DisposingComObject, IVsTextViewFilter, IOleCommandTarget,
 	int mLastHighlightBracesLine;
 	ViewCol mLastHighlightBracesCol;
 
+	string mLastFindReferencesWord;
+	int mLastFindReferencesLine;
+
 	static const GUID iid = { 0xd143496a, 0xc795, 0x428d, [ 0x8c, 0xfe, 0x96, 0x88, 0xcf, 0x19, 0x5e, 0x3f ] };
 
 version(tip)
@@ -300,6 +303,10 @@ version(tip)
 			{
 			case ECMD_RETURN:
 				gotEnterKey = true;
+				break;
+
+			case ECMD_CANCEL:
+				mCodeWinMgr.mSource.clearReferenceMarker();
 				break;
 
 			case ECMD_INVOKESNIPPETFROMSHORTCUT:
@@ -1574,7 +1581,7 @@ else
 		if(mView.GetCaretPos(&line, &idx) != S_OK)
 			return S_FALSE;
 
-		Package.GetLanguageService().GetReferences(mCodeWinMgr.mSource, "", line, idx, &FindReferencesCallBack);
+		Package.GetLanguageService().GetReferences(mCodeWinMgr.mSource, "", line, idx, false, &FindReferencesCallBack);
 		return S_FALSE;
 	}
 
@@ -1597,6 +1604,12 @@ else
 
 			fs.DoSearch(&GUID_VsSymbolScope_All, &criteria);
 		}
+	}
+
+	extern(D)
+	void FindReferencesInModuleCallBack(uint request, string filename, string tok, int line, int idx, string[] exps)
+	{
+		mCodeWinMgr.mSource.updateReferenceMarker(exps);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1917,12 +1930,26 @@ version(none) // quick info tooltips not good enough yet
 
 		if(int rc = mView.GetCaretPos(&line, &idx))
 			return false;
-		if(mLastHighlightBracesLine == line && mLastHighlightBracesCol == idx)
-			return false;
 
-		mLastHighlightBracesLine = line;
-		mLastHighlightBracesCol = idx;
-		HighlightMatchingPairs();
+		if(mLastHighlightBracesLine != line || mLastHighlightBracesCol != idx)
+		{
+			mLastHighlightBracesLine = line;
+			mLastHighlightBracesCol = idx;
+			HighlightMatchingPairs();
+			return true;
+		}
+
+		if (Package.GetGlobalOptions().ColorizeReferences)
+		{
+			string word = toUTF8(GetWordAtCaret());
+			if(dLex.isIdentifier(word) && (mLastFindReferencesWord != word || mLastFindReferencesLine != line))
+			{
+				mLastFindReferencesWord = word;
+				mLastFindReferencesLine = line;
+				Package.GetLanguageService().GetReferences(mCodeWinMgr.mSource, word, line, idx, true, &FindReferencesInModuleCallBack);
+				return true;
+			}
+		}
 
 version(tip)
 {
@@ -1935,7 +1962,7 @@ version(tip)
 		else
 			mTextTipData.Dismiss();
 }
-		return true;
+		return false;
 	}
 }
 

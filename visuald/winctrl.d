@@ -164,6 +164,22 @@ class Widget
 		return true;
 	}
 
+	int getWidth()
+	{
+		RECT r;
+		if(!.GetWindowRect(hwnd, &r))
+			return 0;
+		return r.right - r.left;
+	}
+
+	int getHeight()
+	{
+		RECT r;
+		if(!.GetWindowRect(hwnd, &r))
+			return 0;
+		return r.bottom - r.top;
+	}
+
 	// coordinates relative to parent (child window) or screen (top level window)
 	void setRect(int left, int top, int w, int h)
 	{

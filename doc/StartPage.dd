@@ -32,7 +32,7 @@ $(UL
  $(LI Code outlining)
  $(LI Symbol/File search window)
  $(LI Integration of $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb) and
-      $(LINK2 http://dsource.org/projects/mago_debugger, Mago) for nice debugging experience)
+      $(LINK2 https://github.com/rainers/mago, Mago) for nice debugging experience)
  $(LI Profiler browse window)
  $(LI Code Coverage support)
  $(LI Support for Error List, Code Definition window, Object Browser and Class View)
@@ -96,8 +96,7 @@ $(H2 Download)
 
 $(P The latest installer and older versions can be downloaded
 $(LINK2 https://github.com/dlang/visuald/releases, here).
-You can find even older versions and some additional files in
-the $(LINK2 http://www.dsource.org/projects/visuald/browser/downloads/, dsource download directory).)
+)
 
 Macros:
 	TITLE=Visual D

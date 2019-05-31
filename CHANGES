@@ -1116,3 +1116,22 @@ Version history
   * visualdproj: fixed additional options not passed to single file compilation
   * VS2015: workaround VS not correctly updating extension caches after uninstallation
   * bugzilla 19826: visualdproj projects created for LDC still use DMD
+
+unreleased Version 0.50.0
+  * VS 16.1 Preview 2: ignore tracked files in *.delete.*.tlog as dependencies, too
+  * now another installer available that includes DMD and LDC
+  * installer no longer asks for DMD path when updating existing installation
+  * check for updates for Visual D, DMD and LDC, assisted download and install 
+  * experimental highlight references to the same symbol as the one at the caret
+  * new VC projects now determine Windows SDK automatically
+  * VC project: "New item" now also allows adding D module
+  * dparser:
+    - add semantic coloring for module and package names
+  * mago:
+    - fixed width of hex display of negative values
+    - dynamic type not shown for types that have no members (including interfaces)
+    - dynamic type now displayed with the declared type (in braces)
+    - determine dynamic type of C++ classes
+    - demangle D symbol names
+    - regression: use of registers in expression was lost at some point
+    - show class and message for exceptions that the debugger breaks on

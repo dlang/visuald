@@ -88,6 +88,16 @@ IVsOutputWindowPane getBuildOutputPane()
 	return pane;
 }
 
+void openSettingsPage(string pageGuid)
+{
+	auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false);
+	VARIANT var;
+	var.vt = VT_BSTR;
+	var.bstrVal = allocBSTR(pageGuid);
+	pIVsUIShell.PostExecCommand(&CMDSETID_StandardCommandSet97, cmdidToolsOptions, OLECMDEXECOPT_DODEFAULT, &var);
+	freeBSTR(var.bstrVal);
+}
+
 class OutputPaneBuffer
 {
 	static shared(string) buffer;
@@ -560,3 +570,284 @@ void setHWBreakpopints()
 	addr4 = null;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+import sdk.vsi.vsshell140;
+
+class VDInfoBarTextSpan : ComObject, IVsInfoBarTextSpan
+{
+	string message;
+
+	this(string msg)
+	{
+		message = msg;
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsInfoBarTextSpan) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+    // the text for the span
+	HRESULT get_Text(BSTR* text)
+	{
+		*text = allocBSTR(message);
+		return S_OK;
+	}
+
+    // formatting options for the text
+	HRESULT get_Bold(VARIANT_BOOL* bold)
+	{
+		*bold = FALSE;
+		return S_OK;
+	}
+	HRESULT get_Italic(VARIANT_BOOL* italic)
+	{
+		*italic = FALSE;
+		return S_OK;
+	}
+	HRESULT get_Underline(VARIANT_BOOL* underline)
+	{
+		*underline = FALSE;
+		return S_OK;
+	}
+}
+
+class VDInfoBarTextSpanCollection : ComObject, IVsInfoBarTextSpanCollection
+{
+	VDInfoBarTextSpan textSpan;
+
+	this(string msg)
+	{
+		textSpan = newCom!VDInfoBarTextSpan(msg);
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsInfoBarTextSpanCollection) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+    // Gets the number of spans stored in the collection.
+	HRESULT get_Count(int* count)
+	{
+		*count = 1;
+		return S_OK;
+	}
+
+    // Gets the span stored at a specific index in the collection.
+    HRESULT GetSpan(in int index, IVsInfoBarTextSpan * span)
+	{
+		if (index != 0)
+			return E_FAIL;
+		*span = addref(textSpan);
+		return S_OK;
+	}
+}
+
+class VDInfoBarActionItem : VDInfoBarTextSpan, IVsInfoBarActionItem
+{
+	int index;
+
+	this(int idx, string msg)
+	{
+		index = idx;
+		super(msg);
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsInfoBarActionItem) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+    // Gets the user-provided context associated with the hyperlink.
+    // This contextual data can be used to identify the hyperlink when it's clicked.
+	HRESULT get_ActionContext(VARIANT* context)
+	{
+		context.vt = VT_INT;
+		context.intVal = index;
+		return S_OK;
+	}
+
+    // Gets whether or not this action item should be rendered as a button.
+    // By default, action items are rendered as a hyperlink.
+	HRESULT get_IsButton(VARIANT_BOOL* isButton)
+	{
+		*isButton = FALSE;
+		return S_OK;
+	}
+}
+
+class VDInfoBarActionItemCollection : ComObject, IVsInfoBarActionItemCollection
+{
+	VDInfoBarActionItem action;
+
+	this(string msg)
+	{
+		action = newCom!VDInfoBarActionItem(0, msg);
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsInfoBarActionItemCollection) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+    // Gets the number of spans stored in the collection.
+	HRESULT get_Count(int* count)
+	{
+		*count = 1;
+		return S_OK;
+	}
+
+    // Gets the span stored at a specific index in the collection.
+    HRESULT GetItem(in int index, IVsInfoBarActionItem * item)
+	{
+		if (index != 0)
+			return S_FALSE;
+		*item = addref(action);
+		return S_OK;
+	}
+}
+
+class VDInfoBar : ComObject, IVsInfoBar
+{
+	VDInfoBarTextSpanCollection spans;
+	VDInfoBarActionItemCollection actions;
+
+	this(string msg, string action)
+	{
+		spans = newCom!VDInfoBarTextSpanCollection(msg);
+		if(action)
+			actions = newCom!VDInfoBarActionItemCollection(action);
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsInfoBar) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	// Gets the moniker for the image to display in the info bar
+    /+[ propget]+/
+	HRESULT get_Image(/+[out, retval]+/ ImageMoniker* moniker)
+	{
+		*moniker = ImageMoniker.init;
+		return S_FALSE;
+	}
+
+    // Gets whether or not the InfoBar supports closing
+	HRESULT get_IsCloseButtonVisible(/+[out, retval]+/ VARIANT_BOOL* closeButtonVisible)
+	{
+		*closeButtonVisible = TRUE;
+		return S_OK;
+	}
+
+    // Gets the collection of text spans displayed in the info bar.  Any
+    // IVsInfoBarActionItem spans in this collection will be rendered as a hyperlink.
+	HRESULT get_TextSpans(IVsInfoBarTextSpanCollection * textSpans)
+	{
+		*textSpans = addref(spans);
+		return S_OK;
+	}
+
+    // Gets the collection of action items displayed in the info bar
+	HRESULT get_ActionItems(IVsInfoBarActionItemCollection * actionItems)
+	{
+		*actionItems = addref(actions);
+		return S_FALSE;
+	}
+}
+
+class VDInfoBarUIEvents : ComObject, IVsInfoBarUIEvents
+{
+	extern(D) bool delegate(int) onAction;
+	IVsInfoBarUIElement uiElement;
+
+	this(typeof(onAction) dg, IVsInfoBarUIElement ui)
+	{
+		onAction = dg;
+		uiElement = ui;
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsInfoBarUIEvents) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+    // Callback invoked when the close button on an info bar is clicked
+    HRESULT OnClosed(/+[in]+/ IVsInfoBarUIElement infoBarUIElement)
+	{
+		return S_OK;
+	}
+
+    // Callback invoked when an action item on an info bar is clicked
+    HRESULT OnActionItemClicked(/+[in]+/ IVsInfoBarUIElement infoBarUIElement, /+[in]+/ IVsInfoBarActionItem actionItem)
+	{
+		VARIANT var;
+		if(auto hr = actionItem.get_ActionContext(&var))
+			return hr;
+		if (onAction(var.intVal) && uiElement)
+		{
+			if (auto barHost = getInfoBarHost())
+			{
+				scope(exit) release(barHost);
+				barHost.RemoveInfoBar(uiElement);
+			}
+		}
+		return S_OK;
+	}
+}
+
+IVsInfoBarHost getInfoBarHost()
+{
+	auto pIVsShell = ComPtr!(IVsShell)(queryService!(IVsShell), false);
+	if(!pIVsShell)
+		return null;
+
+	VARIANT var;
+	if(!SUCCEEDED(pIVsShell.GetProperty(VSSPROPID_MainWindowInfoBarHost, &var)))
+		return null;
+	if(var.vt != VT_UNKNOWN)
+		return null;
+	scope(exit) release(var.punkVal);
+
+	auto barHost = qi_cast!IVsInfoBarHost(var.punkVal);
+	return barHost;
+}
+
+bool showInfoBar(string msg, string action, bool delegate(int) dg)
+{
+	import sdk.vsi.vsplatformui;
+	auto pUIFactory = ComPtr!(IVsInfoBarUIFactory)(queryService!(SVsInfoBarUIFactory, IVsInfoBarUIFactory), false);
+	if(!pUIFactory)
+		return false;
+
+	auto barHost = getInfoBarHost();
+	if (!barHost)
+		return false;
+	scope(exit) release(barHost);
+
+	auto info = newCom!VDInfoBar(msg, action);
+	IVsInfoBarUIElement pUIElement;
+	if (!SUCCEEDED(pUIFactory.CreateInfoBar(info, &pUIElement)))
+		return false;
+	scope(exit) release(pUIElement);
+
+	if(dg)
+	{
+		DWORD cookie;
+		pUIElement.Advise(newCom!VDInfoBarUIEvents(dg, pUIElement), &cookie);
+	}
+
+	barHost.AddInfoBar(pUIElement);
+	return true;
+}

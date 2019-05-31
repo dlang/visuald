@@ -105,7 +105,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -226,7 +226,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -347,7 +347,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>user32.lib kernel32.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
+  <libfiles>user32.lib kernel32.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
   <libpaths>..\sdk\lib</libpaths>
   <deffile />
   <resfile />
@@ -468,7 +468,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -589,7 +589,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -710,7 +710,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -831,7 +831,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib oleaut32.lib comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -952,6 +952,7 @@ rc /fo&quot;$(OutDir)\visuald.res&quot; /I &quot;$(IntDir)&quot; $(InputPath)" d
   <File path="tokenreplace.d" />
   <File path="tokenreplacedialog.d" />
   <File path="trackprojectdocument.d" />
+  <File path="updates.d" />
   <File perConfig="true" path="visuald.def">
    <Config tool="None" name="TestDebug|Win32" />
   </File>

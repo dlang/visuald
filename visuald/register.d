@@ -305,9 +305,9 @@ static const wstring regPathToolsDirsDmd   = "\\ToolsOptionsPages\\Projects\\Vis
 static const wstring regPathToolsDirsGdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\GDC Directories"w;
 static const wstring regPathToolsDirsLdc   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\LDC Directories"w;
 static const wstring regPathToolsDirsCmd   = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\Compile/Run/Debug/Dustmite"w;
+static const wstring regPathToolsUpdate    = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\Updates"w;
 static const wstring regPathToolsDub       = "\\ToolsOptionsPages\\Projects\\Visual D Settings\\DUB Options"w;
 static const wstring regPathMagoOptions    = "\\ToolsOptionsPages\\Debugger\\Mago"w;
-static const wstring regMiscFiles          = regPathProjects ~ "\\{A2FE74E1-B743-11d0-AE1A-00A0C90FFFC3}"w;
 static const wstring regPathMetricsExcpt   = "\\AD7Metrics\\Exception"w;
 static const wstring regPathMetricsEE      = "\\AD7Metrics\\ExpressionEvaluator"w;
 
@@ -315,6 +315,24 @@ static const wstring vendorMicrosoftGuid   = "{994B45C4-E6E9-11D2-903F-00C04FA30
 static const wstring guidCOMPlusNativeEng  = "{92EF0900-2251-11D2-B72E-0000F87572EF}"w;
 
 static const GUID GUID_MaGoDebugger = uuid("{97348AC0-2B6B-4B99-A245-4C7E2C09D403}");
+
+static const wstring[] regMiscProjects =
+[
+	// GUID                                       TemplateGroupIDs(VsTemplate)
+	"{A2FE74E1-B743-11d0-AE1A-00A0C90FFFC3}"w, // misc (new item without project)
+	"{3295daf3-837e-4482-ab9c-a945fa3e0cee}"w, // VC-Windows;WinRT-Common;VC-Native;VC-MFC
+	"{887e6942-90cd-4266-8816-b74502858c07}"w, // VC-Windows;WinRT-Native-6.3;WinRT-Common
+	"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"w, // VC
+	"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC943}"w, // VC-Windows;WinRT-Common;VC-Native <= used by our templates
+	"{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC944}"w, // VC-Windows;WinRT-Common;VC-Managed
+	"{8BC9CEBA-8B4A-11D0-8D11-00A0C91BC942}"w, // VC package addclass?
+	"{8C3FFDCC-9A63-43F2-9A3E-C45FB2ABF450}"w, // VC-Windows;WinRT-Common;VC-Native
+	"{dc073cad-303e-4838-9969-278c87bd53eb}"w, // VC-Windows;WinRT-Native-Phone-6.3;WinRT-Common
+	"{F8BBB05E-FBD0-4B36-8C17-0B3F79AD4F01}"w, // VC-Android
+	"{F8BBB05E-FBD0-4B36-8C17-0B3F79AD4F01}"w, // VC-Android
+	"{fae12128-4bbf-454a-b96c-e83e7ad6a783}"w, // VC-Windows;CodeSharing-Native;WinRT-Common
+	"{fe0b9df8-a7c2-4687-a235-316c1aca78d3}"w, // VC-Windows;WinRT-Native-UAP;WinRT-Common
+];
 
 ///////////////////////////////////////////////////////////////////////
 //  Registration
@@ -452,7 +470,8 @@ HRESULT VSDllUnregisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathPrjTemplates ~ "\\"w ~ packageGuid);
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathProjects ~ "\\"w ~ GUID2wstring(g_projectFactoryCLSID));
-		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regMiscFiles ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid);
+		foreach (reg; regMiscProjects)
+			hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathProjects ~ "\\"w ~ reg ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid);
 
 		hr |= RegDeleteRecursive(keyRoot, registrationRoot ~ regPathToolsOptions);
 
@@ -490,6 +509,10 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	else if (ver == 16)
 		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.16.0.dll"w;
 
+	wstring vdext15Path;
+	if (ver >= 15)
+		vdext15Path = dirName(dllPath) ~ "\\vdext15.dll"w;
+
 	try
 	{
 		wstring packageGuid = GUID2wstring(g_packageCLSID);
@@ -498,6 +521,7 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		wstring exprEvalGuid = GUID2wstring(g_expressionEvaluator);
 		wstring wizardGuid = GUID2wstring(g_ProjectItemWizardCLSID);
 		wstring vdhelperGuid = GUID2wstring(g_VisualDHelperCLSID);
+		wstring vdhelper15Guid = GUID2wstring(g_VisualDHelper15CLSID);
 		wstring vchelperGuid = GUID2wstring(g_VisualCHelperCLSID);
 
 		// package
@@ -534,6 +558,18 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 			keyHelperCLSID.Set(null, "vdextensions.VisualDHelper"w);
 			keyHelperCLSID.Set("Class"w, "vdextensions.VisualDHelper"w);
 			keyHelperCLSID.Set("CodeBase"w, vdextPath);
+		}
+
+		// VDExtensions
+		version(vdext15)
+		if (vdext15Path)
+		{
+			scope RegKey keyHelperCLSID = new RegKey(keyRoot, registrationRoot ~ "\\CLSID\\"w ~ vdhelper15Guid);
+			keyHelperCLSID.Set("InprocServer32"w, "mscoree.dll");
+			keyHelperCLSID.Set("ThreadingModel"w, "Both"w);
+			keyHelperCLSID.Set(null, "vdextensions.VisualDHelper15"w);
+			keyHelperCLSID.Set("Class"w, "vdextensions.VisualDHelper15"w);
+			keyHelperCLSID.Set("CodeBase"w, vdext15Path);
 		}
 
 		// dbuild extension
@@ -631,11 +667,15 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyProject1.Set("TemplatesDir"w, templatePath ~ "\\Items"w);
 		keyProject1.Set("SortPriority"w, 25);
 
-		// Miscellaneous Files Project
-		scope RegKey keyProject2 = new RegKey(keyRoot, registrationRoot ~ regMiscFiles ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid ~ "\\/1"w);
-		keyProject2.Set(null, g_languageName);
-		keyProject2.Set("TemplatesDir"w, templatePath ~ "\\Items"w);
-		keyProject2.Set("SortPriority"w, 25);
+		// new items in VC Projects
+		foreach (reg; regMiscProjects)
+		{
+			wstring strkey = registrationRoot ~ regPathProjects ~ "\\"w ~ reg ~ "\\AddItemTemplates\\TemplateDirs\\"w ~ packageGuid ~ "\\/1"w;
+			scope RegKey keyProject2 = new RegKey(keyRoot, strkey);
+			keyProject2.Set(null, g_languageName);
+			keyProject2.Set("TemplatesDir"w, templatePath ~ "\\VCItems"w);
+			keyProject2.Set("SortPriority"w, 25);
+		}
 
 		// property pages
 		foreach(guid; guids_propertyPages)
@@ -698,6 +738,12 @@ version(none){
 		keyToolOptsLdc.Set("Package"w, packageGuid);
 		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_CmdLinePropertyPage));
 		keyToolOptsLdc.Set("Sort"w, 40);
+
+		scope RegKey keyToolOptsUpdate = new RegKey(keyRoot, registrationRoot ~ regPathToolsUpdate);
+		keyToolOptsLdc.Set(null, "Updates");
+		keyToolOptsLdc.Set("Package"w, packageGuid);
+		keyToolOptsLdc.Set("Page"w, GUID2wstring(g_UpdatePropertyPage));
+		keyToolOptsLdc.Set("Sort"w, 50);
 
 static if(hasDubSupport)
 {

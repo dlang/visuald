@@ -11,7 +11,7 @@
         <MSBuildVersion_Major>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[0])</MSBuildVersion_Major>
         <MSBuildVersion_Minor>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[1])</MSBuildVersion_Minor>
         <MSBuildVersion_Build>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[2])</MSBuildVersion_Build>
-        <DBuildVersion Condition="$(MSBuildVersion_Major) != 16">$(MSBuildVersion_Major).$(MSBuildVersion_Minor)</DBuildVersion>
+        <DBuildVersion Condition="$(MSBuildVersion_Major) != 16">$(MSBuildVersion_Major).0</DBuildVersion>
         <DBuildVersion Condition="$(MSBuildVersion_Major) == 16 and $(MSBuildVersion_Minor) == 0">16.0</DBuildVersion>
         <DBuildVersion Condition="$(MSBuildVersion_Major) == 16 and $(MSBuildVersion_Minor) != 0">16.1</DBuildVersion>
     </PropertyGroup>

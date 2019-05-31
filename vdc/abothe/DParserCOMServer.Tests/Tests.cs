@@ -229,7 +229,7 @@ foo();
 			using (var vd = new VDServerDisposable(code))
 			{
 				var instance = vd.Initialize();
-				instance.GetReferences(vd.FirstModuleFile, null, 5, 0, null);
+				instance.GetReferences(vd.FirstModuleFile, null, 5, 0, null, false);
 
 				string answer;
 				int remainingAttempts = 200;

@@ -11,7 +11,7 @@ using System.IO;
 
 namespace DParserCOMServer.CodeSemantics
 {
-	public class ReferencesListGenerator : AbstractVDServerTask<string, object>
+	public class ReferencesListGenerator : AbstractVDServerTask<string, bool>
 	{
 		private readonly VDServer _vdServer;
 		public ReferencesListGenerator(VDServer vdServer, EditorDataProvider editorDataProvider)
@@ -20,7 +20,7 @@ namespace DParserCOMServer.CodeSemantics
 			_vdServer = vdServer;
 		}
 
-		protected override string Process(EditorData editorData, object parameter)
+		protected override string Process(EditorData editorData, bool moduleOnly)
 		{
 			var sr = DResolver.GetScopedCodeObject(editorData);
 			var rr = sr != null ? LooseResolution.ResolveTypeLoosely(editorData, sr, out _, true) : null;
@@ -33,7 +33,7 @@ namespace DParserCOMServer.CodeSemantics
 				if (n != null)
 				{
 					var ctxt = ResolutionContext.Create(editorData, true);
-					if (n.ContainsAnyAttribute(DTokens.Private) || (n is DVariable variable && variable.IsLocal))
+					if (moduleOnly || n.ContainsAnyAttribute(DTokens.Private) || (n is DVariable variable && variable.IsLocal))
 					{
 						GetReferencesInModule(editorData.SyntaxTree, refs, n, ctxt);
 					}

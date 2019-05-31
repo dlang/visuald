@@ -664,13 +664,14 @@ alias void delegate(uint request, string filename, string tok, int line, int idx
 
 class GetReferencesCommand : FileCommand
 {
-	this(string filename, string tok, int line, int idx, wstring expr, GetReferencesCallBack cb)
+	this(string filename, string tok, int line, int idx, wstring expr, bool moduleOnly, GetReferencesCallBack cb)
 	{
 		super("GetReferences", filename);
 		mTok = tok;
 		mLine = line;
 		mIndex = idx;
 		mExpr = expr;
+		mModuleOnly = moduleOnly;
 		mCallback = cb;
 	}
 
@@ -682,7 +683,7 @@ class GetReferencesCommand : FileCommand
 		BSTR fname = allocBSTR(mFilename);
 		BSTR tok = allocBSTR(mTok);
 		BSTR expr = allocwBSTR(mExpr);
-		HRESULT rc = gVDServer.GetReferences(fname, tok, mLine + 1, mIndex, expr);
+		HRESULT rc = gVDServer.GetReferences(fname, tok, mLine + 1, mIndex, expr, mModuleOnly);
 		freeBSTR(expr);
 		freeBSTR(tok);
 		freeBSTR(fname);
@@ -719,6 +720,7 @@ class GetReferencesCommand : FileCommand
 	wstring mExpr;
 	int mLine;
 	int mIndex;
+	int mModuleOnly;
 	string[] mReferences;
 }
 
@@ -806,9 +808,9 @@ class VDServerClient
 		return cmd.mRequest;
 	}
 
-	int GetReferences(string filename, string tok, int line, int idx, wstring expr, GetReferencesCallBack cb)
+	int GetReferences(string filename, string tok, int line, int idx, wstring expr, bool moduleOnly, GetReferencesCallBack cb)
 	{
-		auto cmd = new _shared!(GetReferencesCommand)(filename, tok, line, idx, expr, cb);
+		auto cmd = new _shared!(GetReferencesCommand)(filename, tok, line, idx, expr, moduleOnly, cb);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}

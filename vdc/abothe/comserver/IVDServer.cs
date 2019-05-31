@@ -33,7 +33,7 @@ namespace DParserCOMServer
 		void GetIdentifierTypesResult(out string types);
 		void GetDefinition (string filename, int startLine, int startIndex, int endLine, int endIndex);
 		void GetDefinitionResult (out int startLine, out int startIndex, out int endLine, out int endIndex, out string filename);
-		void GetReferences (string filename, string tok, uint line, uint idx, string expr);
+		void GetReferences (string filename, string tok, uint line, uint idx, string expr, bool moduleOnly);
 		void GetReferencesResult (out string stringList);
 		void ConfigureCommentTasks (string tasks);
 		void GetCommentTasks (string filename, out string tasks);

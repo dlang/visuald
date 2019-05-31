@@ -16,7 +16,7 @@ if not exist ..\sdk\lib\nul     md ..\sdk\lib
 
 set LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib
 set LIBS=%LIBS% comdlg32.lib gdi32.lib ole32.lib rpcrt4.lib shell32.lib winmm.lib
-set LIBS=%LIBS% wsock32.lib comctl32.lib oleaut32.lib ws2_32.lib odbc32.lib
+set LIBS=%LIBS% wsock32.lib comctl32.lib oleaut32.lib ws2_32.lib odbc32.lib winhttp.lib onecore.lib
 
 echo WindowsSdkDir=%WindowsSdkDir%
 set WINSDKLIB=
