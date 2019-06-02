@@ -2390,7 +2390,7 @@ class Config :	DisposingComObject,
 		{
 			if(mProjectOptions.pauseAfterRunning)
 			{
-				args = "/c " ~ quoteFilename(prg) ~ " " ~ args ~ " & pause";
+				args = "/c " ~ quoteFilenameForCmd(prg) ~ " " ~ args ~ " & pause";
 				prg = getCmdPath();
 			}
 			ShellExecuteW(null, null, toUTF16z(quoteFilename(prg)), toUTF16z(args), toUTF16z(workdir), SW_SHOWNORMAL);
