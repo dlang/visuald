@@ -126,9 +126,9 @@
     <BoolProperty Name="Main" Category="Code Generation" DisplayName="Add Main" Switch="-main"
                   Description="add default main() (e.g. for unittesting)." />
     <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
-      <EnumValue Name="Default" DisplayName="asserts, invariants, contraints" />
-      <EnumValue Name="Debug" DisplayName="debug statements, asserts, invariants, contraints" Switch="-debug" />
-      <EnumValue Name="Release" DisplayName="none" Switch="-release" />
+      <EnumValue Name="Off" DisplayName="None" Switch="-boundscheck=off" />
+      <EnumValue Name="SafeOnly" DisplayName="For @safe code" Switch="-boundscheck=safeonly" />
+      <EnumValue Name="On" DisplayName="Always" Switch="-boundscheck=on" />
     </EnumProperty>
     <EnumProperty Name="CPUArchitecture" Category="Code Generation" DisplayName="CPU Architecture" Description="generate instructions for architecture.">
       <EnumValue Name="baseline" DisplayName="default architecture as determined by target" Switch="-mcpu=baseline" />

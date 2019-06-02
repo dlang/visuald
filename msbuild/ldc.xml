@@ -124,7 +124,12 @@
                   Description="generate code for all template instantiations." Switch="-allinst" />
     <BoolProperty Name="Main" Category="Code Generation" DisplayName="Add Main" Switch="-main"
                   Description="add default main() (e.g. for unittesting)." />
-    
+    <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
+      <EnumValue Name="Off" DisplayName="None" Switch="-boundscheck=off" />
+      <EnumValue Name="SafeOnly" DisplayName="For @safe code" Switch="-boundscheck=safeonly" />
+      <EnumValue Name="On" DisplayName="Always" Switch="-boundscheck=on" />
+    </EnumProperty>
+
     <EnumProperty Name="DebugCode" Category="Code Generation" DisplayName="Debug Code" Description="compile in debug code.">
       <EnumValue Name="Default" DisplayName="asserts, invariants, contraints" />
       <EnumValue Name="Debug" DisplayName="debug statements, asserts, invariants, contraints" Switch="-debug" />
@@ -135,11 +140,8 @@
       <EnumValue Name="VS" DisplayName="For VS debug engines" Switch="-gc" />
       <EnumValue Name="Mago" DisplayName="For D debug engines (mago)" Switch="-g" />
     </EnumProperty>
-    <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
-      <EnumValue Name="Off" DisplayName="None" Switch="-boundscheck=off" />
-      <EnumValue Name="SafeOnly" DisplayName="For @safe code" Switch="-boundscheck=safeonly" />
-      <EnumValue Name="On" DisplayName="Always" Switch="-boundscheck=on" />
-    </EnumProperty>
+    <BoolProperty Name="DebugMixin" Category="Code Generation" DisplayName="Mixin Debug File" Switch="-mixin="
+                  Description="expand and save mixins to specified file." />
 
     <BoolProperty Name="PerformSyntaxCheckOnly" Category="Code Generation" DisplayName="Perform Syntax Check Only"
             Description="Performs a syntax check only." Switch="-o-" />
