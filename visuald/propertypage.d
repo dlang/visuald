@@ -2422,12 +2422,16 @@ class UpdatePropertyPage : GlobalPropertyPage
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "Updates"; }
 
+	int buttonWidth; // VS automatically handles DPIchanges?
+
 	Button newButton(string text, int id)
 	{
 		auto btn = new Button(mCanvas, text, id);
 		int left, top, w, h;
 		btn.getRect(left, top, w, h);
-		btn.setRect(left, top, 90, h);
+		if (buttonWidth == 0)
+			buttonWidth = 12 * btn.getTextWidth(text) / 10; // use the size of the first button for all others, too
+		btn.setRect(left, top, buttonWidth, h);
 		return btn;
 	}
 

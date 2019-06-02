@@ -232,6 +232,25 @@ class Widget
 	{
 		return SetWindowTextW(hwnd, toUTF16z(txt)) != 0;
 	}
+	uint getTextWidth(string text)
+	{
+		HANDLE dc = GetDC(hwnd);
+		if (!dc)
+			return 0;
+		scope(exit) ReleaseDC(hwnd, dc);
+
+		auto prevfont = cast(HFONT) SelectObject(dc, getDialogFont());
+		if (prevfont == null)
+			return 0;
+		scope(exit) SelectObject(dc, prevfont);
+
+		wstring wtext = to!wstring(text);
+		SIZE size;
+		if (GetTextExtentPoint32W(dc, wtext.ptr, wtext.length, &size) == 0)
+			return 0;
+
+		return size.cx;
+	}
 
 	bool GetWindowRect(RECT* r)
 	{
@@ -550,26 +569,6 @@ class Label : Widget
 		string newline = std.ascii.newline; // join no longer likes immutable seperator
 		auto winstr = std.string.join(lines, newline);
 		SendMessageW(hwnd, WM_SETTEXT, 0, cast(LPARAM)toUTF16z(winstr));
-	}
-
-	uint getTextWidth(string text)
-	{
-		HANDLE dc = GetDC(hwnd);
-		if (!dc)
-			return 0;
-		scope(exit) ReleaseDC(hwnd, dc);
-
-		auto prevfont = cast(HFONT) SelectObject(dc, getDialogFont());
-		if (prevfont == null)
-			return 0;
-		scope(exit) SelectObject(dc, prevfont);
-
-		wstring wtext = to!wstring(text);
-		SIZE size;
-		if (GetTextExtentPoint32W(dc, wtext.ptr, wtext.length, &size) == 0)
-			return 0;
-
-		return size.cx;
 	}
 }
 
