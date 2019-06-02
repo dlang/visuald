@@ -84,6 +84,7 @@
       <AdditionalOptions></AdditionalOptions>
       <CompilationModel>Project</CompilationModel>
       <CRuntimeLibrary>MultiThreaded</CRuntimeLibrary>
+      <EnableDebugMixin>false</EnableDebugMixin>
       <!-- do not provide empty strings as default, they will show up on the generated command line
       <ObjectFileName></ObjectFileName>
       <DocDir></DocDir>

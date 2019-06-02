@@ -140,8 +140,10 @@
       <EnumValue Name="VS" DisplayName="For VS debug engines" Switch="-gc" />
       <EnumValue Name="Mago" DisplayName="For D debug engines (mago)" Switch="-g" />
     </EnumProperty>
-    <BoolProperty Name="DebugMixin" Category="Code Generation" DisplayName="Mixin Debug File" Switch="-mixin="
+    <BoolProperty Name="EnableDebugMixin" Category="Code Generation" DisplayName="Enable Mixin Debugging"
                   Description="expand and save mixins to specified file." />
+    <StringProperty Name="DebugMixin" Category="Code Generation" DisplayName="Mixin Debug File" Switch="-mixin="
+                  Description="Specifies the name of the mixin debug file if mixin debugging is enabled. Leave empty to auto generate a name according to the compilation model. Use [PackageName] to add the folder name with special characters replaced." />
 
     <BoolProperty Name="PerformSyntaxCheckOnly" Category="Code Generation" DisplayName="Perform Syntax Check Only"
             Description="Performs a syntax check only." Switch="-o-" />

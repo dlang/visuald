@@ -46,9 +46,19 @@
       </DCompile>
     </ItemGroup>
 
+    <!-- clear mixin file if disabled -->
+    <ItemGroup>
+      <DCompile Condition="'%(DCompile.EnableDebugMixin)' != 'true'">
+        <DebugMixin></DebugMixin>
+      </DCompile>
+    </ItemGroup>
+
     <ItemGroup>
       <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'Project'">
         <ObjectFileName>$(IntDir)dcompile_$(ProjectName).obj</ObjectFileName>
+      </DCompile>
+      <DCompile Condition="'%(DCompile.EnableDebugMixin)' == 'true' and '%(DCompile.DebugMixin)' == '' and '%(DCompile.CompilationModel)' == 'Project'">
+        <DebugMixin>$(IntDir)dcompile_$(ProjectName).mixin</DebugMixin>
       </DCompile>
       <DCompile Condition="'%(DCompile.CompilationModel)' == 'Project' and '$(VisualStudioVersion)' != '12.0'">
         <UseMultiToolTask>false</UseMultiToolTask> <!-- Never use MultiToolTask when compiling by project -->
@@ -58,6 +68,9 @@
     <ItemGroup>
       <DCompile Condition="'%(DCompile.ObjectFileName)' == '' and '%(DCompile.CompilationModel)' == 'Package'">
         <ObjectFileName>$(IntDir)dpackage_%(PackageName).obj</ObjectFileName>
+      </DCompile>
+      <DCompile Condition="'%(DCompile.EnableDebugMixin)' == 'true' and '%(DCompile.DebugMixin)' == '' and '%(DCompile.CompilationModel)' == 'Package'">
+        <DebugMixin>$(IntDir)dpackage_%(PackageName).mixin</DebugMixin>
       </DCompile>
       <DCompile Condition="'%(DCompile.CompilationModel)' == 'Package' and '$(VisualStudioVersion)' != '12.0'">
         <UseMultiToolTask>$(CompileD_UseMultiToolTask)</UseMultiToolTask>
@@ -69,6 +82,10 @@
         <ObjectFileName Condition="'%(PackageName)' == ''">$(IntDir)%(FileName).obj</ObjectFileName>
         <ObjectFileName Condition="'%(PackageName)' != ''">$(IntDir)%(PackageName).%(FileName).obj</ObjectFileName>
       </DCompile>
+      <DCompile Condition="'%(DCompile.EnableDebugMixin)' == 'true' and '%(DCompile.DebugMixin)' == '' and '%(DCompile.CompilationModel)' == 'File'">
+        <DebugMixin Condition="'%(PackageName)' == ''">$(IntDir)%(FileName).mixin</DebugMixin>
+        <DebugMixin Condition="'%(PackageName)' != ''">$(IntDir)%(PackageName).%(FileName).mixin</DebugMixin>
+      </DCompile>
       <DCompile Condition="'%(DCompile.CompilationModel)' == 'File'">
         <UseMultiToolTask>$(CompileD_UseMultiToolTask)</UseMultiToolTask>
       </DCompile>
@@ -78,6 +95,7 @@
     <ItemGroup>
       <DCompile>
         <ObjectFileName>$([System.String]::Copy('%(ObjectFileName)').Replace('[PackageName]','%(PackageName)'))</ObjectFileName>
+        <DebugMixin>$([System.String]::Copy('%(DebugMixin)').Replace('[PackageName]','%(PackageName)'))</DebugMixin>
       </DCompile>
     </ItemGroup>
 
