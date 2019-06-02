@@ -56,6 +56,7 @@
       <StackStomp>false</StackStomp>
       <AllInst>false</AllInst>
       <BetterC>false</BetterC>
+      <CppStandard>default</CppStandard>
       <DIP25>false</DIP25>
       <DIP1000>false</DIP1000>
       <DIP1008>false</DIP1008>

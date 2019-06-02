@@ -107,7 +107,17 @@
       <_DebugFull Condition="'$(_DebugFull)' == ''">@(DCompile->Metadata('DebugFull')->Distinct())</_DebugFull>
       <_DebugFull Condition="'$(_DebugFull)' != 'true' and '$(_DebugFull)' != 'false'">false</_DebugFull>
     </PropertyGroup>
-    
+
+    <PropertyGroup>
+      <_CppStandard Condition="'$(_CppStandard)' == ''">@(DCompile->Metadata('CppStandard')->Distinct())</_CppStandard>
+      <_clLanguage  Condition="'$(_CppStandard)' == 'fromCpp'">@(ClCompile->Metadata('LanguageStandard')->Distinct())</_clLanguage>
+      <_CppStandard Condition="'$(_CppStandard)' == 'fromCpp' and '$(_clLanguage)' == 'stdcpp14'">cpp14</_CppStandard>
+      <_CppStandard Condition="'$(_CppStandard)' == 'fromCpp' and '$(_clLanguage)' == 'stdcpp17'">cpp17</_CppStandard>
+      <_CppStandard Condition="'$(_CppStandard)' == 'fromCpp' and '$(_clLanguage)' == 'stdcpplatest'">cpp17</_CppStandard>
+      <_CppStandard Condition="'$(_CppStandard)' == 'fromCpp' and '$(_clLanguage)' == 'Default'">cpp17</_CppStandard>
+      <_CppStandard Condition="'$(_CppStandard)' == 'fromCpp'">default</_CppStandard> <!-- for older VS -->
+    </PropertyGroup>
+
     <PropertyGroup>
       <ClMultiToolTaskMinimalRebuild>true</ClMultiToolTaskMinimalRebuild>
       <ClMultiToolTaskMinimalRebuild Condition="'$(_BuildActionType)' != 'Build' or '$(ForceRebuild)' == 'true'">false</ClMultiToolTaskMinimalRebuild>
@@ -172,6 +182,7 @@
               PerformSyntaxCheckOnly="%(DCompile.PerformSyntaxCheckOnly)"
               
               BetterC="%(DCompile.BetterC)"
+              CppStandard="$(_CppStandard)"
               DIP25="%(DCompile.DIP25)"
               DIP1000="%(DCompile.DIP1000)"
               DIP1008="%(DCompile.DIP1008)"

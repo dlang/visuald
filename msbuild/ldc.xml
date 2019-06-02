@@ -147,6 +147,15 @@
             Description="Performs a syntax check only." Switch="-o-" />
 
     <!-- =============== Language =============== -->
+    <EnumProperty Name="CppStandard" Category="Language" DisplayName="C++ Language Standard"
+                  Description="set C++ name mangling compatibility. (LDC 1.15.0+)">
+      <EnumValue Name="default" DisplayName="Default" />
+      <EnumValue Name="cpp98" DisplayName="C++ 98" Switch="-extern-std=c++98" />
+      <EnumValue Name="cpp11" DisplayName="C++ 11" Switch="-extern-std=c++11" />
+      <EnumValue Name="cpp14" DisplayName="C++ 14" Switch="-extern-std=c++14" />
+      <EnumValue Name="cpp17" DisplayName="C++ 17" Switch="-extern-std=c++17" />
+      <EnumValue Name="fromCpp" DisplayName="Match Visual C++ Setting" Switch="-extern-std=c++17" />
+    </EnumProperty>
     <BoolProperty Name="BetterC" Category="Language" DisplayName="Better C" Switch="-betterC"
                   Description="omit generating some runtime information and helper functions." />
     <BoolProperty Name="DIP25" Category="Language" DisplayName="DIP25" Switch="-dip25"
