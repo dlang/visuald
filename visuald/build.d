@@ -855,8 +855,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 {
 	this(CBuilderThread builder)
 	{
-		mCompiler = builder.mConfig.GetProjectOptions().compiler;
-		mProjectDir = builder.mConfig.GetProjectDir();
+		mConfig = builder.mConfig;
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -880,13 +879,13 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		uint nPriority, nLineNum;
 		string filename, taskItemText;
 
-		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText, mCompiler))
+		if(!parseOutputStringForTaskItem(line, nPriority, filename, nLineNum, taskItemText, mConfig))
 			return S_FALSE;
 
 		//if(Package.GetGlobalOptions().demangleError)
 		//	taskItemText = demangleText(taskItemText);
 
-		filename = makeFilenameCanonical(filename, mProjectDir);
+		filename = makeFilenameCanonical(filename, mConfig.GetProjectDir());
 		if(pnPriority)
 			*pnPriority = nPriority;
 		if(pnLineNum)
@@ -898,8 +897,7 @@ class CLaunchPadOutputParser : DComObject, IVsLaunchPadOutputParser
 		return S_OK;
 	}
 
-	string mProjectDir;
-	int mCompiler;
+	Config mConfig;
 }
 
 
@@ -1053,7 +1051,7 @@ HRESULT outputToErrorList(IVsLaunchPad pad, CBuilderThread pBuilder,
 		uint nPriority, nLineNum;
 		string strFilename, strTaskItemText;
 
-		if(parseOutputStringForTaskItem(line, nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD))
+		if(parseOutputStringForTaskItem(line, nPriority, strFilename, nLineNum, strTaskItemText, pBuilder.mConfig))
 		{
 			IVsOutputWindowPane2 pane2 = qi_cast!IVsOutputWindowPane2(outPane);
 			if(pane2)
@@ -1096,9 +1094,20 @@ bool isInitializedRE(T)(ref T re)
 
 bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
                                   out string filename, out uint nLineNum,
-                                  out string itemText, int compiler)
+                                  out string itemText, Config config)
 {
 	outputLine = strip(outputLine);
+
+	void setPriority()
+	{
+		auto opts = config ? config.GetProjectOptions() : null;
+		if(itemText.startsWith("Warning:"))
+			nPriority = opts && opts.infowarnings ? TP_NORMAL : TP_HIGH;
+		else if(itemText.startsWith("Deprecation:"))
+			nPriority = opts && opts.errDeprecated ? TP_HIGH : TP_NORMAL;
+		else
+			nPriority = TP_HIGH;
+	}
 
 	// DMD compile error
 	__gshared static Regex!char re1dmd, re1gdc, remixin, re2, re3, re4, re5, re6;
@@ -1116,10 +1125,7 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 		nLineNum = to!uint(lineno);
 		uint nMixinLine = to!uint(lineno2) - nLineNum + 1;
 		itemText = "mixin(" ~ to!string(nMixinLine) ~ ") " ~ strip(captures[4]);
-		if(itemText.startsWith("Warning:")) // make these errors if not building with -wi?
-			nPriority = TP_NORMAL;
-		else
-			nPriority = TP_HIGH;
+		setPriority();
 		return true;
 	}
 
@@ -1144,7 +1150,7 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 	if(!isInitializedRE(re1gdc))
 		re1gdc = regex(r"^(.*?):([0-9]+):(.*)$");
 
-	rematch = match(outputLine, compiler == Compiler.GDC ? re1gdc : re1dmd);
+	rematch = match(outputLine, config && config.GetProjectOptions().compiler == Compiler.GDC ? re1gdc : re1dmd);
 	if(!rematch.empty())
 	{
 		auto captures = rematch.captures();
@@ -1152,10 +1158,7 @@ bool parseOutputStringForTaskItem(string outputLine, out uint nPriority,
 		string lineno = captures[2];
 		nLineNum = to!uint(lineno);
 		itemText = strip(captures[3]);
-		if(itemText.startsWith("Warning:")) // make these errors if not building with -wi?
-			nPriority = TP_NORMAL;
-		else
-			nPriority = TP_HIGH;
+		setPriority();
 		return true;
 	}
 
@@ -1226,35 +1229,35 @@ unittest
 {
 	uint nPriority, nLineNum;
 	string strFilename, strTaskItemText;
-	bool rc = parseOutputStringForTaskItem("file.d(37): huhu", nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+	bool rc = parseOutputStringForTaskItem("file.d(37): huhu", nPriority, strFilename, nLineNum, strTaskItemText, null);
 	assert(rc);
 	assert(strFilename == "file.d");
 	assert(nLineNum == 37);
 	assert(strTaskItemText == "huhu");
 
 	rc = parseOutputStringForTaskItem("main.d(10): Error: undefined identifier A, did you mean B?",
-									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+									  nPriority, strFilename, nLineNum, strTaskItemText, null);
 	assert(rc);
 	assert(strFilename == "main.d");
 	assert(nLineNum == 10);
 	assert(strTaskItemText == "Error: undefined identifier A, did you mean B?");
 
 	rc = parseOutputStringForTaskItem(r"object.Exception@C:\tmp\d\forever.d(28): what?",
-									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+									  nPriority, strFilename, nLineNum, strTaskItemText, null);
 	assert(rc);
 	assert(strFilename == r"C:\tmp\d\forever.d");
 	assert(nLineNum == 28);
 	assert(strTaskItemText == "what?");
 
 	rc = parseOutputStringForTaskItem(r"0x004020C8 in void test.__modtest() at C:\tmp\d\forever.d(34)",
-									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+									  nPriority, strFilename, nLineNum, strTaskItemText, null);
 	assert(rc);
 	assert(strFilename == r"C:\tmp\d\forever.d");
 	assert(nLineNum == 34);
 	assert(strTaskItemText == "");
 
 	rc = parseOutputStringForTaskItem(r"D:\LuaD\luad\conversions\structs.d-mixin-36(36): Error: cast(MFVector)(*_this).x is not an lvalue",
-									  nPriority, strFilename, nLineNum, strTaskItemText, Compiler.DMD);
+									  nPriority, strFilename, nLineNum, strTaskItemText, null);
 	assert(rc);
 	assert(strFilename == r"D:\LuaD\luad\conversions\structs.d");
 	assert(nLineNum == 36);
