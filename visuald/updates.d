@@ -47,6 +47,7 @@ enum CheckProduct
 	VisualD,
 	DMD,
 	LDC,
+	GDC,
 }
 
 struct UpdateInfo
@@ -410,9 +411,11 @@ VersionInfo extractVersion(string verstr)
 	try
 	{
 		__gshared static Regex!char re;
-		if(re.empty)
-			re = regex(`([0-9]+)\.([0-9]+)(\.([0-9]+))?([-\.]?([abr])?[a-z]*[-\.]?([0-9]*))?`);
-
+		synchronized
+		{
+			if (re.empty)
+				re = regex(`([0-9]+)\.([0-9]+)(\.([0-9]+))?([-\.]?([abr])?[a-z]*[-\.]?([0-9]*))?`);
+		}
 		auto rematch = match(verstr, re);
 		if (!rematch.empty)
 		{

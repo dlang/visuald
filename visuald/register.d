@@ -821,9 +821,17 @@ HRESULT registerMago(in wchar* pszRegRoot, in bool useRanu)
 	wstring languageGuid = GUID2wstring(g_languageCLSID);
 	wstring vendorGuid = GUID2wstring(g_vendorCLSID);
 
-	scope RegKey keyEE = new RegKey(keyRoot, registrationRoot ~ "\\AD7Metrics\\ExpressionEvaluator\\"w ~ languageGuid ~ "\\"w ~ vendorGuid);
+	wstring eeKeyStr = registrationRoot ~ "\\AD7Metrics\\ExpressionEvaluator\\"w ~ languageGuid ~ "\\"w ~ vendorGuid;
+	scope RegKey keyEE = new RegKey(keyRoot, eeKeyStr);
 	keyEE.Set("Language"w, "D"w);
 	keyEE.Set("Name"w, "D"w);
+
+	// needed to avoid "D does not support conditional breakpoints", see
+	// https://github.com/Microsoft/ConcordExtensibilitySamples/issues/18
+	scope RegKey keyEEEngine = new RegKey(keyRoot, eeKeyStr ~ "\\Engine"w);
+	keyEE.Set("0"w, "{449EC4CC-30D2-4032-9256-EE18EB41B62B}"w); // COMPlusOnlyEng
+	keyEE.Set("1"w, "{92EF0900-2251-11D2-B72E-0000F87572EF}"w); // COMPlusNativeEng
+	keyEE.Set("2"w, "{3B476D35-A401-11D2-AAD4-00C04F990171}"w); // NativeOnlyEng
 
 	scope RegKey keyCV = new RegKey(keyRoot, registrationRoot ~ "\\Debugger\\CodeView Compilers\\68:*"w);
 	keyEE.Set("LanguageID"w, languageGuid);
