@@ -88,12 +88,15 @@ IVsOutputWindowPane getBuildOutputPane()
 	return pane;
 }
 
-void openSettingsPage(string pageGuid)
+void openSettingsPage(in GUID clsid)
 {
 	auto pIVsUIShell = ComPtr!(IVsUIShell)(queryService!(IVsUIShell), false);
+	if (!pIVsUIShell)
+		return;
+	wstring pageGuid = GUID2wstring(clsid);
 	VARIANT var;
 	var.vt = VT_BSTR;
-	var.bstrVal = allocBSTR(pageGuid);
+	var.bstrVal = allocwBSTR(pageGuid);
 	pIVsUIShell.PostExecCommand(&CMDSETID_StandardCommandSet97, cmdidToolsOptions, OLECMDEXECOPT_DODEFAULT, &var);
 	freeBSTR(var.bstrVal);
 }

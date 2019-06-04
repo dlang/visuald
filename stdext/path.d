@@ -117,7 +117,7 @@ string quoteFilename(string fname)
 {
 	if(fname.length >= 2 && fname[0] == '\"' && fname[$-1] == '\"')
 		return fname;
-	if(fname.indexOf('$') >= 0 || indexOf(fname, ' ') >= 0)
+	if(fname.indexOfAny("$ &|<>") >= 0)
 		fname = "\"" ~ fname ~ "\"";
 	return fname;
 }
@@ -133,6 +133,14 @@ void quoteFilenames(string[] files)
 string quoteNormalizeFilename(string fname)
 {
 	return quoteFilename(normalizePath(fname));
+}
+
+string quoteFilenameForCmd(string cmdfile)
+{
+	string qcmdfile = quoteFilename(cmdfile);
+	if (qcmdfile.length > 2 && qcmdfile[0] == '"')
+		qcmdfile = qcmdfile[1..2] ~ "\"" ~ qcmdfile[2..$]; // trick cmd into not removing quotes (e.g. fails with '&' in name)
+	return qcmdfile;
 }
 
 string getNameWithoutExt(string fname)

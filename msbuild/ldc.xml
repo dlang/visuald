@@ -124,7 +124,12 @@
                   Description="generate code for all template instantiations." Switch="-allinst" />
     <BoolProperty Name="Main" Category="Code Generation" DisplayName="Add Main" Switch="-main"
                   Description="add default main() (e.g. for unittesting)." />
-    
+    <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
+      <EnumValue Name="Off" DisplayName="None" Switch="-boundscheck=off" />
+      <EnumValue Name="SafeOnly" DisplayName="For @safe code" Switch="-boundscheck=safeonly" />
+      <EnumValue Name="On" DisplayName="Always" Switch="-boundscheck=on" />
+    </EnumProperty>
+
     <EnumProperty Name="DebugCode" Category="Code Generation" DisplayName="Debug Code" Description="compile in debug code.">
       <EnumValue Name="Default" DisplayName="asserts, invariants, contraints" />
       <EnumValue Name="Debug" DisplayName="debug statements, asserts, invariants, contraints" Switch="-debug" />
@@ -135,16 +140,24 @@
       <EnumValue Name="VS" DisplayName="For VS debug engines" Switch="-gc" />
       <EnumValue Name="Mago" DisplayName="For D debug engines (mago)" Switch="-g" />
     </EnumProperty>
-    <EnumProperty Name="BoundsCheck" Category="Code Generation" DisplayName="Bounds Checking" Description="enable array bounds checking.">
-      <EnumValue Name="Off" DisplayName="None" Switch="-boundscheck=off" />
-      <EnumValue Name="SafeOnly" DisplayName="For @safe code" Switch="-boundscheck=safeonly" />
-      <EnumValue Name="On" DisplayName="Always" Switch="-boundscheck=on" />
-    </EnumProperty>
+    <BoolProperty Name="EnableDebugMixin" Category="Code Generation" DisplayName="Enable Mixin Debugging"
+                  Description="expand and save mixins to specified file." />
+    <StringProperty Name="DebugMixin" Category="Code Generation" DisplayName="Mixin Debug File" Switch="-mixin="
+                  Description="Specifies the name of the mixin debug file if mixin debugging is enabled. Leave empty to auto generate a name according to the compilation model. Use [PackageName] to add the folder name with special characters replaced." />
 
     <BoolProperty Name="PerformSyntaxCheckOnly" Category="Code Generation" DisplayName="Perform Syntax Check Only"
             Description="Performs a syntax check only." Switch="-o-" />
 
     <!-- =============== Language =============== -->
+    <EnumProperty Name="CppStandard" Category="Language" DisplayName="C++ Language Standard"
+                  Description="set C++ name mangling compatibility. (LDC 1.15.0+)">
+      <EnumValue Name="default" DisplayName="Default" />
+      <EnumValue Name="cpp98" DisplayName="C++ 98" Switch="-extern-std=c++98" />
+      <EnumValue Name="cpp11" DisplayName="C++ 11" Switch="-extern-std=c++11" />
+      <EnumValue Name="cpp14" DisplayName="C++ 14" Switch="-extern-std=c++14" />
+      <EnumValue Name="cpp17" DisplayName="C++ 17" Switch="-extern-std=c++17" />
+      <EnumValue Name="fromCpp" DisplayName="Match Visual C++ Setting" Switch="-extern-std=c++17" />
+    </EnumProperty>
     <BoolProperty Name="BetterC" Category="Language" DisplayName="Better C" Switch="-betterC"
                   Description="omit generating some runtime information and helper functions." />
     <BoolProperty Name="DIP25" Category="Language" DisplayName="DIP25" Switch="-dip25"

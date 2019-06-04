@@ -1121,10 +1121,19 @@ unreleased Version 0.50.0
   * VS 16.1 Preview 2: ignore tracked files in *.delete.*.tlog as dependencies, too
   * now another installer available that includes DMD and LDC
   * installer no longer asks for DMD path when updating existing installation
-  * check for updates for Visual D, DMD and LDC, assisted download and install 
+  * check for updates for Visual D, DMD and LDC, assisted download and install
+  * check and report invalid non-empty DMD/LDC installation folders
   * experimental highlight references to the same symbol as the one at the caret
-  * new VC projects now determine Windows SDK automatically
-  * VC project: "New item" now also allows adding D module
+  * VC project:
+    - new projects now determine Windows SDK automatically
+    - DMD: fix wrong selections for bounds check options
+    - LDC: added -mixin option
+    - added enable -mixin option to autogenerate files according to the compilation model
+    - "New item" now also allows adding D module
+    - new option for -extern-std=c++xx
+  * visualdproj:
+    - Error List: classify warnings and deprecations according to the respective options
+  * bugzilla 19930: visualdproj: fix building projects with "&|<>" in directory names
   * dparser:
     - add semantic coloring for module and package names
   * mago:
@@ -1135,3 +1144,4 @@ unreleased Version 0.50.0
     - demangle D symbol names
     - regression: use of registers in expression was lost at some point
     - show class and message for exceptions that the debugger breaks on
+    - fix conditional breakpoints "not supported"

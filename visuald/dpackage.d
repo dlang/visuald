@@ -285,6 +285,7 @@ class Package : DisposingComObject,
 		mLangsvc = addref(newCom!LanguageService(this));
 		mProjFactory = addref(newCom!ProjectFactory(this));
 		mLibInfos = new LibraryInfos();
+		mCheckMessages = new UpdateMessages();
 	}
 
 	~this()
@@ -675,7 +676,7 @@ version(none)
 		}
 		if(nCmdID == CmdShowLangPage)
 		{
-			openSettingsPage("002A2DE9-8BB6-484D-9823-7E4AD4084715");
+			openSettingsPage(g_IntellisensePropertyPage);
 			return S_OK;
 		}
 		if(nCmdID == CmdShowWebsite)
@@ -699,6 +700,48 @@ version(none)
 	{
 		auto opts = GetGlobalOptions();
 
+		enum Result { kNotSet, kBinaryExists, kBinaryMissing }
+		Result checkInstalledBinary(CheckProduct prod)
+		{
+			string exe;
+			switch(prod)
+			{
+				case CheckProduct.DMD:
+					exe = opts.DMD.getCompilerPath(opts.DMD.InstallDir);
+					break;
+				case CheckProduct.GDC:
+					exe = opts.GDC.getCompilerPath(opts.GDC.InstallDir);
+					break;
+				case CheckProduct.LDC:
+					exe = opts.LDC.getCompilerPath(opts.LDC.InstallDir);
+					break;
+				default:
+					return Result.kNotSet;
+			}
+			if (exe.empty)
+				return Result.kNotSet;
+			if (std.file.exists(exe))
+				return Result.kBinaryExists;
+			return Result.kBinaryMissing;
+		}
+
+		void showMissingBinaryInfo(CheckProduct prod)
+		{
+			switch(prod)
+			{
+				case CheckProduct.DMD:
+					mCheckMessages.addMessage("Visual D: DMD installation directory invalid", "Goto DMD Setup Page",
+											  (int) { openSettingsPage(g_DmdDirPropertyPage); return true; });
+					break;
+				case CheckProduct.LDC:
+					mCheckMessages.addMessage("Visual D: LDC installation directory invalid", "Goto LDC Setup Page",
+											  (int) { openSettingsPage(g_LdcDirPropertyPage); return true; });
+					break;
+				default:
+					break;
+			}
+		}
+
 		string getInstalledVersion(CheckProduct prod)
 		{
 			switch(prod)
@@ -716,17 +759,31 @@ version(none)
 
 		string checkProduct(CheckProduct prod, ubyte freq)
 		{
+			if (prod != CheckProduct.VisualD)
+			{
+				auto res = checkInstalledBinary(prod);
+				if (res == Result.kNotSet)
+					return null;
+
+				if (res == Result.kBinaryMissing)
+				{
+					showMissingBinaryInfo(prod);
+					return null;
+				}
+			}
+
 			CheckFrequency frequency = cast(CheckFrequency)freq;
-			if (frequency != CheckFrequency.Never)
-				if (auto info = checkForUpdate(prod, toDuration(frequency), frequency))
-					if (info.updated)
-					{
-						string ver = getInstalledVersion(prod);
-						if (extractVersion(ver) >= extractVersion(info.name))
-							return null;
-						return info.name;
-					}
-			return null;
+			if (frequency == CheckFrequency.Never)
+				return null;
+
+			auto info = checkForUpdate(prod, toDuration(frequency), frequency);
+			if (!info || !info.updated)
+				return null;
+
+			string ver = getInstalledVersion(prod);
+			if (extractVersion(ver) >= extractVersion(info.name))
+				return null;
+			return info.name;
 		}
 
 		string[3] msgs;
@@ -745,30 +802,27 @@ version(none)
 				cnt++;
 			}
 
-		if (cnt == 1)
-			mUpdateCheckMessage = "New update available: " ~ message;
+		if (cnt > 1)
+			message = "Visual D: New update available: " ~ message;
 		else if (cnt > 1)
-			mUpdateCheckMessage = "New updates available: " ~ message;
-		else
-			mUpdateCheckMessage = null;
+			message = "Visual D: New updates available: " ~ message;
+
+		if (message)
+			mCheckMessages.addMessage(message, "Goto Update Page",
+									  (int) { openSettingsPage(g_UpdatePropertyPage); return true; });
 	}
 
 	void idleCheckUpdates()
 	{
-		if (!mHasMadeUpdateCheck &&
-		    (GetGlobalOptions().checkUpdatesVisualD != CheckFrequency.Never || 
-		     GetGlobalOptions().checkUpdatesDMD != CheckFrequency.Never || 
-		     GetGlobalOptions().checkUpdatesLDC != CheckFrequency.Never))
+		if (!mHasMadeUpdateCheck)
 		{
 			import core.thread;
 			mHasMadeUpdateCheck = true;
 			new Thread(&checkUpdates).start();
 		}
-		else if (mUpdateCheckMessage)
+		else if (mCheckMessages.hasMessages())
 		{
-			showInfoBar(mUpdateCheckMessage, "Goto Update Page",
-						(int) { openSettingsPage("002A2DE9-8BB6-484D-9829-7E4AD4084715"); return true; });
-			mUpdateCheckMessage = null;
+			mCheckMessages.showMessages();
 		}
 
 		if (mSaveOptionsInIdle)
@@ -1295,9 +1349,42 @@ private:
 	Library          mLibrary;
 	bool             mWantsUpdateLibInfos;
 
+	bool             mHasMadePatchCheck;
 	bool             mHasMadeUpdateCheck;
 	bool             mSaveOptionsInIdle;
-	string           mUpdateCheckMessage;
+	UpdateMessages   mCheckMessages;
+}
+
+class UpdateMessages
+{
+	static struct UpdateMessage
+	{
+		string message;
+		string action;
+		bool delegate(int) callback;
+	}
+
+	UpdateMessage[] messages;
+
+	void addMessage(string msg, string action, bool delegate(int) callback)
+	{
+		synchronized(this)
+			messages ~= UpdateMessage(msg, action, callback);
+	}
+	bool hasMessages() const
+	{
+		return messages.length > 0;
+	}
+
+	void showMessages()
+	{
+		synchronized(this)
+		{
+			foreach(m; messages)
+				showInfoBar(m.message, m.action, m.callback);
+			messages = null;
+		}
+	}
 }
 
 struct CompilerDirectories
@@ -1346,6 +1433,8 @@ struct CompilerDirectories
 	}
 	string getCompilerPath(string instdir)
 	{
+		if (instdir.empty)
+			return null;
 		string exe;
 		if (compiler == Compiler.DMD)
 		{

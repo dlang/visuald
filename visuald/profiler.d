@@ -605,7 +605,7 @@ private:
 				txt = to!string(demangle(txt, fullDeco));
 			else
 			{
-				pragma(msg, text(__FILE__, "(", __LINE__, "): profiler._demangle uses compatibility mode, this won't allow disabling type info"));
+				pragma(msg, text(__FILE__, "(", __LINE__, "): Warning: profiler._demangle uses compatibility mode, this won't allow disabling type info"));
 				txt = to!string(demangle(txt));
 			}
 		}

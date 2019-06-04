@@ -47,6 +47,7 @@ namespace dbuild
             this.switchOrderList.Add("PerformSyntaxCheckOnly");
 
             this.switchOrderList.Add("BetterC");
+			this.switchOrderList.Add("CppStandard");
             this.switchOrderList.Add("DIP25");
             this.switchOrderList.Add("DIP1000");
             this.switchOrderList.Add("DIP1008");
@@ -435,37 +436,37 @@ namespace dbuild
             }
         }
 
-		public string DebugMixin
-		{
-			get { return GetStringProperty("DebugMixin"); }
-			set
-			{
-				SetFileProperty("DebugMixin", "Debug Mixin File",
-								"Expand and save mixins to specified file. (-mixin=[file])",
-								"-mixin=", value);
-			}
-		}
+        public string DebugMixin
+        {
+            get { return GetStringProperty("DebugMixin"); }
+            set
+            {
+                SetFileProperty("DebugMixin", "Debug Mixin File",
+                                "Expand and save mixins to specified file. (-mixin=[file])",
+                                "-mixin=", value);
+            }
+        }
 
-		public string CPUArchitecture
-		{
-			get { return GetStringProperty("CPUArchitecture"); }
-			set
-			{
-				string[][] switchMap = new string[4][]
-				{
-					new string[2] { "baseline", "" },
-					new string[2] { "avx", "-mcpu=avx" },
-					new string[2] { "avx2", "-mcpu=avx2" },
-					new string[2] { "native", "-mcpu=native" }
-				};
+        public string CPUArchitecture
+        {
+            get { return GetStringProperty("CPUArchitecture"); }
+            set
+            {
+                string[][] switchMap = new string[4][]
+                {
+                    new string[2] { "baseline", "" },
+                    new string[2] { "avx", "-mcpu=avx" },
+                    new string[2] { "avx2", "-mcpu=avx2" },
+                    new string[2] { "native", "-mcpu=native" }
+                };
 
-				SetEnumProperty("CPUArchitecture", "CPU Architecture",
-								"generate instructions for architecture. (-mcpu=)",
-								switchMap, value);
-			}
-		}
+                SetEnumProperty("CPUArchitecture", "CPU Architecture",
+                                "generate instructions for architecture. (-mcpu=)",
+                                switchMap, value);
+            }
+        }
 
-		public string BoundsCheck
+        public string BoundsCheck
         {
             get { return GetStringProperty("BoundsCheck"); }
             set
@@ -626,6 +627,27 @@ namespace dbuild
                                 "-transition=complex", value);
             }
         }
+
+        public string CppStandard
+        {
+            get { return GetStringProperty("CppStandard"); }
+            set
+            {
+                string[][] switchMap = new string[5][]
+                {
+                    new string[2] { "default", "" },
+                    new string[2] { "cpp98", "-extern-std=c++98" },
+                    new string[2] { "cpp11", "-extern-std=c++11" },
+                    new string[2] { "cpp14", "-extern-std=c++14" },
+                    new string[2] { "cpp17", "-extern-std=c++17" }
+                };
+
+                SetEnumProperty("CppStandard", "C++ Language Standard",
+                                "set C++ name mangling compatibility (-extern-std=)",
+                                switchMap, value);
+            }
+        }
+
 
         // Messages
         public string Warnings
