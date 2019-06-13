@@ -76,6 +76,7 @@
       <PerformSyntaxCheckOnly>false</PerformSyntaxCheckOnly>
       <PreserveSourcePath>false</PreserveSourcePath>
       <Main>false</Main>
+      <LowMem>false</LowMem>
       <ShowDependencies>false</ShowDependencies>
       <VersionIdentifiers></VersionIdentifiers>
       <DebugIdentifiers></DebugIdentifiers>

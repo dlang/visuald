@@ -68,7 +68,8 @@
         <DataSource Persistence="ProjectFile" ItemType="" Label="" HasConfigurationCondition="true" />
       </BoolProperty.DataSource>
     </BoolProperty>
-
+    <BoolProperty Name="LowMem" Category="General" DisplayName="Enable garbage collection for the compiler"
+                  Description="Uses less memory for the compilation at the cost of slower compilation. (-lowmem)" Switch="-lowmem" />
 
     <!-- =============== Messages =============== -->
     <EnumProperty Name="Warnings" Category="Messages" DisplayName="Enable warnings" Description="Enable display of warnings. (-w, -wi)">

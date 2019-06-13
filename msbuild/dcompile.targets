@@ -221,6 +221,7 @@
               ShowGC="%(DCompile.ShowGC)"
               IgnorePragma="%(DCompile.IgnorePragma)"
               ShowDependencies="%(DCompile.ShowDependencies)"
+              LowMem="%(DCompile.LowMem)"
 
               DocDir="%(DCompile.DocDir)"
               DocFile="%(DCompile.DocFile)"
