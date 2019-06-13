@@ -118,7 +118,9 @@ UpdateInfo* checkForUpdate(CheckProduct prod, Duration renew, int frequency)
 	{
 		auto info = new UpdateInfo;
 		info.name = "DMD " ~ txt;
-		info.download_url = "http://" ~ domain ~ url[0..$-6] ~ "2.x/" ~ txt ~ "/dmd." ~ txt ~ ".windows.7z";
+		auto verinfo = extractVersion(txt);
+		auto ver = verinfo.major ~ "." ~ verinfo.minor ~ "." ~ verinfo.rev;
+		info.download_url = "http://" ~ domain ~ url[0..$-6] ~ verinfo.major ~ ".x/" ~ ver ~ "/dmd." ~ txt ~ ".windows.7z";
 		info.lastCheck = modTime;
 		info.updated = updated;
 		return info;
