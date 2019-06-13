@@ -90,9 +90,9 @@
   Caption "${LONG_APPNAME} ${VERSION} Setup"
 !ifdef DMD
   !ifdef LDC
-    !define OUT_SUFFIX "-dmd${DMD_VERSION}-ldc2-${LDC_VERSION}"
+    !define OUT_SUFFIX "-dmd-${DMD_VERSION}-ldc2-${LDC_VERSION}"
   !else
-    !define OUT_SUFFIX "-dmd${DMD_VERSION}"
+    !define OUT_SUFFIX "-dmd-${DMD_VERSION}"
   !endif
 !else
   !define OUT_SUFFIX ""
@@ -330,7 +330,7 @@ ${MementoSection} "Install DMD" SecDMD
 
   ; not using ${File} to keep compiler even if Visual D uninstalled
 
-  !define DmdBaseDir "$CompilerInstallDir\dmd${DMD_VERSION}"
+  !define DmdBaseDir "$CompilerInstallDir\dmd-${DMD_VERSION}"
   ${SetOutPath} "${DmdBaseDir}"
   File /r ${DMD_SRC}\html
   File /r ${DMD_SRC}\samples
@@ -911,6 +911,7 @@ SectionEnd
   LangString DESC_SecVS2013 ${LANG_ENGLISH} "Register for usage in Visual Studio 2013."
   LangString DESC_SecVS2015 ${LANG_ENGLISH} "Register for usage in Visual Studio 2015."
   LangString DESC_SecVS2017 ${LANG_ENGLISH} "Register for usage in Visual Studio 2017."
+  LangString DESC_SecVS2019 ${LANG_ENGLISH} "Register for usage in Visual Studio 2019."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -946,6 +947,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2013} $(DESC_SecVS2013)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2015} $(DESC_SecVS2015)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017} $(DESC_SecVS2017)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019} $(DESC_SecVS2019)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
@@ -1281,7 +1283,7 @@ Function DMDInstallPage
     IfErrors 0 HasDInstallationFolder
     ReadRegStr $DInstallDir HKLM "SOFTWARE\D" "Install_Dir" 
     IfErrors 0 HasDInstallationFolder
-    StrCpy $DInstallDir "c:\D"
+    StrCpy $DInstallDir "C:\D"
   HasDInstallationFolder:
     StrCpy $CompilerInstallDir $DInstallDir
   HasCompilerInstallDir:

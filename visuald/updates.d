@@ -531,7 +531,7 @@ void doUpdate(string baseDir, CheckProduct prod, int frequency, void delegate(st
 					break;
 
 				case CheckProduct.DMD:
-					string dmdname = info.name.replace(" ", "").toLower();
+					string dmdname = info.name.replace(" ", "-").toLower();
 					string dmd2x = buildPath(baseDir, dmdname);
 					unzipCompiler(tgtfile, "dmd2", dmd2x);
 					Package.GetGlobalOptions().DMD.InstallDir = dmd2x;
