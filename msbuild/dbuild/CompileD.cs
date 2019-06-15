@@ -38,6 +38,7 @@ namespace dbuild
             this.switchOrderList.Add("StackStomp");
             this.switchOrderList.Add("AllInst");
             this.switchOrderList.Add("Main");
+            this.switchOrderList.Add("LowMem");
             this.switchOrderList.Add("DebugCode");
             this.switchOrderList.Add("DebugInfo");
             this.switchOrderList.Add("DebugFull");
@@ -386,6 +387,17 @@ namespace dbuild
                 SetBoolProperty("Main", "Add Main",
                                 "Add default main() (e.g. for unittesting) (-main)",
                                 "-main", value);
+            }
+        }
+
+        public bool LowMem
+        {
+            get { return GetBoolProperty("LowMem"); }
+            set
+            {
+                SetBoolProperty("LowMem", "Low Memory Usage",
+                                "Use garbage collector to reduce memory needed by the compiler (-lowmem)",
+                                "-lowmem", value);
             }
         }
 
@@ -1031,6 +1043,24 @@ namespace dbuild
         {
             applyParameters(parameters);
             return GenerateCommandLineExceptSwitches(new string[0]);
+        }
+
+#if TOOLS_V14 || TOOLS_V15
+        protected override string GenerateCommandLineCommandsExceptSwitches(string[] switchesToRemove, VCToolTask.CommandLineFormat format = VCToolTask.CommandLineFormat.ForBuildLog, VCToolTask.EscapeFormat escapeFormat = VCToolTask.EscapeFormat.Default)
+        {
+            string cmd = base.GenerateCommandLineCommandsExceptSwitches(switchesToRemove, format, escapeFormat);
+#else
+        protected override string GenerateCommandLineCommands(VCToolTask.CommandLineFormat format = VCToolTask.CommandLineFormat.ForBuildLog)
+        {
+            string cmd = base.GenerateCommandLineCommands(format);
+#endif
+            // must be outside of response file
+            if (LowMem)
+                if (string.IsNullOrEmpty(cmd))
+                    cmd = " -lowmem";
+                else
+                    cmd += " -lowmem"; // must be outside of response file
+            return cmd;
         }
 
         public override bool Execute()

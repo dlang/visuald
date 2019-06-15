@@ -2036,14 +2036,14 @@ class ProfileItemIndex
 				}
 				else if(curItem)
 				{
-					char[] txt = buf;
+					const(char)[] txt = buf;
 					_munch(txt, " \t\n\r");
 					if(txt.length > 0 && isDigit(txt[0]))
 					{
 						long calls;
 						if(parseLong(txt, calls))
 						{
-							char[] id = parseNonSpace(txt);
+							auto id = parseNonSpace(txt);
 							if(id.length > 0)
 							{
 								_munch(txt, " \t\n\r");
@@ -2061,7 +2061,7 @@ class ProfileItemIndex
 					else if(txt.length > 0)
 					{
 						long calls, treeTime, funcTime;
-						char[] id = parseNonSpace(txt);
+						auto id = parseNonSpace(txt);
 						if(id.length > 0 &&
 						   parseLong(txt, calls) &&
 						   parseLong(txt, treeTime) &&

@@ -2532,7 +2532,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 		auto info = checkForUpdate(CheckProduct.VisualD, -1.days, opts.checkUpdatesVisualD);
 		updateVisualDInfo(info);
 
-		info = checkForUpdate(CheckProduct.DMD, -1.days, opts.checkUpdatesVisualD);
+		info = checkForUpdate(CheckProduct.DMD, -1.days, opts.checkUpdatesDMD);
 		updateDMDInfo(info);
 
 		info = checkForUpdate(CheckProduct.LDC, -1.days, opts.checkUpdatesLDC);
@@ -2985,6 +2985,7 @@ struct MagoOptions
 	bool showVTable;
 	bool flatClassFields;
 	bool expandableStrings;
+	uint maxArrayElements;
 
 	void saveToRegistry()
 	{
@@ -2994,6 +2995,7 @@ struct MagoOptions
 		keyMago.Set("showVTable", showVTable);
 		keyMago.Set("flatClassFields", flatClassFields);
 		keyMago.Set("expandableStrings", expandableStrings);
+		keyMago.Set("maxArrayElements", maxArrayElements);
 	}
 
 	void loadFromRegistry()
@@ -3005,6 +3007,7 @@ struct MagoOptions
 		showVTable        = (keyMago.GetDWORD("showVTable", 1) != 0);
 		flatClassFields   = (keyMago.GetDWORD("flatClassFields", 0) != 0);
 		expandableStrings = (keyMago.GetDWORD("expandableStrings", 0) != 0);
+		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
 	}
 }
 
@@ -3023,6 +3026,10 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
 		AddControl("", mFlatClassFields   = new CheckBox(mCanvas, "Show base class fields as direct fields"));
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
+		auto saveWidth = kLabelWidth;
+		kLabelWidth = kPageWidth * 4 / 5;
+		AddControl("Limit array elements shown in expansions to", mMaxArrayElements = new Text(mCanvas));
+		kLabelWidth  = saveWidth;
 	}
 
 	override void UpdateDirty(bool bDirty)
@@ -3069,6 +3076,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		mShowVTable.setChecked(mOptions.showVTable);
 		mFlatClassFields.setChecked(mOptions.flatClassFields);
 		mExpandableStrings.setChecked(mOptions.expandableStrings);
+		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
 	}
 
 	int DoApply(ref MagoOptions opts, ref MagoOptions refopts)
@@ -3079,6 +3087,12 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mShowVTable.isChecked(), opts.showVTable, refopts.showVTable);
 		changes += changeOption(mFlatClassFields.isChecked(), opts.flatClassFields, refopts.flatClassFields);
 		changes += changeOption(mExpandableStrings.isChecked(), opts.expandableStrings, refopts.expandableStrings);
+
+		import stdext.string;
+		long maxelem;
+		const(char)[] txt = mMaxArrayElements.getText();
+		if (parseLong(txt, maxelem))
+			changes += changeOption(cast(uint)maxelem, opts.maxArrayElements, refopts.maxArrayElements);
 		return changes;
 	}
 
@@ -3087,6 +3101,7 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mShowVTable;
 	CheckBox mFlatClassFields;
 	CheckBox mExpandableStrings;
+	Text mMaxArrayElements;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
