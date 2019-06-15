@@ -2532,7 +2532,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 		auto info = checkForUpdate(CheckProduct.VisualD, -1.days, opts.checkUpdatesVisualD);
 		updateVisualDInfo(info);
 
-		info = checkForUpdate(CheckProduct.DMD, -1.days, opts.checkUpdatesVisualD);
+		info = checkForUpdate(CheckProduct.DMD, -1.days, opts.checkUpdatesDMD);
 		updateDMDInfo(info);
 
 		info = checkForUpdate(CheckProduct.LDC, -1.days, opts.checkUpdatesLDC);

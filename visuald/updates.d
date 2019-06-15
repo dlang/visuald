@@ -61,6 +61,22 @@ struct UpdateInfo
 
 UpdateInfo* checkForUpdate(CheckProduct prod, Duration renew, int frequency)
 {
+	auto info = _checkForUpdate(prod, renew, frequency);
+
+	if (prod == CheckProduct.DMD && frequency == CheckFrequency.DailyPrereleases)
+	{
+		// check releases for DMD prerelases, too
+		auto relinfo = _checkForUpdate(prod, renew, CheckFrequency.Daily);
+		auto prever = extractVersion(info.name);
+		auto relver = extractVersion(relinfo.name);
+		if (relver > prever)
+			info = relinfo;
+	}
+	return info;
+}
+
+UpdateInfo* _checkForUpdate(CheckProduct prod, Duration renew, int frequency)
+{
 	bool prereleases = frequency == CheckFrequency.DailyPrereleases;
 	string updateDir = std.path.buildPath(environment["APPDATA"], "VisualD", "Updates");
 	if (!std.file.exists(updateDir))
@@ -240,7 +256,13 @@ void winHttpGet(DownloadRequest* req)
 										   header.ptr, &dwSize,
 										   WINHTTP_NO_HEADER_INDEX);
 			debug(UPDATE) writeln("Header: ", header);
+
 			auto lines = header.splitLines();
+			if (lines.length == 0 || !lines[0].startsWith("HTTP/"))
+				throw new Exception("no HTTP header");
+			if (!lines[0].endsWith(" OK"))
+				throw new Exception(to!string(lines[0]));
+
 			foreach(ln; lines)
 				if (ln.startsWith("Content-Length:"))
 				{
