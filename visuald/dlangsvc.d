@@ -262,7 +262,7 @@ class LanguageService : DisposingComObject,
 		*/
 		*pbstrName = null;
 		*piLineOffset = 0;
-		return S_OK;
+		return E_FAIL;
 	}
 
 	override HRESULT GetProximityExpressions(IVsTextBuffer pBuffer, in int iLine, in int iCol, in int cLines, IVsEnumBSTR* ppEnum)
