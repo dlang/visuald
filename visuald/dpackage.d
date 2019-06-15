@@ -507,6 +507,8 @@ version(none)
 
 		mOptions.initFromRegistry();
 
+		// debug dumpFontsAndColors();
+
 		//register with ComponentManager for Idle processing
 		IOleComponentManager componentManager;
 		if(mHostSP.QueryService(&SOleComponentManager_iid, &IOleComponentManager.iid, cast(void**)&componentManager) == S_OK)

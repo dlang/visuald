@@ -472,6 +472,107 @@ void updateEnvironmentFont()
 	}
 }
 
+debug
+void dumpFontsAndColors()
+{
+	dte._DTE _dte = queryService!(dte._DTE);
+	if(!_dte)
+	{
+		logCall("dumpFontsAndColors: no DTE");
+		return;
+	}
+	scope(exit) release(_dte);
+
+	dte.Properties props;
+	BSTR bprop = allocBSTR("FontsAndColors");
+	BSTR bpage = allocBSTR("TextEditor");
+	HRESULT hr = _dte.get_Properties(bprop, bpage, &props);
+	detachBSTR(bprop);
+	detachBSTR(bpage);
+	if(FAILED(hr) || !props)
+	{
+		logCall("dumpFontsAndColors: no TextEditor props");
+		return;
+	}
+	scope(exit) release(props);
+
+	VARIANT index;
+	dte.Property faciprop;
+	index.vt = VT_BSTR;
+	index.bstrVal = allocBSTR("FontsAndColorsItems");
+	hr = props.Item(index, &faciprop);
+	detachBSTR(index.bstrVal);
+	if (FAILED(hr) || !faciprop)
+	{
+		logCall("dumpFontsAndColors: no FontsAndColorsItems item");
+		return;
+	}
+	scope(exit) release(faciprop);
+	IDispatch facid;
+	hr = faciprop.get_Object(&facid);
+	if (FAILED(hr) || !facid)
+	{
+		logCall("dumpFontsAndColors: FontsAndColorsItems item not an object");
+		return;
+	}
+	scope(exit) release(facid);
+	dte.FontsAndColorsItems faci = qi_cast!(dte.FontsAndColorsItems)(facid);
+	if(!faci)
+	{
+		logCall("dumpFontsAndColors: object not an FontsAndColorsItems");
+		return;
+	}
+	scope(exit) release(faci);
+
+	int count;
+	hr = faci.get_Count(&count);
+	if(FAILED(hr))
+	{
+		logCall("dumpFontsAndColors: FontsAndColorsItems.getCount failed");
+		return;
+	}
+
+	static void logColItem(int i, dte.ColorableItems colItems)
+	{
+		BSTR name;
+		HRESULT hr = colItems.get_Name(&name);
+		if (FAILED(hr))
+			return;
+
+		OLE_COLOR fg, bg;
+		hr = colItems.get_Foreground(&fg);
+		hr = colItems.get_Background(&fg);
+
+		logCall("%s: %s fg = %x, bg = %x", i, detachBSTR(name), fg, bg);
+	}
+
+	logCall("dumpFontsAndColors: FontsAndColors.count = %s", count);
+	for(int i = 0; i < count; i++)
+	{
+		VARIANT colindex;
+		colindex.vt = VT_I4;
+		colindex.lVal = i + 1;
+		dte.ColorableItems colItems;
+		hr = faci.Item(colindex, &colItems);
+		if (FAILED(hr) || !colItems)
+			break;
+		scope(exit) release(colItems);
+
+		logColItem(i, colItems);
+	}
+
+	VARIANT colname;
+	colname.vt = VT_BSTR;
+	colname.bstrVal = allocBSTR("Plain Text");
+	dte.ColorableItems namedItems;
+	hr = faci.Item(colname, &namedItems);
+	if (FAILED(hr) || !namedItems)
+		return;
+	scope(exit) release(namedItems);
+
+	logColItem(-1, namedItems);
+}
+
 ////////////////////////////////////////////////////////////////////////
 IVsTextView GetActiveView()
 {
