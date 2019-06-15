@@ -118,7 +118,8 @@
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;</postBuildCommand>
+  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
+echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="Release">
@@ -239,8 +240,8 @@
   <privatePhobos>0</privatePhobos>
   <additionalOptions />
   <preBuildCommand />
-  <postBuildCommand>echo Success &gt;$(TargetPath)
-echo. &gt;$(TargetDir)\build.dep</postBuildCommand>
+  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
+echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Config platform="Win32" name="Release COFF32">
