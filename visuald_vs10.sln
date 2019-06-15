@@ -613,7 +613,6 @@ Global
 		{CD26A145-F663-473D-8908-0254FE377D48}.Test|Win32.Build.0 = Release|Win32
 		{CD26A145-F663-473D-8908-0254FE377D48}.Test|x64.ActiveCfg = Release|Win32
 		{CD26A145-F663-473D-8908-0254FE377D48}.TestDebug|Win32.ActiveCfg = Debug|Win32
-		{CD26A145-F663-473D-8908-0254FE377D48}.TestDebug|Win32.Build.0 = Debug|Win32
 		{CD26A145-F663-473D-8908-0254FE377D48}.TestDebug|x64.ActiveCfg = Debug|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
