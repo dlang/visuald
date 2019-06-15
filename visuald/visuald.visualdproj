@@ -105,7 +105,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib ..\sdk\lib\winhttp.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -226,7 +226,7 @@
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib winhttp.lib</libfiles>
+  <libfiles>uuid.lib advapi32.lib comdlg32.lib ole32.lib ..\sdk\lib\oleaut32.lib ..\sdk\lib\comctl32.lib shell32.lib gdi32.lib winmm.lib ..\sdk\lib\winhttp.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
