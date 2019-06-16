@@ -805,9 +805,9 @@ version(none)
 			}
 
 		if (cnt > 1)
-			message = "Visual D: New update available: " ~ message;
-		else if (cnt > 1)
 			message = "Visual D: New updates available: " ~ message;
+		else if (cnt > 0)
+			message = "Visual D: New update available: " ~ message;
 
 		if (message)
 			mCheckMessages.addMessage(message, "Goto Update Page",
