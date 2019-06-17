@@ -2524,7 +2524,9 @@ version(remove_pp) {} else
 		ins ~= "  </Folder>\n";
 		ins ~= " </Folder>\n";
 		ins ~= "</DProject>\n";
-		std.file.write(projfile, txt[0 .. pos + pos2 + 1] ~ ins);
+		string xml = txt[0 .. pos + pos2 + 1] ~ ins;
+		if (xml != txt)
+			std.file.write(projfile, xml);
 	}
 
 	void setCurrentFile(string file)

@@ -44,7 +44,7 @@ echo "%VSI2D%" --vsi="%VSISDKINC:\=/%" --win="%WINSDKINC:\=/%" --dte="%DTE_IDL_P
 if errorlevel 1 exit /B 1
 
 echo Translation successful! 
-echo Visual Studio now prompts to reload the vsi project, but cannot do so because the build is still running.
+echo Visual Studio might now prompt to reload the vsi project, but cannot do so because the build is still running.
 echo Please reload the solution manually.
 echo Success > "%OUT%"
 exit /B 0
