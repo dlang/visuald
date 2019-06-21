@@ -202,7 +202,7 @@ void winHttpGet(DownloadRequest* req)
 	// Use WinHttpOpen to obtain a session handle.
 	hSession = WinHttpOpen("Visual D"w.ptr,
 						   WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-						   WINHTTP_NO_PROXY_NAME, 
+						   WINHTTP_NO_PROXY_NAME,
 						   WINHTTP_NO_PROXY_BYPASS, 0);
 	scope(exit) if(hSession) WinHttpCloseHandle(hSession);
 
@@ -221,8 +221,8 @@ void winHttpGet(DownloadRequest* req)
 	// Create an HTTP request handle.
 	if(hConnect && !req.cancel)
 		hRequest = WinHttpOpenRequest(hConnect, "GET"w.ptr, req.request,
-									  null, WINHTTP_NO_REFERER, 
-									  WINHTTP_DEFAULT_ACCEPT_TYPES, 
+									  null, WINHTTP_NO_REFERER,
+									  WINHTTP_DEFAULT_ACCEPT_TYPES,
 									  req.port == INTERNET_DEFAULT_HTTPS_PORT ? WINHTTP_FLAG_SECURE : 0);
 	scope(exit) if(hRequest) WinHttpCloseHandle(hRequest);
 
@@ -423,8 +423,8 @@ struct VersionInfo
 		if (suffix != rhs.suffix)
 			return  suffix.empty ? 1 : // no suffix is better than "beta" or "rc"
 				rhs.suffix.empty ? -1 : suffix < rhs.suffix ? -1 : 1;
-		if (rev != rhs.rev)
-			return toNum(rev) < toNum(rhs.rev) ? -1 : 1;
+		if (sfxnum != rhs.sfxnum)
+			return toNum(sfxnum) < toNum(rhs.sfxnum) ? -1 : 1;
 		return 0;
 	}
 }

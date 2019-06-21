@@ -10,6 +10,7 @@ module visuald.register;
 
 import visuald.windows;
 import sdk.win32.winreg;
+import sdk.win32.winnls;
 
 import std.string;
 import std.conv;
@@ -409,6 +410,22 @@ bool generateGeneralXML(string originalXML, string insertXML, string newXML)
 {
 	try
 	{
+		if (!std.file.exists(originalXML))
+		{
+			// if english (LCID 1033) not installed, try the system language
+			auto id = GetSystemDefaultLangID();
+			auto basedir = dirName(dirName(originalXML));
+			auto filename = baseName(originalXML);
+			originalXML = buildPath(basedir, to!string(id), filename);
+			if (!std.file.exists(originalXML))
+				foreach (string name; dirEntries(basedir, SpanMode.depth))
+					if (icmp(baseName(name), filename) == 0)
+					{
+						originalXML = name;
+						break;
+					}
+		}
+
 		string oxml = cast(string) std.file.read(originalXML);
 		string ixml = cast(string) std.file.read(insertXML);
 
