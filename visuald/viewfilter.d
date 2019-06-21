@@ -1609,7 +1609,8 @@ else
 	extern(D)
 	void FindReferencesInModuleCallBack(uint request, string filename, string tok, int line, int idx, string[] exps)
 	{
-		mCodeWinMgr.mSource.updateReferenceMarker(exps);
+		if (mCodeWinMgr && mCodeWinMgr.mSource) // if view removed before callback called
+			mCodeWinMgr.mSource.updateReferenceMarker(exps);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1715,6 +1716,8 @@ else
 	int RefreshMethodTip(Definition[] defs, TextSpan span)
 	{
 		if(defs.length == 0)
+			return S_FALSE;
+		if (!mCodeWinMgr || !mCodeWinMgr.mSource) // if view removed before callback called
 			return S_FALSE;
 
 		MethodData md = mCodeWinMgr.mSource.GetMethodData();
