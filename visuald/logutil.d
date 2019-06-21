@@ -855,6 +855,7 @@ const string LogCallMix2 = FuncNameMix ~ _hasThisMix ~ _getEBP ~ _LogCallArgType
 const string LogCallMixNoRet = FuncNameMix ~ _hasThisMix ~ _LogCallMix ~ "mixin(__LOGCALL__);" ~ _LogIndentNoRet;
 }
 } else {
+const string LogCallMixFunc = "";
 const string LogCallMix = "";
 const string LogCallMix2 = "";
 const string LogCallMixNoRet = "";

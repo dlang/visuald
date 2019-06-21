@@ -725,6 +725,7 @@ HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfil
 		VSITEMID oitemID;
 		BOOL open;
 		hr = pIVsUIShellOpenDocument.IsDocumentOpen(hierarchy, itemID, bstrAbsPath, &LOGVIEWID_Primary, VSIDOFLAGS(0),
+		                                            &ohierarchy, &oitemID, &srpIVsWindowFrame, &open);
 	}
 	if(FAILED(hr) || !srpIVsWindowFrame)
 		return returnError(hr);
