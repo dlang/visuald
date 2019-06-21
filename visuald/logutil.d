@@ -824,9 +824,11 @@ enum LogCall = genLogMixin!(logParameterIdentifier!hasThis)(__FUNCTION__, hasThi
 mixin(LogCall);
 };
 
+	const string _hasNoThisMix = "const bool hasThis = false;" ~ nl;
 	const string _hasThisMix = "const bool hasThis = true;" ~ nl;
 	const string _LogIndentNoRet = "logIndent(1); scope(exit) logIndent(-1);" ~ nl;
 
+	const string LogCallMixFunc = _hasNoThisMix ~ _logMix ~ _LogIndentNoRet;
 	const string LogCallMix = _hasThisMix ~ _logMix ~ _LogIndentNoRet;
 	const string LogCallMix2 = _hasThisMix ~ _logMix ~ _LogIndentNoRet;
 	const string LogCallMixNoRet = _hasThisMix ~ _logMix ~ _LogIndentNoRet;

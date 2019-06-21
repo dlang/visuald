@@ -683,6 +683,8 @@ HRESULT FindFileInSolution(string filename, string srcfile, out string absPath)
 
 HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfile = "", bool adjustLineToChanges = false)
 {
+	mixin(LogCallMixFunc);
+
 	// Get the IVsUIShellOpenDocument service so we can ask it to open a doc window
 	IVsUIShellOpenDocument pIVsUIShellOpenDocument = queryService!(IVsUIShellOpenDocument);
 	if(!pIVsUIShellOpenDocument)
@@ -696,9 +698,14 @@ HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfil
 	scope(exit) detachBSTR(bstrAbsPath);
 
 	IVsWindowFrame srpIVsWindowFrame;
+	IServiceProvider svcProvider;
+	IVsUIHierarchy hierarchy;
+	VSITEMID itemID;
+	hr = pIVsUIShellOpenDocument.OpenDocumentViaProject(bstrAbsPath, &LOGVIEWID_Primary, &svcProvider,
+	                                                    &hierarchy, &itemID, &srpIVsWindowFrame);
+	scope(exit) release(svcProvider);
+	scope(exit) release(hierarchy);
 
-	hr = pIVsUIShellOpenDocument.OpenDocumentViaProject(bstrAbsPath, &LOGVIEWID_Primary, null, null, null,
-	                                                    &srpIVsWindowFrame);
 	if(FAILED(hr))
 		hr = pIVsUIShellOpenDocument.OpenStandardEditor(
 				/* [in]  VSOSEFLAGS   grfOpenStandard           */ OSE_ChooseBestStdEditor,
@@ -710,7 +717,15 @@ HRESULT OpenFileInSolution(string filename, int line, int col = 0, string srcfil
 				/* [in]  IUnknown    *punkDocDataExisting       */ DOCDATAEXISTING_UNKNOWN,
 				/* [in]  IServiceProvider *pSP                  */ null,
 				/* [out, retval] IVsWindowFrame **ppWindowFrame */ &srpIVsWindowFrame);
-
+	if(!FAILED(hr) && !srpIVsWindowFrame)
+	{
+		// OpenDocumentViaProject sometimes doesn't return srpIVsWindowFrame
+		IVsUIHierarchy ohierarchy;
+		scope(exit) release(ohierarchy);
+		VSITEMID oitemID;
+		BOOL open;
+		hr = pIVsUIShellOpenDocument.IsDocumentOpen(hierarchy, itemID, bstrAbsPath, &LOGVIEWID_Primary, VSIDOFLAGS(0),
+	}
 	if(FAILED(hr) || !srpIVsWindowFrame)
 		return returnError(hr);
 	scope(exit) release(srpIVsWindowFrame);
@@ -778,6 +793,42 @@ HRESULT NavigateTo(IVsTextBuffer textBuffer, int line1, int col1, int line2, int
 	scope(exit) release(textmgr);
 
 	return textmgr.NavigateToLineAndColumn(textBuffer, &LOGVIEWID_Primary, line1, col1, line2, col2);
+}
+
+HRESULT NavigateTo(IVsTextView textView, int line, int col)
+{
+	HRESULT hr = textView.SetCaretPos(line, col);
+	if (hr == S_OK)
+		hr = textView.CenterLines(line, 1);
+	return hr;
+}
+
+HRESULT NavigateTo(IVsWindowFrame frame, int line, int col)
+{
+	import sdk.win32.oleauto;
+	VARIANT var;
+	VariantInit(&var);
+	HRESULT hr = frame.GetProperty(VSFPROPID_DocView, &var);
+	scope(exit) VariantClear(&var);
+	if (FAILED(hr) || var.vt != VT_UNKNOWN || var.punkVal is null)
+		return E_FAIL;
+
+	IVsTextView textView;
+	hr = var.punkVal.QueryInterface(&IID_IVsTextView, cast(void**)&textView);
+	if (FAILED(hr))
+	{
+		IVsCodeWindow codeWin;
+		hr = var.punkVal.QueryInterface(&IID_IVsCodeWindow, cast(void**)&codeWin);
+		if (FAILED(hr))
+			return hr;
+
+		hr = codeWin.GetPrimaryView(&textView);
+		release(codeWin);
+		if (FAILED(hr))
+			return hr;
+	}
+	scope(exit) release(textView);
+	return NavigateTo(textView, line, col);
 }
 
 HRESULT OpenFileInSolutionWithScope(string fname, int line, int col, string scop, bool adjustLineToChanges = false)

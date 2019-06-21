@@ -1150,3 +1150,4 @@ unreleased Version 0.50.0
     - support multiple "live ranges" when LDC uses registers for locals
     - fix evaluating locals in registers
   * slightly change identification of break point locations
+  * fixed "go to definition" eventually not jumping to correct line after opening document
