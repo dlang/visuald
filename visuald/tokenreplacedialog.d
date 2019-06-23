@@ -223,6 +223,8 @@ private:
 	ReplaceOptions _options;
 	
 	HFONT mDlgFont;
+	int mTextHeight;
+	int mTextWidth;
 	Label         _wndFindLabel;
 	MultiLineText _wndFindText;
 	Label         _wndReplaceLabel;
@@ -319,6 +321,11 @@ private:
 		if(!mDlgFont)
 			mDlgFont = newDialogFont();
 
+		int fHeight, fWidth;
+		GetFontMetrics(mDlgFont, fWidth, fHeight);
+		mTextHeight = fHeight + 4;
+		mTextWidth = fWidth;
+
 		_wndFindLabel   = new Label(_wndBack, "Fi&nd what:", -1);
 		_wndFindText    = new MultiLineText(_wndBack, "", IDC_FINDTEXT);
 		_wndReplaceLabel = new Label(_wndBack, "Re&place with:", -1);
@@ -394,12 +401,12 @@ private:
 	{
 		int top = kBackMargin; // kToolBarAtTop ? kToolBarHeight : 1;
 		int bot = ch - kBackMargin;
-		int lineh = 16;
-		int combh = 20;
+		int lineh = mTextHeight;
+		int combh = mTextHeight + 4;
 		int lblspacing = 1;
 		int spacing = 3;
-		int btnw = 80;
-		int btnh = 24;
+		int btnw = mTextWidth * 10;
+		int btnh = mTextHeight + 6;
 		int x = kBackMargin;
 		int w = cw - 2 * kBackMargin;
 		_wndReplaceAll  .setRect(x + w - btnw,                  bot - btnh, btnw, btnh);
@@ -419,10 +426,12 @@ else
 {
 		_wndReplaceCase.setVisible(false);
 }
-		_wndDirectionUp .setRect(x + 100, bot - lineh, w - 100, lineh); // bot -= lineh + spacing;
-		_wndMatchBraces .setRect(x,       bot - lineh,     100, lineh); bot -= lineh + spacing;
-		_wndIncComment  .setRect(x + 100, bot - lineh, w - 100, lineh); // bot -= lineh + spacing;
-		_wndMatchCase   .setRect(x,       bot - lineh,     100, lineh); bot -= lineh + spacing;
+		int cbw = mTextWidth * 15;
+
+		_wndDirectionUp .setRect(x + cbw, bot - lineh, w - cbw, lineh); // bot -= lineh + spacing;
+		_wndMatchBraces .setRect(x,       bot - lineh,     cbw, lineh); bot -= lineh + spacing;
+		_wndIncComment  .setRect(x + cbw, bot - lineh, w - cbw, lineh); // bot -= lineh + spacing;
+		_wndMatchCase   .setRect(x,       bot - lineh,     cbw, lineh); bot -= lineh + spacing;
 
 		_wndFindLabel   .setRect(x, top, w, lineh); top += lineh + lblspacing;
 		int th = max(0, bot - top - spacing - lineh - spacing) / 2;

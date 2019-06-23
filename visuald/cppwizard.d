@@ -275,6 +275,8 @@ private:
 	ToolBar       _wndToolbar;
 	HIMAGELIST    _himlToolbar;
 	HFONT mDlgFont;
+	int mTextHeight;
+	int mTextWidth;
 
 	Label         _wndInputTypeLabel;
 	ComboBox      _wndInputType;
@@ -404,6 +406,10 @@ private:
 		updateEnvironmentFont();
 		if(!mDlgFont)
 			mDlgFont = newDialogFont();
+		int fHeight, fWidth;
+		GetFontMetrics(mDlgFont, fWidth, fHeight);
+		mTextHeight = fHeight + 4;
+		mTextWidth = fWidth;
 
 		_wndInputTypeLabel = new Label(_wndBack, "&Convert:", -1);
 		_wndInputType      = new ComboBox(_wndBack, [ "Input files", "Current Document", 
@@ -501,12 +507,12 @@ private:
 	{
 		int top = kBackMargin; // kToolBarAtTop ? kToolBarHeight : 1;
 		int bot = ch - kBackMargin;
-		int lineh = 16;
-		int combh = 20;
+		int lineh = mTextHeight;
+		int combh = mTextHeight + 4;
 		int lblspacing = 1;
 		int spacing = 3;
-		int btnw = 80;
-		int btnh = 24;
+		int btnw = mTextWidth * 10;
+		int btnh = mTextHeight + 6;
 		int x = kBackMargin;
 		int w = cw - 2 * kBackMargin;
 
@@ -523,10 +529,10 @@ private:
 		// \----------.---+\---------------+
 		//                   Load Save Conv
 
-		int lblwidth = 64;
-		int kwpwidth = 150;
+		int lblwidth = mTextWidth * 10;
+		int kwpwidth = mTextWidth * 22;
 		_wndInputTypeLabel.setRect(x, top + 2, lblwidth, lineh);
-		_wndInputType.setRect(x + lblwidth, top, w - lblwidth - kwpwidth - 10, combh);
+		_wndInputType.setRect(x + lblwidth, top, w - lblwidth, combh);
 		top += combh + 2 + spacing;
 
 		_wndInputDirLabel.setRect(x,           top, lblwidth, lineh);
@@ -538,7 +544,7 @@ private:
 		_wndLoad   .setRect(x + w - btnw - 2 * (spacing + btnw), bot - btnh, btnw, btnh);
 		bot -= btnh + spacing + spacing;
 
-		int plblwidth = 82;
+		int plblwidth = mTextWidth * 13;
 		int tw = max(0, w - spacing) / 2;
 		_wndKeywordPrefixLabel.setRect(x, bot - lineh, plblwidth, lineh);
 		_wndKeywordPrefixText.setRect(x + plblwidth, bot - lineh, tw - plblwidth - spacing, lineh);

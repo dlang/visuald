@@ -1117,7 +1117,7 @@ Version history
   * VS2015: workaround VS not correctly updating extension caches after uninstallation
   * bugzilla 19826: visualdproj projects created for LDC still use DMD
 
-unreleased Version 0.50.0
+2019-06-23 Version 0.50.0
   * VS 16.1 Preview 2: ignore tracked files in *.delete.*.tlog as dependencies, too
   * now another installer available that includes DMD and LDC
   * installer no longer asks for DMD path when updating existing installation
@@ -1135,6 +1135,7 @@ unreleased Version 0.50.0
     - D-Compiler option missing if no english VS language pack installed
   * visualdproj:
     - Error List: classify warnings and deprecations according to the respective options
+    - don't pass -mixin= for the link step
   * bugzilla 19930: visualdproj: fix building projects with "&|<>" in directory names
   * dparser:
     - add semantic coloring for module and package names
@@ -1151,3 +1152,4 @@ unreleased Version 0.50.0
     - fix evaluating locals in registers
   * slightly change identification of break point locations
   * fixed "go to definition" eventually not jumping to correct line after opening document
+  * scale dialogs according to current text font size, i.e. adapt to DPI scaling

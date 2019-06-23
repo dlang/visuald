@@ -1,5 +1,55 @@
 Ddoc
 
+$(H2 2019-06-23 Version 0.50.0)
+ $(UL
+  $(LI installer:
+   $(UL
+    $(LI now another installer available that includes DMD and LDC)
+    $(LI installer no longer asks for DMD path when updating existing installation)
+    $(LI check for updates for Visual D, DMD and LDC, assisted download and install)
+    $(LI check and report invalid non-empty DMD/LDC installation folders)
+    $(LI VC project: D-Compiler option missing if no english VS language pack installed)
+   ))
+  $(LI VC project:
+   $(UL
+    $(LI new projects now determine Windows SDK automatically)
+    $(LI DMD: fix wrong selections for bounds check options)
+    $(LI LDC: added -mixin option)
+    $(LI added enable -mixin option to autogenerate files according to the compilation model)
+    $(LI "New item" now also allows adding D module)
+    $(LI new option for -extern-std=c++xx)
+    $(LI new option for -lowmem)
+   ))
+  $(LI visualdproj:
+   $(UL
+    $(LI VS 16.1 Preview 2: ignore tracked files in *.delete.*.tlog as dependencies, too)
+    $(LI Error List: classify warnings and deprecations according to the respective options)
+    $(LI don't pass -mixin= to the link step)
+    $(LI bugzilla 19930: visualdproj: fix building projects with "&|<>" in directory names)
+   ))
+  $(LI dparser:
+   $(UL
+    $(LI add semantic coloring for module and package names)
+    $(LI experimental highlight references to the same symbol as the one at the caret)
+   ))
+  $(LI mago:
+   $(UL
+    $(LI fixed width of hex display of negative values)
+    $(LI dynamic type not shown for types that have no members (including interfaces))
+    $(LI dynamic type now displayed with the declared type (in braces))
+    $(LI determine dynamic type of C++ classes)
+    $(LI demangle D symbol names)
+    $(LI regression: use of registers in expression was lost at some point)
+    $(LI show class and message for exceptions that the debugger breaks on)
+    $(LI fix conditional breakpoints "not supported")
+    $(LI support multiple "live ranges" when LDC uses registers for locals)
+    $(LI fix evaluating locals in registers)
+   ))
+  $(LI slightly change identification of break point locations)
+  $(LI fixed "go to definition" eventually not jumping to correct line after opening document)
+  $(LI scale dialogs according to current text font size, i.e. adapt to DPI scaling)
+ )
+
 $(H2 2019-04-28 Version 0.49.2)
  $(UL
   $(LI VS2013/VS2015: VC projects broken in 0.49.1 due to unsupported msbuild variable)
