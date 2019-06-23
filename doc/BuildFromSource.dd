@@ -7,16 +7,11 @@ $(H2 Prerequisites)
 
 $(P You need the following tools to build Visual D:)
 $(UL
-  $(LI Visual Studio 2013/2015 (other versions might also work, VS 2017 was ok
-    until update 15.3.1))
+  $(LI Visual Studio 2013/2015/2017/2019
   $(LI a recent version of Visual D)
-  $(LI $(LINK2 https://www.microsoft.com/en-us/download/details.aspx?id=40758,
-    Visual Studio Integration SDK for VS2013) or enable it during $(LINK2
-    https://msdn.microsoft.com/en-us/library/mt683786.aspx, VS 2015) or VS 2017 installation.)
-  $(LI Windows SDK 6.0A (included in VS2008) or later (tested with most versions
-    up to 10.0.15063.0))
-  $(LI DMD 2.071 or newer)
-  $(LI coffimplib from ($(LINK http://ftp.digitalmars.com/coffimplib.zip)))
+  $(LI Visual Studio Integration SDK for VS2013 or later (enable it during VS installation.)
+  $(LI Windows SDK 6.0A or later (tested with most versions up to 10.0.17763.0))
+  $(LI DMD 2.084 or newer)
   $(LI for installer: $(LINK2 http://nsis.sourceforge.net/Download, NSIS). External projects
     included in installer:)
     $(UL
@@ -27,13 +22,14 @@ $(UL
       $(LI $(LINK2 http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz, binutils 2.25)
         extracted to ../../binutils-2.25)
     )
+  $(LI For OMF builds: coffimplib from ($(LINK http://ftp.digitalmars.com/coffimplib.zip)))
 )
 
 $(P Visual D consists of a number of components that need to be built separately:)
 $(UL
   $(LI $(LINK2 https://github.com/dlang/visuald, visuald): the core package loaded as a language service by Visual Studio: visuald_vs10.sln)
   $(LI $(LINK2 https://github.com/rainers/D_Parser/tree/visuald, dparser): the semantic engine
-    integrated as a sub module: vdc/abothe/VDServer.sln)
+    integrated as a sub module: vdc/abothe/VDServer.sln. Needs VS 2017 or later)
   $(LI vdextensions: some extensions to visuald only accessible via C#: vdextensions/vdextensions.csproj)
   $(LI dbuild: MSBuild integration: msbuild/dbuild/dbuild.csproj)
   $(LI $(LINK2 https://github.com/rainers/mago, mago): the debug engine: ../../mago/MagoDbg_2010.sln)
@@ -42,12 +38,12 @@ $(UL
   $(LI pipedmd, dcxxfilt: additional command line tools in the "tools" folder)
 )
 
-$(H2 Building Visual D)
+$(H2 Building the Visual Studio extension Visual D)
 
 $(P Short version:
 $(UL
  $(LI Load visuald_vs10.sln into Visual Studio 2013+.)
- $(LI Select configuration Debug/Win32)
+ $(LI Select configuration "Debug COFF32|Win32")
  $(LI Build project "build".)
  $(LI Build project "VisualD".)
 )
@@ -60,7 +56,7 @@ that verifies recent changes to the development
 branch of Visual D. This can also be used as a reference for the build process.)
 
 $(P The Visual D source code is usually updated to work with the latest release version
-of DMD (2.077 as of now), so you should use this release of the compiler when using
+of DMD (2.086.0 as of now), so you should use this release of the compiler when using
 the latest svn/git checkout.)
 
 $(P If you want to start developing or debugging, you should load visuald_vs10.sln
@@ -79,21 +75,23 @@ branch in the registry, so it does not interfere with your working
 environment.)
 
 $(UL
- $(LI VS2010-VS2017: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
+ $(LI VS2010-VS2019: The mechanism has changed with VS2010, as the non-standard registry settings are rebuilt
    on every start of Visual Studio.
   $(UL
+   $(LI in the following items, VS 2015 is similar to VS 2013 (replace version 12.0 with 14.0),
+     and CS 2019 is similar to VS 2017 (replace version 15.0 with 16.0).)
    $(LI Copy the files from `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\Extensions\Rainer Schuetze\VisualD` into the folder
-     `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0\Extensions\VisualD` (replace 12.0 with 14.0 for VS2015, 15.0_`<id>`
+     `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0\Extensions\VisualD` (replace 12.0 with 15.0_`<id>`
      for VS2017 with `<id>` some identifier generated during VS installation))
    $(LI Move the files from `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\Extensions\Rainer Schuetze\VisualD` into the folder
-     `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD` (replace 12.0D with 14.0D for VS2015, 15.0_`<id>`D
+     `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD` (replace 12.0D with 15.0_`<id>`D
      for VS2017 with `<id>` some identifier generated during VS installation))
    $(LI in visuald.pkgdef, replace the path "C:\\Program Files (x86)\\Visual D\\visuald.dll" with your debug build output path.)
    $(LI Modify a line in `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\devenv.pkgdef:
      $(PRE -"PkgDefSearchPath" = "$ApplicationExtensionsFolder$;$RootFolder$\Common7\IDE\CommonExtensions;$RootFolder$\Common7\IDE\devenv.admin.pkgdef;")
      $(PRE +"PkgDefSearchPath" = "$ApplicationExtensionsFolder$;$RootFolder$\Common7\IDE\CommonExtensions;$AppDataLocalFolder$\Extensions;$RootFolder$\Common7\IDE\devenv.admin.pkgdef;")
     )
-   $(LI in the registry, delete hives
+   $(LI for VS2015 or earlier delete these hives in the registry:
     $(UL
      $(LI `HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\14.0D`)
      $(LI `HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\14.0D_Config`)

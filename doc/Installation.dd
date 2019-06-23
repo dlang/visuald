@@ -9,8 +9,19 @@ for all users, not only for a single user.)
 
 $(P To compile your application, you must have $(LINK2 http://www.digitalmars.com/d/download.html, DMD),
 $(LINK2 https://github.com/D-Programming-GDC/GDC, GDC) or $(LINK2 https://github.com/ldc-developers/ldc, LDC)
-installed. Not all functionality
-has been thoroughly tested with GDC and LDC, so having DMD available for cross-checking is recommended.)
+installed.)
+
+$(H2 Using DMD)
+
+$(P DMD is a the reference D compiler. It has the latest features of D implemented first, and
+usually provides the fastest compilation times for debug builds.)
+
+$(P Not all functionality of Visual D has been adopted to GDC and LDC, so having DMD available is recommended.)
+It is also used as the default in most options, e.g. when creating new projects.
+
+$(P You can change the DMD installation path at the global
+Tools->Options->Projects and Solutions->Visual D Settings->DMD Directories
+option page.)
 
 $(H2 Using LDC)
 
@@ -24,8 +35,13 @@ option page. Then switch the "Compiler" option in the project configuration to "
 $(H2 Using GDC)
 
 $(P GDC is a D compiler using the GNU compiler suite backend. It can produce more efficient code than DMD.)
-You can find a rather dated build at $(LINK http://gdcproject.org/downloads). Please also install the respective
-MinGW environment.
+
+$(B As there is currently no uptodate build of GDC available for Windows, support for it has
+fallen behind and is untested. With GDC being included with the GCC compiler suite in May 2019, this might change in the
+near future.)
+
+$(P You can find a rather dated build at $(LINK http://gdcproject.org/downloads). Please also install the respective
+MinGW environment.)
 
 $(P Enter the GDC installation path at the global Tools->Options->Projects and Solutions->Visual D Settings->GDC Directories
 option page. Then switch the "Compiler" option in the project configuration to "GDC".)

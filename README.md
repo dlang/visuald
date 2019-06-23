@@ -4,7 +4,7 @@
 This is the README file for Visual D, a 
 Visual Studio package providing both project management and language services
 
-Copyright (c) 2010-2018 by Rainer Schuetze, All Rights Reserved
+Copyright (c) 2010-2019 by Rainer Schuetze, All Rights Reserved
 
 Visual D aims at providing seamless integration of the D programming language
 into Visual Studio. 
@@ -15,8 +15,8 @@ Use forum http://forum.dlang.org/group/digitalmars.D.ide for questions and the D
 
 Major Features
 ---------------
-* Project management
-  - all DMD and GDC command line options accessable
+* Custom Project management
+  - all DMD command line options accessible
   - support for GDC and LDC
   - support for resource compiler
   - custom build commands
@@ -25,9 +25,15 @@ Major Features
   - automatic link between dependend projects
   - new project templates
 
+* Integration with VC projects
+  - seamless integration through build customization
+  - DMD and LDC command line options accessible
+  - parallel compilation
+
 * Debugger
-  - integrates cv2pdb for seamless integration with the VS native debugger 
+  - VS debugger extension providing D expression evaluation
   - integrates mago, a debug engine dedicated to D
+  - integrates cv2pdb for debugging executables built with the Digital Mars toolchain
 
 * Language Service
   - syntax highlighting with special version/debug and token string support
@@ -55,23 +61,20 @@ Major Features
   - disassembly view synchronized with source code
   
 * Supported Visual Studio versions
-  - VS 2008
-  - VS 2010
-  - VS 2012
-  - VS 2013
-  - VS 2015
-  - VS 2017
+  - VS 2008 - VS 2019, Community, Professional or Enterprise versions
   
-  Unfortunately, Express versions of Visual Studio do not support this 
-  kind of extensions. Use the Visual Studio Shell instead:
+  Express versions of Visual Studio do not support this 
+  kind of extensions. If you need to use these old version, use the Visual Studio Shell instead:
   - VS 2008 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=9771
   - VS 2010 Shell: no longer available
   - VS 2012 Shell: http://www.microsoft.com/en-us/download/details.aspx?id=30670
                  + http://www.microsoft.com/en-us/download/details.aspx?id=30663
-  
-  Starting with VS 2013, Microsoft also released Community Versions of
-  Visual Studio, which are free for most users and are similar to the
-  professional editions.
+
+  If you are using the Visual Studio Shell 2008 or 2010, it misses one file,
+  that is needed for the conversion of the debug information by cv2pdb. This 
+  is msobj80.dll for VS2008 and msobj100.dll for VS2010 and must be extracted 
+  from a standard installation, the Visual C Express edition or the Windows SDK.
+  You might also find it installed by other Microsoft products. 
   
 * Includes tools to
   - convert some idl/h files of the Windows SDK to D
@@ -107,17 +110,6 @@ For LDC and GDC, after installation you must setup Visual D to find them: see
 Tools->Options->Projects and Solutions->Visual D Settings->LDC Directories
 and GDC Directories, respectively.
 
-For debugging applications, you should also install cv2pdb which is now 
-included in the Visual D installer. Please make sure, changes to 
-Common7\Packages\Debugger\autoexp.dat do not mix with previous manual 
-installations of cv2pdb. 
-
-If you are using the Visual Studio Shell 2008 or 2010, it misses one file,
-that is needed for the conversion of the debug information by cv2pdb. This 
-is msobj80.dll for VS2008 and msobj100.dll for VS2010 and must be extracted 
-from a standard installation, the Visual C Express edition or the Windows SDK.
-You might also find it installed by other Microsoft products. 
-
 Changes
 -------
 For documentation on the changes between this version and
@@ -130,6 +122,7 @@ In a nutshell:
 - install the Visual Studio SDK
 - start Visual Studio and load solution visuald_vs9.sln (VS 2008) or
   visuald_vs10.sln (VS 2010+)
+- select configuration "Debug COFF32|Win32"
 - build project "build"
 - build project "VisualD"
 
