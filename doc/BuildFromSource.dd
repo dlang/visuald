@@ -3,28 +3,6 @@ Ddoc
 $(P The latest sources of Visual D are available from the github repository at
 $(LINK https://github.com/dlang/visuald).)
 
-$(H2 Prerequisites)
-
-$(P You need the following tools to build Visual D:)
-$(UL
-  $(LI Visual Studio 2013/2015/2017/2019
-  $(LI a recent version of Visual D)
-  $(LI Visual Studio Integration SDK for VS2013 or later (enable it during VS installation.)
-  $(LI Windows SDK 6.0A or later (tested with most versions up to 10.0.17763.0))
-  $(LI DMD 2.084 or newer)
-  $(LI for installer: $(LINK2 http://nsis.sourceforge.net/Download, NSIS). External projects
-    included in installer:)
-    $(UL
-      $(LI $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb) checked
-        out to ../../cv2pdb/trunk for historic reasons)
-      $(LI $(LINK2 https://github.com/rainers/mago, mago) checked
-        out to ../../mago)
-      $(LI $(LINK2 http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz, binutils 2.25)
-        extracted to ../../binutils-2.25)
-    )
-  $(LI For OMF builds: coffimplib from ($(LINK http://ftp.digitalmars.com/coffimplib.zip)))
-)
-
 $(P Visual D consists of a number of components that need to be built separately:)
 $(UL
   $(LI $(LINK2 https://github.com/dlang/visuald, visuald): the core package loaded as a language service by Visual Studio: visuald_vs10.sln)
@@ -38,18 +16,28 @@ $(UL
   $(LI pipedmd, dcxxfilt: additional command line tools in the "tools" folder)
 )
 
-$(H2 Building the Visual Studio extension Visual D)
+$(H2 Building the Visual Studio extension package)
 
-$(P Short version:
+$(H3 Prerequisites)
+
+$(P You need the following tools to build main package of Visual D:)
+$(UL
+  $(LI Visual Studio 2013/2015/2017/2019)
+  $(LI a recent version of Visual D)
+  $(LI Visual Studio Integration SDK for VS2013 or later (enable it during VS installation.))
+  $(LI Windows SDK 6.0A or later (tested with most versions up to 10.0.17763.0))
+  $(LI DMD 2.084 or newer)
+)
+
+$(H3 Short build instructions:)
 $(UL
  $(LI Load visuald_vs10.sln into Visual Studio 2013+.)
- $(LI Select configuration "Debug COFF32|Win32")
- $(LI Build project "build".)
+ $(LI Select configuration "$(B Debug COFF32)|Win32")
+ $(LI Build project "$(B build)". You might get prompted to reload the solution.)
  $(LI Build project "VisualD".)
 )
-)
 
-$(P Longer version:)
+$(H3 Longer build instructions:)
 
 $(P There is an $(LINK2 https://ci.appveyor.com/project/rainers/visuald, AppVeyor project)
 that verifies recent changes to the development
@@ -57,18 +45,22 @@ branch of Visual D. This can also be used as a reference for the build process.)
 
 $(P The Visual D source code is usually updated to work with the latest release version
 of DMD (2.086.0 as of now), so you should use this release of the compiler when using
-the latest svn/git checkout.)
+the latest git checkout.)
 
-$(P If you want to start developing or debugging, you should load visuald_vs10.sln
-in Visual Studio with Visual D installed. Build the "build" project at least once
+$(P To start developing or debugging, you should load visuald_vs10.sln
+in Visual Studio with Visual D installed.
+The preferred configuration to use is "Debug COFF32|Win32". This chooses building
+with the Microsoft runtime libraries. As Visual Studio is a 32-bit process, an extension
+has to be built for that platform, too.
+Build the "build" project at least once
 to build the necessary prerequisites and tools, e.g. D translations from
 the Windows and Visual Studio SDK.)
 
-$(P The standard build procedure for the release version is to execute
-"nmake install_vs" in the trunk directory. $(B Please check the variable settings at the
-top of the Makefile and adjust them to the installation directories on your system.))
+$(P If you want to build against the Digital Mars toolchain using OMF object files,
+you'll need coffimplib from ($(LINK http://ftp.digitalmars.com/coffimplib.zip)) installed
+somewhere in your PATH. Use Configuration "Debug OMF|Win32" in that case.)
 
-$(H2 Deployment)
+$(H3 Deployment)
 
 $(P You should debug Visual D within Visual Studio using a different
 branch in the registry, so it does not interfere with your working
@@ -101,6 +93,7 @@ $(UL
    $(LI Visual D will now be shown in the Extension Manager where it might have to be enabled.)
   )
  )
+ $(P)
  $(LI VS2008: To create a configuration named "D"
   $(UL
    $(LI As administrator, execute from the command line:
@@ -116,8 +109,24 @@ $(UL
  )
 )
 
+$(H3 Building the installer)
+
+$(P The standard build procedure for the release version is to execute
+"nmake install_vs" in the trunk directory. $(B Please check the variable settings at the
+top of the Makefile and adjust them to the installation directories on your system.))
+
+  $(LI for installer: $(LINK2 http://nsis.sourceforge.net/Download, NSIS). External projects
+    included in installer:)
+    $(UL
+      $(LI $(LINK2 https://github.com/rainers/cv2pdb, cv2pdb) checked
+        out to ../../cv2pdb/trunk for historic reasons)
+      $(LI $(LINK2 https://github.com/rainers/mago, mago) checked
+        out to ../../mago)
+      $(LI $(LINK2 http://ftp.gnu.org/gnu/binutils/binutils-2.25.tar.gz, binutils 2.25)
+        extracted to ../../binutils-2.25)
+    )
+
 $(P Good luck!)
 
 Macros:
 	TITLE=Building from Source
-

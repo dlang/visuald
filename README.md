@@ -120,8 +120,7 @@ Building Visual D
 In a nutshell:
 
 - install the Visual Studio SDK
-- start Visual Studio and load solution visuald_vs9.sln (VS 2008) or
-  visuald_vs10.sln (VS 2010+)
+- start Visual Studio VS 2013+ and load solution visuald_vs10.sln
 - select configuration "Debug COFF32|Win32"
 - build project "build"
 - build project "VisualD"
