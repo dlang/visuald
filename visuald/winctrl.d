@@ -72,6 +72,19 @@ HFONT deleteDialogFont(HFONT font)
 	return null;
 }
 
+void GetFontMetrics(HFONT font, out int fWidth, out int fHeight)
+{
+	HWND hwnd = GetDesktopWindow();
+	HDC dc = GetDC(hwnd);
+	SelectObject(dc, font);
+	TEXTMETRIC tm;
+	GetTextMetrics(dc, &tm);
+	ReleaseDC(hwnd, dc);
+
+	fHeight = tm.tmHeight;
+	fWidth = tm.tmAveCharWidth;
+}
+
 class Widget
 {
 	HWND hwnd;

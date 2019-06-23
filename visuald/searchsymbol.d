@@ -405,6 +405,7 @@ private:
 	HIMAGELIST _himlToolbar;
 	ItemArray _lastResultsArray; // remember to keep reference to SolutionItems referenced in list items
 	HFONT mDlgFont;
+	int mTextHeight;
 
 	BOOL _fCombineColumns;
 	BOOL _fAlternateRowColor;
@@ -1003,14 +1004,18 @@ private:
 		if(!mDlgFont)
 			mDlgFont = newDialogFont();
 
+		int fHeight, fWidth;
+		GetFontMetrics(mDlgFont, fWidth, fHeight);
+		mTextHeight = fHeight + 4;
+
 		if (SUCCEEDED(_InitializeViewState()))
 		{
 			_wndFileWheel = new Text(_wndBack, "", IDC_FILEWHEEL);
 			int top = kToolBarAtTop ? kToolBarHeight : 1;
-			_wndFileWheel.setRect(kBackMargin, top + 2 + kBackMargin, 185, 16);
+			_wndFileWheel.setRect(kBackMargin, top + 2 + kBackMargin, 185, mTextHeight);
 			_wndFileList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
 			                            0, IDC_FILELIST);
-			_wndFileList.setRect(kBackMargin, top + kBackMargin + 20, 185, 78);
+			_wndFileList.setRect(kBackMargin, top + kBackMargin + 2 + mTextHeight, 185, 78);
 			HWND hdrHwnd = cast(HWND)_wndFileList.SendMessage(LVM_GETHEADER);
 			if(hdrHwnd)
 			{

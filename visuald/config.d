@@ -518,7 +518,7 @@ class ProjectOptions
 		if(privatePhobos)
 			cmd ~= " -defaultlib=" ~ quoteFilename(normalizeDir(objdir) ~ "privatephobos.lib");
 
-		if(enableMixin)
+		if(enableMixin && compile)
 			cmd ~= " -mixin=" ~ quoteNormalizeFilename(mixinPath);
 
 		if(doDocComments && compile && !syntaxOnly)
@@ -787,7 +787,7 @@ class ProjectOptions
 
 		cmd ~= commonLanguageOptions();
 
-		if(enableMixin)
+		if(enableMixin && compile)
 			cmd ~= " -mixin=" ~ quoteNormalizeFilename(mixinPath);
 
 		if(doDocComments && compile && !syntaxOnly)

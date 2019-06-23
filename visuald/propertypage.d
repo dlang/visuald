@@ -248,15 +248,9 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 
 		if(!mDlgFont)
 			mDlgFont = newDialogFont();
-		HWND hwnd = GetDesktopWindow();
-		HDC dc = GetDC(hwnd);
-		SelectObject(dc, mDlgFont);
-		TEXTMETRIC tm;
-		GetTextMetrics(dc, &tm);
-		ReleaseDC(hwnd, dc);
 
-		int fHeight = tm.tmHeight;
-		int fWidth = tm.tmAveCharWidth;
+		int fHeight, fWidth;
+		GetFontMetrics(mDlgFont, fWidth, fHeight);
 
 		kPageWidth = fWidth * 75 + 2 * kMargin;
 		kLabelWidth = fWidth * 22;

@@ -275,6 +275,7 @@ private:
 	Window _wndParent;
 	ProfileWindowBack _wndBack;
 	HFONT mDlgFont;
+	int mTextHeight;
 
 	Text _wndFileWheel;
 	ListView _wndFuncList;
@@ -950,14 +951,18 @@ private:
 		if(!mDlgFont)
 			mDlgFont = newDialogFont();
 
+		int fHeight, fWidth;
+		GetFontMetrics(mDlgFont, fWidth, fHeight);
+		mTextHeight = fHeight + 4;
+
 		if (SUCCEEDED(_InitializeViewState()))
 		{
 			_wndFileWheel = new Text(_wndBack, "", IDC_FILEWHEEL);
 			int top = kToolBarAtTop ? kToolBarHeight : 1;
-			_wndFileWheel.setRect(kBackMargin, top + kBackMargin, 185, 16);
+			_wndFileWheel.setRect(kBackMargin, top + kBackMargin, 185, mTextHeight);
 			_wndFuncList = new ListView(_wndBack, LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_SHAREIMAGELISTS | WS_BORDER | WS_TABSTOP,
 			                            0, IDC_FILELIST);
-			_wndFuncList.setRect(kBackMargin, top + kBackMargin + 20, 185, 78);
+			_wndFuncList.setRect(kBackMargin, top + kBackMargin + 2 + mTextHeight, 185, 78);
 			HWND hdrHwnd = cast(HWND)_wndFuncList.SendMessage(LVM_GETHEADER);
 			if(hdrHwnd)
 			{

@@ -1135,6 +1135,7 @@ unreleased Version 0.50.0
     - D-Compiler option missing if no english VS language pack installed
   * visualdproj:
     - Error List: classify warnings and deprecations according to the respective options
+    - don't pass -mixin= for the link step
   * bugzilla 19930: visualdproj: fix building projects with "&|<>" in directory names
   * dparser:
     - add semantic coloring for module and package names
@@ -1151,3 +1152,4 @@ unreleased Version 0.50.0
     - fix evaluating locals in registers
   * slightly change identification of break point locations
   * fixed "go to definition" eventually not jumping to correct line after opening document
+  * scale dialogs according to current text font size, i.e. adapt to DPI scaling
