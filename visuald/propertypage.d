@@ -1256,7 +1256,7 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 	override void CreateControls()
 	{
 		mUnindentCheckBox = kLabelWidth;
-		AddControl("", mBetterC                 = new CheckBox(mCanvas, "omit generating some runtime information and helper functions"));
+		AddControl("", mBetterC                 = new CheckBox(mCanvas, "Better C: omit generating some runtime information and helper functions"));
 		AddHorizontalLine();
 		AddControl("", mDip25                   = new CheckBox(mCanvas, "implement DIP25: sealed pointers (DMD 2.067+)"));
 		AddControl("", mDip1000                 = new CheckBox(mCanvas, "implement DIP1000: scoped pointers (DMD 2.073+)"));
