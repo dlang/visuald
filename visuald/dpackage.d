@@ -1822,7 +1822,7 @@ class GlobalOptions
 			baseInstallDir = "c:\\D";
 	}
 
-	bool initFromRegistry()
+	bool initFromRegistry(bool restoreDefaults = false)
 	{
 		bool rc = true;
 		try
@@ -1843,6 +1843,8 @@ class GlobalOptions
 			// get defaults from global config
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
+			if (restoreDefaults)
+				keyUserOpts.Close(); // make it invalid to only restore defaults
 
 			detectWindowsSDKDir();
 			detectUCRT();

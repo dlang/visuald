@@ -434,7 +434,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		if (btn)
 		{
 			btnWidth = max(btn.getWidth(), kLineHeight);
-			pageWidth -= btnWidth;
+			pageWidth -= btnWidth + 1;
 		}
 		int labelWidth = 0;
 		int margin = tc ? 0 : kMargin;
@@ -749,9 +749,25 @@ class GlobalPropertyPage : ResizablePropertyPage
 	abstract void SetControls(GlobalOptions options);
 	abstract int  DoApply(GlobalOptions options, GlobalOptions refoptions);
 
+	static GlobalPropertyPage[] openPages;
+
 	this(GlobalOptions options)
 	{
 		mOptions = options;
+		openPages.addunique(this);
+	}
+
+	override void Dispose()
+	{
+		stdext.array.remove(openPages, this);
+		super.Dispose();
+	}
+
+	void UpdateOpenPages()
+	{
+		foreach(p; openPages)
+			if (p.mCanvas && p.mCanvas.hwnd)
+				p.UpdateControls();
 	}
 
 	override void UpdateControls()
@@ -2433,6 +2449,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 	{
 		auto btn = new Button(mCanvas, "...", ID_BROWSE_BASEDIR);
 		AddControl("Base directory", mBaseDir = new Text(mCanvas), btn);
+		AddLabel("Updates will be downloaded and installed to this directory. The current user must have full access.");
 
 		string[] updateChecks = [ "Never", "Daily", "Weekly", "Daily pre-releases" ];
 		AddTitleLine("Visual D");
@@ -2721,6 +2738,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 	override string GetCategoryName() { return "Projects"; }
 	override string GetPageName() { return "D Options"; }
 
+	enum ID_RESETSETTINGS = 1200;
+
 	this(GlobalOptions options)
 	{
 		super(options);
@@ -2729,7 +2748,14 @@ class ToolsProperty2Page : GlobalPropertyPage
 
 	override void CreateControls()
 	{
-		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"));
+		auto btntext = "Reset Settings...";
+		auto btn = new Button(mCanvas, btntext, ID_RESETSETTINGS);
+		int left, top, w, h;
+		btn.getRect(left, top, w, h);
+		int buttonWidth = 12 * btn.getTextWidth(btntext) / 10;
+		btn.setRect(left, top, buttonWidth, h);
+
+		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"), btn);
 		AddTitleLine(".visualdproj build options");
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
 		AddControl("", mShowUptodate  = new CheckBox(mCanvas, "Show why a target is rebuilt"));
@@ -2780,6 +2806,29 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mIncPath.getText(), opts.IncSearchPath, refopts.IncSearchPath);
 		changes += changeOption(mJSNPath.getText(), opts.JSNSearchPath, refopts.JSNSearchPath);
 		return changes;
+	}
+
+	extern(D) override void OnCommand(Widget w, int cmd)
+	{
+		switch(cmd)
+		{
+			case ID_RESETSETTINGS:
+				int answer = UtilMessageBox("Do you want to reset all global Visual D user settings to their default?", MB_YESNOCANCEL | MB_ICONEXCLAMATION,
+											"Reset Visual D Settings");
+				if (answer == IDYES)
+				{
+					auto initializer = typeid(mOptions).initializer;
+					destroy(mOptions);
+					memcpy(cast(void*)mOptions, initializer.ptr, initializer.length);
+					mOptions.__ctor();
+					mOptions.initFromRegistry(true);
+					UpdateOpenPages();
+				}
+				break;
+			default:
+				break;
+		}
+		super.OnCommand(w, cmd);
 	}
 
 	CheckBox mTimeBuilds;
