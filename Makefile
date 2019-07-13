@@ -28,8 +28,14 @@
 PROGRAMFILESX86 = c:\Program Files (x86)
 
 NSIS    = $(PROGRAMFILESX86)\NSIS
+!IF !EXIST("$(NSIS)")
+NSIS    = c:\p\NSIS-3.04
+!ENDIF
 MSBUILD = msbuild
 MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild"
+!IF !EXIST($(MSBUILD15))
+MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild"
+!ENDIF
 !IF !EXIST($(MSBUILD15))
 MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Current\Bin\msbuild"
 !ENDIF
@@ -59,7 +65,7 @@ vdserver:
 	devenv /Project "vdserver"  /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
 dparser:
-	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5 /p:DefineConstants=NET40 /t:Rebuild
+	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5.2 /p:DefineConstants=NET40 /t:Rebuild
 	editbin /STACK:0x800000 bin\Release\DParserCOMServer\DParserCOMServer.exe
 
 dparser_test:
