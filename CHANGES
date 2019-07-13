@@ -1153,3 +1153,14 @@ Version history
   * slightly change identification of break point locations
   * fixed "go to definition" eventually not jumping to correct line after opening document
   * scale dialogs according to current text font size, i.e. adapt to DPI scaling
+
+unreleased Version 0.50.1
+  * msbuild: fix parallel build in VS 2019 16.1
+  * msbuild: fix building right after full installation
+  * bugzilla 20003: project properties: show "Better C" in option text
+  * bugzilla 20004: add button to reset all global settings to their default
+  * bugzilla 20005: try to detect VC through ISetupConfiguration, too
+  * mago: improve function call in watch window
+    - implement virtual functions, fix calling delegates and function pointers
+    - display of delegate type
+	- support arbitrary return types
