@@ -2817,6 +2817,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 											"Reset Visual D Settings");
 				if (answer == IDYES)
 				{
+					import core.stdc.string : memcpy;
 					auto initializer = typeid(mOptions).initializer;
 					destroy(mOptions);
 					memcpy(cast(void*)mOptions, initializer.ptr, initializer.length);
