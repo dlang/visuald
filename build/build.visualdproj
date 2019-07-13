@@ -547,7 +547,16 @@ call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk.success&qu
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" path="sdk_libs.bat" tool="Custom" />
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" perConfig="true" outfile="$(IntDir)\sdk_libs.success" path="sdk_libs.bat" tool="Custom">
+   <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+if errorlevel 1 goto reportError
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Debug COFF32|Win32" />
+   <Config tool="None" customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
+if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
+if errorlevel 1 goto reportError
+call $(InputPath) &quot;$(OutDir)\vsi2d.exe&quot; &quot;$(IntDir)\sdk_libs.success&quot;" outfile="$(IntDir)\sdk_libs.success" name="Release COFF32|Win32" />
+  </File>
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
