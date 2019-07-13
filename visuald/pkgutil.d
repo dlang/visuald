@@ -905,7 +905,9 @@ string findVCInstallDirViaCOM(bool delegate(string) verify)
 	ISetupInstance instance;
 	DWORD fetched;
 
-    HRESULT hr = CoCreateInstance(cast()iid_SetupConfiguration, null, CLSCTX_ALL, cast()ISetupConfiguration.iid, cast(void**) &setup);
+	GUID clsid = iid_SetupConfiguration;
+	GUID iid = ISetupConfiguration.iid;
+	HRESULT hr = CoCreateInstance(clsid, null, CLSCTX_ALL, iid, cast(void**) &setup);
 	if (hr != S_OK || !setup)
 		return null;
 	scope(exit) setup.Release();
