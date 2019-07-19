@@ -2,7 +2,7 @@ module tracegc;
 
 import core.stdc.string;
 
-//version = traceGC;
+version = traceGC;
 
 // tiny helper to clear a page of the stack below the current stack pointer to avoid false pointers there
 void wipeStack()
@@ -207,11 +207,11 @@ bool validFilename(const(char)* fn)
 		r"\gc\proxy.d",
 		r"\core\memory.d",
 		r"\std\array.d",
-		r"\ddmd\root\rmem.d",
-		r"\ddmd\root\array.d",
-		r"\ddmd\root\aav.d",
-		r"\ddmd\root\outbuffer.d",
-		r"\ddmd\root\stringtable.d",
+		r"\dmd\root\rmem.d",
+		r"\dmd\root\array.d",
+		r"\dmd\root\aav.d",
+		r"\dmd\root\outbuffer.d",
+		r"\dmd\root\stringtable.d",
 		r"\stdext\com.d",
 		r"\ddmdrmem.d",
 	];
@@ -224,17 +224,53 @@ bool validFilename(const(char)* fn)
 
 ////////////////////////////////////////////////////////////
 
-import gc.gcinterface;
+import core.gc.gcinterface;
+import core.gc.registry;
 import gc.os;
 import core.exception;
+
+extern (C) pragma(crt_constructor) void register_tracegc()
+{
+	registerGCFactory("trace", &GCTraceProxy.initialize);
+}
 
 class GCTraceProxy : GC
 {
 	GC gc;
 
-	void Dtor()
+	static GC initialize()
 	{
-		gc.Dtor();
+		__gshared ubyte[__traits(classInstanceSize, GCTraceProxy)] buf;
+
+		initRtlCaptureStackBackTrace();
+		// initTraceMalloc();
+
+		auto init = typeid(GCTraceProxy).initializer();
+		assert(init.length == buf.length);
+		auto instance = cast(GCTraceProxy) memcpy(buf.ptr, init.ptr, init.length);
+		instance.__ctor();
+		return instance;
+	}
+
+	this()
+	{
+		// unfortunately, registry cannot be invoked twice, and
+		// initialize for ConservativeGC is private
+		__gshared ubyte[__traits(classInstanceSize, ConservativeGC)] buf;
+
+		ConservativeGC.isPrecise = true;
+		auto init = typeid(ConservativeGC).initializer();
+		assert(init.length == __traits(classInstanceSize, ConservativeGC));
+		auto instance = cast(ConservativeGC) memcpy(buf.ptr, init.ptr, init.length);
+		instance.__ctor();
+
+		gc = instance;
+		tracer = this;
+ 	}
+
+	~this()
+	{
+		destroy(gc);
 	}
 
 	void enable()
@@ -340,6 +376,11 @@ class GCTraceProxy : GC
 		return gc.stats();
 	}
 
+	core.memory.GC.ProfileStats profileStats() nothrow
+	{
+		return gc.profileStats();
+	}
+
 	void addRoot(void* p) nothrow @nogc
 	{
 		return gc.addRoot(p);
@@ -386,14 +427,36 @@ class GCTraceProxy : GC
 ///////////////////////////////////////////////////////////
 static struct TraceEntry
 {
-	void* addr;
-	size_t[15] buffer;
+	enum eagerResolve = true;
 
-	StackAddrInfo* resolve() nothrow
+	void* addr;
+	static if (eagerResolve)
 	{
-		for (size_t sp = 0; sp < buffer.length && buffer[sp]; sp++)
+		StackAddrInfo* ai;
+
+		StackAddrInfo* resolve() nothrow { return ai; }
+	}
+	else
+	{
+		size_t[15] buffer;
+
+		StackAddrInfo* resolve() nothrow { return _resolve(buffer[]); }
+	}
+
+	void initialize(void* addr, ref size_t[15] buf) nothrow
+	{
+		this.addr = addr;
+		static if (eagerResolve)
+			ai = _resolve(buf[]);
+		else
+			buffer[] = buf[];
+	}
+
+	StackAddrInfo* _resolve(size_t[] buf) nothrow
+	{
+		for (size_t sp = 0; sp < buf.length && buf[sp]; sp++)
 		{
-			StackAddrInfo* ai = resolveAddr(buffer[sp]);
+			StackAddrInfo* ai = resolveAddr(buf[sp]);
 			if (ai.line != uint.max)
 				return ai;
 		}
@@ -554,6 +617,9 @@ private:
 	size_t _cap;
 }
 
+__gshared GCTraceProxy tracer;
+
+/+
 import core.demangle;
 extern pragma(mangle, mangle!GC("gc.proxy.instance")) __gshared GC gc_instance;
 
@@ -561,7 +627,7 @@ __gshared GCTraceProxy tracer = new GCTraceProxy;
 
 extern(C) void gc_init()
 {
-	import gc.config;
+	import core.gc.config;
 
 	config.initialize();
 	ConservativeGC.initialize(gc_instance);
@@ -590,13 +656,16 @@ void removeGCTracer()
 {
 	gc_instance = tracer.gc;
 }
++/
 
 void traceAlloc(void* addr) nothrow
 {
-	TraceEntry te;
+	size_t[15] buf;
 
-	te.addr = addr;
-	auto backtraceLength = RtlCaptureStackBackTrace(2, cast(ULONG)te.buffer.length, cast(void**)te.buffer.ptr, null);
+	auto backtraceLength = RtlCaptureStackBackTrace(2, cast(ULONG)buf.length, cast(void**)buf.ptr, null);
+
+	TraceEntry te;
+	te.initialize(addr, buf);
 
 	tracer.traceBuffer.pushEntry(te);
 }
@@ -626,9 +695,7 @@ void dumpAddr(AddrTracePair[] traceMap, void* addr, size_t size)
 	else
 		filename = "<unknown address>: ";
 
-	gc.impl.conservative.gc.printf("%s(%d): %p %llx\n", filename, line, addr, cast(long) size);
-	//sprintf(buf.ptr, "%s(%d): %p %llx\n", filename, line, addr, cast(long) size);
-	//OutputDebugStringA(buf.ptr);
+	trace_printf("%s(%d): %p %llx\n", filename, line, addr, cast(long) size);
 }
 
 struct AddrInfoStat
@@ -666,16 +733,16 @@ void dumpAddrInfoStat()
 {
 	char[256] buf;
 
-	OutputDebugStringA("Dump combined by stack location:\n");
+	trace_printf("\nDump combined by stack location:\n");
 
 	foreach(ref info; addrInfoStat)
 		if (info.ai)
 		{
 			const(char)* filename = stringBuffer.ptr + info.ai.filenameOff;
-			sprintf(buf.ptr, "%s(%d): %lld allocs %llx bytes\n", filename, info.ai.line, cast(long)info.count, cast(long)info.size);
-			OutputDebugStringA(buf.ptr);
+			trace_printf("%s(%d): %lld allocs %llx bytes\n", filename, info.ai.line, cast(long)info.count, cast(long)info.size);
 		}
 
+	trace_printf("\n");
 }
 
 ///////////////////////////////////////////////////////////////
@@ -688,9 +755,9 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	cgc.gcLock.lock();
 	auto pooltable = gcx.pooltable;
 
-	alias ScanRange = gc.gcinterface.Range;
+	alias ScanRange = Gcx.ScanRange!false;
 
-	Gcx.ToScanStack toscan;
+	Gcx.ToScanStack!ScanRange toscan;
 
 	/**
 	* Search a range of memory values and mark any pointers into the GC pool.
@@ -741,7 +808,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 				{
 					// We don't care abou setting pointsToBase correctly
 					// because it's ignored for small object pools anyhow.
-					auto offsetBase = offset & notbinsize[bin];
+					auto offsetBase = baseOffset(offset, cast(Bins)bin);
 					biti = offsetBase >> pool.shiftBy;
 					base = pool.baseAddr + offsetBase;
 					//debug(PRINTF) printf("\t\tbiti = x%x\n", biti);
@@ -757,7 +824,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 				}
 				else if (bin == B_PAGE)
 				{
-					auto offsetBase = offset & notbinsize[bin];
+					auto offsetBase = offset & ~cast(size_t)(PAGESIZE-1);
 					base = pool.baseAddr + offsetBase;
 					biti = offsetBase >> pool.shiftBy;
 					//debug(PRINTF) printf("\t\tbiti = x%x\n", biti);
@@ -862,13 +929,14 @@ void dumpGC(GC _gc)
 	assert(cgc);
 	auto gcx = cgc.gcx;
 
+	core.memory.GC.Stats stats = _gc.stats();
+
 	cgc.gcLock.lock();
 
-	char[256] buf;
-	sprintf(buf.ptr, "Dump of GC %p: %d pools\n", _gc, gcx.npools);
-	OutputDebugStringA(buf.ptr);
-	sprintf(buf.ptr, "Trace buffer memory: %lld bytes\n", cast(long)tracer.traceBuffer.memUsage());
-	OutputDebugStringA(buf.ptr);
+	trace_printf("Dump of GC %p: %d pools\n", _gc, gcx.pooltable.length);
+	trace_printf("Trace buffer memory: %lld bytes\n", cast(long)tracer.traceBuffer.memUsage());
+
+	trace_printf("GC stats: %lld used, %lld free\n", cast(long)stats.usedSize, cast(long)stats.freeSize);
 
 	AddrTracePair[] traceMap = tracer.traceBuffer.createTraceMap();
 	memset(addrInfoStat.ptr, 0, addrInfoStat.sizeof);
@@ -880,7 +948,7 @@ void dumpGC(GC _gc)
 	{
 		size_t usedSize = 0;
 		size_t freeSize = 0;
-		foreach (pool; gcx.pooltable[0 .. gcx.npools])
+		foreach (pool; gcx.pooltable[0 .. gcx.pooltable.length])
 		{
 			foreach (pn, bin; pool.pagetable[0 .. pool.npages])
 			{
@@ -922,10 +990,8 @@ void dumpGC(GC _gc)
 			}
 		}
 
-		sprintf(buf.ptr, "Sum of used memory: %lld bytes\n", cast(long)usedSize);
-		OutputDebugStringA(buf.ptr);
-		sprintf(buf.ptr, "Sum of free memory: %lld bytes\n", cast(long)freeSize);
-		OutputDebugStringA(buf.ptr);
+		trace_printf("Sum of used memory: %lld bytes\n", cast(long)usedSize);
+		trace_printf("Sum of free memory: %lld bytes\n", cast(long)freeSize);
 	}
 
 	dumpObjectAddrs();
@@ -938,15 +1004,13 @@ void dumpGC(GC _gc)
 			if (StackAddrInfo* ai = te.resolve())
 			{
 				const(char)* filename = stringBuffer.ptr + ai.filenameOff;
-				sprintf(buf.ptr, "%s(%d): root %p\n", filename, ai.line, root);
+				trace_printf("%s(%d): root %p\n", filename, ai.line, root);
 			}
 			else
-				sprintf(buf.ptr, "<unknown-location>: root %p\n", root);
+				trace_printf("<unknown-location>: root %p\n", root);
 		}
 		else
-			sprintf(buf.ptr, "<unknown-address>: root %p\n", root);
-
-		OutputDebugStringA(buf.ptr);
+			trace_printf("<unknown-address>: root %p\n", root);
 	}
 
 	void dumpRange(void *pbot, void *ptop) scope nothrow
@@ -970,7 +1034,7 @@ void dumpGC(GC _gc)
 
 			if (bin < B_PAGE)
 			{
-				auto offsetBase = offset & notbinsize[bin];
+				auto offsetBase = baseOffset(offset, cast(Bins)bin);
 				base = pool.baseAddr + offsetBase;
 				biti = offsetBase >> pool.shiftBy;
 				if (pool.freebits.test(biti))
@@ -978,7 +1042,7 @@ void dumpGC(GC _gc)
 			}
 			else if (bin == B_PAGE)
 			{
-				auto offsetBase = offset & notbinsize[bin];
+				auto offsetBase = offset & ~cast(size_t)(PAGESIZE-1);
 				base = pool.baseAddr + offsetBase;
 			}
 			else if (bin == B_PAGEPLUS)
@@ -991,31 +1055,29 @@ void dumpGC(GC _gc)
 
 			if (!rangeShown)
 			{
-				sprintf(buf.ptr, "within range %p - %p:\n", pbot, ptop);
-				OutputDebugStringA(buf.ptr);
+				trace_printf("within range %p - %p:\n", pbot, ptop);
 				rangeShown = true;
 			}
-			int len;
+
 			if (auto te = tracer.traceBuffer.findTraceEntry(traceMap, base))
 			{
 				if (StackAddrInfo* ai = te.resolve())
 				{
 					const(char)* filename = stringBuffer.ptr + ai.filenameOff;
-					len = sprintf(buf.ptr, "%s(%d): @range+%llx %p", filename, ai.line, cast(long)(cast(void*)p - pbot), root);
+					trace_printf("%s(%d): @range+%llx %p", filename, ai.line, cast(long)(cast(void*)p - pbot), root);
 				}
 				else
-					len = sprintf(buf.ptr, "<unknown-location>: @range+%llx %p", cast(long)(cast(void*)p - pbot), root);
+					trace_printf("<unknown-location>: @range+%llx %p", cast(long)(cast(void*)p - pbot), root);
 			}
 			else
 			{
-				len = sprintf(buf.ptr, "<unknown-gc-address>: @range+%llx %p", cast(long)(cast(void*)p - pbot), root);
+				trace_printf("<unknown-gc-address>: @range+%llx %p", cast(long)(cast(void*)p - pbot), root);
 			}
 
 			if (root != base)
-				len += sprintf(buf.ptr + len, " base %p", base);
-			buf.ptr[len++] = '\n';
-			buf.ptr[len] = 0;
-			OutputDebugStringA(buf.ptr);
+				trace_printf(" base %p\n", base);
+			else
+				trace_printf("\n");
 		}
 	}
 	foreach(range; _gc.rangeIter)
@@ -1049,6 +1111,10 @@ void findRoot(void* sobj)
 	const(void*) minAddr = cgc.gcx.pooltable.minAddr;
 	const(void*) maxAddr = cgc.gcx.pooltable.maxAddr;
 
+	import core.sys.windows.dbghelp;
+	auto dbghelp = DbgHelp.get();
+	HANDLE hProcess = GetCurrentProcess();
+
 	char[256] buf;
 nextLoc:
 	for ( ; ; )
@@ -1058,15 +1124,21 @@ nextLoc:
 		if (te && (ai = te.resolve()) !is null)
 		{
 			const(char)* filename = stringBuffer.ptr + ai.filenameOff;
-			sprintf(buf.ptr, "%s(%d): %p\n", filename, ai.line, sobj);
+			trace_printf("%s(%d): %p\n", filename, ai.line, sobj);
 		}
 		else
-			sprintf(buf.ptr, "no location: %p\n", sobj);
-		OutputDebugStringA(buf.ptr);
+			trace_printf("no location: %p\n", sobj);
 
 		ulong src;
 		if (auto psrc = sobj in references)
 		{
+			BlkInfo info = cgc.queryNoSync(*psrc);
+			if (info.base)
+			{
+				sobj = info.base;
+				continue nextLoc;
+			}
+
 			for (void* base = *psrc; base >= minAddr && base <= maxAddr; )
 			{
 				if (auto pobj = base in objects)
@@ -1083,9 +1155,52 @@ nextLoc:
 				else
 					base -= 0x1000;
 			}
-			sprintf(buf.ptr, "%p not a heap object\n", *psrc);
-			OutputDebugStringA(buf.ptr);
+			trace_printf("%p not a heap object\n", *psrc);
+
+			DWORD64 disp;
+			char[300] symbuf;
+			auto sym = cast(IMAGEHLP_SYMBOLA64*) symbuf.ptr;
+			sym.SizeOfStruct = IMAGEHLP_SYMBOLA64.sizeof;
+			sym.MaxNameLength = 300 - IMAGEHLP_SYMBOLA64.sizeof;
+
+			if (dbghelp.SymGetSymFromAddr64(hProcess, cast(size_t)*psrc, &disp, sym))
+				trace_printf("    sym %s + %lld\n", sym.Name.ptr, disp);
 		}
 		break;
 	}
 }
+
+////////////////////////////////////////////////////////////////
+private __gshared MonoTime gcStartTick;
+private __gshared FILE* gcx_fh;
+private __gshared bool hadNewline = false;
+
+private int trace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
+{
+    if (!gcx_fh)
+        gcx_fh = fopen("tracegc.log", "w");
+    if (!gcx_fh)
+        return 0;
+
+    int len;
+    if (MonoTime.ticksPerSecond == 0)
+    {
+        len = fprintf(gcx_fh, "before init: ");
+    }
+    else if (hadNewline)
+    {
+        if (gcStartTick == MonoTime.init)
+            gcStartTick = MonoTime.currTime;
+        immutable timeElapsed = MonoTime.currTime - gcStartTick;
+        immutable secondsAsDouble = timeElapsed.total!"hnsecs" / cast(double)convert!("seconds", "hnsecs")(1);
+        len = fprintf(gcx_fh, "%10.6lf: ", secondsAsDouble);
+    }
+    len += fprintf(gcx_fh, fmt, args);
+    fflush(gcx_fh);
+    import core.stdc.string;
+    hadNewline = fmt && fmt[0] && fmt[strlen(fmt) - 1] == '\n';
+    return len;
+}
+
+//sprintf(buf.ptr, "%s(%d): %p %llx\n", filename, line, addr, cast(long) size);
+//OutputDebugStringA(buf.ptr);

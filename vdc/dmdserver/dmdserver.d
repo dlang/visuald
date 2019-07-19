@@ -29,6 +29,7 @@ import dmd.dstruct;
 import dmd.dsymbol;
 import dmd.dsymbolsem;
 import dmd.dtemplate;
+import dmd.errors;
 import dmd.expression;
 import dmd.func;
 import dmd.globals;
@@ -47,6 +48,8 @@ import dmd.tokens;
 import dmd.visitor;
 
 import dmd.root.outbuffer;
+import dmd.root.file;
+import dmd.root.filename;
 import dmd.root.rmem;
 import dmd.root.rootobject;
 
@@ -74,6 +77,7 @@ import stdext.array;
 version = SingleThread;
 
 //import std.stdio;
+import std.ascii;
 import std.parallelism;
 import std.path;
 import std.string;
@@ -90,7 +94,7 @@ import core.stdc.stdio;
 import core.stdc.stdlib;
 import core.stdc.string;
 
-//version = traceGC;
+// version = traceGC;
 version (traceGC) import tracegc;
 
 debug version = DebugServer;
@@ -99,7 +103,11 @@ debug version = DebugServer;
 shared(Object) gDMDSync = new Object; // no multi-instances/multi-threading with DMD
 shared(Object) gOptSync = new Object; // no multi-instances/multi-threading with DMD
 
-extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise" ];
+version (traceGC)
+	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:trace" ];
+else
+	// precise GC doesn't help much because dmd erases most type info
+	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:precise" ];
 
 ///////////////////////////////////////////////////////////////////////
 version(DebugServer)
@@ -153,13 +161,6 @@ class DMDServer : ComObject, IVDServer
 		version(unittest) {} else
 			version(SingleThread) mTid = spawn(&taskLoop, thisTid);
 		mOptions = new Options;
-
-		synchronized(gDMDSync)
-		{
-			global._init();
-			global.params.isWindows = true;
-			global.params.errorLimit = 0;
-		}
 	}
 
 	override ULONG Release()
@@ -306,17 +307,16 @@ class DMDServer : ComObject, IVDServer
 			mod = findModule(fname, false);
 			if (mod)
 			{
-				if (auto pErr = cast(void*)mod in mErrors)
+				if (auto pErr = fname in mErrors)
 					if (*pErr == "__parsing__")
 						doCancel = true;
 			}
 
 			// always create new module
 			mod = findModule(fname, true);
-			mod.srcfile.setbuffer(cast(char*)(text.ptr), text.length);
-			mod.srcfile._ref = 1; // do not own buffer
+			mod.srcBuffer = new FileBuffer(cast(ubyte[])text);
 
-			mErrors[cast(void*)mod] = "__pending__";
+			mErrors[fname] = "__pending__";
 		}
 		if (doCancel)
 		{
@@ -334,7 +334,7 @@ class DMDServer : ComObject, IVDServer
 
 			synchronized(gErrorSync)
 			{
-				auto pErr = cast(void*)mod in mErrors;
+				auto pErr = fname in mErrors;
 				if (!pErr)
 					return; // already relaced by a new request
 
@@ -360,7 +360,7 @@ class DMDServer : ComObject, IVDServer
 			}
 			synchronized(gErrorSync)
 			{
-				if (auto pErr = cast(void*)mod in mErrors)
+				if (auto pErr = fname in mErrors)
 					*pErr = errors;
 			}
 
@@ -380,7 +380,7 @@ class DMDServer : ComObject, IVDServer
 		{
 			synchronized(gErrorSync)
 			{
-				if (auto pError = cast(void*)mod in mErrors)
+				if (auto pError = fname in mErrors)
 				{
 					if (*pError != "__pending__" && *pError != "__parsing__")
 					{
@@ -646,7 +646,7 @@ class DMDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
-	override HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
+	override HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr, in BOOL moduleOnly)
 	{
 		return E_NOTIMPL;
 	}
@@ -699,20 +699,20 @@ class DMDServer : ComObject, IVDServer
 	{
 		clearDmdStatics();
 
-		// Initialization
-		Token._init();
-		Type._init();
-		Id.initialize();
-		Module._init();
-		Target._init();
-		Expression._init();
-		Objc._init();
-		builtin_init();
+		// (de-)initialization
+		Type.deinitialize();
+		Id.deinitialize();
+		Module.deinitialize();
+		target.deinitialize();
+		Expression.deinitialize();
+		Objc.deinitialize();
+		builtinDeinitialize();
+
 		Module.rootModule = null;
-		global.gag = false;
-		global.gaggedErrors = 0;
-		global.errors = 0;
-		global.warnings = 0;
+		global = global.init;
+
+		core.memory.GC.Stats stats = GC.stats();
+		dbglog(text("before collect GC stats: ", stats.usedSize, " used, ", stats.freeSize, " free\n"));
 
 		version(traceGC)
 		{
@@ -721,10 +721,20 @@ class DMDServer : ComObject, IVDServer
 			dumpGC();
 		}
 		else
+		{
 			GC.collect();
+		}
+
+		stats = GC.stats();
+		dbglog(text("after  collect GC stats: ", stats.usedSize, " used, ", stats.freeSize, " free\n"));
+
+		Token._init();
 
 		synchronized(gOptSync)
 		{
+			global._init();
+			global.params.isWindows = true;
+			global.params.errorLimit = 0;
 			global.params.color = false;
 			global.params.link = true;
 			global.params.useAssert = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
@@ -736,7 +746,7 @@ class DMDServer : ComObject, IVDServer
 			global.params.useSwitchError = CHECKENABLE.on;
 			global.params.useInline = false;
 			global.params.obj = false;
-			global.params.useDeprecated = mOptions.noDeprecated ? Diagnostic.error : Diagnostic.off;
+			global.params.useDeprecated = mOptions.noDeprecated ? DiagnosticReporting.error : DiagnosticReporting.off;
 			global.params.linkswitches = Strings();
 			global.params.libfiles = Strings();
 			global.params.dllfiles = Strings();
@@ -822,10 +832,19 @@ class DMDServer : ComObject, IVDServer
 				global.filePath.push(toStringz(i));
 		}
 
+		Type._init();
+		Id.initialize();
+		Module._init();
+		Expression._init();
+		Objc._init();
+		builtin_init();
+
+		target._init(global.params);
+
 		// redo module name with the new Identifier.stringtable
 		foreach (m; modules)
 		{
-			auto fname = m.srcfile.name.toString();
+			auto fname = m.srcfile.toString();
 			auto name = stripExtension(baseName(fname));
 			m.ident = Identifier.idPool(name);
 		}
@@ -833,7 +852,7 @@ class DMDServer : ComObject, IVDServer
 		for (size_t i = 0; i < modules.length; i++)
 		{
 			Module m = modules[i];
-			m.read(Loc());
+			m.read(Loc.initial);
 		}
 		size_t filecount = modules.length;
 		for (size_t filei = 0, modi = 0; filei < filecount; filei++, modi++)
@@ -909,7 +928,7 @@ private:
 	{
 		size_t pos = mModules.length;
 		foreach (i, m; mModules)
-			if (_stricmp(m.srcfile.name.toChars(), fname) == 0)
+			if (FileName.equals(m.srcfile.toString(), fname))
 			{
 				if (createNew)
 				{
@@ -922,10 +941,10 @@ private:
 		if (!createNew)
 			return null;
 
-		auto m = new Module(toStringz(fname), null, false, false);
+		auto m = new Module(fname, null, false, false);
 		if (pos < mModules.length)
 		{
-			mErrors.remove(cast(void*)mModules[pos]);
+			mErrors.remove(fname);
 			mModules[pos] = m;
 		}
 		else
@@ -937,7 +956,7 @@ private:
 
 	Options mOptions;
 	Module[] mModules;
-	string[void*] mErrors; // cannot index by C++ class Module
+	string[string] mErrors; // cannot index by C++ class Module
 
 	bool mSemanticExpansionsRunning;
 	bool mSemanticTipRunning;
@@ -961,19 +980,20 @@ __gshared char[] gErrorMessages;
 __gshared char[] gOtherErrorMessages;
 __gshared bool gErrorWasSupplemental;
 
-extern(C++)
-void verrorPrint(const ref Loc loc, Color headerColor, const(char)* header,
-				 const(char)* format, va_list ap, const(char)* p1 = null, const(char)* p2 = null)
+void errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
+				 const(char)* format, va_list ap, const(char)* p1 = null, const(char)* p2 = null) nothrow
 {
 	if (!loc.filename)
 		return;
 
 	import dmd.errors;
 
-	synchronized(gErrorSync)
+	try synchronized(gErrorSync)
 	{
 		bool other = _stricmp(loc.filename, gErrorFile) != 0;
-		bool supplemental = (cast(Classification)headerColor == Classification.supplemental);
+		while (header && std.ascii.isWhite(*header))
+			header++;
+		bool supplemental = !header && !*header;
 
 		__gshared char[4096] buf;
 		int len = 0;
@@ -1026,6 +1046,10 @@ void verrorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 			gErrorWasSupplemental = supplemental;
 		}
 	}
+	catch(Exception e)
+	{
+
+	}
 }
 
 void initErrorFile(string fname)
@@ -1036,16 +1060,19 @@ void initErrorFile(string fname)
 		gErrorMessages = null;
 		gOtherErrorMessages = null;
 		gErrorWasSupplemental = false;
+
+		import std.functional;
+		diagnosticHandler = toDelegate(&errorPrint);
 	}
 }
 
-int _stricmp(const(char)*str1, string s2)
+int _stricmp(const(char)*str1, string s2) nothrow
 {
 	const(char)[] s1 = str1[0..strlen(str1)];
 	return icmp(s1, s2);
 }
 
-int _stricmp(const(wchar)*str1, wstring s2)
+int _stricmp(const(wchar)*str1, wstring s2) nothrow
 {
 	const(wchar)[] s1 = str1[0..wcslen(str1)];
 	return icmp(s1, s2);
@@ -1054,6 +1081,8 @@ int _stricmp(const(wchar)*str1, wstring s2)
 ////////////////////////////////////////////////////////////////
 version(all) // new mangling with dmd version >= 2.077
 {
+	alias countersType = uint[uint]; // actually uint[Key]
+
 	enum string[2][] dmdStatics =
 	[
 	["_D3dmd5clone12buildXtoHashFCQBa7dstruct17StructDeclarationPSQCg6dscope5ScopeZ8tftohashCQDh5mtype12TypeFunction", "TypeFunction"],
@@ -1069,6 +1098,14 @@ version(all) // new mangling with dmd version >= 2.077
 	["_D3dmd9dtemplate16TemplateInstance16tryExpandMembersMFPSQCc6dscope5ScopeZ4nesti", "int"],
 	["_D3dmd9dtemplate16TemplateInstance12trySemantic3MFPSQBy6dscope5ScopeZ4nesti", "int"],
 	["_D3dmd13expressionsem25ExpressionSemanticVisitor5visitMRCQCd10expression7CallExpZ4nesti", "int"],
+	["_D3dmd5lexer5Lexer12stringbufferSQBf4root9outbuffer9OutBuffer", "OutBuffer"],
+	["_D3dmd10expression10IntegerExp__T7literalVii0ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
+	["_D3dmd10expression10IntegerExp__T7literalVii1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
+	["_D3dmd10expression10IntegerExp__T7literalViN1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
+	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
+
+
+
 	//["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ11visitAArrayMFCQEwQEc10TypeAArrayZ8fd_aaLenCQFz4func15FuncDeclaration", "FuncDeclaration"],
 	//["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ8noMemberMFQDxQDmQCxQByiZ4nesti", "int"],
 	];
@@ -1171,8 +1208,7 @@ void clearDmdStatics()
 	// static __gshared FuncDeclaration* fdapply = [null, null];
 	// static __gshared TypeDelegate* fldeTy = [null, null];
 
-	// dmd.dinterpret
-	// ctfeStack = ctfeStack.init;
+	dinterpret_init();
 
 	// dmd.dtemplate
 	emptyArrayElement = null;
@@ -1255,6 +1291,10 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	}
 
 	override void visit(VoidInitializer vinit)
+	{
+	}
+
+	override void visit(ErrorInitializer einit)
 	{
 	}
 
@@ -1492,7 +1532,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return stop;
 	}
 
-	bool matchIdentifier(ref Loc loc, Identifier ident)
+	bool matchIdentifier(ref const Loc loc, Identifier ident)
 	{
 		if (ident)
 			if (loc.filename is filename)
@@ -1665,7 +1705,7 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 					else
 						buf.writestring(decl.toPrettyChars());
 					auto res = buf.peekSlice();
-					buf.extractString(); // take ownership
+					buf.extractSlice(); // take ownership
 					return cast(string)res;
 				}
 
@@ -1732,13 +1772,13 @@ RootObject _findAST(Dsymbol sym, const(char*) filename, int startLine, int start
 
 RootObject findAST(Module mod, int startLine, int startIndex, int endLine, int endIndex)
 {
-	auto filename = mod.srcfile.name.toChars();
+	auto filename = mod.srcfile.toChars();
 	return _findAST(mod, filename, startLine, startIndex, endLine, endIndex);
 }
 
 string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex)
 {
-	auto filename = mod.srcfile.name.toChars();
+	auto filename = mod.srcfile.toChars();
 	scope FindTipVisitor ftv = new FindTipVisitor(filename, startLine, startIndex, endLine, endIndex);
 	mod.accept(ftv);
 
@@ -1792,7 +1832,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 
 string findDefinition(Module mod, ref int line, ref int index)
 {
-	auto filename = mod.srcfile.name.toChars();
+	auto filename = mod.srcfile.toChars();
 	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 

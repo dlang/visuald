@@ -10,24 +10,24 @@ extern (C++) struct Mem
 		return p[0 .. strlen(p) + 1].dup.ptr;
 	}
 
-	static void xfree(void* p) nothrow
+	static void xfree(void* p) nothrow pure
 	{
 		return GC.free(p);
 	}
 
-	static void* xmalloc(size_t n) nothrow
+	static void* xmalloc(size_t n) nothrow pure
 	{
-		if (cancel)
-			throw cancelError;
+		if (*pcancel)
+			throw *pcancelError;
 		return GC.malloc(n);
 	}
 
-	static void* xcalloc(size_t size, size_t n) nothrow
+	static void* xcalloc(size_t size, size_t n) nothrow pure
 	{
 		return GC.calloc(size * n);
 	}
 
-	static void* xrealloc(void* p, size_t size) nothrow
+	static void* xrealloc(void* p, size_t size) nothrow pure
 	{
 		return GC.realloc(p, size);
 	}
@@ -37,8 +37,11 @@ extern (C++) struct Mem
 		throw oom;
 	}
 
-	__gshared cancelError = new Error("cancel malloc");
-	__gshared bool cancel;
+	extern(D) __gshared immutable cancelError = new Error("cancel malloc");
+	extern(D) __gshared bool cancel;
+	// fake purity
+	enum pcancel = cast(immutable) &cancel;
+	enum pcancelError = cast(immutable) &cancelError;
 }
 
 extern (C++) const __gshared Mem mem;
@@ -53,7 +56,7 @@ Params:
 
 Returns: A null-terminated copy of the input array.
 */
-extern (D) char[] xarraydup(const(char)[] s) nothrow
+extern (D) char[] xarraydup(const(char)[] s) nothrow pure
 {
     if (!s)
         return null;

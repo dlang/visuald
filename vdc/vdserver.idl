@@ -10,7 +10,6 @@
 import "oaidl.idl";
 import "ivdserver.idl";
 
-	HRESULT GetReferences([in] BSTR filename, [in] BSTR tok, [in] DWORD line, [in] DWORD idx, [in] BSTR expr, [in] BOOL moduleOnly);
 // library statement
 [uuid(002a2de9-8bb6-484d-9903-7e4ad4084715), version(1.0),
  helpstring("Visual D Semantic Server")]

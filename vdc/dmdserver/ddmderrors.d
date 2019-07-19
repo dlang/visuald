@@ -8,7 +8,7 @@
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/ddmd/errors.d, _errors.d)
  */
 
-module dmd.errors;
+module dmderrors;
 
 // Online documentation: https://dlang.org/phobos/ddmd_errors.html
 
