@@ -617,7 +617,7 @@
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
-  <vtls>0</vtls>
+  <vtls>1</vtls>
   <vgc>0</vgc>
   <symdebug>1</symdebug>
   <symdebugref>1</symdebugref>
@@ -706,7 +706,7 @@
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
-  <enableMixin>0</enableMixin>
+  <enableMixin>1</enableMixin>
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
@@ -1124,7 +1124,7 @@
   <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>1</useInline>
+  <useInline>0</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -1156,7 +1156,7 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..\..</imppath>
+  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
@@ -1204,7 +1204,7 @@
   <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
-  <privatePhobos>1</privatePhobos>
+  <privatePhobos>0</privatePhobos>
   <additionalOptions>-L/STACK:8388608 -gf</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
@@ -1277,7 +1277,7 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..\..</imppath>
+  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)</outdir>
   <objdir>$(OutDir)\$(PlatformName)\$(ProjectName)</objdir>
@@ -1306,12 +1306,12 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>2</runCv2pdb>
+  <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions>-s.</cv2pdbOptions>
-  <enableMixin>0</enableMixin>
+  <enableMixin>1</enableMixin>
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
@@ -1365,7 +1365,7 @@
   <useArrayBounds>0</useArrayBounds>
   <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>0</useUnitTests>
+  <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
@@ -1398,7 +1398,7 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>1</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..\..</imppath>
+  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
@@ -1419,7 +1419,7 @@
   <versionlevel>0</versionlevel>
   <versionids>MARS NoBackend</versionids>
   <dump_source>0</dump_source>
-  <mapverbosity>0</mapverbosity>
+  <mapverbosity>3</mapverbosity>
   <createImplib>0</createImplib>
   <debuglib>0</debuglib>
   <defaultlibname />
@@ -1432,11 +1432,11 @@
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
-  <enableMixin>0</enableMixin>
+  <enableMixin>1</enableMixin>
   <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
-  <libfiles />
+  <libfiles>ole32.lib oleaut32.lib</libfiles>
   <libpaths />
   <deffile />
   <resfile />
@@ -1483,7 +1483,7 @@
    <File path="dmd\src\dmd\ast_node.d" />
    <File path="dmd\src\dmd\astbase.d" tool="None" />
    <File path="dmd\src\dmd\astcodegen.d" />
-   <File path="dmd\src\dmd\asttypename.d" />
+   <File path="dmd\src\dmd\asttypename.d" tool="None" />
    <File path="dmd\src\dmd\attrib.d" />
    <File path="dmd\src\dmd\blockexit.d" />
    <File path="dmd\src\dmd\boostlicense.txt" />
@@ -1621,6 +1621,7 @@ if exist &quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\rc.exe&quot; set rc=&q
 %rc% /fo&quot;$(OutDir)\$(InputName).res&quot; /I&quot;$(IntDir)&quot; $(InputPath)" dependencies="&quot;$(IntDir)\dmdserver.tlb&quot; ..\..\version" outfile="$(OutDir)\dmdserver.res" path="dmdserver.rc" linkoutput="true" tool="Custom" />
   <File path="..\ivdserver.d" />
   <File path="..\semanticopt.d" />
+  <File path="semvisitor.d" />
   <File path="..\..\tools\tracegc.d" />
   <File path="..\vdserverfactory.d" />
  </Folder>

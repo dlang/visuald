@@ -666,8 +666,8 @@ Global
 		{34289BD7-AB7E-4264-B146-8139DDE9F0BF}.Test|x64.Build.0 = Release|x64
 		{34289BD7-AB7E-4264-B146-8139DDE9F0BF}.TestDebug|Win32.ActiveCfg = TestDebug|Win32
 		{34289BD7-AB7E-4264-B146-8139DDE9F0BF}.TestDebug|Win32.Build.0 = TestDebug|Win32
-		{34289BD7-AB7E-4264-B146-8139DDE9F0BF}.TestDebug|x64.ActiveCfg = Debug|x64
-		{34289BD7-AB7E-4264-B146-8139DDE9F0BF}.TestDebug|x64.Build.0 = Debug|x64
+		{34289BD7-AB7E-4264-B146-8139DDE9F0BF}.TestDebug|x64.ActiveCfg = TestDebug|x64
+		{34289BD7-AB7E-4264-B146-8139DDE9F0BF}.TestDebug|x64.Build.0 = TestDebug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

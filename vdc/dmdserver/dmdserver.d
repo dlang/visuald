@@ -7,6 +7,7 @@
 // See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module vdc.dmdserver;
+import vdc.semvisitor;
 
 version(MAIN) {} else version = noServer;
 
@@ -19,6 +20,7 @@ import dmd.arraytypes;
 import dmd.builtin;
 import dmd.cond;
 import dmd.console;
+import dmd.ctfeexpr;
 import dmd.dclass;
 import dmd.declaration;
 import dmd.dimport;
@@ -73,6 +75,7 @@ import sdk.win32.oleauto;
 import stdext.com;
 import stdext.string;
 import stdext.array;
+import stdext.path;
 
 version = SingleThread;
 
@@ -147,6 +150,27 @@ alias object.AssociativeArray!(string, std.concurrency.Tid) _wa1; // fully insta
 alias object.AssociativeArray!(std.concurrency.Tid, string[]) _wa2; // fully instantiate type info for string[Tid]
 
 ///////////////////////////////////////////////////////////////
+enum ModuleState
+{
+	New,
+	Pending,
+	Parsing,
+	Analyzing,
+	Done
+}
+
+struct ModuleData
+{
+	string filename;
+	Module parsedModule;
+	Module analyzedModule;
+
+	ModuleState state;
+	string parseErrors;
+	string analyzeErrors;
+}
+
+///////////////////////////////////////////////////////////////
 
 struct delegate_fake
 {
@@ -161,6 +185,7 @@ class DMDServer : ComObject, IVDServer
 		version(unittest) {} else
 			version(SingleThread) mTid = spawn(&taskLoop, thisTid);
 		mOptions = new Options;
+		dmdInit();
 	}
 
 	override ULONG Release()
@@ -238,7 +263,6 @@ class DMDServer : ComObject, IVDServer
 	{
 		string fname = to_string(filename);
 
-
 		synchronized(gOptSync)
 		{
 			auto opts = mOptions;
@@ -294,29 +318,26 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags)
 	{
-		string fname = to_string(filename);
+		string fname = makeFilenameCanonical(to_string(filename), null);
 		size_t len = wcslen(srcText);
 		string text  = to_string(srcText, len + 1); // DMD parser needs trailing 0
 		text = text[0..$-1];
 
-		Module mod;
+		ModuleData* modData;
 		bool doCancel = false;
 		synchronized(gErrorSync)
 		{
 			// cancel existing
-			mod = findModule(fname, false);
-			if (mod)
+			modData = findModule(fname, false);
+			if (modData)
 			{
-				if (auto pErr = fname in mErrors)
-					if (*pErr == "__parsing__")
-						doCancel = true;
+				if (modData.state == ModuleState.Parsing || modData.state == ModuleState.Analyzing)
+					doCancel = true;
 			}
 
 			// always create new module
-			mod = findModule(fname, true);
-			mod.srcBuffer = new FileBuffer(cast(ubyte[])text);
-
-			mErrors[fname] = "__pending__";
+			modData = findModule(fname, true);
+			modData.state = ModuleState.Pending;
 		}
 		if (doCancel)
 		{
@@ -334,19 +355,14 @@ class DMDServer : ComObject, IVDServer
 
 			synchronized(gErrorSync)
 			{
-				auto pErr = fname in mErrors;
-				if (!pErr)
-					return; // already relaced by a new request
-
-				*pErr = "__parsing__";
+				modData.state = ModuleState.Parsing;
 			}
-			string errors;
 			synchronized(gDMDSync)
 			{
 				try
 				{
 					initErrorFile(fname);
-					parseModules([mod]);
+					parseModule(modData, text);
 				}
 				catch(OutOfMemoryError e)
 				{
@@ -356,12 +372,31 @@ class DMDServer : ComObject, IVDServer
 				{
 					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.msg);
 				}
-				errors = cast(string) gErrorMessages;
-			}
-			synchronized(gErrorSync)
-			{
-				if (auto pErr = fname in mErrors)
-					*pErr = errors;
+				synchronized(gErrorSync)
+				{
+					modData.parseErrors = cast(string) gErrorMessages;
+				}
+
+				modData.state = ModuleState.Analyzing;
+				try
+				{
+					initErrorFile(fname);
+					// clear all other semantic modules?
+					analyzeModules(modData);
+				}
+				catch(OutOfMemoryError e)
+				{
+					throw e; // terminate
+				}
+				catch(Throwable t)
+				{
+					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.msg);
+				}
+				synchronized(gErrorSync)
+				{
+					modData.analyzeErrors = cast(string) gErrorMessages;
+				}
+				modData.state = ModuleState.Done;
 			}
 
 			if(flags & 1)
@@ -374,22 +409,20 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT GetParseErrors(in BSTR filename, BSTR* errors)
 	{
-		string fname = to_string(filename);
+		string fname = makeFilenameCanonical(to_string(filename), null);
 
-		if(auto mod = findModule(fname, false))
+		if(auto md = findModule(fname, false))
 		{
 			synchronized(gErrorSync)
 			{
-				if (auto pError = fname in mErrors)
+				if (md.state == ModuleState.Done)
 				{
-					if (*pError != "__pending__" && *pError != "__parsing__")
-					{
-						version(DebugServer)
-							dbglog("GetParseErrors: " ~ *pError);
+					string err = md.parseErrors ~ md.analyzeErrors;
+					version(DebugServer)
+						dbglog("GetParseErrors: " ~ err);
 
-						*errors = allocBSTR(*pError);
-						return S_OK;
-					}
+					*errors = allocBSTR(err);
+					return S_OK;
 				}
 			}
 		}
@@ -398,18 +431,18 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT GetTip(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 	{
-		string fname = to_string(filename);
+		string fname = makeFilenameCanonical(to_string(filename), null);
 
 		mTipSpan.start.line  = startLine;
 		mTipSpan.start.index = startIndex;
 		mTipSpan.end.line    = endLine;
 		mTipSpan.end.index   = endIndex;
 
-		Module m;
+		ModuleData* md;
 		synchronized(gErrorSync)
 		{
-			m = findModule(fname, false);
-			if (!m)
+			md = findModule(fname, false);
+			if (!md)
 				return S_FALSE;
 		}
 
@@ -420,7 +453,10 @@ class DMDServer : ComObject, IVDServer
 			{
 				try
 				{
-					txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1);
+					if (auto m = md.analyzedModule)
+						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1);
+					else
+						txt = "analyzing...";
 				}
 				catch(OutOfMemoryError e)
 				{
@@ -462,18 +498,18 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT GetDefinition(in BSTR filename, int startLine, int startIndex, int endLine, int endIndex)
 	{
-		string fname = to_string(filename);
+		string fname = makeFilenameCanonical(to_string(filename), null);
 
 		mDefSpan.start.line  = startLine;
 		mDefSpan.start.index = startIndex;
 		mDefSpan.end.line    = endLine;
 		mDefSpan.end.index   = endIndex;
 
-		Module m;
+		ModuleData* md;
 		synchronized(gErrorSync)
 		{
-			m = findModule(fname, false);
-			if (!m)
+			md = findModule(fname, false);
+			if (!md)
 				return S_FALSE;
 		}
 
@@ -484,7 +520,10 @@ class DMDServer : ComObject, IVDServer
 			{
 				try
 				{
-					deffilename = findDefinition(m, mDefSpan.start.line, mDefSpan.start.index);
+					if (auto m = md.analyzedModule)
+						deffilename = findDefinition(m, mDefSpan.start.line, mDefSpan.start.index);
+					else
+						deffilename = "analyzing...";
 				}
 				catch(OutOfMemoryError e)
 				{
@@ -526,7 +565,7 @@ class DMDServer : ComObject, IVDServer
 	override HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
 	{
 		string[] symbols;
-		string fname = to_string(filename);
+		string fname = makeFilenameCanonical(to_string(filename), null);
 		/+
 		auto src = mSemanticProject.getModuleByFilename(fname);
 		if(!src)
@@ -602,7 +641,7 @@ class DMDServer : ComObject, IVDServer
 	{
 		// array of pairs of DWORD
 		int[] locData;
-		string fname = to_string(filename);
+		string fname = makeFilenameCanonical(to_string(filename), null);
 		/+
 		synchronized(mSemanticProject)
 			if(auto src = mSemanticProject.getModuleByFilename(fname))
@@ -695,24 +734,42 @@ class DMDServer : ComObject, IVDServer
 		}
 	}
 
-	void parseModules(Module[] modules)
+	void parseModule(ModuleData* md, string text)
 	{
+		string name = stripExtension(baseName(md.filename));
+		auto id = Identifier.idPool(name);
+		md.parsedModule = new Module(md.filename, id, false, false);
+		md.parsedModule.srcBuffer = new FileBuffer(cast(ubyte[])text);
+		md.parsedModule.read(Loc.initial);
+		md.parsedModule.parse();
+	}
+
+	void analyzeModules(ModuleData* rootModule)
+	{
+		version(none)
+		{
 		clearDmdStatics();
 
 		// (de-)initialization
 		Type.deinitialize();
-		Id.deinitialize();
+		//Id.deinitialize();
 		Module.deinitialize();
 		target.deinitialize();
 		Expression.deinitialize();
 		Objc.deinitialize();
 		builtinDeinitialize();
+		Token._init();
+		Module._init();
+		}
 
 		Module.rootModule = null;
 		global = global.init;
 
-		core.memory.GC.Stats stats = GC.stats();
-		dbglog(text("before collect GC stats: ", stats.usedSize, " used, ", stats.freeSize, " free\n"));
+		version(DebugServer)
+		{
+			core.memory.GC.Stats stats = GC.stats();
+			dbglog(text("before collect GC stats: ", stats.usedSize, " used, ", stats.freeSize, " free\n"));
+		}
 
 		version(traceGC)
 		{
@@ -725,10 +782,11 @@ class DMDServer : ComObject, IVDServer
 			GC.collect();
 		}
 
-		stats = GC.stats();
-		dbglog(text("after  collect GC stats: ", stats.usedSize, " used, ", stats.freeSize, " free\n"));
-
-		Token._init();
+		version(DebugServer)
+		{
+			stats = GC.stats();
+			dbglog(text("after  collect GC stats: ", stats.usedSize, " used, ", stats.freeSize, " free\n"));
+		}
 
 		synchronized(gOptSync)
 		{
@@ -768,48 +826,56 @@ class DMDServer : ComObject, IVDServer
 			// Add in command line versions
 			if (global.params.versionids)
 				foreach (charz; *global.params.versionids)
-					VersionCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
+				{
+					auto ident = charz[0 .. strlen(charz)];
+					if (VersionCondition.isReserved(ident))
+						VersionCondition.addPredefinedGlobalIdent(ident);
+					else
+						VersionCondition.addGlobalIdent(ident);
+				}
 
-/*
-			VersionCondition.addPredefinedGlobalIdent("DigitalMars");
-			VersionCondition.addPredefinedGlobalIdent("Windows");
-			VersionCondition.addPredefinedGlobalIdent("LittleEndian");
-			VersionCondition.addPredefinedGlobalIdent("D_Version2");
-			VersionCondition.addPredefinedGlobalIdent("all");
-			if (global.params.is64bit)
+			if (mPredefineVersions)
 			{
-				VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86_64");
-				VersionCondition.addPredefinedGlobalIdent("X86_64");
-				VersionCondition.addPredefinedGlobalIdent("Win64");
+				VersionCondition.addPredefinedGlobalIdent("DigitalMars");
+				VersionCondition.addPredefinedGlobalIdent("Windows");
+				VersionCondition.addPredefinedGlobalIdent("LittleEndian");
+				VersionCondition.addPredefinedGlobalIdent("D_Version2");
+				VersionCondition.addPredefinedGlobalIdent("all");
+				if (global.params.is64bit)
+				{
+					VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86_64");
+					VersionCondition.addPredefinedGlobalIdent("X86_64");
+					VersionCondition.addPredefinedGlobalIdent("Win64");
+				}
+				else
+				{
+					VersionCondition.addPredefinedGlobalIdent("D_InlineAsm"); //legacy
+					VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86");
+					VersionCondition.addPredefinedGlobalIdent("X86");
+					VersionCondition.addPredefinedGlobalIdent("Win32");
+				}
+				if (global.params.mscoff || global.params.is64bit)
+					VersionCondition.addPredefinedGlobalIdent("CRuntime_Microsoft");
+				else
+					VersionCondition.addPredefinedGlobalIdent("CRuntime_DigitalMars");
+				if (global.params.isLP64)
+					VersionCondition.addPredefinedGlobalIdent("D_LP64");
+				if (global.params.doDocComments)
+					VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
+				if (global.params.cov)
+					VersionCondition.addPredefinedGlobalIdent("D_Coverage");
+				if (global.params.pic)
+					VersionCondition.addPredefinedGlobalIdent("D_PIC");
+				if (global.params.useUnitTests)
+					VersionCondition.addPredefinedGlobalIdent("unittest");
+				if (global.params.useAssert)
+					VersionCondition.addPredefinedGlobalIdent("assert");
+				if (global.params.useArrayBounds == CHECKENABLE.off)
+					VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
+				if (global.params.betterC)
+					VersionCondition.addPredefinedGlobalIdent("D_betterC");
 			}
-			else
-			{
-				VersionCondition.addPredefinedGlobalIdent("D_InlineAsm"); //legacy
-				VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86");
-				VersionCondition.addPredefinedGlobalIdent("X86");
-				VersionCondition.addPredefinedGlobalIdent("Win32");
-			}
-			if (global.params.mscoff || global.params.is64bit)
-				VersionCondition.addPredefinedGlobalIdent("CRuntime_Microsoft");
-			else
-				VersionCondition.addPredefinedGlobalIdent("CRuntime_DigitalMars");
-			if (global.params.isLP64)
-				VersionCondition.addPredefinedGlobalIdent("D_LP64");
-			if (global.params.doDocComments)
-				VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
-			if (global.params.cov)
-				VersionCondition.addPredefinedGlobalIdent("D_Coverage");
-			if (global.params.pic)
-				VersionCondition.addPredefinedGlobalIdent("D_PIC");
-			if (global.params.useUnitTests)
-				VersionCondition.addPredefinedGlobalIdent("unittest");
-			if (global.params.useAssert)
-				VersionCondition.addPredefinedGlobalIdent("assert");
-			if (global.params.useArrayBounds == CHECKENABLE.off)
-				VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
-			if (global.params.betterC)
-				VersionCondition.addPredefinedGlobalIdent("D_betterC");
-*/
+
 			// always enable for tooltips
 			global.params.doDocComments = true;
 
@@ -832,47 +898,50 @@ class DMDServer : ComObject, IVDServer
 				global.filePath.push(toStringz(i));
 		}
 
-		Type._init();
-		Id.initialize();
+		//Id.initialize();
+		Type._reinit();
 		Module._init();
-		Expression._init();
-		Objc._init();
-		builtin_init();
+		Module.amodules = Module.amodules.init;
+		//Expression._init();
+		//Objc._init();
+		//builtin_init();
 
 		target._init(global.params);
 
-		// redo module name with the new Identifier.stringtable
-		foreach (m; modules)
+		for (size_t i = 0; i < mModules.length; i++)
 		{
-			auto fname = m.srcfile.toString();
-			auto name = stripExtension(baseName(fname));
-			m.ident = Identifier.idPool(name);
-		}
-
-		for (size_t i = 0; i < modules.length; i++)
-		{
-			Module m = modules[i];
-			m.read(Loc.initial);
-		}
-		size_t filecount = modules.length;
-		for (size_t filei = 0, modi = 0; filei < filecount; filei++, modi++)
-		{
-			Module m = modules[modi];
-			if (!Module.rootModule)
-				Module.rootModule = m;
+			Module m = new Module(mModules[i].filename, null, false, false);
+			memcpy(cast(void*)m, cast(void*)mModules[i].parsedModule, __traits(classInstanceSize, Module));
+			m = cast(Module)mModules[i].parsedModule.syntaxCopy(m);
 			m.importedFrom = m;
-			m.parse();
+			m = m.resolvePackage();
+			mModules[i].analyzedModule = m;
+			Module.modules.insert(m);
 		}
-		for (size_t i = 0; i < modules.length; i++)
+		Module.rootModule = rootModule.analyzedModule;
+
+		for (size_t i = 0; i < mModules.length; i++)
 		{
-			Module m = modules[i];
+			Module m = mModules[i].analyzedModule;
 			m.importAll(null);
 		}
 
+version(all)
+{
+		Module.rootModule.dsymbolSemantic(null);
+		Module.dprogress = 1;
+		Module.runDeferredSemantic();
+		Module.rootModule.semantic2(null);
+		Module.runDeferredSemantic2();
+		Module.rootModule.semantic3(null);
+		Module.runDeferredSemantic3();
+}
+else
+{
 		// Do semantic analysis
 		for (size_t i = 0; i < modules.length; i++)
 		{
-			Module m = modules[i];
+			Module m = mModules[i].analyzedModule;
 			m.dsymbolSemantic(null);
 		}
 
@@ -894,6 +963,7 @@ class DMDServer : ComObject, IVDServer
 			m.semantic3(null);
 		}
 		Module.runDeferredSemantic3();
+}
 	}
 
 private:
@@ -924,11 +994,11 @@ private:
 		m.errors = 0;                // this symbol failed to pass semantic()
 	}
 
-	Module findModule(string fname, bool createNew)
+	ModuleData* findModule(string fname, bool createNew)
 	{
 		size_t pos = mModules.length;
 		foreach (i, m; mModules)
-			if (FileName.equals(m.srcfile.toString(), fname))
+			if (m.filename == fname)
 			{
 				if (createNew)
 				{
@@ -941,26 +1011,25 @@ private:
 		if (!createNew)
 			return null;
 
-		auto m = new Module(fname, null, false, false);
+		auto md = new ModuleData;
+		md.filename = fname;
 		if (pos < mModules.length)
-		{
-			mErrors.remove(fname);
-			mModules[pos] = m;
-		}
+			mModules[pos] = md;
 		else
-			mModules ~= m;
-		return m;
+			mModules ~= md;
+		return md;
 	}
 
 	version(SingleThread) Tid mTid;
 
 	Options mOptions;
-	Module[] mModules;
-	string[string] mErrors; // cannot index by C++ class Module
+	ModuleData*[] mModules;
 
 	bool mSemanticExpansionsRunning;
 	bool mSemanticTipRunning;
 	bool mSemanticDefinitionRunning;
+
+	bool mPredefineVersions;
 
 	string mModuleToParse;
 	string mLastTip;
@@ -1021,7 +1090,7 @@ void errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 		else
 			buf[$-1] = nl;
 
-		dbglog(buf[0..len]);
+		version(DebugServer) dbglog(buf[0..len]);
 
 		if (other)
 		{
@@ -1079,12 +1148,10 @@ int _stricmp(const(wchar)*str1, wstring s2) nothrow
 }
 
 ////////////////////////////////////////////////////////////////
-version(all) // new mangling with dmd version >= 2.077
-{
-	alias countersType = uint[uint]; // actually uint[Key]
+alias countersType = uint[uint]; // actually uint[Key]
 
-	enum string[2][] dmdStatics =
-	[
+enum string[2][] dmdStatics =
+[
 	["_D3dmd5clone12buildXtoHashFCQBa7dstruct17StructDeclarationPSQCg6dscope5ScopeZ8tftohashCQDh5mtype12TypeFunction", "TypeFunction"],
 	["_D3dmd7dstruct15search_toStringRCQBfQBe17StructDeclarationZ10tftostringCQCs5mtype12TypeFunction", "TypeFunction"],
 	["_D3dmd13expressionsem11loadStdMathFZ10impStdMathCQBv7dimport6Import", "Import"],
@@ -1103,34 +1170,12 @@ version(all) // new mangling with dmd version >= 2.077
 	["_D3dmd10expression10IntegerExp__T7literalVii1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	["_D3dmd10expression10IntegerExp__T7literalViN1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
-
-
+	["_D3dmd10identifier10Identifier10generateIdRNbPxaZ1im", "int"],
+	["_D3dmd5lexer5Lexer4scanMFNbPSQBb6tokens5TokenZ8initdoneb", "bool"],
 
 	//["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ11visitAArrayMFCQEwQEc10TypeAArrayZ8fd_aaLenCQFz4func15FuncDeclaration", "FuncDeclaration"],
 	//["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ8noMemberMFQDxQDmQCxQByiZ4nesti", "int"],
-	];
-}
-else
-{
-	enum string[2][] dmdStatics =
-	[
-		["D4ddmd5clone12buildXtoHashRC4ddmd7dstruct17StructDeclarationPS4ddmd6dscope5ScopeZ8tftohashC4ddmd5mtype12TypeFunction", "TypeFunction"],
-		["D4ddmd7dstruct15search_toStringRC4ddmd7dstruct17StructDeclarationZ10tftostringC4ddmd5mtype12TypeFunction", "TypeFunction"],
-		["D4ddmd10expression11loadStdMathRZ10impStdMathC4ddmd7dimport6Import", "Import"],
-		["D4ddmd4func15FuncDeclaration8genCfuncRPS4ddmd4root5array33__T5ArrayTC4ddmd5mtype9ParameterZ5ArrayC4ddmd5mtype4TypeC4ddmd10identifier10IdentifiermZ2stC4ddmd7dsymbol12DsymbolTable", "DsymbolTable"],
-		["D4ddmd5mtype10TypeAArray6dotExpMRPS4ddmd6dscope5ScopeC4ddmd10expression10ExpressionC4ddmd10identifier10IdentifieriZ8fd_aaLenC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
-		["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ3feqC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
-		["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ4fcmpC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
-		["D4ddmd7typesem19TypeSemanticVisitor5visitMRC4ddmd5mtype10TypeAArrayZ5fhashC4ddmd4func15FuncDeclaration", "FuncDeclaration"],
-
-		["D4ddmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
-		["D4ddmd10dsymbolsem22DsymbolSemanticVisitor5visitMRC4ddmd9dtemplate13TemplateMixinZ4nesti", "int"],
-		["D4ddmd9dtemplate16TemplateInstance16tryExpandMembersMRPS4ddmd6dscope5ScopeZ4nesti", "int"],
-		["D4ddmd9dtemplate16TemplateInstance12trySemantic3MRPS4ddmd6dscope5ScopeZ4nesti", "int"],
-		["D4ddmd13expressionsem25ExpressionSemanticVisitor5visitMRC4ddmd10expression7CallExpZ4nesti", "int"],
-		["D4ddmd5mtype4Type8noMemberMRPS4ddmd6dscope5ScopeC4ddmd10expression10ExpressionC4ddmd10identifier10IdentifieriZ4nesti", "int"],
-	];
-}
+];
 
 string cmangled(string s)
 {
@@ -1139,6 +1184,7 @@ string cmangled(string s)
 			return "_D3dmd6dmacro5Macro6expandMFPSQBc4root9outbuffer9OutBuffermPmAxaZ4nesti";
 	return s;
 }
+
 string genDeclDmdStatics()
 {
 	string s;
@@ -1157,7 +1203,13 @@ string genInitDmdStatics()
 
 mixin(genDeclDmdStatics);
 
-void clearDmdStatics()
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ7fdapplyPCQDr4func15FuncDeclaration")
+extern __gshared FuncDeclaration* statementsem_fdapply;
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ6fldeTyPCQDq5mtype12TypeDelegate")
+extern __gshared TypeDelegate* statementsem_fldeTy;
+
+
+void clearSemanticStatics()
 {
 	/*
 	import core.demangle;
@@ -1166,682 +1218,115 @@ void clearDmdStatics()
 	*/
 	mixin(genInitDmdStatics);
 
-	Module.rootModule = null;
-	Module.modules = null;     // symbol table of all modules
-	Module.amodules = Modules();    // array of all modules
-	Module.deferred = Dsymbols();    // deferred Dsymbol's needing semantic() run on them
-	Module.deferred2 = Dsymbols();   // deferred Dsymbol's needing semantic2() run on them
-	Module.deferred3 = Dsymbols();   // deferred Dsymbol's needing semantic3() run on them
-	Module.dprogress = 0;      // progress resolving the deferred list
-	Module.moduleinfo = null;
-
-	ClassDeclaration.object = null;
-	ClassDeclaration.throwable = null;
-	ClassDeclaration.exception = null;
-	ClassDeclaration.errorException = null;
-	ClassDeclaration.cpp_type_info_ptr = null;
-
-	StructDeclaration.xerreq = null;
-	StructDeclaration.xerrcmp = null;
-
-	Type.dtypeinfo = null;
-	Type.typeinfoclass = null;
-	Type.typeinfointerface = null;
-	Type.typeinfostruct = null;
-	Type.typeinfopointer = null;
-	Type.typeinfoarray = null;
-	Type.typeinfostaticarray = null;
-	Type.typeinfoassociativearray = null;
-	Type.typeinfovector = null;
-	Type.typeinfoenum = null;
-	Type.typeinfofunction = null;
-	Type.typeinfodelegate = null;
-	Type.typeinfotypelist = null;
-	Type.typeinfoconst = null;
-	Type.typeinfoinvariant = null;
-	Type.typeinfoshared = null;
-	Type.typeinfowild = null;
-	Type.rtinfo = null;
-	Type.stringtable.reset();
-
 	// statementsem
 	// static __gshared FuncDeclaration* fdapply = [null, null];
 	// static __gshared TypeDelegate* fldeTy = [null, null];
-
-	dinterpret_init();
+	statementsem_fdapply[0] = statementsem_fdapply[1] = null;
+	statementsem_fldeTy[0]  = statementsem_fldeTy[1] = null;
 
 	// dmd.dtemplate
 	emptyArrayElement = null;
 	TemplateValueParameter.edummies = null;
+	TemplateTypeParameter.tdummy = null;
+	TemplateAliasParameter.sdummy = null;
+
+	CtfeStatus.callDepth = 0;
+	CtfeStatus.stackTraceCallsToSuppress = 0;
+	CtfeStatus.maxCallDepth = 0;
+	CtfeStatus.numAssignments = 0;
+
+	VarDeclaration.nextSequenceNumber = 0;
+
+	// Package.this.packageTag?
+	// funcDeclarationSemantic.printedMain?
+/+
+	Type.stringtable.reset();
+
+	dinterpret_init();
 
 	Scope.freelist = null;
 	//Token.freelist = null;
 
 	Identifier.initTable();
++/
+}
+
+// initialization that are necessary once
+void dmdInit()
+{
+	__gshared bool initialized;
+	if (initialized)
+		return;
+	initialized = true;
+
+	import dmd.root.longdouble;
+	// Initialization
+	version(CRuntime_Microsoft)
+		initFPU();
+
+	global.params.isWindows = true;
+	global._init();
+	Token._init();
+	Id.initialize();
+	Expression._init();
+	builtin_init();
+
+	dmdReinit(true);
+}
+
+// initialization that are necessary before restarting an analysis
+void dmdReinit(bool configChanged)
+{
+	if (configChanged)
+	{
+		target._init(global.params); // needed by Type._init
+		Type._init();
+
+		// assume object.d unmodified otherwis
+		Module.moduleinfo = null;
+
+		ClassDeclaration.object = null;
+		ClassDeclaration.throwable = null;
+		ClassDeclaration.exception = null;
+		ClassDeclaration.errorException = null;
+		ClassDeclaration.cpp_type_info_ptr = null;
+
+		StructDeclaration.xerreq = null;
+		StructDeclaration.xerrcmp = null;
+
+		Type.dtypeinfo = null;
+		Type.typeinfoclass = null;
+		Type.typeinfointerface = null;
+		Type.typeinfostruct = null;
+		Type.typeinfopointer = null;
+		Type.typeinfoarray = null;
+		Type.typeinfostaticarray = null;
+		Type.typeinfoassociativearray = null;
+		Type.typeinfovector = null;
+		Type.typeinfoenum = null;
+		Type.typeinfofunction = null;
+		Type.typeinfodelegate = null;
+		Type.typeinfotypelist = null;
+		Type.typeinfoconst = null;
+		Type.typeinfoinvariant = null;
+		Type.typeinfoshared = null;
+		Type.typeinfowild = null;
+		Type.rtinfo = null;
+	}
+	Objc._init();
+
+	Module._init();
+	Module.deferred = Dsymbols();    // deferred Dsymbol's needing semantic() run on them
+	Module.deferred2 = Dsymbols();   // deferred Dsymbol's needing semantic2() run on them
+	Module.deferred3 = Dsymbols();   // deferred Dsymbol's needing semantic3() run on them
+	Module.dprogress = 0;      // progress resolving the deferred list
+
+	dinterpret_init();
+
+	clearSemanticStatics();
 }
 
 ////////////////////////////////////////////////////////////////
-Loc endLoc(Dsymbol sym)
-{
-	return Loc();
-}
-
-// walk the complete AST (declarations, statement and expressions)
-// assumes being started on module/declaration level
-extern(C++) class ASTVisitor : StoppableVisitor
-{
-	alias visit = super.visit;
-
-	void visitExpression(Expression expr)
-	{
-		if (stop || !expr)
-			return;
-
-		if (walkPostorder(expr, this))
-			stop = true;
-	}
-
-	void visitStatement(Statement stmt)
-	{
-		if (stop || !stmt)
-			return;
-
-		if (walkPostorder(stmt, this))
-			stop = true;
-	}
-
-	void visitDeclaration(Dsymbol sym)
-	{
-		if (stop || !sym)
-			return;
-
-		sym.accept(this);
-	}
-
-	// override void visit(Expression) {}
-	// override void visit(Parameter) {}
-	// override void visit(Statement) {}
-	// override void visit(Type) {}
-	// override void visit(TemplateParameter) {}
-	// override void visit(Condition) {}
-	// override void visit(Initializer) {}
-
-	override void visit(ScopeDsymbol scopesym)
-	{
-		// optimize to only visit members in approriate source range
-		size_t mcnt = scopesym.members ? scopesym.members.dim : 0;
-		for (size_t m = 0; !stop && m < mcnt; m++)
-		{
-			Dsymbol s = (*scopesym.members)[m];
-			s.accept(this);
-		}
-	}
-
-	override void visit(VarDeclaration decl)
-	{
-		visit(cast(Declaration)decl);
-
-		if (!stop && decl._init)
-			decl._init.accept(this);
-	}
-
-	override void visit(ExpInitializer einit)
-	{
-		visitExpression(einit.exp);
-	}
-
-	override void visit(VoidInitializer vinit)
-	{
-	}
-
-	override void visit(ErrorInitializer einit)
-	{
-	}
-
-	override void visit(StructInitializer sinit)
-	{
-		foreach (i, const id; sinit.field)
-			if (auto iz = sinit.value[i])
-				iz.accept(this);
-	}
-
-	override void visit(ArrayInitializer ainit)
-	{
-		foreach (i, ex; ainit.index)
-		{
-			if (ex)
-				ex.accept(this);
-			if (auto iz = ainit.value[i])
-				iz.accept(this);
-		}
-	}
-
-	override void visit(FuncDeclaration decl)
-	{
-		visit(cast(Declaration)decl);
-
-		if (decl.parameters)
-			foreach(p; *decl.parameters)
-				if (!stop)
-					p.accept(this);
-
-		visitStatement(decl.frequire);
-		visitStatement(decl.fensure);
-		visitStatement(decl.fbody);
-	}
-
-	override void visit(ErrorStatement stmt)
-	{
-		visitStatement(stmt.errStmt);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(ExpStatement stmt)
-	{
-		visitExpression(stmt.exp);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(CompileStatement stmt)
-	{
-		if (stmt.exps)
-			foreach(e; *stmt.exps)
-				if (!stop)
-					e.accept(this);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(WhileStatement stmt)
-	{
-		visitExpression(stmt.condition);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(DoStatement stmt)
-	{
-		visitExpression(stmt.condition);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(ForStatement stmt)
-	{
-		visitExpression(stmt.condition);
-		visitExpression(stmt.increment);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(ForeachStatement stmt)
-	{
-		if (stmt.parameters)
-			foreach(p; *stmt.parameters)
-				if (!stop)
-					p.accept(this);
-		visitExpression(stmt.aggr);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(ForeachRangeStatement stmt)
-	{
-		if (!stop && stmt.prm)
-			stmt.prm.accept(this);
-		visitExpression(stmt.lwr);
-		visitExpression(stmt.upr);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(IfStatement stmt)
-	{
-		if (!stop && stmt.prm)
-			stmt.prm.accept(this);
-		visitExpression(stmt.condition);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(PragmaStatement stmt)
-	{
-		if (!stop && stmt.args)
-			foreach(a; *stmt.args)
-				if (!stop)
-					a.accept(this);
-		if (!stop)
-			visit(cast(Statement)stmt);
-	}
-
-	override void visit(StaticAssertStatement stmt)
-	{
-		visitExpression(stmt.sa.exp);
-		visitExpression(stmt.sa.msg);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(SwitchStatement stmt)
-	{
-		visitExpression(stmt.condition);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(CaseStatement stmt)
-	{
-		visitExpression(stmt.exp);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(CaseRangeStatement stmt)
-	{
-		visitExpression(stmt.first);
-		visitExpression(stmt.last);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(GotoCaseStatement stmt)
-	{
-		visitExpression(stmt.exp);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(ReturnStatement stmt)
-	{
-		visitExpression(stmt.exp);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(SynchronizedStatement stmt)
-	{
-		visitExpression(stmt.exp);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(WithStatement stmt)
-	{
-		visitExpression(stmt.exp);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(TryCatchStatement stmt)
-	{
-		if (!stop && stmt.catches)
-			foreach(c; *stmt.catches)
-				visitDeclaration(c.var);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(ThrowStatement stmt)
-	{
-		visitExpression(stmt.exp);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(ImportStatement stmt)
-	{
-		if (!stop && stmt.imports)
-			foreach(i; *stmt.imports)
-				visitDeclaration(i);
-		visit(cast(Statement)stmt);
-	}
-
-	override void visit(DeclarationExp expr)
-	{
-		visitDeclaration(expr.declaration);
-	}
-
-	override void visit(ErrorExp expr)
-	{
-		visitExpression(expr.errExp);
-		if (!stop)
-			visit(cast(Expression)expr);
-	}
-
-}
-
-extern(C++) class FindASTVisitor : ASTVisitor
-{
-	const(char*) filename;
-	int startLine;
-	int startIndex;
-	int endLine;
-	int endIndex;
-
-	alias visit = super.visit;
-	RootObject found;
-
-	this(const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
-	{
-		this.filename = filename;
-		this.startLine = startLine;
-		this.startIndex = startIndex;
-		this.endLine = endLine;
-		this.endIndex = endIndex;
-	}
-
-	bool foundNode(RootObject obj)
-	{
-		if (!obj)
-		{
-			found = obj;
-			stop = true;
-		}
-		return stop;
-	}
-
-	bool matchIdentifier(ref const Loc loc, Identifier ident)
-	{
-		if (ident)
-			if (loc.filename is filename)
-				if (loc.linnum == startLine && loc.linnum == endLine)
-					if (loc.charnum <= startIndex && loc.charnum + ident.toString().length >= endIndex)
-						return true;
-		return false;
-	}
-
-	bool matchLoc(ref Loc loc)
-	{
-		if (loc.filename is filename)
-			if (loc.linnum == startLine && loc.linnum == endLine)
-				if (loc.charnum <= startIndex /*&& loc.charnum + ident.toString().length >= endIndex*/)
-					return true;
-		return false;
-	}
-
-	override void visit(Dsymbol sym)
-	{
-		if (!found && matchIdentifier(sym.loc, sym.ident))
-			foundNode(sym);
-	}
-
-	override void visit(Parameter sym)
-	{
-		//if (!found && matchIdentifier(sym.loc, sym.ident))
-		//	foundNode(sym);
-	}
-
-	override void visit(ScopeDsymbol scopesym)
-	{
-		// optimize to only visit members in approriate source range
-		size_t mcnt = scopesym.members ? scopesym.members.dim : 0;
-		for (size_t m = 0; m < mcnt; m++)
-		{
-			Dsymbol s = (*scopesym.members)[m];
-			if (s.isTemplateInstance)
-				continue;
-			if (s.loc.filename !is filename)
-				continue;
-
-			if (s.loc.linnum > endLine || (s.loc.linnum == endLine && s.loc.charnum > endIndex))
-				continue;
-
-			Loc nextloc;
-			for (m++; m < mcnt; m++)
-			{
-				auto ns = (*scopesym.members)[m];
-				if (ns.isTemplateInstance)
-					continue;
-				if (ns.loc.filename is filename)
-				{
-					nextloc = ns.loc;
-					break;
-				}
-			}
-			m--;
-
-			if (nextloc.filename)
-				if (nextloc.linnum < startLine || (nextloc.linnum == startLine && nextloc.charnum < startIndex))
-					continue;
-
-			s.accept(this);
-
-			if (!found)
-				foundNode(s);
-			break;
-		}
-	}
-	override void visit(TemplateInstance)
-	{
-		// skip members added by semantic
-	}
-
-	override void visit(Statement stmt)
-	{
-		// default to nothing
-	}
-
-	override void visit(CallExp expr)
-	{
-		super.visit(expr);
-	}
-
-	override void visit(Expression expr)
-	{
-		// default to nothing
-	}
-	override void visit(SymbolExp expr)
-	{
-		if (!found && expr.var)
-			if (matchIdentifier(expr.loc, expr.var.ident))
-				foundNode(expr);
-	}
-	override void visit(NewExp ne)
-	{
-		if (!found && matchLoc(ne.loc))
-			if (ne.member)
-				foundNode(ne.member);
-			else
-				foundNode(ne.type);
-	}
-
-	override void visit(DotIdExp de)
-	{
-		if (!found && de.ident)
-			if (matchIdentifier(de.identloc, de.ident))
-				foundNode(de);
-	}
-
-	override void visit(DotTemplateExp dte)
-	{
-		if (!found && dte.td && dte.td.ident)
-			if (matchIdentifier(dte.identloc, dte.td.ident))
-				foundNode(dte);
-	}
-
-	override void visit(TemplateExp te)
-	{
-		if (!found && te.td && te.td.ident)
-			if (matchIdentifier(te.identloc, te.td.ident))
-				foundNode(te);
-	}
-
-	override void visit(DotVarExp dve)
-	{
-		if (!found && dve.var && dve.var.ident)
-			if (matchIdentifier(dve.varloc, dve.var.ident))
-				foundNode(dve);
-	}
-}
-
-extern(C++) class FindTipVisitor : FindASTVisitor
-{
-	string tip;
-
-	alias visit = super.visit;
-
-	this(const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
-	{
-		super(filename, startLine, startIndex, endLine, endIndex);
-	}
-
-	void visitCallExpression(CallExp expr)
-	{
-		if (!found)
-		{
-			// replace function type with actual
-			visitExpression(expr);
-			if (found is expr.e1)
-			{
-				foundNode(expr);
-			}
-		}
-	}
-
-	override bool foundNode(RootObject obj)
-	{
-		found = obj;
-		if (obj)
-		{
-			string tipForDeclaration(Declaration decl)
-			{
-				if (auto func = decl.isFuncDeclaration())
-				{
-					OutBuffer buf;
-					if (decl.type)
-						functionToBufferWithIdent(decl.type.toTypeFunction(), &buf, decl.toPrettyChars());
-					else
-						buf.writestring(decl.toPrettyChars());
-					auto res = buf.peekSlice();
-					buf.extractSlice(); // take ownership
-					return cast(string)res;
-				}
-
-				string txt;
-				if (decl.isParameter())
-					txt = "(parameter) ";
-				else if (!decl.isDataseg() && !decl.isCodeseg() && !decl.isField())
-					txt = "(local variable) ";
-				bool fqn = txt.empty;
-
-				if (decl.type)
-					txt ~= to!string(decl.type.toPrettyChars()) ~ " ";
-				txt ~= to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
-				return txt;
-			}
-
-			const(char)* toc = null;
-			if (auto t = obj.isType())
-				toc = t.toChars();
-			else if (auto e = obj.isExpression())
-			{
-				switch(e.op)
-				{
-					case TOK.variable:
-					case TOK.symbolOffset:
-						tip = tipForDeclaration((cast(SymbolExp)e).var);
-						break;
-					case TOK.dotVariable:
-						tip = tipForDeclaration((cast(DotVarExp)e).var);
-						break;
-					default:
-						if (e.type)
-							toc = e.type.toPrettyChars();
-						break;
-				}
-			}
-			else if (auto s = obj.isDsymbol())
-			{
-				if (auto decl = s.isDeclaration)
-					tip = tipForDeclaration(decl);
-				else
-					toc = s.toPrettyChars(true);
-			}
-			if (!tip.length)
-			{
-				if (!toc)
-					toc = obj.toChars();
-				tip = to!string(toc);
-			}
-			// append doc
-			stop = true;
-		}
-		return stop;
-	}
-}
-
-RootObject _findAST(Dsymbol sym, const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
-{
-	scope FindASTVisitor fav = new FindASTVisitor(filename, startLine, startIndex, endLine, endIndex);
-	sym.accept(fav);
-
-	return fav.found;
-}
-
-RootObject findAST(Module mod, int startLine, int startIndex, int endLine, int endIndex)
-{
-	auto filename = mod.srcfile.toChars();
-	return _findAST(mod, filename, startLine, startIndex, endLine, endIndex);
-}
-
-string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex)
-{
-	auto filename = mod.srcfile.toChars();
-	scope FindTipVisitor ftv = new FindTipVisitor(filename, startLine, startIndex, endLine, endIndex);
-	mod.accept(ftv);
-
-	return ftv.tip;
-}
-////////////////////////////////////////////////////////////////
-
-extern(C++) class FindDefinitionVisitor : FindASTVisitor
-{
-	Loc loc;
-
-	alias visit = super.visit;
-
-	this(const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
-	{
-		super(filename, startLine, startIndex, endLine, endIndex);
-	}
-
-	override bool foundNode(RootObject obj)
-	{
-		found = obj;
-		if (obj)
-		{
-			if (auto t = obj.isType())
-			{
-				if (t.ty == Tstruct)
-					loc = (cast(TypeStruct)t).sym.loc;
-			}
-			else if (auto e = obj.isExpression())
-			{
-				switch(e.op)
-				{
-					case TOK.variable:
-					case TOK.symbolOffset:
-						loc = (cast(SymbolExp)e).var.loc;
-						break;
-					default:
-						loc = e.loc;
-						break;
-				}
-			}
-			else if (auto s = obj.isDsymbol())
-			{
-				loc = s.loc;
-			}
-			stop = true;
-		}
-		return stop;
-	}
-}
-
-string findDefinition(Module mod, ref int line, ref int index)
-{
-	auto filename = mod.srcfile.toChars();
-	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
-	mod.accept(fdv);
-
-	if (!fdv.loc.filename)
-		return null;
-	line = fdv.loc.linnum;
-	index = fdv.loc.charnum;
-	return to!string(fdv.loc.filename);
-}
 
 extern(C) int _CrtDumpMemoryLeaks();
 extern(C) void dumpGC();
@@ -1854,6 +1339,7 @@ unittest
 		dumpGC();
 
 	DMDServer srv = newCom!DMDServer;
+	srv.mPredefineVersions = true;
 	addref(srv);
 	scope(exit) release(srv);
 
@@ -1959,8 +1445,7 @@ unittest
 	for (int i = 0; i < 2; i++)
 	{
 		srv.mModules = null;
-		srv.mErrors = null;
-		clearDmdStatics ();
+		//clearDmdStatics ();
 
 		source = q{
 			import std.stdio;

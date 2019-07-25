@@ -53,9 +53,10 @@ static ~this()
 
 class VDServerClassFactory : ComObject, IClassFactory
 {
-	version(MARS) static GUID iid = uuid("002a2de9-8bb6-484d-9906-7e4ad4084715");
-	else debug    static GUID iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
-	else          static GUID iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+	version(MARS) static immutable GUID iid = uuid("002a2de9-8bb6-484d-9906-7e4ad4084715");
+	else debug    static immutable GUID iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
+	else debug    static immutable GUID iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+	else          static immutable GUID iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
@@ -106,7 +107,7 @@ extern(C) int vdserver_main()
 
 	// Register the Factory.
 	DWORD regID = 0;
-	hr = CoRegisterClassObject(VDServerClassFactory.iid, cf, CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &regID);
+	hr = CoRegisterClassObject(*cast(GUID*)&VDServerClassFactory.iid, cf, CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &regID);
 	if(FAILED(hr))
 	{
 		ShowErrorMessage("CoRegisterClassObject()", hr);
