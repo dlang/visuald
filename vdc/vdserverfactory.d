@@ -11,7 +11,7 @@ module vdc.vdserverfactory;
 import vdc.ivdserver;
 version(MARS)
 {
-	import vdc.dmdserver;
+	import vdc.dmdserver.dmdserver;
 	alias VDServer = DMDServer;
 }
 else

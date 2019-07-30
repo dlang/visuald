@@ -6,12 +6,14 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-module vdc.semvisitor;
+module vdc.dmdserver.semvisitor;
 
 import vdc.semanticopt;
 
+import dmd.aggregate;
 import dmd.apply;
 import dmd.arraytypes;
+import dmd.attrib;
 import dmd.builtin;
 import dmd.cond;
 import dmd.console;
@@ -109,6 +111,29 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 		if (!stop && decl._init)
 			decl._init.accept(this);
+	}
+
+	override void visit(AttribDeclaration decl)
+	{
+		visit(cast(Declaration)decl);
+
+		if (!stop)
+			if (auto inc = decl.include(null))
+				foreach(d; *inc)
+					if (!stop)
+						d.accept(this);
+	}
+
+	override void visit(ConditionalDeclaration decl)
+	{
+		if (!stop && decl.condition)
+			decl.condition.accept(this);
+
+		visit(cast(AttribDeclaration)decl);
+	}
+
+	override void visit(Condition)
+	{
 	}
 
 	override void visit(ExpInitializer einit)
@@ -389,44 +414,50 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		//	foundNode(sym);
 	}
 
+	override void visit(DVCondition cond)
+	{
+		if (!found && matchIdentifier(cond.loc, cond.ident))
+			foundNode(cond);
+	}
+
+	version(none)
 	override void visit(ScopeDsymbol scopesym)
 	{
 		// optimize to only visit members in approriate source range
+		// unfortunately, some members don't have valid locations
 		size_t mcnt = scopesym.members ? scopesym.members.dim : 0;
+		size_t minMember = 0;
+		size_t maxMember = mcnt;
 		for (size_t m = 0; m < mcnt; m++)
 		{
 			Dsymbol s = (*scopesym.members)[m];
 			if (s.isTemplateInstance)
 				continue;
-			if (s.loc.filename !is filename)
-				continue;
-
-			if (s.loc.linnum > endLine || (s.loc.linnum == endLine && s.loc.charnum > endIndex))
-				continue;
-
-			Loc nextloc;
-			for (m++; m < mcnt; m++)
+			if (s.loc.filename)
 			{
-				auto ns = (*scopesym.members)[m];
-				if (ns.isTemplateInstance)
+				if (s.loc.filename !is filename)
 					continue;
-				if (ns.loc.filename is filename)
+
+				if (s.loc.linnum > endLine || (s.loc.linnum == endLine && s.loc.charnum > endIndex))
 				{
-					nextloc = ns.loc;
+					maxMember = m;
 					break;
 				}
+				if (s.loc.linnum < startLine || (s.loc.linnum == startLine && s.loc.charnum < startIndex))
+					minMember = m;
 			}
-			m--;
+		}
 
-			if (nextloc.filename)
-				if (nextloc.linnum < startLine || (nextloc.linnum == startLine && nextloc.charnum < startIndex))
-					continue;
+		for (size_t m = minMember; m < maxMember; m++)
+		{
+			Dsymbol s = (*scopesym.members)[m];
+			if (s.loc.filename && s.loc.filename !is filename)
+				continue;
 
 			s.accept(this);
 
-			if (!found)
-				foundNode(s);
-			break;
+			if (found)
+				break;
 		}
 	}
 	override void visit(TemplateInstance)
@@ -489,6 +520,46 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		if (!found && dve.var && dve.var.ident)
 			if (matchIdentifier(dve.varloc, dve.var.ident))
 				foundNode(dve);
+	}
+
+	override void visit(AggregateDeclaration ad)
+	{
+		visit(cast(ScopeDsymbol)ad);
+	}
+
+	override void visit(ClassDeclaration cd)
+	{
+		if (cd.baseclasses)
+		{
+			foreach (bc; *(cd.baseclasses))
+			{
+				if (bc.originalType && bc.originalType.ty == Tident)
+				{
+					visitTypeIdentifier(cast(TypeIdentifier) bc.originalType, bc.type);
+				}
+			}
+		}
+		visit(cast(AggregateDeclaration)cd);
+	}
+
+	void visitTypeIdentifier(TypeIdentifier originalType, Type resolvedType)
+	{
+		Loc loc = originalType.loc;
+		if (matchIdentifier(loc, originalType.ident))
+			foundNode(resolvedType);
+		
+		// guess qualified name to be without spaces
+		loc.charnum += originalType.ident.toString().length + 1;
+		foreach (id; originalType.idents)
+		{
+			if (id.dyncast() == DYNCAST.identifier)
+			{
+				auto ident = cast(Identifier)id;
+				if (matchIdentifier(loc, ident))
+					foundNode(resolvedType);
+				loc.charnum += ident.toString().length + 1;
+			}
+		}
 	}
 }
 

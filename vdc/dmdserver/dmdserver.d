@@ -6,8 +6,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
-module vdc.dmdserver;
-import vdc.semvisitor;
+module vdc.dmdserver.dmdserver;
+import vdc.dmdserver.semvisitor;
 
 version(MAIN) {} else version = noServer;
 
@@ -100,7 +100,7 @@ import core.stdc.string;
 // version = traceGC;
 version (traceGC) import tracegc;
 
-debug version = DebugServer;
+version = DebugServer;
 //debug version = vdlog; // log through visual D logging (needs version = InProc in vdserverclient)
 
 shared(Object) gDMDSync = new Object; // no multi-instances/multi-threading with DMD
@@ -898,15 +898,7 @@ class DMDServer : ComObject, IVDServer
 				global.filePath.push(toStringz(i));
 		}
 
-		//Id.initialize();
-		Type._reinit();
-		Module._init();
-		Module.amodules = Module.amodules.init;
-		//Expression._init();
-		//Objc._init();
-		//builtin_init();
-
-		target._init(global.params);
+		dmdReinit(true);
 
 		for (size_t i = 0; i < mModules.length; i++)
 		{
@@ -919,6 +911,10 @@ class DMDServer : ComObject, IVDServer
 			Module.modules.insert(m);
 		}
 		Module.rootModule = rootModule.analyzedModule;
+		Module.loadModuleHandler = (const ref Loc location, Identifiers* packages, Identifier ident)
+		{
+			return Module.loadFromFile(location, packages, ident);
+		};
 
 		for (size_t i = 0; i < mModules.length; i++)
 		{
@@ -1049,7 +1045,7 @@ __gshared char[] gErrorMessages;
 __gshared char[] gOtherErrorMessages;
 __gshared bool gErrorWasSupplemental;
 
-void errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
+void  errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 				 const(char)* format, va_list ap, const(char)* p1 = null, const(char)* p2 = null) nothrow
 {
 	if (!loc.filename)
@@ -1271,6 +1267,9 @@ void dmdInit()
 	Expression._init();
 	builtin_init();
 
+	target._init(global.params); // needed by Type._init
+	Type._init();
+
 	dmdReinit(true);
 }
 
@@ -1280,7 +1279,7 @@ void dmdReinit(bool configChanged)
 	if (configChanged)
 	{
 		target._init(global.params); // needed by Type._init
-		Type._init();
+		Type._reinit();
 
 		// assume object.d unmodified otherwis
 		Module.moduleinfo = null;
@@ -1316,6 +1315,7 @@ void dmdReinit(bool configChanged)
 	Objc._init();
 
 	Module._init();
+	Module.amodules = Module.amodules.init;
 	Module.deferred = Dsymbols();    // deferred Dsymbol's needing semantic() run on them
 	Module.deferred2 = Dsymbols();   // deferred Dsymbol's needing semantic2() run on them
 	Module.deferred3 = Dsymbols();   // deferred Dsymbol's needing semantic3() run on them
