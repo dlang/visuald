@@ -501,9 +501,9 @@ class DMDServer : ComObject, IVDServer
 		string fname = makeFilenameCanonical(to_string(filename), null);
 
 		mDefSpan.start.line  = startLine;
-		mDefSpan.start.index = startIndex;
+		mDefSpan.start.index = startIndex + 1;
 		mDefSpan.end.line    = endLine;
-		mDefSpan.end.index   = endIndex;
+		mDefSpan.end.index   = endIndex + 1;
 
 		ModuleData* md;
 		synchronized(gErrorSync)
@@ -555,9 +555,9 @@ class DMDServer : ComObject, IVDServer
 		version(DebugServer) dbglog("GetDefinitionResult: " ~ mLastDefFile);
 		writeReadyMessage();
 		startLine  = mDefSpan.start.line;
-		startIndex = mDefSpan.start.index;
+		startIndex = mDefSpan.start.index - 1;
 		endLine    = mDefSpan.start.line;
-		endIndex   = mDefSpan.start.index + 1;
+		endIndex   = mDefSpan.start.index;
 		*answer = allocBSTR(mLastDefFile);
 		return S_OK;
 	}
@@ -902,12 +902,11 @@ class DMDServer : ComObject, IVDServer
 
 		for (size_t i = 0; i < mModules.length; i++)
 		{
-			Module m = new Module(mModules[i].filename, null, false, false);
-			memcpy(cast(void*)m, cast(void*)mModules[i].parsedModule, __traits(classInstanceSize, Module));
-			m = cast(Module)mModules[i].parsedModule.syntaxCopy(m);
+			ModuleData* md = mModules[i];
+			Module m = cloneModule(md.parsedModule);
 			m.importedFrom = m;
 			m = m.resolvePackage();
-			mModules[i].analyzedModule = m;
+			md.analyzedModule = m;
 			Module.modules.insert(m);
 		}
 		Module.rootModule = rootModule.analyzedModule;

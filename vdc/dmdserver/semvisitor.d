@@ -19,6 +19,7 @@ import dmd.cond;
 import dmd.console;
 import dmd.dclass;
 import dmd.declaration;
+import dmd.denum;
 import dmd.dimport;
 import dmd.dinterpret;
 import dmd.dmodule;
@@ -86,13 +87,15 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		sym.accept(this);
 	}
 
-	// override void visit(Expression) {}
-	// override void visit(Parameter) {}
-	// override void visit(Statement) {}
-	// override void visit(Type) {}
-	// override void visit(TemplateParameter) {}
-	// override void visit(Condition) {}
-	// override void visit(Initializer) {}
+	// default to being permissve
+	override void visit(Dsymbol) {}
+	override void visit(Expression) {}
+	override void visit(Parameter) {}
+	override void visit(Statement) {}
+	override void visit(Type) {}
+	override void visit(TemplateParameter) {}
+	override void visit(Condition) {}
+	override void visit(Initializer) {}
 
 	override void visit(ScopeDsymbol scopesym)
 	{
@@ -130,10 +133,6 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			decl.condition.accept(this);
 
 		visit(cast(AttribDeclaration)decl);
-	}
-
-	override void visit(Condition)
-	{
 	}
 
 	override void visit(ExpInitializer einit)
@@ -319,6 +318,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(TryCatchStatement stmt)
 	{
+		// variables not looked at by PostorderStatementVisitor
 		if (!stop && stmt.catches)
 			foreach(c; *stmt.catches)
 				visitDeclaration(c.var);
@@ -410,8 +410,8 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(Parameter sym)
 	{
-		//if (!found && matchIdentifier(sym.loc, sym.ident))
-		//	foundNode(sym);
+		if (!found && matchIdentifier(sym.identloc, sym.ident))
+			foundNode(sym);
 	}
 
 	override void visit(DVCondition cond)
@@ -465,20 +465,11 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		// skip members added by semantic
 	}
 
-	override void visit(Statement stmt)
-	{
-		// default to nothing
-	}
-
 	override void visit(CallExp expr)
 	{
 		super.visit(expr);
 	}
 
-	override void visit(Expression expr)
-	{
-		// default to nothing
-	}
 	override void visit(SymbolExp expr)
 	{
 		if (!found && expr.var)
@@ -491,7 +482,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			if (ne.member)
 				foundNode(ne.member);
 			else
-				foundNode(ne.type);
+				foundNode(ne.newtype);
 	}
 
 	override void visit(DotIdExp de)
@@ -518,12 +509,33 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	override void visit(DotVarExp dve)
 	{
 		if (!found && dve.var && dve.var.ident)
-			if (matchIdentifier(dve.varloc, dve.var.ident))
+			if (matchIdentifier(dve.varloc.filename ? dve.varloc : dve.loc, dve.var.ident))
 				foundNode(dve);
+	}
+
+	override void visit(VarDeclaration decl)
+	{
+		if (decl.originalType && decl.originalType.ty == Tident)
+			visitTypeIdentifier(cast(TypeIdentifier) decl.originalType, decl.type);
+
+		super.visit(decl);
+	}
+
+	override void visit(EnumDeclaration ed)
+	{
+		if (!found && ed.ident)
+			if (matchIdentifier(ed.loc, ed.ident))
+				foundNode(ed);
+
+		visit(cast(ScopeDsymbol)ed);
 	}
 
 	override void visit(AggregateDeclaration ad)
 	{
+		if (!found && ad.ident)
+			if (matchIdentifier(ad.loc, ad.ident))
+				foundNode(ad);
+
 		visit(cast(ScopeDsymbol)ad);
 	}
 
@@ -609,6 +621,10 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 				string txt;
 				if (decl.isParameter())
 					txt = "(parameter) ";
+				else if (decl.isEnumMember())
+					txt = "(enum member) ";
+				else if (decl.isAliasDeclaration())
+					txt = "(alias) ";
 				else if (!decl.isDataseg() && !decl.isCodeseg() && !decl.isField())
 					txt = "(local variable) ";
 				bool fqn = txt.empty;
@@ -616,12 +632,15 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 				if (decl.type)
 					txt ~= to!string(decl.type.toPrettyChars()) ~ " ";
 				txt ~= to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
+				if (auto em = decl.isEnumMember())
+					if (em.origValue)
+						txt ~= " = " ~ em.origValue.toString();
 				return txt;
 			}
 
-			const(char)* toc = null;
+			string toc;
 			if (auto t = obj.isType())
-				toc = t.toChars();
+				toc = "(" ~ t.kind().to!string ~ ") " ~ t.toPrettyChars(true).to!string;
 			else if (auto e = obj.isExpression())
 			{
 				switch(e.op)
@@ -635,7 +654,7 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 						break;
 					default:
 						if (e.type)
-							toc = e.type.toPrettyChars();
+							toc = e.type.toPrettyChars(true).to!string;
 						break;
 				}
 			}
@@ -644,13 +663,13 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 				if (auto decl = s.isDeclaration)
 					tip = tipForDeclaration(decl);
 				else
-					toc = s.toPrettyChars(true);
+					toc = s.toPrettyChars(true).to!string;
 			}
 			if (!tip.length)
 			{
 				if (!toc)
-					toc = obj.toChars();
-				tip = to!string(toc);
+					toc = obj.toString().dup;
+				tip = toc;
 			}
 			// append doc
 			stop = true;
@@ -712,6 +731,9 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 					case TOK.symbolOffset:
 						loc = (cast(SymbolExp)e).var.loc;
 						break;
+					case TOK.dotVariable:
+						loc = (cast(DotVarExp)e).var.loc;
+						break;
 					default:
 						loc = e.loc;
 						break;
@@ -738,4 +760,45 @@ string findDefinition(Module mod, ref int line, ref int index)
 	line = fdv.loc.linnum;
 	index = fdv.loc.charnum;
 	return to!string(fdv.loc.filename);
+}
+
+Module cloneModule(Module mo)
+{
+    Module m = new Module(mo.srcfile.toString(), mo.ident, mo.isDocFile, mo.isHdrFile);
+    *cast(FileName*)&(m.srcfile) = mo.srcfile; // keep identical source file name pointer
+    m.isPackageFile = mo.isPackageFile;
+    mo.syntaxCopy(m);
+
+	extern(C++) class AdjustModuleVisitor : ASTVisitor
+	{
+		// avoid allocating capture
+		Module m;
+		this (Module m)
+		{
+			this.m = m;
+		}
+
+		alias visit = super.visit;
+
+		override void visit(ConditionalStatement cond)
+		{
+			if (auto dbg = cond.condition.isDebugCondition())
+				cond.condition = new DebugCondition(dbg.loc, m, dbg.level, dbg.ident);
+			else if (auto ver = cond.condition.isVersionCondition())
+				cond.condition = new VersionCondition(ver.loc, m, ver.level, ver.ident);
+		}
+
+		override void visit(ConditionalDeclaration cond)
+		{
+			if (auto dbg = cond.condition.isDebugCondition())
+				cond.condition = new DebugCondition(dbg.loc, m, dbg.level, dbg.ident);
+			else if (auto ver = cond.condition.isVersionCondition())
+				cond.condition = new VersionCondition(ver.loc, m, ver.level, ver.ident);
+		}
+	}
+
+    import dmd.permissivevisitor;
+    scope v = new AdjustModuleVisitor(m);
+    m.accept(v);
+    return m;
 }
