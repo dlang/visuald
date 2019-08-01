@@ -550,7 +550,7 @@
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
+  <program />
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -792,7 +792,7 @@
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
+  <program />
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
