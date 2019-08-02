@@ -681,12 +681,56 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT GetReferences(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr, in BOOL moduleOnly)
 	{
-		return E_NOTIMPL;
+		string fname = makeFilenameCanonical(to_string(filename), null);
+
+		ModuleData* md;
+		synchronized(gErrorSync)
+		{
+			md = findModule(fname, false);
+			if (!md)
+				return S_FALSE;
+		}
+
+		void _getReferences()
+		{
+			string references;
+			synchronized(gDMDSync)
+			{
+				try
+				{
+					if (auto m = md.analyzedModule)
+						references = findReferences(m, line, idx + 1);
+					else
+						references = "analyzing...";
+				}
+				catch(OutOfMemoryError e)
+				{
+					throw e; // terminate
+				}
+				catch(Throwable t)
+				{
+					version(DebugServer) dbglog("GetReferences: exception " ~ t.msg);
+				}
+			}
+			mLastReferences = references;
+			mSemanticGetReferencesRunning = false;
+		}
+		version(DebugServer) dbglog("  schedule GetReferences: " ~ fname);
+		mSemanticGetReferencesRunning = true;
+		schedule(&_getReferences);
+
+		return S_OK;
 	}
 
 	override HRESULT GetReferencesResult(BSTR* stringList)
 	{
-		return E_NOTIMPL;
+		if(mSemanticGetReferencesRunning)
+		{
+			*stringList = allocBSTR("__pending__");
+			return S_OK;
+		}
+		*stringList = allocBSTR(mLastReferences);
+		return S_OK;
 	}
 
 	HRESULT GetIdentifierTypes(in BSTR filename, int startLine, int endLine, int flags)
@@ -727,11 +771,11 @@ class DMDServer : ComObject, IVDServer
 					version(DebugServer) dbglog("GetIdentifierTypes: exception " ~ t.msg);
 				}
 			}
-			mLastIdentiferTypes = identiferTypes;
-			mSemanticIdentierTypesRunning = false;
+			mLastIdentifierTypes = identiferTypes;
+			mSemanticIdentifierTypesRunning = false;
 		}
 		version(DebugServer) dbglog("  schedule GetIdentifierTypes: " ~ fname);
-		mSemanticIdentierTypesRunning = true;
+		mSemanticIdentifierTypesRunning = true;
 		schedule(&_getIdentifierTypes);
 
 		return S_OK;
@@ -739,12 +783,12 @@ class DMDServer : ComObject, IVDServer
 
 	HRESULT GetIdentifierTypesResult(BSTR* types)
 	{
-		if(mSemanticIdentierTypesRunning)
+		if(mSemanticIdentifierTypesRunning)
 		{
 			*types = allocBSTR("__pending__");
 			return S_OK;
 		}
-		*types = allocBSTR(mLastIdentiferTypes);
+		*types = allocBSTR(mLastIdentifierTypes);
 		return S_OK;
 	}
 
@@ -1066,17 +1110,22 @@ private:
 	bool mSemanticExpansionsRunning;
 	bool mSemanticTipRunning;
 	bool mSemanticDefinitionRunning;
-	bool mSemanticIdentierTypesRunning;
+	bool mSemanticIdentifierTypesRunning;
+	bool mSemanticGetReferencesRunning;
 
 	bool mPredefineVersions;
 
 	string mModuleToParse;
 	string mLastTip;
 	TextSpan mTipSpan;
+
 	string mLastDefFile;
 	TextSpan mDefSpan;
-	string mLastIdentiferTypes;
+
+	string mLastIdentifierTypes;
 	TextSpan mIdTypesSpan;
+
+	string mLastReferences;
 	string[] mLastSymbols;
 	string mLastMessage;
 	string mLastError;

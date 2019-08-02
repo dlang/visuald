@@ -931,6 +931,83 @@ string findIdentifierTypes(Module mod)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+string findReferences(Module mod, int line, int index)
+{
+	auto filename = mod.srcfile.toChars();
+	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
+	mod.accept(fdv);
+
+	if (!fdv.found)
+		return null;
+
+	extern(C++) class FindReferencesVisitor : ASTVisitor
+	{
+		RootObject search;
+		string references;
+
+		alias visit = super.visit;
+
+		extern(D)
+		void addReference(ref const Loc loc, Identifier ident)
+		{
+			if (loc.filename && ident)
+			{
+				import core.stdc.stdio;
+				char[128] buf;
+				int llen = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:\n",
+									loc.linnum, loc.charnum - 1,
+									loc.linnum, loc.charnum + ident.toString().length - 1);
+				references ~= buf[0..llen];
+			}
+
+		}
+
+		override void visit(Dsymbol sym)
+		{
+			if (sym is search)
+				addReference(sym.loc, sym.ident);
+		}
+		override void visit(SymbolExp expr)
+		{
+			if (expr.var is search)
+				addReference(expr.loc, expr.var.ident);
+		}
+		override void visit(DotVarExp dve)
+		{
+			if (dve.var is search)
+				addReference(dve.varloc.filename ? dve.varloc : dve.loc, dve.var.ident);
+		}
+	}
+
+	scope FindReferencesVisitor frv = new FindReferencesVisitor();
+
+	if (auto t = fdv.found.isType())
+	{
+		if (t.ty == Tstruct)
+			fdv.found = (cast(TypeStruct)t).sym;
+	}
+	else if (auto e = fdv.found.isExpression())
+	{
+		switch(e.op)
+		{
+			case TOK.variable:
+			case TOK.symbolOffset:
+				fdv.found = (cast(SymbolExp)e).var;
+				break;
+			case TOK.dotVariable:
+				fdv.found = (cast(DotVarExp)e).var;
+				break;
+			default:
+				break;
+		}
+	}
+	frv.search = fdv.found;
+	mod.accept(frv);
+
+	return frv.references;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 Module cloneModule(Module mo)
 {
