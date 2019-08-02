@@ -8,7 +8,7 @@
 
 module vdc.dmdserver.semvisitor;
 
-import vdc.semanticopt;
+import vdc.ivdserver;
 
 import dmd.aggregate;
 import dmd.apply;
@@ -575,6 +575,22 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	}
 }
 
+RootObject _findAST(Dsymbol sym, const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
+{
+	scope FindASTVisitor fav = new FindASTVisitor(filename, startLine, startIndex, endLine, endIndex);
+	sym.accept(fav);
+
+	return fav.found;
+}
+
+RootObject findAST(Module mod, int startLine, int startIndex, int endLine, int endIndex)
+{
+	auto filename = mod.srcfile.toChars();
+	return _findAST(mod, filename, startLine, startIndex, endLine, endIndex);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 extern(C++) class FindTipVisitor : FindASTVisitor
 {
 	string tip;
@@ -623,15 +639,29 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 					txt = "(parameter) ";
 				else if (decl.isEnumMember())
 					txt = "(enum member) ";
+				else if (decl.storage_class & STC.manifest)
+					txt = "(constant) ";
 				else if (decl.isAliasDeclaration())
 					txt = "(alias) ";
-				else if (!decl.isDataseg() && !decl.isCodeseg() && !decl.isField())
+				else if (decl.isField())
+					txt = "(field) ";
+				else if (!decl.isDataseg() && !decl.isCodeseg())
 					txt = "(local variable) ";
+				else if (decl.isThreadlocal())
+					txt = "(thread local variable) ";
+				else if (decl.type && decl.type.isShared())
+					txt = "(shared variable) ";
+				else
+					txt = "(__gshared variable) ";
 				bool fqn = txt.empty;
 
 				if (decl.type)
 					txt ~= to!string(decl.type.toPrettyChars()) ~ " ";
 				txt ~= to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
+				if (decl.storage_class & STC.manifest)
+					if (auto var = decl.isVarDeclaration())
+						if (var._init)
+							txt ~= " = " ~ var._init.toString();
 				if (auto em = decl.isEnumMember())
 					if (em.origValue)
 						txt ~= " = " ~ em.origValue.toString();
@@ -676,20 +706,6 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 		}
 		return stop;
 	}
-}
-
-RootObject _findAST(Dsymbol sym, const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
-{
-	scope FindASTVisitor fav = new FindASTVisitor(filename, startLine, startIndex, endLine, endIndex);
-	sym.accept(fav);
-
-	return fav.found;
-}
-
-RootObject findAST(Module mod, int startLine, int startIndex, int endLine, int endIndex)
-{
-	auto filename = mod.srcfile.toChars();
-	return _findAST(mod, filename, startLine, startIndex, endLine, endIndex);
 }
 
 string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex)
@@ -762,17 +778,20 @@ string findDefinition(Module mod, ref int line, ref int index)
 	return to!string(fdv.loc.filename);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 int[] findBinaryIsInLocations(Module mod)
 {
 	extern(C++) class BinaryIsInVisitor : ASTVisitor
 	{
 		int[] locdata;
+		const(char)* filename;
 
 		alias visit = super.visit;
 
 		final void addLocation(const ref Loc loc)
 		{
-			if (loc.filename)
+			if (loc.filename is filename)
 			{
 				locdata ~= loc.linnum;
 				locdata ~= loc.charnum - 1;
@@ -792,17 +811,133 @@ int[] findBinaryIsInLocations(Module mod)
 	}
 
 	scope BinaryIsInVisitor biiv = new BinaryIsInVisitor;
+	biiv.filename = mod.srcfile.toChars();
 	mod.accept(biiv);
 
 	return biiv.locdata;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+string findIdentifierTypes(Module mod)
+{
+	static struct IdTypePos
+	{
+		int type;
+		int line;
+		int col;
+	}
+	extern(C++) class IdentifierTypesVisitor : ASTVisitor
+	{
+		IdTypePos[][const(char)[]] idTypes;
+		const(char)* filename;
+
+		alias visit = super.visit;
+
+		extern(D)
+		final void addTypePos(const(char)[] ident, int type, int line, int col)
+		{
+			if (auto pid = ident in idTypes)
+			{
+				if (type != (*pid)[$-1].type)
+					*pid ~= IdTypePos(type, line, col);
+			}
+			else
+				idTypes[ident] = [IdTypePos(type, line, col)];
+		}
+
+		void addIdent(ref const Loc loc, Identifier ident, int type)
+		{
+			if (ident && loc.filename is filename)
+				addTypePos(ident.toString(), type, loc.linnum, loc.charnum);
+		}
+
+		void addDeclaration(ref const Loc loc, Declaration decl)
+		{
+			auto ident = decl.ident;
+			if (auto func = decl.isFuncDeclaration())
+			{
+				auto p = decl.toParent2;
+				if (p && p.isAggregateDeclaration)
+					addIdent(loc, ident, TypeReferenceKind.Function);
+				else
+					addIdent(loc, ident, TypeReferenceKind.Method);
+			}
+			else if (decl.isParameter())
+				addIdent(loc, ident, TypeReferenceKind.ParameterVariable);
+			else if (decl.isEnumMember())
+				addIdent(loc, ident, TypeReferenceKind.EnumValue);
+			else if (decl.storage_class & STC.manifest)
+				addIdent(loc, ident, TypeReferenceKind.Constant);
+			else if (decl.isAliasDeclaration())
+				addIdent(loc, ident, TypeReferenceKind.Alias);
+			else if (decl.isField())
+				addIdent(loc, ident, TypeReferenceKind.MemberVariable);
+			else if (!decl.isDataseg() && !decl.isCodeseg())
+				addIdent(loc, ident, TypeReferenceKind.LocalVariable);
+			else if (decl.isThreadlocal())
+				addIdent(loc, ident, TypeReferenceKind.TLSVariable);
+			else if (decl.type && decl.type.isShared())
+				addIdent(loc, ident, TypeReferenceKind.SharedVariable);
+			else
+				addIdent(loc, ident, TypeReferenceKind.GSharedVariable);
+		}
+
+		override void visit(Dsymbol sym)
+		{
+			if (auto decl = sym.isDeclaration)
+				addDeclaration(sym.loc, decl);
+			else
+				addIdent(sym.loc, sym.ident, TypeReferenceKind.Variable);
+		}
+
+		override void visit(Parameter sym)
+		{
+			addIdent(sym.identloc, sym.ident, TypeReferenceKind.ParameterVariable);
+		}
+
+		override void visit(EnumDeclaration ed)
+		{
+			addIdent(ed.loc, ed.ident, TypeReferenceKind.Enum);
+			super.visit(ed);
+		}
+
+		override void visit(AggregateDeclaration ad)
+		{
+			if (ad.isInterfaceDeclaration)
+				addIdent(ad.loc, ad.ident, TypeReferenceKind.Interface);
+			else if (ad.isClassDeclaration)
+				addIdent(ad.loc, ad.ident, TypeReferenceKind.Class);
+			else if (ad.isUnionDeclaration)
+				addIdent(ad.loc, ad.ident, TypeReferenceKind.Union);
+			else
+				addIdent(ad.loc, ad.ident, TypeReferenceKind.Struct);
+			super.visit(ad);
+		}
+	}
+
+	scope IdentifierTypesVisitor itv = new IdentifierTypesVisitor;
+	itv.filename = mod.srcfile.toChars();
+	mod.accept(itv);
+
+	string s;
+	foreach(id, pos; itv.idTypes)
+	{
+		string ids = id.idup ~ ":" ~ pos[0].type.to!string();
+		foreach (ref p; pos[1..$])
+			ids ~= ";" ~ p.type.to!string() ~ "," ~ p.line.to!string() ~ "," ~ p.col.to!string();
+		s ~= ids ~ "\n";
+	}
+	return s;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 Module cloneModule(Module mo)
 {
-    Module m = new Module(mo.srcfile.toString(), mo.ident, mo.isDocFile, mo.isHdrFile);
-    *cast(FileName*)&(m.srcfile) = mo.srcfile; // keep identical source file name pointer
-    m.isPackageFile = mo.isPackageFile;
-    mo.syntaxCopy(m);
+	Module m = new Module(mo.srcfile.toString(), mo.ident, mo.isDocFile, mo.isHdrFile);
+	*cast(FileName*)&(m.srcfile) = mo.srcfile; // keep identical source file name pointer
+	m.isPackageFile = mo.isPackageFile;
+	mo.syntaxCopy(m);
 
 	extern(C++) class AdjustModuleVisitor : ASTVisitor
 	{
@@ -832,8 +967,8 @@ Module cloneModule(Module mo)
 		}
 	}
 
-    import dmd.permissivevisitor;
-    scope v = new AdjustModuleVisitor(m);
-    m.accept(v);
-    return m;
+	import dmd.permissivevisitor;
+	scope v = new AdjustModuleVisitor(m);
+	m.accept(v);
+	return m;
 }

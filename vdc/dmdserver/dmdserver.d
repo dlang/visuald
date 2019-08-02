@@ -691,12 +691,61 @@ class DMDServer : ComObject, IVDServer
 
 	HRESULT GetIdentifierTypes(in BSTR filename, int startLine, int endLine, int flags)
 	{
-		return E_NOTIMPL;
+		string fname = makeFilenameCanonical(to_string(filename), null);
+
+		mIdTypesSpan.start.line  = startLine; // unused so far
+		mIdTypesSpan.start.index = 0;
+		mIdTypesSpan.end.line    = endLine;
+		mIdTypesSpan.end.index   = 0;
+
+		ModuleData* md;
+		synchronized(gErrorSync)
+		{
+			md = findModule(fname, false);
+			if (!md)
+				return S_FALSE;
+		}
+
+		void _getIdentifierTypes()
+		{
+			string identiferTypes;
+			synchronized(gDMDSync)
+			{
+				try
+				{
+					if (auto m = md.analyzedModule)
+						identiferTypes = findIdentifierTypes(m);
+					else
+						identiferTypes = "identifying...";
+				}
+				catch(OutOfMemoryError e)
+				{
+					throw e; // terminate
+				}
+				catch(Throwable t)
+				{
+					version(DebugServer) dbglog("GetIdentifierTypes: exception " ~ t.msg);
+				}
+			}
+			mLastIdentiferTypes = identiferTypes;
+			mSemanticIdentierTypesRunning = false;
+		}
+		version(DebugServer) dbglog("  schedule GetIdentifierTypes: " ~ fname);
+		mSemanticIdentierTypesRunning = true;
+		schedule(&_getIdentifierTypes);
+
+		return S_OK;
 	}
 
 	HRESULT GetIdentifierTypesResult(BSTR* types)
 	{
-		return E_NOTIMPL;
+		if(mSemanticIdentierTypesRunning)
+		{
+			*types = allocBSTR("__pending__");
+			return S_OK;
+		}
+		*types = allocBSTR(mLastIdentiferTypes);
+		return S_OK;
 	}
 
 	///////////////////////////////////////////////////////////////
@@ -1017,6 +1066,7 @@ private:
 	bool mSemanticExpansionsRunning;
 	bool mSemanticTipRunning;
 	bool mSemanticDefinitionRunning;
+	bool mSemanticIdentierTypesRunning;
 
 	bool mPredefineVersions;
 
@@ -1025,6 +1075,8 @@ private:
 	TextSpan mTipSpan;
 	string mLastDefFile;
 	TextSpan mDefSpan;
+	string mLastIdentiferTypes;
+	TextSpan mIdTypesSpan;
 	string[] mLastSymbols;
 	string mLastMessage;
 	string mLastError;
@@ -1148,6 +1200,8 @@ enum string[2][] dmdStatics =
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ3feqCQEn4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ4fcmpCQEo4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem12typeSemanticRCQBc5mtype4TypeSQBr7globals3LocPSQCi6dscope5ScopeZ11visitAArrayMFCQDpQCn10TypeAArrayZ5fhashCQEp4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ11visitAArrayMFCQEkQDq10TypeAArrayZ8fd_aaLenCQFn4func15FuncDeclaration", "FuncDeclaration"],
+	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ8noMemberMFQDlQDaQClCQEp10identifier10IdentifieriZ4nesti", "int"],
 	["_D3dmd6dmacro5Macro6expandMFPSQBc4root9outbuffer9OutBufferkPkAxaZ4nesti", "int"], // x86
 	["_D3dmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
 	["_D3dmd10dsymbolsem22DsymbolSemanticVisitor5visitMRCQBx9dtemplate13TemplateMixinZ4nesti", "int"],
@@ -1161,9 +1215,6 @@ enum string[2][] dmdStatics =
 	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
 	["_D3dmd10identifier10Identifier10generateIdRNbPxaZ1im", "int"],
 	["_D3dmd5lexer5Lexer4scanMFNbPSQBb6tokens5TokenZ8initdoneb", "bool"],
-
-	//["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ11visitAArrayMFCQEwQEc10TypeAArrayZ8fd_aaLenCQFz4func15FuncDeclaration", "FuncDeclaration"],
-	//["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDd10identifier10IdentifieriZ8noMemberMFQDxQDmQCxQByiZ4nesti", "int"],
 ];
 
 string cmangled(string s)
@@ -1266,7 +1317,8 @@ void dmdInit()
 	dmdReinit(true);
 }
 
-// initialization that are necessary before restarting an analysis
+// initialization that are necessary before restarting an analysis (which might run
+// for another platform/architecture)
 void dmdReinit(bool configChanged)
 {
 	if (configChanged)

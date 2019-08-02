@@ -239,3 +239,32 @@ uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool do
 		|  (msvcrt     ? 0x8_00_00_00 : 0);
 }
 
+// from D_Parser: types returned by GetIdentifierTypes
+enum TypeReferenceKind : uint
+{
+	Unknown,
+
+	Interface,
+	Enum,
+	EnumValue,
+	Template,
+	Class,
+	Struct,
+	Union,
+	TemplateTypeParameter,
+
+	Constant,
+	LocalVariable,
+	ParameterVariable,
+	TLSVariable,
+	SharedVariable,
+	GSharedVariable,
+	MemberVariable,
+	Variable,
+
+	Alias,
+	Module,
+	Function,
+	Method,
+	BasicType,
+}
