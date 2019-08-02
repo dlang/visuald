@@ -640,24 +640,18 @@ class DMDServer : ComObject, IVDServer
 	override HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs)
 	{
 		// array of pairs of DWORD
-		int[] locData;
 		string fname = makeFilenameCanonical(to_string(filename), null);
-		/+
-		synchronized(mSemanticProject)
-			if(auto src = mSemanticProject.getModuleByFilename(fname))
-				if(auto mod = src.parsed)
-				{
-					mod.visit(delegate bool (ast.Node n) {
-						if(n.id == TOK_in || n.id == TOK_is)
-							if(cast(ast.BinaryExpression) n)
-							{
-								locData ~= n.span.start.line;
-								locData ~= n.span.start.index;
-							}
-						return true;
-					});
-				}
-		+/
+
+		ModuleData* md;
+		synchronized(gErrorSync)
+		{
+			md = findModule(fname, false);
+			if (!md || !md.parsedModule)
+				return S_FALSE;
+		}
+
+		int[] locData = findBinaryIsInLocations(md.parsedModule);
+
 		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, cast(ULONG) locData.length);
 		if(!sa)
 			return E_OUTOFMEMORY;
@@ -665,7 +659,7 @@ class DMDServer : ComObject, IVDServer
 		for(LONG index = 0; index < locData.length; index++)
 			SafeArrayPutElement(sa, &index, &locData[index]);
 
-		locs.vt = VT_ARRAY;
+		locs.vt = VT_ARRAY | VT_INT;
 		locs.parray = sa;
 		return S_OK;
 	}

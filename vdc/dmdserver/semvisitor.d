@@ -762,6 +762,41 @@ string findDefinition(Module mod, ref int line, ref int index)
 	return to!string(fdv.loc.filename);
 }
 
+int[] findBinaryIsInLocations(Module mod)
+{
+	extern(C++) class BinaryIsInVisitor : ASTVisitor
+	{
+		int[] locdata;
+
+		alias visit = super.visit;
+
+		final void addLocation(const ref Loc loc)
+		{
+			if (loc.filename)
+			{
+				locdata ~= loc.linnum;
+				locdata ~= loc.charnum - 1;
+			}
+		}
+
+		override void visit(InExp e)
+		{
+			addLocation(e.oploc);
+			super.visit(e);
+		}
+		override void visit(IdentityExp e)
+		{
+			addLocation(e.oploc);
+			super.visit(e);
+		}
+	}
+
+	scope BinaryIsInVisitor biiv = new BinaryIsInVisitor;
+	mod.accept(biiv);
+
+	return biiv.locdata;
+}
+
 Module cloneModule(Module mo)
 {
     Module m = new Module(mo.srcfile.toString(), mo.ident, mo.isDocFile, mo.isHdrFile);
