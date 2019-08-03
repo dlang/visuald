@@ -10,6 +10,7 @@ module vdc.dmdserver.semvisitor;
 
 import vdc.ivdserver;
 
+import dmd.access;
 import dmd.aggregate;
 import dmd.apply;
 import dmd.arraytypes;
@@ -363,6 +364,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	alias visit = super.visit;
 	RootObject found;
+	ScopeDsymbol foundScope;
 
 	this(const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
 	{
@@ -420,46 +422,69 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			foundNode(cond);
 	}
 
-	version(none)
+	override void visit(CompoundStatement cs)
+	{
+		// optimize to only visit members in approriate source range
+		size_t scnt = cs.statements ? cs.statements.dim : 0;
+		for (size_t i = 0; i < scnt && !stop; i++)
+		{
+			Statement s = (*cs.statements)[i];
+			if (!s)
+				continue;
+			if (s.loc.filename)
+			{
+				if (s.loc.filename !is filename || s.loc.linnum > endLine)
+					continue;
+				Loc endloc;
+				if (auto ss = s.isScopeStatement())
+					endloc = ss.endloc;
+				else if (auto ws = s.isWhileStatement())
+					endloc = ws.endloc;
+				else if (auto ds = s.isDoStatement())
+					endloc = ds.endloc;
+				else if (auto fs = s.isForStatement())
+					endloc = fs.endloc;
+				else if (auto fs = s.isForeachStatement())
+					endloc = fs.endloc;
+				else if (auto fs = s.isForeachRangeStatement())
+					endloc = fs.endloc;
+				else if (auto ifs = s.isIfStatement())
+					endloc = ifs.endloc;
+				else if (auto ws = s.isWithStatement())
+					endloc = ws.endloc;
+				if (endloc.filename && endloc.linnum < startLine)
+					continue;
+			}
+			s.accept(this);
+		}
+	}
+
 	override void visit(ScopeDsymbol scopesym)
 	{
 		// optimize to only visit members in approriate source range
 		// unfortunately, some members don't have valid locations
 		size_t mcnt = scopesym.members ? scopesym.members.dim : 0;
-		size_t minMember = 0;
-		size_t maxMember = mcnt;
-		for (size_t m = 0; m < mcnt; m++)
+		for (size_t m = 0; m < mcnt && !stop; m++)
 		{
 			Dsymbol s = (*scopesym.members)[m];
 			if (s.isTemplateInstance)
 				continue;
 			if (s.loc.filename)
 			{
-				if (s.loc.filename !is filename)
+				if (s.loc.filename !is filename || s.loc.linnum > endLine)
 					continue;
-
-				if (s.loc.linnum > endLine || (s.loc.linnum == endLine && s.loc.charnum > endIndex))
-				{
-					maxMember = m;
-					break;
-				}
-				if (s.loc.linnum < startLine || (s.loc.linnum == startLine && s.loc.charnum < startIndex))
-					minMember = m;
+				Loc endloc;
+				if (auto fd = s.isFuncDeclaration())
+					endloc = fd.endloc;
+				if (endloc.filename && endloc.linnum < startLine)
+					continue;
 			}
-		}
-
-		for (size_t m = minMember; m < maxMember; m++)
-		{
-			Dsymbol s = (*scopesym.members)[m];
-			if (s.loc.filename && s.loc.filename !is filename)
-				continue;
-
 			s.accept(this);
-
-			if (found)
-				break;
 		}
+		if (found && !foundScope)
+			foundScope = scopesym;
 	}
+
 	override void visit(TemplateInstance)
 	{
 		// skip members added by semantic
@@ -559,7 +584,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		Loc loc = originalType.loc;
 		if (matchIdentifier(loc, originalType.ident))
 			foundNode(resolvedType);
-		
+
 		// guess qualified name to be without spaces
 		loc.charnum += originalType.ident.toString().length + 1;
 		foreach (id; originalType.idents)
@@ -1006,6 +1031,104 @@ string findReferences(Module mod, int line, int index)
 
 	return frv.references;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+string[] findExpansions(Module mod, int line, int index, string tok)
+{
+	auto filename = mod.srcfile.toChars();
+	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index - cast(int) tok.length, line, index + 1);
+	mod.accept(fdv);
+
+	if (!fdv.found)
+		return null;
+
+	Type type = fdv.found.isType();
+	if (auto e = fdv.found.isExpression())
+	{
+		switch(e.op)
+		{
+			case TOK.variable:
+			case TOK.symbolOffset:
+				type = (cast(SymbolExp)e).var.type;
+				break;
+			case TOK.dotVariable:
+				type = (cast(DotVarExp)e).e1.type;
+				break;
+			default:
+				break;
+		}
+	}
+
+	auto sds = fdv.foundScope;
+	if (type)
+	{
+		if (auto ts = type.isTypeStruct())
+			sds = ts.sym;
+		else if (auto tc = type.isTypeClass())
+			sds = tc.sym;
+		else if (auto te = type.isTypeEnum())
+			sds = te.sym;
+	}
+
+	string[void*] idmap; // doesn't work with extern(C++) classes
+	void searchScope(ScopeDsymbol sds, int flags)
+	{
+		// TODO: properties
+		// TODO: base classes
+		// TODO: struct/class not going to parent if accessed from elsewhere (but does if nested)
+		for (Dsymbol ds = sds; ds; ds = ds.toParent)
+		{
+			ScopeDsymbol sd = ds.isScopeDsymbol();
+			if (!ds)
+				continue;
+
+			foreach (pair; sd.symtab.tab.asRange)
+			{
+				Dsymbol s = pair.value;
+				if (!symbolIsVisible(mod, s))
+					continue;
+				auto ident = pair.key.toString();
+				if (ident.startsWith(tok))
+					idmap[cast(void*)s] = ident.idup;
+			}
+
+			// TODO: alias this
+
+			// imported modules
+			size_t cnt = sd.importedScopes ? sd.importedScopes.dim : 0;
+			for (size_t i = 0; i < cnt; i++)
+			{
+				if ((flags & IgnorePrivateImports) && sd.prots[i] == Prot.Kind.private_)
+					continue;
+				auto ss = (*sd.importedScopes)[i].isScopeDsymbol();
+				if (!ss)
+					continue;
+
+				int sflags = 0;
+				if (ss.isModule())
+				{
+					if (flags & SearchLocalsOnly)
+						continue;
+					sflags |= IgnorePrivateImports;
+				}
+				else // mixin template
+				{
+					if (flags & SearchImportsOnly)
+						continue;
+					sflags |= SearchLocalsOnly;
+				}
+				searchScope(ss, sflags | IgnorePrivateImports);
+			}
+		}
+	}
+	searchScope(sds, 0);
+
+	string[] idlist;
+	foreach(sym, id; idmap)
+		idlist ~= id ~ ":" ~ cast(string) (cast(Dsymbol)sym).toString();
+	return idlist;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 

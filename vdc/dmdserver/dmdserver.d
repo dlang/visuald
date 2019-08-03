@@ -564,21 +564,25 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT GetSemanticExpansions(in BSTR filename, in BSTR tok, uint line, uint idx, in BSTR expr)
 	{
-		string[] symbols;
 		string fname = makeFilenameCanonical(to_string(filename), null);
-		/+
-		auto src = mSemanticProject.getModuleByFilename(fname);
-		if(!src)
-			return S_FALSE;
+
+		ModuleData* md;
+		synchronized(gErrorSync)
+		{
+			md = findModule(fname, false);
+			if (!md)
+				return S_FALSE;
+		}
 
 		string stok = to_string(tok);
 		string sexpr = to_string(expr);
-		void calcExpansions()
+		void _calcExpansions()
 		{
-			fnSemanticWriteError = &semanticWriteError;
+			string[] symbols;
 			try
 			{
-				mLastSymbols = null; //_GetSemanticExpansions(src, stok, line, idx, sexpr);
+				if (auto m = md.analyzedModule)
+					symbols = findExpansions(m, line, idx + 1, stok);
 			}
 			catch(OutOfMemoryError e)
 			{
@@ -586,16 +590,16 @@ class DMDServer : ComObject, IVDServer
 			}
 			catch(Throwable t)
 			{
-				version(DebugServer) dbglog("GetSemanticExpansions.calcExpansions: exception " ~ t.msg);
-				logInfo(t.msg);
+				version(DebugServer) dbglog("calcExpansions: exception " ~ t.msg);
 			}
 			mSemanticExpansionsRunning = false;
+			mLastSymbols = symbols;
 		}
 		version(DebugServer) dbglog("  schedule GetSemanticExpansions: " ~ fname);
 		mLastSymbols = null;
 		mSemanticExpansionsRunning = true;
-		schedule(&calcExpansions);
-		+/
+		schedule(&_calcExpansions);
+
 		return S_OK;
 	}
 
