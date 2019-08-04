@@ -1606,6 +1606,7 @@
   <File path="ddmdlib.d" />
   <File path="ddmdmars.d" />
   <File path="ddmdrmem.d" />
+  <File path="dmdinit.d" />
   <File path="dmdserver.d" />
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
