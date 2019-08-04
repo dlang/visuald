@@ -49,6 +49,8 @@ namespace dbuild
 
         public override bool Execute()
         {
+            DateTime now = DateTime.Now;
+
             Type taskType;
             if (!PrepareTaskAssembly(out taskType))
                 return false;
@@ -95,7 +97,8 @@ namespace dbuild
 
             if (SchedulerVerbose)
             {
-                Log.LogMessageFromResources("MultiTool.AddDone", ToolExe, taskScheduler.Count);
+                Log.LogMessageFromResources("MultiTool.AddDone", ToolExe, taskScheduler.Count,
+                                            (object)(DateTime.Now - now).TotalMilliseconds);
             }
 
             int errCode = ProcessTasks();

@@ -871,51 +871,51 @@ BrowseNode GetInfoObject(BrowseNode val, ULONG idx)
 // move to intellisense.d?
 int GetInfoCount(JSONValue val)
 {
-	if(val.type == JSON_TYPE.ARRAY)
+	if(val.type == JSONType.array)
 		return val.array.length;
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* m = "members" in val.object)
-			if(m.type == JSON_TYPE.ARRAY)
+			if(m.type == JSONType.array)
 				return m.array.length;
 	return 0;
 }
 
 string GetInfoName(JSONValue val)
 {
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* v = "name" in val.object)
-			if(v.type == JSON_TYPE.STRING)
+			if(v.type == JSONType.string)
 				return v.str;
-	if(val.type == JSON_TYPE.STRING)
+	if(val.type == JSONType.string)
 		return val.str;
 	return null;
 }
 
 string GetInfoKind(JSONValue val)
 {
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* v = "kind" in val.object)
-			if(v.type == JSON_TYPE.STRING)
+			if(v.type == JSONType.string)
 				return v.str;
-	if(val.type == JSON_TYPE.STRING)
+	if(val.type == JSONType.string)
 		return "class";
 	return null;
 }
 
 string GetInfoType(JSONValue val)
 {
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* v = "type" in val.object)
-			if(v.type == JSON_TYPE.STRING)
+			if(v.type == JSONType.string)
 				return v.str;
 	return null;
 }
 
 string GetInfoBase(JSONValue val)
 {
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* v = "base" in val.object)
-			if(v.type == JSON_TYPE.STRING)
+			if(v.type == JSONType.string)
 				return v.str;
 	return null;
 }
@@ -923,41 +923,41 @@ string GetInfoBase(JSONValue val)
 string[] GetInfoInterfaces(JSONValue val)
 {
 	string[] ifaces;
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* v = "interfaces" in val.object)
-			if(v.type == JSON_TYPE.ARRAY)
+			if(v.type == JSONType.array)
 				foreach(i, iface; v.array)
-					if(iface.type == JSON_TYPE.STRING)
+					if(iface.type == JSONType.string)
 						ifaces ~= iface.str;
 	return ifaces;
 }
 
 string GetInfoFilename(JSONValue val)
 {
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* v = "file" in val.object)
-			if(v.type == JSON_TYPE.STRING)
+			if(v.type == JSONType.string)
 				return v.str;
 	return null;
 }
 
 int GetInfoLine(JSONValue val)
 {
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* v = "line" in val.object)
-			if(v.type == JSON_TYPE.INTEGER)
+			if(v.type == JSONType.integer)
 				return cast(int) v.integer - 1;
 	return -1;
 }
 
 JSONValue GetInfoObject(JSONValue val, ULONG idx)
 {
-	if(val.type == JSON_TYPE.ARRAY)
+	if(val.type == JSONType.array)
 		if(idx < val.array.length)
 			return val.array[idx];
-	if(val.type == JSON_TYPE.OBJECT)
+	if(val.type == JSONType.object)
 		if(JSONValue* m = "members" in val.object)
-			if(m.type == JSON_TYPE.ARRAY)
+			if(m.type == JSONType.array)
 				if(idx < m.array.length)
 					return m.array[idx];
 	return JSONValue();
@@ -1079,7 +1079,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 				static if(!useJSON)
 					arr ~= info.mModules;
 				else
-					if(info.mModules.type == JSON_TYPE.ARRAY)
+					if(info.mModules.type == JSONType.ARRAY)
 						arr ~= info.mModules.array;
 
 		}

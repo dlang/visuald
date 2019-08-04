@@ -12,7 +12,7 @@
     <AssemblyName>DParserCOMServer</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <SignAssembly>False</SignAssembly>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

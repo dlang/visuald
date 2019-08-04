@@ -17,7 +17,8 @@ $(TABLE_NOBORDER
  )
  $(TR
   $(TD If you are just starting with the D programming language and don't have a compiler installed then this download
-  provides you with everything to get you started with writing D program in Visual Studio:)
+  provides you with everything to get you started with writing D program in Visual Studio including the reference
+  compiler DMD $(DMD_VERSION) and the LLVM-based compiler LDC $(LDC_VERSION):)
   $(TD
   <span>
   <div align="right">

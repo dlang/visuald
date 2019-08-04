@@ -1734,27 +1734,34 @@ class GlobalOptions
 		VSInstallDir = normalizeDir(VSInstallDir);
 	}
 
-	void detectVCInstallDir()
+	bool detectVCToolsInstallDir(string baseDir)
 	{
-		string defverFile = VSInstallDir ~ r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.v142.default.txt"; // VS2019
+		string defverFile = baseDir ~ r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.v142.default.txt"; // VS2019
 		if (!std.file.exists(defverFile))
-			defverFile = VSInstallDir ~ r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt";
+			defverFile = baseDir ~ r"VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt";
 		if (std.file.exists(defverFile))
 		{
 			// VS 2017
 			try
 			{
 				string ver = strip(readUtf8(defverFile));
-				VCInstallDir = VSInstallDir ~ r"VC\";
+				VCInstallDir = baseDir ~ r"VC\";
 				if (!ver.empty)
 				{
 					VCToolsInstallDir = VCInstallDir ~ r"Tools\MSVC\" ~ ver ~ r"\";
+					return true;
 				}
 			}
 			catch(Exception)
 			{
 			}
 		}
+		return false;
+	}
+
+	void detectVCInstallDir()
+	{
+		detectVCToolsInstallDir(VSInstallDir);
 		if (VCInstallDir.empty)
 		{
 			if(char* pe = getenv("VCINSTALLDIR"))
@@ -1764,8 +1771,13 @@ class GlobalOptions
 				scope RegKey keyVS = new RegKey(hConfigKey, regConfigRoot ~ "\\Setup\\VC", false);
 				VCInstallDir = toUTF8(keyVS.GetString("ProductDir"));
 			}
-			VCInstallDir = normalizeDir(VCInstallDir);
 		}
+		if (VCInstallDir.empty)
+		{
+			findVCInstallDirViaCOM(&detectVCToolsInstallDir);
+		}
+		if (!VCInstallDir.empty)
+			VCInstallDir = normalizeDir(VCInstallDir);
 	}
 
 	string getVCDir(string sub, bool x64, bool expand = false)
@@ -1822,7 +1834,7 @@ class GlobalOptions
 			baseInstallDir = "c:\\D";
 	}
 
-	bool initFromRegistry()
+	bool initFromRegistry(bool restoreDefaults = false)
 	{
 		bool rc = true;
 		try
@@ -1843,6 +1855,8 @@ class GlobalOptions
 			// get defaults from global config
 			scope RegKey keyToolOpts = new RegKey(hConfigKey, regConfigRoot ~ regPathToolsOptions, false);
 			scope RegKey keyUserOpts = new RegKey(hUserKey, regUserRoot ~ regPathToolsOptions, false);
+			if (restoreDefaults)
+				keyUserOpts.Close(); // make it invalid to only restore defaults
 
 			detectWindowsSDKDir();
 			detectUCRT();

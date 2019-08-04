@@ -133,7 +133,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>dbuild</RootNamespace>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition=" '$(TargetVer)' == '12.0' or '$(TargetVer)' == '14.0' ">v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion Condition=" '$(TargetVer)' == '12.0' or '$(TargetVer)' == '14.0' ">v4.5.2</TargetFrameworkVersion>
     <TargetFrameworkVersion Condition=" '$(TargetVer)' == '16.0' or '$(TargetVer)' == '16.1' ">v4.7.2</TargetFrameworkVersion>
     <GeneratePkgDefFile>false</GeneratePkgDefFile>
     <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>

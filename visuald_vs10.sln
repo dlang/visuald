@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29102.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2BD51E62-6604-48AE-9E01-C940C0CA1C68}"
 	ProjectSection(SolutionItems) = preProject
@@ -414,7 +414,8 @@ Global
 		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Test|Win32.ActiveCfg = Release|Win32
 		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Test|x64.ActiveCfg = Debug GDC|x64
 		{8760F45A-69D9-4B68-BE63-0E055B51D447}.Test|x64.Build.0 = Debug GDC|x64
-		{8760F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|Win32.ActiveCfg = Debug|Win32
+		{8760F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|Win32.ActiveCfg = TestDebug|Win32
+		{8760F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|Win32.Build.0 = TestDebug|Win32
 		{8760F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|x64.ActiveCfg = Debug|x64
 		{8760F45A-69D9-4B68-BE63-0E055B51D447}.TestDebug|x64.Build.0 = Debug|x64
 		{FE3A959D-6CFA-43BF-8637-62125B571770}.Debug COFF32|Win32.ActiveCfg = Debug COFF32|Win32
@@ -612,7 +613,8 @@ Global
 		{CD26A145-F663-473D-8908-0254FE377D48}.Test|Win32.ActiveCfg = Release|Win32
 		{CD26A145-F663-473D-8908-0254FE377D48}.Test|Win32.Build.0 = Release|Win32
 		{CD26A145-F663-473D-8908-0254FE377D48}.Test|x64.ActiveCfg = Release|Win32
-		{CD26A145-F663-473D-8908-0254FE377D48}.TestDebug|Win32.ActiveCfg = Debug|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.TestDebug|Win32.ActiveCfg = TestDebug|Win32
+		{CD26A145-F663-473D-8908-0254FE377D48}.TestDebug|Win32.Build.0 = TestDebug|Win32
 		{CD26A145-F663-473D-8908-0254FE377D48}.TestDebug|x64.ActiveCfg = Debug|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
