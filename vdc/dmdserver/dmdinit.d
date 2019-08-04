@@ -310,8 +310,15 @@ void addDefaultVersionIdentifiers(const ref Param params)
         VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
     if (params.cov)
         VersionCondition.addPredefinedGlobalIdent("D_Coverage");
-    if (params.pic != PIC.fixed)
-        VersionCondition.addPredefinedGlobalIdent(params.pic == PIC.pic ? "D_PIC" : "D_PIE");
+    static if(__traits(compiles, PIC.fixed))
+    {
+        // dmd 2.088
+        if (params.pic != PIC.fixed)
+            VersionCondition.addPredefinedGlobalIdent(params.pic == PIC.pic ? "D_PIC" : "D_PIE");
+    }
+    else if (params.pic)
+        VersionCondition.addPredefinedGlobalIdent("D_PIC");
+
     if (params.useUnitTests)
         VersionCondition.addPredefinedGlobalIdent("unittest");
     if (params.useAssert == CHECKENABLE.on)

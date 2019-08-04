@@ -801,7 +801,7 @@ class DMDServer : ComObject, IVDServer
 	{
 		string name = stripExtension(baseName(md.filename));
 		auto id = Identifier.idPool(name);
-		md.parsedModule = new Module(md.filename, id, false, false);
+		md.parsedModule = new Module(md.filename, id, true, false);
 		md.parsedModule.srcBuffer = new FileBuffer(cast(ubyte[])text);
 		md.parsedModule.read(Loc.initial);
 		md.parsedModule.parse();
@@ -1296,5 +1296,5 @@ unittest
 		wipeStack();
 	GC.collect();
 
-	checkDefinition(7, 12, "source.d", 5, 9); // xyz
+	checkDefinition(7, 12, "source.d", 5, 8); // xyz
 }

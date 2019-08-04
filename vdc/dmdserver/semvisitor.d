@@ -88,7 +88,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		sym.accept(this);
 	}
 
-	// default to being permissve
+	// default to being permissive
 	override void visit(Dsymbol) {}
 	override void visit(Expression) {}
 	override void visit(Parameter) {}
@@ -694,8 +694,14 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 			}
 
 			string toc;
+			const(char)* doc;
 			if (auto t = obj.isType())
+			{
 				toc = "(" ~ t.kind().to!string ~ ") " ~ t.toPrettyChars(true).to!string;
+				if (auto sym = typeSymbol(t))
+					if (sym.comment)
+						doc = sym.comment;
+			}
 			else if (auto e = obj.isExpression())
 			{
 				switch(e.op)
@@ -703,9 +709,11 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 					case TOK.variable:
 					case TOK.symbolOffset:
 						tip = tipForDeclaration((cast(SymbolExp)e).var);
+						doc = (cast(SymbolExp)e).var.comment;
 						break;
 					case TOK.dotVariable:
 						tip = tipForDeclaration((cast(DotVarExp)e).var);
+						doc = (cast(DotVarExp)e).var.comment;
 						break;
 					default:
 						if (e.type)
@@ -719,6 +727,9 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 					tip = tipForDeclaration(decl);
 				else
 					toc = s.toPrettyChars(true).to!string;
+
+				if (s.comment)
+					doc = s.comment;
 			}
 			if (!tip.length)
 			{
@@ -727,6 +738,8 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 				tip = toc;
 			}
 			// append doc
+			if (doc)
+				tip = tip ~ "\n" ~ cast(string)doc[0..strlen(doc)];
 			stop = true;
 		}
 		return stop;
@@ -763,6 +776,8 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 			{
 				if (t.ty == Tstruct)
 					loc = (cast(TypeStruct)t).sym.loc;
+				else if (t.ty == Tstruct)
+					loc = (cast(TypeClass)t).sym.loc;
 			}
 			else if (auto e = obj.isExpression())
 			{
@@ -1061,14 +1076,8 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 
 	auto sds = fdv.foundScope;
 	if (type)
-	{
-		if (auto ts = type.isTypeStruct())
-			sds = ts.sym;
-		else if (auto tc = type.isTypeClass())
-			sds = tc.sym;
-		else if (auto te = type.isTypeEnum())
-			sds = te.sym;
-	}
+		if (auto sym = typeSymbol(type))
+			sds = sym;
 
 	string[void*] idmap; // doesn't work with extern(C++) classes
 	void searchScope(ScopeDsymbol sds, int flags)
@@ -1129,8 +1138,18 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	return idlist;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
+
+ScopeDsymbol typeSymbol(Type type)
+{
+	if (auto ts = type.isTypeStruct())
+		return ts.sym;
+	if (auto tc = type.isTypeClass())
+		return tc.sym;
+	if (auto te = type.isTypeEnum())
+		return te.sym;
+	return null;
+}
 
 Module cloneModule(Module mo)
 {
