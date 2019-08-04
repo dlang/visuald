@@ -1604,7 +1604,7 @@
   </Folder>
   <File path="ddmderrors.d" tool="None" />
   <File path="ddmdlib.d" />
-  <File path="ddmdmars.d" />
+  <File path="dmderrors.d" />
   <File path="ddmdrmem.d" />
   <File path="dmdinit.d" />
   <File path="dmdserver.d" />

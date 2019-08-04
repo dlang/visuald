@@ -3,6 +3,7 @@ module vdc.dmdserver.dmdinit;
 import dmd.arraytypes;
 import dmd.builtin;
 import dmd.cond;
+import dmd.compiler;
 import dmd.ctfeexpr;
 import dmd.dclass;
 import dmd.declaration;
@@ -110,6 +111,8 @@ void clearSemanticStatics()
 	CtfeStatus.numAssignments = 0;
 
 	VarDeclaration.nextSequenceNumber = 0;
+
+	entrypoint = cast(Module)&entrypoint; // disable generation of C main
 
 	// Package.this.packageTag?
 	// funcDeclarationSemantic.printedMain?

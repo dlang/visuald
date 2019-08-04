@@ -739,7 +739,7 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 			}
 			// append doc
 			if (doc)
-				tip = tip ~ "\n" ~ cast(string)doc[0..strlen(doc)];
+				tip = tip ~ "\n\n" ~ strip(cast(string)doc[0..strlen(doc)]);
 			stop = true;
 		}
 		return stop;
@@ -1191,3 +1191,19 @@ Module cloneModule(Module mo)
 	m.accept(v);
 	return m;
 }
+
+Module createModuleFromText(string filename, string text)
+{
+	import std.path;
+
+	string name = stripExtension(baseName(filename));
+	auto id = Identifier.idPool(name);
+	auto mod = new Module(filename, id, true, false);
+	mod.srcBuffer = new FileBuffer(cast(ubyte[])text);
+	mod.read(Loc.initial);
+	mod.parse();
+	return mod;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
