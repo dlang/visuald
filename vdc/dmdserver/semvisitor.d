@@ -55,12 +55,13 @@ import dmd.root.rootobject;
 
 import std.string;
 import std.conv;
+import core.stdc.string;
 
 // walk the complete AST (declarations, statement and expressions)
 // assumes being started on module/declaration level
 extern(C++) class ASTVisitor : StoppableVisitor
 {
-	alias visit = super.visit;
+	alias visit = StoppableVisitor.visit;
 
 	void visitExpression(Expression expr)
 	{
@@ -362,7 +363,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	int endLine;
 	int endIndex;
 
-	alias visit = super.visit;
+	alias visit = ASTVisitor.visit;
 	RootObject found;
 	ScopeDsymbol foundScope;
 
@@ -620,7 +621,7 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 {
 	string tip;
 
-	alias visit = super.visit;
+	alias visit = FindASTVisitor.visit;
 
 	this(const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
 	{
@@ -760,7 +761,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 {
 	Loc loc;
 
-	alias visit = super.visit;
+	alias visit = FindASTVisitor.visit;
 
 	this(const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
 	{
@@ -827,7 +828,7 @@ int[] findBinaryIsInLocations(Module mod)
 		int[] locdata;
 		const(char)* filename;
 
-		alias visit = super.visit;
+		alias visit = ASTVisitor.visit;
 
 		final void addLocation(const ref Loc loc)
 		{
@@ -871,7 +872,7 @@ string findIdentifierTypes(Module mod)
 		IdTypePos[][const(char)[]] idTypes;
 		const(char)* filename;
 
-		alias visit = super.visit;
+		alias visit = ASTVisitor.visit;
 
 		extern(D)
 		final void addTypePos(const(char)[] ident, int type, int line, int col)
@@ -971,7 +972,13 @@ string findIdentifierTypes(Module mod)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-string findReferences(Module mod, int line, int index)
+struct Reference
+{
+	Loc loc;
+	Identifier ident;
+}
+
+Reference[] findReferencesInModule(Module mod, int line, int index)
 {
 	auto filename = mod.srcfile.toChars();
 	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
@@ -983,23 +990,15 @@ string findReferences(Module mod, int line, int index)
 	extern(C++) class FindReferencesVisitor : ASTVisitor
 	{
 		RootObject search;
-		string references;
+		Reference[] references;
 
-		alias visit = super.visit;
+		alias visit = ASTVisitor.visit;
 
 		extern(D)
 		void addReference(ref const Loc loc, Identifier ident)
 		{
 			if (loc.filename && ident)
-			{
-				import core.stdc.stdio;
-				char[128] buf;
-				int llen = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:\n",
-									loc.linnum, loc.charnum - 1,
-									loc.linnum, loc.charnum + ident.toString().length - 1);
-				references ~= buf[0..llen];
-			}
-
+				references ~= Reference(loc, ident);
 		}
 
 		override void visit(Dsymbol sym)
@@ -1091,12 +1090,13 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			if (!ds)
 				continue;
 
-			foreach (pair; sd.symtab.tab.asRange)
+			//foreach (pair; sd.symtab.tab.asRange)
+			foreach (key, s; sd.symtab.tab.aa)
 			{
-				Dsymbol s = pair.value;
+				//Dsymbol s = pair.value;
 				if (!symbolIsVisible(mod, s))
 					continue;
-				auto ident = pair.key.toString();
+				auto ident = /*pair.*/(cast(Dsymbol)key).toString();
 				if (ident.startsWith(tok))
 					idmap[cast(void*)s] = ident.idup;
 			}
@@ -1167,7 +1167,7 @@ Module cloneModule(Module mo)
 			this.m = m;
 		}
 
-		alias visit = super.visit;
+		alias visit = ASTVisitor.visit;
 
 		override void visit(ConditionalStatement cond)
 		{

@@ -23,6 +23,9 @@ import dmd.target;
 
 import dmd.root.outbuffer;
 
+import std.string;
+import core.stdc.string;
+
 ////////////////////////////////////////////////////////////////
 alias countersType = uint[uint]; // actually uint[Key]
 
@@ -48,15 +51,19 @@ enum string[2][] dmdStatics =
 	["_D3dmd10expression10IntegerExp__T7literalVii1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	["_D3dmd10expression10IntegerExp__T7literalViN1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
-	["_D3dmd10identifier10Identifier10generateIdRNbPxaZ1im", "int"],
+	["_D3dmd10identifier10Identifier10generateIdRNbPxaZ1ik", "size_t"],
 	["_D3dmd5lexer5Lexer4scanMFNbPSQBb6tokens5TokenZ8initdoneb", "bool"],
 ];
 
 string cmangled(string s)
 {
 	version (Win64)
+	{
+		if (s == "_D3dmd10identifier10Identifier10generateIdRNbPxaZ1ik")
+			return "_D3dmd10identifier10Identifier10generateIdRNbPxaZ1im"; // size_t
 		if (s ==   "_D3dmd6dmacro5Macro6expandMFPSQBc4root9outbuffer9OutBufferkPkAxaZ4nesti")
 			return "_D3dmd6dmacro5Macro6expandMFPSQBc4root9outbuffer9OutBuffermPmAxaZ4nesti";
+	}
 	return s;
 }
 
@@ -150,50 +157,186 @@ void dmdInit()
 
 	target._init(global.params); // needed by Type._init
 	Type._init();
+}
 
-	dmdReinit(true);
+struct Options
+{
+	string[] importDirs;
+	string[] stringImportDirs;
+
+	bool unittestOn;
+	bool x64;
+	bool msvcrt;
+	bool debugOn;
+	bool coverage;
+	bool doDoc;
+	bool noBoundsCheck;
+	bool gdcCompiler;
+	bool ldcCompiler;
+	bool noDeprecated;
+	bool mixinAnalysis;
+	bool UFCSExpansions;
+
+	bool predefineDefaultVersions;
+	int versionLevel;
+	string[] versionIds;
+	int debugLevel;
+	string[] debugIds;
+
+	void opAssign(const ref Options opts)
+	{
+		import std.traits;
+
+		static foreach(i, F; typeof(this).tupleof)
+			static if(isDynamicArray!(typeof(F)))
+				this.tupleof[i] = opts.tupleof[i].dup;
+			else
+				this.tupleof[i] = opts.tupleof[i];
+	}
+
+	bool setImportDirs(string[] dirs)
+	{
+		if(dirs == importDirs)
+			return false;
+		importDirs = dirs;
+		return true;
+	}
+	bool setStringImportDirs(string[] dirs)
+	{
+		if(dirs == stringImportDirs)
+			return false;
+		stringImportDirs = dirs;
+		return true;
+	}
+	bool setVersionIds(int level, string[] ids)
+	{
+		if(versionLevel == level && versionIds == ids)
+			return false;
+		versionLevel = level;
+		versionIds == ids;
+		return true;
+	}
+	bool setDebugIds(int level, string[] ids)
+	{
+		if(debugLevel == level && debugIds == ids)
+			return false;
+		debugLevel = level;
+		debugIds == ids;
+		return true;
+	}
+}
+
+void dmdSetupParams(const ref Options opts)
+{
+	global = global.init;
+
+	global._init();
+	global.params.isWindows = true;
+	global.params.errorLimit = 0;
+	global.params.color = false;
+	global.params.link = true;
+	global.params.useAssert = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
+	global.params.useInvariants = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
+	global.params.useIn = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
+	global.params.useOut = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
+	global.params.useArrayBounds = opts.noBoundsCheck ? CHECKENABLE.on : CHECKENABLE.off; // set correct value later
+	global.params.doDocComments = opts.doDoc;
+	global.params.useSwitchError = CHECKENABLE.on;
+	global.params.useInline = false;
+	global.params.obj = false;
+	global.params.useDeprecated = opts.noDeprecated ? DiagnosticReporting.error : DiagnosticReporting.off;
+	global.params.linkswitches = Strings();
+	global.params.libfiles = Strings();
+	global.params.dllfiles = Strings();
+	global.params.objfiles = Strings();
+	global.params.ddocfiles = Strings();
+	// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
+	global.params.is64bit = opts.x64;
+	global.params.mscoff = opts.msvcrt;
+	global.params.cpu = CPU.baseline;
+	global.params.isLP64 = global.params.is64bit;
+
+	global.params.versionlevel = opts.versionLevel;
+	global.params.versionids = new Strings();
+	foreach(v; opts.versionIds)
+		global.params.versionids.push(toStringz(v));
+
+	global.versionids = new Identifiers();
+
+	// Add in command line versions
+	if (global.params.versionids)
+		foreach (charz; *global.params.versionids)
+		{
+			auto ident = charz[0 .. strlen(charz)];
+			if (VersionCondition.isReserved(ident))
+				VersionCondition.addPredefinedGlobalIdent(ident);
+			else
+				VersionCondition.addGlobalIdent(ident);
+		}
+
+	if (opts.predefineDefaultVersions)
+		addDefaultVersionIdentifiers(global.params);
+
+	// always enable for tooltips
+	global.params.doDocComments = true;
+
+	global.params.debugids = new Strings();
+	global.params.debuglevel = opts.debugLevel;
+	foreach(d; opts.debugIds)
+		global.params.debugids.push(toStringz(d));
+
+	global.debugids = new Identifiers();
+	if (global.params.debugids)
+		foreach (charz; *global.params.debugids)
+			DebugCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
+
+	global.path = new Strings();
+	foreach(i; opts.importDirs)
+		global.path.push(toStringz(i));
+
+	global.filePath = new Strings();
+	foreach(i; opts.stringImportDirs)
+		global.filePath.push(toStringz(i));
 }
 
 // initialization that are necessary before restarting an analysis (which might run
-// for another platform/architecture)
-void dmdReinit(bool configChanged)
+// for another platform/architecture, different versions)
+void dmdReinit()
 {
-	if (configChanged)
-	{
-		target._init(global.params); // needed by Type._init
-		Type._reinit();
+	target._init(global.params); // needed by Type._init
+	Type._reinit();
 
-		// assume object.d unmodified otherwis
-		Module.moduleinfo = null;
+	// assume object.d unmodified otherwis
+	Module.moduleinfo = null;
 
-		ClassDeclaration.object = null;
-		ClassDeclaration.throwable = null;
-		ClassDeclaration.exception = null;
-		ClassDeclaration.errorException = null;
-		ClassDeclaration.cpp_type_info_ptr = null;
+	ClassDeclaration.object = null;
+	ClassDeclaration.throwable = null;
+	ClassDeclaration.exception = null;
+	ClassDeclaration.errorException = null;
+	ClassDeclaration.cpp_type_info_ptr = null;
 
-		StructDeclaration.xerreq = null;
-		StructDeclaration.xerrcmp = null;
+	StructDeclaration.xerreq = null;
+	StructDeclaration.xerrcmp = null;
 
-		Type.dtypeinfo = null;
-		Type.typeinfoclass = null;
-		Type.typeinfointerface = null;
-		Type.typeinfostruct = null;
-		Type.typeinfopointer = null;
-		Type.typeinfoarray = null;
-		Type.typeinfostaticarray = null;
-		Type.typeinfoassociativearray = null;
-		Type.typeinfovector = null;
-		Type.typeinfoenum = null;
-		Type.typeinfofunction = null;
-		Type.typeinfodelegate = null;
-		Type.typeinfotypelist = null;
-		Type.typeinfoconst = null;
-		Type.typeinfoinvariant = null;
-		Type.typeinfoshared = null;
-		Type.typeinfowild = null;
-		Type.rtinfo = null;
-	}
+	Type.dtypeinfo = null;
+	Type.typeinfoclass = null;
+	Type.typeinfointerface = null;
+	Type.typeinfostruct = null;
+	Type.typeinfopointer = null;
+	Type.typeinfoarray = null;
+	Type.typeinfostaticarray = null;
+	Type.typeinfoassociativearray = null;
+	Type.typeinfovector = null;
+	Type.typeinfoenum = null;
+	Type.typeinfofunction = null;
+	Type.typeinfodelegate = null;
+	Type.typeinfotypelist = null;
+	Type.typeinfoconst = null;
+	Type.typeinfoinvariant = null;
+	Type.typeinfoshared = null;
+	Type.typeinfowild = null;
+	Type.rtinfo = null;
+
 	Objc._init();
 
 	Module._init();

@@ -1306,7 +1306,7 @@
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>0</runCv2pdb>
+  <runCv2pdb>2</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
@@ -1398,7 +1398,7 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>1</addDepImp>
   <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
+  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src $(DMDInstallDir)\druntime\src</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
@@ -1604,8 +1604,8 @@
   </Folder>
   <File path="ddmderrors.d" tool="None" />
   <File path="ddmdlib.d" />
-  <File path="dmderrors.d" />
   <File path="ddmdrmem.d" />
+  <File path="dmderrors.d" />
   <File path="dmdinit.d" />
   <File path="dmdserver.d" />
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
@@ -1621,7 +1621,7 @@ set rc=rc
 if exist &quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\rc.exe&quot; set rc=&quot;%WindowsSdkDir%\bin\%WindowsSDKVersion%x86\rc.exe&quot;
 %rc% /fo&quot;$(OutDir)\$(InputName).res&quot; /I&quot;$(IntDir)&quot; $(InputPath)" dependencies="&quot;$(IntDir)\dmdserver.tlb&quot; ..\..\version" outfile="$(OutDir)\dmdserver.res" path="dmdserver.rc" linkoutput="true" tool="Custom" />
   <File path="..\ivdserver.d" />
-  <File path="..\semanticopt.d" />
+  <File path="semanalysis.d" />
   <File path="semvisitor.d" />
   <File path="..\..\tools\tracegc.d" />
   <File path="..\vdserverfactory.d" />

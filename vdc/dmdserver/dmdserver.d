@@ -7,15 +7,15 @@
 // See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
 
 module vdc.dmdserver.dmdserver;
-import vdc.dmdserver.semvisitor;
 import vdc.dmdserver.dmdinit;
 import vdc.dmdserver.dmderrors;
+import vdc.dmdserver.semvisitor;
+import vdc.dmdserver.semanalysis;
 
 version(MAIN) {} else version = noServer;
 
 version(noServer):
 import vdc.ivdserver;
-import vdc.semanticopt;
 
 import dmd.arraytypes;
 import dmd.cond;
@@ -71,8 +71,9 @@ import core.time;
 import core.stdc.stdio;
 import core.stdc.stdlib;
 import core.stdc.string;
+import core.stdc.wchar_;
 
-// version = traceGC;
+//version = traceGC;
 version (traceGC) import tracegc;
 
 version = DebugServer;
@@ -82,7 +83,7 @@ shared(Object) gDMDSync = new Object; // no multi-instances/multi-threading with
 shared(Object) gOptSync = new Object; // no multi-instances/multi-threading with DMD
 
 version (traceGC)
-	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:trace" ];
+	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:trace disable:1" ];
 else
 	// precise GC doesn't help much because dmd erases most type info
 	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:precise" ];
@@ -156,7 +157,6 @@ class DMDServer : ComObject, IVDServer
 	{
 		version(unittest) {} else
 			version(SingleThread) mTid = spawn(&taskLoop, thisTid);
-		mOptions = new Options;
 		dmdInit();
 	}
 
@@ -237,7 +237,7 @@ class DMDServer : ComObject, IVDServer
 
 		synchronized(gOptSync)
 		{
-			auto opts = mOptions;
+			auto opts = &mOptions;
 
 			string imports = to_string(imp);
 			string strImports = to_string(stringImp);
@@ -675,7 +675,18 @@ class DMDServer : ComObject, IVDServer
 				try
 				{
 					if (auto m = md.analyzedModule)
-						references = findReferences(m, line, idx + 1);
+					{
+						auto reflocs = findReferencesInModule(m, line, idx + 1);
+
+						char[128] buf;
+						foreach (ref r; reflocs)
+						{
+							int llen = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:\n",
+												r.loc.linnum, r.loc.charnum - 1,
+												r.loc.linnum, r.loc.charnum - 1 + r.ident.toString().length);
+							references ~= buf[0..llen];
+						}
+					}
 					else
 						references = "analyzing...";
 				}
@@ -869,10 +880,10 @@ class DMDServer : ComObject, IVDServer
 			global.params.cpu = CPU.baseline;
 			global.params.isLP64 = global.params.is64bit;
 
-			global.params.versionlevel = mOptions.versionIds.level;
+			global.params.versionlevel = mOptions.versionLevel;
 			global.params.versionids = new Strings();
-			foreach(id, v; mOptions.versionIds.identifiers)
-				global.params.versionids.push(toStringz(id));
+			foreach(v; mOptions.versionIds)
+				global.params.versionids.push(toStringz(v));
 
 			global.versionids = new Identifiers();
 
@@ -894,9 +905,9 @@ class DMDServer : ComObject, IVDServer
 			global.params.doDocComments = true;
 
 			global.params.debugids = new Strings();
-			global.params.debuglevel = mOptions.debugIds.level;
-			foreach(id, v; mOptions.debugIds.identifiers)
-				global.params.debugids.push(toStringz(id));
+			global.params.debuglevel = mOptions.debugLevel;
+			foreach(d; mOptions.debugIds)
+				global.params.debugids.push(toStringz(d));
 
 			global.debugids = new Identifiers();
 			if (global.params.debugids)
@@ -912,7 +923,7 @@ class DMDServer : ComObject, IVDServer
 				global.filePath.push(toStringz(i));
 		}
 
-		dmdReinit(true);
+		dmdReinit();
 
 		for (size_t i = 0; i < mModules.length; i++)
 		{

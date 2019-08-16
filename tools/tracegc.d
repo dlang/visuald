@@ -411,10 +411,16 @@ class GCTraceProxy : GC
 		return gc.rangeIter();
 	}
 
-	void runFinalizers(in void[] segment) nothrow
-	{
-		return gc.runFinalizers(segment);
-	}
+	//static if (__VERSION__ >= 2087)
+		void runFinalizers(scope const void[] segment) nothrow
+		{
+			return gc.runFinalizers(segment);
+		}
+	//else
+		void runFinalizers(in void[] segment) nothrow
+		{
+			return gc.runFinalizers(segment);
+		}
 
 	bool inFinalizer() nothrow
 	{
@@ -745,8 +751,13 @@ void dumpAddrInfoStat()
 	trace_printf("\n");
 }
 
+HashTab!(void*, void*)**pp_references;
+
 ///////////////////////////////////////////////////////////////
 import rt.util.container.hashtab;
+
+alias ScanRange = Gcx.ScanRange!false;
+Gcx.ToScanStack!ScanRange toscan; // dmd BUG: alignment causes bad capture!
 
 void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references, ref HashTab!(void*, size_t) objects)
 {
@@ -754,10 +765,6 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 
 	cgc.gcLock.lock();
 	auto pooltable = gcx.pooltable;
-
-	alias ScanRange = Gcx.ScanRange!false;
-
-	Gcx.ToScanStack!ScanRange toscan;
 
 	/**
 	* Search a range of memory values and mark any pointers into the GC pool.
@@ -771,6 +778,10 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 		enum FANOUT_LIMIT = 32;
 		size_t stackPos;
 		ScanRange[FANOUT_LIMIT] stack = void;
+
+		import core.stdc.stdlib;
+		if (&references != *pp_references)
+			exit(1);
 
 	Lagain:
 		size_t pcache = 0;
@@ -1096,8 +1107,71 @@ void dumpGC(GC _gc)
 	findRoot(null);
 }
 
+shared static this()
+{
+	import dmd.identifier;
+	Identifier.anonymous();
+}
+
+const(char)[] dmdident(ConservativeGC cgc, void* p)
+{
+	import dmd.dsymbol;
+	import dmd.identifier;
+
+	BlkInfo inf = cgc.queryNoSync(p);
+	if (inf.base is null || inf.size < Dsymbol.sizeof)
+		return null;
+
+	auto dummyIdent = Identifier.anonymous();
+	auto sym = cast(Dsymbol)p;
+	auto ident = sym.ident;
+	BlkInfo syminf = cgc.queryNoSync(cast(void*)ident);
+	if (syminf.base is null || syminf.size < Identifier.sizeof)
+		return null;
+	if (*cast(void**)dummyIdent !is *cast(void**)ident)
+		return null; // not an Identifier
+
+	__gshared char[256] buf;
+	int len = sprintf(buf.ptr, "sym %.*s", ident.toString().length, ident.toString().ptr);
+	return buf[0..len];
+}
+
+bool isInImage(void* p)
+{
+	import core.internal.traits : externDFunc;
+    alias findImageSection = externDFunc!("rt.sections_win64.findImageSection", void[] function(string) nothrow @nogc);
+    void[] dataSection = findImageSection(".data");
+
+	if (p - dataSection.ptr < dataSection.length)
+		return true;
+	return false;
+}
+
+const(char)[] dmdtype(ConservativeGC cgc, void* p)
+{
+	import dmd.mtype;
+	import dmd.identifier;
+
+	BlkInfo inf = cgc.queryNoSync(p);
+	if (inf.base is null || inf.size < Type.sizeof)
+		return null;
+
+	auto vtbl = *cast(void***)p;
+	if (!isInImage(vtbl))
+		return null;
+	auto func = vtbl[5];
+	Type type = cast(Type)p;
+	if (func != (&type.dyncast).funcptr)
+		return null;
+
+	__gshared char[256] buf;
+	int len = sprintf(buf.ptr, "type %s %s", type.kind(), type.deco);
+	return buf[0..len];
+}
+
 void findRoot(void* sobj)
 {
+	//sobj = cast(void*)1;
 	if (!sobj)
 		return;
 
@@ -1106,6 +1180,10 @@ void findRoot(void* sobj)
 
 	HashTab!(void*, void*) references;
 	HashTab!(void*, size_t) objects;
+
+	HashTab!(void*, void*)* preferences = &references;
+	pp_references = &preferences;
+
 	collectReferences(cgc, references, objects);
 
 	const(void*) minAddr = cgc.gcx.pooltable.minAddr;
@@ -1124,10 +1202,13 @@ nextLoc:
 		if (te && (ai = te.resolve()) !is null)
 		{
 			const(char)* filename = stringBuffer.ptr + ai.filenameOff;
-			trace_printf("%s(%d): %p\n", filename, ai.line, sobj);
+			auto id = dmdident(cgc, sobj);
+			if (!id)
+				id = dmdtype(cgc, sobj);
+			xtrace_printf("%s(%d): %p %.*s\n", filename, ai.line, sobj, id.length, id.ptr);
 		}
 		else
-			trace_printf("no location: %p\n", sobj);
+			xtrace_printf("no location: %p\n", sobj);
 
 		ulong src;
 		if (auto psrc = sobj in references)
@@ -1155,7 +1236,7 @@ nextLoc:
 				else
 					base -= 0x1000;
 			}
-			trace_printf("%p not a heap object\n", *psrc);
+			xtrace_printf("%p not a heap object\n", *psrc);
 
 			DWORD64 disp;
 			char[300] symbuf;
@@ -1164,7 +1245,7 @@ nextLoc:
 			sym.MaxNameLength = 300 - IMAGEHLP_SYMBOLA64.sizeof;
 
 			if (dbghelp.SymGetSymFromAddr64(hProcess, cast(size_t)*psrc, &disp, sym))
-				trace_printf("    sym %s + %lld\n", sym.Name.ptr, disp);
+				xtrace_printf("    sym %s + %lld\n", sym.Name.ptr, disp);
 		}
 		break;
 	}
@@ -1202,5 +1283,12 @@ private int trace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
     return len;
 }
 
-//sprintf(buf.ptr, "%s(%d): %p %llx\n", filename, line, addr, cast(long) size);
-//OutputDebugStringA(buf.ptr);
+private int xtrace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
+{
+	char[1024] buf;
+	sprintf(buf.ptr, fmt, args);
+	OutputDebugStringA(buf.ptr);
+
+	return trace_printf(fmt, args);
+}
+
