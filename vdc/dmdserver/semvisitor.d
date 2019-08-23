@@ -55,21 +55,35 @@ import dmd.root.rootobject;
 
 import std.string;
 import std.conv;
+import stdext.array;
 import core.stdc.string;
 
 // walk the complete AST (declarations, statement and expressions)
 // assumes being started on module/declaration level
 extern(C++) class ASTVisitor : StoppableVisitor
 {
+	bool unconditional; // take both branches in conditional declarations/statements
+
 	alias visit = StoppableVisitor.visit;
+
+	Expression[] visiting;
+	size_t currentVisiting;
 
 	void visitExpression(Expression expr)
 	{
 		if (stop || !expr)
 			return;
 
+		if (currentVisiting >= visiting.length)
+			visiting ~= expr;
+		else
+			visiting[currentVisiting] = expr;
+		currentVisiting++;
+
 		if (walkPostorder(expr, this))
 			stop = true;
+
+		visiting[--currentVisiting] = null;
 	}
 
 	void visitStatement(Statement stmt)
@@ -90,14 +104,51 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	}
 
 	// default to being permissive
-	override void visit(Dsymbol) {}
-	override void visit(Expression) {}
 	override void visit(Parameter) {}
-	override void visit(Statement) {}
-	override void visit(Type) {}
 	override void visit(TemplateParameter) {}
-	override void visit(Condition) {}
-	override void visit(Initializer) {}
+
+	// expressions
+	override void visit(Expression expr)
+	{
+		if (expr.original && expr.original != expr)
+			if (!visiting.contains(expr.original))
+				visitExpression(expr.original);
+	}
+
+	override void visit(IsExp ie)
+	{
+		// TODO: has ident
+		if (ie.targ)
+			ie.targ.accept(this);
+		if (ie.originaltarg && ie.originaltarg !is ie.targ)
+			ie.originaltarg.accept(this);
+
+		visit(cast(Expression)ie);
+	}
+
+	override void visit(DeclarationExp expr)
+	{
+		visitDeclaration(expr.declaration);
+		visit(cast(Expression)expr);
+	}
+
+	override void visit(TypeExp expr)
+	{
+		if (expr.type)
+			expr.type.accept(this);
+		visit(cast(Expression)expr);
+	}
+
+	// types
+	override void visit(Type) {}
+
+	override void visit(TypeTypeof t)
+	{
+		visitExpression(t.exp);
+	}
+
+	// symbols
+	override void visit(Dsymbol) {}
 
 	override void visit(ScopeDsymbol scopesym)
 	{
@@ -110,6 +161,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		}
 	}
 
+	// declarations
 	override void visit(VarDeclaration decl)
 	{
 		visit(cast(Declaration)decl);
@@ -123,7 +175,14 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		visit(cast(Declaration)decl);
 
 		if (!stop)
-			if (auto inc = decl.include(null))
+			if (unconditional)
+			{
+				if (decl.decl)
+					foreach(d; *decl.decl)
+						if (!stop)
+							d.accept(this);
+			}
+			else if (auto inc = decl.include(null))
 				foreach(d; *inc)
 					if (!stop)
 						d.accept(this);
@@ -135,7 +194,45 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			decl.condition.accept(this);
 
 		visit(cast(AttribDeclaration)decl);
+
+		if (!stop && unconditional && decl.elsedecl)
+			foreach(d; *decl.elsedecl)
+				if (!stop)
+					d.accept(this);
 	}
+
+	override void visit(FuncDeclaration decl)
+	{
+		visit(cast(Declaration)decl);
+
+		if (decl.parameters)
+			foreach(p; *decl.parameters)
+				if (!stop)
+					p.accept(this);
+
+		if (decl.frequires)
+			foreach(s; *decl.frequires)
+				visitStatement(s);
+		if (decl.fensures)
+			foreach(e; *decl.fensures)
+				visitStatement(e.ensure); // TODO: check result ident
+
+		visitStatement(decl.frequire);
+		visitStatement(decl.fensure);
+		visitStatement(decl.fbody);
+	}
+
+	// condition
+	override void visit(Condition) {}
+
+	override void visit(StaticIfCondition cond)
+	{
+		visitExpression(cond.exp);
+		visit(cast(Condition)cond);
+	}
+
+	// initializer
+	override void visit(Initializer) {}
 
 	override void visit(ExpInitializer einit)
 	{
@@ -168,19 +265,8 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		}
 	}
 
-	override void visit(FuncDeclaration decl)
-	{
-		visit(cast(Declaration)decl);
-
-		if (decl.parameters)
-			foreach(p; *decl.parameters)
-				if (!stop)
-					p.accept(this);
-
-		visitStatement(decl.frequire);
-		visitStatement(decl.fensure);
-		visitStatement(decl.fbody);
-	}
+	// statements
+	override void visit(Statement) {}
 
 	override void visit(ErrorStatement stmt)
 	{
@@ -194,6 +280,24 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		visitExpression(stmt.exp);
 		if (!stop)
 			visit(cast(Statement)stmt);
+	}
+
+	override void visit(ConditionalStatement stmt)
+	{
+		if (!stop && stmt.condition)
+		{
+			stmt.condition.accept(this);
+
+			if (unconditional)
+			{
+				visitStatement(stmt.ifbody);
+				visitStatement(stmt.elsebody);
+			}
+			else if (stmt.condition.include(null))
+				visitStatement(stmt.ifbody);
+			else
+				visitStatement(stmt.elsebody);
+		}
 	}
 
 	override void visit(CompileStatement stmt)
@@ -340,19 +444,6 @@ extern(C++) class ASTVisitor : StoppableVisitor
 				visitDeclaration(i);
 		visit(cast(Statement)stmt);
 	}
-
-	override void visit(DeclarationExp expr)
-	{
-		visitDeclaration(expr.declaration);
-	}
-
-	override void visit(ErrorExp expr)
-	{
-		visitExpression(expr.errExp);
-		if (!stop)
-			visit(cast(Expression)expr);
-	}
-
 }
 
 extern(C++) class FindASTVisitor : ASTVisitor
@@ -396,6 +487,24 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return false;
 	}
 
+	bool visitPackages(IdentifiersAtLoc* packages)
+	{
+		if (packages)
+			for (size_t p; p < packages.dim; p++)
+				if (!found && matchIdentifier((*packages)[p].loc, (*packages)[p].ident))
+				{
+					Package pkg;
+					auto pkgs = new IdentifiersAtLoc();
+					for (size_t q = 0; q <= p; q++)
+						pkgs.push((*packages)[p]);
+					Package.resolve(pkgs, null, &pkg);
+					if (pkg)
+						foundNode(pkg);
+					return true;
+				}
+		return false;
+	}
+
 	bool matchLoc(ref Loc loc)
 	{
 		if (loc.filename is filename)
@@ -413,14 +522,48 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(Parameter sym)
 	{
-		if (!found && matchIdentifier(sym.identloc, sym.ident))
+		if (!found && matchIdentifier(sym.ident.loc, sym.ident))
 			foundNode(sym);
+	}
+
+	override void visit(Module mod)
+	{
+		if (mod.md)
+		{
+			visitPackages(mod.md.packages);
+
+			if (!found && matchIdentifier(mod.md.loc, mod.md.id))
+				foundNode(mod);
+		}
+		visit(cast(Package)mod);
+	}
+
+	override void visit(Import imp)
+	{
+		visitPackages(imp.packages);
+
+		if (!found && matchIdentifier(imp.loc, imp.id))
+			foundNode(imp.mod);
+
+		for (int n = 0; !found && n < imp.names.dim; n++)
+			if (matchIdentifier(imp.names[n].loc, imp.names[n].ident) ||
+				matchIdentifier(imp.aliases[n].loc, imp.aliases[n].ident))
+				if (n < imp.aliasdecls.dim)
+					foundNode(imp.aliasdecls[n]);
+
+		visit(cast(Dsymbol)imp);
 	}
 
 	override void visit(DVCondition cond)
 	{
 		if (!found && matchIdentifier(cond.loc, cond.ident))
 			foundNode(cond);
+	}
+
+	override void visit(TypeIdentifier t)
+	{
+		visitTypeIdentifier(t, t);
+		visit(cast(TypeQualified)t);
 	}
 
 	override void visit(CompoundStatement cs)
@@ -501,6 +644,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		if (!found && expr.var)
 			if (matchIdentifier(expr.loc, expr.var.ident))
 				foundNode(expr);
+		super.visit(expr);
 	}
 	override void visit(NewExp ne)
 	{
@@ -509,6 +653,14 @@ extern(C++) class FindASTVisitor : ASTVisitor
 				foundNode(ne.member);
 			else
 				foundNode(ne.newtype);
+	}
+
+	override void visit(IdentifierExp expr)
+	{
+		if (!found && expr.ident && expr.type)
+			if (matchIdentifier(expr.loc, expr.ident))
+				foundNode(expr.type);
+		visit(cast(Expression)expr);
 	}
 
 	override void visit(DotIdExp de)
@@ -646,105 +798,123 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 		found = obj;
 		if (obj)
 		{
-			string tipForDeclaration(Declaration decl)
-			{
-				if (auto func = decl.isFuncDeclaration())
-				{
-					OutBuffer buf;
-					if (decl.type)
-						functionToBufferWithIdent(decl.type.toTypeFunction(), &buf, decl.toPrettyChars());
-					else
-						buf.writestring(decl.toPrettyChars());
-					auto res = buf.peekSlice();
-					buf.extractSlice(); // take ownership
-					return cast(string)res;
-				}
-
-				string txt;
-				if (decl.isParameter())
-					txt = "(parameter) ";
-				else if (decl.isEnumMember())
-					txt = "(enum member) ";
-				else if (decl.storage_class & STC.manifest)
-					txt = "(constant) ";
-				else if (decl.isAliasDeclaration())
-					txt = "(alias) ";
-				else if (decl.isField())
-					txt = "(field) ";
-				else if (!decl.isDataseg() && !decl.isCodeseg())
-					txt = "(local variable) ";
-				else if (decl.isThreadlocal())
-					txt = "(thread local variable) ";
-				else if (decl.type && decl.type.isShared())
-					txt = "(shared variable) ";
-				else
-					txt = "(__gshared variable) ";
-				bool fqn = txt.empty;
-
-				if (decl.type)
-					txt ~= to!string(decl.type.toPrettyChars()) ~ " ";
-				txt ~= to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
-				if (decl.storage_class & STC.manifest)
-					if (auto var = decl.isVarDeclaration())
-						if (var._init)
-							txt ~= " = " ~ var._init.toString();
-				if (auto em = decl.isEnumMember())
-					if (em.origValue)
-						txt ~= " = " ~ em.origValue.toString();
-				return txt;
-			}
-
-			string toc;
-			const(char)* doc;
-			if (auto t = obj.isType())
-			{
-				toc = "(" ~ t.kind().to!string ~ ") " ~ t.toPrettyChars(true).to!string;
-				if (auto sym = typeSymbol(t))
-					if (sym.comment)
-						doc = sym.comment;
-			}
-			else if (auto e = obj.isExpression())
-			{
-				switch(e.op)
-				{
-					case TOK.variable:
-					case TOK.symbolOffset:
-						tip = tipForDeclaration((cast(SymbolExp)e).var);
-						doc = (cast(SymbolExp)e).var.comment;
-						break;
-					case TOK.dotVariable:
-						tip = tipForDeclaration((cast(DotVarExp)e).var);
-						doc = (cast(DotVarExp)e).var.comment;
-						break;
-					default:
-						if (e.type)
-							toc = e.type.toPrettyChars(true).to!string;
-						break;
-				}
-			}
-			else if (auto s = obj.isDsymbol())
-			{
-				if (auto decl = s.isDeclaration)
-					tip = tipForDeclaration(decl);
-				else
-					toc = s.toPrettyChars(true).to!string;
-
-				if (s.comment)
-					doc = s.comment;
-			}
-			if (!tip.length)
-			{
-				if (!toc)
-					toc = obj.toString().dup;
-				tip = toc;
-			}
-			// append doc
-			if (doc)
-				tip = tip ~ "\n\n" ~ strip(cast(string)doc[0..strlen(doc)]);
+			tip = tipForObject(obj);
 			stop = true;
 		}
 		return stop;
 	}
+}
+
+string tipForObject(RootObject obj)
+{
+	string tipForDeclaration(Declaration decl)
+	{
+		if (auto func = decl.isFuncDeclaration())
+		{
+			OutBuffer buf;
+			if (decl.type)
+				functionToBufferWithIdent(decl.type.toTypeFunction(), &buf, decl.toPrettyChars());
+			else
+				buf.writestring(decl.toPrettyChars());
+			auto res = buf.peekSlice();
+			buf.extractSlice(); // take ownership
+			return cast(string)res;
+		}
+
+		bool fqn = true;
+		string txt;
+		if (decl.isParameter())
+		{
+			txt = "(parameter) ";
+			fqn = false;
+		}
+		else if (auto em = decl.isEnumMember())
+		{
+			txt = "(enum value) " ~ decl.toPrettyChars(fqn).to!string;
+			if (em.origValue)
+				txt ~= " = " ~ cast(string)em.origValue.toString();
+			return txt;
+		}
+		else if (decl.storage_class & STC.manifest)
+			txt = "(constant) ";
+		else if (decl.isAliasDeclaration())
+			txt = "(alias) ";
+		else if (decl.isField())
+			txt = "(field) ";
+		else if (!decl.isDataseg() && !decl.isCodeseg())
+		{
+			txt = "(local variable) ";
+			fqn = false;
+		}
+		else if (decl.isThreadlocal())
+			txt = "(thread local variable) ";
+		else if (decl.type && decl.type.isShared())
+			txt = "(shared variable) ";
+		else
+			txt = "(__gshared variable) ";
+
+		if (decl.type)
+			txt ~= to!string(decl.type.toPrettyChars(true)) ~ " ";
+		txt ~= to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
+		if (decl.storage_class & STC.manifest)
+			if (auto var = decl.isVarDeclaration())
+				if (var._init)
+					txt ~= " = " ~ var._init.toString();
+		if (auto ad = decl.isAliasDeclaration())
+			if (ad.aliassym)
+				txt ~= " = " ~ tipForObject(ad.aliassym);
+		return txt;
+	}
+
+	string tip;
+	string toc;
+	const(char)* doc;
+	if (auto t = obj.isType())
+	{
+		toc = "(" ~ t.kind().to!string ~ ") " ~ t.toPrettyChars(true).to!string;
+		if (auto sym = typeSymbol(t))
+			if (sym.comment)
+				doc = sym.comment;
+	}
+	else if (auto e = obj.isExpression())
+	{
+		switch(e.op)
+		{
+			case TOK.variable:
+			case TOK.symbolOffset:
+				tip = tipForDeclaration((cast(SymbolExp)e).var);
+				doc = (cast(SymbolExp)e).var.comment;
+				break;
+			case TOK.dotVariable:
+				tip = tipForDeclaration((cast(DotVarExp)e).var);
+				doc = (cast(DotVarExp)e).var.comment;
+				break;
+			default:
+				if (e.type)
+					toc = e.type.toPrettyChars(true).to!string;
+				break;
+		}
+	}
+	else if (auto s = obj.isDsymbol())
+	{
+		if (auto decl = s.isDeclaration())
+			tip = tipForDeclaration(decl);
+		else
+			toc = "(" ~ s.kind().to!string ~ ") " ~ s.toPrettyChars(true).to!string;
+
+		if (s.comment)
+			doc = s.comment;
+	}
+	if (!tip.length)
+	{
+		if (!toc)
+			toc = obj.toString().dup;
+		tip = toc;
+	}
+	// append doc
+	if (doc)
+		tip = tip ~ "\n\n" ~ strip(cast(string)doc[0..strlen(doc)]);
+	return tip;
 }
 
 string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex)
@@ -821,11 +991,11 @@ string findDefinition(Module mod, ref int line, ref int index)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-int[] findBinaryIsInLocations(Module mod)
+Loc[] findBinaryIsInLocations(Module mod)
 {
 	extern(C++) class BinaryIsInVisitor : ASTVisitor
 	{
-		int[] locdata;
+		Loc[] locdata;
 		const(char)* filename;
 
 		alias visit = ASTVisitor.visit;
@@ -833,10 +1003,7 @@ int[] findBinaryIsInLocations(Module mod)
 		final void addLocation(const ref Loc loc)
 		{
 			if (loc.filename is filename)
-			{
-				locdata ~= loc.linnum;
-				locdata ~= loc.charnum - 1;
-			}
+				locdata ~= loc;
 		}
 
 		override void visit(InExp e)
@@ -853,6 +1020,7 @@ int[] findBinaryIsInLocations(Module mod)
 
 	scope BinaryIsInVisitor biiv = new BinaryIsInVisitor;
 	biiv.filename = mod.srcfile.toChars();
+	biiv.unconditional = true;
 	mod.accept(biiv);
 
 	return biiv.locdata;
@@ -890,6 +1058,13 @@ string findIdentifierTypes(Module mod)
 		{
 			if (ident && loc.filename is filename)
 				addTypePos(ident.toString(), type, loc.linnum, loc.charnum);
+		}
+
+		void addPackages(IdentifiersAtLoc* packages)
+		{
+			if (packages)
+				for (size_t p; p < packages.dim; p++)
+					addIdent((*packages)[p].loc, (*packages)[p].ident, TypeReferenceKind.Package);
 		}
 
 		void addDeclaration(ref const Loc loc, Declaration decl)
@@ -931,9 +1106,25 @@ string findIdentifierTypes(Module mod)
 				addIdent(sym.loc, sym.ident, TypeReferenceKind.Variable);
 		}
 
+		override void visit(Import imp)
+		{
+			addPackages(imp.packages);
+
+			addIdent(imp.loc, imp.ident, TypeReferenceKind.Module);
+
+			for (int n = 0; n < imp.names.dim; n++)
+			{
+				addIdent(imp.names[n].loc, imp.names[n].ident, TypeReferenceKind.Alias);
+				if (imp.aliases[n].ident && n < imp.aliasdecls.dim)
+					addDeclaration(imp.aliases[n].loc, imp.aliasdecls[n]);
+			}
+
+			visit(cast(Dsymbol)imp);
+		}
+
 		override void visit(Parameter sym)
 		{
-			addIdent(sym.identloc, sym.ident, TypeReferenceKind.ParameterVariable);
+			addIdent(sym.ident.loc, sym.ident, TypeReferenceKind.ParameterVariable);
 		}
 
 		override void visit(EnumDeclaration ed)
@@ -1156,6 +1347,7 @@ Module cloneModule(Module mo)
 	Module m = new Module(mo.srcfile.toString(), mo.ident, mo.isDocFile, mo.isHdrFile);
 	*cast(FileName*)&(m.srcfile) = mo.srcfile; // keep identical source file name pointer
 	m.isPackageFile = mo.isPackageFile;
+	m.md = mo.md;
 	mo.syntaxCopy(m);
 
 	extern(C++) class AdjustModuleVisitor : ASTVisitor

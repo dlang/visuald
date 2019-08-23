@@ -213,7 +213,7 @@ struct Options
 		if(versionLevel == level && versionIds == ids)
 			return false;
 		versionLevel = level;
-		versionIds == ids;
+		versionIds = ids;
 		return true;
 	}
 	bool setDebugIds(int level, string[] ids)
@@ -221,7 +221,7 @@ struct Options
 		if(debugLevel == level && debugIds == ids)
 			return false;
 		debugLevel = level;
-		debugIds == ids;
+		debugIds = ids;
 		return true;
 	}
 }

@@ -626,14 +626,21 @@ class DMDServer : ComObject, IVDServer
 				return S_FALSE;
 		}
 
-		int[] locData = findBinaryIsInLocations(md.parsedModule);
+		Loc[] locData = findBinaryIsInLocations(md.parsedModule);
 
-		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, cast(ULONG) locData.length);
+		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, 2 * cast(ULONG) locData.length);
 		if(!sa)
 			return E_OUTOFMEMORY;
 
 		for(LONG index = 0; index < locData.length; index++)
-			SafeArrayPutElement(sa, &index, &locData[index]);
+		{
+			LONG idx = index * 2;
+			LONG value = locData[index].linnum;
+			SafeArrayPutElement(sa, &idx, &value);
+			idx++;
+			value = locData[index].charnum - 1;
+			SafeArrayPutElement(sa, &idx, &value);
+		}
 
 		locs.vt = VT_ARRAY | VT_INT;
 		locs.parray = sa;
@@ -935,7 +942,7 @@ class DMDServer : ComObject, IVDServer
 			Module.modules.insert(m);
 		}
 		Module.rootModule = rootModule.analyzedModule;
-		Module.loadModuleHandler = (const ref Loc location, Identifiers* packages, Identifier ident)
+		Module.loadModuleHandler = (const ref Loc location, IdentifiersAtLoc* packages, Identifier ident)
 		{
 			return Module.loadFromFile(location, packages, ident);
 		};
@@ -1186,7 +1193,7 @@ unittest
 	}
 
 	checkTip(5, 9, "(local variable) int xyz");
-	checkTip(6, 9, "void std.stdio.writeln!(int, int, int).writeln(int _param_0, int _param_1, int _param_2) @safe");
+	checkTip(6, 9, "void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe");
 	checkTip(7, 12, "(local variable) int xyz");
 
 	version(traceGC)

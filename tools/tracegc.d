@@ -2,7 +2,7 @@ module tracegc;
 
 import core.stdc.string;
 
-version = traceGC;
+//version = traceGC;
 
 // tiny helper to clear a page of the stack below the current stack pointer to avoid false pointers there
 void wipeStack()

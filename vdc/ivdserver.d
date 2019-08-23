@@ -264,6 +264,7 @@ enum TypeReferenceKind : uint
 
 	Alias,
 	Module,
+	Package = Module, // todo
 	Function,
 	Method,
 	BasicType,

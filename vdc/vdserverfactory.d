@@ -147,12 +147,11 @@ void ShowErrorMessage(LPCTSTR header, HRESULT hr)
 import std.compiler;
 import std.conv;
 
-static if(version_minor < 64)
+version(TEST)
 {
-	// dmd 2.064 implicitely adds C main with D main
 	int main(char[][] argv)
 	{
-		return vdserver_main();
+		return 0; //vdserver_main();
 	}
 }
 else
