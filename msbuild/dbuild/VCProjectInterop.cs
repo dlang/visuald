@@ -78,16 +78,13 @@ namespace vdextensions
                 throw new COMException();
 
             var envitem = ext as EnvDTE.ProjectItem;
-            if (envitem == null)
-                throw new COMException();
-
             var cfgmgr = envproj.ConfigurationManager;
             var activecfg = cfgmgr.ActiveConfiguration;
             var activename = activecfg.ConfigurationName + "|" + activecfg.PlatformName;
 
             fcfg = null;
             cfg = null;
-            var vcfile = envitem.Object as Microsoft.VisualStudio.VCProjectEngine.VCFile;
+            var vcfile = envitem != null ? envitem.Object as Microsoft.VisualStudio.VCProjectEngine.VCFile : null;
             if (vcfile != null)
             {
                 var vcfconfigs = vcfile.FileConfigurations as IVCCollection;
@@ -169,7 +166,7 @@ namespace vdextensions
 
             var cd = new dbuild.CompileD();
             cd.Compiler = compiler;
-            cd.ToolExe = fcfg.Evaluate(ldc ? "$(LDCBinDir)ldmd2.exe" : "$(DMDBinDir)dmd.exe");
+            cd.ToolExe = eval(ldc ? "$(LDCBinDir)ldmd2.exe" : "$(DMDBinDir)dmd.exe");
             cd.AdditionalOptions = vcprop.GetEvaluatedPropertyValue("AdditionalOptions");
             cd.Sources = new Microsoft.Build.Framework.ITaskItem[1] { new Microsoft.Build.Utilities.TaskItem("dummy.d") };
             var strOptions = getParametersFromFakeProperties(vcprop, vcrefl.GetProperties(0));
@@ -263,9 +260,16 @@ namespace vdextensions
             return parameterValues;
         }
 
-        private static Dictionary<string, object> parseParameters(string xaml, Dictionary<string, string> strOptions)
+        Dictionary<string, object> cacheXaml = new Dictionary<string, object>();
+
+        private Dictionary<string, object> parseParameters(string xaml, Dictionary<string, string> strOptions)
         {
-            object rootObject = XamlServices.Load(new StreamReader(xaml));
+            object rootObject;
+            if (!cacheXaml.TryGetValue(xaml, out rootObject))
+            {
+                rootObject = XamlServices.Load(new StreamReader(xaml));
+                cacheXaml.Add(xaml, rootObject);
+            }
             XamlTypes.ProjectSchemaDefinitions schemas = rootObject as XamlTypes.ProjectSchemaDefinitions;
             if (schemas != null)
             {
