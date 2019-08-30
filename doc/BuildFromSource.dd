@@ -72,13 +72,17 @@ $(UL
   $(UL
    $(LI in the following items, VS 2015 is similar to VS 2013 (replace version 12.0 with 14.0),
      and CS 2019 is similar to VS 2017 (replace version 15.0 with 16.0).)
+   $(LI Start the IDE with the new settings branch via
+    $(PRE devenv /RootSuffix D)
+    This will create a new set of settings to be used for debugging.
    $(LI Copy the files from `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\Extensions\Rainer Schuetze\VisualD` into the folder
      `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0\Extensions\VisualD` (replace 12.0 with 15.0_`<id>`
      for VS2017 with `<id>` some identifier generated during VS installation))
    $(LI Move the files from `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\Extensions\Rainer Schuetze\VisualD` into the folder
      `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD` (replace 12.0D with 15.0_`<id>`D
      for VS2017 with `<id>` some identifier generated during VS installation))
-   $(LI in visuald.pkgdef, replace the path "C:\\Program Files (x86)\\Visual D\\visuald.dll" with your debug build output path.)
+   $(LI in `$(DOLLAR)(APPDATA)\Local\Microsoft\VisualStudio\12.0D\Extensions\VisualD\visuald.pkgdef`,
+     replace the path "C:\\Program Files (x86)\\Visual D\\visuald.dll" with your debug build output path.)
    $(LI Modify a line in `$(DOLLAR)(VSINSTALLDIR)\Common7\IDE\devenv.pkgdef:
      $(PRE -"PkgDefSearchPath" = "$ApplicationExtensionsFolder$;$RootFolder$\Common7\IDE\CommonExtensions;$RootFolder$\Common7\IDE\devenv.admin.pkgdef;")
      $(PRE +"PkgDefSearchPath" = "$ApplicationExtensionsFolder$;$RootFolder$\Common7\IDE\CommonExtensions;$AppDataLocalFolder$\Extensions;$RootFolder$\Common7\IDE\devenv.admin.pkgdef;")

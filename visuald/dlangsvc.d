@@ -887,7 +887,7 @@ class LanguageService : DisposingComObject,
 	void ConfigureSemanticProject(Source src)
 	{
 		string file = src.GetFileName();
-		Config cfg = getProjectConfig(file);
+		Config cfg = getProjectConfig(file, true);
 		if(!cfg)
 			cfg = getCurrentStartupConfig();
 

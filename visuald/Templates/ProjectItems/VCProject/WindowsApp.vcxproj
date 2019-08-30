@@ -223,6 +223,11 @@ $if$ ($platformx86_1$ == 1)
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
+    <DCompile>
+      <DebugCode>Release</DebugCode>
+      <Optimizer>true</Optimizer>
+      <Inliner>true</Inliner>
+    </DCompile>
     <Link>
       <SubSystem>$subsystem$</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -260,6 +265,11 @@ $if$ ($platformx64_1$ == 1)
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
+    <DCompile>
+      <DebugCode>Release</DebugCode>
+      <Optimizer>true</Optimizer>
+      <Inliner>true</Inliner>
+    </DCompile>
     <Link>
       <SubSystem>$subsystem$</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -297,6 +307,11 @@ $if$ ($platformx86_2$ == 1)
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
+    <DCompile>
+      <DebugCode>Release</DebugCode>
+      <Optimizer>true</Optimizer>
+      <Inliner>true</Inliner>
+    </DCompile>
     <Link>
       <SubSystem>$subsystem$</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -334,6 +349,11 @@ $if$ ($platformx64_2$ == 1)
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
+    <DCompile>
+      <DebugCode>Release</DebugCode>
+      <Optimizer>true</Optimizer>
+      <Inliner>true</Inliner>
+    </DCompile>
     <Link>
       <SubSystem>$subsystem$</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

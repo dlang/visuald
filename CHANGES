@@ -1163,4 +1163,13 @@ unreleased Version 0.50.1
   * mago: improve function call in watch window
     - implement virtual functions, fix calling delegates and function pointers
     - display of delegate type
-	- support arbitrary return types
+    - support arbitrary return types
+    - fix showing UTF32 values (supported by dmd 2.089)
+    - fix reading enum values (not emitted before dmd 2.089)
+  * VC project: release configurations in new projects now default to -release -O -inline
+  * VC project: Compile and Compile/Run/Debug/Disassemble didn't use all command line options,
+    Run/Debug now use "dmd -i" instead of "rdmd"
+  * version highlighting for source files not in a project now reads settings from startup project
+  * highlight x64 registers in asm block
+  * VS 2019 16.2: command line options no longer read correctly from the VC project for
+    Compile and Run/Debug/Disassemble, dbuild refactored to not rely on msbuild DLLs for that

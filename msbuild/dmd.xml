@@ -139,8 +139,8 @@
     </EnumProperty>
 
     <EnumProperty Name="DebugCode" Category="Code Generation" DisplayName="Debug Code" Description="compile in debug code.">
-      <EnumValue Name="Default" DisplayName="asserts, invariants, contraints" />
-      <EnumValue Name="Debug" DisplayName="debug statements, asserts, invariants, contraints" Switch="-debug" />
+      <EnumValue Name="Default" DisplayName="asserts, invariants, constraints" />
+      <EnumValue Name="Debug" DisplayName="debug statements, asserts, invariants, constraints" Switch="-debug" />
       <EnumValue Name="Release" DisplayName="none" Switch="-release" />
     </EnumProperty>
     <EnumProperty Name="DebugInfo" Category="Code Generation" DisplayName="Debug Info" Description="generate debug information.">
