@@ -3413,14 +3413,16 @@ class Config :	DisposingComObject,
 		return files;
 	}
 
-	string getCompilerVersionIDs()
+	string getCompilerVersionIDs(string cmd = null)
 	{
 		ProjectOptions opts = GetProjectOptions();
-
-		string cmd = opts.buildCommandLine(this, true, false, null, true);
+		if (!cmd)
+		{
+			cmd = opts.buildCommandLine(this, true, false, null, true);
+			if (opts.additionalOptions.length)
+				cmd ~= " " ~ opts.additionalOptions;
+		}
 		cmd ~= " -v -o- dummy.obj";
-		if (opts.additionalOptions.length)
-			cmd ~= " " ~ opts.additionalOptions;
 
 		__gshared string[string] cachedVersions;
 		synchronized

@@ -1026,9 +1026,39 @@ class VCConfig : Config
 	}
 	override string GetCompileCommand(CFileNode file, bool syntaxOnly = false, string tool = null, string addopt = null)
 	{
-		if (file)
+		if (file && (tool == "RDMDeval" || !mCmdLine))
 			return super.GetCompileCommand(file, syntaxOnly, tool, addopt);
-		return addopt && mCmdLine ? mCmdLine ~ " " ~ addopt : mCmdLine ~ addopt;
+		string cmd = mCmdLine;
+		if (file)
+		{
+			string outfile = GetOutputFile(file, tool);
+			cmd ~= " " ~ quoteFilename(file.GetFilename());
+			if (tool == "RDMD")
+				cmd = cmd.replace(" -c ", " ");
+			else
+				cmd ~= " -c";
+			if(syntaxOnly && GetProjectOptions().compiler == Compiler.GDC)
+				cmd ~= " -fsyntax-only";
+			else if(syntaxOnly)
+				cmd ~= " -o-";
+			else
+				cmd ~= " " ~ GetProjectOptions().getOutputFileOption(outfile);
+			if (tool == "RDMD" && addopt.indexOf("--build-only") >= 0)
+				addopt = addopt.replace("--build-only", "-i"); // dmd 2.079+
+		}
+		cmd = addopt && cmd ? cmd ~ " " ~ addopt : cmd ~ addopt;
+		if (cmd)
+			cmd ~= "\n";
+		return cmd;
+	}
+
+	override string getCompilerVersionIDs(string cmd = null)
+	{
+		if (mCmdLine)
+		{
+			cmd = mCmdLine;
+		}
+		return super.getCompilerVersionIDs(cmd);
 	}
 
 	override string GetCppCompiler() { return "cl"; }
@@ -1106,7 +1136,7 @@ Config createVisualCppConfig(IVsHierarchy pHierarchy, VSITEMID itemid, string fi
 	ProjectOptions cmpopts = clone(opts);
 	if (vdhelper_GetDCompileOptions(pHierarchy, itemid, opts) == S_OK)
 	{
-		if (genCmdLine)
+		if (true || genCmdLine)
 		{
 			string cmd;
 			if (vdhelper_GetDCommandLine(pHierarchy, itemid, cmd) == S_OK)

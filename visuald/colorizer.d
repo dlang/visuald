@@ -903,6 +903,18 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		"TR3",  "TR4",  "TR5",  "TR6",  "TR7",
 		"MM0",  "MM1",  "MM2",  "MM3",  "MM4",  "MM5",  "MM6",  "MM7",
 		"XMM0", "XMM1", "XMM2", "XMM3", "XMM4", "XMM5", "XMM6", "XMM7",
+		// 64 bit
+		"RAX",  "RBX",  "RCX",  "RDX",  "RSI",  "RDI",  "RBP",  "RSP",
+		"SIL",  "DIL",  "BPL",  "SPL",
+		"R8",   "R9",   "R10",  "R11",  "R12",  "R13",  "R14",  "R15",
+		"R8D",  "R9D",  "R10D", "R11D", "R12D", "R13D", "R14D", "R15D",
+		"R8W",  "R9W",  "R10W", "R11W", "R12W", "R13W", "R14W", "R15W",
+		"R8B",  "R9B",  "R10B", "R11B", "R12B", "R13B", "R14B", "R15B",
+
+		"XMM8",  "XMM9", "XMM10", "XMM11", "XMM12", "XMM13", "XMM14", "XMM15",
+		"YMM0",  "YMM1", "YMM2",  "YMM3",  "YMM4",  "YMM5",  "YMM6",  "YMM7",  
+		"YMM8",  "YMM9", "YMM10", "YMM11", "YMM12", "YMM13", "YMM14", "YMM15", 
+		// CR0-CR8?
 	];
 	static const wstring[] asmMnemonics = [
 		"__emit",     "_emit",      "aaa",        "aad",        "aam",        "aas",
@@ -1464,7 +1476,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		int changes = 0;
 		string file = mSource.GetFileName ();
-		Config cfg = getProjectConfig(file);
+		Config cfg = getProjectConfig(file, true);
+		if (!cfg)
+			cfg = getCurrentStartupConfig();
 		release(cfg); // we don't need a reference
 
 		if(cfg != mConfig)

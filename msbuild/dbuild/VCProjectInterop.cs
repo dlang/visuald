@@ -100,9 +100,9 @@ namespace vdextensions
                 if (fcfg == null)
                     throw new COMException();
 
-                var vcftool = fcfg.Tool as Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.VCToolBase;
+                var vcftool = fcfg.Tool; // as Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.VCToolBase;
                 vcprop = vcftool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
-                if (vcftool != null && vcprop != null && vcftool.ItemType == "DCompile")
+                if (vcftool != null && vcprop != null && vcfile.ItemType == "DCompile")
                 {
                     vcrefl = vcftool as System.Reflection.IReflect;
                     if (vcrefl != null)
@@ -130,17 +130,14 @@ namespace vdextensions
             var tools = cfg.FileTools as IVCCollection;
             for (int f = 1; f <= tools.Count; f++)
             {
-                var obj = tools.Item(f);
-                var vctool = obj as Microsoft.VisualStudio.Project.VisualC.VCProjectEngine.VCToolBase;
-                if (vctool != null && vctool.ItemType == "DCompile")
+                var vctool = tools.Item(f);
+                vcrefl = vctool as System.Reflection.IReflect;
+                if (vcrefl != null && 
+                    vcrefl.GetProperty("ItemType", System.Reflection.BindingFlags.Default).Equals("DCompile"))
                 {
                     vcprop = vctool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
                     if (vcprop != null)
-                    {
-                        vcrefl = vctool as System.Reflection.IReflect;
-                        if (vcrefl != null)
-                            return;
-                    }
+                        return;
                 }
             }
             throw new COMException();
@@ -164,11 +161,10 @@ namespace vdextensions
             string assemblyFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             string xmlFileName = System.IO.Path.Combine(assemblyFolder, compiler + ".xml");
 
-            var cd = new dbuild.CompileD();
+            var cd = new dbuild.CompileDOpt();
             cd.Compiler = compiler;
             cd.ToolExe = eval(ldc ? "$(LDCBinDir)ldmd2.exe" : "$(DMDBinDir)dmd.exe");
             cd.AdditionalOptions = vcprop.GetEvaluatedPropertyValue("AdditionalOptions");
-            cd.Sources = new Microsoft.Build.Framework.ITaskItem[1] { new Microsoft.Build.Utilities.TaskItem("dummy.d") };
             var strOptions = getParametersFromFakeProperties(vcprop, vcrefl.GetProperties(0));
             var parameters = parseParameters(xmlFileName, strOptions);
             cmdline = cd.ToolExe + " " + cd.GenCmdLine(parameters);

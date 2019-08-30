@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.Build.Framework;
 using Microsoft.Build.CPPTasks;
 using System.Collections;
@@ -9,850 +8,171 @@ using System.Text;
 
 namespace dbuild
 {
-    public class CompileD : TrackedVCToolTask
-    {
-        public CompileD()
-        : base(new ResourceManager("dbuild.Strings", Assembly.GetExecutingAssembly()))
-        {
-            MinimalRebuildFromTracking = true;
+	public class CompileD : TrackedVCToolTask, IToolSwitchProvider
+	{
+		CompileDOptions opts;
 
-            this.switchOrderList.Add("DoNotLink");
-            this.switchOrderList.Add("CodeGeneration");
-
-            this.switchOrderList.Add("ImportPaths");
-            this.switchOrderList.Add("StringImportPaths");
-            this.switchOrderList.Add("VersionIdentifiers");
-            this.switchOrderList.Add("DebugIdentifiers");
-            this.switchOrderList.Add("ObjectFileName");
-            this.switchOrderList.Add("PreserveSourcePath");
-            this.switchOrderList.Add("CRuntimeLibrary");
-
-            this.switchOrderList.Add("Profile");
-            this.switchOrderList.Add("ProfileGC");
-            this.switchOrderList.Add("Coverage");
-            this.switchOrderList.Add("MinCoverage");
-            this.switchOrderList.Add("Unittest");
-            this.switchOrderList.Add("Optimizer");
-            this.switchOrderList.Add("Inliner");
-            this.switchOrderList.Add("StackFrame");
-            this.switchOrderList.Add("StackStomp");
-            this.switchOrderList.Add("AllInst");
-            this.switchOrderList.Add("Main");
-            this.switchOrderList.Add("LowMem");
-            this.switchOrderList.Add("DebugCode");
-            this.switchOrderList.Add("DebugInfo");
-            this.switchOrderList.Add("DebugFull");
-            this.switchOrderList.Add("DebugMixin");
-            this.switchOrderList.Add("BoundsCheck");
-            this.switchOrderList.Add("CPUArchitecture");
-            this.switchOrderList.Add("PerformSyntaxCheckOnly");
-
-            this.switchOrderList.Add("BetterC");
-			this.switchOrderList.Add("CppStandard");
-            this.switchOrderList.Add("DIP25");
-            this.switchOrderList.Add("DIP1000");
-            this.switchOrderList.Add("DIP1008");
-            this.switchOrderList.Add("RevertImport");
-            this.switchOrderList.Add("PreviewDtorFields");
-            this.switchOrderList.Add("PreviewIntPromote");
-            this.switchOrderList.Add("PreviewFixAliasThis");
-            this.switchOrderList.Add("PreviewMarkdown");
-            this.switchOrderList.Add("TransitionVMarkdown");
-            this.switchOrderList.Add("TransitionField");
-            this.switchOrderList.Add("TransitionCheckImports");
-            this.switchOrderList.Add("TransitionComplex");
-
-            this.switchOrderList.Add("Warnings");
-            this.switchOrderList.Add("Deprecations");
-            this.switchOrderList.Add("Verbose");
-            this.switchOrderList.Add("ShowTLS");
-            this.switchOrderList.Add("ShowGC");
-            this.switchOrderList.Add("IgnorePragma");
-            this.switchOrderList.Add("ShowDependencies");
-
-            this.switchOrderList.Add("DocDir");
-            this.switchOrderList.Add("DocFile");
-            this.switchOrderList.Add("DepFile");
-            this.switchOrderList.Add("HeaderDir");
-            this.switchOrderList.Add("HeaderFile");
-            this.switchOrderList.Add("JSONFile");
-
-            this.switchOrderList.Add("AdditionalOptions");
-
-            this.switchOrderList.Add("Sources");
-        }
-
-        private ArrayList switchOrderList = new ArrayList();
-        private string _compiler = "dmd";
-
-        public string Compiler
-        {
-            get { return _compiler; }
-            set { _compiler = value; }
-        }
-
-        protected override string ToolName
-        {
-            get { return _compiler + ".exe"; }
-        }
-
-        [Required]
-        public virtual ITaskItem[] Sources
-        {
-            get
-            {
-                if (base.IsPropertySet("Sources"))
-                {
-                    return base.ActiveToolSwitches["Sources"].TaskItemArray;
-                }
-                return null;
-            }
-            set
-            {
-                base.ActiveToolSwitches.Remove("Sources");
-                ToolSwitch toolSwitch = new ToolSwitch(ToolSwitchType.ITaskItemArray);
-                toolSwitch.Separator = " ";
-                toolSwitch.Required = true;
-                toolSwitch.ArgumentRelationList = new ArrayList();
-                toolSwitch.TaskItemArray = value;
-                base.ActiveToolSwitches.Add("Sources", toolSwitch);
-                base.AddActiveSwitchToolValue(toolSwitch);
-            }
-        }
-
-        // Hidden
-        public bool DoNotLink
-        {
-            get { return GetBoolProperty("DoNotLink"); }
-            set
-            {
-                SetBoolProperty("DoNotLink", "Do Not Link",
-                                "Compile only. Do not link (-c)",
-                                "-c", value);
-            }
-        }
-
-        public string CodeGeneration
-        {
-            get { return GetStringProperty("CodeGeneration"); }
-            set
-            {
-                string[][] switchMap = new string[3][]
-                {
-                    new string[2] { "32BitsMS-COFF", "-m32mscoff" },
-                    new string[2] { "32Bits", "-m32" },
-                    new string[2] { "64Bits", "-m64" }
-                };
-
-                SetEnumProperty("CodeGeneration", "Code Generation",
-                                "Generate 32 or 64 bit code.",
-                                switchMap, value);
-            }
-        }
-
-        // General
-        public string[] ImportPaths
-        {
-            get { return GetStringArray("ImportPaths"); }
-            set
-            {
-                SetStringArray("ImportPaths", GetToolSwitchTypeForStringPathArray(), "Import Paths",
-                               "Where to look for imports. (-I[path]).", "-I", value);
-            }
-        }
-
-        public string[] StringImportPaths
-        {
-            get { return GetStringArray("StringImportPaths"); }
-            set
-            {
-                SetStringArray("StringImportPaths", GetToolSwitchTypeForStringPathArray(), "String Import Paths",
-                               "Where to look for string imports. (-J[path]).", "-J", value);
-            }
-        }
-
-        public string[] VersionIdentifiers
-        {
-            get { return GetStringArray("VersionIdentifiers"); }
-            set
-            {
-                SetStringArray("VersionIdentifiers", ToolSwitchType.StringArray, "Version Identifiers",
-                               "Compile in version code identified by ident/&gt;= level.", "-version=", value);
-            }
-        }
-
-        public string[] DebugIdentifiers
-        {
-            get { return GetStringArray("DebugIdentifiers"); }
-            set
-            {
-                SetStringArray("DebugIdentifiers", ToolSwitchType.StringArray, "Debug Identifiers",
-                               "Compile in debug code identified by ident/&lt;= level.", "-debug=", value);
-            }
-        }
-
-        public string ObjectFileName
-        {
-            get { return GetStringProperty("ObjectFileName"); }
-            set
-            {
-                SetFileProperty("ObjectFileName", "Object File Name",
-                    "Specifies the name of the output object file. Leave empty to auto generate a name according to the compilation model. Use [PackageName] to add the folder name with special characters replaced.",
-                    "-of", value);
-            }
-        }
-
-        public bool PreserveSourcePath
-        {
-            get { return GetBoolProperty("PreserveSourcePath"); }
-            set
-            {
-                SetBoolProperty("PreserveSourcePath", "Preserve source path",
-                                "Preserve source path for output files. (-op)",
-                                "-op", value);
-            }
-        }
- 
-        public string CRuntimeLibrary
-        {
-            get { return GetStringProperty("CRuntimeLibrary"); }
-            set
-            {
-                string[][] switchMap = new string[5][]
-                {
-                    new string[2] { "None", "-mscrtlib=" },
-                    new string[2] { "MultiThreaded", "" },
-                    new string[2] { "MultiThreadedDebug", "-mscrtlib=libcmtd" },
-                    new string[2] { "MultiThreadedDll", "-mscrtlib=msvcrt" },
-                    new string[2] { "MultiThreadedDebugDll", "-mscrtlib=msvcrtd" }
-                };
-
-                SetEnumProperty("CRuntimeLibrary", "C Runtime Library",
-                                "Link against the static/dynamic debug/release C runtime library.",
-                                switchMap, value);
-            }
-        }
-
-        // Code generation
-        public bool Profile
-        {
-            get { return GetBoolProperty("Profile"); }
-            set
-            {
-                SetBoolProperty("Profile", "Enable Profiling",
-                                "Profile runtime performance of generated code. (-profile)",
-                                "-profile", value);
-            }
-        }
-
-        public bool ProfileGC
-        {
-            get { return GetBoolProperty("ProfileGC"); }
-            set
-            {
-                SetBoolProperty("ProfileGC", "Enable GC Profiling",
-                                "Profile runtime allocations. (-profile=gc)",
-                                "-profile=gc", value);
-            }
-        }
-
-        public bool Coverage
-        {
-            get { return GetBoolProperty("Coverage"); }
-            set
-            {
-                SetBoolProperty("Coverage", "Enable Code Coverage",
-                                "Do code coverage analysis. (-cov)",
-                                "-cov", value);
-            }
-        }
-
-        public int MinCoverage
-        {
-            get
-            {
-                if (base.IsPropertySet("MinCoverage"))
-                {
-                    return base.ActiveToolSwitches["MinCoverage"].Number;
-                }
-                return 0;
-
-            }
-            set
-            {
-                base.ActiveToolSwitches.Remove("MinCoverage");
-                ToolSwitch toolSwitch = new ToolSwitch(ToolSwitchType.Integer);
-                toolSwitch.DisplayName = "Minimum Code Coverage";
-                toolSwitch.Description = "Require at least nnn% code coverage. (-cov=nnn)";
-                toolSwitch.ArgumentRelationList = new ArrayList();
-                if (base.ValidateInteger("MinCoverage", 0, 100, value))
-                {
-                    toolSwitch.IsValid = true;
-                }
-                else
-                {
-                    toolSwitch.IsValid = false;
-                }
-
-                toolSwitch.SwitchValue = "-cov=";
-                toolSwitch.Name = "MinCoverage";
-                toolSwitch.Number = value;
-                base.ActiveToolSwitches.Add("MinCoverage", toolSwitch);
-                base.AddActiveSwitchToolValue(toolSwitch);
-            }
-        }
-
-        public bool Unittest
-        {
-            get { return GetBoolProperty("Unittest"); }
-            set
-            {
-                SetBoolProperty("Unittest", "Enable Unittests",
-                                "Compile in unit tests (-unittest)",
-                                "-unittest", value);
-            }
-        }
-
-        public bool Optimizer
-        {
-            get { return GetBoolProperty("Optimizer"); }
-            set
-            {
-                SetBoolProperty("Optimizer", "Optimizations",
-                                "run optimizer (-O)",
-                                "-O", value);
-            }
-        }
-
-        public bool Inliner
-        {
-            get { return GetBoolProperty("Inliner"); }
-            set
-            {
-                SetBoolProperty("Inliner", "Inlining",
-                                "Do function inlining (-inline)",
-                                "-inline", value);
-            }
-        }
-
-        public bool StackFrame
-        {
-            get { return GetBoolProperty("StackFrame"); }
-            set
-            {
-                SetBoolProperty("StackFrame", "Stack Frames",
-                                "Always emit stack frame (-gs)",
-                                "-gs", value);
-            }
-        }
-
-        public bool StackStomp
-        {
-            get { return GetBoolProperty("StackStomp"); }
-            set
-            {
-                SetBoolProperty("StackStomp", "Stack Stomp",
-                                "Add stack stomp code (-gx)",
-                                "-gx", value);
-            }
-        }
-
-        public bool AllInst
-        {
-            get { return GetBoolProperty("AllInst"); }
-            set
-            {
-                SetBoolProperty("AllInst", "All Template Instantiations",
-                                "Generate code for all template instantiations (-allinst)",
-                                "-allinst", value);
-            }
-        }
-
-        public bool BetterC
-        {
-            get { return GetBoolProperty("BetterC"); }
-            set
-            {
-                SetBoolProperty("BetterC", "Better C",
-                                "Omit generating some runtime information and helper functions (-betterC)",
-                                "-betterC", value);
-            }
-        }
-
-        public bool Main
-        {
-            get { return GetBoolProperty("Main"); }
-            set
-            {
-                SetBoolProperty("Main", "Add Main",
-                                "Add default main() (e.g. for unittesting) (-main)",
-                                "-main", value);
-            }
-        }
-
-        public bool LowMem
-        {
-            get { return GetBoolProperty("LowMem"); }
-            set
-            {
-                SetBoolProperty("LowMem", "Low Memory Usage",
-                                "Use garbage collector to reduce memory needed by the compiler (-lowmem)",
-                                "-lowmem", value);
-            }
-        }
-
-        public string DebugCode
-        {
-            get { return GetStringProperty("DebugCode"); }
-            set
-            {
-                string[][] switchMap = new string[3][]
-                {
-                    new string[2] { "Default", "" },
-                    new string[2] { "Debug", "-debug" },
-                    new string[2] { "Release", "-release" }
-                };
-
-                SetEnumProperty("DebugCode", "Debug Code",
-                                "Compile in debug code. (-debug, -release)",
-                                switchMap, value);
-            }
-        }
-
-        public string DebugInfo
-        {
-            get { return GetStringProperty("DebugInfo"); }
-            set
-            {
-                string[][] switchMap = new string[3][]
-                {
-                    new string[2] { "None", "" },
-                    new string[2] { "VS", "-gc" },
-                    new string[2] { "Mago", "-g" }
-                };
-
-                SetEnumProperty("DebugInfo", "Debug Info",
-                                "Generate debug information. (-gc, -g)",
-                                switchMap, value);
-            }
-        }
-
-        public bool DebugFull
-        {
-            get { return GetBoolProperty("DebugFull"); }
-            set
-            {
-                SetBoolProperty("DebugFull", "Full Debug Info",
-                                "Emit debug info for all referenced types (-gf)",
-                                "-gf", value);
-            }
-        }
-
-        public string DebugMixin
-        {
-            get { return GetStringProperty("DebugMixin"); }
-            set
-            {
-                SetFileProperty("DebugMixin", "Debug Mixin File",
-                                "Expand and save mixins to specified file. (-mixin=[file])",
-                                "-mixin=", value);
-            }
-        }
-
-        public string CPUArchitecture
-        {
-            get { return GetStringProperty("CPUArchitecture"); }
-            set
-            {
-                string[][] switchMap = new string[4][]
-                {
-                    new string[2] { "baseline", "" },
-                    new string[2] { "avx", "-mcpu=avx" },
-                    new string[2] { "avx2", "-mcpu=avx2" },
-                    new string[2] { "native", "-mcpu=native" }
-                };
-
-                SetEnumProperty("CPUArchitecture", "CPU Architecture",
-                                "generate instructions for architecture. (-mcpu=)",
-                                switchMap, value);
-            }
-        }
-
-        public string BoundsCheck
-        {
-            get { return GetStringProperty("BoundsCheck"); }
-            set
-            {
-                string[][] switchMap = new string[3][]
-                {
-                    new string[2] { "Off", "-boundscheck=off" },
-                    new string[2] { "SafeOnly", "-boundscheck=safeonly" },
-                    new string[2] { "On", "-boundscheck=on" }
-                };
-
-                SetEnumProperty("BoundsCheck", "Bounds Checking",
-                                "Enable array bounds checking. (-boundscheck=off/safeonly/on)",
-                                switchMap, value);
-            }
-        }
-
-        public bool PerformSyntaxCheckOnly
-        {
-            get { return GetBoolProperty("PerformSyntaxCheckOnly"); }
-            set
-            {
-                SetBoolProperty("PerformSyntaxCheckOnly", "Perform Syntax Check Only",
-                                "Performs a syntax check only (-o-)",
-                                "-o-", value);
-            }
-        }
-
-        // Language
-        public bool DIP25
-        {
-            get { return GetBoolProperty("DIP25"); }
-            set
-            {
-                SetBoolProperty("DIP25", "DIP25",
-                                "implement DIP25: sealed pointers (-dip25)",
-                                "-dip25", value);
-            }
-        }
-
-        public bool DIP1000
-        {
-            get { return GetBoolProperty("DIP1000"); }
-            set
-            {
-                SetBoolProperty("DIP1000", "DIP1000",
-                                "implement DIP1000: scoped pointers (-dip1000)",
-                                "-dip1000", value);
-            }
-        }
-
-        public bool DIP1008
-        {
-            get { return GetBoolProperty("DIP1008"); }
-            set
-            {
-                SetBoolProperty("DIP1008", "DIP1008",
-                                "implement DIP1008: reference counted exceptions (-dip1008)",
-                                "-dip1008", value);
-            }
-        }
-
-        public bool RevertImport
-        {
-            get { return GetBoolProperty("RevertImport"); }
-            set
-            {
-                SetBoolProperty("RevertImport", "Revert import",
-								"revert to single phase name lookup (-revert=import)",
-                                "-revert=import", value);
-            }
-        }
-
-        public bool PreviewDtorFields
+		public CompileD()
+		: base(new ResourceManager("dbuild.Strings", Assembly.GetExecutingAssembly()))
 		{
-            get { return GetBoolProperty("PreviewDtorFields"); }
-            set
-            {
-                SetBoolProperty("PreviewDtorFields", "Preview dtorfields",
-								"destruct fields of partially constructed objects (-preview=dtorfields)",
-                                "-preview=dtorfields", value);
-            }
-        }
+			opts = new CompileDOptions(this);
+			MinimalRebuildFromTracking = true;
+		}
 
-        public bool PreviewIntPromote
-        {
-            get { return GetBoolProperty("PreviewIntPromote"); }
-            set
-            {
-                SetBoolProperty("PreviewIntPromote", "Preview intpromote",
-								"fix integral promotions for unary + - ~ operators (-preview=intpromote)",
-								"-preview=intpromote", value);
-            }
-        }
-
-        public bool PreviewFixAliasThis
+		public new string AdditionalOptions
 		{
-            get { return GetBoolProperty("PreviewFixAliasThis"); }
-            set
-            {
-                SetBoolProperty("PreviewFixAliasThis", "Preview fixAliasThis",
-								"when a symbol is resolved, check alias this scope before upper scopes (-preview=fixAliasThis)",
-								"-preview=fixAliasThis", value);
-            }
-        }
+			get { return base.AdditionalOptions; }
+			set { base.AdditionalOptions = value; opts.AdditionalOptions = value; }
+		}
 
-        public bool PreviewMarkdown
+		public string Compiler { get { return opts.Compiler; } set { opts.Compiler = value; } }
+		protected override string ToolName { get { return opts.ToolName; } }
+		public string TrackerLogDirectory { get { return opts.TrackerLogDirectory; } set { opts.TrackerLogDirectory = value; } }
+
+		// use the default implementation of SourcesPropertyName, it returns "Sources"
+		[Required]
+		public virtual ITaskItem[] Sources { get { return opts.Sources; } set { opts.Sources = value; } }
+
+		public bool DoNotLink { get { return opts.DoNotLink; } set { opts.DoNotLink = value; } }
+		public string CodeGeneration { get { return opts.CodeGeneration; } set { opts.CodeGeneration = value; } }
+		public string[] ImportPaths { get { return opts.ImportPaths; } set { opts.ImportPaths = value; } }
+		public string[] StringImportPaths { get { return opts.StringImportPaths; } set { opts.StringImportPaths = value; } }
+		public string[] VersionIdentifiers { get { return opts.VersionIdentifiers; } set { opts.VersionIdentifiers = value; } }
+		public string[] DebugIdentifiers { get { return opts.DebugIdentifiers; } set { opts.DebugIdentifiers = value; } }
+		public string ObjectFileName { get { return opts.ObjectFileName; } set { opts.ObjectFileName = value; } }
+		public bool PreserveSourcePath { get { return opts.PreserveSourcePath; } set { opts.PreserveSourcePath = value; } }
+		public string CRuntimeLibrary { get { return opts.CRuntimeLibrary; } set { opts.CRuntimeLibrary = value; } }
+		public bool Profile { get { return opts.Profile; } set { opts.Profile = value; } }
+		public bool ProfileGC { get { return opts.ProfileGC; } set { opts.ProfileGC = value; } }
+		public bool Coverage { get { return opts.Coverage; } set { opts.Coverage = value; } }
+		public int MinCoverage { get { return opts.MinCoverage; } set { opts.MinCoverage = value; } }
+		public bool Unittest { get { return opts.Unittest; } set { opts.Unittest = value; } }
+		public bool Optimizer { get { return opts.Optimizer; } set { opts.Optimizer = value; } }
+		public bool Inliner { get { return opts.Inliner; } set { opts.Inliner = value; } }
+		public bool StackFrame { get { return opts.StackFrame; } set { opts.StackFrame = value; } }
+		public bool StackStomp { get { return opts.StackStomp; } set { opts.StackStomp = value; } }
+		public bool AllInst { get { return opts.AllInst; } set { opts.AllInst = value; } }
+		public bool BetterC { get { return opts.BetterC; } set { opts.BetterC = value; } }
+		public bool Main { get { return opts.Main; } set { opts.Main = value; } }
+		public bool LowMem { get { return opts.LowMem; } set { opts.LowMem = value; } }
+		public string DebugCode { get { return opts.DebugCode; } set { opts.DebugCode = value; } }
+		public string DebugInfo { get { return opts.DebugInfo; } set { opts.DebugInfo = value; } }
+		public bool DebugFull { get { return opts.DebugFull; } set { opts.DebugFull = value; } }
+		public string DebugMixin { get { return opts.DebugMixin; } set { opts.DebugMixin = value; } }
+		public string CPUArchitecture { get { return opts.CPUArchitecture; } set { opts.CPUArchitecture = value; } }
+		public string BoundsCheck { get { return opts.BoundsCheck; } set { opts.BoundsCheck = value; } }
+		public bool PerformSyntaxCheckOnly { get { return opts.PerformSyntaxCheckOnly; } set { opts.PerformSyntaxCheckOnly = value; } }
+		public bool DIP25 { get { return opts.DIP25; } set { opts.DIP25 = value; } }
+		public bool DIP1000 { get { return opts.DIP1000; } set { opts.DIP1000 = value; } }
+		public bool DIP1008 { get { return opts.DIP1008; } set { opts.DIP1008 = value; } }
+		public bool RevertImport { get { return opts.RevertImport; } set { opts.RevertImport = value; } }
+		public bool PreviewDtorFields { get { return opts.PreviewDtorFields; } set { opts.PreviewDtorFields = value; } }
+		public bool PreviewIntPromote { get { return opts.PreviewIntPromote; } set { opts.PreviewIntPromote = value; } }
+		public bool PreviewFixAliasThis { get { return opts.PreviewFixAliasThis; } set { opts.PreviewFixAliasThis = value; } }
+		public bool PreviewMarkdown { get { return opts.PreviewMarkdown; } set { opts.PreviewMarkdown = value; } }
+		public bool TransitionVMarkdown { get { return opts.TransitionVMarkdown; } set { opts.TransitionVMarkdown = value; } }
+		public bool TransitionField { get { return opts.TransitionField; } set { opts.TransitionField = value; } }
+		public bool TransitionCheckImports { get { return opts.TransitionCheckImports; } set { opts.TransitionCheckImports = value; } }
+		public bool TransitionComplex { get { return opts.TransitionComplex; } set { opts.TransitionComplex = value; } }
+		public string CppStandard { get { return opts.CppStandard; } set { opts.CppStandard = value; } }
+		public string Warnings { get { return opts.Warnings; } set { opts.Warnings = value; } }
+		public string Deprecations { get { return opts.Deprecations; } set { opts.Deprecations = value; } }
+		public bool Verbose { get { return opts.Verbose; } set { opts.Verbose = value; } }
+		public bool ShowTLS { get { return opts.ShowTLS; } set { opts.ShowTLS = value; } }
+		public bool ShowGC { get { return opts.ShowGC; } set { opts.ShowGC = value; } }
+		public bool IgnorePragma { get { return opts.IgnorePragma; } set { opts.IgnorePragma = value; } }
+		public bool ShowDependencies { get { return opts.ShowDependencies; } set { opts.ShowDependencies = value; } }
+		public string DocDir { get { return opts.DocDir; } set { opts.DocDir = value; } }
+		public string DocFile { get { return opts.DocFile; } set { opts.DocFile = value; } }
+		public string DepFile { get { return opts.DepFile; } set { opts.DepFile = value; } }
+		public string HeaderDir { get { return opts.HeaderDir; } set { opts.HeaderDir = value; } }
+		public string HeaderFile { get { return opts.HeaderFile; } set { opts.HeaderFile = value; } }
+		public string JSONFile { get { return opts.JSONFile; } set { opts.JSONFile = value; } }
+		public bool ShowCommandLine { get { return opts.ShowCommandLine; } set { opts.ShowCommandLine = value; } }
+		public string PackageName { get { return opts.PackageName; } set { opts.PackageName = value; } }
+
+		// IToolSwitchProvider
+		public void SetProperty(string name, string displayName, string description, string switchValue,
+								DToolSwitchType dtype, object value,
+								bool multipleValues = false, bool required = false, string separator = null)
 		{
-            get { return GetBoolProperty("PreviewMarkdown"); }
-            set
-            {
-                SetBoolProperty("PreviewMarkdown", "Enable Markdown",
-								"Enable Markdown replacements in Ddoc (-preview=markdown)",
-								"-preview=markdown", value);
-            }
-        }
+			var type = (ToolSwitchType)dtype;
+			if (dtype == DToolSwitchType.StringPathArray)
+				type = GetToolSwitchTypeForStringPathArray();
 
-        public bool TransitionVMarkdown
-        {
-            get { return GetBoolProperty("TransitionVMarkdown"); }
-            set
-            {
-                SetBoolProperty("TransitionVMarkdown", "List Markdown Usage",
-                                "List instances of Markdown replacements in Ddoc (-transition=vmarkdown)",
-                                "-transition=vmarkdown", value);
-            }
-        }
+			base.ActiveToolSwitches.Remove(name);
+			ToolSwitch toolSwitch = new ToolSwitch(type);
+			toolSwitch.DisplayName = displayName;
+			toolSwitch.Description = description;
+			toolSwitch.SwitchValue = switchValue;
+			toolSwitch.Name = name;
 
-        public bool TransitionField
-        {
-            get { return GetBoolProperty("TransitionField"); }
-            set
-            {
-                SetBoolProperty("TransitionField", "List non-mutable fields",
-                                "List all non-mutable fields which occupy an object instance (-transition=field)",
-                                "-transition=field", value);
-            }
-        }
+			switch (type)
+			{
+				case ToolSwitchType.Boolean: toolSwitch.BooleanValue = (bool)value; break;
+				case ToolSwitchType.Integer: toolSwitch.Number = (int)value; break;
+				case ToolSwitchType.File:
+				case ToolSwitchType.Directory:
+				case ToolSwitchType.String: toolSwitch.Value = (string)value; break;
+				case (ToolSwitchType)9 /*ToolSwitchType.StringPathArray*/:
+				case ToolSwitchType.StringArray: toolSwitch.StringList = (string[])value; break;
+				case ToolSwitchType.ITaskItem: toolSwitch.TaskItem = (ITaskItem)value; break;
+				case ToolSwitchType.ITaskItemArray: toolSwitch.TaskItemArray = (ITaskItem[])value; break;
+			}
 
-        public bool TransitionCheckImports
-        {
-            get { return GetBoolProperty("TransitionCheckImports"); }
-            set
-            {
-                SetBoolProperty("TransitionCheckImports", "Show import anomalies",
-                                "Give deprecation messages about import anomalies (-transition=checkimports)",
-                                "-transition=checkimports", value);
-            }
-        }
+			toolSwitch.MultipleValues = multipleValues;
+			toolSwitch.Required = required;
+			toolSwitch.Separator = separator;
+			base.ActiveToolSwitches.Add(name, toolSwitch);
+			AddActiveSwitchToolValue(toolSwitch);
+		}
 
-        public bool TransitionComplex
-        {
-            get { return GetBoolProperty("TransitionComplex"); }
-            set
-            {
-                SetBoolProperty("TransitionComplex", "Show usage of complex types",
-                                "Give deprecation messages about all usages of complex or imaginary types (-transition=complex)",
-                                "-transition=complex", value);
-            }
-        }
+		public object GetProperty(string name)
+		{
+			if (IsPropertySet(name))
+			{
+				var toolSwitch = base.ActiveToolSwitches[name];
+				switch (toolSwitch.Type)
+				{
+					case ToolSwitchType.Boolean: return toolSwitch.BooleanValue;
+					case ToolSwitchType.Integer: return toolSwitch.Number;
+					case ToolSwitchType.File:
+					case ToolSwitchType.Directory:
+					case ToolSwitchType.String: return toolSwitch.Value;
+					case (ToolSwitchType)9 /*ToolSwitchType.StringPathArray*/:
+					case ToolSwitchType.StringArray: return toolSwitch.StringList;
+					case ToolSwitchType.ITaskItem: return toolSwitch.TaskItem;
+					case ToolSwitchType.ITaskItemArray: return toolSwitch.TaskItemArray;
+				}
+			}
+			return null;
+		}
 
-        public string CppStandard
-        {
-            get { return GetStringProperty("CppStandard"); }
-            set
-            {
-                string[][] switchMap = new string[5][]
-                {
-                    new string[2] { "default", "" },
-                    new string[2] { "cpp98", "-extern-std=c++98" },
-                    new string[2] { "cpp11", "-extern-std=c++11" },
-                    new string[2] { "cpp14", "-extern-std=c++14" },
-                    new string[2] { "cpp17", "-extern-std=c++17" }
-                };
+		private ToolSwitchType GetToolSwitchTypeForStringPathArray()
+		{
+			// dynamically decide whether ToolSwitchType.StringPathArray exists
+			// (not declared in Microsoft.Build.CPPTasks.Common, Version=12.0.0.0, but still seems to work)
+			var type = typeof(ToolSwitchType);
+			var enums = type.GetEnumNames();
+			if (enums.Length >= 10)
+				return (ToolSwitchType)9; // ToolSwitchType.StringPathArray;
+			return ToolSwitchType.StringArray;
+		}
 
-                SetEnumProperty("CppStandard", "C++ Language Standard",
-                                "set C++ name mangling compatibility (-extern-std=)",
-                                switchMap, value);
-            }
-        }
-
-
-        // Messages
-        public string Warnings
-        {
-            get { return GetStringProperty("Warnings"); }
-            set
-            {
-                string[][] switchMap = new string[3][]
-                {
-                    new string[2] { "None", "" },
-                    new string[2] { "Info", "-wi" },
-                    new string[2] { "Error", "-w" }
-                };
-
-                SetEnumProperty("Warnings", "Warnings",
-                                "Enable display of warnings. (-w, -wi)",
-                                switchMap, value);
-            }
-        }
-
-        public string Deprecations
-        {
-            get { return GetStringProperty("Deprecations"); }
-            set
-            {
-                string[][] switchMap = new string[3][]
-                {
-                    new string[2] { "Info", "-dw" },
-                    new string[2] { "Error", "-de" },
-                    new string[2] { "Allow", "-d" }
-                };
-
-                SetEnumProperty("Deprecations", "Enable deprecated features",
-                                "Enable display of deprecated features. (-dw, -de, -d)",
-                                switchMap, value);
-            }
-        }
-
-        public bool Verbose
-        {
-            get { return GetBoolProperty("Verbose"); }
-            set
-            {
-                SetBoolProperty("Verbose", "Verbose",
-                                "Print out what the compiler is currently doing (-v)",
-                                "-v", value);
-            }
-        }
-
-        public bool ShowTLS
-        {
-            get { return GetBoolProperty("ShowTLS"); }
-            set
-            {
-                SetBoolProperty("ShowTLS", "Show TLS variables",
-                                "List all variables going into thread local storage (-vtls)",
-                                "-vtls", value);
-            }
-        }
-
-        public bool ShowGC
-        {
-            get { return GetBoolProperty("ShowGC"); }
-            set
-            {
-                SetBoolProperty("ShowGC", "Show GC allocations",
-                                "List all gc allocations including hidden ones. (-vgc)",
-                                "-vgc", value);
-            }
-        }
-
-        public bool IgnorePragma
-        {
-            get { return GetBoolProperty("IgnorePragma"); }
-            set
-            {
-                SetBoolProperty("IgnorePragma", "Ignore unsupported pragmas",
-                                "Ignore unsupported pragmas. (-ignore)",
-                                "-ignore", value);
-            }
-        }
-
-        public bool ShowDependencies
-        {
-            get { return GetBoolProperty("ShowDependencies"); }
-            set
-            {
-                SetBoolProperty("ShowDependencies", "Print module dependencies",
-                                "Print module dependencies (imports/file/version/debug/lib). (-deps)",
-                                "-deps", value);
-            }
-        }
-
-        // Documentation
-        public string DocDir
-        {
-            get { return GetStringProperty("DocDir"); }
-            set
-            {
-                SetFileProperty("DocDir", "Documentation Directory",
-                                "Write documentation file(s) to this directory. (-Dd[dir])",
-                                "-Dd", value);
-            }
-        }
-
-        public string DocFile
-        {
-            get { return GetStringProperty("DocFile"); }
-            set
-            {
-                SetFileProperty("DocFile", "Documentation File",
-                                "Write documentation to this file. (-Df[file])",
-                                "-Df", value);
-            }
-        }
-
-        public string DepFile
-        {
-            get { return GetStringProperty("DepFile"); }
-            set
-            {
-                SetFileProperty("DepFile", "Dependencies File",
-                                "Write module dependencies to filename (only imports). (-deps=[file])",
-                                "-deps=", value);
-            }
-        }
-
-        public string HeaderDir
-        {
-            get { return GetStringProperty("HeaderDir"); }
-            set
-            {
-                SetFileProperty("HeaderDir", "Header Directory",
-                                "Write 'header' file(s) to this directory. (-Hd[dir])",
-                                "-Hd", value);
-            }
-        }
-
-        public string HeaderFile
-        {
-            get { return GetStringProperty("HeaderFile"); }
-            set
-            {
-                SetFileProperty("HeaderFile", "Header File",
-                                "Write 'header' to this file. (-Hf[file])",
-                                "-Hf", value);
-            }
-        }
-
-        public string JSONFile
-        {
-            get { return GetStringProperty("JSONFile"); }
-            set
-            {
-                SetFileProperty("JSONFile", "JSON Browse File",
-                                "Write browse information to this JSON file. (-Xf[file])",
-                                "-Xf", value);
-            }
-        }
-
-        // Other properties
-        public bool ShowCommandLine
-        {
-            get;
-            set;
-        }
-
-        public string PackageName
-        {
-            get;
-            set;
-        }
-
-        public string TrackerLogDirectory
-        {
-            get;
-            set;
-        }
-
-        [Output]
+		[Output]
         public string PackageNameOut
         {
-            get { return PackageName; }
+            get { return opts.PackageName; }
         }
 
         protected override ArrayList SwitchOrderList
         {
-            get { return this.switchOrderList; }
+            get { return opts.switchOrderList; }
         }
 
         private string TLogPrefix
         {
-            get { return _compiler == "LDC" ? "ldmd2-ldc2" : "dmd"; }
+            get { return Compiler == "LDC" ? "ldmd2-ldc2" : "dmd"; }
         }
 
         protected override string[] ReadTLogNames
@@ -874,8 +194,8 @@ namespace dbuild
         {
             get
             {
-                if (this.TrackerLogDirectory != null)
-                    return this.TrackerLogDirectory;
+                if (opts.TrackerLogDirectory != null)
+                    return opts.TrackerLogDirectory;
                 return string.Empty;
             }
         }
@@ -888,161 +208,9 @@ namespace dbuild
             }
         }
 
-        private bool GetBoolProperty(string name)
-        {
-            if (base.IsPropertySet(name))
-            {
-                return base.ActiveToolSwitches[name].BooleanValue;
-            }
-            return false;
-        }
-
-        private void SetBoolProperty(string name,
-                                     string displayName,
-                                     string description,
-                                     string switchValue,
-                                     bool value)
-        {
-            base.ActiveToolSwitches.Remove(name);
-            ToolSwitch toolSwitch = new ToolSwitch(ToolSwitchType.Boolean);
-            toolSwitch.DisplayName = displayName;
-            toolSwitch.Description = description;
-            toolSwitch.ArgumentRelationList = new ArrayList();
-            toolSwitch.SwitchValue = switchValue;
-            toolSwitch.Name = name;
-            toolSwitch.BooleanValue = value;
-            base.ActiveToolSwitches.Add(name, toolSwitch);
-            base.AddActiveSwitchToolValue(toolSwitch);
-        }
-
-        private string GetStringProperty(string name)
-        {
-            if (base.IsPropertySet(name))
-            {
-                return base.ActiveToolSwitches[name].Value;
-            }
-            return null;
-        }
-
-        private void SetFileProperty(string name,
-                                     string displayName,
-                                     string description,
-                                     string switchValue,
-                                     string value)
-        {
-            base.ActiveToolSwitches.Remove(name);
-            ToolSwitch toolSwitch = new ToolSwitch(ToolSwitchType.File);
-            toolSwitch.DisplayName = displayName;
-            toolSwitch.Description = description;
-            toolSwitch.ArgumentRelationList = new ArrayList();
-            toolSwitch.SwitchValue = switchValue;
-            toolSwitch.Name = name;
-            toolSwitch.Value = value;
-            base.ActiveToolSwitches.Add(name, toolSwitch);
-            base.AddActiveSwitchToolValue(toolSwitch);
-        }
-
-        private void SetDirectoryProperty(string name,
-                                          string displayName,
-                                          string description,
-                                          string switchValue,
-                                          string value)
-        {
-            base.ActiveToolSwitches.Remove(name);
-            ToolSwitch toolSwitch = new ToolSwitch(ToolSwitchType.Directory);
-            toolSwitch.DisplayName = displayName;
-            toolSwitch.Description = description;
-            toolSwitch.ArgumentRelationList = new ArrayList();
-            toolSwitch.SwitchValue = switchValue;
-            toolSwitch.Name = name;
-            toolSwitch.Value = VCToolTask.EnsureTrailingSlash(value);
-            base.ActiveToolSwitches.Add(name, toolSwitch);
-            base.AddActiveSwitchToolValue(toolSwitch);
-        }
-
-        private void SetEnumProperty(string name,
-                                     string displayName,
-                                     string description,
-                                     string[][] switchMap,
-                                     string value)
-            {
-                base.ActiveToolSwitches.Remove(name);
-                ToolSwitch toolSwitch = new ToolSwitch(ToolSwitchType.String);
-                toolSwitch.DisplayName = displayName;
-                toolSwitch.Description = description;
-                toolSwitch.ArgumentRelationList = new ArrayList();
-                toolSwitch.SwitchValue = base.ReadSwitchMap(name, switchMap, value);
-                toolSwitch.Name = name;
-                toolSwitch.Value = value;
-                toolSwitch.MultipleValues = true;
-                base.ActiveToolSwitches.Add(name, toolSwitch);
-                base.AddActiveSwitchToolValue(toolSwitch);
-            }
-
-        private string[] GetStringArray(string name)
-        {
-            if (base.IsPropertySet(name))
-            {
-                return base.ActiveToolSwitches[name].StringList;
-            }
-            return null;
-        }
-
-        private void SetStringArray(string name,
-                                    ToolSwitchType type,
-                                    string displayName,
-                                    string description,
-                                    string switchValue,
-                                    string[] value)
-        {
-            base.ActiveToolSwitches.Remove(name);
-            ToolSwitch toolSwitch = new ToolSwitch(type);
-            toolSwitch.DisplayName = displayName;
-            toolSwitch.Description = description;
-            toolSwitch.ArgumentRelationList = new ArrayList();
-            toolSwitch.SwitchValue = switchValue;
-            toolSwitch.Name = name;
-            toolSwitch.StringList = value;
-            base.ActiveToolSwitches.Add(name, toolSwitch);
-            base.AddActiveSwitchToolValue(toolSwitch);
-        }
-
-        private ToolSwitchType GetToolSwitchTypeForStringPathArray()
-        {
-            // dynamically decide whether ToolSwitchType.StringPathArray exists
-            // (not declared in Microsoft.Build.CPPTasks.Common, Version=12.0.0.0, but still seems to work)
-            var type = typeof(ToolSwitchType);
-            var enums = type.GetEnumNames();
-            if (enums.Length >= 10)
-                return (ToolSwitchType)9; // ToolSwitchType.StringPathArray;
-            return ToolSwitchType.StringArray;
-        }
-
-        // use the default implementation of SourcesPropertyName, it returns "Sources"
-
         protected override ITaskItem[] TrackedInputFiles
         {
             get { return Sources; } //  return new ITaskItem[1] { new TaskItem(this.Source) };
-        }
-
-        private void applyParameters(Dictionary<string, object> parameterValues)
-        {
-            var myType = typeof(CompileD);
-            foreach (string s in switchOrderList)
-            {
-                var prop = myType.GetProperty(s);
-                object val;
-                if (prop != null && parameterValues.TryGetValue(s, out val))
-                {
-                    prop.SetValue(this, val, null);
-                }
-            }
-        }
-
-        public string GenCmdLine(Dictionary<string, object> parameters)
-        {
-            applyParameters(parameters);
-            return GenerateCommandLineExceptSwitches(new string[0]);
         }
 
 #if TOOLS_V14 || TOOLS_V15
@@ -1055,7 +223,7 @@ namespace dbuild
             string cmd = base.GenerateCommandLineCommands(format);
 #endif
             // must be outside of response file
-            if (LowMem)
+            if (opts.LowMem)
                 if (string.IsNullOrEmpty(cmd))
                     cmd = " -lowmem";
                 else
@@ -1073,13 +241,13 @@ namespace dbuild
 
         protected override int ExecuteTool(string pathToTool, string responseFileCommands, string commandLineCommands)
         {
-            responseFileCommands = responseFileCommands.Replace("[PackageName]", PackageName);
-            commandLineCommands = commandLineCommands.Replace("[PackageName]", PackageName);
+            responseFileCommands = responseFileCommands.Replace("[PackageName]", opts.PackageName);
+            commandLineCommands = commandLineCommands.Replace("[PackageName]", opts.PackageName);
 
             string src = "";
             foreach (var item in Sources)
                 src += " " + item.ToString();
-            if (ShowCommandLine)
+            if (opts.ShowCommandLine)
                 Log.LogMessage(MessageImportance.High, pathToTool + " " + commandLineCommands + " " + responseFileCommands);
             else
                 Log.LogMessage(MessageImportance.High, "Compiling" + src);
