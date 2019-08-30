@@ -26,12 +26,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.086.1"
+!define DMD_VERSION "2.087.1"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.16.0"
+!define LDC_VERSION "1.17.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -101,7 +101,7 @@
 
   SetCompressor /solid lzma
 !ifdef DMD
-  SetCompressorDictSize 128
+  SetCompressorDictSize 112
 !endif
 
   !define UNINSTALL_REGISTRY_ROOT HKLM
@@ -170,7 +170,7 @@
 
   ReserveFile ${DMD_PAGE_INI}
 !ifdef DMD ; doesn't work in NSIS3 on appveyor
-  ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
+;  ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
 !endif
 
 ;--------------------------------
