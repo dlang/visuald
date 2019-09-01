@@ -255,10 +255,10 @@ unittest
 		}
 	}
 
-	void checkExpansions(Module analyzedModule, int line, int col, string[] expected)
+	void checkExpansions(Module analyzedModule, int line, int col, string tok, string[] expected)
 	{
 		import std.algorithm, std.array;
-		string[] expansions = findExpansions(analyzedModule, line, col, "");
+		string[] expansions = findExpansions(analyzedModule, line, col, tok);
 		expansions.sort();
 		expected.sort();
 		assert_equal(expansions.length, expected.length);
@@ -473,11 +473,15 @@ unittest
 		{                                // Line 10
 			S anS;
 			int x = anS.f(1);
-			a
+			int y = anS.
 		}
 	};
-	m = checkErrors(source, "12,14,12,15:no property `f` for type `S`\n");
+	m = checkErrors(source,
+		"14,2,14,3:identifier or `new` expected following `.`, not `}`\n" ~
+		"14,2,14,3:semicolon expected, not `}`\n" ~
+		"12,14,12,15:no property `f` for type `S`\n");
 	dumpAST(m);
-	checkExpansions(m, 12, 16, [ "field1", "field2", "fun", "more" ]);
-	checkExpansions(m, 13, 5, [ "field1", "field2", "fun", "more" ]);
+	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
+	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
+	checkExpansions(m, 13, 13, "an", [ "anS" ]);
 }

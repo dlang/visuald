@@ -554,7 +554,7 @@ class DMDServer : ComObject, IVDServer
 			try
 			{
 				if (auto m = md.analyzedModule)
-					symbols = findExpansions(m, line, idx + 1, stok);
+					symbols = findExpansions(m, line, idx + 1 - cast(int) stok.length, stok);
 			}
 			catch(OutOfMemoryError e)
 			{

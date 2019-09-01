@@ -512,11 +512,11 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return false;
 	}
 
-	bool matchLoc(ref Loc loc)
+	bool matchLoc(ref const(Loc) loc, int len)
 	{
 		if (loc.filename is filename)
 			if (loc.linnum == startLine && loc.linnum == endLine)
-				if (loc.charnum <= startIndex /*&& loc.charnum + ident.toString().length >= endIndex*/)
+				if (loc.charnum <= startIndex && loc.charnum + len >= endIndex)
 					return true;
 		return false;
 	}
@@ -636,6 +636,13 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			foundScope = scopesym;
 	}
 
+	override void visit(ScopeStatement ss)
+	{
+		visit(cast(Statement)ss);
+		if (found && !foundScope)
+			foundScope = ss.scopesym;
+	}
+
 	override void visit(TemplateInstance)
 	{
 		// skip members added by semantic
@@ -655,7 +662,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	}
 	override void visit(NewExp ne)
 	{
-		if (!found && matchLoc(ne.loc))
+		if (!found && matchLoc(ne.loc, 99))
 			if (ne.member)
 				foundNode(ne.member);
 			else
@@ -672,9 +679,20 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(DotIdExp de)
 	{
-		if (!found && de.ident)
-			if (matchIdentifier(de.identloc, de.ident))
+		if (!found)
+			if (de.ident)
+				if (matchIdentifier(de.identloc, de.ident))
+					foundNode(de);
+	}
+
+	override void visit(DotExp de)
+	{
+		if (!found)
+		{
+			// '.' of erroneous DotIdExp
+			if (matchLoc(de.loc, 2))
 				foundNode(de);
+		}
 	}
 
 	override void visit(DotTemplateExp dte)
@@ -738,6 +756,13 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			}
 		}
 		visit(cast(AggregateDeclaration)cd);
+	}
+
+	override void visit(FuncDeclaration decl)
+	{
+		super.visit(decl);
+		if (found && !foundScope)
+			foundScope = decl.scopesym;
 	}
 
 	void visitTypeIdentifier(TypeIdentifier originalType, Type resolvedType)
@@ -961,10 +986,8 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 		{
 			if (auto t = obj.isType())
 			{
-				if (t.ty == Tstruct)
-					loc = (cast(TypeStruct)t).sym.loc;
-				else if (t.ty == Tstruct)
-					loc = (cast(TypeClass)t).sym.loc;
+				if (auto sym = typeSymbol(t))
+					loc = sym.loc;
 			}
 			else if (auto e = obj.isExpression())
 			{
@@ -1281,7 +1304,7 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 string[] findExpansions(Module mod, int line, int index, string tok)
 {
 	auto filename = mod.srcfile.toChars();
-	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index - cast(int) tok.length, line, index + 1);
+	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 
 	if (!fdv.found)
@@ -1295,11 +1318,15 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		{
 			case TOK.variable:
 			case TOK.symbolOffset:
-				type = (cast(SymbolExp)e).var.type;
+				//type = (cast(SymbolExp)e).var.type;
 				break;
 			case TOK.dotVariable:
 			case TOK.dotIdentifier:
 				type = (cast(UnaExp)e).e1.type;
+				flags |= SearchLocalsOnly;
+				break;
+			case TOK.dot:
+				type = (cast(DotExp)e).e1.type;
 				flags |= SearchLocalsOnly;
 				break;
 			default:
@@ -1327,18 +1354,21 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		for (Dsymbol ds = sds; ds; ds = uplevel(ds))
 		{
 			ScopeDsymbol sd = ds.isScopeDsymbol();
-			if (!ds)
+			if (!sd)
 				continue;
 
 			//foreach (pair; sd.symtab.tab.asRange)
-			foreach (key, s; sd.symtab.tab.aa)
+			if (sd.symtab)
 			{
-				//Dsymbol s = pair.value;
-				if (!symbolIsVisible(mod, s))
-					continue;
-				auto ident = /*pair.*/(cast(Dsymbol)key).toString();
-				if (ident.startsWith(tok))
-					idmap[cast(void*)s] = ident.idup;
+				foreach (key, s; sd.symtab.tab.aa)
+				{
+					//Dsymbol s = pair.value;
+					if (!symbolIsVisible(mod, s))
+						continue;
+					auto ident = /*pair.*/(cast(Dsymbol)key).toString();
+					if (ident.startsWith(tok))
+						idmap[cast(void*)s] = ident.idup;
+				}
 			}
 
 			// TODO: alias this
