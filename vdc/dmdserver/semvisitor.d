@@ -115,6 +115,11 @@ extern(C++) class ASTVisitor : StoppableVisitor
 				visitExpression(expr.original);
 	}
 
+	override void visit(ErrorExp errexp)
+	{
+		visit(cast(Expression)errexp);
+	}
+
 	override void visit(IsExp ie)
 	{
 		// TODO: has ident
@@ -245,6 +250,8 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(ErrorInitializer einit)
 	{
+		if (einit.original)
+			einit.original.accept(this);
 	}
 
 	override void visit(StructInitializer sinit)
@@ -551,7 +558,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 				if (n < imp.aliasdecls.dim)
 					foundNode(imp.aliasdecls[n]);
 
-		visit(cast(Dsymbol)imp);
+		// symbol has ident of first package, so don't forward
 	}
 
 	override void visit(DVCondition cond)
@@ -695,7 +702,8 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		if (decl.originalType && decl.originalType.ty == Tident)
 			visitTypeIdentifier(cast(TypeIdentifier) decl.originalType, decl.type);
-
+		else if (decl.type && decl.type.ty == Tident) // not yet semantically analyzed (or a template declaration)
+			visitTypeIdentifier(cast(TypeIdentifier) decl.type, decl.type);
 		super.visit(decl);
 	}
 
@@ -841,17 +849,20 @@ string tipForObject(RootObject obj)
 			txt = "(alias) ";
 		else if (decl.isField())
 			txt = "(field) ";
-		else if (!decl.isDataseg() && !decl.isCodeseg())
+		else if (decl.semanticRun >= PASS.semanticdone) // avoid lazy semantic analysis
 		{
-			txt = "(local variable) ";
-			fqn = false;
+			if (!decl.isDataseg() && !decl.isCodeseg())
+			{
+				txt = "(local variable) ";
+				fqn = false;
+			}
+			else if (decl.isThreadlocal())
+				txt = "(thread local variable) ";
+			else if (decl.type && decl.type.isShared())
+				txt = "(shared variable) ";
+			else if (decl.type && decl.type.ty != Terror)
+				txt = "(__gshared variable) ";
 		}
-		else if (decl.isThreadlocal())
-			txt = "(thread local variable) ";
-		else if (decl.type && decl.type.isShared())
-			txt = "(shared variable) ";
-		else
-			txt = "(__gshared variable) ";
 
 		if (decl.type)
 			txt ~= to!string(decl.type.toPrettyChars(true)) ~ " ";
@@ -871,7 +882,12 @@ string tipForObject(RootObject obj)
 	const(char)* doc;
 	if (auto t = obj.isType())
 	{
-		toc = "(" ~ t.kind().to!string ~ ") " ~ t.toPrettyChars(true).to!string;
+		string kind;
+		if (t.isTypeIdentifier())
+			kind = "unresolved type";
+		else
+			kind = t.kind().to!string;
+		toc = "(" ~ kind ~ ") " ~ t.toPrettyChars(true).to!string;
 		if (auto sym = typeSymbol(t))
 			if (sym.comment)
 				doc = sym.comment;
@@ -1098,6 +1114,25 @@ string findIdentifierTypes(Module mod)
 				addIdent(loc, ident, TypeReferenceKind.GSharedVariable);
 		}
 
+		void addType(ref const Loc loc, Type type, Type originalType)
+		{
+			static TypeReferenceKind refkind(Type t)
+			{
+				switch (t.ty)
+				{
+					case Tident:  return TypeReferenceKind.TemplateTypeParameter;
+					case Tclass:  return TypeReferenceKind.Class;
+					case Tstruct: return TypeReferenceKind.Struct;
+					case Tenum:   return TypeReferenceKind.Enum;
+					default:      return TypeReferenceKind.BasicType;
+				}
+			}
+			if (originalType && originalType.ty == Tident)
+				addIdent(loc, (cast(TypeIdentifier) originalType).ident, refkind(type));
+			else if (type && type.ty == Tident) // not yet semantically analyzed (or a template declaration)
+				addIdent(loc, (cast(TypeIdentifier) type).ident, TypeReferenceKind.TemplateTypeParameter);
+		}
+
 		override void visit(Dsymbol sym)
 		{
 			if (auto decl = sym.isDeclaration)
@@ -1106,11 +1141,17 @@ string findIdentifierTypes(Module mod)
 				addIdent(sym.loc, sym.ident, TypeReferenceKind.Variable);
 		}
 
+		override void visit(VarDeclaration decl)
+		{
+			addType(decl.loc, decl.type, decl.originalType);
+			visit(cast(Declaration)decl);
+		}
+
 		override void visit(Import imp)
 		{
 			addPackages(imp.packages);
 
-			addIdent(imp.loc, imp.ident, TypeReferenceKind.Module);
+			addIdent(imp.loc, imp.id, TypeReferenceKind.Module);
 
 			for (int n = 0; n < imp.names.dim; n++)
 			{
@@ -1118,8 +1159,7 @@ string findIdentifierTypes(Module mod)
 				if (imp.aliases[n].ident && n < imp.aliasdecls.dim)
 					addDeclaration(imp.aliases[n].loc, imp.aliasdecls[n]);
 			}
-
-			visit(cast(Dsymbol)imp);
+			// symbol has ident of first package, so don't forward
 		}
 
 		override void visit(Parameter sym)
@@ -1247,6 +1287,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	if (!fdv.found)
 		return null;
 
+	int flags = 0;
 	Type type = fdv.found.isType();
 	if (auto e = fdv.found.isExpression())
 	{
@@ -1257,7 +1298,9 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 				type = (cast(SymbolExp)e).var.type;
 				break;
 			case TOK.dotVariable:
-				type = (cast(DotVarExp)e).e1.type;
+			case TOK.dotIdentifier:
+				type = (cast(UnaExp)e).e1.type;
+				flags |= SearchLocalsOnly;
 				break;
 			default:
 				break;
@@ -1272,10 +1315,16 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	string[void*] idmap; // doesn't work with extern(C++) classes
 	void searchScope(ScopeDsymbol sds, int flags)
 	{
+		static Dsymbol uplevel(Dsymbol s)
+		{
+			if (auto ad = s.isAggregateDeclaration())
+				return ad.enclosing;
+			return s.toParent;
+		}
 		// TODO: properties
 		// TODO: base classes
 		// TODO: struct/class not going to parent if accessed from elsewhere (but does if nested)
-		for (Dsymbol ds = sds; ds; ds = ds.toParent)
+		for (Dsymbol ds = sds; ds; ds = uplevel(ds))
 		{
 			ScopeDsymbol sd = ds.isScopeDsymbol();
 			if (!ds)
@@ -1321,7 +1370,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			}
 		}
 	}
-	searchScope(sds, 0);
+	searchScope(sds, flags);
 
 	string[] idlist;
 	foreach(sym, id; idmap)

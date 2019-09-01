@@ -184,6 +184,7 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 ////////////////////////////////////////////////////////////////
 //version = traceGC;
 version (traceGC) import tracegc;
+extern(Windows) void OutputDebugStringA(const(char)* lpOutputString);
 
 unittest
 {
@@ -252,6 +253,28 @@ unittest
 					continue L_nextLoc;
 			assert(false);
 		}
+	}
+
+	void checkExpansions(Module analyzedModule, int line, int col, string[] expected)
+	{
+		import std.algorithm, std.array;
+		string[] expansions = findExpansions(analyzedModule, line, col, "");
+		expansions.sort();
+		expected.sort();
+		assert_equal(expansions.length, expected.length);
+		for (size_t i = 0; i < expansions.length; i++)
+			assert_equal(expansions[i].split(':')[0], expected[i]);
+	}
+
+	void dumpAST(Module mod)
+	{
+		import dmd.root.outbuffer;
+		import dmd.hdrgen;
+		auto buf = OutBuffer();
+		buf.doindent = 1;
+		moduleToBuffer(&buf, mod);
+
+		OutputDebugStringA(buf.peekChars);
 	}
 
 	string source;
@@ -409,5 +432,52 @@ unittest
 	m = checkErrors(source, "");
 
 	checkTip(m,  2, 10, "(struct) source.ST(T)");
-	checkTip(m,  4,  4, "(struct) source.ST(T)");
+	checkTip(m,  4,  4, "(unresolved type) T");
+	checkTip(m,  4,  6, "T f");
+
+	source =
+	q{                                   // Line 1
+		void foo()
+		{
+			int x = 1;
+			try
+			{
+				x++;
+			}
+			catch(Exception e)
+			{                            // Line 10
+				Exception* pe = &e;
+				throw new Error("unexpected");
+			}
+			finally
+			{
+				x = 0;
+			}
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  9, 20, "(local variable) object.Exception e");
+	checkTip(m,  9, 10, "(class) object.Exception");
+
+	source =
+	q{                                   // Line 1
+		struct S
+		{
+			int field1 = 1;
+			int field2 = 2;              // Line 5
+			int fun(int par) { return field1 + par; }
+			int more = 3;
+		}
+		void foo()
+		{                                // Line 10
+			S anS;
+			int x = anS.f(1);
+			a
+		}
+	};
+	m = checkErrors(source, "12,14,12,15:no property `f` for type `S`\n");
+	dumpAST(m);
+	checkExpansions(m, 12, 16, [ "field1", "field2", "fun", "more" ]);
+	checkExpansions(m, 13, 5, [ "field1", "field2", "fun", "more" ]);
 }
