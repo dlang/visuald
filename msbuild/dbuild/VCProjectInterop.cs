@@ -132,12 +132,21 @@ namespace vdextensions
             {
                 var vctool = tools.Item(f);
                 vcrefl = vctool as System.Reflection.IReflect;
-                if (vcrefl != null && 
-                    vcrefl.GetProperty("ItemType", System.Reflection.BindingFlags.Default).Equals("DCompile"))
+                var prop = vctool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
+                if (prop != null)
                 {
-                    vcprop = vctool as Microsoft.VisualStudio.VCProjectEngine.IVCRulePropertyStorage;
-                    if (vcprop != null)
-                        return;
+                    // read C# property dynamically to avoid dependency on Microsoft.VisualStudio.Project.VisualC.VCProjectEngine
+                    var type = vctool.GetType();
+                    var itprop = type.GetProperty("ItemType");
+                    if (itprop != null)
+                    {
+                        object val = itprop.GetValue(vctool);
+                        if (val != null && val.Equals("DCompile"))
+                        {
+                            vcprop = prop;
+                            return;
+                        }
+                    }
                 }
             }
             throw new COMException();
