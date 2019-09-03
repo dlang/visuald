@@ -84,7 +84,14 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
-2019-05-24 Version 0.50.0
+2019-09-03 Version 0.50.1
+$(UL
+ $(LI Fixes some integration issues with VS 2019 16.2)
+ $(LI mago: improve function call in watch window)
+ $(LI better version highlighting for files not in project)
+)
+
+2019-06-23 Version 0.50.0
 $(UL
  $(LI Now checks for updates of Visual D, DMD and LDC and assists download and install)
  $(LI Setup including DMD and LDC now available)

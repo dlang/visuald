@@ -1,6 +1,8 @@
+setlocal
 set DMD=c:\s\d\rainers\windows\bin\dmd.exe
 rem set WEB=m:\s\d\rainers\web\visuald
 set WEB=c:\s\d\visuald\gh-pages\visuald
+set CP=c:\u\gnuwin\cp.exe
 
 set SRC=      doc/ReportingBugs.dd
 set SRC=%SRC% doc/StartPage.dd
@@ -31,15 +33,15 @@ rem ..\..\rainers\d-programming-language.org\dlang.org.ddoc
 
 if not exist %WEB% md %WEB%
 if not exist %WEB%\images md %WEB%\images
-cp -u doc/images/* %WEB%\images
+%cp% -u doc/images/* %WEB%\images
 
 if not exist %WEB%\css md %WEB%\css
-cp -u doc/css/* %WEB%\css
+%cp% -u doc/css/* %WEB%\css
 
 if not exist %WEB%\js md %WEB%\js
-cp -u doc/js/* %WEB%\js
+%cp% -u doc/js/* %WEB%\js
 
-cp -u doc/favicon.ico %WEB%
+%cp% -u doc/favicon.ico %WEB%
 
 %DMD% -Dd%WEB% -o- -w %DDOC% %SRC%
 
