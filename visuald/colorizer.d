@@ -388,15 +388,15 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 						type = TokenColor.Keyword;
 				}
 
-			if (type == TokenColor.Identifier)
-				type = mSource.getIdentifierColor(tok, iLine + 1, prevpos);
-
 			if(cov >= 0)
 			{
 				type = covtype;
 			}
 			else
 			{
+				if (type == TokenColor.Identifier)
+					type = mSource.getIdentifierColor(tok, iLine + 1, prevpos);
+
 				if(mColorizeVersions)
 				{
 					if(Lexer.isCommentOrSpace(type, tok) || (inTokenString || nowInTokenString))
@@ -888,6 +888,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		return type;
 	}
 
+	// anything that originates from TokenColor.Identifier
+	bool isIdentifierColorType(int type)
+	{
+		int sct = stringColorType(type);
+		return sct == TokenColor.StringIdentifier || sct == TokenColor.DisabledIdentifier;
+	}
+
 	__gshared int[wstring] asmIdentifiers;
 	static const wstring[] asmKeywords = [ "__LOCAL_SIZE", "dword", "even", "far", "naked", "near", "ptr", "qword", "seg", "word", ];
 	static const wstring[] asmRegisters = [
@@ -1220,13 +1227,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		case VersionParseState.InAsmBlockEnabled:
 			if(text == "}")
 				parseState = VersionParseState.IdleEnabled;
-			else if(ntype == TokenColor.Identifier)
+			else if(isIdentifierColorType(ntype))
 				ntype = asmColorType(text);
 			break;
 		case VersionParseState.InAsmBlockDisabled:
 			if(text == "}")
 				parseState = VersionParseState.IdleDisabled;
-			else if(ntype == TokenColor.Identifier)
+			else if(isIdentifierColorType(ntype))
 				ntype = asmColorType(text);
 			goto case VersionParseState.IdleDisabled;
 		}
