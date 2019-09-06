@@ -229,7 +229,86 @@ Unsorted
 
 - dparser: doesn't support qualified name in catch(fqn)
 
+- dpp support
+
 0.45.0
 ======
 - exception on vdextensions: The Visual Studio component cache is out of date 
 
+0.49.0
+======
+- DParser:
+  + static if (is(__traits(parent, target) : __traits(parent, rest[0])))
+  + static if (is(T == __vector) )
+  - needs too much CPU
+- Documentation:
+  - installation (VC required)
+  - move newer VS versions to top
++ colors
+- tooltips
+- exceptions while VC project loaded?
+- VS2019:
+  - new project: D templates hardly accessible
+  + vcxproj: DCompiler not selectable
+- mago: 
+  - toDebug
+  - context 'this' and members of 'this' shown
+- pasting large code snippet is slow with auto-indent
+
+0.50.0
+======
++ VS 16.2: pdb newer than exe
++ Deprecation shown as error
+
+- search files/symbols sometimes blank: columns have width 0
+- new D module: adjust module name
+
++ VC project: simpler opt-in for -mixin, per package filename
++ -extern-std=
+
+- dark scheme: colors wrong after install (also happens for C#?), colors still too dark
+- reference highlight: wrong color, not shown in scroll margin
+- download: no update for the status bar in VS2017
++ display html error
++ update message "DMD 2.086.1 Goto Page"?
++ VC projects: DMD/LDC switch not visible in non-english?
+
++ vtbl for C++ classes
+- mago: call update in VS2019
++ mago: VS2019, dragging a variable from the autos, locals, or watches copies the whole line (C++, too?)
++ mago: breakpoint conditions no longer supported?
+- mago: debug info with different cased filenames opened twice in VS
++ mago: limit array exansions
++ mago: AA with impl, but without elements?
+- mago: start class expansions for derived type
+
++ support -lowmem
++ show message if compiler path wrong
+
+- LDC: options for debug-lib and LTO
+
+- HiDPI:
+  + edit line in search dialog
+  + edit line in profiler dialog
+  + search and replace token dialog
+  + C++ conversion wizard
+  - toolbar bitmaps don't scale
+- adapt tool window color to theme
+
+- semantic coloring:
+  - x in foreach(x; range)
+  - x in if(auto x = ptr)
+  - goto labels
+  - exit in scope(exit)
+  - x in extern(x)
+  - public imports in imports
+
+
+0.50.1
+======
++ reset settings to default
++ msbuild doesn't work after first full instllation, still needs to open+close settings
+- vd reported as "unresponsive" when loading project (> 7 sec)
++ VC parallel build
+
+- compile & disassemble: VC projects output dir always Win32/Debug

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">
+  <Metadata>
+    <Identity Id="Visual.D" Version="VDVERSION" Language="en-US" Publisher="Rainer Schuetze" />
+    <Icon>vdlogo.ico</Icon>
+    <PreviewImage>vdlogo.ico</PreviewImage>
+    <DisplayName>Visual D</DisplayName>
+    <Description xml:space="preserve">Extension to provide support for the D programming language</Description>
+  </Metadata>
+  <Installation InstalledByMsi="true" AllUsers="true" SystemComponent="false">
+    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.VSWinExpress" />
+    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Premium" />
+    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Ultimate" />
+    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Pro" />
+    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.IntegratedShell" />
+    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Enterprise" />
+    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Commuunity" />
+  </Installation>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="visuald.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.MefComponent" Path="VDINSTALLPATH\vdextensions.dll" />
+    <Asset Type="Microsoft.VisualStudio.MefComponent" Path="VDINSTALLPATH\vdext15.dll" />
+    <Asset Type="Microsoft.VisualStudio.Assembly" Path="VDINSTALLPATH\VisualDWizard.dll" AssemblyName="|VisualDWizard;AssemblyName|" />
+  </Assets>
+
+  <WizardExtension>
+    <Assembly>NuGet.VisualStudio.Interop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</Assembly>
+    <FullClassName>NuGet.VisualStudio.TemplateWizard</FullClassName>
+  </WizardExtension>
+  <WizardData>
+    <packages repository="extension" keyName="VSSDK.TemplateWizardInterface" isPreunzipped="true">
+      <package id="EntityFramework" version="6.2.0" />
+      <package id="EntityFramework.zh-Hans" version="6.2.0" />
+    </packages>
+  </WizardData>
+ </PackageManifest>

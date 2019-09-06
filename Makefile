@@ -81,6 +81,9 @@ fake_dparser:
 vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
 
+vdext15:
+	cd vdextensions && $(MSBUILD) vdext15.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
+
 visualdwizard:
 	cd vdwizard && $(MSBUILD) VisualDWizard.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
@@ -163,7 +166,7 @@ install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago dbuild12 dbuild
 
 install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 fake_dbuild12 fake_dbuild14 dbuild15 install_only
 
-install_modules: prerequisites visuald_vs vdserver vdextension visualdwizard dcxxfilt
+install_modules: prerequisites visuald_vs vdserver vdextension vdext15 visualdwizard dcxxfilt
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads

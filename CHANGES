@@ -1174,3 +1174,6 @@ Version history
   * don't highlight asm keywords/mnemonics/registers from semantic information
   * VS 2019 16.2: command line options no longer read correctly from the VC project for
     Compile and Run/Debug/Disassemble, dbuild refactored to not rely on msbuild DLLs for that
+
+unreleased Version 0.51.0
+  * Ctrl+Click goto definition added for VS2017+

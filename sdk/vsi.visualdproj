@@ -1939,6 +1939,8 @@
    <File path="vsi\msdbg157.d" />
    <File path="vsi\msdbg158.d" />
    <File path="vsi\msdbg160.d" />
+   <File path="vsi\msdbg161.d" />
+   <File path="vsi\msdbg162.d" />
    <File path="vsi\msdbg90.d" />
    <File path="vsi\objext.d" />
    <File path="vsi\ocdesign.d" />
@@ -1999,6 +2001,9 @@
    <File path="vsi\vsshell156.d" />
    <File path="vsi\vsshell157.d" />
    <File path="vsi\vsshell158.d" />
+   <File path="vsi\vsshell160.d" />
+   <File path="vsi\vsshell161.d" />
+   <File path="vsi\vsshell162.d" />
    <File path="vsi\vsshell2.d" />
    <File path="vsi\vsshell80.d" />
    <File path="vsi\vsshell90.d" />

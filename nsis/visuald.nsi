@@ -257,6 +257,7 @@ Section "Visual Studio package" SecPackage
 
 !ifdef VDEXTENSIONS
   ${File} ..\bin\Release\vdextensions\ vdextensions.dll
+  ${File} ..\bin\Release\vdext15\ vdext15.dll
 !endif
 
 !ifdef DPARSER
@@ -548,7 +549,7 @@ ${MementoSection} "Install in VS 2017" SecVS2017
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs15\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
@@ -596,7 +597,7 @@ ${MementoSection} "Install in VS 2019" SecVS2019
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs15\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 

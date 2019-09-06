@@ -299,6 +299,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VCItems", "VCItems", "{1F0F
 		visuald\Templates\VCItems\ditems.vsdir = visuald\Templates\VCItems\ditems.vsdir
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extensions_vs12", "Extensions_vs12", "{BDE81C48-A33E-4852-A49F-AD0080C4B400}"
+	ProjectSection(SolutionItems) = preProject
+		nsis\Extensions_vs12\extension.vsixmanifest = nsis\Extensions_vs12\extension.vsixmanifest
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extensions_vs15", "Extensions_vs15", "{8A87ACE9-7B7C-4BC6-B9BD-3664429A8A5E}"
+	ProjectSection(SolutionItems) = preProject
+		nsis\Extensions_vs15\extension.vsixmanifest = nsis\Extensions_vs15\extension.vsixmanifest
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug COFF32|Win32 = Debug COFF32|Win32
@@ -655,6 +665,8 @@ Global
 		{6DE93AA1-4EBB-40DF-8C3D-6B060F2F045A} = {1F473A70-B5E1-4D56-A9F3-E87D69886621}
 		{6FDF165B-4643-4059-8B50-70B6E4A2D99C} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
 		{1F0F6731-D58B-4F54-A330-C4C1011F76EE} = {AC054091-8D8F-4393-B3C5-AB67980B80EE}
+		{BDE81C48-A33E-4852-A49F-AD0080C4B400} = {7F391DE3-9620-4A98-B05D-4181924A9D15}
+		{8A87ACE9-7B7C-4BC6-B9BD-3664429A8A5E} = {7F391DE3-9620-4A98-B05D-4181924A9D15}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BAF35E81-511D-4170-B7D0-594E5DE3886A}
