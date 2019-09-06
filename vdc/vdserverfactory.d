@@ -107,7 +107,7 @@ extern(C) int vdserver_main()
 
 	// Register the Factory.
 	DWORD regID = 0;
-	hr = CoRegisterClassObject(*cast(GUID*)&VDServerClassFactory.iid, cf, CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &regID);
+	hr = CoRegisterClassObject(*cast(GUID*)&VDServerClassFactory.iid, cf, CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE, &regID);
 	if(FAILED(hr))
 	{
 		ShowErrorMessage("CoRegisterClassObject()", hr);
