@@ -1603,9 +1603,8 @@
    <File path="dmd\src\dmd\utils.d" />
    <File path="dmd\src\dmd\visitor.d" />
   </Folder>
-  <File path="ddmderrors.d" tool="None" />
-  <File path="ddmdlib.d" />
-  <File path="ddmdrmem.d" />
+  <File path="dmdlib.d" />
+  <File path="dmdrmem.d" />
   <File path="dmderrors.d" />
   <File path="dmdinit.d" />
   <File path="dmdserver.d" />

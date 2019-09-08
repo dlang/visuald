@@ -1,3 +1,11 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2019 by Rainer Schuetze, All Rights Reserved
+//
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
+
 module vdc.dmdserver.dmdinit;
 
 import dmd.arraytypes;
@@ -120,13 +128,6 @@ void clearSemanticStatics()
 	// funcDeclarationSemantic.printedMain?
 	/+
 	Type.stringtable.reset();
-
-	dinterpret_init();
-
-	Scope.freelist = null;
-	//Token.freelist = null;
-
-	Identifier.initTable();
 	+/
 }
 
