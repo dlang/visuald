@@ -112,14 +112,9 @@ void clearSemanticStatics()
 	TemplateTypeParameter.tdummy = null;
 	TemplateAliasParameter.sdummy = null;
 
-	CtfeStatus.callDepth = 0;
-	CtfeStatus.stackTraceCallsToSuppress = 0;
-	CtfeStatus.maxCallDepth = 0;
-	CtfeStatus.numAssignments = 0;
-
 	VarDeclaration.nextSequenceNumber = 0;
 
-	entrypoint = cast(Module)&entrypoint; // disable generation of C main
+	//entrypoint = cast(Module)&entrypoint; // disable generation of C main
 
 	// Package.this.packageTag?
 	// funcDeclarationSemantic.printedMain?

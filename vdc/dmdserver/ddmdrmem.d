@@ -5,6 +5,8 @@ import core.stdc.string : strlen;
 
 extern (C++) struct Mem
 {
+	enum isGCEnabled = true;
+
 	static char* xstrdup(const(char)* p) nothrow
 	{
 		return p[0 .. strlen(p) + 1].dup.ptr;

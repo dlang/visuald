@@ -1569,6 +1569,7 @@
    <File path="dmd\src\dmd\permissivevisitor.d" />
    <File path="dmd\src\dmd\posix.mak" />
    <File path="dmd\src\dmd\printast.d" />
+   <File path="dmd\src\dmd\root\region.d" />
    <File path="dmd\src\dmd\s2ir.d" tool="None" />
    <File path="dmd\src\dmd\safe.d" />
    <File path="dmd\src\dmd\sapply.d" />
