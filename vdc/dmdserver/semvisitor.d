@@ -1233,6 +1233,18 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			super.visit(expr);
 		}
 
+		override void visit(NewExp ne)
+		{
+			if (ne.member)
+				ne.member.accept(this);
+
+			addType(ne.loc, ne.newtype, ne.parsedType);
+			if (ne.newtype != ne.parsedType)
+				addType(ne.loc, ne.newtype, ne.newtype);
+
+			super.visit(ne);
+		}
+
 		override void visit(DotVarExp dve)
 		{
 			if (dve.var && dve.var.ident)
