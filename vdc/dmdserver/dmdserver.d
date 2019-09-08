@@ -752,7 +752,10 @@ class DMDServer : ComObject, IVDServer
 				try
 				{
 					if (auto m = md.analyzedModule)
-						identiferTypes = findIdentifierTypes(m);
+					{
+						auto res = findIdentifierTypes(m);
+						identiferTypes = findIdentifierTypesResultToString(res);
+					}
 					else
 						identiferTypes = "identifying...";
 				}
@@ -1060,6 +1063,27 @@ private:
 	string mLastError;
 	bool mHadMessage;
 	SysTime mNextReadyMessage;
+}
+
+////////////////////////////////////////////////////////////////
+
+string idPositionsToString(IdTypePos[] pos)
+{
+	string ids = pos[0].type.to!string();
+	foreach (ref p; pos[1..$])
+		ids ~= ";" ~ p.type.to!string() ~ "," ~ p.line.to!string() ~ "," ~ (p.col - 1).to!string();
+	return ids;
+}
+
+string findIdentifierTypesResultToString(FindIdentifierTypesResult res)
+{
+	string s;
+	foreach(id, pos; res)
+	{
+		string ids = id.idup ~ ":" ~ idPositionsToString(pos);
+		s ~= ids ~ "\n";
+	}
+	return s;
 }
 
 ////////////////////////////////////////////////////////////////

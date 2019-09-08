@@ -201,7 +201,7 @@ unittest
 
 	auto filename = "source.d";
 
-	void assert_equal(S, T)(S s, T t)
+	static void assert_equal(S, T)(S s, T t)
 	{
 		if (s == t)
 			return;
@@ -267,23 +267,22 @@ unittest
 			assert_equal(expansions[i].split(':')[0], expected[i]);
 	}
 
-	void checkIdentifierTypes(Module analyzedModule, IdTypePos[][string] expectedPos)
+	void checkIdentifierTypes(Module analyzedModule, IdTypePos[][string] expected)
 	{
-		string[] expected;
-		foreach(id, pos; expectedPos)
+		static void assert_equalPositions(IdTypePos[] s, IdTypePos[] t)
 		{
-			string ids = id.idup ~ ":" ~ idPositionsToString(pos);
-			expected ~= ids;
+			assert_equal(s.length, t.length);
+			assert_equal(s[0].type, t[0].type);
+			foreach (i; 1.. s.length)
+				assert_equal(s[i], t[i]);
 		}
-
 		import std.algorithm, std.array, std.string;
-		string stridtypes = findIdentifierTypes(analyzedModule);
-		string[] idtypes = splitLines(stridtypes);
-		idtypes.sort();
-		expected.sort();
+		auto idtypes = findIdentifierTypes(analyzedModule);
 		assert_equal(idtypes.length, expected.length);
-		for (size_t i = 0; i < idtypes.length; i++)
-			assert_equal(idtypes[i], expected[i]);
+		auto ids = idtypes.keys();
+		ids.sort();
+		foreach (i, id; ids)
+			assert_equalPositions(idtypes[id], expected[id]);
 	}
 
 	static struct TextPos
@@ -493,6 +492,7 @@ unittest
 			}
 			catch(Exception e)
 			{                            // Line 10
+				auto err = cast(Error) e;
 				Exception* pe = &e;
 				throw new Error("unexpected");
 			}
@@ -506,6 +506,8 @@ unittest
 
 	checkTip(m,  9, 20, "(local variable) object.Exception e");
 	checkTip(m,  9, 10, "(class) object.Exception");
+	checkTip(m,  11, 21, "(class) object.Error");
+	checkTip(m,  12, 5, "(class) object.Exception");
 
 	source =
 	q{                                   // Line 1

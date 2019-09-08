@@ -576,6 +576,14 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		visit(cast(TypeQualified)t);
 	}
 
+	override void visit(CastExp expr)
+	{
+		visitTypeIdentifier(expr.parsedTo, expr.to);
+		if (expr.parsedTo != expr.to)
+			visitTypeIdentifier(expr.to, expr.to);
+		super.visit(expr);
+	}
+
 	override void visit(CompoundStatement cs)
 	{
 		// optimize to only visit members in approriate source range
@@ -768,23 +776,45 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	void visitTypeIdentifier(Type originalType, Type resolvedType)
 	{
-		if (found || !originalType || originalType.ty != Tident)
+		if (found || !originalType || !resolvedType)
 			return;
+		while (originalType.ty != Tident)
+		{
+			if (originalType.ty != resolvedType.ty)
+				return;
+			switch (originalType.ty)
+			{
+				case Tarray:
+				case Tpointer:
+				case Treference:
+				case Tsarray:
+				case Tvector:
+					originalType = (cast(TypeNext) originalType).next;
+					resolvedType = (cast(TypeNext) resolvedType).next;
+					break;
+				default:
+					return;
+			}
+		}
 		auto otype = cast(TypeIdentifier) originalType;
 		Loc loc = otype.loc;
 		if (matchIdentifier(loc, otype.ident))
-			foundNode(resolvedType);
-
-		// guess qualified name to be without spaces
-		loc.charnum += otype.ident.toString().length + 1;
-		foreach (id; otype.idents)
 		{
-			if (id.dyncast() == DYNCAST.identifier)
+			foundNode(resolvedType);
+		}
+		else
+		{
+			// guess qualified name to be without spaces
+			loc.charnum += otype.ident.toString().length + 1;
+			foreach (id; otype.idents)
 			{
-				auto ident = cast(Identifier)id;
-				if (matchIdentifier(loc, ident))
-					foundNode(resolvedType);
-				loc.charnum += ident.toString().length + 1;
+				if (id.dyncast() == DYNCAST.identifier)
+				{
+					auto ident = cast(Identifier)id;
+					if (matchIdentifier(loc, ident))
+						foundNode(resolvedType);
+					loc.charnum += ident.toString().length + 1;
+				}
 			}
 		}
 	}
@@ -1077,19 +1107,13 @@ struct IdTypePos
 	int col;
 }
 
-string idPositionsToString(IdTypePos[] pos)
-{
-	string ids = pos[0].type.to!string();
-	foreach (ref p; pos[1..$])
-		ids ~= ";" ~ p.type.to!string() ~ "," ~ p.line.to!string() ~ "," ~ p.col.to!string();
-	return ids;
-}
+alias FindIdentifierTypesResult = IdTypePos[][const(char)[]];
 
-string findIdentifierTypes(Module mod)
+FindIdentifierTypesResult findIdentifierTypes(Module mod)
 {
 	extern(C++) class IdentifierTypesVisitor : ASTVisitor
 	{
-		IdTypePos[][const(char)[]] idTypes;
+		FindIdentifierTypesResult idTypes;
 		const(char)* filename;
 
 		alias visit = ASTVisitor.visit;
@@ -1152,6 +1176,23 @@ string findIdentifierTypes(Module mod)
 
 		void addType(ref const Loc loc, Type type, Type originalType)
 		{
+			while (type && originalType && type.ty == originalType.ty)
+			{
+				switch (originalType.ty)
+				{
+					case Tarray:
+					case Tpointer:
+					case Treference:
+					case Tsarray:
+					case Tvector:
+						originalType = (cast(TypeNext) originalType).next;
+						type         = (cast(TypeNext) type        ).next;
+						continue;
+					default:
+						break;
+				}
+				break;
+			}
 			static TypeReferenceKind refkind(Type t)
 			{
 				switch (t.ty)
@@ -1163,7 +1204,7 @@ string findIdentifierTypes(Module mod)
 					default:      return TypeReferenceKind.BasicType;
 				}
 			}
-			if (originalType && originalType.ty == Tident)
+			if (originalType && originalType.ty == Tident && type)
 				addIdent(loc, (cast(TypeIdentifier) originalType).ident, refkind(type));
 			else if (type && type.ty == Tident) // not yet semantically analyzed (or a template declaration)
 				addIdent(loc, (cast(TypeIdentifier) type).ident, TypeReferenceKind.TemplateTypeParameter);
@@ -1243,13 +1284,7 @@ string findIdentifierTypes(Module mod)
 	itv.filename = mod.srcfile.toChars();
 	mod.accept(itv);
 
-	string s;
-	foreach(id, pos; itv.idTypes)
-	{
-		string ids = id.idup ~ ":" ~ idPositionsToString(pos);
-		s ~= ids ~ "\n";
-	}
-	return s;
+	return itv.idTypes;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
