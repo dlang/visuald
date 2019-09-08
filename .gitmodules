@@ -1,3 +1,6 @@
 [submodule "vdc/abothe/Parser"]
 	path = vdc/abothe/Parser
 	url = https://github.com/rainers/D_Parser.git
+[submodule "vdc/dmdserver/dmd"]
+	path = vdc/dmdserver/dmd
+	url = https://github.com/rainers/dmd.git

@@ -11,6 +11,7 @@ module vdc.dmdserver.semanalysis;
 import vdc.dmdserver.dmdinit;
 import vdc.dmdserver.dmderrors;
 import vdc.dmdserver.semvisitor;
+import vdc.ivdserver;
 
 import dmd.arraytypes;
 import dmd.cond;
@@ -196,7 +197,7 @@ unittest
 	opts.predefineDefaultVersions = true;
 	opts.x64 = true;
 	opts.msvcrt = true;
-	opts.importDirs = [ r"c:\s\d\rainers\druntime\import", r"c:\s\d\rainers\phobos" ];
+	opts.importDirs = [ r"c:\s\d\dlang\druntime\import", r"c:\s\d\dlang\phobos" ];
 
 	auto filename = "source.d";
 
@@ -264,6 +265,42 @@ unittest
 		assert_equal(expansions.length, expected.length);
 		for (size_t i = 0; i < expansions.length; i++)
 			assert_equal(expansions[i].split(':')[0], expected[i]);
+	}
+
+	void checkIdentifierTypes(Module analyzedModule, IdTypePos[][string] expectedPos)
+	{
+		string[] expected;
+		foreach(id, pos; expectedPos)
+		{
+			string ids = id.idup ~ ":" ~ idPositionsToString(pos);
+			expected ~= ids;
+		}
+
+		import std.algorithm, std.array, std.string;
+		string stridtypes = findIdentifierTypes(analyzedModule);
+		string[] idtypes = splitLines(stridtypes);
+		idtypes.sort();
+		expected.sort();
+		assert_equal(idtypes.length, expected.length);
+		for (size_t i = 0; i < idtypes.length; i++)
+			assert_equal(idtypes[i], expected[i]);
+	}
+
+	static struct TextPos
+	{
+		int line;
+		int column;
+	}
+	void checkReferences(Module analyzedModule, int line, int col, TextPos[] expected)
+	{
+		import std.algorithm, std.array, std.string;
+		auto refs = findReferencesInModule(analyzedModule, line, col);
+		assert_equal(refs.length, expected.length);
+		for (size_t i = 0; i < refs.length; i++)
+		{
+			assert_equal(refs[i].loc.linnum, expected[i].line);
+			assert_equal(refs[i].loc.charnum, expected[i].column);
+		}
 	}
 
 	void dumpAST(Module mod)
@@ -407,6 +444,11 @@ unittest
 			S anS;
 			int x = anS.fun(1);          // Line 10
 		}
+		int fun(S s)
+		{
+			auto p = new S(1);
+			return s.field1;             // Line 15
+		}
 	};
 	m = checkErrors(source, "");
 
@@ -421,6 +463,11 @@ unittest
 	checkTip(m,  9,  6, "(local variable) source.S anS");
 	checkTip(m, 10, 12, "(local variable) source.S anS");
 	checkTip(m, 10, 16, "int source.S.fun(int par)");
+
+	checkTip(m, 12, 11, "(struct) source.S");
+
+	checkDefinition(m, 10, 16, "source.d", 5, 8);  // fun
+	checkDefinition(m, 14, 17, "source.d", 2, 10); // S
 
 	source =
 	q{                                   // Line 1
@@ -484,4 +531,69 @@ unittest
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
 	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
 	checkExpansions(m, 13, 13, "an", [ "anS" ]);
+
+	source =
+	q{                                   // Line 1
+		struct S
+		{
+			int fun(int par) { return par; }
+		}                                // Line 5
+		void fun(int rec)
+		{
+			S anS;
+			int x = anS.fun(1);
+			if (rec)                     // Line 10
+				fun(false);
+		}
+	};
+	m = checkErrors(source, "");
+
+	IdTypePos[][string] exp = [
+		"S":   [ IdTypePos(TypeReferenceKind.Struct) ],
+		"x":   [ IdTypePos(TypeReferenceKind.LocalVariable) ],
+		"anS": [ IdTypePos(TypeReferenceKind.LocalVariable) ],
+		"rec": [ IdTypePos(TypeReferenceKind.ParameterVariable) ],
+		"par": [ IdTypePos(TypeReferenceKind.ParameterVariable) ],
+		"fun": [ IdTypePos(TypeReferenceKind.Method),
+		         IdTypePos(TypeReferenceKind.Function, 6, 8),
+		         IdTypePos(TypeReferenceKind.Method, 9, 16),
+		         IdTypePos(TypeReferenceKind.Function, 11, 5)],
+	];
+	checkIdentifierTypes(m, exp);
+
+	source =
+	q{                                   // Line 1
+		struct S
+		{
+			int fun(int par) { return par; }
+			int foo() { return fun(1); } // Line 5
+		}
+		void fun(int rec)
+		{
+			S anS;
+			int x = anS.fun(1);          // Line 10
+			if (rec) fun(false);
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkReferences(m, 4, 8, [TextPos(4,8), TextPos(5, 23), TextPos(10, 16)]);
+
+	// foreach lowered to for
+	source = q{                          // Line 1
+		import std.range;
+		int fun(int rec)
+		{
+			int sum = 0;                 // Line 5
+			foreach(i; iota(0, rec))
+				sum += i;
+			return sum;
+		}
+	};
+	m = checkErrors(source, "");
+	dumpAST(m);
+
+	checkTip(m, 6, 12, "(local variable) int i");
+	checkTip(m, 7, 5, "(local variable) int sum");
+	checkTip(m, 7, 12, "(local variable) int i");
 }

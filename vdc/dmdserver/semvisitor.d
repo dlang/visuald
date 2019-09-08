@@ -337,6 +337,9 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		visitExpression(stmt.increment);
 		if (!stop)
 			visit(cast(Statement)stmt);
+
+		if (!stop && stmt.loweredFrom)
+			stmt.loweredFrom.accept(this);
 	}
 
 	override void visit(ForeachStatement stmt)
@@ -718,10 +721,11 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(VarDeclaration decl)
 	{
-		if (decl.originalType && decl.originalType.ty == Tident)
-			visitTypeIdentifier(cast(TypeIdentifier) decl.originalType, decl.type);
-		else if (decl.type && decl.type.ty == Tident) // not yet semantically analyzed (or a template declaration)
-			visitTypeIdentifier(cast(TypeIdentifier) decl.type, decl.type);
+		visitTypeIdentifier(decl.parsedType, decl.type);
+		if (!found && decl.originalType != decl.parsedType)
+			visitTypeIdentifier(decl.originalType, decl.type);
+		if (!found && decl.type != decl.originalType && decl.type != decl.parsedType)
+			visitTypeIdentifier(decl.type, decl.type); // not yet semantically analyzed (or a template declaration)
 		super.visit(decl);
 	}
 
@@ -749,10 +753,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		{
 			foreach (bc; *(cd.baseclasses))
 			{
-				if (bc.originalType && bc.originalType.ty == Tident)
-				{
-					visitTypeIdentifier(cast(TypeIdentifier) bc.originalType, bc.type);
-				}
+				visitTypeIdentifier(bc.parsedType, bc.type);
 			}
 		}
 		visit(cast(AggregateDeclaration)cd);
@@ -765,15 +766,18 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			foundScope = decl.scopesym;
 	}
 
-	void visitTypeIdentifier(TypeIdentifier originalType, Type resolvedType)
+	void visitTypeIdentifier(Type originalType, Type resolvedType)
 	{
-		Loc loc = originalType.loc;
-		if (matchIdentifier(loc, originalType.ident))
+		if (found || !originalType || originalType.ty != Tident)
+			return;
+		auto otype = cast(TypeIdentifier) originalType;
+		Loc loc = otype.loc;
+		if (matchIdentifier(loc, otype.ident))
 			foundNode(resolvedType);
 
 		// guess qualified name to be without spaces
-		loc.charnum += originalType.ident.toString().length + 1;
-		foreach (id; originalType.idents)
+		loc.charnum += otype.ident.toString().length + 1;
+		foreach (id; otype.idents)
 		{
 			if (id.dyncast() == DYNCAST.identifier)
 			{
@@ -1066,14 +1070,23 @@ Loc[] findBinaryIsInLocations(Module mod)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+struct IdTypePos
+{
+	int type;
+	int line;
+	int col;
+}
+
+string idPositionsToString(IdTypePos[] pos)
+{
+	string ids = pos[0].type.to!string();
+	foreach (ref p; pos[1..$])
+		ids ~= ";" ~ p.type.to!string() ~ "," ~ p.line.to!string() ~ "," ~ p.col.to!string();
+	return ids;
+}
+
 string findIdentifierTypes(Module mod)
 {
-	static struct IdTypePos
-	{
-		int type;
-		int line;
-		int col;
-	}
 	extern(C++) class IdentifierTypesVisitor : ASTVisitor
 	{
 		IdTypePos[][const(char)[]] idTypes;
@@ -1113,9 +1126,9 @@ string findIdentifierTypes(Module mod)
 			{
 				auto p = decl.toParent2;
 				if (p && p.isAggregateDeclaration)
-					addIdent(loc, ident, TypeReferenceKind.Function);
-				else
 					addIdent(loc, ident, TypeReferenceKind.Method);
+				else
+					addIdent(loc, ident, TypeReferenceKind.Function);
 			}
 			else if (decl.isParameter())
 				addIdent(loc, ident, TypeReferenceKind.ParameterVariable);
@@ -1167,7 +1180,23 @@ string findIdentifierTypes(Module mod)
 		override void visit(VarDeclaration decl)
 		{
 			addType(decl.loc, decl.type, decl.originalType);
-			visit(cast(Declaration)decl);
+			if (decl.parsedType != decl.originalType)
+				addType(decl.loc, decl.type, decl.parsedType);
+			super.visit(decl);
+		}
+
+		override void visit(SymbolExp expr)
+		{
+			if (expr.var && expr.var.ident)
+				addDeclaration(expr.loc, expr.var);
+			super.visit(expr);
+		}
+
+		override void visit(DotVarExp dve)
+		{
+			if (dve.var && dve.var.ident)
+				addDeclaration(dve.varloc.filename ? dve.varloc : dve.loc, dve.var);
+			super.visit(dve);
 		}
 
 		override void visit(Import imp)
@@ -1217,9 +1246,7 @@ string findIdentifierTypes(Module mod)
 	string s;
 	foreach(id, pos; itv.idTypes)
 	{
-		string ids = id.idup ~ ":" ~ pos[0].type.to!string();
-		foreach (ref p; pos[1..$])
-			ids ~= ";" ~ p.type.to!string() ~ "," ~ p.line.to!string() ~ "," ~ p.col.to!string();
+		string ids = id.idup ~ ":" ~ idPositionsToString(pos);
 		s ~= ids ~ "\n";
 	}
 	return s;
@@ -1423,6 +1450,8 @@ ScopeDsymbol typeSymbol(Type type)
 
 Module cloneModule(Module mo)
 {
+	if (!mo)
+		return null;
 	Module m = new Module(mo.srcfile.toString(), mo.ident, mo.isDocFile, mo.isHdrFile);
 	*cast(FileName*)&(m.srcfile) = mo.srcfile; // keep identical source file name pointer
 	m.isPackageFile = mo.isPackageFile;

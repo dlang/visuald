@@ -36,6 +36,12 @@ extern (C++) struct Mem
 		__gshared static oom = new Error("out of memory");
 		throw oom;
 	}
+	static void* check(void* p) nothrow
+	{
+		if (!p)
+			error();
+		return p;
+	}
 
 	extern(D) __gshared immutable cancelError = new Error("cancel malloc");
 	extern(D) __gshared bool cancel;

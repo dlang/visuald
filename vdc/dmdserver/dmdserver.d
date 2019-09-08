@@ -475,7 +475,7 @@ class DMDServer : ComObject, IVDServer
 		mDefSpan.start.line  = startLine;
 		mDefSpan.start.index = startIndex + 1;
 		mDefSpan.end.line    = endLine;
-		mDefSpan.end.index   = endIndex + 1;
+		mDefSpan.end.index   = endIndex; // last character preferred position for evaluation
 
 		ModuleData* md;
 		synchronized(gErrorSync)
@@ -493,7 +493,7 @@ class DMDServer : ComObject, IVDServer
 				try
 				{
 					if (auto m = md.analyzedModule)
-						deffilename = findDefinition(m, mDefSpan.start.line, mDefSpan.start.index);
+						deffilename = findDefinition(m, mDefSpan.end.line, mDefSpan.end.index);
 					else
 						deffilename = "analyzing...";
 				}
@@ -526,10 +526,10 @@ class DMDServer : ComObject, IVDServer
 
 		version(DebugServer) dbglog("GetDefinitionResult: " ~ mLastDefFile);
 		writeReadyMessage();
-		startLine  = mDefSpan.start.line;
-		startIndex = mDefSpan.start.index - 1;
-		endLine    = mDefSpan.start.line;
-		endIndex   = mDefSpan.start.index;
+		startLine  = mDefSpan.end.line;
+		startIndex = mDefSpan.end.index - 1;
+		endLine    = mDefSpan.end.line;
+		endIndex   = mDefSpan.end.index;
 		*answer = allocBSTR(mLastDefFile);
 		return S_OK;
 	}
@@ -817,6 +817,11 @@ class DMDServer : ComObject, IVDServer
 
 	void analyzeModules(ModuleData* rootModule)
 	{
+		if (rootModule.parsedModule)
+			rootModule.analyzedModule = analyzeModule(rootModule.parsedModule, mOptions);
+
+		version(none) {
+
 		version(none)
 		{
 		clearDmdStatics();
@@ -935,11 +940,13 @@ class DMDServer : ComObject, IVDServer
 		for (size_t i = 0; i < mModules.length; i++)
 		{
 			ModuleData* md = mModules[i];
-			Module m = cloneModule(md.parsedModule);
-			m.importedFrom = m;
-			m = m.resolvePackage();
-			md.analyzedModule = m;
-			Module.modules.insert(m);
+			if (Module m = cloneModule(md.parsedModule))
+			{
+				m.importedFrom = m;
+				m = m.resolvePackage();
+				md.analyzedModule = m;
+				Module.modules.insert(m);
+			}
 		}
 		Module.rootModule = rootModule.analyzedModule;
 		Module.loadModuleHandler = (const ref Loc location, IdentifiersAtLoc* packages, Identifier ident)
@@ -949,19 +956,22 @@ class DMDServer : ComObject, IVDServer
 
 		for (size_t i = 0; i < mModules.length; i++)
 		{
-			Module m = mModules[i].analyzedModule;
-			m.importAll(null);
+			if (Module m = mModules[i].analyzedModule)
+				m.importAll(null);
 		}
 
 version(all)
 {
-		Module.rootModule.dsymbolSemantic(null);
-		Module.dprogress = 1;
-		Module.runDeferredSemantic();
-		Module.rootModule.semantic2(null);
-		Module.runDeferredSemantic2();
-		Module.rootModule.semantic3(null);
-		Module.runDeferredSemantic3();
+		if (Module.rootModule)
+		{
+			Module.rootModule.dsymbolSemantic(null);
+			Module.dprogress = 1;
+			Module.runDeferredSemantic();
+			Module.rootModule.semantic2(null);
+			Module.runDeferredSemantic2();
+			Module.rootModule.semantic3(null);
+			Module.runDeferredSemantic3();
+		}
 }
 else
 {
@@ -990,6 +1000,7 @@ else
 			m.semantic3(null);
 		}
 		Module.runDeferredSemantic3();
+}
 }
 	}
 
@@ -1065,12 +1076,13 @@ unittest
 
 	DMDServer srv = newCom!DMDServer;
 	srv.mPredefineVersions = true;
+	srv.mOptions.predefineDefaultVersions = true;
 	addref(srv);
 	scope(exit) release(srv);
 
 	auto filename = allocBSTR("source.d");
-	auto imp = allocBSTR(r"c:\s\d\rainers\druntime\import" ~ "\n" ~
-						 r"c:\s\d\rainers\phobos");
+	auto imp = allocBSTR(r"c:\s\d\dlang\druntime\import" ~ "\n" ~
+						 r"c:\s\d\dlang\phobos");
 	auto empty = allocBSTR("");
 	uint flags = ConfigureFlags!()(false, //bool unittestOn
 								   false, //bool debugOn,

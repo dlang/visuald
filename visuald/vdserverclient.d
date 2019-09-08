@@ -62,7 +62,16 @@ private void dbglog(string s)
 	else
 	{
 		if(!dbgfh)
-			dbgfh = fopen("c:/tmp/vdclient.log", "w");
+		{
+			import std.file;
+			string fname = tempDir();
+			char[20] name = "/vdclient0.log";
+			for (char i = '0'; !dbgfh && i <= '9'; i++)
+			{
+				name[9] = i;
+				dbgfh = fopen((fname ~ name).ptr, "w");
+			}
+		}
 		SysTime now = Clock.currTime();
 		uint tid = sdk.win32.winbase.GetCurrentThreadId();
 		auto len = fprintf(dbgfh, "%02d:%02d:%02d - %04x - ",

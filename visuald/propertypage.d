@@ -37,7 +37,7 @@ import std.path;
 import std.process : environment;
 import std.string;
 
-debug version = DParserOption;
+version = DParserOption;
 enum hasDubSupport = false;
 
 class PropertyWindow : Window
@@ -2939,6 +2939,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	override void CreateControls()
 	{
 		AddTitleLine("Semantic analysis");
+		version(DParserOption) AddControl("", mUseDmdParser = new CheckBox(mCanvas, "Experimental: use DMD parsing engine for semantic analysis"));
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
 		//AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
@@ -2947,7 +2948,6 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		//AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
 		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
 		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "+ writing '.'", "+ writing an identifier" ], false));
-		version(DParserOption) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
 		AddControl("", mExactExpMatch = new CheckBox(mCanvas, "Expansions match exact start instead of case insensitive sub string"));
 		AddControl("Sort expansions", mSortExpMode = new ComboBox(mCanvas, [ "alphabetically", "by type", "by declaration and scope" ], false));
 		AddTitleLine("Tooltips");
@@ -2963,7 +2963,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 
 	void EnableControls()
 	{
-		version(DParserOption) bool useDParser = mUseDParser.isChecked();
+		version(DParserOption) bool useDParser = !mUseDmdParser.isChecked();
 		else                   bool useDParser = true;
 		mMixinAnalysis.setEnabled(useDParser);
 		mUFCSExpansions.setEnabled(useDParser);
@@ -2980,7 +2980,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 		mShowValueInTooltip.setChecked(opts.showValueInTooltip);
 		//mSemanticGotoDef.setChecked(opts.semanticGotoDef);
-		version(DParserOption) mUseDParser.setChecked(opts.useDParser);
+		version(DParserOption) mUseDmdParser.setChecked(!opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
 		mSortExpMode.setSelection(opts.sortExpMode);
@@ -2999,7 +2999,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip);
 		changes += changeOption(mShowValueInTooltip.isChecked(), opts.showValueInTooltip, refopts.showValueInTooltip);
 		//changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef);
-		version(DParserOption) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser);
+		version(DParserOption) changes += changeOption(!mUseDmdParser.isChecked(), opts.useDParser, refopts.useDParser);
 		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
 		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
 		changes += changeOption(cast(ubyte) mSortExpMode.getSelection(), opts.sortExpMode, refopts.sortExpMode);
@@ -3014,7 +3014,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	CheckBox mShowTypeInTooltip;
 	CheckBox mShowValueInTooltip;
 	//CheckBox mSemanticGotoDef;
-	version(DParserOption) CheckBox mUseDParser;
+	version(DParserOption) CheckBox mUseDmdParser;
 	CheckBox mUFCSExpansions;
 	ComboBox mSortExpMode;
 	CheckBox mExactExpMatch;

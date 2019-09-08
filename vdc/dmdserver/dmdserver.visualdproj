@@ -1151,11 +1151,11 @@
   <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
-  <otherDMD>0</otherDMD>
+  <otherDMD>1</otherDMD>
   <cccmd>$(CC) -c -nologo -Idmd\src\dmd -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\dmd\vcbuild -DTARGET_WINDOS=1</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <program>c:\s\d\dlang\dmd\generated\Windows\Release\x64\dmd.exe</program>
   <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
@@ -1506,7 +1506,7 @@
    <File path="dmd\src\dmd\delegatize.d" />
    <File path="dmd\src\dmd\denum.d" />
    <File path="dmd\src\dmd\dimport.d" />
-   <File path="dmd\src\dmd\dinifile.d" />
+   <File path="dmd\src\dmd\dinifile.d" tool="None" />
    <File path="dmd\src\dmd\dinterpret.d" />
    <File path="dmd\src\dmd\dmacro.d" />
    <File path="dmd\src\dmd\dmangle.d" />
