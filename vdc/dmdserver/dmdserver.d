@@ -83,7 +83,7 @@ shared(Object) gDMDSync = new Object; // no multi-instances/multi-threading with
 shared(Object) gOptSync = new Object; // no multi-instances/multi-threading with DMD
 
 version (traceGC)
-	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:trace disable:1" ];
+	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:trace disable:0" ];
 else
 	// precise GC doesn't help much because dmd erases most type info
 	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:precise" ];
@@ -1105,8 +1105,7 @@ unittest
 	scope(exit) release(srv);
 
 	auto filename = allocBSTR("source.d");
-	auto imp = allocBSTR(r"c:\s\d\dlang\druntime\import" ~ "\n" ~
-						 r"c:\s\d\dlang\phobos");
+	auto imp = allocBSTR(guessImportPaths().join("\n"));
 	auto empty = allocBSTR("");
 	uint flags = ConfigureFlags!()(false, //bool unittestOn
 								   false, //bool debugOn,

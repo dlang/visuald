@@ -1,6 +1,8 @@
 module tracegc;
 
 import core.stdc.string;
+import core.time;
+import core.stdc.stdio;
 
 //version = traceGC;
 
@@ -11,9 +13,8 @@ void wipeStack()
 	memset (data.ptr, 0xff, 4096);
 }
 
-version(traceGC):
+version(traceGC) {
 import core.sys.windows.windows;
-import core.stdc.stdio;
 import gc.impl.conservative.gc;
 import core.thread;
 
@@ -927,7 +928,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	foreach(range; cgc.rangeIter)
 		mark(range.pbot, range.ptop);
 
-	thread_scanAll(&mark);
+	//thread_scanAll(&mark);
 	thread_resumeAll();
 
 	cgc.gcLock.unlock();
@@ -1125,6 +1126,8 @@ const(char)[] dmdident(ConservativeGC cgc, void* p)
 	auto dummyIdent = Identifier.anonymous();
 	auto sym = cast(Dsymbol)p;
 	auto ident = sym.ident;
+	if (!ident)
+		return null;
 	BlkInfo syminf = cgc.queryNoSync(cast(void*)ident);
 	if (syminf.base is null || syminf.size < Identifier.sizeof)
 		return null;
@@ -1251,12 +1254,14 @@ nextLoc:
 	}
 }
 
+} // version(traceGC)
+
 ////////////////////////////////////////////////////////////////
 private __gshared MonoTime gcStartTick;
 private __gshared FILE* gcx_fh;
 private __gshared bool hadNewline = false;
 
-private int trace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
+int trace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
 {
     if (!gcx_fh)
         gcx_fh = fopen("tracegc.log", "w");
@@ -1283,7 +1288,7 @@ private int trace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
     return len;
 }
 
-private int xtrace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
+int xtrace_printf(ARGS...)(const char* fmt, ARGS args) nothrow
 {
 	char[1024] buf;
 	sprintf(buf.ptr, fmt, args);

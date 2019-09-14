@@ -184,8 +184,19 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 
 ////////////////////////////////////////////////////////////////
 //version = traceGC;
-version (traceGC) import tracegc;
+import tracegc;
 extern(Windows) void OutputDebugStringA(const(char)* lpOutputString);
+
+string[] guessImportPaths()
+{
+	import std.file;
+
+	if (std.file.exists(r"c:\s\d\dlang\druntime\import\object.d"))
+		return [ r"c:\s\d\dlang\druntime\import", r"c:\s\d\dlang\phobos" ];
+	if (std.file.exists(r"c:\s\d\rainers\druntime\import\object.d"))
+		return [ r"c:\s\d\rainers\druntime\import", r"c:\s\d\rainers\phobos" ];
+	return [ r"c:\d\dmd2\src\druntime\import", r"c:\s\d\rainers\src\phobos" ];
+}
 
 unittest
 {
@@ -197,7 +208,7 @@ unittest
 	opts.predefineDefaultVersions = true;
 	opts.x64 = true;
 	opts.msvcrt = true;
-	opts.importDirs = [ r"c:\s\d\dlang\druntime\import", r"c:\s\d\dlang\phobos" ];
+	opts.importDirs = guessImportPaths();
 
 	auto filename = "source.d";
 
@@ -352,8 +363,15 @@ unittest
 			GC.collect();
 
 			//_CrtDumpMemoryLeaks();
-			dumpGC();
+			//dumpGC();
 		}
+
+		//core.memory.GC.Stats stats = GC.stats();
+		//trace_printf("GC stats: %lld MB used, %lld MB free\n", cast(long)stats.usedSize >> 20, cast(long)stats.freeSize >> 20);
+
+		version(traceGC)
+			if (stats.usedSize > (200 << 20))
+				dumpGC();
 	}
 
 	checkTip(m, 5, 8, "(local variable) int xyz");

@@ -1394,10 +1394,10 @@
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
-  <cccmd>$(CC) -nologo -c -TP -Idmd\src -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\vcbuild -DTARGET_WINDOS=1 -FIwarnings.h</cccmd>
+  <cccmd>$(CC) -nologo -c -Idmd\src -Idmd\src\dmd\backend -Idmd\src\dmd\tk -Idmd\src\dmd\root -Idmd\src\vcbuild -DTARGET_WINDOS=1 -FIwarnings.h</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>1</addDepImp>
-  <program>c:\l\d\dmd2\windows\bin\dmd.exe</program>
+  <program>c:\s\d\rainers\dmd\generated\Windows\Release\x64\dmd.exe</program>
   <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src $(DMDInstallDir)\druntime\src</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
@@ -1603,10 +1603,10 @@
    <File path="dmd\src\dmd\utils.d" />
    <File path="dmd\src\dmd\visitor.d" />
   </Folder>
-  <File path="dmdlib.d" />
-  <File path="dmdrmem.d" />
   <File path="dmderrors.d" />
   <File path="dmdinit.d" />
+  <File path="dmdlib.d" />
+  <File path="dmdrmem.d" />
   <File path="dmdserver.d" />
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
