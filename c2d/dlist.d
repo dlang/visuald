@@ -268,9 +268,19 @@ else
 	}
 }
 
-	ref T opStar()
+	ref T opUnary(string op)() if(op == "*")
 	{
 		return _pos.data;
+	}
+
+	void opUnary(string op)() if(op == "++")
+	{
+		advance();
+	}
+
+	void opUnary(string op)() if(op == "--")
+	{
+		retreat();
 	}
 
 	ref T opIndex(int idx)
@@ -280,14 +290,14 @@ else
 		return *it;
 	}
 
-	DListIterator!(T) opAdd(int cnt)
+	DListIterator!(T) opBinary(string op)(int cnt) if(op == "+")
 	{
 		DListIterator!(T) it = this;
 		it += cnt;
 		return it;
 	}
 
-	DListIterator!(T) opSub(int cnt)
+	DListIterator!(T) opBinary(string op)(int cnt) if(op == "-")
 	{
 		DListIterator!(T) it = this;
 		it += -cnt;
@@ -314,7 +324,7 @@ else
 		return _pos is _list.root._next;
 	}
 
-	void opAddAssign(int cnt)
+	void opOpAssign(string op)(int cnt) if(op == "+")
 	{
 		while(cnt > 0)
 		{
@@ -327,9 +337,9 @@ else
 			cnt++;
 		}
 	}
-	void opSubAssign(int cnt)
+	void opOpAssign(string op)(int cnt) if(op == "-")
 	{
-		opAddAssign(-cnt);
+		opOpAssign!"+"(-cnt);
 	}
 
 	void insertAfter(T data)

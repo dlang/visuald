@@ -39,7 +39,7 @@ struct Queue(T)
 		return data[idx];
 	}
 
-	ref Queue!T opCatAssign(ref T t)
+	ref Queue!T opOpAssign(string op)(ref T t) if (op == "~")
 	{
 		append(t);
 		return this;
