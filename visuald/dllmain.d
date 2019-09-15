@@ -188,7 +188,7 @@ void GenerateGeneralXMLW(HWND hwnd, HINSTANCE hinst, LPWSTR lpszCmdLine, int nCm
 }
 
 extern(Windows)
-bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt, float* covPercent)
+BOOL GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt, float* covPercent)
 {
 	if (!Package.s_instance)
 		return false; // not yet loaded as a package
@@ -196,3 +196,24 @@ bool GetCoverageData(const(char)* fname, uint line, uint* data, uint cnt, float*
 	return Package.GetLanguageService().GetCoverageData(filename, line, data, cnt, covPercent);
 }
 
+extern(Windows)
+uint GetTooltip(BSTR fname, uint line, uint col)
+{
+	if (!Package.s_instance)
+		return false; // not yet loaded as a package
+	string filename = to!string(fname);
+	return Package.GetLanguageService().RequestTooltip(filename, line, col);
+}
+
+extern(Windows)
+BOOL GetTooltipResult(uint request, BSTR* btip, BSTR* bfmt)
+{
+	if (!Package.s_instance)
+		return false; // not yet loaded as a package
+
+	wstring tip, fmt;
+	bool rc = Package.GetLanguageService().GetTooltipResult(request, tip, fmt);
+	*btip = allocwBSTR(tip);
+	*bfmt = allocwBSTR(fmt);
+	return rc;
+}

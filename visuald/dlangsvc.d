@@ -46,6 +46,7 @@ import vdc.ivdserver;
 static import vdc.util;
 
 import stdext.array;
+import stdext.ddocmacros;
 import stdext.string;
 import stdext.path;
 
@@ -697,8 +698,31 @@ class LanguageService : DisposingComObject,
 	}
 
 	//////////////////////////////////////////////////////////////
+	extern(D) alias IdleTask = void delegate();
+	IdleTask[] runInIdle;
+	__gshared Object syncRunInIdle = new Object;
+
+	void addIdleTask(IdleTask task)
+	{
+		synchronized(syncRunInIdle)
+			runInIdle ~= task;
+	}
+	void execIdleTasks()
+	{
+		void delegate()[] toRun;
+		synchronized(syncRunInIdle)
+		{
+			toRun = runInIdle;
+			runInIdle = null;
+		}
+		foreach(r; toRun)
+			r();
+	}
+
 	bool OnIdle()
 	{
+		execIdleTasks();
+
 		if(mVDServerClient)
 			mVDServerClient.onIdle();
 
@@ -841,6 +865,91 @@ class LanguageService : DisposingComObject,
 		if (covPrecent)
 			*covPrecent = src.mColorizer.mCoveragePercent;
 
+		return true;
+	}
+
+	// QuickInfo callback from C# ///////////////////////////////////
+
+	private uint mLastTipIdleTaskScheduled;
+	private uint mLastTipIdleTaskHandled;
+
+	private uint mLastTipRequest;
+	private uint mLastTipReceived;
+	private wstring mLastTip;
+	private wstring mLastTipFmt;
+
+	extern(D)
+	void tipCallback(uint request, string fname, string text, TextSpan span)
+	{
+		mLastTipReceived = request;
+		text = text.strip();
+		text = text.replace("\r", "");
+		text = replace(text, "\a", "\n\n");
+		text = phobosDdocExpand(text);
+
+		mLastTip = toUTF16(text);
+
+		string fmt;
+		int state = 0;
+		uint pos = 0;
+		int prevcol = -1;
+		while (pos < mLastTip.length)
+		{
+			uint prevpos = pos;
+			int tok;
+			int col = dLex.scan(state, mLastTip, pos, tok);
+			if (col != prevcol)
+			{
+				if (prevpos > 0)
+				{
+					fmt ~= ";";
+					fmt ~= to!string(prevpos);
+					fmt ~= ":";
+				}
+				fmt ~= defaultColors[col == 0 ? 5 : col-1].name;
+				prevcol = col;
+			}
+		}
+		mLastTipFmt = toUTF16(fmt);
+	}
+
+	uint RequestTooltip(string filename, int line, int col)
+	{
+		if (!Package.GetGlobalOptions().usesQuickInfoTooltips())
+			return 0;
+
+		if (++mLastTipIdleTaskScheduled == 0) // skip 0 as an error value
+			++mLastTipIdleTaskScheduled;
+		uint task = mLastTipIdleTaskScheduled;
+
+		addIdleTask(() {
+			if (task != mLastTipIdleTaskScheduled)
+				return; // ignore old requests
+			auto src = GetSource(filename);
+			if (!src)
+				return;
+
+			TextSpan span = TextSpan(col, line, col + 1, line);
+			ConfigureSemanticProject(src);
+			int flags = Package.GetGlobalOptions().showValueInTooltip ? 1 : 0;
+
+			mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
+			mLastTipIdleTaskHandled = mLastTipIdleTaskScheduled;
+		});
+		return mLastTipIdleTaskScheduled;
+	}
+
+	bool GetTooltipResult(uint task, out wstring tip, out wstring fmtdesc)
+	{
+		if (task != mLastTipIdleTaskScheduled)
+			return true; // return empty tip for wrong request
+		if (task != mLastTipIdleTaskHandled)
+			return false; // wait some more
+		if (mLastTipRequest != mLastTipReceived)
+			return false; // wait some more
+
+		tip = mLastTip;
+		fmtdesc = mLastTipFmt;
 		return true;
 	}
 
@@ -1640,7 +1749,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	}
 
 
-        // Commands -- see MarkerCommandValues for meaning of iItem param
+	// Commands -- see MarkerCommandValues for meaning of iItem param
 	override HRESULT GetMarkerCommandInfo(/+[in]+/ IVsTextMarker pMarker, in int iItem,
 		/+[out, custom(uuid_IVsTextMarkerClient, "optional")]+/ BSTR * pbstrText,
 		/+[out]+/ DWORD* pcmdf)

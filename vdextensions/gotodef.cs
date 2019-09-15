@@ -165,7 +165,9 @@ namespace vdext15
     [Name("GotoDefVisualD")]
     [Order(Before = "WordSelection")]
     internal sealed class GoToDefMouseHandlerProvider : IMouseProcessorProvider
-    {
+	{
+#pragma warning disable 649 // Field is never assigned to, and will always have its default value null
+
         [Import]
         private IClassifierAggregatorService _aggregatorFactory;
 

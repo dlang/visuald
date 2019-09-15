@@ -1823,7 +1823,7 @@ version(none) // quick info tooltips not good enough yet
 		}
 		*pbstrText = allocBSTR(msg);
 }
-		if(Package.GetGlobalOptions().showTypeInTooltip)
+		if(Package.GetGlobalOptions().showTypeInTooltip && !Package.GetGlobalOptions().usesQuickInfoTooltips())
 		{
 			if(mPendingSpan == span && mTipRequest == mPendingRequest)
 			{
