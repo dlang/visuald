@@ -145,6 +145,8 @@ class idl2d
 			"enclaveapi.h",
 			// Win SDK 10.0.14393.0
 			"dpa_dsa.h",
+			// Win SDK 10.0.18362.0
+			"fileapifromapp.h",
 		])
 			win_idl_files ~= f ~ "*"; // make it optional
 
@@ -1292,6 +1294,8 @@ version(all)
 			replaceTokenSequence(tokens, "MEM_EXTENDED_PARAMETER_TYPE, *PMEM_EXTENDED_PARAMETER_TYPE", "*PMEM_EXTENDED_PARAMETER_TYPE", true);
 			// win 10.0.17763.0: typedef enum MEM_SECTION_EXTENDED_PARAMETER_TYPE {} MEM_SECTION_EXTENDED_PARAMETER_TYPE, ...
 			replaceTokenSequence(tokens, "MEM_SECTION_EXTENDED_PARAMETER_TYPE, *PMEM_SECTION_EXTENDED_PARAMETER_TYPE", "*PMEM_SECTION_EXTENDED_PARAMETER_TYPE", true);
+			// win 10.0.18362.0: typedef struct DECLSPEC_ALIGN(16) DECLSPEC_NOINITALL _CONTEXT ...
+			replaceTokenSequence(tokens, "DECLSPEC_NOINITALL", "", true);
 		}
 
 		if(currentModule == "commctrl")
@@ -1359,6 +1363,10 @@ version(all)
 		{
 			// imports inside extern(C) {}
 			replaceTokenSequence(tokens, "extern \"C\" { $_data }", "$_data", true);
+		}
+		if(currentModule == "fileapifromapp")
+		{
+			replaceTokenSequence(tokens, "WINSTORAGEAPI", "", true);
 		}
 		if(currentModule == "propidlbase")
 		{
