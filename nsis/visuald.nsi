@@ -913,6 +913,8 @@ SectionEnd
   LangString DESC_SecVS2015 ${LANG_ENGLISH} "Register for usage in Visual Studio 2015."
   LangString DESC_SecVS2017 ${LANG_ENGLISH} "Register for usage in Visual Studio 2017."
   LangString DESC_SecVS2019 ${LANG_ENGLISH} "Register for usage in Visual Studio 2019."
+  LangString DESC_SecVS2017BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2017 Build Tools."
+  LangString DESC_SecVS2019BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2019 Build Tools."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -949,6 +951,8 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2015} $(DESC_SecVS2015)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017} $(DESC_SecVS2017)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019} $(DESC_SecVS2019)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017BT} $(DESC_SecVS2017BT)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019BT} $(DESC_SecVS2019BT)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
