@@ -1543,6 +1543,7 @@ Module createModuleFromText(string filename, string text)
 {
 	import std.path;
 
+	text ~= "\0\0"; // parser needs 2 trailing zeroes
 	string name = stripExtension(baseName(filename));
 	auto id = Identifier.idPool(name);
 	auto mod = new Module(filename, id, true, false);

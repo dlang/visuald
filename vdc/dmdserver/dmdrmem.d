@@ -23,16 +23,33 @@ extern (C++) struct Mem
 			throw *pcancelError;
 		return GC.malloc(n);
 	}
+	static void* xmalloc_noscan(size_t n) nothrow pure
+	{
+		if (*pcancel)
+			throw *pcancelError;
+		return GC.malloc(n, GC.BlkAttr.NO_SCAN);
+	}
 
 	static void* xcalloc(size_t size, size_t n) nothrow pure
 	{
 		return GC.calloc(size * n);
 	}
 
+	static void* xcalloc_noscan(size_t size, size_t n) nothrow pure
+	{
+		return GC.calloc(size * n, GC.BlkAttr.NO_SCAN);
+	}
+
 	static void* xrealloc(void* p, size_t size) nothrow pure
 	{
 		return GC.realloc(p, size);
 	}
+
+	static void* xrealloc_noscan(void* p, size_t size) nothrow pure
+	{
+		return GC.realloc(p, size, GC.BlkAttr.NO_SCAN);
+	}
+
 	static void error() nothrow
 	{
 		__gshared static oom = new Error("out of memory");
