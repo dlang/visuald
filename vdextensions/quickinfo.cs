@@ -62,14 +62,14 @@ namespace vdext15
 		}
 	}
 
-	internal sealed class VsiualDQuickInfoSource : IAsyncQuickInfoSource
+	internal sealed class VisualDQuickInfoSource : IAsyncQuickInfoSource
 	{
 		private ITextBuffer _textBuffer;
 		private string _filename;
 
-		VsiualDQuickInfoSourceProvider _provider;
+		VisualDQuickInfoSourceProvider _provider;
 
-		public VsiualDQuickInfoSource(VsiualDQuickInfoSourceProvider provider, ITextBuffer textBuffer)
+		public VisualDQuickInfoSource(VisualDQuickInfoSourceProvider provider, ITextBuffer textBuffer)
 		{
 			_provider = provider;
 			_textBuffer = textBuffer;
@@ -251,12 +251,12 @@ namespace vdext15
 	}
 
 	[Export(typeof(IAsyncQuickInfoSourceProvider))]
-	[Name("Vsiual D Quick Info Provider")]
+	[Name("Visual D Quick Info Provider")]
 	[ContentType("d")]
 	[Order]
-	internal sealed class VsiualDQuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
+	internal sealed class VisualDQuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
 	{
-		// these imports don't work in VsiualDQuickInfoSource, maybe because created in another thread?
+		// these imports don't work in VisualDQuickInfoSource, maybe because created in another thread?
 		[Import]
 		public IClassificationFormatMapService formatMap = null;
 		[Import]
@@ -269,7 +269,7 @@ namespace vdext15
 
 			// This ensures only one instance per textbuffer is created
 			return textBuffer.Properties.GetOrCreateSingletonProperty(()
-				=> new VsiualDQuickInfoSource(this, textBuffer));
+				=> new VisualDQuickInfoSource(this, textBuffer));
 		}
 	}
 }
