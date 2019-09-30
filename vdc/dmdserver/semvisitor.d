@@ -479,7 +479,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	bool foundNode(RootObject obj)
 	{
-		if (!obj)
+		if (obj)
 		{
 			found = obj;
 			stop = true;
@@ -574,6 +574,11 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		visitTypeIdentifier(t, t);
 		visit(cast(TypeQualified)t);
+	}
+
+	override void visit(Expression expr)
+	{
+		super.visit(expr);
 	}
 
 	override void visit(CastExp expr)
@@ -682,9 +687,16 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(IdentifierExp expr)
 	{
-		if (!found && expr.ident && expr.type)
+		if (!found && expr.ident)
+		{
 			if (matchIdentifier(expr.loc, expr.ident))
-				foundNode(expr.type);
+			{
+				if (expr.type)
+					foundNode(expr.type);
+				else if (expr.original)
+					foundNode(expr.original.type);
+			}
+		}
 		visit(cast(Expression)expr);
 	}
 

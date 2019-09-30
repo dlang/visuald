@@ -454,37 +454,83 @@ unittest
 		struct S
 		{
 			int field1 = 3;
+			static long stat1 = 7;       // Line 5
 			int fun(int par) { return field1 + par; }
 		}
 		void foo()
 		{
-			S anS;
-			int x = anS.fun(1);          // Line 10
+			S anS;                       // Line 10
+			int x = anS.fun(1);
 		}
 		int fun(S s)
 		{
-			auto p = new S(1);
-			return s.field1;             // Line 15
+			auto p = new S(1);           // Line 15
+			auto seven = S.stat1;
+			return s.field1;
 		}
 	};
 	m = checkErrors(source, "");
 
 	checkTip(m,  2, 10, "(struct) source.S");
 	checkTip(m,  4,  8, "(field) int source.S.field1");
-	checkTip(m,  5,  8, "int source.S.fun(int par)");
-	checkTip(m,  5, 16, "(parameter) int par");
-	checkTip(m,  5, 30, "(field) int source.S.field1");
-	checkTip(m,  5, 39, "(parameter) int par");
+	checkTip(m,  6,  8, "int source.S.fun(int par)");
+	checkTip(m,  6, 16, "(parameter) int par");
+	checkTip(m,  6, 30, "(field) int source.S.field1");
+	checkTip(m,  6, 39, "(parameter) int par");
 
-	checkTip(m,  9,  4, "(struct) source.S");
-	checkTip(m,  9,  6, "(local variable) source.S anS");
-	checkTip(m, 10, 12, "(local variable) source.S anS");
-	checkTip(m, 10, 16, "int source.S.fun(int par)");
+	checkTip(m, 10,  4, "(struct) source.S");
+	checkTip(m, 10,  6, "(local variable) source.S anS");
+	checkTip(m, 11, 12, "(local variable) source.S anS");
+	checkTip(m, 11, 16, "int source.S.fun(int par)");
 
-	checkTip(m, 12, 11, "(struct) source.S");
+	checkTip(m, 13, 11, "(struct) source.S");
+	checkTip(m, 16, 19, "(thread local variable) long source.S.stat1");
+	checkTip(m, 16, 17, "(struct) source.S");
 
-	checkDefinition(m, 10, 16, "source.d", 5, 8);  // fun
-	checkDefinition(m, 14, 17, "source.d", 2, 10); // S
+	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
+	checkDefinition(m, 15, 17, "source.d", 2, 10); // S
+
+	source =
+	q{                                   // Line 1
+		class C
+		{
+			int field1 = 3;
+			static long stat1 = 7;       // Line 5
+			int fun(int par) { return field1 + par; }
+		}
+		void foo()
+		{
+			C aC = new C;                // Line 10
+			int x = aC.fun(1);
+		}
+		int fun(C c)
+		{
+			auto p = new C();            // Line 15
+			auto seven = C.stat1;
+			return c.field1;
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  2,  9, "(class) source.C");
+	checkTip(m,  4,  8, "(field) int source.C.field1");
+	checkTip(m,  6,  8, "int source.C.fun(int par)");
+	checkTip(m,  6, 16, "(parameter) int par");
+	checkTip(m,  6, 30, "(field) int source.C.field1");
+	checkTip(m,  6, 39, "(parameter) int par");
+
+	checkTip(m, 10,  4, "(class) source.C");
+	checkTip(m, 10, 15, "(class) source.C");
+	checkTip(m, 10,  6, "(local variable) source.C aC");
+	checkTip(m, 11, 12, "(local variable) source.C aC");
+	checkTip(m, 11, 16, "int source.C.fun(int par)");
+
+	checkTip(m, 13, 11, "(class) source.C");
+	checkTip(m, 16, 19, "(thread local variable) long source.C.stat1");
+	checkTip(m, 16, 17, "(class) source.C");
+
+	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
+	checkDefinition(m, 15, 17, "source.d", 2, 9);  // C
 
 	source =
 	q{                                   // Line 1
@@ -547,7 +593,7 @@ unittest
 		"14,2,14,3:identifier or `new` expected following `.`, not `}`\n" ~
 		"14,2,14,3:semicolon expected, not `}`\n" ~
 		"12,14,12,15:no property `f` for type `S`\n");
-	dumpAST(m);
+	//dumpAST(m);
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
 	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
 	checkExpansions(m, 13, 13, "an", [ "anS" ]);
@@ -611,9 +657,96 @@ unittest
 		}
 	};
 	m = checkErrors(source, "");
-	dumpAST(m);
+	//dumpAST(m);
 
 	checkTip(m, 6, 12, "(local variable) int i");
 	checkTip(m, 7, 5, "(local variable) int sum");
 	checkTip(m, 7, 12, "(local variable) int i");
+
+	source = q{                          // Line 1
+		enum TOK : ubyte
+		{
+			reserved,
+			leftParentheses,             // Line 5
+			rightParentheses,
+		}
+		void foo(TOK op)
+		{
+			if (op == TOK.leftParentheses) {}   // Line 10
+		}
+		class Base
+		{
+			this(TOK op, size_t sz) {}
+		}                                // Line 15
+		class LeftBase : Base
+		{
+			this()
+			{
+				super(TOK.leftParentheses, LeftBase.sizeof);// Line 20
+			}
+		}
+	};
+	m = checkErrors(source, "");
+	dumpAST(m);
+
+	checkTip(m, 10,  8, "(parameter) source.TOK op");
+	checkTip(m, 10, 14, "(enum) source.TOK");
+	checkTip(m, 10, 18, "(enum value) source.TOK.leftParentheses = 1");
+	checkTip(m, 20, 11, "(enum) source.TOK");
+	checkTip(m, 20, 15, "(enum value) source.TOK.leftParentheses = 1");
+	checkTip(m, 20, 32, "(class) source.LeftBase");
+	//checkTip(m, 20, 41, "(constant) source.LeftBase.sizeof = 8");
+}
+
+unittest
+{
+	import core.memory;
+	import std.path;
+	import std.file;
+
+	dmdInit();
+	string srcdir = "dmd/src";
+
+	Options opts;
+	opts.predefineDefaultVersions = true;
+	opts.x64 = true;
+	opts.msvcrt = true;
+	opts.importDirs = guessImportPaths() ~ srcdir;
+	opts.stringImportDirs ~= srcdir ~ "/../res";
+	opts.versionIds ~= "MARS";
+	//opts.versionIds ~= "NoBackend";
+
+	auto filename = std.path.buildPath(srcdir, "dmd/expressionsem.d");
+
+	static void assert_equal(S, T)(S s, T t)
+	{
+		if (s == t)
+			return;
+		assert(false);
+	}
+
+	Module checkErrors(string src, string expected_err)
+	{
+		try
+		{
+			initErrorFile(filename);
+			Module parsedModule = createModuleFromText(filename, src);
+			assert(parsedModule);
+			Module m = analyzeModule(parsedModule, opts);
+			auto err = cast(string) gErrorMessages;
+			assert_equal(err, expected_err);
+			return m;
+		}
+		catch(Throwable t)
+		{
+			throw t;
+		}
+	}
+	string source = cast(string)std.file.read(filename);
+	Module m = checkErrors(source, "");
+}
+
+// https://issues.dlang.org/show_bug.cgi?id=20253
+void dummy()
+{
 }
