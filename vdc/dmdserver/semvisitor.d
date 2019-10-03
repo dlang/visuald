@@ -273,20 +273,15 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	}
 
 	// statements
-	override void visit(Statement) {}
-
-	override void visit(ErrorStatement stmt)
+	override void visit(Statement stmt)
 	{
-		visitStatement(stmt.errStmt);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visitStatement(stmt.original);
 	}
 
 	override void visit(ExpStatement stmt)
 	{
 		visitExpression(stmt.exp);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(ConditionalStatement stmt)
@@ -305,6 +300,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			else
 				visitStatement(stmt.elsebody);
 		}
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(CompileStatement stmt)
@@ -313,33 +309,26 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			foreach(e; *stmt.exps)
 				if (!stop)
 					e.accept(this);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(WhileStatement stmt)
 	{
 		visitExpression(stmt.condition);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(DoStatement stmt)
 	{
 		visitExpression(stmt.condition);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(ForStatement stmt)
 	{
 		visitExpression(stmt.condition);
 		visitExpression(stmt.increment);
-		if (!stop)
-			visit(cast(Statement)stmt);
-
-		if (!stop && stmt.loweredFrom)
-			stmt.loweredFrom.accept(this);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(ForeachStatement stmt)
@@ -349,8 +338,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 				if (!stop)
 					p.accept(this);
 		visitExpression(stmt.aggr);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(ForeachRangeStatement stmt)
@@ -359,8 +347,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			stmt.prm.accept(this);
 		visitExpression(stmt.lwr);
 		visitExpression(stmt.upr);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(IfStatement stmt)
@@ -368,8 +355,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		if (!stop && stmt.prm)
 			stmt.prm.accept(this);
 		visitExpression(stmt.condition);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(PragmaStatement stmt)
@@ -378,8 +364,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			foreach(a; *stmt.args)
 				if (!stop)
 					a.accept(this);
-		if (!stop)
-			visit(cast(Statement)stmt);
+		visit(cast(Statement)stmt);
 	}
 
 	override void visit(StaticAssertStatement stmt)

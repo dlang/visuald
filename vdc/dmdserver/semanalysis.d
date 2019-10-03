@@ -687,7 +687,7 @@ unittest
 		}
 	};
 	m = checkErrors(source, "");
-	dumpAST(m);
+	//dumpAST(m);
 
 	checkTip(m, 10,  8, "(parameter) source.TOK op");
 	checkTip(m, 10, 14, "(enum) source.TOK");
