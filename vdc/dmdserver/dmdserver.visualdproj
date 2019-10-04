@@ -1084,7 +1084,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/STACK:8388608</additionalOptions>
+  <additionalOptions>-L/STACK:8388608 -check=assert</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>

@@ -67,6 +67,9 @@ vdserver:
 dmdserver:
 	devenv /Project "dmdserver" /Build "$(CONFIG)|x64" visuald_vs10.sln
 
+dmdserver_test:
+	devenv /Project "dmdserver" /Build "TestDebug|x64" visuald_vs10.sln
+
 dparser:
 	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5.2 /p:DefineConstants=NET40 /t:Rebuild
 	editbin /STACK:0x800000 bin\Release\DParserCOMServer\DParserCOMServer.exe
