@@ -3029,6 +3029,8 @@ struct MagoOptions
 	bool showVTable;
 	bool flatClassFields;
 	bool expandableStrings;
+	bool hideReferencePointers;
+	bool removeLeadingHexZeroes;
 	uint maxArrayElements;
 
 	void saveToRegistry()
@@ -3039,6 +3041,8 @@ struct MagoOptions
 		keyMago.Set("showVTable", showVTable);
 		keyMago.Set("flatClassFields", flatClassFields);
 		keyMago.Set("expandableStrings", expandableStrings);
+		keyMago.Set("hideReferencePointers", hideReferencePointers);
+		keyMago.Set("removeLeadingHexZeroes", removeLeadingHexZeroes);
 		keyMago.Set("maxArrayElements", maxArrayElements);
 	}
 
@@ -3051,6 +3055,8 @@ struct MagoOptions
 		showVTable        = (keyMago.GetDWORD("showVTable", 1) != 0);
 		flatClassFields   = (keyMago.GetDWORD("flatClassFields", 0) != 0);
 		expandableStrings = (keyMago.GetDWORD("expandableStrings", 0) != 0);
+		hideReferencePointers = (keyMago.GetDWORD("hideReferencePointers", 1) != 0);
+		removeLeadingHexZeroes = (keyMago.GetDWORD("removeLeadingHexZeroes", 0) != 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
 	}
 }
@@ -3070,6 +3076,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
 		AddControl("", mFlatClassFields   = new CheckBox(mCanvas, "Show base class fields as direct fields"));
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
+		AddControl("", mHideRefPointers   = new CheckBox(mCanvas, "Hide pointers for class references and slices"));
+		AddControl("", mRemoveHexZeroes   = new CheckBox(mCanvas, "Remove leading zeroes from hex values"));
 		auto saveWidth = kLabelWidth;
 		kLabelWidth = kPageWidth * 4 / 5;
 		AddControl("Limit array elements shown in expansions to", mMaxArrayElements = new Text(mCanvas));
@@ -3120,6 +3128,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		mShowVTable.setChecked(mOptions.showVTable);
 		mFlatClassFields.setChecked(mOptions.flatClassFields);
 		mExpandableStrings.setChecked(mOptions.expandableStrings);
+		mHideRefPointers.setChecked(mOptions.hideReferencePointers);
+		mRemoveHexZeroes.setChecked(mOptions.removeLeadingHexZeroes);
 		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
 	}
 
@@ -3131,6 +3141,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mShowVTable.isChecked(), opts.showVTable, refopts.showVTable);
 		changes += changeOption(mFlatClassFields.isChecked(), opts.flatClassFields, refopts.flatClassFields);
 		changes += changeOption(mExpandableStrings.isChecked(), opts.expandableStrings, refopts.expandableStrings);
+		changes += changeOption(mHideRefPointers.isChecked(), opts.hideReferencePointers, refopts.hideReferencePointers);
+		changes += changeOption(mRemoveHexZeroes.isChecked(), opts.removeLeadingHexZeroes, refopts.removeLeadingHexZeroes);
 
 		import stdext.string;
 		long maxelem;
@@ -3145,6 +3157,8 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mShowVTable;
 	CheckBox mFlatClassFields;
 	CheckBox mExpandableStrings;
+	CheckBox mHideRefPointers;
+	CheckBox mRemoveHexZeroes;
 	Text mMaxArrayElements;
 }
 
