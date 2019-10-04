@@ -104,14 +104,14 @@ before_build:
 build_script:
   - cd c:\projects
   - cd visuald
+  # Fetch submodules
+  - git submodule update --init --recursive
   # ignore failure once, in case it needs reloading the sdk project
   - nmake prerequisites || nmake prerequisites
   # build Visual D
   - nmake visuald_vs
   # build and run Visual D unittests
   - nmake visuald_test
-  # Fetch submodules
-  - git submodule update --init --recursive
   - cd ..
   # Clone mago/cv2pdb (need to be two levels up)
   - cd ..
