@@ -4361,36 +4361,6 @@ else
 		return changed;
 	}
 
-	// from D_Parser
-	enum TypeReferenceKind : uint
-	{
-		Unknown,
-
-		Interface,
-		Enum,
-		EnumValue,
-		Template,
-		Class,
-		Struct,
-		Union,
-		TemplateTypeParameter,
-
-		Constant,
-		LocalVariable,
-		ParameterVariable,
-		TLSVariable,
-		SharedVariable,
-		GSharedVariable,
-		MemberVariable,
-		Variable,
-
-		Alias,
-		Module,
-		Function,
-		Method,
-		BasicType,
-	}
-
 	int convertTypeRefToColor(uint kind)
 	{
 		switch (kind)

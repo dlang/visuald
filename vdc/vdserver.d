@@ -208,7 +208,7 @@ class VDServer : ComObject, IVDServer
 
 			int changed = (oldflags != (flags & 0xff0000ff));
 			changed += opts.setImportDirs(splitLines(imports));
-			changed += opts.setImportDirs(splitLines(imports));
+			changed += opts.setStringImportDirs(splitLines(strImports));
 			changed += opts.setVersionIds(versionlevel, splitLines(verids));
 			changed += opts.setDebugIds(debuglevel, splitLines(dbgids));
 		}

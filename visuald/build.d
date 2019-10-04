@@ -1426,9 +1426,15 @@ bool getFilesFromTrackerFile(string lnkdeppath, ref string[] files)
 		bool isExcluded(string file)
 		{
 			foreach(ex; exclpaths)
+			{
 				if (file.length >= ex.length && icmp(file[0..ex.length], ex) == 0)
+				{
 					if (ex[$-1] == '\\' || file.length == ex.length || file[ex.length] == '\\')
 						return true;
+				}
+				else if (ex.indexOf('\\') < 0 && globMatch(baseName(file).toLower, ex.toLower))
+					return true;
+			}
 			return false;
 		}
 

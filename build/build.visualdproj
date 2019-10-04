@@ -628,6 +628,7 @@ dmd -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).
   <File customcmd="dmd -map $(OutDir)\$(InputName).map -of$(IntDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" perConfig="true" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" path="..\tools\mb2utf16.d" tool="Custom">
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
 dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; &quot;-od$(IntDir)&quot; $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug|Win32" />
+   <Config tool="Custom" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="TestDebug|Win32" />
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
 if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
@@ -639,7 +640,7 @@ if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp
 if errorlevel 1 goto reportError
 dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release COFF32|Win32" />
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
-dmd -map $(OutDir)\$(InputName).map -of$(IntDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release|Win32" />
+dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release|Win32" />
   </File>
   <File customcmd="dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" perConfig="true" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" path="..\tools\pipedmd.d" tool="Custom">
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...

@@ -1926,7 +1926,8 @@ class GlobalOptions
 			fmtIndentCase       = getBoolOpt("fmtIndentCase", true);
 
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
-			useDParser          = true; // getBoolOpt("useDParser2", keyDParser.key !is null);
+			version(all) useDParser    = getBoolOpt("useDParser2", keyDParser.key !is null);
+			else  useDParser    = true;
 			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
 			sortExpMode         = getBoolOpt("sortExpMode", 0);
@@ -2122,7 +2123,7 @@ class GlobalOptions
 		if(useDParser)
 			gServerClassFactory_iid = DParserClassFactory_iid;
 		else
-			gServerClassFactory_iid = VDServerClassFactory_iid;
+			gServerClassFactory_iid = DMDServerClassFactory_iid;
 	}
 
 	bool saveToRegistry()

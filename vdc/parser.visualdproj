@@ -32,7 +32,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -45,7 +45,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -54,14 +53,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -100,10 +98,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -154,7 +153,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
@@ -167,7 +166,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -176,14 +174,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -222,10 +219,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -276,7 +274,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>1</noboundscheck>
+  <boundscheck>3</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
@@ -289,7 +287,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -298,14 +295,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -344,10 +340,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles>ole32.lib oleaut32.lib</libfiles>
@@ -398,7 +395,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -411,7 +408,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -420,14 +416,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -466,10 +461,11 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -520,7 +516,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
@@ -533,7 +529,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -542,14 +537,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -588,10 +582,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -642,7 +637,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -655,7 +650,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -664,14 +658,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -710,10 +703,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -764,7 +758,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -777,7 +771,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -786,14 +779,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
@@ -832,10 +824,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -886,7 +879,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -899,7 +892,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -908,14 +900,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
@@ -954,10 +945,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1008,7 +1000,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -1021,7 +1013,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -1030,14 +1021,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -1076,10 +1066,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1130,7 +1121,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -1143,7 +1134,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -1152,14 +1142,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -1198,10 +1187,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1252,7 +1242,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -1265,7 +1255,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -1274,14 +1263,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -1320,10 +1308,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1374,7 +1363,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -1387,7 +1376,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2.043</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -1396,24 +1384,23 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
+  <program />
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
@@ -1442,10 +1429,11 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1496,7 +1484,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>1</noboundscheck>
+  <boundscheck>3</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
@@ -1509,7 +1497,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -1518,14 +1505,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -1564,10 +1550,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1618,7 +1605,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>1</useUnitTests>
   <useInline>0</useInline>
@@ -1631,7 +1618,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -1640,14 +1626,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -1686,10 +1671,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1709,7 +1695,6 @@
   <filesToClean>*.obj</filesToClean>
  </Config>
  <Config platform="Win32" name="Release COFF32">
-  <enableMixin>0</enableMixin>
   <obj>0</obj>
   <link>0</link>
   <lib>1</lib>
@@ -1741,7 +1726,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>0</useInline>
@@ -1754,7 +1739,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -1763,14 +1747,13 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -1809,10 +1792,11 @@
   <runargs />
   <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1863,7 +1847,7 @@
   <useIn>0</useIn>
   <useOut>0</useOut>
   <useArrayBounds>0</useArrayBounds>
-  <noboundscheck>0</noboundscheck>
+  <boundscheck>0</boundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
@@ -1876,7 +1860,6 @@
   <pic>0</pic>
   <cov>0</cov>
   <nofloat>0</nofloat>
-  <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <allinst>0</allinst>
   <stackStomp>0</stackStomp>
@@ -1885,21 +1868,20 @@
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
   <transition_field>0</transition_field>
-  <transition_import>0</transition_import>
-  <transition_dtorfields>0</transition_dtorfields>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <transition_intpromote>0</transition_intpromote>
-  <transition_tls>0</transition_tls>
-  <transition_fixAliasThis>0</transition_fixAliasThis>
-  <transition_markdown>0</transition_markdown>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
-  <otherDMD>1</otherDMD>
+  <otherDMD>0</otherDMD>
   <cccmd>$(CC) -c</cccmd>
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>0</addDepImp>
-  <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
+  <program />
   <imppath>..</imppath>
   <fileImppath>.</fileImppath>
   <outdir>..\bin\$(ConfigurationName)</outdir>
@@ -1931,10 +1913,11 @@
   <runargs />
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
-  <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
   <objfiles />
   <linkswitches />
   <libfiles />
@@ -1985,8 +1968,8 @@
   <File path="logger.d" />
   <File path="parsertest.d" />
   <File path="semantic.d" />
+  <File path="semanticopt.d" />
   <File path="util.d" />
-  <File path="vdserver.d" />
   <File path="versions.d" />
  </Folder>
 </DProject>

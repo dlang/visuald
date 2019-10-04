@@ -9,7 +9,15 @@
 module vdc.vdserverfactory;
 
 import vdc.ivdserver;
-import vdc.vdserver;
+version(MARS)
+{
+	import vdc.dmdserver.dmdserver;
+	alias VDServer = DMDServer;
+}
+else
+{
+	import vdc.vdserver;
+}
 
 import sdk.port.base;
 import sdk.win32.oaidl;
@@ -45,8 +53,10 @@ static ~this()
 
 class VDServerClassFactory : ComObject, IClassFactory
 {
-	debug static GUID iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
-	else  static GUID iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+	version(MARS) static immutable GUID iid = uuid("002a2de9-8bb6-484d-9906-7e4ad4084715");
+	else debug    static immutable GUID iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
+	else debug    static immutable GUID iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
+	else          static immutable GUID iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
@@ -97,7 +107,7 @@ extern(C) int vdserver_main()
 
 	// Register the Factory.
 	DWORD regID = 0;
-	hr = CoRegisterClassObject(VDServerClassFactory.iid, cf, CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE, &regID);
+	hr = CoRegisterClassObject(*cast(GUID*)&VDServerClassFactory.iid, cf, CLSCTX_LOCAL_SERVER, REGCLS_SINGLEUSE, &regID);
 	if(FAILED(hr))
 	{
 		ShowErrorMessage("CoRegisterClassObject()", hr);
@@ -116,7 +126,7 @@ extern(C) int vdserver_main()
 	}
 
 	// All done, so remove class object.
-	CoRevokeClassObject(regID);	
+	CoRevokeClassObject(regID);
 	return 0;
 }
 
@@ -137,19 +147,16 @@ void ShowErrorMessage(LPCTSTR header, HRESULT hr)
 import std.compiler;
 import std.conv;
 
-static if(version_minor < 64)
+version(TEST)
 {
-	// dmd 2.064 implicitely adds C main with D main
 	int main(char[][] argv)
 	{
-		return vdserver_main();
+		return 0; //vdserver_main();
 	}
 }
 else
 {
-	extern (C) int rt_init();
-	extern (C) int rt_term();
-	extern (C) bool runModuleUnitTests();
+	import core.runtime;
 	enum EXIT_SUCCESS = 0;
 	enum EXIT_FAILURE = -1;
 
@@ -159,9 +166,13 @@ else
 		int result = EXIT_FAILURE;
 		try
 		{
-			if (rt_init() && runModuleUnitTests())
-				result = vdserver_main();
-
+			if (rt_init())
+			{
+				version(unittest)
+					result = runModuleUnitTests().passed ? EXIT_SUCCESS : EXIT_FAILURE;
+				else
+					result = vdserver_main();
+			}
 			if (!rt_term())
 				result = (result == EXIT_SUCCESS) ? EXIT_FAILURE : result;
 		}
