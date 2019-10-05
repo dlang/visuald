@@ -1551,7 +1551,8 @@ struct IdentifierType
 	uint type;
 }
 
-class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTextMarkerClient
+class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
+               IVsTextMarkerClient, IVsHiddenTextClient
 {
 	Colorizer mColorizer;
 	IVsTextLines mBuffer;
@@ -1628,6 +1629,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		if(queryInterface!(IVsTextLinesEvents) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IVsTextMarkerClient) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsHiddenTextClient) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -1792,6 +1795,92 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		return S_OK;
 	}
 
+	// IVsHiddenTextClient ///////////////////////////////////////////////
+	HRESULT OnHiddenRegionChange(IVsHiddenRegion pHidReg,
+								 in HIDDEN_REGION_EVENT EventCode,     // HIDDENREGIONEVENT value
+								 in BOOL fBufferModifiable)
+	{
+		return S_OK;
+	}
+
+	HRESULT GetTipText(/+[in]+/ IVsHiddenRegion pHidReg,
+					   /+[out, optional]+/ BSTR *pbstrText)
+	{
+		TextSpan span;
+		HRESULT hr = pHidReg.GetSpan(&span);
+		if (FAILED(hr) || !pbstrText)
+			return hr;
+		wstring txt = GetText(span.iStartLine, 0, span.iEndLine, span.iEndIndex);
+
+		LANGPREFERENCES3 langPrefs;
+		uint tabsz = GetUserPreferences(&langPrefs, null) == S_OK ? langPrefs.uTabSize : 8;
+		if (span.iStartIndex > 0 && span.iStartIndex <= txt.length)
+		{
+			int vpos = visiblePosition(txt, tabsz, span.iStartIndex);
+			txt = repeat(cast(wchar)' ', vpos).array().to!wstring ~ txt[span.iStartIndex .. $];
+		}
+		// unindent text, limit line length and number of lines
+		enum maxLines = 30;
+		enum maxLineLength = 130;
+		wstring[] lines = txt.splitLines();
+		while (lines.length > 0 && strip(lines[0]).empty)
+			lines = lines[1..$];
+		size_t visibleLines = min(lines.length, maxLines);
+		size_t minIndent = size_t.max;
+		for (size_t ln = 0; ln < visibleLines; ln++)
+		{
+			int p;
+			int n = countVisualSpaces(lines[ln], tabsz, &p);
+			if (p < lines[ln].length && n < minIndent) // ignore empty lines
+				minIndent = n;
+		}
+		for (size_t ln = 0; ln < visibleLines; ln++)
+		{
+			auto line = lines[ln].detab(tabsz);
+			if (line.length < minIndent)
+				line = null;
+			else if (line.length > minIndent + maxLineLength)
+				line = line[minIndent .. minIndent + maxLineLength] ~ "..."w;
+			else
+				line = line[minIndent .. $];
+			lines[ln] = line.to!wstring;
+		}
+		if (lines.length > visibleLines)
+			lines = lines[0..visibleLines] ~ "..."w;
+		wstring tipText = join(lines, "\n"w);
+		*pbstrText = allocwBSTR(tipText);
+		return S_OK;
+	}
+
+	HRESULT GetMarkerCommandInfo(/+[in]+/ IVsHiddenRegion pHidReg, in int iItem,
+									 /+[out, custom(uuid_IVsHiddenTextClient, "optional")]+/ BSTR * pbstrText,
+									 /+[out]+/ DWORD* pcmdf)
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT ExecMarkerCommand(/+[in]+/ IVsHiddenRegion pHidReg, in int iItem)
+	{
+		return E_NOTIMPL;
+	}
+
+	/*
+	MakeBaseSpanVisible is used for visibility control.  If the user does something that requires a
+	piece of hidden text to be visible (e.g. Goto line command, debugger stepping, find in files hit,
+	etc.) then we will turn around and call this for regions that the text hiding manager cannot
+	automatically make visible.  (In the current implementation this will only happen for concealed
+	regions; collapsible ones will be automatically expanded.)  This CANNOT fail!!  You must either
+	destroy the hidden region by calling IVsHiddenRegion::Remove() or else reset its range so that
+	it is no longer hiding the hidden text.  It is OK to add/remove other regions when this is called.
+	*/
+	HRESULT MakeBaseSpanVisible(/+[in]+/ IVsHiddenRegion pHidReg, in TextSpan *pBaseSpan)
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT OnBeforeSessionEnd()
+	{
+		return S_OK;
+	}
+
 	///////////////////////////////////////////////////////////////////////////////
 	void setDisasmFiles(string asmfile, string linefile)
 	{
@@ -1909,7 +1998,7 @@ version(threadedOutlining) {} else
 		{
 			scope(exit) release(htm);
 			if(htm.GetHiddenTextSession(mBuffer, &mHiddenTextSession) != S_OK)
-				htm.CreateHiddenTextSession(0, mBuffer, null, &mHiddenTextSession);
+				htm.CreateHiddenTextSession(0, mBuffer, this, &mHiddenTextSession);
 		}
 		return mHiddenTextSession;
 	}
