@@ -3413,6 +3413,31 @@ class Config :	DisposingComObject,
 		return files;
 	}
 
+	string[] filterTroublesomeOptions(string[] cmds)
+	{
+		// filter out options that can cause unexpected failures due to file accesses
+		size_t j = 0;
+		for (size_t i = 0; i < cmds.length; i++)
+		{
+			if (cmds[i] == "-lib")
+				continue;
+			if (cmds[i] == "-vcg-ast")
+				continue;
+			if (cmds[i] == "-run")
+				break;
+			if (cmds[i].startsWith("-X")) // json
+				continue;
+			if (cmds[i].startsWith("-H")) // hdr
+				continue;
+			if (cmds[i].startsWith("-D")) // doc
+				continue;
+			if (cmds[i].startsWith("-deps"))
+				continue;
+			cmds[j++] = cmds[i];
+		}
+		return cmds[0..j];
+	}
+
 	string getCompilerVersionIDs(string cmd = null)
 	{
 		ProjectOptions opts = GetProjectOptions();
@@ -3442,6 +3467,7 @@ class Config :	DisposingComObject,
 			try
 			{
 				auto cmds = tokenizeArgs(cmd);
+				cmds = filterTroublesomeOptions(cmds);
 				auto res = execute(cmds, null, ExecConfig.suppressConsole);
 				if (res.status == 0)
 				{

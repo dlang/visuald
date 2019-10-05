@@ -1529,6 +1529,7 @@ class GlobalOptions
 	bool autoOutlining;
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
 	bool parseSource = true;
+	bool showParseErrors = true;
 	bool pasteIndent;
 	bool fmtIndentCase = true;
 	bool expandFromSemantics;
@@ -1567,13 +1568,14 @@ class GlobalOptions
 	bool ColorizeReferences;
 	bool lastColorizeCoverage;
 	bool lastColorizeVersions;
+	bool lastShowParseErrors;
 	bool lastUseDParser;
 	string lastInstallDirs;
 
 	int vsVersion;
 	bool isVS2017OrLater() { return vsVersion >= 15; }
-	bool usesUpdateSemanticModule() { return parseSource || expandFromSemantics || showTypeInTooltip || semanticGotoDef; }
-	bool usesQuickInfoTooltips() { return isVS2017OrLater() && !useDParser; }
+	bool usesUpdateSemanticModule() { return parseSource || showParseErrors || expandFromSemantics || showTypeInTooltip || semanticGotoDef; }
+	bool usesQuickInfoTooltips() { return isVS2017OrLater(); }
 
 	this()
 	{
@@ -1913,6 +1915,7 @@ class GlobalOptions
 			autoOutlining       = getBoolOpt("autoOutlining", true);
 			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
 			//parseSource         = getBoolOpt("parseSource", true);
+			showParseErrors     = getBoolOpt("showParseErrors", true);
 			expandFromSemantics = getBoolOpt("expandFromSemantics", true);
 			//expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
 			expandFromJSON      = getBoolOpt("expandFromJSON", true);
@@ -2099,6 +2102,7 @@ class GlobalOptions
 			lastColorizeCoverage = ColorizeCoverage;
 			lastColorizeVersions = ColorizeVersions;
 			lastUseDParser       = useDParser;
+			lastShowParseErrors  = showParseErrors;
 
 			updateDefaultColors();
 
@@ -2189,6 +2193,7 @@ class GlobalOptions
 			keyToolOpts.Set("autoOutlining",       autoOutlining);
 			keyToolOpts.Set("deleteFiles",         deleteFiles);
 			//keyToolOpts.Set("parseSource",         parseSource);
+			keyToolOpts.Set("showParseErrors",     showParseErrors);
 			keyToolOpts.Set("expandFromSemantics", expandFromSemantics);
 			//keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
@@ -2262,6 +2267,11 @@ class GlobalOptions
 		if(lastInstallDirs != installDirs)
 		{
 			lastInstallDirs = installDirs;
+			updateColorizer = true;
+		}
+		if (lastShowParseErrors != showParseErrors)
+		{
+			lastShowParseErrors = showParseErrors;
 			updateColorizer = true;
 		}
 		if(updateColorizer)

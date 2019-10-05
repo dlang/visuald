@@ -570,7 +570,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>MARS NoBackend GC</versionids>
+  <versionids>MARS NoBackend GC LanguageServer</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>1</mapverbosity>
   <createImplib>0</createImplib>
@@ -1054,7 +1054,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>MARS NoBackend GC</versionids>
+  <versionids>MARS NoBackend GC LanguageServer</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>2</mapverbosity>
   <createImplib>0</createImplib>
@@ -1296,7 +1296,7 @@
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>MARS NoBackend GC</versionids>
+  <versionids>MARS NoBackend GC LanguageServer</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>

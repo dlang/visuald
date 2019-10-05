@@ -132,7 +132,8 @@ namespace DParserCOMServer
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 		{
-			_tipGenerationTask.Run(filename, new CodeLocation(startIndex + 1, startLine), (flags & 1) != 0);
+			_tipGenerationTask.Run(filename, new CodeLocation(startIndex + 1, startLine),
+			                       Tuple.Create((flags & 1) != 0, (flags & 2) != 0));
 		}
 
 		public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)

@@ -586,8 +586,13 @@ class LanguageService : DisposingComObject,
 
 	void UpdateColorizer(bool force)
 	{
+		bool showErrors = Package.GetGlobalOptions().showParseErrors;
 		foreach(src; mSources)
+		{
 			src.mColorizer.OnConfigModified(force);
+			if (!showErrors && src.mParseErrors.length)
+				src.updateParseErrors(null);
+		}
 	}
 
 	// IVsOutliningCapableLanguage ///////////////////////////////
@@ -887,17 +892,31 @@ class LanguageService : DisposingComObject,
 		text = replace(text, "\a", "\n\n");
 		text = phobosDdocExpand(text);
 
-		mLastTip = toUTF16(text);
-
+		wstring tip = toUTF16(text);
 		string fmt;
 		int state = 0;
-		uint pos = 0;
+		size_t pos = 0;
 		int prevcol = -1;
-		while (pos < mLastTip.length)
+		bool incode = false;
+		while (pos < tip.length)
 		{
 			uint prevpos = pos;
-			int tok;
-			int col = dLex.scan(state, mLastTip, pos, tok);
+			int tok, col;
+			if (tip[pos] == '`')
+			{
+				tip = tip[0 .. pos] ~ tip[pos + 1 .. $];
+				incode = !incode;
+				state = 0;
+				continue;
+			}
+			if (!incode)
+			{
+				while (pos < tip.length && tip[pos] != '`')
+					decode(tip, pos);
+				col = 0;
+			}
+			else
+				col = dLex.scan(state, tip, pos, tok);
 			if (col != prevcol)
 			{
 				if (prevpos > 0)
@@ -910,6 +929,7 @@ class LanguageService : DisposingComObject,
 				prevcol = col;
 			}
 		}
+		mLastTip = tip;
 		mLastTipFmt = toUTF16(fmt);
 	}
 
@@ -931,7 +951,7 @@ class LanguageService : DisposingComObject,
 
 			TextSpan span = TextSpan(col, line, col + 1, line);
 			ConfigureSemanticProject(src);
-			int flags = Package.GetGlobalOptions().showValueInTooltip ? 1 : 0;
+			int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2;
 
 			mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
 			mLastTipIdleTaskHandled = mLastTipIdleTaskScheduled;
@@ -4151,6 +4171,8 @@ else
 
 	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn, string tasks)
 	{
+		if (!Package.GetGlobalOptions().showParseErrors)
+			parseErrors = null;
 		updateParseErrors(parseErrors);
 		mBinaryIsIn = binaryIsIn;
 		if(IVsTextColorState colorState = qi_cast!IVsTextColorState(mBuffer))

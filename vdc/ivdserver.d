@@ -88,6 +88,7 @@ public:
 	// startLine, startIndex, endLine, endIndex: selected range in the editor
 	//                                           if start==end, mouse hovers without selection
 	// flags:      1 - try to evaluate constants/expressions
+	// flags:      2 - quote code for highlighting
 	//
 	// it is assumed that the semantic analysis is forwarded to some other thread
 	// and that the status can be polled by GetTipResult

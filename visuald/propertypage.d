@@ -2939,6 +2939,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	override void CreateControls()
 	{
 		AddTitleLine("Semantic analysis");
+		AddControl("", mShowParseErrors = new CheckBox(mCanvas, "Show parsing errors (squiggles and markers)"));
 		version(DParserOption) AddControl("", mUseDmdParser = new CheckBox(mCanvas, "Experimental: use DMD parsing engine for semantic analysis"));
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
@@ -2973,6 +2974,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 
 	override void SetControls(GlobalOptions opts)
 	{
+		mShowParseErrors.setChecked(opts.showParseErrors);
 		mExpandSemantics.setChecked(opts.expandFromSemantics);
 		//mExpandFromBuffer.setChecked(opts.expandFromBuffer);
 		mExpandFromJSON.setChecked(opts.expandFromJSON);
@@ -2992,6 +2994,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
+		changes += changeOption(mShowParseErrors.isChecked(), opts.showParseErrors, refopts.showParseErrors);
 		changes += changeOption(mExpandSemantics.isChecked(), opts.expandFromSemantics, refopts.expandFromSemantics);
 		//changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer);
 		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON);
@@ -3007,6 +3010,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		return changes;
 	}
 
+	CheckBox mShowParseErrors;
 	CheckBox mExpandSemantics;
 	//CheckBox mExpandFromBuffer;
 	CheckBox mExpandFromJSON;

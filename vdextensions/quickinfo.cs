@@ -34,11 +34,14 @@ namespace vdext15
 		{
 		}
 
-		public void setForeground(System.Windows.Media.Brush brush)
+		public void setForeground(System.Windows.Media.Brush brush, bool bold)
 		{
 			Foreground = brush;
 			foreach (var inl in Inlines)
+			{
 				inl.Foreground = brush;
+				inl.FontWeight = FontWeight.FromOpenTypeWeight(bold ? 700 : 400);
+			}
 		}
 
 		public void enableLink()
@@ -97,7 +100,7 @@ namespace vdext15
 							return false;
 						Thread.Sleep(100);
 					}
-					return true;
+					return !string.IsNullOrEmpty(info);
 				}
 			}
 			catch
@@ -141,17 +144,17 @@ namespace vdext15
 			return null;
 		}
 
-		public ClassifiedTextBlock createClassifiedTextBlock(ITextView view, string text, string type)
+		public ClassifiedTextBlock createClassifiedTextBlock(ITextView view, string text, string type, bool bold)
 		{
 			var tb = new ClassifiedTextBlock(text);
 			if (String.IsNullOrEmpty(text) || String.IsNullOrEmpty(text.Trim()))
 				return tb;
 
-			if (type == "Identifier")
-				tb.enableLink();
+			//if (type == "Identifier")
+			//	tb.enableLink();
 
 			// Foreground cannot be set from the constructor?!
-			tb.setForeground(GetBrush(view, type));
+			tb.setForeground(GetBrush(view, type), bold);
 			return tb;
 		}
 
@@ -177,6 +180,44 @@ namespace vdext15
 					// back in the UI thread to allow creation of UIElements
 					var rows = new List<object>();
 					var secs = new List<object>();
+					bool bold = false;
+					Func<string, string, string> addClassifiedTextBlock = (string txt, string type) =>
+					{
+						while (!String.IsNullOrEmpty(txt))
+						{
+							string tag = bold ? "</b>" : "<b>";
+							string sec;
+							bool secbold = bold;
+							var pos = txt.IndexOf(tag);
+							if (pos >= 0)
+							{
+								bold = !bold;
+								sec = txt.Substring(0, pos);
+								txt = txt.Substring(pos + tag.Length);
+							}
+							else
+							{
+								sec = txt;
+								txt = null;
+							}
+							if (!String.IsNullOrEmpty(sec))
+								secs.Add(createClassifiedTextBlock(session.TextView, sec, type, secbold));
+						}
+						return txt;
+					};
+
+					Func<string, string, string> addTextSection = (string sec, string type) =>
+					{
+						var nls = sec.Split('\n');
+						for (int n = 0; n < nls.Length - 1; n++)
+						{
+							addClassifiedTextBlock(nls[n], type);
+							rows.Add(new ContainerElement(ContainerElementStyle.Wrapped, secs));
+							secs = new List<object>();
+						}
+						addClassifiedTextBlock(nls[nls.Length - 1], type);
+						return sec;
+					};
 
 					string[] ops = fmt.Split(';');
 					int prevpos = 0;
@@ -194,15 +235,7 @@ namespace vdext15
 								if (Int32.TryParse(colname[0], out pos) && pos > prevpos)
 								{
 									string sec = info.Substring(prevpos, pos - prevpos);
-									var nls = sec.Split('\n');
-									for (int n = 0; n < nls.Length - 1; n++)
-									{
-										secs.Add(createClassifiedTextBlock(session.TextView, nls[n], prevtype));
-										rows.Add(new ContainerElement(ContainerElementStyle.Wrapped, secs));
-										secs = new List<object>();
-									}
-									secs.Add(createClassifiedTextBlock(session.TextView, nls[nls.Length-1], prevtype));
-
+									addTextSection(sec, prevtype);
 									prevtype = colname[1];
 									prevpos = pos;
 								}
@@ -212,11 +245,11 @@ namespace vdext15
 					if (prevtype != null && prevpos < info.Length)
 					{
 						string sec = info.Substring(prevpos, info.Length - prevpos);
-						secs.Add(createClassifiedTextBlock(session.TextView, sec, prevtype));
+						addTextSection(sec, prevtype);
 					}
 					else
 					{
-						secs.Add(createClassifiedTextBlock(session.TextView, info, PredefinedClassificationTypeNames.SymbolDefinition));
+						addClassifiedTextBlock(info, PredefinedClassificationTypeNames.SymbolDefinition);
 					}
 					if (secs.Count > 0)
 						rows.Add(new ContainerElement(ContainerElementStyle.Wrapped, secs));

@@ -10,14 +10,18 @@ using D_Parser.Resolver.TypeResolution;
 namespace DParserCOMServer.CodeSemantics
 {
 	public class TooltipGenerator
-		: AbstractVDServerTask<Tuple<CodeLocation, CodeLocation, string>, bool>
+		: AbstractVDServerTask<Tuple<CodeLocation, CodeLocation, string>, Tuple<bool, bool>>
 	{
 		public TooltipGenerator(VDServer vdServer, EditorDataProvider editorDataProvider)
 			: base(vdServer, editorDataProvider) { }
 
 		protected override Tuple<CodeLocation, CodeLocation, string> Process(
-			EditorData editorData, bool evaluateUnderneathExpression)
+			EditorData editorData, Tuple<bool /*evaluateUnderneathExpression*/, 
+			                             bool /*quoteCode*/> opts)
 		{
+			bool evaluateUnderneathExpression = opts.Item1;
+			bool quoteCode = opts.Item2;
+
 			// codeOffset+1 because otherwise it does not work on the first character
 			editorData.CaretOffset++;
 
@@ -45,7 +49,7 @@ namespace DParserCOMServer.CodeSemantics
 					if (!isRenamed || at.Definition.Location == sr.Location)
 						dt = at.Base;
 				}
-				tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(dt));
+				tipText.Append(NodeToolTipContentGen.Instance.GenTooltipSignature(dt, false, -1, quoteCode));
 				if (dt is DSymbol symbol)
 					dn = symbol.Definition;
 

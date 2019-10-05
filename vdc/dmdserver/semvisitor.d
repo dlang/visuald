@@ -862,14 +862,21 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 		found = obj;
 		if (obj)
 		{
-			tip = tipForObject(obj);
+			tip = tipForObject(obj, true);
 			stop = true;
 		}
 		return stop;
 	}
 }
 
-string tipForObject(RootObject obj)
+string quoteCode(bool quote, string s)
+{
+	if (!quote || s.empty)
+		return s;
+	return "`" ~ s ~ "`";
+}
+
+string tipForObject(RootObject obj, bool quote)
 {
 	string tipForDeclaration(Declaration decl)
 	{
@@ -882,42 +889,44 @@ string tipForObject(RootObject obj)
 				buf.writestring(decl.toPrettyChars());
 			auto res = buf.peekSlice();
 			buf.extractSlice(); // take ownership
-			return cast(string)res;
+			return quoteCode(quote, cast(string)res);
 		}
 
 		bool fqn = true;
 		string txt;
+		string kind;
 		if (decl.isParameter())
 		{
-			txt = "(parameter) ";
+			kind = "(parameter) ";
 			fqn = false;
 		}
 		else if (auto em = decl.isEnumMember())
 		{
-			txt = "(enum value) " ~ decl.toPrettyChars(fqn).to!string;
+			kind = "(enum value) ";
+			txt = decl.toPrettyChars(fqn).to!string;
 			if (em.origValue)
 				txt ~= " = " ~ cast(string)em.origValue.toString();
-			return txt;
+			return kind ~ quoteCode(quote, txt);
 		}
 		else if (decl.storage_class & STC.manifest)
-			txt = "(constant) ";
+			kind = "(constant) ";
 		else if (decl.isAliasDeclaration())
-			txt = "(alias) ";
+			kind = "(alias) ";
 		else if (decl.isField())
-			txt = "(field) ";
+			kind = "(field) ";
 		else if (decl.semanticRun >= PASS.semanticdone) // avoid lazy semantic analysis
 		{
 			if (!decl.isDataseg() && !decl.isCodeseg())
 			{
-				txt = "(local variable) ";
+				kind = "(local variable) ";
 				fqn = false;
 			}
 			else if (decl.isThreadlocal())
-				txt = "(thread local variable) ";
+				kind = "(thread local variable) ";
 			else if (decl.type && decl.type.isShared())
-				txt = "(shared variable) ";
+				kind = "(shared variable) ";
 			else if (decl.type && decl.type.ty != Terror)
-				txt = "(__gshared variable) ";
+				kind = "(__gshared variable) ";
 		}
 
 		if (decl.type)
@@ -929,8 +938,8 @@ string tipForObject(RootObject obj)
 					txt ~= " = " ~ var._init.toString();
 		if (auto ad = decl.isAliasDeclaration())
 			if (ad.aliassym)
-				txt ~= " = " ~ tipForObject(ad.aliassym);
-		return txt;
+				txt ~= " = " ~ tipForObject(ad.aliassym, false);
+		return kind ~ quoteCode(quote, txt);
 	}
 
 	string tip;
@@ -943,7 +952,7 @@ string tipForObject(RootObject obj)
 			kind = "unresolved type";
 		else
 			kind = t.kind().to!string;
-		toc = "(" ~ kind ~ ") " ~ t.toPrettyChars(true).to!string;
+		toc = "(" ~ kind ~ ") " ~ quoteCode(quote, t.toPrettyChars(true).to!string);
 		if (auto sym = typeSymbol(t))
 			if (sym.comment)
 				doc = sym.comment;
@@ -963,7 +972,7 @@ string tipForObject(RootObject obj)
 				break;
 			default:
 				if (e.type)
-					toc = e.type.toPrettyChars(true).to!string;
+					toc = quoteCode(quote, e.type.toPrettyChars(true).to!string);
 				break;
 		}
 	}
@@ -972,7 +981,7 @@ string tipForObject(RootObject obj)
 		if (auto decl = s.isDeclaration())
 			tip = tipForDeclaration(decl);
 		else
-			toc = "(" ~ s.kind().to!string ~ ") " ~ s.toPrettyChars(true).to!string;
+			toc = "(" ~ s.kind().to!string ~ ") " ~ quoteCode(quote, s.toPrettyChars(true).to!string);
 
 		if (s.comment)
 			doc = s.comment;
@@ -980,7 +989,7 @@ string tipForObject(RootObject obj)
 	if (!tip.length)
 	{
 		if (!toc)
-			toc = obj.toString().dup;
+			toc = quoteCode(quote, obj.toString().dup);
 		tip = toc;
 	}
 	// append doc

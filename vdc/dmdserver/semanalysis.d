@@ -374,11 +374,11 @@ unittest
 				dumpGC();
 	}
 
-	checkTip(m, 5, 8, "(local variable) int xyz");
-	checkTip(m, 5, 10, "(local variable) int xyz");
+	checkTip(m, 5, 8, "(local variable) `int xyz`");
+	checkTip(m, 5, 10, "(local variable) `int xyz`");
 	checkTip(m, 5, 11, "");
-	checkTip(m, 6, 8, "void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe");
-	checkTip(m, 7, 11, "(local variable) int xyz");
+	checkTip(m, 6, 8, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
+	checkTip(m, 7, 11, "(local variable) `int xyz`");
 
 	version(traceGC)
 	{
@@ -427,27 +427,27 @@ unittest
 
 	m = checkErrors(source, "");
 
-	checkTip(m,  2, 24, "(parameter) const(string[]) args"); // function arg
-	checkTip(m,  3,  6, "(parameter) const(string[]) args"); // in contract
-	checkTip(m,  3, 34, "(parameter) const(string[]) args"); // in contract
-	checkTip(m,  5, 24, "(parameter) const(string[]) args"); // static if is typeof expression
-	checkTip(m,  6, 10, "(parameter) const(string[]) args"); // if expression
-	checkTip(m, 11, 21, "(parameter) const(string[]) args"); // !in expression
+	checkTip(m,  2, 24, "(parameter) `const(string[]) args`"); // function arg
+	checkTip(m,  3,  6, "(parameter) `const(string[]) args`"); // in contract
+	checkTip(m,  3, 34, "(parameter) `const(string[]) args`"); // in contract
+	checkTip(m,  5, 24, "(parameter) `const(string[]) args`"); // static if is typeof expression
+	checkTip(m,  6, 10, "(parameter) `const(string[]) args`"); // if expression
+	checkTip(m, 11, 21, "(parameter) `const(string[]) args`"); // !in expression
 
-	checkTip(m, 19,  9, "(enum) pkg.source.EE"); // enum EE
-	checkTip(m, 19, 13, "(enum value) pkg.source.EE.E1 = 3"); // enum E1
-	checkTip(m, 19, 21, "(enum value) pkg.source.EE.E2 = 4"); // enum E2
-	checkTip(m, 22, 14, "(enum) pkg.source.EE"); // enum EE
-	checkTip(m, 22, 17, "(enum value) pkg.source.EE.E1 = 3"); // enum E1
+	checkTip(m, 19,  9, "(enum) `pkg.source.EE`"); // enum EE
+	checkTip(m, 19, 13, "(enum value) `pkg.source.EE.E1 = 3`"); // enum E1
+	checkTip(m, 19, 21, "(enum value) `pkg.source.EE.E2 = 4`"); // enum E2
+	checkTip(m, 22, 14, "(enum) `pkg.source.EE`"); // enum EE
+	checkTip(m, 22, 17, "(enum value) `pkg.source.EE.E1 = 3`"); // enum E1
 
-	checkTip(m,  1,  9, "(package) pkg");
-	checkTip(m,  1, 13, "(module) pkg.source");
-	checkTip(m, 24, 10, "(package) core");
-	checkTip(m, 24, 15, "(module) core.cpuid");
-	checkTip(m, 24, 23, "(alias) pkg.source.cpu_vendor = string core.cpuid.vendor() pure nothrow @nogc @property @trusted");
-	checkTip(m, 24, 36, "(alias) pkg.source.cpu_vendor = string core.cpuid.vendor() pure nothrow @nogc @property @trusted");
-	checkTip(m, 24, 44, "(alias) pkg.source.processor = string core.cpuid.processor() pure nothrow @nogc @property @trusted");
-	checkTip(m, 28, 11, "string core.cpuid.vendor() pure nothrow @nogc @property @trusted");
+	checkTip(m,  1,  9, "(package) `pkg`");
+	checkTip(m,  1, 13, "(module) `pkg.source`");
+	checkTip(m, 24, 10, "(package) `core`");
+	checkTip(m, 24, 15, "(module) `core.cpuid`");
+	checkTip(m, 24, 23, "(alias) `pkg.source.cpu_vendor = string core.cpuid.vendor() pure nothrow @nogc @property @trusted`");
+	checkTip(m, 24, 36, "(alias) `pkg.source.cpu_vendor = string core.cpuid.vendor() pure nothrow @nogc @property @trusted`");
+	checkTip(m, 24, 44, "(alias) `pkg.source.processor = string core.cpuid.processor() pure nothrow @nogc @property @trusted`");
+	checkTip(m, 28, 11, "`string core.cpuid.vendor() pure nothrow @nogc @property @trusted`");
 
 	source =
 	q{                                   // Line 1
@@ -471,21 +471,21 @@ unittest
 	};
 	m = checkErrors(source, "");
 
-	checkTip(m,  2, 10, "(struct) source.S");
-	checkTip(m,  4,  8, "(field) int source.S.field1");
-	checkTip(m,  6,  8, "int source.S.fun(int par)");
-	checkTip(m,  6, 16, "(parameter) int par");
-	checkTip(m,  6, 30, "(field) int source.S.field1");
-	checkTip(m,  6, 39, "(parameter) int par");
+	checkTip(m,  2, 10, "(struct) `source.S`");
+	checkTip(m,  4,  8, "(field) `int source.S.field1`");
+	checkTip(m,  6,  8, "`int source.S.fun(int par)`");
+	checkTip(m,  6, 16, "(parameter) `int par`");
+	checkTip(m,  6, 30, "(field) `int source.S.field1`");
+	checkTip(m,  6, 39, "(parameter) `int par`");
 
-	checkTip(m, 10,  4, "(struct) source.S");
-	checkTip(m, 10,  6, "(local variable) source.S anS");
-	checkTip(m, 11, 12, "(local variable) source.S anS");
-	checkTip(m, 11, 16, "int source.S.fun(int par)");
+	checkTip(m, 10,  4, "(struct) `source.S`");
+	checkTip(m, 10,  6, "(local variable) `source.S anS`");
+	checkTip(m, 11, 12, "(local variable) `source.S anS`");
+	checkTip(m, 11, 16, "`int source.S.fun(int par)`");
 
-	checkTip(m, 13, 11, "(struct) source.S");
-	checkTip(m, 16, 19, "(thread local variable) long source.S.stat1");
-	checkTip(m, 16, 17, "(struct) source.S");
+	checkTip(m, 13, 11, "(struct) `source.S`");
+	checkTip(m, 16, 19, "(thread local variable) `long source.S.stat1`");
+	checkTip(m, 16, 17, "(struct) `source.S`");
 
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
 	checkDefinition(m, 15, 17, "source.d", 2, 10); // S
@@ -512,22 +512,22 @@ unittest
 	};
 	m = checkErrors(source, "");
 
-	checkTip(m,  2,  9, "(class) source.C");
-	checkTip(m,  4,  8, "(field) int source.C.field1");
-	checkTip(m,  6,  8, "int source.C.fun(int par)");
-	checkTip(m,  6, 16, "(parameter) int par");
-	checkTip(m,  6, 30, "(field) int source.C.field1");
-	checkTip(m,  6, 39, "(parameter) int par");
+	checkTip(m,  2,  9, "(class) `source.C`");
+	checkTip(m,  4,  8, "(field) `int source.C.field1`");
+	checkTip(m,  6,  8, "`int source.C.fun(int par)`");
+	checkTip(m,  6, 16, "(parameter) `int par`");
+	checkTip(m,  6, 30, "(field) `int source.C.field1`");
+	checkTip(m,  6, 39, "(parameter) `int par`");
 
-	checkTip(m, 10,  4, "(class) source.C");
-	checkTip(m, 10, 15, "(class) source.C");
-	checkTip(m, 10,  6, "(local variable) source.C aC");
-	checkTip(m, 11, 12, "(local variable) source.C aC");
-	checkTip(m, 11, 16, "int source.C.fun(int par)");
+	checkTip(m, 10,  4, "(class) `source.C`");
+	checkTip(m, 10, 15, "(class) `source.C`");
+	checkTip(m, 10,  6, "(local variable) `source.C aC`");
+	checkTip(m, 11, 12, "(local variable) `source.C aC`");
+	checkTip(m, 11, 16, "`int source.C.fun(int par)`");
 
-	checkTip(m, 13, 11, "(class) source.C");
-	checkTip(m, 16, 19, "(thread local variable) long source.C.stat1");
-	checkTip(m, 16, 17, "(class) source.C");
+	checkTip(m, 13, 11, "(class) `source.C`");
+	checkTip(m, 16, 19, "(thread local variable) `long source.C.stat1`");
+	checkTip(m, 16, 17, "(class) `source.C`");
 
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
 	checkDefinition(m, 15, 17, "source.d", 2, 9);  // C
@@ -541,9 +541,9 @@ unittest
 	};
 	m = checkErrors(source, "");
 
-	checkTip(m,  2, 10, "(struct) source.ST(T)");
-	checkTip(m,  4,  4, "(unresolved type) T");
-	checkTip(m,  4,  6, "T f");
+	checkTip(m,  2, 10, "(struct) `source.ST(T)`");
+	checkTip(m,  4,  4, "(unresolved type) `T`");
+	checkTip(m,  4,  6, "`T f`");
 
 	source =
 	q{                                   // Line 1
@@ -568,10 +568,10 @@ unittest
 	};
 	m = checkErrors(source, "");
 
-	checkTip(m,  9, 20, "(local variable) object.Exception e");
-	checkTip(m,  9, 10, "(class) object.Exception");
-	checkTip(m,  11, 21, "(class) object.Error");
-	checkTip(m,  12, 5, "(class) object.Exception");
+	checkTip(m,  9, 20, "(local variable) `object.Exception e`");
+	checkTip(m,  9, 10, "(class) `object.Exception`");
+	checkTip(m,  11, 21, "(class) `object.Error`");
+	checkTip(m,  12, 5, "(class) `object.Exception`");
 
 	source =
 	q{                                   // Line 1
@@ -659,16 +659,16 @@ unittest
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
-	checkTip(m, 6, 12, "(local variable) int i");
-	checkTip(m, 7, 5, "(local variable) int sum");
-	checkTip(m, 7, 12, "(local variable) int i");
+	checkTip(m, 6, 12, "(local variable) `int i`");
+	checkTip(m, 7, 5, "(local variable) `int sum`");
+	checkTip(m, 7, 12, "(local variable) `int i`");
 
 	source = q{                          // Line 1
 		enum TOK : ubyte
 		{
 			reserved,
 			leftParentheses,             // Line 5
-			rightParentheses,
+			rightParentheses, /// right parent doc
 		}
 		void foo(TOK op)
 		{
@@ -678,24 +678,25 @@ unittest
 		{
 			this(TOK op, size_t sz) {}
 		}                                // Line 15
-		class LeftBase : Base
+		/// right base doc
+		class RightBase : Base
 		{
 			this()
-			{
-				super(TOK.leftParentheses, LeftBase.sizeof);// Line 20
+			{                            // Line 20
+				super(TOK.rightParentheses, RightBase.sizeof);
 			}
 		}
 	};
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
-	checkTip(m, 10,  8, "(parameter) source.TOK op");
-	checkTip(m, 10, 14, "(enum) source.TOK");
-	checkTip(m, 10, 18, "(enum value) source.TOK.leftParentheses = 1");
-	checkTip(m, 20, 11, "(enum) source.TOK");
-	checkTip(m, 20, 15, "(enum value) source.TOK.leftParentheses = 1");
-	checkTip(m, 20, 32, "(class) source.LeftBase");
-	//checkTip(m, 20, 41, "(constant) source.LeftBase.sizeof = 8");
+	checkTip(m, 10,  8, "(parameter) `source.TOK op`");
+	checkTip(m, 10, 14, "(enum) `source.TOK`");
+	checkTip(m, 10, 18, "(enum value) `source.TOK.leftParentheses = 1`");
+	checkTip(m, 21, 11, "(enum) `source.TOK`");
+	checkTip(m, 21, 15, "(enum value) `source.TOK.rightParentheses = 2`");
+	checkTip(m, 21, 33, "(class) `source.RightBase`\n\nright base doc");
+	//checkTip(m, 20, 41, "(constant) `source.RightBase.sizeof = 8`");
 }
 
 unittest
