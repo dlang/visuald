@@ -208,7 +208,7 @@ namespace vdext15
 
 					Func<string, string, string> addTextSection = (string sec, string type) =>
 					{
-						var nls = sec.Split('\n');
+						var nls = sec.Split(new char[1] { '\n' }, StringSplitOptions.None);
 						for (int n = 0; n < nls.Length - 1; n++)
 						{
 							addClassifiedTextBlock(nls[n], type);

@@ -110,7 +110,7 @@ namespace DParserCOMServer
 
 		public void GetIdentifierTypes(string filename, int startLine, int endLine, int flags)
 		{
-			_identifierTypesTask.Run(filename, new CodeLocation(startLine + 1, 0), new Tuple<int,bool> (endLine, (flags & 1) != 0));
+			_identifierTypesTask.Run(filename, new CodeLocation(0, startLine), new Tuple<int,bool> (endLine, (flags & 1) != 0));
 
 		}
 		public void GetIdentifierTypesResult(out string answer)
@@ -132,8 +132,7 @@ namespace DParserCOMServer
 
 		public void GetTip(string filename, int startLine, int startIndex, int endLine, int endIndex, int flags)
 		{
-			_tipGenerationTask.Run(filename, new CodeLocation(startIndex + 1, startLine),
-			                       Tuple.Create((flags & 1) != 0, (flags & 2) != 0));
+			_tipGenerationTask.Run(filename, new CodeLocation(startIndex + 1, startLine), flags);
 		}
 
 		public void GetTipResult(out int startLine, out int startIndex, out int endLine, out int endIndex, out string answer)

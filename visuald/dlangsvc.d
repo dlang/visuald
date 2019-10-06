@@ -975,10 +975,12 @@ class LanguageService : DisposingComObject,
 
 	// semantic completion ///////////////////////////////////
 
-	uint GetTip(Source src, TextSpan* pSpan, GetTipCallBack cb)
+	uint GetTip(Source src, TextSpan* pSpan, bool overloads, GetTipCallBack cb)
 	{
 		ConfigureSemanticProject(src);
 		int flags = Package.GetGlobalOptions().showValueInTooltip ? 1 : 0;
+		if (overloads)
+			flags |= 4;
 		return vdServerClient.GetTip(src.GetFileName(), pSpan, flags, cb);
 	}
 	uint GetDefinition(Source src, TextSpan* pSpan, GetDefinitionCallBack cb)

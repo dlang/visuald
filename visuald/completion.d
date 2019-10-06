@@ -1166,6 +1166,8 @@ class MethodData : DisposingComObject, IVsMethodData
 	{
 		if (mCurrentMethod < GetOverloadCount() - 1)
 			mCurrentMethod++;
+		else
+			mCurrentMethod = 0;
 		return mCurrentMethod;
 	}
 
@@ -1173,6 +1175,8 @@ class MethodData : DisposingComObject, IVsMethodData
 	{
 		if (mCurrentMethod > 0)
 			mCurrentMethod--;
+		else
+			mCurrentMethod = GetOverloadCount() - 1;
 		return mCurrentMethod;
 	}
 
@@ -1259,6 +1263,9 @@ class MethodData : DisposingComObject, IVsMethodData
 
 			case MTT_CLOSEBRACKET:
 				result = ")"; // mMethods.CloseBracket;
+				string constraint = mMethods[method].GetConstraint();
+				if (constraint.length)
+					result ~= " " ~ constraint;
 				break;
 
 			case MTT_DELIMITER:
