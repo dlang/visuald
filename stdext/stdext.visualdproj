@@ -916,7 +916,7 @@
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />

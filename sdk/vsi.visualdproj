@@ -916,7 +916,7 @@
   <program>m:\s\d\rainers\windows\bin\dmd_msc.exe</program>
   <imppath>..</imppath>
   <fileImppath />
-  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
@@ -2078,6 +2078,7 @@
    <File path="win32\propidlbase.d" />
    <File path="win32\enclaveapi.d" />
    <File path="win32\dpa_dsa.d" />
+   <File path="win32\fileapifromapp.d" />
   </Folder>
   <Folder name="vsi">
    <File path="vsi\sdk_shared.d" />
@@ -2149,6 +2150,7 @@
    <File path="vsi\msdbg160.d" />
    <File path="vsi\msdbg161.d" />
    <File path="vsi\msdbg162.d" />
+   <File path="vsi\msdbg163.d" />
    <File path="vsi\msdbg90.d" />
    <File path="vsi\objext.d" />
    <File path="vsi\ocdesign.d" />
@@ -2212,6 +2214,7 @@
    <File path="vsi\vsshell160.d" />
    <File path="vsi\vsshell161.d" />
    <File path="vsi\vsshell162.d" />
+   <File path="vsi\vsshell163.d" />
    <File path="vsi\vsshell2.d" />
    <File path="vsi\vsshell80.d" />
    <File path="vsi\vsshell90.d" />
