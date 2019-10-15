@@ -163,6 +163,7 @@ struct Options
 	bool unittestOn;
 	bool x64;
 	bool msvcrt;
+	bool warnings;
 	bool debugOn;
 	bool coverage;
 	bool doDoc;
@@ -241,6 +242,7 @@ void dmdSetupParams(const ref Options opts)
 	global.params.useInline = false;
 	global.params.obj = false;
 	global.params.useDeprecated = opts.noDeprecated ? DiagnosticReporting.error : DiagnosticReporting.off;
+	global.params.warnings = opts.warnings ? DiagnosticReporting.inform : DiagnosticReporting.off;
 	global.params.linkswitches = Strings();
 	global.params.libfiles = Strings();
 	global.params.dllfiles = Strings();

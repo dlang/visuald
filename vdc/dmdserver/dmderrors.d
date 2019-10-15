@@ -22,10 +22,82 @@ import core.stdc.string;
 import core.stdc.wchar_ : wcslen;
 
 shared(Object) gErrorSync = new Object;
-__gshared string gErrorFile;
-__gshared char[] gErrorMessages;
-__gshared char[] gOtherErrorMessages;
-__gshared bool gErrorWasSupplemental;
+private __gshared // under gErrorSync lock
+{
+	string gErrorFile;
+	string gErrorMessages;
+	string gOtherErrorMessages;
+
+	private string gLastHeader;
+	private string[] gLastErrorMsgs; // all but first are supplemental
+	private Loc[] gLastErrorLocs;
+}
+
+void flushLastError()
+{
+	if (gLastErrorLocs.empty)
+		return;
+	assert(gLastErrorLocs.length == gLastErrorMsgs.length);
+
+	char[1014] buf;
+	char[] genErrorMessage(size_t pos)
+	{
+		char[] msg;
+		if (pos < gLastErrorLocs.length)
+		{
+			Loc loc = gLastErrorLocs[pos];
+			int len = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:", loc.linnum, loc.charnum - 1, loc.linnum, loc.charnum);
+			msg ~= buf[0..len];
+		}
+
+		msg ~= gLastHeader;
+		for (size_t i = 0; i < gLastErrorLocs.length; i++)
+		{
+			if (i > 0)
+				msg ~= "\a";
+
+			Loc loc = gLastErrorLocs[i];
+			if (i == pos)
+			{
+				if (i > 0)
+					msg ~= "--> ";
+			}
+			else if (loc.filename)
+			{
+				int len = snprintf(buf.ptr, buf.length, "%s(%d): ", loc.filename, loc.linnum);
+				msg ~= buf[0..len];
+			}
+			msg ~= gLastErrorMsgs[i];
+		}
+		return msg;
+	}
+
+	size_t otherLocs;
+	foreach (loc; gLastErrorLocs)
+		if (!loc.filename || _stricmp(loc.filename, gErrorFile) != 0)
+			otherLocs++;
+
+	if (otherLocs == gLastErrorLocs.length)
+	{
+		gOtherErrorMessages ~= genErrorMessage(size_t.max) ~ "\n";
+	}
+	else
+	{
+		for (size_t i = 0; i < gLastErrorLocs.length; i++)
+		{
+			Loc loc = gLastErrorLocs[i];
+			if (loc.filename && _stricmp(loc.filename, gErrorFile) == 0)
+			{
+				gErrorMessages ~= genErrorMessage(i) ~ "\n";
+				gLastHeader = "Info: ";
+			}
+		}
+	}
+
+	gLastHeader = null;
+	gLastErrorLocs.length = 0;
+	gLastErrorMsgs.length = 0;
+}
 
 void errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 				const(char)* format, va_list ap, const(char)* p1 = null, const(char)* p2 = null) nothrow
@@ -38,76 +110,53 @@ void errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 		bool other = _stricmp(loc.filename, gErrorFile) != 0;
 		while (header && std.ascii.isWhite(*header))
 			header++;
-		bool supplemental = !header && !*header;
+		bool supplemental = !header || !*header;
+
+		if (!supplemental)
+			flushLastError();
 
 		__gshared char[4096] buf;
 		int len = 0;
-		if (other)
-		{
-			len = snprintf(buf.ptr, buf.length, "%s(%d):", loc.filename, loc.linnum);
-		}
-		else
-		{
-			int llen = snprintf(buf.ptr, buf.length, "%d,%d,%d,%d:", loc.linnum, loc.charnum - 1, loc.linnum, loc.charnum);
-			gErrorMessages ~= buf[0..llen];
-			if (supplemental)
-				gErrorMessages ~= gOtherErrorMessages;
-			gOtherErrorMessages = null;
-		}
+		if (header && *header)
+			gLastHeader = header[0..strlen(header)].idup;
 		if (p1 && len < buf.length)
 			len += snprintf(buf.ptr + len, buf.length - len, "%s ", p1);
 		if (p2 && len < buf.length)
 			len += snprintf(buf.ptr + len, buf.length - len, "%s ", p2);
 		if (len < buf.length)
 			len += vsnprintf(buf.ptr + len, buf.length - len, format, ap);
-		char nl = other ? '\a' : '\n';
-		if (len < buf.length)
-			buf[len++] = nl;
-		else
-			buf[$-1] = nl;
 
-		version(DebugServer) dbglog(buf[0..len]);
-
-		if (other)
-		{
-			if (gErrorWasSupplemental)
-			{
-				if (gErrorMessages.length && gErrorMessages[$-1] == '\n')
-					gErrorMessages[$-1] = '\a';
-				gErrorMessages ~= buf[0..len];
-				gErrorMessages ~= '\n';
-			}
-			else if (supplemental)
-				gOtherErrorMessages ~= buf[0..len];
-			else
-			{
-				gErrorWasSupplemental = false;
-				gOtherErrorMessages = buf[0..len].dup;
-			}
-		}
-		else
-		{
-			gErrorMessages ~= buf[0..len];
-			gErrorWasSupplemental = supplemental;
-		}
+		gLastErrorMsgs ~= buf[0..len].dup;
+		gLastErrorLocs ~= loc;
 	}
 	catch(Exception e)
 	{
-
+		// tame synchronized "throwing"
 	}
 }
 
-void initErrorFile(string fname)
+void initErrorMessages(string fname)
 {
 	synchronized(gErrorSync)
 	{
 		gErrorFile = fname;
 		gErrorMessages = null;
 		gOtherErrorMessages = null;
-		gErrorWasSupplemental = false;
+
+		gLastErrorLocs = null;
+		gLastErrorMsgs = null;
 
 		import std.functional;
 		diagnosticHandler = toDelegate(&errorPrint);
+	}
+}
+
+string getErrorMessages(bool other = false)
+{
+	synchronized(gErrorSync)
+	{
+		flushLastError();
+		return other ? gOtherErrorMessages : gErrorMessages;
 	}
 }
 

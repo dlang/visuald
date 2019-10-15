@@ -8,7 +8,7 @@
 
 module vdc.dmdserver.semvisitor;
 
-import vdc.ivdserver;
+import vdc.ivdserver : TypeReferenceKind;
 
 import dmd.access;
 import dmd.aggregate;
@@ -141,6 +141,14 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	{
 		if (expr.type)
 			expr.type.accept(this);
+		visit(cast(Expression)expr);
+	}
+
+	override void visit(FuncExp expr)
+	{
+		visitDeclaration(expr.fd);
+		visitDeclaration(expr.td);
+
 		visit(cast(Expression)expr);
 	}
 
@@ -644,9 +652,19 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			foundScope = ss.scopesym;
 	}
 
-	override void visit(TemplateInstance)
+	override void visit(TemplateInstance ti)
 	{
 		// skip members added by semantic
+		visit(cast(ScopeDsymbol)ti);
+	}
+
+	override void visit(TemplateDeclaration td)
+	{
+		foreach(ti; td.instances)
+			if (!stop)
+				visit(ti);
+
+		visit(cast(ScopeDsymbol)td);
 	}
 
 	override void visit(CallExp expr)
@@ -1129,8 +1147,15 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 		{
 			if (auto pid = ident in idTypes)
 			{
-				if (type != (*pid)[$-1].type)
-					*pid ~= IdTypePos(type, line, col);
+				// merge sorted
+				import std.range;
+				auto a = assumeSorted!"a.line < b.line || (a.line == b.line && a.col < b.col)"(*pid);
+				auto itp = IdTypePos(type, line, col);
+				auto sections = a.trisect(itp);
+				if (!sections[1].empty && sections[1][0].type == type) // upperbound
+					sections[1][0] = itp;
+				else if (sections[0].empty || sections[0][$-1].type != type) // lowerbound
+					*pid = (*pid)[0..sections[0].length] ~ itp ~ (*pid)[sections[0].length..$];
 			}
 			else
 				idTypes[ident] = [IdTypePos(type, line, col)];

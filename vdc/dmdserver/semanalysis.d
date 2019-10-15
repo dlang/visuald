@@ -164,6 +164,7 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 			mi.createSemanticModule();
 		}
 
+		version(none) // do this lazily
 		foreach(ref mi; ctxt.modules)
 		{
 			mi.semanticModule.importAll(null);
@@ -171,6 +172,7 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 	}
 
 	Module.rootModule = ctxt.modules[rootModuleIndex].semanticModule;
+	Module.rootModule.importAll(null);
 	Module.rootModule.dsymbolSemantic(null);
 	Module.dprogress = 1;
 	Module.runDeferredSemantic();
@@ -184,7 +186,7 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 
 ////////////////////////////////////////////////////////////////
 //version = traceGC;
-import tracegc;
+//import tracegc;
 extern(Windows) void OutputDebugStringA(const(char)* lpOutputString);
 
 string[] guessImportPaths()
@@ -208,6 +210,7 @@ unittest
 	opts.predefineDefaultVersions = true;
 	opts.x64 = true;
 	opts.msvcrt = true;
+	opts.warnings = true;
 	opts.importDirs = guessImportPaths();
 
 	auto filename = "source.d";
@@ -221,11 +224,11 @@ unittest
 
 	Module checkErrors(string src, string expected_err)
 	{
-		initErrorFile(filename);
+		initErrorMessages(filename);
 		Module parsedModule = createModuleFromText(filename, src);
 		assert(parsedModule);
 		Module m = analyzeModule(parsedModule, opts);
-		auto err = cast(string) gErrorMessages;
+		auto err = getErrorMessages();
 		assert_equal(err, expected_err);
 		return m;
 	}
@@ -246,9 +249,9 @@ unittest
 
 	void checkBinaryIsInLocations(string src, Loc[] locs)
 	{
-		initErrorFile(filename);
+		initErrorMessages(filename);
 		Module parsedModule = createModuleFromText(filename, src);
-		auto err = cast(string) gErrorMessages;
+		auto err = getErrorMessages();
 		assert(err == null);
 		assert(parsedModule);
 		Loc[] locdata = findBinaryIsInLocations(parsedModule);
@@ -331,7 +334,7 @@ unittest
 			return abc;
 		}
 	};
-	Module m = checkErrors(source, "4,10,4,11:undefined identifier `abc`\n");
+	Module m = checkErrors(source, "4,10,4,11:Error: undefined identifier `abc`\n");
 
 	version(traceGC)
 	{
@@ -395,10 +398,10 @@ unittest
 		int main(in string[] args)
 		in(args.length > 1) in{ assert(args.length > 1); }
 		do {
-			static if(is(typeof(args[0]) : string)) // Line 5
+			static if(is(typeof(args[0]) : string)) { // Line 5
 				if (args[0] is args[1]) {}
 				else if (args[1] !is args[0]) {}
-
+			}
 			int[string] aa;
 			if (auto p = args[0] in aa)  // Line 10
 				if (auto q = args[1] !in aa) {}
@@ -590,9 +593,9 @@ unittest
 		}
 	};
 	m = checkErrors(source,
-		"14,2,14,3:identifier or `new` expected following `.`, not `}`\n" ~
-		"14,2,14,3:semicolon expected, not `}`\n" ~
-		"12,14,12,15:no property `f` for type `S`\n");
+		"14,2,14,3:Error: identifier or `new` expected following `.`, not `}`\n" ~
+		"14,2,14,3:Error: semicolon expected, not `}`\n" ~
+		"12,14,12,15:Error: no property `f` for type `S`\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
 	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
@@ -697,6 +700,61 @@ unittest
 	checkTip(m, 21, 15, "(enum value) `source.TOK.rightParentheses = 2`");
 	checkTip(m, 21, 33, "(class) `source.RightBase`\n\nright base doc");
 	//checkTip(m, 20, 41, "(constant) `source.RightBase.sizeof = 8`");
+
+	source = q{
+		void fun()
+		{
+			string cmd = "cmd";
+			bool isX86_64 = true;        // Line 5
+			cmd = "pushd .\n" ~ `call vcvarsall.bat ` ~ (isX86_64 ? "amd64" : "x86") ~ "\n" ~ "popd\n" ~ cmd;
+		}
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  6, 49, "(local variable) `bool isX86_64`");
+	checkTip(m,  6, 97, "(local variable) `string cmd`");
+
+	source = q{
+		void fun()
+		{
+			string str = "hello";
+			string cmd = ()     // Line 5
+			{
+				auto local = str.length;
+				return str;
+			}();
+		}
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  7, 10, "(local variable) `ulong local`");
+	checkTip(m,  7, 18, "(local variable) `string str`");
+
+	source = q{
+		struct S(T)
+		{
+			T member;
+		}                              // Line 5
+		S!int x;
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  6,  9, "(thread local variable) `source.S!int source.x`");
+	checkTip(m,  4,  6, "(field) `int source.S!int.member`");
+
+	source = q{
+		void foo()
+		{
+			version(none)
+			{                          // Line 5
+			}
+			int test;
+		}
+	};
+	m = checkErrors(source, "");
 }
 
 unittest
@@ -712,6 +770,7 @@ unittest
 	opts.predefineDefaultVersions = true;
 	opts.x64 = true;
 	opts.msvcrt = true;
+	opts.warnings = true;
 	opts.importDirs = guessImportPaths() ~ srcdir;
 	opts.stringImportDirs ~= srcdir ~ "/../res";
 	opts.versionIds ~= "MARS";
@@ -730,11 +789,11 @@ unittest
 	{
 		try
 		{
-			initErrorFile(filename);
+			initErrorMessages(filename);
 			Module parsedModule = createModuleFromText(filename, src);
 			assert(parsedModule);
 			Module m = analyzeModule(parsedModule, opts);
-			auto err = cast(string) gErrorMessages;
+			auto err = getErrorMessages();
 			assert_equal(err, expected_err);
 			return m;
 		}

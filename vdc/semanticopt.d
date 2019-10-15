@@ -117,6 +117,7 @@ class Options
 	bool coverage;
 	bool doDoc;
 	bool noBoundsCheck;
+	bool warnings;
 	bool gdcCompiler;
 	bool ldcCompiler;
 	bool noDeprecated;

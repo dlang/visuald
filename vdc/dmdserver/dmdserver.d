@@ -215,7 +215,7 @@ class DMDServer : ComObject, IVDServer
 			}
 			catch(Throwable e)
 			{
-				version(DebugCmd) dbglog ("taskLoop exception: " ~ e.msg);
+				version(DebugCmd) dbglog ("taskLoop exception: " ~ e.toString());
 			}
 		}
 		prioritySend(tid, "done");
@@ -245,7 +245,7 @@ class DMDServer : ComObject, IVDServer
 			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64,
 											  opts.coverage, opts.doDoc, opts.noBoundsCheck, opts.gdcCompiler,
 											  0, 0, // no need to compare version levels, done in setVersionIds
-											  opts.noDeprecated, opts.ldcCompiler, opts.msvcrt,
+											  opts.noDeprecated, opts.ldcCompiler, opts.msvcrt, opts.warnings,
 											  opts.mixinAnalysis, opts.UFCSExpansions);
 
 			opts.unittestOn     = (flags & 1) != 0;
@@ -260,6 +260,7 @@ class DMDServer : ComObject, IVDServer
 			opts.UFCSExpansions = (flags & 0x2_00_00_00) != 0;
 			opts.ldcCompiler    = (flags & 0x4_00_00_00) != 0;
 			opts.msvcrt         = (flags & 0x8_00_00_00) != 0;
+			opts.warnings       = (flags & 0x10_00_00_00) != 0;
 
 			int versionlevel = (flags >> 8)  & 0xff;
 			int debuglevel   = (flags >> 16) & 0xff;
@@ -325,6 +326,15 @@ class DMDServer : ComObject, IVDServer
 		{
 			version(DebugServer) dbglog("    doParse: " ~ firstLine(text));
 
+			string combinedErrorMessages()
+			{
+				string msgs = getErrorMessages();
+				string otherMessages = getErrorMessages(true);
+				if (otherMessages.length)
+					msgs ~= "1,0,1,1: errors in imported modules: " ~ otherMessages.replace("\n", "\a");
+				return msgs;
+			}
+
 			synchronized(gErrorSync)
 			{
 				modData.state = ModuleState.Parsing;
@@ -333,7 +343,7 @@ class DMDServer : ComObject, IVDServer
 			{
 				try
 				{
-					initErrorFile(fname);
+					initErrorMessages(fname);
 					modData.parsedModule = createModuleFromText(fname, text);
 				}
 				catch(OutOfMemoryError e)
@@ -342,17 +352,14 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.msg);
+					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.toString());
 				}
-				synchronized(gErrorSync)
-				{
-					modData.parseErrors = cast(string) gErrorMessages;
-				}
+				modData.parseErrors = combinedErrorMessages();
 
 				modData.state = ModuleState.Analyzing;
 				try
 				{
-					initErrorFile(fname);
+					initErrorMessages(fname);
 					// clear all other semantic modules?
 					analyzeModules(modData);
 				}
@@ -362,12 +369,9 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.msg);
+					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.toString());
 				}
-				synchronized(gErrorSync)
-				{
-					modData.analyzeErrors = cast(string) gErrorMessages;
-				}
+				modData.analyzeErrors = combinedErrorMessages();
 				modData.state = ModuleState.Done;
 			}
 
@@ -436,7 +440,7 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("GetTip: exception " ~ t.msg);
+					version(DebugServer) dbglog("GetTip: exception " ~ t.toString());
 					txt = "exception: " ~ t.msg;
 				}
 			}
@@ -503,7 +507,7 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("GetDefinition: exception " ~ t.msg);
+					version(DebugServer) dbglog("GetDefinition: exception " ~ t.toString());
 				}
 			}
 			mLastDefFile = deffilename;
@@ -562,7 +566,7 @@ class DMDServer : ComObject, IVDServer
 			}
 			catch(Throwable t)
 			{
-				version(DebugServer) dbglog("calcExpansions: exception " ~ t.msg);
+				version(DebugServer) dbglog("calcExpansions: exception " ~ t.toString());
 			}
 			mSemanticExpansionsRunning = false;
 			mLastSymbols = symbols;
@@ -703,7 +707,7 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("GetReferences: exception " ~ t.msg);
+					version(DebugServer) dbglog("GetReferences: exception " ~ t.toString());
 				}
 			}
 			mLastReferences = references;
@@ -765,7 +769,7 @@ class DMDServer : ComObject, IVDServer
 				}
 				catch(Throwable t)
 				{
-					version(DebugServer) dbglog("GetIdentifierTypes: exception " ~ t.msg);
+					version(DebugServer) dbglog("GetIdentifierTypes: exception " ~ t.toString());
 				}
 			}
 			mLastIdentifierTypes = identiferTypes;
@@ -1119,6 +1123,7 @@ unittest
 								   false, //bool noDeprecated,
 								   false, //bool ldc,
 								   true,  //bool msvcrt,
+								   false, //bool warnings,
 								   true,  //bool mixinAnalysis,
 								   true); //bool ufcsExpansionsfalse,
 
@@ -1227,9 +1232,9 @@ unittest
 			dumpGC();
 	}
 
-	checkTip(5, 9, "(local variable) int xyz");
-	checkTip(6, 9, "void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe");
-	checkTip(7, 12, "(local variable) int xyz");
+	checkTip(5, 9, "(local variable) `int xyz`");
+	checkTip(6, 9, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
+	checkTip(7, 12, "(local variable) `int xyz`");
 
 	version(traceGC)
 		wipeStack();

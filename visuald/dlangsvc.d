@@ -1039,7 +1039,8 @@ class LanguageService : DisposingComObject,
 									  cfgopts.compiler == Compiler.GDC,
 									  cfgopts.versionlevel, cfgopts.debuglevel,
 									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,
-									  cfgopts.useMSVCRT (), globopts.mixinAnalysis, globopts.UFCSExpansions);
+									  cfgopts.useMSVCRT (), cfgopts.warnings,
+									  globopts.mixinAnalysis, globopts.UFCSExpansions);
 
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
 			stringImp = tokenizeArgs(strimp);
@@ -4272,6 +4273,7 @@ else
 			foreach(pos; mBinaryIsIn)
 				colorState.ReColorizeLines(pos.line - 1, pos.line);
 		}
+		Package.GetErrorProvider().updateTaskItems(filename, parseErrors);
 		Package.GetTaskProvider().updateTaskItems(filename, tasks);
 
 		if (Package.GetGlobalOptions().semanticHighlighting)
@@ -4356,13 +4358,27 @@ else
 
 	void finishParseErrors()
 	{
+		string file = GetFileName();
+		Config cfg = getProjectConfig(file, true);
+		if(!cfg)
+			cfg = getCurrentStartupConfig();
+		auto opts = cfg ? cfg.GetProjectOptions() : null;
+
 		clearParseErrors();
 		for(int i = 0; i < mParseErrors.length; i++)
 		{
 			auto span = mParseErrors[i].span;
+			int mtype = MARKER_CODESENSE_ERROR;
+			if (mParseErrors[i].msg.startsWith("Warning:") && (!opts || opts.infowarnings))
+				mtype = MARKER_WARNING;
+			else if (mParseErrors[i].msg.startsWith("Deprecation:") && (!opts || !opts.errDeprecated))
+				mtype = MARKER_WARNING;
+			else if (mParseErrors[i].msg.startsWith("Info:"))
+				mtype = MARKER_WARNING;
 			IVsTextLineMarker marker;
-			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex,
+			mBuffer.CreateLineMarker(mtype, span.iStartLine - 1, span.iStartIndex,
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
+			//release(marker);
 		}
 	}
 
@@ -4556,12 +4572,20 @@ else
 		mOutliningState = 2;
 	}
 
-	bool hasParseError(ParserSpan span)
+	int hasParseError(ParserSpan span)
 	{
 		for(int i = 0; i < mParseErrors.length; i++)
 			if(spanContains(span, mParseErrors[i].span.iStartLine-1, mParseErrors[i].span.iStartIndex))
-				return true;
-		return false;
+			{
+				if (mParseErrors[i].msg.startsWith("Warning:"))
+					return 2;
+				if (mParseErrors[i].msg.startsWith("Deprecation:"))
+					return 3;
+				if (mParseErrors[i].msg.startsWith("Info:"))
+					return 3;
+				return 1;
+			}
+		return 0;
 	}
 
 	string getParseError(int line, int index)

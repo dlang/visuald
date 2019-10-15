@@ -222,7 +222,7 @@ public:
 
 ///////////////////////////////////////////////////////////////////////
 uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
-					  int versionLevel, int debugLevel, bool noDeprecated, bool ldc, bool msvcrt,
+					  int versionLevel, int debugLevel, bool noDeprecated, bool ldc, bool msvcrt, bool warnings,
 					  bool mixinAnalysis, bool ufcsExpansions)
 {
 	return (unittestOn ? 1 : 0)
@@ -235,10 +235,11 @@ uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool do
 		|  (noDeprecated ? 128 : 0)
 		| ((versionLevel & 0xff) << 8)
 		| ((debugLevel   & 0xff) << 16)
-		|  (mixinAnalysis  ? 0x1_00_00_00 : 0)
-		|  (ufcsExpansions ? 0x2_00_00_00 : 0)
-		|  (ldc        ? 0x4_00_00_00 : 0)
-		|  (msvcrt     ? 0x8_00_00_00 : 0);
+		|  (mixinAnalysis  ? 0x01_00_00_00 : 0)
+		|  (ufcsExpansions ? 0x02_00_00_00 : 0)
+		|  (ldc            ? 0x04_00_00_00 : 0)
+		|  (msvcrt         ? 0x08_00_00_00 : 0)
+		|  (warnings       ? 0x10_00_00_00 : 0);
 }
 
 // from D_Parser: types returned by GetIdentifierTypes
