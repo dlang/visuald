@@ -182,7 +182,7 @@ class Type : Node
 			return v;
 		return semanticErrorValue("cannot calculate property ", prop, " of type ", this);
 	}
-	@disable Value _interpretProperty(Context ctx, string prop)
+	/*@disable*/ Value _interpretProperty(Context ctx, string prop)
 	{
 		return null;
 	}
@@ -433,7 +433,7 @@ class BasicType : Type
 		return Category.kVoid;
 	}
 	
-	@disable override Value _interpretProperty(Context ctx, string prop)
+	/*@disable*/ override Value _interpretProperty(Context ctx, string prop)
 	{
 		switch(prop)
 		{
