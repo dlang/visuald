@@ -381,6 +381,16 @@ class Package : DisposingComObject,
 					mTaskProviderCookie = 0;
 				}
 			}
+			if (mErrorProviderCookie != 0)
+			{
+				if (auto errorList = queryService!(SVsErrorList, IVsTaskList))
+				{
+					scope(exit) release(errorList);
+					errorList.UnregisterTaskProvider(mErrorProviderCookie);
+					mErrorProvider = null;
+					mErrorProviderCookie = 0;
+				}
+			}
 
 			mHostSP = release(mHostSP);
 		}
@@ -530,11 +540,21 @@ version(none)
 		if (auto taskList = queryService!(IVsTaskList))
 		{
 			scope(exit) release(taskList);
-			mTaskProvider = newCom!TaskProvider;
+			mTaskProvider = newCom!TaskProvider(false);
 			if (taskList.RegisterTaskProvider (mTaskProvider, &mTaskProviderCookie) != S_OK)
 				mTaskProvider = null;
 			else
 				taskList.RefreshTasks(mTaskProviderCookie);
+		}
+
+		if (auto errorList = queryService!(SVsErrorList, IVsTaskList))
+		{
+			scope(exit) release(errorList);
+			mErrorProvider = newCom!TaskProvider(true);
+			if (errorList.RegisterTaskProvider (mErrorProvider, &mErrorProviderCookie) != S_OK)
+				mErrorProvider = null;
+			else
+				errorList.RefreshTasks(mErrorProviderCookie);
 		}
 
 		return S_OK; // E_NOTIMPL;
@@ -1298,6 +1318,12 @@ version(none)
 		return s_instance.mTaskProvider;
 	}
 
+	static TaskProvider GetErrorProvider()
+	{
+		assert(s_instance);
+		return s_instance.mErrorProvider;
+	}
+
 	static GlobalOptions GetGlobalOptions()
 	{
 		assert(s_instance);
@@ -1331,6 +1357,15 @@ version(none)
 		}
 	}
 
+	static void RefreshErrorList()
+	{
+		if (auto errorList = queryService!(SVsErrorList, IVsTaskList))
+		{
+			errorList.RefreshTasks(s_instance.mErrorProviderCookie);
+			release(errorList);
+		}
+	}
+
 private:
 	IServiceProvider mHostSP;
 	uint             mLangServiceCookie;
@@ -1343,6 +1378,9 @@ private:
 
 	TaskProvider     mTaskProvider;
 	uint             mTaskProviderCookie;
+
+	TaskProvider     mErrorProvider;
+	uint             mErrorProviderCookie;
 
 	uint             mOmLibraryCookie;
 
