@@ -15,6 +15,7 @@ import dmd.aggregate;
 import dmd.apply;
 import dmd.arraytypes;
 import dmd.attrib;
+import dmd.ast_node;
 import dmd.builtin;
 import dmd.cond;
 import dmd.console;
@@ -66,7 +67,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	alias visit = StoppableVisitor.visit;
 
-	Expression[] visiting;
+	ASTNode[] visiting;
 	size_t currentVisiting;
 
 	void visitExpression(Expression expr)
@@ -91,8 +92,16 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		if (stop || !stmt)
 			return;
 
+		if (currentVisiting >= visiting.length)
+			visiting ~= stmt;
+		else
+			visiting[currentVisiting] = stmt;
+		currentVisiting++;
+
 		if (walkPostorder(stmt, this))
 			stop = true;
+
+		visiting[--currentVisiting] = null;
 	}
 
 	void visitDeclaration(Dsymbol sym)
@@ -283,7 +292,9 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	// statements
 	override void visit(Statement stmt)
 	{
-		visitStatement(stmt.original);
+		if (stmt.original)
+			if (!visiting.contains(stmt.original))
+				visitStatement(stmt.original);
 	}
 
 	override void visit(ExpStatement stmt)
@@ -591,6 +602,9 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			Statement s = (*cs.statements)[i];
 			if (!s)
 				continue;
+			if (visiting.contains(s))
+				continue;
+
 			if (s.loc.filename)
 			{
 				if (s.loc.filename !is filename || s.loc.linnum > endLine)
@@ -617,6 +631,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			}
 			s.accept(this);
 		}
+		visit(cast(Statement)cs);
 	}
 
 	override void visit(ScopeDsymbol scopesym)
