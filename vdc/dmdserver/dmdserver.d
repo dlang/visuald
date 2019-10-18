@@ -162,6 +162,7 @@ class DMDServer : ComObject, IVDServer
 
 	override ULONG Release()
 	{
+		version(SingleThread)
 		if(count == 1 && mTid != mTid.init)
 		{
 			// avoid recursive calls if the object is temporarily ref-counted

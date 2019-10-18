@@ -232,6 +232,7 @@ void dmdSetupParams(const ref Options opts)
 	global.params.errorLimit = 0;
 	global.params.color = false;
 	global.params.link = true;
+	global.params.useUnitTests = opts.unittestOn;
 	global.params.useAssert = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 	global.params.useInvariants = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
 	global.params.useIn = opts.debugOn ? CHECKENABLE.on : CHECKENABLE.off;

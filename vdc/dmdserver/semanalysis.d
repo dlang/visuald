@@ -205,12 +205,14 @@ unittest
 	import core.memory;
 
 	dmdInit();
+	dmdReinit();
 
 	Options opts;
 	opts.predefineDefaultVersions = true;
 	opts.x64 = true;
 	opts.msvcrt = true;
 	opts.warnings = true;
+	opts.unittestOn = true;
 	opts.importDirs = guessImportPaths();
 
 	auto filename = "source.d";
@@ -229,7 +231,9 @@ unittest
 		assert(parsedModule);
 		Module m = analyzeModule(parsedModule, opts);
 		auto err = getErrorMessages();
+		auto other = getErrorMessages(true);
 		assert_equal(err, expected_err);
+		assert_equal(other, "");
 		return m;
 	}
 
@@ -745,6 +749,7 @@ unittest
 	checkTip(m,  6,  9, "(thread local variable) `source.S!int source.x`");
 	checkTip(m,  4,  6, "(field) `int source.S!int.member`");
 
+	// check for conditional not producing warning "unreachable code"
 	source = q{
 		void foo()
 		{
@@ -755,6 +760,34 @@ unittest
 		}
 	};
 	m = checkErrors(source, "");
+
+	// check for semantics in unittest
+	source = q{
+		unittest
+		{
+			int var1 = 1;
+			int var2 = var1 + 1;       // Line 5
+		}
+	};
+	m = checkErrors(source, "");
+	checkTip(m,  5, 15, "(local variable) `int var1`");
+
+	// can object.d create reserved classes, e.g. Error?
+	source = q{
+		module object;
+		alias ulong size_t;
+		class Object
+		{
+		}
+		class Throwable
+		{
+		}
+		class Error : Throwable
+		{
+		}
+	};
+	m = checkErrors(source, "");
+	// beware: bad object.d after this point
 }
 
 unittest
@@ -764,6 +797,8 @@ unittest
 	import std.file;
 
 	dmdInit();
+	lastContext = null;
+
 	string srcdir = "dmd/src";
 
 	Options opts;
@@ -794,7 +829,9 @@ unittest
 			assert(parsedModule);
 			Module m = analyzeModule(parsedModule, opts);
 			auto err = getErrorMessages();
+			auto other = getErrorMessages(true);
 			assert_equal(err, expected_err);
+			assert_equal(other, "");
 			return m;
 		}
 		catch(Throwable t)
