@@ -800,8 +800,11 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	override void visit(FuncDeclaration decl)
 	{
 		super.visit(decl);
+
 		if (found && !foundScope)
 			foundScope = decl.scopesym;
+
+		visitTypeIdentifier(decl.originalType, decl.type);
 	}
 
 	void visitTypeIdentifier(Type originalType, Type resolvedType)
@@ -814,13 +817,25 @@ extern(C++) class FindASTVisitor : ASTVisitor
 				return;
 			switch (originalType.ty)
 			{
+				case Taarray:
+				{
+					auto originalAA = cast(TypeAArray) originalType;
+					auto resolvedAA = cast(TypeAArray) resolvedType;
+					visitTypeIdentifier(originalAA.index, resolvedAA.index);
+					if (found)
+						return;
+					goto case;
+				}
 				case Tarray:
 				case Tpointer:
 				case Treference:
 				case Tsarray:
 				case Tvector:
+				case Tfunction:
 					originalType = (cast(TypeNext) originalType).next;
 					resolvedType = (cast(TypeNext) resolvedType).next;
+					if (!originalType || !resolvedType)
+						return;
 					break;
 				default:
 					return;
@@ -978,17 +993,24 @@ string tipForObject(RootObject obj, bool quote)
 	string tip;
 	string toc;
 	const(char)* doc;
-	if (auto t = obj.isType())
+
+	string tipForType(Type t)
 	{
 		string kind;
 		if (t.isTypeIdentifier())
 			kind = "unresolved type";
 		else
 			kind = t.kind().to!string;
-		toc = "(" ~ kind ~ ") " ~ quoteCode(quote, t.toPrettyChars(true).to!string);
+		string txt = "(" ~ kind ~ ") " ~ quoteCode(quote, t.toPrettyChars(true).to!string);
 		if (auto sym = typeSymbol(t))
 			if (sym.comment)
 				doc = sym.comment;
+		return txt;
+	}
+
+	if (auto t = obj.isType())
+	{
+		toc = tipForType(t);
 	}
 	else if (auto e = obj.isExpression())
 	{
@@ -1005,7 +1027,7 @@ string tipForObject(RootObject obj, bool quote)
 				break;
 			default:
 				if (e.type)
-					toc = quoteCode(quote, e.type.toPrettyChars(true).to!string);
+					toc = tipForType(e.type);
 				break;
 		}
 	}
@@ -1182,6 +1204,24 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addTypePos(ident.toString(), type, loc.linnum, loc.charnum);
 		}
 
+		void addIdentByType(ref const Loc loc, Identifier ident, Type t)
+		{
+			if (ident && t && loc.filename is filename)
+			{
+				int type = TypeReferenceKind.Unknown;
+				switch (t.ty)
+				{
+					case Tstruct:   type = TypeReferenceKind.Struct; break;
+					//case Tunion:  type = TypeReferenceKind.Union; break;
+					case Tclass:    type = TypeReferenceKind.Class; break;
+					case Tenum:     type = TypeReferenceKind.Enum; break;
+					default: break;
+				}
+				if (type != TypeReferenceKind.Unknown)
+					addTypePos(ident.toString(), type, loc.linnum, loc.charnum);
+			}
+		}
+
 		void addPackages(IdentifiersAtLoc* packages)
 		{
 			if (packages)
@@ -1264,6 +1304,46 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addIdent(sym.loc, sym.ident, TypeReferenceKind.Variable);
 		}
 
+		override void visit(Parameter sym)
+		{
+			addIdent(sym.ident.loc, sym.ident, TypeReferenceKind.ParameterVariable);
+		}
+
+		override void visit(Module mod)
+		{
+			if (mod.md)
+			{
+				addPackages(mod.md.packages);
+				addIdent(mod.md.loc, mod.md.id, TypeReferenceKind.Module);
+			}
+			visit(cast(Package)mod);
+		}
+
+		override void visit(Import imp)
+		{
+			addPackages(imp.packages);
+
+			addIdent(imp.loc, imp.id, TypeReferenceKind.Module);
+
+			for (int n = 0; n < imp.names.dim; n++)
+			{
+				addIdent(imp.names[n].loc, imp.names[n].ident, TypeReferenceKind.Alias);
+				if (imp.aliases[n].ident && n < imp.aliasdecls.dim)
+					addDeclaration(imp.aliases[n].loc, imp.aliasdecls[n]);
+			}
+			// symbol has ident of first package, so don't forward
+		}
+
+		override void visit(DebugCondition cond)
+		{
+			addIdent(cond.loc, cond.ident, TypeReferenceKind.VersionIdentifier);
+		}
+
+		override void visit(VersionCondition cond)
+		{
+			addIdent(cond.loc, cond.ident, TypeReferenceKind.VersionIdentifier);
+		}
+
 		override void visit(VarDeclaration decl)
 		{
 			addType(decl.loc, decl.type, decl.originalType);
@@ -1291,31 +1371,27 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			super.visit(ne);
 		}
 
+		override void visit(TypeExp expr)
+		{
+			if (expr.original && expr.type)
+			{
+				if (auto ie = expr.original.isIdentifierExp())
+				{
+					addIdentByType(ie.loc, ie.ident, expr.type);
+				}
+				else if (auto die = expr.original.isDotIdExp())
+				{
+					addIdentByType(die.ident.loc, die.ident, expr.type);
+				}
+			}
+			super.visit(expr);
+		}
+
 		override void visit(DotVarExp dve)
 		{
 			if (dve.var && dve.var.ident)
 				addDeclaration(dve.varloc.filename ? dve.varloc : dve.loc, dve.var);
 			super.visit(dve);
-		}
-
-		override void visit(Import imp)
-		{
-			addPackages(imp.packages);
-
-			addIdent(imp.loc, imp.id, TypeReferenceKind.Module);
-
-			for (int n = 0; n < imp.names.dim; n++)
-			{
-				addIdent(imp.names[n].loc, imp.names[n].ident, TypeReferenceKind.Alias);
-				if (imp.aliases[n].ident && n < imp.aliasdecls.dim)
-					addDeclaration(imp.aliases[n].loc, imp.aliasdecls[n]);
-			}
-			// symbol has ident of first package, so don't forward
-		}
-
-		override void visit(Parameter sym)
-		{
-			addIdent(sym.ident.loc, sym.ident, TypeReferenceKind.ParameterVariable);
 		}
 
 		override void visit(EnumDeclaration ed)

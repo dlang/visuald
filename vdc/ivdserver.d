@@ -271,4 +271,7 @@ enum TypeReferenceKind : uint
 	Function,
 	Method,
 	BasicType,
+
+	DebugIdentifier,
+	VersionIdentifier,
 }

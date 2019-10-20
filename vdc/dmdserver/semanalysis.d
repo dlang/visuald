@@ -554,7 +554,7 @@ unittest
 
 	source =
 	q{                                   // Line 1
-		void foo()
+		inout(Exception) foo(inout(char)* ptr)
 		{
 			int x = 1;
 			try
@@ -565,20 +565,24 @@ unittest
 			{                            // Line 10
 				auto err = cast(Error) e;
 				Exception* pe = &e;
+				const(Exception*) cpe = &e;
 				throw new Error("unexpected");
 			}
 			finally
 			{
 				x = 0;
 			}
+			return null;
 		}
 	};
 	m = checkErrors(source, "");
 
-	checkTip(m,  9, 20, "(local variable) `object.Exception e`");
-	checkTip(m,  9, 10, "(class) `object.Exception`");
+	checkTip(m,  9,  20, "(local variable) `object.Exception e`");
+	checkTip(m,  9,  10, "(class) `object.Exception`");
 	checkTip(m,  11, 21, "(class) `object.Error`");
-	checkTip(m,  12, 5, "(class) `object.Exception`");
+	checkTip(m,  12,  5, "(class) `object.Exception`");
+	checkTip(m,  13, 11, "(class) `const(object.Exception)`");
+	checkTip(m,   2,  9, "(class) `inout(object.Exception)`");
 
 	source =
 	q{                                   // Line 1
@@ -634,6 +638,7 @@ unittest
 	];
 	checkIdentifierTypes(m, exp);
 
+	// references
 	source =
 	q{                                   // Line 1
 		struct S
@@ -693,6 +698,18 @@ unittest
 				super(TOK.rightParentheses, RightBase.sizeof);
 			}
 		}
+		TOK[Base] mapBaseTOK;
+
+		void testcase(int op)
+		{
+			switch(op)
+			{   // from object.d
+				case TypeInfo_Class.ClassFlags.isCOMclass:       // Line 30
+				case TypeInfo_Class.ClassFlags.noPointers:
+				default:
+					break;
+			}
+		}
 	};
 	m = checkErrors(source, "");
 	//dumpAST(m);
@@ -703,7 +720,34 @@ unittest
 	checkTip(m, 21, 11, "(enum) `source.TOK`");
 	checkTip(m, 21, 15, "(enum value) `source.TOK.rightParentheses = 2`");
 	checkTip(m, 21, 33, "(class) `source.RightBase`\n\nright base doc");
+	checkTip(m, 24, 19, "(thread local variable) `source.TOK[source.Base] source.mapBaseTOK`");
+	checkTip(m, 24,  7, "(class) `source.Base`");
+	checkTip(m, 24,  3, "(enum) `source.TOK`");
+	checkTip(m, 30, 10, "(class) `object.TypeInfo_Class`");
+	checkTip(m, 30, 25, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m, 30, 36, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
 	//checkTip(m, 20, 41, "(constant) `source.RightBase.sizeof = 8`");
+
+	IdTypePos[][string] exp2 = [
+		"size_t":           [ IdTypePos(TypeReferenceKind.BasicType) ],
+		"Base":             [ IdTypePos(TypeReferenceKind.Class) ],
+		"mapBaseTOK":       [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+		"TOK":              [ IdTypePos(TypeReferenceKind.Enum) ],
+		"testcase":         [ IdTypePos(TypeReferenceKind.Function) ],
+		"rightParentheses": [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"__ctor":           [ IdTypePos(TypeReferenceKind.Method) ],
+		"sz":               [ IdTypePos(TypeReferenceKind.ParameterVariable) ],
+		"RightBase":        [ IdTypePos(TypeReferenceKind.Class) ],
+		"foo":              [ IdTypePos(TypeReferenceKind.Function) ],
+		"leftParentheses":  [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"op":               [ IdTypePos(TypeReferenceKind.ParameterVariable) ],
+		"reserved":         [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"noPointers":       [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"isCOMclass":       [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"TypeInfo_Class":   [ IdTypePos(TypeReferenceKind.Class) ],
+		"ClassFlags":       [ IdTypePos(TypeReferenceKind.Enum) ],
+	];
+	checkIdentifierTypes(m, exp2);
 
 	source = q{
 		void fun()
