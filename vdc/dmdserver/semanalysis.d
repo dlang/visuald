@@ -206,6 +206,7 @@ unittest
 
 	dmdInit();
 	dmdReinit();
+	lastContext = null;
 
 	Options opts;
 	opts.predefineDefaultVersions = true;
@@ -332,13 +333,14 @@ unittest
 	}
 
 	string source;
+	Module m;
 	source = q{
 		int main()
 		{
 			return abc;
 		}
 	};
-	Module m = checkErrors(source, "4,10,4,11:Error: undefined identifier `abc`\n");
+	m = checkErrors(source, "4,10,4,11:Error: undefined identifier `abc`\n");
 
 	version(traceGC)
 	{
@@ -655,7 +657,7 @@ unittest
 	};
 	m = checkErrors(source, "");
 
-	checkReferences(m, 4, 8, [TextPos(4,8), TextPos(5, 23), TextPos(10, 16)]);
+	checkReferences(m, 4, 8, [TextPos(4,8), TextPos(5, 23), TextPos(10, 16)]); // fun
 
 	// foreach lowered to for
 	source = q{                          // Line 1
@@ -686,7 +688,7 @@ unittest
 		{
 			if (op == TOK.leftParentheses) {}   // Line 10
 		}
-		class Base
+		class Base : Object
 		{
 			this(TOK op, size_t sz) {}
 		}                                // Line 15
@@ -700,7 +702,7 @@ unittest
 		}
 		TOK[Base] mapBaseTOK;
 
-		void testcase(int op)
+		c_long testcase(int op)
 		{
 			switch(op)
 			{   // from object.d
@@ -709,7 +711,9 @@ unittest
 				default:
 					break;
 			}
+			return 0;
 		}
+		import core.stdc.config;
 	};
 	m = checkErrors(source, "");
 	//dumpAST(m);
@@ -746,6 +750,11 @@ unittest
 		"isCOMclass":       [ IdTypePos(TypeReferenceKind.EnumValue) ],
 		"TypeInfo_Class":   [ IdTypePos(TypeReferenceKind.Class) ],
 		"ClassFlags":       [ IdTypePos(TypeReferenceKind.Enum) ],
+		"Object":           [ IdTypePos(TypeReferenceKind.Class) ],
+		"core":             [ IdTypePos(TypeReferenceKind.Package) ],
+		"stdc":             [ IdTypePos(TypeReferenceKind.Package) ],
+		"config":           [ IdTypePos(TypeReferenceKind.Module) ],
+		"c_long":           [ IdTypePos(TypeReferenceKind.BasicType) ],
 	];
 	checkIdentifierTypes(m, exp2);
 
@@ -816,6 +825,54 @@ unittest
 	m = checkErrors(source, "");
 	checkTip(m,  5, 15, "(local variable) `int var1`");
 
+	// check position of var in AddrExp
+	source = q{
+		void fun(int* p);
+		void foo()
+		{
+			int var = 1;               // Line 5
+			fun(&var);
+		}
+	};
+	m = checkErrors(source, "");
+	checkReferences(m, 5, 8, [TextPos(5,8), TextPos(6, 9)]); // var
+	source = q{
+		bool isReserved(const(char)[] ident)
+		{
+			// more than 7 cases use dup
+			switch (ident)
+			{
+				case "DigitalMars":
+				case "GNU":
+				case "LDC":
+				case "SDC":
+				case "Windows":
+				case "Win32":
+				case "Win64":
+				case "linux":
+				case "OSX":
+				case "iOS":
+				case "TVOS":
+				case "WatchOS":
+				case "FreeBSD":
+				case "OpenBSD":
+				case "NetBSD":
+				case "DragonFlyBSD":
+				case "BSD":
+				case "Solaris":
+					return true;
+				default:
+					return false;
+			}
+		}
+	};
+	m = checkErrors(source, "");
+
+	// change settings to restart everything
+	opts.unittestOn = false;
+	filename = "source2.d";
+	m = checkErrors(source, "");
+
 	// can object.d create reserved classes, e.g. Error?
 	source = q{
 		module object;
@@ -832,6 +889,7 @@ unittest
 	};
 	m = checkErrors(source, "");
 	// beware: bad object.d after this point
+	lastContext = null;
 }
 
 unittest
@@ -841,7 +899,6 @@ unittest
 	import std.file;
 
 	dmdInit();
-	lastContext = null;
 
 	string srcdir = "dmd/src";
 

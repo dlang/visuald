@@ -999,6 +999,10 @@ string tipForObject(RootObject obj, bool quote)
 		string kind;
 		if (t.isTypeIdentifier())
 			kind = "unresolved type";
+		else if (auto tc = t.isTypeClass())
+			kind = tc.sym.isInterfaceDeclaration() ? "interface" : "class";
+		else if (auto ts = t.isTypeStruct())
+			kind = ts.sym.isUnionDeclaration() ? "union" : "struct";
 		else
 			kind = t.kind().to!string;
 		string txt = "(" ~ kind ~ ") " ~ quoteCode(quote, t.toPrettyChars(true).to!string);
@@ -1260,7 +1264,7 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addIdent(loc, ident, TypeReferenceKind.GSharedVariable);
 		}
 
-		void addType(ref const Loc loc, Type type, Type originalType)
+		void addType(Type type, Type originalType)
 		{
 			while (type && originalType && type.ty == originalType.ty)
 			{
@@ -1284,16 +1288,18 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				switch (t.ty)
 				{
 					case Tident:  return TypeReferenceKind.TemplateTypeParameter;
-					case Tclass:  return TypeReferenceKind.Class;
-					case Tstruct: return TypeReferenceKind.Struct;
+					case Tclass:  return (cast(TypeClass)t).sym.isInterfaceDeclaration() ? TypeReferenceKind.Interface
+					                                                                     : TypeReferenceKind.Class;
+					case Tstruct: return (cast(TypeStruct)t).sym.isUnionDeclaration() ? TypeReferenceKind.Union
+					                                                                  : TypeReferenceKind.Struct;
 					case Tenum:   return TypeReferenceKind.Enum;
 					default:      return TypeReferenceKind.BasicType;
 				}
 			}
 			if (originalType && originalType.ty == Tident && type)
-				addIdent(loc, (cast(TypeIdentifier) originalType).ident, refkind(type));
+				addIdent((cast(TypeIdentifier) originalType).loc, (cast(TypeIdentifier) originalType).ident, refkind(type));
 			else if (type && type.ty == Tident) // not yet semantically analyzed (or a template declaration)
-				addIdent(loc, (cast(TypeIdentifier) type).ident, TypeReferenceKind.TemplateTypeParameter);
+				addIdent((cast(TypeIdentifier) type).loc, (cast(TypeIdentifier) type).ident, TypeReferenceKind.TemplateTypeParameter);
 		}
 
 		override void visit(Dsymbol sym)
@@ -1346,9 +1352,9 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 
 		override void visit(VarDeclaration decl)
 		{
-			addType(decl.loc, decl.type, decl.originalType);
+			addType(decl.type, decl.originalType);
 			if (decl.parsedType != decl.originalType)
-				addType(decl.loc, decl.type, decl.parsedType);
+				addType(decl.type, decl.parsedType);
 			super.visit(decl);
 		}
 
@@ -1364,9 +1370,9 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			if (ne.member)
 				ne.member.accept(this);
 
-			addType(ne.loc, ne.newtype, ne.parsedType);
+			addType(ne.newtype, ne.parsedType);
 			if (ne.newtype != ne.parsedType)
-				addType(ne.loc, ne.newtype, ne.newtype);
+				addType(ne.newtype, ne.newtype);
 
 			super.visit(ne);
 		}
@@ -1400,6 +1406,18 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			super.visit(ed);
 		}
 
+		override void visit(FuncDeclaration decl)
+		{
+			super.visit(decl);
+
+			if (decl.type)
+			{
+				auto ft = decl.type.isTypeFunction();
+				auto ot = decl.originalType ? decl.originalType.isTypeFunction() : null;
+				addType(ft ? ft.nextOf() : null, ot ? ot.nextOf() : null); // the return type
+			}
+		}
+
 		override void visit(AggregateDeclaration ad)
 		{
 			if (ad.isInterfaceDeclaration)
@@ -1411,6 +1429,15 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			else
 				addIdent(ad.loc, ad.ident, TypeReferenceKind.Struct);
 			super.visit(ad);
+		}
+
+		override void visit(ClassDeclaration cd)
+		{
+			if (cd.baseclasses)
+				foreach (bc; *(cd.baseclasses))
+					addType(bc.type, bc.parsedType);
+
+			return super.visit(cd);
 		}
 	}
 
@@ -1448,7 +1475,8 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 		void addReference(ref const Loc loc, Identifier ident)
 		{
 			if (loc.filename && ident)
-				references ~= Reference(loc, ident);
+				if (!references.contains(Reference(loc, ident)))
+					references ~= Reference(loc, ident);
 		}
 
 		override void visit(Dsymbol sym)
