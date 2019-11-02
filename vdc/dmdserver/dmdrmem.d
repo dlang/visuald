@@ -20,13 +20,13 @@ extern (C++) struct Mem
 	static void* xmalloc(size_t n) nothrow pure
 	{
 		if (*pcancel)
-			throw *pcancelError;
+			throw new Error("cancel malloc"); //*pcancelError;
 		return GC.malloc(n);
 	}
 	static void* xmalloc_noscan(size_t n) nothrow pure
 	{
 		if (*pcancel)
-			throw *pcancelError;
+			throw new Error("cancel malloc");//*pcancelError;
 		return GC.malloc(n, GC.BlkAttr.NO_SCAN);
 	}
 
