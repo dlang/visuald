@@ -814,8 +814,11 @@ class CFolderNode : CHierContainer
 				case CmdDubUpgrade:
 				case CmdDubRefresh:
 					bool useDub = false;
-					if(Config cfg = GetActiveConfig(GetCVsHierarchy()))
-						useDub = cfg.GetProjectOptions().compilationModel == ProjectOptions.kCompileThroughDub;
+					if(auto prj = cast(Project)GetCVsHierarchy())
+						useDub = prj.findDubConfigFile() !is null;
+					if (!useDub)
+						if(Config cfg = GetActiveConfig(GetCVsHierarchy()))
+							useDub = cfg.GetProjectOptions().compilationModel == ProjectOptions.kCompileThroughDub;
 					fSupported = true;
 					fEnabled = useDub;
 					fInvisible = !useDub;
@@ -899,7 +902,7 @@ class CFolderNode : CHierContainer
 					break;
 				case CmdDubUpgrade:
 					if(Config cfg = GetActiveConfig(GetCVsHierarchy()))
-						launchDubUpgrade(cfg);
+						launchDubCommand(cfg, "upgrade");
 					break;
 				default:
 					break;

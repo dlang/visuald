@@ -161,10 +161,12 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 			modified = true;
 		}
 		if (modified)
+		{
 			if (mInErrorList)
 				Package.RefreshErrorList();
 			else
 				Package.RefreshTaskList();
+		}
 	}
 
 	// Retrieves token settings as defined by user in Tools -> Options -> Environment -> Task List.

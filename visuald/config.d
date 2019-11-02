@@ -3640,43 +3640,38 @@ class Config :	DisposingComObject,
 		bool mscoff    = mProjectOptions.compiler == Compiler.DMD && (x64 || mProjectOptions.mscoff);
 		string workdir = normalizeDir(GetProjectDir());
 		auto globOpts  = Package.GetGlobalOptions();
+		auto dubfile   = mProvider.mProject.findDubConfigFile();
+		string root    = workdir;
+		if (dubfile)
+			root = makeFilenameAbsolute(dubfile.GetFilename(), workdir).dirName;
+
+		string dubpath = globOpts.dubPath;
+		if (!std.file.exists(dubpath))
+			dubpath = normalizeDir(globOpts.DMD.InstallDir) ~ "windows\\bin\\dub.exe";
 
 		string dubcmd;
+		if (root != workdir)
+			dubcmd ~= "cd /D " ~ quoteFilename(root) ~ "\n";
+
 		if (command == "build")
 		{
-			dubcmd = "\"$(VisualDInstallDir)pipedmd.exe\" "
+			dubcmd ~= "\"$(VisualDInstallDir)pipedmd.exe\" "
 				~ (globOpts.demangleError ? null : "-nodemangle ")
 				~ (mProjectOptions.usesMSLink() ? "-msmode " : null)
 				~ (usePipedmdForDeps ? "-deps " ~ quoteFilename(GetDependenciesPath()) ~ " " : null)
-				~ globOpts.dubPath ~ " build";
+				~ quoteFilename(dubpath) ~ " build";
 		}
 		else
 		{
-			dubcmd = globOpts.dubPath ~ " " ~ command;
+			dubcmd ~= quoteFilename(dubpath) ~ " " ~ command;
 		}
+		if (command == "generate")
+			dubcmd ~= " visuald";
+
 		if (globOpts.dubOptions.length)
 			dubcmd ~= " " ~ globOpts.dubOptions;
 
-		auto node = searchNode(mProvider.mProject.GetRootNode(),
-							   delegate (CHierNode n)
-							   {
-								if(auto file = cast(CFileNode) n)
-								{
-									string fname = file.GetFilename();
-									string bname = fname.baseName.toLower;
-									if (bname == "dub.json" || bname == "dub.sdl")
-										return true;
-								}
-								return false;
-							   });
-		if(auto file = cast(CFileNode) node)
-		{
-			string root = makeFilenameAbsolute(file.GetFilename(), workdir).dirName;
-			if (root != workdir)
-				dubcmd ~= " --root=" ~ quoteFilename(root);
-		}
-
-		if (command == "build")
+		if (command == "build" || command == "generate")
 		{
 			switch (mProjectOptions.compiler)
 			{
