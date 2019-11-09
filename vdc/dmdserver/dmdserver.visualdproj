@@ -1563,11 +1563,9 @@
    <File path="dmd\src\dmd\objc_glue.d" tool="None" />
    <File path="dmd\src\dmd\opover.d" />
    <File path="dmd\src\dmd\optimize.d" />
-   <File path="dmd\src\dmd\osmodel.mak" />
    <File path="dmd\src\dmd\parse.d" />
    <File path="dmd\src\dmd\parsetimevisitor.d" />
    <File path="dmd\src\dmd\permissivevisitor.d" />
-   <File path="dmd\src\dmd\posix.mak" />
    <File path="dmd\src\dmd\printast.d" />
    <File path="dmd\src\dmd\root\region.d" />
    <File path="dmd\src\dmd\s2ir.d" tool="None" />

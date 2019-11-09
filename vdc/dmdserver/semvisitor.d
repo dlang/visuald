@@ -712,7 +712,12 @@ extern(C++) class FindASTVisitor : ASTVisitor
 				if (expr.type)
 					foundNode(expr.type);
 				else if (expr.original)
-					foundNode(expr.original.type);
+				{
+					if (auto se = expr.original.isScopeExp())
+						foundNode(se.sds);
+					else
+						foundNode(expr.original.type);
+				}
 			}
 		}
 		visit(cast(Expression)expr);
@@ -723,7 +728,19 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		if (!found)
 			if (de.ident)
 				if (matchIdentifier(de.identloc, de.ident))
-					foundNode(de);
+				{
+					if (de.type)
+						foundNode(de);
+					else if (de.original)
+					{
+						if (auto se = de.original.isScopeExp())
+							foundNode(se.sds);
+						else
+							foundNode(de.original.type);
+					}
+					else
+						foundNode(de);
+				}
 	}
 
 	override void visit(DotExp de)
@@ -813,10 +830,18 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			return;
 		while (originalType.ty != Tident)
 		{
-			if (originalType.ty != resolvedType.ty)
+			// val[max] is parsed as an AA, but can be resolved to a static array
+			if (originalType.ty != resolvedType.ty &&
+				!(originalType.ty == Taarray && resolvedType.ty == Tsarray))
 				return;
-			switch (originalType.ty)
+			switch (resolvedType.ty)
 			{
+				case Tsarray:
+				{
+					auto resolvedSA = cast(TypeSArray) resolvedType;
+					visitExpression(resolvedSA.dim);
+					goto case Tarray;
+				}
 				case Taarray:
 				{
 					auto originalAA = cast(TypeAArray) originalType;
@@ -829,7 +854,6 @@ extern(C++) class FindASTVisitor : ASTVisitor
 				case Tarray:
 				case Tpointer:
 				case Treference:
-				case Tsarray:
 				case Tvector:
 				case Tfunction:
 					originalType = (cast(TypeNext) originalType).next;
@@ -945,7 +969,12 @@ string tipForObject(RootObject obj, bool quote)
 		string kind;
 		if (decl.isParameter())
 		{
-			kind = "(parameter) ";
+			if (decl.parent)
+				if (auto fd = decl.parent.isFuncDeclaration())
+					if (fd.ident.toString().startsWith("__foreachbody"))
+						kind = "(foreach variable) ";
+			if (kind.empty)
+				kind = "(parameter) ";
 			fqn = false;
 		}
 		else if (auto em = decl.isEnumMember())
@@ -1014,7 +1043,7 @@ string tipForObject(RootObject obj, bool quote)
 
 	if (auto t = obj.isType())
 	{
-		toc = tipForType(t);
+		toc = tipForType(t.mutableOf().unSharedOf());
 	}
 	else if (auto e = obj.isExpression())
 	{
@@ -1266,14 +1295,27 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 
 		void addType(Type type, Type originalType)
 		{
-			while (type && originalType && type.ty == originalType.ty)
+			while (type && originalType && (type.ty == originalType.ty || 
+				   (originalType.ty == Taarray && type.ty == Tsarray)))
 			{
-				switch (originalType.ty)
+				switch (type.ty)
 				{
+					case Tsarray:
+					{
+						auto resolvedSA = cast(TypeSArray) type;
+						visitExpression(resolvedSA.dim);
+						goto case Tarray;
+					}
+					case Taarray:
+					{
+						auto originalAA = cast(TypeAArray) originalType;
+						auto resolvedAA = cast(TypeAArray) type;
+						addType(resolvedAA.index, originalAA.index);
+						goto case Tarray;
+					}
 					case Tarray:
 					case Tpointer:
 					case Treference:
-					case Tsarray:
 					case Tvector:
 						originalType = (cast(TypeNext) originalType).next;
 						type         = (cast(TypeNext) type        ).next;
@@ -1302,12 +1344,21 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addIdent((cast(TypeIdentifier) type).loc, (cast(TypeIdentifier) type).ident, TypeReferenceKind.TemplateTypeParameter);
 		}
 
+		void addSymbol(ref const Loc loc, Dsymbol sym)
+		{
+			if (auto decl = sym.isDeclaration())
+				addDeclaration(loc, decl);
+			else if (sym.isModule())
+				addIdent(loc, sym.ident, TypeReferenceKind.Module);
+			else if (sym.isPackage())
+				addIdent(loc, sym.ident, TypeReferenceKind.Package);
+			else
+				addIdent(loc, sym.ident, TypeReferenceKind.Variable);
+		}
+
 		override void visit(Dsymbol sym)
 		{
-			if (auto decl = sym.isDeclaration)
-				addDeclaration(sym.loc, decl);
-			else
-				addIdent(sym.loc, sym.ident, TypeReferenceKind.Variable);
+			addSymbol(sym.loc, sym);
 		}
 
 		override void visit(Parameter sym)
@@ -1391,6 +1442,30 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				}
 			}
 			super.visit(expr);
+		}
+
+		override void visit(IdentifierExp expr)
+		{
+			if (expr.original)
+				if (auto se = expr.original.isScopeExp())
+					addSymbol(expr.loc, se.sds);
+
+//			if (expr.type)
+//				addIdentByType(expr.loc, expr.ident, expr.type);
+//			else if (expr.original && expr.original.type)
+//				addIdentByType(expr.loc, expr.ident, expr.original.type);
+//			else
+				super.visit(expr);
+		}
+
+		override void visit(DotIdExp expr)
+		{
+//			if (expr.type)
+//				addIdentByType(expr.identloc, expr.ident, expr.type);
+//			else if (expr.original && expr.original.type)
+//				addIdentByType(expr.identloc, expr.ident, expr.original.type);
+//			else
+				super.visit(expr);
 		}
 
 		override void visit(DotVarExp dve)

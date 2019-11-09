@@ -583,8 +583,8 @@ unittest
 	checkTip(m,  9,  10, "(class) `object.Exception`");
 	checkTip(m,  11, 21, "(class) `object.Error`");
 	checkTip(m,  12,  5, "(class) `object.Exception`");
-	checkTip(m,  13, 11, "(class) `const(object.Exception)`");
-	checkTip(m,   2,  9, "(class) `inout(object.Exception)`");
+	checkTip(m,  13, 11, "(class) `object.Exception`");
+	checkTip(m,   2,  9, "(class) `object.Exception`");
 
 	source =
 	q{                                   // Line 1
@@ -773,6 +773,31 @@ unittest
 	checkTip(m,  6, 97, "(local variable) `string cmd`");
 
 	source = q{
+		int fun()
+		{
+			int sum;
+			foreach(m; object.ModuleInfo)  // Line 5
+				if (m) sum++;
+			return sum;
+		}
+	};
+	m = checkErrors(source, "");
+	dumpAST(m);
+	checkTip(m,  6,  9, "(foreach variable) `object.ModuleInfo* m`");
+	checkTip(m,  5, 12, "(foreach variable) `object.ModuleInfo* m`");
+	checkTip(m,  5, 15, "(module) `object`");
+	checkTip(m,  5, 22, "(struct) `object.ModuleInfo`");
+
+	exp2 = [
+		"fun":              [ IdTypePos(TypeReferenceKind.Function) ],
+		"sum":              [ IdTypePos(TypeReferenceKind.LocalVariable) ],
+		"m":                [ IdTypePos(TypeReferenceKind.ParameterVariable) ],
+		"object":           [ IdTypePos(TypeReferenceKind.Module) ],
+		"ModuleInfo":       [ IdTypePos(TypeReferenceKind.Struct) ],
+	];
+	checkIdentifierTypes(m, exp2);
+
+	source = q{
 		void fun()
 		{
 			string str = "hello";
@@ -836,6 +861,94 @@ unittest
 	};
 	m = checkErrors(source, "");
 	checkReferences(m, 5, 8, [TextPos(5,8), TextPos(6, 9)]); // var
+	// check array initializer
+	filename = "tok.d";
+	source = q{
+		module tok;
+		enum TOK : ubyte
+		{
+			reserved,
+
+			// Other
+			leftParentheses,
+			rightParentheses,
+			max_
+		}
+		enum PREC : int
+		{
+			zero,
+			expr,
+		}
+	};
+	m = checkErrors(source, "");
+	source = q{
+		import tok;
+		immutable PREC[TOK.max_] precedence =
+		[
+			TOK.reserved : PREC.zero,             // Line 5
+			TOK.leftParentheses : PREC.expr,
+		];
+	};
+	filename = "source.d";
+	m = checkErrors(source, "");
+
+	// TODO: checkTip(m, 3, 18, "(enum) `tok.TOK`");
+	checkTip(m, 3, 22, "(enum value) `tok.TOK.max_ = 3`");
+	checkTip(m, 3, 13, "(enum) `tok.PREC`");
+	checkTip(m, 5,  4, "(enum) `tok.TOK`");
+	checkTip(m, 5,  8, "(enum value) `tok.TOK.reserved = cast(ubyte)0u`");
+	checkTip(m, 5, 19, "(enum) `tok.PREC`");
+	checkTip(m, 5, 24, "(enum value) `tok.PREC.zero = 0`");
+
+	IdTypePos[][string] exp4 = [
+		"tok":             [ IdTypePos(TypeReferenceKind.Package) ],
+		"zero":            [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"expr":            [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"reserved":        [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"leftParentheses": [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"max_":            [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"PREC":            [ IdTypePos(TypeReferenceKind.Enum) ],
+		"TOK":             [ IdTypePos(TypeReferenceKind.Enum) ],
+		"precedence":      [ IdTypePos(TypeReferenceKind.GSharedVariable) ],
+	];
+	checkIdentifierTypes(m, exp4);
+
+	source = q{
+		int[] darr = [ TypeInfo_Class.ClassFlags.isCOMclass ];
+		int[int] aarr =
+		[
+			TypeInfo_Class.ClassFlags.isCOMclass : 1,  // Line 5
+			1 : TypeInfo_Class.ClassFlags.isCOMclass
+		];
+		int[] iarr = [ TypeInfo_Class.ClassFlags.noPointers : 1 ];
+	};
+	m = checkErrors(source, "");
+	checkTip(m, 2, 18, "(class) `object.TypeInfo_Class`");
+	checkTip(m, 2, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m, 2, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m, 5, 4, "(class) `object.TypeInfo_Class`");
+	checkTip(m, 5, 19, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m, 5, 30, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m, 6, 8, "(class) `object.TypeInfo_Class`");
+	checkTip(m, 6, 23, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m, 6, 34, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m, 8, 18, "(class) `object.TypeInfo_Class`");
+	checkTip(m, 8, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m, 8, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.noPointers = 2u`");
+
+	checkReferences(m, 2, 44, [TextPos(2,44), TextPos(5, 30), TextPos(6, 34)]); // isCOMclass
+
+	IdTypePos[][string] exp3 = [
+		"isCOMclass":       [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"noPointers":       [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"TypeInfo_Class":   [ IdTypePos(TypeReferenceKind.Class) ],
+		"ClassFlags":       [ IdTypePos(TypeReferenceKind.Enum) ],
+		"darr":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+		"aarr":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+		"iarr":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+	];
+	checkIdentifierTypes(m, exp3);
+
 	source = q{
 		bool isReserved(const(char)[] ident)
 		{
@@ -947,4 +1060,8 @@ unittest
 // https://issues.dlang.org/show_bug.cgi?id=20253
 void dummy()
 {
+	enum string s1 = "int xx;";
+	enum string s2 = "int yy;";
+	mixin(s1, s2);
+	int t = xx + yy;
 }
