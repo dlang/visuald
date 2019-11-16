@@ -18,6 +18,25 @@
   <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(DbuildCompileDDLLPath)" />
   <UsingTask TaskName="dbuild.MultiToolTaskVisualD" AssemblyFile="$(DbuildCompileDDLLPath)" />
 
+  <UsingTask TaskName="SetEnvironmentVariable" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
+    <ParameterGroup>
+      <EnvKey ParameterType="System.String" Required="true" />
+      <EnvValue ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            try {
+                Environment.SetEnvironmentVariable(EnvKey, EnvValue, System.EnvironmentVariableTarget.Process);
+            }
+            catch  {
+            }
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
   <!-- remove disabled files from DCompile -->
   <Target Name="_collectDFiles"
     DependsOnTargets="_SelectedFiles">
@@ -296,6 +315,8 @@
   </Target>
 
   <Target Name="DCompilePatchLinkInput" DependsOnTargets="_collectDFiles;NeedsDLibraries">
+
+    <SetEnvironmentVariable Condition="'$(LinkToolExe)' != ''" EnvKey="dbuild_LinkToolExe" EnvValue="$([System.IO.Path]::Combine('$(LinkToolPath)', '$(LinkToolExe)'))"/>
 
     <PropertyGroup Condition="'$(DDemangleLink)' == '1' and '$(_NeedsPipeLink)' == 'true'">
       <LinkToolPath>$(VisualDMSBuildDir)</LinkToolPath>

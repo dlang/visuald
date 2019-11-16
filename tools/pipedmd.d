@@ -71,12 +71,16 @@ string eatArg(string cmd)
 
 version(pipeLink)
 {
+	import core.stdc.stdlib : getenv;
 	extern(C) int putenv(const char*);
 	int main(string[] argv)
 	{
+		const(char)* p = getenv("dbuild_LinkToolExe");
+		string link = p ? fromMBSz(cast(immutable)p) : "link.exe";
+		// printf("pipelink called with: dbuild_LinkToolExe=%s\n", p);
 		string cmd = to!string(GetCommandLineW());
 		//printf("pipelink called with: %.*s\n", cast(int)cmd.length, cmd.ptr);
-		cmd = "link.exe" ~ eatArg(cmd);
+		cmd = link ~ eatArg(cmd);
 		putenv("VS_UNICODE_OUTPUT="); // disable unicode output for link.exe
 		int exitCode = runProcess(cmd, null, true, true, false, true, false);
 		return exitCode;
