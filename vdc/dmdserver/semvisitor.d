@@ -54,6 +54,7 @@ import dmd.root.filename;
 import dmd.root.rmem;
 import dmd.root.rootobject;
 
+import std.algorithm;
 import std.string;
 import std.conv;
 import stdext.array;
@@ -587,7 +588,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(CastExp expr)
 	{
-		visitTypeIdentifier(expr.parsedTo, expr.to);
+		visitTypeIdentifier(expr.parsedTo, expr.to, true);
 		if (expr.parsedTo != expr.to)
 			visitTypeIdentifier(expr.to, expr.to);
 		super.visit(expr);
@@ -687,6 +688,22 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		super.visit(expr);
 	}
 
+	override void visit(ScopeExp expr)
+	{
+		if (auto ti = expr.sds.isTemplateInstance())
+		{
+			if (ti.tiargs && ti.parsedArgs)
+			{
+				size_t args = min(ti.tiargs.dim, ti.parsedArgs.dim);
+				for (size_t a = 0; a < args; a++)
+					if (Type tip = (*ti.parsedArgs)[a].isType())
+						if (Type tir = (*ti.tiargs)[a].isType())
+							visitTypeIdentifier(tip, tir);
+			}
+		}
+		super.visit(expr);
+	}
+
 	override void visit(SymbolExp expr)
 	{
 		if (!found && expr.var)
@@ -776,7 +793,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(VarDeclaration decl)
 	{
-		visitTypeIdentifier(decl.parsedType, decl.type);
+		visitTypeIdentifier(decl.parsedType, decl.type, true);
 		if (!found && decl.originalType != decl.parsedType)
 			visitTypeIdentifier(decl.originalType, decl.type);
 		if (!found && decl.type != decl.originalType && decl.type != decl.parsedType)
@@ -824,7 +841,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		visitTypeIdentifier(decl.originalType, decl.type);
 	}
 
-	void visitTypeIdentifier(Type originalType, Type resolvedType)
+	void visitTypeIdentifier(Type originalType, Type resolvedType, bool syntaxCopiedOriginal = false)
 	{
 		if (found || !originalType || !resolvedType)
 			return;
@@ -866,23 +883,30 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			}
 		}
 		auto otype = cast(TypeIdentifier) originalType;
+		if (otype.copiedFrom && syntaxCopiedOriginal)
+			otype = otype.copiedFrom;
 		Loc loc = otype.loc;
 		if (matchIdentifier(loc, otype.ident))
 		{
-			foundNode(resolvedType);
+			if (otype.parentScopes.dim > 0)
+				foundNode(otype.parentScopes[0]);
+			else
+				foundNode(resolvedType);
 		}
 		else
 		{
 			// guess qualified name to be without spaces
-			loc.charnum += otype.ident.toString().length + 1;
-			foreach (id; otype.idents)
+			foreach (i, id; otype.idents)
 			{
-				if (id.dyncast() == DYNCAST.identifier)
+				RootObject obj = id;
+				if (obj.dyncast() == DYNCAST.identifier)
 				{
-					auto ident = cast(Identifier)id;
-					if (matchIdentifier(loc, ident))
-						foundNode(resolvedType);
-					loc.charnum += ident.toString().length + 1;
+					auto ident = cast(Identifier)obj;
+					if (matchIdentifier(id.loc, ident))
+						if (otype.parentScopes.dim > i + 1)
+							foundNode(otype.parentScopes[i + 1]);
+						else
+							foundNode(resolvedType);
 				}
 			}
 		}
@@ -1066,6 +1090,9 @@ string tipForObject(RootObject obj, bool quote)
 	}
 	else if (auto s = obj.isDsymbol())
 	{
+		if (auto imp = s.isImport())
+			if (imp.mod)
+				s = imp.mod;
 		if (auto decl = s.isDeclaration())
 			tip = tipForDeclaration(decl);
 		else
@@ -1293,7 +1320,7 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addIdent(loc, ident, TypeReferenceKind.GSharedVariable);
 		}
 
-		void addType(Type type, Type originalType)
+		void addType(Type type, Type originalType, bool syntaxCopiedOriginal = false)
 		{
 			while (type && originalType && (type.ty == originalType.ty || 
 				   (originalType.ty == Taarray && type.ty == Tsarray)))
@@ -1310,7 +1337,7 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 					{
 						auto originalAA = cast(TypeAArray) originalType;
 						auto resolvedAA = cast(TypeAArray) type;
-						addType(resolvedAA.index, originalAA.index);
+						addType(resolvedAA.index, originalAA.index, syntaxCopiedOriginal);
 						goto case Tarray;
 					}
 					case Tarray:
@@ -1338,10 +1365,48 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 					default:      return TypeReferenceKind.BasicType;
 				}
 			}
+			void addTypeIdentifier(TypeIdentifier tid, Type resolvedType)
+			{
+				if (tid.copiedFrom && syntaxCopiedOriginal)
+					tid = tid.copiedFrom;
+				if (tid.parentScopes.dim > 0)
+					addObject(tid.loc, tid.parentScopes[0]);
+				else
+					addIdent(tid.loc, tid.ident, refkind(resolvedType));
+
+				foreach (i, id; tid.idents)
+				{
+					RootObject obj = id;
+					if (obj.dyncast() == DYNCAST.identifier)
+					{
+						auto ident = cast(Identifier)obj;
+						if (tid.parentScopes.dim > i + 1)
+							addObject(id.loc, tid.parentScopes[i + 1]);
+						else
+							addIdent(id.loc, id, refkind(resolvedType));
+					}
+				}
+			}
+
 			if (originalType && originalType.ty == Tident && type)
-				addIdent((cast(TypeIdentifier) originalType).loc, (cast(TypeIdentifier) originalType).ident, refkind(type));
+				addTypeIdentifier(cast(TypeIdentifier) originalType, type);
 			else if (type && type.ty == Tident) // not yet semantically analyzed (or a template declaration)
-				addIdent((cast(TypeIdentifier) type).loc, (cast(TypeIdentifier) type).ident, TypeReferenceKind.TemplateTypeParameter);
+				addTypeIdentifier(cast(TypeIdentifier) type, type);
+		}
+
+		void addObject(ref const Loc loc, RootObject obj)
+		{
+			if (auto t = obj.isType())
+				addType(t, t);
+			else if (auto s = obj.isDsymbol())
+			{
+				if (auto imp = s.isImport())
+					if (imp.mod)
+						s = imp.mod;
+				addSymbol(loc, s);
+			}
+			else if (auto e = obj.isExpression())
+				e.accept(this);
 		}
 
 		void addSymbol(ref const Loc loc, Dsymbol sym)
@@ -1405,7 +1470,7 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 		{
 			addType(decl.type, decl.originalType);
 			if (decl.parsedType != decl.originalType)
-				addType(decl.type, decl.parsedType);
+				addType(decl.type, decl.parsedType, true);
 			super.visit(decl);
 		}
 
@@ -1421,7 +1486,7 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			if (ne.member)
 				ne.member.accept(this);
 
-			addType(ne.newtype, ne.parsedType);
+			addType(ne.newtype, ne.parsedType, true);
 			if (ne.newtype != ne.parsedType)
 				addType(ne.newtype, ne.newtype);
 
@@ -1473,6 +1538,28 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			if (dve.var && dve.var.ident)
 				addDeclaration(dve.varloc.filename ? dve.varloc : dve.loc, dve.var);
 			super.visit(dve);
+		}
+
+		override void visit(ScopeExp expr)
+		{
+			if (auto ti = expr.sds.isTemplateInstance())
+			{
+				if (ti.tiargs && ti.parsedArgs)
+				{
+					size_t args = min(ti.tiargs.dim, ti.parsedArgs.dim);
+					for (size_t a = 0; a < args; a++)
+						if (Type tip = (*ti.parsedArgs)[a].isType())
+							if (Type tir = (*ti.tiargs)[a].isType())
+								addType(tir, tip);
+				}
+			}
+			super.visit(expr);
+		}
+
+		override void visit(CastExp expr)
+		{
+			addType(expr.to, expr.parsedTo, true);
+			super.visit(expr);
 		}
 
 		override void visit(EnumDeclaration ed)

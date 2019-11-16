@@ -541,6 +541,21 @@ unittest
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
 	checkDefinition(m, 15, 17, "source.d", 2, 9);  // C
 
+	// enum value
+	source =
+	q{                                   // Line 1
+		enum TTT = 9;
+		void fun()
+		{
+			int x = TTT;                // Line 5
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  2,  8, "(constant) `int source.TTT = 9`");
+	checkTip(m,  5, 13, "(constant) `int source.TTT = 9`");
+
+	// template struct without instances
 	source =
 	q{                                   // Line 1
 		struct ST(T)
@@ -782,7 +797,7 @@ unittest
 		}
 	};
 	m = checkErrors(source, "");
-	dumpAST(m);
+	//dumpAST(m);
 	checkTip(m,  6,  9, "(foreach variable) `object.ModuleInfo* m`");
 	checkTip(m,  5, 12, "(foreach variable) `object.ModuleInfo* m`");
 	checkTip(m,  5, 15, "(module) `object`");
@@ -861,6 +876,89 @@ unittest
 	};
 	m = checkErrors(source, "");
 	checkReferences(m, 5, 8, [TextPos(5,8), TextPos(6, 9)]); // var
+
+	// check position of var in AddrExp
+	source = q{
+		struct S { int x = 3; }
+		void fun(T)(T* p) {}
+		void foo()
+		{
+			S var;               // Line 6
+			fun!(S)(&var);
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  7,  9, "(struct) `source.S`");
+
+	// check template arguments
+	source = q{
+		void fun(T)() {}
+		void foo()
+		{
+			fun!(object.ModuleInfo)();  // Line 5
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  5,  9, "(module) `object`");
+	checkTip(m,  5, 16, "(struct) `object.ModuleInfo`");
+
+	exp2 = [
+		"fun":              [ IdTypePos(TypeReferenceKind.Function) ],
+		"foo":              [ IdTypePos(TypeReferenceKind.Function) ],
+		"object":           [ IdTypePos(TypeReferenceKind.Module) ],
+		"ModuleInfo":       [ IdTypePos(TypeReferenceKind.Struct) ],
+	];
+	checkIdentifierTypes(m, exp2);
+
+	// check FQN types in cast
+	source = q{
+		void foo()
+		{
+			auto e = cast(object.Exception) null;
+			auto p = cast(object.Exception*) null;  // Line 5
+		}
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  4, 18, "(module) `object`");
+	checkTip(m,  4, 25, "(class) `object.Exception`");
+	checkTip(m,  5, 18, "(module) `object`");
+	checkTip(m,  5, 25, "(class) `object.Exception`");
+
+	exp2 = [
+		"foo":       [ IdTypePos(TypeReferenceKind.Function) ],
+		"object":    [ IdTypePos(TypeReferenceKind.Module) ],
+		"Exception": [ IdTypePos(TypeReferenceKind.Class) ],
+		"e":         [ IdTypePos(TypeReferenceKind.LocalVariable) ],
+		"p":         [ IdTypePos(TypeReferenceKind.LocalVariable) ],
+	];
+	checkIdentifierTypes(m, exp2);
+
+	// fqn, function call on static members
+	source = q{
+		struct Mem
+		{
+			static Mem foo(int sz) { return Mem(); }
+		}                                    // Line 5
+		__gshared Mem mem;
+		void fun()
+		{
+			source.Mem m = source.mem.foo(1234);
+		}                                    // Line 10
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  9, 30, "`Mem source.Mem.foo(int sz)`");
+	checkTip(m,  9, 19, "(module) `source`");
+	checkTip(m,  9, 26, "(__gshared variable) `source.Mem source.mem`");
+	checkTip(m,  9, 11, "(struct) `source.Mem`");
+	checkTip(m,  9,  4, "(module) `source`");
+
+	///////////////////////////////////////////////////////////
 	// check array initializer
 	filename = "tok.d";
 	source = q{
@@ -949,6 +1047,7 @@ unittest
 	];
 	checkIdentifierTypes(m, exp3);
 
+	// more than 7 cases translated to table
 	source = q{
 		bool isReserved(const(char)[] ident)
 		{
@@ -1058,10 +1157,21 @@ unittest
 }
 
 // https://issues.dlang.org/show_bug.cgi?id=20253
+enum TTT = 9;
 void dummy()
 {
-	enum string s1 = "int xx;";
-	enum string s2 = "int yy;";
-	mixin(s1, s2);
-	int t = xx + yy;
+	import std.file;
+	std.file.read(""); // no tip on std and file
+	auto x = TTT;
+}
+
+struct XMem
+{
+	static XMem foo(int sz) { return XMem(); }
+}
+__gshared XMem xmem;
+
+void fun()
+{
+	vdc.dmdserver.semanalysis.XMem m = vdc.dmdserver.semanalysis.xmem.foo(1234);
 }
