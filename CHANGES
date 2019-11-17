@@ -1184,9 +1184,11 @@ unreleased Version 0.51.0
 	- new option: "remove leading zeroes from hex values"
 	- fix crash expanding pointer to empty dynamic array
 	- large arrays: show growing index, fix omitting last element
-  * dparser: now creates server process per Visual Studio Instance
+  * installer: add sections for "Build Tools VS2017/2019""
+  * dparser: now creates server process per Visual Studio instance
   * added option to not show error squiggles and markers
   * added tooltip to collapsed region
   * fix function signature tool tips
   * error list now filled with intellisense errors
-  * basic DUB support: update and refresh if project contains dub.json or dub.sdl
+  * basic DUB support: upgrade and refresh if project contains dub.json or dub.sdl
+  * msbuild: pass original variable LinkToolExe to pipelink.exe through environment

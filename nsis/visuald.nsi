@@ -29,12 +29,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.087.1"
+!define DMD_VERSION "2.089.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.17.0"
+!define LDC_VERSION "1.18.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
