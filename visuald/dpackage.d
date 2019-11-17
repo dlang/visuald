@@ -381,6 +381,16 @@ class Package : DisposingComObject,
 					mTaskProviderCookie = 0;
 				}
 			}
+			if (mErrorProviderCookie != 0)
+			{
+				if (auto errorList = queryService!(SVsErrorList, IVsTaskList))
+				{
+					scope(exit) release(errorList);
+					errorList.UnregisterTaskProvider(mErrorProviderCookie);
+					mErrorProvider = null;
+					mErrorProviderCookie = 0;
+				}
+			}
 
 			mHostSP = release(mHostSP);
 		}
@@ -530,11 +540,21 @@ version(none)
 		if (auto taskList = queryService!(IVsTaskList))
 		{
 			scope(exit) release(taskList);
-			mTaskProvider = newCom!TaskProvider;
+			mTaskProvider = newCom!TaskProvider(false);
 			if (taskList.RegisterTaskProvider (mTaskProvider, &mTaskProviderCookie) != S_OK)
 				mTaskProvider = null;
 			else
 				taskList.RefreshTasks(mTaskProviderCookie);
+		}
+
+		if (auto errorList = queryService!(SVsErrorList, IVsTaskList))
+		{
+			scope(exit) release(errorList);
+			mErrorProvider = newCom!TaskProvider(true);
+			if (errorList.RegisterTaskProvider (mErrorProvider, &mErrorProviderCookie) != S_OK)
+				mErrorProvider = null;
+			else
+				errorList.RefreshTasks(mErrorProviderCookie);
 		}
 
 		return S_OK; // E_NOTIMPL;
@@ -1298,6 +1318,12 @@ version(none)
 		return s_instance.mTaskProvider;
 	}
 
+	static TaskProvider GetErrorProvider()
+	{
+		assert(s_instance);
+		return s_instance.mErrorProvider;
+	}
+
 	static GlobalOptions GetGlobalOptions()
 	{
 		assert(s_instance);
@@ -1331,6 +1357,15 @@ version(none)
 		}
 	}
 
+	static void RefreshErrorList()
+	{
+		if (auto errorList = queryService!(SVsErrorList, IVsTaskList))
+		{
+			errorList.RefreshTasks(s_instance.mErrorProviderCookie);
+			release(errorList);
+		}
+	}
+
 private:
 	IServiceProvider mHostSP;
 	uint             mLangServiceCookie;
@@ -1343,6 +1378,9 @@ private:
 
 	TaskProvider     mTaskProvider;
 	uint             mTaskProviderCookie;
+
+	TaskProvider     mErrorProvider;
+	uint             mErrorProviderCookie;
 
 	uint             mOmLibraryCookie;
 
@@ -1529,6 +1567,7 @@ class GlobalOptions
 	bool autoOutlining;
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
 	bool parseSource = true;
+	bool showParseErrors = true;
 	bool pasteIndent;
 	bool fmtIndentCase = true;
 	bool expandFromSemantics;
@@ -1567,13 +1606,14 @@ class GlobalOptions
 	bool ColorizeReferences;
 	bool lastColorizeCoverage;
 	bool lastColorizeVersions;
+	bool lastShowParseErrors;
 	bool lastUseDParser;
 	string lastInstallDirs;
 
 	int vsVersion;
 	bool isVS2017OrLater() { return vsVersion >= 15; }
-	bool usesUpdateSemanticModule() { return parseSource || expandFromSemantics || showTypeInTooltip || semanticGotoDef; }
-
+	bool usesUpdateSemanticModule() { return parseSource || showParseErrors || expandFromSemantics || showTypeInTooltip || semanticGotoDef; }
+	bool usesQuickInfoTooltips() { return isVS2017OrLater(); }
 
 	this()
 	{
@@ -1913,6 +1953,7 @@ class GlobalOptions
 			autoOutlining       = getBoolOpt("autoOutlining", true);
 			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
 			//parseSource         = getBoolOpt("parseSource", true);
+			showParseErrors     = getBoolOpt("showParseErrors", true);
 			expandFromSemantics = getBoolOpt("expandFromSemantics", true);
 			//expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
 			expandFromJSON      = getBoolOpt("expandFromJSON", true);
@@ -1926,7 +1967,8 @@ class GlobalOptions
 			fmtIndentCase       = getBoolOpt("fmtIndentCase", true);
 
 			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
-			useDParser          = true; // getBoolOpt("useDParser2", keyDParser.key !is null);
+			version(all) useDParser    = getBoolOpt("useDParser2", keyDParser.key !is null);
+			else  useDParser    = true;
 			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
 			sortExpMode         = getBoolOpt("sortExpMode", 0);
@@ -2098,6 +2140,7 @@ class GlobalOptions
 			lastColorizeCoverage = ColorizeCoverage;
 			lastColorizeVersions = ColorizeVersions;
 			lastUseDParser       = useDParser;
+			lastShowParseErrors  = showParseErrors;
 
 			updateDefaultColors();
 
@@ -2122,7 +2165,7 @@ class GlobalOptions
 		if(useDParser)
 			gServerClassFactory_iid = DParserClassFactory_iid;
 		else
-			gServerClassFactory_iid = VDServerClassFactory_iid;
+			gServerClassFactory_iid = DMDServerClassFactory_iid;
 	}
 
 	bool saveToRegistry()
@@ -2188,6 +2231,7 @@ class GlobalOptions
 			keyToolOpts.Set("autoOutlining",       autoOutlining);
 			keyToolOpts.Set("deleteFiles",         deleteFiles);
 			//keyToolOpts.Set("parseSource",         parseSource);
+			keyToolOpts.Set("showParseErrors",     showParseErrors);
 			keyToolOpts.Set("expandFromSemantics", expandFromSemantics);
 			//keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
@@ -2261,6 +2305,11 @@ class GlobalOptions
 		if(lastInstallDirs != installDirs)
 		{
 			lastInstallDirs = installDirs;
+			updateColorizer = true;
+		}
+		if (lastShowParseErrors != showParseErrors)
+		{
+			lastShowParseErrors = showParseErrors;
 			updateColorizer = true;
 		}
 		if(updateColorizer)

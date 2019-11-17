@@ -1426,9 +1426,15 @@ bool getFilesFromTrackerFile(string lnkdeppath, ref string[] files)
 		bool isExcluded(string file)
 		{
 			foreach(ex; exclpaths)
+			{
 				if (file.length >= ex.length && icmp(file[0..ex.length], ex) == 0)
+				{
 					if (ex[$-1] == '\\' || file.length == ex.length || file[ex.length] == '\\')
 						return true;
+				}
+				else if (ex.indexOf('\\') < 0 && globMatch(baseName(file).toLower, ex.toLower))
+					return true;
+			}
 			return false;
 		}
 
@@ -1486,7 +1492,7 @@ bool launchBatchProcess(string workdir, string cmdfile, string cmdline, IVsOutpu
 	return hr == S_OK && result == 0;
 }
 
-bool launchDubUpgrade(Config cfg)
+bool launchDubCommand(Config cfg, string command)
 {
 	IVsOutputWindowPane pane = getVisualDOutputPane();
 	if(!pane)
@@ -1495,11 +1501,14 @@ bool launchDubUpgrade(Config cfg)
 
 	string workdir = normalizeDir(cfg.GetProjectDir());
 	string precmd = cfg.getEnvironmentChanges();
-	string cmd = precmd ~ cfg.getDubCommandLine("upgrade", false) ~ "\n";
-	cmd = cmd ~ "\nif %errorlevel% neq 0 echo Upgrading failed!\n";
-	cmd = cmd ~ "\nif %errorlevel% == 0 echo Upgrading done.\n";
+	string cmd = precmd ~ cfg.getDubCommandLine(command, false) ~ "\n";
+	cmd = cmd ~ "\nif %errorlevel% neq 0 echo dub " ~ command ~ " failed!\n";
+	cmd = cmd ~ "\nif %errorlevel% == 0 echo dub " ~ command ~ " done.\n";
 
-	string cmdfile = makeFilenameAbsolute(stripExtension(cfg.GetCommandLinePath(false)) ~ ".upgrade.cmd", workdir);
+	string cmdfile = makeFilenameAbsolute(stripExtension(cfg.GetCommandLinePath(false)) ~ "." ~ command ~ ".cmd", workdir);
+	mkdirRecurse(dirName(cmdfile));
+
+	cmd = cfg.GetProjectOptions().replaceEnvironment(cmd, cfg);
 
 	pane.Activate();
 	return launchBatchProcess(workdir, cmdfile, cmd, pane);
@@ -1507,5 +1516,9 @@ bool launchDubUpgrade(Config cfg)
 
 bool refreshDubProject(Project prj)
 {
-	return false;
+	Config cfg = GetActiveConfig(prj);
+	if (!cfg)
+		return false;
+
+	return launchDubCommand(cfg, "generate");
 }

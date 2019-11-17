@@ -2662,6 +2662,23 @@ Error:
 		}
 	}
 
+	CFileNode findDubConfigFile()
+	{
+		auto node = searchNode(GetRootNode(),
+							   delegate (CHierNode n)
+							   {
+								if(auto file = cast(CFileNode) n)
+								{
+									string fname = file.GetFilename();
+									string bname = fname.baseName.toLower;
+									if (bname == "dub.json" || bname == "dub.sdl")
+										return true;
+								}
+								return false;
+							   });
+		return cast(CFileNode) node;
+	}
+
 	ConfigProvider GetConfigProvider() { return mConfigProvider; }
 	string GetFilename() { return mFilename; }
 	string GetName() { return mName; }

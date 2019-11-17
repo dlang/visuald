@@ -18,18 +18,18 @@ environment:
     - os: Visual Studio 2017
       VS: 15
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-    - os: Visual Studio 2015
-      VS: 14
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#    - os: Visual Studio 2015
+#      VS: 14
+#      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 #    - os: Visual Studio 2013
 #      VS: 12
 #      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
 # cache relative to C:\projects\visuald
 cache:
-  - C:\projects\cache\dmd2083_0.7z
+  - C:\projects\cache\dmd2088_0.7z
   - C:\projects\cache\cd851.zip
-  - C:\projects\cache\VisualD-v0.47.0.exe
+  - C:\projects\cache\VisualD-v0.50.1.exe
   - C:\projects\cache\binutils-2.25.tar.gz
 
 #matrix:
@@ -50,10 +50,10 @@ install:
   # Download & extract D compiler
   - ps: |
         If ($Env:D_COMPILER -eq 'dmd') {
-            If (-not (Test-Path 'cache\dmd2083_0.7z')) {
-                Start-FileDownload 'http://downloads.dlang.org/releases/2.x/2.083.0/dmd.2.083.0.windows.7z' -FileName 'cache\dmd2083_0.7z'
+            If (-not (Test-Path 'cache\dmd2088_0.7z')) {
+                Start-FileDownload 'http://downloads.dlang.org/releases/2.x/2.088.0/dmd.2.088.0.windows.7z' -FileName 'cache\dmd2088_0.7z'
             }
-            7z x cache\dmd2083_0.7z > $null
+            7z x cache\dmd2088_0.7z > $null
             Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
             c:\projects\dmd2\windows\bin\dmd.exe --version
         } ElseIf ($Env:D_COMPILER -eq 'dmd-nightly') {
@@ -77,10 +77,10 @@ install:
         copy c:\projects\dm\bin\coffimplib.exe c:\projects\dmd2\windows\bin
   # Download & install Visual D
   - ps: |
-        If (-not (Test-Path 'cache\VisualD-v0.47.0.exe')) {
-            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.47.0/VisualD-v0.47.0.exe' -FileName 'cache\VisualD-v0.47.0.exe'
+        If (-not (Test-Path 'cache\VisualD-v0.50.1.exe')) {
+            Start-FileDownload 'https://github.com/dlang/visuald/releases/download/v0.50.1/VisualD-v0.50.1.exe' -FileName 'cache\VisualD-v0.50.1.exe'
         }
-  - cache\VisualD-v0.47.0.exe /S
+  - cache\VisualD-v0.50.1.exe /S
   # configure DMD path
   - reg add "HKLM\SOFTWARE\DMD" /v InstallationFolder /t REG_SZ /d c:\projects /reg:32 /f
   # disable link dependencies monitoring, fails on AppVeyor server
@@ -104,14 +104,14 @@ before_build:
 build_script:
   - cd c:\projects
   - cd visuald
+  # Fetch submodules
+  - git submodule update --init --recursive
   # ignore failure once, in case it needs reloading the sdk project
   - nmake prerequisites || nmake prerequisites
   # build Visual D
   - nmake visuald_vs
   # build and run Visual D unittests
-  - nmake visuald_test
-  # Fetch submodules
-  - git submodule update --init --recursive
+  - nmake visuald_test dmdserver_test
   - cd ..
   # Clone mago/cv2pdb (need to be two levels up)
   - cd ..

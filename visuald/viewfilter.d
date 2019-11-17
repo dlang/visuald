@@ -1667,15 +1667,14 @@ else
 				return S_FALSE;
 			goto stepUp;
 		}
-
 		span.iStartIndex = idx;
 		span.iStartLine = line;
-		span.iEndIndex = idx + 1;
-		span.iEndLine = line;
+		span.iEndIndex = span.iStartIndex + 1;
+		span.iEndLine = span.iStartLine;
 
 		mPendingMethodTipWord = word;
 		mPendingMethodTipComma = cntComma;
-		mPendingRequest = Package.GetLanguageService().GetTip(mCodeWinMgr.mSource, &span, &OnGetMethodTipText);
+		mPendingRequest = Package.GetLanguageService().GetTip(mCodeWinMgr.mSource, &span, true, &OnGetMethodTipText);
 		return S_OK;
 	}
 
@@ -1692,7 +1691,7 @@ else
 			foreach(fn; funcs)
 			{
 				Definition def;
-				def.name = mPendingMethodTipWord;
+				def.name = ""; // name is already in the type, was mPendingMethodTipWord;
 				int pos = fn.indexOf("\n");
 				if(pos >= 0)
 				{
@@ -1706,6 +1705,8 @@ else
 					fn = fn[0..$-1];
 				if(fn.endsWith(":"))
 					fn = fn[0..$-1];
+				if (fn.endsWith("`") && fn.indexOf('`') < fn.length - 1)
+					fn = fn[fn.indexOf('`')+1..$-1];
 				def.setType(fn);
 				defs ~= def;
 			}
@@ -1823,7 +1824,7 @@ version(none) // quick info tooltips not good enough yet
 		}
 		*pbstrText = allocBSTR(msg);
 }
-		if(Package.GetGlobalOptions().showTypeInTooltip)
+		if(Package.GetGlobalOptions().showTypeInTooltip && !Package.GetGlobalOptions().usesQuickInfoTooltips())
 		{
 			if(mPendingSpan == span && mTipRequest == mPendingRequest)
 			{
@@ -1835,7 +1836,7 @@ version(none) // quick info tooltips not good enough yet
 				if(mPendingSpan != span)
 				{
 					mPendingSpan = span;
-					mPendingRequest = Package.GetLanguageService().GetTip(src, &span, &OnGetTipText);
+					mPendingRequest = Package.GetLanguageService().GetTip(src, &span, false, &OnGetTipText);
 				}
 				return E_PENDING;
 			}

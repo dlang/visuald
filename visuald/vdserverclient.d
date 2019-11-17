@@ -62,7 +62,16 @@ private void dbglog(string s)
 	else
 	{
 		if(!dbgfh)
-			dbgfh = fopen("c:/tmp/vdclient.log", "w");
+		{
+			import std.file;
+			string fname = tempDir();
+			char[20] name = "/vdclient0.log";
+			for (char i = '0'; !dbgfh && i <= '9'; i++)
+			{
+				name[9] = i;
+				dbgfh = fopen((fname ~ name).ptr, "w");
+			}
+		}
 		SysTime now = Clock.currTime();
 		uint tid = sdk.win32.winbase.GetCurrentThreadId();
 		auto len = fprintf(dbgfh, "%02d:%02d:%02d - %04x - ",
@@ -80,11 +89,13 @@ private void dbglog(string s)
 version(DebugServer)
 	const GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9A02-7e4ad4084715");
 else
+
 	const GUID VDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9902-7e4ad4084715");
 version(DebugServer)
 	const GUID DParserClassFactory_iid  = uuid("002a2de9-8bb6-484d-AB05-7e4ad4084715"); // needs VDServer, not factory
 else
 	const GUID DParserClassFactory_iid  = uuid("002a2de9-8bb6-484d-AA05-7e4ad4084715"); // needs VDServer, not factory
+const GUID DMDServerClassFactory_iid = uuid("002a2de9-8bb6-484d-9906-7e4ad4084715");
 
 __gshared GUID gServerClassFactory_iid = VDServerClassFactory_iid;
 __gshared GUID IVDServer_iid = IVDServer.iid;
@@ -883,7 +894,8 @@ class VDServerClient
 
 	static void clientLoop()
 	{
-		startVDServer();
+		if (!startVDServer())
+			restartServer = true;
 
 		try
 		{
@@ -891,7 +903,7 @@ class VDServerClient
 			bool pendingMessageSent = false;
 
 			Queue!(_shared!(Command)) toAnswer;
-			while(gVDServer)
+			while(gVDServer || restartServer)
 			{
 				bool changed = false;
 				receiveTimeout(dur!"msecs"(50),
@@ -971,7 +983,8 @@ class VDServerClient
 					restartServer = false;
 					version(DebugCmd) dbglog("*** clientLoop: restarting server ***");
 					stopVDServer();
-					startVDServer();
+					if (!startVDServer())
+						restartServer = true;
 				}
 			}
 		}

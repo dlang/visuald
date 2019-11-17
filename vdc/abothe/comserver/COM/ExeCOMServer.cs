@@ -68,7 +68,7 @@ namespace DParserCOMServer.COM
 
 			// Register the SimpleObject class object
 			int hResult = COMNative.CoRegisterClassObject(ref clsid, new VDServerClassFactory(),
-				CLSCTX.LOCAL_SERVER, REGCLS.MULTIPLEUSE | REGCLS.SUSPENDED,
+				CLSCTX.LOCAL_SERVER, REGCLS.SINGLEUSE | REGCLS.SUSPENDED,
 				out _cookie);
 			if (hResult != 0)
 			{

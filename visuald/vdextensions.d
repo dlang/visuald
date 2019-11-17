@@ -103,6 +103,7 @@ int vdhelper_GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, ProjectOptio
 		opt.versionlevel   = (flags >> 8)  & 0xff;
 		opt.debuglevel     = (flags >> 16) & 0xff;
 		opt.mscoff         = true;
+		opt.warnings       = (flags & 0x10_00_00_00) != 0;
 
 		return S_OK;
 	}

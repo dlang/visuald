@@ -14,3 +14,5 @@ vdextensions/obj
 /msbuild/dbuild/.vs
 /test
 .vs
+/msbuild/dbuild/assemblies
+/vdextensions/assembly

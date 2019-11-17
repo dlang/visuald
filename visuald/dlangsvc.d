@@ -46,6 +46,7 @@ import vdc.ivdserver;
 static import vdc.util;
 
 import stdext.array;
+import stdext.ddocmacros;
 import stdext.string;
 import stdext.path;
 
@@ -585,8 +586,13 @@ class LanguageService : DisposingComObject,
 
 	void UpdateColorizer(bool force)
 	{
+		bool showErrors = Package.GetGlobalOptions().showParseErrors;
 		foreach(src; mSources)
+		{
 			src.mColorizer.OnConfigModified(force);
+			if (!showErrors && src.mParseErrors.length)
+				src.updateParseErrors(null);
+		}
 	}
 
 	// IVsOutliningCapableLanguage ///////////////////////////////
@@ -697,8 +703,31 @@ class LanguageService : DisposingComObject,
 	}
 
 	//////////////////////////////////////////////////////////////
+	extern(D) alias IdleTask = void delegate();
+	IdleTask[] runInIdle;
+	__gshared Object syncRunInIdle = new Object;
+
+	void addIdleTask(IdleTask task)
+	{
+		synchronized(syncRunInIdle)
+			runInIdle ~= task;
+	}
+	void execIdleTasks()
+	{
+		void delegate()[] toRun;
+		synchronized(syncRunInIdle)
+		{
+			toRun = runInIdle;
+			runInIdle = null;
+		}
+		foreach(r; toRun)
+			r();
+	}
+
 	bool OnIdle()
 	{
+		execIdleTasks();
+
 		if(mVDServerClient)
 			mVDServerClient.onIdle();
 
@@ -844,12 +873,114 @@ class LanguageService : DisposingComObject,
 		return true;
 	}
 
+	// QuickInfo callback from C# ///////////////////////////////////
+
+	private uint mLastTipIdleTaskScheduled;
+	private uint mLastTipIdleTaskHandled;
+
+	private uint mLastTipRequest;
+	private uint mLastTipReceived;
+	private wstring mLastTip;
+	private wstring mLastTipFmt;
+
+	extern(D)
+	void tipCallback(uint request, string fname, string text, TextSpan span)
+	{
+		mLastTipReceived = request;
+		text = text.strip();
+		text = text.replace("\r", "");
+		text = replace(text, "\a", "\n\n");
+		text = phobosDdocExpand(text);
+
+		wstring tip = toUTF16(text);
+		string fmt;
+		int state = 0;
+		size_t pos = 0;
+		int prevcol = -1;
+		bool incode = false;
+		while (pos < tip.length)
+		{
+			uint prevpos = pos;
+			int tok, col;
+			if (tip[pos] == '`')
+			{
+				tip = tip[0 .. pos] ~ tip[pos + 1 .. $];
+				incode = !incode;
+				state = 0;
+				continue;
+			}
+			if (!incode)
+			{
+				while (pos < tip.length && tip[pos] != '`')
+					decode(tip, pos);
+				col = 0;
+			}
+			else
+				col = dLex.scan(state, tip, pos, tok);
+			if (col != prevcol)
+			{
+				if (prevpos > 0)
+				{
+					fmt ~= ";";
+					fmt ~= to!string(prevpos);
+					fmt ~= ":";
+				}
+				fmt ~= defaultColors[col == 0 ? 5 : col-1].name;
+				prevcol = col;
+			}
+		}
+		mLastTip = tip;
+		mLastTipFmt = toUTF16(fmt);
+	}
+
+	uint RequestTooltip(string filename, int line, int col)
+	{
+		if (!Package.GetGlobalOptions().usesQuickInfoTooltips())
+			return 0;
+
+		if (++mLastTipIdleTaskScheduled == 0) // skip 0 as an error value
+			++mLastTipIdleTaskScheduled;
+		uint task = mLastTipIdleTaskScheduled;
+
+		addIdleTask(() {
+			if (task != mLastTipIdleTaskScheduled)
+				return; // ignore old requests
+			auto src = GetSource(filename);
+			if (!src)
+				return;
+
+			TextSpan span = TextSpan(col, line, col + 1, line);
+			ConfigureSemanticProject(src);
+			int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2;
+
+			mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
+			mLastTipIdleTaskHandled = mLastTipIdleTaskScheduled;
+		});
+		return mLastTipIdleTaskScheduled;
+	}
+
+	bool GetTooltipResult(uint task, out wstring tip, out wstring fmtdesc)
+	{
+		if (task != mLastTipIdleTaskScheduled)
+			return true; // return empty tip for wrong request
+		if (task != mLastTipIdleTaskHandled)
+			return false; // wait some more
+		if (mLastTipRequest != mLastTipReceived)
+			return false; // wait some more
+
+		tip = mLastTip;
+		fmtdesc = mLastTipFmt;
+		return true;
+	}
+
 	// semantic completion ///////////////////////////////////
 
-	uint GetTip(Source src, TextSpan* pSpan, GetTipCallBack cb)
+	uint GetTip(Source src, TextSpan* pSpan, bool overloads, GetTipCallBack cb)
 	{
 		ConfigureSemanticProject(src);
 		int flags = Package.GetGlobalOptions().showValueInTooltip ? 1 : 0;
+		if (overloads)
+			flags |= 4;
 		return vdServerClient.GetTip(src.GetFileName(), pSpan, flags, cb);
 	}
 	uint GetDefinition(Source src, TextSpan* pSpan, GetDefinitionCallBack cb)
@@ -908,7 +1039,8 @@ class LanguageService : DisposingComObject,
 									  cfgopts.compiler == Compiler.GDC,
 									  cfgopts.versionlevel, cfgopts.debuglevel,
 									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,
-									  cfgopts.useMSVCRT (), globopts.mixinAnalysis, globopts.UFCSExpansions);
+									  cfgopts.useMSVCRT (), cfgopts.warnings,
+									  globopts.mixinAnalysis, globopts.UFCSExpansions);
 
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
 			stringImp = tokenizeArgs(strimp);
@@ -1422,7 +1554,8 @@ struct IdentifierType
 	uint type;
 }
 
-class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTextMarkerClient
+class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
+               IVsTextMarkerClient, IVsHiddenTextClient
 {
 	Colorizer mColorizer;
 	IVsTextLines mBuffer;
@@ -1499,6 +1632,8 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 		if(queryInterface!(IVsTextLinesEvents) (this, riid, pvObject))
 			return S_OK;
 		if(queryInterface!(IVsTextMarkerClient) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsHiddenTextClient) (this, riid, pvObject))
 			return S_OK;
 		return super.QueryInterface(riid, pvObject);
 	}
@@ -1640,7 +1775,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	}
 
 
-        // Commands -- see MarkerCommandValues for meaning of iItem param
+	// Commands -- see MarkerCommandValues for meaning of iItem param
 	override HRESULT GetMarkerCommandInfo(/+[in]+/ IVsTextMarker pMarker, in int iItem,
 		/+[out, custom(uuid_IVsTextMarkerClient, "optional")]+/ BSTR * pbstrText,
 		/+[out]+/ DWORD* pcmdf)
@@ -1659,6 +1794,92 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents, IVsTex
 	}
 
 	override HRESULT OnAfterMarkerChange(/+[in]+/ IVsTextMarker pMarker)
+	{
+		return S_OK;
+	}
+
+	// IVsHiddenTextClient ///////////////////////////////////////////////
+	HRESULT OnHiddenRegionChange(IVsHiddenRegion pHidReg,
+								 in HIDDEN_REGION_EVENT EventCode,     // HIDDENREGIONEVENT value
+								 in BOOL fBufferModifiable)
+	{
+		return S_OK;
+	}
+
+	HRESULT GetTipText(/+[in]+/ IVsHiddenRegion pHidReg,
+					   /+[out, optional]+/ BSTR *pbstrText)
+	{
+		TextSpan span;
+		HRESULT hr = pHidReg.GetSpan(&span);
+		if (FAILED(hr) || !pbstrText)
+			return hr;
+		wstring txt = GetText(span.iStartLine, 0, span.iEndLine, span.iEndIndex);
+
+		LANGPREFERENCES3 langPrefs;
+		uint tabsz = GetUserPreferences(&langPrefs, null) == S_OK ? langPrefs.uTabSize : 8;
+		if (span.iStartIndex > 0 && span.iStartIndex <= txt.length)
+		{
+			int vpos = visiblePosition(txt, tabsz, span.iStartIndex);
+			txt = repeat(cast(wchar)' ', vpos).array().to!wstring ~ txt[span.iStartIndex .. $];
+		}
+		// unindent text, limit line length and number of lines
+		enum maxLines = 30;
+		enum maxLineLength = 130;
+		wstring[] lines = txt.splitLines();
+		while (lines.length > 0 && strip(lines[0]).empty)
+			lines = lines[1..$];
+		size_t visibleLines = min(lines.length, maxLines);
+		size_t minIndent = size_t.max;
+		for (size_t ln = 0; ln < visibleLines; ln++)
+		{
+			int p;
+			int n = countVisualSpaces(lines[ln], tabsz, &p);
+			if (p < lines[ln].length && n < minIndent) // ignore empty lines
+				minIndent = n;
+		}
+		for (size_t ln = 0; ln < visibleLines; ln++)
+		{
+			auto line = lines[ln].detab(tabsz);
+			if (line.length < minIndent)
+				line = null;
+			else if (line.length > minIndent + maxLineLength)
+				line = line[minIndent .. minIndent + maxLineLength] ~ "..."w;
+			else
+				line = line[minIndent .. $];
+			lines[ln] = line.to!wstring;
+		}
+		if (lines.length > visibleLines)
+			lines = lines[0..visibleLines] ~ "..."w;
+		wstring tipText = join(lines, "\n"w);
+		*pbstrText = allocwBSTR(tipText);
+		return S_OK;
+	}
+
+	HRESULT GetMarkerCommandInfo(/+[in]+/ IVsHiddenRegion pHidReg, in int iItem,
+									 /+[out, custom(uuid_IVsHiddenTextClient, "optional")]+/ BSTR * pbstrText,
+									 /+[out]+/ DWORD* pcmdf)
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT ExecMarkerCommand(/+[in]+/ IVsHiddenRegion pHidReg, in int iItem)
+	{
+		return E_NOTIMPL;
+	}
+
+	/*
+	MakeBaseSpanVisible is used for visibility control.  If the user does something that requires a
+	piece of hidden text to be visible (e.g. Goto line command, debugger stepping, find in files hit,
+	etc.) then we will turn around and call this for regions that the text hiding manager cannot
+	automatically make visible.  (In the current implementation this will only happen for concealed
+	regions; collapsible ones will be automatically expanded.)  This CANNOT fail!!  You must either
+	destroy the hidden region by calling IVsHiddenRegion::Remove() or else reset its range so that
+	it is no longer hiding the hidden text.  It is OK to add/remove other regions when this is called.
+	*/
+	HRESULT MakeBaseSpanVisible(/+[in]+/ IVsHiddenRegion pHidReg, in TextSpan *pBaseSpan)
+	{
+		return E_NOTIMPL;
+	}
+	HRESULT OnBeforeSessionEnd()
 	{
 		return S_OK;
 	}
@@ -1780,7 +2001,7 @@ version(threadedOutlining) {} else
 		{
 			scope(exit) release(htm);
 			if(htm.GetHiddenTextSession(mBuffer, &mHiddenTextSession) != S_OK)
-				htm.CreateHiddenTextSession(0, mBuffer, null, &mHiddenTextSession);
+				htm.CreateHiddenTextSession(0, mBuffer, this, &mHiddenTextSession);
 		}
 		return mHiddenTextSession;
 	}
@@ -4042,6 +4263,8 @@ else
 
 	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn, string tasks)
 	{
+		if (!Package.GetGlobalOptions().showParseErrors)
+			parseErrors = null;
 		updateParseErrors(parseErrors);
 		mBinaryIsIn = binaryIsIn;
 		if(IVsTextColorState colorState = qi_cast!IVsTextColorState(mBuffer))
@@ -4050,6 +4273,7 @@ else
 			foreach(pos; mBinaryIsIn)
 				colorState.ReColorizeLines(pos.line - 1, pos.line);
 		}
+		Package.GetErrorProvider().updateTaskItems(filename, parseErrors);
 		Package.GetTaskProvider().updateTaskItems(filename, tasks);
 
 		if (Package.GetGlobalOptions().semanticHighlighting)
@@ -4134,13 +4358,27 @@ else
 
 	void finishParseErrors()
 	{
+		string file = GetFileName();
+		Config cfg = getProjectConfig(file, true);
+		if(!cfg)
+			cfg = getCurrentStartupConfig();
+		auto opts = cfg ? cfg.GetProjectOptions() : null;
+
 		clearParseErrors();
 		for(int i = 0; i < mParseErrors.length; i++)
 		{
 			auto span = mParseErrors[i].span;
+			int mtype = MARKER_CODESENSE_ERROR;
+			if (mParseErrors[i].msg.startsWith("Warning:") && (!opts || opts.infowarnings))
+				mtype = MARKER_WARNING;
+			else if (mParseErrors[i].msg.startsWith("Deprecation:") && (!opts || !opts.errDeprecated))
+				mtype = MARKER_WARNING;
+			else if (mParseErrors[i].msg.startsWith("Info:"))
+				mtype = MARKER_WARNING;
 			IVsTextLineMarker marker;
-			mBuffer.CreateLineMarker(MARKER_CODESENSE_ERROR, span.iStartLine - 1, span.iStartIndex,
+			mBuffer.CreateLineMarker(mtype, span.iStartLine - 1, span.iStartIndex,
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
+			//release(marker);
 		}
 	}
 
@@ -4252,36 +4490,6 @@ else
 		return changed;
 	}
 
-	// from D_Parser
-	enum TypeReferenceKind : uint
-	{
-		Unknown,
-
-		Interface,
-		Enum,
-		EnumValue,
-		Template,
-		Class,
-		Struct,
-		Union,
-		TemplateTypeParameter,
-
-		Constant,
-		LocalVariable,
-		ParameterVariable,
-		TLSVariable,
-		SharedVariable,
-		GSharedVariable,
-		MemberVariable,
-		Variable,
-
-		Alias,
-		Module,
-		Function,
-		Method,
-		BasicType,
-	}
-
 	int convertTypeRefToColor(uint kind)
 	{
 		switch (kind)
@@ -4364,12 +4572,20 @@ else
 		mOutliningState = 2;
 	}
 
-	bool hasParseError(ParserSpan span)
+	int hasParseError(ParserSpan span)
 	{
 		for(int i = 0; i < mParseErrors.length; i++)
 			if(spanContains(span, mParseErrors[i].span.iStartLine-1, mParseErrors[i].span.iStartIndex))
-				return true;
-		return false;
+			{
+				if (mParseErrors[i].msg.startsWith("Warning:"))
+					return 2;
+				if (mParseErrors[i].msg.startsWith("Deprecation:"))
+					return 3;
+				if (mParseErrors[i].msg.startsWith("Info:"))
+					return 3;
+				return 1;
+			}
+		return 0;
 	}
 
 	string getParseError(int line, int index)

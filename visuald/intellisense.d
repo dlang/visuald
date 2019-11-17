@@ -551,6 +551,7 @@ class LibraryInfo
 struct ParameterInfo
 {
 	string rettype;
+	string constraint;
 	string[] name;
 	string[] display;
 	string[] desc;
@@ -563,9 +564,25 @@ struct ParameterInfo
 		if(lineInfo.length == 0)
 			return false;
 		int pos = lineInfo.length - 1;
+
+		void skipWhiteSpace()
+		{
+			while (pos > 0)
+			{
+				auto tok = text[lineInfo[pos].StartIndex .. lineInfo[pos].EndIndex];
+				if (!dLex.isCommentOrSpace(lineInfo[pos].type, tok))
+					break;
+				pos--;
+			}
+		}
+	L_skipConstraint:
+		name = null;
+		display = null;
+		desc = null;
+		skipWhiteSpace();
 		if(text[lineInfo[pos].StartIndex .. lineInfo[pos].EndIndex] != ")")
 			return false; // not a function
-		
+
 		int braceLevel = 1;
 		pos--;
 		string ident;
@@ -598,7 +615,19 @@ struct ParameterInfo
 			{
 				braceLevel--;
 				if(braceLevel == 0)
+				{
 					prependParam();
+					pos--;
+					skipWhiteSpace();
+					tok = text[lineInfo[pos].StartIndex .. lineInfo[pos].EndIndex];
+					if (tok == "if")
+					{
+						constraint = text[lineInfo[pos].StartIndex .. $].to!string;
+						pos--;
+						goto L_skipConstraint;
+					}
+					continue;
+				}
 			}
 			pos--;
 		}
@@ -647,7 +676,12 @@ struct Definition
 	{
 		return GetParamInfo().rettype;
 	}
-	
+
+	string GetConstraint() 
+	{
+		return GetParamInfo().constraint;
+	}
+
 	int GetParameterCount() 
 	{
 		return GetParamInfo().name.length;

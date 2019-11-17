@@ -15,6 +15,9 @@
 ; define VDSERVER to include vdserver COM server installation
 ; !define VDSERVER
 
+; define DMDSERVER to include dmdserver COM server installation
+!define DMDSERVER
+
 ; define VDEXTENSIONS to include C# extensions (expected at ../bin/Release/vdextensions)
 !define VDEXTENSIONS
 
@@ -26,12 +29,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.087.1"
+!define DMD_VERSION "2.089.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.17.0"
+!define LDC_VERSION "1.18.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -255,8 +258,13 @@ Section "Visual Studio package" SecPackage
   ${File} "..\bin\${CONFIG}\" vdserver.exe
 !endif
 
+!ifdef DMDSERVER
+  ${File} "..\bin\${CONFIG}\x64\" dmdserver.exe
+!endif
+
 !ifdef VDEXTENSIONS
   ${File} ..\bin\Release\vdextensions\ vdextensions.dll
+  ${File} ..\bin\Release\vdext15\ vdext15.dll
 !endif
 
 !ifdef DPARSER
@@ -278,6 +286,10 @@ Section "Visual Studio package" SecPackage
   Call RegisterIVDServer
 !ifdef VDSERVER
   Call RegisterVDServer
+!endif
+
+!ifdef DMDSERVER
+  Call RegisterDMDServer
 !endif
 
 !ifdef DPARSER
@@ -548,7 +560,7 @@ ${MementoSection} "Install in VS 2017" SecVS2017
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs15\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
@@ -596,7 +608,7 @@ ${MementoSection} "Install in VS 2019" SecVS2019
   ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
 
   ${SetOutPath} "$1${EXTENSION_DIR}"
-  ${File} ..\nsis\Extensions_vs12\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions_vs15\ extension.vsixmanifest
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
@@ -912,6 +924,8 @@ SectionEnd
   LangString DESC_SecVS2015 ${LANG_ENGLISH} "Register for usage in Visual Studio 2015."
   LangString DESC_SecVS2017 ${LANG_ENGLISH} "Register for usage in Visual Studio 2017."
   LangString DESC_SecVS2019 ${LANG_ENGLISH} "Register for usage in Visual Studio 2019."
+  LangString DESC_SecVS2017BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2017 Build Tools."
+  LangString DESC_SecVS2019BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2019 Build Tools."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -948,6 +962,8 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2015} $(DESC_SecVS2015)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017} $(DESC_SecVS2017)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019} $(DESC_SecVS2019)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017BT} $(DESC_SecVS2017BT)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019BT} $(DESC_SecVS2019BT)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
@@ -1123,6 +1139,7 @@ Section "Uninstall"
 
   Call un.RegisterIVDServer
   Call un.RegisterVDServer
+  Call un.RegisterDMDServer
   Call un.RegisterDParser
 
   Call un.installedFiles
@@ -1545,23 +1562,45 @@ Function un.RegisterVDServer
 FunctionEnd
 
 ;---------------------------------------
+!define DMDSERVER_REG_ROOT                  HKCR
+!define DMDSERVER_FACTORY_NAME              visuald.dmdserver.factory
+!define DMDSERVER_FACTORY_CLSID             {002a2de9-8bb6-484d-9906-7e4ad4084715}
+; typelib and IVDServer interface inherited from vdserver.exe
+
+Function RegisterDMDServer
+
+  WriteRegStr ${DMDSERVER_REG_ROOT} "${DMDSERVER_FACTORY_NAME}\CLSID"                "" ${DMDSERVER_FACTORY_CLSID}
+  WriteRegStr ${DMDSERVER_REG_ROOT} "CLSID\${DMDSERVER_FACTORY_CLSID}\LocalServer32" "" $INSTDIR\dmdserver.exe
+  WriteRegStr ${DMDSERVER_REG_ROOT} "CLSID\${DMDSERVER_FACTORY_CLSID}\ProgId"        "" DMDServer.VDServer
+  WriteRegStr ${DMDSERVER_REG_ROOT} "CLSID\${DMDSERVER_FACTORY_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
+
+FunctionEnd
+
+Function un.RegisterDMDServer
+
+  DeleteRegKey ${DMDSERVER_REG_ROOT} "${DMDSERVER_FACTORY_NAME}" 
+  DeleteRegKey ${DMDSERVER_REG_ROOT} "CLSID\${DMDSERVER_FACTORY_CLSID}"
+
+FunctionEnd
+
+;---------------------------------------
 !define DPARSER_REG_ROOT                   HKCR
 !define DPARSER_FACTORY_NAME               DParserCOMServer.VDServerClassFactory
-!define DPARSER_FACTORY_CLSID              {002a2de9-8bb6-484d-aa02-7e4ad4084715}
+!define DPARSER_FACTORY_CLSID              {002a2de9-8bb6-484d-aa05-7e4ad4084715}
 !define DPARSER_VDSERVER_CLSID             {002a2de9-8bb6-484d-aa05-7e4ad4084715}
 ; typelib and IVDServer interface inherited from vdserver.exe
 
 Function RegisterDParser
 
-;  WriteRegStr ${DPARSER_REG_ROOT} "${DPARSER_FACTORY_NAME}\CLSID"                "" ${DPARSER_FACTORY_CLSID}
-;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\LocalServer32" "" $INSTDIR\DParser\DParserCOMServer.exe
-;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\ProgId"        "" DParserCOMServer.VDServer
-;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
+  WriteRegStr ${DPARSER_REG_ROOT} "${DPARSER_FACTORY_NAME}\CLSID"                "" ${DPARSER_FACTORY_CLSID}
+  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\LocalServer32" "" $INSTDIR\DParser\DParserCOMServer.exe
+  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\ProgId"        "" DParserCOMServer.VDServer
+  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_FACTORY_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
 
-  WriteRegStr ${DPARSER_REG_ROOT} "${DPARSER_FACTORY_NAME}\CLSID"                 "" ${DPARSER_VDSERVER_CLSID}
-  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\LocalServer32" "" $INSTDIR\DParser\DParserCOMServer.exe
-  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\ProgId"        "" DParserCOMServer.VDServer
-  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
+;  WriteRegStr ${DPARSER_REG_ROOT} "${DPARSER_FACTORY_NAME}\CLSID"                 "" ${DPARSER_VDSERVER_CLSID}
+;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\LocalServer32" "" $INSTDIR\DParser\DParserCOMServer.exe
+;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\ProgId"        "" DParserCOMServer.VDServer
+;  WriteRegStr ${DPARSER_REG_ROOT} "CLSID\${DPARSER_VDSERVER_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
 
 FunctionEnd
 
@@ -1572,6 +1611,7 @@ Function un.RegisterDParser
 
 FunctionEnd
 
+;---------------------------------------
 Function VSConfigurationChanged
   Exch $1 ; argument "${VS2017_INSTALL_KEY}Common7\IDE" 
 

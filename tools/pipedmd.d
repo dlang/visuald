@@ -71,12 +71,16 @@ string eatArg(string cmd)
 
 version(pipeLink)
 {
+	import core.stdc.stdlib : getenv;
 	extern(C) int putenv(const char*);
 	int main(string[] argv)
 	{
+		const(char)* p = getenv("dbuild_LinkToolExe");
+		string link = p ? fromMBSz(cast(immutable)p) : "link.exe";
+		// printf("pipelink called with: dbuild_LinkToolExe=%s\n", p);
 		string cmd = to!string(GetCommandLineW());
 		//printf("pipelink called with: %.*s\n", cast(int)cmd.length, cmd.ptr);
-		cmd = "link.exe" ~ eatArg(cmd);
+		cmd = link ~ eatArg(cmd);
 		putenv("VS_UNICODE_OUTPUT="); // disable unicode output for link.exe
 		int exitCode = runProcess(cmd, null, true, true, false, true, false);
 		return exitCode;
@@ -155,11 +159,12 @@ int main(string[] argv)
 		string fullexe = findExeInPath(exe);
 		bool isX64 = isExe64bit(fullexe);
 		if (verbose)
+		{
 			if (fullexe.empty)
 				printf ("%.*s not found in PATH, assuming %d-bit application\n", exe.length, exe.ptr, isX64 ? 64 : 32);
 			else
 				printf ("%.*s is a %d-bit application\n", fullexe.length, fullexe.ptr, isX64 ? 64 : 32);
-
+		}
 		string trackerArgs;
 		string tracker = findTracker(isX64, trackerArgs);
 		if (tracker.length > 0)

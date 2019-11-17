@@ -37,7 +37,7 @@ import std.path;
 import std.process : environment;
 import std.string;
 
-// version = DParserOption;
+version = DParserOption;
 enum hasDubSupport = false;
 
 class PropertyWindow : Window
@@ -2939,6 +2939,8 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	override void CreateControls()
 	{
 		AddTitleLine("Semantic analysis");
+		AddControl("", mShowParseErrors = new CheckBox(mCanvas, "Show parsing errors (squiggles and markers)"));
+		version(DParserOption) AddControl("", mUseDmdParser = new CheckBox(mCanvas, "Experimental: use DMD parsing engine for semantic analysis"));
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
 		//AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
@@ -2947,7 +2949,6 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		//AddControl("", mExpandFromBuffer = new CheckBox(mCanvas, "Expansions from text buffer"));
 		AddControl("", mExpandFromJSON = new CheckBox(mCanvas, "Expansions from JSON browse information"));
 		AddControl("Show expansion when", mExpandTrigger = new ComboBox(mCanvas, [ "pressing Ctrl+Space", "+ writing '.'", "+ writing an identifier" ], false));
-		version(DParserOption) AddControl("", mUseDParser = new CheckBox(mCanvas, "Use Alexander Bothe's D parsing engine for semantic analysis"));
 		AddControl("", mExactExpMatch = new CheckBox(mCanvas, "Expansions match exact start instead of case insensitive sub string"));
 		AddControl("Sort expansions", mSortExpMode = new ComboBox(mCanvas, [ "alphabetically", "by type", "by declaration and scope" ], false));
 		AddTitleLine("Tooltips");
@@ -2963,7 +2964,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 
 	void EnableControls()
 	{
-		version(DParserOption) bool useDParser = mUseDParser.isChecked();
+		version(DParserOption) bool useDParser = !mUseDmdParser.isChecked();
 		else                   bool useDParser = true;
 		mMixinAnalysis.setEnabled(useDParser);
 		mUFCSExpansions.setEnabled(useDParser);
@@ -2973,6 +2974,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 
 	override void SetControls(GlobalOptions opts)
 	{
+		mShowParseErrors.setChecked(opts.showParseErrors);
 		mExpandSemantics.setChecked(opts.expandFromSemantics);
 		//mExpandFromBuffer.setChecked(opts.expandFromBuffer);
 		mExpandFromJSON.setChecked(opts.expandFromJSON);
@@ -2980,7 +2982,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mShowTypeInTooltip.setChecked(opts.showTypeInTooltip);
 		mShowValueInTooltip.setChecked(opts.showValueInTooltip);
 		//mSemanticGotoDef.setChecked(opts.semanticGotoDef);
-		version(DParserOption) mUseDParser.setChecked(opts.useDParser);
+		version(DParserOption) mUseDmdParser.setChecked(!opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
 		mSortExpMode.setSelection(opts.sortExpMode);
@@ -2992,6 +2994,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
 	{
 		int changes = 0;
+		changes += changeOption(mShowParseErrors.isChecked(), opts.showParseErrors, refopts.showParseErrors);
 		changes += changeOption(mExpandSemantics.isChecked(), opts.expandFromSemantics, refopts.expandFromSemantics);
 		//changes += changeOption(mExpandFromBuffer.isChecked(), opts.expandFromBuffer, refopts.expandFromBuffer);
 		changes += changeOption(mExpandFromJSON.isChecked(), opts.expandFromJSON, refopts.expandFromJSON);
@@ -2999,7 +3002,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(mShowTypeInTooltip.isChecked(), opts.showTypeInTooltip, refopts.showTypeInTooltip);
 		changes += changeOption(mShowValueInTooltip.isChecked(), opts.showValueInTooltip, refopts.showValueInTooltip);
 		//changes += changeOption(mSemanticGotoDef.isChecked(), opts.semanticGotoDef, refopts.semanticGotoDef);
-		version(DParserOption) changes += changeOption(mUseDParser.isChecked(), opts.useDParser, refopts.useDParser);
+		version(DParserOption) changes += changeOption(!mUseDmdParser.isChecked(), opts.useDParser, refopts.useDParser);
 		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
 		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
 		changes += changeOption(cast(ubyte) mSortExpMode.getSelection(), opts.sortExpMode, refopts.sortExpMode);
@@ -3007,6 +3010,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		return changes;
 	}
 
+	CheckBox mShowParseErrors;
 	CheckBox mExpandSemantics;
 	//CheckBox mExpandFromBuffer;
 	CheckBox mExpandFromJSON;
@@ -3014,7 +3018,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	CheckBox mShowTypeInTooltip;
 	CheckBox mShowValueInTooltip;
 	//CheckBox mSemanticGotoDef;
-	version(DParserOption) CheckBox mUseDParser;
+	version(DParserOption) CheckBox mUseDmdParser;
 	CheckBox mUFCSExpansions;
 	ComboBox mSortExpMode;
 	CheckBox mExactExpMatch;
@@ -3029,6 +3033,8 @@ struct MagoOptions
 	bool showVTable;
 	bool flatClassFields;
 	bool expandableStrings;
+	bool hideReferencePointers;
+	bool removeLeadingHexZeroes;
 	uint maxArrayElements;
 
 	void saveToRegistry()
@@ -3039,6 +3045,8 @@ struct MagoOptions
 		keyMago.Set("showVTable", showVTable);
 		keyMago.Set("flatClassFields", flatClassFields);
 		keyMago.Set("expandableStrings", expandableStrings);
+		keyMago.Set("hideReferencePointers", hideReferencePointers);
+		keyMago.Set("removeLeadingHexZeroes", removeLeadingHexZeroes);
 		keyMago.Set("maxArrayElements", maxArrayElements);
 	}
 
@@ -3051,6 +3059,8 @@ struct MagoOptions
 		showVTable        = (keyMago.GetDWORD("showVTable", 1) != 0);
 		flatClassFields   = (keyMago.GetDWORD("flatClassFields", 0) != 0);
 		expandableStrings = (keyMago.GetDWORD("expandableStrings", 0) != 0);
+		hideReferencePointers = (keyMago.GetDWORD("hideReferencePointers", 1) != 0);
+		removeLeadingHexZeroes = (keyMago.GetDWORD("removeLeadingHexZeroes", 0) != 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
 	}
 }
@@ -3070,6 +3080,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
 		AddControl("", mFlatClassFields   = new CheckBox(mCanvas, "Show base class fields as direct fields"));
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
+		AddControl("", mHideRefPointers   = new CheckBox(mCanvas, "Hide pointers for class references and slices"));
+		AddControl("", mRemoveHexZeroes   = new CheckBox(mCanvas, "Remove leading zeroes from hex values"));
 		auto saveWidth = kLabelWidth;
 		kLabelWidth = kPageWidth * 4 / 5;
 		AddControl("Limit array elements shown in expansions to", mMaxArrayElements = new Text(mCanvas));
@@ -3120,6 +3132,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		mShowVTable.setChecked(mOptions.showVTable);
 		mFlatClassFields.setChecked(mOptions.flatClassFields);
 		mExpandableStrings.setChecked(mOptions.expandableStrings);
+		mHideRefPointers.setChecked(mOptions.hideReferencePointers);
+		mRemoveHexZeroes.setChecked(mOptions.removeLeadingHexZeroes);
 		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
 	}
 
@@ -3131,6 +3145,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mShowVTable.isChecked(), opts.showVTable, refopts.showVTable);
 		changes += changeOption(mFlatClassFields.isChecked(), opts.flatClassFields, refopts.flatClassFields);
 		changes += changeOption(mExpandableStrings.isChecked(), opts.expandableStrings, refopts.expandableStrings);
+		changes += changeOption(mHideRefPointers.isChecked(), opts.hideReferencePointers, refopts.hideReferencePointers);
+		changes += changeOption(mRemoveHexZeroes.isChecked(), opts.removeLeadingHexZeroes, refopts.removeLeadingHexZeroes);
 
 		import stdext.string;
 		long maxelem;
@@ -3145,6 +3161,8 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mShowVTable;
 	CheckBox mFlatClassFields;
 	CheckBox mExpandableStrings;
+	CheckBox mHideRefPointers;
+	CheckBox mRemoveHexZeroes;
 	Text mMaxArrayElements;
 }
 

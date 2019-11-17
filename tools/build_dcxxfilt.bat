@@ -3,7 +3,7 @@ rem unpack and configure binutils 2.25+
 rem don't use spaces in path names!
 
 setlocal
-if "%DMDINSTALLDIR%" == "" set DMDINSTALLDIR=c:\s\d\rainers
+if "%DMDINSTALLDIR%" == "" set DMDINSTALLDIR=c:\d\dmd-2.087.0
 set DMD=%DMDINSTALLDIR%\windows\bin\dmd
 if "%BINUTILS%" == "" set BINUTILS=c:\s\cpp\cxxfilt
 

@@ -184,7 +184,7 @@ class VDServer : ComObject, IVDServer
 			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64,
 											  opts.coverage, opts.doDoc, opts.noBoundsCheck, opts.gdcCompiler,
 											  0, 0, // no need to compare version levels, done in setVersionIds
-											  opts.noDeprecated, opts.ldcCompiler, opts.msvcrt,
+											  opts.noDeprecated, opts.ldcCompiler, opts.msvcrt, opts.warnings,
 											  opts.mixinAnalysis, opts.UFCSExpansions);
 
 			opts.unittestOn     = (flags & 1) != 0;
@@ -199,6 +199,7 @@ class VDServer : ComObject, IVDServer
 			opts.UFCSExpansions = (flags & 0x2_00_00_00) != 0;
 			opts.ldcCompiler    = (flags & 0x4_00_00_00) != 0;
 			opts.msvcrt         = (flags & 0x8_00_00_00) != 0;
+			opts.warnings       = (flags & 0x10_00_00_00) != 0;
 
 			int versionlevel = (flags >> 8)  & 0xff;
 			int debuglevel   = (flags >> 16) & 0xff;
@@ -208,7 +209,7 @@ class VDServer : ComObject, IVDServer
 
 			int changed = (oldflags != (flags & 0xff0000ff));
 			changed += opts.setImportDirs(splitLines(imports));
-			changed += opts.setImportDirs(splitLines(imports));
+			changed += opts.setStringImportDirs(splitLines(strImports));
 			changed += opts.setVersionIds(versionlevel, splitLines(verids));
 			changed += opts.setDebugIds(debuglevel, splitLines(dbgids));
 		}

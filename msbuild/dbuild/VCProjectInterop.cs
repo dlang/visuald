@@ -40,7 +40,7 @@ namespace vdextensions
     {
         ///////////////////////////////////////////////////////////////////////
         static int ConfigureFlags(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
-                                  int versionLevel, int debugLevel, bool noDeprecated, bool ldc)
+                                  int versionLevel, int debugLevel, bool noDeprecated, bool ldc, bool warnings)
         {
             return (unittestOn ? 1 : 0)
                 | (debugOn ? 2 : 0)
@@ -52,7 +52,8 @@ namespace vdextensions
                 | (noDeprecated ? 128 : 0)
                 | ((versionLevel & 0xff) << 8)
                 | ((debugLevel & 0xff) << 16)
-                | (ldc ? 0x4000000 : 0);
+                | (ldc ? 0x4000000 : 0)
+                | (warnings ? 0x10000000 : 0);
         }
 
 
@@ -207,11 +208,12 @@ namespace vdextensions
             bool doc = vcprop.GetEvaluatedPropertyValue("DocDir") != "" || vcprop.GetEvaluatedPropertyValue("DocFile") != "";
             bool nobounds = vcprop.GetEvaluatedPropertyValue("BoundsCheck") == "On";
             bool noDeprecated = vcprop.GetEvaluatedPropertyValue("Deprecations") == "Error";
+            bool warnings = vcprop.GetEvaluatedPropertyValue("Warnings") != "None";
             bool gdc = false;
             int versionLevel = 0;
             int debugLevel = 0;
             flags = (uint)ConfigureFlags(unittestOn, debugOn, x64, cov, doc, nobounds, gdc,
-                                         versionLevel, debugLevel, noDeprecated, ldc);
+                                         versionLevel, debugLevel, noDeprecated, ldc, warnings);
         }
 
 

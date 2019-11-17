@@ -1,0 +1,85 @@
+// This file is part of Visual D
+//
+// Visual D integrates the D programming language into Visual Studio
+// Copyright (c) 2010 by Rainer Schuetze, All Rights Reserved
+//
+// Distributed under the Boost Software License, Version 1.0.
+// See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt
+
+/////////////////////////////////////////////////////////////////////////////
+// Resources for the Visual D semantic server
+//
+1 TYPELIB dmdserver.tlb
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+#define __str(x) #x
+#define _str(x) __str(x)
+
+#include "../../version"
+
+#if VERSION_BUILD > 0
+#define VERSION_POSTFIX         _str(VERSION_BETA) _str(VERSION_BUILD)
+#else
+#define VERSION_POSTFIX
+#endif
+
+#define VER_COMPANYNAME_STR     "Rainer Schuetze"
+#define VER_FILEVERSION         VERSION_MAJOR,VERSION_MINOR,VERSION_REVISION
+#define VER_FILEVERSION_STR     _str(VERSION_MAJOR.VERSION_MINOR.VERSION_REVISION) VERSION_POSTFIX
+#define VER_PRODUCTVERSION      VER_FILEVERSION
+#define VER_PRODUCTVERSION_STR  VER_FILEVERSION_STR
+#define VER_LEGALCOPYRIGHT_STR  "(c) 2017 Rainer Schuetze"
+
+#define VER_FILEDESCRIPTION_STR  "DMD Semantic Server\0"
+#define VER_PRODUCTNAME_STR      "DMDServer\0"
+#define VER_INTERNALNAME_STR     "dmdserver.exe\0"
+#define VER_ORIGINALFILENAME_STR "dmdserver.exe\0"
+#define VER_LANGUAGENEUTRAL
+
+#define VER_FILEFLAGSMASK 0x3fL
+#define VER_FILEFLAGS     0x8L
+#define VER_FILEOS        0x40004L
+#define VER_FILETYPE      0x1L // VS_APP
+#define VER_FILESUBTYPE   0x0L // unknown
+
+#define VER_BLOCKHEADER   "040904b0"
+#define VER_TRANSLATION   0x409
+
+/////////////////////////////////////////////////////////////////////////////
+#define VS_VERSION_INFO         1
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    VER_FILEVERSION
+PRODUCTVERSION VER_PRODUCTVERSION
+FILEFLAGSMASK  VER_FILEFLAGSMASK
+FILEFLAGS      VER_FILEFLAGS
+FILEOS         VER_FILEOS
+FILETYPE       VER_FILETYPE
+FILESUBTYPE    VER_FILESUBTYPE
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK VER_BLOCKHEADER
+        BEGIN
+            VALUE "CompanyName",     VER_COMPANYNAME_STR
+            VALUE "FileDescription", VER_FILEDESCRIPTION_STR
+            VALUE "FileVersion",     VER_FILEVERSION_STR
+            VALUE "InternalName",    VER_INTERNALNAME_STR
+            VALUE "LegalCopyright",  VER_LEGALCOPYRIGHT_STR
+            VALUE "OriginalFilename",VER_ORIGINALFILENAME_STR
+            VALUE "ProductName",     VER_PRODUCTNAME_STR
+            VALUE "ProductVersion",  VER_PRODUCTVERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", VER_TRANSLATION, 0x04B0
+    END
+END
+
+IDI_VISUALD ICON "dmdicon.ico"
+
+/////////////////////////////////////////////////////////////////////////////

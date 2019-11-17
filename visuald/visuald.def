@@ -23,3 +23,5 @@ EXPORTS
 	WritePackageDefW           = WritePackageDefW           PRIVATE
 	GetCoverageData            = GetCoverageData            PRIVATE
 	GenerateGeneralXMLW        = GenerateGeneralXMLW        PRIVATE
+	GetTooltip                 = GetTooltip                 PRIVATE
+	GetTooltipResult           = GetTooltipResult           PRIVATE

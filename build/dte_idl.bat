@@ -24,7 +24,7 @@ if "%IVIEWER%" == "" if exist "%WindowsSdkVerBinPath%\x86\iviewers.dll" set IVIE
 if "%IVIEWER%" == "" if exist "%WindowsSdkDir%\bin\x86\iviewers.dll"    set IVIEWER=%WindowsSdkDir%\bin\x86\iviewers.dll
 if "%IVIEWER%" == "" if exist "%WindowsSdkDir%\bin\iviewers.dll"        set IVIEWER=%WindowsSdkDir%\bin\iviewers.dll
 if "%IVIEWER%" == "" if exist "%WindowsSdkDir%\bin\%WindowsSdkVersion%\x86\iviewers.dll" set IVIEWER=%WindowsSdkDir%\bin\%WindowsSdkVersion%\x86\iviewers.dll
-if "%IVIEWER%" == "" (echo "iviewer.dll" not found && exit /B 1)
+if "%IVIEWER%" == "" (echo "iviewer.dll" not found with WindowsSdkDir="%WindowsSdkDir%", WindowsSdkVersion=%WindowsSdkVersion% && exit /B 1)
 
 echo "%TLB2IDL%" "%MSENV%\dte80.olb" "%DTE_IDL_PATH%\dte80.idl" "%IVIEWER%"
 

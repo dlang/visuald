@@ -64,6 +64,12 @@ visuald_test:
 vdserver:
 	devenv /Project "vdserver"  /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
+dmdserver:
+	devenv /Project "dmdserver" /Build "$(CONFIG)|x64" visuald_vs10.sln
+
+dmdserver_test:
+	devenv /Project "dmdserver" /Build "TestDebug|x64" visuald_vs10.sln
+
 dparser:
 	cd vdc\abothe && $(MSBUILD15) vdserver.sln /p:Configuration=Release;Platform="Any CPU" /p:TargetFrameworkVersion=4.5.2 /p:DefineConstants=NET40 /t:Rebuild
 	editbin /STACK:0x800000 bin\Release\DParserCOMServer\DParserCOMServer.exe
@@ -80,6 +86,9 @@ fake_dparser:
 
 vdextension:
 	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
+
+vdext15:
+	cd vdextensions && $(MSBUILD) vdext15.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
 
 visualdwizard:
 	cd vdwizard && $(MSBUILD) VisualDWizard.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
@@ -163,7 +172,7 @@ install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago dbuild12 dbuild
 
 install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 fake_dbuild12 fake_dbuild14 dbuild15 install_only
 
-install_modules: prerequisites visuald_vs vdserver vdextension visualdwizard dcxxfilt
+install_modules: prerequisites visuald_vs vdserver dmdserver vdextension vdext15 visualdwizard dcxxfilt
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads

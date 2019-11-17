@@ -27,9 +27,11 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 {
 	VSTASKPRIORITY[string] mTokens;
 	CommentTaskItem[] mTasks;
+	bool mInErrorList;
 
-	this()
+	this(bool errlist)
 	{
+		mInErrorList = errlist;
 		RefreshTokens();
 	}
 
@@ -66,7 +68,7 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 		mixin(LogCallMix);
 		return E_NOTIMPL;
 	}
-	override HRESULT get_ReRegistrationKey (BSTR *pbstrKey)
+	override HRESULT get_ReRegistrationKey(BSTR *pbstrKey)
 	{
 		mixin(LogCallMix);
 		return E_NOTIMPL;
@@ -113,7 +115,7 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 			if(idx > 0)
 			{
 				string[] num = split(t[0..idx], ",");
-				if(num.length == 2)
+				if(num.length >= 2)
 				{
 					try
 					{
@@ -126,7 +128,9 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 							pos++;
 						if (pos == mTasks.length)
 						{
-							mTasks ~= newCom!CommentTaskItem(txt, prio, filename, line, col);
+							auto task = newCom!CommentTaskItem(txt, prio, filename, line, col);
+							task.mError = mInErrorList;
+							mTasks ~= task;
 							modified = true;
 						}
 						else if (mTasks[pos].mLine != line || mTasks[pos].mColumn != col ||
@@ -134,7 +138,7 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 						{
 							mTasks[pos].mLine = line;
 							mTasks[pos].mColumn = col;
-							mTasks[pos].mText = txt;
+							mTasks[pos].mText = txt.replace("\a", "\n");
 							mTasks[pos].mPriority = prio;
 							modified = true;
 						}
@@ -157,7 +161,12 @@ class TaskProvider : DisposingComObject, IVsTaskProvider, IVsTaskListEvents
 			modified = true;
 		}
 		if (modified)
-			Package.RefreshTaskList();
+		{
+			if (mInErrorList)
+				Package.RefreshErrorList();
+			else
+				Package.RefreshTaskList();
+		}
 	}
 
 	// Retrieves token settings as defined by user in Tools -> Options -> Environment -> Task List.
@@ -210,6 +219,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 	string mText;
 	VSTASKPRIORITY mPriority;
 	bool mChecked;
+	bool mError;
 
 	this(string txt, VSTASKPRIORITY prio, string file, int line, int col)
 	{
@@ -241,7 +251,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 
 	override HRESULT get_Category(/+[out, retval]+/ VSTASKCATEGORY *pCat)
 	{
-		*pCat = CAT_COMMENTS;
+		*pCat = mError ? CAT_CODESENSE : CAT_COMMENTS;
 		return S_OK;
 	}
 
@@ -253,7 +263,7 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
 
 	override HRESULT get_ImageListIndex(/+[out,retval]+/ int *pIndex)
 	{
-		*pIndex = BMP_COMMENT;
+		*pIndex = mError ? BMP_SQUIGGLE : BMP_COMMENT;
 		return S_OK;
 	}
 
@@ -352,7 +362,16 @@ class CommentTaskItem : DComObject, IVsTaskItem, IVsErrorItem
     // Returns the category of this item: error, warning, or informational message.
     HRESULT GetCategory(/+[out]+/ VSERRORCATEGORY* pCategory)
 	{
-		*pCategory = EC_MESSAGE;
+		if (!mError)
+			*pCategory = EC_MESSAGE;
+		else if (mText.startsWith ("Deprecation:"))
+			*pCategory = EC_MESSAGE;
+		else if (mText.startsWith ("Info:"))
+			*pCategory = EC_MESSAGE;
+		else if (mText.startsWith ("Warning:"))
+			*pCategory = EC_WARNING;
+		else
+			*pCategory = EC_ERROR;
 		return S_OK;
 	}
 }

@@ -10,6 +10,7 @@ module vdc.ast.mod;
 
 import vdc.util;
 import vdc.semantic;
+import vdc.semanticopt;
 import vdc.lexer;
 
 import vdc.ast.node;
@@ -59,10 +60,10 @@ class Module : Node
 		return tn.filename == filename
 			&& tn.imported == imported;
 	}
-	
-	
+
+
 	Project getProject() { return static_cast!Project(parent); }
-	
+
 	override void toD(CodeWriter writer)
 	{
 		foreach(m; members)
@@ -116,7 +117,7 @@ class Module : Node
 			writer("::", baseName(filename));
 		writer("::");
 	}
-	
+
 	string getModuleName()
 	{
 		if(auto md = cast(ModuleDeclaration) getMember(0))
@@ -158,7 +159,7 @@ class Module : Node
 						auto imp = Import.create(objmod); // only needs module name
 						scop.addImport(imp);
 					}
-			
+
 			super.addMemberSymbols(scop);
 		}
 	}
@@ -173,12 +174,12 @@ class Module : Node
 		initScope();
 		return scop.search(ident, false, false, true);
 	}
-	
+
 	override void _semantic(Scope sc)
 	{
 		if(imported) // no full semantic on imports
 			return;
-		
+
 		// the order in which lazy semantic analysis takes place:
 		// - evaluate/expand version/debug
 		// - evaluate mixins and static if conditionals in lexical order
@@ -192,17 +193,17 @@ class Module : Node
 
 		sc = sc.push(scop);
 		scope(exit) sc.pop();
-		
+
 		foreach(m; members)
 		{
 			m.semantic(scop);
 		}
 	}
-	
+
 	public /* debug & version handling */ {
 	VersionDebug debugIds;
 	VersionDebug versionIds;
-	
+
 	Options getOptions()
 	{
 		if(options)
@@ -234,7 +235,7 @@ class Module : Node
 			return true;
 		return false;
 	}
-	
+
 	bool versionEnabled(int level)
 	{
 		if(Options opt = getOptions())
@@ -266,7 +267,7 @@ class Module : Node
 			return true;
 		return false;
 	}
-	
+
 	bool debugEnabled(int level)
 	{
 		if(Options opt = getOptions())
@@ -284,7 +285,7 @@ class Module : Node
 			return opt.debugOn;
 		return false;
 	}
-	
+
 	}
 }
 
@@ -316,7 +317,7 @@ class PackageIdentifier : Node
 class ModuleFullyQualifiedName : Node
 {
 	PackageIdentifier[] pkgs;
-	
+
 	mixin ForwardCtor!();
 
 	override void toD(CodeWriter writer)
@@ -362,7 +363,7 @@ class ModuleFullyQualifiedName : Node
 			}
 		}
 	}
-	
+
 	string getName()
 	{
 		string name = getMember!Identifier(0).ident;
@@ -394,7 +395,7 @@ class AttributeSpecifier : Node
 	override void toD(CodeWriter writer)
 	{
 		writer.writeAttributesAndAnnotations(attr, annotation);
-		
+
 		switch(id)
 		{
 			case TOK_colon:
@@ -424,7 +425,7 @@ class AttributeSpecifier : Node
 		m.attr = combineAttributes(attr, m.attr);
 		m.annotation = combineAnnotations(annotation, m.annotation);
 	}
-	
+
 	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
 		switch(id)
@@ -499,7 +500,7 @@ class DeclarationBlock : Node
 			foreach(m; members)
 				writer(m);
 	}
-	
+
 	override Node[] expandNonScopeBlock(Scope sc, Node[] athis)
 	{
 		return removeAll();
@@ -534,7 +535,7 @@ class Pragma : Node
 	string ident;
 
 	TemplateArgumentList getTemplateArgumentList() { return getMember!TemplateArgumentList(0); }
-	
+
 	override Pragma clone()
 	{
 		Pragma n = static_cast!Pragma(super.clone());
@@ -549,7 +550,7 @@ class Pragma : Node
 		auto tn = static_cast!(typeof(this))(n);
 		return tn.ident == ident;
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		writer("pragma(", ident, ", ", getMember(0), ")");
@@ -562,7 +563,7 @@ class Pragma : Node
 			string msg;
 			auto alst = getTemplateArgumentList();
 			alst.semantic(sc);
-			
+
 			foreach(m; alst.members)
 			{
 				Value val = m.interpretCatch(nullContext);
@@ -588,7 +589,7 @@ class ImportDeclaration : Node
 	override void toC(CodeWriter writer)
 	{
 	}
-	
+
 	override void _semantic(Scope sc)
 	{
 		getMember(0).annotation = annotation; // copy protection attributes
@@ -637,7 +638,7 @@ class Import : Node
 
 	string aliasIdent;
 	ImportBindList getImportBindList() { return members.length > 1 ? getMember!ImportBindList(1) : null; }
-	
+
 	Annotation getProtection()
 	{
 		if(parent && parent.parent)
@@ -649,7 +650,7 @@ class Import : Node
 	Module mod;
 	int countLookups;
 	int countFound;
-		
+
 	override Import clone()
 	{
 		Import n = static_cast!Import(super.clone());
@@ -665,7 +666,7 @@ class Import : Node
 		auto tn = static_cast!(typeof(this))(n);
 		return tn.aliasIdent == aliasIdent;
 	}
-	
+
 	override void toD(CodeWriter writer)
 	{
 		if(aliasIdent.length)
@@ -680,7 +681,7 @@ class Import : Node
 		sc.addImport(this);
 		if(aliasIdent.length > 0)
 			sc.addSymbol(aliasIdent, this);
-		
+
 		auto mfqn = getMember!ModuleFullyQualifiedName(0);
 		mfqn.addSymbols(sc);
 	}
@@ -690,10 +691,10 @@ class Import : Node
 		if(!mod)
 			if(auto prj = sc.mod.getProject())
 				mod = prj.importModule(getModuleName(), this);
-		
+
 		if(!mod)
 			return Scope.SearchSet();
-		
+
 		return mod.search(ident);
 	}
 
@@ -702,7 +703,7 @@ class Import : Node
 		auto mfqn = getMember!ModuleFullyQualifiedName(0);
 		return mfqn.getName();
 	}
-	
+
 	static Import create(Module mod)
 	{
 		// TODO: no location info
@@ -722,8 +723,8 @@ unittest
 	verifyParseWrite(q{ import ntest = pkg.test; });
 	verifyParseWrite(q{ import io = std.stdio : writeln, write; });
 }
-			
-						   
+
+
 //ImportBindList:
 //    ImportBind
 //    ImportBind , ImportBindList
@@ -764,7 +765,7 @@ class MixinDeclaration : Node
 		writer("mixin(", getMember(0), ");");
 		writer.nl;
 	}
-	
+
 	override Node[] expandNonScopeInterpret(Scope sc, Node[] athis)
 	{
 		Context ctx = new Context(nullContext);

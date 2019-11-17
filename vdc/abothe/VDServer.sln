@@ -70,7 +70,4 @@ Global
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {62BBA23E-674A-4160-8500-54A307388C95}
 	EndGlobalSection
-	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = vdcomserver\vdcomserver.csproj
-	EndGlobalSection
 EndGlobal

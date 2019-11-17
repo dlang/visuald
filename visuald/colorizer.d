@@ -379,14 +379,13 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			else
 				span = ParserSpan(prevpos, iLine, pos, iLine);
 
-			if(tok[0] == 'i')
-				if(tok == "in" || tok == "is")
-				{
-					if(langsvc.isBinaryOperator(mSource, iLine + 1, prevpos, iLine + 1, pos))
-						type = userColorType(tok, TokenColor.Operator);
-					else
-						type = TokenColor.Keyword;
-				}
+			if(tok.length == 2 && tok[0] == 'i' && (tok[1] == 'n' || tok[1] == 's')) // in/is
+			{
+				if(langsvc.isBinaryOperator(mSource, iLine + 1, prevpos, iLine + 1, pos))
+					type = userColorType(tok, TokenColor.Operator);
+				else
+					type = TokenColor.Keyword;
+			}
 
 			if(cov >= 0)
 			{
