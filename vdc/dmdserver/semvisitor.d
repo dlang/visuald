@@ -1064,6 +1064,29 @@ string tipForObject(RootObject obj, bool quote)
 				doc = sym.comment;
 		return txt;
 	}
+	string tipForDotIdExp(DotIdExp die)
+	{
+		bool isConstant = die.original.isConstantExpr();
+		Expression e1;
+		if (!isConstant && !die.original.isArrayLengthExp() && die.type)
+		{
+			e1 = isAALenCall(die.original);
+			if (!e1 && die.ident == Id.ptr && die.original.isCastExp())
+				e1 = die.original;
+			if (!e1)
+				return tipForType(die.type);
+		}
+		if (!e1)
+			e1 = die.e1;
+		string tip = isConstant ? "(constant) `" : "(field) `";
+		tip ~= die.original.type.toPrettyChars(true).to!string ~ " ";
+		tip ~= e1.type ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
+		tip ~= "." ~ die.ident.toString();
+		if (isConstant)
+			tip ~= " = " ~ die.original.toString();
+		tip ~= "`";
+		return tip;
+	}
 
 	if (auto t = obj.isType())
 	{
@@ -1082,6 +1105,13 @@ string tipForObject(RootObject obj, bool quote)
 				tip = tipForDeclaration((cast(DotVarExp)e).var);
 				doc = (cast(DotVarExp)e).var.comment;
 				break;
+			case TOK.dotIdentifier:
+				if (e.original && e.original.type)
+				{
+					tip = tipForDotIdExp(e.isDotIdExp());
+					break;
+				}
+				goto default;
 			default:
 				if (e.type)
 					toc = tipForType(e.type);
@@ -1525,11 +1555,13 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 
 		override void visit(DotIdExp expr)
 		{
-//			if (expr.type)
-//				addIdentByType(expr.identloc, expr.ident, expr.type);
-//			else if (expr.original && expr.original.type)
-//				addIdentByType(expr.identloc, expr.ident, expr.original.type);
-//			else
+			auto orig = expr.original;
+			if (orig && orig.type && orig.isConstantExpr())
+				addIdent(expr.identloc, expr.ident, TypeReferenceKind.Constant);
+			else if (orig && orig.type &&
+					 (orig.isArrayLengthExp() || orig.isAALenCall() || (expr.ident == Id.ptr && orig.isCastExp())))
+				addIdent(expr.identloc, expr.ident, TypeReferenceKind.MemberVariable);
+			else
 				super.visit(expr);
 		}
 
@@ -1792,6 +1824,41 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	foreach(sym, id; idmap)
 		idlist ~= id ~ ":" ~ cast(string) (cast(Dsymbol)sym).toString();
 	return idlist;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool isConstantExpr(Expression expr)
+{
+	switch(expr.op)
+	{
+		case TOK.int64, TOK.float64, TOK.char_, TOK.complex80:
+		case TOK.null_, TOK.void_:
+		case TOK.string_:
+		case TOK.arrayLiteral, TOK.assocArrayLiteral, TOK.structLiteral:
+		case TOK.classReference:
+			//case TOK.type:
+		case TOK.vector:
+		case TOK.function_, TOK.delegate_:
+		case TOK.symbolOffset, TOK.address:
+		case TOK.typeid_:
+		case TOK.slice:
+			return true;
+		default:
+			return false;
+	}
+}
+
+// return first argument to aaLen()
+Expression isAALenCall(Expression expr)
+{
+	// unpack first argument of _aaLen(aa)
+	if (auto ce = expr.isCallExp())
+		if (auto ve = ce.e1.isVarExp())
+			if (ve.var.ident is Id.aaLen)
+				if (ce.arguments && ce.arguments.dim > 0)
+					return (*ce.arguments)[0];
+	return null;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

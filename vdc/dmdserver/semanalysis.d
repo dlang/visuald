@@ -745,7 +745,7 @@ unittest
 	checkTip(m, 30, 10, "(class) `object.TypeInfo_Class`");
 	checkTip(m, 30, 25, "(enum) `object.TypeInfo_Class.ClassFlags`");
 	checkTip(m, 30, 36, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
-	//checkTip(m, 20, 41, "(constant) `source.RightBase.sizeof = 8`");
+	checkTip(m, 21, 43, "(constant) `ulong source.RightBase.sizeof = 8LU`");
 
 	IdTypePos[][string] exp2 = [
 		"size_t":           [ IdTypePos(TypeReferenceKind.BasicType) ],
@@ -770,6 +770,7 @@ unittest
 		"stdc":             [ IdTypePos(TypeReferenceKind.Package) ],
 		"config":           [ IdTypePos(TypeReferenceKind.Module) ],
 		"c_long":           [ IdTypePos(TypeReferenceKind.BasicType) ],
+		"sizeof":           [ IdTypePos(TypeReferenceKind.Constant) ],
 	];
 	checkIdentifierTypes(m, exp2);
 
@@ -1019,20 +1020,28 @@ unittest
 			1 : TypeInfo_Class.ClassFlags.isCOMclass
 		];
 		int[] iarr = [ TypeInfo_Class.ClassFlags.noPointers : 1 ];
+		void fun()
+		{                                              // Line 10
+			auto a = darr.length + aarr.length;
+			auto p = darr.ptr;
+		}
 	};
 	m = checkErrors(source, "");
-	checkTip(m, 2, 18, "(class) `object.TypeInfo_Class`");
-	checkTip(m, 2, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m, 2, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
-	checkTip(m, 5, 4, "(class) `object.TypeInfo_Class`");
-	checkTip(m, 5, 19, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m, 5, 30, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
-	checkTip(m, 6, 8, "(class) `object.TypeInfo_Class`");
-	checkTip(m, 6, 23, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m, 6, 34, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
-	checkTip(m, 8, 18, "(class) `object.TypeInfo_Class`");
-	checkTip(m, 8, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
-	checkTip(m, 8, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.noPointers = 2u`");
+	checkTip(m,  2, 18, "(class) `object.TypeInfo_Class`");
+	checkTip(m,  2, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m,  2, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m,  5, 4, "(class) `object.TypeInfo_Class`");
+	checkTip(m,  5, 19, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m,  5, 30, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m,  6, 8, "(class) `object.TypeInfo_Class`");
+	checkTip(m,  6, 23, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m,  6, 34, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
+	checkTip(m,  8, 18, "(class) `object.TypeInfo_Class`");
+	checkTip(m,  8, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
+	checkTip(m,  8, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.noPointers = 2u`");
+	checkTip(m, 11, 18, "(field) `ulong int[].length`");
+	checkTip(m, 11, 32, "(field) `ulong int[int].length`");
+	checkTip(m, 12, 18, "(field) `int* int[].ptr`");
 
 	checkReferences(m, 2, 44, [TextPos(2,44), TextPos(5, 30), TextPos(6, 34)]); // isCOMclass
 
@@ -1044,6 +1053,11 @@ unittest
 		"darr":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
 		"aarr":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
 		"iarr":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+		"fun":              [ IdTypePos(TypeReferenceKind.Function) ],
+		"length":           [ IdTypePos(TypeReferenceKind.MemberVariable) ],
+		"ptr":              [ IdTypePos(TypeReferenceKind.MemberVariable) ],
+		"a":                [ IdTypePos(TypeReferenceKind.LocalVariable) ],
+		"p":                [ IdTypePos(TypeReferenceKind.LocalVariable) ],
 	];
 	checkIdentifierTypes(m, exp3);
 
@@ -1163,6 +1177,18 @@ void dummy()
 	import std.file;
 	std.file.read(""); // no tip on std and file
 	auto x = TTT;
+	int[] arr;
+	auto s = arr.ptr;
+	auto y = arr.length;
+	auto my = arr.mangleof;
+	auto zi = size_t.init;
+	auto z0 = size_t.min;
+	auto z1 = size_t.max;
+	auto z2 = size_t.alignof;
+	auto z3 = size_t.stringof;
+	float flt;
+	auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity, flt.re, flt.min_normal, flt.min_10_exp];
+	auto ti = Object.classinfo;
 }
 
 struct XMem
