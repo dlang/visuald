@@ -1667,17 +1667,8 @@ else
 				return S_FALSE;
 			goto stepUp;
 		}
-version(none)
-{
 		span.iStartIndex = idx;
 		span.iStartLine = line;
-}
-else
-{
-		// use caret after opening parenthesis
-		span.iStartIndex = otherIndex + 1;
-		span.iStartLine = otherLine;
-}
 		span.iEndIndex = span.iStartIndex + 1;
 		span.iEndLine = span.iStartLine;
 
@@ -1714,6 +1705,8 @@ else
 					fn = fn[0..$-1];
 				if(fn.endsWith(":"))
 					fn = fn[0..$-1];
+				if (fn.endsWith("`") && fn.indexOf('`') < fn.length - 1)
+					fn = fn[fn.indexOf('`')+1..$-1];
 				def.setType(fn);
 				defs ~= def;
 			}
