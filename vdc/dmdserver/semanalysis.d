@@ -842,6 +842,7 @@ unittest
 
 	checkTip(m,  6,  9, "(thread local variable) `source.S!int source.x`");
 	checkTip(m,  4,  6, "(field) `int source.S!int.member`");
+	checkTip(m,  6,  3, "(struct) `source.S!int`");
 
 	// check for conditional not producing warning "unreachable code"
 	source = q{
@@ -1197,7 +1198,15 @@ struct XMem
 }
 __gshared XMem xmem;
 
+template Templ(T)
+{
+	struct Templ
+	{
+		T payload;
+	}
+}
 void fun()
 {
+	Templ!(XMem) arr;
 	vdc.dmdserver.semanalysis.XMem m = vdc.dmdserver.semanalysis.xmem.foo(1234);
 }

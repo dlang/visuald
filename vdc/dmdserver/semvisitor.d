@@ -847,6 +847,18 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			return;
 		while (originalType.ty != Tident)
 		{
+			if (originalType.ty == Tinstance)
+			{
+				auto titype = cast(TypeInstance) originalType;
+				if (titype.tempinst && matchIdentifier(titype.loc, titype.tempinst.name))
+				{
+					if (titype.parentScopes.dim > 0)
+						foundNode(titype.parentScopes[0]);
+					else
+						foundNode(resolvedType);
+					return;
+				}
+			}
 			// val[max] is parsed as an AA, but can be resolved to a static array
 			if (originalType.ty != resolvedType.ty &&
 				!(originalType.ty == Taarray && resolvedType.ty == Tsarray))
@@ -895,7 +907,6 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		}
 		else
 		{
-			// guess qualified name to be without spaces
 			foreach (i, id; otype.idents)
 			{
 				RootObject obj = id;
@@ -979,12 +990,11 @@ string tipForObject(RootObject obj, bool quote)
 		if (auto func = decl.isFuncDeclaration())
 		{
 			OutBuffer buf;
-			if (decl.type)
+			if (decl.type && decl.type.isTypeFunction())
 				functionToBufferWithIdent(decl.type.toTypeFunction(), &buf, decl.toPrettyChars());
 			else
 				buf.writestring(decl.toPrettyChars());
-			auto res = buf.peekSlice();
-			buf.extractSlice(); // take ownership
+			auto res = buf.extractSlice(); // take ownership
 			return quoteCode(quote, cast(string)res);
 		}
 
@@ -1395,15 +1405,8 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 					default:      return TypeReferenceKind.BasicType;
 				}
 			}
-			void addTypeIdentifier(TypeIdentifier tid, Type resolvedType)
+			void addTypeQualified(TypeQualified tid, Type resolvedType)
 			{
-				if (tid.copiedFrom && syntaxCopiedOriginal)
-					tid = tid.copiedFrom;
-				if (tid.parentScopes.dim > 0)
-					addObject(tid.loc, tid.parentScopes[0]);
-				else
-					addIdent(tid.loc, tid.ident, refkind(resolvedType));
-
 				foreach (i, id; tid.idents)
 				{
 					RootObject obj = id;
@@ -1417,9 +1420,34 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 					}
 				}
 			}
+			void addTypeIdentifier(TypeIdentifier tid, Type resolvedType)
+			{
+				if (tid.copiedFrom && syntaxCopiedOriginal)
+					tid = tid.copiedFrom;
+				if (tid.parentScopes.dim > 0)
+					addObject(tid.loc, tid.parentScopes[0]);
+				else
+					addIdent(tid.loc, tid.ident, refkind(resolvedType));
+				addTypeQualified(tid, resolvedType);
+			}
+
+			void addTypeInstance(TypeInstance tid, Type resolvedType)
+			{
+				if (!tid.tempinst)
+					return;
+				//if (tid.copiedFrom && syntaxCopiedOriginal)
+				//	tid = tid.copiedFrom;
+				if (tid.parentScopes.dim > 0)
+					addObject(tid.loc, tid.parentScopes[0]);
+				else
+					addIdent(tid.loc, tid.tempinst.name, refkind(resolvedType));
+				addTypeQualified(tid, resolvedType);
+			}
 
 			if (originalType && originalType.ty == Tident && type)
 				addTypeIdentifier(cast(TypeIdentifier) originalType, type);
+			if (originalType && originalType.ty == Tinstance && type)
+				addTypeInstance(cast(TypeInstance) originalType, type);
 			else if (type && type.ty == Tident) // not yet semantically analyzed (or a template declaration)
 				addTypeIdentifier(cast(TypeIdentifier) type, type);
 		}
@@ -1891,6 +1919,7 @@ Module cloneModule(Module mo)
 		this (Module m)
 		{
 			this.m = m;
+			unconditional = true;
 		}
 
 		alias visit = ASTVisitor.visit;
@@ -1901,6 +1930,7 @@ Module cloneModule(Module mo)
 				cond.condition = new DebugCondition(dbg.loc, m, dbg.level, dbg.ident);
 			else if (auto ver = cond.condition.isVersionCondition())
 				cond.condition = new VersionCondition(ver.loc, m, ver.level, ver.ident);
+			super.visit(cond);
 		}
 
 		override void visit(ConditionalDeclaration cond)
@@ -1909,6 +1939,7 @@ Module cloneModule(Module mo)
 				cond.condition = new DebugCondition(dbg.loc, m, dbg.level, dbg.ident);
 			else if (auto ver = cond.condition.isVersionCondition())
 				cond.condition = new VersionCondition(ver.loc, m, ver.level, ver.ident);
+			super.visit(cond);
 		}
 	}
 

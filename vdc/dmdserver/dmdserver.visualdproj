@@ -1457,6 +1457,7 @@
    <Folder name="root">
     <File path="dmd\src\dmd\root\aav.d" />
     <File path="dmd\src\dmd\root\array.d" />
+    <File path="dmd\src\dmd\root\bitarray.d" />
     <File path="dmd\src\dmd\root\ctfloat.d" />
     <File path="dmd\src\dmd\root\file.d" />
     <File path="dmd\src\dmd\root\filename.d" />
