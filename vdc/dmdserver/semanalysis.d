@@ -584,7 +584,9 @@ unittest
 				Exception* pe = &e;
 				const(Exception*) cpe = &e;
 				throw new Error("unexpected");
-			}
+			}                            // Line 15
+			catch(Throwable)
+			{}
 			finally
 			{
 				x = 0;
@@ -600,6 +602,7 @@ unittest
 	checkTip(m,  12,  5, "(class) `object.Exception`");
 	checkTip(m,  13, 11, "(class) `object.Exception`");
 	checkTip(m,   2,  9, "(class) `object.Exception`");
+	checkTip(m,  16, 10, "(class) `object.Throwable`");
 
 	source =
 	q{                                   // Line 1
