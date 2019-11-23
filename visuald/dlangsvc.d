@@ -950,10 +950,19 @@ class LanguageService : DisposingComObject,
 				return;
 
 			TextSpan span = TextSpan(col, line, col + 1, line);
-			ConfigureSemanticProject(src);
-			int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2;
+			string errorTip = src.getParseError(line, col);
+			if (errorTip.length)
+			{
+				mLastTipRequest -= 10;
+				tipCallback(mLastTipRequest, filename, errorTip, span);
+			}
+			else
+			{
+				ConfigureSemanticProject(src);
+				int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2;
 
-			mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
+				mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
+			}
 			mLastTipIdleTaskHandled = mLastTipIdleTaskScheduled;
 		});
 		return mLastTipIdleTaskScheduled;
@@ -4378,6 +4387,14 @@ else
 			IVsTextLineMarker marker;
 			mBuffer.CreateLineMarker(mtype, span.iStartLine - 1, span.iStartIndex,
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
+			if (marker && Package.GetGlobalOptions().usesQuickInfoTooltips())
+			{
+				// do not show tooltip error via GetTipText, but through RequestTooltip
+				DWORD visualStyle;
+				marker.GetVisualStyle(&visualStyle);
+				visualStyle &= ~MV_TIP_FOR_BODY;
+				marker.SetVisualStyle(visualStyle);
+			}
 			//release(marker);
 		}
 	}
