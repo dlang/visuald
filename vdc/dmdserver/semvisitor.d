@@ -113,8 +113,17 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		sym.accept(this);
 	}
 
+	void visitParameter(Parameter p, Declaration decl)
+	{
+		visitType(p.parsedType, p.type, true);
+		visitExpression(p.defaultArg);
+	}
+
 	// default to being permissive
-	override void visit(Parameter) {}
+	override void visit(Parameter p)
+	{
+		visitParameter(p, null);
+	}
 	override void visit(TemplateParameter) {}
 
 	// expressions
@@ -308,10 +317,25 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	{
 		visit(cast(Declaration)decl);
 
-		if (decl.parameters)
+		// function declaration only
+		if (auto tf = decl.type ? decl.type.isTypeFunction() : null)
+		{
+			if (tf.parameterList && tf.parameterList.parameters)
+				foreach(i, p; *tf.parameterList.parameters)
+					if (!stop)
+					{
+						if (decl.parameters && i < decl.parameters.dim)
+							visitParameter(p, (*decl.parameters)[i]);
+						else
+							p.accept(this);
+					}
+		}
+		else if (decl.parameters)
+		{
 			foreach(p; *decl.parameters)
 				if (!stop)
 					p.accept(this);
+		}
 
 		if (decl.frequires)
 			foreach(s; *decl.frequires)
@@ -461,8 +485,9 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(IfStatement stmt)
 	{
-		if (!stop && stmt.prm)
-			stmt.prm.accept(this);
+		// prm converted to DeclarationExp as part of condition
+		//if (!stop && stmt.prm)
+		//	stmt.prm.accept(this);
 		visitExpression(stmt.condition);
 		visit(cast(Statement)stmt);
 	}
@@ -585,6 +610,33 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return stop;
 	}
 
+	bool foundExpr(Expression expr)
+	{
+		if (auto se = expr.isScopeExp())
+			foundNode(se.sds);
+		else if (auto ve = expr.isVarExp())
+			foundNode(ve.var);
+		else if (auto te = expr.isTypeExp())
+			foundNode(te.type);
+		else
+			return false;
+		return true;
+	}
+
+	bool foundOriginal(Expression expr)
+	{
+		if (!expr)
+			return false;
+		CommaExp ce;
+		while ((ce = expr.isCommaExp()) !is null)
+		{
+			if (foundExpr(ce.e1))
+				return true;
+			expr = ce.e2;
+		}
+		return foundExpr(expr);
+	}
+
 	bool matchIdentifier(ref const Loc loc, Identifier ident)
 	{
 		if (ident)
@@ -628,10 +680,11 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			foundNode(sym);
 	}
 
-	override void visit(Parameter sym)
+	override void visitParameter(Parameter sym, Declaration decl)
 	{
+		super.visitParameter(sym, decl);
 		if (!found && matchIdentifier(sym.ident.loc, sym.ident))
-			foundNode(sym);
+			foundNode(decl ? decl : sym);
 	}
 
 	override void visit(Module mod)
@@ -790,12 +843,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 				if (expr.type)
 					foundNode(expr.type);
 				else if (expr.original)
-				{
-					if (auto se = expr.original.isScopeExp())
-						foundNode(se.sds);
-					else
-						foundNode(expr.original.type);
-				}
+					foundOriginal(expr.original);
 			}
 		}
 		visit(cast(Expression)expr);
@@ -807,15 +855,8 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			if (de.ident)
 				if (matchIdentifier(de.identloc, de.ident))
 				{
-					if (de.type)
-						foundNode(de);
-					else if (de.original)
-					{
-						if (auto se = de.original.isScopeExp())
-							foundNode(se.sds);
-						else
-							foundNode(de.original.type);
-					}
+					if (!de.type && de.original)
+						foundOriginal(de.original);
 					else
 						foundNode(de);
 				}
@@ -1154,6 +1195,16 @@ string tipForObject(RootObject obj, bool quote)
 		if (s.comment)
 			doc = s.comment;
 	}
+	else if (auto p = obj.isParameter())
+	{
+		if (auto t = p.type ? p.type : p.parsedType)
+			tip = t.toPrettyChars(true).to!string;
+		if (p.ident && tip.length)
+			tip ~= " ";
+		if (p.ident)
+			tip ~= p.ident.toString;
+		tip = "(parameter) " ~ quoteCode(quote, tip);
+	}
 	if (!tip.length)
 	{
 		if (!toc)
@@ -1302,9 +1353,12 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				auto a = assumeSorted!"a.line < b.line || (a.line == b.line && a.col < b.col)"(*pid);
 				auto itp = IdTypePos(type, line, col);
 				auto sections = a.trisect(itp);
-				if (!sections[1].empty && sections[1][0].type == type) // upperbound
-					sections[1][0] = itp;
+				if (!sections[1].empty)
+				{} // do not overwrite identical location
+				else if (!sections[2].empty && sections[2][0].type == type) // upperbound
+					sections[2][0] = itp; // extend lowest location
 				else if (sections[0].empty || sections[0][$-1].type != type) // lowerbound
+					// insert new entry if last lower location is different type
 					*pid = (*pid)[0..sections[0].length] ~ itp ~ (*pid)[sections[0].length..$];
 			}
 			else
@@ -1478,8 +1532,9 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			addSymbol(sym.loc, sym);
 		}
 
-		override void visit(Parameter sym)
+		override void visitParameter(Parameter sym, Declaration decl)
 		{
+			super.visitParameter(sym, decl);
 			addIdent(sym.ident.loc, sym.ident, TypeReferenceKind.ParameterVariable);
 		}
 
@@ -1525,19 +1580,33 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			super.visit(expr);
 		}
 
+		void addIdentExp(Expression expr, Type t)
+		{
+			if (auto ie = expr.isIdentifierExp())
+			{
+				addIdentByType(ie.loc, ie.ident, t);
+			}
+			else if (auto die = expr.isDotIdExp())
+			{
+				addIdentByType(die.ident.loc, die.ident, t);
+			}
+		}
+
+		void addOriginal(Expression expr, Type t)
+		{
+			for (auto ce = expr.isCommaExp(); ce; ce = expr.isCommaExp())
+			{
+				addIdentExp(ce, t);
+				expr = ce.e2;
+			}
+			addIdentExp(expr, t);
+		}
+
 		override void visit(TypeExp expr)
 		{
 			if (expr.original && expr.type)
-			{
-				if (auto ie = expr.original.isIdentifierExp())
-				{
-					addIdentByType(ie.loc, ie.ident, expr.type);
-				}
-				else if (auto die = expr.original.isDotIdExp())
-				{
-					addIdentByType(die.ident.loc, die.ident, expr.type);
-				}
-			}
+				addOriginal(expr.original, expr.type);
+
 			super.visit(expr);
 		}
 

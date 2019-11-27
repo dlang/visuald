@@ -443,6 +443,12 @@ unittest
 	checkTip(m,  6, 10, "(parameter) `const(string[]) args`"); // if expression
 	checkTip(m, 11, 21, "(parameter) `const(string[]) args`"); // !in expression
 
+	checkTip(m, 10, 13, "(local variable) `int* p`");
+	checkTip(m, 10, 17, "(parameter) `const(string[]) args`"); // in expression
+	checkTip(m, 10, 28, "(local variable) `int[string] aa`");
+
+	checkReferences(m, 10, 13, [TextPos(10,13)]); // p
+
 	checkTip(m, 19,  9, "(enum) `pkg.source.EE`"); // enum EE
 	checkTip(m, 19, 13, "(enum value) `pkg.source.EE.E1 = 3`"); // enum E1
 	checkTip(m, 19, 21, "(enum value) `pkg.source.EE.E2 = 4`"); // enum E2
@@ -545,7 +551,7 @@ unittest
 	source =
 	q{                                   // Line 1
 		enum TTT = 9;
-		void fun()
+		void fun(int y = TTT)
 		{
 			int x = TTT;                // Line 5
 		}
@@ -554,6 +560,7 @@ unittest
 
 	checkTip(m,  2,  8, "(constant) `int source.TTT = 9`");
 	checkTip(m,  5, 13, "(constant) `int source.TTT = 9`");
+	checkTip(m,  3, 20, "(constant) `int source.TTT = 9`");
 
 	// template struct without instances
 	source =
@@ -947,21 +954,26 @@ unittest
 		struct Mem
 		{
 			static Mem foo(int sz) { return Mem(); }
-		}                                    // Line 5
+			ref Mem func(ref Mem m);             // Line 5
+		}
 		__gshared Mem mem;
 		void fun()
 		{
-			source.Mem m = source.mem.foo(1234);
-		}                                    // Line 10
+			source.Mem m = source.mem.foo(1234); // Line 10
+		}
 	};
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
-	checkTip(m,  9, 30, "`Mem source.Mem.foo(int sz)`");
-	checkTip(m,  9, 19, "(module) `source`");
-	checkTip(m,  9, 26, "(__gshared variable) `source.Mem source.mem`");
-	checkTip(m,  9, 11, "(struct) `source.Mem`");
-	checkTip(m,  9,  4, "(module) `source`");
+	checkTip(m,  5, 12, "`Mem source.Mem.func(ref Mem m) ref`"); // TDOO: ref after func?
+	checkTip(m,  5,  8, "(struct) `source.Mem`");
+	checkTip(m,  5, 21, "(struct) `source.Mem`");
+	checkTip(m,  5, 25, "(parameter) `source.Mem m`");
+	checkTip(m, 10, 30, "`Mem source.Mem.foo(int sz)`");
+	checkTip(m, 10, 19, "(module) `source`");
+	checkTip(m, 10, 26, "(__gshared variable) `source.Mem source.mem`");
+	checkTip(m, 10, 11, "(struct) `source.Mem`");
+	checkTip(m, 10,  4, "(module) `source`");
 
 	///////////////////////////////////////////////////////////
 	// check array initializer
@@ -1120,6 +1132,29 @@ unittest
 	m = checkErrors(source, "");
 	// beware: bad object.d after this point
 	lastContext = null;
+
+	///////////////////////////////////////////////////////////
+	// check array initializer
+	filename = "shell.d";
+	source = q{
+		module shell;
+		alias uint VSITEMID;
+		const VSITEMID VSITEMID_NIL = cast(VSITEMID)(-1);
+	};
+	m = checkErrors(source, "");
+	source = q{
+		import shell;
+		void ffoo()
+		{
+			if (uint(1) == VSITEMID_NIL) {} // Line 5
+		}
+	};
+	filename = "source.d";
+	m = checkErrors(source, "");
+
+	// TODO: checkTip(m, 3, 18, "(enum) `tok.TOK`");
+	checkTip(m, 5, 19, "(__gshared variable) `const(uint) shell.VSITEMID_NIL`");
+	lastContext = null;
 }
 
 unittest
@@ -1197,6 +1232,7 @@ void dummy()
 
 struct XMem
 {
+	void foo2(int xx = TTT);
 	static XMem foo(int sz) { return XMem(); }
 }
 __gshared XMem xmem;
@@ -1212,4 +1248,12 @@ void fun()
 {
 	Templ!(XMem) arr;
 	vdc.dmdserver.semanalysis.XMem m = vdc.dmdserver.semanalysis.xmem.foo(1234);
+};
+
+//pragma(msg, TTT);
+
+import sdk.vsi.vsshell;
+void ffoo()
+{
+	if (uint(1) == VSITEMID_NIL) {}
 }
