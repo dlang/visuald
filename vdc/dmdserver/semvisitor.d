@@ -58,6 +58,7 @@ import std.algorithm;
 import std.string;
 import std.conv;
 import stdext.array;
+import stdext.denseset;
 import core.stdc.string;
 
 // walk the complete AST (declarations, statement and expressions)
@@ -68,41 +69,27 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	alias visit = StoppableVisitor.visit;
 
-	ASTNode[] visiting;
-	size_t currentVisiting;
+	DenseSet!ASTNode visited;
+
+	void visitRecursive(T)(T node)
+	{
+		if (stop || !node || visited.contains(node))
+			return;
+
+		visited.insert(node);
+
+		if (walkPostorder(node, this))
+			stop = true;
+	}
 
 	void visitExpression(Expression expr)
 	{
-		if (stop || !expr)
-			return;
-
-		if (currentVisiting >= visiting.length)
-			visiting ~= expr;
-		else
-			visiting[currentVisiting] = expr;
-		currentVisiting++;
-
-		if (walkPostorder(expr, this))
-			stop = true;
-
-		visiting[--currentVisiting] = null;
+		visitRecursive(expr);
 	}
 
 	void visitStatement(Statement stmt)
 	{
-		if (stop || !stmt)
-			return;
-
-		if (currentVisiting >= visiting.length)
-			visiting ~= stmt;
-		else
-			visiting[currentVisiting] = stmt;
-		currentVisiting++;
-
-		if (walkPostorder(stmt, this))
-			stop = true;
-
-		visiting[--currentVisiting] = null;
+		visitRecursive(stmt);
 	}
 
 	void visitDeclaration(Dsymbol sym)
@@ -130,8 +117,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	override void visit(Expression expr)
 	{
 		if (expr.original && expr.original != expr)
-			if (!visiting.contains(expr.original))
-				visitExpression(expr.original);
+			visitExpression(expr.original);
 	}
 
 	override void visit(ErrorExp errexp)
@@ -407,8 +393,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	override void visit(Statement stmt)
 	{
 		if (stmt.original)
-			if (!visiting.contains(stmt.original))
-				visitStatement(stmt.original);
+			visitStatement(stmt.original);
 	}
 
 	override void visit(ExpStatement stmt)
@@ -623,7 +608,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return true;
 	}
 
-	bool foundOriginal(Expression expr)
+	bool foundResolved(Expression expr)
 	{
 		if (!expr)
 			return false;
@@ -741,7 +726,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			Statement s = (*cs.statements)[i];
 			if (!s)
 				continue;
-			if (visiting.contains(s))
+			if (visited.contains(s))
 				continue;
 
 			if (s.loc.filename)
@@ -842,8 +827,8 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			{
 				if (expr.type)
 					foundNode(expr.type);
-				else if (expr.original)
-					foundOriginal(expr.original);
+				else if (expr.resolvedTo)
+					foundResolved(expr.resolvedTo);
 			}
 		}
 		visit(cast(Expression)expr);
@@ -855,8 +840,8 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			if (de.ident)
 				if (matchIdentifier(de.identloc, de.ident))
 				{
-					if (!de.type && de.original)
-						foundOriginal(de.original);
+					if (!de.type && de.resolvedTo)
+						foundResolved(de.resolvedTo);
 					else
 						foundNode(de);
 				}
@@ -1130,24 +1115,25 @@ string tipForObject(RootObject obj, bool quote)
 	}
 	string tipForDotIdExp(DotIdExp die)
 	{
-		bool isConstant = die.original.isConstantExpr();
+		auto resolvedTo = die.resolvedTo;
+		bool isConstant = resolvedTo.isConstantExpr();
 		Expression e1;
-		if (!isConstant && !die.original.isArrayLengthExp() && die.type)
+		if (!isConstant && !resolvedTo.isArrayLengthExp() && die.type)
 		{
-			e1 = isAALenCall(die.original);
-			if (!e1 && die.ident == Id.ptr && die.original.isCastExp())
-				e1 = die.original;
+			e1 = isAALenCall(resolvedTo);
+			if (!e1 && die.ident == Id.ptr && resolvedTo.isCastExp())
+				e1 = resolvedTo;
 			if (!e1)
 				return tipForType(die.type);
 		}
 		if (!e1)
 			e1 = die.e1;
 		string tip = isConstant ? "(constant) `" : "(field) `";
-		tip ~= die.original.type.toPrettyChars(true).to!string ~ " ";
+		tip ~= resolvedTo.type.toPrettyChars(true).to!string ~ " ";
 		tip ~= e1.type ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
 		tip ~= "." ~ die.ident.toString();
 		if (isConstant)
-			tip ~= " = " ~ die.original.toString();
+			tip ~= " = " ~ resolvedTo.toString();
 		tip ~= "`";
 		return tip;
 	}
@@ -1170,9 +1156,10 @@ string tipForObject(RootObject obj, bool quote)
 				doc = (cast(DotVarExp)e).var.comment;
 				break;
 			case TOK.dotIdentifier:
-				if (e.original && e.original.type)
+				auto die = e.isDotIdExp();
+				if (die.resolvedTo && die.resolvedTo.type)
 				{
-					tip = tipForDotIdExp(e.isDotIdExp());
+					tip = tipForDotIdExp(die);
 					break;
 				}
 				goto default;
@@ -1596,7 +1583,7 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 		{
 			for (auto ce = expr.isCommaExp(); ce; ce = expr.isCommaExp())
 			{
-				addIdentExp(ce, t);
+				addIdentExp(ce.e1, t);
 				expr = ce.e2;
 			}
 			addIdentExp(expr, t);
@@ -1612,8 +1599,8 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 
 		override void visit(IdentifierExp expr)
 		{
-			if (expr.original)
-				if (auto se = expr.original.isScopeExp())
+			if (expr.resolvedTo)
+				if (auto se = expr.resolvedTo.isScopeExp())
 					addSymbol(expr.loc, se.sds);
 
 //			if (expr.type)
@@ -1626,7 +1613,7 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 
 		override void visit(DotIdExp expr)
 		{
-			auto orig = expr.original;
+			auto orig = expr.resolvedTo;
 			if (orig && orig.type && orig.isConstantExpr())
 				addIdent(expr.identloc, expr.ident, TypeReferenceKind.Constant);
 			else if (orig && orig.type &&
