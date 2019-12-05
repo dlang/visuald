@@ -758,7 +758,7 @@ unittest
 	checkTip(m, 21, 43, "(constant) `ulong source.RightBase.sizeof = 8LU`");
 
 	IdTypePos[][string] exp2 = [
-		"size_t":           [ IdTypePos(TypeReferenceKind.BasicType) ],
+		"size_t":           [ IdTypePos(TypeReferenceKind.Alias) ],
 		"Base":             [ IdTypePos(TypeReferenceKind.Class) ],
 		"mapBaseTOK":       [ IdTypePos(TypeReferenceKind.TLSVariable) ],
 		"TOK":              [ IdTypePos(TypeReferenceKind.Enum) ],
@@ -779,7 +779,7 @@ unittest
 		"core":             [ IdTypePos(TypeReferenceKind.Package) ],
 		"stdc":             [ IdTypePos(TypeReferenceKind.Package) ],
 		"config":           [ IdTypePos(TypeReferenceKind.Module) ],
-		"c_long":           [ IdTypePos(TypeReferenceKind.BasicType) ],
+		"c_long":           [ IdTypePos(TypeReferenceKind.Alias) ],
 		"sizeof":           [ IdTypePos(TypeReferenceKind.Constant) ],
 	];
 	checkIdentifierTypes(m, exp2);
@@ -923,6 +923,32 @@ unittest
 		"ModuleInfo":       [ IdTypePos(TypeReferenceKind.Struct) ],
 	];
 	checkIdentifierTypes(m, exp2);
+
+	// check template arguments
+	source = q{
+		template Templ(T)
+		{
+			struct S
+			{                       // Line 5
+				T payload;
+			}
+			enum value = 4;
+		}
+		void fun()                  // Line 10
+		{
+			Templ!(ModuleInfo).S arr;
+			int v = Templ!Object.value;
+		};
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  2, 12, "(template) `source.Templ(T)`");
+	checkTip(m, 12,  4, "(struct) `source.Templ!(ModuleInfo).S`");
+	checkTip(m, 12, 23, "(struct) `source.Templ!(ModuleInfo).S`");
+	checkTip(m, 12, 11, "(struct) `object.ModuleInfo`");
+	checkTip(m, 13, 12, "(template instance) `source.Templ!(object.Object)`");
+	checkTip(m, 13, 18, "(class) `object.Object`");
+	checkTip(m, 13, 25, "(constant) `int source.Templ!(object.Object).value = 4`");
 
 	// check FQN types in cast
 	source = q{
@@ -1249,11 +1275,3 @@ void fun()
 	Templ!(XMem) arr;
 	vdc.dmdserver.semanalysis.XMem m = vdc.dmdserver.semanalysis.xmem.foo(1234);
 };
-
-//pragma(msg, TTT);
-
-import sdk.vsi.vsshell;
-void ffoo()
-{
-	if (uint(1) == VSITEMID_NIL) {}
-}
