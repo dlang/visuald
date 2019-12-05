@@ -1671,20 +1671,20 @@ class GlobalOptions
 			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
 				WindowsSdkDir = "";
 		}
-		if(WindowsSdkDir.empty)
+		void checkLegacySDK(wstring reg)
 		{
-			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.1"w, false);
-			WindowsSdkDir = toUTF8(keySdk.GetString("InstallationFolder"));
-			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
-				WindowsSdkDir = "";
+			if(WindowsSdkDir.empty)
+			{
+				scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, reg, false);
+				WindowsSdkDir = toUTF8(keySdk.GetString("InstallationFolder"));
+				if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
+					WindowsSdkDir = "";
+			}
 		}
-		if(WindowsSdkDir.empty)
-		{
-			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.0"w, false);
-			WindowsSdkDir = toUTF8(keySdk.GetString("InstallationFolder"));
-			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
-				WindowsSdkDir = "";
-		}
+		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.1A"w);
+		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.1"w);
+		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.0A"w);
+		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.0"w);
 		if(WindowsSdkDir.empty)
 		{
 			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
@@ -1692,6 +1692,11 @@ class GlobalOptions
 			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
 				WindowsSdkDir = "";
 		}
+		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v7.1A"w);
+		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v7.1"w);
+		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v7.0A"w);
+		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v7.0"w);
+
 		if(WindowsSdkDir.empty)
 			if(char* psdk = getenv("WindowsSdkDir"))
 				WindowsSdkDir = fromMBSz(cast(immutable)psdk);
