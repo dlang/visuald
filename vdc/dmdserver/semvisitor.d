@@ -44,6 +44,7 @@ import dmd.sapply;
 import dmd.semantic2;
 import dmd.semantic3;
 import dmd.statement;
+import dmd.staticassert;
 import dmd.target;
 import dmd.tokens;
 import dmd.visitor;
@@ -668,6 +669,13 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			foundNode(sym);
 	}
 
+	override void visit(StaticAssert sa)
+	{
+		visitExpression(sa.exp);
+		visitExpression(sa.msg);
+		super.visit(sa);
+	}
+
 	override void visitParameter(Parameter sym, Declaration decl)
 	{
 		super.visitParameter(sym, decl);
@@ -939,7 +947,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			{
 				if (titype.parentScopes.dim > 0)
 					foundNode(titype.parentScopes[0]);
-				else
+				else if (resolvedType)
 					foundNode(resolvedType);
 				return;
 			}
@@ -953,7 +961,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 					if (matchIdentifier(id.loc, ident))
 						if (titype.parentScopes.dim > i + 1)
 							foundNode(titype.parentScopes[i + 1]);
-						else
+						else if (resolvedType)
 							foundNode(resolvedType);
 				}
 			}
@@ -972,7 +980,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			{
 				if (otype.parentScopes.dim > 0)
 					foundNode(otype.parentScopes[0]);
-				else
+				else if (resolvedType)
 					foundNode(resolvedType);
 			}
 			else
@@ -986,7 +994,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 						if (matchIdentifier(id.loc, ident))
 							if (otype.parentScopes.dim > i + 1)
 								foundNode(otype.parentScopes[i + 1]);
-							else
+							else if (resolvedType)
 								foundNode(resolvedType);
 					}
 				}
@@ -1164,7 +1172,7 @@ string tipForObject(RootObject obj, bool quote)
 			e1 = die.e1;
 		string tip = isConstant ? "(constant) `" : "(field) `";
 		tip ~= resolvedTo.type.toPrettyChars(true).to!string ~ " ";
-		tip ~= e1.type ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
+		tip ~= e1.type && !e1.isConstantExpr() ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
 		tip ~= "." ~ die.ident.toString();
 		if (isConstant)
 			tip ~= " = " ~ resolvedTo.toString();

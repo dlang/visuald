@@ -554,13 +554,21 @@ unittest
 		void fun(int y = TTT)
 		{
 			int x = TTT;                // Line 5
+			static assert(msg.length == 4);
 		}
+		static assert(TTT == 9, msg);   // compiler doesn't analyze the msg if the assert passes
+		enum msg = "fail";
 	};
 	m = checkErrors(source, "");
 
 	checkTip(m,  2,  8, "(constant) `int source.TTT = 9`");
 	checkTip(m,  5, 13, "(constant) `int source.TTT = 9`");
 	checkTip(m,  3, 20, "(constant) `int source.TTT = 9`");
+	checkTip(m,  6, 18, "(constant) `string source.msg = \"fail\"`");
+	checkTip(m,  6, 22, "(constant) `ulong \"fail\".length = 4LU`"); // string.length?
+	checkTip(m,  8, 17, "(constant) `int source.TTT = 9`");
+	checkTip(m,  8, 17, "(constant) `int source.TTT = 9`");
+	checkTip(m,  9,  8, "(constant) `string source.msg = \"fail\"`");
 
 	// template struct without instances
 	source =
@@ -902,6 +910,26 @@ unittest
 	m = checkErrors(source, "");
 
 	checkTip(m,  7,  9, "(struct) `source.S`");
+
+	// float properties
+	source = q{
+		float flt;
+		auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig,
+				  flt.infinity, flt.min_normal, flt.min_10_exp, flt.min_exp,
+				  flt.max_10_exp, flt.max_exp];
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  3, 17, "(constant) `ulong float.sizeof = 4LU`");
+	checkTip(m,  3, 29, "(constant) `float float.init = nanF`");
+	checkTip(m,  3, 39, "(constant) `float float.epsilon = 1.19209e-07F`");
+	checkTip(m,  3, 52, "(constant) `int float.mant_dig = 24`");
+	checkTip(m,  4, 11, "(constant) `float float.infinity = infF`");
+	checkTip(m,  4, 25, "(constant) `float float.min_normal = 1.17549e-38F`");
+	checkTip(m,  4, 41, "(constant) `int float.min_10_exp = -37`");
+	checkTip(m,  4, 57, "(constant) `int float.min_exp = -125`");
+	checkTip(m,  5, 11, "(constant) `int float.max_10_exp = 38`");
+	checkTip(m,  5, 27, "(constant) `int float.max_exp = 128`");
 
 	// check template arguments
 	source = q{
