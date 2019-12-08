@@ -499,7 +499,7 @@ unittest
 	checkTip(m, 11, 16, "`int source.S.fun(int par)`");
 
 	checkTip(m, 13, 11, "(struct) `source.S`");
-	checkTip(m, 16, 19, "(thread local variable) `long source.S.stat1`");
+	checkTip(m, 16, 19, "(thread local global) `long source.S.stat1`");
 	checkTip(m, 16, 17, "(struct) `source.S`");
 
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
@@ -541,7 +541,7 @@ unittest
 	checkTip(m, 11, 16, "`int source.C.fun(int par)`");
 
 	checkTip(m, 13, 11, "(class) `source.C`");
-	checkTip(m, 16, 19, "(thread local variable) `long source.C.stat1`");
+	checkTip(m, 16, 19, "(thread local global) `long source.C.stat1`");
 	checkTip(m, 16, 17, "(class) `source.C`");
 
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
@@ -638,7 +638,7 @@ unittest
 	m = checkErrors(source,
 		"14,2,14,3:Error: identifier or `new` expected following `.`, not `}`\n" ~
 		"14,2,14,3:Error: semicolon expected, not `}`\n" ~
-		"12,14,12,15:Error: no property `f` for type `S`\n");
+		"12,15,12,16:Error: no property `f` for type `S`\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
 	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
@@ -757,7 +757,7 @@ unittest
 	checkTip(m, 21, 11, "(enum) `source.TOK`");
 	checkTip(m, 21, 15, "(enum value) `source.TOK.rightParentheses = 2`");
 	checkTip(m, 21, 33, "(class) `source.RightBase`\n\nright base doc");
-	checkTip(m, 24, 19, "(thread local variable) `source.TOK[source.Base] source.mapBaseTOK`");
+	checkTip(m, 24, 19, "(thread local global) `source.TOK[source.Base] source.mapBaseTOK`");
 	checkTip(m, 24,  7, "(class) `source.Base`");
 	checkTip(m, 24,  3, "(enum) `source.TOK`");
 	checkTip(m, 30, 10, "(class) `object.TypeInfo_Class`");
@@ -792,6 +792,7 @@ unittest
 	];
 	checkIdentifierTypes(m, exp2);
 
+	// string expressions with concat
 	source = q{
 		void fun()
 		{
@@ -805,6 +806,25 @@ unittest
 
 	checkTip(m,  6, 49, "(local variable) `bool isX86_64`");
 	checkTip(m,  6, 97, "(local variable) `string cmd`");
+
+	// alias
+	source = q{
+		enum EE = 3;
+		alias EE E1;
+		alias E2 = EE;
+		alias ET(T) = E1;   // Line 5
+		alias ETint = ET!int;
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  2,  8, "(constant) `int source.EE = 3`");
+	checkTip(m,  3,  9, "(constant) `int source.EE = 3`");
+	checkTip(m,  3, 12, "(alias constant) `source.E1 = int source.EE = 3`");
+	checkTip(m,  4,  9, "(alias constant) `source.E2 = int source.EE = 3`");
+	checkTip(m,  4, 14, "(constant) `int source.EE = 3`");
+	checkTip(m,  5,  9, "(alias constant) `source.ET!int = int source.EE = 3`");
+	checkTip(m,  6,  9, "(alias constant) `source.ETint = int source.EE = 3`");
 
 	source = q{
 		int fun()
@@ -858,7 +878,7 @@ unittest
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
-	checkTip(m,  6,  9, "(thread local variable) `source.S!int source.x`");
+	checkTip(m,  6,  9, "(thread local global) `source.S!int source.x`");
 	checkTip(m,  4,  6, "(field) `int source.S!int.member`");
 	checkTip(m,  6,  3, "(struct) `source.S!int`");
 
@@ -1025,9 +1045,42 @@ unittest
 	checkTip(m,  5, 25, "(parameter) `source.Mem m`");
 	checkTip(m, 10, 30, "`Mem source.Mem.foo(int sz)`");
 	checkTip(m, 10, 19, "(module) `source`");
-	checkTip(m, 10, 26, "(__gshared variable) `source.Mem source.mem`");
+	checkTip(m, 10, 26, "(__gshared global) `source.Mem source.mem`");
 	checkTip(m, 10, 11, "(struct) `source.Mem`");
 	checkTip(m, 10,  4, "(module) `source`");
+
+	// UFCS
+	source = q{
+		int foo(Object o, int sz)
+		{
+			return sz * 2;
+		}                            // Line 5
+		int fun()
+		{
+			auto o = new Object;
+			return o.    foo(4);
+		}                            // Line 10
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  9, 11, "(local variable) `object.Object o`");
+	checkTip(m,  9, 17, "`int source.foo(Object o, int sz)`");
+
+	// UDA
+	source = q{
+		struct uda {}
+		@uda int x;
+		void foo(@uda uint u);
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  3, 12, "(thread local global) `int source.x`");
+	checkTip(m,  3,  4, "(struct) `source.uda`");
+	checkTip(m,  4, 13, "(struct) `source.uda`");
+
+	checkReferences(m, 2, 10, [TextPos(2,10), TextPos(3, 4), TextPos(4, 13)]); // uda
 
 	///////////////////////////////////////////////////////////
 	// check array initializer
@@ -1207,7 +1260,7 @@ unittest
 	m = checkErrors(source, "");
 
 	// TODO: checkTip(m, 3, 18, "(enum) `tok.TOK`");
-	checkTip(m, 5, 19, "(__gshared variable) `const(uint) shell.VSITEMID_NIL`");
+	checkTip(m, 5, 19, "(constant global) `const(uint) shell.VSITEMID_NIL`");
 	lastContext = null;
 }
 
@@ -1263,6 +1316,8 @@ unittest
 	Module m = checkErrors(source, "");
 }
 
+version(test):
+
 // https://issues.dlang.org/show_bug.cgi?id=20253
 enum TTT = 9;
 void dummy()
@@ -1281,15 +1336,17 @@ void dummy()
 	auto z3 = size_t.stringof;
 	float flt;
 	auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity, flt.re, flt.min_normal, flt.min_10_exp];
-	auto ti = Object.classinfo;
+	//auto ti = Object.classinfo;
 }
 
 struct XMem
 {
+	int x;
 	void foo2(int xx = TTT);
 	static XMem foo(int sz) { return XMem(); }
 }
 __gshared XMem xmem;
+auto foo3(ref XMem x, @uda(EE) int sz) { fun!XMem(x); return x; }
 
 template Templ(T)
 {
@@ -1298,8 +1355,20 @@ template Templ(T)
 		T payload;
 	}
 }
-void fun()
+void fun(T)(T p)
 {
 	Templ!(XMem) arr;
 	vdc.dmdserver.semanalysis.XMem m = vdc.dmdserver.semanalysis.xmem.foo(1234);
 };
+
+enum EE = 3;
+alias Object E1;
+alias E2 = EE;
+alias ET(T) = T.sizeof;   // Line 5
+enum msg = "huhu";
+
+@nogc:
+struct uda { int x; string y; }
+@uda(EE, msg) shared int x;
+
+import core.memory;

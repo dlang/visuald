@@ -4539,6 +4539,11 @@ else
 
 	int getIdentifierColor(wstring id, int line, int col)
 	{
+		if (id.length > 1 && id[0] == '@') // @UDA lexed as single token
+		{
+			id = id[1..$];
+			col++;
+		}
 		auto pit = id in mIdentifierTypes;
 		if (!pit)
 			return TokenColor.Identifier;

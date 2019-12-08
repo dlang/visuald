@@ -105,6 +105,8 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	{
 		visitType(p.parsedType, p.type);
 		visitExpression(p.defaultArg);
+		if (p.userAttribDecl)
+			visit(p.userAttribDecl);
 	}
 
 	// default to being permissive
@@ -248,6 +250,8 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(ScopeDsymbol scopesym)
 	{
+		super.visit(scopesym);
+
 		// optimize to only visit members in approriate source range
 		size_t mcnt = scopesym.members ? scopesym.members.dim : 0;
 		for (size_t m = 0; !stop && m < mcnt; m++)
@@ -272,6 +276,13 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			decl._init.accept(this);
 	}
 
+	override void visit(AliasDeclaration ad)
+	{
+		if (ad.originalType)
+			visitType(ad.originalType, ad.originalType);
+		super.visit(ad);
+	}
+
 	override void visit(AttribDeclaration decl)
 	{
 		visit(cast(Declaration)decl);
@@ -288,6 +299,15 @@ extern(C++) class ASTVisitor : StoppableVisitor
 				foreach(d; *inc)
 					if (!stop)
 						d.accept(this);
+	}
+
+	override void visit(UserAttributeDeclaration decl)
+	{
+		if (decl.atts)
+			foreach(e; *decl.atts)
+				visitExpression(e);
+
+		super.visit(decl);
 	}
 
 	override void visit(ConditionalDeclaration decl)
@@ -1050,7 +1070,7 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 		found = obj;
 		if (obj)
 		{
-			tip = tipForObject(obj, true);
+			tip = tipForObject(obj);
 			stop = true;
 		}
 		return stop;
@@ -1064,9 +1084,33 @@ string quoteCode(bool quote, string s)
 	return "`" ~ s ~ "`";
 }
 
-string tipForObject(RootObject obj, bool quote)
+struct TipData
 {
-	string tipForDeclaration(Declaration decl)
+	string kind;
+	string code;
+	string doc;
+}
+
+string tipForObject(RootObject obj)
+{
+	TipData tip = tipDataForObject(obj);
+
+	string txt;
+	if (tip.kind.length)
+		txt = "(" ~ tip.kind ~ ")";
+	if (tip.code.length && txt.length)
+		txt ~= " ";
+	txt ~= quoteCode(true, tip.code);
+	if (tip.doc.length && txt.length)
+		txt ~= "\n\n";
+	if (tip.doc.length)
+		txt ~= strip(tip.doc);
+	return txt;
+}
+
+TipData tipDataForObject(RootObject obj)
+{
+	TipData tipForDeclaration(Declaration decl)
 	{
 		if (auto func = decl.isFuncDeclaration())
 		{
@@ -1076,7 +1120,7 @@ string tipForObject(RootObject obj, bool quote)
 			else
 				buf.writestring(decl.toPrettyChars());
 			auto res = buf.extractSlice(); // take ownership
-			return quoteCode(quote, cast(string)res);
+			return TipData("", cast(string)res);
 		}
 
 		bool fqn = true;
@@ -1087,38 +1131,42 @@ string tipForObject(RootObject obj, bool quote)
 			if (decl.parent)
 				if (auto fd = decl.parent.isFuncDeclaration())
 					if (fd.ident.toString().startsWith("__foreachbody"))
-						kind = "(foreach variable) ";
+						kind = "foreach variable";
 			if (kind.empty)
-				kind = "(parameter) ";
+				kind = "parameter";
 			fqn = false;
 		}
 		else if (auto em = decl.isEnumMember())
 		{
-			kind = "(enum value) ";
+			kind = "enum value";
 			txt = decl.toPrettyChars(fqn).to!string;
 			if (em.origValue)
 				txt ~= " = " ~ cast(string)em.origValue.toString();
-			return kind ~ quoteCode(quote, txt);
+			return TipData(kind, txt);
 		}
 		else if (decl.storage_class & STC.manifest)
-			kind = "(constant) ";
+			kind = "constant";
 		else if (decl.isAliasDeclaration())
-			kind = "(alias) ";
+			kind = "alias";
 		else if (decl.isField())
-			kind = "(field) ";
+			kind = "field";
 		else if (decl.semanticRun >= PASS.semanticdone) // avoid lazy semantic analysis
 		{
 			if (!decl.isDataseg() && !decl.isCodeseg())
 			{
-				kind = "(local variable) ";
+				kind = "local variable";
 				fqn = false;
 			}
 			else if (decl.isThreadlocal())
-				kind = "(thread local variable) ";
+				kind = "thread local global";
 			else if (decl.type && decl.type.isShared())
-				kind = "(shared variable) ";
+				kind = "shared global";
+			else if (decl.type && decl.type.isConst())
+				kind = "constant global";
+			else if (decl.type && decl.type.isImmutable())
+				kind = "immutable global";
 			else if (decl.type && decl.type.ty != Terror)
-				kind = "(__gshared variable) ";
+				kind = "__gshared global";
 		}
 
 		if (decl.type)
@@ -1130,15 +1178,17 @@ string tipForObject(RootObject obj, bool quote)
 					txt ~= " = " ~ var._init.toString();
 		if (auto ad = decl.isAliasDeclaration())
 			if (ad.aliassym)
-				txt ~= " = " ~ tipForObject(ad.aliassym, false);
-		return kind ~ quoteCode(quote, txt);
+			{
+				TipData tip = tipDataForObject(ad.aliassym);
+				if (tip.kind.length)
+					kind = "alias " ~ tip.kind;
+				if (tip.code.length)
+					txt ~= " = " ~ tip.code;
+			}
+		return TipData(kind, txt);
 	}
 
-	string tip;
-	string toc;
-	const(char)* doc;
-
-	string tipForType(Type t)
+	TipData tipForType(Type t)
 	{
 		string kind;
 		if (t.isTypeIdentifier())
@@ -1149,13 +1199,14 @@ string tipForObject(RootObject obj, bool quote)
 			kind = ts.sym.isUnionDeclaration() ? "union" : "struct";
 		else
 			kind = t.kind().to!string;
-		string txt = "(" ~ kind ~ ") " ~ quoteCode(quote, t.toPrettyChars(true).to!string);
+		string txt = t.toPrettyChars(true).to!string;
+		string doc;
 		if (auto sym = typeSymbol(t))
 			if (sym.comment)
-				doc = sym.comment;
-		return txt;
+				doc = sym.comment.to!string;
+		return TipData(kind, txt, doc);
 	}
-	string tipForDotIdExp(DotIdExp die)
+	TipData tipForDotIdExp(DotIdExp die)
 	{
 		auto resolvedTo = die.resolvedTo;
 		bool isConstant = resolvedTo.isConstantExpr();
@@ -1170,19 +1221,21 @@ string tipForObject(RootObject obj, bool quote)
 		}
 		if (!e1)
 			e1 = die.e1;
-		string tip = isConstant ? "(constant) `" : "(field) `";
-		tip ~= resolvedTo.type.toPrettyChars(true).to!string ~ " ";
+		string kind = isConstant ? "constant" : "field";
+		string tip = resolvedTo.type.toPrettyChars(true).to!string ~ " ";
 		tip ~= e1.type && !e1.isConstantExpr() ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
 		tip ~= "." ~ die.ident.toString();
 		if (isConstant)
 			tip ~= " = " ~ resolvedTo.toString();
-		tip ~= "`";
-		return tip;
+		return TipData(kind, tip);
 	}
+
+	TipData tip;
+	const(char)* doc;
 
 	if (auto t = obj.isType())
 	{
-		toc = tipForType(t.mutableOf().unSharedOf());
+		tip = tipForType(t.mutableOf().unSharedOf());
 	}
 	else if (auto e = obj.isExpression())
 	{
@@ -1207,7 +1260,7 @@ string tipForObject(RootObject obj, bool quote)
 				goto default;
 			default:
 				if (e.type)
-					toc = tipForType(e.type);
+					tip = tipForType(e.type);
 				break;
 		}
 	}
@@ -1219,30 +1272,30 @@ string tipForObject(RootObject obj, bool quote)
 		if (auto decl = s.isDeclaration())
 			tip = tipForDeclaration(decl);
 		else
-			toc = "(" ~ s.kind().to!string ~ ") " ~ quoteCode(quote, s.toPrettyChars(true).to!string);
-
+		{
+			tip.kind = s.kind().to!string;
+			tip.code = s.toPrettyChars(true).to!string;
+		}
 		if (s.comment)
 			doc = s.comment;
 	}
 	else if (auto p = obj.isParameter())
 	{
 		if (auto t = p.type ? p.type : p.parsedType)
-			tip = t.toPrettyChars(true).to!string;
-		if (p.ident && tip.length)
-			tip ~= " ";
+			tip.code = t.toPrettyChars(true).to!string;
+		if (p.ident && tip.code.length)
+			tip.code ~= " ";
 		if (p.ident)
-			tip ~= p.ident.toString;
-		tip = "(parameter) " ~ quoteCode(quote, tip);
+			tip.code ~= p.ident.toString;
+		tip.kind = "parameter";
 	}
-	if (!tip.length)
+	if (!tip.code.length)
 	{
-		if (!toc)
-			toc = quoteCode(quote, obj.toString().dup);
-		tip = toc;
+		tip.code = obj.toString().dup;
 	}
 	// append doc
 	if (doc)
-		tip = tip ~ "\n\n" ~ strip(cast(string)doc[0..strlen(doc)]);
+		tip.doc = cast(string)doc[0..strlen(doc)];
 	return tip;
 }
 
@@ -1560,6 +1613,8 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addIdent(loc, sym.ident, TypeReferenceKind.Module);
 			else if (sym.isPackage())
 				addIdent(loc, sym.ident, TypeReferenceKind.Package);
+			else if (sym.isTemplateDeclaration())
+				addIdent(loc, sym.ident, TypeReferenceKind.Template);
 			else
 				addIdent(loc, sym.ident, TypeReferenceKind.Variable);
 		}
@@ -1764,6 +1819,12 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 		{
 			if (dve.var is search)
 				addReference(dve.varloc.filename ? dve.varloc : dve.loc, dve.var.ident);
+		}
+		override void visit(TypeExp te)
+		{
+			if (auto ts = typeSymbol(te.type))
+				if (ts is search)
+					addReference(te.loc, ts.ident);
 		}
 	}
 

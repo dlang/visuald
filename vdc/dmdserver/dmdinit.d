@@ -241,6 +241,7 @@ void dmdSetupParams(const ref Options opts)
 	global.params.doDocComments = opts.doDoc;
 	global.params.useSwitchError = CHECKENABLE.on;
 	global.params.useInline = false;
+	global.params.ignoreUnsupportedPragmas = opts.ldcCompiler;
 	global.params.obj = false;
 	global.params.useDeprecated = opts.noDeprecated ? DiagnosticReporting.error : DiagnosticReporting.off;
 	global.params.warnings = opts.warnings ? DiagnosticReporting.inform : DiagnosticReporting.off;
