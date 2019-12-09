@@ -991,8 +991,8 @@ unittest
 	m = checkErrors(source, "");
 
 	checkTip(m,  2, 12, "(template) `source.Templ(T)`");
-	checkTip(m, 12,  4, "(struct) `source.Templ!(ModuleInfo).S`");
-	checkTip(m, 12, 23, "(struct) `source.Templ!(ModuleInfo).S`");
+	checkTip(m, 12,  4, "(template instance) `source.Templ!(object.ModuleInfo)`");
+	checkTip(m, 12, 23, "(struct) `source.Templ!(object.ModuleInfo).S`");
 	checkTip(m, 12, 11, "(struct) `object.ModuleInfo`");
 	checkTip(m, 13, 12, "(template instance) `source.Templ!(object.Object)`");
 	checkTip(m, 13, 18, "(class) `object.Object`");
@@ -1000,7 +1000,7 @@ unittest
 
 	// check FQN types in cast
 	source = q{
-		void foo()
+		void foo(Error*)
 		{
 			auto e = cast(object.Exception) null;
 			auto p = cast(object.Exception*) null;  // Line 5
@@ -1009,6 +1009,7 @@ unittest
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
+	checkTip(m,  2, 12, "(class) `object.Error`");
 	checkTip(m,  4, 18, "(module) `object`");
 	checkTip(m,  4, 25, "(class) `object.Exception`");
 	checkTip(m,  5, 18, "(module) `object`");
@@ -1020,6 +1021,7 @@ unittest
 		"Exception": [ IdTypePos(TypeReferenceKind.Class) ],
 		"e":         [ IdTypePos(TypeReferenceKind.LocalVariable) ],
 		"p":         [ IdTypePos(TypeReferenceKind.LocalVariable) ],
+		"Error":     [ IdTypePos(TypeReferenceKind.Class) ],
 	];
 	checkIdentifierTypes(m, exp2);
 
@@ -1362,7 +1364,7 @@ void fun(T)(T p)
 };
 
 enum EE = 3;
-alias Object E1;
+alias object.Object E1;
 alias E2 = EE;
 alias ET(T) = T.sizeof;   // Line 5
 enum msg = "huhu";

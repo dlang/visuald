@@ -103,7 +103,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	void visitParameter(Parameter p, Declaration decl)
 	{
-		visitType(p.parsedType, p.type);
+		visitType(p.parsedType);
 		visitExpression(p.defaultArg);
 		if (p.userAttribDecl)
 			visit(p.userAttribDecl);
@@ -130,9 +130,9 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(CastExp expr)
 	{
-		visitType(expr.parsedTo, expr.to);
+		visitType(expr.parsedTo);
 		if (expr.parsedTo != expr.to)
-			visitType(expr.to, expr.to);
+			visitType(expr.to);
 		super.visit(expr);
 	}
 
@@ -155,8 +155,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(TypeExp expr)
 	{
-		if (expr.type)
-			expr.type.accept(this);
+		visitType(expr.type);
 		visit(cast(Expression)expr);
 	}
 
@@ -173,9 +172,9 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		if (ne.member)
 			ne.member.accept(this);
 
-		visitType(ne.parsedType, ne.newtype);
+		visitType(ne.parsedType);
 		if (ne.newtype != ne.parsedType)
-			visitType(ne.newtype, ne.newtype);
+			visitType(ne.newtype);
 
 		super.visit(ne);
 	}
@@ -194,55 +193,48 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			size_t args = min(ti.tiargs.dim, ti.parsedArgs.dim);
 			for (size_t a = 0; a < args; a++)
 				if (Type tip = (*ti.parsedArgs)[a].isType())
-					if (Type tir = (*ti.tiargs)[a].isType())
-						visitType(tip, tir);
+					visitType(tip);
 		}
 	}
 
 	// types
-	void visitType(Type originalType, Type resolvedType)
+	void visitType(Type type)
 	{
-		if (!originalType || !resolvedType)
-			return;
+		if (type)
+			type.accept(this);
+	}
 
-		// val[max] is parsed as an AA, but can be resolved to a static array
-		if (originalType.ty != resolvedType.ty &&
-			!(originalType.ty == Taarray && resolvedType.ty == Tsarray))
-			return;
-		switch (resolvedType.ty)
+	override void visit(Type t)
+	{
+	}
+
+	override void visit(TypeSArray tsa)
+	{
+		visitExpression(tsa.dim);
+		super.visit(tsa);
+	}
+
+	override void visit(TypeAArray taa)
+	{
+		if (taa.resolvedTo)
+			visitType(taa.resolvedTo);
+		else
 		{
-			case Tsarray:
-			{
-				auto resolvedSA = cast(TypeSArray) resolvedType;
-				visitExpression(resolvedSA.dim);
-				goto case Tarray;
-			}
-			case Taarray:
-			{
-				auto originalAA = cast(TypeAArray) originalType;
-				auto resolvedAA = cast(TypeAArray) resolvedType;
-				visitType(originalAA.index, resolvedAA.index);
-				goto case;
-			}
-			case Tarray:
-			case Tpointer:
-			case Treference:
-			case Tvector:
-			case Tfunction:
-				originalType = (cast(TypeNext) originalType).next;
-				resolvedType = (cast(TypeNext) resolvedType).next;
-				visitType(originalType, resolvedType);
-				break;
-			default:
-				break;
+			visitType(taa.index);
+			super.visit(taa);
 		}
 	}
 
-	override void visit(Type) {}
+	override void visit(TypeNext tn)
+	{
+		visitType(tn.next);
+		super.visit(tn);
+	}
 
 	override void visit(TypeTypeof t)
 	{
 		visitExpression(t.exp);
+		super.visit(t);
 	}
 
 	// symbols
@@ -264,11 +256,11 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	// declarations
 	override void visit(VarDeclaration decl)
 	{
-		visitType(decl.parsedType, decl.type);
+		visitType(decl.parsedType);
 		if (decl.originalType != decl.parsedType)
-			visitType(decl.originalType, decl.type);
+			visitType(decl.originalType);
 		if (decl.type != decl.originalType && decl.type != decl.parsedType)
-			visitType(decl.type, decl.type); // not yet semantically analyzed (or a template declaration)
+			visitType(decl.type); // not yet semantically analyzed (or a template declaration)
 
 		visit(cast(Declaration)decl);
 
@@ -278,8 +270,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 
 	override void visit(AliasDeclaration ad)
 	{
-		if (ad.originalType)
-			visitType(ad.originalType, ad.originalType);
+		visitType(ad.originalType);
 		super.visit(ad);
 	}
 
@@ -363,7 +354,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	{
 		if (cd.baseclasses)
 			foreach (bc; *(cd.baseclasses))
-				visitType(bc.parsedType, bc.type);
+				visitType(bc.parsedType);
 
 		super.visit(cd);
 	}
@@ -567,8 +558,8 @@ extern(C++) class ASTVisitor : StoppableVisitor
 			foreach(c; *stmt.catches)
 				if (c.var)
 					visitDeclaration(c.var);
-				else if (c.type)
-					visitType(c.parsedType, c.type);
+				else
+					visitType(c.parsedType);
 
 		visit(cast(Statement)stmt);
 	}
@@ -735,12 +726,6 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		if (!found && matchIdentifier(cond.loc, cond.ident))
 			foundNode(cond);
-	}
-
-	override void visit(TypeIdentifier t)
-	{
-		visitTypeIdentifier(t, t);
-		visit(cast(TypeQualified)t);
 	}
 
 	override void visit(Expression expr)
@@ -947,81 +932,67 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		if (found && !foundScope)
 			foundScope = decl.scopesym;
 
-		visitTypeIdentifier(decl.originalType, decl.type);
+		visitType(decl.originalType);
 	}
 
-	override void visitType(Type originalType, Type resolvedType)
+	override void visit(TypeQualified tq)
 	{
-		visitTypeIdentifier(originalType, resolvedType);
+		foreach (i, id; tq.idents)
+		{
+			RootObject obj = id;
+			if (obj.dyncast() == DYNCAST.identifier)
+			{
+				auto ident = cast(Identifier)obj;
+				if (matchIdentifier(id.loc, ident))
+					if (tq.parentScopes.dim > i + 1)
+						foundNode(tq.parentScopes[i + 1]);
+			}
+		}
+		super.visit(tq);
 	}
 
-	void visitTypeIdentifier(Type originalType, Type resolvedType)
+	override void visit(TypeIdentifier otype)
 	{
-		if (found || !originalType || !resolvedType)
+		if (found)
 			return;
 
-		if (originalType.ty == Tinstance)
+		for (TypeIdentifier ti = otype; ti; ti = ti.copiedFrom)
+			if (ti.parentScopes.dim)
+			{
+				otype = ti;
+				break;
+			}
+
+		if (matchIdentifier(otype.loc, otype.ident))
 		{
-			auto titype = cast(TypeInstance) originalType;
-			if (titype.tempinst && matchIdentifier(titype.loc, titype.tempinst.name))
-			{
-				if (titype.parentScopes.dim > 0)
-					foundNode(titype.parentScopes[0]);
-				else if (resolvedType)
-					foundNode(resolvedType);
-				return;
-			}
-			visitTemplateInstance(titype.tempinst);
-			foreach (i, id; titype.idents)
-			{
-				RootObject obj = id;
-				if (obj.dyncast() == DYNCAST.identifier)
-				{
-					auto ident = cast(Identifier)obj;
-					if (matchIdentifier(id.loc, ident))
-						if (titype.parentScopes.dim > i + 1)
-							foundNode(titype.parentScopes[i + 1]);
-						else if (resolvedType)
-							foundNode(resolvedType);
-				}
-			}
-		}
-		if (originalType.ty == Tident)
-		{
-			auto otype = cast(TypeIdentifier) originalType;
-			for (TypeIdentifier ti = otype; ti; ti = ti.copiedFrom)
-				if (ti.parentScopes.dim)
-				{
-					otype = ti;
-					break;
-				}
-			Loc loc = otype.loc;
-			if (matchIdentifier(loc, otype.ident))
-			{
-				if (otype.parentScopes.dim > 0)
-					foundNode(otype.parentScopes[0]);
-				else if (resolvedType)
-					foundNode(resolvedType);
-			}
+			if (otype.parentScopes.dim > 0)
+				foundNode(otype.parentScopes[0]);
 			else
-			{
-				foreach (i, id; otype.idents)
-				{
-					RootObject obj = id;
-					if (obj.dyncast() == DYNCAST.identifier)
-					{
-						auto ident = cast(Identifier)obj;
-						if (matchIdentifier(id.loc, ident))
-							if (otype.parentScopes.dim > i + 1)
-								foundNode(otype.parentScopes[i + 1]);
-							else if (resolvedType)
-								foundNode(resolvedType);
-					}
-				}
-			}
+				foundNode(otype);
 		}
-		if (!found)
-			super.visitType(originalType, resolvedType);
+		super.visit(otype);
+	}
+
+	override void visit(TypeInstance ti)
+	{
+		if (found)
+			return;
+
+		for (TypeInstance cti = ti; cti; cti = cti.copiedFrom)
+			if (cti.parentScopes.dim)
+			{
+				ti = cti;
+				break;
+			}
+
+		if (ti.tempinst && matchIdentifier(ti.loc, ti.tempinst.name))
+		{
+			if (ti.parentScopes.dim > 0)
+				foundNode(ti.parentScopes[0]);
+			return;
+		}
+		visitTemplateInstance(ti.tempinst);
+		super.visit(ti);
 	}
 }
 
@@ -1509,81 +1480,47 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addIdent(loc, ident, TypeReferenceKind.GSharedVariable);
 		}
 
-		override void visitType(Type originalType, Type type)
+		override void visit(TypeQualified tid)
 		{
-			addType(type, originalType);
+			foreach (i, id; tid.idents)
+			{
+				RootObject obj = id;
+				if (obj.dyncast() == DYNCAST.identifier)
+				{
+					auto ident = cast(Identifier)obj;
+					if (tid.parentScopes.dim > i + 1)
+						addObject(id.loc, tid.parentScopes[i + 1]);
+				}
+			}
+			super.visit(tid);
 		}
 
-		void addType(Type type, Type originalType)
+		override void visit(TypeIdentifier tid)
 		{
-			static TypeReferenceKind refkind(Type t)
+			while (tid.copiedFrom)
 			{
-				switch (t.ty)
-				{
-					case Tident:  return TypeReferenceKind.TemplateTypeParameter;
-					case Tclass:  return (cast(TypeClass)t).sym.isInterfaceDeclaration() ? TypeReferenceKind.Interface
-					                                                                     : TypeReferenceKind.Class;
-					case Tstruct: return (cast(TypeStruct)t).sym.isUnionDeclaration() ? TypeReferenceKind.Union
-					                                                                  : TypeReferenceKind.Struct;
-					case Tenum:   return TypeReferenceKind.Enum;
-					default:      return TypeReferenceKind.BasicType;
-				}
-			}
-			void addTypeQualified(TypeQualified tid, Type resolvedType)
-			{
-				foreach (i, id; tid.idents)
-				{
-					RootObject obj = id;
-					if (obj.dyncast() == DYNCAST.identifier)
-					{
-						auto ident = cast(Identifier)obj;
-						if (tid.parentScopes.dim > i + 1)
-							addObject(id.loc, tid.parentScopes[i + 1]);
-						else
-							addIdent(id.loc, id, refkind(resolvedType));
-					}
-				}
-			}
-			void addTypeIdentifier(TypeIdentifier tid, Type resolvedType)
-			{
-				while (tid.copiedFrom)
-				{
-					if (tid.parentScopes.dim > 0)
-						break;
-					tid = tid.copiedFrom;
-				}
 				if (tid.parentScopes.dim > 0)
-					addObject(tid.loc, tid.parentScopes[0]);
-				else
-					addIdent(tid.loc, tid.ident, refkind(resolvedType));
-				addTypeQualified(tid, resolvedType);
+					break;
+				tid = tid.copiedFrom;
 			}
+			if (tid.parentScopes.dim > 0)
+				addObject(tid.loc, tid.parentScopes[0]);
+			super.visit(tid);
+		}
 
-			void addTypeInstance(TypeInstance tid, Type resolvedType)
-			{
-				if (!tid.tempinst)
-					return;
-				if (tid.parentScopes.dim > 0)
-					addObject(tid.loc, tid.parentScopes[0]);
-				else
-					addIdent(tid.loc, tid.tempinst.name, refkind(resolvedType));
-				addTypeQualified(tid, resolvedType);
-			}
-
-			if (originalType && originalType.ty == Tident && type)
-				addTypeIdentifier(cast(TypeIdentifier) originalType, type);
-			else if (originalType && originalType.ty == Tinstance && type)
-				addTypeInstance(cast(TypeInstance) originalType, type);
-			else if (type && type.ty == Tident) // not yet semantically analyzed (or a template declaration)
-				addTypeIdentifier(cast(TypeIdentifier) type, type);
-			else
-				super.visitType(originalType, type);
+		override void visit(TypeInstance tid)
+		{
+			if (!tid.tempinst)
+				return;
+			if (tid.parentScopes.dim > 0)
+				addObject(tid.loc, tid.parentScopes[0]);
+			super.visit(tid);
 		}
 
 		void addObject(ref const Loc loc, RootObject obj)
 		{
 			if (auto t = obj.isType())
-				addType(t, t);
+				visitType(t);
 			else if (auto s = obj.isDsymbol())
 			{
 				if (auto imp = s.isImport())
@@ -1599,10 +1536,10 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 		{
 			if (auto decl = sym.isDeclaration())
 				addDeclaration(loc, decl);
-			else if (sym.isStructDeclaration())
-				addIdent(loc, sym.ident, TypeReferenceKind.Struct);
 			else if (sym.isUnionDeclaration())
 				addIdent(loc, sym.ident, TypeReferenceKind.Union);
+			else if (sym.isStructDeclaration())
+				addIdent(loc, sym.ident, TypeReferenceKind.Struct);
 			else if (sym.isInterfaceDeclaration())
 				addIdent(loc, sym.ident, TypeReferenceKind.Interface);
 			else if (sym.isClassDeclaration())
@@ -1745,11 +1682,10 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 		{
 			super.visit(decl);
 
-			if (decl.type)
+			if (decl.originalType)
 			{
-				auto ft = decl.type.isTypeFunction();
 				auto ot = decl.originalType ? decl.originalType.isTypeFunction() : null;
-				addType(ft ? ft.nextOf() : null, ot ? ot.nextOf() : null); // the return type
+				visitType(ot ? ot.nextOf() : null); // the return type
 			}
 		}
 
@@ -1822,9 +1758,52 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 		}
 		override void visit(TypeExp te)
 		{
+			super.visit(te);
 			if (auto ts = typeSymbol(te.type))
-				if (ts is search)
-					addReference(te.loc, ts.ident);
+			    if (ts is search)
+			        addReference(te.loc, ts.ident);
+		}
+
+		override void visit(TypeQualified tid)
+		{
+			foreach (i, id; tid.idents)
+			{
+				RootObject obj = id;
+				if (obj.dyncast() == DYNCAST.identifier)
+				{
+					auto ident = cast(Identifier)obj;
+					if (tid.parentScopes.dim > i + 1)
+						if (tid.parentScopes[i + 1] is search)
+							addReference(id.loc, ident);
+				}
+			}
+			super.visit(tid);
+		}
+
+		override void visit(TypeIdentifier tid)
+		{
+			while (tid.copiedFrom)
+			{
+				if (tid.parentScopes.dim > 0)
+					break;
+				tid = tid.copiedFrom;
+			}
+			if (tid.parentScopes.dim > 0)
+				if (tid.parentScopes[0] is search)
+					addReference(tid.loc, tid.ident);
+
+			super.visit(tid);
+		}
+
+		override void visit(TypeInstance tid)
+		{
+			if (!tid.tempinst)
+				return;
+			if (tid.parentScopes.dim > 0)
+				if (tid.parentScopes[0] is search)
+					addReference(tid.loc, tid.tempinst.name);
+
+			super.visit(tid);
 		}
 	}
 
