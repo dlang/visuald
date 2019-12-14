@@ -186,6 +186,22 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		super.visit(expr);
 	}
 
+	override void visit(TraitsExp te)
+	{
+		if (te.args)
+		{
+			foreach(a; (*te.args))
+				if (auto t = a.isType())
+					visitType(t);
+				else if (auto e = a.isExpression())
+					visitExpression(e);
+				//else if (auto s = a.isSymbol())
+				//	visitSymbol(s);
+		}
+
+		super.visit(te);
+	}
+
 	void visitTemplateInstance(TemplateInstance ti)
 	{
 		if (ti.tiargs && ti.parsedArgs)
@@ -647,21 +663,22 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return false;
 	}
 
-	bool visitPackages(IdentifiersAtLoc* packages)
+	bool visitPackages(Module mod, IdentifiersAtLoc* packages)
 	{
-		if (packages)
-			for (size_t p; p < packages.dim; p++)
-				if (!found && matchIdentifier((*packages)[p].loc, (*packages)[p].ident))
-				{
-					Package pkg;
-					auto pkgs = new IdentifiersAtLoc();
-					for (size_t q = 0; q <= p; q++)
-						pkgs.push((*packages)[p]);
-					Package.resolve(pkgs, null, &pkg);
-					if (pkg)
-						foundNode(pkg);
-					return true;
-				}
+		if (!mod || !packages)
+			return false;
+
+		Package pkg = mod.parent ? mod.parent.isPackage() : null;
+		for (size_t p; pkg && p < packages.dim; p++)
+		{
+			size_t q = packages.dim - 1 - p;
+			if (!found && matchIdentifier((*packages)[q].loc, (*packages)[q].ident))
+			{
+				foundNode(pkg);
+				return true;
+			}
+			pkg = pkg.parent ? pkg.parent.isPackage() : null;
+		}
 		return false;
 	}
 
@@ -676,6 +693,8 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(Dsymbol sym)
 	{
+		if (sym.isFuncLiteralDeclaration())
+			return;
 		if (!found && matchIdentifier(sym.loc, sym.ident))
 			foundNode(sym);
 	}
@@ -698,7 +717,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		if (mod.md)
 		{
-			visitPackages(mod.md.packages);
+			visitPackages(mod, mod.md.packages);
 
 			if (!found && matchIdentifier(mod.md.loc, mod.md.id))
 				foundNode(mod);
@@ -708,7 +727,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 
 	override void visit(Import imp)
 	{
-		visitPackages(imp.packages);
+		visitPackages(imp.mod, imp.packages);
 
 		if (!found && matchIdentifier(imp.loc, imp.id))
 			foundNode(imp.mod);
@@ -884,6 +903,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			if (matchLoc(de.loc, 2))
 				foundNode(de);
 		}
+		super.visit(de);
 	}
 
 	override void visit(DotTemplateExp dte)
@@ -891,6 +911,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		if (!found && dte.td && dte.td.ident)
 			if (matchIdentifier(dte.identloc, dte.td.ident))
 				foundNode(dte);
+		super.visit(dte);
 	}
 
 	override void visit(TemplateExp te)
@@ -898,6 +919,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		if (!found && te.td && te.td.ident)
 			if (matchIdentifier(te.identloc, te.td.ident))
 				foundNode(te);
+		super.visit(te);
 	}
 
 	override void visit(DotVarExp dve)
@@ -1177,6 +1199,7 @@ TipData tipDataForObject(RootObject obj)
 				doc = sym.comment.to!string;
 		return TipData(kind, txt, doc);
 	}
+
 	TipData tipForDotIdExp(DotIdExp die)
 	{
 		auto resolvedTo = die.resolvedTo;
@@ -1187,7 +1210,7 @@ TipData tipDataForObject(RootObject obj)
 			e1 = isAALenCall(resolvedTo);
 			if (!e1 && die.ident == Id.ptr && resolvedTo.isCastExp())
 				e1 = resolvedTo;
-			if (!e1)
+			if (!e1 && resolvedTo.isTypeExp())
 				return tipForType(die.type);
 		}
 		if (!e1)
@@ -1701,6 +1724,16 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addIdent(ad.loc, ad.ident, TypeReferenceKind.Struct);
 			super.visit(ad);
 		}
+
+		override void visit(AliasDeclaration ad)
+		{
+			// the alias identifier can be both before and after the aliased type,
+			//  but we rely on so ascending locations in addTypePos
+			// as a work around, add the declared identifier before and after
+			//  by processing it twice
+			super.visit(ad);
+			super.visit(ad);
+		}
 	}
 
 	scope IdentifierTypesVisitor itv = new IdentifierTypesVisitor;
@@ -1730,38 +1763,106 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 	{
 		RootObject search;
 		Reference[] references;
+		const(char)* filename;
 
 		alias visit = ASTVisitor.visit;
 
 		extern(D)
 		void addReference(ref const Loc loc, Identifier ident)
 		{
-			if (loc.filename && ident)
+			if (loc.filename is filename && ident)
 				if (!references.contains(Reference(loc, ident)))
 					references ~= Reference(loc, ident);
+		}
+
+		void addResolved(ref const Loc loc, Expression resolved)
+		{
+			if (resolved)
+				if (auto se = resolved.isScopeExp())
+					if (se.sds is search)
+						addReference(loc, se.sds.ident);
+		}
+
+		void addPackages(Module mod, IdentifiersAtLoc* packages)
+		{
+			if (!mod || !packages)
+				return;
+
+			Package pkg = mod.parent ? mod.parent.isPackage() : null;
+			for (size_t p; pkg && p < packages.dim; p++)
+			{
+				size_t q = packages.dim - 1 - p;
+				if (pkg is search)
+					addReference((*packages)[q].loc, (*packages)[q].ident);
+				if (auto parent = pkg.parent)
+					pkg = parent.isPackage();
+			}
 		}
 
 		override void visit(Dsymbol sym)
 		{
 			if (sym is search)
 				addReference(sym.loc, sym.ident);
+			super.visit(sym);
 		}
+		override void visit(Module mod)
+		{
+			if (mod.md)
+			{
+				addPackages(mod, mod.md.packages);
+				if (mod is search)
+					addReference(mod.md.loc, mod.md.id);
+			}
+			visit(cast(Package)mod);
+		}
+
+		override void visit(Import imp)
+		{
+			addPackages(imp.mod, imp.packages);
+
+			if (imp.mod is search)
+				addReference(imp.loc, imp.id);
+
+			for (int n = 0; n < imp.names.dim; n++)
+			{
+				// names? (imp.names[n].loc, imp.names[n].ident)
+				if (n < imp.aliasdecls.dim)
+					if (imp.aliasdecls[n].aliassym is search)
+						addReference(imp.names[n].loc, imp.names[n].ident);
+			}
+			// symbol has ident of first package, so don't forward
+		}
+
 		override void visit(SymbolExp expr)
 		{
 			if (expr.var is search)
 				addReference(expr.loc, expr.var.ident);
+			super.visit(expr);
 		}
 		override void visit(DotVarExp dve)
 		{
 			if (dve.var is search)
 				addReference(dve.varloc.filename ? dve.varloc : dve.loc, dve.var.ident);
+			super.visit(dve);
 		}
 		override void visit(TypeExp te)
 		{
-			super.visit(te);
 			if (auto ts = typeSymbol(te.type))
 			    if (ts is search)
 			        addReference(te.loc, ts.ident);
+			super.visit(te);
+		}
+
+		override void visit(IdentifierExp expr)
+		{
+			addResolved(expr.loc, expr.resolvedTo);
+			super.visit(expr);
+		}
+
+		override void visit(DotIdExp expr)
+		{
+			addResolved(expr.identloc, expr.resolvedTo);
+			super.visit(expr);
 		}
 
 		override void visit(TypeQualified tid)
@@ -1830,6 +1931,7 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 		}
 	}
 	frv.search = fdv.found;
+	frv.filename = filename;
 	mod.accept(frv);
 
 	return frv.references;

@@ -385,6 +385,7 @@ unittest
 
 	checkTip(m, 5, 8, "(local variable) `int xyz`");
 	checkTip(m, 5, 10, "(local variable) `int xyz`");
+	checkTip(m, 6, 4, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
 	checkTip(m, 5, 11, "");
 	checkTip(m, 6, 8, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
 	checkTip(m, 7, 11, "(local variable) `int xyz`");
@@ -814,6 +815,8 @@ unittest
 		alias E2 = EE;
 		alias ET(T) = E1;   // Line 5
 		alias ETint = ET!int;
+		enum Enum { En1, En2 }
+		alias En1 = Enum.En1;
 	};
 	m = checkErrors(source, "");
 	//dumpAST(m);
@@ -825,6 +828,23 @@ unittest
 	checkTip(m,  4, 14, "(constant) `int source.EE = 3`");
 	checkTip(m,  5,  9, "(alias constant) `source.ET!int = int source.EE = 3`");
 	checkTip(m,  6,  9, "(alias constant) `source.ETint = int source.EE = 3`");
+
+	checkReferences(m, 7, 15, [TextPos(7,15), TextPos(8, 20)]); // En1
+
+	exp2 = [
+		"EE":               [ IdTypePos(TypeReferenceKind.Constant) ],
+		"E1":               [ IdTypePos(TypeReferenceKind.Alias) ],
+		"E2":               [ IdTypePos(TypeReferenceKind.Alias) ],
+		"ET":               [ IdTypePos(TypeReferenceKind.Alias) ],
+		//"T":                [ IdTypePos(TypeReferenceKind.TemplateParameter) ],
+		"ETint":            [ IdTypePos(TypeReferenceKind.Alias) ],
+		"Enum":             [ IdTypePos(TypeReferenceKind.Enum) ],
+		"En2":              [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"En1":              [ IdTypePos(TypeReferenceKind.EnumValue),
+		                      IdTypePos(TypeReferenceKind.Alias, 8, 9),
+		                      IdTypePos(TypeReferenceKind.EnumValue, 8, 20) ],
+	];
+	checkIdentifierTypes(m, exp2);
 
 	source = q{
 		int fun()
@@ -894,6 +914,16 @@ unittest
 	};
 	m = checkErrors(source, "");
 
+	source = q{
+		static if(__traits(compiles, () { Object o = new Object; })) {}
+		static if(!__traits(compiles, () { auto o = Object; })) {}
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  2, 37, "(class) `object.Object`");
+	checkTip(m,  2, 44, "(local variable) `object.Object o`");
+	checkTip(m,  3, 47, "(class) `object.Object`");
+
 	// check for semantics in unittest
 	source = q{
 		unittest
@@ -936,7 +966,11 @@ unittest
 		float flt;
 		auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig,
 				  flt.infinity, flt.min_normal, flt.min_10_exp, flt.min_exp,
-				  flt.max_10_exp, flt.max_exp];
+				  flt.max_10_exp, flt.max_exp]; // Line 5
+		float fre(cfloat f)
+		{
+			return f.re + f.im;
+		}
 	};
 	m = checkErrors(source, "");
 
@@ -950,6 +984,8 @@ unittest
 	checkTip(m,  4, 57, "(constant) `int float.min_exp = -125`");
 	checkTip(m,  5, 11, "(constant) `int float.max_10_exp = 38`");
 	checkTip(m,  5, 27, "(constant) `int float.max_exp = 128`");
+	checkTip(m,  8, 13, "(field) `float cfloat.re`");
+	checkTip(m,  8, 20, "(field) `float cfloat.im`");
 
 	// check template arguments
 	source = q{
@@ -1069,6 +1105,31 @@ unittest
 	checkTip(m,  9, 11, "(local variable) `object.Object o`");
 	checkTip(m,  9, 17, "`int source.foo(Object o, int sz)`");
 
+	// FQN
+	source = q{
+		module pkg.pkg2.mod; static import pkg.pkg2.mod;
+		void goo()
+		{
+			import pkg.pkg2.mod : poo = goo;   // Line 5
+			pkg.pkg2.mod.goo();
+			poo();
+			pkg.pkg2.mod.tmpl(1);
+		}
+		void tmpl(T)(T t) {}              // Line 10
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  6, 17, "`void pkg.pkg2.mod.goo()`");
+	checkTip(m,  6, 13, "(module) `pkg.pkg2.mod`");
+	checkTip(m,  6,  4, "(package) `pkg`");
+	checkTip(m,  8,  4, "(package) `pkg`");
+	checkTip(m,  8, 13, "(module) `pkg.pkg2.mod`");
+
+	checkReferences(m,  6, 17, [TextPos(3,  8), TextPos(5, 32), TextPos(6, 17), TextPos(7,  4)]); // goo/poo
+	checkReferences(m, 10,  8, [TextPos(8, 17), TextPos(10, 8)]); // tmpl
+	checkReferences(m,  6, 13, [TextPos(2, 19), TextPos(2, 47), TextPos(5, 20), TextPos(6, 13), TextPos(8, 13)]); // mod
+	checkReferences(m,  6,  4, [TextPos(2, 10), TextPos(2, 38), TextPos(5, 11), TextPos(6,  4), TextPos(8,  4)]); // pkg
+
 	// UDA
 	source = q{
 		struct uda {}
@@ -1082,7 +1143,23 @@ unittest
 	checkTip(m,  3,  4, "(struct) `source.uda`");
 	checkTip(m,  4, 13, "(struct) `source.uda`");
 
-	checkReferences(m, 2, 10, [TextPos(2,10), TextPos(3, 4), TextPos(4, 13)]); // uda
+	checkReferences(m, 2, 10, [TextPos(2, 10), TextPos(3, 4), TextPos(4, 13)]); // uda
+
+	// type references
+	source = q{
+		void foo(Object ss)
+		{
+			auto o = cast(Object)ss;
+			auto s = S!Object(new Object);  // Line 5
+		}
+		struct S(T)
+		{
+			T payload;
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkReferences(m, 2, 12, [TextPos(2,12), TextPos(4, 18), TextPos(5, 26), TextPos(5, 15)]); // Object
 
 	///////////////////////////////////////////////////////////
 	// check array initializer
@@ -1336,36 +1413,61 @@ void dummy()
 	auto z1 = size_t.max;
 	auto z2 = size_t.alignof;
 	auto z3 = size_t.stringof;
-	float flt;
-	auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity, flt.re, flt.min_normal, flt.min_10_exp];
+	cfloat flt = cfloat.nan;
+	auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity,
+			  flt.re, flt.im, flt.min_normal, flt.min_10_exp];
 	//auto ti = Object.classinfo;
 }
 
 struct XMem
 {
 	int x;
-	void foo2(int xx = TTT);
+	void foo2(int xx = TTT + 1);
 	static XMem foo(int sz) { return XMem(); }
 }
 __gshared XMem xmem;
-auto foo3(ref XMem x, @uda(EE) int sz) { fun!XMem(x); return x; }
+auto foo3(ref XMem x, @uda(EE) int sz)
+{
+	XMem m;
+	m.x = 3;
+	fun!XMem(x);
+	return x;
+}
 
-template Templ(T)
+template Templ(T, int n)
 {
 	struct Templ
 	{
 		T payload;
 	}
 }
-void fun(T)(T p)
-{
-	Templ!(XMem) arr;
-	vdc.dmdserver.semanalysis.XMem m = vdc.dmdserver.semanalysis.xmem.foo(1234);
-};
 
-enum EE = 3;
+import vdc.dmdserver.dmdinit;
+
+void fun(T)(T p) if(TTT == 9)
+{
+	Templ!(XMem, TTT) arr;
+	vdc.dmdserver.semanalysis.XMem m1 = vdc.dmdserver.semanalysis.xmem.foo(1234);
+	vdc.dmdserver.semanalysis.XMem m2 = vdc.dmdserver.semanalysis.xmem.foo(1234);
+	Enum* ee;
+}
+void goo()
+{
+	import std.file; 
+	XMem m;
+	vdc.dmdserver.semanalysis.foo3(m, 1234);
+	std.file.read("abc");
+}
+enum Enum
+{
+	En1, En2, En3
+}
+
+alias En1 = Enum.En1;
+enum EE = Enum.En2;
 alias object.Object E1;
 alias E2 = EE;
+alias E3 = E2;
 alias ET(T) = T.sizeof;   // Line 5
 enum msg = "huhu";
 
@@ -1374,3 +1476,5 @@ struct uda { int x; string y; }
 @uda(EE, msg) shared int x;
 
 import core.memory;
+static assert(__traits(compiles, () { Enum ee = En1; }));
+static assert(!__traits(compiles, () { Enum ee = En; }));
