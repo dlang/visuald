@@ -902,6 +902,44 @@ unittest
 	checkTip(m,  4,  6, "(field) `int source.S!int.member`");
 	checkTip(m,  6,  3, "(struct) `source.S!int`");
 
+	// scope statement in version caused crash
+	source = q{
+		void fun(uint p)
+		{
+			switch (p)
+			{                            // Line 5
+				case 1:
+					version(all)
+					{
+						{
+							int x = 4;   // Line 10
+							int y = 3;
+						}
+					}
+					else
+					{
+						{
+							int y = 3;
+						}
+					}
+				default:
+			}
+		}
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkReferences(m,  10, 12, [TextPos(10, 12)]); // x
+
+	exp2 = [
+		"all": [IdTypePos(TypeReferenceKind.VersionIdentifier)],
+		"p":   [IdTypePos(TypeReferenceKind.ParameterVariable)],
+		"y":   [IdTypePos(TypeReferenceKind.LocalVariable)],
+		"fun": [IdTypePos(TypeReferenceKind.Function)],
+		"x":   [IdTypePos(TypeReferenceKind.LocalVariable)],
+	];
+	checkIdentifierTypes(m, exp2);
+
 	// check for conditional not producing warning "unreachable code"
 	source = q{
 		void foo()
@@ -1160,6 +1198,33 @@ unittest
 	m = checkErrors(source, "");
 
 	checkReferences(m, 2, 12, [TextPos(2,12), TextPos(4, 18), TextPos(5, 26), TextPos(5, 15)]); // Object
+
+	// no semantics after error
+	source = q{
+		int abc;
+		void funky()
+		{
+			a = 1
+			if (a == 1)
+			{
+			}
+		}
+	};
+	m = checkErrors(source,
+		"6,3,6,4:Error: found `if` when expecting `;` following statement\n" ~
+		"6,9,6,10:Error: found `==` when expecting `)`\n" ~
+		"6,12,6,13:Error: missing `{ ... }` for function literal\n" ~
+		"6,12,6,13:Error: found `1` when expecting `;` following statement\n" ~
+		"6,13,6,14:Error: found `)` instead of statement\n" ~
+		"9,2,9,3:Error: unrecognized declaration\n" ~
+		"5,3,5,4:Error: undefined identifier `a`\n" ~
+		"6,6,6,7:Error: undefined identifier `a`\n");
+
+	exp2 = [
+		"abc":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+		"funky":           [ IdTypePos(TypeReferenceKind.Function) ],
+	];
+	checkIdentifierTypes(m, exp2);
 
 	///////////////////////////////////////////////////////////
 	// check array initializer
@@ -1478,3 +1543,13 @@ struct uda { int x; string y; }
 import core.memory;
 static assert(__traits(compiles, () { Enum ee = En1; }));
 static assert(!__traits(compiles, () { Enum ee = En; }));
+
+int abc;
+
+void funky()
+{
+	int a = 1;
+	if (a == 1)
+	{
+	}
+}
