@@ -23,6 +23,8 @@ import dmd.identifier;
 import dmd.semantic2;
 import dmd.semantic3;
 
+// debug version = traceGC;
+
 __gshared AnalysisContext lastContext;
 
 struct ModuleInfo
@@ -185,8 +187,10 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 }
 
 ////////////////////////////////////////////////////////////////
-//version = traceGC;
-//import tracegc;
+version (traceGC) import tracegc;
+
+extern(C) int _CrtDumpMemoryLeaks();
+extern(C) void dumpGC();
 extern(Windows) void OutputDebugStringA(const(char)* lpOutputString);
 
 string[] guessImportPaths()
@@ -201,6 +205,35 @@ string[] guessImportPaths()
 }
 
 unittest
+{
+	version(traceGC)
+	{
+		import core.memory;
+		import std.stdio;
+		GC.collect();
+		writeln(GC.stats);
+		dumpGC();
+
+		do_unittests();
+
+		writeln(GC.stats);
+
+		lastContext = null;
+		dmdInit();
+		dmdReinit();
+
+		wipeStack();
+		GC.collect();
+		auto stats = GC.stats;
+		writeln(stats);
+		//if (stats.usedSize > 2_000_000)
+			dumpGC();
+	}
+	else
+		do_unittests();
+}
+
+void do_unittests()
 {
 	import core.memory;
 
@@ -342,16 +375,6 @@ unittest
 	};
 	m = checkErrors(source, "4,10,4,11:Error: undefined identifier `abc`\n");
 
-	version(traceGC)
-	{
-		wipeStack();
-		GC.collect();
-	}
-
-	//_CrtDumpMemoryLeaks();
-	version(traceGC)
-		dumpGC();
-
 	source = q{
 		import std.stdio;
 		int main(string[] args)
@@ -366,6 +389,7 @@ unittest
 	{
 		m = checkErrors(source, "");
 
+		version(none)
 		version(traceGC)
 		{
 			wipeStack();
@@ -373,14 +397,13 @@ unittest
 
 			//_CrtDumpMemoryLeaks();
 			//dumpGC();
-		}
 
-		//core.memory.GC.Stats stats = GC.stats();
-		//trace_printf("GC stats: %lld MB used, %lld MB free\n", cast(long)stats.usedSize >> 20, cast(long)stats.freeSize >> 20);
+			core.memory.GC.Stats stats = GC.stats();
+			trace_printf("GC stats: %lld MB used, %lld MB free\n", cast(long)stats.usedSize >> 20, cast(long)stats.freeSize >> 20);
 
-		version(traceGC)
 			if (stats.usedSize > (200 << 20))
 				dumpGC();
+		}
 	}
 
 	checkTip(m, 5, 8, "(local variable) `int xyz`");
@@ -389,12 +412,6 @@ unittest
 	checkTip(m, 5, 11, "");
 	checkTip(m, 6, 8, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
 	checkTip(m, 7, 11, "(local variable) `int xyz`");
-
-	version(traceGC)
-	{
-		wipeStack();
-		GC.collect();
-	}
 
 	checkDefinition(m, 7, 11, "source.d", 5, 8); // xyz
 
@@ -1405,7 +1422,6 @@ unittest
 
 	// TODO: checkTip(m, 3, 18, "(enum) `tok.TOK`");
 	checkTip(m, 5, 19, "(constant global) `const(uint) shell.VSITEMID_NIL`");
-	lastContext = null;
 }
 
 unittest

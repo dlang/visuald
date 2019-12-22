@@ -13,6 +13,8 @@ import vdc.dmdserver.semvisitor;
 import vdc.dmdserver.semanalysis;
 
 version(MAIN) {} else version = noServer;
+// debug version = traceGC;
+version = SingleThread;
 
 version(noServer):
 import vdc.ivdserver;
@@ -52,8 +54,6 @@ import stdext.string;
 import stdext.array;
 import stdext.path;
 
-version = SingleThread;
-
 //import std.stdio;
 import std.ascii;
 import std.parallelism;
@@ -73,10 +73,9 @@ import core.stdc.stdlib;
 import core.stdc.string;
 import core.stdc.wchar_;
 
-//version = traceGC;
 version (traceGC) import tracegc;
 
-version = DebugServer;
+debug version = DebugServer;
 //debug version = vdlog; // log through visual D logging (needs version = InProc in vdserverclient)
 
 shared(Object) gDMDSync = new Object; // no multi-instances/multi-threading with DMD

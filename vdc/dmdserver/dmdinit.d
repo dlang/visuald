@@ -308,6 +308,7 @@ void dmdReinit()
 
 	// assume object.d unmodified otherwis
 	Module.moduleinfo = null;
+	dmd.compiler.rootHasMain = null;
 
 	ClassDeclaration.object = null;
 	ClassDeclaration.throwable = null;
@@ -345,6 +346,7 @@ void dmdReinit()
 	Module.deferred2 = Dsymbols();   // deferred Dsymbol's needing semantic2() run on them
 	Module.deferred3 = Dsymbols();   // deferred Dsymbol's needing semantic3() run on them
 	Module.dprogress = 0;      // progress resolving the deferred list
+	Module.rootModule = null;
 
 	dinterpret_init();
 

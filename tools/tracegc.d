@@ -4,7 +4,7 @@ import core.stdc.string;
 import core.time;
 import core.stdc.stdio;
 
-//version = traceGC;
+// debug version = traceGC;
 
 // tiny helper to clear a page of the stack below the current stack pointer to avoid false pointers there
 void wipeStack()
@@ -214,7 +214,7 @@ bool validFilename(const(char)* fn)
 		r"\dmd\root\outbuffer.d",
 		r"\dmd\root\stringtable.d",
 		r"\stdext\com.d",
-		r"\ddmdrmem.d",
+		r"\dmdrmem.d",
 	];
 	foreach (ex; excl)
 		if (flen > ex.length && fn[flen - ex.length .. flen] == ex)
@@ -1006,9 +1006,11 @@ void dumpGC(GC _gc)
 		trace_printf("Sum of free memory: %lld bytes\n", cast(long)freeSize);
 	}
 
+	trace_printf("=== GC objects:\n");
 	dumpObjectAddrs();
 	dumpAddrInfoStat();
 
+	trace_printf("=== GC roots:\n");
 	foreach(root; _gc.rootIter)
 	{
 		if (auto te = tracer.traceBuffer.findTraceEntry(traceMap, root))
@@ -1024,6 +1026,10 @@ void dumpGC(GC _gc)
 		else
 			trace_printf("<unknown-address>: root %p\n", root);
 	}
+
+	import core.sys.windows.dbghelp;
+	auto dbghelp = DbgHelp.get();
+	HANDLE hProcess = GetCurrentProcess();
 
 	void dumpRange(void *pbot, void *ptop) scope nothrow
 	{
@@ -1086,17 +1092,32 @@ void dumpGC(GC _gc)
 				trace_printf("<unknown-gc-address>: @range+%llx %p", cast(long)(cast(void*)p - pbot), root);
 			}
 
+			DWORD64 disp;
+			char[300] symbuf;
+			auto sym = cast(IMAGEHLP_SYMBOLA64*) symbuf.ptr;
+			sym.SizeOfStruct = IMAGEHLP_SYMBOLA64.sizeof;
+			sym.MaxNameLength = 300 - IMAGEHLP_SYMBOLA64.sizeof;
+
+			try
+			{
+				if (dbghelp.SymGetSymFromAddr64(hProcess, cast(size_t)p, &disp, sym))
+					trace_printf("    sym %s + %lld", sym.Name.ptr, disp);
+			} catch(Exception) {}
+
 			if (root != base)
 				trace_printf(" base %p\n", base);
 			else
 				trace_printf("\n");
 		}
 	}
+
+	trace_printf("=== GC ranges:\n");
 	foreach(range; _gc.rangeIter)
 	{
 		dumpRange(range.pbot, range.ptop);
 	}
 
+	trace_printf("=== stack ranges:\n");
 	wipeStack(); // remove anything that might be left by iterating through the GC
 	thread_scanAll(&dumpRange);
 
@@ -1192,10 +1213,6 @@ void findRoot(void* sobj)
 	const(void*) minAddr = cgc.gcx.pooltable.minAddr;
 	const(void*) maxAddr = cgc.gcx.pooltable.maxAddr;
 
-	import core.sys.windows.dbghelp;
-	auto dbghelp = DbgHelp.get();
-	HANDLE hProcess = GetCurrentProcess();
-
 	char[256] buf;
 nextLoc:
 	for ( ; ; )
@@ -1246,6 +1263,10 @@ nextLoc:
 			auto sym = cast(IMAGEHLP_SYMBOLA64*) symbuf.ptr;
 			sym.SizeOfStruct = IMAGEHLP_SYMBOLA64.sizeof;
 			sym.MaxNameLength = 300 - IMAGEHLP_SYMBOLA64.sizeof;
+
+			import core.sys.windows.dbghelp;
+			auto dbghelp = DbgHelp.get();
+			HANDLE hProcess = GetCurrentProcess();
 
 			if (dbghelp.SymGetSymFromAddr64(hProcess, cast(size_t)*psrc, &disp, sym))
 				xtrace_printf("    sym %s + %lld\n", sym.Name.ptr, disp);

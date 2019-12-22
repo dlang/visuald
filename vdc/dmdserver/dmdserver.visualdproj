@@ -1398,7 +1398,7 @@
   <ccTransOpt>1</ccTransOpt>
   <addDepImp>1</addDepImp>
   <program>c:\s\d\rainers\windows\bin\dmd.exe</program>
-  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src $(DMDInstallDir)\druntime\src</imppath>
+  <imppath>dmd\src ..\.. $(DMDInstallDir)\src\druntime\src c:\s\d\dlang\druntime\src</imppath>
   <fileImppath>dmd dmd\res</fileImppath>
   <outdir>..\..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
