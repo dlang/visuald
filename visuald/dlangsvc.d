@@ -222,12 +222,15 @@ class LanguageService : DisposingComObject,
 
 	override HRESULT GetFileExtensions(BSTR* pbstrExtensions)
 	{
-		return E_NOTIMPL;
+		wstring ext = join(g_languageFileExtensions, ";");
+		*pbstrExtensions = allocwBSTR(ext);
+		return S_OK;
 	}
 
 	override HRESULT GetLanguageName(BSTR* bstrName)
 	{
-		return E_NOTIMPL;
+		*bstrName = allocwBSTR(g_languageName);
+		return S_OK;
 	}
 
 	// IVsLanguageDebugInfo //////////////////////////////////////
@@ -593,6 +596,12 @@ class LanguageService : DisposingComObject,
 			if (!showErrors && src.mParseErrors.length)
 				src.updateParseErrors(null);
 		}
+	}
+
+	void RestartParser()
+	{
+		foreach(src; mSources)
+			src.mModificationCount++;
 	}
 
 	// IVsOutliningCapableLanguage ///////////////////////////////
