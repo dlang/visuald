@@ -666,6 +666,43 @@ void do_unittests()
 	q{                                   // Line 1
 		struct S
 		{
+			int field1 = 1;
+			int field2 = 2;              // Line 5
+			int fun(int par) { return field1 + par; }
+			int more = 3;
+		}
+		void foo()
+		{                                // Line 10
+			S anS;
+			if (anS.fool == 1) {}
+		}
+	};
+	m = checkErrors(source,
+					"12,11,12,12:Error: no property `fool` for type `S`\n");
+	//dumpAST(m);
+	checkExpansions(m, 12, 12, "f", [ "field1", "field2", "fun" ]);
+
+	source =
+	q{                                   // Line 1
+		class C
+		{
+			int toDebug() { return 0; }
+		}                                // Line 5
+		void foo()
+		{
+			C c = new C;
+			c.toString();
+			if (c.toDebug()) {}          // Line 10
+		}
+	};
+	m = checkErrors(source, "");
+	checkExpansions(m,  9,  6, "to", [ "toString", "toHash", "toDebug" ]);
+	checkExpansions(m, 10, 10, "to", [ "toString", "toHash", "toDebug" ]);
+
+	source =
+	q{                                   // Line 1
+		struct S
+		{
 			int fun(int par) { return par; }
 		}                                // Line 5
 		void fun(int rec)
@@ -1488,12 +1525,13 @@ void dummy()
 	int[] arr;
 	auto s = arr.ptr;
 	auto y = arr.length;
-	auto my = arr.mangleof;
-	auto zi = size_t.init;
-	auto z0 = size_t.min;
-	auto z1 = size_t.max;
-	auto z2 = size_t.alignof;
-	auto z3 = size_t.stringof;
+	enum my = arr.mangleof;
+	enum zi = size_t.init;
+	enum z0 = size_t.min;
+	enum z1 = size_t.max;
+	enum z2 = size_t.alignof;
+	enum z3 = size_t.stringof;
+	enum z4 = size_t.mangleof;
 	cfloat flt = cfloat.nan;
 	auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity,
 			  flt.re, flt.im, flt.min_normal, flt.min_10_exp];
@@ -1554,7 +1592,7 @@ enum msg = "huhu";
 
 @nogc:
 struct uda { int x; string y; }
-@uda(EE, msg) shared int x;
+@EE @uda(EE, msg) shared int x;
 
 import core.memory;
 static assert(__traits(compiles, () { Enum ee = En1; }));

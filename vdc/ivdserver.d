@@ -120,6 +120,8 @@ public:
 	// stringList: a new-line delimited list of expansions
 	//
 	// return S_FALSE as long as the semantic analysis is still running
+	//
+	// format of each line: name:type:description
 	HRESULT GetSemanticExpansionsResult(BSTR* stringList);
 
 	// not used

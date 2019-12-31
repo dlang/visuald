@@ -888,7 +888,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			if (de.ident)
 				if (matchIdentifier(de.identloc, de.ident))
 				{
-					if (!de.type && de.resolvedTo)
+					if (!de.type && de.resolvedTo && !de.resolvedTo.isErrorExp())
 						foundResolved(de.resolvedTo);
 					else
 						foundNode(de);
@@ -1477,6 +1477,8 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			auto ident = decl.ident;
 			if (auto func = decl.isFuncDeclaration())
 			{
+				if (func.isFuncLiteralDeclaration())
+					return; // ignore generated identifiers
 				auto p = decl.toParent2;
 				if (p && p.isAggregateDeclaration)
 					addIdent(loc, ident, TypeReferenceKind.Method);
@@ -1938,6 +1940,52 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+string symbol2ExpansionType(Dsymbol sym)
+{
+	if (sym.isInterfaceDeclaration())
+		return "IFAC";
+	if (sym.isClassDeclaration())
+		return "CLSS";
+	if (sym.isUnionDeclaration())
+		return "UNIO";
+	if (sym.isStructDeclaration())
+		return "STRU";
+	if (sym.isEnumDeclaration())
+		return "ENUM";
+	if (sym.isEnumMember())
+		return "EVAL";
+	if (sym.isAliasDeclaration())
+		return "ALIA";
+	if (sym.isTemplateDeclaration())
+		return "TMPL";
+	if (sym.isTemplateMixin())
+		return "NMIX";
+	if (sym.isModule())
+		return "MOD";
+	if (sym.isPackage())
+		return "PKG";
+	if (sym.isFuncDeclaration())
+	{
+		auto p = sym.toParent2;
+		return p && p.isAggregateDeclaration ? "MTHD" : "FUNC";
+	}
+	if (sym.isVarDeclaration())
+	{
+		auto p = sym.toParent2;
+		return p && p.isAggregateDeclaration ? "PROP" : "VAR"; // "SPRP"?
+	}
+	if (sym.isOverloadSet())
+		return "OVR";
+	return "TEXT";
+}
+
+string symbol2ExpansionLine(Dsymbol sym)
+{
+	string type = symbol2ExpansionType(sym);
+	string tip = tipForObject(sym);
+	return type ~ ":" ~ tip.replace("\n", "\a");
+}
+
 string[] findExpansions(Module mod, int line, int index, string tok)
 {
 	auto filename = mod.srcfile.toChars();
@@ -1951,24 +1999,30 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	Type type = fdv.found.isType();
 	if (auto e = fdv.found.isExpression())
 	{
-		switch(e.op)
+		Type getType(Expression e, bool recursed)
 		{
-			case TOK.variable:
-			case TOK.symbolOffset:
-				//type = (cast(SymbolExp)e).var.type;
-				break;
-			case TOK.dotVariable:
-			case TOK.dotIdentifier:
-				type = (cast(UnaExp)e).e1.type;
-				flags |= SearchLocalsOnly;
-				break;
-			case TOK.dot:
-				type = (cast(DotExp)e).e1.type;
-				flags |= SearchLocalsOnly;
-				break;
-			default:
-				break;
+			switch(e.op)
+			{
+				case TOK.variable:
+				case TOK.symbolOffset:
+					if(recursed)
+						return (cast(SymbolExp)e).var.type;
+					return null;
+
+				case TOK.dotVariable:
+				case TOK.dotIdentifier:
+					flags |= SearchLocalsOnly;
+					return getType((cast(UnaExp)e).e1, true);
+
+				case TOK.dot:
+					flags |= SearchLocalsOnly;
+					return (cast(DotExp)e).e1.type;
+				default:
+					return recursed ? e.type : null;
+			}
 		}
+		if (auto t = getType(e, false))
+			type = t;
 	}
 
 	auto sds = fdv.foundScope;
@@ -1977,6 +2031,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			sds = sym;
 
 	string[void*] idmap; // doesn't work with extern(C++) classes
+
 	void searchScope(ScopeDsymbol sds, int flags)
 	{
 		static Dsymbol uplevel(Dsymbol s)
@@ -1986,8 +2041,8 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			return s.toParent;
 		}
 		// TODO: properties
-		// TODO: base classes
 		// TODO: struct/class not going to parent if accessed from elsewhere (but does if nested)
+
 		for (Dsymbol ds = sds; ds; ds = uplevel(ds))
 		{
 			ScopeDsymbol sd = ds.isScopeDsymbol();
@@ -2002,10 +2057,23 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 					//Dsymbol s = pair.value;
 					if (!symbolIsVisible(mod, s))
 						continue;
-					auto ident = /*pair.*/(cast(Dsymbol)key).toString();
+					auto ident = /*pair.*/(cast(Identifier)key).toString();
 					if (ident.startsWith(tok))
 						idmap[cast(void*)s] = ident.idup;
 				}
+			}
+
+			// base classes
+			if (auto cd = ds.isClassDeclaration())
+			{
+				if (auto bcs = cd.baseclasses)
+					foreach (bc; *bcs)
+					{
+						int sflags = 0;
+						if (bc.sym.getModule() == mod)
+							sflags |= IgnoreSymbolVisibility;
+						searchScope(bc.sym, sflags);
+					}
 			}
 
 			// TODO: alias this
@@ -2041,7 +2109,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 
 	string[] idlist;
 	foreach(sym, id; idmap)
-		idlist ~= id ~ ":" ~ cast(string) (cast(Dsymbol)sym).toString();
+		idlist ~= id ~ ":" ~ symbol2ExpansionLine(cast(Dsymbol)sym);
 	return idlist;
 }
 
