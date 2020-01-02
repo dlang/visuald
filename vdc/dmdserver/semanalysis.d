@@ -656,7 +656,7 @@ void do_unittests()
 	m = checkErrors(source,
 		"14,2,14,3:Error: identifier or `new` expected following `.`, not `}`\n" ~
 		"14,2,14,3:Error: semicolon expected, not `}`\n" ~
-		"12,15,12,16:Error: no property `f` for type `S`\n");
+		"12,15,12,16:Error: no property `f` for type `source.S`\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
 	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
@@ -678,7 +678,7 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source,
-					"12,11,12,12:Error: no property `fool` for type `S`\n");
+					"12,11,12,12:Error: no property `fool` for type `source.S`\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 12, "f", [ "field1", "field2", "fun" ]);
 
