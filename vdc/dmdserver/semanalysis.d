@@ -246,6 +246,7 @@ void do_unittests()
 	opts.x64 = true;
 	opts.msvcrt = true;
 	opts.warnings = true;
+	opts.noDeprecated = true;
 	opts.unittestOn = true;
 	opts.importDirs = guessImportPaths();
 
@@ -976,6 +977,7 @@ void do_unittests()
 							int y = 3;
 						}
 					}
+					break;
 				default:
 			}
 		}
@@ -1236,6 +1238,21 @@ void do_unittests()
 	checkTip(m,  4, 13, "(struct) `source.uda`");
 
 	checkReferences(m, 2, 10, [TextPos(2, 10), TextPos(3, 4), TextPos(4, 13)]); // uda
+
+	// deprecation
+	source = q{
+		deprecated void dep() {}
+		void foo()
+		{
+			dep();
+			source.dep();
+		}
+	};
+	m = checkErrors(source,
+					"5,3,5,4:Deprecation: function `source.dep` is deprecated\n" ~
+					"6,10,6,11:Deprecation: function `source.dep` is deprecated\n" ~
+					"6,10,6,11:Deprecation: function `source.dep` is deprecated\n");
+	//dumpAST(m);
 
 	// type references
 	source = q{

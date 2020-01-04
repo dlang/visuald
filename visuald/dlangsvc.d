@@ -1056,8 +1056,9 @@ class LanguageService : DisposingComObject,
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.boundscheck == 3,
 									  cfgopts.compiler == Compiler.GDC,
 									  cfgopts.versionlevel, cfgopts.debuglevel,
-									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,
-									  cfgopts.useMSVCRT (), cfgopts.warnings,
+									  !cfgopts.useDeprecated, !cfgopts.errDeprecated,
+									  cfgopts.compiler == Compiler.LDC,
+									  cfgopts.useMSVCRT (), cfgopts.warnings, !cfgopts.infowarnings,
 									  globopts.mixinAnalysis, globopts.UFCSExpansions);
 
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
@@ -4361,17 +4362,23 @@ else
 
 	void clearParseErrors()
 	{
-		IVsEnumLineMarkers pEnum;
-		if(mBuffer.EnumMarkers(0, 0, 0, 0, MARKER_CODESENSE_ERROR, EM_ENTIREBUFFER, &pEnum) == S_OK)
+		void removeMarkers(int type)
 		{
-			scope(exit) release(pEnum);
-			IVsTextLineMarker marker;
-			while(pEnum.Next(&marker) == S_OK)
+			IVsEnumLineMarkers pEnum;
+			if(mBuffer.EnumMarkers(0, 0, 0, 0, type, EM_ENTIREBUFFER, &pEnum) == S_OK)
 			{
-				marker.Invalidate();
-				marker.Release();
+				scope(exit) release(pEnum);
+				IVsTextLineMarker marker;
+				while(pEnum.Next(&marker) == S_OK)
+				{
+					marker.Invalidate();
+					marker.Release();
+				}
 			}
 		}
+		removeMarkers(MARKER_CODESENSE_ERROR);
+		removeMarkers(MARKER_OTHER_ERROR);
+		removeMarkers(MARKER_WARNING);
 	}
 
 	void finishParseErrors()
@@ -4390,7 +4397,7 @@ else
 			if (mParseErrors[i].msg.startsWith("Warning:") && (!opts || opts.infowarnings))
 				mtype = MARKER_WARNING;
 			else if (mParseErrors[i].msg.startsWith("Deprecation:") && (!opts || !opts.errDeprecated))
-				mtype = MARKER_WARNING;
+				mtype = MARKER_OTHER_ERROR;
 			else if (mParseErrors[i].msg.startsWith("Info:"))
 				mtype = MARKER_WARNING;
 			IVsTextLineMarker marker;

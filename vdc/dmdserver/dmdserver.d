@@ -245,7 +245,8 @@ class DMDServer : ComObject, IVDServer
 			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64,
 											  opts.coverage, opts.doDoc, opts.noBoundsCheck, opts.gdcCompiler,
 											  0, 0, // no need to compare version levels, done in setVersionIds
-											  opts.noDeprecated, opts.ldcCompiler, opts.msvcrt, opts.warnings,
+											  opts.noDeprecated, opts.deprecatedInfo,
+											  opts.ldcCompiler, opts.msvcrt, opts.warnings, opts.warnAsError,
 											  opts.mixinAnalysis, opts.UFCSExpansions);
 
 			opts.unittestOn     = (flags & 1) != 0;
@@ -256,11 +257,13 @@ class DMDServer : ComObject, IVDServer
 			opts.noBoundsCheck  = (flags & 32) != 0;
 			opts.gdcCompiler    = (flags & 64) != 0;
 			opts.noDeprecated   = (flags & 128) != 0;
+			opts.deprecatedInfo = (flags & 0x40_00_00_00) != 0;
 			opts.mixinAnalysis  = (flags & 0x1_00_00_00) != 0;
 			opts.UFCSExpansions = (flags & 0x2_00_00_00) != 0;
 			opts.ldcCompiler    = (flags & 0x4_00_00_00) != 0;
 			opts.msvcrt         = (flags & 0x8_00_00_00) != 0;
 			opts.warnings       = (flags & 0x10_00_00_00) != 0;
+			opts.warnAsError    = (flags & 0x20_00_00_00) != 0;
 
 			int versionlevel = (flags >> 8)  & 0xff;
 			int debuglevel   = (flags >> 16) & 0xff;
@@ -287,6 +290,28 @@ class DMDServer : ComObject, IVDServer
 		mSemanticProject.saveErrors = true;
 		+/
 		return S_OK;
+	}
+
+	extern(D) static void tryExec(void delegate() dg)
+	{
+		try
+		{
+			dg();
+		}
+		catch(OutOfMemoryError oom)
+		{
+			throw oom; // terminate
+		}
+		catch(Exception e)
+		{
+			version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ e.toString());
+		}
+		catch(Throwable t)
+		{
+			version(DebugServer) dbglog("UpdateModule.doParse: error " ~ t.toString());
+			if (t.msg != "fatal error") // fatal() is a non-fatal error
+				throw t; // terminate the server and let it be restarted
+		}
 	}
 
 	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags)
@@ -341,36 +366,21 @@ class DMDServer : ComObject, IVDServer
 			}
 			synchronized(gDMDSync)
 			{
-				try
+				tryExec(()
 				{
 					initErrorMessages(fname);
 					modData.parsedModule = createModuleFromText(fname, text);
-				}
-				catch(OutOfMemoryError e)
-				{
-					throw e; // terminate
-				}
-				catch(Throwable t)
-				{
-					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.toString());
-				}
-				modData.parseErrors = combinedErrorMessages();
+				});
 
+				modData.parseErrors = combinedErrorMessages();
 				modData.state = ModuleState.Analyzing;
-				try
+
+				tryExec(()
 				{
 					initErrorMessages(fname);
 					// clear all other semantic modules?
 					analyzeModules(modData);
-				}
-				catch(OutOfMemoryError e)
-				{
-					throw e; // terminate
-				}
-				catch(Throwable t)
-				{
-					version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ t.toString());
-				}
+				});
 				modData.analyzeErrors = combinedErrorMessages();
 				modData.state = ModuleState.Done;
 			}
@@ -1121,9 +1131,11 @@ unittest
 								   0,     //int versionLevel,
 								   0,     //int debugLevel,
 								   false, //bool noDeprecated,
+								   false, //bool deprecatedInfo,
 								   false, //bool ldc,
 								   true,  //bool msvcrt,
 								   false, //bool warnings,
+								   false, //bool warnAsError,
 								   true,  //bool mixinAnalysis,
 								   true); //bool ufcsExpansionsfalse,
 

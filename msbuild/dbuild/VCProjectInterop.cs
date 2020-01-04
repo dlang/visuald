@@ -40,7 +40,8 @@ namespace vdextensions
     {
         ///////////////////////////////////////////////////////////////////////
         static int ConfigureFlags(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
-                                  int versionLevel, int debugLevel, bool noDeprecated, bool ldc, bool warnings)
+                                  int versionLevel, int debugLevel, bool noDeprecated, bool deprecateInfo,
+                                  bool ldc, bool warnings, bool warnAsError)
         {
             return (unittestOn ? 1 : 0)
                 | (debugOn ? 2 : 0)
@@ -50,10 +51,12 @@ namespace vdextensions
                 | (nobounds ? 32 : 0)
                 | (gdc ? 64 : 0)
                 | (noDeprecated ? 128 : 0)
+                | (deprecateInfo ? 0x40000000 : 0)
                 | ((versionLevel & 0xff) << 8)
                 | ((debugLevel & 0xff) << 16)
                 | (ldc ? 0x4000000 : 0)
-                | (warnings ? 0x10000000 : 0);
+                | (warnings ? 0x10000000 : 0)
+                | (warnAsError ? 0x20000000 : 0);
         }
 
 
@@ -207,13 +210,16 @@ namespace vdextensions
             bool cov = vcprop.GetEvaluatedPropertyValue("Coverage") == "true";
             bool doc = vcprop.GetEvaluatedPropertyValue("DocDir") != "" || vcprop.GetEvaluatedPropertyValue("DocFile") != "";
             bool nobounds = vcprop.GetEvaluatedPropertyValue("BoundsCheck") == "On";
-            bool noDeprecated = vcprop.GetEvaluatedPropertyValue("Deprecations") == "Error";
+            bool noDeprecated = vcprop.GetEvaluatedPropertyValue("Deprecations") != "Allow";
+            bool deprecatedInfo = vcprop.GetEvaluatedPropertyValue("Deprecations") == "Info";
             bool warnings = vcprop.GetEvaluatedPropertyValue("Warnings") != "None";
+            bool warnAsError = vcprop.GetEvaluatedPropertyValue("Warnings") == "Error";
             bool gdc = false;
             int versionLevel = 0;
             int debugLevel = 0;
             flags = (uint)ConfigureFlags(unittestOn, debugOn, x64, cov, doc, nobounds, gdc,
-                                         versionLevel, debugLevel, noDeprecated, ldc, warnings);
+                                         versionLevel, debugLevel, noDeprecated, deprecatedInfo,
+                                         ldc, warnings, warnAsError);
         }
 
 

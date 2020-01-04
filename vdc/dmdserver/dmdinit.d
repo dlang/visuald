@@ -164,6 +164,7 @@ struct Options
 	bool x64;
 	bool msvcrt;
 	bool warnings;
+	bool warnAsError;
 	bool debugOn;
 	bool coverage;
 	bool doDoc;
@@ -171,6 +172,7 @@ struct Options
 	bool gdcCompiler;
 	bool ldcCompiler;
 	bool noDeprecated;
+	bool deprecatedInfo;
 	bool mixinAnalysis;
 	bool UFCSExpansions;
 
@@ -243,8 +245,10 @@ void dmdSetupParams(const ref Options opts)
 	global.params.useInline = false;
 	global.params.ignoreUnsupportedPragmas = opts.ldcCompiler;
 	global.params.obj = false;
-	global.params.useDeprecated = opts.noDeprecated ? DiagnosticReporting.error : DiagnosticReporting.off;
-	global.params.warnings = opts.warnings ? DiagnosticReporting.inform : DiagnosticReporting.off;
+	global.params.useDeprecated = !opts.noDeprecated ? DiagnosticReporting.off
+		: opts.deprecatedInfo ? DiagnosticReporting.inform : DiagnosticReporting.error ;
+	global.params.warnings = !opts.warnings ? DiagnosticReporting.off
+		: opts.warnAsError ? DiagnosticReporting.error : DiagnosticReporting.inform;
 	global.params.linkswitches = Strings();
 	global.params.libfiles = Strings();
 	global.params.dllfiles = Strings();
