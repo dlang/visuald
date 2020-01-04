@@ -139,8 +139,7 @@
     </EnumProperty>
     <EnumProperty Name="DebugInfo" Category="Code Generation" DisplayName="Debug Info" Description="generate debug information.">
       <EnumValue Name="None" DisplayName="None" />
-      <EnumValue Name="VS" DisplayName="For VS debug engines" Switch="-gc" />
-      <EnumValue Name="Mago" DisplayName="For D debug engines (mago)" Switch="-g" />
+      <EnumValue Name="Mago" DisplayName="Enable Debug Information Generation" Switch="-g" />
     </EnumProperty>
     <BoolProperty Name="EnableDebugMixin" Category="Code Generation" DisplayName="Enable Mixin Debugging"
                   Description="expand and save mixins to specified file." />
