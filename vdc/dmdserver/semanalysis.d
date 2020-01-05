@@ -701,6 +701,24 @@ void do_unittests()
 	checkExpansions(m, 10, 10, "to", [ "toString", "toHash", "toDebug" ]);
 
 	source =
+		q{                                   // Line 1
+			class C
+			{
+				int toDebug() { return 0; }
+			}                                // Line 5
+			void foo()
+			{
+				C c = new C;
+				if (c.to
+			}                                // Line 10
+		};
+		m = checkErrors(source, "10,3,10,4:Error: found `}` when expecting `)`\n" ~
+								"10,3,10,4:Error: found `}` instead of statement\n" ~
+								"9,10,9,11:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
+		dumpAST(m);
+		checkExpansions(m,  9,  11, "to", [ "toString", "toHash", "toDebug" ]);
+
+		source =
 	q{                                   // Line 1
 		struct S
 		{
