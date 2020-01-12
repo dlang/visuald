@@ -702,7 +702,8 @@ void dumpAddr(AddrTracePair[] traceMap, void* addr, size_t size)
 	else
 		filename = "<unknown address>: ";
 
-	trace_printf("%s(%d): %p %llx\n", filename, line, addr, cast(long) size);
+	auto xtra = dumpExtra(addr);
+	trace_printf("%s(%d): %p %llx%.*s\n", filename, line, addr, cast(long) size, cast(int)xtra.length, xtra.ptr);
 }
 
 struct AddrInfoStat
@@ -755,6 +756,107 @@ void dumpAddrInfoStat()
 HashTab!(void*, void*)**pp_references;
 
 ///////////////////////////////////////////////////////////////
+__gshared void** modvtbl;
+__gshared void** aliasdeclvtbl;
+__gshared void** funcdeclvtbl;
+__gshared void** vardeclvtbl;
+__gshared void** structdeclvtbl;
+__gshared void** classdeclvtbl;
+__gshared void** ifacedeclvtbl;
+__gshared void** enumdeclvtbl;
+__gshared void** enummembervtbl;
+__gshared void** tmpldeclvtbl;
+__gshared void** tmplinstvtbl; // package
+
+shared static this()
+{
+	import dmd.dmodule;
+	import dmd.declaration;
+	import dmd.func;
+	import dmd.dclass;
+	import dmd.denum;
+	import dmd.dstruct;
+	import dmd.dtemplate;
+
+	void** getVtbl(T)() { return *cast(void***)typeid(T).initializer().ptr; }
+	modvtbl        = getVtbl!Module;
+	aliasdeclvtbl  = getVtbl!AliasDeclaration;
+	funcdeclvtbl   = getVtbl!FuncDeclaration;
+	vardeclvtbl    = getVtbl!VarDeclaration;
+	structdeclvtbl = getVtbl!StructDeclaration;
+	classdeclvtbl  = getVtbl!ClassDeclaration;
+	ifacedeclvtbl  = getVtbl!InterfaceDeclaration;
+	enumdeclvtbl   = getVtbl!EnumDeclaration;
+	enummembervtbl = getVtbl!EnumMember;
+	tmpldeclvtbl   = getVtbl!TemplateDeclaration;
+	tmplinstvtbl   = getVtbl!TemplateInstance;
+}
+
+char[] dumpExtra(void* p)
+{
+	import dmd.dmodule;
+	import dmd.dsymbol;
+	import dmd.identifier;
+	import vdc.dmdserver.semanalysis;
+
+	static bool isLive(Module m)
+	{
+		foreach (ref md; lastContext.modules)
+			if (m is md.parsedModule || m is md.semanticModule)
+				return true;
+		foreach (mod; Module.amodules)
+			if (m is mod)
+				return true;
+		return false;
+	}
+
+	__gshared char[256] buf;
+	void** vtbl = *cast(void***)p;
+	if (vtbl is modvtbl)
+	{
+		Module m = cast(Module)p;
+		if (!isLive(m))
+		{
+			Identifier ident = m.ident;
+			auto len = snprintf(buf.ptr, buf.length, "stale Module %.*s", cast(int) ident.toString().length, ident.toString().ptr);
+			return buf[0..len];
+		}
+	}
+	else
+	{
+		if (vtbl is aliasdeclvtbl || vtbl is funcdeclvtbl || vtbl is vardeclvtbl ||
+			vtbl is structdeclvtbl || vtbl is classdeclvtbl || vtbl is ifacedeclvtbl ||
+			vtbl is enumdeclvtbl || vtbl is enummembervtbl ||
+			vtbl is tmpldeclvtbl || vtbl is tmplinstvtbl)
+		{
+			auto sym = cast(Dsymbol)p;
+			const(char)* cat;
+			if (auto m = sym.getModule())
+			{
+				if (!isLive(m))
+					cat = "stale";
+			}
+			else
+			{
+				cat = "detached";
+			}
+			if (cat)
+			{
+				Identifier ident = sym.ident;
+				auto name = ident ? ident.toString() : "<anonymous>";
+				auto len = snprintf(buf.ptr, buf.length, "%s %s %.*s", cat, sym.kind(), cast(int) name.length, name.ptr);
+				if (len >= buf.length)
+					return buf[0..$-1];
+				else
+					return buf[0..len];
+			}
+		}
+
+	}
+	return null;
+}
+
+///////////////////////////////////////////////////////////////
 import rt.util.container.hashtab;
 
 alias ScanRange = Gcx.ScanRange!false;
@@ -767,10 +869,255 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	cgc.gcLock.lock();
 	auto pooltable = gcx.pooltable;
 
+    Gcx.ToScanStack!(Gcx.ScanRange!false) toscanConservative;
+    Gcx.ToScanStack!(Gcx.ScanRange!true) toscanPrecise;
+
+    template scanStack(bool precise)
+    {
+        static if (precise)
+            alias scanStack = toscanPrecise;
+        else
+            alias scanStack = toscanConservative;
+    }
+
+    /**
+	* Search a range of memory values and mark any pointers into the GC pool.
+	*/
+    void mark(bool precise)(Gcx.ScanRange!precise rng) scope nothrow
+    {
+        alias toscan = scanStack!precise;
+
+        debug(MARK_PRINTF)
+            printf("marking range: [%p..%p] (%#llx)\n", pbot, ptop, cast(long)(ptop - pbot));
+
+        // limit the amount of ranges added to the toscan stack
+        enum FANOUT_LIMIT = 32;
+        size_t stackPos;
+        Gcx.ScanRange!precise[FANOUT_LIMIT] stack = void;
+
+        size_t pcache = 0;
+
+        const highpool = pooltable.length - 1;
+        const minAddr = pooltable.minAddr;
+        size_t memSize = pooltable.maxAddr - minAddr;
+        Pool* pool = null;
+
+        // properties of allocation pointed to
+        Gcx.ScanRange!precise tgt = void;
+
+        for (;;)
+        {
+            auto p = *cast(void**)(rng.pbot);
+
+            debug(MARK_PRINTF) printf("\tmark %p: %p\n", rng.pbot, p);
+
+            if (cast(size_t)(p - minAddr) < memSize &&
+                (cast(size_t)p & ~cast(size_t)(PAGESIZE-1)) != pcache)
+            {
+                static if (precise) if (rng.pbase)
+                {
+                    size_t bitpos = cast(void**)rng.pbot - rng.pbase;
+                    while (bitpos >= rng.bmplength)
+                    {
+                        bitpos -= rng.bmplength;
+                        rng.pbase += rng.bmplength;
+                    }
+                    import core.bitop;
+                    if (!core.bitop.bt(rng.ptrbmp, bitpos))
+                    {
+                        debug(MARK_PRINTF) printf("\t\tskipping non-pointer\n");
+                        goto LnextPtr;
+                    }
+                }
+
+                if (!pool || p < pool.baseAddr || p >= pool.topAddr)
+                {
+                    size_t low = 0;
+                    size_t high = highpool;
+                    while (true)
+                    {
+                        size_t mid = (low + high) >> 1;
+                        pool = pooltable[mid];
+                        if (p < pool.baseAddr)
+                            high = mid - 1;
+                        else if (p >= pool.topAddr)
+                            low = mid + 1;
+                        else break;
+
+                        if (low > high)
+                            goto LnextPtr;
+                    }
+                }
+                size_t offset = cast(size_t)(p - pool.baseAddr);
+                size_t biti = void;
+                size_t pn = offset / PAGESIZE;
+                size_t bin = pool.pagetable[pn]; // not Bins to avoid multiple size extension instructions
+				void* base;
+
+                debug(MARK_PRINTF)
+                    printf("\t\tfound pool %p, base=%p, pn = %lld, bin = %d\n", pool, pool.baseAddr, cast(long)pn, bin);
+
+                // Adjust bit to be at start of allocated memory block
+                if (bin < B_PAGE)
+                {
+                    // We don't care abou setting pointsToBase correctly
+                    // because it's ignored for small object pools anyhow.
+                    auto offsetBase = baseOffset(offset, cast(Bins)bin);
+                    biti = offsetBase >> Pool.ShiftBy.Small;
+                    //debug(PRINTF) printf("\t\tbiti = x%x\n", biti);
+
+                    if (!pool.mark.testAndSet!false(biti) && !pool.noscan.test(biti))
+                    {
+						base = pool.baseAddr + offsetBase;
+						references[base] = rng.pbot;
+						objects[base] = binsize[bin];
+
+                        tgt.pbot = pool.baseAddr + offsetBase;
+                        tgt.ptop = tgt.pbot + binsize[bin];
+                        static if (precise)
+                        {
+                            tgt.pbase = cast(void**)pool.baseAddr;
+                            tgt.ptrbmp = pool.is_pointer.data;
+                            tgt.bmplength = size_t.max; // no repetition
+                        }
+                        goto LaddRange;
+                    }
+                }
+                else if (bin == B_PAGE)
+                {
+                    biti = offset >> Pool.ShiftBy.Large;
+                    //debug(PRINTF) printf("\t\tbiti = x%x\n", biti);
+
+                    pcache = cast(size_t)p & ~cast(size_t)(PAGESIZE-1);
+                    tgt.pbot = cast(void*)pcache;
+
+                    // For the NO_INTERIOR attribute.  This tracks whether
+                    // the pointer is an interior pointer or points to the
+                    // base address of a block.
+                    if (tgt.pbot != sentinel_sub(p) && pool.nointerior.nbits && pool.nointerior.test(biti))
+                        goto LnextPtr;
+
+                    if (!pool.mark.testAndSet!false(biti) && !pool.noscan.test(biti))
+                    {
+						base = pool.baseAddr + (offset & ~cast(size_t)(PAGESIZE-1));
+						references[base] = rng.pbot;
+						objects[base] = (cast(LargeObjectPool*)pool).getSize(pn);
+
+                        tgt.ptop = tgt.pbot + (cast(LargeObjectPool*)pool).getSize(pn);
+                        goto LaddLargeRange;
+                    }
+                }
+                else if (bin == B_PAGEPLUS)
+                {
+                    pn -= pool.bPageOffsets[pn];
+                    biti = pn * (PAGESIZE >> Pool.ShiftBy.Large);
+
+                    pcache = cast(size_t)p & ~cast(size_t)(PAGESIZE-1);
+                    if (pool.nointerior.nbits && pool.nointerior.test(biti))
+                        goto LnextPtr;
+
+                    if (!pool.mark.testAndSet!false(biti) && !pool.noscan.test(biti))
+                    {
+						base = pool.baseAddr + (offset & ~cast(size_t)(PAGESIZE-1));
+						references[base] = rng.pbot;
+						objects[base] = (cast(LargeObjectPool*)pool).getSize(pn);
+
+                        tgt.pbot = pool.baseAddr + (pn * PAGESIZE);
+                        tgt.ptop = tgt.pbot + (cast(LargeObjectPool*)pool).getSize(pn);
+                    LaddLargeRange:
+                        static if (precise)
+                        {
+                            auto rtinfo = pool.rtinfo[biti];
+                            if (rtinfo is rtinfoNoPointers)
+                                goto LnextPtr; // only if inconsistent with noscan
+                            if (rtinfo is rtinfoHasPointers)
+                            {
+                                tgt.pbase = null; // conservative
+                            }
+                            else
+                            {
+                                tgt.ptrbmp = cast(size_t*)rtinfo;
+                                size_t element_size = *tgt.ptrbmp++;
+                                tgt.bmplength = (element_size + (void*).sizeof - 1) / (void*).sizeof;
+                                assert(tgt.bmplength);
+
+                                debug(SENTINEL)
+                                    tgt.pbot = sentinel_add(tgt.pbot);
+                                if (pool.appendable.test(biti))
+                                {
+                                    // take advantage of knowing array layout in rt.lifetime
+                                    void* arrtop = tgt.pbot + 16 + *cast(size_t*)tgt.pbot;
+                                    assert (arrtop > tgt.pbot && arrtop <= tgt.ptop);
+                                    tgt.pbot += 16;
+                                    tgt.ptop = arrtop;
+                                }
+                                else
+                                {
+                                    tgt.ptop = tgt.pbot + element_size;
+                                }
+                                tgt.pbase = cast(void**)tgt.pbot;
+                            }
+                        }
+                        goto LaddRange;
+                    }
+                }
+                else
+                {
+                    // Don't mark bits in B_FREE pages
+                    assert(bin == B_FREE);
+                }
+            }
+        LnextPtr:
+            rng.pbot += (void*).sizeof;
+            if (rng.pbot < rng.ptop)
+                continue;
+
+        LnextRange:
+            if (stackPos)
+            {
+                // pop range from local stack and recurse
+                rng = stack[--stackPos];
+            }
+            else
+            {
+                if (toscan.empty)
+                    break; // nothing more to do
+
+                // pop range from global stack and recurse
+                rng = toscan.pop();
+            }
+            // printf("  pop [%p..%p] (%#zx)\n", p1, p2, cast(size_t)p2 - cast(size_t)p1);
+            goto LcontRange;
+
+        LaddRange:
+            rng.pbot += (void*).sizeof;
+            if (rng.pbot < rng.ptop)
+            {
+                if (stackPos < stack.length)
+                {
+                    stack[stackPos] = tgt;
+                    stackPos++;
+                    continue;
+                }
+                toscan.push(rng);
+                // reverse order for depth-first-order traversal
+                foreach_reverse (ref range; stack)
+                    toscan.push(range);
+                stackPos = 0;
+            }
+        LendOfRange:
+            // continue with last found range
+            rng = tgt;
+
+        LcontRange:
+            pcache = 0;
+        }
+    }
+
 	/**
 	* Search a range of memory values and mark any pointers into the GC pool.
 	*/
-	void mark(void *pbot, void *ptop) scope nothrow
+	void markc(void *pbot, void *ptop) scope nothrow
 	{
 		void **p1 = cast(void **)pbot;
 		void **p2 = cast(void **)ptop;
@@ -924,9 +1271,9 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	gcx.prepare(); // set freebits
 
 	foreach(root; cgc.rootIter)
-		mark(&root, &root + 1);
+		mark!true(Gcx.ScanRange!true(&root, &root + 1, null));
 	foreach(range; cgc.rangeIter)
-		mark(range.pbot, range.ptop);
+		mark!true(Gcx.ScanRange!true(range.pbot, range.ptop, null));
 
 	//thread_scanAll(&mark);
 	thread_resumeAll();
@@ -1156,7 +1503,7 @@ const(char)[] dmdident(ConservativeGC cgc, void* p)
 		return null; // not an Identifier
 
 	__gshared char[256] buf;
-	int len = sprintf(buf.ptr, "sym %.*s", ident.toString().length, ident.toString().ptr);
+	int len = sprintf(buf.ptr, "%s %.*s", sym.kind(), ident.toString().length, ident.toString().ptr);
 	return buf[0..len];
 }
 
@@ -1225,7 +1572,11 @@ nextLoc:
 			auto id = dmdident(cgc, sobj);
 			if (!id)
 				id = dmdtype(cgc, sobj);
-			xtrace_printf("%s(%d): %p %.*s\n", filename, ai.line, sobj, id.length, id.ptr);
+			auto xtra = dumpExtra(sobj);
+			if (xtra.length)
+				xtrace_printf("%s(%d): %p %.*s\n", filename, ai.line, sobj, xtra.length, xtra.ptr);
+			else
+				xtrace_printf("%s(%d): %p %.*s\n", filename, ai.line, sobj, id.length, id.ptr);
 		}
 		else
 			xtrace_printf("no location: %p\n", sobj);

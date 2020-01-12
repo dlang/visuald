@@ -1504,19 +1504,20 @@ unittest
 
 	dmdInit();
 
-	string srcdir = "dmd/src";
+	string thisdir = std.path.dirName(__FILE_FULL_PATH__);
+	string srcdir = std.path.buildPath(thisdir, "dmd", "src");
 
 	Options opts;
 	opts.predefineDefaultVersions = true;
 	opts.x64 = true;
 	opts.msvcrt = true;
 	opts.warnings = true;
-	opts.importDirs = guessImportPaths() ~ srcdir;
+	opts.importDirs = guessImportPaths() ~ srcdir ~ dirName(dirName(thisdir));
 	opts.stringImportDirs ~= srcdir ~ "/../res";
 	opts.versionIds ~= "MARS";
 	//opts.versionIds ~= "NoBackend";
 
-	auto filename = std.path.buildPath(srcdir, "dmd/expressionsem.d");
+	auto filename = std.path.buildPath(srcdir, "dmd", "expressionsem.d");
 
 	static void assert_equal(S, T)(S s, T t)
 	{
@@ -1544,8 +1545,48 @@ unittest
 			throw t;
 		}
 	}
-	string source = cast(string)std.file.read(filename);
-	Module m = checkErrors(source, "");
+
+	version(traceGC)
+	{
+		import core.memory;
+		import std.stdio;
+		GC.collect();
+		writeln(GC.stats);
+		dumpGC();
+	}
+
+	bool dump = false;
+	string source;
+	Module m;
+	//foreach(i; 0..40)
+	{
+		filename = __FILE_FULL_PATH__;
+		source = cast(string)std.file.read(filename);
+		m = checkErrors(source, "");
+
+		version(traceGC)
+		{
+			GC.collect();
+			auto stats = GC.stats;
+			writeln(stats);
+			if (stats.usedSize >= 400_000_000)
+				dumpGC();
+		}
+	}
+
+	foreach(f; ["expressionsem.d", "typesem.d", "statementsem.d"])
+	{
+		filename = std.path.buildPath(srcdir, "dmd", f);
+		source = cast(string)std.file.read(filename);
+		m = checkErrors(source, "");
+
+		version(traceGC)
+		{
+			GC.collect();
+			auto stats = GC.stats;
+			writeln(stats);
+		}
+	}
 }
 
 version(test):

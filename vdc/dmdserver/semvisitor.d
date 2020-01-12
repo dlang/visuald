@@ -295,6 +295,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		visit(cast(Declaration)decl);
 
 		if (!stop)
+		{
 			if (unconditional)
 			{
 				if (decl.decl)
@@ -306,6 +307,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 				foreach(d; *inc)
 					if (!stop)
 						d.accept(this);
+		}
 	}
 
 	override void visit(UserAttributeDeclaration decl)
@@ -572,10 +574,12 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		// variables not looked at by PostorderStatementVisitor
 		if (!stop && stmt.catches)
 			foreach(c; *stmt.catches)
+			{
 				if (c.var)
 					visitDeclaration(c.var);
 				else
 					visitType(c.parsedType);
+			}
 
 		visit(cast(Statement)stmt);
 	}
