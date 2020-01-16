@@ -153,6 +153,7 @@ void dmdInit()
 
 	target._init(global.params); // needed by Type._init
 	Type._init();
+	Module._init();
 }
 
 struct Options
