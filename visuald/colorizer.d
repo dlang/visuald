@@ -264,6 +264,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	bool mConfigMSVCRT;
 	bool mConfigCoverage;
 	bool mConfigDoc;
+	bool mConfigBetterC;
 	ubyte mConfigBoundsCheck;
 	ubyte mConfigCompiler;
 
@@ -744,6 +745,12 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				return mConfigDoc ? 1 : -1;
 			case "D_NoBoundsChecks":
 				return mConfigBoundsCheck == 3 ? 1 : -1;
+			case "D_BetterC":
+				return mConfigBetterC ? 1 : -1;
+			case "D_ModuleInfo":
+			case "D_Exceptions":
+			case "D_TypeInfo":
+				return mConfigBetterC ? -1 : 1;
 			case "Win32":
 			case "X86":
 			case "D_InlineAsm_X86":
@@ -759,8 +766,10 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 				return mConfigCompiler == Compiler.LDC ? 1 : -1;
 			case "DigitalMars":
 				return mConfigCompiler == Compiler.DMD ? 1 : -1;
+			case "CppRuntime_DigitalMars":
 			case "CRuntime_DigitalMars":
 				return mConfigCompiler == Compiler.DMD && !mConfigMSVCRT ? 1 : -1;
+			case "CppRuntime_Microsoft":
 			case "CRuntime_Microsoft":
 				return (mConfigCompiler == Compiler.DMD || mConfigCompiler == Compiler.LDC) && mConfigMSVCRT ? 1 : -1;
 			case "MinGW":
@@ -1510,6 +1519,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			changes += modifyValue(opts.isX86_64,      mConfigX64);
 			changes += modifyValue(opts.useMSVCRT(),   mConfigMSVCRT);
 			changes += modifyValue(opts.cov,           mConfigCoverage);
+			changes += modifyValue(opts.betterC,       mConfigBetterC);
 			changes += modifyValue(opts.doDocComments, mConfigDoc);
 			changes += modifyValue(opts.boundscheck,   mConfigBoundsCheck);
 			changes += modifyValue(opts.compiler,      mConfigCompiler);
