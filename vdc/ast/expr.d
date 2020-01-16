@@ -1816,7 +1816,7 @@ class IntegerLiteralExpression : PrimaryExpression
 			}
 			unsigned = true;
 		}
-		val = removechars(val, "_");
+		val = tr(val, "_", "", "d");
 		value = parse!ulong(val, radix);
 	}
 
@@ -1972,7 +1972,7 @@ class FloatLiteralExpression : PrimaryExpression
 				break;
 			val = val[0..$-1];
 		}
-		val = removechars(val, "_");
+		val = tr(val, "_", "", "d");
 		value = parse!real(val);
 	}
 
