@@ -145,8 +145,7 @@
     </EnumProperty>
     <EnumProperty Name="DebugInfo" Category="Code Generation" DisplayName="Debug Info" Description="generate debug information.">
       <EnumValue Name="None" DisplayName="None" />
-      <EnumValue Name="VS" DisplayName="For VS debug engines" Switch="-gc" />
-      <EnumValue Name="Mago" DisplayName="For D debug engines (mago)" Switch="-g" />
+      <EnumValue Name="Mago" DisplayName="Enable Debug Information Generation" Switch="-g" />
     </EnumProperty>
     <BoolProperty Name="DebugFull" Category="Code Generation" DisplayName="Full Debug Info" Switch="-gf"
                   Description="when generating debug info emit it for all referenced types." />

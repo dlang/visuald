@@ -84,6 +84,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2020-18-01 Version 0.51.0
+$(UL
+ $(LI experimental: semantic server built from DMD frontend)
+ $(LI VS2017+: Ctrl+Click goto definition added)
+ $(LI VS2017+: syntax highlighted tool tips)
+)
+
 2019-09-03 Version 0.50.1
 $(UL
  $(LI Fixes some integration issues with VS 2019 16.2)
@@ -98,27 +105,6 @@ $(UL
  $(LI mago debugger: better support for dynamic type of classes, show exception messages,
       conditional breakpoints)
  $(LI highlight references to symbol at caret)
-)
-
-2019-04-28 Version 0.49.2
-$(UL
- $(LI VS2013/VS2015: VC projects broken in 0.49.1 due to unsupported msbuild variable)
- $(LI VS2015: workaround VS not correctly updating extension caches after uninstallation)
-)
-
-2019-04-21 Version 0.49.1
-$(UL
-  $(LI fixed reading settings from VC projects in VS2017)
-  $(LI added support for VS2019 Update 16.1)
-  $(LI dparser improvements and bug fixes)
-)
-
-2019-04-07 Version 0.49.0
-$(UL
-  $(LI support for Visual Studio 2019)
-  $(LI parallel compilation supported by VC projects (thanks to Igor Cesi))
-  $(LI catch up with recent language changes)
-  $(LI new "Language" configuration page for -transition=/-preview=/-revert= options)
 )
 
 $(LINK2 VersionHistory.html, more...)

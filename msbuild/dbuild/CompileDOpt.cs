@@ -421,7 +421,7 @@ namespace dbuild
                 string[][] switchMap = new string[3][]
                 {
                     new string[2] { "None", "" },
-                    new string[2] { "VS", "-gc" },
+                    new string[2] { "VS", "-g" },  // -gc removed, but kept for compatibility
                     new string[2] { "Mago", "-g" }
                 };
 

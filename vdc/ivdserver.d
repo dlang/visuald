@@ -120,6 +120,8 @@ public:
 	// stringList: a new-line delimited list of expansions
 	//
 	// return S_FALSE as long as the semantic analysis is still running
+	//
+	// format of each line: name:type:description
 	HRESULT GetSemanticExpansionsResult(BSTR* stringList);
 
 	// not used
@@ -222,7 +224,8 @@ public:
 
 ///////////////////////////////////////////////////////////////////////
 uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool doc, bool nobounds, bool gdc,
-					  int versionLevel, int debugLevel, bool noDeprecated, bool ldc, bool msvcrt, bool warnings,
+					  int versionLevel, int debugLevel, bool noDeprecated, bool deprecateInfo,
+					  bool ldc, bool msvcrt, bool warnings, bool warnAsError,
 					  bool mixinAnalysis, bool ufcsExpansions)
 {
 	return (unittestOn ? 1 : 0)
@@ -233,13 +236,15 @@ uint ConfigureFlags()(bool unittestOn, bool debugOn, bool x64, bool cov, bool do
 		|  (nobounds   ? 32 : 0)
 		|  (gdc        ? 64 : 0)
 		|  (noDeprecated ? 128 : 0)
+		|  (deprecateInfo  ? 0x40_00_00_00 : 0)
 		| ((versionLevel & 0xff) << 8)
 		| ((debugLevel   & 0xff) << 16)
 		|  (mixinAnalysis  ? 0x01_00_00_00 : 0)
 		|  (ufcsExpansions ? 0x02_00_00_00 : 0)
 		|  (ldc            ? 0x04_00_00_00 : 0)
 		|  (msvcrt         ? 0x08_00_00_00 : 0)
-		|  (warnings       ? 0x10_00_00_00 : 0);
+		|  (warnings       ? 0x10_00_00_00 : 0)
+		|  (warnAsError    ? 0x20_00_00_00 : 0);
 }
 
 // from D_Parser: types returned by GetIdentifierTypes

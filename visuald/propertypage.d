@@ -1109,11 +1109,10 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 
 	override void CreateControls()
 	{
-		string[] dbgInfoOpt = [ "None", "Symbolic (suitable for Mago)", "Symbolic (suitable for VS debug engine)", "Symbolic (suitable for selected debug engine)" ];
 		AddControl("Debug Mode", mDebugMode = new ComboBox(mCanvas, [ "On (enable debug statements, asserts, invariants and constraints)",
 		                                                              "Off (disable asserts, invariants and constraints)",
 		                                                              "Default (enable asserts, invariants and constraints)" ], false));
-		AddControl("Debug Info", mDebugInfo = new ComboBox(mCanvas, dbgInfoOpt, false));
+		AddControl("Debug Info", mDebugInfo = new CheckBox(mCanvas, "Generate debug information"));
 		AddControl("Full debug info", mFullDebug = new CheckBox(mCanvas, "Generate full debug information (DMD 2.075+)"));
 		AddHorizontalLine();
 		AddControl("", mEnableMixin = new CheckBox(mCanvas, "Enable mixin debugging (DMD 2.084.1+)"));
@@ -1150,7 +1149,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	override void SetControls(ProjectOptions options)
 	{
 		mDebugMode.setSelection(options.release);
-		mDebugInfo.setSelection(options.symdebug);
+		mDebugInfo.setChecked(options.symdebug != 0);
 		mFullDebug.setChecked(options.symdebugref);
 		mRunCv2pdb.setSelection(options.runCv2pdb);
 		mPathCv2pdb.setText(options.pathCv2pdb);
@@ -1168,7 +1167,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 	{
 		int changes = 0;
 		changes += changeOption(cast(ubyte) mDebugMode.getSelection(), options.release, refoptions.release);
-		changes += changeOption(cast(ubyte) mDebugInfo.getSelection(), options.symdebug, refoptions.symdebug);
+		changes += changeOption(cast(ubyte) mDebugInfo.isChecked(), options.symdebug, refoptions.symdebug);
 		changes += changeOption(cast(ubyte) mFullDebug.isChecked(), options.symdebugref, refoptions.symdebugref);
 		changes += changeOption(cast(ubyte) mRunCv2pdb.getSelection(), options.runCv2pdb, refoptions.runCv2pdb);
 		changes += changeOption(mPathCv2pdb.getText(), options.pathCv2pdb, refoptions.pathCv2pdb);
@@ -1182,7 +1181,7 @@ class DmdDebugPropertyPage : ProjectPropertyPage
 
 	bool mCanRunCv2PDB;
 	ComboBox mDebugMode;
-	ComboBox mDebugInfo;
+	CheckBox mDebugInfo;
 	CheckBox mFullDebug;
 	ComboBox mRunCv2pdb;
 	Text mPathCv2pdb;

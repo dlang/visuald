@@ -59,7 +59,7 @@ enum string[2][] dmdStatics =
 	//["_D3dmd10expression10IntegerExp__T7literalVii1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	//["_D3dmd10expression10IntegerExp__T7literalViN1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
-	["_D3dmd10identifier10Identifier10generateIdRNbPxaZ1ik", "size_t"],
+	["_D3dmd10identifier10Identifier10generateIdFNbAxaZ1ik", "size_t"],
 	["_D3dmd5lexer5Lexer4scanMFNbPSQBb6tokens5TokenZ8initdoneb", "bool"],
 ];
 
@@ -67,8 +67,8 @@ string cmangled(string s)
 {
 	version (Win64)
 	{
-		if (s == "_D3dmd10identifier10Identifier10generateIdRNbPxaZ1ik")
-			return "_D3dmd10identifier10Identifier10generateIdRNbPxaZ1im"; // size_t
+		if (s == "_D3dmd10identifier10Identifier10generateIdFNbAxaZ1ik")
+			return "_D3dmd10identifier10Identifier10generateIdFNbAxaZ1im"; // size_t
 		if (s ==   "_D3dmd6dmacro10MacroTable6expandMFKSQBi4root9outbuffer9OutBufferkKkAxaZ4nesti")
 			return "_D3dmd6dmacro10MacroTable6expandMFKSQBi4root9outbuffer9OutBuffermKmAxaZ4nesti";
 	}
@@ -153,6 +153,7 @@ void dmdInit()
 
 	target._init(global.params); // needed by Type._init
 	Type._init();
+	Module._init();
 }
 
 struct Options
@@ -164,6 +165,7 @@ struct Options
 	bool x64;
 	bool msvcrt;
 	bool warnings;
+	bool warnAsError;
 	bool debugOn;
 	bool coverage;
 	bool doDoc;
@@ -171,6 +173,7 @@ struct Options
 	bool gdcCompiler;
 	bool ldcCompiler;
 	bool noDeprecated;
+	bool deprecatedInfo;
 	bool mixinAnalysis;
 	bool UFCSExpansions;
 
@@ -241,9 +244,12 @@ void dmdSetupParams(const ref Options opts)
 	global.params.doDocComments = opts.doDoc;
 	global.params.useSwitchError = CHECKENABLE.on;
 	global.params.useInline = false;
+	global.params.ignoreUnsupportedPragmas = opts.ldcCompiler;
 	global.params.obj = false;
-	global.params.useDeprecated = opts.noDeprecated ? DiagnosticReporting.error : DiagnosticReporting.off;
-	global.params.warnings = opts.warnings ? DiagnosticReporting.inform : DiagnosticReporting.off;
+	global.params.useDeprecated = !opts.noDeprecated ? DiagnosticReporting.off
+		: opts.deprecatedInfo ? DiagnosticReporting.inform : DiagnosticReporting.error ;
+	global.params.warnings = !opts.warnings ? DiagnosticReporting.off
+		: opts.warnAsError ? DiagnosticReporting.error : DiagnosticReporting.inform;
 	global.params.linkswitches = Strings();
 	global.params.libfiles = Strings();
 	global.params.dllfiles = Strings();
@@ -307,6 +313,7 @@ void dmdReinit()
 
 	// assume object.d unmodified otherwis
 	Module.moduleinfo = null;
+	dmd.compiler.rootHasMain = null;
 
 	ClassDeclaration.object = null;
 	ClassDeclaration.throwable = null;
@@ -344,6 +351,7 @@ void dmdReinit()
 	Module.deferred2 = Dsymbols();   // deferred Dsymbol's needing semantic2() run on them
 	Module.deferred3 = Dsymbols();   // deferred Dsymbol's needing semantic3() run on them
 	Module.dprogress = 0;      // progress resolving the deferred list
+	Module.rootModule = null;
 
 	dinterpret_init();
 

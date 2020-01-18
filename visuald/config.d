@@ -149,7 +149,7 @@ class ProjectOptions
 	bool verbose;		// verbose compile
 	bool vtls;		// identify thread local variables
 	bool vgc;		// List all gc allocations including hidden ones (DMD 2.066+)
-	ubyte symdebug;		// insert debug symbolic information (0: none, 1: mago, 2: VS, 3: as debugging)
+	ubyte symdebug;		// insert debug symbolic information (0: none, 1: mago; obsolete: 2: VS, 3: as debugging)
 	bool symdebugref;	// insert debug information for all referenced types, too
 	bool optimize;		// run optimizer
 	ubyte cpu;		// target CPU
@@ -329,7 +329,7 @@ class ProjectOptions
 	void setDebug(bool dbg)
 	{
 		runCv2pdb = dbg && !isX86_64 ? 1 : 0;
-		symdebug = dbg ? 3 : 0;
+		symdebug = dbg ? 1 : 0;
 		release = dbg ? 0 : 1;
 		optimize = release == 1;
 		useInline = release == 1;
@@ -401,14 +401,9 @@ class ProjectOptions
 		if(vgc)
 			cmd ~= " -vgc";
 
-		int symdbg = symdebug;
-		if(symdebug == 3)
-			symdbg = debugEngine == 1 ? 1 : 2;
-		if(symdbg == 1)
-			cmd ~= " -g";
-		if(symdbg == 2)
+		if(symdebug)
 			cmd ~= " -g"; // -gc no longer supported
-		if (symdbg && symdebugref)
+		if (symdebug && symdebugref)
 			cmd ~= " -gf";
 
 		if(optimize)
@@ -619,7 +614,7 @@ class ProjectOptions
 			cmd ~= " -fd-vtls";
 		if(vgc)
 			cmd ~= " -fd-vgc";
-		if(symdebug > 0)
+		if(symdebug)
 			cmd ~= " -g";
 		//if(symdebug == 2)
 		//    cmd ~= " -fdebug-c";
@@ -745,13 +740,8 @@ class ProjectOptions
 		if(verbose)
 			cmd ~= " -v";
 
-		int symdbg = symdebug;
-		if(symdebug == 3)
-			symdbg = debugEngine == 1 ? 1 : 2;
-		if(symdbg == 1)
+		if(symdebug)
 			cmd ~= " -g";
-		if(symdbg == 2)
-			cmd ~= " -gc";
 
 		if(optimize)
 			cmd ~= " -O";

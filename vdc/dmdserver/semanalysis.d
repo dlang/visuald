@@ -23,6 +23,8 @@ import dmd.identifier;
 import dmd.semantic2;
 import dmd.semantic3;
 
+// debug version = traceGC;
+
 __gshared AnalysisContext lastContext;
 
 struct ModuleInfo
@@ -185,8 +187,10 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 }
 
 ////////////////////////////////////////////////////////////////
-//version = traceGC;
-//import tracegc;
+version (traceGC) import tracegc;
+
+extern(C) int _CrtDumpMemoryLeaks();
+extern(C) void dumpGC();
 extern(Windows) void OutputDebugStringA(const(char)* lpOutputString);
 
 string[] guessImportPaths()
@@ -202,6 +206,35 @@ string[] guessImportPaths()
 
 unittest
 {
+	version(traceGC)
+	{
+		import core.memory;
+		import std.stdio;
+		GC.collect();
+		writeln(GC.stats);
+		dumpGC();
+
+		do_unittests();
+
+		writeln(GC.stats);
+
+		lastContext = null;
+		dmdInit();
+		dmdReinit();
+
+		wipeStack();
+		GC.collect();
+		auto stats = GC.stats;
+		writeln(stats);
+		//if (stats.usedSize > 2_000_000)
+			dumpGC();
+	}
+	else
+		do_unittests();
+}
+
+void do_unittests()
+{
 	import core.memory;
 
 	dmdInit();
@@ -213,6 +246,7 @@ unittest
 	opts.x64 = true;
 	opts.msvcrt = true;
 	opts.warnings = true;
+	opts.noDeprecated = true;
 	opts.unittestOn = true;
 	opts.importDirs = guessImportPaths();
 
@@ -342,16 +376,6 @@ unittest
 	};
 	m = checkErrors(source, "4,10,4,11:Error: undefined identifier `abc`\n");
 
-	version(traceGC)
-	{
-		wipeStack();
-		GC.collect();
-	}
-
-	//_CrtDumpMemoryLeaks();
-	version(traceGC)
-		dumpGC();
-
 	source = q{
 		import std.stdio;
 		int main(string[] args)
@@ -366,6 +390,7 @@ unittest
 	{
 		m = checkErrors(source, "");
 
+		version(none)
 		version(traceGC)
 		{
 			wipeStack();
@@ -373,27 +398,21 @@ unittest
 
 			//_CrtDumpMemoryLeaks();
 			//dumpGC();
-		}
 
-		//core.memory.GC.Stats stats = GC.stats();
-		//trace_printf("GC stats: %lld MB used, %lld MB free\n", cast(long)stats.usedSize >> 20, cast(long)stats.freeSize >> 20);
+			core.memory.GC.Stats stats = GC.stats();
+			trace_printf("GC stats: %lld MB used, %lld MB free\n", cast(long)stats.usedSize >> 20, cast(long)stats.freeSize >> 20);
 
-		version(traceGC)
 			if (stats.usedSize > (200 << 20))
 				dumpGC();
+		}
 	}
 
 	checkTip(m, 5, 8, "(local variable) `int xyz`");
 	checkTip(m, 5, 10, "(local variable) `int xyz`");
+	checkTip(m, 6, 4, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
 	checkTip(m, 5, 11, "");
 	checkTip(m, 6, 8, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
 	checkTip(m, 7, 11, "(local variable) `int xyz`");
-
-	version(traceGC)
-	{
-		wipeStack();
-		GC.collect();
-	}
 
 	checkDefinition(m, 7, 11, "source.d", 5, 8); // xyz
 
@@ -442,6 +461,12 @@ unittest
 	checkTip(m,  5, 24, "(parameter) `const(string[]) args`"); // static if is typeof expression
 	checkTip(m,  6, 10, "(parameter) `const(string[]) args`"); // if expression
 	checkTip(m, 11, 21, "(parameter) `const(string[]) args`"); // !in expression
+
+	checkTip(m, 10, 13, "(local variable) `int* p`");
+	checkTip(m, 10, 17, "(parameter) `const(string[]) args`"); // in expression
+	checkTip(m, 10, 28, "(local variable) `int[string] aa`");
+
+	checkReferences(m, 10, 13, [TextPos(10,13)]); // p
 
 	checkTip(m, 19,  9, "(enum) `pkg.source.EE`"); // enum EE
 	checkTip(m, 19, 13, "(enum value) `pkg.source.EE.E1 = 3`"); // enum E1
@@ -493,7 +518,7 @@ unittest
 	checkTip(m, 11, 16, "`int source.S.fun(int par)`");
 
 	checkTip(m, 13, 11, "(struct) `source.S`");
-	checkTip(m, 16, 19, "(thread local variable) `long source.S.stat1`");
+	checkTip(m, 16, 19, "(thread local global) `long source.S.stat1`");
 	checkTip(m, 16, 17, "(struct) `source.S`");
 
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
@@ -535,7 +560,7 @@ unittest
 	checkTip(m, 11, 16, "`int source.C.fun(int par)`");
 
 	checkTip(m, 13, 11, "(class) `source.C`");
-	checkTip(m, 16, 19, "(thread local variable) `long source.C.stat1`");
+	checkTip(m, 16, 19, "(thread local global) `long source.C.stat1`");
 	checkTip(m, 16, 17, "(class) `source.C`");
 
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
@@ -545,15 +570,24 @@ unittest
 	source =
 	q{                                   // Line 1
 		enum TTT = 9;
-		void fun()
+		void fun(int y = TTT)
 		{
 			int x = TTT;                // Line 5
+			static assert(msg.length == 4);
 		}
+		static assert(TTT == 9, msg);   // compiler doesn't analyze the msg if the assert passes
+		enum msg = "fail";
 	};
 	m = checkErrors(source, "");
 
 	checkTip(m,  2,  8, "(constant) `int source.TTT = 9`");
 	checkTip(m,  5, 13, "(constant) `int source.TTT = 9`");
+	checkTip(m,  3, 20, "(constant) `int source.TTT = 9`");
+	checkTip(m,  6, 18, "(constant) `string source.msg = \"fail\"`");
+	checkTip(m,  6, 22, "(constant) `ulong \"fail\".length = 4LU`"); // string.length?
+	checkTip(m,  8, 17, "(constant) `int source.TTT = 9`");
+	checkTip(m,  8, 17, "(constant) `int source.TTT = 9`");
+	checkTip(m,  9,  8, "(constant) `string source.msg = \"fail\"`");
 
 	// template struct without instances
 	source =
@@ -584,7 +618,9 @@ unittest
 				Exception* pe = &e;
 				const(Exception*) cpe = &e;
 				throw new Error("unexpected");
-			}
+			}                            // Line 15
+			catch(Throwable)
+			{}
 			finally
 			{
 				x = 0;
@@ -600,6 +636,7 @@ unittest
 	checkTip(m,  12,  5, "(class) `object.Exception`");
 	checkTip(m,  13, 11, "(class) `object.Exception`");
 	checkTip(m,   2,  9, "(class) `object.Exception`");
+	checkTip(m,  16, 10, "(class) `object.Throwable`");
 
 	source =
 	q{                                   // Line 1
@@ -620,13 +657,68 @@ unittest
 	m = checkErrors(source,
 		"14,2,14,3:Error: identifier or `new` expected following `.`, not `}`\n" ~
 		"14,2,14,3:Error: semicolon expected, not `}`\n" ~
-		"12,14,12,15:Error: no property `f` for type `S`\n");
+		"12,15,12,16:Error: no property `f` for type `source.S`\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
 	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
 	checkExpansions(m, 13, 13, "an", [ "anS" ]);
 
 	source =
+	q{                                   // Line 1
+		struct S
+		{
+			int field1 = 1;
+			int field2 = 2;              // Line 5
+			int fun(int par) { return field1 + par; }
+			int more = 3;
+		}
+		void foo()
+		{                                // Line 10
+			S anS;
+			if (anS.fool == 1) {}
+		}
+	};
+	m = checkErrors(source,
+					"12,11,12,12:Error: no property `fool` for type `source.S`\n");
+	//dumpAST(m);
+	checkExpansions(m, 12, 12, "f", [ "field1", "field2", "fun" ]);
+
+	source =
+	q{                                   // Line 1
+		class C
+		{
+			int toDebug() { return 0; }
+		}                                // Line 5
+		void foo()
+		{
+			C c = new C;
+			c.toString();
+			if (c.toDebug()) {}          // Line 10
+		}
+	};
+	m = checkErrors(source, "");
+	checkExpansions(m,  9,  6, "to", [ "toString", "toHash", "toDebug" ]);
+	checkExpansions(m, 10, 10, "to", [ "toString", "toHash", "toDebug" ]);
+
+	source =
+		q{                                   // Line 1
+			class C
+			{
+				int toDebug() { return 0; }
+			}                                // Line 5
+			void foo()
+			{
+				C c = new C;
+				if (c.to
+			}                                // Line 10
+		};
+		m = checkErrors(source, "10,3,10,4:Error: found `}` when expecting `)`\n" ~
+								"10,3,10,4:Error: found `}` instead of statement\n" ~
+								"9,10,9,11:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
+		dumpAST(m);
+		checkExpansions(m,  9,  11, "to", [ "toString", "toHash", "toDebug" ]);
+
+		source =
 	q{                                   // Line 1
 		struct S
 		{
@@ -739,7 +831,7 @@ unittest
 	checkTip(m, 21, 11, "(enum) `source.TOK`");
 	checkTip(m, 21, 15, "(enum value) `source.TOK.rightParentheses = 2`");
 	checkTip(m, 21, 33, "(class) `source.RightBase`\n\nright base doc");
-	checkTip(m, 24, 19, "(thread local variable) `source.TOK[source.Base] source.mapBaseTOK`");
+	checkTip(m, 24, 19, "(thread local global) `source.TOK[source.Base] source.mapBaseTOK`");
 	checkTip(m, 24,  7, "(class) `source.Base`");
 	checkTip(m, 24,  3, "(enum) `source.TOK`");
 	checkTip(m, 30, 10, "(class) `object.TypeInfo_Class`");
@@ -748,7 +840,7 @@ unittest
 	checkTip(m, 21, 43, "(constant) `ulong source.RightBase.sizeof = 8LU`");
 
 	IdTypePos[][string] exp2 = [
-		"size_t":           [ IdTypePos(TypeReferenceKind.BasicType) ],
+		"size_t":           [ IdTypePos(TypeReferenceKind.Alias) ],
 		"Base":             [ IdTypePos(TypeReferenceKind.Class) ],
 		"mapBaseTOK":       [ IdTypePos(TypeReferenceKind.TLSVariable) ],
 		"TOK":              [ IdTypePos(TypeReferenceKind.Enum) ],
@@ -769,11 +861,12 @@ unittest
 		"core":             [ IdTypePos(TypeReferenceKind.Package) ],
 		"stdc":             [ IdTypePos(TypeReferenceKind.Package) ],
 		"config":           [ IdTypePos(TypeReferenceKind.Module) ],
-		"c_long":           [ IdTypePos(TypeReferenceKind.BasicType) ],
+		"c_long":           [ IdTypePos(TypeReferenceKind.Alias) ],
 		"sizeof":           [ IdTypePos(TypeReferenceKind.Constant) ],
 	];
 	checkIdentifierTypes(m, exp2);
 
+	// string expressions with concat
 	source = q{
 		void fun()
 		{
@@ -787,6 +880,44 @@ unittest
 
 	checkTip(m,  6, 49, "(local variable) `bool isX86_64`");
 	checkTip(m,  6, 97, "(local variable) `string cmd`");
+
+	// alias
+	source = q{
+		enum EE = 3;
+		alias EE E1;
+		alias E2 = EE;
+		alias ET(T) = E1;   // Line 5
+		alias ETint = ET!int;
+		enum Enum { En1, En2 }
+		alias En1 = Enum.En1;
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  2,  8, "(constant) `int source.EE = 3`");
+	checkTip(m,  3,  9, "(constant) `int source.EE = 3`");
+	checkTip(m,  3, 12, "(alias constant) `source.E1 = int source.EE = 3`");
+	checkTip(m,  4,  9, "(alias constant) `source.E2 = int source.EE = 3`");
+	checkTip(m,  4, 14, "(constant) `int source.EE = 3`");
+	checkTip(m,  5,  9, "(alias constant) `source.ET!int = int source.EE = 3`");
+	checkTip(m,  6,  9, "(alias constant) `source.ETint = int source.EE = 3`");
+
+	checkReferences(m, 7, 15, [TextPos(7,15), TextPos(8, 20)]); // En1
+
+	exp2 = [
+		"EE":               [ IdTypePos(TypeReferenceKind.Constant) ],
+		"E1":               [ IdTypePos(TypeReferenceKind.Alias) ],
+		"E2":               [ IdTypePos(TypeReferenceKind.Alias) ],
+		"ET":               [ IdTypePos(TypeReferenceKind.Alias) ],
+		//"T":                [ IdTypePos(TypeReferenceKind.TemplateParameter) ],
+		"ETint":            [ IdTypePos(TypeReferenceKind.Alias) ],
+		"Enum":             [ IdTypePos(TypeReferenceKind.Enum) ],
+		"En2":              [ IdTypePos(TypeReferenceKind.EnumValue) ],
+		"En1":              [ IdTypePos(TypeReferenceKind.EnumValue),
+		                      IdTypePos(TypeReferenceKind.Alias, 8, 9),
+		                      IdTypePos(TypeReferenceKind.EnumValue, 8, 20) ],
+	];
+	checkIdentifierTypes(m, exp2);
 
 	source = q{
 		int fun()
@@ -840,8 +971,48 @@ unittest
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
-	checkTip(m,  6,  9, "(thread local variable) `source.S!int source.x`");
+	checkTip(m,  6,  9, "(thread local global) `source.S!int source.x`");
 	checkTip(m,  4,  6, "(field) `int source.S!int.member`");
+	checkTip(m,  6,  3, "(struct) `source.S!int`");
+
+	// scope statement in version caused crash
+	source = q{
+		void fun(uint p)
+		{
+			switch (p)
+			{                            // Line 5
+				case 1:
+					version(all)
+					{
+						{
+							int x = 4;   // Line 10
+							int y = 3;
+						}
+					}
+					else
+					{
+						{
+							int y = 3;
+						}
+					}
+					break;
+				default:
+			}
+		}
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkReferences(m,  10, 12, [TextPos(10, 12)]); // x
+
+	exp2 = [
+		"all": [IdTypePos(TypeReferenceKind.VersionIdentifier)],
+		"p":   [IdTypePos(TypeReferenceKind.ParameterVariable)],
+		"y":   [IdTypePos(TypeReferenceKind.LocalVariable)],
+		"fun": [IdTypePos(TypeReferenceKind.Function)],
+		"x":   [IdTypePos(TypeReferenceKind.LocalVariable)],
+	];
+	checkIdentifierTypes(m, exp2);
 
 	// check for conditional not producing warning "unreachable code"
 	source = q{
@@ -854,6 +1025,16 @@ unittest
 		}
 	};
 	m = checkErrors(source, "");
+
+	source = q{
+		static if(__traits(compiles, () { Object o = new Object; })) {}
+		static if(!__traits(compiles, () { auto o = Object; })) {}
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  2, 37, "(class) `object.Object`");
+	checkTip(m,  2, 44, "(local variable) `object.Object o`");
+	checkTip(m,  3, 47, "(class) `object.Object`");
 
 	// check for semantics in unittest
 	source = q{
@@ -892,6 +1073,32 @@ unittest
 
 	checkTip(m,  7,  9, "(struct) `source.S`");
 
+	// float properties
+	source = q{
+		float flt;
+		auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig,
+				  flt.infinity, flt.min_normal, flt.min_10_exp, flt.min_exp,
+				  flt.max_10_exp, flt.max_exp]; // Line 5
+		float fre(cfloat f)
+		{
+			return f.re + f.im;
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  3, 17, "(constant) `ulong float.sizeof = 4LU`");
+	checkTip(m,  3, 29, "(constant) `float float.init = nanF`");
+	checkTip(m,  3, 39, "(constant) `float float.epsilon = 1.19209e-07F`");
+	checkTip(m,  3, 52, "(constant) `int float.mant_dig = 24`");
+	checkTip(m,  4, 11, "(constant) `float float.infinity = infF`");
+	checkTip(m,  4, 25, "(constant) `float float.min_normal = 1.17549e-38F`");
+	checkTip(m,  4, 41, "(constant) `int float.min_10_exp = -37`");
+	checkTip(m,  4, 57, "(constant) `int float.min_exp = -125`");
+	checkTip(m,  5, 11, "(constant) `int float.max_10_exp = 38`");
+	checkTip(m,  5, 27, "(constant) `int float.max_exp = 128`");
+	checkTip(m,  8, 13, "(field) `float cfloat.re`");
+	checkTip(m,  8, 20, "(field) `float cfloat.im`");
+
 	// check template arguments
 	source = q{
 		void fun(T)() {}
@@ -913,9 +1120,35 @@ unittest
 	];
 	checkIdentifierTypes(m, exp2);
 
+	// check template arguments
+	source = q{
+		template Templ(T)
+		{
+			struct S
+			{                       // Line 5
+				T payload;
+			}
+			enum value = 4;
+		}
+		void fun()                  // Line 10
+		{
+			Templ!(ModuleInfo).S arr;
+			int v = Templ!Object.value;
+		};
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  2, 12, "(template) `source.Templ(T)`");
+	checkTip(m, 12,  4, "(template instance) `source.Templ!(object.ModuleInfo)`");
+	checkTip(m, 12, 23, "(struct) `source.Templ!(object.ModuleInfo).S`");
+	checkTip(m, 12, 11, "(struct) `object.ModuleInfo`");
+	checkTip(m, 13, 12, "(template instance) `source.Templ!(object.Object)`");
+	checkTip(m, 13, 18, "(class) `object.Object`");
+	checkTip(m, 13, 25, "(constant) `int source.Templ!(object.Object).value = 4`");
+
 	// check FQN types in cast
 	source = q{
-		void foo()
+		void foo(Error*)
 		{
 			auto e = cast(object.Exception) null;
 			auto p = cast(object.Exception*) null;  // Line 5
@@ -924,6 +1157,7 @@ unittest
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
+	checkTip(m,  2, 12, "(class) `object.Error`");
 	checkTip(m,  4, 18, "(module) `object`");
 	checkTip(m,  4, 25, "(class) `object.Exception`");
 	checkTip(m,  5, 18, "(module) `object`");
@@ -935,6 +1169,7 @@ unittest
 		"Exception": [ IdTypePos(TypeReferenceKind.Class) ],
 		"e":         [ IdTypePos(TypeReferenceKind.LocalVariable) ],
 		"p":         [ IdTypePos(TypeReferenceKind.LocalVariable) ],
+		"Error":     [ IdTypePos(TypeReferenceKind.Class) ],
 	];
 	checkIdentifierTypes(m, exp2);
 
@@ -943,21 +1178,142 @@ unittest
 		struct Mem
 		{
 			static Mem foo(int sz) { return Mem(); }
-		}                                    // Line 5
+			ref Mem func(ref Mem m);             // Line 5
+		}
 		__gshared Mem mem;
 		void fun()
 		{
-			source.Mem m = source.mem.foo(1234);
-		}                                    // Line 10
+			source.Mem m = source.mem.foo(1234); // Line 10
+		}
 	};
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
-	checkTip(m,  9, 30, "`Mem source.Mem.foo(int sz)`");
-	checkTip(m,  9, 19, "(module) `source`");
-	checkTip(m,  9, 26, "(__gshared variable) `source.Mem source.mem`");
-	checkTip(m,  9, 11, "(struct) `source.Mem`");
-	checkTip(m,  9,  4, "(module) `source`");
+	checkTip(m,  5, 12, "`Mem source.Mem.func(ref Mem m) ref`"); // TDOO: ref after func?
+	checkTip(m,  5,  8, "(struct) `source.Mem`");
+	checkTip(m,  5, 21, "(struct) `source.Mem`");
+	checkTip(m,  5, 25, "(parameter) `source.Mem m`");
+	checkTip(m, 10, 30, "`Mem source.Mem.foo(int sz)`");
+	checkTip(m, 10, 19, "(module) `source`");
+	checkTip(m, 10, 26, "(__gshared global) `source.Mem source.mem`");
+	checkTip(m, 10, 11, "(struct) `source.Mem`");
+	checkTip(m, 10,  4, "(module) `source`");
+
+	// UFCS
+	source = q{
+		int foo(Object o, int sz)
+		{
+			return sz * 2;
+		}                            // Line 5
+		int fun()
+		{
+			auto o = new Object;
+			return o.    foo(4);
+		}                            // Line 10
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  9, 11, "(local variable) `object.Object o`");
+	checkTip(m,  9, 17, "`int source.foo(Object o, int sz)`");
+
+	// FQN
+	source = q{
+		module pkg.pkg2.mod; static import pkg.pkg2.mod;
+		void goo()
+		{
+			import pkg.pkg2.mod : poo = goo;   // Line 5
+			pkg.pkg2.mod.goo();
+			poo();
+			pkg.pkg2.mod.tmpl(1);
+		}
+		void tmpl(T)(T t) {}              // Line 10
+	};
+	m = checkErrors(source, "");
+
+	checkTip(m,  6, 17, "`void pkg.pkg2.mod.goo()`");
+	checkTip(m,  6, 13, "(module) `pkg.pkg2.mod`");
+	checkTip(m,  6,  4, "(package) `pkg`");
+	checkTip(m,  8,  4, "(package) `pkg`");
+	checkTip(m,  8, 13, "(module) `pkg.pkg2.mod`");
+
+	checkReferences(m,  6, 17, [TextPos(3,  8), TextPos(5, 32), TextPos(6, 17), TextPos(7,  4)]); // goo/poo
+	checkReferences(m, 10,  8, [TextPos(8, 17), TextPos(10, 8)]); // tmpl
+	checkReferences(m,  6, 13, [TextPos(2, 19), TextPos(2, 47), TextPos(5, 20), TextPos(6, 13), TextPos(8, 13)]); // mod
+	checkReferences(m,  6,  4, [TextPos(2, 10), TextPos(2, 38), TextPos(5, 11), TextPos(6,  4), TextPos(8,  4)]); // pkg
+
+	// UDA
+	source = q{
+		struct uda {}
+		@uda int x;
+		void foo(@uda uint u);
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+
+	checkTip(m,  3, 12, "(thread local global) `int source.x`");
+	checkTip(m,  3,  4, "(struct) `source.uda`");
+	checkTip(m,  4, 13, "(struct) `source.uda`");
+
+	checkReferences(m, 2, 10, [TextPos(2, 10), TextPos(3, 4), TextPos(4, 13)]); // uda
+
+	// deprecation
+	source = q{
+		deprecated void dep() {}
+		void foo()
+		{
+			dep();
+			source.dep();
+		}
+	};
+	m = checkErrors(source,
+					"5,3,5,4:Deprecation: function `source.dep` is deprecated\n" ~
+					"6,10,6,11:Deprecation: function `source.dep` is deprecated\n" ~
+					"6,10,6,11:Deprecation: function `source.dep` is deprecated\n");
+	//dumpAST(m);
+
+	// type references
+	source = q{
+		void foo(Object ss)
+		{
+			auto o = cast(Object)ss;
+			auto s = S!Object(new Object);  // Line 5
+		}
+		struct S(T)
+		{
+			T payload;
+		}
+	};
+	m = checkErrors(source, "");
+
+	checkReferences(m, 2, 12, [TextPos(2,12), TextPos(4, 18), TextPos(5, 26), TextPos(5, 15)]); // Object
+
+	// no semantics after error
+	source = q{
+		int abc;
+		void funky()
+		{
+			a = 1
+			if (a == 1)
+			{
+			}
+		}
+	};
+	m = checkErrors(source,
+		"6,3,6,4:Error: found `if` when expecting `;` following statement\n" ~
+		"6,9,6,10:Error: found `==` when expecting `)`\n" ~
+		"6,12,6,13:Error: missing `{ ... }` for function literal\n" ~
+		"6,12,6,13:Error: found `1` when expecting `;` following statement\n" ~
+		"6,13,6,14:Error: found `)` instead of statement\n" ~
+		"9,2,9,3:Error: unrecognized declaration\n" ~
+		"5,3,5,4:Error: undefined identifier `a`\n" ~
+		"6,6,6,7:Error: undefined identifier `a`\n");
+
+	exp2 = [
+		"abc":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+		"funky":           [ IdTypePos(TypeReferenceKind.Function) ],
+	];
+	checkIdentifierTypes(m, exp2);
 
 	///////////////////////////////////////////////////////////
 	// check array initializer
@@ -1116,6 +1472,28 @@ unittest
 	m = checkErrors(source, "");
 	// beware: bad object.d after this point
 	lastContext = null;
+
+	///////////////////////////////////////////////////////////
+	// check array initializer
+	filename = "shell.d";
+	source = q{
+		module shell;
+		alias uint VSITEMID;
+		const VSITEMID VSITEMID_NIL = cast(VSITEMID)(-1);
+	};
+	m = checkErrors(source, "");
+	source = q{
+		import shell;
+		void ffoo()
+		{
+			if (uint(1) == VSITEMID_NIL) {} // Line 5
+		}
+	};
+	filename = "source.d";
+	m = checkErrors(source, "");
+
+	// TODO: checkTip(m, 3, 18, "(enum) `tok.TOK`");
+	checkTip(m, 5, 19, "(constant global) `const(uint) shell.VSITEMID_NIL`");
 }
 
 unittest
@@ -1126,19 +1504,20 @@ unittest
 
 	dmdInit();
 
-	string srcdir = "dmd/src";
+	string thisdir = std.path.dirName(__FILE_FULL_PATH__);
+	string srcdir = std.path.buildPath(thisdir, "dmd", "src");
 
 	Options opts;
 	opts.predefineDefaultVersions = true;
 	opts.x64 = true;
 	opts.msvcrt = true;
 	opts.warnings = true;
-	opts.importDirs = guessImportPaths() ~ srcdir;
+	opts.importDirs = guessImportPaths() ~ srcdir ~ dirName(dirName(thisdir));
 	opts.stringImportDirs ~= srcdir ~ "/../res";
 	opts.versionIds ~= "MARS";
 	//opts.versionIds ~= "NoBackend";
 
-	auto filename = std.path.buildPath(srcdir, "dmd/expressionsem.d");
+	auto filename = std.path.buildPath(srcdir, "dmd", "expressionsem.d");
 
 	static void assert_equal(S, T)(S s, T t)
 	{
@@ -1166,9 +1545,51 @@ unittest
 			throw t;
 		}
 	}
-	string source = cast(string)std.file.read(filename);
-	Module m = checkErrors(source, "");
+
+	version(traceGC)
+	{
+		import core.memory;
+		import std.stdio;
+		GC.collect();
+		writeln(GC.stats);
+		dumpGC();
+	}
+
+	bool dump = false;
+	string source;
+	Module m;
+	//foreach(i; 0..40)
+	{
+		filename = __FILE_FULL_PATH__;
+		source = cast(string)std.file.read(filename);
+		m = checkErrors(source, "");
+
+		version(traceGC)
+		{
+			GC.collect();
+			auto stats = GC.stats;
+			writeln(stats);
+			if (stats.usedSize >= 400_000_000)
+				dumpGC();
+		}
+	}
+
+	foreach(f; ["expressionsem.d", "typesem.d", "statementsem.d"])
+	{
+		filename = std.path.buildPath(srcdir, "dmd", f);
+		source = cast(string)std.file.read(filename);
+		m = checkErrors(source, "");
+
+		version(traceGC)
+		{
+			GC.collect();
+			auto stats = GC.stats;
+			writeln(stats);
+		}
+	}
 }
+
+version(test):
 
 // https://issues.dlang.org/show_bug.cgi?id=20253
 enum TTT = 9;
@@ -1180,24 +1601,85 @@ void dummy()
 	int[] arr;
 	auto s = arr.ptr;
 	auto y = arr.length;
-	auto my = arr.mangleof;
-	auto zi = size_t.init;
-	auto z0 = size_t.min;
-	auto z1 = size_t.max;
-	auto z2 = size_t.alignof;
-	auto z3 = size_t.stringof;
-	float flt;
-	auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity, flt.re, flt.min_normal, flt.min_10_exp];
-	auto ti = Object.classinfo;
+	enum my = arr.mangleof;
+	enum zi = size_t.init;
+	enum z0 = size_t.min;
+	enum z1 = size_t.max;
+	enum z2 = size_t.alignof;
+	enum z3 = size_t.stringof;
+	enum z4 = size_t.mangleof;
+	cfloat flt = cfloat.nan;
+	auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig, flt.infinity,
+			  flt.re, flt.im, flt.min_normal, flt.min_10_exp];
+	//auto ti = Object.classinfo;
 }
 
 struct XMem
 {
+	int x;
+	void foo2(int xx = TTT + 1);
 	static XMem foo(int sz) { return XMem(); }
 }
 __gshared XMem xmem;
-
-void fun()
+auto foo3(ref XMem x, @uda(EE) int sz)
 {
-	vdc.dmdserver.semanalysis.XMem m = vdc.dmdserver.semanalysis.xmem.foo(1234);
+	XMem m;
+	m.x = 3;
+	fun!XMem(x);
+	return x;
+}
+
+template Templ(T, int n)
+{
+	struct Templ
+	{
+		T payload;
+	}
+}
+
+import vdc.dmdserver.dmdinit;
+
+void fun(T)(T p) if(TTT == 9)
+{
+	Templ!(XMem, TTT) arr;
+	vdc.dmdserver.semanalysis.XMem m1 = vdc.dmdserver.semanalysis.xmem.foo(1234);
+	vdc.dmdserver.semanalysis.XMem m2 = vdc.dmdserver.semanalysis.xmem.foo(1234);
+	Enum* ee;
+}
+void goo()
+{
+	import std.file; 
+	XMem m;
+	vdc.dmdserver.semanalysis.foo3(m, 1234);
+	std.file.read("abc");
+}
+enum Enum
+{
+	En1, En2, En3
+}
+
+alias En1 = Enum.En1;
+enum EE = Enum.En2;
+alias object.Object E1;
+alias E2 = EE;
+alias E3 = E2;
+alias ET(T) = T.sizeof;   // Line 5
+enum msg = "huhu";
+
+@nogc:
+struct uda { int x; string y; }
+@EE @uda(EE, msg) shared int x;
+
+import core.memory;
+static assert(__traits(compiles, () { Enum ee = En1; }));
+static assert(!__traits(compiles, () { Enum ee = En; }));
+
+int abc;
+
+void funky()
+{
+	int a = 1;
+	if (a == 1)
+	{
+	}
 }

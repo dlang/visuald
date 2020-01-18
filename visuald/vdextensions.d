@@ -98,12 +98,14 @@ int vdhelper_GetDCompileOptions(IVsHierarchy proj, VSITEMID itemid, ProjectOptio
 		opt.cov            = (flags & 8) != 0;
 		opt.doDocComments  = (flags & 16) != 0;
 		opt.boundscheck    = (flags & 32) != 0 ? 3 : 0;
-		opt.errDeprecated  = (flags & 128) != 0;
+		opt.useDeprecated  = (flags & 128) == 0;
+		opt.errDeprecated  = (flags & 0x40_00_00_00) == 0;
 		opt.compiler       = (flags & 0x4_00_00_00) != 0 ? Compiler.LDC : (flags & 64) != 0 ? Compiler.GDC : Compiler.DMD;
 		opt.versionlevel   = (flags >> 8)  & 0xff;
 		opt.debuglevel     = (flags >> 16) & 0xff;
 		opt.mscoff         = true;
 		opt.warnings       = (flags & 0x10_00_00_00) != 0;
+		opt.infowarnings   = (flags & 0x20_00_00_00) == 0;
 
 		return S_OK;
 	}

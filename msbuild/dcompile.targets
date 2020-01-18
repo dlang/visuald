@@ -38,15 +38,18 @@
   </UsingTask>
 
   <!-- remove disabled files from DCompile -->
-  <Target Name="_collectDFiles"
-    DependsOnTargets="_SelectedFiles">
-    
+  <Target Name="_collectDFiles">
+
+    <ItemGroup>
+      <dcompile_SelectedFiles Include="$(SelectedFiles)"/>
+    </ItemGroup>
+
     <ItemGroup Condition="'$(DCompiler)' == 'None'">
       <DCompile Remove="@(DCompile)" />
     </ItemGroup>
     
-    <ItemGroup Condition="'@(SelectedFiles)' != ''">
-      <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
+    <ItemGroup Condition="'@(dcompile_SelectedFiles)' != ''">
+      <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(dcompile_SelectedFiles)'" />
     </ItemGroup>
     
     <ItemGroup>
@@ -127,10 +130,10 @@
     BeforeTargets="$(DCompileBeforeTargets)"
     AfterTargets="$(DCompileAfterTargets)"
     Condition="'@(DCompile)' != '' and '$(DCompiler)' != 'None'"
-    DependsOnTargets="_collectDFiles;_replacePackageName;_SelectedFiles">
+    DependsOnTargets="_collectDFiles;_replacePackageName">
     
-    <ItemGroup Condition="'@(SelectedFiles)' != ''">
-      <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
+    <ItemGroup Condition="'@(dcompile_SelectedFiles)' != ''">
+      <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(dcompile_SelectedFiles)'" />
     </ItemGroup>
     
     <PropertyGroup>

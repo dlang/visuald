@@ -1172,10 +1172,10 @@ void regexReplacePPdefines(TokenList srctokens, string[string] defines)
 						endIt.retreat();
 						posttext = endIt.pretext ~ endIt.text ~ posttext;
 					}
-					string text = tokenListToString(tokIt + 2, endIt);
+					string toktext = tokenListToString(tokIt + 2, endIt);
 					string txt = s;
 					txt = replace(txt, "$id", ident);
-					txt = replace(txt, "$text", text);
+					txt = replace(txt, "$text", toktext);
 					it.pretext ~= tokIt.pretext;
 					it.text = txt ~ posttext;
 					it.type = Token.PPinsert;

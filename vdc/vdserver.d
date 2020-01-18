@@ -184,7 +184,8 @@ class VDServer : ComObject, IVDServer
 			uint oldflags = ConfigureFlags!()(opts.unittestOn, opts.debugOn, opts.x64,
 											  opts.coverage, opts.doDoc, opts.noBoundsCheck, opts.gdcCompiler,
 											  0, 0, // no need to compare version levels, done in setVersionIds
-											  opts.noDeprecated, opts.ldcCompiler, opts.msvcrt, opts.warnings,
+											  opts.noDeprecated, false,
+											  opts.ldcCompiler, opts.msvcrt, opts.warnings, false,
 											  opts.mixinAnalysis, opts.UFCSExpansions);
 
 			opts.unittestOn     = (flags & 1) != 0;

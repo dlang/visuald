@@ -222,12 +222,15 @@ class LanguageService : DisposingComObject,
 
 	override HRESULT GetFileExtensions(BSTR* pbstrExtensions)
 	{
-		return E_NOTIMPL;
+		wstring ext = join(g_languageFileExtensions, ";");
+		*pbstrExtensions = allocwBSTR(ext);
+		return S_OK;
 	}
 
 	override HRESULT GetLanguageName(BSTR* bstrName)
 	{
-		return E_NOTIMPL;
+		*bstrName = allocwBSTR(g_languageName);
+		return S_OK;
 	}
 
 	// IVsLanguageDebugInfo //////////////////////////////////////
@@ -595,6 +598,12 @@ class LanguageService : DisposingComObject,
 		}
 	}
 
+	void RestartParser()
+	{
+		foreach(src; mSources)
+			src.mModificationCount++;
+	}
+
 	// IVsOutliningCapableLanguage ///////////////////////////////
 	HRESULT CollapseToDefinitions(/+[in]+/ IVsTextLines pTextLines,  // the buffer in question
 								  /+[in]+/ IVsOutliningSession pSession)
@@ -950,10 +959,19 @@ class LanguageService : DisposingComObject,
 				return;
 
 			TextSpan span = TextSpan(col, line, col + 1, line);
-			ConfigureSemanticProject(src);
-			int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2;
+			string errorTip = src.getParseError(line, col);
+			if (errorTip.length)
+			{
+				mLastTipRequest -= 10;
+				tipCallback(mLastTipRequest, filename, errorTip, span);
+			}
+			else
+			{
+				ConfigureSemanticProject(src);
+				int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2;
 
-			mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
+				mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
+			}
 			mLastTipIdleTaskHandled = mLastTipIdleTaskScheduled;
 		});
 		return mLastTipIdleTaskScheduled;
@@ -1038,8 +1056,9 @@ class LanguageService : DisposingComObject,
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.boundscheck == 3,
 									  cfgopts.compiler == Compiler.GDC,
 									  cfgopts.versionlevel, cfgopts.debuglevel,
-									  cfgopts.errDeprecated, cfgopts.compiler == Compiler.LDC,
-									  cfgopts.useMSVCRT (), cfgopts.warnings,
+									  !cfgopts.useDeprecated, !cfgopts.errDeprecated,
+									  cfgopts.compiler == Compiler.LDC,
+									  cfgopts.useMSVCRT (), cfgopts.warnings, !cfgopts.infowarnings,
 									  globopts.mixinAnalysis, globopts.UFCSExpansions);
 
 			string strimp = cfgopts.replaceEnvironment(cfgopts.fileImppath, cfg);
@@ -4343,17 +4362,23 @@ else
 
 	void clearParseErrors()
 	{
-		IVsEnumLineMarkers pEnum;
-		if(mBuffer.EnumMarkers(0, 0, 0, 0, MARKER_CODESENSE_ERROR, EM_ENTIREBUFFER, &pEnum) == S_OK)
+		void removeMarkers(int type)
 		{
-			scope(exit) release(pEnum);
-			IVsTextLineMarker marker;
-			while(pEnum.Next(&marker) == S_OK)
+			IVsEnumLineMarkers pEnum;
+			if(mBuffer.EnumMarkers(0, 0, 0, 0, type, EM_ENTIREBUFFER, &pEnum) == S_OK)
 			{
-				marker.Invalidate();
-				marker.Release();
+				scope(exit) release(pEnum);
+				IVsTextLineMarker marker;
+				while(pEnum.Next(&marker) == S_OK)
+				{
+					marker.Invalidate();
+					marker.Release();
+				}
 			}
 		}
+		removeMarkers(MARKER_CODESENSE_ERROR);
+		removeMarkers(MARKER_OTHER_ERROR);
+		removeMarkers(MARKER_WARNING);
 	}
 
 	void finishParseErrors()
@@ -4372,12 +4397,20 @@ else
 			if (mParseErrors[i].msg.startsWith("Warning:") && (!opts || opts.infowarnings))
 				mtype = MARKER_WARNING;
 			else if (mParseErrors[i].msg.startsWith("Deprecation:") && (!opts || !opts.errDeprecated))
-				mtype = MARKER_WARNING;
+				mtype = MARKER_OTHER_ERROR;
 			else if (mParseErrors[i].msg.startsWith("Info:"))
 				mtype = MARKER_WARNING;
 			IVsTextLineMarker marker;
 			mBuffer.CreateLineMarker(mtype, span.iStartLine - 1, span.iStartIndex,
 									 span.iEndLine - 1, span.iEndIndex, this, &marker);
+			if (marker && Package.GetGlobalOptions().usesQuickInfoTooltips())
+			{
+				// do not show tooltip error via GetTipText, but through RequestTooltip
+				DWORD visualStyle;
+				marker.GetVisualStyle(&visualStyle);
+				visualStyle &= ~MV_TIP_FOR_BODY;
+				marker.SetVisualStyle(visualStyle);
+			}
 			//release(marker);
 		}
 	}
@@ -4522,6 +4555,11 @@ else
 
 	int getIdentifierColor(wstring id, int line, int col)
 	{
+		if (id.length > 1 && id[0] == '@') // @UDA lexed as single token
+		{
+			id = id[1..$];
+			col++;
+		}
 		auto pit = id in mIdentifierTypes;
 		if (!pit)
 			return TokenColor.Identifier;

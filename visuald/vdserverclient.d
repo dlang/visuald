@@ -754,6 +754,22 @@ class GetMessageCommand : Command
 	string mMessage;
 }
 
+///////////////////////////////////////
+class ServerRestartedCommand : Command
+{
+	this()
+	{
+		super("ServerRestarted");
+	}
+
+	override bool forward()
+	{
+		import visuald.dpackage;
+		Package.GetLanguageService().RestartParser();
+		return true;
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////
 __gshared Tid gUITid;
 
@@ -983,7 +999,9 @@ class VDServerClient
 					restartServer = false;
 					version(DebugCmd) dbglog("*** clientLoop: restarting server ***");
 					stopVDServer();
-					if (!startVDServer())
+					if (startVDServer())
+						(new _shared!(ServerRestartedCommand)()).send(gUITid);
+					else
 						restartServer = true;
 				}
 			}
