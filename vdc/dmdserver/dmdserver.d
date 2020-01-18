@@ -85,7 +85,7 @@ version (traceGC)
 	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:trace disable:0" ];
 else
 	// precise GC doesn't help much because dmd erases most type info
-	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:precise" ];
+	extern(C) __gshared string[] rt_options = [ "scanDataSeg=precise", "gcopt=gc:precise heapSizeFactor=1.1" ];
 
 ///////////////////////////////////////////////////////////////////////
 version(DebugServer)
