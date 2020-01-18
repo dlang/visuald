@@ -1175,20 +1175,33 @@ Version history
   * VS 2019 16.2: command line options no longer read correctly from the VC project for
     Compile and Run/Debug/Disassemble, dbuild refactored to not rely on msbuild DLLs for that
 
-unreleased Version 0.51.0
-  * Ctrl+Click goto definition added for VS2017+
-  * experimental: semantic server built from dmd frontend
-  * VS2017+: syntax highlighted tool tips
+2020-01-18 Version 0.51.0
+  * installer:
+    - add sections for "Build Tools VS2017/2019"
+    - support more legacy Windows SDKs
+    - full installer now bundled with DMD 2.090 and LDC 1.19
+  * editor:
+    - added option to not show error squiggles and markers
+    - Ctrl+Click goto definition added for VS2017+
+    - VS2017+: syntax highlighted tool tips
+    - added tooltip to collapsed region
+    - fix function signature tool tips
+    - synchronize known version identifiers with dmd 2.090
+  * semantic server
+    - experimental: semantic server built from dmd frontend
+    - now creates server process per Visual Studio instance
+    - improve recovery after semantic server is restarted
+    - error list now filled with intellisense errors
+  * projects:
+    - visualdproj basic DUB support: upgrade and refresh if project contains dub.json or dub.sdl
+    - msbuild: pass original variable LinkToolExe to pipelink.exe through environment
+    - msbuild: fixed dependency project being marked as "unsuccessfully built" when detecting
+      D library requirements
+    - removed support for -gc (no longer supported since dmd 2.083)
   * mago:
     - new option "hide reference pointers"
-	- new option: "remove leading zeroes from hex values"
-	- fix crash expanding pointer to empty dynamic array
-	- large arrays: show growing index, fix omitting last element
-  * installer: add sections for "Build Tools VS2017/2019""
-  * dparser: now creates server process per Visual Studio instance
-  * added option to not show error squiggles and markers
-  * added tooltip to collapsed region
-  * fix function signature tool tips
-  * error list now filled with intellisense errors
-  * basic DUB support: upgrade and refresh if project contains dub.json or dub.sdl
-  * msbuild: pass original variable LinkToolExe to pipelink.exe through environment
+    - new option: "remove leading zeroes from hex values"
+    - fix crash expanding pointer to empty dynamic array
+    - large arrays: show growing index, fix omitting last element
+    - improve AA version detection, adapt to modified hash function
+    - VS2019 16.4: fix "Error" shown in tooltip for array elements beyond the actual size
