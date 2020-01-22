@@ -1545,6 +1545,9 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	void OnConfigModified(bool force)
 	{
 		int changes = UpdateConfig();
+		if (changes || force)
+			mSource.mModificationCount++;
+
 		changes += modifyValue(Package.GetGlobalOptions().ColorizeVersions, mColorizeVersions);
 		changes += modifyValue(Package.GetGlobalOptions().ColorizeCoverage, mColorizeCoverage);
 

@@ -1205,3 +1205,7 @@ Version history
     - large arrays: show growing index, fix omitting last element
     - improve AA version detection, adapt to modified hash function
     - VS2019 16.4: fix "Error" shown in tooltip for array elements beyond the actual size
+
+unreleased Version 0.51.1
+  * editor:
+    - restart semantic analysis if project settings change
