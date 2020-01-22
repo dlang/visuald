@@ -99,11 +99,11 @@ void flushLastError()
 	gLastErrorMsgs.length = 0;
 }
 
-void errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
+bool errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 				const(char)* format, va_list ap, const(char)* p1 = null, const(char)* p2 = null) nothrow
 {
 	if (!loc.filename)
-		return;
+		return true;
 
 	try synchronized(gErrorSync)
 	{
@@ -133,6 +133,7 @@ void errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 	{
 		// tame synchronized "throwing"
 	}
+	return true;
 }
 
 void initErrorMessages(string fname)

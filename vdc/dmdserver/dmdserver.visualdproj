@@ -1004,7 +1004,7 @@
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
-  <release>0</release>
+  <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
@@ -1471,6 +1471,7 @@
     <File path="dmd\src\dmd\root\rmem.d" tool="None" />
     <File path="dmd\src\dmd\root\rootobject.d" />
     <File path="dmd\src\dmd\root\speller.d" />
+    <File path="dmd\src\dmd\root\string.d" />
     <File path="dmd\src\dmd\root\stringtable.d" />
     <File path="dmd\src\dmd\root\strtold.d" />
    </Folder>
@@ -1528,6 +1529,7 @@
    <File path="dmd\src\dmd\expression.d" />
    <File path="dmd\src\dmd\expressionsem.d" />
    <File path="dmd\src\dmd\filecache.d" />
+   <File path="dmd\src\dmd\foreachvar.d" />
    <File path="dmd\src\dmd\frontend.d" tool="None" />
    <File path="dmd\src\dmd\func.d" />
    <File path="dmd\src\dmd\globals.d" />
@@ -1560,6 +1562,7 @@
    <File path="dmd\src\dmd\mtype.d" />
    <File path="dmd\src\dmd\nogc.d" />
    <File path="dmd\src\dmd\nspace.d" />
+   <File path="dmd\src\dmd\ob.d" />
    <File path="dmd\src\dmd\objc.d" />
    <File path="dmd\src\dmd\objc_glue.d" tool="None" />
    <File path="dmd\src\dmd\opover.d" />
