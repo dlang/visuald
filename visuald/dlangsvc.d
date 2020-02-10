@@ -76,6 +76,7 @@ import sdk.vsi.stdidcmd;
 import sdk.vsi.vsdbgcmd;
 import sdk.vsi.vsdebugguids;
 import sdk.vsi.msdbg;
+import sdk.win32.commctrl;
 
 version = threadedOutlining;
 
@@ -374,6 +375,8 @@ class LanguageService : DisposingComObject,
 	// IVsProvideColorableItems //////////////////////////////////////
 	__gshared ColorableItem[] colorableItems;
 
+	__gshared HIMAGELIST completionImageList;
+
 	// delete <VisualStudio-User-Root>\FontAndColors\Cache\{A27B4E24-A735-4D1D-B8E7-9716E1E3D8E0}\Version
 	// if the list of colorableItems changes
 	static struct DefaultColorData
@@ -460,6 +463,8 @@ class LanguageService : DisposingComObject,
 		colorableItems = new ColorableItem[defaultColors.length];
 		foreach(i, def; defaultColors)
 			colorableItems[i] = newCom!ColorableItem(def.name, def.foreground, def.background, def.rgbForeground, def.rgbBackground);
+
+		completionImageList = LoadImageList(g_hInst, MAKEINTRESOURCEA(BMP_COMPLETION), 16, 16);
 	};
 	static void shared_static_dtor()
 	{
@@ -469,6 +474,11 @@ class LanguageService : DisposingComObject,
 			destroy(def); // to keep COM leak detection happy
 		}
 		Source.parseTaskPool = null;
+		if(completionImageList)
+		{
+			ImageList_Destroy(completionImageList);
+			completionImageList = null;
+		}
 	}
 
 	static void updateThemeColors()
@@ -1154,6 +1164,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 	Source mSource;
 	LanguageService mLangSvc;
 	ViewFilter[] mViewFilters;
+	NavigationBarClient mNavBar;
 
 	this(LanguageService langSvc, IVsCodeWindow pCodeWin, Source source)
 	{
@@ -1180,6 +1191,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 			mCodeWin = null;
 		}
 		mSource = release(mSource);
+		mNavBar = release(mNavBar);
 		mLangSvc = null;
 	}
 
@@ -1231,6 +1243,22 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 	}
 
 	//////////////////////////////////////////////////////////////////////
+	void SetupNavigationBar()
+	{
+		if (mNavBar)
+			return;
+
+		if (auto ddbm = qi_cast!IVsDropdownBarManager(mCodeWin))
+		{
+			IVsDropdownBar bar;
+			if (ddbm.GetDropdownBar(&bar) != S_OK || !bar)
+			{
+				mNavBar = addref(newCom!NavigationBarClient(this));
+				ddbm.AddDropdownBar(3, mNavBar);
+			}
+		}
+	}
+	//////////////////////////////////////////////////////////////////////
 
 	bool OnIdle()
 	{
@@ -1253,6 +1281,119 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 			if(vf.mView is pView)
 				return vf;
 		return null;
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////
+class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskMemFreeMyStrings
+{
+	IVsDropdownBar dropdownBar;
+	CodeWindowManager mWinMgr;
+
+	this(CodeWindowManager mgr)
+	{
+		mWinMgr = mgr;
+	}
+
+	override HRESULT QueryInterface(in IID* riid, void** pvObject)
+	{
+		if(queryInterface!(IVsDropdownBarClient) (this, riid, pvObject))
+			return S_OK;
+		if(queryInterface!(IVsCoTaskMemFreeMyStrings) (this, riid, pvObject))
+			return S_OK;
+		return super.QueryInterface(riid, pvObject);
+	}
+
+	override void Dispose()
+	{
+		dropdownBar = release(dropdownBar);
+	}
+
+	// IVsDropdownBarClient
+	HRESULT SetDropdownBar(/+[in]+/ IVsDropdownBar pDropdownBar)
+	{
+		dropdownBar = addref(pDropdownBar);
+		return S_OK;
+	}
+
+	// called whenever info about a combo is needed; any of the out parameters are allowed to be passed in as NULL ptrs if not needed
+	HRESULT GetComboAttributes(in int iCombo,
+							   /+[out]+/ ULONG *pcEntries,
+							   /+[out]+/ ULONG *puEntryType,  // ORing of DROPDOWNENTRYTYPE enum
+							   /+[out]+/ HANDLE *phImageList)  // actually an HIMAGELIST
+	{
+		*pcEntries = 1;
+		*puEntryType = ENTRY_TEXT | ENTRY_IMAGE; // DROPDOWNENTRYTYPE
+		*phImageList = cast(HANDLE) LanguageService.completionImageList;
+		return S_OK;
+	}
+
+	// called for ENTRY_TEXT
+	HRESULT GetEntryText(in int iCombo, in int iIndex, /+[out]+/ WCHAR **ppszText)
+	{
+		switch (iCombo)
+		{
+			case 0:
+				*ppszText = allocBSTR("<Module scope>");
+				break;
+			case 1:
+				*ppszText = allocBSTR("<Class/Struct scope>");
+				break;
+			case 2:
+				*ppszText = allocBSTR("<Funtion scope>");
+				break;
+			default:
+				return S_FALSE;
+		}
+		return S_OK;
+	}
+
+	// called for ENTRY_ATTR
+	HRESULT GetEntryAttributes(in int iCombo, in int iIndex, 
+							   /+[out]+/ ULONG *pAttr) // ORing of DROPDOWNFONTATTR enum values
+	{
+		return E_NOTIMPL;
+	}
+
+	// called for ENTRY_IMAGE
+	HRESULT GetEntryImage(in int iCombo, in int iIndex, /+[out]+/ int *piImageIndex)
+	{
+		switch (iCombo)
+		{
+			case 0:
+				*piImageIndex = CSIMG_CLASS;
+				break;
+			case 1:
+				*piImageIndex = CSIMG_MEMBER;
+				break;
+			case 2:
+				*piImageIndex = CSIMG_FIELD;
+				break;
+			default:
+				return S_FALSE; // keep space for image
+		}
+		return S_OK;
+	}
+
+	HRESULT OnItemSelected(in int iCombo, in int iIndex)
+	{
+		return E_NOTIMPL;
+	}
+
+	HRESULT OnItemChosen(in int iCombo, in int iIndex)
+	{
+		return E_NOTIMPL;
+	}
+
+	HRESULT OnComboGetFocus(in int iCombo)
+	{
+		return E_NOTIMPL;
+	}
+
+	// GetComboTipText returns a tooltip for an entire combo
+	HRESULT GetComboTipText(in int iCombo,  /+[out]+/ BSTR *pbstrText)
+	{
+		return E_NOTIMPL;
 	}
 }
 
@@ -4649,7 +4790,7 @@ else
 	CompletionSet GetCompletionSet()
 	{
 		if(!mCompletionSet)
-			mCompletionSet = addref(newCom!CompletionSet(null, this));
+			mCompletionSet = addref(newCom!CompletionSet(this));
 		return mCompletionSet;
 	}
 

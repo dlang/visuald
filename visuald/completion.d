@@ -51,8 +51,6 @@ import sdk.win32.wtypes;
 
 const int kCompletionSearchLines = 5000;
 
-class ImageList {};
-
 struct Declaration
 {
 	string name;
@@ -710,9 +708,9 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 	bool mWasUnique;
 	int mLastDeclCount;
 
-	this(ImageList imageList, Source source)
+	this(Source source)
 	{
-		mImageList = LoadImageList(g_hInst, MAKEINTRESOURCEA(BMP_COMPLETION), 16, 16);
+		mImageList = LanguageService.completionImageList;
 		mSource = source;
 	}
 
@@ -770,12 +768,6 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 	override void Dispose()
 	{
 		Close();
-		//if (imageList != null) imageList.Dispose();
-		if(mImageList)
-		{
-			ImageList_Destroy(mImageList);
-			mImageList = null;
-		}
 	}
 
 	void Close()

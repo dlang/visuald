@@ -104,6 +104,7 @@ version(tip)
 		mView.AddCommandFilter(this, &mNextTarget);
 		hookWindowProc(cast(HWND) mView.GetWindowHandle());
 
+		// mgr.SetupNavigationBar();
 version(tip)
 		mTextTipData = addref(newCom!TextTipData);
 	}
