@@ -2056,14 +2056,14 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			//foreach (pair; sd.symtab.tab.asRange)
 			if (sd.symtab)
 			{
-				foreach (key, s; sd.symtab.tab.aa)
+				foreach (kv; sd.symtab.tab.asRange)
 				{
 					//Dsymbol s = pair.value;
-					if (!symbolIsVisible(mod, s))
+					if (!symbolIsVisible(mod, kv.value))
 						continue;
-					auto ident = /*pair.*/(cast(Identifier)key).toString();
+					auto ident = /*pair.*/(cast(Identifier)kv.key).toString();
 					if (ident.startsWith(tok))
-						idmap[cast(void*)s] = ident.idup;
+						idmap[cast(void*)kv.value] = ident.idup;
 				}
 			}
 

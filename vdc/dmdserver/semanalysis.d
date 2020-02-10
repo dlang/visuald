@@ -267,8 +267,11 @@ void do_unittests()
 		Module m = analyzeModule(parsedModule, opts);
 		auto err = getErrorMessages();
 		auto other = getErrorMessages(true);
-		assert_equal(err, expected_err);
-		assert_equal(other, "");
+		if (expected_err != "<ignore>")
+		{
+			assert_equal(err, expected_err);
+			assert_equal(other, "");
+		}
 		return m;
 	}
 
@@ -1536,8 +1539,11 @@ unittest
 			Module m = analyzeModule(parsedModule, opts);
 			auto err = getErrorMessages();
 			auto other = getErrorMessages(true);
-			assert_equal(err, expected_err);
-			assert_equal(other, "");
+			if (expected_err != "<ignore>")
+			{
+				assert_equal(err, expected_err);
+				assert_equal(other, "");
+			}
 			return m;
 		}
 		catch(Throwable t)
@@ -1562,13 +1568,25 @@ unittest
 	{
 		filename = __FILE_FULL_PATH__;
 		source = cast(string)std.file.read(filename);
-		m = checkErrors(source, "");
-
-		version(traceGC)
+		if (i & 1)
 		{
-			GC.collect();
+			import std.array;
+			source = replace(source, "std", "stdx");
+			m = checkErrors(source, "<ignore>");
+		}
+		else
+			m = checkErrors(source, "");
+
+		//version(traceGC)
+		{
+			import std.stdio;
+			if ((i % 10) == 0)
+				GC.collect();
 			auto stats = GC.stats;
 			writeln(stats);
+		}
+		version(traceGC)
+		{
 			if (stats.usedSize >= 400_000_000)
 				dumpGC();
 		}
