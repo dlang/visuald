@@ -662,7 +662,8 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyPrjTempl.Set(null, g_languageName);
 		keyPrjTempl.Set("DeveloperActivity"w, g_languageName);
 		keyPrjTempl.Set("SortPriority"w, 20);
-		keyPrjTempl.Set("TemplatesDir"w, templatePath ~ tmplprojectdir);
+		if (ver < 15) // registered in vsixmanifest
+			keyPrjTempl.Set("TemplatesDir"w, templatePath ~ tmplprojectdir);
 		keyPrjTempl.Set("Folder"w, "{152CDB9D-B85A-4513-A171-245CE5C61FCC}"w); // other languages
 
 		wstring projects = registrationRoot ~ "\\Projects\\"w ~ GUID2wstring(g_projectFactoryCLSID);
@@ -674,7 +675,8 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		keyProject.Set("Package"w, packageGuid);
 		keyProject.Set("DefaultProjectExtension"w, g_defaultProjectFileExtension);
 		keyProject.Set("PossibleProjectExtensions"w, join(g_projectFileExtensions, ";"w));
-		keyProject.Set("ProjectTemplatesDir"w, templatePath ~ tmplprojectdir);
+		if (ver < 15) // registered in vsixmanifest
+			keyProject.Set("ProjectTemplatesDir"w, templatePath ~ tmplprojectdir);
 		keyProject.Set("Language(VsTemplate)"w, g_languageName);
 		keyProject.Set("ItemTemplatesDir"w, templatePath ~ "\\Items"w);
 

@@ -1,14 +1,18 @@
 <VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
   <TemplateData>
-    <Name>Visual D based Win32 Application</Name>
-    <Description>A project for creating a Windows application</Description>
-    <Icon>__TemplateIcon.ico</Icon>
+    <Name>Visual D based Windows Application</Name>
+    <Description>A Visual D project for creating a Win32 application, console application, DLL or static library. This is based on a project type designed for the D programming language.
+    </Description>
+    <Icon>vdproj.ico</Icon>
     <ProjectType>D</ProjectType>
     <SortOrder>50</SortOrder>
     <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
     <CreateNewFolder>true</CreateNewFolder>
     <DefaultName>WindowsApp</DefaultName>
     <ProvideDefaultName>true</ProvideDefaultName>
+    <LanguageTag>D</LanguageTag>
+    <PlatformTag>Windows</PlatformTag>
+    <PlatformTag>Visual D</PlatformTag>
   </TemplateData>
   <TemplateContent>
     <Project File="WindowsApp.visualdproj" ReplaceParameters="true">
