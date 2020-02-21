@@ -10,6 +10,7 @@ module visuald.updates;
 
 import visuald.windows;
 import visuald.dpackage;
+import visuald.pkgutil;
 
 import std.conv;
 import std.datetime;
@@ -61,18 +62,26 @@ struct UpdateInfo
 
 UpdateInfo* checkForUpdate(CheckProduct prod, Duration renew, int frequency)
 {
-	auto info = _checkForUpdate(prod, renew, frequency);
-
-	if (prod == CheckProduct.DMD && frequency == CheckFrequency.DailyPrereleases)
+	try
 	{
-		// check releases for DMD prerelases, too
-		auto relinfo = _checkForUpdate(prod, renew, CheckFrequency.Daily);
-		auto prever = extractVersion(info.name);
-		auto relver = extractVersion(relinfo.name);
-		if (relver > prever)
-			info = relinfo;
+		auto info = _checkForUpdate(prod, renew, frequency);
+
+		if (prod == CheckProduct.DMD && frequency == CheckFrequency.DailyPrereleases)
+		{
+			// check releases for DMD prerelases, too
+			auto relinfo = _checkForUpdate(prod, renew, CheckFrequency.Daily);
+			auto prever = extractVersion(info.name);
+			auto relver = extractVersion(relinfo.name);
+			if (relver > prever)
+				info = relinfo;
+		}
+		return info;
 	}
-	return info;
+	catch(Exception e)
+	{
+		showStatusBarText("error while checking for update: " ~ e.msg);
+	}
+	return null;
 }
 
 UpdateInfo* _checkForUpdate(CheckProduct prod, Duration renew, int frequency)
@@ -493,13 +502,13 @@ void doUpdate(string baseDir, CheckProduct prod, int frequency, void delegate(st
 				{
 					if (req.data.length == 0)
 					{
-						dgProgress(name ~ ": connecting");
+						dgProgress("Downloading " ~ name ~ ": connecting");
 					}
 					else
 					{
 						import std.conv;
 						string allbytes = req.fullSize > 0 ? " of " ~ approxBytes(req.fullSize) : "";
-						dgProgress(name ~ ": " ~ approxBytes(req.data.length) ~ allbytes);
+						dgProgress("Downloading " ~ name ~ ": " ~ approxBytes(req.data.length) ~ allbytes);
 					}
 					Thread.sleep(500.msecs);
 				}

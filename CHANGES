@@ -1210,3 +1210,5 @@ unreleased Version 0.51.1
   * editor:
     - restart semantic analysis if project settings change
   * VS 2019 16.1+: the new project dialog now allows filtering by language tag "D"
+  - avoid crash due to unhandled exception if checking for updates fails
+  - refresh Update page after upgrading

@@ -2427,6 +2427,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 	enum ID_MESSAGE_LABEL = 1110;
 	enum ID_CANCEL_UPDATE = 1111;
 	enum ID_BROWSE_BASEDIR = 1112;
+	enum ID_REFRESH_INSTALLDIR = 1113;
 
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "Updates"; }
@@ -2579,8 +2580,8 @@ class UpdatePropertyPage : GlobalPropertyPage
 				if (pp.mCanvas && pp.mCanvas.hwnd)
 					PostMessage(pp.mCanvas.hwnd, WM_COMMAND, DirPropertyPage.ID_REFRESH_INSTALLDIR, 0);
 
-			if (mUpdateCancel && mUpdateCancel.hwnd)
-				mUpdateCancel.setVisible(false);
+			if (mCanvas && mCanvas.hwnd)
+				PostMessage(mCanvas.hwnd, WM_COMMAND, ID_REFRESH_INSTALLDIR, 0);
 
 			if (Package.s_instance)
 				Package.s_instance.deferSaveOptions();
@@ -2639,6 +2640,13 @@ class UpdatePropertyPage : GlobalPropertyPage
 			case ID_CHECK_DMD:
 				auto info = checkForUpdate(CheckProduct.DMD, 0.days, mDMDCheck.getSelection());
 				updateDMDInfo(info);
+				break;
+
+			case ID_REFRESH_INSTALLDIR:
+				if (mUpdateCancel && mUpdateCancel.hwnd)
+					mUpdateCancel.setVisible(false);
+
+				SetControls(GetGlobalOptions());
 				break;
 
 			case ID_CANCEL_UPDATE:
