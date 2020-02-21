@@ -1564,7 +1564,7 @@ unittest
 	bool dump = false;
 	string source;
 	Module m;
-	//foreach(i; 0..40)
+	int i = 0; //foreach(i; 0..40)
 	{
 		filename = __FILE_FULL_PATH__;
 		source = cast(string)std.file.read(filename);
