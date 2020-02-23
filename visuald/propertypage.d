@@ -3042,6 +3042,8 @@ struct MagoOptions
 	bool expandableStrings;
 	bool hideReferencePointers;
 	bool removeLeadingHexZeroes;
+	bool recombineTuples;
+	bool showDArrayLengthInType;
 	uint maxArrayElements;
 
 	void saveToRegistry()
@@ -3054,6 +3056,8 @@ struct MagoOptions
 		keyMago.Set("expandableStrings", expandableStrings);
 		keyMago.Set("hideReferencePointers", hideReferencePointers);
 		keyMago.Set("removeLeadingHexZeroes", removeLeadingHexZeroes);
+		keyMago.Set("recombineTuples", recombineTuples);
+		keyMago.Set("showDArrayLengthInType", showDArrayLengthInType);
 		keyMago.Set("maxArrayElements", maxArrayElements);
 	}
 
@@ -3068,6 +3072,8 @@ struct MagoOptions
 		expandableStrings = (keyMago.GetDWORD("expandableStrings", 0) != 0);
 		hideReferencePointers = (keyMago.GetDWORD("hideReferencePointers", 1) != 0);
 		removeLeadingHexZeroes = (keyMago.GetDWORD("removeLeadingHexZeroes", 0) != 0);
+		recombineTuples   = (keyMago.GetDWORD("recombineTuples", 1) != 0);
+		showDArrayLengthInType = (keyMago.GetDWORD("showDArrayLengthInType", 0) != 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
 	}
 }
@@ -3086,8 +3092,10 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mShowStaticsInAggr = new CheckBox(mCanvas, "Show static fields in structs and classes"));
 		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
 		AddControl("", mFlatClassFields   = new CheckBox(mCanvas, "Show base class fields as direct fields"));
+		AddControl("", mRecombineTuples   = new CheckBox(mCanvas, "Rebuild tuples from compiler generated fields"));
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
 		AddControl("", mHideRefPointers   = new CheckBox(mCanvas, "Hide pointers for class references and slices"));
+		AddControl("", mShowLengthInType  = new CheckBox(mCanvas, "Show length of dynamic array in type column"));
 		AddControl("", mRemoveHexZeroes   = new CheckBox(mCanvas, "Remove leading zeroes from hex values"));
 		auto saveWidth = kLabelWidth;
 		kLabelWidth = kPageWidth * 4 / 5;
@@ -3141,6 +3149,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		mExpandableStrings.setChecked(mOptions.expandableStrings);
 		mHideRefPointers.setChecked(mOptions.hideReferencePointers);
 		mRemoveHexZeroes.setChecked(mOptions.removeLeadingHexZeroes);
+		mRecombineTuples.setChecked(mOptions.recombineTuples);
+		mShowLengthInType.setChecked(mOptions.showDArrayLengthInType);
 		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
 	}
 
@@ -3154,6 +3164,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mExpandableStrings.isChecked(), opts.expandableStrings, refopts.expandableStrings);
 		changes += changeOption(mHideRefPointers.isChecked(), opts.hideReferencePointers, refopts.hideReferencePointers);
 		changes += changeOption(mRemoveHexZeroes.isChecked(), opts.removeLeadingHexZeroes, refopts.removeLeadingHexZeroes);
+		changes += changeOption(mRecombineTuples.isChecked(), opts.recombineTuples, refopts.recombineTuples);
+		changes += changeOption(mShowLengthInType.isChecked(), opts.showDArrayLengthInType, refopts.showDArrayLengthInType);
 
 		import stdext.string;
 		long maxelem;
@@ -3170,6 +3182,8 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mExpandableStrings;
 	CheckBox mHideRefPointers;
 	CheckBox mRemoveHexZeroes;
+	CheckBox mRecombineTuples;
+	CheckBox mShowLengthInType;
 	Text mMaxArrayElements;
 }
 
