@@ -1212,3 +1212,17 @@ unreleased Version 0.51.1
   * VS 2019 16.1+: the new project dialog now allows filtering by language tag "D"
   - avoid crash due to unhandled exception if checking for updates fails
   - refresh Update page after upgrading
+  - mago debugger:
+    - lookup symbols as the remainder of globals and present them expandable if ambiguous
+    - add option to show length of dynamic array in type column
+    - add support for Tuples: recombine fields __<var>_field_%d to an expandable structure
+  - dmdserver:
+    - rebased to dmd 2.091.0-beta1
+    - all language options are now passed to the engine
+    - fixed a couple of crashes (often result in eternally reporting "Anaylzing...")
+  - projects:
+    - added support for -preview=dip1021 (though compiler crashes)
+    - added support for -preview=rvaluerefparam
+    - added support for -preview=nosharedaccess
+    - added support for -HCf (C++ header generation, only vcxproj)
+    - LDC with vcxproj: some language options were inaccessible

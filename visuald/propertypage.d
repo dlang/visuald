@@ -1276,6 +1276,9 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		AddControl("", mDip25                   = new CheckBox(mCanvas, "implement DIP25: sealed pointers (DMD 2.067+)"));
 		AddControl("", mDip1000                 = new CheckBox(mCanvas, "implement DIP1000: scoped pointers (DMD 2.073+)"));
 		AddControl("", mDip1008                 = new CheckBox(mCanvas, "implement DIP1008: reference counted exceptions (DMD 2.078+)"));
+		AddControl("", mDip1021                 = new CheckBox(mCanvas, "implement DIP1021: mutable function arguments (DMD 2.089+)"));
+		AddControl("", mPreview_rvaluerefparam  = new CheckBox(mCanvas, "enable rvalue arguments to ref parameters (DMD 2.087+)"));
+		AddControl("", mPreview_nosharedaccess  = new CheckBox(mCanvas, "disable access to shared memory objects (DMD 2.088+)"));
 		AddHorizontalLine();
 		AddControl("", mTransition_import       = new CheckBox(mCanvas, "revert to single phase name lookup (DMD 2.071+)"));
 		AddControl("", mTransition_dtorfields   = new CheckBox(mCanvas, "destruct fields of partially constructed objects (DMD 2.083+)"));
@@ -1289,10 +1292,13 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		mDip25.setChecked(options.dip25);
 		mDip1000.setChecked(options.dip1000);
 		mDip1008.setChecked(options.dip1008);
+		mDip1021.setChecked(options.dip1021);
 		mTransition_import.setChecked(options.revert_import);
 		mTransition_dtorfields.setChecked(options.preview_dtorfields);
 		mTransition_intpromote.setChecked(options.preview_intpromote);
 		mTransition_fixAliasThis.setChecked(options.preview_fixAliasThis);
+		mPreview_rvaluerefparam.setChecked(options.preview_rvaluerefparam);
+		mPreview_nosharedaccess.setChecked(options.preview_nosharedaccess);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1302,10 +1308,13 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		changes += changeOption(mDip25.isChecked(), options.dip25, refoptions.dip25);
 		changes += changeOption(mDip1000.isChecked(), options.dip1000, refoptions.dip1000);
 		changes += changeOption(mDip1008.isChecked(), options.dip1008, refoptions.dip1008);
+		changes += changeOption(mDip1021.isChecked(), options.dip1021, refoptions.dip1021);
 		changes += changeOption(mTransition_import.isChecked(), options.revert_import, refoptions.revert_import);
 		changes += changeOption(mTransition_dtorfields.isChecked(), options.preview_dtorfields, refoptions.preview_dtorfields);
 		changes += changeOption(mTransition_intpromote.isChecked(), options.preview_intpromote, refoptions.preview_intpromote);
 		changes += changeOption(mTransition_fixAliasThis.isChecked(), options.preview_fixAliasThis, refoptions.preview_fixAliasThis);
+		changes += changeOption(mPreview_rvaluerefparam.isChecked(), options.preview_rvaluerefparam, refoptions.preview_rvaluerefparam);
+		changes += changeOption(mPreview_nosharedaccess.isChecked(), options.preview_nosharedaccess, refoptions.preview_nosharedaccess);
 		return changes;
 	}
 
@@ -1313,6 +1322,9 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 	CheckBox mDip25;
 	CheckBox mDip1000;
 	CheckBox mDip1008;
+	CheckBox mDip1021;
+	CheckBox mPreview_rvaluerefparam;
+	CheckBox mPreview_nosharedaccess;
 	CheckBox mTransition_import;
 	CheckBox mTransition_dtorfields;
 	CheckBox mTransition_intpromote;

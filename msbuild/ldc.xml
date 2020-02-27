@@ -166,24 +166,33 @@
     <BoolProperty Name="DIP1000" Category="Language" DisplayName="DIP1000" Switch="-dip1000"
                   Description="implement DIP1000: scoped pointers." />
     <BoolProperty Name="DIP1008" Category="Language" DisplayName="DIP1008" Switch="-dip1008"
-                  Description="reference counted exceptions." />
+                  Description="implement DIP1008: reference counted exceptions." />
+    <BoolProperty Name="DIP1021" Category="Language" DisplayName="DIP1021" Switch="-preview=dip1021"
+                  Description="implement DIP1021: mutable function arguments." />
 
-    <BoolProperty Name="TransitionImport" Category="Language" DisplayName="Transition import" Switch="-transition=import"
-                  Description="revert to single phase name lookup." />
-    <BoolProperty Name="TransitionDtorFields" Category="Language" DisplayName="Transition dtorfields" Switch="-transition=dtorfields"
+    <BoolProperty Name="PreviewFieldwise" Category="Language" DisplayName="Preview fieldwise" Switch="-preview=fieldwise"
+                  Description="use fieldwise comparisons for struct equality." />
+    <BoolProperty Name="PreviewDtorFields" Category="Language" DisplayName="Preview dtorfields" Switch="-preview=dtorfields"
                   Description="destruct fields of partially constructed objects." />
-    <BoolProperty Name="TransitionIntPromote" Category="Language" DisplayName="Transition intpromote" Switch="-transition=intpromote"
+    <BoolProperty Name="PreviewIntPromote" Category="Language" DisplayName="Preview intpromote" Switch="-preview=intpromote"
                   Description="fix integral promotions for unary + - ~ operators." />
-    <BoolProperty Name="TransitionFixAliasThis" Category="Language" DisplayName="Transition fixAliasThis" Switch="-transition=fixAliasThis"
+    <BoolProperty Name="PreviewFixAliasThis" Category="Language" DisplayName="Preview fixAliasThis" Switch="-preview=fixAliasThis"
                   Description="when a symbol is resolved, check alias this scope before upper scopes." />
+    <BoolProperty Name="PreviewRvalueRefParam" Category="Language" DisplayName="Preview rvaluerefparam" Switch="-preview=rvaluerefparam"
+                  Description="enable rvalue arguments to ref parameters." />
+    <BoolProperty Name="PreviewNoSharedAccess" Category="Language" DisplayName="Preview nosharedaccess" Switch="-preview=nosharedaccess"
+                  Description="disable access to shared memory objects." />
+
+    <BoolProperty Name="RevertImport" Category="Language" DisplayName="Revert import" Switch="-revert=import"
+                  Description="revert to single phase name lookup." />
 
     <!-- =============== Documentation =============== -->
     <StringProperty Name="DocDir" Category="Documentation" DisplayName="Documentation Directory" Subtype="folder"
                     Description="write documentation file(s) to this directory." Switch="-Dd" />
     <StringProperty Name="DocFile" Category="Documentation" DisplayName="Documentation File" Subtype="file"
                     Description="write documentation to this file." Switch="-Df" />
-    <BoolProperty   Name="TransitionMarkdown" Category="Documentation" DisplayName="Enable Markdown" Switch="-transition=markdown"
-                    Description="Enable Markdown replacements in Ddoc" />
+    <BoolProperty   Name="PreviewMarkdown" Category="Documentation" DisplayName="Enable Markdown" Switch="-preview=markdown"
+                    Description="Enable Markdown replacements in Ddoc." />
     <BoolProperty   Name="TransitionVMarkdown" Category="Documentation" DisplayName="List Markdown Usage" Switch="-transition=vmarkdown"
                     Description="List instances of Markdown replacements in Ddoc" />
     <StringProperty Name="DepFile" Category="Documentation" DisplayName="Dependencies File" Subtype="file"
@@ -192,6 +201,8 @@
                     Description="write 'header' file(s) to this directory." Switch="-Hd" />
     <StringProperty Name="HeaderFile" Category="Documentation" DisplayName="Header File" Subtype="file"
                     Description="write 'header' to this file." Switch="-Hf" />
+    <StringProperty Name="CppHeaderFile" Category="Documentation" DisplayName="C++ Header File" Subtype="file"
+                    Description="write C++ 'header' to this file." Switch="-HCf" />
     <StringProperty Name="JSONFile" Category="Documentation" DisplayName="JSON Browse File" Subtype="file"
                     Description="write browse information to this JSON file." Switch="-Xf" />
 

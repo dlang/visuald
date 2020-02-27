@@ -52,6 +52,7 @@ public:
 	// stringImp:  new-line delimited list of string import folders
 	// versionids: new-line delimited list of version identifiers defined on the command line
 	// debugids:   new-line delimited list of debug identifiers defined on the command line
+	// cmdline:    space delimited additional command line options
 	// flags:      see ConfigureFlags
 	//
 	// Options are taken from the project that contains the file. If the file
@@ -62,7 +63,7 @@ public:
 	// This function is usually called after UpdateModule, assuming that parsing does
 	// not depend on compilation options, so any semantic analysis should be deferred
 	// until ConfigureSemanticProject is called.
-	HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags);
+	HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, in BSTR cmdline, DWORD flags);
 
 	// delete all semantic and parser information
 	HRESULT ClearSemanticProject();

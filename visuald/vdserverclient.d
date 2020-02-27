@@ -269,13 +269,15 @@ class FileCommand : Command
 class ConfigureProjectCommand : FileCommand
 {
 	this(string filename, immutable(string[]) imp, immutable(string[]) stringImp,
-		 immutable(string[]) versionids, immutable(string[]) debugids, uint flags)
+		 immutable(string[]) versionids, immutable(string[]) debugids,
+		 string cmdline, uint flags)
 	{
 		super("ConfigureProject", filename);
 		mImp = imp;
 		mStringImp = stringImp;
 		mVersionids = versionids;
 		mDebugids = debugids;
+		mCmdline = cmdline;
 		mFlags = flags;
 	}
 
@@ -294,14 +296,16 @@ class ConfigureProjectCommand : FileCommand
 		auto bstringImp = allocBSTR(jstringImp);
 		auto bversionids = allocBSTR(jversionids);
 		auto bdebugids = allocBSTR(jdebugids);
+		auto bcmdline = allocBSTR(mCmdline);
 
-		HRESULT hr = gVDServer.ConfigureSemanticProject(bfilename, bimp, bstringImp, bversionids, bdebugids, mFlags);
+		HRESULT hr = gVDServer.ConfigureSemanticProject(bfilename, bimp, bstringImp, bversionids, bdebugids, bcmdline, mFlags);
 
 		freeBSTR(bfilename);
 		freeBSTR(bimp);
 		freeBSTR(bstringImp);
 		freeBSTR(bversionids);
 		freeBSTR(bdebugids);
+		freeBSTR(bcmdline);
 
 		return hr;
 	}
@@ -310,6 +314,7 @@ class ConfigureProjectCommand : FileCommand
 	immutable(string[]) mStringImp;
 	immutable(string[]) mVersionids;
 	immutable(string[]) mDebugids;
+	string mCmdline;
 	uint mFlags;
 }
 
@@ -807,9 +812,9 @@ class VDServerClient
 
 	//////////////////////////////////////
 	uint ConfigureSemanticProject(string filename, immutable(string[]) imp, immutable(string[]) stringImp,
-								  immutable(string[]) versionids, immutable(string[]) debugids, uint flags)
+								  immutable(string[]) versionids, immutable(string[]) debugids, string cmdline, uint flags)
 	{
-		auto cmd = new _shared!(ConfigureProjectCommand)(filename, imp, stringImp, versionids, debugids, flags);
+		auto cmd = new _shared!(ConfigureProjectCommand)(filename, imp, stringImp, versionids, debugids, cmdline, flags);
 		cmd.send(mTid);
 		return cmd.mRequest;
 	}

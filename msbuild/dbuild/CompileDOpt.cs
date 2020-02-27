@@ -91,10 +91,13 @@ namespace dbuild
 			this.switchOrderList.Add("DIP25");
 			this.switchOrderList.Add("DIP1000");
 			this.switchOrderList.Add("DIP1008");
+			this.switchOrderList.Add("DIP1021");
 			this.switchOrderList.Add("RevertImport");
 			this.switchOrderList.Add("PreviewDtorFields");
 			this.switchOrderList.Add("PreviewIntPromote");
 			this.switchOrderList.Add("PreviewFixAliasThis");
+			this.switchOrderList.Add("PreviewRvalueRefParam");
+			this.switchOrderList.Add("PreviewNoSharedAccess");
 			this.switchOrderList.Add("PreviewMarkdown");
 			this.switchOrderList.Add("TransitionVMarkdown");
 			this.switchOrderList.Add("TransitionField");
@@ -114,6 +117,7 @@ namespace dbuild
 			this.switchOrderList.Add("DepFile");
 			this.switchOrderList.Add("HeaderDir");
 			this.switchOrderList.Add("HeaderFile");
+			this.switchOrderList.Add("CppHeaderFile");
 			this.switchOrderList.Add("JSONFile");
 
 			this.switchOrderList.Add("AdditionalOptions");
@@ -524,18 +528,29 @@ namespace dbuild
             }
         }
 
-        public bool DIP1008
-        {
-            get { return GetBoolProperty("DIP1008"); }
-            set
-            {
+		public bool DIP1008
+		{
+			get { return GetBoolProperty("DIP1008"); }
+			set
+			{
 				SetBoolProperty("DIP1008", "DIP1008",
-                                "implement DIP1008: reference counted exceptions (-dip1008)",
-                                "-dip1008", value);
-            }
-        }
+								"implement DIP1008: reference counted exceptions (-dip1008)",
+								"-dip1008", value);
+			}
+		}
 
-        public bool RevertImport
+		public bool DIP1021
+		{
+			get { return GetBoolProperty("DIP1021"); }
+			set
+			{
+				SetBoolProperty("DIP1021", "DIP1021",
+								"implement DIP1021: mutable function arguments (-preview=dip1021)",
+								"-preview=dip1021", value);
+			}
+		}
+
+		public bool RevertImport
         {
             get { return GetBoolProperty("RevertImport"); }
             set
@@ -568,18 +583,40 @@ namespace dbuild
             }
         }
 
-        public bool PreviewFixAliasThis
+		public bool PreviewFixAliasThis
 		{
-            get { return GetBoolProperty("PreviewFixAliasThis"); }
-            set
-            {
+			get { return GetBoolProperty("PreviewFixAliasThis"); }
+			set
+			{
 				SetBoolProperty("PreviewFixAliasThis", "Preview fixAliasThis",
 								"when a symbol is resolved, check alias this scope before upper scopes (-preview=fixAliasThis)",
 								"-preview=fixAliasThis", value);
-            }
-        }
+			}
+		}
 
-        public bool PreviewMarkdown
+		public bool PreviewRvalueRefParam
+		{
+			get { return GetBoolProperty("PreviewRvalueRefParam"); }
+			set
+			{
+				SetBoolProperty("PreviewRvalueRefParam", "Preview rvaluerefparam",
+								"enable rvalue arguments to ref parameters (-preview=rvaluerefparam)",
+								"-preview=rvaluerefparam", value);
+			}
+		}
+
+		public bool PreviewNoSharedAccess
+		{
+			get { return GetBoolProperty("PreviewNoSharedAccess"); }
+			set
+			{
+				SetBoolProperty("PreviewNoSharedAccess", "Preview nosharedaccess",
+								"disable access to shared memory objects (-preview=nosharedaccess)",
+								"-preview=nosharedaccess", value);
+			}
+		}
+
+		public bool PreviewMarkdown
 		{
             get { return GetBoolProperty("PreviewMarkdown"); }
             set
@@ -792,18 +829,29 @@ namespace dbuild
             }
         }
 
-        public string HeaderFile
-        {
-            get { return GetStringProperty("HeaderFile"); }
-            set
-            {
+		public string HeaderFile
+		{
+			get { return GetStringProperty("HeaderFile"); }
+			set
+			{
 				SetFileProperty("HeaderFile", "Header File",
-                                "Write 'header' to this file. (-Hf[file])",
-                                "-Hf", value);
-            }
-        }
+								"Write 'header' to this file. (-Hf[file])",
+								"-Hf", value);
+			}
+		}
 
-        public string JSONFile
+		public string CppHeaderFile
+		{
+			get { return GetStringProperty("CppHeaderFile"); }
+			set
+			{
+				SetFileProperty("CppHeaderFile", "C++ Header File",
+								"Write C++ 'header' to this file. (-HCf=[file])",
+								"-HCf=", value);
+			}
+		}
+
+		public string JSONFile
         {
             get { return GetStringProperty("JSONFile"); }
             set

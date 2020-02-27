@@ -231,7 +231,7 @@ class DMDServer : ComObject, IVDServer
 			runTask(dg);
 	}
 
-	override HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags)
+	override HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, in BSTR cmdline, DWORD flags)
 	{
 		string fname = to_string(filename);
 
@@ -270,8 +270,10 @@ class DMDServer : ComObject, IVDServer
 
 			string verids = to_string(versionids);
 			string dbgids = to_string(debugids);
+			string cmdln  = to_string(cmdline);
 
-			int changed = (oldflags != (flags & 0xff0000ff));
+			int changed = (oldflags != (flags & 0xff0000ff)) + (cmdln != opts.cmdline);
+			opts.cmdline = cmdln;
 			changed += opts.setImportDirs(splitLines(imports));
 			changed += opts.setStringImportDirs(splitLines(strImports));
 			changed += opts.setVersionIds(versionlevel, splitLines(verids));
@@ -1140,7 +1142,7 @@ unittest
 								   true); //bool ufcsExpansionsfalse,
 
 	HRESULT hr;
-	hr = srv.ConfigureSemanticProject(filename, imp, empty, empty, empty, flags);
+	hr = srv.ConfigureSemanticProject(filename, imp, empty, empty, empty, null, flags);
 	assert(hr == S_OK);
 
 	void checkErrors(string src, string expected_err)

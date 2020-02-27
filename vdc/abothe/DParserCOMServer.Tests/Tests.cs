@@ -61,7 +61,7 @@ namespace DParserCOMServer.Tests
 			public IVDServer Initialize(uint flags = 0)
 			{
 				IVDServer instance = new VDServer();
-				instance.ConfigureSemanticProject(null, _subFolder, "", "", "", flags);
+				instance.ConfigureSemanticProject(null, _subFolder, "", "", "", "", flags);
 				Console.WriteLine("Waiting for " + _subFolder + " to be parsed...");
 				if (!_parseFinishedSemaphore.WaitOne(5000))
 				{

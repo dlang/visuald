@@ -1054,6 +1054,7 @@ class LanguageService : DisposingComObject,
 		string[] stringImp;
 		string[] versionids;
 		string[] debugids;
+		string cmdline;
 		uint flags = 0;
 
 		if(cfg)
@@ -1083,12 +1084,14 @@ class LanguageService : DisposingComObject,
 			string versions = cfg.getCompilerVersionIDs();
 			versionids = tokenizeArgs(versions);
 			debugids = tokenizeArgs(cfgopts.debugids);
+			cmdline = cfgopts.dmdFrontEndOptions();
 		}
 		else
 		{
 			imp = Package.GetGlobalOptions().getImportPaths(Compiler.DMD);
 		}
-		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp), assumeUnique(versionids), assumeUnique(debugids), flags);
+		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp),
+		                                              assumeUnique(versionids), assumeUnique(debugids), cmdline, flags);
 	}
 
 	bool isBinaryOperator(Source src, int startLine, int startIndex, int endLine, int endIndex)

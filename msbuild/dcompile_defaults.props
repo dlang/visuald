@@ -60,12 +60,15 @@
       <DIP25>false</DIP25>
       <DIP1000>false</DIP1000>
       <DIP1008>false</DIP1008>
+      <DIP1021>false</DIP1021>
       <CPUArchitecture>baseline</CPUArchitecture>
       <RevertImport>false</RevertImport>
       <PreviewFieldwise>false</PreviewFieldwise>
       <PreviewDtorFields>false</PreviewDtorFields>
       <PreviewIntPromote>false</PreviewIntPromote>
       <PreviewFixAliasThis>false</PreviewFixAliasThis>
+      <PreviewRvalueRefParam>false</PreviewRvalueRefParam>
+      <PreviewNoSharedAccess>false</PreviewNoSharedAccess>
       <PreviewMarkdown>false</PreviewMarkdown>
       <TransitionVMarkdown>false</TransitionVMarkdown>
       <TransitionField>false</TransitionField>
@@ -93,6 +96,7 @@
       <DepFile></DepFile>
       <HeaderDir></HeaderDir>
       <HeaderFile></HeaderFile>
+      <CppHeaderFile></CppHeaderFile>
       <JSONFile></JSONFile>
       <DebugMixin></DebugMixin>
       -->
@@ -106,6 +110,7 @@
       <CodeGeneration Condition="'$(Platform)' == 'X64'">64Bits</CodeGeneration>
       <CodeGeneration Condition="'$(Platform)' != 'Win32' and '$(Platform)' != 'X64'">echo DMD not supported on this platform
 exit 1</CodeGeneration>
-    </DCompile>
+    
+  </DCompile>
   </ItemDefinitionGroup>
 </Project>

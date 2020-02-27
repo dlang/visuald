@@ -1699,7 +1699,7 @@
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
-midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /tlb &quot;..\vdserver.tlb&quot; /out &quot;$(IntDir)&quot; /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" path="vdserver.idl" tool="Custom" />
+midl /D _DEBUG /nologo /char signed /env win32 /Oicf  /tlb &quot;..\vdserver.tlb&quot; /out &quot;$(IntDir)&quot; /error stub_data $(InputPath)" outfile="$(OutDir)/vdserver.tlb" dependencies="ivdserver.idl" path="vdserver.idl" tool="Custom" />
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError

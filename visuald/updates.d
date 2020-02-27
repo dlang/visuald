@@ -23,6 +23,8 @@ import std.string;
 import std.utf;
 import core.thread;
 
+// version = HTTP_CALLBACK; // install status callback to debug failures
+
 enum CheckFrequency
 {
 	Never,
@@ -214,6 +216,11 @@ void winHttpGet(DownloadRequest* req)
 						   WINHTTP_NO_PROXY_NAME,
 						   WINHTTP_NO_PROXY_BYPASS, 0);
 	scope(exit) if(hSession) WinHttpCloseHandle(hSession);
+
+	// Install the status callback function.
+	version(HTTP_CALLBACK)
+	auto isCallback = WinHttpSetStatusCallback(hSession, &winhttpStatusCallback,
+											   WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0);
 
 	DWORD opt = WINHTTP_OPTION_REDIRECT_POLICY_ALWAYS;
 	WinHttpSetOption(hSession, WINHTTP_OPTION_REDIRECT_POLICY, &opt, opt.sizeof);
@@ -595,4 +602,308 @@ version(TEST_UPDATE)
 		else
 			writeln("Success");
 	}
+}
+
+// Win7 SP1 might fail with "The application experienced an internal error loading the SSL libraries."
+// Solution: enable TLS 1.1 and 1.2:
+// https://support.microsoft.com/en-us/help/3140245/update-to-enable-tls-1-1-and-tls-1-2-as-default-secure-protocols-in-wi
+
+version(HTTP_CALLBACK):
+extern(Windows)
+int winhttpStatusCallback(HINTERNET hInternet,
+						  DWORD_PTR dwContext,
+						  DWORD dwInternetStatus,
+						  LPVOID lpvStatusInformation,
+						  DWORD dwStatusInformationLength)
+{
+    char[1024] szBuffer;
+    WINHTTP_ASYNC_RESULT *pAR;
+
+	//if (dwContext == 0)
+	//{
+	//    // this should not happen, but we are being defensive here
+	//    return;
+	//}
+
+	szBuffer[0] = 0;
+
+	// Create a string that reflects the status flag.
+	switch (dwInternetStatus)
+	{
+		case WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION:
+			//Closing the connection to the server.The lpvStatusInformation parameter is NULL.
+			snprintf(szBuffer.ptr, szBuffer.length, "CLOSING_CONNECTION (%d)", dwStatusInformationLength);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER:
+			//Successfully connected to the server. 
+			//The lpvStatusInformation parameter contains a pointer to an LPWSTR that indicates the IP address of the server in dotted notation.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "CONNECTED_TO_SERVER (%S)",  cast(WCHAR *)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "CONNECTED_TO_SERVER (%d)",  dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER:
+			//Connecting to the server.
+			//The lpvStatusInformation parameter contains a pointer to an LPWSTR that indicates the IP address of the server in dotted notation.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "CONNECTING_TO_SERVER (%S)", cast(WCHAR *)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "CONNECTING_TO_SERVER (%d)",  dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED:
+			//Successfully closed the connection to the server. The lpvStatusInformation parameter is NULL. 
+			snprintf(szBuffer.ptr, szBuffer.length, "CONNECTION_CLOSED (%d)",  dwStatusInformationLength);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE:
+			//Data is available to be retrieved with WinHttpReadData.The lpvStatusInformation parameter points to a DWORD that contains the number of bytes of data available.
+			//The dwStatusInformationLength parameter itself is 4 (the size of a DWORD).
+
+			snprintf(szBuffer.ptr, szBuffer.length, "DATA_AVAILABLE Number of bytes available : %d. All data has been read -> Displaying the data.", *cast(LPDWORD)lpvStatusInformation);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_HANDLE_CREATED:
+			//An HINTERNET handle has been created. The lpvStatusInformation parameter contains a pointer to the HINTERNET handle.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "HANDLE_CREATED : %X",  cast(uint)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "HANDLE_CREATED (%d)",  dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING:
+			//This handle value has been terminated. The lpvStatusInformation parameter contains a pointer to the HINTERNET handle. There will be no more callbacks for this handle.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "HANDLE_CLOSING : %X",  cast(uint)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "HANDLE_CLOSING (%d)",  dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE:
+			//The response header has been received and is available with WinHttpQueryHeaders. The lpvStatusInformation parameter is NULL.
+			snprintf(szBuffer.ptr, szBuffer.length, "HEADERS_AVAILABLE (%d)",  dwStatusInformationLength);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_INTERMEDIATE_RESPONSE:
+			//Received an intermediate (100 level) status code message from the server. 
+			//The lpvStatusInformation parameter contains a pointer to a DWORD that indicates the status code.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "INTERMEDIATE_RESPONSE Status code : %d",  *cast(DWORD*)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "INTERMEDIATE_RESPONSE (%d)",  dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_NAME_RESOLVED:
+			//Successfully found the IP address of the server. The lpvStatusInformation parameter contains a pointer to a LPWSTR that indicates the name that was resolved.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "NAME_RESOLVED : %S",  cast(WCHAR *)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "NAME_RESOLVED (%d)",  dwStatusInformationLength);
+			}
+			break;
+
+
+		case WINHTTP_CALLBACK_STATUS_READ_COMPLETE:
+			//Data was successfully read from the server. The lpvStatusInformation parameter contains a pointer to the buffer specified in the call to WinHttpReadData. 
+			//The dwStatusInformationLength parameter contains the number of bytes read.
+			//When used by WinHttpWebSocketReceive, the lpvStatusInformation parameter contains a pointer to a WINHTTP_WEB_SOCKET_STATUS structure, 
+			//	and the dwStatusInformationLength parameter indicates the size of lpvStatusInformation.
+
+			snprintf(szBuffer.ptr, szBuffer.length, "READ_COMPLETE Number of bytes read : %d", dwStatusInformationLength);
+
+			// Copy the data and delete the buffers.
+			break;
+
+
+		case WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE:
+			//Waiting for the server to respond to a request. The lpvStatusInformation parameter is NULL. 
+			snprintf(szBuffer.ptr, szBuffer.length, "RECEIVING_RESPONSE (%d)", dwStatusInformationLength);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_REDIRECT:
+			//An HTTP request is about to automatically redirect the request. The lpvStatusInformation parameter contains a pointer to an LPWSTR indicating the new URL.
+			//At this point, the application can read any data returned by the server with the redirect response and can query the response headers. It can also cancel the operation by closing the handle
+
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "REDIRECT to %S", cast(WCHAR *)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "REDIRECT (%d)", dwStatusInformationLength);
+			}		
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR:
+			//An error occurred while sending an HTTP request. 
+			//The lpvStatusInformation parameter contains a pointer to a WINHTTP_ASYNC_RESULT structure. Its dwResult member indicates the ID of the called function and dwError indicates the return value.
+			pAR = cast(WINHTTP_ASYNC_RESULT *)lpvStatusInformation;
+			snprintf(szBuffer.ptr, szBuffer.length, "REQUEST_ERROR - error %d, result %s",  pAR.dwError, "func".ptr /*GetApiErrorString(pAR.dwResult)*/);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_REQUEST_SENT:
+			//Successfully sent the information request to the server. 
+			//The lpvStatusInformation parameter contains a pointer to a DWORD indicating the number of bytes sent. 
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "REQUEST_SENT Number of bytes sent : %d", *cast(DWORD*)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "REQUEST_SENT (%d)", dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_RESOLVING_NAME:
+			//Looking up the IP address of a server name. The lpvStatusInformation parameter contains a pointer to the server name being resolved.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "RESOLVING_NAME %S", cast(WCHAR*)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "RESOLVING_NAME (%d)", dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED:
+			//Successfully received a response from the server. 
+			//The lpvStatusInformation parameter contains a pointer to a DWORD indicating the number of bytes received.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "RESPONSE_RECEIVED. Number of bytes : %d", *cast(DWORD*)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "RESPONSE_RECEIVED (%d)", dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
+			//One or more errors were encountered while retrieving a Secure Sockets Layer (SSL) certificate from the server. 
+			/*If the dwInternetStatus parameter is WINHTTP_CALLBACK_STATUS_SECURE_FAILURE, this parameter can be a bitwise-OR combination of one or more of the following values:
+			WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED
+			Certification revocation checking has been enabled, but the revocation check failed to verify whether a certificate has been revoked.The server used to check for revocation might be unreachable.
+			WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT
+			SSL certificate is invalid.
+			WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED
+			SSL certificate was revoked.
+			WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA
+			The function is unfamiliar with the Certificate Authority that generated the server's certificate.
+			WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID
+			SSL certificate common name(host name field) is incorrect, for example, if you entered www.microsoft.com and the common name on the certificate says www.msn.com.
+			WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID
+			SSL certificate date that was received from the server is bad.The certificate is expired.
+			WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR
+			The application experienced an internal error loading the SSL libraries.
+			*/
+			if (lpvStatusInformation)
+			{
+				import core.stdc.string;
+				snprintf(szBuffer.ptr, szBuffer.length, "SECURE_FAILURE (%d).", *cast(DWORD*)lpvStatusInformation);
+				if (*cast(DWORD*)lpvStatusInformation & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED)  //1
+				{
+					strcat(szBuffer.ptr, "Revocation check failed to verify whether a certificate has been revoked.");
+				}
+				if (*cast(DWORD*)lpvStatusInformation & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT)  //2
+				{
+					strcat(szBuffer.ptr, "SSL certificate is invalid.");
+				}
+				if (*cast(DWORD*)lpvStatusInformation & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED)  //4
+				{
+					strcat(szBuffer.ptr, "SSL certificate was revoked.");
+				}
+				if (*cast(DWORD*)lpvStatusInformation & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA)  //8
+				{
+					strcat(szBuffer.ptr, "The function is unfamiliar with the Certificate Authority that generated the server\'s certificate.");
+				}
+				if (*cast(DWORD*)lpvStatusInformation & WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID)  //10
+				{
+					strcat(szBuffer.ptr, "SSL certificate common name(host name field) is incorrect");
+				}
+				if (*cast(DWORD*)lpvStatusInformation & WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID)  //20
+				{
+					strcat(szBuffer.ptr, "CSSL certificate date that was received from the server is bad.The certificate is expired.");
+				}
+				if (*cast(DWORD*)lpvStatusInformation & WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR)  //80000000
+				{
+					strcat(szBuffer.ptr, "The application experienced an internal error loading the SSL libraries.");
+				}
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "SECURE_FAILURE (%d)", dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
+			// Sending the information request to the server.The lpvStatusInformation parameter is NULL.
+			snprintf(szBuffer.ptr, szBuffer.length, "SENDING_REQUEST (%d)", dwStatusInformationLength);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
+			snprintf(szBuffer.ptr, szBuffer.length, "SENDREQUEST_COMPLETE (%d)", dwStatusInformationLength);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE:
+			//Data was successfully written to the server. The lpvStatusInformation parameter contains a pointer to a DWORD that indicates the number of bytes written.
+			//When used by WinHttpWebSocketSend, the lpvStatusInformation parameter contains a pointer to a WINHTTP_WEB_SOCKET_STATUS structure, 
+			//and the dwStatusInformationLength parameter indicates the size of lpvStatusInformation.
+			if (lpvStatusInformation)
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "WRITE_COMPLETE (%d)", *cast(DWORD*)lpvStatusInformation);
+			}
+			else
+			{
+				snprintf(szBuffer.ptr, szBuffer.length, "WRITE_COMPLETE (%d)", dwStatusInformationLength);
+			}
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_GETPROXYFORURL_COMPLETE:
+			// The operation initiated by a call to WinHttpGetProxyForUrlEx is complete. Data is available to be retrieved with WinHttpReadData.
+			snprintf(szBuffer.ptr, szBuffer.length, "GETPROXYFORURL_COMPLETE (%d)", dwStatusInformationLength);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE:
+			// The connection was successfully closed via a call to WinHttpWebSocketClose.
+			snprintf(szBuffer.ptr, szBuffer.length, "CLOSE_COMPLETE (%d)", dwStatusInformationLength);
+			break;
+
+		case WINHTTP_CALLBACK_STATUS_SHUTDOWN_COMPLETE:
+			// The connection was successfully shut down via a call to WinHttpWebSocketShutdown
+			snprintf(szBuffer.ptr, szBuffer.length, "SHUTDOWN_COMPLETE (%d)", dwStatusInformationLength);
+			break;
+
+		default:
+			snprintf(szBuffer.ptr, szBuffer.length, "Unknown/unhandled callback - status %d given", dwInternetStatus);
+			break;
+	}
+
+	OutputDebugStringA(szBuffer.ptr);
+	return 0;
 }

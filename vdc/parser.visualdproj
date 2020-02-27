@@ -662,7 +662,7 @@
   <preview_dtorfields>0</preview_dtorfields>
   <transition_checkimports>0</transition_checkimports>
   <transition_complex>0</transition_complex>
-  <preview_intpromote>0</preview_intpromote>
+  <preview_intpromote>1</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
   <transition_vmarkdown>0</transition_vmarkdown>
