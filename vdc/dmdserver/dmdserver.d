@@ -583,7 +583,7 @@ class DMDServer : ComObject, IVDServer
 			mSemanticExpansionsRunning = false;
 			mLastSymbols = symbols;
 		}
-		version(DebugServer) dbglog("  schedule GetSemanticExpansions: " ~ fname);
+		version(DebugServer) dbglog("  schedule GetSemanticExpansions: " ~ fname ~ "(" ~ to!string(line) ~ "," ~ to!string(idx) ~ "): " ~ stok);
 		mLastSymbols = null;
 		mSemanticExpansionsRunning = true;
 		schedule(&_calcExpansions);

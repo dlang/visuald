@@ -620,14 +620,22 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		this.endIndex = endIndex;
 	}
 
-	bool foundNode(RootObject obj)
+	void foundNode(RootObject obj)
 	{
 		if (obj)
 		{
 			found = obj;
+			// do not stop until the scope is also set
+		}
+	}
+
+	void checkScope(ScopeDsymbol sc)
+	{
+		if (found && sc && !foundScope)
+		{
+			foundScope = sc;
 			stop = true;
 		}
-		return stop;
 	}
 
 	bool foundExpr(Expression expr)
@@ -819,15 +827,13 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			}
 			s.accept(this);
 		}
-		if (found && !foundScope)
-			foundScope = scopesym;
+		checkScope(scopesym);
 	}
 
 	override void visit(ScopeStatement ss)
 	{
 		visit(cast(Statement)ss);
-		if (found && !foundScope)
-			foundScope = ss.scopesym;
+		checkScope(ss.scopesym);
 	}
 
 	override void visit(TemplateInstance ti)
@@ -955,8 +961,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		super.visit(decl);
 
-		if (found && !foundScope)
-			foundScope = decl.scopesym;
+		checkScope(decl.scopesym);
 
 		visitType(decl.originalType);
 	}
@@ -1062,7 +1067,7 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 		}
 	}
 
-	override bool foundNode(RootObject obj)
+	override void foundNode(RootObject obj)
 	{
 		found = obj;
 		if (obj)
@@ -1070,7 +1075,6 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 			tip = tipForObject(obj);
 			stop = true;
 		}
-		return stop;
 	}
 }
 
@@ -1305,6 +1309,7 @@ string findTip(Module mod, int startLine, int startIndex, int endLine, int endIn
 
 	return ftv.tip;
 }
+
 ////////////////////////////////////////////////////////////////
 
 extern(C++) class FindDefinitionVisitor : FindASTVisitor
@@ -1318,7 +1323,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 		super(filename, startLine, startIndex, endLine, endIndex);
 	}
 
-	override bool foundNode(RootObject obj)
+	override void foundNode(RootObject obj)
 	{
 		found = obj;
 		if (obj)
@@ -1348,9 +1353,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 			{
 				loc = s.loc;
 			}
-			stop = true;
 		}
-		return stop;
 	}
 }
 
@@ -1990,10 +1993,22 @@ string symbol2ExpansionLine(Dsymbol sym)
 	return type ~ ":" ~ tip.replace("\n", "\a");
 }
 
+////////////////////////////////////////////////////////////////
+
+extern(C++) class FindExpansionsVisitor : FindASTVisitor
+{
+	alias visit = FindASTVisitor.visit;
+
+	this(const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
+	{
+		super(filename, startLine, startIndex, endLine, endIndex);
+	}
+}
+
 string[] findExpansions(Module mod, int line, int index, string tok)
 {
 	auto filename = mod.srcfile.toChars();
-	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
+	scope FindExpansionsVisitor fdv = new FindExpansionsVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 
 	if (!fdv.found)

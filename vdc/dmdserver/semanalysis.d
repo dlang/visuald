@@ -704,24 +704,37 @@ void do_unittests()
 	checkExpansions(m, 10, 10, "to", [ "toString", "toHash", "toDebug" ]);
 
 	source =
-		q{                                   // Line 1
-			class C
-			{
-				int toDebug() { return 0; }
-			}                                // Line 5
-			void foo()
-			{
-				C c = new C;
-				if (c.to
-			}                                // Line 10
-		};
-		m = checkErrors(source, "10,3,10,4:Error: found `}` when expecting `)`\n" ~
-								"10,3,10,4:Error: found `}` instead of statement\n" ~
-								"9,10,9,11:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
-		dumpAST(m);
-		checkExpansions(m,  9,  11, "to", [ "toString", "toHash", "toDebug" ]);
+	q{                                   // Line 1
+		class C
+		{
+			int toDebug() { return 0; }
+		}                                // Line 5
+		void foo()
+		{
+			C c = new C;
+			if (c.to
+		}                                // Line 10
+	};
+	m = checkErrors(source, "10,2,10,3:Error: found `}` when expecting `)`\n" ~
+							"10,2,10,3:Error: found `}` instead of statement\n" ~
+							"9,9,9,10:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
+	checkExpansions(m,  9,  10, "to", [ "toString", "toHash", "toDebug" ]);
 
-		source =
+	source =
+	q{                                   // Line 1
+		inout(void)* f10063(inout void* p) pure
+		{
+			return p;
+		}                                // Line 5
+		immutable(void)* g10063(inout int* p) pure
+		{
+			return f10063(p);
+		}
+	};
+	m = checkErrors(source, "8,16,8,17:Error: cannot implicitly convert expression `f10063(cast(inout(void*))p)` of type `inout(void)*` to `immutable(void)*`\n");
+	checkExpansions(m,  8,  11, "f1", [ "f10063" ]);
+
+	source =
 	q{                                   // Line 1
 		struct S
 		{
