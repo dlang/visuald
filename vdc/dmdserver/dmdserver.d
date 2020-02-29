@@ -300,19 +300,19 @@ class DMDServer : ComObject, IVDServer
 		{
 			dg();
 		}
-		catch(OutOfMemoryError oom)
-		{
-			throw oom; // terminate
-		}
 		catch(Exception e)
 		{
 			version(DebugServer) dbglog("UpdateModule.doParse: exception " ~ e.toString());
+		}
+		catch(OutOfMemoryError oom)
+		{
+			exit(33); // throw oom; // terminate
 		}
 		catch(Throwable t)
 		{
 			version(DebugServer) dbglog("UpdateModule.doParse: error " ~ t.toString());
 			if (t.msg != "fatal error") // fatal() is a non-fatal error
-				throw t; // terminate the server and let it be restarted
+				exit(37); // terminate the server and let it be restarted
 		}
 	}
 

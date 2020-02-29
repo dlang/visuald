@@ -2050,9 +2050,14 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			sds = sym;
 
 	string[void*] idmap; // doesn't work with extern(C++) classes
+	DenseSet!ScopeDsymbol searched;
 
 	void searchScope(ScopeDsymbol sds, int flags)
 	{
+		if (searched.contains(sds))
+			return;
+		searched.insert(sds);
+
 		static Dsymbol uplevel(Dsymbol s)
 		{
 			if (auto ad = s.isAggregateDeclaration())

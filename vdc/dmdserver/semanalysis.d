@@ -719,6 +719,7 @@ void do_unittests()
 							"10,2,10,3:Error: found `}` instead of statement\n" ~
 							"9,9,9,10:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
 	checkExpansions(m,  9,  10, "to", [ "toString", "toHash", "toDebug" ]);
+	checkExpansions(m,  9,  8, "c", [ "c", "capacity", "clear" ]);
 
 	source =
 	q{                                   // Line 1
