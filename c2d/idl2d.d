@@ -1296,6 +1296,9 @@ version(all)
 			replaceTokenSequence(tokens, "MEM_SECTION_EXTENDED_PARAMETER_TYPE, *PMEM_SECTION_EXTENDED_PARAMETER_TYPE", "*PMEM_SECTION_EXTENDED_PARAMETER_TYPE", true);
 			// win 10.0.18362.0: typedef struct DECLSPEC_ALIGN(16) DECLSPEC_NOINITALL _CONTEXT ...
 			replaceTokenSequence(tokens, "DECLSPEC_NOINITALL", "", true);
+
+			replaceTokenSequence(tokens, "RtlZeroMemory($dest,$length)",
+			                             "import core.stdc.string: memset; memset($dest,0,$length)", true);
 		}
 
 		if(currentModule == "commctrl")
