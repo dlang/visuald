@@ -3008,6 +3008,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mExactExpMatch.setChecked(opts.exactExpMatch);
 
 		//mExpandSemantics.setEnabled(false);
+		EnableControls();
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)

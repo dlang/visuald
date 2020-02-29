@@ -697,6 +697,10 @@ version(tip)
 	void initCompletion(bool autoInsert)
 	{
 		CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet();
+		if (!autoInsert && cs.isActive())
+			if (cs.ContinueExpansions())
+				return;
+
 		Declarations decl = new Declarations;
 		decl.StartExpansions(mView, mCodeWinMgr.mSource, autoInsert);
 	}
