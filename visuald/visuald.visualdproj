@@ -52,6 +52,7 @@
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -60,6 +61,8 @@
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -173,6 +176,7 @@
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -181,6 +185,8 @@
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -250,7 +256,7 @@
   <multiobj>0</multiobj>
   <singleFileCompilation>2</singleFileCompilation>
   <oneobj>0</oneobj>
-  <mscoff>0</mscoff>
+  <mscoff>1</mscoff>
   <trace>0</trace>
   <quiet>0</quiet>
   <verbose>0</verbose>
@@ -294,6 +300,7 @@
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -302,6 +309,8 @@
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -415,6 +424,7 @@
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -423,6 +433,8 @@
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -536,6 +548,7 @@
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -544,6 +557,8 @@
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -657,6 +672,7 @@
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -665,6 +681,8 @@
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -778,6 +796,7 @@
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -786,6 +805,8 @@
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
