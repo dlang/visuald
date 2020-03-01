@@ -311,7 +311,7 @@ class DMDServer : ComObject, IVDServer
 		catch(Throwable t)
 		{
 			version(DebugServer) dbglog("UpdateModule.doParse: error " ~ t.toString());
-			if (t.msg != "fatal error") // fatal() is a non-fatal error
+			if (t.msg != "cancel malloc" && t.msg != "fatal error") // fatal() is a non-fatal error
 				exit(37); // terminate the server and let it be restarted
 		}
 	}
