@@ -267,7 +267,11 @@ void do_unittests()
 		Module m = analyzeModule(parsedModule, opts);
 		auto err = getErrorMessages();
 		auto other = getErrorMessages(true);
-		if (expected_err != "<ignore>")
+		if (expected_err == "<ignore>")
+		{
+			assert(err != "");
+		}
+		else
 		{
 			assert_equal(err, expected_err);
 			assert_equal(other, "");
@@ -675,16 +679,19 @@ void do_unittests()
 			int fun(int par) { return field1 + par; }
 			int more = 3;
 		}
-		void foo()
+		int foo()
 		{                                // Line 10
 			S anS;
 			if (anS.fool == 1) {}
+			return fok;
 		}
 	};
 	m = checkErrors(source,
-					"12,11,12,12:Error: no property `fool` for type `source.S`\n");
+					"12,11,12,12:Error: no property `fool` for type `source.S`\n" ~
+					"13,10,13,11:Error: undefined identifier `fok`, did you mean function `foo`?\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 12, "f", [ "field1", "field2", "fun" ]);
+	checkExpansions(m, 13, 11, "f", [ "foo" ]);
 
 	source =
 	q{                                   // Line 1
@@ -734,6 +741,17 @@ void do_unittests()
 	};
 	m = checkErrors(source, "8,16,8,17:Error: cannot implicitly convert expression `f10063(cast(inout(void*))p)` of type `inout(void)*` to `immutable(void)*`\n");
 	checkExpansions(m,  8,  11, "f1", [ "f10063" ]);
+
+	source =
+	q{                                   // Line 1
+		int foo()
+		{
+			for
+			return 1;                    // Line 5
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  4,  4, "fo", [ "foo" ]);
 
 	source =
 	q{                                   // Line 1

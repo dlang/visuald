@@ -599,6 +599,28 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	}
 }
 
+Loc endLocation(Statement s)
+{
+	Loc endloc;
+	if (auto ss = s.isScopeStatement())
+		endloc = ss.endloc;
+	else if (auto ws = s.isWhileStatement())
+		endloc = ws.endloc;
+	else if (auto ds = s.isDoStatement())
+		endloc = ds.endloc;
+	else if (auto fs = s.isForStatement())
+		endloc = fs.endloc;
+	else if (auto fs = s.isForeachStatement())
+		endloc = fs.endloc;
+	else if (auto fs = s.isForeachRangeStatement())
+		endloc = fs.endloc;
+	else if (auto ifs = s.isIfStatement())
+		endloc = ifs.endloc;
+	else if (auto ws = s.isWithStatement())
+		endloc = ws.endloc;
+	return endloc;
+}
+
 extern(C++) class FindASTVisitor : ASTVisitor
 {
 	const(char*) filename;
@@ -780,23 +802,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			{
 				if (s.loc.filename !is filename || s.loc.linnum > endLine)
 					continue;
-				Loc endloc;
-				if (auto ss = s.isScopeStatement())
-					endloc = ss.endloc;
-				else if (auto ws = s.isWhileStatement())
-					endloc = ws.endloc;
-				else if (auto ds = s.isDoStatement())
-					endloc = ds.endloc;
-				else if (auto fs = s.isForStatement())
-					endloc = fs.endloc;
-				else if (auto fs = s.isForeachStatement())
-					endloc = fs.endloc;
-				else if (auto fs = s.isForeachRangeStatement())
-					endloc = fs.endloc;
-				else if (auto ifs = s.isIfStatement())
-					endloc = ifs.endloc;
-				else if (auto ws = s.isWithStatement())
-					endloc = ws.endloc;
+				Loc endloc = endLocation(s);
 				if (endloc.filename && endloc.linnum < startLine)
 					continue;
 			}
@@ -2003,6 +2009,32 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 	{
 		super(filename, startLine, startIndex, endLine, endIndex);
 	}
+
+	override void visit(IdentifierExp expr)
+	{
+		if (!found && expr.ident)
+		{
+			if (matchIdentifier(expr.loc, expr.ident))
+			{
+				foundNode(expr);
+			}
+		}
+		visit(cast(Expression)expr);
+	}
+
+	override void checkScope(ScopeDsymbol sc)
+	{
+		if (sc && !foundScope)
+		{
+			if (sc.loc.filename !is filename || sc.loc.linnum > endLine)
+				return;
+			if (sc.endlinnum < startLine)
+				return;
+
+			foundScope = sc;
+			stop = true;
+		}
+	}
 }
 
 string[] findExpansions(Module mod, int line, int index, string tok)
@@ -2011,12 +2043,12 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	scope FindExpansionsVisitor fdv = new FindExpansionsVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 
-	if (!fdv.found)
+	if (!fdv.found && !fdv.foundScope)
 		return null;
 
 	int flags = 0;
-	Type type = fdv.found.isType();
-	if (auto e = fdv.found.isExpression())
+	Type type = fdv.found ? fdv.found.isType() : null;
+	if (auto e = fdv.found ? fdv.found.isExpression() : null)
 	{
 		Type getType(Expression e, bool recursed)
 		{
@@ -2048,6 +2080,8 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	if (type)
 		if (auto sym = typeSymbol(type))
 			sds = sym;
+	if (!sds)
+		return null;
 
 	string[void*] idmap; // doesn't work with extern(C++) classes
 	DenseSet!ScopeDsymbol searched;
