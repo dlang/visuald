@@ -177,7 +177,6 @@ class ProjectOptions
 	bool preservePaths;	// !=0 means don't strip path from source file
 	bool warnings;		// enable warnings
 	bool infowarnings;	// enable informational warnings
-	bool checkProperty;	// enforce property syntax
 	bool genStackFrame;	// always generate stack frame
 	bool pic;		// generate position-independent-code for shared libs
 	bool cov;		// generate code coverage data
@@ -437,8 +436,6 @@ class ProjectOptions
 			cmd ~= " -w";
 		if(infowarnings)
 			cmd ~= " -wi";
-		if(checkProperty)
-			cmd ~= " -property";
 		return cmd;
 	}
 
@@ -659,8 +656,6 @@ class ProjectOptions
 			cmd ~= " -Werror";
 		if(infowarnings)
 			cmd ~= " -Wall";
-		if(checkProperty)
-			cmd ~= " -fproperty";
 		if(genStackFrame)
 			cmd ~= " -fno-omit-frame-pointer";
 		if(cov)
@@ -782,8 +777,6 @@ class ProjectOptions
 			cmd ~= " -w";
 		if(infowarnings)
 			cmd ~= " -wi";
-		if(checkProperty)
-			cmd ~= " -property";
 		if(ignoreUnsupportedPragmas)
 			cmd ~= " -ignore";
 		if(allinst)
@@ -1444,7 +1437,6 @@ class ProjectOptions
 		elem ~= new xml.Element("preservePaths", toElem(preservePaths));
 		elem ~= new xml.Element("warnings", toElem(warnings));
 		elem ~= new xml.Element("infowarnings", toElem(infowarnings));
-		elem ~= new xml.Element("checkProperty", toElem(checkProperty));
 		elem ~= new xml.Element("genStackFrame", toElem(genStackFrame));
 		elem ~= new xml.Element("pic", toElem(pic));
 		elem ~= new xml.Element("cov", toElem(cov));
@@ -1602,7 +1594,6 @@ class ProjectOptions
 		fromElem(elem, "preservePaths", preservePaths);
 		fromElem(elem, "warnings", warnings);
 		fromElem(elem, "infowarnings", infowarnings);
-		fromElem(elem, "checkProperty", checkProperty);
 		fromElem(elem, "genStackFrame", genStackFrame);
 		fromElem(elem, "pic", pic);
 		fromElem(elem, "cov", cov);
