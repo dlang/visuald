@@ -2014,6 +2014,135 @@ string symbol2ExpansionLine(Dsymbol sym)
 	return type ~ ":" ~ tip.replace("\n", "\a");
 }
 
+string[string] initSymbolProperties(int kind)
+{
+	string[string] props;
+	// generic
+	props["init"] = "PROP:A type's or variable's static initializer expression";
+	props["sizeof"] = "PROP:Size of a type or variable in bytes";
+	props["alignof"] = "PROP:Variable alignment";
+	props["mangleof"] = "PROP:String representing the ‘mangled’ representation of the type";
+	props["stringof"] = "PROP:String representing the source representation of the type";
+
+	switch (kind)
+	{
+		case 0:
+			// numeric types
+			props["max"] = "PROP:Maximum value";
+			props["min"] = "PROP:Minimum value";
+			break;
+		case 1:
+			// floating point
+			props["infinity"] = "PROP:Infinity value";
+			props["nan"] = "PROP:Not-a-Number value";
+			props["dig"] = "PROP:Number of decimal digits of precision";
+			props["epsilon"] = "PROP:Smallest increment to the value 1";
+			props["mant_dig"] = "PROP:Number of bits in mantissa";
+			props["max_10_exp"] = "PROP:Maximum int value such that 10^max_10_exp is representable";
+			props["max_exp"] = "PROP:Maximum int value such that 2^max_exp-1 is representable";
+			props["min_10_exp"] = "PROP:Minimum int value such that 10^max_10_exp is representable";
+			props["min_exp"] = "PROP:Minimum int value such that 2^max_exp-1 is representable";
+			props["min_normal"] = "PROP:Number of decimal digits of precision";
+			// require this
+			props["re"] = "PROP:Real part of a complex number";
+			props["im"] = "PROP:Imaginary part of a complex number";
+			break;
+		case 2:
+			// arrays (require this)
+			props["length"] = "PROP:Array length";
+			props["dup"] = "PROP:Create a dynamic array of the same size and copy the contents of the array into it.";
+			props["idup"] = "PROP:Creates immutable copy of the array";
+			props["reverse"] = "PROP:Reverses in place the order of the elements in the array. Returns the array.";
+			props["sort"] = "PROP:Sorts in place the order of the elements in the array. Returns the array.";
+			props["ptr"] = "PROP:Returns pointer to the array";
+			break;
+		case 3:
+			// assoc array (require this)
+			props["length"] = "PROP:Returns number of values in the associative array. Unlike for dynamic arrays, it is read-only.";
+			props["keys"] = "PROP:Returns dynamic array, the elements of which are the keys in the associative array.";
+			props["values"] = "PROP:Returns dynamic array, the elements of which are the values in the associative array.";
+			props["rehash"] = "PROP:Reorganizes the associative array in place so that lookups are more efficient." ~
+				" rehash is effective when, for example, the program is done loading up a symbol table and now needs fast lookups in it." ~
+				" Returns a reference to the reorganized array.";
+			props["byKey"] = "PROP:Returns a delegate suitable for use as an aggregate to a `foreach` which will iterate over the keys of the associative array.";
+			props["byValue"] = "PROP:Returns a delegate suitable for use as an aggregate to a `foreach` which will iterate over the values of the associative array.";
+			props["get"] = "Looks up key; if it exists returns corresponding value else evaluates and returns defaultValue.";
+			props["remove"] = "remove(key) does nothing if the given key does not exist and returns false. If the given key does exist, it removes it from the AA and returns true.";
+			break;
+		case 4:
+			// static array (require this)
+			props["length"] = "PROP:Returns number of values in the type tuple.";
+			break;
+		case 5:
+			// delegate (require this)
+			props["ptr"] = "PROP:The .ptr property of a delegate will return the frame pointer value as a void*.";
+			props["funcptr"] = "PROP:The .funcptr property of a delegate will return the function pointer value as a function type.";
+			break;
+		case 6:
+			// class (require this)
+			props["classinfo"] = "PROP:Information about the dynamic type of the class";
+			break;
+		case 7:
+			// struct
+			props["sizeof"] = "PROP:Size in bytes of struct";
+			props["alignof"] = "PROP:Size boundary struct needs to be aligned on";
+			props["tupleof"] = "PROP:Gets type tuple of fields";
+			break;
+		default:
+			break;
+	}
+	return props;
+}
+
+const string[string] genericProps;
+const string[string] integerProps;
+const string[string] floatingProps;
+const string[string] dynArrayProps;
+const string[string] assocArrayProps;
+const string[string] staticArrayProps;
+const string[string] delegateProps;
+const string[string] classProps;
+const string[string] structProps;
+
+shared static this()
+{
+	genericProps     = initSymbolProperties (-1);
+	integerProps     = initSymbolProperties (0);
+	floatingProps    = initSymbolProperties (1);
+	dynArrayProps    = initSymbolProperties (2);
+	assocArrayProps  = initSymbolProperties (3);
+	staticArrayProps = initSymbolProperties (4);
+	delegateProps    = initSymbolProperties (5);
+	classProps       = initSymbolProperties (6);
+	structProps      = initSymbolProperties (7);
+}
+
+void addSymbolProperties(ref string[] expansions, RootObject sym, string tok)
+{
+	bool hasThis = false;
+	Type t = sym.isType();
+	if (auto e = sym.isExpression())
+	{
+		t = e.type;
+		hasThis = true;
+	}
+	if (!t)
+		return;
+
+	const string[string] props = t.isTypeClass()    && hasThis ? classProps
+	                           : t.isTypeStruct()              ? structProps
+	                           : t.isTypeDelegate() && hasThis ? delegateProps
+	                           : t.isTypeSArray()   && hasThis ? staticArrayProps
+	                           : t.isTypeAArray()   && hasThis ? assocArrayProps
+	                           : t.isTypeDArray()   && hasThis ? dynArrayProps
+	                           : t.isfloating()     ? floatingProps
+	                           : t.isintegral()     ? integerProps
+	                           : genericProps;
+	foreach (id, p; props)
+		if (id.startsWith(tok))
+			expansions ~= id ~ ":" ~ p;
+}
+
 ////////////////////////////////////////////////////////////////
 
 extern(C++) class FindExpansionsVisitor : FindASTVisitor
@@ -2147,9 +2276,8 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 					return ad.enclosing;
 			return s.toParent;
 		}
-		// TODO: properties
 		// TODO: struct/class not going to parent if accessed from elsewhere (but does if nested)
-
+		// TODO: UFCS
 		for (Dsymbol ds = sds; ds; ds = uplevel(ds))
 		{
 			ScopeDsymbol sd = ds.isScopeDsymbol();
@@ -2218,7 +2346,6 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 						searchScopeSymbol(te.sym);
 				}
 			}
-			// TODO: builtin properties
 
 			if (flags & SearchLocalsOnly)
 				break;
@@ -2254,7 +2381,12 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 
 	string[] idlist;
 	foreach(sym, id; idmap)
-		idlist ~= id ~ ":" ~ symbol2ExpansionLine(cast(Dsymbol)sym);
+		if (!id.startsWith("__"))
+			idlist ~= id ~ ":" ~ symbol2ExpansionLine(cast(Dsymbol)sym);
+
+	if (fdv.found)
+		addSymbolProperties(idlist, fdv.found, tok);
+
 	return idlist;
 }
 

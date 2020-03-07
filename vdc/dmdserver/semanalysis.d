@@ -392,27 +392,7 @@ void do_unittests()
 			return xyz;
 		}
 	};
-
-	for (int i = 0; i < 1; i++) // loop for testing GC leaks
-	{
-		m = checkErrors(source, "");
-
-		version(none)
-		version(traceGC)
-		{
-			wipeStack();
-			GC.collect();
-
-			//_CrtDumpMemoryLeaks();
-			//dumpGC();
-
-			core.memory.GC.Stats stats = GC.stats();
-			trace_printf("GC stats: %lld MB used, %lld MB free\n", cast(long)stats.usedSize >> 20, cast(long)stats.freeSize >> 20);
-
-			if (stats.usedSize > (200 << 20))
-				dumpGC();
-		}
-	}
+	m = checkErrors(source, "");
 
 	checkTip(m, 5, 8, "(local variable) `int xyz`");
 	checkTip(m, 5, 10, "(local variable) `int xyz`");
@@ -667,7 +647,7 @@ void do_unittests()
 		"12,15,12,16:Error: no property `f` for type `source.S`\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
-	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
+	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more", "init", "sizeof", "alignof", "mangleof", "stringof" ]);
 	checkExpansions(m, 13, 13, "an", [ "anS" ]);
 
 	source =
@@ -816,7 +796,7 @@ void do_unittests()
 		}                                // Line 10
 	};
 	m = checkErrors(source, "");
-	checkExpansions(m,  7, 23, "", [ "DMD", "GDC", "LDC" ]);
+	checkExpansions(m,  7, 23, "", [ "DMD", "GDC", "LDC", "init", "sizeof", "alignof", "mangleof", "stringof", "min", "max" ]);
 	checkExpansions(m, 10, 1, "C", [ "Compiler", "ClassInfo" ]);
 	checkExpansions(m, 10, 1, "Ob", [ "Object" ]);
 
