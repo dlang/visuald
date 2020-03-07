@@ -65,10 +65,13 @@ namespace dbuild
 		public bool DIP25 { get { return opts.DIP25; } set { opts.DIP25 = value; } }
 		public bool DIP1000 { get { return opts.DIP1000; } set { opts.DIP1000 = value; } }
 		public bool DIP1008 { get { return opts.DIP1008; } set { opts.DIP1008 = value; } }
+		public bool DIP1021 { get { return opts.DIP1021; } set { opts.DIP1021 = value; } }
 		public bool RevertImport { get { return opts.RevertImport; } set { opts.RevertImport = value; } }
 		public bool PreviewDtorFields { get { return opts.PreviewDtorFields; } set { opts.PreviewDtorFields = value; } }
 		public bool PreviewIntPromote { get { return opts.PreviewIntPromote; } set { opts.PreviewIntPromote = value; } }
 		public bool PreviewFixAliasThis { get { return opts.PreviewFixAliasThis; } set { opts.PreviewFixAliasThis = value; } }
+		public bool PreviewRvalueRefParam { get { return opts.PreviewRvalueRefParam; } set { opts.PreviewRvalueRefParam = value; } }
+		public bool PreviewNoSharedAccess { get { return opts.PreviewNoSharedAccess; } set { opts.PreviewNoSharedAccess = value; } }
 		public bool PreviewMarkdown { get { return opts.PreviewMarkdown; } set { opts.PreviewMarkdown = value; } }
 		public bool TransitionVMarkdown { get { return opts.TransitionVMarkdown; } set { opts.TransitionVMarkdown = value; } }
 		public bool TransitionField { get { return opts.TransitionField; } set { opts.TransitionField = value; } }
@@ -87,6 +90,7 @@ namespace dbuild
 		public string DepFile { get { return opts.DepFile; } set { opts.DepFile = value; } }
 		public string HeaderDir { get { return opts.HeaderDir; } set { opts.HeaderDir = value; } }
 		public string HeaderFile { get { return opts.HeaderFile; } set { opts.HeaderFile = value; } }
+		public string CppHeaderFile { get { return opts.CppHeaderFile; } set { opts.CppHeaderFile = value; } }
 		public string JSONFile { get { return opts.JSONFile; } set { opts.JSONFile = value; } }
 		public bool ShowCommandLine { get { return opts.ShowCommandLine; } set { opts.ShowCommandLine = value; } }
 		public string PackageName { get { return opts.PackageName; } set { opts.PackageName = value; } }

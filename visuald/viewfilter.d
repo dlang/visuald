@@ -104,6 +104,7 @@ version(tip)
 		mView.AddCommandFilter(this, &mNextTarget);
 		hookWindowProc(cast(HWND) mView.GetWindowHandle());
 
+		// mgr.SetupNavigationBar();
 version(tip)
 		mTextTipData = addref(newCom!TextTipData);
 	}
@@ -696,6 +697,10 @@ version(tip)
 	void initCompletion(bool autoInsert)
 	{
 		CompletionSet cs = mCodeWinMgr.mSource.GetCompletionSet();
+		if (!autoInsert && cs.isActive())
+			if (cs.ContinueExpansions())
+				return;
+
 		Declarations decl = new Declarations;
 		decl.StartExpansions(mView, mCodeWinMgr.mSource, autoInsert);
 	}

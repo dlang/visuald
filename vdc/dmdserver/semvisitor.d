@@ -12,6 +12,7 @@ import vdc.ivdserver : TypeReferenceKind;
 
 import dmd.access;
 import dmd.aggregate;
+import dmd.aliasthis;
 import dmd.apply;
 import dmd.arraytypes;
 import dmd.attrib;
@@ -599,6 +600,28 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	}
 }
 
+Loc endLocation(Statement s)
+{
+	Loc endloc;
+	if (auto ss = s.isScopeStatement())
+		endloc = ss.endloc;
+	else if (auto ws = s.isWhileStatement())
+		endloc = ws.endloc;
+	else if (auto ds = s.isDoStatement())
+		endloc = ds.endloc;
+	else if (auto fs = s.isForStatement())
+		endloc = fs.endloc;
+	else if (auto fs = s.isForeachStatement())
+		endloc = fs.endloc;
+	else if (auto fs = s.isForeachRangeStatement())
+		endloc = fs.endloc;
+	else if (auto ifs = s.isIfStatement())
+		endloc = ifs.endloc;
+	else if (auto ws = s.isWithStatement())
+		endloc = ws.endloc;
+	return endloc;
+}
+
 extern(C++) class FindASTVisitor : ASTVisitor
 {
 	const(char*) filename;
@@ -620,14 +643,22 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		this.endIndex = endIndex;
 	}
 
-	bool foundNode(RootObject obj)
+	void foundNode(RootObject obj)
 	{
 		if (obj)
 		{
 			found = obj;
+			// do not stop until the scope is also set
+		}
+	}
+
+	void checkScope(ScopeDsymbol sc)
+	{
+		if (found && sc && !foundScope)
+		{
+			foundScope = sc;
 			stop = true;
 		}
-		return stop;
 	}
 
 	bool foundExpr(Expression expr)
@@ -772,23 +803,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			{
 				if (s.loc.filename !is filename || s.loc.linnum > endLine)
 					continue;
-				Loc endloc;
-				if (auto ss = s.isScopeStatement())
-					endloc = ss.endloc;
-				else if (auto ws = s.isWhileStatement())
-					endloc = ws.endloc;
-				else if (auto ds = s.isDoStatement())
-					endloc = ds.endloc;
-				else if (auto fs = s.isForStatement())
-					endloc = fs.endloc;
-				else if (auto fs = s.isForeachStatement())
-					endloc = fs.endloc;
-				else if (auto fs = s.isForeachRangeStatement())
-					endloc = fs.endloc;
-				else if (auto ifs = s.isIfStatement())
-					endloc = ifs.endloc;
-				else if (auto ws = s.isWithStatement())
-					endloc = ws.endloc;
+				Loc endloc = endLocation(s);
 				if (endloc.filename && endloc.linnum < startLine)
 					continue;
 			}
@@ -819,15 +834,19 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			}
 			s.accept(this);
 		}
-		if (found && !foundScope)
-			foundScope = scopesym;
+		checkScope(scopesym);
 	}
 
 	override void visit(ScopeStatement ss)
 	{
 		visit(cast(Statement)ss);
-		if (found && !foundScope)
-			foundScope = ss.scopesym;
+		checkScope(ss.scopesym);
+	}
+
+	override void visit(ForStatement fs)
+	{
+		visit(cast(Statement)fs);
+		checkScope(fs.scopesym);
 	}
 
 	override void visit(TemplateInstance ti)
@@ -955,8 +974,7 @@ extern(C++) class FindASTVisitor : ASTVisitor
 	{
 		super.visit(decl);
 
-		if (found && !foundScope)
-			foundScope = decl.scopesym;
+		checkScope(decl.scopesym);
 
 		visitType(decl.originalType);
 	}
@@ -1062,7 +1080,7 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 		}
 	}
 
-	override bool foundNode(RootObject obj)
+	override void foundNode(RootObject obj)
 	{
 		found = obj;
 		if (obj)
@@ -1070,7 +1088,6 @@ extern(C++) class FindTipVisitor : FindASTVisitor
 			tip = tipForObject(obj);
 			stop = true;
 		}
-		return stop;
 	}
 }
 
@@ -1208,6 +1225,14 @@ TipData tipDataForObject(RootObject obj)
 	{
 		auto resolvedTo = die.resolvedTo;
 		bool isConstant = resolvedTo.isConstantExpr();
+		bool isEnumValue = false;
+		if (auto ve = resolvedTo.isVarExp())
+			if (auto em = ve.var ? ve.var.isEnumMember() : null)
+			{
+				isConstant = isEnumValue = true;
+				resolvedTo = em.origValue;
+			}
+
 		Expression e1;
 		if (!isConstant && !resolvedTo.isArrayLengthExp() && die.type)
 		{
@@ -1219,8 +1244,8 @@ TipData tipDataForObject(RootObject obj)
 		}
 		if (!e1)
 			e1 = die.e1;
-		string kind = isConstant ? "constant" : "field";
-		string tip = resolvedTo.type.toPrettyChars(true).to!string ~ " ";
+		string kind = isEnumValue ? "enum value" : isConstant ? "constant" : "field";
+		string tip = isEnumValue ? "" : resolvedTo.type.toPrettyChars(true).to!string ~ " ";
 		tip ~= e1.type && !e1.isConstantExpr() ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
 		tip ~= "." ~ die.ident.toString();
 		if (isConstant)
@@ -1305,6 +1330,7 @@ string findTip(Module mod, int startLine, int startIndex, int endLine, int endIn
 
 	return ftv.tip;
 }
+
 ////////////////////////////////////////////////////////////////
 
 extern(C++) class FindDefinitionVisitor : FindASTVisitor
@@ -1318,7 +1344,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 		super(filename, startLine, startIndex, endLine, endIndex);
 	}
 
-	override bool foundNode(RootObject obj)
+	override void foundNode(RootObject obj)
 	{
 		found = obj;
 		if (obj)
@@ -1348,9 +1374,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 			{
 				loc = s.loc;
 			}
-			stop = true;
 		}
-		return stop;
 	}
 }
 
@@ -1990,18 +2014,218 @@ string symbol2ExpansionLine(Dsymbol sym)
 	return type ~ ":" ~ tip.replace("\n", "\a");
 }
 
+string[string] initSymbolProperties(int kind)
+{
+	string[string] props;
+	// generic
+	props["init"] = "PROP:A type's or variable's static initializer expression";
+	props["sizeof"] = "PROP:Size of a type or variable in bytes";
+	props["alignof"] = "PROP:Variable alignment";
+	props["mangleof"] = "PROP:String representing the ‘mangled’ representation of the type";
+	props["stringof"] = "PROP:String representing the source representation of the type";
+
+	switch (kind)
+	{
+		case 0:
+			// numeric types
+			props["max"] = "PROP:Maximum value";
+			props["min"] = "PROP:Minimum value";
+			break;
+		case 1:
+			// floating point
+			props["infinity"] = "PROP:Infinity value";
+			props["nan"] = "PROP:Not-a-Number value";
+			props["dig"] = "PROP:Number of decimal digits of precision";
+			props["epsilon"] = "PROP:Smallest increment to the value 1";
+			props["mant_dig"] = "PROP:Number of bits in mantissa";
+			props["max_10_exp"] = "PROP:Maximum int value such that 10^max_10_exp is representable";
+			props["max_exp"] = "PROP:Maximum int value such that 2^max_exp-1 is representable";
+			props["min_10_exp"] = "PROP:Minimum int value such that 10^max_10_exp is representable";
+			props["min_exp"] = "PROP:Minimum int value such that 2^max_exp-1 is representable";
+			props["min_normal"] = "PROP:Number of decimal digits of precision";
+			// require this
+			props["re"] = "PROP:Real part of a complex number";
+			props["im"] = "PROP:Imaginary part of a complex number";
+			break;
+		case 2:
+			// arrays (require this)
+			props["length"] = "PROP:Array length";
+			props["dup"] = "PROP:Create a dynamic array of the same size and copy the contents of the array into it.";
+			props["idup"] = "PROP:Creates immutable copy of the array";
+			props["reverse"] = "PROP:Reverses in place the order of the elements in the array. Returns the array.";
+			props["sort"] = "PROP:Sorts in place the order of the elements in the array. Returns the array.";
+			props["ptr"] = "PROP:Returns pointer to the array";
+			break;
+		case 3:
+			// assoc array (require this)
+			props["length"] = "PROP:Returns number of values in the associative array. Unlike for dynamic arrays, it is read-only.";
+			props["keys"] = "PROP:Returns dynamic array, the elements of which are the keys in the associative array.";
+			props["values"] = "PROP:Returns dynamic array, the elements of which are the values in the associative array.";
+			props["rehash"] = "PROP:Reorganizes the associative array in place so that lookups are more efficient." ~
+				" rehash is effective when, for example, the program is done loading up a symbol table and now needs fast lookups in it." ~
+				" Returns a reference to the reorganized array.";
+			props["byKey"] = "PROP:Returns a delegate suitable for use as an aggregate to a `foreach` which will iterate over the keys of the associative array.";
+			props["byValue"] = "PROP:Returns a delegate suitable for use as an aggregate to a `foreach` which will iterate over the values of the associative array.";
+			props["get"] = "Looks up key; if it exists returns corresponding value else evaluates and returns defaultValue.";
+			props["remove"] = "remove(key) does nothing if the given key does not exist and returns false. If the given key does exist, it removes it from the AA and returns true.";
+			break;
+		case 4:
+			// static array (require this)
+			props["length"] = "PROP:Returns number of values in the type tuple.";
+			break;
+		case 5:
+			// delegate (require this)
+			props["ptr"] = "PROP:The .ptr property of a delegate will return the frame pointer value as a void*.";
+			props["funcptr"] = "PROP:The .funcptr property of a delegate will return the function pointer value as a function type.";
+			break;
+		case 6:
+			// class (require this)
+			props["classinfo"] = "PROP:Information about the dynamic type of the class";
+			break;
+		case 7:
+			// struct
+			props["sizeof"] = "PROP:Size in bytes of struct";
+			props["alignof"] = "PROP:Size boundary struct needs to be aligned on";
+			props["tupleof"] = "PROP:Gets type tuple of fields";
+			break;
+		default:
+			break;
+	}
+	return props;
+}
+
+const string[string] genericProps;
+const string[string] integerProps;
+const string[string] floatingProps;
+const string[string] dynArrayProps;
+const string[string] assocArrayProps;
+const string[string] staticArrayProps;
+const string[string] delegateProps;
+const string[string] classProps;
+const string[string] structProps;
+
+shared static this()
+{
+	genericProps     = initSymbolProperties (-1);
+	integerProps     = initSymbolProperties (0);
+	floatingProps    = initSymbolProperties (1);
+	dynArrayProps    = initSymbolProperties (2);
+	assocArrayProps  = initSymbolProperties (3);
+	staticArrayProps = initSymbolProperties (4);
+	delegateProps    = initSymbolProperties (5);
+	classProps       = initSymbolProperties (6);
+	structProps      = initSymbolProperties (7);
+}
+
+void addSymbolProperties(ref string[] expansions, RootObject sym, string tok)
+{
+	bool hasThis = false;
+	Type t = sym.isType();
+	if (auto e = sym.isExpression())
+	{
+		t = e.type;
+		hasThis = true;
+	}
+	if (!t)
+		return;
+
+	const string[string] props = t.isTypeClass()    && hasThis ? classProps
+	                           : t.isTypeStruct()              ? structProps
+	                           : t.isTypeDelegate() && hasThis ? delegateProps
+	                           : t.isTypeSArray()   && hasThis ? staticArrayProps
+	                           : t.isTypeAArray()   && hasThis ? assocArrayProps
+	                           : t.isTypeDArray()   && hasThis ? dynArrayProps
+	                           : t.isfloating()     ? floatingProps
+	                           : t.isintegral()     ? integerProps
+	                           : genericProps;
+	foreach (id, p; props)
+		if (id.startsWith(tok))
+			expansions ~= id ~ ":" ~ p;
+}
+
+////////////////////////////////////////////////////////////////
+
+extern(C++) class FindExpansionsVisitor : FindASTVisitor
+{
+	alias visit = FindASTVisitor.visit;
+
+	this(const(char*) filename, int startLine, int startIndex, int endLine, int endIndex)
+	{
+		super(filename, startLine, startIndex, endLine, endIndex);
+	}
+
+	override void visit(IdentifierExp expr)
+	{
+		if (!found && expr.ident)
+		{
+			if (matchIdentifier(expr.loc, expr.ident))
+			{
+				foundNode(expr);
+			}
+		}
+		// skip base class to avoid matching resolved expression
+		visit(cast(Expression)expr);
+	}
+
+	override void visit(SymbolExp expr)
+	{
+		if (!found && expr.var && !expr.original) // do not match lowered VarExp
+			if (matchIdentifier(expr.loc, expr.var.ident))
+				foundNode(expr);
+		// skip base class to avoid matching lowered expression
+		visit(cast(Expression)expr);
+	}
+
+	override void visit(DotVarExp dve)
+	{
+		if (!found && dve.var && dve.var.ident)
+			if (matchIdentifier(dve.varloc.filename ? dve.varloc : dve.loc, dve.var.ident))
+				foundNode(dve);
+	}
+
+	override void visit(DotIdExp de)
+	{
+		if (!found && de.ident)
+		{
+			if (matchIdentifier(de.identloc, de.ident))
+			{
+				if (!de.type && de.resolvedTo && !de.resolvedTo.isErrorExp())
+					foundResolved(de.resolvedTo);
+				else
+					foundNode(de);
+			}
+		}
+	}
+
+	override void checkScope(ScopeDsymbol sc)
+	{
+		if (sc && !foundScope)
+		{
+			if (sc.loc.filename !is filename || sc.loc.linnum > endLine)
+				return;
+			if (sc.loc.linnum == endLine && sc.loc.charnum > endIndex)
+				return;
+			if (sc.endlinnum < startLine)
+				return;
+
+			foundScope = sc;
+			stop = true;
+		}
+	}
+}
+
 string[] findExpansions(Module mod, int line, int index, string tok)
 {
 	auto filename = mod.srcfile.toChars();
-	scope FindDefinitionVisitor fdv = new FindDefinitionVisitor(filename, line, index, line, index + 1);
+	scope FindExpansionsVisitor fdv = new FindExpansionsVisitor(filename, line, index, line, index + 1);
 	mod.accept(fdv);
 
-	if (!fdv.found)
-		return null;
+	if (!fdv.found && !fdv.foundScope)
+		fdv.foundScope = mod;
 
 	int flags = 0;
-	Type type = fdv.found.isType();
-	if (auto e = fdv.found.isExpression())
+	Type type = fdv.found ? fdv.found.isType() : null;
+	if (auto e = fdv.found ? fdv.found.isExpression() : null)
 	{
 		Type getType(Expression e, bool recursed)
 		{
@@ -2033,20 +2257,27 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	if (type)
 		if (auto sym = typeSymbol(type))
 			sds = sym;
+	if (!sds)
+		sds = mod;
 
 	string[void*] idmap; // doesn't work with extern(C++) classes
+	DenseSet!ScopeDsymbol searched;
 
 	void searchScope(ScopeDsymbol sds, int flags)
 	{
+		if (searched.contains(sds))
+			return;
+		searched.insert(sds);
+
 		static Dsymbol uplevel(Dsymbol s)
 		{
 			if (auto ad = s.isAggregateDeclaration())
-				return ad.enclosing;
+				if (ad.enclosing)
+					return ad.enclosing;
 			return s.toParent;
 		}
-		// TODO: properties
 		// TODO: struct/class not going to parent if accessed from elsewhere (but does if nested)
-
+		// TODO: UFCS
 		for (Dsymbol ds = sds; ds; ds = uplevel(ds))
 		{
 			ScopeDsymbol sd = ds.isScopeDsymbol();
@@ -2056,31 +2287,68 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			//foreach (pair; sd.symtab.tab.asRange)
 			if (sd.symtab)
 			{
-				foreach (key, s; sd.symtab.tab.aa)
+				foreach (kv; sd.symtab.tab.asRange)
 				{
 					//Dsymbol s = pair.value;
-					if (!symbolIsVisible(mod, s))
+					if (!symbolIsVisible(mod, kv.value))
 						continue;
-					auto ident = /*pair.*/(cast(Identifier)key).toString();
+					auto ident = /*pair.*/(cast(Identifier)kv.key).toString();
 					if (ident.startsWith(tok))
-						idmap[cast(void*)s] = ident.idup;
+						idmap[cast(void*)kv.value] = ident.idup;
 				}
 			}
 
+			void searchScopeSymbol(ScopeDsymbol sym)
+			{
+				if (!sym)
+					return;
+				int sflags = SearchLocalsOnly;
+				if (sym.getModule() == mod)
+					sflags |= IgnoreSymbolVisibility;
+				searchScope(sym, sflags);
+			}
 			// base classes
 			if (auto cd = ds.isClassDeclaration())
 			{
 				if (auto bcs = cd.baseclasses)
 					foreach (bc; *bcs)
-					{
-						int sflags = 0;
-						if (bc.sym.getModule() == mod)
-							sflags |= IgnoreSymbolVisibility;
-						searchScope(bc.sym, sflags);
-					}
+						searchScopeSymbol(bc.sym);
+			}
+			// with statement
+			if (auto ws = ds.isWithScopeSymbol())
+			{
+				Expression eold = null;
+				for (Expression e = ws.withstate.exp; e != eold; e = resolveAliasThis(ws._scope, e))
+				{
+					if (auto se = e.isScopeExp())
+						searchScopeSymbol(se.sds);
+					else if (auto te = e.isTypeExp())
+						searchScopeSymbol(te.type.toDsymbol(null).isScopeDsymbol());
+					else
+						searchScopeSymbol(e.type.toBasetype().toDsymbol(null).isScopeDsymbol());
+					eold = e;
+				}
+			}
+			// alias this
+			if (auto ad = ds.isAggregateDeclaration())
+			{
+				Declaration decl = ad.aliasthis && ad.aliasthis.sym ? ad.aliasthis.sym.isDeclaration() : null;
+				if (decl)
+				{
+					Type t = decl.type;
+					if (auto ts = t.isTypeStruct())
+						searchScopeSymbol(ts.sym);
+					else if (auto tc = t.isTypeClass())
+						searchScopeSymbol(tc.sym);
+					else if (auto ti = t.isTypeInstance())
+						searchScopeSymbol(ti.tempinst);
+					else if (auto te = t.isTypeEnum())
+						searchScopeSymbol(te.sym);
+				}
 			}
 
-			// TODO: alias this
+			if (flags & SearchLocalsOnly)
+				break;
 
 			// imported modules
 			size_t cnt = sd.importedScopes ? sd.importedScopes.dim : 0;
@@ -2113,7 +2381,12 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 
 	string[] idlist;
 	foreach(sym, id; idmap)
-		idlist ~= id ~ ":" ~ symbol2ExpansionLine(cast(Dsymbol)sym);
+		if (!id.startsWith("__"))
+			idlist ~= id ~ ":" ~ symbol2ExpansionLine(cast(Dsymbol)sym);
+
+	if (fdv.found)
+		addSymbolProperties(idlist, fdv.found, tok);
+
 	return idlist;
 }
 

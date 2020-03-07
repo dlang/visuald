@@ -226,10 +226,13 @@
               DIP25="%(DCompile.DIP25)"
               DIP1000="%(DCompile.DIP1000)"
               DIP1008="%(DCompile.DIP1008)"
+              DIP1021="%(DCompile.DIP1021)"
               RevertImport="%(DCompile.RevertImport)"
               PreviewDtorFields="%(DCompile.PreviewDtorFields)"
               PreviewIntPromote="%(DCompile.PreviewIntPromote)"
               PreviewFixAliasThis="%(DCompile.PreviewFixAliasThis)"
+              PreviewRvalueRefParam="%(DCompile.PreviewRvalueRefParam)"
+              PreviewNoSharedAccess="%(DCompile.PreviewNoSharedAccess)"
               PreviewMarkdown="%(DCompile.PreviewMarkdown)"
               TransitionVMarkdown="%(DCompile.TransitionVMarkdown)"
               TransitionField="%(DCompile.TransitionField)"
@@ -250,6 +253,7 @@
               DepFile="%(DCompile.DepFile)"
               HeaderDir="%(DCompile.HeaderDir)"
               HeaderFile="%(DCompile.HeaderFile)"
+              CppHeaderFile="%(DCompile.CppHeaderFile)"
               JSONFile="%(DCompile.JSONFile)"
     >
     </CompileD>

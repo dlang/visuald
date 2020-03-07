@@ -62,7 +62,7 @@ namespace DParserCOMServer
 
 		readonly char[] nlSeparator = { '\n' };
 
-		public void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, uint flags)
+		public void ConfigureSemanticProject(string filename, string imp, string stringImp, string versionids, string debugids, string cmdline, uint flags)
 		{
 			_editorDataProvider.ConfigureEnvironment(imp, versionids, debugids, flags);
 

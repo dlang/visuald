@@ -134,7 +134,7 @@ const LanguageProperty[] g_languageProperties =
 	{ "ShowHotURLs"w,                  1 },
 	{ "Default to Non Hot URLs"w,      1 },
 	{ "DefaultToInsertSpaces"w,        0 },
-	{ "ShowDropdownBarOption "w,       1 },
+	{ "ShowDropdownBarOption"w,        1 },
 	{ "Single Code Window Only"w,      1 },
 	{ "EnableAdvancedMembersOption"w,  1 },
 	{ "Support CF_HTML"w,              0 },

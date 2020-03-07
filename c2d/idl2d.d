@@ -1296,6 +1296,9 @@ version(all)
 			replaceTokenSequence(tokens, "MEM_SECTION_EXTENDED_PARAMETER_TYPE, *PMEM_SECTION_EXTENDED_PARAMETER_TYPE", "*PMEM_SECTION_EXTENDED_PARAMETER_TYPE", true);
 			// win 10.0.18362.0: typedef struct DECLSPEC_ALIGN(16) DECLSPEC_NOINITALL _CONTEXT ...
 			replaceTokenSequence(tokens, "DECLSPEC_NOINITALL", "", true);
+
+			replaceTokenSequence(tokens, "RtlZeroMemory($dest,$length)",
+			                             "import core.stdc.string: memset; memset($dest,0,$length)", true);
 		}
 
 		if(currentModule == "commctrl")
@@ -1308,6 +1311,9 @@ version(all)
 		{
 			replaceTokenSequence(tokens, "WINOLEAUTAPI_($_rettype)", "extern(Windows) $_rettype", true);
 			replaceTokenSequence(tokens, "WINOLEAUTAPI", "extern(Windows) HRESULT", true);
+			// rename the three argument inlined overload, LDC stumbles over it
+			replaceTokenSequence(tokens, "VarCmp($arg1, $arg2, $arg3) { $code$ }",
+			                             "VarCmp_inl($arg1, $arg2, $arg3) { $code$ }", true);
 		}
 		if(currentModule == "shellapi")
 		{
@@ -1827,7 +1833,7 @@ version(none)
 		while (replaceTokenSequence(tokens, "typedef $_identtype $_expr1, $args;",
 			"typedef $_identtype $_expr1; typedef $_identtype $args;", true) > 0) {}
 		while (replaceTokenSequence(tokens, "typedef void $_expr1, $args;",
-			"typedef void $_expr1; typedef void $args;", true) > 0) {};
+			"typedef void $_expr1; typedef void $args;", true) > 0) {}
 
 		replaceTokenSequence(tokens, "typedef $_ident1 $_ident1;", "", true);
 		replaceTokenSequence(tokens, "typedef interface $_ident1 $_ident1;", "", true);

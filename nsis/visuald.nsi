@@ -34,7 +34,7 @@
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.19.0"
+!define LDC_VERSION "1.20.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support

@@ -1276,6 +1276,9 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		AddControl("", mDip25                   = new CheckBox(mCanvas, "implement DIP25: sealed pointers (DMD 2.067+)"));
 		AddControl("", mDip1000                 = new CheckBox(mCanvas, "implement DIP1000: scoped pointers (DMD 2.073+)"));
 		AddControl("", mDip1008                 = new CheckBox(mCanvas, "implement DIP1008: reference counted exceptions (DMD 2.078+)"));
+		AddControl("", mDip1021                 = new CheckBox(mCanvas, "implement DIP1021: mutable function arguments (DMD 2.089+)"));
+		AddControl("", mPreview_rvaluerefparam  = new CheckBox(mCanvas, "enable rvalue arguments to ref parameters (DMD 2.087+)"));
+		AddControl("", mPreview_nosharedaccess  = new CheckBox(mCanvas, "disable access to shared memory objects (DMD 2.088+)"));
 		AddHorizontalLine();
 		AddControl("", mTransition_import       = new CheckBox(mCanvas, "revert to single phase name lookup (DMD 2.071+)"));
 		AddControl("", mTransition_dtorfields   = new CheckBox(mCanvas, "destruct fields of partially constructed objects (DMD 2.083+)"));
@@ -1289,10 +1292,13 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		mDip25.setChecked(options.dip25);
 		mDip1000.setChecked(options.dip1000);
 		mDip1008.setChecked(options.dip1008);
+		mDip1021.setChecked(options.dip1021);
 		mTransition_import.setChecked(options.revert_import);
 		mTransition_dtorfields.setChecked(options.preview_dtorfields);
 		mTransition_intpromote.setChecked(options.preview_intpromote);
 		mTransition_fixAliasThis.setChecked(options.preview_fixAliasThis);
+		mPreview_rvaluerefparam.setChecked(options.preview_rvaluerefparam);
+		mPreview_nosharedaccess.setChecked(options.preview_nosharedaccess);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1302,10 +1308,13 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		changes += changeOption(mDip25.isChecked(), options.dip25, refoptions.dip25);
 		changes += changeOption(mDip1000.isChecked(), options.dip1000, refoptions.dip1000);
 		changes += changeOption(mDip1008.isChecked(), options.dip1008, refoptions.dip1008);
+		changes += changeOption(mDip1021.isChecked(), options.dip1021, refoptions.dip1021);
 		changes += changeOption(mTransition_import.isChecked(), options.revert_import, refoptions.revert_import);
 		changes += changeOption(mTransition_dtorfields.isChecked(), options.preview_dtorfields, refoptions.preview_dtorfields);
 		changes += changeOption(mTransition_intpromote.isChecked(), options.preview_intpromote, refoptions.preview_intpromote);
 		changes += changeOption(mTransition_fixAliasThis.isChecked(), options.preview_fixAliasThis, refoptions.preview_fixAliasThis);
+		changes += changeOption(mPreview_rvaluerefparam.isChecked(), options.preview_rvaluerefparam, refoptions.preview_rvaluerefparam);
+		changes += changeOption(mPreview_nosharedaccess.isChecked(), options.preview_nosharedaccess, refoptions.preview_nosharedaccess);
 		return changes;
 	}
 
@@ -1313,6 +1322,9 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 	CheckBox mDip25;
 	CheckBox mDip1000;
 	CheckBox mDip1008;
+	CheckBox mDip1021;
+	CheckBox mPreview_rvaluerefparam;
+	CheckBox mPreview_nosharedaccess;
 	CheckBox mTransition_import;
 	CheckBox mTransition_dtorfields;
 	CheckBox mTransition_intpromote;
@@ -2427,6 +2439,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 	enum ID_MESSAGE_LABEL = 1110;
 	enum ID_CANCEL_UPDATE = 1111;
 	enum ID_BROWSE_BASEDIR = 1112;
+	enum ID_REFRESH_INSTALLDIR = 1113;
 
 	override string GetCategoryName() { return "D Options"; }
 	override string GetPageName() { return "Updates"; }
@@ -2579,8 +2592,8 @@ class UpdatePropertyPage : GlobalPropertyPage
 				if (pp.mCanvas && pp.mCanvas.hwnd)
 					PostMessage(pp.mCanvas.hwnd, WM_COMMAND, DirPropertyPage.ID_REFRESH_INSTALLDIR, 0);
 
-			if (mUpdateCancel && mUpdateCancel.hwnd)
-				mUpdateCancel.setVisible(false);
+			if (mCanvas && mCanvas.hwnd)
+				PostMessage(mCanvas.hwnd, WM_COMMAND, ID_REFRESH_INSTALLDIR, 0);
 
 			if (Package.s_instance)
 				Package.s_instance.deferSaveOptions();
@@ -2639,6 +2652,13 @@ class UpdatePropertyPage : GlobalPropertyPage
 			case ID_CHECK_DMD:
 				auto info = checkForUpdate(CheckProduct.DMD, 0.days, mDMDCheck.getSelection());
 				updateDMDInfo(info);
+				break;
+
+			case ID_REFRESH_INSTALLDIR:
+				if (mUpdateCancel && mUpdateCancel.hwnd)
+					mUpdateCancel.setVisible(false);
+
+				SetControls(GetGlobalOptions());
 				break;
 
 			case ID_CANCEL_UPDATE:
@@ -2988,6 +3008,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mExactExpMatch.setChecked(opts.exactExpMatch);
 
 		//mExpandSemantics.setEnabled(false);
+		EnableControls();
 	}
 
 	override int DoApply(GlobalOptions opts, GlobalOptions refopts)
@@ -3034,6 +3055,8 @@ struct MagoOptions
 	bool expandableStrings;
 	bool hideReferencePointers;
 	bool removeLeadingHexZeroes;
+	bool recombineTuples;
+	bool showDArrayLengthInType;
 	uint maxArrayElements;
 
 	void saveToRegistry()
@@ -3046,6 +3069,8 @@ struct MagoOptions
 		keyMago.Set("expandableStrings", expandableStrings);
 		keyMago.Set("hideReferencePointers", hideReferencePointers);
 		keyMago.Set("removeLeadingHexZeroes", removeLeadingHexZeroes);
+		keyMago.Set("recombineTuples", recombineTuples);
+		keyMago.Set("showDArrayLengthInType", showDArrayLengthInType);
 		keyMago.Set("maxArrayElements", maxArrayElements);
 	}
 
@@ -3060,6 +3085,8 @@ struct MagoOptions
 		expandableStrings = (keyMago.GetDWORD("expandableStrings", 0) != 0);
 		hideReferencePointers = (keyMago.GetDWORD("hideReferencePointers", 1) != 0);
 		removeLeadingHexZeroes = (keyMago.GetDWORD("removeLeadingHexZeroes", 0) != 0);
+		recombineTuples   = (keyMago.GetDWORD("recombineTuples", 1) != 0);
+		showDArrayLengthInType = (keyMago.GetDWORD("showDArrayLengthInType", 0) != 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
 	}
 }
@@ -3078,8 +3105,10 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mShowStaticsInAggr = new CheckBox(mCanvas, "Show static fields in structs and classes"));
 		AddControl("", mShowVTable        = new CheckBox(mCanvas, "Show virtual function table as field of classes"));
 		AddControl("", mFlatClassFields   = new CheckBox(mCanvas, "Show base class fields as direct fields"));
+		AddControl("", mRecombineTuples   = new CheckBox(mCanvas, "Rebuild tuples from compiler generated fields"));
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
 		AddControl("", mHideRefPointers   = new CheckBox(mCanvas, "Hide pointers for class references and slices"));
+		AddControl("", mShowLengthInType  = new CheckBox(mCanvas, "Show length of dynamic array in type column"));
 		AddControl("", mRemoveHexZeroes   = new CheckBox(mCanvas, "Remove leading zeroes from hex values"));
 		auto saveWidth = kLabelWidth;
 		kLabelWidth = kPageWidth * 4 / 5;
@@ -3133,6 +3162,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		mExpandableStrings.setChecked(mOptions.expandableStrings);
 		mHideRefPointers.setChecked(mOptions.hideReferencePointers);
 		mRemoveHexZeroes.setChecked(mOptions.removeLeadingHexZeroes);
+		mRecombineTuples.setChecked(mOptions.recombineTuples);
+		mShowLengthInType.setChecked(mOptions.showDArrayLengthInType);
 		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
 	}
 
@@ -3146,6 +3177,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mExpandableStrings.isChecked(), opts.expandableStrings, refopts.expandableStrings);
 		changes += changeOption(mHideRefPointers.isChecked(), opts.hideReferencePointers, refopts.hideReferencePointers);
 		changes += changeOption(mRemoveHexZeroes.isChecked(), opts.removeLeadingHexZeroes, refopts.removeLeadingHexZeroes);
+		changes += changeOption(mRecombineTuples.isChecked(), opts.recombineTuples, refopts.recombineTuples);
+		changes += changeOption(mShowLengthInType.isChecked(), opts.showDArrayLengthInType, refopts.showDArrayLengthInType);
 
 		import stdext.string;
 		long maxelem;
@@ -3162,6 +3195,8 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mExpandableStrings;
 	CheckBox mHideRefPointers;
 	CheckBox mRemoveHexZeroes;
+	CheckBox mRecombineTuples;
+	CheckBox mShowLengthInType;
 	Text mMaxArrayElements;
 }
 

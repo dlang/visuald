@@ -166,7 +166,8 @@ class VDServer : ComObject, IVDServer
 			runTask(dg);
 	}
 
-	override HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids, DWORD flags)
+	override HRESULT ConfigureSemanticProject(in BSTR filename, in BSTR imp, in BSTR stringImp, in BSTR versionids, in BSTR debugids,
+											  in BSTR cmdline, DWORD flags)
 	{
 		string fname = to_string(filename);
 

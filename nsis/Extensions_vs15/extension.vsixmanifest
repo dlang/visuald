@@ -18,6 +18,7 @@
   </Installation>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" Path="visuald.pkgdef" />
+    <Asset Type="Microsoft.VisualStudio.ProjectTemplate" Path="VDINSTALLPATH\Templates\ProjectItems" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" Path="VDINSTALLPATH\vdextensions.dll" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" Path="VDINSTALLPATH\vdext15.dll" />
     <Asset Type="Microsoft.VisualStudio.Assembly" Path="VDINSTALLPATH\VisualDWizard.dll" AssemblyName="|VisualDWizard;AssemblyName|" />

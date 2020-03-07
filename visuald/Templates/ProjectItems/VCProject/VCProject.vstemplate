@@ -1,15 +1,18 @@
 <VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
   <TemplateData>
-    <Name>VC++ based Windows Application</Name>
-    <Description>A project for creating a Windows application</Description>
-    <Icon>__TemplateIcon.ico</Icon>
-    <ProjectType>D</ProjectType>
+    <Name>D/VC++ based Windows Application</Name>
+    <Description>A Visual C++ project for creating a Win32 application, console application, DLL or static library. This is based on Visual C++'s vcxproj project type for seamless integration with C++ and msbuild.</Description>
+    <Icon>dwinproj.ico</Icon>
+    <ProjectType>VC</ProjectType>
     <SortOrder>50</SortOrder>
     <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
     <CreateInPlace>true</CreateInPlace>
     <CreateNewFolder>true</CreateNewFolder>
     <DefaultName>WindowsApplication</DefaultName>
     <ProvideDefaultName>true</ProvideDefaultName>
+    <LanguageTag>D</LanguageTag>
+    <PlatformTag>Windows</PlatformTag>
+    <PlatformTag>Visual D</PlatformTag>
   </TemplateData>
   <TemplateContent>
     <Project File="WindowsApp.vcxproj" ReplaceParameters="true">

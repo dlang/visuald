@@ -177,7 +177,6 @@ class ProjectOptions
 	bool preservePaths;	// !=0 means don't strip path from source file
 	bool warnings;		// enable warnings
 	bool infowarnings;	// enable informational warnings
-	bool checkProperty;	// enforce property syntax
 	bool genStackFrame;	// always generate stack frame
 	bool pic;		// generate position-independent-code for shared libs
 	bool cov;		// generate code coverage data
@@ -190,6 +189,7 @@ class ProjectOptions
 	bool dip25;
 	bool dip1000;
 	bool dip1008;
+	bool dip1021;
 	bool transition_field;         // list all non-mutable fields which occupy an object instance
 	bool revert_import;            // revert to single phase name lookup
 	bool preview_dtorfields;       // destruct fields of partially constructed objects
@@ -197,6 +197,8 @@ class ProjectOptions
 	bool transition_complex;       // give deprecation messages about all usages of complex or imaginary types
 	bool preview_intpromote;       // fix integral promotions for unary + - ~ operators
 	bool preview_fixAliasThis;     // when a symbol is resolved, check alias this scope before going to upper scopes
+	bool preview_rvaluerefparam;   // enable rvalue arguments to ref parameters
+	bool preview_nosharedaccess;   // disable access to shared memory objects
 	bool preview_markdown;         // enable Markdown replacements in Ddoc
 	bool transition_vmarkdown;     // list instances of Markdown replacements in Ddoc
 
@@ -388,7 +390,7 @@ class ProjectOptions
 	// common options with building phobos.lib
 	string dmdCommonCompileOptions()
 	{
-		string cmd;
+		string cmd = dmdFrontEndCompileOptions();
 
 		if(isX86_64)
 			cmd ~= " -m64";
@@ -396,10 +398,6 @@ class ProjectOptions
 			cmd ~= " -m32mscoff";
 		if(verbose)
 			cmd ~= " -v";
-		if(vtls)
-			cmd ~= " -vtls";
-		if(vgc)
-			cmd ~= " -vgc";
 
 		if(symdebug)
 			cmd ~= " -g"; // -gc no longer supported
@@ -408,10 +406,28 @@ class ProjectOptions
 
 		if(optimize)
 			cmd ~= " -O";
-		if(useDeprecated)
-			cmd ~= " -d";
 		if(useInline)
 			cmd ~= " -inline";
+		if(genStackFrame)
+			cmd ~= " -gs";
+		if(stackStomp)
+			cmd ~= " -gx";
+
+		cmd ~= commonLanguageOptions();
+		return cmd;
+	}
+
+	string dmdFrontEndCompileOptions()
+	{
+		string cmd;
+		if(vtls)
+			cmd ~= " -vtls";
+		if(vgc)
+			cmd ~= " -vgc";
+		if(useDeprecated)
+			cmd ~= " -d";
+		else if(errDeprecated)
+			cmd ~= " -de";
 		if(release == 1)
 			cmd ~= " -release";
 		else if(release == 0)
@@ -420,14 +436,12 @@ class ProjectOptions
 			cmd ~= " -w";
 		if(infowarnings)
 			cmd ~= " -wi";
-		if(checkProperty)
-			cmd ~= " -property";
-		if(genStackFrame)
-			cmd ~= " -gs";
-		if(stackStomp)
-			cmd ~= " -gx";
+		return cmd;
+	}
 
-		cmd ~= commonLanguageOptions();
+	string dmdFrontEndOptions()
+	{
+		string cmd = commonLanguageOptions() ~ dmdFrontEndCompileOptions();
 		return cmd;
 	}
 
@@ -443,6 +457,8 @@ class ProjectOptions
 			cmd ~= " -dip1000";
 		if (dip1008)
 			cmd ~= " -dip1008";
+		if (dip1021)
+			cmd ~= " -preview=dip1021";
 		if (transition_field)
 			cmd ~= " -transition=field";
 		if (revert_import)
@@ -457,6 +473,10 @@ class ProjectOptions
 			cmd ~= " -preview=intpromote";
 		if (preview_fixAliasThis)
 			cmd ~= " -preview=fixAliasThis";
+		if (preview_rvaluerefparam)
+			cmd ~= " -preview=rvaluerefparam";
+		if (preview_nosharedaccess)
+			cmd ~= " -preview=nosharedaccess";
 		if (preview_markdown)
 			cmd ~= " -preview=markdown";
 		if (transition_vmarkdown)
@@ -488,8 +508,6 @@ class ProjectOptions
 			cmd ~= " -profile";
 		if(quiet)
 			cmd ~= " -quiet";
-		else if(errDeprecated)
-			cmd ~= " -de";
 		switch (boundscheck)
 		{
 			default: break;
@@ -638,8 +656,6 @@ class ProjectOptions
 			cmd ~= " -Werror";
 		if(infowarnings)
 			cmd ~= " -Wall";
-		if(checkProperty)
-			cmd ~= " -fproperty";
 		if(genStackFrame)
 			cmd ~= " -fno-omit-frame-pointer";
 		if(cov)
@@ -761,8 +777,6 @@ class ProjectOptions
 			cmd ~= " -w";
 		if(infowarnings)
 			cmd ~= " -wi";
-		if(checkProperty)
-			cmd ~= " -property";
 		if(ignoreUnsupportedPragmas)
 			cmd ~= " -ignore";
 		if(allinst)
@@ -1423,7 +1437,6 @@ class ProjectOptions
 		elem ~= new xml.Element("preservePaths", toElem(preservePaths));
 		elem ~= new xml.Element("warnings", toElem(warnings));
 		elem ~= new xml.Element("infowarnings", toElem(infowarnings));
-		elem ~= new xml.Element("checkProperty", toElem(checkProperty));
 		elem ~= new xml.Element("genStackFrame", toElem(genStackFrame));
 		elem ~= new xml.Element("pic", toElem(pic));
 		elem ~= new xml.Element("cov", toElem(cov));
@@ -1436,6 +1449,7 @@ class ProjectOptions
 		elem ~= new xml.Element("dip25", toElem(dip25));
 		elem ~= new xml.Element("dip1000", toElem(dip1000));
 		elem ~= new xml.Element("dip1008", toElem(dip1008));
+		elem ~= new xml.Element("dip1021", toElem(dip1021));
 		elem ~= new xml.Element("transition_field", toElem(transition_field));
 		elem ~= new xml.Element("revert_import", toElem(revert_import));
 		elem ~= new xml.Element("preview_dtorfields", toElem(preview_dtorfields));
@@ -1444,6 +1458,8 @@ class ProjectOptions
 		elem ~= new xml.Element("preview_intpromote", toElem(preview_intpromote));
 		elem ~= new xml.Element("preview_fixAliasThis", toElem(preview_fixAliasThis));
 		elem ~= new xml.Element("preview_markdown", toElem(preview_markdown));
+		elem ~= new xml.Element("preview_rvaluerefparam", toElem(preview_rvaluerefparam));
+		elem ~= new xml.Element("preview_nosharedaccess", toElem(preview_nosharedaccess));
 		elem ~= new xml.Element("transition_vmarkdown", toElem(transition_vmarkdown));
 
 		elem ~= new xml.Element("compiler", toElem(compiler));
@@ -1578,7 +1594,6 @@ class ProjectOptions
 		fromElem(elem, "preservePaths", preservePaths);
 		fromElem(elem, "warnings", warnings);
 		fromElem(elem, "infowarnings", infowarnings);
-		fromElem(elem, "checkProperty", checkProperty);
 		fromElem(elem, "genStackFrame", genStackFrame);
 		fromElem(elem, "pic", pic);
 		fromElem(elem, "cov", cov);
@@ -1591,6 +1606,7 @@ class ProjectOptions
 		fromElem(elem, "dip25", dip25);
 		fromElem(elem, "dip1000", dip1000);
 		fromElem(elem, "dip1008", dip1008);
+		fromElem(elem, "dip1021", dip1021);
 		fromElem(elem, "transition_field", transition_field);
 		fromElem(elem, "revert_import", revert_import);
 		fromElem(elem, "preview_dtorfields", preview_dtorfields);
@@ -1598,6 +1614,8 @@ class ProjectOptions
 		fromElem(elem, "transition_complex", transition_complex);
 		fromElem(elem, "preview_intpromote", preview_intpromote);
 		fromElem(elem, "preview_fixAliasThis", preview_fixAliasThis);
+		fromElem(elem, "preview_rvaluerefparam", preview_rvaluerefparam);
+		fromElem(elem, "preview_nosharedaccess", preview_nosharedaccess);
 		fromElem(elem, "preview_markdown", preview_markdown);
 		fromElem(elem, "transition_vmarkdown", transition_vmarkdown);
 

@@ -175,6 +175,8 @@
                   Description="implement DIP1000: scoped pointers. (dmd 2.073+)" />
     <BoolProperty Name="DIP1008" Category="Language" DisplayName="DIP1008" Switch="-dip1008"
                   Description="implement DIP1008: reference counted exceptions. (dmd 2.078+)" />
+    <BoolProperty Name="DIP1021" Category="Language" DisplayName="DIP1021" Switch="-preview=dip1021"
+                  Description="implement DIP1021: mutable function arguments. (dmd 2.089+)" />
 
     <BoolProperty Name="PreviewFieldwise" Category="Language" DisplayName="Preview fieldwise" Switch="-preview=fieldwise"
                   Description="use fieldwise comparisons for struct equality. (dmd 2.085+)" />
@@ -184,6 +186,10 @@
                   Description="fix integral promotions for unary + - ~ operators. (dmd 2.085+)" />
     <BoolProperty Name="PreviewFixAliasThis" Category="Language" DisplayName="Preview fixAliasThis" Switch="-preview=fixAliasThis"
                   Description="when a symbol is resolved, check alias this scope before upper scopes. (dmd 2.085+)" />
+    <BoolProperty Name="PreviewRvalueRefParam" Category="Language" DisplayName="Preview rvaluerefparam" Switch="-preview=rvaluerefparam"
+                  Description="enable rvalue arguments to ref parameters. (dmd 2.087+)" />
+    <BoolProperty Name="PreviewNoSharedAccess" Category="Language" DisplayName="Preview nosharedaccess" Switch="-preview=nosharedaccess"
+                  Description="disable access to shared memory objects. (dmd 2.088+)" />
 
     <BoolProperty Name="RevertImport" Category="Language" DisplayName="Revert import" Switch="-revert=import"
               Description="revert to single phase name lookup. (dmd 2.085+)" />
@@ -203,6 +209,8 @@
                     Description="write 'header' file(s) to this directory." Switch="-Hd" />
     <StringProperty Name="HeaderFile" Category="Documentation" DisplayName="Header File" Subtype="file"
                     Description="write 'header' to this file." Switch="-Hf" />
+    <StringProperty Name="CppHeaderFile" Category="Documentation" DisplayName="C++ Header File" Subtype="file"
+                    Description="write C++ 'header' to this file." Switch="-HCf" />
     <StringProperty Name="JSONFile" Category="Documentation" DisplayName="JSON Browse File" Subtype="file"
                     Description="write browse information to this JSON file." Switch="-Xf" />
 

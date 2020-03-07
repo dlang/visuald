@@ -182,6 +182,7 @@ struct Options
 	string[] versionIds;
 	int debugLevel;
 	string[] debugIds;
+	string cmdline; // more options
 
 	void opAssign(const ref Options opts)
 	{
@@ -261,6 +262,40 @@ void dmdSetupParams(const ref Options opts)
 	global.params.cpu = CPU.baseline;
 	global.params.isLP64 = global.params.is64bit;
 
+	string[] cli = opts.cmdline.split(' ');
+	foreach(opt; cli)
+	{
+		switch(opt)
+		{
+			case "-vtls": global.params.vtls = true; break;
+			case "-vgc":  global.params.vgc = true; break;
+			// case "-d": // already covered by flags
+			// case "-de":
+			// case "-release":
+			// case "-debug":
+			// case "-w":
+			// case "-wi":
+			// case "-property": global.params.checkProperty = true; break;
+			case "-betterC": global.params.betterC = true; break;
+			case "-dip25":  global.params.useDIP25 = true; break;
+			case "-dip1000":  global.params.useDIP25 = global.params.vsafe = true; break;
+			case "-dip1008":  global.params.ehnogc = true; break;
+			case "-revert=import": global.params.vfield = true; break;
+			case "-transition=field": global.params.vfield = true; break;
+			case "-transition=checkimports": global.params.check10378 = true; break;
+			case "-transition=complex": global.params.vcomplex = true; break;
+			case "-transition=vmarkdown": global.params.vmarkdown = true; break;
+			case "-preview=dip1021":  global.params.useDIP1021 = true; break;
+			case "-preview=fieldwise": global.params.fieldwise = true; break;
+			case "-preview=intpromote": global.params.fix16997 = true; break;
+			case "-preview=dtorfields": global.params.dtorFields = true; break;
+			case "-preview=markdown": global.params.markdown = true; break;
+			case "-preview=rvaluerefparam": global.params.rvalueRefParam = true; break;
+			case "-preview=nosharedaccess": global.params.noSharedAccess = true; break;
+			case "-preview=fixAliasThis": global.params.fixAliasThis = true; break;
+			default: break;
+		}
+	}
 	global.params.versionlevel = opts.versionLevel;
 	global.params.versionids = new Strings();
 	foreach(v; opts.versionIds)

@@ -51,8 +51,6 @@ import sdk.win32.wtypes;
 
 const int kCompletionSearchLines = 5000;
 
-class ImageList {};
-
 struct Declaration
 {
 	string name;
@@ -186,6 +184,10 @@ class Declarations
 	Declaration[] mDecls;
 	int mExpansionState = kStateInit;
 
+	string mPrefixAll;      // start identifier that the initial completion was requested on
+	string mPrefixFiltered; // start identifier that mDecls was filtered to
+	Declaration[] mAllDecls;
+
 	enum
 	{
 		kStateInit,
@@ -198,6 +200,23 @@ class Declarations
 
 	this()
 	{
+	}
+
+	bool filterDeclarations(string prefix)
+	{
+		if (!prefix.startsWith(mPrefixAll))
+			return false;
+
+		if (mAllDecls.empty)
+			mAllDecls = mDecls;
+
+		mDecls = null;
+		foreach (d; mAllDecls)
+			if (d.name.startsWith(prefix))
+				mDecls ~= d;
+		mPrefixFiltered = prefix;
+		return true;
+
 	}
 
 	int GetCount()
@@ -307,6 +326,7 @@ class Declarations
 			dir = replace(imp[0 .. dpos], ".", "\\");
 			imp = imp[dpos + 1 .. $];
 		}
+		mPrefixAll = imp;
 
 		int namesLength = mDecls.length;
 		foreach(string impdir; imports)
@@ -389,6 +409,7 @@ class Declarations
 		if(iState == -1)
 			return false;
 
+		mPrefixAll = tok;
 		int namesLength = mDecls.length;
 		for(int ln = start; ln < end; ln++)
 		{
@@ -426,6 +447,7 @@ class Declarations
 		if(!tok.length)
 			return false;
 
+		mPrefixAll = tok;
 		int namesLength = mDecls.length;
 		string[] completions = Package.GetLibInfos().findCompletions(tok, true);
 		foreach (c; completions)
@@ -510,6 +532,7 @@ class Declarations
 			src.ensureCurrentTextParsed(); // pass new text before expansion request
 
 			auto langsvc = Package.GetLanguageService();
+			mPrefixAll = tok;
 			mPendingSource = src;
 			mPendingView = textView;
 			mPendingRequest = langsvc.GetSemanticExpansions(src, tok, caretLine, caretIdx, &OnExpansions);
@@ -710,9 +733,9 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 	bool mWasUnique;
 	int mLastDeclCount;
 
-	this(ImageList imageList, Source source)
+	this(Source source)
 	{
-		mImageList = LoadImageList(g_hInst, MAKEINTRESOURCEA(BMP_COMPLETION), 16, 16);
+		mImageList = LanguageService.completionImageList;
 		mSource = source;
 	}
 
@@ -767,15 +790,22 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		return mDisplayed || (mDecls && mDecls.mPendingSource);
 	}
 
+	bool ContinueExpansions()
+	{
+		if (!mDecls || !mTextView || !mSource)
+			return false;
+
+		string tok = mDecls.GetWordBeforeCaret(mTextView, mSource);
+		if (!mDecls.filterDeclarations(tok))
+			return false;
+
+		Init(mTextView, mDecls, mCompleteWord);
+		return true;
+	}
+
 	override void Dispose()
 	{
 		Close();
-		//if (imageList != null) imageList.Dispose();
-		if(mImageList)
-		{
-			ImageList_Destroy(mImageList);
-			mImageList = null;
-		}
 	}
 
 	void Close()
@@ -1047,7 +1077,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		return S_OK;
 	}
 
-	override HRESULT GetContextImageList (HANDLE *phImageList)
+	override HRESULT GetContextImageList(HANDLE *phImageList)
 	{
 		mixin(LogCallMix);
 

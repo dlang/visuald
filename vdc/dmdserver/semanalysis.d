@@ -267,8 +267,15 @@ void do_unittests()
 		Module m = analyzeModule(parsedModule, opts);
 		auto err = getErrorMessages();
 		auto other = getErrorMessages(true);
-		assert_equal(err, expected_err);
-		assert_equal(other, "");
+		if (expected_err == "<ignore>")
+		{
+			assert(err != "");
+		}
+		else
+		{
+			assert_equal(err, expected_err);
+			assert_equal(other, "");
+		}
 		return m;
 	}
 
@@ -385,27 +392,7 @@ void do_unittests()
 			return xyz;
 		}
 	};
-
-	for (int i = 0; i < 1; i++) // loop for testing GC leaks
-	{
-		m = checkErrors(source, "");
-
-		version(none)
-		version(traceGC)
-		{
-			wipeStack();
-			GC.collect();
-
-			//_CrtDumpMemoryLeaks();
-			//dumpGC();
-
-			core.memory.GC.Stats stats = GC.stats();
-			trace_printf("GC stats: %lld MB used, %lld MB free\n", cast(long)stats.usedSize >> 20, cast(long)stats.freeSize >> 20);
-
-			if (stats.usedSize > (200 << 20))
-				dumpGC();
-		}
-	}
+	m = checkErrors(source, "");
 
 	checkTip(m, 5, 8, "(local variable) `int xyz`");
 	checkTip(m, 5, 10, "(local variable) `int xyz`");
@@ -660,7 +647,7 @@ void do_unittests()
 		"12,15,12,16:Error: no property `f` for type `source.S`\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
-	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ]);
+	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more", "init", "sizeof", "alignof", "mangleof", "stringof" ]);
 	checkExpansions(m, 13, 13, "an", [ "anS" ]);
 
 	source =
@@ -672,16 +659,19 @@ void do_unittests()
 			int fun(int par) { return field1 + par; }
 			int more = 3;
 		}
-		void foo()
+		int foo()
 		{                                // Line 10
 			S anS;
 			if (anS.fool == 1) {}
+			return fok;
 		}
 	};
 	m = checkErrors(source,
-					"12,11,12,12:Error: no property `fool` for type `source.S`\n");
+					"12,11,12,12:Error: no property `fool` for type `source.S`\n" ~
+					"13,10,13,11:Error: undefined identifier `fok`, did you mean function `foo`?\n");
 	//dumpAST(m);
 	checkExpansions(m, 12, 12, "f", [ "field1", "field2", "fun" ]);
+	checkExpansions(m, 13, 11, "f", [ "foo" ]);
 
 	source =
 	q{                                   // Line 1
@@ -701,24 +691,177 @@ void do_unittests()
 	checkExpansions(m, 10, 10, "to", [ "toString", "toHash", "toDebug" ]);
 
 	source =
-		q{                                   // Line 1
-			class C
-			{
-				int toDebug() { return 0; }
-			}                                // Line 5
-			void foo()
-			{
-				C c = new C;
-				if (c.to
-			}                                // Line 10
-		};
-		m = checkErrors(source, "10,3,10,4:Error: found `}` when expecting `)`\n" ~
-								"10,3,10,4:Error: found `}` instead of statement\n" ~
-								"9,10,9,11:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
-		dumpAST(m);
-		checkExpansions(m,  9,  11, "to", [ "toString", "toHash", "toDebug" ]);
+	q{                                   // Line 1
+		class C
+		{
+			int toDebug() { return 0; }
+		}                                // Line 5
+		void foo()
+		{
+			C c = new C;
+			if (c.to
+		}                                // Line 10
+	};
+	m = checkErrors(source, "10,2,10,3:Error: found `}` when expecting `)`\n" ~
+							"10,2,10,3:Error: found `}` instead of statement\n" ~
+							"9,9,9,10:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
+	checkExpansions(m,  9,  10, "to", [ "toString", "toHash", "toDebug" ]);
+	checkExpansions(m,  9,  8, "c", [ "c", "capacity", "clear" ]);
 
-		source =
+	source =
+	q{                                   // Line 1
+		inout(void)* f10063(inout void* p) pure
+		{
+			return p;
+		}                                // Line 5
+		immutable(void)* g10063(inout int* p) pure
+		{
+			return f10063(p);
+		}
+	};
+	m = checkErrors(source, "8,16,8,17:Error: cannot implicitly convert expression `f10063(cast(inout(void*))p)` of type `inout(void)*` to `immutable(void)*`\n");
+	checkExpansions(m,  8,  11, "f1", [ "f10063" ]);
+
+	source =
+	q{                                   // Line 1
+		int foo()
+		{
+			for
+			return 1;                    // Line 5
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  4,  4, "fo", [ "foo" ]);
+
+	source =
+	q{                                   // Line 1
+		enum Compiler
+		{
+			DMD,
+			GDC,                         // Line 5
+			LDC
+		}
+		C
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  8,  3, "C", [ "Compiler", "ClassInfo" ]);
+
+	source =
+	q{                                   // Line 1
+		enum Compiler
+		{
+			DMD,
+			GDC,                         // Line 5
+			LDC
+		}
+		auto cc = Comp
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  8,  13, "Comp", [ "Compiler" ]);
+
+	source =
+	q{                                   // Line 1
+		enum Compiler
+		{
+			DMD,
+			GDC,                         // Line 5
+			LDC
+		}
+		auto cc = Compiler.
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  8,  22, "", [ "DMD", "GDC", "LDC" ]);
+
+	source =
+	q{                                   // Line 1
+		struct Task
+		{
+			enum Compiler { DMD, GDC, LDC }
+			Com                          // Line 5
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  5,  4, "Com", [ "Compiler" ]);
+
+	source =
+	q{                                   // Line 1
+		struct Task
+		{
+			enum Compiler { DMD, GDC, LDC }
+			void foo(int x)              // Line 5
+			{
+				if (x == Compiler.DMD)
+				{}
+			}
+		}                                // Line 10
+	};
+	m = checkErrors(source, "");
+	checkExpansions(m,  7, 23, "", [ "DMD", "GDC", "LDC", "init", "sizeof", "alignof", "mangleof", "stringof", "min", "max" ]);
+	checkExpansions(m, 10, 1, "C", [ "Compiler", "ClassInfo" ]);
+	checkExpansions(m, 10, 1, "Ob", [ "Object" ]);
+
+	source =
+	q{                                   // Line 1
+		void checkOverlappedFields()
+		{
+			foreach (loop; 0 .. 10)
+			{                            // Line 5
+				const vd1 = true;
+			}
+			for (int loop2; loop2 < 10; loop2++)
+			{
+				const vd2 = true;        // Line 10
+			}
+			static foreach (loop3; 0 .. 10)
+			{
+				mixin("bool m" ~ ('0' + loop3) ~ " = true;");
+			}                            // Line 15
+			if (auto ifvar = null)
+			{
+				const vd3 = true;
+			}
+			else                         // Line 20
+			{
+				const vd4 = true;
+			}
+			while (m1 == m2)
+			{                            // Line 25
+				const vd5 = true;
+			}
+			do {
+				const vd6 = true;
+			}                            // Line 30
+			while (m3 == m4);
+			struct S { int sm1, sm2; } S anS;
+			with(anS)
+			{
+			}                            // Line 35
+			struct T { int sm3; S _s; alias _s this; } T aT;
+			aT.sm1 = 3;
+			with(aT)
+			{
+			}                            // Line 40
+		}
+		bool smglob;
+		bool vdglob;
+	};
+	m = checkErrors(source, "");
+	checkExpansions(m,  7, 1, "vd", [ "vdglob", "vd1" ]);
+	checkExpansions(m,  7, 1, "lo", [ "loop" ]);
+	checkExpansions(m, 11, 1, "vd", [ "vdglob", "vd2" ]);
+	checkExpansions(m, 11, 1, "lo", [ "loop2" ]);
+	checkExpansions(m, 16, 1, "m", [ "m0", "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9" ]);
+	checkExpansions(m, 19, 1, "vd", [ "vdglob", "vd3" ]);
+	checkExpansions(m, 19, 1, "if", [ "ifvar" ]);
+	checkExpansions(m, 23, 1, "vd", [ "vdglob", "vd4" ]);
+	checkExpansions(m, 23, 1, "if", []);
+	checkExpansions(m, 27, 1, "vd", [ "vdglob", "vd5" ]);
+	checkExpansions(m, 30, 1, "vd", [ "vdglob", "vd6" ]);
+	checkExpansions(m, 35, 1, "sm", [ "sm1", "sm2", "smglob" ]);
+	checkExpansions(m, 37, 7, "sm", [ "sm1", "sm2", "sm3" ]);
+	checkExpansions(m, 40, 1, "sm", [ "sm1", "sm2", "sm3", "smglob" ]);
+
+	source =
 	q{                                   // Line 1
 		struct S
 		{
@@ -1536,8 +1679,11 @@ unittest
 			Module m = analyzeModule(parsedModule, opts);
 			auto err = getErrorMessages();
 			auto other = getErrorMessages(true);
-			assert_equal(err, expected_err);
-			assert_equal(other, "");
+			if (expected_err != "<ignore>")
+			{
+				assert_equal(err, expected_err);
+				assert_equal(other, "");
+			}
 			return m;
 		}
 		catch(Throwable t)
@@ -1558,17 +1704,29 @@ unittest
 	bool dump = false;
 	string source;
 	Module m;
-	//foreach(i; 0..40)
+	int i = 0; //foreach(i; 0..40)
 	{
 		filename = __FILE_FULL_PATH__;
 		source = cast(string)std.file.read(filename);
-		m = checkErrors(source, "");
-
-		version(traceGC)
+		if (i & 1)
 		{
-			GC.collect();
+			import std.array;
+			source = replace(source, "std", "stdx");
+			m = checkErrors(source, "<ignore>");
+		}
+		else
+			m = checkErrors(source, "");
+
+		//version(traceGC)
+		{
+			import std.stdio;
+			if ((i % 10) == 0)
+				GC.collect();
 			auto stats = GC.stats;
 			writeln(stats);
+		}
+		version(traceGC)
+		{
 			if (stats.usedSize >= 400_000_000)
 				dumpGC();
 		}

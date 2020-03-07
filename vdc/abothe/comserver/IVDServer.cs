@@ -18,7 +18,7 @@ namespace DParserCOMServer
 	[InterfaceType (ComInterfaceType.InterfaceIsIUnknown)]
 	public interface IVDServer
 	{
-		void ConfigureSemanticProject (string filename, string imp, string stringImp, string versionids, string debugids, uint flags);
+		void ConfigureSemanticProject (string filename, string imp, string stringImp, string versionids, string debugids, string cmdline, uint flags);
 		void ClearSemanticProject ();
 		void UpdateModule (string filename, string srcText, int flags);
 		void GetTip (string filename, int startLine, int startIndex, int endLine, int endIndex, int flags);
