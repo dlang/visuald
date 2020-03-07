@@ -12,6 +12,7 @@ import vdc.ivdserver : TypeReferenceKind;
 
 import dmd.access;
 import dmd.aggregate;
+import dmd.aliasthis;
 import dmd.apply;
 import dmd.arraytypes;
 import dmd.attrib;
@@ -842,6 +843,12 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		checkScope(ss.scopesym);
 	}
 
+	override void visit(ForStatement fs)
+	{
+		visit(cast(Statement)fs);
+		checkScope(fs.scopesym);
+	}
+
 	override void visit(TemplateInstance ti)
 	{
 		// skip members added by semantic
@@ -1218,6 +1225,14 @@ TipData tipDataForObject(RootObject obj)
 	{
 		auto resolvedTo = die.resolvedTo;
 		bool isConstant = resolvedTo.isConstantExpr();
+		bool isEnumValue = false;
+		if (auto ve = resolvedTo.isVarExp())
+			if (auto em = ve.var ? ve.var.isEnumMember() : null)
+			{
+				isConstant = isEnumValue = true;
+				resolvedTo = em.origValue;
+			}
+
 		Expression e1;
 		if (!isConstant && !resolvedTo.isArrayLengthExp() && die.type)
 		{
@@ -1229,8 +1244,8 @@ TipData tipDataForObject(RootObject obj)
 		}
 		if (!e1)
 			e1 = die.e1;
-		string kind = isConstant ? "constant" : "field";
-		string tip = resolvedTo.type.toPrettyChars(true).to!string ~ " ";
+		string kind = isEnumValue ? "enum value" : isConstant ? "constant" : "field";
+		string tip = isEnumValue ? "" : resolvedTo.type.toPrettyChars(true).to!string ~ " ";
 		tip ~= e1.type && !e1.isConstantExpr() ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
 		tip ~= "." ~ die.ident.toString();
 		if (isConstant)
@@ -2019,7 +2034,38 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 				foundNode(expr);
 			}
 		}
+		// skip base class to avoid matching resolved expression
 		visit(cast(Expression)expr);
+	}
+
+	override void visit(SymbolExp expr)
+	{
+		if (!found && expr.var && !expr.original) // do not match lowered VarExp
+			if (matchIdentifier(expr.loc, expr.var.ident))
+				foundNode(expr);
+		// skip base class to avoid matching lowered expression
+		visit(cast(Expression)expr);
+	}
+
+	override void visit(DotVarExp dve)
+	{
+		if (!found && dve.var && dve.var.ident)
+			if (matchIdentifier(dve.varloc.filename ? dve.varloc : dve.loc, dve.var.ident))
+				foundNode(dve);
+	}
+
+	override void visit(DotIdExp de)
+	{
+		if (!found && de.ident)
+		{
+			if (matchIdentifier(de.identloc, de.ident))
+			{
+				if (!de.type && de.resolvedTo && !de.resolvedTo.isErrorExp())
+					foundResolved(de.resolvedTo);
+				else
+					foundNode(de);
+			}
+		}
 	}
 
 	override void checkScope(ScopeDsymbol sc)
@@ -2027,6 +2073,8 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 		if (sc && !foundScope)
 		{
 			if (sc.loc.filename !is filename || sc.loc.linnum > endLine)
+				return;
+			if (sc.loc.linnum == endLine && sc.loc.charnum > endIndex)
 				return;
 			if (sc.endlinnum < startLine)
 				return;
@@ -2044,7 +2092,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 	mod.accept(fdv);
 
 	if (!fdv.found && !fdv.foundScope)
-		return null;
+		fdv.foundScope = mod;
 
 	int flags = 0;
 	Type type = fdv.found ? fdv.found.isType() : null;
@@ -2081,7 +2129,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		if (auto sym = typeSymbol(type))
 			sds = sym;
 	if (!sds)
-		return null;
+		sds = mod;
 
 	string[void*] idmap; // doesn't work with extern(C++) classes
 	DenseSet!ScopeDsymbol searched;
@@ -2095,7 +2143,8 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		static Dsymbol uplevel(Dsymbol s)
 		{
 			if (auto ad = s.isAggregateDeclaration())
-				return ad.enclosing;
+				if (ad.enclosing)
+					return ad.enclosing;
 			return s.toParent;
 		}
 		// TODO: properties
@@ -2121,20 +2170,58 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 				}
 			}
 
+			void searchScopeSymbol(ScopeDsymbol sym)
+			{
+				if (!sym)
+					return;
+				int sflags = SearchLocalsOnly;
+				if (sym.getModule() == mod)
+					sflags |= IgnoreSymbolVisibility;
+				searchScope(sym, sflags);
+			}
 			// base classes
 			if (auto cd = ds.isClassDeclaration())
 			{
 				if (auto bcs = cd.baseclasses)
 					foreach (bc; *bcs)
-					{
-						int sflags = 0;
-						if (bc.sym.getModule() == mod)
-							sflags |= IgnoreSymbolVisibility;
-						searchScope(bc.sym, sflags);
-					}
+						searchScopeSymbol(bc.sym);
 			}
+			// with statement
+			if (auto ws = ds.isWithScopeSymbol())
+			{
+				Expression eold = null;
+				for (Expression e = ws.withstate.exp; e != eold; e = resolveAliasThis(ws._scope, e))
+				{
+					if (auto se = e.isScopeExp())
+						searchScopeSymbol(se.sds);
+					else if (auto te = e.isTypeExp())
+						searchScopeSymbol(te.type.toDsymbol(null).isScopeDsymbol());
+					else
+						searchScopeSymbol(e.type.toBasetype().toDsymbol(null).isScopeDsymbol());
+					eold = e;
+				}
+			}
+			// alias this
+			if (auto ad = ds.isAggregateDeclaration())
+			{
+				Declaration decl = ad.aliasthis && ad.aliasthis.sym ? ad.aliasthis.sym.isDeclaration() : null;
+				if (decl)
+				{
+					Type t = decl.type;
+					if (auto ts = t.isTypeStruct())
+						searchScopeSymbol(ts.sym);
+					else if (auto tc = t.isTypeClass())
+						searchScopeSymbol(tc.sym);
+					else if (auto ti = t.isTypeInstance())
+						searchScopeSymbol(ti.tempinst);
+					else if (auto te = t.isTypeEnum())
+						searchScopeSymbol(te.sym);
+				}
+			}
+			// TODO: builtin properties
 
-			// TODO: alias this
+			if (flags & SearchLocalsOnly)
+				break;
 
 			// imported modules
 			size_t cnt = sd.importedScopes ? sd.importedScopes.dim : 0;

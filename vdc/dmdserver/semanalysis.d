@@ -755,6 +755,134 @@ void do_unittests()
 
 	source =
 	q{                                   // Line 1
+		enum Compiler
+		{
+			DMD,
+			GDC,                         // Line 5
+			LDC
+		}
+		C
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  8,  3, "C", [ "Compiler", "ClassInfo" ]);
+
+	source =
+	q{                                   // Line 1
+		enum Compiler
+		{
+			DMD,
+			GDC,                         // Line 5
+			LDC
+		}
+		auto cc = Comp
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  8,  13, "Comp", [ "Compiler" ]);
+
+	source =
+	q{                                   // Line 1
+		enum Compiler
+		{
+			DMD,
+			GDC,                         // Line 5
+			LDC
+		}
+		auto cc = Compiler.
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  8,  22, "", [ "DMD", "GDC", "LDC" ]);
+
+	source =
+	q{                                   // Line 1
+		struct Task
+		{
+			enum Compiler { DMD, GDC, LDC }
+			Com                          // Line 5
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkExpansions(m,  5,  4, "Com", [ "Compiler" ]);
+
+	source =
+	q{                                   // Line 1
+		struct Task
+		{
+			enum Compiler { DMD, GDC, LDC }
+			void foo(int x)              // Line 5
+			{
+				if (x == Compiler.DMD)
+				{}
+			}
+		}                                // Line 10
+	};
+	m = checkErrors(source, "");
+	checkExpansions(m,  7, 23, "", [ "DMD", "GDC", "LDC" ]);
+	checkExpansions(m, 10, 1, "C", [ "Compiler", "ClassInfo" ]);
+	checkExpansions(m, 10, 1, "Ob", [ "Object" ]);
+
+	source =
+	q{                                   // Line 1
+		void checkOverlappedFields()
+		{
+			foreach (loop; 0 .. 10)
+			{                            // Line 5
+				const vd1 = true;
+			}
+			for (int loop2; loop2 < 10; loop2++)
+			{
+				const vd2 = true;        // Line 10
+			}
+			static foreach (loop3; 0 .. 10)
+			{
+				mixin("bool m" ~ ('0' + loop3) ~ " = true;");
+			}                            // Line 15
+			if (auto ifvar = null)
+			{
+				const vd3 = true;
+			}
+			else                         // Line 20
+			{
+				const vd4 = true;
+			}
+			while (m1 == m2)
+			{                            // Line 25
+				const vd5 = true;
+			}
+			do {
+				const vd6 = true;
+			}                            // Line 30
+			while (m3 == m4);
+			struct S { int sm1, sm2; } S anS;
+			with(anS)
+			{
+			}                            // Line 35
+			struct T { int sm3; S _s; alias _s this; } T aT;
+			aT.sm1 = 3;
+			with(aT)
+			{
+			}                            // Line 40
+		}
+		bool smglob;
+		bool vdglob;
+	};
+	m = checkErrors(source, "");
+	checkExpansions(m,  7, 1, "vd", [ "vdglob", "vd1" ]);
+	checkExpansions(m,  7, 1, "lo", [ "loop" ]);
+	checkExpansions(m, 11, 1, "vd", [ "vdglob", "vd2" ]);
+	checkExpansions(m, 11, 1, "lo", [ "loop2" ]);
+	checkExpansions(m, 16, 1, "m", [ "m0", "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9" ]);
+	checkExpansions(m, 19, 1, "vd", [ "vdglob", "vd3" ]);
+	checkExpansions(m, 19, 1, "if", [ "ifvar" ]);
+	checkExpansions(m, 23, 1, "vd", [ "vdglob", "vd4" ]);
+	checkExpansions(m, 23, 1, "if", []);
+	checkExpansions(m, 27, 1, "vd", [ "vdglob", "vd5" ]);
+	checkExpansions(m, 30, 1, "vd", [ "vdglob", "vd6" ]);
+	checkExpansions(m, 35, 1, "sm", [ "sm1", "sm2", "smglob" ]);
+	checkExpansions(m, 37, 7, "sm", [ "sm1", "sm2", "sm3" ]);
+	checkExpansions(m, 40, 1, "sm", [ "sm1", "sm2", "sm3", "smglob" ]);
+
+	source =
+	q{                                   // Line 1
 		struct S
 		{
 			int fun(int par) { return par; }
