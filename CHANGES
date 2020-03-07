@@ -1206,7 +1206,7 @@ Version history
     - improve AA version detection, adapt to modified hash function
     - VS2019 16.4: fix "Error" shown in tooltip for array elements beyond the actual size
 
-unreleased Version 0.51.1
+unreleased Version 0.52.0
   * editor:
     - restart semantic analysis if project settings change
     - while showing completions typing more characters no longer restarts analysis, but
@@ -1218,14 +1218,17 @@ unreleased Version 0.51.1
     - lookup symbols as the remainder of globals and present them expandable if ambiguous
     - add option to show length of dynamic array in type column
     - add support for Tuples: recombine fields __<var>_field_%d to an expandable structure
+    - fixed displaying dynamic type of C++ classes for x86
   - dmdserver:
     - rebased to dmd 2.091.0-beta1
     - all language options are now passed to the engine
     - fixed a couple of crashes (often result in eternally reporting "Anaylzing...")
-    - terminate on fatal assertions and let Visual D restart it
+    - terminate on fatal assertions and let Visual D restart the server
+    - improvements for code-completions
   - projects:
     - added support for -preview=dip1021 (though compiler crashes)
     - added support for -preview=rvaluerefparam
     - added support for -preview=nosharedaccess
     - added support for -HCf (C++ header generation, only vcxproj)
     - LDC with vcxproj: some language options were inaccessible
+    - removed legacy support for -property
