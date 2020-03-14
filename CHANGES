@@ -1212,20 +1212,25 @@ unreleased Version 0.52.0
     - while showing completions typing more characters no longer restarts analysis, but
       just filters existing results
   * VS 2019 16.1+: the new project dialog now allows filtering by language tag "D"
-  - avoid crash due to unhandled exception if checking for updates fails
-  - refresh Update page after upgrading
-  - mago debugger:
+  * avoid crash due to unhandled exception if checking for updates fails
+  * refresh Update page after upgrading
+  * mago debugger:
     - lookup symbols as the remainder of globals and present them expandable if ambiguous
     - add option to show length of dynamic array in type column
     - add support for Tuples: recombine fields __<var>_field_%d to an expandable structure
     - fixed displaying dynamic type of C++ classes for x86
-  - dmdserver:
+  * cv2pdb:
+    - fixed debug info conversion error when dchar is used with dmd 2.089+
+  * dmdserver:
     - rebased to dmd 2.091.0-beta1
     - all language options are now passed to the engine
     - fixed a couple of crashes (often result in eternally reporting "Anaylzing...")
     - terminate on fatal assertions and let Visual D restart the server
     - improvements for code-completions
-  - projects:
+    - bugzilla 20660: goto definition on import module doesn't work
+  * dparser:
+    - added parser support for is(symbol == module/package)
+  * projects:
     - added support for -preview=dip1021 (though compiler crashes)
     - added support for -preview=rvaluerefparam
     - added support for -preview=nosharedaccess
