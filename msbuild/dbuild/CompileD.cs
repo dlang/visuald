@@ -5,6 +5,7 @@ using System.Collections;
 using System.Resources;
 using System.Reflection;
 using System.Text;
+using System.IO;
 
 namespace dbuild
 {
@@ -250,7 +251,7 @@ namespace dbuild
 
             string src = "";
             foreach (var item in Sources)
-                src += " " + item.ToString();
+                src += " " + Path.GetFileName(item.ToString());
             if (opts.ShowCommandLine)
                 Log.LogMessage(MessageImportance.High, pathToTool + " " + commandLineCommands + " " + responseFileCommands);
             else

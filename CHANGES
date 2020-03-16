@@ -1237,3 +1237,6 @@ unreleased Version 0.52.0
     - added support for -HCf (C++ header generation, only vcxproj)
     - LDC with vcxproj: some language options were inaccessible
     - removed legacy support for -property
+    - vcxproj: add dbuild.props showing how to setup a project that builds D files without Visual D installed
+    - vcxproj: do not check referenced projects if the project itself already needs phobos to be linked
+    - vcxproj: only print the filename in the "Compiling" message, not the path

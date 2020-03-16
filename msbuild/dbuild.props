@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <!-- This file can be added to the "ExtensionSettings" ImportGroup of a vcxproj file
+         to support compilation of D files without installation of Visual D.
+         - the path to used D compilers have to be specified below
+         - the msbuild folder from the Visual D installation should be specified below
+         - the following import should be added to the "ExtensionTargets" ImportGroup of the vcxproj file
+           <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile.targets') and '$(DbuildCompileDDLLPath)' == ''" Project="$(VisualDMSBuildDir)\dcompile.targets" />
+     -->
+    <!-- remove condition and update installation paths to map to local copies -->
+    <PropertyGroup Condition="false">
+        <DMDInstallDir Condition="'$(DMDInstallDir)' == ''">$(MSBuildThisFileDirectory)dmd2\</DMDInstallDir>
+        <LDCInstallDir Condition="'$(LDCInstallDir)' == ''">$(MSBuildThisFileDirectory)ldc2\</LDCInstallDir>
+        <VisualDMSBuildDir Condition="'$(VisualDMSBuildDir)' == ''">$(MSBuildThisFileDirectory)msbuild\</VisualDMSBuildDir>
+    </PropertyGroup>
+  
+    <!-- import now if not already done by Platforms/*/ImportBefore -->
+    <ImportGroup Condition="'$(DCompileBeforeTargets)' == ''">
+        <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile_defaults.props')" Project="$(VisualDMSBuildDir)\dcompile_defaults.props" />
+        <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile.props')" Project="$(VisualDMSBuildDir)\dcompile.props" />
+    </ImportGroup>
+</Project>
