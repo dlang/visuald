@@ -2207,6 +2207,8 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 				return;
 			if (sc.endlinnum < startLine)
 				return;
+			if (sc.endlinnum == startLine && sc.endcharnum < startIndex)
+				return;
 
 			foundScope = sc;
 			stop = true;
@@ -2240,7 +2242,13 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 				case TOK.dotVariable:
 				case TOK.dotIdentifier:
 					flags |= SearchLocalsOnly;
-					return getType((cast(UnaExp)e).e1, true);
+					if (recursed)
+						if (auto dve = e.isDotVarExp())
+							if (dve.varloc.filename)  // skip compiler generated idents (alias this)
+								return dve.var.type;
+
+					auto e1 = (cast(UnaExp)e).e1;
+					return getType(e1, true);
 
 				case TOK.dot:
 					flags |= SearchLocalsOnly;
@@ -2384,8 +2392,8 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		if (!id.startsWith("__"))
 			idlist ~= id ~ ":" ~ symbol2ExpansionLine(cast(Dsymbol)sym);
 
-	if (fdv.found)
-		addSymbolProperties(idlist, fdv.found, tok);
+	if (type)
+		addSymbolProperties(idlist, type, tok);
 
 	return idlist;
 }

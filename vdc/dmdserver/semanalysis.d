@@ -674,8 +674,9 @@ void do_unittests()
 		"14,2,14,3:Error: semicolon expected, not `}`\n" ~
 		"12,15,12,16:Error: no property `f` for type `source.S`\n");
 	//dumpAST(m);
+	string[] structProperties = [ "init", "sizeof", "alignof", "mangleof", "stringof", "tupleof" ];
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
-	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more", "init", "sizeof", "alignof", "mangleof", "stringof" ]);
+	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ] ~ structProperties);
 	checkExpansions(m, 13, 13, "an", [ "anS" ]);
 
 	source =
@@ -798,7 +799,8 @@ void do_unittests()
 		auto cc = Compiler.
 	};
 	m = checkErrors(source, "<ignore>");
-	checkExpansions(m,  8,  22, "", [ "DMD", "GDC", "LDC" ]);
+	string[] enumProperties = [ "init", "sizeof", "alignof", "mangleof", "stringof", "min", "max" ];
+	checkExpansions(m,  8,  22, "", [ "DMD", "GDC", "LDC" ] ~ enumProperties);
 
 	source =
 	q{                                   // Line 1
@@ -821,12 +823,30 @@ void do_unittests()
 				if (x == Compiler.DMD)
 				{}
 			}
-		}                                // Line 10
+			int member;                  // Line 10
+		}
+		const eComp = Task.Compiler.DMD;
+		const Task aTask;
+		const aComp = aTask.Compiler.DMD;
+		struct Proc                      // Line 15
+		{
+			Task task;
+		}
+		void run()
+		{                                // Line 20
+			Proc proc;
+			proc.task.member = 3;
+		}
 	};
 	m = checkErrors(source, "");
-	checkExpansions(m,  7, 23, "", [ "DMD", "GDC", "LDC", "init", "sizeof", "alignof", "mangleof", "stringof", "min", "max" ]);
-	checkExpansions(m, 10, 1, "C", [ "Compiler", "ClassInfo" ]);
-	checkExpansions(m, 10, 1, "Ob", [ "Object" ]);
+	checkExpansions(m,  7, 23, "", [ "DMD", "GDC", "LDC" ] ~ enumProperties);
+	checkExpansions(m, 10,  1, "C", [ "Compiler", "ClassInfo" ]);
+	checkExpansions(m, 10,  1, "Ob", [ "Object" ]);
+	checkExpansions(m, 12, 22, "C", [ "Compiler" ]);
+	checkExpansions(m, 12, 31, "D", [ "DMD" ]);
+	checkExpansions(m, 14, 23, "C", [ "Compiler" ]);
+	checkExpansions(m, 14, 32, "D", [ "DMD" ]);
+	checkExpansions(m, 22, 14, "m", [ "member", "mangleof" ]);
 
 	source =
 	q{                                   // Line 1
