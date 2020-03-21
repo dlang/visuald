@@ -975,6 +975,18 @@ void do_unittests()
 	checkTip(m, 7, 5, "(local variable) `int sum`");
 	checkTip(m, 7, 12, "(local variable) `int i`");
 
+	source = q{
+		import std.array;
+		void main()
+		{
+			auto s = split("abc", "b");                // Line 5
+			auto t = split(
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkTip(m, 5, 13, "`string[] std.array.split!(string, string)(string range, string sep) pure nothrow @safe`");
+	checkTip(m, 6, 13, "(template function) `std.array.split(S)(S s) if (isSomeString!S)`");
+
 	source = q{                          // Line 1
 		enum TOK : ubyte
 		{

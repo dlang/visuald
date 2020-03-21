@@ -107,6 +107,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{36148913-8F4
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "msbuild", "msbuild", "{38FEE953-9826-4DDB-8BE3-6DAB8E71AC66}"
 	ProjectSection(SolutionItems) = preProject
+		msbuild\dbuild.props = msbuild\dbuild.props
 		msbuild\dcompile.props = msbuild\dcompile.props
 		msbuild\dcompile.targets = msbuild\dcompile.targets
 		msbuild\dcompile_defaults.props = msbuild\dcompile_defaults.props

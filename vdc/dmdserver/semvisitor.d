@@ -1253,6 +1253,16 @@ TipData tipDataForObject(RootObject obj)
 		return TipData(kind, tip);
 	}
 
+	TipData tipForTemplate(TemplateExp te)
+	{
+		Dsymbol ds = te.fd;
+		if (!ds)
+			ds = te.td.onemember ? te.td.onemember : te.td;
+		string kind = ds.isFuncDeclaration() ? "template function" : "template";
+		string tip = ds.toPrettyChars(true).to!string;
+		return TipData(kind, tip);
+	}
+
 	TipData tip;
 	const(char)* doc;
 
@@ -1281,6 +1291,9 @@ TipData tipDataForObject(RootObject obj)
 					break;
 				}
 				goto default;
+			case TOK.template_:
+				tip = tipForTemplate((cast(TemplateExp)e));
+				break;
 			default:
 				if (e.type)
 					tip = tipForType(e.type);

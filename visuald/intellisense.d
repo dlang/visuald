@@ -552,6 +552,7 @@ struct ParameterInfo
 {
 	string rettype;
 	string constraint;
+	string funcAttr;
 	string[] name;
 	string[] display;
 	string[] desc;
@@ -579,9 +580,17 @@ struct ParameterInfo
 		name = null;
 		display = null;
 		desc = null;
-		skipWhiteSpace();
-		if(text[lineInfo[pos].StartIndex .. lineInfo[pos].EndIndex] != ")")
-			return false; // not a function
+		for (; pos > 0; pos--)
+		{
+			skipWhiteSpace();
+			auto tok = text[lineInfo[pos].StartIndex .. lineInfo[pos].EndIndex];
+			if (tok == ")")
+				break;
+			// skip attributes scope, const, return, uda, etc
+			if (lineInfo[pos].type != TokenCat.Keyword && !tok.startsWith("@"))
+				return false; // not a function
+			funcAttr = tok.to!string ~ " " ~ funcAttr;
+		}
 
 		int braceLevel = 1;
 		pos--;
@@ -680,6 +689,11 @@ struct Definition
 	string GetConstraint() 
 	{
 		return GetParamInfo().constraint;
+	}
+
+	string GetFuncAttributes() 
+	{
+		return GetParamInfo().funcAttr;
 	}
 
 	int GetParameterCount() 
