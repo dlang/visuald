@@ -1729,6 +1729,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 	bool mOutlining;
 	bool mStopOutlining;
 	bool mVerifiedEncoding;
+	bool mHasPendingUpdateModule;
 	IVsHiddenTextSession mHiddenTextSession;
 
 	static struct LineChange { int oldLine, newLine; }
@@ -4406,6 +4407,7 @@ else
 		{
 			bool verbose = (mModificationCountSemantic == -1);
 			mModificationCountSemantic = mModificationCount;
+			mHasPendingUpdateModule = true;
 			auto langsvc = Package.GetLanguageService();
 			langsvc.UpdateSemanticModule(this, srctext, verbose, &OnUpdateModule);
 		}
@@ -4426,6 +4428,7 @@ else
 
 	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn, string tasks)
 	{
+		mHasPendingUpdateModule = false;
 		if (!Package.GetGlobalOptions().showParseErrors)
 			parseErrors = null;
 		updateParseErrors(parseErrors);

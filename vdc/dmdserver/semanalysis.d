@@ -32,13 +32,18 @@ struct ModuleInfo
 	Module parsedModule;
 	Module semanticModule;
 
-	Module createSemanticModule()
+	Module createSemanticModule(bool resolve)
 	{
+		if (semanticModule)
+			return semanticModule;
 		Module m = cloneModule(parsedModule);
 		m.importedFrom = m;
-		m.resolvePackage(); // adds module to Module.amodules (ignore return which could be module with same name)
 		semanticModule = m;
-		Module.modules.insert(m);
+		if (resolve)
+		{
+			m.resolvePackage(); // adds module to Module.amodules (ignore return which could be module with same name)
+			Module.modules.insert(m);
+		}
 		return m;
 	}
 }
@@ -64,6 +69,32 @@ class AnalysisContext
 				return cast(int)i;
 		return -1;
 	}
+
+	Module loadModuleHandler(const ref Loc location, IdentifiersAtLoc* packages, Identifier ident)
+	{
+		// only called if module not found in Module.amodules
+	L_nextMod:
+		foreach (mi; modules)
+		{
+			if (mi.parsedModule.ident != ident)
+				continue L_nextMod;
+			if (auto md = mi.parsedModule.md)
+			{
+				if (!md.packages || !packages)
+					if (!md.packages && !packages)
+						return mi.createSemanticModule(false);
+
+				if (md.packages.length != packages.length)
+					continue L_nextMod;
+				for (size_t p = 0; p < packages.length; p++)
+					if (cast(Identifier)md.packages.opIndex(p) != md.packages.opIndex(p))
+						continue L_nextMod;
+			}
+			return mi.createSemanticModule(false);
+		}
+
+		return Module.loadFromFile(location, packages, ident);
+	};
 }
 
 // is the module already added implicitly during semantic analysis?
@@ -104,8 +135,7 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 			{
 				if (!ctxt.modules[idx].semanticModule)
 				{
-					auto m = ctxt.modules[rootModuleIndex].createSemanticModule();
-					m.importAll(null);
+					auto m = ctxt.modules[rootModuleIndex].createSemanticModule(true);
 				}
 				needsReinit = false;
 			}
@@ -121,15 +151,14 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 			if (ma is null)
 			{
 				// if not, no other module depends on it, so just append
-				auto m = ctxt.modules[rootModuleIndex].createSemanticModule();
-				m.importAll(null);
+				auto m = ctxt.modules[rootModuleIndex].createSemanticModule(true);
 				needsReinit = false;
 			}
 			else
 			{
 				// TODO: check if the same as m
-				auto m = ctxt.modules[rootModuleIndex].createSemanticModule();
-				m.importAll(null);
+				// auto m = ctxt.modules[rootModuleIndex].createSemanticModule();
+				// m.importAll(null);
 				// TODO: only update dependent modules
 			}
 		}
@@ -151,20 +180,18 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 		}
 	}
 
-	Module.loadModuleHandler = (const ref Loc location, IdentifiersAtLoc* packages, Identifier ident)
-	{
-		// only called if module not found in Module.amodules
-		return Module.loadFromFile(location, packages, ident);
-	};
+	Module.loadModuleHandler = &ctxt.loadModuleHandler;
 
 	if (needsReinit)
 	{
 		dmdReinit();
 
+		// clear existing semantically analyzed modules
 		foreach(ref mi; ctxt.modules)
-		{
-			mi.createSemanticModule();
-		}
+			mi.semanticModule = null;
+
+		// analyze other modules lazily
+		ctxt.modules[rootModuleIndex].createSemanticModule(true);
 
 		version(none) // do this lazily
 		foreach(ref mi; ctxt.modules)
@@ -387,7 +414,7 @@ void do_unittests()
 		import std.stdio;
 		int main(string[] args)
 		{
-			int xyz = 7;
+			int xyz = 7;                // Line 5
 			writeln(1, 2, 3);
 			return xyz;
 		}
@@ -402,6 +429,7 @@ void do_unittests()
 	checkTip(m, 7, 11, "(local variable) `int xyz`");
 
 	checkDefinition(m, 7, 11, "source.d", 5, 8); // xyz
+	checkDefinition(m, 2, 14, opts.importDirs[1] ~ r"\std\stdio.d", 0, 0); // std.stdio
 
 	//checkTypeIdentifiers(source);
 
@@ -646,8 +674,9 @@ void do_unittests()
 		"14,2,14,3:Error: semicolon expected, not `}`\n" ~
 		"12,15,12,16:Error: no property `f` for type `source.S`\n");
 	//dumpAST(m);
+	string[] structProperties = [ "init", "sizeof", "alignof", "mangleof", "stringof", "tupleof" ];
 	checkExpansions(m, 12, 16, "f", [ "field1", "field2", "fun" ]);
-	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more", "init", "sizeof", "alignof", "mangleof", "stringof" ]);
+	checkExpansions(m, 13, 16, "", [ "field1", "field2", "fun", "more" ] ~ structProperties);
 	checkExpansions(m, 13, 13, "an", [ "anS" ]);
 
 	source =
@@ -770,7 +799,8 @@ void do_unittests()
 		auto cc = Compiler.
 	};
 	m = checkErrors(source, "<ignore>");
-	checkExpansions(m,  8,  22, "", [ "DMD", "GDC", "LDC" ]);
+	string[] enumProperties = [ "init", "sizeof", "alignof", "mangleof", "stringof", "min", "max" ];
+	checkExpansions(m,  8,  22, "", [ "DMD", "GDC", "LDC" ] ~ enumProperties);
 
 	source =
 	q{                                   // Line 1
@@ -793,12 +823,30 @@ void do_unittests()
 				if (x == Compiler.DMD)
 				{}
 			}
-		}                                // Line 10
+			int member;                  // Line 10
+		}
+		const eComp = Task.Compiler.DMD;
+		const Task aTask;
+		const aComp = aTask.Compiler.DMD;
+		struct Proc                      // Line 15
+		{
+			Task task;
+		}
+		void run()
+		{                                // Line 20
+			Proc proc;
+			proc.task.member = 3;
+		}
 	};
 	m = checkErrors(source, "");
-	checkExpansions(m,  7, 23, "", [ "DMD", "GDC", "LDC", "init", "sizeof", "alignof", "mangleof", "stringof", "min", "max" ]);
-	checkExpansions(m, 10, 1, "C", [ "Compiler", "ClassInfo" ]);
-	checkExpansions(m, 10, 1, "Ob", [ "Object" ]);
+	checkExpansions(m,  7, 23, "", [ "DMD", "GDC", "LDC" ] ~ enumProperties);
+	checkExpansions(m, 10,  1, "C", [ "Compiler", "ClassInfo" ]);
+	checkExpansions(m, 10,  1, "Ob", [ "Object" ]);
+	checkExpansions(m, 12, 22, "C", [ "Compiler" ]);
+	checkExpansions(m, 12, 31, "D", [ "DMD" ]);
+	checkExpansions(m, 14, 23, "C", [ "Compiler" ]);
+	checkExpansions(m, 14, 32, "D", [ "DMD" ]);
+	checkExpansions(m, 22, 14, "m", [ "member", "mangleof" ]);
 
 	source =
 	q{                                   // Line 1
@@ -926,6 +974,18 @@ void do_unittests()
 	checkTip(m, 6, 12, "(local variable) `int i`");
 	checkTip(m, 7, 5, "(local variable) `int sum`");
 	checkTip(m, 7, 12, "(local variable) `int i`");
+
+	source = q{
+		import std.array;
+		void main()
+		{
+			auto s = split("abc", "b");                // Line 5
+			auto t = split(
+		}
+	};
+	m = checkErrors(source, "<ignore>");
+	checkTip(m, 5, 13, "`string[] std.array.split!(string, string)(string range, string sep) pure nothrow @safe`");
+	checkTip(m, 6, 13, "(template function) `std.array.split(S)(S s) if (isSomeString!S)`");
 
 	source = q{                          // Line 1
 		enum TOK : ubyte

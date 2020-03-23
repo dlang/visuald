@@ -28,6 +28,18 @@
     </StringProperty>
 
     <!-- =============== General =============== -->
+    <EnumProperty Name="DCompiler"
+                  Category="General"
+                  DisplayName="D Compiler"
+                  Description="select the compiler. Disable to avoid some changed linker defaults. Apply to switch to the property pages of the selected compiler.">
+      <EnumValue Name="DMD" DisplayName="DMD - Reference compiler" />
+      <EnumValue Name="LDC" DisplayName="LDC - LLVM based compiler" />
+      <EnumValue Name="None" DisplayName="disable" />
+      <!--<EnumValue Name="GDC" DisplayName="GDC - gcc based compiler" />-->
+      <EnumProperty.DataSource>
+        <DataSource Persistence="ProjectFile" Label="Configuration" />
+      </EnumProperty.DataSource>
+    </EnumProperty>
     <StringListProperty Name="ImportPaths" Category="General" DisplayName="Import Paths" Description="where to look for imports."
                         Subtype="folder" Switch="-I" />
     <StringListProperty Name="StringImportPaths" Category="General" DisplayName="String Import Paths"

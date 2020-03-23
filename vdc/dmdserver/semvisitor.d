@@ -1253,6 +1253,16 @@ TipData tipDataForObject(RootObject obj)
 		return TipData(kind, tip);
 	}
 
+	TipData tipForTemplate(TemplateExp te)
+	{
+		Dsymbol ds = te.fd;
+		if (!ds)
+			ds = te.td.onemember ? te.td.onemember : te.td;
+		string kind = ds.isFuncDeclaration() ? "template function" : "template";
+		string tip = ds.toPrettyChars(true).to!string;
+		return TipData(kind, tip);
+	}
+
 	TipData tip;
 	const(char)* doc;
 
@@ -1281,6 +1291,9 @@ TipData tipDataForObject(RootObject obj)
 					break;
 				}
 				goto default;
+			case TOK.template_:
+				tip = tipForTemplate((cast(TemplateExp)e));
+				break;
 			default:
 				if (e.type)
 					tip = tipForType(e.type);
@@ -2207,6 +2220,8 @@ extern(C++) class FindExpansionsVisitor : FindASTVisitor
 				return;
 			if (sc.endlinnum < startLine)
 				return;
+			if (sc.endlinnum == startLine && sc.endcharnum < startIndex)
+				return;
 
 			foundScope = sc;
 			stop = true;
@@ -2240,7 +2255,13 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 				case TOK.dotVariable:
 				case TOK.dotIdentifier:
 					flags |= SearchLocalsOnly;
-					return getType((cast(UnaExp)e).e1, true);
+					if (recursed)
+						if (auto dve = e.isDotVarExp())
+							if (dve.varloc.filename)  // skip compiler generated idents (alias this)
+								return dve.var.type;
+
+					auto e1 = (cast(UnaExp)e).e1;
+					return getType(e1, true);
 
 				case TOK.dot:
 					flags |= SearchLocalsOnly;
@@ -2384,8 +2405,8 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		if (!id.startsWith("__"))
 			idlist ~= id ~ ":" ~ symbol2ExpansionLine(cast(Dsymbol)sym);
 
-	if (fdv.found)
-		addSymbolProperties(idlist, fdv.found, tok);
+	if (type)
+		addSymbolProperties(idlist, type, tok);
 
 	return idlist;
 }

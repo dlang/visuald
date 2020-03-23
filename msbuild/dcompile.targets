@@ -292,20 +292,23 @@
 
   <Target Name="NeedsDLibraries" DependsOnTargets="_collectDFiles" Condition="'$(ConfigurationType)' != 'StaticLibrary'">
 
+    <PropertyGroup Condition="'@(DCompile)' != ''">
+      <IsBetterC>@(DCompile->Metadata('BetterC')->Distinct()->ClearMetadata())</IsBetterC>
+      <_NeedsDLibraries Condition="'$(IsBetterC)' != 'true'">true</_NeedsDLibraries>
+    </PropertyGroup>
+    
     <MSBuild
         Projects="@(_MSBuildProjectReferenceExistent)"
         Targets="LibNeedsDLibraries"
         BuildInParallel="$(BuildInParallel)"
         Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
-        Condition="'%(_MSBuildProjectReferenceExistent.Extension)' == '.vcxproj' and '@(ProjectReferenceWithConfiguration)' != '' and '@(_MSBuildProjectReferenceExistent)' != ''"
+        Condition="'$(_NeedsDLibraries)' != 'true' and '%(_MSBuildProjectReferenceExistent.Extension)' == '.vcxproj' and '@(ProjectReferenceWithConfiguration)' != '' and '@(_MSBuildProjectReferenceExistent)' != ''"
         ContinueOnError="!$(BuildingProject)"
         RemoveProperties="%(_MSBuildProjectReferenceExistent.GlobalPropertiesToRemove)">
         <Output TaskParameter="TargetOutputs" ItemName="LibsNeedDLibraries"/>
     </MSBuild>
 
-    <PropertyGroup Condition="'@(DCompile)' != ''">
-      <IsBetterC>@(DCompile->Metadata('BetterC')->Distinct()->ClearMetadata())</IsBetterC>
-      <_NeedsDLibraries Condition="'$(IsBetterC)' != 'true'">true</_NeedsDLibraries>
+    <PropertyGroup Condition="'@(DCompile)' != '' and '$(_NeedsDLibraries)' != 'true'">
       <_NeedsDLibraries Condition="'%(LibsNeedDLibraries.Identity)' == 'true'">true</_NeedsDLibraries>
     </PropertyGroup>
 

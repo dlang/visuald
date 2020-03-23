@@ -1677,6 +1677,7 @@ else
 		span.iEndIndex = span.iStartIndex + 1;
 		span.iEndLine = span.iStartLine;
 
+		mPendingMethodTipSpan = span;
 		mPendingMethodTipWord = word;
 		mPendingMethodTipComma = cntComma;
 		mPendingRequest = Package.GetLanguageService().GetTip(mCodeWinMgr.mSource, &span, true, &OnGetMethodTipText);
@@ -1685,6 +1686,16 @@ else
 
 	extern(D) void OnGetMethodTipText(uint request, string filename, string text, TextSpan span)
 	{
+		if (text == "analyzing...")
+		{
+			// the server is still ananlyzing the module, try again
+			auto src = mCodeWinMgr.mSource;
+			if (src.mHasPendingUpdateModule)
+			{
+				mPendingRequest = Package.GetLanguageService().GetTip(src, &mPendingMethodTipSpan, true, &OnGetMethodTipText);
+				return;
+			}
+		}
 		Definition[] defs;
 		string[] funcs = split(text, "\a");
 		if(funcs.empty)
@@ -1908,8 +1919,11 @@ version(none) // quick info tooltips not good enough yet
 	//////////////////////////////
 	TextSpan mPendingSpan;
 	uint mPendingRequest;
+
 	int mPendingMethodTipComma;
 	string mPendingMethodTipWord;
+	TextSpan mPendingMethodTipSpan;
+
 	TextSpan mTipSpan;
 	string mTipText;
 	uint mTipRequest;

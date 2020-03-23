@@ -1293,6 +1293,9 @@ class MethodData : DisposingComObject, IVsMethodData
 
 			case MTT_CLOSEBRACKET:
 				result = ")"; // mMethods.CloseBracket;
+				string funcAttr = mMethods[method].GetFuncAttributes();
+				if (funcAttr.length)
+					result ~= " " ~ funcAttr;
 				string constraint = mMethods[method].GetConstraint();
 				if (constraint.length)
 					result ~= " " ~ constraint;
