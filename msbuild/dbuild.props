@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <!-- This file can be added to the "ExtensionSettings" ImportGroup of a vcxproj file
-         to support compilation of D files without installation of Visual D.
+    <!-- This file can be added ta a vcxproj file to support compilation of D files without installation of Visual D:
+         - add an import to this file to the "ExtensionSettings" ImportGroup as in
+             <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+             <ImportGroup Label="ExtensionSettings">
+               <Import Project="dbuild.props" />
+             </ImportGroup>
          - the path to used D compilers have to be specified below
          - the msbuild folder from the Visual D installation should be specified below
          - the following import should be added to the "ExtensionTargets" ImportGroup of the vcxproj file
-           <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile.targets') and '$(DbuildCompileDDLLPath)' == ''" Project="$(VisualDMSBuildDir)\dcompile.targets" />
+             <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile.targets') and '$(DbuildCompileDDLLPath)' == ''" Project="$(VisualDMSBuildDir)\dcompile.targets" />
+
+         Alternatively you can copy the settings and imports into your project file directly.
      -->
-    <!-- remove condition and update installation paths to map to local copies -->
+    <!-- remove condition and update installation paths to map to local copies, do not define a specific value
+         if you want to use standard auto detection -->
     <PropertyGroup Condition="false">
         <DMDInstallDir Condition="'$(DMDInstallDir)' == ''">$(MSBuildThisFileDirectory)dmd2\</DMDInstallDir>
         <LDCInstallDir Condition="'$(LDCInstallDir)' == ''">$(MSBuildThisFileDirectory)ldc2\</LDCInstallDir>
         <VisualDMSBuildDir Condition="'$(VisualDMSBuildDir)' == ''">$(MSBuildThisFileDirectory)msbuild\</VisualDMSBuildDir>
     </PropertyGroup>
-  
+
+    <!-- no changes necessary below -->    
     <!-- import now if not already done by Platforms/*/ImportBefore -->
     <ImportGroup Condition="'$(DCompileBeforeTargets)' == ''">
         <Import Condition="Exists('$(VisualDMSBuildDir)\dcompile_defaults.props')" Project="$(VisualDMSBuildDir)\dcompile_defaults.props" />

@@ -34,6 +34,11 @@
     <DDemangleLink Condition="$(DDemangleLink) == ''">1</DDemangleLink>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(DReplaceGeneralPage)' == ''">
+    <DReplaceGeneralPage>$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Visual D\dbuild\$(VisualStudioVersion)', 'replaceGeneralPage', '', RegistryView.Registry64, RegistryView.Registry32))</DReplaceGeneralPage>
+    <DReplaceGeneralPage Condition="$(DReplaceGeneralPage) == ''">1</DReplaceGeneralPage>
+  </PropertyGroup>
+  
   <PropertyGroup Condition="'$(MSBuildVersion)' != ''">
     <!-- map "Current" to 16.0, VS2019 is the first to behave this way -->
     <MSBuildVersion_Major>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[0])</MSBuildVersion_Major>

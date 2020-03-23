@@ -2,6 +2,56 @@ Ddoc
 
 $(H2 2020-01-18 Version 0.51.0)
  $(UL
+  $(LI editor:
+   $(UL
+    $(LI restart semantic analysis if project settings change)
+    $(LI while showing completions typing more characters no longer restarts analysis, but
+      just filters existing results)
+    $(LI fix parameter info tooltip for functions with function attributes)
+  ))
+  $(LI VS 2019 16.1+: the new project dialog now allows filtering by language tag "D")
+  $(LI avoid crash due to unhandled exception if checking for updates fails)
+  $(LI refresh Update page after upgrading)
+  $(LI mago debugger:
+   $(UL
+    $(LI lookup symbols as the remainder of globals and present them expandable if ambiguous)
+    $(LI add option to show length of dynamic array in type column)
+    $(LI add support for Tuples: recombine fields `__<var>_field_%d` to an expandable structure)
+    $(LI fixed displaying dynamic type of C++ classes for x86)
+  ))
+  $(LI cv2pdb:
+   $(UL
+    $(LI fixed debug info conversion error when dchar is used with dmd 2.089+)
+  ))
+  $(LI dmdserver:
+   $(UL
+    $(LI rebased to dmd 2.091.0-beta1)
+    $(LI all language options are now passed to the engine)
+    $(LI fixed a couple of crashes (often result in eternally reporting "Anaylzing..."))
+    $(LI terminate on fatal assertions and let Visual D restart the server)
+    $(LI improvements for code-completions)
+    $(LI bugzilla 20660: goto definition on import module doesn't work)
+  ))
+  $(LI dparser:
+   $(UL
+    $(LI added parser support for is(symbol == module/package))
+  ))
+  $(LI projects:
+   $(UL
+    $(LI added support for -preview=dip1021)
+    $(LI added support for -preview=rvaluerefparam)
+    $(LI added support for -preview=nosharedaccess)
+    $(LI added support for -HCf (C++ header generation, only vcxproj))
+    $(LI LDC with vcxproj: some language options were inaccessible)
+    $(LI removed legacy support for -property)
+    $(LI vcxproj: add dbuild.props showing how to setup a project that builds D files without Visual D installed)
+    $(LI vcxproj: do not check referenced projects if the project itself already needs phobos to be linked)
+    $(LI vcxproj: only print the filename in the "Compiling" message, not the path)
+  ))
+ )
+
+$(H2 2020-01-18 Version 0.51.0)
+ $(UL
   $(LI installer:
    $(UL
     $(LI add sections for "Build Tools VS2017/2019")

@@ -3,7 +3,7 @@ Ddoc
 $(P Here's a little bit of history required to understand the available options for debugging
 D programs with Visual Studio.)
 
-$(P If you are only interested in the latest state with VS 2015, you can skip all this and go
+$(P If you are only interested in the latest state with VS 2015 or later, you can skip all this and go
 directly to the $(ALOCAL recommendation, recommendation).)
 
 $(H2 VS 2008-2010 cv2pdb)
@@ -92,19 +92,17 @@ files (-m64 or -m32mscoff) with -g, but not with
 LDC does not yet emit this source language information.
 
 <a id="recommendation"></a>
-$(H3 Recommendation for VS 2015)
+$(H3 Recommendation for VS 2015 or later)
 
 $(UL
   $(LI use DMD 2.072 or later)
   $(LI for Visual D projects, compile to COFF even for Win32 by enabling "Use MS-COFF object file format" on the
        project configuration page Compiler->Output)
-  $(LI select symbolic debug information "suitable for Mago" on the
-       project configuration page Compiler->Debug)
   $(LI choose the Visual Studio debugger on the project configuration page Debugging)
 )
 
 $(P If you are using the new $(VDLINK vcxproject, Visual C/C++ project integration), all you have to do is
-select debug information "for D debug engines" on the project configuration page "D Compiler->Code generation".)
+enable debug information on the project configuration page "D Compiler->Code generation".)
 
 $(H2 Exceptions)
 

@@ -1206,7 +1206,7 @@ Version history
     - improve AA version detection, adapt to modified hash function
     - VS2019 16.4: fix "Error" shown in tooltip for array elements beyond the actual size
 
-unreleased Version 0.52.0
+2020-03-23 Version 0.52.0
   * editor:
     - restart semantic analysis if project settings change
     - while showing completions typing more characters no longer restarts analysis, but

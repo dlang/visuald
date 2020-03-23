@@ -84,6 +84,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2020-23-03 Version 0.52.0
+$(UL
+ $(LI mago: added support for tuples and simpler display of globals)
+ $(LI DMD based semantic engine: updated to 2.091, improvements to code-completions)
+ $(LI updated support for all language options)
+)
+
 2020-18-01 Version 0.51.0
 $(UL
  $(LI experimental: semantic server built from DMD frontend)
