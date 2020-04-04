@@ -40,7 +40,6 @@
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -52,6 +51,7 @@
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -60,6 +60,8 @@
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -162,7 +164,6 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -174,6 +175,7 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -182,6 +184,8 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -284,7 +288,6 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -296,6 +299,7 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -304,6 +308,8 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -406,7 +412,6 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -418,6 +423,7 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -426,6 +432,8 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -528,7 +536,6 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -540,6 +547,7 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <dip25>0</dip25>
   <dip1000>0</dip1000>
   <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
   <transition_field>0</transition_field>
   <revert_import>0</revert_import>
   <preview_dtorfields>0</preview_dtorfields>
@@ -548,6 +556,8 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <preview_intpromote>0</preview_intpromote>
   <preview_fixAliasThis>0</preview_fixAliasThis>
   <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -610,6 +620,130 @@ echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
 echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
+ <Config platform="Win32" name="Release LDC">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>1</lib>
+  <subsystem>0</subsystem>
+  <multiobj>0</multiobj>
+  <singleFileCompilation>3</singleFileCompilation>
+  <oneobj>0</oneobj>
+  <mscoff>0</mscoff>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <vgc>0</vgc>
+  <symdebug>0</symdebug>
+  <symdebugref>1</symdebugref>
+  <optimize>0</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <errDeprecated>0</errDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <boundscheck>0</boundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>0</useUnitTests>
+  <useInline>0</useInline>
+  <release>1</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
+  <genStackFrame>0</genStackFrame>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <allinst>0</allinst>
+  <stackStomp>0</stackStomp>
+  <betterC>0</betterC>
+  <dip25>0</dip25>
+  <dip1000>0</dip1000>
+  <dip1008>0</dip1008>
+  <dip1021>0</dip1021>
+  <transition_field>0</transition_field>
+  <revert_import>0</revert_import>
+  <preview_dtorfields>0</preview_dtorfields>
+  <transition_checkimports>0</transition_checkimports>
+  <transition_complex>0</transition_complex>
+  <preview_intpromote>0</preview_intpromote>
+  <preview_fixAliasThis>0</preview_fixAliasThis>
+  <preview_markdown>0</preview_markdown>
+  <preview_rvaluerefparam>0</preview_rvaluerefparam>
+  <preview_nosharedaccess>0</preview_nosharedaccess>
+  <transition_vmarkdown>0</transition_vmarkdown>
+  <compiler>2</compiler>
+  <otherDMD>0</otherDMD>
+  <cccmd>$(CC) -c</cccmd>
+  <ccTransOpt>1</ccTransOpt>
+  <addDepImp>0</addDepImp>
+  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <imppath />
+  <fileImppath />
+  <outdir>..\bin\$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)\$(ProjectName)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <modules_ddoc />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids />
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <debuglib>0</debuglib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>0</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
+  <enableMixin>0</enableMixin>
+  <mixinPath>$(IntDir)\$(SafeProjectName).mixin</mixinPath>
+  <objfiles />
+  <linkswitches />
+  <libfiles />
+  <libpaths />
+  <deffile />
+  <resfile />
+  <exefile>$(IntDir)\$(ProjectName).sdk</exefile>
+  <pdbfile>$(IntDir)\$(SafeProjectName).pdb</pdbfile>
+  <impfile>$(IntDir)\$(SafeProjectName).lib</impfile>
+  <mapfile>$(IntDir)\$(SafeProjectName).map</mapfile>
+  <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
+  <privatePhobos>0</privatePhobos>
+  <additionalOptions />
+  <preBuildCommand />
+  <postBuildCommand>echo Success &gt;&quot;$(TargetPath)&quot;
+echo. &gt;&quot;$(TargetDir)\build.dep&quot;</postBuildCommand>
+  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
+ </Config>
  <Folder name="build">
   <File customcmd="if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
@@ -628,7 +762,6 @@ dmd -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).
   <File customcmd="dmd -map $(OutDir)\$(InputName).map -of$(IntDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" perConfig="true" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" path="..\tools\mb2utf16.d" tool="Custom">
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
 dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; &quot;-od$(IntDir)&quot; $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug|Win32" />
-   <Config tool="Custom" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="TestDebug|Win32" />
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
 if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
@@ -639,6 +772,9 @@ if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSI
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
 if errorlevel 1 goto reportError
 dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release COFF32|Win32" />
+   <Config tool="Custom" customcmd="ldmd2 -m32 &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release LDC|Win32" />
+   <Config tool="Custom" customcmd="ldmd2 -map $(OutDir)\$(InputName).map -of$(IntDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Reelase LDC|Win32" />
+   <Config tool="Custom" customcmd="dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="TestDebug|Win32" />
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
 dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release|Win32" />
   </File>
@@ -646,7 +782,6 @@ dmd -map $(OutDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) .
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
 dmd -g -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; &quot;-od$(IntDir)&quot; $(InputPath) ..\tools\nostacktrace.d oleaut32.lib ole32.lib
 &quot;$(VisualDInstallDir)\cv2pdb\cv2pdb.exe&quot; &quot;$(OutDir)\$(InputName).exe&quot;" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Debug|Win32" />
-   <Config tool="Custom" customcmd="dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d ole32.lib oleaut32.lib" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="TestDebug|Win32" />
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
 if exist &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot; call &quot;$(VSINSTALLDIR)\Common7\Tools\vsvars32.bat&quot;
 if exist &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; ( pushd . &amp;&amp; call &quot;$(VCINSTALLDIR)\Auxiliary\Build\vcvars32.bat&quot; &amp;&amp; popd )
@@ -661,6 +796,11 @@ if errorlevel 1 goto reportError
 dmd -m32mscoff -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
 if errorlevel 1 goto reportError
 dmd -m32mscoff -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release COFF32|Win32" />
+   <Config tool="Custom" customcmd="ldmd2 -m32 -version=pipeLink -map &quot;$(IntDir)\pipelink.map&quot; &quot;-of$(OutDir)\pipelink.exe&quot; $(InputPath) ..\tools\nostacktrace.d user32.lib oleaut32.lib ole32.lib -L/SUBSYSTEM:CONSOLE,5.01
+if errorlevel 1 goto reportError
+ldmd2 -m32 -map &quot;$(IntDir)\$(InputName).map&quot; &quot;-of$(OutDir)\$(InputName).exe&quot; $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release LDC|Win32" />
+   <Config tool="Custom" customcmd="ldmd2 -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Reelase LDC|Win32" />
+   <Config tool="Custom" customcmd="dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d ole32.lib oleaut32.lib" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="TestDebug|Win32" />
    <Config tool="Custom" customcmd="echo Compiling $(InputPath)...
 dmd -map $(IntDir)\$(InputName).map -of$(OutDir)\$(InputName).exe $(InputPath) ..\tools\nostacktrace.d oleaut32.lib ole32.lib" dependencies="..\tools\nostacktrace.d" outfile="$(OutDir)\$(InputName).exe" name="Release|Win32" />
   </File>

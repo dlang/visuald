@@ -549,6 +549,7 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		optval = val;
 		return 1;
 	}
+	extern(D)
 	int changeOptionDg(V)(V val, void delegate (V optval) setdg, V refval)
 	{
 		if(refval == val)
@@ -1980,7 +1981,7 @@ class FilePropertyPage : ConfigNodePropertyPage
 		string tool = mTool.getText();
 		if(tool == "Auto")
 			tool = "";
-		changes += changeOptionDg!bool(mPerConfig.isChecked(), &node.SetPerConfigOptions, refnode.GetPerConfigOptions());
+		changes += changeOptionDg!bool(mPerConfig.isChecked(),    (s) => node.SetPerConfigOptions(s),      refnode.GetPerConfigOptions());
 		changes += changeOptionDg!string(tool,                    (s) => node.SetTool(cfgname, s),         refnode.GetTool(cfgname));
 		changes += changeOptionDg!string(mCustomCmd.getText(),    (s) => node.SetCustomCmd(cfgname, s),    refnode.GetCustomCmd(cfgname));
 		changes += changeOptionDg!string(mAddOpt.getText(),       (s) => node.SetAdditionalOptions(cfgname, s), refnode.GetAdditionalOptions(cfgname));
@@ -2425,6 +2426,7 @@ class UpdatePropertyPage : GlobalPropertyPage
 	this(GlobalOptions options)
 	{
 		super(options);
+		kNeededLines = 15;
 	}
 
 	enum ID_UPDATE_VISUALD = 1101;

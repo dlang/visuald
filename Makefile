@@ -39,7 +39,7 @@ MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBui
 !IF !EXIST($(MSBUILD15))
 MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Current\Bin\msbuild"
 !ENDIF
-CONFIG  = Release COFF32
+CONFIG  = Release LDC
 
 ##############################################################
 # no more changes should be necessary starting from here
