@@ -44,6 +44,7 @@ init:
 install:
   # show environment
   - set D_COMPILER=dmd
+  - set CONFIG=Release COFF32
   - set
   - cd c:\projects
   - if not exist cache\nul mkdir cache
@@ -55,18 +56,15 @@ install:
             }
             7z x cache\dmd2088_0.7z > $null
             Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
-            c:\projects\dmd2\windows\bin\dmd.exe --version
         } ElseIf ($Env:D_COMPILER -eq 'dmd-nightly') {
             Start-FileDownload 'http://nightlies.dlang.org/dmd-nightly/dmd.master.windows.7z' -FileName 'dmd2.7z'
             7z x dmd2.7z > $null
             Set-Item -path env:DMD -value c:\projects\dmd2\windows\bin\dmd.exe
-            c:\projects\dmd2\windows\bin\dmd.exe --version
         } ElseIf ($Env:D_COMPILER -eq 'ldc') {
             # LDC unsupported so far
-            Start-FileDownload 'http://github.com/ldc-developers/ldc/releases/download/v1.0.0/ldc2-1.0.0-win64-msvc.zip' -FileName 'ldc2.zip'
+            Start-FileDownload 'http://github.com/ldc-developers/ldc/releases/download/v1.20.1/ldc2-1.20.1-windows-multilib.zip' -FileName 'ldc2.zip'
             7z x ldc2.zip > $null
-            Set-Item -path env:DMD -value c:\projects\ldc2-1.0.0-win64-msvc\bin\ldmd2.exe
-            c:\projects\ldc2-1.0.0-win64-msvc\bin\ldc2 --version
+            Set-Item -path env:DMD -value c:\projects\ldc2-1.20.1-windows-multilib\bin\ldmd2.exe
         }
   # Download & extract coffimplib.exe (no longer available publically as a single download)
   - ps: |
@@ -102,16 +100,17 @@ before_build:
   - cd c:\projects
 
 build_script:
+  - '"%DMD%" --version'
   - cd c:\projects
   - cd visuald
   # Fetch submodules
   - git submodule update --init --recursive
   # ignore failure once, in case it needs reloading the sdk project
-  - nmake prerequisites || nmake prerequisites
+  - nmake "CONFIG=%CONFIG%" prerequisites || nmake "CONFIG=%CONFIG%" prerequisites
   # build Visual D
-  - nmake visuald_vs
+  - nmake "CONFIG=%CONFIG%" visuald_vs
   # build and run Visual D unittests
-  - nmake visuald_test dmdserver_test
+  - nmake "CONFIG=%CONFIG%" visuald_test dmdserver_test
   - cd ..
   # Clone mago/cv2pdb (need to be two levels up)
   - cd ..
@@ -137,8 +136,8 @@ build_script:
   - cd visuald
   # can build dbuild15 and dparser only with VS2017
   - if     "%VS%"=="15" nuget restore vdc\abothe\VDServer.sln
-  - if     "%VS%"=="15" nmake install_vs_only_vs2017
-  - if not "%VS%"=="15" nmake install_vs_no_vs2017
+  - if     "%VS%"=="15" nmake "CONFIG=%CONFIG%" install_vs_only_vs2017
+  - if not "%VS%"=="15" nmake "CONFIG=%CONFIG%" install_vs_no_vs2017
 
 after_build:
   # publish as artifact
