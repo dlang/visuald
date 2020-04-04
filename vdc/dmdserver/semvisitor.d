@@ -1122,147 +1122,153 @@ string tipForObject(RootObject obj)
 	return txt;
 }
 
-TipData tipDataForObject(RootObject obj)
+TipData tipForDeclaration(Declaration decl)
 {
-	TipData tipForDeclaration(Declaration decl)
+	if (auto func = decl.isFuncDeclaration())
 	{
-		if (auto func = decl.isFuncDeclaration())
-		{
-			OutBuffer buf;
-			if (decl.type && decl.type.isTypeFunction())
-				functionToBufferWithIdent(decl.type.toTypeFunction(), &buf, decl.toPrettyChars());
-			else
-				buf.writestring(decl.toPrettyChars());
-			auto res = buf.extractSlice(); // take ownership
-			return TipData("", cast(string)res);
-		}
+		HdrGenState hgs = { ddoc: true, fullQual: true };
+		OutBuffer buf;
 
-		bool fqn = true;
-		string txt;
-		string kind;
-		if (decl.isParameter())
-		{
-			if (decl.parent)
-				if (auto fd = decl.parent.isFuncDeclaration())
-					if (fd.ident.toString().startsWith("__foreachbody"))
-						kind = "foreach variable";
-			if (kind.empty)
-				kind = "parameter";
-			fqn = false;
-		}
-		else if (auto em = decl.isEnumMember())
-		{
-			kind = "enum value";
-			txt = decl.toPrettyChars(fqn).to!string;
-			if (em.origValue)
-				txt ~= " = " ~ cast(string)em.origValue.toString();
-			return TipData(kind, txt);
-		}
-		else if (decl.storage_class & STC.manifest)
-			kind = "constant";
-		else if (decl.isAliasDeclaration())
-			kind = "alias";
-		else if (decl.isField())
-			kind = "field";
-		else if (decl.semanticRun >= PASS.semanticdone) // avoid lazy semantic analysis
-		{
-			if (!decl.isDataseg() && !decl.isCodeseg())
-			{
-				kind = "local variable";
-				fqn = false;
-			}
-			else if (decl.isThreadlocal())
-				kind = "thread local global";
-			else if (decl.type && decl.type.isShared())
-				kind = "shared global";
-			else if (decl.type && decl.type.isConst())
-				kind = "constant global";
-			else if (decl.type && decl.type.isImmutable())
-				kind = "immutable global";
-			else if (decl.type && decl.type.ty != Terror)
-				kind = "__gshared global";
-		}
+		auto fntype = decl.type ? decl.type.isTypeFunction() : null;
 
-		if (decl.type)
-			txt ~= to!string(decl.type.toPrettyChars(true)) ~ " ";
-		txt ~= to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
-		if (decl.storage_class & STC.manifest)
-			if (auto var = decl.isVarDeclaration())
-				if (var._init)
-					txt ~= " = " ~ var._init.toString();
-		if (auto ad = decl.isAliasDeclaration())
-			if (ad.aliassym)
-			{
-				TipData tip = tipDataForObject(ad.aliassym);
-				if (tip.kind.length)
-					kind = "alias " ~ tip.kind;
-				if (tip.code.length)
-					txt ~= " = " ~ tip.code;
-			}
+		if (auto td = fntype && decl.parent ? decl.parent.isTemplateDeclaration() : null)
+			functionToBufferFull(fntype, &buf, decl.getIdent(), &hgs, td);
+		else if (fntype)
+			functionToBufferWithIdent(fntype, &buf, decl.toPrettyChars());
+		else
+			buf.writestring(decl.toPrettyChars());
+		auto res = buf.extractSlice(); // take ownership
+		return TipData("", cast(string)res);
+	}
+
+	bool fqn = true;
+	string txt;
+	string kind;
+	if (decl.isParameter())
+	{
+		if (decl.parent)
+			if (auto fd = decl.parent.isFuncDeclaration())
+				if (fd.ident.toString().startsWith("__foreachbody"))
+					kind = "foreach variable";
+		if (kind.empty)
+			kind = "parameter";
+		fqn = false;
+	}
+	else if (auto em = decl.isEnumMember())
+	{
+		kind = "enum value";
+		txt = decl.toPrettyChars(fqn).to!string;
+		if (em.origValue)
+			txt ~= " = " ~ cast(string)em.origValue.toString();
 		return TipData(kind, txt);
 	}
-
-	TipData tipForType(Type t)
+	else if (decl.storage_class & STC.manifest)
+		kind = "constant";
+	else if (decl.isAliasDeclaration())
+		kind = "alias";
+	else if (decl.isField())
+		kind = "field";
+	else if (decl.semanticRun >= PASS.semanticdone) // avoid lazy semantic analysis
 	{
-		string kind;
-		if (t.isTypeIdentifier())
-			kind = "unresolved type";
-		else if (auto tc = t.isTypeClass())
-			kind = tc.sym.isInterfaceDeclaration() ? "interface" : "class";
-		else if (auto ts = t.isTypeStruct())
-			kind = ts.sym.isUnionDeclaration() ? "union" : "struct";
-		else
-			kind = t.kind().to!string;
-		string txt = t.toPrettyChars(true).to!string;
-		string doc;
-		if (auto sym = typeSymbol(t))
-			if (sym.comment)
-				doc = sym.comment.to!string;
-		return TipData(kind, txt, doc);
-	}
-
-	TipData tipForDotIdExp(DotIdExp die)
-	{
-		auto resolvedTo = die.resolvedTo;
-		bool isConstant = resolvedTo.isConstantExpr();
-		bool isEnumValue = false;
-		if (auto ve = resolvedTo.isVarExp())
-			if (auto em = ve.var ? ve.var.isEnumMember() : null)
-			{
-				isConstant = isEnumValue = true;
-				resolvedTo = em.origValue;
-			}
-
-		Expression e1;
-		if (!isConstant && !resolvedTo.isArrayLengthExp() && die.type)
+		if (!decl.isDataseg() && !decl.isCodeseg())
 		{
-			e1 = isAALenCall(resolvedTo);
-			if (!e1 && die.ident == Id.ptr && resolvedTo.isCastExp())
-				e1 = resolvedTo;
-			if (!e1 && resolvedTo.isTypeExp())
-				return tipForType(die.type);
+			kind = "local variable";
+			fqn = false;
 		}
-		if (!e1)
-			e1 = die.e1;
-		string kind = isEnumValue ? "enum value" : isConstant ? "constant" : "field";
-		string tip = isEnumValue ? "" : resolvedTo.type.toPrettyChars(true).to!string ~ " ";
-		tip ~= e1.type && !e1.isConstantExpr() ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
-		tip ~= "." ~ die.ident.toString();
-		if (isConstant)
-			tip ~= " = " ~ resolvedTo.toString();
-		return TipData(kind, tip);
+		else if (decl.isThreadlocal())
+			kind = "thread local global";
+		else if (decl.type && decl.type.isShared())
+			kind = "shared global";
+		else if (decl.type && decl.type.isConst())
+			kind = "constant global";
+		else if (decl.type && decl.type.isImmutable())
+			kind = "immutable global";
+		else if (decl.type && decl.type.ty != Terror)
+			kind = "__gshared global";
 	}
 
-	TipData tipForTemplate(TemplateExp te)
+	if (decl.type)
+		txt ~= to!string(decl.type.toPrettyChars(true)) ~ " ";
+	txt ~= to!string(fqn ? decl.toPrettyChars(fqn) : decl.toChars());
+	if (decl.storage_class & STC.manifest)
+		if (auto var = decl.isVarDeclaration())
+			if (var._init)
+				txt ~= " = " ~ var._init.toString();
+	if (auto ad = decl.isAliasDeclaration())
+		if (ad.aliassym)
+		{
+			TipData tip = tipDataForObject(ad.aliassym);
+			if (tip.kind.length)
+				kind = "alias " ~ tip.kind;
+			if (tip.code.length)
+				txt ~= " = " ~ tip.code;
+		}
+	return TipData(kind, txt);
+}
+
+TipData tipForType(Type t)
+{
+	string kind;
+	if (t.isTypeIdentifier())
+		kind = "unresolved type";
+	else if (auto tc = t.isTypeClass())
+		kind = tc.sym.isInterfaceDeclaration() ? "interface" : "class";
+	else if (auto ts = t.isTypeStruct())
+		kind = ts.sym.isUnionDeclaration() ? "union" : "struct";
+	else
+		kind = t.kind().to!string;
+	string txt = t.toPrettyChars(true).to!string;
+	string doc;
+	if (auto sym = typeSymbol(t))
+		if (sym.comment)
+			doc = sym.comment.to!string;
+	return TipData(kind, txt, doc);
+}
+
+TipData tipForDotIdExp(DotIdExp die)
+{
+	auto resolvedTo = die.resolvedTo;
+	bool isConstant = resolvedTo.isConstantExpr();
+	bool isEnumValue = false;
+	if (auto ve = resolvedTo.isVarExp())
+		if (auto em = ve.var ? ve.var.isEnumMember() : null)
+		{
+			isConstant = isEnumValue = true;
+			resolvedTo = em.origValue;
+		}
+
+	Expression e1;
+	if (!isConstant && !resolvedTo.isArrayLengthExp() && die.type)
 	{
-		Dsymbol ds = te.fd;
-		if (!ds)
-			ds = te.td.onemember ? te.td.onemember : te.td;
-		string kind = ds.isFuncDeclaration() ? "template function" : "template";
-		string tip = ds.toPrettyChars(true).to!string;
-		return TipData(kind, tip);
+		e1 = isAALenCall(resolvedTo);
+		if (!e1 && die.ident == Id.ptr && resolvedTo.isCastExp())
+			e1 = resolvedTo;
+		if (!e1 && resolvedTo.isTypeExp())
+			return tipForType(die.type);
 	}
+	if (!e1)
+		e1 = die.e1;
+	string kind = isEnumValue ? "enum value" : isConstant ? "constant" : "field";
+	string tip = isEnumValue ? "" : resolvedTo.type.toPrettyChars(true).to!string ~ " ";
+	tip ~= e1.type && !e1.isConstantExpr() ? die.e1.type.toPrettyChars(true).to!string : e1.toString();
+	tip ~= "." ~ die.ident.toString();
+	if (isConstant)
+		tip ~= " = " ~ resolvedTo.toString();
+	return TipData(kind, tip);
+}
 
+TipData tipForTemplate(TemplateExp te)
+{
+	Dsymbol ds = te.fd;
+	if (!ds)
+		ds = te.td.onemember ? te.td.onemember : te.td;
+	string kind = ds.isFuncDeclaration() ? "template function" : "template";
+	string tip = ds.toPrettyChars(true).to!string;
+	return TipData(kind, tip);
+}
+
+TipData tipDataForObject(RootObject obj)
+{
 	TipData tip;
 	const(char)* doc;
 
@@ -2409,6 +2415,95 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		addSymbolProperties(idlist, type, tok);
 
 	return idlist;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+string[] getModuleOutline(Module mod, int maxdepth)
+{
+	extern(C++) class OutlineVisitor : ASTVisitor
+	{
+		string[] lines;
+		int maxdepth;
+		int depth = 1;
+
+		alias visit = ASTVisitor.visit;
+
+		extern(D)
+		void addOutline(ref const Loc loc, int endln, Dsymbol decl)
+		{
+			if (!loc.filename) // ignore compiler added symbols
+				return;
+
+			import dmd.root.string : toDString;
+			auto desc = toDString(decl.toPrettyChars());
+			if (auto fd = decl.isFuncDeclaration())
+				if (auto tf = fd.type ? fd.type.isTypeFunction() : null)
+				{
+					auto td = decl.parent ? decl.parent.isTemplateDeclaration() : null;
+					if (!td || fd != td.onemember) // parameters already printed in function templates
+						desc ~= toDString(parametersTypeToChars(tf.parameterList));
+				}
+
+			string txt = depth.to!string ~ ":" ~ loc.linnum.to!string ~ ":" ~ endln.to!string ~ ":";
+			string cat = symbol2ExpansionType(decl);
+			txt ~= cat ~ ":" ~ desc;
+			lines ~= txt;
+		}
+
+		override void visit(FuncDeclaration fd)
+		{
+			addOutline(fd.loc, fd.endloc.linnum, fd);
+			if (depth < maxdepth)
+			{
+				depth++;
+				super.visit(fd);
+				depth--;
+			}
+		}
+
+		override void visit(EnumDeclaration ed)
+		{
+			if (ed.ident)
+				addOutline(ed.loc, ed.endlinnum, ed);
+			if (depth < maxdepth)
+			{
+				depth++;
+				super.visit(ed);
+				depth--;
+			}
+		}
+
+		override void visit(AggregateDeclaration ad)
+		{
+			addOutline(ad.loc, ad.endlinnum, ad);
+			if (depth < maxdepth)
+			{
+				depth++;
+				super.visit(ad);
+				depth--;
+			}
+		}
+
+		override void visit(TemplateDeclaration td)
+		{
+			addOutline(td.loc, td.endlinnum, td);
+			if (!td.loc.filename)
+				super.visit(td);
+			else if (depth < maxdepth)
+			{
+				depth++;
+				super.visit(td);
+				depth--;
+			}
+		}
+
+	}
+
+	scope ov = new OutlineVisitor();
+	ov.maxdepth = maxdepth;
+	mod.accept(ov);
+
+	return ov.lines;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

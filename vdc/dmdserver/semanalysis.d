@@ -260,6 +260,13 @@ unittest
 		do_unittests();
 }
 
+static void assert_equal(S, T)(S s, T t)
+{
+	if (s == t)
+		return;
+	assert(false);
+}
+
 void do_unittests()
 {
 	import core.memory;
@@ -278,13 +285,6 @@ void do_unittests()
 	opts.importDirs = guessImportPaths();
 
 	auto filename = "source.d";
-
-	static void assert_equal(S, T)(S s, T t)
-	{
-		if (s == t)
-			return;
-		assert(false);
-	}
 
 	Module checkErrors(string src, string expected_err)
 	{
@@ -1701,6 +1701,80 @@ void do_unittests()
 
 unittest
 {
+	string filename = "source.d";
+	string source;
+
+	Module checkOutline(string src, int depth, string[] expected)
+	{
+		initErrorMessages(filename);
+		Module parsedModule = createModuleFromText(filename, src);
+		assert(parsedModule);
+
+		string[] lines = getModuleOutline(parsedModule, depth);
+		assert_equal(lines.length, expected.length);
+		for (size_t i = 0; i < lines.length; i++)
+			assert_equal(lines[i], expected[i]);
+		return parsedModule;
+	}
+
+	source =
+	q{                                   // Line 1
+		struct S
+		{
+			int field1 = 3;
+			static long stat1 = 7;       // Line 5
+			int fun(int par) { return field1 + par; }
+		}
+		void foo()
+		{
+			S anS;                       // Line 10
+			int x = anS.fun(1);
+		}
+		int fun(S s)
+		{
+			class Nested                 // Line 15
+			{
+				override string toString() { return "nested"; }
+				void method() {}
+				struct Inner
+				{                        // Line 20
+					void test();
+				}
+			}
+			return 7;
+		}                                // Line 25
+		template tmpl(T)
+		{
+			struct helper { T x; }
+			class tmpl { helper* hlp; }
+			enum E { E1, E2 }            // Line 30
+		}
+		auto tmplfun(T)(T x) { return x; }
+		enum { anonymous }
+	};
+
+	string[] expected =
+	[
+		"1:2:7:STRU:S",
+		"2:6:6:FUNC:fun(int par)",
+		"1:8:12:FUNC:foo()",
+		"1:13:25:FUNC:fun(S s)",
+		"2:15:23:CLSS:Nested",
+		"3:17:17:FUNC:toString()",
+		"3:18:18:FUNC:method()",
+		"3:19:22:STRU:Inner",
+		// "4:21:FUNC:test()",
+		"1:26:31:TMPL:tmpl(T)",
+		"2:28:28:STRU:helper",
+		"2:29:29:CLSS:tmpl(T)",
+		"2:30:30:ENUM:E",
+		"1:32:32:FUNC:tmplfun(T)(T x)",
+	];
+	checkOutline(source, 3, expected);
+}
+
+unittest
+{
 	import core.memory;
 	import std.path;
 	import std.file;
@@ -1721,13 +1795,6 @@ unittest
 	//opts.versionIds ~= "NoBackend";
 
 	auto filename = std.path.buildPath(srcdir, "dmd", "expressionsem.d");
-
-	static void assert_equal(S, T)(S s, T t)
-	{
-		if (s == t)
-			return;
-		assert(false);
-	}
 
 	Module checkErrors(string src, string expected_err)
 	{

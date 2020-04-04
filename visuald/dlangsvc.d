@@ -618,12 +618,13 @@ class LanguageService : DisposingComObject,
 	HRESULT CollapseToDefinitions(/+[in]+/ IVsTextLines pTextLines,  // the buffer in question
 								  /+[in]+/ IVsOutliningSession pSession)
 	{
-		GetSource(pTextLines).mOutlining = true;
+		auto src = GetSource(pTextLines);
+		src.mOutlining = true;
 		if(auto session = qi_cast!IVsHiddenTextSession(pSession))
 		{
 			scope(exit) release(session);
-			GetSource(pTextLines).UpdateOutlining(session, hrsDefault);
-			GetSource(pTextLines).CollapseAllHiddenRegions(session, true);
+			src.UpdateOutlining(session, hrsDefault);
+			src.CollapseAllHiddenRegions(session, true);
 		}
 		return S_OK;
 	}
@@ -788,6 +789,8 @@ class LanguageService : DisposingComObject,
 			mLastActiveView.mView.GetCaretPos(&line, &idx);
 			if(tryJumpToDefinitionInCodeWindow(mLastActiveView.mCodeWinMgr.mSource, line, idx))
 				return true;
+			if (mLastActiveView.mCodeWinMgr.mNavBar)
+				mLastActiveView.mCodeWinMgr.mNavBar.UpdateFromCaret(line, idx);
 		}
 		return false;
 	}
@@ -1178,6 +1181,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 		}
 		mSource = addref(source);
 		mLangSvc = langSvc;
+		source.mCodeWinMgr = this;
 	}
 
 	~this()
@@ -1217,6 +1221,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 		// attach view filter to primary view.
 		if(textView)
 			OnNewView(textView);
+		release(textView);
 
 		// attach view filter to secondary view.
 		textView = null;
@@ -1224,6 +1229,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 			return E_FAIL;
 		if(textView)
 			OnNewView(textView);
+		release(textView);
 
 		return S_OK;
 	}
@@ -1261,6 +1267,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 			}
 		}
 	}
+
 	//////////////////////////////////////////////////////////////////////
 
 	bool OnIdle()
@@ -1290,7 +1297,7 @@ class CodeWindowManager : DisposingComObject, IVsCodeWindowManager
 /////////////////////////////////////////////////////////////////////////
 class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskMemFreeMyStrings
 {
-	IVsDropdownBar dropdownBar;
+	IVsDropdownBar mDropdownBar;
 	CodeWindowManager mWinMgr;
 
 	this(CodeWindowManager mgr)
@@ -1309,13 +1316,13 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 
 	override void Dispose()
 	{
-		dropdownBar = release(dropdownBar);
+		mDropdownBar = release(mDropdownBar);
 	}
 
 	// IVsDropdownBarClient
 	HRESULT SetDropdownBar(/+[in]+/ IVsDropdownBar pDropdownBar)
 	{
-		dropdownBar = addref(pDropdownBar);
+		mDropdownBar = addref(pDropdownBar);
 		return S_OK;
 	}
 
@@ -1325,7 +1332,20 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 							   /+[out]+/ ULONG *puEntryType,  // ORing of DROPDOWNENTRYTYPE enum
 							   /+[out]+/ HANDLE *phImageList)  // actually an HIMAGELIST
 	{
-		*pcEntries = 1;
+		switch (iCombo)
+		{
+			case 0:
+				*pcEntries = mGlobal.length;
+				break;
+			case 1:
+				*pcEntries = mColumn2.length;
+				break;
+			case 2:
+				*pcEntries = mColumn3.length;
+				break;
+			default:
+				return S_FALSE;
+		}
 		*puEntryType = ENTRY_TEXT | ENTRY_IMAGE; // DROPDOWNENTRYTYPE
 		*phImageList = cast(HANDLE) LanguageService.completionImageList;
 		return S_OK;
@@ -1334,20 +1354,11 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	// called for ENTRY_TEXT
 	HRESULT GetEntryText(in int iCombo, in int iIndex, /+[out]+/ WCHAR **ppszText)
 	{
-		switch (iCombo)
-		{
-			case 0:
-				*ppszText = allocBSTR("<Module scope>");
-				break;
-			case 1:
-				*ppszText = allocBSTR("<Class/Struct scope>");
-				break;
-			case 2:
-				*ppszText = allocBSTR("<Funtion scope>");
-				break;
-			default:
-				return S_FALSE;
-		}
+		int idx = getNodeIndex(iCombo, iIndex);
+		if (idx < 0 || idx >= mNodes.length)
+			return S_FALSE;
+
+		*ppszText = allocBSTR(mNodes[idx].desc);
 		return S_OK;
 	}
 
@@ -1361,20 +1372,11 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	// called for ENTRY_IMAGE
 	HRESULT GetEntryImage(in int iCombo, in int iIndex, /+[out]+/ int *piImageIndex)
 	{
-		switch (iCombo)
-		{
-			case 0:
-				*piImageIndex = CSIMG_CLASS;
-				break;
-			case 1:
-				*piImageIndex = CSIMG_MEMBER;
-				break;
-			case 2:
-				*piImageIndex = CSIMG_FIELD;
-				break;
-			default:
-				return S_FALSE; // keep space for image
-		}
+		int idx = getNodeIndex(iCombo, iIndex);
+		if (idx < 0 || idx >= mNodes.length)
+			return S_FALSE; // keep space for image
+
+		*piImageIndex = mNodes[idx].getImage();
 		return S_OK;
 	}
 
@@ -1385,7 +1387,11 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 
 	HRESULT OnItemChosen(in int iCombo, in int iIndex)
 	{
-		return E_NOTIMPL;
+		int idx = getNodeIndex(iCombo, iIndex);
+		if (idx < 0 || idx >= mNodes.length)
+			return S_FALSE; // keep space for image
+
+		return NavigateTo(mWinMgr.mSource.mBuffer, mNodes[idx].begline, 0, mNodes[idx].begline, 0);
 	}
 
 	HRESULT OnComboGetFocus(in int iCombo)
@@ -1397,6 +1403,153 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	HRESULT GetComboTipText(in int iCombo,  /+[out]+/ BSTR *pbstrText)
 	{
 		return E_NOTIMPL;
+	}
+
+	/////////////////////////////
+	struct OutlineNode
+	{
+		int begline;
+		int endline;
+		int depth;
+		int image;
+		string desc;
+
+		bool containsLine(int line) const
+		{
+			return begline <= line && line <= endline;
+		}
+		int getImage() const
+		{
+			return image;
+		}
+	}
+	OutlineNode[] mNodes;
+	size_t[] mGlobal;
+	size_t[] mColumn2;
+	size_t[] mColumn3;
+	int mCurrentLine;
+
+	void UpdateFromSource(string outline)
+	{
+		string[] lines = outline.splitLines();
+		mNodes = new OutlineNode[lines.length];
+		size_t valid = 0;
+
+		foreach(ln; lines)
+		{
+			string[] toks = ln.split(":");
+			if (toks.length >= 5)
+			{
+				try
+				{
+					mNodes[valid].depth = parse!int(toks[0]);
+					mNodes[valid].begline = parse!int(toks[1]) - 1;
+					mNodes[valid].endline = parse!int(toks[2]) - 1;
+					mNodes[valid].image = visuald.completion.Declaration.Type2Glyph(toks[3]);
+					mNodes[valid].desc = toks[4];
+					if (mNodes[valid].depth > 0 && mNodes[valid].begline >= 0 &&
+						mNodes[valid].endline >= mNodes[valid].begline && mNodes[valid].desc.length)
+					valid++;
+				}
+				catch(ConvException)
+				{
+				}
+			}
+		}
+		mNodes = mNodes[0..valid];
+
+		FillGlobalColumn();
+
+		_UpdateFromLine(mCurrentLine);
+	}
+
+	void FillGlobalColumn()
+	{
+		size_t cnt = 0;
+		foreach (ref node; mNodes)
+			if (node.depth <= 1)
+				cnt++;
+
+		mGlobal.length = cnt;
+		cnt = 0;
+		for (size_t n = 0; n < mNodes.length; n++)
+			if (mNodes[n].depth <= 1)
+				mGlobal[cnt++] = n;
+	}
+
+	int getNodeIndex(int iCombo, int index)
+	{
+		if (iCombo == 0)
+			return index >= mGlobal.length ? -1 : mGlobal[index];
+		if (iCombo == 1)
+			return index >= mColumn2.length ? -1 : mColumn2[index];
+		if (iCombo == 2)
+			return index >= mColumn3.length ? -1 : mColumn3[index];
+		return -1;
+	}
+
+	int findGlobalIndex(int line)
+	{
+		for (size_t g = 0; g < mGlobal.length; g++)
+			if (mNodes[mGlobal[g]].containsLine(line))
+				return g;
+		return -1;
+	}
+
+	void UpdateFromCaret(int line, int col)
+	{
+		// col ignored for now
+		if (line == mCurrentLine)
+			return;
+		_UpdateFromLine(line);
+	}
+
+	void _UpdateFromLine(int line)
+	{
+		mCurrentLine = line;
+		mColumn2 = null;
+		mColumn3 = null;
+		int sel1 = findGlobalIndex(line);
+		int sel2 = -1;
+		int sel3 = -1;
+		if (sel1 >= 0)
+		{
+			int g = mGlobal[sel1];
+			int gdepth = mNodes[g].depth;
+			for (int h = g + 1; h < mNodes.length; h++)
+			{
+				if (mNodes[h].depth <= gdepth)
+					break;
+				if (mNodes[h].depth == gdepth + 1)
+				{
+					mColumn2 ~= h;
+					if (mNodes[h].containsLine(line))
+					{
+						sel2 = mColumn2.length - 1;
+						int hdepth = mNodes[h].depth;
+						for (int i = h + 1; i < mNodes.length; i++)
+						{
+							if (mNodes[i].depth <= hdepth)
+								break;
+							if (mNodes[i].depth == hdepth + 1)
+							{
+								mColumn3 ~= i;
+								if (mNodes[i].containsLine(line))
+								{
+									sel3 = mColumn3.length - 1;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if (mDropdownBar)
+		{
+			mDropdownBar.RefreshCombo(0, sel1);
+			mDropdownBar.RefreshCombo(1, sel2);
+			mDropdownBar.RefreshCombo(2, sel3);
+		}
 	}
 }
 
@@ -1722,6 +1875,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 {
 	Colorizer mColorizer;
 	IVsTextLines mBuffer;
+	CodeWindowManager mCodeWinMgr;
 	CompletionSet mCompletionSet;
 	MethodData mMethodData;
 	ExpansionProvider mExpansionProvider;
@@ -4426,7 +4580,8 @@ else
 		return startParsing(false, true);
 	}
 
-	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn, string tasks)
+	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn,
+								  string tasks, string outline)
 	{
 		mHasPendingUpdateModule = false;
 		if (!Package.GetGlobalOptions().showParseErrors)
@@ -4445,6 +4600,9 @@ else
 		if (Package.GetGlobalOptions().semanticHighlighting)
 			Package.GetLanguageService().GetIdentifierTypes(this, 0, -1, Package.GetGlobalOptions().semanticResolveFields,
 															&OnUpdateIdentifierTypes);
+
+		if (mCodeWinMgr && mCodeWinMgr.mNavBar)
+			mCodeWinMgr.mNavBar.UpdateFromSource(outline);
 	}
 
 	bool parseErrorEntry(string e, ref ParseError error)

@@ -148,6 +148,17 @@ public:
 	// this method is called once after GetParseErrors returned successfully
 	HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs);
 
+	// return the locations where "in" and "is" are used as binary operators
+	//
+	// filename:   file name
+	//
+	// stringList: a new-line delimited list of selected AST nodes
+	//
+	// format of each line: depth:line:endline:description
+	//
+	// this method might be called once after GetParseErrors returned successfully
+	HRESULT GetDocumentOutline(in BSTR filename, BSTR* stringList);
+
 	// return a message to be displayed in the status line of the IDE
 	//
 	// it is assumed that a message is returned only once.

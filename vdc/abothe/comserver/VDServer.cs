@@ -272,6 +272,11 @@ namespace DParserCOMServer
 			locs = visitor.locs.ToArray();
 		}
 
+		public void GetDocumentOutline(string filename, out string outline)
+		{
+			outline = "";
+		}
+
 		public void GetLastMessage(out string message)
 		{
 			//MessageBox.Show("GetLastMessage()");

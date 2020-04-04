@@ -104,7 +104,9 @@ version(tip)
 		mView.AddCommandFilter(this, &mNextTarget);
 		hookWindowProc(cast(HWND) mView.GetWindowHandle());
 
-		// mgr.SetupNavigationBar();
+		LANGPREFERENCES3 langPrefs;
+		if(GetUserPreferences(&langPrefs, null) == S_OK && langPrefs.fDropdownBar)
+			mgr.SetupNavigationBar();
 version(tip)
 		mTextTipData = addref(newCom!TextTipData);
 	}

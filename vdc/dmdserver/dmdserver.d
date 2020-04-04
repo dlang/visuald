@@ -629,6 +629,23 @@ class DMDServer : ComObject, IVDServer
 		return E_NOTIMPL;
 	}
 
+	override HRESULT GetDocumentOutline(in BSTR filename, BSTR* outline)
+	{
+		string fname = makeFilenameCanonical(to_string(filename), null);
+
+		synchronized(gErrorSync)
+		{
+			ModuleData* md = findModule(fname, false);
+			if (!md || !md.parsedModule)
+				return S_FALSE;
+
+			string[] outlines = getModuleOutline(md.parsedModule, 4);
+			string joined = outlines.join("\n");
+			*outline = allocBSTR(joined);
+		}
+		return S_OK;
+	}
+
 	override HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs)
 	{
 		// array of pairs of DWORD
