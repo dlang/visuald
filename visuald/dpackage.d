@@ -1706,7 +1706,7 @@ class GlobalOptions
 		if(WindowsSdkVersion.empty)
 		{
 			if(char* pver = getenv("WindowsSdkVersion"))
-				WindowsSdkVersion = fromMBSz(cast(immutable)pver);
+				WindowsSdkVersion = normalizeVersion(fromMBSz(cast(immutable)pver));
 			else if(!WindowsSdkDir.empty)
 			{
 				string rootsDir = normalizeDir(WindowsSdkDir) ~ "Lib\\";
@@ -1718,7 +1718,7 @@ class GlobalOptions
 							string bname = baseName(f);
 							if(!bname.empty && isDigit(bname[0]))
 								if (std.file.exists(f ~ "\\um\\x64\\kernel32.lib"))
-									WindowsSdkVersion = bname;
+									WindowsSdkVersion = normalizeVersion(bname);
 						}
 				}
 				catch(Exception)
@@ -1743,7 +1743,7 @@ class GlobalOptions
 		if(UCRTVersion.empty)
 		{
 			if(char* pver = getenv("UCRTVersion"))
-				UCRTVersion = fromMBSz(cast(immutable)pver);
+				UCRTVersion = normalizeVersion(fromMBSz(cast(immutable)pver));
 			else if(!UCRTSdkDir.empty)
 			{
 				string rootsDir = normalizeDir(UCRTSdkDir) ~ "Lib\\";
@@ -1754,7 +1754,7 @@ class GlobalOptions
 						{
 							string bname = baseName(f);
 							if(!bname.empty && isDigit(bname[0]) && std.file.exists(f ~ "/ucrt/x64/libucrt.lib"))
-								UCRTVersion = bname;
+								UCRTVersion = normalizeVersion(bname);
 						}
 				}
 				catch(Exception)
