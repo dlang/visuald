@@ -1134,9 +1134,9 @@ TipData tipForDeclaration(Declaration decl)
 		if (auto td = fntype && decl.parent ? decl.parent.isTemplateDeclaration() : null)
 			functionToBufferFull(fntype, &buf, decl.getIdent(), &hgs, td);
 		else if (fntype)
-			functionToBufferWithIdent(fntype, &buf, decl.toPrettyChars());
+			functionToBufferWithIdent(fntype, &buf, decl.toPrettyChars(true), &hgs);
 		else
-			buf.writestring(decl.toPrettyChars());
+			buf.writestring(decl.toPrettyChars(true));
 		auto res = buf.extractSlice(); // take ownership
 		return TipData("", cast(string)res);
 	}

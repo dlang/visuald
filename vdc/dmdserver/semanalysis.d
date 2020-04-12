@@ -581,6 +581,15 @@ void do_unittests()
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
 	checkDefinition(m, 15, 17, "source.d", 2, 9);  // C
 
+	{
+		global.addSymbolLinks = true;
+		scope(exit) global.addSymbolLinks = false;
+
+		checkTip(m,  2,  9, "(class) `#<source,source.d>#.#<C,source.d,2,9>#`");
+		checkTip(m,  4,  8, "(field) `int #<source,source.d>#.#<C,source.d,2,9>#.#<field1,source.d,4,8>#`");
+		checkTip(m,  6,  8, "`int #<source,source.d>#.#<C,source.d,2,9>#.#<fun,source.d,6,8>#(int par)`");
+		checkTip(m,  6, 16, "(parameter) `int par`");
+	}
 	// enum value
 	source =
 	q{                                   // Line 1
@@ -1338,6 +1347,11 @@ void do_unittests()
 			Templ!(ModuleInfo).S arr;
 			int v = Templ!Object.value;
 		};
+		struct Q { int q; }         // Line 15
+		Templ!(Q).S tfun(Templ!(int).S s)
+		{
+			return typeof(return).init;
+		}
 	};
 	m = checkErrors(source, "");
 
@@ -1348,7 +1362,16 @@ void do_unittests()
 	checkTip(m, 13, 12, "(template instance) `source.Templ!(object.Object)`");
 	checkTip(m, 13, 18, "(class) `object.Object`");
 	checkTip(m, 13, 25, "(constant) `int source.Templ!(object.Object).value = 4`");
+	checkTip(m, 13, 25, "(constant) `int source.Templ!(object.Object).value = 4`");
+	checkTip(m, 16, 15, "`source.Templ!(Q).S source.tfun(source.Templ!int.S s)`"); // todo: Q not fqn
 
+	{
+		global.addSymbolLinks = true;
+		scope(exit) global.addSymbolLinks = false;
+
+		checkTip(m, 16, 15,	"`#<source,source.d>#.#<Templ!(Q),source.d,2,12>#.#<S,source.d,4,11># " ~
+			"#<source,source.d>#.#<tfun,source.d,16,15>#(#<source,source.d>#.#<Templ!int,source.d,2,12>#.#<S,source.d,4,11># s)`");
+	}
 	// check FQN types in cast
 	source = q{
 		void foo(Error*)
@@ -1392,11 +1415,11 @@ void do_unittests()
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
-	checkTip(m,  5, 12, "`Mem source.Mem.func(ref Mem m) ref`"); // TDOO: ref after func?
+	checkTip(m,  5, 12, "`source.Mem source.Mem.func(ref source.Mem m) ref`"); // TDOO: ref after func?
 	checkTip(m,  5,  8, "(struct) `source.Mem`");
 	checkTip(m,  5, 21, "(struct) `source.Mem`");
 	checkTip(m,  5, 25, "(parameter) `source.Mem m`");
-	checkTip(m, 10, 30, "`Mem source.Mem.foo(int sz)`");
+	checkTip(m, 10, 30, "`source.Mem source.Mem.foo(int sz)`");
 	checkTip(m, 10, 19, "(module) `source`");
 	checkTip(m, 10, 26, "(__gshared global) `source.Mem source.mem`");
 	checkTip(m, 10, 11, "(struct) `source.Mem`");
@@ -1418,7 +1441,7 @@ void do_unittests()
 	//dumpAST(m);
 
 	checkTip(m,  9, 11, "(local variable) `object.Object o`");
-	checkTip(m,  9, 17, "`int source.foo(Object o, int sz)`");
+	checkTip(m,  9, 17, "`int source.foo(object.Object o, int sz)`");
 
 	// FQN
 	source = q{
