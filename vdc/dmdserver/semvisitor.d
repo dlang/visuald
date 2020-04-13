@@ -59,6 +59,7 @@ import dmd.root.rootobject;
 import std.algorithm;
 import std.string;
 import std.conv;
+import std.functional;
 import stdext.array;
 import stdext.denseset;
 import core.stdc.string;
@@ -1341,8 +1342,66 @@ TipData tipDataForObject(RootObject obj)
 	return tip;
 }
 
-string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex)
+static const(char)* printSymbolWithLink(Dsymbol sym, bool qualifyTypes)
 {
+	const(char)* s = qualifyTypes ? sym.toPrettyCharsHelper() : sym.toChars();
+
+	if (auto ti = sym.isTemplateInstance())
+		if (ti.tempdecl)
+			if (auto td = ti.tempdecl.isTemplateDeclaration())
+				sym = td.onemember ? td.onemember : td;
+
+	if (!sym.loc.filename)
+		return s;
+
+    import dmd.root.string : toDString;
+    import dmd.utf;
+	auto str = s.toDString();
+	size_t p = 0;
+	while (p < str.length)
+	{
+		char c = str[p];
+		if (c < 0x80)
+		{
+			if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'))
+				break;
+			p++;
+		}
+		else
+		{
+			dchar dch;
+			size_t pos = p;
+			if (utf_decodeChar(str, pos, dch) !is null)
+				break;
+			if (!isUniAlpha(dch))
+				break;
+			p = pos;
+		}
+	}
+	OutBuffer lnkbuf;
+	lnkbuf.writestring("#<");
+	lnkbuf.writestring(str[0..p]);
+	lnkbuf.writeByte('#');
+	lnkbuf.writestring(sym.loc.filename);
+	if (sym.loc.linnum > 0) // no lineno for modules
+	{
+		lnkbuf.writeByte(',');
+		lnkbuf.print(sym.loc.linnum);
+		lnkbuf.writeByte(',');
+		lnkbuf.print(sym.loc.charnum);
+	}
+	lnkbuf.writestring("#>");
+	lnkbuf.writestring(str[p..$]);
+	return lnkbuf.extractChars();
+}
+
+string findTip(Module mod, int startLine, int startIndex, int endLine, int endIndex, bool addlinks)
+{
+	auto old = Dsymbol.prettyPrintSymbolHandler;
+	if (addlinks)
+		Dsymbol.prettyPrintSymbolHandler = toDelegate(&printSymbolWithLink);
+	scope(exit) Dsymbol.prettyPrintSymbolHandler = old;
+
 	auto filename = mod.srcfile.toChars();
 	scope FindTipVisitor ftv = new FindTipVisitor(filename, startLine, startIndex, endLine, endIndex);
 	mod.accept(ftv);
@@ -1954,6 +2013,13 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 					addReference(tid.loc, tid.tempinst.name);
 
 			super.visit(tid);
+		}
+
+		override void visitParameter(Parameter p, Declaration decl)
+		{
+			if (decl is search)
+				addReference(decl.loc, decl.ident);
+			super.visitParameter(p, decl);
 		}
 	}
 

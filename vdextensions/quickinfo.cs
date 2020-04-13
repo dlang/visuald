@@ -14,6 +14,9 @@ using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Adornments;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 using System;
 using System.ComponentModel.Composition;
@@ -24,14 +27,27 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Runtime.InteropServices; // DllImport
+using System.Diagnostics;
 
 namespace vdext15
 {
+	struct SymLink
+	{
+		public int start;
+		public int length;
+		public string filename;
+		public int line;
+		public int column;
+	}
+
 	class ClassifiedTextBlock : TextBlock
 	{
-		public ClassifiedTextBlock(string text)
+		VisualDQuickInfoSourceProvider _provider;
+
+		public ClassifiedTextBlock(string text, VisualDQuickInfoSourceProvider provider)
 			: base(new Run(text))
 		{
+			_provider = provider;
 		}
 
 		public void setForeground(System.Windows.Media.Brush brush, bool bold)
@@ -44,12 +60,16 @@ namespace vdext15
 			}
 		}
 
-		public void enableLink()
+		public void enableLink(SymLink link)
 		{
 			MouseLeftButtonDown += new System.Windows.Input.MouseButtonEventHandler(
 				delegate (object sender, System.Windows.Input.MouseButtonEventArgs args)
 				{
-					// Text = "clicked!";
+					try
+					{
+						NavigateTo(link.filename, link.line, link.column);
+					}
+					catch { }
 				});
 			MouseEnter += new System.Windows.Input.MouseEventHandler(
 				delegate (object sender, System.Windows.Input.MouseEventArgs args)
@@ -62,6 +82,57 @@ namespace vdext15
 					foreach (var td in System.Windows.TextDecorations.Underline)
 						TextDecorations.Remove(td);
 				});
+		}
+
+		public int NavigateTo(string file, int line, int column)
+		{
+			int hr = VSConstants.S_OK;
+			var openDoc = _provider.globalServiceProvider.GetService(typeof(SVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+			if (openDoc == null)
+			{
+				Debug.Fail("Failed to get SVsUIShellOpenDocument service.");
+				return VSConstants.E_UNEXPECTED;
+			}
+
+			Microsoft.VisualStudio.OLE.Interop.IServiceProvider sp = null;
+			IVsUIHierarchy hierarchy = null;
+			uint itemID = 0;
+			IVsWindowFrame frame = null;
+			Guid viewGuid = VSConstants.LOGVIEWID_TextView;
+
+			hr = openDoc.OpenDocumentViaProject(file, ref viewGuid, out sp, out hierarchy, out itemID, out frame);
+			Debug.Assert(hr == VSConstants.S_OK, "OpenDocumentViaProject did not return S_OK.");
+
+			hr = frame.Show();
+			Debug.Assert(hr == VSConstants.S_OK, "Show did not return S_OK.");
+
+			IntPtr viewPtr = IntPtr.Zero;
+			Guid textLinesGuid = typeof(IVsTextLines).GUID;
+			hr = frame.QueryViewInterface(ref textLinesGuid, out viewPtr);
+			Debug.Assert(hr == VSConstants.S_OK, "QueryViewInterface did not return S_OK.");
+
+			IVsTextLines textLines = Marshal.GetUniqueObjectForIUnknown(viewPtr) as IVsTextLines;
+
+			var textMgr = _provider.globalServiceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager;
+			if (textMgr == null)
+			{
+				Debug.Fail("Failed to get SVsTextManager service.");
+				return VSConstants.E_UNEXPECTED;
+			}
+
+			IVsTextView textView = null;
+			hr = textMgr.GetActiveView(0, textLines, out textView);
+			Debug.Assert(hr == VSConstants.S_OK, "QueryViewInterface did not return S_OK.");
+
+			if (textView != null)
+			{
+				if (line > 0)
+				{
+					textView.SetCaretPos(line - 1, Math.Max(column - 1, 0));
+				}
+			}
+
+			return VSConstants.S_OK;
 		}
 	}
 
@@ -84,9 +155,11 @@ namespace vdext15
 		[DllImport("visuald.dll")]
 		public static extern bool GetTooltipResult(int request,
 		                                           [MarshalAs(UnmanagedType.BStr)] out string tip,
-		                                           [MarshalAs(UnmanagedType.BStr)] out string fmt);
+		                                           [MarshalAs(UnmanagedType.BStr)] out string fmt,
+		                                           [MarshalAs(UnmanagedType.BStr)] out string links);
 
-		static bool GetQuickInfo(string fname, int line, int col, out string info, out string fmt,
+		static bool GetQuickInfo(string fname, int line, int col,
+		                         out string info, out string fmt, out string links,
 		                         CancellationToken cancellationToken)
 		{
 			try
@@ -94,7 +167,7 @@ namespace vdext15
 				int req = GetTooltip(fname, line, col);
 				if (req != 0)
 				{
-					while (!GetTooltipResult(req, out info, out fmt))
+					while (!GetTooltipResult(req, out info, out fmt, out links))
 					{
 						if (cancellationToken.IsCancellationRequested)
 							return false;
@@ -108,6 +181,7 @@ namespace vdext15
 			}
 			info = "";
 			fmt = "";
+			links = "";
 			return false;
 		}
 
@@ -146,16 +220,43 @@ namespace vdext15
 
 		public ClassifiedTextBlock createClassifiedTextBlock(ITextView view, string text, string type, bool bold)
 		{
-			var tb = new ClassifiedTextBlock(text);
+			var tb = new ClassifiedTextBlock(text, _provider);
 			if (String.IsNullOrEmpty(text) || String.IsNullOrEmpty(text.Trim()))
 				return tb;
-
-			//if (type == "Identifier")
-			//	tb.enableLink();
 
 			// Foreground cannot be set from the constructor?!
 			tb.setForeground(GetBrush(view, type), bold);
 			return tb;
+		}
+
+		static SymLink[] stringToSymLinks(string links)
+		{
+			string[] strlinks = links.Split(';');
+			SymLink[] symlinks = new SymLink[strlinks.Length];
+			for (int i = 0; i < strlinks.Length; i++)
+			{
+				string[] tok = strlinks[i].Split(',');
+				if (tok.Length >= 3 && !String.IsNullOrEmpty(tok[2]))
+				{
+					Int32.TryParse(tok[0], out symlinks[i].start);
+					Int32.TryParse(tok[1], out symlinks[i].length);
+					symlinks[i].filename = tok[2];
+					if (tok.Length >= 5)
+					{
+						Int32.TryParse(tok[3], out symlinks[i].line);
+						Int32.TryParse(tok[4], out symlinks[i].column);
+					}
+				}
+			}
+			return symlinks;
+		}
+
+		static int findSymLink(SymLink[] symLinks, int pos)
+		{
+			for (int i = 0; i < symLinks.Length; i++)
+				if (symLinks[i].start <= pos && pos < symLinks[i].start + symLinks[i].length)
+					return i;
+			return -1;
 		}
 
 		// This is called on a background thread.
@@ -170,10 +271,11 @@ namespace vdext15
 				var lineSpan = _textBuffer.CurrentSnapshot.CreateTrackingSpan(line.Extent, SpanTrackingMode.EdgeInclusive);
 
 				var column = triggerPoint.Value.Position - line.Start.Position;
-				string info, fmt;
-				if (!GetQuickInfo(_filename, lineNumber, column, out info, out fmt, cancellationToken))
+				string info, fmt, links;
+				if (!GetQuickInfo(_filename, lineNumber, column, out info, out fmt, out links, cancellationToken))
 					return System.Threading.Tasks.Task.FromResult<QuickInfoItem>(null);
 
+				SymLink[] symlinks = stringToSymLinks(links);
 				ContainerElement infoElm = null;
 				Application.Current.Dispatcher.Invoke(delegate
 				{
@@ -181,7 +283,7 @@ namespace vdext15
 					var rows = new List<object>();
 					var secs = new List<object>();
 					bool bold = false;
-					Func<string, string, string> addClassifiedTextBlock = (string txt, string type) =>
+					Func<int, string, string, string> addClassifiedTextBlock = (int off, string txt, string type) =>
 					{
 						while (!String.IsNullOrEmpty(txt))
 						{
@@ -201,25 +303,34 @@ namespace vdext15
 								txt = null;
 							}
 							if (!String.IsNullOrEmpty(sec))
-								secs.Add(createClassifiedTextBlock(session.TextView, sec, type, secbold));
+							{
+								var tb = createClassifiedTextBlock(session.TextView, sec, type, secbold);
+								int symidx = findSymLink(symlinks, off);
+								if (symidx >= 0)
+									tb.enableLink(symlinks[symidx]);
+								secs.Add(tb);
+								off += sec.Length;
+							}
 						}
 						return txt;
 					};
 
-					Func<string, string, string> addTextSection = (string sec, string type) =>
+					Func<int, string, string, string> addTextSection = (int off, string sec, string type) =>
 					{
 						var nls = sec.Split(new char[1] { '\n' }, StringSplitOptions.None);
 						for (int n = 0; n < nls.Length - 1; n++)
 						{
-							addClassifiedTextBlock(nls[n], type);
+							addClassifiedTextBlock(off, nls[n], type);
 							rows.Add(new ContainerElement(ContainerElementStyle.Wrapped, secs));
 							secs = new List<object>();
+							off += nls[n].Length + 1;
 						}
-						addClassifiedTextBlock(nls[nls.Length - 1], type);
+						addClassifiedTextBlock(off, nls[nls.Length - 1], type);
 						return sec;
 					};
 
 					string[] ops = fmt.Split(';');
+
 					int prevpos = 0;
 					string prevtype = null;
 					foreach (var op in ops)
@@ -235,21 +346,24 @@ namespace vdext15
 								if (Int32.TryParse(colname[0], out pos) && pos > prevpos)
 								{
 									string sec = info.Substring(prevpos, pos - prevpos);
-									addTextSection(sec, prevtype);
+									addTextSection(prevpos, sec, prevtype);
 									prevtype = colname[1];
 									prevpos = pos;
 								}
 							}
 						}
 					}
-					if (prevtype != null && prevpos < info.Length)
+					if (prevpos < info.Length)
 					{
-						string sec = info.Substring(prevpos, info.Length - prevpos);
-						addTextSection(sec, prevtype);
-					}
-					else
-					{
-						addClassifiedTextBlock(info, PredefinedClassificationTypeNames.SymbolDefinition);
+						if (prevtype != null)
+						{
+							string sec = info.Substring(prevpos, info.Length - prevpos);
+							addTextSection(prevpos, sec, prevtype);
+						}
+						else
+						{
+							addClassifiedTextBlock(prevpos, info, PredefinedClassificationTypeNames.SymbolDefinition);
+						}
 					}
 					if (secs.Count > 0)
 						rows.Add(new ContainerElement(ContainerElementStyle.Wrapped, secs));
@@ -294,6 +408,8 @@ namespace vdext15
 		public IClassificationFormatMapService formatMap = null;
 		[Import]
 		public IClassificationTypeRegistryService typeRegistry = null;
+		[Import]
+		public SVsServiceProvider globalServiceProvider = null;
 
 		public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
 		{

@@ -904,6 +904,7 @@ class LanguageService : DisposingComObject,
 	private uint mLastTipReceived;
 	private wstring mLastTip;
 	private wstring mLastTipFmt;
+	private wstring mLastTipLinks;
 
 	extern(D)
 	void tipCallback(uint request, string fname, string text, TextSpan span)
@@ -914,12 +915,16 @@ class LanguageService : DisposingComObject,
 		text = replace(text, "\a", "\n\n");
 		text = phobosDdocExpand(text);
 
+		// remove quotes from `code` and put coloring information into fmt
+		// extract links inside code from #<symbol#filename,line,col#>
 		wstring tip = toUTF16(text);
 		string fmt;
-		int state = 0;
+		wstring links;
+		int state = Lexer.State.kWhite;
 		size_t pos = 0;
 		int prevcol = -1;
 		bool incode = false;
+		int beglink = -1;
 		while (pos < tip.length)
 		{
 			uint prevpos = pos;
@@ -928,7 +933,7 @@ class LanguageService : DisposingComObject,
 			{
 				tip = tip[0 .. pos] ~ tip[pos + 1 .. $];
 				incode = !incode;
-				state = 0;
+				state = Lexer.State.kWhite;
 				continue;
 			}
 			if (!incode)
@@ -937,8 +942,35 @@ class LanguageService : DisposingComObject,
 					decode(tip, pos);
 				col = 0;
 			}
+			else if (state == Lexer.State.kWhite && tip[pos] == '#')
+			{
+				if (beglink < 0)
+				{
+					if (tip.length > pos + 1 && tip[pos+1] == '<')
+					{
+						tip = tip[0 .. pos] ~ tip[pos + 2 .. $];
+						beglink = pos;
+						continue;
+					}
+					pos++;
+				}
+				else
+				{
+					uint lpos = pos + 1;
+					while (lpos + 1 < tip.length && (tip[lpos] != '#' || tip[lpos+1] != '>'))
+						decode(tip, lpos);
+
+					wstring link = tip[pos + 1 .. lpos];
+					links ~= to!wstring(beglink) ~ "," ~ to!wstring(pos - beglink) ~ "," ~ link ~ ";";
+					beglink = -1;
+
+					tip = tip[0 .. pos] ~ tip[lpos + 2 .. $];
+				}
+			}
 			else
+			{
 				col = dLex.scan(state, tip, pos, tok);
+			}
 			if (col != prevcol)
 			{
 				if (prevpos > 0)
@@ -953,6 +985,7 @@ class LanguageService : DisposingComObject,
 		}
 		mLastTip = tip;
 		mLastTipFmt = toUTF16(fmt);
+		mLastTipLinks = links;
 	}
 
 	uint RequestTooltip(string filename, int line, int col)
@@ -981,7 +1014,7 @@ class LanguageService : DisposingComObject,
 			else
 			{
 				ConfigureSemanticProject(src);
-				int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2;
+				int flags = (Package.GetGlobalOptions().showValueInTooltip ? 1 : 0) | 2 | 8;
 
 				mLastTipRequest = vdServerClient.GetTip(src.GetFileName(), &span, flags, &tipCallback);
 			}
@@ -990,7 +1023,7 @@ class LanguageService : DisposingComObject,
 		return mLastTipIdleTaskScheduled;
 	}
 
-	bool GetTooltipResult(uint task, out wstring tip, out wstring fmtdesc)
+	bool GetTooltipResult(uint task, out wstring tip, out wstring fmtdesc, out wstring links)
 	{
 		if (task != mLastTipIdleTaskScheduled)
 			return true; // return empty tip for wrong request
@@ -1001,6 +1034,7 @@ class LanguageService : DisposingComObject,
 
 		tip = mLastTip;
 		fmtdesc = mLastTipFmt;
+		links = mLastTipLinks;
 		return true;
 	}
 

@@ -441,8 +441,9 @@ class DMDServer : ComObject, IVDServer
 			{
 				try
 				{
+					bool addlinks = (flags & 8) != 0;
 					if (auto m = md.analyzedModule)
-						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1);
+						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1, addlinks);
 					else
 						txt = "analyzing...";
 				}

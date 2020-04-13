@@ -306,9 +306,9 @@ void do_unittests()
 		return m;
 	}
 
-	void checkTip(Module analyzedModule, int line, int col, string expected_tip)
+	void checkTip(Module analyzedModule, int line, int col, string expected_tip, bool addlinks = false)
 	{
-		string tip = findTip(analyzedModule, line, col, line, col + 1);
+		string tip = findTip(analyzedModule, line, col, line, col + 1, addlinks);
 		assert_equal(tip, expected_tip);
 	}
 
@@ -581,15 +581,11 @@ void do_unittests()
 	checkDefinition(m, 11, 16, "source.d", 6, 8);  // fun
 	checkDefinition(m, 15, 17, "source.d", 2, 9);  // C
 
-	{
-		global.addSymbolLinks = true;
-		scope(exit) global.addSymbolLinks = false;
+	checkTip(m,  2,  9, "(class) `#<source#source.d#>.#<C#source.d,2,9#>`", true);
+	checkTip(m,  4,  8, "(field) `int #<source#source.d#>.#<C#source.d,2,9#>.#<field1#source.d,4,8#>`", true);
+	checkTip(m,  6,  8, "`int #<source#source.d#>.#<C#source.d,2,9#>.#<fun#source.d,6,8#>(int par)`", true);
+	checkTip(m,  6, 16, "(parameter) `int par`", true);
 
-		checkTip(m,  2,  9, "(class) `#<source,source.d>#.#<C,source.d,2,9>#`");
-		checkTip(m,  4,  8, "(field) `int #<source,source.d>#.#<C,source.d,2,9>#.#<field1,source.d,4,8>#`");
-		checkTip(m,  6,  8, "`int #<source,source.d>#.#<C,source.d,2,9>#.#<fun,source.d,6,8>#(int par)`");
-		checkTip(m,  6, 16, "(parameter) `int par`");
-	}
 	// enum value
 	source =
 	q{                                   // Line 1
@@ -1350,8 +1346,10 @@ void do_unittests()
 		struct Q { int q; }         // Line 15
 		Templ!(Q).S tfun(Templ!(int).S s)
 		{
+			tmplfun!int(0);
 			return typeof(return).init;
-		}
+		}                           // Line 20
+		void tmplfun(T)(T x){}
 	};
 	m = checkErrors(source, "");
 
@@ -1365,13 +1363,10 @@ void do_unittests()
 	checkTip(m, 13, 25, "(constant) `int source.Templ!(object.Object).value = 4`");
 	checkTip(m, 16, 15, "`source.Templ!(Q).S source.tfun(source.Templ!int.S s)`"); // todo: Q not fqn
 
-	{
-		global.addSymbolLinks = true;
-		scope(exit) global.addSymbolLinks = false;
+	checkTip(m, 16, 15, "`#<source#source.d#>.#<Templ#source.d,2,12#>!(Q).#<S#source.d,4,11#> " ~
+			 "#<source#source.d#>.#<tfun#source.d,16,15#>(#<source#source.d#>.#<Templ#source.d,2,12#>!int.#<S#source.d,4,11#> s)`", true);
+	checkTip(m, 18,  4, "`void #<source#source.d#>.#<tmplfun#source.d,21,8#>!int(int x) pure nothrow @nogc @safe`", true);
 
-		checkTip(m, 16, 15,	"`#<source,source.d>#.#<Templ!(Q),source.d,2,12>#.#<S,source.d,4,11># " ~
-			"#<source,source.d>#.#<tfun,source.d,16,15>#(#<source,source.d>#.#<Templ!int,source.d,2,12>#.#<S,source.d,4,11># s)`");
-	}
 	// check FQN types in cast
 	source = q{
 		void foo(Error*)
@@ -1482,6 +1477,31 @@ void do_unittests()
 	checkTip(m,  4, 13, "(struct) `source.uda`");
 
 	checkReferences(m, 2, 10, [TextPos(2, 10), TextPos(3, 4), TextPos(4, 13)]); // uda
+
+	// member template function instance
+	source = q{
+		class ASTVisitor
+		{
+			void visitRecursive(T)(T node)
+			{                                   // Line 5
+			}
+			void visitExpression(Node expr)
+			{
+				visitRecursive(expr);
+			}                                  // Line 10
+		}
+		class Node {}
+	};
+	m = checkErrors(source, "");
+	//dumpAST(m);
+	checkTip(m,  9, 20, "(parameter) `source.Node expr`");
+	checkTip(m,  9,  5, "`void source.ASTVisitor.visitRecursive!(source.Node)(source.Node node) pure nothrow @nogc @safe`");
+
+	checkTip(m,  9,  5, "`void #<source#source.d#>.#<ASTVisitor#source.d,2,9#>.#<visitRecursive#source.d,4,9#>!" ~
+			 "(#<source#source.d#>.#<Node#source.d,12,9#>)(#<source#source.d#>.#<Node#source.d,12,9#> node) pure nothrow @nogc @safe`", true);
+
+	checkReferences(m, 9, 20, [TextPos(7, 30), TextPos(9, 20)]); // expr
+
 
 	// deprecation
 	source = q{
