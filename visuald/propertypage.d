@@ -542,6 +542,23 @@ abstract class PropertyPage : DisposingComObject, IPropertyPage, IVsPropertyPage
 		}
 	}
 
+	// two controls on same line
+	void AddTwoControls(Widget w1, Widget w2)
+	{
+		int prevLineY = mLineY;
+		AddControl("", w1);
+		mResizableWidgets[w1].att.right = 1;
+		mResizableWidgets[w1].att.hdiv = 2;
+		mResizableWidgets[w1].initright /= 2;
+
+		mLineY = prevLineY;
+		AddControl("", w2);
+		mResizableWidgets[w2].att.left = 1;
+		mResizableWidgets[w2].att.right = 2;
+		mResizableWidgets[w2].att.hdiv = 2;
+		mResizableWidgets[w2].initleft = mResizableWidgets[w2].initright / 2;
+	}
+
 	int changeOption(V)(V val, ref V optval, ref V refval)
 	{
 		if(refval == val)
@@ -2779,11 +2796,12 @@ class ToolsProperty2Page : GlobalPropertyPage
 		AddControl("", mDemangleError = new CheckBox(mCanvas, "Demangle names in link errors/disassembly"), btn);
 		AddTitleLine(".visualdproj build options");
 		AddControl("", mSortProjects  = new CheckBox(mCanvas, "Sort project items"));
-		AddControl("", mShowUptodate  = new CheckBox(mCanvas, "Show why a target is rebuilt"));
-		AddControl("", mTimeBuilds    = new CheckBox(mCanvas, "Show build time"));
+		AddTwoControls(mTimeBuilds    = new CheckBox(mCanvas, "Show build time"),
+			           mEchoCommands  = new CheckBox(mCanvas, "Echo batch commands executed"));
+		AddTwoControls(mShowUptodate  = new CheckBox(mCanvas, "Show why a target is rebuilt"),
+		               mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		static if(enableShowMemUsage)
 			AddControl("", mShowMemUsage  = new CheckBox(mCanvas, "Show compiler memory usage"));
-		AddControl("", mStopSlnBuild  = new CheckBox(mCanvas, "Stop solution build on error"));
 		AddControl("Resource includes", mIncPath = new Text(mCanvas));
 		AddControl("", mOptlinkDeps   = new CheckBox(mCanvas, "Monitor linker dependencies"));
 		mLinesPerMultiLine = 2;
@@ -2800,6 +2818,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 		mTimeBuilds.setChecked(opts.timeBuilds);
 		mSortProjects.setChecked(opts.sortProjects);
 		mShowUptodate.setChecked(opts.showUptodateFailure);
+		mEchoCommands.setChecked(opts.echoCommands);
 		mStopSlnBuild.setChecked(opts.stopSolutionBuild);
 		mDemangleError.setChecked(opts.demangleError);
 		mOptlinkDeps.setChecked(opts.optlinkDeps);
@@ -2817,7 +2836,8 @@ class ToolsProperty2Page : GlobalPropertyPage
 		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds);
 		changes += changeOption(mSortProjects.isChecked(), opts.sortProjects, refopts.sortProjects);
 		changes += changeOption(mShowUptodate.isChecked(), opts.showUptodateFailure, refopts.showUptodateFailure);
-		changes += changeOption(mStopSlnBuild.isChecked(), opts.stopSolutionBuild, refopts.stopSolutionBuild);
+		changes += changeOption(mTimeBuilds.isChecked(), opts.timeBuilds, refopts.timeBuilds);
+		changes += changeOption(mEchoCommands.isChecked(), opts.echoCommands, refopts.echoCommands);
 		changes += changeOption(mDemangleError.isChecked(), opts.demangleError, refopts.demangleError);
 		changes += changeOption(mOptlinkDeps.isChecked(), opts.optlinkDeps, refopts.optlinkDeps);
 		changes += changeOption(mExcludeFileDeps.getText(), opts.excludeFileDeps, refopts.excludeFileDeps);
@@ -2857,6 +2877,7 @@ class ToolsProperty2Page : GlobalPropertyPage
 	CheckBox mSortProjects;
 	CheckBox mShowUptodate;
 	CheckBox mStopSlnBuild;
+	CheckBox mEchoCommands;
 	CheckBox mDemangleError;
 	CheckBox mOptlinkDeps;
 	MultiLineText mExcludeFileDeps;
@@ -3058,6 +3079,8 @@ struct MagoOptions
 	bool hideReferencePointers;
 	bool removeLeadingHexZeroes;
 	bool recombineTuples;
+	bool callDebuggerFunctions;
+	bool callDebuggerUseMagoGC;
 	bool showDArrayLengthInType;
 	uint maxArrayElements;
 
@@ -3072,6 +3095,8 @@ struct MagoOptions
 		keyMago.Set("hideReferencePointers", hideReferencePointers);
 		keyMago.Set("removeLeadingHexZeroes", removeLeadingHexZeroes);
 		keyMago.Set("recombineTuples", recombineTuples);
+		keyMago.Set("callDebuggerFunctions", callDebuggerFunctions);
+		keyMago.Set("callDebuggerUseMagoGC", callDebuggerUseMagoGC);
 		keyMago.Set("showDArrayLengthInType", showDArrayLengthInType);
 		keyMago.Set("maxArrayElements", maxArrayElements);
 	}
@@ -3085,9 +3110,11 @@ struct MagoOptions
 		showVTable        = (keyMago.GetDWORD("showVTable", 1) != 0);
 		flatClassFields   = (keyMago.GetDWORD("flatClassFields", 0) != 0);
 		expandableStrings = (keyMago.GetDWORD("expandableStrings", 0) != 0);
-		hideReferencePointers = (keyMago.GetDWORD("hideReferencePointers", 1) != 0);
+		hideReferencePointers  = (keyMago.GetDWORD("hideReferencePointers", 1) != 0);
 		removeLeadingHexZeroes = (keyMago.GetDWORD("removeLeadingHexZeroes", 0) != 0);
-		recombineTuples   = (keyMago.GetDWORD("recombineTuples", 1) != 0);
+		recombineTuples        = (keyMago.GetDWORD("recombineTuples", 1) != 0);
+		callDebuggerFunctions  = (keyMago.GetDWORD("callDebuggerFunctions", 1) != 0);
+		callDebuggerUseMagoGC  = (keyMago.GetDWORD("callDebuggerUseMagoGC", 1) != 0);
 		showDArrayLengthInType = (keyMago.GetDWORD("showDArrayLengthInType", 0) != 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
 	}
@@ -3110,6 +3137,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mRecombineTuples   = new CheckBox(mCanvas, "Rebuild tuples from compiler generated fields"));
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
 		AddControl("", mHideRefPointers   = new CheckBox(mCanvas, "Hide pointers for class references and slices"));
+		AddControl("", mCallDebuggerFuncs = new CheckBox(mCanvas, "Call struct/class methods __debug[Overview|Expanded|Visualizer]"));
+		AddControl("", mCallDebugSwitchGC = new CheckBox(mCanvas, "Switch GC while executing debugger functions"));
 		AddControl("", mShowLengthInType  = new CheckBox(mCanvas, "Show length of dynamic array in type column"));
 		AddControl("", mRemoveHexZeroes   = new CheckBox(mCanvas, "Remove leading zeroes from hex values"));
 		auto saveWidth = kLabelWidth;
@@ -3165,6 +3194,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		mHideRefPointers.setChecked(mOptions.hideReferencePointers);
 		mRemoveHexZeroes.setChecked(mOptions.removeLeadingHexZeroes);
 		mRecombineTuples.setChecked(mOptions.recombineTuples);
+		mCallDebuggerFuncs.setChecked(mOptions.callDebuggerFunctions);
+		mCallDebugSwitchGC.setChecked(mOptions.callDebuggerUseMagoGC);
 		mShowLengthInType.setChecked(mOptions.showDArrayLengthInType);
 		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
 	}
@@ -3180,6 +3211,8 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mHideRefPointers.isChecked(), opts.hideReferencePointers, refopts.hideReferencePointers);
 		changes += changeOption(mRemoveHexZeroes.isChecked(), opts.removeLeadingHexZeroes, refopts.removeLeadingHexZeroes);
 		changes += changeOption(mRecombineTuples.isChecked(), opts.recombineTuples, refopts.recombineTuples);
+		changes += changeOption(mCallDebuggerFuncs.isChecked(), opts.callDebuggerFunctions, refopts.callDebuggerFunctions);
+		changes += changeOption(mCallDebugSwitchGC.isChecked(), opts.callDebuggerUseMagoGC, refopts.callDebuggerUseMagoGC);
 		changes += changeOption(mShowLengthInType.isChecked(), opts.showDArrayLengthInType, refopts.showDArrayLengthInType);
 
 		import stdext.string;
@@ -3198,6 +3231,8 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mHideRefPointers;
 	CheckBox mRemoveHexZeroes;
 	CheckBox mRecombineTuples;
+	CheckBox mCallDebuggerFuncs;
+	CheckBox mCallDebugSwitchGC;
 	CheckBox mShowLengthInType;
 	Text mMaxArrayElements;
 }

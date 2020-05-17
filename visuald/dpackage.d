@@ -1564,6 +1564,7 @@ class GlobalOptions
 	bool demangleError = true;
 	bool optlinkDeps = true;
 	bool showMemUsage = false;
+	bool echoCommands = false;
 	bool autoOutlining;
 	byte deleteFiles;  // 0: ask, -1: don't delete, 1: delete (obsolete)
 	bool parseSource = true;
@@ -1947,6 +1948,7 @@ class GlobalOptions
 			ColorizeCoverage    = getBoolOpt("ColorizeCoverage", true);
 			showCoverageMargin  = getBoolOpt("showCoverageMargin", false);
 			timeBuilds          = getBoolOpt("timeBuilds", false);
+			echoCommands        = getBoolOpt("echoCommands", false);
 			sortProjects        = getBoolOpt("sortProjects", true);
 			stopSolutionBuild   = getBoolOpt("stopSolutionBuild", false);
 			showUptodateFailure = getBoolOpt("showUptodateFailure", false);
@@ -2227,6 +2229,7 @@ class GlobalOptions
 			keyToolOpts.Set("showCoverageMargin",  showCoverageMargin);
 			keyToolOpts.Set("excludeFileDeps",     toUTF16(excludeFileDeps));
 			keyToolOpts.Set("timeBuilds",          timeBuilds);
+			keyToolOpts.Set("echoCommands",        echoCommands);
 			keyToolOpts.Set("sortProjects",        sortProjects);
 			keyToolOpts.Set("stopSolutionBuild",   stopSolutionBuild);
 			keyToolOpts.Set("showUptodateFailure", showUptodateFailure);
