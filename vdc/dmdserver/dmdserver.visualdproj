@@ -1761,7 +1761,7 @@
    <File path="dmd\src\dmd\boostlicense.txt" />
    <File path="dmd\src\dmd\builtin.d" />
    <File path="dmd\src\dmd\canthrow.d" />
-   <File path="dmd\src\dmd\chkprintf.d" />
+   <File path="dmd\src\dmd\chkformat.d" />
    <File path="dmd\src\dmd\cli.d" tool="None" />
    <File path="dmd\src\dmd\clone.d" />
    <File path="dmd\src\dmd\compiler.d" />
@@ -1858,6 +1858,7 @@
    <File path="dmd\src\dmd\statementsem.d" />
    <File path="dmd\src\dmd\staticassert.d" />
    <File path="dmd\src\dmd\staticcond.d" />
+   <File path="dmd\src\dmd\stmtstate.d" />
    <File path="dmd\src\dmd\strictvisitor.d" />
    <File path="dmd\src\dmd\target.d" />
    <File path="dmd\src\dmd\templateparamsem.d" />
