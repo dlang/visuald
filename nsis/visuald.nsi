@@ -29,7 +29,7 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.091.0"
+!define DMD_VERSION "2.092.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
@@ -849,6 +849,8 @@ ${MementoSection} "mago" SecMago
   ${File} ${MAGO_SOURCE}\bin\Win32\Release\ udis86.dll
 ;;  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ CVSTI.dll
   ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoRemote.exe
+  ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoGC64.dll
+  ${File} ${MAGO_SOURCE}\bin\Win32\Release\ MagoGC32.dll
   ${File} ${MAGO_SOURCE}\ LICENSE.TXT
   ${File} ${MAGO_SOURCE}\ NOTICE.TXT
 
@@ -889,6 +891,8 @@ ${MementoSection} "mago" SecMago
 ;  Call RegisterMago
   
   WriteRegStr HKLM "SOFTWARE\Wow6432Node\MagoDebugger" "Remote_x64" "$INSTDIR\Mago\MagoRemote.exe"
+  WriteRegStr HKLM "SOFTWARE\Wow6432Node\MagoDebugger" "MagoGC32.dll" "$INSTDIR\Mago\MagoGC32.dll"
+  WriteRegStr HKLM "SOFTWARE\Wow6432Node\MagoDebugger" "MagoGC64.dll" "$INSTDIR\Mago\MagoGC64.dll"
 
 ${MementoSectionEnd}
 !endif
