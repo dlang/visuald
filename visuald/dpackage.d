@@ -1965,17 +1965,15 @@ class GlobalOptions
 			//expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
 			expandFromJSON      = getBoolOpt("expandFromJSON", true);
 			expandTrigger       = cast(byte) getIntOpt("expandTrigger", 0);
-			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true); // changed default
-			showValueInTooltip  = getBoolOpt("showValueInTooltip", false);
+			showTypeInTooltip   = getBoolOpt("showTypeInTooltip2", true);  // changed default
+			showValueInTooltip  = getBoolOpt("showValueInTooltip2", true); // changed default
 			semanticHighlighting  = getBoolOpt("semanticHighlighting", true);
-			semanticResolveFields = getBoolOpt("semanticResolveFields", false);
+			semanticResolveFields = getBoolOpt("semanticResolveFields2", true); // changed default
 			//semanticGotoDef     = getBoolOpt("semanticGotoDef", true);
 			pasteIndent         = getBoolOpt("pasteIndent", true);
 			fmtIndentCase       = getBoolOpt("fmtIndentCase", true);
 
-			scope RegKey keyDParser = new RegKey(HKEY_CLASSES_ROOT, "CLSID\\{002a2de9-8bb6-484d-AA05-7e4ad4084715}", false);
-			version(all) useDParser    = getBoolOpt("useDParser2", keyDParser.key !is null);
-			else  useDParser    = true;
+			useDParser          = getBoolOpt("useDParser3", false);
 			mixinAnalysis       = getBoolOpt("mixinAnalysis", false);
 			UFCSExpansions      = getBoolOpt("UFCSExpansions", true);
 			sortExpMode         = getBoolOpt("sortExpMode", 0);
@@ -2245,11 +2243,11 @@ class GlobalOptions
 			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
 			keyToolOpts.Set("expandTrigger",       expandTrigger);
 			keyToolOpts.Set("showTypeInTooltip2",  showTypeInTooltip);
-			keyToolOpts.Set("showValueInTooltip",  showValueInTooltip);
+			keyToolOpts.Set("showValueInTooltip2", showValueInTooltip);
 			keyToolOpts.Set("semanticHighlighting",  semanticHighlighting);
-			keyToolOpts.Set("semanticResolveFields", semanticResolveFields);
+			keyToolOpts.Set("semanticResolveFields2", semanticResolveFields);
 			//keyToolOpts.Set("semanticGotoDef",     semanticGotoDef);
-			keyToolOpts.Set("useDParser2",         useDParser);
+			keyToolOpts.Set("useDParser3",         useDParser);
 			keyToolOpts.Set("mixinAnalysis",       mixinAnalysis);
 			keyToolOpts.Set("UFCSExpansions",      UFCSExpansions);
 			keyToolOpts.Set("sortExpMode",         sortExpMode);

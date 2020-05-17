@@ -2906,9 +2906,9 @@ class ColorizerPropertyPage : GlobalPropertyPage
 		AddTitleLine("Colorizer");
 		AddControl("", mColorizeVersions = new CheckBox(mCanvas, "Colorize version and debug statements"));
 		AddControl("", mSemanticHighlighting = new CheckBox(mCanvas, "Colorize identifiers from semantic analysis"));
-		AddControl("", mResolveFields = new CheckBox(mCanvas, "   resolving fields and aliases (experimental, can be slow)"));
+		AddControl("", mResolveFields = new CheckBox(mCanvas, "   resolving fields and aliases"));
 		AddControl("Colored types", mUserTypes = new MultiLineText(mCanvas), 1000);
-		AddControl("", mColorizeReferences = new CheckBox(mCanvas, "Highlight references to the symbol at the caret (experimental)"));
+		AddControl("", mColorizeReferences = new CheckBox(mCanvas, "Highlight references to the symbol at the caret"));
 		AddTitleLine("Coverage");
 		AddControl("", mColorizeCoverage = new CheckBox(mCanvas, "Colorize coverage from .LST file"));
 		AddControl("", mShowCoverageMargin = new CheckBox(mCanvas, "Show coverage margin"));
@@ -2982,7 +2982,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	{
 		AddTitleLine("Semantic analysis");
 		AddControl("", mShowParseErrors = new CheckBox(mCanvas, "Show parsing errors (squiggles and markers)"));
-		version(DParserOption) AddControl("", mUseDmdParser = new CheckBox(mCanvas, "Experimental: use DMD parsing engine for semantic analysis"));
+		version(DParserOption) AddControl("", mUseDmdParser = new CheckBox(mCanvas, "use DMD parsing engine for semantic analysis"));
 		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
 		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
 		//AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
@@ -2995,7 +2995,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddControl("Sort expansions", mSortExpMode = new ComboBox(mCanvas, [ "alphabetically", "by type", "by declaration and scope" ], false));
 		AddTitleLine("Tooltips");
 		AddControl("", mShowTypeInTooltip = new CheckBox(mCanvas, "Show type of expressions in tooltip"));
-		AddControl("", mShowValueInTooltip = new CheckBox(mCanvas, "Show value of constant expressions in tooltip (experimental)"));
+		AddControl("", mShowValueInTooltip = new CheckBox(mCanvas, "Show value of constant expressions in tooltip"));
 	}
 
 	override void UpdateDirty(bool bDirty)
