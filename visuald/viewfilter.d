@@ -1607,7 +1607,10 @@ else
 			criteria.szName = "Find All References";
 
 			if (auto lib = Package.s_instance.GetLibrary())
+			{
 				lib.mLastFindReferencesResult = exps;
+				lib.mLastFindReferencesSource = mCodeWinMgr.mSource;
+			}
 
 			fs.DoSearch(&GUID_VsSymbolScope_All, &criteria);
 		}
