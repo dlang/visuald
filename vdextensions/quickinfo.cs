@@ -89,10 +89,7 @@ namespace vdext15
 			int hr = VSConstants.S_OK;
 			var openDoc = _provider.globalServiceProvider.GetService(typeof(SVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
 			if (openDoc == null)
-			{
-				Debug.Fail("Failed to get SVsUIShellOpenDocument service.");
 				return VSConstants.E_UNEXPECTED;
-			}
 
 			Microsoft.VisualStudio.OLE.Interop.IServiceProvider sp = null;
 			IVsUIHierarchy hierarchy = null;
@@ -101,35 +98,36 @@ namespace vdext15
 			Guid viewGuid = VSConstants.LOGVIEWID_TextView;
 
 			hr = openDoc.OpenDocumentViaProject(file, ref viewGuid, out sp, out hierarchy, out itemID, out frame);
-			Debug.Assert(hr == VSConstants.S_OK, "OpenDocumentViaProject did not return S_OK.");
-
+			if (hr != VSConstants.S_OK)
+				return hr;
 			hr = frame.Show();
-			Debug.Assert(hr == VSConstants.S_OK, "Show did not return S_OK.");
+			if (hr != VSConstants.S_OK)
+				return hr;
 
 			IntPtr viewPtr = IntPtr.Zero;
 			Guid textLinesGuid = typeof(IVsTextLines).GUID;
 			hr = frame.QueryViewInterface(ref textLinesGuid, out viewPtr);
-			Debug.Assert(hr == VSConstants.S_OK, "QueryViewInterface did not return S_OK.");
+			if (hr != VSConstants.S_OK)
+				return hr;
 
 			IVsTextLines textLines = Marshal.GetUniqueObjectForIUnknown(viewPtr) as IVsTextLines;
 
 			var textMgr = _provider.globalServiceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager;
 			if (textMgr == null)
-			{
-				Debug.Fail("Failed to get SVsTextManager service.");
 				return VSConstants.E_UNEXPECTED;
-			}
 
 			IVsTextView textView = null;
 			hr = textMgr.GetActiveView(0, textLines, out textView);
-			Debug.Assert(hr == VSConstants.S_OK, "QueryViewInterface did not return S_OK.");
+			if (hr != VSConstants.S_OK)
+				return hr;
 
-			if (textView != null)
+			if (textView != null && line > 0)
 			{
-				if (line > 0)
-				{
-					textView.SetCaretPos(line - 1, Math.Max(column - 1, 0));
-				}
+				int col = Math.Max(column - 1, 0);
+				textView.SetCaretPos(line - 1, col);
+				var span = new TextSpan { iStartLine = line - 1, iStartIndex = col, iEndLine = line - 1, iEndIndex = col + 1 };
+				textView.EnsureSpanVisible(span);
+				textView.CenterLines(line - 1, 1);
 			}
 
 			return VSConstants.S_OK;
