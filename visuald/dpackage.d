@@ -718,6 +718,51 @@ version(none)
 		return OLECMDERR_E_NOTSUPPORTED;
 	}
 
+	string getInstalledVersion(CheckProduct prod)
+	{
+		auto opts = GetGlobalOptions();
+		switch(prod)
+		{
+			case CheckProduct.VisualD:
+				return full_version;
+			case CheckProduct.DMD:
+				return opts.DMD.getCompilerVersionLabel(opts.DMD.InstallDir);
+			case CheckProduct.LDC:
+				return opts.LDC.getCompilerVersionLabel(opts.LDC.InstallDir);
+			default:
+				return null;
+		}
+	}
+
+	float getInstalledVersionFloat(CheckProduct prod)
+	{
+		auto opts = GetGlobalOptions();
+		string ver;
+		switch(prod)
+		{
+			case CheckProduct.VisualD:
+				ver = pkg_version;
+				break;
+			case CheckProduct.DMD:
+				ver = opts.DMD.getCompilerVersionLabel(opts.DMD.InstallDir);
+				auto pos = ver.indexOf("v2");
+				if (pos < 0)
+					return 0;
+				ver = ver[pos+1..$];
+				break;
+			case CheckProduct.LDC:
+				ver = opts.LDC.getCompilerVersionLabel(opts.LDC.InstallDir);
+				auto pos = ver.indexOf("1.");
+				if (pos < 0)
+					return 0;
+				ver = ver[pos..$];
+				break;
+			default:
+				return 0;
+		}
+		return parse!float(ver) + 1e-5; // avoid rounding issues when comparing to
+	}
+
 	extern(D) void checkUpdates()
 	{
 		auto opts = GetGlobalOptions();
@@ -761,21 +806,6 @@ version(none)
 					break;
 				default:
 					break;
-			}
-		}
-
-		string getInstalledVersion(CheckProduct prod)
-		{
-			switch(prod)
-			{
-				case CheckProduct.VisualD:
-					return full_version;
-				case CheckProduct.DMD:
-					return opts.DMD.getCompilerVersionLabel(opts.DMD.InstallDir);
-				case CheckProduct.LDC:
-					return opts.LDC.getCompilerVersionLabel(opts.LDC.InstallDir);
-				default:
-					return null;
 			}
 		}
 

@@ -50,6 +50,7 @@ import visuald.lexutil;
 import visuald.pkgutil;
 import visuald.vdextensions;
 import visuald.register;
+import visuald.updates;
 
 version = hasOutputGroup;
 enum usePipedmdForDeps = true;
@@ -874,7 +875,7 @@ class ProjectOptions
 		return cmd;
 	}
 
-	string linkDMDCommandLine(bool mslink)
+	string linkDMDCommandLine(bool mslink, bool ldc)
 	{
 		string cmd;
 
@@ -929,7 +930,8 @@ class ProjectOptions
 			if (mslink && lib == OutputType.DLL)
 				cmd ~= " -L/DLL";
 
-			if (mslink && Package.GetGlobalOptions().isVS2017OrLater)
+			if (mslink && Package.GetGlobalOptions().isVS2017OrLater && !ldc &&
+				Package.s_instance.getInstalledVersionFloat(CheckProduct.DMD) < 2.076)
 				cmd ~= " -L/noopttls"; // update 15.3.1 moves TLS into _DATA segment
 		}
 		return cmd;
@@ -1131,7 +1133,8 @@ class ProjectOptions
 
 		if(mslink)
 		{
-			if (Package.GetGlobalOptions().isVS2017OrLater)
+			if (Package.GetGlobalOptions().isVS2017OrLater &&
+				Package.s_instance.getInstalledVersionFloat(CheckProduct.DMD) < 2.076)
 				cmd ~= " /noopttls"; // update 15.3.1 moves TLS into _DATA segment
 
 			switch(cRuntime)
@@ -1174,9 +1177,9 @@ class ProjectOptions
 		else if(isLDCforMinGW())
 			return linkLDCCommandLine();
 		else if(compiler == Compiler.LDC)
-			return linkDMDCommandLine(true); // MS link
+			return linkDMDCommandLine(true, true); // MS link
 		else
-			return linkDMDCommandLine(isX86_64);
+			return linkDMDCommandLine(isX86_64, false);
 	}
 
 	string getObjectDirOption()
