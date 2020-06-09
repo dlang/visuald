@@ -1241,3 +1241,24 @@ Version history
     - vcxproj: add dbuild.props showing how to setup a project that builds D files without Visual D installed
     - vcxproj: do not check referenced projects if the project itself already needs phobos to be linked
     - vcxproj: only print the filename in the "Compiling" message, not the path
+
+unreleased version 1.0.0
+  * Visual D and all tools now built with LDC
+  * projects:
+    - trailing \ now removed from $(WindowsSDKVersion)/$(UCRTVersion) for more consistency between
+      autodetected version and as read from the environment
+    - added global option "Echo batch commands executed" to show commands during builds
+    - workaround /noopttls no longer added when building with LDC or dmd 2.076+
+  * dmdserver:
+    - now enabled by default including semantic highlighting
+    - updated to dmd 2.092
+    - improve preciseness for the GC
+    - fix parameters not considered references to itself
+    - fix crash when invoking "Find All References"
+  * editor with dmdserver:
+    - implement "goto definition" by clicking identifier in tool tip
+    - add navigation bar
+  * mago debugger
+    - can now execute class/struct methods __debugOverview, __debugExpaanded, __debugTextView
+      to customize display in the debugger
+    - some performance improvements by caching some data while the debuggee is stopped
