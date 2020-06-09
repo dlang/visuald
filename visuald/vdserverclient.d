@@ -453,7 +453,7 @@ class GetDefinitionCommand : FileCommand
 //////////////////////////////////////
 
 alias void delegate(uint request, string filename, string parseErrors,
-                    TextPos[] binaryIsIn, string tasks) UpdateModuleCallBack;
+                    TextPos[] binaryIsIn, string tasks, string outline) UpdateModuleCallBack;
 
 class UpdateModuleCommand : FileCommand
 {
@@ -524,6 +524,10 @@ class UpdateModuleCommand : FileCommand
 		if(gVDServer.GetCommentTasks(fname, &tasks) == S_OK)
 			mTasks = detachBSTR(tasks);
 
+		BSTR outline;
+		if(gVDServer.GetDocumentOutline(fname, &outline) == S_OK)
+			mOutline = detachBSTR(outline);
+
 		send(gUITid);
 		return S_OK;
 	}
@@ -533,7 +537,7 @@ class UpdateModuleCommand : FileCommand
 		version(DebugCmd)
 			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mErrors);
 		if(mCallback)
-			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks);
+			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks, mOutline);
 		return true;
 	}
 
@@ -541,7 +545,7 @@ class UpdateModuleCommand : FileCommand
 	wstring mText;
 	string mErrors;
 	string mTasks;
-	string mIdentifierTypes;
+	string mOutline;
 	bool mVerbose;
 	TextPos[] mBinaryIsIn;
 }

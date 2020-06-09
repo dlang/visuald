@@ -1866,6 +1866,10 @@ version(none)
 
 			replaceTokenSequence(tokens, "__uuidof(SVsHierarchyManipulation)", "SVsHierarchyManipulation.iid", true);
 		}
+		if(currentModule == "vsshell166")
+		{
+			replaceTokenSequence(tokens, "__uuidof(IVsDebuggerLaunchAsync)", "IVsDebuggerLaunchAsync.iid", true);
+		}
 		if(currentModule == "vapiemp")
 		{
 			// CLSID_CVapiEMPDataSource undefined, create one
@@ -2228,6 +2232,10 @@ else
 			"const GUID $_ident = { $_num1,$_num2,$_num3, [ $_num4,$_num5,$_num6,$_num7,$_num8,$_num9,$_numA,$_numB ] }", true);
 		replaceTokenSequence(tokens, "EXTERN_GUID($_ident,$_num1,$_num2,$_num3,$_num4,$_num5,$_num6,$_num7,$_num8,$_num9,$_numA,$_numB)",
 			"const GUID $_ident = { $_num1,$_num2,$_num3, [ $_num4,$_num5,$_num6,$_num7,$_num8,$_num9,$_numA,$_numB ] }", true);
+
+		// VS 16.6: untranslatable C++
+		replaceTokenSequence(tokens, "idl_bool IsLegacyVTIntPtrVARIANT $code GetVSCOOKIEVariantValHelper($args) { $code2 }",
+							 "", false);
 
 		// combaseapi.h:
 		replaceTokenSequence(tokens, "alias int $_ident = $_num;", "enum int $_ident = $_num;", true);

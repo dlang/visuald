@@ -29,6 +29,7 @@ interface IVDServer : IUnknown
 	HRESULT IsBinaryOperator([in] BSTR filename, [in] DWORD startLine, [in] DWORD startIndex, [in] DWORD endLine, [in] DWORD endIndex, [out,retval] BOOL* pIsOp);
 	HRESULT GetParseErrors([in] BSTR filename, [out, retval] BSTR* errors);
 	HRESULT GetBinaryIsInLocations([in] BSTR filename, [out,retval] VARIANT* locs); // array of pairs of DWORD
+	HRESULT GetDocumentOutline([in] BSTR filename, [out, retval] BSTR* stringList);
 	HRESULT GetLastMessage([out,retval] BSTR* message);
 	HRESULT GetIdentifierTypes([in] BSTR filename, [in] DWORD startLine, [in] DWORD endLine, [in] DWORD flags);
 	HRESULT GetIdentifierTypesResult([out, retval] BSTR* types);

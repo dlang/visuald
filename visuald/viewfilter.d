@@ -104,7 +104,9 @@ version(tip)
 		mView.AddCommandFilter(this, &mNextTarget);
 		hookWindowProc(cast(HWND) mView.GetWindowHandle());
 
-		// mgr.SetupNavigationBar();
+		LANGPREFERENCES3 langPrefs;
+		if(GetUserPreferences(&langPrefs, null) == S_OK && langPrefs.fDropdownBar)
+			mgr.SetupNavigationBar();
 version(tip)
 		mTextTipData = addref(newCom!TextTipData);
 	}
@@ -1605,7 +1607,10 @@ else
 			criteria.szName = "Find All References";
 
 			if (auto lib = Package.s_instance.GetLibrary())
+			{
 				lib.mLastFindReferencesResult = exps;
+				lib.mLastFindReferencesSource = mCodeWinMgr.mSource;
+			}
 
 			fs.DoSearch(&GUID_VsSymbolScope_All, &criteria);
 		}

@@ -441,8 +441,9 @@ class DMDServer : ComObject, IVDServer
 			{
 				try
 				{
+					bool addlinks = (flags & 8) != 0;
 					if (auto m = md.analyzedModule)
-						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1);
+						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1, addlinks);
 					else
 						txt = "analyzing...";
 				}
@@ -627,6 +628,23 @@ class DMDServer : ComObject, IVDServer
 	override HRESULT GetCommentTasks(in BSTR filename, BSTR* tasks)
 	{
 		return E_NOTIMPL;
+	}
+
+	override HRESULT GetDocumentOutline(in BSTR filename, BSTR* outline)
+	{
+		string fname = makeFilenameCanonical(to_string(filename), null);
+
+		synchronized(gErrorSync)
+		{
+			ModuleData* md = findModule(fname, false);
+			if (!md || !md.parsedModule)
+				return S_FALSE;
+
+			string[] outlines = getModuleOutline(md.parsedModule, 4);
+			string joined = outlines.join("\n");
+			*outline = allocBSTR(joined);
+		}
+		return S_OK;
 	}
 
 	override HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs)

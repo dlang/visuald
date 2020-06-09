@@ -973,6 +973,7 @@ version(none)
 		hr = S_FALSE;
 	}
 
+	string quiet = Package.GetGlobalOptions().echoCommands ? "" : "/Q ";
 	DWORD result;
 	IVsLaunchPad2 pad2 = qi_cast!IVsLaunchPad2(srpIVsLaunchPad);
 	if(pad2 && pBuilder.needsOutputParser())
@@ -980,7 +981,7 @@ version(none)
 		CLaunchPadOutputParser pLaunchPadOutputParser = newCom!CLaunchPadOutputParser(pBuilder);
 		hr = pad2.ExecCommandEx(
 			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
-			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilenameForCmd(cmdfile)),
+			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z(quiet ~ "/C " ~ quoteFilenameForCmd(cmdfile)),
 			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strBuildDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
 			/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow | LPF_PipeStdoutToTaskList,
 			/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
@@ -996,7 +997,7 @@ version(none)
 	else
 		hr = srpIVsLaunchPad.ExecCommand(
 			/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
-			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilenameForCmd(cmdfile)),
+			/* [in] LPCOLESTR pszCommandLine               */ _toUTF16z(quiet ~ "/C " ~ quoteFilenameForCmd(cmdfile)),
 			/* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(strBuildDir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
 			/* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow | LPF_PipeStdoutToTaskList,
 			/* [in] IVsOutputWindowPane *pOutputWindowPane */ pIVsOutputWindowPane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to
@@ -1475,10 +1476,11 @@ bool launchBatchProcess(string workdir, string cmdfile, string cmdline, IVsOutpu
 	}
 	//		scope(exit) std.file.remove(cmdfile);
 
+	string quiet = Package.GetGlobalOptions().echoCommands ? "" : "/Q ";
 	BSTR bstrOutput;
 	DWORD result;
 	hr = srpIVsLaunchPad.ExecCommand(/* [in] LPCOLESTR pszApplicationName           */ _toUTF16z(getCmdPath()),
-									 /* [in] LPCOLESTR pszCommandLine               */ _toUTF16z("/Q /C " ~ quoteFilenameForCmd(cmdfile)),
+									 /* [in] LPCOLESTR pszCommandLine               */ _toUTF16z(quiet ~ "/C " ~ quoteFilenameForCmd(cmdfile)),
 									 /* [in] LPCOLESTR pszWorkingDir                */ _toUTF16z(workdir),      // may be NULL, passed on to CreateProcess (wee Win32 API for details)
 									 /* [in] LAUNCHPAD_FLAGS lpf                    */ LPF_PipeStdoutToOutputWindow,
 									 /* [in] IVsOutputWindowPane *pOutputWindowPane */ pane, // if LPF_PipeStdoutToOutputWindow, which pane in the output window should the output be piped to

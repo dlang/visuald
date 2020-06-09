@@ -28,6 +28,13 @@ S normalizePath(S)(S path)
 	return replace(path, "/", "\\");
 }
 
+string normalizeVersion(string ver)
+{
+	while (ver.endsWith('\\'))
+		ver = ver[0..$-1];
+	return ver;
+}
+
 string canonicalPath(string path)
 {
 	return toLower(replace(path, "/", "\\"));

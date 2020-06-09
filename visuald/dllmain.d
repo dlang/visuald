@@ -207,14 +207,15 @@ uint GetTooltip(BSTR fname, uint line, uint col)
 }
 
 extern(Windows)
-BOOL GetTooltipResult(uint request, BSTR* btip, BSTR* bfmt)
+BOOL GetTooltipResult(uint request, BSTR* btip, BSTR* bfmt, BSTR* blinks)
 {
 	if (!Package.s_instance)
 		return false; // not yet loaded as a package
 
-	wstring tip, fmt;
-	bool rc = Package.GetLanguageService().GetTooltipResult(request, tip, fmt);
+	wstring tip, fmt, links;
+	bool rc = Package.GetLanguageService().GetTooltipResult(request, tip, fmt, links);
 	*btip = allocwBSTR(tip);
 	*bfmt = allocwBSTR(fmt);
+	*blinks = allocwBSTR(links);
 	return rc;
 }

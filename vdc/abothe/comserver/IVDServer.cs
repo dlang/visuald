@@ -28,6 +28,7 @@ namespace DParserCOMServer
 		void IsBinaryOperator (string filename, uint startLine, uint startIndex, uint endLine, uint endIndex, out bool pIsOp);
 		void GetParseErrors (string filename, out string errors);
 		void GetBinaryIsInLocations (string filename, out object locs); // array of pairs of DWORD
+		void GetDocumentOutline(string filename, out string outline);
 		void GetLastMessage (out string message);
 		void GetIdentifierTypes(string filename, int startLine, int endLine, int flags);
 		void GetIdentifierTypesResult(out string types);

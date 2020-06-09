@@ -24,7 +24,7 @@ $(TABLE_NOBORDER
   <div align="right">
   $(LINK2 https://github.com/dlang/visuald/releases/download/v$(VERSION)/VisualD-v$(VERSION)-dmd-$(DMD_VERSION)-ldc2-$(LDC_VERSION).exe, $(IMG images/download_with_dmdldc2.png))
   </div>
-  <div align="right"><small>download size approx 70 MB</small></div>
+  <div align="right"><small>download size approx 80 MB</small></div>
   </span>
  ))
  $(TR
@@ -34,7 +34,7 @@ $(TABLE_NOBORDER
   <div align="right">
   $(LINK2 https://github.com/dlang/visuald/releases/download/v$(VERSION)/VisualD-v$(VERSION).exe, $(IMG images/download_extension2.png))
   </div>
-  <div align="right"><small>download size approx 3 MB</small></div>
+  <div align="right"><small>download size approx 4 MB</small></div>
  ))
  $(TR
   $(TD Cutting edge prereleases if you want to try the most recent improvements to Visual D:)
@@ -88,7 +88,7 @@ $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 $(UL
  $(LI mago: added support for tuples and simpler display of globals)
  $(LI DMD based semantic engine: updated to 2.091, improvements to code-completions)
- $(LI updated support for all language options)
+ $(LI projects: updated support for all language options)
 )
 
 2020-18-01 Version 0.51.0

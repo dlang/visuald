@@ -12,6 +12,7 @@ import visuald.comutil;
 import visuald.logutil;
 import visuald.hierutil;
 import visuald.dpackage;
+import visuald.dlangsvc;
 import visuald.dimagelist;
 import visuald.intellisense;
 
@@ -142,6 +143,7 @@ class Library : DComObject,
 
 	// Find References result
 	string[]        mLastFindReferencesResult;
+	Source          mLastFindReferencesSource;
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
 	{
@@ -380,7 +382,7 @@ class Library : DComObject,
 		{
 			if (eListType != LLT_MEMBERS) // also called with LLT_NAMESPACES and LLT_CLASSES, so avoid duplicates
 				return E_FAIL;
-			auto frl = newCom!FindReferencesList(mLastFindReferencesResult);
+			auto frl = newCom!FindReferencesList(mLastFindReferencesResult, mLastFindReferencesSource);
 			return frl.QueryInterface(&IVsSimpleObjectList2.iid, cast(void**) ppList);
 		}
 		else
@@ -1788,11 +1790,11 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 	}
 	RefData[] mReferences;
 
-	this(string[] refs)
+	this(string[] refs, Source source)
 	{
 		mReferences = new RefData[refs.length];
 		foreach (i, r; refs)
-			parseRef(i, r);
+			parseRef(i, r, source);
 	}
 
 	override HRESULT QueryInterface(in IID* riid, void** pvObject)
@@ -1807,7 +1809,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		return uIndex < mReferences.length;
 	}
 
-	string parseRef(int i, string r)
+	string parseRef(int i, string r, Source source)
 	{
 		auto refdata = &mReferences[i];
 
@@ -1829,10 +1831,25 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 						refdata.len = -1;
 
 					auto sidx = indexOf(r, '|');
-
+					if (sidx < 0)
+						sidx = r.length;
 					refdata.file = r[idx + 1 .. sidx];
 
-					string src = sidx < r.length ? r[sidx + 1..$] : "";
+					string src;
+					if (sidx < r.length)
+						src = r[sidx + 1..$];
+					else if (source)
+					{
+						if (refdata.file.empty)
+						{
+							if (i == 0)
+								refdata.file = source.GetFileName();
+							else
+								refdata.file = mReferences[i-1].file;
+						}
+						wstring wsrc = source.GetText(refdata.line, 0, refdata.line, -1);
+						src = to!string(wsrc);
+					}
 					size_t srclen = src.length;
 					src = stripLeft(src);
 					size_t stripped = srclen - src.length;

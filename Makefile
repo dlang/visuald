@@ -39,7 +39,7 @@ MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBui
 !IF !EXIST($(MSBUILD15))
 MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Current\Bin\msbuild"
 !ENDIF
-CONFIG  = Release COFF32
+CONFIG  = Release LDC
 
 ##############################################################
 # no more changes should be necessary starting from here
@@ -141,6 +141,10 @@ mago_vs16:
 	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v142              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
 	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v142" /target:Expression\MagoNatCC MagoDbg_2010.sln
 
+magogc:
+	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoGC" magodbg_2010.sln
+	cd ..\..\mago && devenv /Build "Release|x64" /Project "MagoGC" magodbg_2010.sln
+
 cv2pdb:
 	cd ..\..\cv2pdb\trunk && devenv /Project "cv2pdb"      /Build "Release|Win32" src\cv2pdb_vs12.sln
 	cd ..\..\cv2pdb\trunk && devenv /Project "dviewhelper" /Build "Release|Win32" src\cv2pdb_vs12.sln
@@ -164,13 +168,13 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules dparser dparser_test cv2pdb_vs16 mago_vs16 dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules dparser dparser_test cv2pdb_vs16 mago_vs16 magogc dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 
-install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago dbuild12 dbuild14 fake_dbuild15 install_only
+install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago magogc dbuild12 dbuild14 fake_dbuild15 install_only
 
-install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 fake_dbuild12 fake_dbuild14 dbuild15 install_only
+install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 magogc fake_dbuild12 fake_dbuild14 dbuild15 install_only
 
 install_modules: prerequisites visuald_vs vdserver dmdserver vdextension vdext15 visualdwizard dcxxfilt
 

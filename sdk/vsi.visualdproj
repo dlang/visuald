@@ -40,7 +40,6 @@
   <preservePaths>1</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -164,7 +163,6 @@
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -288,7 +286,6 @@
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -412,7 +409,6 @@
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -536,7 +532,6 @@
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -660,7 +655,6 @@
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -784,7 +778,6 @@
   <preservePaths>1</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -874,7 +867,7 @@
   <lib>1</lib>
   <subsystem>0</subsystem>
   <multiobj>0</multiobj>
-  <singleFileCompilation>2</singleFileCompilation>
+  <singleFileCompilation>0</singleFileCompilation>
   <oneobj>0</oneobj>
   <mscoff>0</mscoff>
   <trace>0</trace>
@@ -908,7 +901,6 @@
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -1032,7 +1024,6 @@
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -1156,7 +1147,6 @@
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -1280,7 +1270,6 @@
   <preservePaths>1</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -1404,7 +1393,6 @@
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -1528,7 +1516,6 @@
   <preservePaths>1</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -1652,7 +1639,6 @@
   <preservePaths>1</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -1776,7 +1762,6 @@
   <preservePaths>1</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -1900,7 +1885,6 @@
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
   <infowarnings>0</infowarnings>
-  <checkProperty>0</checkProperty>
   <genStackFrame>0</genStackFrame>
   <pic>0</pic>
   <cov>0</cov>
@@ -2200,6 +2184,8 @@
    <File path="vsi\msdbg162.d" />
    <File path="vsi\msdbg163.d" />
    <File path="vsi\msdbg164.d" />
+   <File path="vsi\msdbg165.d" />
+   <File path="vsi\msdbg166.d" />
    <File path="vsi\msdbg90.d" />
    <File path="vsi\objext.d" />
    <File path="vsi\ocdesign.d" />
@@ -2236,6 +2222,7 @@
    <File path="vsi\vslangproj150.d" />
    <File path="vsi\vslangproj157.d" />
    <File path="vsi\vslangproj158.d" />
+   <File path="vsi\vslangproj165.d" />
    <File path="vsi\vslangproj2.d" />
    <File path="vsi\vslangproj80.d" />
    <File path="vsi\vslangproj90.d" />
@@ -2265,6 +2252,8 @@
    <File path="vsi\vsshell162.d" />
    <File path="vsi\vsshell163.d" />
    <File path="vsi\vsshell164.d" />
+   <File path="vsi\vsshell165.d" />
+   <File path="vsi\vsshell166.d" />
    <File path="vsi\vsshell2.d" />
    <File path="vsi\vsshell80.d" />
    <File path="vsi\vsshell90.d" />

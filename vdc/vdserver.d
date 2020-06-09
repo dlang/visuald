@@ -581,6 +581,11 @@ class VDServer : ComObject, IVDServer
 		return E_NOTIMPL;
 	}
 
+	override HRESULT GetDocumentOutline(in BSTR filename, BSTR* outline)
+	{
+		return E_NOTIMPL;
+	}
+
 	override HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs)
 	{
 		// array of pairs of DWORD

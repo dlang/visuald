@@ -195,6 +195,8 @@ namespace DParserCOMServer.CodeSemantics
 
 		public void SetSuggestedItem(string item) { }
 
+		public ISyntaxRegion TriggerSyntaxRegion { set { } }
+
 		/// <summary>
 		/// Adds a node to the completion data
 		/// </summary>

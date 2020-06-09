@@ -720,7 +720,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	}
 
 	__gshared int[wstring] predefinedVersions;
-	shared static this()
+	extern(D) shared static this()
 	{
 		foreach(v, p; vdc.versions.sPredefinedVersions)
 			predefinedVersions[to!wstring(v)] = p;
@@ -1044,7 +1044,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 		"wrmsr",      "xadd",       "xchg",       "xlat",       "xlatb",      "xor",
 		"xorpd",      "xorps",
 	];
-	shared static this()
+	extern(D) shared static this()
 	{
 		foreach(id; asmKeywords)
 			asmIdentifiers[id] = TokenColor.Keyword;
