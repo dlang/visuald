@@ -25,6 +25,7 @@ import stdext.file;
 import sdk.port.vsi;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
+import sdk.vsi.vsshell100;
 import sdk.vsi.fpstfmt;
 import sdk.vsi.ivssccmanager2;
 
@@ -111,6 +112,10 @@ class CFileNode : CHierNode,
 					var.lVal = icon;
 			}
 			return S_OK;
+
+		case VSHPROPID_ItemDocCookie:
+			var.vt = VT_UINT;
+			return GetDocInfo(null, null, null, &var.uintVal);
 
 		default:
 			return super.GetProperty(propid, var);
@@ -1403,6 +1408,8 @@ version(none)
 		return kImageFolderClosed;
 	}
 
+	alias VT_VSITEMID = VT_I4; // was VT_INT, was VT_INT_PTR
+
 	override int GetProperty(in VSITEMID itemid, in VSHPROPID propid, VARIANT* var)
 	{
 		//mixin(LogCallMix);
@@ -1447,27 +1454,27 @@ version(none)
 			break;
 
 		case VSHPROPID_FirstVisibleChild:
-			var.vt = VT_INT; // VT_INT_PTR;
+			var.vt = VT_VSITEMID;
 			var.lVal = GetFirstDisplayableNodeID(pNode);
 			break;
 		case VSHPROPID_FirstChild:
-			var.vt = VT_INT; // VT_INT_PTR;
+			var.vt = VT_VSITEMID;
 			var.lVal = pNode.GetFirstMemberChildID();
 			break;
 		case VSHPROPID_NextVisibleSibling:
-			var.vt = VT_INT; // VT_INT_PTR;
+			var.vt = VT_VSITEMID;
 			var.lVal = GetNextDisplayableNodeID(pNode);
 			break;
 		case VSHPROPID_NextSibling:
-			var.vt = VT_INT; // VT_INT_PTR;
+			var.vt = VT_VSITEMID;
 			var.lVal = pNode.GetNextMemberSiblingID();
 			break;
 		case VSHPROPID_Parent:
-			var.vt = VT_INT; // VT_INT_PTR;
+			var.vt = VT_VSITEMID;
 			var.lVal = GetVsItemID(pNode.GetParent());
 			break;
 		case VSHPROPID_Root:
-			var.vt = VT_INT; // VT_INT_PTR;
+			var.vt = VT_VSITEMID;
 			var.lVal = VSITEMID_ROOT;
 			break;
 		case VSHPROPID_IconImgList:
