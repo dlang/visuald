@@ -1125,7 +1125,33 @@ class LanguageService : DisposingComObject,
 		}
 		else
 		{
+			// source file loaded into VS without project
 			imp = Package.GetGlobalOptions().getImportPaths(Compiler.DMD);
+			versionids = [ // default versions for dmd -m64
+				"DigitalMars", "Windows", "Win64",
+				"CRuntime_Microsoft", "CppRuntime_Microsoft",
+				"D_Version2", "all", "assert",
+				"LittleEndian", "D_SIMD",
+				"X86_64", "D_LP64", "D_InlineAsm_X86_64",
+				"D_ModuleInfo", "D_Exceptions", "D_TypeInfo", "D_HardFloat",
+			];
+			flags = ConfigureFlags!()(false, // bool unittestOn,
+									  true,  // bool debugOn,
+									  true,  // bool x64,
+									  false, // bool cov,
+									  false, // bool doc,
+									  false, // bool nobounds,
+									  false, // bool gdc,
+									  0,     // int versionLevel,
+									  0,     // int debugLevel,
+									  false, // bool noDeprecated,
+									  true,  // bool deprecateInfo,
+									  false, // bool ldc,
+									  true,  // bool msvcrt,
+									  true,  // bool warnings,
+									  false, // bool warnAsError,
+									  true,  // bool mixinAnalysis,
+									  false);// bool ufcsExpansions
 		}
 		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp),
 		                                              assumeUnique(versionids), assumeUnique(debugids), cmdline, flags);
