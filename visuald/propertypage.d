@@ -3080,6 +3080,7 @@ struct MagoOptions
 	bool removeLeadingHexZeroes;
 	bool recombineTuples;
 	bool callDebuggerFunctions;
+	bool callDebuggerRanges;
 	bool callDebuggerUseMagoGC;
 	bool showDArrayLengthInType;
 	uint maxArrayElements;
@@ -3096,6 +3097,7 @@ struct MagoOptions
 		keyMago.Set("removeLeadingHexZeroes", removeLeadingHexZeroes);
 		keyMago.Set("recombineTuples", recombineTuples);
 		keyMago.Set("callDebuggerFunctions", callDebuggerFunctions);
+		keyMago.Set("callDebuggerRanges", callDebuggerRanges);
 		keyMago.Set("callDebuggerUseMagoGC", callDebuggerUseMagoGC);
 		keyMago.Set("showDArrayLengthInType", showDArrayLengthInType);
 		keyMago.Set("maxArrayElements", maxArrayElements);
@@ -3114,6 +3116,7 @@ struct MagoOptions
 		removeLeadingHexZeroes = (keyMago.GetDWORD("removeLeadingHexZeroes", 0) != 0);
 		recombineTuples        = (keyMago.GetDWORD("recombineTuples", 1) != 0);
 		callDebuggerFunctions  = (keyMago.GetDWORD("callDebuggerFunctions", 1) != 0);
+		callDebuggerRanges     = (keyMago.GetDWORD("callDebuggerRanges", 1) != 0);
 		callDebuggerUseMagoGC  = (keyMago.GetDWORD("callDebuggerUseMagoGC", 1) != 0);
 		showDArrayLengthInType = (keyMago.GetDWORD("showDArrayLengthInType", 0) != 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
@@ -3138,6 +3141,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		AddControl("", mExpandableStrings = new CheckBox(mCanvas, "Expand strings to show array of characters"));
 		AddControl("", mHideRefPointers   = new CheckBox(mCanvas, "Hide pointers for class references and slices"));
 		AddControl("", mCallDebuggerFuncs = new CheckBox(mCanvas, "Call struct/class methods __debug[Overview|Expanded|Visualizer]"));
+		AddControl("", mCallDebuggerRange = new CheckBox(mCanvas, "Call range methods to show elements in overview/expansion"));
 		AddControl("", mCallDebugSwitchGC = new CheckBox(mCanvas, "Switch GC while executing debugger functions"));
 		AddControl("", mShowLengthInType  = new CheckBox(mCanvas, "Show length of dynamic array in type column"));
 		AddControl("", mRemoveHexZeroes   = new CheckBox(mCanvas, "Remove leading zeroes from hex values"));
@@ -3181,6 +3185,7 @@ class MagoPropertyPage : ResizablePropertyPage
 
 	void EnableControls()
 	{
+		mCallDebuggerRange.setEnabled(mOptions.callDebuggerFunctions);
 	}
 
 	void SetControls()
@@ -3195,6 +3200,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		mRemoveHexZeroes.setChecked(mOptions.removeLeadingHexZeroes);
 		mRecombineTuples.setChecked(mOptions.recombineTuples);
 		mCallDebuggerFuncs.setChecked(mOptions.callDebuggerFunctions);
+		mCallDebuggerRange.setChecked(mOptions.callDebuggerRanges);
 		mCallDebugSwitchGC.setChecked(mOptions.callDebuggerUseMagoGC);
 		mShowLengthInType.setChecked(mOptions.showDArrayLengthInType);
 		mMaxArrayElements.setText(to!string(mOptions.maxArrayElements));
@@ -3212,6 +3218,7 @@ class MagoPropertyPage : ResizablePropertyPage
 		changes += changeOption(mRemoveHexZeroes.isChecked(), opts.removeLeadingHexZeroes, refopts.removeLeadingHexZeroes);
 		changes += changeOption(mRecombineTuples.isChecked(), opts.recombineTuples, refopts.recombineTuples);
 		changes += changeOption(mCallDebuggerFuncs.isChecked(), opts.callDebuggerFunctions, refopts.callDebuggerFunctions);
+		changes += changeOption(mCallDebuggerRange.isChecked(), opts.callDebuggerRanges, refopts.callDebuggerRanges);
 		changes += changeOption(mCallDebugSwitchGC.isChecked(), opts.callDebuggerUseMagoGC, refopts.callDebuggerUseMagoGC);
 		changes += changeOption(mShowLengthInType.isChecked(), opts.showDArrayLengthInType, refopts.showDArrayLengthInType);
 
@@ -3232,6 +3239,7 @@ class MagoPropertyPage : ResizablePropertyPage
 	CheckBox mRemoveHexZeroes;
 	CheckBox mRecombineTuples;
 	CheckBox mCallDebuggerFuncs;
+	CheckBox mCallDebuggerRange;
 	CheckBox mCallDebugSwitchGC;
 	CheckBox mShowLengthInType;
 	Text mMaxArrayElements;
