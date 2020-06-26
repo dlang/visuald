@@ -1255,10 +1255,13 @@ unreleased version 1.0.0
     - improve preciseness for the GC
     - fix parameters not considered references to itself
     - fix crash when invoking "Find All References"
+    - fixed passing default versions to file not in any project
   * editor with dmdserver:
     - implement "goto definition" by clicking identifier in tool tip
     - add navigation bar
+    - fixed "Find in Solution" no longer working in VS 2019 16.6
   * mago debugger
-    - can now execute class/struct methods __debugOverview, __debugExpaanded, __debugTextView
+    - can now execute class/struct methods __debugOverview, __debugExpanded, __debugTextView
       to customize display in the debugger
+    - can now display ranges similar to arrays
     - some performance improvements by caching some data while the debuggee is stopped
