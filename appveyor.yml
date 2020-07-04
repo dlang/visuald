@@ -45,6 +45,7 @@ install:
   # show environment
   - set D_COMPILER=dmd
   - set CONFIG=Release COFF32
+  - set CONFIG_DMDSERVER=Release COFF32
   - set
   - cd c:\projects
   - if not exist cache\nul mkdir cache
@@ -110,7 +111,7 @@ build_script:
   # build Visual D
   - nmake "CONFIG=%CONFIG%" visuald_vs
   # build and run Visual D unittests
-  - nmake "CONFIG=%CONFIG%" visuald_test dmdserver_test
+  - nmake "CONFIG=%CONFIG%" "CONFIG_DMDSERVER=%CONFIG_DMDSERVER%" visuald_test dmdserver_test
   - cd ..
   # Clone mago/cv2pdb (need to be two levels up)
   - cd ..
@@ -136,8 +137,8 @@ build_script:
   - cd visuald
   # can build dbuild15 and dparser only with VS2017
   - if     "%VS%"=="15" nuget restore vdc\abothe\VDServer.sln
-  - if     "%VS%"=="15" nmake "CONFIG=%CONFIG%" install_vs_only_vs2017
-  - if not "%VS%"=="15" nmake "CONFIG=%CONFIG%" install_vs_no_vs2017
+  - if     "%VS%"=="15" nmake "CONFIG=%CONFIG%" "CONFIG_DMDSERVER=%CONFIG_DMDSERVER%" install_vs_only_vs2017
+  - if not "%VS%"=="15" nmake "CONFIG=%CONFIG%" "CONFIG_DMDSERVER=%CONFIG_DMDSERVER%" install_vs_no_vs2017
 
 after_build:
   # publish as artifact

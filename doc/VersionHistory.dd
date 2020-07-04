@@ -1,5 +1,43 @@
 Ddoc
 
+$(H2 2020-07-04 Version 1.0.0)
+ $(UL
+  $(LI project management:
+   $(UL
+    $(LI trailing \ now removed from $(WindowsSDKVersion)/$(UCRTVersion) for more consistency between
+      autodetected version and as read from the environment)
+    $(LI added global option "Echo batch commands executed" to show commands during builds)
+    $(LI workaround /noopttls no longer added when building with LDC or dmd 2.076+)
+  ))
+  $(LI dmdserver:
+   $(UL
+    $(LI now enabled by default including semantic highlighting)
+    $(LI updated to dmd 2.092)
+    $(LI fix parameters not considered references to itself)
+    $(LI fix crash when invoking "Find All References")
+    $(LI fixed passing default versions to file not in any project)
+    $(LI now built with LDC)
+    $(LI improve preciseness for the GC)
+  ))
+  $(LI editor with dmdserver:
+   $(UL
+    $(LI implement "goto definition" by clicking identifier in tool tip)
+    $(LI add navigation bar)
+    $(LI fixed "Find in Solution" no longer working in VS 2019 16.6)
+  ))
+  $(LI mago debugger
+   $(UL
+    $(LI can now evaluate class/struct methods/fields __debugOverview, __debugExpanded, __debugTextView
+      to customize display in the debugger)
+    $(LI experimental: can now display ranges similar to arrays)
+    $(LI some performance improvements by caching some data while the debuggee is stopped)
+  ))
+  $(LI installer:
+   $(UL
+    $(LI full installer now bundled with dmd 2.092.1 and LDC 1.22.0)
+  ))
+ )
+
 $(H2 2020-03-23 Version 0.52.0)
  $(UL
   $(LI editor:

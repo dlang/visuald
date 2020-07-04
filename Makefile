@@ -39,7 +39,9 @@ MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBui
 !IF !EXIST($(MSBUILD15))
 MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Current\Bin\msbuild"
 !ENDIF
-CONFIG  = Release LDC
+# CONFIG  = Release LDC
+CONFIG  = Release COFF32
+CONFIG_DMDSERVER = Release LDC
 
 ##############################################################
 # no more changes should be necessary starting from here
@@ -65,7 +67,7 @@ vdserver:
 	devenv /Project "vdserver"  /Build "$(CONFIG)|Win32" visuald_vs10.sln
 
 dmdserver:
-	devenv /Project "dmdserver" /Build "$(CONFIG)|x64" visuald_vs10.sln
+	devenv /Project "dmdserver" /Build "$(CONFIG_DMDSERVER)|x64" visuald_vs10.sln
 
 dmdserver_test:
 	devenv /Project "dmdserver" /Build "TestDebug|x64" visuald_vs10.sln
@@ -180,4 +182,4 @@ install_modules: prerequisites visuald_vs vdserver dmdserver vdextension vdext15
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads
-	cd nsis && "$(NSIS)\makensis" /V1 "/DCONFIG=$(CONFIG)" $(NSIS_ARGS) visuald.nsi
+	cd nsis && "$(NSIS)\makensis" /V1 "/DCONFIG=$(CONFIG)" "/DCONFIG_DMDSERVER=$(CONFIG_DMDSERVER)" $(NSIS_ARGS) visuald.nsi

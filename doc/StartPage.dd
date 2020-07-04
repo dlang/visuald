@@ -84,6 +84,14 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2020-07-04 Version 1.0.0
+$(UL
+ $(LI DMD based semantic engine: enabled by default, updated to front end version 2.092)
+ $(LI mago: customize debugger display with methods/fields __debugOverview, __debugExpanded, __debugTextView)
+ $(LI navigation bar: display and change current edit scope)
+ $(LI goto definition by clicking identifier in tool tip)
+)
+
 2020-23-03 Version 0.52.0
 $(UL
  $(LI mago: added support for tuples and simpler display of globals)
