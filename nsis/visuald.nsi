@@ -87,6 +87,9 @@
 !ifndef CONFIG
   !define CONFIG  "Release"
 !endif
+!ifndef CONFIG_DMDSERVER
+  !define CONFIG_DMDSERVER  "Release"
+!endif
 
   ;Name and file
   Name "${LONG_APPNAME}"
@@ -259,7 +262,7 @@ Section "Visual Studio package" SecPackage
 !endif
 
 !ifdef DMDSERVER
-  ${File} "..\bin\${CONFIG}\x64\" dmdserver.exe
+  ${File} "..\bin\${CONFIG_DMDSERVER}\x64\" dmdserver.exe
 !endif
 
 !ifdef VDEXTENSIONS

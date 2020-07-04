@@ -3116,7 +3116,7 @@ struct MagoOptions
 		removeLeadingHexZeroes = (keyMago.GetDWORD("removeLeadingHexZeroes", 0) != 0);
 		recombineTuples        = (keyMago.GetDWORD("recombineTuples", 1) != 0);
 		callDebuggerFunctions  = (keyMago.GetDWORD("callDebuggerFunctions", 1) != 0);
-		callDebuggerRanges     = (keyMago.GetDWORD("callDebuggerRanges", 1) != 0);
+		callDebuggerRanges     = (keyMago.GetDWORD("callDebuggerRanges", 0) != 0);
 		callDebuggerUseMagoGC  = (keyMago.GetDWORD("callDebuggerUseMagoGC", 1) != 0);
 		showDArrayLengthInType = (keyMago.GetDWORD("showDArrayLengthInType", 0) != 0);
 		maxArrayElements  =  keyMago.GetDWORD("maxArrayElements", 1000);
