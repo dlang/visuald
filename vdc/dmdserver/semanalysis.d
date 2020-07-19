@@ -1047,6 +1047,23 @@ void do_unittests()
 	checkTip(m, 30, 36, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
 	checkTip(m, 21, 43, "(constant) `ulong source.RightBase.sizeof = 8LU`");
 
+	source = q{                          // Line 1
+		/**********************************
+		* Read line from `stdin`.
+		*/
+		S readln(S = string)(dchar terminator = '\n')
+		{
+			return null;
+		}
+		void foo()
+		{                                // Line 10
+			cast(void)readln();
+		}
+	};
+	m = checkErrors(source, "");
+	checkTip(m, 11,  14, "`string source.readln!string(dchar terminator = '\\x0a') pure nothrow @nogc @safe`"
+			 ~ "\n\nRead line fxrom `stdin`.");
+
 	IdTypePos[][string] exp2 = [
 		"size_t":           [ IdTypePos(TypeReferenceKind.Alias) ],
 		"Base":             [ IdTypePos(TypeReferenceKind.Class) ],
@@ -1833,7 +1850,7 @@ unittest
 	opts.msvcrt = true;
 	opts.warnings = true;
 	opts.importDirs = guessImportPaths() ~ srcdir ~ dirName(dirName(thisdir));
-	opts.stringImportDirs ~= srcdir ~ "/../res";
+	opts.stringImportDirs ~= srcdir ~ "/dmd/res";
 	opts.versionIds ~= "MARS";
 	//opts.versionIds ~= "NoBackend";
 

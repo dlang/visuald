@@ -1268,6 +1268,31 @@ TipData tipForTemplate(TemplateExp te)
 	return TipData(kind, tip);
 }
 
+const(char)* docForSymbol(Dsymbol var)
+{
+	if (var.comment)
+		return var.comment;
+	if (var.parent)
+	{
+		const(char)* docForTemplateDeclaration(Dsymbol s)
+		{
+			if (s)
+				if (auto td = s.isTemplateDeclaration())
+					if (td.comment && td.onemember)
+						return td.comment;
+			return null;
+		}
+
+		if (auto doc = docForTemplateDeclaration(var.parent))
+			return doc;
+
+		if (auto ti = var.parent.isTemplateInstance())
+			if (auto doc = docForTemplateDeclaration(ti.tempdecl))
+				return doc;
+	}
+	return null;
+}
+
 TipData tipDataForObject(RootObject obj)
 {
 	TipData tip;
@@ -1284,11 +1309,11 @@ TipData tipDataForObject(RootObject obj)
 			case TOK.variable:
 			case TOK.symbolOffset:
 				tip = tipForDeclaration((cast(SymbolExp)e).var);
-				doc = (cast(SymbolExp)e).var.comment;
+				doc = docForSymbol((cast(SymbolExp)e).var);
 				break;
 			case TOK.dotVariable:
 				tip = tipForDeclaration((cast(DotVarExp)e).var);
-				doc = (cast(DotVarExp)e).var.comment;
+				doc = docForSymbol((cast(DotVarExp)e).var);
 				break;
 			case TOK.dotIdentifier:
 				auto die = e.isDotIdExp();
@@ -1319,8 +1344,7 @@ TipData tipDataForObject(RootObject obj)
 			tip.kind = s.kind().to!string;
 			tip.code = s.toPrettyChars(true).to!string;
 		}
-		if (s.comment)
-			doc = s.comment;
+		doc = docForSymbol(s);
 	}
 	else if (auto p = obj.isParameter())
 	{

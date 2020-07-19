@@ -1242,7 +1242,7 @@ Version history
     - vcxproj: do not check referenced projects if the project itself already needs phobos to be linked
     - vcxproj: only print the filename in the "Compiling" message, not the path
 
-unreleased version 1.0.0
+2020-07-04 version 1.0.0
   * projects:
     - trailing \ now removed from $(WindowsSDKVersion)/$(UCRTVersion) for more consistency between
       autodetected version and as read from the environment
@@ -1267,3 +1267,13 @@ unreleased version 1.0.0
     - some performance improvements by caching some data while the debuggee is stopped
   * installer:
     - full installer now bundled with dmd 2.092.1 and LDC 1.22.0
+
+unreleased version 1.0.1
+  * projects:
+    - bugzilla 21024: VS2017/2019 new project: fixed unrelated files listed in New Project Dialog
+    - bugzilla 21028: project templates not visible when VS started as standard/restricted user
+  * dmdserver:
+    - updated to dmd 2.093
+    - fixed showing documentation for template functions
+  * mago debugger expression evaluator:
+    - fixed wrong values displayed eventually when switching stack frames
