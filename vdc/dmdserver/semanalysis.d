@@ -23,6 +23,8 @@ import dmd.identifier;
 import dmd.semantic2;
 import dmd.semantic3;
 
+import std.algorithm;
+
 // debug version = traceGC;
 
 __gshared AnalysisContext lastContext;
@@ -93,7 +95,7 @@ class AnalysisContext
 			return mi.createSemanticModule(false);
 		}
 
-		return Module.loadFromFile(location, packages, ident);
+		return Module.loadFromFile(location, packages, ident, 1, 0); // enable doc comment parsing
 	};
 }
 
@@ -309,7 +311,10 @@ void do_unittests()
 	void checkTip(Module analyzedModule, int line, int col, string expected_tip, bool addlinks = false)
 	{
 		string tip = findTip(analyzedModule, line, col, line, col + 1, addlinks);
-		assert_equal(tip, expected_tip);
+		if (expected_tip.endsWith("..."))
+			assert(tip.startsWith(expected_tip[0..$-3]));
+		else
+			assert_equal(tip, expected_tip);
 	}
 
 	void checkDefinition(Module analyzedModule, int line, int col, string expected_fname, int expected_line, int expected_col)
@@ -423,9 +428,9 @@ void do_unittests()
 
 	checkTip(m, 5, 8, "(local variable) `int xyz`");
 	checkTip(m, 5, 10, "(local variable) `int xyz`");
-	checkTip(m, 6, 4, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
+	checkTip(m, 6, 4, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`\n...");
 	checkTip(m, 5, 11, "");
-	checkTip(m, 6, 8, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
+	checkTip(m, 6, 8, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`\n...");
 	checkTip(m, 7, 11, "(local variable) `int xyz`");
 
 	checkDefinition(m, 7, 11, "source.d", 5, 8); // xyz
@@ -492,11 +497,11 @@ void do_unittests()
 	checkTip(m,  1,  9, "(package) `pkg`");
 	checkTip(m,  1, 13, "(module) `pkg.source`");
 	checkTip(m, 24, 10, "(package) `core`");
-	checkTip(m, 24, 15, "(module) `core.cpuid`");
+	checkTip(m, 24, 15, "(module) `core.cpuid`\n...");
 	checkTip(m, 24, 23, "(alias) `pkg.source.cpu_vendor = string core.cpuid.vendor() pure nothrow @nogc @property @trusted`");
 	checkTip(m, 24, 36, "(alias) `pkg.source.cpu_vendor = string core.cpuid.vendor() pure nothrow @nogc @property @trusted`");
 	checkTip(m, 24, 44, "(alias) `pkg.source.processor = string core.cpuid.processor() pure nothrow @nogc @property @trusted`");
-	checkTip(m, 28, 11, "`string core.cpuid.vendor() pure nothrow @nogc @property @trusted`");
+	checkTip(m, 28, 11, "`string core.cpuid.vendor() pure nothrow @nogc @property @trusted`\n...");
 
 	source =
 	q{                                   // Line 1
@@ -651,12 +656,12 @@ void do_unittests()
 	m = checkErrors(source, "");
 
 	checkTip(m,  9,  20, "(local variable) `object.Exception e`");
-	checkTip(m,  9,  10, "(class) `object.Exception`");
-	checkTip(m,  11, 21, "(class) `object.Error`");
-	checkTip(m,  12,  5, "(class) `object.Exception`");
-	checkTip(m,  13, 11, "(class) `object.Exception`");
-	checkTip(m,   2,  9, "(class) `object.Exception`");
-	checkTip(m,  16, 10, "(class) `object.Throwable`");
+	checkTip(m,  9,  10, "(class) `object.Exception`\n...");
+	checkTip(m,  11, 21, "(class) `object.Error`\n...");
+	checkTip(m,  12,  5, "(class) `object.Exception`\n...");
+	checkTip(m,  13, 11, "(class) `object.Exception`\n...");
+	checkTip(m,   2,  9, "(class) `object.Exception`\n...");
+	checkTip(m,  16, 10, "(class) `object.Throwable`\n...");
 
 	source =
 	q{                                   // Line 1
@@ -989,7 +994,8 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source, "<ignore>");
-	checkTip(m, 5, 13, "`string[] std.array.split!(string, string)(string range, string sep) pure nothrow @safe`");
+	// todo: deal with "ditto"
+	checkTip(m, 5, 13, "`string[] std.array.split!(string, string)(string range, string sep) pure nothrow @safe`\n\nditto");
 	checkTip(m, 6, 13, "(template function) `std.array.split(S)(S s) if (isSomeString!S)`");
 
 	source = q{                          // Line 1
@@ -1042,27 +1048,10 @@ void do_unittests()
 	checkTip(m, 24, 19, "(thread local global) `source.TOK[source.Base] source.mapBaseTOK`");
 	checkTip(m, 24,  7, "(class) `source.Base`");
 	checkTip(m, 24,  3, "(enum) `source.TOK`");
-	checkTip(m, 30, 10, "(class) `object.TypeInfo_Class`");
+	checkTip(m, 30, 10, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m, 30, 25, "(enum) `object.TypeInfo_Class.ClassFlags`");
 	checkTip(m, 30, 36, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
 	checkTip(m, 21, 43, "(constant) `ulong source.RightBase.sizeof = 8LU`");
-
-	source = q{                          // Line 1
-		/**********************************
-		* Read line from `stdin`.
-		*/
-		S readln(S = string)(dchar terminator = '\n')
-		{
-			return null;
-		}
-		void foo()
-		{                                // Line 10
-			cast(void)readln();
-		}
-	};
-	m = checkErrors(source, "");
-	checkTip(m, 11,  14, "`string source.readln!string(dchar terminator = '\\x0a') pure nothrow @nogc @safe`"
-			 ~ "\n\nRead line fxrom `stdin`.");
 
 	IdTypePos[][string] exp2 = [
 		"size_t":           [ IdTypePos(TypeReferenceKind.Alias) ],
@@ -1090,6 +1079,34 @@ void do_unittests()
 		"sizeof":           [ IdTypePos(TypeReferenceKind.Constant) ],
 	];
 	checkIdentifierTypes(m, exp2);
+
+	source = q{                          // Line 1
+		/**********************************
+		* Read line from `stdin`.
+		*/
+		S readln(S = string)(dchar terminator = '\n')
+		{
+			return null;
+		}
+		void foo()
+		{                                // Line 10
+			cast(void)readln();
+		}
+	};
+	m = checkErrors(source, "");
+	checkTip(m, 11,  14, "`string source.readln!string(dchar terminator = '\\x0a') pure nothrow @nogc @safe`"
+			 ~ "\n\nRead line from `stdin`.");
+
+	source = q{                          // Line 1
+		import std.stdio;
+		void foo()
+		{
+			cast(void)readln();          // Line 5
+		}
+	};
+	m = checkErrors(source, "");
+	checkTip(m, 5,  14, "`string std.stdio.readln!string(dchar terminator = '\\x0a') @system`"
+			 ~ "\n\nRead line from `stdin`...");
 
 	// string expressions with concat
 	source = q{
@@ -1157,8 +1174,8 @@ void do_unittests()
 	//dumpAST(m);
 	checkTip(m,  6,  9, "(foreach variable) `object.ModuleInfo* m`");
 	checkTip(m,  5, 12, "(foreach variable) `object.ModuleInfo* m`");
-	checkTip(m,  5, 15, "(module) `object`");
-	checkTip(m,  5, 22, "(struct) `object.ModuleInfo`");
+	checkTip(m,  5, 15, "(module) `object`\n...");
+	checkTip(m,  5, 22, "(struct) `object.ModuleInfo`\n...");
 
 	exp2 = [
 		"fun":              [ IdTypePos(TypeReferenceKind.Function) ],
@@ -1257,9 +1274,9 @@ void do_unittests()
 	};
 	m = checkErrors(source, "");
 
-	checkTip(m,  2, 37, "(class) `object.Object`");
+	checkTip(m,  2, 37, "(class) `object.Object`\n...");
 	checkTip(m,  2, 44, "(local variable) `object.Object o`");
-	checkTip(m,  3, 47, "(class) `object.Object`");
+	checkTip(m,  3, 47, "(class) `object.Object`\n...");
 
 	// check for semantics in unittest
 	source = q{
@@ -1334,8 +1351,8 @@ void do_unittests()
 	};
 	m = checkErrors(source, "");
 
-	checkTip(m,  5,  9, "(module) `object`");
-	checkTip(m,  5, 16, "(struct) `object.ModuleInfo`");
+	checkTip(m,  5,  9, "(module) `object`\n...");
+	checkTip(m,  5, 16, "(struct) `object.ModuleInfo`\n...");
 
 	exp2 = [
 		"fun":              [ IdTypePos(TypeReferenceKind.Function) ],
@@ -1373,9 +1390,9 @@ void do_unittests()
 	checkTip(m,  2, 12, "(template) `source.Templ(T)`");
 	checkTip(m, 12,  4, "(template instance) `source.Templ!(object.ModuleInfo)`");
 	checkTip(m, 12, 23, "(struct) `source.Templ!(object.ModuleInfo).S`");
-	checkTip(m, 12, 11, "(struct) `object.ModuleInfo`");
+	checkTip(m, 12, 11, "(struct) `object.ModuleInfo`\n...");
 	checkTip(m, 13, 12, "(template instance) `source.Templ!(object.Object)`");
-	checkTip(m, 13, 18, "(class) `object.Object`");
+	checkTip(m, 13, 18, "(class) `object.Object`\n...");
 	checkTip(m, 13, 25, "(constant) `int source.Templ!(object.Object).value = 4`");
 	checkTip(m, 13, 25, "(constant) `int source.Templ!(object.Object).value = 4`");
 	checkTip(m, 16, 15, "`source.Templ!(Q).S source.tfun(source.Templ!int.S s)`"); // todo: Q not fqn
@@ -1395,11 +1412,11 @@ void do_unittests()
 	m = checkErrors(source, "");
 	//dumpAST(m);
 
-	checkTip(m,  2, 12, "(class) `object.Error`");
-	checkTip(m,  4, 18, "(module) `object`");
-	checkTip(m,  4, 25, "(class) `object.Exception`");
-	checkTip(m,  5, 18, "(module) `object`");
-	checkTip(m,  5, 25, "(class) `object.Exception`");
+	checkTip(m,  2, 12, "(class) `object.Error`\n...");
+	checkTip(m,  4, 18, "(module) `object`\n...");
+	checkTip(m,  4, 25, "(class) `object.Exception`\n...");
+	checkTip(m,  5, 18, "(module) `object`\n...");
+	checkTip(m,  5, 25, "(class) `object.Exception`\n...");
 
 	exp2 = [
 		"foo":       [ IdTypePos(TypeReferenceKind.Function) ],
@@ -1646,16 +1663,16 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source, "");
-	checkTip(m,  2, 18, "(class) `object.TypeInfo_Class`");
+	checkTip(m,  2, 18, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m,  2, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
 	checkTip(m,  2, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
-	checkTip(m,  5, 4, "(class) `object.TypeInfo_Class`");
+	checkTip(m,  5, 4, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m,  5, 19, "(enum) `object.TypeInfo_Class.ClassFlags`");
 	checkTip(m,  5, 30, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
-	checkTip(m,  6, 8, "(class) `object.TypeInfo_Class`");
+	checkTip(m,  6, 8, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m,  6, 23, "(enum) `object.TypeInfo_Class.ClassFlags`");
 	checkTip(m,  6, 34, "(enum value) `object.TypeInfo_Class.ClassFlags.isCOMclass = 1u`");
-	checkTip(m,  8, 18, "(class) `object.TypeInfo_Class`");
+	checkTip(m,  8, 18, "(class) `object.TypeInfo_Class`\n...");
 	checkTip(m,  8, 33, "(enum) `object.TypeInfo_Class.ClassFlags`");
 	checkTip(m,  8, 44, "(enum value) `object.TypeInfo_Class.ClassFlags.noPointers = 2u`");
 	checkTip(m, 11, 18, "(field) `ulong int[].length`");
