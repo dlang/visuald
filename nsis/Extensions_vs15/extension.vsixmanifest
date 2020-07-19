@@ -14,7 +14,7 @@
     <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Pro" />
     <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.IntegratedShell" />
     <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Enterprise" />
-    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Commuunity" />
+    <InstallationTarget Version="[12.0,17.0)" Id="Microsoft.VisualStudio.Community" />
   </Installation>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" Path="visuald.pkgdef" />

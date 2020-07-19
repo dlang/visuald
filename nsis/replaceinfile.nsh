@@ -85,7 +85,8 @@ Function RIF
   IfFileExists $2 +1 RIF_error      ; knock-knock
   FileOpen $R0 $2 "r"               ; open the door
  
-  GetTempFileName $R2               ; who's new?
+  GetFullPathName $R1 $2\..         ; same folder as source file
+  GetTempFileName $R2 $R1           ; Put temporary file in same folder to preserve access rights
   FileOpen $R1 $R2 "w"              ; the escape, please!
  
   RIF_loop:                         ; round'n'round we go
