@@ -658,13 +658,15 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 		// project
 		wstring tmplprojectdir = ver < 10 ? "\\Projects_vs9"w : "\\Projects"w;
 
-		scope RegKey keyPrjTempl = new RegKey(keyRoot, registrationRoot ~ regPathPrjTemplates ~ "\\"w ~ packageGuid ~ "\\/1");
-		keyPrjTempl.Set(null, g_languageName);
-		keyPrjTempl.Set("DeveloperActivity"w, g_languageName);
-		keyPrjTempl.Set("SortPriority"w, 20);
 		if (ver < 15) // registered in vsixmanifest
+		{
+			scope RegKey keyPrjTempl = new RegKey(keyRoot, registrationRoot ~ regPathPrjTemplates ~ "\\"w ~ packageGuid ~ "\\/1");
+			keyPrjTempl.Set(null, g_languageName);
+			keyPrjTempl.Set("DeveloperActivity"w, g_languageName);
+			keyPrjTempl.Set("SortPriority"w, 20);
 			keyPrjTempl.Set("TemplatesDir"w, templatePath ~ tmplprojectdir);
-		keyPrjTempl.Set("Folder"w, "{152CDB9D-B85A-4513-A171-245CE5C61FCC}"w); // other languages
+			keyPrjTempl.Set("Folder"w, "{152CDB9D-B85A-4513-A171-245CE5C61FCC}"w); // other languages
+		}
 
 		wstring projects = registrationRoot ~ "\\Projects\\"w ~ GUID2wstring(g_projectFactoryCLSID);
 		scope RegKey keyProject = new RegKey(keyRoot, projects);

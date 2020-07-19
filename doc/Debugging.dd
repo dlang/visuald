@@ -88,8 +88,7 @@ $(P Using Mago's expression evaluator allowed to implement this for D pretty eas
 $(P The debugger engine needs to detect the source language of the code location. This information
 is added to the debug information starting with dmd 2.072 when compiled for COFF object
 files (-m64 or -m32mscoff) with -g, but not with
--gc, i.e. you should select debug info for Mago even when using the VS debug engine.) Unfortunately,
-LDC does not yet emit this source language information.
+-gc, i.e. you should select debug info for Mago even when using the VS debug engine.)
 
 <a id="recommendation"></a>
 $(H3 Recommendation for VS 2015 or later)
@@ -120,6 +119,49 @@ simply enable the "D Exceptions" entry, but must select the specific exceptions 
 $(IMG_CENTER images/d_exceptions.png)
 
 Please note that these specific exception settings only apply to the Mago debug engine, not the Concord extension.
+
+<a id="customization"></a>
+$(H2 Debugger Customization)
+
+$(P Starting with Visual D 1.0 the display of structs and classes can be customized in the mago expression evaluator
+for the Concord debugger engine (when using dmd as the copiler). This is done by enabling
+"Call struct/class methods __debug[Overview|Expanded|Visualizer]" in the global mago Debugging options for mago
+and adding some extra methods or fields to the declaration of the struct or class:)
+
+$(UL
+  $(LI `__debugOverview` will be evaluated to display the single line representation in the watch, locals or auto window.)
+  $(LI `__debugExpanded` will be evaluated to display the expanded list of members in the watch, locals or auto window.)
+  $(LI `__debugStringView` will be evaluated to populate the text visualizer window.)
+)
+
+$(P The type of the return value determines what fields are displayed. Here is an example session:)
+
+	<div align="center"><img src="images/debugeval.png" width="90%"/></div>
+
+$(P Instead of functions you can also define the __debug* properties as fields that are eagerly filled by the regular code.
+You must not alias other members because that information is not available in the debug information.)
+
+$(P The JSON Visualizer window was opened by clicking the focused lense in the Autos window.
+As with other special display functionality, the function evaluation can be disabled by appending ",!" to
+the expression as shown in the watch window.)
+
+$(P While executing these functions for display, the GC is switched to a region allocator that discards all memory
+when excution of the debuggee is resumed (this can be disabled in the global debugger options with setting
+"Switch GC while executing debugger functions"). So you should
+not keep references to memory allocated during execution of the __debug* functions.)
+
+$(H3 Displaying Ranges)
+
+$(P Enabling mago debugger option "Call range methods to show elements in overview/expansion" activates function evaluation of
+methods `save`, `empty`, `front` and `popFront` if they all exist. This allows displaying forward ranges as
+a list of their elements.)
+
+	<div align="center"><img src="images/debugranges.png" width="90%"/></div>
+
+$(P This is currently considered experimental, because it is rather slow.)
+
+$(P Known issue: if `front` returns a reference to the element, the wrong value is displayed. This is caused by bad
+debug information.)
 
 Macros:
 	TITLE=Debugging

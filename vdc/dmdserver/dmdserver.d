@@ -988,7 +988,7 @@ class DMDServer : ComObject, IVDServer
 		Module.rootModule = rootModule.analyzedModule;
 		Module.loadModuleHandler = (const ref Loc location, IdentifiersAtLoc* packages, Identifier ident)
 		{
-			return Module.loadFromFile(location, packages, ident);
+			return Module.loadFromFile(location, packages, ident, 0, 0);
 		};
 
 		for (size_t i = 0; i < mModules.length; i++)
@@ -1190,7 +1190,10 @@ unittest
 		}
 
 		string tip = detachBSTR(bstrTip);
-		assert(tip == expected_tip);
+		if (expected_tip.endsWith("..."))
+			assert(tip.startsWith(expected_tip[0..$-3]));
+		else
+			assert(tip == expected_tip);
 	}
 
 	void checkDefinition(int line, int col, string expected_fname, int expected_line, int expected_col)
@@ -1265,7 +1268,7 @@ unittest
 	}
 
 	checkTip(5, 9, "(local variable) `int xyz`");
-	checkTip(6, 9, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`");
+	checkTip(6, 9, "`void std.stdio.writeln!(int, int, int)(int _param_0, int _param_1, int _param_2) @safe`...");
 	checkTip(7, 12, "(local variable) `int xyz`");
 
 	version(traceGC)

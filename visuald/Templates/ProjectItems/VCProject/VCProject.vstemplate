@@ -3,7 +3,7 @@
     <Name>D/VC++ based Windows Application</Name>
     <Description>A Visual C++ project for creating a Win32 application, console application, DLL or static library. This is based on Visual C++'s vcxproj project type for seamless integration with C++ and msbuild.</Description>
     <Icon>dwinproj.ico</Icon>
-    <ProjectType>VC</ProjectType>
+    <ProjectType>D</ProjectType>
     <SortOrder>50</SortOrder>
     <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
     <CreateInPlace>true</CreateInPlace>
