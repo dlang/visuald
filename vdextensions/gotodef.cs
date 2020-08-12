@@ -180,6 +180,7 @@ namespace vdext15
         public IMouseProcessor GetAssociatedProcessor(IWpfTextView view)
         {
             var buffer = view.TextBuffer;
+            IVsUIShell vsUIShell = GetVsUIShell();
 
             IOleCommandTarget shellCommandDispatcher = GetShellCommandDispatcher(view);
 
@@ -196,6 +197,7 @@ namespace vdext15
 
 			return new GoToDefMouseHandler(view,
                                            shellCommandDispatcher,
+                                           vsUIShell,
                                            _aggregatorFactory.GetClassifier(buffer),
                                            _navigatorService.GetTextStructureNavigator(buffer),
                                            CtrlKeyState.GetStateForView(view));
@@ -211,26 +213,36 @@ namespace vdext15
             return _globalServiceProvider.GetService(typeof(SUIHostCommandDispatcher)) as IOleCommandTarget;
         }
 
+        /// <summary>
+        /// Get the SVsUIShell from the global service provider.
+        /// </summary>
+        private IVsUIShell GetVsUIShell()
+        {
+            return _globalServiceProvider.GetService(typeof(SVsUIShell)) as IVsUIShell;
+        }
+
         #endregion
     }
 
-    /// <summary>
-    /// Handle ctrl+click on valid elements to send GoToDefinition to the shell.  Also handle mouse moves
-    /// (when control is pressed) to highlight references for which GoToDefinition will (likely) be valid.
-    /// </summary>
-    internal sealed class GoToDefMouseHandler : MouseProcessorBase
+/// <summary>
+/// Handle ctrl+click on valid elements to send GoToDefinition to the shell.  Also handle mouse moves
+/// (when control is pressed) to highlight references for which GoToDefinition will (likely) be valid.
+/// </summary>
+internal sealed class GoToDefMouseHandler : MouseProcessorBase
     {
         private IWpfTextView _view;
         private CtrlKeyState _state;
         private IClassifier _aggregator;
         private ITextStructureNavigator _navigator;
         private IOleCommandTarget _commandTarget;
+        private IVsUIShell _vsUIShell;
 
-        public GoToDefMouseHandler(IWpfTextView view, IOleCommandTarget commandTarget, 
+        public GoToDefMouseHandler(IWpfTextView view, IOleCommandTarget commandTarget, IVsUIShell vsUIShell,
             IClassifier aggregator, ITextStructureNavigator navigator, CtrlKeyState state)
         {
             _view = view;
             _commandTarget = commandTarget;
+            _vsUIShell = vsUIShell;
             _state = state;
             _aggregator = aggregator;
             _navigator = navigator;
@@ -315,12 +327,34 @@ namespace vdext15
             _mouseDownAnchorPoint = null;
         }
 
+        // Support backward/forward navigation via extended mouse buttons.
+        // Derived from https://github.com/tunnelvisionlabs/MouseNavigation/blob/master/Tvl.VisualStudio.MouseNavigation/MouseNavigationProcessor.cs.
+        public override void PostprocessMouseUp(MouseButtonEventArgs e)
+        {
+            if (_vsUIShell == null)
+                return;
 
-        #endregion
+            uint cmdId;
+            if (e.ChangedButton == MouseButton.XButton1)
+                cmdId = (uint) VSConstants.VSStd97CmdID.ShellNavBackward;
+            else if (e.ChangedButton == MouseButton.XButton2)
+                cmdId = (uint) VSConstants.VSStd97CmdID.ShellNavForward;
+            else
+                return;
 
-        #region Private helpers
+            object obj = null;
+            _vsUIShell.PostExecCommand(VSConstants.GUID_VSStandardCommandSet97, cmdId,
+                (uint) OLECMDEXECOPT.OLECMDEXECOPT_DONTPROMPTUSER, ref obj);
 
-        private Point RelativeToView(Point position)
+            e.Handled = true;
+        }
+
+
+    #endregion
+
+    #region Private helpers
+
+    private Point RelativeToView(Point position)
         {
             return new Point(position.X + _view.ViewportLeft, position.Y + _view.ViewportTop);
         }
