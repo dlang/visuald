@@ -1268,12 +1268,16 @@ Version history
   * installer:
     - full installer now bundled with dmd 2.092.1 and LDC 1.22.0
 
-unreleased version 1.0.1
+2020-08-21 version 1.0.1
   * projects:
     - bugzilla 21024: VS2017/2019 new project: fixed unrelated files listed in New Project Dialog
     - bugzilla 21028: project templates not visible when VS started as standard/restricted user
   * dmdserver:
-    - updated to dmd 2.093
+    - updated to DMD 2.093.1
     - fixed showing documentation for template functions
+  * editor:
+    - now extra mouse buttons to navigate backward/forward supported
   * mago debugger expression evaluator:
     - fixed wrong values displayed eventually when switching stack frames
+  * installer:
+    - full installer now bundled with DMD 2.091.1 and LDC 1.23.0
