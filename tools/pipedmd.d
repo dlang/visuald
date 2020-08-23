@@ -313,7 +313,7 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 
 	if(!bSuccess)
 	{
-		printf("failed launching %s\n", szCommand);
+		printf("failed launching %ls\n", szCommand);
 		return 1;
 	}
 
