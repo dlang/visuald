@@ -341,7 +341,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		// function declaration only
 		if (auto tf = decl.type ? decl.type.isTypeFunction() : null)
 		{
-			if (tf.parameterList && tf.parameterList.parameters)
+			if (tf.parameterList.parameters)
 				foreach(i, p; *tf.parameterList.parameters)
 					if (!stop)
 					{

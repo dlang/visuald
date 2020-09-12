@@ -1867,7 +1867,8 @@ unittest
 	opts.msvcrt = true;
 	opts.warnings = true;
 	opts.importDirs = guessImportPaths() ~ srcdir ~ dirName(dirName(thisdir));
-	opts.stringImportDirs ~= srcdir ~ "/dmd/res";
+	opts.stringImportDirs ~= srcdir ~ "/dmd/res"; // for default_ddoc_theme.ddoc 
+	opts.stringImportDirs ~= srcdir ~ "/.."; // for VERSION
 	opts.versionIds ~= "MARS";
 	//opts.versionIds ~= "NoBackend";
 

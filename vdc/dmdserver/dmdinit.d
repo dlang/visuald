@@ -67,15 +67,15 @@ enum string[2][] dmdStatics =
 	//["_D3dmd10expression10IntegerExp__T7literalVii1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	//["_D3dmd10expression10IntegerExp__T7literalViN1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	["_D3dmd10identifier10Identifier17generateIdWithLocFNbAyaKxSQCe7globals3LocZ8countersHSQDfQDeQCvQCmFNbQBwKxQBwZ3Keyk", "countersType"],
-	["_D3dmd10identifier10Identifier10generateIdFNbAxaZ1ik", "size_t"],
+	["_D3dmd10identifier10Identifier9newSuffixFNbZ1ik", "size_t"],
 ];
 
 string cmangled(string s)
 {
 	version (Win64)
 	{
-		if (s == "_D3dmd10identifier10Identifier10generateIdFNbAxaZ1ik")
-			return "_D3dmd10identifier10Identifier10generateIdFNbAxaZ1im"; // size_t
+		if (s == "_D3dmd10identifier10Identifier9newSuffixFNbZ1ik")
+			return "_D3dmd10identifier10Identifier9newSuffixFNbZ1im"; // size_t
 		if (s ==   "_D3dmd6dmacro10MacroTable6expandMFKSQBi4root9outbuffer9OutBufferkKkAxaZ4nesti")
 			return "_D3dmd6dmacro10MacroTable6expandMFKSQBi4root9outbuffer9OutBuffermKmAxaZ4nesti";
 	}

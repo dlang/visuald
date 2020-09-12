@@ -1749,7 +1749,9 @@
    <File path="dmd\src\dmd\aggregate.d" />
    <File path="dmd\src\dmd\aliasthis.d" />
    <File path="dmd\src\dmd\apply.d" />
-   <File path="dmd\src\dmd\argtypes.d" />
+   <File path="dmd\src\dmd\argtypes_aarch64.d" />
+   <File path="dmd\src\dmd\argtypes_sysv_x64.d" />
+   <File path="dmd\src\dmd\argtypes_x86.d" />
    <File path="dmd\src\dmd\arrayop.d" />
    <File path="dmd\src\dmd\arraytypes.d" />
    <File path="dmd\src\dmd\ast_node.d" />
