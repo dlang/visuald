@@ -1,5 +1,22 @@
 Ddoc
 
+$(H2 2020-08-23 Version 1.0.1)
+ $(UL
+  $(LI dmd based semantic engine:
+   $(UL
+    $(LI updated to DMD 2.093.1)
+    $(LI fixed showing documentation for template functions)
+  ))
+  $(LI editor: now extra mouse buttons to navigate backward/forward supported)
+  $(LI project management:
+   $(UL
+    $(LI bugzilla 21024: VS2017/2019 new project: fixed unrelated files listed in New Project Dialog)
+    $(LI bugzilla 21028: project templates not visible when VS started as standard/restricted user)
+  ))
+  $(LI mago debugger expression evaluator: fixed wrong values displayed eventually when switching stack frames)
+  $(LI installer: full installer now bundled with DMD 2.093.1 and LDC 1.23.0)
+ )
+
 $(H2 2020-07-04 Version 1.0.0)
  $(UL
   $(LI project management:

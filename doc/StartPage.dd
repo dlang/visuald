@@ -84,6 +84,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2020-08-23 Version 1.0.1
+ $(UL
+  $(LI dmd based semantic engine: updated to DMD 2.093.1)
+  $(LI editor: now extra mouse buttons to navigate backward/forward supported)
+  $(LI installer: full installer now bundled with DMD 2.093.1 and LDC 1.23.0)
+ )
+
 2020-07-04 Version 1.0.0
 $(UL
  $(LI DMD based semantic engine: enabled by default, updated to front end version 2.092)
@@ -92,34 +99,11 @@ $(UL
  $(LI goto definition by clicking identifier in tool tip)
 )
 
-2020-23-03 Version 0.52.0
+2020-03-23 Version 0.52.0
 $(UL
  $(LI mago: added support for tuples and simpler display of globals)
  $(LI DMD based semantic engine: updated to 2.091, improvements to code-completions)
  $(LI projects: updated support for all language options)
-)
-
-2020-18-01 Version 0.51.0
-$(UL
- $(LI experimental: semantic server built from DMD frontend)
- $(LI VS2017+: Ctrl+Click goto definition added)
- $(LI VS2017+: syntax highlighted tool tips)
-)
-
-2019-09-03 Version 0.50.1
-$(UL
- $(LI Fixes some integration issues with VS 2019 16.2)
- $(LI mago: improve function call in watch window)
- $(LI better version highlighting for files not in project)
-)
-
-2019-06-23 Version 0.50.0
-$(UL
- $(LI Now checks for updates of Visual D, DMD and LDC and assists download and install)
- $(LI Setup including DMD and LDC now available)
- $(LI mago debugger: better support for dynamic type of classes, show exception messages,
-      conditional breakpoints)
- $(LI highlight references to symbol at caret)
 )
 
 $(LINK2 VersionHistory.html, more...)
