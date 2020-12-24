@@ -2186,6 +2186,8 @@
    <File path="vsi\msdbg164.d" />
    <File path="vsi\msdbg165.d" />
    <File path="vsi\msdbg166.d" />
+   <File path="vsi\msdbg167.d" />
+   <File path="vsi\msdbg168.d" />
    <File path="vsi\msdbg90.d" />
    <File path="vsi\objext.d" />
    <File path="vsi\ocdesign.d" />
@@ -2254,6 +2256,7 @@
    <File path="vsi\vsshell164.d" />
    <File path="vsi\vsshell165.d" />
    <File path="vsi\vsshell166.d" />
+   <File path="vsi\vsshell167.d" />
    <File path="vsi\vsshell2.d" />
    <File path="vsi\vsshell80.d" />
    <File path="vsi\vsshell90.d" />

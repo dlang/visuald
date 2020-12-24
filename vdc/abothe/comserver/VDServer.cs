@@ -342,6 +342,11 @@ namespace DParserCOMServer
 			}
 		}
 
+		public void GetParameterStorageLocs(string filename, out object locs)
+		{ 
+			throw new NotImplementedException();
+		}
+
 #if false
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		[ComRegisterFunction()]

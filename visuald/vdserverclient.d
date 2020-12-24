@@ -453,7 +453,7 @@ class GetDefinitionCommand : FileCommand
 //////////////////////////////////////
 
 alias void delegate(uint request, string filename, string parseErrors,
-                    TextPos[] binaryIsIn, string tasks, string outline) UpdateModuleCallBack;
+                    TextPos[] binaryIsIn, string tasks, string outline, ParameterStorageLoc[] stcLocs) UpdateModuleCallBack;
 
 class UpdateModuleCommand : FileCommand
 {
@@ -494,31 +494,37 @@ class UpdateModuleCommand : FileCommand
 
 		mErrors = detachBSTR(errors);
 
-		VARIANT locs;
-
-		if(gVDServer.GetBinaryIsInLocations(fname, &locs) == S_OK &&
-		   (locs.vt == (VT_ARRAY | VT_INT) || locs.vt == (VT_ARRAY | VT_I4)))
+		void variantToArray(size_t function(size_t) reorder = n => n, A)(ref VARIANT locs, ref A a)
 		{
-			SAFEARRAY* sa = locs.parray;
-			assert(SafeArrayGetDim(sa) == 1);
-			LONG lbound, ubound;
-			SafeArrayGetLBound(sa, 1, &lbound);
-			SafeArrayGetUBound(sa, 1, &ubound);
-
-			size_t cnt = (ubound - lbound + 1) / 2;
-			mBinaryIsIn.length = cnt;
-			for(size_t i = 0; i < cnt; i++)
+			if (locs.vt == (VT_ARRAY | VT_INT) || locs.vt == (VT_ARRAY | VT_I4))
 			{
-				LONG index = lbound + 2 * i;
-				int line, col;
-				SafeArrayGetElement(sa, &index, &line);
-				mBinaryIsIn[i].line = line;
-				index++;
-				SafeArrayGetElement(sa, &index, &col);
-				mBinaryIsIn[i].index = col;
+				SAFEARRAY* sa = locs.parray;
+				assert(SafeArrayGetDim(sa) == 1);
+				LONG lbound, ubound;
+				SafeArrayGetLBound(sa, 1, &lbound);
+				SafeArrayGetUBound(sa, 1, &ubound);
+
+				enum Alen = a[0].tupleof.length;
+				size_t cnt = (ubound - lbound + 1) / Alen;
+				a.length = cnt;
+				LONG index = lbound;
+				int val;
+				for(size_t i = 0; i < cnt; i++)
+				{
+					static foreach(f; 0..Alen)
+					{
+						SafeArrayGetElement(sa, &index, &val);
+						a[i].tupleof[reorder(f)] = val;
+						index++;
+					}
+				}
+				SafeArrayDestroy(sa);
 			}
-			SafeArrayDestroy(sa);
 		}
+
+		VARIANT locs;
+		if(gVDServer.GetBinaryIsInLocations(fname, &locs) == S_OK)
+			variantToArray!(n => 1 - n)(locs, mBinaryIsIn); // swap line and column
 
 		BSTR tasks;
 		if(gVDServer.GetCommentTasks(fname, &tasks) == S_OK)
@@ -527,6 +533,10 @@ class UpdateModuleCommand : FileCommand
 		BSTR outline;
 		if(gVDServer.GetDocumentOutline(fname, &outline) == S_OK)
 			mOutline = detachBSTR(outline);
+
+		VARIANT stclocs;
+		if(gVDServer.GetParameterStorageLocs(fname, &stclocs) == S_OK)
+			variantToArray(stclocs, mParameterStcLocs);
 
 		send(gUITid);
 		return S_OK;
@@ -537,7 +547,7 @@ class UpdateModuleCommand : FileCommand
 		version(DebugCmd)
 			dbglog(to!string(mRequest) ~ " forward:  " ~ mCommand ~ " " ~ ": " ~ mErrors);
 		if(mCallback)
-			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks, mOutline);
+			mCallback(mRequest, mFilename, mErrors, cast(TextPos[])mBinaryIsIn, mTasks, mOutline, mParameterStcLocs);
 		return true;
 	}
 
@@ -548,6 +558,7 @@ class UpdateModuleCommand : FileCommand
 	string mOutline;
 	bool mVerbose;
 	TextPos[] mBinaryIsIn;
+	ParameterStorageLoc[] mParameterStcLocs;
 }
 
 //////////////////////////////////////

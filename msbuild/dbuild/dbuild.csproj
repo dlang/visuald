@@ -106,6 +106,7 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TargetVer>12.0</TargetVer>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -161,7 +162,6 @@
     <Reference Include="System.Xaml" />
     <Reference Include="System.XML" />
   </ItemGroup>
-  
   <!-- VS2013 -->
   <ItemGroup Condition="'$(TargetVer)' == '12.0' and Exists('assemblies\v12\Microsoft.Build.dll')">
     <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -225,7 +225,6 @@
       <HintPath>c:\Windows\assembly\GAC\Microsoft.VisualStudio.VCProjectEngine\12.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
-
   <!-- VS2015 -->
   <ItemGroup Condition="'$(TargetVer)' == '14.0' and Exists('assemblies\v14\Microsoft.Build.dll')">
     <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -291,7 +290,6 @@
       <HintPath>c:\Windows\assembly\GAC\Microsoft.VisualStudio.VCProjectEngine\14.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
-  
   <!-- VS2017 -->
   <PropertyGroup>
     <VS2017Ver Condition="Exists('assemblies\v15')">Local</VS2017Ver>
@@ -333,7 +331,6 @@
       <HintPath Condition="'$(VS2017Ver)' == 'Community'">c:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
-
   <!-- VS2019 -->
   <ItemGroup Condition="'$(TargetVer)' == '16.0' or '$(TargetVer)' == '16.1'">
     <Reference Include="Microsoft.Build">
@@ -358,7 +355,6 @@
       <HintPath>assemblies\v16\Microsoft.VisualStudio.VCProjectEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetVer)' == '16.0'">
     <Reference Include="Microsoft.Build.CPPTasks.Common">
       <HintPath>assemblies\v16\Microsoft.Build.CPPTasks.Common.dll</HintPath>
@@ -369,7 +365,6 @@
       <HintPath>assemblies\v16_1\Microsoft.Build.CPPTasks.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="Strings.resx">
       <SubType>Designer</SubType>

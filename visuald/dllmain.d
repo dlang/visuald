@@ -26,6 +26,7 @@ import threadaux = core.sys.windows.threadaux;
 
 import std.conv;
 import std.array;
+import sdk.win32.oleauto;
 
 // enable precise scanning of the DATA/TLS sections (dmd 2.075+) and GC (dmd 2.085+)
 pragma(msg, "DMD VERSION = ", __VERSION__);
@@ -218,4 +219,38 @@ BOOL GetTooltipResult(uint request, BSTR* btip, BSTR* bfmt, BSTR* blinks)
 	*bfmt = allocwBSTR(fmt);
 	*blinks = allocwBSTR(links);
 	return rc;
+}
+
+extern(Windows)
+BOOL GetParameterStorageLocs(const(char)* fname, SAFEARRAY** psa, BOOL* pPending)
+{
+	if (!Package.s_instance)
+		return false; // not yet loaded as a package
+
+	int changeCount;
+	bool pending;
+	string filename = to!string(fname);
+	auto stcLocs = Package.GetLanguageService().GetParameterStorageLocs(filename, pending, changeCount);
+
+	SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, 3 * cast(ULONG) stcLocs.length);
+	if(!sa)
+		return E_OUTOFMEMORY;
+
+	LONG idx = 0;
+	for(LONG index = 0; index < stcLocs.length; index++)
+	{
+		LONG value = stcLocs[index].type;
+		SafeArrayPutElement(sa, &idx, &value);
+		idx++;
+		value = stcLocs[index].line;
+		SafeArrayPutElement(sa, &idx, &value);
+		idx++;
+		value = stcLocs[index].col - 1;
+		SafeArrayPutElement(sa, &idx, &value);
+		idx++;
+	}
+
+	*pPending = pending;
+	*psa = sa;
+	return true;
 }

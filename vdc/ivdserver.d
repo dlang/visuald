@@ -149,7 +149,7 @@ public:
 	// this method is called once after GetParseErrors returned successfully
 	HRESULT GetBinaryIsInLocations(in BSTR filename, VARIANT* locs);
 
-	// return the locations where "in" and "is" are used as binary operators
+	// return the document outline, i.e. a simple description of the AST
 	//
 	// filename:   file name
 	//
@@ -233,6 +233,15 @@ public:
 	//
 	// return S_FALSE as long as the parsing is still running
 	HRESULT GetCommentTasks(in BSTR filename, BSTR* tasks);
+
+	// return the locations of call arguments with parameter storage class ref, out or lazy
+	//
+	// filename:   file name
+	// locs:       an array of triplets of DWORDs type,line,index that gives the text
+	//             location of the argument expression. type is 0/1/2 for ref/out/lazy
+	//
+	// this method is called once after GetParseErrors returned successfully
+	HRESULT GetParameterStorageLocs(in BSTR filename, VARIANT* locs);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -292,4 +301,18 @@ enum TypeReferenceKind : uint
 
 	DebugIdentifier,
 	VersionIdentifier,
+}
+
+enum ParameterStorageClass
+{
+	Ref,
+	Out,
+	Lazy
+}
+
+struct ParameterStorageLoc
+{
+	int type;
+	int line;
+	int col;
 }

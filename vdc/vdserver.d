@@ -644,6 +644,11 @@ class VDServer : ComObject, IVDServer
 		return E_NOTIMPL;
 	}
 
+	override HRESULT GetParameterStorageLocs(in BSTR filename, VARIANT* locs)
+	{
+		return E_NOTIMPL;
+	}
+
 	///////////////////////////////////////////////////////////////
 	// create our own task pool to be able to destroy it (it keeps a the
 	//  arguments to the last task, so they are never collected)

@@ -1280,4 +1280,10 @@ Version history
   * mago debugger expression evaluator:
     - fixed wrong values displayed eventually when switching stack frames
   * installer:
-    - full installer now bundled with DMD 2.091.1 and LDC 1.23.0
+    - full installer now bundled with DMD 2.093.1 and LDC 1.23.0
+
+unreleased version 1.0.2
+  * dmdserver:
+    - updated to DMD 2.094.1
+  * editor:
+    - bugzilla 21239: navigation bar now sorted, symbols starting with "__" moved to the bottom
