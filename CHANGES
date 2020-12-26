@@ -1282,8 +1282,11 @@ Version history
   * installer:
     - full installer now bundled with DMD 2.093.1 and LDC 1.23.0
 
-unreleased version 1.0.2
+unreleased version 1.1.0
   * dmdserver:
-    - updated to DMD 2.094.1
+    - updated to DMD 2.095.0-beta.1
+    - experimental: show parameter storage ref/out/lazy at call site
   * editor:
     - bugzilla 21239: navigation bar now sorted, symbols starting with "__" moved to the bottom
+  * installer:
+    - full installer now bundled with DMD 2.095.0-beta.1 and LDC 1.24.0
