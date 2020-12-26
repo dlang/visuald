@@ -222,7 +222,7 @@ BOOL GetTooltipResult(uint request, BSTR* btip, BSTR* bfmt, BSTR* blinks)
 }
 
 extern(Windows)
-BOOL GetParameterStorageLocs(const(char)* fname, SAFEARRAY** psa, BOOL* pPending)
+BOOL GetParameterStorageLocs(const(char)* fname, SAFEARRAY** psa, BOOL* pPending, INT* pChangeCount)
 {
 	if (!Package.s_instance)
 		return false; // not yet loaded as a package
@@ -252,5 +252,6 @@ BOOL GetParameterStorageLocs(const(char)* fname, SAFEARRAY** psa, BOOL* pPending
 
 	*pPending = pending;
 	*psa = sa;
+	*pChangeCount = changeCount;
 	return true;
 }

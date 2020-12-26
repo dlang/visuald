@@ -1785,22 +1785,24 @@ void do_unittests()
 		void funOut(out int p) {}
 		void funLazy(lazy int p) {}  // Line 5
 
-		void foo()
+		void foo(int[] arr)
 		{
 			int x;
 			funIn(x);                // Line 10
 			funRef(x);
 			funOut(x);
 			funLazy(x);
+			funRef(arr[3]);
 		}
 	};
 	m = checkErrors(source, "");
 
 	auto stcpos = findParameterStorageClass(m);
-	assert_equal(stcpos.length, 3);
+	assert_equal(stcpos.length, 4);
 	assert_equal(stcpos[0], ParameterStorageClassPos(0, 11, 11));
 	assert_equal(stcpos[1], ParameterStorageClassPos(1, 12, 11));
 	assert_equal(stcpos[2], ParameterStorageClassPos(2, 13, 12));
+	assert_equal(stcpos[3], ParameterStorageClassPos(0, 14, 11));
 }
 
 unittest

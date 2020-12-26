@@ -1613,6 +1613,7 @@ class GlobalOptions
 	bool useDParser;
 	bool mixinAnalysis;
 	bool UFCSExpansions;
+	bool showParamStorage;
 	byte sortExpMode;  // 0: alphabetically, 1: by type, 2: by declaration and scope
 	bool exactExpMatch;
 	ubyte checkUpdatesVisualD; // CheckFrequency: 0: never, 1: daily, 2: weekly, 3: daily prereleases
@@ -1638,6 +1639,7 @@ class GlobalOptions
 	bool lastColorizeCoverage;
 	bool lastColorizeVersions;
 	bool lastShowParseErrors;
+	bool lastShowParamStorage;
 	bool lastUseDParser;
 	string lastInstallDirs;
 
@@ -1991,6 +1993,7 @@ class GlobalOptions
 			deleteFiles         = cast(byte) getIntOpt("deleteFiles", 0);
 			//parseSource         = getBoolOpt("parseSource", true);
 			showParseErrors     = getBoolOpt("showParseErrors", true);
+			showParamStorage    = getBoolOpt("showParamStorage", true);
 			expandFromSemantics = getBoolOpt("expandFromSemantics", true);
 			//expandFromBuffer    = getBoolOpt("expandFromBuffer", true);
 			expandFromJSON      = getBoolOpt("expandFromJSON", true);
@@ -2176,6 +2179,7 @@ class GlobalOptions
 			lastColorizeVersions = ColorizeVersions;
 			lastUseDParser       = useDParser;
 			lastShowParseErrors  = showParseErrors;
+			lastShowParamStorage = showParamStorage;
 
 			updateDefaultColors();
 
@@ -2268,6 +2272,7 @@ class GlobalOptions
 			keyToolOpts.Set("deleteFiles",         deleteFiles);
 			//keyToolOpts.Set("parseSource",         parseSource);
 			keyToolOpts.Set("showParseErrors",     showParseErrors);
+			keyToolOpts.Set("showParamStorage",    showParamStorage);
 			keyToolOpts.Set("expandFromSemantics", expandFromSemantics);
 			//keyToolOpts.Set("expandFromBuffer",    expandFromBuffer);
 			keyToolOpts.Set("expandFromJSON",      expandFromJSON);
@@ -2348,7 +2353,13 @@ class GlobalOptions
 			lastShowParseErrors = showParseErrors;
 			updateColorizer = true;
 		}
-		if(updateColorizer)
+		if (lastShowParamStorage != showParamStorage)
+		{
+			lastShowParamStorage = showParamStorage;
+			if(auto svc = Package.s_instance.mLangsvc)
+				svc.RestartParser();
+		}
+		else if(updateColorizer)
 			if(auto svc = Package.s_instance.mLangsvc)
 				svc.UpdateColorizer(true);
 

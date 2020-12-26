@@ -261,14 +261,15 @@ namespace vdext15
 	{
 		[DllImport("visuald.dll")]
 		public static extern bool GetParameterStorageLocs(string fname,
-			[MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_INT)] out int[] locs, out bool pending);
+			[MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_INT)] out int[] locs,
+			out bool pending, out int changeCount);
 
-		public static bool GetParameterStorageLocations(string fname, out int[] data, out bool pending)
+		public static bool GetParameterStorageLocations(string fname, out int[] data, out bool pending, out int changeCount)
 		{
 			try
 			{
 				// grab triplets of (type, line, col)
-				if (!GetParameterStorageLocs(fname, out data, out pending))
+				if (!GetParameterStorageLocs(fname, out data, out pending, out changeCount))
 					return false;
 				return true;
 			}
@@ -276,6 +277,7 @@ namespace vdext15
 			{
 				data = new int[0];
 				pending = true;
+				changeCount = -1;
 				return false;
 			}
 		}
@@ -383,6 +385,8 @@ namespace vdext15
 		private string _fileName;
 		int[] _stcLocs;
 		ITextSnapshot _pendingSnapshot;
+		ITextSnapshot _currentSnapshot;
+		int _changeCount;
 
 		public ParamStorageTagger(ITextBuffer buffer)
 		{
@@ -400,37 +404,41 @@ namespace vdext15
 			}
 
 			buffer.Changed += (sender, args) => HandleBufferChanged(args);
-			_pendingSnapshot = buffer.CurrentSnapshot;
+			_pendingSnapshot = _currentSnapshot = buffer.CurrentSnapshot;
 		}
 
 		#region ITagger implementation
 
 		public void UpdateStcSpans()
 		{
-			if (_pendingSnapshot == null)
-				return;
-
 			int[] stcLocs;
 			bool pending;
-			ParamStorageAdornmentTagger.GetParameterStorageLocations(_fileName, out stcLocs, out pending);
+			int changeCount;
+			ParamStorageAdornmentTagger.GetParameterStorageLocations(_fileName, out stcLocs, out pending, out changeCount);
 			if (pending && _stcLocs != null)
 				return;
+			if (_pendingSnapshot == null && _changeCount == changeCount)
+				return;
 
-			int j = 0;
-			for (int i = 0; i + 2 < stcLocs.Length; i += 3)
+			if (stcLocs != null)
 			{
-				if (stcLocs[i] >= 0 && stcLocs[i] <= 2)
+				int j = 0;
+				for (int i = 0; i + 2 < stcLocs.Length; i += 3)
 				{
-					if (stcLocs[i + 1] >= _pendingSnapshot.LineCount)
-						continue;
-					var line = _pendingSnapshot.GetLineFromLineNumber(stcLocs[i + 1] - 1);
-					stcLocs[j] = stcLocs[i];
-					stcLocs[j + 1] = line.Start.Position + stcLocs[i + 2];
-					j += 2;
+					if (stcLocs[i] >= 0 && stcLocs[i] <= 2)
+					{
+						if (stcLocs[i + 1] >= _currentSnapshot.LineCount)
+							continue;
+						var line = _currentSnapshot.GetLineFromLineNumber(stcLocs[i + 1] - 1);
+						stcLocs[j] = stcLocs[i];
+						stcLocs[j + 1] = line.Start.Position + stcLocs[i + 2];
+						j += 2;
+					}
 				}
+				Array.Resize(ref stcLocs, j);
 			}
-			Array.Resize(ref stcLocs, j);
 			_stcLocs = stcLocs;
+			_changeCount = changeCount;
 			if (!pending)
 				_pendingSnapshot = null;
 		}
@@ -440,22 +448,23 @@ namespace vdext15
 			UpdateStcSpans();
 
 			// Note that the spans argument can contain spans that are sub-spans of lines or intersect multiple lines.
-			for (int i = 0; i + 1 < _stcLocs.Length; i += 2)
-			{
-				// need to compare manually as info is on different snapshots
-				int pos = _stcLocs[i + 1];
-				bool intersects = false;
-				foreach (var span in spans)
-					if (span.Start.Position <= pos && pos <= span.End.Position)
-						intersects = true;
-
-				if (intersects)
+			if (_stcLocs != null)
+				for (int i = 0; i + 1 < _stcLocs.Length; i += 2)
 				{
-					var point = new SnapshotPoint(spans.First().Snapshot, pos);
-					SnapshotSpan span = new SnapshotSpan(point, 1);
-					yield return new TagSpan<ParamStorageTag>(span, new ParamStorageTag(_stcLocs[i]));
+					// need to compare manually as info is on different snapshots
+					int pos = _stcLocs[i + 1];
+					bool intersects = false;
+					foreach (var span in spans)
+						if (span.Start.Position <= pos && pos <= span.End.Position)
+							intersects = true;
+
+					if (intersects)
+					{
+						var point = new SnapshotPoint(spans.First().Snapshot, pos);
+						SnapshotSpan span = new SnapshotSpan(point, 1);
+						yield return new TagSpan<ParamStorageTag>(span, new ParamStorageTag(_stcLocs[i]));
+					}
 				}
-			}
 		}
 		public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
@@ -485,15 +494,14 @@ namespace vdext15
 			// Combine all changes into a single span so that
 			// the ITagger<>.TagsChanged event can be raised just once for a compound edit
 			// with many parts.
-			ITextSnapshot snapshot = args.After;
-			_pendingSnapshot = args.After;
+			_pendingSnapshot = _currentSnapshot = args.After;
 
 			int start = args.Changes[0].NewPosition;
 			int end = args.Changes[args.Changes.Count - 1].NewEnd;
 
 			SnapshotSpan totalAffectedSpan = new SnapshotSpan(
-				snapshot.GetLineFromPosition(start).Start,
-				snapshot.GetLineFromPosition(end).End);
+				_currentSnapshot.GetLineFromPosition(start).Start,
+				_currentSnapshot.GetLineFromPosition(end).End);
 
 			temp(this, new SnapshotSpanEventArgs(totalAffectedSpan));
 		}

@@ -8,6 +8,7 @@
 
 module visuald.vdserverclient;
 
+import visuald.dpackage;
 import visuald.pkgutil;
 import visuald.logutil;
 
@@ -534,9 +535,12 @@ class UpdateModuleCommand : FileCommand
 		if(gVDServer.GetDocumentOutline(fname, &outline) == S_OK)
 			mOutline = detachBSTR(outline);
 
-		VARIANT stclocs;
-		if(gVDServer.GetParameterStorageLocs(fname, &stclocs) == S_OK)
-			variantToArray(stclocs, mParameterStcLocs);
+		if (Package.GetGlobalOptions().showParamStorage)
+		{
+			VARIANT stclocs;
+			if(gVDServer.GetParameterStorageLocs(fname, &stclocs) == S_OK)
+				variantToArray(stclocs, mParameterStcLocs);
+		}
 
 		send(gUITid);
 		return S_OK;
