@@ -1774,6 +1774,35 @@ void do_unittests()
 
 	// TODO: checkTip(m, 3, 18, "(enum) `tok.TOK`");
 	checkTip(m, 5, 19, "(constant global) `const(uint) shell.VSITEMID_NIL`");
+
+	///////////////////////////////////////////////////////////
+	// parameter storage class
+	lastContext = null;
+	filename = "source.d";
+	source = q{
+		void funIn(in int p) {}
+		void funRef(ref int p) {}
+		void funOut(out int p) {}
+		void funLazy(lazy int p) {}  // Line 5
+
+		void foo(int[] arr)
+		{
+			int x;
+			funIn(x);                // Line 10
+			funRef(x);
+			funOut(x);
+			funLazy(x);
+			funRef(arr[3]);
+		}
+	};
+	m = checkErrors(source, "");
+
+	auto stcpos = findParameterStorageClass(m);
+	assert_equal(stcpos.length, 4);
+	assert_equal(stcpos[0], ParameterStorageClassPos(0, 11, 11));
+	assert_equal(stcpos[1], ParameterStorageClassPos(1, 12, 11));
+	assert_equal(stcpos[2], ParameterStorageClassPos(2, 13, 12));
+	assert_equal(stcpos[3], ParameterStorageClassPos(0, 14, 11));
 }
 
 unittest
@@ -1867,7 +1896,8 @@ unittest
 	opts.msvcrt = true;
 	opts.warnings = true;
 	opts.importDirs = guessImportPaths() ~ srcdir ~ dirName(dirName(thisdir));
-	opts.stringImportDirs ~= srcdir ~ "/dmd/res";
+	opts.stringImportDirs ~= srcdir ~ "/dmd/res"; // for default_ddoc_theme.ddoc 
+	opts.stringImportDirs ~= srcdir ~ "/.."; // for VERSION
 	opts.versionIds ~= "MARS";
 	//opts.versionIds ~= "NoBackend";
 

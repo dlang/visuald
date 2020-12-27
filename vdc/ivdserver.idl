@@ -39,5 +39,6 @@ interface IVDServer : IUnknown
 	HRESULT GetReferencesResult([out,retval] BSTR* stringList);
 	HRESULT ConfigureCommentTasks([in] BSTR tasks);
 	HRESULT GetCommentTasks([in] BSTR filename, [out,retval] BSTR* tasks);
+	HRESULT GetParameterStorageLocs([in] BSTR filename, [out, retval] VARIANT* locs); // array of triplets of DWORD
 };
 

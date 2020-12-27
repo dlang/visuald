@@ -895,6 +895,16 @@ class LanguageService : DisposingComObject,
 		return true;
 	}
 
+	ParameterStorageLoc[] GetParameterStorageLocs(string filename, out bool pending, out int changeCount)
+	{
+		Source src = GetSource(filename);
+		if(!src)
+			return null;
+		pending = src.mHasPendingUpdateModule || src.mModificationCountSemantic != src.mModificationCount;
+		changeCount = src.mModificationCount;
+		return src.mParameterStcLocs;
+	}
+
 	// QuickInfo callback from C# ///////////////////////////////////
 
 	private uint mLastTipIdleTaskScheduled;
@@ -1489,6 +1499,19 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	size_t[] mColumn3;
 	int mCurrentLine;
 
+	bool columnLess(const ref size_t col1, const ref size_t col2)
+	{
+		auto d1 = mNodes[col1].desc;
+		auto d2 = mNodes[col2].desc;
+		bool i1 = d1.startsWith("__"); // move internal symbols to the end of the list
+		bool i2 = d2.startsWith("__");
+		if (i1 && !i2)
+			return false;
+		if (!i1 && i2)
+			return true;
+		return icmp(d1, d2) < 0;
+	}
+
 	void UpdateFromSource(string outline)
 	{
 		string[] lines = outline.splitLines();
@@ -1535,6 +1558,8 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		for (size_t n = 0; n < mNodes.length; n++)
 			if (mNodes[n].depth <= 1)
 				mGlobal[cnt++] = n;
+
+		sort!((a, b) => columnLess(a, b))(mGlobal);
 	}
 
 	int getNodeIndex(int iCombo, int index)
@@ -1548,10 +1573,10 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		return -1;
 	}
 
-	int findGlobalIndex(int line)
+	int findLineIndex(size_t[] column, int line)
 	{
-		for (size_t g = 0; g < mGlobal.length; g++)
-			if (mNodes[mGlobal[g]].containsLine(line))
+		for (size_t g = 0; g < column.length; g++)
+			if (mNodes[column[g]].containsLine(line))
 				return g;
 		return -1;
 	}
@@ -1569,7 +1594,7 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		mCurrentLine = line;
 		mColumn2 = null;
 		mColumn3 = null;
-		int sel1 = findGlobalIndex(line);
+		int sel1 = findLineIndex(mGlobal, line);
 		int sel2 = -1;
 		int sel3 = -1;
 		if (sel1 >= 0)
@@ -1585,24 +1610,21 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 					mColumn2 ~= h;
 					if (mNodes[h].containsLine(line))
 					{
-						sel2 = mColumn2.length - 1;
 						int hdepth = mNodes[h].depth;
 						for (int i = h + 1; i < mNodes.length; i++)
 						{
 							if (mNodes[i].depth <= hdepth)
 								break;
 							if (mNodes[i].depth == hdepth + 1)
-							{
 								mColumn3 ~= i;
-								if (mNodes[i].containsLine(line))
-								{
-									sel3 = mColumn3.length - 1;
-								}
-							}
 						}
 					}
 				}
 			}
+			sort!((a, b) => columnLess(a, b))(mColumn2);
+			sort!((a, b) => columnLess(a, b))(mColumn3);
+			sel2 = findLineIndex(mColumn2, line);
+			sel3 = findLineIndex(mColumn3, line);
 		}
 		if (mDropdownBar)
 		{
@@ -1956,6 +1978,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 	IdentifierType[][wstring] mIdentifierTypes;
 	vdc.util.TextPos[] mBinaryIsIn;
 	NewHiddenRegion[] mOutlineRegions;
+	ParameterStorageLoc[] mParameterStcLocs;
 
 	int mOutliningState;
 	int mModificationCountOutlining;
@@ -4641,13 +4664,14 @@ else
 	}
 
 	extern(D) void OnUpdateModule(uint request, string filename, string parseErrors, vdc.util.TextPos[] binaryIsIn,
-								  string tasks, string outline)
+								  string tasks, string outline, ParameterStorageLoc[] parameterStcLocs)
 	{
 		mHasPendingUpdateModule = false;
 		if (!Package.GetGlobalOptions().showParseErrors)
 			parseErrors = null;
 		updateParseErrors(parseErrors);
 		mBinaryIsIn = binaryIsIn;
+		mParameterStcLocs = parameterStcLocs;
 		if(IVsTextColorState colorState = qi_cast!IVsTextColorState(mBuffer))
 		{
 			scope(exit) release(colorState);

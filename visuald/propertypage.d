@@ -2983,8 +2983,11 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddTitleLine("Semantic analysis");
 		AddControl("", mShowParseErrors = new CheckBox(mCanvas, "Show parsing errors (squiggles and markers)"));
 		version(DParserOption) AddControl("", mUseDmdParser = new CheckBox(mCanvas, "use DMD parsing engine for semantic analysis"));
-		AddControl("", mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"));
-		AddControl("", mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
+		auto lineY = mLineY;
+		AddControl("", mShowParamStorage = new CheckBox(mCanvas, "Show parameter storage class at call site (experimental)"));
+		mLineY = lineY; // overlay with next
+		AddTwoControls(mMixinAnalysis = new CheckBox(mCanvas, "Enable mixin analysis"),
+		               mUFCSExpansions = new CheckBox(mCanvas, "Enable UFCS expansions"));
 		//AddControl("", mSemanticGotoDef = new CheckBox(mCanvas, "Use semantic analysis for \"Goto Definition\" (before trying JSON info)"));
 		AddTitleLine("Expansions");
 		AddControl("", mExpandSemantics = new CheckBox(mCanvas, "Expansions from semantic analysis"));
@@ -3010,7 +3013,10 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		else                   bool useDParser = true;
 		mMixinAnalysis.setEnabled(useDParser);
 		mUFCSExpansions.setEnabled(useDParser);
+		mMixinAnalysis.setVisible(useDParser);
+		mUFCSExpansions.setVisible(useDParser);
 		mSortExpMode.setEnabled(useDParser);
+		mShowParamStorage.setVisible(!useDParser);
 		mShowValueInTooltip.setEnabled(mShowTypeInTooltip.isChecked());
 	}
 
@@ -3027,6 +3033,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		version(DParserOption) mUseDmdParser.setChecked(!opts.useDParser);
 		mMixinAnalysis.setChecked(opts.mixinAnalysis);
 		mUFCSExpansions.setChecked(opts.UFCSExpansions);
+		mShowParamStorage.setChecked(opts.showParamStorage);
 		mSortExpMode.setSelection(opts.sortExpMode);
 		mExactExpMatch.setChecked(opts.exactExpMatch);
 
@@ -3048,6 +3055,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		version(DParserOption) changes += changeOption(!mUseDmdParser.isChecked(), opts.useDParser, refopts.useDParser);
 		changes += changeOption(mMixinAnalysis.isChecked(), opts.mixinAnalysis, refopts.mixinAnalysis);
 		changes += changeOption(mUFCSExpansions.isChecked(), opts.UFCSExpansions, refopts.UFCSExpansions);
+		changes += changeOption(mShowParamStorage.isChecked(), opts.showParamStorage, refopts.showParamStorage);
 		changes += changeOption(cast(ubyte) mSortExpMode.getSelection(), opts.sortExpMode, refopts.sortExpMode);
 		changes += changeOption(mExactExpMatch.isChecked(), opts.exactExpMatch, refopts.exactExpMatch);
 		return changes;
@@ -3062,6 +3070,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	CheckBox mShowValueInTooltip;
 	//CheckBox mSemanticGotoDef;
 	version(DParserOption) CheckBox mUseDmdParser;
+	CheckBox mShowParamStorage;
 	CheckBox mUFCSExpansions;
 	ComboBox mSortExpMode;
 	CheckBox mExactExpMatch;

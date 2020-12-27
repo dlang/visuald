@@ -341,7 +341,7 @@ extern(C++) class ASTVisitor : StoppableVisitor
 		// function declaration only
 		if (auto tf = decl.type ? decl.type.isTypeFunction() : null)
 		{
-			if (tf.parameterList && tf.parameterList.parameters)
+			if (tf.parameterList.parameters)
 				foreach(i, p; *tf.parameterList.parameters)
 					if (!stop)
 					{
@@ -1135,7 +1135,7 @@ TipData tipForDeclaration(Declaration decl)
 		if (auto td = fntype && decl.parent ? decl.parent.isTemplateDeclaration() : null)
 			functionToBufferFull(fntype, &buf, decl.getIdent(), &hgs, td);
 		else if (fntype)
-			functionToBufferWithIdent(fntype, &buf, decl.toPrettyChars(true), &hgs);
+			functionToBufferWithIdent(fntype, &buf, decl.toPrettyChars(true), &hgs, func.isStatic);
 		else
 			buf.writestring(decl.toPrettyChars(true));
 		auto res = buf.extractSlice(); // take ownership
@@ -1873,6 +1873,88 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 	mod.accept(itv);
 
 	return itv.idTypes;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+struct ParameterStorageClassPos
+{
+	int type; // ref, out, lazy
+	int line;
+	int col;
+}
+
+ParameterStorageClassPos[] findParameterStorageClass(Module mod)
+{
+	extern(C++) class ParameterStorageClassVisitor : ASTVisitor
+	{
+		ParameterStorageClassPos[] stcPos;
+		const(char)* filename;
+
+		alias visit = ASTVisitor.visit;
+
+		final void addParamPos(int type, int line, int col)
+		{
+			auto psp = ParameterStorageClassPos(type, line, col);
+			stcPos ~= psp;
+		}
+		final void addParamPos(int type, Expression expr)
+		{
+			if (expr.loc.filename is filename)
+				addParamPos(type, expr.loc.linnum, expr.loc.charnum);
+		}
+		final void addLazyParamPos(int type, Expression expr)
+		{
+			if (!expr.loc.filename)
+				// drill into generated function for lazy parameter
+				if (expr.op == TOK.function_)
+					if (auto fd = (cast(FuncExp)expr).fd)
+						if (fd.fbody)
+							if (auto cs = fd.fbody.isCompoundStatement())
+								if (cs.statements && cs.statements.length)
+									if (auto rs = (*cs.statements)[0].isReturnStatement())
+										expr = rs.exp;
+
+			if (expr.loc.filename is filename)
+				addParamPos(type, expr.loc.linnum, expr.loc.charnum);
+		}
+
+		override void visit(CallExp expr)
+		{
+			if (expr.arguments && expr.arguments.length)
+			{
+				if (auto tf = expr.f ? expr.f.type.isTypeFunction() : null)
+				{
+					if (auto params = tf.parameterList.parameters)
+					{
+						size_t cnt = min(expr.arguments.length, params.length);
+						for (size_t p = 0; p < cnt; p++)
+						{
+							auto stc = (*params)[p].storageClass;
+							if (stc & STC.ref_)
+							{
+								if (stc & (STC.in_ | STC.const_))
+									continue;
+								if((*params)[p].type && !(*params)[p].type.isMutable())
+									continue;
+								addParamPos(0, (*expr.arguments)[p]);
+							}
+							else if (stc & STC.out_)
+								addParamPos(1, (*expr.arguments)[p]);
+							else if (stc & STC.lazy_)
+								addLazyParamPos(2, (*expr.arguments)[p]);
+						}
+					}
+				}
+			}
+			super.visit(expr);
+		}
+	}
+
+	scope psv = new ParameterStorageClassVisitor;
+	psv.filename = mod.srcfile.toChars();
+	mod.accept(psv);
+
+	return psv.stcPos;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

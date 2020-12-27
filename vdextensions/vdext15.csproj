@@ -25,6 +25,7 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
     <Prefer32Bit>false</Prefer32Bit>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -140,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="gotodef.cs" />
+    <Compile Include="ParamStorageAdornmentTagger.cs" />
     <Compile Include="quickinfo.cs" />
     <Compile Include="vdext15.cs" />
     <Compile Include="Properties\AssemblyInfo15.cs" />

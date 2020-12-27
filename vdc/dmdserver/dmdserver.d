@@ -823,6 +823,43 @@ class DMDServer : ComObject, IVDServer
 		return S_OK;
 	}
 
+	override HRESULT GetParameterStorageLocs(in BSTR filename, VARIANT* locs)
+	{
+		// array of pairs of DWORD
+		string fname = makeFilenameCanonical(to_string(filename), null);
+
+		ModuleData* md;
+		synchronized(gErrorSync)
+		{
+			md = findModule(fname, false);
+			if (!md || !md.analyzedModule)
+				return S_FALSE;
+		}
+
+		auto stcLoc = findParameterStorageClass(md.analyzedModule);
+
+		SAFEARRAY *sa = SafeArrayCreateVector(VT_INT, 0, 3 * cast(ULONG) stcLoc.length);
+		if(!sa)
+			return E_OUTOFMEMORY;
+
+		for(LONG index = 0; index < stcLoc.length; index++)
+		{
+			LONG idx = index * 3;
+			LONG value = stcLoc[index].type;
+			SafeArrayPutElement(sa, &idx, &value);
+			idx++;
+			value = stcLoc[index].line;
+			SafeArrayPutElement(sa, &idx, &value);
+			idx++;
+			value = stcLoc[index].col - 1;
+			SafeArrayPutElement(sa, &idx, &value);
+		}
+
+		locs.vt = VT_ARRAY | VT_INT;
+		locs.parray = sa;
+		return S_OK;
+	}
+
 	///////////////////////////////////////////////////////////////
 	// create our own task pool to be able to destroy it (it keeps a the
 	//  arguments to the last task, so they are never collected)
@@ -1118,6 +1155,15 @@ string findIdentifierTypesResultToString(FindIdentifierTypesResult res)
 		s ~= ids ~ "\n";
 	}
 	return s;
+}
+
+////////////////////////////////////////////////////////////////
+void dummy_instantiation_of_cas()
+{
+	// workaround missing symbol starting with dmd 2.093
+	import core.atomic;
+	LONG Target, old, Value;
+	cas( cast(shared(LONG)*)Target, old, Value );
 }
 
 ////////////////////////////////////////////////////////////////

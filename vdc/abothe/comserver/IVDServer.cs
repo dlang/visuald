@@ -38,6 +38,7 @@ namespace DParserCOMServer
 		void GetReferencesResult (out string stringList);
 		void ConfigureCommentTasks (string tasks);
 		void GetCommentTasks (string filename, out string tasks);
+		void GetParameterStorageLocs(string filename, out object locs); // array of triplets of DWORD
 	}
 }
 

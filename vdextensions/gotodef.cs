@@ -166,16 +166,14 @@ namespace vdext15
     [Order(Before = "WordSelection")]
     internal sealed class GoToDefMouseHandlerProvider : IMouseProcessorProvider
 	{
-#pragma warning disable 649 // Field is never assigned to, and will always have its default value null
+        [Import]
+        private IClassifierAggregatorService _aggregatorFactory = null;
 
         [Import]
-        private IClassifierAggregatorService _aggregatorFactory;
+        private ITextStructureNavigatorSelectorService _navigatorService = null;
 
         [Import]
-        private ITextStructureNavigatorSelectorService _navigatorService;
-
-        [Import]
-        private SVsServiceProvider _globalServiceProvider;
+        private SVsServiceProvider _globalServiceProvider = null;
 
         public IMouseProcessor GetAssociatedProcessor(IWpfTextView view)
         {
@@ -224,11 +222,11 @@ namespace vdext15
         #endregion
     }
 
-/// <summary>
-/// Handle ctrl+click on valid elements to send GoToDefinition to the shell.  Also handle mouse moves
-/// (when control is pressed) to highlight references for which GoToDefinition will (likely) be valid.
-/// </summary>
-internal sealed class GoToDefMouseHandler : MouseProcessorBase
+    /// <summary>
+    /// Handle ctrl+click on valid elements to send GoToDefinition to the shell.  Also handle mouse moves
+    /// (when control is pressed) to highlight references for which GoToDefinition will (likely) be valid.
+    /// </summary>
+    internal sealed class GoToDefMouseHandler : MouseProcessorBase
     {
         private IWpfTextView _view;
         private CtrlKeyState _state;
@@ -350,11 +348,11 @@ internal sealed class GoToDefMouseHandler : MouseProcessorBase
         }
 
 
-    #endregion
+        #endregion
 
-    #region Private helpers
+        #region Private helpers
 
-    private Point RelativeToView(Point position)
+        private Point RelativeToView(Point position)
         {
             return new Point(position.X + _view.ViewportLeft, position.Y + _view.ViewportTop);
         }
@@ -467,7 +465,7 @@ internal sealed class GoToDefMouseHandler : MouseProcessorBase
         #endregion
     }
 
-	#region Classification type/format exports
+#region Classification type/format exports
 
 	[Export(typeof(EditorFormatDefinition))]
 	[ClassificationType(ClassificationTypeNames = "UnderlineClassificationVisualD")]
@@ -484,24 +482,24 @@ internal sealed class GoToDefMouseHandler : MouseProcessorBase
 		}
 	}
 
-	#endregion
+#endregion
 
-	#region Provider definition
+#region Provider definition
 
-	[Export(typeof(IViewTaggerProvider))]
+    [Export(typeof(IViewTaggerProvider))]
 	[ContentType("text")]
 	[TagType(typeof(ClassificationTag))]
-	internal class UnderlineClassifierProvider : IViewTaggerProvider
+    internal class UnderlineClassifierProvider : IViewTaggerProvider
 	{
 		[Import]
-		internal IClassificationTypeRegistryService ClassificationRegistry;
+		internal IClassificationTypeRegistryService ClassificationRegistry = null;
 
 		//[Import]
 		//private SVsServiceProvider _serviceProvider;
 
 		[Export(typeof(ClassificationTypeDefinition))]
 		[Name("UnderlineClassificationVisualD")]
-		internal static ClassificationTypeDefinition underlineClassificationType;
+		internal static ClassificationTypeDefinition underlineClassificationType = null;
 
 		private static IClassificationType s_underlineClassification;
 		public static UnderlineClassifier GetClassifierForView(ITextView view)
@@ -533,9 +531,9 @@ internal sealed class GoToDefMouseHandler : MouseProcessorBase
 		}
 	}
 
-	#endregion
+#endregion
 
-	internal class UnderlineClassifier : ITagger<ClassificationTag>
+    internal class UnderlineClassifier : ITagger<ClassificationTag>
 	{
 		private IClassificationType _classificationType;
 		private ITextView _textView;
@@ -548,7 +546,7 @@ internal sealed class GoToDefMouseHandler : MouseProcessorBase
 			_underlineSpan = null;
 		}
 
-		#region Private helpers
+#region Private helpers
 
 		private void SendEvent(SnapshotSpan span)
 		{
@@ -557,9 +555,9 @@ internal sealed class GoToDefMouseHandler : MouseProcessorBase
 				temp(this, new SnapshotSpanEventArgs(span));
 		}
 
-		#endregion
+#endregion
 
-		#region UnderlineClassification public members
+#region UnderlineClassification public members
 
 		public SnapshotSpan? CurrentUnderlineSpan { get { return _underlineSpan; } }
 
@@ -590,7 +588,7 @@ internal sealed class GoToDefMouseHandler : MouseProcessorBase
 			}
 		}
 
-		#endregion
+#endregion
 
 		public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
 		{

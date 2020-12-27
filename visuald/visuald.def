@@ -25,3 +25,4 @@ EXPORTS
 	GenerateGeneralXMLW        = GenerateGeneralXMLW        PRIVATE
 	GetTooltip                 = GetTooltip                 PRIVATE
 	GetTooltipResult           = GetTooltipResult           PRIVATE
+	GetParameterStorageLocs    = GetParameterStorageLocs    PRIVATE

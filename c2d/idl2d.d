@@ -1628,6 +1628,8 @@ version(none) version(vsi)
 
 		if(currentModule == "msdbg")
 			replaceTokenSequence(tokens, "const DWORD S_UNKNOWN = 0x3;", "denum DWORD S_UNKNOWN = 0x3;", true);
+		if(currentModule == "msdbg167")
+			replaceTokenSequence(tokens, "__uuidof($data)", "$data.iid", true);
 		if(currentModule == "activdbg")
 			replaceTokenSequence(tokens, "const THREAD_STATE", "denum THREAD_STATE", true);
 
