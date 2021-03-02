@@ -9,10 +9,11 @@ $(H2 2021-02-02 Version 1.1.0)
     $(LI improved handling of symbols in selective imports)
   ))
   $(LI editor:
+   $(UL
     $(LI bugzilla 21239: navigation bar now sorted, symbols starting with "__" moved to the bottom)
     $(LI integrated dfmt for "Format Document")
   ))
-  *$(LI installer:
+  $(LI installer:
    $(UL
     $(LI full installer now bundled with DMD 2.095.1 and LDC 1.25.0)
   ))
