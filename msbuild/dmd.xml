@@ -202,6 +202,10 @@
                   Description="enable rvalue arguments to ref parameters. (dmd 2.087+)" />
     <BoolProperty Name="PreviewNoSharedAccess" Category="Language" DisplayName="Preview nosharedaccess" Switch="-preview=nosharedaccess"
                   Description="disable access to shared memory objects. (dmd 2.088+)" />
+    <BoolProperty Name="PreviewIn" Category="Language" DisplayName="Preview in" Switch="-preview=in"
+                  Description="'in' on parameters means `scope const [ref]` (dmd 2.092+) and accepts rvalues (dmd 2.094+)" />
+    <BoolProperty Name="PreviewInclusiveInContracts" Category="Language" DisplayName="Preview inclusive in contracts" Switch="-preview=inclusiveincontracts"
+                  Description="'in' contracts of overridden methods must be a superset of parent contract (dmd 2.095+)" />
 
     <BoolProperty Name="RevertImport" Category="Language" DisplayName="Revert import" Switch="-revert=import"
               Description="revert to single phase name lookup. (dmd 2.085+)" />

@@ -3,7 +3,13 @@ Ddoc
 $(H2 Syntax Highlighting)
 
 $(UL
- $(LI syntax highlighting supports all sorts of D2 style strings.
+ $(LI semantic syntax highlighting supports all kinds of types and variables.
+    $(P The colors are configured in the standard Visual Studio dialog Tools->Options->Environment->Fonts and Colors.
+        This code snippet shows how the color names match the respective code.
+   )
+   $(LINK2 images/colortest.png, <img src="images/colortest2.png" width="100%"/>)
+  )
+ $(LI all sorts of D2 style strings are supported.
   $(IMG_CENTER images/strings.png)
  )
  $(LI statements disabled by version or debug conditionals are displayed in a slightly different color.
@@ -15,8 +21,11 @@ $(UL
  $(LI highlighting colors can be setup in the "Fonts and Colors" page found in the Tools->Options Dialog.
    In addition to the regular colors, you'll find "Visual D Disabled ..." colors for the code disabled
    through version statements and "Visual D Token String ..." colors for the code in token strings.)
- $(LI underlining of syntax errors (no semantic analysis done)
+ $(LI underlining of syntax and semantic errors (semantic analysis done when using the dmd based engine)
    $(IMG_CENTER images/syntaxerror.png)
+ )
+ $(LI $(P new in Visual D 1.1: parameter storage mutable ref/out/lazy can be shown at the call site.)
+   $(LINK2 images/parameterstorage.png, <img src="images/parameterstorage2.png" width="100%"/>)
  )
 )
 
@@ -25,7 +34,7 @@ Tools->Options->Text Editor->D->Editor: )
 
  $(IMG_CENTER images/editor-options.png)
 
-$(P User defined types have there own color settings. You can also manipulate other identifiers by assigning them
+$(P You can manipulate coloring of identifiers by assigning them to
 a different color category: if prefixed with one of the section names, they will be highlighted accordingly.
 The available color categories are: )
 

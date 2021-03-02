@@ -65,6 +65,10 @@ import std.array;
 import std.file;
 import std.path;
 
+//import dfmt; // causes bad dependency with -inline
+pragma(mangle,"dfmt_format")
+bool dfmt_format(string source_desc, string buffer, ref string output);
+
 ///////////////////////////////////////////////////////////////////////////////
 
 interface IVsCustomDataTip : IUnknown
@@ -320,6 +324,9 @@ version(tip)
 
 			case ECMD_FORMATSELECTION:
 				return ReindentLines();
+
+			case ECMD_FORMATDOCUMENT:
+				return FormatDocument();
 
 			case ECMD_COMMENTBLOCK:
 			case ECMD_COMMENT_BLOCK:
@@ -746,6 +753,7 @@ version(tip)
 			{
 			case ECMD_PARAMINFO:
 			case ECMD_FORMATSELECTION:
+			case ECMD_FORMATDOCUMENT:
 			case ECMD_COMMENTBLOCK:
 			case ECMD_COMMENT_BLOCK:
 			case ECMD_UNCOMMENTBLOCK:
@@ -1208,6 +1216,62 @@ version(tip)
 				if(iStartLine != iNewEndLine)
 					return ReindentLines(iStartLine, iNewEndLine);
 		return S_OK;
+	}
+
+	int FormatDocument()
+	{
+		string fname = mCodeWinMgr.mSource.GetFileName();
+		int endLine, endCol;
+		mCodeWinMgr.mSource.mBuffer.GetLastLineIndex(&endLine, &endCol);
+		BSTR text;
+		HRESULT hr = mCodeWinMgr.mSource.mBuffer.GetLineText(0, 0, endLine, endCol, &text);
+		string txt = detachBSTR(text);
+		string res;
+		if(!dfmt_format(fname, txt, res))
+			return E_FAIL;
+		if(res == txt)
+			return S_OK;
+
+		import stdext.diffmyers;
+		string[] txtlines = txt.splitLines;
+		string[] reslines = res.splitLines;
+
+		IVsCompoundAction compAct = qi_cast!IVsCompoundAction(mView);
+		if(compAct)
+			compAct.OpenCompoundAction("Format Document"w.ptr);
+
+		int lineOff = 0;
+		R[] diffs = diff(txtlines, reslines);
+		foreach(r; diffs)
+		{
+			string ntxt = join(reslines[r.ypos .. r.ypos + r.ylen], '\n');
+			TextSpan changedSpan;
+			int line = r.xpos + lineOff;
+			int lastline = line + r.xlen;
+			int lastlinelen = 0;
+			if (r.ylen && r.xlen)
+			{
+				// do not replace last newline, so the next line does not appear as modified
+				lastline--;
+				mCodeWinMgr.mSource.mBuffer.GetLengthOfLine(lastline, &lastlinelen);
+			}
+			else if (r.ylen)
+			{
+				ntxt ~= '\n';
+			}
+			wstring wtxt = to!wstring(ntxt);
+			hr = mCodeWinMgr.mSource.mBuffer.ReplaceLines(line, 0, lastline, lastlinelen, wtxt.ptr, wtxt.length, &changedSpan);
+			if (hr != S_OK)
+				break;
+			lineOff += r.ylen - r.xlen;
+		}
+
+		if(compAct)
+		{
+			compAct.CloseCompoundAction();
+			compAct.Release();
+		}
+		return hr;
 	}
 
 	//////////////////////////////////////////////////////////////

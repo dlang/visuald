@@ -15,6 +15,7 @@ import stdext.file;
 
 import core.stdc.stdlib;
 //import std.windows.charset;
+import stdext.path;
 import std.path;
 import std.utf;
 import std.string;
@@ -31,10 +32,13 @@ string ellipseString(string s, int maxlen)
 }
 
 
-void addFileMacros(string path, string base, ref string[string] replacements)
+void addFileMacros(string path, string base, ref string[string] replacements, string workdir = null)
 {
 	replacements[base ~ "PATH"] = path;
+	string fullpath = makeFilenameCanonical(path, workdir);
+	replacements[base ~ "FULLPATH"] = fullpath;
 	replacements[base ~ "DIR"] = dirName(path);
+	replacements[base ~ "FULLDIR"] = dirName(fullpath);
 	string filename = baseName(path);
 	string ext = extension(path);
 	if(ext.startsWith("."))

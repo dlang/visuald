@@ -89,6 +89,8 @@
       <PreviewRvalueRefParam>false</PreviewRvalueRefParam>
       <PreviewNoSharedAccess>false</PreviewNoSharedAccess>
       <PreviewMarkdown>false</PreviewMarkdown>
+      <PreviewIn>false</PreviewIn>
+      <PreviewInclusiveInContracts>false</PreviewInclusiveInContracts>
       <TransitionVMarkdown>false</TransitionVMarkdown>
       <TransitionField>false</TransitionField>
       <TransitionCheckImports>false</TransitionCheckImports>
@@ -130,6 +132,7 @@
       <CodeGeneration Condition="'$(Platform)' != 'Win32' and '$(Platform)' != 'X64'">echo DMD not supported on this platform
 exit 1</CodeGeneration>
     
+  
   </DCompile>
   </ItemDefinitionGroup>
 </Project>

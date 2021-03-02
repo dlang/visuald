@@ -4,3 +4,6 @@
 [submodule "vdc/dmdserver/dmd"]
 	path = vdc/dmdserver/dmd
 	url = https://github.com/rainers/dmd.git
+[submodule "dfmt/dfmt"]
+	path = dfmt/dfmt
+	url = https://github.com/rainers/dfmt.git
