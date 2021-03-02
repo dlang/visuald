@@ -1282,11 +1282,17 @@ Version history
   * installer:
     - full installer now bundled with DMD 2.093.1 and LDC 1.23.0
 
-unreleased version 1.1.0
+2021-03-02 version 1.1.0
   * dmdserver:
-    - updated to DMD 2.095.0-beta.1
+    - updated to frontend of DMD 2.095.1
     - experimental: show parameter storage ref/out/lazy at call site
+    - improved handling of symbols in selective imports
   * editor:
     - bugzilla 21239: navigation bar now sorted, symbols starting with "__" moved to the bottom
+    - integrated dfmt for "Format Document"
   * installer:
-    - full installer now bundled with DMD 2.095.0-beta.1 and LDC 1.24.0
+    - full installer now bundled with DMD 2.095.1 and LDC 1.25.0
+  * projects:
+    - added support for -preview=in and -preview=inclusiveincontracts
+    - visualdproj: added macros FULLOUTDIR, FULLINTDIR, INPUTFULLPATH, INPUTFULLDIR, TARGETFULLPATH
+      and TARGETFULLDIR for guaranteed absolute paths

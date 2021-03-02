@@ -1,5 +1,30 @@
 Ddoc
 
+$(H2 2021-02-02 Version 1.1.0)
+ $(UL
+  $(LI dmdserver:
+   $(UL
+    $(LI updated to frontend of DMD 2.095.1)
+    $(LI experimental: show parameter storage ref/out/lazy at call site)
+    $(LI improved handling of symbols in selective imports)
+  ))
+  $(LI editor:
+   $(UL
+    $(LI bugzilla 21239: navigation bar now sorted, symbols starting with "__" moved to the bottom)
+    $(LI integrated dfmt for "Format Document")
+  ))
+  $(LI installer:
+   $(UL
+    $(LI full installer now bundled with DMD 2.095.1 and LDC 1.25.0)
+  ))
+  $(LI projects:
+   $(UL
+    $(LI added support for -preview=in and -preview=inclusiveincontracts)
+    $(LI visualdproj: added macros FULLOUTDIR, FULLINTDIR, INPUTFULLPATH, INPUTFULLDIR, TARGETFULLPATH
+      and TARGETFULLDIR for guaranteed absolute paths)
+  ))
+ )
+
 $(H2 2020-08-23 Version 1.0.1)
  $(UL
   $(LI dmd based semantic engine:

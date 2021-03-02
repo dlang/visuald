@@ -84,6 +84,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2021-03-02 Version 1.1.0
+ $(UL
+  $(LI semantic engine updated to frontend of DMD 2.095.1)
+  $(LI experimental: show parameter storage ref/out/lazy at call site)
+  $(LI integrated dfmt for "Format Document")
+ )
+
 2020-08-23 Version 1.0.1
  $(UL
   $(LI dmd based semantic engine: updated to DMD 2.093.1)
@@ -97,13 +104,6 @@ $(UL
  $(LI mago: customize debugger display with methods/fields __debugOverview, __debugExpanded, __debugTextView)
  $(LI navigation bar: display and change current edit scope)
  $(LI goto definition by clicking identifier in tool tip)
-)
-
-2020-03-23 Version 0.52.0
-$(UL
- $(LI mago: added support for tuples and simpler display of globals)
- $(LI DMD based semantic engine: updated to 2.091, improvements to code-completions)
- $(LI projects: updated support for all language options)
 )
 
 $(LINK2 VersionHistory.html, more...)

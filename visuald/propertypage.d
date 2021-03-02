@@ -1280,7 +1280,7 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 {
 	this()
 	{
-		kNeededLines = 12;
+		kNeededLines = 14;
 	}
 
 	override string GetCategoryName() { return "Compiler"; }
@@ -1297,8 +1297,10 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		AddControl("", mDip1021                 = new CheckBox(mCanvas, "implement DIP1021: mutable function arguments (DMD 2.089+)"));
 		AddControl("", mPreview_rvaluerefparam  = new CheckBox(mCanvas, "enable rvalue arguments to ref parameters (DMD 2.087+)"));
 		AddControl("", mPreview_nosharedaccess  = new CheckBox(mCanvas, "disable access to shared memory objects (DMD 2.088+)"));
+		AddControl("", mPreview_in              = new CheckBox(mCanvas, "'in' on parameters means `scope const [ref]` (dmd 2.092+) and accepts rvalues (dmd 2.094+)"));
+		AddControl("", mPreview_inclInContracts = new CheckBox(mCanvas, "'in' contracts of overridden methods must be a superset of parent contract (dmd 2.095+)"));
 		AddHorizontalLine();
-		AddControl("", mTransition_import       = new CheckBox(mCanvas, "revert to single phase name lookup (DMD 2.071+)"));
+		AddControl("", mTransition_import       = new CheckBox(mCanvas, "revert to single phase name lookup (DMD 2.071 - 2.087)"));
 		AddControl("", mTransition_dtorfields   = new CheckBox(mCanvas, "destruct fields of partially constructed objects (DMD 2.083+)"));
 		AddControl("", mTransition_intpromote   = new CheckBox(mCanvas, "fix integral promotions for unary + - ~ operators (DMD 2.078+)"));
 		AddControl("", mTransition_fixAliasThis = new CheckBox(mCanvas, "when a symbol is resolved, check alias this scope before upper scopes (DMD 2.084+)"));
@@ -1317,6 +1319,8 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		mTransition_fixAliasThis.setChecked(options.preview_fixAliasThis);
 		mPreview_rvaluerefparam.setChecked(options.preview_rvaluerefparam);
 		mPreview_nosharedaccess.setChecked(options.preview_nosharedaccess);
+		mPreview_in.setChecked(options.preview_in);
+		mPreview_inclInContracts.setChecked(options.preview_inclincontracts);
 	}
 
 	override int DoApply(ProjectOptions options, ProjectOptions refoptions)
@@ -1333,6 +1337,8 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 		changes += changeOption(mTransition_fixAliasThis.isChecked(), options.preview_fixAliasThis, refoptions.preview_fixAliasThis);
 		changes += changeOption(mPreview_rvaluerefparam.isChecked(), options.preview_rvaluerefparam, refoptions.preview_rvaluerefparam);
 		changes += changeOption(mPreview_nosharedaccess.isChecked(), options.preview_nosharedaccess, refoptions.preview_nosharedaccess);
+		changes += changeOption(mPreview_in.isChecked(), options.preview_in, refoptions.preview_in);
+		changes += changeOption(mPreview_inclInContracts.isChecked(), options.preview_inclincontracts, refoptions.preview_inclincontracts);
 		return changes;
 	}
 
@@ -1343,6 +1349,8 @@ class DmdLanguagePropertyPage : ProjectPropertyPage
 	CheckBox mDip1021;
 	CheckBox mPreview_rvaluerefparam;
 	CheckBox mPreview_nosharedaccess;
+	CheckBox mPreview_in;
+	CheckBox mPreview_inclInContracts;
 	CheckBox mTransition_import;
 	CheckBox mTransition_dtorfields;
 	CheckBox mTransition_intpromote;

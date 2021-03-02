@@ -768,11 +768,10 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		if (!found && matchIdentifier(imp.loc, imp.id))
 			foundNode(imp.mod);
 
-		for (int n = 0; !found && n < imp.names.dim; n++)
+		for (int n = 0; !found && n < imp.names.dim && n < imp.aliasdecls.dim; n++)
 			if (matchIdentifier(imp.names[n].loc, imp.names[n].ident) ||
 				matchIdentifier(imp.aliases[n].loc, imp.aliases[n].ident))
-				if (n < imp.aliasdecls.dim)
-					foundNode(imp.aliasdecls[n]);
+				foundNode(imp.aliasdecls[n]);
 
 		// symbol has ident of first package, so don't forward
 	}
@@ -1053,6 +1052,20 @@ RootObject findAST(Module mod, int startLine, int startIndex, int endLine, int e
 {
 	auto filename = mod.srcfile.toChars();
 	return _findAST(mod, filename, startLine, startIndex, endLine, endIndex);
+}
+
+bool isUnnamedSelectiveImportAlias(AliasDeclaration ad)
+{
+	if (!ad || !ad._import)
+		return false;
+	auto imp = ad._import.isImport();
+	if (!imp)
+		return false;
+
+	for (int n = 0; n < imp.aliasdecls.dim && n < imp.aliases.dim; n++)
+		if (ad == imp.aliasdecls[n])
+			return !imp.aliases[n].ident;
+	return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1337,14 +1350,22 @@ TipData tipDataForObject(RootObject obj)
 		if (auto imp = s.isImport())
 			if (imp.mod)
 				s = imp.mod;
-		if (auto decl = s.isDeclaration())
+		auto ad = s.isAliasDeclaration();
+		if (isUnnamedSelectiveImportAlias(ad) && !ad.aliassym && ad.type) // selective import of type
+		{
+			tip = tipForType(ad.type.mutableOf().unSharedOf());
+		}
+		else if (auto decl = s.isDeclaration())
+		{
 			tip = tipForDeclaration(decl);
+			doc = docForSymbol(s);
+		}
 		else
 		{
 			tip.kind = s.kind().to!string;
 			tip.code = s.toPrettyChars(true).to!string;
+			doc = docForSymbol(s);
 		}
-		doc = docForSymbol(s);
 	}
 	else if (auto p = obj.isParameter())
 	{
@@ -1449,7 +1470,7 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 	override void foundNode(RootObject obj)
 	{
 		found = obj;
-		if (obj)
+		while (obj) // resolving aliases
 		{
 			if (auto t = obj.isType())
 			{
@@ -1474,8 +1495,34 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 			}
 			else if (auto s = obj.isDsymbol())
 			{
+				auto ad = s.isAliasDeclaration();
+				if (ad && ad._import) // selective import
+				{
+					if (ad.aliassym)
+					{
+						found = obj = ad.aliassym;
+						continue;
+					}
+					else if (ad.type)
+					{
+						found = obj = ad.type;
+						continue;
+					}
+				}
+				if (!s.loc.isValid())
+				{
+					if (auto td = s.isTemplateDeclaration())
+					{
+						if (td.onemember)
+						{
+							found = obj = td.onemember;
+							continue;
+						}
+					}
+				}
 				loc = s.loc;
 			}
+			break;
 		}
 	}
 }
@@ -1621,8 +1668,13 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 				addIdent(loc, ident, TypeReferenceKind.EnumValue);
 			else if (decl.storage_class & STC.manifest)
 				addIdent(loc, ident, TypeReferenceKind.Constant);
-			else if (decl.isAliasDeclaration())
-				addIdent(loc, ident, TypeReferenceKind.Alias);
+			else if (auto ad = decl.isAliasDeclaration())
+			{
+				if (isUnnamedSelectiveImportAlias(ad) && !ad.aliassym && ad.type)
+					addIdentByType(loc, ident, ad.type);
+				else
+					addIdent(loc, ident, TypeReferenceKind.Alias);
+			}
 			else if (decl.isField())
 				addIdent(loc, ident, TypeReferenceKind.MemberVariable);
 			else if (!decl.isDataseg() && !decl.isCodeseg())
@@ -1740,9 +1792,14 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 
 			for (int n = 0; n < imp.names.dim; n++)
 			{
-				addIdent(imp.names[n].loc, imp.names[n].ident, TypeReferenceKind.Alias);
+				if (n < imp.aliasdecls.dim && imp.aliasdecls[n].aliassym)
+					addSymbol(imp.names[n].loc, imp.aliasdecls[n].aliassym);
+				else if (n < imp.aliasdecls.dim && imp.aliasdecls[n].type)
+					addIdentByType(imp.names[n].loc, imp.names[n].ident, imp.aliasdecls[n].type);
+				else
+					addIdent(imp.names[n].loc, imp.names[n].ident, TypeReferenceKind.Alias);
 				if (imp.aliases[n].ident && n < imp.aliasdecls.dim)
-					addDeclaration(imp.aliases[n].loc, imp.aliasdecls[n]);
+					addIdent(imp.aliases[n].loc, imp.aliases[n].ident, TypeReferenceKind.Alias);
 			}
 			// symbol has ident of first package, so don't forward
 		}

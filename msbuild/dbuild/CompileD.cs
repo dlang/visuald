@@ -74,6 +74,8 @@ namespace dbuild
 		public bool PreviewRvalueRefParam { get { return opts.PreviewRvalueRefParam; } set { opts.PreviewRvalueRefParam = value; } }
 		public bool PreviewNoSharedAccess { get { return opts.PreviewNoSharedAccess; } set { opts.PreviewNoSharedAccess = value; } }
 		public bool PreviewMarkdown { get { return opts.PreviewMarkdown; } set { opts.PreviewMarkdown = value; } }
+		public bool PreviewIn { get { return opts.PreviewIn; } set { opts.PreviewIn = value; } }
+		public bool PreviewInclusiveInContracts { get { return opts.PreviewInclusiveInContracts; } set { opts.PreviewInclusiveInContracts = value; } }
 		public bool TransitionVMarkdown { get { return opts.TransitionVMarkdown; } set { opts.TransitionVMarkdown = value; } }
 		public bool TransitionField { get { return opts.TransitionField; } set { opts.TransitionField = value; } }
 		public bool TransitionCheckImports { get { return opts.TransitionCheckImports; } set { opts.TransitionCheckImports = value; } }

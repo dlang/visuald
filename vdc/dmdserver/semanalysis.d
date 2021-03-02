@@ -1754,26 +1754,51 @@ void do_unittests()
 	lastContext = null;
 
 	///////////////////////////////////////////////////////////
-	// check array initializer
+	// check imports, selective and renamed
 	filename = "shell.d";
 	source = q{
 		module shell;
 		alias uint VSITEMID;
 		const VSITEMID VSITEMID_NIL = cast(VSITEMID)(-1);
+		struct shell_struct {}
+		class original {}
+		void tmplFun(T)(T t) {}
 	};
 	m = checkErrors(source, "");
 	source = q{
-		import shell;
+		import shell : VSITEMID_NIL, shell_struct, renamed = original, tmplFun;
 		void ffoo()
 		{
 			if (uint(1) == VSITEMID_NIL) {} // Line 5
 		}
+		shell_struct s;
+		renamed r;
 	};
 	filename = "source.d";
 	m = checkErrors(source, "");
 
-	// TODO: checkTip(m, 3, 18, "(enum) `tok.TOK`");
 	checkTip(m, 5, 19, "(constant global) `const(uint) shell.VSITEMID_NIL`");
+	checkDefinition(m, 5, 19, "shell.d", 4, 18); // VSITEMID_NIL
+	checkDefinition(m, 7, 3, "shell.d", 5, 10); // shell_struct
+	checkTip(m, 7, 3, "(struct) `shell.shell_struct`");
+	checkTip(m, 8, 3, "(alias) `shell.original source.renamed`");
+	checkDefinition(m, 2, 38, "shell.d", 5, 10); // shell_struct in import
+	checkDefinition(m, 2, 56, "shell.d", 6, 9); // original in import
+	checkDefinition(m, 2, 66, "shell.d", 7, 8); // tmplFun in import
+	checkDefinition(m, 8, 3, "shell.d", 6, 9); // renamed
+
+	IdTypePos[][string] exp5 = [
+		"shell":         [ IdTypePos(TypeReferenceKind.Module) ],
+		"VSITEMID_NIL":  [ IdTypePos(TypeReferenceKind.GSharedVariable) ],
+		"shell_struct":  [ IdTypePos(TypeReferenceKind.Struct) ],
+		"ffoo":          [ IdTypePos(TypeReferenceKind.Function) ],
+		"s":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+		"r":             [ IdTypePos(TypeReferenceKind.TLSVariable) ],
+		"original":      [ IdTypePos(TypeReferenceKind.Class) ],
+		"renamed":       [ IdTypePos(TypeReferenceKind.Alias) ],
+		"tmplFun":       [ IdTypePos(TypeReferenceKind.Template) ],
+	];
+	checkIdentifierTypes(m, exp5);
 
 	///////////////////////////////////////////////////////////
 	// parameter storage class

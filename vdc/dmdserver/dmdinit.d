@@ -299,6 +299,8 @@ void dmdSetupParams(const ref Options opts)
 			case "-preview=rvaluerefparam": global.params.rvalueRefParam = true; break;
 			case "-preview=nosharedaccess": global.params.noSharedAccess = true; break;
 			case "-preview=fixAliasThis": global.params.fixAliasThis = true; break;
+			case "-preview=in": global.params.previewIn = true; break;
+			case "-preview=inclusiveincontracts": global.params.inclusiveInContracts = true; break;
 			default: break;
 		}
 	}

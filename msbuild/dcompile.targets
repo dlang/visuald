@@ -234,6 +234,8 @@
               PreviewRvalueRefParam="%(DCompile.PreviewRvalueRefParam)"
               PreviewNoSharedAccess="%(DCompile.PreviewNoSharedAccess)"
               PreviewMarkdown="%(DCompile.PreviewMarkdown)"
+              PreviewIn="%(DCompile.PreviewIn)"
+              PreviewInclusiveInContracts="%(DCompile.PreviewInclusiveInContracts)"
               TransitionVMarkdown="%(DCompile.TransitionVMarkdown)"
               TransitionField="%(DCompile.TransitionField)"
               TransitionCheckImports="%(DCompile.TransitionCheckImports)"

@@ -99,6 +99,8 @@ namespace dbuild
 			this.switchOrderList.Add("PreviewRvalueRefParam");
 			this.switchOrderList.Add("PreviewNoSharedAccess");
 			this.switchOrderList.Add("PreviewMarkdown");
+			this.switchOrderList.Add("PreviewIn");
+			this.switchOrderList.Add("PreviewInclusiveInContracts");
 			this.switchOrderList.Add("TransitionVMarkdown");
 			this.switchOrderList.Add("TransitionField");
 			this.switchOrderList.Add("TransitionCheckImports");
@@ -627,7 +629,29 @@ namespace dbuild
             }
         }
 
-        public bool TransitionVMarkdown
+		public bool PreviewIn
+		{
+			get { return GetBoolProperty("PreviewIn"); }
+			set
+			{
+				SetBoolProperty("PreviewIn", "Preview in",
+								"'in' on parameters means `scope const [ref]` and accepts rvalues (-preview=in)",
+								"-preview=in", value);
+			}
+		}
+
+		public bool PreviewInclusiveInContracts
+		{
+			get { return GetBoolProperty("PreviewInclusiveInContracts"); }
+			set
+			{
+				SetBoolProperty("PreviewInclusiveInContracts", "Preview inclusiveincontracts",
+								"''in' contracts of overridden methods must be a superset of parent contract (-preview=inclusiveincontracts)",
+								"-preview=inclusiveincontracts", value);
+			}
+		}
+
+		public bool TransitionVMarkdown
         {
             get { return GetBoolProperty("TransitionVMarkdown"); }
             set
