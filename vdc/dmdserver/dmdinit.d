@@ -100,7 +100,7 @@ string genInitDmdStatics()
 
 mixin(genDeclDmdStatics);
 
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ7fdapplyPCQDr4func15FuncDeclaration")
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ5__S17fdapplyPCQDw4func15FuncDeclaration")
 extern __gshared FuncDeclaration* statementsem_fdapply;
 pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ6fldeTyPCQDq5mtype12TypeDelegate")
 extern __gshared TypeDelegate* statementsem_fldeTy;
@@ -283,8 +283,8 @@ void dmdSetupParams(const ref Options opts)
 			// case "-wi":
 			// case "-property": global.params.checkProperty = true; break;
 			case "-betterC": global.params.betterC = true; break;
-			case "-dip25":  global.params.useDIP25 = true; break;
-			case "-dip1000":  global.params.useDIP25 = global.params.vsafe = true; break;
+			case "-dip25":  global.params.useDIP25 = FeatureState.enabled; break;
+			case "-dip1000":  global.params.useDIP25 = FeatureState.enabled; global.params.vsafe = true; break;
 			case "-dip1008":  global.params.ehnogc = true; break;
 			case "-revert=import": global.params.vfield = true; break;
 			case "-transition=field": global.params.vfield = true; break;
@@ -294,7 +294,7 @@ void dmdSetupParams(const ref Options opts)
 			case "-preview=dip1021":  global.params.useDIP1021 = true; break;
 			case "-preview=fieldwise": global.params.fieldwise = true; break;
 			case "-preview=intpromote": global.params.fix16997 = true; break;
-			case "-preview=dtorfields": global.params.dtorFields = true; break;
+			case "-preview=dtorfields": global.params.dtorFields = FeatureState.enabled; break;
 			case "-preview=markdown": global.params.markdown = true; break;
 			case "-preview=rvaluerefparam": global.params.rvalueRefParam = true; break;
 			case "-preview=nosharedaccess": global.params.noSharedAccess = true; break;
