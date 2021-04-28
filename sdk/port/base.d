@@ -172,6 +172,9 @@ interface IImageList {}
 // 7.1
 enum CCM_TRANSLATEACCELERATOR = (WM_USER+97);
 
+// msdbg*.d
+alias ULONG32 XINT32;
+
 version(sdk) {}
 else {
 

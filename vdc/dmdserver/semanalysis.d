@@ -24,6 +24,7 @@ import dmd.semantic2;
 import dmd.semantic3;
 
 import std.algorithm;
+import std.conv;
 
 // debug version = traceGC;
 
@@ -72,7 +73,7 @@ class AnalysisContext
 		return -1;
 	}
 
-	Module loadModuleHandler(const ref Loc location, IdentifiersAtLoc* packages, Identifier ident)
+	Module loadModuleHandler(const ref Loc location, IdentifierAtLoc[] packages, Identifier ident)
 	{
 		// only called if module not found in Module.amodules
 	L_nextMod:
@@ -89,7 +90,7 @@ class AnalysisContext
 				if (md.packages.length != packages.length)
 					continue L_nextMod;
 				for (size_t p = 0; p < packages.length; p++)
-					if (cast(Identifier)md.packages.opIndex(p) != md.packages.opIndex(p))
+					if (cast(Identifier)md.packages[p] != md.packages[p])
 						continue L_nextMod;
 			}
 			return mi.createSemanticModule(false);
@@ -226,6 +227,9 @@ string[] guessImportPaths()
 {
 	import std.file;
 
+	string path = r"c:\D\dmd-" ~ to!string(__VERSION__ * 0.001) ~ ".0";
+	if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
+		return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
 	if (std.file.exists(r"c:\s\d\dlang\druntime\import\object.d"))
 		return [ r"c:\s\d\dlang\druntime\import", r"c:\s\d\dlang\phobos" ];
 	if (std.file.exists(r"c:\s\d\rainers\druntime\import\object.d"))

@@ -1296,3 +1296,12 @@ Version history
     - added support for -preview=in and -preview=inclusiveincontracts
     - visualdproj: added macros FULLOUTDIR, FULLINTDIR, INPUTFULLPATH, INPUTFULLDIR, TARGETFULLPATH
       and TARGETFULLDIR for guaranteed absolute paths
+
+2021-04-28 version 1.1.1
+  * dmdserver:
+    - updated to frontend of DMD 2.096.1
+  * debugger:
+    - bugzilla 21734: stack overflow when displaying recursive structure with array
+  * installer:
+    - full installer now bundled with DMD 2.096.1 and LDC 1.25.1
+

@@ -699,16 +699,16 @@ extern(C++) class FindASTVisitor : ASTVisitor
 		return false;
 	}
 
-	bool visitPackages(Module mod, IdentifiersAtLoc* packages)
+	extern(D) bool visitPackages(Module mod, IdentifierAtLoc[] packages)
 	{
 		if (!mod || !packages)
 			return false;
 
 		Package pkg = mod.parent ? mod.parent.isPackage() : null;
-		for (size_t p; pkg && p < packages.dim; p++)
+		for (size_t p; pkg && p < packages.length; p++)
 		{
-			size_t q = packages.dim - 1 - p;
-			if (!found && matchIdentifier((*packages)[q].loc, (*packages)[q].ident))
+			size_t q = packages.length - 1 - p;
+			if (!found && matchIdentifier(packages[q].loc, packages[q].ident))
 			{
 				foundNode(pkg);
 				return true;
@@ -1642,11 +1642,11 @@ FindIdentifierTypesResult findIdentifierTypes(Module mod)
 			}
 		}
 
-		void addPackages(IdentifiersAtLoc* packages)
+		extern(D) void addPackages(IdentifierAtLoc[] packages)
 		{
 			if (packages)
-				for (size_t p; p < packages.dim; p++)
-					addIdent((*packages)[p].loc, (*packages)[p].ident, TypeReferenceKind.Package);
+				for (size_t p; p < packages.length; p++)
+					addIdent(packages[p].loc, packages[p].ident, TypeReferenceKind.Package);
 		}
 
 		void addDeclaration(ref const Loc loc, Declaration decl)
@@ -2054,17 +2054,17 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 						addReference(loc, se.sds.ident);
 		}
 
-		void addPackages(Module mod, IdentifiersAtLoc* packages)
+		extern(D) void addPackages(Module mod, IdentifierAtLoc[] packages)
 		{
 			if (!mod || !packages)
 				return;
 
 			Package pkg = mod.parent ? mod.parent.isPackage() : null;
-			for (size_t p; pkg && p < packages.dim; p++)
+			for (size_t p; pkg && p < packages.length; p++)
 			{
-				size_t q = packages.dim - 1 - p;
+				size_t q = packages.length - 1 - p;
 				if (pkg is search)
-					addReference((*packages)[q].loc, (*packages)[q].ident);
+					addReference(packages[q].loc, packages[q].ident);
 				if (auto parent = pkg.parent)
 					pkg = parent.isPackage();
 			}
@@ -2610,7 +2610,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 			size_t cnt = sd.importedScopes ? sd.importedScopes.dim : 0;
 			for (size_t i = 0; i < cnt; i++)
 			{
-				if ((flags & IgnorePrivateImports) && sd.prots[i] == Prot.Kind.private_)
+				if ((flags & IgnorePrivateImports) && sd.visibilities[i] == Visibility.Kind.private_)
 					continue;
 				auto ss = (*sd.importedScopes)[i].isScopeDsymbol();
 				if (!ss)

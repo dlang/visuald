@@ -84,6 +84,12 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2021-04-28 Version 1.1.1
+ $(UL
+  $(LI semantic engine updated to frontend of DMD 2.096.1)
+  $(LI full installer now bundled with DMD 2.096.1 and LDC 1.25.1)
+ )
+
 2021-03-02 Version 1.1.0
  $(UL
   $(LI semantic engine updated to frontend of DMD 2.095.1)
