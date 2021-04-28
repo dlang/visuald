@@ -100,7 +100,12 @@ string genInitDmdStatics()
 
 mixin(genDeclDmdStatics);
 
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ5__S17fdapplyPCQDw4func15FuncDeclaration")
+static if (__VERSION__ < 2096)
+	enum fdapply_mangling = "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ7fdapplyPCQDr4func15FuncDeclaration";
+else // !!! broken in 2.096.0 ("5__S1" instead of "4__S1")
+	enum fdapply_mangling = "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ4__S17fdapplyPCQDw4func15FuncDeclaration";
+
+pragma(mangle, fdapply_mangling)
 extern __gshared FuncDeclaration* statementsem_fdapply;
 pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ6fldeTyPCQDq5mtype12TypeDelegate")
 extern __gshared TypeDelegate* statementsem_fldeTy;

@@ -1,5 +1,21 @@
 Ddoc
 
+$(H2 2021-04-28 Version 1.1.1)
+ $(UL
+  $(LI dmdserver:
+   $(UL
+    $(LI updated to frontend of DMD 2.096.1)
+  ))
+  $(LI debugger:
+   $(UL
+    $(LI bugzilla 21734: stack overflow when displaying recursive structure with array)
+  ))
+  $(LI installer:
+   $(UL
+    $(LI full installer now bundled with DMD 2.096.1 and LDC 1.25.1)
+  ))
+ )
+
 $(H2 2021-02-02 Version 1.1.0)
  $(UL
   $(LI dmdserver:
