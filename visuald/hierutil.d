@@ -1241,7 +1241,7 @@ string[] GetImportPaths(Config cfg)
 	imports = tokenizeArgs(imp);
 
 	string addopts = opt.replaceEnvironment(opt.additionalOptions, cfg);
-	addunique(imports, GlobalOptions.getOptionImportPaths(addopts, projectpath));
+	addunique(imports, GlobalOptions.getOptionImportPaths(tokenizeArgs(addopts), projectpath));
 
 	foreach(ref i; imports)
 		i = makeDirnameCanonical(unquoteArgument(i), projectpath);

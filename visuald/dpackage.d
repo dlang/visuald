@@ -2510,10 +2510,9 @@ class GlobalOptions
 		return path;
 	}
 
-	static string[] getOptionImportPaths(string opts, string workdir)
+	static string[] getOptionImportPaths(string[] args, string workdir)
 	{
 		string[] imports;
-		string[] args = tokenizeArgs(opts);
 		args = expandResponseFiles(args, workdir);
 		foreach(arg; args)
 		{
@@ -2536,7 +2535,7 @@ class GlobalOptions
 				if(string* pFlags = "DFLAGS" in *pEnv)
 				{
 					string opts = replace(*pFlags, "%@P%", bindir);
-					imports ~= getOptionImportPaths(opts, bindir);
+					imports ~= getOptionImportPaths(tokenizeArgs(opts), bindir);
 				}
 		}
 		return imports;
@@ -2566,7 +2565,7 @@ class GlobalOptions
 								foreach(a; arr.vals())
 								{
 									string opts = replace(a, "%%ldcbinarypath%%", bindir);
-									imports ~= getOptionImportPaths(opts, bindir);
+									imports ~= getOptionImportPaths([opts], bindir); // assume single argument that might contain spaces
 								}
 							}
 						}
