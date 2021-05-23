@@ -104,7 +104,11 @@ namespace vdext15
 				Dictionary<SnapshotSpan, TAdornment> translatedAdornmentCache = new Dictionary<SnapshotSpan, TAdornment>();
 
 				foreach (var keyValuePair in adornmentCache)
-					translatedAdornmentCache.Add(keyValuePair.Key.TranslateTo(snapshot, SpanTrackingMode.EdgeExclusive), keyValuePair.Value);
+				{
+					var span = keyValuePair.Key.TranslateTo(snapshot, SpanTrackingMode.EdgeExclusive);
+					if (!translatedAdornmentCache.ContainsKey(span))
+						translatedAdornmentCache.Add(span, keyValuePair.Value);
+				}
 
 				adornmentCache = translatedAdornmentCache;
 			}
