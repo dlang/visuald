@@ -125,7 +125,8 @@ bool errorPrint(const ref Loc loc, Color headerColor, const(char)* header,
 			len += snprintf(buf.ptr + len, buf.length - len, "%s ", p2);
 		if (len < buf.length)
 			len += vsnprintf(buf.ptr + len, buf.length - len, format, ap);
-
+		if (len >= buf.length)
+			len = buf.length - 1;
 		gLastErrorMsgs ~= buf[0..len].dup;
 		gLastErrorLocs ~= loc;
 	}

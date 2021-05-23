@@ -230,6 +230,9 @@ string[] guessImportPaths()
 	string path = r"c:\D\dmd-" ~ to!string(__VERSION__ * 0.001) ~ ".0";
 	if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
 		return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+	path ~= "-beta.1";
+	if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
+		return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
 	if (std.file.exists(r"c:\s\d\dlang\druntime\import\object.d"))
 		return [ r"c:\s\d\dlang\druntime\import", r"c:\s\d\dlang\phobos" ];
 	if (std.file.exists(r"c:\s\d\rainers\druntime\import\object.d"))
@@ -1320,6 +1323,7 @@ void do_unittests()
 	checkTip(m,  7,  9, "(struct) `source.S`");
 
 	// float properties
+	opts.noDeprecated = false; // complex
 	source = q{
 		float flt;
 		auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig,
@@ -1344,6 +1348,8 @@ void do_unittests()
 	checkTip(m,  5, 27, "(constant) `int float.max_exp = 128`");
 	checkTip(m,  8, 13, "(field) `float cfloat.re`");
 	checkTip(m,  8, 20, "(field) `float cfloat.im`");
+
+	opts.noDeprecated = true; // complex
 
 	// check template arguments
 	source = q{
