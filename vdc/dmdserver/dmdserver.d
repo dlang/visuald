@@ -318,6 +318,24 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags)
 	{
+		auto stats = GC.stats();
+		if (stats.usedSize > 1_000_000_000) // 2GB
+		{
+			// throw away everything and restart form scratch
+			synchronized(gDMDSync)
+			{
+				reinitSemanticModules();
+				foreach (i, m; mModules)
+					m.analyzedModule = null;
+
+				wipeStack();
+				GC.collect();
+				auto nstats = GC.stats();
+				printf("reinit: stats.usedSize %zd -> %zd\n", stats.usedSize, nstats.usedSize);
+				dumpGC();
+			}
+		}
+
 		string fname = makeFilenameCanonical(to_string(filename), null);
 		size_t len = wcslen(srcText);
 		string text  = to_string(srcText, len + 1); // DMD parser needs trailing 0
@@ -353,38 +371,13 @@ class DMDServer : ComObject, IVDServer
 		{
 			version(DebugServer) dbglog("    doParse: " ~ firstLine(text));
 
-			string combinedErrorMessages()
-			{
-				string msgs = getErrorMessages();
-				string otherMessages = getErrorMessages(true);
-				if (otherMessages.length)
-					msgs ~= "1,0,1,1: errors in imported modules: " ~ otherMessages.replace("\n", "\a");
-				return msgs;
-			}
-
 			synchronized(gErrorSync)
 			{
 				modData.state = ModuleState.Parsing;
 			}
 			synchronized(gDMDSync)
 			{
-				tryExec(()
-				{
-					initErrorMessages(fname);
-					modData.parsedModule = createModuleFromText(fname, text);
-				});
-
-				modData.parseErrors = combinedErrorMessages();
-				modData.state = ModuleState.Analyzing;
-
-				tryExec(()
-				{
-					initErrorMessages(fname);
-					// clear all other semantic modules?
-					analyzeModules(modData);
-				});
-				modData.analyzeErrors = combinedErrorMessages();
-				modData.state = ModuleState.Done;
+				analyzeModules(modData, fname, text);
 			}
 
 			if(flags & 1)
@@ -442,7 +435,7 @@ class DMDServer : ComObject, IVDServer
 				try
 				{
 					bool addlinks = (flags & 8) != 0;
-					if (auto m = md.analyzedModule)
+					if (auto m = ensureAnalyzed(md))
 						txt = findTip(m, startLine, startIndex + 1, endLine, endIndex + 1, addlinks);
 					else
 						txt = "analyzing...";
@@ -509,7 +502,7 @@ class DMDServer : ComObject, IVDServer
 			{
 				try
 				{
-					if (auto m = md.analyzedModule)
+					if (auto m = ensureAnalyzed(md))
 						deffilename = findDefinition(m, mDefSpan.end.line, mDefSpan.end.index);
 					else
 						deffilename = "analyzing...";
@@ -570,7 +563,7 @@ class DMDServer : ComObject, IVDServer
 			string[] symbols;
 			try
 			{
-				if (auto m = md.analyzedModule)
+				if (auto m = ensureAnalyzed(md))
 					symbols = findExpansions(m, line, idx + 1 - cast(int) stok.length, stok);
 			}
 			catch(OutOfMemoryError e)
@@ -715,7 +708,7 @@ class DMDServer : ComObject, IVDServer
 			{
 				try
 				{
-					if (auto m = md.analyzedModule)
+					if (auto m = ensureAnalyzed(md))
 					{
 						auto reflocs = findReferencesInModule(m, line, idx + 1);
 
@@ -889,193 +882,54 @@ class DMDServer : ComObject, IVDServer
 		}
 	}
 
-	void analyzeModules(ModuleData* rootModule)
+	// call under gDMDSync lock, do not parse if fname is null
+	void analyzeModules(ModuleData* modData, string fname, string text)
 	{
-		if (rootModule.parsedModule)
-			rootModule.analyzedModule = analyzeModule(rootModule.parsedModule, mOptions);
-
-		version(none) {
-
-		version(none)
+		string combinedErrorMessages()
 		{
-		clearDmdStatics();
-
-		// (de-)initialization
-		Type.deinitialize();
-		//Id.deinitialize();
-		Module.deinitialize();
-		target.deinitialize();
-		Expression.deinitialize();
-		Objc.deinitialize();
-		builtinDeinitialize();
-		Token._init();
-		Module._init();
+			string msgs = getErrorMessages();
+			string otherMessages = getErrorMessages(true);
+			if (otherMessages.length)
+				msgs ~= "1,0,1,1: errors in imported modules: " ~ otherMessages.replace("\n", "\a");
+			return msgs;
 		}
 
-		Module.rootModule = null;
-		global = global.init;
-
-		version(DebugServer)
+		if (fname)
 		{
-			core.memory.GC.Stats stats = GC.stats();
-			dbglog(text("before collect GC stats: ", stats.usedSize, " used, ", stats.freeSize, " free\n"));
-		}
-
-		version(traceGC)
-		{
-			wipeStack();
-			GC.collect();
-			dumpGC();
-		}
-		else
-		{
-			GC.collect();
-		}
-
-		version(DebugServer)
-		{
-			stats = GC.stats();
-			dbglog(text("after  collect GC stats: ", stats.usedSize, " used, ", stats.freeSize, " free\n"));
-		}
-
-		synchronized(gOptSync)
-		{
-			global._init();
-			global.params.isWindows = true;
-			global.params.errorLimit = 0;
-			global.params.color = false;
-			global.params.link = true;
-			global.params.useAssert = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
-			global.params.useInvariants = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
-			global.params.useIn = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
-			global.params.useOut = mOptions.debugOn ? CHECKENABLE.on : CHECKENABLE.off;
-			global.params.useArrayBounds = mOptions.noBoundsCheck ? CHECKENABLE.on : CHECKENABLE.off; // set correct value later
-			global.params.doDocComments = mOptions.doDoc;
-			global.params.useSwitchError = CHECKENABLE.on;
-			global.params.useInline = false;
-			global.params.obj = false;
-			global.params.useDeprecated = mOptions.noDeprecated ? DiagnosticReporting.error : DiagnosticReporting.off;
-			global.params.linkswitches = Strings();
-			global.params.libfiles = Strings();
-			global.params.dllfiles = Strings();
-			global.params.objfiles = Strings();
-			global.params.ddocfiles = Strings();
-			// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
-			global.params.is64bit = mOptions.x64;
-			global.params.mscoff = mOptions.msvcrt;
-			global.params.cpu = CPU.baseline;
-			global.params.isLP64 = global.params.is64bit;
-
-			global.params.versionlevel = mOptions.versionLevel;
-			global.params.versionids = new Strings();
-			foreach(v; mOptions.versionIds)
-				global.params.versionids.push(toStringz(v));
-
-			global.versionids = new Identifiers();
-
-			// Add in command line versions
-			if (global.params.versionids)
-				foreach (charz; *global.params.versionids)
-				{
-					auto ident = charz[0 .. strlen(charz)];
-					if (VersionCondition.isReserved(ident))
-						VersionCondition.addPredefinedGlobalIdent(ident);
-					else
-						VersionCondition.addGlobalIdent(ident);
-				}
-
-			if (mPredefineVersions)
-				addDefaultVersionIdentifiers(global.params);
-
-			// always enable for tooltips
-			global.params.doDocComments = true;
-
-			global.params.debugids = new Strings();
-			global.params.debuglevel = mOptions.debugLevel;
-			foreach(d; mOptions.debugIds)
-				global.params.debugids.push(toStringz(d));
-
-			global.debugids = new Identifiers();
-			if (global.params.debugids)
-				foreach (charz; *global.params.debugids)
-					DebugCondition.addGlobalIdent(charz[0 .. strlen(charz)]);
-
-			global.path = new Strings();
-			foreach(i; mOptions.importDirs)
-				global.path.push(toStringz(i));
-
-			global.filePath = new Strings();
-			foreach(i; mOptions.stringImportDirs)
-				global.filePath.push(toStringz(i));
-		}
-
-		dmdReinit();
-
-		for (size_t i = 0; i < mModules.length; i++)
-		{
-			ModuleData* md = mModules[i];
-			if (Module m = cloneModule(md.parsedModule))
+			tryExec(()
 			{
-				m.importedFrom = m;
-				m = m.resolvePackage();
-				md.analyzedModule = m;
-				Module.modules.insert(m);
+				initErrorMessages(fname);
+				modData.parsedModule = createModuleFromText(fname, text);
+			});
+			modData.parseErrors = combinedErrorMessages();
+		}
+
+		modData.state = ModuleState.Analyzing;
+
+		tryExec(()
+		{
+			if (modData.parsedModule)
+			{
+				initErrorMessages(modData.parsedModule.srcfile.toString().idup);
+				// clear all other semantic modules?
+				modData.analyzedModule = analyzeModule(modData.parsedModule, mOptions);
 			}
-		}
-		Module.rootModule = rootModule.analyzedModule;
-		Module.loadModuleHandler = (const ref Loc location, IdentifiersAtLoc* packages, Identifier ident)
-		{
-			return Module.loadFromFile(location, packages, ident, 0, 0);
-		};
+		});
+		modData.analyzeErrors = combinedErrorMessages();
+		modData.state = ModuleState.Done;
+	}
 
-		for (size_t i = 0; i < mModules.length; i++)
-		{
-			if (Module m = mModules[i].analyzedModule)
-				m.importAll(null);
-		}
-
-version(all)
-{
-		if (Module.rootModule)
-		{
-			Module.rootModule.dsymbolSemantic(null);
-			Module.dprogress = 1;
-			Module.runDeferredSemantic();
-			Module.rootModule.semantic2(null);
-			Module.runDeferredSemantic2();
-			Module.rootModule.semantic3(null);
-			Module.runDeferredSemantic3();
-		}
-}
-else
-{
-		// Do semantic analysis
-		for (size_t i = 0; i < modules.length; i++)
-		{
-			Module m = mModules[i].analyzedModule;
-			m.dsymbolSemantic(null);
-		}
-
-		Module.dprogress = 1;
-		Module.runDeferredSemantic();
-
-		// Do pass 2 semantic analysis
-		for (size_t i = 0; i < modules.length; i++)
-		{
-			Module m = modules[i];
-			m.semantic2(null);
-		}
-		Module.runDeferredSemantic2();
-
-		// Do pass 3 semantic analysis
-		for (size_t i = 0; i < modules.length; i++)
-		{
-			Module m = modules[i];
-			m.semantic3(null);
-		}
-		Module.runDeferredSemantic3();
-}
-}
+	// call under gDMDSync lock
+	Module ensureAnalyzed(ModuleData* modData)
+	{
+		if (modData.analyzedModule)
+			return modData.analyzedModule;
+		if (!modData.parsedModule)
+			return null;
+		if (modData.state == ModuleState.Analyzing)
+			return null;
+		analyzeModules(modData, null, null);
+		return modData.analyzedModule;
 	}
 
 private:
