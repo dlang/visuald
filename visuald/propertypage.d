@@ -48,7 +48,7 @@ class PropertyWindow : Window
 		super(parent, style, title);
 	}
 
-	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	override LRESULT WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		import sdk.win32.commctrl;
 

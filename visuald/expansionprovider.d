@@ -13,6 +13,8 @@ import std.ascii;
 import std.string;
 import std.utf;
 
+import stdext.array;
+
 import visuald.comutil;
 import visuald.logutil;
 import visuald.hierutil;
@@ -207,10 +209,10 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 						 this, // pClient
 						 g_languageCLSID, // guidLang
 						 bstrTypes.ptr, // bstrTypes
-						 bstrTypes.length, // iCountTypes
+						 bstrTypes.ilength, // iCountTypes
 						 includeNullType ? 1 : 0,  // fIncludeNULLType
 						 bstrKinds.ptr, // bstrKinds
-						 bstrKinds.length, // iCountKinds
+						 bstrKinds.ilength, // iCountKinds
 						 includeNullKind ? 1 : 0, // fIncludeNULLKind
 						 bstrPrompt, // bstrPrefixText
 						 ">"); //bstrCompletionChar
@@ -343,7 +345,7 @@ class ExpansionProvider : DisposingComObject, IVsExpansionClient
 		int token = 0;
 
 		// initialize the vars needed for our super-complex function parser :-)
-		for (int i = 0, n = func.length; i < n; i++)
+		for (int i = 0, n = func.ilength; i < n; i++)
 		{
 			char ch = func[i];
 
@@ -806,7 +808,7 @@ class ExpansionFunction : DComObject, IVsExpansionFunction
 	{
 		if (!list.length)
 			list = GetIntellisenseList();
-		*iListCount = list.length;
+		*iListCount = list.ilength;
 		return S_OK;
         }
 

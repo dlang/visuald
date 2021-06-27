@@ -197,7 +197,7 @@ int UtilGetFilesFromPROJITEMDrop(HGLOBAL h, ref string[] rgFiles)
 		// We go until *wzBuffer is null since we don't allow empty strings.
 		while(*wzBuffer)
 		{
-			int len = wcslen(wzBuffer);
+			auto len = wcslen(wzBuffer);
 			assert(len);
 			string file = toUTF8(wzBuffer[0..len]);
 			rgFiles ~= file;
@@ -207,7 +207,7 @@ int UtilGetFilesFromPROJITEMDrop(HGLOBAL h, ref string[] rgFiles)
 
 	.GlobalUnlock(h);
 
-    return rgFiles.length;
+    return rgFiles.ilength;
 }
 
 wstring UtilGetStringFromHGLOBAL(HGLOBAL h)

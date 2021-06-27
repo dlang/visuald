@@ -1799,7 +1799,7 @@ class ConfigProvider : DisposingComObject,
 		for(int i = 0; i < celt && i < mConfigs.length; i++)
 			rgpcfg[i] = addref(mConfigs[i]);
 		if(pcActual)
-			*pcActual = mConfigs.length;
+			*pcActual = mConfigs.ilength;
 		if(prgfFlags)
 			*prgfFlags = cast(VSCFGFLAGS) 0;
 		return S_OK;
@@ -1928,7 +1928,7 @@ class ConfigProvider : DisposingComObject,
 		//	return returnError(E_ABORT);
 
 		// copy configs for all platforms
-		int cnt = mConfigs.length;
+		int cnt = mConfigs.ilength;
 		for(int i = 0; i < cnt; i++)
 			if(mConfigs[i].mName == strCloneCfgName)
 			{
@@ -1948,7 +1948,7 @@ class ConfigProvider : DisposingComObject,
 		logCall("%s.DeleteCfgsOfCfgName(pszCfgName=%s)", this, _toLog(pszCfgName));
 
 		string strCfgName = to_string(pszCfgName);
-		int cnt = mConfigs.length;
+		int cnt = mConfigs.ilength;
 		for(int i = 0; i < mConfigs.length; )
 			if(mConfigs[i].mName == strCfgName)
 				mConfigs = mConfigs[0..i] ~ mConfigs[i+1..$];
@@ -2018,7 +2018,7 @@ class ConfigProvider : DisposingComObject,
 		//if(!mProject.QueryEditProjectFile())
 		//	return returnError(E_ABORT);
 
-		int cnt = mConfigs.length;
+		int cnt = mConfigs.ilength;
 		for(int i = 0; i < cnt; i++)
 			if(mConfigs[i].mPlatform == strClonePlatformName)
 			{
@@ -2038,7 +2038,7 @@ class ConfigProvider : DisposingComObject,
 		logCall("%s.DeleteCfgsOfPlatformName(pszPlatformName=%s)", this, _toLog(pszPlatformName));
 
 		string strPlatformName = to_string(pszPlatformName);
-		int cnt = mConfigs.length;
+		int cnt = mConfigs.ilength;
 		for(int i = 0; i < mConfigs.length; )
 			if(mConfigs[i].mPlatform == strPlatformName)
 				mConfigs = mConfigs[0..i] ~ mConfigs[i+1..$];
@@ -2062,7 +2062,7 @@ class ConfigProvider : DisposingComObject,
 		for(int cnt = 0; cnt < kPlatforms.length && cnt < celt && rgbstr; cnt++)
 			rgbstr[cnt] = allocBSTR(kPlatforms[cnt]);
 		if(pcActual)
-			*pcActual = kPlatforms.length;
+			*pcActual = kPlatforms.ilength;
 		return S_OK;
 	}
 
@@ -4316,7 +4316,7 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 		mPos += cElements;
 		if(mPos > mTargets.length)
 		{
-			mPos = mTargets.length;
+			mPos = mTargets.ilength;
 			return S_FALSE;
 		}
 		return S_OK;
@@ -4419,12 +4419,12 @@ class DEnumOutputs : DComObject, IVsEnumOutputs, ICallFactory, IExternalConnecti
 
 		if(HRESULT hr = pStm.Write(cast(void*)&iid, iid.sizeof, null))
 			return hr;
-		int length = mTargets.length;
+		int length = mTargets.ilength;
 		if(HRESULT hr = pStm.Write(&length, length.sizeof, null))
 			return hr;
 		foreach(s; mTargets)
 		{
-			length = s.length;
+			length = s.ilength;
 			if(HRESULT hr = pStm.Write(&length, length.sizeof, null))
 				return hr;
 			if(HRESULT hr = pStm.Write(cast(void*)s.ptr, length, null))

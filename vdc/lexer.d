@@ -14,6 +14,19 @@ import std.conv;
 static import std.ascii;
 static import std.uni;
 
+alias pos_t = uint;
+
+version (Win64)
+{
+	dchar decode(S)(auto ref S str, ref pos_t index) @trusted pure
+	{
+		size_t pos = index;
+		dchar ch = std.utf.decode(str, pos);
+		index = cast(pos_t) pos;
+		return ch;
+	}
+}
+
 // current limitations:
 // - nested comments must not nest more than 255 times
 // - braces must not nest more than 4095 times inside token string
@@ -110,13 +123,13 @@ struct Lexer
 		return idx;
 	}
 
-	int scanIdentifier(S)(S text, size_t startpos, ref size_t pos)
+	int scanIdentifier(S)(S text, pos_t startpos, ref pos_t pos)
 	{
 		int pid;
 		return scanIdentifier(text, startpos, pos, pid);
 	}
 
-	int scanIdentifier(S)(S text, size_t startpos, ref size_t pos, ref int pid)
+	int scanIdentifier(S)(S text, pos_t startpos, ref pos_t pos, ref int pid)
 	{
 		while(pos < text.length)
 		{
@@ -137,9 +150,9 @@ struct Lexer
 		return TokenCat.Identifier;
 	}
 
-	static int scanOperator(S)(S text, size_t startpos, ref size_t pos, ref int pid)
+	static int scanOperator(S)(S text, pos_t startpos, ref pos_t pos, ref int pid)
 	{
-		size_t len;
+		pos_t len;
 		int id = parseOperator(text, startpos, len);
 		if(id == TOK_error)
 			return TokenCat.Text;
@@ -149,7 +162,7 @@ struct Lexer
 		return TokenCat.Operator;
 	}
 
-	static dchar trydecode(S)(S text, ref size_t pos)
+	static dchar trydecode(S)(S text, ref pos_t pos)
 	{
 		if(pos >= text.length)
 			return 0;
@@ -157,7 +170,7 @@ struct Lexer
 		return ch;
 	}
 
-	static void skipDigits(S)(S text, ref size_t pos, int base)
+	static void skipDigits(S)(S text, ref pos_t pos, int base)
 	{
 		while(pos < text.length)
 		{
@@ -174,23 +187,23 @@ struct Lexer
 		}
 	}
 
-	static int scanNumber(S)(S text, dchar ch, ref size_t pos)
+	static int scanNumber(S)(S text, dchar ch, ref pos_t pos)
 	{
 		int pid;
 		return scanNumber(text, ch, pos, pid);
 	}
 
-	static int scanNumber(S)(S text, dchar ch, ref size_t pos, ref int pid)
+	static int scanNumber(S)(S text, dchar ch, ref pos_t pos, ref int pid)
 	{
 		// pos after first digit
 		int base = 10;
-		size_t nextpos = pos;
+		pos_t nextpos = pos;
 		if(ch == '.')
 			goto L_float;
 
 		if(ch == '0')
 		{
-			size_t prevpos = pos;
+			pos_t prevpos = pos;
 			ch = trydecode(text, pos);
 			if(ch.isAnyCaseOf!'b')
 				base = 2;
@@ -215,7 +228,7 @@ struct Lexer
 		if(base >= 8 && ch == '.') // ".." is the slice token
 		{
 			{ // mute errors about goto skipping declaration
-				size_t trypos = nextpos;
+				pos_t trypos = nextpos;
 				dchar trych = trydecode(text, trypos);
 				if (trych == '.')
 					goto L_integer;
@@ -289,7 +302,7 @@ L_integer:
 	version(unspecified) unittest
 	{
 		int pid;
-		size_t pos = 1;
+		pos_t pos = 1;
 		auto cat = scanNumber("0.0i", '0', pos, pid);
 		assert(pid == TOK_FloatLiteral);
 		pos = 1;
@@ -297,7 +310,7 @@ L_integer:
 		assert(pid == TOK_IntegerLiteral);
 	}
 
-	static State scanBlockComment(S)(S text, ref size_t pos)
+	static State scanBlockComment(S)(S text, ref pos_t pos)
 	{
 		while(pos < text.length)
 		{
@@ -314,7 +327,7 @@ L_integer:
 		return State.kBlockComment;
 	}
 
-	State scanNestedComment(S)(S text, size_t startpos, ref size_t pos, ref int nesting)
+	State scanNestedComment(S)(S text, pos_t startpos, ref pos_t pos, ref int nesting)
 	{
 		while(pos < text.length)
 		{
@@ -355,16 +368,16 @@ L_integer:
 		return State.kNestedComment;
 	}
 
-	static State scanStringPostFix(S)(S text, ref size_t pos)
+	static State scanStringPostFix(S)(S text, ref pos_t pos)
 	{
-		size_t nextpos = pos;
+		pos_t nextpos = pos;
 		dchar ch = trydecode(text, nextpos);
 		if(ch == 'c' || ch == 'w' || ch == 'd')
 			pos = nextpos;
 		return State.kWhite;
 	}
 
-	static State scanStringWysiwyg(S)(S text, ref size_t pos)
+	static State scanStringWysiwyg(S)(S text, ref pos_t pos)
 	{
 		while(pos < text.length)
 		{
@@ -375,7 +388,7 @@ L_integer:
 		return State.kStringWysiwyg;
 	}
 
-	static State scanStringAltWysiwyg(S)(S text, ref size_t pos)
+	static State scanStringAltWysiwyg(S)(S text, ref pos_t pos)
 	{
 		while(pos < text.length)
 		{
@@ -386,7 +399,7 @@ L_integer:
 		return State.kStringAltWysiwyg;
 	}
 
-	static State scanStringCStyle(S)(S text, ref size_t pos, dchar term)
+	static State scanStringCStyle(S)(S text, ref pos_t pos, dchar term)
 	{
 		while(pos < text.length)
 		{
@@ -403,7 +416,7 @@ L_integer:
 		return State.kStringCStyle;
 	}
 
-	State startDelimiterString(S)(S text, ref size_t pos, ref int nesting)
+	State startDelimiterString(S)(S text, ref pos_t pos, ref int nesting)
 	{
 		nesting = 1;
 
@@ -430,7 +443,7 @@ L_integer:
 		return s;
 	}
 
-	State scanTokenString(S)(S text, ref size_t pos, ref int tokLevel)
+	State scanTokenString(S)(S text, ref pos_t pos, ref int tokLevel)
 	{
 		int state = toState(State.kWhite, 0, 0, 0);
 		int id = -1;
@@ -445,7 +458,7 @@ L_integer:
 		return (tokLevel > 0 ? State.kStringToken : State.kWhite);
 	}
 
-	static bool isStartingComment(S)(S txt, ref size_t idx)
+	static bool isStartingComment(S)(S txt, ref pos_t idx)
 	{
 		if(idx >= 0 && idx < txt.length-1 && txt[idx] == '/' && (txt[idx+1] == '*' || txt[idx+1] == '+'))
 			return true;
@@ -457,7 +470,7 @@ L_integer:
 		return false;
 	}
 
-	static bool isEndingComment(S)(S txt, ref size_t pos)
+	static bool isEndingComment(S)(S txt, ref pos_t pos)
 	{
 		if(pos < txt.length && pos > 0 && txt[pos] == '/' && (txt[pos-1] == '*' || txt[pos-1] == '+'))
 		{
@@ -486,7 +499,7 @@ L_integer:
 		if(text.length == 0)
 			return false;
 
-		size_t pos;
+		pos_t pos;
 		dchar ch = decode(text, pos);
 		if(!isIdentifierChar(ch))
 			return false;
@@ -505,7 +518,7 @@ L_integer:
 		if(text.length == 0)
 			return false;
 
-		size_t pos;
+		pos_t pos;
 		while(pos < text.length)
 		{
 			dchar ch = decode(text, pos);
@@ -592,7 +605,7 @@ L_integer:
 		return (type == TokenCat.Comment || (type == TokenCat.Text && std.uni.isWhite(decodeFront(text))));
 	}
 
-	static State scanNestedDelimiterString(S)(S text, ref size_t pos, State s, ref int nesting)
+	static State scanNestedDelimiterString(S)(S text, ref pos_t pos, State s, ref int nesting)
 	{
 		dchar open  = openingBracket(s);
 		dchar close = closingBracket(s);
@@ -610,7 +623,7 @@ L_integer:
 		return s;
 	}
 
-	State scanDelimitedString(S)(S text, ref size_t pos, ref int delim)
+	State scanDelimitedString(S)(S text, ref pos_t pos, ref int delim)
 	{
 		string delimiter = s_delimiters[delim];
 
@@ -634,7 +647,7 @@ L_integer:
 		return State.kStringDelimited;
 	}
 
-	int scan(S)(ref int state, in S text, ref size_t pos, ref int id)
+	int scan(S)(ref int state, in S text, ref pos_t pos, ref int id)
 	{
 		State s = scanState(state);
 		int nesting = nestingLevel(state);
@@ -642,7 +655,7 @@ L_integer:
 		int otherState = getOtherState(state);
 
 		int type = TokenCat.Text;
-		size_t startpos = pos;
+		pos_t startpos = pos;
 		dchar ch;
 
 		id = TOK_Space;
@@ -653,7 +666,7 @@ L_integer:
 			ch = decode(text, pos);
 			if(ch == 'r' || ch == 'x' || ch == 'q')
 			{
-				size_t prevpos = pos;
+				pos_t prevpos = pos;
 				dchar nch = trydecode(text, pos);
 				if(nch == '"' && ch == 'q')
 				{
@@ -697,7 +710,7 @@ L_integer:
 				type = scanNumber(text, ch, pos, id);
 			else if (ch == '.')
 			{
-				size_t nextpos = pos;
+				pos_t nextpos = pos;
 				ch = trydecode(text, nextpos);
 				if(std.ascii.isDigit(ch))
 					type = scanNumber(text, '.', pos, id);
@@ -706,7 +719,7 @@ L_integer:
 			}
 			else if (ch == '/')
 			{
-				size_t prevpos = pos;
+				pos_t prevpos = pos;
 				ch = trydecode(text, pos);
 				if (ch == '/')
 				{
@@ -842,7 +855,7 @@ L_integer:
 		return type;
 	}
 
-	int scan(S)(ref int state, in S text, ref size_t pos)
+	int scan(S)(ref int state, in S text, ref pos_t pos)
 	{
 		int id;
 		return scan(state, text, pos, id);
@@ -852,7 +865,7 @@ L_integer:
 	TokenInfo[] ScanLine(S)(int iState, S text)
 	{
 		TokenInfo[] lineInfo;
-		for(size_t pos = 0; pos < text.length; )
+		for(pos_t pos = 0; pos < text.length; )
 		{
 			TokenInfo info;
 			info.StartIndex = pos;
@@ -1348,7 +1361,7 @@ string genOperatorParser(string getch)
 	return txt;
 }
 
-int parseOperator(S)(S txt, size_t pos, ref size_t len)
+int parseOperator(S)(S txt, pos_t pos, ref pos_t len)
 {
 	dchar getch()
 	{

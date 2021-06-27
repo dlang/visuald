@@ -221,7 +221,7 @@ class Declarations
 
 	int GetCount()
 	{
-		return mDecls.length;
+		return mDecls.ilength;
 	}
 
 	dchar OnAutoComplete(IVsTextView textView, string committedWord, dchar commitChar, int commitIndex)
@@ -320,7 +320,7 @@ class Declarations
 		string[] imports = GetImportPaths(file);
 
 		string dir;
-		int dpos = lastIndexOf(imp, '.');
+		auto dpos = lastIndexOf(imp, '.');
 		if(dpos >= 0)
 		{
 			dir = replace(imp[0 .. dpos], ".", "\\");
@@ -328,7 +328,7 @@ class Declarations
 		}
 		mPrefixAll = imp;
 
-		int namesLength = mDecls.length;
+		auto namesLength = mDecls.length;
 		foreach(string impdir; imports)
 		{
 			impdir = impdir ~ dir;
@@ -410,7 +410,7 @@ class Declarations
 			return false;
 
 		mPrefixAll = tok;
-		int namesLength = mDecls.length;
+		const namesLength = mDecls.length;
 		for(int ln = start; ln < end; ln++)
 		{
 			wstring text = src.GetText(ln, 0, ln, -1);
@@ -448,7 +448,7 @@ class Declarations
 			return false;
 
 		mPrefixAll = tok;
-		int namesLength = mDecls.length;
+		const namesLength = mDecls.length;
 		string[] completions = Package.GetLibInfos().findCompletions(tok, true);
 		foreach (c; completions)
 		{
@@ -467,12 +467,12 @@ class Declarations
 		assert(hr == S_OK);
 		wstring txt = src.GetText(line, 0, line, -1);
 		if(idx > txt.length)
-			idx = txt.length;
+			idx = txt.ilength;
 		int endIdx = idx;
 		dchar ch;
-		for(size_t p = idx; p > 0 && dLex.isIdentifierCharOrDigit(ch = decodeBwd(txt, p)); idx = p) {}
+		for(size_t p = idx; p > 0 && dLex.isIdentifierCharOrDigit(ch = decodeBwd(txt, p)); idx = cast(int)p) {}
 		int startIdx = idx;
-		for(size_t p = idx; p > 0 && std.uni.isWhite(ch = decodeBwd(txt, p)); idx = p) {}
+		for(size_t p = idx; p > 0 && std.uni.isWhite(ch = decodeBwd(txt, p)); idx = cast(int)p) {}
 		if (ch == '.')
 			return false;
 		wstring tok = txt[startIdx .. endIdx];
@@ -488,7 +488,7 @@ class Declarations
 			return false;
 		scope(exit) release(exmgr);
 
-		int namesLength = mDecls.length;
+		const namesLength = mDecls.length;
 		IVsExpansionEnumeration enumExp;
 		hr = exmgr.EnumerateExpansions(g_languageCLSID, FALSE, null, 0, false, false, &enumExp);
 		if(hr == S_OK && enumExp)
@@ -575,7 +575,7 @@ class Declarations
 				}
 
 				// go through assoc array for faster uniqueness check
-				int[string] decls;
+				size_t[string] decls;
 
 				// add existing declarations
 				foreach(i, d; mDecls)
@@ -648,7 +648,7 @@ class Declarations
 				{
 					wstring txt = to!wstring(GetText(textView, 0));
 					TextSpan changedSpan;
-					src.mBuffer.ReplaceLines(line, startIdx, line, endIdx, txt.ptr, txt.length, &changedSpan);
+					src.mBuffer.ReplaceLines(line, startIdx, line, endIdx, txt.ptr, txt.ilength, &changedSpan);
 					if (GetGlyph(0) == CSIMG_SNIPPET)
 						if (auto view = Package.GetLanguageService().GetViewFilter(src, textView))
 							view.HandleSnippet();
@@ -974,7 +974,7 @@ class CompletionSet : DisposingComObject, IVsCompletionSet, IVsCompletionSet3, I
 		{
 			// if the char is in the list of given member names then obviously it
 			// is not a commit char.
-			int i = textSoFar.length;
+			int i = textSoFar.ilength;
 			for (int j = 0, n = mDecls.GetCount(); j < n; j++)
 			{
 				string name = mDecls.GetText(mTextView, j);
@@ -1184,7 +1184,7 @@ class MethodData : DisposingComObject, IVsMethodData
 	{
 		if (!mTextView || mMethods.length == 0)
 			return 0;
-		return mMethods.length;
+		return mMethods.ilength;
 	}
 
 	override int GetCurMethod()

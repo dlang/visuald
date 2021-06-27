@@ -220,7 +220,7 @@ class Widget
 		SendMessage(WM_SETREDRAW, enable);
 	}
 
-	int SendMessage(int msg, WPARAM wp = 0, LPARAM lp = 0)
+	LRESULT SendMessage(int msg, WPARAM wp = 0, LPARAM lp = 0)
 	{
 		return .SendMessage(hwnd, msg, wp, lp);
 	}
@@ -259,7 +259,7 @@ class Widget
 
 		wstring wtext = to!wstring(text);
 		SIZE size;
-		if (GetTextExtentPoint32W(dc, wtext.ptr, wtext.length, &size) == 0)
+		if (GetTextExtentPoint32W(dc, wtext.ptr, cast(uint)wtext.length, &size) == 0)
 			return 0;
 
 		return size.cx;
@@ -425,14 +425,14 @@ class Window : Widget
 		//backgroundBrush = CreateSolidBrush(col);
 	}
 
-	extern(Windows) static int WinWindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	extern(Windows) static LRESULT WinWindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (Window win = cast(Window) fromHWND(hWnd))
 			return win.WindowProc(hWnd,uMsg,wParam,lParam);
 		return DefWindowProcA(hWnd, uMsg, wParam, lParam);
 	}
 
-	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	LRESULT WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg) {
 		case WM_COMMAND:
@@ -541,7 +541,7 @@ class Dialog : Widget
 		bgbrush = null;
 	}
 
-	extern(Windows) static int DlgWindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	extern(Windows) static LRESULT DlgWindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (Dialog dlg = cast(Dialog) fromHWND(hWnd))
 			return dlg.WindowProc(hWnd,uMsg,wParam,lParam);
@@ -559,7 +559,7 @@ class Dialog : Widget
 		super(parent);
 	}
 
-	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	LRESULT WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		return DefDlgProcA(hWnd, uMsg, wParam, lParam);
 	}
@@ -627,7 +627,7 @@ class Text : Widget
 
 	string getText()
 	{
-		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+		int len = cast(int)SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		scope buffer = new wchar[len+1];
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
 		string s = toUTF8(buffer[0..$-1]);
@@ -637,7 +637,7 @@ class Text : Widget
 
 	wstring getWText()
 	{
-		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+		int len = cast(int)SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		auto buffer = new wchar[len+1];
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
 		buffer = replace(buffer, "\r", "");
@@ -661,7 +661,7 @@ class MultiLineText : Text
 		SetWindowLongA(hwnd, GWL_WNDPROC, cast(int)cast(void*)&MLTWindowProc);
 	}
 
-	extern(Windows) static int MLTWindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	extern(Windows) static LRESULT MLTWindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (MultiLineText mlt = cast(MultiLineText) fromHWND(hWnd))
 			return mlt.WindowProc(hWnd,uMsg,wParam,lParam);
@@ -677,7 +677,7 @@ class MultiLineText : Text
 		return hWnd;
 	}
 
-	int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	LRESULT WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if(uMsg == WM_CHAR)
 		{
@@ -713,11 +713,11 @@ class ComboBox : Widget
 
 	int findString(string s)
 	{
-		return SendMessageW(hwnd, CB_FINDSTRING, 0, cast(LPARAM)toUTF16z(s));
+		return cast(int)SendMessageW(hwnd, CB_FINDSTRING, 0, cast(LPARAM)toUTF16z(s));
 	}
 	int getSelection()
 	{
-		return SendMessageA(hwnd, CB_GETCURSEL, 0, 0);
+		return cast(int)SendMessageA(hwnd, CB_GETCURSEL, 0, 0);
 	}
 	void setSelection(int n)
 	{
@@ -729,14 +729,14 @@ class ComboBox : Widget
 	}
 	string getText()
 	{
-		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+		int len = cast(int)SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		scope buffer = new wchar[len+1];
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
 		return toUTF8(buffer[0..$-1]);
 	}
 	wstring getWText()
 	{
-		int len = SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
+		int len = cast(int)SendMessageW(hwnd, WM_GETTEXTLENGTH, 0, 0);
 		scope buffer = new wchar[len+1];
 		SendMessageW(hwnd, WM_GETTEXT, cast(WPARAM)(len+1), cast(LPARAM)buffer.ptr);
 		return assumeUnique(buffer[0..$-1]);
@@ -823,7 +823,7 @@ class ListView : Widget
 
 	int SendItemMessage(uint msg, ref LVITEM lvi)
 	{
-		return .SendMessage(hwnd, msg, 0, cast(LPARAM)&lvi);
+		return cast(int).SendMessage(hwnd, msg, 0, cast(LPARAM)&lvi);
 	}
 }
 
@@ -917,7 +917,7 @@ class TabControl : Widget
 
 	int getCurSel()
 	{
-		return SendMessage(TCM_GETCURSEL, 0, 0);
+		return cast(int)SendMessage(TCM_GETCURSEL, 0, 0);
 	}
 
 	void raiseWidget(size_t idx)

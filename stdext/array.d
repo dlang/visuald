@@ -131,3 +131,9 @@ void remove(T)(ref bool[T] arr, T val)
 {
 	arr.remove(val);
 }
+
+int ilength(T)(T[] arr)
+{
+	assert(arr.length < int.max);
+	return cast(int) arr.length;
+}

@@ -63,16 +63,16 @@ string getEnvVar(string var)
 
 string _replaceMacros(string start, dchar end, string esc)(string s, string[string] replacements)
 {
-	int[string] lastReplacePos;
+	size_t[string] lastReplacePos;
 	auto slen = start.length;
 
-	for(int i = 0; i + slen < s.length; )
+	for(size_t i = 0; i + slen < s.length; )
 	{
 		if(s[i .. i+esc.length] == esc)
 			s = s[0 .. i] ~ s[i + 1 .. $];
 		else if(s[i .. i+slen] == start)
 		{
-			int len = indexOf(s[i+slen .. $], end);
+			auto len = indexOf(s[i+slen .. $], end);
 			if(len < 0)
 				break;
 			string id = toUpper(s[i + slen .. i + slen + len]);
@@ -82,12 +82,12 @@ string _replaceMacros(string start, dchar end, string esc)(string s, string[stri
 			else
 				nid = getEnvVar(id);
 
-			int *p = id in lastReplacePos;
+			auto p = id in lastReplacePos;
 			if(!p || *p <= i)
 			{
 				s = s[0 .. i] ~ nid ~ s[i + slen + 1 + len .. $];
-				int difflen = nid.length - (len + slen + 1);
-				foreach(ref int pos; lastReplacePos)
+				ptrdiff_t difflen = nid.length - (len + slen + 1);
+				foreach(ref size_t pos; lastReplacePos)
 					if(pos > i)
 						pos += difflen;
 				lastReplacePos[id] = i + nid.length;

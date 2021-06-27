@@ -815,8 +815,8 @@ public:
 string demangleText(string ln)
 {
 	string txt;
-	static if(__traits(compiles, (){uint p; decodeDmdString("", p);}))
-		uint i;
+	static if(__traits(compiles, (){size_t p; decodeDmdString("", p);}))
+		size_t i;
 	else
 		int i; // until dmd 2.056
 	for (i = 0; i < ln.length; )
@@ -961,7 +961,7 @@ version(none)
 	{
 		int cp = GetKBCodePage();
 		const(char)*p = toMBSz(batchFileText, cp);
-		int plen = strlen(p);
+		const plen = strlen(p);
 		string dir = dirName(cmdfile);
 		if(!std.file.exists(dir))
 			mkdirRecurse(dir);
@@ -1267,12 +1267,12 @@ unittest
 
 string unEscapeFilename(string file)
 {
-	int pos = std.string.indexOf(file, '\\');
+	auto pos = std.string.indexOf(file, '\\');
 	if(pos < 0)
 		return file;
 
 	char[] p;
-	int start = 0;
+	size_t start = 0;
 	while(pos < file.length)
 	{
 		if(file[pos+1] == '(' || file[pos+1] == ')' || file[pos+1] == '\\')
@@ -1280,7 +1280,7 @@ string unEscapeFilename(string file)
 			p ~= file[start .. pos];
 			start = pos + 1;
 		}
-		int nextpos = std.string.indexOf(file[pos + 1 .. $], '\\');
+		auto nextpos = std.string.indexOf(file[pos + 1 .. $], '\\');
 		if(nextpos < 0)
 			break;
 		pos += nextpos + 1;

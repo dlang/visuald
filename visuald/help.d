@@ -121,7 +121,7 @@ string replacePath(string s, string href, string path)
 	string t;
 	for( ; ; )
 	{
-		int pos = s.indexOf(href);
+		auto pos = s.indexOf(href);
 		if(pos < 0)
 			break;
 		t ~= s[0..pos + href.length];
@@ -153,8 +153,8 @@ string createDisambiguationPage(string word, string[] files)
 
 	string start = `<div id="content">`;
 	string footer = `<div id="footernav">`;
-	int ps = html.indexOf(start);
-	int pe = html.indexOf(footer);
+	auto ps = html.indexOf(start);
+	auto pe = html.indexOf(footer);
 	if(ps < 0 || pe < ps)
 	{
 		html = fallback;

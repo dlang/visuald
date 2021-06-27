@@ -26,6 +26,7 @@ import sdk.win32.commctrl;
 import sdk.vsi.vsshell;
 import sdk.vsi.vsshell80;
 
+import stdext.array;
 import stdext.string;
 
 import std.conv;
@@ -155,7 +156,7 @@ class ProfileWindowBack : Window
 		super(parent);
 	}
 
-	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	override LRESULT WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		BOOL fHandled;
 		LRESULT rc = mPane._WindowProc(hWnd, uMsg, wParam, lParam, fHandled);
@@ -262,10 +263,10 @@ class ProfilePane : DisposingComObject, IVsWindowPane
 		logMessage("TranslateAccelerator", msg.hwnd, msg.message, msg.wParam, msg.lParam);
 
 		BOOL fHandled;
-		HRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
+		LRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
 
 		if(fHandled)
-			return hrRet;
+			return cast(HRESULT)hrRet;
 		return E_NOTIMPL;
 	}
 
@@ -299,7 +300,7 @@ private:
 
 	static HINSTANCE getInstance() { return Widget.getInstance(); }
 
-	int _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
+	LRESULT _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		if(uMsg != WM_NOTIFY)
 			logMessage("_WindowProc", hWnd, uMsg, wParam, lParam);
@@ -307,7 +308,7 @@ private:
 		return _HandleMessage(hWnd, uMsg, wParam, lParam, fHandled);
 	}
 
-	int _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
+	LRESULT _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		switch(uMsg)
 		{
@@ -407,8 +408,8 @@ private:
 	void _MoveSelection(BOOL fDown)
 	{
 		// Get the current selection
-		int iSel = _wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
-		int iCnt = _wndFuncList.SendMessage(LVM_GETITEMCOUNT);
+		int iSel = cast(int)_wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
+		int iCnt = cast(int)_wndFuncList.SendMessage(LVM_GETITEMCOUNT);
 		if(iSel == 0 && !fDown)
 			return;
 		if(iSel == iCnt - 1 && fDown)
@@ -580,8 +581,8 @@ private:
 
 	string _demangle(string txt, bool fullDeco)
 	{
-		static if(__traits(compiles, (){uint p; decodeDmdString("", p);}))
-			uint p = 0;
+		static if(__traits(compiles, (){size_t p; decodeDmdString("", p);}))
+			size_t p = 0;
 		else
 			int p = 0; // until dmd 2.056
 		version(all) // debug // allow std 2.052 in debug builds
@@ -866,7 +867,7 @@ private:
 				TBBUTTON initButton(int id, ubyte style)
 				{
 					return TBBUTTON(id < 0 ? IDR_LAST - IDR_FIRST + 1 : id - IDR_FIRST,
-					                id, TBSTATE_ENABLED, style, [0,0], 0, 0);
+					                id, TBSTATE_ENABLED, style, TBBUTTON.bReserved.init, 0, 0);
 				}
 				static const TBBUTTON[] s_tbb = [
 					initButton(IDR_ALTERNATEROWCOLOR, BTNS_CHECK),
@@ -1274,7 +1275,7 @@ else
 
 	LRESULT _OnOpenSelectedItem(WORD wNotifyCode, WORD wID, HWND hwndCtl, ref BOOL fHandled)
 	{
-		int iSel = _wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
+		int iSel = cast(int)_wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
 		if (iSel != -1)
 		{
 			_OpenProfileItem(iSel);
@@ -1306,7 +1307,7 @@ else
 	int _ListViewIndexFromColumnID(COLUMNID colid)
 	{
 		int iCol = -1;
-		int cCols = _wndFuncListHdr.SendMessage(HDM_GETITEMCOUNT);
+		int cCols = cast(int)_wndFuncListHdr.SendMessage(HDM_GETITEMCOUNT);
 		for (int i = 0; i < cCols && iCol == -1; i++)
 		{
 			HDITEM hdi;
@@ -1419,7 +1420,7 @@ else
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	LRESULT _OnFileListGetDispInfo(int idCtrl, in NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListGetDispInfo(WPARAM idCtrl, in NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLVDISPINFO *pnmlvdi = cast(NMLVDISPINFO *)pnmh;
 		if (pnmlvdi.item.mask & LVIF_TEXT)
@@ -1550,7 +1551,7 @@ else
 		HRESULT hr = S_OK;
 
 		for(int i = 0; i < _rgColumns.length; i++)
-			_rgColumns[i].cx = _wndFuncList.SendMessage(LVM_GETCOLUMNWIDTH, _ListViewIndexFromColumnID(_rgColumns[i].colid));
+			_rgColumns[i].cx = cast(int)_wndFuncList.SendMessage(LVM_GETCOLUMNWIDTH, _ListViewIndexFromColumnID(_rgColumns[i].colid));
 
 		try
 		{
@@ -1633,7 +1634,7 @@ else
 		return hr;
 	}
 
-	LRESULT _OnFileListColumnClick(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListColumnClick(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
 		_SetSortColumn(_ColumnIDFromListViewIndex(pnmlv.iSubItem), pnmlv.iSubItem);
@@ -1641,7 +1642,7 @@ else
 		return 0;
 	}
 
-	LRESULT _OnFileListDeleteItem(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListDeleteItem(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
 		ProfileItem psi = cast(ProfileItem)cast(void*)pnmlv.lParam;
@@ -1650,7 +1651,7 @@ else
 		return 0;
 	}
 
-	LRESULT _OnFileListItemChanged(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListItemChanged(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
 
@@ -1677,7 +1678,7 @@ else
 				int idx = _lastResultsArray.findFunc(func);
 				if(idx >= 0)
 				{
-					int sel = _wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
+					int sel = cast(int)_wndFuncList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
 					_UpdateSelection(sel, idx);
 				}
 			}
@@ -1735,7 +1736,7 @@ else
 		return hr;
 	}
 
-	LRESULT _OnFileListDblClick(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListDblClick(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMITEMACTIVATE *pnmitem = cast(NMITEMACTIVATE*) pnmh;
 		if (FAILED(_OpenProfileItem(pnmitem.iItem)))
@@ -1771,7 +1772,7 @@ else
 		_crAlternate = RGB(rNew, gNew, bNew);
 	}
 
-	LRESULT _OnFileListCustomDraw(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListCustomDraw(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		LRESULT lRet = CDRF_DODEFAULT;
 		NMLVCUSTOMDRAW *pnmlvcd = cast(NMLVCUSTOMDRAW *)pnmh;
@@ -1819,7 +1820,7 @@ else
 		return lRet;
 	}
 
-	LRESULT _OnFileListHdrItemChanged(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListHdrItemChanged(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMHEADER *pnmhdr = cast(NMHEADER *)pnmh;
 		if (pnmhdr.pitem.mask & HDI_WIDTH)
@@ -1835,7 +1836,7 @@ else
 		return 0;
 	}
 
-	LRESULT _OnToolbarGetInfoTip(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnToolbarGetInfoTip(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMTBGETINFOTIP *pnmtbgit = cast(NMTBGETINFOTIP *)pnmh;
 		string tip;
@@ -1894,7 +1895,7 @@ class ItemArray
 		mGroups ~= group;
 	}
 
-	int GetCount() const { return max(mItems.length, mGroups.length); }
+	int GetCount() const { return max(mItems.ilength, mGroups.ilength); }
 
 	ProfileItemGroup GetGroup(uint idx) const
 	{
@@ -1914,7 +1915,7 @@ class ItemArray
 	{
 		foreach(i, psi; mItems)
 			if(psi.GetName() == name)
-				return i;
+				return cast(int)i;
 		return -1;
 	}
 
@@ -2031,7 +2032,7 @@ class ProfileItemIndex
 				}
 				else if(buf[0] == '=')
 				{
-					int pos = std.string.indexOf(buf, "Timer Is");
+					auto pos = std.string.indexOf(buf, "Timer Is");
 					if(pos > 0)
 					{
 						char[] txt = buf[pos + 9 .. $];

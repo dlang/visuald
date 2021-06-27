@@ -512,7 +512,7 @@ class LanguageService : DisposingComObject,
 
 	override HRESULT GetItemCount(int* piCount)
 	{
-		*piCount = colorableItems.length;
+		*piCount = colorableItems.ilength;
 		return S_OK;
 	}
 
@@ -931,13 +931,13 @@ class LanguageService : DisposingComObject,
 		string fmt;
 		wstring links;
 		int state = Lexer.State.kWhite;
-		size_t pos = 0;
+		pos_t pos = 0;
 		int prevcol = -1;
 		bool incode = false;
 		int beglink = -1;
 		while (pos < tip.length)
 		{
-			uint prevpos = pos;
+			size_t prevpos = pos;
 			int tok, col;
 			if (tip[pos] == '`')
 			{
@@ -959,14 +959,14 @@ class LanguageService : DisposingComObject,
 					if (tip.length > pos + 1 && tip[pos+1] == '<')
 					{
 						tip = tip[0 .. pos] ~ tip[pos + 2 .. $];
-						beglink = pos;
+						beglink = cast(int)pos;
 						continue;
 					}
 					pos++;
 				}
 				else
 				{
-					uint lpos = pos + 1;
+					size_t lpos = pos + 1;
 					while (lpos + 1 < tip.length && (tip[lpos] != '#' || tip[lpos+1] != '>'))
 						decode(tip, lpos);
 
@@ -1405,13 +1405,13 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		switch (iCombo)
 		{
 			case 0:
-				*pcEntries = mGlobal.length;
+				*pcEntries = mGlobal.ilength;
 				break;
 			case 1:
-				*pcEntries = mColumn2.length;
+				*pcEntries = mColumn2.ilength;
 				break;
 			case 2:
-				*pcEntries = mColumn3.length;
+				*pcEntries = mColumn3.ilength;
 				break;
 			default:
 				return S_FALSE;
@@ -1424,8 +1424,8 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	// called for ENTRY_TEXT
 	HRESULT GetEntryText(in int iCombo, in int iIndex, /+[out]+/ WCHAR **ppszText)
 	{
-		int idx = getNodeIndex(iCombo, iIndex);
-		if (idx < 0 || idx >= mNodes.length)
+		size_t idx = getNodeIndex(iCombo, iIndex);
+		if (idx >= mNodes.length)
 			return S_FALSE;
 
 		*ppszText = allocBSTR(mNodes[idx].desc);
@@ -1442,8 +1442,8 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 	// called for ENTRY_IMAGE
 	HRESULT GetEntryImage(in int iCombo, in int iIndex, /+[out]+/ int *piImageIndex)
 	{
-		int idx = getNodeIndex(iCombo, iIndex);
-		if (idx < 0 || idx >= mNodes.length)
+		size_t idx = getNodeIndex(iCombo, iIndex);
+		if (idx >= mNodes.length)
 			return S_FALSE; // keep space for image
 
 		*piImageIndex = mNodes[idx].getImage();
@@ -1457,8 +1457,8 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 
 	HRESULT OnItemChosen(in int iCombo, in int iIndex)
 	{
-		int idx = getNodeIndex(iCombo, iIndex);
-		if (idx < 0 || idx >= mNodes.length)
+		size_t idx = getNodeIndex(iCombo, iIndex);
+		if (idx >= mNodes.length)
 			return S_FALSE; // keep space for image
 
 		return NavigateTo(mWinMgr.mSource.mBuffer, mNodes[idx].begline, 0, mNodes[idx].begline, 0);
@@ -1562,7 +1562,7 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		sort!((a, b) => columnLess(a, b))(mGlobal);
 	}
 
-	int getNodeIndex(int iCombo, int index)
+	size_t getNodeIndex(int iCombo, int index)
 	{
 		if (iCombo == 0)
 			return index >= mGlobal.length ? -1 : mGlobal[index];
@@ -1570,12 +1570,12 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 			return index >= mColumn2.length ? -1 : mColumn2[index];
 		if (iCombo == 2)
 			return index >= mColumn3.length ? -1 : mColumn3[index];
-		return -1;
+		return mNodes.length;
 	}
 
 	int findLineIndex(size_t[] column, int line)
 	{
-		for (size_t g = 0; g < column.length; g++)
+		for (int g = 0; g < column.ilength; g++)
 			if (mNodes[column[g]].containsLine(line))
 				return g;
 		return -1;
@@ -1599,9 +1599,9 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 		int sel3 = -1;
 		if (sel1 >= 0)
 		{
-			int g = mGlobal[sel1];
+			size_t g = mGlobal[sel1];
 			int gdepth = mNodes[g].depth;
-			for (int h = g + 1; h < mNodes.length; h++)
+			for (size_t h = g + 1; h < mNodes.length; h++)
 			{
 				if (mNodes[h].depth <= gdepth)
 					break;
@@ -1611,7 +1611,7 @@ class NavigationBarClient : DisposingComObject, IVsDropdownBarClient, IVsCoTaskM
 					if (mNodes[h].containsLine(line))
 					{
 						int hdepth = mNodes[h].depth;
-						for (int i = h + 1; i < mNodes.length; i++)
+						for (size_t i = h + 1; i < mNodes.length; i++)
 						{
 							if (mNodes[i].depth <= hdepth)
 								break;
@@ -2322,7 +2322,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 	{
 		line++; // 0-based line numbers in VS to 1-based line numbers in debug info
 		if (line >= mDisasmLineInfo.length)
-			line = mDisasmLineInfo.length - 1;
+			line = mDisasmLineInfo.ilength - 1;
 		// prefer to display asm of line before current line if none available on it
 		while (line > 0 && mDisasmLineInfo[line].sym is null)
 			line--;
@@ -2339,7 +2339,7 @@ class Source : DisposingComObject, IVsUserDataEvents, IVsTextLinesEvents,
 
 		foreach (i, off; symInfo.offsets)
 			if (off >= mDisasmLineInfo[line].offset)
-				return symInfo.firstLine + i;
+				return symInfo.firstLine + cast(int)i;
 
 		return -1;
 	}
@@ -2469,7 +2469,7 @@ version(threadedOutlining) {} else
 	{
 		NewHiddenRegion[] rgns = CreateOutlineRegions(state);
 		if(DiffRegions(session, rgns))
-			session.AddHiddenRegions(chrNonUndoable, rgns.length, rgns.ptr, null);
+			session.AddHiddenRegions(chrNonUndoable, rgns.ilength, rgns.ptr, null);
 	}
 
 	void CollapseAllHiddenRegions(IVsHiddenTextSession session, bool collapsed)
@@ -2571,7 +2571,7 @@ version(threadedOutlining) {} else
 						rgn.tsHiddenText = TextSpan(pos - 1, ln, lastOpenRegion, -2); // use endLine as marker for 'case'
 						rgn.pszBanner = "..."w.ptr;
 						rgn.dwClient = kHiddenRegionCookie;
-						lastOpenRegion = rgns.length;
+						lastOpenRegion = rgns.ilength;
 						rgns ~= rgn;
 					}
 
@@ -2590,7 +2590,7 @@ version(threadedOutlining) {} else
 							rgn.tsHiddenText = TextSpan(pos - 1, ln, lastOpenRegion, -1);
 						rgn.pszBanner = txt[pos-1] == '{' ? "{...}"w.ptr : "[...]"w.ptr;
 						rgn.dwClient = kHiddenRegionCookie;
-						lastOpenRegion = rgns.length;
+						lastOpenRegion = rgns.ilength;
 						rgns ~= rgn;
 						prevBracketLine = ln;
 					}
@@ -2662,9 +2662,9 @@ version(threadedOutlining) {} else
 			else if(isComment && isSpaceOrComment)
 			{
 				lastCommentStartLine = ln;
-				lastCommentStartLineLength = txt.length;
+				lastCommentStartLineLength = txt.ilength;
 			}
-			prevLineLenth = txt.length;
+			prevLineLenth = txt.ilength;
 			ln++;
 		}
 		while(lastOpenRegion >= 0)
@@ -2838,8 +2838,8 @@ version(all)
 		wstring txt = GetText(line, 0, line, -1);
 		if(idx > txt.length)
 			return false;
-		for(size_t p = endIdx; p < txt.length && dLex.isIdentifierCharOrDigit(decode(txt, p)); endIdx = p) {}
-		for(size_t p = startIdx; p > 0 && dLex.isIdentifierCharOrDigit(decodeBwd(txt, p)); startIdx = p) {}
+		for(size_t p = endIdx; p < txt.length && dLex.isIdentifierCharOrDigit(decode(txt, p)); endIdx = cast(int)p) {}
+		for(size_t p = startIdx; p > 0 && dLex.isIdentifierCharOrDigit(decodeBwd(txt, p)); startIdx = cast(int)p) {}
 		return startIdx < endIdx;
 }
 else
@@ -2953,7 +2953,7 @@ else
 				idx--; // skip '.'
 				for (size_t p = idx; p > 0 && isWhite(decodeBwd(txt, p)); idx = p) {}
 				for (size_t p = idx; p > 0 && dLex.isIdentifierCharOrDigit(decodeBwd(txt, p)); idx = p) {}
-				pSpan.iStartIndex = idx;
+				pSpan.iStartIndex = cast(int)idx;
 				goto L_again;
 			}
 		}
@@ -3001,7 +3001,7 @@ else
 
 	static int GetTokenInfoAt(TokenInfo[] infoArray, int col, ref TokenInfo info, bool extendLast = false)
 	{
-		int len = infoArray.length;
+		int len = infoArray.ilength;
 		for (int i = 0; i < len; i++)
 		{
 			int start = infoArray[i].StartIndex;
@@ -3030,7 +3030,7 @@ else
 	{
 		wstring text;
 		if(idx < 0)
-			idx = infoArray.length;
+			idx = infoArray.ilength;
 		for(;;)
 		{
 			text = GetText(line, 0, line, -1);
@@ -3107,7 +3107,7 @@ else
 		{
 			wstring txt;
 			TokenInfo[] lineInfo = GetLineInfo(ln, &txt);
-			int inf = cl < 0 ? lineInfo.length - 1 : GetTokenInfoAt(lineInfo, cl-1, info);
+			int inf = cl < 0 ? lineInfo.ilength - 1 : GetTokenInfoAt(lineInfo, cl-1, info);
 			for( ; inf >= 0; inf--)
 			{
 				if(lineInfo[inf].type != TokenCat.Comment &&
@@ -3273,7 +3273,7 @@ else
 		wstring wspc = toUTF16(spc);
 
 		TextSpan changedSpan;
-		return mBuffer.ReplaceLines(line, 0, line, idx, wspc.ptr, wspc.length, &changedSpan);
+		return mBuffer.ReplaceLines(line, 0, line, idx, wspc.ptr, wspc.ilength, &changedSpan);
 	}
 
 	static struct _LineTokenIterator(SRC)
@@ -3383,7 +3383,7 @@ else
 
 				line--;
 				lineInfo = src.GetLineInfo(line, &lineText);
-				tok = lineInfo.length;
+				tok = lineInfo.ilength;
 			}
 			tok--;
 			return true;
@@ -3842,7 +3842,7 @@ else
 					{
 						text = text[0..$-nl.length] ~ wrefnl;
 						TextSpan changedSpan;
-						rc = mBuffer.ReplaceLines(ln, 0, ln + 1, 0, text.ptr, text.length, &changedSpan);
+						rc = mBuffer.ReplaceLines(ln, 0, ln + 1, 0, text.ptr, text.ilength, &changedSpan);
 					}
 				}
 			}
@@ -3951,7 +3951,7 @@ else
 					txt = createVisualSpaces!wstring(m, langPrefs.fInsertTabs ? langPrefs.uTabSize : 0);
 
 				TextSpan changedSpan;
-				if (int hr = mBuffer.ReplaceLines(line, 0, line, p, txt.ptr, txt.length, &changedSpan))
+				if (int hr = mBuffer.ReplaceLines(line, 0, line, p, txt.ptr, txt.ilength, &changedSpan))
 					return hr;
 			}
 		}
@@ -3969,7 +3969,7 @@ else
 				wstring add = createVisualSpaces!wstring(n - indent, 0, 2); // use spaces, not tabs
 				wstring ins = pfx ~ add;
 				TextSpan changedSpan;
-				if (int hr = mBuffer.ReplaceLines(line, 0, line, p, ins.ptr, ins.length, &changedSpan))
+				if (int hr = mBuffer.ReplaceLines(line, 0, line, p, ins.ptr, ins.ilength, &changedSpan))
 					return hr;
 			}
 		}
@@ -4088,7 +4088,7 @@ else
 			wstring text = GetText(line, 0, line, -1);
 			lineState = mColorizer.GetLineState(line);
 
-			uint len = (plinepos > text.length ? text.length : plinepos);
+			uint len = (plinepos > text.length ? text.ilength : plinepos);
 			plinepos = 0;
 
 			if(testFn(lineState, data))
@@ -4211,7 +4211,7 @@ else
 				tokpos ~= pos;
 				toktype ~= dLex.scan(iState, text, pos);
 			}
-			int p = (tok >= 0 ? tok : tokpos.length) - 1;
+			int p = (tok >= 0 ? tok : tokpos.ilength) - 1;
 			for( ; p >= 0; p--)
 			{
 				pos = tokpos[p];
@@ -4255,8 +4255,8 @@ else
 				tokpos ~= pos;
 				toktype ~= dLex.scan(iState, text, pos);
 			}
-			int p = (tok >= 0 ? tok : tokpos.length) - 1;
-			uint ppos = (p >= tokpos.length - 1 ? text.length : tokpos[p+1]);
+			int p = (tok >= 0 ? tok : tokpos.ilength) - 1;
+			uint ppos = (p >= tokpos.length - 1 ? text.ilength : tokpos[p+1]);
 			for( ; p >= 0; p--)
 			{
 				pos = tokpos[p];
@@ -4375,7 +4375,7 @@ else
 					wstring t = strip(text);
 					if (t.length > 0 && t[$-1] == ch)
 					{
-						int ncol = ntext.length - nt.length;
+						int ncol = ntext.ilength - nt.ilength;
 						if (t.length == 1)
 						{
 							// remove empty auto inserted line
@@ -4454,7 +4454,7 @@ else
 		wstring close;
 		close ~= ch;
 		TextSpan changedSpan;
-		if (int rc = mBuffer.ReplaceLines(line, col, line, col, close.ptr, close.length, &changedSpan))
+		if (int rc = mBuffer.ReplaceLines(line, col, line, col, close.ptr, close.ilength, &changedSpan))
 			return rc;
 
 		mLastBraceCompletionText = close ~ mLastBraceCompletionText;
@@ -4473,7 +4473,7 @@ else
 		{
 			wstring newline = "\n"w;
 			TextSpan changedSpan;
-			if (int rc = mBuffer.ReplaceLines(line, col, line, col, newline.ptr, newline.length, &changedSpan))
+			if (int rc = mBuffer.ReplaceLines(line, col, line, col, newline.ptr, newline.ilength, &changedSpan))
 				return rc;
 			CacheLineIndentInfo cacheInfo;
 			if (int rc = ReplaceLineIndent(line + 1, &fmtOpt, cacheInfo))
@@ -4979,7 +4979,7 @@ else
 			{
 				if(auto session = GetHiddenTextSession())
 					if(DiffRegions(session, mOutlineRegions))
-						session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.length, mOutlineRegions.ptr, null);
+						session.AddHiddenRegions(chrNonUndoable, mOutlineRegions.ilength, mOutlineRegions.ptr, null);
 				mOutlineRegions = mOutlineRegions.init;
 			}
 		}
@@ -5171,7 +5171,7 @@ class EnumProximityExpressions : DComObject, IVsEnumBSTR
 
 	override int GetCount(ULONG *pceltCount)
 	{
-		*pceltCount = mExpressions.length;
+		*pceltCount = mExpressions.ilength;
 		return S_OK;
 	}
 }

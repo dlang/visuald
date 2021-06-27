@@ -988,7 +988,7 @@ version(none)
 			return hr;
 
 		ULONG written;
-		HRESULT hr = pStream.Write(s.ptr, s.length, &written);
+		HRESULT hr = pStream.Write(s.ptr, s.ilength, &written);
 		if(hr == S_OK && written != s.length)
 			hr = E_FAIL;
 		return hr;
@@ -1401,7 +1401,7 @@ private:
 	uint             mLangServiceCookie;
 	uint             mProjFactoryCookie;
 
-	uint             mComponentID;
+	DWORD_PTR        mComponentID;
 
 	LanguageService  mLangsvc;
 	ProjectFactory   mProjFactory;

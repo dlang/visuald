@@ -23,6 +23,7 @@ import sdk.win32.commctrl;
 import std.json;
 import std.conv;
 import std.string;
+import stdext.array;
 
 class LibraryManager : DComObject, IVsLibraryMgr
 {
@@ -62,7 +63,7 @@ class LibraryManager : DComObject, IVsLibraryMgr
 		if(!pnCount)
 			return E_INVALIDARG;
 
-		*pnCount = mLibraries.length;
+		*pnCount = mLibraries.ilength;
 		return S_OK;
 	}
 
@@ -530,7 +531,7 @@ class Library : DComObject,
 		mixin(LogCallMix2);
 		assert(pCount);
 
-		*pCount = mLibraryItems.length;
+		*pCount = mLibraryItems.ilength;
 		return S_OK;
 	}
 
@@ -751,7 +752,7 @@ version(todo)
 		// update the liblist
 		VSTREELISTITEMCHANGE listChanges;
 		listChanges.grfChange = TCT_ITEMADDED;
-		listChanges.Index     = mLibraryItems.length - 1;
+		listChanges.Index     = mLibraryItems.ilength - 1;
 
 		return mCounterLibList.Increment(listChanges);
 	}
@@ -853,7 +854,7 @@ static if(useJSON)
 else
 	alias BrowseNode InfoObject;
 
-int GetInfoCount(BrowseNode val)   { return val ? val.members.length : 0; }
+size_t GetInfoCount(BrowseNode val)   { return val ? val.members.length : 0; }
 string GetInfoName(BrowseNode val) { return val ? val.name : null; }
 string GetInfoKind(BrowseNode val) { return val ? val.kind : null; }
 string GetInfoType(BrowseNode val) { return val ? val.type : null; }
@@ -871,7 +872,7 @@ BrowseNode GetInfoObject(BrowseNode val, ULONG idx)
 }
 
 // move to intellisense.d?
-int GetInfoCount(JSONValue val)
+size_t GetInfoCount(JSONValue val)
 {
 	if(val.type == JSONType.array)
 		return val.array.length;
@@ -1182,7 +1183,7 @@ class ObjectList : DComObject, IVsSimpleObjectList2
 
 	int GetCount()
 	{
-		return mMembers.length;
+		return mMembers.ilength;
 	}
 
 	bool IsValidIndex(/* [in] */ ULONG uIndex)
@@ -1809,7 +1810,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
 		return uIndex < mReferences.length;
 	}
 
-	string parseRef(int i, string r, Source source)
+	string parseRef(size_t i, string r, Source source)
 	{
 		auto refdata = &mReferences[i];
 
@@ -1885,7 +1886,7 @@ class FindReferencesList : DComObject, IVsSimpleObjectList2
     HRESULT GetItemCount(/+[out]+/ ULONG* pCount)
 	{
 		mixin(LogCallMix2);
-		*pCount = mReferences.length;
+		*pCount = mReferences.ilength;
 		return S_OK;
 	}
     /+[local]+/ HRESULT GetDisplayData(in ULONG Index,

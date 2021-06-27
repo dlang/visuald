@@ -2147,7 +2147,7 @@ Error:
 
 		lLenGlobal += 1; // anothr trailing null character to terminate list
 
-		DWORD   cbAlloc = DROPFILES.sizeof + lLenGlobal * WCHAR.sizeof;// bytes to allocate
+		const   cbAlloc = DROPFILES.sizeof + lLenGlobal * WCHAR.sizeof;// bytes to allocate
 		HGLOBAL hGlobal = GlobalAlloc(GHND | GMEM_SHARE, cbAlloc);
 		if(!hGlobal) return E_ABORT;
 
@@ -2158,7 +2158,7 @@ Error:
 		// structure contain wide characters
 		pDropFiles.fWide = TRUE;
 		LPWSTR pFiles = cast(LPWSTR)(pDropFiles + 1);
-		LONG nCurPos = 0;
+		size_t nCurPos = 0;
 		for (ULONG i = 0; i < mItemSelDragged.length; i++)
 		{
 			BSTR cbstrProjref;
@@ -2166,7 +2166,7 @@ Error:
 			if (FAILED(hr))
 				continue;
 
-			UINT cchProjRef = wcslen(cbstrProjref) + 1;
+			auto cchProjRef = wcslen(cbstrProjref) + 1;
 			memcpy(pFiles + nCurPos, cbstrProjref, cchProjRef * WCHAR.sizeof);
 			nCurPos += cchProjRef;
 			freeBSTR(cbstrProjref);
