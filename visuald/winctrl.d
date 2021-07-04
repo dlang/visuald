@@ -112,7 +112,7 @@ class Widget
 		if(!hwnd)
 			return false;
 
-		SetWindowLongA(hwnd, GWL_USERDATA, cast(int)cast(void*)this);
+		SetWindowLongPtrA(hwnd, GWL_USERDATA, cast(size_t)cast(void*)this);
 		return true;
 	}
 
@@ -338,7 +338,7 @@ class Widget
 
 	static Widget fromHWND(HWND hwnd)
 	{
-		return cast(Widget)cast(void*)GetWindowLongA(hwnd, GWL_USERDATA);
+		return cast(Widget)cast(void*)GetWindowLongPtrA(hwnd, GWL_USERDATA);
 	}
 
 	static HINSTANCE getInstance() { return hInst; }

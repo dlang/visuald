@@ -1448,7 +1448,7 @@
   <program />
   <imppath>..</imppath>
   <fileImppath>..;resources</fileImppath>
-  <outdir>..\bin\$(ConfigurationName)\$(ProjectName)</outdir>
+  <outdir>..\bin\$(ConfigurationName)\$(PlatformName)</outdir>
   <objdir>$(OutDir)\$(ProjectName)</objdir>
   <objname />
   <libname />
