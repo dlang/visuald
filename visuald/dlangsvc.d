@@ -1132,6 +1132,8 @@ class LanguageService : DisposingComObject,
 			versionids = tokenizeArgs(versions);
 			debugids = tokenizeArgs(cfgopts.debugids);
 			cmdline = cfgopts.dmdFrontEndOptions();
+			if (globopts.dmdServerMemThres)
+				cmdline ~= " -memThreshold=" ~ to!string(globopts.dmdServerMemThres);
 		}
 		else
 		{

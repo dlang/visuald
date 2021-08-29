@@ -278,6 +278,11 @@ class DMDServer : ComObject, IVDServer
 			changed += opts.setStringImportDirs(splitLines(strImports));
 			changed += opts.setVersionIds(versionlevel, splitLines(verids));
 			changed += opts.setDebugIds(debuglevel, splitLines(dbgids));
+
+			long res;
+			auto p = opts.cmdline.indexOf(" -memThreshold=");
+			const(char)[] arg = p >= 0 ? opts.cmdline[p + 15..$] : "0";
+			opts.restartMemThreshold = parseLong(arg, res) ? cast(uint)res : 0;
 		}
 		return S_OK;
 	}
@@ -318,8 +323,9 @@ class DMDServer : ComObject, IVDServer
 
 	override HRESULT UpdateModule(in BSTR filename, in BSTR srcText, in DWORD flags)
 	{
-		auto stats = GC.stats();
-		if (stats.usedSize > 1_000_000_000) // 2GB
+		GC.Stats stats;
+		if (mOptions.restartMemThreshold &&
+			(stats = GC.stats()).usedSize > (mOptions.restartMemThreshold << 20L))
 		{
 			// throw away everything and restart form scratch
 			synchronized(gDMDSync)
@@ -328,11 +334,16 @@ class DMDServer : ComObject, IVDServer
 				foreach (i, m; mModules)
 					m.analyzedModule = null;
 
-				wipeStack();
-				GC.collect();
-				auto nstats = GC.stats();
-				printf("reinit: stats.usedSize %zd -> %zd\n", stats.usedSize, nstats.usedSize);
-				dumpGC();
+				version(traceGC)
+				{
+					wipeStack();
+					GC.collect();
+					auto nstats = GC.stats();
+					printf("reinit: stats.usedSize %zd -> %zd\n", stats.usedSize, nstats.usedSize);
+					dumpGC();
+				}
+				else
+					GC.collect();
 			}
 		}
 

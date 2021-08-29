@@ -2991,6 +2991,10 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		AddTitleLine("Semantic analysis");
 		AddControl("", mShowParseErrors = new CheckBox(mCanvas, "Show parsing errors (squiggles and markers)"));
 		version(DParserOption) AddControl("", mUseDmdParser = new CheckBox(mCanvas, "use DMD parsing engine for semantic analysis"));
+		auto saveWidth = kLabelWidth;
+		kLabelWidth = kPageWidth * 4 / 5;
+		AddControl("  Restart parsing engine if it needs more than (MB, 0 for never)", mDmdServerMemThres = new Text(mCanvas));
+		kLabelWidth  = saveWidth;
 		auto lineY = mLineY;
 		AddControl("", mShowParamStorage = new CheckBox(mCanvas, "Show parameter storage class at call site (experimental)"));
 		mLineY = lineY; // overlay with next
@@ -3026,6 +3030,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mSortExpMode.setEnabled(useDParser);
 		mShowParamStorage.setVisible(!useDParser);
 		mShowValueInTooltip.setEnabled(mShowTypeInTooltip.isChecked());
+		mDmdServerMemThres.setEnabled(!useDParser);
 	}
 
 	override void SetControls(GlobalOptions opts)
@@ -3044,6 +3049,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		mShowParamStorage.setChecked(opts.showParamStorage);
 		mSortExpMode.setSelection(opts.sortExpMode);
 		mExactExpMatch.setChecked(opts.exactExpMatch);
+		mDmdServerMemThres.setText(to!string(opts.dmdServerMemThres));
 
 		//mExpandSemantics.setEnabled(false);
 		EnableControls();
@@ -3066,6 +3072,12 @@ class IntellisensePropertyPage : GlobalPropertyPage
 		changes += changeOption(mShowParamStorage.isChecked(), opts.showParamStorage, refopts.showParamStorage);
 		changes += changeOption(cast(ubyte) mSortExpMode.getSelection(), opts.sortExpMode, refopts.sortExpMode);
 		changes += changeOption(mExactExpMatch.isChecked(), opts.exactExpMatch, refopts.exactExpMatch);
+
+		import stdext.string;
+		long thres;
+		const(char)[] txt = mDmdServerMemThres.getText();
+		if (parseLong(txt, thres))
+			changes += changeOption(cast(uint)thres, opts.dmdServerMemThres, refopts.dmdServerMemThres);
 		return changes;
 	}
 
@@ -3083,6 +3095,7 @@ class IntellisensePropertyPage : GlobalPropertyPage
 	ComboBox mSortExpMode;
 	CheckBox mExactExpMatch;
 	CheckBox mMixinAnalysis;
+	Text mDmdServerMemThres;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

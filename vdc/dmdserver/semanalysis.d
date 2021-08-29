@@ -2060,7 +2060,8 @@ void test_ana_dmd()
 				}
 			}
 		}
-		writeln(GC.stats);
+		version(traceGC)
+			writeln(GC.stats);
 	}
 	test_leaks();
 }

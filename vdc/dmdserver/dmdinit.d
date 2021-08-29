@@ -190,6 +190,8 @@ struct Options
 	string[] debugIds;
 	string cmdline; // more options
 
+	uint restartMemThreshold;
+
 	void opAssign(const ref Options opts)
 	{
 		import std.traits;

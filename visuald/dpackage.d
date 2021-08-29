@@ -1619,6 +1619,7 @@ class GlobalOptions
 	ubyte checkUpdatesVisualD; // CheckFrequency: 0: never, 1: daily, 2: weekly, 3: daily prereleases
 	ubyte checkUpdatesDMD;
 	ubyte checkUpdatesLDC;
+	uint dmdServerMemThres;
 	string baseInstallDir;
 	string VDServerIID;
 	string compileAndRunOpts;
