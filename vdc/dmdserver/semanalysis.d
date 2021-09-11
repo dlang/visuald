@@ -327,7 +327,7 @@ void do_unittests()
 	{
 		string tip = findTip(analyzedModule, line, col, line, col + 1, addlinks);
 		if (expected_tip.endsWith("..."))
-			assert(tip.startsWith(expected_tip[0..$-3]));
+			assert_equal(tip[0..min($, expected_tip.length-3)], expected_tip[0..$-3]);
 		else
 			assert_equal(tip, expected_tip);
 	}

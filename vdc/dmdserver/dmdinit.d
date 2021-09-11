@@ -286,7 +286,7 @@ void dmdSetupParams(const ref Options opts)
 			// case "-property": global.params.checkProperty = true; break;
 			case "-betterC": global.params.betterC = true; break;
 			case "-dip25":  global.params.useDIP25 = FeatureState.enabled; break;
-			case "-dip1000":  global.params.useDIP25 = FeatureState.enabled; global.params.vsafe = true; break;
+			case "-dip1000":  global.params.useDIP25 = global.params.useDIP1000 = FeatureState.enabled; break;
 			case "-dip1008":  global.params.ehnogc = true; break;
 			case "-revert=import": global.params.vfield = true; break;
 			case "-transition=field": global.params.vfield = true; break;
