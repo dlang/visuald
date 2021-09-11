@@ -901,7 +901,15 @@ class DMDServer : ComObject, IVDServer
 			string msgs = getErrorMessages();
 			string otherMessages = getErrorMessages(true);
 			if (otherMessages.length)
+			{
+
+				ptrdiff_t p = 0;
+				for (int i = 0; i < 3 && p >= 0; i++)
+					p = otherMessages.indexOf('\n', p);
+				if (p >= 0)
+					otherMessages = otherMessages[0..p] ~ "...";
 				msgs ~= "1,0,1,1: errors in imported modules: " ~ otherMessages.replace("\n", "\a");
+			}
 			return msgs;
 		}
 
