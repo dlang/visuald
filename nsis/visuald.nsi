@@ -29,12 +29,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.097.0"
+!define DMD_VERSION "2.098.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.26.0"
+!define LDC_VERSION "1.28.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -266,8 +266,8 @@ Section "Visual Studio package" SecPackage
 !endif
 
 !ifdef VDEXTENSIONS
-  ${File} ..\bin\Release\vdextensions\ vdextensions.dll
-  ${File} ..\bin\Release\vdext15\ vdext15.dll
+  ${File} ..\bin\Release\vdextensions\obj\ vdextensions.dll
+  ${File} ..\bin\Release\vdext15\obj\ vdext15.dll
 !endif
 
 !ifdef DPARSER

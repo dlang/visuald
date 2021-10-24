@@ -1305,14 +1305,16 @@ Version history
   * installer:
     - full installer now bundled with DMD 2.096.1 and LDC 1.25.1
 
-2021-06-xx version 1.1.2
+2021-06-xx version 1.2.0
   * dmdserver:
-    - updated to frontend of DMD 2.097.0
+    - updated to frontend of DMD 2.098.0
     - bugzilla 21710: Code Completion doesn't work if compiler path contains a white space
+    - restrict "errors in imported modules" to a couple of lines
+    - added option to restart the semantic analysis of a memory usage goes above a given threshold
   * project management
     - bugzilla 21897: Semicolon inside quotes in path variable causes range violation in pipedmd
   * editor
     - bugzilla 21877: VS2019 crash with "Show parameter storage class at call site"
   * installer:
-    - full installer now bundled with DMD 2.097.0 and LDC 1.26.0
+    - full installer now bundled with DMD 2.098.0 and LDC 1.28.0
 

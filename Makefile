@@ -41,7 +41,7 @@ MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild
 !ENDIF
 # CONFIG  = Release LDC
 CONFIG  = Release COFF32
-CONFIG_DMDSERVER = Release LDC
+CONFIG_DMDSERVER = Release COFF32
 
 ##############################################################
 # no more changes should be necessary starting from here
@@ -87,17 +87,17 @@ fake_dparser:
 	if not exist bin\Release\DParserCOMServer\D_Parser.dll echo dummy >bin\Release\DParserCOMServer\D_Parser.dll
 
 vdextension:
-	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
+	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
 vdext15:
-	cd vdextensions && $(MSBUILD) vdext15.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
+	cd vdextensions && $(MSBUILD) vdext15.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
 visualdwizard:
 	cd vdwizard && $(MSBUILD) VisualDWizard.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
 dbuild12:
-	cd msbuild\dbuild && devenv /Build "Release|AnyCPU" /Project "dbuild" dbuild.sln
-#	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
+#	cd msbuild\dbuild && devenv /Build "Release|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
 fake_dbuild12:
 	if not exist msbuild\dbuild\obj\release\nul md msbuild\dbuild\obj\release
@@ -105,8 +105,8 @@ fake_dbuild12:
 	if not exist msbuild\dbuild\obj\release\dbuild.12.0.dll echo dummy >msbuild\dbuild\obj\release\dbuild.12.0.dll
 
 dbuild14:
-	cd msbuild\dbuild && devenv /Build "Release-v14|AnyCPU" /Project "dbuild" dbuild.sln
-#	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
+#	cd msbuild\dbuild && devenv /Build "Release-v14|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v14;Platform=AnyCPU /t:Rebuild
 
 fake_dbuild14:
 	if not exist msbuild\dbuild\obj\release-v14\nul md msbuild\dbuild\obj\release-v14
@@ -114,7 +114,8 @@ fake_dbuild14:
 	if not exist msbuild\dbuild\obj\release-v14\dbuild.14.0.dll echo dummy >msbuild\dbuild\obj\release-v14\dbuild.14.0.dll
 
 dbuild15:
-	cd msbuild\dbuild && devenv /Build "Release-v15|AnyCPU" /Project "dbuild" dbuild.sln
+#	cd msbuild\dbuild && devenv /Build "Release-v15|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v15;Platform=AnyCPU /t:Rebuild
 
 fake_dbuild15:
 	if not exist msbuild\dbuild\obj\release-v15\nul md msbuild\dbuild\obj\release-v15
@@ -122,10 +123,12 @@ fake_dbuild15:
 	if not exist msbuild\dbuild\obj\release-v15\dbuild.15.0.dll echo dummy >msbuild\dbuild\obj\release-v15\dbuild.15.0.dll
 
 dbuild16:
-	cd msbuild\dbuild && devenv /Build "Release-v16|AnyCPU" /Project "dbuild" dbuild.sln
+#	cd msbuild\dbuild && devenv /Build "Release-v16|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v16;Platform=AnyCPU /t:Rebuild
 
 dbuild16_1:
-	cd msbuild\dbuild && devenv /Build "Release-v16_1|AnyCPU" /Project "dbuild" dbuild.sln
+#	cd msbuild\dbuild && devenv /Build "Release-v16_1|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v16_1;Platform=AnyCPU /t:Rebuild
 
 
 mago:

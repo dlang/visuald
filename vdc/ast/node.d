@@ -182,14 +182,14 @@ class Node
 
 	version(COUNT) static __gshared int countNodes;
 
-	version(NODE_ALLOC)
+	version(NODE_ALLOC) mixin(q{
 	new(size_t sz)
 	{
 		assert(sz < NodeAllocData.kSize / 2);
 			//return gc_malloc(sz, 1); // BlkAttr.FINALIZE
 		void* p = NodeAllocData.alloc(sz);
 		return p;
-	}
+	}});
 
 	this()
 	{
