@@ -38,7 +38,10 @@
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
-; !define VS2019
+!define VS2019
+
+; define VS2022 to include VS2022 support
+; !define VS2022
 
 !ifdef DMD
   !define DMD_PAGE_INI "basedir.ini"
@@ -87,6 +90,9 @@
 !ifndef CONFIG
   !define CONFIG  "Release"
 !endif
+!ifndef CONFIG_X64
+  !define CONFIG_X64  "Release LDC"
+!endif
 !ifndef CONFIG_DMDSERVER
   !define CONFIG_DMDSERVER  "Release"
 !endif
@@ -128,6 +134,7 @@
   !define VS2015_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\14.0
   !define VS2017_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\15.0
   !define VS2019_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\16.0
+  !define VS2022_REGISTRY_KEY     SOFTWARE\Microsoft\VisualStudio\17.0
   !define VS2017_INSTALL_KEY      SOFTWARE\Microsoft\VisualStudio\SxS\VS7
 !ifdef EXPRESS
   !define VCEXP2008_REGISTRY_KEY  SOFTWARE\Microsoft\VCExpress\9.0
@@ -276,6 +283,10 @@ Section "Visual Studio package" SecPackage
   ${File} ..\bin\Release\DParserCOMServer\ D_Parser.dll
 !endif
 
+!ifdef VS2022
+  ${SetOutPath} "$INSTDIR\x64"
+  ${File} "..\bin\${CONFIG_X64}\x64\" ${DLLNAME}
+!endif
 
   ${SetOutPath} "$INSTDIR"
   ; restart templates from scratch to not keep old files
@@ -316,6 +327,9 @@ Section "Visual Studio package" SecPackage
 !ifdef VS2019
   ${File} ..\msbuild\dbuild\obj\release-v16\ dbuild.16.0.dll
   ${File} ..\msbuild\dbuild\obj\release-v16_1\ dbuild.16.1.dll
+!endif
+!ifdef VS2022
+  ${File} ..\msbuild\dbuild\obj\release-v17\ dbuild.17.0.dll
 !endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
@@ -644,6 +658,56 @@ ${MementoSectionEnd}
 
 !endif
 
+!ifdef VS2022
+;--------------------------------
+${MementoSection} "Install in VS 2022" SecVS2022
+
+  ;ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLRegister ${VS2022_REGISTRY_KEY}'
+  ;WriteRegStr ${VS_REGISTRY_ROOT} "${VS2022_REGISTRY_KEY}${VDSETTINGS_KEY}" "DMDInstallDir" $DMDInstallDir
+  ;${RegisterWin32Exception} ${VS2022_REGISTRY_KEY} "Win32 Exceptions\D Exception"
+
+  Call DetectVS2022_InstallationFolder
+  WriteRegStr HKLM "Software\${APPNAME}" "VS2022InstallDir" $1
+
+  StrCpy $1 "$1Common7\IDE\"
+  RMDir /r '$1${EXTENSION_DIR_APP}'
+  ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" WritePackageDef ${VS2022_REGISTRY_KEY} $1${EXTENSION_DIR}\visuald.pkgdef'
+  ${AddItem} "$1${EXTENSION_DIR}\visuald.pkgdef"
+
+  ${SetOutPath} "$1${EXTENSION_DIR}"
+  ${File} ..\nsis\Extensions_vs15\ extension.vsixmanifest
+  ${File} ..\nsis\Extensions\ vdlogo.ico
+  ${AddItem} "$1${EXTENSION_DIR}"
+
+  GetFullPathName /SHORT $0 $INSTDIR
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "16" NoBackup
+  !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup
+
+  !ifdef MAGO
+    ${SetOutPath} "$1..\Packages\Debugger"
+    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.dll
+    ${File} ${MAGO_SOURCE}\bin\x64\Release\ MagoNatCC.vsdconfig
+  !endif
+
+  ${SetOutPath} "$1\PublicAssemblies"
+  ${File} "..\bin\Release\VisualDWizard\obj\" VisualDWizard.dll
+
+  push $1
+  Call VSConfigurationChanged
+
+${MementoSectionEnd}
+
+;--------------------------------
+${MementoSection} "Install in VS 2022 Build Tools" SecVS2022BT
+
+  Call DetectVS2022BuildTools_InstallationFolder
+  WriteRegStr HKLM "Software\${APPNAME}" "VS2022BTInstallDir" $1
+
+${MementoSectionEnd}
+
+!endif
+
 !ifdef EXPRESS
 ;--------------------------------
 ${MementoUnselectedSection} "Install in VC-Express 2008" SecVCExpress2008
@@ -699,6 +763,35 @@ SectionGroup Components
 ;--------------------------------
 !ifdef MSBUILD
 ${MementoSection} "MSBuild integration" SecMSBuild
+
+!ifdef VS2022
+  Call DetectVS2022_InstallationFolder
+  StrCmp $1 "" NoVS2022
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "x64"
+    ${RegisterPlatform} "$1\MsBuild\Microsoft\VC\v170" "Win32"
+    ${RegisterIcons} "17.0"
+
+    !define V170_GENERAL_XML "$1\MsBuild\Microsoft\VC\v170\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V170_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.17.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.17.0.xml"
+
+  NoVS2022:
+
+  Call DetectVS2022BuildTools_InstallationFolder
+  StrCmp $1 "" NoVS2022BT
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "x64"
+    ${RegisterPlatform} "$1\Common7\IDE\VC\VCTargets" "Win32"
+    ${RegisterIcons} "17.0"
+
+    !define V170BT_GENERAL_XML "$1\Common7\IDE\VC\VCTargets\1033\general.xml"
+
+    ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" GenerateGeneralXML ${V170BT_GENERAL_XML};$INSTDIR\msbuild\general_d.snippet;$INSTDIR\msbuild\general_d.17bt.0.xml'
+    ${AddItem} "$INSTDIR\msbuild\general_d.17bt.0.xml"
+
+  NoVS2022BT:
+
+!endif
 
 !ifdef VS2019
   Call DetectVS2019_InstallationFolder
@@ -931,8 +1024,10 @@ SectionEnd
   LangString DESC_SecVS2015 ${LANG_ENGLISH} "Register for usage in Visual Studio 2015."
   LangString DESC_SecVS2017 ${LANG_ENGLISH} "Register for usage in Visual Studio 2017."
   LangString DESC_SecVS2019 ${LANG_ENGLISH} "Register for usage in Visual Studio 2019."
+  LangString DESC_SecVS2022 ${LANG_ENGLISH} "Register for usage in Visual Studio 2022."
   LangString DESC_SecVS2017BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2017 Build Tools."
   LangString DESC_SecVS2019BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2019 Build Tools."
+  LangString DESC_SecVS2022BT ${LANG_ENGLISH} "Register for usage in Visual Studio 2022 Build Tools."
 !ifdef EXPRESS
   LangString DESC_SecVCExpress2008 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2008 (experimental and unusable)."
   LangString DESC_SecVCExpress2010 ${LANG_ENGLISH} "Register for usage in Visual C++ Express 2010 (experimental and unusable)."
@@ -969,8 +1064,10 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2015} $(DESC_SecVS2015)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017} $(DESC_SecVS2017)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019} $(DESC_SecVS2019)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022} $(DESC_SecVS2022)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2017BT} $(DESC_SecVS2017BT)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2019BT} $(DESC_SecVS2019BT)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecVS2022BT} $(DESC_SecVS2022BT)
 !ifdef EXPRESS
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2008)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVCExpress2008} $(DESC_SecVCExpress2010)
@@ -1005,6 +1102,19 @@ Section "Uninstall"
 !ifdef EXPRESS
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2008_REGISTRY_KEY}'
   ExecWait 'rundll32 "$INSTDIR\${DLLNAME}" RunDLLUnregister ${VCEXP2010_REGISTRY_KEY}'
+!endif
+
+!ifdef VS2022
+  ReadRegStr $1 HKLM "Software\${APPNAME}" "VS2022InstallDir"
+  StrCmp $1 "" NoVS2022pkgdef
+    StrCpy $1 "$1Common7\IDE"
+    IfFileExists '$1${EXTENSION_DIR_APP}' +1 NoVS2022ExtensionDir
+      Push $1
+      Call un.VSConfigurationChanged
+    NoVS2022ExtensionDir:
+    RMDir /r '$1${EXTENSION_DIR_APP}'
+    RMDir '$1${EXTENSION_DIR_ROOT}'
+  NoVS2022pkgdef:
 !endif
 
 !ifdef VS2019
@@ -1097,7 +1207,7 @@ Section "Uninstall"
   Push ${VS2017_REGISTRY_KEY}
   Call un.PatchAutoExp
 
-  ; autoexp.dat long gone, ignore for VS2019
+  ; autoexp.dat long gone, ignore for VS2019 or later
 
 !endif
 
@@ -1268,6 +1378,24 @@ Function .onInit
     SectionSetFlags ${SecVS2019BT} ${SF_RO}
     SectionSetText ${SecVS2019BT} ""
   Installed_VS2019BT:
+
+!endif
+
+!ifdef VS2022
+  ; detect VS2022
+  ClearErrors
+  Call DetectVS2022_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2022
+    SectionSetFlags ${SecVS2022} ${SF_RO}
+  Installed_VS2022:
+
+  ; detect VS2022 Build Tools
+  ClearErrors
+  Call DetectVS2022BuildTools_InstallationFolder
+  StrCmp $1 "" 0 Installed_VS2022BT
+    SectionSetFlags ${SecVS2022BT} ${SF_RO}
+    SectionSetText ${SecVS2022BT} ""
+  Installed_VS2022BT:
 
 !endif
 
@@ -1725,5 +1853,65 @@ Function DetectVS2019BuildTools_InstallationFolder
   StrCpy $1 ""
 
 FunctionEnd
+!endif
 
+!ifdef VS2022
+Function DetectVS2022_InstallationFolder
+
+  StrCpy $0 0
+  loop:
+    EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
+    ; MessageBox MB_YESNO|MB_ICONQUESTION "Enum: $1$\n$\nMore?" IDYES 0 IDNO done
+    StrCmp $1 "" done
+    ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+    IfErrors NoDisplayName
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "Displayname: $2$\n$\nMore?" IDYES 0 IDNO done
+        StrCpy $3 $2 14
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "Visual Studio in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+        StrCmp $3 "Visual Studio " 0 NotVS2022
+        StrCpy $3 $2 12 -12
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "2022 Preview in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+        StrCmp $3 "2022 Preview" IsVS2022
+        StrCpy $3 $2 4 -4
+        ; MessageBox MB_YESNO|MB_ICONQUESTION "2022 in: '$3'$\n$\nMore?" IDYES 0 IDNO done
+        StrCmp $3 "2022" IsVS2022 NotVS2022
+        IsVS2022:
+            ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+            IfErrors NoInstallLocation
+                ; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+                StrCpy $1 "$2\\"
+                return
+            NoInstallLocation:
+        NotVS2022:
+    NoDisplayName:
+    IntOp $0 $0 + 1
+    Goto loop
+  done:
+  StrCpy $1 ""
+
+FunctionEnd
+
+Function DetectVS2022BuildTools_InstallationFolder
+
+  StrCpy $0 0
+  loop:
+    EnumRegKey $1 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall $0
+    StrCmp $1 "" done
+    ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 DisplayName
+    IfErrors NoDisplayName
+        StrCmp $2 "Visual Studio Build Tools 2022" 0 NotVS2022BT
+            ReadRegStr $2 HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1 InstallLocation
+            IfErrors NoInstallLocation
+                ; MessageBox MB_YESNO|MB_ICONQUESTION "$2$\n$\nMore?" IDYES 0 IDNO done
+                StrCpy $1 "$2\\"
+                return
+            NoInstallLocation:
+        NotVS2022BT:
+    NoDisplayName:
+    IntOp $0 $0 + 1
+    Goto loop
+  done:
+  StrCpy $1 ""
+
+FunctionEnd
 !endif

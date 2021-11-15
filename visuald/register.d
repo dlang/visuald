@@ -157,13 +157,17 @@ class RegKey
 		}
 		else if(write)
 		{
-			auto opt = REG_OPTION_NON_VOLATILE | (x64hive ? KEY_WOW64_64KEY : 0);
-			hr = hrRegCreateKeyEx(root, keyname, 0, null, opt, KEY_WRITE, null, &key, null);
+			auto opt = REG_OPTION_NON_VOLATILE;
+			auto sam = (x64hive ? KEY_WOW64_64KEY : 0) | KEY_WRITE;
+			hr = hrRegCreateKeyEx(root, keyname, 0, null, opt, sam, null, &key, null);
 			if(FAILED(hr))
 				throw new RegistryException(hr);
 		}
 		else
-			hr = hrRegOpenKeyEx(root, keyname, (x64hive ? KEY_WOW64_64KEY : 0), KEY_READ, &key);
+		{
+			auto sam = (x64hive ? KEY_WOW64_64KEY : 0) | KEY_READ;
+			hr = hrRegOpenKeyEx(root, keyname, REG_OPTION_OPEN_LINK, sam, &key);
+		}
 	}
 
 	void Set(wstring name, wstring value, bool escape = true)
@@ -512,23 +516,29 @@ HRESULT VSDllRegisterServerInternal(in wchar* pszRegRoot, in bool useRanu)
 	HKEY    keyRoot = useRanu ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
 	wstring registrationRoot = GetRegistrationRoot(pszRegRoot, useRanu);
 	wstring dllPath = GetDLLName(g_hInst);
-	wstring templatePath = GetTemplatePath(dllPath);
-	wstring vdextPath = dirName(dllPath) ~ "\\vdextensions.dll"w;
+	wstring instPath = dirName(dllPath);
+	wstring templatePath = GetTemplatePath(instPath);
+	wstring vdextPath = instPath ~ "\\vdextensions.dll"w;
 
 	float ver = guessVSVersion(registrationRoot);
+	if (ver >= 17)
+		dllPath = buildPath(instPath, "x64"w, baseName(dllPath)); // 32-bit DLL used to register 64-bit DLL
+
 	wstring dbuildPath;
 	if (ver == 12)
-		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.12.0.dll"w;
+		dbuildPath = instPath ~ "\\msbuild\\dbuild.12.0.dll"w;
 	else if (ver == 14)
-		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.14.0.dll"w;
+		dbuildPath = instPath ~ "\\msbuild\\dbuild.14.0.dll"w;
 	else if (ver == 15)
-		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.15.0.dll"w;
+		dbuildPath = instPath ~ "\\msbuild\\dbuild.15.0.dll"w;
 	else if (ver == 16)
-		dbuildPath = dirName(dllPath) ~ "\\msbuild\\dbuild.16.0.dll"w;
+		dbuildPath = instPath ~ "\\msbuild\\dbuild.16.0.dll"w;
+	else if (ver == 17)
+		dbuildPath = instPath ~ "\\msbuild\\dbuild.16.0.dll"w;
 
 	wstring vdext15Path;
 	if (ver >= 15)
-		vdext15Path = dirName(dllPath) ~ "\\vdext15.dll"w;
+		vdext15Path = instPath ~ "\\vdext15.dll"w;
 
 	try
 	{
@@ -957,10 +967,9 @@ wstring GetDLLName(HINSTANCE inst)
 	return to_wstring(dllPath.ptr);
 }
 
-wstring GetTemplatePath(wstring dllpath)
+wstring GetTemplatePath(wstring instpath)
 {
-	string path = toUTF8(dllpath);
-	path = dirName(path);
+	string path = toUTF8(instpath);
 	debug path = dirName(dirName(path)) ~ "\\visuald";
 	path = path ~ "\\Templates";
 	return toUTF16(path);

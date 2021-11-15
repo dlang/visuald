@@ -13,8 +13,12 @@
 
   <PropertyGroup>
     <DbuildCompileDDLLPath Condition="'$(DbuildCompileDDLLPath)' == ''">$(MSBuildThisFileDirectory)dbuild.$(DBuildVersion).dll</DbuildCompileDDLLPath>
+    <CPPTaskPath Condition="'$(CPPTaskPath)' == ''">$(_VCTargetsPathForToolset)\Microsoft.Build.CPPTasks.Common.dll</CPPTaskPath>
   </PropertyGroup>
 
+  <!-- load CPPTasks Assembly before dbuild, so that it doesn't have to be found as an implicit dependency -->
+  <UsingTask TaskName="VCMessage" AssemblyFile="$(CPPTaskPath)" />
+  
   <UsingTask TaskName="dbuild.CompileD" AssemblyFile="$(DbuildCompileDDLLPath)" />
   <UsingTask TaskName="dbuild.MultiToolTaskVisualD" AssemblyFile="$(DbuildCompileDDLLPath)" />
 
@@ -132,6 +136,8 @@
     Condition="'@(DCompile)' != '' and '$(DCompiler)' != 'None'"
     DependsOnTargets="_collectDFiles;_replacePackageName">
     
+    <VCMessage Condition="$(DBuildVersion) == '17.0'" Type="Message" Code="MSB8034" Importance="low" Arguments="CPPTaskPath;$(CPPTaskPath)"/>
+
     <ItemGroup Condition="'@(dcompile_SelectedFiles)' != ''">
       <DCompile Remove="@(DCompile)" Condition="'%(Identity)' != '@(dcompile_SelectedFiles)'" />
     </ItemGroup>
@@ -342,6 +348,7 @@
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '140'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '141'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
       <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '142'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
+      <DRuntimeLibs Condition="'$(PlatformToolsetVersion)' == '143'">$(DRuntimeLibs);legacy_stdio_definitions.lib</DRuntimeLibs>
 
       <!-- LDC does not embed reference to C runtime into object files -->
       <_CRuntimeLib>@(DCompile->Metadata('CRuntimeLibrary')->Distinct()->ClearMetadata())</_CRuntimeLib>

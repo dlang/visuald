@@ -220,7 +220,7 @@ namespace dbuild
             get { return Sources; } //  return new ITaskItem[1] { new TaskItem(this.Source) };
         }
 
-#if TOOLS_V14 || TOOLS_V15
+#if TOOLS_V14 || TOOLS_V15 || TOOLS_V17
         protected override string GenerateCommandLineCommandsExceptSwitches(string[] switchesToRemove, VCToolTask.CommandLineFormat format = VCToolTask.CommandLineFormat.ForBuildLog, VCToolTask.EscapeFormat escapeFormat = VCToolTask.EscapeFormat.Default)
         {
             string cmd = base.GenerateCommandLineCommandsExceptSwitches(switchesToRemove, format, escapeFormat);

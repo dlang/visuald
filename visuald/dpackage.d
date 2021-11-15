@@ -1563,7 +1563,7 @@ class GlobalOptions
 {
 	HKEY hConfigKey;
 	HKEY hUserKey;
-	wstring regConfigRoot;
+	wstring regConfigRoot; // the _Config hive
 	wstring regUserRoot;
 
 	CompilerDirectories DMD;
@@ -1666,11 +1666,16 @@ class GlobalOptions
 		if(registry4)
 		{
 			scope(exit) release(registry4);
-			if(registry4.GetLocalRegistryRootEx(RegType_Configuration, cast(uint*)&hConfigKey, &bstrRoot) == S_OK)
+			VSLOCALREGISTRYROOTHANDLE confHandle, userHandle;
+			if(registry4.GetLocalRegistryRootEx(RegType_Configuration, &confHandle, &bstrRoot) == S_OK)
 			{
+				hConfigKey = cast(HKEY)cast(int)confHandle; // sign extend to pointer
 				regConfigRoot = wdetachBSTR(bstrRoot);
-				if(registry4.GetLocalRegistryRootEx(RegType_UserSettings, cast(uint*)&hUserKey, &bstrRoot) == S_OK)
+				if(registry4.GetLocalRegistryRootEx(RegType_UserSettings, &userHandle, &bstrRoot) == S_OK)
+				{
+					hUserKey = cast(HKEY)cast(int)userHandle;
 					regUserRoot = wdetachBSTR(bstrRoot);
+				}
 				else
 				{
 					regUserRoot = regConfigRoot;
@@ -1924,7 +1929,9 @@ class GlobalOptions
 			vsVersion = cast(int) guessVSVersion(regConfigRoot);
 
 			wstring dllPath = GetDLLName(g_hInst);
-			VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
+			VisualDInstallDir = dirName(toUTF8(dllPath));
+			version(Win64) VisualDInstallDir = dirName(VisualDInstallDir); // installed in x64 sub folder
+			VisualDInstallDir = normalizeDir(VisualDInstallDir);
 
 			wstring idePath = GetDLLName(null);
 			DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
