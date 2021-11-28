@@ -38,7 +38,7 @@
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
-!define VS2019
+; !define VS2019
 
 ; define VS2022 to include VS2022 support
 ; !define VS2022
