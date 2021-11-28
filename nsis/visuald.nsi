@@ -91,7 +91,7 @@
   !define CONFIG  "Release"
 !endif
 !ifndef CONFIG_X64
-  !define CONFIG_X64  "Release LDC"
+  !define CONFIG_X64  "Release COFF32"
 !endif
 !ifndef CONFIG_DMDSERVER
   !define CONFIG_DMDSERVER  "Release"

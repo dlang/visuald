@@ -41,7 +41,7 @@ MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild
 !ENDIF
 # CONFIG  = Release LDC
 CONFIG  = Release COFF32
-CONFIG_X64 = Release LDC
+CONFIG_X64 = Release COFF32
 CONFIG_DMDSERVER = Release COFF32
 
 ##############################################################
