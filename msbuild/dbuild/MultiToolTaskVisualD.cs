@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-#if TOOLS_V14 || TOOLS_V15
+#if TOOLS_V14 || TOOLS_V15 // || TOOLS_V17
 
 namespace dbuild
 {
@@ -751,4 +751,4 @@ namespace dbuild
     }
 }
 
-#endif //TOOLS_V14 || TOOLS_V15
+#endif //TOOLS_V14 || TOOLS_V15 || TOOLS_V17

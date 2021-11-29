@@ -100,14 +100,9 @@ string genInitDmdStatics()
 
 mixin(genDeclDmdStatics);
 
-static if (__VERSION__ < 2096)
-	enum fdapply_mangling = "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ7fdapplyPCQDr4func15FuncDeclaration";
-else // !!! broken in 2.096.0 ("5__S1" instead of "4__S1")
-	enum fdapply_mangling = "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ4__S17fdapplyPCQDw4func15FuncDeclaration";
-
-pragma(mangle, fdapply_mangling)
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype10TypeAArrayZ7fdapplyPCQFz4func15FuncDeclaration")
 extern __gshared FuncDeclaration* statementsem_fdapply;
-pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor5visitMRCQCb9statement16ForeachStatementZ6fldeTyPCQDq5mtype12TypeDelegate")
+pragma(mangle, "_D3dmd12statementsem24StatementSemanticVisitor15applyAssocArrayFCQCl9statement16ForeachStatementCQDr10expression10ExpressionCQEt5mtype10TypeAArrayZ6fldeTyPCQFyQBf12TypeDelegate")
 extern __gshared TypeDelegate* statementsem_fldeTy;
 
 
@@ -156,7 +151,7 @@ void dmdInit()
 	version(CRuntime_Microsoft)
 		initFPU();
 
-	global.params.targetOS = TargetOS.Windows;
+	target.os = Target.OS.Windows;
 	global._init();
 	//Token._init();
 	Id.initialize();
@@ -194,6 +189,8 @@ struct Options
 	int debugLevel;
 	string[] debugIds;
 	string cmdline; // more options
+
+	uint restartMemThreshold;
 
 	void opAssign(const ref Options opts)
 	{
@@ -243,7 +240,7 @@ void dmdSetupParams(const ref Options opts)
 	global = global.init;
 
 	global._init();
-	global.params.targetOS = TargetOS.Windows;
+	target.os = Target.OS.Windows;
 	global.params.errorLimit = 0;
 	global.params.color = false;
 	global.params.link = true;
@@ -268,10 +265,10 @@ void dmdSetupParams(const ref Options opts)
 	global.params.objfiles = Strings();
 	global.params.ddocfiles = Strings();
 	// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
-	global.params.is64bit = opts.x64;
-	global.params.mscoff = opts.msvcrt;
-	global.params.cpu = CPU.baseline;
-	global.params.isLP64 = global.params.is64bit;
+	target.is64bit = opts.x64;
+	target.mscoff = opts.msvcrt;
+	target.cpu = CPU.baseline;
+	target.isLP64 = target.is64bit;
 
 	string[] cli = opts.cmdline.split(' ');
 	foreach(opt; cli)
@@ -289,7 +286,7 @@ void dmdSetupParams(const ref Options opts)
 			// case "-property": global.params.checkProperty = true; break;
 			case "-betterC": global.params.betterC = true; break;
 			case "-dip25":  global.params.useDIP25 = FeatureState.enabled; break;
-			case "-dip1000":  global.params.useDIP25 = FeatureState.enabled; global.params.vsafe = true; break;
+			case "-dip1000":  global.params.useDIP25 = global.params.useDIP1000 = FeatureState.enabled; break;
 			case "-dip1008":  global.params.ehnogc = true; break;
 			case "-revert=import": global.params.vfield = true; break;
 			case "-transition=field": global.params.vfield = true; break;
@@ -361,7 +358,6 @@ void dmdReinit()
 
 	// assume object.d unmodified otherwis
 	Module.moduleinfo = null;
-	dmd.compiler.rootHasMain = null;
 
 	ClassDeclaration.object = null;
 	ClassDeclaration.throwable = null;
@@ -410,116 +406,18 @@ void dmdReinit()
 void addDefaultVersionIdentifiers(const ref Param params)
 {
     VersionCondition.addPredefinedGlobalIdent("DigitalMars");
-    if (params.targetOS == TargetOS.Windows)
-    {
-        VersionCondition.addPredefinedGlobalIdent("Windows");
-        if (global.params.mscoff)
-        {
-            VersionCondition.addPredefinedGlobalIdent("CRuntime_Microsoft");
-            VersionCondition.addPredefinedGlobalIdent("CppRuntime_Microsoft");
-        }
-        else
-        {
-            VersionCondition.addPredefinedGlobalIdent("CRuntime_DigitalMars");
-            VersionCondition.addPredefinedGlobalIdent("CppRuntime_DigitalMars");
-        }
-    }
-    else if (params.targetOS == TargetOS.linux)
-    {
-        VersionCondition.addPredefinedGlobalIdent("Posix");
-        VersionCondition.addPredefinedGlobalIdent("linux");
-        VersionCondition.addPredefinedGlobalIdent("ELFv1");
-        VersionCondition.addPredefinedGlobalIdent("CRuntime_Glibc");
-        VersionCondition.addPredefinedGlobalIdent("CppRuntime_Gcc");
-    }
-    else if (params.targetOS == TargetOS.OSX)
-    {
-        VersionCondition.addPredefinedGlobalIdent("Posix");
-        VersionCondition.addPredefinedGlobalIdent("OSX");
-        VersionCondition.addPredefinedGlobalIdent("CppRuntime_Clang");
-        // For legacy compatibility
-        VersionCondition.addPredefinedGlobalIdent("darwin");
-    }
-    else if (params.targetOS == TargetOS.FreeBSD)
-    {
-        VersionCondition.addPredefinedGlobalIdent("Posix");
-        VersionCondition.addPredefinedGlobalIdent("FreeBSD");
-        VersionCondition.addPredefinedGlobalIdent("ELFv1");
-        VersionCondition.addPredefinedGlobalIdent("CppRuntime_Clang");
-    }
-    else if (params.targetOS == TargetOS.OpenBSD)
-    {
-        VersionCondition.addPredefinedGlobalIdent("Posix");
-        VersionCondition.addPredefinedGlobalIdent("OpenBSD");
-        VersionCondition.addPredefinedGlobalIdent("ELFv1");
-        VersionCondition.addPredefinedGlobalIdent("CppRuntime_Gcc");
-    }
-    else if (params.targetOS == TargetOS.DragonFlyBSD)
-    {
-        VersionCondition.addPredefinedGlobalIdent("Posix");
-        VersionCondition.addPredefinedGlobalIdent("DragonFlyBSD");
-        VersionCondition.addPredefinedGlobalIdent("ELFv1");
-        VersionCondition.addPredefinedGlobalIdent("CppRuntime_Gcc");
-    }
-    else if (params.targetOS == TargetOS.Solaris)
-    {
-        VersionCondition.addPredefinedGlobalIdent("Posix");
-        VersionCondition.addPredefinedGlobalIdent("Solaris");
-        VersionCondition.addPredefinedGlobalIdent("ELFv1");
-        VersionCondition.addPredefinedGlobalIdent("CppRuntime_Sun");
-    }
-    else
-    {
-        assert(0);
-    }
     VersionCondition.addPredefinedGlobalIdent("LittleEndian");
     VersionCondition.addPredefinedGlobalIdent("D_Version2");
     VersionCondition.addPredefinedGlobalIdent("all");
 
-    if (params.cpu >= CPU.sse2)
-    {
-        VersionCondition.addPredefinedGlobalIdent("D_SIMD");
-        if (params.cpu >= CPU.avx)
-            VersionCondition.addPredefinedGlobalIdent("D_AVX");
-        if (params.cpu >= CPU.avx2)
-            VersionCondition.addPredefinedGlobalIdent("D_AVX2");
-    }
+    target.addPredefinedGlobalIdentifiers();
 
-    if (params.is64bit)
-    {
-        VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86_64");
-        VersionCondition.addPredefinedGlobalIdent("X86_64");
-        if (params.targetOS == TargetOS.Windows)
-        {
-            VersionCondition.addPredefinedGlobalIdent("Win64");
-        }
-    }
-    else
-    {
-        VersionCondition.addPredefinedGlobalIdent("D_InlineAsm"); //legacy
-        VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86");
-        VersionCondition.addPredefinedGlobalIdent("X86");
-        if (params.targetOS == TargetOS.Windows)
-        {
-            VersionCondition.addPredefinedGlobalIdent("Win32");
-        }
-    }
-
-    if (params.isLP64)
-        VersionCondition.addPredefinedGlobalIdent("D_LP64");
     if (params.doDocComments)
         VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
     if (params.cov)
         VersionCondition.addPredefinedGlobalIdent("D_Coverage");
-    static if(__traits(compiles, PIC.fixed))
-    {
-        // dmd 2.088
-        if (params.pic != PIC.fixed)
-            VersionCondition.addPredefinedGlobalIdent(params.pic == PIC.pic ? "D_PIC" : "D_PIE");
-    }
-    else if (params.pic)
-        VersionCondition.addPredefinedGlobalIdent("D_PIC");
-
+    if (params.pic != PIC.fixed)
+        VersionCondition.addPredefinedGlobalIdent(params.pic == PIC.pic ? "D_PIC" : "D_PIE");
     if (params.useUnitTests)
         VersionCondition.addPredefinedGlobalIdent("unittest");
     if (params.useAssert == CHECKENABLE.on)

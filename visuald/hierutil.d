@@ -197,7 +197,7 @@ int UtilGetFilesFromPROJITEMDrop(HGLOBAL h, ref string[] rgFiles)
 		// We go until *wzBuffer is null since we don't allow empty strings.
 		while(*wzBuffer)
 		{
-			int len = wcslen(wzBuffer);
+			auto len = wcslen(wzBuffer);
 			assert(len);
 			string file = toUTF8(wzBuffer[0..len]);
 			rgFiles ~= file;
@@ -207,7 +207,7 @@ int UtilGetFilesFromPROJITEMDrop(HGLOBAL h, ref string[] rgFiles)
 
 	.GlobalUnlock(h);
 
-    return rgFiles.length;
+    return rgFiles.ilength;
 }
 
 wstring UtilGetStringFromHGLOBAL(HGLOBAL h)
@@ -1241,7 +1241,7 @@ string[] GetImportPaths(Config cfg)
 	imports = tokenizeArgs(imp);
 
 	string addopts = opt.replaceEnvironment(opt.additionalOptions, cfg);
-	addunique(imports, GlobalOptions.getOptionImportPaths(addopts, projectpath));
+	addunique(imports, GlobalOptions.getOptionImportPaths(tokenizeArgs(addopts), projectpath));
 
 	foreach(ref i; imports)
 		i = makeDirnameCanonical(unquoteArgument(i), projectpath);

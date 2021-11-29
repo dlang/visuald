@@ -27,6 +27,7 @@ import sdk.vsi.vsshell80;
 import dte80a = sdk.vsi.dte80a;
 import dte80 = sdk.vsi.dte80;
 
+import stdext.array;
 import stdext.path;
 import stdext.string;
 
@@ -202,7 +203,7 @@ class SearchWindowBack : Window
 		super(parent);
 	}
 
-	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	override LRESULT WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		BOOL fHandled;
 		LRESULT rc = mPane._WindowProc(hWnd, uMsg, wParam, lParam, fHandled);
@@ -298,7 +299,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 		if(!pstream)
 			return E_INVALIDARG;
 
-		HRESULT _doRead(void* p, size_t cnt)
+		HRESULT _doRead(void* p, uint cnt)
 		{
 			uint read;
 			HRESULT hr = pstream.Read(cast(byte*)p, cnt, &read);
@@ -317,7 +318,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 			if(num > 10)
 				return E_UNEXPECTED;
 			columns.length = num;
-			if(HRESULT hr = _doRead(columns.ptr, columns.length * COLUMNINFO.sizeof))
+			if(HRESULT hr = _doRead(columns.ptr, cast(uint)(columns.length * COLUMNINFO.sizeof)))
 				return hr;
 			return S_OK;
 		}
@@ -338,7 +339,7 @@ class SearchPane : DisposingComObject, IVsWindowPane
 		if(!pstream)
 			return E_INVALIDARG;
 
-		HRESULT _doWrite(const(void)* p, size_t cnt)
+		HRESULT _doWrite(const(void)* p, uint cnt)
 		{
 			uint written;
 			HRESULT hr = pstream.Write(cast(const(byte)*)p, cnt, &written);
@@ -351,16 +352,16 @@ class SearchPane : DisposingComObject, IVsWindowPane
 
 		HRESULT _doWriteColumn(COLUMNINFO[] columns)
 		{
-			uint num = columns.length;
+			uint num = columns.ilength;
 			if(HRESULT hr = _doWrite(cast(byte*)&num, num.sizeof))
 				return hr;
-			if(HRESULT hr = _doWrite(columns.ptr, columns.length * COLUMNINFO.sizeof))
+			if(HRESULT hr = _doWrite(columns.ptr, cast(uint)(columns.length * COLUMNINFO.sizeof)))
 				return hr;
 			return S_OK;
 		}
 
 		// write size overall to allow skipping chunk
-		uint size = 2 * uint.sizeof + (_fileColumns.length + _symbolColumns.length) * COLUMNINFO.sizeof;
+		uint size = cast(uint)(2 * uint.sizeof + (_fileColumns.length + _symbolColumns.length) * COLUMNINFO.sizeof);
 		if(HRESULT hr = _doWrite(cast(byte*)&size, size.sizeof))
 			return hr;
 
@@ -382,10 +383,10 @@ class SearchPane : DisposingComObject, IVsWindowPane
 		logMessage("TranslateAccelerator", msg.hwnd, msg.message, msg.wParam, msg.lParam);
 
 		BOOL fHandled;
-		HRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
+		LRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
 
 		if(fHandled)
-			return hrRet;
+			return cast(HRESULT)hrRet;
 		return E_NOTIMPL;
 	}
 
@@ -419,7 +420,7 @@ private:
 
 	static HINSTANCE getInstance() { return Widget.getInstance(); }
 
-	int _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
+	LRESULT _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		if(uMsg != WM_NOTIFY)
 			logMessage("_WindowProc", hWnd, uMsg, wParam, lParam);
@@ -427,7 +428,7 @@ private:
 		return _HandleMessage(hWnd, uMsg, wParam, lParam, fHandled);
 	}
 
-	int _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
+	LRESULT _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled)
 	{
 		switch(uMsg)
 		{
@@ -524,8 +525,8 @@ private:
 	void _MoveSelection(BOOL fDown)
 	{
 		// Get the current selection
-		int iSel = _wndFileList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
-		int iCnt = _wndFileList.SendMessage(LVM_GETITEMCOUNT);
+		int iSel = cast(int)_wndFileList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
+		int iCnt = cast(int)_wndFileList.SendMessage(LVM_GETITEMCOUNT);
 		if(iSel == 0 && !fDown)
 			return;
 		if(iSel == iCnt - 1 && fDown)
@@ -911,7 +912,7 @@ private:
 
 				TBBUTTON initButton(int id, ubyte style)
 				{
-					return TBBUTTON(id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, [0,0], 0, 0);
+					return TBBUTTON(id < 0 ? 10 : id - IDR_FIRST, id, TBSTATE_ENABLED, style, TBBUTTON.bReserved.init, 0, 0);
 				}
 				static const TBBUTTON[] s_tbb = [
 					initButton(IDR_SEARCHFILE,        BTNS_CHECKGROUP),
@@ -1269,7 +1270,7 @@ private:
 
 	LRESULT _OnOpenSelectedItem(WORD wNotifyCode, WORD wID, HWND hwndCtl, ref BOOL fHandled)
 	{
-		int iSel = _wndFileList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
+		int iSel = cast(int)_wndFileList.SendMessage(LVM_GETNEXTITEM, cast(WPARAM)-1, LVNI_SELECTED);
 		if (iSel != -1)
 		{
 			_OpenSolutionItem(iSel);
@@ -1345,7 +1346,7 @@ private:
 	int _ListViewIndexFromColumnID(COLUMNID colid)
 	{
 		int iCol = -1;
-		int cCols = _wndFileListHdr.SendMessage(HDM_GETITEMCOUNT);
+		int cCols = cast(int)_wndFileListHdr.SendMessage(HDM_GETITEMCOUNT);
 		for (int i = 0; i < cCols && iCol == -1; i++)
 		{
 			HDITEM hdi;
@@ -1557,7 +1558,7 @@ else
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	LRESULT _OnFileListGetDispInfo(int idCtrl, in NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListGetDispInfo(WPARAM idCtrl, in NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLVDISPINFO *pnmlvdi = cast(NMLVDISPINFO *)pnmh;
 		if (pnmlvdi.item.mask & LVIF_TEXT)
@@ -1735,7 +1736,7 @@ else
 		HRESULT hr = S_OK;
 
 		for(int i = 0; i < _rgColumns.length; i++)
-			(*_rgColumns)[i].cx = _wndFileList.SendMessage(LVM_GETCOLUMNWIDTH, _ListViewIndexFromColumnID((*_rgColumns)[i].colid));
+			(*_rgColumns)[i].cx = cast(int)_wndFileList.SendMessage(LVM_GETCOLUMNWIDTH, _ListViewIndexFromColumnID((*_rgColumns)[i].colid));
 
 		try
 		{
@@ -1818,7 +1819,7 @@ else
 		return hr;
 	}
 
-	LRESULT _OnFileListColumnClick(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListColumnClick(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
 		_SetSortColumn(_ColumnIDFromListViewIndex(pnmlv.iSubItem), pnmlv.iSubItem);
@@ -1826,7 +1827,7 @@ else
 		return 0;
 	}
 
-	LRESULT _OnFileListDeleteItem(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListDeleteItem(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMLISTVIEW *pnmlv = cast(NMLISTVIEW *)pnmh;
 		SolutionItem psi = cast(SolutionItem)cast(void*)pnmlv.lParam;
@@ -1878,7 +1879,7 @@ else
 		return hr;
 	}
 
-	LRESULT _OnFileListDblClick(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListDblClick(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMITEMACTIVATE *pnmitem = cast(NMITEMACTIVATE*) pnmh;
 		if (FAILED(_OpenSolutionItem(pnmitem.iItem)))
@@ -1914,7 +1915,7 @@ else
 		_crAlternate = RGB(rNew, gNew, bNew);
 	}
 
-	LRESULT _OnFileListCustomDraw(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListCustomDraw(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		LRESULT lRet = CDRF_DODEFAULT;
 		NMLVCUSTOMDRAW *pnmlvcd = cast(NMLVCUSTOMDRAW *)pnmh;
@@ -1963,7 +1964,7 @@ else
 		return lRet;
 	}
 
-	LRESULT _OnFileListHdrItemChanged(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnFileListHdrItemChanged(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMHEADER *pnmhdr = cast(NMHEADER *)pnmh;
 		if (pnmhdr.pitem.mask & HDI_WIDTH)
@@ -1996,7 +1997,7 @@ else
 		return 0;
 	}
 
-	LRESULT _OnToolbarGetInfoTip(int idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
+	LRESULT _OnToolbarGetInfoTip(WPARAM idCtrl, ref NMHDR *pnmh, ref BOOL fHandled)
 	{
 		NMTBGETINFOTIP *pnmtbgit = cast(NMTBGETINFOTIP *)pnmh;
 		string tip;
@@ -2050,7 +2051,7 @@ class SolutionItem //: IUnknown
 
 	this(string path, string relpath)
 	{
-		int idx = lastIndexOf(path, '\\');
+		auto idx = lastIndexOf(path, '\\');
 		if(idx < 0)
 			def.name = path;
 		else
@@ -2087,7 +2088,7 @@ class SolutionItem //: IUnknown
 
 		if(def.inScope.length)
 			return def.inScope;
-		int idx = lastIndexOf(def.filename, '\\');
+		auto idx = lastIndexOf(def.filename, '\\');
 		if(idx < 0)
 			return "";
 		return def.filename[0 .. idx];
@@ -2236,7 +2237,7 @@ class ItemArray //: IUnknown
 		mGroups ~= group;
 	}
 
-	int GetCount() const { return max(mItems.length, mGroups.length); }
+	int GetCount() const { return max(mItems.ilength, mGroups.ilength); }
 
 	SolutionItemGroup GetGroup(uint idx) const
 	{

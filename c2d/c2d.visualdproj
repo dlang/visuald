@@ -62,6 +62,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -185,6 +187,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -308,6 +312,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -431,6 +437,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
@@ -554,6 +562,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -677,6 +687,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -800,6 +812,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -923,6 +937,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>1</compiler>
   <otherDMD>0</otherDMD>
@@ -1046,6 +1062,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -1169,6 +1187,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -1292,6 +1312,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -1415,6 +1437,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -1538,6 +1562,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -1661,6 +1687,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>2</compiler>
   <otherDMD>0</otherDMD>
@@ -1784,6 +1812,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
@@ -1881,7 +1911,7 @@
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>1</useInline>
-  <release>0</release>
+  <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
@@ -1907,6 +1937,8 @@
   <preview_markdown>0</preview_markdown>
   <preview_rvaluerefparam>0</preview_rvaluerefparam>
   <preview_nosharedaccess>0</preview_nosharedaccess>
+  <preview_in>0</preview_in>
+  <preview_inclincontracts>0</preview_inclincontracts>
   <transition_vmarkdown>0</transition_vmarkdown>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>

@@ -15,7 +15,7 @@ void wipeStack()
 
 version(traceGC) {
 import core.sys.windows.windows;
-import gc.impl.conservative.gc;
+import core.internal.gc.impl.conservative.gc;
 import core.thread;
 
 extern(C) alias _CRT_ALLOC_HOOK = int function(int, void *, size_t, int, long, const(char) *, int);
@@ -227,7 +227,7 @@ bool validFilename(const(char)* fn)
 
 import core.gc.gcinterface;
 import core.gc.registry;
-import gc.os;
+import core.internal.gc.os;
 import core.exception;
 
 extern (C) pragma(crt_constructor) void register_tracegc()
@@ -427,7 +427,10 @@ class GCTraceProxy : GC
 	{
 		return gc.inFinalizer();
 	}
-
+	ulong allocatedInCurrentThread() nothrow
+	{
+		return gc.allocatedInCurrentThread();
+	}
 	TraceBuffer traceBuffer;
 }
 
@@ -801,9 +804,10 @@ char[] dumpExtra(void* p)
 
 	static bool isLive(Module m)
 	{
-		foreach (ref md; lastContext.modules)
-			if (m is md.parsedModule || m is md.semanticModule)
-				return true;
+		if (lastContext)
+			foreach (ref md; lastContext.modules)
+				if (m is md.parsedModule || m is md.semanticModule)
+					return true;
 		foreach (mod; Module.amodules)
 			if (m is mod)
 				return true;
@@ -857,20 +861,26 @@ char[] dumpExtra(void* p)
 }
 
 ///////////////////////////////////////////////////////////////
-import rt.util.container.hashtab;
+import core.internal.container.hashtab;
 
 alias ScanRange = Gcx.ScanRange!false;
-Gcx.ToScanStack!ScanRange toscan; // dmd BUG: alignment causes bad capture!
+//Gcx.ToScanStack!ScanRange toscan;
+// dmd BUG: alignment causes bad capture!
+
+Gcx.ToScanStack!(Gcx.ScanRange!false) toscanConservative;
+Gcx.ToScanStack!(Gcx.ScanRange!true) toscanPrecise;
+
+HashTab!(void*, void*) *g_references;
+HashTab!(void*, size_t) *g_objects;
+ConservativeGC g_cgc;
 
 void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references, ref HashTab!(void*, size_t) objects)
 {
-	auto gcx = cgc.gcx;
+	g_cgc = cgc;
+	g_references = &references;
+	g_objects = &objects;
 
 	cgc.gcLock.lock();
-	auto pooltable = gcx.pooltable;
-
-    Gcx.ToScanStack!(Gcx.ScanRange!false) toscanConservative;
-    Gcx.ToScanStack!(Gcx.ScanRange!true) toscanPrecise;
 
     template scanStack(bool precise)
     {
@@ -883,8 +893,9 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
     /**
 	* Search a range of memory values and mark any pointers into the GC pool.
 	*/
-    void mark(bool precise)(Gcx.ScanRange!precise rng) scope nothrow
+    static void mark(bool precise)(Gcx.ScanRange!precise rng) nothrow
     {
+	auto pooltable = g_cgc.gcx.pooltable;
         alias toscan = scanStack!precise;
 
         debug(MARK_PRINTF)
@@ -969,8 +980,8 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
                     if (!pool.mark.testAndSet!false(biti) && !pool.noscan.test(biti))
                     {
 						base = pool.baseAddr + offsetBase;
-						references[base] = rng.pbot;
-						objects[base] = binsize[bin];
+						(*g_references)[base] = rng.pbot;
+						(*g_objects)[base] = binsize[bin];
 
                         tgt.pbot = pool.baseAddr + offsetBase;
                         tgt.ptop = tgt.pbot + binsize[bin];
@@ -1000,8 +1011,8 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
                     if (!pool.mark.testAndSet!false(biti) && !pool.noscan.test(biti))
                     {
 						base = pool.baseAddr + (offset & ~cast(size_t)(PAGESIZE-1));
-						references[base] = rng.pbot;
-						objects[base] = (cast(LargeObjectPool*)pool).getSize(pn);
+						(*g_references)[base] = rng.pbot;
+						(*g_objects)[base] = (cast(LargeObjectPool*)pool).getSize(pn);
 
                         tgt.ptop = tgt.pbot + (cast(LargeObjectPool*)pool).getSize(pn);
                         goto LaddLargeRange;
@@ -1019,8 +1030,8 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
                     if (!pool.mark.testAndSet!false(biti) && !pool.noscan.test(biti))
                     {
 						base = pool.baseAddr + (offset & ~cast(size_t)(PAGESIZE-1));
-						references[base] = rng.pbot;
-						objects[base] = (cast(LargeObjectPool*)pool).getSize(pn);
+						(*g_references)[base] = rng.pbot;
+						(*g_objects)[base] = (cast(LargeObjectPool*)pool).getSize(pn);
 
                         tgt.pbot = pool.baseAddr + (pn * PAGESIZE);
                         tgt.ptop = tgt.pbot + (cast(LargeObjectPool*)pool).getSize(pn);
@@ -1117,6 +1128,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	/**
 	* Search a range of memory values and mark any pointers into the GC pool.
 	*/
+	version(none)
 	void markc(void *pbot, void *ptop) scope nothrow
 	{
 		void **p1 = cast(void **)pbot;
@@ -1268,12 +1280,18 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	}
 
 	thread_suspendAll();
-	gcx.prepare(); // set freebits
+	cgc.gcx.prepare(); // set freebits
 
 	foreach(root; cgc.rootIter)
 		mark!true(Gcx.ScanRange!true(&root, &root + 1, null));
 	foreach(range; cgc.rangeIter)
 		mark!true(Gcx.ScanRange!true(range.pbot, range.ptop, null));
+
+	g_cgc = null;
+	g_references = null;
+	g_objects = null;
+	toscanConservative.clear();
+	toscanPrecise.clear();
 
 	//thread_scanAll(&mark);
 	thread_resumeAll();
@@ -1479,7 +1497,7 @@ void dumpGC(GC _gc)
 shared static this()
 {
 	import dmd.identifier;
-	Identifier.anonymous();
+	//Identifier.anonymous();
 }
 
 const(char)[] dmdident(ConservativeGC cgc, void* p)
@@ -1491,7 +1509,9 @@ const(char)[] dmdident(ConservativeGC cgc, void* p)
 	if (inf.base is null || inf.size < Dsymbol.sizeof)
 		return null;
 
-	auto dummyIdent = Identifier.anonymous();
+	static Identifier dummyIdent;
+	if (!dummyIdent)
+		dummyIdent = Identifier.generateAnonymousId("ymous");
 	auto sym = cast(Dsymbol)p;
 	auto ident = sym.ident;
 	if (!ident)
@@ -1510,8 +1530,8 @@ const(char)[] dmdident(ConservativeGC cgc, void* p)
 bool isInImage(void* p)
 {
 	import core.internal.traits : externDFunc;
-    alias findImageSection = externDFunc!("rt.sections_win64.findImageSection", void[] function(string) nothrow @nogc);
-    void[] dataSection = findImageSection(".data");
+	alias findImageSection = externDFunc!("rt.sections_win64.findImageSection", void[] function(string) nothrow @nogc);
+	void[] dataSection = findImageSection(".data");
 
 	if (p - dataSection.ptr < dataSection.length)
 		return true;

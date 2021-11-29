@@ -108,10 +108,10 @@ fail:
 	return hr;
 }
 
-HRESULT hrRegOpenKeyEx(HKEY root, wstring regPath, int reserved, REGSAM samDesired, HKEY* phkResult)
+HRESULT hrRegOpenKeyEx(HKEY root, wstring regPath, int opt, REGSAM samDesired, HKEY* phkResult)
 {
 	wchar* szRegPath = _toUTF16zw(regPath);
-	LONG lRes = RegOpenKeyExW(root, szRegPath, 0, samDesired, phkResult);
+	LONG lRes = RegOpenKeyExW(root, szRegPath, opt, samDesired, phkResult);
 	return HRESULT_FROM_WIN32(lRes);
 }
 
@@ -120,6 +120,6 @@ HRESULT hrRegCreateKeyEx(HKEY keySub, wstring regPath, int reserved, wstring cla
 {
 	wchar* szRegPath = _toUTF16zw(regPath);
 	wchar* szClassname = _toUTF16zw(classname);
-	LONG lRes = RegCreateKeyExW(keySub, szRegPath, 0, szClassname, opt, samDesired, security, key, disposition);
+	LONG lRes = RegCreateKeyExW(keySub, szRegPath, reserved, szClassname, opt, samDesired, security, key, disposition);
 	return HRESULT_FROM_WIN32(lRes);
 }

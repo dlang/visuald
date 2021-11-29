@@ -32,6 +32,7 @@ import vdc.lexer;
 import vdc.versions;
 
 import stdext.string;
+import stdext.array;
 
 import sdk.port.vsi;
 import sdk.vsi.textmgr;
@@ -585,7 +586,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 			if(info.bBackgroundValid)
 				SetBkColor(hDC, info.crBackground);
 
-			ExtTextOutA(hDC, tr.right - 1, tr.top, ETO_OPAQUE, &tr, s.ptr, s.length, null);
+			ExtTextOutA(hDC, tr.right - 1, tr.top, ETO_OPAQUE, &tr, s.ptr, cast(UINT)s.length, null);
 		}
 
 		MoveToEx(hDC, x0, r.top, null);
@@ -1378,7 +1379,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 	{
 		if(iLine >= mLineState.length)
 		{
-			int i = mLineState.length;
+			size_t i = mLineState.length;
 			mLineState.length = iLine + 100;
 			for( ; i < mLineState.length; i++)
 				mLineState[i] = -1;
@@ -1397,7 +1398,7 @@ class Colorizer : DisposingComObject, IVsColorizer, ConfigModifiedListener
 
 		int ln = line;
 		if(ln >= mLineState.length)
-			ln = max(mLineState.length, 1) - 1;
+			ln = max(mLineState.ilength, 1) - 1;
 		while(ln > 0 && mLineState[ln] == -1)
 			ln--;
 

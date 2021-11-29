@@ -122,7 +122,7 @@ void advanceTextPos(_string text, ref int lineno, ref int column)
 {
 	for( ; ; )
 	{
-		int pos = indexOf(text, '\n');
+		auto pos = indexOf(text, '\n');
 		if(pos < 0)
 			break;
 		lineno++;
@@ -495,13 +495,13 @@ bool findTokenSequence(TokenIterator it, _string[] search,
 		return strEqual(strip(s), strip(txt));
 	}
 
-	int p = 0;
+	size_t p = 0;
 	while(p < search.length && search[p].length == 0)
 		p++;
 	if(p >= search.length)
 		return false;
 
-	int prevsubmatchLength = submatch.length;
+	auto prevsubmatchLength = submatch.length;
 
 	while(!it.atEnd() && (stopText.length == 0 || !strEqual(it.text, stopText)
 	                                           || strEqual(search[p], stopText)))
@@ -510,7 +510,7 @@ bool findTokenSequence(TokenIterator it, _string[] search,
 		if(strEqual(strip(it.text), search[p]) || dollar)
 		{
 			TokenIterator mit = it + (dollar ? 0 : 1);
-			int i = p + (dollar ? 0 : 1);
+			auto i = p + (dollar ? 0 : 1);
 			while(i < search.length && search[i].length == 0)
 				i++;
 			while(!mit.atEnd() && i < search.length)
@@ -611,7 +611,7 @@ bool findTokenSequence(TokenIterator it, _string[] search,
 				}
 				else
 				{
-					int idx = indexOf(search[i], '$');
+					auto idx = indexOf(search[i], '$');
 					if(idx < 0)
 					{
 						if (!strEqual(mittext, search[i]))

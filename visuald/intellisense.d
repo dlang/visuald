@@ -245,8 +245,8 @@ struct SearchData
 			bool matchString(string txt, string str)
 			{
 				CaseSensitive cs = caseSensitive ? CaseSensitive.yes : CaseSensitive.no;
-				int pos = 0;
-				int p = pos + indexOfPath(name[pos..$], str, cs);
+				auto p = indexOfPath(name[0..$], str, cs);
+				auto pos = p - p; // 0 of same type
 				while(p >= pos)
 				{
 					if(!wholeWord)
@@ -531,7 +531,7 @@ class LibraryInfo
 					{
 						// strip template arguments and constraint
 						string s = n.str;
-						int pos = indexOf(s, '(');
+						auto pos = indexOf(s, '(');
 						if(pos >= 0)
 							s = s[0..pos];
 						addunique(cplts, s);
@@ -564,7 +564,7 @@ struct ParameterInfo
 		
 		if(lineInfo.length == 0)
 			return false;
-		int pos = lineInfo.length - 1;
+		int pos = lineInfo.ilength - 1;
 
 		void skipWhiteSpace()
 		{
@@ -698,7 +698,7 @@ struct Definition
 
 	int GetParameterCount() 
 	{
-		return GetParamInfo().name.length;
+		return GetParamInfo().name.ilength;
 	}
 	
 	void GetParameterInfo(int parameter, out string name, out string display, out string description)
@@ -1137,7 +1137,7 @@ class BrowseInfo
 			{
 				// strip template arguments and constraint
 				string s = node.name;
-				int pos = indexOf(s, '(');
+				auto pos = indexOf(s, '(');
 				if(pos >= 0)
 					s = s[0..pos];
 				addunique(cplts, s);

@@ -12,11 +12,13 @@ Global
 		Debug-v15|Any CPU = Debug-v15|Any CPU
 		Debug-v16_1|Any CPU = Debug-v16_1|Any CPU
 		Debug-v16|Any CPU = Debug-v16|Any CPU
+		Debug-v17|Any CPU = Debug-v17|Any CPU
 		Release|Any CPU = Release|Any CPU
 		Release-v14|Any CPU = Release-v14|Any CPU
 		Release-v15|Any CPU = Release-v15|Any CPU
 		Release-v16_1|Any CPU = Release-v16_1|Any CPU
 		Release-v16|Any CPU = Release-v16|Any CPU
+		Release-v17|Any CPU = Release-v17|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{45508B90-440B-46DD-82CC-178196D9794E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -29,6 +31,8 @@ Global
 		{45508B90-440B-46DD-82CC-178196D9794E}.Debug-v16_1|Any CPU.Build.0 = Debug-v16_1|Any CPU
 		{45508B90-440B-46DD-82CC-178196D9794E}.Debug-v16|Any CPU.ActiveCfg = Debug-v16|Any CPU
 		{45508B90-440B-46DD-82CC-178196D9794E}.Debug-v16|Any CPU.Build.0 = Debug-v16|Any CPU
+		{45508B90-440B-46DD-82CC-178196D9794E}.Debug-v17|Any CPU.ActiveCfg = Debug-v17|Any CPU
+		{45508B90-440B-46DD-82CC-178196D9794E}.Debug-v17|Any CPU.Build.0 = Debug-v17|Any CPU
 		{45508B90-440B-46DD-82CC-178196D9794E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45508B90-440B-46DD-82CC-178196D9794E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{45508B90-440B-46DD-82CC-178196D9794E}.Release-v14|Any CPU.ActiveCfg = Release-v14|Any CPU
@@ -39,6 +43,8 @@ Global
 		{45508B90-440B-46DD-82CC-178196D9794E}.Release-v16_1|Any CPU.Build.0 = Release-v16_1|Any CPU
 		{45508B90-440B-46DD-82CC-178196D9794E}.Release-v16|Any CPU.ActiveCfg = Release-v16|Any CPU
 		{45508B90-440B-46DD-82CC-178196D9794E}.Release-v16|Any CPU.Build.0 = Release-v16|Any CPU
+		{45508B90-440B-46DD-82CC-178196D9794E}.Release-v17|Any CPU.ActiveCfg = Release-v17|Any CPU
+		{45508B90-440B-46DD-82CC-178196D9794E}.Release-v17|Any CPU.Build.0 = Release-v17|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

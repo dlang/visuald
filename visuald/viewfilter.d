@@ -144,7 +144,7 @@ version(tip)
 
 	static ViewFilter[HWND] sHooks;
 
-	extern(Windows) static int WindowProcHook(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+	extern(Windows) static LRESULT WindowProcHook(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		WNDPROC proc;
 		ViewFilter* pvf = hWnd in sHooks;
@@ -152,7 +152,7 @@ version(tip)
 			proc = pvf.mPrevProc;
 		if(!proc)
 			proc = &DefWindowProcA;
-		int res = proc(hWnd,uMsg,wParam,lParam);
+		LRESULT res = proc(hWnd,uMsg,wParam,lParam);
 
 		if(Package.GetGlobalOptions().showCoverageMargin)
 			if(uMsg == WM_PAINT && pvf)
@@ -169,7 +169,7 @@ version(tip)
 		mPrevProc = cast(WNDPROC)GetWindowLongPtr(hwnd, GWL_WNDPROC);
 		mHwnd = hwnd;
 		sHooks[mHwnd] = this;
-		SetWindowLongPtr(hwnd, GWL_WNDPROC, cast(uint) &WindowProcHook);
+		SetWindowLongPtr(hwnd, GWL_WNDPROC, cast(LONG_PTR) &WindowProcHook);
 		return true;
 	}
 
@@ -178,7 +178,7 @@ version(tip)
 		if(!mHwnd)
 			return false;
 
-		SetWindowLongPtr(mHwnd, GWL_WNDPROC, cast(uint) mPrevProc);
+		SetWindowLongPtr(mHwnd, GWL_WNDPROC, cast(LONG_PTR) mPrevProc);
 		sHooks.remove(mHwnd);
 		mHwnd = null;
 		mPrevProc = null;
@@ -798,7 +798,7 @@ version(tip)
 	{
 		int iState, tokidx;
 		uint pos;
-		size_t idxpos = idx;
+		pos_t idxpos = idx;
 		if(Lexer.isStartingComment(txt, idxpos))
 		{
 			idx = cast(ViewCol) idxpos;
@@ -1012,7 +1012,7 @@ version(tip)
 		{
 			wstring text = mCodeWinMgr.mSource.GetText(line, 0, line, -1);
 			if(idx < 0)
-				idx = text.length;
+				idx = text.ilength;
 
 			while(--idx >= 0)
 			{
@@ -1260,7 +1260,7 @@ version(tip)
 				ntxt ~= '\n';
 			}
 			wstring wtxt = to!wstring(ntxt);
-			hr = mCodeWinMgr.mSource.mBuffer.ReplaceLines(line, 0, lastline, lastlinelen, wtxt.ptr, wtxt.length, &changedSpan);
+			hr = mCodeWinMgr.mSource.mBuffer.ReplaceLines(line, 0, lastline, lastlinelen, wtxt.ptr, wtxt.ilength, &changedSpan);
 			if (hr != S_OK)
 				break;
 			lineOff += r.ylen - r.xlen;
@@ -1438,7 +1438,7 @@ else
 		wstring wrtxt = replaceTokenSequence(wtxt, 1, 0, "unittest { $any }", "", opt, null);
 
 		TextSpan changedSpan;
-		return mCodeWinMgr.mSource.mBuffer.ReplaceLines(0, 0, endLine, endCol, wrtxt.ptr, wrtxt.length, &changedSpan);
+		return mCodeWinMgr.mSource.mBuffer.ReplaceLines(0, 0, endLine, endCol, wrtxt.ptr, wrtxt.ilength, &changedSpan);
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -1777,7 +1777,7 @@ else
 			{
 				Definition def;
 				def.name = ""; // name is already in the type, was mPendingMethodTipWord;
-				int pos = fn.indexOf("\n");
+				auto pos = fn.indexOf("\n");
 				if(pos >= 0)
 				{
 					def.help = fn[pos + 1 .. $];

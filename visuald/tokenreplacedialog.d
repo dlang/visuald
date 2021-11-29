@@ -30,6 +30,8 @@ import dte80 = sdk.vsi.dte80;
 import std.algorithm;
 import std.conv;
 
+import stdext.array;
+
 private IVsWindowFrame sWindowFrame;
 private	TokenReplacePane sSearchPane;
 
@@ -85,7 +87,7 @@ class TokenReplaceWindowBack : Dialog
 		super(parent);
 	}
 	
-	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	override LRESULT WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
 	{
 		BOOL fHandled;
 		LRESULT rc = mPane._WindowProc(hWnd, uMsg, wParam, lParam, fHandled);
@@ -205,10 +207,10 @@ class TokenReplacePane : DisposingComObject, IVsWindowPane
 		logMessage("TranslateAccelerator", msg.hwnd, msg.message, msg.wParam, msg.lParam);
 		
 		BOOL fHandled;
-		HRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
+		LRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
 
 		if(fHandled)
-			return hrRet;
+			return cast(HRESULT)hrRet;
 		return E_NOTIMPL;
 	}
 
@@ -243,7 +245,7 @@ private:
 		
 	static HINSTANCE getInstance() { return Widget.getInstance(); }
 
-	int _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
+	LRESULT _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
 	{
 		if(uMsg != WM_NOTIFY)
 			logMessage("_WindowProc", hWnd, uMsg, wParam, lParam);
@@ -251,7 +253,7 @@ private:
 		return _HandleMessage(hWnd, uMsg, wParam, lParam, fHandled);
 	}
 	
-	int _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
+	LRESULT _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
 	{
 		switch(uMsg)
 		{
@@ -556,7 +558,7 @@ else
 		
 		if(replaceMode <= 0)
 		{
-			int idx = replaceMode < 0 ? ranges.length - 1 : 0;
+			size_t idx = replaceMode < 0 ? ranges.length - 1 : 0;
 			if(view)
 				view.SetSelection(ranges[idx].startlineno, ranges[idx].startcolumn,
 								  ranges[idx].endlineno,   ranges[idx].endcolumn);
@@ -599,7 +601,7 @@ else
 
 				TextSpan changedSpan;
 				if(buffer.ReplaceLines(startlineno, startcolumn, endlineno, endcolumn, 
-									   ranges[i].replacementText.ptr, ranges[i].replacementText.length,
+									   ranges[i].replacementText.ptr, ranges[i].replacementText.ilength,
 									   &changedSpan) != S_OK)
 					return i;
 				
@@ -607,7 +609,7 @@ else
 				diffColumns = changedSpan.iEndIndex - endcolumn;
 			}
 		}
-		return ranges.length;
+		return ranges.ilength;
 	}
 	
 	LRESULT _OnFindNext()

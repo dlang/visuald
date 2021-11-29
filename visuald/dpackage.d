@@ -988,7 +988,7 @@ version(none)
 			return hr;
 
 		ULONG written;
-		HRESULT hr = pStream.Write(s.ptr, s.length, &written);
+		HRESULT hr = pStream.Write(s.ptr, s.ilength, &written);
 		if(hr == S_OK && written != s.length)
 			hr = E_FAIL;
 		return hr;
@@ -1401,7 +1401,7 @@ private:
 	uint             mLangServiceCookie;
 	uint             mProjFactoryCookie;
 
-	uint             mComponentID;
+	DWORD_PTR        mComponentID;
 
 	LanguageService  mLangsvc;
 	ProjectFactory   mProjFactory;
@@ -1563,7 +1563,7 @@ class GlobalOptions
 {
 	HKEY hConfigKey;
 	HKEY hUserKey;
-	wstring regConfigRoot;
+	wstring regConfigRoot; // the _Config hive
 	wstring regUserRoot;
 
 	CompilerDirectories DMD;
@@ -1619,6 +1619,7 @@ class GlobalOptions
 	ubyte checkUpdatesVisualD; // CheckFrequency: 0: never, 1: daily, 2: weekly, 3: daily prereleases
 	ubyte checkUpdatesDMD;
 	ubyte checkUpdatesLDC;
+	uint dmdServerMemThres;
 	string baseInstallDir;
 	string VDServerIID;
 	string compileAndRunOpts;
@@ -1665,11 +1666,16 @@ class GlobalOptions
 		if(registry4)
 		{
 			scope(exit) release(registry4);
-			if(registry4.GetLocalRegistryRootEx(RegType_Configuration, cast(uint*)&hConfigKey, &bstrRoot) == S_OK)
+			VSLOCALREGISTRYROOTHANDLE confHandle, userHandle;
+			if(registry4.GetLocalRegistryRootEx(RegType_Configuration, &confHandle, &bstrRoot) == S_OK)
 			{
+				hConfigKey = cast(HKEY)cast(int)confHandle; // sign extend to pointer
 				regConfigRoot = wdetachBSTR(bstrRoot);
-				if(registry4.GetLocalRegistryRootEx(RegType_UserSettings, cast(uint*)&hUserKey, &bstrRoot) == S_OK)
+				if(registry4.GetLocalRegistryRootEx(RegType_UserSettings, &userHandle, &bstrRoot) == S_OK)
+				{
+					hUserKey = cast(HKEY)cast(int)userHandle;
 					regUserRoot = wdetachBSTR(bstrRoot);
+				}
 				else
 				{
 					regUserRoot = regConfigRoot;
@@ -1923,7 +1929,9 @@ class GlobalOptions
 			vsVersion = cast(int) guessVSVersion(regConfigRoot);
 
 			wstring dllPath = GetDLLName(g_hInst);
-			VisualDInstallDir = normalizeDir(dirName(toUTF8(dllPath)));
+			VisualDInstallDir = dirName(toUTF8(dllPath));
+			version(Win64) VisualDInstallDir = dirName(VisualDInstallDir); // installed in x64 sub folder
+			VisualDInstallDir = normalizeDir(VisualDInstallDir);
 
 			wstring idePath = GetDLLName(null);
 			DevEnvDir = normalizeDir(dirName(toUTF8(idePath)));
@@ -2510,10 +2518,9 @@ class GlobalOptions
 		return path;
 	}
 
-	static string[] getOptionImportPaths(string opts, string workdir)
+	static string[] getOptionImportPaths(string[] args, string workdir)
 	{
 		string[] imports;
-		string[] args = tokenizeArgs(opts);
 		args = expandResponseFiles(args, workdir);
 		foreach(arg; args)
 		{
@@ -2536,7 +2543,7 @@ class GlobalOptions
 				if(string* pFlags = "DFLAGS" in *pEnv)
 				{
 					string opts = replace(*pFlags, "%@P%", bindir);
-					imports ~= getOptionImportPaths(opts, bindir);
+					imports ~= getOptionImportPaths(tokenizeArgs(opts), bindir);
 				}
 		}
 		return imports;
@@ -2566,7 +2573,7 @@ class GlobalOptions
 								foreach(a; arr.vals())
 								{
 									string opts = replace(a, "%%ldcbinarypath%%", bindir);
-									imports ~= getOptionImportPaths(opts, bindir);
+									imports ~= getOptionImportPaths([opts], bindir); // assume single argument that might contain spaces
 								}
 							}
 						}

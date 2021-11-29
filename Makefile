@@ -41,7 +41,8 @@ MSBUILD15 = "c:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild
 !ENDIF
 # CONFIG  = Release LDC
 CONFIG  = Release COFF32
-CONFIG_DMDSERVER = Release LDC
+CONFIG_X64 = Release COFF32
+CONFIG_DMDSERVER = Release COFF32
 
 ##############################################################
 # no more changes should be necessary starting from here
@@ -58,6 +59,9 @@ prerequisites:
 
 visuald_vs:
 	devenv /Project "visuald"   /Build "$(CONFIG)|Win32" visuald_vs10.sln
+
+visuald_vs_x64:
+	devenv /Project "visuald"   /Build "$(CONFIG_X64)|x64" visuald_vs10.sln
 
 visuald_test:
 	devenv /Project "visuald"   /Build "TestDebug|Win32" visuald_vs10.sln
@@ -87,17 +91,17 @@ fake_dparser:
 	if not exist bin\Release\DParserCOMServer\D_Parser.dll echo dummy >bin\Release\DParserCOMServer\D_Parser.dll
 
 vdextension:
-	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
+	cd vdextensions && $(MSBUILD) vdextensions.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
 vdext15:
-	cd vdextensions && $(MSBUILD) vdext15.csproj /p:Configuration=Release;Platform=x86 /t:Rebuild
+	cd vdextensions && $(MSBUILD) vdext15.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
 visualdwizard:
 	cd vdwizard && $(MSBUILD) VisualDWizard.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
 dbuild12:
-	cd msbuild\dbuild && devenv /Build "Release|AnyCPU" /Project "dbuild" dbuild.sln
-#	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
+#	cd msbuild\dbuild && devenv /Build "Release|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release;Platform=AnyCPU /t:Rebuild
 
 fake_dbuild12:
 	if not exist msbuild\dbuild\obj\release\nul md msbuild\dbuild\obj\release
@@ -105,8 +109,8 @@ fake_dbuild12:
 	if not exist msbuild\dbuild\obj\release\dbuild.12.0.dll echo dummy >msbuild\dbuild\obj\release\dbuild.12.0.dll
 
 dbuild14:
-	cd msbuild\dbuild && devenv /Build "Release-v14|AnyCPU" /Project "dbuild" dbuild.sln
-#	cd msbuild\dbuild && $(MSBUILD) dbuild.sln /p:Configuration=Release;Platform="Any CPU" /t:Rebuild
+#	cd msbuild\dbuild && devenv /Build "Release-v14|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v14;Platform=AnyCPU /t:Rebuild
 
 fake_dbuild14:
 	if not exist msbuild\dbuild\obj\release-v14\nul md msbuild\dbuild\obj\release-v14
@@ -114,7 +118,8 @@ fake_dbuild14:
 	if not exist msbuild\dbuild\obj\release-v14\dbuild.14.0.dll echo dummy >msbuild\dbuild\obj\release-v14\dbuild.14.0.dll
 
 dbuild15:
-	cd msbuild\dbuild && devenv /Build "Release-v15|AnyCPU" /Project "dbuild" dbuild.sln
+#	cd msbuild\dbuild && devenv /Build "Release-v15|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v15;Platform=AnyCPU /t:Rebuild
 
 fake_dbuild15:
 	if not exist msbuild\dbuild\obj\release-v15\nul md msbuild\dbuild\obj\release-v15
@@ -122,10 +127,16 @@ fake_dbuild15:
 	if not exist msbuild\dbuild\obj\release-v15\dbuild.15.0.dll echo dummy >msbuild\dbuild\obj\release-v15\dbuild.15.0.dll
 
 dbuild16:
-	cd msbuild\dbuild && devenv /Build "Release-v16|AnyCPU" /Project "dbuild" dbuild.sln
+#	cd msbuild\dbuild && devenv /Build "Release-v16|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v16;Platform=AnyCPU /t:Rebuild
 
 dbuild16_1:
-	cd msbuild\dbuild && devenv /Build "Release-v16_1|AnyCPU" /Project "dbuild" dbuild.sln
+#	cd msbuild\dbuild && devenv /Build "Release-v16_1|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v16_1;Platform=AnyCPU /t:Rebuild
+
+dbuild17:
+#	cd msbuild\dbuild && devenv /Build "Release-v16|AnyCPU" /Project "dbuild" dbuild.sln
+	cd msbuild\dbuild && $(MSBUILD) dbuild.csproj /p:Configuration=Release-v17;Platform=AnyCPU /t:Rebuild
 
 
 mago:
@@ -142,6 +153,9 @@ mago_vs16:
 	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=Win32;PlatformToolset=v142            /target:DebugEngine\MagoNatDE MagoDbg_2010.sln
 	cd ..\..\mago && msbuild /p:Configuration=Release;Platform=x64;PlatformToolset=v142              /target:DebugEngine\MagoRemote MagoDbg_2010.sln
 	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=Win32;PlatformToolset=v142" /target:Expression\MagoNatCC MagoDbg_2010.sln
+
+magocc_x64:
+	cd ..\..\mago && msbuild "/p:Configuration=Release StaticDE;Platform=x64;PlatformToolset=v142" /target:Expression\MagoNatCC MagoDbg_2010.sln
 
 magogc:
 	cd ..\..\mago && devenv /Build "Release|Win32" /Project "MagoGC" magodbg_2010.sln
@@ -170,7 +184,7 @@ $(DCXXFILT_EXE): tools\dcxxfilt.d
 ##################################
 # create installer
 
-install_release_modules: install_modules dparser dparser_test cv2pdb_vs16 mago_vs16 magogc dbuild12 dbuild14 dbuild15
+install_release_modules: install_modules dparser dparser_test cv2pdb_vs16 mago_vs16 magocc_x64 magogc dbuild12 dbuild14 dbuild15
 
 install_vs: install_release_modules install_only
 
@@ -178,7 +192,7 @@ install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago magogc dbuild12
 
 install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 magogc fake_dbuild12 fake_dbuild14 dbuild15 install_only
 
-install_modules: prerequisites visuald_vs vdserver dmdserver vdextension vdext15 visualdwizard dcxxfilt
+install_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver vdextension vdext15 visualdwizard dcxxfilt
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads

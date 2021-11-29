@@ -1785,6 +1785,7 @@
    <File path="dmd\src\dmd\ast_node.d" />
    <File path="dmd\src\dmd\astbase.d" tool="None" />
    <File path="dmd\src\dmd\astcodegen.d" />
+   <File path="dmd\src\dmd\astenums.d" />
    <File path="dmd\src\dmd\asttypename.d" tool="None" />
    <File path="dmd\src\dmd\attrib.d" />
    <File path="dmd\src\dmd\blockexit.d" />
@@ -1799,6 +1800,7 @@
    <File path="dmd\src\dmd\cond.d" />
    <File path="dmd\src\dmd\console.d" />
    <File path="dmd\src\dmd\constfold.d" />
+   <File path="dmd\src\dmd\cparse.d" />
    <File path="dmd\src\dmd\cppmangle.d" />
    <File path="dmd\src\dmd\cppmanglewin.d" />
    <File path="dmd\src\dmd\ctfeexpr.d" />
@@ -1844,6 +1846,7 @@
    <File path="dmd\src\dmd\identifier.d" />
    <File path="dmd\src\dmd\impcnvtab.d" />
    <File path="dmd\src\dmd\imphint.d" />
+   <File path="dmd\src\dmd\importc.d" />
    <File path="dmd\src\dmd\init.d" />
    <File path="dmd\src\dmd\initsem.d" />
    <File path="dmd\src\dmd\inline.d" />

@@ -139,7 +139,7 @@ int countVisualSpaces(S)(S txt, int tabSize, int* txtpos = null)
 int visiblePosition(S)(S txt, int tabSize, int idx)
 {
 	if(idx > txt.length)
-		idx = txt.length;
+		idx = cast(int)txt.length;
 
 	int p = 0;
 

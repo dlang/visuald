@@ -595,7 +595,7 @@ HGLOBAL CopyGlobalMemory(HGLOBAL hDest, HGLOBAL hSource)
     assert(hSource);
 
     // make sure we have suitable hDest
-    uint nSize = GlobalSize(hSource);
+    auto nSize = GlobalSize(hSource);
     assert(nSize < int.max);
     
 	if (!hDest)

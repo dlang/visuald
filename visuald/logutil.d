@@ -18,6 +18,8 @@ import std.datetime;
 import std.array;
 import std.file;
 
+import stdext.array;
+
 import stdcarg = core.stdc.stdarg;
 import stdcio = core.stdc.stdio;
 // import std.stdarg;
@@ -623,7 +625,7 @@ string _getArgs(string func)
 	while(sidx < func.length && func[sidx] != '(')
 		sidx++;
 
-	int eidx = func.length - 1;
+	int eidx = func.ilength - 1;
 	while(eidx >= 0 && func[eidx] != ')')
 		eidx++;
 
@@ -754,7 +756,7 @@ string _getLogReturn(string func, string type)
 		bool isPtr = false;
 		if(!isOut)
 		{
-			int len = prevargs.length;
+			auto len = prevargs.length;
 			if((len < 5  || prevargs[0..5] != "void*") &&
 			   (len < 4  || prevargs[0..4] != "MSG*") &&
 			   (len < 13 || prevargs[0..13] != "PROPPAGEINFO*"))

@@ -313,7 +313,7 @@ int runProcess(string command, string depsfile, bool doDemangle, bool demangleAl
 
 	if(!bSuccess)
 	{
-		printf("failed launching %ls\n", szCommand);
+		printf("failed launching %ls\n", cast(wchar*)szCommand); // https://issues.dlang.org/show_bug.cgi?id=21958
 		return 1;
 	}
 
@@ -542,8 +542,7 @@ void processLine(ubyte[] output, ref size_t writepos, bool optlink, int cp)
 
 ///////////////////////////////////////////////////////////////////////////////
 bool isExe64bit(string exe)
-//out(res) { 	printf("isExe64bit: %.*s %d-bit\n", exe.length, exe.ptr, res ? 64 : 32); }
-body
+//out(res) { 	printf("isExe64bit: %.*s %d-bit\n", exe.length, exe.ptr, res ? 64 : 32); } do
 {
 	if (exe is null || !std.file.exists(exe))
 		return false;
@@ -567,13 +566,53 @@ body
 	return false;
 }
 
+string[] splitPathList(string pathlist)
+{
+	string[] paths;
+	string path;
+	size_t pos = 0;
+	size_t startpos = pos;
+	bool quoted = false;
+	while (pos < pathlist.length)
+	{
+		size_t prevpos = pos;
+		dchar ch = decode(pathlist, pos);
+		if (ch == '\"') {
+			// remove quotes
+			path ~= pathlist[startpos..prevpos];
+			startpos = pos;
+			quoted = !quoted;
+		}
+		else if (ch == ';' && !quoted)
+		{
+			path ~= pathlist[startpos..prevpos];
+			if (path.length)
+				paths ~= path;
+			path = null;
+			startpos = pos;
+		}
+	}
+	path ~= pathlist[startpos..pos];
+	if (path.length)
+		paths ~= path;
+	return paths;
+}
+
+unittest
+{
+	assert(splitPathList(`c:\windows;c:\windows\system`) == [`c:\windows`, `c:\windows\system`]);
+	assert(splitPathList(`c:\windows;c:\"windows"\system`) == [`c:\windows`, `c:\windows\system`]);
+	assert(splitPathList(`c:\"tmp ;"\d;"c:\d rocks";.;`) == [`c:\tmp ;\d`, `c:\d rocks`, `.`]);
+	assert(splitPathList(`c:\tmp\;"c:\d rocks`) == [`c:\tmp\`, `c:\d rocks`]);
+}
+
 string findExeInPath(string exe)
 {
 	if (std.path.baseName(exe) != exe)
 		return exe; // if the file has dir component, don't search path
 
 	string path = std.process.environment["PATH"];
-	string[] paths = split(path, ";");
+	string[] paths = splitPathList(path);
 	string ext = extension(exe);
 
 	foreach(p; paths)

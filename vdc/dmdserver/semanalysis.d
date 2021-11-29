@@ -111,6 +111,18 @@ Module findInAllModules(const(char)[] filename)
 	return null;
 }
 
+void reinitSemanticModules()
+{
+	if (!lastContext)
+		return;
+
+	dmdReinit();
+
+	// clear existing semantically analyzed modules
+	foreach(ref mi; lastContext.modules)
+		mi.semanticModule = null;
+}
+
 //
 Module analyzeModule(Module parsedModule, const ref Options opts)
 {
@@ -138,7 +150,7 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 			{
 				if (!ctxt.modules[idx].semanticModule)
 				{
-					auto m = ctxt.modules[rootModuleIndex].createSemanticModule(true);
+					auto m = ctxt.modules[idx].createSemanticModule(true);
 				}
 				needsReinit = false;
 			}
@@ -187,20 +199,16 @@ Module analyzeModule(Module parsedModule, const ref Options opts)
 
 	if (needsReinit)
 	{
-		dmdReinit();
-
-		// clear existing semantically analyzed modules
-		foreach(ref mi; ctxt.modules)
-			mi.semanticModule = null;
+		reinitSemanticModules();
 
 		// analyze other modules lazily
 		ctxt.modules[rootModuleIndex].createSemanticModule(true);
 
 		version(none) // do this lazily
-		foreach(ref mi; ctxt.modules)
-		{
-			mi.semanticModule.importAll(null);
-		}
+			foreach(ref mi; ctxt.modules)
+			{
+				mi.semanticModule.importAll(null);
+			}
 	}
 
 	Module.rootModule = ctxt.modules[rootModuleIndex].semanticModule;
@@ -228,6 +236,9 @@ string[] guessImportPaths()
 	import std.file;
 
 	string path = r"c:\D\dmd-" ~ to!string(__VERSION__ * 0.001) ~ ".0";
+	if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
+		return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
+	path ~= "-beta.1";
 	if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
 		return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
 	if (std.file.exists(r"c:\s\d\dlang\druntime\import\object.d"))
@@ -316,7 +327,7 @@ void do_unittests()
 	{
 		string tip = findTip(analyzedModule, line, col, line, col + 1, addlinks);
 		if (expected_tip.endsWith("..."))
-			assert(tip.startsWith(expected_tip[0..$-3]));
+			assert_equal(tip[0..min($, expected_tip.length-3)], expected_tip[0..$-3]);
 		else
 			assert_equal(tip, expected_tip);
 	}
@@ -1320,6 +1331,7 @@ void do_unittests()
 	checkTip(m,  7,  9, "(struct) `source.S`");
 
 	// float properties
+	opts.noDeprecated = false; // complex
 	source = q{
 		float flt;
 		auto q = [flt.sizeof, flt.init, flt.epsilon, flt.mant_dig,
@@ -1344,6 +1356,8 @@ void do_unittests()
 	checkTip(m,  5, 27, "(constant) `int float.max_exp = 128`");
 	checkTip(m,  8, 13, "(field) `float cfloat.re`");
 	checkTip(m,  8, 20, "(field) `float cfloat.im`");
+
+	opts.noDeprecated = true; // complex
 
 	// check template arguments
 	source = q{
@@ -1908,7 +1922,7 @@ unittest
 	checkOutline(source, 3, expected);
 }
 
-unittest
+void test_ana_dmd()
 {
 	import core.memory;
 	import std.path;
@@ -1964,50 +1978,97 @@ unittest
 		dumpGC();
 	}
 
-	bool dump = false;
-	string source;
-	Module m;
-	int i = 0; //foreach(i; 0..40)
+	void test_sem()
 	{
-		filename = __FILE_FULL_PATH__;
-		source = cast(string)std.file.read(filename);
-		if (i & 1)
+		bool dump = false;
+		string source;
+		Module m;
+		int i = 0; //foreach(i; 0..40)
 		{
-			import std.array;
-			source = replace(source, "std", "stdx");
-			m = checkErrors(source, "<ignore>");
+			filename = __FILE_FULL_PATH__;
+			source = cast(string)std.file.read(filename);
+			if (i & 1)
+			{
+				import std.array;
+				source = replace(source, "std", "stdx");
+				m = checkErrors(source, "<ignore>");
+			}
+			else
+				m = checkErrors(source, "");
+
+			version(traceGC)
+			{
+				import std.stdio;
+				if ((i % 10) == 0)
+					GC.collect();
+				auto stats = GC.stats;
+				writeln(stats);
+			}
+			version(traceGC)
+			{
+				if (stats.usedSize >= 400_000_000)
+					dumpGC();
+			}
 		}
-		else
+
+		foreach(f; ["expressionsem.d", "typesem.d", "statementsem.d"])
+		{
+			filename = std.path.buildPath(srcdir, "dmd", f);
+			source = cast(string)std.file.read(filename);
 			m = checkErrors(source, "");
 
-		//version(traceGC)
-		{
-			import std.stdio;
-			if ((i % 10) == 0)
+			version(traceGC)
+			{
 				GC.collect();
-			auto stats = GC.stats;
-			writeln(stats);
-		}
-		version(traceGC)
-		{
-			if (stats.usedSize >= 400_000_000)
-				dumpGC();
+				auto stats = GC.stats;
+				writeln(stats);
+			}
 		}
 	}
-
-	foreach(f; ["expressionsem.d", "typesem.d", "statementsem.d"])
+	// test_sem();
+	void test_leaks()
 	{
-		filename = std.path.buildPath(srcdir, "dmd", f);
-		source = cast(string)std.file.read(filename);
-		m = checkErrors(source, "");
+		bool dump = false;
+		string source;
+		Module m;
 
-		version(traceGC)
+		foreach(f; ["access.d", "aggregate.d", "aliasthis.d", "apply.d", "argtypes_sysv_x64.d", "arrayop.d"])
 		{
-			GC.collect();
-			auto stats = GC.stats;
-			writeln(stats);
+			filename = std.path.buildPath(srcdir, "dmd", f);
+			source = cast(string)std.file.read(filename);
+			m = checkErrors(source, "");
+
+			version(traceGC)
+			{
+				//GC.collect();
+				auto stats = GC.stats;
+				writeln(stats);
+				if (stats.usedSize > 200_000_000)
+				{
+					//mModules = null;
+					m = null;
+					lastContext = null;
+					Module.loadModuleHandler = null;
+					dmdInit();
+					dmdReinit();
+
+					wipeStack();
+					GC.collect();
+					auto nstats = GC.stats();
+					printf("reinit: stats.usedSize %zd -> %zd\n", stats.usedSize, nstats.usedSize);
+					dumpGC();
+				}
+			}
 		}
+		version(traceGC)
+			writeln(GC.stats);
 	}
+	test_leaks();
+}
+
+unittest
+{
+	test_ana_dmd();
 }
 
 version(test):

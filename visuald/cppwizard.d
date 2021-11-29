@@ -30,6 +30,7 @@ import sdk.vsi.vsshell80;
 import dte80a = sdk.vsi.dte80a;
 import dte80 = sdk.vsi.dte80;
 
+import stdext.array;
 import stdext.file;
 import stdext.string;
 
@@ -114,7 +115,7 @@ class CppWizardWindowBack : Dialog
 		super(parent);
 	}
 
-	override int WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
+	override LRESULT WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam) 
 	{
 		BOOL fHandled;
 		LRESULT rc = mPane._WindowProc(hWnd, uMsg, wParam, lParam, fHandled);
@@ -257,10 +258,10 @@ class CppWizardPane : DisposingComObject, IVsWindowPane
 		logMessage("TranslateAccelerator", msg.hwnd, msg.message, msg.wParam, msg.lParam);
 
 		BOOL fHandled;
-		HRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
+		LRESULT hrRet = _HandleMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam, fHandled);
 
 		if(fHandled)
-			return hrRet;
+			return cast(HRESULT)hrRet;
 		return E_NOTIMPL;
 	}
 
@@ -315,7 +316,7 @@ private:
 
 	static HINSTANCE getInstance() { return Widget.getInstance(); }
 
-	int _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
+	LRESULT _WindowProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
 	{
 		if(uMsg != WM_NOTIFY)
 			logMessage("_WindowProc", hWnd, uMsg, wParam, lParam);
@@ -323,7 +324,7 @@ private:
 		return _HandleMessage(hWnd, uMsg, wParam, lParam, fHandled);
 	}
 
-	int _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
+	LRESULT _HandleMessage(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, ref BOOL fHandled) 
 	{
 		switch(uMsg)
 		{
@@ -749,7 +750,7 @@ private:
 			wstring wntxt = to!wstring(ntxt);
 			TextSpan changedSpan;
 			if(buffer.ReplaceLines(startLine, startCol, endLine, endCol, 
-								   wntxt.ptr, wntxt.length, &changedSpan) != S_OK)
+								   wntxt.ptr, wntxt.ilength, &changedSpan) != S_OK)
 				return false;
 		}
 		return true;
