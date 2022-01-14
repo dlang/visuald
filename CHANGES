@@ -1308,7 +1308,7 @@ Version history
 2021-12-25 version 1.2.0
   * added support for VS 2022
   * dmdserver:
-    - updated to frontend of DMD 2.098.0
+    - updated to frontend of DMD 2.098.1
     - bugzilla 21710: Code Completion doesn't work if compiler path contains a white space
     - restrict "errors in imported modules" to a couple of lines
     - added option to restart the semantic analysis if memory usage goes above a given threshold
@@ -1320,4 +1320,4 @@ Version history
   * cv2pdb:
     - added support for DWARF5
   * installer:
-    - full installer now bundled with DMD 2.098.0 and LDC 1.28.0
+    - full installer now bundled with DMD 2.098.1 and LDC 1.28.1

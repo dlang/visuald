@@ -17,6 +17,7 @@ if not exist ..\sdk\vsi\nul     md ..\sdk\vsi
 if not exist %DTE_IDL_PATH%\nul md %DTE_IDL_PATH%
 
 set MSENV=%COMMONPROGRAMFILES%\Microsoft Shared\MSEnv
+if not exist "%MSENV%\dte80.olb" set MSENV=%COMMONPROGRAMFILES(x86)%\Microsoft Shared\MSEnv
 if not exist "%MSENV%\dte80.olb" (echo "%MSENV%\dte80.olb" does not exist && exit /B 1)
 
 set IVIEWER=

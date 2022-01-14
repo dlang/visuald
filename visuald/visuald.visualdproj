@@ -1495,7 +1495,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>2</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/SUBSYSTEM:WINDOWS,5.01 -gf</additionalOptions>
+  <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
@@ -1745,7 +1745,7 @@
   <useStdLibPath>1</useStdLibPath>
   <cRuntime>1</cRuntime>
   <privatePhobos>0</privatePhobos>
-  <additionalOptions>-L/OPT:ICF -L/OPT:REF -L/SUBSYSTEM:WINDOWS,5.01</additionalOptions>
+  <additionalOptions>-L/OPT:ICF -L/OPT:REF</additionalOptions>
   <preBuildCommand />
   <postBuildCommand />
   <filesToClean>*.obj</filesToClean>
