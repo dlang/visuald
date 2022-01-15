@@ -1305,7 +1305,7 @@ Version history
   * installer:
     - full installer now bundled with DMD 2.096.1 and LDC 1.25.1
 
-2021-12-25 version 1.2.0
+2022-01-15 version 1.2.0
   * added support for VS 2022
   * dmdserver:
     - updated to frontend of DMD 2.098.1
