@@ -84,6 +84,13 @@ $(H2 News)
 $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
 )
 
+2022-01-15 Version 1.2.0
+ $(UL
+  $(LI added support for VS 2022)
+  $(LI dmdserver updated to frontend of DMD 2.098.1)
+  $(LI full installer now bundled with DMD 2.098.1 and LDC 1.28.1)
+ )
+
 2021-04-28 Version 1.1.1
  $(UL
   $(LI semantic engine updated to frontend of DMD 2.096.1)
@@ -96,21 +103,6 @@ $(P $(LINK2 VersionHistory.html, Full version history and complete details...)
   $(LI experimental: show parameter storage ref/out/lazy at call site)
   $(LI integrated dfmt for "Format Document")
  )
-
-2020-08-23 Version 1.0.1
- $(UL
-  $(LI dmd based semantic engine: updated to DMD 2.093.1)
-  $(LI editor: now extra mouse buttons to navigate backward/forward supported)
-  $(LI installer: full installer now bundled with DMD 2.093.1 and LDC 1.23.0)
- )
-
-2020-07-04 Version 1.0.0
-$(UL
- $(LI DMD based semantic engine: enabled by default, updated to front end version 2.092)
- $(LI mago: customize debugger display with methods/fields __debugOverview, __debugExpanded, __debugTextView)
- $(LI navigation bar: display and change current edit scope)
- $(LI goto definition by clicking identifier in tool tip)
-)
 
 $(LINK2 VersionHistory.html, more...)
 

@@ -29,12 +29,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.098.0"
+!define DMD_VERSION "2.098.1"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.28.0"
+!define LDC_VERSION "1.28.1"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -1708,6 +1708,11 @@ Function RegisterDMDServer
   WriteRegStr ${DMDSERVER_REG_ROOT} "CLSID\${DMDSERVER_FACTORY_CLSID}\LocalServer32" "" $INSTDIR\dmdserver.exe
   WriteRegStr ${DMDSERVER_REG_ROOT} "CLSID\${DMDSERVER_FACTORY_CLSID}\ProgId"        "" DMDServer.VDServer
   WriteRegStr ${DMDSERVER_REG_ROOT} "CLSID\${DMDSERVER_FACTORY_CLSID}\Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" "" ""
+
+  SetRegView 64
+  WriteRegStr   HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\dmdserver.exe" "DumpFolder" "%LOCALAPPDATA%\CrashDumps"
+  WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\dmdserver.exe" "DumpCount"  10
+  SetRegView 32
 
 FunctionEnd
 

@@ -538,7 +538,7 @@ else
 		if(!compareCommandFile(cmdfile, cmdline))
 			return showFailure && showUptodateFailure("command line changed");
 
-		string target = makeFilenameAbsolute(mConfig.GetTargetPath(), workdir);
+		string target = canonicalPath(makeFilenameCanonical(mConfig.GetTargetPath(), workdir));
 		string[] targets;
 		if(!combined && compileOnly)
 		{
@@ -550,7 +550,9 @@ else
 			foreach (file; lnkfiles)
 				if (extension(file) == ext)
 					targets ~= projopts.replaceEnvironment(file, mConfig);
-			makeFilenamesAbsolute(targets, workdir);
+			makeFilenamesCanonical(targets, workdir);
+			foreach(ref string t; targets)
+				t = canonicalPath(t);
 		}
 		else
 		{
@@ -565,7 +567,7 @@ else
 		}
 
 		string oldestFile;
-		long targettm = getOldestFileTime(targets, oldestFile );
+		long targettm = getOldestFileTime(targets, oldestFile);
 		if(targettm == long.min)
 			return showFailure && showUptodateFailure(oldestFile ~ " does not exist");
 
@@ -578,7 +580,16 @@ else
 			string[] libs = mConfig.getLibsFromDependentProjects();
 			files ~= libs;
 		}
-		makeFilenamesAbsolute(files, workdir);
+		makeFilenamesCanonical(files, workdir);
+		foreach(ref string f; files)
+			f = canonicalPath(f);
+		// remove targets from source files, dmd 2.098 reads lib files to update them only if modified
+		size_t g = 0;
+		for (size_t f = 0; f < files.length; f++)
+			if (!targets.contains(files[f]))
+				files[g++] = files[f];
+		files.length = g;
+
 		string newestFile;
 		long sourcetm = getNewestFileTime(files, newestFile);
 

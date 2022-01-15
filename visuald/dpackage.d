@@ -2490,17 +2490,8 @@ class GlobalOptions
 			if(string* pLink = "LINKCMD" in env)
 				path = *pLink;
 			if(x64)
-			{
-				if(DMD.overrideIni64)
-					path = DMD.overrideLinker64;
-				else if(string* pLink = "LINKCMD64" in env)
+				if(string* pLink = "LINKCMD64" in env)
 					path = *pLink;
-			}
-			else if(mscoff)
-			{
-				if(DMD.overrideIni32coff)
-					path = DMD.overrideLinker32coff;
-			}
 
 			if(options)
 			{
@@ -2514,6 +2505,16 @@ class GlobalOptions
 			if(libs)
 				if(string* pLibs = "LIB" in env)
 					*libs = *pLibs;
+		}
+		if(x64)
+		{
+			if(DMD.overrideIni64)
+				path = DMD.overrideLinker64;
+		}
+		else if(mscoff)
+		{
+			if(DMD.overrideIni32coff)
+				path = DMD.overrideLinker32coff;
 		}
 		return path;
 	}

@@ -1,5 +1,34 @@
 Ddoc
 
+$(H2 2022-01-15 Version 1.2.0)
+ $(UL
+  $(LI added support for VS 2022)
+  $(LI dmdserver:
+   $(UL
+    $(LI updated to frontend of DMD 2.098.1)
+    $(LI bugzilla 21710: Code Completion doesn't work if compiler path contains a white space)
+    $(LI restrict "errors in imported modules" to a couple of lines)
+    $(LI added option to restart the semantic analysis if memory usage goes above a given threshold)
+  ))
+  $(LI project management:
+   $(UL
+    $(LI bugzilla 21897: Semicolon inside quotes in path variable causes range violation in pipedmd)
+    $(LI avoid rebuild when target is also read by compiler (dmd 2.098+))
+  ))
+  $(LI editor:
+   $(UL
+    $(LI bugzilla 21877: VS2019 crash with "Show parameter storage class at call site")
+  ))
+  $(LI cv2pdb:
+   $(UL
+    $(LI added support for DWARF5)
+  ))
+  $(LI installer:
+   $(UL
+    $(LI full installer now bundled with DMD 2.098.1 and LDC 1.28.1)
+  ))
+ )
+
 $(H2 2021-04-28 Version 1.1.1)
  $(UL
   $(LI dmdserver:
