@@ -117,11 +117,13 @@ class RegistryException : Exception
 	HRESULT result;
 }
 
+enum RegHive { def, x64, x86 }
+
 class RegKey
 {
-	this(HKEY root, wstring keyname, bool write = true, bool chkDump = true, bool x64hive = false)
+	this(HKEY root, wstring keyname, bool write = true, bool chkDump = true, RegHive hive = RegHive.def)
 	{
-		Create(root, keyname, write, chkDump, x64hive);
+		Create(root, keyname, write, chkDump, hive);
 	}
 
 	~this()
@@ -145,8 +147,9 @@ class RegKey
 		return  "\""w ~ escapeString(name) ~ "\""w;
 	}
 
-	void Create(HKEY root, wstring keyname, bool write = true, bool chkDump = true, bool x64hive = false)
+	void Create(HKEY root, wstring keyname, bool write, bool chkDump, RegHive hive)
 	{
+		DWORD sam = hive == RegHive.x64 ? KEY_WOW64_64KEY : hive == RegHive.x86 ? KEY_WOW64_32KEY : 0;
 		HRESULT hr;
 		if(write && chkDump && registryRoot.length && keyname.startsWith(registryRoot))
 		{
@@ -158,15 +161,13 @@ class RegKey
 		else if(write)
 		{
 			auto opt = REG_OPTION_NON_VOLATILE;
-			auto sam = (x64hive ? KEY_WOW64_64KEY : 0) | KEY_WRITE;
-			hr = hrRegCreateKeyEx(root, keyname, 0, null, opt, sam, null, &key, null);
+			hr = hrRegCreateKeyEx(root, keyname, 0, null, opt, sam | KEY_WRITE, null, &key, null);
 			if(FAILED(hr))
 				throw new RegistryException(hr);
 		}
 		else
 		{
-			auto sam = (x64hive ? KEY_WOW64_64KEY : 0) | KEY_READ;
-			hr = hrRegOpenKeyEx(root, keyname, REG_OPTION_OPEN_LINK, sam, &key);
+			hr = hrRegOpenKeyEx(root, keyname, REG_OPTION_OPEN_LINK, sam | KEY_READ, &key);
 		}
 	}
 

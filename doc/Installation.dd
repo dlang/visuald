@@ -1,6 +1,6 @@
 Ddoc
 
-$(P Visual D works with all Visual Studio versions from 2008 to 2019. Please make sure to
+$(P Visual D works with all Visual Studio versions from 2008 to 2022. Please make sure to
 have the $(B C++ development tools) aswell as a $(B Windows SDK) included in the Visual Studio installation.)
 
 $(P The click-through-installer will guide you through the installation process. The installer lets you select the
@@ -8,7 +8,7 @@ Visual Studio Version for which you want Visual D to be installed. It will alway
 for all users, not only for a single user.)
 
 $(P To compile your application, you must have $(LINK2 http://www.digitalmars.com/d/download.html, DMD),
-$(LINK2 https://github.com/D-Programming-GDC/GDC, GDC) or $(LINK2 https://github.com/ldc-developers/ldc, LDC)
+$(LINK2 https://github.com/ldc-developers/ldc, LDC) or $(LINK2 https://github.com/D-Programming-GDC/GDC, GDC)
 installed.)
 
 $(H2 Using DMD)

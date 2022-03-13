@@ -1321,3 +1321,8 @@ Version history
     - added support for DWARF5
   * installer:
     - full installer now bundled with DMD 2.098.1 and LDC 1.28.1
+
+unreleased version 1.2.1
+  * bugzilla 22747: D files in VC projects failed to build, added separate versions of
+    Microsoft.Build.CPPTasks.Common for 17.0, 17.1 and 17.2.
+  * bugzilla 22764: now searches the 32-bit registry hive for install paths of DMD and LDC

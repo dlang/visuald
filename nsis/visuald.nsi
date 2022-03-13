@@ -330,6 +330,8 @@ Section "Visual Studio package" SecPackage
 !endif
 !ifdef VS2022
   ${File} ..\msbuild\dbuild\obj\release-v17\ dbuild.17.0.dll
+  ${File} ..\msbuild\dbuild\obj\release-v17_1\ dbuild.17.1.dll
+  ${File} ..\msbuild\dbuild\obj\release-v17_2\ dbuild.17.2.dll
 !endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif
