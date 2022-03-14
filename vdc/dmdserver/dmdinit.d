@@ -29,7 +29,7 @@ import dmd.mtype;
 import dmd.objc;
 import dmd.target;
 
-import dmd.root.outbuffer;
+import dmd.common.outbuffer;
 
 import std.string;
 import core.stdc.string;
@@ -56,13 +56,13 @@ enum string[2][] dmdStatics =
 
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ11visitAArrayMFCQEkQDq10TypeAArrayZ8fd_aaLenCQFn4func15FuncDeclaration", "FuncDeclaration"],
 	["_D3dmd7typesem6dotExpFCQv5mtype4TypePSQBk6dscope5ScopeCQCb10expression10ExpressionCQDdQBc8DotIdExpiZ8noMemberMFQDlQDaQClCQEp10identifier10IdentifieriZ4nesti", "int"],
-	["_D3dmd6dmacro10MacroTable6expandMFKSQBi4root9outbuffer9OutBufferkKkAxaZ4nesti", "int"], // x86
+	["_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBufferkKkAxaZ4nesti", "int"], // x86
 	["_D3dmd7dmodule6Module19runDeferredSemanticRZ6nestedi", "int"],
 	["_D3dmd10dsymbolsem22DsymbolSemanticVisitor5visitMRCQBx9dtemplate13TemplateMixinZ4nesti", "int"],
 	["_D3dmd9dtemplate16TemplateInstance16tryExpandMembersMFPSQCc6dscope5ScopeZ4nesti", "int"],
 	["_D3dmd9dtemplate16TemplateInstance12trySemantic3MFPSQBy6dscope5ScopeZ4nesti", "int"],
 	["_D3dmd13expressionsem25ExpressionSemanticVisitor5visitMRCQCd10expression7CallExpZ4nesti", "int"],
-	["_D3dmd5lexer5Lexer12stringbufferSQBf4root9outbuffer9OutBuffer", "OutBuffer"],
+	["_D3dmd5lexer5Lexer12stringbufferSQBf6common9outbuffer9OutBuffer", "OutBuffer"],
 	//["_D3dmd10expression10IntegerExp__T7literalVii0ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	//["_D3dmd10expression10IntegerExp__T7literalVii1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
 	//["_D3dmd10expression10IntegerExp__T7literalViN1ZQnRZ11theConstantCQCkQCjQCa", "IntegerExp"],
@@ -76,8 +76,8 @@ string cmangled(string s)
 	{
 		if (s == "_D3dmd10identifier10Identifier9newSuffixFNbZ1ik")
 			return "_D3dmd10identifier10Identifier9newSuffixFNbZ1im"; // size_t
-		if (s ==   "_D3dmd6dmacro10MacroTable6expandMFKSQBi4root9outbuffer9OutBufferkKkAxaZ4nesti")
-			return "_D3dmd6dmacro10MacroTable6expandMFKSQBi4root9outbuffer9OutBuffermKmAxaZ4nesti";
+		if (s ==   "_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBufferkKkAxaZ4nesti")
+			return "_D3dmd6dmacro10MacroTable6expandMFKSQBi6common9outbuffer9OutBuffermKmAxaZ4nesti";
 	}
 	return s;
 }
@@ -127,7 +127,7 @@ void clearSemanticStatics()
 	TemplateTypeParameter.tdummy = null;
 	TemplateAliasParameter.sdummy = null;
 
-	VarDeclaration.nextSequenceNumber = 0;
+	//VarDeclaration.nextSequenceNumber = 0;
 
 	//entrypoint = cast(Module)&entrypoint; // disable generation of C main
 
@@ -266,7 +266,7 @@ void dmdSetupParams(const ref Options opts)
 	global.params.ddocfiles = Strings();
 	// Default to -m32 for 32 bit dmd, -m64 for 64 bit dmd
 	target.is64bit = opts.x64;
-	target.mscoff = opts.msvcrt;
+	target.omfobj = !opts.msvcrt;
 	target.cpu = CPU.baseline;
 	target.isLP64 = target.is64bit;
 
@@ -405,36 +405,154 @@ void dmdReinit()
 // plain copy of dmd.mars.addDefaultVersionIdentifiers
 void addDefaultVersionIdentifiers(const ref Param params)
 {
-    VersionCondition.addPredefinedGlobalIdent("DigitalMars");
-    VersionCondition.addPredefinedGlobalIdent("LittleEndian");
-    VersionCondition.addPredefinedGlobalIdent("D_Version2");
-    VersionCondition.addPredefinedGlobalIdent("all");
+	VersionCondition.addPredefinedGlobalIdent("DigitalMars");
+	VersionCondition.addPredefinedGlobalIdent("LittleEndian");
+	VersionCondition.addPredefinedGlobalIdent("D_Version2");
+	VersionCondition.addPredefinedGlobalIdent("all");
 
-    target.addPredefinedGlobalIdentifiers();
+	target.addPredefinedGlobalIdentifiers();
 
-    if (params.doDocComments)
-        VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
-    if (params.cov)
-        VersionCondition.addPredefinedGlobalIdent("D_Coverage");
-    if (params.pic != PIC.fixed)
-        VersionCondition.addPredefinedGlobalIdent(params.pic == PIC.pic ? "D_PIC" : "D_PIE");
-    if (params.useUnitTests)
-        VersionCondition.addPredefinedGlobalIdent("unittest");
-    if (params.useAssert == CHECKENABLE.on)
-        VersionCondition.addPredefinedGlobalIdent("assert");
-    if (params.useArrayBounds == CHECKENABLE.off)
-        VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
-    if (params.betterC)
-    {
-        VersionCondition.addPredefinedGlobalIdent("D_BetterC");
-    }
-    else
-    {
-        VersionCondition.addPredefinedGlobalIdent("D_ModuleInfo");
-        VersionCondition.addPredefinedGlobalIdent("D_Exceptions");
-        VersionCondition.addPredefinedGlobalIdent("D_TypeInfo");
-    }
+	if (params.doDocComments)
+		VersionCondition.addPredefinedGlobalIdent("D_Ddoc");
+	if (params.cov)
+		VersionCondition.addPredefinedGlobalIdent("D_Coverage");
+	if (params.pic != PIC.fixed)
+		VersionCondition.addPredefinedGlobalIdent(params.pic == PIC.pic ? "D_PIC" : "D_PIE");
+	if (params.useUnitTests)
+		VersionCondition.addPredefinedGlobalIdent("unittest");
+	if (params.useAssert == CHECKENABLE.on)
+		VersionCondition.addPredefinedGlobalIdent("assert");
+	if (params.useArrayBounds == CHECKENABLE.off)
+		VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
+	if (params.betterC)
+	{
+		VersionCondition.addPredefinedGlobalIdent("D_BetterC");
+	}
+	else
+	{
+		VersionCondition.addPredefinedGlobalIdent("D_ModuleInfo");
+		VersionCondition.addPredefinedGlobalIdent("D_Exceptions");
+		VersionCondition.addPredefinedGlobalIdent("D_TypeInfo");
+	}
 
-    VersionCondition.addPredefinedGlobalIdent("D_HardFloat");
+	VersionCondition.addPredefinedGlobalIdent("D_HardFloat");
 }
 
+/**
+* Add predefined global identifiers that are determied by the target
+*/
+private
+void addPredefinedGlobalIdentifiers(const ref Target tgt)
+{
+	import dmd.cond : VersionCondition;
+
+	alias predef = VersionCondition.addPredefinedGlobalIdent;
+	if (tgt.cpu >= CPU.sse2)
+	{
+		predef("D_SIMD");
+		if (tgt.cpu >= CPU.avx)
+			predef("D_AVX");
+		if (tgt.cpu >= CPU.avx2)
+			predef("D_AVX2");
+	}
+
+	with (Target)
+	{
+		if (tgt.os & OS.Posix)
+			predef("Posix");
+		if (tgt.os & (OS.linux | OS.FreeBSD | OS.OpenBSD | OS.DragonFlyBSD | OS.Solaris))
+			predef("ELFv1");
+		switch (tgt.os)
+		{
+			case OS.none:         { predef("FreeStanding"); break; }
+			case OS.linux:        { predef("linux");        break; }
+			case OS.OpenBSD:      { predef("OpenBSD");      break; }
+			case OS.DragonFlyBSD: { predef("DragonFlyBSD"); break; }
+			case OS.Solaris:      { predef("Solaris");      break; }
+			case OS.Windows:
+				{
+					predef("Windows");
+					VersionCondition.addPredefinedGlobalIdent(tgt.is64bit ? "Win64" : "Win32");
+					break;
+				}
+			case OS.OSX:
+				{
+					predef("OSX");
+					// For legacy compatibility
+					predef("darwin");
+					break;
+				}
+			case OS.FreeBSD:
+				{
+					predef("FreeBSD");
+					switch (tgt.osMajor)
+					{
+						case 10: predef("FreeBSD_10");  break;
+						case 11: predef("FreeBSD_11"); break;
+						case 12: predef("FreeBSD_12"); break;
+						default: predef("FreeBSD_11"); break;
+					}
+					break;
+				}
+			default: assert(0);
+		}
+	}
+
+	addCRuntimePredefinedGlobalIdent(tgt.c);
+	addCppRuntimePredefinedGlobalIdent(tgt.cpp);
+
+	if (tgt.is64bit)
+	{
+		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86_64");
+		VersionCondition.addPredefinedGlobalIdent("X86_64");
+	}
+	else
+	{
+		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm"); //legacy
+		VersionCondition.addPredefinedGlobalIdent("D_InlineAsm_X86");
+		VersionCondition.addPredefinedGlobalIdent("X86");
+	}
+	if (tgt.isLP64)
+		VersionCondition.addPredefinedGlobalIdent("D_LP64");
+	else if (tgt.is64bit)
+		VersionCondition.addPredefinedGlobalIdent("X32");
+}
+
+private
+void addCRuntimePredefinedGlobalIdent(const ref TargetC c)
+{
+	import dmd.cond : VersionCondition;
+
+	alias predef = VersionCondition.addPredefinedGlobalIdent;
+	with (TargetC.Runtime) switch (c.runtime)
+	{
+		default:
+		case Unspecified: return;
+		case Bionic:      return predef("CRuntime_Bionic");
+		case DigitalMars: return predef("CRuntime_DigitalMars");
+		case Glibc:       return predef("CRuntime_Glibc");
+		case Microsoft:   return predef("CRuntime_Microsoft");
+		case Musl:        return predef("CRuntime_Musl");
+		case Newlib:      return predef("CRuntime_Newlib");
+		case UClibc:      return predef("CRuntime_UClibc");
+		case WASI:        return predef("CRuntime_WASI");
+	}
+}
+
+private
+void addCppRuntimePredefinedGlobalIdent(const ref TargetCPP cpp)
+{
+	import dmd.cond : VersionCondition;
+
+	alias predef = VersionCondition.addPredefinedGlobalIdent;
+	with (TargetCPP.Runtime) switch (cpp.runtime)
+	{
+		default:
+		case Unspecified: return;
+		case Clang:       return predef("CppRuntime_Clang");
+		case DigitalMars: return predef("CppRuntime_DigitalMars");
+		case Gcc:         return predef("CppRuntime_Gcc");
+		case Microsoft:   return predef("CppRuntime_Microsoft");
+		case Sun:         return predef("CppRuntime_Sun");
+	}
+}

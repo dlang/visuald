@@ -1752,10 +1752,17 @@
  </Config>
  <Folder name="dmdserver">
   <Folder name="dmd">
+   <Folder name="common">
+    <File path="dmd\src\dmd\common\file.d" />
+    <File path="dmd\src\dmd\common\int128.d" />
+    <File path="dmd\src\dmd\common\outbuffer.d" />
+    <File path="dmd\src\dmd\common\string.d" />
+   </Folder>
    <Folder name="root">
     <File path="dmd\src\dmd\root\aav.d" />
     <File path="dmd\src\dmd\root\array.d" />
     <File path="dmd\src\dmd\root\bitarray.d" />
+    <File path="dmd\src\dmd\root\complex.d" />
     <File path="dmd\src\dmd\root\ctfloat.d" />
     <File path="dmd\src\dmd\root\file.d" />
     <File path="dmd\src\dmd\root\filename.d" />
@@ -1763,7 +1770,6 @@
     <File path="dmd\src\dmd\root\longdouble.d" />
     <File path="dmd\src\dmd\root\longdouble.h" />
     <File path="dmd\src\dmd\root\man.d" />
-    <File path="dmd\src\dmd\root\outbuffer.d" />
     <File path="dmd\src\dmd\root\port.d" />
     <File path="dmd\src\dmd\root\response.d" />
     <File path="dmd\src\dmd\root\rmem.d" tool="None" />
@@ -1772,6 +1778,7 @@
     <File path="dmd\src\dmd\root\string.d" />
     <File path="dmd\src\dmd\root\stringtable.d" />
     <File path="dmd\src\dmd\root\strtold.d" />
+    <File path="dmd\src\dmd\root\utf.d" />
    </Folder>
    <File path="dmd\src\dmd\access.d" />
    <File path="dmd\src\dmd\aggregate.d" />
@@ -1796,7 +1803,6 @@
    <File path="dmd\src\dmd\cli.d" tool="None" />
    <File path="dmd\src\dmd\clone.d" />
    <File path="dmd\src\dmd\compiler.d" />
-   <File path="dmd\src\dmd\complex.d" />
    <File path="dmd\src\dmd\cond.d" />
    <File path="dmd\src\dmd\console.d" />
    <File path="dmd\src\dmd\constfold.d" />
@@ -1831,7 +1837,7 @@
    <File path="dmd\src\dmd\escape.d" />
    <File path="dmd\src\dmd\expression.d" />
    <File path="dmd\src\dmd\expressionsem.d" />
-   <File path="dmd\src\dmd\filecache.d" />
+   <File path="dmd\src\dmd\file_manager.d" />
    <File path="dmd\src\dmd\foreachvar.d" />
    <File path="dmd\src\dmd\frontend.d" tool="None" />
    <File path="dmd\src\dmd\func.d" />
@@ -1906,7 +1912,6 @@
    <File path="dmd\src\dmd\transitivevisitor.d" />
    <File path="dmd\src\dmd\typesem.d" />
    <File path="dmd\src\dmd\typinf.d" />
-   <File path="dmd\src\dmd\utf.d" />
    <File path="dmd\src\dmd\utils.d" />
    <File path="dmd\src\dmd\visitor.d" />
   </Folder>
