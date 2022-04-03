@@ -865,6 +865,8 @@ void do_unittests()
 		{                                // Line 20
 			Proc proc;
 			proc.task.member = 3;
+			Proc* pproc = &proc;
+			pproc.task.member = 1;
 		}
 	};
 	m = checkErrors(source, "");
@@ -876,6 +878,7 @@ void do_unittests()
 	checkExpansions(m, 14, 23, "C", [ "Compiler" ]);
 	checkExpansions(m, 14, 32, "D", [ "DMD" ]);
 	checkExpansions(m, 22, 14, "m", [ "member", "mangleof" ]);
+	checkExpansions(m, 24, 11, "t", [ "task", "tupleof" ]);
 
 	source =
 	q{                                   // Line 1
