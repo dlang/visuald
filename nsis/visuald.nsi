@@ -29,7 +29,7 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.098.1"
+!define DMD_VERSION "2.099.0"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
@@ -330,6 +330,8 @@ Section "Visual Studio package" SecPackage
 !endif
 !ifdef VS2022
   ${File} ..\msbuild\dbuild\obj\release-v17\ dbuild.17.0.dll
+  ${File} ..\msbuild\dbuild\obj\release-v17_1\ dbuild.17.1.dll
+  ${File} ..\msbuild\dbuild\obj\release-v17_2\ dbuild.17.2.dll
 !endif
   WriteRegStr HKLM "Software\${APPNAME}" "msbuild" $INSTDIR\msbuild
 !endif

@@ -402,6 +402,7 @@ void do_unittests()
 		import std.algorithm, std.array, std.string;
 		auto refs = findReferencesInModule(analyzedModule, line, col);
 		assert_equal(refs.length, expected.length);
+		refs.sort!("a.loc.linnum < b.loc.linnum")();
 		for (size_t i = 0; i < refs.length; i++)
 		{
 			assert_equal(refs[i].loc.linnum, expected[i].line);
@@ -411,7 +412,7 @@ void do_unittests()
 
 	void dumpAST(Module mod)
 	{
-		import dmd.root.outbuffer;
+		import dmd.common.outbuffer;
 		import dmd.hdrgen;
 		auto buf = OutBuffer();
 		buf.doindent = 1;
@@ -696,7 +697,10 @@ void do_unittests()
 	};
 	m = checkErrors(source,
 		"14,2,14,3:Error: identifier or `new` expected following `.`, not `}`\n" ~
-		"14,2,14,3:Error: semicolon expected, not `}`\n" ~
+		"14,2,14,3:Error: semicolon needed to end declaration of `y`, instead of `}`\a" ~
+		"source.d(13): `y` declared here\n" ~
+		"13,7,13,8:Info: source.d(14): semicolon needed to end declaration of `y`, instead of `}`\a" ~
+		"--> `y` declared here\n" ~
 		"12,15,12,16:Error: no property `f` for type `source.S`\n");
 	//dumpAST(m);
 	string[] structProperties = [ "init", "sizeof", "alignof", "mangleof", "stringof", "tupleof" ];
@@ -756,7 +760,7 @@ void do_unittests()
 			if (c.to
 		}                                // Line 10
 	};
-	m = checkErrors(source, "10,2,10,3:Error: found `}` when expecting `)`\n" ~
+	m = checkErrors(source, "10,2,10,3:Error: missing closing `)` after `if (c.to`\n" ~
 							"10,2,10,3:Error: found `}` instead of statement\n" ~
 							"9,9,9,10:Error: no property `to` for type `source.C`, perhaps `import std.conv;` is needed?\n");
 	checkExpansions(m,  9,  10, "to", [ "toString", "toHash", "toDebug" ]);
@@ -861,6 +865,8 @@ void do_unittests()
 		{                                // Line 20
 			Proc proc;
 			proc.task.member = 3;
+			Proc* pproc = &proc;
+			pproc.task.member = 1;
 		}
 	};
 	m = checkErrors(source, "");
@@ -872,6 +878,7 @@ void do_unittests()
 	checkExpansions(m, 14, 23, "C", [ "Compiler" ]);
 	checkExpansions(m, 14, 32, "D", [ "DMD" ]);
 	checkExpansions(m, 22, 14, "m", [ "member", "mangleof" ]);
+	checkExpansions(m, 24, 11, "t", [ "task", "tupleof" ]);
 
 	source =
 	q{                                   // Line 1
@@ -1603,7 +1610,7 @@ void do_unittests()
 		"6,12,6,13:Error: missing `{ ... }` for function literal\n" ~
 		"6,12,6,13:Error: found `1` when expecting `;` following statement\n" ~
 		"6,13,6,14:Error: found `)` instead of statement\n" ~
-		"9,2,9,3:Error: unrecognized declaration\n" ~
+		"9,2,9,3:Error: unmatched closing brace\n" ~
 		"5,3,5,4:Error: undefined identifier `a`\n" ~
 		"6,6,6,7:Error: undefined identifier `a`\n");
 

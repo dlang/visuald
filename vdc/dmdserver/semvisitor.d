@@ -51,7 +51,7 @@ import dmd.target;
 import dmd.tokens;
 import dmd.visitor;
 
-import dmd.root.outbuffer;
+import dmd.common.outbuffer;
 import dmd.root.file;
 import dmd.root.filename;
 import dmd.root.rmem;
@@ -291,6 +291,13 @@ extern(C++) class ASTVisitor : StoppableVisitor
 	{
 		visitType(ad.originalType);
 		super.visit(ad);
+	}
+
+	override void visit(AliasAssign aa)
+	{
+		if (aa.type)
+			visitType(aa.type);
+		super.visit(aa);
 	}
 
 	override void visit(AttribDeclaration decl)
@@ -783,6 +790,16 @@ extern(C++) class FindASTVisitor : ASTVisitor
 			foundNode(cond);
 	}
 
+	override void visit(AliasAssign aa)
+	{
+		if (!found && matchIdentifier(aa.loc, aa.ident))
+			foundNode(aa);
+		if (aa.type)
+			super.visit(aa);
+		if (aa.aliassym)
+			super.visit(aa.aliassym);
+	}
+
 	override void visit(Expression expr)
 	{
 		super.visit(expr);
@@ -1137,6 +1154,16 @@ string tipForObject(RootObject obj)
 	return txt;
 }
 
+TipData tipForAlias(Dsymbol sym, string kind, string txt)
+{
+	TipData tip = tipDataForObject(sym);
+	if (tip.kind.length)
+		kind = "alias " ~ tip.kind;
+	if (tip.code.length)
+		txt ~= " = " ~ tip.code;
+	return TipData(kind, txt);
+}
+
 TipData tipForDeclaration(Declaration decl)
 {
 	if (auto func = decl.isFuncDeclaration())
@@ -1211,13 +1238,10 @@ TipData tipForDeclaration(Declaration decl)
 				txt ~= " = " ~ var._init.toString();
 	if (auto ad = decl.isAliasDeclaration())
 		if (ad.aliassym)
-		{
-			TipData tip = tipDataForObject(ad.aliassym);
-			if (tip.kind.length)
-				kind = "alias " ~ tip.kind;
-			if (tip.code.length)
-				txt ~= " = " ~ tip.code;
-		}
+			return tipForAlias(ad.aliassym, kind, txt);
+	if (auto aa = decl.isAliasAssign())
+		if (aa.aliassym)
+			return tipForAlias(aa.aliassym, kind, txt);
 	return TipData(kind, txt);
 }
 
@@ -1320,16 +1344,16 @@ TipData tipDataForObject(RootObject obj)
 	{
 		switch(e.op)
 		{
-			case TOK.variable:
-			case TOK.symbolOffset:
+			case EXP.variable:
+			case EXP.symbolOffset:
 				tip = tipForDeclaration((cast(SymbolExp)e).var);
 				doc = docForSymbol((cast(SymbolExp)e).var);
 				break;
-			case TOK.dotVariable:
+			case EXP.dotVariable:
 				tip = tipForDeclaration((cast(DotVarExp)e).var);
 				doc = docForSymbol((cast(DotVarExp)e).var);
 				break;
-			case TOK.dotIdentifier:
+			case EXP.dotIdentifier:
 				auto die = e.isDotIdExp();
 				if (die.resolvedTo && die.resolvedTo.type)
 				{
@@ -1337,7 +1361,7 @@ TipData tipDataForObject(RootObject obj)
 					break;
 				}
 				goto default;
-			case TOK.template_:
+			case EXP.template_:
 				tip = tipForTemplate((cast(TemplateExp)e));
 				break;
 			default:
@@ -1401,7 +1425,7 @@ static const(char)* printSymbolWithLink(Dsymbol sym, bool qualifyTypes)
 		return s;
 
     import dmd.root.string : toDString;
-    import dmd.utf;
+    import dmd.root.utf;
 	auto str = s.toDString();
 	size_t p = 0;
 	while (p < str.length)
@@ -1482,11 +1506,11 @@ extern(C++) class FindDefinitionVisitor : FindASTVisitor
 			{
 				switch(e.op)
 				{
-					case TOK.variable:
-					case TOK.symbolOffset:
+					case EXP.variable:
+					case EXP.symbolOffset:
 						loc = (cast(SymbolExp)e).var.loc;
 						break;
-					case TOK.dotVariable:
+					case EXP.dotVariable:
 						loc = (cast(DotVarExp)e).var.loc;
 						break;
 					default:
@@ -1964,7 +1988,7 @@ ParameterStorageClassPos[] findParameterStorageClass(Module mod)
 		{
 			if (!expr.loc.filename)
 				// drill into generated function for lazy parameter
-				if (expr.op == TOK.function_)
+				if (expr.op == EXP.function_)
 					if (auto fd = (cast(FuncExp)expr).fd)
 						if (fd.fbody)
 							if (auto cs = fd.fbody.isCompoundStatement())
@@ -2111,6 +2135,11 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 				addReference(expr.loc, expr.var.ident);
 			super.visit(expr);
 		}
+		override void visit(SymOffExp expr)
+		{
+			// skip this SymbolExp, it is not an original and has bad location
+			super.visit(cast(Expression)expr);
+		}
 		override void visit(DotVarExp dve)
 		{
 			if (dve.var is search)
@@ -2198,11 +2227,11 @@ Reference[] findReferencesInModule(Module mod, int line, int index)
 	{
 		switch(e.op)
 		{
-			case TOK.variable:
-			case TOK.symbolOffset:
+			case EXP.variable:
+			case EXP.symbolOffset:
 				fdv.found = (cast(SymbolExp)e).var;
 				break;
-			case TOK.dotVariable:
+			case EXP.dotVariable:
 				fdv.found = (cast(DotVarExp)e).var;
 				break;
 			default:
@@ -2482,14 +2511,14 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 		{
 			switch(e.op)
 			{
-				case TOK.variable:
-				case TOK.symbolOffset:
+				case EXP.variable:
+				case EXP.symbolOffset:
 					if(recursed)
 						return (cast(SymbolExp)e).var.type;
 					return null;
 
-				case TOK.dotVariable:
-				case TOK.dotIdentifier:
+				case EXP.dotVariable:
+				case EXP.dotIdentifier:
 					flags |= SearchLocalsOnly;
 					if (recursed)
 						if (auto dve = e.isDotVarExp())
@@ -2499,7 +2528,7 @@ string[] findExpansions(Module mod, int line, int index, string tok)
 					auto e1 = (cast(UnaExp)e).e1;
 					return getType(e1, true);
 
-				case TOK.dot:
+				case EXP.dot:
 					flags |= SearchLocalsOnly;
 					return (cast(DotExp)e).e1.type;
 				default:
@@ -2742,17 +2771,17 @@ bool isConstantExpr(Expression expr)
 {
 	switch(expr.op)
 	{
-		case TOK.int64, TOK.float64, TOK.char_, TOK.complex80:
-		case TOK.null_, TOK.void_:
-		case TOK.string_:
-		case TOK.arrayLiteral, TOK.assocArrayLiteral, TOK.structLiteral:
-		case TOK.classReference:
-			//case TOK.type:
-		case TOK.vector:
-		case TOK.function_, TOK.delegate_:
-		case TOK.symbolOffset, TOK.address:
-		case TOK.typeid_:
-		case TOK.slice:
+		case EXP.int64, EXP.float64, EXP.char_, EXP.complex80:
+		case EXP.null_, EXP.void_:
+		case EXP.string_:
+		case EXP.arrayLiteral, EXP.assocArrayLiteral, EXP.structLiteral:
+		case EXP.classReference:
+			//case EXP.type:
+		case EXP.vector:
+		case EXP.function_, EXP.delegate_:
+		case EXP.symbolOffset, EXP.address:
+		case EXP.typeid_:
+		case EXP.slice:
 			return true;
 		default:
 			return false;
@@ -2835,12 +2864,13 @@ Module createModuleFromText(string filename, string text)
 {
 	import std.path;
 
-	text ~= "\0\0"; // parser needs 2 trailing zeroes
+	text ~= "\0\0\0\0"; // parser needs 4 trailing zeroes
 	string name = stripExtension(baseName(filename));
 	auto id = Identifier.idPool(name);
 	auto mod = new Module(filename, id, true, false);
 	mod.srcBuffer = new FileBuffer(cast(ubyte[])text);
 	mod.read(Loc.initial);
+	mod.importedFrom = mod; // avoid skipping unittests
 	mod.parse();
 	return mod;
 }

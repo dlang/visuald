@@ -44,9 +44,12 @@
     <MSBuildVersion_Major>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[0])</MSBuildVersion_Major>
     <MSBuildVersion_Minor>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[1])</MSBuildVersion_Minor>
     <MSBuildVersion_Build>$([System.String]::Copy('$(MSBuildVersion)').Split(['.'])[2])</MSBuildVersion_Build>
-    <DBuildVersion Condition="$(MSBuildVersion_Major) != 16">$(MSBuildVersion_Major).0</DBuildVersion>
+    <DBuildVersion Condition="$(MSBuildVersion_Major) != 16 and $(MSBuildVersion_Major) != 17">$(MSBuildVersion_Major).0</DBuildVersion>
     <DBuildVersion Condition="$(MSBuildVersion_Major) == 16 and $(MSBuildVersion_Minor) == 0">16.0</DBuildVersion>
     <DBuildVersion Condition="$(MSBuildVersion_Major) == 16 and $(MSBuildVersion_Minor) != 0">16.1</DBuildVersion>
+    <DBuildVersion Condition="$(MSBuildVersion_Major) == 17 and $(MSBuildVersion_Minor) == 0">17.0</DBuildVersion>
+    <DBuildVersion Condition="$(MSBuildVersion_Major) == 17 and $(MSBuildVersion_Minor) == 1">17.1</DBuildVersion>
+    <DBuildVersion Condition="$(MSBuildVersion_Major) == 17 and $(MSBuildVersion_Minor) &gt; 1">17.2</DBuildVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(DBuildVersion)' == ''">

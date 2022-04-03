@@ -1705,7 +1705,7 @@ class GlobalOptions
 	{
 		if(WindowsSdkDir.empty)
 		{
-			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"w, false);
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"w, false, true, RegHive.x86);
 			WindowsSdkDir = toUTF8(keySdk.GetString("KitsRoot10"));
 			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
 				WindowsSdkDir = "";
@@ -1714,7 +1714,7 @@ class GlobalOptions
 		{
 			if(WindowsSdkDir.empty)
 			{
-				scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, reg, false);
+				scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, reg, false, true, RegHive.x86);
 				WindowsSdkDir = toUTF8(keySdk.GetString("InstallationFolder"));
 				if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
 					WindowsSdkDir = "";
@@ -1726,7 +1726,7 @@ class GlobalOptions
 		checkLegacySDK("SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\v8.0"w);
 		if(WindowsSdkDir.empty)
 		{
-			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false);
+			scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows"w, false, true, RegHive.x86);
 			WindowsSdkDir = toUTF8(keySdk.GetString("CurrentInstallFolder"));
 			if(!std.file.exists(buildPath(WindowsSdkDir, "Lib")))
 				WindowsSdkDir = "";
@@ -1775,7 +1775,7 @@ class GlobalOptions
 				UCRTSdkDir = normalizeDir(fromMBSz(cast(immutable)psdk));
 			else
 			{
-				scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"w, false);
+				scope RegKey keySdk = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots"w, false, true, RegHive.x86);
 				UCRTSdkDir = normalizeDir(toUTF8(keySdk.GetString("KitsRoot10")));
 			}
 		}
@@ -1888,11 +1888,11 @@ class GlobalOptions
 
 	void detectDMDInstallDir()
 	{
-		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false);
+		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false, true, RegHive.x86);
 		DMD.InstallDir = toUTF8(keyVD.GetString("DMDInstallDir"));
 		if(DMD.InstallDir.empty)
 		{
-			scope RegKey keyDMD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\DMD", false);
+			scope RegKey keyDMD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\DMD", false, true, RegHive.x86);
 			string dir = toUTF8(keyDMD.GetString("InstallationFolder"));
 			if(!dir.empty)
 				DMD.InstallDir = dir ~ "\\dmd2";
@@ -1901,17 +1901,17 @@ class GlobalOptions
 
 	void detectLDCInstallDir()
 	{
-		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false);
+		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false, true, RegHive.x86);
 		LDC.InstallDir = toUTF8(keyVD.GetString("LDCInstallDir"));
 	}
 
 	void detectBaseInstallDir()
 	{
-		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false);
+		scope RegKey keyVD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\VisualD", false, true, RegHive.x86);
 		baseInstallDir = toUTF8(keyVD.GetString("BaseInstallDir"));
 		if(baseInstallDir.empty)
 		{
-			scope RegKey keyDMD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\DMD", false);
+			scope RegKey keyDMD = new RegKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\DMD", false, true, RegHive.x86);
 			baseInstallDir = toUTF8(keyDMD.GetString("InstallationFolder"));
 		}
 		if(baseInstallDir.empty)
