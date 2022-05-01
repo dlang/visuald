@@ -29,12 +29,12 @@
 
 ; define DMD source path to include dmd installation
 ; !define DMD 
-!define DMD_VERSION "2.099.0"
+!define DMD_VERSION "2.099.1"
 !define DMD_SRC c:\d\dmd-${DMD_VERSION}
 
 ; define LDC to include ldc installation
 ; !define LDC
-!define LDC_VERSION "1.28.1"
+!define LDC_VERSION "1.29.0"
 !define LDC_SRC c:\d\ldc2-${LDC_VERSION}-windows-multilib
 
 ; define VS2019 to include VS2019 support
@@ -681,7 +681,7 @@ ${MementoSection} "Install in VS 2022" SecVS2022
   ${File} ..\nsis\Extensions\ vdlogo.ico
   ${AddItem} "$1${EXTENSION_DIR}"
 
-  GetFullPathName /SHORT $0 $INSTDIR
+  GetFullPathName $0 $INSTDIR
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDINSTALLPATH" "$0" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VSVERSION" "16" NoBackup
   !insertmacro ReplaceInFile "$1${EXTENSION_DIR}\extension.vsixmanifest" "VDVERSION" "${VERSION_MAJOR}.${VERSION_MINOR}" NoBackup

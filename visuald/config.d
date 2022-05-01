@@ -3436,7 +3436,7 @@ class Config :	DisposingComObject,
 		return files;
 	}
 
-	string[] filterTroublesomeOptions(string[] cmds)
+	static string[] filterTroublesomeOptions(string[] cmds)
 	{
 		// filter out options that can cause unexpected failures due to file accesses
 		size_t j = 0;
@@ -3470,8 +3470,11 @@ class Config :	DisposingComObject,
 			if (opts.additionalOptions.length)
 				cmd ~= " " ~ opts.additionalOptions;
 		}
-		cmd ~= " -v -o- dummy.obj";
+		return getCompilerVersionIDs(cmd, opts.versionids);
+	}
 
+	static string getCompilerVersionIDs(string cmd, string opt_versionids)
+	{
 		__gshared string[string] cachedVersions;
 		synchronized
 		{
@@ -3481,12 +3484,13 @@ class Config :	DisposingComObject,
 				cmd = quoteFilename(Package.GetGlobalOptions().LDC.getCompilerPath()) ~ cmd[4..$];
 			else if (cmd.startsWith("gdc "))
 				cmd = quoteFilename(Package.GetGlobalOptions().GDC.getCompilerPath()) ~ cmd[3..$];
+			cmd ~= " -v -o- dummy.obj";
 
 			string key = cmd;
 			if (auto p = key in cachedVersions)
 				return *p;
 
-			string versions = opts.versionids;
+			string versions = opt_versionids;
 			try
 			{
 				auto cmds = tokenizeArgs(cmd);

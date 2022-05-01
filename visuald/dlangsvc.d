@@ -11,6 +11,7 @@ module visuald.dlangsvc;
 // import diamond;
 
 import visuald.comutil;
+import visuald.lexutil;
 import visuald.logutil;
 import visuald.hierutil;
 import visuald.fileutil;
@@ -1048,6 +1049,24 @@ class LanguageService : DisposingComObject,
 		return true;
 	}
 
+	string GuessImportPathFromSource(Source src)
+	{
+		ModuleDeclParseState state;
+		int lines = src.GetLineCount();
+		for (int ln = 0; ln < lines; ln++)
+		{
+			wstring txt = src.GetText(ln, 0, ln, -1);
+			string line = toUTF8(txt);
+			if (state.parseLine(line))
+				break;
+		}
+		string file = src.GetFileName();
+		string dir = dirName(file);
+		while(findSkip(state.modname, "."))
+			dir = dirName(dir);
+		return dir;
+	}
+
 	// semantic completion ///////////////////////////////////
 
 	uint GetTip(Source src, TextSpan* pSpan, bool overloads, GetTipCallBack cb)
@@ -1092,10 +1111,14 @@ class LanguageService : DisposingComObject,
 
 	void ConfigureSemanticProject(Source src)
 	{
+		bool guessImport = false;
 		string file = src.GetFileName();
 		Config cfg = getProjectConfig(file, true);
 		if(!cfg)
+		{
 			cfg = getCurrentStartupConfig();
+			guessImport = true;
+		}
 
 		string[] imp;
 		string[] stringImp;
@@ -1104,11 +1127,11 @@ class LanguageService : DisposingComObject,
 		string cmdline;
 		uint flags = 0;
 
+		auto globopts = Package.GetGlobalOptions();
 		if(cfg)
 		{
 			scope(exit) release(cfg);
 			auto cfgopts = cfg.GetProjectOptions();
-			auto globopts = Package.GetGlobalOptions();
 			imp = GetImportPaths(cfg) ~ Package.GetGlobalOptions().getImportPaths(cfgopts.compiler);
 			flags = ConfigureFlags!()(cfgopts.useUnitTests, !cfgopts.release, cfgopts.isX86_64,
 									  cfgopts.cov, cfgopts.doDocComments, cfgopts.boundscheck == 3,
@@ -1132,39 +1155,41 @@ class LanguageService : DisposingComObject,
 			versionids = tokenizeArgs(versions);
 			debugids = tokenizeArgs(cfgopts.debugids);
 			cmdline = cfgopts.dmdFrontEndOptions();
-			if (globopts.dmdServerMemThres)
-				cmdline ~= " -memThreshold=" ~ to!string(globopts.dmdServerMemThres);
 		}
 		else
 		{
 			// source file loaded into VS without project
-			imp = Package.GetGlobalOptions().getImportPaths(Compiler.DMD);
-			versionids = [ // default versions for dmd -m64
-				"DigitalMars", "Windows", "Win64",
-				"CRuntime_Microsoft", "CppRuntime_Microsoft",
-				"D_Version2", "all", "assert",
-				"LittleEndian", "D_SIMD",
-				"X86_64", "D_LP64", "D_InlineAsm_X86_64",
-				"D_ModuleInfo", "D_Exceptions", "D_TypeInfo", "D_HardFloat",
-			];
-			flags = ConfigureFlags!()(false, // bool unittestOn,
+			imp = globopts.getImportPaths(Compiler.DMD);
+			guessImport = true;
+			cmdline = globopts.compileAndRunOpts;
+			auto cmdopts = tokenizeArgs(cmdline);
+			string versions = Config.getCompilerVersionIDs("dmd " ~ cmdline, "");
+			versionids = tokenizeArgs(versions);
+			flags = ConfigureFlags!()(versionids.contains("unittest") != null,
 									  true,  // bool debugOn,
-									  true,  // bool x64,
-									  false, // bool cov,
-									  false, // bool doc,
-									  false, // bool nobounds,
+									  versionids.contains("D_LP64") != null,
+									  versionids.contains("D_Coverage") != null,
+									  versionids.contains("D_ddoc") != null,
+									  versionids.contains("D_NoBoundsChecks") != null,
 									  false, // bool gdc,
 									  0,     // int versionLevel,
 									  0,     // int debugLevel,
-									  false, // bool noDeprecated,
-									  true,  // bool deprecateInfo,
+									  cmdopts.contains("-de") != null, // bool noDeprecated,
+									  cmdopts.contains("-di") != null,  // bool deprecateInfo,
 									  false, // bool ldc,
-									  true,  // bool msvcrt,
-									  true,  // bool warnings,
-									  false, // bool warnAsError,
-									  true,  // bool mixinAnalysis,
-									  false);// bool ufcsExpansions
+									  versionids.contains("CRuntime_Microsoft") != null,
+									  cmdopts.contains("-wi") != null,  // bool warnings,
+									  cmdopts.contains("-w") != null, // bool warnAsError,
+									  globopts.mixinAnalysis,
+									  globopts.UFCSExpansions);
 		}
+		if (guessImport)
+		{
+			string workdir = GuessImportPathFromSource(src);
+			imp.addunique(workdir);
+		}
+		if (globopts.dmdServerMemThres)
+			cmdline ~= " -memThreshold=" ~ to!string(globopts.dmdServerMemThres);
 		vdServerClient.ConfigureSemanticProject(file, assumeUnique(imp), assumeUnique(stringImp),
 		                                              assumeUnique(versionids), assumeUnique(debugids), cmdline, flags);
 	}
