@@ -64,7 +64,7 @@ class ComObject : IUnknown
 		return p;
 	}
 
-extern (System):
+extern (Windows):
 	override HRESULT QueryInterface(in IID* riid, void** ppv)
 	{
 		if (*riid == IID_IUnknown)
