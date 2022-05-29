@@ -298,7 +298,7 @@ void dmdSetupParams(const ref Options opts)
 			case "-preview=intpromote": global.params.fix16997 = true; break;
 			case "-preview=dtorfields": global.params.dtorFields = FeatureState.enabled; break;
 			case "-preview=markdown": global.params.markdown = true; break;
-			case "-preview=rvaluerefparam": global.params.rvalueRefParam = true; break;
+			case "-preview=rvaluerefparam": global.params.rvalueRefParam = FeatureState.enabled; break;
 			case "-preview=nosharedaccess": global.params.noSharedAccess = true; break;
 			case "-preview=fixAliasThis": global.params.fixAliasThis = true; break;
 			case "-preview=in": global.params.previewIn = true; break;
@@ -422,6 +422,12 @@ void addDefaultVersionIdentifiers(const ref Param params)
 		VersionCondition.addPredefinedGlobalIdent("unittest");
 	if (params.useAssert == CHECKENABLE.on)
 		VersionCondition.addPredefinedGlobalIdent("assert");
+    if (params.useIn == CHECKENABLE.on)
+        VersionCondition.addPredefinedGlobalIdent("D_PreConditions");
+    if (params.useOut == CHECKENABLE.on)
+        VersionCondition.addPredefinedGlobalIdent("D_PostConditions");
+    if (params.useInvariants == CHECKENABLE.on)
+        VersionCondition.addPredefinedGlobalIdent("D_Invariants");
 	if (params.useArrayBounds == CHECKENABLE.off)
 		VersionCondition.addPredefinedGlobalIdent("D_NoBoundsChecks");
 	if (params.betterC)
@@ -436,6 +442,9 @@ void addDefaultVersionIdentifiers(const ref Param params)
 	}
 
 	VersionCondition.addPredefinedGlobalIdent("D_HardFloat");
+
+    if (params.tracegc)
+        VersionCondition.addPredefinedGlobalIdent("D_ProfileGC");
 }
 
 /**
@@ -490,6 +499,7 @@ void addPredefinedGlobalIdentifiers(const ref Target tgt)
 						case 10: predef("FreeBSD_10");  break;
 						case 11: predef("FreeBSD_11"); break;
 						case 12: predef("FreeBSD_12"); break;
+						case 13: predef("FreeBSD_13"); break;
 						default: predef("FreeBSD_11"); break;
 					}
 					break;

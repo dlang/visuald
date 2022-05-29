@@ -1870,6 +1870,7 @@
    <File path="dmd\src\dmd\link.d" tool="None" />
    <File path="dmd\src\dmd\mars.d" tool="None" />
    <File path="dmd\src\dmd\mtype.d" />
+   <File path="dmd\src\dmd\mustuse.d" />
    <File path="dmd\src\dmd\nogc.d" />
    <File path="dmd\src\dmd\nspace.d" />
    <File path="dmd\src\dmd\ob.d" />
