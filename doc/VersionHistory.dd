@@ -1,5 +1,20 @@
 Ddoc
 
+$(H2 2022-06-05 Version 1.3.0)
+ $(UL
+  $(LI dmdserver updated to frontend of DMD 2.100.0)
+  $(LI full installer now bundled with DMD 2.100.0 and LDC 1.29.0)
+  $(LI bugzilla 22747: D files in VC projects failed to build in VS 2022, added separate versions of
+       Microsoft.Build.CPPTasks.Common for 17.0, 17.1 and 17.2.)
+  $(LI bugzilla 22764: now searches the 32-bit registry hive for install paths of DMD and LDC)
+  $(LI bugzilla 23069: mago crashing when debugging VARIANT data type in VS 2022)
+  $(LI bugzilla 23043: project templates missing in VS 2022 until configuration manually updated)
+  $(LI semantic analysis: without a project loaded, a D file is now analized using the compile options)
+  $(LI of "Compile and Run" with an import path derived from the module declaration.)
+  $(LI visualdproj: exit code printed for failed commands)
+  $(LI cv2pdb 0.52: improved DWARF support for non-contiguous functions, bug fixes)
+ )
+
 $(H2 2022-01-15 Version 1.2.0)
  $(UL
   $(LI added support for VS 2022)

@@ -3189,11 +3189,14 @@ class Config :	DisposingComObject,
 		}
 		if(cmd.length)
 		{
-			cmd = getEnvironmentChanges() ~ cmd ~ addopt ~ "\n:reportError\n";
+			cmd = getEnvironmentChanges() ~ cmd ~ addopt ~ "\n";
+			cmd ~= ":reportError\n";
+			cmd ~= "set ERR=%ERRORLEVEL%\n";
+			cmd ~= "if %ERR% LSS -65535 then ERR=0x%=EXITCODE%\n";
 			if(syntaxOnly)
-				cmd ~= "if %errorlevel% neq 0 echo Compiling " ~ file.GetFilename() ~ " failed!\n";
+				cmd ~= "if %errorlevel% neq 0 echo Compiling " ~ file.GetFilename() ~ " failed (error code %ERR%)!\n";
 			else
-				cmd ~= "if %errorlevel% neq 0 echo Building " ~ outfile ~ " failed!\n";
+				cmd ~= "if %errorlevel% neq 0 echo Building " ~ outfile ~ " failed (error code %ERR%)!\n";
 			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
 		return cmd;
@@ -3436,7 +3439,7 @@ class Config :	DisposingComObject,
 		return files;
 	}
 
-	string[] filterTroublesomeOptions(string[] cmds)
+	static string[] filterTroublesomeOptions(string[] cmds)
 	{
 		// filter out options that can cause unexpected failures due to file accesses
 		size_t j = 0;
@@ -3470,8 +3473,11 @@ class Config :	DisposingComObject,
 			if (opts.additionalOptions.length)
 				cmd ~= " " ~ opts.additionalOptions;
 		}
-		cmd ~= " -v -o- dummy.obj";
+		return getCompilerVersionIDs(cmd, opts.versionids);
+	}
 
+	static string getCompilerVersionIDs(string cmd, string opt_versionids)
+	{
 		__gshared string[string] cachedVersions;
 		synchronized
 		{
@@ -3481,12 +3487,13 @@ class Config :	DisposingComObject,
 				cmd = quoteFilename(Package.GetGlobalOptions().LDC.getCompilerPath()) ~ cmd[4..$];
 			else if (cmd.startsWith("gdc "))
 				cmd = quoteFilename(Package.GetGlobalOptions().GDC.getCompilerPath()) ~ cmd[3..$];
+			cmd ~= " -v -o- dummy.obj";
 
 			string key = cmd;
 			if (auto p = key in cachedVersions)
 				return *p;
 
-			string versions = opts.versionids;
+			string versions = opt_versionids;
 			try
 			{
 				auto cmds = tokenizeArgs(cmd);
@@ -3871,7 +3878,9 @@ class Config :	DisposingComObject,
 		}
 		cmd ~= "\ngoto noError\n";
 		cmd ~= "\n:reportError\n";
-		cmd ~= "echo Building " ~ GetTargetPath() ~ " failed!\n";
+		cmd ~= "set ERR=%ERRORLEVEL%\n";
+		cmd ~= "if %ERR% LSS -65535 then ERR=0x%=EXITCODE%\n";
+		cmd ~= "echo Building " ~ GetTargetPath() ~ " failed (error code %ERR%)!\n";
 		cmd ~= "\n:noError\n";
 
 		return mProjectOptions.replaceEnvironment(cmd, this);

@@ -2817,7 +2817,7 @@ Module cloneModule(Module mo)
 {
 	if (!mo)
 		return null;
-	Module m = new Module(mo.srcfile.toString(), mo.ident, mo.isDocFile, mo.isHdrFile);
+	Module m = new Module(mo.srcfile.toString(), mo.ident, cast(bool)mo.docfile, cast(bool)mo.hdrfile);
 	*cast(FileName*)&(m.srcfile) = mo.srcfile; // keep identical source file name pointer
 	m.isPackageFile = mo.isPackageFile;
 	m.md = mo.md;
@@ -2868,7 +2868,7 @@ Module createModuleFromText(string filename, string text)
 	string name = stripExtension(baseName(filename));
 	auto id = Identifier.idPool(name);
 	auto mod = new Module(filename, id, true, false);
-	mod.srcBuffer = new FileBuffer(cast(ubyte[])text);
+	mod.src = cast(ubyte[])text;
 	mod.read(Loc.initial);
 	mod.importedFrom = mod; // avoid skipping unittests
 	mod.parse();

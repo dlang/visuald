@@ -1116,7 +1116,7 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source, "");
-	checkTip(m, 11,  14, "`string source.readln!string(dchar terminator = '\\x0a') pure nothrow @nogc @safe`"
+	checkTip(m, 11,  14, "`string source.readln!string(dchar terminator = '\\n') pure nothrow @nogc @safe`"
 			 ~ "\n\nRead line from `stdin`.");
 
 	source = q{                          // Line 1
@@ -1127,7 +1127,7 @@ void do_unittests()
 		}
 	};
 	m = checkErrors(source, "");
-	checkTip(m, 5,  14, "`string std.stdio.readln!string(dchar terminator = '\\x0a') @system`"
+	checkTip(m, 5,  14, "`string std.stdio.readln!string(dchar terminator = '\\n') @system`"
 			 ~ "\n\nRead line from `stdin`...");
 
 	// string expressions with concat

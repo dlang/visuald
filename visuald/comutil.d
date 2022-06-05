@@ -150,7 +150,7 @@ debug
 	}
 }
 
-extern (System):
+extern (Windows):
 	override HRESULT QueryInterface(in IID* riid, void** ppv)
 	{
 		HRESULT hr = super.QueryInterface(riid, ppv);

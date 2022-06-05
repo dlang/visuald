@@ -1322,10 +1322,15 @@ Version history
   * installer:
     - full installer now bundled with DMD 2.098.1 and LDC 1.28.1
 
-unreleased version 1.3.0
-  * dmdserver updated to frontend of DMD 2.099.1-beta
-  * full installer now bundled with DMD 2.099.1 and LDC 1.28.1
-  * bugzilla 22747: D files in VC projects failed to build, added separate versions of
+2022-06-05 version 1.3.0
+  * dmdserver updated to frontend of DMD 2.100.0
+  * full installer now bundled with DMD 2.100.0 and LDC 1.29.0
+  * bugzilla 22747: D files in VC projects failed to build in VS 2022, added separate versions of
     Microsoft.Build.CPPTasks.Common for 17.0, 17.1 and 17.2.
   * bugzilla 22764: now searches the 32-bit registry hive for install paths of DMD and LDC
-  * cv2pdb 0.51: added DWARF support for non-contiguous functions.
+  * bugzilla 23069: mago crashing when debugging VARIANT data type in VS 2022
+  * bugzilla 23043: project templates missing in VS 2022 until configuration manually updated
+  * semantic analysis: without a project loaded, a D file is now analized using the compile options
+    of "Compile and Run" with an import path derived from the module declaration.
+  * visualdproj: exit code printed for failed commands
+  * cv2pdb 0.52: improved DWARF support for non-contiguous functions, bug fixes
