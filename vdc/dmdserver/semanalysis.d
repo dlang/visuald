@@ -1990,7 +1990,8 @@ void test_ana_dmd()
 		bool dump = false;
 		string source;
 		Module m;
-		int i = 0; //foreach(i; 0..40)
+		int i = 0;
+		//foreach(i; 0..40)
 		{
 			filename = __FILE_FULL_PATH__;
 			source = cast(string)std.file.read(filename);
@@ -2003,13 +2004,18 @@ void test_ana_dmd()
 			else
 				m = checkErrors(source, "");
 
+			import std.stdio;
 			version(traceGC)
 			{
-				import std.stdio;
 				if ((i % 10) == 0)
 					GC.collect();
 				auto stats = GC.stats;
 				writeln(stats);
+			}
+			else
+			{
+				GC.collect();
+				writeln(GC.stats);
 			}
 			version(traceGC)
 			{
@@ -2032,7 +2038,8 @@ void test_ana_dmd()
 			}
 		}
 	}
-	// test_sem();
+	test_sem();
+
 	void test_leaks()
 	{
 		bool dump = false;

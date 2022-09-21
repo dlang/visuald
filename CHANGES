@@ -1330,7 +1330,7 @@ Version history
   * bugzilla 22764: now searches the 32-bit registry hive for install paths of DMD and LDC
   * bugzilla 23069: mago crashing when debugging VARIANT data type in VS 2022
   * bugzilla 23043: project templates missing in VS 2022 until configuration manually updated
-  * semantic analysis: without a project loaded, a D file is now analized using the compile options
+  * semantic analysis: without a project loaded, a D file is now analyzed using the compile options
     of "Compile and Run" with an import path derived from the module declaration.
   * visualdproj: exit code printed for failed commands
   * cv2pdb 0.52: improved DWARF support for non-contiguous functions, bug fixes
