@@ -1,0 +1,61 @@
+name: build visuald
+
+on: [push, pull_request]
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: src/visuald_vs10.vcxproj
+
+  # Configuration type to build.
+  BUILD_CONFIGURATION: Release
+  BUILD_PLATFORM: x64
+  BUILD_PLATFORM_TOOLSET: v142
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout visuald
+        uses: actions/checkout@v3
+        with:
+          path: visuald/trunk
+          submodules: true
+#      - name: Checkout cv2pdb
+#        uses: actions/checkout@v3
+#        with:
+#          repository: rainers/cv2pdb
+#          path: cv2pdb/trunk
+#      - name: Checkout mago
+#        uses: actions/checkout@v3
+#        with:
+#          repository: rainers/mago
+#          path: mago
+      - name: Prepare D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: dmd-2.098.1
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.2
+      - name: Setup VS environment
+        uses: seanmiddleditch/gha-setup-vsdevenv@v4
+      - name: Download Visual D
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: 'https://github.com/dlang/visuald/releases/download/v1.3.0/VisualD-v1.3.0.exe'
+          name: 'VisualD-v1.3.0.exe'
+          version: '1.3.0'
+          command: ./VisualD-v1.3.0.exe /S
+      - name: Register visuald
+        run: |
+          reg add "HKLM\SOFTWARE\DMD" /v "InstallationDir" /t REG_SZ /d "c:\hostedtoolcache\windows\dc\dmd-2.098.1\x64" /reg:32 /f
+          reg add "HKLM\SOFTWARE\VisualD" /v "DMDInstallDir" /t REG_SZ /d "c:\hostedtoolcache\windows\dc\dmd-2.098.1\x64\dmd2" /reg:32 /f
+      - name: Build visuald
+        working-directory: visuald/trunk
+        run: nmake install_modules
+      - name: Upload binaries
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: bin
+          path: visuald/trunk/bin
