@@ -874,7 +874,8 @@ HashTab!(void*, void*) *g_references;
 HashTab!(void*, size_t) *g_objects;
 ConservativeGC g_cgc;
 
-void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references, ref HashTab!(void*, size_t) objects)
+void collectReferences(ConservativeGC cgc, bool precise,
+					   ref HashTab!(void*, void*) references, ref HashTab!(void*, size_t) objects)
 {
 	g_cgc = cgc;
 	g_references = &references;
@@ -895,7 +896,7 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	*/
     static void mark(bool precise)(Gcx.ScanRange!precise rng) nothrow
     {
-	auto pooltable = g_cgc.gcx.pooltable;
+        auto pooltable = g_cgc.gcx.pooltable;
         alias toscan = scanStack!precise;
 
         debug(MARK_PRINTF)
@@ -1282,16 +1283,29 @@ void collectReferences(ConservativeGC cgc, ref HashTab!(void*, void*) references
 	thread_suspendAll();
 	cgc.gcx.prepare(); // set freebits
 
-	foreach(root; cgc.rootIter)
-		mark!true(Gcx.ScanRange!true(&root, &root + 1, null));
-	foreach(range; cgc.rangeIter)
-		mark!true(Gcx.ScanRange!true(range.pbot, range.ptop, null));
+	if (precise)
+	{
+		foreach(root; cgc.rootIter)
+			mark!true(Gcx.ScanRange!true(&root, &root + 1, null));
+		foreach(range; cgc.rangeIter)
+			mark!true(Gcx.ScanRange!true(range.pbot, range.ptop, null));
+		thread_scanAll((b, t) => mark!true(Gcx.ScanRange!true(b, t)));
+	}
+	else
+	{
+		foreach(root; cgc.rootIter)
+			mark!false(Gcx.ScanRange!false(&root, &root + 1));
+		foreach(range; cgc.rangeIter)
+			mark!false(Gcx.ScanRange!false(range.pbot, range.ptop));
+		thread_scanAll((b, t) => mark!false(Gcx.ScanRange!false(b, t)));
+	}
+
+	toscanConservative.clear();
+	toscanPrecise.clear();
 
 	g_cgc = null;
 	g_references = null;
 	g_objects = null;
-	toscanConservative.clear();
-	toscanPrecise.clear();
 
 	//thread_scanAll(&mark);
 	thread_resumeAll();
@@ -1575,7 +1589,7 @@ void findRoot(void* sobj)
 	HashTab!(void*, void*)* preferences = &references;
 	pp_references = &preferences;
 
-	collectReferences(cgc, references, objects);
+	collectReferences(cgc, true, references, objects);
 
 	const(void*) minAddr = cgc.gcx.pooltable.minAddr;
 	const(void*) maxAddr = cgc.gcx.pooltable.maxAddr;

@@ -235,7 +235,7 @@ string[] guessImportPaths()
 {
 	import std.file;
 
-	string path = r"c:\D\dmd-" ~ to!string(__VERSION__ * 0.001) ~ ".0";
+	string path = r"c:\D\dmd-" ~ to!string(__VERSION__)[0..1] ~ "." ~ to!string(__VERSION__)[1..$] ~ ".0";
 	if (std.file.exists(path ~ r"\src\druntime\import\object.d"))
 		return [ path ~ r"\src\druntime\import", path ~ r"\src\phobos" ];
 	path ~= "-beta.1";
@@ -1929,6 +1929,27 @@ unittest
 	checkOutline(source, 3, expected);
 }
 
+void check_leaks()
+{
+	import core.memory;
+	import std.stdio;
+
+	//mModules = null;
+	lastContext = null;
+	Module.loadModuleHandler = null;
+	dmdInit();
+	dmdReinit();
+
+	version(traceGC)
+		wipeStack();
+	GC.collect();
+
+	auto stats = GC.stats;
+	writeln(stats);
+	version(traceGC)
+		dumpGC();
+}
+
 void test_ana_dmd()
 {
 	import core.memory;
@@ -2004,23 +2025,17 @@ void test_ana_dmd()
 			else
 				m = checkErrors(source, "");
 
-			import std.stdio;
 			version(traceGC)
 			{
-				if ((i % 10) == 0)
-					GC.collect();
-				auto stats = GC.stats;
-				writeln(stats);
+				m = null;
+				check_leaks();
 			}
 			else
 			{
-				GC.collect();
+				import std.stdio;
+				if ((i % 10) == 0)
+					GC.collect();
 				writeln(GC.stats);
-			}
-			version(traceGC)
-			{
-				if (stats.usedSize >= 400_000_000)
-					dumpGC();
 			}
 		}
 
@@ -2059,18 +2074,10 @@ void test_ana_dmd()
 				writeln(stats);
 				if (stats.usedSize > 200_000_000)
 				{
-					//mModules = null;
 					m = null;
-					lastContext = null;
-					Module.loadModuleHandler = null;
-					dmdInit();
-					dmdReinit();
-
-					wipeStack();
-					GC.collect();
+					check_leaks();
 					auto nstats = GC.stats();
 					printf("reinit: stats.usedSize %zd -> %zd\n", stats.usedSize, nstats.usedSize);
-					dumpGC();
 				}
 			}
 		}

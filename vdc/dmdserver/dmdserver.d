@@ -336,11 +336,8 @@ class DMDServer : ComObject, IVDServer
 
 				version(traceGC)
 				{
-					wipeStack();
-					GC.collect();
-					auto nstats = GC.stats();
-					printf("reinit: stats.usedSize %zd -> %zd\n", stats.usedSize, nstats.usedSize);
-					dumpGC();
+					mModules = null;
+					check_leaks();
 				}
 				else
 					GC.collect();
