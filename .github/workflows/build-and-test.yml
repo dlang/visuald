@@ -13,7 +13,8 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    # windows-latest doesn't have .net framework 4.0
+    runs-on: windows-2019
 
     steps:
       - name: Checkout visuald
@@ -52,7 +53,7 @@ jobs:
           reg add "HKLM\SOFTWARE\VisualD" /v "DMDInstallDir" /t REG_SZ /d "c:\hostedtoolcache\windows\dc\dmd-2.098.1\x64\dmd2" /reg:32 /f
       - name: Build visuald
         working-directory: visuald/trunk
-        run: nmake install_modules
+        run: nmake d_modules
       - name: Upload binaries
         uses: actions/upload-artifact@v2
         if: failure()

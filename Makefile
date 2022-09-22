@@ -196,7 +196,9 @@ install_vs_no_vs2017:   install_modules fake_dparser cv2pdb mago magogc dbuild12
 
 install_vs_only_vs2017: install_modules dparser dparser_test cv2pdb_vs15 mago_vs15 magogc fake_dbuild12 fake_dbuild14 dbuild15 install_only
 
-install_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver vdextension vdext15 visualdwizard dcxxfilt
+install_modules: d_modules vdextension vdext15 visualdwizard dcxxfilt
+
+d_modules: prerequisites visuald_vs visuald_vs_x64 vdserver dmdserver
 
 install_only:
 	if not exist ..\downloads\nul md ..\downloads
