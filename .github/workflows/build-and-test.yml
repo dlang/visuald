@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: visuald/trunk
-          submodules: true
+          submodules: recursive
 #      - name: Checkout cv2pdb
 #        uses: actions/checkout@v3
 #        with:
