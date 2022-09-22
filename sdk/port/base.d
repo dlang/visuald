@@ -175,6 +175,9 @@ enum CCM_TRANSLATEACCELERATOR = (WM_USER+97);
 // msdbg*.d
 alias ULONG32 XINT32;
 
+// Win SDK 10.0.22621.0
+struct _UNWIND_HISTORY_TABLE;
+
 version(sdk) {}
 else {
 
