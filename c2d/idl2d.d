@@ -1327,6 +1327,8 @@ version(all)
 								 "*PPOWER_SETTING_ALTITUDE;", true);
 			replaceTokenSequence(tokens, "FORCEINLINE BYTE ReadUCharAcquire $code WriteULong64Raw($args) { $code2 }",
 								 "/+ $* +/", true);
+			replaceTokenSequence(tokens, "FORCEINLINE PVOID ReadPointerAcquire $code WritePointerRaw($args) { $code2 }",
+								 "/+ $* +/", true);
 		}
 
 		if(currentModule == "commctrl")

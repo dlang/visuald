@@ -3191,12 +3191,14 @@ class Config :	DisposingComObject,
 		{
 			cmd = getEnvironmentChanges() ~ cmd ~ addopt ~ "\n";
 			cmd ~= ":reportError\n";
-			cmd ~= "set ERR=%ERRORLEVEL%\n";
-			cmd ~= "if %ERR% LSS -65535 then ERR=0x%=EXITCODE%\n";
+			cmd ~= "set ERR=%ERRORLEVEL%\n"; // clears errorlevel
+			cmd ~= "set DISPERR=%ERR%\n";
+			cmd ~= "if %ERR% LSS -65535 then DISPERR=0x%=EXITCODE%\n";
 			if(syntaxOnly)
-				cmd ~= "if %errorlevel% neq 0 echo Compiling " ~ file.GetFilename() ~ " failed (error code %ERR%)!\n";
+				cmd ~= "if %errorlevel% neq 0 echo Compiling " ~ file.GetFilename() ~ " failed (error code %DISPERR%)!\n";
 			else
-				cmd ~= "if %errorlevel% neq 0 echo Building " ~ outfile ~ " failed (error code %ERR%)!\n";
+				cmd ~= "if %errorlevel% neq 0 echo Building " ~ outfile ~ " failed (error code %DISPERR%)!\n";
+			cmd ~= "exit /B %ERR%\n";
 			cmd = mProjectOptions.replaceEnvironment(cmd, this, file.GetFilename(), outfile);
 		}
 		return cmd;
@@ -3878,9 +3880,11 @@ class Config :	DisposingComObject,
 		}
 		cmd ~= "\ngoto noError\n";
 		cmd ~= "\n:reportError\n";
-		cmd ~= "set ERR=%ERRORLEVEL%\n";
-		cmd ~= "if %ERR% LSS -65535 then ERR=0x%=EXITCODE%\n";
-		cmd ~= "echo Building " ~ GetTargetPath() ~ " failed (error code %ERR%)!\n";
+		cmd ~= "set ERR=%ERRORLEVEL%\n"; // clears errorlevel
+		cmd ~= "set DISPERR=%ERR%\n";
+		cmd ~= "if %ERR% LSS -65535 then DISPERR=0x%=EXITCODE%\n";
+		cmd ~= "echo Building " ~ GetTargetPath() ~ " failed (error code %DISPERR%)!\n";
+		cmd ~= "exit /B %ERR%\n";
 		cmd ~= "\n:noError\n";
 
 		return mProjectOptions.replaceEnvironment(cmd, this);

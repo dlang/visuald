@@ -1334,3 +1334,8 @@ Version history
     of "Compile and Run" with an import path derived from the module declaration.
   * visualdproj: exit code printed for failed commands
   * cv2pdb 0.52: improved DWARF support for non-contiguous functions, bug fixes
+
+2022-09-22 version 1.3.1
+  * dmdserver: fixed memory leak
+  * fixed building against WinSDK 10.0.22621.0
+  * fixed projects no longer considered failing
