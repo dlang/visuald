@@ -1335,7 +1335,10 @@ Version history
   * visualdproj: exit code printed for failed commands
   * cv2pdb 0.52: improved DWARF support for non-contiguous functions, bug fixes
 
-2022-09-22 version 1.3.1
+2022-10-09 version 1.3.1
+  * full installer now bundled with DMD 2.100.2 and LDC 1.30.0
   * dmdserver: fixed memory leak
   * fixed building against WinSDK 10.0.22621.0
   * fixed projects no longer considered failing
+  * D files in VC projects failed to build in VS 2022 17.3 and 17.4, added separate versions of
+    dbuild.17.x.dll linked respective Microsoft.Build.CPPTasks.Common.dll
